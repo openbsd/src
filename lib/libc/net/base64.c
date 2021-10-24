@@ -1,4 +1,4 @@
-/*	$OpenBSD: base64.c,v 1.12 2021/10/22 10:22:15 tb Exp $	*/
+/*	$OpenBSD: base64.c,v 1.13 2021/10/24 10:05:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -121,11 +121,8 @@ static const char Pad64 = '=';
    */
 
 int
-b64_ntop(src, srclength, target, targsize)
-	unsigned char const *src;
-	size_t srclength;
-	char *target;
-	size_t targsize;
+b64_ntop(unsigned char const *src, size_t srclength, char *target,
+    size_t targsize)
 {
 	size_t datalength = 0;
 	unsigned char input[3];
@@ -185,10 +182,7 @@ b64_ntop(src, srclength, target, targsize)
  */
 
 int
-b64_pton(src, target, targsize)
-	char const *src;
-	unsigned char *target;
-	size_t targsize;
+b64_pton(char const *src, unsigned char *target, size_t targsize)
 {
 	int tarindex, state, ch;
 	unsigned char nextbyte;

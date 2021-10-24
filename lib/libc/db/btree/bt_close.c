@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_close.c,v 1.10 2015/01/16 16:48:51 deraadt Exp $	*/
+/*	$OpenBSD: bt_close.c,v 1.11 2021/10/24 10:05:22 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -107,9 +107,7 @@ __bt_close(DB *dbp)
  *	RET_SUCCESS, RET_ERROR.
  */
 int
-__bt_sync(dbp, flags)
-	const DB *dbp;
-	u_int flags;
+__bt_sync(const DB *dbp, u_int flags)
 {
 	BTREE *t;
 	int status;
@@ -150,8 +148,7 @@ __bt_sync(dbp, flags)
  *	RET_ERROR, RET_SUCCESS
  */
 static int
-bt_meta(t)
-	BTREE *t;
+bt_meta(BTREE *t)
 {
 	BTMETA m;
 	void *p;

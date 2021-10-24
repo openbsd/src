@@ -1,4 +1,4 @@
-/*	$OpenBSD: getwchar.c,v 1.2 2015/08/31 02:53:57 guenther Exp $	*/
+/*	$OpenBSD: getwchar.c,v 1.3 2021/10/24 10:05:23 jsg Exp $	*/
 /* $NetBSD: getwchar.c,v 1.2 2003/01/18 11:29:55 thorpej Exp $ */
 
 /*-
@@ -38,7 +38,7 @@
 #undef getwchar
 
 wint_t
-getwchar()
+getwchar(void)
 {
 
 	return fgetwc(stdin);

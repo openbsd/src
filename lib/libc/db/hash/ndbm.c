@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.26 2016/05/07 21:58:06 tedu Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.27 2021/10/24 10:05:22 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -57,11 +57,7 @@ static DBM *_dbm_open(const char *, const char *, int, mode_t);
  *	 NULL on failure
  */
 static DBM *
-_dbm_open(file, suff, flags, mode)
-	const char *file;
-	const char *suff;
-	int flags;
-	mode_t mode;
+_dbm_open(const char *file, const char *suff, int flags, mode_t mode)
 {
 	HASHINFO info;
 	char path[PATH_MAX];
@@ -92,10 +88,7 @@ _dbm_open(file, suff, flags, mode)
  *	 NULL on failure
  */
 DBM *
-dbm_open(file, flags, mode)
-	const char *file;
-	int flags;
-	mode_t mode;
+dbm_open(const char *file, int flags, mode_t mode)
 {
 
 	return(_dbm_open(file, DBM_SUFFIX, flags, mode));
@@ -106,8 +99,7 @@ dbm_open(file, flags, mode)
  *	Nothing.
  */
 void
-dbm_close(db)
-	DBM *db;
+dbm_close(DBM *db)
 {
 
 	(void)(db->close)(db);
@@ -120,9 +112,7 @@ DEF_WEAK(dbm_close);
  *	NULL on failure
  */
 datum
-dbm_fetch(db, key)
-	DBM *db;
-	datum key;
+dbm_fetch(DBM *db, datum key)
 {
 	datum retdata;
 	int status;
@@ -147,8 +137,7 @@ DEF_WEAK(dbm_fetch);
  *	NULL on failure
  */
 datum
-dbm_firstkey(db)
-	DBM *db;
+dbm_firstkey(DBM *db)
 {
 	int status;
 	datum retkey;
@@ -169,8 +158,7 @@ DEF_WEAK(dbm_firstkey);
  *	NULL on failure
  */
 datum
-dbm_nextkey(db)
-	DBM *db;
+dbm_nextkey(DBM *db)
 {
 	int status;
 	datum retkey;
@@ -191,9 +179,7 @@ DEF_WEAK(dbm_nextkey);
  *	<0 on failure
  */
 int
-dbm_delete(db, key)
-	DBM *db;
-	datum key;
+dbm_delete(DBM *db, datum key)
 {
 	int status;
 	DBT dbtkey;
@@ -215,10 +201,7 @@ DEF_WEAK(dbm_delete);
  *	 1 if DBM_INSERT and entry exists
  */
 int
-dbm_store(db, key, data, flags)
-	DBM *db;
-	datum key, data;
-	int flags;
+dbm_store(DBM *db, datum key, datum data, int flags)
 {
 	DBT dbtkey, dbtdata;
 
@@ -232,8 +215,7 @@ dbm_store(db, key, data, flags)
 DEF_WEAK(dbm_store);
 
 int
-dbm_error(db)
-	DBM *db;
+dbm_error(DBM *db)
 {
 	HTAB *hp;
 
@@ -242,8 +224,7 @@ dbm_error(db)
 }
 
 int
-dbm_clearerr(db)
-	DBM *db;
+dbm_clearerr(DBM *db)
 {
 	HTAB *hp;
 
@@ -253,16 +234,14 @@ dbm_clearerr(db)
 }
 
 int
-dbm_dirfno(db)
-	DBM *db;
+dbm_dirfno(DBM *db)
 {
 
 	return(((HTAB *)db->internal)->fp);
 }
 
 int
-dbm_rdonly(dbp)
-	DBM *dbp;
+dbm_rdonly(DBM *dbp)
 {
 	HTAB *hashp = (HTAB *)dbp->internal;
 
