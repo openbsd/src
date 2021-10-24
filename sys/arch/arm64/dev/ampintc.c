@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.24 2021/10/21 18:30:57 patrick Exp $ */
+/* $OpenBSD: ampintc.c,v 1.25 2021/10/24 14:54:52 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -980,7 +980,7 @@ ampintc_intr_disestablish_msi(void *cookie)
 void
 ampintc_intr_barrier_msi(void *cookie)
 {
-	ampintc_intr_barrier(*(void **)cookie);
+	intr_barrier(*(void **)cookie);
 }
 
 #ifdef MULTIPROCESSOR
