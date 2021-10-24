@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.80 2021/10/23 15:42:35 tobhe Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.81 2021/10/24 14:50:42 tobhe Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -154,16 +154,6 @@ struct cryptop {
 	int		crp_olen;	/* Result total length */
 	int		crp_alloctype;	/* Type of buf to allocate if needed */
 
-	int		crp_etype;	/*
-					 * Error type (zero means no error).
-					 * All error codes except EAGAIN
-					 * indicate possible data corruption (as in,
-					 * the data have been touched). On all
-					 * errors, the crp_sid may have changed
-					 * (reset to a new one), so the caller
-					 * should always check and use the new
-					 * value on future requests.
-					 */
 	int		crp_flags;
 
 #define CRYPTO_F_IMBUF	0x0001	/* Input/output are mbuf chains, otherwise contig */
@@ -215,7 +205,7 @@ int	crypto_register(u_int32_t, int *,
 	    int (*)(struct cryptop *));
 int	crypto_unregister(u_int32_t, int);
 int32_t	crypto_get_driverid(u_int8_t);
-void	crypto_invoke(struct cryptop *);
+int	crypto_invoke(struct cryptop *);
 
 void	cuio_copydata(struct uio *, int, int, caddr_t);
 void	cuio_copyback(struct uio *, int, int, const void *);

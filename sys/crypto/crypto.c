@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.91 2021/10/24 10:26:22 patrick Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.92 2021/10/24 14:50:42 tobhe Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -379,7 +379,7 @@ crypto_unregister(u_int32_t driverid, int alg)
 /*
  * Dispatch a crypto request to the appropriate crypto devices.
  */
-void
+int
 crypto_invoke(struct cryptop *crp)
 {
 	u_int64_t nid;
@@ -394,7 +394,7 @@ crypto_invoke(struct cryptop *crp)
 
 	s = splvm();
 	if (crp->crp_ndesc < 1 || crypto_drivers == NULL) {
-		crp->crp_etype = EINVAL;
+		error = EINVAL;
 		goto done;
 	}
 
@@ -414,7 +414,6 @@ crypto_invoke(struct cryptop *crp)
 	crypto_drivers[hid].cc_bytes += crp->crp_ilen;
 
 	error = crypto_drivers[hid].cc_process(crp);
-	crp->crp_etype = error;
 	if (error == ERESTART) {
 		/* Unregister driver and migrate session. */
 		crypto_unregister(hid, CRYPTO_ALGORITHM_MAX + 1);
@@ -422,7 +421,7 @@ crypto_invoke(struct cryptop *crp)
 	}
 
 	splx(s);
-	return;
+	return error;
 
  migrate:
 	/* Migrate session. */
@@ -433,9 +432,10 @@ crypto_invoke(struct cryptop *crp)
 	if (crypto_newsession(&nid, &(crp->crp_desc->CRD_INI), 0) == 0)
 		crp->crp_sid = nid;
 
-	crp->crp_etype = EAGAIN;
+	error = EAGAIN;
  done:
 	splx(s);
+	return error;
 }
 
 /*

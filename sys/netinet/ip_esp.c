@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.180 2021/10/24 14:24:29 bluhm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.181 2021/10/24 14:50:42 tobhe Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -526,18 +526,15 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	}
 
 	KERNEL_LOCK();
-	crypto_invoke(crp);
-	while (crp->crp_etype == EAGAIN) {
+	while ((error = crypto_invoke(crp)) == EAGAIN) {
 		/* Reset the session ID */
 		if (tdb->tdb_cryptoid != 0)
 			tdb->tdb_cryptoid = crp->crp_sid;
-		crypto_invoke(crp);
 	}
 	KERNEL_UNLOCK();
-	if (crp->crp_etype) {
-		DPRINTF("crypto error %d", crp->crp_etype);
+	if (error) {
+		DPRINTF("crypto error %d", error);
 		ipsecstat_inc(ipsec_noxform);
-		error = crp->crp_etype;
 		goto drop;
 	}
 
@@ -1028,18 +1025,15 @@ esp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	}
 
 	KERNEL_LOCK();
-	crypto_invoke(crp);
-	while (crp->crp_etype == EAGAIN) {
+	while ((error = crypto_invoke(crp)) == EAGAIN) {
 		/* Reset the session ID */
 		if (tdb->tdb_cryptoid != 0)
 			tdb->tdb_cryptoid = crp->crp_sid;
-		crypto_invoke(crp);
 	}
 	KERNEL_UNLOCK();
-	if (crp->crp_etype) {
-		DPRINTF("crypto error %d", crp->crp_etype);
+	if (error) {
+		DPRINTF("crypto error %d", error);
 		ipsecstat_inc(ipsec_noxform);
-		error = crp->crp_etype;
 		goto drop;
 	}
 
