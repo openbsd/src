@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptox.c,v 1.4 2021/10/23 15:42:35 tobhe Exp $	*/
+/*	$OpenBSD: cryptox.c,v 1.5 2021/10/24 10:26:22 patrick Exp $	*/
 /*
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -485,6 +485,5 @@ cryptox_process(struct cryptop *crp)
 
 out:
 	smr_read_leave();
-	crp->crp_etype = err;
 	return (err);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.39 2021/10/23 15:42:35 tobhe Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.40 2021/10/24 10:26:22 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -824,7 +824,6 @@ glxsb_crypto_process(struct cryptop *crp)
 	}
 
 out:
-	crp->crp_etype = err;
 	splx(s);
 	return (err);
 }

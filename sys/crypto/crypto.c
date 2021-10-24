@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.90 2021/10/23 15:42:35 tobhe Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.91 2021/10/24 10:26:22 patrick Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -414,14 +414,11 @@ crypto_invoke(struct cryptop *crp)
 	crypto_drivers[hid].cc_bytes += crp->crp_ilen;
 
 	error = crypto_drivers[hid].cc_process(crp);
-	if (error) {
-		if (error == ERESTART) {
-			/* Unregister driver and migrate session. */
-			crypto_unregister(hid, CRYPTO_ALGORITHM_MAX + 1);
-			goto migrate;
-		} else {
-			crp->crp_etype = error;
-		}
+	crp->crp_etype = error;
+	if (error == ERESTART) {
+		/* Unregister driver and migrate session. */
+		crypto_unregister(hid, CRYPTO_ALGORITHM_MAX + 1);
+		goto migrate;
 	}
 
 	splx(s);
