@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.18 2021/10/24 15:33:12 patrick Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.19 2021/10/24 15:41:47 patrick Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -126,27 +126,6 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	uint64_t nodes;
 	int error;
 
-#if 0
-	/* Handle retrieval of mount point arguments. */
-	if (mp->mnt_flag & MNT_GETARGS) {
-		if (mp->mnt_data == NULL)
-			return EIO;
-		tmp = VFS_TO_TMPFS(mp);
-
-		args->ta_version = TMPFS_ARGS_VERSION;
-		args->ta_nodes_max = tmp->tm_nodes_max;
-		args->ta_size_max = tmp->tm_mem_limit;
-
-		root = tmp->tm_root;
-		args->ta_root_uid = root->tn_uid;
-		args->ta_root_gid = root->tn_gid;
-		args->ta_root_mode = root->tn_mode;
-
-		*data_len = sizeof(*args);
-		return 0;
-	}
-#endif
-
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (tmpfs_mount_update(mp));
 
@@ -203,11 +182,6 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	mp->mnt_data = tmp;
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_stat.f_namemax = TMPFS_MAXNAMLEN;
-#if 0
-	mp->mnt_fs_bshift = PAGE_SHIFT;
-	mp->mnt_dev_bshift = DEV_BSHIFT;
-	mp->mnt_iflag |= IMNT_MPSAFE;
-#endif
 	vfs_getnewfsid(mp);
 
 	mp->mnt_stat.mount_info.tmpfs_args = *args;
@@ -229,7 +203,6 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 int
 tmpfs_start(struct mount *mp, int flags, struct proc *p)
 {
-
 	return 0;
 }
 
@@ -249,7 +222,6 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	if (error != 0)
 		return error;
 
-
 	/*
 	 * First round, detach and destroy all directory entries.
 	 * Also, clear the pointers to the vnodes - they are gone.
@@ -263,9 +235,8 @@ tmpfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 		}
 		while ((de = TAILQ_FIRST(&node->tn_spec.tn_dir.tn_dir)) != NULL) {
 			cnode = de->td_node;
-			if (cnode) {
+			if (cnode)
 				cnode->tn_vnode = NULL;
-			}
 			tmpfs_dir_detach(node, de);
 			tmpfs_free_dirent(tmp, de);
 		}
