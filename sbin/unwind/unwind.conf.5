@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.30 2021/08/31 20:28:45 kn Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.31 2021/10/24 15:57:17 kn Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 31 2021 $
+.Dd $Mdocdate: October 24 2021 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -150,8 +150,8 @@ block list "/etc/blocklist" log
 .Pp
 Define a DNS over TLS (DoT) forwarder and make it the preferred resolver:
 .Bd -literal -offset indent
-forwarder 192.168.1.250 port 8080 authentication name "resolver.local" DoT
-preference DoT
+forwarder { 192.168.1.250 port 8080 authentication name "resolver.local" DoT }
+preference { DoT }
 .Ed
 .Pp
 Where a domain requires a specific nameserver
