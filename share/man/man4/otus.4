@@ -1,4 +1,4 @@
-.\" $OpenBSD: otus.4,v 1.34 2021/10/15 08:10:44 kn Exp $
+.\" $OpenBSD: otus.4,v 1.35 2021/10/24 12:32:42 kn Exp $
 .\"
 .\" Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 15 2021 $
+.Dd $Mdocdate: October 24 2021 $
 .Dt OTUS 4
 .Os
 .Sh NAME
@@ -129,7 +129,7 @@ using WPA key
 .Dq mywpakey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid wpakey mywpakey
+join mynwid wpakey mywpakey
 inet autoconf
 .Ed
 .Sh DIAGNOSTICS

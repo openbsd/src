@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1182 2021/10/24 10:11:24 kn Exp $
+#	$OpenBSD: install.sub,v 1.1183 2021/10/24 12:32:42 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1241,23 +1241,23 @@ ieee80211_config() {
 			ask_until "$_prompt" "O"
 			case "$_haswpa-$resp" in
 			?-[Oo]) # No further questions
-				ifconfig $_if nwid "$_nwid"
-				quote nwid "$_nwid" >>$_hn
+				ifconfig $_if join "$_nwid"
+				quote join "$_nwid" >>$_hn
 				break
 				;;
 			?-[Ww])	ask_until "WEP key? (will echo)"
 				# Make sure ifconfig accepts the key.
-				if _err=$(ifconfig $_if nwid "$_nwid" nwkey "$resp" 2>&1) &&
+				if _err=$(ifconfig $_if join "$_nwid" nwkey "$resp" 2>&1) &&
 					[[ -z $_err ]]; then
-					quote nwid "$_nwid" nwkey "$resp" >>$_hn
+					quote join "$_nwid" nwkey "$resp" >>$_hn
 					break
 				fi
 				echo "$_err"
 				;;
 			1-[Pp])	ask_until "WPA passphrase? (will echo)"
 				# Make sure ifconfig accepts the key.
-				if ifconfig $_if nwid "$_nwid" wpakey "$resp"; then
-					quote nwid "$_nwid" wpakey "$resp" >>$_hn
+				if ifconfig $_if join "$_nwid" wpakey "$resp"; then
+					quote join "$_nwid" wpakey "$resp" >>$_hn
 					break
 				fi
 				;;

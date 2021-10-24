@@ -1,4 +1,4 @@
-.\" $OpenBSD: bwi.4,v 1.45 2021/10/15 08:10:44 kn Exp $
+.\" $OpenBSD: bwi.4,v 1.46 2021/10/24 12:32:42 kn Exp $
 .\"
 .\" Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 15 2021 $
+.Dd $Mdocdate: October 24 2021 $
 .Dt BWI 4
 .Os
 .Sh NAME
@@ -125,7 +125,7 @@ using WPA key
 .Dq mywpakey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid wpakey mywpakey
+join mynwid wpakey mywpakey
 inet autoconf
 .Ed
 .Sh SEE ALSO

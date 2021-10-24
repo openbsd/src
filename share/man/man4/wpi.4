@@ -1,4 +1,4 @@
-.\" $OpenBSD: wpi.4,v 1.43 2021/10/15 08:10:45 kn Exp $
+.\" $OpenBSD: wpi.4,v 1.44 2021/10/24 12:32:42 kn Exp $
 .\"
 .\" Copyright (c) 2006, 2007
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 15 2021 $
+.Dd $Mdocdate: October 24 2021 $
 .Dt WPI 4
 .Os
 .Sh NAME
@@ -119,7 +119,7 @@ using WPA key
 .Dq mywpakey ,
 obtaining an IP address using DHCP:
 .Bd -literal -offset indent
-nwid mynwid wpakey mywpakey
+join mynwid wpakey mywpakey
 inet autoconf
 .Ed
 .Sh DIAGNOSTICS
