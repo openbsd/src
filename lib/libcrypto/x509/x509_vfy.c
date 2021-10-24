@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.89 2021/09/03 08:58:53 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.90 2021/10/24 13:48:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2503,6 +2503,12 @@ int
 X509_STORE_CTX_get_explicit_policy(X509_STORE_CTX *ctx)
 {
 	return ctx->explicit_policy;
+}
+
+int
+X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx)
+{
+	return ctx->last_untrusted; /* XXX */
 }
 
 int

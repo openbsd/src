@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.35 2021/10/24 09:27:48 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.36 2021/10/24 13:48:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -539,6 +539,9 @@ void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
 
 X509_POLICY_TREE *X509_STORE_CTX_get0_policy_tree(X509_STORE_CTX *ctx);
 int X509_STORE_CTX_get_explicit_policy(X509_STORE_CTX *ctx);
+#if defined(LIBRESSL_NEW_API)
+int X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx);
+#endif
 
 X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param);
