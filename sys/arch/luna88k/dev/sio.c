@@ -1,4 +1,4 @@
-/* $OpenBSD: sio.c,v 1.6 2017/06/04 13:48:13 aoyama Exp $ */
+/* $OpenBSD: sio.c,v 1.7 2021/10/24 09:18:51 deraadt Exp $ */
 /* $NetBSD: sio.c,v 1.1 2000/01/05 08:48:55 nisimura Exp $ */
 
 /*-
@@ -51,7 +51,7 @@ const struct cfattach sio_ca = {
 };
 
 struct cfdriver sio_cd = {
-	NULL, "sio", DV_DULL, 0
+	NULL, "sio", DV_DULL,
 };
 
 void nullintr(void *);

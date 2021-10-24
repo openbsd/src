@@ -1,4 +1,4 @@
-/* $OpenBSD: lcd.c,v 1.10 2017/11/03 06:54:06 aoyama Exp $ */
+/* $OpenBSD: lcd.c,v 1.11 2021/10/24 09:18:51 deraadt Exp $ */
 /* $NetBSD: lcd.c,v 1.2 2000/01/07 05:13:08 nisimura Exp $ */
 
 /*-
@@ -88,7 +88,7 @@ const struct cfattach lcd_ca = {
 };
 
 struct cfdriver lcd_cd = {
-	NULL, "lcd", DV_DULL, 0
+	NULL, "lcd", DV_DULL,
 };
 
 /* Internal prototypes */
