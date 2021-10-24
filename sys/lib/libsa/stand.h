@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.70 2020/12/09 18:10:19 krw Exp $	*/
+/*	$OpenBSD: stand.h,v 1.71 2021/10/24 17:49:19 deraadt Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -159,6 +159,9 @@ long long	strtoll(const char *, char **, int);
 char	*strchr(const char *, int);
 void	*memset(void *, int, size_t);
 void	exit(void);
+#define O_RDONLY        0x0000          /* open for reading only */
+#define O_WRONLY        0x0001          /* open for writing only */
+#define O_RDWR          0x0002          /* open for reading and writing */
 int	open(const char *, int);
 int	close(int);
 void	closeall(void);

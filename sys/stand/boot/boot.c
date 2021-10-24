@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.54 2020/06/15 14:43:57 naddy Exp $	*/
+/*	$OpenBSD: boot.c,v 1.55 2021/10/24 17:49:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -167,8 +167,6 @@ loadrandom(char *name, char *buf, size_t buflen)
 	char path[MAXPATHLEN];
 	struct stat sb;
 	int fd, i, error = 0;
-
-#define O_RDONLY	0
 
 	/* Extract the device name from the kernel we are loading. */
 	for (i = 0; i < sizeof(cmd.path); i++) {

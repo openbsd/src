@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.6 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: stat.c,v 1.7 2021/10/24 17:49:19 deraadt Exp $	*/
 /*	$NetBSD: stat.c,v 1.3 1994/10/26 05:45:07 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@ stat(const char *str, struct stat *sb)
 #ifdef __INTERNAL_LIBSA_CREAD
 	if ((fd = oopen(str, 0)) < 0)
 #else
-	if ((fd = open(str, 0)) < 0)
+	if ((fd = open(str, O_RDONLY)) < 0)
 #endif
 		return (-1);
 	rv = fstat(fd, sb);

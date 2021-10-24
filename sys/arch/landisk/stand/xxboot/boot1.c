@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot1.c,v 1.9 2020/12/09 18:10:19 krw Exp $	*/
+/*	$OpenBSD: boot1.c,v 1.10 2021/10/24 17:49:19 deraadt Exp $	*/
 /*	$NetBSD: boot1.c,v 1.1 2006/09/01 21:26:19 uwe Exp $	*/
 
 /*-
@@ -86,7 +86,7 @@ boot1(uint32_t *sector)
 
 		bios_sector = ptn_disklabel.d_partitions[0].p_offset;
 		*sector = bios_sector;
-		fd = open("boot", 0);
+		fd = open("boot", O_RDONLY);
 	} while (0);
 
 	if (fd == -1 || fstat(fd, &sb) == -1)

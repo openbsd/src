@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile.c,v 1.20 2019/04/10 04:17:37 deraadt Exp $ */
+/* $OpenBSD: loadfile.c,v 1.21 2021/10/24 17:49:19 deraadt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ loadfile(const char *fname, uint64_t *marks, int flags)
 	int fd, rval;
 
 	/* Open the file. */
-	if ((fd = open(fname, 0)) < 0) {
+	if ((fd = open(fname, O_RDONLY)) < 0) {
 		WARN(("open %s", fname ? fname : "<default>"));
 		return -1;
 	}

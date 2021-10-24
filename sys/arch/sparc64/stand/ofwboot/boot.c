@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.36 2021/01/30 21:06:45 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.37 2021/10/24 17:49:19 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -483,7 +483,7 @@ main(void)
 		rc4_keysetup(&randomctx, rnddata, sizeof rnddata);
 		rc4_skip(&randomctx, 1536);
 
-		if ((fd = open(bootline, 0)) < 0) {
+		if ((fd = open(bootline, O_RDONLY)) < 0) {
 			printf("open %s: %s\n", opened_name, strerror(errno));
 			continue;
 		}
