@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vfsops.c,v 1.17 2019/12/26 13:28:49 bluhm Exp $	*/
+/*	$OpenBSD: tmpfs_vfsops.c,v 1.18 2021/10/24 15:33:12 patrick Exp $	*/
 /*	$NetBSD: tmpfs_vfsops.c,v 1.52 2011/09/27 01:10:43 christos Exp $	*/
 
 /*
@@ -67,6 +67,7 @@ int	tmpfs_vptofh(struct vnode *, struct fid *);
 int	tmpfs_statfs(struct mount *, struct statfs *, struct proc *);
 int	tmpfs_sync(struct mount *, int, int, struct ucred *, struct proc *);
 int	tmpfs_init(struct vfsconf *);
+int	tmpfs_mount_update(struct mount *);
 
 int
 tmpfs_init(struct vfsconf *vfsp)
@@ -78,6 +79,40 @@ tmpfs_init(struct vfsconf *vfsp)
 	    PR_WAITOK, "tmpfs_node", NULL);
 
 	return 0;
+}
+
+int
+tmpfs_mount_update(struct mount *mp)
+{
+	tmpfs_mount_t *tmp;
+	struct vnode *rootvp;
+	int error;
+
+	if ((mp->mnt_flag & MNT_RDONLY) == 0)
+		return EOPNOTSUPP;
+
+	/* ro->rw transition: nothing to do? */
+	if (mp->mnt_flag & MNT_WANTRDWR)
+		return 0;
+
+	tmp = mp->mnt_data;
+	rootvp = tmp->tm_root->tn_vnode;
+
+	/* Lock root to prevent lookups. */
+	error = vn_lock(rootvp, LK_EXCLUSIVE | LK_RETRY);
+	if (error)
+		return error;
+
+	/* Lock mount point to prevent nodes from being added/removed. */
+	rw_enter_write(&tmp->tm_lock);
+
+	/* Flush files opened for writing; skip rootvp. */
+	error = vflush(mp, rootvp, WRITECLOSE);
+
+	rw_exit_write(&tmp->tm_lock);
+	VOP_UNLOCK(rootvp);
+
+	return error;
 }
 
 int
@@ -112,10 +147,8 @@ tmpfs_mount(struct mount *mp, const char *path, void *data,
 	}
 #endif
 
-	if (mp->mnt_flag & MNT_UPDATE) {
-		/* TODO */
-		return EOPNOTSUPP;
-	}
+	if (mp->mnt_flag & MNT_UPDATE)
+		return (tmpfs_mount_update(mp));
 
 	/* Prohibit mounts if there is not enough memory. */
 	if (tmpfs_mem_info(1) < TMPFS_PAGES_RESERVED)
