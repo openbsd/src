@@ -242,6 +242,9 @@ outgoing-interface{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_OUTGOING_INTE
 allow-axfr-fallback{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ALLOW_AXFR_FALLBACK;}
 tls-auth{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_AUTH;}
 auth-domain-name{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_AUTH_DOMAIN_NAME;}
+client-cert{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_AUTH_CLIENT_CERT;}
+client-key{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_AUTH_CLIENT_KEY;}
+client-key-pw{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_AUTH_CLIENT_KEY_PW;}
 key{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_KEY;}
 algorithm{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_ALGORITHM;}
 secret{COLON}		{ LEXOUT(("v(%s) ", yytext)); return VAR_SECRET;}

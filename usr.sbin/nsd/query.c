@@ -1424,6 +1424,7 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 		}
 
 		if (!q->delegation_domain
+		    || !q->delegation_rrset
 		    || (exact && q->qtype == TYPE_DS && closest_encloser == q->delegation_domain))
 		{
 			if (q->qclass == CLASS_ANY) {

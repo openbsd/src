@@ -1,5 +1,31 @@
 NSD RELEASE NOTES
 
+4.3.8
+================
+FEATURES:
+	- Merge #185 by cesarkuroiwa: Mutual TLS.
+	- Set default for answer-cookie to no. Because in server deployments
+	  with mixed server software, a default of yes causes issues.
+BUG FIXES:
+	- Fix to compile with OpenSSL 3.0.0beta2.
+	- Fix configure detection of SSL_CTX_set_security_level.
+	- Fix deprecated functions use from openssl 3.0.0beta2.
+	- For #184: Note that all zones can be targeted by some nsd-control
+	  commands in the man page.
+	- Fixes for #185: Document client-cert, client-key and client-key-pw
+	  in the man page. Fix yacc semicolon. Fix unused variable warning.
+	  Use strlcpy instead of strncpy. Fix spelling error in error
+	  printout.
+	- Merge #187: Support using system-wide crypto policies.
+	- Fix #188: NSD fails to build against openssl 1.1 on CentOS 7.
+	- Fix sed script in ssldir split handling.
+	- Fix #189: nsd 4.3.7 crash answer_delegation: Assertion
+	  `query->delegation_rrset' failed.
+	- Fix #190: NSD returns 3 NSEC3 records for NODATA response.
+	- Fix compile failure with openssl 1.0.2.
+	- Fix #194: Incorrect NSEC3 response for SOA query below delegation
+	  point.
+
 4.3.7
 ================
 FEATURES:

@@ -325,6 +325,11 @@ remote-control:
 	# The authentication domain name as defined in RFC8310.
 	#auth-domain-name: "example.com"
 
+	# Client certificate and private key for Mutual TLS authentication
+	#client-cert: "path/to/clientcert.pem"
+	#client-key: "path/to/clientkey.key"
+	#client-key-pw: "password"
+
 # Patterns have zone configuration and they are shared by one or more zones.
 #
 # pattern:

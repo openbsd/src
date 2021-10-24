@@ -124,6 +124,13 @@ ssl_handshake(struct xfrd_tcp_pipeline* tp)
 
 	return 0;
 }
+
+int password_cb(char *buf, int size, int ATTR_UNUSED(rwflag), void *u)
+{
+	strlcpy(buf, (char*)u, size);
+	return strlen(buf);
+}
+
 #endif
 
 /* sort tcppipe, first on IP address, for an IPaddresss, sort on num_unused */
@@ -170,6 +177,7 @@ struct xfrd_tcp_set* xfrd_tcp_set_create(struct region* region, const char *tls_
 				tls_cert_bundle);
 	}
 #else
+	(void)tls_cert_bundle;
 	log_msg(LOG_INFO, "xfrd: No TLS 1.3 support - XFR-over-TLS not available");
 #endif
 	for(i=0; i<XFRD_MAX_TCP; i++)
@@ -708,6 +716,25 @@ xfrd_tcp_open(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 			xfrd_set_refresh_now(zone);
 			return 0;
 		}
+
+		/* Load client certificate (if provided) */
+		if (zone->master->tls_auth_options->client_cert &&
+		    zone->master->tls_auth_options->client_key) {
+			if (SSL_CTX_use_certificate_chain_file(set->ssl_ctx,
+			                                       zone->master->tls_auth_options->client_cert) != 1) {
+				log_msg(LOG_ERR, "xfrd tls: Unable to load client certificate from file %s", zone->master->tls_auth_options->client_cert);
+			}
+
+			if (zone->master->tls_auth_options->client_key_pw) {
+				SSL_CTX_set_default_passwd_cb(set->ssl_ctx, password_cb);
+				SSL_CTX_set_default_passwd_cb_userdata(set->ssl_ctx, zone->master->tls_auth_options->client_key_pw);
+			}
+
+			if (SSL_CTX_use_PrivateKey_file(set->ssl_ctx, zone->master->tls_auth_options->client_key, SSL_FILETYPE_PEM) != 1) {
+				log_msg(LOG_ERR, "xfrd tls: Unable to load private key from file %s", zone->master->tls_auth_options->client_key);
+			}
+		}
+
 		tp->handshake_done = 0;
 		if(!ssl_handshake(tp)) {
 			if(tp->handshake_want == SSL_ERROR_SYSCALL) {

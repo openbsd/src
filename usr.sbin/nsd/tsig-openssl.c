@@ -114,7 +114,9 @@ tsig_openssl_init_algorithm(region_type* region,
 #endif
 		return 0;
 	}
-#ifndef HAVE_EVP_MAC_CTX_NEW
+#ifdef HAVE_EVP_MAC_CTX_GET_MAC_SIZE
+	algorithm->maximum_digest_size = EVP_MAC_CTX_get_mac_size(hmac_ctx);
+#elif !defined(HAVE_EVP_MAC_CTX_NEW)
 	algorithm->maximum_digest_size = EVP_MD_size(hmac_algorithm);
 #else
 	algorithm->maximum_digest_size = EVP_MAC_size(hmac_ctx);

@@ -340,6 +340,9 @@ struct tls_auth_options {
 	rbnode_type node; /* key of tree is name */
 	char* name;
 	char* auth_domain_name;
+	char* client_cert;
+	char* client_key;
+	char* client_key_pw;
 };
 
 /** zone list free space */

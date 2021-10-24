@@ -583,10 +583,13 @@ domain_find_ns_rrsets(domain_type* domain, zone_type* zone, rrset_type **ns)
 {
 	/* return highest NS RRset in the zone that is a delegation above */
 	domain_type* result = NULL;
+	rrset_type* rrset = NULL;
 	while (domain && domain != zone->apex) {
-		*ns = domain_find_rrset(domain, zone, TYPE_NS);
-		if (*ns)
+		rrset = domain_find_rrset(domain, zone, TYPE_NS);
+		if (rrset) {
+			*ns = rrset;
 			result = domain;
+		}
 		domain = domain->parent;
 	}
 

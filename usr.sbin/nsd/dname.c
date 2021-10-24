@@ -243,6 +243,7 @@ int dname_parse_wire(uint8_t* dname, const char* name)
 		}
 		*h = label_length;
 		h = p;
+		p++;
 	}
 
 	/* Add root label.  */

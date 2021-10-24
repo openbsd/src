@@ -31,6 +31,12 @@
 /* Pathname to the NSD database */
 #undef DBFILE
 
+/* Whether ERR_load_SSL_strings is deprecated */
+#undef DEPRECATED_ERR_LOAD_SSL_STRINGS
+
+/* Whether SHA1_Init is deprecated */
+#undef DEPRECATED_SHA1_INIT
+
 /* default dnstap socket path */
 #undef DNSTAP_SOCKET_PATH
 
@@ -127,6 +133,9 @@
 /* Define to 1 if you have the `ERR_load_crypto_strings' function. */
 #undef HAVE_ERR_LOAD_CRYPTO_STRINGS
 
+/* Define to 1 if you have the `ERR_load_SSL_strings' function. */
+#undef HAVE_ERR_LOAD_SSL_STRINGS
+
 /* Define to 1 if you have the `event_base_free' function. */
 #undef HAVE_EVENT_BASE_FREE
 
@@ -144,6 +153,9 @@
 
 /* Define to 1 if you have the `EVP_cleanup' function. */
 #undef HAVE_EVP_CLEANUP
+
+/* Define to 1 if you have the `EVP_MAC_CTX_get_mac_size' function. */
+#undef HAVE_EVP_MAC_CTX_GET_MAC_SIZE
 
 /* Define to 1 if you have the `EVP_MAC_CTX_new' function. */
 #undef HAVE_EVP_MAC_CTX_NEW
@@ -338,6 +350,9 @@
 /* Define to 1 if you have the `setusercontext' function. */
 #undef HAVE_SETUSERCONTEXT
 
+/* Define to 1 if you have the `SHA1_Init' function. */
+#undef HAVE_SHA1_INIT
+
 /* Define to 1 if you have the `sigaction' function. */
 #undef HAVE_SIGACTION
 
@@ -358,6 +373,9 @@
 
 /* Define to 1 if you have the `SSL_CTX_set_security_level' function. */
 #undef HAVE_SSL_CTX_SET_SECURITY_LEVEL
+
+/* Define to 1 if you have the `SSL_get1_peer_certificate' function. */
+#undef HAVE_SSL_GET1_PEER_CERTIFICATE
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H

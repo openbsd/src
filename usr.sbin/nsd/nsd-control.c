@@ -133,9 +133,7 @@ static void ssl_path_err(const char* s, const char *path)
 {
 	unsigned long err;
 	err = ERR_peek_error();
-	if (ERR_GET_LIB(err) == ERR_LIB_SYS &&
-		(ERR_GET_FUNC(err) == SYS_F_FOPEN ||
-		 ERR_GET_FUNC(err) == SYS_F_FREAD) ) {
+	if (ERR_GET_LIB(err) == ERR_LIB_SYS) {
 		fprintf(stderr, "error: %s\n%s: %s\n",
 			s, path, ERR_reason_error_string(err));
 		exit(1);
@@ -532,7 +530,9 @@ int main(int argc, char* argv[])
 #ifdef HAVE_ERR_LOAD_CRYPTO_STRINGS
 	ERR_load_crypto_strings();
 #endif
+#if defined(HAVE_ERR_LOAD_SSL_STRINGS) && !defined(DEPRECATED_ERR_LOAD_SSL_STRINGS)
 	ERR_load_SSL_strings();
+#endif
 #if OPENSSL_VERSION_NUMBER < 0x10100000 || !defined(HAVE_OPENSSL_INIT_CRYPTO)
 	OpenSSL_add_all_algorithms();
 #else

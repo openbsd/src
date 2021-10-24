@@ -1823,7 +1823,9 @@ perform_openssl_init(void)
 #ifdef HAVE_ERR_LOAD_CRYPTO_STRINGS
 	ERR_load_crypto_strings();
 #endif
+#if defined(HAVE_ERR_LOAD_SSL_STRINGS) && !defined(DEPRECATED_ERR_LOAD_SSL_STRINGS)
 	ERR_load_SSL_strings();
+#endif
 #if OPENSSL_VERSION_NUMBER < 0x10100000 || !defined(HAVE_OPENSSL_INIT_CRYPTO)
 	OpenSSL_add_all_algorithms();
 #else
@@ -1999,9 +2001,12 @@ server_tls_ctx_setup(char* key, char* pem, char* verifypem)
 	}
 #endif
 #if defined(SHA256_DIGEST_LENGTH) && defined(SSL_TXT_CHACHA20)
-	/* if we have sha256, set the cipher list to have no known vulns */
-	if(!SSL_CTX_set_cipher_list(ctx, "ECDHE+AESGCM:ECDHE+CHACHA20"))
-		log_crypto_err("could not set cipher list with SSL_CTX_set_cipher_list");
+	/* if we detect system-wide crypto policies, use those */
+	if (access( "/etc/crypto-policies/config", F_OK ) != 0 ) {
+		/* if we have sha256, set the cipher list to have no known vulns */
+		if(!SSL_CTX_set_cipher_list(ctx, "ECDHE+AESGCM:ECDHE+CHACHA20"))
+			log_crypto_err("could not set cipher list with SSL_CTX_set_cipher_list");
+	}
 #endif
 	if((SSL_CTX_set_options(ctx, SSL_OP_CIPHER_SERVER_PREFERENCE) &
 		SSL_OP_CIPHER_SERVER_PREFERENCE) !=

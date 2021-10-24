@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Jul 22, 2021" "NLnet Labs" "nsd 4.3.7"
+.TH "nsd.conf" "5" "Oct 12, 2021" "NLnet Labs" "nsd 4.3.8"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -494,7 +494,7 @@ With the value 0 the rate is unlimited.
 .TP
 .B answer\-cookie:\fR <yes or no>
 Enable to answer to requests containig DNS Cookies as specified in RFC7873.
-Default is yes.
+Default is no.
 .TP
 .B cookie\-secret:\fR <128 bit hex string>
 Servers in an anycast deployment need to be able to  verify  each other's DNS
@@ -884,8 +884,24 @@ It has the following attributes.
 The tls-auth name. Used to refer to this TLS authentication information in the
 access control list.
 .TP
-.B auth-domain-name:\fR <string>
+.B auth\-domain\-name:\fR <string>
 The authentication domain name as defined in RFC8310.
+.TP
+.B client\-cert: <file name of clientcert.pem>
+If you want to use mutual TLS authentication, this is where the client
+certificates can be configured that NSD uses to connect to the upstream
+server to download the zone. The client public key pem cert file can
+be configured here. Also configure a private key with client\-key.
+.TP
+.B client\-key: <file name of clientkey.key>
+If you want to use mutual TLS authentication, the private key file can
+be configured here for the client authentication.
+.TP
+.B client\-key\-pw: <string>
+If the client\-key file uses a password to decrypt the key before it can
+be used, then the password can be specified here as a string.
+It is possible to include other config files with the include: option, and
+this can be used to move that sensitive data to another file, if you wish.
 .SS DNSTAP Logging Options
 DNSTAP support, when compiled in, is enabled in the \fBdnstap:\fR section.
 This starts a collector process that writes the log information to the

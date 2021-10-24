@@ -1053,12 +1053,21 @@ nsec3_add_ds_proof(struct query *query, struct answer *answer,
 				!prev_par->nsec3->nsec3_is_exact);
 			nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
 				prev_par->nsec3->nsec3_cover);
+		} else {
+			/* the exact case was handled earlier, so this is
+			 * with a closest-encloser proof, if in the part
+			 * before the else the closest encloser proof is done,
+			 * then we do not need to add a DS here because
+			 * the optout proof is already complete. If not,
+			 * we add the nsec3 here to complete the closest
+			 * encloser proof with a next closer */
+			/* add optout range from parent zone */
+			/* note: no check of optout bit, resolver checks it */
+			if(domain->nsec3) {
+				nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
+					domain->nsec3->nsec3_ds_parent_cover);
+			}
 		}
-		/* add optout range from parent zone */
-		/* note: no check of optout bit, resolver checks it */
-		if(domain->nsec3)
-			nsec3_add_rrset(query, answer, AUTHORITY_SECTION,
-				domain->nsec3->nsec3_ds_parent_cover);
 	}
 }
 

@@ -1,4 +1,4 @@
-.TH "nsd\-control" "8" "Jul 22, 2021" "NLnet Labs" "nsd 4.3.7"
+.TH "nsd\-control" "8" "Oct 12, 2021" "NLnet Labs" "nsd 4.3.8"
 .\" Copyright (c) 2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -107,7 +107,8 @@ For bulk removals.
 Write zonefiles to disk, or the given zonefile to disk.  Zones that have
 changed (via AXFR or IXFR) are written, or if the zonefile has not been
 created yet then it is created.  Directory components of the zonefile
-path are created if necessary.
+path are created if necessary. With argument that zone is written if it
+was modified, without argument, all modified zones are written.
 .TP
 .B notify [<zone>]
 Send NOTIFY messages to slave servers.  Sends to the IP addresses
@@ -116,7 +117,8 @@ server.  Usually NSD sends NOTIFY messages right away when a master zone
 serial is updated.  If a zone is given, notifies are sent for that zone.
 These slave servers are supposed to initiate a zone transfer request
 later (to this server or another master), this can be allowed via
-the 'provide\-xfr:' acl list configuration.
+the 'provide\-xfr:' acl list configuration. With argument that zone is
+processed, without argument, all zones are processed.
 .TP
 .B transfer [<zone>]
 Attempt to update slave zones that are hosted on this server by contacting
@@ -125,13 +127,15 @@ If a zone is given, that zone is updated.  Usually NSD receives a NOTIFY
 from the masters (configured via 'allow\-notify:' acl list) that a new zone
 serial has to be transferred.  For zones with no content, NSD may have backed
 off from asking often because the masters did not respond, but this command
-will reset the backoff to its initial timeout, for frequent retries.
+will reset the backoff to its initial timeout, for frequent retries. With
+argument that zone is transferred, without argument, all zones are transferred.
 .TP
 .B force_transfer [<zone>]
 Force update slave zones that are hosted on this server.  Even if the
 master hosts the same serial number of the zone, a full AXFR is performed
 to fetch it.  If you want to use IXFR and check that the serial number
-increases, use the 'transfer' command.
+increases, use the 'transfer' command. With argument that zone is
+transferred, without argument, all zones are transferred.
 .TP
 .B zonestatus [<zone>]
 Print state of the zone, the serial numbers and since when they have
@@ -142,7 +146,8 @@ zone is up\-to\-date), 'expired' (slave zone has expired), 'refreshing' (slave
 zone has transfers active).  The serial numbers printed are
 the 'served\-serial' (currently active), the 'commit\-serial' (is in reload),
 the 'notified\-serial' (got notify, busy fetching the data).  The serial
-numbers are only printed if such a serial number is available.
+numbers are only printed if such a serial number is available. With argument
+that zone is printed, without argument, all zones are printed.
 .TP
 .B serverpid
 Prints the PID of the server process.  This is used for statistics (and

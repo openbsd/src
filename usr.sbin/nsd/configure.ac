@@ -5,7 +5,7 @@ dnl
 sinclude(acx_nlnetlabs.m4)
 sinclude(dnstap/dnstap.m4)
 
-AC_INIT([NSD],[4.3.7],[nsd-bugs@nlnetlabs.nl])
+AC_INIT([NSD],[4.3.8],[nsd-bugs@nlnetlabs.nl])
 AC_CONFIG_HEADERS([config.h])
 
 #
@@ -369,6 +369,31 @@ AC_DEFUN([CHECK_SSL], [
         ])
     if test x_$withval != x_no; then
         AC_MSG_CHECKING(for SSL)
+	if test -n "$withval"; then
+        	dnl look for openssl install with different version, eg.
+                dnl in /usr/include/openssl11/openssl/ssl.h
+                dnl and /usr/lib64/openssl11/libssl.so
+                dnl with the --with-ssl=/usr/include/openssl11
+                if test ! -f "$withval/include/openssl/ssl.h" -a -f "$withval/openssl/ssl.h"; then
+                        ssldir="$withval"
+                        found_ssl="yes"
+                        withval=""
+                        ssldir_include="$ssldir"
+                        CPPFLAGS="$CPPFLAGS -I$ssldir_include";
+                        dnl find the libdir
+                        ssldir_lib=`echo $ssldir | sed -e 's/include/lib/'`
+                        if test -f "$ssldir_lib/libssl.a" -o -f "$ssldir_lib/libssl.so"; then
+                                : # found here
+                        else
+                                ssldir_lib=`echo $ssldir | sed -e 's/include/lib64/'`
+                                if test -f "$ssldir_lib/libssl.a" -o -f "$ssldir_lib/libssl.so"; then
+                                        : # found here
+                                else
+                                        AC_MSG_ERROR([Could not find openssl lib file, $ssldir_lib/libssl.[so,a], pass like "/usr/local" or "/usr/include/openssl11"])
+                                fi
+                        fi
+                fi
+	fi
         if test x_$withval = x_ -o x_$withval = x_yes; then
             withval="/usr/local/ssl /usr/lib/ssl /usr/ssl /usr/pkg /usr/sfw /usr/local /usr /usr/local/opt/openssl"
         fi
@@ -376,10 +401,15 @@ AC_DEFUN([CHECK_SSL], [
             ssldir="$dir"
             if test -f "$dir/include/openssl/ssl.h"; then
                 found_ssl="yes";
-                AC_DEFINE_UNQUOTED([HAVE_SSL], [], [Define if you have the SSL libraries installed.])
                 if test x_$ssldir != x_/usr; then
                     CPPFLAGS="$CPPFLAGS -I$ssldir/include";
                 fi
+		ssldir_include="$ssldir/include"
+		if test ! -d "$ssldir/lib" -a -d "$ssldir/lib64"; then
+			ssldir_lib="$ssldir/lib64"
+		else
+			ssldir_lib="$ssldir/lib"
+		fi
                 break;
             fi
         done
@@ -388,11 +418,12 @@ AC_DEFUN([CHECK_SSL], [
         else
             AC_MSG_RESULT([found in $ssldir])
             HAVE_SSL=yes
+            AC_DEFINE_UNQUOTED([HAVE_SSL], [], [Define if you have the SSL libraries installed.])
             if test x_$ssldir != x_/usr; then
-                LDFLAGS="$LDFLAGS -L$ssldir/lib";
+                LDFLAGS="$LDFLAGS -L$ssldir_lib";
             fi
 	    if test x_$ssldir = x_/usr/sfw; then
-		LDFLAGS="$LDFLAGS -R$ssldir/lib";
+		LDFLAGS="$LDFLAGS -R$ssldir_lib";
 	    fi
         fi
         AC_SUBST(HAVE_SSL)
@@ -1049,7 +1080,12 @@ if test x$HAVE_SSL = x"yes"; then
 	SSL_LIBS="-lssl"
 	AC_SUBST(SSL_LIBS)
 	AC_CHECK_HEADERS([openssl/ssl.h openssl/err.h openssl/rand.h openssl/ocsp.h openssl/core_names.h],,, [AC_INCLUDES_DEFAULT])
-	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new EVP_cleanup ERR_load_crypto_strings OPENSSL_init_crypto SSL_CTX_set_security_level CRYPTO_memcmp EC_KEY_new_by_curve_name EVP_MAC_CTX_new EVP_MAC_CTX_set_params])
+	AC_CHECK_FUNCS([HMAC_CTX_reset HMAC_CTX_new EVP_cleanup ERR_load_crypto_strings OPENSSL_init_crypto CRYPTO_memcmp EC_KEY_new_by_curve_name EVP_MAC_CTX_new EVP_MAC_CTX_set_params EVP_MAC_CTX_get_mac_size SHA1_Init])
+	if test "$ac_cv_func_SHA1_Init" = "yes"; then
+		ACX_FUNC_DEPRECATED([SHA1_Init], [(void)SHA1_Init(NULL);], [
+#include <openssl/sha.h>
+])
+	fi
 	AC_CHECK_DECLS([SSL_CTX_set_ecdh_auto,SSL_CTX_set_tmp_ecdh], [], [], [
 AC_INCLUDES_DEFAULT
 #ifdef HAVE_OPENSSL_ERR_H
@@ -1076,7 +1112,12 @@ AC_INCLUDES_DEFAULT
 
 	BAKLIBS="$LIBS"
 	LIBS="-lssl $LIBS"
-	AC_CHECK_FUNCS([OPENSSL_init_ssl])
+	AC_CHECK_FUNCS([OPENSSL_init_ssl SSL_get1_peer_certificate SSL_CTX_set_security_level ERR_load_SSL_strings])
+	if test "$ac_cv_func_ERR_load_SSL_strings" = "yes"; then
+		ACX_FUNC_DEPRECATED([ERR_load_SSL_strings], [(void)ERR_load_SSL_strings();], [
+#include <openssl/ssl.h>
+])
+	fi
 	LIBS="$BAKLIBS"
 
 else
