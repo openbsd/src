@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.29 2019/04/14 17:39:03 jsing Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.30 2021/10/24 13:46:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -168,6 +168,12 @@ void
 BIO_set_data(BIO *a, void *ptr)
 {
 	a->ptr = ptr;
+}
+
+int
+BIO_get_init(BIO *a)
+{
+	return a->init;
 }
 
 void
