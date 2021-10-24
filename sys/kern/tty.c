@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.169 2021/05/19 18:10:45 kettenis Exp $	*/
+/*	$OpenBSD: tty.c,v 1.170 2021/10/24 00:02:25 jsg Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1452,7 +1452,7 @@ ttypend(struct tty *tp)
 	SET(tp->t_state, TS_TYPEN);
 	tq = tp->t_rawq;
 	tp->t_rawq.c_cc = 0;
-	tp->t_rawq.c_cf = tp->t_rawq.c_cl = 0;
+	tp->t_rawq.c_cf = tp->t_rawq.c_cl = NULL;
 	while ((c = getc(&tq)) >= 0)
 		ttyinput(c, tp);
 	CLR(tp->t_state, TS_TYPEN);

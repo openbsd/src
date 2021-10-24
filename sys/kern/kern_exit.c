@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.199 2021/03/12 10:13:28 mpi Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.200 2021/10/24 00:02:24 jsg Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		qr = LIST_FIRST(&pr->ps_children);
 		if (qr)		/* only need this if any child is S_ZOMB */
 			wakeup(initprocess);
-		for (; qr != 0; qr = nqr) {
+		for (; qr != NULL; qr = nqr) {
 			nqr = LIST_NEXT(qr, ps_sibling);
 			/*
 			 * Traced processes are killed since their

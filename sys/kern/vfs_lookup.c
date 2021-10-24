@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.85 2021/07/16 07:59:38 claudio Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.86 2021/10/24 00:02:25 jsg Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -381,7 +381,7 @@ int
 vfs_lookup(struct nameidata *ndp)
 {
 	char *cp;			/* pointer into pathname argument */
-	struct vnode *dp = 0;		/* the directory we are searching */
+	struct vnode *dp = NULL;	/* the directory we are searching */
 	struct vnode *tdp;		/* saved dp */
 	struct mount *mp;		/* mount table entry */
 	int docache;			/* == 0 do not cache last component */
@@ -725,7 +725,7 @@ bad:
 int
 vfs_relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 {
-	struct vnode *dp = 0;		/* the directory we are searching */
+	struct vnode *dp = NULL;	/* the directory we are searching */
 	int wantparent;			/* 1 => wantparent or lockparent flag */
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.90 2021/02/08 10:51:01 mpi Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.91 2021/10/24 00:02:25 jsg Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -320,7 +320,7 @@ leavepgrp(struct process *pr)
 	LIST_REMOVE(pr, ps_pglist);
 	if (LIST_EMPTY(&pr->ps_pgrp->pg_members))
 		pgdelete(pr->ps_pgrp);
-	pr->ps_pgrp = 0;
+	pr->ps_pgrp = NULL;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.109 2021/10/22 15:11:32 mpi Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.110 2021/10/24 00:02:25 jsg Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -335,7 +335,7 @@ ptswrite(dev_t dev, struct uio *uio, int flag)
 	struct pt_softc *pti = pt_softc[minor(dev)];
 	struct tty *tp = pti->pt_tty;
 
-	if (tp->t_oproc == 0)
+	if (tp->t_oproc == NULL)
 		return (EIO);
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
@@ -429,7 +429,7 @@ ptcclose(dev_t dev, int flag, int devtype, struct proc *p)
 
 	(void)(*linesw[tp->t_line].l_modem)(tp, 0);
 	tp->t_state &= ~TS_CARR_ON;
-	tp->t_oproc = 0;		/* mark closed */
+	tp->t_oproc = NULL;		/* mark closed */
 	return (0);
 }
 

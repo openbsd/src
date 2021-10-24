@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.245 2021/06/13 13:17:59 krw Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.246 2021/10/24 00:02:25 jsg Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -387,7 +387,7 @@ readdoslabel(struct buf *bp, void (*strat)(struct buf *),
 			if (error == 0) {
 				dospartoff = DL_GETBSTART(gptlp);
 				dospartend = DL_GETBEND(gptlp);
-				if (partoffp == 0)
+				if (partoffp == NULL)
 					*lp = *gptlp;
 				free(gptlp, M_DEVBUF,
 				    sizeof(struct disklabel));

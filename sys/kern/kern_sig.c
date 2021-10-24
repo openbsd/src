@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.286 2021/10/23 14:56:55 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.287 2021/10/24 00:02:25 jsg Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ sigstkinit(struct sigaltstack *ss)
 {
 	ss->ss_flags = SS_DISABLE;
 	ss->ss_size = 0;
-	ss->ss_sp = 0;
+	ss->ss_sp = NULL;
 }
 
 /*
@@ -1116,7 +1116,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 				atomic_clearbits_int(siglist, mask);
 			if (action == SIG_CATCH)
 				goto runfast;
-			if (p->p_wchan == 0)
+			if (p->p_wchan == NULL)
 				goto run;
 			p->p_stat = SSLEEP;
 			goto out;
@@ -1410,12 +1410,12 @@ postsig(struct proc *p, int signum)
 	action = ps->ps_sigact[signum];
 	info = (ps->ps_siginfo & mask) != 0;
 	onstack = (ps->ps_sigonstack & mask) != 0;
-	sigval.sival_ptr = 0;
+	sigval.sival_ptr = NULL;
 
 	if (p->p_sisig != signum) {
 		trapno = 0;
 		code = SI_USER;
-		sigval.sival_ptr = 0;
+		sigval.sival_ptr = NULL;
 	} else {
 		trapno = p->p_sitrapno;
 		code = p->p_sicode;
@@ -2139,7 +2139,7 @@ single_thread_clear(struct proc *p, int flag)
 		 * it back into some sleep queue
 		 */
 		if (q->p_stat == SSTOP && (q->p_flag & flag) == 0) {
-			if (q->p_wchan == 0)
+			if (q->p_wchan == NULL)
 				setrunnable(q);
 			else
 				q->p_stat = SSLEEP;

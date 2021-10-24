@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.46 2019/09/06 21:30:31 cheloha Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.47 2021/10/24 00:02:25 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Mats O Jansson <moj@stacken.kth.se>
@@ -118,7 +118,7 @@ userconf_init(void)
 	struct cfdata *cd;
 	int   ln;
 
-	while (cfdata[i].cf_attach != 0) {
+	while (cfdata[i].cf_attach != NULL) {
 		userconf_maxdev = i;
 		userconf_totdev = i;
 
@@ -132,7 +132,7 @@ userconf_init(void)
 		i++;
 	}
 
-	while (cfdata[i].cf_attach == 0) {
+	while (cfdata[i].cf_attach == NULL) {
 		userconf_totdev = i;
 		i++;
 	}
@@ -884,7 +884,7 @@ userconf_common_dev(char *dev, int len, short unit, short state, char routine)
 		break;
 	}
 
-	while (cfdata[i].cf_attach != 0) {
+	while (cfdata[i].cf_attach != NULL) {
 		if (strlen(cfdata[i].cf_driver->cd_name) == len) {
 
 			/*
@@ -1108,7 +1108,7 @@ userconf_add(char *dev, int len, short unit, short state)
 		/* Find max unit number of the device type */
 
 		i = 0;
-		while (cfdata[i].cf_attach != 0) {
+		while (cfdata[i].cf_attach != NULL) {
 			if (strlen(cfdata[i].cf_driver->cd_name) == len &&
 			    strncasecmp(dev, cfdata[i].cf_driver->cd_name,
 			    len) == 0) {
@@ -1133,7 +1133,7 @@ userconf_add(char *dev, int len, short unit, short state)
 		star_unit = -1;
 
 		i = 0;
-		while (cfdata[i].cf_attach != 0) {
+		while (cfdata[i].cf_attach != NULL) {
 			if (strlen(cfdata[i].cf_driver->cd_name) == len &&
 			    strncasecmp(dev, cfdata[i].cf_driver->cd_name,
 			    len) == 0) {
@@ -1152,7 +1152,7 @@ userconf_add(char *dev, int len, short unit, short state)
 		star_unit++;
 
 		i = 0;
-		while (cfdata[i].cf_attach != 0) {
+		while (cfdata[i].cf_attach != NULL) {
 			if (strlen(cfdata[i].cf_driver->cd_name) == len &&
 			    strncasecmp(dev, cfdata[i].cf_driver->cd_name,
 			    len) == 0) {

@@ -75,11 +75,11 @@ void db_symbol_values(Elf_Sym *, char **, db_expr_t *);
 					/* return name and value of symbol */
 
 #define db_find_sym_and_offset(val,namep,offp)	\
-	db_symbol_values(db_search_symbol(val,DB_STGY_ANY,offp),namep,0)
+	db_symbol_values(db_search_symbol(val,DB_STGY_ANY,offp),namep,NULL)
 					/* find name&value given approx val */
 
 #define db_find_xtrn_sym_and_offset(val,namep,offp)	\
-	db_symbol_values(db_search_symbol(val,DB_STGY_XTRN,offp),namep,0)
+	db_symbol_values(db_search_symbol(val,DB_STGY_XTRN,offp),namep,NULL)
 					/* ditto, but no locals */
 
 void db_printsym(db_expr_t, db_strategy_t, int (*)(const char *, ...));

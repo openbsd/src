@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.46 2021/06/07 09:10:32 mpi Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.47 2021/10/24 00:02:25 jsg Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -216,6 +216,6 @@ soo_close(struct file *fp, struct proc *p)
 		flags = (fp->f_flag & FNONBLOCK) ? MSG_DONTWAIT : 0;
 		error = soclose(fp->f_data, flags);
 	}
-	fp->f_data = 0;
+	fp->f_data = NULL;
 	return (error);
 }

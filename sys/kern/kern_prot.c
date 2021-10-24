@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.77 2021/01/17 15:28:22 mvs Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.78 2021/10/24 00:02:25 jsg Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -271,7 +271,8 @@ sys_setpgid(struct proc *curp, void *v, register_t *retval)
 	newpgrp = pool_get(&pgrp_pool, PR_WAITOK);
 
 	if (pid != 0 && pid != curpr->ps_pid) {
-		if ((targpr = prfind(pid)) == 0 || !inferior(targpr, curpr)) {
+		if ((targpr = prfind(pid)) == NULL ||
+		    !inferior(targpr, curpr)) {
 			error = ESRCH;
 			goto out;
 		}

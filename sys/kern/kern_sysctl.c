@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.394 2021/05/04 21:57:15 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.395 2021/10/24 00:02:25 jsg Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -1998,7 +1998,7 @@ sysctl_proc_nobroadcastkill(int *name, u_int namelen, void *newp, size_t newlen,
 		return (EINVAL);
 
 	/* Only root can change PS_NOBROADCASTKILL */
-	if (newp != 0 && (error = suser(cp)) != 0)
+	if (newp != NULL && (error = suser(cp)) != 0)
 		return (error);
 
 	/* get the PS_NOBROADCASTKILL flag */
