@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.179 2021/10/23 22:19:37 bluhm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.180 2021/10/24 14:24:29 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -546,13 +546,7 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	/* Release the crypto descriptors */
 	crypto_freereq(crp);
 
-	error = esp_input_cb(tdb, tc, m, clen);
-	if (error) {
-		ipsecstat_inc(ipsec_idrops);
-		tdb->tdb_idrops++;
-	}
-
-	return 0;
+	return esp_input_cb(tdb, tc, m, clen);
 
  drop:
 	m_freemp(mp);
@@ -1055,13 +1049,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	/* Release the crypto descriptors */
 	crypto_freereq(crp);
 
-	error = esp_output_cb(tdb, tc, m, ilen, olen);
-	if (error) {
-		ipsecstat_inc(ipsec_odrops);
-		tdb->tdb_odrops++;
-	}
-
-	return 0;
+	return esp_output_cb(tdb, tc, m, ilen, olen);
 
  drop:
 	m_freem(m);
