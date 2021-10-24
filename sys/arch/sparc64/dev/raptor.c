@@ -1,4 +1,4 @@
-/*	$OpenBSD: raptor.c,v 1.10 2021/03/11 11:17:00 jsg Exp $	*/
+/*	$OpenBSD: raptor.c,v 1.11 2021/10/24 17:05:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -140,7 +140,7 @@ struct wsdisplay_accessops raptor_accessops = {
 int	raptor_match(struct device *, void *, void *);
 void	raptor_attach(struct device *, struct device *, void *);
 
-struct cfattach raptor_ca = {
+const struct cfattach raptor_ca = {
 	sizeof(struct raptor_softc), raptor_match, raptor_attach
 };
 

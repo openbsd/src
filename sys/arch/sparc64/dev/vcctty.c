@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcctty.c,v 1.14 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: vcctty.c,v 1.15 2021/10/24 17:05:04 mpi Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -71,7 +71,7 @@ struct vcctty_softc {
 int	vcctty_match(struct device *, void *, void *);
 void	vcctty_attach(struct device *, struct device *, void *);
 
-struct cfattach vcctty_ca = {
+const struct cfattach vcctty_ca = {
 	sizeof(struct vcctty_softc), vcctty_match, vcctty_attach
 };
 

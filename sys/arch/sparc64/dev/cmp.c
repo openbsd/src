@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmp.c,v 1.2 2008/07/11 13:47:20 kettenis Exp $	*/
+/*	$OpenBSD: cmp.c,v 1.3 2021/10/24 17:05:03 mpi Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -25,7 +25,7 @@
 int	cmp_match(struct device *, void *, void *);
 void	cmp_attach(struct device *, struct device *, void *);
 
-struct cfattach cmp_ca = {
+const struct cfattach cmp_ca = {
 	sizeof(struct device), cmp_match, cmp_attach
 };
 

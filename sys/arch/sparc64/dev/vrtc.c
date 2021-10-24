@@ -1,4 +1,4 @@
-/*	$OpenBSD: vrtc.c,v 1.1 2008/03/08 19:19:43 kettenis Exp $	*/
+/*	$OpenBSD: vrtc.c,v 1.2 2021/10/24 17:05:04 mpi Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -32,7 +32,7 @@ extern todr_chip_handle_t todr_handle;
 int	vrtc_match(struct device *, void *, void *);
 void	vrtc_attach(struct device *, struct device *, void *);
 
-struct cfattach vrtc_ca = {
+const struct cfattach vrtc_ca = {
 	sizeof(struct device), vrtc_match, vrtc_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: beep.c,v 1.9 2019/06/22 20:30:42 kn Exp $	*/
+/*	$OpenBSD: beep.c,v 1.10 2021/10/24 17:05:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Jason L. Wright (jason@thought.net)
@@ -78,7 +78,7 @@ int beep_match(struct device *, void *, void *);
 void beep_attach(struct device *, struct device *, void *);
 void beep_setfreq(struct beep_softc *, int);
 
-struct cfattach beep_ca = {
+const struct cfattach beep_ca = {
 	sizeof(struct beep_softc), beep_match, beep_attach
 };
 

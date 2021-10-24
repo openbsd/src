@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbus.c,v 1.45 2019/06/25 22:30:56 dlg Exp $	*/
+/*	$OpenBSD: sbus.c,v 1.46 2021/10/24 17:05:04 mpi Exp $	*/
 /*	$NetBSD: sbus.c,v 1.46 2001/10/07 20:30:41 eeh Exp $ */
 
 /*-
@@ -158,11 +158,11 @@ void	sbus_xbox_attach(struct device *, struct device *, void *);
 int	sbus_mb_match(struct device *, void *, void *);
 int	sbus_xbox_match(struct device *, void *, void *);
 
-struct cfattach sbus_mb_ca = {
+const struct cfattach sbus_mb_ca = {
 	sizeof(struct sbus_softc), sbus_mb_match, sbus_mb_attach
 };
 
-struct cfattach sbus_xbox_ca = {
+const struct cfattach sbus_xbox_ca = {
 	sizeof(struct sbus_softc), sbus_xbox_match, sbus_xbox_attach
 };
 

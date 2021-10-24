@@ -1,4 +1,4 @@
-/*	$OpenBSD: vds.c,v 1.1 2009/12/31 11:58:41 kettenis Exp $	*/
+/*	$OpenBSD: vds.c,v 1.2 2021/10/24 17:05:04 mpi Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -42,7 +42,7 @@ struct vds_softc {
 int	vds_match(struct device *, void *, void *);
 void	vds_attach(struct device *, struct device *, void *);
 
-struct cfattach vds_ca = {
+const struct cfattach vds_ca = {
 	sizeof(struct vds_softc), vds_match, vds_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.31 2018/12/27 11:06:38 claudio Exp $	*/
+/*	$OpenBSD: zs.c,v 1.32 2021/10/24 17:05:04 mpi Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -146,11 +146,11 @@ static void zs_attach_fhc(struct device *, struct device *, void *);
 static void zs_attach(struct zsc_softc *, struct zsdevice *, int);
 static int  zs_print(void *, const char *name);
 
-struct cfattach zs_sbus_ca = {
+const struct cfattach zs_sbus_ca = {
 	sizeof(struct zsc_softc), zs_match_sbus, zs_attach_sbus
 };
 
-struct cfattach zs_fhc_ca = {
+const struct cfattach zs_fhc_ca = {
 	sizeof(struct zsc_softc), zs_match_fhc, zs_attach_fhc
 };
 

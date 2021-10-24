@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus_mainbus.c,v 1.11 2021/03/11 11:17:00 jsg Exp $	*/
+/*	$OpenBSD: ebus_mainbus.c,v 1.12 2021/10/24 17:05:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -56,7 +56,7 @@ extern struct cfdriver pyro_cd;
 int	ebus_mainbus_match(struct device *, void *, void *);
 void	ebus_mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach ebus_mainbus_ca = {
+const struct cfattach ebus_mainbus_ca = {
 	sizeof(struct ebus_softc), ebus_mainbus_match, ebus_mainbus_attach
 };
 

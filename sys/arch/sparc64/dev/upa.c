@@ -1,4 +1,4 @@
-/*	$OpenBSD: upa.c,v 1.10 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: upa.c,v 1.11 2021/10/24 17:05:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -63,7 +63,7 @@ struct upa_softc {
 int	upa_match(struct device *, void *, void *);
 void	upa_attach(struct device *, struct device *, void *);
 
-struct cfattach upa_ca = {
+const struct cfattach upa_ca = {
 	sizeof(struct upa_softc), upa_match, upa_attach
 };
 

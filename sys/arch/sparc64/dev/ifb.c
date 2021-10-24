@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifb.c,v 1.24 2021/03/11 11:17:00 jsg Exp $	*/
+/*	$OpenBSD: ifb.c,v 1.25 2021/10/24 17:05:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009 Miodrag Vallat.
@@ -300,7 +300,7 @@ struct wsdisplay_accessops ifb_accessops = {
 int	ifbmatch(struct device *, void *, void *);
 void	ifbattach(struct device *, struct device *, void *);
 
-struct cfattach ifb_ca = {
+const struct cfattach ifb_ca = {
 	sizeof (struct ifb_softc), ifbmatch, ifbattach
 };
 

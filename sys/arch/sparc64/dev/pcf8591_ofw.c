@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8591_ofw.c,v 1.5 2007/10/22 20:53:10 cnst Exp $ */
+/*	$OpenBSD: pcf8591_ofw.c,v 1.6 2021/10/24 17:05:03 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 Damien Miller <djm@openbsd.org>
@@ -45,7 +45,7 @@ int	pcfadc_match(struct device *, void *, void *);
 void	pcfadc_attach(struct device *, struct device *, void *);
 void	pcfadc_refresh(void *);
 
-struct cfattach pcfadc_ca = {
+const struct cfattach pcfadc_ca = {
 	sizeof(struct pcfadc_softc), pcfadc_match, pcfadc_attach
 };
 

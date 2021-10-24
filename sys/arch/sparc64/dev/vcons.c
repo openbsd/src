@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcons.c,v 1.18 2020/07/22 14:02:31 deraadt Exp $	*/
+/*	$OpenBSD: vcons.c,v 1.19 2021/10/24 17:05:04 mpi Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -47,7 +47,7 @@ struct vcons_softc {
 int	vcons_match(struct device *, void *, void *);
 void	vcons_attach(struct device *, struct device *, void *);
 
-struct cfattach vcons_ca = {
+const struct cfattach vcons_ca = {
 	sizeof(struct vcons_softc), vcons_match, vcons_attach
 };
 

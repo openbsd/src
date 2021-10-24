@@ -1,4 +1,4 @@
-/*	$OpenBSD: core.c,v 1.1 2008/07/11 14:23:53 kettenis Exp $	*/
+/*	$OpenBSD: core.c,v 1.2 2021/10/24 17:05:03 mpi Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -25,7 +25,7 @@
 int	core_match(struct device *, void *, void *);
 void	core_attach(struct device *, struct device *, void *);
 
-struct cfattach core_ca = {
+const struct cfattach core_ca = {
 	sizeof(struct device), core_match, core_attach
 };
 

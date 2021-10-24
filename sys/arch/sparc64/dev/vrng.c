@@ -1,4 +1,4 @@
-/*	$OpenBSD: vrng.c,v 1.6 2020/05/29 04:42:24 deraadt Exp $	*/
+/*	$OpenBSD: vrng.c,v 1.7 2021/10/24 17:05:04 mpi Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  *
@@ -53,7 +53,7 @@ struct vrng_softc {
 int	vrng_match(struct device *, void *, void *);
 void	vrng_attach(struct device *, struct device *, void *);
 
-struct cfattach vrng_ca = {
+const struct cfattach vrng_ca = {
 	sizeof(struct vrng_softc), vrng_match, vrng_attach
 };
 

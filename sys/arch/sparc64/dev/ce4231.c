@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.36 2018/12/27 11:06:38 claudio Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.37 2021/10/24 17:05:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -175,7 +175,7 @@ struct audio_hw_if ce4231_sa_hw_if = {
 	ce4231_trigger_input
 };
 
-struct cfattach audioce_ca = {
+const struct cfattach audioce_ca = {
 	sizeof (struct ce4231_softc), ce4231_match, ce4231_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.27 2019/10/12 15:55:31 cheloha Exp $	*/
+/*	$OpenBSD: lom.c,v 1.28 2021/10/24 17:05:03 mpi Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -181,7 +181,7 @@ int	lom_match(struct device *, void *, void *);
 void	lom_attach(struct device *, struct device *, void *);
 int	lom_activate(struct device *, int);
 
-struct cfattach lom_ca = {
+const struct cfattach lom_ca = {
 	sizeof(struct lom_softc), lom_match, lom_attach,
 	NULL, lom_activate
 };

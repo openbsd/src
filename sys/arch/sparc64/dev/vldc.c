@@ -1,4 +1,4 @@
-/*	$OpenBSD: vldc.c,v 1.1 2012/03/17 20:07:18 kettenis Exp $	*/
+/*	$OpenBSD: vldc.c,v 1.2 2021/10/24 17:05:04 mpi Exp $	*/
 /*
  * Copyright (c) 2009, 2012 Mark Kettenis
  *
@@ -42,7 +42,7 @@ struct vldc_softc {
 int	vldc_match(struct device *, void *, void *);
 void	vldc_attach(struct device *, struct device *, void *);
 
-struct cfattach vldc_ca = {
+const struct cfattach vldc_ca = {
 	sizeof(struct vldc_softc), vldc_match, vldc_attach
 };
 

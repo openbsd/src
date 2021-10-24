@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.29 2018/12/27 11:06:38 claudio Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.30 2021/10/24 17:05:04 mpi Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -201,7 +201,7 @@ struct zskbd_softc {
 static int	zskbd_match(struct device *, void *, void *);
 static void	zskbd_attach(struct device *, struct device *, void *);
 
-struct cfattach zskbd_ca = {
+const struct cfattach zskbd_ca = {
 	sizeof(struct zskbd_softc), zskbd_match, zskbd_attach
 };
 

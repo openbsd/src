@@ -1,4 +1,4 @@
-/*	$OpenBSD: auxio.c,v 1.8 2019/12/05 12:46:54 mpi Exp $	*/
+/*	$OpenBSD: auxio.c,v 1.9 2021/10/24 17:05:03 mpi Exp $	*/
 /*	$NetBSD: auxio.c,v 1.1 2000/04/15 03:08:13 mrg Exp $	*/
 
 /*
@@ -58,11 +58,11 @@ int	auxio_sbus_match(struct device *, void *, void *);
 void	auxio_sbus_attach(struct device *, struct device *, void *);
 void	auxio_attach_common(struct auxio_softc *);
 
-struct cfattach auxio_ebus_ca = {
+const struct cfattach auxio_ebus_ca = {
 	sizeof(struct auxio_softc), auxio_ebus_match, auxio_ebus_attach
 };
 
-struct cfattach auxio_sbus_ca = {
+const struct cfattach auxio_sbus_ca = {
 	sizeof(struct auxio_softc), auxio_sbus_match, auxio_sbus_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: led.c,v 1.2 2019/06/21 08:12:35 kn Exp $	*/
+/*	$OpenBSD: led.c,v 1.3 2021/10/24 17:05:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -68,7 +68,7 @@ struct led_softc {
 int	led_match(struct device *, void *, void *);
 void	led_attach(struct device *, struct device *, void *);
 
-struct cfattach led_ca = {
+const struct cfattach led_ca = {
 	sizeof(struct led_softc), led_match, led_attach
 };
 

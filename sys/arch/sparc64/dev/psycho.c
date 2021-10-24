@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.78 2021/02/23 04:44:31 cheloha Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.79 2021/10/24 17:05:04 mpi Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ void	psycho_attach(struct device *, struct device *, void *);
 int	psycho_print(void *aux, const char *p);
 
 
-struct cfattach psycho_ca = {
+const struct cfattach psycho_ca = {
         sizeof(struct psycho_softc), psycho_match, psycho_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.139 2021/03/11 11:17:00 jsg Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.140 2021/10/24 17:05:04 mpi Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.51 2001/07/24 19:32:11 eeh Exp $ */
 
 /*
@@ -1146,7 +1146,7 @@ extern bus_space_tag_t mainbus_space_tag;
 	}
 }
 
-struct cfattach mainbus_ca = {
+const struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 

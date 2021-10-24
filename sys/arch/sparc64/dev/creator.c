@@ -1,4 +1,4 @@
-/*	$OpenBSD: creator.c,v 1.53 2020/05/25 09:55:48 jsg Exp $	*/
+/*	$OpenBSD: creator.c,v 1.54 2021/10/24 17:05:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -77,7 +77,7 @@ struct cfdriver creator_cd = {
 	NULL, "creator", DV_DULL
 };
 
-struct cfattach creator_ca = {
+const struct cfattach creator_ca = {
 	sizeof(struct creator_softc), creator_match, creator_attach
 };
 

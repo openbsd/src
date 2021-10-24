@@ -1,4 +1,4 @@
-/*	$OpenBSD: prtc.c,v 1.5 2018/08/29 02:03:12 dlg Exp $	*/
+/*	$OpenBSD: prtc.c,v 1.6 2021/10/24 17:05:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -44,7 +44,7 @@ struct prtc_softc {
 int	prtc_match(struct device *, void *, void *);
 void	prtc_attach(struct device *, struct device *, void *);
 
-struct cfattach prtc_ca = {
+const struct cfattach prtc_ca = {
 	sizeof(struct prtc_softc), prtc_match, prtc_attach
 };
 

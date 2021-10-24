@@ -1,4 +1,4 @@
-/*	$OpenBSD: machfb.c,v 1.11 2020/05/25 09:55:48 jsg Exp $	*/
+/*	$OpenBSD: machfb.c,v 1.12 2021/10/24 17:05:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -201,7 +201,7 @@ struct wsdisplay_accessops machfb_accessops = {
 int	machfb_match(struct device *, void *, void *);
 void	machfb_attach(struct device *, struct device *, void *);
 
-struct cfattach machfb_ca = {
+const struct cfattach machfb_ca = {
 	sizeof(struct machfb_softc), machfb_match, machfb_attach
 };
 

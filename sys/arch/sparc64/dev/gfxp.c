@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfxp.c,v 1.14 2020/05/25 09:55:48 jsg Exp $	*/
+/*	$OpenBSD: gfxp.c,v 1.15 2021/10/24 17:05:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -134,7 +134,7 @@ struct wsdisplay_accessops gfxp_accessops = {
 int	gfxp_match(struct device *, void *, void *);
 void	gfxp_attach(struct device *, struct device *, void *);
 
-struct cfattach gfxp_ca = {
+const struct cfattach gfxp_ca = {
 	sizeof(struct gfxp_softc), gfxp_match, gfxp_attach
 };
 

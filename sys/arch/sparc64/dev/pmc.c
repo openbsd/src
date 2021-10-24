@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmc.c,v 1.4 2014/12/10 12:27:57 mikeb Exp $	*/
+/*	$OpenBSD: pmc.c,v 1.5 2021/10/24 17:05:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -53,7 +53,7 @@ void	pmc_attach(struct device *, struct device *, void *);
 int	pmc_activate(struct device *, int);
 int	pmc_wdog_cb(void *, int);
 
-struct cfattach pmc_ca = {
+const struct cfattach pmc_ca = {
 	sizeof(struct pmc_softc), pmc_match, pmc_attach, NULL, pmc_activate
 };
 

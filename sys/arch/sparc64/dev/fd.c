@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.51 2020/02/20 02:05:18 cheloha Exp $	*/
+/*	$OpenBSD: fd.c,v 1.52 2021/10/24 17:05:03 mpi Exp $	*/
 /*	$NetBSD: fd.c,v 1.112 2003/08/07 16:29:35 agc Exp $	*/
 
 /*-
@@ -218,11 +218,11 @@ void	fdcattach_ebus(struct device *, struct device *, void *);
 
 int	fdcattach(struct fdc_softc *, int);
 
-struct cfattach fdc_sbus_ca = {
+const struct cfattach fdc_sbus_ca = {
 	sizeof(struct fdc_softc), fdcmatch_sbus, fdcattach_sbus
 };
 
-struct cfattach fdc_ebus_ca = {
+const struct cfattach fdc_ebus_ca = {
 	sizeof(struct fdc_softc), fdcmatch_ebus, fdcattach_ebus
 };
 
@@ -276,7 +276,7 @@ int	fdmatch(struct device *, void *, void *);
 void	fdattach(struct device *, struct device *, void *);
 int	fdactivate(struct device *, int);
 
-struct cfattach fd_ca = {
+const struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fdmatch, fdattach,
 	NULL, fdactivate
 };

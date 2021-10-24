@@ -1,4 +1,4 @@
-/*	$OpenBSD: radeonfb.c,v 1.6 2020/05/25 09:55:48 jsg Exp $	*/
+/*	$OpenBSD: radeonfb.c,v 1.7 2021/10/24 17:05:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Mark Kettenis.
@@ -128,7 +128,7 @@ struct wsdisplay_accessops radeonfb_accessops = {
 int	radeonfb_match(struct device *, void *, void *);
 void	radeonfb_attach(struct device *, struct device *, void *);
 
-struct cfattach radeonfb_ca = {
+const struct cfattach radeonfb_ca = {
 	sizeof(struct radeonfb_softc), radeonfb_match, radeonfb_attach
 };
 

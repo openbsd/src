@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgiic.c,v 1.3 2015/05/07 00:00:52 jsg Exp $	*/
+/*	$OpenBSD: mgiic.c,v 1.4 2021/10/24 17:05:03 mpi Exp $	*/
 /*
  * Copyright (c) 2008 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -82,7 +82,7 @@ struct cfdriver mgiic_cd = {
         NULL, "mgiic", DV_DULL
 };
 
-struct cfattach mgiic_ca = {
+const struct cfattach mgiic_ca = {
         sizeof(struct mgiic_softc), mgiic_match, mgiic_attach
 };
 

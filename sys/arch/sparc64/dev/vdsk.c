@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.71 2021/03/11 11:17:00 jsg Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.72 2021/10/24 17:05:04 mpi Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -169,7 +169,7 @@ struct vdsk_softc {
 int	vdsk_match(struct device *, void *, void *);
 void	vdsk_attach(struct device *, struct device *, void *);
 
-struct cfattach vdsk_ca = {
+const struct cfattach vdsk_ca = {
 	sizeof(struct vdsk_softc), vdsk_match, vdsk_attach
 };
 

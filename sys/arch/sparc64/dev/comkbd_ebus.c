@@ -1,4 +1,4 @@
-/*	$OpenBSD: comkbd_ebus.c,v 1.23 2018/12/27 11:06:38 claudio Exp $	*/
+/*	$OpenBSD: comkbd_ebus.c,v 1.24 2021/10/24 17:05:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -103,7 +103,7 @@ void comkbd_putc(struct comkbd_softc *, u_int8_t);
 int comkbd_intr(void *);
 void comkbd_soft(void *);
 
-struct cfattach comkbd_ca = {
+const struct cfattach comkbd_ca = {
 	sizeof(struct comkbd_softc), comkbd_match, comkbd_attach
 };
 

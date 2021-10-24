@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcfiic_ebus.c,v 1.14 2021/03/11 11:17:00 jsg Exp $ */
+/*	$OpenBSD: pcfiic_ebus.c,v 1.15 2021/10/24 17:05:03 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -50,7 +50,7 @@ struct pcfiic_ebus_softc {
 	void			*esc_ih;
 };
 
-struct cfattach pcfiic_ebus_ca = {
+const struct cfattach pcfiic_ebus_ca = {
 	sizeof(struct pcfiic_ebus_softc), pcfiic_ebus_match, pcfiic_ebus_attach
 };
 

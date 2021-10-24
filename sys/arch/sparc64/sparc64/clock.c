@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.70 2021/03/11 11:17:00 jsg Exp $	*/
+/*	$OpenBSD: clock.c,v 1.71 2021/10/24 17:05:04 mpi Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -171,15 +171,15 @@ static int	clockmatch_fhc(struct device *, void *, void *);
 static void	clockattach_fhc(struct device *, struct device *, void *);
 static void	clockattach(int, bus_space_tag_t, bus_space_handle_t);
 
-struct cfattach clock_sbus_ca = {
+const struct cfattach clock_sbus_ca = {
 	sizeof(struct device), clockmatch_sbus, clockattach_sbus
 };
 
-struct cfattach clock_ebus_ca = {
+const struct cfattach clock_ebus_ca = {
 	sizeof(struct device), clockmatch_ebus, clockattach_ebus
 };
 
-struct cfattach clock_fhc_ca = {
+const struct cfattach clock_fhc_ca = {
 	sizeof(struct device), clockmatch_fhc, clockattach_fhc
 };
 
@@ -192,7 +192,7 @@ static void	timerattach(struct device *, struct device *, void *);
 
 struct timerreg_4u	timerreg_4u;	/* XXX - need more cleanup */
 
-struct cfattach timer_ca = {
+const struct cfattach timer_ca = {
 	sizeof(struct device), timermatch, timerattach
 };
 

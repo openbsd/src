@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_ebus.c,v 1.24 2021/01/19 21:52:59 dlg Exp $	*/
+/*	$OpenBSD: com_ebus.c,v 1.25 2021/10/24 17:05:03 mpi Exp $	*/
 /*	$NetBSD: com_ebus.c,v 1.6 2001/07/24 19:27:10 eeh Exp $	*/
 
 /*
@@ -53,7 +53,7 @@ int	com_ebus_match(struct device *, void *, void *);
 void	com_ebus_attach(struct device *, struct device *, void *);
 int	com_ebus_speed(struct ebus_attach_args *);
 
-struct cfattach com_ebus_ca = {
+const struct cfattach com_ebus_ca = {
 	sizeof(struct com_softc), com_ebus_match, com_ebus_attach
 };
 

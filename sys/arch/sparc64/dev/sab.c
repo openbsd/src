@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.38 2021/09/01 16:10:39 jan Exp $	*/
+/*	$OpenBSD: sab.c,v 1.39 2021/10/24 17:05:04 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -159,7 +159,7 @@ void sabtty_cnputc(struct sabtty_softc *, int);
 int sabtty_cngetc(struct sabtty_softc *);
 void sabtty_abort(struct sabtty_softc *);
 
-struct cfattach sab_ca = {
+const struct cfattach sab_ca = {
 	sizeof(struct sab_softc), sab_match, sab_attach
 };
 
@@ -167,7 +167,7 @@ struct cfdriver sab_cd = {
 	NULL, "sab", DV_DULL
 };
 
-struct cfattach sabtty_ca = {
+const struct cfattach sabtty_ca = {
 	sizeof(struct sabtty_softc), sabtty_match, sabtty_attach,
 	NULL, sabtty_activate
 };

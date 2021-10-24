@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcc.c,v 1.1 2009/05/10 12:24:04 kettenis Exp $	*/
+/*	$OpenBSD: vcc.c,v 1.2 2021/10/24 17:05:04 mpi Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -42,7 +42,7 @@ struct vcc_softc {
 int	vcc_match(struct device *, void *, void *);
 void	vcc_attach(struct device *, struct device *, void *);
 
-struct cfattach vcc_ca = {
+const struct cfattach vcc_ca = {
 	sizeof(struct vcc_softc), vcc_match, vcc_attach
 };
 

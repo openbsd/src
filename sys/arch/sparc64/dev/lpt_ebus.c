@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_ebus.c,v 1.10 2019/12/05 12:46:54 mpi Exp $	*/
+/*	$OpenBSD: lpt_ebus.c,v 1.11 2021/10/24 17:05:03 mpi Exp $	*/
 /*	$NetBSD: lpt_ebus.c,v 1.8 2002/03/01 11:51:00 martin Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ struct lpt_ebus_softc {
 int	lpt_ebus_match(struct device *, void *, void *);
 void	lpt_ebus_attach(struct device *, struct device *, void *);
 
-struct cfattach lpt_ebus_ca = {
+const struct cfattach lpt_ebus_ca = {
 	sizeof(struct lpt_ebus_softc), lpt_ebus_match, lpt_ebus_attach
 };
 

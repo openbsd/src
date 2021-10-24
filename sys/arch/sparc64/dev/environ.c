@@ -1,4 +1,4 @@
-/*	$OpenBSD: environ.c,v 1.1 2008/01/18 20:12:38 kettenis Exp $	*/
+/*	$OpenBSD: environ.c,v 1.2 2021/10/24 17:05:03 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -45,7 +45,7 @@ int	environ_match(struct device *, void *, void *);
 void	environ_attach(struct device *, struct device *, void *);
 void	environ_refresh(void *);
 
-struct cfattach environ_ca = {
+const struct cfattach environ_ca = {
 	sizeof(struct environ_softc), environ_match, environ_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tda.c,v 1.8 2016/03/07 13:21:51 naddy Exp $ */
+/*	$OpenBSD: tda.c,v 1.9 2021/10/24 17:05:04 mpi Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -66,7 +66,7 @@ void	tda_attach(struct device *, struct device *, void *);
 void	tda_setspeed(struct tda_softc *);
 void	tda_adjust(void *);
 
-struct cfattach tda_ca = {
+const struct cfattach tda_ca = {
 	sizeof(struct tda_softc), tda_match, tda_attach
 };
 
