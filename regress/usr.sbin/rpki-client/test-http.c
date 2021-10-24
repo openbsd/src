@@ -30,13 +30,13 @@ http_request(size_t id, const char *uri, const char *last_mod, int fd)
 {
 	struct ibuf     *b;
 
-	b = io_buf_new();
+	b = io_new_buffer();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, uri);
 	io_str_buffer(b, last_mod);
 	/* pass file as fd */
 	b->fd = fd;
-	io_buf_close(&httpq, b);
+	io_close_buffer(&httpq, b);
 }
 
 static const char *
