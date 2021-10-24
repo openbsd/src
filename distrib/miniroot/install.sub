@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1181 2021/10/23 14:49:06 kn Exp $
+#	$OpenBSD: install.sub,v 1.1182 2021/10/24 10:11:24 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1867,8 +1867,7 @@ install_http() {
 		case $_tls in
 		force)	$AI && exit 1 || return
 			;;
-		try)	ask_yn "Unable to connect using https. Use http instead?" ||
-				return
+		try)	echo "Unable to connect using HTTPS; using HTTP instead."
 			_http_proto=http
 			_url_base="http://$HTTP_SERVER/$HTTP_DIR"
 			unpriv -f $_sig ftp -vMo $_sig "$_url_base/SHA256.sig" \
