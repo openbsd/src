@@ -1,6 +1,6 @@
-.\" $OpenBSD: SSL_read.3,v 1.7 2020/05/26 19:45:58 schwarze Exp $
-.\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
-.\" partial merge up to: OpenSSL 18bad535 Apr 9 15:13:55 2019 +0100
+.\" $OpenBSD: SSL_read.3,v 1.8 2021/10/24 15:10:13 schwarze Exp $
+.\" full merge up to: OpenSSL 5a2443ae Nov 14 11:37:36 2016 +0000
+.\" partial merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org> and
 .\" Matt Caswell <matt@openssl.org>.
@@ -51,38 +51,59 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 26 2020 $
+.Dd $Mdocdate: October 24 2021 $
 .Dt SSL_READ 3
 .Os
 .Sh NAME
+.Nm SSL_read_ex ,
 .Nm SSL_read ,
+.Nm SSL_peek_ex ,
 .Nm SSL_peek
 .Nd read bytes from a TLS connection
 .Sh SYNOPSIS
 .In openssl/ssl.h
 .Ft int
+.Fn SSL_read_ex "SSL *ssl" "void *buf" "size_t num" "size_t *readbytes"
+.Ft int
 .Fn SSL_read "SSL *ssl" "void *buf" "int num"
+.Ft int
+.Fn SSL_peek_ex "SSL *ssl" "void *buf" "size_t num" "size_t *readbytes"
 .Ft int
 .Fn SSL_peek "SSL *ssl" "void *buf" "int num"
 .Sh DESCRIPTION
+.Fn SSL_read_ex
+and
 .Fn SSL_read
-tries to read
+try to read
 .Fa num
 bytes from the specified
 .Fa ssl
 into the buffer
 .Fa buf .
+On success
+.Fn SSL_read_ex
+stores the number of bytes actually read in
+.Pf * Fa readbytes .
 .Pp
+.Fn SSL_peek_ex
+and
 .Fn SSL_peek
-is identical to
-.Fn SSL_read
+are identical to
+.Fn SSL_read_ex
+and
+.Fn SSL_read ,
+respectively,
 except that no bytes are removed from the underlying BIO during
 the read, such that a subsequent call to
+.Fn SSL_read_ex
+or
 .Fn SSL_read
 will yield at least the same bytes once again.
 .Pp
 In the following,
-.Fn SSL_read
+.Fn SSL_read_ex ,
+.Fn SSL_read ,
+.Fn SSL_peek_ex ,
 and
 .Fn SSL_peek
 are called
@@ -107,11 +128,11 @@ or
 .Xr SSL_set_accept_state 3
 before the first call to a read function.
 .Pp
-The read functions works based on the TLS records.
+The read functions work based on the TLS records.
 The data are received in records (with a maximum record size of 16kB).
 Only when a record has been completely received, it can be processed
 (decrypted and checked for integrity).
-Therefore data that was not retrieved at the last read call can
+Therefore, data that was not retrieved at the last read call can
 still be buffered inside the TLS layer and will be retrieved on the
 next read call.
 If
@@ -182,7 +203,24 @@ or
 .Dv SSL_ERROR_WANT_WRITE ,
 it must be repeated with the same arguments.
 .Sh RETURN VALUES
-The following return values can occur:
+.Fn SSL_read_ex
+and
+.Fn SSL_peek_ex
+return 1 for success or 0 for failure.
+Success means that one or more application data bytes
+have been read from the SSL connection.
+Failure means that no bytes could be read from the SSL connection.
+Failures can be retryable (e.g. we are waiting for more bytes to be
+delivered by the network) or non-retryable (e.g. a fatal network error).
+In the event of a failure, call
+.Xr SSL_get_error 3
+to find out the reason which indicates whether the call is retryable or not.
+.Pp
+For
+.Fn SSL_read
+and
+.Fn SSL_peek ,
+the following return values can occur:
 .Bl -tag -width Ds
 .It >0
 The read operation was successful.
@@ -232,3 +270,9 @@ appeared in SSLeay 0.4 or earlier.
 first appeared in SSLeay 0.6.6.
 Both functions have been available since
 .Ox 2.4 .
+.Pp
+.Fn SSL_read_ex
+and
+.Fn SSL_peek_ex
+first appeared in OpenSSL 1.1.1 and have been available since
+.Ox 7.1 .
