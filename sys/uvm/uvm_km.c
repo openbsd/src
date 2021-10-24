@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.145 2021/06/15 16:38:09 mpi Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.146 2021/10/24 15:23:52 mpi Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -239,8 +239,10 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *min, vaddr_t *max, vsize_t size,
  *    the pages right away.    (this gets called from uvm_unmap_...).
  */
 void
-uvm_km_pgremove(struct uvm_object *uobj, vaddr_t start, vaddr_t end)
+uvm_km_pgremove(struct uvm_object *uobj, vaddr_t startva, vaddr_t endva)
 {
+	const voff_t start = startva - vm_map_min(kernel_map);
+	const voff_t end = endva - vm_map_min(kernel_map);
 	struct vm_page *pp;
 	voff_t curoff;
 	int slot;
@@ -248,6 +250,7 @@ uvm_km_pgremove(struct uvm_object *uobj, vaddr_t start, vaddr_t end)
 
 	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
 
+	pmap_remove(pmap_kernel(), startva, endva);
 	for (curoff = start ; curoff < end ; curoff += PAGE_SIZE) {
 		pp = uvm_pagelookup(uobj, curoff);
 		if (pp && pp->pg_flags & PG_BUSY) {
@@ -301,6 +304,7 @@ uvm_km_pgremove_intrsafe(vaddr_t start, vaddr_t end)
 			panic("uvm_km_pgremove_intrsafe: no page");
 		uvm_pagefree(pg);
 	}
+	pmap_kremove(start, end - start);
 }
 
 /*
