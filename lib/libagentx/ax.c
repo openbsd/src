@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.c,v 1.7 2021/01/02 01:06:31 rob Exp $ */
+/*	$OpenBSD: ax.c,v 1.8 2021/10/24 17:43:38 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -764,6 +764,8 @@ ax_oidrange2string(struct ax_oid *oid, uint8_t range_subid,
 
 	rest = sizeof(buf);
 	p = buf;
+	if (oid->aoi_idlen == 0)
+		(void)strlcpy(buf, "null", sizeof(buf));
 	for (i = 0; i < oid->aoi_idlen; i++) {
 		if (range_subid != 0 && range_subid - 1 == (uint8_t)i)
 			ret = snprintf(p, rest, ".[%u-%u]", oid->aoi_id[i],
