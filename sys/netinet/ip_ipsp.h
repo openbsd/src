@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.217 2021/10/24 22:59:47 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.218 2021/10/24 23:33:37 tobhe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -583,8 +583,6 @@ int	esp_attach(void);
 int	esp_init(struct tdb *, const struct xformsw *, struct ipsecinit *);
 int	esp_zeroize(struct tdb *);
 int	esp_input(struct mbuf **, struct tdb *, int, int);
-int	esp_input_cb(struct tdb *, uint8_t *, int, int, uint64_t,
-    struct mbuf **, int);
 int	esp_output(struct mbuf *, struct tdb *, int, int);
 int	esp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
