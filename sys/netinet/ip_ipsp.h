@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.215 2021/10/24 18:15:58 tobhe Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.216 2021/10/24 22:34:19 tobhe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -571,10 +571,7 @@ int	ah_attach(void);
 int	ah_init(struct tdb *, const struct xformsw *, struct ipsecinit *);
 int	ah_zeroize(struct tdb *);
 int	ah_input(struct mbuf **, struct tdb *, int, int);
-int	ah_input_cb(struct tdb *, struct tdb_crypto *, struct mbuf **, int);
 int	ah_output(struct mbuf *, struct tdb *, int, int);
-int	ah_output_cb(struct tdb *, struct tdb_crypto *, struct mbuf *, int,
-	    int);
 int	ah_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 int	ah4_input(struct mbuf **, int *, int, int);
