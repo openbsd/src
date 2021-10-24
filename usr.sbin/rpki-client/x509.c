@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.25 2021/10/12 15:16:45 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.26 2021/10/24 13:45:19 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -186,32 +186,32 @@ x509_get_purpose(X509 *x, const char *fn)
 char *
 x509_get_pubkey(X509 *x, const char *fn)
 {
-	EVP_PKEY	*evp;
-	EC_KEY		*ec;
+	EVP_PKEY	*pkey;
+	EC_KEY		*eckey;
 	int		 nid;
 	const char	*cname;
 	uint8_t		*pubkey = NULL;
 	char		*res = NULL;
 	int		 len;
 
-	evp = X509_get0_pubkey(x);
-	if (evp == NULL) {
+	pkey = X509_get0_pubkey(x);
+	if (pkey == NULL) {
 		warnx("%s: X509_get_pubkey failed in %s", fn, __func__);
 		goto out;
 	}
-	if (EVP_PKEY_base_id(evp) != EVP_PKEY_EC) {
+	if (EVP_PKEY_base_id(pkey) != EVP_PKEY_EC) {
 		warnx("%s: Expected EVP_PKEY_EC, got %d", fn,
-		    EVP_PKEY_base_id(evp));
+		    EVP_PKEY_base_id(pkey));
 		goto out;
 	}
 
-	ec = EVP_PKEY_get0_EC_KEY(evp);
-	if (ec == NULL) {
+	eckey = EVP_PKEY_get0_EC_KEY(pkey);
+	if (eckey == NULL) {
 		warnx("%s: Incorrect key type", fn);
 		goto out;
 	}
 
-	nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+	nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
 	if (nid != NID_X9_62_prime256v1) {
 		if ((cname = EC_curve_nid2nist(nid)) == NULL)
 			cname = OBJ_nid2sn(nid);
@@ -219,12 +219,12 @@ x509_get_pubkey(X509 *x, const char *fn)
 		goto out;
 	}
 
-	if (!EC_KEY_check_key(ec)) {
+	if (!EC_KEY_check_key(eckey)) {
 		warnx("%s: EC_KEY_check_key failed in %s", fn, __func__);
 		goto out;
 	}
 
-	len = i2d_PUBKEY(evp, &pubkey);
+	len = i2d_PUBKEY(pkey, &pubkey);
 	if (len <= 0) {
 		warnx("%s: i2d_PUBKEY failed in %s", fn, __func__);
 		goto out;
