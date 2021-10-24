@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.49 2019/06/28 13:35:00 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.50 2021/10/24 21:24:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -355,7 +355,7 @@ opencal(void)
 		 */
 		if (doall) {
 			int fderr;
-			fderr = open(_PATH_DEVNULL, O_WRONLY, 0);
+			fderr = open(_PATH_DEVNULL, O_WRONLY);
 			if (fderr == -1)
 				_exit(0);
 			(void)dup2(fderr, STDERR_FILENO);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_source.c,v 1.10 2015/12/07 20:39:19 mmcc Exp $	*/
+/*	$OpenBSD: ex_source.c,v 1.11 2021/10/24 21:24:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -93,7 +93,7 @@ ex_source(SCR *sp, EXCMD *cmdp)
 	int fd;
 
 	name = cmdp->argv[0]->bp;
-	if ((fd = open(name, O_RDONLY, 0)) >= 0)
+	if ((fd = open(name, O_RDONLY)) >= 0)
 		return (ex_sourcefd(sp, cmdp, fd));
 
 	msgq_str(sp, M_SYSERR, name, "%s");

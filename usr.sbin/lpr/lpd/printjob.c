@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.61 2019/07/03 03:24:03 deraadt Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.62 2021/10/24 21:24:18 deraadt Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -138,7 +138,7 @@ printjob(void)
 	init();					/* set up capabilities */
 	(void)write(STDOUT_FILENO, "", 1);	/* ack that daemon is started */
 	PRIV_START;
-	fd = open(LF, O_WRONLY|O_APPEND, 0664);	/* set up log file */
+	fd = open(LF, O_WRONLY|O_APPEND);	/* set up log file */
 	PRIV_END;
 	if (fd < 0) {
 		syslog(LOG_ERR, "%s: %m", LF);

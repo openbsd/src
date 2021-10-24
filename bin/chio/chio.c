@@ -1,4 +1,4 @@
-/*	$OpenBSD: chio.c,v 1.28 2021/08/31 05:29:55 robert Exp $	*/
+/*	$OpenBSD: chio.c,v 1.29 2021/10/24 21:24:21 deraadt Exp $	*/
 /*	$NetBSD: chio.c,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 			changer_name = _PATH_CH;
 
 	/* Open the changer device. */
-	if ((changer_fd = open(changer_name, O_RDWR, 0600)) == -1)
+	if ((changer_fd = open(changer_name, O_RDWR)) == -1)
 		err(1, "%s: open", changer_name);
 
 	/* Find the specified command. */

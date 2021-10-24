@@ -1,4 +1,4 @@
-/*	$OpenBSD: logwtmp.c,v 1.13 2021/05/23 17:01:21 jan Exp $	*/
+/*	$OpenBSD: logwtmp.c,v 1.14 2021/10/24 21:24:20 deraadt Exp $	*/
 /*	$NetBSD: logwtmp.c,v 1.4 1995/04/11 02:44:58 cgd Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ ftpdlogwtmp(const char *line, const char *name, const char *host)
 	struct stat buf;
 	struct utmp ut;
 
-	if (fd < 0 && (fd = open(_PATH_WTMP, O_WRONLY|O_APPEND, 0)) == -1)
+	if (fd < 0 && (fd = open(_PATH_WTMP, O_WRONLY|O_APPEND)) == -1)
 		return;
 	if (fstat(fd, &buf) == 0) {
 		(void)strncpy(ut.ut_line, line, sizeof(ut.ut_line));

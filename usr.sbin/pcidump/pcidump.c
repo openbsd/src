@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcidump.c,v 1.66 2021/07/16 09:14:17 jsg Exp $	*/
+/*	$OpenBSD: pcidump.c,v 1.67 2021/10/24 21:24:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 David Gwynne <loki@animata.net>
@@ -223,13 +223,13 @@ main(int argc, char *argv[])
 		dumpall = 0;
 
 	if (dumpall == 0) {
-		pcifd = open(pcidev, O_RDONLY, 0777);
+		pcifd = open(pcidev, O_RDONLY);
 		if (pcifd == -1)
 			err(1, "%s", pcidev);
 	} else {
 		for (;;) {
 			snprintf(pcidev, 16, "/dev/pci%d", domid++);
-			pcifd = open(pcidev, O_RDONLY, 0777);
+			pcifd = open(pcidev, O_RDONLY);
 			if (pcifd == -1) {
 				if (errno == ENXIO || errno == ENOENT) {
 					return 0;
@@ -1124,7 +1124,7 @@ dump_vga_bios(void)
 	void *bios;
 	int fd;
 
-	fd = open(_PATH_MEM, O_RDONLY, 0777);
+	fd = open(_PATH_MEM, O_RDONLY);
 	if (fd == -1)
 		err(1, "%s", _PATH_MEM);
 

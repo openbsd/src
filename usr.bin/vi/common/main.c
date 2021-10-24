@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.42 2021/01/26 18:19:43 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.43 2021/10/24 21:24:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -578,7 +578,7 @@ attach(GS *gp)
 	int fd;
 	char ch;
 
-	if ((fd = open(_PATH_TTY, O_RDONLY, 0)) < 0) {
+	if ((fd = open(_PATH_TTY, O_RDONLY)) < 0) {
 		warn("%s", _PATH_TTY);
 		return;
 	}

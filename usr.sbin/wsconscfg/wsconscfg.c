@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconscfg.c,v 1.16 2017/10/31 17:59:30 anton Exp $ */
+/* $OpenBSD: wsconscfg.c,v 1.17 2021/10/24 21:24:19 deraadt Exp $ */
 /* $NetBSD: wsconscfg.c,v 1.4 1999/07/29 18:24:10 augustss Exp $ */
 
 /*
@@ -114,7 +114,7 @@ main(int argc, char *argv[])
 	if (argc > 0 && sscanf(argv[0], "%d", &idx) != 1)
 		errx(1, "invalid index");
 
-	wsfd = open(wsdev, O_RDWR, 0);
+	wsfd = open(wsdev, O_RDWR);
 	if (wsfd < 0)
 		err(2, "%s", wsdev);
 

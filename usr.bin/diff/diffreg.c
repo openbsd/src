@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.94 2021/09/01 18:16:52 halex Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.95 2021/10/24 21:24:16 deraadt Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -456,7 +456,7 @@ opentemp(const char *file)
 
 	if (strcmp(file, "-") == 0)
 		ifd = STDIN_FILENO;
-	else if ((ifd = open(file, O_RDONLY, 0644)) == -1)
+	else if ((ifd = open(file, O_RDONLY)) == -1)
 		return (NULL);
 
 	(void)strlcpy(tempfile, _PATH_TMP "/diff.XXXXXXXX", sizeof(tempfile));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 2017/12/15 14:45:51 bluhm Exp $ */
+/*	$OpenBSD: main.c,v 1.11 2021/10/24 21:24:20 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Sebastien Marie <semarie@openbsd.org>
  *
@@ -74,7 +74,7 @@ test_rpath()
 	int fd;
 	char data[512];
 
-	if ((fd = open("/dev/zero", O_RDONLY, 0)) == -1)
+	if ((fd = open("/dev/zero", O_RDONLY)) == -1)
 		_exit(errno);
 
 	if (read(fd, data, sizeof(data)) == -1)
@@ -89,7 +89,7 @@ test_wpath()
 	int fd;
 	char data[] = { 0x01, 0x02, 0x03, 0x04, 0x05 };
 
-	if ((fd = open("/dev/null", O_WRONLY, 0)) == -1)
+	if ((fd = open("/dev/null", O_WRONLY)) == -1)
 		_exit(errno);
 
 	if (write(fd, data, sizeof(data)) == -1)

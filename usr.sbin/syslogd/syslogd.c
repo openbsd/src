@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.270 2021/09/19 10:17:36 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.271 2021/10/24 21:24:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -502,7 +502,7 @@ main(int argc, char *argv[])
 	consfile.f_type = F_CONSOLE;
 	(void)strlcpy(consfile.f_un.f_fname, ctty,
 	    sizeof(consfile.f_un.f_fname));
-	consfile.f_file = open(consfile.f_un.f_fname, O_WRONLY|O_NONBLOCK, 0);
+	consfile.f_file = open(consfile.f_un.f_fname, O_WRONLY|O_NONBLOCK);
 	if (consfile.f_file == -1)
 		log_warn("open %s", consfile.f_un.f_fname);
 
@@ -585,7 +585,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if ((fd_klog = open(_PATH_KLOG, O_RDONLY, 0)) == -1) {
+	if ((fd_klog = open(_PATH_KLOG, O_RDONLY)) == -1) {
 		log_warn("open %s", _PATH_KLOG);
 	} else if (fd_sendsys != -1) {
 		/* Use /dev/klog to register sendsyslog(2) receiver. */

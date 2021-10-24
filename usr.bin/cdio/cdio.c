@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.81 2021/08/13 10:56:54 schwarze Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.82 2021/10/24 21:24:16 deraadt Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -645,7 +645,7 @@ tao(int argc, char **argv)
 		if (argv[0] == NULL)
 			usage();
 		tr->file = argv[0];
-		tr->fd = open(tr->file, O_RDONLY, 0640);
+		tr->fd = open(tr->file, O_RDONLY);
 		if (tr->fd == -1)
 			err(1, "cannot open file %s", tr->file);
 		if (fstat(tr->fd, &sb) == -1)

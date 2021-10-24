@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.28 2019/06/28 13:32:49 deraadt Exp $	*/
+/*	$OpenBSD: compare.c,v 1.29 2021/10/24 21:24:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -220,7 +220,7 @@ typeerr:		LABEL;
 		}
 	}
 	if (s->flags & F_CKSUM) {
-		if ((fd = open(p->fts_accpath, MTREE_O_FLAGS, 0)) == -1) {
+		if ((fd = open(p->fts_accpath, MTREE_O_FLAGS)) == -1) {
 			LABEL;
 			(void)printf("%scksum: %s: %s\n",
 			    tab, p->fts_accpath, strerror(errno));

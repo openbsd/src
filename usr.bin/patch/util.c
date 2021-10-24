@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.45 2019/12/02 22:17:32 jca Exp $	*/
+/*	$OpenBSD: util.c,v 1.46 2021/10/24 21:24:17 deraadt Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -157,7 +157,7 @@ copy_file(const char *from, const char *to)
 	tofd = open(to, O_CREAT|O_TRUNC|O_WRONLY, 0666);
 	if (tofd == -1)
 		return -1;
-	fromfd = open(from, O_RDONLY, 0);
+	fromfd = open(from, O_RDONLY);
 	if (fromfd == -1)
 		pfatal("internal error, can't reopen %s", from);
 	while ((i = read(fromfd, buf, bufsz)) > 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.72 2019/12/04 09:51:07 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.73 2021/10/24 21:24:16 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -800,7 +800,7 @@ motd(void)
 
 	motd = login_getcapstr(lc, "welcome", _PATH_MOTDFILE, _PATH_MOTDFILE);
 
-	if ((fd = open(motd, O_RDONLY, 0)) == -1)
+	if ((fd = open(motd, O_RDONLY)) == -1)
 		return;
 
 	memset(&sa, 0, sizeof(sa));
@@ -843,7 +843,7 @@ dolastlog(int quiet)
 	off_t pos;
 	int fd;
 
-	if ((fd = open(_PATH_LASTLOG, O_RDWR, 0)) >= 0) {
+	if ((fd = open(_PATH_LASTLOG, O_RDWR)) >= 0) {
 		pos = (off_t)pwd->pw_uid * sizeof(ll);
 		if (!quiet) {
 			if (pread(fd, &ll, sizeof(ll), pos) == sizeof(ll) &&

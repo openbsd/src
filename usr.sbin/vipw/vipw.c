@@ -1,4 +1,4 @@
-/*	$OpenBSD: vipw.c,v 1.25 2021/07/12 15:09:22 beck Exp $	 */
+/*	$OpenBSD: vipw.c,v 1.26 2021/10/24 21:24:19 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 	tfd = pw_lock(0);
 	if (tfd == -1)
 		errx(1, "the passwd file is busy or you cannot lock.");
-	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
+	pfd = open(_PATH_MASTERPASSWD, O_RDONLY);
 	if (pfd == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 	copyfile(pfd, tfd, &begin);

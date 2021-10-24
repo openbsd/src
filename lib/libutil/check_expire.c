@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_expire.c,v 1.13 2019/06/28 13:32:43 deraadt Exp $	*/
+/*	$OpenBSD: check_expire.c,v 1.14 2021/10/24 21:24:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -173,7 +173,7 @@ pwd_update(const struct passwd *pwd, const struct passwd *opwd)
 			return("can't open passwd temp file");
 	}
 
-	pfd = open(_PATH_MASTERPASSWD, O_RDONLY|O_CLOEXEC, 0);
+	pfd = open(_PATH_MASTERPASSWD, O_RDONLY|O_CLOEXEC);
 	if (pfd == -1) {
 		pw_abort();
 		return(strerror(errno));

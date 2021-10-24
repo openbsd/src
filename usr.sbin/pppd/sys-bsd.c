@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.31 2021/09/03 08:18:31 deraadt Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.32 2021/10/24 21:24:19 deraadt Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -1454,7 +1454,7 @@ lock(dev)
 
     while ((fd = open(lock_file, O_EXCL | O_CREAT | O_RDWR, 0644)) == -1) {
 	if (errno == EEXIST
-	    && (fd = open(lock_file, O_RDONLY, 0)) >= 0) {
+	    && (fd = open(lock_file, O_RDONLY)) >= 0) {
 	    /* Read the lock file to find out who has the device locked */
 	    n = read(fd, hdb_lock_buffer, 11);
 	    if (n <= 0) {

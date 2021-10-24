@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbtest.c,v 1.17 2020/02/14 19:17:33 schwarze Exp $	*/
+/*	$OpenBSD: dbtest.c,v 1.18 2021/10/24 21:24:20 deraadt Exp $	*/
 /*	$NetBSD: dbtest.c,v 1.8 1996/05/03 21:57:48 cgd Exp $	*/
 
 /*-
@@ -680,7 +680,7 @@ rfile(name, lenp)
 	for (; isspace((unsigned char)*name); ++name);
 	if ((np = strchr(name, '\n')) != NULL)
 		*np = '\0';
-	if ((fd = open(name, O_RDONLY, 0)) < 0 ||
+	if ((fd = open(name, O_RDONLY)) < 0 ||
 	    fstat(fd, &sb))
 		dberr("%s: %s\n", name, strerror(errno));
 	if (sb.st_size > (off_t)INT_MAX)

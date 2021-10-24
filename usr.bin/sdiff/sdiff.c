@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdiff.c,v 1.38 2021/07/12 15:09:20 beck Exp $ */
+/*	$OpenBSD: sdiff.c,v 1.39 2021/10/24 21:24:17 deraadt Exp $ */
 
 /*
  * Written by Raymond Lai <ray@cyth.net>.
@@ -102,7 +102,7 @@ mktmpcpy(const char *source_file)
 	char *target_file;
 
 	/* Open input and output. */
-	ifd = open(source_file, O_RDONLY, 0);
+	ifd = open(source_file, O_RDONLY);
 	/* File was opened successfully. */
 	if (ifd != -1) {
 		if (fstat(ifd, &sb) == -1)

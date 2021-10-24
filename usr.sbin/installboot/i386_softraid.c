@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_softraid.c,v 1.17 2020/06/27 15:35:29 deraadt Exp $	*/
+/*	$OpenBSD: i386_softraid.c,v 1.18 2021/10/24 21:24:18 deraadt Exp $	*/
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2010 Otto Moerbeek <otto@drijf.net>
@@ -140,7 +140,7 @@ sr_install_bootldr(int devfd, char *dev)
 	if (p == NULL)
 		err(1, NULL);
 
-	fd = open(stage2, O_RDONLY, 0);
+	fd = open(stage2, O_RDONLY);
 	if (fd == -1)
 		err(1, NULL);
 

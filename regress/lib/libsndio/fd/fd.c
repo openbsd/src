@@ -306,7 +306,7 @@ main(int argc, char **argv)
 		events |= POLLIN;
 	}
 	if (playpath) {
-		playfd = open(playpath, O_RDONLY, 0);
+		playfd = open(playpath, O_RDONLY);
 		if (playfd < 0) {
 			perror(playpath);
 			exit(1);

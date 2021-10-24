@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.32 2021/07/12 15:09:21 beck Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.33 2021/10/24 21:24:18 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -133,20 +133,20 @@ main(int argc, char *argv[])
 	if (argc > 0) {
 		nlistpath = argv[0];
 		nlistname = basename(nlistpath);
-		if ((fd = open(nlistpath, O_RDONLY, 0)) == -1)
+		if ((fd = open(nlistpath, O_RDONLY)) == -1)
 			err(1, "can't open %s", nlistpath);
 		rval = kvm_mkdb(fd, dbdir, nlistpath, nlistname, kvm_gid,
 		    verbose);
 	} else {
 		nlistname = basename(_PATH_UNIX);
-		if ((fd = open((nlistpath = _PATH_KSYMS), O_RDONLY, 0)) == -1 ||
+		if ((fd = open((nlistpath = _PATH_KSYMS), O_RDONLY)) == -1 ||
 		    (rval = kvm_mkdb(fd, dbdir, nlistpath, nlistname, kvm_gid,
 		    verbose)) != 0) {
 			if (fd == -1) 
 				warnx("can't open %s", _PATH_KSYMS);
 			else
 				warnx("will try again using %s instead", _PATH_UNIX);
-			if ((fd = open((nlistpath = _PATH_UNIX), O_RDONLY, 0)) == -1)
+			if ((fd = open((nlistpath = _PATH_UNIX), O_RDONLY)) == -1)
 				err(1, "can't open %s", nlistpath);
 			rval = kvm_mkdb(fd, dbdir, nlistpath, nlistname,
 			    kvm_gid, verbose);

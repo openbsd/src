@@ -1,4 +1,4 @@
-/*	$OpenBSD: chpass.c,v 1.47 2021/07/12 15:09:19 beck Exp $	*/
+/*	$OpenBSD: chpass.c,v 1.48 2021/10/24 21:24:16 deraadt Exp $	*/
 /*	$NetBSD: chpass.c,v 1.8 1996/05/15 21:50:43 jtc Exp $	*/
 
 /*-
@@ -206,7 +206,7 @@ main(int argc, char *argv[])
 	}
 	if (i >= 4)
 		fputc('\n', stderr);
-	pfd = open(_PATH_MASTERPASSWD, O_RDONLY|O_CLOEXEC, 0);
+	pfd = open(_PATH_MASTERPASSWD, O_RDONLY|O_CLOEXEC);
 	if (pfd == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 

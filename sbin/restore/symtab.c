@@ -1,4 +1,4 @@
-/*	$OpenBSD: symtab.c,v 1.23 2019/06/28 13:32:46 deraadt Exp $	*/
+/*	$OpenBSD: symtab.c,v 1.24 2021/10/24 21:24:22 deraadt Exp $	*/
 /*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
 
 /*
@@ -536,7 +536,7 @@ initsymtable(char *filename)
 		ep->e_flags |= NEW;
 		return;
 	}
-	if ((fd = open(filename, O_RDONLY, 0)) == -1) {
+	if ((fd = open(filename, O_RDONLY)) == -1) {
 		warn("open");
 		panic("cannot open symbol table file %s\n", filename);
 	}

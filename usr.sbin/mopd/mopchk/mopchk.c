@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopchk.c,v 1.18 2015/02/09 23:00:14 deraadt Exp $	*/
+/*	$OpenBSD: mopchk.c,v 1.19 2021/10/24 21:24:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -117,7 +117,7 @@ main(argc, argv)
 		i++;
 		filename = argv[optind++];
 		printf("Checking: %s\n",filename);
-		dl.ldfd = open(filename, O_RDONLY, 0);
+		dl.ldfd = open(filename, O_RDONLY);
 		if (dl.ldfd == -1) {
 			printf("Unknown file.\n");
 		} else {

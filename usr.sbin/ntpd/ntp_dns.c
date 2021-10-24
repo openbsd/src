@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.26 2020/04/12 14:20:56 otto Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.27 2021/10/24 21:24:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -74,7 +74,7 @@ ntp_dns(struct ntpd_conf *nconf, struct passwd *pw)
 		fatal("setsid");
 	log_procinit("dns");
 
-	if ((nullfd = open("/dev/null", O_RDWR, 0)) == -1)
+	if ((nullfd = open("/dev/null", O_RDWR)) == -1)
 		fatal(NULL);
 
 	if (!nconf->debug) {

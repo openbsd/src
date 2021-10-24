@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.8 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: cp.c,v 1.9 2021/10/24 21:24:21 deraadt Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -386,7 +386,7 @@ copy(char *argv[], enum op type, int fts_options)
 }
 
 
-/*	$OpenBSD: cp.c,v 1.8 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: cp.c,v 1.9 2021/10/24 21:24:21 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -455,7 +455,7 @@ copy_file(FTSENT *entp, int dne)
 			err(1, "calloc");
 	}
 
-	if ((from_fd = open(entp->fts_path, O_RDONLY, 0)) == -1) {
+	if ((from_fd = open(entp->fts_path, O_RDONLY)) == -1) {
 		warn("%s", entp->fts_path);
 		return (1);
 	}
@@ -488,7 +488,7 @@ copy_file(FTSENT *entp, int dne)
 				return (0);
 			}
 		}
-		to_fd = open(to.p_path, O_WRONLY | O_TRUNC, 0);
+		to_fd = open(to.p_path, O_WRONLY | O_TRUNC);
 	} else
 		to_fd = open(to.p_path, O_WRONLY | O_TRUNC | O_CREAT,
 		    fs->st_mode & ~(S_ISTXT | S_ISUID | S_ISGID));

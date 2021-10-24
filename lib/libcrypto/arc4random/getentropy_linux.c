@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_linux.c,v 1.47 2020/05/17 14:44:20 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_linux.c,v 1.48 2021/10/24 21:24:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2014 Theo de Raadt <deraadt@openbsd.org>
@@ -212,7 +212,7 @@ start:
 #ifdef O_CLOEXEC
 	flags |= O_CLOEXEC;
 #endif
-	fd = open("/dev/urandom", flags, 0);
+	fd = open("/dev/urandom", flags);
 	if (fd == -1) {
 		if (errno == EINTR)
 			goto start;

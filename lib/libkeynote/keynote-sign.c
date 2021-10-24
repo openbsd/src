@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sign.c,v 1.19 2019/06/28 13:32:42 deraadt Exp $ */
+/* $OpenBSD: keynote-sign.c,v 1.20 2021/10/24 21:24:20 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -103,7 +103,7 @@ keynote_sign(int argc, char *argv[])
 	algname = argv[1 + flg];
 
     /* Read assertion */
-    fd = open(argv[2 + flg], O_RDONLY, 0);
+    fd = open(argv[2 + flg], O_RDONLY);
     if (fd == -1)
     {
 	perror(argv[2 + flg]);
@@ -139,7 +139,7 @@ keynote_sign(int argc, char *argv[])
     close(fd);
 
     /* Read private key file */
-    fd = open(argv[3 + flg], O_RDONLY, 0);
+    fd = open(argv[3 + flg], O_RDONLY);
     if (fd == -1)
     {
 	perror(argv[3 + flg]);

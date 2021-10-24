@@ -97,7 +97,7 @@ main(int argc, char **argv)
 		if (strcmp(ifile, "-") == 0)
 			ifd = STDIN_FILENO;
 		else {
-			ifd = open(ifile, O_RDONLY, 0);
+			ifd = open(ifile, O_RDONLY);
 			if (ifd == -1) {
 				perror(ifile);
 				return 1;

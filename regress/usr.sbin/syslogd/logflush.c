@@ -1,4 +1,4 @@
-/*	$OpenBSD: logflush.c,v 1.1 2021/03/09 15:16:28 bluhm Exp $	*/
+/*	$OpenBSD: logflush.c,v 1.2 2021/10/24 21:24:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
@@ -52,7 +52,7 @@ main(int argc, char *argv[])
 	if (setsockopt(pair[1], SOL_SOCKET, SO_SNDBUF, &val, sizeof(val)) == -1)
 		err(1, "setsockopt SO_SNDBUF");
 
-	if ((klog = open(_PATH_KLOG, O_RDONLY, 0)) == -1)
+	if ((klog = open(_PATH_KLOG, O_RDONLY)) == -1)
 		err(1, "open %s", _PATH_KLOG);
 	/* Use /dev/klog to register sendsyslog(2) receiver. */
 	if (ioctl(klog, LIOCSFD, &pair[1]) == -1)

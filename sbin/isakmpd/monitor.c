@@ -1,4 +1,4 @@
-/* $OpenBSD: monitor.c,v 1.81 2020/01/24 02:14:08 yasuoka Exp $	 */
+/* $OpenBSD: monitor.c,v 1.82 2021/10/24 21:24:21 deraadt Exp $	 */
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -858,7 +858,7 @@ m_priv_req_readdir()
 		if (m_priv_local_sanitize_path(path, sizeof path, O_RDONLY)
 		    != 0)
 			continue;
-		fd = open(path, O_RDONLY, 0);
+		fd = open(path, O_RDONLY);
 		if (fd == -1) {
 			log_error("m_priv_req_readdir: open "
 			    "(\"%s\", O_RDONLY, 0) failed", path);

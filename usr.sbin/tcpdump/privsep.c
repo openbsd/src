@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.56 2021/07/12 15:09:21 beck Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.57 2021/10/24 21:24:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -402,7 +402,7 @@ impl_open_dump(int fd, const char *RFileName)
 		file = -1;
 		logmsg(LOG_ERR, "[priv]: No offline file specified");
 	} else {
-		file = open(RFileName, O_RDONLY, 0);
+		file = open(RFileName, O_RDONLY);
 		err = errno;
 		if (file == -1)
 			logmsg(LOG_DEBUG, "[priv]: failed to open %s: %s",
@@ -421,7 +421,7 @@ impl_open_pfosfp(int fd)
 
 	logmsg(LOG_DEBUG, "[priv]: msg PRIV_OPEN_PFOSFP received");
 
-	file = open(PF_OSFP_FILE, O_RDONLY, 0);
+	file = open(PF_OSFP_FILE, O_RDONLY);
 	err = errno;
 	if (file == -1)
 		logmsg(LOG_DEBUG, "[priv]: failed to open %s: %s",

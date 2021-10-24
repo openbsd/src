@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp-proxy.c,v 1.38 2020/02/12 14:46:36 schwarze Exp $ */
+/*	$OpenBSD: ftp-proxy.c,v 1.39 2021/10/24 21:24:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Camiel Dobbelaar, <cd@sentia.nl>
@@ -773,7 +773,7 @@ main(int argc, char *argv[])
 	init_filter(qname, tagname, verbose);
 
 	if (daemonize) {
-		devnull = open(_PATH_DEVNULL, O_RDWR, 0);
+		devnull = open(_PATH_DEVNULL, O_RDWR);
 		if (devnull == -1)
 			err(1, "open(%s)", _PATH_DEVNULL);
 	}

@@ -895,7 +895,7 @@ afile_open(struct afile *f, char *path, int hdr, int flags,
 			f->fd = STDIN_FILENO;
 		} else {
 			f->path = path;
-			f->fd = open(f->path, O_RDONLY, 0);
+			f->fd = open(f->path, O_RDONLY);
 			if (f->fd == -1) {
 				log_puts(f->path);
 				log_puts(": failed to open for reading\n");

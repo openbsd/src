@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_udf.c,v 1.8 2019/06/28 13:32:45 deraadt Exp $	*/
+/*	$OpenBSD: mount_udf.c,v 1.9 2021/10/24 21:24:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Pedro Martelletto <pedro@ambientworks.net>
@@ -55,7 +55,7 @@ lastblock(char *dev)
 	struct ioc_read_toc_entry t;
 	struct cd_toc_entry te;
 
-	fd = open(dev, O_RDONLY, 0);
+	fd = open(dev, O_RDONLY);
 	if (fd == -1)
 		err(1, "open");
 

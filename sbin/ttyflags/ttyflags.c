@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttyflags.c,v 1.15 2019/06/04 15:45:58 otto Exp $	*/
+/*	$OpenBSD: ttyflags.c,v 1.16 2021/10/24 21:24:22 deraadt Exp $	*/
 /*	$NetBSD: ttyflags.c,v 1.8 1996/04/09 05:20:30 cgd Exp $	*/
 
 /*
@@ -199,7 +199,7 @@ ttyflags(struct ttyent *tep, int print)
 		return (0);
 
 	/* Open the device NON-BLOCKING, set the flags, and close it. */
-	if ((fd = open(path, O_RDONLY | O_NONBLOCK, 0)) == -1) {
+	if ((fd = open(path, O_RDONLY | O_NONBLOCK)) == -1) {
 		if (!(errno == ENXIO ||
 		      (errno == ENOENT && (st & TTY_ON) == 0)))
 			rval = 1;

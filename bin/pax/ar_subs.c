@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.49 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.50 2021/10/24 21:24:21 deraadt Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -448,7 +448,7 @@ wr_archive(ARCHD *arcn, int is_app)
 			 * we were later unable to read (we also purge it from
 			 * the link table).
 			 */
-			if ((fd = open(arcn->org_name, O_RDONLY, 0)) < 0) {
+			if ((fd = open(arcn->org_name, O_RDONLY)) < 0) {
 				syswarn(1,errno, "Unable to open %s to read",
 					arcn->org_name);
 				purg_lnk(arcn);
@@ -918,7 +918,7 @@ copy(void)
 		 * have to copy a regular file to the destination directory.
 		 * first open source file and then create the destination file
 		 */
-		if ((fdsrc = open(arcn->org_name, O_RDONLY, 0)) < 0) {
+		if ((fdsrc = open(arcn->org_name, O_RDONLY)) < 0) {
 			syswarn(1, errno, "Unable to open %s to read",
 			    arcn->org_name);
 			purg_lnk(arcn);

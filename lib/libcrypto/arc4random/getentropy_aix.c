@@ -1,4 +1,4 @@
-/*	$OpenBSD: getentropy_aix.c,v 1.7 2020/05/17 14:44:20 deraadt Exp $	*/
+/*	$OpenBSD: getentropy_aix.c,v 1.8 2021/10/24 21:24:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Michael Felt <aixtools@gmail.com>
@@ -134,7 +134,7 @@ start:
 #ifdef O_CLOEXEC
 	flags |= O_CLOEXEC;
 #endif
-	fd = open(path, flags, 0);
+	fd = open(path, flags);
 	if (fd == -1) {
 		if (errno == EINTR)
 			goto start;

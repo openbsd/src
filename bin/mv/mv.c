@@ -1,4 +1,4 @@
-/*	$OpenBSD: mv.c,v 1.46 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: mv.c,v 1.47 2021/10/24 21:24:21 deraadt Exp $	*/
 /*	$NetBSD: mv.c,v 1.9 1995/03/21 09:06:52 cgd Exp $	*/
 
 /*
@@ -276,7 +276,7 @@ fastcopy(char *from, char *to, struct stat *sbp)
 		}
 	}
 
-	if ((from_fd = open(from, O_RDONLY, 0)) == -1) {
+	if ((from_fd = open(from, O_RDONLY)) == -1) {
 		warn("%s", from);
 		return (1);
 	}

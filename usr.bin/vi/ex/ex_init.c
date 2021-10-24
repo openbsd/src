@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_init.c,v 1.18 2017/04/18 01:45:35 deraadt Exp $	*/
+/*	$OpenBSD: ex_init.c,v 1.19 2021/10/24 21:24:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -341,7 +341,7 @@ exrc_isok(SCR *sp, struct stat *sbp, int *fdp, char *path, int rootown,
 	int nf1, nf2;
 	char *a, *b, buf[PATH_MAX];
 
-	if ((*fdp = open(path, O_RDONLY, 0)) < 0) {
+	if ((*fdp = open(path, O_RDONLY)) < 0) {
 		if (errno == ENOENT)
                         /* This is the only case where ex_exrc()
                          * should silently try the next file, for

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_nlist.c,v 1.7 2019/06/28 13:32:48 deraadt Exp $	*/
+/*	$OpenBSD: i386_nlist.c,v 1.8 2021/10/24 21:24:18 deraadt Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -300,7 +300,7 @@ nlist_elf32(const char *name, struct nlist *list)
 {
 	int fd, n;
 
-	fd = open(name, O_RDONLY, 0);
+	fd = open(name, O_RDONLY);
 	if (fd == -1)
 		return (-1);
 	n = __elf_fdnlist(fd, list);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 2016/08/14 22:29:01 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 2021/10/24 21:24:19 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -298,7 +298,7 @@ acct_load(char *pn, int wr)
 	/*
 	 * open the file
 	 */
-	fd = open(pn, wr ? O_RDWR : O_RDONLY, 0);
+	fd = open(pn, wr ? O_RDWR : O_RDONLY);
 	if (fd == -1) {
 		warn("open %s %s", pn, wr ? "for read/write" : "read-only");
 		return (-1);

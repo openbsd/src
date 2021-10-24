@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sigver.c,v 1.17 2019/06/28 13:32:42 deraadt Exp $ */
+/* $OpenBSD: keynote-sigver.c,v 1.18 2021/10/24 21:24:20 deraadt Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -56,7 +56,7 @@ keynote_sigver(int argc, char *argv[])
     }
 
     /* Open and read assertion file */
-    fd = open(argv[1], O_RDONLY, 0);
+    fd = open(argv[1], O_RDONLY);
     if (fd == -1)
     {
 	perror(argv[1]);

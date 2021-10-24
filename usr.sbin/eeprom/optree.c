@@ -1,4 +1,4 @@
-/*	$OpenBSD: optree.c,v 1.10 2019/06/28 13:32:47 deraadt Exp $	*/
+/*	$OpenBSD: optree.c,v 1.11 2021/10/24 21:24:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Federico G. Schwindt <fgsch@openbsd.org>
@@ -177,7 +177,7 @@ op_tree(void)
 {
 	int fd;
 
-	if ((fd = open(path_openprom, O_RDONLY, 0640)) == -1)
+	if ((fd = open(path_openprom, O_RDONLY)) == -1)
 		err(1, "open: %s", path_openprom);
 	op_nodes(fd, 0, 0);
 	(void)close(fd);

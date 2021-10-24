@@ -1,4 +1,4 @@
-/*	$OpenBSD: receiver.c,v 1.30 2021/10/22 11:10:34 claudio Exp $ */
+/*	$OpenBSD: receiver.c,v 1.31 2021/10/24 21:24:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -267,7 +267,7 @@ rsync_receiver(struct sess *sess, int fdin, int fdout, const char *root)
 	oumask = umask(0);
 
 	if (!sess->opts->dry_run) {
-		dfd = open(root, O_RDONLY | O_DIRECTORY, 0);
+		dfd = open(root, O_RDONLY | O_DIRECTORY);
 		if (dfd == -1)
 			err(ERR_FILE_IO, "%s: open", root);
 	}

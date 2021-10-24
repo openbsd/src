@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmp.c,v 1.18 2018/03/05 16:57:37 cheloha Exp $      */
+/*      $OpenBSD: cmp.c,v 1.19 2021/10/24 21:24:16 deraadt Exp $      */
 /*      $NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $      */
 
 /*
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 		special = 1;
 		fd1 = 0;
 		file1 = "stdin";
-	} else if ((fd1 = open(file1, O_RDONLY, 0)) == -1)
+	} else if ((fd1 = open(file1, O_RDONLY)) == -1)
 		fatal("%s", file1);
 	if (strcmp(file2 = argv[1], "-") == 0) {
 		if (special)
@@ -95,7 +95,7 @@ main(int argc, char *argv[])
 		special = 1;
 		fd2 = 0;
 		file2 = "stdin";
-	} else if ((fd2 = open(file2, O_RDONLY, 0)) == -1)
+	} else if ((fd2 = open(file2, O_RDONLY)) == -1)
 		fatal("%s", file2);
 
 	if (pledge("stdio", NULL) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.27 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: dd.c,v 1.28 2021/10/24 21:24:21 deraadt Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -95,7 +95,7 @@ setup(void)
 		in.name = "stdin";
 		in.fd = STDIN_FILENO;
 	} else {
-		in.fd = open(in.name, O_RDONLY, 0);
+		in.fd = open(in.name, O_RDONLY);
 		if (in.fd == -1)
 			err(1, "%s", in.name);
 	}

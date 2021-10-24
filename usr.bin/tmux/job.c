@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.65 2021/10/11 10:55:30 nicm Exp $ */
+/* $OpenBSD: job.c,v 1.66 2021/10/24 21:24:17 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -142,7 +142,7 @@ job_run(const char *cmd, int argc, char **argv, struct environ *e, struct sessio
 				close(out[1]);
 			close(out[0]);
 
-			nullfd = open(_PATH_DEVNULL, O_RDWR, 0);
+			nullfd = open(_PATH_DEVNULL, O_RDWR);
 			if (nullfd == -1)
 				fatal("open failed");
 			if (dup2(nullfd, STDERR_FILENO) == -1)

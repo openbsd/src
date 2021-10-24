@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.54 2016/03/17 19:40:43 krw Exp $	*/
+/*	$OpenBSD: main.c,v 1.55 2021/10/24 21:24:19 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -439,7 +439,7 @@ main(argc, argv)
 	 * out and we want to use the modem lines, we reopen it later
 	 * in order to wait for the carrier detect signal from the modem.
 	 */
-	while ((ttyfd = open(devnam, O_NONBLOCK | O_RDWR, 0)) < 0) {
+	while ((ttyfd = open(devnam, O_NONBLOCK | O_RDWR)) < 0) {
 	    if (errno != EINTR)
 		syslog(LOG_ERR, "Failed to open %s: %m", devnam);
 	    if (!persist || errno != EINTR)

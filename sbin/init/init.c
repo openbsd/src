@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.70 2020/03/25 19:26:52 cheloha Exp $	*/
+/*	$OpenBSD: init.c,v 1.71 2021/10/24 21:24:21 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -205,7 +205,7 @@ main(int argc, char *argv[])
 	/*
 	 * Paranoia.
 	 */
-	if ((fd = open(_PATH_DEVNULL, O_RDWR, 0)) != -1) {
+	if ((fd = open(_PATH_DEVNULL, O_RDWR)) != -1) {
 		(void)dup2(fd, STDIN_FILENO);
 		(void)dup2(fd, STDOUT_FILENO);
 		(void)dup2(fd, STDERR_FILENO);
@@ -1025,7 +1025,7 @@ start_getty(session_t *sp)
 		int fd;
 
 		close(p[0]);
-		fd = open(sp->se_device, O_RDONLY | O_NONBLOCK, 0666);
+		fd = open(sp->se_device, O_RDONLY | O_NONBLOCK);
 		if (fd == -1 && (errno == ENXIO || errno == ENOENT ||
 		    errno == EISDIR)) {
 			(void)write(p[1], "0", 1);

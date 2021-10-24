@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.28 2019/06/28 13:35:03 deraadt Exp $	*/
+/*	$OpenBSD: buf.c,v 1.29 2021/10/24 21:24:17 deraadt Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -94,7 +94,7 @@ buf_load(const char *path)
 
 	buf = NULL;
 
-	if ((fd = open(path, O_RDONLY, 0600)) == -1)
+	if ((fd = open(path, O_RDONLY)) == -1)
 		goto out;
 
 	if (fstat(fd, &st) == -1)

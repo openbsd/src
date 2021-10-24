@@ -1,4 +1,4 @@
-/*	$OpenBSD: savecore.c,v 1.62 2019/06/28 13:32:46 deraadt Exp $	*/
+/*	$OpenBSD: savecore.c,v 1.63 2021/10/24 21:24:22 deraadt Exp $	*/
 /*	$NetBSD: savecore.c,v 1.26 1996/03/18 21:16:05 leo Exp $	*/
 
 /*-
@@ -644,7 +644,7 @@ check_space(void)
 		exit(1);
 	}
 	kernelsize = st.st_blocks * S_BLKSIZE;
-	if ((fd = open(dirn, O_RDONLY, 0)) == -1 || fstatfs(fd, &fsbuf) == -1) {
+	if ((fd = open(dirn, O_RDONLY)) == -1 || fstatfs(fd, &fsbuf) == -1) {
 		syslog(LOG_ERR, "%s: %m", dirn);
 		exit(1);
 	}

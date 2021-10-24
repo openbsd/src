@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.74 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.75 2021/10/24 21:24:21 deraadt Exp $	*/
 
 /*
  * execute command tree
@@ -1197,7 +1197,7 @@ herein(const char *content, int sub)
 	 * doesn't get removed too soon).
 	 */
 	h = maketemp(ATEMP, TT_HEREDOC_EXP, &genv->temps);
-	if (!(shf = h->shf) || (fd = open(h->name, O_RDONLY, 0)) == -1) {
+	if (!(shf = h->shf) || (fd = open(h->name, O_RDONLY)) == -1) {
 		warningf(true, "can't %s temporary file %s: %s",
 		    !shf ? "create" : "open",
 		    h->name, strerror(errno));

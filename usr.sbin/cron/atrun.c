@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.52 2019/10/20 13:33:30 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.53 2021/10/24 21:24:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002-2003 Todd C. Miller <millert@openbsd.org>
@@ -336,7 +336,7 @@ run_job(const atjob *job, int dfd, const char *atfile)
 	char *nargv[2], *nenvp[1];
 
 	/* Open the file and unlink it so we don't try running it again. */
-	if ((fd = openat(dfd, atfile, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0)) == -1) {
+	if ((fd = openat(dfd, atfile, O_RDONLY|O_NONBLOCK|O_NOFOLLOW)) == -1) {
 		syslog(LOG_ERR, "(CRON) CAN'T OPEN (%s)", atfile);
 		return;
 	}

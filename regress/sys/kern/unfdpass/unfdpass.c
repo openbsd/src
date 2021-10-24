@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.20 2018/11/28 08:06:22 claudio Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.21 2021/10/24 21:24:20 deraadt Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -303,7 +303,7 @@ child(int sock, int type, int oflag)
 	files = (int *)CMSG_DATA(cmp);
 	for (i = 0; i < nfds; i++) {
 		(void) snprintf(fname, sizeof fname, "file%d", i + 1);
-		if ((fd = open(fname, O_RDONLY, 0666)) == -1)
+		if ((fd = open(fname, O_RDONLY)) == -1)
 			err(1, "child open %s", fname);
 		files[i] = fd;
 	}

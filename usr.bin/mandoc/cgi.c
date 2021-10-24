@@ -1,4 +1,4 @@
-/* $OpenBSD: cgi.c,v 1.114 2021/08/19 15:21:32 schwarze Exp $ */
+/* $OpenBSD: cgi.c,v 1.115 2021/10/24 21:24:16 deraadt Exp $ */
 /*
  * Copyright (c) 2014-2019, 2021 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -875,7 +875,7 @@ resp_format(const struct req *req, const char *file)
 	int		 fd;
 	int		 usepath;
 
-	if (-1 == (fd = open(file, O_RDONLY, 0))) {
+	if (-1 == (fd = open(file, O_RDONLY))) {
 		puts("<p>You specified an invalid manual file.</p>");
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.19 2019/06/28 13:35:05 deraadt Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.20 2021/10/24 21:24:17 deraadt Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ ttymsg(iov, iovcnt, line, tmout)
 	 * open will fail on slip lines or exclusive-use lines
 	 * if not running as root; not an error.
 	 */
-	if ((fd = open(device, O_WRONLY|O_NONBLOCK, 0)) == -1) {
+	if ((fd = open(device, O_WRONLY|O_NONBLOCK)) == -1) {
 		if (errno == EBUSY || errno == EACCES)
 			return (NULL);
 		(void) snprintf(errbuf, sizeof(errbuf),

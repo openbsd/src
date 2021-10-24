@@ -1,4 +1,4 @@
-/*	$OpenBSD: ophandlers.c,v 1.15 2019/06/28 13:32:47 deraadt Exp $	*/
+/*	$OpenBSD: ophandlers.c,v 1.16 2021/10/24 21:24:18 deraadt Exp $	*/
 /*	$NetBSD: ophandlers.c,v 1.2 1996/02/28 01:13:30 thorpej Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ op_handler(char *keyword, char *arg)
 	char opio_buf[BUFSIZE];
 	int fd, optnode;
 
-	if ((fd = open(path_openprom, arg ? O_RDWR : O_RDONLY, 0640)) == -1)
+	if ((fd = open(path_openprom, arg ? O_RDWR : O_RDONLY)) == -1)
 		BARF(path_openprom, strerror(errno));
 
 	/* Check to see if it's a special-case keyword. */
@@ -178,7 +178,7 @@ op_dump(void)
 	char buf1[BUFSIZE], buf2[BUFSIZE], buf3[BUFSIZE], buf4[BUFSIZE];
 	int fd, optnode;
 
-	if ((fd = open(path_openprom, O_RDONLY, 0640)) == -1)
+	if ((fd = open(path_openprom, O_RDONLY)) == -1)
 		err(1, "open: %s", path_openprom);
 
 	if (ioctl(fd, OPIOCGETOPTNODE, (char *)&optnode) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.22 2017/07/29 07:18:03 florian Exp $ */
+/*	$OpenBSD: process.c,v 1.23 2021/10/24 21:24:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -417,7 +417,7 @@ mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *idx, u_char *dst,
 
 		snprintf(filename, sizeof(filename), "%s.SYS", pfile);
 		if ((mopCmpEAddr(dst, dl_mcst) == 0)) {
-			if ((nfd = open(filename, O_RDONLY, 0)) != -1) {
+			if ((nfd = open(filename, O_RDONLY)) != -1) {
 				close(nfd);
 				mopSendASV(src, ii->eaddr, ii, trans);
 				snprintf(line, sizeof(line),
@@ -433,7 +433,7 @@ mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *idx, u_char *dst,
 			syslog(LOG_INFO, "%s", line);
 		} else {
 			if ((mopCmpEAddr(dst, ii->eaddr) == 0)) {
-				dl_rpr->ldfd = open(filename, O_RDONLY, 0);
+				dl_rpr->ldfd = open(filename, O_RDONLY);
 				mopStartLoad(src, ii->eaddr, dl_rpr, trans);
 				snprintf(line, sizeof(line),
 				    "%x:%x:%x:%x:%x:%x Send me %s",

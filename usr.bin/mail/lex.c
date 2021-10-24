@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.41 2019/06/28 13:35:01 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.42 2021/10/24 21:24:16 deraadt Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ setfile(char *name)
 	 * and set pointers.
 	 */
 	readonly = 0;
-	if ((i = open(name, O_WRONLY, 0)) == -1)
+	if ((i = open(name, O_WRONLY)) == -1)
 		readonly++;
 	else
 		(void)close(i);

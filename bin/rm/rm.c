@@ -1,4 +1,4 @@
-/*	$OpenBSD: rm.c,v 1.42 2017/06/27 21:49:47 tedu Exp $	*/
+/*	$OpenBSD: rm.c,v 1.43 2021/10/24 21:24:21 deraadt Exp $	*/
 /*	$NetBSD: rm.c,v 1.19 1995/09/07 06:48:50 jtc Exp $	*/
 
 /*-
@@ -310,7 +310,7 @@ rm_overwrite(char *file, struct stat *sbp)
 		    file, (unsigned long long)sbp->st_ino);
 		return (0);
 	}
-	if ((fd = open(file, O_WRONLY|O_NONBLOCK|O_NOFOLLOW, 0)) == -1)
+	if ((fd = open(file, O_WRONLY|O_NONBLOCK|O_NOFOLLOW)) == -1)
 		goto err;
 	if (fstat(fd, &sb2))
 		goto err;

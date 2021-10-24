@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.85 2019/06/28 13:35:00 deraadt Exp $	*/
+/*	$OpenBSD: buf.c,v 1.86 2021/10/24 21:24:16 deraadt Exp $	*/
 /*
  * Copyright (c) 2003 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -85,7 +85,7 @@ buf_load(const char *path)
 	int fd;
 	BUF *bp;
 
-	if ((fd = open(path, O_RDONLY, 0600)) == -1)
+	if ((fd = open(path, O_RDONLY)) == -1)
 		fatal("buf_load: failed to load '%s' : %s", path,
 		    strerror(errno));
 

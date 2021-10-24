@@ -1,4 +1,4 @@
-/* $OpenBSD: read_termcap.c,v 1.22 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: read_termcap.c,v 1.23 2021/10/24 21:24:20 deraadt Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2005,2006 Free Software Foundation, Inc.              *
@@ -60,7 +60,7 @@
 #include <tic.h>
 #include <term_entry.h>
 
-MODULE_ID("$Id: read_termcap.c,v 1.22 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: read_termcap.c,v 1.23 2021/10/24 21:24:20 deraadt Exp $")
 
 #if !PURE_TERMINFO
 
@@ -316,7 +316,7 @@ _nc_getent(
 	    if (fd >= 0) {
 		(void) lseek(fd, (off_t) 0, SEEK_SET);
 	    } else if ((_nc_access(db_array[current], R_OK) < 0)
-		       || (fd = open(db_array[current], O_RDONLY, 0)) < 0) {
+		       || (fd = open(db_array[current], O_RDONLY)) < 0) {
 		/* No error on unfound file. */
 		if (errno == ENOENT)
 		    continue;

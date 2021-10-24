@@ -1,4 +1,4 @@
-/* $OpenBSD: wsfontload.c,v 1.23 2020/08/05 13:56:06 fcambus Exp $ */
+/* $OpenBSD: wsfontload.c,v 1.24 2021/10/24 21:24:19 deraadt Exp $ */
 /* $NetBSD: wsfontload.c,v 1.2 2000/01/05 18:46:43 ad Exp $ */
 
 /*
@@ -136,7 +136,7 @@ main(int argc, char *argv[])
 	if (argc > 1)
 		usage();
 
-	wsfd = open(wsdev, O_RDWR, 0);
+	wsfd = open(wsdev, O_RDWR);
 	if (wsfd == -1)
 		err(2, "open %s", wsdev);
 
@@ -169,7 +169,7 @@ main(int argc, char *argv[])
 
 	if (argc > 0) {
 		infile = argv[0];
-		ffd = open(infile, O_RDONLY, 0);
+		ffd = open(infile, O_RDONLY);
 		if (ffd == -1)
 			err(4, "open %s", infile);
 		if (!*f.name)

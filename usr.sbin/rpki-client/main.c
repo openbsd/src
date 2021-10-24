@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.153 2021/10/24 16:59:14 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.154 2021/10/24 21:24:19 deraadt Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -783,9 +783,9 @@ main(int argc, char *argv[])
 		goto usage;
 	}
 
-	if ((cachefd = open(cachedir, O_RDONLY | O_DIRECTORY, 0)) == -1)
+	if ((cachefd = open(cachedir, O_RDONLY | O_DIRECTORY)) == -1)
 		err(1, "cache directory %s", cachedir);
-	if ((outdirfd = open(outputdir, O_RDONLY | O_DIRECTORY, 0)) == -1)
+	if ((outdirfd = open(outputdir, O_RDONLY | O_DIRECTORY)) == -1)
 		err(1, "output directory %s", outputdir);
 
 	check_fs_size(cachefd, cachedir);

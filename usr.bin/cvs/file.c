@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.274 2020/10/19 19:51:20 naddy Exp $	*/
+/*	$OpenBSD: file.c,v 1.275 2021/10/24 21:24:16 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -1010,9 +1010,9 @@ cvs_file_cmp(const char *file1, const char *file2)
 
 	ret = 0;
 
-	if ((fd1 = open(file1, O_RDONLY|O_NOFOLLOW, 0)) == -1)
+	if ((fd1 = open(file1, O_RDONLY|O_NOFOLLOW)) == -1)
 		fatal("cvs_file_cmp: open: `%s': %s", file1, strerror(errno));
-	if ((fd2 = open(file2, O_RDONLY|O_NOFOLLOW, 0)) == -1)
+	if ((fd2 = open(file2, O_RDONLY|O_NOFOLLOW)) == -1)
 		fatal("cvs_file_cmp: open: `%s': %s", file2, strerror(errno));
 
 	if (fstat(fd1, &stb1) == -1)
@@ -1079,7 +1079,7 @@ cvs_file_copy(const char *from, const char *to)
 	if (cvs_noexec == 1)
 		return (0);
 
-	if ((src = open(from, O_RDONLY, 0)) == -1)
+	if ((src = open(from, O_RDONLY)) == -1)
 		fatal("cvs_file_copy: open: `%s': %s", from, strerror(errno));
 
 	if (fstat(src, &st) == -1)

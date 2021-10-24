@@ -1,4 +1,4 @@
-/*	$OpenBSD: spellprog.c,v 1.14 2019/03/10 20:45:11 schwarze Exp $	*/
+/*	$OpenBSD: spellprog.c,v 1.15 2021/10/24 21:24:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -281,7 +281,7 @@ main(int argc, char **argv)
 	if ((wlists = calloc(sizeof(struct wlist), (argc + 1))) == NULL)
 		err(1, "malloc");
 	for (i = 0; argc--; i++) {
-		wlists[i].fd = open(argv[i], O_RDONLY, 0);
+		wlists[i].fd = open(argv[i], O_RDONLY);
 		if (wlists[i].fd == -1 || fstat(wlists[i].fd, &sb) != 0)
 			err(1, "%s", argv[i]);
 		if (sb.st_size > SIZE_MAX)

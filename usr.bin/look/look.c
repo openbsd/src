@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.24 2021/07/12 15:09:20 beck Exp $	*/
+/*	$OpenBSD: look.c,v 1.25 2021/10/24 21:24:16 deraadt Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -118,7 +118,7 @@ main(int argc, char *argv[])
 	if (termchar != '\0' && (p = strchr(string, termchar)) != NULL)
 		*++p = '\0';
 
-	if ((fd = open(file, O_RDONLY, 0)) == -1 || fstat(fd, &sb) == -1)
+	if ((fd = open(file, O_RDONLY)) == -1 || fstat(fd, &sb) == -1)
 		err(2, "%s", file);
 	if (sb.st_size > SIZE_MAX)
 		errc(2, EFBIG, "%s", file);

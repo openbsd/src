@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.725 2021/08/25 21:07:47 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.726 2021/10/24 21:24:21 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -703,7 +703,7 @@ main(int argc, char *argv[])
 	    socket_fd) == -1)
 		fatal("socketpair");
 
-	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
+	if ((nullfd = open(_PATH_DEVNULL, O_RDWR)) == -1)
 		fatal("open(%s)", _PATH_DEVNULL);
 
 	fork_privchld(ifi, socket_fd[0], socket_fd[1]);

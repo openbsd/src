@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.17 2019/06/28 13:32:47 deraadt Exp $ */
+/*	$OpenBSD: exec_elf.c,v 1.18 2021/10/24 21:24:18 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -97,7 +97,7 @@ loadkernel(char *file)
 {
 	int fd;
 
-	if ((fd = open(file, O_RDONLY | O_EXLOCK, 0)) == -1)
+	if ((fd = open(file, O_RDONLY | O_EXLOCK)) == -1)
 		err(1, "%s", file);
 
 	if (read(fd, (char *)&elf_ex, sizeof(elf_ex)) != sizeof(elf_ex))

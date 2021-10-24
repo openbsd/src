@@ -1,4 +1,4 @@
-/* $OpenBSD: mandocdb.c,v 1.217 2021/08/19 16:55:24 schwarze Exp $ */
+/* $OpenBSD: mandocdb.c,v 1.218 2021/10/24 21:24:16 deraadt Exp $ */
 /*
  * Copyright (c) 2011-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -2210,11 +2210,11 @@ dbwrite(struct dba *dba)
 		say(tfn, "&dba_write");
 		goto err;
 	}
-	if ((fd1 = open(MANDOC_DB, O_RDONLY, 0)) == -1) {
+	if ((fd1 = open(MANDOC_DB, O_RDONLY)) == -1) {
 		say(MANDOC_DB, "&open");
 		goto err;
 	}
-	if ((fd2 = open(tfn, O_RDONLY, 0)) == -1) {
+	if ((fd2 = open(tfn, O_RDONLY)) == -1) {
 		say(tfn, "&open");
 		goto err;
 	}

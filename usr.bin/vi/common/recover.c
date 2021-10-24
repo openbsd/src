@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.30 2019/07/22 12:39:02 schwarze Exp $	*/
+/*	$OpenBSD: recover.c,v 1.31 2021/10/24 21:24:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -750,7 +750,7 @@ rcv_copy(SCR *sp, int wfd, char *fname)
 	int nr, nw, off, rfd;
 	char buf[8 * 1024];
 
-	if ((rfd = open(fname, O_RDONLY, 0)) == -1)
+	if ((rfd = open(fname, O_RDONLY)) == -1)
 		goto err;
 	while ((nr = read(rfd, buf, sizeof(buf))) > 0)
 		for (off = 0; nr; nr -= nw, off += nw)

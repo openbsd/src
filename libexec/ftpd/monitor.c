@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.29 2021/05/31 16:18:01 jan Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.30 2021/10/24 21:24:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -223,7 +223,7 @@ monitor_post_auth(void)
 	}
 
 	/* We have to keep stdout open, because reply() needs it. */
-	if ((nullfd = open(_PATH_DEVNULL, O_RDWR, 0)) == -1)
+	if ((nullfd = open(_PATH_DEVNULL, O_RDWR)) == -1)
 		fatalx("cannot open %s: %m", _PATH_DEVNULL);
 	dup2(nullfd, STDIN_FILENO);
 	dup2(nullfd, STDERR_FILENO);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_main.c,v 1.35 2021/09/02 11:19:02 schwarze Exp $	*/
+/*	$OpenBSD: cl_main.c,v 1.36 2021/10/24 21:24:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -183,7 +183,7 @@ cl_init(GS *gp)
 	if (F_ISSET(clp, CL_STDIN_TTY)) {
 		if (tcgetattr(STDIN_FILENO, &clp->orig) == -1)
 			goto tcfail;
-	} else if ((fd = open(_PATH_TTY, O_RDONLY, 0)) != -1) {
+	} else if ((fd = open(_PATH_TTY, O_RDONLY)) != -1) {
 		if (tcgetattr(fd, &clp->orig) == -1)
 tcfail:			err(1, "tcgetattr");
 		(void)close(fd);

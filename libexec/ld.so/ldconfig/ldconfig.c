@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldconfig.c,v 1.38 2018/06/08 19:24:46 cheloha Exp $	*/
+/*	$OpenBSD: ldconfig.c,v 1.39 2021/10/24 21:24:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -432,7 +432,7 @@ readhints(void)
 	long msize;
 	int fd, i;
 
-	if ((fd = open(_PATH_LD_HINTS, O_RDONLY, 0)) == -1) {
+	if ((fd = open(_PATH_LD_HINTS, O_RDONLY)) == -1) {
 		warn("%s", _PATH_LD_HINTS);
 		return -1;
 	}

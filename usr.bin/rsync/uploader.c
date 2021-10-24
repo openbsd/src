@@ -1,4 +1,4 @@
-/*	$OpenBSD: uploader.c,v 1.30 2021/10/22 11:10:34 claudio Exp $ */
+/*	$OpenBSD: uploader.c,v 1.31 2021/10/24 21:24:17 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -736,7 +736,7 @@ pre_file(const struct upload *p, int *filefd, off_t *size,
 		const char *root = sess->opts->basedir[i];
 		int dfd, x;
 
-		dfd = openat(p->rootfd, root, O_RDONLY | O_DIRECTORY, 0);
+		dfd = openat(p->rootfd, root, O_RDONLY | O_DIRECTORY);
 		if (dfd == -1)
 			err(ERR_FILE_IO, "%s: openat", root);
 		x = check_file(dfd, f, &st);
@@ -771,7 +771,7 @@ pre_file(const struct upload *p, int *filefd, off_t *size,
 	}
 
 	*size = st.st_size;
-	*filefd = openat(p->rootfd, f->path, O_RDONLY | O_NOFOLLOW, 0);
+	*filefd = openat(p->rootfd, f->path, O_RDONLY | O_NOFOLLOW);
 	if (*filefd == -1 && errno != ENOENT) {
 		ERR("%s: openat", f->path);
 		return -1;

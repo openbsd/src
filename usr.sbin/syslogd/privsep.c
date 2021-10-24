@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.73 2021/07/12 15:09:21 beck Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.74 2021/10/24 21:24:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -261,7 +261,7 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 			must_read(sock, &path, path_len);
 			path[path_len - 1] = '\0';
 			check_tty_name(path, sizeof(path));
-			fd = open(path, O_WRONLY|O_NONBLOCK, 0);
+			fd = open(path, O_WRONLY|O_NONBLOCK);
 			send_fd(sock, fd);
 			if (fd == -1)
 				warnx("priv_open_tty failed");
@@ -297,7 +297,7 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 
 		case PRIV_OPEN_UTMP:
 			log_debug("[priv]: msg PRIV_OPEN_UTMP received");
-			fd = open(_PATH_UTMP, O_RDONLY|O_NONBLOCK, 0);
+			fd = open(_PATH_UTMP, O_RDONLY|O_NONBLOCK);
 			send_fd(sock, fd);
 			if (fd == -1)
 				warnx("priv_open_utmp failed");
@@ -308,7 +308,7 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 		case PRIV_OPEN_CONFIG:
 			log_debug("[priv]: msg PRIV_OPEN_CONFIG received");
 			stat(conf, &cf_info);
-			fd = open(conf, O_RDONLY|O_NONBLOCK, 0);
+			fd = open(conf, O_RDONLY|O_NONBLOCK);
 			send_fd(sock, fd);
 			if (fd == -1)
 				warnx("priv_open_config failed");
@@ -456,7 +456,7 @@ open_file(char *path)
 	if (path[0] == '|')
 		return (-1);
 
-	return (open(path, O_WRONLY|O_APPEND|O_NONBLOCK, 0));
+	return (open(path, O_WRONLY|O_APPEND|O_NONBLOCK));
 }
 
 static int

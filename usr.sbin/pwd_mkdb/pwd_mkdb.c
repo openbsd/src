@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.57 2019/10/17 21:54:29 millert Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.58 2021/10/24 21:24:19 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -386,7 +386,7 @@ cp(char *from, char *to, mode_t mode)
 	static char buf[MAXBSIZE];
 	int from_fd, rcount, to_fd, wcount;
 
-	if ((from_fd = open(from, O_RDONLY, 0)) == -1)
+	if ((from_fd = open(from, O_RDONLY)) == -1)
 		fatal("%s", from);
 	if ((to_fd = open(to, O_WRONLY|O_CREAT|O_EXCL, mode)) == -1)
 		fatal("%s", to);

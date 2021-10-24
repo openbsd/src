@@ -1,4 +1,4 @@
-/* $OpenBSD: rdsetroot.c,v 1.2 2019/04/16 06:09:52 sunil Exp $ */
+/* $OpenBSD: rdsetroot.c,v 1.3 2021/10/24 21:24:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 Sunil Nimmagadda <sunil@openbsd.org>
@@ -72,14 +72,14 @@ main(int argc, char **argv)
 	} else
 		usage();
 
-	if ((kfd = open(kernel, xflag ? O_RDONLY : O_RDWR, 0644)) < 0)
+	if ((kfd = open(kernel, xflag ? O_RDONLY : O_RDWR)) < 0)
 		err(1, "%s", kernel);
 
 	if (fs) {
 		if (xflag)
 			fsfd = open(fs, O_RDWR | O_CREAT | O_TRUNC, 0644);
 		else
-			fsfd = open(fs, O_RDONLY, 0644);
+			fsfd = open(fs, O_RDONLY);
 	} else {
 		if (xflag)
 			fsfd = dup(STDOUT_FILENO);

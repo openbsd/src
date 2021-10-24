@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.35 2019/06/28 13:35:05 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.36 2021/10/24 21:24:18 deraadt Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ do_write(char *tty, char *mytty, uid_t myuid)
 		login = user_from_uid(myuid, 0);
 
 	(void)snprintf(path, sizeof(path), "%s%s", _PATH_DEV, tty);
-	fd = open(path, O_WRONLY, 0666);
+	fd = open(path, O_WRONLY);
 	if (fd == -1)
 		err(1, "open %s", path);
 	fflush(stdout);

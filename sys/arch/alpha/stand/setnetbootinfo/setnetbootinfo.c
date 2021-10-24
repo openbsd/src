@@ -1,4 +1,4 @@
-/*	$OpenBSD: setnetbootinfo.c,v 1.4 2014/07/12 19:01:49 tedu Exp $	*/
+/*	$OpenBSD: setnetbootinfo.c,v 1.5 2021/10/24 21:24:22 deraadt Exp $	*/
 /*	$NetBSD: setnetbootinfo.c,v 1.5 1997/04/06 08:41:37 cgd Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ main(argc, argv)
 
 	if (verbose)
 		printf("opening %s...\n", netboot);
-	if ((fd = open(netboot, O_RDONLY, 0)) == -1)
+	if ((fd = open(netboot, O_RDONLY)) == -1)
 		err(1, "open: %s", netboot);
 	if (fstat(fd, &sb) == -1)
 		err(1, "fstat: %s", netboot);

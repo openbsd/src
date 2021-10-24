@@ -1,4 +1,4 @@
-/*	$OpenBSD: split.c,v 1.21 2015/12/31 16:13:01 millert Exp $	*/
+/*	$OpenBSD: split.c,v 1.22 2021/10/24 21:24:17 deraadt Exp $	*/
 /*	$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ main(int argc, char *argv[])
 
 	if (*argv != NULL)
 		if (ifd == -1) {		/* Input file. */
-			if ((ifd = open(*argv, O_RDONLY, 0)) < 0)
+			if ((ifd = open(*argv, O_RDONLY)) < 0)
 				err(1, "%s", *argv);
 			++argv;
 		}

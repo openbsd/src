@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.28 2019/12/04 06:25:45 deraadt Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.29 2021/10/24 21:24:20 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -164,7 +164,7 @@ auth_cat(char *file)
 	int fd, nchars;
 	char tbuf[8192];
 
-	if ((fd = open(file, O_RDONLY, 0)) == -1)
+	if ((fd = open(file, O_RDONLY)) == -1)
 		return (0);
 	while ((nchars = read(fd, tbuf, sizeof(tbuf))) > 0)
 		(void)write(fileno(stdout), tbuf, nchars);

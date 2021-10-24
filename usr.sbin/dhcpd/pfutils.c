@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfutils.c,v 1.22 2021/07/12 15:09:20 beck Exp $ */
+/*	$OpenBSD: pfutils.c,v 1.23 2021/10/24 21:24:18 deraadt Exp $ */
 /*
  * Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
  *
@@ -52,7 +52,7 @@ pftable_handler()
 	struct pollfd pfd[1];
 	int l, r, fd, nfds;
 
-	if ((fd = open(_PATH_DEV_PF, O_RDWR|O_NOFOLLOW, 0660)) == -1)
+	if ((fd = open(_PATH_DEV_PF, O_RDWR|O_NOFOLLOW)) == -1)
 		fatal("can't open pf device");
 
 	if (setgroups(1, &pw->pw_gid) ||

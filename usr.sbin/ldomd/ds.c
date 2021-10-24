@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds.c,v 1.10 2019/11/28 18:40:42 kn Exp $	*/
+/*	$OpenBSD: ds.c,v 1.11 2021/10/24 21:24:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -673,7 +673,7 @@ ds_conn_open(const char *path, void *cookie)
 	dc->path = xstrdup(path);
 	dc->cookie = cookie;
 
-	dc->fd = open(path, O_RDWR, 0);
+	dc->fd = open(path, O_RDWR);
 	if (dc->fd == -1)
 		err(1, "cannot open %s", path);
 

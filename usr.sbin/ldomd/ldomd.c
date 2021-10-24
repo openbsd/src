@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldomd.c,v 1.10 2019/11/28 18:40:42 kn Exp $	*/
+/*	$OpenBSD: ldomd.c,v 1.11 2021/10/24 21:24:18 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2012 Mark Kettenis
@@ -216,7 +216,7 @@ main(int argc, char **argv)
 		char path[PATH_MAX];
 
 		snprintf(path, sizeof(path), "/dev/vdsp%d", i);
-		if (open(path, O_RDWR, 0) == -1)
+		if (open(path, O_RDWR) == -1)
 			break;
 	}
 
@@ -436,7 +436,7 @@ hv_open(void)
 	ssize_t nbytes;
 	uint64_t code;
 
-	hvctl_fd = open("/dev/hvctl", O_RDWR, 0);
+	hvctl_fd = open("/dev/hvctl", O_RDWR);
 	if (hvctl_fd == -1)
 		fatal("cannot open /dev/hvctl");
 

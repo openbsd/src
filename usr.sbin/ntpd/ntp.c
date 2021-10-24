@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.167 2020/09/11 07:09:41 otto Exp $ */
+/*	$OpenBSD: ntp.c,v 1.168 2021/10/24 21:24:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -112,7 +112,7 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 		fatalx("control socket init failed");
 	if (control_listen(fd_ctl) == -1)
 		fatalx("control socket listen failed");
-	if ((nullfd = open("/dev/null", O_RDWR, 0)) == -1)
+	if ((nullfd = open("/dev/null", O_RDWR)) == -1)
 		fatal(NULL);
 
 	if (stat(pw->pw_dir, &stb) == -1) {

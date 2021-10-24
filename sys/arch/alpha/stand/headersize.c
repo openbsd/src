@@ -1,4 +1,4 @@
-/*	$OpenBSD: headersize.c,v 1.10 2013/10/15 05:17:31 deraadt Exp $	*/
+/*	$OpenBSD: headersize.c,v 1.11 2021/10/24 21:24:22 deraadt Exp $	*/
 /*	$NetBSD: headersize.c,v 1.5 1996/09/23 04:32:59 cgd Exp $	*/
 
 /*
@@ -59,7 +59,7 @@ main(argc, argv)
 		errx(1, "load addr argument (%s) not valid", argv[1]);
 	fname = argv[2];
 
-	if ((fd = open(fname, O_RDONLY, 0)) == -1)
+	if ((fd = open(fname, O_RDONLY)) == -1)
 		err(1, "%s: open failed", fname);
 
 	if (read(fd, &buf, HDR_BUFSIZE) != HDR_BUFSIZE)

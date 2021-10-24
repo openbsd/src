@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmpproto.c,v 1.13 2019/06/28 13:32:50 deraadt Exp $	*/
+/*	$OpenBSD: rmpproto.c,v 1.14 2021/10/24 21:24:19 deraadt Exp $	*/
 /*	$NetBSD: rmpproto.c,v 1.5.2.1 1995/11/14 08:45:44 thorpej Exp $	*/
 
 /*
@@ -355,7 +355,7 @@ match:
 	 *	"too many open files" - RMP_E_BUSY
 	 *	anything else         - RMP_E_OPENFILE
 	 */
-	if ((rconn->bootfd = open(filename, O_RDONLY, 0600)) == -1) {
+	if ((rconn->bootfd = open(filename, O_RDONLY)) == -1) {
 		rpl->r_brpl.rmp_retcode = (errno == ENOENT)? RMP_E_NOFILE:
 			(errno == EMFILE || errno == ENFILE)? RMP_E_BUSY:
 			RMP_E_OPENFILE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_truncate.c,v 1.1.1.1 2019/11/19 19:57:04 bluhm Exp $	*/
+/*	$OpenBSD: t_truncate.c,v 1.2 2021/10/24 21:24:20 deraadt Exp $	*/
 /* $NetBSD: t_truncate.c,v 1.3 2017/01/13 20:03:51 christos Exp $ */
 
 /*-
@@ -96,7 +96,7 @@ ATF_TC_BODY(ftruncate_err, tc)
 {
 	int fd;
 
-	fd = open("/etc/passwd", O_RDONLY, 0400);
+	fd = open("/etc/passwd", O_RDONLY);
 	ATF_REQUIRE(fd >= 0);
 
 	errno = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: videotest.c,v 1.5 2015/11/17 07:13:55 mmcc Exp $ */
+/*	$OpenBSD: videotest.c,v 1.6 2021/10/24 21:24:20 deraadt Exp $ */
 
 /*
  * Copyright (c) 2010 Marcus Glocker <mglocker@openbsd.org>
@@ -117,7 +117,7 @@ main(void)
 		    DEV_PATH, dev_name);
 
 		/* open video device */
-		fd = open(dev_full, O_RDWR, 0);
+		fd = open(dev_full, O_RDWR);
 		if (fd == -1) {
 			warn("%s", dev_full);
 			break;
@@ -317,7 +317,7 @@ test_capture(char *dev_name, char *dev_full, int access, int use_poll)
 			}
 
 			/* open device */
-			fd1 = open(dev_full, O_RDWR, 0);
+			fd1 = open(dev_full, O_RDWR);
 			if (fd1 == -1)
 				err(1, "open");
 			sleep(WAIT_INIT);	/* let device initialize */
