@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.52 2021/09/20 10:45:01 inoguchi Exp $
+# $OpenBSD: appstest.sh,v 1.53 2021/10/25 07:17:14 tb Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -649,7 +649,7 @@ __EOF__
 	fi
 
 	$openssl_bin req -new -keyout $tsa_key -out $tsa_csr \
-		-passout pass:$tsa_pass -subj $subj -asn1-kludge
+		-passout pass:$tsa_pass -subj $subj
 	check_exit_status $?
 
 	start_message "ca ... sign by CA with TSA extensions"
@@ -683,7 +683,7 @@ __EOF__
 	fi
 
 	$openssl_bin req -new -keyout $ocsp_key -nodes -out $ocsp_csr \
-		-subj $subj -no-asn1-kludge
+		-subj $subj
 	check_exit_status $?
 
 	start_message "ca ... sign by CA with OCSP extensions"
