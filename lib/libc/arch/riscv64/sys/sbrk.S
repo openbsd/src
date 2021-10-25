@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.1 2021/05/04 04:17:53 drahn Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.2 2021/10/25 14:38:10 jca Exp $	*/
 /*
  * Copyright (c) 2021 Dale Rahn <drahn@openbsd.org>
  *
@@ -28,7 +28,6 @@ __curbrk:
 	.dword _C_LABEL(_end)
 	END(__curbrk)
 	
-	.weak	sbrk
 ENTRY(sbrk)
 	RETGUARD_SETUP(sbrk, t6)
 
@@ -48,3 +47,4 @@ ENTRY(sbrk)
 	RETGUARD_CHECK(sbrk, t6);
 	ret
 END(sbrk)
+	.weak	sbrk

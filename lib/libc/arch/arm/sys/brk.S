@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.10 2017/11/21 19:08:36 kettenis Exp $	*/
+/*	$OpenBSD: brk.S,v 1.11 2021/10/25 14:38:10 jca Exp $	*/
 /*	$NetBSD: brk.S,v 1.7 2003/12/26 11:23:44 martin Exp $	*/
 
 /*-
@@ -43,8 +43,6 @@
 __minbrk:
 	.word	_C_LABEL(_end)
 	END(__minbrk)
-
-	.weak	brk
 
 /*
  * Change the data segment size
@@ -96,3 +94,4 @@ ENTRY(brk)
 .Lcurbrk:
 	.word	PIC_SYM(__curbrk, GOT)
 END(brk)
+	.weak	brk

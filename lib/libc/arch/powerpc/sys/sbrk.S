@@ -1,4 +1,4 @@
-/* $OpenBSD: sbrk.S,v 1.14 2020/10/26 22:07:05 gkoehler Exp $ */
+/* $OpenBSD: sbrk.S,v 1.15 2021/10/25 14:38:10 jca Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -36,8 +36,6 @@ __curbrk:
 	END(__curbrk)
 	.type	__curbrk,@object
 
-	.weak	sbrk
-
 	.text
 ENTRY(sbrk)
 	
@@ -74,3 +72,4 @@ ENTRY(sbrk)
 	mr	3, 5		/* # remember, 5=old_curbrk */
 	blr
 END(sbrk)
+	.weak	sbrk

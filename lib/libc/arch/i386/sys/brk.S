@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.13 2017/08/19 18:24:06 deraadt Exp $ */
+/*	$OpenBSD: brk.S,v 1.14 2021/10/25 14:38:10 jca Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -42,7 +42,6 @@ __minbrk:
 	END(__minbrk)
 	.type	__minbrk,@object
 
-	.weak	brk
 ENTRY(brk)
 #ifdef __PIC__
 	movl	4(%esp),%ecx
@@ -82,3 +81,4 @@ ENTRY(brk)
 	SET_ERRNO()
 	ret
 END(brk)
+	.weak	brk

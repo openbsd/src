@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.1 2021/05/04 04:17:53 drahn Exp $	*/
+/*	$OpenBSD: brk.S,v 1.2 2021/10/25 14:38:10 jca Exp $	*/
 /*
  * Copyright (c) 2021 Dale Rahn <drahn@openbsd.org>
  *
@@ -26,7 +26,6 @@ __minbrk:
 	.dword _C_LABEL(_end)
 	
 
-	.weak	brk
 ENTRY(brk)
 	RETGUARD_SETUP(brk, t6)
 	lla	t1, _C_LABEL(__minbrk)
@@ -56,3 +55,4 @@ ENTRY(brk)
 	RETGUARD_CHECK(brk, t6);
 	ret
 END(brk)
+	.weak	brk

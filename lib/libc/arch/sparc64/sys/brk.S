@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.7 2015/09/05 06:22:47 guenther Exp $	*/
+/*	$OpenBSD: brk.S,v 1.8 2021/10/25 14:38:10 jca Exp $	*/
 /*	$NetBSD: brk.S,v 1.9 2000/07/25 20:15:40 mycroft Exp $	*/
 
 /*
@@ -40,8 +40,6 @@
 
 	.globl	__curbrk
 	.globl	_C_LABEL(_end)
-
-	.weak	brk
 
 	.data
 	.align	8
@@ -85,3 +83,4 @@ ENTRY(brk)
 	 stx	%o2, [%g1 + %lo(__curbrk)]
 #endif
 END(brk)
+	.weak	brk
