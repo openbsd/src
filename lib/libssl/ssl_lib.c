@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.275 2021/10/23 20:42:50 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.276 2021/10/25 10:01:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -887,10 +887,10 @@ SSL_get_peer_cert_chain(const SSL *s)
 	STACK_OF(X509)	*r;
 
 	if ((s == NULL) || (s->session == NULL) ||
-	    (SSI(s)->sess_cert == NULL))
+	    (s->session->sess_cert == NULL))
 		r = NULL;
 	else
-		r = SSI(s)->sess_cert->cert_chain;
+		r = s->session->sess_cert->cert_chain;
 
 	/*
 	 * If we are a client, cert_chain includes the peer's own
@@ -2245,8 +2245,8 @@ ssl_using_ecc_cipher(SSL *s)
 	alg_a = S3I(s)->hs.cipher->algorithm_auth;
 	alg_k = S3I(s)->hs.cipher->algorithm_mkey;
 
-	return SSI(s)->tlsext_ecpointformatlist != NULL &&
-	    SSI(s)->tlsext_ecpointformatlist_length > 0 &&
+	return s->session->tlsext_ecpointformatlist != NULL &&
+	    s->session->tlsext_ecpointformatlist_length > 0 &&
 	    ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA));
 }
 

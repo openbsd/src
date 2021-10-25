@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.366 2021/10/23 20:42:50 beck Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.367 2021/10/25 10:01:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -412,28 +412,6 @@ struct ssl_method_st {
 	unsigned int enc_flags;		/* SSL_ENC_FLAG_* */
 };
 
-typedef struct ssl_session_internal_st {
-	CRYPTO_EX_DATA ex_data; /* application specific data */
-
-	/* These are used to make removal of session-ids more
-	 * efficient and to implement a maximum cache size. */
-	struct ssl_session_st *prev, *next;
-
-	/* Used to indicate that session resumption is not allowed.
-	 * Applications can also set this bit for a new session via
-	 * not_resumable_session_cb to disable session caching and tickets. */
-	int not_resumable;
-
-	/* The cert is the certificate used to establish this connection */
-	struct sess_cert_st /* SESS_CERT */ *sess_cert;
-
-	size_t tlsext_ecpointformatlist_length;
-	uint8_t *tlsext_ecpointformatlist; /* peer's list */
-	size_t tlsext_supportedgroups_length;
-	uint16_t *tlsext_supportedgroups; /* peer's list */
-} SSL_SESSION_INTERNAL;
-#define SSI(s) (s->session->internal)
-
 /* Lets make this into an ASN.1 type structure as follows
  * SSL_SESSION_ID ::= SEQUENCE {
  *	version 		INTEGER,	-- structure version number
@@ -500,7 +478,24 @@ struct ssl_session_st {
 	size_t tlsext_ticklen;			/* Session ticket length */
 	uint32_t tlsext_tick_lifetime_hint;	/* Session lifetime hint in seconds */
 
-	struct ssl_session_internal_st *internal;
+	CRYPTO_EX_DATA ex_data; /* application specific data */
+
+	/* These are used to make removal of session-ids more
+	 * efficient and to implement a maximum cache size. */
+	struct ssl_session_st *prev, *next;
+
+	/* Used to indicate that session resumption is not allowed.
+	 * Applications can also set this bit for a new session via
+	 * not_resumable_session_cb to disable session caching and tickets. */
+	int not_resumable;
+
+	/* The cert is the certificate used to establish this connection */
+	struct sess_cert_st /* SESS_CERT */ *sess_cert;
+
+	size_t tlsext_ecpointformatlist_length;
+	uint8_t *tlsext_ecpointformatlist; /* peer's list */
+	size_t tlsext_supportedgroups_length;
+	uint16_t *tlsext_supportedgroups; /* peer's list */
 };
 
 typedef struct cert_pkey_st {

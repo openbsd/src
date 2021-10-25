@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.86 2021/10/23 14:40:54 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.87 2021/10/25 10:01:46 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -922,16 +922,16 @@ tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 	if ((cert_idx = ssl_cert_type(cert, pkey)) < 0)
 		goto err;
 
-	ssl_sess_cert_free(SSI(s)->sess_cert);
-	if ((SSI(s)->sess_cert = ssl_sess_cert_new()) == NULL)
+	ssl_sess_cert_free(s->session->sess_cert);
+	if ((s->session->sess_cert = ssl_sess_cert_new()) == NULL)
 		goto err;
 
-	SSI(s)->sess_cert->cert_chain = certs;
+	s->session->sess_cert->cert_chain = certs;
 	certs = NULL;
 
 	X509_up_ref(cert);
-	SSI(s)->sess_cert->peer_pkeys[cert_idx].x509 = cert;
-	SSI(s)->sess_cert->peer_key = &(SSI(s)->sess_cert->peer_pkeys[cert_idx]);
+	s->session->sess_cert->peer_pkeys[cert_idx].x509 = cert;
+	s->session->sess_cert->peer_key = &(s->session->sess_cert->peer_pkeys[cert_idx]);
 
 	X509_free(s->session->peer);
 

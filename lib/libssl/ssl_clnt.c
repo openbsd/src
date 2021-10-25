@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.116 2021/10/23 16:11:30 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.117 2021/10/25 10:01:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -655,7 +655,7 @@ ssl3_send_client_hello(SSL *s)
 		if (sess == NULL ||
 		    sess->ssl_version != s->version ||
 		    (!sess->session_id_length && !sess->tlsext_tick) ||
-		    sess->internal->not_resumable) {
+		    sess->not_resumable) {
 			if (!ssl_get_new_session(s, 0))
 				goto err;
 		}
@@ -1157,8 +1157,8 @@ ssl3_get_server_certificate(SSL *s)
 	sc = ssl_sess_cert_new();
 	if (sc == NULL)
 		goto err;
-	ssl_sess_cert_free(SSI(s)->sess_cert);
-	SSI(s)->sess_cert = sc;
+	ssl_sess_cert_free(s->session->sess_cert);
+	s->session->sess_cert = sc;
 
 	sc->cert_chain = sk;
 	/*
@@ -1231,7 +1231,7 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	int al;
 
 	alg_a = S3I(s)->hs.cipher->algorithm_auth;
-	sc = SSI(s)->sess_cert;
+	sc = s->session->sess_cert;
 
 	if ((dh = DH_new()) == NULL) {
 		SSLerror(s, ERR_R_DH_LIB);
@@ -1359,7 +1359,7 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	int al;
 
 	alg_a = S3I(s)->hs.cipher->algorithm_auth;
-	sc = SSI(s)->sess_cert;
+	sc = s->session->sess_cert;
 
 	/* Only named curves are supported. */
 	if (!CBS_get_u8(cbs, &curve_type) ||
@@ -1468,18 +1468,18 @@ ssl3_get_server_key_exchange(SSL *s)
 		return (1);
 	}
 
-	if (SSI(s)->sess_cert != NULL) {
-		DH_free(SSI(s)->sess_cert->peer_dh_tmp);
-		SSI(s)->sess_cert->peer_dh_tmp = NULL;
+	if (s->session->sess_cert != NULL) {
+		DH_free(s->session->sess_cert->peer_dh_tmp);
+		s->session->sess_cert->peer_dh_tmp = NULL;
 
-		EC_KEY_free(SSI(s)->sess_cert->peer_ecdh_tmp);
-		SSI(s)->sess_cert->peer_ecdh_tmp = NULL;
+		EC_KEY_free(s->session->sess_cert->peer_ecdh_tmp);
+		s->session->sess_cert->peer_ecdh_tmp = NULL;
 
-		free(SSI(s)->sess_cert->peer_x25519_tmp);
-		SSI(s)->sess_cert->peer_x25519_tmp = NULL;
+		free(s->session->sess_cert->peer_x25519_tmp);
+		s->session->sess_cert->peer_x25519_tmp = NULL;
 	} else {
-		SSI(s)->sess_cert = ssl_sess_cert_new();
-		if (SSI(s)->sess_cert == NULL)
+		s->session->sess_cert = ssl_sess_cert_new();
+		if (s->session->sess_cert == NULL)
 			goto err;
 	}
 
@@ -2267,7 +2267,7 @@ ssl3_send_client_key_exchange(SSL *s)
 	if (S3I(s)->hs.state == SSL3_ST_CW_KEY_EXCH_A) {
 		alg_k = S3I(s)->hs.cipher->algorithm_mkey;
 
-		if ((sess_cert = SSI(s)->sess_cert) == NULL) {
+		if ((sess_cert = s->session->sess_cert) == NULL) {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
 			    SSL_AD_UNEXPECTED_MESSAGE);
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
@@ -2670,12 +2670,12 @@ ssl3_check_cert_and_algorithm(SSL *s)
 	if (alg_a & SSL_aNULL)
 		return (1);
 
-	sc = SSI(s)->sess_cert;
+	sc = s->session->sess_cert;
 	if (sc == NULL) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
-	dh = SSI(s)->sess_cert->peer_dh_tmp;
+	dh = s->session->sess_cert->peer_dh_tmp;
 
 	/* This is the passed certificate. */
 

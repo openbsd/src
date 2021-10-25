@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.99 2021/09/10 09:25:29 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.100 2021/10/25 10:01:46 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -243,7 +243,7 @@ tlsext_supportedgroups_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
 		int i;
 
 		if (S3I(s)->hs.tls13.hrr) {
-			if (SSI(s)->tlsext_supportedgroups == NULL) {
+			if (s->session->tlsext_supportedgroups == NULL) {
 				*alert = SSL_AD_HANDSHAKE_FAILURE;
 				return 0;
 			}
@@ -251,7 +251,7 @@ tlsext_supportedgroups_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
 			 * In the case of TLSv1.3 the client cannot change
 			 * the supported groups.
 			 */
-			if (groups_len != SSI(s)->tlsext_supportedgroups_length) {
+			if (groups_len != s->session->tlsext_supportedgroups_length) {
 				*alert = SSL_AD_ILLEGAL_PARAMETER;
 				return 0;
 			}
@@ -260,7 +260,7 @@ tlsext_supportedgroups_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
 
 				if (!CBS_get_u16(&grouplist, &group))
 					goto err;
-				if (SSI(s)->tlsext_supportedgroups[i] != group) {
+				if (s->session->tlsext_supportedgroups[i] != group) {
 					*alert = SSL_AD_ILLEGAL_PARAMETER;
 					return 0;
 				}
@@ -269,7 +269,7 @@ tlsext_supportedgroups_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
 			return 1;
 		}
 
-		if (SSI(s)->tlsext_supportedgroups != NULL)
+		if (s->session->tlsext_supportedgroups != NULL)
 			goto err;
 
 		if ((groups = reallocarray(NULL, groups_len,
@@ -290,8 +290,8 @@ tlsext_supportedgroups_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
 			goto err;
 		}
 
-		SSI(s)->tlsext_supportedgroups = groups;
-		SSI(s)->tlsext_supportedgroups_length = groups_len;
+		s->session->tlsext_supportedgroups = groups;
+		s->session->tlsext_supportedgroups_length = groups_len;
 	}
 
 	return 1;
@@ -383,8 +383,8 @@ tlsext_ecpf_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	}
 
 	if (!s->internal->hit) {
-		if (!CBS_stow(&ecpf, &(SSI(s)->tlsext_ecpointformatlist),
-		    &(SSI(s)->tlsext_ecpointformatlist_length))) {
+		if (!CBS_stow(&ecpf, &(s->session->tlsext_ecpointformatlist),
+		    &(s->session->tlsext_ecpointformatlist_length))) {
 			*alert = SSL_AD_INTERNAL_ERROR;
 			return 0;
 		}

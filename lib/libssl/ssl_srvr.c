@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.122 2021/10/23 14:40:54 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.123 2021/10/25 10:01:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2433,15 +2433,15 @@ ssl3_get_client_certificate(SSL *s)
 	 * With the current implementation, sess_cert will always be NULL
 	 * when we arrive here
 	 */
-	if (SSI(s)->sess_cert == NULL) {
-		SSI(s)->sess_cert = ssl_sess_cert_new();
-		if (SSI(s)->sess_cert == NULL) {
+	if (s->session->sess_cert == NULL) {
+		s->session->sess_cert = ssl_sess_cert_new();
+		if (s->session->sess_cert == NULL) {
 			SSLerror(s, ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
-	sk_X509_pop_free(SSI(s)->sess_cert->cert_chain, X509_free);
-	SSI(s)->sess_cert->cert_chain = sk;
+	sk_X509_pop_free(s->session->sess_cert->cert_chain, X509_free);
+	s->session->sess_cert->cert_chain = sk;
 
 	/*
 	 * Inconsistency alert: cert_chain does *not* include the

@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.182 2021/07/01 17:53:39 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.183 2021/10/25 10:01:46 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -329,8 +329,8 @@ tls1_get_formatlist(SSL *s, int client_formats, const uint8_t **pformats,
     size_t *pformatslen)
 {
 	if (client_formats != 0) {
-		*pformats = SSI(s)->tlsext_ecpointformatlist;
-		*pformatslen = SSI(s)->tlsext_ecpointformatlist_length;
+		*pformats = s->session->tlsext_ecpointformatlist;
+		*pformatslen = s->session->tlsext_ecpointformatlist_length;
 		return;
 	}
 
@@ -352,8 +352,8 @@ tls1_get_group_list(SSL *s, int client_groups, const uint16_t **pgroups,
     size_t *pgroupslen)
 {
 	if (client_groups != 0) {
-		*pgroups = SSI(s)->tlsext_supportedgroups;
-		*pgroupslen = SSI(s)->tlsext_supportedgroups_length;
+		*pgroups = s->session->tlsext_supportedgroups;
+		*pgroupslen = s->session->tlsext_supportedgroups_length;
 		return;
 	}
 
