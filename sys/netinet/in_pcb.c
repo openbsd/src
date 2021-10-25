@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.255 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.256 2021/10/25 22:20:47 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -524,14 +524,6 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 #if NSTOEPLITZ > 0
 	inp->inp_flowid = stoeplitz_ip4port(inp->inp_faddr.s_addr,
 	    inp->inp_laddr.s_addr, inp->inp_fport, inp->inp_lport);
-#endif
-#ifdef IPSEC
-	{
-		/* Cause an IPsec SA to be established. */
-		/* error is just ignored */
-		ipsp_spd_inp(NULL, AF_INET, 0, &error, IPSP_DIRECTION_OUT,
-		    NULL, inp, NULL);
-	}
 #endif
 	return (0);
 }
