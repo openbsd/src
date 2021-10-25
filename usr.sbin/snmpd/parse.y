@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.71 2021/10/20 16:00:47 gerhard Exp $	*/
+/*	$OpenBSD: parse.y,v 1.72 2021/10/25 11:21:32 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -821,7 +821,7 @@ hostdef		: STRING hostoid hostauth srcaddr	{
 			}
 			tr->ta_oid = $2;
 			tr->ta_version = $3.type;
-			if ($3.type == ADDRESS_FLAG_SNMPV2) {
+			if ($3.type == SNMP_V2) {
 				(void)strlcpy(tr->ta_community, $3.data,
 				    sizeof(tr->ta_community));
 				free($3.data);
