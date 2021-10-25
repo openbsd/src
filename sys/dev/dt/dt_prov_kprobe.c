@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_kprobe.c,v 1.1 2021/09/03 16:45:45 jasper Exp $	*/
+/*	$OpenBSD: dt_prov_kprobe.c,v 1.2 2021/10/25 17:15:29 jasper Exp $	*/
 
 /*
  * Copyright (c) 2020 Tom Rollet <tom.rollet@epita.fr>
@@ -243,7 +243,6 @@ dt_prov_kprobe_alloc(struct dt_probe *dtp, struct dt_softc *sc,
 		return ENOMEM;
 
 	/* Patch only if it's first pcb referencing this probe */
-	mtx_enter(&dtp->dtp_mtx);
 	dtp->dtp_ref++;
 	KASSERT(dtp->dtp_ref != 0);
 
@@ -252,7 +251,6 @@ dt_prov_kprobe_alloc(struct dt_probe *dtp, struct dt_softc *sc,
 		db_write_bytes(dtp->dtp_addr, BKPT_SIZE, &patch);
 		intr_restore(s);
 	}
-	mtx_leave(&dtp->dtp_mtx);
 
 	dp->dp_filter = dtrq->dtrq_filter;
 	dp->dp_evtflags = dtrq->dtrq_evtflags & DTEVT_PROV_KPROBE;
@@ -282,7 +280,6 @@ dt_prov_kprobe_dealloc(struct dt_probe *dtp, struct dt_softc *sc,
 	} else
 		KASSERT(0 && "Trying to dealloc not yet implemented probe type");
 
-	mtx_enter(&dtp->dtp_mtx);
 	dtp->dtp_ref--;
 
 	if (dtp->dtp_ref == 0) {
@@ -290,8 +287,6 @@ dt_prov_kprobe_dealloc(struct dt_probe *dtp, struct dt_softc *sc,
 		db_write_bytes(dtp->dtp_addr, size, &patch);
 		intr_restore(s);
 	}
-
-	mtx_leave(&dtp->dtp_mtx);
 
 	/* Deallocation of PCB is done by dt_pcb_purge when closing the dev */
 	return 0;
@@ -417,8 +412,6 @@ dt_prov_kprobe_patch_all_entry(void)
 	for (i = 0; i < PPTMASK; ++i) {
 		SLIST_FOREACH(kprobe_dtp, &dtpf_entry[i], kprobe_next) {
 			dtp = kprobe_dtp->dtp;
-
-			mtx_enter(&dtp->dtp_mtx);
 			dtp->dtp_ref++;
 
 			if (dtp->dtp_ref == 1) {
@@ -427,8 +420,6 @@ dt_prov_kprobe_patch_all_entry(void)
 				db_write_bytes(dtp->dtp_addr, BKPT_SIZE, &patch);
 				intr_restore(s);
 			}
-
-			mtx_leave(&dtp->dtp_mtx);
 		}
 	}
 }
@@ -445,8 +436,6 @@ dt_prov_kprobe_depatch_all_entry(void)
 	for (i = 0; i < PPTMASK; ++i) {
 		SLIST_FOREACH(kprobe_dtp, &dtpf_entry[i], kprobe_next) {
 			dtp = kprobe_dtp->dtp;
-
-			mtx_enter(&dtp->dtp_mtx);
 			dtp->dtp_ref--;
 
 			if (dtp->dtp_ref == 0) {
@@ -455,8 +444,6 @@ dt_prov_kprobe_depatch_all_entry(void)
 				db_write_bytes(dtp->dtp_addr, SSF_SIZE, &patch);
 				intr_restore(s);
 			}
-
-			mtx_leave(&dtp->dtp_mtx);
 		}
 
 	}
