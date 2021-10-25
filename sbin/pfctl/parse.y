@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.710 2021/10/15 15:01:27 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.711 2021/10/25 14:50:29 sashan Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -358,7 +358,6 @@ void		 expand_label_addr(const char *, char *, size_t, u_int8_t,
 void		 expand_label_port(const char *, char *, size_t,
 		    struct node_port *);
 void		 expand_label_proto(const char *, char *, size_t, u_int8_t);
-void		 expand_label_nr(const char *, char *, size_t);
 void		 expand_label(char *, size_t, const char *, u_int8_t,
 		    struct node_host *, struct node_port *, struct node_host *,
 		    struct node_port *, u_int8_t);
@@ -4196,14 +4195,20 @@ expand_label_proto(const char *name, char *label, size_t len, u_int8_t proto)
 }
 
 void
-expand_label_nr(const char *name, char *label, size_t len)
+pfctl_expand_label_nr(struct pf_rule *r, unsigned int rno)
 {
 	char n[11];
 
-	if (strstr(label, name) != NULL) {
-		snprintf(n, sizeof(n), "%u", pf->anchor->match);
-		expand_label_str(label, len, name, n);
-	}
+	snprintf(n, sizeof(n), "%u", rno);
+
+	if (strstr(r->label, "$nr") != NULL)
+		expand_label_str(r->label, PF_RULE_LABEL_SIZE, "$nr", n);
+
+	if (strstr(r->tagname, "$nr") != NULL)
+		expand_label_str(r->tagname, PF_TAG_NAME_SIZE, "$nr", n);
+
+	if (strstr(r->match_tagname, "$nr") != NULL)
+		expand_label_str(r->match_tagname, PF_TAG_NAME_SIZE, "$nr", n);
 }
 
 void
@@ -4218,7 +4223,7 @@ expand_label(char *label, size_t len, const char *ifname, sa_family_t af,
 	expand_label_port("$srcport", label, len, src_port);
 	expand_label_port("$dstport", label, len, dst_port);
 	expand_label_proto("$proto", label, len, proto);
-	expand_label_nr("$nr", label, len);
+	/* rule number, '$nr', gets expanded after optimizer */
 }
 
 int
