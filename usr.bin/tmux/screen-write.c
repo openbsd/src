@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.202 2021/10/20 09:50:40 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.203 2021/10/25 09:22:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -184,8 +184,10 @@ screen_write_initctx(struct screen_write_ctx *ctx, struct tty_ctx *ttyctx,
 	if (ctx->init_ctx_cb != NULL) {
 		ctx->init_ctx_cb(ctx, ttyctx);
 		if (ttyctx->palette != NULL) {
-			ttyctx->defaults.fg = ttyctx->palette->fg;
-			ttyctx->defaults.bg = ttyctx->palette->bg;
+			if (COLOUR_DEFAULT(ttyctx->defaults.fg))
+				ttyctx->defaults.fg = ttyctx->palette->fg;
+			if (COLOUR_DEFAULT(ttyctx->defaults.bg))
+				ttyctx->defaults.bg = ttyctx->palette->bg;
 		}
 	} else {
 		ttyctx->redraw_cb = screen_write_redraw_cb;
