@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.203 2021/10/21 09:59:13 claudio Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.204 2021/10/25 10:24:54 claudio Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -231,6 +231,8 @@ struct file *
 fd_getfile(struct filedesc *fdp, int fd)
 {
 	struct file *fp;
+
+	vfs_stall_barrier();
 
 	if ((u_int)fd >= fdp->fd_nfiles)
 		return (NULL);

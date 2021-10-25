@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.117 2021/10/21 09:59:14 claudio Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.118 2021/10/25 10:24:54 claudio Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -564,8 +564,6 @@ int
 vn_lock(struct vnode *vp, int flags)
 {
 	int error, xlocked, do_wakeup;
-
-	vfs_stall_barrier();
 
 	do {
 		mtx_enter(&vnode_mtx);

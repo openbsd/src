@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.63 2021/10/21 09:59:14 claudio Exp $	*/
+/*	$OpenBSD: file.h,v 1.64 2021/10/25 10:24:54 claudio Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -106,7 +106,11 @@ struct file {
 #define FIF_INSERTED		0x80	/* present in `filehead' */
 
 #define FREF(fp) \
-	atomic_inc_int(&(fp)->f_count)
+	do { \
+		extern void vfs_stall_barrier(void); \
+		vfs_stall_barrier(); \
+		atomic_inc_int(&(fp)->f_count); \
+	} while (0)
 
 #define FRELE(fp,p) \
 	(atomic_dec_int_nv(&fp->f_count) == 0 ? fdrop(fp, p) : 0)
