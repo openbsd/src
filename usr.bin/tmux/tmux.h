@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1148 2021/10/20 09:50:40 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1149 2021/10/25 09:38:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3155,7 +3155,8 @@ typedef void (*popup_finish_edit_cb)(char *, size_t, void *);
 int		 popup_display(int, int, struct cmdq_item *, u_int, u_int,
 		    u_int, u_int, struct environ *, const char *, int, char **,
 		    const char *, const char *, struct client *,
-		    struct session *, popup_close_cb, void *);
+		    struct session *, const char *, const char *,
+		    popup_close_cb, void *);
 int		 popup_editor(struct client *, const char *, size_t,
 		    popup_finish_edit_cb, void *);
 

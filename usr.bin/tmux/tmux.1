@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.864 2021/10/20 09:50:40 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.865 2021/10/25 09:38:36 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 20 2021 $
+.Dd $Mdocdate: October 25 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5800,6 +5800,8 @@ forwards any input read from stdin to the empty pane given by
 .Op Fl d Ar start-directory
 .Op Fl e Ar environment
 .Op Fl h Ar height
+.Op Fl s Ar style
+.Op Fl S Ar border-style
 .Op Fl t Ar target-pane
 .Op Fl T Ar title
 .Op Fl w Ar width
@@ -5852,6 +5854,16 @@ See
 .Ic popup-border-lines
 for possible values for
 .Ar border-lines .
+.Pp
+.Fl s
+sets the style for the popup and
+.Fl S
+sets the style for the popup border.
+For how to specify
+.Ar style ,
+see the
+.Sx STYLES
+section.
 .Pp
 .Fl e
 takes the form
