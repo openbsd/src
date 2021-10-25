@@ -2106,6 +2106,7 @@
 ./usr/share/man/man3/SSL_num_renegotiations.3
 ./usr/share/man/man3/SSL_pending.3
 ./usr/share/man/man3/SSL_read.3
+./usr/share/man/man3/SSL_read_early_data.3
 ./usr/share/man/man3/SSL_renegotiate.3
 ./usr/share/man/man3/SSL_rstate_string.3
 ./usr/share/man/man3/SSL_session_reused.3
