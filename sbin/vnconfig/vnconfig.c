@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.6 2021/09/22 20:43:16 deraadt Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.7 2021/10/25 19:54:29 kn Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -332,7 +332,7 @@ int
 unconfig(char *vnd)
 {
 	struct vnd_ioctl vndio;
-	int fd, rv = -1, unit;
+	int fd, rv = -1;
 	char *rdev;
 
 	if ((fd = opendev(vnd, O_RDONLY, OPENDEV_PART, &rdev)) == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.69 2020/01/26 12:41:21 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.70 2021/10/25 19:54:29 kn Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -685,7 +685,6 @@ handle_job_status(Job *job, int status)
 int
 run_gnode(GNode *gn)
 {
-	Job *j;
 	if (!gn || (gn->type & OP_DUMMY))
 		return NOSUCHNODE;
 

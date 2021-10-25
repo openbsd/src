@@ -434,7 +434,7 @@ static int
 backc(void)
 {
 	wchar_t	 ch, prev_ch;
-	int	 i, len, width;
+	int	 len, width;
 
 	if ((len = mbtowc_left(&ch, linebuf + curr, curr)) <= 0)
 		return (0);

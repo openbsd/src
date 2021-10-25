@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.10 2019/06/28 13:35:04 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.11 2021/10/25 19:54:29 kn Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -192,7 +192,7 @@ initcpu(void)
 {
 	field_view	*v;
 	size_t		 size = sizeof(cpu_count);
-	int		 mib[2], i;
+	int		 mib[2];
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_NCPU;

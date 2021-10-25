@@ -1,4 +1,4 @@
-/*	$OpenBSD: dw.c,v 1.4 2017/09/27 08:59:38 mpi Exp $ */
+/*	$OpenBSD: dw.c,v 1.5 2021/10/25 19:54:29 kn Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot
@@ -49,10 +49,6 @@ static int	 dw_read_string(struct dwbuf *, const char **);
 static int	 dw_read_buf(struct dwbuf *, struct dwbuf *, size_t);
 
 static int	 dw_skip_bytes(struct dwbuf *, size_t);
-
-static int	 dw_read_filename(struct dwbuf *, const char **, const char **,
-		     uint8_t, uint64_t);
-
 
 static int	 dw_attr_parse(struct dwbuf *, struct dwattr *, uint8_t,
 		     struct dwaval_queue *);
@@ -167,55 +163,6 @@ dw_skip_bytes(struct dwbuf *d, size_t n)
 	d->len -= n;
 	return 0;
 }
-
-static int
-dw_read_filename(struct dwbuf *names, const char **outdirname,
-    const char **outbasename, uint8_t opcode_base, uint64_t file)
-{
-	struct dwbuf dirnames;
-	const char *basename = NULL, *dirname = NULL;
-	uint64_t mtime, size, dummy, dir = 0;
-	const char *name;
-	size_t i;
-
-	if (file == 0)
-		return -1;
-
-	/* Skip over opcode table. */
-	for (i = 1; i < opcode_base; i++) {
-		if (dw_read_uleb128(names, &dummy))
-			return -1;
-	}
-
-	/* Skip over directory name table for now. */
-	dirnames = *names;
-	for (;;) {
-		if (dw_read_string(names, &name))
-			return -1;
-		if (*name == '\0')
-			break;
-	}
-
-	/* Locate file entry. */
-	for (i = 0; i < file; i++) {
-		if (dw_read_string(names, &basename) || *basename == '\0' ||
-		    dw_read_uleb128(names, &dir) ||
-		    dw_read_uleb128(names, &mtime) ||
-		    dw_read_uleb128(names, &size))
-			return -1;
-	}
-
-	for (i = 0; i < dir; i++) {
-		if (!dw_read_string(&dirnames, &dirname) || *dirname == '\0')
-			return -1;
-	}
-
-	*outdirname = dirname;
-	*outbasename = basename;
-
-	return 0;
-}
-
 
 const char *
 dw_tag2name(uint64_t tag)
