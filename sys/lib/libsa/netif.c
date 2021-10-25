@@ -1,4 +1,4 @@
-/*	$OpenBSD: netif.c,v 1.12 2017/09/08 05:36:53 deraadt Exp $	*/
+/*	$OpenBSD: netif.c,v 1.13 2021/10/25 15:59:46 patrick Exp $	*/
 /*	$NetBSD: netif.c,v 1.7 1996/10/13 02:29:03 christos Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ netif_match(struct netif *nif, void *machdep_hint)
 struct netif *
 netif_select(void *machdep_hint)
 {
-	int d, u, unit_done, s;
+	int d, u, s;
 	struct netif_driver *drv;
 	struct netif cur_if;
 	static struct netif best_if;
@@ -106,7 +106,6 @@ netif_select(void *machdep_hint)
 
 		for (u = 0; u < drv->netif_nifs; u++) {
 			cur_if.nif_unit = u;
-			unit_done = 0;
 
 #ifdef NETIF_DEBUG
 			if (netif_debug)

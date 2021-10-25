@@ -1,4 +1,4 @@
-/*	$OpenBSD: tftp.c,v 1.6 2014/07/13 15:31:20 mpi Exp $	*/
+/*	$OpenBSD: tftp.c,v 1.7 2021/10/25 15:59:46 patrick Exp $	*/
 /*	$NetBSD: tftp.c,v 1.15 2003/08/18 15:45:29 dsl Exp $	 */
 
 /*
@@ -383,9 +383,6 @@ tftp_write(struct open_file *f, void *start, size_t size, size_t *resid)
 int
 tftp_stat(struct open_file *f, struct stat *sb)
 {
-	struct tftp_handle *tftpfile;
-	tftpfile = (struct tftp_handle *) f->f_fsdata;
-
 	sb->st_mode = 0444;
 	sb->st_nlink = 1;
 	sb->st_uid = 0;
