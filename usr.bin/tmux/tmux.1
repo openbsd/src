@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.866 2021/10/25 20:32:42 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.867 2021/10/25 21:21:16 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -4831,6 +4831,10 @@ replaces a numeric argument by its ASCII equivalent, so
 .Ql #{a:98}
 results in
 .Ql b .
+.Ql c
+replaces a
+.Nm
+colour by its six-digit hexadecimal RGB value.
 .Pp
 A limit may be placed on the length of the resultant string by prefixing it
 by an

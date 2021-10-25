@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1149 2021/10/25 09:38:36 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1150 2021/10/25 21:21:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2616,6 +2616,7 @@ int	 input_key_get_mouse(struct screen *, struct mouse_event *, u_int,
 int	 colour_find_rgb(u_char, u_char, u_char);
 int	 colour_join_rgb(u_char, u_char, u_char);
 void	 colour_split_rgb(int, u_char *, u_char *, u_char *);
+int	 colour_force_rgb(int);
 const char *colour_tostring(int);
 int	 colour_fromstring(const char *s);
 int	 colour_256toRGB(int);
