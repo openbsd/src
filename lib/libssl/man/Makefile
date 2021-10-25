@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.74 2021/10/23 11:41:52 beck Exp $
+# $OpenBSD: Makefile,v 1.75 2021/10/25 15:13:52 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -103,6 +103,7 @@ MAN =	BIO_f_ssl.3 \
 	SSL_num_renegotiations.3 \
 	SSL_pending.3 \
 	SSL_read.3 \
+	SSL_read_early_data.3 \
 	SSL_renegotiate.3 \
 	SSL_rstate_string.3 \
 	SSL_session_reused.3 \
@@ -124,9 +125,6 @@ MAN =	BIO_f_ssl.3 \
 	SSL_write.3 \
 	d2i_SSL_SESSION.3 \
 	ssl.3
-
-# To be enabled after the release of OpenBSD 6.8:
-#	SSL_read_early_data.3 \
 
 all clean cleandir depend includes obj tags:
 
