@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.15 2021/09/03 16:45:45 jasper Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.16 2021/10/25 19:51:12 millert Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -529,8 +529,6 @@ dt_dev_alloc_probe(const char *func, const char *name, struct dt_provider *dtpv)
 	dtp->dtp_name = name;
 	dtp->dtp_sysnum = -1;
 	dtp->dtp_ref = 0;
-
-	mtx_init(&dtp->dtp_mtx, IPL_HIGH);
 
 	return dtp;
 }
