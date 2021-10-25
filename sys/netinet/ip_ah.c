@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.164 2021/10/24 22:34:19 tobhe Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.165 2021/10/25 09:47:02 tobhe Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -539,7 +539,6 @@ ah_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	uint8_t hl;
 	int error, rplen, clen;
 	uint64_t ibytes;
-	uint64_t rpl;
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
 #endif
@@ -740,7 +739,7 @@ ah_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 		    sizeof(u_int32_t), &btsx);
 		btsx = ntohl(btsx);
 
-		switch (checkreplaywindow(tdb, rpl, btsx, &esn, 1)) {
+		switch (checkreplaywindow(tdb, tdb->tdb_rpl, btsx, &esn, 1)) {
 		case 0: /* All's well. */
 #if NPFSYNC > 0
 			pfsync_update_tdb(tdb,0);
