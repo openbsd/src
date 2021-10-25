@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.25 2021/09/09 15:21:39 krw Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.26 2021/10/25 13:51:25 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -15,9 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef _CMD_H
-#define _CMD_H
 
 #define CMD_EXIT	0x0000
 #define CMD_QUIT	0x0001
@@ -40,5 +37,3 @@ int		Xabort(char *, struct mbr *);
 int		Xhelp(char *, struct mbr *);
 int		Xflag(char *, struct mbr *);
 int		Xupdate(char *, struct mbr *);
-
-#endif /* _CMD_H */

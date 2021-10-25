@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.h,v 1.30 2021/09/02 18:07:45 krw Exp $	*/
+/*	$OpenBSD: part.h,v 1.31 2021/10/25 13:51:25 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -15,9 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#ifndef _PART_H
-#define _PART_H
 
 struct prt {
 	uint64_t	prt_bs;
@@ -45,5 +42,3 @@ void PRT_fix_BN(struct prt *, const int);
 
 /* This does bs/ns -> CHS */
 void PRT_fix_CHS(struct prt *);
-
-#endif /* _PART_H */
