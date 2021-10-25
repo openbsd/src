@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbrk.S,v 1.10 2017/08/19 18:24:06 deraadt Exp $	*/
+/*	$OpenBSD: sbrk.S,v 1.11 2021/10/25 14:19:51 kettenis Exp $	*/
 /*	$NetBSD: sbrk.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
 
 /*-
@@ -53,7 +53,6 @@ __curbrk:
 	END(__curbrk)
 	.type	__curbrk,@object
 
-	.weak	sbrk
 ENTRY(sbrk)
 	movq	__curbrk(%rip),%rax
 	movslq	%edi,%rsi
@@ -68,3 +67,4 @@ ENTRY(sbrk)
 	SET_ERRNO
 	ret
 END(sbrk)
+	.weak	sbrk
