@@ -25,8 +25,6 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-#include "ext_dat.h"
-
 #ifndef OPENSSL_NO_RFC3779
 
 static const ASN1_TEMPLATE ASRange_seq_tt[] = {
