@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.1 2021/10/24 17:53:07 claudio Exp $ */
+/*	$OpenBSD: print.c,v 1.2 2021/10/25 14:07:56 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -159,9 +159,6 @@ roa_print(const struct roa *p)
 void
 gbr_print(const struct gbr *p)
 {
-	char	 buf[128];
-	size_t	 i;
-
 	printf("Subject key identifier: %s\n", pretty_key_id(p->ski));
 	printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 	printf("Authority info access: %s\n", p->aia);
