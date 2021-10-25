@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.114 2021/10/25 10:09:28 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.115 2021/10/25 10:14:48 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -514,6 +514,7 @@ int
 dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 {
 	int al, i, ret;
+	int rrcount = 0;
 	unsigned int n;
 	SSL3_RECORD_INTERNAL *rr;
 
@@ -539,6 +540,19 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	}
 
  start:
+	/*
+	 * Do not process more than three consecutive records, otherwise the
+	 * peer can cause us to loop indefinitely. Instead, return with an
+	 * SSL_ERROR_WANT_READ so the caller can choose when to handle further
+	 * processing. In the future, the total number of non-handshake and
+	 * non-application data records per connection should probably also be
+	 * limited...
+	 */
+	if (rrcount++ >= 3) {
+		ssl_force_want_read(s);
+		return -1;
+	}
+
 	s->internal->rwstate = SSL_NOTHING;
 
 	/* S3I(s)->rrec.type	    - is the type of record

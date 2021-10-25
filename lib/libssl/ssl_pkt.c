@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.51 2021/10/25 10:09:28 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.52 2021/10/25 10:14:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -715,7 +715,8 @@ ssl3_write_pending(SSL *s, int type, const unsigned char *buf, unsigned int len)
 int
 ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 {
-	int al, i, ret, rrcount = 0;
+	int al, i, ret;
+	int rrcount = 0;
 	unsigned int n;
 	SSL3_RECORD_INTERNAL *rr;
 
