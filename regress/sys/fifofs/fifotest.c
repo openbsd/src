@@ -94,7 +94,7 @@ runtest(char *fifo, int flags, int timeout)
 
 	/* Note: O_RDWR not required by POSIX */
 	alarm(2);
-	if ((fd = open(fifo, O_RDWR | flags, 0644)) == -1) {
+	if ((fd = open(fifo, O_RDWR | flags)) == -1) {
 		printf("open %s: %s\n", fifo, strerror(errno));
 		exit(1);
 	}
@@ -168,7 +168,7 @@ eof_writer(const char *fifo, int flags)
 
 	/* connect to FIFO. */
 	alarm(2);
-	fd = open(fifo, O_WRONLY | flags, 0644);
+	fd = open(fifo, O_WRONLY | flags);
 	alarm(0);
 	if (fd == -1) {
 		printf("open %s O_WRONLY: %s\n", fifo, strerror(errno));
