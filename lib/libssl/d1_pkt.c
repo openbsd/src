@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.113 2021/10/23 13:36:03 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.114 2021/10/25 10:09:28 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -654,14 +654,9 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 			 * Application data while renegotiating is allowed.
 			 * Try reading again.
 			 */
-			BIO *bio;
-
 			S3I(s)->in_read_app_data = 2;
-			bio = SSL_get_rbio(s);
-			s->internal->rwstate = SSL_READING;
-			BIO_clear_retry_flags(bio);
-			BIO_set_retry_read(bio);
-			return (-1);
+			ssl_force_want_read(s);
+			return -1;
 		} else {
 			/* Not certain if this is the right error handling */
 			al = SSL_AD_UNEXPECTED_MESSAGE;
@@ -714,17 +709,8 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 				}
 
 				if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-					if (S3I(s)->rbuf.left == 0) /* no read-ahead left? */
-					{
-						BIO *bio;
-						/* In the case where we try to read application data,
-						 * but we trigger an SSL handshake, we return -1 with
-						 * the retry option set.  Otherwise renegotiation may
-						 * cause nasty problems in the blocking world */
-						s->internal->rwstate = SSL_READING;
-						bio = SSL_get_rbio(s);
-						BIO_clear_retry_flags(bio);
-						BIO_set_retry_read(bio);
+					if (S3I(s)->rbuf.left == 0) {
+						ssl_force_want_read(s);
 						return (-1);
 					}
 				}
@@ -851,17 +837,8 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		}
 
 		if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-			if (S3I(s)->rbuf.left == 0) /* no read-ahead left? */
-			{
-				BIO *bio;
-				/* In the case where we try to read application data,
-				 * but we trigger an SSL handshake, we return -1 with
-				 * the retry option set.  Otherwise renegotiation may
-				 * cause nasty problems in the blocking world */
-				s->internal->rwstate = SSL_READING;
-				bio = SSL_get_rbio(s);
-				BIO_clear_retry_flags(bio);
-				BIO_set_retry_read(bio);
+			if (S3I(s)->rbuf.left == 0) {
+				ssl_force_want_read(s);
 				return (-1);
 			}
 		}

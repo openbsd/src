@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.50 2021/08/30 19:25:43 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.51 2021/10/25 10:09:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,14 +127,15 @@ static int ssl3_get_record(SSL *s);
  * Force a WANT_READ return for certain error conditions where
  * we don't want to spin internally.
  */
-static void
+void
 ssl_force_want_read(SSL *s)
 {
-	BIO * bio;
+	BIO *bio;
 
 	bio = SSL_get_rbio(s);
 	BIO_clear_retry_flags(bio);
 	BIO_set_retry_read(bio);
+
 	s->internal->rwstate = SSL_READING;
 }
 
@@ -931,11 +932,6 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 				if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
 					if (S3I(s)->rbuf.left == 0) {
-						/* no read-ahead left? */
-			/* In the case where we try to read application data,
-			 * but we trigger an SSL handshake, we return -1 with
-			 * the retry option set.  Otherwise renegotiation may
-			 * cause nasty problems in the blocking world */
 						ssl_force_want_read(s);
 						return (-1);
 					}
@@ -1079,11 +1075,7 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		}
 
 		if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-			if (S3I(s)->rbuf.left == 0) { /* no read-ahead left? */
-				/* In the case where we try to read application data,
-				 * but we trigger an SSL handshake, we return -1 with
-				 * the retry option set.  Otherwise renegotiation may
-				 * cause nasty problems in the blocking world */
+			if (S3I(s)->rbuf.left == 0) {
 				ssl_force_want_read(s);
 				return (-1);
 			}

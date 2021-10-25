@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.367 2021/10/25 10:01:46 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.368 2021/10/25 10:09:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1371,6 +1371,8 @@ uint16_t ssl3_cipher_get_value(const SSL_CIPHER *c);
 int ssl3_renegotiate(SSL *ssl);
 
 int ssl3_renegotiate_check(SSL *ssl);
+
+void ssl_force_want_read(SSL *s);
 
 int ssl3_dispatch_alert(SSL *s);
 int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
