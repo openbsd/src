@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.16 2021/10/23 20:01:16 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.17 2021/10/25 18:25:22 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -38,11 +38,15 @@
 #include "extern.h"
 
 static void		 build_chain(const struct auth *, STACK_OF(X509) **);
-static struct crl	*get_crl(const struct auth *, struct crl_tree *);
+static struct crl	*get_crl(const struct auth *);
 static void		 build_crls(const struct crl *, STACK_OF(X509_CRL) **);
 
 /* Limit how deep the RPKI tree can be. */
 #define	MAX_CERT_DEPTH	12
+
+static X509_STORE_CTX	*ctx;
+static struct auth_tree  auths = RB_INITIALIZER(&auths);
+static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
 
 /*
  * Parse and validate a ROA.
@@ -50,8 +54,7 @@ static void		 build_crls(const struct crl *, STACK_OF(X509_CRL) **);
  * Returns the roa on success, NULL on failure.
  */
 static struct roa *
-proc_parser_roa(struct entity *entp, X509_STORE_CTX *ctx,
-    struct auth_tree *auths, struct crl_tree *crlt)
+proc_parser_roa(struct entity *entp)
 {
 	struct roa		*roa;
 	X509			*x509;
@@ -64,10 +67,10 @@ proc_parser_roa(struct entity *entp, X509_STORE_CTX *ctx,
 	if ((roa = roa_parse(&x509, entp->file)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(entp->file, auths, roa->ski, roa->aki);
+	a = valid_ski_aki(entp->file, &auths, roa->ski, roa->aki);
 
 	build_chain(a, &chain);
-	crl = get_crl(a, crlt);
+	crl = get_crl(a);
 	build_crls(crl, &crls);
 
 	assert(x509 != NULL);
@@ -113,7 +116,7 @@ proc_parser_roa(struct entity *entp, X509_STORE_CTX *ctx,
 	 * the code around roa_read() to check the "valid" field itself.
 	 */
 
-	if (valid_roa(entp->file, auths, roa))
+	if (valid_roa(entp->file, &auths, roa))
 		roa->valid = 1;
 
 	sk_X509_free(chain);
@@ -134,8 +137,7 @@ proc_parser_roa(struct entity *entp, X509_STORE_CTX *ctx,
  * Return the mft on success or NULL on failure.
  */
 static struct mft *
-proc_parser_mft(struct entity *entp, X509_STORE_CTX *ctx,
-	struct auth_tree *auths, struct crl_tree *crlt)
+proc_parser_mft(struct entity *entp)
 {
 	struct mft		*mft;
 	X509			*x509;
@@ -146,7 +148,7 @@ proc_parser_mft(struct entity *entp, X509_STORE_CTX *ctx,
 	if ((mft = mft_parse(&x509, entp->file)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(entp->file, auths, mft->ski, mft->aki);
+	a = valid_ski_aki(entp->file, &auths, mft->ski, mft->aki);
 	build_chain(a, &chain);
 
 	if (!X509_STORE_CTX_init(ctx, NULL, x509, NULL))
@@ -187,8 +189,7 @@ proc_parser_mft(struct entity *entp, X509_STORE_CTX *ctx,
  * parse failure.
  */
 static struct cert *
-proc_parser_cert(const struct entity *entp, X509_STORE_CTX *ctx,
-    struct auth_tree *auths, struct crl_tree *crlt)
+proc_parser_cert(const struct entity *entp)
 {
 	struct cert		*cert;
 	X509			*x509;
@@ -205,9 +206,9 @@ proc_parser_cert(const struct entity *entp, X509_STORE_CTX *ctx,
 	if (cert == NULL)
 		return NULL;
 
-	a = valid_ski_aki(entp->file, auths, cert->ski, cert->aki);
+	a = valid_ski_aki(entp->file, &auths, cert->ski, cert->aki);
 	build_chain(a, &chain);
-	build_crls(get_crl(a, crlt), &crls);
+	build_crls(get_crl(a), &crls);
 
 	assert(x509 != NULL);
 	if (!X509_STORE_CTX_init(ctx, NULL, x509, NULL))
@@ -236,7 +237,7 @@ proc_parser_cert(const struct entity *entp, X509_STORE_CTX *ctx,
 	sk_X509_CRL_free(crls);
 
 	/* Validate the cert to get the parent */
-	if (!valid_cert(entp->file, auths, cert)) {
+	if (!valid_cert(entp->file, &auths, cert)) {
 		X509_free(x509); // needed? XXX
 		return cert;
 	}
@@ -262,7 +263,7 @@ proc_parser_cert(const struct entity *entp, X509_STORE_CTX *ctx,
 	if (na->fn == NULL)
 		err(1, NULL);
 
-	if (RB_INSERT(auth_tree, auths, na) != NULL)
+	if (RB_INSERT(auth_tree, &auths, na) != NULL)
 		err(1, "auth tree corrupted");
 
 	return cert;
@@ -279,8 +280,7 @@ proc_parser_cert(const struct entity *entp, X509_STORE_CTX *ctx,
  * parse failure.
  */
 static struct cert *
-proc_parser_root_cert(const struct entity *entp, X509_STORE_CTX *ctx,
-    struct auth_tree *auths, struct crl_tree *crlt)
+proc_parser_root_cert(const struct entity *entp)
 {
 	char			subject[256];
 	ASN1_TIME		*notBefore, *notAfter;
@@ -327,7 +327,7 @@ proc_parser_root_cert(const struct entity *entp, X509_STORE_CTX *ctx,
 		    subject);
 		goto badcert;
 	}
-	if (!valid_ta(entp->file, auths, cert)) {
+	if (!valid_ta(entp->file, &auths, cert)) {
 		warnx("%s: certificate not a valid ta, subject='%s'",
 		    entp->file, subject);
 		goto badcert;
@@ -353,7 +353,7 @@ proc_parser_root_cert(const struct entity *entp, X509_STORE_CTX *ctx,
 	if (na->fn == NULL)
 		err(1, NULL);
 
-	if (RB_INSERT(auth_tree, auths, na) != NULL)
+	if (RB_INSERT(auth_tree, &auths, na) != NULL)
 		err(1, "auth tree corrupted");
 
 	return cert;
@@ -369,7 +369,7 @@ proc_parser_root_cert(const struct entity *entp, X509_STORE_CTX *ctx,
  * CRL tree.
  */
 static void
-proc_parser_crl(struct entity *entp, X509_STORE_CTX *ctx, struct crl_tree *crlt)
+proc_parser_crl(struct entity *entp)
 {
 	X509_CRL		*x509_crl;
 	struct crl		*crl;
@@ -399,7 +399,7 @@ proc_parser_crl(struct entity *entp, X509_STORE_CTX *ctx, struct crl_tree *crlt)
 			errx(1, "%s: mktime failed", entp->file);
 		}
 
-		if (RB_INSERT(crl_tree, crlt, crl) != NULL) {
+		if (RB_INSERT(crl_tree, &crlt, crl) != NULL) {
 			warnx("%s: duplicate AKI %s", entp->file, crl->aki);
 			free_crl(crl);
 		}
@@ -410,8 +410,7 @@ proc_parser_crl(struct entity *entp, X509_STORE_CTX *ctx, struct crl_tree *crlt)
  * Parse a ghostbuster record
  */
 static void
-proc_parser_gbr(struct entity *entp, X509_STORE_CTX *ctx,
-    struct auth_tree *auths, struct crl_tree *crlt)
+proc_parser_gbr(struct entity *entp)
 {
 	struct gbr		*gbr;
 	X509			*x509;
@@ -423,10 +422,10 @@ proc_parser_gbr(struct entity *entp, X509_STORE_CTX *ctx,
 	if ((gbr = gbr_parse(&x509, entp->file)) == NULL)
 		return;
 
-	a = valid_ski_aki(entp->file, auths, gbr->ski, gbr->aki);
+	a = valid_ski_aki(entp->file, &auths, gbr->ski, gbr->aki);
 
 	build_chain(a, &chain);
-	build_crls(get_crl(a, crlt), &crls);
+	build_crls(get_crl(a), &crls);
 
 	assert(x509 != NULL);
 	if (!X509_STORE_CTX_init(ctx, NULL, x509, NULL))
@@ -477,7 +476,7 @@ build_chain(const struct auth *a, STACK_OF(X509) **chain)
  * Find a CRL based on the auth SKI value.
  */
 static struct crl *
-get_crl(const struct auth *a, struct crl_tree *crlt)
+get_crl(const struct auth *a)
 {
 	struct crl	find;
 
@@ -485,7 +484,7 @@ get_crl(const struct auth *a, struct crl_tree *crlt)
 		return NULL;
 
 	find.aki = a->cert->ski;
-	return RB_FIND(crl_tree, crlt, &find);
+	return RB_FIND(crl_tree, &crlt, &find);
 }
 
 /*
@@ -507,6 +506,77 @@ build_crls(const struct crl *crl, STACK_OF(X509_CRL) **crls)
 		err(1, "sk_X509_CRL_push");
 }
 
+static void
+parse_entity(struct entityq *q, struct msgbuf *msgq)
+{
+	struct entity	*entp;
+	struct tal	*tal;
+	struct cert	*cert;
+	struct mft	*mft;
+	struct roa	*roa;
+	struct ibuf	*b;
+	int		 c;
+
+	while ((entp = TAILQ_FIRST(q)) != NULL) {
+		TAILQ_REMOVE(q, entp, entries);
+
+		b = io_new_buffer();
+		io_simple_buffer(b, &entp->type, sizeof(entp->type));
+
+		switch (entp->type) {
+		case RTYPE_TAL:
+			if ((tal = tal_parse(entp->file, entp->descr)) == NULL)
+				errx(1, "%s: could not parse tal file",
+				    entp->file);
+			tal_buffer(b, tal);
+			tal_free(tal);
+			break;
+		case RTYPE_CER:
+			if (entp->has_pkey)
+				cert = proc_parser_root_cert(entp);
+			else
+				cert = proc_parser_cert(entp);
+			c = (cert != NULL);
+			io_simple_buffer(b, &c, sizeof(int));
+			if (cert != NULL)
+				cert_buffer(b, cert);
+			/*
+			 * The parsed certificate data "cert" is now
+			 * managed in the "auths" table, so don't free
+			 * it here (see the loop after "out").
+			 */
+			break;
+		case RTYPE_MFT:
+			mft = proc_parser_mft(entp);
+			c = (mft != NULL);
+			io_simple_buffer(b, &c, sizeof(int));
+			if (mft != NULL)
+				mft_buffer(b, mft);
+			mft_free(mft);
+			break;
+		case RTYPE_CRL:
+			proc_parser_crl(entp);
+			break;
+		case RTYPE_ROA:
+			roa = proc_parser_roa(entp);
+			c = (roa != NULL);
+			io_simple_buffer(b, &c, sizeof(int));
+			if (roa != NULL)
+				roa_buffer(b, roa);
+			roa_free(roa);
+			break;
+		case RTYPE_GBR:
+			proc_parser_gbr(entp);
+			break;
+		default:
+			abort();
+		}
+
+		io_close_buffer(msgq, b);
+		entity_free(entp);
+	}
+}
+
 /*
  * Process responsible for parsing and validating content.
  * All this process does is wait to be told about a file to parse, then
@@ -517,19 +587,11 @@ build_crls(const struct crl *crl, STACK_OF(X509_CRL) **crls)
 void
 proc_parser(int fd)
 {
-	struct tal	*tal;
-	struct cert	*cert;
-	struct mft	*mft;
-	struct roa	*roa;
-	struct entity	*entp;
 	struct entityq	 q;
 	struct msgbuf	 msgq;
 	struct pollfd	 pfd;
+	struct entity	*entp;
 	struct ibuf	*b, *inbuf = NULL;
-	X509_STORE_CTX	*ctx;
-	struct auth_tree auths = RB_INITIALIZER(&auths);
-	struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
-	int		 c, rc = 1;
 
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
@@ -560,17 +622,8 @@ proc_parser(int fd)
 		if ((pfd.revents & POLLHUP))
 			break;
 
-		/*
-		 * Start with read events.
-		 * This means that the parent process is sending us
-		 * something we need to parse.
-		 * We don't actually parse it til we have space in our
-		 * outgoing buffer for responding, though.
-		 */
-
 		if ((pfd.revents & POLLIN)) {
 			b = io_buf_read(fd, &inbuf);
-			
 			if (b != NULL) {
 				entp = calloc(1, sizeof(struct entity));
 				if (entp == NULL)
@@ -590,79 +643,9 @@ proc_parser(int fd)
 			}
 		}
 
-		/*
-		 * If there's nothing to parse, then stop waiting for
-		 * the write signal.
-		 */
-
-		if (TAILQ_EMPTY(&q)) {
-			pfd.events &= ~POLLOUT;
-			continue;
-		}
-
-		entp = TAILQ_FIRST(&q);
-		assert(entp != NULL);
-
-		b = io_new_buffer();
-		io_simple_buffer(b, &entp->type, sizeof(entp->type));
-
-		switch (entp->type) {
-		case RTYPE_TAL:
-			if ((tal = tal_parse(entp->file, entp->descr)) == NULL)
-				goto out;
-			tal_buffer(b, tal);
-			tal_free(tal);
-			break;
-		case RTYPE_CER:
-			if (entp->has_pkey)
-				cert = proc_parser_root_cert(entp, ctx, &auths,
-				    &crlt);
-			else
-				cert = proc_parser_cert(entp, ctx, &auths,
-				    &crlt);
-			c = (cert != NULL);
-			io_simple_buffer(b, &c, sizeof(int));
-			if (cert != NULL)
-				cert_buffer(b, cert);
-			/*
-			 * The parsed certificate data "cert" is now
-			 * managed in the "auths" table, so don't free
-			 * it here (see the loop after "out").
-			 */
-			break;
-		case RTYPE_MFT:
-			mft = proc_parser_mft(entp, ctx, &auths, &crlt);
-			c = (mft != NULL);
-			io_simple_buffer(b, &c, sizeof(int));
-			if (mft != NULL)
-				mft_buffer(b, mft);
-			mft_free(mft);
-			break;
-		case RTYPE_CRL:
-			proc_parser_crl(entp, ctx, &crlt);
-			break;
-		case RTYPE_ROA:
-			roa = proc_parser_roa(entp, ctx, &auths, &crlt);
-			c = (roa != NULL);
-			io_simple_buffer(b, &c, sizeof(int));
-			if (roa != NULL)
-				roa_buffer(b, roa);
-			roa_free(roa);
-			break;
-		case RTYPE_GBR:
-			proc_parser_gbr(entp, ctx, &auths, &crlt);
-			break;
-		default:
-			abort();
-		}
-
-		io_close_buffer(&msgq, b);
-		TAILQ_REMOVE(&q, entp, entries);
-		entity_free(entp);
+		parse_entity(&q, &msgq);
 	}
 
-	rc = 0;
-out:
 	while ((entp = TAILQ_FIRST(&q)) != NULL) {
 		TAILQ_REMOVE(&q, entp, entries);
 		entity_free(entp);
@@ -671,8 +654,7 @@ out:
 	/* XXX free auths and crl tree */
 
 	X509_STORE_CTX_free(ctx);
-
 	msgbuf_clear(&msgq);
 
-	exit(rc);
+	exit(0);
 }
