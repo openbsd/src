@@ -1,3 +1,4 @@
+/*	$OpenBSD: x509_addr.c,v 1.18 2021/10/25 11:55:27 tb Exp $ */
 /*
  * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
