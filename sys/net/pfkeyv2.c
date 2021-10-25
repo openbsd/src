@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.220 2021/10/22 12:30:53 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.221 2021/10/25 18:25:01 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1042,8 +1042,10 @@ int
 pfkeyv2_sa_flush(struct tdb *tdb, void *satype_vp, int last)
 {
 	if (!(*((u_int8_t *) satype_vp)) ||
-	    tdb->tdb_satype == *((u_int8_t *) satype_vp))
-		tdb_delete(tdb);
+	    tdb->tdb_satype == *((u_int8_t *) satype_vp)) {
+		tdb_unlink_locked(tdb);
+		tdb_free(tdb);
+	}
 	return (0);
 }
 

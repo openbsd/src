@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.247 2021/10/25 16:00:12 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.248 2021/10/25 18:25:01 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -733,10 +733,19 @@ puttdb(struct tdb *tdbp)
 void
 tdb_unlink(struct tdb *tdbp)
 {
+	mtx_enter(&tdb_sadb_mtx);
+	tdb_unlink_locked(tdbp);
+	mtx_leave(&tdb_sadb_mtx);
+}
+
+void
+tdb_unlink_locked(struct tdb *tdbp)
+{
 	struct tdb *tdbpp;
 	u_int32_t hashval;
 
-	mtx_enter(&tdb_sadb_mtx);
+	MUTEX_ASSERT_LOCKED(&tdb_sadb_mtx);
+
 	hashval = tdb_hash(tdbp->tdb_spi, &tdbp->tdb_dst, tdbp->tdb_sproto);
 
 	if (tdbh[hashval] == tdbp) {
@@ -793,7 +802,6 @@ tdb_unlink(struct tdb *tdbp)
 		ipsecstat_inc(ipsec_prevtunnels);
 	}
 #endif /* IPSEC */
-	mtx_leave(&tdb_sadb_mtx);
 }
 
 void
