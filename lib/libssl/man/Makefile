@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.75 2021/10/25 15:13:52 tb Exp $
+# $OpenBSD: Makefile,v 1.76 2021/10/25 15:16:35 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -14,15 +14,16 @@ MAN =	BIO_f_ssl.3 \
 	SSL_CTX_ctrl.3 \
 	SSL_CTX_flush_sessions.3 \
 	SSL_CTX_free.3 \
+	SSL_CTX_get0_certificate.3 \
 	SSL_CTX_get_ex_new_index.3 \
 	SSL_CTX_get_verify_mode.3 \
-	SSL_CTX_get0_certificate.3 \
 	SSL_CTX_load_verify_locations.3 \
 	SSL_CTX_new.3 \
 	SSL_CTX_sess_number.3 \
 	SSL_CTX_sess_set_cache_size.3 \
 	SSL_CTX_sess_set_get_cb.3 \
 	SSL_CTX_sessions.3 \
+	SSL_CTX_set1_groups.3 \
 	SSL_CTX_set_alpn_select_cb.3 \
 	SSL_CTX_set_cert_store.3 \
 	SSL_CTX_set_cert_verify_callback.3 \
@@ -51,16 +52,15 @@ MAN =	BIO_f_ssl.3 \
 	SSL_CTX_set_tmp_dh_callback.3 \
 	SSL_CTX_set_tmp_rsa_callback.3 \
 	SSL_CTX_set_verify.3 \
-	SSL_CTX_set1_groups.3 \
 	SSL_CTX_use_certificate.3 \
 	SSL_SESSION_free.3 \
+	SSL_SESSION_get0_cipher.3 \
+	SSL_SESSION_get0_peer.3 \
 	SSL_SESSION_get_compress_id.3 \
 	SSL_SESSION_get_ex_new_index.3 \
 	SSL_SESSION_get_id.3 \
 	SSL_SESSION_get_protocol_version.3 \
 	SSL_SESSION_get_time.3 \
-	SSL_SESSION_get0_cipher.3 \
-	SSL_SESSION_get0_peer.3 \
 	SSL_SESSION_has_ticket.3 \
 	SSL_SESSION_is_resumable.3 \
 	SSL_SESSION_new.3 \
