@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.293 2021/09/13 22:16:27 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.294 2021/10/26 16:29:49 deraadt Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -260,7 +260,7 @@ const struct kmem_pa_mode vmm_kp_contig = {
 };
 
 struct cfdriver vmm_cd = {
-	NULL, "vmm", DV_DULL
+	NULL, "vmm", DV_DULL, CD_SKIPHIBERNATE
 };
 
 const struct cfattach vmm_ca = {

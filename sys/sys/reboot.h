@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.h,v 1.19 2020/05/23 00:40:53 deraadt Exp $	*/
+/*	$OpenBSD: reboot.h,v 1.20 2021/10/26 16:29:49 deraadt Exp $	*/
 /*	$NetBSD: reboot.h,v 1.9 1996/04/22 01:23:25 christos Exp $	*/
 
 /*
@@ -58,6 +58,7 @@
 #define	RB_USERREQ	0x04000	/* boot() called at user request (e.g. ddb) */
 #define	RB_RESET	0x08000	/* just reset, no cleanup  */
 #define	RB_GOODRANDOM	0x10000	/* excellent random seed loaded */
+#define	RB_UNHIBERNATE	0x20000	/* unhibernate */
 
 /*
  * Constants for converting boot-style device number to type,

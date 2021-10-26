@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.121 2021/02/24 03:08:47 jsg Exp $ */
+/* $OpenBSD: xhci.c,v 1.122 2021/10/26 16:29:49 deraadt Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -38,7 +38,7 @@
 #include <dev/usb/xhcivar.h>
 
 struct cfdriver xhci_cd = {
-	NULL, "xhci", DV_DULL
+	NULL, "xhci", DV_DULL, CD_SKIPHIBERNATE
 };
 
 #ifdef XHCI_DEBUG

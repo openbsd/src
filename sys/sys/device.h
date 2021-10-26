@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.55 2018/09/10 16:18:34 sashan Exp $	*/
+/*	$OpenBSD: device.h,v 1.56 2021/10/26 16:29:49 deraadt Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -136,11 +136,15 @@ struct cfattach {
 #define	DETACH_FORCE	0x01		/* force detachment; hardware gone */
 #define	DETACH_QUIET	0x02		/* don't print a notice */
 
+/* For cd_mode, below */
+#define CD_INDIRECT		1
+#define CD_SKIPHIBERNATE	2
+
 struct cfdriver {
 	void	**cd_devs;		/* devices found */
 	char	*cd_name;		/* device name */
 	enum	devclass cd_class;	/* device classification */
-	int	cd_indirect;		/* indirectly configure subdevices */
+	int	cd_mode;		/* device type subclassification */
 	int	cd_ndevs;		/* size of cd_devs array */
 };
 

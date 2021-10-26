@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.264 2021/08/09 12:59:53 kevlo Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.265 2021/10/26 16:29:49 deraadt Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -286,7 +286,7 @@ struct cfattach azalia_ca = {
 };
 
 struct cfdriver azalia_cd = {
-	NULL, "azalia", DV_DULL
+	NULL, "azalia", DV_DULL, CD_SKIPHIBERNATE
 };
 
 struct audio_hw_if azalia_hw_if = {

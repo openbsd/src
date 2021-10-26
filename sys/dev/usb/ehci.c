@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.214 2021/01/11 14:41:12 mglocker Exp $ */
+/*	$OpenBSD: ehci.c,v 1.215 2021/10/26 16:29:49 deraadt Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 #include <dev/usb/ehcivar.h>
 
 struct cfdriver ehci_cd = {
-	NULL, "ehci", DV_DULL
+	NULL, "ehci", DV_DULL, CD_SKIPHIBERNATE
 };
 
 #ifdef EHCI_DEBUG

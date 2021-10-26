@@ -1,4 +1,4 @@
-/*	$OpenBSD: isa.c,v 1.48 2021/03/07 06:17:03 jsg Exp $	*/
+/*	$OpenBSD: isa.c,v 1.49 2021/10/26 16:29:49 deraadt Exp $	*/
 /*	$NetBSD: isa.c,v 1.85 1996/05/14 00:31:04 thorpej Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ struct cfattach isa_ca = {
 };
 
 struct cfdriver isa_cd = {
-	NULL, "isa", DV_DULL, 1
+	NULL, "isa", DV_DULL, CD_INDIRECT
 };
 
 int

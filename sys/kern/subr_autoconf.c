@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.94 2019/12/30 23:56:26 jsg Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.95 2021/10/26 16:29:49 deraadt Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -51,6 +51,7 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/atomic.h>
+#include <sys/reboot.h>
 
 #include "hotplug.h"
 #include "mpath.h"
@@ -188,7 +189,7 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
 	m.parent = parent;
 	m.match = NULL;
 	m.aux = aux;
-	m.indirect = parent && parent->dv_cfdata->cf_driver->cd_indirect;
+	m.indirect = parent && (parent->dv_cfdata->cf_driver->cd_mode & CD_INDIRECT);
 	m.pri = 0;
 
 	for (cf = cfdata; cf->cf_driver; cf++) {
@@ -202,6 +203,14 @@ config_search(cfmatch_t fn, struct device *parent, void *aux)
 		if (cf->cf_fstate == FSTATE_DNOTFOUND ||
 		    cf->cf_fstate == FSTATE_DSTAR)
 			continue;
+		if (boothowto & RB_UNHIBERNATE) {
+			if (cf->cf_driver->cd_mode & CD_SKIPHIBERNATE)
+				continue;
+			if (cf->cf_driver->cd_class == DV_IFNET)
+				continue;
+			if (cf->cf_driver->cd_class == DV_TAPE)
+				continue;
+		}
 		for (p = cf->cf_parents; *p >= 0; p++)
 			if (parent->dv_cfdata == &cfdata[*p])
 				mapply(&m, cf);
@@ -237,7 +246,7 @@ config_scan(cfscan_t fn, struct device *parent)
 	void *match;
 	int indirect;
 
-	indirect = parent && parent->dv_cfdata->cf_driver->cd_indirect;
+	indirect = parent && (parent->dv_cfdata->cf_driver->cd_mode & CD_INDIRECT);
 
 	for (cf = cfdata; cf->cf_driver; cf++) {
 		/*
@@ -348,7 +357,7 @@ config_attach(struct device *parent, void *match, void *aux, cfprint_t print)
 	autoconf_attdet++;
 	mtx_leave(&autoconf_attdet_mtx);
 
-	if (parent && parent->dv_cfdata->cf_driver->cd_indirect) {
+	if (parent && (parent->dv_cfdata->cf_driver->cd_mode & CD_INDIRECT)) {
 		dev = match;
 		cf = dev->dv_cfdata;
 	} else {

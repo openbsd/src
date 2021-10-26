@@ -1,4 +1,4 @@
-/*	$OpenBSD: isadma.c,v 1.35 2021/03/07 06:17:03 jsg Exp $	*/
+/*	$OpenBSD: isadma.c,v 1.36 2021/10/26 16:29:49 deraadt Exp $	*/
 /*	$NetBSD: isadma.c,v 1.32 1997/09/05 01:48:33 thorpej Exp $	*/
 
 /*-
@@ -89,7 +89,7 @@ struct cfattach isadma_ca = {
 };
 
 struct cfdriver isadma_cd = {
-	NULL, "isadma", DV_DULL, 1
+	NULL, "isadma", DV_DULL, CD_INDIRECT
 };
 
 int

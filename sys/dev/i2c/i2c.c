@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.c,v 1.16 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: i2c.c,v 1.17 2021/10/26 16:29:49 deraadt Exp $	*/
 /*	$NetBSD: i2c.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ struct cfattach iic_ca = {
 };
 
 struct cfdriver iic_cd = {
-	NULL, "iic", DV_DULL
+	NULL, "iic", DV_DULL, CD_SKIPHIBERNATE
 };
 
 int

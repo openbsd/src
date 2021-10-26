@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.161 2020/04/03 20:11:47 patrick Exp $ */
+/*	$OpenBSD: ohci.c,v 1.162 2021/10/26 16:29:49 deraadt Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -52,7 +52,7 @@
 #include <dev/usb/ohcivar.h>
 
 struct cfdriver ohci_cd = {
-	NULL, "ohci", DV_DULL
+	NULL, "ohci", DV_DULL, CD_SKIPHIBERNATE
 };
 
 #ifdef OHCI_DEBUG
