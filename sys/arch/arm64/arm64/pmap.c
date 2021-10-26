@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.81 2021/09/14 16:18:57 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.82 2021/10/26 14:13:57 patrick Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -724,6 +724,7 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 {
 	pmap_t pm = pmap_kernel();
 	struct pte_desc *pted;
+	struct vm_page *pg;
 
 	pted = pmap_vp_lookup(pm, va, NULL);
 
@@ -746,7 +747,9 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	pmap_pte_insert(pted);
 
 	ttlb_flush(pm, va & ~PAGE_MASK);
-	if (cache == PMAP_CACHE_CI || cache == PMAP_CACHE_DEV_NGNRNE)
+
+	pg = PHYS_TO_VM_PAGE(pted->pted_pte & PTE_RPGN);
+	if (pg && (cache == PMAP_CACHE_CI || cache == PMAP_CACHE_DEV_NGNRNE))
 		cpu_idcache_wbinv_range(va & ~PAGE_MASK, PAGE_SIZE);
 }
 
