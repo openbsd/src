@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.79 2021/10/26 13:31:05 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.80 2021/10/26 16:12:54 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -337,12 +337,12 @@ enum publish_type {
  * and parsed.
  */
 struct entity {
-	enum rtype	 type; /* type of entity (not RTYPE_EOF) */
-	char		*file; /* local path to file */
-	int		 has_pkey; /* whether pkey/sz is specified */
-	unsigned char	*pkey; /* public key (optional) */
-	size_t		 pkeysz; /* public key length (optional) */
-	char		*descr; /* tal description */
+	enum rtype	 type;		/* type of entity (not RTYPE_EOF) */
+	char		*file;		/* local path to file */
+	int		 has_data;	/* whether data blob is specified */
+	unsigned char	*data;		/* optional data blob */
+	size_t		 datasz; 	/* length of optional data blob */
+	char		*descr;		/* tal description */
 	TAILQ_ENTRY(entity) entries;
 };
 TAILQ_HEAD(entityq, entity);
@@ -397,8 +397,7 @@ extern int verbose;
 
 void		 tal_buffer(struct ibuf *, const struct tal *);
 void		 tal_free(struct tal *);
-struct tal	*tal_parse(const char *, char *);
-char		*tal_read_file(const char *);
+struct tal	*tal_parse(const char *, char *, size_t);
 struct tal	*tal_read(struct ibuf *);
 
 void		 cert_buffer(struct ibuf *, const struct cert *);
@@ -534,8 +533,8 @@ void		 cryptoerrx(const char *, ...)
 
 /* Encoding functions for hex and base64. */
 
-int		 base64_decode(const unsigned char *, unsigned char **,
-		    size_t *);
+int		 base64_decode(const unsigned char *, size_t,
+		    unsigned char **, size_t *);
 int		 base64_encode(const unsigned char *, size_t, char **);
 char		*hex_encode(const unsigned char *, size_t);
 
@@ -595,8 +594,9 @@ int		 output_csv(FILE *, struct vrp_tree *, struct brk_tree *,
 int		 output_json(FILE *, struct vrp_tree *, struct brk_tree *,
 		    struct stats *);
 
-void	logx(const char *fmt, ...)
+void		logx(const char *fmt, ...)
 		    __attribute__((format(printf, 1, 2)));
+unsigned char	*load_file(const char *, size_t *);
 
 int	mkpath(const char *);
 

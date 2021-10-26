@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.19 2021/10/26 13:31:05 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.20 2021/10/26 16:12:54 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,13 +17,11 @@
  */
 
 #include <sys/queue.h>
-#include <sys/stat.h>
 #include <sys/tree.h>
 #include <sys/types.h>
 
 #include <assert.h>
 #include <err.h>
-#include <fcntl.h>
 #include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -201,7 +199,7 @@ proc_parser_cert(const struct entity *entp, const unsigned char *der,
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls;
 
-	assert(!entp->has_pkey);
+	assert(!entp->has_data);
 
 	/* Extract certificate data and X509. */
 
@@ -294,11 +292,11 @@ proc_parser_root_cert(const struct entity *entp, const unsigned char *der,
 	struct auth		*na;
 	char			*tal;
 
-	assert(entp->has_pkey);
+	assert(entp->has_data);
 
 	/* Extract certificate data and X509. */
 
-	cert = ta_parse(&x509, entp->file, der, len, entp->pkey, entp->pkeysz);
+	cert = ta_parse(&x509, entp->file, der, len, entp->data, entp->datasz);
 	if (cert == NULL)
 		return NULL;
 
@@ -510,39 +508,6 @@ build_crls(const struct crl *crl, STACK_OF(X509_CRL) **crls)
 		err(1, "sk_X509_CRL_push");
 }
 
-static unsigned char *
-load_file(const char *name, size_t *len)
-{
-	unsigned char *buf = NULL;
-	struct stat st;
-	ssize_t n;
-	size_t size;
-	int fd;
-
-	*len = 0;
-
-	if ((fd = open(name, O_RDONLY)) == -1)
-		return NULL;
-	if (fstat(fd, &st) != 0)
-		goto err;
-	if (st.st_size < 0)
-		goto err;
-	size = (size_t)st.st_size;
-	if ((buf = malloc(size)) == NULL)
-		goto err;
-	n = read(fd, buf, size);
-	if (n < 0 || (size_t)n != size)
-		goto err;
-	close(fd);
-	*len = size;
-	return buf;
-
-err:
-	close(fd);
-	free(buf);
-	return NULL;
-}
-
 static void
 parse_entity(struct entityq *q, struct msgbuf *msgq)
 {
@@ -571,14 +536,15 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 
 		switch (entp->type) {
 		case RTYPE_TAL:
-			if ((tal = tal_parse(entp->file, entp->descr)) == NULL)
+			if ((tal = tal_parse(entp->file, entp->data,
+			    entp->datasz)) == NULL)
 				errx(1, "%s: could not parse tal file",
 				    entp->file);
 			tal_buffer(b, tal);
 			tal_free(tal);
 			break;
 		case RTYPE_CER:
-			if (entp->has_pkey)
+			if (entp->has_data)
 				cert = proc_parser_root_cert(entp, f, flen);
 			else
 				cert = proc_parser_cert(entp, f, flen);

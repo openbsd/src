@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.14 2021/10/23 20:01:16 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.15 2021/10/26 16:12:54 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -661,7 +661,8 @@ publish_done(struct rrdp *s, struct publish_xml *pxml)
 	size_t datasz = 0;
 
 	if (pxml->data_length > 0)
-		if ((base64_decode(pxml->data, &data, &datasz)) == -1)
+		if ((base64_decode(pxml->data, pxml->data_length,
+		    &data, &datasz)) == -1)
 			return -1;
 
 	/* only send files if the fetch did not fail already */

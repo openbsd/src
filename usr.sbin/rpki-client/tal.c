@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.31 2021/10/23 16:06:04 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.32 2021/10/26 16:12:54 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -41,7 +41,7 @@ tal_cmp(const void *a, const void *b)
  * The pointer must be freed with tal_free().
  */
 static struct tal *
-tal_parse_buffer(const char *fn, char *buf)
+tal_parse_buffer(const char *fn, char *buf, size_t len)
 {
 	char		*nl, *line, *f, *file = NULL;
 	unsigned char	*der;
@@ -49,17 +49,30 @@ tal_parse_buffer(const char *fn, char *buf)
 	int		 rc = 0;
 	struct tal	*tal = NULL;
 	EVP_PKEY	*pkey = NULL;
+	int		 optcomment = 1;
 
 	if ((tal = calloc(1, sizeof(struct tal))) == NULL)
 		err(1, NULL);
 
 	/* Begin with the URI section, comment section already removed. */
-	while ((nl = strchr(buf, '\n')) != NULL) {
+	while ((nl = memchr(buf, '\n', len)) != NULL) {
 		line = buf;
+
+		/* replace LF and optional CR with NUL */
 		*nl = '\0';
+		if (nl > line && nl[-1] == '\r')
+			nl[-1] = '\0';
 
 		/* advance buffer to next line */
+		len -= nl + 1 - buf;
 		buf = nl + 1;
+
+		if (optcomment) {
+			/* if this is a comment, just eat the line */
+			if (line[0] == '#')
+				continue;
+			optcomment = 0;
+		}
 
 		/* Zero-length line is end of section. */
 		if (*line == '\0')
@@ -112,7 +125,7 @@ tal_parse_buffer(const char *fn, char *buf)
 	qsort(tal->uri, tal->urisz, sizeof(tal->uri[0]), tal_cmp);
 
 	/* Now the Base64-encoded public key. */
-	if ((base64_decode(buf, &der, &dersz)) == -1) {
+	if ((base64_decode(buf, len, &der, &dersz)) == -1) {
 		warnx("%s: RFC 7730 section 2.1: subjectPublicKeyInfo: "
 		    "bad public key", fn);
 		goto out;
@@ -144,13 +157,13 @@ out:
  * Returns the encoded data or NULL on syntax failure.
  */
 struct tal *
-tal_parse(const char *fn, char *buf)
+tal_parse(const char *fn, char *buf, size_t len)
 {
 	struct tal	*p;
 	const char	*d;
 	size_t		 dlen;
 
-	p = tal_parse_buffer(fn, buf);
+	p = tal_parse_buffer(fn, buf, len);
 	if (p == NULL)
 		return NULL;
 
@@ -167,76 +180,6 @@ tal_parse(const char *fn, char *buf)
 		err(1, NULL);
 
 	return p;
-}
-
-/*
- * Read the file named "file" into a returned, NUL-terminated buffer.
- * This replaces CRLF terminators with plain LF, if found, and also
- * elides document-leading comment lines starting with "#".
- * Files may not exceeds 4096 bytes.
- * This function exits on failure, so it always returns a buffer with
- * TAL data.
- */
-char *
-tal_read_file(const char *file)
-{
-	char		*nbuf, *line = NULL, *buf = NULL;
-	FILE		*in;
-	ssize_t		 n, i;
-	size_t		 sz = 0, bsz = 0;
-	int		 optcomment = 1;
-
-	if ((in = fopen(file, "r")) == NULL)
-		err(1, "fopen: %s", file);
-
-	while ((n = getline(&line, &sz, in)) != -1) {
-		/* replace CRLF with just LF */
-		if (n > 1 && line[n - 1] == '\n' && line[n - 2] == '\r') {
-			line[n - 2] = '\n';
-			line[n - 1] = '\0';
-			n--;
-		}
-		if (optcomment) {
-			/* if this is comment, just eat the line */
-			if (line[0] == '#')
-				continue;
-			optcomment = 0;
-			/*
-			 * Empty line is end of section and needs
-			 * to be eaten as well.
-			 */
-			if (line[0] == '\n')
-				continue;
-		}
-
-		/* make sure every line is valid ascii */
-		for (i = 0; i < n; i++)
-			if (!isprint((unsigned char)line[i]) &&
-			    !isspace((unsigned char)line[i]))
-				errx(1, "getline: %s: "
-				    "invalid content", file);
-
-		/* concat line to buf */
-		if ((nbuf = realloc(buf, bsz + n + 1)) == NULL)
-			err(1, NULL);
-		if (buf == NULL)
-			nbuf[0] = '\0';	/* initialize buffer */
-		buf = nbuf;
-		bsz += n + 1;
-		if (strlcat(buf, line, bsz) >= bsz)
-			errx(1, "strlcat overflow");
-		/* limit the buffer size */
-		if (bsz > 4096)
-			errx(1, "%s: file too big", file);
-	}
-
-	free(line);
-	if (ferror(in))
-		err(1, "getline: %s", file);
-	fclose(in);
-	if (buf == NULL)
-		errx(1, "%s: no data", file);
-	return buf;
 }
 
 /*

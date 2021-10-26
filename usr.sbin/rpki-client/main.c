@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.154 2021/10/24 21:24:19 deraadt Exp $ */
+/*	$OpenBSD: main.c,v 1.155 2021/10/26 16:12:54 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -20,6 +20,7 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/tree.h>
 #include <sys/wait.h>
@@ -82,13 +83,46 @@ logx(const char *fmt, ...)
 	}
 }
 
+unsigned char *
+load_file(const char *name, size_t *len)
+{
+	unsigned char *buf = NULL;
+	struct stat st;
+	ssize_t n;
+	size_t size;
+	int fd;
+
+	*len = 0;
+
+	if ((fd = open(name, O_RDONLY)) == -1)
+		return NULL;
+	if (fstat(fd, &st) != 0)
+		goto err;
+	if (st.st_size < 0)
+		goto err;
+	size = (size_t)st.st_size;
+	if ((buf = malloc(size)) == NULL)
+		goto err;
+	n = read(fd, buf, size);
+	if (n < 0 || (size_t)n != size)
+		goto err;
+	close(fd);
+	*len = size;
+	return buf;
+
+err:
+	close(fd);
+	free(buf);
+	return NULL;
+}
+
 void
 entity_free(struct entity *ent)
 {
 	if (ent == NULL)
 		return;
 
-	free(ent->pkey);
+	free(ent->data);
 	free(ent->file);
 	free(ent->descr);
 	free(ent);
@@ -104,10 +138,10 @@ entity_read_req(struct ibuf *b, struct entity *ent)
 {
 	io_read_buf(b, &ent->type, sizeof(ent->type));
 	io_read_str(b, &ent->file);
-	io_read_buf(b, &ent->has_pkey, sizeof(ent->has_pkey));
-	if (ent->has_pkey)
-		io_read_buf_alloc(b, (void **)&ent->pkey, &ent->pkeysz);
 	io_read_str(b, &ent->descr);
+	io_read_buf(b, &ent->has_data, sizeof(ent->has_data));
+	if (ent->has_data)
+		io_read_buf_alloc(b, (void **)&ent->data, &ent->datasz);
 }
 
 /*
@@ -128,10 +162,10 @@ entity_write_req(const struct entity *ent)
 	b = io_new_buffer();
 	io_simple_buffer(b, &ent->type, sizeof(ent->type));
 	io_str_buffer(b, ent->file);
-	io_simple_buffer(b, &ent->has_pkey, sizeof(int));
-	if (ent->has_pkey)
-		io_buf_buffer(b, ent->pkey, ent->pkeysz);
 	io_str_buffer(b, ent->descr);
+	io_simple_buffer(b, &ent->has_data, sizeof(int));
+	if (ent->has_data)
+		io_buf_buffer(b, ent->data, ent->datasz);
 	io_close_buffer(&procq, b);
 }
 
@@ -169,7 +203,7 @@ entityq_flush(struct entityq *q, struct repo *rp)
  */
 static void
 entityq_add(char *file, enum rtype type, struct repo *rp,
-    const unsigned char *pkey, size_t pkeysz, char *descr)
+    unsigned char *data, size_t datasz, char *descr)
 {
 	struct entity	*p;
 
@@ -178,12 +212,10 @@ entityq_add(char *file, enum rtype type, struct repo *rp,
 
 	p->type = type;
 	p->file = file;
-	p->has_pkey = pkey != NULL;
-	if (p->has_pkey) {
-		p->pkeysz = pkeysz;
-		if ((p->pkey = malloc(pkeysz)) == NULL)
-			err(1, NULL);
-		memcpy(p->pkey, pkey, pkeysz);
+	p->has_data = data != NULL;
+	if (p->has_data) {
+		p->data = data;
+		p->datasz = datasz;
 	}
 	if (descr != NULL)
 		if ((p->descr = strdup(descr)) == NULL)
@@ -388,11 +420,13 @@ queue_add_from_mft_set(const struct mft *mft)
 static void
 queue_add_tal(const char *file)
 {
-	char	*nfile, *buf;
+	unsigned char	*buf;
+	char		*nfile;
+	size_t		 len;
 
 	if ((nfile = strdup(file)) == NULL)
 		err(1, NULL);
-	buf = tal_read_file(file);
+	buf = load_file(file, &len);
 
 	/* Record tal for later reporting */
 	if (stats.talnames == NULL) {
@@ -408,9 +442,7 @@ queue_add_tal(const char *file)
 	}
 
 	/* Not in a repository, so directly add to queue. */
-	entityq_add(nfile, RTYPE_TAL, NULL, NULL, 0, buf);
-	/* entityq_add makes a copy of buf */
-	free(buf);
+	entityq_add(nfile, RTYPE_TAL, NULL, buf, len, buf);
 }
 
 /*
@@ -420,13 +452,17 @@ static void
 queue_add_from_tal(struct tal *tal)
 {
 	struct repo	*repo;
+	unsigned char	*data;
 
 	assert(tal->urisz);
 
 	/* Look up the repository. */
 	repo = ta_lookup(tal);
 
-	entityq_add(NULL, RTYPE_CER, repo, tal->pkey,
+	/* steal the pkey from the tal structure */
+	data = tal->pkey;
+	tal->pkey = NULL;
+	entityq_add(NULL, RTYPE_CER, repo, data,
 	    tal->pkeysz, tal->descr);
 }
 
@@ -683,6 +719,7 @@ main(int argc, char *argv[])
 	char		*bind_addr = NULL;
 	const char	*cachedir = NULL, *outputdir = NULL;
 	const char	*tals[TALSZ_MAX], *errs, *name;
+	const char	*file = NULL;
 	struct vrp_tree	 vrps = RB_INITIALIZER(&vrps);
 	struct brk_tree  brks = RB_INITIALIZER(&brks);
 	struct rusage	ru;
@@ -709,7 +746,7 @@ main(int argc, char *argv[])
 	    "proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "b:Bcd:e:jnorRs:t:T:vV")) != -1)
+	while ((c = getopt(argc, argv, "b:Bcd:e:f:jnorRs:t:T:vV")) != -1)
 		switch (c) {
 		case 'b':
 			bind_addr = optarg;
@@ -725,6 +762,10 @@ main(int argc, char *argv[])
 			break;
 		case 'e':
 			rsync_prog = optarg;
+			break;
+		case 'f':
+			file = optarg;
+			noop = 1;
 			break;
 		case 'j':
 			outformats |= FORMAT_JSON;
