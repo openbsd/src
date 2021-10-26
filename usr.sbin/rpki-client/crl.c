@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.10 2021/01/29 10:13:16 claudio Exp $ */
+/*	$OpenBSD: crl.c,v 1.11 2021/10/26 10:52:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,32 +29,22 @@
 #include "extern.h"
 
 X509_CRL *
-crl_parse(const char *fn)
+crl_parse(const char *fn, const unsigned char *der, size_t len)
 {
 	int		 rc = 0;
 	X509_CRL	*x = NULL;
-	BIO		*bio = NULL;
-	FILE		*f;
 
-	if ((f = fopen(fn, "rb")) == NULL) {
-		warn("%s", fn);
+	/* just fail for empty buffers, the warning was printed elsewhere */
+	if (der == NULL)
 		return NULL;
-	}
 
-	if ((bio = BIO_new_fp(f, BIO_CLOSE)) == NULL) {
-		if (verbose > 0)
-			cryptowarnx("%s: BIO_new_file", fn);
-		return NULL;
-	}
-
-	if ((x = d2i_X509_CRL_bio(bio, NULL)) == NULL) {
-		cryptowarnx("%s: d2i_X509_CRL_bio", fn);
+	if ((x = d2i_X509_CRL(NULL, &der, len)) == NULL) {
+		cryptowarnx("%s: d2i_X509_CRL", fn);
 		goto out;
 	}
 
 	rc = 1;
 out:
-	BIO_free_all(bio);
 	if (rc == 0) {
 		X509_CRL_free(x);
 		x = NULL;

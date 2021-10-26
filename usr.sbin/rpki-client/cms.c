@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.10 2021/09/09 14:15:49 claudio Exp $ */
+/*	$OpenBSD: cms.c,v 1.11 2021/10/26 10:52:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -35,14 +35,12 @@
  * Return the eContent as a string and set "rsz" to be its length.
  */
 unsigned char *
-cms_parse_validate(X509 **xp, const char *fn, const ASN1_OBJECT *oid,
-    size_t *rsz)
+cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
+    size_t derlen, const ASN1_OBJECT *oid, size_t *rsz)
 {
 	const ASN1_OBJECT	*obj;
 	ASN1_OCTET_STRING	**os = NULL;
-	BIO			*bio = NULL;
 	CMS_ContentInfo		*cms;
-	FILE			*f;
 	int			 rc = 0;
 	STACK_OF(X509)		*certs = NULL;
 	unsigned char		*res = NULL;
@@ -50,21 +48,11 @@ cms_parse_validate(X509 **xp, const char *fn, const ASN1_OBJECT *oid,
 	*rsz = 0;
 	*xp = NULL;
 
-	/*
-	 * This is usually fopen() failure, so let it pass through to
-	 * the handler, which will in turn ignore the entity.
-	 */
-	if ((f = fopen(fn, "rb")) == NULL) {
-		warn("%s", fn);
+	/* just fail for empty buffers, the warning was printed elsewhere */
+	if (der == NULL)
 		return NULL;
-	}
 
-	if ((bio = BIO_new_fp(f, BIO_CLOSE)) == NULL) {
-		cryptowarnx("%s: BIO_new_fp", fn);
-		return NULL;
-	}
-
-	if ((cms = d2i_CMS_bio(bio, NULL)) == NULL) {
+	if ((cms = d2i_CMS_ContentInfo(NULL, &der, derlen)) == NULL) {
 		cryptowarnx("%s: RFC 6488: failed CMS parse", fn);
 		goto out;
 	}
@@ -74,8 +62,8 @@ cms_parse_validate(X509 **xp, const char *fn, const ASN1_OBJECT *oid,
 	 * Verify that the self-signage is correct.
 	 */
 
-	if (!CMS_verify(cms, NULL, NULL,
-	    NULL, NULL, CMS_NO_SIGNER_CERT_VERIFY)) {
+	if (!CMS_verify(cms, NULL, NULL, NULL, NULL,
+	    CMS_NO_SIGNER_CERT_VERIFY)) {
 		cryptowarnx("%s: RFC 6488: CMS not self-signed", fn);
 		goto out;
 	}
@@ -134,7 +122,6 @@ cms_parse_validate(X509 **xp, const char *fn, const ASN1_OBJECT *oid,
 
 	rc = 1;
 out:
-	BIO_free_all(bio);
 	sk_X509_free(certs);
 	CMS_ContentInfo_free(cms);
 

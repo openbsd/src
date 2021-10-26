@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.10 2021/09/09 14:15:49 claudio Exp $ */
+/*	$OpenBSD: gbr.c,v 1.11 2021/10/26 10:52:50 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -44,7 +44,7 @@ static ASN1_OBJECT	*gbr_oid;
  * Returns the payload or NULL if the document was malformed.
  */
 struct gbr *
-gbr_parse(X509 **x509, const char *fn)
+gbr_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 {
 	struct parse	 p;
 	size_t		 cmsz;
@@ -61,7 +61,7 @@ gbr_parse(X509 **x509, const char *fn)
 			    "1.2.840.113549.1.9.16.1.35");
 	}
 
-	cms = cms_parse_validate(x509, fn, gbr_oid, &cmsz);
+	cms = cms_parse_validate(x509, fn, der, len, gbr_oid, &cmsz);
 	if (cms == NULL)
 		return NULL;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.77 2021/10/24 17:53:07 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.78 2021/10/26 10:52:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -410,22 +410,25 @@ void		 cert_insert_brks(struct brk_tree *, struct cert *);
 
 void		 mft_buffer(struct ibuf *, const struct mft *);
 void		 mft_free(struct mft *);
-struct mft	*mft_parse(X509 **, const char *);
+struct mft	*mft_parse(X509 **, const char *, const unsigned char *,
+		    size_t);
 int		 mft_check(const char *, struct mft *);
 struct mft	*mft_read(struct ibuf *);
 
 void		 roa_buffer(struct ibuf *, const struct roa *);
 void		 roa_free(struct roa *);
-struct roa	*roa_parse(X509 **, const char *);
+struct roa	*roa_parse(X509 **, const char *, const unsigned char *,
+		    size_t);
 struct roa	*roa_read(struct ibuf *);
 void		 roa_insert_vrps(struct vrp_tree *, struct roa *, size_t *,
 		    size_t *);
 
 void		 gbr_free(struct gbr *);
-struct gbr	*gbr_parse(X509 **, const char *);
+struct gbr	*gbr_parse(X509 **, const char *, const unsigned char *,
+		    size_t);
 
 /* crl.c */
-X509_CRL	*crl_parse(const char *);
+X509_CRL	*crl_parse(const char *, const unsigned char *, size_t);
 void		 free_crl(struct crl *);
 
 /* Validation of our objects. */
@@ -443,6 +446,7 @@ int		 valid_uri(const char *, size_t, const char *);
 
 /* Working with CMS. */
 unsigned char	*cms_parse_validate(X509 **, const char *,
+		    const unsigned char *, size_t,
 		    const ASN1_OBJECT *, size_t *);
 int		 cms_econtent_version(const char *, const unsigned char **,
 		    size_t, long *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.17 2021/10/25 18:25:22 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.18 2021/10/26 10:52:50 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,11 +17,13 @@
  */
 
 #include <sys/queue.h>
+#include <sys/stat.h>
 #include <sys/tree.h>
 #include <sys/types.h>
 
 #include <assert.h>
 #include <err.h>
+#include <fcntl.h>
 #include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,7 +56,7 @@ static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
  * Returns the roa on success, NULL on failure.
  */
 static struct roa *
-proc_parser_roa(struct entity *entp)
+proc_parser_roa(struct entity *entp, const unsigned char *der, size_t len)
 {
 	struct roa		*roa;
 	X509			*x509;
@@ -64,7 +66,7 @@ proc_parser_roa(struct entity *entp)
 	STACK_OF(X509_CRL)	*crls;
 	struct crl		*crl;
 
-	if ((roa = roa_parse(&x509, entp->file)) == NULL)
+	if ((roa = roa_parse(&x509, entp->file, der, len)) == NULL)
 		return NULL;
 
 	a = valid_ski_aki(entp->file, &auths, roa->ski, roa->aki);
@@ -137,7 +139,7 @@ proc_parser_roa(struct entity *entp)
  * Return the mft on success or NULL on failure.
  */
 static struct mft *
-proc_parser_mft(struct entity *entp)
+proc_parser_mft(struct entity *entp, const unsigned char *der, size_t len)
 {
 	struct mft		*mft;
 	X509			*x509;
@@ -145,7 +147,7 @@ proc_parser_mft(struct entity *entp)
 	struct auth		*a;
 	STACK_OF(X509)		*chain;
 
-	if ((mft = mft_parse(&x509, entp->file)) == NULL)
+	if ((mft = mft_parse(&x509, entp->file, der, len)) == NULL)
 		return NULL;
 
 	a = valid_ski_aki(entp->file, &auths, mft->ski, mft->aki);
@@ -369,14 +371,14 @@ proc_parser_root_cert(const struct entity *entp)
  * CRL tree.
  */
 static void
-proc_parser_crl(struct entity *entp)
+proc_parser_crl(struct entity *entp, const unsigned char *der, size_t len)
 {
 	X509_CRL		*x509_crl;
 	struct crl		*crl;
 	const ASN1_TIME		*at;
 	struct tm		 expires_tm;
 
-	if ((x509_crl = crl_parse(entp->file)) != NULL) {
+	if ((x509_crl = crl_parse(entp->file, der, len)) != NULL) {
 		if ((crl = malloc(sizeof(*crl))) == NULL)
 			err(1, NULL);
 		if ((crl->aki = x509_crl_get_aki(x509_crl, entp->file)) ==
@@ -410,7 +412,7 @@ proc_parser_crl(struct entity *entp)
  * Parse a ghostbuster record
  */
 static void
-proc_parser_gbr(struct entity *entp)
+proc_parser_gbr(struct entity *entp, const unsigned char *der, size_t len)
 {
 	struct gbr		*gbr;
 	X509			*x509;
@@ -419,7 +421,7 @@ proc_parser_gbr(struct entity *entp)
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls;
 
-	if ((gbr = gbr_parse(&x509, entp->file)) == NULL)
+	if ((gbr = gbr_parse(&x509, entp->file, der, len)) == NULL)
 		return;
 
 	a = valid_ski_aki(entp->file, &auths, gbr->ski, gbr->aki);
@@ -506,6 +508,39 @@ build_crls(const struct crl *crl, STACK_OF(X509_CRL) **crls)
 		err(1, "sk_X509_CRL_push");
 }
 
+static unsigned char *
+load_file(const char *name, size_t *len)
+{
+	unsigned char *buf = NULL;
+	struct stat st;
+	ssize_t n;
+	size_t size;
+	int fd;
+
+	*len = 0;
+
+	if ((fd = open(name, O_RDONLY)) == -1)
+		return NULL;
+	if (fstat(fd, &st) != 0)
+		goto err;
+	if (st.st_size < 0)
+		goto err;
+	size = (size_t)st.st_size;
+	if ((buf = malloc(size)) == NULL)
+		goto err;
+	n = read(fd, buf, size);
+	if (n < 0 || (size_t)n != size)
+		goto err;
+	close(fd);
+	*len = size;
+	return buf;
+
+err:
+	close(fd);
+	free(buf);
+	return NULL;
+}
+
 static void
 parse_entity(struct entityq *q, struct msgbuf *msgq)
 {
@@ -515,6 +550,8 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 	struct mft	*mft;
 	struct roa	*roa;
 	struct ibuf	*b;
+	unsigned char	*f;
+	size_t		 flen;
 	int		 c;
 
 	while ((entp = TAILQ_FIRST(q)) != NULL) {
@@ -522,6 +559,13 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 
 		b = io_new_buffer();
 		io_simple_buffer(b, &entp->type, sizeof(entp->type));
+
+		f = NULL;
+		if (entp->type != RTYPE_TAL && entp->type != RTYPE_CER) {
+			f = load_file(entp->file, &flen);
+			if (f == NULL)
+				warn("%s", entp->file);
+		}
 
 		switch (entp->type) {
 		case RTYPE_TAL:
@@ -546,19 +590,19 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			 * it here (see the loop after "out").
 			 */
 			break;
+		case RTYPE_CRL:
+			proc_parser_crl(entp, f, flen);
+			break;
 		case RTYPE_MFT:
-			mft = proc_parser_mft(entp);
+			mft = proc_parser_mft(entp, f, flen);
 			c = (mft != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (mft != NULL)
 				mft_buffer(b, mft);
 			mft_free(mft);
 			break;
-		case RTYPE_CRL:
-			proc_parser_crl(entp);
-			break;
 		case RTYPE_ROA:
-			roa = proc_parser_roa(entp);
+			roa = proc_parser_roa(entp, f, flen);
 			c = (roa != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (roa != NULL)
@@ -566,12 +610,13 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			roa_free(roa);
 			break;
 		case RTYPE_GBR:
-			proc_parser_gbr(entp);
+			proc_parser_gbr(entp, f, flen);
 			break;
 		default:
 			abort();
 		}
 
+		free(f);
 		io_close_buffer(msgq, b);
 		entity_free(entp);
 	}

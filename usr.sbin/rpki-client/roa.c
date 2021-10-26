@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.27 2021/10/23 16:06:04 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.28 2021/10/26 10:52:50 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -327,7 +327,7 @@ out:
  * Returns the ROA or NULL if the document was malformed.
  */
 struct roa *
-roa_parse(X509 **x509, const char *fn)
+roa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 {
 	struct parse	 p;
 	size_t		 cmsz;
@@ -348,7 +348,7 @@ roa_parse(X509 **x509, const char *fn)
 			    "1.2.840.113549.1.9.16.1.24");
 	}
 
-	cms = cms_parse_validate(x509, fn, roa_oid, &cmsz);
+	cms = cms_parse_validate(x509, fn, der, len, roa_oid, &cmsz);
 	if (cms == NULL)
 		return NULL;
 

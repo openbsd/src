@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.40 2021/10/24 12:06:16 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.41 2021/10/26 10:52:50 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -409,7 +409,7 @@ out:
  * The MFT content is otherwise returned.
  */
 struct mft *
-mft_parse(X509 **x509, const char *fn)
+mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 {
 	struct parse	 p;
 	int		 c, rc = 0;
@@ -426,7 +426,7 @@ mft_parse(X509 **x509, const char *fn)
 			    "1.2.840.113549.1.9.16.1.26");
 	}
 
-	cms = cms_parse_validate(x509, fn, mft_oid, &cmsz);
+	cms = cms_parse_validate(x509, fn, der, len, mft_oid, &cmsz);
 	if (cms == NULL)
 		return NULL;
 	assert(*x509 != NULL);
