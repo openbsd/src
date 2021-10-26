@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.49 2021/03/24 21:36:26 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.50 2021/10/26 06:24:47 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -556,13 +556,13 @@ test_tlsext_supportedgroups_client(void)
 	if ((ssl->session = SSL_SESSION_new()) == NULL)
 		errx(1, "failed to create session");
 
-	if ((SSI(ssl)->tlsext_supportedgroups = malloc(sizeof(uint16_t)))
+	if ((ssl->session->tlsext_supportedgroups = malloc(sizeof(uint16_t)))
 	    == NULL) {
 		FAIL("client could not malloc\n");
 		goto err;
 	}
-	SSI(ssl)->tlsext_supportedgroups[0] = tls1_ec_nid2curve_id(NID_secp384r1);
-	SSI(ssl)->tlsext_supportedgroups_length = 1;
+	ssl->session->tlsext_supportedgroups[0] = tls1_ec_nid2curve_id(NID_secp384r1);
+	ssl->session->tlsext_supportedgroups_length = 1;
 
 	if (!tlsext_supportedgroups_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need Ellipticcurves\n");
@@ -616,20 +616,20 @@ test_tlsext_supportedgroups_client(void)
 		goto err;
 	}
 
-	if (SSI(ssl)->tlsext_supportedgroups_length !=
+	if (ssl->session->tlsext_supportedgroups_length !=
 	    sizeof(tlsext_supportedgroups_client_secp384r1_val) / sizeof(uint16_t)) {
 		FAIL("no tlsext_ellipticcurves from client "
 		    "Ellipticcurves\n");
 		goto err;
 	}
 
-	if (memcmp(SSI(ssl)->tlsext_supportedgroups,
+	if (memcmp(ssl->session->tlsext_supportedgroups,
 	    tlsext_supportedgroups_client_secp384r1_val,
 	    sizeof(tlsext_supportedgroups_client_secp384r1_val)) != 0) {
 		FAIL("client had an incorrect Ellipticcurves "
 		    "entry\n");
-		compare_data2(SSI(ssl)->tlsext_supportedgroups,
-		    SSI(ssl)->tlsext_supportedgroups_length * 2,
+		compare_data2(ssl->session->tlsext_supportedgroups,
+		    ssl->session->tlsext_supportedgroups_length * 2,
 		    tlsext_supportedgroups_client_secp384r1_val,
 		    sizeof(tlsext_supportedgroups_client_secp384r1_val));
 		goto err;
@@ -716,18 +716,18 @@ test_tlsext_supportedgroups_client(void)
 		goto err;
 	}
 
-	if (SSI(ssl)->tlsext_supportedgroups_length !=
+	if (ssl->session->tlsext_supportedgroups_length !=
 	    sizeof(tlsext_supportedgroups_client_nistp192and224_val) / sizeof(uint16_t)) {
 		FAIL("no tlsext_ellipticcurves from client Ellipticcurves\n");
 		goto err;
 	}
 
-	if (memcmp(SSI(ssl)->tlsext_supportedgroups,
+	if (memcmp(ssl->session->tlsext_supportedgroups,
 	    tlsext_supportedgroups_client_nistp192and224_val,
 	    sizeof(tlsext_supportedgroups_client_nistp192and224_val)) != 0) {
 		FAIL("client had an incorrect Ellipticcurves entry\n");
-		compare_data2(SSI(ssl)->tlsext_supportedgroups,
-		    SSI(ssl)->tlsext_supportedgroups_length * 2,
+		compare_data2(ssl->session->tlsext_supportedgroups,
+		    ssl->session->tlsext_supportedgroups_length * 2,
 		    tlsext_supportedgroups_client_nistp192and224_val,
 		    sizeof(tlsext_supportedgroups_client_nistp192and224_val));
 		goto err;
@@ -921,14 +921,14 @@ test_tlsext_ecpf_client(void)
 		goto err;
 	}
 
-	if (SSI(ssl)->tlsext_ecpointformatlist_length !=
+	if (ssl->session->tlsext_ecpointformatlist_length !=
 	    sizeof(tlsext_ecpf_hello_uncompressed_val)) {
 		FAIL("no tlsext_ecpointformats from client "
 		    "ECPointFormats\n");
 		goto err;
 	}
 
-	if (memcmp(SSI(ssl)->tlsext_ecpointformatlist,
+	if (memcmp(ssl->session->tlsext_ecpointformatlist,
 	    tlsext_ecpf_hello_uncompressed_val,
 	    sizeof(tlsext_ecpf_hello_uncompressed_val)) != 0) {
 		FAIL("client had an incorrect ECPointFormats entry\n");
@@ -1014,14 +1014,14 @@ test_tlsext_ecpf_client(void)
 		goto err;
 	}
 
-	if (SSI(ssl)->tlsext_ecpointformatlist_length !=
+	if (ssl->session->tlsext_ecpointformatlist_length !=
 	    sizeof(tlsext_ecpf_hello_prefer_order_val)) {
 		FAIL("no tlsext_ecpointformats from client "
 		    "ECPointFormats\n");
 		goto err;
 	}
 
-	if (memcmp(SSI(ssl)->tlsext_ecpointformatlist,
+	if (memcmp(ssl->session->tlsext_ecpointformatlist,
 	    tlsext_ecpf_hello_prefer_order_val,
 	    sizeof(tlsext_ecpf_hello_prefer_order_val)) != 0) {
 		FAIL("client had an incorrect ECPointFormats entry\n");
@@ -1070,13 +1070,13 @@ test_tlsext_ecpf_server(void)
 		FAIL("server cannot find cipher\n");
 		goto err;
 	}
-	if ((SSI(ssl)->tlsext_ecpointformatlist = malloc(sizeof(uint8_t)))
+	if ((ssl->session->tlsext_ecpointformatlist = malloc(sizeof(uint8_t)))
 	    == NULL) {
 		FAIL("server could not malloc\n");
 		goto err;
 	}
-	SSI(ssl)->tlsext_ecpointformatlist[0] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
-	SSI(ssl)->tlsext_ecpointformatlist_length = 1;
+	ssl->session->tlsext_ecpointformatlist[0] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
+	ssl->session->tlsext_ecpointformatlist_length = 1;
 
 	if (!tlsext_ecpf_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
 		FAIL("server should need ECPointFormats now\n");
@@ -1147,13 +1147,13 @@ test_tlsext_ecpf_server(void)
 		errx(1, "failed to create session");
 
 	/* Add a session list even though it will be ignored. */
-	if ((SSI(ssl)->tlsext_ecpointformatlist = malloc(sizeof(uint8_t)))
+	if ((ssl->session->tlsext_ecpointformatlist = malloc(sizeof(uint8_t)))
 	    == NULL) {
 		FAIL("server could not malloc\n");
 		goto err;
 	}
-	SSI(ssl)->tlsext_ecpointformatlist[0] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
-	SSI(ssl)->tlsext_ecpointformatlist_length = 1;
+	ssl->session->tlsext_ecpointformatlist[0] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
+	ssl->session->tlsext_ecpointformatlist_length = 1;
 
 	/* Replace the default list with a custom one. */
 	if ((ssl->internal->tlsext_ecpointformatlist = malloc(sizeof(uint8_t) * 3)) == NULL) {
@@ -1222,14 +1222,14 @@ test_tlsext_ecpf_server(void)
 		goto err;
 	}
 
-	if (SSI(ssl)->tlsext_ecpointformatlist_length !=
+	if (ssl->session->tlsext_ecpointformatlist_length !=
 	    sizeof(tlsext_ecpf_hello_prefer_order_val)) {
 		FAIL("no tlsext_ecpointformats from server "
 		    "ECPointFormats\n");
 		goto err;
 	}
 
-	if (memcmp(SSI(ssl)->tlsext_ecpointformatlist,
+	if (memcmp(ssl->session->tlsext_ecpointformatlist,
 	    tlsext_ecpf_hello_prefer_order_val,
 	    sizeof(tlsext_ecpf_hello_prefer_order_val)) != 0) {
 		FAIL("server had an incorrect ECPointFormats entry\n");
@@ -2885,10 +2885,10 @@ test_tlsext_serverhello_build(void)
 	    ssl3_get_cipher_by_id(TLS1_CK_ECDHE_RSA_WITH_AES_128_SHA256);
 	ssl->internal->tlsext_status_expected = 1;
 	ssl->internal->tlsext_ticket_expected = 1;
-	if ((SSI(ssl)->tlsext_ecpointformatlist = malloc(1)) == NULL)
+	if ((ssl->session->tlsext_ecpointformatlist = malloc(1)) == NULL)
 		errx(1, "malloc failed");
-	SSI(ssl)->tlsext_ecpointformatlist_length = 1;
-	SSI(ssl)->tlsext_ecpointformatlist[0] =
+	ssl->session->tlsext_ecpointformatlist_length = 1;
+	ssl->session->tlsext_ecpointformatlist[0] =
 	    TLSEXT_ECPOINTFORMAT_uncompressed;
 
 	if (!tlsext_server_build(ssl, SSL_TLSEXT_MSG_SH, &cbb)) {
