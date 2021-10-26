@@ -1,4 +1,4 @@
-/*	$OpenBSD: encoding.c,v 1.5 2021/10/26 16:12:54 claudio Exp $  */
+/*	$OpenBSD: encoding.c,v 1.6 2021/10/26 16:59:19 claudio Exp $  */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -14,14 +14,54 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/stat.h>
+
 #include <err.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <openssl/evp.h>
 
 #include "extern.h"
+
+/*
+ * Load file from disk and return the buffer and size.
+ */
+unsigned char *
+load_file(const char *name, size_t *len)
+{
+	unsigned char *buf = NULL;
+	struct stat st;
+	ssize_t n;
+	size_t size;
+	int fd;
+
+	*len = 0;
+
+	if ((fd = open(name, O_RDONLY)) == -1)
+		return NULL;
+	if (fstat(fd, &st) != 0)
+		goto err;
+	if (st.st_size < 0)
+		goto err;
+	size = (size_t)st.st_size;
+	if ((buf = malloc(size)) == NULL)
+		goto err;
+	n = read(fd, buf, size);
+	if (n < 0 || (size_t)n != size)
+		goto err;
+	close(fd);
+	*len = size;
+	return buf;
+
+err:
+	close(fd);
+	free(buf);
+	return NULL;
+}
 
 /*
  * Decode base64 encoded string into binary buffer returned in out.

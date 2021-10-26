@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.155 2021/10/26 16:12:54 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.156 2021/10/26 16:59:19 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -20,7 +20,6 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/resource.h>
-#include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/tree.h>
 #include <sys/wait.h>
@@ -81,39 +80,6 @@ logx(const char *fmt, ...)
 		vwarnx(fmt, ap);
 		va_end(ap);
 	}
-}
-
-unsigned char *
-load_file(const char *name, size_t *len)
-{
-	unsigned char *buf = NULL;
-	struct stat st;
-	ssize_t n;
-	size_t size;
-	int fd;
-
-	*len = 0;
-
-	if ((fd = open(name, O_RDONLY)) == -1)
-		return NULL;
-	if (fstat(fd, &st) != 0)
-		goto err;
-	if (st.st_size < 0)
-		goto err;
-	size = (size_t)st.st_size;
-	if ((buf = malloc(size)) == NULL)
-		goto err;
-	n = read(fd, buf, size);
-	if (n < 0 || (size_t)n != size)
-		goto err;
-	close(fd);
-	*len = size;
-	return buf;
-
-err:
-	close(fd);
-	free(buf);
-	return NULL;
 }
 
 void

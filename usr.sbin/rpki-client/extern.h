@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.80 2021/10/26 16:12:54 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.81 2021/10/26 16:59:19 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -533,6 +533,7 @@ void		 cryptoerrx(const char *, ...)
 
 /* Encoding functions for hex and base64. */
 
+unsigned char	*load_file(const char *, size_t *);
 int		 base64_decode(const unsigned char *, size_t,
 		    unsigned char **, size_t *);
 int		 base64_encode(const unsigned char *, size_t, char **);
@@ -596,7 +597,6 @@ int		 output_json(FILE *, struct vrp_tree *, struct brk_tree *,
 
 void		logx(const char *fmt, ...)
 		    __attribute__((format(printf, 1, 2)));
-unsigned char	*load_file(const char *, size_t *);
 
 int	mkpath(const char *);
 
