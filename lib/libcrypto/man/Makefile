@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.203 2021/10/26 12:56:48 schwarze Exp $
+# $OpenBSD: Makefile,v 1.204 2021/10/26 18:11:04 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -306,6 +306,7 @@ MAN=	\
 	X509_REQ_add1_attr.3 \
 	X509_REQ_new.3 \
 	X509_REVOKED_new.3 \
+	X509_SIG_get0.3 \
 	X509_SIG_new.3 \
 	X509_STORE_CTX_get_error.3 \
 	X509_STORE_CTX_get_ex_new_index.3 \
@@ -331,6 +332,7 @@ MAN=	\
 	X509_cmp_time.3 \
 	X509_digest.3 \
 	X509_find_by_subject.3 \
+	X509_get_extension_flags.3 \
 	X509_get0_notBefore.3 \
 	X509_get0_signature.3 \
 	X509_get1_email.3 \
