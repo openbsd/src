@@ -1013,3 +1013,4 @@ rpkiNotify	1012
 id_ct_geofeedCSVwithCRLF	1013
 id_ct_signedChecklist		1014
 id_kp_bgpsec_router		1015
+tlsfeature	1016

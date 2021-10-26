@@ -479,6 +479,7 @@ id-pe 10		: ac-proxying
 !Cname sinfo-access
 id-pe 11		: subjectInfoAccess	: Subject Information Access
 id-pe 14		: proxyCertInfo		: Proxy Certificate Information
+id-pe 24		: tlsfeature		: TLS Feature
 id-pe 28		: sbgp-ipAddrBlockv2
 id-pe 29		: sbgp-autonomousSysNumv2
 
