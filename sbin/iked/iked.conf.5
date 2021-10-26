@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.86 2021/08/03 12:46:30 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.87 2021/10/26 17:31:22 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 3 2021 $
+.Dd $Mdocdate: October 26 2021 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -92,6 +92,16 @@ Additional configuration files can be included with the
 keyword, for example:
 .Bd -literal -offset indent
 include "/etc/macros.conf"
+.Ed
+.Pp
+Certain parameters can be expressed as lists, in which case
+.Xr iked 8
+generates all the necessary flow combinations.
+For example:
+.Bd -literal -offset indent
+ikev2 esp proto { tcp, udp } \e
+	from 192.168.1.1 to 10.0.0.18 \e
+	peer 192.168.10.1
 .Ed
 .Sh MACROS
 Macros can be defined that will later be expanded in context.
@@ -354,7 +364,13 @@ Note that this only matters for IKEv2 endpoints and does not
 restrict the traffic selectors to negotiate flows with different
 address families, e.g. IPv6 flows negotiated by IPv4 endpoints.
 .Pp
-.It Ic proto Ar protocol
+.It Xo
+.Ic proto Ar protocol
+.Xc
+.It Xo
+.Ic proto
+.Ic { Ar protocol ... Ic }
+.Xc
 The optional
 .Ic proto
 parameter restricts the flow to a specific IP protocol.
@@ -367,6 +383,14 @@ For a list of all the protocol name to number mappings used by
 .Xr iked 8 ,
 see the file
 .Pa /etc/protocols .
+.Pp
+Multiple
+.Ar protocol
+entries can be specified, separated by commas or whitespace,
+if enclosed in curly brackets:
+.Bd -literal -offset indent
+proto { tcp, udp }
+.Ed
 .Pp
 .It Ic rdomain Ar number
 Specify a different routing domain for unencrypted traffic.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.194 2021/10/12 10:01:59 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.195 2021/10/26 17:31:22 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -242,10 +242,9 @@ struct iked_policy {
 
 #define IKED_SKIP_FLAGS			 0
 #define IKED_SKIP_AF			 1
-#define IKED_SKIP_PROTO			 2
-#define IKED_SKIP_SRC_ADDR		 3
-#define IKED_SKIP_DST_ADDR		 4
-#define IKED_SKIP_COUNT			 5
+#define IKED_SKIP_SRC_ADDR		 2
+#define IKED_SKIP_DST_ADDR		 3
+#define IKED_SKIP_COUNT			 4
 	struct iked_policy		*pol_skip[IKED_SKIP_COUNT];
 
 	uint8_t				 pol_flags;
@@ -265,7 +264,8 @@ struct iked_policy {
 	int				 pol_af;
 	int				 pol_rdomain;
 	uint8_t				 pol_saproto;
-	unsigned int			 pol_ipproto;
+	unsigned int			 pol_ipproto[IKED_IPPROTO_MAX];
+	unsigned int			 pol_nipproto;
 
 	struct iked_addr		 pol_peer;
 	struct iked_static_id		 pol_peerid;

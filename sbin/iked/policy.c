@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.84 2021/10/12 10:01:59 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.85 2021/10/26 17:31:22 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2020-2021 Tobias Heider <tobhe@openbsd.org>
@@ -223,9 +223,6 @@ policy_test(struct iked *env, struct iked_policy *key)
 		else if (key->pol_af && p->pol_af &&
 		    key->pol_af != p->pol_af)
 			p = p->pol_skip[IKED_SKIP_AF];
-		else if (key->pol_ipproto && p->pol_ipproto &&
-		    key->pol_ipproto != p->pol_ipproto)
-			p = p->pol_skip[IKED_SKIP_PROTO];
 		else if (sockaddr_cmp((struct sockaddr *)&key->pol_peer.addr,
 		    (struct sockaddr *)&p->pol_peer.addr,
 		    p->pol_peer.addr_mask) != 0)
@@ -334,9 +331,6 @@ policy_calc_skip_steps(struct iked_policies *policies)
 		    prev->pol_af != AF_UNSPEC &&
 		    cur->pol_af != prev->pol_af)
 			IKED_SET_SKIP_STEPS(IKED_SKIP_AF);
-		if (cur->pol_ipproto && prev->pol_ipproto &&
-		    cur->pol_ipproto != prev->pol_ipproto)
-			IKED_SET_SKIP_STEPS(IKED_SKIP_PROTO);
 		if (IKED_ADDR_NEQ(&cur->pol_peer, &prev->pol_peer))
 			IKED_SET_SKIP_STEPS(IKED_SKIP_DST_ADDR);
 		if (IKED_ADDR_NEQ(&cur->pol_local, &prev->pol_local))

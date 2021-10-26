@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.2 2021/03/21 22:18:00 tobhe Exp $	*/
+/*	$OpenBSD: print.c,v 1.3 2021/10/26 17:31:22 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Tobias Heider <tobias.heider@stusta.de>
@@ -90,8 +90,16 @@ print_policy(struct iked_policy *pol)
 
 	print_verbose(" %s", print_xf(pol->pol_saproto, 0, saxfs));
 
-	if (pol->pol_ipproto)
-		print_verbose(" proto %s", print_proto(pol->pol_ipproto));
+	if (pol->pol_nipproto > 0) {
+		print_verbose(" proto {");
+		for (i = 0; i < pol->pol_nipproto; i++) {
+			if (i == 0)
+				print_verbose(" %s", print_proto(pol->pol_ipproto[i]));
+			else
+				print_verbose(", %s", print_proto(pol->pol_ipproto[i]));
+		}
+		print_verbose(" }");
+	}
 
 	if (pol->pol_af) {
 		if (pol->pol_af == AF_INET)

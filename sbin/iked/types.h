@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.45 2021/09/01 15:30:06 tobhe Exp $	*/
+/*	$OpenBSD: types.h,v 1.46 2021/10/26 17:31:22 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -63,6 +63,7 @@
 #define IKED_PSK_SIZE		1024	/* XXX should be dynamic */
 #define IKED_MSGBUF_MAX		8192
 #define IKED_CFG_MAX		16	/* maximum CP attributes */
+#define IKED_IPPROTO_MAX	16
 #define IKED_TAG_SIZE		64
 #define IKED_CYCLE_BUFFERS	8	/* # of static buffers for mapping */
 #define IKED_PASSWORD_SIZE	256	/* limited by most EAP types */
