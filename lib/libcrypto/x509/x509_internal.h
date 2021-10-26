@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_internal.h,v 1.12 2021/09/03 08:58:53 beck Exp $ */
+/* $OpenBSD: x509_internal.h,v 1.13 2021/10/26 09:09:53 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -106,6 +106,8 @@ struct x509_constraints_names *x509_constraints_names_dup(
     struct x509_constraints_names *names);
 void x509_constraints_names_clear(struct x509_constraints_names *names);
 struct x509_constraints_names *x509_constraints_names_new(size_t names_max);
+int x509_constraints_general_to_bytes(GENERAL_NAME *name, uint8_t **bytes,
+    size_t *len);
 void x509_constraints_names_free(struct x509_constraints_names *names);
 int x509_constraints_valid_host(uint8_t *name, size_t len);
 int x509_constraints_valid_sandns(uint8_t *name, size_t len);
