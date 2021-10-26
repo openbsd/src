@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.35 2021/10/06 12:50:10 visa Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.36 2021/10/26 10:45:55 patrick Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -928,8 +928,6 @@ Xdtb_efi(void)
 	char path[MAXPATHLEN];
 	struct stat sb;
 	int fd;
-
-#define O_RDONLY	0
 
 	if (cmd.argc != 2)
 		return (1);
