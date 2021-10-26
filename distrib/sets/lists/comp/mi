@@ -1894,6 +1894,7 @@
 ./usr/share/man/man3/EVP_EncodeInit.3
 ./usr/share/man/man3/EVP_EncryptInit.3
 ./usr/share/man/man3/EVP_OpenInit.3
+./usr/share/man/man3/EVP_PKCS82PKEY.3
 ./usr/share/man/man3/EVP_PKEY_CTX_ctrl.3
 ./usr/share/man/man3/EVP_PKEY_CTX_new.3
 ./usr/share/man/man3/EVP_PKEY_add1_attr.3
@@ -1975,6 +1976,7 @@
 ./usr/share/man/man3/PKCS7_sign_add_signer.3
 ./usr/share/man/man3/PKCS7_verify.3
 ./usr/share/man/man3/PKCS8_PRIV_KEY_INFO_new.3
+./usr/share/man/man3/PKCS8_pkey_set0.3
 ./usr/share/man/man3/PKEY_USAGE_PERIOD_new.3
 ./usr/share/man/man3/POLICYINFO_new.3
 ./usr/share/man/man3/PROXY_POLICY_new.3
