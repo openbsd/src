@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.204 2021/10/25 09:38:36 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.205 2021/10/26 12:22:23 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -665,10 +665,12 @@ screen_write_menu(struct screen_write_ctx *ctx, struct menu *menu,
 			if (*name == '-') {
 				name++;
 				default_gc.attr |= GRID_ATTR_DIM;
-				format_draw(ctx, gc, menu->width, name, NULL);
+				format_draw(ctx, gc, menu->width, name, NULL,
+				    0);
 				default_gc.attr &= ~GRID_ATTR_DIM;
 			} else
-				format_draw(ctx, gc, menu->width, name, NULL);
+				format_draw(ctx, gc, menu->width, name, NULL,
+				    gc == choice_gc);
 			gc = &default_gc;
 		}
 	}
@@ -764,7 +766,7 @@ screen_write_box(struct screen_write_ctx *ctx, u_int nx, u_int ny,
 	if (title != NULL) {
 		gc.attr &= ~GRID_ATTR_CHARSET;
 		screen_write_cursormove(ctx, cx + 2, cy, 0);
-		format_draw(ctx, &gc, nx - 4, title, NULL);
+		format_draw(ctx, &gc, nx - 4, title, NULL, 0);
 	}
 
 	screen_write_set_cursor(ctx, cx, cy);
