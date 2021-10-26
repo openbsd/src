@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509at_get_attr.3,v 1.4 2021/10/25 12:25:14 schwarze Exp $
+.\" $OpenBSD: X509at_get_attr.3,v 1.5 2021/10/26 12:56:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 25 2021 $
+.Dd $Mdocdate: October 26 2021 $
 .Dt X509AT_GET_ATTR 3
 .Os
 .Sh NAME
@@ -145,6 +145,7 @@ on failure.
 .Xr STACK_OF 3 ,
 .Xr X509_ATTRIBUTE_get0_data 3 ,
 .Xr X509_ATTRIBUTE_new 3 ,
+.Xr X509_REQ_get_attr 3 ,
 .Xr X509at_add1_attr 3
 .Sh HISTORY
 .Fn X509at_get_attr ,
