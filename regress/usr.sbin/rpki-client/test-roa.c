@@ -1,4 +1,4 @@
-/*	$Id: test-roa.c,v 1.13 2021/10/24 17:54:28 claudio Exp $ */
+/*	$Id: test-roa.c,v 1.14 2021/10/26 16:59:54 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -39,7 +39,8 @@ main(int argc, char *argv[])
 	BIO		*bio_out = NULL;
 	X509		*xp = NULL;
 	struct roa	*p;
-
+	unsigned char	*buf;
+	size_t		 len;
 
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
@@ -68,8 +69,11 @@ main(int argc, char *argv[])
 		errx(1, "argument missing");
 
 	for (i = 0; i < argc; i++) {
-		if ((p = roa_parse(&xp, argv[i])) == NULL)
-			break;
+		buf = load_file(argv[i], &len);
+		if ((p = roa_parse(&xp, argv[i], buf, len)) == NULL) {
+			free(buf);
+			continue;
+		}
 		if (verb)
 			roa_print(p);
 		if (ppem) {
@@ -77,6 +81,7 @@ main(int argc, char *argv[])
 				errx(1,
 				    "PEM_write_bio_X509: unable to write cert");
 		}
+		free(buf);
 		roa_free(p);
 		X509_free(xp);
 	}

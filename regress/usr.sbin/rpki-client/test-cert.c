@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.14 2021/10/24 17:54:28 claudio Exp $ */
+/*	$Id: test-cert.c,v 1.15 2021/10/26 16:59:54 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -71,15 +71,19 @@ main(int argc, char *argv[])
 			const char	*cert_path = argv[i];
 			const char	*tal_path = argv[i + 1];
 			char		*buf;
+			size_t		 len;
 			struct tal	*tal;
 
-			buf = tal_read_file(tal_path);
-			tal = tal_parse(tal_path, buf);
+			buf = load_file(tal_path, &len);
+			tal = tal_parse(tal_path, buf, len);
 			free(buf);
 			if (tal == NULL)
 				break;
 
-			p = ta_parse(&xp, cert_path, tal->pkey, tal->pkeysz);
+			buf = load_file(cert_path, &len);
+			p = ta_parse(&xp, cert_path, buf, len,
+			    tal->pkey, tal->pkeysz);
+			free(buf);
 			tal_free(tal);
 			if (p == NULL)
 				break;
@@ -91,11 +95,16 @@ main(int argc, char *argv[])
 		}
 	} else {
 		for (i = 0; i < argc; i++) {
-			p = cert_parse(&xp, argv[i]);
+			char		*buf;
+			size_t		 len;
+
+			buf = load_file(argv[i], &len);
+			p = cert_parse(&xp, argv[i], buf, len);
 			if (p == NULL)
 				break;
 			if (verb)
 				cert_print(p);
+			free(buf);
 			cert_free(p);
 			X509_free(xp);
 		}
