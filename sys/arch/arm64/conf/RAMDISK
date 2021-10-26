@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.157 2021/09/03 14:53:09 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.158 2021/10/26 14:20:47 patrick Exp $
 
 machine		arm64
 maxusers	4
@@ -243,6 +243,7 @@ mskc*		at pci?			# Marvell Yukon-2
 msk*		at mskc?		#  each port of above
 re*		at pci?			# Realtek 8169/8169S/8110S
 rge*		at pci?			# Realtek 8125
+vmx*		at pci?			# VMware VMXNET3 virtual interface
 
 # PCI WiFi
 athn*		at pci?			# Atheros AR9k (802.11a/g/n)
