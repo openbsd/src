@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.228 2021/10/26 12:22:23 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.229 2021/10/26 12:29:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -810,14 +810,23 @@ status_prompt_translate_key(struct client *c, key_code key, key_code *new_key)
 {
 	if (c->prompt_mode == PROMPT_ENTRY) {
 		switch (key) {
+		case '\001': /* C-a */
 		case '\003': /* C-c */
+		case '\005': /* C-e */
 		case '\007': /* C-g */
 		case '\010': /* C-h */
 		case '\011': /* Tab */
+		case '\013': /* C-k */
+		case '\016': /* C-n */
+		case '\020': /* C-p */
+		case '\024': /* C-t */
 		case '\025': /* C-u */
 		case '\027': /* C-w */
+		case '\031': /* C-y */
 		case '\n':
 		case '\r':
+		case KEYC_LEFT|KEYC_CTRL:
+		case KEYC_RIGHT|KEYC_CTRL:
 		case KEYC_BSPACE:
 		case KEYC_DC:
 		case KEYC_DOWN:
@@ -838,6 +847,9 @@ status_prompt_translate_key(struct client *c, key_code key, key_code *new_key)
 	}
 
 	switch (key) {
+	case KEYC_BSPACE:
+		*new_key = KEYC_LEFT;
+		return (1);
 	case 'A':
 	case 'I':
 	case 'C':
@@ -883,7 +895,7 @@ status_prompt_translate_key(struct client *c, key_code key, key_code *new_key)
 		*new_key = 'B'|KEYC_VI;
 		return (1);
 	case 'd':
-		*new_key = '\025';
+		*new_key = '\025'; /* C-u */
 		return (1);
 	case 'e':
 		*new_key = 'e'|KEYC_VI;
