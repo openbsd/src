@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_add1_attr.3,v 1.1 2021/10/22 15:50:19 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_add1_attr.3,v 1.2 2021/10/26 12:45:31 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 22 2021 $
+.Dd $Mdocdate: October 26 2021 $
 .Dt EVP_PKEY_ADD1_ATTR 3
 .Os
 .Sh NAME
@@ -148,7 +148,7 @@ return 1 for success or 0 for failure.
 .Pp
 .Fn EVP_PKEY_delete_attr
 and
-.Fn X509at_get_attr
+.Fn EVP_PKEY_get_attr
 return the deleted or requested attribute or
 .Dv NULL
 if the requested index is negative or greater than or equal to
