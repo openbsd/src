@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.49 2021/09/09 15:09:43 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.50 2021/10/26 15:14:18 job Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -351,6 +351,14 @@ x509_verify_ctx_validate_legacy_chain(struct x509_verify_ctx *ctx,
 	 */
 	if (!x509_vfy_check_chain_extensions(ctx->xsc))
 		goto err;
+
+#ifndef OPENSSL_NO_RFC3779
+	if (!X509v3_asid_validate_path(ctx->xsc))
+		goto err;
+
+	if (!X509v3_addr_validate_path(ctx->xsc))
+		goto err;
+#endif
 
 	if (!x509_constraints_chain(ctx->xsc->chain,
 		&ctx->xsc->error, &ctx->xsc->error_depth)) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.91 2021/10/24 13:52:13 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.92 2021/10/26 15:14:18 job Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -548,6 +548,16 @@ X509_verify_cert_legacy(X509_STORE_CTX *ctx)
 	ok = check_name_constraints(ctx);
 	if (!ok)
 		goto end;
+
+#ifndef OPENSSL_NO_RFC3779
+	ok = X509v3_asid_validate_path(ctx);
+	if (!ok)
+		goto end;
+
+	ok = X509v3_addr_validate_path(ctx);
+	if (!ok)
+		goto end;
+#endif
 
 	ok = check_id(ctx);
 	if (!ok)
