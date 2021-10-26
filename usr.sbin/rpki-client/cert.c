@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.40 2021/10/23 16:06:04 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.41 2021/10/26 13:31:05 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -976,7 +976,8 @@ out:
  * is also dereferenced.
  */
 static struct cert *
-cert_parse_inner(X509 **xp, const char *fn, int ta)
+cert_parse_inner(X509 **xp, const char *fn, const unsigned char *der,
+    size_t len, int ta)
 {
 	int		 rc = 0, extsz, c;
 	int		 sia_present = 0;
@@ -985,28 +986,19 @@ cert_parse_inner(X509 **xp, const char *fn, int ta)
 	X509_EXTENSION	*ext = NULL;
 	ASN1_OBJECT	*obj;
 	struct parse	 p;
-	BIO		*bio = NULL;
-	FILE		*f;
 
 	*xp = NULL;
 
-	if ((f = fopen(fn, "rb")) == NULL) {
-		warn("%s", fn);
+	/* just fail for empty buffers, the warning was printed elsewhere */
+	if (der == NULL)
 		return NULL;
-	}
-
-	if ((bio = BIO_new_fp(f, BIO_CLOSE)) == NULL) {
-		if (verbose > 0)
-			cryptowarnx("%s: BIO_new_file", fn);
-		return NULL;
-	}
 
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
 	if ((p.res = calloc(1, sizeof(struct cert))) == NULL)
 		err(1, NULL);
 
-	if ((x = *xp = d2i_X509_bio(bio, NULL)) == NULL) {
+	if ((x = *xp = d2i_X509(NULL, &der, len)) == NULL) {
 		cryptowarnx("%s: d2i_X509_bio", p.fn);
 		goto out;
 	}
@@ -1144,7 +1136,6 @@ cert_parse_inner(X509 **xp, const char *fn, int ta)
 
 	rc = 1;
 out:
-	BIO_free_all(bio);
 	if (rc == 0) {
 		cert_free(p.res);
 		X509_free(x);
@@ -1154,19 +1145,20 @@ out:
 }
 
 struct cert *
-cert_parse(X509 **xp, const char *fn)
+cert_parse(X509 **xp, const char *fn, const unsigned char *der, size_t len)
 {
-	return cert_parse_inner(xp, fn, 0);
+	return cert_parse_inner(xp, fn, der, len, 0);
 }
 
 struct cert *
-ta_parse(X509 **xp, const char *fn, const unsigned char *pkey, size_t pkeysz)
+ta_parse(X509 **xp, const char *fn, const unsigned char *der, size_t len,
+    const unsigned char *pkey, size_t pkeysz)
 {
 	EVP_PKEY	*pk = NULL, *opk = NULL;
 	struct cert	*p;
 	int		 rc = 0;
 
-	if ((p = cert_parse_inner(xp, fn, 1)) == NULL)
+	if ((p = cert_parse_inner(xp, fn, der, len, 1)) == NULL)
 		return NULL;
 
 	if (pkey != NULL) {

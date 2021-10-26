@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.18 2021/10/26 10:52:50 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.19 2021/10/26 13:31:05 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -191,7 +191,8 @@ proc_parser_mft(struct entity *entp, const unsigned char *der, size_t len)
  * parse failure.
  */
 static struct cert *
-proc_parser_cert(const struct entity *entp)
+proc_parser_cert(const struct entity *entp, const unsigned char *der,
+    size_t len)
 {
 	struct cert		*cert;
 	X509			*x509;
@@ -204,7 +205,7 @@ proc_parser_cert(const struct entity *entp)
 
 	/* Extract certificate data and X509. */
 
-	cert = cert_parse(&x509, entp->file);
+	cert = cert_parse(&x509, entp->file, der, len);
 	if (cert == NULL)
 		return NULL;
 
@@ -282,7 +283,8 @@ proc_parser_cert(const struct entity *entp)
  * parse failure.
  */
 static struct cert *
-proc_parser_root_cert(const struct entity *entp)
+proc_parser_root_cert(const struct entity *entp, const unsigned char *der,
+    size_t len)
 {
 	char			subject[256];
 	ASN1_TIME		*notBefore, *notAfter;
@@ -296,7 +298,7 @@ proc_parser_root_cert(const struct entity *entp)
 
 	/* Extract certificate data and X509. */
 
-	cert = ta_parse(&x509, entp->file, entp->pkey, entp->pkeysz);
+	cert = ta_parse(&x509, entp->file, der, len, entp->pkey, entp->pkeysz);
 	if (cert == NULL)
 		return NULL;
 
@@ -561,7 +563,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		io_simple_buffer(b, &entp->type, sizeof(entp->type));
 
 		f = NULL;
-		if (entp->type != RTYPE_TAL && entp->type != RTYPE_CER) {
+		if (entp->type != RTYPE_TAL) {
 			f = load_file(entp->file, &flen);
 			if (f == NULL)
 				warn("%s", entp->file);
@@ -577,9 +579,9 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			break;
 		case RTYPE_CER:
 			if (entp->has_pkey)
-				cert = proc_parser_root_cert(entp);
+				cert = proc_parser_root_cert(entp, f, flen);
 			else
-				cert = proc_parser_cert(entp);
+				cert = proc_parser_cert(entp, f, flen);
 			c = (cert != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (cert != NULL)
