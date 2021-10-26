@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: August 11 2020 $
+.Dd $Mdocdate: October 26 2021 $
 .Dt FIDO_BIO_TEMPLATE 3
 .Os
 .Sh NAME
@@ -164,6 +164,16 @@ Please note that the first template in
 has an
 .Fa idx
 (index) value of 0.
+.Sh RETURN VALUES
+The error codes returned by
+.Fn fido_bio_template_set_id
+and
+.Fn fido_bio_template_set_name
+are defined in
+.In fido/err.h .
+On success,
+.Dv FIDO_OK
+is returned.
 .Sh SEE ALSO
 .Xr fido_bio_dev_get_info 3 ,
 .Xr fido_bio_enroll_new 3

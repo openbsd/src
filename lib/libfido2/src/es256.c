@@ -5,11 +5,8 @@
  */
 
 #include <openssl/bn.h>
-#include <openssl/ec.h>
-#include <openssl/evp.h>
 #include <openssl/obj_mac.h>
 
-#include <string.h>
 #include "fido.h"
 #include "fido/es256.h"
 
@@ -147,9 +144,7 @@ es256_sk_free(es256_sk_t **skp)
 	if (skp == NULL || (sk = *skp) == NULL)
 		return;
 
-	explicit_bzero(sk, sizeof(*sk));
-	free(sk);
-
+	freezero(sk, sizeof(*sk));
 	*skp = NULL;
 }
 
@@ -167,9 +162,7 @@ es256_pk_free(es256_pk_t **pkp)
 	if (pkp == NULL || (pk = *pkp) == NULL)
 		return;
 
-	explicit_bzero(pk, sizeof(*pk));
-	free(pk);
-
+	freezero(pk, sizeof(*pk));
 	*pkp = NULL;
 }
 

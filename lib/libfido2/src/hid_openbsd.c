@@ -13,6 +13,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <string.h>
 #include <unistd.h>
 #include <usbhid.h>
@@ -27,6 +28,8 @@ struct hid_openbsd {
 	int fd;
 	size_t report_in_len;
 	size_t report_out_len;
+	sigset_t sigmask;
+	const sigset_t *sigmaskp;
 };
 
 int
@@ -46,14 +49,10 @@ fido_hid_manifest(fido_dev_info_t *devlist, size_t ilen, size_t *olen)
 
 	for (i = *olen = 0; i < MAX_UHID && *olen < ilen; i++) {
 		snprintf(path, sizeof(path), "/dev/fido/%zu", i);
-		if ((fd = open(path, O_RDWR)) == -1) {
-			if (errno != ENOENT && errno != ENXIO) {
-				fido_log_debug("%s: open %s: %s", __func__,
-				    path, strerror(errno));
-			}
+		if ((fd = fido_hid_unix_open(path)) == -1)
 			continue;
-		}
-		close(fd);
+		if (close(fd) == -1)
+			fido_log_error(errno, "%s: close", __func__);
 
 		memset(&udi, 0, sizeof(udi));
 		strlcpy(udi.udi_vendor, "OpenBSD", sizeof(udi.udi_vendor));
@@ -65,6 +64,12 @@ fido_hid_manifest(fido_dev_info_t *devlist, size_t ilen, size_t *olen)
 
 		di = &devlist[*olen];
 		memset(di, 0, sizeof(*di));
+		di->io = (fido_dev_io_t) {
+			fido_hid_open,
+			fido_hid_close,
+			fido_hid_read,
+			fido_hid_write,
+		};
 		if ((di->path = strdup(path)) == NULL ||
 		    (di->manufacturer = strdup(udi.udi_vendor)) == NULL ||
 		    (di->product = strdup(udi.udi_product)) == NULL) {
@@ -74,14 +79,8 @@ fido_hid_manifest(fido_dev_info_t *devlist, size_t ilen, size_t *olen)
 			explicit_bzero(di, sizeof(*di));
 			return FIDO_ERR_INTERNAL;
 		}
-		di->vendor_id = udi.udi_vendorNo;
-		di->product_id = udi.udi_productNo;
-		di->io = (fido_dev_io_t) {
-			fido_hid_open,
-			fido_hid_close,
-			fido_hid_read,
-			fido_hid_write,
-		};
+		di->vendor_id = (int16_t)udi.udi_vendorNo;
+		di->product_id = (int16_t)udi.udi_productNo;
 		(*olen)++;
 	}
 
@@ -137,7 +136,7 @@ terrible_ping_kludge(struct hid_openbsd *ctx)
 		 * synched now.
 		 */
 		fido_log_debug("%s: got reply", __func__);
-		fido_log_xxd(data, ctx->report_out_len);
+		fido_log_xxd(data, ctx->report_out_len, "%s", __func__);
 		return 0;
 	}
 	fido_log_debug("%s: no response", __func__);
@@ -150,11 +149,11 @@ fido_hid_open(const char *path)
 	struct hid_openbsd *ret = NULL;
 
 	if ((ret = calloc(1, sizeof(*ret))) == NULL ||
-	    (ret->fd = open(path, O_RDWR)) < 0) {
+	    (ret->fd = fido_hid_unix_open(path)) == -1) {
 		free(ret);
 		return (NULL);
 	}
-	ret->report_in_len = ret->report_out_len = MAX_U2FHID_LEN;
+	ret->report_in_len = ret->report_out_len = CTAP_MAX_REPORT_LEN;
 	fido_log_debug("%s: inlen = %zu outlen = %zu", __func__,
 	    ret->report_in_len, ret->report_out_len);
 
@@ -176,48 +175,21 @@ fido_hid_close(void *handle)
 {
 	struct hid_openbsd *ctx = (struct hid_openbsd *)handle;
 
-	close(ctx->fd);
+	if (close(ctx->fd) == -1)
+		fido_log_error(errno, "%s: close", __func__);
+
 	free(ctx);
 }
 
 int
-waitfd(int fd, int ms)
+fido_hid_set_sigmask(void *handle, const fido_sigset_t *sigmask)
 {
-	struct timespec ts_start, ts_now, ts_delta;
-	struct pollfd pfd;
-	int ms_remain, r;
+	struct hid_openbsd *ctx = handle;
 
-	if (ms < 0)
-		return 0;
-	memset(&pfd, 0, sizeof(pfd));
-	pfd.fd = fd;
-	pfd.events = POLLIN;
-	if (clock_gettime(CLOCK_MONOTONIC, &ts_start) != 0) {
-		fido_log_debug("%s: clock_gettime: %s",
-		    __func__, strerror(errno));
-		return -1;
-	}
-	for (ms_remain = ms; ms_remain > 0;) {
-		if ((r = poll(&pfd, 1, ms_remain)) > 0)
-			return 0;
-		else if (r == 0)
-			break;
-		else if (errno != EINTR) {
-			fido_log_debug("%s: poll: %s",
-			    __func__, strerror(errno));
-			return -1;
-		}
-		/* poll interrupted - subtract time already waited */
-		if (clock_gettime(CLOCK_MONOTONIC, &ts_now) != 0) {
-			fido_log_debug("%s: clock_gettime: %s",
-			    __func__, strerror(errno));
-			return -1;
-		}
-		timespecsub(&ts_now, &ts_start, &ts_delta);
-		ms_remain = ms - ((ts_delta.tv_sec * 1000) +
-		    (ts_delta.tv_nsec / 1000000));
-	}
-	return -1;
+	ctx->sigmask = *sigmask;
+	ctx->sigmaskp = &ctx->sigmask;
+
+	return (FIDO_OK);
 }
 
 int
@@ -226,20 +198,27 @@ fido_hid_read(void *handle, unsigned char *buf, size_t len, int ms)
 	struct hid_openbsd *ctx = (struct hid_openbsd *)handle;
 	ssize_t r;
 
-	fido_log_debug("%s: %zu timeout %d", __func__, len, ms);
 	if (len != ctx->report_in_len) {
 		fido_log_debug("%s: invalid len: got %zu, want %zu", __func__,
 		    len, ctx->report_in_len);
 		return (-1);
 	}
-	if (waitfd(ctx->fd, ms) != 0) {
+
+	if (fido_hid_unix_wait(ctx->fd, ms, ctx->sigmaskp) < 0) {
 		fido_log_debug("%s: fd not ready", __func__);
 		return (-1);
 	}
-	if ((r = read(ctx->fd, buf, len)) == -1 || (size_t)r != len) {
-		fido_log_debug("%s: read: %s", __func__, strerror(errno));
+
+	if ((r = read(ctx->fd, buf, len)) == -1) {
+		fido_log_error(errno, "%s: read", __func__);
 		return (-1);
 	}
+
+	if (r < 0 || (size_t)r != len) {
+		fido_log_debug("%s: %zd != %zu", __func__, r, len);
+		return (-1);
+	}
+
 	return ((int)len);
 }
 
@@ -254,11 +233,17 @@ fido_hid_write(void *handle, const unsigned char *buf, size_t len)
 		    len, ctx->report_out_len);
 		return (-1);
 	}
-	if ((r = write(ctx->fd, buf + 1, len - 1)) == -1 ||
-	    (size_t)r != len - 1) {
-		fido_log_debug("%s: write: %s", __func__, strerror(errno));
+
+	if ((r = write(ctx->fd, buf + 1, len - 1)) == -1) {
+		fido_log_error(errno, "%s: write", __func__);
 		return (-1);
 	}
+
+	if (r < 0 || (size_t)r != len - 1) {
+		fido_log_debug("%s: %zd != %zu", __func__, r, len - 1);
+		return (-1);
+	}
+
 	return ((int)len);
 }
 

@@ -1,13 +1,13 @@
 /*
- * Copyright (c) 2018 Yubico AB. All rights reserved.
+ * Copyright (c) 2018-2021 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
  */
 
+#undef _GNU_SOURCE /* XSI strerror_r() */
+
 #include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "fido.h"
 
@@ -30,6 +30,21 @@ log_on_stderr(const char *str)
 	fprintf(stderr, "%s", str);
 }
 
+static void
+do_log(const char *suffix, const char *fmt, va_list args)
+{
+	char line[LINELEN], body[LINELEN];
+
+	vsnprintf(body, sizeof(body), fmt, args);
+
+	if (suffix != NULL)
+		snprintf(line, sizeof(line), "%.180s: %.70s\n", body, suffix);
+	else
+		snprintf(line, sizeof(line), "%.180s\n", body);
+
+	log_handler(line);
+}
+
 void
 fido_log_init(void)
 {
@@ -40,32 +55,30 @@ fido_log_init(void)
 void
 fido_log_debug(const char *fmt, ...)
 {
-	char line[LINELEN];
-	va_list ap;
-	int r;
+	va_list args;
 
 	if (!logging || log_handler == NULL)
 		return;
 
-	va_start(ap, fmt);
-	r = vsnprintf(line, sizeof(line) - 1, fmt, ap);
-	va_end(ap);
-	if (r < 0 || (size_t)r >= sizeof(line) - 1)
-		return;
-	strlcat(line, "\n", sizeof(line));
-	log_handler(line);
+	va_start(args, fmt);
+	do_log(NULL, fmt, args);
+	va_end(args);
 }
 
 void
-fido_log_xxd(const void *buf, size_t count)
+fido_log_xxd(const void *buf, size_t count, const char *fmt, ...)
 {
 	const uint8_t *ptr = buf;
-	char row[XXDROW];
-	char xxd[XXDLEN];
+	char row[XXDROW], xxd[XXDLEN];
+	va_list args;
 
-	if (!logging || log_handler == NULL || count == 0)
+	if (!logging || log_handler == NULL)
 		return;
 
+	snprintf(row, sizeof(row), "buf=%p, len=%zu", buf, count);
+	va_start(args, fmt);
+	do_log(row, fmt, args);
+	va_end(args);
 	*row = '\0';
 
 	for (size_t i = 0; i < count; i++) {
@@ -80,6 +93,22 @@ fido_log_xxd(const void *buf, size_t count)
 			*row = '\0';
 		}
 	}
+}
+
+void
+fido_log_error(int errnum, const char *fmt, ...)
+{
+	char errstr[LINELEN];
+	va_list args;
+
+	if (!logging || log_handler == NULL)
+		return;
+	if (strerror_r(errnum, errstr, sizeof(errstr)) != 0)
+		snprintf(errstr, sizeof(errstr), "error %d", errnum);
+
+	va_start(args, fmt);
+	do_log(errstr, fmt, args);
+	va_end(args);
 }
 
 void

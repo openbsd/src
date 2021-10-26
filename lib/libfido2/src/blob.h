@@ -28,8 +28,10 @@ cbor_item_t *fido_blob_encode(const fido_blob_t *);
 fido_blob_t *fido_blob_new(void);
 int fido_blob_decode(const cbor_item_t *, fido_blob_t *);
 int fido_blob_is_empty(const fido_blob_t *);
-int fido_blob_set(fido_blob_t *, const unsigned char *, size_t);
+int fido_blob_set(fido_blob_t *, const u_char *, size_t);
+int fido_blob_append(fido_blob_t *, const u_char *, size_t);
 void fido_blob_free(fido_blob_t **);
+void fido_blob_reset(fido_blob_t *);
 void fido_free_blob_array(fido_blob_array_t *);
 
 #ifdef __cplusplus

@@ -31,8 +31,14 @@
 #define CTAP_CBOR_CLIENT_PIN		0x06
 #define CTAP_CBOR_RESET			0x07
 #define CTAP_CBOR_NEXT_ASSERT		0x08
+#define CTAP_CBOR_LARGEBLOB		0x0c
+#define CTAP_CBOR_CONFIG		0x0d
 #define CTAP_CBOR_BIO_ENROLL_PRE	0x40
 #define CTAP_CBOR_CRED_MGMT_PRE		0x41
+
+/* Supported CTAP PIN/UV Auth Protocols. */
+#define CTAP_PIN_PROTOCOL1		1
+#define CTAP_PIN_PROTOCOL2		2
 
 /* U2F command opcodes. */
 #define U2F_CMD_REGISTER		0x01
@@ -43,6 +49,7 @@
 #define U2F_AUTH_CHECK			0x07
 
 /* ISO7816-4 status words. */
+#define SW1_MORE_DATA			0x61
 #define SW_CONDITIONS_NOT_SATISFIED	0x6985
 #define SW_WRONG_DATA			0x6a80
 #define SW_NO_ERROR			0x9000
@@ -92,10 +99,19 @@
 /* Supported extensions. */
 #define FIDO_EXT_HMAC_SECRET	0x01
 #define FIDO_EXT_CRED_PROTECT	0x02
+#define FIDO_EXT_LARGEBLOB_KEY	0x04
+#define FIDO_EXT_CRED_BLOB	0x08
 
 /* Supported credential protection policies. */
 #define FIDO_CRED_PROT_UV_OPTIONAL		0x01
 #define FIDO_CRED_PROT_UV_OPTIONAL_WITH_ID	0x02
 #define FIDO_CRED_PROT_UV_REQUIRED		0x03
+
+#ifdef _FIDO_INTERNAL
+#define FIDO_EXT_ASSERT_MASK	(FIDO_EXT_HMAC_SECRET|FIDO_EXT_LARGEBLOB_KEY| \
+				 FIDO_EXT_CRED_BLOB)
+#define FIDO_EXT_CRED_MASK	(FIDO_EXT_HMAC_SECRET|FIDO_EXT_CRED_PROTECT| \
+				 FIDO_EXT_LARGEBLOB_KEY|FIDO_EXT_CRED_BLOB)
+#endif /* _FIDO_INTERNAL */
 
 #endif /* !_FIDO_PARAM_H */

@@ -2,16 +2,18 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: February 7 2020 $
+.Dd $Mdocdate: October 26 2021 $
 .Dt FIDO_ASSERT_SET_AUTHDATA 3
 .Os
 .Sh NAME
 .Nm fido_assert_set_authdata ,
 .Nm fido_assert_set_authdata_raw ,
+.Nm fido_assert_set_clientdata ,
 .Nm fido_assert_set_clientdata_hash ,
 .Nm fido_assert_set_count ,
 .Nm fido_assert_set_extensions ,
 .Nm fido_assert_set_hmac_salt ,
+.Nm fido_assert_set_hmac_secret ,
 .Nm fido_assert_set_up ,
 .Nm fido_assert_set_uv ,
 .Nm fido_assert_set_rp ,
@@ -31,6 +33,8 @@ typedef enum {
 .Ft int
 .Fn fido_assert_set_authdata_raw "fido_assert_t *assert" " size_t idx" "const unsigned char *ptr" "size_t len"
 .Ft int
+.Fn fido_assert_set_clientdata "fido_assert_t *assert" "const unsigned char *ptr" "size_t len"
+.Ft int
 .Fn fido_assert_set_clientdata_hash "fido_assert_t *assert" "const unsigned char *ptr" "size_t len"
 .Ft int
 .Fn fido_assert_set_count "fido_assert_t *assert" "size_t n"
@@ -38,6 +42,8 @@ typedef enum {
 .Fn fido_assert_set_extensions "fido_assert_t *assert" "int flags"
 .Ft int
 .Fn fido_assert_set_hmac_salt "fido_assert_t *assert" "const unsigned char *ptr" "size_t len"
+.Ft int
+.Fn fido_assert_set_hmac_secret "fido_assert_t *assert" "const unsigned char *ptr" "size_t len"
 .Ft int
 .Fn fido_assert_set_up "fido_assert_t *assert" "fido_opt_t up"
 .Ft int
@@ -100,9 +106,10 @@ Alternatively, a raw binary blob may be passed to
 .Fn fido_assert_set_authdata_raw .
 .Pp
 The
-.Fn fido_assert_set_clientdata_hash
+.Fn fido_assert_set_clientdata_hash ,
+.Fn fido_assert_set_hmac_salt ,
 and
-.Fn fido_assert_set_hmac_salt
+.Fn fido_assert_set_hmac_secret
 functions set the client data hash and hmac-salt parts of
 .Fa assert
 to
@@ -115,6 +122,18 @@ bytes.
 A copy of
 .Fa ptr
 is made, and no references to the passed pointer are kept.
+.Pp
+The
+.Fn fido_assert_set_clientdata
+function allows an application to set the client data hash of
+.Fa assert
+by specifying the assertion's unhashed client data.
+This is required by Windows Hello, which calculates the client data
+hash internally.
+For compatibility with Windows Hello, applications should use
+.Fn fido_assert_set_clientdata
+instead of
+.Fn fido_assert_set_clientdata_hash .
 .Pp
 The
 .Fn fido_assert_set_rp
@@ -136,8 +155,11 @@ function sets the extensions of
 to the bitmask
 .Fa flags .
 At the moment, only the
-.Dv FIDO_EXT_HMAC_SECRET
-extension is supported.
+.Dv FIDO_EXT_CRED_BLOB ,
+.Dv FIDO_EXT_HMAC_SECRET ,
+and
+.Dv FIDO_EXT_LARGEBLOB_KEY
+extensions are supported.
 If
 .Fa flags
 is zero, the extensions of
@@ -178,6 +200,11 @@ set of functions can be found in the
 .Pa examples/assert.c
 file shipped with
 .Em libfido2 .
+.Pp
+.Fn fido_assert_set_hmac_secret
+is not normally useful in a FIDO client or server \(em it is provided
+to enable testing other functionality that relies on retrieving the
+HMAC secret from an assertion obtained from an authenticator.
 .Sh RETURN VALUES
 The
 .Nm

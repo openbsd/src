@@ -2,12 +2,12 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: February 7 2020 $
+.Dd $Mdocdate: October 26 2021 $
 .Dt FIDO_CRED_VERIFY 3
 .Os
 .Sh NAME
 .Nm fido_cred_verify
-.Nd verifies the signature of a FIDO 2 credential
+.Nd verifies the attestation signature of a FIDO 2 credential
 .Sh SYNOPSIS
 .In fido.h
 .Ft int
@@ -15,7 +15,7 @@
 .Sh DESCRIPTION
 The
 .Fn fido_cred_verify
-function verifies whether the signature contained in
+function verifies whether the attestation signature contained in
 .Fa cred
 matches the attributes of the credential.
 Before using
@@ -29,7 +29,7 @@ A brief description follows:
 The
 .Fn fido_cred_verify
 function verifies whether the client data hash, relying party ID,
-credential ID, type, and resident key and user verification
+credential ID, type, and resident/discoverable key and user verification
 attributes of
 .Fa cred
 have been attested by the holder of the private counterpart of
@@ -54,6 +54,11 @@ The error codes returned by
 .Fn fido_cred_verify
 are defined in
 .In fido/err.h .
+If
+.Fa cred
+does not contain attestation data, then
+.Dv FIDO_ERR_INVALID_ARGUMENT
+is returned.
 If
 .Fa cred
 passes verification, then

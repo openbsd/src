@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: August 11 2020 $
+.Dd $Mdocdate: October 26 2021 $
 .Dt FIDO_BIO_DEV_GET_INFO 3
 .Os
 .Sh NAME
@@ -101,7 +101,7 @@ function sets the friendly name of
 .Fa template
 on
 .Fa dev .
-.Pp
+.Sh RETURN VALUES
 The error codes returned by
 .Fn fido_bio_dev_get_info ,
 .Fn fido_bio_dev_enroll_begin ,
@@ -120,11 +120,3 @@ is returned.
 .Xr fido_bio_enroll_new 3 ,
 .Xr fido_bio_info_new 3 ,
 .Xr fido_bio_template 3
-.Sh CAVEATS
-Biometric enrollment is a tentative feature of FIDO 2.1.
-Applications willing to strictly abide by FIDO 2.0 should refrain
-from using biometric enrollment.
-Applications using biometric enrollment should ensure it is
-supported by the authenticator prior to using the API.
-Since FIDO 2.1 hasn't been finalised, there is a chance the
-functionality and associated data structures may change.

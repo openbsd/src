@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: August 23 2020 $
+.Dd $Mdocdate: October 26 2021 $
 .Dt FIDO_DEV_OPEN 3
 .Os
 .Sh NAME
@@ -14,9 +14,13 @@
 .Nm fido_dev_force_fido2 ,
 .Nm fido_dev_force_u2f ,
 .Nm fido_dev_is_fido2 ,
+.Nm fido_dev_is_winhello ,
+.Nm fido_dev_supports_credman ,
 .Nm fido_dev_supports_cred_prot ,
 .Nm fido_dev_supports_pin ,
 .Nm fido_dev_has_pin ,
+.Nm fido_dev_supports_uv ,
+.Nm fido_dev_has_uv ,
 .Nm fido_dev_protocol ,
 .Nm fido_dev_build ,
 .Nm fido_dev_flags ,
@@ -42,11 +46,19 @@
 .Ft bool
 .Fn fido_dev_is_fido2 "const fido_dev_t *dev"
 .Ft bool
+.Fn fido_dev_is_winhello "const fido_dev_t *dev"
+.Ft bool
+.Fn fido_dev_supports_credman "const fido_dev_t *dev"
+.Ft bool
 .Fn fido_dev_supports_cred_prot "const fido_dev_t *dev"
 .Ft bool
 .Fn fido_dev_supports_pin "const fido_dev_t *dev"
 .Ft bool
 .Fn fido_dev_has_pin "const fido_dev_t *dev"
+.Ft bool
+.Fn fido_dev_supports_uv "const fido_dev_t *dev"
+.Ft bool
+.Fn fido_dev_has_uv "const fido_dev_t *dev"
 .Ft uint8_t
 .Fn fido_dev_protocol "const fido_dev_t *dev"
 .Ft uint8_t
@@ -66,6 +78,18 @@ where
 .Fa dev
 is a freshly allocated or otherwise closed
 .Vt fido_dev_t .
+If
+.Fa dev
+claims to be FIDO2,
+.Em libfido2
+will attempt to speak FIDO2 to
+.Fa dev .
+If that fails,
+.Em libfido2
+will fallback to U2F unless the
+.Dv FIDO_DISABLE_U2F_FALLBACK
+flag was set in
+.Xr fido_init 3 .
 .Pp
 The
 .Fn fido_dev_close
@@ -126,6 +150,22 @@ if
 is a FIDO 2 device.
 .Pp
 The
+.Fn fido_dev_is_winhello
+function returns
+.Dv true
+if
+.Fa dev
+is a Windows Hello device.
+.Pp
+The
+.Fn fido_dev_supports_credman
+function returns
+.Dv true
+if
+.Fa dev
+supports FIDO 2.1 Credential Management.
+.Pp
+The
 .Fn fido_dev_supports_cred_prot
 function returns
 .Dv true
@@ -148,6 +188,23 @@ function returns
 if
 .Fa dev
 has a FIDO 2.0 Client PIN set.
+.Pp
+The
+.Fn fido_dev_supports_uv
+function returns
+.Dv true
+if
+.Fa dev
+supports a built-in user verification method.
+.Pp
+The
+.Fn fido_dev_has_uv
+function returns
+.Dv true
+if
+.Fa dev
+supports built-in user verification and its user verification
+feature is configured.
 .Pp
 The
 .Fn fido_dev_protocol
@@ -189,4 +246,5 @@ On error, a different error code defined in
 is returned.
 .Sh SEE ALSO
 .Xr fido_dev_info_manifest 3 ,
-.Xr fido_dev_set_io_functions 3
+.Xr fido_dev_set_io_functions 3 ,
+.Xr fido_init 3

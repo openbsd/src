@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Yubico AB. All rights reserved.
+ * Copyright (c) 2019-2021 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
  */
@@ -71,6 +71,7 @@ int fido_credman_get_dev_metadata(fido_dev_t *, fido_credman_metadata_t *,
 int fido_credman_get_dev_rk(fido_dev_t *, const char *, fido_credman_rk_t *,
     const char *);
 int fido_credman_get_dev_rp(fido_dev_t *, fido_credman_rp_t *, const char *);
+int fido_credman_set_dev_rk(fido_dev_t *, fido_cred_t *, const char *);
 
 size_t fido_credman_rk_count(const fido_credman_rk_t *);
 size_t fido_credman_rp_count(const fido_credman_rp_t *);

@@ -1,26 +1,28 @@
-# $OpenBSD: Makefile,v 1.6 2020/08/11 08:44:53 djm Exp $
+# $OpenBSD: Makefile,v 1.7 2021/10/26 21:36:23 djm Exp $
 
 .PATH:	${.CURDIR}/man ${.CURDIR}/src
 
 CFLAGS+= -I${.CURDIR}/src -std=c99
-CFLAGS+= -DHAVE_ARC4RANDOM_BUF -D_FIDO_INTERNAL -DHAVE_UNISTD_H
+CFLAGS+= -D_FIDO_INTERNAL -DHAVE_UNISTD_H
 
 WARNINGS=	yes
 CDIAGFLAGS+=	-Wall -Wextra
 CDIAGFLAGS+=	-Werror
 
 LDADD+=		-L${BSDOBJDIR}/lib/libcbor -lcbor
+LDADD+=		-L${BSDOBJDIR}/lib/libz -lz
 
 SYMBOL_LIST=	Symbols.list
 VERSION_SCRIPT=	Symbols.map
 CLEANFILES=	${SYMBOL_LIST} ${VERSION_SCRIPT}
 
 LIB=	fido2
-SRCS=	aes256.c assert.c authkey.c bio.c blob.c buf.c cbor.c cred.c credman.c
-SRCS+=	dev.c ecdh.c eddsa.c err.c es256.c hid.c hid_openbsd.c info.c io.c
-SRCS+=	iso7816.c log.c pin.c reset.c rs256.c u2f.c
+SRCS=	aes256.c assert.c authkey.c bio.c blob.c buf.c cbor.c compress.c
+SRCS+=	config.c cred.c credman.c dev.c ecdh.c eddsa.c err.c es256.c
+SRCS+=	hid.c hid_openbsd.c hid_unix.c info.c io.c iso7816.c largeblob.c
+SRCS+=	log.c pin.c random.c reset.c rs256.c u2f.c
 
-HDRS=	fido.h fido/bio.h fido/credman.h fido/eddsa.h fido/err.h
+HDRS=	fido.h fido/bio.h fido/config.h fido/credman.h fido/eddsa.h fido/err.h
 HDRS+=	fido/es256.h fido/param.h fido/rs256.h fido/types.h
 
 MAN=	eddsa_pk_new.3 es256_pk_new.3 fido_assert_allow_cred.3 fido_assert_new.3
@@ -31,6 +33,7 @@ MAN+=	fido_cred_set_authdata.3 fido_cred_verify.3 fido_credman_metadata_new.3
 MAN+=	fido_dev_get_assert.3 fido_dev_info_manifest.3 fido_dev_make_cred.3
 MAN+=	fido_dev_open.3 fido_dev_set_io_functions.3 fido_dev_set_pin.3
 MAN+=	fido_init.3 fido_strerr.3 rs256_pk_new.3 fido_dev_get_touch_begin.3
+MAN+=	fido_dev_enable_entattest.3 fido_dev_largeblob_get.3
 
 includes:
 	@for i in $(HDRS); do \

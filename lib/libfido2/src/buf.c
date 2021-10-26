@@ -4,7 +4,6 @@
  * license that can be found in the LICENSE file.
  */
 
-#include <string.h>
 #include "fido.h"
 
 int

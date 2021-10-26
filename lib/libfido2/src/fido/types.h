@@ -7,6 +7,11 @@
 #ifndef _FIDO_TYPES_H
 #define _FIDO_TYPES_H
 
+#ifdef __MINGW32__
+#include <sys/types.h>
+#endif
+
+#include <signal.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -42,6 +47,12 @@ typedef enum {
 } fido_opt_t;
 
 typedef void fido_log_handler_t(const char *);
+
+#ifdef _WIN32
+typedef int fido_sigset_t;
+#else
+typedef sigset_t fido_sigset_t;
+#endif
 
 #ifdef _FIDO_INTERNAL
 #include "packed.h"
@@ -118,6 +129,7 @@ typedef struct fido_cred_ext {
 } fido_cred_ext_t;
 
 typedef struct fido_cred {
+	fido_blob_t       cd;            /* client data */
 	fido_blob_t       cdh;           /* client data hash */
 	fido_rp_t         rp;            /* relying party */
 	fido_user_t       user;          /* user entity */
@@ -128,31 +140,45 @@ typedef struct fido_cred {
 	int               type;          /* cose algorithm */
 	char             *fmt;           /* credential format */
 	fido_cred_ext_t   authdata_ext;  /* decoded extensions */
-	fido_blob_t       authdata_cbor; /* raw cbor payload */
+	fido_blob_t       authdata_cbor; /* cbor-encoded payload */
+	fido_blob_t       authdata_raw;  /* cbor-decoded payload */
 	fido_authdata_t   authdata;      /* decoded authdata payload */
 	fido_attcred_t    attcred;       /* returned credential (key + id) */
 	fido_attstmt_t    attstmt;       /* attestation statement (x509 + sig) */
+	fido_blob_t       largeblob_key; /* decoded large blob key */
+	fido_blob_t       blob;          /* FIDO 2.1 credBlob */
 } fido_cred_t;
 
+typedef struct fido_assert_extattr {
+	int         mask;            /* decoded extensions */
+	fido_blob_t hmac_secret_enc; /* hmac secret, encrypted */
+	fido_blob_t blob;            /* decoded FIDO 2.1 credBlob */
+} fido_assert_extattr_t;
+
 typedef struct _fido_assert_stmt {
-	fido_blob_t     id;              /* credential id */
-	fido_user_t     user;            /* user attributes */
-	fido_blob_t     hmac_secret_enc; /* hmac secret, encrypted */
-	fido_blob_t     hmac_secret;     /* hmac secret */
-	int             authdata_ext;    /* decoded extensions */
-	fido_blob_t     authdata_cbor;   /* raw cbor payload */
-	fido_authdata_t authdata;        /* decoded authdata payload */
-	fido_blob_t     sig;             /* signature of cdh + authdata */
+	fido_blob_t           id;            /* credential id */
+	fido_user_t           user;          /* user attributes */
+	fido_blob_t           hmac_secret;   /* hmac secret */
+	fido_assert_extattr_t authdata_ext;  /* decoded extensions */
+	fido_blob_t           authdata_cbor; /* raw cbor payload */
+	fido_authdata_t       authdata;      /* decoded authdata payload */
+	fido_blob_t           sig;           /* signature of cdh + authdata */
+	fido_blob_t           largeblob_key; /* decoded large blob key */
 } fido_assert_stmt;
+
+typedef struct fido_assert_ext {
+	int         mask;                /* enabled extensions */
+	fido_blob_t hmac_salt;           /* optional hmac-secret salt */
+} fido_assert_ext_t;
 
 typedef struct fido_assert {
 	char              *rp_id;        /* relying party id */
+	fido_blob_t        cd;           /* client data */
 	fido_blob_t        cdh;          /* client data hash */
-	fido_blob_t        hmac_salt;    /* optional hmac-secret salt */
 	fido_blob_array_t  allow_list;   /* list of allowed credentials */
 	fido_opt_t         up;           /* user presence */
 	fido_opt_t         uv;           /* user verification */
-	int                ext;          /* enabled extensions */
+	fido_assert_ext_t  ext;          /* enabled extensions */
 	fido_assert_stmt  *stmt;         /* array of expected assertions */
 	size_t             stmt_cnt;     /* number of allocated assertions */
 	size_t             stmt_len;     /* number of received assertions */
@@ -174,16 +200,29 @@ typedef struct fido_byte_array {
 	size_t len;
 } fido_byte_array_t;
 
+typedef struct fido_algo {
+	char *type;
+	int cose;
+} fido_algo_t;
+
+typedef struct fido_algo_array {
+	fido_algo_t *ptr;
+	size_t len;
+} fido_algo_array_t;
+
 typedef struct fido_cbor_info {
 	fido_str_array_t  versions;      /* supported versions: fido2|u2f */
 	fido_str_array_t  extensions;    /* list of supported extensions */
+	fido_str_array_t  transports;    /* list of supported transports */
 	unsigned char     aaguid[16];    /* aaguid */
 	fido_opt_array_t  options;       /* list of supported options */
 	uint64_t          maxmsgsiz;     /* maximum message size */
 	fido_byte_array_t protocols;     /* supported pin protocols */
+	fido_algo_array_t algorithms;    /* list of supported algorithms */
 	uint64_t          maxcredcntlst; /* max number of credentials in list */
 	uint64_t          maxcredidlen;  /* max credential ID length */
 	uint64_t          fwversion;     /* firmware version */
+	uint64_t          maxcredbloblen; /* max credBlob length */
 } fido_cbor_info_t;
 
 typedef struct fido_dev_info {
@@ -209,17 +248,18 @@ struct fido_ctap_info {
 })
 
 typedef struct fido_dev {
-	uint64_t              nonce;     /* issued nonce */
-	fido_ctap_info_t      attr;      /* device attributes */
-	uint32_t              cid;       /* assigned channel id */
-	char                 *path;      /* device path */
-	void                 *io_handle; /* abstract i/o handle */
-	fido_dev_io_t         io;        /* i/o functions */
-	bool                  io_own;    /* device has own io/transport */
-	size_t                rx_len;    /* length of HID input reports */
-	size_t                tx_len;    /* length of HID output reports */
-	int                   flags;     /* internal flags; see FIDO_DEV_* */
-	fido_dev_transport_t  transport; /* transport functions */
+	uint64_t              nonce;      /* issued nonce */
+	fido_ctap_info_t      attr;       /* device attributes */
+	uint32_t              cid;        /* assigned channel id */
+	char                 *path;       /* device path */
+	void                 *io_handle;  /* abstract i/o handle */
+	fido_dev_io_t         io;         /* i/o functions */
+	bool                  io_own;     /* device has own io/transport */
+	size_t                rx_len;     /* length of HID input reports */
+	size_t                tx_len;     /* length of HID output reports */
+	int                   flags;      /* internal flags; see FIDO_DEV_* */
+	fido_dev_transport_t  transport;  /* transport functions */
+	uint64_t	      maxmsgsize; /* max message size */
 } fido_dev_t;
 
 #else

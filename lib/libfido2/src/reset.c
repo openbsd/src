@@ -4,7 +4,6 @@
  * license that can be found in the LICENSE file.
  */
 
-#include <stdlib.h>
 #include "fido.h"
 
 static int
@@ -28,6 +27,11 @@ fido_dev_reset_wait(fido_dev_t *dev, int ms)
 	if ((r = fido_dev_reset_tx(dev)) != FIDO_OK ||
 	    (r = fido_rx_cbor_status(dev, ms)) != FIDO_OK)
 		return (r);
+
+	if (dev->flags & FIDO_DEV_PIN_SET) {
+		dev->flags &= ~FIDO_DEV_PIN_SET;
+		dev->flags |= FIDO_DEV_PIN_UNSET;
+	}
 
 	return (FIDO_OK);
 }

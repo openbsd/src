@@ -2,7 +2,7 @@
 .\" Use of this source code is governed by a BSD-style
 .\" license that can be found in the LICENSE file.
 .\"
-.Dd $Mdocdate: August 11 2020 $
+.Dd $Mdocdate: October 26 2021 $
 .Dt FIDO_ASSERT_NEW 3
 .Os
 .Sh NAME
@@ -14,14 +14,18 @@
 .Nm fido_assert_user_icon ,
 .Nm fido_assert_user_name ,
 .Nm fido_assert_authdata_ptr ,
+.Nm fido_assert_blob_ptr ,
 .Nm fido_assert_clientdata_hash_ptr ,
 .Nm fido_assert_hmac_secret_ptr ,
+.Nm fido_assert_largeblob_key_ptr ,
 .Nm fido_assert_user_id_ptr ,
 .Nm fido_assert_sig_ptr ,
 .Nm fido_assert_id_ptr ,
 .Nm fido_assert_authdata_len ,
+.Nm fido_assert_blob_len ,
 .Nm fido_assert_clientdata_hash_len ,
 .Nm fido_assert_hmac_secret_len ,
+.Nm fido_assert_largeblob_key_len ,
 .Nm fido_assert_user_id_len ,
 .Nm fido_assert_sig_len ,
 .Nm fido_assert_id_len ,
@@ -49,7 +53,11 @@
 .Ft const unsigned char *
 .Fn fido_assert_clientdata_hash_ptr "const fido_assert_t *assert"
 .Ft const unsigned char *
+.Fn fido_assert_blob_ptr "const fido_assert_t *assert" "size_t idx"
+.Ft const unsigned char *
 .Fn fido_assert_hmac_secret_ptr "const fido_assert_t *assert" "size_t idx"
+.Ft const unsigned char *
+.Fn fido_assert_largeblob_key_ptr "const fido_assert_t *assert" "size_t idx"
 .Ft const unsigned char *
 .Fn fido_assert_user_id_ptr "const fido_assert_t *assert" "size_t idx"
 .Ft const unsigned char *
@@ -61,7 +69,11 @@
 .Ft size_t
 .Fn fido_assert_clientdata_hash_len "const fido_assert_t *assert"
 .Ft size_t
+.Fn fido_assert_blob_len "const fido_assert_t *assert" "size_t idx"
+.Ft size_t
 .Fn fido_assert_hmac_secret_len "const fido_assert_t *assert" "size_t idx"
+.Ft size_t
+.Fn fido_assert_largeblob_key_len "const fido_assert_t *assert" "size_t idx"
 .Ft size_t
 .Fn fido_assert_user_id_len "const fido_assert_t *assert" "size_t idx"
 .Ft size_t
@@ -143,19 +155,26 @@ NUL-terminated UTF-8 strings.
 The
 .Fn fido_assert_user_id_ptr ,
 .Fn fido_assert_authdata_ptr ,
+.Fn fido_assert_blob_ptr ,
 .Fn fido_assert_hmac_secret_ptr ,
+.Fn fido_assert_largeblob_key_ptr ,
 .Fn fido_assert_sig_ptr ,
 and
 .Fn fido_assert_id_ptr
-functions return pointers to the user ID, authenticator data,
-hmac-secret, signature, and credential ID attributes of statement
+functions return pointers to the user ID, CBOR-encoded
+authenticator data, cred blob, hmac-secret,
+.Dq largeBlobKey ,
+signature, and credential ID attributes of statement
 .Fa idx
 in
 .Fa assert .
+.Pp
 The
 .Fn fido_assert_user_id_len ,
 .Fn fido_assert_authdata_len ,
+.Fn fido_assert_blob_len ,
 .Fn fido_assert_hmac_secret_len ,
+.Fn fido_assert_largeblob_key_len ,
 .Fn fido_assert_sig_len ,
 and
 .Fn fido_assert_id_len
@@ -192,12 +211,18 @@ function returns a pointer to the client data hash of
 The corresponding length can be obtained by
 .Fn fido_assert_clientdata_hash_len .
 .Sh RETURN VALUES
+The authenticator data returned by
+.Fn fido_assert_authdata_ptr
+is a CBOR-encoded byte string, as obtained from the authenticator.
+.Pp
 The
 .Fn fido_assert_user_display_name ,
 .Fn fido_assert_user_icon ,
 .Fn fido_assert_user_name ,
 .Fn fido_assert_authdata_ptr ,
 .Fn fido_assert_clientdata_hash_ptr ,
+.Fn fido_assert_hmac_secret_ptr ,
+.Fn fido_assert_largeblob_key_ptr ,
 .Fn fido_assert_user_id_ptr ,
 and
 .Fn fido_assert_sig_ptr
@@ -214,4 +239,5 @@ qualifier is invoked.
 .Xr fido_assert_allow_cred 3 ,
 .Xr fido_assert_set_authdata 3 ,
 .Xr fido_assert_verify 3 ,
-.Xr fido_dev_get_assert 3
+.Xr fido_dev_get_assert 3 ,
+.Xr fido_dev_largeblob_get 3

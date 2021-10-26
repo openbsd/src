@@ -4,225 +4,65 @@
  * license that can be found in the LICENSE file.
  */
 
-#include <string.h>
-
+#include <openssl/sha.h>
 #include "fido.h"
 #include "fido/es256.h"
 
-static int
-parse_pintoken(const cbor_item_t *key, const cbor_item_t *val, void *arg)
-{
-	fido_blob_t *token = arg;
-
-	if (cbor_isa_uint(key) == false ||
-	    cbor_int_get_width(key) != CBOR_INT_8 ||
-	    cbor_get_uint8(key) != 2) {
-		fido_log_debug("%s: cbor type", __func__);
-		return (0); /* ignore */
-	}
-
-	return (fido_blob_decode(val, token));
-}
-
-#ifdef FIDO_UVTOKEN
-static int
-parse_uvtoken(const cbor_item_t *key, const cbor_item_t *val, void *arg)
-{
-	return (parse_pintoken(key, val, arg));
-}
-#endif /* FIDO_UVTOKEN */
-
-static int
-fido_dev_get_pin_token_tx(fido_dev_t *dev, const char *pin,
-    const fido_blob_t *ecdh, const es256_pk_t *pk)
-{
-	fido_blob_t	 f;
-	fido_blob_t	*p = NULL;
-	cbor_item_t	*argv[6];
-	int		 r;
-
-	memset(&f, 0, sizeof(f));
-	memset(argv, 0, sizeof(argv));
-
-	if ((p = fido_blob_new()) == NULL || fido_blob_set(p,
-	    (const unsigned char *)pin, strlen(pin)) < 0) {
-		fido_log_debug("%s: fido_blob_set", __func__);
-		r = FIDO_ERR_INVALID_ARGUMENT;
-		goto fail;
-	}
-
-	if ((argv[0] = cbor_build_uint8(1)) == NULL ||
-	    (argv[1] = cbor_build_uint8(5)) == NULL ||
-	    (argv[2] = es256_pk_encode(pk, 1)) == NULL ||
-	    (argv[5] = cbor_encode_pin_hash_enc(ecdh, p)) == NULL) {
-		fido_log_debug("%s: cbor encode", __func__);
-		r = FIDO_ERR_INTERNAL;
-		goto fail;
-	}
-
-	if (cbor_build_frame(CTAP_CBOR_CLIENT_PIN, argv, nitems(argv),
-	    &f) < 0 || fido_tx(dev, CTAP_CMD_CBOR, f.ptr, f.len) < 0) {
-		fido_log_debug("%s: fido_tx", __func__);
-		r = FIDO_ERR_TX;
-		goto fail;
-	}
-
-	r = FIDO_OK;
-fail:
-	cbor_vector_free(argv, nitems(argv));
-	fido_blob_free(&p);
-	free(f.ptr);
-
-	return (r);
-}
-
-#ifdef FIDO_UVTOKEN
-static int
-fido_dev_get_uv_token_tx(fido_dev_t *dev, const es256_pk_t *pk)
-{
-	fido_blob_t	 f;
-	cbor_item_t	*argv[3];
-	int		 r;
-
-	memset(&f, 0, sizeof(f));
-	memset(argv, 0, sizeof(argv));
-
-	if ((argv[0] = cbor_build_uint8(1)) == NULL ||
-	    (argv[1] = cbor_build_uint8(6)) == NULL ||
-	    (argv[2] = es256_pk_encode(pk, 1)) == NULL) {
-		fido_log_debug("%s: cbor encode", __func__);
-		r = FIDO_ERR_INTERNAL;
-		goto fail;
-	}
-
-	if (cbor_build_frame(CTAP_CBOR_CLIENT_PIN, argv, nitems(argv),
-	    &f) < 0 || fido_tx(dev, CTAP_CMD_CBOR, f.ptr, f.len) < 0) {
-		fido_log_debug("%s:  fido_tx", __func__);
-		r = FIDO_ERR_TX;
-		goto fail;
-	}
-
-	r = FIDO_OK;
-fail:
-	cbor_vector_free(argv, nitems(argv));
-	free(f.ptr);
-
-	return (r);
-}
-#endif /* FIDO_UVTOKEN */
-
-static int
-fido_dev_get_pin_token_rx(fido_dev_t *dev, const fido_blob_t *ecdh,
-    fido_blob_t *token, int ms)
-{
-	fido_blob_t	*aes_token = NULL;
-	unsigned char	 reply[FIDO_MAXMSG];
-	int		 reply_len;
-	int		 r;
-
-	if ((aes_token = fido_blob_new()) == NULL) {
-		r = FIDO_ERR_INTERNAL;
-		goto fail;
-	}
-
-	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
-	    ms)) < 0) {
-		fido_log_debug("%s: fido_rx", __func__);
-		r = FIDO_ERR_RX;
-		goto fail;
-	}
-
-	if ((r = cbor_parse_reply(reply, (size_t)reply_len, aes_token,
-	    parse_pintoken)) != FIDO_OK) {
-		fido_log_debug("%s: parse_pintoken", __func__);
-		goto fail;
-	}
-
-	if  (aes256_cbc_dec(ecdh, aes_token, token) < 0) {
-		fido_log_debug("%s: aes256_cbc_dec", __func__);
-		r = FIDO_ERR_RX;
-		goto fail;
-	}
-
-	r = FIDO_OK;
-fail:
-	fido_blob_free(&aes_token);
-
-	return (r);
-}
-
-#ifdef FIDO_UVTOKEN
-static int
-fido_dev_get_uv_token_rx(fido_dev_t *dev, const  fido_blob_t *ecdh,
-    fido_blob_t *token, int ms)
-{
-	fido_blob_t	*aes_token = NULL;
-	unsigned char	 reply[FIDO_MAXMSG];
-	int		 reply_len;
-	int		 r;
-
-	if ((aes_token = fido_blob_new()) == NULL) {
-		r = FIDO_ERR_INTERNAL;
-		goto fail;
-	}
-
-	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
-	    ms)) < 0) {
-		fido_log_debug("%s: fido_rx", __func__);
-		r = FIDO_ERR_RX;
-		goto fail;
-	}
-
-	if ((r = cbor_parse_reply(reply, (size_t)reply_len, aes_token,
-	    parse_uvtoken)) != FIDO_OK) {
-		fido_log_debug("%s: parse_uvtoken", __func__);
-		goto fail;
-	}
-
-	if (aes256_cbc_dec(ecdh, aes_token, token) < 0) {
-		fido_log_debug("%s: aes256_cbc_dec", __func__);
-		r = FIDO_ERR_RX;
-		goto fail;
-	}
-
-	r = FIDO_OK;
-fail:
-	fido_blob_free(&aes_token);
-
-	return (r);
-}
-#endif /* FIDO_UVTOKEN */
-
-static int
-fido_dev_get_pin_token_wait(fido_dev_t *dev, const char *pin,
-    const fido_blob_t *ecdh, const es256_pk_t *pk, fido_blob_t *token, int ms)
-{
-	int r;
-
-#ifdef FIDO_UVTOKEN
-	if (getenv("FIDO_UVTOKEN") != NULL) {
-		if ((r = fido_dev_get_uv_token_tx(dev, pk)) != FIDO_OK ||
-		    (r = fido_dev_get_uv_token_rx(dev, ecdh, token, ms)) != FIDO_OK)
-			return (r);
-	} else {
-		if ((r = fido_dev_get_pin_token_tx(dev, pin, ecdh, pk)) != FIDO_OK ||
-		    (r = fido_dev_get_pin_token_rx(dev, ecdh, token, ms)) != FIDO_OK)
-			return (r);
-	}
-#else
-	if ((r = fido_dev_get_pin_token_tx(dev, pin, ecdh, pk)) != FIDO_OK ||
-	    (r = fido_dev_get_pin_token_rx(dev, ecdh, token, ms)) != FIDO_OK)
-		return (r);
-#endif
-
-	return (FIDO_OK);
-}
+#define CTAP21_UV_TOKEN_PERM_MAKECRED	0x01
+#define CTAP21_UV_TOKEN_PERM_ASSERT	0x02
+#define CTAP21_UV_TOKEN_PERM_CRED_MGMT	0x04
+#define CTAP21_UV_TOKEN_PERM_BIO	0x08
+#define CTAP21_UV_TOKEN_PERM_LARGEBLOB	0x10
+#define CTAP21_UV_TOKEN_PERM_CONFIG	0x20
 
 int
-fido_dev_get_pin_token(fido_dev_t *dev, const char *pin,
-    const fido_blob_t *ecdh, const es256_pk_t *pk, fido_blob_t *token)
+fido_sha256(fido_blob_t *digest, const u_char *data, size_t data_len)
 {
-	return (fido_dev_get_pin_token_wait(dev, pin, ecdh, pk, token, -1));
+	if ((digest->ptr = calloc(1, SHA256_DIGEST_LENGTH)) == NULL)
+		return (-1);
+
+	digest->len = SHA256_DIGEST_LENGTH;
+
+	if (SHA256(data, data_len, digest->ptr) != digest->ptr) {
+		fido_blob_reset(digest);
+		return (-1);
+	}
+
+	return (0);
+}
+
+static int
+pin_sha256_enc(const fido_dev_t *dev, const fido_blob_t *shared,
+    const fido_blob_t *pin, fido_blob_t **out)
+{
+	fido_blob_t	*ph = NULL;
+	int		 r;
+
+	if ((*out = fido_blob_new()) == NULL ||
+	    (ph = fido_blob_new()) == NULL) {
+		r = FIDO_ERR_INTERNAL;
+		goto fail;
+	}
+
+	if (fido_sha256(ph, pin->ptr, pin->len) < 0 || ph->len < 16) {
+		fido_log_debug("%s: SHA256", __func__);
+		r = FIDO_ERR_INTERNAL;
+		goto fail;
+	}
+
+	ph->len = 16; /* first 16 bytes */
+
+	if (aes256_cbc_enc(dev, shared, ph, *out) < 0) {
+		fido_log_debug("%s: aes256_cbc_enc", __func__);
+		r = FIDO_ERR_INTERNAL;
+		goto fail;
+	}
+
+	r = FIDO_OK;
+fail:
+	fido_blob_free(&ph);
+
+	return (r);
 }
 
 static int
@@ -253,12 +93,267 @@ pad64(const char *pin, fido_blob_t **ppin)
 }
 
 static int
+pin_pad64_enc(const fido_dev_t *dev, const fido_blob_t *shared,
+    const char *pin, fido_blob_t **out)
+{
+	fido_blob_t *ppin = NULL;
+	int	     r;
+
+	if ((r = pad64(pin, &ppin)) != FIDO_OK) {
+		fido_log_debug("%s: pad64", __func__);
+		    goto fail;
+	}
+
+	if ((*out = fido_blob_new()) == NULL) {
+		r = FIDO_ERR_INTERNAL;
+		goto fail;
+	}
+
+	if (aes256_cbc_enc(dev, shared, ppin, *out) < 0) {
+		fido_log_debug("%s: aes256_cbc_enc", __func__);
+		r = FIDO_ERR_INTERNAL;
+		goto fail;
+	}
+
+	r = FIDO_OK;
+fail:
+	fido_blob_free(&ppin);
+
+	return (r);
+}
+
+static cbor_item_t *
+encode_uv_permission(uint8_t cmd)
+{
+	switch (cmd) {
+	case CTAP_CBOR_ASSERT:
+		return (cbor_build_uint8(CTAP21_UV_TOKEN_PERM_ASSERT));
+	case CTAP_CBOR_BIO_ENROLL_PRE:
+		return (cbor_build_uint8(CTAP21_UV_TOKEN_PERM_BIO));
+	case CTAP_CBOR_CONFIG:
+		return (cbor_build_uint8(CTAP21_UV_TOKEN_PERM_CONFIG));
+	case CTAP_CBOR_MAKECRED:
+		return (cbor_build_uint8(CTAP21_UV_TOKEN_PERM_MAKECRED));
+	case CTAP_CBOR_CRED_MGMT_PRE:
+		return (cbor_build_uint8(CTAP21_UV_TOKEN_PERM_CRED_MGMT));
+	case CTAP_CBOR_LARGEBLOB:
+		return (cbor_build_uint8(CTAP21_UV_TOKEN_PERM_LARGEBLOB));
+	default:
+		fido_log_debug("%s: cmd 0x%02x", __func__, cmd);
+		return (NULL);
+	}
+}
+
+static int
+ctap20_uv_token_tx(fido_dev_t *dev, const char *pin, const fido_blob_t *ecdh,
+    const es256_pk_t *pk)
+{
+	fido_blob_t	 f;
+	fido_blob_t	*p = NULL;
+	fido_blob_t	*phe = NULL;
+	cbor_item_t	*argv[6];
+	int		 r;
+
+	memset(&f, 0, sizeof(f));
+	memset(argv, 0, sizeof(argv));
+
+	if (pin == NULL) {
+		fido_log_debug("%s: NULL pin", __func__);
+		r = FIDO_ERR_PIN_REQUIRED;
+		goto fail;
+	}
+
+	if ((p = fido_blob_new()) == NULL || fido_blob_set(p,
+	    (const unsigned char *)pin, strlen(pin)) < 0) {
+		fido_log_debug("%s: fido_blob_set", __func__);
+		r = FIDO_ERR_INVALID_ARGUMENT;
+		goto fail;
+	}
+
+	if ((r = pin_sha256_enc(dev, ecdh, p, &phe)) != FIDO_OK) {
+		fido_log_debug("%s: pin_sha256_enc", __func__);
+		goto fail;
+	}
+
+	if ((argv[0] = cbor_encode_pin_opt(dev)) == NULL ||
+	    (argv[1] = cbor_build_uint8(5)) == NULL ||
+	    (argv[2] = es256_pk_encode(pk, 1)) == NULL ||
+	    (argv[5] = fido_blob_encode(phe)) == NULL) {
+		fido_log_debug("%s: cbor encode", __func__);
+		r = FIDO_ERR_INTERNAL;
+		goto fail;
+	}
+
+	if (cbor_build_frame(CTAP_CBOR_CLIENT_PIN, argv, nitems(argv),
+	    &f) < 0 || fido_tx(dev, CTAP_CMD_CBOR, f.ptr, f.len) < 0) {
+		fido_log_debug("%s: fido_tx", __func__);
+		r = FIDO_ERR_TX;
+		goto fail;
+	}
+
+	r = FIDO_OK;
+fail:
+	cbor_vector_free(argv, nitems(argv));
+	fido_blob_free(&p);
+	fido_blob_free(&phe);
+	free(f.ptr);
+
+	return (r);
+}
+
+static int
+ctap21_uv_token_tx(fido_dev_t *dev, const char *pin, const fido_blob_t *ecdh,
+    const es256_pk_t *pk, uint8_t cmd, const char *rpid)
+{
+	fido_blob_t	 f;
+	fido_blob_t	*p = NULL;
+	fido_blob_t	*phe = NULL;
+	cbor_item_t	*argv[10];
+	uint8_t		 subcmd;
+	int		 r;
+
+	memset(&f, 0, sizeof(f));
+	memset(argv, 0, sizeof(argv));
+
+	if (pin != NULL) {
+		if ((p = fido_blob_new()) == NULL || fido_blob_set(p,
+		    (const unsigned char *)pin, strlen(pin)) < 0) {
+			fido_log_debug("%s: fido_blob_set", __func__);
+			r = FIDO_ERR_INVALID_ARGUMENT;
+			goto fail;
+		}
+		if ((r = pin_sha256_enc(dev, ecdh, p, &phe)) != FIDO_OK) {
+			fido_log_debug("%s: pin_sha256_enc", __func__);
+			goto fail;
+		}
+		subcmd = 9; /* getPinUvAuthTokenUsingPinWithPermissions */
+	} else {
+		if (fido_dev_has_uv(dev) == false) {
+			fido_log_debug("%s: fido_dev_has_uv", __func__);
+			r = FIDO_ERR_PIN_REQUIRED;
+			goto fail;
+		}
+		subcmd = 6; /* getPinUvAuthTokenUsingUvWithPermissions */
+	}
+
+	if ((argv[0] = cbor_encode_pin_opt(dev)) == NULL ||
+	    (argv[1] = cbor_build_uint8(subcmd)) == NULL ||
+	    (argv[2] = es256_pk_encode(pk, 1)) == NULL ||
+	    (phe != NULL && (argv[5] = fido_blob_encode(phe)) == NULL) ||
+	    (argv[8] = encode_uv_permission(cmd)) == NULL ||
+	    (rpid != NULL && (argv[9] = cbor_build_string(rpid)) == NULL)) {
+		fido_log_debug("%s: cbor encode", __func__);
+		r = FIDO_ERR_INTERNAL;
+		goto fail;
+	}
+
+	if (cbor_build_frame(CTAP_CBOR_CLIENT_PIN, argv, nitems(argv),
+	    &f) < 0 || fido_tx(dev, CTAP_CMD_CBOR, f.ptr, f.len) < 0) {
+		fido_log_debug("%s:  fido_tx", __func__);
+		r = FIDO_ERR_TX;
+		goto fail;
+	}
+
+	r = FIDO_OK;
+fail:
+	cbor_vector_free(argv, nitems(argv));
+	fido_blob_free(&p);
+	fido_blob_free(&phe);
+	free(f.ptr);
+
+	return (r);
+}
+
+static int
+parse_uv_token(const cbor_item_t *key, const cbor_item_t *val, void *arg)
+{
+	fido_blob_t *token = arg;
+
+	if (cbor_isa_uint(key) == false ||
+	    cbor_int_get_width(key) != CBOR_INT_8 ||
+	    cbor_get_uint8(key) != 2) {
+		fido_log_debug("%s: cbor type", __func__);
+		return (0); /* ignore */
+	}
+
+	return (fido_blob_decode(val, token));
+}
+
+static int
+uv_token_rx(fido_dev_t *dev, const fido_blob_t *ecdh, fido_blob_t *token,
+    int ms)
+{
+	fido_blob_t	*aes_token = NULL;
+	unsigned char	 reply[FIDO_MAXMSG];
+	int		 reply_len;
+	int		 r;
+
+	if ((aes_token = fido_blob_new()) == NULL) {
+		r = FIDO_ERR_INTERNAL;
+		goto fail;
+	}
+
+	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
+	    ms)) < 0) {
+		fido_log_debug("%s: fido_rx", __func__);
+		r = FIDO_ERR_RX;
+		goto fail;
+	}
+
+	if ((r = cbor_parse_reply(reply, (size_t)reply_len, aes_token,
+	    parse_uv_token)) != FIDO_OK) {
+		fido_log_debug("%s: parse_uv_token", __func__);
+		goto fail;
+	}
+
+	if  (aes256_cbc_dec(dev, ecdh, aes_token, token) < 0) {
+		fido_log_debug("%s: aes256_cbc_dec", __func__);
+		r = FIDO_ERR_RX;
+		goto fail;
+	}
+
+	r = FIDO_OK;
+fail:
+	fido_blob_free(&aes_token);
+
+	return (r);
+}
+
+static int
+uv_token_wait(fido_dev_t *dev, uint8_t cmd, const char *pin,
+    const fido_blob_t *ecdh, const es256_pk_t *pk, const char *rpid,
+    fido_blob_t *token, int ms)
+{
+	int r;
+
+	if (ecdh == NULL || pk == NULL)
+		return (FIDO_ERR_INVALID_ARGUMENT);
+	if (fido_dev_supports_permissions(dev))
+		r = ctap21_uv_token_tx(dev, pin, ecdh, pk, cmd, rpid);
+	else
+		r = ctap20_uv_token_tx(dev, pin, ecdh, pk);
+	if (r != FIDO_OK)
+		return (r);
+
+	return (uv_token_rx(dev, ecdh, token, ms));
+}
+
+int
+fido_dev_get_uv_token(fido_dev_t *dev, uint8_t cmd, const char *pin,
+    const fido_blob_t *ecdh, const es256_pk_t *pk, const char *rpid,
+    fido_blob_t *token)
+{
+	return (uv_token_wait(dev, cmd, pin, ecdh, pk, rpid, token, -1));
+}
+
+static int
 fido_dev_change_pin_tx(fido_dev_t *dev, const char *pin, const char *oldpin)
 {
 	fido_blob_t	 f;
-	fido_blob_t	*ppin = NULL;
+	fido_blob_t	*ppine = NULL;
 	fido_blob_t	*ecdh = NULL;
 	fido_blob_t	*opin = NULL;
+	fido_blob_t	*opinhe = NULL;
 	cbor_item_t	*argv[6];
 	es256_pk_t	*pk = NULL;
 	int r;
@@ -273,22 +368,29 @@ fido_dev_change_pin_tx(fido_dev_t *dev, const char *pin, const char *oldpin)
 		goto fail;
 	}
 
-	if ((r = pad64(pin, &ppin)) != FIDO_OK) {
-		fido_log_debug("%s: pad64", __func__);
-		goto fail;
-	}
-
 	if ((r = fido_do_ecdh(dev, &pk, &ecdh)) != FIDO_OK) {
 		fido_log_debug("%s: fido_do_ecdh", __func__);
 		goto fail;
 	}
 
-	if ((argv[0] = cbor_build_uint8(1)) == NULL ||
+	/* pad and encrypt new pin */
+	if ((r = pin_pad64_enc(dev, ecdh, pin, &ppine)) != FIDO_OK) {
+		fido_log_debug("%s: pin_pad64_enc", __func__);
+		goto fail;
+	}
+
+	/* hash and encrypt old pin */
+	if ((r = pin_sha256_enc(dev, ecdh, opin, &opinhe)) != FIDO_OK) {
+		fido_log_debug("%s: pin_sha256_enc", __func__);
+		goto fail;
+	}
+
+	if ((argv[0] = cbor_encode_pin_opt(dev)) == NULL ||
 	    (argv[1] = cbor_build_uint8(4)) == NULL ||
 	    (argv[2] = es256_pk_encode(pk, 1)) == NULL ||
-	    (argv[3] = cbor_encode_change_pin_auth(ecdh, ppin, opin)) == NULL ||
-	    (argv[4] = cbor_encode_pin_enc(ecdh, ppin)) == NULL ||
-	    (argv[5] = cbor_encode_pin_hash_enc(ecdh, opin)) == NULL) {
+	    (argv[3] = cbor_encode_change_pin_auth(dev, ecdh, ppine, opinhe)) == NULL ||
+	    (argv[4] = fido_blob_encode(ppine)) == NULL ||
+	    (argv[5] = fido_blob_encode(opinhe)) == NULL) {
 		fido_log_debug("%s: cbor encode", __func__);
 		r = FIDO_ERR_INTERNAL;
 		goto fail;
@@ -305,9 +407,10 @@ fido_dev_change_pin_tx(fido_dev_t *dev, const char *pin, const char *oldpin)
 fail:
 	cbor_vector_free(argv, nitems(argv));
 	es256_pk_free(&pk);
-	fido_blob_free(&ppin);
+	fido_blob_free(&ppine);
 	fido_blob_free(&ecdh);
 	fido_blob_free(&opin);
+	fido_blob_free(&opinhe);
 	free(f.ptr);
 
 	return (r);
@@ -318,7 +421,7 @@ static int
 fido_dev_set_pin_tx(fido_dev_t *dev, const char *pin)
 {
 	fido_blob_t	 f;
-	fido_blob_t	*ppin = NULL;
+	fido_blob_t	*ppine = NULL;
 	fido_blob_t	*ecdh = NULL;
 	cbor_item_t	*argv[5];
 	es256_pk_t	*pk = NULL;
@@ -327,21 +430,21 @@ fido_dev_set_pin_tx(fido_dev_t *dev, const char *pin)
 	memset(&f, 0, sizeof(f));
 	memset(argv, 0, sizeof(argv));
 
-	if ((r = pad64(pin, &ppin)) != FIDO_OK) {
-		fido_log_debug("%s: pad64", __func__);
-		goto fail;
-	}
-
 	if ((r = fido_do_ecdh(dev, &pk, &ecdh)) != FIDO_OK) {
 		fido_log_debug("%s: fido_do_ecdh", __func__);
 		goto fail;
 	}
 
-	if ((argv[0] = cbor_build_uint8(1)) == NULL ||
+	if ((r = pin_pad64_enc(dev, ecdh, pin, &ppine)) != FIDO_OK) {
+		fido_log_debug("%s: pin_pad64_enc", __func__);
+		goto fail;
+	}
+
+	if ((argv[0] = cbor_encode_pin_opt(dev)) == NULL ||
 	    (argv[1] = cbor_build_uint8(3)) == NULL ||
 	    (argv[2] = es256_pk_encode(pk, 1)) == NULL ||
-	    (argv[3] = cbor_encode_set_pin_auth(ecdh, ppin)) == NULL ||
-	    (argv[4] = cbor_encode_pin_enc(ecdh, ppin)) == NULL) {
+	    (argv[3] = cbor_encode_pin_auth(dev, ecdh, ppine)) == NULL ||
+	    (argv[4] = fido_blob_encode(ppine)) == NULL) {
 		fido_log_debug("%s: cbor encode", __func__);
 		r = FIDO_ERR_INTERNAL;
 		goto fail;
@@ -358,7 +461,7 @@ fido_dev_set_pin_tx(fido_dev_t *dev, const char *pin)
 fail:
 	cbor_vector_free(argv, nitems(argv));
 	es256_pk_free(&pk);
-	fido_blob_free(&ppin);
+	fido_blob_free(&ppine);
 	fido_blob_free(&ecdh);
 	free(f.ptr);
 
@@ -388,6 +491,11 @@ fido_dev_set_pin_wait(fido_dev_t *dev, const char *pin, const char *oldpin,
 		return (r);
 	}
 
+	if (dev->flags & FIDO_DEV_PIN_UNSET) {
+		dev->flags &= ~FIDO_DEV_PIN_UNSET;
+		dev->flags |= FIDO_DEV_PIN_SET;
+	}
+
 	return (FIDO_OK);
 }
 
@@ -398,14 +506,15 @@ fido_dev_set_pin(fido_dev_t *dev, const char *pin, const char *oldpin)
 }
 
 static int
-parse_retry_count(const cbor_item_t *key, const cbor_item_t *val, void *arg)
+parse_retry_count(const uint8_t keyval, const cbor_item_t *key,
+    const cbor_item_t *val, void *arg)
 {
 	int		*retries = arg;
 	uint64_t	 n;
 
 	if (cbor_isa_uint(key) == false ||
 	    cbor_int_get_width(key) != CBOR_INT_8 ||
-	    cbor_get_uint8(key) != 3) {
+	    cbor_get_uint8(key) != keyval) {
 		fido_log_debug("%s: cbor type", __func__);
 		return (0); /* ignore */
 	}
@@ -421,7 +530,19 @@ parse_retry_count(const cbor_item_t *key, const cbor_item_t *val, void *arg)
 }
 
 static int
-fido_dev_get_retry_count_tx(fido_dev_t *dev)
+parse_pin_retry_count(const cbor_item_t *key, const cbor_item_t *val, void *arg)
+{
+	return (parse_retry_count(3, key, val, arg));
+}
+
+static int
+parse_uv_retry_count(const cbor_item_t *key, const cbor_item_t *val, void *arg)
+{
+	return (parse_retry_count(5, key, val, arg));
+}
+
+static int
+fido_dev_get_retry_count_tx(fido_dev_t *dev, uint8_t subcmd)
 {
 	fido_blob_t	 f;
 	cbor_item_t	*argv[2];
@@ -431,7 +552,7 @@ fido_dev_get_retry_count_tx(fido_dev_t *dev)
 	memset(argv, 0, sizeof(argv));
 
 	if ((argv[0] = cbor_build_uint8(1)) == NULL ||
-	    (argv[1] = cbor_build_uint8(1)) == NULL) {
+	    (argv[1] = cbor_build_uint8(subcmd)) == NULL) {
 		r = FIDO_ERR_INTERNAL;
 		goto fail;
 	}
@@ -452,7 +573,7 @@ fail:
 }
 
 static int
-fido_dev_get_retry_count_rx(fido_dev_t *dev, int *retries, int ms)
+fido_dev_get_pin_retry_count_rx(fido_dev_t *dev, int *retries, int ms)
 {
 	unsigned char	reply[FIDO_MAXMSG];
 	int		reply_len;
@@ -467,8 +588,8 @@ fido_dev_get_retry_count_rx(fido_dev_t *dev, int *retries, int ms)
 	}
 
 	if ((r = cbor_parse_reply(reply, (size_t)reply_len, retries,
-	    parse_retry_count)) != FIDO_OK) {
-		fido_log_debug("%s: parse_retry_count", __func__);
+	    parse_pin_retry_count)) != FIDO_OK) {
+		fido_log_debug("%s: parse_pin_retry_count", __func__);
 		return (r);
 	}
 
@@ -476,12 +597,12 @@ fido_dev_get_retry_count_rx(fido_dev_t *dev, int *retries, int ms)
 }
 
 static int
-fido_dev_get_retry_count_wait(fido_dev_t *dev, int *retries, int ms)
+fido_dev_get_pin_retry_count_wait(fido_dev_t *dev, int *retries, int ms)
 {
 	int r;
 
-	if ((r = fido_dev_get_retry_count_tx(dev)) != FIDO_OK ||
-	    (r = fido_dev_get_retry_count_rx(dev, retries, ms)) != FIDO_OK)
+	if ((r = fido_dev_get_retry_count_tx(dev, 1)) != FIDO_OK ||
+	    (r = fido_dev_get_pin_retry_count_rx(dev, retries, ms)) != FIDO_OK)
 		return (r);
 
 	return (FIDO_OK);
@@ -490,13 +611,55 @@ fido_dev_get_retry_count_wait(fido_dev_t *dev, int *retries, int ms)
 int
 fido_dev_get_retry_count(fido_dev_t *dev, int *retries)
 {
-	return (fido_dev_get_retry_count_wait(dev, retries, -1));
+	return (fido_dev_get_pin_retry_count_wait(dev, retries, -1));
+}
+
+static int
+fido_dev_get_uv_retry_count_rx(fido_dev_t *dev, int *retries, int ms)
+{
+	unsigned char	reply[FIDO_MAXMSG];
+	int		reply_len;
+	int		r;
+
+	*retries = 0;
+
+	if ((reply_len = fido_rx(dev, CTAP_CMD_CBOR, &reply, sizeof(reply),
+	    ms)) < 0) {
+		fido_log_debug("%s: fido_rx", __func__);
+		return (FIDO_ERR_RX);
+	}
+
+	if ((r = cbor_parse_reply(reply, (size_t)reply_len, retries,
+	    parse_uv_retry_count)) != FIDO_OK) {
+		fido_log_debug("%s: parse_uv_retry_count", __func__);
+		return (r);
+	}
+
+	return (FIDO_OK);
+}
+
+static int
+fido_dev_get_uv_retry_count_wait(fido_dev_t *dev, int *retries, int ms)
+{
+	int r;
+
+	if ((r = fido_dev_get_retry_count_tx(dev, 7)) != FIDO_OK ||
+	    (r = fido_dev_get_uv_retry_count_rx(dev, retries, ms)) != FIDO_OK)
+		return (r);
+
+	return (FIDO_OK);
 }
 
 int
-cbor_add_pin_params(fido_dev_t *dev, const fido_blob_t *hmac_data,
+fido_dev_get_uv_retry_count(fido_dev_t *dev, int *retries)
+{
+	return (fido_dev_get_uv_retry_count_wait(dev, retries, -1));
+}
+
+int
+cbor_add_uv_params(fido_dev_t *dev, uint8_t cmd, const fido_blob_t *hmac_data,
     const es256_pk_t *pk, const fido_blob_t *ecdh, const char *pin,
-    cbor_item_t **auth, cbor_item_t **opt)
+    const char *rpid, cbor_item_t **auth, cbor_item_t **opt)
 {
 	fido_blob_t	*token = NULL;
 	int		 r;
@@ -506,13 +669,14 @@ cbor_add_pin_params(fido_dev_t *dev, const fido_blob_t *hmac_data,
 		goto fail;
 	}
 
-	if ((r = fido_dev_get_pin_token(dev, pin, ecdh, pk, token)) != FIDO_OK) {
-		fido_log_debug("%s: fido_dev_get_pin_token", __func__);
+	if ((r = fido_dev_get_uv_token(dev, cmd, pin, ecdh, pk, rpid,
+	    token)) != FIDO_OK) {
+		fido_log_debug("%s: fido_dev_get_uv_token", __func__);
 		goto fail;
 	}
 
-	if ((*auth = cbor_encode_pin_auth(token, hmac_data)) == NULL ||
-	    (*opt = cbor_encode_pin_opt()) == NULL) {
+	if ((*auth = cbor_encode_pin_auth(dev, token, hmac_data)) == NULL ||
+	    (*opt = cbor_encode_pin_opt(dev)) == NULL) {
 		fido_log_debug("%s: cbor encode", __func__);
 		r = FIDO_ERR_INTERNAL;
 		goto fail;
