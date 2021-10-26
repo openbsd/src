@@ -2164,6 +2164,7 @@
 ./usr/share/man/man3/X509_PURPOSE_set.3
 ./usr/share/man/man3/X509_REQ_new.3
 ./usr/share/man/man3/X509_REVOKED_new.3
+./usr/share/man/man3/X509_SIG_get0.3
 ./usr/share/man/man3/X509_SIG_new.3
 ./usr/share/man/man3/X509_STORE_CTX_get_error.3
 ./usr/share/man/man3/X509_STORE_CTX_get_ex_new_index.3
@@ -2192,6 +2193,7 @@
 ./usr/share/man/man3/X509_get0_notBefore.3
 ./usr/share/man/man3/X509_get0_signature.3
 ./usr/share/man/man3/X509_get1_email.3
+./usr/share/man/man3/X509_get_extension_flags.3
 ./usr/share/man/man3/X509_get_pubkey.3
 ./usr/share/man/man3/X509_get_pubkey_parameters.3
 ./usr/share/man/man3/X509_get_serialNumber.3
