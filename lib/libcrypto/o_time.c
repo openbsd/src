@@ -1,4 +1,4 @@
-/* $OpenBSD: o_time.c,v 1.15 2014/06/12 15:49:27 deraadt Exp $ */
+/* $OpenBSD: o_time.c,v 1.16 2021/10/27 09:50:56 beck Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -72,6 +72,8 @@
 
 static long date_to_julian(int y, int m, int d);
 static void julian_to_date(long jd, int *y, int *m, int *d);
+static int julian_adj(const struct tm *tm, int off_day, long offset_sec,
+    long *pday, int *psec);
 
 int
 OPENSSL_gmtime_adj(struct tm *tm, int off_day, long offset_sec)
@@ -129,6 +131,85 @@ OPENSSL_gmtime_adj(struct tm *tm, int off_day, long offset_sec)
 
 	return 1;
 
+}
+
+int
+OPENSSL_gmtime_diff(int *pday, int *psec, const struct tm *from,
+    const struct tm *to)
+{
+	int from_sec, to_sec, diff_sec;
+	long from_jd, to_jd, diff_day;
+
+	if (!julian_adj(from, 0, 0, &from_jd, &from_sec))
+		return 0;
+	if (!julian_adj(to, 0, 0, &to_jd, &to_sec))
+		return 0;
+	diff_day = to_jd - from_jd;
+	diff_sec = to_sec - from_sec;
+	/* Adjust differences so both positive or both negative */
+	if (diff_day > 0 && diff_sec < 0) {
+		diff_day--;
+		diff_sec += SECS_PER_DAY;
+	}
+	if (diff_day < 0 && diff_sec > 0) {
+		diff_day++;
+		diff_sec -= SECS_PER_DAY;
+	}
+
+	if (pday)
+		*pday = (int)diff_day;
+	if (psec)
+		*psec = diff_sec;
+
+	return 1;
+
+}
+
+/* Convert tm structure and offset into julian day and seconds */
+static int
+julian_adj(const struct tm *tm, int off_day, long offset_sec, long *pday,
+    int *psec)
+{
+	int time_year, time_month, time_day;
+	long offset_day, time_jd;
+	int offset_hms;
+
+	/* split offset into days and day seconds */
+	offset_day = offset_sec / SECS_PER_DAY;
+	/* Avoid sign issues with % operator */
+	offset_hms = offset_sec - (offset_day * SECS_PER_DAY);
+	offset_day += off_day;
+	/* Add current time seconds to offset */
+	offset_hms += tm->tm_hour * 3600 + tm->tm_min * 60 + tm->tm_sec;
+	/* Adjust day seconds if overflow */
+	if (offset_hms >= SECS_PER_DAY) {
+		offset_day++;
+		offset_hms -= SECS_PER_DAY;
+	} else if (offset_hms < 0) {
+		offset_day--;
+		offset_hms += SECS_PER_DAY;
+	}
+
+	/*
+	 * Convert date of time structure into a Julian day number.
+	 */
+
+	time_year = tm->tm_year + 1900;
+	time_month = tm->tm_mon + 1;
+	time_day = tm->tm_mday;
+
+	time_jd = date_to_julian(time_year, time_month, time_day);
+
+	/* Work out Julian day of new date */
+	time_jd += offset_day;
+
+	if (time_jd < 0)
+		return 0;
+
+	*pday = time_jd;
+	*psec = offset_hms;
+
+	return 1;
 }
 
 /* Convert date to and from julian day

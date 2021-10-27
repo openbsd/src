@@ -1,4 +1,4 @@
-/* $OpenBSD: o_time.h,v 1.7 2016/12/21 15:49:29 jsing Exp $ */
+/* $OpenBSD: o_time.h,v 1.8 2021/10/27 09:50:56 beck Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -64,7 +64,8 @@
 __BEGIN_HIDDEN_DECLS
 
 int OPENSSL_gmtime_adj(struct tm *tm, int offset_day, long offset_sec);
+int OPENSSL_gmtime_diff(int *pday, int *psec, const struct tm *from,
+    const struct tm *to);
 
 __END_HIDDEN_DECLS
-
 #endif
