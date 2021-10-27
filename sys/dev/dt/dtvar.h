@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.9 2021/10/25 17:15:29 jasper Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.10 2021/10/27 09:09:55 jasper Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -159,7 +159,7 @@ int		dtioc_req_isvalid(struct dtioc_req *);
  *  Locks used to protect struct members in this file:
  *	I	immutable after creation
  *	K	kernel lock
- *	K,S	kernel lock for writting and SMR for reading
+ *	K,S	kernel lock for writing and SMR for reading
  *	m	per-pcb mutex
  *	c	owned (read & modified) by a single CPU
  */

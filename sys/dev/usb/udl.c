@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.94 2020/07/31 10:49:33 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.95 2021/10/27 09:09:55 jasper Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -929,7 +929,7 @@ udl_putchar(void *cookie, int row, int col, u_int uc, uint32_t attr)
 
 	if (uc == ' ') {
 		/*
-		 * Writting a block for the space character instead rendering
+		 * Writing a block for the space character instead rendering
 		 * it from font bits is more slim.
 		 */
 		r = (sc->udl_fb_block_write)(sc, bgc, x, y,
@@ -1665,7 +1665,7 @@ udl_cmd_insert_buf_comp(struct udl_softc *sc, uint8_t *buf, uint32_t len)
 
 	/*
 	 * Finish up a 512 byte main-block.  The leftover space gets
-	 * padded to zero.  Finally terminate the block by writting the
+	 * padded to zero.  Finally terminate the block by writing the
 	 * 0xff-into-UDL_REG_SYNC-register sequence.
 	 */
 	if (eob == 1) {
