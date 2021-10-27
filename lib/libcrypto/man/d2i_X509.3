@@ -1,6 +1,8 @@
-.\"	$OpenBSD: d2i_X509.3,v 1.10 2021/10/26 23:37:56 tb Exp $
-.\"	OpenSSL 94480b57 Sep 12 23:34:41 2009 +0000
-.\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
+.\" $OpenBSD: d2i_X509.3,v 1.11 2021/10/27 10:35:43 schwarze Exp $
+.\" OpenSSL d2i_X509.pod checked up to:
+.\" 256989ce4 Jun 19 15:00:32 2020 +0200
+.\" OpenSSL i2d_re_X509_tbs.pod checked up to:
+.\" 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
@@ -19,8 +21,10 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" The original files were written by Dr. Stephen Henson <steve@openssl.org>.
-.\" Copyright (c) 2002, 2003, 2005, 2009, 2016 The OpenSSL Project.
+.\" The original files were written by Dr. Stephen Henson <steve@openssl.org>,
+.\" Emilia Kasper <emilia@openssl.org>, Viktor Dukhovni <viktor@openssl.org>,
+.\" and Rich Salz <rsalz@openssl.org>.
+.\" Copyright (c) 2002, 2014, 2016 The OpenSSL Project.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -67,7 +71,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 26 2021 $
+.Dd $Mdocdate: October 27 2021 $
 .Dt D2I_X509 3
 .Os
 .Sh NAME
@@ -252,8 +256,7 @@ are analogous for CRL and certificate request, respectively.
 The "re" in
 .Fn i2d_re_X509_tbs
 stands for "re-encode", and ensures that a fresh encoding is generated
-in case the object has been modified after creation (see the BUGS
-section).
+in case the object has been modified after creation.
 .Pp
 The encoding of the TBSCertificate portion of a certificate is cached in
 the
@@ -314,7 +317,7 @@ return 1 for success or 0 if an error occurs.
 .Fn i2d_re_X509_CRL_tbs ,
 and
 .Fn i2d_re_X509_REQ_tbs
-return the length of bytes successfully encoded or 0 if an error occurs.
+return the number of bytes successfully encoded or 0 if an error occurs.
 .Pp
 For all functions, the error code can be obtained by
 .Xr ERR_get_error 3 .
