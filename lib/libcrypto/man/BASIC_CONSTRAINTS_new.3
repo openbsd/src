@@ -1,4 +1,4 @@
-.\" $OpenBSD: BASIC_CONSTRAINTS_new.3,v 1.5 2019/08/22 15:15:35 schwarze Exp $
+.\" $OpenBSD: BASIC_CONSTRAINTS_new.3,v 1.6 2021/10/27 11:24:47 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 22 2019 $
+.Dd $Mdocdate: October 27 2021 $
 .Dt BASIC_CONSTRAINTS_NEW 3
 .Os
 .Sh NAME
@@ -70,6 +70,7 @@ if an error occurs.
 .Xr d2i_BASIC_CONSTRAINTS 3 ,
 .Xr X509_check_purpose 3 ,
 .Xr X509_EXTENSION_new 3 ,
+.Xr X509_get_extension_flags 3 ,
 .Xr X509_new 3
 .Sh STANDARDS
 RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
