@@ -1,4 +1,4 @@
-#       $OpenBSD: BSD.x11.dist,v 1.55 2020/11/28 14:36:37 matthieu Exp $
+#       $OpenBSD: BSD.x11.dist,v 1.56 2021/10/27 21:31:31 matthieu Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 .
@@ -85,6 +85,8 @@
                         ..
                     ..
                 ..
+		libxcvt
+		..
                 pixman-1
                 ..
                 vulkan
