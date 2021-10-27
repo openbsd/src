@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_kprobe.c,v 1.2 2021/10/25 17:15:29 jasper Exp $	*/
+/*	$OpenBSD: dt_prov_kprobe.c,v 1.3 2021/10/27 15:18:12 jasper Exp $	*/
 
 /*
  * Copyright (c) 2020 Tom Rollet <tom.rollet@epita.fr>
@@ -39,7 +39,8 @@ int dt_prov_kprobe_hook(struct dt_provider *dtpv, ...);
 int dt_prov_kprobe_dealloc(struct dt_probe *dtp, struct dt_softc *sc,
     struct dtioc_req *dtrq);
 
-void db_prof_count(struct trapframe *frame);
+void	db_prof_count(struct trapframe *frame);
+vaddr_t	db_get_probe_addr(struct trapframe *);
 
 struct kprobe_probe {
 	struct dt_probe* dtp;
@@ -312,11 +313,7 @@ dt_prov_kprobe_hook(struct dt_provider *dtpv, ...)
 	tf = va_arg(ap, struct trapframe*);
 	va_end(ap);
 
-#if defined(__amd64__)
-	vaddr_t addr = tf->tf_rip - BKPT_SIZE;
-#elif defined(__i386)
-	vaddr_t addr = tf->tf_eip - BKPT_SIZE;
-#endif
+	addr = db_get_probe_addr(tf);
 
 	SLIST_FOREACH(kprobe_dtp, &dtpf_entry[INSTTOIDX(addr)], kprobe_next) {
 		dtp = kprobe_dtp->dtp;
