@@ -662,13 +662,8 @@ out of them.
  Trying to select a version that gives no warnings...
 */
 #if !(defined(STMT_START) && defined(STMT_END))
-# ifdef PERL_USE_GCC_BRACE_GROUPS
-#   define STMT_START	(void)(	/* gcc supports "({ STATEMENTS; })" */
-#   define STMT_END	)
-# else
 #   define STMT_START	do
 #   define STMT_END	while (0)
-# endif
 #endif
 
 #ifndef BYTEORDER  /* Should never happen -- byteorder is in config.h */
