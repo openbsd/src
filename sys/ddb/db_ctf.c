@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_ctf.c,v 1.30 2020/10/15 03:14:00 deraadt Exp $	*/
+/*	$OpenBSD: db_ctf.c,v 1.31 2021/10/27 21:21:35 jasper Exp $	*/
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -248,12 +248,14 @@ const struct ctf_type *
 db_ctf_type_by_symbol(Elf_Sym *st)
 {
 	Elf_Sym			*symp;
-	uint32_t		 objtoff = db_ctf.cth->cth_objtoff;
+	uint32_t		 objtoff;
 	uint16_t		*dsp;
 	size_t			 idx = 0;
 
 	if (!db_ctf.ctf_found || st == NULL)
 		return NULL;
+
+	objtoff = db_ctf.cth->cth_objtoff;
 
 	while (objtoff < db_ctf.cth->cth_funcoff) {
 		dsp = (uint16_t *)(db_ctf.data + objtoff);
@@ -492,6 +494,9 @@ static const char *
 db_ctf_off2name(uint32_t offset)
 {
 	const char		*name;
+
+	if (!db_ctf.ctf_found)
+		return NULL;
 
 	if (CTF_NAME_STID(offset) != CTF_STRTAB_0)
 		return "external";
