@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.218 2021/06/04 09:05:19 mvs Exp $
+;	$OpenBSD: syscalls.master,v 1.219 2021/10/27 03:24:44 visa Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -166,7 +166,7 @@
 			    struct itimerval *itv); }
 71	STD		{ int sys_select(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, struct timeval *tv); }
-72	STD		{ int sys_kevent(int fd, \
+72	STD NOLOCK	{ int sys_kevent(int fd, \
 			    const struct kevent *changelist, int nchanges, \
 			    struct kevent *eventlist, int nevents, \
 			    const struct timespec *timeout); }
