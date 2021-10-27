@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time.c,v 1.28 2021/10/27 09:50:57 beck Exp $ */
+/* $OpenBSD: a_time.c,v 1.29 2021/10/27 09:56:43 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -114,7 +114,7 @@ ASN1_TIME_diff(int *pday, int *psec, const ASN1_TIME *from,
 
     if (ASN1_time_parse(from->data, from->length, &tm_from, 0) == -1)
 	    return 0;
-    if (ASN1_time_parse(from->data, from->length, &tm_to, 0) == -1)
+    if (ASN1_time_parse(to->data, to->length, &tm_to, 0) == -1)
 	    return 0;
 
     return OPENSSL_gmtime_diff(pday, psec, &tm_from, &tm_to);
