@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_get_extension_flags.3,v 1.1 2021/10/23 15:41:10 tb Exp $
+.\" $OpenBSD: X509_get_extension_flags.3,v 1.2 2021/10/27 11:22:57 schwarze Exp $
 .\" full merge up to: OpenSSL 361136f4 Sep 1 18:56:58 2015 +0100
 .\" selective merge up to: OpenSSL 2b2e3106f Feb 16 15:04:45 2021 +0000
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 23 2021 $
+.Dd $Mdocdate: October 27 2021 $
 .Dt X509_GET_EXTENSION_FLAGS 3
 .Os
 .Sh NAME
@@ -76,8 +76,8 @@ These functions retrieve information related to commonly used
 certificate extensions.
 .Pp
 .Fn X509_get_extension_flags
-retrieves general information about a certificate, it will return one or
-more of the following flags ored together.
+retrieves general information about a certificate.
+It returns one or more of the following flags OR'ed together.
 .Bl -tag -width Ds
 .It Dv EXFLAG_V1
 The certificate is an obsolete version 1 certificate.
@@ -128,7 +128,7 @@ The value can be retrieved using
 .Pp
 .Fn X509_get_key_usage
 returns the value of the key usage extension.
-If key usage is present will return zero or more of the flags:
+If key usage is present, it returns zero or more of these flags:
 .Dv KU_DIGITAL_SIGNATURE ,
 .Dv KU_NON_REPUDIATION ,
 .Dv KU_KEY_ENCIPHERMENT ,
@@ -136,17 +136,17 @@ If key usage is present will return zero or more of the flags:
 .Dv KU_KEY_AGREEMENT ,
 .Dv KU_KEY_CERT_SIGN ,
 .Dv KU_CRL_SIGN ,
-.Dv KU_ENCIPHER_ONLY
+.Dv KU_ENCIPHER_ONLY ,
 or
-.Dv KU_DECIPHER_ONLY
+.Dv KU_DECIPHER_ONLY ,
 corresponding to individual key usage bits.
-If key usage is absent then
+If key usage is absent,
 .Dv UINT32_MAX
 is returned.
 .Pp
 .Fn X509_get_extended_key_usage
 returns the value of the extended key usage extension.
-If extended key usage is present it will return zero or more of the
+If extended key usage is present, it returns zero or more of these
 flags:
 .Dv XKU_SSL_SERVER ,
 .Dv XKU_SSL_CLIENT ,
@@ -200,8 +200,17 @@ and
 .Fn X509_get_extended_key_usage
 return sets of flags corresponding to the certificate extension values.
 .Sh SEE ALSO
+.Xr BASIC_CONSTRAINTS_new 3 ,
+.Xr EXTENDED_KEY_USAGE_new 3 ,
+.Xr POLICYINFO_new 3 ,
+.Xr PROXY_CERT_INFO_EXTENSION_new 3 ,
+.Xr X509_check_ca 3 ,
 .Xr X509_check_purpose 3 ,
-.Xr X509_get_ext_d2i 3
+.Xr X509_EXTENSION_new 3 ,
+.Xr X509_get_ext_d2i 3 ,
+.Xr X509_get_subject_name 3 ,
+.Xr X509_get_version 3 ,
+.Xr X509_new 3
 .Sh HISTORY
 .Nm X509_get_extension_flags ,
 .Nm X509_get_key_usage ,
