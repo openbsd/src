@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.18 2021/10/27 18:09:08 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.19 2021/10/27 21:56:58 beck Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -321,7 +321,7 @@ valid_uri(const char *uri, size_t usz, const char *proto)
 {
 	size_t s;
 
-	if (usz > 2048)
+	if (usz > MAX_URI_LENGTH)
 		return 0;
 
 	for (s = 0; s < usz; s++)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.41 2021/10/26 13:31:05 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.42 2021/10/27 21:56:58 beck Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -80,6 +80,8 @@ append_ip(struct parse *p, const struct cert_ip *ip)
 
 	if (!ip_addr_check_overlap(ip, p->fn, p->res->ips, p->res->ipsz))
 		return 0;
+	if (res->ipsz >= MAX_IP_SIZE)
+		return 0;
 	res->ips = reallocarray(res->ips, res->ipsz + 1,
 	    sizeof(struct cert_ip));
 	if (res->ips == NULL)
@@ -98,6 +100,8 @@ append_as(struct parse *p, const struct cert_as *as)
 {
 
 	if (!as_check_overlap(as, p->fn, p->res->as, p->res->asz))
+		return 0;
+	if (p->res->asz >= MAX_AS_SIZE)
 		return 0;
 	p->res->as = reallocarray(p->res->as, p->res->asz + 1,
 	    sizeof(struct cert_as));

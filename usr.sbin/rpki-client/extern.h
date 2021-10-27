@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.81 2021/10/26 16:59:19 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.82 2021/10/27 21:56:58 beck Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -602,5 +602,22 @@ int	mkpath(const char *);
 
 #define		RPKI_PATH_OUT_DIR	"/var/db/rpki-client"
 #define		RPKI_PATH_BASE_DIR	"/var/cache/rpki-client"
+
+/*
+ * Maximum number of ip ranges and AS ranges we will accept in
+ * any single file
+ */
+#define MAX_IP_SIZE	200000
+#define MAX_AS_SIZE	200000
+
+/*
+ * Maximum URI length we will accept
+ */
+#define MAX_URI_LENGTH 2048
+
+/*
+ * Maximum File Size we will accept
+ */
+#define MAX_FILE_SIZE 2000000
 
 #endif /* ! EXTERN_H */

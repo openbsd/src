@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.28 2021/10/26 10:52:50 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.29 2021/10/27 21:56:58 beck Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -379,7 +379,7 @@ roa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 	p.res->expires = expires;
-	
+
 	if (!roa_parse_econtent(cms, cmsz, &p))
 		goto out;
 

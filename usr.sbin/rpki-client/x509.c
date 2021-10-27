@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.27 2021/10/24 16:59:14 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.28 2021/10/27 21:56:58 beck Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -282,11 +282,18 @@ x509_get_aia(X509 *x, const char *fn)
 		goto out;
 	}
 
+	if (ASN1_STRING_length(ad->location->d.uniformResourceIdentifier)
+	    > MAX_URI_LENGTH) {
+		warnx("%s: RFC 6487 section 4.8.7: AIA: "
+		    "URI exceeds max length of %d", fn, MAX_URI_LENGTH);
+		goto out;
+	}
+
 	aia = strndup(
 	    ASN1_STRING_get0_data(ad->location->d.uniformResourceIdentifier),
 	    ASN1_STRING_length(ad->location->d.uniformResourceIdentifier));
 	if (aia == NULL)
-		err(1, NULL);
+		err(1, NULL); /* why not just return NULL? */
 
 out:
 	AUTHORITY_INFO_ACCESS_free(info);
@@ -377,10 +384,17 @@ x509_get_crl(X509 *x, const char *fn)
 		goto out;
 	}
 
+	if (ASN1_STRING_length(name->d.uniformResourceIdentifier)
+	    > MAX_URI_LENGTH) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL: "
+		    "URI exceeds max length of %d", fn, MAX_URI_LENGTH);
+		goto out;
+	}
+
 	crl = strndup(ASN1_STRING_get0_data(name->d.uniformResourceIdentifier),
 	    ASN1_STRING_length(name->d.uniformResourceIdentifier));
 	if (crl == NULL)
-		err(1, NULL);
+		err(1, NULL); /* why not just return NULL? */
 
 out:
 	CRL_DIST_POINTS_free(crldp);
