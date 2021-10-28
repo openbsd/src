@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.h,v 1.4 2021/10/24 17:16:09 claudio Exp $ */
+/*	$OpenBSD: rrdp.h,v 1.5 2021/10/28 11:57:00 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -46,7 +46,7 @@ struct publish_xml;
 struct publish_xml	*new_publish_xml(enum publish_type, char *,
 			    char *, size_t);
 void			 free_publish_xml(struct publish_xml *);
-void			 publish_add_content(struct publish_xml *,
+int			 publish_add_content(struct publish_xml *,
 			    const char *, int);
 int			 publish_done(struct rrdp *, struct publish_xml *);
 

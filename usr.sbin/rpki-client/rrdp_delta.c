@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_delta.c,v 1.3 2021/10/24 17:16:09 claudio Exp $ */
+/*	$OpenBSD: rrdp_delta.c,v 1.4 2021/10/28 11:57:00 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -218,9 +218,11 @@ static void
 delta_content_handler(void *data, const char *content, int length)
 {
 	struct delta_xml *dxml = data;
+	XML_Parser p = dxml->parser;
 
 	if (dxml->scope == DELTA_SCOPE_PUBLISH)
-		publish_add_content(dxml->pxml, content, length);
+		if (publish_add_content(dxml->pxml, content, length) == -1)
+			PARSE_FAIL(p, "parse failed - content too big");
 }
 
 struct delta_xml *

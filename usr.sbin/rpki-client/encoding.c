@@ -1,4 +1,4 @@
-/*	$OpenBSD: encoding.c,v 1.7 2021/10/27 21:56:58 beck Exp $  */
+/*	$OpenBSD: encoding.c,v 1.8 2021/10/28 11:57:00 claudio Exp $  */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -64,6 +64,20 @@ err:
 }
 
 /*
+ * Return the size of the data blob in outlen for an inlen sized base64 buffer.
+ * Returns 0 on success and -1 if inlen would overflow an int.
+ */
+int
+base64_decode_len(size_t inlen, size_t *outlen)
+{
+	*outlen = 0;
+	if (inlen >= INT_MAX - 3)
+		return -1;
+	*outlen = ((inlen + 3) / 4) * 3 + 1;
+	return 0;
+}
+
+/*
  * Decode base64 encoded string into binary buffer returned in out.
  * The out buffer size is stored in outlen.
  * Returns 0 on success or -1 for any errors.
@@ -74,7 +88,8 @@ base64_decode(const unsigned char *in, size_t inlen,
 {
 	static EVP_ENCODE_CTX *ctx;
 	unsigned char *to;
-	int tolen;
+	size_t tolen;
+	int evplen;
 
 	if (ctx == NULL && (ctx = EVP_ENCODE_CTX_new()) == NULL)
 		err(1, "EVP_ENCODE_CTX_new");
@@ -82,19 +97,19 @@ base64_decode(const unsigned char *in, size_t inlen,
 	*out = NULL;
 	*outlen = 0;
 
-	if (inlen >= INT_MAX - 3)
+	if (base64_decode_len(inlen, &tolen) == -1)
 		return -1;
-	tolen = ((inlen + 3) / 4) * 3 + 1;
 	if ((to = malloc(tolen)) == NULL)
 		return -1;
 
+	evplen = tolen;
 	EVP_DecodeInit(ctx);
-	if (EVP_DecodeUpdate(ctx, to, &tolen, in, inlen) == -1)
+	if (EVP_DecodeUpdate(ctx, to, &evplen, in, inlen) == -1)
 		goto fail;
-	*outlen = tolen;
-	if (EVP_DecodeFinal(ctx, to + tolen, &tolen) == -1)
+	*outlen = evplen;
+	if (EVP_DecodeFinal(ctx, to + evplen, &evplen) == -1)
 		goto fail;
-	*outlen += tolen;
+	*outlen += evplen;
 	*out = to;
 	return 0;
 
@@ -103,6 +118,24 @@ fail:
 	return -1;
 }
 
+/*
+ * Return the size of the base64 blob in outlen for a inlen sized binary buffer.
+ * Returns 0 on success and -1 if inlen would overflow the calculation.
+ */
+int
+base64_encode_len(size_t inlen, size_t *outlen)
+{
+	*outlen = 0;
+	if (inlen >= INT_MAX / 2)
+		return -1;
+	*outlen = ((inlen + 2) / 3) * 4 + 1;
+	return 0;
+}
+
+/*
+ * Encode a binary buffer into a base64 encoded string returned in out.
+ * Returns 0 on success or -1 for any errors.
+ */
 int
 base64_encode(const unsigned char *in, size_t inlen, char **out)
 {
@@ -111,9 +144,8 @@ base64_encode(const unsigned char *in, size_t inlen, char **out)
 
 	*out = NULL;
 
-	if (inlen >= INT_MAX / 2)
+	if (base64_encode_len(inlen, &tolen) == -1)
 		return -1;
-	tolen = ((inlen + 2) / 3) * 4 + 1;
 	if ((to = malloc(tolen)) == NULL)
 		return -1;
 

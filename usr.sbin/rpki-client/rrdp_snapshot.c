@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_snapshot.c,v 1.2 2021/10/24 17:16:09 claudio Exp $ */
+/*	$OpenBSD: rrdp_snapshot.c,v 1.3 2021/10/28 11:57:00 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -194,9 +194,11 @@ static void
 snapshot_content_handler(void *data, const char *content, int length)
 {
 	struct snapshot_xml *sxml = data;
+	XML_Parser p = sxml->parser;
 
 	if (sxml->scope == SNAPSHOT_SCOPE_PUBLISH)
-		publish_add_content(sxml->pxml, content, length);
+		if (publish_add_content(sxml->pxml, content, length) == -1)
+			PARSE_FAIL(p, "parse failed - content too big");
 }
 
 struct snapshot_xml *
