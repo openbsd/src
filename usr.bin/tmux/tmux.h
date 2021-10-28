@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1151 2021/10/26 12:22:23 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1152 2021/10/28 18:54:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1709,6 +1709,9 @@ struct client {
 #define CLIENT_UNATTACHEDFLAGS	\
 	(CLIENT_DEAD|		\
 	 CLIENT_SUSPENDED|	\
+	 CLIENT_EXIT)
+#define CLIENT_NODETACHFLAGS 	\
+	(CLIENT_DEAD|		\
 	 CLIENT_EXIT)
 #define CLIENT_NOSIZEFLAGS	\
 	(CLIENT_DEAD|		\

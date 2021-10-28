@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.388 2021/10/11 13:27:50 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.389 2021/10/28 18:54:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -516,7 +516,7 @@ server_client_detach(struct client *c, enum msgtype msgtype)
 {
 	struct session	*s = c->session;
 
-	if (s == NULL || (c->flags & CLIENT_UNATTACHEDFLAGS))
+	if (s == NULL || (c->flags & CLIENT_NODETACHFLAGS))
 		return;
 
 	c->flags |= CLIENT_EXIT;
