@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_REQ_new.3,v 1.9 2021/10/27 14:54:07 schwarze Exp $
+.\" $OpenBSD: X509_REQ_new.3,v 1.10 2021/10/28 13:23:19 schwarze Exp $
 .\"
 .\" Copyright (c) 2016, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,12 +14,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 27 2021 $
+.Dd $Mdocdate: October 28 2021 $
 .Dt X509_REQ_NEW 3
 .Os
 .Sh NAME
 .Nm X509_REQ_new ,
 .Nm X509_REQ_dup ,
+.Nm X509_to_X509_REQ ,
 .Nm X509_REQ_free ,
 .Nm X509_REQ_INFO_new ,
 .Nm X509_REQ_INFO_free
@@ -30,6 +31,8 @@
 .Fn X509_REQ_new void
 .Ft X509_REQ *
 .Fn X509_REQ_dup "X509_REQ *req"
+.Ft X509_REQ *
+.Fn X509_to_X509_REQ "X509 *x" "EVP_PKEY *pkey" "const EVP_MD *md"
 .Ft void
 .Fn X509_REQ_free "X509_REQ *req"
 .Ft X509_REQ_INFO *
@@ -54,6 +57,22 @@ creates a deep copy of
 using
 .Xr ASN1_item_dup 3 ,
 setting the reference count of the copy to 1.
+.Pp
+.Fn X509_to_X509_REQ
+allocates a new certification request object, copies
+the subject name and the public key into it from the certificate
+.Fa x ,
+and sets the version to zero.
+Unless
+.Fa pkey
+is
+.Dv NULL ,
+it also signs the request with
+.Xr X509_REQ_sign 3
+using
+.Fa pkey
+and
+.Fa md .
 .Pp
 .Fn X509_REQ_free
 frees
@@ -85,6 +104,7 @@ pointer, no action occurs.
 .Sh RETURN VALUES
 .Fn X509_REQ_new ,
 .Fn X509_REQ_dup ,
+.Fn X509_to_X509_REQ ,
 and
 .Fn X509_REQ_INFO_new
 return the new
@@ -115,8 +135,10 @@ RFC 2986: PKCS #10: Certification Request Syntax Specification
 .Fn X509_REQ_INFO_new ,
 and
 .Fn X509_REQ_INFO_free
-first appeared in SSLeay 0.4.4 and
+first appeared in SSLeay 0.4.4,
 .Fn X509_REQ_dup
-in SSLeay 0.5.1.
+in SSLeay 0.5.1, and
+.Fn X509_to_X509_REQ
+in SSLeay 0.6.0.
 These functions have been available since
 .Ox 2.4 .
