@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.156 2021/10/26 16:59:19 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.157 2021/10/28 19:02:36 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1173,8 +1173,15 @@ main(int argc, char *argv[])
 		rc = 1;
 
 
+	logx("Processing time %lld seconds "
+	    "(%lld seconds user, %lld seconds system)",
+	    (long long)stats.elapsed_time.tv_sec,
+	    (long long)stats.user_time.tv_sec,
+	    (long long)stats.system_time.tv_sec);
 	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);
+	logx("BGPsec Router Certificates: %zu (%zu invalid)",
+	    stats.brks, stats.brks_invalids);
 	logx("Certificates: %zu (%zu failed parse, %zu invalid)",
 	    stats.certs, stats.certs_fail, stats.certs_invalid);
 	logx("Trust Anchor Locators: %zu", stats.tals);
@@ -1182,8 +1189,6 @@ main(int argc, char *argv[])
 	    stats.mfts, stats.mfts_fail, stats.mfts_stale);
 	logx("Certificate revocation lists: %zu", stats.crls);
 	logx("Ghostbuster records: %zu", stats.gbrs);
-	logx("BGPsec Router Certificates: %zu (%zu invalid)",
-	    stats.brks, stats.brks_invalids);
 	logx("Repositories: %zu", stats.repos);
 	logx("Cleanup: removed %zu files, %zu directories",
 	    stats.del_files, stats.del_dirs);
