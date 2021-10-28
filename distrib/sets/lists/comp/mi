@@ -878,6 +878,7 @@
 ./usr/include/fido
 ./usr/include/fido.h
 ./usr/include/fido/bio.h
+./usr/include/fido/config.h
 ./usr/include/fido/credman.h
 ./usr/include/fido/eddsa.h
 ./usr/include/fido/err.h
@@ -2162,6 +2163,8 @@
 ./usr/share/man/man3/X509_PKEY_new.3
 ./usr/share/man/man3/X509_PUBKEY_new.3
 ./usr/share/man/man3/X509_PURPOSE_set.3
+./usr/share/man/man3/X509_REQ_add1_attr.3
+./usr/share/man/man3/X509_REQ_add_extensions.3
 ./usr/share/man/man3/X509_REQ_new.3
 ./usr/share/man/man3/X509_REVOKED_new.3
 ./usr/share/man/man3/X509_SIG_get0.3
@@ -2457,9 +2460,11 @@
 ./usr/share/man/man3/fido_cred_set_authdata.3
 ./usr/share/man/man3/fido_cred_verify.3
 ./usr/share/man/man3/fido_credman_metadata_new.3
+./usr/share/man/man3/fido_dev_enable_entattest.3
 ./usr/share/man/man3/fido_dev_get_assert.3
 ./usr/share/man/man3/fido_dev_get_touch_begin.3
 ./usr/share/man/man3/fido_dev_info_manifest.3
+./usr/share/man/man3/fido_dev_largeblob_get.3
 ./usr/share/man/man3/fido_dev_make_cred.3
 ./usr/share/man/man3/fido_dev_open.3
 ./usr/share/man/man3/fido_dev_set_io_functions.3
