@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.28 2021/10/27 21:56:58 beck Exp $ */
+/*	$OpenBSD: x509.c,v 1.29 2021/10/28 09:02:19 beck Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -293,7 +293,7 @@ x509_get_aia(X509 *x, const char *fn)
 	    ASN1_STRING_get0_data(ad->location->d.uniformResourceIdentifier),
 	    ASN1_STRING_length(ad->location->d.uniformResourceIdentifier));
 	if (aia == NULL)
-		err(1, NULL); /* why not just return NULL? */
+		err(1, NULL);
 
 out:
 	AUTHORITY_INFO_ACCESS_free(info);
@@ -303,24 +303,29 @@ out:
 /*
  * Extract the expire time (not-after) of a certificate.
  */
-time_t
-x509_get_expire(X509 *x, const char *fn)
+int
+x509_get_expire(X509 *x, const char *fn, time_t *tt)
 {
 	const ASN1_TIME	*at;
 	struct tm	 expires_tm;
 	time_t		 expires;
 
 	at = X509_get0_notAfter(x);
-	if (at == NULL)
-		errx(1, "%s: X509_get0_notafter failed", fn);
+	if (at == NULL) {
+		warnx("%s: X509_get0_notafter failed", fn);
+		return 0;
+	}
 	memset(&expires_tm, 0, sizeof(expires_tm));
-	if (ASN1_time_parse(at->data, at->length, &expires_tm, 0) == -1)
-		errx(1, "%s: ASN1_time_parse failed", fn);
-
+	if (ASN1_time_parse(at->data, at->length, &expires_tm, 0) == -1) {
+		warnx("%s: ASN1_time_parse failed", fn);
+		return 0;
+	}
 	if ((expires = mktime(&expires_tm)) == -1)
 		errx(1, "%s: mktime failed", fn);
 
-	return expires;
+	*tt = expires;
+	return 1;
+
 }
 
 /*
@@ -394,7 +399,7 @@ x509_get_crl(X509 *x, const char *fn)
 	crl = strndup(ASN1_STRING_get0_data(name->d.uniformResourceIdentifier),
 	    ASN1_STRING_length(name->d.uniformResourceIdentifier));
 	if (crl == NULL)
-		err(1, NULL); /* why not just return NULL? */
+		err(1, NULL);
 
 out:
 	CRL_DIST_POINTS_free(crldp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.82 2021/10/27 21:56:58 beck Exp $ */
+/*	$OpenBSD: extern.h,v 1.83 2021/10/28 09:02:19 beck Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -558,7 +558,7 @@ struct ibuf	*io_buf_recvfd(int, struct ibuf **);
 char		*x509_get_aia(X509 *, const char *);
 char		*x509_get_aki(X509 *, int, const char *);
 char		*x509_get_ski(X509 *, const char *);
-time_t		 x509_get_expire(X509 *, const char *);
+int		 x509_get_expire(X509 *, const char *, time_t *);
 char		*x509_get_crl(X509 *, const char *);
 char		*x509_crl_get_aki(X509_CRL *, const char *);
 char		*x509_get_pubkey(X509 *, const char *);
