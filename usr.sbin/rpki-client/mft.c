@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.41 2021/10/26 10:52:50 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.42 2021/10/28 13:51:42 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -228,6 +228,12 @@ mft_parse_flist(struct parse *p, const ASN1_OCTET_STRING *os)
 		goto out;
 	}
 
+	if (sk_ASN1_TYPE_num(seq) > MAX_MANIFEST_ENTRIES) {
+		warnx("%s: %d exceeds manifest entry limit (%d)", p->fn,
+		    sk_ASN1_TYPE_num(seq), MAX_MANIFEST_ENTRIES);
+		goto out;
+	}
+
 	p->res->files = calloc(sk_ASN1_TYPE_num(seq), sizeof(struct mftfile));
 	if (p->res->files == NULL)
 		err(1, NULL);
@@ -244,7 +250,7 @@ mft_parse_flist(struct parse *p, const ASN1_OCTET_STRING *os)
 	}
 
 	rc = 1;
-out:
+ out:
 	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
 	return rc;
 }

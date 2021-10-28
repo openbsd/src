@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.84 2021/10/28 11:57:00 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.85 2021/10/28 13:51:42 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -621,5 +621,10 @@ int	mkpath(const char *);
  * Maximum File Size we will accept
  */
 #define MAX_FILE_SIZE 2000000
+
+/*
+ * Maximum number of FileAndHash entries per Manifest.
+ */
+#define	MAX_MANIFEST_ENTRIES	100000
 
 #endif /* ! EXTERN_H */
