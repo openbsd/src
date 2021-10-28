@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.27 2021/09/15 15:18:23 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.28 2021/10/28 09:44:49 kn Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -830,13 +830,6 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		    ntohs(udp->uh_sport), hbuf_dst, ntohs(udp->uh_dport));
 	}
 
-	if (ntohs(udp->uh_sport) != SERVER_PORT ||
-	    ntohs(udp->uh_dport) != CLIENT_PORT) {
-		log_warnx("%s: invalid ports used %s:%d -> %s:%d", __func__,
-		    hbuf_src, ntohs(udp->uh_sport),
-		    hbuf_dst, ntohs(udp->uh_dport));
-		return;
-	}
 	if (rem < sizeof(*dhcp_hdr))
 		goto too_short;
 
