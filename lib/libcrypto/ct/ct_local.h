@@ -18,8 +18,8 @@
  * From RFC6962: opaque SerializedSCT<1..2^16-1>; struct { SerializedSCT
  * sct_list <1..2^16-1>; } SignedCertificateTimestampList;
  */
-# define MAX_SCT_SIZE            65535
-# define MAX_SCT_LIST_SIZE       MAX_SCT_SIZE
+#define MAX_SCT_SIZE            65535
+#define MAX_SCT_LIST_SIZE       MAX_SCT_SIZE
 
 /*
  * Macros to read and write integers in network-byte order.
@@ -55,60 +55,60 @@
 
 /* Signed Certificate Timestamp */
 struct sct_st {
-    sct_version_t version;
-    /* If version is not SCT_VERSION_V1, this contains the encoded SCT */
-    unsigned char *sct;
-    size_t sct_len;
-    /* If version is SCT_VERSION_V1, fields below contain components of the SCT */
-    unsigned char *log_id;
-    size_t log_id_len;
-    /*
-    * Note, we cannot distinguish between an unset timestamp, and one
-    * that is set to 0.  However since CT didn't exist in 1970, no real
-    * SCT should ever be set as such.
-    */
-    uint64_t timestamp;
-    unsigned char *ext;
-    size_t ext_len;
-    unsigned char hash_alg;
-    unsigned char sig_alg;
-    unsigned char *sig;
-    size_t sig_len;
-    /* Log entry type */
-    ct_log_entry_type_t entry_type;
-    /* Where this SCT was found, e.g. certificate, OCSP response, etc. */
-    sct_source_t source;
-    /* The result of the last attempt to validate this SCT. */
-    sct_validation_status_t validation_status;
+	sct_version_t version;
+	/* If version is not SCT_VERSION_V1, this contains the encoded SCT */
+	unsigned char *sct;
+	size_t sct_len;
+	/* If version is SCT_VERSION_V1, fields below contain components of the SCT */
+	unsigned char *log_id;
+	size_t log_id_len;
+	/*
+	 * Note, we cannot distinguish between an unset timestamp, and one
+	 * that is set to 0.  However since CT didn't exist in 1970, no real
+	 * SCT should ever be set as such.
+	 */
+	uint64_t timestamp;
+	unsigned char *ext;
+	size_t ext_len;
+	unsigned char hash_alg;
+	unsigned char sig_alg;
+	unsigned char *sig;
+	size_t sig_len;
+	/* Log entry type */
+	ct_log_entry_type_t entry_type;
+	/* Where this SCT was found, e.g. certificate, OCSP response, etc. */
+	sct_source_t source;
+	/* The result of the last attempt to validate this SCT. */
+	sct_validation_status_t validation_status;
 };
 
 /* Miscellaneous data that is useful when verifying an SCT  */
 struct sct_ctx_st {
-    /* Public key */
-    EVP_PKEY *pkey;
-    /* Hash of public key */
-    unsigned char *pkeyhash;
-    size_t pkeyhashlen;
-    /* For pre-certificate: issuer public key hash */
-    unsigned char *ihash;
-    size_t ihashlen;
-    /* certificate encoding */
-    unsigned char *certder;
-    size_t certderlen;
-    /* pre-certificate encoding */
-    unsigned char *preder;
-    size_t prederlen;
-    /* milliseconds since epoch (to check that the SCT isn't from the future) */
-    uint64_t epoch_time_in_ms;
+	/* Public key */
+	EVP_PKEY *pkey;
+	/* Hash of public key */
+	unsigned char *pkeyhash;
+	size_t pkeyhashlen;
+	/* For pre-certificate: issuer public key hash */
+	unsigned char *ihash;
+	size_t ihashlen;
+	/* certificate encoding */
+	unsigned char *certder;
+	size_t certderlen;
+	/* pre-certificate encoding */
+	unsigned char *preder;
+	size_t prederlen;
+	/* milliseconds since epoch (to check that the SCT isn't from the future) */
+	uint64_t epoch_time_in_ms;
 };
 
 /* Context when evaluating whether a Certificate Transparency policy is met */
 struct ct_policy_eval_ctx_st {
-    X509 *cert;
-    X509 *issuer;
-    CTLOG_STORE *log_store;
-    /* milliseconds since epoch (to check that SCTs aren't from the future) */
-    uint64_t epoch_time_in_ms;
+	X509 *cert;
+	X509 *issuer;
+	CTLOG_STORE *log_store;
+	/* milliseconds since epoch (to check that SCTs aren't from the future) */
+	uint64_t epoch_time_in_ms;
 };
 
 /*
