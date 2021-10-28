@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time.c,v 1.29 2021/10/27 09:56:43 beck Exp $ */
+/* $OpenBSD: a_time.c,v 1.30 2021/10/28 14:24:08 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -107,8 +107,7 @@ ASN1_TIME_free(ASN1_TIME *a)
 }
 
 int
-ASN1_TIME_diff(int *pday, int *psec, const ASN1_TIME *from,
-    const ASN1_TIME *to)
+ASN1_TIME_diff(int *pday, int *psec, const ASN1_TIME *from, const ASN1_TIME *to)
 {
     struct tm tm_from, tm_to;
 
