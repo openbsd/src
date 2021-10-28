@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.28 2021/10/23 20:01:16 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.29 2021/10/28 13:50:29 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,6 +32,9 @@
 #include <imsg.h>
 
 #include "extern.h"
+
+#define	__STRINGIFY(x)	#x
+#define	STRINGIFY(x)	__STRINGIFY(x)
 
 /*
  * A running rsync process.
@@ -275,6 +278,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 			args[i++] = (char *)prog;
 			args[i++] = "-rt";
 			args[i++] = "--no-motd";
+			args[i++] = "--max-size=" STRINGIFY(MAX_FILE_SIZE);
 			args[i++] = "--timeout=180";
 			args[i++] = "--include=*/";
 			args[i++] = "--include=*.cer";
