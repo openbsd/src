@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_kprobe.c,v 1.3 2021/10/27 15:18:12 jasper Exp $	*/
+/*	$OpenBSD: dt_prov_kprobe.c,v 1.4 2021/10/28 08:47:40 jasper Exp $	*/
 
 /*
  * Copyright (c) 2020 Tom Rollet <tom.rollet@epita.fr>
@@ -303,7 +303,7 @@ dt_prov_kprobe_hook(struct dt_provider *dtpv, ...)
 	va_list ap;
 	int is_dt_bkpt = 0;
 	int error;	/* Return values for return probes*/
-	vaddr_t *args;
+	vaddr_t *args, addr;
 	size_t argsize;
 	register_t retval[2];
 
