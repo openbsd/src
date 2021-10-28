@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.205 2021/10/27 14:54:07 schwarze Exp $
+# $OpenBSD: Makefile,v 1.206 2021/10/28 13:13:03 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -333,10 +333,10 @@ MAN=	\
 	X509_cmp_time.3 \
 	X509_digest.3 \
 	X509_find_by_subject.3 \
-	X509_get_extension_flags.3 \
 	X509_get0_notBefore.3 \
 	X509_get0_signature.3 \
 	X509_get1_email.3 \
+	X509_get_extension_flags.3 \
 	X509_get_pubkey.3 \
 	X509_get_pubkey_parameters.3 \
 	X509_get_serialNumber.3 \
