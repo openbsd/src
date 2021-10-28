@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-confirm-before.c,v 1.51 2021/09/09 13:38:32 nicm Exp $ */
+/* $OpenBSD: cmd-confirm-before.c,v 1.52 2021/10/28 18:39:15 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -72,7 +72,7 @@ cmd_confirm_before_exec(struct cmd *self, struct cmdq_item *item)
 	int				 wait = !args_has(args, 'b');
 
 	cdata = xcalloc(1, sizeof *cdata);
-	cdata->cmdlist = args_make_commands_now(self, item, 0, 0);
+	cdata->cmdlist = args_make_commands_now(self, item, 0, 1);
 	if (cdata->cmdlist == NULL)
 		return (CMD_RETURN_ERROR);
 
