@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.60 2021/10/22 11:10:34 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.61 2021/10/28 13:07:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -283,6 +283,8 @@ static struct opts	 opts;
 #define OP_COMP_DEST	1009
 #define OP_COPY_DEST	1010
 #define OP_LINK_DEST	1011
+#define OP_MAX_SIZE	1012
+#define OP_MIN_SIZE	1013
 
 const struct option	 lopts[] = {
     { "address",	required_argument, NULL,		OP_ADDRESS },
@@ -306,6 +308,8 @@ const struct option	 lopts[] = {
     { "include",	required_argument, NULL, 		OP_INCLUDE },
     { "include-from",	required_argument, NULL,		OP_INCLUDE_FROM },
     { "links",		no_argument,	&opts.preserve_links,	1 },
+    { "max-size",	required_argument, NULL,		OP_MAX_SIZE },
+    { "min-size",	required_argument, NULL,		OP_MIN_SIZE },
     { "no-links",	no_argument,	&opts.preserve_links,	0 },
     { "no-motd",	no_argument,	&opts.no_motd,		1 },
     { "numeric-ids",	no_argument,	&opts.numeric_ids,	1 },
@@ -466,6 +470,10 @@ basedir:
 				errx(1, "too many --%s directories specified",
 				    lopts[lidx].name);
 			opts.basedir[basedir_cnt++] = optarg;
+			break;
+		case OP_MAX_SIZE:
+		case OP_MIN_SIZE:
+			/* for now simply ignore */
 			break;
 		case OP_VERSION:
 			fprintf(stderr, "openrsync: protocol version %u\n",
