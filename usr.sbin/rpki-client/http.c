@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.45 2021/10/23 20:01:16 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.46 2021/10/29 08:51:20 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -72,6 +72,7 @@
 #define HTTP_IDLE_TIMEOUT	10
 #define HTTP_IO_TIMEOUT		(3 * 60)
 #define MAX_CONNECTIONS		64
+#define MAX_CONTENTLEN		(2 * 1024 * 1024 * 1024LL)
 #define NPFDS			(MAX_CONNECTIONS + 1)
 
 enum res {
@@ -119,6 +120,7 @@ struct http_connection {
 	size_t			bufsz;
 	size_t			bufpos;
 	off_t			iosz;
+	off_t			totalsz;
 	time_t			idle_time;
 	time_t			io_time;
 	int			status;
@@ -986,8 +988,6 @@ http_request(struct http_connection *conn)
 	assert(conn->state == STATE_IDLE || conn->state == STATE_TLSCONNECT);
 	conn->state = STATE_REQUEST;
 
-	/* TODO adjust request for HTTP proxy setups */
-
 	/*
 	 * Send port number only if it's specified and does not equal
 	 * the default. Some broken HTTP servers get confused if you explicitly
@@ -1173,7 +1173,7 @@ http_parse_header(struct http_connection *conn, char *buf)
 		cp += sizeof(CONTENTLEN) - 1;
 		if ((s = strcspn(cp, " \t")) != 0)
 			*(cp+s) = 0;
-		conn->iosz = strtonum(cp, 0, LLONG_MAX, &errstr);
+		conn->iosz = strtonum(cp, 0, MAX_CONTENTLEN, &errstr);
 		if (errstr != NULL) {
 			warnx("Content-Length of %s is %s",
 			    http_info(conn->req->uri), errstr);
@@ -1400,6 +1400,7 @@ again:
 			if (http_isredirect(conn))
 				http_redirect(conn);
 
+			conn->totalsz = 0;
 			if (conn->chunked)
 				conn->state = STATE_RESPONSE_CHUNKED_HEADER;
 			else
@@ -1657,9 +1658,14 @@ data_write(struct http_connection *conn)
 		bsz = conn->iosz;
 
 	s = write(conn->req->outfd, conn->buf, bsz);
-
 	if (s == -1) {
 		warn("%s: data write", http_info(conn->req->uri));
+		return http_failed(conn);
+	}
+
+	conn->totalsz += s;
+	if (conn->totalsz > MAX_CONTENTLEN) {
+		warn("%s: too much data offered", http_info(conn->req->uri));
 		return http_failed(conn);
 	}
 
