@@ -1,10 +1,10 @@
-.\"	$OpenBSD: X509_EXTENSION_set_object.3,v 1.14 2021/10/27 14:54:07 schwarze Exp $
-.\"	OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
+.\" $OpenBSD: X509_EXTENSION_set_object.3,v 1.15 2021/10/29 10:22:00 schwarze Exp $
+.\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2016, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -65,11 +65,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 27 2021 $
+.Dd $Mdocdate: October 29 2021 $
 .Dt X509_EXTENSION_SET_OBJECT 3
 .Os
 .Sh NAME
 .Nm X509_EXTENSION_new ,
+.Nm X509_EXTENSION_dup ,
 .Nm X509_EXTENSION_free ,
 .Nm X509_EXTENSION_create_by_NID ,
 .Nm X509_EXTENSION_create_by_OBJ ,
@@ -86,6 +87,8 @@
 .In openssl/x509.h
 .Ft X509_EXTENSION *
 .Fn X509_EXTENSION_new void
+.Ft X509_EXTENSION *
+.Fn X509_EXTENSION_dup "X509_EXTENSION *ex"
 .Ft void
 .Fn X509_EXTENSION_free "X509_EXTENSION *ex"
 .Ft X509_EXTENSION *
@@ -98,7 +101,7 @@
 .Ft X509_EXTENSION *
 .Fo X509_EXTENSION_create_by_OBJ
 .Fa "X509_EXTENSION **ex"
-.Fa "ASN1_OBJECT *obj"
+.Fa "const ASN1_OBJECT *obj"
 .Fa "int crit"
 .Fa "ASN1_OCTET_STRING *data"
 .Fc
@@ -127,7 +130,7 @@
 .Fc
 .Ft ASN1_OCTET_STRING *
 .Fo X509_EXTENSION_get_data
-.Fa "X509_EXTENSION *ne"
+.Fa "X509_EXTENSION *ex"
 .Fc
 .Sh DESCRIPTION
 .Fn X509_EXTENSION_new
@@ -147,6 +150,12 @@ objects and for X.509 v2 certificate revocation lists inside
 and
 .Vt X509_REVOKED
 objects.
+.Pp
+.Fn X509_EXTENSION_dup
+creates a deep copy of
+.Fa ex
+using
+.Xr ASN1_item_dup 3 .
 .Pp
 .Fn X509_EXTENSION_free
 frees
@@ -240,6 +249,7 @@ associated with an extension is the extension encoding in an
 structure.
 .Sh RETURN VALUES
 .Fn X509_EXTENSION_new ,
+.Fn X509_EXTENSION_dup ,
 .Fn X509_EXTENSION_create_by_NID ,
 and
 .Fn X509_EXTENSION_create_by_OBJ
@@ -300,7 +310,9 @@ Certificate Revocation List (CRL) Profile
 .Fn X509_EXTENSION_new
 and
 .Fn X509_EXTENSION_free
-first appeared in SSLeay 0.6.2.
+first appeared in SSLeay 0.6.2,
+.Fn X509_EXTENSION_dup
+in SSLeay 0.6.5, and
 .Fn X509_EXTENSION_create_by_NID ,
 .Fn X509_EXTENSION_create_by_OBJ ,
 .Fn X509_EXTENSION_set_object ,
@@ -310,6 +322,6 @@ first appeared in SSLeay 0.6.2.
 .Fn X509_EXTENSION_get_critical ,
 and
 .Fn X509_EXTENSION_get_data
-first appeared in SSLeay 0.8.0.
+in SSLeay 0.8.0.
 These functions have been available since
 .Ox 2.4 .
