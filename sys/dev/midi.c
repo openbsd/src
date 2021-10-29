@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.48 2020/12/25 12:59:52 visa Exp $	*/
+/*	$OpenBSD: midi.c,v 1.49 2021/10/29 13:24:50 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -386,9 +386,11 @@ filt_midiread(struct knote *kn, long hint)
 	struct midi_softc *sc = (struct midi_softc *)kn->kn_hook;
 	int retval;
 
-	mtx_enter(&audio_lock);
+	if ((hint & NOTE_SUBMIT) == 0)
+		mtx_enter(&audio_lock);
 	retval = !MIDIBUF_ISEMPTY(&sc->inbuf);
-	mtx_leave(&audio_lock);
+	if ((hint & NOTE_SUBMIT) == 0)
+		mtx_leave(&audio_lock);
 
 	return (retval);
 }
@@ -409,9 +411,11 @@ filt_midiwrite(struct knote *kn, long hint)
 	struct midi_softc *sc = (struct midi_softc *)kn->kn_hook;
 	int		   retval;
 
-	mtx_enter(&audio_lock);
+	if ((hint & NOTE_SUBMIT) == 0)
+		mtx_enter(&audio_lock);
 	retval = !MIDIBUF_ISFULL(&sc->outbuf);
-	mtx_leave(&audio_lock);
+	if ((hint & NOTE_SUBMIT) == 0)
+		mtx_leave(&audio_lock);
 
 	return (retval);
 }
