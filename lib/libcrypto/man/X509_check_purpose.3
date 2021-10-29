@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_check_purpose.3,v 1.6 2021/07/27 13:27:46 schwarze Exp $
+.\" $OpenBSD: X509_check_purpose.3,v 1.7 2021/10/29 14:29:24 schwarze Exp $
 .\"
 .\" Copyright (c) 2019, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 27 2021 $
+.Dd $Mdocdate: October 29 2021 $
 .Dt X509_CHECK_PURPOSE 3
 .Os
 .Sh NAME
@@ -40,6 +40,8 @@ is intended to be used for the given
 which can be one of the following integer constants.
 The check succeeds if none of the conditions given in the list below
 are violated.
+It always fails if parsing fails for any extension contained in the
+.Fa certificate .
 .Bl -tag -width 1n
 .It Dv X509_PURPOSE_SSL_CLIENT
 .Bl -dash -width 1n -compact
@@ -173,10 +175,12 @@ contains a Key Usage extension, the
 bit is set.
 .El
 .It Dv X509_PURPOSE_ANY
-The check always succeeds.
+Nothing is required except that, if any extensions are present,
+parsing them needs to succeed.
 .It Dv X509_PURPOSE_OCSP_HELPER
 .\" ocsp_helper, "OCSP helper"
-The check always succeeds.
+Nothing is required except that, if any extensions are present,
+parsing them needs to succeed.
 The application program is expected
 to do the actual checking by other means.
 .It Dv X509_PURPOSE_TIMESTAMP_SIGN
@@ -213,6 +217,10 @@ To succeed, the check always requires that none of the following
 conditions are violated:
 .Pp
 .Bl -dash -width 1n -compact
+.It
+If the
+.Fa certificate
+contains any extensions, parsing them succeeds.
 .It
 If the
 .Fa certificate
@@ -320,13 +328,15 @@ or
 bits set.
 .El
 .It Dv X509_PURPOSE_ANY
-The check always succeeds, even if the three common conditions
+Nothing is required except that, if any extensions are present,
+parsing them needs to succeed.
+The check even succeeds if the three other common conditions
 cited above this list are violated.
 .El
 .Pp
-If the
+If parsing of any extensions that are present succeeds and the
 .Fa purpose
-is -1,
+argument is \-1,
 .Fn X509_check_purpose
 always succeeds, no matter whether or not the
 .Fa ca
@@ -345,7 +355,7 @@ identifiers not listed above.
 .Fn X509_check_purpose
 returns the following values:
 .Bl -column -1 Failure -compact
-.It -1 Ta Error Ta The
+.It \-1 Ta Error Ta Parsing of certificate extensions failed or the
 .Fa purpose
 is invalid.
 .It 0 Ta Failure Ta The
