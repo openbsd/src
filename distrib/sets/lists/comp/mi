@@ -2166,6 +2166,7 @@
 ./usr/share/man/man3/X509_REQ_add1_attr.3
 ./usr/share/man/man3/X509_REQ_add_extensions.3
 ./usr/share/man/man3/X509_REQ_new.3
+./usr/share/man/man3/X509_REQ_print_ex.3
 ./usr/share/man/man3/X509_REVOKED_new.3
 ./usr/share/man/man3/X509_SIG_get0.3
 ./usr/share/man/man3/X509_SIG_new.3
