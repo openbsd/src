@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.101 2021/09/26 13:13:16 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.102 2021/10/29 18:38:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -41,6 +41,7 @@ void		dos_mbr_to_mbr(const struct dos_mbr *, const uint64_t,
 void
 MBR_init(struct mbr *mbr)
 {
+	struct dos_partition	dp;
 	uint64_t		adj;
 	daddr_t			daddr;
 
@@ -56,19 +57,13 @@ MBR_init(struct mbr *mbr)
 		return;
 	}
 
-	dos_mbr_to_mbr(&default_dmbr, 0, 0, mbr);
+	memset(mbr, 0, sizeof(*mbr));
+	memcpy(mbr->mbr_code, default_dmbr.dmbr_boot, sizeof(mbr->mbr_code));
+	memcpy(&dp, &default_dmbr.dmbr_parts[0], sizeof(dp));
+	PRT_parse(&dp, 0, 0, &mbr->mbr_prt[0]);
 
-	/*
-	 * XXX Do *NOT* zap all MBR parts! Some archs still read default mbr
-	 * from disk! Just mark them inactive until -b goodness spreads
-	 * further.
-	 */
-
-	mbr->mbr_prt[0].prt_flag = 0;
-	mbr->mbr_prt[1].prt_flag = 0;
-	mbr->mbr_prt[2].prt_flag = 0;
-
-	mbr->mbr_prt[3].prt_flag = DOSACTIVE;
+	if (mbr->mbr_prt[0].prt_flag != DOSACTIVE)
+		mbr->mbr_prt[3].prt_flag = DOSACTIVE;
 	mbr->mbr_signature = DOSMBR_SIGNATURE;
 
 	/* Use whole disk. Reserve first track, or first cyl, if possible. */
