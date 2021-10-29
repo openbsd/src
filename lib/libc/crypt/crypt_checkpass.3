@@ -1,4 +1,4 @@
-.\" $OpenBSD: crypt_checkpass.3,v 1.12 2019/07/29 23:14:06 deraadt Exp $
+.\" $OpenBSD: crypt_checkpass.3,v 1.13 2021/10/29 10:54:33 deraadt Exp $
 .\"
 .\" Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 29 2019 $
+.Dd $Mdocdate: October 29 2021 $
 .Dt CRYPT_CHECKPASS 3
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nm crypt_newhash
 .Nd password hashing
 .Sh SYNOPSIS
+.In pwd.h
 .In unistd.h
 .Ft int
 .Fn crypt_checkpass "const char *password" "const char *hash"
