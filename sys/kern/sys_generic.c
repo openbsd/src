@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.138 2021/10/24 11:23:22 mpi Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.139 2021/10/29 15:52:44 anton Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -1128,7 +1128,7 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 {
 	struct kqueue_scan_state scan;
 	struct pollfd pfds[4], *pl = pfds;
-	int error, nevents = 0;
+	int error, ncollected, nevents = 0;
 	size_t sz;
 
 	/* Standards say no more than MAX_OPEN; this is possibly better. */
@@ -1154,14 +1154,14 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 		dosigsuspend(p, *sigmask &~ sigcantmask);
 
 	/* Register kqueue events */
-	*retval = ppollregister(p, pl, nfds, &nevents);
+	ncollected = ppollregister(p, pl, nfds, &nevents);
 
 	/*
 	 * The poll/select family of syscalls has been designed to
 	 * block when file descriptors are not available, even if
 	 * there's nothing to wait for.
 	 */
-	if (nevents == 0) {
+	if (nevents == 0 && ncollected == 0) {
 		uint64_t nsecs = INFSLP;
 
 		if (timeout != NULL) {
@@ -1184,7 +1184,7 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 		struct kevent kev[KQ_NEVENTS];
 		int i, ready, count;
 
-		/* Maxium number of events per iteration */
+		/* Maximum number of events per iteration */
 		count = MIN(nitems(kev), nevents);
 		ready = kqueue_scan(&scan, count, kev, timeout, p, &error);
 #ifdef KTRACE
@@ -1193,7 +1193,7 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 #endif
 		/* Convert back events that are ready. */
 		for (i = 0; i < ready; i++)
-			*retval += ppollcollect(p, &kev[i], pl, nfds);
+			ncollected += ppollcollect(p, &kev[i], pl, nfds);
 
 		/*
 		 * Stop if there was an error or if we had enough
@@ -1205,6 +1205,7 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 		nevents -= ready;
 	}
 	kqueue_scan_finish(&scan);
+	*retval = ncollected;
 done:
 	/*
 	 * NOTE: poll(2) is not restarted after a signal and EWOULDBLOCK is
