@@ -1,4 +1,4 @@
-/*	$OpenBSD: pollnval.c,v 1.1 2021/10/29 13:13:04 mpi Exp $	*/
+/*	$OpenBSD: pollnval.c,v 1.2 2021/10/29 20:15:03 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2021 Leah Neukirchen <leah@vuxu.org>
@@ -25,6 +25,9 @@ int
 main(void)
 {
 	struct pollfd fds[1];
+
+	/* Do not hang forever, abort with timeout. */
+	alarm(10);
 
 	fds[0].fd = 0;
 	fds[0].events = POLLIN | POLLHUP;
