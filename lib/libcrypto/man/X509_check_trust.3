@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_check_trust.3,v 1.3 2021/07/28 07:37:04 jmc Exp $
+.\" $OpenBSD: X509_check_trust.3,v 1.4 2021/10/29 11:25:37 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,11 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 28 2021 $
+.Dd $Mdocdate: October 29 2021 $
 .Dt X509_CHECK_TRUST 3
 .Os
 .Sh NAME
-.Nm X509_check_trust
+.Nm X509_check_trust ,
+.Nm X509_TRUST_set_default
 .Nd check whether a certificate is trusted
 .Sh SYNOPSIS
 .In openssl/x509.h
@@ -26,6 +27,12 @@
 .Fo X509_check_trust
 .Fa "X509 *certificate"
 .Fa "int trust"
+.Fa "int flags"
+.Fc
+.Ft int
+.Fo "(*X509_TRUST_set_default(int (*handler)(int, X509 *, int)))"
+.Fa "int trust"
+.Fa "X509 *certificate"
 .Fa "int flags"
 .Fc
 .Sh DESCRIPTION
@@ -176,6 +183,27 @@ identifiers listed above, or it may have installed additional,
 user-supplied checking functions for user-defined
 .Fa trust
 identifiers not listed above.
+.Pp
+If the function
+.Fn X509_TRUST_set_default
+was called, the
+.Fa handler
+function passed to it is used instead of the standard algorithm,
+but only in the case where the
+.Fa trust
+argument of
+.Fn X509_check_trust
+is invalid.
+The compatibility step is not used used in this case.
+.Pp
+If the return value of the first call to
+.Fn X509_TRUST_set_default
+is saved and passed back to
+.Fn X509_TRUST_set_default
+later on, the standard behaviour
+of using the standard algorithm for invalid
+.Fa trust
+arguments is restored.
 .Sh RETURN VALUES
 .Fn X509_check_trust
 returns the following values:
@@ -194,6 +222,16 @@ The
 is neither trusted nor explicitly rejected,
 which implies that it is not trusted.
 .El
+.Pp
+.Fn X509_TRUST_set_default
+returns a pointer to the handler function for invalid
+.Fa trust
+that was installed before the call, which may either be a pointer
+to a function installed by a previous call to
+.Fn X509_TRUST_set_default
+or a pointer to the built-in function implementing the standard algorithm if
+.Fn X509_TRUST_set_default
+was never called before.
 .Sh SEE ALSO
 .Xr PEM_read_X509_AUX 3 ,
 .Xr X509_add1_trust_object 3 ,
@@ -205,5 +243,7 @@ which implies that it is not trusted.
 .Xr X509_VERIFY_PARAM_set_trust 3
 .Sh HISTORY
 .Fn X509_check_trust
+and
+.Fn X509_TRUST_set_default
 first appeared in OpenSSL 0.9.5 and has been available since
 .Ox 2.7 .
