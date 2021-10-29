@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.85 2021/10/28 13:51:42 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.86 2021/10/29 09:27:36 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -444,6 +444,7 @@ int		 valid_roa(const char *, struct auth_tree *, struct roa *);
 int		 valid_filename(const char *);
 int		 valid_filehash(const char *, const char *, size_t);
 int		 valid_uri(const char *, size_t, const char *);
+int		 valid_origin(const char *, const char *);
 
 /* Working with CMS. */
 unsigned char	*cms_parse_validate(X509 **, const char *,

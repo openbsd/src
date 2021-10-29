@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.h,v 1.5 2021/10/28 11:57:00 claudio Exp $ */
+/*	$OpenBSD: rrdp.h,v 1.6 2021/10/29 09:27:36 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -54,7 +54,8 @@ int			 publish_done(struct rrdp *, struct publish_xml *);
 struct notification_xml;
 
 struct notification_xml	*new_notification_xml(XML_Parser,
-			    struct rrdp_session *, struct rrdp_session *);
+			    struct rrdp_session *, struct rrdp_session *,
+			    const char *);
 void			 free_notification_xml(struct notification_xml *);
 enum rrdp_task		 notification_done(struct notification_xml *,
 			    char *);

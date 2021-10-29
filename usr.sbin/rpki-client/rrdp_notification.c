@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.8 2021/10/24 17:16:09 claudio Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.9 2021/10/29 09:27:36 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -54,6 +54,7 @@ struct notification_xml {
 	XML_Parser		 parser;
 	struct rrdp_session	*repository;
 	struct rrdp_session	*current;
+	const char		*notifyuri;
 	char			*session_id;
 	char			*snapshot_uri;
 	char			 snapshot_hash[SHA256_DIGEST_LENGTH];
@@ -172,7 +173,8 @@ start_snapshot_elem(struct notification_xml *nxml, const char **attr)
 	for (i = 0; attr[i]; i += 2) {
 		if (strcmp("uri", attr[i]) == 0 && hasUri++ == 0) {
 			if (valid_uri(attr[i + 1], strlen(attr[i + 1]),
-			    "https://")) {
+			    "https://") &&
+			    valid_origin(attr[i + 1], nxml->notifyuri)) {
 				nxml->snapshot_uri = xstrdup(attr[i + 1]);
 				continue;
 			}
@@ -217,7 +219,8 @@ start_delta_elem(struct notification_xml *nxml, const char **attr)
 	for (i = 0; attr[i]; i += 2) {
 		if (strcmp("uri", attr[i]) == 0 && hasUri++ == 0) {
 			if (valid_uri(attr[i + 1], strlen(attr[i + 1]),
-			    "https://")) {
+			    "https://") &&
+			    valid_origin(attr[i + 1], nxml->notifyuri)) {
 				delta_uri = attr[i + 1];
 				continue;
 			}
@@ -307,7 +310,7 @@ notification_xml_elem_end(void *data, const char *el)
 
 struct notification_xml *
 new_notification_xml(XML_Parser p, struct rrdp_session *repository,
-    struct rrdp_session *current)
+    struct rrdp_session *current, const char *notifyuri)
 {
 	struct notification_xml *nxml;
 
@@ -317,6 +320,7 @@ new_notification_xml(XML_Parser p, struct rrdp_session *repository,
 	nxml->parser = p;
 	nxml->repository = repository;
 	nxml->current = current;
+	nxml->notifyuri = notifyuri;
 
 	XML_SetElementHandler(nxml->parser, notification_xml_elem_start,
 	    notification_xml_elem_end);

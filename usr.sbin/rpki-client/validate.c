@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.19 2021/10/27 21:56:58 beck Exp $ */
+/*	$OpenBSD: validate.c,v 1.20 2021/10/29 09:27:36 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -337,6 +337,30 @@ valid_uri(const char *uri, size_t usz, const char *proto)
 
 	/* do not allow files or directories to start with a '.' */
 	if (strstr(uri, "/.") != NULL)
+		return 0;
+
+	return 1;
+}
+
+/*
+ * Validate that a URI has the same host as the URI passed in proto.
+ * Returns 1 if valid, 0 otherwise.
+ */
+int
+valid_origin(const char *uri, const char *proto)
+{
+	const char *to;
+
+	/* extract end of host from proto URI */
+	to = strstr(proto, "://");
+	if (to == NULL)
+		return 0;
+	to += strlen("://");
+	if ((to = strchr(to, '/')) == NULL)
+		return 0;
+
+	/* compare hosts including the / for the start of the path section */
+	if (strncasecmp(uri, proto, to - proto + 1) != 0)
 		return 0;
 
 	return 1;

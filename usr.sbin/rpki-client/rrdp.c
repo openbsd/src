@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.16 2021/10/28 11:57:00 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.17 2021/10/29 09:27:36 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -208,7 +208,8 @@ rrdp_new(size_t id, char *local, char *notify, char *session_id,
 	if ((s->parser = XML_ParserCreate("US-ASCII")) == NULL)
 		err(1, "XML_ParserCreate");
 
-	s->nxml = new_notification_xml(s->parser, &s->repository, &s->current);
+	s->nxml = new_notification_xml(s->parser, &s->repository, &s->current,
+	    notify);
 
 	TAILQ_INSERT_TAIL(&states, s, entry);
 
