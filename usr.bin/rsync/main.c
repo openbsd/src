@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.61 2021/10/28 13:07:43 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.62 2021/10/29 08:00:59 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "extern.h"
 
@@ -341,7 +342,7 @@ main(int argc, char *argv[])
 	pid_t		 child;
 	int		 fds[2], sd = -1, rc, c, st, i, lidx;
 	size_t		 basedir_cnt = 0;
-	struct sess	  sess;
+	struct sess	 sess;
 	struct fargs	*fargs;
 	char		**args;
 	const char 	*errstr;
@@ -351,6 +352,8 @@ main(int argc, char *argv[])
 	if (pledge("stdio unix rpath wpath cpath dpath inet fattr chown dns getpw proc exec unveil",
 	    NULL) == -1)
 		err(ERR_IPC, "pledge");
+
+	opts.max_size = opts.min_size = -1;
 
 	while ((c = getopt_long(argc, argv, "Dae:ghlnoprtvxz", lopts, &lidx))
 	    != -1) {
@@ -472,8 +475,12 @@ basedir:
 			opts.basedir[basedir_cnt++] = optarg;
 			break;
 		case OP_MAX_SIZE:
+			if (scan_scaled(optarg, &opts.max_size) == -1)
+				err(1, "bad max-size");
+			break;
 		case OP_MIN_SIZE:
-			/* for now simply ignore */
+			if (scan_scaled(optarg, &opts.min_size) == -1)
+				err(1, "bad min-size");
 			break;
 		case OP_VERSION:
 			fprintf(stderr, "openrsync: protocol version %u\n",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fargs.c,v 1.20 2021/10/22 11:10:34 claudio Exp $ */
+/*	$OpenBSD: fargs.c,v 1.21 2021/10/29 08:00:59 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -131,6 +131,10 @@ fargs_cmdline(struct sess *sess, const struct fargs *f, size_t *skip)
 	if (!sess->opts->specials && sess->opts->devices)
 		/* --devices is sent as -D --no-specials */
 		addargs(&args, "--no-specials");
+	if (sess->opts->max_size >= 0)
+		addargs(&args, "--max-size=%lld", sess->opts->max_size);
+	if (sess->opts->min_size >= 0)
+		addargs(&args, "--min-size=%lld", sess->opts->min_size);
 
 	/* only add --compare-dest, etc if this is the sender */
 	if (sess->opts->alt_base_mode != 0 && 

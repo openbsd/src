@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.27 2021/10/22 16:42:28 jmc Exp $
+.\"	$OpenBSD: rsync.1,v 1.28 2021/10/29 08:00:59 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 22 2021 $
+.Dd $Mdocdate: October 29 2021 $
 .Dt OPENRSYNC 1
 .Os
 .Sh NAME
@@ -31,6 +31,8 @@
 .Op Fl -exclude-from Ns = Ns Ar file
 .Op Fl -include Ar pattern
 .Op Fl -include-from Ns = Ns Ar file
+.Op Fl -max-size Ns = Ns size
+.Op Fl -min-size Ns = Ns size
 .Op Fl -no-motd
 .Op Fl -numeric-ids
 .Op Fl -port Ns = Ns Ar service
@@ -127,6 +129,22 @@ set the numeric group ID to match the source instead.
 Also transfer symbolic links.
 The link is transferred as a standalone file: if the destination does
 not exist, it will be broken.
+.It Fl -max-size Ar size
+Don't transfer any file that is larger than
+.Ar size
+bytes.
+Alternatively
+.Ar size
+may instead use a multiplier, as documented in
+.Xr scan_scaled 3 ,
+to specify the size.
+.It Fl -min-size Ar size
+Don't transfer any file that is smaller than
+.Ar size
+bytes.
+See
+.Fl -max-size
+on the definiton of size.
 .It Fl n , -dry-run
 Do not actually modify the destination.
 Mainly useful in combination with

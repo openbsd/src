@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.12 2021/10/22 11:10:34 claudio Exp $
+#	$OpenBSD: Makefile,v 1.13 2021/10/29 08:00:59 claudio Exp $
 
 PROG=	openrsync
 SRCS=	blocks.c client.c copy.c downloader.c fargs.c flist.c hash.c ids.c \
 	io.c log.c main.c misc.c mkpath.c mktemp.c receiver.c rmatch.c \
 	rules.c sender.c server.c session.c socket.c symlinks.c uploader.c
-LDADD+= -lcrypto -lm
-DPADD+= ${LIBCRYPTO} ${LIBM}
+LDADD+= -lcrypto -lm -lutil
+DPADD+= ${LIBCRYPTO} ${LIBM} ${LIBUTIL}
 MAN=	openrsync.1
 
 CFLAGS+= -Wall -Wextra

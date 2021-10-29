@@ -1,4 +1,4 @@
-/*	$OpenBSD: uploader.c,v 1.31 2021/10/24 21:24:17 deraadt Exp $ */
+/*	$OpenBSD: uploader.c,v 1.32 2021/10/29 08:00:59 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -701,6 +701,15 @@ pre_file(const struct upload *p, int *filefd, off_t *size,
 			ERRX1("io_write_int");
 			return -1;
 		}
+		return 0;
+	}
+
+	if (sess->opts->max_size >= 0 && f->st.size > sess->opts->max_size) {
+		WARNX("skipping over max-size file %s", f->path);
+		return 0;
+	}
+	if (sess->opts->min_size >= 0 && f->st.size < sess->opts->min_size) {
+		WARNX("skipping under min-size file %s", f->path);
 		return 0;
 	}
 
