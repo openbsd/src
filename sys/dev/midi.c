@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.49 2021/10/29 13:24:50 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.50 2021/10/30 12:26:26 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -32,6 +32,8 @@
 #include <dev/audio_if.h>
 #include <dev/midivar.h>
 
+#define IPL_SOFTMIDI		IPL_SOFTNET
+#define DEVNAME(sc)		((sc)->dev.dv_xname)
 
 int	midiopen(dev_t, int, int, struct proc *);
 int	midiclose(dev_t, int, int, struct proc *);
@@ -84,6 +86,25 @@ const struct filterops midiread_filtops = {
 };
 
 void
+midi_buf_wakeup(void *addr)
+{
+	struct midi_buffer *buf = addr;
+
+	if (buf->blocking) {
+		wakeup(&buf->blocking);
+		buf->blocking = 0;
+	}
+	/*
+	 * As long as selwakeup() grabs the KERNEL_LOCK() make sure it is
+	 * already held here to avoid lock ordering problems with `audio_lock'
+	 */
+	KERNEL_ASSERT_LOCKED();
+	mtx_enter(&audio_lock);
+	selwakeup(&buf->sel);
+	mtx_leave(&audio_lock);
+}
+
+void
 midi_iintr(void *addr, int data)
 {
 	struct midi_softc  *sc = (struct midi_softc *)addr;
@@ -97,13 +118,14 @@ midi_iintr(void *addr, int data)
 		return; /* discard data */
 
 	MIDIBUF_WRITE(mb, data);
-	if (mb->used == 1) {
-		if (sc->rchan) {
-			sc->rchan = 0;
-			wakeup(&sc->rchan);
-		}
-		selwakeup(&sc->rsel);
-	}
+
+	/*
+	 * As long as selwakeup() needs to be protected by the
+	 * KERNEL_LOCK() we have to delay the wakeup to another
+	 * context to keep the interrupt context KERNEL_LOCK()
+	 * free.
+	 */
+	softintr_schedule(sc->inbuf.softintr);
 }
 
 int
@@ -131,9 +153,9 @@ midiread(dev_t dev, struct uio *uio, int ioflag)
 			error = EWOULDBLOCK;
 			goto done_mtx;
 		}
-		sc->rchan = 1;
-		error = msleep_nsec(&sc->rchan, &audio_lock, PWAIT | PCATCH,
-		    "mid_rd", INFSLP);
+		sc->inbuf.blocking = 1;
+		error = msleep_nsec(&sc->inbuf.blocking, &audio_lock,
+		    PWAIT | PCATCH, "mid_rd", INFSLP);
 		if (!(sc->dev.dv_flags & DVF_ACTIVE))
 			error = EIO;
 		if (error)
@@ -206,11 +228,14 @@ void
 midi_out_stop(struct midi_softc *sc)
 {
 	sc->isbusy = 0;
-	if (sc->wchan) {
-		sc->wchan = 0;
-		wakeup(&sc->wchan);
-	}
-	selwakeup(&sc->wsel);
+
+	/*
+	 * As long as selwakeup() needs to be protected by the
+	 * KERNEL_LOCK() we have to delay the wakeup to another
+	 * context to keep the interrupt context KERNEL_LOCK()
+	 * free.
+	 */
+	softintr_schedule(sc->outbuf.softintr);
 }
 
 void
@@ -276,8 +301,8 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 				 */
 				goto done_mtx;
 			}
-			sc->wchan = 1;
-			error = msleep_nsec(&sc->wchan, &audio_lock,
+			sc->outbuf.blocking = 1;
+			error = msleep_nsec(&sc->outbuf.blocking, &audio_lock,
 			    PWAIT | PCATCH, "mid_wr", INFSLP);
 			if (!(sc->dev.dv_flags & DVF_ACTIVE))
 				error = EIO;
@@ -327,9 +352,9 @@ midipoll(dev_t dev, int events, struct proc *p)
 	}
 	if (revents == 0) {
 		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &sc->rsel);
+			selrecord(p, &sc->inbuf.sel);
 		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(p, &sc->wsel);
+			selrecord(p, &sc->outbuf.sel);
 	}
 	mtx_leave(&audio_lock);
 	device_unref(&sc->dev);
@@ -349,11 +374,11 @@ midikqfilter(dev_t dev, struct knote *kn)
 	error = 0;
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->rsel.si_note;
+		klist = &sc->inbuf.sel.si_note;
 		kn->kn_fop = &midiread_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &sc->wsel.si_note;
+		klist = &sc->outbuf.sel.si_note;
 		kn->kn_fop = &midiwrite_filtops;
 		break;
 	default:
@@ -376,7 +401,7 @@ filt_midirdetach(struct knote *kn)
 	struct midi_softc *sc = (struct midi_softc *)kn->kn_hook;
 
 	mtx_enter(&audio_lock);
-	klist_remove_locked(&sc->rsel.si_note, kn);
+	klist_remove_locked(&sc->inbuf.sel.si_note, kn);
 	mtx_leave(&audio_lock);
 }
 
@@ -401,7 +426,7 @@ filt_midiwdetach(struct knote *kn)
 	struct midi_softc *sc = (struct midi_softc *)kn->kn_hook;
 
 	mtx_enter(&audio_lock);
-	klist_remove_locked(&sc->wsel.si_note, kn);
+	klist_remove_locked(&sc->outbuf.sel.si_note, kn);
 	mtx_leave(&audio_lock);
 }
 
@@ -458,7 +483,7 @@ midiopen(dev_t dev, int flags, int mode, struct proc *p)
 	MIDIBUF_INIT(&sc->inbuf);
 	MIDIBUF_INIT(&sc->outbuf);
 	sc->isbusy = 0;
-	sc->rchan = sc->wchan = 0;
+	sc->inbuf.blocking = sc->outbuf.blocking = 0;
 	sc->flags = flags;
 	error = sc->hw_if->open(sc->hw_hdl, flags, midi_iintr, midi_ointr, sc);
 	if (error)
@@ -486,8 +511,8 @@ midiclose(dev_t dev, int fflag, int devtype, struct proc *p)
 	if (!MIDIBUF_ISEMPTY(mb))
 		midi_out_start(sc);
 	while (sc->isbusy) {
-		sc->wchan = 1;
-		error = msleep_nsec(&sc->wchan, &audio_lock,
+		sc->outbuf.blocking = 1;
+		error = msleep_nsec(&sc->outbuf.blocking, &audio_lock,
 		    PWAIT, "mid_dr", SEC_TO_NSEC(5));
 		if (!(sc->dev.dv_flags & DVF_ACTIVE))
 			error = EIO;
@@ -503,7 +528,7 @@ midiclose(dev_t dev, int fflag, int devtype, struct proc *p)
 	 * sleep 20ms (around 64 bytes) to give the time to the
 	 * uart to drain its internal buffers.
 	 */
-	tsleep_nsec(&sc->wchan, PWAIT, "mid_cl", MSEC_TO_NSEC(20));
+	tsleep_nsec(&sc->outbuf.blocking, PWAIT, "mid_cl", MSEC_TO_NSEC(20));
 	sc->hw_if->close(sc->hw_hdl);
 	sc->flags = 0;
 	device_unref(&sc->dev);
@@ -533,10 +558,26 @@ midiattach(struct device *parent, struct device *self, void *aux)
 	    hwif->close == 0 ||
 	    hwif->output == 0 ||
 	    hwif->getinfo == 0) {
-		printf("midi: missing method\n");
+		printf("%s: missing method\n", DEVNAME(sc));
 		return;
 	}
 #endif
+
+	sc->inbuf.softintr = softintr_establish(IPL_SOFTMIDI,
+	    midi_buf_wakeup, &sc->inbuf);
+	if (sc->inbuf.softintr == NULL) {
+		printf("%s: can't establish input softintr\n", DEVNAME(sc));
+		return;
+	}
+
+	sc->outbuf.softintr = softintr_establish(IPL_SOFTMIDI,
+	    midi_buf_wakeup, &sc->outbuf);
+	if (sc->outbuf.softintr == NULL) {
+		printf("%s: can't establish output softintr\n", DEVNAME(sc));
+		softintr_disestablish(sc->inbuf.softintr);
+		return;
+	}
+
 	sc->hw_if = hwif;
 	sc->hw_hdl = hdl;
 	sc->hw_if->getinfo(sc->hw_hdl, &mi);
@@ -568,16 +609,10 @@ mididetach(struct device *self, int flags)
 	 * in read/write/ioctl, which return EIO.
 	 */
 	if (sc->flags) {
-		if (sc->flags & FREAD) {
-			sc->rchan = 0;
-			wakeup(&sc->rchan);
-			selwakeup(&sc->rsel);
-		}
-		if (sc->flags & FWRITE) {
-			sc->wchan = 0;
-			wakeup(&sc->wchan);
-			selwakeup(&sc->wsel);
-		}
+		if (sc->flags & FREAD)
+			midi_buf_wakeup(&sc->inbuf);
+		if (sc->flags & FWRITE)
+			midi_buf_wakeup(&sc->outbuf);
 		sc->hw_if->close(sc->hw_hdl);
 		sc->flags = 0;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: midivar.h,v 1.11 2020/01/10 20:17:45 ratchov Exp $	*/
+/*	$OpenBSD: midivar.h,v 1.12 2021/10/30 12:26:26 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -32,10 +32,15 @@
  */
 #define MIDIBUF_SIZE		(1 << 10)
 #define MIDIBUF_MASK		(MIDIBUF_SIZE - 1)
+
 struct midi_buffer {
+	void	     *softintr;		/* context to call selwakeup() */
+	struct	      selinfo sel;	/* to record & wakeup poll(2) */
+	int	      blocking;		/* read/write blocking */
 	unsigned char data[MIDIBUF_SIZE]; 
 	unsigned      start, used;
 };
+
 #define MIDIBUF_START(buf)	((buf)->start)
 #define MIDIBUF_END(buf)	(((buf)->start + (buf)->used) & MIDIBUF_MASK)
 #define MIDIBUF_USED(buf)	((buf)->used)
@@ -72,10 +77,6 @@ struct midi_softc {
 	int		    isbusy;		/* concerns only the output */
 	int		    flags;		/* open flags */
 	int		    props;		/* midi hw proprieties */
-	int		    rchan;
-	int		    wchan;
-	struct selinfo	    rsel;
-	struct selinfo	    wsel;
 	struct timeout	    timeo;
 	struct midi_buffer  inbuf;
 	struct midi_buffer  outbuf;
