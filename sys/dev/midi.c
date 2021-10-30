@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.50 2021/10/30 12:26:26 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.51 2021/10/30 12:40:55 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -609,13 +609,30 @@ mididetach(struct device *self, int flags)
 	 * in read/write/ioctl, which return EIO.
 	 */
 	if (sc->flags) {
-		if (sc->flags & FREAD)
-			midi_buf_wakeup(&sc->inbuf);
-		if (sc->flags & FWRITE)
-			midi_buf_wakeup(&sc->outbuf);
+		KERNEL_ASSERT_LOCKED();
+		if (sc->flags & FREAD) {
+			wakeup(&sc->inbuf.blocking);
+			mtx_enter(&audio_lock);
+			selwakeup(&sc->inbuf.sel);
+			mtx_leave(&audio_lock);
+		}
+		if (sc->flags & WRITE) {
+			wakeup(&sc->outbuf.blocking);
+			mtx_enter(&audio_lock);
+			selwakeup(&sc->outbuf.sel);
+			mtx_leave(&audio_lock);
+		}
 		sc->hw_if->close(sc->hw_hdl);
 		sc->flags = 0;
 	}
+
+	klist_invalidate(&sc->inbuf.sel.si_note);
+	klist_invalidate(&sc->outbuf.sel.si_note);
+
+	if (sc->inbuf.softintr)
+		softintr_disestablish(sc->inbuf.softintr);
+	if (sc->outbuf.softintr)
+		softintr_disestablish(sc->outbuf.softintr);
 	return 0;
 }
 
