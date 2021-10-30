@@ -1,7 +1,6 @@
-.\"	$OpenBSD: d2i_X509_CRL.3,v 1.7 2018/03/27 17:35:50 schwarze Exp $
-.\"	OpenSSL bb9ad09e Jun 6 00:43:05 2016 -0400
+.\" $OpenBSD: d2i_X509_CRL.3,v 1.8 2021/10/30 16:20:35 schwarze Exp $
 .\"
-.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2016, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: October 30 2021 $
 .Dt D2I_X509_CRL 3
 .Os
 .Sh NAME
@@ -96,6 +95,16 @@ and
 decode and encode an ASN.1
 .Vt CertificateList
 structure defined in RFC 5280 section 5.1.
+.Pp
+If
+.Xr X509_CRL_set_default_method 3
+is in effect and the
+.Fn crl_init
+callback is not
+.Dv NULL ,
+that callback is invoked at the end of
+.Fn d2i_X509_CRL .
+.Pp
 .Fn d2i_X509_CRL_bio ,
 .Fn d2i_X509_CRL_fp ,
 .Fn i2d_X509_CRL_bio ,
@@ -123,6 +132,7 @@ the revokedCertificates field of the ASN.1
 structure.
 .Sh SEE ALSO
 .Xr ASN1_item_d2i 3 ,
+.Xr X509_CRL_METHOD_new 3 ,
 .Xr X509_CRL_new 3 ,
 .Xr X509_REVOKED_new 3
 .Sh STANDARDS
