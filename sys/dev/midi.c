@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.51 2021/10/30 12:40:55 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.52 2021/10/30 12:48:11 ratchov Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -616,7 +616,7 @@ mididetach(struct device *self, int flags)
 			selwakeup(&sc->inbuf.sel);
 			mtx_leave(&audio_lock);
 		}
-		if (sc->flags & WRITE) {
+		if (sc->flags & FWRITE) {
 			wakeup(&sc->outbuf.blocking);
 			mtx_enter(&audio_lock);
 			selwakeup(&sc->outbuf.sel);
