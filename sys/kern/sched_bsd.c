@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.69 2021/09/09 18:41:39 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.70 2021/10/30 23:24:48 deraadt Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -64,23 +64,6 @@ struct __mp_lock sched_lock;
 
 void			schedcpu(void *);
 uint32_t		decay_aftersleep(uint32_t, uint32_t);
-
-void
-scheduler_start(void)
-{
-	static struct timeout schedcpu_to;
-
-	/*
-	 * We avoid polluting the global namespace by keeping the scheduler
-	 * timeouts static in this function.
-	 * We setup the timeout here and kick schedcpu once to make it do
-	 * its job.
-	 */
-	timeout_set(&schedcpu_to, schedcpu, &schedcpu_to);
-
-	rrticks_init = hz / 10;
-	schedcpu(&schedcpu_to);
-}
 
 /*
  * Force switch among equal priority processes every 100ms.
@@ -532,7 +515,7 @@ void (*cpu_setperf)(int);
 #define PERFPOL_AUTO 1
 #define PERFPOL_HIGH 2
 int perflevel = 100;
-int perfpolicy = PERFPOL_MANUAL;
+int perfpolicy = PERFPOL_AUTO;
 
 #ifndef SMALL_KERNEL
 /*
@@ -542,22 +525,30 @@ int perfpolicy = PERFPOL_MANUAL;
 
 void setperf_auto(void *);
 struct timeout setperf_to = TIMEOUT_INITIALIZER(setperf_auto, NULL);
+extern int hw_power;
 
 void
 setperf_auto(void *v)
 {
 	static uint64_t *idleticks, *totalticks;
 	static int downbeats;
-
-	int i, j;
-	int speedup;
+	int i, j = 0;
+	int speedup = 0;
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	uint64_t idle, total, allidle, alltotal;
+	uint64_t idle, total, allidle = 0, alltotal = 0;
 
 	if (perfpolicy != PERFPOL_AUTO)
 		return;
 
+	if (cpu_setperf == NULL)
+		return;
+
+	if (hw_power) {
+		speedup = 1;
+		goto faster;
+	}
+		
 	if (!idleticks)
 		if (!(idleticks = mallocarray(ncpusfound, sizeof(*idleticks),
 		    M_DEVBUF, M_NOWAIT | M_ZERO)))
@@ -569,10 +560,6 @@ setperf_auto(void *v)
 			    sizeof(*idleticks) * ncpusfound);
 			return;
 		}
-
-	alltotal = allidle = 0;
-	j = 0;
-	speedup = 0;
 	CPU_INFO_FOREACH(cii, ci) {
 		if (!cpu_is_online(ci))
 			continue;
@@ -596,6 +583,7 @@ setperf_auto(void *v)
 		downbeats = 5;
 
 	if (speedup && perflevel != 100) {
+faster:
 		perflevel = 100;
 		cpu_setperf(perflevel);
 	} else if (!speedup && perflevel != 0 && --downbeats <= 0) {
@@ -676,3 +664,26 @@ sysctl_hwperfpolicy(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	return 0;
 }
 #endif
+
+void
+scheduler_start(void)
+{
+	static struct timeout schedcpu_to;
+
+	/*
+	 * We avoid polluting the global namespace by keeping the scheduler
+	 * timeouts static in this function.
+	 * We setup the timeout here and kick schedcpu once to make it do
+	 * its job.
+	 */
+	timeout_set(&schedcpu_to, schedcpu, &schedcpu_to);
+
+	rrticks_init = hz / 10;
+	schedcpu(&schedcpu_to);
+
+#ifndef SMALL_KERNEL
+	if (perfpolicy == PERFPOL_AUTO)
+		timeout_add_msec(&setperf_to, 200);
+#endif
+}
+

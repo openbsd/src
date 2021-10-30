@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.399 2021/07/20 00:41:54 mlarkin Exp $ */
+/* $OpenBSD: acpi.c,v 1.400 2021/10/30 23:24:46 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3556,6 +3556,7 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case APM_IOC_GETPOWER:
 		/* A/C */
 		pi->ac_state = APM_AC_UNKNOWN;
+// XXX replace with new power code
 		SLIST_FOREACH(ac, &sc->sc_ac, aac_link) {
 			if (ac->aac_softc->sc_ac_stat == PSR_ONLINE)
 				pi->ac_state = APM_AC_ON;

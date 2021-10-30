@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiac.c,v 1.33 2020/06/10 22:26:40 jca Exp $ */
+/* $OpenBSD: acpiac.c,v 1.34 2021/10/30 23:24:47 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -70,6 +70,7 @@ void
 acpiac_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpiac_softc *sc = (struct acpiac_softc *)self;
+	extern int hw_power;
 	struct acpi_attach_args *aa = aux;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
@@ -83,6 +84,7 @@ acpiac_attach(struct device *parent, struct device *self, void *aux)
 		printf("offline\n");
 	else
 		printf("in unknown state\n");
+	hw_power = (sc->sc_ac_stat == PSR_ONLINE);
 
 	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensdev.xname));
@@ -140,6 +142,7 @@ int
 acpiac_notify(struct aml_node *node, int notify_type, void *arg)
 {
 	struct acpiac_softc *sc = arg;
+	extern int hw_power;
 
 	dnprintf(10, "acpiac_notify: %.2x %s\n", notify_type,
 	    DEVNAME(sc));
@@ -159,5 +162,6 @@ acpiac_notify(struct aml_node *node, int notify_type, void *arg)
 		dnprintf(10, "A/C status: %d\n", sc->sc_ac_stat);
 		break;
 	}
+	hw_power = (sc->sc_ac_stat == PSR_ONLINE);
 	return (0);
 }

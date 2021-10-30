@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.218 2021/05/17 17:54:31 claudio Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.219 2021/10/30 23:24:48 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -928,7 +928,8 @@ struct kinfo_file {
 #define	HW_PERFPOLICY		23	/* set performance policy */
 #define	HW_SMT			24	/* int: enable SMT/HT/CMT */
 #define	HW_NCPUONLINE		25	/* int: number of cpus being used */
-#define	HW_MAXID		26	/* number of valid hw ids */
+#define	HW_POWER		26	/* int: machine has wall-power */
+#define	HW_MAXID		27	/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -957,6 +958,7 @@ struct kinfo_file {
 	{ "perfpolicy", CTLTYPE_STRING }, \
 	{ "smt", CTLTYPE_INT }, \
 	{ "ncpuonline", CTLTYPE_INT }, \
+	{ "power", CTLTYPE_INT }, \
 }
 
 /*

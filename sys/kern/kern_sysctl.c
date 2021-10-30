@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.395 2021/10/24 00:02:25 jsg Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.396 2021/10/30 23:24:48 deraadt Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -654,6 +654,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
  */
 char *hw_vendor, *hw_prod, *hw_uuid, *hw_serial, *hw_ver;
 int allowpowerdown = 1;
+int hw_power = 1;
 
 /* morally const values reported by sysctl_bounded_arr */
 static int byte_order = BYTE_ORDER;
@@ -665,6 +666,7 @@ const struct sysctl_bounded_args hw_vars[] = {
 	{HW_BYTEORDER, &byte_order, SYSCTL_INT_READONLY},
 	{HW_PAGESIZE, &page_size, SYSCTL_INT_READONLY},
 	{HW_DISKCOUNT, &disk_count, SYSCTL_INT_READONLY},
+	{HW_POWER, &hw_power, SYSCTL_INT_READONLY},
 };
 
 int
