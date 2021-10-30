@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.152 2021/10/30 16:24:18 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.153 2021/10/30 16:35:31 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -783,17 +783,6 @@ unp_drop(struct unpcb *unp, int errno)
 
 	so->so_error = errno;
 	unp_disconnect(unp);
-	if (so->so_head) {
-		so->so_pcb = NULL;
-		/*
-		 * As long as `unp_lock' is taken before entering
-		 * uipc_usrreq() releasing it here would lead to a
-		 * double unlock.
-		 */
-		sofree(so, SL_NOUNLOCK);
-		m_freem(unp->unp_addr);
-		pool_put(&unpcb_pool, unp);
-	}
 }
 
 #ifdef notdef
