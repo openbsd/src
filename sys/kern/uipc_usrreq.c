@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.151 2021/10/23 20:44:42 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.152 2021/10/30 16:24:18 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -305,7 +305,13 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		break;
 
 	case PRU_ABORT:
-		unp_drop(unp, ECONNABORTED);
+		unp_detach(unp);
+		/*
+		 * As long as `unp_lock' is taken before entering
+		 * uipc_usrreq() releasing it here would lead to a
+		 * double unlock.
+		 */
+		sofree(so, SL_NOUNLOCK);
 		break;
 
 	case PRU_SENSE: {
