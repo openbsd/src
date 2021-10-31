@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.2 2021/10/31 15:02:25 patrick Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.3 2021/10/31 15:22:40 patrick Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -101,6 +101,7 @@ void	igc_setup_interface(struct igc_softc *);
 
 void	igc_init(void *);
 void	igc_start(struct ifqueue *);
+int	igc_txeof(struct tx_ring *);
 void	igc_stop(struct igc_softc *);
 int	igc_ioctl(struct ifnet *, u_long, caddr_t);
 int	igc_rxrinfo(struct igc_softc *, struct if_rxrinfo *);
@@ -916,14 +917,180 @@ igc_init(void *arg)
 	splx(s);
 }
 
+static inline int
+igc_load_mbuf(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf *m)
+{
+	int error;
+
+	error = bus_dmamap_load_mbuf(dmat, map, m,
+	    BUS_DMA_STREAMING | BUS_DMA_NOWAIT);
+	if (error != EFBIG)
+		return (error);
+
+	error = m_defrag(m, M_DONTWAIT);
+	if (error != 0)
+		return (error);
+
+	return (bus_dmamap_load_mbuf(dmat, map, m,
+	    BUS_DMA_STREAMING | BUS_DMA_NOWAIT));
+}
+
 void
 igc_start(struct ifqueue *ifq)
 {
 	struct ifnet *ifp = ifq->ifq_if;
 	struct igc_softc *sc = ifp->if_softc;
+	struct tx_ring *txr = ifq->ifq_softc;
+	union igc_adv_tx_desc *txdesc;
+	struct igc_tx_buf *txbuf;
+	bus_dmamap_t map;
+	struct mbuf *m;
+	unsigned int prod, free, last, i;
+	unsigned int mask;
+	uint32_t cmd_type_len;
+	uint32_t olinfo_status;
+	int post = 0;
+#if NBPFILTER > 0
+	caddr_t if_bpf;
+#endif
 
-	if (!sc->link_active)
+	if (!sc->link_active) {
+		ifq_purge(ifq);
 		return;
+	}
+
+	prod = txr->next_avail_desc;
+	free = txr->next_to_clean;
+	if (free <= prod)
+		free += sc->num_tx_desc;
+	free -= prod;
+
+	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map, 0,
+	    txr->txdma.dma_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+
+	mask = sc->num_tx_desc - 1;
+
+	for (;;) {
+		if (free <= IGC_MAX_SCATTER) {
+			ifq_set_oactive(ifq);
+			break;
+		}
+
+		m = ifq_dequeue(ifq);
+		if (m == NULL)
+			break;
+
+		txbuf = &txr->tx_buffers[prod];
+		map = txbuf->map;
+
+		if (igc_load_mbuf(txr->txdma.dma_tag, map, m) != 0) {
+			ifq->ifq_errors++;
+			m_freem(m);
+			continue;
+		}
+
+		olinfo_status = m->m_pkthdr.len << IGC_ADVTXD_PAYLEN_SHIFT;
+
+		bus_dmamap_sync(txr->txdma.dma_tag, map, 0,
+		    map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+
+		for (i = 0; i < map->dm_nsegs; i++) {
+			txdesc = &txr->tx_base[prod];
+
+			cmd_type_len = IGC_ADVTXD_DCMD_IFCS | IGC_ADVTXD_DTYP_DATA |
+			    IGC_ADVTXD_DCMD_DEXT | map->dm_segs[i].ds_len;
+			if (i == map->dm_nsegs - 1)
+				cmd_type_len |= IGC_ADVTXD_DCMD_EOP |
+				    IGC_ADVTXD_DCMD_RS;
+
+			htolem64(&txdesc->read.buffer_addr, map->dm_segs[i].ds_addr);
+			htolem32(&txdesc->read.cmd_type_len, cmd_type_len);
+			htolem32(&txdesc->read.olinfo_status, olinfo_status);
+
+			last = prod;
+
+			prod++;
+			prod &= mask;
+		}
+
+		txbuf->m_head = m;
+		txbuf->eop_index = last;
+
+#if NBPFILTER > 0
+		if_bpf = ifp->if_bpf;
+		if (if_bpf)
+			bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+
+		free -= i;
+		post = 1;
+	}
+
+	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map, 0,
+	    txr->txdma.dma_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+
+	if (post) {
+		txr->next_avail_desc = prod;
+		IGC_WRITE_REG(&sc->hw, IGC_TDT(txr->me), prod);
+	}
+}
+
+int
+igc_txeof(struct tx_ring *txr)
+{
+	struct igc_softc *sc = txr->sc;
+	struct ifqueue *ifq = txr->ifq;
+	union igc_adv_tx_desc *txdesc;
+	struct igc_tx_buf *txbuf;
+	bus_dmamap_t map;
+	unsigned int cons, prod, last;
+	unsigned int mask;
+	int done = 0;
+
+	prod = txr->next_avail_desc;
+	cons = txr->next_to_clean;
+
+	if (cons == prod)
+		return (0);
+
+	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map, 0,
+	    txr->txdma.dma_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+
+	mask = sc->num_tx_desc - 1;
+
+	do {
+		txbuf = &txr->tx_buffers[cons];
+		last = txbuf->eop_index;
+		txdesc = &txr->tx_base[last];
+
+		if (!(txdesc->wb.status & htole32(IGC_TXD_STAT_DD)))
+			break;
+
+		map = txbuf->map;
+
+		bus_dmamap_sync(txr->txdma.dma_tag, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_POSTWRITE);
+		bus_dmamap_unload(txr->txdma.dma_tag, map);
+		m_freem(txbuf->m_head);
+
+		txbuf->m_head = NULL;
+		txbuf->eop_index = -1;
+
+		cons = last + 1;
+		cons &= mask;
+
+		done = 1;
+	} while (cons != prod);
+
+	bus_dmamap_sync(txr->txdma.dma_tag, txr->txdma.dma_map, 0,
+	    txr->txdma.dma_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+
+	txr->next_to_clean = cons;
+
+	if (ifq_is_oactive(ifq))
+		ifq_restart(ifq);
+
+	return (done);
 }
 
 /*********************************************************************
@@ -1589,8 +1756,10 @@ igc_intr_queue(void *arg)
 	struct igc_softc *sc = iq->sc;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct rx_ring *rxr = iq->rxr;
+	struct tx_ring *txr = iq->txr;
 
 	if (ifp->if_flags & IFF_RUNNING) {
+		igc_txeof(txr);
 		igc_rxeof(rxr);
 		igc_rxrefill(rxr);
 	}
