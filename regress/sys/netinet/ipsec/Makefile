@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.32 2021/10/13 18:55:04 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.33 2021/10/31 18:24:08 bluhm Exp $
 
 # This test needs a manual setup of four machines, the make
 # target create-setup can be used to distribute the configuration.
@@ -645,7 +645,8 @@ REGRESS_TARGETS =	${TARGETS:S/^/run-send-/} \
 
 ${REGRESS_TARGETS:Mrun-send-*}: stamp-bpf stamp-pflog stamp-drop
 
-CLEANFILES +=	addr.py *.pyc *.log stamp-* */hostname.* *.{in,out} *.tcpdump
+CLEANFILES +=	addr.py *.pyc *.log stamp-* */hostname.* *.{in,out}
+CLEANFILES +=	*.pcap *.tcpdump
 
 # Run make create-setup to configure remote machines for test.
 
