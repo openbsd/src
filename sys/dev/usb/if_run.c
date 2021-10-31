@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.132 2020/11/27 14:45:03 krw Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.133 2021/10/31 12:17:54 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1701,14 +1701,17 @@ void
 run_next_scan(void *arg)
 {
 	struct run_softc *sc = arg;
+	int s;
 
 	if (usbd_is_dying(sc->sc_udev))
 		return;
 
 	usbd_ref_incr(sc->sc_udev);
 
+	s = splnet();
 	if (sc->sc_ic.ic_state == IEEE80211_S_SCAN)
 		ieee80211_next_scan(&sc->sc_ic.ic_if);
+	splx(s);
 
 	usbd_ref_decr(sc->sc_udev);
 }
