@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.3 2021/10/31 15:22:40 patrick Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.4 2021/10/31 15:25:10 patrick Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -787,11 +787,13 @@ igc_setup_interface(struct igc_softc *sc)
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 
+#ifdef notyet
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+#endif
 
 	/* Initialize ifmedia structures. */
 	ifmedia_init(&sc->media, IFM_IMASK, igc_media_change, igc_media_status);
