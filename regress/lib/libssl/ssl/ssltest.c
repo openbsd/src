@@ -1,4 +1,4 @@
-/* ssl/ssltest.c */
+/*	$OpenBSD: ssltest.c,v 1.31 2021/10/31 16:56:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1390,24 +1390,27 @@ get_proxy_auth_ex_data_idx(void)
 static int
 verify_callback(int ok, X509_STORE_CTX *ctx)
 {
+	X509 *xs;
 	char *s, buf[256];
+	int error, error_depth;
 
-	s = X509_NAME_oneline(X509_get_subject_name(ctx->current_cert), buf,
-	    sizeof buf);
+	xs = X509_STORE_CTX_get_current_cert(ctx);
+	s = X509_NAME_oneline(X509_get_subject_name(xs), buf, sizeof buf);
+	error = X509_STORE_CTX_get_error(ctx);
+	error_depth = X509_STORE_CTX_get_error_depth(ctx);
 	if (s != NULL) {
 		if (ok)
-			fprintf(stderr, "depth=%d %s\n",
-			    ctx->error_depth, buf);
+			fprintf(stderr, "depth=%d %s\n", error_depth, buf);
 		else {
-			fprintf(stderr, "depth=%d error=%d %s\n",
-			    ctx->error_depth, ctx->error, buf);
+			fprintf(stderr, "depth=%d error=%d %s\n", error_depth,
+			    error, buf);
 		}
 	}
 
 	if (ok == 0) {
 		fprintf(stderr, "Error string: %s\n",
-		    X509_verify_cert_error_string(ctx->error));
-		switch (ctx->error) {
+		    X509_verify_cert_error_string(error));
+		switch (error) {
 		case X509_V_ERR_CERT_NOT_YET_VALID:
 		case X509_V_ERR_CERT_HAS_EXPIRED:
 		case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
@@ -1417,12 +1420,7 @@ verify_callback(int ok, X509_STORE_CTX *ctx)
 	}
 
 	if (ok == 1) {
-		X509 *xs = ctx->current_cert;
-#if 0
-		X509 *xi = ctx->current_issuer;
-#endif
-
-		if (xs->ex_flags & EXFLAG_PROXY) {
+		if (X509_get_extension_flags(xs) & EXFLAG_PROXY) {
 			unsigned int *letters =
 			    X509_STORE_CTX_get_ex_data(ctx,
 			    get_proxy_auth_ex_data_idx());
@@ -1760,16 +1758,19 @@ app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 	unsigned int letters[26]; /* only used with proxy_auth */
 
 	if (cb_arg->app_verify) {
+		X509 *xs;
 		char *s = NULL, buf[256];
 
+		xs = X509_STORE_CTX_get0_cert(ctx);
 		fprintf(stderr, "In app_verify_callback, allowing cert. ");
 		fprintf(stderr, "Arg is: %s\n", cb_arg->string);
 		fprintf(stderr, "Finished printing do we have a context? 0x%p a cert? 0x%p\n",
-		    (void *)ctx, (void *)ctx->cert);
-		if (ctx->cert)
-			s = X509_NAME_oneline(X509_get_subject_name(ctx->cert), buf, 256);
+		    (void *)ctx, (void *)xs);
+		if (xs)
+			s = X509_NAME_oneline(X509_get_subject_name(xs), buf, 256);
 		if (s != NULL) {
-			fprintf(stderr, "cert depth=%d %s\n", ctx->error_depth, buf);
+			fprintf(stderr, "cert depth=%d %s\n",
+			    X509_STORE_CTX_get_error_depth(ctx), buf);
 		}
 		return (1);
 	}
