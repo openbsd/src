@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.43 2021/10/31 16:26:08 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.44 2021/10/31 16:51:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -100,7 +100,7 @@ typedef enum {
 	X509_LU_CRL,
 } X509_LOOKUP_TYPE;
 
-#if defined(LIBRESSL_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
+#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
 typedef struct x509_object_st {
 	/* one of the above types */
 	int type;
@@ -120,7 +120,7 @@ typedef struct x509_lookup_st X509_LOOKUP;
 DECLARE_STACK_OF(X509_LOOKUP)
 DECLARE_STACK_OF(X509_OBJECT)
 
-#if defined(LIBRESSL_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
+#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
 /* This is a static that defines the function interface */
 typedef struct x509_lookup_method_st {
 	const char *name;
@@ -165,7 +165,7 @@ typedef struct X509_VERIFY_PARAM_st X509_VERIFY_PARAM;
 
 DECLARE_STACK_OF(X509_VERIFY_PARAM)
 
-#if defined(LIBRESSL_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
+#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
 /*
  * This is used to hold everything.  It is used for all certificate
  * validation.  Once we have a certificate chain, the 'verify'
@@ -205,7 +205,7 @@ int X509_STORE_set_depth(X509_STORE *store, int depth);
 #define X509_STORE_set_verify_func(ctx,func)	((ctx)->verify=(func))
 #endif
 
-#if defined(LIBRESSL_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
+#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
 /* This is the functions plus an instance of the local variables. */
 struct x509_lookup_st {
 	int init;			/* have we been started */

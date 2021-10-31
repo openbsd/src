@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.47 2021/10/23 09:13:51 beck Exp $
+# $OpenBSD: Makefile,v 1.48 2021/10/31 16:51:16 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -18,7 +18,7 @@ CFLAGS+= -Wall -Wundef
 .if ${COMPILER_VERSION:L} == "clang"
 CFLAGS+= -Werror
 .endif
-CFLAGS+= -DLIBRESSL_INTERNAL
+CFLAGS+= -DLIBRESSL_INTERNAL -DLIBRESSL_CRYPTO_INTERNAL
 
 .if !defined(NOPIC)
 CFLAGS+= -DDSO_DLFCN -DHAVE_DLFCN_H -DHAVE_FUNOPEN
