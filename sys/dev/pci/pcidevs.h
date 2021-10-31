@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1980 2021/10/30 03:22:08 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1981 2021/10/31 14:41:00 patrick Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5550,6 +5550,7 @@
 #define	PCI_PRODUCT_INTEL_80960RD	0x5200		/* i960 RD */
 #define	PCI_PRODUCT_INTEL_PRO_100_SERVER	0x5201		/* PRO 100 Server */
 #define	PCI_PRODUCT_INTEL_I225_LMVP	0x5502		/* I225-LMvP */
+#define	PCI_PRODUCT_INTEL_I226_K	0x5504		/* I226-K */
 #define	PCI_PRODUCT_INTEL_I219_LM18	0x550a		/* I219-LM */
 #define	PCI_PRODUCT_INTEL_I219_V18	0x550b		/* I219-V */
 #define	PCI_PRODUCT_INTEL_I219_LM19	0x550c		/* I219-LM */
