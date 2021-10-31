@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls_ocsp.c,v 1.21 2021/10/21 14:57:55 tb Exp $ */
+/*	$OpenBSD: tls_ocsp.c,v 1.22 2021/10/31 16:39:32 tb Exp $ */
 /*
  * Copyright (c) 2015 Marko Kreen <markokr@gmail.com>
  * Copyright (c) 2016 Bob Beck <beck@openbsd.org>
@@ -129,7 +129,7 @@ tls_ocsp_get_certid(X509 *main_cert, STACK_OF(X509) *extra_certs,
 	X509_NAME *issuer_name;
 	X509 *issuer;
 	X509_STORE_CTX *storectx = NULL;
-	X509_OBJECT tmpobj;
+	X509_OBJECT *obj = NULL;
 	OCSP_CERTID *cid = NULL;
 	X509_STORE *store;
 
@@ -150,15 +150,15 @@ tls_ocsp_get_certid(X509 *main_cert, STACK_OF(X509) *extra_certs,
 		goto out;
 	if (X509_STORE_CTX_init(storectx, store, main_cert, extra_certs) != 1)
 		goto out;
-	if (X509_STORE_get_by_subject(storectx, X509_LU_X509, issuer_name,
-	    &tmpobj) == 1) {
-		cid = OCSP_cert_to_id(NULL, main_cert,
-		    X509_OBJECT_get0_X509(&tmpobj));
-		X509_OBJECT_free_contents(&tmpobj);
-	}
+	if ((obj = X509_STORE_CTX_get_obj_by_subject(storectx, X509_LU_X509,
+	    issuer_name)) == NULL)
+		goto out;
+
+	cid = OCSP_cert_to_id(NULL, main_cert, X509_OBJECT_get0_X509(obj));
 
  out:
 	X509_STORE_CTX_free(storectx);
+	X509_OBJECT_free(obj);
 
 	return cid;
 }
