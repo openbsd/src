@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.83 2021/10/31 16:28:50 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.84 2021/10/31 16:29:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,13 +126,6 @@ extern "C" {
 #define X509v3_KU_ENCIPHER_ONLY		0x0001
 #define X509v3_KU_DECIPHER_ONLY		0x8000
 #define X509v3_KU_UNDEF			0xffff
-
-typedef struct X509_objects_st
-	{
-	int nid;
-	int (*a2i)(void);
-	int (*i2a)(void);
-	} X509_OBJECTS;
 
 struct X509_algor_st {
 	ASN1_OBJECT *algorithm;
