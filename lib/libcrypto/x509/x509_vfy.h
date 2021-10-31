@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.39 2021/10/31 15:55:45 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.40 2021/10/31 16:17:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,11 +102,11 @@ typedef struct x509_file_st
  * certificate chain.
  */
 
-#define X509_LU_RETRY		-1
-#define X509_LU_FAIL		0
-#define X509_LU_X509		1
-#define X509_LU_CRL		2
-#define X509_LU_PKEY		3
+typedef enum {
+	X509_LU_NONE,
+	X509_LU_X509,
+	X509_LU_CRL,
+} X509_LOOKUP_TYPE;
 
 #if defined(LIBRESSL_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
 typedef struct x509_object_st {
