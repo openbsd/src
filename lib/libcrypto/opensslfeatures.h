@@ -87,7 +87,7 @@
 /* #define OPENSSL_NO_RC4 */
 #define OPENSSL_NO_RC5
 /* #define OPENSSL_NO_RDRAND */
-#define OPENSSL_NO_RFC3779
+/* #define OPENSSL_NO_RFC3779 */
 /* #define OPENSSL_NO_RMD160 */
 /* #define OPENSSL_NO_RSA */
 /* #define OPENSSL_NO_SCRYPT */
