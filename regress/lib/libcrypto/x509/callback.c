@@ -1,4 +1,4 @@
-/* $OpenBSD: callback.c,v 1.2 2021/09/30 18:28:38 jsing Exp $ */
+/* $OpenBSD: callback.c,v 1.3 2021/10/31 08:27:15 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -115,7 +115,6 @@ verify_cert(const char *roots_dir, const char *roots_file,
 	X509_STORE_CTX *xsc = NULL;
 	X509_STORE *store = NULL;
 	int verify_err, use_dir;
-	unsigned long flags;
 	X509 *leaf = NULL;
 
 	*chains = 0;
@@ -141,15 +140,11 @@ verify_cert(const char *roots_dir, const char *roots_file,
 		if (!X509_STORE_load_locations(store, NULL, roots_dir))
 			errx(1, "failed to set by_dir directory of %s", roots_dir);
 	}
-	if (mode == MODE_LEGACY_VFY) {
-		flags = X509_VERIFY_PARAM_get_flags(xsc->param);
-		flags |= X509_V_FLAG_LEGACY_VERIFY;
-		X509_VERIFY_PARAM_set_flags(xsc->param, flags);
-	} else {
-		flags = X509_VERIFY_PARAM_get_flags(xsc->param);
-		flags &= ~X509_V_FLAG_LEGACY_VERIFY;
-		X509_VERIFY_PARAM_set_flags(xsc->param, flags);
-	}
+	if (mode == MODE_LEGACY_VFY)
+		X509_STORE_CTX_set_flags(xsc, X509_V_FLAG_LEGACY_VERIFY);
+	else
+		X509_VERIFY_PARAM_clear_flags(X509_STORE_CTX_get0_param(xsc),
+		    X509_V_FLAG_LEGACY_VERIFY);
 
 	if (verbose)
 		X509_STORE_CTX_set_verify_cb(xsc, verify_cert_cb);

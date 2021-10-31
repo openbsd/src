@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.2 2018/11/10 01:43:03 tb Exp $ */
+/* $OpenBSD: x509name.c,v 1.3 2021/10/31 08:27:15 tb Exp $ */
 /*
  * Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -28,7 +28,8 @@ debug_print(X509_NAME *name)
 	int loc;
 
 	for (loc = 0; loc < X509_NAME_entry_count(name); loc++)
-		printf("%d:", X509_NAME_get_entry(name, loc)->set);
+		printf("%d:",
+		    X509_NAME_ENTRY_set(X509_NAME_get_entry(name, loc)));
 	putchar(' ');
 	X509_NAME_print_ex_fp(stdout, name, 0, XN_FLAG_SEP_CPLUS_SPC);
 	putchar('\n');
