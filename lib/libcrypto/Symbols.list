@@ -126,6 +126,7 @@ ASN1_T61STRING_new
 ASN1_TBOOLEAN_it
 ASN1_TIME_adj
 ASN1_TIME_check
+ASN1_TIME_diff
 ASN1_TIME_free
 ASN1_TIME_it
 ASN1_TIME_new
@@ -276,6 +277,7 @@ BIO_get_data
 BIO_get_ex_data
 BIO_get_ex_new_index
 BIO_get_host_ip
+BIO_get_init
 BIO_get_new_index
 BIO_get_port
 BIO_get_retry_BIO
@@ -1484,6 +1486,7 @@ EVP_MD_CTX_destroy
 EVP_MD_CTX_free
 EVP_MD_CTX_init
 EVP_MD_CTX_md
+EVP_MD_CTX_md_data
 EVP_MD_CTX_new
 EVP_MD_CTX_reset
 EVP_MD_CTX_set_flags
@@ -1772,6 +1775,8 @@ EVP_whirlpool
 EXTENDED_KEY_USAGE_free
 EXTENDED_KEY_USAGE_it
 EXTENDED_KEY_USAGE_new
+FIPS_mode
+FIPS_mode_set
 GENERAL_NAMES_free
 GENERAL_NAMES_it
 GENERAL_NAMES_new
@@ -2045,6 +2050,13 @@ OCSP_resp_count
 OCSP_resp_find
 OCSP_resp_find_status
 OCSP_resp_get0
+OCSP_resp_get0_certs
+OCSP_resp_get0_id
+OCSP_resp_get0_produced_at
+OCSP_resp_get0_respdata
+OCSP_resp_get0_signature
+OCSP_resp_get0_signer
+OCSP_resp_get0_tbs_sigalg
 OCSP_response_create
 OCSP_response_get1_basic
 OCSP_response_status
@@ -2126,7 +2138,6 @@ PEM_read_RSAPublicKey
 PEM_read_RSA_PUBKEY
 PEM_read_X509
 PEM_read_X509_AUX
-PEM_read_X509_CERT_PAIR
 PEM_read_X509_CRL
 PEM_read_X509_REQ
 PEM_read_bio
@@ -2150,7 +2161,6 @@ PEM_read_bio_RSAPublicKey
 PEM_read_bio_RSA_PUBKEY
 PEM_read_bio_X509
 PEM_read_bio_X509_AUX
-PEM_read_bio_X509_CERT_PAIR
 PEM_read_bio_X509_CRL
 PEM_read_bio_X509_REQ
 PEM_write
@@ -2175,7 +2185,6 @@ PEM_write_RSAPublicKey
 PEM_write_RSA_PUBKEY
 PEM_write_X509
 PEM_write_X509_AUX
-PEM_write_X509_CERT_PAIR
 PEM_write_X509_CRL
 PEM_write_X509_REQ
 PEM_write_X509_REQ_NEW
@@ -2205,7 +2214,6 @@ PEM_write_bio_RSAPublicKey
 PEM_write_bio_RSA_PUBKEY
 PEM_write_bio_X509
 PEM_write_bio_X509_AUX
-PEM_write_bio_X509_CERT_PAIR
 PEM_write_bio_X509_CRL
 PEM_write_bio_X509_REQ
 PEM_write_bio_X509_REQ_NEW
@@ -2857,9 +2865,6 @@ X509_CERT_AUX_free
 X509_CERT_AUX_it
 X509_CERT_AUX_new
 X509_CERT_AUX_print
-X509_CERT_PAIR_free
-X509_CERT_PAIR_it
-X509_CERT_PAIR_new
 X509_CINF_free
 X509_CINF_it
 X509_CINF_new
@@ -2979,11 +2984,13 @@ X509_NAME_print
 X509_NAME_print_ex
 X509_NAME_print_ex_fp
 X509_NAME_set
+X509_OBJECT_free
 X509_OBJECT_free_contents
 X509_OBJECT_get0_X509
 X509_OBJECT_get0_X509_CRL
 X509_OBJECT_get_type
 X509_OBJECT_idx_by_subject
+X509_OBJECT_new
 X509_OBJECT_retrieve_by_subject
 X509_OBJECT_retrieve_match
 X509_OBJECT_up_ref_count
@@ -3024,6 +3031,7 @@ X509_REQ_digest
 X509_REQ_dup
 X509_REQ_extension_nid
 X509_REQ_free
+X509_REQ_get0_pubkey
 X509_REQ_get0_signature
 X509_REQ_get1_email
 X509_REQ_get_attr
@@ -3068,6 +3076,8 @@ X509_REVOKED_new
 X509_REVOKED_set_revocationDate
 X509_REVOKED_set_serialNumber
 X509_SIG_free
+X509_SIG_get0
+X509_SIG_getm
 X509_SIG_it
 X509_SIG_new
 X509_STORE_CTX_cleanup
@@ -3083,6 +3093,7 @@ X509_STORE_CTX_get0_store
 X509_STORE_CTX_get0_untrusted
 X509_STORE_CTX_get1_chain
 X509_STORE_CTX_get1_issuer
+X509_STORE_CTX_get_by_subject
 X509_STORE_CTX_get_chain
 X509_STORE_CTX_get_current_cert
 X509_STORE_CTX_get_error
@@ -3090,6 +3101,10 @@ X509_STORE_CTX_get_error_depth
 X509_STORE_CTX_get_ex_data
 X509_STORE_CTX_get_ex_new_index
 X509_STORE_CTX_get_explicit_policy
+X509_STORE_CTX_get_num_untrusted
+X509_STORE_CTX_get_obj_by_subject
+X509_STORE_CTX_get_verify
+X509_STORE_CTX_get_verify_cb
 X509_STORE_CTX_init
 X509_STORE_CTX_new
 X509_STORE_CTX_purpose_inherit
@@ -3097,16 +3112,20 @@ X509_STORE_CTX_set0_crls
 X509_STORE_CTX_set0_param
 X509_STORE_CTX_set0_trusted_stack
 X509_STORE_CTX_set0_untrusted
+X509_STORE_CTX_set0_verified_chain
 X509_STORE_CTX_set_cert
 X509_STORE_CTX_set_chain
+X509_STORE_CTX_set_current_cert
 X509_STORE_CTX_set_default
 X509_STORE_CTX_set_depth
 X509_STORE_CTX_set_error
+X509_STORE_CTX_set_error_depth
 X509_STORE_CTX_set_ex_data
 X509_STORE_CTX_set_flags
 X509_STORE_CTX_set_purpose
 X509_STORE_CTX_set_time
 X509_STORE_CTX_set_trust
+X509_STORE_CTX_set_verify
 X509_STORE_CTX_set_verify_cb
 X509_STORE_CTX_trusted_stack
 X509_STORE_add_cert
@@ -3117,7 +3136,6 @@ X509_STORE_get0_objects
 X509_STORE_get0_param
 X509_STORE_get1_certs
 X509_STORE_get1_crls
-X509_STORE_get_by_subject
 X509_STORE_get_ex_data
 X509_STORE_load_locations
 X509_STORE_load_mem
@@ -3210,12 +3228,15 @@ X509_get0_signature
 X509_get0_tbs_sigalg
 X509_get1_email
 X509_get1_ocsp
+X509_get_X509_PUBKEY
 X509_get_default_cert_area
 X509_get_default_cert_dir
 X509_get_default_cert_dir_env
 X509_get_default_cert_file
 X509_get_default_cert_file_env
 X509_get_default_private_dir
+X509_get_extended_key_usage
+X509_get_extension_flags
 X509_get_ex_data
 X509_get_ex_new_index
 X509_get_ext
@@ -3225,6 +3246,7 @@ X509_get_ext_by_critical
 X509_get_ext_count
 X509_get_ext_d2i
 X509_get_issuer_name
+X509_get_key_usage
 X509_get_pubkey
 X509_get_pubkey_parameters
 X509_get_serialNumber
@@ -3523,7 +3545,6 @@ d2i_X509_ALGORS
 d2i_X509_ATTRIBUTE
 d2i_X509_AUX
 d2i_X509_CERT_AUX
-d2i_X509_CERT_PAIR
 d2i_X509_CINF
 d2i_X509_CRL
 d2i_X509_CRL_INFO
@@ -3740,7 +3761,6 @@ i2d_X509_ALGORS
 i2d_X509_ATTRIBUTE
 i2d_X509_AUX
 i2d_X509_CERT_AUX
-i2d_X509_CERT_PAIR
 i2d_X509_CINF
 i2d_X509_CRL
 i2d_X509_CRL_INFO
@@ -3760,6 +3780,9 @@ i2d_X509_SIG
 i2d_X509_VAL
 i2d_X509_bio
 i2d_X509_fp
+i2d_re_X509_tbs
+i2d_re_X509_CRL_tbs
+i2d_re_X509_REQ_tbs
 i2o_ECPublicKey
 i2s_ASN1_ENUMERATED
 i2s_ASN1_ENUMERATED_TABLE
