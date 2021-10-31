@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.122 2021/10/21 14:01:00 tb Exp $	 */
+/* $OpenBSD: x509.c,v 1.123 2021/10/31 16:45:04 tb Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -110,7 +110,7 @@ x509_generate_kn(int id, X509 *cert)
 	X509_NAME *issuer, *subject;
 	struct keynote_deckey dc;
 	X509_STORE_CTX *csc = NULL;
-	X509_OBJECT obj;
+	X509_OBJECT *obj = NULL;
 	X509	*icert;
 	RSA	*key = NULL;
 	time_t	tt;
@@ -160,14 +160,20 @@ x509_generate_kn(int id, X509 *cert)
 		    "certificate store");
 		goto fail;
 	}
+	obj = X509_OBJECT_new();
+	if (obj == NULL) {
+		log_print("x509_generate_kn: failed to get memory for "
+		    "certificate object");
+		goto fail;
+	}
 
 	/* Now find issuer's certificate so we can get the public key.  */
 	X509_STORE_CTX_init(csc, x509_cas, cert, NULL);
-	if (X509_STORE_get_by_subject(csc, X509_LU_X509, issuer, &obj) !=
+	if (X509_STORE_get_by_subject(csc, X509_LU_X509, issuer, obj) !=
 	    X509_LU_X509) {
 		X509_STORE_CTX_cleanup(csc);
 		X509_STORE_CTX_init(csc, x509_certs, cert, NULL);
-		if (X509_STORE_get_by_subject(csc, X509_LU_X509, issuer, &obj)
+		if (X509_STORE_get_by_subject(csc, X509_LU_X509, issuer, obj)
 		    != X509_LU_X509) {
 			X509_STORE_CTX_cleanup(csc);
 			LOG_DBG((LOG_POLICY, 30,
@@ -179,7 +185,7 @@ x509_generate_kn(int id, X509 *cert)
 	X509_STORE_CTX_free(csc);
 	csc = NULL;
 
-	icert = X509_OBJECT_get0_X509(&obj);
+	icert = X509_OBJECT_get0_X509(obj);
 	if (icert == NULL) {
 		LOG_DBG((LOG_POLICY, 30, "x509_generate_kn: "
 		    "missing certificates, cannot construct X509 chain"));
@@ -190,7 +196,8 @@ x509_generate_kn(int id, X509 *cert)
 		    "x509_generate_kn: failed to get public key from cert"));
 		goto fail;
 	}
-	X509_OBJECT_free_contents(&obj);
+	X509_OBJECT_free(obj);
+	obj = NULL;
 
 	dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
 	dc.dec_key = key;
@@ -444,6 +451,7 @@ x509_generate_kn(int id, X509 *cert)
 
 fail:
 	X509_STORE_CTX_free(csc);
+	X509_OBJECT_free(obj);
 	free(buf);
 	free(skey);
 	free(ikey);
