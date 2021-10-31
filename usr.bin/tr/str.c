@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.12 2012/12/05 23:20:26 deraadt Exp $	*/
+/*	$OpenBSD: str.c,v 1.13 2021/10/31 21:34:16 cheloha Exp $	*/
 /*	$NetBSD: str.c,v 1.7 1995/08/31 22:13:47 jtc Exp $	*/
 
 /*-
@@ -32,6 +32,7 @@
 
 #include <sys/types.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -280,25 +281,34 @@ genseq(s)
  * an escape code or a literal character.
  */
 static int
-backslash(s)
-	STR *s;
+backslash(STR *s)
 {
-	int ch, cnt, val;
+	size_t i;
+	int ch, val;
 
-	for (cnt = val = 0;;) {
-		ch = *++s->str;
-		if (!isascii(ch) || !isdigit(ch))
-			break;
-		val = val * 8 + ch - '0';
-		if (++cnt == 3) {
-			++s->str;
-			break;
-		}
+	assert(*s->str == '\\');
+	s->str++;
+
+	/* Empty escapes become plain backslashes. */
+	if (*s->str == '\0') {
+		s->state = EOS;
+		return ('\\');
 	}
-	if (cnt)
+
+	val = 0;
+	for (i = 0; i < 3; i++) {
+		if (s->str[i] < '0' || '7' < s->str[i])
+			break;
+		val = val * 8 + s->str[i] - '0';
+	}
+	if (i > 0) {
+		if (val > UCHAR_MAX)
+			errx(1, "octal value out of range: %d", val);
+		s->str += i;
 		return (val);
-	if (ch != '\0')
-		++s->str;
+	}
+
+	ch = *s->str++;
 	switch (ch) {
 		case 'a':			/* escape characters */
 			return ('\7');
@@ -314,9 +324,6 @@ backslash(s)
 			return ('\t');
 		case 'v':
 			return ('\13');
-		case '\0':			/*  \" -> \ */
-			s->state = EOS;
-			return ('\\');
 		default:			/* \x" -> x */
 			return (ch);
 	}
