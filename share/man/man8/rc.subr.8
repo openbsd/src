@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: rc.subr.8,v 1.38 2021/02/27 09:28:05 ajacoutot Exp $
+.\" 	$OpenBSD: rc.subr.8,v 1.39 2021/10/31 17:58:28 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2021 Antoine Jacoutot
 .\" Copyright (c) 2011 Robert Nagy, Antoine Jacoutot, Ingo Schwarze
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 27 2021 $
+.Dd $Mdocdate: October 31 2021 $
 .Dt RC.SUBR 8
 .Os
 .Sh NAME
@@ -302,7 +302,7 @@ in an
 .Nm rc.d
 script to disable the reload action if the respective daemon
 does not support reloading its configuration.
-The same is possible, but almost never useful, for other actions.
+.Em The same is possible, but almost never useful, for other actions.
 .It Va rc_usercheck
 Can be set to
 .Dq NO
