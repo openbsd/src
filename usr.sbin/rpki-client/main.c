@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.157 2021/10/28 19:02:36 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.158 2021/10/31 15:58:13 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -408,7 +408,7 @@ queue_add_tal(const char *file)
 	}
 
 	/* Not in a repository, so directly add to queue. */
-	entityq_add(nfile, RTYPE_TAL, NULL, buf, len, buf);
+	entityq_add(nfile, RTYPE_TAL, NULL, buf, len, NULL);
 }
 
 /*
