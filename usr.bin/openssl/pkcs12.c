@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.15 2021/10/23 14:48:33 tb Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.16 2021/10/31 16:47:27 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -905,8 +905,11 @@ dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 
 	case NID_pkcs8ShroudedKeyBag:
 		if (options & INFO) {
+			const X509_ALGOR *tp8alg;
+
 			BIO_printf(bio_err, "Shrouded Keybag: ");
-			alg_print(bio_err, bag->value.shkeybag->algor);
+			X509_SIG_get0(bag->value.shkeybag, &tp8alg, NULL);
+			alg_print(bio_err, tp8alg);
 		}
 		if (options & NOKEYS)
 			return 1;
