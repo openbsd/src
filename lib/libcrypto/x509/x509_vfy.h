@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.42 2021/10/31 16:23:46 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.43 2021/10/31 16:26:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,14 +76,6 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-typedef struct x509_file_st
-	{
-	int num_paths;	/* number of paths to files or directories */
-	int num_alloced;
-	char **paths;	/* the list of paths or directories */
-	int *path_type;
-	} X509_CERT_FILE_CTX;
 
 /*
  * SSL_CTX -> X509_STORE
