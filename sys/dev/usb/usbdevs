@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.743 2021/10/29 14:22:26 jsg Exp $
+$OpenBSD: usbdevs,v 1.744 2021/10/31 12:22:48 stsp Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3079,6 +3079,7 @@ product MELCO RT2870_2		0x0150	RT2870
 product MELCO WLIUCGNHP		0x0158	WLI-UC-GNHP
 product MELCO WLIUCGN		0x015d	WLI-UC-GN
 product MELCO WLIUCG301N	0x016f	WLI-UC-G301N
+product MELCO UWABR100		0x017f	SONY UWA-BR100
 product MELCO WLIUCGNM		0x01a2	WLI-UC-GNM
 product MELCO WLIUCGNM2		0x01ee	WLI-UC-GNM2
 
