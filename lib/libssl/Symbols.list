@@ -84,9 +84,11 @@ SSL_CTX_get_default_passwd_cb_userdata
 SSL_CTX_get_ex_data
 SSL_CTX_get_ex_new_index
 SSL_CTX_get_info_callback
+SSL_CTX_get_keylog_callback
 SSL_CTX_get_max_early_data
 SSL_CTX_get_max_proto_version
 SSL_CTX_get_min_proto_version
+SSL_CTX_get_num_tickets
 SSL_CTX_get_quiet_shutdown
 SSL_CTX_get_ssl_method
 SSL_CTX_get_timeout
@@ -126,12 +128,14 @@ SSL_CTX_set_default_verify_paths
 SSL_CTX_set_ex_data
 SSL_CTX_set_generate_session_id
 SSL_CTX_set_info_callback
+SSL_CTX_set_keylog_callback
 SSL_CTX_set_max_early_data
 SSL_CTX_set_max_proto_version
 SSL_CTX_set_min_proto_version
 SSL_CTX_set_msg_callback
 SSL_CTX_set_next_proto_select_cb
 SSL_CTX_set_next_protos_advertised_cb
+SSL_CTX_set_num_tickets
 SSL_CTX_set_post_handshake_auth
 SSL_CTX_set_purpose
 SSL_CTX_set_quiet_shutdown
@@ -211,6 +215,7 @@ SSL_get0_chain_certs
 SSL_get0_next_proto_negotiated
 SSL_get0_param
 SSL_get0_peername
+SSL_get0_verified_chain
 SSL_get1_session
 SSL_get1_supported_ciphers
 SSL_get_SSL_CTX
@@ -235,6 +240,7 @@ SSL_get_info_callback
 SSL_get_max_early_data
 SSL_get_max_proto_version
 SSL_get_min_proto_version
+SSL_get_num_tickets
 SSL_get_peer_cert_chain
 SSL_get_peer_certificate
 SSL_get_peer_finished
@@ -267,9 +273,11 @@ SSL_load_client_CA_file
 SSL_load_error_strings
 SSL_new
 SSL_peek
+SSL_peek_ex
 SSL_pending
 SSL_read
 SSL_read_early_data
+SSL_read_ex
 SSL_renegotiate
 SSL_renegotiate_abbreviated
 SSL_renegotiate_pending
@@ -301,6 +309,7 @@ SSL_set_max_early_data
 SSL_set_max_proto_version
 SSL_set_min_proto_version
 SSL_set_msg_callback
+SSL_set_num_tickets
 SSL_set_post_handshake_auth
 SSL_set_psk_use_session_callback
 SSL_set_purpose
@@ -345,6 +354,7 @@ SSL_version_str
 SSL_want
 SSL_write
 SSL_write_early_data
+SSL_write_ex
 
 /* OpenSSL compatible init */
 OPENSSL_init_ssl
