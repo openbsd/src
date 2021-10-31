@@ -560,6 +560,7 @@
 ./usr/include/dev/pci/if_em_osdep.h
 ./usr/include/dev/pci/if_em_soc.h
 ./usr/include/dev/pci/if_etreg.h
+./usr/include/dev/pci/if_igc.h
 ./usr/include/dev/pci/if_ipwreg.h
 ./usr/include/dev/pci/if_ipwvar.h
 ./usr/include/dev/pci/if_iwireg.h
@@ -602,6 +603,15 @@
 ./usr/include/dev/pci/if_wpireg.h
 ./usr/include/dev/pci/if_wpivar.h
 ./usr/include/dev/pci/if_xgereg.h
+./usr/include/dev/pci/igc_api.h
+./usr/include/dev/pci/igc_base.h
+./usr/include/dev/pci/igc_defines.h
+./usr/include/dev/pci/igc_hw.h
+./usr/include/dev/pci/igc_i225.h
+./usr/include/dev/pci/igc_mac.h
+./usr/include/dev/pci/igc_nvm.h
+./usr/include/dev/pci/igc_phy.h
+./usr/include/dev/pci/igc_regs.h
 ./usr/include/dev/pci/ixgb_ee.h
 ./usr/include/dev/pci/ixgb_hw.h
 ./usr/include/dev/pci/ixgb_ids.h
