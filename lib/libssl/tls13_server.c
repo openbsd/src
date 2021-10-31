@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.87 2021/10/25 10:01:46 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.88 2021/10/31 16:37:25 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -557,15 +557,11 @@ tls13_server_check_certificate(struct tls13_ctx *ctx, CERT_PKEY *cpk,
 	if (cpk->x509 == NULL || cpk->privatekey == NULL)
 		goto done;
 
-	if (!X509_check_purpose(cpk->x509, -1, 0))
-		return 0;
-
 	/*
 	 * The digitalSignature bit MUST be set if the Key Usage extension is
 	 * present as per RFC 8446 section 4.4.2.2.
 	 */
-	if ((cpk->x509->ex_flags & EXFLAG_KUSAGE) &&
-	    !(cpk->x509->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE))
+	if (!(X509_get_key_usage(cpk->x509) & X509v3_KU_DIGITAL_SIGNATURE))
 		goto done;
 
 	if ((sigalg = ssl_sigalg_select(s, cpk->privatekey)) == NULL)
