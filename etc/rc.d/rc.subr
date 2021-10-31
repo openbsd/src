@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.136 2021/02/27 09:28:04 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.137 2021/10/31 17:46:23 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -19,10 +19,76 @@
 _rc_actions="start stop restart reload check"
 readonly _rc_actions
 
+_rc_check_name() {
+	[[ $1 == +([_[:alpha:]])+(|[_[:alnum:]]) ]]
+}
+
+_rc_do() {
+	if [ -n "${_RC_DEBUG}" ]; then
+		echo "doing $@" && "$@"
+	else
+		"$@" >/dev/null 2>&1
+	fi
+}
+
 _rc_err() {
 	[ -n "${1}" ] && echo "${1}" 1>&2
 	[ -n "${2}" ] && exit "${2}" || exit 1
 }
+
+_rc_parse_conf() {
+	typeset -l _key
+	local _l _rcfile _val
+	set -A _allowed_keys -- \
+		accounting amd_master check_quotas ipsec library_aslr \
+		multicast nfs_server pexp pf pkg_scripts shlib_dirs spamd_black
+
+	[ $# -gt 0 ] || set -- /etc/rc.conf /etc/rc.conf.local
+	for _rcfile; do
+		[[ -f $_rcfile ]] || continue
+		while IFS=' 	' read -r _l; do
+			[[ $_l == [!#=]*=* ]] || continue
+			_key=${_l%%*([[:blank:]])=*}
+			[[ $_key == *_@(flags|logger|rtable|timeout|user) ]] ||
+				[[ " ${_allowed_keys[*]} " == *" $_key "* ]] ||
+				continue
+			[[ $_key == "" ]] && continue
+			_val=${_l##*([!=])=*([[:blank:]])}
+			_val=${_val%%#*}
+			_val=${_val%%*([[:blank:]])}
+			# remove leading and trailing quotes (backwards compat)
+			[[ $_val == @(\"*\"|\'*\') ]] &&
+				_val=${_val#?} _val=${_val%?}
+			eval "${_key}=\${_val}"
+		done < $_rcfile
+	done
+
+	_rc_do _rc_quirks
+}
+
+_rc_quirks() {
+	# special care needed for spamlogd to avoid starting it up and failing
+	# all the time
+	if [ X"${spamd_flags}" = X"NO" -o X"${spamd_black}" != X"NO" ]; then
+		spamlogd_flags=NO
+	fi
+
+	# special care needed for pflogd to avoid starting it up and failing
+	# if pf is not enabled
+	if [ X"${pf}" = X"NO" ]; then
+		pflogd_flags=NO
+	fi
+
+	# special care needed if nfs_server=YES to startup nfsd and mountd with
+	# sane default flags
+	if [ X"${nfs_server}" = X"YES" ]; then
+		[ X"${nfsd_flags}" = X"NO" ] && nfsd_flags="-tun 4"
+		[ X"${mountd_flags}" = X"NO" ] && mountd_flags=
+	fi
+}
+
+# return if we only want internal functions
+[ -n "${FUNCS_ONLY}" ] && return
 
 _rc_not_supported() {
 	local _a _enotsup _what=${1}
@@ -59,18 +125,6 @@ EOF
 
 _rc_rm_runfile() {
 	rm -f ${_RC_RUNFILE}
-}
-
-_rc_check_name() {
-	[[ $1 == +([_[:alpha:]])+(|[_[:alnum:]]) ]]
-}
-
-_rc_do() {
-	if [ -n "${_RC_DEBUG}" ]; then
-		echo "doing $@" && "$@"
-	else
-		"$@" >/dev/null 2>&1
-	fi
 }
 
 _rc_exit() {
@@ -115,60 +169,6 @@ _rc_wait() {
 	done
 	return 1
 }
-
-_rc_quirks() {
-	# special care needed for spamlogd to avoid starting it up and failing
-	# all the time
-	if [ X"${spamd_flags}" = X"NO" -o X"${spamd_black}" != X"NO" ]; then
-		spamlogd_flags=NO
-	fi
-
-	# special care needed for pflogd to avoid starting it up and failing
-	# if pf is not enabled
-	if [ X"${pf}" = X"NO" ]; then
-		pflogd_flags=NO
-	fi
-
-	# special care needed if nfs_server=YES to startup nfsd and mountd with
-	# sane default flags
-	if [ X"${nfs_server}" = X"YES" ]; then
-		[ X"${nfsd_flags}" = X"NO" ] && nfsd_flags="-tun 4"
-		[ X"${mountd_flags}" = X"NO" ] && mountd_flags=
-	fi
-}
-
-_rc_parse_conf() {
-	typeset -l _key
-	local _l _rcfile _val
-	set -A _allowed_keys -- \
-		accounting amd_master check_quotas ipsec library_aslr \
-		multicast nfs_server pexp pf pkg_scripts shlib_dirs spamd_black
-
-	[ $# -gt 0 ] || set -- /etc/rc.conf /etc/rc.conf.local
-	for _rcfile; do
-		[[ -f $_rcfile ]] || continue
-		while IFS=' 	' read -r _l; do
-			[[ $_l == [!#=]*=* ]] || continue
-			_key=${_l%%*([[:blank:]])=*}
-			[[ $_key == *_@(flags|logger|rtable|timeout|user) ]] ||
-				[[ " ${_allowed_keys[*]} " == *" $_key "* ]] ||
-				continue
-			[[ $_key == "" ]] && continue
-			_val=${_l##*([!=])=*([[:blank:]])}
-			_val=${_val%%#*}
-			_val=${_val%%*([[:blank:]])}
-			# remove leading and trailing quotes (backwards compat)
-			[[ $_val == @(\"*\"|\'*\') ]] &&
-				_val=${_val#?} _val=${_val%?}
-			eval "${_key}=\${_val}"
-		done < $_rcfile
-	done
-
-	_rc_do _rc_quirks
-}
-
-# return if we only want internal functions
-[ -n "${FUNCS_ONLY}" ] && return
 
 rc_start() {
 	${rcexec} "${daemon_logger:+set -o pipefail; }${daemon} ${daemon_flags}${daemon_logger:+ 2>&1 |
