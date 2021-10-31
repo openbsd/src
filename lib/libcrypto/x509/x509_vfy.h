@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.37 2021/10/24 13:52:13 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.38 2021/10/31 15:54:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -108,26 +108,29 @@ typedef struct x509_file_st
 #define X509_LU_CRL		2
 #define X509_LU_PKEY		3
 
-typedef struct x509_object_st
-	{
+#if defined(LIBRESSL_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
+typedef struct x509_object_st {
 	/* one of the above types */
 	int type;
-	union	{
+	union {
 		char *ptr;
 		X509 *x509;
 		X509_CRL *crl;
 		EVP_PKEY *pkey;
-		} data;
-	} X509_OBJECT;
+	} data;
+} X509_OBJECT;
+#else
+typedef struct x509_object_st X509_OBJECT;
+#endif
 
 typedef struct x509_lookup_st X509_LOOKUP;
 
 DECLARE_STACK_OF(X509_LOOKUP)
 DECLARE_STACK_OF(X509_OBJECT)
 
+#if defined(LIBRESSL_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
 /* This is a static that defines the function interface */
-typedef struct x509_lookup_method_st
-	{
+typedef struct x509_lookup_method_st {
 	const char *name;
 	int (*new_item)(X509_LOOKUP *ctx);
 	void (*free)(X509_LOOKUP *ctx);
@@ -143,7 +146,7 @@ typedef struct x509_lookup_method_st
 	    const unsigned char *bytes, int len, X509_OBJECT *ret);
 	int (*get_by_alias)(X509_LOOKUP *ctx, int type, const char *str,
 	    int len, X509_OBJECT *ret);
-	} X509_LOOKUP_METHOD;
+} X509_LOOKUP_METHOD;
 
 typedef struct X509_VERIFY_PARAM_ID_st X509_VERIFY_PARAM_ID;
 
@@ -152,8 +155,7 @@ typedef struct X509_VERIFY_PARAM_ID_st X509_VERIFY_PARAM_ID;
  * parameters used can be customized
  */
 
-typedef struct X509_VERIFY_PARAM_st
-	{
+typedef struct X509_VERIFY_PARAM_st {
 	char *name;
 	time_t check_time;	/* Time to use */
 	unsigned long inh_flags; /* Inheritance flags */
@@ -164,16 +166,22 @@ typedef struct X509_VERIFY_PARAM_st
 	STACK_OF(ASN1_OBJECT) *policies;	/* Permissible policies */
 	X509_VERIFY_PARAM_ID *id;	/* opaque ID data */
 } X509_VERIFY_PARAM;
+#else
+typedef struct x509_lookup_method_st X509_LOOKUP_METHOD;
+typedef struct X509_VERIFY_PARAM_st X509_VERIFY_PARAM;
+#endif
 
 DECLARE_STACK_OF(X509_VERIFY_PARAM)
 
-/* This is used to hold everything.  It is used for all certificate
+#if defined(LIBRESSL_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
+/*
+ * This is used to hold everything.  It is used for all certificate
  * validation.  Once we have a certificate chain, the 'verify'
- * function is then called to actually check the cert chain. */
-struct x509_store_st
-	{
+ * function is then called to actually check the cert chain.
+ */
+struct x509_store_st {
 	/* The following is a cache of trusted certs */
-	int cache; 	/* if true, stash any hits */
+	int cache;	/* if true, stash any hits */
 	STACK_OF(X509_OBJECT) *objs;	/* Cache of all objects */
 
 	/* These are external lookup methods */
@@ -196,29 +204,31 @@ struct x509_store_st
 
 	CRYPTO_EX_DATA ex_data;
 	int references;
-	} /* X509_STORE */;
+} /* X509_STORE */;
+#endif
 
 int X509_STORE_set_depth(X509_STORE *store, int depth);
 
 #define X509_STORE_set_verify_cb_func(ctx,func) ((ctx)->verify_cb=(func))
 #define X509_STORE_set_verify_func(ctx,func)	((ctx)->verify=(func))
 
+#if defined(LIBRESSL_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
 /* This is the functions plus an instance of the local variables. */
-struct x509_lookup_st
-	{
+struct x509_lookup_st {
 	int init;			/* have we been started */
 	int skip;			/* don't use us. */
 	X509_LOOKUP_METHOD *method;	/* the functions */
 	char *method_data;		/* method data */
 
 	X509_STORE *store_ctx;	/* who owns us */
-	} /* X509_LOOKUP */;
+} /* X509_LOOKUP */;
 
-/* This is a used when verifying cert chains.  Since the
- * gathering of the cert chain can take some time (and have to be
- * 'retried', this needs to be kept and passed around. */
-struct x509_store_ctx_st      /* X509_STORE_CTX */
-	{
+/*
+ * This is used when verifying cert chains.  Since the gathering of the cert
+ * chain can take some time (and has to be 'retried'), this needs to be kept
+ * and passed around.
+ */
+struct x509_store_ctx_st {
 	X509_STORE *ctx;
 	int current_method;	/* used when looking up certs */
 
@@ -265,7 +275,8 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 	X509_STORE_CTX *parent; /* For CRL path validation: parent context */
 
 	CRYPTO_EX_DATA ex_data;
-	} /* X509_STORE_CTX */;
+} /* X509_STORE_CTX */;
+#endif
 
 void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 
