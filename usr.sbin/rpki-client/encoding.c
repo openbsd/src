@@ -1,4 +1,4 @@
-/*	$OpenBSD: encoding.c,v 1.8 2021/10/28 11:57:00 claudio Exp $  */
+/*	$OpenBSD: encoding.c,v 1.9 2021/10/31 16:00:14 claudio Exp $  */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -17,6 +17,7 @@
 #include <sys/stat.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -37,7 +38,7 @@ load_file(const char *name, size_t *len)
 	struct stat st;
 	ssize_t n;
 	size_t size;
-	int fd;
+	int fd, saved_errno;
 
 	*len = 0;
 
@@ -45,21 +46,29 @@ load_file(const char *name, size_t *len)
 		return NULL;
 	if (fstat(fd, &st) != 0)
 		goto err;
-	if (st.st_size < 0 || st.st_size > MAX_FILE_SIZE)
+	if (st.st_size <= 0 || st.st_size > MAX_FILE_SIZE) {
+		errno = EFBIG;
 		goto err;
+	}
 	size = (size_t)st.st_size;
 	if ((buf = malloc(size)) == NULL)
 		goto err;
 	n = read(fd, buf, size);
-	if (n < 0 || (size_t)n != size)
+	if (n == -1)
 		goto err;
+	if ((size_t)n != size) {
+		errno = EIO;
+		goto err;
+	}
 	close(fd);
 	*len = size;
 	return buf;
 
 err:
+	saved_errno = errno;
 	close(fd);
 	free(buf);
+	errno = saved_errno;
 	return NULL;
 }
 

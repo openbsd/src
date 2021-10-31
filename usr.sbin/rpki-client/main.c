@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.158 2021/10/31 15:58:13 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.159 2021/10/31 16:00:14 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -393,6 +393,10 @@ queue_add_tal(const char *file)
 	if ((nfile = strdup(file)) == NULL)
 		err(1, NULL);
 	buf = load_file(file, &len);
+	if (buf == NULL) {
+		warn("%s", file);
+		return;
+	}
 
 	/* Record tal for later reporting */
 	if (stats.talnames == NULL) {
