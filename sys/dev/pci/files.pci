@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.356 2021/10/21 18:36:42 bluhm Exp $
+#	$OpenBSD: files.pci,v 1.357 2021/10/31 14:52:57 patrick Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -834,6 +834,17 @@ file	dev/pci/if_iavf.c		iavf
 device	rge: ether, ifnet, ifmedia
 attach	rge at pci
 file	dev/pci/if_rge.c		rge
+
+# Intel Ethernet I225 Series
+device	igc: ether, ifnet, ifmedia, intrmap, stoeplitz
+attach	igc at pci
+file	dev/pci/if_igc.c		igc
+file	dev/pci/igc_api.c		igc
+file	dev/pci/igc_base.c		igc
+file	dev/pci/igc_i225.c		igc
+file	dev/pci/igc_mac.c		igc
+file	dev/pci/igc_nvm.c		igc
+file	dev/pci/igc_phy.c		igc
 
 # NS16550 compatible UART
 attach	com at pci with com_pci
