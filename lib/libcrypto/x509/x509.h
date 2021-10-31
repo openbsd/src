@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.82 2021/10/23 13:16:52 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.83 2021/10/31 16:28:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -326,11 +326,6 @@ typedef struct x509_trust_st {
 } X509_TRUST;
 
 DECLARE_STACK_OF(X509_TRUST)
-
-typedef struct x509_cert_pair_st {
-	X509 *forward;
-	X509 *reverse;
-} X509_CERT_PAIR;
 
 /* standard trust ids */
 
@@ -907,12 +902,6 @@ void X509_CERT_AUX_free(X509_CERT_AUX *a);
 X509_CERT_AUX *d2i_X509_CERT_AUX(X509_CERT_AUX **a, const unsigned char **in, long len);
 int i2d_X509_CERT_AUX(X509_CERT_AUX *a, unsigned char **out);
 extern const ASN1_ITEM X509_CERT_AUX_it;
-
-X509_CERT_PAIR *X509_CERT_PAIR_new(void);
-void X509_CERT_PAIR_free(X509_CERT_PAIR *a);
-X509_CERT_PAIR *d2i_X509_CERT_PAIR(X509_CERT_PAIR **a, const unsigned char **in, long len);
-int i2d_X509_CERT_PAIR(X509_CERT_PAIR *a, unsigned char **out);
-extern const ASN1_ITEM X509_CERT_PAIR_it;
 
 int X509_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);

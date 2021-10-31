@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509a.c,v 1.15 2018/05/01 19:01:27 tb Exp $ */
+/* $OpenBSD: x_x509a.c,v 1.16 2021/10/31 16:28:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -269,57 +269,4 @@ X509_reject_clear(X509 *x)
 		sk_ASN1_OBJECT_pop_free(x->aux->reject, ASN1_OBJECT_free);
 		x->aux->reject = NULL;
 	}
-}
-
-static const ASN1_TEMPLATE X509_CERT_PAIR_seq_tt[] = {
-	{
-		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
-		.tag = 0,
-		.offset = offsetof(X509_CERT_PAIR, forward),
-		.field_name = "forward",
-		.item = &X509_it,
-	},
-	{
-		.flags = ASN1_TFLG_EXPLICIT | ASN1_TFLG_OPTIONAL,
-		.tag = 1,
-		.offset = offsetof(X509_CERT_PAIR, reverse),
-		.field_name = "reverse",
-		.item = &X509_it,
-	},
-};
-
-const ASN1_ITEM X509_CERT_PAIR_it = {
-	.itype = ASN1_ITYPE_SEQUENCE,
-	.utype = V_ASN1_SEQUENCE,
-	.templates = X509_CERT_PAIR_seq_tt,
-	.tcount = sizeof(X509_CERT_PAIR_seq_tt) / sizeof(ASN1_TEMPLATE),
-	.funcs = NULL,
-	.size = sizeof(X509_CERT_PAIR),
-	.sname = "X509_CERT_PAIR",
-};
-
-
-X509_CERT_PAIR *
-d2i_X509_CERT_PAIR(X509_CERT_PAIR **a, const unsigned char **in, long len)
-{
-	return (X509_CERT_PAIR *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
-	    &X509_CERT_PAIR_it);
-}
-
-int
-i2d_X509_CERT_PAIR(X509_CERT_PAIR *a, unsigned char **out)
-{
-	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_CERT_PAIR_it);
-}
-
-X509_CERT_PAIR *
-X509_CERT_PAIR_new(void)
-{
-	return (X509_CERT_PAIR *)ASN1_item_new(&X509_CERT_PAIR_it);
-}
-
-void
-X509_CERT_PAIR_free(X509_CERT_PAIR *a)
-{
-	ASN1_item_free((ASN1_VALUE *)a, &X509_CERT_PAIR_it);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_xaux.c,v 1.9 2016/09/04 16:10:38 jsing Exp $ */
+/* $OpenBSD: pem_xaux.c,v 1.10 2021/10/31 16:28:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -90,33 +90,5 @@ int
 PEM_write_bio_X509_AUX(BIO *bp, X509 *x)
 {
 	return PEM_ASN1_write_bio((i2d_of_void *)i2d_X509_AUX, PEM_STRING_X509_TRUSTED, bp,
-	    x, NULL, NULL, 0, NULL, NULL);
-}
-
-X509_CERT_PAIR *
-PEM_read_X509_CERT_PAIR(FILE *fp, X509_CERT_PAIR **x, pem_password_cb *cb, void *u)
-{
-	return PEM_ASN1_read((d2i_of_void *)d2i_X509_CERT_PAIR, PEM_STRING_X509_PAIR, fp,
-	    (void **)x, cb, u);
-}
-
-int
-PEM_write_X509_CERT_PAIR(FILE *fp, X509_CERT_PAIR *x)
-{
-	return PEM_ASN1_write((i2d_of_void *)i2d_X509_CERT_PAIR, PEM_STRING_X509_PAIR, fp,
-	    x, NULL, NULL, 0, NULL, NULL);
-}
-
-X509_CERT_PAIR *
-PEM_read_bio_X509_CERT_PAIR(BIO *bp, X509_CERT_PAIR **x, pem_password_cb *cb, void *u)
-{
-	return PEM_ASN1_read_bio((d2i_of_void *)d2i_X509_CERT_PAIR, PEM_STRING_X509_PAIR, bp,
-	    (void **)x, cb, u);
-}
-
-int
-PEM_write_bio_X509_CERT_PAIR(BIO *bp, X509_CERT_PAIR *x)
-{
-	return PEM_ASN1_write_bio((i2d_of_void *)i2d_X509_CERT_PAIR, PEM_STRING_X509_PAIR, bp,
 	    x, NULL, NULL, 0, NULL, NULL);
 }

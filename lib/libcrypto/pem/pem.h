@@ -1,4 +1,4 @@
-/* $OpenBSD: pem.h,v 1.19 2018/08/24 19:51:31 tb Exp $ */
+/* $OpenBSD: pem.h,v 1.20 2021/10/31 16:28:50 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,7 +114,6 @@ extern "C" {
 
 #define PEM_STRING_X509_OLD	"X509 CERTIFICATE"
 #define PEM_STRING_X509		"CERTIFICATE"
-#define PEM_STRING_X509_PAIR	"CERTIFICATE PAIR"
 #define PEM_STRING_X509_TRUSTED	"TRUSTED CERTIFICATE"
 #define PEM_STRING_X509_REQ_OLD	"NEW CERTIFICATE REQUEST"
 #define PEM_STRING_X509_REQ	"CERTIFICATE REQUEST"
@@ -434,8 +433,6 @@ void	PEM_dek_info(char *buf, const char *type, int len, char *str);
 DECLARE_PEM_rw(X509, X509)
 
 DECLARE_PEM_rw(X509_AUX, X509)
-
-DECLARE_PEM_rw(X509_CERT_PAIR, X509_CERT_PAIR)
 
 DECLARE_PEM_rw(X509_REQ, X509_REQ)
 DECLARE_PEM_write(X509_REQ_NEW, X509_REQ)
