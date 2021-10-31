@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.41 2021/10/31 16:20:37 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.42 2021/10/31 16:23:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -500,6 +500,10 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x);
 int X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
     X509_NAME *name, X509_OBJECT *ret);
 #define X509_STORE_get_by_subject X509_STORE_CTX_get_by_subject
+#if defined(LIBRESSL_NEW_API)
+X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *vs,
+    X509_LOOKUP_TYPE type, X509_NAME *name);
+#endif
 
 int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
 	long argl, char **ret);

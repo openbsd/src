@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.35 2021/10/31 16:20:37 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.36 2021/10/31 16:23:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -319,6 +319,22 @@ X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m)
 			return NULL;
 		}
 	}
+}
+
+X509_OBJECT *
+X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
+    X509_NAME *name)
+{
+	X509_OBJECT *ret;
+
+	if ((ret = X509_OBJECT_new()) == NULL)
+		return NULL;
+	if (!X509_STORE_CTX_get_by_subject(vs, type, name, ret)) {
+		X509_OBJECT_free(ret);
+		return NULL;
+	}
+
+	return ret;
 }
 
 int
