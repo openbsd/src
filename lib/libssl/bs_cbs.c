@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.20 2021/05/16 10:58:27 jsing Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.21 2021/10/31 06:48:54 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -95,6 +95,11 @@ int
 CBS_strdup(const CBS *cbs, char **out_ptr)
 {
 	free(*out_ptr);
+	*out_ptr = NULL;
+
+	if (CBS_contains_zero_byte(cbs))
+		return 0;
+
 	*out_ptr = strndup((const char *)cbs->data, cbs->len);
 	return (*out_ptr != NULL);
 }
