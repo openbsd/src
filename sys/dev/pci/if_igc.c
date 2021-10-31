@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.2 2021/10/31 15:02:25 patrick Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -829,6 +829,7 @@ igc_init(void *arg)
 {
 	struct igc_softc *sc = (struct igc_softc *)arg;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct rx_ring *rxr;
 	uint32_t ctrl = 0;
 	int i, s;
 
@@ -892,6 +893,19 @@ igc_init(void *arg)
 
 	/* Set Energy Efficient Ethernet. */
 	igc_set_eee_i225(&sc->hw, true, true, true);
+
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		rxr = &sc->rx_rings[i];
+		igc_rxfill(rxr);
+		if (if_rxr_inuse(&rxr->rx_ring) == 0) {
+			printf("%s: Unable to fill any rx descriptors\n",
+			    DEVNAME(sc));
+			igc_stop(sc);
+			splx(s);
+		}
+		IGC_WRITE_REG(&sc->hw, IGC_RDT(i),
+		    (rxr->last_desc_filled + 1) % sc->num_rx_desc);
+	}
 
 	igc_enable_intr(sc);
 
@@ -1073,8 +1087,10 @@ igc_rxrefill(void *xrxr)
 	struct rx_ring *rxr = xrxr;
 	struct igc_softc *sc = rxr->sc;
 
-	if (igc_rxfill(rxr))
-		IGC_WRITE_REG(&sc->hw, IGC_RDT(rxr->me), rxr->last_desc_filled);
+	if (igc_rxfill(rxr)) {
+		IGC_WRITE_REG(&sc->hw, IGC_RDT(rxr->me),
+		    (rxr->last_desc_filled + 1) % sc->num_rx_desc);
+	}
 	else if (if_rxr_inuse(&rxr->rx_ring) == 0)
 		timeout_add(&rxr->rx_refill, 1);
 }
@@ -1879,12 +1895,6 @@ igc_setup_receive_ring(struct rx_ring *rxr)
 	if_rxr_init(&rxr->rx_ring, 2 * ((ifp->if_hardmtu / MCLBYTES) + 1),
 	    sc->num_rx_desc - 1);
 
-	igc_rxfill(rxr);
-	if (if_rxr_inuse(&rxr->rx_ring) == 0) {
-		printf("%s: Unable to fill any rx descriptors\n", DEVNAME(sc));
-		return ENOBUFS;
-	}
-
 	return 0;
 }
 
@@ -1913,6 +1923,9 @@ igc_initialize_receive_unit(struct igc_softc *sc)
 	rctl |= IGC_RCTL_EN | IGC_RCTL_BAM | IGC_RCTL_LBM_NO |
 	    IGC_RCTL_RDMTS_HALF | (hw->mac.mc_filter_type << IGC_RCTL_MO_SHIFT);
 
+	/* Do not store bad packets */
+	rctl &= ~IGC_RCTL_SBP;
+
 	/* Enable Long Packet receive */
 	if (sc->hw.mac.max_frame_size != ETHER_MAX_LEN)
 		rctl |= IGC_RCTL_LPE;
@@ -1929,12 +1942,13 @@ igc_initialize_receive_unit(struct igc_softc *sc)
 	rxcsum = IGC_READ_REG(hw, IGC_RXCSUM);
 	rxcsum &= ~IGC_RXCSUM_PCSD;
 
-	igc_initialize_rss_mapping(sc);
-
 	if (sc->sc_nqueues > 1)
 		rxcsum |= IGC_RXCSUM_PCSD;
 
 	IGC_WRITE_REG(hw, IGC_RXCSUM, rxcsum);
+
+	if (sc->sc_nqueues > 1)
+		igc_initialize_rss_mapping(sc);
 
 #if 0
 	srrctl |= 4096 >> IGC_SRRCTL_BSIZEPKT_SHIFT;
