@@ -1,4 +1,4 @@
-/* $OpenBSD: mvspi.c,v 1.2 2021/10/24 17:52:26 mpi Exp $ */
+/* $OpenBSD: mvspi.c,v 1.3 2021/10/31 15:12:00 kettenis Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -60,6 +60,7 @@ struct mvspi_softc {
 	struct spi_controller	 sc_tag;
 
 	int			 sc_cs;
+	u_int			 sc_cs_delay;
 };
 
 int	 mvspi_match(struct device *, void *, void *);
@@ -68,7 +69,7 @@ int	 mvspi_detach(struct device *, int);
 
 void	 mvspi_config(void *, struct spi_config *);
 uint32_t mvspi_clkdiv(struct mvspi_softc *, uint32_t);
-int	 mvspi_transfer(void *, char *, char *, int);
+int	 mvspi_transfer(void *, char *, char *, int, int);
 int	 mvspi_acquire_bus(void *, int);
 void	 mvspi_release_bus(void *, int);
 
@@ -177,6 +178,7 @@ mvspi_config(void *cookie, struct spi_config *conf)
 		return;
 	}
 	sc->sc_cs = cs;
+	sc->sc_cs_delay = conf->sc_cs_delay;
 
 	HCLR4(sc, SPI_CFG, SPI_CFG_PRESCALE_MASK);
 	HSET4(sc, SPI_CFG, mvspi_clkdiv(sc, conf->sc_freq));
@@ -229,12 +231,13 @@ mvspi_set_cs(struct mvspi_softc *sc, int cs, int on)
 }
 
 int
-mvspi_transfer(void *cookie, char *out, char *in, int len)
+mvspi_transfer(void *cookie, char *out, char *in, int len, int flags)
 {
 	struct mvspi_softc *sc = cookie;
 	int i = 0;
 
 	mvspi_set_cs(sc, sc->sc_cs, 1);
+	delay(sc->sc_cs_delay);
 
 	while (i < len) {
 		if (mvspi_wait_state(sc, SPI_CTRL_XFER_READY,
@@ -255,7 +258,8 @@ mvspi_transfer(void *cookie, char *out, char *in, int len)
 		i++;
 	}
 
-	mvspi_set_cs(sc, sc->sc_cs, 0);
+	if (!ISSET(flags, SPI_KEEP_CS))
+		mvspi_set_cs(sc, sc->sc_cs, 0);
 	return 0;
 
 err:

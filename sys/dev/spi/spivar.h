@@ -1,4 +1,4 @@
-/* $OpenBSD: spivar.h,v 1.1 2018/07/26 10:59:07 patrick Exp $ */
+/* $OpenBSD: spivar.h,v 1.2 2021/10/31 15:12:00 kettenis Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -23,14 +23,17 @@ struct spi_config {
 #define SPI_CONFIG_CS_HIGH	(1 << 2)
 	int		 sc_bpw;
 	uint32_t	 sc_freq;
+	u_int		 sc_cs_delay;
 };
 
+#define SPI_KEEP_CS		(1 << 0)
+
 typedef struct spi_controller {
-	void			*sc_cookie;
-	void			(*sc_config)(void *, struct spi_config *);
-	int			(*sc_transfer)(void *, char *, char *, int);
-	int			(*sc_acquire_bus)(void *, int);
-	void			(*sc_release_bus)(void *, int);
+	void		*sc_cookie;
+	void		(*sc_config)(void *, struct spi_config *);
+	int		(*sc_transfer)(void *, char *, char *, int, int);
+	int		(*sc_acquire_bus)(void *, int);
+	void		(*sc_release_bus)(void *, int);
 } *spi_tag_t;
 
 struct spi_attach_args {
@@ -42,11 +45,11 @@ struct spi_attach_args {
 #define	spi_config(sc, config)						\
 	(*(sc)->sc_config)((sc)->sc_cookie, (config))
 #define	spi_read(sc, data, len)						\
-	(*(sc)->sc_transfer)((sc)->sc_cookie, NULL, (data), (len))
+	(*(sc)->sc_transfer)((sc)->sc_cookie, NULL, (data), (len), 0)
 #define	spi_write(sc, data, len)					\
-	(*(sc)->sc_transfer)((sc)->sc_cookie, (data), NULL, (len))
-#define	spi_transfer(sc, out, in, len)					\
-	(*(sc)->sc_transfer)((sc)->sc_cookie, (out), (in), (len))
+	(*(sc)->sc_transfer)((sc)->sc_cookie, (data), NULL, (len), 0)
+#define	spi_transfer(sc, out, in, len, flags)				\
+	(*(sc)->sc_transfer)((sc)->sc_cookie, (out), (in), (len), (flags))
 #define	spi_acquire_bus(sc, flags)					\
 	(*(sc)->sc_acquire_bus)((sc)->sc_cookie, (flags))
 #define	spi_release_bus(sc, flags)					\
