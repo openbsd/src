@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1980 2021/10/30 03:22:08 jsg Exp $
+$OpenBSD: pcidevs,v 1.1981 2021/10/31 14:41:00 patrick Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5545,6 +5545,7 @@ product INTEL EP80579_LAN_6	0x5049  EP80579 LAN
 product INTEL 80960RD		0x5200	i960 RD
 product INTEL PRO_100_SERVER	0x5201	PRO 100 Server
 product INTEL I225_LMVP		0x5502	I225-LMvP
+product INTEL I226_K		0x5504	I226-K
 product INTEL I219_LM18		0x550a	I219-LM
 product INTEL I219_V18		0x550b	I219-V
 product INTEL I219_LM19		0x550c	I219-LM
