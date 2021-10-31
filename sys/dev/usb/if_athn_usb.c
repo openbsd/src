@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.61 2021/04/15 18:25:44 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.62 2021/10/31 12:24:02 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -90,6 +90,8 @@ static const struct athn_usb_type {
 	{{ USB_VENDOR_NETGEAR, USB_PRODUCT_NETGEAR_WNDA3200 },
 	   ATHN_USB_FLAG_AR7010 },
 	{{ USB_VENDOR_PANASONIC, USB_PRODUCT_PANASONIC_N5HBZ0000055 },
+	   ATHN_USB_FLAG_AR7010 },
+	{{ USB_VENDOR_MELCO, USB_PRODUCT_MELCO_UWABR100 },
 	   ATHN_USB_FLAG_AR7010 },
 	{{ USB_VENDOR_VIA, USB_PRODUCT_VIA_AR9271 }}
 };
