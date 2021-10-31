@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.34 2021/10/24 09:27:48 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.35 2021/10/31 16:20:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -132,7 +132,7 @@ X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
 }
 
 int
-X509_LOOKUP_by_subject(X509_LOOKUP *ctx, int type, X509_NAME *name,
+X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type, X509_NAME *name,
     X509_OBJECT *ret)
 {
 	if ((ctx->method == NULL) || (ctx->method->get_by_subject == NULL))
@@ -143,8 +143,8 @@ X509_LOOKUP_by_subject(X509_LOOKUP *ctx, int type, X509_NAME *name,
 }
 
 int
-X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, int type, X509_NAME *name,
-    ASN1_INTEGER *serial, X509_OBJECT *ret)
+X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+    X509_NAME *name, ASN1_INTEGER *serial, X509_OBJECT *ret)
 {
 	if ((ctx->method == NULL) ||
 	    (ctx->method->get_by_issuer_serial == NULL))
@@ -153,7 +153,7 @@ X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, int type, X509_NAME *name,
 }
 
 int
-X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, int type,
+X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     const unsigned char *bytes, int len, X509_OBJECT *ret)
 {
 	if ((ctx->method == NULL) || (ctx->method->get_by_fingerprint == NULL))
@@ -162,8 +162,8 @@ X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, int type,
 }
 
 int
-X509_LOOKUP_by_alias(X509_LOOKUP *ctx, int type, const char *str, int len,
-    X509_OBJECT *ret)
+X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type, const char *str,
+    int len, X509_OBJECT *ret)
 {
 	if ((ctx->method == NULL) || (ctx->method->get_by_alias == NULL))
 		return 0;
@@ -242,7 +242,7 @@ X509_OBJECT_new(void)
 		return NULL;
 	}
 
-	ret->type = 0;
+	ret->type = X509_LU_NONE;
 
 	return ret;
 }
@@ -322,8 +322,8 @@ X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m)
 }
 
 int
-X509_STORE_get_by_subject(X509_STORE_CTX *vs, int type, X509_NAME *name,
-    X509_OBJECT *ret)
+X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
+    X509_NAME *name, X509_OBJECT *ret)
 {
 	X509_STORE *ctx = vs->ctx;
 	X509_LOOKUP *lu;
@@ -471,7 +471,7 @@ X509_OBJECT_up_ref_count(X509_OBJECT *a)
 	return 1;
 }
 
-int
+X509_LOOKUP_TYPE
 X509_OBJECT_get_type(const X509_OBJECT *a)
 {
 	return a->type;
@@ -491,8 +491,8 @@ X509_OBJECT_free_contents(X509_OBJECT *a)
 }
 
 static int
-x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, int type, X509_NAME *name,
-    int *pnmatch)
+x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
+    X509_NAME *name, int *pnmatch)
 {
 	X509_OBJECT stmp;
 	X509 x509_s;
@@ -535,13 +535,14 @@ x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, int type, X509_NAME *name,
 }
 
 int
-X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, int type, X509_NAME *name)
+X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
+    X509_NAME *name)
 {
 	return x509_object_idx_cnt(h, type, name, NULL);
 }
 
 X509_OBJECT *
-X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h, int type,
+X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
     X509_NAME *name)
 {
 	int idx;
