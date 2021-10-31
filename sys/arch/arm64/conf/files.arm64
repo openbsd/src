@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.44 2021/08/31 15:20:06 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.45 2021/10/31 16:38:12 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -170,6 +170,10 @@ define	spmi {}
 device	aplpmu
 attach	aplpmu at spmi
 file	arch/arm64/dev/aplpmu.c			aplpmu
+
+device	aplspi: spi
+attach	aplspi at fdt
+file	arch/arm64/dev/aplspi.c			aplspi
 
 device	aplspmi: spmi
 attach	aplspmi at fdt
