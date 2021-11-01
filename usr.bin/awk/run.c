@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.69 2020/12/09 20:00:11 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.70 2021/11/01 18:28:24 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -448,13 +448,15 @@ Cell *awkgetline(Node **a, int n)	/* get next line from specific input */
 			n = getrec(&record, &recsize, true);
 		else {			/* getline var */
 			n = getrec(&buf, &bufsize, false);
-			x = execute(a[0]);
-			setsval(x, buf);
-			if (is_number(x->sval, & result)) {
-				x->fval = result;
-				x->tval |= NUM;
+			if (n > 0) {
+				x = execute(a[0]);
+				setsval(x, buf);
+				if (is_number(x->sval, & result)) {
+					x->fval = result;
+					x->tval |= NUM;
+				}
+				tempfree(x);
 			}
-			tempfree(x);
 		}
 	}
 	setfval(r, (Awkfloat) n);
