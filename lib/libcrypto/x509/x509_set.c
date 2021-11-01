@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_set.c,v 1.18 2021/10/21 13:02:01 tb Exp $ */
+/* $OpenBSD: x509_set.c,v 1.19 2021/11/01 08:14:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -217,10 +217,8 @@ X509_get_signature_type(const X509 *x)
 	return EVP_PKEY_type(OBJ_obj2nid(x->sig_alg->algorithm));
 }
 
-#if defined(LIBRESSL_NEW_API)
 X509_PUBKEY *
 X509_get_X509_PUBKEY(const X509 *x)
 {
 	return x->cert_info->key;
 }
-#endif

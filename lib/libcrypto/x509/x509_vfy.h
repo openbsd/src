@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.44 2021/10/31 16:51:16 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.45 2021/11/01 08:14:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -200,10 +200,6 @@ struct x509_store_st {
 #endif
 
 int X509_STORE_set_depth(X509_STORE *store, int depth);
-
-#if !defined(LIBRESSL_NEW_API)
-#define X509_STORE_set_verify_func(ctx,func)	((ctx)->verify=(func))
-#endif
 
 #if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
 /* This is the functions plus an instance of the local variables. */
@@ -425,10 +421,8 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 				| X509_V_FLAG_INHIBIT_ANY \
 				| X509_V_FLAG_INHIBIT_MAP)
 
-#if defined(LIBRESSL_NEW_API)
 X509_OBJECT *X509_OBJECT_new(void);
 void X509_OBJECT_free(X509_OBJECT *a);
-#endif
 int X509_OBJECT_idx_by_subject(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
 	     X509_NAME *name);
 X509_OBJECT *X509_OBJECT_retrieve_by_subject(STACK_OF(X509_OBJECT) *h,
@@ -492,10 +486,8 @@ int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x);
 int X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
     X509_NAME *name, X509_OBJECT *ret);
 #define X509_STORE_get_by_subject X509_STORE_CTX_get_by_subject
-#if defined(LIBRESSL_NEW_API)
 X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *vs,
     X509_LOOKUP_TYPE type, X509_NAME *name);
-#endif
 
 int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
 	long argl, char **ret);
@@ -530,13 +522,9 @@ void *	X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx,int idx);
 int	X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);
 void	X509_STORE_CTX_set_error(X509_STORE_CTX *ctx,int s);
 int	X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx);
-#if defined(LIBRESSL_NEW_API)
 void	X509_STORE_CTX_set_error_depth(X509_STORE_CTX *ctx, int depth);
-#endif
 X509 *	X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
-#if defined(LIBRESSL_NEW_API)
 void	X509_STORE_CTX_set_current_cert(X509_STORE_CTX *ctx, X509 *x);
-#endif
 X509 *X509_STORE_CTX_get0_current_issuer(X509_STORE_CTX *ctx);
 X509_CRL *X509_STORE_CTX_get0_current_crl(X509_STORE_CTX *ctx);
 X509_STORE_CTX *X509_STORE_CTX_get0_parent_ctx(X509_STORE_CTX *ctx);
@@ -552,7 +540,6 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, unsigned long flags);
 void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags,
 								time_t t);
-#if defined(LIBRESSL_NEW_API)
 void X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 int (*X509_STORE_CTX_get_verify(X509_STORE_CTX *ctx))(X509_STORE_CTX *);
 void X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx,
@@ -560,15 +547,12 @@ void X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx,
 #define X509_STORE_set_verify_func(ctx, func) \
     X509_STORE_set_verify((ctx), (func))
 int (*X509_STORE_CTX_get_verify_cb(X509_STORE_CTX *ctx))(int, X509_STORE_CTX *);
-#endif
 void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
 				  int (*verify_cb)(int, X509_STORE_CTX *));
 
 X509_POLICY_TREE *X509_STORE_CTX_get0_policy_tree(X509_STORE_CTX *ctx);
 int X509_STORE_CTX_get_explicit_policy(X509_STORE_CTX *ctx);
-#if defined(LIBRESSL_NEW_API)
 int X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx);
-#endif
 
 X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(X509_STORE_CTX *ctx);
 void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param);

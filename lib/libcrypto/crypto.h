@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.51 2021/10/23 09:13:51 beck Exp $ */
+/* $OpenBSD: crypto.h,v 1.52 2021/11/01 08:14:36 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -505,10 +505,8 @@ uint64_t OPENSSL_cpu_caps(void);
 int OPENSSL_isservice(void);
 
 #ifndef LIBRESSL_INTERNAL
-#if defined(LIBRESSL_NEW_API)
 int FIPS_mode(void);
 int FIPS_mode_set(int r);
-#endif
 
 void OPENSSL_init(void);
 

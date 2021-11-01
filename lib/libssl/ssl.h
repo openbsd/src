@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.214 2021/10/23 20:42:50 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.215 2021/11/01 08:14:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -506,7 +506,6 @@ void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version,
 #define SSL_CTX_set_msg_callback_arg(ctx, arg) SSL_CTX_ctrl((ctx), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
 #define SSL_set_msg_callback_arg(ssl, arg) SSL_ctrl((ssl), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
 typedef void (*SSL_CTX_keylog_cb_func)(const SSL *ssl, const char *line);
-#if defined(LIBRESSL_NEW_API)
 void SSL_CTX_set_keylog_callback(SSL_CTX *ctx, SSL_CTX_keylog_cb_func cb);
 SSL_CTX_keylog_cb_func SSL_CTX_get_keylog_callback(const SSL_CTX *ctx);
 int SSL_set_num_tickets(SSL *s, size_t num_tickets);
@@ -514,7 +513,6 @@ size_t SSL_get_num_tickets(const SSL *s);
 int SSL_CTX_set_num_tickets(SSL_CTX *ctx, size_t num_tickets);
 size_t SSL_CTX_get_num_tickets(const SSL_CTX *ctx);
 STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s);
-#endif
 
 #ifndef LIBRESSL_INTERNAL
 struct ssl_aead_ctx_st;
@@ -1294,11 +1292,9 @@ int	SSL_is_server(const SSL *s);
 int 	SSL_read(SSL *ssl, void *buf, int num);
 int 	SSL_peek(SSL *ssl, void *buf, int num);
 int 	SSL_write(SSL *ssl, const void *buf, int num);
-#if defined(LIBRESSL_NEW_API)
 int 	SSL_read_ex(SSL *ssl, void *buf, size_t num, size_t *bytes_read);
 int 	SSL_peek_ex(SSL *ssl, void *buf, size_t num, size_t *bytes_peeked);
 int 	SSL_write_ex(SSL *ssl, const void *buf, size_t num, size_t *bytes_written);
-#endif
 
 #if defined(LIBRESSL_HAS_TLS1_3) || defined(LIBRESSL_INTERNAL)
 uint32_t SSL_CTX_get_max_early_data(const SSL_CTX *ctx);

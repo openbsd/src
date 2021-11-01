@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.9 2021/10/23 17:43:06 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.10 2021/11/01 08:14:36 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -800,11 +800,9 @@ char *X509_PURPOSE_get0_sname(const X509_PURPOSE *xp);
 int X509_PURPOSE_get_trust(const X509_PURPOSE *xp);
 void X509_PURPOSE_cleanup(void);
 int X509_PURPOSE_get_id(const X509_PURPOSE *);
-#if defined(LIBRESSL_NEW_API)
 uint32_t X509_get_extension_flags(X509 *x);
 uint32_t X509_get_key_usage(X509 *x);
 uint32_t X509_get_extended_key_usage(X509 *x);
-#endif
 
 STACK_OF(OPENSSL_STRING) *X509_get1_email(X509 *x);
 STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(X509_REQ *x);

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.85 2021/10/31 16:51:16 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.86 2021/11/01 08:14:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -594,9 +594,7 @@ extern "C" {
 int X509_CRL_up_ref(X509_CRL *x);
 int X509_CRL_get_signature_nid(const X509_CRL *crl);
 
-#if defined(LIBRESSL_NEW_API)
 int i2d_re_X509_CRL_tbs(X509_CRL *req, unsigned char **pp);
-#endif
 
 const STACK_OF(X509_EXTENSION) *X509_CRL_get0_extensions(const X509_CRL *crl);
 long X509_CRL_get_version(const X509_CRL *crl);
@@ -626,12 +624,7 @@ void X509_CRL_METHOD_free(X509_CRL_METHOD *m);
 void X509_CRL_set_meth_data(X509_CRL *crl, void *dat);
 void *X509_CRL_get_meth_data(X509_CRL *crl);
 
-#if defined(LIBRESSL_NEW_API)
 X509_PUBKEY	*X509_get_X509_PUBKEY(const X509 *x);
-#else
-#define		 X509_get_X509_PUBKEY(x)	(x)->cert_info->key
-#endif
-
 
 const char *X509_verify_cert_error_string(long n);
 
@@ -831,12 +824,10 @@ void X509_SIG_free(X509_SIG *a);
 X509_SIG *d2i_X509_SIG(X509_SIG **a, const unsigned char **in, long len);
 int i2d_X509_SIG(X509_SIG *a, unsigned char **out);
 extern const ASN1_ITEM X509_SIG_it;
-#if defined(LIBRESSL_NEW_API)
 void X509_SIG_get0(const X509_SIG *sig, const X509_ALGOR **palg,
     const ASN1_OCTET_STRING **pdigest);
 void X509_SIG_getm(X509_SIG *sig, X509_ALGOR **palg,
     ASN1_OCTET_STRING **pdigest);
-#endif
 
 X509_REQ_INFO *X509_REQ_INFO_new(void);
 void X509_REQ_INFO_free(X509_REQ_INFO *a);
@@ -903,9 +894,7 @@ void *X509_get_ex_data(X509 *r, int idx);
 int		i2d_X509_AUX(X509 *a,unsigned char **pp);
 X509 *		d2i_X509_AUX(X509 **a,const unsigned char **pp,long length);
 
-#if defined(LIBRESSL_NEW_API)
 int i2d_re_X509_tbs(X509 *x, unsigned char **pp);
-#endif
 
 void X509_get0_signature(const ASN1_BIT_STRING **psig,
     const X509_ALGOR **palg, const X509 *x);
@@ -1019,10 +1008,8 @@ int		X509_REQ_set_subject_name(X509_REQ *req, X509_NAME *name);
 X509_NAME	*X509_REQ_get_subject_name(const X509_REQ *x);
 int		X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_REQ_get_pubkey(X509_REQ *req);
-#if defined(LIBRESSL_NEW_API)
 int		i2d_re_X509_REQ_tbs(X509_REQ *req, unsigned char **pp);
 EVP_PKEY *	X509_REQ_get0_pubkey(X509_REQ *req);
-#endif
 int		X509_REQ_extension_nid(int nid);
 int *		X509_REQ_get_extension_nids(void);
 void		X509_REQ_set_extension_nids(int *nids);
