@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpcie.c,v 1.7 2021/10/07 13:34:20 kettenis Exp $	*/
+/*	$OpenBSD: aplpcie.c,v 1.8 2021/11/01 20:22:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -147,7 +147,6 @@ aplpcie_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t *ranges;
 	int i, j, nranges, rangeslen;
 	uint32_t bus_range[2];
-	uint32_t msi_range[2];
 	char name[32];
 	int idx;
 
@@ -181,17 +180,8 @@ aplpcie_attach(struct device *parent, struct device *self, void *aux)
 	    OF_getpropint64(sc->sc_node, "msi-doorbell", 0xffff000ULL);
 	if (OF_getpropintarray(sc->sc_node, "msi-ranges", sc->sc_msi_range,
 	    sizeof(sc->sc_msi_range)) != sizeof(sc->sc_msi_range)) {
-		/* XXX temporary backwards compatibility. */
-		if (OF_getpropintarray(sc->sc_node, "msi-ranges", msi_range,
-		    sizeof(msi_range)) != sizeof(msi_range)) {
-			printf(": invalid msi-ranges property\n");
-			return;
-		}
-		sc->sc_msi_range[0] = 0;
-		sc->sc_msi_range[1] = 0;
-		sc->sc_msi_range[2] = msi_range[0];
-		sc->sc_msi_range[3] = 0;
-		sc->sc_msi_range[4] = msi_range[1];
+		printf(": invalid msi-ranges property\n");
+		return;
 	}
 
 	/*
