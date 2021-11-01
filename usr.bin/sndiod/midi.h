@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.h,v 1.14 2021/01/28 11:17:58 ratchov Exp $	*/
+/*	$OpenBSD: midi.h,v 1.15 2021/11/01 14:43:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -89,7 +89,8 @@ struct port {
 #define PORT_DRAIN	2
 	unsigned int state;
 	unsigned int num;		/* port serial number */
-	struct name *path_list;
+	char *path;
+	struct port *alt_next;
 	int hold;			/* hold the port open ? */
 	struct midi *midi;
 };
@@ -113,6 +114,7 @@ void midi_tag(struct midi *, unsigned int);
 unsigned int midi_tags(struct midi *);
 void midi_link(struct midi *, struct midi *);
 void midi_abort(struct midi *);
+void midi_migrate(struct midi *, struct midi *);
 
 void port_log(struct port *);
 struct port *port_new(char *, unsigned int, int);
@@ -124,6 +126,7 @@ int  port_init(struct port *);
 void port_done(struct port *);
 void port_drain(struct port *);
 int  port_close(struct port *);
-int  port_reopen(struct port *);
+struct port *port_alt_ref(int);
+struct port *port_migrate(struct port *);
 
 #endif /* !defined(MIDI_H) */

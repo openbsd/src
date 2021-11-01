@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.h,v 1.4 2019/09/21 04:42:46 ratchov Exp $	*/
+/*	$OpenBSD: siofile.h,v 1.5 2021/11/01 14:43:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -38,7 +38,6 @@ struct dev_sio {
 };
 
 int dev_sio_open(struct dev *);
-int dev_sio_reopen(struct dev *);
 void dev_sio_close(struct dev *);
 void dev_sio_log(struct dev *);
 void dev_sio_start(struct dev *);

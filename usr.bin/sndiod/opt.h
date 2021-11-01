@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.h,v 1.6 2021/03/03 10:19:06 ratchov Exp $	*/
+/*	$OpenBSD: opt.h,v 1.7 2021/11/01 14:43:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -23,7 +23,7 @@ struct dev;
 
 struct opt {
 	struct opt *next;
-	struct dev *dev;
+	struct dev *dev, *alt_first;
 	struct midi *midi;
 	struct mtc *mtc;	/* if set, MMC-controlled MTC source */
 
@@ -35,6 +35,7 @@ struct opt {
 	int rmin, rmax;		/* recording channels */
 	int dup;		/* true if join/expand enabled */
 	int mode;		/* bitmap of MODE_XXX */
+	int refcnt;
 };
 
 extern struct opt *opt_list;
@@ -42,6 +43,12 @@ extern struct opt *opt_list;
 struct opt *opt_new(struct dev *, char *, int, int, int, int,
     int, int, int, unsigned int);
 void opt_del(struct opt *);
-struct opt *opt_byname(struct dev *, char *);
+struct opt *opt_byname(char *);
+struct opt *opt_bynum(int);
+void opt_init(struct opt *);
+void opt_done(struct opt *);
+void opt_setdev(struct opt *, struct dev *);
+struct dev *opt_ref(struct opt *);
+void opt_unref(struct opt *);
 
 #endif /* !defined(OPT_H) */

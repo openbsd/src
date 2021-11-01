@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.102 2021/05/03 04:29:50 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.103 2021/11/01 14:43:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -45,16 +45,13 @@ struct dev *dev_new(char *, struct aparams *, unsigned int, unsigned int,
     unsigned int, unsigned int, unsigned int, unsigned int);
 void dev_adjpar(struct dev *, int, int, int);
 int dev_allocbufs(struct dev *);
-int dev_open(struct dev *);
 void dev_freebufs(struct dev *);
-void dev_close(struct dev *);
 int dev_ref(struct dev *);
 void dev_unref(struct dev *);
 int dev_init(struct dev *);
 void dev_done(struct dev *);
 struct dev *dev_bynum(int);
 void dev_del(struct dev *);
-void dev_setalt(struct dev *, unsigned int);
 unsigned int dev_roundof(struct dev *, unsigned int);
 void dev_wakeup(struct dev *);
 
@@ -930,10 +927,8 @@ dev_new(char *path, struct aparams *par,
 		return NULL;
 	}
 	d = xmalloc(sizeof(struct dev));
-	d->alt_list = NULL;
-	dev_addname(d,path);
+	d->path = path;
 	d->num = dev_sndnum++;
-	d->alt_num = -1;
 
 	d->reqpar = *par;
 	d->reqmode = mode;
@@ -948,57 +943,13 @@ dev_new(char *path, struct aparams *par,
 	d->slot_list = NULL;
 	d->master = MIDI_MAXCTL;
 	d->master_enabled = 0;
+	d->alt_next = d;
 	snprintf(d->name, CTL_NAMEMAX, "%u", d->num);
 	for (pd = &dev_list; *pd != NULL; pd = &(*pd)->next)
 		;
 	d->next = *pd;
 	*pd = d;
 	return d;
-}
-
-/*
- * add a alternate name
- */
-int
-dev_addname(struct dev *d, char *name)
-{
-	struct dev_alt *a;
-
-	if (d->alt_list != NULL && d->alt_list->idx == DEV_NMAX - 1) {
-		log_puts(name);
-		log_puts(": too many alternate names\n");
-		return 0;
-	}
-	a = xmalloc(sizeof(struct dev_alt));
-	a->name = name;
-	a->idx = (d->alt_list == NULL) ? 0 : d->alt_list->idx + 1;
-	a->next = d->alt_list;
-	d->alt_list = a;
-	return 1;
-}
-
-/*
- * set prefered alt device name
- */
-void
-dev_setalt(struct dev *d, unsigned int idx)
-{
-	struct dev_alt **pa, *a;
-
-	/* find alt with given index */
-	for (pa = &d->alt_list; (a = *pa)->idx != idx; pa = &a->next)
-		;
-
-	/* detach from list */
-	*pa = a->next;
-
-	/* attach at head */
-	a->next = d->alt_list;
-	d->alt_list = a;
-
-	/* reopen device with the new alt */
-	if (idx != d->alt_num)
-		dev_reopen(d);
 }
 
 /*
@@ -1099,9 +1050,6 @@ dev_allocbufs(struct dev *d)
 int
 dev_open(struct dev *d)
 {
-	char name[CTL_NAMEMAX];
-	struct dev_alt *a;
-
 	d->mode = d->reqmode;
 	d->round = d->reqround;
 	d->bufsz = d->reqbufsz;
@@ -1122,16 +1070,6 @@ dev_open(struct dev *d)
 	}
 	if (!dev_allocbufs(d))
 		return 0;
-
-	/* if there are multiple alt devs, add server.device knob */
-	if (d->alt_list->next != NULL) {
-		for (a = d->alt_list; a != NULL; a = a->next) {
-			snprintf(name, sizeof(name), "%d", a->idx);
-			ctl_new(CTL_DEV_ALT, d, &a->idx,
-			    CTL_SEL, d->name, "server", -1, "device",
-			    name, -1, 1, a->idx == d->alt_num);
-		}
-	}
 
 	d->pstate = DEV_INIT;
 	return 1;
@@ -1158,18 +1096,18 @@ dev_abort(struct dev *d)
 	}
 	d->slot_list = NULL;
 
-	for (c = ctlslot_array, i = 0; i < DEV_NCTLSLOT; i++, c++) {
-		if (c->ops == NULL)
-			continue;
-		if (c->opt->dev != d)
-			continue;
-		c->ops->exit(c->arg);
-		c->ops = NULL;
-	}
-
 	for (o = opt_list; o != NULL; o = o->next) {
 		if (o->dev != d)
 			continue;
+		for (c = ctlslot_array, i = 0; i < DEV_NCTLSLOT; i++, c++) {
+			if (c->ops == NULL)
+				continue;
+			if (c->opt == o) {
+				c->ops->exit(s->arg);
+				c->ops = NULL;
+			}
+		}
+
 		midi_abort(o->midi);
 	}
 
@@ -1208,9 +1146,6 @@ dev_freebufs(struct dev *d)
 void
 dev_close(struct dev *d)
 {
-	struct dev_alt *a;
-	unsigned int idx;
-
 	d->pstate = DEV_CFG;
 	dev_sio_close(d);
 	dev_freebufs(d);
@@ -1219,82 +1154,6 @@ dev_close(struct dev *d)
 		d->master_enabled = 0;
 		ctl_del(CTL_DEV_MASTER, d, NULL);
 	}
-	for (idx = 0, a = d->alt_list; a != NULL; idx++, a = a->next)
-		ctl_del(CTL_DEV_ALT, d, &idx);
-}
-
-/*
- * Close the device, but attempt to migrate everything to a new sndio
- * device.
- */
-int
-dev_reopen(struct dev *d)
-{
-	struct mtc *mtc;
-	struct slot *s;
-	long long pos;
-	unsigned int pstate;
-	int delta;
-
-	/* not opened */
-	if (d->pstate == DEV_CFG)
-		return 1;
-
-	/* save state */
-	delta = d->delta;
-	pstate = d->pstate;
-
-	if (!dev_sio_reopen(d))
-		return 0;
-
-	/* reopen returns a stopped device */
-	d->pstate = DEV_INIT;
-
-	/* reallocate new buffers, with new parameters */
-	dev_freebufs(d);
-	dev_allocbufs(d);
-
-	/*
-	 * adjust time positions, make anything go back delta ticks, so
-	 * that the new device can start at zero
-	 */
-	for (s = d->slot_list; s != NULL; s = s->next) {
-		pos = (long long)s->delta * d->round + s->delta_rem;
-		pos -= (long long)delta * s->round;
-		s->delta_rem = pos % (int)d->round;
-		s->delta = pos / (int)d->round;
-		if (log_level >= 3) {
-			slot_log(s);
-			log_puts(": adjusted: delta -> ");
-			log_puti(s->delta);
-			log_puts(", delta_rem -> ");
-			log_puti(s->delta_rem);
-			log_puts("\n");
-		}
-
-		/* reinitilize the format conversion chain */
-		slot_initconv(s);
-	}
-	mtc = &mtc_array[0];
-	if (mtc->dev == d && mtc->tstate == MTC_RUN) {
-		mtc->delta -= delta * MTC_SEC;
-		if (log_level >= 2) {
-			dev_log(mtc->dev);
-			log_puts(": adjusted mtc: delta ->");
-			log_puti(mtc->delta);
-			log_puts("\n");
-		}
-	}
-
-	/* remove old controls and add new ones */
-	dev_sioctl_close(d);
-	dev_sioctl_open(d);
-
-	/* start the device if needed */
-	if (pstate == DEV_RUN)
-		dev_wakeup(d);
-
-	return 1;
 }
 
 int
@@ -1381,7 +1240,6 @@ void
 dev_del(struct dev *d)
 {
 	struct dev **p;
-	struct dev_alt *a;
 
 #ifdef DEBUG
 	if (log_level >= 3) {
@@ -1401,10 +1259,6 @@ dev_del(struct dev *d)
 #endif
 	}
 	*p = d->next;
-	while ((a = d->alt_list) != NULL) {
-		d->alt_list = a->next;
-		xfree(a);
-	}
 	xfree(d);
 }
 
@@ -1441,6 +1295,103 @@ dev_wakeup(struct dev *d)
 		d->pstate = DEV_RUN;
 		dev_sio_start(d);
 	}
+}
+
+/*
+ * Return true if both of the given devices can run the same
+ * clients
+ */
+int
+dev_iscompat(struct dev *o, struct dev *n)
+{
+	if (((long long)o->round * n->rate != (long long)n->round * o->rate) ||
+	    ((long long)o->bufsz * n->rate != (long long)n->bufsz * o->rate)) {
+		if (log_level >= 1) {
+			log_puts(n->name);
+			log_puts(": not compatible with ");
+			log_puts(o->name);
+			log_puts("\n");
+		}
+		return 0;
+	}
+	return 1;
+}
+
+/*
+ * Close the device, but attempt to migrate everything to a new sndio
+ * device.
+ */
+struct dev *
+dev_migrate(struct dev *odev)
+{
+	struct dev *ndev;
+	struct opt *o;
+	struct slot *s;
+	int i;
+
+	/* not opened */
+	if (odev->pstate == DEV_CFG)
+		return odev;
+
+	ndev = odev;
+	while (1) {
+		/* try next one, circulating through the list */
+		ndev = ndev->alt_next;
+		if (ndev == odev) {
+			if (log_level >= 1) {
+				dev_log(odev);
+				log_puts(": no fall-back device found\n");
+			}
+			return NULL;
+		}
+
+
+		if (!dev_ref(ndev))
+			continue;
+
+		/* check if new parameters are compatible with old ones */
+		if (!dev_iscompat(odev, ndev)) {
+			dev_unref(ndev);
+			continue;
+		}
+
+		/* found it!*/
+		break;
+	}
+
+	if (log_level >= 1) {
+		dev_log(odev);
+		log_puts(": switching to ");
+		dev_log(ndev);
+		log_puts("\n");
+	}
+
+	if (mtc_array[0].dev == odev)
+		mtc_setdev(&mtc_array[0], ndev);
+
+	/* move opts to new device (also moves clients using the opts) */
+	for (o = opt_list; o != NULL; o = o->next) {
+		if (o->dev != odev)
+			continue;
+		if (strcmp(o->name, o->dev->name) == 0)
+			continue;
+		opt_setdev(o, ndev);
+	}
+
+	/* terminate remaining clients */
+	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
+		if (s->opt == NULL || s->opt->dev != odev)
+			continue;
+		if (s->ops != NULL) {
+			s->ops->exit(s);
+			s->ops = NULL;
+		}
+	}
+
+	/* slots and/or MMC hold refs, drop ours */
+	dev_unref(ndev);
+
+	return ndev;
 }
 
 /*
@@ -1549,6 +1500,43 @@ mtc_loc(struct mtc *mtc, unsigned int origin)
 	mtc->origin = origin;
 	if (mtc->tstate == MTC_RUN)
 		mtc_start(mtc);
+}
+
+/*
+ * set MMC device
+ */
+void
+mtc_setdev(struct mtc *mtc, struct dev *d)
+{
+	struct opt *o;
+
+	if (mtc->dev == d)
+		return;
+
+	if (log_level >= 2) {
+		dev_log(d);
+		log_puts(": set to be MIDI clock source\n");
+	}
+
+	/* adjust clock and ref counter, if needed */
+	if (mtc->tstate == MTC_RUN) {
+		mtc->delta -= mtc->dev->delta;
+		dev_unref(mtc->dev);
+	}
+
+	mtc->dev = d;
+
+	if (mtc->tstate == MTC_RUN) {
+		mtc->delta += mtc->dev->delta;
+		dev_ref(mtc->dev);
+		dev_wakeup(mtc->dev);
+	}
+
+	/* move in once anything using MMC */
+	for (o = opt_list; o != NULL; o = o->next) {
+		if (o->mtc == mtc)
+			opt_setdev(o, mtc->dev);
+	}
 }
 
 /*
@@ -1787,7 +1775,8 @@ slot_new(struct opt *opt, unsigned int id, char *who,
 	    NULL, -1, 127, s->vol);
 
 found:
-	if (!dev_ref(opt->dev))
+	/* open device, this may change opt's device */
+	if (!opt_ref(s->opt))
 		return NULL;
 	s->opt = opt;
 	s->ops = ops;
@@ -1809,8 +1798,6 @@ found:
 	if (log_level >= 3) {
 		slot_log(s);
 		log_puts(": using ");
-		dev_log(s->opt->dev);
-		log_puts(".");
 		log_puts(s->opt->name);
 		log_puts(", mode = ");
 		log_putx(mode);
@@ -1839,7 +1826,7 @@ slot_del(struct slot *s)
 		slot_stop(s, 0);
 		break;
 	}
-	dev_unref(s->opt->dev);
+	opt_unref(s->opt);
 }
 
 /*
@@ -1858,6 +1845,62 @@ slot_setvol(struct slot *s, unsigned int vol)
 #endif
 	s->vol = vol;
 	s->mix.vol = MIDI_TO_ADATA(s->vol);
+}
+
+/*
+ * set device for this slot
+ */
+void
+slot_setopt(struct slot *s, struct opt *o)
+{
+	struct opt *t;
+	struct dev *odev, *ndev;
+	struct ctl *c;
+
+	if (s->opt == NULL || s->opt == o)
+		return;
+
+	if (log_level >= 2) {
+		slot_log(s);
+		log_puts(": moving to opt ");
+		log_puts(o->name);
+		log_puts("\n");
+	}
+
+	odev = s->opt->dev;
+	if (s->ops != NULL) {
+		ndev = opt_ref(o);
+		if (ndev == NULL)
+			return;
+
+		if (!dev_iscompat(odev, ndev)) {
+			opt_unref(o);
+			return;
+		}
+	}
+
+	if (s->pstate == SLOT_RUN || s->pstate == SLOT_STOP)
+		slot_detach(s);
+
+	t = s->opt;
+	s->opt = o;
+
+	c = ctl_find(CTL_SLOT_LEVEL, s, NULL);
+	ctl_update(c);
+
+	if (o->dev != t->dev) {
+		dev_midi_slotdesc(odev, s);
+		dev_midi_slotdesc(ndev, s);
+		dev_midi_vol(ndev, s);
+	}
+
+	if (s->pstate == SLOT_RUN || s->pstate == SLOT_STOP)
+		slot_attach(s);
+
+	if (s->ops != NULL) {
+		opt_unref(t);
+		return;
+	}
 }
 
 /*
@@ -2202,7 +2245,7 @@ ctlslot_new(struct opt *o, struct ctlops *ops, void *arg)
 	}
 	s->opt = o;
 	s->self = 1 << i;
-	if (!dev_ref(o->dev))
+	if (!opt_ref(o))
 		return NULL;
 	s->ops = ops;
 	s->arg = arg;
@@ -2232,7 +2275,7 @@ ctlslot_del(struct ctlslot *s)
 			pc = &c->next;
 	}
 	s->ops = NULL;
-	dev_unref(s->opt->dev);
+	opt_unref(s->opt);
 }
 
 int
@@ -2243,8 +2286,9 @@ ctlslot_visible(struct ctlslot *s, struct ctl *c)
 	switch (c->scope) {
 	case CTL_HW:
 	case CTL_DEV_MASTER:
-	case CTL_DEV_ALT:
 		return (s->opt->dev == c->u.any.arg0);
+	case CTL_OPT_DEV:
+		return (s->opt == c->u.any.arg0);
 	case CTL_SLOT_LEVEL:
 		return (s->opt->dev == c->u.slot_level.slot->opt->dev);
 	default:
@@ -2268,6 +2312,28 @@ ctlslot_lookup(struct ctlslot *s, int addr)
 	if (!ctlslot_visible(s, c))
 		return NULL;
 	return c;
+}
+
+void
+ctlslot_update(struct ctlslot *s)
+{
+	struct ctl *c;
+	unsigned int refs_mask;
+
+	for (c = ctl_list; c != NULL; c = c->next) {
+		if (c->type == CTL_NONE)
+			continue;
+		refs_mask = ctlslot_visible(s, c) ? s->self : 0;
+
+		/* nothing to do if no visibility change */
+		if (((c->refs_mask & s->self) ^ refs_mask) == 0)
+			continue;
+		/* if control becomes visble */
+		if (refs_mask)
+			c->refs_mask |= s->self;
+		/* if control is hidden */
+		c->desc_mask |= s->self;
+	}
 }
 
 void
@@ -2318,15 +2384,16 @@ ctl_log(struct ctl *c)
 		log_puts("dev_master:");
 		log_puts(c->u.dev_master.dev->name);
 		break;
-	case CTL_DEV_ALT:
-		log_puts("dev_alt:");
-		log_puts(c->u.dev_alt.dev->name);
-		log_putu(c->u.dev_alt.idx);
-		break;
 	case CTL_SLOT_LEVEL:
 		log_puts("slot_level:");
 		log_puts(c->u.slot_level.slot->name);
 		log_putu(c->u.slot_level.slot->unit);
+		break;
+	case CTL_OPT_DEV:
+		log_puts("opt_dev:");
+		log_puts(c->u.opt_dev.opt->name);
+		log_puts("/");
+		log_puts(c->u.opt_dev.dev->name);
 		break;
 	default:
 		log_puts("unknown");
@@ -2368,15 +2435,16 @@ ctl_setval(struct ctl *c, int val)
 		c->val_mask = ~0U;
 		c->curval = val;
 		return 1;
-	case CTL_DEV_ALT:
-		dev_setalt (c->u.dev_alt.dev, c->u.dev_alt.idx);
-		return 1;
 	case CTL_SLOT_LEVEL:
 		slot_setvol(c->u.slot_level.slot, val);
 		// XXX change dev_midi_vol() into slot_midi_vol()
 		dev_midi_vol(c->u.slot_level.slot->opt->dev, c->u.slot_level.slot);
 		c->val_mask = ~0U;
 		c->curval = val;
+		return 1;
+	case CTL_OPT_DEV:
+		c->u.opt_dev.opt->alt_first = c->u.opt_dev.dev;
+		opt_setdev(c->u.opt_dev.opt, c->u.opt_dev.dev);
 		return 1;
 	default:
 		if (log_level >= 2) {
@@ -2429,8 +2497,8 @@ ctl_new(int scope, void *arg0, void *arg1,
 	case CTL_HW:
 		c->u.hw.addr = *(unsigned int *)arg1;
 		break;
-	case CTL_DEV_ALT:
-		c->u.dev_alt.idx = *(unsigned int *)arg1;
+	case CTL_OPT_DEV:
+		c->u.any.arg1 = arg1;
 		break;
 	default:
 		c->u.any.arg1 = NULL;
@@ -2494,8 +2562,8 @@ ctl_match(struct ctl *c, int scope, void *arg0, void *arg1)
 		if (arg1 != NULL && c->u.hw.addr != *(unsigned int *)arg1)
 			return 0;
 		break;
-	case CTL_DEV_ALT:
-		if (arg1 != NULL && c->u.dev_alt.idx != *(unsigned int *)arg1)
+	case CTL_OPT_DEV:
+		if (arg1 != NULL && c->u.any.arg1 != arg1)
 			return 0;
 		break;
 	}
@@ -2600,4 +2668,3 @@ dev_ctlsync(struct dev *d)
 			s->ops->sync(s->arg);
 	}
 }
-

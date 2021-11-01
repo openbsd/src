@@ -1,4 +1,4 @@
-/*	$OpenBSD: amsg.h,v 1.13 2020/02/26 13:53:58 ratchov Exp $	*/
+/*	$OpenBSD: amsg.h,v 1.14 2021/11/01 14:43:24 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -106,6 +106,7 @@ struct amsg {
 			uint16_t mode;		/* bitmap of MODE_XXX */
 #define AMSG_VERSION	7
 			uint8_t version;	/* protocol version */
+#define AMSG_NODEV	255
 			uint8_t devnum;		/* device number */
 			uint32_t id;		/* client id */
 #define AMSG_OPTMAX	12

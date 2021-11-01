@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.h,v 1.40 2021/03/03 10:19:06 ratchov Exp $	*/
+/*	$OpenBSD: dev.h,v 1.41 2021/11/01 14:43:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -126,7 +126,7 @@ struct ctl {
 
 #define CTL_HW		0
 #define CTL_DEV_MASTER	1
-#define CTL_DEV_ALT	2
+#define CTL_OPT_DEV	2
 #define CTL_SLOT_LEVEL	3
 	unsigned int scope;
 	union {
@@ -142,12 +142,16 @@ struct ctl {
 			struct dev *dev;
 		} dev_master;
 		struct {
-			struct dev *dev;
-			unsigned int idx;
-		} dev_alt;
-		struct {
 			struct slot *slot;
 		} slot_level;
+		struct {
+			struct slot *slot;
+			struct opt *opt;
+		} slot_opt;
+		struct {
+			struct opt *opt;
+			struct dev *dev;
+		} opt_dev;
 	} u;
 
 	unsigned int addr;		/* slot side control address */
@@ -217,6 +221,11 @@ struct dev {
 	char name[CTL_NAMEMAX];
 
 	/*
+	 * next to try if this fails
+	 */
+	struct dev *alt_next;
+
+	/*
 	 * audio device (while opened)
 	 */
 	struct dev_sio sio;
@@ -256,12 +265,7 @@ struct dev {
 #define DEV_INIT	1			/* stopped */
 #define DEV_RUN		2			/* playin & recording */
 	unsigned int pstate;			/* one of above */
-	struct dev_alt {
-		struct dev_alt *next;
-		char *name;
-		unsigned int idx;
-	} *alt_list;
-	int alt_num;
+	char *path;
 
 	/*
 	 * actual parameters and runtime state (i.e. once opened)
@@ -283,12 +287,13 @@ extern struct mtc mtc_array[1];
 void slot_array_init(void);
 
 void dev_log(struct dev *);
+int dev_open(struct dev *);
+void dev_close(struct dev *);
 void dev_abort(struct dev *);
-int dev_reopen(struct dev *);
+struct dev *dev_migrate(struct dev *);
 struct dev *dev_new(char *, struct aparams *, unsigned int, unsigned int,
     unsigned int, unsigned int, unsigned int, unsigned int);
 struct dev *dev_bynum(int);
-int dev_addname(struct dev *, char *);
 void dev_del(struct dev *);
 void dev_adjpar(struct dev *, int, int, int);
 int  dev_init(struct dev *);
@@ -297,6 +302,7 @@ int dev_ref(struct dev *);
 void dev_unref(struct dev *);
 int  dev_getpos(struct dev *);
 unsigned int dev_roundof(struct dev *, unsigned int);
+int dev_iscompat(struct dev *, struct dev *);
 
 /*
  * interface to hardware device
@@ -330,6 +336,7 @@ struct slot *slot_new(struct opt *, unsigned int, char *,
     struct slotops *, void *, int);
 void slot_del(struct slot *);
 void slot_setvol(struct slot *, unsigned int);
+void slot_setopt(struct slot *, struct opt *);
 void slot_start(struct slot *);
 void slot_stop(struct slot *, int);
 void slot_read(struct slot *);
@@ -356,6 +363,8 @@ struct ctlslot *ctlslot_new(struct opt *, struct ctlops *, void *);
 void ctlslot_del(struct ctlslot *);
 int ctlslot_visible(struct ctlslot *, struct ctl *);
 struct ctl *ctlslot_lookup(struct ctlslot *, int);
+void ctlslot_update(struct ctlslot *);
+
 void dev_label(struct dev *, int);
 void dev_ctlsync(struct dev *);
 

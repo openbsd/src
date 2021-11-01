@@ -1,4 +1,4 @@
-.\" $OpenBSD: sndio.7,v 1.26 2020/11/20 12:13:11 schwarze Exp $
+.\" $OpenBSD: sndio.7,v 1.27 2021/11/01 14:43:24 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 20 2020 $
+.Dd $Mdocdate: November 1 2021 $
 .Dt SNDIO 7
 .Os
 .Sh NAME
@@ -67,7 +67,7 @@ From the user's perspective, every audio device or MIDI port exposed by
 .Xr sndiod 8
 has a descriptor of the form:
 .Bd -literal -offset center
-type[@hostname][,servnum]/devnum[.option]
+type[@hostname][,servnum]/[devnum|option]
 .Ed
 .Pp
 This information is used by programs to determine
@@ -147,7 +147,7 @@ and/or
 .Ev AUDIORECDEVICE
 environment variables.
 If they are not set, the program first tries to connect to
-.Li snd/0 .
+.Li snd/default .
 If that fails, it then tries to use
 .Li rsnd/0 .
 .Pp
@@ -215,13 +215,13 @@ Raw audio devices.
 Raw MIDI ports.
 .El
 .Sh EXAMPLES
-.Bl -tag -width "snd/0.rear" -compact
+.Bl -tag -width "midithru/0" -compact
 .It Li snd/0
 Audio device referred to by the first
 .Fl f
 option of
 .Xr sndiod 8 .
-.It Li snd/0.rear
+.It Li snd/rear
 Sub-device registered with
 .Dq -s rear .
 .It Li midithru/0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sock.c,v 1.44 2021/03/03 10:19:06 ratchov Exp $	*/
+/*	$OpenBSD: sock.c,v 1.45 2021/11/01 14:43:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -101,6 +101,48 @@ struct sock *sock_list = NULL;
 unsigned int sock_sesrefs = 0;		/* connections to the session */
 uint8_t sock_sescookie[AMSG_COOKIELEN];	/* owner of the session */
 
+/*
+ * Old clients used to send dev number and opt name. This routine
+ * finds proper opt pointer for the given device.
+ */
+static struct opt *
+legacy_opt(int devnum, char *optname)
+{
+	struct dev *d;
+	struct opt *o;
+
+	d = dev_bynum(devnum);
+	if (d == NULL)
+		return NULL;
+	if (strcmp(optname, "default") == 0) {
+		for (o = opt_list; o != NULL; o = o->next) {
+			if (strcmp(o->name, d->name) == 0)
+				return o;
+		}
+		return NULL;
+	} else {
+		o = opt_byname(optname);
+		return (o != NULL && o->dev == d) ? o : NULL;
+	}
+}
+
+/*
+ * If control slot is associated to a particular opt, then
+ * remove the unused group part of the control name to make mixer
+ * look nicer
+ */
+static char *
+ctlgroup(struct sock *f, struct ctl *c)
+{
+	if (f->ctlslot->opt == NULL)
+		return c->group;
+	if (strcmp(c->group, f->ctlslot->opt->name) == 0)
+		return "";
+	if (strcmp(c->group, f->ctlslot->opt->dev->name) == 0)
+		return "";
+	return c->group;
+}
+
 void
 sock_log(struct sock *f)
 {
@@ -130,7 +172,7 @@ sock_log(struct sock *f)
 void
 sock_close(struct sock *f)
 {
-	struct dev *d;
+	struct opt *o;
 	struct sock **pf;
 	unsigned int tags, i;
 
@@ -159,8 +201,8 @@ sock_close(struct sock *f)
 	if (f->midi) {
 		tags = midi_tags(f->midi);
 		for (i = 0; i < DEV_NMAX; i++) {
-			if ((tags & (1 << i)) && (d = dev_bynum(i)) != NULL)
-				dev_unref(d);
+			if ((tags & (1 << i)) && (o = opt_bynum(i)) != NULL)
+				opt_unref(o);
 		}
 		midi_del(f->midi);
 		f->midi = NULL;
@@ -818,7 +860,6 @@ sock_hello(struct sock *f)
 {
 	struct amsg_hello *p = &f->rmsg.u.hello;
 	struct port *c;
-	struct dev *d;
 	struct opt *opt;
 	unsigned int mode;
 	unsigned int id;
@@ -876,21 +917,25 @@ sock_hello(struct sock *f)
 		if (f->midi == NULL)
 			return 0;
 		/* XXX: add 'devtype' to libsndio */
-		if (p->devnum < 16) {
-			d = dev_bynum(p->devnum);
-			if (d == NULL)
-				return 0;
-			opt = opt_byname(d, p->opt);
+		if (p->devnum == AMSG_NODEV) {
+			opt = opt_byname(p->opt);
 			if (opt == NULL)
 				return 0;
-			if (!dev_ref(d))
+			if (!opt_ref(opt))
+				return 0;
+			midi_tag(f->midi, opt->num);
+		} else if (p->devnum < 16) {
+			opt = legacy_opt(p->devnum, p->opt);
+			if (opt == NULL)
+				return 0;
+			if (!opt_ref(opt))
 				return 0;
 			midi_tag(f->midi, opt->num);
 		} else if (p->devnum < 32) {
 			midi_tag(f->midi, p->devnum);
 		} else if (p->devnum < 48) {
-			c = port_bynum(p->devnum - 32);
-			if (c == NULL || !port_ref(c))
+			c = port_alt_ref(p->devnum - 32);
+			if (c == NULL)
 				return 0;
 			f->port = c;
 			midi_link(f->midi, c->midi);
@@ -899,19 +944,15 @@ sock_hello(struct sock *f)
 		return 1;
 	}
 	if (mode & MODE_CTLMASK) {
-		d = dev_bynum(p->devnum);
-		if (d == NULL) {
-			if (log_level >= 2) {
-				sock_log(f);
-				log_puts(": ");
-				log_putu(p->devnum);
-				log_puts(": no such device\n");
-			}
-			return 0;
+		if (p->devnum == AMSG_NODEV) {
+			opt = opt_byname(p->opt);
+			if (opt == NULL)
+				return 0;
+		} else {
+			opt = legacy_opt(p->devnum, p->opt);
+			if (opt == NULL)
+				return 0;
 		}
-		opt = opt_byname(d, p->opt);
-		if (opt == NULL)
-			return 0;
 		f->ctlslot = ctlslot_new(opt, &sock_ctlops, f);
 		if (f->ctlslot == NULL) {
 			if (log_level >= 2) {
@@ -926,10 +967,8 @@ sock_hello(struct sock *f)
 		f->ctlsyncpending = 0;
 		return 1;
 	}
-	d = dev_bynum(p->devnum);
-	if (d == NULL)
-		return 0;
-	opt = opt_byname(d, p->opt);
+	opt = (p->devnum == AMSG_NODEV) ?
+	    opt_byname(p->opt) : legacy_opt(p->devnum, p->opt);
 	if (opt == NULL)
 		return 0;
 	f->slot = slot_new(opt, id, p->who, &sock_slotops, f, mode);
@@ -1582,10 +1621,7 @@ sock_buildmsg(struct sock *f)
 			c->val_mask &= ~mask;
 			type = ctlslot_visible(f->ctlslot, c) ?
 			    c->type : CTL_NONE;
-			strlcpy(desc->group, (f->ctlslot->opt == NULL ||
-			    strcmp(c->group, f->ctlslot->opt->dev->name) != 0) ?
-			    c->group : "",
-			    AMSG_CTL_NAMEMAX);
+			strlcpy(desc->group, ctlgroup(f, c), AMSG_CTL_NAMEMAX);
 			strlcpy(desc->node0.name, c->node0.name,
 			    AMSG_CTL_NAMEMAX);
 			desc->node0.unit = ntohs(c->node0.unit);

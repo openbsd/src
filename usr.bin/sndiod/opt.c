@@ -1,4 +1,4 @@
-/*	$OpenBSD: opt.c,v 1.8 2021/03/03 10:19:06 ratchov Exp $	*/
+/*	$OpenBSD: opt.c,v 1.9 2021/11/01 14:43:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2011 Alexandre Ratchov <alex@caoua.org>
  *
@@ -59,8 +59,7 @@ opt_midi_omsg(void *arg, unsigned char *msg, int len)
 		chan = msg[0] & MIDI_CHANMASK;
 		if (chan >= DEV_NSLOT)
 			return;
-		if (slot_array[chan].opt == NULL ||
-		    slot_array[chan].opt->dev != o->dev)
+		if (slot_array[chan].opt != o)
 			return;
 		slot_setvol(slot_array + chan, msg[2]);
 		ctl_onval(CTL_SLOT_LEVEL, slot_array + chan, NULL, msg[2]);
@@ -91,6 +90,7 @@ opt_midi_omsg(void *arg, unsigned char *msg, int len)
 				return;
 			if (o->mtc == NULL)
 				return;
+			mtc_setdev(o->mtc, o->dev);
 			if (log_level >= 2) {
 				log_puts(o->name);
 				log_puts(": mmc stop\n");
@@ -102,6 +102,7 @@ opt_midi_omsg(void *arg, unsigned char *msg, int len)
 				return;
 			if (o->mtc == NULL)
 				return;
+			mtc_setdev(o->mtc, o->dev);
 			if (log_level >= 2) {
 				log_puts(o->name);
 				log_puts(": mmc start\n");
@@ -115,6 +116,7 @@ opt_midi_omsg(void *arg, unsigned char *msg, int len)
 				return;
 			if (o->mtc == NULL)
 				return;
+			mtc_setdev(o->mtc, o->dev);
 			switch (x->u.loc.hr >> 5) {
 			case MTC_FPS_24:
 				fps = 24;
@@ -173,22 +175,28 @@ opt_new(struct dev *d, char *name,
     int pmin, int pmax, int rmin, int rmax,
     int maxweight, int mmc, int dup, unsigned int mode)
 {
+	struct dev *a;
 	struct opt *o, **po;
 	unsigned int len, num;
 	char c;
 
-	for (len = 0; name[len] != '\0'; len++) {
-		if (len == OPT_NAMEMAX) {
-			log_puts(name);
-			log_puts(": too long\n");
-			return NULL;
-		}
-		c = name[len];
-		if ((c < 'a' || c > 'z') &&
-		    (c < 'A' || c > 'Z')) {
-			log_puts(name);
-			log_puts(": only alphabetic chars allowed\n");
-			return NULL;
+	if (name == NULL) {
+		name = d->name;
+		len = strlen(name);
+	} else {
+		for (len = 0; name[len] != '\0'; len++) {
+			if (len == OPT_NAMEMAX) {
+				log_puts(name);
+				log_puts(": too long\n");
+				return NULL;
+			}
+			c = name[len];
+			if ((c < 'a' || c > 'z') &&
+			    (c < 'A' || c > 'Z')) {
+				log_puts(name);
+				log_puts(": only alphabetic chars allowed\n");
+				return NULL;
+			}
 		}
 	}
 	num = 0;
@@ -199,9 +207,8 @@ opt_new(struct dev *d, char *name,
 		log_puts(": too many opts\n");
 		return NULL;
 	}
-	if (opt_byname(d, name)) {
-		dev_log(d);
-		log_puts(".");
+
+	if (opt_byname(name)) {
 		log_puts(name);
 		log_puts(": already defined\n");
 		return NULL;
@@ -220,9 +227,18 @@ opt_new(struct dev *d, char *name,
 		}
 	}
 
+	if (strcmp(d->name, name) == 0)
+		a = d;
+	else {
+		/* circulate to the first "alternate" device (greatest num) */
+		for (a = d; a->alt_next->num > a->num; a = a->alt_next)
+			;
+	}
+
 	o = xmalloc(sizeof(struct opt));
 	o->num = num;
-	o->dev = d;
+	o->alt_first = o->dev = a;
+	o->refcnt = 0;
 
 	/*
 	 * XXX: below, we allocate a midi input buffer, since we don't
@@ -286,14 +302,24 @@ opt_new(struct dev *d, char *name,
 }
 
 struct opt *
-opt_byname(struct dev *d, char *name)
+opt_byname(char *name)
 {
 	struct opt *o;
 
 	for (o = opt_list; o != NULL; o = o->next) {
-		if (d != NULL && o->dev != d)
-			continue;
 		if (strcmp(name, o->name) == 0)
+			return o;
+	}
+	return NULL;
+}
+
+struct opt *
+opt_bynum(int num)
+{
+	struct opt *o;
+
+	for (o = opt_list; o != NULL; o = o->next) {
+		if (o->num == num)
 			return o;
 	}
 	return NULL;
@@ -315,4 +341,175 @@ opt_del(struct opt *o)
 	midi_del(o->midi);
 	*po = o->next;
 	xfree(o);
+}
+
+void
+opt_init(struct opt *o)
+{
+	struct dev *d;
+
+	if (strcmp(o->name, o->dev->name) != 0) {
+		for (d = dev_list; d != NULL; d = d->next) {
+			ctl_new(CTL_OPT_DEV, o, d,
+			    CTL_SEL, o->name, "server", -1, "device",
+			    d->name, -1, 1, o->dev == d);
+		}
+	}
+}
+
+void
+opt_done(struct opt *o)
+{
+	struct dev *d;
+
+	if (o->refcnt != 0) {
+		// XXX: all clients are already kicked, so this never happens
+		log_puts(o->name);
+		log_puts(": still has refs\n");
+	}
+	for (d = dev_list; d != NULL; d = d->next)
+		ctl_del(CTL_OPT_DEV, o, d);
+}
+
+/*
+ * Set opt's device, and (if necessary) move clients to
+ * to the new device
+ */
+void
+opt_setdev(struct opt *o, struct dev *ndev)
+{
+	struct dev *odev;
+	struct ctl *c;
+	struct ctlslot *p;
+	struct slot *s;
+	int i;
+
+	if (!dev_ref(ndev))
+		return;
+
+	odev = o->dev;
+	if (odev == ndev) {
+		dev_unref(ndev);
+		return;
+	}
+
+	/* check if clients can use new device */
+	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
+		if (s->opt != o)
+			continue;
+		if (s->ops != NULL && !dev_iscompat(odev, ndev)) {
+			dev_unref(ndev);
+			return;
+		}
+	}
+
+	/*
+	 * if we're using MMC, move all opts to the new device, mtc_setdev()
+	 * will call us back
+	 */
+	if (o->mtc != NULL && o->mtc->dev != ndev) {
+		mtc_setdev(o->mtc, ndev);
+		dev_unref(ndev);
+		return;
+	}
+
+	c = ctl_find(CTL_OPT_DEV, o, o->dev);
+	if (c != NULL)
+		c->curval = 0;
+
+	/* detach clients from old device */
+	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
+		if (s->opt != o)
+			continue;
+
+		if (s->pstate == SLOT_RUN || s->pstate == SLOT_STOP)
+			slot_detach(s);
+	}
+
+	o->dev = ndev;
+
+	if (o->refcnt > 0) {
+		dev_unref(odev);
+		dev_ref(o->dev);
+	}
+
+	c = ctl_find(CTL_OPT_DEV, o, o->dev);
+	if (c != NULL) {
+		c->curval = 1;
+		c->val_mask = ~0;
+	}
+
+	/* attach clients to new device */
+	for (i = 0, s = slot_array; i < DEV_NSLOT; i++, s++) {
+		if (s->opt != o)
+			continue;
+
+		if (ndev != odev) {
+			dev_midi_slotdesc(odev, s);
+			dev_midi_slotdesc(ndev, s);
+			dev_midi_vol(ndev, s);
+		}
+
+		c = ctl_find(CTL_SLOT_LEVEL, s, NULL);
+		ctl_update(c);
+
+		if (s->pstate == SLOT_RUN || s->pstate == SLOT_STOP) {
+			slot_initconv(s);
+			slot_attach(s);
+		}
+	}
+
+	/* move controlling clients to new device */
+	for (p = ctlslot_array, i = 0; i < DEV_NCTLSLOT; i++, p++) {
+		if (p->ops == NULL)
+			continue;
+		if (p->opt == o)
+			ctlslot_update(p);
+	}
+
+	dev_unref(ndev);
+}
+
+/*
+ * Get a reference to opt's device
+ */
+struct dev *
+opt_ref(struct opt *o)
+{
+	struct dev *d;
+
+	if (o->refcnt == 0) {
+		if (strcmp(o->name, o->dev->name) == 0) {
+			if (!dev_ref(o->dev))
+				return NULL;
+		} else {
+			/* find first working one */
+			d = o->alt_first;
+			while (1) {
+				if (dev_ref(d))
+					break;
+				d = d->alt_next;
+				if (d == o->alt_first)
+					return NULL;
+			}
+
+			/* if device changed, move everything to the new one */
+			if (d != o->dev)
+				opt_setdev(o, d);
+		}
+	}
+
+	o->refcnt++;
+	return o->dev;
+}
+
+/*
+ * Release opt's device
+ */
+void
+opt_unref(struct opt *o)
+{
+	o->refcnt--;
+	if (o->refcnt == 0)
+		dev_unref(o->dev);
 }

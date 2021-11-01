@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.7 2020/01/23 05:40:09 ratchov Exp $	*/
+/*	$OpenBSD: utils.c,v 1.8 2021/11/01 14:43:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2003-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -187,48 +187,4 @@ xstrdup(char *s)
 	p = xmalloc(size);
 	memcpy(p, s, size);
 	return p;
-}
-
-/*
- * copy and append the given string to the name list
- */
-void
-namelist_add(struct name **list, char *str)
-{
-	struct name *n;
-	size_t size;
-
-	size = strlen(str) + 1;
-	n = xmalloc(sizeof(struct name) + size);
-	memcpy(n->str, str, size);
-	n->next = *list;
-	*list = n;
-}
-
-void
-namelist_clear(struct name **list)
-{
-	struct name *n;
-
-	while ((n = *list) != NULL) {
-		*list = n->next;
-		xfree(n);
-	}
-}
-
-char *
-namelist_byindex(struct name **list, unsigned int idx)
-{
-	struct name *n;
-
-	n = *list;
-	while (1) {
-		if (n == NULL)
-			return NULL;
-		if (idx == 0)
-			break;
-		n = n->next;
-		idx--;
-	}
-	return n->str;
 }

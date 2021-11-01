@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.46 2021/07/12 15:09:20 beck Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.47 2021/11/01 14:43:25 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -318,8 +318,7 @@ mkdev(char *path, struct aparams *par,
 	struct dev *d;
 
 	for (d = dev_list; d != NULL; d = d->next) {
-		if (d->alt_list->next == NULL &&
-		    strcmp(d->alt_list->name, path) == 0)
+		if (strcmp(d->path, path) == 0)
 			return d;
 	}
 	if (!bufsz && !round) {
@@ -341,8 +340,7 @@ mkport(char *path, int hold)
 	struct port *c;
 
 	for (c = port_list; c != NULL; c = c->next) {
-		if (c->path_list->next == NULL &&
-		    strcmp(c->path_list->str, path) == 0)
+		if (strcmp(c->path, path) == 0)
 			return c;
 	}
 	c = port_new(path, MODE_MIDIMASK, hold);
@@ -385,10 +383,8 @@ static int
 start_helper(int background)
 {
 	struct dev *d;
-	struct dev_alt *da;
 	struct port *p;
 	struct passwd *pw;
-	struct name *n;
 	int s[2];
 	pid_t pid;
 
@@ -424,14 +420,11 @@ start_helper(int background)
 				err(1, "cannot drop privileges");
 		}
 		for (d = dev_list; d != NULL; d = d->next) {
-			for (da = d->alt_list; da != NULL; da = da->next) {
-				dounveil(da->name, "rsnd/", "/dev/audio");
-				dounveil(da->name, "rsnd/", "/dev/audioctl");
-			}
+			dounveil(d->path, "rsnd/", "/dev/audio");
+			dounveil(d->path, "rsnd/", "/dev/audioctl");
 		}
 		for (p = port_list; p != NULL; p = p->next) {
-			for (n = p->path_list; n != NULL; n = n->next)
-				dounveil(n->str, "rmidi/", "/dev/rmidi");
+			dounveil(p->path, "rmidi/", "/dev/rmidi");
 		}
 		if (pledge("stdio sendfd rpath wpath", NULL) == -1)
 			err(1, "pledge");
@@ -461,10 +454,12 @@ main(int argc, char **argv)
 	char base[SOCKPATH_MAX], path[SOCKPATH_MAX];
 	unsigned int mode, dup, mmc, vol;
 	unsigned int hold, autovol, bufsz, round, rate;
+	unsigned int reopen_list;
 	const char *str;
 	struct aparams par;
-	struct dev *d;
-	struct port *p;
+	struct opt *o;
+	struct dev *d, *dev_first, *dev_next;
+	struct port *p, *port_first, *port_next;
 	struct listen *l;
 	struct passwd *pw;
 	struct tcpaddr {
@@ -493,6 +488,8 @@ main(int argc, char **argv)
 	rmax = 1;
 	aparams_init(&par);
 	mode = MODE_PLAY | MODE_REC;
+	dev_first = dev_next = NULL;
+	port_first = port_next = NULL;
 	tcpaddr_list = NULL;
 	d = NULL;
 	p = NULL;
@@ -559,11 +556,17 @@ main(int argc, char **argv)
 			break;
 		case 'q':
 			p = mkport(optarg, hold);
+			/* create new circulate list */
+			port_first = port_next = p;
 			break;
 		case 'Q':
 			if (p == NULL)
 				errx(1, "-Q %s: no ports defined", optarg);
-			namelist_add(&p->path_list, optarg);
+			p = mkport(optarg, hold);
+			/* add to circulate list */
+			p->alt_next = port_next;
+			port_first->alt_next = p;
+			port_next = p;
 			break;
 		case 'a':
 			hold = opt_onoff();
@@ -584,12 +587,18 @@ main(int argc, char **argv)
 		case 'f':
 			d = mkdev(optarg, &par, 0, bufsz, round,
 			    rate, hold, autovol);
+			/* create new circulate list */
+			dev_first = dev_next = d;
 			break;
 		case 'F':
 			if (d == NULL)
 				errx(1, "-F %s: no devices defined", optarg);
-			if (!dev_addname(d, optarg))
-				exit(1);
+			d = mkdev(optarg, &par, 0, bufsz, round,
+			    rate, hold, autovol);
+			/* add to circulate list */
+			d->alt_next = dev_next;
+			dev_first->alt_next = d;
+			dev_next = d;
 			break;
 		default:
 			fputs(usagestr, stderr);
@@ -612,12 +621,27 @@ main(int argc, char **argv)
 			    bufsz, round, rate, 0, autovol);
 		}
 	}
-	for (d = dev_list; d != NULL; d = d->next) {
-		if (opt_byname(d, "default"))
-			continue;
-		if (mkopt("default", d, pmin, pmax, rmin, rmax,
-			mode, vol, mmc, dup) == NULL)
+
+	/*
+	 * Add default sub-device (if none) backed by the last device
+	 */
+	o = opt_byname("default");
+	if (o == NULL) {
+		o = mkopt("default", dev_list, pmin, pmax, rmin, rmax,
+		    mode, vol, 0, dup);
+		if (o == NULL)
 			return 1;
+	}
+
+	/*
+	 * For each device create an anonymous sub-device using
+	 * the "default" sub-device as template
+	 */
+	for (d = dev_list; d != NULL; d = d->next) {
+		if (opt_new(d, NULL, o->pmin, o->pmax, o->rmin, o->rmax,
+			o->maxweight, o->mtc != NULL, o->dup, o->mode) == NULL)
+			return 1;
+		dev_adjpar(d, o->mode, o->pmax, o->rmax);
 	}
 
 	setsig();
@@ -652,6 +676,8 @@ main(int argc, char **argv)
 		if (!dev_init(d))
 			return 1;
 	}
+	for (o = opt_list; o != NULL; o = o->next)
+		opt_init(o);
 	if (background) {
 		log_flush();
 		log_level = 0;
@@ -680,10 +706,28 @@ main(int argc, char **argv)
 			break;
 		if (reopen_flag) {
 			reopen_flag = 0;
-			for (d = dev_list; d != NULL; d = d->next)
-				dev_reopen(d);
-			for (p = port_list; p != NULL; p = p->next)
-				port_reopen(p);
+
+			reopen_list = 0;
+			for (d = dev_list; d != NULL; d = d->next) {
+				if (d->pstate != DEV_CFG)
+					reopen_list |= (1 << d->num);
+			}
+			for (d = dev_list; d != NULL; d = d->next) {
+				if (reopen_list & (1 << d->num))
+					dev_migrate(d);
+			}
+
+			reopen_list = 0;
+			for (p = port_list; p != NULL; p = p->next) {
+				if (p->state != PORT_CFG)
+					reopen_list |= (1 << p->num);
+			}
+			for (p = port_list; p != NULL; p = p->next) {
+				if (reopen_list & (1 << p->num)) {
+					if (port_migrate(p) != p)
+						port_close(p);
+				}
+			}
 		}
 		if (!fdpass_peer)
 			break;
@@ -695,6 +739,8 @@ main(int argc, char **argv)
 		listen_close(listen_list);
 	while (sock_list != NULL)
 		sock_close(sock_list);
+	for (o = opt_list; o != NULL; o = o->next)
+		opt_done(o);
 	for (d = dev_list; d != NULL; d = d->next)
 		dev_done(d);
 	for (p = port_list; p != NULL; p = p->next)
