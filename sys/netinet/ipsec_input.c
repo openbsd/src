@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.189 2021/10/24 22:59:47 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.190 2021/11/01 09:19:10 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -623,10 +623,11 @@ ipsec_common_input_cb(struct mbuf **mp, struct tdb *tdbp, int skip, int protoff)
 		if ((ifp = if_get(m->m_pkthdr.ph_ifidx)) == NULL) {
 			goto baddone;
 		}
-		if (pf_test(af, PF_IN, ifp, &m) != PF_PASS) {
+		if (pf_test(af, PF_IN, ifp, mp) != PF_PASS) {
 			if_put(ifp);
 			goto baddone;
 		}
+		m = *mp;
 		if_put(ifp);
 		if (m == NULL)
 			return 0;
