@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.21 2021/10/28 09:02:19 beck Exp $ */
+/*	$OpenBSD: parser.c,v 1.22 2021/11/01 09:12:18 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -248,21 +248,14 @@ proc_parser_cert(const struct entity *entp, const unsigned char *der,
 	 */
 
 	cert->valid = 1;
+	if ((cert->tal = strdup(a->cert->tal)) == NULL)
+		err(1, NULL);
 
 	na = malloc(sizeof(*na));
 	if (na == NULL)
 		err(1, NULL);
-
-	cert->tal = strdup(a->tal);
-	if (cert->tal == NULL)
-		err(1, NULL);
-
 	na->parent = a;
 	na->cert = cert;
-	na->tal = a->tal;
-	na->fn = strdup(entp->file);
-	if (na->fn == NULL)
-		err(1, NULL);
 
 	if (RB_INSERT(auth_tree, &auths, na) != NULL)
 		err(1, "auth tree corrupted");
@@ -290,7 +283,6 @@ proc_parser_root_cert(const struct entity *entp, const unsigned char *der,
 	struct cert		*cert;
 	X509			*x509;
 	struct auth		*na;
-	char			*tal;
 
 	assert(entp->has_data);
 
@@ -340,20 +332,14 @@ proc_parser_root_cert(const struct entity *entp, const unsigned char *der,
 	 */
 
 	cert->valid = 1;
+	if ((cert->tal = strdup(entp->descr)) == NULL)
+		err(1, NULL);
 
 	na = malloc(sizeof(*na));
 	if (na == NULL)
 		err(1, NULL);
-
-	if ((tal = strdup(entp->descr)) == NULL)
-		err(1, NULL);
-
 	na->parent = NULL;
 	na->cert = cert;
-	na->tal = tal;
-	na->fn = strdup(entp->file);
-	if (na->fn == NULL)
-		err(1, NULL);
 
 	if (RB_INSERT(auth_tree, &auths, na) != NULL)
 		err(1, "auth tree corrupted");
