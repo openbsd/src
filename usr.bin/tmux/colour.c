@@ -1,4 +1,4 @@
-/* $OpenBSD: colour.c,v 1.23 2021/10/25 21:21:16 nicm Exp $ */
+/* $OpenBSD: colour.c,v 1.24 2021/11/01 07:48:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -115,7 +115,7 @@ colour_force_rgb(int c)
 		return (colour_256toRGB(c));
 	if (c >= 0 && c <= 7)
 		return (colour_256toRGB(c));
-	if (c >= 90 & c <= 97)
+	if (c >= 90 && c <= 97)
 		return (colour_256toRGB(8 + c - 90));
 	return (-1);
 }
