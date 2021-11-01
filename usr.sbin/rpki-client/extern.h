@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.87 2021/11/01 09:12:18 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.88 2021/11/01 17:00:34 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -128,7 +128,6 @@ struct cert {
 	char		*tal; /* basename of TAL for this cert */
 	enum cert_purpose	 purpose; /* Certificate Purpose (BGPSec or CA) */
 	char		*pubkey; /* Subject Public Key Info */
-	int		 valid; /* validated resources */
 	X509		*x509; /* the cert */
 	time_t		 expires; /* do not use after */
 };
@@ -277,7 +276,8 @@ struct auth {
 RB_HEAD(auth_tree, auth);
 RB_PROTOTYPE(auth_tree, auth, entry, authcmp);
 
-struct auth *auth_find(struct auth_tree *, const char *);
+struct auth	*auth_find(struct auth_tree *, const char *);
+int		 auth_insert(struct auth_tree *, struct cert *, struct auth *);
 
 /*
  * Resource types specified by the RPKI profiles.
@@ -359,8 +359,7 @@ struct stats {
 	size_t	 mfts_fail; /* failing syntactic parse */
 	size_t	 mfts_stale; /* stale manifests */
 	size_t	 certs; /* certificates */
-	size_t	 certs_fail; /* failing syntactic parse */
-	size_t	 certs_invalid; /* invalid resources */
+	size_t	 certs_fail; /* invalid certificate */
 	size_t	 roas; /* route origin authorizations */
 	size_t	 roas_fail; /* failing syntactic parse */
 	size_t	 roas_invalid; /* invalid resources */
@@ -378,7 +377,6 @@ struct stats {
 	size_t	 del_files; /* number of files removed in cleanup */
 	size_t	 del_dirs; /* number of directories removed in cleanup */
 	size_t	 brks; /* number of BGPsec Router Key (BRK) certificates */
-	size_t	 brks_invalids; /* invalid BGPsec certs */
 	char	*talnames;
 	struct timeval	elapsed_time;
 	struct timeval	user_time;

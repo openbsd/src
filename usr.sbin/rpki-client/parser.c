@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.22 2021/11/01 09:12:18 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.23 2021/11/01 17:00:34 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -195,7 +195,7 @@ proc_parser_cert(const struct entity *entp, const unsigned char *der,
 	struct cert		*cert;
 	X509			*x509;
 	int			 c;
-	struct auth		*a = NULL, *na;
+	struct auth		*a = NULL;
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls;
 
@@ -237,28 +237,24 @@ proc_parser_cert(const struct entity *entp, const unsigned char *der,
 	sk_X509_free(chain);
 	sk_X509_CRL_free(crls);
 
+	if ((cert->tal = strdup(a->cert->tal)) == NULL)
+		err(1, NULL);
+
 	/* Validate the cert to get the parent */
 	if (!valid_cert(entp->file, &auths, cert)) {
 		X509_free(x509); // needed? XXX
-		return cert;
+		cert_free(cert);
+		return NULL;
 	}
 
 	/*
 	 * Add validated certs to the RPKI auth tree.
 	 */
-
-	cert->valid = 1;
-	if ((cert->tal = strdup(a->cert->tal)) == NULL)
-		err(1, NULL);
-
-	na = malloc(sizeof(*na));
-	if (na == NULL)
-		err(1, NULL);
-	na->parent = a;
-	na->cert = cert;
-
-	if (RB_INSERT(auth_tree, &auths, na) != NULL)
-		err(1, "auth tree corrupted");
+	if (!auth_insert(&auths, cert, a)) {
+		X509_free(x509); // needed? XXX
+		cert_free(cert);
+		return NULL;
+	}
 
 	return cert;
 }
@@ -282,7 +278,6 @@ proc_parser_root_cert(const struct entity *entp, const unsigned char *der,
 	X509_NAME		*name;
 	struct cert		*cert;
 	X509			*x509;
-	struct auth		*na;
 
 	assert(entp->has_data);
 
@@ -327,27 +322,23 @@ proc_parser_root_cert(const struct entity *entp, const unsigned char *der,
 		goto badcert;
 	}
 
-	/*
-	 * Add valid roots to the RPKI auth tree.
-	 */
-
-	cert->valid = 1;
 	if ((cert->tal = strdup(entp->descr)) == NULL)
 		err(1, NULL);
 
-	na = malloc(sizeof(*na));
-	if (na == NULL)
-		err(1, NULL);
-	na->parent = NULL;
-	na->cert = cert;
-
-	if (RB_INSERT(auth_tree, &auths, na) != NULL)
-		err(1, "auth tree corrupted");
+	/*
+	 * Add valid roots to the RPKI auth tree.
+	 */
+	if (!auth_insert(&auths, cert, NULL)) {
+		X509_free(x509); // needed? XXX
+		cert_free(cert);
+		return NULL;
+	}
 
 	return cert;
  badcert:
 	X509_free(x509); // needed? XXX
-	return cert;
+	cert_free(cert);
+	return NULL;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.22 2021/10/11 16:50:03 job Exp $ */
+/*	$OpenBSD: output.c,v 1.23 2021/11/01 17:00:34 claudio Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -213,8 +213,8 @@ outputheader(FILE *out, struct stats *st)
 	    "# Generated on host %s at %s\n"
 	    "# Processing time %lld seconds (%lld seconds user, %lld seconds system)\n"
 	    "# Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)\n"
-	    "# BGPsec Router Certificates: %zu (%zu invalid)\n"
-	    "# Certificates: %zu (%zu failed parse, %zu invalid)\n"
+	    "# BGPsec Router Certificates: %zu\n"
+	    "# Certificates: %zu (%zu invalid)\n"
 	    "# Trust Anchor Locators: %zu (%s)\n"
 	    "# Manifests: %zu (%zu failed parse, %zu stale)\n"
 	    "# Certificate revocation lists: %zu\n"
@@ -224,8 +224,7 @@ outputheader(FILE *out, struct stats *st)
 	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
 	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
 	    st->roas, st->roas_fail, st->roas_invalid,
-	    st->brks, st->brks_invalids,
-	    st->certs, st->certs_fail, st->certs_invalid,
+	    st->brks, st->certs, st->certs_fail,
 	    st->tals, st->talnames,
 	    st->mfts, st->mfts_fail, st->mfts_stale,
 	    st->crls,

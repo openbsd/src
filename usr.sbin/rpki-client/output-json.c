@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.20 2021/10/15 08:48:18 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.21 2021/11/01 17:00:34 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -47,9 +47,7 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t\t\"failedroas\": %zu,\n"
 	    "\t\t\"invalidroas\": %zu,\n"
 	    "\t\t\"bgpsec_pubkeys\": %zu,\n"
-	    "\t\t\"invalidbgpsec_pubkeys\": %zu,\n"
 	    "\t\t\"certificates\": %zu,\n"
-	    "\t\t\"failcertificates\": %zu,\n"
 	    "\t\t\"invalidcertificates\": %zu,\n"
 	    "\t\t\"tals\": %zu,\n"
 	    "\t\t\"talfiles\": \"%s\",\n"
@@ -67,8 +65,7 @@ outputheader_json(FILE *out, struct stats *st)
 	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
 	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
 	    st->roas, st->roas_fail, st->roas_invalid,
-	    st->brks, st->brks_invalids,
-	    st->certs, st->certs_fail, st->certs_invalid,
+	    st->brks, st->certs, st->certs_fail,
 	    st->tals, st->talnames,
 	    st->mfts, st->mfts_fail, st->mfts_stale,
 	    st->crls,

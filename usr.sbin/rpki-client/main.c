@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.159 2021/10/31 16:00:14 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.160 2021/11/01 17:00:34 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -497,24 +497,18 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		}
 		cert = cert_read(b);
 		if (cert->purpose == CERT_PURPOSE_CA) {
-			if (cert->valid) {
-				/*
-				 * Process the revocation list from the
-				 * certificate *first*, since it might mark that
-				 * we're revoked and then we don't want to
-				 * process the MFT.
-				 */
-				queue_add_from_cert(cert);
-			} else
-				st->certs_invalid++;
+			/*
+			 * Process the revocation list from the
+			 * certificate *first*, since it might mark that
+			 * we're revoked and then we don't want to
+			 * process the MFT.
+			 */
+			queue_add_from_cert(cert);
 		} else if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
-			if (cert->valid) {
-				cert_insert_brks(brktree, cert);
-				st->brks++;
-			} else
-				st->brks_invalids++;
+			cert_insert_brks(brktree, cert);
+			st->brks++;
 		} else
-			st->certs_invalid++;
+			st->certs_fail++;
 		cert_free(cert);
 		break;
 	case RTYPE_MFT:
@@ -1184,10 +1178,9 @@ main(int argc, char *argv[])
 	    (long long)stats.system_time.tv_sec);
 	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);
-	logx("BGPsec Router Certificates: %zu (%zu invalid)",
-	    stats.brks, stats.brks_invalids);
-	logx("Certificates: %zu (%zu failed parse, %zu invalid)",
-	    stats.certs, stats.certs_fail, stats.certs_invalid);
+	logx("BGPsec Router Certificates: %zu", stats.brks);
+	logx("Certificates: %zu (%zu invalid)",
+	    stats.certs, stats.certs_fail);
 	logx("Trust Anchor Locators: %zu", stats.tals);
 	logx("Manifests: %zu (%zu failed parse, %zu stale)",
 	    stats.mfts, stats.mfts_fail, stats.mfts_stale);

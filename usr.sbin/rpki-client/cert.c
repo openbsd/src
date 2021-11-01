@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.43 2021/10/28 09:02:19 beck Exp $ */
+/*	$OpenBSD: cert.c,v 1.44 2021/11/01 17:00:34 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1256,7 +1256,6 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 {
 	size_t	 i;
 
-	io_simple_buffer(b, &p->valid, sizeof(int));
 	io_simple_buffer(b, &p->expires, sizeof(time_t));
 	io_simple_buffer(b, &p->purpose, sizeof(enum cert_purpose));
 	io_simple_buffer(b, &p->ipsz, sizeof(size_t));
@@ -1319,7 +1318,6 @@ cert_read(struct ibuf *b)
 	if ((p = calloc(1, sizeof(struct cert))) == NULL)
 		err(1, NULL);
 
-	io_read_buf(b, &p->valid, sizeof(int));
 	io_read_buf(b, &p->expires, sizeof(time_t));
 	io_read_buf(b, &p->purpose, sizeof(enum cert_purpose));
 	io_read_buf(b, &p->ipsz, sizeof(size_t));
@@ -1363,6 +1361,24 @@ auth_find(struct auth_tree *auths, const char *aki)
 	a.cert = &c;
 
 	return RB_FIND(auth_tree, auths, &a);
+}
+
+int
+auth_insert(struct auth_tree *auths, struct cert *cert, struct auth *parent)
+{
+	struct auth *na;
+
+	na = malloc(sizeof(*na));
+	if (na == NULL)
+		err(1, NULL);
+
+	na->parent = parent;
+	na->cert = cert;
+
+	if (RB_INSERT(auth_tree, auths, na) != NULL)
+		err(1, "auth tree corrupted");
+
+	return 1;
 }
 
 static inline int
