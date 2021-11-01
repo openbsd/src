@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.27 2018/07/31 02:55:57 deraadt Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.28 2021/11/01 23:20:35 cheloha Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -45,8 +45,6 @@
 #include <wchar.h>
 #include <wctype.h>
 
-#define	MAXLINELEN	(8 * 1024)
-
 int cflag, dflag, iflag, uflag;
 int numchars, numfields, repeats;
 
@@ -59,10 +57,10 @@ __dead void	usage(void);
 int
 main(int argc, char *argv[])
 {
-	char *t1, *t2;
+	char *prevline, *t1, *t2, *thisline;
 	FILE *ifp = NULL, *ofp = NULL;
+	size_t prevsize, thissize, tmpsize;
 	int ch;
-	char *prevline, *thisline;
 
 	setlocale(LC_CTYPE, "");
 
@@ -133,15 +131,18 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	prevline = malloc(MAXLINELEN);
-	thisline = malloc(MAXLINELEN);
-	if (prevline == NULL || thisline == NULL)
-		err(1, "malloc");
-
-	if (fgets(prevline, MAXLINELEN, ifp) == NULL)
+	prevsize = 0;
+	prevline = NULL;
+	if (getline(&prevline, &prevsize, ifp) == -1) {
+		free(prevline);
+		if (ferror(ifp))
+			err(1, "getline");
 		exit(0);
-
-	while (fgets(thisline, MAXLINELEN, ifp)) {
+	}
+	
+	thissize = 0;
+	thisline = NULL;
+	while (getline(&thisline, &thissize, ifp) != -1) {
 		/* If requested get the chosen fields + character offsets. */
 		if (numfields || numchars) {
 			t1 = skip(thisline);
@@ -157,11 +158,20 @@ main(int argc, char *argv[])
 			t1 = prevline;
 			prevline = thisline;
 			thisline = t1;
+			tmpsize = prevsize;
+			prevsize = thissize;
+			thissize = tmpsize;
 			repeats = 0;
 		} else
 			++repeats;
 	}
+	free(thisline);
+	if (ferror(ifp))
+		err(1, "getline");
+
 	show(ofp, prevline);
+	free(prevline);
+
 	exit(0);
 }
 
