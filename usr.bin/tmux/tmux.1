@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.867 2021/10/25 21:21:16 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.868 2021/11/01 09:34:49 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 25 2021 $
+.Dd $Mdocdate: November 1 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4415,6 +4415,9 @@ capabilities.
 The alternate screen feature preserves the contents of the window when an
 interactive application starts and restores it on exit, so that any output
 visible before the application starts reappears unchanged after it exits.
+.Pp
+.It Ic cursor-colour Ar colour
+Set the colour of the cursor.
 .Pp
 .It Ic pane-colours[] Ar colour
 The default colour palette.

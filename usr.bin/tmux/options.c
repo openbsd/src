@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.65 2021/10/14 13:19:01 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.66 2021/11/01 09:34:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1106,13 +1106,20 @@ options_push_changes(const char *name)
 	struct session		*s;
 	struct window		*w;
 	struct window_pane	*wp;
+	int			 c;
 
 	if (strcmp(name, "automatic-rename") == 0) {
 		RB_FOREACH(w, windows, &windows) {
 			if (w->active == NULL)
 				continue;
-			if (options_get_number(w->options, "automatic-rename"))
+			if (options_get_number(w->options, name))
 				w->active->flags |= PANE_CHANGED;
+		}
+	}
+	if (strcmp(name, "cursor-colour") == 0) {
+		RB_FOREACH(wp, window_pane_tree, &all_window_panes) {
+			c = options_get_number(wp->options, name);
+			wp->screen->default_ccolour = c;
 		}
 	}
 	if (strcmp(name, "key-table") == 0) {
