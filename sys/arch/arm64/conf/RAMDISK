@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.159 2021/10/31 16:38:12 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.160 2021/11/01 09:02:46 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -108,6 +108,9 @@ aplpcie*	at fdt?
 pci*		at aplpcie?
 aplpinctrl*	at fdt? early 1
 aplspi*		at fdt?
+aplhidev*	at spi?
+aplkbd*		at aplhidev?
+wskbd*		at aplkbd? mux 1
 aplspmi*	at fdt?
 aplpmu*		at aplspmi?
 exuart*		at fdt?

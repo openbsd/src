@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.45 2021/10/31 16:38:12 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.46 2021/11/01 09:02:46 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -151,6 +151,14 @@ file	arch/arm64/dev/apldwusb.c		apldwusb
 device	aplintc
 attach	aplintc at fdt
 file	arch/arm64/dev/aplintc.c		aplintc
+
+device	aplhidev {}
+attach	aplhidev at spi
+device	aplkbd: hid, hidkbd, wskbddev
+attach	aplkbd at aplhidev
+device	aplms: hid, hidms, wsmousedev
+attach	aplms at aplhidev
+file	arch/arm64/dev/aplhidev.c		aplhidev | aplkbd | aplms needs-flag
 
 device	aplpcie: pcibus
 attach	aplpcie at fdt
