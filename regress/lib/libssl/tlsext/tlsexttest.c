@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.51 2021/10/26 14:34:02 beck Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.52 2021/11/01 16:39:01 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3543,85 +3543,171 @@ done:
 	return (failure);
 }
 
-unsigned char *valid_hostnames[] = {
-	"openbsd.org",
-	"op3nbsd.org",
-	"org",
-	"3openbsd.com",
-	"3-0penb-d.c-m",
-	"a",
-	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com",
-	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
-	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
-	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
-	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-	NULL,
+struct tls_sni_test {
+	const char *hostname;
+	int is_ip;
+	int valid;
 };
+
+static const struct tls_sni_test tls_sni_tests[] = {
+	{
+		.hostname = "openbsd.org",
+		.valid = 1,
+	},
+	{
+		.hostname = "op3nbsd.org",
+		.valid = 1,
+	},
+	{
+		.hostname = "org",
+		.valid = 1,
+	},
+	{
+		.hostname = "3openbsd.com",
+		.valid = 1,
+	},
+	{
+		.hostname = "3-0penb-d.c-m",
+		.valid = 1,
+	},
+	{
+		.hostname = "a",
+		.valid = 1,
+	},
+	{
+		.hostname =
+		    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com",
+		.valid = 1,
+	},
+	{
+		.hostname =
+		    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+		    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+		    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+		    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+		.valid = 1,
+	},
+	{
+		.hostname = "openbsd.org.",
+		.valid = 0,
+	},
+	{
+		.hostname = "openbsd..org",
+		.valid = 0,
+	},
+	{
+		.hostname = "openbsd.org-",
+		.valid = 0,
+	},
+	{
+		.hostname =
+		    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com",
+		.valid = 0,
+	},
+	{
+		.hostname =
+		    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+		    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+		    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
+		    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.a",
+		.valid = 0,
+	},
+	{
+		.hostname = "-p3nbsd.org",
+		.valid = 0,
+	},
+	{
+		.hostname = "openbs-.org",
+		.valid = 0,
+	},
+	{
+		.hostname = "openbsd\n.org",
+		.valid = 0,
+	},
+	{
+		.hostname = "open_bsd.org",
+		.valid = 0,
+	},
+	{
+		.hostname = "open\178bsd.org",
+		.valid = 0,
+	},
+	{
+		.hostname = "open\255bsd.org",
+		.valid = 0,
+	},
+	{
+		.hostname = "dead::beef",
+		.is_ip = 1,
+		.valid = 0,
+	},
+	{
+		.hostname = "192.168.0.1",
+		.is_ip = 1,
+		.valid = 0,
+	},
+};
+
+#define N_TLS_SNI_TESTS (sizeof(tls_sni_tests) / sizeof(*tls_sni_tests))
+
+static int
+test_tlsext_is_valid_hostname(const struct tls_sni_test *tst)
+{
+	int failure = 0;
+	int is_ip;
+	CBS cbs;
+	
+	CBS_init(&cbs, tst->hostname, strlen(tst->hostname));
+	if (tlsext_sni_is_valid_hostname(&cbs, &is_ip) != tst->valid) {
+		if (tst->valid) {
+			FAIL("Valid hostname '%s' rejected\n",
+			    tst->hostname);
+		} else {
+			FAIL("Invalid hostname '%s' accepted\n",
+			    tst->hostname);
+		}
+		failure = 1;
+		goto done;
+	}
+	if (tst->is_ip != is_ip) {
+		if (tst->is_ip) {
+			FAIL("Hostname '%s' is an IP literal but not "
+			    "identified as one\n", tst->hostname);
+		} else {
+			FAIL("Hostname '%s' is not an IP literal but is "
+			    "identified as one\n", tst->hostname);
+		}
+		failure = 1;
+		goto done;
+	}
+
+	if (tst->valid) {
+		CBS_init(&cbs, tst->hostname,
+		    strlen(tst->hostname) + 1);
+		if (tlsext_sni_is_valid_hostname(&cbs, &is_ip)) {
+			FAIL("hostname with NUL byte accepted\n");
+			failure = 1;
+			goto done;
+		}
+	}
+ done:
+	return failure;
+}
 
 static int
 test_tlsext_valid_hostnames(void)
 {
-	int i, failure = 0;
+	const struct tls_sni_test *tst;
+	int failure = 0;
+	size_t i;
 
-	for (i = 0; valid_hostnames[i] != NULL; i++) {
-		CBS cbs;
-		CBS_init(&cbs, valid_hostnames[i], strlen(valid_hostnames[i]));
-		if (!tlsext_sni_is_valid_hostname(&cbs)) {
-			FAIL("Valid hostname '%s' rejected\n",
-			    valid_hostnames[i]);
-			failure = 1;
-			goto done;
-		}
+	for (i = 0; i < N_TLS_SNI_TESTS; i++) {
+		tst = &tls_sni_tests[i];
+		failure |= test_tlsext_is_valid_hostname(tst);
 	}
- done:
+
 	return failure;
 }
-
-unsigned char *invalid_hostnames[] = {
-	"openbsd.org.",
-	"openbsd..org",
-	"openbsd.org-",
-	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.com",
-	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
-	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
-	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa."
-	"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.a",
-	"-p3nbsd.org",
-	"openbs-.org",
-	"openbsd\n.org",
-	"open_bsd.org",
-	"open\178bsd.org",
-	"open\255bsd.org",
-	NULL,
-};
-
-static int
-test_tlsext_invalid_hostnames(void)
-{
-	int i, failure = 0;
-	CBS cbs;
-
-	for (i = 0; invalid_hostnames[i] != NULL; i++) {
-		CBS_init(&cbs, invalid_hostnames[i],
-		    strlen(invalid_hostnames[i]));
-		if (tlsext_sni_is_valid_hostname(&cbs)) {
-			FAIL("Invalid hostname '%s' accepted\n",
-			    invalid_hostnames[i]);
-			failure = 1;
-			goto done;
-		}
-	}
-	CBS_init(&cbs, valid_hostnames[0],
-	    strlen(valid_hostnames[0]) + 1);
-	if (tlsext_sni_is_valid_hostname(&cbs)) {
-		FAIL("hostname with NUL byte accepted\n");
-		failure = 1;
-		goto done;
-	}
- done:
-	return failure;
-}
-
 
 int
 main(int argc, char **argv)
@@ -3674,7 +3760,6 @@ main(int argc, char **argv)
 	failed |= test_tlsext_serverhello_build();
 
 	failed |= test_tlsext_valid_hostnames();
-	failed |= test_tlsext_invalid_hostnames();
 
 	return (failed);
 }
