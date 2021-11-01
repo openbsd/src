@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.h,v 1.6 2021/11/01 14:43:25 ratchov Exp $	*/
+/*	$OpenBSD: utils.h,v 1.7 2021/11/01 18:23:09 ratchov Exp $	*/
 /*
  * Copyright (c) 2003-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,11 +19,6 @@
 #define UTILS_H
 
 #include <stddef.h>
-
-struct name {
-	struct name *next;
-	char str[];
-};
 
 void log_puts(char *);
 void log_putx(unsigned long);
