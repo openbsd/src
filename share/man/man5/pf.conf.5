@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.587 2021/07/19 16:23:56 kn Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.588 2021/11/01 07:51:51 landry Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 19 2021 $
+.Dd $Mdocdate: November 1 2021 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1103,13 +1103,14 @@ The
 option is similar to
 .Cm route-to ,
 but routes packets that pass in the opposite direction (replies) to the
-specified interface.
+specified address.
 Opposite direction is only defined in the context of a state entry, and
 .Cm reply-to
 is useful only in rules that create state.
-It can be used on systems with multiple external connections to
-route all outgoing packets of a connection through the interface
-the incoming connection arrived through (symmetric routing enforcement).
+It can be used on systems with multiple paths to the internet to ensure
+that replies to an incoming network connection to a particular address
+are sent using the path associated with that address (symmetric routing
+enforcement).
 .It Cm route-to
 The
 .Cm route-to
