@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.34 2019/03/13 20:34:00 tb Exp $ */
+/* $OpenBSD: x_crl.c,v 1.35 2021/11/01 20:53:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,6 +66,7 @@
 #include <openssl/x509v3.h>
 
 #include "asn1_locl.h"
+#include "x509_lcl.h"
 
 static int X509_REVOKED_cmp(const X509_REVOKED * const *a,
     const X509_REVOKED * const *b);

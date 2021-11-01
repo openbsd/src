@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.11 2021/10/29 12:11:13 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.12 2021/11/01 20:53:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -64,6 +64,8 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
+
+#include "x509_lcl.h"
 
 #define V1_ROOT (EXFLAG_V1|EXFLAG_SS)
 #define ku_reject(x, usage) \

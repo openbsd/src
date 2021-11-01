@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strex.c,v 1.28 2018/05/19 10:46:28 tb Exp $ */
+/* $OpenBSD: a_strex.c,v 1.29 2021/11/01 20:53:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -513,7 +513,7 @@ do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n, int indent,
 		else
 			ent = X509_NAME_get_entry(n, i);
 		if (prev != -1) {
-			if (prev == ent->set) {
+			if (prev == X509_NAME_ENTRY_set(ent)) {
 				if (!io_ch(arg, sep_mv, sep_mv_len))
 					return -1;
 				outlen += sep_mv_len;
@@ -526,7 +526,7 @@ do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n, int indent,
 				outlen += indent;
 			}
 		}
-		prev = ent->set;
+		prev = X509_NAME_ENTRY_set(ent);
 		fn = X509_NAME_ENTRY_get_object(ent);
 		val = X509_NAME_ENTRY_get_data(ent);
 		fn_nid = OBJ_obj2nid(fn);

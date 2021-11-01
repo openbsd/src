@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_mutl.c,v 1.24 2021/07/09 14:08:00 tb Exp $ */
+/* $OpenBSD: p12_mutl.c,v 1.25 2021/11/01 20:53:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -67,6 +67,8 @@
 #include <openssl/err.h>
 #include <openssl/hmac.h>
 #include <openssl/pkcs12.h>
+
+#include "x509_lcl.h"
 
 /* Generate a MAC */
 int

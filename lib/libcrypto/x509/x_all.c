@@ -1,4 +1,4 @@
-/* $OpenBSD: x_all.c,v 1.23 2016/12/30 15:24:51 jsing Exp $ */
+/* $OpenBSD: x_all.c,v 1.24 2021/11/01 20:53:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,6 +72,8 @@
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
+
+#include "x509_lcl.h"
 
 X509 *
 d2i_X509_bio(BIO *bp, X509 **x509)

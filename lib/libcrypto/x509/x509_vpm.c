@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.27 2021/09/30 18:23:46 jsing Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.28 2021/11/01 20:53:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -67,6 +67,7 @@
 #include <openssl/x509v3.h>
 
 #include "vpm_int.h"
+#include "x509_lcl.h"
 
 /* X509_VERIFY_PARAM functions */
 

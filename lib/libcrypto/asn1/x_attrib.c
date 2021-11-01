@@ -1,4 +1,4 @@
-/* $OpenBSD: x_attrib.c,v 1.14 2020/06/04 21:21:03 schwarze Exp $ */
+/* $OpenBSD: x_attrib.c,v 1.15 2021/11/01 20:53:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,6 +61,8 @@
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+
+#include "x509_lcl.h"
 
 /* X509_ATTRIBUTE: this has the following form:
  *

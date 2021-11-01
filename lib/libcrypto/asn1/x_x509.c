@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509.c,v 1.28 2021/10/23 11:56:10 tb Exp $ */
+/* $OpenBSD: x_x509.c,v 1.29 2021/11/01 20:53:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,6 +64,8 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
+#include "x509_lcl.h"
 
 static const ASN1_AUX X509_CINF_aux = {
 	.flags = ASN1_AFLG_ENCODING,

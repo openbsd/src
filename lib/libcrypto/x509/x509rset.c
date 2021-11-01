@@ -1,4 +1,4 @@
-/* $OpenBSD: x509rset.c,v 1.8 2021/10/21 16:47:01 tb Exp $ */
+/* $OpenBSD: x509rset.c,v 1.9 2021/11/01 20:53:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,8 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+
+#include "x509_lcl.h"
 
 int
 X509_REQ_set_version(X509_REQ *x, long version)

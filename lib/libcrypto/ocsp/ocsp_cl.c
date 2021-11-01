@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_cl.c,v 1.18 2021/10/24 13:50:14 tb Exp $ */
+/* $OpenBSD: ocsp_cl.c,v 1.19 2021/11/01 20:53:08 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -136,7 +136,7 @@ OCSP_request_add1_cert(OCSP_REQUEST *req, X509 *cert)
 
 	if (!sk_X509_push(sig->certs, cert))
 		return 0;
-	CRYPTO_add(&cert->references, 1, CRYPTO_LOCK_X509);
+	X509_up_ref(cert);
 	return 1;
 }
 

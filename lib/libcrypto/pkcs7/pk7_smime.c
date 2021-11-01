@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_smime.c,v 1.22 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: pk7_smime.c,v 1.23 2021/11/01 20:53:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -63,6 +63,8 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
+#include "x509_lcl.h"
 
 static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
 

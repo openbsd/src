@@ -1,4 +1,4 @@
-/* $OpenBSD: ossl_typ.h,v 1.13 2015/09/30 04:10:07 doug Exp $ */
+/* $OpenBSD: ossl_typ.h,v 1.14 2021/11/01 20:53:08 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -126,6 +126,11 @@ typedef struct X509_name_st X509_NAME;
 typedef struct X509_pubkey_st X509_PUBKEY;
 typedef struct x509_store_st X509_STORE;
 typedef struct x509_store_ctx_st X509_STORE_CTX;
+
+typedef struct x509_object_st X509_OBJECT;
+typedef struct x509_lookup_st X509_LOOKUP;
+typedef struct x509_lookup_method_st X509_LOOKUP_METHOD;
+typedef struct X509_VERIFY_PARAM_st X509_VERIFY_PARAM;
 
 typedef struct pkcs8_priv_key_info_st PKCS8_PRIV_KEY_INFO;
 

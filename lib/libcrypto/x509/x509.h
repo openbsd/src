@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.86 2021/11/01 08:14:36 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.87 2021/11/01 20:53:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -139,171 +139,33 @@ typedef struct X509_val_st {
 	ASN1_TIME *notAfter;
 } X509_VAL;
 
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
-struct X509_pubkey_st {
-	X509_ALGOR *algor;
-	ASN1_BIT_STRING *public_key;
-	EVP_PKEY *pkey;
-};
-
-typedef struct X509_sig_st {
-	X509_ALGOR *algor;
-	ASN1_OCTET_STRING *digest;
-} X509_SIG;
-
-typedef struct X509_name_entry_st {
-	ASN1_OBJECT *object;
-	ASN1_STRING *value;
-	int set;
-	int size;	/* temp variable */
-} X509_NAME_ENTRY;
-#else
 typedef struct X509_sig_st X509_SIG;
+
 typedef struct X509_name_entry_st X509_NAME_ENTRY;
-#endif
 
 DECLARE_STACK_OF(X509_NAME_ENTRY)
-
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
-/* we always keep X509_NAMEs in 2 forms. */
-struct X509_name_st {
-	STACK_OF(X509_NAME_ENTRY) *entries;
-	int modified;	/* true if 'bytes' needs to be built */
-#ifndef OPENSSL_NO_BUFFER
-	BUF_MEM *bytes;
-#else
-	char *bytes;
-#endif
-/*	unsigned long hash; Keep the hash around for lookups */
-	unsigned char *canon_enc;
-	int canon_enclen;
-} /* X509_NAME */;
-#endif
 
 DECLARE_STACK_OF(X509_NAME)
 
 #define X509_EX_V_NETSCAPE_HACK		0x8000
 #define X509_EX_V_INIT			0x0001
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
-typedef struct X509_extension_st {
-	ASN1_OBJECT *object;
-	ASN1_BOOLEAN critical;
-	ASN1_OCTET_STRING *value;
-} X509_EXTENSION;
-#else
 typedef struct X509_extension_st X509_EXTENSION;
-#endif
 
 typedef STACK_OF(X509_EXTENSION) X509_EXTENSIONS;
 
 DECLARE_STACK_OF(X509_EXTENSION)
 
-/* a sequence of these are used */
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
-typedef struct x509_attributes_st {
-	ASN1_OBJECT *object;
-	int single; /* 0 for a set, 1 for a single item (which is wrong) */
-	union {
-		char		*ptr;
-/* 0 */		STACK_OF(ASN1_TYPE) *set;
-/* 1 */		ASN1_TYPE	*single;
-	} value;
-} X509_ATTRIBUTE;
-#else
 typedef struct x509_attributes_st X509_ATTRIBUTE;
-#endif
 
 DECLARE_STACK_OF(X509_ATTRIBUTE)
 
-
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
-typedef struct X509_req_info_st {
-	ASN1_ENCODING enc;
-	ASN1_INTEGER *version;
-	X509_NAME *subject;
-	X509_PUBKEY *pubkey;
-	/*  d=2 hl=2 l=  0 cons: cont: 00 */
-	STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
-} X509_REQ_INFO;
-
-typedef struct X509_req_st {
-	X509_REQ_INFO *req_info;
-	X509_ALGOR *sig_alg;
-	ASN1_BIT_STRING *signature;
-	int references;
-} X509_REQ;
-
-typedef struct x509_cinf_st {
-	ASN1_INTEGER *version;		/* [ 0 ] default of v1 */
-	ASN1_INTEGER *serialNumber;
-	X509_ALGOR *signature;
-	X509_NAME *issuer;
-	X509_VAL *validity;
-	X509_NAME *subject;
-	X509_PUBKEY *key;
-	ASN1_BIT_STRING *issuerUID;		/* [ 1 ] optional in v2 */
-	ASN1_BIT_STRING *subjectUID;		/* [ 2 ] optional in v2 */
-	STACK_OF(X509_EXTENSION) *extensions;	/* [ 3 ] optional in v3 */
-	ASN1_ENCODING enc;
-} X509_CINF;
-#else
 typedef struct X509_req_info_st X509_REQ_INFO;
+
 typedef struct X509_req_st X509_REQ;
-typedef struct x509_cinf_st X509_CINF;
-#endif
 
-/* This stuff is certificate "auxiliary info"
- * it contains details which are useful in certificate
- * stores and databases. When used this is tagged onto
- * the end of the certificate itself
- */
-
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
-typedef struct x509_cert_aux_st {
-	STACK_OF(ASN1_OBJECT) *trust;		/* trusted uses */
-	STACK_OF(ASN1_OBJECT) *reject;		/* rejected uses */
-	ASN1_UTF8STRING *alias;			/* "friendly name" */
-	ASN1_OCTET_STRING *keyid;		/* key id of private key */
-	STACK_OF(X509_ALGOR) *other;		/* other unspecified info */
-} X509_CERT_AUX;
-#else
 typedef struct x509_cert_aux_st X509_CERT_AUX;
-#endif
 
-struct x509_st;
-
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
-struct x509_st {
-	X509_CINF *cert_info;
-	X509_ALGOR *sig_alg;
-	ASN1_BIT_STRING *signature;
-	int valid;
-	int references;
-	char *name;
-	CRYPTO_EX_DATA ex_data;
-	/* These contain copies of various extension values */
-	long ex_pathlen;
-	long ex_pcpathlen;
-	unsigned long ex_flags;
-	unsigned long ex_kusage;
-	unsigned long ex_xkusage;
-	unsigned long ex_nscert;
-	ASN1_OCTET_STRING *skid;
-	AUTHORITY_KEYID *akid;
-	X509_POLICY_CACHE *policy_cache;
-	STACK_OF(DIST_POINT) *crldp;
-	STACK_OF(GENERAL_NAME) *altname;
-	NAME_CONSTRAINTS *nc;
-#ifndef OPENSSL_NO_RFC3779
-	STACK_OF(IPAddressFamily) *rfc3779_addr;
-	struct ASIdentifiers_st *rfc3779_asid;
-#endif
-#ifndef OPENSSL_NO_SHA
-	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
-#endif
-	X509_CERT_AUX *aux;
-} /* X509 */;
-#endif
+typedef struct x509_cinf_st X509_CINF;
 
 DECLARE_STACK_OF(X509)
 
@@ -322,6 +184,7 @@ DECLARE_STACK_OF(X509_TRUST)
 
 /* standard trust ids */
 
+/* OpenSSL changed this to 0 */
 #define X509_TRUST_DEFAULT	-1	/* Only valid in purpose settings */
 
 #define X509_TRUST_COMPAT	1
@@ -422,66 +285,13 @@ DECLARE_STACK_OF(X509_TRUST)
 			XN_FLAG_FN_LN | \
 			XN_FLAG_FN_ALIGN)
 
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
-struct x509_revoked_st {
-	ASN1_INTEGER *serialNumber;
-	ASN1_TIME *revocationDate;
-	STACK_OF(X509_EXTENSION) /* optional */ *extensions;
-	/* Set up if indirect CRL */
-	STACK_OF(GENERAL_NAME) *issuer;
-	/* Revocation reason */
-	int reason;
-	int sequence; /* load sequence */
-};
-#endif
-
 DECLARE_STACK_OF(X509_REVOKED)
 
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
-typedef struct X509_crl_info_st {
-	ASN1_INTEGER *version;
-	X509_ALGOR *sig_alg;
-	X509_NAME *issuer;
-	ASN1_TIME *lastUpdate;
-	ASN1_TIME *nextUpdate;
-	STACK_OF(X509_REVOKED) *revoked;
-	STACK_OF(X509_EXTENSION) /* [0] */ *extensions;
-	ASN1_ENCODING enc;
-} X509_CRL_INFO;
-#else
 typedef struct X509_crl_info_st X509_CRL_INFO;
-#endif
-
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
-struct X509_crl_st {
-	/* actual signature */
-	X509_CRL_INFO *crl;
-	X509_ALGOR *sig_alg;
-	ASN1_BIT_STRING *signature;
-	int references;
-	int flags;
-	/* Copies of various extensions */
-	AUTHORITY_KEYID *akid;
-	ISSUING_DIST_POINT *idp;
-	/* Convenient breakdown of IDP */
-	int idp_flags;
-	int idp_reasons;
-	/* CRL and base CRL numbers for delta processing */
-	ASN1_INTEGER *crl_number;
-	ASN1_INTEGER *base_crl_number;
-#ifndef OPENSSL_NO_SHA
-	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
-#endif
-	STACK_OF(GENERAL_NAMES) *issuers;
-	const X509_CRL_METHOD *meth;
-	void *meth_data;
-} /* X509_CRL */;
-#endif
 
 DECLARE_STACK_OF(X509_CRL)
 
-typedef struct private_key_st
-	{
+typedef struct private_key_st {
 	int version;
 	/* The PKCS#8 data types */
 	X509_ALGOR *enc_algor;
@@ -499,7 +309,7 @@ typedef struct private_key_st
 	EVP_CIPHER_INFO cipher;
 
 	int references;
-	} X509_PKEY;
+} X509_PKEY;
 
 #ifndef OPENSSL_NO_EVP
 typedef struct X509_info_st {
@@ -560,18 +370,6 @@ typedef struct PBKDF2PARAM_st {
 	ASN1_INTEGER *keylength;
 	X509_ALGOR *prf;
 } PBKDF2PARAM;
-
-
-/* PKCS#8 private key info structure */
-
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || !defined(LIBRESSL_OPAQUE_X509)
-struct pkcs8_priv_key_info_st {
-        ASN1_INTEGER *version;
-        X509_ALGOR *pkeyalg;
-        ASN1_OCTET_STRING *pkey;
-        STACK_OF(X509_ATTRIBUTE) *attributes;
-};
-#endif
 
 #ifdef  __cplusplus
 }

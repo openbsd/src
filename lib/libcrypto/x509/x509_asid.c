@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.18 2021/10/25 11:55:27 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.19 2021/11/01 20:53:08 tb Exp $ */
 /*
  * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -25,6 +25,8 @@
 #include <openssl/x509.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
+#include "x509_lcl.h"
 
 #ifndef OPENSSL_NO_RFC3779
 

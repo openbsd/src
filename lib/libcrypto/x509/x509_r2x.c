@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_r2x.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: x509_r2x.c,v 1.12 2021/11/01 20:53:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,6 +65,8 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+
+#include "x509_lcl.h"
 
 X509 *
 X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)

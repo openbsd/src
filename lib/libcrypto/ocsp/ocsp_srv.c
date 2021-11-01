@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_srv.c,v 1.10 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ocsp_srv.c,v 1.11 2021/11/01 20:53:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -213,7 +213,7 @@ OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert)
 
 	if (!sk_X509_push(resp->certs, cert))
 		return 0;
-	CRYPTO_add(&cert->references, 1, CRYPTO_LOCK_X509);
+	X509_up_ref(cert);
 	return 1;
 }
 

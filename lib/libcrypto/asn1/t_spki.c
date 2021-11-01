@@ -1,4 +1,4 @@
-/* $OpenBSD: t_spki.c,v 1.12 2021/08/24 15:23:03 tb Exp $ */
+/* $OpenBSD: t_spki.c,v 1.13 2021/11/01 20:53:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -70,6 +70,8 @@
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
+
+#include "x509_lcl.h"
 
 /* Print out an SPKI */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_npas.c,v 1.13 2018/05/13 14:22:34 tb Exp $ */
+/* $OpenBSD: p12_npas.c,v 1.14 2021/11/01 20:53:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -62,6 +62,8 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
+
+#include "x509_lcl.h"
 
 /* PKCS#12 password change routine */
 
