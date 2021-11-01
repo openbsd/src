@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.6 2021/09/06 19:55:27 patrick Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.7 2021/11/01 20:04:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -43,15 +43,22 @@
  * single PCIe device behind each DART.
  */
 
+#define DART_PARAMS2		0x0004
+#define  DART_PARAMS2_BYPASS_SUPPORT	(1 << 0)
 #define DART_TLB_OP		0x0020
-#define  DART_TLB_OP_FLUSH	(1 << 20)
-#define  DART_TLB_OP_BUSY	(1 << 2)
+#define  DART_TLB_OP_FLUSH		(1 << 20)
+#define  DART_TLB_OP_BUSY		(1 << 2)
 #define DART_TLB_OP_SIDMASK	0x0034
-#define DART_CONFIG(sid)	(0x0100 + 4 *(sid))
-#define  DART_CONFIG_TXEN	(1 << 7)
+#define DART_TCR(sid)		(0x0100 + 4 *(sid))
+#define  DART_TCR_TRANSLATE_ENABLE	(1 << 7)
+#define  DART_TCR_BYPASS_DART		(1 << 8)
+#define  DART_TCR_BYPASS_DAPF		(1 << 12)
 #define DART_TTBR(sid, idx)	(0x0200 + 16 * (sid) + 4 * (idx))
-#define  DART_TTBR_VALID	(1U << 31)
-#define  DART_TTBR_SHIFT	12
+#define  DART_TTBR_VALID		(1U << 31)
+#define  DART_TTBR_SHIFT		12
+
+#define DART_NUM_STREAMS	16
+#define DART_ALL_STREAMS	((1 << DART_NUM_STREAMS) - 1)
 
 #define DART_PAGE_SIZE		16384
 #define DART_PAGE_MASK		(DART_PAGE_SIZE - 1)
@@ -73,19 +80,15 @@ static apldart_trunc_page(paddr_t pa)
 }
 
 #define HREAD4(sc, reg)							\
-	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh[0], (reg)))
+	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
 #define HWRITE4(sc, reg, val)						\
-	apldart_write(sc, (reg), (val))
+	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
 
 struct apldart_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh[2];
+	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
-
-	uint32_t		sc_sid_mask;
-	int			sc_nsid;
-	int			sc_subdart;
 
 	bus_addr_t		sc_dvabase;
 	bus_addr_t		sc_dvaend;
@@ -160,7 +163,7 @@ apldart_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,dart-m1");
+	return OF_is_compatible(faa->fa_node, "apple,t8103-dart");
 }
 
 void
@@ -171,6 +174,7 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	paddr_t pa;
 	volatile uint64_t *l1;
 	int ntte, nl1, nl2;
+	uint32_t params2;
 	int sid, idx;
 
 	if (faa->fa_nreg < 1) {
@@ -180,26 +184,23 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
-	    faa->fa_reg[0].size, 0, &sc->sc_ioh[0])) {
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
 		printf(": can't map registers\n");
 		return;
-	}
-
-	if (faa->fa_nreg > 1) {
-		if (bus_space_map(sc->sc_iot, faa->fa_reg[1].addr,
-		    faa->fa_reg[1].size, 0, &sc->sc_ioh[1])) {
-			printf(": can't map registers\n");
-			return;
-		}
-		sc->sc_subdart = 1;
 	}
 
 	sc->sc_dmat = faa->fa_dmat;
 
 	printf("\n");
 
-	sc->sc_sid_mask = OF_getpropint(faa->fa_node, "sid-mask", 0xffff);
-	sc->sc_nsid = fls(sc->sc_sid_mask);
+	params2 = HREAD4(sc, DART_PARAMS2);
+	if (params2 & DART_PARAMS2_BYPASS_SUPPORT) {
+		for (sid = 0; sid < DART_NUM_STREAMS; sid++) {
+			HWRITE4(sc, DART_TCR(sid),
+			    DART_TCR_BYPASS_DART | DART_TCR_BYPASS_DAPF);
+		}
+		return;
+	}
 
 	/*
 	 * Skip the first page to help catching bugs where a device is
@@ -211,11 +212,11 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dvaend = 0xffffffff - DART_PAGE_SIZE;
 
 	/* Disable translations. */
-	for (sid = 0; sid < sc->sc_nsid; sid++)
-		HWRITE4(sc, DART_CONFIG(sid), 0);
+	for (sid = 0; sid < DART_NUM_STREAMS; sid++)
+		HWRITE4(sc, DART_TCR(sid), 0);
 
 	/* Remove page tables. */
-	for (sid = 0; sid < sc->sc_nsid; sid++) {
+	for (sid = 0; sid < DART_NUM_STREAMS; sid++) {
 		for (idx = 0; idx < 4; idx++)
 			HWRITE4(sc, DART_TTBR(sid, idx), 0);
 	}
@@ -244,7 +245,7 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Install page tables. */
-	for (sid = 0; sid < sc->sc_nsid; sid++) {
+	for (sid = 0; sid < DART_NUM_STREAMS; sid++) {
 		pa = APLDART_DMA_DVA(sc->sc_l1);
 		for (idx = 0; idx < nl1; idx++) {
 			HWRITE4(sc, DART_TTBR(sid, idx),
@@ -255,8 +256,8 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	apldart_flush_tlb(sc);
 
 	/* Enable translations. */
-	for (sid = 0; sid < sc->sc_nsid; sid++)
-		HWRITE4(sc, DART_CONFIG(sid), DART_CONFIG_TXEN);
+	for (sid = 0; sid < DART_NUM_STREAMS; sid++)
+		HWRITE4(sc, DART_TCR(sid), DART_TCR_TRANSLATE_ENABLE);
 
 	fdt_intr_establish(faa->fa_node, IPL_NET, apldart_intr,
 	    sc, sc->sc_dev.dv_xname);
@@ -310,7 +311,7 @@ apldart_flush_tlb(struct apldart_softc *sc)
 {
 	__asm volatile ("dsb sy" ::: "memory");
 
-	HWRITE4(sc, DART_TLB_OP_SIDMASK, sc->sc_sid_mask);
+	HWRITE4(sc, DART_TLB_OP_SIDMASK, DART_ALL_STREAMS);
 	HWRITE4(sc, DART_TLB_OP, DART_TLB_OP_FLUSH);
 	while (HREAD4(sc, DART_TLB_OP) & DART_TLB_OP_BUSY)
 		CPU_BUSY_CYCLE();
@@ -579,12 +580,4 @@ apldart_dmamem_free(bus_dma_tag_t dmat, struct apldart_dmamem *adm)
 	bus_dmamem_free(dmat, &adm->adm_seg, 1);
 	bus_dmamap_destroy(dmat, adm->adm_map);
 	free(adm, M_DEVBUF, sizeof(*adm));
-}
-
-void
-apldart_write(struct apldart_softc *sc, bus_size_t offset, uint32_t value)
-{
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], offset, value);
-	if (sc->sc_subdart)
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh[1], offset, value);
 }
