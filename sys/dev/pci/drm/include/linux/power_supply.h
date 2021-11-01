@@ -6,8 +6,8 @@
 static inline int
 power_supply_is_system_supplied(void)
 {
-	/* XXX return 0 if on battery */
-	return (1);
+	extern int hw_power;
+	return hw_power;
 }
 
 #endif
