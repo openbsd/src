@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.100 2021/10/25 10:01:46 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.101 2021/11/01 16:37:17 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -16,6 +16,11 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/socket.h>
+
+#include <arpa/inet.h>
+#include <netinet/in.h>
 
 #include <ctype.h>
 
@@ -673,6 +678,29 @@ tlsext_sni_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 	return 1;
 }
 
+static int
+tlsext_sni_is_ip_literal(CBS *cbs, int *is_ip)
+{
+	union {
+		struct in_addr ip4;
+		struct in6_addr ip6;
+	} addrbuf;
+	char *hostname = NULL;
+
+	*is_ip = 0;
+
+	if (!CBS_strdup(cbs, &hostname))
+		return 0;
+
+	if (inet_pton(AF_INET, hostname, &addrbuf) == 1 ||
+	    inet_pton(AF_INET6, hostname, &addrbuf) == 1)
+		*is_ip = 1;
+
+	free(hostname);
+
+	return 1;
+}
+
 /*
  * Validate that the CBS contains only a hostname consisting of RFC 5890
  * compliant A-labels (see RFC 6066 section 3). Not a complete check
@@ -680,7 +708,7 @@ tlsext_sni_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
  * correct structure and character set.
  */
 int
-tlsext_sni_is_valid_hostname(CBS *cbs)
+tlsext_sni_is_valid_hostname(CBS *cbs, int *is_ip)
 {
 	uint8_t prev, c = 0;
 	int component = 0;
@@ -691,7 +719,13 @@ tlsext_sni_is_valid_hostname(CBS *cbs)
 	if (CBS_len(&hostname) > TLSEXT_MAXLEN_host_name)
 		return 0;
 
-	while(CBS_len(&hostname) > 0) {
+	/* An IP literal is invalid as a host name (RFC 6066 section 3). */
+	if (!tlsext_sni_is_ip_literal(&hostname, is_ip))
+		return 0;
+	if (*is_ip)
+		return 0;
+
+	while (CBS_len(&hostname) > 0) {
 		prev = c;
 		if (!CBS_get_u8(&hostname, &c))
 			return 0;
@@ -727,12 +761,14 @@ tlsext_sni_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
 	CBS server_name_list, host_name;
 	uint8_t name_type;
+	int is_ip;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &server_name_list))
 		goto err;
 
 	if (!CBS_get_u8(&server_name_list, &name_type))
 		goto err;
+
 	/*
 	 * RFC 6066 section 3, only one type (host_name) is specified.
 	 * We do not tolerate unknown types, neither does BoringSSL.
@@ -743,17 +779,25 @@ tlsext_sni_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		goto err;
 	}
 
-
-	if (!CBS_get_u16_length_prefixed(&server_name_list, &host_name))
-		goto err;
 	/*
 	 * RFC 6066 section 3 specifies a host name must be at least 1 byte
 	 * so 0 length is a decode error.
 	 */
+	if (!CBS_get_u16_length_prefixed(&server_name_list, &host_name))
+		goto err;
 	if (CBS_len(&host_name) < 1)
 		goto err;
 
-	if (!tlsext_sni_is_valid_hostname(&host_name)) {
+	if (!tlsext_sni_is_valid_hostname(&host_name, &is_ip)) {
+		/*
+		 * Various pieces of software have been known to set the SNI
+		 * host name to an IP address, even though that violates the
+		 * RFC. If this is the case, pretend the SNI extension does
+		 * not exist.
+		 */
+		if (is_ip)
+			goto done;
+
 		*alert = SSL_AD_ILLEGAL_PARAMETER;
 		goto err;
 	}
@@ -777,6 +821,7 @@ tlsext_sni_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		}
 	}
 
+ done:
 	/*
 	 * RFC 6066 section 3 forbids multiple host names with the same type,
 	 * therefore we allow only one entry.
