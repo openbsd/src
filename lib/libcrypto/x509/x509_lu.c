@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.36 2021/10/31 16:23:45 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.37 2021/11/01 17:20:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -325,16 +325,16 @@ X509_OBJECT *
 X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
     X509_NAME *name)
 {
-	X509_OBJECT *ret;
+	X509_OBJECT *obj;
 
-	if ((ret = X509_OBJECT_new()) == NULL)
+	if ((obj = X509_OBJECT_new()) == NULL)
 		return NULL;
-	if (!X509_STORE_CTX_get_by_subject(vs, type, name, ret)) {
-		X509_OBJECT_free(ret);
+	if (!X509_STORE_CTX_get_by_subject(vs, type, name, obj)) {
+		X509_OBJECT_free(obj);
 		return NULL;
 	}
 
-	return ret;
+	return obj;
 }
 
 int
