@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.217 2021/10/25 10:01:46 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.218 2021/11/01 16:45:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -162,6 +162,7 @@
 #include "dtls_locl.h"
 #include "ssl_locl.h"
 #include "ssl_sigalgs.h"
+#include "ssl_tlsext.h"
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers) / sizeof(SSL_CIPHER))
 
@@ -1785,17 +1786,21 @@ _SSL_set_ecdh_auto(SSL *s, int state)
 static int
 _SSL_set_tlsext_host_name(SSL *s, const char *name)
 {
+	int is_ip;
+	CBS cbs;
+
+	CBS_init(&cbs, name, strlen(name));
+
 	free(s->tlsext_hostname);
 	s->tlsext_hostname = NULL;
 
 	if (name == NULL)
 		return 1;
 
-	if (strlen(name) > TLSEXT_MAXLEN_host_name) {
+	if (!tlsext_sni_is_valid_hostname(&cbs, &is_ip)) {
 		SSLerror(s, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
 		return 0;
 	}
-
 	if ((s->tlsext_hostname = strdup(name)) == NULL) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		return 0;
