@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aplhidev.4,v 1.1 2021/11/01 09:21:24 kettenis Exp $
+.\"	$OpenBSD: aplhidev.4,v 1.2 2021/11/01 15:23:57 jmc Exp $
 .\"
 .\" Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: November 1 2021 $
-.Dt APLHIDEV 4
+.Dt APLHIDEV 4 arm64
 .Os
 .Sh NAME
 .Nm aplhidev ,
@@ -34,9 +34,9 @@ The
 driver provides support for Human Interface Devices (HID) on
 Serial Peripheral Interface (SPI) buses on Apple Silicon Macs.
 .Sh SEE ALSO
-.Xr aplspi 4,
-.Xr intro 4,
-.Xr wskbd 4,
+.Xr aplspi 4 ,
+.Xr intro 4 ,
+.Xr wskbd 4 ,
 .Xr wsmouse 4
 .Sh HISTORY
 The
