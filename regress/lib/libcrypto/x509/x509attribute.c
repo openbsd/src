@@ -1,4 +1,4 @@
-/* $OpenBSD: x509attribute.c,v 1.2 2021/10/31 08:27:15 tb Exp $ */
+/* $OpenBSD: x509attribute.c,v 1.3 2021/11/01 08:28:31 tb Exp $ */
 /*
  * Copyright (c) 2020 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -14,8 +14,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#define LIBRESSL_CRYPTO_INTERNAL
 
 #include <errno.h>
 #include <stdio.h>
@@ -85,14 +83,12 @@ main(void)
 	if ((attrib = X509_ATTRIBUTE_create(NID_pkcs9_contentType,
 	    V_ASN1_OBJECT, coid)) == NULL)
 		fail_str("X509_ATTRIBUTE_create", "NULL");
-	else if (attrib->object == NULL)
-		fail_str("attrib->object", "NULL");
-	else if (attrib->single)
-		fail_int("attrib->single", attrib->single);
-	else if ((num = sk_ASN1_TYPE_num(attrib->value.set)) != 1)
-		fail_int("num", num);
-	else if ((any = sk_ASN1_TYPE_value(attrib->value.set, 0)) == NULL)
-		fail_str("any", "NULL");
+	else if (X509_ATTRIBUTE_get0_object(attrib) == NULL)
+		fail_str("X509_ATTRIBUTE_get0_object", "NULL");
+	else if ((num = X509_ATTRIBUTE_count(attrib)) != 1)
+		fail_int("X509_ATTRIBUTE_count", num);
+	else if ((any = X509_ATTRIBUTE_get0_type(attrib, 0)) == NULL)
+		fail_str("X509_ATTRIBUTE_get0_type", "NULL");
 	else if (any->type != V_ASN1_OBJECT)
 		fail_int("any->type", any->type);
 	else if (any->value.object != coid)
