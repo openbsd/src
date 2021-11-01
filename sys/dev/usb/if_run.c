@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.133 2021/10/31 12:17:54 stsp Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.134 2021/11/01 12:08:46 krw Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1968,7 +1968,7 @@ run_set_key_cb(struct run_softc *sc, void *arg)
 		wcid = 0;	/* NB: update WCID0 for group keys */
 		base = RT2860_SKEY(0, k->k_id);
 	} else {
-		wcid = RUN_AID2WCID(cmd->ni->ni_associd);
+		wcid = (cmd->ni != NULL) ? RUN_AID2WCID(cmd->ni->ni_associd) : 0;
 		base = RT2860_PKEY(wcid);
 	}
 
@@ -2021,7 +2021,8 @@ run_set_key_cb(struct run_softc *sc, void *arg)
 	}
 
 	if (sc->sc_key_tasks == 0) {
-		cmd->ni->ni_port_valid = 1;
+		if (cmd->ni != NULL)
+			cmd->ni->ni_port_valid = 1;
 		ieee80211_set_link_state(ic, LINK_STATE_UP);
 	}
 }
@@ -2059,7 +2060,7 @@ run_delete_key_cb(struct run_softc *sc, void *arg)
 
 	} else {
 		/* remove pairwise key */
-		wcid = RUN_AID2WCID(cmd->ni->ni_associd);
+		wcid = (cmd->ni != NULL) ? RUN_AID2WCID(cmd->ni->ni_associd) : 0;
 		run_read(sc, RT2860_WCID_ATTR(wcid), &attr);
 		attr &= ~0xf;
 		run_write(sc, RT2860_WCID_ATTR(wcid), attr);
@@ -4715,8 +4716,10 @@ run_init(struct ifnet *ifp)
 
 	if (ic->ic_flags & IEEE80211_F_WEPON) {
 		/* install WEP keys */
-		for (i = 0; i < IEEE80211_WEP_NKID; i++)
-			(void)run_set_key(ic, NULL, &ic->ic_nw_keys[i]);
+		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
+			if (ic->ic_nw_keys[i].k_cipher != IEEE80211_CIPHER_NONE)
+				(void)run_set_key(ic, NULL, &ic->ic_nw_keys[i]);
+		}
 	}
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR)
