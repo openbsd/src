@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.120 2021/08/31 15:52:59 patrick Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.121 2021/11/02 23:30:15 mlarkin Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -955,7 +955,7 @@ cpu_check_vmm_cap(struct cpu_info *ci)
 			/* VM Functions available? */
 			if (msr & (IA32_VMX_ENABLE_VM_FUNCTIONS) << 32) {
 				ci->ci_vmm_cap.vcc_vmx.vmx_vm_func =
-				    rdmsr(IA32_VMX_VMFUNC);	
+				    rdmsr(IA32_VMX_VMFUNC);
 			}
 		}
 	}
@@ -1039,7 +1039,7 @@ cpu_check_vmm_cap(struct cpu_info *ci)
 		 * hardware (RDCL_NO), or we may be nested in an VMM that
 		 * is doing flushes (SKIP_L1DFL_VMENTRY) using the MSR.
 		 * In either case no mitigation at all is necessary.
-		 */	
+		 */
 		if (ci->ci_feature_sefflags_edx & SEFF0EDX_ARCH_CAP) {
 			msr = rdmsr(MSR_ARCH_CAPABILITIES);
 			if ((msr & ARCH_CAPABILITIES_RDCL_NO) ||
