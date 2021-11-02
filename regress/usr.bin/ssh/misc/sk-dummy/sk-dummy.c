@@ -44,7 +44,7 @@
 	} while (0)
 #endif
 
-#if SSH_SK_VERSION_MAJOR != 0x00080000
+#if SSH_SK_VERSION_MAJOR != 0x00090000
 # error SK API has changed, sk-dummy.c needs an update
 #endif
 
@@ -241,6 +241,7 @@ sk_enroll(uint32_t alg, const uint8_t *challenge, size_t challenge_len,
 		skdebug(__func__, "calloc response failed");
 		goto out;
 	}
+	response->flags = flags;
 	switch(alg) {
 	case SSH_SK_ECDSA:
 		if (pack_key_ecdsa(response) != 0)
