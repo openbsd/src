@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.52 2021/11/01 16:39:01 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.53 2021/11/02 14:39:09 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1719,6 +1719,20 @@ test_tlsext_sni_client(void)
 		hexdump(data, dlen);
 		fprintf(stderr, "test data:\n");
 		hexdump(tlsext_sni_client, sizeof(tlsext_sni_client));
+		goto err;
+	}
+
+	/*
+	 * SSL_set_tlsext_host_name() may be called with a NULL host name to
+	 * disable SNI.
+	 */
+	if (!SSL_set_tlsext_host_name(ssl, NULL)) {
+		FAIL("cannot set host name to NULL");
+		goto err;
+	}
+
+	if (tlsext_sni_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
+		FAIL("client should not need SNI\n");
 		goto err;
 	}
 
