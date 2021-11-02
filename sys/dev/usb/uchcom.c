@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.28 2020/07/31 10:49:33 mglocker Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.29 2021/11/02 09:52:40 dlg Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -72,9 +72,8 @@ int	uchcomdebug = 0;
 #define UCHCOM_REG_BPS_DIV	0x13
 #define UCHCOM_REG_BPS_MOD	0x14
 #define UCHCOM_REG_BPS_PAD	0x0F
-#define UCHCOM_REG_BREAK1	0x05
-#define UCHCOM_REG_BREAK2	0x18
-#define UCHCOM_REG_LCR1		0x18
+#define UCHCOM_REG_BREAK	0x05
+#define UCHCOM_REG_LCR		0x18
 #define UCHCOM_REG_LCR2		0x25
 
 #define UCHCOM_VER_20		0x20
@@ -83,11 +82,25 @@ int	uchcomdebug = 0;
 #define UCHCOM_BPS_MOD_BASE	20000000
 #define UCHCOM_BPS_MOD_BASE_OFS	1100
 
+#define UCHCOM_BPS_PRE_IMM	0x80	/* CH341: immediate RX forwarding */
+
 #define UCHCOM_DTR_MASK		0x20
 #define UCHCOM_RTS_MASK		0x40
 
-#define UCHCOM_BRK1_MASK	0x01
-#define UCHCOM_BRK2_MASK	0x40
+#define UCHCOM_BREAK_MASK	0x01
+
+#define UCHCOM_LCR_CS5		0x00
+#define UCHCOM_LCR_CS6		0x01
+#define UCHCOM_LCR_CS7		0x02
+#define UCHCOM_LCR_CS8		0x03
+#define UCHCOM_LCR_STOPB	0x04
+#define UCHCOM_LCR_PARENB	0x08
+#define UCHCOM_LCR_PARODD	0x00
+#define UCHCOM_LCR_PAREVEN	0x10
+#define UCHCOM_LCR_PARMARK	0x20
+#define UCHCOM_LCR_PARSPACE	0x30
+#define UCHCOM_LCR_TXE		0x40
+#define UCHCOM_LCR_RXE		0x80
 
 #define UCHCOM_INTR_STAT1	0x02
 #define UCHCOM_INTR_STAT2	0x03
@@ -577,23 +590,21 @@ int
 uchcom_set_break(struct uchcom_softc *sc, int onoff)
 {
 	usbd_status err;
-	uint8_t brk1, brk2;
+	uint8_t brk, lcr;
 
-	err = uchcom_read_reg(sc, UCHCOM_REG_BREAK1, &brk1, UCHCOM_REG_BREAK2,
-	    &brk2);
+	err = uchcom_read_reg(sc, UCHCOM_REG_BREAK, &brk, UCHCOM_REG_LCR, &lcr);
 	if (err)
 		return EIO;
 	if (onoff) {
 		/* on - clear bits */
-		brk1 &= ~UCHCOM_BRK1_MASK;
-		brk2 &= ~UCHCOM_BRK2_MASK;
+		brk &= ~UCHCOM_BREAK_MASK;
+		lcr &= ~UCHCOM_LCR_TXE;
 	} else {
 		/* off - set bits */
-		brk1 |= UCHCOM_BRK1_MASK;
-		brk2 |= UCHCOM_BRK2_MASK;
+		brk |= UCHCOM_BREAK_MASK;
+		lcr |= UCHCOM_LCR_TXE;
 	}
-	err = uchcom_write_reg(sc, UCHCOM_REG_BREAK1, brk1, UCHCOM_REG_BREAK2,
-	    brk2);
+	err = uchcom_write_reg(sc, UCHCOM_REG_BREAK, brk, UCHCOM_REG_LCR, lcr);
 	if (err)
 		return EIO;
 
@@ -665,23 +676,50 @@ uchcom_set_dte_rate(struct uchcom_softc *sc, uint32_t rate)
 int
 uchcom_set_line_control(struct uchcom_softc *sc, tcflag_t cflag)
 {
-	/*
-	 * XXX: it is difficult to handle the line control appropriately:
-	 *   work as chip default - CS8, no parity, !CSTOPB
-	 *   other modes are not supported.
-	 */
+	usbd_status err;
+	uint8_t lcr = 0, lcr2 = 0;
+
+	err = uchcom_read_reg(sc, UCHCOM_REG_LCR, &lcr,
+	    UCHCOM_REG_LCR2, &lcr2);
+	if (err) {
+		printf("%s: cannot get LCR: %s\n",
+		    sc->sc_dev.dv_xname, usbd_errstr(err));
+		return EIO;
+	}
+
+	lcr = UCHCOM_LCR_RXE | UCHCOM_LCR_TXE;
 
 	switch (ISSET(cflag, CSIZE)) {
 	case CS5:
+		lcr |= UCHCOM_LCR_CS5;
+		break;
 	case CS6:
+		lcr |= UCHCOM_LCR_CS6;
+		break;
 	case CS7:
-		return EINVAL;
+		lcr |= UCHCOM_LCR_CS7;
+		break;
 	case CS8:
+		lcr |= UCHCOM_LCR_CS8;
 		break;
 	}
 
-	if (ISSET(cflag, PARENB) || ISSET(cflag, CSTOPB))
-		return EINVAL;
+	if (ISSET(cflag, PARENB)) {
+		lcr |= UCHCOM_LCR_PARENB;
+		if (!ISSET(cflag, PARODD))
+			lcr |= UCHCOM_LCR_PAREVEN;
+	}
+
+	if (ISSET(cflag, CSTOPB)) {
+		lcr |= UCHCOM_LCR_STOPB;
+	}
+
+	err = uchcom_write_reg(sc, UCHCOM_REG_LCR, lcr, UCHCOM_REG_LCR2, lcr2);
+	if (err) {
+		printf("%s: cannot set LCR: %s\n",
+		    sc->sc_dev.dv_xname, usbd_errstr(err));
+		return EIO;
+ 	}
 
 	return 0;
 }
