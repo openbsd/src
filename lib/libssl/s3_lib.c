@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.218 2021/11/01 16:45:56 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.219 2021/11/02 13:59:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1789,13 +1789,13 @@ _SSL_set_tlsext_host_name(SSL *s, const char *name)
 	int is_ip;
 	CBS cbs;
 
-	CBS_init(&cbs, name, strlen(name));
-
 	free(s->tlsext_hostname);
 	s->tlsext_hostname = NULL;
 
 	if (name == NULL)
 		return 1;
+
+	CBS_init(&cbs, name, strlen(name));
 
 	if (!tlsext_sni_is_valid_hostname(&cbs, &is_ip)) {
 		SSLerror(s, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
