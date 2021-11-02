@@ -1510,6 +1510,7 @@
 ./usr/share/man/man4/icmp6.4
 ./usr/share/man/man4/icsphy.4
 ./usr/share/man/man4/ifmedia.4
+./usr/share/man/man4/igc.4
 ./usr/share/man/man4/iha.4
 ./usr/share/man/man4/ihidev.4
 ./usr/share/man/man4/iic.4
