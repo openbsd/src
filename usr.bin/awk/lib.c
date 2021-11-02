@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.46 2021/06/10 21:01:43 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.47 2021/11/02 15:29:41 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -825,10 +825,17 @@ convert:
 	if (result != NULL)
 		*result = r;
 
-	retval = (isspace((uschar)*ep) || *ep == '\0' || trailing_stuff_ok);
+	/*
+	 * check for trailing stuff
+	 */
+	while (isspace((uschar)*ep))
+		ep++;
 
 	if (no_trailing != NULL)
 		*no_trailing = (*ep == '\0');
+
+	// return true if found the end, or trailing stuff is allowed
+	retval = *ep == '\0' || trailing_stuff_ok;
 
 	return retval;
 }

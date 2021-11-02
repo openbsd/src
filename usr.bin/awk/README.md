@@ -1,4 +1,4 @@
-$OpenBSD: README.md,v 1.4 2020/12/09 20:00:11 millert Exp $
+$OpenBSD: README.md,v 1.5 2021/11/02 15:29:41 millert Exp $
 
 # The One True Awk
 
@@ -109,17 +109,17 @@ astonishly slow.  If `awk` seems slow, you might try fixing that.
 More generally, turning on optimization can significantly improve
 `awk`'s speed, perhaps by 1/3 for highest levels.
 
+## A Note About Releases
+
+We don't do releases. 
+
 ## A Note About Maintenance
 
-NOTICE! Maintenance of this program is on a ``best effort''
+NOTICE! Maintenance of this program is on a ''best effort''
 basis.  We try to get to issues and pull requests as quickly
 as we can.  Unfortunately, however, keeping this program going
 is not at the top of our priority list.
 
-_If_ you (yes, you!) are interested in taking over active maintenance of
-`awk`, please open an issue to indicate that fact, and give us a little bit of
-your background and some idea of your plans and dreams.  Thanks!
-
 #### Last Updated
 
-Tue Oct 13 20:00:09 IDT 2020
+Sat Jul 25 14:00:07 EDT 2021

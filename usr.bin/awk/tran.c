@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.33 2020/12/18 21:36:24 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.34 2021/11/02 15:29:41 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -419,7 +419,7 @@ Awkfloat getfval(Cell *vp)	/* get float val of a Cell */
 	return(vp->fval);
 }
 
-static char *get_inf_nan(double d)
+static const char *get_inf_nan(double d)
 {
 	if (isinf(d)) {
 		return (d < 0 ? "-inf" : "+inf");
@@ -433,7 +433,7 @@ static char *get_str_val(Cell *vp, char **fmt)        /* get string val of a Cel
 {
 	int n;
 	double dtemp;
-	char *p;
+	const char *p;
 
 	if ((vp->tval & (NUM | STR)) == 0)
 		funnyvar(vp, "read value of");
