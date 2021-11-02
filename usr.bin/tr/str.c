@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.13 2021/10/31 21:34:16 cheloha Exp $	*/
+/*	$OpenBSD: str.c,v 1.14 2021/11/02 03:09:15 cheloha Exp $	*/
 /*	$NetBSD: str.c,v 1.7 1995/08/31 22:13:47 jtc Exp $	*/
 
 /*-
@@ -164,24 +164,38 @@ static CLASS classes[] = {
 };
 
 static void
-genclass(s)
-	STR *s;
+genclass(STR *s)
 {
-	int cnt, (*func)(int);
 	CLASS *cp, tmp;
-	int *p;
+	size_t len;
+	int i;
 
 	tmp.name = (char *)s->str;
 	if ((cp = (CLASS *)bsearch(&tmp, classes, sizeof(classes) /
 	    sizeof(CLASS), sizeof(CLASS), c_class)) == NULL)
 		errx(1, "unknown class %s", s->str);
 
-	if ((cp->set = p = calloc(NCHARS + 1, sizeof(int))) == NULL)
-		errx(1, "no memory for a class");
-	for (cnt = 0, func = cp->func; cnt < NCHARS; ++cnt)
-		if ((func)(cnt))
-			*p++ = cnt;
-	*p = OOBCH;
+	/*
+	 * Generate the set of characters in the class if we haven't
+	 * already done so.
+	 */
+	if (cp->set == NULL) {
+		cp->set = reallocarray(NULL, NCHARS + 1, sizeof(*cp->set));
+		if (cp->set == NULL)
+			err(1, NULL);
+		len = 0;
+		for (i = 0; i < NCHARS; i++) {
+			if (cp->func(i)) {
+				cp->set[len] = i;
+				len++;
+			}
+		}
+		cp->set[len] = OOBCH;
+		len++;
+		cp->set = reallocarray(cp->set, len, sizeof(*cp->set));
+		if (cp->set == NULL)
+			err(1, NULL);
+	}
 
 	s->cnt = 0;
 	s->state = SET;
