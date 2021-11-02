@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1183 2021/10/24 12:32:42 kn Exp $
+#	$OpenBSD: install.sub,v 1.1184 2021/11/02 16:54:01 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -885,6 +885,27 @@ ask_password() {
 	done
 }
 
+# Ask for a passphrase once showing prompt $1. Ensure input is not empty
+# save it in $_passphrase.
+ask_passphrase() {
+	local _q=$1
+
+	if $AI; then
+		echo -n "$_q "
+		_autorespond "$_q"
+		echo '<provided>'
+		_passphrase=$resp
+		return
+	fi
+
+	while :; do
+		IFS= read -r _passphrase?"$_q (will echo) "
+
+		[[ -n $_passphrase ]] && break
+
+		echo "Empty passphrase, try again."
+	done
+}
 
 # ------------------------------------------------------------------------------
 # Support functions for donetconfig()
@@ -1245,19 +1266,19 @@ ieee80211_config() {
 				quote join "$_nwid" >>$_hn
 				break
 				;;
-			?-[Ww])	ask_until "WEP key? (will echo)"
+			?-[Ww])	ask_passphrase "WEP key?"
 				# Make sure ifconfig accepts the key.
-				if _err=$(ifconfig $_if join "$_nwid" nwkey "$resp" 2>&1) &&
+				if _err=$(ifconfig $_if join "$_nwid" nwkey "$_passphrase" 2>&1) &&
 					[[ -z $_err ]]; then
-					quote join "$_nwid" nwkey "$resp" >>$_hn
+					quote join "$_nwid" nwkey "$_passphrase" >>$_hn
 					break
 				fi
 				echo "$_err"
 				;;
-			1-[Pp])	ask_until "WPA passphrase? (will echo)"
+			1-[Pp])	ask_passphrase "WPA passphrase?"
 				# Make sure ifconfig accepts the key.
-				if ifconfig $_if join "$_nwid" wpakey "$resp"; then
-					quote join "$_nwid" wpakey "$resp" >>$_hn
+				if ifconfig $_if join "$_nwid" wpakey "$_passphrase"; then
+					quote join "$_nwid" wpakey "$_passphrase" >>$_hn
 					break
 				fi
 				;;
