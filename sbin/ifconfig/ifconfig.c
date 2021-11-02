@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.445 2021/10/06 06:14:08 florian Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.446 2021/11/02 23:36:43 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -2033,7 +2033,7 @@ setifnwkey(const char *val, int d)
 	}
 
 	if (ioctl(sock, SIOCS80211NWKEY, (caddr_t)&nwkey) == -1)
-		warn("SIOCS80211NWKEY");
+		err("SIOCS80211NWKEY");
 }
 
 /* ARGSUSED */
