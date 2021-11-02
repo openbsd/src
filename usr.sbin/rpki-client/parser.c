@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.23 2021/11/01 17:00:34 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.24 2021/11/02 19:30:30 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -248,17 +248,18 @@ proc_parser_cert(const struct entity *entp, const unsigned char *der,
 	}
 
 	/*
-	 * Add validated certs to the RPKI auth tree.
+	 * Add validated CA certs to the RPKI auth tree.
 	 */
-	if (!auth_insert(&auths, cert, a)) {
-		X509_free(x509); // needed? XXX
-		cert_free(cert);
-		return NULL;
+	if (cert->purpose == CERT_PURPOSE_CA) {
+		if (!auth_insert(&auths, cert, a)) {
+			X509_free(x509); // needed? XXX
+			cert_free(cert);
+			return NULL;
+		}
 	}
 
 	return cert;
 }
-
 
 /*
  * Root certificates come from TALs (has a pkey and is self-signed).

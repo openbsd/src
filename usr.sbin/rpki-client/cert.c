@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.44 2021/11/01 17:00:34 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.45 2021/11/02 19:30:30 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1084,11 +1084,18 @@ cert_parse_inner(X509 **xp, const char *fn, const unsigned char *der,
 			goto out;
 		}
 		if (p.res->ipsz > 0) {
-			warnx("%s: unexpected IP resources in BGPsec cert", p.fn);
+			warnx("%s: unexpected IP resources in BGPsec cert",
+			   p.fn);
 			goto out;
 		}
 		if (sia_present) {
-			warnx("%s: unexpected SIA extension in BGPsec cert", p.fn);
+			warnx("%s: unexpected SIA extension in BGPsec cert",
+			   p.fn);
+			goto out;
+		}
+		if (ta) {
+			warnx("%s: BGPsec cert can not be a trust anchor",
+			   p.fn);
 			goto out;
 		}
 		break;
