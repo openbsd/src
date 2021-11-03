@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.45 2021/10/22 12:30:53 bluhm Exp $
+.\"	$OpenBSD: sysctl.2,v 1.46 2021/11/03 00:48:08 jsg Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 22 2021 $
+.Dd $Mdocdate: November 3 2021 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -291,6 +291,7 @@ privileges may change the value.
 .It Dv HW_PERFPOLICY Ta "string" Ta "yes"
 .It Dv HW_PHYSMEM Ta "integer" Ta "no"
 .It Dv HW_PHYSMEM64 Ta "int64_t" Ta "no"
+.It Dv HW_POWER Ta "integer" Ta "no"
 .It Dv HW_PRODUCT Ta "string" Ta "no"
 .It Dv HW_SENSORS Ta "node" Ta "not applicable"
 .It Dv HW_SETPERF Ta "integer" Ta "yes"
@@ -350,6 +351,8 @@ This variable is deprecated; use
 instead.
 .It Dv HW_PHYSMEM64 Pq Va hw.physmem
 The total physical memory, in bytes.
+.It Dv HW_POWER Pq Va hw.power
+Machine has wall-power.
 .It Dv HW_PRODUCT Pq Va hw.product
 The product name of the machine.
 .It Dv HW_SENSORS Pq Va hw.sensors
