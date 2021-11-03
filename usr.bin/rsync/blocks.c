@@ -1,4 +1,4 @@
-/*	$OpenBSD: blocks.c,v 1.20 2021/06/30 13:10:04 claudio Exp $ */
+/*	$OpenBSD: blocks.c,v 1.21 2021/11/03 14:42:12 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -331,10 +331,10 @@ blk_recv_ack(char buf[20], const struct blkset *blocks, int32_t idx)
 	size_t	 pos = 0, sz;
 
 	sz = sizeof(int32_t) + /* index */
-	     sizeof(int32_t) + /* block count */
-	     sizeof(int32_t) + /* block length */
-	     sizeof(int32_t) + /* checksum length */
-	     sizeof(int32_t); /* block remainder */
+	    sizeof(int32_t) + /* block count */
+	    sizeof(int32_t) + /* block length */
+	    sizeof(int32_t) + /* checksum length */
+	    sizeof(int32_t); /* block remainder */
 	assert(sz == 20);
 
 	io_buffer_int(buf, &pos, sz, idx);
@@ -457,9 +457,9 @@ blk_send_ack(struct sess *sess, int fd, struct blkset *p)
 	/* Put the entire send routine into a buffer. */
 
 	sz = sizeof(int32_t) + /* block count */
-	     sizeof(int32_t) + /* block length */
-	     sizeof(int32_t) + /* checksum length */
-	     sizeof(int32_t); /* block remainder */
+	    sizeof(int32_t) + /* block length */
+	    sizeof(int32_t) + /* checksum length */
+	    sizeof(int32_t); /* block remainder */
 	assert(sz <= sizeof(buf));
 
 	if (!io_read_buf(sess, fd, buf, sz)) {

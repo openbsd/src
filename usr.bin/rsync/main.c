@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.62 2021/10/29 08:00:59 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.63 2021/11/03 14:42:12 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -301,12 +301,12 @@ const struct option	 lopts[] = {
     { "devices",	no_argument,	&opts.devices,		1 },
     { "no-devices",	no_argument,	&opts.devices,		0 },
     { "dry-run",	no_argument,	&opts.dry_run,		1 },
-    { "exclude",	required_argument, NULL, 		OP_EXCLUDE },
+    { "exclude",	required_argument, NULL,		OP_EXCLUDE },
     { "exclude-from",	required_argument, NULL,		OP_EXCLUDE_FROM },
     { "group",		no_argument,	&opts.preserve_gids,	1 },
     { "no-group",	no_argument,	&opts.preserve_gids,	0 },
     { "help",		no_argument,	NULL,			'h' },
-    { "include",	required_argument, NULL, 		OP_INCLUDE },
+    { "include",	required_argument, NULL,		OP_INCLUDE },
     { "include-from",	required_argument, NULL,		OP_INCLUDE_FROM },
     { "links",		no_argument,	&opts.preserve_links,	1 },
     { "max-size",	required_argument, NULL,		OP_MAX_SIZE },
@@ -345,7 +345,7 @@ main(int argc, char *argv[])
 	struct sess	 sess;
 	struct fargs	*fargs;
 	char		**args;
-	const char 	*errstr;
+	const char	*errstr;
 
 	/* Global pledge. */
 

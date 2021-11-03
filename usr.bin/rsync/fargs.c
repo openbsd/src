@@ -1,4 +1,4 @@
-/*	$OpenBSD: fargs.c,v 1.21 2021/10/29 08:00:59 claudio Exp $ */
+/*	$OpenBSD: fargs.c,v 1.22 2021/11/03 14:42:12 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,7 +29,7 @@
 const char *
 alt_base_mode(int mode)
 {
-	switch(mode) {
+	switch (mode) {
 	case BASE_MODE_COMPARE:
 		return "--compare-dest";
 	case BASE_MODE_COPY:
@@ -137,7 +137,7 @@ fargs_cmdline(struct sess *sess, const struct fargs *f, size_t *skip)
 		addargs(&args, "--min-size=%lld", sess->opts->min_size);
 
 	/* only add --compare-dest, etc if this is the sender */
-	if (sess->opts->alt_base_mode != 0 && 
+	if (sess->opts->alt_base_mode != 0 &&
 	    f->mode == FARGS_SENDER) {
 		for (j = 0; j < MAX_BASEDIR; j++) {
 			if (sess->opts->basedir[j] == NULL)

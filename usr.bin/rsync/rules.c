@@ -1,4 +1,4 @@
-/*	$OpenBSD: rules.c,v 1.3 2021/11/03 08:30:14 claudio Exp $ */
+/*	$OpenBSD: rules.c,v 1.4 2021/11/03 14:42:12 deraadt Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  *
@@ -23,9 +23,9 @@
 
 struct rule {
 	char			*pattern;
-	enum rule_type		type;
+	enum rule_type		 type;
 #ifdef NOTYET
-	unsigned int		modifiers;
+	unsigned int		 modifiers;
 #endif
 	short			 numseg;
 	unsigned char		 anchored;
@@ -126,7 +126,7 @@ parse_command(const char *command, size_t len)
 {
 	const char *mod;
 	size_t	i;
-	
+
 	mod = memchr(command, ',', len);
 	if (mod != NULL) {
 		/* XXX modifiers not yet implemented */
@@ -179,7 +179,7 @@ parse_pattern(struct rule *r, char *pattern)
 			nseg++;
 	r->numseg = nseg;
 
-	/* check if this pattern only matches against the basename */ 
+	/* check if this pattern only matches against the basename */
 	if (nseg == 1 && !r->anchored)
 		r->fileonly = 1;
 
@@ -221,7 +221,7 @@ parse_rule(char *line, enum rule_type def)
 				return -1;
 			type = def;
 			pattern = line;
-		} else 
+		} else
 			pattern = line + len + 1;
 
 		if (*pattern == '\0' && type != RULE_CLEAR)
@@ -412,12 +412,12 @@ rules_match(const char *path, int isdir)
 	struct rule *r;
 	size_t i;
 
-	basename = strrchr(path, '/');	
+	basename = strrchr(path, '/');
 	if (basename != NULL)
 		basename += 1;
 	else
 		basename = path;
-	
+
 	for (i = 0; i < numrules; i++) {
 		r = &rules[i];
 

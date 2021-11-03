@@ -1,4 +1,4 @@
-/*	$OpenBSD: uploader.c,v 1.32 2021/10/29 08:00:59 claudio Exp $ */
+/*	$OpenBSD: uploader.c,v 1.33 2021/11/03 14:42:12 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -653,7 +653,7 @@ post_dir(struct sess *sess, const struct upload *u, size_t idx)
  */
 static int
 check_file(int rootfd, const struct flist *f, struct stat *st)
-{ 
+{
 	if (fstatat(rootfd, f->path, st, AT_SYMLINK_NOFOLLOW) == -1) {
 		if (errno == ENOENT)
 			return 3;
@@ -1035,14 +1035,14 @@ rsync_uploader(struct upload *u, int *fileinfd,
 	/* Make sure the block metadata buffer is big enough. */
 
 	u->bufsz =
-	     sizeof(int32_t) + /* identifier */
-	     sizeof(int32_t) + /* block count */
-	     sizeof(int32_t) + /* block length */
-	     sizeof(int32_t) + /* checksum length */
-	     sizeof(int32_t) + /* block remainder */
-	     blk.blksz *
-	     (sizeof(int32_t) + /* short checksum */
-	      blk.csum); /* long checksum */
+	    sizeof(int32_t) + /* identifier */
+	    sizeof(int32_t) + /* block count */
+	    sizeof(int32_t) + /* block length */
+	    sizeof(int32_t) + /* checksum length */
+	    sizeof(int32_t) + /* block remainder */
+	    blk.blksz *
+	    (sizeof(int32_t) + /* short checksum */
+	    blk.csum); /* long checksum */
 
 	if (u->bufsz > u->bufmax) {
 		if ((bufp = realloc(u->buf, u->bufsz)) == NULL) {

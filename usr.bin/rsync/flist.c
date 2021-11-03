@@ -1,4 +1,4 @@
-/*	$OpenBSD: flist.c,v 1.35 2021/10/22 09:59:35 claudio Exp $ */
+/*	$OpenBSD: flist.c,v 1.36 2021/11/03 14:42:12 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -283,7 +283,7 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 
 		if (sess->mplex_reads &&
 		    io_read_check(fdin) &&
-		     !io_read_flush(sess, fdin)) {
+		    !io_read_flush(sess, fdin)) {
 			ERRX1("io_read_flush");
 			goto out;
 		}
@@ -356,7 +356,7 @@ flist_send(struct sess *sess, int fdin, int fdout, const struct flist *fl,
 		/* Conditional part: devices & special files. */
 
 		if ((sess->opts->devices && (S_ISBLK(f->st.mode) ||
-		     S_ISCHR(f->st.mode))) ||
+		    S_ISCHR(f->st.mode))) ||
 		    (sess->opts->specials && (S_ISFIFO(f->st.mode) ||
 		    S_ISSOCK(f->st.mode)))) {
 			if (!io_write_int(sess, fdout, f->st.rdev)) {
@@ -694,7 +694,7 @@ flist_recv(struct sess *sess, int fd, struct flist **flp, size_t *sz)
 		/* Conditional part: devices & special files. */
 
 		if ((sess->opts->devices && (S_ISBLK(ff->st.mode) ||
-		     S_ISCHR(ff->st.mode))) ||
+		    S_ISCHR(ff->st.mode))) ||
 		    (sess->opts->specials && (S_ISFIFO(ff->st.mode) ||
 		    S_ISSOCK(ff->st.mode)))) {
 			if (!(FLIST_RDEV_SAME & flag)) {

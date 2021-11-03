@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.14 2021/06/30 13:10:04 claudio Exp $ */
+/*	$OpenBSD: server.c,v 1.15 2021/11/03 14:42:12 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -65,7 +65,7 @@ rsync_server(const struct opts *opts, size_t argc, char *argv[])
 	/* Begin by making descriptors non-blocking. */
 
 	if (!fcntl_nonblock(fdin) ||
-	     !fcntl_nonblock(fdout)) {
+	    !fcntl_nonblock(fdout)) {
 		ERRX1("fcntl_nonblock");
 		goto out;
 	}
