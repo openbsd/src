@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time.c,v 1.30 2021/10/28 14:24:08 tb Exp $ */
+/* $OpenBSD: a_time.c,v 1.31 2021/11/03 13:44:15 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -106,14 +106,29 @@ ASN1_TIME_free(ASN1_TIME *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_TIME_it);
 }
 
+/* Public API in OpenSSL. Kept internal for now. */
+static int
+ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm)
+{
+	time_t now;
+
+	if (s != NULL)
+		return ASN1_time_parse(s->data, s->length, tm, 0) != -1;
+
+	time(&now);
+	memset(tm, 0, sizeof(*tm));
+
+	return gmtime_r(&now, tm) != NULL;
+}
+
 int
 ASN1_TIME_diff(int *pday, int *psec, const ASN1_TIME *from, const ASN1_TIME *to)
 {
     struct tm tm_from, tm_to;
 
-    if (ASN1_time_parse(from->data, from->length, &tm_from, 0) == -1)
+    if (!ASN1_TIME_to_tm(from, &tm_from))
 	    return 0;
-    if (ASN1_time_parse(to->data, to->length, &tm_to, 0) == -1)
+    if (!ASN1_TIME_to_tm(to, &tm_to))
 	    return 0;
 
     return OPENSSL_gmtime_diff(pday, psec, &tm_from, &tm_to);
