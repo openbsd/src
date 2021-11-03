@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.135 2018/04/17 12:13:29 stsp Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.136 2021/11/03 05:59:25 yasuoka Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -28,7 +28,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: April 17 2018 $
+.Dd $Mdocdate: November 3 2021 $
 .Dt ISAKMPD.CONF 5
 .Os
 .Sh NAME
@@ -726,7 +726,7 @@ See below.
 Parameters for IPsec transform configuration
 .Bl -tag -width Ds
 .It Em AUTHENTICATION_ALGORITHM
-The optional authentication algorithm in the case of this
+The optional authentication algorithm, or ANY in the case of this
 being an ESP transform.
 .It Em ENCAPSULATION_MODE
 The encapsulation mode as given by the RFCs.
@@ -745,7 +745,8 @@ List of lifetimes, each element is a
 .Aq Sy Lifetime
 section name.
 .It Em TRANSFORM_ID
-The transform ID as given by the RFCs.
+The transform ID as given by the RFCs, or ANY to denote that any
+transform proposed will be accepted.
 .El
 .It Aq Sy IPsec-ID
 Parameters for IPsec ID configuration
