@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.25 2021/11/03 10:19:22 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.26 2021/11/03 10:50:18 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -40,9 +40,6 @@
 static void		 build_chain(const struct auth *, STACK_OF(X509) **);
 static struct crl	*get_crl(const struct auth *);
 static void		 build_crls(const struct crl *, STACK_OF(X509_CRL) **);
-
-/* Limit how deep the RPKI tree can be. */
-#define	MAX_CERT_DEPTH	12
 
 static X509_STORE_CTX	*ctx;
 static struct auth_tree  auths = RB_INITIALIZER(&auths);
