@@ -1,7 +1,6 @@
-.\"	$OpenBSD: d2i_X509_ALGOR.3,v 1.9 2018/03/27 17:35:50 schwarze Exp $
-.\"	OpenSSL 186bb907 Apr 13 11:05:13 2015 -0700
+.\" $OpenBSD: d2i_X509_ALGOR.3,v 1.10 2021/11/03 15:02:14 schwarze Exp $
 .\"
-.\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2016, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,12 +14,14 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: November 3 2021 $
 .Dt D2I_X509_ALGOR 3
 .Os
 .Sh NAME
 .Nm d2i_X509_ALGOR ,
-.Nm i2d_X509_ALGOR
+.Nm i2d_X509_ALGOR ,
+.Nm d2i_X509_ALGORS ,
+.Nm i2d_X509_ALGORS
 .Nd decode and encode algorithm identifiers
 .Sh SYNOPSIS
 .In openssl/x509.h
@@ -35,6 +36,17 @@
 .Fa "X509_ALGOR *val_in"
 .Fa "unsigned char **der_out"
 .Fc
+.Ft X509_ALGORS *
+.Fo d2i_X509_ALGORS
+.Fa "X509_ALGORS **val_out"
+.Fa "const unsigned char **der_in"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_X509_ALGORS
+.Fa "X509_ALGORS *val_in"
+.Fa "unsigned char **der_out"
+.Fc
 .Sh DESCRIPTION
 .Fn d2i_X509_ALGOR
 and
@@ -42,10 +54,23 @@ and
 decode and encode an ASN.1
 .Vt AlgorithmIdentifier
 structure defined in RFC 5280 section 4.1.1.2.
+.Pp
+.Fn d2i_X509_ALGORS
+and
+.Fn i2d_X509_ALGORS
+decode and encode an ASN.1 sequence of
+.Vt AlgorithmIdentifier
+structures.
+The data type
+.Vt X509_ALGORS
+is defined as
+.Vt STACK_OF(X509_ALGOR) .
+.Pp
 For details about the semantics, examples, caveats, and bugs, see
 .Xr ASN1_item_d2i 3 .
 .Sh SEE ALSO
 .Xr ASN1_item_d2i 3 ,
+.Xr STACK_OF 3 ,
 .Xr X509_ALGOR_new 3
 .Sh STANDARDS
 RFC 5280: Internet X.509 Public Key Infrastructure Certificate and
@@ -56,3 +81,9 @@ and
 .Fn i2d_X509_ALGOR
 first appeared in SSLeay 0.5.1 and have been available since
 .Ox 2.4 .
+.Pp
+.Fn d2i_X509_ALGORS
+and
+.Fn i2d_X509_ALGORS
+first appeared in OpenSSL 0.9.8h and have been available since
+.Ox 4.5 .
