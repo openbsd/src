@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.187 2021/10/08 09:22:10 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.188 2021/11/03 11:52:59 krw Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -667,7 +667,8 @@ ieee80211_set_ess(struct ieee80211com *ic, struct ieee80211_ess *ess,
 				(*ic->ic_delete_key)(ic, NULL, k);
 			memcpy(&ic->ic_nw_keys[i], &ess->nw_keys[i],
 			    sizeof(struct ieee80211_key));
-			(*ic->ic_set_key)(ic, NULL, k);
+			if (k->k_cipher != IEEE80211_CIPHER_NONE)
+				(*ic->ic_set_key)(ic, NULL, k);
 		}
 		ic->ic_def_txkey = ess->def_txkey;
 		ic->ic_flags |= IEEE80211_F_WEPON;
