@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.194 2021/11/01 09:34:49 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.195 2021/11/03 13:37:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1619,7 +1619,7 @@ input_csi_dispatch(struct input_ctx *ictx)
 	case INPUT_CSI_DECSCUSR:
 		n = input_get(ictx, 0, 0, 0);
 		if (n != -1)
-			screen_set_cursor_style(s, n);
+			screen_set_cursor_style(n, &s->cstyle, &s->mode);
 		break;
 	case INPUT_CSI_XDA:
 		n = input_get(ictx, 0, 0, 0);
@@ -1685,6 +1685,7 @@ input_csi_dispatch_rm_private(struct input_ctx *ictx)
 			break;
 		case 12:
 			screen_write_mode_clear(sctx, MODE_CURSOR_BLINKING);
+			screen_write_mode_set(sctx, MODE_CURSOR_BLINKING_SET);
 			break;
 		case 25:	/* TCEM */
 			screen_write_mode_clear(sctx, MODE_CURSOR);
@@ -1774,6 +1775,7 @@ input_csi_dispatch_sm_private(struct input_ctx *ictx)
 			break;
 		case 12:
 			screen_write_mode_set(sctx, MODE_CURSOR_BLINKING);
+			screen_write_mode_set(sctx, MODE_CURSOR_BLINKING_SET);
 			break;
 		case 25:	/* TCEM */
 			screen_write_mode_set(sctx, MODE_CURSOR);

@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.868 2021/11/01 09:34:49 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.869 2021/11/03 13:37:17 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 1 2021 $
+.Dd $Mdocdate: November 3 2021 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4425,6 +4425,16 @@ Each entry in the array defines the colour
 .Nm
 uses when the colour with that index is requested.
 The index may be from zero to 255.
+.Pp
+.It Ic cursor-style Ar style
+Set the style of the cursor. Available styles are:
+.Ic default ,
+.Ic blinking-block ,
+.Ic block ,
+.Ic blinking-underline ,
+.Ic underline ,
+.Ic blinking-bar ,
+.Ic bar .
 .Pp
 .It Xo Ic remain-on-exit
 .Op Ic on | off | failed
