@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.32 2021/10/26 16:12:54 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.33 2021/11/03 18:10:12 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -58,14 +58,16 @@ tal_parse_buffer(const char *fn, char *buf, size_t len)
 	while ((nl = memchr(buf, '\n', len)) != NULL) {
 		line = buf;
 
-		/* replace LF and optional CR with NUL */
-		*nl = '\0';
-		if (nl > line && nl[-1] == '\r')
-			nl[-1] = '\0';
-
 		/* advance buffer to next line */
 		len -= nl + 1 - buf;
 		buf = nl + 1;
+
+		/* replace LF and optional CR with NUL, point nl at first NUL */
+		*nl = '\0';
+		if (nl > line && nl[-1] == '\r') {
+			nl[-1] = '\0';
+			nl--;
+		}
 
 		if (optcomment) {
 			/* if this is a comment, just eat the line */
