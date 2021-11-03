@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.46 2021/10/29 08:51:20 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.47 2021/11/03 13:29:28 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1679,7 +1679,7 @@ data_write(struct http_connection *conn)
 
 	/* all data written, switch back to read */
 	if (conn->bufpos == 0 || conn->iosz == 0) {
-		if (conn->chunked)
+		if (conn->chunked && conn->iosz == 0)
 			conn->state = STATE_RESPONSE_CHUNKED_TRAILER;
 		else
 			conn->state = STATE_RESPONSE_DATA;
