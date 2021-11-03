@@ -1,4 +1,4 @@
-/*	$OpenBSD: eigrpd.h,v 1.26 2021/01/19 10:53:25 claudio Exp $ */
+/*	$OpenBSD: eigrpd.h,v 1.27 2021/11/03 13:48:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -227,9 +227,6 @@ struct eigrp_iface {
 	TAILQ_HEAD(, summary_addr) summary_list;
 };
 RB_PROTOTYPE(iface_id_head, eigrp_iface, id_tree, iface_id_compare)
-
-#define INADDRSZ	4
-#define IN6ADDRSZ	16
 
 struct seq_addr_entry {
 	TAILQ_ENTRY(seq_addr_entry) entry;

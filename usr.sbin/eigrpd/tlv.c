@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlv.c,v 1.15 2016/10/10 02:26:24 gsoares Exp $ */
+/*	$OpenBSD: tlv.c,v 1.16 2021/11/03 13:48:46 deraadt Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -66,10 +66,10 @@ gen_sequence_tlv(struct ibuf *buf, struct seq_addr_head *seq_addr_list)
 	TAILQ_FOREACH(sa, seq_addr_list, entry) {
 		switch (sa->af) {
 		case AF_INET:
-			alen = INADDRSZ;
+			alen = sizeof (struct in_addr);
 			break;
 		case AF_INET6:
-			alen = IN6ADDRSZ;
+			alen = sizeof(struct in6_addr);
 			break;
 		default:
 			fatalx("gen_sequence_tlv: unknown address family");
@@ -298,14 +298,14 @@ tlv_decode_seq(int af, struct tlv *tlv, char *buf,
 
 		switch (af) {
 		case AF_INET:
-			if (alen != INADDRSZ) {
+			if (alen != sizeof (struct in_addr)) {
 				log_debug("%s: invalid address length",
 				    __func__);
 				return (-1);
 			}
 			break;
 		case AF_INET6:
-			if (alen != IN6ADDRSZ) {
+			if (alen != sizeof (struct in6_addr)) {
 				log_debug("%s: invalid address length",
 				    __func__);
 				return (-1);
