@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.24 2021/11/02 19:30:30 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.25 2021/11/03 10:19:22 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -68,7 +68,6 @@ proc_parser_roa(struct entity *entp, const unsigned char *der, size_t len)
 		return NULL;
 
 	a = valid_ski_aki(entp->file, &auths, roa->ski, roa->aki);
-
 	build_chain(a, &chain);
 	crl = get_crl(a);
 	build_crls(crl, &crls);
@@ -99,14 +98,14 @@ proc_parser_roa(struct entity *entp, const unsigned char *der, size_t len)
 	/*
 	 * Check CRL to figure out the soonest transitive expiry moment
 	 */
-	if (roa->expires > crl->expires)
+	if (crl != NULL && roa->expires > crl->expires)
 		roa->expires = crl->expires;
 
 	/*
 	 * Scan the cert tree to figure out the soonest transitive
 	 * expiry moment
 	 */
-	for (; a->parent != NULL; a = a->parent) {
+	for (; a != NULL; a = a->parent) {
 		if (roa->expires > a->cert->expires)
 			roa->expires = a->cert->expires;
 	}
