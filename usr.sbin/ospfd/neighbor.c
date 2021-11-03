@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.49 2019/11/19 09:55:55 remi Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.50 2021/11/03 21:40:03 sthen Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -136,9 +136,10 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 
 	if (nbr_fsm_tbl[i].state == -1) {
 		/* event outside of the defined fsm, ignore it. */
-		log_warnx("nbr_fsm: neighbor ID %s, "
+		log_warnx("nbr_fsm: neighbor ID %s (%s), "
 		    "event %s not expected in state %s",
-		    inet_ntoa(nbr->id), nbr_event_names[event],
+		    inet_ntoa(nbr->id), nbr->iface->name,
+		    nbr_event_names[event],
 		    nbr_state_name(old_state));
 		return (0);
 	}
@@ -184,8 +185,9 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 	}
 
 	if (ret) {
-		log_warnx("nbr_fsm: error changing state for neighbor ID %s, "
-		    "event %s, state %s", inet_ntoa(nbr->id),
+		log_warnx("nbr_fsm: error changing state for neighbor "
+		    "ID %s (%s), event %s, state %s",
+		    inet_ntoa(nbr->id), nbr->iface->name,
 		    nbr_event_names[event], nbr_state_name(old_state));
 		return (-1);
 	}
@@ -217,10 +219,11 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 			if_fsm(nbr->iface, IF_EVT_NBR_CHNG);
 
 		log_debug("nbr_fsm: event %s resulted in action %s and "
-		    "changing state for neighbor ID %s from %s to %s",
+		    "changing state for neighbor ID %s (%s) from %s to %s",
 		    nbr_event_names[event],
 		    nbr_action_names[nbr_fsm_tbl[i].action],
-		    inet_ntoa(nbr->id), nbr_state_name(old_state),
+		    inet_ntoa(nbr->id), nbr->iface->name,
+		    nbr_state_name(old_state),
 		    nbr_state_name(nbr->state));
 
 		if (nbr->iface->type == IF_TYPE_VIRTUALLINK) {
@@ -523,7 +526,8 @@ nbr_act_snapshot(struct nbr *nbr)
 	/* we need to wait for the old snapshot to finish */
 	if (nbr->dd_snapshot) {
 		log_debug("nbr_act_snapshot: giving up, old snapshot running "
-		    "for neigbor ID %s", inet_ntoa(nbr->id));
+		    "for neighbor ID %s (%s)", inet_ntoa(nbr->id),
+		    nbr->iface->name);
 		return (nbr_act_restart_dd(nbr));
 	}
 	ospfe_imsg_compose_rde(IMSG_NEIGHBOR_CAPA, nbr->peerid, 0,
@@ -616,8 +620,9 @@ nbr_act_delete(struct nbr *nbr)
 	tv.tv_sec = DEFAULT_NBR_TMOUT;
 
 	if (evtimer_add(&nbr->inactivity_timer, &tv)) {
-		log_warnx("nbr_act_delete: error scheduling neighbor ID %s "
-		    "for removal", inet_ntoa(nbr->id));
+		log_warnx("nbr_act_delete: error scheduling "
+		    "neighbor ID %s (%s) for removal",
+		    inet_ntoa(nbr->id), nbr->iface->name);
 	}
 
 	return (nbr_act_clear_lists(nbr));
@@ -641,7 +646,8 @@ nbr_act_clear_lists(struct nbr *nbr)
 int
 nbr_act_hello_check(struct nbr *nbr)
 {
-	log_debug("nbr_act_hello_check: neighbor ID %s", inet_ntoa(nbr->id));
+	log_debug("nbr_act_hello_check: neighbor ID %s (%s)",
+	    inet_ntoa(nbr->id), nbr->iface->name);
 
 	return (-1);
 }

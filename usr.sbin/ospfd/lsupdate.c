@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.49 2021/01/19 09:25:53 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.50 2021/11/03 21:40:03 sthen Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -238,8 +238,9 @@ recv_ls_update(struct nbr *nbr, char *buf, u_int16_t len)
 	u_int32_t		 nlsa;
 
 	if (len < sizeof(nlsa)) {
-		log_warnx("recv_ls_update: bad packet size, neighbor ID %s",
-		    inet_ntoa(nbr->id));
+		log_warnx("recv_ls_update: bad packet size, "
+		    "neighbor ID %s (%s)", inet_ntoa(nbr->id),
+		    nbr->iface->name);
 		return;
 	}
 	memcpy(&nlsa, buf, sizeof(nlsa));
@@ -255,8 +256,8 @@ recv_ls_update(struct nbr *nbr, char *buf, u_int16_t len)
 	case NBR_STA_XSTRT:
 	case NBR_STA_SNAP:
 		log_debug("recv_ls_update: packet ignored in state %s, "
-		    "neighbor ID %s", nbr_state_name(nbr->state),
-		    inet_ntoa(nbr->id));
+		    "neighbor ID %s (%s)", nbr_state_name(nbr->state),
+		    inet_ntoa(nbr->id), nbr->iface->name);
 		break;
 	case NBR_STA_XCHNG:
 	case NBR_STA_LOAD:
@@ -264,13 +265,15 @@ recv_ls_update(struct nbr *nbr, char *buf, u_int16_t len)
 		for (; nlsa > 0 && len > 0; nlsa--) {
 			if (len < sizeof(lsa)) {
 				log_warnx("recv_ls_update: bad packet size, "
-				    "neighbor ID %s", inet_ntoa(nbr->id));
+				    "neighbor ID %s (%s)", inet_ntoa(nbr->id),
+				    nbr->iface->name);
 				return;
 			}
 			memcpy(&lsa, buf, sizeof(lsa));
 			if (len < ntohs(lsa.len)) {
 				log_warnx("recv_ls_update: bad packet size, "
-				    "neighbor ID %s", inet_ntoa(nbr->id));
+				    "neighbor ID %s (%s)", inet_ntoa(nbr->id),
+				    nbr->iface->name);
 				return;
 			}
 			ospfe_imsg_compose_rde(IMSG_LS_UPD, nbr->peerid, 0,
@@ -280,7 +283,8 @@ recv_ls_update(struct nbr *nbr, char *buf, u_int16_t len)
 		}
 		if (nlsa > 0 || len > 0) {
 			log_warnx("recv_ls_update: bad packet size, "
-			    "neighbor ID %s", inet_ntoa(nbr->id));
+			    "neighbor ID %s (%s)", inet_ntoa(nbr->id),
+			    nbr->iface->name);
 			return;
 		}
 		break;
@@ -491,8 +495,8 @@ ls_retrans_timer(int fd, short event, void *bula)
 			if (nlsa == 0) {
 				/* something bad happened retry later */
 				log_warnx("ls_retrans_timer: sending LS update "
-				    "to neighbor ID %s failed",
-				    inet_ntoa(nbr->id));
+				    "to neighbor ID %s (%s) failed",
+				    inet_ntoa(nbr->id), nbr->iface->name);
 				TAILQ_REMOVE(&nbr->ls_retrans_list, le, entry);
 				nbr->ls_ret_cnt--;
 				le->le_when = nbr->iface->rxmt_interval;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.8 2019/12/28 09:25:24 denis Exp $ */
+/*	$OpenBSD: lsack.c,v 1.9 2021/11/03 21:40:03 sthen Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -105,8 +105,8 @@ recv_ls_ack(struct nbr *nbr, char *buf, u_int16_t len)
 	case NBR_STA_XSTRT:
 	case NBR_STA_SNAP:
 		log_debug("recv_ls_ack: packet ignored in state %s, "
-		    "neighbor ID %s", nbr_state_name(nbr->state),
-		    inet_ntoa(nbr->id));
+		    "neighbor ID %s (%s)", nbr_state_name(nbr->state),
+		    inet_ntoa(nbr->id), nbr->iface->name);
 		break;
 	case NBR_STA_XCHNG:
 	case NBR_STA_LOAD:
@@ -127,7 +127,8 @@ recv_ls_ack(struct nbr *nbr, char *buf, u_int16_t len)
 		}
 		if (len > 0) {
 			log_warnx("recv_ls_ack: bad packet size, "
-			    "neighbor ID %s", inet_ntoa(nbr->id));
+			    "neighbor ID %s (%s)", inet_ntoa(nbr->id),
+			    nbr->iface->name);
 			return;
 		}
 		break;
@@ -141,8 +142,8 @@ lsa_hdr_check(struct nbr *nbr, struct lsa_hdr *lsa_hdr)
 {
 	/* invalid age */
 	if ((ntohs(lsa_hdr->age) < 1) || (ntohs(lsa_hdr->age) > MAX_AGE)) {
-		log_debug("lsa_hdr_check: invalid age, neighbor ID %s",
-		     inet_ntoa(nbr->id));
+		log_debug("lsa_hdr_check: invalid age, neighbor ID %s (%s)",
+		     inet_ntoa(nbr->id), nbr->iface->name);
 		return (0);
 	}
 
@@ -157,15 +158,17 @@ lsa_hdr_check(struct nbr *nbr, struct lsa_hdr *lsa_hdr)
 	case LSA_TYPE_EXTERNAL:
 		break;
 	default:
-		log_debug("lsa_hdr_check: invalid LSA type %d, neighbor ID %s",
-		    lsa_hdr->type, inet_ntoa(nbr->id));
+		log_debug("lsa_hdr_check: invalid LSA type %d, "
+		    "neighbor ID %s (%s)",
+		    lsa_hdr->type, inet_ntoa(nbr->id), nbr->iface->name);
 		return (0);
 	}
 
 	/* invalid sequence number */
 	if (ntohl(lsa_hdr->seq_num) == RESV_SEQ_NUM) {
-		log_debug("ls_hdr_check: invalid seq num, neighbor ID %s",
-			inet_ntoa(nbr->id));
+		log_debug("ls_hdr_check: invalid seq num, "
+		    "neighbor ID %s (%s)", inet_ntoa(nbr->id),
+		    nbr->iface->name);
 		return (0);
 	}
 

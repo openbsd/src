@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.35 2021/01/19 16:01:39 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.36 2021/11/03 21:40:03 sthen Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -214,8 +214,13 @@ recv_packet(int fd, short event, void *bula)
 	}
 
 	if (auth_validate(buf, len, iface, nbr)) {
-		log_warnx("recv_packet: authentication error, "
-		    "interface %s", iface->name);
+		if (nbr == NULL)
+			log_warnx("recv_packet: authentication error, "
+			    "interface %s", iface->name);
+		else
+			log_warnx("recv_packet: authentication error, "
+			    "neighbor ID %s interface %s",
+			    inet_ntoa(nbr->id), iface->name);
 		return;
 	}
 
