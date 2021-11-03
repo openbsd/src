@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_r2x.c,v 1.12 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x509_r2x.c,v 1.13 2021/11/03 14:36:21 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,6 +74,7 @@ X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
 	X509 *ret = NULL;
 	X509_CINF *xi = NULL;
 	X509_NAME *xn;
+	EVP_PKEY *pubkey;
 
 	if ((ret = X509_new()) == NULL) {
 		X509error(ERR_R_MALLOC_FAILURE);
@@ -88,14 +89,12 @@ X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
 			goto err;
 		if (!ASN1_INTEGER_set(xi->version, 2))
 			goto err;
-/*		xi->extensions=ri->attributes; <- bad, should not ever be done
-		ri->attributes=NULL; */
 	}
 
 	xn = X509_REQ_get_subject_name(r);
-	if (X509_set_subject_name(ret, X509_NAME_dup(xn)) == 0)
+	if (X509_set_subject_name(ret, xn) == 0)
 		goto err;
-	if (X509_set_issuer_name(ret, X509_NAME_dup(xn)) == 0)
+	if (X509_set_issuer_name(ret, xn) == 0)
 		goto err;
 
 	if (X509_gmtime_adj(xi->validity->notBefore, 0) == NULL)
@@ -104,14 +103,16 @@ X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
 	    (long)60 * 60 * 24 * days) == NULL)
 		goto err;
 
-	X509_set_pubkey(ret, X509_REQ_get_pubkey(r));
+	if ((pubkey = X509_REQ_get0_pubkey(r)) == NULL)
+		goto err;
+	if (!X509_set_pubkey(ret, pubkey))
+		goto err;
 
 	if (!X509_sign(ret, pkey, EVP_md5()))
 		goto err;
-	if (0) {
+	return ret;
+
 err:
-		X509_free(ret);
-		ret = NULL;
-	}
-	return (ret);
+	X509_free(ret);
+	return NULL;
 }
