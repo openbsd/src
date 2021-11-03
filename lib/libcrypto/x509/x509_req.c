@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.24 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x509_req.c,v 1.25 2021/11/03 12:53:25 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -232,46 +232,27 @@ X509_REQ_get_extensions(X509_REQ *req)
 	    ext->value.sequence->length, &X509_EXTENSIONS_it);
 }
 
-/* Add a STACK_OF extensions to a certificate request: allow alternative OIDs
- * in case we want to create a non standard one.
+/*
+ * Add a STACK_OF extensions to a certificate request: allow alternative OIDs
+ * in case we want to create a non-standard one.
  */
 
 int
 X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
     int nid)
 {
-	ASN1_TYPE *at = NULL;
-	X509_ATTRIBUTE *attr = NULL;
+	unsigned char *ext = NULL;
+	int extlen;
+	int rv;
 
-	if (!(at = ASN1_TYPE_new()) ||
-	    !(at->value.sequence = ASN1_STRING_new()))
-		goto err;
+	extlen = i2d_X509_EXTENSIONS(exts, &ext);
+	if (extlen <= 0)
+		return 0;
 
-	at->type = V_ASN1_SEQUENCE;
-	/* Generate encoding of extensions */
-	at->value.sequence->length = ASN1_item_i2d((ASN1_VALUE *)exts,
-	    &at->value.sequence->data, &X509_EXTENSIONS_it);
-	if (!(attr = X509_ATTRIBUTE_new()))
-		goto err;
-	if (!(attr->value.set = sk_ASN1_TYPE_new_null()))
-		goto err;
-	if (!sk_ASN1_TYPE_push(attr->value.set, at))
-		goto err;
-	at = NULL;
-	attr->single = 0;
-	attr->object = OBJ_nid2obj(nid);
-	if (!req->req_info->attributes) {
-		if (!(req->req_info->attributes = sk_X509_ATTRIBUTE_new_null()))
-			goto err;
-	}
-	if (!sk_X509_ATTRIBUTE_push(req->req_info->attributes, attr))
-		goto err;
-	return 1;
+	rv = X509_REQ_add1_attr_by_NID(req, nid, V_ASN1_SEQUENCE, ext, extlen);
+	free(ext);
 
-err:
-	X509_ATTRIBUTE_free(attr);
-	ASN1_TYPE_free(at);
-	return 0;
+	return rv;
 }
 
 /* This is the normal usage: use the "official" OID */
