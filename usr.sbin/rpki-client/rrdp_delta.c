@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_delta.c,v 1.4 2021/10/28 11:57:00 claudio Exp $ */
+/*	$OpenBSD: rrdp_delta.c,v 1.5 2021/11/03 13:30:56 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -87,7 +87,7 @@ start_delta_elem(struct delta_xml *dxml, const char **attr)
 				continue;
 		}
 		PARSE_FAIL(p, "parse failed - non conforming "
-		    "attribute found in delta elem");
+		    "attribute '%s' found in delta elem", attr[i]);
 	}
 	if (!(has_xmlns && dxml->version && dxml->session_id && dxml->serial))
 		PARSE_FAIL(p, "parse failed - incomplete delta attributes");
@@ -136,7 +136,7 @@ start_publish_withdraw_elem(struct delta_xml *dxml, const char **attr,
 				continue;
 		}
 		PARSE_FAIL(p, "parse failed - non conforming "
-		    "attribute found in publish/withdraw elem");
+		    "attribute '%s' found in publish/withdraw elem", attr[i]);
 	}
 	if (hasUri != 1)
 		PARSE_FAIL(p,

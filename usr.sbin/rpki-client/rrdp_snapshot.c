@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_snapshot.c,v 1.3 2021/10/28 11:57:00 claudio Exp $ */
+/*	$OpenBSD: rrdp_snapshot.c,v 1.4 2021/11/03 13:30:56 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -80,7 +80,7 @@ start_snapshot_elem(struct snapshot_xml *sxml, const char **attr)
 		}
 		PARSE_FAIL(p,
 		    "parse failed - non conforming "
-		    "attribute found in snapshot elem");
+		    "attribute '%s' found in snapshot elem", attr[i]);
 	}
 	if (!(has_xmlns && sxml->version && sxml->session_id && sxml->serial))
 		PARSE_FAIL(p,
