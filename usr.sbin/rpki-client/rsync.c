@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.29 2021/10/28 13:50:29 job Exp $ */
+/*	$OpenBSD: rsync.c,v 1.30 2021/11/03 14:59:37 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -119,7 +119,7 @@ proc_child(int signal)
 void
 proc_rsync(char *prog, char *bind_addr, int fd)
 {
-	size_t			 i, idsz = 0;
+	size_t			 i, idsz = 0, nprocs = 0;
 	int			 rc = 0;
 	struct pollfd		 pfd;
 	struct msgbuf		 msgq;
@@ -186,7 +186,9 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		pid_t pid;
 		int st;
 
-		pfd.events = POLLIN;
+		pfd.events = 0;
+		if (nprocs < MAX_RSYNC_PROCESSES)
+			pfd.events |= POLLIN;
 		if (msgq.queued)
 			pfd.events |= POLLOUT;
 
@@ -228,6 +230,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 				ids[i].uri = NULL;
 				ids[i].pid = 0;
 				ids[i].id = 0;
+				nprocs--;
 			}
 			if (pid == -1 && errno != ECHILD)
 				err(1, "waitpid");
@@ -314,6 +317,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		ids[i].id = id;
 		ids[i].pid = pid;
 		ids[i].uri = uri;
+		nprocs++;
 
 		/* Clean up temporary values. */
 
