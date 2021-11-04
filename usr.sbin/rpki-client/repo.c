@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.9 2021/08/12 15:27:15 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.10 2021/11/04 17:35:09 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -88,7 +88,8 @@ SLIST_HEAD(, tarepo)	tarepos = SLIST_HEAD_INITIALIZER(tarepos);
 
 struct	repo {
 	SLIST_ENTRY(repo)	 entry;
-	char			*repouri;	/* CA repository base URI */
+	char			*repouri;
+	char			*notifyuri;
 	const struct rrdprepo	*rrdp;
 	const struct rsyncrepo	*rsync;
 	const struct tarepo	*ta;
@@ -1089,18 +1090,33 @@ ta_lookup(struct tal *tal)
 struct repo *
 repo_lookup(const char *uri, const char *notify)
 {
-	struct repo *rp;
+	struct repo	*rp;
+	char		*repouri;
+
+	if ((repouri = rsync_base_uri(uri)) == NULL)
+		errx(1, "bad caRepository URI: %s", uri);
 
 	/* Look up in repository table. */
 	SLIST_FOREACH(rp, &repos, entry) {
-		if (strcmp(rp->repouri, uri) != 0)
+		if (strcmp(rp->repouri, repouri) != 0)
 			continue;
+		if (rp->notifyuri != NULL) {
+			if (notify == NULL)
+				continue;
+			if (strcmp(rp->notifyuri, notify) != 0)
+				continue;
+		} else if (notify != NULL)
+			continue;
+		/* found matching repo */
+		free(repouri);
 		return rp;
 	}
 
 	rp = repo_alloc();
-	if ((rp->repouri = strdup(uri)) == NULL)
-		err(1, NULL);
+	rp->repouri = repouri;
+	if (notify != NULL)
+		if ((rp->notifyuri = strdup(notify)) == NULL)
+			err(1, NULL);
 
 	/* try RRDP first if available */
 	if (notify != NULL)
