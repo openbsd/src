@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.162 2021/11/04 14:24:41 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.163 2021/11/04 18:00:07 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1020,19 +1020,23 @@ main(int argc, char *argv[])
 		}
 
 		for (i = 0; i < NPFD; i++) {
-			if (pfd[i].revents & (POLLERR|POLLNVAL))
-				errx(1, "poll[%zu]: bad fd", i);
-			if (pfd[i].revents & POLLHUP) {
-				warnx("poll[%zu]: hangup", i);
+			if (pfd[i].revents & (POLLERR|POLLNVAL)) {
+				warnx("poll[%zu]: bad fd", i);
 				hangup = 1;
 			}
+			if (pfd[i].revents & POLLHUP)
+				hangup = 1;
 			if (pfd[i].revents & POLLOUT) {
 				switch (msgbuf_write(queues[i])) {
 				case 0:
-					errx(1, "write[%zu]: "
+					warnx("write[%zu]: "
 					    "connection closed", i);
+					hangup = 1;
+					break;
 				case -1:
-					err(1, "write[%zu]", i);
+					warn("write[%zu]", i);
+					hangup = 1;
+					break;
 				}
 			}
 		}
@@ -1147,7 +1151,7 @@ main(int argc, char *argv[])
 
 	/* processing did not finish because of error */
 	if (entity_queue != 0)
-		return 1;
+		errx(1, "not all files processed, giving up");
 
 	logx("all files parsed: generating output");
 
