@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.87 2021/10/26 17:31:22 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.88 2021/11/04 03:53:57 yasuoka Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 26 2021 $
+.Dd $Mdocdate: November 4 2021 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -998,9 +998,9 @@ keyword.
 3DES requires 24 bytes to form its 168-bit key.
 This is because the most significant bit of each byte is used for parity.
 .Pp
-The keysize of AES-CTR is actually 128-bit.
+The keysize of AES-CTR can be 128, 192, or 256 bits.
 However as well as the key, a 32-bit nonce has to be supplied.
-Thus 160 bits of key material have to be supplied.
+Thus 160, 224, or 288 bits of key material, respectively, have to be supplied.
 The same applies to AES-GCM, AES-GMAC and Chacha20-Poly1305,
 however in the latter case the keysize is 256 bit.
 .Pp
