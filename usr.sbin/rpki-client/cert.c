@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.45 2021/11/02 19:30:30 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.46 2021/11/04 11:32:55 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1220,7 +1220,6 @@ cert_free(struct cert *p)
 	free(p->aia);
 	free(p->aki);
 	free(p->ski);
-	free(p->tal);
 	free(p->pubkey);
 	X509_free(p->x509);
 	free(p);
@@ -1263,13 +1262,14 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 {
 	size_t	 i;
 
-	io_simple_buffer(b, &p->expires, sizeof(time_t));
-	io_simple_buffer(b, &p->purpose, sizeof(enum cert_purpose));
-	io_simple_buffer(b, &p->ipsz, sizeof(size_t));
+	io_simple_buffer(b, &p->expires, sizeof(p->expires));
+	io_simple_buffer(b, &p->purpose, sizeof(p->purpose));
+	io_simple_buffer(b, &p->talid, sizeof(p->talid));
+	io_simple_buffer(b, &p->ipsz, sizeof(p->ipsz));
 	for (i = 0; i < p->ipsz; i++)
 		cert_ip_buffer(b, &p->ips[i]);
 
-	io_simple_buffer(b, &p->asz, sizeof(size_t));
+	io_simple_buffer(b, &p->asz, sizeof(p->asz));
 	for (i = 0; i < p->asz; i++)
 		cert_as_buffer(b, &p->as[i]);
 	io_str_buffer(b, p->mft);
@@ -1279,7 +1279,6 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 	io_str_buffer(b, p->aia);
 	io_str_buffer(b, p->aki);
 	io_str_buffer(b, p->ski);
-	io_str_buffer(b, p->tal);
 	io_str_buffer(b, p->pubkey);
 }
 
@@ -1325,9 +1324,10 @@ cert_read(struct ibuf *b)
 	if ((p = calloc(1, sizeof(struct cert))) == NULL)
 		err(1, NULL);
 
-	io_read_buf(b, &p->expires, sizeof(time_t));
-	io_read_buf(b, &p->purpose, sizeof(enum cert_purpose));
-	io_read_buf(b, &p->ipsz, sizeof(size_t));
+	io_read_buf(b, &p->expires, sizeof(p->expires));
+	io_read_buf(b, &p->purpose, sizeof(p->purpose));
+	io_read_buf(b, &p->talid, sizeof(p->talid));
+	io_read_buf(b, &p->ipsz, sizeof(p->ipsz));
 
 	p->ips = calloc(p->ipsz, sizeof(struct cert_ip));
 	if (p->ips == NULL)
@@ -1335,7 +1335,7 @@ cert_read(struct ibuf *b)
 	for (i = 0; i < p->ipsz; i++)
 		cert_ip_read(b, &p->ips[i]);
 
-	io_read_buf(b, &p->asz, sizeof(size_t));
+	io_read_buf(b, &p->asz, sizeof(p->asz));
 	p->as = calloc(p->asz, sizeof(struct cert_as));
 	if (p->as == NULL)
 		err(1, NULL);
@@ -1349,7 +1349,6 @@ cert_read(struct ibuf *b)
 	io_read_str(b, &p->aia);
 	io_read_str(b, &p->aki);
 	io_read_str(b, &p->ski);
-	io_read_str(b, &p->tal);
 	io_read_str(b, &p->pubkey);
 
 	assert(p->mft != NULL || p->purpose == CERT_PURPOSE_BGPSEC_ROUTER);
@@ -1406,8 +1405,7 @@ insert_brk(struct brk_tree *tree, struct cert *cert, int asid)
 
 	b->asid = asid;
 	b->expires = cert->expires;
-	if ((b->tal = strdup(cert->tal)) == NULL)
-		err(1, NULL);
+	b->talid = cert->talid;
 	if ((b->ski = strdup(cert->ski)) == NULL)
 		err(1, NULL);
 	if ((b->pubkey = strdup(cert->pubkey)) == NULL)
@@ -1420,13 +1418,10 @@ insert_brk(struct brk_tree *tree, struct cert *cert, int asid)
 	if ((found = RB_INSERT(brk_tree, tree, b)) != NULL) {
 		if (found->expires < b->expires) {
 			found->expires = b->expires;
-			free(found->tal);
-			found->tal = b->tal;
-			b->tal = NULL;
+			found->talid = b->talid;
 		}
 		free(b->ski);
 		free(b->pubkey);
-		free(b->tal);
 		free(b);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.26 2021/11/03 10:50:18 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.27 2021/11/04 11:32:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -233,8 +233,7 @@ proc_parser_cert(const struct entity *entp, const unsigned char *der,
 	sk_X509_free(chain);
 	sk_X509_CRL_free(crls);
 
-	if ((cert->tal = strdup(a->cert->tal)) == NULL)
-		err(1, NULL);
+	cert->talid = a->cert->talid;
 
 	/* Validate the cert to get the parent */
 	if (!valid_cert(entp->file, &auths, cert)) {
@@ -319,8 +318,7 @@ proc_parser_root_cert(const struct entity *entp, const unsigned char *der,
 		goto badcert;
 	}
 
-	if ((cert->tal = strdup(entp->descr)) == NULL)
-		err(1, NULL);
+	cert->talid = entp->talid;
 
 	/*
 	 * Add valid roots to the RPKI auth tree.
@@ -521,6 +519,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			    entp->datasz)) == NULL)
 				errx(1, "%s: could not parse tal file",
 				    entp->file);
+			tal->id = entp->talid;
 			tal_buffer(b, tal);
 			tal_free(tal);
 			break;

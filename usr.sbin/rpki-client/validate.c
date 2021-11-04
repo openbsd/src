@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.21 2021/11/01 09:12:18 claudio Exp $ */
+/*	$OpenBSD: validate.c,v 1.22 2021/11/04 11:32:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -217,8 +217,7 @@ valid_roa(const char *fn, struct auth_tree *auths, struct roa *roa)
 	if (a == NULL)
 		return 0;
 
-	if ((roa->tal = strdup(a->cert->tal)) == NULL)
-		err(1, NULL);
+	roa->talid = a->cert->talid;
 
 	for (i = 0; i < roa->ipsz; i++) {
 		if (valid_ip(a, roa->ips[i].afi, roa->ips[i].min,

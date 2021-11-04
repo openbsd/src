@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-csv.c,v 1.11 2021/10/11 16:50:03 job Exp $ */
+/*	$OpenBSD: output-csv.c,v 1.12 2021/11/04 11:32:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -34,7 +34,8 @@ output_csv(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 		ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
 
 		if (fprintf(out, "AS%u,%s,%u,%s,%lld\n", v->asid, buf,
-		    v->maxlength, v->tal, (long long)v->expires) < 0)
+		    v->maxlength, taldescs[v->talid],
+		    (long long)v->expires) < 0)
 			return -1;
 	}
 	return 0;

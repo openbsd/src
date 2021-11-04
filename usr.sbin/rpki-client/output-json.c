@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.21 2021/11/01 17:00:34 claudio Exp $ */
+/*	$OpenBSD: output-json.c,v 1.22 2021/11/04 11:32:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -28,6 +28,7 @@ outputheader_json(FILE *out, struct stats *st)
 	char		hn[NI_MAXHOST], tbuf[26];
 	struct tm	*tp;
 	time_t		t;
+	size_t		i;
 
 	time(&t);
 	setenv("TZ", "UTC", 1);
@@ -50,7 +51,24 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t\t\"certificates\": %zu,\n"
 	    "\t\t\"invalidcertificates\": %zu,\n"
 	    "\t\t\"tals\": %zu,\n"
-	    "\t\t\"talfiles\": \"%s\",\n"
+	    "\t\t\"invalidtals\": %zu,\n"
+	    "\t\t\"talfiles\": [\n",
+	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
+	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
+	    st->roas, st->roas_fail, st->roas_invalid,
+	    st->brks, st->certs, st->certs_fail,
+	    st->tals, talsz - st->tals) < 0)
+		return -1;
+
+	for (i = 0; i < talsz; i++) {
+		if (fprintf(out,
+		    "\t\t\t\"%s\"%s\n",
+		    tals[i], i == talsz - 1 ? "" : ",") < 0)
+			return -1;
+	}
+
+	if (fprintf(out,
+	    "\t\t],\n"
 	    "\t\t\"manifests\": %zu,\n"
 	    "\t\t\"failedmanifests\": %zu,\n"
 	    "\t\t\"stalemanifests\": %zu,\n"
@@ -62,11 +80,6 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t\t\"cachedir_del_files\": %zu,\n"
 	    "\t\t\"cachedir_del_dirs\": %zu\n"
 	    "\t},\n\n",
-	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
-	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
-	    st->roas, st->roas_fail, st->roas_invalid,
-	    st->brks, st->certs, st->certs_fail,
-	    st->tals, st->talnames,
 	    st->mfts, st->mfts_fail, st->mfts_stale,
 	    st->crls,
 	    st->gbrs,
@@ -103,7 +116,8 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 
 		if (fprintf(out, "\t\t{ \"asn\": %u, \"prefix\": \"%s\", "
 		    "\"maxLength\": %u, \"ta\": \"%s\", \"expires\": %lld }",
-		    v->asid, buf, v->maxlength, v->tal, (long long)v->expires)
+		    v->asid, buf, v->maxlength, taldescs[v->talid],
+		    (long long)v->expires)
 		    < 0)
 			return -1;
 	}
@@ -121,7 +135,7 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 
 		if (fprintf(out, "\t\t{ \"asn\": %u, \"ski\": \"%s\", "
 		    "\"pubkey\": \"%s\", \"ta\": \"%s\", \"expires\": %lld }",
-		    b->asid, b->ski, b->pubkey, b->tal,
+		    b->asid, b->ski, b->pubkey, taldescs[b->talid],
 		    (long long)b->expires) < 0)
 			return -1;
 	}

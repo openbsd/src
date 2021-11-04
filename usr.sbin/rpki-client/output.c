@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.23 2021/11/01 17:00:34 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.24 2021/11/04 11:32:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -201,6 +201,7 @@ outputheader(FILE *out, struct stats *st)
 	char		hn[NI_MAXHOST], tbuf[80];
 	struct tm	*tp;
 	time_t		t;
+	size_t		i;
 
 	time(&t);
 	setenv("TZ", "UTC", 1);
@@ -211,21 +212,31 @@ outputheader(FILE *out, struct stats *st)
 
 	if (fprintf(out,
 	    "# Generated on host %s at %s\n"
-	    "# Processing time %lld seconds (%lld seconds user, %lld seconds system)\n"
+	    "# Processing time %lld seconds (%llds user, %llds system)\n"
 	    "# Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)\n"
 	    "# BGPsec Router Certificates: %zu\n"
-	    "# Certificates: %zu (%zu invalid)\n"
-	    "# Trust Anchor Locators: %zu (%s)\n"
+	    "# Certificates: %zu (%zu invalid)\n",
+	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
+	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
+	    st->roas, st->roas_fail, st->roas_invalid,
+	    st->brks, st->certs, st->certs_fail) < 0)
+		return -1;
+
+	if (fprintf(out,
+	    "# Trust Anchor Locators: %zu (%zu invalid) [", st->tals,
+	    talsz - st->tals) < 0)
+		return -1;
+	for (i = 0; i < talsz; i++)
+		if (fprintf(out, " %s", tals[i]) < 0)
+			return -1;
+
+	if (fprintf(out,
+	    " ]\n"
 	    "# Manifests: %zu (%zu failed parse, %zu stale)\n"
 	    "# Certificate revocation lists: %zu\n"
 	    "# Ghostbuster records: %zu\n"
 	    "# Repositories: %zu\n"
 	    "# VRP Entries: %zu (%zu unique)\n",
-	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
-	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
-	    st->roas, st->roas_fail, st->roas_invalid,
-	    st->brks, st->certs, st->certs_fail,
-	    st->tals, st->talnames,
 	    st->mfts, st->mfts_fail, st->mfts_stale,
 	    st->crls,
 	    st->gbrs,

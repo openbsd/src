@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.33 2021/11/03 18:10:12 tb Exp $ */
+/*	$OpenBSD: tal.c,v 1.34 2021/11/04 11:32:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -215,9 +215,10 @@ tal_buffer(struct ibuf *b, const struct tal *p)
 {
 	size_t	 i;
 
+	io_simple_buffer(b, &p->id, sizeof(p->id));
 	io_buf_buffer(b, p->pkey, p->pkeysz);
 	io_str_buffer(b, p->descr);
-	io_simple_buffer(b, &p->urisz, sizeof(size_t));
+	io_simple_buffer(b, &p->urisz, sizeof(p->urisz));
 
 	for (i = 0; i < p->urisz; i++)
 		io_str_buffer(b, p->uri[i]);
@@ -237,9 +238,10 @@ tal_read(struct ibuf *b)
 	if ((p = calloc(1, sizeof(struct tal))) == NULL)
 		err(1, NULL);
 
+	io_read_buf(b, &p->id, sizeof(p->id));
 	io_read_buf_alloc(b, (void **)&p->pkey, &p->pkeysz);
 	io_read_str(b, &p->descr);
-	io_read_buf(b, &p->urisz, sizeof(size_t));
+	io_read_buf(b, &p->urisz, sizeof(p->urisz));
 	assert(p->pkeysz > 0);
 	assert(p->descr);
 	assert(p->urisz > 0);

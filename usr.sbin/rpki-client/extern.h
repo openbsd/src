@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.90 2021/11/03 14:59:37 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.91 2021/11/04 11:32:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -118,6 +118,7 @@ struct cert {
 	size_t		 ipsz; /* length of "ips" */
 	struct cert_as	*as; /* list of AS numbers and ranges */
 	size_t		 asz; /* length of "asz" */
+	int		 talid; /* cert is covered by which TAL */
 	char		*repo; /* CA repository (rsync:// uri) */
 	char		*mft; /* manifest (rsync:// uri) */
 	char		*notify; /* RRDP notify (https:// uri) */
@@ -125,8 +126,7 @@ struct cert {
 	char		*aia; /* AIA (or NULL, for trust anchor) */
 	char		*aki; /* AKI (or NULL, for trust anchor) */
 	char		*ski; /* SKI */
-	char		*tal; /* basename of TAL for this cert */
-	enum cert_purpose	 purpose; /* Certificate Purpose (BGPSec or CA) */
+	enum cert_purpose	 purpose; /* BGPSec or CA */
 	char		*pubkey; /* Subject Public Key Info */
 	X509		*x509; /* the cert */
 	time_t		 expires; /* do not use after */
@@ -145,6 +145,7 @@ struct tal {
 	unsigned char	*pkey; /* DER-encoded public key */
 	size_t		 pkeysz; /* length of pkey */
 	char		*descr; /* basename of tal file */
+	int		 id; /* ID of this TAL */
 };
 
 /*
@@ -192,11 +193,11 @@ struct roa {
 	uint32_t	 asid; /* asID of ROA (if 0, RFC 6483 sec 4) */
 	struct roa_ip	*ips; /* IP prefixes */
 	size_t		 ipsz; /* number of IP prefixes */
+	int		 talid; /* ROAs are covered by which TAL */
 	int		 valid; /* validated resources */
 	char		*aia; /* AIA */
 	char		*aki; /* AKI */
 	char		*ski; /* SKI */
-	char		*tal; /* basename of TAL for this cert */
 	time_t		 expires; /* do not use after */
 };
 
@@ -216,8 +217,8 @@ struct gbr {
 struct vrp {
 	RB_ENTRY(vrp)	entry;
 	struct ip_addr	addr;
+	int		talid; /* covered by which TAL */
 	uint32_t	asid;
-	char		*tal; /* basename of TAL for this cert */
 	enum afi	afi;
 	unsigned char	maxlength;
 	time_t		expires; /* transitive expiry moment */
@@ -234,7 +235,7 @@ RB_PROTOTYPE(vrp_tree, vrp, entry, vrpcmp);
 struct brk {
 	RB_ENTRY(brk)	 entry;
 	uint32_t	 asid;
-	char		*tal; /* basename of TAL for this key */
+	int		 talid; /* covered by which TAL */
 	char		*ski; /* Subject Key Identifier */
 	char		*pubkey; /* Subject Public Key Info */
 	time_t		 expires; /* transitive expiry moment */
@@ -340,7 +341,7 @@ struct entity {
 	int		 has_data;	/* whether data blob is specified */
 	unsigned char	*data;		/* optional data blob */
 	size_t		 datasz; 	/* length of optional data blob */
-	char		*descr;		/* tal description */
+	int		 talid;		/* tal identifier */
 	TAILQ_ENTRY(entity) entries;
 };
 TAILQ_HEAD(entityq, entity);
@@ -377,7 +378,6 @@ struct stats {
 	size_t	 del_files; /* number of files removed in cleanup */
 	size_t	 del_dirs; /* number of directories removed in cleanup */
 	size_t	 brks; /* number of BGPsec Router Key (BRK) certificates */
-	char	*talnames;
 	struct timeval	elapsed_time;
 	struct timeval	user_time;
 	struct timeval	system_time;
@@ -388,6 +388,9 @@ struct msgbuf;
 
 /* global variables */
 extern int verbose;
+extern const char *tals[];
+extern const char *taldescs[];
+extern size_t talsz;
 
 /* Routines for RPKI entities. */
 
