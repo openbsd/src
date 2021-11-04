@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.50 2021/10/26 15:14:18 job Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.51 2021/11/04 23:52:34 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -38,7 +38,58 @@ static int x509_verify_cert_error(struct x509_verify_ctx *ctx, X509 *cert,
     size_t depth, int error, int ok);
 static void x509_verify_chain_free(struct x509_verify_chain *chain);
 
-#define X509_VERIFY_CERT_HASH (EVP_sha512())
+/*
+ * Parse an asn1 to a representable time_t as per RFC 5280 rules.
+ * Returns -1 if that can't be done for any reason.
+ */
+time_t
+x509_verify_asn1_time_to_time_t(const ASN1_TIME *atime, int notAfter)
+{
+	struct tm tm = { 0 };
+	int type;
+
+	type = ASN1_time_parse(atime->data, atime->length, &tm, atime->type);
+	if (type == -1)
+		return -1;
+
+	/* RFC 5280 section 4.1.2.5 */
+	if (tm.tm_year < 150 && type != V_ASN1_UTCTIME)
+		return -1;
+	if (tm.tm_year >= 150 && type != V_ASN1_GENERALIZEDTIME)
+		return -1;
+
+	if (notAfter) {
+		/*
+		 * If we are a completely broken operating system with a
+		 * 32 bit time_t, and we have been told this is a notAfter
+		 * date, limit the date to a 32 bit representable value.
+		 */
+		if (!ASN1_time_tm_clamp_notafter(&tm))
+			return -1;
+	}
+
+	/*
+	 * Defensively fail if the time string is not representable as
+	 * a time_t. A time_t must be sane if you care about times after
+	 * Jan 19 2038.
+	 */
+	return timegm(&tm);
+}
+
+/*
+ * Cache certificate hash, and values parsed out of an X509.
+ * called from cache_extensions()
+ */
+void
+x509_verify_cert_info_populate(X509 *cert)
+{
+	/*
+	 * Parse and save the cert times, or remember that they
+	 * are unacceptable/unparsable.
+	 */
+	cert->not_before = x509_verify_asn1_time_to_time_t(X509_get_notBefore(cert), 0);
+	cert->not_after = x509_verify_asn1_time_to_time_t(X509_get_notAfter(cert), 1);
+}
 
 struct x509_verify_chain *
 x509_verify_chain_new(void)
@@ -194,6 +245,7 @@ x509_verify_cert_cache_extensions(X509 *cert) {
 	}
 	if (cert->ex_flags & EXFLAG_INVALID)
 		return 0;
+
 	return (cert->ex_flags & EXFLAG_SET);
 }
 
@@ -455,22 +507,15 @@ x509_verify_potential_parent(struct x509_verify_ctx *ctx, X509 *parent,
 }
 
 static int
-x509_verify_parent_signature(X509 *parent, X509 *child,
-    unsigned char *child_md, int *error)
+x509_verify_parent_signature(X509 *parent, X509 *child, int *error)
 {
-	unsigned char parent_md[EVP_MAX_MD_SIZE] = { 0 };
 	EVP_PKEY *pkey;
 	int cached;
 	int ret = 0;
 
 	/* Use cached value if we have it */
-	if (child_md != NULL) {
-		if (!X509_digest(parent, X509_VERIFY_CERT_HASH, parent_md,
-		    NULL))
-			return 0;
-		if ((cached = x509_issuer_cache_find(parent_md, child_md)) >= 0)
-			return cached;
-	}
+	if ((cached = x509_issuer_cache_find(parent->hash, child->hash)) >= 0)
+		return cached;
 
 	/* Check signature. Did parent sign child? */
 	if ((pkey = X509_get_pubkey(parent)) == NULL) {
@@ -483,8 +528,7 @@ x509_verify_parent_signature(X509 *parent, X509 *child,
 		ret = 1;
 
 	/* Add result to cache */
-	if (child_md != NULL)
-		x509_issuer_cache_add(parent_md, child_md, ret);
+	x509_issuer_cache_add(parent->hash, child->hash, ret);
 
 	EVP_PKEY_free(pkey);
 
@@ -493,8 +537,8 @@ x509_verify_parent_signature(X509 *parent, X509 *child,
 
 static int
 x509_verify_consider_candidate(struct x509_verify_ctx *ctx, X509 *cert,
-    unsigned char *cert_md, int is_root_cert, X509 *candidate,
-    struct x509_verify_chain *current_chain, int full_chain)
+    int is_root_cert, X509 *candidate, struct x509_verify_chain *current_chain,
+    int full_chain)
 {
 	int depth = sk_X509_num(current_chain->certs);
 	struct x509_verify_chain *new_chain;
@@ -514,8 +558,7 @@ x509_verify_consider_candidate(struct x509_verify_ctx *ctx, X509 *cert,
 		return 0;
 	}
 
-	if (!x509_verify_parent_signature(candidate, cert, cert_md,
-	    &ctx->error)) {
+	if (!x509_verify_parent_signature(candidate, cert, &ctx->error)) {
 		if (!x509_verify_cert_error(ctx, candidate, depth,
 		    ctx->error, 0))
 			return 0;
@@ -579,7 +622,6 @@ static void
 x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
     struct x509_verify_chain *current_chain, int full_chain)
 {
-	unsigned char cert_md[EVP_MAX_MD_SIZE] = { 0 };
 	X509 *candidate;
 	int i, depth, count, ret, is_root;
 
@@ -598,11 +640,6 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 	if (depth >= ctx->max_depth &&
 	    !x509_verify_cert_error(ctx, cert, depth,
 		X509_V_ERR_CERT_CHAIN_TOO_LONG, 0))
-		return;
-
-	if (!X509_digest(cert, X509_VERIFY_CERT_HASH, cert_md, NULL) &&
-	    !x509_verify_cert_error(ctx, cert, depth,
-		X509_V_ERR_UNSPECIFIED, 0))
 		return;
 
 	count = ctx->chains_count;
@@ -640,7 +677,7 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 				is_root = !full_chain ||
 				    x509_verify_cert_self_signed(candidate);
 				x509_verify_consider_candidate(ctx, cert,
-				    cert_md, is_root, candidate, current_chain,
+				    is_root, candidate, current_chain,
 				    full_chain);
 			}
 			X509_free(candidate);
@@ -653,7 +690,7 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 				is_root = !full_chain ||
 				    x509_verify_cert_self_signed(candidate);
 				x509_verify_consider_candidate(ctx, cert,
-				    cert_md, is_root, candidate, current_chain,
+				    is_root, candidate, current_chain,
 				    full_chain);
 			}
 		}
@@ -665,7 +702,7 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 			candidate = sk_X509_value(ctx->intermediates, i);
 			if (x509_verify_potential_parent(ctx, candidate, cert)) {
 				x509_verify_consider_candidate(ctx, cert,
-				    cert_md, 0, candidate, current_chain,
+				    0, candidate, current_chain,
 				    full_chain);
 			}
 		}
@@ -748,47 +785,9 @@ x509_verify_set_check_time(struct x509_verify_ctx *ctx) {
 	return 1;
 }
 
-int
-x509_verify_asn1_time_to_tm(const ASN1_TIME *atime, struct tm *tm, int notafter)
-{
-	int type;
-
-	type = ASN1_time_parse(atime->data, atime->length, tm, atime->type);
-	if (type == -1)
-		return 0;
-
-	/* RFC 5280 section 4.1.2.5 */
-	if (tm->tm_year < 150 && type != V_ASN1_UTCTIME)
-		return 0;
-	if (tm->tm_year >= 150 && type != V_ASN1_GENERALIZEDTIME)
-		return 0;
-
-	if (notafter) {
-		/*
-		 * If we are a completely broken operating system with a
-		 * 32 bit time_t, and we have been told this is a notafter
-		 * date, limit the date to a 32 bit representable value.
-		 */
-		if (!ASN1_time_tm_clamp_notafter(tm))
-			return 0;
-	}
-
-	/*
-	 * Defensively fail if the time string is not representable as
-	 * a time_t. A time_t must be sane if you care about times after
-	 * Jan 19 2038.
-	 */
-	if (timegm(tm) == -1)
-		return 0;
-
-	return 1;
-}
-
 static int
-x509_verify_cert_time(int is_notafter, const ASN1_TIME *cert_asn1,
-    time_t *cmp_time, int *error)
+x509_verify_cert_times(X509 *cert, time_t *cmp_time, int *error)
 {
-	struct tm cert_tm, when_tm;
 	time_t when;
 
 	if (cmp_time == NULL)
@@ -796,29 +795,21 @@ x509_verify_cert_time(int is_notafter, const ASN1_TIME *cert_asn1,
 	else
 		when = *cmp_time;
 
-	if (!x509_verify_asn1_time_to_tm(cert_asn1, &cert_tm,
-	    is_notafter)) {
-		*error = is_notafter ?
-		    X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD :
-		    X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
+	if (cert->not_before == -1) {
+		*error = X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD;
 		return 0;
 	}
-
-	if (gmtime_r(&when, &when_tm) == NULL) {
-		*error = X509_V_ERR_UNSPECIFIED;
+	if (when < cert->not_before) {
+		*error = X509_V_ERR_CERT_NOT_YET_VALID;
 		return 0;
 	}
-
-	if (is_notafter) {
-		if (ASN1_time_tm_cmp(&cert_tm, &when_tm) == -1) {
-			*error = X509_V_ERR_CERT_HAS_EXPIRED;
-			return 0;
-		}
-	} else  {
-		if (ASN1_time_tm_cmp(&cert_tm, &when_tm) == 1) {
-			*error = X509_V_ERR_CERT_NOT_YET_VALID;
-			return 0;
-		}
+	if (cert->not_after == -1) {
+		*error = X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD;
+		return 0;
+	}
+	if (when > cert->not_after) {
+		*error = X509_V_ERR_CERT_HAS_EXPIRED;
+		return 0;
 	}
 
 	return 1;
@@ -924,15 +915,8 @@ x509_verify_cert_valid(struct x509_verify_ctx *ctx, X509 *cert,
 	}
 
 	if (x509_verify_set_check_time(ctx)) {
-		if (!x509_verify_cert_time(0, X509_get_notBefore(cert),
-		    ctx->check_time, &ctx->error)) {
-			if (!x509_verify_cert_error(ctx, cert, depth,
-			    ctx->error, 0))
-				return 0;
-		}
-
-		if (!x509_verify_cert_time(1, X509_get_notAfter(cert),
-		    ctx->check_time, &ctx->error)) {
+		if (!x509_verify_cert_times(cert, ctx->check_time,
+		    &ctx->error)) {
 			if (!x509_verify_cert_error(ctx, cert, depth,
 			    ctx->error, 0))
 				return 0;

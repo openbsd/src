@@ -61,6 +61,12 @@
 
 __BEGIN_HIDDEN_DECLS
 
+#define TS_HASH_EVP		EVP_sha1()
+#define TS_HASH_LEN		SHA_DIGEST_LENGTH
+
+#define X509_CERT_HASH_EVP	EVP_sha512()
+#define X509_CERT_HASH_LEN	SHA512_DIGEST_LENGTH
+
 struct X509_pubkey_st {
 	X509_ALGOR *algor;
 	ASN1_BIT_STRING *public_key;
@@ -177,9 +183,9 @@ struct x509_st {
 	STACK_OF(IPAddressFamily) *rfc3779_addr;
 	struct ASIdentifiers_st *rfc3779_asid;
 #endif
-#ifndef OPENSSL_NO_SHA
-	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
-#endif
+	unsigned char hash[X509_CERT_HASH_LEN];
+	time_t not_before;
+	time_t not_after;
 	X509_CERT_AUX *aux;
 } /* X509 */;
 

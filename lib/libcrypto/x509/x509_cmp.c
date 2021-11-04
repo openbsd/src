@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cmp.c,v 1.36 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x509_cmp.c,v 1.37 2021/11/04 23:52:34 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -215,7 +215,7 @@ X509_cmp(const X509 *a, const X509 *b)
 	X509_check_purpose((X509 *)a, -1, 0);
 	X509_check_purpose((X509 *)b, -1, 0);
 
-	return memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
+	return memcmp(a->hash, b->hash, X509_CERT_HASH_LEN);
 }
 #endif
 

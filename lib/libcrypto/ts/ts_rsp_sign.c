@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_sign.c,v 1.24 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: ts_rsp_sign.c,v 1.25 2021/11/04 23:52:34 beck Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -849,14 +849,18 @@ ESS_CERT_ID_new_init(X509 *cert, int issuer_needed)
 {
 	ESS_CERT_ID *cid = NULL;
 	GENERAL_NAME *name = NULL;
+	unsigned char cert_hash[TS_HASH_LEN];
 
 	/* Recompute SHA1 hash of certificate if necessary (side effect). */
 	X509_check_purpose(cert, -1, 0);
 
 	if (!(cid = ESS_CERT_ID_new()))
 		goto err;
-	if (!ASN1_OCTET_STRING_set(cid->hash, cert->sha1_hash,
-	    sizeof(cert->sha1_hash)))
+
+	if (!X509_digest(cert, TS_HASH_EVP, cert_hash, NULL))
+		goto err;
+
+	if (!ASN1_OCTET_STRING_set(cid->hash, cert_hash, sizeof(cert_hash)))
 		goto err;
 
 	/* Setting the issuer/serial if requested. */

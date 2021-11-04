@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.h,v 1.1 2020/09/13 15:06:17 beck Exp $ */
+/* $OpenBSD: x509_verify.h,v 1.2 2021/11/04 23:52:34 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -19,6 +19,7 @@
 
 #ifdef LIBRESSL_INTERNAL
 struct x509_verify_ctx;
+struct x509_verify_cert_info;
 typedef struct x509_verify_ctx X509_VERIFY_CTX;
 
 X509_VERIFY_CTX *x509_verify_ctx_new(STACK_OF(X509) *roots);

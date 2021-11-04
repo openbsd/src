@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.12 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.13 2021/11/04 23:52:34 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -65,6 +65,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
 
+#include "x509_internal.h"
 #include "x509_lcl.h"
 
 #define V1_ROOT (EXFLAG_V1|EXFLAG_SS)
@@ -449,9 +450,7 @@ x509v3_cache_extensions(X509 *x)
 	if (x->ex_flags & EXFLAG_SET)
 		return;
 
-#ifndef OPENSSL_NO_SHA
-	X509_digest(x, EVP_sha1(), x->sha1_hash, NULL);
-#endif
+	X509_digest(x, X509_CERT_HASH_EVP, x->hash, NULL);
 
 	/* V1 should mean no extensions ... */
 	if (!X509_get_version(x))
@@ -618,6 +617,9 @@ x509v3_cache_extensions(X509 *x)
 			break;
 		}
 	}
+
+	x509_verify_cert_info_populate(x);
+
 	x->ex_flags |= EXFLAG_SET;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.93 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.94 2021/11/04 23:52:34 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1843,6 +1843,18 @@ verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err)
 	return ctx->verify_cb(0, ctx);
 }
 
+
+/* Mimic OpenSSL '0 for failure' ick */
+static int
+time_t_bogocmp(time_t a, time_t b)
+{
+	if (a == -1 || b == -1)
+		return 0;
+	if (a <= b)
+		return -1;
+	return 1;
+}
+
 /*
  * Check certificate validity times.
  *
@@ -1854,17 +1866,21 @@ verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err)
 int
 x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 {
-	time_t *ptime;
+	time_t ptime;
 	int i;
 
 	if (ctx->param->flags & X509_V_FLAG_USE_CHECK_TIME)
-		ptime = &ctx->param->check_time;
+		ptime = ctx->param->check_time;
 	else if (ctx->param->flags & X509_V_FLAG_NO_CHECK_TIME)
 		return 1;
 	else
-		ptime = NULL;
+		ptime = time(NULL);
 
-	i = X509_cmp_time(X509_get_notBefore(x), ptime);
+	if (x->ex_flags & EXFLAG_SET)
+		i = time_t_bogocmp(x->not_before, ptime);
+	else
+		i = X509_cmp_time(X509_get_notBefore(x), &ptime);
+
 	if (i >= 0 && depth < 0)
 		return 0;
 	if (i == 0 && !verify_cb_cert(ctx, x, depth,
@@ -1874,7 +1890,11 @@ x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 	    X509_V_ERR_CERT_NOT_YET_VALID))
 		return 0;
 
-	i = X509_cmp_time_internal(X509_get_notAfter(x), ptime, 1);
+	if (x->ex_flags & EXFLAG_SET)
+		i = time_t_bogocmp(x->not_after, ptime);
+	else
+		i = X509_cmp_time_internal(X509_get_notAfter(x), &ptime, 1);
+
 	if (i <= 0 && depth < 0)
 		return 0;
 	if (i == 0 && !verify_cb_cert(ctx, x, depth,
@@ -1883,6 +1903,7 @@ x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 	if (i < 0 && !verify_cb_cert(ctx, x, depth,
 	    X509_V_ERR_CERT_HAS_EXPIRED))
 		return 0;
+
 	return 1;
 }
 
@@ -1994,30 +2015,23 @@ X509_cmp_current_time(const ASN1_TIME *ctm)
  * 0 on error.
  */
 static int
-X509_cmp_time_internal(const ASN1_TIME *ctm, time_t *cmp_time, int clamp_notafter)
+X509_cmp_time_internal(const ASN1_TIME *ctm, time_t *cmp_time, int is_notafter)
 {
-	time_t compare;
-	struct tm tm1, tm2;
-	int ret = 0;
+	time_t compare, cert_time;
 
 	if (cmp_time == NULL)
 		compare = time(NULL);
 	else
 		compare = *cmp_time;
 
-	memset(&tm1, 0, sizeof(tm1));
+	if ((cert_time = x509_verify_asn1_time_to_time_t(ctm, is_notafter)) ==
+	    -1)
+		return 0; /* invalid time */
 
-	if (!x509_verify_asn1_time_to_tm(ctm, &tm1, clamp_notafter))
-		goto out; /* invalid time */
+	if (cert_time <= compare)
+		return -1; /* 0 is used for error, so map same to less than */
 
-	if (gmtime_r(&compare, &tm2) == NULL)
-		goto out;
-
-	ret = ASN1_time_tm_cmp(&tm1, &tm2);
-	if (ret == 0)
-		ret = -1; /* 0 is used for error, so map same to less than */
- out:
-	return (ret);
+	return 1;
 }
 
 int
