@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.47 2021/11/03 13:29:28 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.48 2021/11/04 14:24:41 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -192,16 +192,6 @@ static enum res	http_write(struct http_connection *);
 static enum res	proxy_read(struct http_connection *);
 static enum res	proxy_write(struct http_connection *);
 static enum res	data_write(struct http_connection *);
-
-static time_t
-getmonotime(void)
-{
-	struct timespec ts;
-
-	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
-		err(1, "clock_gettime");
-	return (ts.tv_sec);
-}
 
 /*
  * Return a string that can be used in error message to identify the

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.92 2021/11/04 14:21:19 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.93 2021/11/04 14:24:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -599,6 +599,7 @@ int		 output_json(FILE *, struct vrp_tree *, struct brk_tree *,
 
 void		logx(const char *fmt, ...)
 		    __attribute__((format(printf, 1, 2)));
+time_t		getmonotime(void);
 
 int	mkpath(const char *);
 

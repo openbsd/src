@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.161 2021/11/04 11:32:55 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.162 2021/11/04 14:24:41 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -84,6 +84,16 @@ logx(const char *fmt, ...)
 		vwarnx(fmt, ap);
 		va_end(ap);
 	}
+}
+
+time_t
+getmonotime(void)
+{
+	struct timespec ts;
+
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+		err(1, "clock_gettime");
+	return (ts.tv_sec);
 }
 
 void
