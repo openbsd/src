@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipsec.conf.5,v 1.161 2021/11/04 03:53:57 yasuoka Exp $
+.\"	$OpenBSD: ipsec.conf.5,v 1.162 2021/11/04 04:20:14 yasuoka Exp $
 .\"
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
 .\"
@@ -668,7 +668,7 @@ Transforms followed by
 .Bq IKE only
 can only be used with the
 .Ic ike
-keyword, transforms with
+keyword; transforms with
 .Bq phase 2 only
 can only be used with the
 .Ic quick
@@ -681,7 +681,7 @@ The keysize of AES-CTR can be 128, 192, or 256 bits.
 However as well as the key, a 32-bit nonce has to be supplied.
 Thus 160, 224, or 288 bits of key material, respectively, have to be supplied.
 The same applies to AES-GCM, AES-GMAC and Chacha20-Poly1305,
-however in the latter case the keysize is 256 bit.
+however in the latter case the keysize is 256 bits.
 .Pp
 Using AES-GMAC or NULL with ESP will only provide authentication.
 This is useful in setups where AH cannot be used, e.g. when NAT is involved.
