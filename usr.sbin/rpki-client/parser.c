@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.27 2021/11/04 11:32:55 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.28 2021/11/04 18:26:48 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -232,12 +232,12 @@ proc_parser_cert(const struct entity *entp, const unsigned char *der,
 	X509_STORE_CTX_cleanup(ctx);
 	sk_X509_free(chain);
 	sk_X509_CRL_free(crls);
+	X509_free(x509);
 
 	cert->talid = a->cert->talid;
 
 	/* Validate the cert to get the parent */
 	if (!valid_cert(entp->file, &auths, cert)) {
-		X509_free(x509); // needed? XXX
 		cert_free(cert);
 		return NULL;
 	}
@@ -247,7 +247,6 @@ proc_parser_cert(const struct entity *entp, const unsigned char *der,
 	 */
 	if (cert->purpose == CERT_PURPOSE_CA) {
 		if (!auth_insert(&auths, cert, a)) {
-			X509_free(x509); // needed? XXX
 			cert_free(cert);
 			return NULL;
 		}
@@ -318,20 +317,22 @@ proc_parser_root_cert(const struct entity *entp, const unsigned char *der,
 		goto badcert;
 	}
 
+	X509_free(x509);
+
 	cert->talid = entp->talid;
 
 	/*
 	 * Add valid roots to the RPKI auth tree.
 	 */
 	if (!auth_insert(&auths, cert, NULL)) {
-		X509_free(x509); // needed? XXX
 		cert_free(cert);
 		return NULL;
 	}
 
 	return cert;
+
  badcert:
-	X509_free(x509); // needed? XXX
+	X509_free(x509);
 	cert_free(cert);
 	return NULL;
 }
