@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.184 2021/10/24 23:33:37 tobhe Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.185 2021/11/04 14:45:07 tobhe Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -682,7 +682,7 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 		goto drop;
 	}
 
-	/* Trim the mbuf chain to remove the trailing authenticator and padding */
+	/* Trim the mbuf chain to remove the padding */
 	m_adj(m, -(lastthree[1] + 2));
 
 	/* Restore the Next Protocol field */
