@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.91 2021/11/04 11:32:55 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.92 2021/11/04 14:21:19 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -602,26 +602,26 @@ void		logx(const char *fmt, ...)
 
 int	mkpath(const char *);
 
-#define		RPKI_PATH_OUT_DIR	"/var/db/rpki-client"
-#define		RPKI_PATH_BASE_DIR	"/var/cache/rpki-client"
+#define RPKI_PATH_OUT_DIR	"/var/db/rpki-client"
+#define RPKI_PATH_BASE_DIR	"/var/cache/rpki-client"
 
 /* Maximum number of IP and AS ranges accepted in any single file */
-#define MAX_IP_SIZE	200000
-#define MAX_AS_SIZE	200000
+#define MAX_IP_SIZE		200000
+#define MAX_AS_SIZE		200000
 
 /* Maximum acceptable URI length */
-#define MAX_URI_LENGTH 2048
+#define MAX_URI_LENGTH		2048
 
 /* Maximum acceptable file size */
-#define MAX_FILE_SIZE 2000000
+#define MAX_FILE_SIZE		2000000
 
 /* Maximum number of FileAndHash entries per manifest. */
-#define	MAX_MANIFEST_ENTRIES	100000
+#define MAX_MANIFEST_ENTRIES	100000
 
 /* Maximum depth of the RPKI tree. */
-#define	MAX_CERT_DEPTH	12
+#define MAX_CERT_DEPTH		12
 
 /* Maximum number of concurrent rsync processes. */
-#define MAX_RSYNC_PROCESSES 16
+#define MAX_RSYNC_PROCESSES	16
 
 #endif /* ! EXTERN_H */
