@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.44 2021/11/05 17:11:28 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.45 2021/11/05 17:13:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -237,67 +237,64 @@ X509_OBJECT_free(X509_OBJECT *a)
 }
 
 void
-X509_STORE_free(X509_STORE *vfy)
+X509_STORE_free(X509_STORE *store)
 {
-	int i;
 	STACK_OF(X509_LOOKUP) *sk;
 	X509_LOOKUP *lu;
+	int i;
 
-	if (vfy == NULL)
+	if (store == NULL)
 		return;
 
-	i = CRYPTO_add(&vfy->references, -1, CRYPTO_LOCK_X509_STORE);
-	if (i > 0)
+	if (CRYPTO_add(&store->references, -1, CRYPTO_LOCK_X509_STORE) > 0)
 		return;
 
-	sk = vfy->get_cert_methods;
+	sk = store->get_cert_methods;
 	for (i = 0; i < sk_X509_LOOKUP_num(sk); i++) {
 		lu = sk_X509_LOOKUP_value(sk, i);
 		X509_LOOKUP_shutdown(lu);
 		X509_LOOKUP_free(lu);
 	}
 	sk_X509_LOOKUP_free(sk);
-	sk_X509_OBJECT_pop_free(vfy->objs, X509_OBJECT_free);
+	sk_X509_OBJECT_pop_free(store->objs, X509_OBJECT_free);
 
-	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, vfy, &vfy->ex_data);
-	X509_VERIFY_PARAM_free(vfy->param);
-	free(vfy);
+	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, store, &store->ex_data);
+	X509_VERIFY_PARAM_free(store->param);
+	free(store);
 }
 
 int
-X509_STORE_up_ref(X509_STORE *x)
+X509_STORE_up_ref(X509_STORE *store)
 {
-	int refs = CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509_STORE);
-	return (refs > 1) ? 1 : 0;
+	return CRYPTO_add(&store->references, 1, CRYPTO_LOCK_X509_STORE) > 1;
 }
 
 X509_LOOKUP *
-X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m)
+X509_STORE_add_lookup(X509_STORE *store, X509_LOOKUP_METHOD *method)
 {
-	int i;
 	STACK_OF(X509_LOOKUP) *sk;
 	X509_LOOKUP *lu;
+	int i;
 
-	sk = v->get_cert_methods;
+	sk = store->get_cert_methods;
 	for (i = 0; i < sk_X509_LOOKUP_num(sk); i++) {
 		lu = sk_X509_LOOKUP_value(sk, i);
-		if (m == lu->method) {
+		if (method == lu->method) {
 			return lu;
 		}
 	}
-	/* a new one */
-	lu = X509_LOOKUP_new(m);
-	if (lu == NULL)
+
+	if ((lu = X509_LOOKUP_new(method)) == NULL)
 		return NULL;
-	else {
-		lu->store_ctx = v;
-		if (sk_X509_LOOKUP_push(v->get_cert_methods, lu))
-			return lu;
-		else {
-			X509_LOOKUP_free(lu);
-			return NULL;
-		}
+
+	lu->store_ctx = store;
+	if (sk_X509_LOOKUP_push(store->get_cert_methods, lu) <= 0) {
+		X509error(ERR_R_MALLOC_FAILURE);
+		X509_LOOKUP_free(lu);
+		return NULL;
 	}
+
+	return lu;
 }
 
 X509_OBJECT *
