@@ -1,4 +1,4 @@
-/*	$OpenBSD: fw_cfg.c,v 1.4 2021/11/04 17:50:05 jan Exp $	*/
+/*	$OpenBSD: fw_cfg.c,v 1.5 2021/11/05 10:18:50 jan Exp $	*/
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
  *
@@ -77,7 +77,7 @@ fw_cfg_init(struct vmop_create_params *vmc)
 
 	switch (vmc->vmc_bootdevice) {
 	case VMBOOTDEV_DISK:
-		bootorder = "/pci@i0cf8/*@2\nHALT";
+		bootorder = "/pci@i0cf8/*@3\nHALT";
 		break;
 	case VMBOOTDEV_CDROM:
 		bootorder = "/pci@i0cf8/*@4/*@0/*@0,40000100\nHALT";
