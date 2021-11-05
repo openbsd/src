@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.37 2021/11/01 17:20:50 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.38 2021/11/05 07:25:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <openssl/err.h>
 #include <openssl/lhash.h>
@@ -349,8 +350,7 @@ X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
 	if (ctx == NULL)
 		return 0;
 
-	stmp.type = 0;
-	stmp.data.ptr = NULL;
+	memset(&stmp, 0, sizeof(stmp));
 
 	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
 	tmp = X509_OBJECT_retrieve_by_subject(ctx->objs, type, name);
@@ -368,10 +368,10 @@ X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
 			return 0;
 	}
 
-	ret->type = tmp->type;
-	ret->data.ptr = tmp->data.ptr;
+	if (!X509_OBJECT_up_ref_count(tmp))
+		return 0;
 
-	X509_OBJECT_up_ref_count(ret);
+	*ret = *tmp;
 
 	return 1;
 }
