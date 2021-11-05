@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.39 2021/11/05 17:03:15 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.40 2021/11/05 17:05:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,8 +92,8 @@ X509_LOOKUP_free(X509_LOOKUP *ctx)
 {
 	if (ctx == NULL)
 		return;
-	if ((ctx->method != NULL) && (ctx->method->free != NULL))
-		(*ctx->method->free)(ctx);
+	if (ctx->method != NULL && ctx->method->free != NULL)
+		ctx->method->free(ctx);
 	free(ctx);
 }
 
@@ -102,10 +102,9 @@ X509_LOOKUP_init(X509_LOOKUP *ctx)
 {
 	if (ctx->method == NULL)
 		return 0;
-	if (ctx->method->init != NULL)
-		return ctx->method->init(ctx);
-	else
+	if (ctx->method->init == NULL)
 		return 1;
+	return ctx->method->init(ctx);
 }
 
 int
@@ -113,10 +112,9 @@ X509_LOOKUP_shutdown(X509_LOOKUP *ctx)
 {
 	if (ctx->method == NULL)
 		return 0;
-	if (ctx->method->shutdown != NULL)
-		return ctx->method->shutdown(ctx);
-	else
+	if (ctx->method->shutdown == NULL)
 		return 1;
+	return ctx->method->shutdown(ctx);
 }
 
 int
@@ -125,17 +123,16 @@ X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
 {
 	if (ctx->method == NULL)
 		return -1;
-	if (ctx->method->ctrl != NULL)
-		return ctx->method->ctrl(ctx, cmd, argc, argl, ret);
-	else
+	if (ctx->method->ctrl == NULL)
 		return 1;
+	return ctx->method->ctrl(ctx, cmd, argc, argl, ret);
 }
 
 int
 X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type, X509_NAME *name,
     X509_OBJECT *ret)
 {
-	if ((ctx->method == NULL) || (ctx->method->get_by_subject == NULL))
+	if (ctx->method == NULL || ctx->method->get_by_subject == NULL)
 		return 0;
 	if (ctx->skip)
 		return 0;
@@ -146,8 +143,7 @@ int
 X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     X509_NAME *name, ASN1_INTEGER *serial, X509_OBJECT *ret)
 {
-	if ((ctx->method == NULL) ||
-	    (ctx->method->get_by_issuer_serial == NULL))
+	if (ctx->method == NULL || ctx->method->get_by_issuer_serial == NULL)
 		return 0;
 	return ctx->method->get_by_issuer_serial(ctx, type, name, serial, ret);
 }
@@ -156,7 +152,7 @@ int
 X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     const unsigned char *bytes, int len, X509_OBJECT *ret)
 {
-	if ((ctx->method == NULL) || (ctx->method->get_by_fingerprint == NULL))
+	if (ctx->method == NULL || ctx->method->get_by_fingerprint == NULL)
 		return 0;
 	return ctx->method->get_by_fingerprint(ctx, type, bytes, len, ret);
 }
@@ -165,7 +161,7 @@ int
 X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type, const char *str,
     int len, X509_OBJECT *ret)
 {
-	if ((ctx->method == NULL) || (ctx->method->get_by_alias == NULL))
+	if (ctx->method == NULL || ctx->method->get_by_alias == NULL)
 		return 0;
 	return ctx->method->get_by_alias(ctx, type, str, len, ret);
 }
