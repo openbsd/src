@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.42 2021/11/05 17:08:12 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.43 2021/11/05 17:09:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -133,8 +133,6 @@ X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type, X509_NAME *name,
     X509_OBJECT *ret)
 {
 	if (ctx->method == NULL || ctx->method->get_by_subject == NULL)
-		return 0;
-	if (ctx->skip)
 		return 0;
 	return ctx->method->get_by_subject(ctx, type, name, ret);
 }

@@ -288,7 +288,6 @@ struct X509_VERIFY_PARAM_st {
  */
 struct x509_store_st {
 	/* The following is a cache of trusted certs */
-	int cache;	/* if true, stash any hits */
 	STACK_OF(X509_OBJECT) *objs;	/* Cache of all objects */
 
 	/* These are external lookup methods */
@@ -316,7 +315,6 @@ struct x509_store_st {
 /* This is the functions plus an instance of the local variables. */
 struct x509_lookup_st {
 	int init;			/* have we been started */
-	int skip;			/* don't use us. */
 	X509_LOOKUP_METHOD *method;	/* the functions */
 	char *method_data;		/* method data */
 
