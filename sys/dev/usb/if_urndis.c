@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urndis.c,v 1.72 2020/07/31 10:49:33 mglocker Exp $ */
+/*	$OpenBSD: if_urndis.c,v 1.73 2021/11/05 11:38:52 mpi Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -118,7 +118,7 @@ struct cfdriver urndis_cd = {
 	NULL, "urndis", DV_IFNET
 };
 
-struct cfattach urndis_ca = {
+const struct cfattach urndis_ca = {
 	sizeof(struct urndis_softc), urndis_match, urndis_attach, urndis_detach
 };
 

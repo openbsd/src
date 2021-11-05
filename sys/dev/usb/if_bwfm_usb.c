@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_usb.c,v 1.19 2020/07/31 10:49:32 mglocker Exp $ */
+/* $OpenBSD: if_bwfm_usb.c,v 1.20 2021/11/05 11:38:51 mpi Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -216,7 +216,7 @@ struct bwfm_bus_ops bwfm_usb_bus_ops = {
 	.bs_txctl = bwfm_usb_txctl,
 };
 
-struct cfattach bwfm_usb_ca = {
+const struct cfattach bwfm_usb_ca = {
 	sizeof(struct bwfm_usb_softc),
 	bwfm_usb_match,
 	bwfm_usb_attach,
