@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.12 2021/10/24 17:52:26 mpi Exp $ */
+/* $OpenBSD: if_fec.c,v 1.13 2021/11/05 15:18:24 patrick Exp $ */
 /*
  * Copyright (c) 2012-2013,2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -510,20 +510,25 @@ fec_phy_init(struct fec_softc *sc, struct mii_softc *child)
 		uint32_t rxc, rxdv, txc, txen;
 		uint32_t rxd0, rxd1, rxd2, rxd3;
 		uint32_t txd0, txd1, txd2, txd3;
-		uint32_t val;
+		uint32_t val, phy;
+		int node;
 
-		rxc = OF_getpropint(sc->sc_node, "rxc-skew-ps", 1400) / 200;
-		rxdv = OF_getpropint(sc->sc_node, "rxdv-skew-ps", 1400) / 200;
-		txc = OF_getpropint(sc->sc_node, "txc-skew-ps", 1400) / 200;
-		txen = OF_getpropint(sc->sc_node, "txen-skew-ps", 1400) / 200;
-		rxd0 = OF_getpropint(sc->sc_node, "rxd0-skew-ps", 1400) / 200;
-		rxd1 = OF_getpropint(sc->sc_node, "rxd1-skew-ps", 1400) / 200;
-		rxd2 = OF_getpropint(sc->sc_node, "rxd2-skew-ps", 1400) / 200;
-		rxd3 = OF_getpropint(sc->sc_node, "rxd3-skew-ps", 1400) / 200;
-		txd0 = OF_getpropint(sc->sc_node, "txd0-skew-ps", 1400) / 200;
-		txd1 = OF_getpropint(sc->sc_node, "txd1-skew-ps", 1400) / 200;
-		txd2 = OF_getpropint(sc->sc_node, "txd2-skew-ps", 1400) / 200;
-		txd3 = OF_getpropint(sc->sc_node, "txd3-skew-ps", 1400) / 200;
+		node = sc->sc_node;
+		phy = OF_getpropint(sc->sc_node, "phy-handle", 0);
+		if (phy)
+			node = OF_getnodebyphandle(phy);
+		rxc = OF_getpropint(node, "rxc-skew-ps", 1400) / 200;
+		rxdv = OF_getpropint(node, "rxdv-skew-ps", 1400) / 200;
+		txc = OF_getpropint(node, "txc-skew-ps", 1400) / 200;
+		txen = OF_getpropint(node, "txen-skew-ps", 1400) / 200;
+		rxd0 = OF_getpropint(node, "rxd0-skew-ps", 1400) / 200;
+		rxd1 = OF_getpropint(node, "rxd1-skew-ps", 1400) / 200;
+		rxd2 = OF_getpropint(node, "rxd2-skew-ps", 1400) / 200;
+		rxd3 = OF_getpropint(node, "rxd3-skew-ps", 1400) / 200;
+		txd0 = OF_getpropint(node, "txd0-skew-ps", 1400) / 200;
+		txd1 = OF_getpropint(node, "txd1-skew-ps", 1400) / 200;
+		txd2 = OF_getpropint(node, "txd2-skew-ps", 1400) / 200;
+		txd3 = OF_getpropint(node, "txd3-skew-ps", 1400) / 200;
 
 		val = ((rxc & 0xf) << 12) | ((rxdv & 0xf) << 8) |
 		    ((txc & 0xf) << 4) | ((txen & 0xf) << 0);
@@ -546,20 +551,25 @@ fec_phy_init(struct fec_softc *sc, struct mii_softc *child)
 		uint32_t rxc, rxdv, txc, txen;
 		uint32_t rxd0, rxd1, rxd2, rxd3;
 		uint32_t txd0, txd1, txd2, txd3;
-		uint32_t val;
+		uint32_t val, phy;
+		int node;
 
-		rxc = OF_getpropint(sc->sc_node, "rxc-skew-ps", 900) / 60;
-		rxdv = OF_getpropint(sc->sc_node, "rxdv-skew-ps", 420) / 60;
-		txc = OF_getpropint(sc->sc_node, "txc-skew-ps", 900) / 60;
-		txen = OF_getpropint(sc->sc_node, "txen-skew-ps", 420) / 60;
-		rxd0 = OF_getpropint(sc->sc_node, "rxd0-skew-ps", 420) / 60;
-		rxd1 = OF_getpropint(sc->sc_node, "rxd1-skew-ps", 420) / 60;
-		rxd2 = OF_getpropint(sc->sc_node, "rxd2-skew-ps", 420) / 60;
-		rxd3 = OF_getpropint(sc->sc_node, "rxd3-skew-ps", 420) / 60;
-		txd0 = OF_getpropint(sc->sc_node, "txd0-skew-ps", 420) / 60;
-		txd1 = OF_getpropint(sc->sc_node, "txd1-skew-ps", 420) / 60;
-		txd2 = OF_getpropint(sc->sc_node, "txd2-skew-ps", 420) / 60;
-		txd3 = OF_getpropint(sc->sc_node, "txd3-skew-ps", 420) / 60;
+		node = sc->sc_node;
+		phy = OF_getpropint(sc->sc_node, "phy-handle", 0);
+		if (phy)
+			node = OF_getnodebyphandle(phy);
+		rxc = OF_getpropint(node, "rxc-skew-ps", 900) / 60;
+		rxdv = OF_getpropint(node, "rxdv-skew-ps", 420) / 60;
+		txc = OF_getpropint(node, "txc-skew-ps", 900) / 60;
+		txen = OF_getpropint(node, "txen-skew-ps", 420) / 60;
+		rxd0 = OF_getpropint(node, "rxd0-skew-ps", 420) / 60;
+		rxd1 = OF_getpropint(node, "rxd1-skew-ps", 420) / 60;
+		rxd2 = OF_getpropint(node, "rxd2-skew-ps", 420) / 60;
+		rxd3 = OF_getpropint(node, "rxd3-skew-ps", 420) / 60;
+		txd0 = OF_getpropint(node, "txd0-skew-ps", 420) / 60;
+		txd1 = OF_getpropint(node, "txd1-skew-ps", 420) / 60;
+		txd2 = OF_getpropint(node, "txd2-skew-ps", 420) / 60;
+		txd3 = OF_getpropint(node, "txd3-skew-ps", 420) / 60;
 
 		val = ((rxdv & 0xf) << 4) || ((txen & 0xf) << 0);
 		fec_miibus_writereg(dev, phy, 0x0d, 0x0002);
