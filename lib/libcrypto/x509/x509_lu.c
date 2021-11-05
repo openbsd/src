@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.40 2021/11/05 17:05:52 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.41 2021/11/05 17:06:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -171,21 +171,16 @@ x509_object_cmp(const X509_OBJECT * const *a, const X509_OBJECT * const *b)
 {
 	int ret;
 
-	ret = ((*a)->type - (*b)->type);
-	if (ret)
+	if ((ret = (*a)->type - (*b)->type) != 0)
 		return ret;
+
 	switch ((*a)->type) {
 	case X509_LU_X509:
-		ret = X509_subject_name_cmp((*a)->data.x509, (*b)->data.x509);
-		break;
+		return X509_subject_name_cmp((*a)->data.x509, (*b)->data.x509);
 	case X509_LU_CRL:
-		ret = X509_CRL_cmp((*a)->data.crl, (*b)->data.crl);
-		break;
-	default:
-		/* abort(); */
-		return 0;
+		return X509_CRL_cmp((*a)->data.crl, (*b)->data.crl);
 	}
-	return ret;
+	return 0;
 }
 
 X509_STORE *
