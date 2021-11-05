@@ -25,6 +25,16 @@ logx(const char *fmt, ...)
 	va_end(ap);
 }
 
+time_t
+getmonotime(void)
+{
+	struct timespec ts;
+
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+		err(1, "clock_gettime");
+	return (ts.tv_sec);
+}
+
 static void
 http_request(size_t id, const char *uri, const char *last_mod, int fd)
 {
