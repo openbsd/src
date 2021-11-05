@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.45 2021/11/05 17:13:14 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.46 2021/11/05 17:15:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,8 +64,6 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "x509_lcl.h"
-
-static void X509_OBJECT_dec_ref_count(X509_OBJECT *a);
 
 X509_LOOKUP *
 X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
@@ -351,103 +349,77 @@ X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
 	return 1;
 }
 
+/* Add obj to the store. Takes ownership of obj. */
+static int
+X509_STORE_add_object(X509_STORE *store, X509_OBJECT *obj)
+{
+	int ret = 0;
+
+	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
+
+	if (X509_OBJECT_retrieve_match(store->objs, obj) != NULL) {
+		/* Object is already present in the store. That's fine. */
+		ret = 1;
+		goto out;
+	}
+
+	if (sk_X509_OBJECT_push(store->objs, obj) <= 0) {
+		X509error(ERR_R_MALLOC_FAILURE);
+		goto out;
+	}
+
+	obj = NULL;
+	ret = 1;
+
+ out:
+	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+	X509_OBJECT_free(obj);
+
+	return ret;
+}
+
 int
-X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
+X509_STORE_add_cert(X509_STORE *store, X509 *x)
 {
 	X509_OBJECT *obj;
-	int ret = 1;
 
 	if (x == NULL)
 		return 0;
-	obj = malloc(sizeof(X509_OBJECT));
-	if (obj == NULL) {
-		X509error(ERR_R_MALLOC_FAILURE);
+
+	if ((obj = X509_OBJECT_new()) == NULL)
+		return 0;
+
+	if (!X509_up_ref(x)) {
+		X509_OBJECT_free(obj);
 		return 0;
 	}
+
 	obj->type = X509_LU_X509;
 	obj->data.x509 = x;
 
-	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
-
-	X509_OBJECT_up_ref_count(obj);
-
-	if (X509_OBJECT_retrieve_match(ctx->objs, obj)) {
-		X509error(X509_R_CERT_ALREADY_IN_HASH_TABLE);
-		ret = 0;
-	} else {
-		if (sk_X509_OBJECT_push(ctx->objs, obj) == 0) {
-			X509error(ERR_R_MALLOC_FAILURE);
-			ret = 0;
-		}
-	}
-
-	if (ret == 0)
-		X509_OBJECT_dec_ref_count(obj);
-
-	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
-
-	if (ret == 0) {
-		obj->data.x509 = NULL; /* owned by the caller */
-		X509_OBJECT_free(obj);
-	}
-
-	return ret;
+	return X509_STORE_add_object(store, obj);
 }
 
 int
-X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
+X509_STORE_add_crl(X509_STORE *store, X509_CRL *x)
 {
 	X509_OBJECT *obj;
-	int ret = 1;
 
 	if (x == NULL)
 		return 0;
-	obj = malloc(sizeof(X509_OBJECT));
-	if (obj == NULL) {
-		X509error(ERR_R_MALLOC_FAILURE);
+
+	if ((obj = X509_OBJECT_new()) == NULL)
+		return 0;
+
+	if (!X509_CRL_up_ref(x)) {
+		X509_OBJECT_free(obj);
 		return 0;
 	}
+
 	obj->type = X509_LU_CRL;
 	obj->data.crl = x;
 
-	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
-
-	X509_OBJECT_up_ref_count(obj);
-
-	if (X509_OBJECT_retrieve_match(ctx->objs, obj)) {
-		X509error(X509_R_CERT_ALREADY_IN_HASH_TABLE);
-		ret = 0;
-	} else {
-		if (sk_X509_OBJECT_push(ctx->objs, obj) == 0) {
-			X509error(ERR_R_MALLOC_FAILURE);
-			ret = 0;
-		}
-	}
-
-	if (ret == 0)
-		X509_OBJECT_dec_ref_count(obj);
-
-	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
-
-	if (ret == 0) {
-		obj->data.crl = NULL; /* owned by the caller */
-		X509_OBJECT_free(obj);
-	}
-
-	return ret;
-}
-
-static void
-X509_OBJECT_dec_ref_count(X509_OBJECT *a)
-{
-	switch (a->type) {
-	case X509_LU_X509:
-		CRYPTO_add(&a->data.x509->references, -1, CRYPTO_LOCK_X509);
-		break;
-	case X509_LU_CRL:
-		CRYPTO_add(&a->data.crl->references, -1, CRYPTO_LOCK_X509_CRL);
-		break;
-	}
+	return X509_STORE_add_object(store, obj);
 }
 
 int
