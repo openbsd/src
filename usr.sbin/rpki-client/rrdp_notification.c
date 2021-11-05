@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.9 2021/10/29 09:27:36 claudio Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.10 2021/11/05 14:30:53 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -141,7 +141,7 @@ start_notification_elem(struct notification_xml *nxml, const char **attr)
 				continue;
 		}
 		PARSE_FAIL(p, "parse failed - non conforming "
-		    "attribute found in notification elem");
+		    "attribute '%s' found in notification elem", attr[i]);
 	}
 	if (!(has_xmlns && nxml->version && nxml->session_id && nxml->serial))
 		PARSE_FAIL(p, "parse failed - incomplete "
@@ -185,7 +185,7 @@ start_snapshot_elem(struct notification_xml *nxml, const char **attr)
 				continue;
 		}
 		PARSE_FAIL(p, "parse failed - non conforming "
-		    "attribute found in snapshot elem");
+		    "attribute '%s' found in snapshot elem", attr[i]);
 	}
 	if (hasUri != 1 || hasHash != 1)
 		PARSE_FAIL(p, "parse failed - incomplete snapshot attributes");
@@ -239,7 +239,7 @@ start_delta_elem(struct notification_xml *nxml, const char **attr)
 				continue;
 		}
 		PARSE_FAIL(p, "parse failed - non conforming "
-		    "attribute found in snapshot elem");
+		    "attribute '%s' found in snapshot elem", attr[i]);
 	}
 	/* Only add to the list if we are relevant */
 	if (hasUri != 1 || hasHash != 1 || delta_serial == 0)
