@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.41 2021/11/05 17:06:42 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.42 2021/11/05 17:08:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -186,40 +186,30 @@ x509_object_cmp(const X509_OBJECT * const *a, const X509_OBJECT * const *b)
 X509_STORE *
 X509_STORE_new(void)
 {
-	X509_STORE *ret;
+	X509_STORE *store;
 
-	if ((ret = malloc(sizeof(X509_STORE))) == NULL)
-		return NULL;
-	ret->objs = sk_X509_OBJECT_new(x509_object_cmp);
-	ret->cache = 1;
-	ret->get_cert_methods = sk_X509_LOOKUP_new_null();
-	ret->verify = 0;
-	ret->verify_cb = 0;
-
-	if ((ret->param = X509_VERIFY_PARAM_new()) == NULL)
+	if ((store = calloc(1, sizeof(*store))) == NULL)
 		goto err;
 
-	ret->get_issuer = 0;
-	ret->check_issued = 0;
-	ret->check_revocation = 0;
-	ret->get_crl = 0;
-	ret->check_crl = 0;
-	ret->cert_crl = 0;
-	ret->lookup_certs = 0;
-	ret->lookup_crls = 0;
-	ret->cleanup = 0;
-
-	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data))
+	if ((store->objs = sk_X509_OBJECT_new(x509_object_cmp)) == NULL)
+		goto err;
+	if ((store->get_cert_methods = sk_X509_LOOKUP_new_null()) == NULL)
+		goto err;
+	if ((store->param = X509_VERIFY_PARAM_new()) == NULL)
 		goto err;
 
-	ret->references = 1;
-	return ret;
+	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, store,
+	    &store->ex_data))
+		goto err;
 
-err:
-	X509_VERIFY_PARAM_free(ret->param);
-	sk_X509_LOOKUP_free(ret->get_cert_methods);
-	sk_X509_OBJECT_free(ret->objs);
-	free(ret);
+	store->references = 1;
+
+	return store;
+
+ err:
+	X509error(ERR_R_MALLOC_FAILURE);
+	X509_STORE_free(store);
+
 	return NULL;
 }
 
