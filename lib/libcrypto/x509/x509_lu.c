@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.46 2021/11/05 17:15:05 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.47 2021/11/05 20:35:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -477,7 +477,6 @@ x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
 		crl_info_s.issuer = name;
 		break;
 	default:
-		/* abort(); */
 		return -1;
 	}
 
@@ -485,6 +484,7 @@ x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
 	if (idx >= 0 && pnmatch) {
 		int tidx;
 		const X509_OBJECT *tobj, *pstmp;
+
 		*pnmatch = 1;
 		pstmp = &stmp;
 		for (tidx = idx + 1; tidx < sk_X509_OBJECT_num(h); tidx++) {
