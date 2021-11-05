@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.38 2021/11/05 07:25:36 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.39 2021/11/05 17:03:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,22 +70,21 @@ static void X509_OBJECT_dec_ref_count(X509_OBJECT *a);
 X509_LOOKUP *
 X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 {
-	X509_LOOKUP *ret;
+	X509_LOOKUP *lu;
 
-	ret = malloc(sizeof(X509_LOOKUP));
-	if (ret == NULL)
-		return NULL;
-
-	ret->init = 0;
-	ret->skip = 0;
-	ret->method = method;
-	ret->method_data = NULL;
-	ret->store_ctx = NULL;
-	if ((method->new_item != NULL) && !method->new_item(ret)) {
-		free(ret);
+	if ((lu = calloc(1, sizeof(*lu))) == NULL) {
+		X509error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	return ret;
+
+	lu->method = method;
+
+	if (method->new_item != NULL && !method->new_item(lu)) {
+		free(lu);
+		return NULL;
+	}
+
+	return lu;
 }
 
 void
