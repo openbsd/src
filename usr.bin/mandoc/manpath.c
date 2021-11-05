@@ -1,6 +1,6 @@
-/*	$OpenBSD: manpath.c,v 1.30 2020/08/27 14:59:42 schwarze Exp $ */
+/* $OpenBSD: manpath.c,v 1.31 2021/11/05 18:03:00 schwarze Exp $ */
 /*
- * Copyright (c) 2011,2014,2015,2017-2019 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2011,2014,2015,2017-2021 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -33,63 +33,51 @@
 #define MANPATH_BASE	"/usr/share/man:/usr/X11R6/man"
 #define MANPATH_DEFAULT	"/usr/share/man:/usr/X11R6/man:/usr/local/man"
 
-static	void	 manconf_file(struct manconf *, const char *);
+static	void	 manconf_file(struct manconf *, const char *, int);
 static	void	 manpath_add(struct manpaths *, const char *, char);
 static	void	 manpath_parseline(struct manpaths *, char *, char);
 
 
 void
-manconf_parse(struct manconf *conf, const char *file,
-		char *defp, char *auxp)
+manconf_parse(struct manconf *conf, const char *file, char *pend, char *pbeg)
 {
-	char		*insert;
+	int use_path_from_file = 1;
 
 	/* Always prepend -m. */
-	manpath_parseline(&conf->manpath, auxp, 'm');
+	manpath_parseline(&conf->manpath, pbeg, 'm');
 
-	/* If -M is given, it overrides everything else. */
-	if (NULL != defp) {
-		manpath_parseline(&conf->manpath, defp, 'M');
-		return;
+	if (pend != NULL && *pend != '\0') {
+		/* If -M is given, it overrides everything else. */
+		manpath_parseline(&conf->manpath, pend, 'M');
+		use_path_from_file = 0;
+		pbeg = pend = NULL;
+	} else if ((pbeg = getenv("MANPATH")) == NULL || *pbeg == '\0') {
+		/* No MANPATH; use man.conf(5) only. */
+		pbeg = pend = NULL;
+	} else if (*pbeg == ':') {
+		/* Prepend man.conf(5) to MANPATH. */
+		pend = pbeg + 1;
+		pbeg = NULL;
+	} else if ((pend = strstr(pbeg, "::")) != NULL) {
+		/* Insert man.conf(5) into MANPATH. */
+		*pend = '\0';
+		pend += 2;
+	} else if (pbeg[strlen(pbeg) - 1] == ':') {
+		/* Append man.conf(5) to MANPATH. */
+		pend = NULL;
+	} else {
+		/* MANPATH overrides man.conf(5) completely. */
+		use_path_from_file = 0;
+		pend = NULL;
 	}
 
-	/* MANPATH and man.conf(5) cooperate. */
-	defp = getenv("MANPATH");
-	if (NULL == file)
+	manpath_parseline(&conf->manpath, pbeg, '\0');
+
+	if (file == NULL)
 		file = MAN_CONF_FILE;
+	manconf_file(conf, file, use_path_from_file);
 
-	/* No MANPATH; use man.conf(5) only. */
-	if (NULL == defp || '\0' == defp[0]) {
-		manconf_file(conf, file);
-		return;
-	}
-
-	/* Prepend man.conf(5) to MANPATH. */
-	if (':' == defp[0]) {
-		manconf_file(conf, file);
-		manpath_parseline(&conf->manpath, defp, '\0');
-		return;
-	}
-
-	/* Append man.conf(5) to MANPATH. */
-	if (':' == defp[strlen(defp) - 1]) {
-		manpath_parseline(&conf->manpath, defp, '\0');
-		manconf_file(conf, file);
-		return;
-	}
-
-	/* Insert man.conf(5) into MANPATH. */
-	insert = strstr(defp, "::");
-	if (NULL != insert) {
-		*insert++ = '\0';
-		manpath_parseline(&conf->manpath, defp, '\0');
-		manconf_file(conf, file);
-		manpath_parseline(&conf->manpath, insert + 1, '\0');
-		return;
-	}
-
-	/* MANPATH overrides man.conf(5) completely. */
-	manpath_parseline(&conf->manpath, defp, '\0');
+	manpath_parseline(&conf->manpath, pend, '\0');
 }
 
 void
@@ -163,7 +151,7 @@ manconf_free(struct manconf *conf)
 }
 
 static void
-manconf_file(struct manconf *conf, const char *file)
+manconf_file(struct manconf *conf, const char *file, int use_path_from_file)
 {
 	const char *const toks[] = { "manpath", "output" };
 	char manpath_default[] = MANPATH_DEFAULT;
@@ -203,7 +191,8 @@ manconf_file(struct manconf *conf, const char *file)
 
 		switch (tok) {
 		case 0:  /* manpath */
-			manpath_add(&conf->manpath, cp, '\0');
+			if (use_path_from_file)
+				manpath_add(&conf->manpath, cp, '\0');
 			*manpath_default = '\0';
 			break;
 		case 1:  /* output */
@@ -217,7 +206,7 @@ manconf_file(struct manconf *conf, const char *file)
 	fclose(stream);
 
 out:
-	if (*manpath_default != '\0')
+	if (use_path_from_file && *manpath_default != '\0')
 		manpath_parseline(&conf->manpath, manpath_default, '\0');
 }
 
