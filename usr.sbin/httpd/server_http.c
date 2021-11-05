@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.147 2021/10/24 16:01:04 ian Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.148 2021/11/05 19:01:02 benno Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -49,7 +49,7 @@ static int	 server_httperror_cmp(const void *, const void *);
 void		 server_httpdesc_free(struct http_descriptor *);
 int		 server_http_authenticate(struct server_config *,
 		    struct client *);
-int		 http_version_num(char *);
+static int	 http_version_num(char *);
 char		*server_expand_http(struct client *, const char *,
 		    char *, size_t);
 char		*replace_var(char *, const char *, const char *);
@@ -201,17 +201,22 @@ done:
 	return (ret);
 }
 
-int
+static int
 http_version_num(char *version)
 {
-	if (strcmp(version, "HTTP/0.9") == 0)
+	if (strlen(version) != 8 || strncmp(version, "HTTP/", 5) != 0
+	    || !isdigit((unsigned char)version[5]) || version[6] != '.'
+	    || !isdigit((unsigned char)version[7]))
+		return (-1);
+	if (version[5] == '0' && version[7] == '9')
 		return (9);
-	if (strcmp(version, "HTTP/1.0") == 0)
-		return (10);
-	/* any other version 1.x gets downgraded to 1.1 */
-	if (strncmp(version, "HTTP/1", 6) == 0)
-		return (11);
-
+	if (version[5] == '1') {
+		if (version[7] == '0')
+			return (10);
+		else
+			/* any other version 1.x gets downgraded to 1.1 */
+			return (11);
+	}
 	return (0);
 }
 
@@ -357,7 +362,10 @@ server_read_http(struct bufferevent *bev, void *arg)
 
 			version = http_version_num(http_version);
 
-			if (version == 0) {
+			if (version == -1) {
+				server_abort_http(clt, 400, "malformed");
+				goto abort;
+			} else if (version == 0) {
 				server_abort_http(clt, 505, "bad http version");
 				goto abort;
 			} else if (version == 11) {
