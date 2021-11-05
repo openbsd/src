@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.18 2021/10/23 16:06:04 claudio Exp $ */
+/*	$OpenBSD: ip.c,v 1.19 2021/11/05 10:50:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -282,57 +282,6 @@ ip_addr_print(const struct ip_addr *addr,
 		ip4_addr2str(addr, buf, bufsz);
 	else
 		ip6_addr2str(addr, buf, bufsz);
-}
-
-/*
- * Serialise an ip_addr for sending over the wire.
- * Matched with ip_addr_read().
- */
-void
-ip_addr_buffer(struct ibuf *b, const struct ip_addr *p)
-{
-	size_t sz = PREFIX_SIZE(p->prefixlen);
-
-	assert(sz <= 16);
-	io_simple_buffer(b, &p->prefixlen, sizeof(unsigned char));
-	io_simple_buffer(b, p->addr, sz);
-}
-
-/*
- * Serialise an ip_addr_range for sending over the wire.
- * Matched with ip_addr_range_read().
- */
-void
-ip_addr_range_buffer(struct ibuf *b, const struct ip_addr_range *p)
-{
-	ip_addr_buffer(b, &p->min);
-	ip_addr_buffer(b, &p->max);
-}
-
-/*
- * Read an ip_addr from the wire.
- * Matched with ip_addr_buffer().
- */
-void
-ip_addr_read(struct ibuf *b, struct ip_addr *p)
-{
-	size_t sz;
-
-	io_read_buf(b, &p->prefixlen, sizeof(unsigned char));
-	sz = PREFIX_SIZE(p->prefixlen);
-	assert(sz <= 16);
-	io_read_buf(b, p->addr, sz);
-}
-
-/*
- * Read an ip_addr_range from the wire.
- * Matched with ip_addr_range_buffer().
- */
-void
-ip_addr_range_read(struct ibuf *b, struct ip_addr_range *p)
-{
-	ip_addr_read(b, &p->min);
-	ip_addr_read(b, &p->max);
 }
 
 /*

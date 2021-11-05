@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.31 2021/11/04 11:32:55 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.32 2021/11/05 10:50:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -419,21 +419,13 @@ roa_free(struct roa *p)
 void
 roa_buffer(struct ibuf *b, const struct roa *p)
 {
-	size_t	 i;
-
 	io_simple_buffer(b, &p->valid, sizeof(p->valid));
 	io_simple_buffer(b, &p->asid, sizeof(p->asid));
 	io_simple_buffer(b, &p->talid, sizeof(p->talid));
 	io_simple_buffer(b, &p->ipsz, sizeof(p->ipsz));
 	io_simple_buffer(b, &p->expires, sizeof(p->expires));
 
-	for (i = 0; i < p->ipsz; i++) {
-		io_simple_buffer(b, &p->ips[i].afi, sizeof(enum afi));
-		io_simple_buffer(b, &p->ips[i].maxlength, sizeof(size_t));
-		io_simple_buffer(b, p->ips[i].min, sizeof(p->ips[i].min));
-		io_simple_buffer(b, p->ips[i].max, sizeof(p->ips[i].max));
-		ip_addr_buffer(b, &p->ips[i].addr);
-	}
+	io_simple_buffer(b, p->ips, p->ipsz * sizeof(p->ips[0]));
 
 	io_str_buffer(b, p->aia);
 	io_str_buffer(b, p->aki);
@@ -449,7 +441,6 @@ struct roa *
 roa_read(struct ibuf *b)
 {
 	struct roa	*p;
-	size_t		 i;
 
 	if ((p = calloc(1, sizeof(struct roa))) == NULL)
 		err(1, NULL);
@@ -462,14 +453,7 @@ roa_read(struct ibuf *b)
 
 	if ((p->ips = calloc(p->ipsz, sizeof(struct roa_ip))) == NULL)
 		err(1, NULL);
-
-	for (i = 0; i < p->ipsz; i++) {
-		io_read_buf(b, &p->ips[i].afi, sizeof(enum afi));
-		io_read_buf(b, &p->ips[i].maxlength, sizeof(size_t));
-		io_read_buf(b, &p->ips[i].min, sizeof(p->ips[i].min));
-		io_read_buf(b, &p->ips[i].max, sizeof(p->ips[i].max));
-		ip_addr_read(b, &p->ips[i].addr);
-	}
+	io_read_buf(b, p->ips, p->ipsz * sizeof(p->ips[0]));
 
 	io_read_str(b, &p->aia);
 	io_read_str(b, &p->aki);

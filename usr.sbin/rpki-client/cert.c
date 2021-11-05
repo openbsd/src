@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.46 2021/11/04 11:32:55 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.47 2021/11/05 10:50:41 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1225,34 +1225,6 @@ cert_free(struct cert *p)
 	free(p);
 }
 
-static void
-cert_ip_buffer(struct ibuf *b, const struct cert_ip *p)
-{
-	io_simple_buffer(b, &p->afi, sizeof(enum afi));
-	io_simple_buffer(b, &p->type, sizeof(enum cert_ip_type));
-
-	if (p->type != CERT_IP_INHERIT) {
-		io_simple_buffer(b, &p->min, sizeof(p->min));
-		io_simple_buffer(b, &p->max, sizeof(p->max));
-	}
-
-	if (p->type == CERT_IP_RANGE)
-		ip_addr_range_buffer(b, &p->range);
-	else if (p->type == CERT_IP_ADDR)
-		ip_addr_buffer(b, &p->ip);
-}
-
-static void
-cert_as_buffer(struct ibuf *b, const struct cert_as *p)
-{
-	io_simple_buffer(b, &p->type, sizeof(enum cert_as_type));
-	if (p->type == CERT_AS_RANGE) {
-		io_simple_buffer(b, &p->range.min, sizeof(uint32_t));
-		io_simple_buffer(b, &p->range.max, sizeof(uint32_t));
-	} else if (p->type == CERT_AS_ID)
-		io_simple_buffer(b, &p->id, sizeof(uint32_t));
-}
-
 /*
  * Write certificate parsed content into buffer.
  * See cert_read() for the other side of the pipe.
@@ -1260,18 +1232,15 @@ cert_as_buffer(struct ibuf *b, const struct cert_as *p)
 void
 cert_buffer(struct ibuf *b, const struct cert *p)
 {
-	size_t	 i;
-
 	io_simple_buffer(b, &p->expires, sizeof(p->expires));
 	io_simple_buffer(b, &p->purpose, sizeof(p->purpose));
 	io_simple_buffer(b, &p->talid, sizeof(p->talid));
 	io_simple_buffer(b, &p->ipsz, sizeof(p->ipsz));
-	for (i = 0; i < p->ipsz; i++)
-		cert_ip_buffer(b, &p->ips[i]);
-
 	io_simple_buffer(b, &p->asz, sizeof(p->asz));
-	for (i = 0; i < p->asz; i++)
-		cert_as_buffer(b, &p->as[i]);
+
+	io_simple_buffer(b, p->ips, p->ipsz * sizeof(p->ips[0]));
+	io_simple_buffer(b, p->as, p->asz * sizeof(p->as[0]));
+
 	io_str_buffer(b, p->mft);
 	io_str_buffer(b, p->notify);
 	io_str_buffer(b, p->repo);
@@ -1280,34 +1249,6 @@ cert_buffer(struct ibuf *b, const struct cert *p)
 	io_str_buffer(b, p->aki);
 	io_str_buffer(b, p->ski);
 	io_str_buffer(b, p->pubkey);
-}
-
-static void
-cert_ip_read(struct ibuf *b, struct cert_ip *p)
-{
-	io_read_buf(b, &p->afi, sizeof(enum afi));
-	io_read_buf(b, &p->type, sizeof(enum cert_ip_type));
-
-	if (p->type != CERT_IP_INHERIT) {
-		io_read_buf(b, &p->min, sizeof(p->min));
-		io_read_buf(b, &p->max, sizeof(p->max));
-	}
-
-	if (p->type == CERT_IP_RANGE)
-		ip_addr_range_read(b, &p->range);
-	else if (p->type == CERT_IP_ADDR)
-		ip_addr_read(b, &p->ip);
-}
-
-static void
-cert_as_read(struct ibuf *b, struct cert_as *p)
-{
-	io_read_buf(b, &p->type, sizeof(enum cert_as_type));
-	if (p->type == CERT_AS_RANGE) {
-		io_read_buf(b, &p->range.min, sizeof(uint32_t));
-		io_read_buf(b, &p->range.max, sizeof(uint32_t));
-	} else if (p->type == CERT_AS_ID)
-		io_read_buf(b, &p->id, sizeof(uint32_t));
 }
 
 /*
@@ -1319,7 +1260,6 @@ struct cert *
 cert_read(struct ibuf *b)
 {
 	struct cert	*p;
-	size_t		 i;
 
 	if ((p = calloc(1, sizeof(struct cert))) == NULL)
 		err(1, NULL);
@@ -1328,19 +1268,17 @@ cert_read(struct ibuf *b)
 	io_read_buf(b, &p->purpose, sizeof(p->purpose));
 	io_read_buf(b, &p->talid, sizeof(p->talid));
 	io_read_buf(b, &p->ipsz, sizeof(p->ipsz));
+	io_read_buf(b, &p->asz, sizeof(p->asz));
 
 	p->ips = calloc(p->ipsz, sizeof(struct cert_ip));
 	if (p->ips == NULL)
 		err(1, NULL);
-	for (i = 0; i < p->ipsz; i++)
-		cert_ip_read(b, &p->ips[i]);
+	io_read_buf(b, p->ips, p->ipsz * sizeof(p->ips[0]));
 
-	io_read_buf(b, &p->asz, sizeof(p->asz));
 	p->as = calloc(p->asz, sizeof(struct cert_as));
 	if (p->as == NULL)
 		err(1, NULL);
-	for (i = 0; i < p->asz; i++)
-		cert_as_read(b, &p->as[i]);
+	io_read_buf(b, p->as, p->asz * sizeof(p->as[0]));
 
 	io_read_str(b, &p->mft);
 	io_read_str(b, &p->notify);
