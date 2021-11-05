@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvclock.c,v 1.7 2021/02/23 04:44:31 cheloha Exp $	*/
+/*	$OpenBSD: pvclock.c,v 1.8 2021/11/05 11:38:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2018 Reyk Floeter <reyk@openbsd.org>
@@ -59,7 +59,7 @@ static inline uint32_t
 static inline int
 	 pvclock_read_done(const struct pvclock_time_info *, uint32_t);
 
-struct cfattach pvclock_ca = {
+const struct cfattach pvclock_ca = {
 	sizeof(struct pvclock_softc),
 	pvclock_match,
 	pvclock_attach,

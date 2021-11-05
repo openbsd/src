@@ -1,4 +1,4 @@
-/*	$OpenBSD: pvbus.c,v 1.23 2021/08/31 15:52:10 patrick Exp $	*/
+/*	$OpenBSD: pvbus.c,v 1.24 2021/11/05 11:38:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -63,7 +63,7 @@ void	 pvbus_xen_print(struct pvbus_hv *);
 int	 pvbus_minor(struct pvbus_softc *, dev_t);
 int	 pvbusgetstr(size_t, const char *, char **);
 
-struct cfattach pvbus_ca = {
+const struct cfattach pvbus_ca = {
 	sizeof(struct pvbus_softc),
 	pvbus_match,
 	pvbus_attach,

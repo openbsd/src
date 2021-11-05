@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.7 2019/05/26 15:20:04 sf Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.8 2021/11/05 11:38:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -138,7 +138,7 @@ int	vioconstop(struct tty *, int);
 int	vioconioctl(dev_t, u_long, caddr_t, int, struct proc *);
 struct tty	*viocontty(dev_t dev);
 
-struct cfattach viocon_ca = {
+const struct cfattach viocon_ca = {
 	sizeof(struct viocon_softc),
 	viocon_match,
 	viocon_attach,

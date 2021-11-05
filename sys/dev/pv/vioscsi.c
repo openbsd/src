@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.27 2021/10/24 09:16:53 deraadt Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.28 2021/11/05 11:38:29 mpi Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -70,7 +70,7 @@ void		 vioscsi_req_done(struct vioscsi_softc *, struct virtio_softc *,
 void		*vioscsi_req_get(void *);
 void		 vioscsi_req_put(void *, void *);
 
-struct cfattach vioscsi_ca = {
+const struct cfattach vioscsi_ca = {
 	sizeof(struct vioscsi_softc),
 	vioscsi_match,
 	vioscsi_attach,

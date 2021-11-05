@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.32 2020/10/15 13:22:13 krw Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.33 2021/11/05 11:38:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -138,7 +138,7 @@ void	vioblk_scsi_capacity(struct scsi_xfer *);
 void	vioblk_scsi_capacity16(struct scsi_xfer *);
 void	vioblk_scsi_done(struct scsi_xfer *, int);
 
-struct cfattach vioblk_ca = {
+const struct cfattach vioblk_ca = {
 	sizeof(struct vioblk_softc),
 	vioblk_match,
 	vioblk_attach,

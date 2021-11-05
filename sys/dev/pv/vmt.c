@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.23 2021/02/11 11:57:32 mestre Exp $ */
+/*	$OpenBSD: vmt.c,v 1.24 2021/11/05 11:38:29 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -370,7 +370,7 @@ struct vmt_tclo_rpc {
 #endif
 };
 
-struct cfattach vmt_ca = {
+const struct cfattach vmt_ca = {
 	sizeof(struct vmt_softc),
 	vmt_match,
 	vmt_attach,

@@ -1,4 +1,4 @@
-/* $OpenBSD: viomb.c,v 1.7 2020/09/04 13:10:16 bket Exp $	 */
+/* $OpenBSD: viomb.c,v 1.8 2021/11/05 11:38:29 mpi Exp $	 */
 /* $NetBSD: viomb.c,v 1.1 2011/10/30 12:12:21 hannken Exp $	 */
 
 /*
@@ -114,7 +114,7 @@ int	viomb_vq_dequeue(struct virtqueue *);
 int	viomb_inflate_intr(struct virtqueue *);
 int	viomb_deflate_intr(struct virtqueue *);
 
-struct cfattach viomb_ca = {
+const struct cfattach viomb_ca = {
 	sizeof(struct viomb_softc), viomb_match, viomb_attach
 };
 

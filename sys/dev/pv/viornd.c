@@ -1,4 +1,4 @@
-/*	$OpenBSD: viornd.c,v 1.4 2020/05/29 04:42:25 deraadt Exp $	*/
+/*	$OpenBSD: viornd.c,v 1.5 2021/11/05 11:38:29 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014 Stefan Fritsch <sf@sfritsch.de>
@@ -59,7 +59,7 @@ void	viornd_attach(struct device *, struct device *, void *);
 int	viornd_vq_done(struct virtqueue *);
 void	viornd_tick(void *);
 
-struct cfattach viornd_ca = {
+const struct cfattach viornd_ca = {
 	sizeof(struct viornd_softc),
 	viornd_match,
 	viornd_attach,
