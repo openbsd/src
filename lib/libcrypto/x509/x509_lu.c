@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.47 2021/11/05 20:35:14 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.48 2021/11/05 21:39:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -533,102 +533,113 @@ X509_OBJECT_get0_X509_CRL(X509_OBJECT *xo)
 }
 
 STACK_OF(X509) *
-X509_STORE_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
+X509_STORE_get1_certs(X509_STORE_CTX *ctx, X509_NAME *name)
 {
-	int i, idx, cnt;
+	X509_STORE *store = ctx->ctx;
 	STACK_OF(X509) *sk;
-	X509 *x;
+	X509 *x = NULL;
 	X509_OBJECT *obj;
+	int i, idx, cnt;
 
-	if (ctx->ctx == NULL)
+	if (store == NULL)
 		return NULL;
-	sk = sk_X509_new_null();
-	if (sk == NULL)
-		return NULL;
+
 	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
-	idx = x509_object_idx_cnt(ctx->ctx->objs, X509_LU_X509, nm, &cnt);
-	if (idx < 0) {
-		/* Nothing found in cache: do lookup to possibly add new
-		 * objects to cache
-		 */
-		X509_OBJECT xobj;
-		CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
-		if (!X509_STORE_get_by_subject(ctx, X509_LU_X509, nm, &xobj)) {
-			sk_X509_free(sk);
-			return NULL;
-		}
-		X509_OBJECT_free_contents(&xobj);
-		CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
-		idx = x509_object_idx_cnt(ctx->ctx->objs,
-		    X509_LU_X509, nm, &cnt);
-		if (idx < 0) {
-			CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
-			sk_X509_free(sk);
-			return NULL;
-		}
-	}
+	idx = x509_object_idx_cnt(store->objs, X509_LU_X509, name, &cnt);
+	if (idx >= 0)
+		goto found;
+	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+
+	/* Nothing found: do lookup to possibly add new objects to cache. */
+	obj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509, name);
+	if (obj == NULL)
+		return NULL;
+
+	X509_OBJECT_free(obj);
+	obj = NULL;
+
+	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
+	idx = x509_object_idx_cnt(store->objs, X509_LU_X509, name, &cnt);
+	if (idx >= 0)
+		goto found;
+	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+
+	return NULL;
+
+ found:
+	if ((sk = sk_X509_new_null()) == NULL)
+		goto err;
+
 	for (i = 0; i < cnt; i++, idx++) {
-		obj = sk_X509_OBJECT_value(ctx->ctx->objs, idx);
+		obj = sk_X509_OBJECT_value(store->objs, idx);
+
 		x = obj->data.x509;
-		CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
-		if (!sk_X509_push(sk, x)) {
-			CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
-			X509_free(x);
-			sk_X509_pop_free(sk, X509_free);
-			return NULL;
+		if (!X509_up_ref(x)) {
+			x = NULL;
+			goto err;
 		}
+		if (!sk_X509_push(sk, x))
+			goto err;
 	}
+
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
 	return sk;
 
+ err:
+	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+	sk_X509_pop_free(sk, X509_free);
+	X509_free(x);
+	return NULL;
 }
 
 STACK_OF(X509_CRL) *
-X509_STORE_get1_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
+X509_STORE_get1_crls(X509_STORE_CTX *ctx, X509_NAME *name)
 {
+	X509_STORE *store = ctx->ctx;
+	STACK_OF(X509_CRL) *sk = NULL;
+	X509_CRL *x = NULL;
+	X509_OBJECT *obj = NULL;
 	int i, idx, cnt;
-	STACK_OF(X509_CRL) *sk;
-	X509_CRL *x;
-	X509_OBJECT *obj, xobj;
 
-	if (ctx->ctx == NULL)
+	if (store == NULL)
 		return NULL;
-	sk = sk_X509_CRL_new_null();
-	if (sk == NULL)
-		return NULL;
-	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
-	/* Check cache first */
-	idx = x509_object_idx_cnt(ctx->ctx->objs, X509_LU_CRL, nm, &cnt);
 
-	/* Always do lookup to possibly add new CRLs to cache
-	 */
-	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
-	if (!X509_STORE_get_by_subject(ctx, X509_LU_CRL, nm, &xobj)) {
-		sk_X509_CRL_free(sk);
+	/* Always do lookup to possibly add new CRLs to cache */
+	obj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_CRL, name);
+	if (obj == NULL)
 		return NULL;
-	}
-	X509_OBJECT_free_contents(&xobj);
+
+	X509_OBJECT_free(obj);
+	obj = NULL;
+
 	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
-	idx = x509_object_idx_cnt(ctx->ctx->objs, X509_LU_CRL, nm, &cnt);
-	if (idx < 0) {
-		CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
-		sk_X509_CRL_free(sk);
-		return NULL;
-	}
+	idx = x509_object_idx_cnt(store->objs, X509_LU_CRL, name, &cnt);
+	if (idx < 0)
+		goto err;
+
+	if ((sk = sk_X509_CRL_new_null()) == NULL)
+		goto err;
 
 	for (i = 0; i < cnt; i++, idx++) {
-		obj = sk_X509_OBJECT_value(ctx->ctx->objs, idx);
+		obj = sk_X509_OBJECT_value(store->objs, idx);
+
 		x = obj->data.crl;
-		CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509_CRL);
-		if (!sk_X509_CRL_push(sk, x)) {
-			CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
-			X509_CRL_free(x);
-			sk_X509_CRL_pop_free(sk, X509_CRL_free);
-			return NULL;
+		if (!X509_CRL_up_ref(x)) {
+			x = NULL;
+			goto err;
 		}
+		if (!sk_X509_CRL_push(sk, x))
+			goto err;
 	}
+
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
 	return sk;
+
+ err:
+	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+	X509_CRL_free(x);
+	sk_X509_CRL_pop_free(sk, X509_CRL_free);
+	return NULL;
 }
 
 X509_OBJECT *
