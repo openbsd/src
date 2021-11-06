@@ -2561,6 +2561,7 @@
 ./usr/share/man/man8/security.8
 ./usr/share/man/man8/sendmail.8
 ./usr/share/man/man8/sensorsd.8
+./usr/share/man/man8/site.8
 ./usr/share/man/man8/sftp-server.8
 ./usr/share/man/man8/showmount.8
 ./usr/share/man/man8/shutdown.8
