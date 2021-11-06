@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.205 2021/08/31 09:51:25 claudio Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.206 2021/11/06 14:27:45 kn Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -106,14 +106,17 @@ static int	redirect_loop;
 static int	retried;
 
 /*
- * Determine whether the character needs encoding, per RFC1738:
- *	- No corresponding graphic US-ASCII.
- *	- Unsafe characters.
+ * Determine whether the character needs encoding, per RFC2396.
  */
 static int
-unsafe_char(const char *c0)
+to_encode(const char *c0)
 {
-	const char *unsafe_chars = " <>\"#{}|\\^~[]`";
+	/* 2.4.3. Excluded US-ASCII Characters */
+	const char *excluded_chars =
+	    " "		/* space */
+	    "<>#\""	/* delims (modulo "%", see below) */
+	    "{}|\\^[]`"	/* unwise */
+	    ;
 	const unsigned char *c = (const unsigned char *)c0;
 
 	/*
@@ -123,16 +126,15 @@ unsafe_char(const char *c0)
 	return (iscntrl(*c) || !isascii(*c) ||
 
 	    /*
-	     * Unsafe characters.
-	     * '%' is also unsafe, if is not followed by two
+	     * '%' is also reserved, if is not followed by two
 	     * hexadecimal digits.
 	     */
-	    strchr(unsafe_chars, *c) != NULL ||
+	    strchr(excluded_chars, *c) != NULL ||
 	    (*c == '%' && (!isxdigit(c[1]) || !isxdigit(c[2]))));
 }
 
 /*
- * Encode given URL, per RFC1738.
+ * Encode given URL, per RFC2396.
  * Allocate and return string to the caller.
  */
 static char *
@@ -145,11 +147,10 @@ url_encode(const char *path)
 
 	/*
 	 * First pass:
-	 * Count unsafe characters, and determine length of the
-	 * final URL.
+	 * Count characters to encode and determine length of the final URL.
 	 */
 	for (i = 0; i < length; i++)
-		if (unsafe_char(path + i))
+		if (to_encode(path + i))
 			new_length += 2;
 
 	epath = epathp = malloc(new_length + 1);	/* One more for '\0'. */
@@ -161,7 +162,7 @@ url_encode(const char *path)
 	 * Encode, and copy final URL.
 	 */
 	for (i = 0; i < length; i++)
-		if (unsafe_char(path + i)) {
+		if (to_encode(path + i)) {
 			snprintf(epathp, 4, "%%" "%02x",
 			    (unsigned char)path[i]);
 			epathp += 3;
