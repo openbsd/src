@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.139 2021/11/06 11:02:53 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.140 2021/11/06 13:33:10 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -205,7 +205,7 @@ rc_stop() {
 }
 
 rc_cmd() {
-	local _to _n _ret
+	local _exit _n _ret
 
 	[ -n "${1}" ] && echo "${_rc_actions}" | grep -qw -- ${1} || _rc_usage
 
@@ -244,14 +244,14 @@ rc_cmd() {
 			kill -ALRM ${_TIMERSUB}
 			wait ${_TIMERSUB} 2>/dev/null # don't print Alarm clock
 			[[ "${_ret}" == 142 ]] && [ X"${rc_bg}" != X"YES" ] &&
-				_to="timeout"
+				_exit="timeout"
 			# XXX for unknown reason, rc_check can fail (e.g. redis)
 			# while it just succeeded in _rc_wait; the check is
 			# needed to cope with failing daemons returning 0
 			#[[ "${_ret}" == @(0|142) ]] && _rc_do rc_check || break
 			[[ "${_ret}" == @(0|142) ]] || break
 			_rc_do _rc_write_runfile
-			_rc_exit ${_to:=ok}
+			_rc_exit ${_exit:=ok}
 		done
 		# handle failure
 		type rc_post >/dev/null && _rc_do rc_post
@@ -262,12 +262,12 @@ rc_cmd() {
 		_rc_do rc_check || exit 0
 		echo $_n "${INRC:+ }${_name}"
 		_rc_do rc_stop || _rc_exit failed
-		_rc_do _rc_wait stop || _rc_exit killed
+		_rc_do _rc_wait stop || _exit=killed
 		if type rc_post >/dev/null; then
-			_rc_do rc_post || _rc_exit failed
+			_rc_do rc_post || _exit=failed
 		fi
 		_rc_do _rc_rm_runfile
-		_rc_exit ok
+		_rc_exit ${_exit:=ok}
 		;;
 	reload)
 		echo $_n "${INRC:+ }${_name}"
