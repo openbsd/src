@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.50 2021/11/06 12:27:05 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.51 2021/11/06 12:31:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -685,30 +685,46 @@ X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h, X509_OBJECT *x)
  * -1 some other error.
  */
 int
-X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
+X509_STORE_CTX_get1_issuer(X509 **out_issuer, X509_STORE_CTX *ctx, X509 *x)
 {
 	X509_NAME *xn;
-	X509_OBJECT obj, *pobj;
+	X509_OBJECT *obj, *pobj;
+	X509 *issuer = NULL;
 	int i, idx, ret;
 
-	*issuer = NULL;
+	*out_issuer = NULL;
+
 	xn = X509_get_issuer_name(x);
-	if (!X509_STORE_get_by_subject(ctx, X509_LU_X509, xn, &obj))
+	obj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509, xn);
+	if (obj == NULL)
 		return 0;
+
+	if ((issuer = X509_OBJECT_get0_X509(obj)) == NULL) {
+		X509_OBJECT_free(obj);
+		return 0;
+	}
+	if (!X509_up_ref(issuer)) {
+		X509_OBJECT_free(obj);
+		return -1;
+	}
+
 	/* If certificate matches all OK */
-	if (ctx->check_issued(ctx, x, obj.data.x509)) {
-		if (x509_check_cert_time(ctx, obj.data.x509, -1)) {
-			*issuer = obj.data.x509;
+	if (ctx->check_issued(ctx, x, issuer)) {
+		if (x509_check_cert_time(ctx, issuer, -1)) {
+			*out_issuer = issuer;
+			X509_OBJECT_free(obj);
 			return 1;
 		}
 	}
-	X509_OBJECT_free_contents(&obj);
+	X509_free(issuer);
+	issuer = NULL;
+	X509_OBJECT_free(obj);
+	obj = NULL;
 
 	if (ctx->ctx == NULL)
 		return 0;
 
 	/* Else find index of first cert accepted by 'check_issued' */
-	ret = 0;
 	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
 	idx = X509_OBJECT_idx_by_subject(ctx->ctx->objs, X509_LU_X509, xn);
 	if (idx != -1) /* should be true as we've had at least one match */ {
@@ -722,22 +738,28 @@ X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 			    X509_get_subject_name(pobj->data.x509)))
 				break;
 			if (ctx->check_issued(ctx, x, pobj->data.x509)) {
-				*issuer = pobj->data.x509;
-				ret = 1;
+				issuer = pobj->data.x509;
 				/*
 				 * If times check, exit with match,
 				 * otherwise keep looking. Leave last
 				 * match in issuer so we return nearest
 				 * match if no certificate time is OK.
 				 */
-				if (x509_check_cert_time(ctx, *issuer, -1))
+				if (x509_check_cert_time(ctx, issuer, -1))
 					break;
 			}
 		}
 	}
+	ret = 0;
+	if (issuer != NULL) {
+		if (!X509_up_ref(issuer)) {
+			ret = -1;
+		} else {
+			*out_issuer = issuer;
+			ret = 1;
+		}
+	}
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
-	if (*issuer)
-		CRYPTO_add(&(*issuer)->references, 1, CRYPTO_LOCK_X509);
 	return ret;
 }
 
