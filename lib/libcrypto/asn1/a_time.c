@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time.c,v 1.31 2021/11/03 13:44:15 tb Exp $ */
+/* $OpenBSD: a_time.c,v 1.32 2021/11/06 07:52:22 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -80,7 +80,6 @@ const ASN1_ITEM ASN1_TIME_it = {
 	.sname = "ASN1_TIME",
 };
 
-
 ASN1_TIME *
 d2i_ASN1_TIME(ASN1_TIME **a, const unsigned char **in, long len)
 {
@@ -124,12 +123,12 @@ ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm)
 int
 ASN1_TIME_diff(int *pday, int *psec, const ASN1_TIME *from, const ASN1_TIME *to)
 {
-    struct tm tm_from, tm_to;
+	struct tm tm_from, tm_to;
 
-    if (!ASN1_TIME_to_tm(from, &tm_from))
-	    return 0;
-    if (!ASN1_TIME_to_tm(to, &tm_to))
-	    return 0;
+	if (!ASN1_TIME_to_tm(from, &tm_from))
+		return 0;
+	if (!ASN1_TIME_to_tm(to, &tm_to))
+		return 0;
 
-    return OPENSSL_gmtime_diff(pday, psec, &tm_from, &tm_to);
+	return OPENSSL_gmtime_diff(pday, psec, &tm_from, &tm_to);
 }
