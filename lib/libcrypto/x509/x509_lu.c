@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.49 2021/11/06 07:18:18 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.50 2021/11/06 12:27:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -697,7 +697,7 @@ X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 		return 0;
 	/* If certificate matches all OK */
 	if (ctx->check_issued(ctx, x, obj.data.x509)) {
-		if (x509_check_cert_time(ctx, obj.data.x509, 1)) {
+		if (x509_check_cert_time(ctx, obj.data.x509, -1)) {
 			*issuer = obj.data.x509;
 			return 1;
 		}
@@ -730,7 +730,7 @@ X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 				 * match in issuer so we return nearest
 				 * match if no certificate time is OK.
 				 */
-				if (x509_check_cert_time(ctx, *issuer, 1))
+				if (x509_check_cert_time(ctx, *issuer, -1))
 					break;
 			}
 		}
