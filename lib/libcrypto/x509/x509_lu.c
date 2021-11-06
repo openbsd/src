@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.48 2021/11/05 21:39:45 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.49 2021/11/06 07:18:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -532,41 +532,20 @@ X509_OBJECT_get0_X509_CRL(X509_OBJECT *xo)
 	return NULL;
 }
 
-STACK_OF(X509) *
-X509_STORE_get1_certs(X509_STORE_CTX *ctx, X509_NAME *name)
+static STACK_OF(X509) *
+X509_get1_certs_from_cache(X509_STORE *store, X509_NAME *name)
 {
-	X509_STORE *store = ctx->ctx;
-	STACK_OF(X509) *sk;
+	STACK_OF(X509) *sk = NULL;
 	X509 *x = NULL;
 	X509_OBJECT *obj;
 	int i, idx, cnt;
 
-	if (store == NULL)
-		return NULL;
-
 	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
+
 	idx = x509_object_idx_cnt(store->objs, X509_LU_X509, name, &cnt);
-	if (idx >= 0)
-		goto found;
-	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+	if (idx < 0)
+		goto err;
 
-	/* Nothing found: do lookup to possibly add new objects to cache. */
-	obj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509, name);
-	if (obj == NULL)
-		return NULL;
-
-	X509_OBJECT_free(obj);
-	obj = NULL;
-
-	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
-	idx = x509_object_idx_cnt(store->objs, X509_LU_X509, name, &cnt);
-	if (idx >= 0)
-		goto found;
-	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
-
-	return NULL;
-
- found:
 	if ((sk = sk_X509_new_null()) == NULL)
 		goto err;
 
@@ -583,13 +562,37 @@ X509_STORE_get1_certs(X509_STORE_CTX *ctx, X509_NAME *name)
 	}
 
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
+
 	return sk;
 
  err:
 	CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
 	sk_X509_pop_free(sk, X509_free);
 	X509_free(x);
+
 	return NULL;
+}
+
+STACK_OF(X509) *
+X509_STORE_get1_certs(X509_STORE_CTX *ctx, X509_NAME *name)
+{
+	X509_STORE *store = ctx->ctx;
+	STACK_OF(X509) *sk;
+	X509_OBJECT *obj;
+
+	if (store == NULL)
+		return NULL;
+
+	if ((sk = X509_get1_certs_from_cache(store, name)) != NULL)
+		return sk;
+
+	/* Nothing found: do lookup to possibly add new objects to cache. */
+	obj = X509_STORE_CTX_get_obj_by_subject(ctx, X509_LU_X509, name);
+	if (obj == NULL)
+		return NULL;
+	X509_OBJECT_free(obj);
+
+	return X509_get1_certs_from_cache(store, name);
 }
 
 STACK_OF(X509_CRL) *
