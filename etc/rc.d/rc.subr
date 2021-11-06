@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.138 2021/11/06 10:38:04 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.139 2021/11/06 11:02:53 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -180,10 +180,10 @@ _rc_wait() {
 		sleep 1
 		_i=$((_i+1))
 	done
-	if [ X"$1" = X"stop" ]; then # KILL the process
-		sleep 1
-		_rc_do rc_check && _rc_do _rc_sendsig KILL
-	fi
+
+	# KILL the process
+	[ X"$1" = X"stop" ] && _rc_do rc_check && _rc_do _rc_sendsig KILL
+
 	return 1
 }
 
