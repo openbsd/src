@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.137 2021/10/31 17:46:23 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.138 2021/11/06 10:38:04 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -41,7 +41,8 @@ _rc_parse_conf() {
 	local _l _rcfile _val
 	set -A _allowed_keys -- \
 		accounting amd_master check_quotas ipsec library_aslr \
-		multicast nfs_server pexp pf pkg_scripts shlib_dirs spamd_black
+		multicast nfs_server pexp pf pkg_scripts shlib_dirs \
+		rc_reload_signal rc_stop_signal spamd_black
 
 	[ $# -gt 0 ] || set -- /etc/rc.conf /etc/rc.conf.local
 	for _rcfile; do
@@ -120,6 +121,8 @@ daemon_rtable=${daemon_rtable}
 daemon_timeout=${daemon_timeout}
 daemon_user=${daemon_user}
 pexp=${pexp}
+rc_reload_signal=${rc_reload_signal}
+rc_stop_signal=${rc_stop_signal}
 EOF
 }
 
@@ -141,6 +144,10 @@ _rc_alarm()
 	kill $! 2>/dev/null # kill last job if it's running
 }
 
+_rc_sendsig() {
+	pkill -${1:-TERM} -T "${daemon_rtable}" -xf "${pexp}" 
+}
+
 _rc_wait() {
 	local _i=0
 	if [ X"$1" = X"start" ]; then # prevent hanging the boot sequence
@@ -160,6 +167,12 @@ _rc_wait() {
 		reload)
 			_rc_do rc_check && return 0 ;;
 		stop)
+			# last chance: send a SIGTERM first in case the process
+			# used another signal to stop (e.g. SIGQUIT with nginx)
+			# or a non-default rc_stop() function; do it 2s before
+			# timeout to re-enter the loop one last time which will
+			# give 1s for SIGTERM to terminate the process
+			((_i == daemon_timeout-2)) && _rc_do _rc_sendsig TERM
 			_rc_do rc_check || return 0 ;;
 		*)
 			break ;;
@@ -167,6 +180,10 @@ _rc_wait() {
 		sleep 1
 		_i=$((_i+1))
 	done
+	if [ X"$1" = X"stop" ]; then # KILL the process
+		sleep 1
+		_rc_do rc_check && _rc_do _rc_sendsig KILL
+	fi
 	return 1
 }
 
@@ -180,11 +197,11 @@ rc_check() {
 }
 
 rc_reload() {
-	pkill -HUP -T "${daemon_rtable}" -xf "${pexp}"
+	_rc_sendsig ${rc_reload_signal}
 }
 
 rc_stop() {
-	pkill -T "${daemon_rtable}" -xf "${pexp}"
+	_rc_sendsig ${rc_stop_signal}
 }
 
 rc_cmd() {
@@ -245,7 +262,7 @@ rc_cmd() {
 		_rc_do rc_check || exit 0
 		echo $_n "${INRC:+ }${_name}"
 		_rc_do rc_stop || _rc_exit failed
-		_rc_do _rc_wait stop || _rc_exit failed
+		_rc_do _rc_wait stop || _rc_exit killed
 		if type rc_post >/dev/null; then
 			_rc_do rc_post || _rc_exit failed
 		fi
@@ -288,6 +305,9 @@ _RC_RUNFILE=${_RC_RUNDIR}/${_name}
 
 # parse /etc/rc.conf{.local} for the daemon variables
 _rc_do _rc_parse_conf
+
+rc_reload_signal=${rc_reload_signal:=HUP}
+rc_stop_signal=${rc_stop_signal:=TERM}
 
 eval _rcflags=\${${_name}_flags}
 eval _rclogger=\${${_name}_logger}
