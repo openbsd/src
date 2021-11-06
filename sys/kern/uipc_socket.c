@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.267 2021/10/24 07:02:47 visa Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.268 2021/11/06 05:26:33 visa Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -148,6 +148,18 @@ soinit(void)
 #endif
 }
 
+struct socket *
+soalloc(int prflags)
+{
+	struct socket *so;
+
+	so = pool_get(&socket_pool, prflags);
+	if (so == NULL)
+		return (NULL);
+	rw_init(&so->so_lock, "solock");
+	return (so);
+}
+
 /*
  * Socket operation routines.
  * These routines are called by the routines in
@@ -171,8 +183,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
-	so = pool_get(&socket_pool, PR_WAITOK | PR_ZERO);
-	rw_init(&so->so_lock, "solock");
+	so = soalloc(PR_WAITOK | PR_ZERO);
 	klist_init(&so->so_rcv.sb_sel.si_note, &socket_klistops, so);
 	klist_init(&so->so_snd.sb_sel.si_note, &socket_klistops, so);
 	sigio_init(&so->so_sigio);

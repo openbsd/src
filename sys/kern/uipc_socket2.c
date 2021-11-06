@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.115 2021/10/27 13:41:09 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.116 2021/11/06 05:26:33 visa Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -159,10 +159,9 @@ sonewconn(struct socket *head, int connstatus)
 		return (NULL);
 	if (head->so_qlen + head->so_q0len > head->so_qlimit * 3)
 		return (NULL);
-	so = pool_get(&socket_pool, PR_NOWAIT|PR_ZERO);
+	so = soalloc(PR_NOWAIT | PR_ZERO);
 	if (so == NULL)
 		return (NULL);
-	rw_init(&so->so_lock, "solock");
 	so->so_type = head->so_type;
 	so->so_options = head->so_options &~ SO_ACCEPTCONN;
 	so->so_linger = head->so_linger;
