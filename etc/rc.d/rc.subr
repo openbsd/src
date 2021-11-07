@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.141 2021/11/07 08:26:12 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.142 2021/11/07 08:31:24 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -155,7 +155,7 @@ _rc_wait() {
 			if _rc_do rc_check; then
 				[ X"${rc_bg}" = X"YES" ] || [ -z "$$" ] && break
 			fi
-			sleep 1
+			sleep .5
 		done & wait
 		pkill -ALRM -P $$
 		return
@@ -170,12 +170,13 @@ _rc_wait() {
 			# or a non-default rc_stop() function; do it 2s before
 			# timeout to re-enter the loop one last time which will
 			# give 1s for SIGTERM to terminate the process
-			((SECONDS == daemon_timeout-2)) && _rc_do _rc_sendsig TERM
+			((SECONDS == daemon_timeout-2)) &&
+				_rc_do _rc_sendsig TERM && sleep .5
 			_rc_do rc_check || return 0 ;;
 		*)
 			break ;;
 		esac
-		sleep 1
+		sleep .5
 	done
 
 	# KILL the process
