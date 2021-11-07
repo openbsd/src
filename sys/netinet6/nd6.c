@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.235 2021/03/08 16:49:07 florian Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.236 2021/11/07 19:38:25 sthen Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -270,6 +270,10 @@ nd6_options(union nd_opts *ndopts)
 			}
 			ndopts->nd_opts_pi_end =
 				(struct nd_opt_prefix_info *)nd_opt;
+			break;
+		case ND_OPT_DNSSL:
+		case ND_OPT_RDNSS:
+			/* Don't warn */
 			break;
 		default:
 			/*
