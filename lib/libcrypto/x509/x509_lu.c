@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.51 2021/11/06 12:31:40 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.52 2021/11/07 15:52:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -315,7 +315,7 @@ int
 X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
     X509_NAME *name, X509_OBJECT *ret)
 {
-	X509_STORE *ctx = vs->ctx;
+	X509_STORE *ctx = vs->store;
 	X509_LOOKUP *lu;
 	X509_OBJECT stmp, *tmp;
 	int i;
@@ -576,7 +576,7 @@ X509_get1_certs_from_cache(X509_STORE *store, X509_NAME *name)
 STACK_OF(X509) *
 X509_STORE_get1_certs(X509_STORE_CTX *ctx, X509_NAME *name)
 {
-	X509_STORE *store = ctx->ctx;
+	X509_STORE *store = ctx->store;
 	STACK_OF(X509) *sk;
 	X509_OBJECT *obj;
 
@@ -598,7 +598,7 @@ X509_STORE_get1_certs(X509_STORE_CTX *ctx, X509_NAME *name)
 STACK_OF(X509_CRL) *
 X509_STORE_get1_crls(X509_STORE_CTX *ctx, X509_NAME *name)
 {
-	X509_STORE *store = ctx->ctx;
+	X509_STORE *store = ctx->store;
 	STACK_OF(X509_CRL) *sk = NULL;
 	X509_CRL *x = NULL;
 	X509_OBJECT *obj = NULL;
@@ -721,16 +721,16 @@ X509_STORE_CTX_get1_issuer(X509 **out_issuer, X509_STORE_CTX *ctx, X509 *x)
 	X509_OBJECT_free(obj);
 	obj = NULL;
 
-	if (ctx->ctx == NULL)
+	if (ctx->store == NULL)
 		return 0;
 
 	/* Else find index of first cert accepted by 'check_issued' */
 	CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
-	idx = X509_OBJECT_idx_by_subject(ctx->ctx->objs, X509_LU_X509, xn);
+	idx = X509_OBJECT_idx_by_subject(ctx->store->objs, X509_LU_X509, xn);
 	if (idx != -1) /* should be true as we've had at least one match */ {
 		/* Look through all matching certs for suitable issuer */
-		for (i = idx; i < sk_X509_OBJECT_num(ctx->ctx->objs); i++) {
-			pobj = sk_X509_OBJECT_value(ctx->ctx->objs, i);
+		for (i = idx; i < sk_X509_OBJECT_num(ctx->store->objs); i++) {
+			pobj = sk_X509_OBJECT_value(ctx->store->objs, i);
 			/* See if we've run past the matches */
 			if (pobj->type != X509_LU_X509)
 				break;

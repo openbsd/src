@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.95 2021/11/07 15:51:23 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.96 2021/11/07 15:52:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -906,8 +906,8 @@ lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 X509 *
 x509_vfy_lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
 {
-	if (ctx->lookup_certs == NULL || ctx->ctx == NULL ||
-	    ctx->ctx->objs == NULL)
+	if (ctx->lookup_certs == NULL || ctx->store == NULL ||
+	    ctx->store->objs == NULL)
 		return NULL;
 	return lookup_cert_match(ctx, x);
 }
@@ -1415,7 +1415,7 @@ check_crl_path(X509_STORE_CTX *ctx, X509 *x)
 	/* Don't allow recursive CRL path validation */
 	if (ctx->parent)
 		return 0;
-	if (!X509_STORE_CTX_init(&crl_ctx, ctx->ctx, x, ctx->untrusted)) {
+	if (!X509_STORE_CTX_init(&crl_ctx, ctx->store, x, ctx->untrusted)) {
 		ret = -1;
 		goto err;
 	}
@@ -2212,7 +2212,7 @@ X509_STORE_CTX_get0_parent_ctx(X509_STORE_CTX *ctx)
 X509_STORE *
 X509_STORE_CTX_get0_store(X509_STORE_CTX *xs)
 {
-	return xs->ctx;
+	return xs->store;
 }
 
 void
@@ -2352,7 +2352,7 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	 * may fail should go last to make sure 'ctx' is as consistent as
 	 * possible even on early exits.
 	 */
-	ctx->ctx = store;
+	ctx->store = store;
 	ctx->cert = x509;
 	ctx->untrusted = chain;
 

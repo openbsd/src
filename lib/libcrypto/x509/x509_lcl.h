@@ -327,7 +327,7 @@ struct x509_lookup_st {
  * and passed around.
  */
 struct x509_store_ctx_st {
-	X509_STORE *ctx;
+	X509_STORE *store;
 	int current_method;	/* used when looking up certs */
 
 	/* The following are set by the caller */
