@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf.c,v 1.38 2020/11/22 10:40:39 jsg Exp $	*/
+/*	$OpenBSD: elf.c,v 1.39 2021/11/07 08:09:04 semarie Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -274,6 +274,8 @@ elf_shn2type(Elf_Ehdr *eh, u_int shn, const char *sn)
 			return (-1);
 		else if (!strcmp(sn, ELF_TEXT))
 			return (N_TEXT);
+		else if (!strncmp(sn, ".text.", 6))
+			return (N_TEXT);
 		else if (!strcmp(sn, ELF_RODATA))
 			return (N_SIZE);
 		else if (!strcmp(sn, ELF_OPENBSDRANDOMDATA))
@@ -355,6 +357,7 @@ elf2nlist(Elf_Sym *sym, Elf_Ehdr *eh, Elf_Shdr *shdr, char *shstr,
 		} else if (sn != NULL && *sn != 0 &&
 		    strcmp(sn, ELF_INIT) &&
 		    strcmp(sn, ELF_TEXT) &&
+		    strncmp(sn, ".text.", 6) &&
 		    strcmp(sn, ELF_FINI))	/* XXX GNU compat */
 			np->nl.n_other = '?';
 		break;
