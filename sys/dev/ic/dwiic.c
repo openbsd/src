@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic.c,v 1.12 2021/07/13 22:08:50 patrick Exp $ */
+/* $OpenBSD: dwiic.c,v 1.13 2021/11/07 14:07:43 stsp Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -530,7 +530,7 @@ dwiic_intr(void *arg)
 	DPRINTF(("%s: %s: enabled=0x%x stat=0x%x\n", sc->sc_dev.dv_xname,
 	    __func__, en, stat));
 	if (!(stat & ~DW_IC_INTR_ACTIVITY))
-		return 1;
+		return 0;
 
 	if (stat & DW_IC_INTR_TX_ABRT)
 		sc->sc_i2c_xfer.error = 1;
