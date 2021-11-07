@@ -1,9 +1,9 @@
-#	$OpenBSD: disktab,v 1.27 2020/09/15 11:44:51 deraadt Exp $
+#	$OpenBSD: disktab,v 1.28 2021/11/07 15:50:15 deraadt Exp $
 
 mini34|gzip bsd.rd disk image 4.4.6875MB:\
-	:dt=rdroot:se#512:nt#1:ns#64:nc#155:\
-	:pa#9856:oa#64:ba#8192:fa#1024:ta=4.2BSD: \
-	:pc#9920:oc#0:
+	:dt=rdroot:se#512:nt#1:ns#64:nc#160:\
+	:pa#10176:oa#64:ba#8192:fa#1024:ta=4.2BSD: \
+	:pc#10240:oc#0:
 
 install360|install.img disk image 360MB:\
 	:dt=rdroot:se#512:nt#1:ns#64:nc#21248:\
