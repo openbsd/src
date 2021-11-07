@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioleds.c,v 1.1 2021/09/25 10:43:24 kn Exp $	*/
+/*	$OpenBSD: gpioleds.c,v 1.2 2021/11/07 16:40:30 kn Exp $	*/
 /*
  * Copyright (c) 2021 Klemens Nanni <kn@openbsd.org>
  *
@@ -94,9 +94,7 @@ gpioleds_attach(struct device *parent, struct device *self, void *aux)
 		free(led_pin, M_TEMP, gpios_len);
 	}
 
-	if (leds == 0) {
-		printf(": no LEDs\n");
-		return;
-	}
+	if (leds == 0)
+		printf(": no LEDs");
 	printf("\n");
 }
