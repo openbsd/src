@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.94 2021/11/04 23:52:34 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.95 2021/11/07 15:51:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -262,7 +262,7 @@ X509_verify_cert_legacy_build_chain(X509_STORE_CTX *ctx, int *bad, int *out_ok)
 		goto end;
 	}
 	X509_up_ref(ctx->cert);
-	ctx->last_untrusted = 1;
+	ctx->num_untrusted = 1;
 
 	/* We use a temporary STACK so we can chop and hack at it */
 	if (ctx->untrusted != NULL &&
@@ -336,7 +336,7 @@ X509_verify_cert_legacy_build_chain(X509_STORE_CTX *ctx, int *bad, int *out_ok)
 				}
 				X509_up_ref(xtmp);
 				(void)sk_X509_delete_ptr(sktmp, xtmp);
-				ctx->last_untrusted++;
+				ctx->num_untrusted++;
 				x = xtmp;
 				num++;
 				/*
@@ -394,7 +394,7 @@ X509_verify_cert_legacy_build_chain(X509_STORE_CTX *ctx, int *bad, int *out_ok)
 					X509_free(x);
 					x = xtmp;
 					(void)sk_X509_set(ctx->chain, i - 1, x);
-					ctx->last_untrusted = 0;
+					ctx->num_untrusted = 0;
 				}
 			} else {
 				/*
@@ -402,7 +402,7 @@ X509_verify_cert_legacy_build_chain(X509_STORE_CTX *ctx, int *bad, int *out_ok)
 				 * certificate for later use
 				 */
 				chain_ss = sk_X509_pop(ctx->chain);
-				ctx->last_untrusted--;
+				ctx->num_untrusted--;
 				num--;
 				j--;
 				x = sk_X509_value(ctx->chain, num - 1);
@@ -476,7 +476,7 @@ X509_verify_cert_legacy_build_chain(X509_STORE_CTX *ctx, int *bad, int *out_ok)
 						X509_free(xtmp);
 						num--;
 					}
-					ctx->last_untrusted = sk_X509_num(ctx->chain);
+					ctx->num_untrusted = sk_X509_num(ctx->chain);
 					retry = 1;
 					break;
 				}
@@ -491,7 +491,7 @@ X509_verify_cert_legacy_build_chain(X509_STORE_CTX *ctx, int *bad, int *out_ok)
 	 */
 	if (trust != X509_TRUST_TRUSTED && !bad_chain) {
 		if ((chain_ss == NULL) || !ctx->check_issued(ctx, x, chain_ss)) {
-			if (ctx->last_untrusted >= num)
+			if (ctx->num_untrusted >= num)
 				ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY;
 			else
 				ctx->error = X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT;
@@ -504,7 +504,7 @@ X509_verify_cert_legacy_build_chain(X509_STORE_CTX *ctx, int *bad, int *out_ok)
 				goto end;
 			}
 			num++;
-			ctx->last_untrusted = num;
+			ctx->num_untrusted = num;
 			ctx->current_cert = chain_ss;
 			ctx->error = X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN;
 			chain_ss = NULL;
@@ -749,7 +749,7 @@ x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx)
 	}
 
 	/* Check all untrusted certificates */
-	for (i = 0; i < ctx->last_untrusted; i++) {
+	for (i = 0; i < ctx->num_untrusted; i++) {
 		int ret;
 		x = sk_X509_value(ctx->chain, i);
 		if (!(ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) &&
@@ -922,7 +922,7 @@ check_trust(X509_STORE_CTX *ctx)
 
 	cb = ctx->verify_cb;
 	/* Check all trusted certificates in chain */
-	for (i = ctx->last_untrusted; i < sk_X509_num(ctx->chain); i++) {
+	for (i = ctx->num_untrusted; i < sk_X509_num(ctx->chain); i++) {
 		x = sk_X509_value(ctx->chain, i);
 		ok = X509_check_trust(x, ctx->param->trust, 0);
 
@@ -948,14 +948,14 @@ check_trust(X509_STORE_CTX *ctx)
 	 */
 	if (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) {
 		X509 *mx;
-		if (ctx->last_untrusted < (int)sk_X509_num(ctx->chain))
+		if (ctx->num_untrusted < (int)sk_X509_num(ctx->chain))
 			return X509_TRUST_TRUSTED;
 		x = sk_X509_value(ctx->chain, 0);
 		mx = lookup_cert_match(ctx, x);
 		if (mx) {
 			(void)sk_X509_set(ctx->chain, 0, mx);
 			X509_free(x);
-			ctx->last_untrusted = 0;
+			ctx->num_untrusted = 0;
 			return X509_TRUST_TRUSTED;
 		}
 	}
@@ -2567,7 +2567,7 @@ X509_STORE_CTX_get_explicit_policy(X509_STORE_CTX *ctx)
 int
 X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx)
 {
-	return ctx->last_untrusted; /* XXX */
+	return ctx->num_untrusted;
 }
 
 int
