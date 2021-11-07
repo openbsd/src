@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.140 2021/11/06 13:33:10 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.141 2021/11/07 08:26:12 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -149,20 +149,18 @@ _rc_sendsig() {
 }
 
 _rc_wait() {
-	local _i=0
 	if [ X"$1" = X"start" ]; then # prevent hanging the boot sequence
 		trap "_rc_alarm" ALRM
-		while [ $_i -lt ${daemon_timeout} ]; do
+		while (( SECONDS < daemon_timeout )); do
 			if _rc_do rc_check; then
 				[ X"${rc_bg}" = X"YES" ] || [ -z "$$" ] && break
 			fi
 			sleep 1
-			_i=$((_i+1))
 		done & wait
 		pkill -ALRM -P $$
 		return
 	fi
-	while [ $_i -lt ${daemon_timeout} ]; do
+	while (( SECONDS < daemon_timeout )); do
 		case "$1" in
 		reload)
 			_rc_do rc_check && return 0 ;;
@@ -172,13 +170,12 @@ _rc_wait() {
 			# or a non-default rc_stop() function; do it 2s before
 			# timeout to re-enter the loop one last time which will
 			# give 1s for SIGTERM to terminate the process
-			((_i == daemon_timeout-2)) && _rc_do _rc_sendsig TERM
+			((SECONDS == daemon_timeout-2)) && _rc_do _rc_sendsig TERM
 			_rc_do rc_check || return 0 ;;
 		*)
 			break ;;
 		esac
 		sleep 1
-		_i=$((_i+1))
 	done
 
 	# KILL the process
