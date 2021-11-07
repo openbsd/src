@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioleds.c,v 1.2 2021/11/07 16:40:30 kn Exp $	*/
+/*	$OpenBSD: gpioleds.c,v 1.3 2021/11/07 16:43:12 kn Exp $	*/
 /*
  * Copyright (c) 2021 Klemens Nanni <kn@openbsd.org>
  *
@@ -60,15 +60,20 @@ gpioleds_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args	*faa = aux;
 	uint32_t		*led_pin;
 	char			*function, *default_state;
+	char			*function_prop = "function";
 	int			 function_len, default_state_len, gpios_len;
 	int			 node, leds = 0;
 
 	pinctrl_byname(faa->fa_node, "default");
 
 	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
-		function_len = OF_getproplen(node, "function");
-		if (function_len <= 0)
-			continue;
+		function_len = OF_getproplen(node, function_prop);
+		if (function_len <= 0) {
+			function_prop = "label";
+			function_len = OF_getproplen(node, function_prop);
+			if (function_len <= 0)
+				continue;
+		}
 		default_state_len = OF_getproplen(node, "default-state");
 		if (default_state_len <= 0)
 			continue;
@@ -77,7 +82,7 @@ gpioleds_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 
 		function = malloc(function_len, M_TEMP, M_WAITOK);
-		OF_getprop(node, "function", function, function_len);
+		OF_getprop(node, function_prop, function, function_len);
 		default_state = malloc(default_state_len, M_TEMP, M_WAITOK);
 		OF_getprop(node, "default-state", default_state, default_state_len);
 		led_pin = malloc(gpios_len, M_TEMP, M_WAITOK);
