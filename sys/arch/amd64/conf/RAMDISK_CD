@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.193 2021/09/13 09:57:48 jmatthew Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.194 2021/11/07 16:06:31 patrick Exp $
 
 machine		amd64
 maxusers	4
@@ -256,6 +256,7 @@ ixl*		at pci?			# Intel Ethernet 700 Series
 mcx*		at pci?			# Mellanox ConnectX-4
 iavf*		at pci?			# Intel Ethernet Adaptive VF
 aq*		at pci?			# Aquantia aQtion Ethernet
+igc*		at pci?			# Intel I225 Ethernet
 
 acx*		at pci?			# TI ACX100/ACX111 (802.11b/g)
 acx*		at cardbus?		# TI ACX100/ACX111 (802.11b/g)
