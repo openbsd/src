@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplepanel.c,v 1.5 2021/10/24 17:52:27 mpi Exp $	*/
+/*	$OpenBSD: simplepanel.c,v 1.6 2021/11/07 15:59:09 patrick Exp $	*/
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -53,12 +53,12 @@ struct simplepanel_softc {
 	const struct drm_display_mode *sc_mode;
 };
 
-struct cfattach	simplepanel_ca = {
+const struct cfattach	simplepanel_ca = {
 	sizeof (struct simplepanel_softc),
 	simplepanel_match, simplepanel_attach
 };
 
-const struct cfdriver simplepanel_cd = {
+struct cfdriver simplepanel_cd = {
 	NULL, "simplepanel", DV_DULL
 };
 
