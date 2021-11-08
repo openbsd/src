@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.277 2021/10/31 16:37:25 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.278 2021/11/08 18:19:22 bcook Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -141,10 +141,10 @@
  */
 
 #include <arpa/inet.h>
-#include <sys/limits.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 
+#include <limits.h>
 #include <stdio.h>
 
 #include <openssl/bn.h>
