@@ -1,13 +1,6 @@
-# $OpenBSD: Makefile,v 1.10 2020/11/09 15:49:48 tb Exp $
+# $OpenBSD: Makefile,v 1.11 2021/11/08 23:06:49 kn Exp $
 
 SUBDIR += libressl
-.if exists(/usr/local/bin/eopenssl11)
 SUBDIR += openssl11
-.else
-.END:
-	@echo 'Run "pkg_add openssl--%1.1" to run tests against OpenSSL 1.1'
-	@echo SKIPPED
-.endif
 
 .include <bsd.subdir.mk>
-.include <bsd.regress.mk>
