@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.185 2021/11/04 14:45:07 tobhe Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.186 2021/11/08 22:36:18 tobhe Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -502,7 +502,7 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 		if (crde->crd_alg == CRYPTO_AES_GMAC)
 			crde->crd_len = 0;
 		else
-			crde->crd_len = m->m_pkthdr.len - (skip + hlen + alen);
+			crde->crd_len = plen;
 	}
 
 	KERNEL_LOCK();
