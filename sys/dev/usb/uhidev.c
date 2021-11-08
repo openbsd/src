@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.95 2021/09/12 06:58:08 anton Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.96 2021/11/08 07:05:21 anton Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -451,6 +451,7 @@ uhidev_detach(struct device *self, int flags)
 
 		sc->sc_subdevs[i] = NULL;
 	}
+	free(sc->sc_subdevs, M_USBDEV, sc->sc_nrepid * sizeof(struct uhidev *));
 
 	return (rv);
 }
