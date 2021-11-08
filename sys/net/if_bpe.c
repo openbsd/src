@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.18 2021/02/26 01:28:51 dlg Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.19 2021/11/08 04:54:44 dlg Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -871,7 +871,7 @@ bpe_cmp(const struct bpe_key *a, const struct bpe_key *b)
 		return (1);
 	if (a->k_isid < b->k_isid)
 		return (-1);
- 
+
 	return (0);
 }
 
