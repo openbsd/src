@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.20 2021/07/07 20:19:01 sashan Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.21 2021/11/08 04:15:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -489,12 +489,15 @@ veb_rule_filter(struct veb_port *p, int dir, struct mbuf *m,
     uint64_t src, uint64_t dst)
 {
 	struct veb_rule *vr;
+	int filter = VEB_R_PASS;
 
+	smr_read_enter();
 	vr = SMR_TAILQ_FIRST(&p->p_vr_list[dir]);
-	if (vr == NULL)
-		return (0);
+	if (vr != NULL)
+		filter = veb_rule_list_test(vr, dir, m, src, dst);
+	smr_read_leave();
 
-	return (veb_rule_list_test(vr, dir, m, src, dst) == VEB_R_BLOCK);
+	return (filter == VEB_R_BLOCK);
 }
 
 #if NPF > 0
