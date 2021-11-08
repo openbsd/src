@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.171 2021/01/26 12:13:21 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.172 2021/11/08 13:33:05 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1623,6 +1623,42 @@ sub save_history
 	return $l;
 }
 
+sub validate_pkgname
+{
+	my ($self, $state, $pkgname) = @_;
+
+	my $revision = $state->defines('REVISION_CHECK');
+	my $epoch = $state->defines('EPOCH_CHECK');
+	my $flavor_list = $state->defines('FLAVOR_LIST_CHECK');
+	if ($revision eq '') {
+		$revision = -1;
+	}
+	if ($epoch eq '') {
+		$epoch = -1;
+	}
+	my $okay_flavors = {map {($_, 1)} split(/\s+/, $flavor_list) };
+	my $v = OpenBSD::PackageName->from_string($pkgname);
+	my $errors = 0;
+	if ($v->{version}->p != $revision) {
+		$state->errsay("REVISION mismatch (REVISION=#1)", $revision);
+		$errors++;
+	}
+	if ($v->{version}->v != $epoch) {
+		$state->errsay("EPOCH mismatch (EPOCH=#1)", $epoch);
+		$errors++;
+	}
+	for my $f (keys %{$v->{flavors}}) {
+		if (!exists $okay_flavors->{$f}) {
+			$state->errsay("bad FLAVOR #1 (admissible flavorss #2)",
+			    $f, $flavor_list);
+			$errors++;
+		}
+	}
+	if ($errors) {
+		$state->fatal("Can't continue");
+	}
+}
+
 sub run_command
 {
 	my ($self, $state) = @_;
@@ -1675,6 +1711,9 @@ sub run_command
 
 	if (!defined $plist->pkgname) {
 		$state->fatal("can't write unnamed packing-list");
+	}
+	if (defined $state->defines('REVISION_CHECK')) {
+		$self->validate_pkgname($state, $plist->pkgname);
 	}
 
 	if (defined $state->opt('q')) {

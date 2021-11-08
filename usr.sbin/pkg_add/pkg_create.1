@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.120 2021/01/29 15:58:56 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.121 2021/11/08 13:33:06 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: January 29 2021 $
+.Dd $Mdocdate: November 8 2021 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -156,6 +156,12 @@ If defined, appended to the description.
 .It Cm USE_GROFF
 Set to 1 to have groff format manpages behind the scenes during
 package creation.
+.It Cm REVISION_CHECK , EPOCH_CHECK , FLAVOR_LIST_CHECK
+Set automatically by
+.Xr bsd.port.mk 5
+to values that help
+.Nm
+catch a few errors in package naming.
 .El
 .It Fl d Oo Fl Oc Ns Ar desc
 Fetch long description for package from file
