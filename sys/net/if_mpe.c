@@ -1,4 +1,4 @@
-/* $OpenBSD: if_mpe.c,v 1.100 2021/03/26 19:00:21 kn Exp $ */
+/* $OpenBSD: if_mpe.c,v 1.101 2021/11/08 04:50:54 dlg Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@spootnik.org>
@@ -403,7 +403,6 @@ mpe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (sc->sc_smpls.smpls_label != MPLS_LABEL2SHIM(0)) {
 			rt_ifa_del(&sc->sc_ifa, RTF_MPLS|RTF_LOCAL,
 			    smplstosa(&sc->sc_smpls), sc->sc_rdomain);
-		
 		}
 		sc->sc_smpls.smpls_label = MPLS_LABEL2SHIM(0);
 		break;
@@ -459,7 +458,7 @@ mpe_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct mpe_softc *sc = ifp->if_softc;
 	struct shim_hdr	*shim;
-	struct mbuf 	*n;
+	struct mbuf	*n;
 	uint8_t		 ttl, tos;
 	uint32_t	 exp;
 	int rxprio = sc->sc_rxhprio;
