@@ -1759,7 +1759,10 @@
 ./usr/share/man/man3/ASN1_generate_nconf.3
 ./usr/share/man/man3/ASN1_get_object.3
 ./usr/share/man/man3/ASN1_item_d2i.3
+./usr/share/man/man3/ASN1_item_digest.3
 ./usr/share/man/man3/ASN1_item_new.3
+./usr/share/man/man3/ASN1_item_sign.3
+./usr/share/man/man3/ASN1_item_verify.3
 ./usr/share/man/man3/ASN1_mbstring_copy.3
 ./usr/share/man/man3/ASN1_parse_dump.3
 ./usr/share/man/man3/ASN1_put_object.3
