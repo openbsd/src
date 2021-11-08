@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.11 2021/11/06 01:24:37 kn Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.12 2021/11/08 16:12:10 kn Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 6 2021 $
+.Dd $Mdocdate: November 8 2021 $
 .Dt SYSUPGRADE 8
 .Os
 .Sh NAME
@@ -69,7 +69,7 @@ This is the default if the system is currently running a snapshot.
 .El
 .Pp
 See
-.Xr site 8
+.Xr upgrade.site 5
 for how to customize the upgrade process.
 .Sh FILES
 .Bl -tag -width "/auto_upgrade.conf" -compact
@@ -86,9 +86,9 @@ Directory the upgrade is downloaded to.
 .Sh SEE ALSO
 .Xr signify 1 ,
 .Xr installurl 5 ,
+.Xr upgrade.site 5 ,
 .Xr autoinstall 8 ,
-.Xr release 8 ,
-.Xr site 8
+.Xr release 8
 .Sh HISTORY
 .Nm
 first appeared in

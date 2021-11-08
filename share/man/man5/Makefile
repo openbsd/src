@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.60 2021/04/10 15:26:47 gnezdo Exp $
+#	$OpenBSD: Makefile,v 1.61 2021/11/08 16:12:09 kn Exp $
 #	$NetBSD: Makefile,v 1.14 1995/05/11 23:13:15 cgd Exp $
 
 MAN=	acct.5 ar.5 bsd.port.mk.5 bsd.port.arch.mk.5 bsd.regress.mk.5 \
 	changelist.5 core.5 \
 	defaultdomain.5 dir.5 disktab.5 elf.5 ethers.5 fbtab.5 files.conf.5 \
-	fs.5 fstab.5 genassym.cf.5 group.5 hostname.if.5 hosts.5 installurl.5 \
+	fs.5 fstab.5 genassym.cf.5 group.5 hostname.if.5 hosts.5 \
+	install.site.8 installurl.5 \
 	intro.5 login.conf.5 mandoc.db.5 mixerctl.conf.5 \
 	mk.conf.5 moduli.5 motd.5 mygate.5 myname.5 netgroup.5 passwd.5 \
 	pf.conf.5 pf.os.5 port-modules.5 cabal-module.5 \

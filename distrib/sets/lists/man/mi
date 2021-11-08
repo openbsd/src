@@ -2177,6 +2177,7 @@
 ./usr/share/man/man5/ifstated.conf.5
 ./usr/share/man/man5/iked.conf.5
 ./usr/share/man/man5/info.5
+./usr/share/man/man5/install.site.5
 ./usr/share/man/man5/installurl.5
 ./usr/share/man/man5/intro.5
 ./usr/share/man/man5/ipsec.conf.5
@@ -2561,7 +2562,6 @@
 ./usr/share/man/man8/security.8
 ./usr/share/man/man8/sendmail.8
 ./usr/share/man/man8/sensorsd.8
-./usr/share/man/man8/site.8
 ./usr/share/man/man8/sftp-server.8
 ./usr/share/man/man8/showmount.8
 ./usr/share/man/man8/shutdown.8
