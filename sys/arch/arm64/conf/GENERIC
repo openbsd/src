@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.212 2021/11/09 16:10:42 kn Exp $
+# $OpenBSD: GENERIC,v 1.213 2021/11/09 16:16:11 kn Exp $
 #
 # GENERIC machine description file
 #
@@ -132,6 +132,7 @@ drm*		at amdgpu?
 wsdisplay*	at amdgpu?
 
 gpiocharger*	at fdt?
+gpiokeys*	at fdt?
 gpioleds*	at fdt?
 
 # Apple
