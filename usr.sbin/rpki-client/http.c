@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.48 2021/11/04 14:24:41 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.49 2021/11/09 11:00:43 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -159,7 +159,7 @@ static uint8_t *tls_ca_mem;
 static size_t tls_ca_size;
 
 /* HTTP request API */
-static void	http_req_new(size_t, char *, char *, int);
+static void	http_req_new(size_t, char *, char *, int, int);
 static void	http_req_free(struct http_request *);
 static void	http_req_done(size_t, enum http_result, const char *);
 static void	http_req_fail(size_t);
@@ -507,7 +507,7 @@ http_resolv(struct addrinfo **res, const char *host, const char *port)
  * Create and queue a new request.
  */
 static void
-http_req_new(size_t id, char *uri, char *modified_since, int outfd)
+http_req_new(size_t id, char *uri, char *modified_since, int count, int outfd)
 {
 	struct http_request *req;
 	char *host, *port, *path;
@@ -530,6 +530,7 @@ http_req_new(size_t id, char *uri, char *modified_since, int outfd)
 	req->path = path;
 	req->uri = uri;
 	req->modified_since = modified_since;
+	req->redirect_loop = count;
 
 	TAILQ_INSERT_TAIL(&queue, req, entry);
 }
@@ -1135,7 +1136,8 @@ http_redirect(struct http_connection *conn)
 			err(1, NULL);
 
 	logx("redirect to %s", http_info(uri));
-	http_req_new(conn->req->id, uri, mod_since, outfd);	
+	http_req_new(conn->req->id, uri, mod_since, conn->req->redirect_loop,
+	    outfd);	
 
 	/* clear request before moving connection to idle */
 	http_req_free(conn->req);
@@ -1867,7 +1869,7 @@ proc_http(char *bind_addr, int fd)
 				io_read_str(b, &mod);
 
 				/* queue up new requests */
-				http_req_new(id, uri, mod, b->fd);
+				http_req_new(id, uri, mod, 0, b->fd);
 				ibuf_free(b);
 			}
 		}
