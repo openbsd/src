@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.75 2021/07/23 00:29:14 jmatthew Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.76 2021/11/09 09:26:18 jan Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -82,6 +82,10 @@
 #endif
 
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip6.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 #include <netinet/if_ether.h>
 
 #include <dev/pci/pcireg.h>
@@ -1388,6 +1392,7 @@ static int	ixl_rxeof(struct ixl_softc *, struct ixl_rx_ring *);
 static void	ixl_rxfill(struct ixl_softc *, struct ixl_rx_ring *);
 static void	ixl_rxrefill(void *);
 static int	ixl_rxrinfo(struct ixl_softc *, struct if_rxrinfo *);
+static void	ixl_rx_checksum(struct mbuf *, uint64_t);
 
 #if NKSTAT > 0
 static void	ixl_kstat_attach(struct ixl_softc *);
@@ -1942,9 +1947,9 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 #if 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
-	    IFCAP_CSUM_UDPv4;
 #endif
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
+	    IFCAP_CSUM_UDPv4 | IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 
 	ifmedia_init(&sc->sc_media, 0, ixl_media_change, ixl_media_status);
 
@@ -2772,6 +2777,69 @@ ixl_load_mbuf(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf *m)
 }
 
 static void
+ixl_tx_setup_offload(struct mbuf *mp, uint64_t *cmd)
+{
+	uint64_t	 ip_hdr_len;
+	int		 ipoff = ETHER_HDR_LEN;
+	uint8_t		 ipproto;
+	struct ip	*ip;
+#ifdef INET6
+	struct ip6_hdr	*ip6;
+#endif
+	struct tcphdr	*th;
+	struct mbuf	*m;
+
+	switch (ntohs(mtod(mp, struct ether_header *)->ether_type)) {
+	case ETHERTYPE_IP:
+		if (mp->m_pkthdr.len < ETHER_HDR_LEN + sizeof(*ip))
+			return;
+		m = m_getptr(mp, ETHER_HDR_LEN, &ipoff);
+		KASSERT(m != NULL && m->m_len - ipoff >= sizeof(*ip));
+		ip = (struct ip *)(m->m_data + ipoff);
+
+		if (mp->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+			*cmd |= IXL_TX_DESC_CMD_IIPT_IPV4_CSUM;
+		else
+			*cmd |= IXL_TX_DESC_CMD_IIPT_IPV4;
+
+		ip_hdr_len = ip->ip_hl << 2;
+		ipproto = ip->ip_p;
+		break;
+#ifdef INET6
+	case ETHERTYPE_IPV6:
+		if (mp->m_pkthdr.len < ETHER_HDR_LEN + sizeof(*ip6))
+			return;
+		m = m_getptr(mp, ETHER_HDR_LEN, &ipoff);
+		KASSERT(m != NULL && m->m_len - ipoff >= sizeof(*ip6));
+		ip6 = (struct ip6_hdr *)(m->m_data + ipoff);
+
+		*cmd |= IXL_TX_DESC_CMD_IIPT_IPV6;
+
+		ip_hdr_len = sizeof(*ip6);
+		ipproto = ip6->ip6_nxt;
+		break;
+#endif
+	default:
+		return;
+	}
+
+	*cmd |= (ETHER_HDR_LEN >> 1) << IXL_TX_DESC_MACLEN_SHIFT;
+	*cmd |= (ip_hdr_len >> 2) << IXL_TX_DESC_IPLEN_SHIFT;
+
+	if (ipproto == IPPROTO_TCP && m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT) {
+		th = (struct tcphdr *)(m->m_data + ipoff + ip_hdr_len);
+
+		*cmd |= IXL_TX_DESC_CMD_L4T_EOFT_TCP;
+		*cmd |= (uint64_t)th->th_off << IXL_TX_DESC_L4LEN_SHIFT;
+	}
+
+	if (ipproto == IPPROTO_UDP && m->m_pkthdr.csum_flags & M_UDP_CSUM_OUT) {
+		*cmd |= IXL_TX_DESC_CMD_L4T_EOFT_UDP;
+		*cmd |= (sizeof(struct udphdr) >> 2) << IXL_TX_DESC_L4LEN_SHIFT;
+	}
+}
+
+static void
 ixl_start(struct ifqueue *ifq)
 {
 	struct ifnet *ifp = ifq->ifq_if;
@@ -2781,7 +2849,7 @@ ixl_start(struct ifqueue *ifq)
 	struct ixl_tx_map *txm;
 	bus_dmamap_t map;
 	struct mbuf *m;
-	uint64_t cmd;
+	uint64_t cmd, off = 0;
 	unsigned int prod, free, last, i;
 	unsigned int mask;
 	int post = 0;
@@ -2828,12 +2896,15 @@ ixl_start(struct ifqueue *ifq)
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
+		ixl_tx_setup_offload(m, &off);
+
 		for (i = 0; i < map->dm_nsegs; i++) {
 			txd = &ring[prod];
 
 			cmd = (uint64_t)map->dm_segs[i].ds_len <<
 			    IXL_TX_DESC_BSIZE_SHIFT;
 			cmd |= IXL_TX_DESC_DTYPE_DATA | IXL_TX_DESC_CMD_ICRC;
+			cmd |= off;
 
 			htolem64(&txd->addr, map->dm_segs[i].ds_addr);
 			htolem64(&txd->cmd, cmd);
@@ -3190,6 +3261,7 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 					m->m_pkthdr.csum_flags |= M_FLOWID;
 				}
 
+				ixl_rx_checksum(m, word);
 				ml_enqueue(&ml, m);
 			} else {
 				ifp->if_ierrors++; /* XXX */
@@ -3320,6 +3392,23 @@ ixl_rxrinfo(struct ixl_softc *sc, struct if_rxrinfo *ifri)
 	free(ifr, M_TEMP, ixl_nqueues(sc) * sizeof(*ifr));
 
 	return (rv);
+}
+
+static void
+ixl_rx_checksum(struct mbuf *m, uint64_t word)
+{
+	if (!ISSET(word, IXL_RX_DESC_L3L4P))
+		return;
+
+	if (ISSET(word, IXL_RX_DESC_IPE))
+		return;
+
+	m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+
+	if (ISSET(word, IXL_RX_DESC_L4E))
+		return;
+
+	m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 }
 
 static int
