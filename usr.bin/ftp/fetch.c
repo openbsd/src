@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.206 2021/11/06 14:27:45 kn Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.207 2021/11/09 12:14:35 kn Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -336,6 +336,7 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	int ishttpsurl = 0;
 #endif /* !NOSSL */
 #ifndef SMALL
+	char *eurl = NULL;
 	char *full_host = NULL;
 	const char *scheme;
 	char *locbase;
@@ -345,6 +346,8 @@ url_get(const char *origline, const char *proxyenv, const char *outfile, int las
 	struct stat stbuf;
 	struct tm lmt = { 0 };
 	struct timespec ts[2];
+#else
+	char *eurl = NULL;
 #endif /* !SMALL */
 	struct tls *tls = NULL;
 	int status;
@@ -713,11 +716,22 @@ noslash:
 #endif /* !NOSSL */
 
 	epath = url_encode(path);
+#ifndef SMALL
+	if (asprintf(&eurl, "%s%s%s%s/%s",
+	    scheme,
+	    full_host,
+	    portnum ? ":" : "",
+	    portnum ? portnum : "",
+	    epath) == -1)
+		errx(1, "Cannot build encoded URL");
+#endif
 	if (proxyurl) {
+#ifndef SMALL
 		if (verbose) {
 			fprintf(ttyout, "Requesting %s (via %s)\n",
-			    origline, proxyurl);
+			    eurl, proxyurl);
 		}
+#endif
 		/*
 		 * Host: directive must use the destination host address for
 		 * the original URI (path).
@@ -734,9 +748,9 @@ noslash:
 			    proxy_credentials);
 		ftp_printf(fin, "\r\n");
 	} else {
-		if (verbose)
-			fprintf(ttyout, "Requesting %s\n", origline);
 #ifndef SMALL
+		if (verbose)
+			fprintf(ttyout, "Requesting %s\n", eurl);
 		if (resume || timestamp) {
 			if (stat(savefile, &stbuf) == 0) {
 				if (resume)
@@ -833,7 +847,11 @@ noslash:
 	status = strtonum(ststr, 200, 503, &errstr);
 	if (errstr) {
 		strnvis(gerror, cp, sizeof gerror, VIS_SAFE);
+#ifndef SMALL
+		warnx("Error retrieving %s: %s", eurl, gerror);
+#else
 		warnx("Error retrieving %s: %s", origline, gerror);
+#endif
 		goto cleanup_url_get;
 	}
 
@@ -879,7 +897,11 @@ noslash:
 		break;
 	default:
 		strnvis(gerror, cp, sizeof gerror, VIS_SAFE);
+#ifndef SMALL
+		warnx("Error retrieving %s: %s", eurl, gerror);
+#else
 		warnx("Error retrieving %s: %s", origline, gerror);
+#endif
 		goto cleanup_url_get;
 	}
 
@@ -1012,7 +1034,11 @@ noslash:
 	if (isunavail) {
 		if (retried || retryafter != 0)
 			warnx("Error retrieving %s: 503 Service Unavailable",
+#ifndef SMALL
+			    eurl);
+#else
 			    origline);
+#endif
 		else {
 			if (verbose)
 				fprintf(ttyout, "Retrying %s\n", origline);
@@ -1135,6 +1161,7 @@ improper:
 
 cleanup_url_get:
 #ifndef SMALL
+	free(eurl);
 	free(full_host);
 #endif /* !SMALL */
 #ifndef NOSSL
