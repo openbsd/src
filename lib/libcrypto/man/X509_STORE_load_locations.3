@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_load_locations.3,v 1.8 2021/08/01 15:37:53 schwarze Exp $
+.\" $OpenBSD: X509_STORE_load_locations.3,v 1.9 2021/11/09 16:23:04 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL X509_STORE_add_cert b0edda11 Mar 20 13:00:17 2018 +0000
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 1 2021 $
+.Dd $Mdocdate: November 9 2021 $
 .Dt X509_STORE_LOAD_LOCATIONS 3
 .Os
 .Sh NAME
@@ -162,6 +162,7 @@ default directory for
 .El
 .Sh SEE ALSO
 .Xr SSL_CTX_load_verify_locations 3 ,
+.Xr X509_load_cert_file 3 ,
 .Xr X509_LOOKUP_hash_dir 3 ,
 .Xr X509_LOOKUP_new 3 ,
 .Xr X509_STORE_new 3 ,

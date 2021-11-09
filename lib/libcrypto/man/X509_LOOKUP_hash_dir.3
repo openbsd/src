@@ -1,5 +1,6 @@
-.\" $OpenBSD: X509_LOOKUP_hash_dir.3,v 1.10 2021/07/31 14:54:33 schwarze Exp $
+.\" $OpenBSD: X509_LOOKUP_hash_dir.3,v 1.11 2021/11/09 16:23:04 schwarze Exp $
 .\" full merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
+.\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
@@ -20,7 +21,7 @@
 .\"
 .\" The original file was written by Victor B. Wagner <vitus@cryptocom.ru>
 .\" and Claus Assmann.
-.\" Copyright (c) 2015, 2016, 2017 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2015, 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -66,16 +67,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 31 2021 $
+.Dd $Mdocdate: November 9 2021 $
 .Dt X509_LOOKUP_HASH_DIR 3
 .Os
 .Sh NAME
 .Nm X509_LOOKUP_hash_dir ,
 .Nm X509_LOOKUP_file ,
-.Nm X509_LOOKUP_mem ,
-.Nm X509_load_cert_file ,
-.Nm X509_load_crl_file ,
-.Nm X509_load_cert_crl_file
+.Nm X509_LOOKUP_mem
 .Nd default certificate lookup methods
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
@@ -85,24 +83,6 @@
 .Fn X509_LOOKUP_file void
 .Ft X509_LOOKUP_METHOD *
 .Fn X509_LOOKUP_mem void
-.Ft int
-.Fo X509_load_cert_file
-.Fa "X509_LOOKUP *ctx"
-.Fa "const char *file"
-.Fa "int type"
-.Fc
-.Ft int
-.Fo X509_load_crl_file
-.Fa "X509_LOOKUP *ctx"
-.Fa "const char *file"
-.Fa "int type"
-.Fc
-.Ft int
-.Fo X509_load_cert_crl_file
-.Fa "X509_LOOKUP *ctx"
-.Fa "const char *file"
-.Fa "int type"
-.Fc
 .Sh DESCRIPTION
 .Fn X509_LOOKUP_hash_dir ,
 .Fn X509_LOOKUP_file ,
@@ -119,54 +99,6 @@ They are automatically used by the
 or
 .Xr SSL_CTX_load_verify_locations 3
 functions.
-.Pp
-Internally, loading of certificates and CRLs is implemented via the functions
-.Fn X509_load_cert_crl_file ,
-.Fn X509_load_cert_file
-and
-.Fn X509_load_crl_file .
-These functions support a parameter
-.Fa type ,
-which can be one of the constants
-.Dv FILETYPE_PEM ,
-.Dv FILETYPE_ASN1 ,
-and
-.Dv FILETYPE_DEFAULT .
-They load certificates and/or CRLs from the specified file into a
-memory cache of
-.Vt X509_STORE
-objects which the given
-.Fa ctx
-parameter is associated with.
-.Pp
-The functions
-.Fn X509_load_cert_file
-and
-.Fn X509_load_crl_file
-can load both PEM and DER formats depending on the
-.Fa type
-value.
-Because DER format cannot contain more than one certificate or CRL
-object (while PEM can contain several concatenated PEM objects),
-.Fn X509_load_cert_crl_file
-with
-.Dv FILETYPE_ASN1
-is equivalent to
-.Fn X509_load_cert_file .
-.Pp
-The constant
-.Dv FILETYPE_DEFAULT
-with
-.Dv NULL
-filename causes these functions to load the default certificate
-store file (see
-.Xr X509_STORE_set_default_paths 3 ) .
-.Pp
-All three methods support adding several certificate locations into one
-.Sy X509_STORE .
-.Pp
-This page documents certificate store formats used by these methods and
-caching policy.
 .Ss File Method
 The
 .Fn X509_LOOKUP_file
@@ -186,7 +118,7 @@ As of OpenSSL 1.0.0, it also checks for newer CRLs upon each lookup, so
 that newer CRLs are used as soon as they appear in the directory.
 .Pp
 The directory should contain one certificate or CRL per file in PEM
-format, with a file name of the form
+format, with a filename of the form
 .Ar hash . Ns Ar N
 for a certificate, or
 .Ar hash . Ns Sy r Ns Ar N
@@ -238,43 +170,18 @@ that are already stored in memory, using the function
 This is particularly useful in processes using
 .Xr chroot 2 .
 .Sh RETURN VALUES
-.Fn X509_LOOKUP_hash_dir ,
-.Fn X509_LOOKUP_file ,
-and
-.Fn X509_LOOKUP_mem
-always return a pointer to a static
-.Vt X509_LOOKUP_METHOD
-object.
-.Pp
-.Fn X509_load_cert_file ,
-.Fn X509_load_crl_file ,
-and
-.Fn X509_load_cert_crl_file
-return the number of objects loaded from the
-.Fa file
-or 0 on error.
+These functions always return a pointer to a static object.
 .Sh SEE ALSO
-.Xr d2i_X509_bio 3 ,
-.Xr PEM_read_PrivateKey 3 ,
 .Xr SSL_CTX_load_verify_locations 3 ,
 .Xr X509_LOOKUP_new 3 ,
-.Xr X509_OBJECT_get0_X509 3 ,
 .Xr X509_STORE_load_locations 3 ,
 .Xr X509_STORE_new 3
 .Sh HISTORY
-.Fn X509_LOOKUP_hash_dir ,
-.Fn X509_LOOKUP_file ,
+.Fn X509_LOOKUP_hash_dir
 and
-.Fn X509_load_cert_file
-first appeared in SSLeay 0.8.0.
-.Fn X509_load_crl_file
-first appeared in SSLeay 0.9.0.
-These functions have been available since
+.Fn X509_LOOKUP_file
+first appeared in SSLeay 0.8.0 and have been available since
 .Ox 2.4 .
-.Pp
-.Fn X509_load_cert_crl_file
-first appeared in OpenSSL 0.9.5 and has been available since
-.Ox 2.7 .
 .Pp
 .Fn X509_LOOKUP_mem
 first appeared in
