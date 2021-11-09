@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_delta.c,v 1.5 2021/11/03 13:30:56 claudio Exp $ */
+/*	$OpenBSD: rrdp_delta.c,v 1.6 2021/11/09 11:01:04 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -225,6 +225,16 @@ delta_content_handler(void *data, const char *content, int length)
 			PARSE_FAIL(p, "parse failed - content too big");
 }
 
+static void
+delta_doctype_handler(void *data, const char *doctypeName,
+    const char *sysid, const char *pubid, int subset)
+{
+	struct delta_xml *dxml = data;
+	XML_Parser p = dxml->parser;
+
+	PARSE_FAIL(p, "parse failed - DOCTYPE not allowed");
+}
+
 struct delta_xml *
 new_delta_xml(XML_Parser p, struct rrdp_session *rs, struct rrdp *r)
 {
@@ -243,6 +253,7 @@ new_delta_xml(XML_Parser p, struct rrdp_session *rs, struct rrdp *r)
 	    delta_xml_elem_end);
 	XML_SetCharacterDataHandler(dxml->parser, delta_content_handler);
 	XML_SetUserData(dxml->parser, dxml);
+	XML_SetDoctypeDeclHandler(dxml->parser, delta_doctype_handler, NULL);
 
 	return dxml;
 }

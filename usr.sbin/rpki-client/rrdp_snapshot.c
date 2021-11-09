@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_snapshot.c,v 1.4 2021/11/03 13:30:56 claudio Exp $ */
+/*	$OpenBSD: rrdp_snapshot.c,v 1.5 2021/11/09 11:01:04 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -201,6 +201,16 @@ snapshot_content_handler(void *data, const char *content, int length)
 			PARSE_FAIL(p, "parse failed - content too big");
 }
 
+static void
+snapshot_doctype_handler(void *data, const char *doctypeName,
+    const char *sysid, const char *pubid, int subset)
+{
+	struct snapshot_xml *sxml = data;
+	XML_Parser p = sxml->parser;
+
+	PARSE_FAIL(p, "parse failed - DOCTYPE not allowed");
+}
+
 struct snapshot_xml *
 new_snapshot_xml(XML_Parser p, struct rrdp_session *rs, struct rrdp *r)
 {
@@ -219,6 +229,8 @@ new_snapshot_xml(XML_Parser p, struct rrdp_session *rs, struct rrdp *r)
 	    snapshot_xml_elem_end);
 	XML_SetCharacterDataHandler(sxml->parser, snapshot_content_handler);
 	XML_SetUserData(sxml->parser, sxml);
+	XML_SetDoctypeDeclHandler(sxml->parser, snapshot_doctype_handler,
+	    NULL);
 
 	return sxml;
 }

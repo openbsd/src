@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.10 2021/11/05 14:30:53 claudio Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.11 2021/11/09 11:01:04 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -308,6 +308,16 @@ notification_xml_elem_end(void *data, const char *el)
 		PARSE_FAIL(p, "parse failed - unexpected elem exit found");
 }
 
+static void
+notification_doctype_handler(void *data, const char *doctypeName,
+    const char *sysid, const char *pubid, int subset)
+{
+	struct notification_xml *nxml = data;
+	XML_Parser p = nxml->parser;
+
+	PARSE_FAIL(p, "parse failed - DOCTYPE not allowed");
+}
+
 struct notification_xml *
 new_notification_xml(XML_Parser p, struct rrdp_session *repository,
     struct rrdp_session *current, const char *notifyuri)
@@ -325,6 +335,8 @@ new_notification_xml(XML_Parser p, struct rrdp_session *repository,
 	XML_SetElementHandler(nxml->parser, notification_xml_elem_start,
 	    notification_xml_elem_end);
 	XML_SetUserData(nxml->parser, nxml);
+	XML_SetDoctypeDeclHandler(nxml->parser, notification_doctype_handler,
+	    NULL);
 
 	return nxml;
 }
