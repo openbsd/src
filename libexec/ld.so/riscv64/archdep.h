@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.1 2021/04/28 15:16:26 drahn Exp $ */
+/*	$OpenBSD: archdep.h,v 1.2 2021/11/09 21:22:29 guenther Exp $ */
 
 /*
  * Copyright (c) 2021 Dale Rahn <drahn@openbsd.org>
@@ -31,7 +31,6 @@
 #define _AARCH64_ARCHDEP_H_
 
 #define	RELOC_TAG	DT_RELA
-#define	HAVE_JMPREL	1
 
 #define	MACHID	EM_RISCV	/* ELF e_machine ID value checked */
 
@@ -39,17 +38,6 @@
 #include <machine/reloc.h>
 #include "syscall.h"
 #include "util.h"
-
-static inline void
-RELOC_JMPREL(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v,
-    Elf_Addr *pltgot)
-{
-	if (ELF_R_TYPE(r->r_info) == R_RISCV_JUMP_SLOT) {
-		p[0] = v + s->st_value + r->r_addend;
-	} else {
-		_dl_exit(5);
-	}
-}
 
 static inline void
 RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
