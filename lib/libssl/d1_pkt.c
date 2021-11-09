@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.115 2021/10/25 10:14:48 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.116 2021/11/09 18:40:21 bcook Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -113,8 +113,7 @@
  * [including the GNU Public Licence.]
  */
 
-#include <machine/endian.h>
-
+#include <endian.h>
 #include <errno.h>
 #include <stdio.h>
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.10 2019/01/21 23:20:31 jsg Exp $ */
+/* $OpenBSD: sha256.c,v 1.11 2021/11/09 18:40:21 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].
@@ -9,8 +9,7 @@
 
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA256)
 
-#include <machine/endian.h>
-
+#include <endian.h>
 #include <stdlib.h>
 #include <string.h>
 

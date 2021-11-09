@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_nist.c,v 1.18 2016/07/18 01:04:52 bcook Exp $ */
+/* $OpenBSD: bn_nist.c,v 1.19 2021/11/09 18:40:20 bcook Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -56,8 +56,7 @@
  *
  */
 
-#include <machine/endian.h>
-
+#include <endian.h>
 #include <stdint.h>
 #include <string.h>
 
