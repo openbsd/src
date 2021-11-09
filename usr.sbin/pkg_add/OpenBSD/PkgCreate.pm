@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.172 2021/11/08 13:33:05 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.173 2021/11/09 12:22:09 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1649,7 +1649,7 @@ sub validate_pkgname
 	}
 	for my $f (keys %{$v->{flavors}}) {
 		if (!exists $okay_flavors->{$f}) {
-			$state->errsay("bad FLAVOR #1 (admissible flavorss #2)",
+			$state->errsay("bad FLAVOR #1 (admissible flavors #2)",
 			    $f, $flavor_list);
 			$errors++;
 		}
