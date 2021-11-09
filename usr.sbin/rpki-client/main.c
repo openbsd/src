@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.163 2021/11/04 18:00:07 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.164 2021/11/09 11:03:39 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -51,6 +51,7 @@
 
 const char	*tals[TALSZ_MAX];
 const char	*taldescs[TALSZ_MAX];
+unsigned int	 talrepocnt[TALSZ_MAX];
 size_t		 talsz;
 
 size_t	entity_queue;
@@ -428,7 +429,9 @@ queue_add_from_tal(struct tal *tal)
 		err(1, NULL);
 
 	/* Look up the repository. */
-	repo = ta_lookup(tal);
+	repo = ta_lookup(tal->id, tal);
+	if (repo == NULL)
+		return;
 
 	/* steal the pkey from the tal structure */
 	data = tal->pkey;
@@ -446,11 +449,10 @@ queue_add_from_cert(const struct cert *cert)
 	struct repo	*repo;
 	char		*nfile;
 
-	repo = repo_lookup(cert->repo, rrdpon ? cert->notify : NULL);
-	if (repo == NULL) {
-		warnx("%s: repository lookup failed", cert->repo);
+	repo = repo_lookup(cert->talid, cert->repo,
+	    rrdpon ? cert->notify : NULL);
+	if (repo == NULL)
 		return;
-	}
 
 	if ((nfile = strdup(cert->mft)) == NULL)
 		err(1, NULL);
@@ -1007,13 +1009,17 @@ main(int argc, char *argv[])
 		err(1, "fchdir");
 
 	while (entity_queue > 0 && !killme) {
+		int polltim;
+
 		for (i = 0; i < NPFD; i++) {
 			pfd[i].events = POLLIN;
 			if (queues[i]->queued)
 				pfd[i].events |= POLLOUT;
 		}
 
-		if ((c = poll(pfd, NPFD, INFTIM)) == -1) {
+		polltim = repo_next_timeout(INFTIM);
+
+		if ((c = poll(pfd, NPFD, polltim)) == -1) {
 			if (errno == EINTR)
 				continue;
 			err(1, "poll");
@@ -1042,6 +1048,8 @@ main(int argc, char *argv[])
 		}
 		if (hangup)
 			break;
+
+		repo_check_timeout();
 
 		/*
 		 * Check the rsync and http process.

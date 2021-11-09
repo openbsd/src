@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.10 2021/11/04 17:35:09 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.11 2021/11/09 11:03:39 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <fts.h>
 #include <limits.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -94,6 +95,8 @@ struct	repo {
 	const struct rsyncrepo	*rsync;
 	const struct tarepo	*ta;
 	struct entityq		 queue;		/* files waiting for repo */
+	time_t			 alarm;		/* sync timeout */
+	int			 talid;
 	size_t			 id;		/* identifier */
 };
 SLIST_HEAD(, repo)	repos = SLIST_HEAD_INITIALIZER(repos);
@@ -608,14 +611,22 @@ rrdp_basedir(const char *dir)
  * Allocate and insert a new repository.
  */
 static struct repo *
-repo_alloc(void)
+repo_alloc(int talid)
 {
 	struct repo *rp;
+
+	if (++talrepocnt[talid] >= MAX_REPO_PER_TAL) {
+		if (talrepocnt[talid] == MAX_REPO_PER_TAL)
+			warnx("too many repositories under %s", tals[talid]);
+		return NULL;
+	}
 
 	if ((rp = calloc(1, sizeof(*rp))) == NULL)
 		err(1, NULL);
 
 	rp->id = ++repoid;
+	rp->talid = talid;
+	rp->alarm = getmonotime() + MAX_REPO_TIMEOUT;
 	TAILQ_INIT(&rp->queue);
 	SLIST_INSERT_HEAD(&repos, rp, entry);
 
@@ -932,6 +943,9 @@ rsync_finish(size_t id, int ok)
 
 	tr = ta_find(id);
 	if (tr != NULL) {
+		/* repository changed state already, ignore request */
+		if (tr->state != REPO_LOADING)
+			return;
 		if (ok) {
 			logx("ta/%s: loaded from network", tr->descr);
 			stats.rsync_repos++;
@@ -954,6 +968,9 @@ rsync_finish(size_t id, int ok)
 	if (rr == NULL)
 		errx(1, "unknown rsync repo %zu", id);
 
+	/* repository changed state already, ignore request */
+	if (rr->state != REPO_LOADING)
+		return;
 	if (ok) {
 		logx("%s: loaded from network", rr->basedir);
 		stats.rsync_repos++;
@@ -982,6 +999,9 @@ rrdp_finish(size_t id, int ok)
 	rr = rrdp_find(id);
 	if (rr == NULL)
 		errx(1, "unknown RRDP repo %zu", id);
+	/* repository changed state already, ignore request */
+	if (rr->state != REPO_LOADING)
+		return;
 
 	if (ok && rrdp_merge_repo(rr)) {
 		logx("%s: loaded from network", rr->notifyuri);
@@ -1033,6 +1053,10 @@ http_finish(size_t id, enum http_result res, const char *last_mod)
 		return;
 	}
 
+	/* repository changed state already, ignore request */
+	if (tr->state != REPO_LOADING)
+		return;
+
 	/* Move downloaded TA file into place, or unlink on failure. */
 	if (res == HTTP_OK) {
 		char *file;
@@ -1066,7 +1090,7 @@ http_finish(size_t id, enum http_result res, const char *last_mod)
  * Look up a trust anchor, queueing it for download if not found.
  */
 struct repo *
-ta_lookup(struct tal *tal)
+ta_lookup(int id, struct tal *tal)
 {
 	struct repo	*rp;
 
@@ -1076,7 +1100,10 @@ ta_lookup(struct tal *tal)
 			return rp;
 	}
 
-	rp = repo_alloc();
+	rp = repo_alloc(id);
+	if (rp == NULL)
+		return NULL;
+
 	if ((rp->repouri = strdup(tal->descr)) == NULL)
 		err(1, NULL);
 	rp->ta = ta_get(tal);
@@ -1088,7 +1115,7 @@ ta_lookup(struct tal *tal)
  * Look up a repository, queueing it for discovery if not found.
  */
 struct repo *
-repo_lookup(const char *uri, const char *notify)
+repo_lookup(int id, const char *uri, const char *notify)
 {
 	struct repo	*rp;
 	char		*repouri;
@@ -1112,7 +1139,12 @@ repo_lookup(const char *uri, const char *notify)
 		return rp;
 	}
 
-	rp = repo_alloc();
+	rp = repo_alloc(id);
+	if (rp == NULL) {
+		free(repouri);
+		return NULL;
+	}
+
 	rp->repouri = repouri;
 	if (notify != NULL)
 		if ((rp->notifyuri = strdup(notify)) == NULL)
@@ -1167,6 +1199,60 @@ repo_queued(struct repo *rp, struct entity *p)
 		return 1;
 	}
 	return 0;
+}
+
+int
+repo_next_timeout(int timeout)
+{
+	struct repo	*rp;
+	time_t		 now;
+
+	now = getmonotime();
+	/* Look up in repository table. (Lookup should actually fail here) */
+	SLIST_FOREACH(rp, &repos, entry) {
+		if (repo_state(rp) == REPO_LOADING) {
+			int diff = rp->alarm - now;
+			diff *= 1000;
+			if (timeout == INFTIM || diff < timeout)
+				timeout = diff;
+		}
+	}
+	return timeout;
+}
+
+static void
+repo_fail(struct repo *rp)
+{
+	/* reset the alarm since code may fallback to rsync */
+	rp->alarm = getmonotime() + MAX_REPO_TIMEOUT;
+
+	if (rp->ta)
+		http_finish(rp->ta->id, HTTP_FAILED, NULL);
+	else if (rp->rrdp)
+		rrdp_finish(rp->rrdp->id, 0);
+	else if (rp->rsync)
+		rsync_finish(rp->rsync->id, 0);
+	else
+		errx(1, "%s: bad repo", rp->repouri);
+}
+
+void
+repo_check_timeout(void)
+{
+	struct repo	*rp;
+	time_t		 now;
+
+	now = getmonotime();
+	/* Look up in repository table. (Lookup should actually fail here) */
+	SLIST_FOREACH(rp, &repos, entry) {
+		if (repo_state(rp) == REPO_LOADING) {
+			if (rp->alarm <= now) {
+				warnx("%s: synchronisation timeout",
+				    rp->repouri);
+				repo_fail(rp);
+			}
+		}
+	}
 }
 
 static char **

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.94 2021/11/05 10:50:41 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.95 2021/11/09 11:03:39 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -390,6 +390,7 @@ struct msgbuf;
 extern int verbose;
 extern const char *tals[];
 extern const char *taldescs[];
+extern unsigned int talrepocnt[];
 extern size_t talsz;
 
 /* Routines for RPKI entities. */
@@ -501,8 +502,8 @@ void		 rrdp_save_state(size_t, struct rrdp_session *);
 int		 rrdp_handle_file(size_t, enum publish_type, char *,
 		    char *, size_t, char *, size_t);
 char		*repo_filename(const struct repo *, const char *);
-struct repo	*ta_lookup(struct tal *);
-struct repo	*repo_lookup(const char *, const char *);
+struct repo	*ta_lookup(int, struct tal *);
+struct repo	*repo_lookup(int, const char *, const char *);
 int		 repo_queued(struct repo *, struct entity *);
 void		 repo_cleanup(struct filepath_tree *);
 void		 repo_free(void);
@@ -517,6 +518,8 @@ void		 rrdp_fetch(size_t, const char *, const char *,
 		    struct rrdp_session *);
 void		 rrdp_http_done(size_t, enum http_result, const char *);
 
+int		 repo_next_timeout(int);
+void		 repo_check_timeout(void);
 
 /* Logging (though really used for OpenSSL errors). */
 
@@ -619,5 +622,11 @@ int	mkpath(const char *);
 
 /* Maximum number of concurrent rsync processes. */
 #define MAX_RSYNC_PROCESSES	16
+
+/* Maximum allowd repositories per tal */
+#define MAX_REPO_PER_TAL	1000
+
+/* Timeout for repository synchronisation, in seconds */
+#define MAX_REPO_TIMEOUT	(15 * 60)
 
 #endif /* ! EXTERN_H */
