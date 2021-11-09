@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.143 2021/11/08 10:10:50 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.144 2021/11/09 11:29:33 sthen Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -285,6 +285,7 @@ rc_cmd() {
 _name=${0##*/}
 _rc_check_name "${_name}" || _rc_err "invalid rc.d script name: ${_name}"
 
+[ -n "${KSH_VERSION}" ] || _rc_err "$0: wrong shell, use /bin/ksh"
 [ -n "${daemon}" ] || _rc_err "$0: daemon is not set"
 
 unset _RC_DEBUG _RC_FORCE
