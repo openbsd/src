@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.105 2021/11/09 14:02:09 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.106 2021/11/10 13:01:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -90,7 +90,7 @@ MBR_init(struct mbr *mbr)
 #if defined(__powerpc__) || defined(__mips__)
 	/* Now fix up for the MS-DOS boot partition on PowerPC/MIPS. */
 	bootprt.prt_flag = DOSACTIVE;	/* Boot from dos part */
-	bootprt.prt_flag = 0;
+	obsdprt.prt_flag = 0;
 	obsdprt.prt_ns += obsdprt.prt_bs;
 	obsdprt.prt_bs = bootprt.prt_bs + bootprt.prt_ns;
 	obsdprt.prt_ns -= obsdprt.prt_bs;
