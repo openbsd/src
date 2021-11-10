@@ -1,4 +1,4 @@
-/* $OpenBSD: by_file.c,v 1.22 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: by_file.c,v 1.23 2021/11/10 09:00:21 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,8 +127,6 @@ X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type)
 	int i, count = 0;
 	X509 *x = NULL;
 
-	if (file == NULL)
-		return (1);
 	in = BIO_new(BIO_s_file_internal());
 
 	if ((in == NULL) || (BIO_read_filename(in, file) <= 0)) {
@@ -138,7 +136,7 @@ X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type)
 
 	if (type == X509_FILETYPE_PEM) {
 		for (;;) {
-			x = PEM_read_bio_X509_AUX(in, NULL, NULL, NULL);
+			x = PEM_read_bio_X509_AUX(in, NULL, NULL, "");
 			if (x == NULL) {
 				if ((ERR_GET_REASON(ERR_peek_last_error()) ==
 				    PEM_R_NO_START_LINE) && (count > 0)) {
@@ -185,8 +183,6 @@ X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 	int i, count = 0;
 	X509_CRL *x = NULL;
 
-	if (file == NULL)
-		return (1);
 	in = BIO_new(BIO_s_file_internal());
 
 	if ((in == NULL) || (BIO_read_filename(in, file) <= 0)) {
@@ -196,7 +192,7 @@ X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 
 	if (type == X509_FILETYPE_PEM) {
 		for (;;) {
-			x = PEM_read_bio_X509_CRL(in, NULL, NULL, NULL);
+			x = PEM_read_bio_X509_CRL(in, NULL, NULL, "");
 			if (x == NULL) {
 				if ((ERR_GET_REASON(ERR_peek_last_error()) ==
 				    PEM_R_NO_START_LINE) && (count > 0)) {
@@ -250,7 +246,7 @@ X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 		X509error(ERR_R_SYS_LIB);
 		return 0;
 	}
-	inf = PEM_X509_INFO_read_bio(in, NULL, NULL, NULL);
+	inf = PEM_X509_INFO_read_bio(in, NULL, NULL, "");
 	BIO_free(in);
 	if (!inf) {
 		X509error(ERR_R_PEM_LIB);
