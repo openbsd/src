@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.187 2020/09/12 13:44:38 kn Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.188 2021/11/10 15:04:26 bket Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -132,6 +132,15 @@
 #define IPCP_OPT_ADDRESSES	1	/* both IP addresses; deprecated */
 #define IPCP_OPT_COMPRESSION	2	/* IP compression protocol (VJ) */
 #define IPCP_OPT_ADDRESS	3	/* local IP address */
+#define IPCP_OPT_PRIMDNS	129	/* primary remote dns address */
+#define IPCP_OPT_SECDNS		131	/* secondary remote dns address */
+
+/* bitmask value to enable or disable individual IPCP options */
+#define SPPP_IPCP_OPT_ADDRESSES		1
+#define SPPP_IPCP_OPT_COMPRESSION	2
+#define SPPP_IPCP_OPT_ADDRESS		3
+#define SPPP_IPCP_OPT_PRIMDNS		4
+#define SPPP_IPCP_OPT_SECDNS		5
 
 #define IPV6CP_OPT_IFID		1	/* interface identifier */
 #define IPV6CP_OPT_COMPRESSION	2	/* IPv6 compression protocol */
@@ -338,6 +347,8 @@ void sppp_update_gw(struct ifnet *ifp);
 void sppp_set_ip_addrs(void *);
 void sppp_clear_ip_addrs(void *);
 void sppp_set_phase(struct sppp *sp);
+void sppp_update_dns(struct ifnet *ifp);
+void sppp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt);
 
 /* our control protocol descriptors */
 static const struct cp lcp = {
@@ -701,6 +712,7 @@ sppp_attach(struct ifnet *ifp)
 
 	sp->pp_if.if_type = IFT_PPP;
 	sp->pp_if.if_output = sppp_output;
+	sp->pp_if.if_rtrequest = sppp_rtrequest;
 	ifq_set_maxlen(&sp->pp_if.if_snd, 50);
 	mq_init(&sp->pp_cpq, 50, IPL_NET);
 	sp->pp_loopcnt = 0;
@@ -2512,13 +2524,19 @@ sppp_ipcp_RCN_rej(struct sppp *sp, struct lcp_header *h, int len)
 			 * Peer doesn't grok address option.  This is
 			 * bad.  XXX  Should we better give up here?
 			 */
-			sp->ipcp.opts &= ~(1 << IPCP_OPT_ADDRESS);
+			sp->ipcp.opts &= ~(1 << SPPP_IPCP_OPT_ADDRESS);
 			break;
 #ifdef notyet
 		case IPCP_OPT_COMPRESS:
-			sp->ipcp.opts &= ~(1 << IPCP_OPT_COMPRESS);
+			sp->ipcp.opts &= ~(1 << SPPP_IPCP_OPT_COMPRESS);
 			break;
 #endif
+		case IPCP_OPT_PRIMDNS:
+			sp->ipcp.opts &= ~(1 << SPPP_IPCP_OPT_PRIMDNS);
+			break;
+		case IPCP_OPT_SECDNS:
+			sp->ipcp.opts &= ~(1 << SPPP_IPCP_OPT_SECDNS);
+			break;
 		}
 	}
 	if (debug)
@@ -2559,7 +2577,7 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 			if (len >= 6 && p[1] == 6) {
 				wantaddr = p[2] << 24 | p[3] << 16 |
 					p[4] << 8 | p[5];
-				sp->ipcp.opts |= (1 << IPCP_OPT_ADDRESS);
+				sp->ipcp.opts |= (1 << SPPP_IPCP_OPT_ADDRESS);
 				if (debug)
 					addlog("[wantaddr %s] ",
 					       sppp_dotted_quad(wantaddr));
@@ -2584,6 +2602,16 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 			 */
 			break;
 #endif
+		case IPCP_OPT_PRIMDNS:
+			if (len >= 6 && p[1] == 6)
+				memcpy(&sp->ipcp.dns[0].s_addr, p + 2,
+				    sizeof(sp->ipcp.dns[0]));
+			break;
+		case IPCP_OPT_SECDNS:
+			if (len >= 6 && p[1] == 6)
+				memcpy(&sp->ipcp.dns[1].s_addr, p + 2,
+				    sizeof(sp->ipcp.dns[1]));
+			break;
 		}
 	}
 	if (debug)
@@ -2612,6 +2640,7 @@ sppp_ipcp_tls(struct sppp *sp)
 	    IPCP_MYADDR_DYN|IPCP_HISADDR_DYN);
 	sp->ipcp.req_myaddr = 0;
 	sp->ipcp.req_hisaddr = 0;
+	memset(&sp->ipcp.dns, 0, sizeof(sp->ipcp.dns));
 
 	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, 0);
 	/*
@@ -2634,7 +2663,7 @@ sppp_ipcp_tls(struct sppp *sp)
 		 * negotiate my address.
 		 */
 		sp->ipcp.flags |= IPCP_MYADDR_DYN;
-		sp->ipcp.opts |= (1 << IPCP_OPT_ADDRESS);
+		sp->ipcp.opts |= (1 << SPPP_IPCP_OPT_ADDRESS);
 	}
 	if (hisaddr >= 1 && hisaddr <= 255) {
 		/*
@@ -2643,6 +2672,10 @@ sppp_ipcp_tls(struct sppp *sp)
 		 */
 		sp->ipcp.flags |= IPCP_HISADDR_DYN;
 	}
+
+	/* negotiate name server addresses */
+	sp->ipcp.opts |= (1 << SPPP_IPCP_OPT_PRIMDNS);
+	sp->ipcp.opts |= (1 << SPPP_IPCP_OPT_SECDNS);
 
 	/* indicate to LCP that it must stay alive */
 	sp->lcp.protos |= (1 << IDX_IPCP);
@@ -2663,12 +2696,12 @@ sppp_ipcp_tlf(struct sppp *sp)
 void
 sppp_ipcp_scr(struct sppp *sp)
 {
-	char opt[6 /* compression */ + 6 /* address */];
+	char opt[6 /* compression */ + 6 /* address */ + 12 /* dns addrs */];
 	u_int32_t ouraddr;
 	int i = 0;
 
 #ifdef notyet
-	if (sp->ipcp.opts & (1 << IPCP_OPT_COMPRESSION)) {
+	if (sp->ipcp.opts & (1 << SPPP_IPCP_OPT_COMPRESSION)) {
 		opt[i++] = IPCP_OPT_COMPRESSION;
 		opt[i++] = 6;
 		opt[i++] = 0;	/* VJ header compression */
@@ -2678,7 +2711,7 @@ sppp_ipcp_scr(struct sppp *sp)
 	}
 #endif
 
-	if (sp->ipcp.opts & (1 << IPCP_OPT_ADDRESS)) {
+	if (sp->ipcp.opts & (1 << SPPP_IPCP_OPT_ADDRESS)) {
 		if (sp->ipcp.flags & IPCP_MYADDR_SEEN)
 			/* not sure if this can ever happen */
 			ouraddr = sp->ipcp.req_myaddr;
@@ -2690,6 +2723,22 @@ sppp_ipcp_scr(struct sppp *sp)
 		opt[i++] = ouraddr >> 16;
 		opt[i++] = ouraddr >> 8;
 		opt[i++] = ouraddr;
+	}
+
+	if (sp->ipcp.opts & (1 << SPPP_IPCP_OPT_PRIMDNS)) {
+		opt[i++] = IPCP_OPT_PRIMDNS;
+		opt[i++] = 6;
+		memcpy(&opt[i], &sp->ipcp.dns[0].s_addr,
+		    sizeof(sp->ipcp.dns[0]));
+		i += sizeof(sp->ipcp.dns[0]);
+	}
+
+	if (sp->ipcp.opts & (1 << SPPP_IPCP_OPT_SECDNS)) {
+		opt[i++] = IPCP_OPT_SECDNS;
+		opt[i++] = 6;
+		memcpy(&opt[i], &sp->ipcp.dns[1].s_addr,
+		    sizeof(sp->ipcp.dns[1]));
+		i += sizeof(sp->ipcp.dns[1]);
 	}
 
 	sp->confid[IDX_IPCP] = ++sp->pp_seq;
@@ -4242,6 +4291,7 @@ sppp_set_ip_addrs(void *arg1)
 			goto out;
 		}
 		sppp_update_gw(ifp);
+		sppp_update_dns(ifp);
 	}
 out:
 	NET_UNLOCK();
@@ -4302,6 +4352,9 @@ sppp_clear_ip_addrs(void *arg1)
 			goto out;
 		}
 		sppp_update_gw(ifp);
+
+		memset(sp->ipcp.dns, 0, sizeof(sp->ipcp.dns));
+		sppp_update_dns(ifp);
 	}
 out:
 	NET_UNLOCK();
@@ -4721,6 +4774,8 @@ sppp_ipcp_opt_name(u_char opt)
 	case IPCP_OPT_ADDRESSES:	return "addresses";
 	case IPCP_OPT_COMPRESSION:	return "compression";
 	case IPCP_OPT_ADDRESS:		return "address";
+	case IPCP_OPT_PRIMDNS:		return "primdns";
+	case IPCP_OPT_SECDNS:		return "secdns";
 	}
 	snprintf (buf, sizeof buf, "0x%x", opt);
 	return buf;
@@ -4850,4 +4905,44 @@ sppp_set_phase(struct sppp *sp)
 		ifp->if_link_state = lstate;
 		if_link_state_change(ifp);
 	}
+}
+
+void
+sppp_update_dns(struct ifnet *ifp)
+{
+	struct rt_addrinfo info;
+	struct sockaddr_rtdns rtdns;
+	struct sppp *sp = ifp->if_softc;
+	size_t sz = 0;
+	int i, flag = 0;
+
+	memset(&rtdns, 0, sizeof(rtdns));
+	memset(&info, 0, sizeof(info));
+
+	for (i = 0; i < IPCP_MAX_DNSSRV; i++) {
+		if (sp->ipcp.dns[i].s_addr == INADDR_ANY)
+			break;
+		sz = sizeof(sp->ipcp.dns[i]);
+		memcpy(rtdns.sr_dns + i * sz, &sp->ipcp.dns[i].s_addr, sz);
+		flag = RTF_UP;
+	}
+
+	rtdns.sr_family = AF_INET;
+	rtdns.sr_len = 2 + i * sz;
+	info.rti_info[RTAX_DNS] = srtdnstosa(&rtdns);
+
+	rtm_proposal(ifp, &info, flag, RTP_PROPOSAL_STATIC);
+}
+
+void
+sppp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
+{
+	if (req == RTM_PROPOSAL) {
+		KERNEL_LOCK();
+		sppp_update_dns(ifp);
+		KERNEL_UNLOCK();
+		return;
+	}
+
+	p2p_rtrequest(ifp, req, rt);
 }

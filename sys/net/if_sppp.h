@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.28 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.29 2021/11/10 15:04:26 bket Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -132,6 +132,8 @@ struct sipcp {
 				  * original one here, in network byte order */
 	u_int32_t req_hisaddr;	/* remote address requested (IPv4) */
 	u_int32_t req_myaddr;	/* local address requested (IPv4) */
+#define IPCP_MAX_DNSSRV	2
+	struct in_addr dns[IPCP_MAX_DNSSRV]; /* IPv4 DNS servers (RFC 1877) */
 #ifdef INET6
 	struct in6_aliasreq req_ifid;	/* local ifid requested (IPv6) */
 #endif
