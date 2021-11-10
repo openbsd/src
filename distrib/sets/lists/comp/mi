@@ -2217,6 +2217,7 @@
 ./usr/share/man/man3/X509_get_subject_name.3
 ./usr/share/man/man3/X509_get_version.3
 ./usr/share/man/man3/X509_keyid_set1.3
+./usr/share/man/man3/X509_load_cert_file.3
 ./usr/share/man/man3/X509_new.3
 ./usr/share/man/man3/X509_ocspid_print.3
 ./usr/share/man/man3/X509_policy_check.3
