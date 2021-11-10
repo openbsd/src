@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.h,v 1.41 2018/02/04 10:06:51 stsp Exp $	*/
+/*	$OpenBSD: if_media.h,v 1.42 2021/11/10 04:46:25 dlg Exp $	*/
 /*	$NetBSD: if_media.h,v 1.22 2000/02/17 21:53:16 sommerfeld Exp $	*/
 
 /*-
@@ -226,7 +226,7 @@ uint64_t	ifmedia_baudrate(uint64_t);
 #define	IFM_IEEE80211_DS5	6	/* Direct Sequence 5Mbps*/
 #define	IFM_IEEE80211_DS11	7	/* Direct Sequence 11Mbps*/
 #define	IFM_IEEE80211_DS1	8	/* Direct Sequence  1Mbps*/
-#define IFM_IEEE80211_DS22	9	/* Direct Sequence 22Mbps */ 
+#define IFM_IEEE80211_DS22	9	/* Direct Sequence 22Mbps */
 #define IFM_IEEE80211_OFDM6	10	/* OFDM 6Mbps */
 #define IFM_IEEE80211_OFDM9	11	/* OFDM 9Mbps */
 #define IFM_IEEE80211_OFDM12	12	/* OFDM 12Mbps */
