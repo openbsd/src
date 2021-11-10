@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.329 2021/10/12 10:01:59 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.330 2021/11/10 13:09:05 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3059,7 +3059,7 @@ ikev2_handle_notifies(struct iked *env, struct iked_message *msg)
 		    groupid);
 		switch (msg->msg_exchange) {
 		case IKEV2_EXCHANGE_IKE_SA_INIT:
-			protoid = IKEV2_SAPROTO_ESP;
+			protoid = IKEV2_SAPROTO_IKE;
 			if (!sa->sa_hdr.sh_initiator) {
 				log_debug("%s: not an initiator", __func__);
 				ikev2_ike_sa_setreason(sa,
