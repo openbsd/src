@@ -16,6 +16,7 @@ run-regress-test-http: test-http
 	./test-http https://${SERVER}/HTTP/ChunkedScript chunk.out
 	./test-http https://${SERVER}/HTTP/300/307.html redir.out
 	sha256 -c ${.CURDIR}/test-http.sum
+	./test-http 'https://demo.cyotek.com/features/redirectchaintest.php?index=1' redirloop.out 2>&1 | grep -q 'Too many redirections requested'
 .else
 	# server ${SERVER} not reachable
 	@echo SKIPPED
