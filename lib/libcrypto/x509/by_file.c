@@ -1,4 +1,4 @@
-/* $OpenBSD: by_file.c,v 1.24 2021/11/10 09:19:25 schwarze Exp $ */
+/* $OpenBSD: by_file.c,v 1.25 2021/11/10 13:57:42 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -262,6 +262,8 @@ X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 			count++;
 		}
 	}
+	if (count == 0)
+		X509error(X509_R_NO_CERTIFICATE_OR_CRL_FOUND);
 	sk_X509_INFO_pop_free(inf, X509_INFO_free);
 	return count;
 }

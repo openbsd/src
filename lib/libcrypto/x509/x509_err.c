@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_err.c,v 1.15 2020/06/05 16:51:12 jsing Exp $ */
+/* $OpenBSD: x509_err.c,v 1.16 2021/11/10 13:57:42 schwarze Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -96,6 +96,7 @@ static ERR_STRING_DATA X509_str_reasons[] = {
 	{ERR_REASON(X509_R_LOADING_CERT_DIR)     , "loading cert dir"},
 	{ERR_REASON(X509_R_LOADING_DEFAULTS)     , "loading defaults"},
 	{ERR_REASON(X509_R_METHOD_NOT_SUPPORTED) , "method not supported"},
+	{ERR_REASON(X509_R_NO_CERTIFICATE_OR_CRL_FOUND), "no certificate or crl found"},
 	{ERR_REASON(X509_R_NO_CERT_SET_FOR_US_TO_VERIFY), "no cert set for us to verify"},
 	{ERR_REASON(X509_R_PUBLIC_KEY_DECODE_ERROR), "public key decode error"},
 	{ERR_REASON(X509_R_PUBLIC_KEY_ENCODE_ERROR), "public key encode error"},

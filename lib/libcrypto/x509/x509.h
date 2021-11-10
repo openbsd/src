@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.87 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.88 2021/11/10 13:57:42 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1197,6 +1197,7 @@ void ERR_load_X509_strings(void);
 #define X509_R_LOADING_CERT_DIR				 103
 #define X509_R_LOADING_DEFAULTS				 104
 #define X509_R_METHOD_NOT_SUPPORTED			 124
+#define X509_R_NO_CERTIFICATE_OR_CRL_FOUND		 136
 #define X509_R_NO_CERT_SET_FOR_US_TO_VERIFY		 105
 #define X509_R_PUBLIC_KEY_DECODE_ERROR			 125
 #define X509_R_PUBLIC_KEY_ENCODE_ERROR			 126
