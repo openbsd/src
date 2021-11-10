@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.49 2021/11/09 11:00:43 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.50 2021/11/10 09:13:30 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -211,14 +211,17 @@ http_info(const char *uri)
 }
 
 /*
- * Determine whether the character needs encoding, per RFC1738:
- *	- No corresponding graphic US-ASCII.
- *	- Unsafe characters.
+ * Determine whether the character needs encoding, per RFC2396.
  */
 static int
-unsafe_char(const char *c0)
+to_encode(const char *c0)
 {
-	const char *unsafe_chars = " <>\"#{}|\\^~[]`";
+	/* 2.4.3. Excluded US-ASCII Characters */
+	const char *excluded_chars =
+	    " "         /* space */
+	    "<>#\""     /* delims (modulo "%", see below) */
+	    "{}|\\^[]`" /* unwise */
+	    ;
 	const unsigned char *c = (const unsigned char *)c0;
 
 	/*
@@ -228,16 +231,15 @@ unsafe_char(const char *c0)
 	return (iscntrl(*c) || !isascii(*c) ||
 
 	    /*
-	     * Unsafe characters.
-	     * '%' is also unsafe, if is not followed by two
+	     * '%' is also reserved, if is not followed by two
 	     * hexadecimal digits.
 	     */
-	    strchr(unsafe_chars, *c) != NULL ||
+	    strchr(excluded_chars, *c) != NULL ||
 	    (*c == '%' && (!isxdigit(c[1]) || !isxdigit(c[2]))));
 }
 
 /*
- * Encode given URL, per RFC1738.
+ * Encode given URL, per RFC2396.
  * Allocate and return string to the caller.
  */
 static char *
@@ -254,7 +256,7 @@ url_encode(const char *path)
 	 * final URL.
 	 */
 	for (i = 0; i < length; i++)
-		if (unsafe_char(path + i))
+		if (to_encode(path + i))
 			new_length += 2;
 
 	epath = epathp = malloc(new_length + 1);	/* One more for '\0'. */
@@ -266,7 +268,7 @@ url_encode(const char *path)
 	 * Encode, and copy final URL.
 	 */
 	for (i = 0; i < length; i++)
-		if (unsafe_char(path + i)) {
+		if (to_encode(path + i)) {
 			snprintf(epathp, 4, "%%" "%02x",
 			    (unsigned char)path[i]);
 			epathp += 3;
