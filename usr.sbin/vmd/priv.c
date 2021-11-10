@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.17 2021/03/29 23:37:01 dv Exp $	*/
+/*	$OpenBSD: priv.c,v 1.18 2021/11/10 20:49:04 sthen Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -81,8 +81,7 @@ priv_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 int
 priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	const char		*desct[] = { "tap", "switch", "bridge",
-				     "veb", NULL };
+	const char		*desct[] = { "tap", "bridge", "veb", NULL };
 	struct privsep		*ps = p->p_ps;
 	struct vmop_ifreq	 vfr;
 	struct vmd		*env = ps->ps_env;
@@ -152,7 +151,7 @@ priv_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 			log_warn("SIOCBRDGADD");
 		break;
 	case IMSG_VMDOP_PRIV_IFEXISTS:
-		/* Determine if bridge/switch exists */
+		/* Determine if bridge exists */
 		strlcpy(ifr.ifr_name, vfr.vfr_name, sizeof(ifr.ifr_name));
 		if (ioctl(env->vmd_fd, SIOCGIFFLAGS, &ifr) == -1)
 			fatalx("%s: bridge \"%s\" does not exist",
@@ -527,7 +526,7 @@ vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
 	    sizeof(vfr.vfr_name)) >= sizeof(vfr.vfr_name))
 		return (-1);
 
-	/* ensure bridge/switch exists */
+	/* ensure bridge exists */
 	proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFEXISTS,
 	    &vfr, sizeof(vfr));
 
@@ -540,7 +539,7 @@ vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
 		log_debug("%s: interface %s rdomain %u", __func__,
 		    vfr.vfr_name, vfr.vfr_id);
 
-	/* ensure switch has the correct rodmain */
+	/* ensure bridge has the correct rdomain */
 	proc_compose(ps, PROC_PRIV, IMSG_VMDOP_PRIV_IFRDOMAIN,
 	    &vfr, sizeof(vfr));
 
