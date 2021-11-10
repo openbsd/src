@@ -1,4 +1,4 @@
-/* $OpenBSD: by_file.c,v 1.23 2021/11/10 09:00:21 schwarze Exp $ */
+/* $OpenBSD: by_file.c,v 1.24 2021/11/10 09:19:25 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,7 +64,6 @@
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include <openssl/lhash.h>
 #include <openssl/x509.h>
 
 #include "x509_lcl.h"
@@ -88,7 +87,7 @@ static X509_LOOKUP_METHOD x509_file_lookup = {
 X509_LOOKUP_METHOD *
 X509_LOOKUP_file(void)
 {
-	return (&x509_file_lookup);
+	return &x509_file_lookup;
 }
 
 static int
@@ -116,7 +115,7 @@ by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 		}
 		break;
 	}
-	return (ok);
+	return ok;
 }
 
 int
@@ -127,7 +126,7 @@ X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type)
 	int i, count = 0;
 	X509 *x = NULL;
 
-	in = BIO_new(BIO_s_file_internal());
+	in = BIO_new(BIO_s_file());
 
 	if ((in == NULL) || (BIO_read_filename(in, file) <= 0)) {
 		X509error(ERR_R_SYS_LIB);
@@ -172,7 +171,7 @@ X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type)
 err:
 	X509_free(x);
 	BIO_free(in);
-	return (ret);
+	return ret;
 }
 
 int
@@ -183,7 +182,7 @@ X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 	int i, count = 0;
 	X509_CRL *x = NULL;
 
-	in = BIO_new(BIO_s_file_internal());
+	in = BIO_new(BIO_s_file());
 
 	if ((in == NULL) || (BIO_read_filename(in, file) <= 0)) {
 		X509error(ERR_R_SYS_LIB);
@@ -226,10 +225,9 @@ X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 		goto err;
 	}
 err:
-	if (x != NULL)
-		X509_CRL_free(x);
+	X509_CRL_free(x);
 	BIO_free(in);
-	return (ret);
+	return ret;
 }
 
 int
@@ -239,6 +237,7 @@ X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 	X509_INFO *itmp;
 	BIO *in;
 	int i, count = 0;
+
 	if (type != X509_FILETYPE_PEM)
 		return X509_load_cert_file(ctx, file, type);
 	in = BIO_new_file(file, "r");
