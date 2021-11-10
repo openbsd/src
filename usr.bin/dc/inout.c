@@ -1,4 +1,4 @@
-/*	$OpenBSD: inout.c,v 1.21 2017/11/29 19:12:48 otto Exp $	*/
+/*	$OpenBSD: inout.c,v 1.22 2021/11/10 04:39:16 tb Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -328,19 +328,21 @@ printnumber(FILE *f, const struct number *b, u_int base)
 	stack_clear(&stack);
 	if (b->scale > 0) {
 		struct number	*num_base;
-		BIGNUM		mult, stop;
+		BIGNUM		*mult, *stop;
 
 		putcharwrap(f, '.');
 		num_base = new_number();
 		bn_check(BN_set_word(num_base->number, base));
-		BN_init(&mult);
-		bn_check(BN_one(&mult));
-		BN_init(&stop);
-		bn_check(BN_one(&stop));
-		scale_number(&stop, b->scale);
+		mult = BN_new();
+		bn_checkp(mult);
+		bn_check(BN_one(mult));
+		stop = BN_new();
+		bn_checkp(stop);
+		bn_check(BN_one(stop));
+		scale_number(stop, b->scale);
 
 		i = 0;
-		while (BN_cmp(&mult, &stop) < 0) {
+		while (BN_cmp(mult, stop) < 0) {
 			u_long	rem;
 
 			if (i && base > 16)
@@ -358,11 +360,11 @@ printnumber(FILE *f, const struct number *b, u_int base)
 			    int_part->number));
 			printwrap(f, p);
 			free(p);
-			bn_check(BN_mul_word(&mult, base));
+			bn_check(BN_mul_word(mult, base));
 		}
 		free_number(num_base);
-		BN_free(&mult);
-		BN_free(&stop);
+		BN_free(mult);
+		BN_free(stop);
 	}
 	flushwrap(f);
 	free_number(int_part);
