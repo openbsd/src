@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.188 2021/11/10 15:04:26 bket Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.189 2021/11/10 20:24:22 bket Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -4931,7 +4931,7 @@ sppp_update_dns(struct ifnet *ifp)
 	rtdns.sr_len = 2 + i * sz;
 	info.rti_info[RTAX_DNS] = srtdnstosa(&rtdns);
 
-	rtm_proposal(ifp, &info, flag, RTP_PROPOSAL_STATIC);
+	rtm_proposal(ifp, &info, flag, RTP_PROPOSAL_PPP);
 }
 
 void

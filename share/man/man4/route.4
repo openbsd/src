@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.4,v 1.55 2020/08/21 13:20:14 benno Exp $
+.\"	$OpenBSD: route.4,v 1.56 2021/11/10 20:24:22 bket Exp $
 .\"	$NetBSD: route.4,v 1.3 1994/11/30 16:22:31 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)route.4	8.6 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: August 21 2020 $
+.Dd $Mdocdate: November 10 2021 $
 .Dt ROUTE 4
 .Os
 .Sh NAME
@@ -282,7 +282,8 @@ The predefined constants for the routing priorities are:
 #define RTP_PROPOSAL_DHCLIENT	58
 #define RTP_PROPOSAL_SLAAC	59
 #define RTP_PROPOSAL_UMB	60
-#define RTP_PROPOSAL_SOLICIT	61	/* request reply of all RTM_PROPOSAL */
+#define RTP_PROPOSAL_PPP	61
+#define RTP_PROPOSAL_SOLICIT	62	/* request reply of all RTM_PROPOSAL */
 #define RTP_MAX		63	/* maximum priority */
 #define RTP_ANY		64	/* any of the above */
 #define RTP_MASK	0x7f
