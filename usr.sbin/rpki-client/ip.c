@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.19 2021/11/05 10:50:41 claudio Exp $ */
+/*	$OpenBSD: ip.c,v 1.20 2021/11/10 09:15:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -234,41 +234,6 @@ ip_addr_parse(const ASN1_BIT_STRING *p,
 }
 
 /*
- * Convert the IPv4 address into CIDR notation conforming to RFC 4632.
- * Buffer should be able to hold xxx.yyy.zzz.www/nn.
- */
-static void
-ip4_addr2str(const struct ip_addr *addr, char *b, size_t bsz)
-{
-	char buf[16];
-	int ret;
-
-	if (inet_ntop(AF_INET, addr->addr, buf, sizeof(buf)) == NULL)
-		err(1, "inet_ntop");
-	ret = snprintf(b, bsz, "%s/%hhu", buf, addr->prefixlen);
-	if (ret < 0 || (size_t)ret >= bsz)
-		err(1, "malformed IPV4 address");
-}
-
-/*
- * Convert the IPv6 address into CIDR notation conforming to RFC 4291.
- * See also RFC 5952.
- * Must hold 0000:0000:0000:0000:0000:0000:0000:0000/nn.
- */
-static void
-ip6_addr2str(const struct ip_addr *addr, char *b, size_t bsz)
-{
-	char buf[44];
-	int ret;
-
-	if (inet_ntop(AF_INET6, addr->addr, buf, sizeof(buf)) == NULL)
-		err(1, "inet_ntop");
-	ret = snprintf(b, bsz, "%s/%hhu", buf, addr->prefixlen);
-	if (ret < 0 || (size_t)ret >= bsz)
-		err(1, "malformed IPV6 address");
-}
-
-/*
  * Convert a ip_addr into a NUL-terminated CIDR notation string
  * conforming to RFC 4632 or 4291.
  * The size of the buffer must be at least 64 (inclusive).
@@ -277,11 +242,25 @@ void
 ip_addr_print(const struct ip_addr *addr,
     enum afi afi, char *buf, size_t bufsz)
 {
+	char ipbuf[INET6_ADDRSTRLEN];
+	int ret, af;
 
-	if (afi == AFI_IPV4)
-		ip4_addr2str(addr, buf, bufsz);
-	else
-		ip6_addr2str(addr, buf, bufsz);
+	switch (afi) {
+	case AFI_IPV4:
+		af = AF_INET;
+		break;
+	case AFI_IPV6:
+		af = AF_INET6;
+		break;
+	default:
+		errx(1, "unsupported address family identifier");
+	}
+
+	if (inet_ntop(af, addr->addr, ipbuf, sizeof(ipbuf)) == NULL)
+		err(1, "inet_ntop");
+	ret = snprintf(buf, bufsz, "%s/%hhu", ipbuf, addr->prefixlen);
+	if (ret < 0 || (size_t)ret >= bufsz)
+		err(1, "malformed IP address");
 }
 
 /*
