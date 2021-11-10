@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.206 2021/10/23 15:00:11 visa Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.207 2021/11/10 04:45:15 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -800,7 +800,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 			 * No interface attached yet.
 			 */
 			error = EINVAL;
-		} else if (d->bd_bif->bif_ifp != NULL) { 
+		} else if (d->bd_bif->bif_ifp != NULL) {
 			if (d->bd_promisc == 0) {
 				MUTEX_ASSERT_UNLOCKED(&d->bd_mtx);
 				NET_LOCK();
@@ -1387,7 +1387,7 @@ bpf_mtap_hdr(caddr_t arg, const void *data, u_int dlen, const struct mbuf *m,
 		mh.mh_len = dlen;
 		mh.mh_data = (void *)data;
 		m0 = (struct mbuf *)&mh;
-	} else 
+	} else
 		m0 = m;
 
 	return _bpf_mtap(arg, m, m0, direction);
@@ -1835,7 +1835,7 @@ bpf_mbuf_copy(const struct mbuf *m, u_int32_t off, void *buf, u_int32_t len)
 
 	for (;;) {
 		count = min(m->m_len - off, len);
-		
+
 		memcpy(cp, m->m_data + off, count);
 		len -= count;
 
