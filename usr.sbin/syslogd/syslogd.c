@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.271 2021/10/24 21:24:19 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.272 2021/11/10 21:59:47 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -1895,6 +1895,7 @@ void
 fprintlog(struct filed *f, int flags, char *msg)
 {
 	struct iovec iov[IOVCNT], *v;
+	struct msghdr msghdr;
 	int l, retryonce;
 	char line[LOG_MAXLINE + 1], pribuf[13], greetings[500], repbuf[80];
 	char ebuf[ERRBUFSIZE];
@@ -2035,20 +2036,22 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 	case F_FORWUDP:
 		log_debug(" %s", f->f_un.f_forw.f_loghost);
-		l = snprintf(line, MINIMUM(MAX_UDPMSG + 1, sizeof(line)),
-		    "%s%s%s%s%s%s%s", (char *)iov[0].iov_base,
-		    (char *)iov[1].iov_base, (char *)iov[2].iov_base,
-		    (char *)iov[3].iov_base, (char *)iov[4].iov_base,
-		    (char *)iov[5].iov_base, (char *)iov[6].iov_base);
-		if (l < 0)
-			l = strlcpy(line, iov[5].iov_base, sizeof(line));
-		if (l >= sizeof(line))
-			l = sizeof(line) - 1;
-		if (l >= MAX_UDPMSG + 1)
-			l = MAX_UDPMSG;
-		if (sendto(f->f_file, line, l, 0,
-		    (struct sockaddr *)&f->f_un.f_forw.f_addr,
-		    f->f_un.f_forw.f_addr.ss_len) != l) {
+		l = iov[0].iov_len + iov[1].iov_len + iov[2].iov_len +
+		    iov[3].iov_len + iov[4].iov_len + iov[5].iov_len +
+		    iov[6].iov_len;
+		if (l > MAX_UDPMSG) {
+			l -= MAX_UDPMSG;
+			if (iov[5].iov_len > l)
+				iov[5].iov_len -= l;
+			else
+				iov[5].iov_len = 0;
+		}
+		memset(&msghdr, 0, sizeof(msghdr));
+		msghdr.msg_name = &f->f_un.f_forw.f_addr;
+		msghdr.msg_namelen = f->f_un.f_forw.f_addr.ss_len;
+		msghdr.msg_iov = iov;
+		msghdr.msg_iovlen = IOVCNT;
+		if (sendmsg(f->f_file, &msghdr, 0) == -1) {
 			switch (errno) {
 			case EADDRNOTAVAIL:
 			case EHOSTDOWN:
@@ -2061,7 +2064,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 				break;
 			default:
 				f->f_type = F_UNUSED;
-				log_warn("sendto \"%s\"",
+				log_warn("sendmsg to \"%s\"",
 				    f->f_un.f_forw.f_loghost);
 				break;
 			}
