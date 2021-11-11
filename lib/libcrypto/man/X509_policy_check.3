@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_policy_check.3,v 1.5 2021/07/30 15:01:40 schwarze Exp $
+.\" $OpenBSD: X509_policy_check.3,v 1.6 2021/11/11 12:06:25 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 30 2021 $
+.Dd $Mdocdate: November 11 2021 $
 .Dt X509_POLICY_CHECK 3
 .Os
 .Sh NAME
@@ -177,6 +177,7 @@ to 0.
 .Xr X509_check_purpose 3 ,
 .Xr X509_check_trust 3 ,
 .Xr X509_new 3 ,
+.Xr X509_policy_tree_get0_policies 3 ,
 .Xr X509_policy_tree_level_count 3 ,
 .Xr X509_verify_cert 3
 .Sh STANDARDS

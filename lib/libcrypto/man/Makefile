@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.210 2021/11/09 16:23:04 schwarze Exp $
+# $OpenBSD: Makefile,v 1.211 2021/11/11 12:06:25 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -352,6 +352,7 @@ MAN=	\
 	X509_new.3 \
 	X509_ocspid_print.3 \
 	X509_policy_check.3 \
+	X509_policy_tree_get0_policies.3 \
 	X509_policy_tree_level_count.3 \
 	X509_print_ex.3 \
 	X509_sign.3 \
