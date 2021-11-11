@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.133 2021/03/08 06:20:50 jsg Exp $
+.\"	$OpenBSD: make.1,v 1.134 2021/11/11 20:42:54 jmc Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: March 8 2021 $
+.Dd $Mdocdate: November 11 2021 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1082,7 +1082,7 @@ Test the value of a variable.
 Test the target being built.
 .It Xo
 .Ic .ifnmake
-.Oo \&! Oc Ar target
+.Oo \&! Oc Ns Ar target
 .Op Ar operator target ...
 .Xc
 Test the target being built.
@@ -1090,7 +1090,7 @@ Test the target being built.
 Reverse the sense of the last conditional.
 .It Xo
 .Ic .elif
-.Oo \&! Oc Ar expression
+.Oo \&! Oc Ns Ar expression
 .Op Ar operator expression ...
 .Xc
 A combination of
