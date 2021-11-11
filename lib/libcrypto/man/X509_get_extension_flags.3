@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_get_extension_flags.3,v 1.2 2021/10/27 11:22:57 schwarze Exp $
+.\" $OpenBSD: X509_get_extension_flags.3,v 1.3 2021/11/11 13:58:59 schwarze Exp $
 .\" full merge up to: OpenSSL 361136f4 Sep 1 18:56:58 2015 +0100
 .\" selective merge up to: OpenSSL 2b2e3106f Feb 16 15:04:45 2021 +0000
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 27 2021 $
+.Dd $Mdocdate: November 11 2021 $
 .Dt X509_GET_EXTENSION_FLAGS 3
 .Os
 .Sh NAME
@@ -143,6 +143,20 @@ corresponding to individual key usage bits.
 If key usage is absent,
 .Dv UINT32_MAX
 is returned.
+.Pp
+The following aliases for these flags are defined in
+.In openssl/x509.h :
+.Dv X509v3_KU_DIGITAL_SIGNATURE ,
+.Dv X509v3_KU_NON_REPUDIATION ,
+.Dv X509v3_KU_KEY_ENCIPHERMENT ,
+.Dv X509v3_KU_DATA_ENCIPHERMENT ,
+.Dv X509v3_KU_KEY_AGREEMENT ,
+.Dv X509v3_KU_KEY_CERT_SIGN ,
+.Dv X509v3_KU_CRL_SIGN ,
+.Dv X509v3_KU_ENCIPHER_ONLY ,
+and
+.Dv X509v3_KU_DECIPHER_ONLY .
+.\" X509v3_KU_UNDEF is intentionally undocumented because nothing uses it.
 .Pp
 .Fn X509_get_extended_key_usage
 returns the value of the extended key usage extension.
