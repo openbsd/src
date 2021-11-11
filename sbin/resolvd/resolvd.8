@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolvd.8,v 1.8 2021/08/05 06:35:18 jmc Exp $
+.\"	$OpenBSD: resolvd.8,v 1.9 2021/11/11 05:52:03 bket Exp $
 .\"
 .\" Copyright (c) 2021 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 5 2021 $
+.Dd $Mdocdate: November 11 2021 $
 .Dt RESOLVD 8
 .Os
 .Sh NAME
@@ -48,6 +48,8 @@ also monitors the routing socket for proposals learned by
 .Xr dhcpleased 8 ,
 .Xr slaacd 8 ,
 or network devices which natively learn DNS information such as
+.Xr sppp 4
+or
 .Xr umb 4 .
 Proposals can also be sent using the
 .Xr route 8
