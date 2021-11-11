@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.51 2021/07/26 12:47:46 kn Exp $
+#	$OpenBSD: Makefile,v 1.52 2021/11/11 20:25:56 kn Exp $
 
 CDROM=		cd${OSrev}.iso
 MTREE=		${UTILS}/mtree.conf
@@ -35,7 +35,7 @@ bsd.gz: bsd.rd
 	gzip -9cn bsd.rd > bsd.gz
 
 bsd.rd: mr.fs bsd
-	objcopy -S -R .comment -R .SUNW_ctf \
+	objcopy -g -x -R .comment -R .SUNW_ctf \
 	    -K rd_root_size -K rd_root_image \
 	    bsd bsd.rd
 	rdsetroot bsd.rd mr.fs

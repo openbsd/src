@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.32 2021/11/07 15:50:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.33 2021/11/11 20:25:56 kn Exp $
 
 FS=		miniroot${OSrev}.img
-FSSIZE=		10240
+FSSIZE=		10368
 FSDISKTYPE=	mini34
 CDROM=		cd${OSrev}.iso
 MOUNT_POINT=	/mnt
@@ -56,7 +56,7 @@ MRDISKTYPE=	rdrootb
 MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
 bsd.gz: bsd.rd
-	objcopy -S -R .comment -R .SUNW_ctf \
+	objcopy -g -x -R .comment -R .SUNW_ctf \
 	    -K rd_root_size -K rd_root_image \
 	    bsd.rd bsd.strip
 	gzip -9cn bsd.strip > bsd.gz
