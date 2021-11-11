@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.80 2020/08/27 21:06:34 kn Exp $
+.\"	$OpenBSD: bridge.4,v 1.81 2021/11/11 09:45:27 claudio Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 27 2020 $
+.Dd $Mdocdate: November 11 2021 $
 .Dt BRIDGE 4
 .Os
 .Sh NAME
@@ -147,7 +147,7 @@ They are defined in
 Some
 .Xr ioctl 2
 calls are used by
-.Xr switch 4
+.Xr veb 4
 and
 .Xr tpmr 4
 as well.
@@ -370,9 +370,6 @@ struct ifbrparam {
 #define	ifbrp_hellotime	ifbrp_ifbrpu.ifbrpu_hellotime
 #define	ifbrp_fwddelay	ifbrp_ifbrpu.ifbrpu_fwddelay
 #define	ifbrp_maxage	ifbrp_ifbrpu.ifbrpu_maxage
-#define	ifbrp_datapath  ifbrp_ifbrpu.ifbrpu_datapath
-#define	ifbrp_maxflow   ifbrp_ifbrpu.ifbrpu_csize
-#define	ifbrp_maxgroup  ifbrp_ifbrpu.ifbrpu_maxgroup
 .Ed
 .Pp
 Note that the
