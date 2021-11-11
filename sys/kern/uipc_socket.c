@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.268 2021/11/06 05:26:33 visa Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.269 2021/11/11 16:35:09 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -333,19 +333,9 @@ soclose(struct socket *so, int flags)
 	s = solock(so);
 	/* Revoke async IO early. There is a final revocation in sofree(). */
 	sigio_free(&so->so_sigio);
-	if (so->so_options & SO_ACCEPTCONN) {
-		while ((so2 = TAILQ_FIRST(&so->so_q0)) != NULL) {
-			(void) soqremque(so2, 0);
-			(void) soabort(so2);
-		}
-		while ((so2 = TAILQ_FIRST(&so->so_q)) != NULL) {
-			(void) soqremque(so2, 1);
-			(void) soabort(so2);
-		}
-	}
-	if (so->so_pcb == NULL)
-		goto discard;
 	if (so->so_state & SS_ISCONNECTED) {
+		if (so->so_pcb == NULL)
+			goto discard;
 		if ((so->so_state & SS_ISDISCONNECTING) == 0) {
 			error = sodisconnect(so);
 			if (error)
@@ -371,6 +361,16 @@ drop:
 		error2 = (*so->so_proto->pr_detach)(so);
 		if (error == 0)
 			error = error2;
+	}
+	if (so->so_options & SO_ACCEPTCONN) {
+		while ((so2 = TAILQ_FIRST(&so->so_q0)) != NULL) {
+			(void) soqremque(so2, 0);
+			(void) soabort(so2);
+		}
+		while ((so2 = TAILQ_FIRST(&so->so_q)) != NULL) {
+			(void) soqremque(so2, 1);
+			(void) soabort(so2);
+		}
 	}
 discard:
 	if (so->so_state & SS_NOFDREF)
