@@ -983,7 +983,6 @@
 ./usr/include/net/if_pppoe.h
 ./usr/include/net/if_pppvar.h
 ./usr/include/net/if_sppp.h
-./usr/include/net/if_switch.h
 ./usr/include/net/if_trunk.h
 ./usr/include/net/if_tun.h
 ./usr/include/net/if_types.h
@@ -2221,6 +2220,7 @@
 ./usr/share/man/man3/X509_new.3
 ./usr/share/man/man3/X509_ocspid_print.3
 ./usr/share/man/man3/X509_policy_check.3
+./usr/share/man/man3/X509_policy_tree_get0_policies.3
 ./usr/share/man/man3/X509_policy_tree_level_count.3
 ./usr/share/man/man3/X509_print_ex.3
 ./usr/share/man/man3/X509_sign.3

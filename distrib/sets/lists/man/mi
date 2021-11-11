@@ -1952,7 +1952,6 @@
 ./usr/share/man/man4/sti.4
 ./usr/share/man/man4/stp.4
 ./usr/share/man/man4/sv.4
-./usr/share/man/man4/switch.4
 ./usr/share/man/man4/sxiccmu.4
 ./usr/share/man/man4/sxidog.4
 ./usr/share/man/man4/sximmc.4
@@ -2240,7 +2239,6 @@
 ./usr/share/man/man5/sparc64/ldom.conf.5
 ./usr/share/man/man5/ssh_config.5
 ./usr/share/man/man5/sshd_config.5
-./usr/share/man/man5/switchd.conf.5
 ./usr/share/man/man5/sysctl.conf.5
 ./usr/share/man/man5/syslog.conf.5
 ./usr/share/man/man5/table.5
@@ -2591,8 +2589,6 @@
 ./usr/share/man/man8/starttls.8
 ./usr/share/man/man8/sticky.8
 ./usr/share/man/man8/swapctl.8
-./usr/share/man/man8/switchctl.8
-./usr/share/man/man8/switchd.8
 ./usr/share/man/man8/sync.8
 ./usr/share/man/man8/sysctl.8
 ./usr/share/man/man8/syslogc.8
