@@ -1,4 +1,4 @@
-.\" $OpenBSD: ERR_load_crypto_strings.3,v 1.9 2020/06/04 20:06:04 schwarze Exp $
+.\" $OpenBSD: ERR_load_crypto_strings.3,v 1.10 2021/11/11 13:13:38 schwarze Exp $
 .\" full merge up to: OpenSSL f672aee4 Feb 9 11:52:40 2016 -0500
 .\" selective merge up to: OpenSSL b3696a55 Sep 2 09:35:50 2017 -0400
 .\"
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 4 2020 $
+.Dd $Mdocdate: November 11 2021 $
 .Dt ERR_LOAD_CRYPTO_STRINGS 3
 .Os
 .Sh NAME
@@ -74,10 +74,37 @@
 .Nm ERR_free_strings ,
 .Nm SSL_load_error_strings
 .Nd load and free OpenSSL error strings
-.\" The function ERR_load_ERR_strings() is intentionally undocumented
-.\" because it is merely a subroutine of ERR_load_crypto_strings(3)
-.\" and should not have been made a part of the API.
-.\" The same applies to the other ERR_load_*_strings() functions.
+.\" The following functions are intentionally undocumented
+.\" because they are merely subroutines of ERR_load_crypto_strings(3)
+.\" and should not have been made a part of the API:
+.\" ERR_load_ASN1_strings()
+.\" ERR_load_BIO_strings()
+.\" ERR_load_BN_strings()
+.\" ERR_load_BUF_strings()
+.\" ERR_load_CMS_strings()
+.\" ERR_load_CONF_strings()
+.\" ERR_load_CRYPTO_strings()
+.\" ERR_load_DH_strings()
+.\" ERR_load_DSA_strings()
+.\" ERR_load_DSO_strings()
+.\" ERR_load_EC_strings()
+.\" ERR_load_ECDH_strings()
+.\" ERR_load_ECDSA_strings()
+.\" ERR_load_ENGINE_strings()
+.\" ERR_load_ERR_strings()
+.\" ERR_load_EVP_strings()
+.\" ERR_load_GOST_strings()
+.\" ERR_load_OBJ_strings()
+.\" ERR_load_OCSP_strings()
+.\" ERR_load_PEM_strings()
+.\" ERR_load_PKCS12_strings()
+.\" ERR_load_PKCS7_strings()
+.\" ERR_load_RAND_strings()
+.\" ERR_load_RSA_strings()
+.\" ERR_load_TS_strings()
+.\" ERR_load_UI_strings()
+.\" ERR_load_X509_strings()
+.\" ERR_load_X509V3_strings()
 .Sh SYNOPSIS
 .In openssl/err.h
 .Ft void
