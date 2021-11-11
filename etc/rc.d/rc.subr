@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.145 2021/11/11 10:37:36 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.146 2021/11/11 12:08:36 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -209,7 +209,7 @@ rc_stop() {
 }
 
 rc_cmd() {
-	local _exit _n _ret
+	local _exit _n _ret _timer
 
 	[ -n "${1}" ] && echo "${_rc_actions}" | grep -qw -- ${1} || _rc_usage
 
@@ -265,8 +265,9 @@ rc_cmd() {
 	stop)
 		_rc_do rc_check || exit 0
 		echo $_n "${INRC:+ }${_name}"
-		_rc_do rc_stop || _rc_exit failed
-		_rc_do _rc_wait stop || _exit=killed
+		_rc_do _rc_wait stop & _timer=$!
+		_rc_do rc_stop || { kill ${_timer}; _rc_exit failed; }
+		wait ${_timer} && _exit=ok || _exit=killed
 		if type rc_post >/dev/null; then
 			_rc_do rc_post || _exit=failed
 		fi
