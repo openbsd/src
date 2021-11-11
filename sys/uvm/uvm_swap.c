@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.150 2021/03/26 13:40:05 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.151 2021/11/11 09:34:27 tb Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -455,8 +455,8 @@ swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
 	/*
 	 * find entry at or after which to insert the new device.
 	 */
-	for (pspp = NULL, spp = LIST_FIRST(&swap_priority); spp != NULL;
-	     spp = LIST_NEXT(spp, spi_swappri)) {
+	pspp = NULL;
+	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
 		if (priority <= spp->spi_priority)
 			break;
 		pspp = spp;
