@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.448 2021/11/03 02:02:36 kn Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.449 2021/11/11 09:39:16 claudio Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -608,8 +608,6 @@ const struct	cmd {
 	{ "-roaming",	0,		0,		umb_roaming },
 	{ "patch",	NEXTARG,	0,		setpair },
 	{ "-patch",	1,		0,		unsetpair },
-	{ "datapath",	NEXTARG,	0,		switch_datapathid },
-	{ "portno",	NEXTARG2,	0,		NULL, switch_portno },
 	{ "addlocal",	NEXTARG,	0,		addlocal },
 	{ "transceiver", NEXTARG0,	0,		transceiver },
 	{ "sff",	NEXTARG0,	0,		transceiver },

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.378 2021/10/29 16:42:57 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.379 2021/11/11 09:39:16 claudio Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: October 29 2021 $
+.Dd $Mdocdate: November 11 2021 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1707,66 +1707,6 @@ The protocol name can be either
 or
 .Ql none .
 In the latter case, authentication will be turned off.
-.El
-.Sh SWITCH
-The following options are available for a
-.Xr switch 4
-interface:
-.Bl -tag -width Ds
-.It Cm add Ar interface
-Add
-.Ar interface
-as a member of the switch.
-The interface is put into promiscuous mode so
-that it can receive every packet sent on the
-network.
-An interface can be a member of at most one switch.
-.It Cm addlocal Ar interface
-Add
-.Ar interface
-as a local port of the switch.
-Local port is a special port connected with the local system's network stack.
-Only
-.Xr vether 4
-can be used for the
-.Ar interface .
-Only one interface can be added as a local port.
-.It Cm datapath Ar id
-Configure the datapath ID for the switch.
-The default value is generated randomly.
-.It Cm del Ar interface
-Remove
-.Ar interface
-from the switch.
-Promiscuous mode is turned off for the interface when it is removed
-from the switch.
-.It Cm maxflow Ar number
-Set the maximum number of flows per table.
-The default value is 10000.
-.It Cm maxgroup Ar number
-Set the maximum number of groups.
-The default value is 1000.
-.It Cm portno Ar interface number
-Set the port number for the port named
-.Ar interface .
-The default value is the interface index of the
-.Ar interface .
-.It Cm protected Ar interface ids
-Put
-.Ar interface
-in protected domains.
-.Ar ids
-is a comma delimited list of domain IDs, between 1 and 31, to put the
-interface in.
-Interfaces that are part of a protected domain cannot forward traffic to any
-other interface in that domain.
-Interfaces do not belong to any protected domain by default.
-.It Cm -protected Ar interface
-Remove
-.Ar interface
-from all protected domains.
-.It Cm up
-Start the switch processing packets.
 .El
 .Sh TPMR
 .nr nS 1

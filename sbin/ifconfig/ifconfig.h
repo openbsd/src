@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.h,v 1.3 2020/08/05 06:12:43 kn Exp $	*/
+/*	$OpenBSD: ifconfig.h,v 1.4 2021/11/11 09:39:16 claudio Exp $	*/
 
 /*
  * Copyright (c) 2009 Claudio Jeker <claudio@openbsd.org>
@@ -69,7 +69,5 @@ void bridge_flushrule(const char *, int);
 int is_bridge(void);
 void bridge_status(void);
 int bridge_rule(int, char **, int);
-void switch_datapathid(const char *, int);
-void switch_portno(const char *, const char *);
 
 int if_sff_info(int);

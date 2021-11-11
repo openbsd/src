@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.29 2020/08/08 12:38:21 kn Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.30 2021/11/11 09:39:16 claudio Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -54,10 +54,8 @@ void bridge_ifclrflag(const char *, u_int32_t);
 
 void bridge_list(char *);
 void bridge_cfg(const char *);
-void switch_cfg(const char *);
 void bridge_badrule(int, char **, int);
 void bridge_showrule(struct ifbrlreq *);
-int is_switch(void);
 int bridge_arprule(struct ifbrlreq *, int *, char ***);
 
 #define	IFBAFBITS	"\020\1STATIC"
@@ -753,7 +751,6 @@ void
 bridge_status(void)
 {
 	struct ifbrparam bp1, bp2;
-	int isswitch;
 
 	if (is_tpmr()) {
 		bridge_list("\t");
@@ -763,18 +760,10 @@ bridge_status(void)
 	if (!is_bridge())
 		return;
 
-	isswitch = is_switch();
-	if (isswitch)
-		switch_cfg("\t");
-	else
-		bridge_cfg("\t");
-
+	bridge_cfg("\t");
 	bridge_list("\t");
 
 	if (aflag && !ifaliases)
-		return;
-
-	if (isswitch)
 		return;
 
 	strlcpy(bp1.ifbrp_name, ifname, sizeof(bp1.ifbrp_name));
@@ -1120,80 +1109,6 @@ bridge_badrule(int argc, char *argv[], int ln)
 	for (i = 0; i < argc; i++)
 		fprintf(stderr, "%s ", argv[i]);
 	fprintf(stderr, "\n");
-}
-
-int
-is_switch()
-{
-	struct ifbrparam bp;
-
-	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
-	if (ioctl(sock, SIOCSWGDPID, (caddr_t)&bp) == -1)
-		return (0);
-
-	return (1);
-}
-
-void
-switch_cfg(const char *delim)
-{
-	struct ifbrparam bp;
-
-	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
-	if (ioctl(sock, SIOCSWGDPID, (caddr_t)&bp) == -1)
-		err(1, "%s", ifname);
-
-	printf("%sdatapath %#016llx", delim, bp.ifbrp_datapath);
-
-	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
-	if (ioctl(sock, SIOCSWGMAXFLOW, (caddr_t)&bp) == -1)
-		err(1, "%s", ifname);
-
-	printf(" maxflow %d", bp.ifbrp_maxflow);
-
-	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
-	if (ioctl(sock, SIOCSWGMAXGROUP, (caddr_t)&bp) == -1)
-		err(1, "%s", ifname);
-
-	printf(" maxgroup %d\n", bp.ifbrp_maxgroup);
-}
-
-void
-switch_datapathid(const char *arg, int d)
-{
-	struct ifbrparam bp;
-	uint64_t newdpid;
-	char *endptr;
-
-	errno = 0;
-	newdpid = strtoull(arg, &endptr, 0);
-	if (arg[0] == '\0' || endptr[0] != '\0' || errno == ERANGE)
-		errx(1, "invalid arg for datapath-id: %s", arg);
-
-	strlcpy(bp.ifbrp_name, ifname, sizeof(bp.ifbrp_name));
-	bp.ifbrp_datapath = newdpid;
-	if (ioctl(sock, SIOCSWSDPID, (caddr_t)&bp) == -1)
-		err(1, "%s", ifname);
-}
-
-void
-switch_portno(const char *ifsname, const char *val)
-{
-	struct ifbreq breq;
-	const char *errstr;
-
-	breq.ifbr_portno = strtonum(val, 0, UINT32_MAX, &errstr);
-	if (errstr)
-		errx(1, "portno %s is: %s", val, errstr);
-
-	strlcpy(breq.ifbr_name, ifname, sizeof(breq.ifbr_name));
-	strlcpy(breq.ifbr_ifsname, ifsname, sizeof(breq.ifbr_ifsname));
-	if (ioctl(sock, SIOCSWSPORTNO, (caddr_t)&breq) == -1) {
-		if (errno == EEXIST)
-			return;
-		else
-			err(1, "%s", ifname);
-	}
 }
 
 #endif
