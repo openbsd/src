@@ -1,4 +1,4 @@
-/*	$OpenBSD: who.c,v 1.31 2021/11/10 15:06:24 schwarze Exp $	*/
+/*	$OpenBSD: who.c,v 1.32 2021/11/11 08:42:31 mestre Exp $	*/
 /*	$NetBSD: who.c,v 1.4 1994/12/07 04:28:49 jtc Exp $	*/
 
 /*
@@ -125,10 +125,15 @@ main(int argc, char *argv[])
 		if (unveil(_PATH_DEV, "r") == -1)
 			err(1, "unveil %s", _PATH_DEV);
 	}
+	if (argc == 1) {
+		if (unveil(*argv, "r") == -1)
+			err(1, "unveil %s", *argv);
+	}
+	if (pledge("stdio rpath getpw", NULL) == -1)
+		err(1, "pledge");
+
 	switch (argc) {
 	case 0:					/* who */
-		if (pledge("stdio rpath getpw", NULL) == -1)
-			err(1, "pledge");
 		ufp = file(_PATH_UTMP);
 
 		if (only_current_term) {
@@ -155,10 +160,6 @@ main(int argc, char *argv[])
 		}
 		break;
 	case 1:					/* who utmp_file */
-		if (unveil(*argv, "r") == -1)
-			err(1, "unveil %s", *argv);
-		if (pledge("stdio rpath getpw", NULL) == -1)
-			err(1, "pledge");
 		ufp = file(*argv);
 
 		if (only_current_term) {
@@ -184,8 +185,6 @@ main(int argc, char *argv[])
 		}
 		break;
 	case 2:					/* who am i */
-		if (pledge("stdio rpath getpw", NULL) == -1)
-			err(1, "pledge");
 		ufp = file(_PATH_UTMP);
 		who_am_i(ufp);
 		break;
@@ -301,10 +300,7 @@ file(char *name)
 		err(1, "%s", name);
 		/* NOTREACHED */
 	}
-	if (show_term || show_idle) {
-		if (pledge("stdio rpath getpw", NULL) == -1)
-			err(1, "pledge");
-	} else {
+	if (!show_term && !show_idle) {
 		if (pledge("stdio getpw", NULL) == -1)
 			err(1, "pledge");
 	}
