@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.octeon/MAKEDEV.md,v 1.21 2021/04/02 02:29:56 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.113 2021/02/12 10:26:33 jsg Exp 
+#	OpenBSD: etc.octeon/MAKEDEV.md,v 1.22 2021/11/11 09:47:33 claudio Exp 
+#	OpenBSD: MAKEDEV.common,v 1.114 2021/11/11 09:47:32 claudio Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -78,7 +78,6 @@
 #	uk*	Unknown SCSI devices
 #	video*	Video V4L2 devices
 #	vscsi*	Virtual SCSI controller
-#	switch*	Switch driver
 #	kstat	Kernel Statistics
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
@@ -227,10 +226,6 @@ std)
 
 kstat)
 	M kstat c 51 0 640
-	;;
-
-switch*)
-	M switch$U c 75 $U 600
 	;;
 
 vscsi*)
@@ -454,14 +449,13 @@ ramdisk)
 	;;
 
 all)
-	R switch0 switch1 switch2 switch3 octcf0 vnd0 vnd1 vnd2 vnd3
-	R sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 tap0
-	R tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio pty0 pty1 pty2
-	R diskmap vscsi0 ch0 audio0 audio1 audio2 audio3 kstat dt bpf
-	R fuse pppac pppx hotplug ptm local wscons pci0 pci1 pci2 pci3
-	R uall video0 video1 uk0 random tty00 tty01 tty02 tty03 tty04
-	R tty05 tty06 tty07 tty08 tty09 tty0a tty0b pf wd0 wd1 wd2 wd3
-	R std st0 st1 fd
+	R octcf0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7
+	R sd8 sd9 cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3
+	R bio pty0 pty1 pty2 diskmap vscsi0 ch0 audio0 audio1 audio2
+	R audio3 kstat dt bpf fuse pppac pppx hotplug ptm local wscons
+	R pci0 pci1 pci2 pci3 uall video0 video1 uk0 random tty00
+	R tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09 tty0a
+	R tty0b pf wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 octcf*|wd*|sd*)

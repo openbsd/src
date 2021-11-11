@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.36 2021/04/02 02:29:56 deraadt Exp 
-#	OpenBSD: MAKEDEV.common,v 1.113 2021/02/12 10:26:33 jsg Exp 
+#	OpenBSD: etc.luna88k/MAKEDEV.md,v 1.37 2021/11/11 09:47:33 claudio Exp 
+#	OpenBSD: MAKEDEV.common,v 1.114 2021/11/11 09:47:32 claudio Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -70,7 +70,6 @@
 #	tap*	Ethernet tunnel driver
 #	uk*	Unknown SCSI devices
 #	vscsi*	Virtual SCSI controller
-#	switch*	Switch driver
 #	xp	HD647180 I/O processor
 #	kstat	Kernel Statistics
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -220,10 +219,6 @@ kstat)
 
 xp)
 		M xp c 11 0 600 
-	;;
-
-switch*)
-	M switch$U c 57 $U 600
 	;;
 
 vscsi*)
@@ -413,12 +408,12 @@ ramdisk)
 	;;
 
 all)
-	R xp pcex audio0 lcd ttya switch0 switch1 switch2 switch3
-	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tap0
-	R tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio pty0 diskmap vscsi0
-	R ch0 kstat dt bpf fuse pppac pppx ptm local wscons uk0 random
-	R tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08 tty09
-	R tty0a tty0b pf wd0 wd1 wd2 wd3 std st0 st1 fd
+	R xp pcex audio0 lcd ttya vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3
+	R sd4 cd0 cd1 rd0 tap0 tap1 tap2 tap3 tun0 tun1 tun2 tun3 bio
+	R pty0 diskmap vscsi0 ch0 kstat dt bpf fuse pppac pppx ptm
+	R local wscons uk0 random tty00 tty01 tty02 tty03 tty04 tty05
+	R tty06 tty07 tty08 tty09 tty0a tty0b pf wd0 wd1 wd2 wd3 std
+	R st0 st1 fd
 	;;
 
 wd*|sd*)

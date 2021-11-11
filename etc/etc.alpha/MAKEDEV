@@ -3,8 +3,8 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.77 2021/01/23 05:08:33 thfr Exp 
-#	OpenBSD: MAKEDEV.common,v 1.112 2021/01/23 05:08:33 thfr Exp 
+#	OpenBSD: etc.alpha/MAKEDEV.md,v 1.78 2021/11/11 09:47:32 claudio Exp 
+#	OpenBSD: MAKEDEV.common,v 1.114 2021/11/11 09:47:32 claudio Exp 
 #	OpenBSD: MAKEDEV.mi,v 1.83 2016/09/11 03:06:31 deraadt Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.14 2005/02/07 06:14:18 david Exp 
 #
@@ -90,7 +90,6 @@
 #	uk*	Unknown SCSI devices
 #	video*	Video V4L2 devices
 #	vscsi*	Virtual SCSI controller
-#	switch*	Switch driver
 #	kstat	Kernel Statistics
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
@@ -250,10 +249,6 @@ ttyB*|ttyc*)
 
 kstat)
 	M kstat c 51 0 640
-	;;
-
-switch*)
-	M switch$U c 69 $U 600
 	;;
 
 vscsi*)
@@ -544,17 +539,17 @@ local)
 	;;
 
 all)
-	R switch0 switch1 switch2 switch3 vnd0 vnd1 vnd2 vnd3 sd0 sd1
-	R sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 cd0 cd1 rd0 ttyB0 ttyB1 tap0
-	R tap1 tap2 tap3 tun0 tun1 tun2 tun3 pty0 fd1 fd1B fd1C fd1D
-	R fd1E fd1F fd1G fd1H fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
-	R diskmap vscsi0 ch0 bio audio0 audio1 audio2 audio3 kstat dt
-	R bpf fuse pppac pppx hotplug ptm local wscons pci0 pci1 pci2
-	R pci3 uall rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6
-	R rmidi7 tuner0 radio0 speaker video0 video1 uk0 random lpa0
-	R lpa1 lpa2 lpt0 lpt1 lpt2 tty00 tty01 tty02 tty03 tty04 tty05
-	R tty06 tty07 tty08 tty09 tty0a tty0b ttyc0 ttyc1 ttyc2 ttyc3
-	R ttyc4 ttyc5 ttyc6 ttyc7 pf wd0 wd1 wd2 wd3 std st0 st1 fd
+	R vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
+	R cd0 cd1 rd0 ttyB0 ttyB1 tap0 tap1 tap2 tap3 tun0 tun1 tun2
+	R tun3 pty0 fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H fd0 fd0B
+	R fd0C fd0D fd0E fd0F fd0G fd0H diskmap vscsi0 ch0 bio audio0
+	R audio1 audio2 audio3 kstat dt bpf fuse pppac pppx hotplug
+	R ptm local wscons pci0 pci1 pci2 pci3 uall rmidi0 rmidi1
+	R rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7 tuner0 radio0
+	R speaker video0 video1 uk0 random lpa0 lpa1 lpa2 lpt0 lpt1
+	R lpt2 tty00 tty01 tty02 tty03 tty04 tty05 tty06 tty07 tty08
+	R tty09 tty0a tty0b ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6
+	R ttyc7 pf wd0 wd1 wd2 wd3 std st0 st1 fd
 	;;
 
 wd*|sd*)
