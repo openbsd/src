@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.43 2021/01/23 05:08:35 thfr Exp $	*/
+/*	$OpenBSD: conf.c,v 1.44 2021/11/11 10:03:09 claudio Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -243,7 +243,6 @@ struct bdevsw bdevsw[] = {
 #include "vscsi.h"
 #include "pppx.h"
 #include "fuse.h"
-#include "switch.h"
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),			/*  0: virtual console */
@@ -355,7 +354,7 @@ struct cdevsw cdevsw[] = {
 	cdev_pppx_init(NPPPX,pppx),		/* 102: pppx */
 	cdev_fuse_init(NFUSE,fuse),		/* 103: fuse */
 	cdev_tun_init(NTUN,tap),		/* 104: Ethernet network tap */
-	cdev_switch_init(NSWITCH,switch),	/* 105: switch(4) control interface */
+	cdev_notdef(),				/* 105: was switch(4) */
 	cdev_fido_init(NFIDO,fido),		/* 106: FIDO/U2F security key */
 	cdev_pppx_init(NPPPX,pppac),		/* 107: PPP Access Concentrator */
 	cdev_ujoy_init(NUJOY,ujoy),		/* 108: USB joystick/gamecontroller */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.72 2021/03/10 10:21:47 jsg Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.73 2021/11/11 10:03:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -155,8 +155,6 @@ struct ifbrparam {
 		u_int8_t	ifbrpu_maxage;		/* max age (sec) */
 		u_int8_t	ifbrpu_proto;		/* bridge protocol */
 		u_int8_t	ifbrpu_txhc;		/* bpdu tx holdcount */
-		u_int64_t	ifbrpu_datapath;	/* datapath-id */
-		u_int32_t	ifbrpu_maxgroup;	/* group size */
 	} ifbrp_ifbrpu;
 };
 #define	ifbrp_csize	ifbrp_ifbrpu.ifbrpu_csize
@@ -167,9 +165,6 @@ struct ifbrparam {
 #define	ifbrp_hellotime	ifbrp_ifbrpu.ifbrpu_hellotime
 #define	ifbrp_fwddelay	ifbrp_ifbrpu.ifbrpu_fwddelay
 #define	ifbrp_maxage	ifbrp_ifbrpu.ifbrpu_maxage
-#define	ifbrp_datapath	ifbrp_ifbrpu.ifbrpu_datapath
-#define	ifbrp_maxflow	ifbrp_ifbrpu.ifbrpu_csize
-#define	ifbrp_maxgroup	ifbrp_ifbrpu.ifbrpu_maxgroup
 
 /* Protocol versions */
 #define	BSTP_PROTO_ID		0x00

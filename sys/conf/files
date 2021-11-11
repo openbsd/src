@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.705 2021/11/08 14:52:08 stsp Exp $
+#	$OpenBSD: files,v 1.706 2021/11/11 10:03:10 claudio Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -577,7 +577,6 @@ pseudo-device bpe: ifnet, ether, ifmedia, etherbridge
 pseudo-device vether: ifnet, ether
 pseudo-device pppx: ifnet
 pseudo-device vxlan: ifnet, ether, ifmedia
-pseudo-device switch: ifnet, ether
 pseudo-device wg: ifnet
 
 pseudo-device ksyms
@@ -822,9 +821,6 @@ file net/bridgestp.c			bridge
 file net/if_etherbridge.c		etherbridge
 file net/if_veb.c			veb
 file net/if_vlan.c			vlan			needs-count
-file net/if_switch.c			switch			needs-count
-file net/switchctl.c			switch
-file net/switchofp.c			switch
 file net/pipex.c			pipex
 file net/radix.c			pf | ipsec | pipex | nfsserver
 file net/rtable.c

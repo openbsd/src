@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.73 2021/01/23 05:08:34 thfr Exp $	*/
+/*	$OpenBSD: conf.c,v 1.74 2021/11/11 10:03:08 claudio Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -173,7 +173,6 @@ cdev_decl(pci);
 #include "fuse.h"
 #include "pvbus.h"
 #include "ipmi.h"
-#include "switch.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -286,7 +285,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NVIOCON,viocon),  /* 94: virtio console */
 	cdev_pvbus_init(NPVBUS,pvbus),	/* 95: pvbus(4) control interface */
 	cdev_ipmi_init(NIPMI,ipmi),	/* 96: ipmi */
-	cdev_switch_init(NSWITCH,switch), /* 97: switch(4) control interface */
+	cdev_notdef(),			/* 97: was switch(4) */
 	cdev_fido_init(NFIDO,fido),	/* 98: FIDO/U2F security keys */
 	cdev_pppx_init(NPPPX,pppac),	/* 99: PPP Access Concentrator */
 	cdev_ujoy_init(NUJOY,ujoy),	/* 100: USB joystick/gamecontroller */

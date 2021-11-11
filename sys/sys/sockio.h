@@ -1,4 +1,4 @@
-/*	$OpenBSD: sockio.h,v 1.83 2019/11/13 11:54:01 tobhe Exp $	*/
+/*	$OpenBSD: sockio.h,v 1.84 2021/11/11 10:03:10 claudio Exp $	*/
 /*	$NetBSD: sockio.h,v 1.5 1995/08/23 00:40:47 thorpej Exp $	*/
 
 /*-
@@ -109,13 +109,6 @@
 #define SIOCBRDGGPARAM  _IOWR('i', 88, struct ifbropreq)/* get brdg STP parms */
 #define SIOCBRDGSTXHC    _IOW('i', 89, struct ifbrparam)/* set tx hold count */
 #define SIOCBRDGSPROTO	 _IOW('i', 90, struct ifbrparam)/* set protocol */
-#define SIOCBRDGS
-
-#define	SIOCSWGDPID	_IOWR('i', 91, struct ifbrparam)/* get datapath id */
-#define	SIOCSWSDPID	 _IOW('i', 92, struct ifbrparam)/* set datapath id */
-#define	SIOCSWGMAXGROUP	_IOWR('i', 93, struct ifbrparam)/* get max groups */
-#define	SIOCSWSPORTNO	_IOWR('i', 95, struct ifbreq)	/* set port number */
-#define	SIOCSWGMAXFLOW	_IOWR('i', 96, struct ifbrparam)/* get max flow per table */
 
 #define	SIOCSIFMTU	 _IOW('i', 127, struct ifreq)	/* set ifnet mtu */
 #define	SIOCGIFMTU	_IOWR('i', 126, struct ifreq)	/* get ifnet mtu */

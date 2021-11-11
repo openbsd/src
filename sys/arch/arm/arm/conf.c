@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.57 2021/03/25 04:12:00 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.58 2021/11/11 10:03:08 claudio Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -264,8 +264,6 @@ struct bdevsw bdevsw[] = {
 #define	NSPKR 0
 #endif
 
-#include "switch.h"
-
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),			/*  0: virtual console */
 	cdev_ctty_init(1,ctty),			/*  1: controlling terminal */
@@ -376,7 +374,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(1,diskmap),		/* 102: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),		/* 103: pppx */
 	cdev_tun_init(NTUN,tap),		/* 104: Ethernet tap */
-	cdev_switch_init(NSWITCH,switch),	/* 105: switch(4) control interface */
+	cdev_notdef(),				/* 105: was switch(4) */
 	cdev_fido_init(NFIDO,fido),		/* 106: FIDO/U2F security key */
 	cdev_pppx_init(NPPPX,pppac),		/* 107: PPP Access Concentrator */
 	cdev_ujoy_init(NUJOY,ujoy),		/* 108: USB joystick/gamecontroller */

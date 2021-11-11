@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 2021/10/05 18:32:28 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.12 2021/11/11 10:03:09 claudio Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -110,7 +110,6 @@ cdev_decl(pci);
 #include "fuse.h"
 #include "openprom.h"
 #include "ipmi.h"
-#include "switch.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -219,7 +218,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 94 */
 	cdev_notdef(),			/* 95 */
 	cdev_ipmi_init(NIPMI,ipmi),	/* 96: ipmi */
-	cdev_switch_init(NSWITCH,switch), /* 97: switch(4) control interface */
+	cdev_notdef(),			/* 97: was switch(4) */
 	cdev_notdef(),			/* 98: FIDO/U2F security key */
 	cdev_pppx_init(NPPPX,pppac),	/* 99: PPP Access Concentrator */
 	cdev_notdef(),			/* 100: USB joystick/gamecontroller */

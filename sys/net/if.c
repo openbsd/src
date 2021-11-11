@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.643 2021/07/20 16:32:28 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.644 2021/11/11 10:03:10 claudio Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
 #include "pf.h"
 #include "pfsync.h"
 #include "ppp.h"
-#include "switch.h"
 #include "if_wg.h"
 
 #include <sys/param.h>
@@ -911,13 +910,6 @@ if_netisr(void *unused)
 #if NBRIDGE > 0
 		if (n & (1 << NETISR_BRIDGE))
 			bridgeintr();
-#endif
-#if NSWITCH > 0
-		if (n & (1 << NETISR_SWITCH)) {
-			KERNEL_LOCK();
-			switchintr();
-			KERNEL_UNLOCK();
-		}
 #endif
 		t |= n;
 	}
@@ -2260,7 +2252,6 @@ forceup:
 	case SIOCBRDGSIFCOST:
 	case SIOCBRDGSTXHC:
 	case SIOCBRDGSPROTO:
-	case SIOCSWSPORTNO:
 #endif
 		if ((error = suser(p)) != 0)
 			break;

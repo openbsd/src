@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.73 2021/01/23 05:08:35 thfr Exp $ */
+/*	$OpenBSD: conf.c,v 1.74 2021/11/11 10:03:09 claudio Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -129,7 +129,6 @@ cdev_decl(pci);
 #include "vscsi.h"
 #include "pppx.h"
 #include "fuse.h"
-#include "switch.h"
 
 struct cdevsw cdevsw[] = {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -229,7 +228,7 @@ struct cdevsw cdevsw[] = {
 	cdev_tun_init(NTUN,tap),	/* 86: Ethernet network tunnel */
 	cdev_drm_init(NDRM,drm),	/* 87: drm */
 	cdev_fuse_init(NFUSE,fuse),	/* 88: fuse */
-	cdev_switch_init(NSWITCH,switch), /* 89: switch(4) control interface */
+	cdev_notdef(),			/* 89: was switch(4) */
 	cdev_fido_init(NFIDO,fido),	/* 90: FIDO/U2F security key */
 	cdev_pppx_init(NPPPX,pppac),	/* 91: PPP Access Concentrator */
 	cdev_ujoy_init(NUJOY,ujoy),	/* 92: USB joystick/gamecontroller */

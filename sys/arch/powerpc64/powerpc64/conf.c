@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 2021/10/05 04:55:53 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 2021/11/11 10:03:09 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -86,7 +86,6 @@ cdev_decl(lpt);
 #include "pty.h"
 #include "radio.h"
 #include "st.h"
-#include "switch.h"
 #include "tun.h"
 #include "ucom.h"
 #include "ugen.h"
@@ -184,7 +183,7 @@ struct cdevsw cdevsw[] =
 	cdev_notdef(),			/* 71 */
 	cdev_pppx_init(NPPPX,pppx),     /* 72: pppx */
 	cdev_pppx_init(NPPPX,pppac),	/* 73: PPP Access Concentrator */
-	cdev_switch_init(NSWITCH,switch), /* 74: switch(4) control interface */
+	cdev_notdef(),			/* 74: was switch(4) */
 	cdev_tun_init(NTUN,tap),	/* 75: Ethernet network tunnel */
 	cdev_tun_init(NTUN,tun),	/* 76: network tunnel */
 	cdev_notdef(),			/* 77 */

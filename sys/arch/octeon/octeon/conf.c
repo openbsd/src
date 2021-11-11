@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.26 2021/01/23 05:08:36 thfr Exp $ */
+/*	$OpenBSD: conf.c,v 1.27 2021/11/11 10:03:09 claudio Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -146,7 +146,6 @@ cdev_decl(pci);
 #include "fuse.h"
 #include "octboot.h"
 #include "openprom.h"
-#include "switch.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -233,7 +232,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 72: was USB scanners */
 	cdev_notdef(),			/* 73: fuse on other mips64 */
 	cdev_tun_init(NTUN,tap),	/* 74: Ethernet network tunnel */
-	cdev_switch_init(NSWITCH,switch), /* 75: switch(4) control interface */
+	cdev_notdef(),			/* 75: was switch(4) */
 	cdev_fido_init(NFIDO,fido),	/* 76: FIDO/U2F security key */
 	cdev_pppx_init(NPPPX,pppac),	/* 77: PPP Access Concentrator */
 	cdev_ujoy_init(NUJOY,ujoy),	/* 78: USB joystick/gamecontroller */

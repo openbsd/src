@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.34 2020/07/06 04:32:25 dlg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.35 2021/11/11 10:03:09 claudio Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -73,7 +73,6 @@
 #include "vscsi.h"
 #include "pppx.h"
 #include "fuse.h"
-#include "switch.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -160,7 +159,7 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(1,diskmap),	/* 54: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 55: pppx */
 	cdev_tun_init(NTUN,tap),	/* 56: Ethernet network tunnel */
-	cdev_switch_init(NSWITCH,switch), /* 57: switch(4) control interface */
+	cdev_notdef(),			/* 57: was switch(4) */
 	cdev_pppx_init(NPPPX,pppac),	/* 58: PPP Access Concentrator */
 };
 int	nchrdev = nitems(cdevsw);

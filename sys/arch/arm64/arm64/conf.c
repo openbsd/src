@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 2021/04/26 06:05:55 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.19 2021/11/11 10:03:08 claudio Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -121,7 +121,6 @@ cdev_decl(pci);
 #include "openprom.h"
 #include "gpio.h"
 #include "ipmi.h"
-#include "switch.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -230,7 +229,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 94 */
 	cdev_notdef(),			/* 95 */
 	cdev_ipmi_init(NIPMI,ipmi),	/* 96: ipmi */
-	cdev_switch_init(NSWITCH,switch), /* 97: switch(4) control interface */
+	cdev_notdef(),			/* 97: was switch(4) */
 	cdev_fido_init(NFIDO,fido),	/* 98: FIDO/U2F security key */
 	cdev_pppx_init(NPPPX,pppac),	/* 99: PPP Access Concentrator */
 	cdev_ujoy_init(NUJOY,ujoy),	/* 100: USB joystick/gamecontroller */

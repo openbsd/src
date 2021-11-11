@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.89 2021/01/23 05:08:34 thfr Exp $	*/
+/*	$OpenBSD: conf.c,v 1.90 2021/11/11 10:03:08 claudio Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -128,7 +128,6 @@ cdev_decl(pci);
 #include "vscsi.h"
 #include "pppx.h"
 #include "fuse.h"
-#include "switch.h"
 
 struct cdevsw	cdevsw[] =
 {
@@ -205,7 +204,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 66: was USB scanners */
 	cdev_fuse_init(NFUSE,fuse),	/* 67: fuse */
 	cdev_tun_init(NTUN,tap),	/* 68: Ethernet network tunnel */
-	cdev_switch_init(NSWITCH,switch), /* 69: switch(4) control interface */
+	cdev_notdef(),			/* 69: was switch(4) */
 	cdev_fido_init(NFIDO,fido),	/* 70: FIDO/U2F security key */
 	cdev_pppx_init(NPPPX,pppac),	/* 71: PPP Access Concentrator */
 	cdev_ujoy_init(NUJOY,ujoy),	/* 72: USB joystick/gamecontroller */
