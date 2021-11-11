@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.233 2021/10/25 14:56:47 sashan Exp $
+# $OpenBSD: Makefile,v 1.234 2021/11/11 12:49:53 sashan Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check whether the output matches pfNN.ok
@@ -12,6 +12,7 @@
 # pfopt: as target pf, but supply extra command line options
 # pfcmd: test pfctl command line parsing
 # pfloadanchors: load anchor from nested files
+# pf-changerule: covers DIOCCHANGERULE ioctl(2)
 
 PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27
 PFTESTS+=28 29 30 31 32 34 35 36 38 39 40 41 44 46 47 48 49 50
@@ -35,6 +36,20 @@ PFCMDFAIL=1
 PFLOADANCHORS=112 113
 
 PFCTL ?=	/sbin/pfctl
+
+.PATH: ${.CURDIR}/../../../sbin/pfctl ${.CURDIR}/../../../sys/net
+
+PROG=	changerule
+SRCS=	changerule.c parse.y pfctl_parser.c pf_print_state.c
+SRCS+=	pfctl.c	pfctl_osfp.c pfctl_radix.c pfctl_table.c
+SRCS+=	pfctl_optimize.c pf_ruleset.c pfctl_queue.c
+CFLAGS= -Wall -Wmissing-prototypes -Wno-uninitialized -Wstrict-prototypes
+CFLAGS+= -Wno-unused-variable
+CFLAGS+= -I${.CURDIR}/../../../sbin/pfctl -DREGRESS_NOMAIN
+YFLAGS=
+
+LDADD+= -lm
+DPADD+= ${LIBM}
 
 MAKEOBJDIRPREFIX=
 
@@ -106,6 +121,7 @@ selfpf:		${SELFPF_TARGETS}
 pf-update:	${PF_UPDATES}
 REGRESS_TARGETS+=pf-include-setup pf
 REGRESS_TARGETS+=selfpf
+REGRESS_TARGETS+=pf-changerule
 UPDATE_TARGETS+=pf-update
 
 pf-include-setup:
@@ -361,6 +377,32 @@ pf-loadanchors-setup:
 .for f in pf112.one pf112.two pf113.one pf113.two
 	[ -f ${.OBJDIR}/$f ] || ln -s ${.CURDIR}/$f ${.OBJDIR}
 .endfor
+
+pf-changerule: changerule changerule-tail.ok changerule-head.ok \
+    changerule-before.ok changerule-after.ok
+	${SUDO} ${PFCTL} -a 'regress/*' -Fr
+	echo 'pass all' | ${SUDO} ${PFCTL} -a regress -f -
+.for i in 10 20 30 40 50
+	echo "pass in proto tcp from any to any port $i" | \
+	    ${SUDO} ./changerule -a regress -i 0
+.endfor
+	${SUDO} ${PFCTL} -a regress -sr | diff -u changerule-head.ok /dev/stdin
+	${SUDO} ${PFCTL} -a 'regress/*' -Fr
+	echo 'pass all' | ${SUDO} ${PFCTL} -a regress -f -
+.for i in 10 20 30 40 50
+	echo "pass in proto tcp from any to any port $i" | \
+	    ${SUDO} ./changerule -a regress -i -1
+.endfor
+	${SUDO} ${PFCTL} -a regress -sr | diff -u changerule-tail.ok /dev/stdin
+	echo 'pass in proto tcp from any to any port 15' | \
+	    ${SUDO} ./changerule -a regress -i 2
+	${SUDO} ${PFCTL} -a regress -sr | \
+	    diff -u changerule-before.ok /dev/stdin
+	echo 'pass in proto tcp from any to any port 25' | \
+	    ${SUDO} ./changerule -a regress -I 3
+	${SUDO} ${PFCTL} -a regress -sr | \
+	    diff -u changerule-after.ok /dev/stdin
+	${SUDO} ${PFCTL} -a 'regress/*' -Fr
 
 update:	${UPDATE_TARGETS}
 

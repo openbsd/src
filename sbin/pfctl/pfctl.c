@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.384 2021/10/25 14:50:29 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.385 2021/11/11 12:49:53 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2459,6 +2459,7 @@ pfctl_reset(int dev, int opts)
 	pfctl_clear_interface_flags(dev, opts);
 }
 
+#ifndef	REGRESS_NOMAIN
 int
 main(int argc, char *argv[])
 {
@@ -2889,6 +2890,7 @@ main(int argc, char *argv[])
 
 	exit(exit_val);
 }
+#endif	/* REGRESS_NOMAIN */
 
 char *
 pf_strerror(int errnum)
