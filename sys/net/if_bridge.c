@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.357 2021/10/23 22:19:37 bluhm Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.358 2021/11/11 18:08:17 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1487,7 +1487,7 @@ bridge_ipsec(struct ifnet *ifp, struct ether_header *eh, int hassnap,
 	struct tdb *tdb;
 	u_int32_t spi;
 	u_int16_t cpi;
-	int error, off;
+	int error, off, prot;
 	u_int8_t proto = 0;
 	struct ip *ip;
 #ifdef INET6
@@ -1575,7 +1575,10 @@ bridge_ipsec(struct ifnet *ifp, struct ether_header *eh, int hassnap,
 					    tdb->tdb_soft_first_use);
 			}
 
-			(*(tdb->tdb_xform->xf_input))(&m, tdb, hlen, off);
+			prot = (*(tdb->tdb_xform->xf_input))(&m, tdb, hlen,
+			    off);
+			if (prot != IPPROTO_DONE)
+				ip_deliver(&m, &hlen, prot, af);
 			return (1);
 		} else {
  skiplookup:

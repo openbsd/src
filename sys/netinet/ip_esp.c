@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.186 2021/11/08 22:36:18 tobhe Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.187 2021/11/11 18:08:18 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -362,7 +362,6 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	if (plen <= 0) {
 		DPRINTF("invalid payload length");
 		espstat_inc(esps_badilen);
-		error = EINVAL;
 		goto drop;
 	}
 
@@ -378,7 +377,6 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi));
 			espstat_inc(esps_badilen);
-			error = EINVAL;
 			goto drop;
 		}
 	}
@@ -397,21 +395,18 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi));
 			espstat_inc(esps_wrap);
-			error = EACCES;
 			goto drop;
 		case 2:
 			DPRINTF("old packet received in SA %s/%08x",
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi));
 			espstat_inc(esps_replay);
-			error = EACCES;
 			goto drop;
 		case 3:
 			DPRINTF("duplicate packet received in SA %s/%08x",
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi));
 			espstat_inc(esps_replay);
-			error = EACCES;
 			goto drop;
 		default:
 			DPRINTF("bogus value from checkreplaywindow() "
@@ -419,7 +414,6 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi));
 			espstat_inc(esps_replay);
-			error = EACCES;
 			goto drop;
 		}
 	}
@@ -434,7 +428,6 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	    (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))	{
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
-		error = ENXIO;
 		goto drop;
 	}
 
@@ -450,7 +443,6 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	if (crp == NULL) {
 		DPRINTF("failed to acquire crypto descriptors");
 		espstat_inc(esps_crypto);
-		error = ENOBUFS;
 		goto drop;
 	}
 
@@ -537,7 +529,6 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi));
 			espstat_inc(esps_badauth);
-			error = -1;
 			goto drop;
 		}
 
@@ -563,21 +554,18 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi));
 			espstat_inc(esps_wrap);
-			error = -1;
 			goto drop;
 		case 2:
 			DPRINTF("old packet received in SA %s/%08x",
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi));
 			espstat_inc(esps_replay);
-			error = -1;
 			goto drop;
 		case 3:
 			DPRINTF("duplicate packet received in SA %s/%08x",
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi));
 			espstat_inc(esps_replay);
-			error = -1;
 			goto drop;
 		default:
 			DPRINTF("bogus value from checkreplaywindow() "
@@ -585,7 +573,6 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi));
 			espstat_inc(esps_replay);
-			error = -1;
 			goto drop;
 		}
 	}
@@ -597,7 +584,6 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi));
 		espstat_inc(esps_hdrops);
-		error = -1;
 		goto drop;
 	}
 
@@ -668,7 +654,6 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi));
 		espstat_inc(esps_badilen);
-		error = -1;
 		goto drop;
 	}
 
@@ -678,7 +663,6 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi));
 		espstat_inc(esps_badenc);
-		error = -1;
 		goto drop;
 	}
 
@@ -694,7 +678,7 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
  drop:
 	m_freemp(mp);
 	crypto_freereq(crp);
-	return error;
+	return IPPROTO_DONE;
 }
 
 /*

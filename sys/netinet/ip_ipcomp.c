@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.86 2021/10/24 18:15:58 tobhe Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.87 2021/11/11 18:08:18 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -154,7 +154,6 @@ ipcomp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	if (crp == NULL) {
 		DPRINTF("failed to acquire crypto descriptors");
 		ipcompstat_inc(ipcomps_crypto);
-		error = ENOBUFS;
 		goto drop;
 	}
 	crdc = &crp->crp_desc[0];
@@ -202,7 +201,6 @@ ipcomp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	    (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)) {
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
-		error = -1;
 		goto drop;
 	}
 	/* Notify on soft expiration */
@@ -218,7 +216,6 @@ ipcomp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	if (m->m_len < skip + hlen &&
 	    (m = *mp = m_pullup(m, skip + hlen)) == NULL) {
 		ipcompstat_inc(ipcomps_hdrops);
-		error = -1;
 		goto drop;
 	}
 
@@ -229,7 +226,6 @@ ipcomp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 		    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 		    ntohl(tdb->tdb_spi));
 		ipcompstat_inc(ipcomps_hdrops);
-		error = -1;
 		goto drop;
 	}
 	/* Keep the next protocol field */
@@ -295,7 +291,7 @@ ipcomp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
  drop:
 	m_freemp(mp);
 	crypto_freereq(crp);
-	return error;
+	return IPPROTO_DONE;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.181 2021/10/23 22:19:37 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.182 2021/11/11 18:08:18 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -964,7 +964,7 @@ tcp_signature_tdb_input(struct mbuf **mp, struct tdb *tdbp, int skip,
     int protoff)
 {
 	m_freemp(mp);
-	return (EINVAL);
+	return (IPPROTO_DONE);
 }
 
 int

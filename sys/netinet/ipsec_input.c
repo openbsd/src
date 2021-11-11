@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.190 2021/11/01 09:19:10 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.191 2021/11/11 18:08:18 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -194,7 +194,7 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 	struct ifnet *encif;
 	u_int32_t spi;
 	u_int16_t cpi;
-	int error;
+	int prot;
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
 #endif
@@ -207,14 +207,12 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 	if ((sproto == IPPROTO_IPCOMP) && (m->m_flags & M_COMP)) {
 		DPRINTF("repeated decompression");
 		ipcompstat_inc(ipcomps_pdrops);
-		error = EINVAL;
 		goto drop;
 	}
 
 	if (m->m_pkthdr.len - skip < 2 * sizeof(u_int32_t)) {
 		DPRINTF("packet too small");
 		IPSEC_ISTAT(esps_hdrops, ahs_hdrops, ipcomps_hdrops);
-		error = EINVAL;
 		goto drop;
 	}
 
@@ -268,7 +266,6 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 	default:
 		DPRINTF("unsupported protocol family %d", af);
 		IPSEC_ISTAT(esps_nopf, ahs_nopf, ipcomps_nopf);
-		error = EPFNOSUPPORT;
 		goto drop;
 	}
 
@@ -278,7 +275,6 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 		DPRINTF("could not find SA for packet to %s, spi %08x",
 		    ipsp_address(&dst_address, buf, sizeof(buf)), ntohl(spi));
 		IPSEC_ISTAT(esps_notdb, ahs_notdb, ipcomps_notdb);
-		error = ENOENT;
 		goto drop;
 	}
 
@@ -287,7 +283,6 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 		    ipsp_address(&dst_address, buf, sizeof(buf)),
 		    ntohl(spi), tdbp->tdb_sproto);
 		IPSEC_ISTAT(esps_invalid, ahs_invalid, ipcomps_invalid);
-		error = EINVAL;
 		goto drop;
 	}
 
@@ -296,7 +291,6 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 		    ipsp_address(&dst_address, buf, sizeof(buf)),
 		    ntohl(spi), tdbp->tdb_sproto);
 		espstat_inc(esps_udpinval);
-		error = EINVAL;
 		goto drop;
 	}
 
@@ -305,7 +299,6 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 		    ipsp_address(&dst_address, buf, sizeof(buf)),
 		    ntohl(spi), tdbp->tdb_sproto);
 		espstat_inc(esps_udpneeded);
-		error = EINVAL;
 		goto drop;
 	}
 
@@ -314,7 +307,6 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 		    ipsp_address(&dst_address, buf, sizeof(buf)),
 		    ntohl(spi), tdbp->tdb_sproto);
 		IPSEC_ISTAT(esps_noxform, ahs_noxform, ipcomps_noxform);
-		error = ENXIO;
 		goto drop;
 	}
 
@@ -326,7 +318,6 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 			    ipsp_address(&dst_address, buf, sizeof(buf)),
 			    ntohl(spi), tdbp->tdb_sproto);
 			IPSEC_ISTAT(esps_pdrops, ahs_pdrops, ipcomps_pdrops);
-			error = EACCES;
 			goto drop;
 		}
 
@@ -352,19 +343,19 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 	 * Call appropriate transform and return -- callback takes care of
 	 * everything else.
 	 */
-	error = (*(tdbp->tdb_xform->xf_input))(mp, tdbp, skip, protoff);
-	if (error) {
+	prot = (*(tdbp->tdb_xform->xf_input))(mp, tdbp, skip, protoff);
+	if (prot == IPPROTO_DONE) {
 		ipsecstat_inc(ipsec_idrops);
 		tdbp->tdb_idrops++;
 	}
-	return error;
+	return prot;
 
  drop:
 	m_freemp(mp);
 	ipsecstat_inc(ipsec_idrops);
 	if (tdbp != NULL)
 		tdbp->tdb_idrops++;
-	return error;
+	return IPPROTO_DONE;
 }
 
 /*
@@ -630,16 +621,15 @@ ipsec_common_input_cb(struct mbuf **mp, struct tdb *tdbp, int skip, int protoff)
 		m = *mp;
 		if_put(ifp);
 		if (m == NULL)
-			return 0;
+			return IPPROTO_DONE;
 	}
 #endif
-	/* Call the appropriate IPsec transform callback. */
-	ip_deliver(mp, &skip, prot, af);
-	return 0;
+	/* Return to the appropriate protocol handler in deliver loop. */
+	return prot;
 
  baddone:
 	m_freemp(mp);
-	return -1;
+	return IPPROTO_DONE;
 #undef IPSEC_ISTAT
 }
 
@@ -829,8 +819,7 @@ ah46_input(struct mbuf **mp, int *offp, int proto, int af)
 		return IPPROTO_DONE;
 	}
 
-	ipsec_common_input(mp, *offp, protoff, af, proto, 0);
-	return IPPROTO_DONE;
+	return ipsec_common_input(mp, *offp, protoff, af, proto, 0);
 }
 
 void
@@ -863,8 +852,7 @@ esp46_input(struct mbuf **mp, int *offp, int proto, int af)
 		return IPPROTO_DONE;
 	}
 
-	ipsec_common_input(mp, *offp, protoff, af, proto, 0);
-	return IPPROTO_DONE;
+	return ipsec_common_input(mp, *offp, protoff, af, proto, 0);
 }
 
 /* IPv4 IPCOMP wrapper */
@@ -888,8 +876,7 @@ ipcomp46_input(struct mbuf **mp, int *offp, int proto, int af)
 		return IPPROTO_DONE;
 	}
 
-	ipsec_common_input(mp, *offp, protoff, af, proto, 0);
-	return IPPROTO_DONE;
+	return ipsec_common_input(mp, *offp, protoff, af, proto, 0);
 }
 
 void
