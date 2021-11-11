@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.40 2021/03/12 16:27:28 stsp Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.41 2021/11/11 13:36:58 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -171,6 +171,7 @@ struct iwn_ops {
 	void		(*reset_sched)(struct iwn_softc *, int, int);
 	void		(*update_sched)(struct iwn_softc *, int, int, uint8_t,
 			    uint16_t);
+	void		(*update_rxon)(struct iwn_softc *);
 	int		(*get_temperature)(struct iwn_softc *);
 	int		(*get_rssi)(const struct iwn_rx_stat *);
 	int		(*set_txpower)(struct iwn_softc *, int);
