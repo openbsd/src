@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2021/07/10 15:05:22 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.31 2021/11/11 22:12:52 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -38,7 +38,8 @@ TEST_FLOWS = \
 	if [ -n "$$config_address" ]; then \
 		dynamic="172.16.13.[0-9]+"; \
 	fi; \
-	while [[ $$count -le 3 ]]; do \
+	[ -z "$$maxwait" ] && maxwait=3; \
+	while [[ $$count -le $$maxwait ]]; do \
 		ipsecctlleft=`ssh ${LEFT_SSH} ipsecctl -sa`; \
 		ipsecctlright=`ssh ${RIGHT_SSH} ipsecctl -sa`; \
 		flowleft=`echo "$$ipsecctlleft" \
@@ -144,6 +145,7 @@ SETUP_CONFIG = \
 	echo "DSTID=\"$$dstid\"" >> $@_$$side.conf; \
 	echo "AUTH=\"$$authstr\"" >> $@_$$side.conf; \
 	echo "CONFIG=\"$$confstr\"" >> $@_$$side.conf; \
+	echo "IKESA=\"$$ikesa\"" >> $@_$$side.conf; \
 	echo "$$global" >> $@_$$side.conf; \
 	cat ${.CURDIR}/iked.in >> $@_$$side.conf
 
@@ -385,6 +387,24 @@ run-cert-second-altname:
 	    ${SETUP_CONFIGS}
 	${SETUP_START}
 	flowtype=esp; ${TEST_FLOWS}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
+	${TEST_PING}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
+
+REGRESS_TARGETS += run-invalid-ke
+run-invalid-ke:
+	flowtype=esp; \
+	leftid=left-from-ca-both; \
+	rightid=right-from-ca-both; \
+	    side=left; srcid=$$leftid; local=${LEFT_ADDR}; peer=${RIGHT_ADDR}; \
+	    dstid="dstid $$rightid"; \
+	    ikesa="ikesa group ecp256 group curve25519"; \
+	    ${SETUP_CONFIG}; \
+	    side=right; mode=passive; srcid=$$rightid; local=${RIGHT_ADDR}; \
+	    peer=${LEFT_ADDR}; dstid="dstid $$leftid"; \
+	    ikesa="ikesa group curve25519"; \
+	    ${SETUP_CONFIG}; \
+	    ${DEPLOY_CONFIGS}
+	${SETUP_START}
+	flowtype=esp; maxwait=6; ${TEST_FLOWS}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
 	${TEST_PING}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
 
 REGRESS_TARGETS += run-psk-fail
