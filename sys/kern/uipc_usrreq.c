@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.154 2021/11/06 17:35:14 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.155 2021/11/11 17:20:02 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -485,20 +485,30 @@ void
 unp_detach(struct unpcb *unp)
 {
 	struct socket *so = unp->unp_socket;
-	struct vnode *vp = NULL;
+	struct vnode *vp = unp->unp_vnode;
 
 	rw_assert_wrlock(&unp_lock);
 
 	LIST_REMOVE(unp, unp_link);
-	if (unp->unp_vnode) {
+
+	if (vp != NULL) {
+		unp->unp_vnode = NULL;
+
 		/*
-		 * `v_socket' is only read in unp_connect and
-		 * unplock prevents concurrent access.
+		 * Enforce `i_lock' -> `unp_lock' because fifo
+		 * subsystem requires it.
 		 */
 
-		unp->unp_vnode->v_socket = NULL;
-		vp = unp->unp_vnode;
-		unp->unp_vnode = NULL;
+		sounlock(so, SL_LOCKED);
+
+		VOP_LOCK(vp, LK_EXCLUSIVE);
+		vp->v_socket = NULL;
+
+		KERNEL_LOCK();
+		vput(vp);
+		KERNEL_UNLOCK();
+
+		solock(so);
 	}
 
 	if (unp->unp_conn)
@@ -511,21 +521,6 @@ unp_detach(struct unpcb *unp)
 	pool_put(&unpcb_pool, unp);
 	if (unp_rights)
 		task_add(systqmp, &unp_gc_task);
-
-	if (vp != NULL) {
-		/*
-		 * Enforce `i_lock' -> `unplock' because fifo subsystem
-		 * requires it. The socket can't be closed concurrently
-		 * because the file descriptor reference is
-		 * still hold.
-		 */
-
-		sounlock(so, SL_LOCKED);
-		KERNEL_LOCK();
-		vrele(vp);
-		KERNEL_UNLOCK();
-		solock(so);
-	}
 }
 
 int
