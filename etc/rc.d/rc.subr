@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.144 2021/11/09 11:29:33 sthen Exp $
+#	$OpenBSD: rc.subr,v 1.145 2021/11/11 10:37:36 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -133,7 +133,14 @@ _rc_exit() {
 	local _pfix
 	[ -z "${INRC}" -o X"$1" != X"ok" ] && _pfix="($1)"
 	echo ${INRC:+'-n'} "${_pfix}"
-	[ X"$1" = X"ok" ] && exit 0 || exit 1
+	case "$1" in
+	ok|killed)
+		exit 0 ;;
+	timeout)
+		exit 142 ;;
+	*)
+		exit 1 ;;
+	esac
 }
 
 _rc_alarm()
