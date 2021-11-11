@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.100 2020/06/24 22:03:42 cheloha Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.101 2021/11/11 12:35:01 sashan Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -82,9 +82,48 @@ RB_GENERATE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
 #define PFI_BUFFER_MAX		0x10000
 #define PFI_MTYPE		M_IFADDR
 
+struct pfi_kif *
+pfi_kif_alloc(const char *kif_name, int mflags)
+{
+	struct pfi_kif *kif;
+
+	kif = malloc(sizeof(*pfi_all), PFI_MTYPE, mflags|M_ZERO);
+	strlcpy(kif->pfik_name, kif_name, sizeof(kif->pfik_name));
+	kif->pfik_tzero = gettime();
+	TAILQ_INIT(&kif->pfik_dynaddrs);
+
+	if (!strcmp(kif->pfik_name, "any")) {
+		/* both so it works in the ioctl and the regular case */
+		kif->pfik_flags |= PFI_IFLAG_ANY;
+		kif->pfik_flags_new |= PFI_IFLAG_ANY;
+	}
+
+	return (kif);
+}
+
+void
+pfi_kif_free(struct pfi_kif *kif)
+{
+	if (kif == NULL)
+		return;
+
+	if ((kif->pfik_rules != 0) || (kif->pfik_states != 0) ||
+	    (kif->pfik_states != 0) || (kif->pfik_states != 0) ||
+	    (kif->pfik_srcnodes != 0))
+		panic("kif is still alive");
+
+	free(kif, PFI_MTYPE, sizeof(*kif));
+}
+
 void
 pfi_initialize(void)
 {
+	/*
+	 * The first time we arrive here is during kernel boot,
+	 * when if_attachsetup() for the first time. No locking
+	 * is needed in this case, because it's granted there
+	 * is a single thread, which sets pfi_all global var.
+	 */
 	if (pfi_all != NULL)	/* already initialized */
 		return;
 
@@ -94,8 +133,10 @@ pfi_initialize(void)
 	pfi_buffer = mallocarray(pfi_buffer_max, sizeof(*pfi_buffer),
 	    PFI_MTYPE, M_WAITOK);
 
-	if ((pfi_all = pfi_kif_get(IFG_ALL)) == NULL)
-		panic("pfi_kif_get for pfi_all failed");
+	pfi_all = pfi_kif_alloc(IFG_ALL, M_WAITOK);
+
+	if (RB_INSERT(pfi_ifhead, &pfi_ifs, pfi_all) != NULL)
+		panic("IFG_ALL kif found already");
 }
 
 struct pfi_kif *
@@ -109,7 +150,7 @@ pfi_kif_find(const char *kif_name)
 }
 
 struct pfi_kif *
-pfi_kif_get(const char *kif_name)
+pfi_kif_get(const char *kif_name, struct pfi_kif **prealloc)
 {
 	struct pfi_kif		*kif;
 
@@ -117,17 +158,13 @@ pfi_kif_get(const char *kif_name)
 		return (kif);
 
 	/* create new one */
-	if ((kif = malloc(sizeof(*kif), PFI_MTYPE, M_NOWAIT|M_ZERO)) == NULL)
-		return (NULL);
-
-	strlcpy(kif->pfik_name, kif_name, sizeof(kif->pfik_name));
-	kif->pfik_tzero = gettime();
-	TAILQ_INIT(&kif->pfik_dynaddrs);
-
-	if (!strcmp(kif->pfik_name, "any")) {
-		/* both so it works in the ioctl and the regular case */
-		kif->pfik_flags |= PFI_IFLAG_ANY;
-		kif->pfik_flags_new |= PFI_IFLAG_ANY;
+	if ((prealloc == NULL) || (*prealloc == NULL)) {
+		kif = pfi_kif_alloc(kif_name, M_NOWAIT);
+		if (kif == NULL)
+			return (NULL);
+	} else {
+		kif = *prealloc;
+		*prealloc = NULL;
 	}
 
 	RB_INSERT(pfi_ifhead, &pfi_ifs, kif);
@@ -239,7 +276,7 @@ pfi_attach_ifnet(struct ifnet *ifp)
 
 	pfi_initialize();
 	pfi_update++;
-	if ((kif = pfi_kif_get(ifp->if_xname)) == NULL)
+	if ((kif = pfi_kif_get(ifp->if_xname, NULL)) == NULL)
 		panic("%s: pfi_kif_get failed", __func__);
 
 	kif->pfik_ifp = ifp;
@@ -282,7 +319,7 @@ pfi_attach_ifgroup(struct ifg_group *ifg)
 
 	pfi_initialize();
 	pfi_update++;
-	if ((kif = pfi_kif_get(ifg->ifg_group)) == NULL)
+	if ((kif = pfi_kif_get(ifg->ifg_group, NULL)) == NULL)
 		panic("%s: pfi_kif_get failed", __func__);
 
 	kif->pfik_group = ifg;
@@ -310,7 +347,7 @@ pfi_group_change(const char *group)
 	struct pfi_kif		*kif;
 
 	pfi_update++;
-	if ((kif = pfi_kif_get(group)) == NULL)
+	if ((kif = pfi_kif_get(group, NULL)) == NULL)
 		panic("%s: pfi_kif_get failed", __func__);
 
 	pfi_kif_update(kif);
@@ -321,8 +358,8 @@ pfi_group_addmember(const char *group, struct ifnet *ifp)
 {
 	struct pfi_kif		*gkif, *ikif;
 
-	if ((gkif = pfi_kif_get(group)) == NULL ||
-	    (ikif = pfi_kif_get(ifp->if_xname)) == NULL)
+	if ((gkif = pfi_kif_get(group, NULL)) == NULL ||
+	    (ikif = pfi_kif_get(ifp->if_xname, NULL)) == NULL)
 		panic("%s: pfi_kif_get failed", __func__);
 	ikif->pfik_flags |= gkif->pfik_flags;
 
@@ -377,9 +414,9 @@ pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 		return (1);
 
 	if (!strcmp(aw->v.ifname, "self"))
-		dyn->pfid_kif = pfi_kif_get(IFG_ALL);
+		dyn->pfid_kif = pfi_kif_get(IFG_ALL, NULL);
 	else
-		dyn->pfid_kif = pfi_kif_get(aw->v.ifname);
+		dyn->pfid_kif = pfi_kif_get(aw->v.ifname, NULL);
 	if (dyn->pfid_kif == NULL) {
 		rv = 1;
 		goto _bad;

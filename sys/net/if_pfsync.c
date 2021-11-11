@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.297 2021/07/07 18:38:25 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.298 2021/11/11 12:35:01 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -547,7 +547,7 @@ pfsync_state_import(struct pfsync_state *sp, int flags)
 		return (EINVAL);
 	}
 
-	if ((kif = pfi_kif_get(sp->ifname)) == NULL) {
+	if ((kif = pfi_kif_get(sp->ifname, NULL)) == NULL) {
 		DPFPRINTF(LOG_NOTICE, "pfsync_state_import: "
 		    "unknown interface: %s", sp->ifname);
 		if (flags & PFSYNC_SI_IOCTL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.136 2021/10/24 10:58:43 sashan Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.137 2021/11/11 12:35:01 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -848,7 +848,7 @@ pfr_create_kentry(struct pfr_addr *ad)
 		/* FALLTHROUGH */
 	case PFRKE_ROUTE:
 		if (ad->pfra_ifname[0])
-			ke->pfrke_rkif = pfi_kif_get(ad->pfra_ifname);
+			ke->pfrke_rkif = pfi_kif_get(ad->pfra_ifname, NULL);
 		if (ke->pfrke_rkif)
 			pfi_kif_ref(ke->pfrke_rkif, PFI_KIF_REF_ROUTE);
 		break;
