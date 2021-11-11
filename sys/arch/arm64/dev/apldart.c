@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.7 2021/11/01 20:04:11 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.8 2021/11/11 18:43:05 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -31,11 +31,6 @@
 #include <dev/ofw/fdt.h>
 
 /*
- * This driver is based on preliminary device tree bindings and will
- * almost certainly need changes once the official bindings land in
- * mainline Linux.  Support for these preliminary bindings will be
- * dropped as soon as official bindings are available.
- *
  * This driver largely ignores stream IDs and simply uses a single
  * translation table for all the devices that it serves.  This is good
  * enough for the PCIe host bridge that serves the on-board devices on
@@ -49,6 +44,9 @@
 #define  DART_TLB_OP_FLUSH		(1 << 20)
 #define  DART_TLB_OP_BUSY		(1 << 2)
 #define DART_TLB_OP_SIDMASK	0x0034
+#define DART_ERROR		0x0040
+#define DART_ERROR_ADDR_LO	0x0050
+#define DART_ERROR_ADDR_HI	0x0054
 #define DART_TCR(sid)		(0x0100 + 4 *(sid))
 #define  DART_TCR_TRANSLATE_ENABLE	(1 << 7)
 #define  DART_TCR_BYPASS_DART		(1 << 8)
@@ -63,9 +61,19 @@
 #define DART_PAGE_SIZE		16384
 #define DART_PAGE_MASK		(DART_PAGE_SIZE - 1)
 
+/*
+ * Some hardware (e.g. bge(4)) will always use (aligned) 64-bit memory
+ * access.  To make sure this doesn't fault, round the subpage limits
+ * down and up accordingly.
+ */
+#define DART_OFFSET_MASK	7
+
 #define DART_L1_TABLE		0xb
-#define DART_L2_INVAL		0x0
-#define DART_L2_PAGE		0x3
+#define DART_L2_INVAL		0
+#define DART_L2_VALID		(1 << 0)
+#define DART_L2_FULL_PAGE	(1 << 1)
+#define DART_L2_START(addr)	((((addr) & DART_PAGE_MASK) >> 2) << 52)
+#define DART_L2_END(addr)	((((addr) & DART_PAGE_MASK) >> 2) << 40)
 
 static inline paddr_t
 apldart_round_page(paddr_t pa)
@@ -73,10 +81,22 @@ apldart_round_page(paddr_t pa)
 	return ((pa + DART_PAGE_MASK) & ~DART_PAGE_MASK);
 }
 
-inline paddr_t
-static apldart_trunc_page(paddr_t pa)
+static inline paddr_t
+apldart_trunc_page(paddr_t pa)
 {
 	return (pa & ~DART_PAGE_MASK);
+}
+
+static inline psize_t
+apldart_round_offset(psize_t off)
+{
+	return ((off + DART_OFFSET_MASK) & ~DART_OFFSET_MASK);
+}
+
+static inline psize_t
+apldart_trunc_offset(psize_t off)
+{
+	return (off & ~DART_OFFSET_MASK);
 }
 
 #define HREAD4(sc, reg)							\
@@ -303,7 +323,9 @@ apldart_intr(void *arg)
 {
 	struct apldart_softc *sc = arg;
 
-	panic("%s: %s", sc->sc_dev.dv_xname, __func__);
+	panic("%s: error 0x%08x addr 0x%08x%08x\n", sc->sc_dev.dv_xname,
+	    HREAD4(sc, DART_ERROR), HREAD4(sc, DART_ERROR_ADDR_HI),
+	    HREAD4(sc, DART_ERROR_ADDR_LO));
 }
 
 void
@@ -340,6 +362,7 @@ apldart_load_map(struct apldart_softc *sc, bus_dmamap_t map)
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		paddr_t pa = map->dm_segs[seg]._ds_paddr;
 		psize_t off = pa - apldart_trunc_page(pa);
+		psize_t start, end;
 		u_long len, dva;
 
 		len = apldart_round_page(map->dm_segs[seg].ds_len + off);
@@ -359,13 +382,20 @@ apldart_load_map(struct apldart_softc *sc, bus_dmamap_t map)
 		map->dm_segs[seg].ds_addr = dva + off;
 
 		pa = apldart_trunc_page(pa);
+		start = apldart_trunc_offset(off);
+		end = DART_PAGE_MASK;
 		while (len > 0) {
+			if (len < DART_PAGE_SIZE)
+				end = apldart_round_offset(len) - 1;
+
 			tte = apldart_lookup_tte(sc, dva);
-			*tte = pa | DART_L2_PAGE;
+			*tte = pa | DART_L2_VALID |
+			    DART_L2_START(start) | DART_L2_END(end);
 
 			pa += DART_PAGE_SIZE;
 			dva += DART_PAGE_SIZE;
 			len -= DART_PAGE_SIZE;
+			start = 0;
 		}
 	}
 
