@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.554 2021/09/01 08:15:53 deraadt Exp $
+#	$OpenBSD: rc,v 1.555 2021/11/11 09:38:14 claudio Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -596,7 +596,7 @@ echo 'preserving editor files.'; /usr/libexec/vi.recover
 run_upgrade_script sysmerge
 
 echo -n 'starting network daemons:'
-start_daemon ldomd sshd switchd snmpd ldpd ripd ospfd ospf6d bgpd ifstated
+start_daemon ldomd sshd snmpd ldpd ripd ospfd ospf6d bgpd ifstated
 start_daemon relayd dhcpd dhcrelay mrouted dvmrpd radiusd eigrpd route6d
 start_daemon rad hostapd lpd smtpd slowcgi httpd ftpd
 start_daemon ftpproxy ftpproxy6 tftpd tftpproxy identd inetd rarpd bootparamd
