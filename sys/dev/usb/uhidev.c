@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.98 2021/11/10 06:33:30 anton Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.99 2021/11/11 07:04:45 anton Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -246,36 +246,29 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_isize += (nrepid != 1);	/* one byte for the report ID */
 	DPRINTF(("uhidev_attach: isize=%d\n", sc->sc_isize));
 
-	memset(&uha, 0, sizeof(uha));
 	uha.uaa = uaa;
 	uha.parent = sc;
+	uha.reportid = UHIDEV_CLAIM_MULTIPLE_REPORTID;
+	uha.nreports = nrepid;
+	uha.claimed = malloc(nrepid, M_TEMP, M_WAITOK|M_ZERO);
 
 	/* Look for a driver claiming multiple report IDs first. */
-	if (nrepid > 1) {
-		uha.reportid = UHIDEV_CLAIM_MULTIPLE_REPORTID;
-		uha.nreports = nrepid;
-		uha.claimed = malloc(nrepid, M_TEMP, M_WAITOK|M_ZERO);
+	dev = config_found_sm(self, &uha, NULL, NULL);
+	if (dev != NULL) {
+		for (repid = 0; repid < nrepid; repid++) {
+			/*
+			 * Could already be assigned by uhidev_set_report_dev().
+			 */
+			if (sc->sc_subdevs[repid] != NULL)
+				continue;
 
-		dev = config_found_sm(self, &uha, NULL, NULL);
-		if (dev != NULL) {
-			for (repid = 0; repid < nrepid; repid++) {
-				/*
-				 * Could already be assigned by
-				 * uhidev_set_report_dev().
-				 */
-				if (sc->sc_subdevs[repid] != NULL)
-					continue;
-
-				if (!uha.claimed[repid])
-					continue;
+			if (uha.claimed[repid])
 				sc->sc_subdevs[repid] = (struct uhidev *)dev;
-			}
 		}
-
-		free(uha.claimed, M_TEMP, nrepid);
-		uha.nreports = 0;
-		uha.claimed = NULL;
 	}
+
+	free(uha.claimed, M_TEMP, nrepid);
+	uha.claimed = NULL;
 
 	for (repid = 0; repid < nrepid; repid++) {
 		DPRINTF(("%s: try repid=%d\n", __func__, repid));

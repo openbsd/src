@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.36 2021/11/10 06:33:30 anton Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.37 2021/11/11 07:04:45 anton Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -75,8 +75,8 @@ struct uhidev_attach_arg {
 	struct usb_attach_arg	*uaa;
 	struct uhidev_softc	*parent;
 	uint8_t			 reportid;
-#define	UHIDEV_CLAIM_MULTIPLE_REPORTID	0
-	u_int			 nreports;
+#define	UHIDEV_CLAIM_MULTIPLE_REPORTID	255
+	uint8_t			 nreports;
 	uint8_t			*claimed;
 };
 
