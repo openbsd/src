@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2021/10/02 07:06:13 anton Exp $
+#	$OpenBSD: Makefile,v 1.26 2021/11/11 10:03:54 claudio Exp $
 
 SUBDIR += acme-client
 SUBDIR += arp
@@ -14,7 +14,6 @@ SUBDIR += ospf6d
 SUBDIR += relayd
 SUBDIR += rpki-client
 SUBDIR += snmpd
-SUBDIR += switchd
 SUBDIR += syslogd
 
 .if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
