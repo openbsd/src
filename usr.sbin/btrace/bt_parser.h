@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parser.h,v 1.21 2021/10/03 22:01:48 dv Exp $	*/
+/*	$OpenBSD: bt_parser.h,v 1.22 2021/11/12 16:57:24 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -147,6 +147,7 @@ struct bt_arg {
 		B_AT_BI_ARG9,
 		B_AT_BI_ARGS,
 		B_AT_BI_RETVAL,
+		B_AT_BI_PROBE,
 
 		B_AT_FN_STR,			/* str($1); str($1, 3); */
 
