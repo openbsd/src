@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.287 2021/10/24 00:02:25 jsg Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.288 2021/11/12 17:57:13 cheloha Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -509,7 +509,7 @@ dosigsuspend(struct proc *p, sigset_t newmask)
 }
 
 /*
- * Suspend process until signal, providing mask to be set
+ * Suspend thread until signal, providing mask to be set
  * in the meantime.  Note nonstandard calling convention:
  * libc stub passes mask, not pointer, to save a copyin.
  */
@@ -519,12 +519,10 @@ sys_sigsuspend(struct proc *p, void *v, register_t *retval)
 	struct sys_sigsuspend_args /* {
 		syscallarg(int) mask;
 	} */ *uap = v;
-	struct process *pr = p->p_p;
-	struct sigacts *ps = pr->ps_sigacts;
 
 	dosigsuspend(p, SCARG(uap, mask) &~ sigcantmask);
-	while (tsleep_nsec(ps, PPAUSE|PCATCH, "sigsusp", INFSLP) == 0)
-		/* void */;
+	while (tsleep_nsec(&nowake, PPAUSE|PCATCH, "sigsusp", INFSLP) == 0)
+		continue;
 	/* always return EINTR rather than ERESTART... */
 	return (EINTR);
 }
