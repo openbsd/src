@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.57 2021/10/24 07:02:47 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.58 2021/11/12 04:34:23 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -287,7 +287,8 @@ extern const struct filterops sig_filtops;
 extern const struct filterops dead_filtops;
 extern const struct klistops socket_klistops;
 
-extern void	kqpoll_init(void);
+extern void	kqpoll_init(unsigned int);
+extern void	kqpoll_done(unsigned int);
 extern void	kqpoll_exit(void);
 extern void	knote(struct klist *list, long hint);
 extern void	knote_fdclose(struct proc *p, int fd);
@@ -302,7 +303,6 @@ extern int	kqueue_scan(struct kqueue_scan_state *, int, struct kevent *,
 		    struct timespec *, struct proc *, int *);
 extern void	kqueue_scan_setup(struct kqueue_scan_state *, struct kqueue *);
 extern void	kqueue_scan_finish(struct kqueue_scan_state *);
-extern void	kqueue_purge(struct proc *, struct kqueue *);
 extern int	filt_seltrue(struct knote *kn, long hint);
 extern int	seltrue_kqfilter(dev_t, struct knote *);
 extern void	klist_init(struct klist *, const struct klistops *, void *);

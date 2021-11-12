@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.170 2021/11/06 05:48:47 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.171 2021/11/12 04:34:22 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -73,6 +73,7 @@ void	kqueue_terminate(struct proc *p, struct kqueue *);
 void	KQREF(struct kqueue *);
 void	KQRELE(struct kqueue *);
 
+void	kqueue_purge(struct proc *, struct kqueue *);
 int	kqueue_sleep(struct kqueue *, struct timespec *);
 
 int	kqueue_read(struct file *, struct uio *, int);
@@ -763,29 +764,55 @@ filter_process(struct knote *kn, struct kevent *kev)
 	return (active);
 }
 
+/*
+ * Initialize the current thread for poll/select system call.
+ * num indicates the number of serials that the system call may utilize.
+ * After this function, the valid range of serials is
+ * p_kq_serial <= x < p_kq_serial + num.
+ */
 void
-kqpoll_init(void)
+kqpoll_init(unsigned int num)
 {
 	struct proc *p = curproc;
 	struct filedesc *fdp;
 
-	if (p->p_kq != NULL) {
-		/*
-		 * Discard any badfd knotes that have been enqueued after
-		 * previous scan.
-		 * This prevents them from accumulating in case
-		 * scan does not make progress for some reason.
-		 */
-		kqpoll_dequeue(p, 0);
-		return;
+	if (p->p_kq == NULL) {
+		p->p_kq = kqueue_alloc(p->p_fd);
+		p->p_kq_serial = arc4random();
+		fdp = p->p_fd;
+		fdplock(fdp);
+		LIST_INSERT_HEAD(&fdp->fd_kqlist, p->p_kq, kq_next);
+		fdpunlock(fdp);
 	}
 
-	p->p_kq = kqueue_alloc(p->p_fd);
-	p->p_kq_serial = arc4random();
-	fdp = p->p_fd;
-	fdplock(fdp);
-	LIST_INSERT_HEAD(&fdp->fd_kqlist, p->p_kq, kq_next);
-	fdpunlock(fdp);
+	if (p->p_kq_serial + num < p->p_kq_serial) {
+		/* Serial is about to wrap. Clear all attached knotes. */
+		kqueue_purge(p, p->p_kq);
+		p->p_kq_serial = 0;
+	}
+
+	/*
+	 * Discard any detached knotes that have been enqueued after
+	 * previous scan.
+	 * This prevents them from accumulating in case
+	 * scan does not make progress for some reason.
+	 */
+	kqpoll_dequeue(p, 0);
+}
+
+/*
+ * Finish poll/select system call.
+ * num must have the same value that was used with kqpoll_init().
+ */
+void
+kqpoll_done(unsigned int num)
+{
+	struct proc *p = curproc;
+
+	KASSERT(p->p_kq != NULL);
+	KASSERT(p->p_kq_serial + num >= p->p_kq_serial);
+
+	p->p_kq_serial += num;
 }
 
 void
@@ -1382,6 +1409,15 @@ retry:
 		}
 
 		mtx_leave(&kq->kq_lock);
+
+		/* Drop expired kqpoll knotes. */
+		if (p->p_kq == kq &&
+		    p->p_kq_serial > (unsigned long)kn->kn_udata) {
+			filter_detach(kn);
+			knote_drop(kn, p);
+			mtx_enter(&kq->kq_lock);
+			continue;
+		}
 
 		memset(kevp, 0, sizeof(*kevp));
 		if (filter_process(kn, kevp) == 0) {

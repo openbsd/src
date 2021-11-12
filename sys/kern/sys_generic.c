@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.139 2021/10/29 15:52:44 anton Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.140 2021/11/12 04:34:22 visa Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -633,7 +633,7 @@ dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
 		pobits[2] = (fd_set *)&bits[5];
 	}
 
-	kqpoll_init();
+	kqpoll_init(nd);
 
 #define	getbits(name, x) \
 	if (name && (error = copyin(name, pibits[x], ni))) \
@@ -730,8 +730,7 @@ done:
 	if (pibits[0] != (fd_set *)&bits[0])
 		free(pibits[0], M_TEMP, 6 * ni);
 
-	kqueue_purge(p, p->p_kq);
-	p->p_kq_serial += nd;
+	kqpoll_done(nd);
 
 	return (error);
 }
@@ -759,7 +758,7 @@ pselregister(struct proc *p, fd_set *pibits[3], fd_set *pobits[3], int nfd,
 				DPRINTFN(2, "select fd %d mask %d serial %lu\n",
 				    fd, msk, p->p_kq_serial);
 				EV_SET(&kev, fd, evf[msk],
-				    EV_ADD|EV_ENABLE|EV_ONESHOT|__EV_POLL,
+				    EV_ADD|EV_ENABLE|__EV_POLL,
 				    evff[msk], 0, (void *)(p->p_kq_serial));
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_STRUCT))
@@ -804,13 +803,10 @@ int
 pselcollect(struct proc *p, struct kevent *kevp, fd_set *pobits[3],
     int *ncollected)
 {
-	/* Filter out and lazily delete spurious events */
 	if ((unsigned long)kevp->udata != p->p_kq_serial) {
-		DPRINTFN(0, "select fd %u mismatched serial %lu\n",
-		    (int)kevp->ident, p->p_kq_serial);
-		kevp->flags = EV_DISABLE|EV_DELETE;
-		kqueue_register(p->p_kq, kevp, p);
-		return (0);
+		panic("%s: spurious kevp %p fd %d udata 0x%lx serial 0x%lx",
+		    __func__, kevp, (int)kevp->ident,
+		    (unsigned long)kevp->udata, p->p_kq_serial);
 	}
 
 	if (kevp->flags & EV_ERROR) {
@@ -1001,14 +997,14 @@ ppollregister(struct proc *p, struct pollfd *pl, int nfds, int *nregistered)
 		kevp = kev;
 		if (pl[i].events & (POLLIN | POLLRDNORM)) {
 			EV_SET(kevp, pl[i].fd, EVFILT_READ,
-			    EV_ADD|EV_ENABLE|EV_ONESHOT|__EV_POLL, 0, 0,
+			    EV_ADD|EV_ENABLE|__EV_POLL, 0, 0,
 			    (void *)(p->p_kq_serial + i));
 			nkev++;
 			kevp++;
 		}
 		if (pl[i].events & (POLLOUT | POLLWRNORM)) {
 			EV_SET(kevp, pl[i].fd, EVFILT_WRITE,
-			    EV_ADD|EV_ENABLE|EV_ONESHOT|__EV_POLL, 0, 0,
+			    EV_ADD|EV_ENABLE|__EV_POLL, 0, 0,
 			    (void *)(p->p_kq_serial + i));
 			nkev++;
 			kevp++;
@@ -1017,7 +1013,7 @@ ppollregister(struct proc *p, struct pollfd *pl, int nfds, int *nregistered)
 			int evff = forcehup ? 0 : NOTE_OOB;
 
 			EV_SET(kevp, pl[i].fd, EVFILT_EXCEPT,
-			    EV_ADD|EV_ENABLE|EV_ONESHOT|__EV_POLL, evff, 0,
+			    EV_ADD|EV_ENABLE|__EV_POLL, evff, 0,
 			    (void *)(p->p_kq_serial + i));
 			nkev++;
 			kevp++;
@@ -1143,7 +1139,7 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 			return (EINVAL);
 	}
 
-	kqpoll_init();
+	kqpoll_init(nfds);
 
 	sz = nfds * sizeof(*pl);
 
@@ -1230,8 +1226,7 @@ bad:
 	if (pl != pfds)
 		free(pl, M_TEMP, sz);
 
-	kqueue_purge(p, p->p_kq);
-	p->p_kq_serial += nfds;
+	kqpoll_done(nfds);
 
 	return (error);
 }
@@ -1248,25 +1243,15 @@ ppollcollect(struct proc *p, struct kevent *kevp, struct pollfd *pl, u_int nfds)
 	/*  Extract poll array index */
 	i = (unsigned long)kevp->udata - p->p_kq_serial;
 
-	/*
-	 * Lazily delete spurious events.
-	 *
-	 * This should not happen as long as kqueue_purge() is called
-	 * at the end of every syscall.  It migh be interesting to do
-	 * like DragonFlyBSD and not always allocated a new knote in
-	 * kqueue_register() with that lazy removal makes sense.
-	 */
 	if (i >= nfds) {
-		DPRINTFN(0, "poll get out of range udata %lu vs serial %lu\n",
+		panic("%s: spurious kevp %p nfds %u udata 0x%lx serial 0x%lx",
+		    __func__, kevp, nfds,
 		    (unsigned long)kevp->udata, p->p_kq_serial);
-		kevp->flags = EV_DISABLE|EV_DELETE;
-		kqueue_register(p->p_kq, kevp, p);
-		return (0);
 	}
 	if ((int)kevp->ident != pl[i].fd) {
-		DPRINTFN(0, "poll get %lu/%d mismatch fd %u!=%d serial %lu\n",
-		    i+1, nfds, (int)kevp->ident, pl[i].fd, p->p_kq_serial);
-		return (0);
+		panic("%s: kevp %p %lu/%d mismatch fd %d!=%d serial 0x%lx",
+		    __func__, kevp, i + 1, nfds, (int)kevp->ident, pl[i].fd,
+		    p->p_kq_serial);
 	}
 
 	/*
