@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplspi.c,v 1.1 2021/10/31 16:38:12 kettenis Exp $	*/
+/*	$OpenBSD: aplspi.c,v 1.2 2021/11/12 17:04:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -20,7 +20,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/stdint.h>
+#include <sys/mutex.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
@@ -63,6 +63,7 @@ struct aplspi_softc {
 	uint32_t		sc_pfreq;
 
 	struct spi_controller	sc_tag;
+	struct mutex		sc_mtx;
 
 	int			sc_cs;
 	uint32_t		*sc_csgpio;
@@ -144,6 +145,8 @@ aplspi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tag.sc_transfer = aplspi_transfer;
 	sc->sc_tag.sc_acquire_bus = aplspi_acquire_bus;
 	sc->sc_tag.sc_release_bus = aplspi_release_bus;
+
+	mtx_init(&sc->sc_mtx, IPL_TTY);
 
 	aplspi_scan(sc);
 }
@@ -245,12 +248,18 @@ aplspi_transfer(void *cookie, char *out, char *in, int len, int flags)
 int
 aplspi_acquire_bus(void *cookie, int flags)
 {
+	struct aplspi_softc *sc = cookie;
+
+	mtx_enter(&sc->sc_mtx);
 	return 0;
 }
 
 void
 aplspi_release_bus(void *cookie, int flags)
 {
+	struct aplspi_softc *sc = cookie;
+
+	mtx_leave(&sc->sc_mtx);
 }
 
 void
