@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.148 2021/11/12 08:44:05 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.149 2021/11/12 08:47:02 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -152,7 +152,7 @@ _rc_wait() {
 
 	if [ X"$1" = X"start" ]; then # prevent hanging the boot sequence
 		trap "_rc_alarm" ALRM
-		while (( SECONDS < daemon_timeout )); do
+		while ((SECONDS < daemon_timeout)); do
 			if _rc_do rc_check; then
 				[ X"${rc_bg}" = X"YES" ] || [ -z "$$" ] && break
 			fi
@@ -161,7 +161,7 @@ _rc_wait() {
 		pkill -ALRM -P $$
 		return
 	fi
-	while (( SECONDS < daemon_timeout )); do
+	while ((SECONDS < daemon_timeout)); do
 		case "$1" in
 		reload)
 			_rc_do rc_check && return 0 ;;
