@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.11 2021/08/02 16:21:11 schwarze Exp $
+.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.12 2021/11/12 11:41:50 schwarze Exp $
 .\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 2 2021 $
+.Dd $Mdocdate: November 12 2021 $
 .Dt X509_OBJECT_GET0_X509 3
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@
 .Nd certificate, CRL, private key, and string wrapper for certificate stores
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
-.Ft int
+.Ft X509_LOOKUP_TYPE
 .Fo X509_OBJECT_get_type
 .Fa "const X509_OBJECT *obj"
 .Fc
@@ -51,13 +51,13 @@
 .Ft int
 .Fo X509_OBJECT_idx_by_subject
 .Fa "STACK_OF(X509_OBJECT) *stack"
-.Fa "int type"
+.Fa "X509_LOOKUP_TYPE type"
 .Fa "X509_NAME *name"
 .Fc
 .Ft X509_OBJECT *
 .Fo X509_OBJECT_retrieve_by_subject
 .Fa "STACK_OF(X509_OBJECT) *stack"
-.Fa "int type"
+.Fa "X509_LOOKUP_TYPE type"
 .Fa "X509_NAME *name"
 .Fc
 .Ft X509_OBJECT *

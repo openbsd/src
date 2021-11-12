@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_LOOKUP_new.3,v 1.7 2021/11/09 16:23:04 schwarze Exp $
+.\" $OpenBSD: X509_LOOKUP_new.3,v 1.8 2021/11/12 11:41:50 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 9 2021 $
+.Dd $Mdocdate: November 12 2021 $
 .Dt X509_LOOKUP_NEW 3
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@
 .Ft int
 .Fo X509_LOOKUP_by_subject
 .Fa "X509_LOOKUP *lookup"
-.Fa "int type"
+.Fa "X509_LOOKUP_TYPE type"
 .Fa "X509_NAME *name"
 .Fa "X509_OBJECT *object"
 .Fc
@@ -84,7 +84,7 @@
 .Ft int
 .Fo X509_LOOKUP_by_issuer_serial
 .Fa "X509_LOOKUP *lookup"
-.Fa "int type"
+.Fa "X509_LOOKUP_TYPE type"
 .Fa "X509_NAME *name"
 .Fa "ASN1_INTEGER *serial"
 .Fa "X509_OBJECT *object"
@@ -92,7 +92,7 @@
 .Ft int
 .Fo X509_LOOKUP_by_fingerprint
 .Fa "X509_LOOKUP *lookup"
-.Fa "int type"
+.Fa "X509_LOOKUP_TYPE type"
 .Fa "const unsigned char *bytes"
 .Fa "int length"
 .Fa "X509_OBJECT *object"
@@ -100,7 +100,7 @@
 .Ft int
 .Fo X509_LOOKUP_by_alias
 .Fa "X509_LOOKUP *lookup"
-.Fa "int type"
+.Fa "X509_LOOKUP_TYPE type"
 .Fa "const char *string"
 .Fa "int length"
 .Fa "X509_OBJECT *object"
