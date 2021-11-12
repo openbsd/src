@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_LOOKUP_new.3,v 1.8 2021/11/12 11:41:50 schwarze Exp $
+.\" $OpenBSD: X509_LOOKUP_new.3,v 1.9 2021/11/12 14:05:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -286,16 +286,13 @@ set to
 .Dv NULL .
 .El
 .Pp
+With LibreSSL,
 .Fn X509_LOOKUP_ctrl
 always ignores the
 .Fa ret
-argument when the built-in
-.Vt X509_LOOKUP_METHOD
-objects are used.
+argument.
 .Pp
-When using built-in
-.Vt X509_LOOKUP_METHOD
-objects,
+With LibreSSL,
 .Fn X509_LOOKUP_by_subject
 is only useful if
 .Fa lookup
@@ -336,9 +333,7 @@ In case of success, the first match is returned in the
 .Pf * Fa object
 provided by the caller, overwriting any previous content.
 .Pp
-Unless an application program manually constructs its own
-.Vt X509_LOOKUP_METHOD
-object containing its own callback functions,
+With LibreSSL,
 .Fn X509_LOOKUP_init ,
 .Fn X509_LOOKUP_shutdown ,
 .Fn X509_LOOKUP_by_issuer_serial ,
@@ -346,15 +341,6 @@ object containing its own callback functions,
 and
 .Fn X509_LOOKUP_by_alias
 have no effect.
-.Fn X509_LOOKUP_init
-is supposed to be called after
-.Fn X509_LOOKUP_new
-and before using the
-.Fa lookup
-object,
-.Fn X509_LOOKUP_shutdown
-after using it and before
-.Fn X509_LOOKUP_free .
 .Sh RETURN VALUES
 .Fn X509_LOOKUP_new
 returns the new object or
@@ -363,11 +349,8 @@ if memory allocation fails.
 .Pp
 .Fn X509_LOOKUP_ctrl
 returns 1 for success or 0 for failure.
-If
-.Fa lookup
-uses a user-defined
-.Vt X509_LOOKUP_METHOD
-object, it might also return \-1 for internal errors.
+With library implementations other than LibreSSL,
+it might also return \-1 for internal errors.
 .Pp
 .Fn X509_LOOKUP_by_subject
 returns 1 for success or 0 for failure.
@@ -388,27 +371,21 @@ is neither
 nor
 .Dv X509_LU_CRL ,
 if no match is found, or if memory allocation fails.
-If
-.Fa lookup
-uses a user-defined
-.Vt X509_LOOKUP_METHOD
-object, it might also return negative values for internal errors.
+With library implementations other than LibreSSL,
+it might also return negative values for internal errors.
 .Pp
 .Fn X509_LOOKUP_init
 and
 .Fn X509_LOOKUP_shutdown
 are supposed to return 1 for success and 0 for failure.
-When using the built-in
-.Vt X509_LOOKUP_METHOD
-objects, they always return 1.
+With LibreSSL, they always return 1.
 .Pp
+With LibreSSL,
 .Fn X509_LOOKUP_by_issuer_serial ,
 .Fn X509_LOOKUP_by_fingerprint ,
 and
 .Fn X509_LOOKUP_by_alias
-always return 0 when using the built-in
-.Vt X509_LOOKUP_METHOD
-objects.
+always return 0.
 .Pp
 .Fn X509_get_default_cert_dir
 returns a pointer to the constant string

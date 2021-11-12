@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_get_by_subject.3,v 1.2 2021/11/12 11:41:50 schwarze Exp $
+.\" $OpenBSD: X509_STORE_get_by_subject.3,v 1.3 2021/11/12 14:05:28 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -159,12 +159,7 @@ return 1 if a match is found or 0 on failure.
 In addition to simply not finding a match,
 they may also fail due to memory allocation failure in
 .Xr X509_LOOKUP_by_subject 3 .
-If
-.Fa ctx
-contains any
-.Vt X509_LOOKUP
-object using a user-defined
-.Vt X509_LOOKUP_METHOD ,
+With library implementations other than LibreSSL,
 they might also return negative values for internal errors.
 .Pp
 .Fn X509_STORE_CTX_get_obj_by_subject
@@ -194,12 +189,7 @@ already contains matching CRLs, or if memory allocation fails.
 returns 1 if a matching
 .Fa issuer
 CA certificate is found or 0 otherwise.
-If
-.Fa ctx
-contains any
-.Vt X509_LOOKUP
-object using a user-defined
-.Vt X509_LOOKUP_METHOD ,
+With library implementations other than LibreSSL,
 it might also return negative values for internal errors.
 .Sh SEE ALSO
 .Xr STACK_OF 3 ,
