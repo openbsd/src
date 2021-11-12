@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.18 2021/10/18 14:46:37 schwarze Exp $
+.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.19 2021/11/12 18:56:00 schwarze Exp $
 .\" full merge up to: OpenSSL d33def66 Feb 9 14:17:13 2016 -0500
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -68,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 18 2021 $
+.Dd $Mdocdate: November 12 2021 $
 .Dt X509_VERIFY_PARAM_SET_FLAGS 3
 .Os
 .Sh NAME
@@ -231,15 +231,41 @@ section for a complete description of values the
 .Fa flags
 parameter can take.
 .Pp
+If the
+.Fa flags
+argument includes any of the flags contained in
+.Dv X509_V_FLAG_POLICY_MASK ,
+that is, any of
+.Dv X509_V_FLAG_POLICY_CHECK ,
+.Dv X509_V_FLAG_EXPLICIT_POLICY ,
+.Dv X509_V_FLAG_INHIBIT_ANY ,
+and
+.Dv X509_V_FLAG_INHIBIT_MAP ,
+then
+.Dv X509_V_FLAG_POLICY_CHECK
+is set in addition to the flags contained in the
+.Fa flags
+argument.
+.Pp
 .Fn X509_VERIFY_PARAM_get_flags
 returns the flags in
 .Fa param .
 .Pp
 .Fn X509_VERIFY_PARAM_clear_flags
-clears the flags
+clears the specified
 .Fa flags
 in
 .Fa param .
+.Pp
+Calling this function can result in unsusual internal states of the
+.Fa param
+object, for example having a verification time configured but having
+.Dv X509_V_FLAG_USE_CHECK_TIME
+unset, or having
+.Dv X509_V_FLAG_EXPLICIT_POLICY
+set but
+.Dv X509_V_FLAG_POLICY_CHECK
+unset, which may have surprising effects.
 .Pp
 .Fn X509_VERIFY_PARAM_set_purpose
 sets the verification
@@ -262,11 +288,17 @@ to
 .Fa trust .
 .Pp
 .Fn X509_VERIFY_PARAM_set_time
-sets the verification time in
+sets the flag
+.Dv X509_V_FLAG_USE_CHECK_TIME
+in
 .Fa param
-to
+in addition to the flags already set and sets the verification time to
 .Fa t .
-Normally the current time is used.
+If this function is not called, the current time is used instead,
+or the UNIX Epoch (January 1, 1970) if
+.Dv X509_V_FLAG_USE_CHECK_TIME
+is manually set using
+.Fn X509_VERIFY_PARAM_set_flags .
 .Pp
 .Fn X509_VERIFY_PARAM_add0_policy
 enables policy checking (it is disabled by default) and adds
@@ -492,12 +524,14 @@ set the
 and
 .Dq inhibit policy mapping
 flags, respectively, as defined in RFC 3280.
-Policy checking is automatically enabled if any of these flags are set.
+These three flags are ignored unless
+.Dv X509_V_FLAG_POLICY_CHECK
+is also set.
 .Pp
 If
 .Dv X509_V_FLAG_NOTIFY_POLICY
-is set and the policy checking is successful a special status code is
-set to the verification callback.
+is set and policy checking is successful, a special status code is
+sent to the verification callback.
 This permits it to examine the valid policy tree and perform additional
 checks or simply log it for debugging purposes.
 .Pp
