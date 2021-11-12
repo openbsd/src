@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.118 2021/09/01 15:30:06 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.119 2021/11/12 14:18:54 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1629,28 +1629,9 @@ ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
 	log_debug("%s: Received fragment: %zu of %zu",
 	     __func__, frag_num, frag_total);
 
-	/* Check new fragmented message */
-	if (sa_frag->frag_arr == NULL) {
-		sa_frag->frag_arr = recallocarray(NULL, 0, frag_total,
-		    sizeof(struct iked_frag_entry*));
-		if (sa_frag->frag_arr == NULL) {
-			log_info("%s: recallocarray sa_frag->frag_arr.", __func__);
-			goto done;
-		}
-		sa_frag->frag_total = frag_total;
-	}
-
-	/* Drop all fragments if frag_num or frag_total don't match */
-	if (frag_num > sa_frag->frag_total || frag_total != sa_frag->frag_total)
-		goto dropall;
-
-	/* Silent drop if fragment already stored */
-	if (sa_frag->frag_arr[frag_num-1] != NULL)
+	/* Drop fragment if frag_num and frag_total don't match */
+	if (frag_num > frag_total)
 		goto done;
-
-	/* The first fragments IKE header determines pld_nextpayload */
-	if (frag_num == 1)
-		sa_frag->frag_nextpayload = pld->pld_nextpayload;
 
         /* Decrypt fragment */
 	if ((e = ibuf_new(buf, len)) == NULL)
@@ -1663,6 +1644,29 @@ ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
 		goto done;
 	}
 	elen = ibuf_length(e);
+
+	/* Check new fragmented message */
+	if (sa_frag->frag_arr == NULL) {
+		sa_frag->frag_arr = recallocarray(NULL, 0, frag_total,
+		    sizeof(struct iked_frag_entry*));
+		if (sa_frag->frag_arr == NULL) {
+			log_info("%s: recallocarray sa_frag->frag_arr.", __func__);
+			goto done;
+		}
+		sa_frag->frag_total = frag_total;
+	} else {
+		/* Drop all fragments if frag_total doesn't match previous */
+		if (frag_total != sa_frag->frag_total)
+			goto dropall;
+
+		/* Silent drop if fragment already stored */
+		if (sa_frag->frag_arr[frag_num-1] != NULL)
+			goto done;
+	}
+
+	/* The first fragments IKE header determines pld_nextpayload */
+	if (frag_num == 1)
+		sa_frag->frag_nextpayload = pld->pld_nextpayload;
 
 	/* Insert new list element */
 	el = calloc(1, sizeof(struct iked_frag_entry));
