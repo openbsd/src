@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.251 2021/11/11 13:36:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.252 2021/11/12 11:40:35 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1682,7 +1682,7 @@ iwn_read_eeprom_enhinfo(struct iwn_softc *sc)
 
 	memset(sc->enh_maxpwr, 0, sizeof sc->enh_maxpwr);
 	for (i = 0; i < nitems(enhinfo); i++) {
-		if (enhinfo[i].chan == 0 || enhinfo[i].reserved != 0)
+		if ((enhinfo[i].flags & IWN_TXP_VALID) == 0)
 			continue;	/* Skip invalid entries. */
 
 		maxpwr = 0;
