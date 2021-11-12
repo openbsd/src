@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.95 2021/06/02 07:29:03 semarie Exp $ */
+/*	$OpenBSD: resolve.c,v 1.96 2021/11/12 22:28:13 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -368,6 +368,8 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 		object->Dyn.info[DT_FINI_ARRAY] += obase;
 	if (object->Dyn.info[DT_PREINIT_ARRAY])
 		object->Dyn.info[DT_PREINIT_ARRAY] += obase;
+	if (object->Dyn.info[DT_RELR])
+		object->Dyn.info[DT_RELR] += obase;
 
 	if (gnu_hash) {
 		Elf_Word *hashtab = (Elf_Word *)(gnu_hash + obase);

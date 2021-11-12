@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.192 2021/05/25 17:01:36 kn Exp $ */
+/*	$OpenBSD: loader.c,v 1.193 2021/11/12 22:28:13 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -61,6 +61,7 @@ void _dl_call_init_recurse(elf_object_t *object, int initfirst);
 void _dl_clean_boot(void);
 static inline void unprotect_if_textrel(elf_object_t *_object);
 static inline void reprotect_if_textrel(elf_object_t *_object);
+static void _dl_rreloc(elf_object_t *_object);
 
 int _dl_pagesz __relro = 4096;
 int _dl_bindnow __relro = 0;
@@ -721,6 +722,7 @@ _dl_rtld(elf_object_t *object)
 	 * Do relocation information first, then GOT.
 	 */
 	unprotect_if_textrel(object);
+	_dl_rreloc(object);
 	fails =_dl_md_reloc(object, DT_REL, DT_RELSZ);
 	fails += _dl_md_reloc(object, DT_RELA, DT_RELASZ);
 	reprotect_if_textrel(object);
@@ -947,3 +949,35 @@ reprotect_if_textrel(elf_object_t *object)
 		}
 	}
 }
+
+static void
+_dl_rreloc(elf_object_t *object)
+{
+	const Elf_Relr	*reloc, *rend;
+	Elf_Addr	loff = object->obj_base;
+
+	reloc = object->dyn.relr;
+	rend  = (const Elf_Relr *)((char *)reloc + object->dyn.relrsz);
+
+	while (reloc < rend) {
+		Elf_Addr *where;
+
+		where = (Elf_Addr *)(*reloc + loff);
+		*where++ += loff;
+
+		for (reloc++; reloc < rend && (*reloc & 1); reloc++) {
+			Elf_Addr bits = *reloc >> 1;
+
+			Elf_Addr *here = where;
+			while (bits != 0) {
+				if (bits & 1) {
+					*here += loff;
+				}
+				bits >>= 1;
+				here++;
+			}
+			where += (8 * sizeof *reloc) - 1;
+		}
+	}
+}
+

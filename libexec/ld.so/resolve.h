@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.98 2021/06/02 07:29:03 semarie Exp $ */
+/*	$OpenBSD: resolve.h,v 1.99 2021/11/12 22:28:13 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -47,7 +47,7 @@
 #endif
 
 /* Number of low tags that are used saved internally (0 .. DT_NUM-1) */
-#define DT_NUM	(DT_PREINIT_ARRAYSZ + 1)
+#define DT_NUM	(DT_RELR + 1)
 
 struct load_list {
 	struct load_list *next;
@@ -132,6 +132,9 @@ struct elf_object {
 			Elf_Addr	encoding;
 			initarrayfunc	**preinit_array;
 			Elf_Addr	preinit_arraysz;
+			Elf_Addr	unassigned;
+			Elf_Addr	relrsz;
+			Elf_Relr	*relr;
 		} u;
 	} Dyn;
 #define dyn Dyn.u
