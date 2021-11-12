@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplhidev.c,v 1.1 2021/11/01 09:02:46 kettenis Exp $	*/
+/*	$OpenBSD: aplhidev.c,v 1.2 2021/11/12 17:05:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -54,6 +54,7 @@
 #define  APLHIDEV_DESC_MAX	512
 #define APLHIDEV_KBD_REPORT	0x0110
 #define APLHIDEV_TP_REPORT	0x0210
+#define APLHIDEV_SET_LEDS	0x0151
 
 struct aplhidev_attach_args {
 	uint8_t	aa_reportid;
@@ -85,6 +86,13 @@ struct aplhidev_msghdr {
 
 struct aplhidev_get_desc {
 	struct aplhidev_msghdr	hdr;
+	uint16_t		crc;
+};
+
+struct aplhidev_set_leds {
+	struct aplhidev_msghdr	hdr;
+	uint8_t			reportid;
+	uint8_t			leds;
 	uint16_t		crc;
 };
 
@@ -121,6 +129,7 @@ struct cfdriver aplhidev_cd = {
 };
 
 void	aplhidev_get_descriptor(struct aplhidev_softc *, uint8_t);
+void	aplhidev_set_leds(struct aplhidev_softc *, uint8_t);
 
 int	aplhidev_intr(void *);
 void	aplkbd_intr(struct device *, void *, size_t);
@@ -241,6 +250,46 @@ aplhidev_get_descriptor(struct aplhidev_softc *sc, uint8_t device)
 	delay(1000);
 }
 
+void
+aplhidev_set_leds(struct aplhidev_softc *sc, uint8_t leds)
+{
+	struct aplhidev_spi_packet packet;
+	struct aplhidev_set_leds *msg;
+	struct aplhidev_spi_status status;
+
+	memset(&packet, 0, sizeof(packet));
+	packet.flags = APLHIDEV_WRITE_PACKET;
+	packet.device = APLHIDEV_KBD_DEVICE;
+	packet.len = sizeof(*msg);
+
+	msg = (void *)&packet.data[0];
+	msg->hdr.type = APLHIDEV_SET_LEDS;
+	msg->hdr.device = APLHIDEV_KBD_DEVICE;
+	msg->hdr.msgid = sc->sc_msgid++;
+	msg->hdr.cmdlen = sizeof(*msg) - sizeof(struct aplhidev_msghdr) - 2;
+	msg->hdr.rsplen = msg->hdr.cmdlen;
+	msg->reportid = APLHIDEV_KBD_DEVICE;
+	msg->leds = leds;
+	msg->crc = crc16(0, (void *)msg, sizeof(*msg) - 2);
+
+	packet.crc = crc16(0, (void *)&packet, sizeof(packet) - 2);
+
+	/*
+	 * XXX Without a delay here, the command will fail.  Does the
+	 * controller need a bit of time between sending us a keypress
+	 * event and accepting a new command from us?
+	 */
+	delay(250);
+
+	spi_acquire_bus(sc->sc_spi_tag, 0);
+	spi_config(sc->sc_spi_tag, &sc->sc_spi_conf);
+	spi_transfer(sc->sc_spi_tag, (char *)&packet, NULL, sizeof(packet),
+	    SPI_KEEP_CS);
+	delay(100);
+	spi_read(sc->sc_spi_tag, (char *)&status, sizeof(status));
+	spi_release_bus(sc->sc_spi_tag, 0);
+}
+
 int
 aplhidev_intr(void *arg)
 {
@@ -304,9 +353,10 @@ aplhidev_intr(void *arg)
 /* Keyboard */
 
 struct aplkbd_softc {
-	struct device	sc_dev;
-	struct hidkbd	sc_kbd;
-	int		sc_spl;
+	struct device		sc_dev;
+	struct aplhidev_softc	*sc_hidev;
+	struct hidkbd		sc_kbd;
+	int			sc_spl;
 };
 
 void	aplkbd_cngetc(void *, u_int *, int *);
@@ -355,6 +405,7 @@ aplkbd_attach(struct device *parent, struct device *self, void *aux)
 	struct aplhidev_attach_args *aa = (struct aplhidev_attach_args *)aux;
 	struct hidkbd *kbd = &sc->sc_kbd;
 
+	sc->sc_hidev = (struct aplhidev_softc *)parent;
 	if (hidkbd_attach(self, kbd, 1, 0, APLHIDEV_KBD_DEVICE,
 	    aa->aa_desc, aa->aa_desclen))
 		return;
@@ -410,6 +461,12 @@ aplkbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 void
 aplkbd_set_leds(void *v, int leds)
 {
+	struct aplkbd_softc *sc = v;
+	struct hidkbd *kbd = &sc->sc_kbd;
+	uint8_t res;
+
+	if (hidkbd_set_leds(kbd, leds, &res))
+		aplhidev_set_leds(sc->sc_hidev, res);
 }
 
 /* Console interface. */
