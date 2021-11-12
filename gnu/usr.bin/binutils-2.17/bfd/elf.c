@@ -1258,6 +1258,9 @@ _bfd_elf_print_private_bfd_data (bfd *abfd, void *farg)
 	    case DT_USED: name = "USED"; break;
 	    case DT_FILTER: name = "FILTER"; stringp = TRUE; break;
 	    case DT_GNU_HASH: name = "GNU_HASH"; break;
+	    case DT_RELR: name = "RELR"; break;
+	    case DT_RELRSZ: name = "RELRSZ"; break;
+	    case DT_RELRENT: name = "RELRENT"; break;
 	    }
 
 	  fprintf (f, "  %-11s ", name);
@@ -2120,6 +2123,9 @@ bfd_section_from_shdr (bfd *abfd, unsigned int shindex)
 	return TRUE;
       }
       break;
+
+    case SHT_RELR:
+      return _bfd_elf_make_section_from_shdr (abfd, hdr, name, shindex);
 
     case SHT_GNU_verdef:
       elf_dynverdef (abfd) = shindex;

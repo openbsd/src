@@ -179,6 +179,9 @@ typedef struct {
   unsigned char	r_addend[8];	/* Constant addend used to compute value */
 } Elf64_External_Rela;
 
+typedef unsigned char Elf32_External_Relr[4];
+typedef unsigned char Elf64_External_Relr[8];
+
 /* dynamic section structure */
 
 typedef struct {
