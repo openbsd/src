@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.147 2021/11/12 08:38:02 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.148 2021/11/12 08:44:05 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -148,6 +148,8 @@ _rc_sendsig() {
 }
 
 _rc_wait() {
+	SECONDS=0
+
 	if [ X"$1" = X"start" ]; then # prevent hanging the boot sequence
 		trap "_rc_alarm" ALRM
 		while (( SECONDS < daemon_timeout )); do
