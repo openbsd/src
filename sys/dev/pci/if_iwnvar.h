@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.41 2021/11/11 13:36:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwnvar.h,v 1.42 2021/11/12 11:41:04 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008
@@ -280,6 +280,7 @@ struct iwn_softc {
 #define IWN_LAST_RX_AMPDU	0x02
 	struct iwn_ucode_info	ucode_info;
 	struct iwn_rxon		rxon;
+	uint32_t		rx_stats_flags;
 	uint32_t		rawtemp;
 	int			temp;
 	int			noise;
@@ -298,6 +299,7 @@ struct iwn_softc {
 	int8_t			maxpwr2GHz;
 	int8_t			maxpwr5GHz;
 	int8_t			maxpwr[IEEE80211_CHAN_MAX];
+	int8_t			maxpwr40[IEEE80211_CHAN_MAX];
 	int8_t			enh_maxpwr[35];
 
 	uint8_t			reset_noise_gain;
