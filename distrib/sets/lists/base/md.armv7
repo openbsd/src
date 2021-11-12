@@ -7,7 +7,7 @@
 ./usr/bin/ld.lld
 ./usr/lib/libLLVM.so.6.0
 ./usr/lib/libc++.so.8.0
-./usr/lib/libc++abi.so.5.0
+./usr/lib/libc++abi.so.5.1
 ./usr/lib/libcompiler_rt.a
 ./usr/libdata/perl5/arm-openbsd
 ./usr/libdata/perl5/arm-openbsd/.packlist
