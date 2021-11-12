@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.234 2021/11/11 12:49:53 sashan Exp $
+# $OpenBSD: Makefile,v 1.235 2021/11/12 06:53:51 anton Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check whether the output matches pfNN.ok
@@ -386,22 +386,24 @@ pf-changerule: changerule changerule-tail.ok changerule-head.ok \
 	echo "pass in proto tcp from any to any port $i" | \
 	    ${SUDO} ./changerule -a regress -i 0
 .endfor
-	${SUDO} ${PFCTL} -a regress -sr | diff -u changerule-head.ok /dev/stdin
+	${SUDO} ${PFCTL} -a regress -sr | \
+	    diff -u ${.CURDIR}/changerule-head.ok /dev/stdin
 	${SUDO} ${PFCTL} -a 'regress/*' -Fr
 	echo 'pass all' | ${SUDO} ${PFCTL} -a regress -f -
 .for i in 10 20 30 40 50
 	echo "pass in proto tcp from any to any port $i" | \
 	    ${SUDO} ./changerule -a regress -i -1
 .endfor
-	${SUDO} ${PFCTL} -a regress -sr | diff -u changerule-tail.ok /dev/stdin
+	${SUDO} ${PFCTL} -a regress -sr | \
+	    diff -u ${.CURDIR}/changerule-tail.ok /dev/stdin
 	echo 'pass in proto tcp from any to any port 15' | \
 	    ${SUDO} ./changerule -a regress -i 2
 	${SUDO} ${PFCTL} -a regress -sr | \
-	    diff -u changerule-before.ok /dev/stdin
+	    diff -u ${.CURDIR}/changerule-before.ok /dev/stdin
 	echo 'pass in proto tcp from any to any port 25' | \
 	    ${SUDO} ./changerule -a regress -I 3
 	${SUDO} ${PFCTL} -a regress -sr | \
-	    diff -u changerule-after.ok /dev/stdin
+	    diff -u ${.CURDIR}/changerule-after.ok /dev/stdin
 	${SUDO} ${PFCTL} -a 'regress/*' -Fr
 
 update:	${UPDATE_TARGETS}
