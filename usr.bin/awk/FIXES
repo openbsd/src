@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.41 2021/11/02 15:29:41 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.42 2021/11/12 15:16:58 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,11 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+Nov 03, 2021:
+        getline accesses uninitialized data after getrec()
+	returns 0 on EOF and leaves the contents of buf unchanged.
+	Thanks to Volodymyr Gubarkov, and Todd C Miller.
 
 Oct 12, 2021:
 	The fix for #83 changed the code to insert 2 chars, but the
