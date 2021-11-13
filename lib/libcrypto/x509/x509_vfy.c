@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.96 2021/11/07 15:52:38 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.97 2021/11/13 18:24:45 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1080,17 +1080,17 @@ err:
 static int
 check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
 {
-	time_t *ptime = NULL;
+	time_t *ptime;
 	int i;
-
-	if (ctx->param->flags & X509_V_FLAG_NO_CHECK_TIME)
-		return (1);
-
-	if (ctx->param->flags & X509_V_FLAG_USE_CHECK_TIME)
-		ptime = &ctx->param->check_time;
 
 	if (notify)
 		ctx->current_crl = crl;
+	if (ctx->param->flags & X509_V_FLAG_USE_CHECK_TIME)
+		ptime = &ctx->param->check_time;
+	else if (ctx->param->flags & X509_V_FLAG_NO_CHECK_TIME)
+		return (1);
+	else
+		ptime = NULL;
 
 	i = X509_cmp_time(X509_CRL_get_lastUpdate(crl), ptime);
 	if (i == 0) {
