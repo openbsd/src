@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.90 2021/11/09 22:38:25 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.91 2021/11/13 20:56:51 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 9 2021 $
+.Dd $Mdocdate: November 13 2021 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -995,15 +995,6 @@ keyword, transforms with
 can only be used with the
 .Ic childsa
 keyword.
-.Pp
-3DES requires 24 bytes to form its 168-bit key.
-This is because the most significant bit of each byte is used for parity.
-.Pp
-The keysize of AES-CTR can be 128, 192, or 256 bits.
-However as well as the key, a 32-bit nonce has to be supplied.
-Thus 160, 224, or 288 bits of key material, respectively, have to be supplied.
-The same applies to AES-GCM, AES-GMAC and Chacha20-Poly1305,
-however in the latter case the keysize is 256 bit.
 .Pp
 Using AES-GMAC or NULL with ESP will only provide authentication.
 This is useful in setups where AH cannot be used, e.g. when NAT is involved.
