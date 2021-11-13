@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.9 2018/05/03 17:13:37 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.10 2021/11/13 08:48:50 matthieu Exp $
 
-SUBDIR =	X11 c++abi exceptions os-test posixtestsuite sse2
+SUBDIR =	c++abi exceptions os-test posixtestsuite sse2
 
 install:
 
