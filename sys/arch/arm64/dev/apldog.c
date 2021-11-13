@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldog.c,v 1.1 2021/02/22 21:30:54 kettenis Exp $	*/
+/*	$OpenBSD: apldog.c,v 1.2 2021/11/13 23:24:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -72,7 +72,7 @@ apldog_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,reboot-v0");
+	return OF_is_compatible(faa->fa_node, "apple,wdt");
 }
 
 void
