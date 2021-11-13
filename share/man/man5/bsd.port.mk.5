@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.546 2021/10/08 13:52:28 sdk Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.547 2021/11/13 12:09:30 kn Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 8 2021 $
+.Dd $Mdocdate: November 13 2021 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1770,8 +1770,8 @@ User settings.
 If non empty, used as a base for the fake area.
 The real fake directory ${WRKINST} is created there.
 Can be set on a per-${PKGPATH} basis.
-For instance, setting FAKEOBJDIR_www/mozilla=/tmp/obj
-will affect only the mozilla port.
+For instance, setting FAKEOBJDIR_www/mozilla-firefox=/tmp/obj
+will affect only the mozilla-firefox port.
 .It Ev FETCH_CMD
 User settings.
 Command used to fetch distribution files for this port.
