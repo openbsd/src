@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.45 2020/12/08 15:06:42 tb Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.46 2021/11/13 20:44:00 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -290,9 +290,9 @@ ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
 {
 	if (str == NULL)
 		return 0;
-	dst->type = str->type;
 	if (!ASN1_STRING_set(dst, str->data, str->length))
 		return 0;
+	dst->type = str->type;
 	dst->flags = str->flags;
 	return 1;
 }
