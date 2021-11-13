@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.20 2021/11/13 17:32:46 kn Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.21 2021/11/13 17:49:40 kn Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -409,6 +409,7 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 	struct rdns_proposal		 learning[nitems(learned)];
 	struct sockaddr_rtdns		*rtdns;
 	struct if_announcemsghdr	*ifan;
+	size_t				 addrsz;
 	int				 rdns_count, af, i;
 	char				*src;
 
@@ -441,25 +442,22 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 
 		switch (af) {
 		case AF_INET:
-			if ((rtdns->sr_len - 2) % sizeof(struct in_addr) != 0) {
-				lwarnx("ignoring invalid RTM_PROPOSAL");
-				return;
-			}
-			rdns_count = (rtdns->sr_len - offsetof(struct
-			    sockaddr_rtdns, sr_dns)) / sizeof(struct in_addr);
+			addrsz = sizeof(struct in_addr);
 			break;
 		case AF_INET6:
-			if ((rtdns->sr_len - 2) % sizeof(struct in6_addr) != 0) {
-				lwarnx("ignoring invalid RTM_PROPOSAL");
-				return;
-			}
-			rdns_count = (rtdns->sr_len - offsetof(struct
-			    sockaddr_rtdns, sr_dns)) / sizeof(struct in6_addr);
+			addrsz = sizeof(struct in6_addr);
 			break;
 		default:
 			lwarnx("ignoring invalid RTM_PROPOSAL");
 			return;
 		}
+
+		if ((rtdns->sr_len - 2) % addrsz != 0) {
+			lwarnx("ignoring invalid RTM_PROPOSAL");
+			return;
+		}
+		rdns_count = (rtdns->sr_len -
+		    offsetof(struct sockaddr_rtdns, sr_dns)) / addrsz;
 
 		/* New proposal from interface means previous proposals expire */
 		for (i = 0; i < ASR_MAXNS; i++)
@@ -469,44 +467,34 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 
 		/* Add the new proposals */
 		for (i = 0; i < rdns_count; i++) {
-			struct in_addr addr4;
-			struct sockaddr_in6 sin6;
-			struct sockaddr *sa;
-			int new;
+			struct sockaddr_storage ss;
+			struct sockaddr_in *sin = (struct sockaddr_in *)&ss;
+			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&ss;
+			int new, err;
 
+			memset(&ss, 0, sizeof(ss));
+			ss.ss_family = af;
+			new = findslot(learning);
 			switch (af) {
 			case AF_INET:
-				memcpy(&addr4, src, sizeof(struct in_addr));
-				src += sizeof(struct in_addr);
-				new = findslot(learning);
-				if (inet_ntop(af, &addr4, learning[new].ip,
-				    INET6_ADDRSTRLEN) != NULL) {
-					learning[new].prio = rtm->rtm_priority;
-					learning[new].if_index = rtm->rtm_index;
-					learning[new].af = af;
-				} else
-					lwarn("inet_ntop");
+				memcpy(&sin->sin_addr, src, addrsz);
 				break;
 			case AF_INET6:
-				memset(&sin6, 0, sizeof(sin6));
-				sin6.sin6_family = af;
-				memcpy(&sin6.sin6_addr, src,
-				    sizeof(struct in6_addr));
-				src += sizeof(struct in6_addr);
-				if (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr))
-					sin6.sin6_scope_id = rtm->rtm_index;
-				new = findslot(learning);
-				sa = (struct sockaddr *)(&sin6);
-				if (getnameinfo(sa, sa->sa_len,
-				    learning[new].ip, sizeof(learning[new].ip),
-				    NULL, 0, NI_NUMERICHOST) == 0) {
-					learning[new].prio = rtm->rtm_priority;
-					learning[new].if_index = rtm->rtm_index;
-					learning[new].af = af;
-				} else
-					lwarn("getnameinfo");
+				memcpy(&sin6->sin6_addr, src, addrsz);
+				if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+					sin6->sin6_scope_id = rtm->rtm_index;
 				break;
 			}
+			src += addrsz;
+
+			if ((err = getnameinfo((struct sockaddr *)&ss, ss.ss_len,
+			    learning[new].ip, sizeof(learning[new].ip),
+			    NULL, 0, NI_NUMERICHOST)) == 0) {
+				learning[new].prio = rtm->rtm_priority;
+				learning[new].if_index = rtm->rtm_index;
+				learning[new].af = af;
+			} else
+				lwarnx("getnameinfo: %s", gai_strerror(err));
 		}
 		break;
 	default:
