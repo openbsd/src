@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_STRING_length.3,v 1.22 2021/10/25 10:26:21 schwarze Exp $
+.\" $OpenBSD: ASN1_STRING_length.3,v 1.23 2021/11/13 17:12:18 schwarze Exp $
 .\" full merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" This file is a derived work.
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 25 2021 $
+.Dd $Mdocdate: November 13 2021 $
 .Dt ASN1_STRING_LENGTH 3
 .Os
 .Sh NAME
@@ -81,6 +81,7 @@
 .Nm ASN1_STRING_set0 ,
 .Nm ASN1_STRING_set ,
 .Nm ASN1_OCTET_STRING_set ,
+.Nm ASN1_STRING_copy ,
 .Nm ASN1_STRING_to_UTF8 ,
 .Nm ASN1_STRING_type
 .Nd ASN1_STRING utility functions
@@ -138,6 +139,11 @@
 .Fa "ASN1_OCTET_STRING *str"
 .Fa "const unsigned char *data"
 .Fa "int len"
+.Fc
+.Ft int
+.Fo ASN1_STRING_copy
+.Fa "ASN1_STRING *dst"
+.Fa "const ASN1_STRING *src"
 .Fc
 .Ft int
 .Fo ASN1_STRING_to_UTF8
@@ -218,7 +224,7 @@ into
 overwriting any previous data.
 If
 .Fa len
-is -1, then
+is \-1, then
 .Fn strlen data
 is used instead of
 .Fa len .
@@ -231,6 +237,18 @@ the content of
 remains uninitialized; that is not considered an error unless
 .Fa len
 is negative.
+.Pp
+.Fn ASN1_STRING_copy
+copies the length and data of
+.Fa src
+into
+.Fa dst
+using
+.Fn ASN1_STRING_set
+and changes the type and flags of
+.Fa dst
+to match the type and flags of
+.Fa src .
 .Pp
 .Fn ASN1_STRING_to_UTF8
 converts the string
@@ -323,10 +341,27 @@ if an error occurred.
 .Fn ASN1_STRING_length
 returns a number of bytes.
 .Pp
+.Fn ASN1_STRING_set ,
+.Fn ASN1_OCTET_STRING_set ,
+and
+.Fn ASN1_STRING_copy
+return 1 on success or 0 on failure.
+They fail is memory allocation fails.
 .Fn ASN1_STRING_set
 and
 .Fn ASN1_OCTET_STRING_set
-return 1 on success or 0 on failure.
+also fail if
+.Fa data
+is
+.Dv NULL
+and
+.Fa len
+is \-1 in the same call.
+.Fn ASN1_STRING_copy
+also fails if
+.Fa src
+is
+.Dv NULL .
 .Pp
 .Fn ASN1_STRING_to_UTF8
 returns the number of bytes in the output buffer
@@ -376,6 +411,10 @@ first appeared in OpenSSL 0.9.6 and has been available since
 .Fn ASN1_STRING_set0
 first appeared in OpenSSL 0.9.8h and has been available since
 .Ox 4.5 .
+.Pp
+.Fn ASN1_STRING_copy
+first appeared in OpenSSL 1.0.0 and has been available since
+.Ox 4.9 .
 .Pp
 .Fn ASN1_STRING_get0_data
 first appeared in OpenSSL 1.1.0 and has been available since
