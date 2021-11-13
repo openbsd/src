@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.171 2021/11/12 04:34:22 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.172 2021/11/13 06:04:02 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -160,7 +160,7 @@ const struct filterops proc_filtops = {
 };
 
 const struct filterops file_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= filt_fileattach,
 	.f_detach	= NULL,
 	.f_event	= NULL,
