@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.19 2021/08/31 09:56:12 deraadt Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.20 2021/11/13 17:32:46 kn Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/syslog.h>
 #include <sys/time.h>
 #include <sys/un.h>
+#include <netdb.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -469,7 +470,8 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		/* Add the new proposals */
 		for (i = 0; i < rdns_count; i++) {
 			struct in_addr addr4;
-			struct in6_addr addr6;
+			struct sockaddr_in6 sin6;
+			struct sockaddr *sa;
 			int new;
 
 			switch (af) {
@@ -486,16 +488,23 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 					lwarn("inet_ntop");
 				break;
 			case AF_INET6:
-				memcpy(&addr6, src, sizeof(struct in6_addr));
+				memset(&sin6, 0, sizeof(sin6));
+				sin6.sin6_family = af;
+				memcpy(&sin6.sin6_addr, src,
+				    sizeof(struct in6_addr));
 				src += sizeof(struct in6_addr);
+				if (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr))
+					sin6.sin6_scope_id = rtm->rtm_index;
 				new = findslot(learning);
-				if (inet_ntop(af, &addr6, learning[new].ip,
-				    INET6_ADDRSTRLEN) != NULL) {
+				sa = (struct sockaddr *)(&sin6);
+				if (getnameinfo(sa, sa->sa_len,
+				    learning[new].ip, sizeof(learning[new].ip),
+				    NULL, 0, NI_NUMERICHOST) == 0) {
 					learning[new].prio = rtm->rtm_priority;
 					learning[new].if_index = rtm->rtm_index;
 					learning[new].af = af;
 				} else
-					lwarn("inet_ntop");
+					lwarn("getnameinfo");
 				break;
 			}
 		}
