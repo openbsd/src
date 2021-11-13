@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.5 2018/08/31 17:35:21 tb Exp $
+#	$OpenBSD: Makefile,v 1.6 2021/11/13 20:50:14 schwarze Exp $
 
 TESTS = \
 	asn1evp \
+	asn1string_copy \
 	asn1time \
 	rfc5280time
 
