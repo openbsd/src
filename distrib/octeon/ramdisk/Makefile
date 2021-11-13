@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.19 2021/10/23 16:16:22 krw Exp $
+#	$OpenBSD: Makefile,v 1.20 2021/11/13 18:18:59 kn Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		24576
@@ -6,6 +6,8 @@ FSDISKTYPE=	miniroot
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 RAMDISK=	RAMDISK
+
+MOUNT_ARGS_msdos=-o-s
 
 LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
@@ -21,7 +23,7 @@ ${FS}: bsd.rd
 	echo 'u\ne 0\nC\nn\n64\n*\nf 0\nw\nq\n' | fdisk -e `cat vnd`
 	echo 'w\ny\nq\n' | disklabel -E `cat vnd` > /dev/null
 	newfs -t msdos /dev/r`cat vnd`i
-	mount /dev/`cat vnd`i ${MOUNT_POINT}
+	mount ${MOUNT_ARGS_msdos} /dev/`cat vnd`i ${MOUNT_POINT}
 	cp bsd.rd ${MOUNT_POINT}/bsd.rd
 	df -i ${MOUNT_POINT}
 	umount ${MOUNT_POINT}
