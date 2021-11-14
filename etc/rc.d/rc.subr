@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.149 2021/11/12 08:47:02 ajacoutot Exp $
+#	$OpenBSD: rc.subr,v 1.150 2021/11/14 09:31:44 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -147,43 +147,16 @@ _rc_sendsig() {
 	pkill -${1:-TERM} -T "${daemon_rtable}" -xf "${pexp}" 
 }
 
-_rc_wait() {
-	SECONDS=0
-
-	if [ X"$1" = X"start" ]; then # prevent hanging the boot sequence
-		trap "_rc_alarm" ALRM
-		while ((SECONDS < daemon_timeout)); do
-			if _rc_do rc_check; then
-				[ X"${rc_bg}" = X"YES" ] || [ -z "$$" ] && break
-			fi
-			sleep .5
-		done & wait
-		pkill -ALRM -P $$
-		return
-	fi
+_rc_wait_for_start() {
+	trap "_rc_alarm" ALRM
 	while ((SECONDS < daemon_timeout)); do
-		case "$1" in
-		reload)
-			_rc_do rc_check && return 0 ;;
-		stop)
-			# last chance: send a SIGTERM first in case the process
-			# used another signal to stop (e.g. SIGQUIT with nginx)
-			# or a non-default rc_stop() function; do it 2s before
-			# timeout to re-enter the loop one last time which will
-			# give 1s for SIGTERM to terminate the process
-			((SECONDS == daemon_timeout-2)) &&
-				_rc_do _rc_sendsig TERM && sleep .5
-			_rc_do rc_check || return 0 ;;
-		*)
-			break ;;
-		esac
+		if _rc_do rc_check; then
+			[ X"${rc_bg}" = X"YES" ] || [ -z "$$" ] && break
+		fi
 		sleep .5
-	done
-
-	# KILL the process
-	[ X"$1" = X"stop" ] && _rc_do rc_check && _rc_do _rc_sendsig KILL
-
-	return 1
+	done & wait
+	pkill -ALRM -P $$
+	return
 }
 
 rc_start() {
@@ -205,6 +178,8 @@ rc_stop() {
 
 rc_cmd() {
 	local _exit _n _ret _timer
+	# optim: don't sleep(1) on the first loop
+	_1stloop=true
 
 	[ -n "${1}" ] && echo "${_rc_actions}" | grep -qw -- ${1} || _rc_usage
 
@@ -237,43 +212,68 @@ rc_cmd() {
 			if type rc_pre >/dev/null; then
 				_rc_do rc_pre || break
 			fi
-			_rc_do _rc_wait start & _TIMERSUB=$!
+			# prevent hanging the boot sequence
+			_rc_do _rc_wait_for_start & _TIMERSUB=$!
 			trap "_rc_alarm" ALRM
 			_rc_do rc_start; _ret=$?
 			kill -ALRM ${_TIMERSUB}
 			wait ${_TIMERSUB} 2>/dev/null # don't print Alarm clock
-			[[ "${_ret}" == 142 ]] && [ X"${rc_bg}" != X"YES" ] &&
-				_exit="timeout"
 			# XXX for unknown reason, rc_check can fail (e.g. redis)
-			# while it just succeeded in _rc_wait; the check is
-			# needed to cope with failing daemons returning 0
+			# while it just succeeded in _rc_wait_for_start;
+			# check to cope with failing daemons returning 0
 			#[[ "${_ret}" == @(0|142) ]] && _rc_do rc_check || break
 			[[ "${_ret}" == @(0|142) ]] || break
+			[[ "${_ret}" == 142 ]] && [ X"${rc_bg}" != X"YES" ] &&
+				_exit="timeout"
 			_rc_do _rc_write_runfile
 			_rc_exit ${_exit:=ok}
 		done
 		# handle failure
-		type rc_post >/dev/null && _rc_do rc_post
 		_rc_do _rc_rm_runfile
+		type rc_post >/dev/null && _rc_do rc_post
 		_rc_exit failed
 		;;
 	stop)
 		_rc_do rc_check || exit 0
 		echo $_n "${INRC:+ }${_name}"
-		_rc_do _rc_wait stop & _timer=$!
-		_rc_do rc_stop || { kill ${_timer}; _rc_exit failed; }
-		wait ${_timer} && _exit=ok || _exit=killed
+		_rc_do rc_stop & _timer=$!
+		while ((SECONDS < daemon_timeout)); do
+			# last chance: send a SIGTERM first in case the process
+			# used another signal to stop (e.g. SIGQUIT with nginx)
+			# or a non-default rc_stop() function; do it 2s before
+			# timeout to re-enter the loop one last time which will
+			# give 1s for SIGTERM to terminate the process
+			((SECONDS == daemon_timeout-2)) &&
+				_rc_do _rc_sendsig TERM && sleep .5
+			pkill -0 -P "$$" 2>/dev/null || _rc_do rc_check ||
+				break
+			${_1stloop} && _1stloop=false || sleep .5
+		done
+		kill -ALRM ${_timer} 2>/dev/null
+		wait ${_timer} # don't print Alarm clock
+		[[ $? == 0 ]] || _exit=failed
+		# KILL the process
+		_rc_do rc_check && _rc_do _rc_sendsig KILL && _exit="killed"
+		_rc_do _rc_rm_runfile
 		if type rc_post >/dev/null; then
 			_rc_do rc_post || _exit=failed
 		fi
-		_rc_do _rc_rm_runfile
 		_rc_exit ${_exit:=ok}
 		;;
 	reload)
 		echo $_n "${INRC:+ }${_name}"
-		_rc_do rc_check && _rc_do rc_reload || _rc_exit failed
-		_rc_do _rc_wait reload || _rc_exit failed
-		_rc_exit ok
+		_rc_do rc_check || _rc_exit failed
+		_rc_do rc_reload & _timer=$!
+		while ((SECONDS < daemon_timeout)); do
+			pkill -0 -P "$$" 2>/dev/null || break
+			${_1stloop} && _1stloop=false || sleep .5
+		done
+		kill -ALRM ${_timer} 2>/dev/null
+		wait ${_timer} # don't print Alarm clock
+		_ret=$?
+		[[ ${_ret} == 142 ]] && _exit=timeout || [[ ${_ret} == 0 ]] ||
+			_exit=failed
+		_rc_exit ${_exit:=ok}
 		;;
 	restart)
 		$0 ${_RC_DEBUG} ${_RC_FORCE} stop &&
