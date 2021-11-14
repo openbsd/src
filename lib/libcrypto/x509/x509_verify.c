@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.52 2021/11/07 15:51:23 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.53 2021/11/14 08:21:47 jsing Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -771,7 +771,8 @@ x509_verify_cert_hostname(struct x509_verify_ctx *ctx, X509 *cert, char *name)
 }
 
 static int
-x509_verify_set_check_time(struct x509_verify_ctx *ctx) {
+x509_verify_set_check_time(struct x509_verify_ctx *ctx)
+{
 	if (ctx->xsc != NULL)  {
 		if (ctx->xsc->param->flags & X509_V_FLAG_USE_CHECK_TIME) {
 			ctx->check_time = &ctx->xsc->param->check_time;
