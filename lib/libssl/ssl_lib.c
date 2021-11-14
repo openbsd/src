@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.278 2021/11/08 18:19:22 bcook Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.279 2021/11/14 22:31:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2335,9 +2335,11 @@ ssl_get_auto_dh(SSL *s)
 	} else {
 		if ((cpk = ssl_get_server_send_pkey(s)) == NULL)
 			return (NULL);
-		if (cpk->privatekey == NULL || cpk->privatekey->pkey.dh == NULL)
+		if (cpk->privatekey == NULL ||
+		    EVP_PKEY_get0_RSA(cpk->privatekey) == NULL)
 			return (NULL);
-		keylen = EVP_PKEY_bits(cpk->privatekey);
+		if ((keylen = EVP_PKEY_bits(cpk->privatekey)) <= 0)
+			return (NULL);
 	}
 
 	if ((dhp = DH_new()) == NULL)
