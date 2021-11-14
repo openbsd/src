@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.28 2021/10/28 09:44:49 kn Exp $	*/
+/*	$OpenBSD: engine.c,v 1.29 2021/11/14 18:13:19 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1394,7 +1394,7 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 		if (old_state == IF_RENEWING) {
 			iface->dhcp_server.s_addr = INADDR_ANY;
 			iface->timo.tv_sec = (iface->lease_time -
-			    iface->renewal_time) / 2; /* RFC 2131 4.4.5 */
+			    iface->rebinding_time) / 2; /* RFC 2131 4.4.5 */
 		} else
 			iface->timo.tv_sec /= 2;
 		request_dhcp_request(iface);
