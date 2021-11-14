@@ -1,4 +1,4 @@
-/*	$OpenBSD: crt0.c,v 1.15 2020/10/14 22:11:18 deraadt Exp $	*/
+/*	$OpenBSD: crt0.c,v 1.16 2021/11/14 00:45:38 guenther Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -37,7 +37,7 @@
 
 #include "md_init.h"
 #ifdef MD_RCRT0_START
-#include "boot.h"
+# include BOOT_H
 #endif
 #include "extern.h"
 

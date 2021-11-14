@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.h,v 1.31 2021/11/14 00:45:38 guenther Exp $ */
+/*	$OpenBSD: boot_md.h,v 1.1 2021/11/14 00:45:38 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -49,6 +49,8 @@ REDIRECT_SYSCALL(mprotect);
 
 #ifdef RCRT0
 
+#define	DT_PROC(n)	((n) - DT_LOPROC)
+
 #if RELOC_TAG == DT_RELA
 typedef	Elf_RelA	RELOC_TYPE;
 #elif RELOC_TAG == DT_REL
@@ -61,7 +63,9 @@ typedef	Elf_Rel		RELOC_TYPE;
 struct boot_dyn {
 	RELOC_TYPE	*dt_reloc;	/* DT_RELA   or DT_REL */
 	Elf_Addr	dt_relocsz;	/* DT_RELASZ or DT_RELSZ */
+	Elf_Addr	*dt_pltgot;
 	const Elf_Sym	*dt_symtab;
+	u_long		dt_proc[DT_PROCNUM];
 };
 
 static void *relro_addr;
@@ -130,7 +134,9 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 	_dl_memset(&dynld, 0, sizeof(dynld));
 	while (dynp->d_tag != DT_NULL) {
 		/* first the tags that are pointers to be relocated */
-		if (dynp->d_tag == DT_SYMTAB)
+		if (dynp->d_tag == DT_PLTGOT)
+			dynld.dt_pltgot = (void *)(dynp->d_un.d_ptr + loff);
+		else if (dynp->d_tag == DT_SYMTAB)
 			dynld.dt_symtab = (void *)(dynp->d_un.d_ptr + loff);
 		else if (dynp->d_tag == RELOC_TAG)	/* DT_{RELA,REL} */
 			dynld.dt_reloc = (void *)(dynp->d_un.d_ptr + loff);
@@ -138,6 +144,10 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 		/* Now for the tags that are just sizes or counts */
 		else if (dynp->d_tag == RELOC_TAG+1)	/* DT_{RELA,REL}SZ */
 			dynld.dt_relocsz = dynp->d_un.d_val;
+		else if (dynp->d_tag >= DT_LOPROC &&
+		    dynp->d_tag < DT_LOPROC + DT_PROCNUM)
+			dynld.dt_proc[dynp->d_tag - DT_LOPROC] =
+			    dynp->d_un.d_val;
 		dynp++;
 	}
 
@@ -154,18 +164,12 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 		rp++;
 	}
 
-	/* do any RWX -> RX fixups for executable PLTs and apply GNU_RELRO */
+	RELOC_GOT(&dynld, loff);
+
+	/* apply GNU_RELRO */
 	phdp = (Elf_Phdr *)dl_data[AUX_phdr];
 	for (i = 0; i < dl_data[AUX_phnum]; i++, phdp++) {
 		switch (phdp->p_type) {
-#if defined(__alpha__) || defined(__powerpc__) || defined(__sparc64__)
-		case PT_LOAD:
-			if ((phdp->p_flags & (PF_X | PF_W)) != (PF_X | PF_W))
-				break;
-			mprotect((void *)(phdp->p_vaddr + loff), phdp->p_memsz,
-			    PROT_READ);
-			break;
-#endif
 		case PT_GNU_RELRO:
 			relro_addr = (void *)(phdp->p_vaddr + loff);
 			relro_size = phdp->p_memsz;
