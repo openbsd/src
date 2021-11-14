@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.common,v 1.21 2020/08/02 15:38:52 deraadt Exp $
+#	$OpenBSD: Makefile.common,v 1.22 2021/11/14 21:51:48 guenther Exp $
 
 S=		${.CURDIR}/../../../../..
 SADIR=		${.CURDIR}/../..
@@ -10,6 +10,7 @@ OBJDUMP?=	objdump
 EFI_HEAP_LIMIT=	0xc00000
 
 LDFLAGS+=	-nostdlib -T${.CURDIR}/../${LDSCRIPT} -Bsymbolic -shared
+LDFLAGS+=	--pack-dyn-relocs=none
 
 COPTS+=		-DEFIBOOT -DFWRANDOM -DNEEDS_HEAP_H -I${.CURDIR}/..
 COPTS+=		-I${EFIDIR}/include -I${S}/stand/boot
