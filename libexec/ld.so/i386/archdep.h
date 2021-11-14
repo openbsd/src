@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.21 2019/10/23 19:55:09 guenther Exp $ */
+/*	$OpenBSD: archdep.h,v 1.22 2021/11/14 22:07:38 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -30,8 +30,7 @@
 #define _I386_ARCHDEP_H_
 
 #define	RELOC_TAG	DT_REL
-
-#define	MACHID	EM_386		/* ELF e_machine ID value checked */
+#define	MACHID		EM_386		/* ELF e_machine ID value checked */
 
 #include <elf.h>
 #include <machine/reloc.h>
@@ -39,6 +38,7 @@
 #include "util.h"
 
 
+/* Only used in lib/csu/boot.h */
 static inline void
 RELOC_DYN(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 {
@@ -53,7 +53,5 @@ RELOC_DYN(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 		_dl_exit(6);
 	}
 }
-
-#define RELOC_GOT(obj, offs)
 
 #endif /* _I386_ARCHDEP_H_ */

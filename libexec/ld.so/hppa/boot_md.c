@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot_md.c,v 1.4 2019/11/28 16:57:17 guenther Exp $ */
+/*	$OpenBSD: boot_md.c,v 1.5 2021/11/14 22:07:38 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -167,6 +167,4 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 		RELOC_DYN(rp, sp, ra, loff);
 		rp++;
 	}
-
-	RELOC_GOT(&dynld, loff);
 }

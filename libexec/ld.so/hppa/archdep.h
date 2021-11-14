@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.16 2017/10/27 16:47:08 mpi Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.17 2021/11/14 22:07:38 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -31,9 +31,7 @@
 #define _HPPA_ARCHDEP_H_
 
 #define	RELOC_TAG	DT_RELA
-#define	HAVE_JMPREL	1
-
-#define	MACHID	EM_PARISC		/* ELF e_machine ID value checked */
+#define	MACHID		EM_PARISC	/* ELF e_machine ID value checked */
 
 #include <elf.h>
 #include <machine/reloc.h>
@@ -67,8 +65,6 @@ RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 		_dl_exit(6);
 	}
 }
-
-#define RELOC_GOT(obj, offs)
 
 void _hppa_dl_dtors(void);
 Elf_Addr _dl_md_plabel(Elf_Addr, Elf_Addr *);

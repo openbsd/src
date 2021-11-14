@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.15 2019/10/23 19:55:09 guenther Exp $ */
+/*	$OpenBSD: archdep.h,v 1.16 2021/11/14 22:07:39 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -29,15 +29,16 @@
 #ifndef _MIPS_ARCHDEP_H_
 #define _MIPS_ARCHDEP_H_
 
+#define	RELOC_TAG	DT_REL
+#define	MACHID		EM_MIPS		/* ELF e_machine ID value checked */
+
 #include <elf.h>
 #include <machine/reloc.h>
 #include "syscall.h"
 #include "util.h"
 
-#define	RELOC_TAG	DT_REL
-#define	MACHID	EM_MIPS		/* ELF e_machine ID value checked */
 
-
+/* Only used in lib/csu/mips64/boot_md.h */
 #define RELOC_DYN(relp, symp, adrp, val)				\
 do {									\
 	if (ELF_R_TYPE(relp->r_info) == R_MIPS_REL32_64) {		\

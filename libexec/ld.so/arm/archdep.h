@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.13 2017/10/27 16:47:08 mpi Exp $ */
+/*	$OpenBSD: archdep.h,v 1.14 2021/11/14 22:07:38 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -30,19 +30,15 @@
 #define _ARM_ARCHDEP_H_
 
 #define	RELOC_TAG	DT_REL
-
-#define	MACHID	EM_ARM	/* ELF e_machine ID value checked */
+#define	MACHID		EM_ARM		/* ELF e_machine ID value checked */
 
 #include <elf.h>
 #include <machine/reloc.h>
 #include "syscall.h"
 #include "util.h"
 
-/*
- *	The following functions are declared inline so they can
- *	be used before bootstrap linking has been finished.
- */
 
+/* Only used in lib/csu/boot.h */
 static inline void
 RELOC_DYN(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 {
@@ -56,7 +52,5 @@ RELOC_DYN(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 		_dl_exit(6);
 	}
 }
-
-#define RELOC_GOT(obj, offs)
 
 #endif /* _ARM_ARCHDEP_H_ */
