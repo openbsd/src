@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.11 2021/11/09 11:03:39 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.12 2021/11/15 16:32:15 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -380,7 +380,7 @@ ta_fetch(struct tarepo *tr)
 }
 
 static struct tarepo *
-ta_get(struct tal *tal)
+ta_get(struct tal *tal, int nofetch)
 {
 	struct tarepo *tr;
 
@@ -405,7 +405,7 @@ ta_get(struct tal *tal)
 	tal->urisz = 0;
 	tal->uri = NULL;
 
-	if (noop) {
+	if (noop || nofetch) {
 		tr->state = REPO_DONE;
 		logx("ta/%s: using cache", tr->descr);
 		/* there is nothing in the queue so no need to flush */
@@ -447,7 +447,7 @@ ta_free(void)
 }
 
 static struct rsyncrepo *
-rsync_get(const char *uri)
+rsync_get(const char *uri, int nofetch)
 {
 	struct rsyncrepo *rr;
 	char *repo;
@@ -470,7 +470,7 @@ rsync_get(const char *uri)
 	rr->repouri = repo;
 	rr->basedir = rsync_dir(repo, "rsync");
 
-	if (noop) {
+	if (noop || nofetch) {
 		rr->state = REPO_DONE;
 		logx("%s: using cache", rr->basedir);
 		/* there is nothing in the queue so no need to flush */
@@ -516,7 +516,7 @@ rsync_free(void)
 static int rrdprepo_fetch(struct rrdprepo *);
 
 static struct rrdprepo *
-rrdp_get(const char *uri)
+rrdp_get(const char *uri, int nofetch)
 {
 	struct rrdprepo *rr;
 
@@ -540,7 +540,7 @@ rrdp_get(const char *uri)
 	RB_INIT(&rr->added);
 	RB_INIT(&rr->deleted);
 
-	if (noop) {
+	if (noop || nofetch) {
 		rr->state = REPO_DONE;
 		logx("%s: using cache", rr->notifyuri);
 		/* there is nothing in the queue so no need to flush */
@@ -614,12 +614,6 @@ static struct repo *
 repo_alloc(int talid)
 {
 	struct repo *rp;
-
-	if (++talrepocnt[talid] >= MAX_REPO_PER_TAL) {
-		if (talrepocnt[talid] == MAX_REPO_PER_TAL)
-			warnx("too many repositories under %s", tals[talid]);
-		return NULL;
-	}
 
 	if ((rp = calloc(1, sizeof(*rp))) == NULL)
 		err(1, NULL);
@@ -1019,7 +1013,7 @@ rrdp_finish(size_t id, int ok)
 		SLIST_FOREACH(rp, &repos, entry)
 			if (rp->rrdp == rr) {
 				rp->rrdp = NULL;
-				rp->rsync = rsync_get(rp->repouri);
+				rp->rsync = rsync_get(rp->repouri, 0);
 				/* need to check if it was already loaded */
 				if (repo_state(rp) != REPO_LOADING)
 					entityq_flush(&rp->queue, rp);
@@ -1093,6 +1087,7 @@ struct repo *
 ta_lookup(int id, struct tal *tal)
 {
 	struct repo	*rp;
+	int		 nofetch = 0;
 
 	/* Look up in repository table. (Lookup should actually fail here) */
 	SLIST_FOREACH(rp, &repos, entry) {
@@ -1101,12 +1096,16 @@ ta_lookup(int id, struct tal *tal)
 	}
 
 	rp = repo_alloc(id);
-	if (rp == NULL)
-		return NULL;
-
 	if ((rp->repouri = strdup(tal->descr)) == NULL)
 		err(1, NULL);
-	rp->ta = ta_get(tal);
+
+	if (++talrepocnt[id] >= MAX_REPO_PER_TAL) {
+		if (talrepocnt[id] == MAX_REPO_PER_TAL)
+			warnx("too many repositories under %s", tals[id]);
+		nofetch = 1;
+	}
+
+	rp->ta = ta_get(tal, nofetch);
 
 	return rp;
 }
@@ -1119,6 +1118,7 @@ repo_lookup(int id, const char *uri, const char *notify)
 {
 	struct repo	*rp;
 	char		*repouri;
+	int		 nofetch = 0;
 
 	if ((repouri = rsync_base_uri(uri)) == NULL)
 		errx(1, "bad caRepository URI: %s", uri);
@@ -1140,21 +1140,22 @@ repo_lookup(int id, const char *uri, const char *notify)
 	}
 
 	rp = repo_alloc(id);
-	if (rp == NULL) {
-		free(repouri);
-		return NULL;
-	}
-
 	rp->repouri = repouri;
 	if (notify != NULL)
 		if ((rp->notifyuri = strdup(notify)) == NULL)
 			err(1, NULL);
 
+	if (++talrepocnt[id] >= MAX_REPO_PER_TAL) {
+		if (talrepocnt[id] == MAX_REPO_PER_TAL)
+			warnx("too many repositories under %s", tals[id]);
+		nofetch = 1;
+	}
+
 	/* try RRDP first if available */
 	if (notify != NULL)
-		rp->rrdp = rrdp_get(notify);
+		rp->rrdp = rrdp_get(notify, nofetch);
 	if (rp->rrdp == NULL)
-		rp->rsync = rsync_get(uri);
+		rp->rsync = rsync_get(uri, nofetch);
 
 	return rp;
 }
