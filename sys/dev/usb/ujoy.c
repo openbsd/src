@@ -1,4 +1,4 @@
-/*	$OpenBSD: ujoy.c,v 1.2 2021/03/08 14:35:57 jcs Exp $ */
+/*	$OpenBSD: ujoy.c,v 1.3 2021/11/15 15:36:24 anton Exp $ */
 
 /*
  * Copyright (c) 2021 Thomas Frohwein	<thfr@openbsd.org>
@@ -104,7 +104,7 @@ ujoy_match(struct device *parent, void *match, void *aux)
 	void			 *desc;
 	int			  ret = UMATCH_NONE;
 
-	if (uha->reportid == UHIDEV_CLAIM_MULTIPLE_REPORTID)
+	if (UHIDEV_CLAIM_MULTIPLE_REPORTID(uha))
 		return (ret);
 
 	/* Find the general usage page and gamecontroller collections */

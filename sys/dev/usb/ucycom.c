@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucycom.c,v 1.39 2021/03/08 14:35:57 jcs Exp $	*/
+/*	$OpenBSD: ucycom.c,v 1.40 2021/11/15 15:36:24 anton Exp $	*/
 /*	$NetBSD: ucycom.c,v 1.3 2005/08/05 07:27:47 skrll Exp $	*/
 
 /*
@@ -165,7 +165,7 @@ ucycom_match(struct device *parent, void *match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
-	if (uha->reportid == UHIDEV_CLAIM_MULTIPLE_REPORTID)
+	if (UHIDEV_CLAIM_MULTIPLE_REPORTID(uha))
 		return (UMATCH_NONE);
 
 	return (usb_lookup(ucycom_devs, uha->uaa->vendor, uha->uaa->product) != NULL ?

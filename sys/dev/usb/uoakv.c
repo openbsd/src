@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoakv.c,v 1.14 2021/03/08 14:35:57 jcs Exp $   */
+/*	$OpenBSD: uoakv.c,v 1.15 2021/11/15 15:36:24 anton Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -110,7 +110,7 @@ uoakv_match(struct device *parent, void *match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 
-	if (uha->reportid == UHIDEV_CLAIM_MULTIPLE_REPORTID)
+	if (UHIDEV_CLAIM_MULTIPLE_REPORTID(uha))
 		return (UMATCH_NONE);
 
 	if (uoakv_lookup(uha->uaa->vendor, uha->uaa->product) == NULL)

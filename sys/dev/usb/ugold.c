@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.19 2021/09/12 06:58:08 anton Exp $   */
+/*	$OpenBSD: ugold.c,v 1.20 2021/11/15 15:36:24 anton Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <uaa@openbsd.org>
@@ -113,7 +113,7 @@ ugold_match(struct device *parent, void *match, void *aux)
 	int size;
 	void *desc;
 
-	if (uha->reportid == UHIDEV_CLAIM_MULTIPLE_REPORTID)
+	if (UHIDEV_CLAIM_MULTIPLE_REPORTID(uha))
 		return (UMATCH_NONE);
 
 	if (usb_lookup(ugold_devs, uha->uaa->vendor, uha->uaa->product) == NULL)

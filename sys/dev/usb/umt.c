@@ -1,4 +1,4 @@
-/* $OpenBSD: umt.c,v 1.4 2021/03/24 02:49:57 jcs Exp $ */
+/* $OpenBSD: umt.c,v 1.5 2021/11/15 15:36:24 anton Exp $ */
 /*
  * USB multitouch touchpad driver for devices conforming to
  * Windows Precision Touchpad standard
@@ -90,7 +90,7 @@ umt_match(struct device *parent, void *match, void *aux)
 	int size;
 	void *desc;
 
-	if (uha->reportid == UHIDEV_CLAIM_MULTIPLE_REPORTID) {
+	if (UHIDEV_CLAIM_MULTIPLE_REPORTID(uha)) {
 		uhidev_get_report_desc(uha->parent, &desc, &size);
 		if (umt_find_winptp_reports(uha->parent, desc, size, &input,
 		    &conf, &cap)) {
