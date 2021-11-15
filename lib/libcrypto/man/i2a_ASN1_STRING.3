@@ -1,0 +1,158 @@
+.\" $OpenBSD: i2a_ASN1_STRING.3,v 1.1 2021/11/15 10:41:11 schwarze Exp $
+.\"
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 15 2021 $
+.Dt I2A_ASN1_STRING 3
+.Os
+.Sh NAME
+.Nm i2a_ASN1_STRING ,
+.Nm a2i_ASN1_STRING
+.Nd hexadecimal dump of an ASN.1 string
+.Sh SYNOPSIS
+.In openssl/asn1.h
+.Ft int
+.Fo i2a_ASN1_STRING
+.Fa "BIO *out_bio"
+.Fa "const ASN1_STRING *a"
+.Fa "int type"
+.Fc
+.Ft int
+.Fo a2i_ASN1_STRING
+.Fa "BIO *in_bio"
+.Fa "ASN1_STRING *out_string"
+.Fa "char *buffer"
+.Fa "int size"
+.Fc
+.Sh DESCRIPTION
+The function
+.Fn i2a_ASN1_STRING
+writes a hexadecimal representation of
+.Fa a
+to
+.Fa out_bio .
+The
+.Fa type
+argument is ignored.
+.Pp
+Each byte of
+.Xr ASN1_STRING_get0_data 3
+is written as a number consisting of two upper-case hexadecimal digits.
+After each group of 70 digits, a backslash and a linefeed
+are inserted before the next digit.
+.Pp
+If the
+.Xr ASN1_STRING_length 3
+of
+.Fa a
+is 0, the single digit
+.Ql 0
+is written instead.
+If
+.Fa a
+is a
+.Dv NULL
+pointer, nothing is written.
+.Pp
+The function
+.Fn a2i_ASN1_STRING
+parses a hexadecimal representation of an ASN.1 string into
+.Fa out_string .
+Both lower-case and upper-case hexadecimal digits are accepted.
+Every pair of input digits is converted into one output byte.
+At least one pair of input digits is required.
+.Pp
+On every input line, the trailing newline character and an optional
+carrier return character character preceding it are ignored.
+The trailing newline need not be present on the last line.
+If there is a backslash character before the newline character,
+parsing is continued on the next input line.
+In particular,
+.Fn a2i_ASN1_STRING
+is able to parse the output of
+.Fn i2a_ASN1_STRING
+except when the
+.Xr ASN1_STRING_length 3
+of
+.Fa a
+was 0.
+.Pp
+Parsing fails if an input line contains an odd number of input
+digits or if memory allocation fails.
+.Pp
+This function uses the
+.Fa buffer
+provided by the caller and assumes it is at least
+.Fa size
+bytes long.
+It is unspecified what the buffer contains after the function returns.
+.Sh RETURN VALUES
+The function
+.Fn i2a_ASN1_STRING
+returns the number of bytes written or \-1 if
+.Xr BIO_write 3
+fails.
+.Pp
+The function
+.Fn a2i_ASN1_STRING
+is intended to return 1 for success or 0 for failure, but see the
+.Sx BUGS
+section for a number of traps.
+.Sh SEE ALSO
+.Xr ASN1_STRING_length 3 ,
+.Xr ASN1_STRING_new 3 ,
+.Xr ASN1_STRING_print_ex 3 ,
+.Xr i2a_ASN1_INTEGER 3 ,
+.Xr i2a_ASN1_OBJECT 3
+.Sh HISTORY
+These functions first appeared in SSLeay 0.6.5.
+The function
+.Fn a2i_ASN1_STRING
+has been part of the public API since SSLeay 0.6.5 and
+.Fn i2a_ASN1_STRING
+since SSLeay 0.8.0.
+They have been available since
+.Ox 2.4 .
+.Sh BUGS
+If the first call to
+.Xr BIO_gets 3
+does not return any data, even if that is caused by a fatal I/O error,
+if the BIO type does not support the
+.Dq gets
+operation, or if it is caused by the BIO being non-blocking,
+.Fn a2i_ASN1_STRING
+immediately succeeds and returns an empty
+.Fa out_string .
+.Pp
+If
+.Fn BIO_gets 3
+returns a partial line, for example because the given
+.Fa size
+is insufficient to contain one of the input lines
+or for reasons specific to the BIO type,
+.Fn a2i_ASN1_STRING
+may fail or silently return a truncated result.
+The caller is responsible for providing a
+.Fa buffer
+of sufficient size to contain the longest possible input line
+and for choosing a BIO of a type that only returns complete
+input lines and does not perform partial reads.
+.Pp
+The function
+.Fn a2i_ASN1_STRING
+does not support non-blocking BIOs.
+Reading is terminated as soon as
+.Xr BIO_gets 3
+returns a value less than 1.
