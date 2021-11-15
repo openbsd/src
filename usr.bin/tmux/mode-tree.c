@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.59 2021/10/26 12:22:23 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.60 2021/11/15 10:58:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -736,10 +736,8 @@ mode_tree_draw(struct mode_tree_data *mtd)
 	}
 
 	sy = screen_size_y(s);
-	if (!mtd->preview || sy <= 4 || h <= 4 || sy - h <= 4 || w <= 4) {
-		screen_write_stop(&ctx);
-		return;
-	}
+	if (!mtd->preview || sy <= 4 || h <= 4 || sy - h <= 4 || w <= 4)
+		goto done;
 
 	line = &mtd->line_list[mtd->current];
 	mti = line->item;
@@ -783,6 +781,8 @@ mode_tree_draw(struct mode_tree_data *mtd)
 		mtd->drawcb(mtd->modedata, mti->itemdata, &ctx, box_x, box_y);
 	}
 
+done:
+	screen_write_cursormove(&ctx, 0, mtd->current - mtd->offset, 0);
 	screen_write_stop(&ctx);
 }
 

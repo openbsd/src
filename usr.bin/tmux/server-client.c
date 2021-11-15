@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.389 2021/10/28 18:54:33 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.390 2021/11/15 10:58:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1706,7 +1706,7 @@ server_client_reset_state(struct client *c)
 	struct window_pane	*wp = server_client_get_pane(c), *loop;
 	struct screen		*s = NULL;
 	struct options		*oo = c->session->options;
-	int			 mode = 0, cursor, flags;
+	int			 mode = 0, cursor, flags, n;
 	u_int			 cx = 0, cy = 0, ox, oy, sx, sy;
 
 	if (c->flags & (CLIENT_CONTROL|CLIENT_SUSPENDED))
@@ -1734,7 +1734,20 @@ server_client_reset_state(struct client *c)
 	tty_margin_off(tty);
 
 	/* Move cursor to pane cursor and offset. */
-	if (c->overlay_draw == NULL) {
+	if (c->prompt_string != NULL) {
+		n = options_get_number(c->session->options, "status-position");
+		if (n == 0)
+			cy = 0;
+		else {
+			n = status_line_size(c);
+			if (n == 0)
+				cy = tty->sy - 1;
+			else
+				cy = tty->sy - n;
+		}
+		cx = c->prompt_cursor;
+		mode &= ~MODE_CURSOR;
+	} else if (c->overlay_draw == NULL) {
 		cursor = 0;
 		tty_window_offset(tty, &ox, &oy, &sx, &sy);
 		if (wp->xoff + s->cx >= ox && wp->xoff + s->cx <= ox + sx &&

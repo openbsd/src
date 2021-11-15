@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1154 2021/11/03 13:37:17 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1155 2021/11/15 10:58:13 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1758,6 +1758,7 @@ struct client {
 #define PROMPT_KEY 0x10
 	int		 prompt_flags;
 	enum prompt_type prompt_type;
+	int              prompt_cursor;
 
 	struct session	*session;
 	struct session	*last_session;
