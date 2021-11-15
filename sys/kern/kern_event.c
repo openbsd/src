@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.172 2021/11/13 06:04:02 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.173 2021/11/15 15:48:54 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -813,6 +813,9 @@ kqpoll_done(unsigned int num)
 	KASSERT(p->p_kq_serial + num >= p->p_kq_serial);
 
 	p->p_kq_serial += num;
+
+	/* XXX Work around a race condition. */
+	kqueue_purge(p, p->p_kq);
 }
 
 void
