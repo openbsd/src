@@ -66,7 +66,6 @@ main(int argc, char *argv[])
 	char *qfnp, *whoami;
 	long argnum, done = 0;
 	int i, offmode = 0, errs = 0;
-	extern int optind;
 	int ch;
 
 	whoami = strrchr(*argv, '/') + 1;

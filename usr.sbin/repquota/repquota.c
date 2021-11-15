@@ -77,8 +77,6 @@ main(int argc, char *argv[])
 	struct group *gr;
 	int gflag = 0, uflag = 0, errs = 0;
 	long i, argnum, done = 0;
-	extern char *optarg;
-	extern int optind;
 	char *qfnp;
 	int ch;
 

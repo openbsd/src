@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.51 2021/03/29 03:54:39 yasuoka Exp $ */
+/*	$OpenBSD: npppd.c,v 1.52 2021/11/15 15:14:24 millert Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.51 2021/03/29 03:54:39 yasuoka Exp $
+ * $Id: npppd.c,v 1.52 2021/11/15 15:14:24 millert Exp $
  */
 #include "version.h"
 #include <sys/param.h>	/* ALIGNED_POINTER */
@@ -136,7 +136,6 @@ int
 main(int argc, char *argv[])
 {
 	int            ch, stop_by_error, runasdaemon = 1, nflag = 0;
-	extern char   *optarg;
 	const char    *npppd_conf0 = DEFAULT_NPPPD_CONF;
 	struct passwd *pw;
 

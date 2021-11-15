@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.78 2021/09/06 13:32:18 deraadt Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.79 2021/11/15 15:14:24 millert Exp $ */
 /*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
 
 /*
@@ -103,7 +103,6 @@ int
 main(int argc, char *argv[])
 {
 	extern char *__progname;
-	extern int optind, opterr;
 	int op;
 
 	/* All error reporting is done through syslogs. */

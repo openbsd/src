@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.126 2021/10/20 06:35:40 semarie Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.127 2021/11/15 15:14:24 millert Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -150,8 +150,6 @@ main(int argc, char *argv[])
 	int fileflag = 0, swapflag = 0, ttyflag = 0, vnodeflag = 0, ch;
 	char buf[_POSIX2_LINE_MAX];
 	const char *dformat = NULL;
-	extern char *optarg;
-	extern int optind;
 	int i;
 
 	hideroot = getuid();

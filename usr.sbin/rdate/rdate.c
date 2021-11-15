@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.35 2015/12/23 19:13:52 deraadt Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.36 2021/11/15 15:14:24 millert Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -82,7 +82,6 @@ main(int argc, char **argv)
 	int             pr = 0, silent = 0, ntp = 1, verbose = 0;
 	int		slidetime = 0, corrleaps = 0;
 	char           *hname;
-	extern int      optind;
 	int             c, p[2], pid;
 	int		family = PF_UNSPEC;
 

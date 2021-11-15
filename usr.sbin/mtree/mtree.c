@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.c,v 1.26 2018/09/16 12:43:40 millert Exp $	*/
+/*	$OpenBSD: mtree.c,v 1.27 2021/11/15 15:14:24 millert Exp $	*/
 /*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
@@ -55,8 +55,6 @@ static void usage(void);
 int
 main(int argc, char *argv[])
 {
-	extern int optind;
-	extern char *optarg;
 	int ch;
 	char *dir, *p;
 	int status;
