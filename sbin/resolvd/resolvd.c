@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.21 2021/11/13 17:49:40 kn Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.22 2021/11/15 17:33:51 kn Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -467,27 +467,32 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 
 		/* Add the new proposals */
 		for (i = 0; i < rdns_count; i++) {
-			struct sockaddr_storage ss;
-			struct sockaddr_in *sin = (struct sockaddr_in *)&ss;
-			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&ss;
-			int new, err;
+			struct sockaddr_in	 sin;
+			struct sockaddr_in6	 sin6;
+			struct sockaddr		*sa;
+			int			 new, err;
 
-			memset(&ss, 0, sizeof(ss));
-			ss.ss_family = af;
 			new = findslot(learning);
 			switch (af) {
 			case AF_INET:
-				memcpy(&sin->sin_addr, src, addrsz);
+				memset(&sin, 0, sizeof(sin));
+				memcpy(&sin.sin_addr, src, addrsz);
+				sa = (struct sockaddr *) &sin;
+				sa->sa_len = sizeof(sin);
 				break;
 			case AF_INET6:
-				memcpy(&sin6->sin6_addr, src, addrsz);
-				if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
-					sin6->sin6_scope_id = rtm->rtm_index;
+				memset(&sin6, 0, sizeof(sin6));
+				memcpy(&sin6.sin6_addr, src, addrsz);
+				if (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr))
+					sin6.sin6_scope_id = rtm->rtm_index;
+				sa = (struct sockaddr *) &sin6;
+				sa->sa_len = sizeof(sin6);
 				break;
 			}
+			sa->sa_family = af;
 			src += addrsz;
 
-			if ((err = getnameinfo((struct sockaddr *)&ss, ss.ss_len,
+			if ((err = getnameinfo(sa, sa->sa_len,
 			    learning[new].ip, sizeof(learning[new].ip),
 			    NULL, 0, NI_NUMERICHOST)) == 0) {
 				learning[new].prio = rtm->rtm_priority;
