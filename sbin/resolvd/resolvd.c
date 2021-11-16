@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.24 2021/11/15 18:25:52 kn Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.25 2021/11/16 16:24:22 kn Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -478,13 +478,13 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			switch (af) {
 			case AF_INET:
 				memcpy(&sin->sin_addr, src, addrsz);
-				ss.ss_len = sizeof(sin);
+				ss.ss_len = sizeof(*sin);
 				break;
 			case AF_INET6:
 				memcpy(&sin6->sin6_addr, src, addrsz);
 				if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
 					sin6->sin6_scope_id = rtm->rtm_index;
-				ss.ss_len = sizeof(sin6);
+				ss.ss_len = sizeof(*sin6);
 				break;
 			}
 			src += addrsz;
