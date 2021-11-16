@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilkbdmap.c,v 1.7 2005/05/07 22:42:30 miod Exp $	*/
+/*	$OpenBSD: hilkbdmap.c,v 1.8 2021/11/16 10:20:52 landry Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -324,9 +324,9 @@ static const keysym_t hilkbd_keydesc_sv[] = {
     KC(90),	KS_0,		KS_equal,	KS_exclamdown,
     KC(91),	KS_plus,	KS_question,	KS_macron,
     KC(92),	KS_eacute,	KS_Eacute,	KS_plusminus,
-    KC(97),	KS_aring,	KS_Aring,	KS_degree,
-    KC(98),	KS_udiaeresis,	KS_Udiaeresis,	KS_bar,		KS_brokenbar,
-    KC(99),	KS_apostrophe,	KS_asterisk,	KS_mu,
+    KC(99),	KS_aring,	KS_Aring,	KS_degree,
+    KC(100),	KS_udiaeresis,	KS_Udiaeresis,	KS_bar,		KS_brokenbar,
+    KC(101),	KS_apostrophe,	KS_asterisk,	KS_mu,
     KC(107),	KS_odiaeresis,
     KC(108),	KS_adiaeresis,	KS_Adiaeresis,	KS_grave,	KS_apostrophe,
     KC(113),	KS_comma,	KS_semicolon,	KS_less,
