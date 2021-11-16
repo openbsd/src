@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.91 2021/06/02 00:39:25 cheloha Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.92 2021/11/16 13:53:14 bluhm Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <ddb/db_interface.h>
 #include <ddb/db_extern.h>
 
+#include <netinet/ip_ipsp.h>
 #include <uvm/uvm_ddb.h>
 
 /*
@@ -89,12 +90,14 @@ void	db_mount_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_show_all_mounts(db_expr_t, int, db_expr_t, char *);
 void	db_show_all_vnodes(db_expr_t, int, db_expr_t, char *);
 void	db_show_all_bufs(db_expr_t, int, db_expr_t, char *);
+void	db_show_all_tdbs(db_expr_t, int, db_expr_t, char *);
 void	db_object_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_page_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_extent_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_pool_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_proc_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_uvmexp_print_cmd(db_expr_t, int, db_expr_t, char *);
+void	db_tdb_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_vnode_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_nfsreq_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_nfsnode_print_cmd(db_expr_t, int, db_expr_t, char *);
@@ -399,6 +402,19 @@ db_show_all_bufs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	pool_walk(&bufpool, full, db_printf, vfs_buf_print);
 }
 
+#ifdef IPSEC
+void
+db_show_all_tdbs(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	int full = 0;
+
+	if (modif[0] == 'f')
+		full = 1;
+
+	pool_walk(&tdb_pool, full, db_printf, tdb_printit);
+}
+#endif
+
 /*ARGSUSED*/
 void
 db_object_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
@@ -509,6 +525,19 @@ db_proc_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	proc_printit((struct proc *)addr, modif, db_printf);
 }
 
+#ifdef IPSEC
+void
+db_tdb_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+	int full = 0;
+
+	if (modif[0] == 'f')
+		full = 1;
+
+	tdb_printit((void *)addr, full, db_printf);
+}
+#endif
+
 /*ARGSUSED*/
 void
 db_uvmexp_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
@@ -539,6 +568,9 @@ struct db_command db_show_all_cmds[] = {
 #ifdef NFSCLIENT
 	{ "nfsreqs",	db_show_all_nfsreqs,	0, NULL },
 	{ "nfsnodes",	db_show_all_nfsnodes,	0, NULL },
+#endif
+#ifdef IPSEC
+	{ "tdbs",	db_show_all_tdbs,	0, NULL },
 #endif
 #ifdef WITNESS
 	{ "locks",	db_witness_list_all,	0, NULL },
@@ -571,6 +603,9 @@ struct db_command db_show_cmds[] = {
 	{ "registers",	db_show_regs,		0,	NULL },
 	{ "socket",	db_socket_print_cmd,	0,	NULL },
 	{ "struct",	db_ctf_show_struct,	CS_OWN,	NULL },
+#ifdef IPSEC
+	{ "tdb",	db_tdb_print_cmd,	0,	NULL },
+#endif
 	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
 	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
 	{ "watches",	db_listwatch_cmd,	0,	NULL },

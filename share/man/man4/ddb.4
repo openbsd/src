@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.99 2020/10/26 18:53:20 deraadt Exp $
+.\"	$OpenBSD: ddb.4,v 1.100 2021/11/16 13:53:14 bluhm Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: October 26 2020 $
+.Dd $Mdocdate: November 16 2021 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -812,6 +812,19 @@ as a struct
 Nested structures and bit fields are not printed.
 Character arrays are printed as bytes.
 .\" --------------------
+.It Xo
+.Ic show tdb
+.Op Cm /f
+.Ar addr
+.Xc
+Prints the
+.Li struct tdb
+at
+.Ar addr .
+If the
+.Cm /f
+modifier is specified prints out all fields of this IPsec SA.
+.\" --------------------
 .It Ic show uvmexp
 Displays a selection of uvm counters and statistics.
 .\" --------------------
@@ -938,6 +951,17 @@ Display information for all outstanding NFS requests.
 For each NFS requests, print a more detailed output.
 See the
 .Ic show nfsreq
+command for more information.
+.El
+.\" --------------------
+.It Ic show all tdbs Op Cm /f
+Display information about all IPsec SAs in the system.
+.Pp
+.Bl -tag -width foo -compact
+.It Cm /f
+For each tdb, print a more detailed output.
+See the
+.Ic show tdb
 command for more information.
 .El
 .\" --------------------

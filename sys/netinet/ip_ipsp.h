@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.219 2021/10/25 18:25:01 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.220 2021/11/16 13:53:14 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -345,6 +345,14 @@ struct tdb {				/* tunnel descriptor block */
 #define	TDBF_PFSYNC_RPL		0x80000	/* Replay counter should be bumped */
 #define	TDBF_ESN		0x100000 /* 64-bit sequence numbers (ESN) */
 
+#define TDBF_BITS ("\20" \
+	"\1UNIQUE\2TIMER\3BYTES\4ALLOCATIONS" \
+	"\5INVALID\6FIRSTUSE\10SOFT_TIMER" \
+	"\11SOFT_BYTES\12SOFT_ALLOCATIONS\13SOFT_FIRSTUSE\14PFS" \
+	"\15TUNNELING" \
+	"\21USEDTUNNEL\22UDPENCAP\23PFSYNC\24PFSYNC_RPL" \
+	"\25ESN")
+
 	u_int32_t	tdb_flags;	/* Flags related to this TDB */
 
 	struct timeout	tdb_timer_tmo;
@@ -486,6 +494,7 @@ struct xformsw {
 extern int ipsec_in_use;
 extern u_int64_t ipsec_last_added;
 extern int encdebug;			/* enable message reporting */
+extern struct pool tdb_pool;
 
 extern int ipsec_keep_invalid;		/* lifetime of embryonic SAs (in sec) */
 extern int ipsec_require_pfs;		/* use Perfect Forward Secrecy */
@@ -526,9 +535,7 @@ extern TAILQ_HEAD(ipsec_policy_head, ipsec_policy) ipsec_policy_head;
 struct cryptop;
 
 /* Misc. */
-#ifdef ENCDEBUG
 const char *ipsp_address(union sockaddr_union *, char *, socklen_t);
-#endif /* ENCDEBUG */
 
 /* SPD tables */
 struct radix_node_head *spd_table_add(unsigned int);
@@ -560,6 +567,7 @@ int	tdb_init(struct tdb *, u_int16_t, struct ipsecinit *);
 void	tdb_unlink(struct tdb *);
 void	tdb_unlink_locked(struct tdb *);
 int	tdb_walk(u_int, int (*)(struct tdb *, void *, int), void *);
+void	tdb_printit(void *, int, int (*)(const char *, ...));
 
 /* XF_IP4 */
 int	ipe4_attach(void);
