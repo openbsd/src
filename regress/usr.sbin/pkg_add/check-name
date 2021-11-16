@@ -1,9 +1,9 @@
 #! /usr/bin/perl
-# $OpenBSD: check-name,v 1.12 2020/03/26 19:31:39 jca Exp $
+# $OpenBSD: check-name,v 1.13 2021/11/16 15:59:58 espie Exp $
 # Written by Marc Espie
 # Public domain
 
-use Test::Simple tests => 20;
+use Test::Simple tests => 23;
 use OpenBSD::Search;
 use OpenBSD::PackageName;
 
@@ -33,6 +33,12 @@ sub check_pkgspec
 
 	my $o = OpenBSD::Search::PkgSpec->new($s);
 	return $o->filter(@list);
+}
+
+sub is_valid_spec
+{
+	my $s = shift;
+	return OpenBSD::Search::PkgSpec->new($s)->is_valid;
 }
 
 sub check_name
@@ -121,3 +127,7 @@ ok(check_list([], check_name("pkgname-1.0p0v0")), "correct name");
 
 ok(check_order(qw(speex-1.2alpha3 speex-1.2beta3 speex-1.2rc1 speex-1.2
     speex-1.2pl1 speex-1.3beta1)), 'check order');
+
+ok(is_valid_spec("rsync->=3")), 'standard spec';
+ok(!is_valid_spec("rsync->=*"), 'invalid spec stem->=*');
+ok(!is_valid_spec("rsync-*.3"), 'invalid spec stem-*.3');
