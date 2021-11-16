@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.27 2021/10/24 21:24:18 deraadt Exp $	*/
+/*	$OpenBSD: wc.c,v 1.28 2021/11/16 23:34:24 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -48,9 +48,9 @@ int	doline, doword, dochar, humanchar, multibyte;
 int	rval;
 extern char *__progname;
 
-static void print_counts(int64_t, int64_t, int64_t, char *);
+static void print_counts(int64_t, int64_t, int64_t, const char *);
 static void format_and_print(int64_t);
-static void cnt(char *);
+static void cnt(const char *);
 
 int
 main(int argc, char *argv[])
@@ -115,12 +115,13 @@ main(int argc, char *argv[])
 }
 
 static void
-cnt(char *file)
+cnt(const char *path)
 {
 	static char *buf;
 	static size_t bufsz;
 
 	FILE *stream;
+	const char *file;
 	char *C;
 	wchar_t wc;
 	short gotsp;
@@ -131,13 +132,15 @@ cnt(char *file)
 
 	linect = wordct = charct = 0;
 	stream = NULL;
-	if (file) {
+	if (path != NULL) {
+		file = path;
 		if ((fd = open(file, O_RDONLY)) == -1) {
 			warn("%s", file);
 			rval = 1;
 			return;
 		}
 	} else  {
+		file = "(stdin)";
 		fd = STDIN_FILENO;
 	}
 
@@ -191,7 +194,7 @@ cnt(char *file)
 			}
 		}
 	} else {
-		if (file == NULL)
+		if (path == NULL)
 			stream = stdin;
 		else if ((stream = fdopen(fd, "r")) == NULL) {
 			warn("%s", file);
@@ -249,7 +252,7 @@ cnt(char *file)
 		}
 	}
 
-	print_counts(linect, wordct, charct, file);
+	print_counts(linect, wordct, charct, path);
 
 	/*
 	 * Don't bother checking doline, doword, or dochar -- speeds
@@ -279,7 +282,7 @@ format_and_print(int64_t v)
 }
 
 static void
-print_counts(int64_t lines, int64_t words, int64_t chars, char *name)
+print_counts(int64_t lines, int64_t words, int64_t chars, const char *name)
 {
 	if (doline)
 		format_and_print(lines);
