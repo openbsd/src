@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.156 2021/11/11 18:36:59 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.157 2021/11/16 08:56:19 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -59,12 +59,17 @@
 /*
  * Locks used to protect global data and struct members:
  *      I       immutable after creation
+ *      D       unp_df_lock
+ *      G       unp_gc_lock
  *      U       unp_lock
  *      R       unp_rights_mtx
  *      a       atomic
  */
 
 struct rwlock unp_lock = RWLOCK_INITIALIZER("unplock");
+struct rwlock unp_df_lock = RWLOCK_INITIALIZER("unpdflk");
+struct rwlock unp_gc_lock = RWLOCK_INITIALIZER("unpgclk");
+
 struct mutex unp_rights_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
 
 /*
@@ -72,7 +77,7 @@ struct mutex unp_rights_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
  * not received and need to be closed.
  */
 struct	unp_deferral {
-	SLIST_ENTRY(unp_deferral)	ud_link;	/* [U] */
+	SLIST_ENTRY(unp_deferral)	ud_link;	/* [D] */
 	int				ud_n;		/* [I] */
 	/* followed by ud_n struct fdpass */
 	struct fdpass			ud_fp[];	/* [I] */
@@ -97,17 +102,17 @@ struct task unp_gc_task = TASK_INITIALIZER(unp_gc, NULL);
  */
 const struct	sockaddr sun_noname = { sizeof(sun_noname), AF_UNIX };
 
-/* [U] list of all UNIX domain sockets, for unp_gc() */
+/* [G] list of all UNIX domain sockets, for unp_gc() */
 LIST_HEAD(unp_head, unpcb)	unp_head =
 	LIST_HEAD_INITIALIZER(unp_head);
-/* [U] list of sets of files that were sent over sockets that are now closed */
+/* [D] list of sets of files that were sent over sockets that are now closed */
 SLIST_HEAD(,unp_deferral)	unp_deferred =
 	SLIST_HEAD_INITIALIZER(unp_deferred);
 
 ino_t	unp_ino;	/* [U] prototype for fake inode numbers */
 int	unp_rights;	/* [R] file descriptors in flight */
-int	unp_defer;	/* [U] number of deferred fp to close by the GC task */
-int	unp_gcing;	/* [U] GC task currently running */
+int	unp_defer;	/* [G] number of deferred fp to close by the GC task */
+int	unp_gcing;	/* [G] GC task currently running */
 
 void
 unp_init(void)
@@ -430,7 +435,21 @@ uipc_attach(struct socket *so, int proto)
 	unp->unp_socket = so;
 	so->so_pcb = unp;
 	getnanotime(&unp->unp_ctime);
+
+	/*
+	 * Enforce `unp_gc_lock' -> `solock()' lock order.
+	 */
+	/*
+	 * We also release the lock on listening socket and on our peer
+	 * socket when called from unp_connect(). This is safe. The
+	 * listening socket protected by vnode(9) lock. The peer socket
+	 * has 'UNP_CONNECTING' flag set.
+	 */
+	sounlock(so, SL_LOCKED);
+	rw_enter_write(&unp_gc_lock);
 	LIST_INSERT_HEAD(&unp_head, unp, unp_link);
+	rw_exit_write(&unp_gc_lock);
+	solock(so);
 	return (0);
 }
 
@@ -490,27 +509,28 @@ unp_detach(struct unpcb *unp)
 
 	rw_assert_wrlock(&unp_lock);
 
+	unp->unp_vnode = NULL;
+
+	/*
+	 * Enforce `unp_gc_lock' -> `solock()' lock order.
+	 * Enforce `i_lock' -> `unp_lock' lock order.
+	 */
+	sounlock(so, SL_LOCKED);
+
+	rw_enter_write(&unp_gc_lock);
 	LIST_REMOVE(unp, unp_link);
+	rw_exit_write(&unp_gc_lock);
 
 	if (vp != NULL) {
-		unp->unp_vnode = NULL;
-
-		/*
-		 * Enforce `i_lock' -> `unp_lock' because fifo
-		 * subsystem requires it.
-		 */
-
-		sounlock(so, SL_LOCKED);
-
 		VOP_LOCK(vp, LK_EXCLUSIVE);
 		vp->v_socket = NULL;
 
 		KERNEL_LOCK();
 		vput(vp);
 		KERNEL_UNLOCK();
-
-		solock(so);
 	}
+
+	solock(so);
 
 	if (unp->unp_conn)
 		unp_disconnect(unp);
@@ -954,10 +974,11 @@ restart:
 
 	if (error) {
 		if (nfds > 0) {
+			/*
+			 * No lock required. We are the only `cm' holder.
+			 */
 			rp = ((struct fdpass *)CMSG_DATA(cm));
-			rw_enter_write(&unp_lock);
 			unp_discard(rp, nfds);
-			rw_exit_write(&unp_lock);
 		}
 	}
 
@@ -1093,16 +1114,17 @@ unp_gc(void *arg __unused)
 	struct unpcb *unp;
 	int nunref, i;
 
-	rw_enter_write(&unp_lock);
-
+	rw_enter_write(&unp_gc_lock);
 	if (unp_gcing)
 		goto unlock;
 	unp_gcing = 1;
+	rw_exit_write(&unp_gc_lock);
 
+	rw_enter_write(&unp_df_lock);
 	/* close any fds on the deferred list */
 	while ((defer = SLIST_FIRST(&unp_deferred)) != NULL) {
 		SLIST_REMOVE_HEAD(&unp_deferred, ud_link);
-		rw_exit_write(&unp_lock);
+		rw_exit_write(&unp_df_lock);
 		for (i = 0; i < defer->ud_n; i++) {
 			fp = defer->ud_fp[i].fp;
 			if (fp == NULL)
@@ -1118,25 +1140,27 @@ unp_gc(void *arg __unused)
 		}
 		free(defer, M_TEMP, sizeof(*defer) +
 		    sizeof(struct fdpass) * defer->ud_n);
-		rw_enter_write(&unp_lock);
+		rw_enter_write(&unp_df_lock);
 	}
+	rw_exit_write(&unp_df_lock);
 
+	rw_enter_write(&unp_gc_lock);
 	unp_defer = 0;
 	LIST_FOREACH(unp, &unp_head, unp_link)
-		unp->unp_flags &= ~(UNP_GCMARK | UNP_GCDEFER | UNP_GCDEAD);
+		unp->unp_gcflags = 0;
 	do {
 		nunref = 0;
 		LIST_FOREACH(unp, &unp_head, unp_link) {
 			fp = unp->unp_file;
-			if (unp->unp_flags & UNP_GCDEFER) {
+			if (unp->unp_gcflags & UNP_GCDEFER) {
 				/*
 				 * This socket is referenced by another
 				 * socket which is known to be live,
 				 * so it's certainly live.
 				 */
-				unp->unp_flags &= ~UNP_GCDEFER;
+				unp->unp_gcflags &= ~UNP_GCDEFER;
 				unp_defer--;
-			} else if (unp->unp_flags & UNP_GCMARK) {
+			} else if (unp->unp_gcflags & UNP_GCMARK) {
 				/* marked as live in previous pass */
 				continue;
 			} else if (fp == NULL) {
@@ -1155,7 +1179,7 @@ unp_gc(void *arg __unused)
 				 */
 				if (fp->f_count == unp->unp_msgcount) {
 					nunref++;
-					unp->unp_flags |= UNP_GCDEAD;
+					unp->unp_gcflags |= UNP_GCDEAD;
 					continue;
 				}
 			}
@@ -1167,10 +1191,12 @@ unp_gc(void *arg __unused)
 			 * sockets and note them as deferred (== referenced,
 			 * but not yet marked).
 			 */
-			unp->unp_flags |= UNP_GCMARK;
+			unp->unp_gcflags |= UNP_GCMARK;
 
 			so = unp->unp_socket;
+			solock(so);
 			unp_scan(so->so_rcv.sb_mb, unp_mark);
+			sounlock(so, SL_LOCKED);
 		}
 	} while (unp_defer);
 
@@ -1180,14 +1206,23 @@ unp_gc(void *arg __unused)
 	 */
 	if (nunref) {
 		LIST_FOREACH(unp, &unp_head, unp_link) {
-			if (unp->unp_flags & UNP_GCDEAD)
-				unp_scan(unp->unp_socket->so_rcv.sb_mb,
-				    unp_discard);
+			if (unp->unp_gcflags & UNP_GCDEAD) {
+				/*
+				 * This socket could still be connected
+				 * and if so it's `so_rcv' is still
+				 * accessible by concurrent PRU_SEND
+				 * thread.
+				 */
+				so = unp->unp_socket;
+				solock(so);
+				unp_scan(so->so_rcv.sb_mb, unp_discard);
+				sounlock(so, SL_LOCKED);
+			}
 		}
 	}
 	unp_gcing = 0;
 unlock:
-	rw_exit_write(&unp_lock);
+	rw_exit_write(&unp_gc_lock);
 }
 
 void
@@ -1233,7 +1268,7 @@ unp_mark(struct fdpass *rp, int nfds)
 	struct unpcb *unp;
 	int i;
 
-	rw_assert_wrlock(&unp_lock);
+	rw_assert_wrlock(&unp_gc_lock);
 
 	for (i = 0; i < nfds; i++) {
 		if (rp[i].fp == NULL)
@@ -1243,12 +1278,12 @@ unp_mark(struct fdpass *rp, int nfds)
 		if (unp == NULL)
 			continue;
 
-		if (unp->unp_flags & (UNP_GCMARK|UNP_GCDEFER))
+		if (unp->unp_gcflags & (UNP_GCMARK|UNP_GCDEFER))
 			continue;
 
 		unp_defer++;
-		unp->unp_flags |= UNP_GCDEFER;
-		unp->unp_flags &= ~UNP_GCDEAD;
+		unp->unp_gcflags |= UNP_GCDEFER;
+		unp->unp_gcflags &= ~UNP_GCDEAD;
 	}
 }
 
@@ -1257,14 +1292,15 @@ unp_discard(struct fdpass *rp, int nfds)
 {
 	struct unp_deferral *defer;
 
-	rw_assert_wrlock(&unp_lock);
-
 	/* copy the file pointers to a deferral structure */
 	defer = malloc(sizeof(*defer) + sizeof(*rp) * nfds, M_TEMP, M_WAITOK);
 	defer->ud_n = nfds;
 	memcpy(&defer->ud_fp[0], rp, sizeof(*rp) * nfds);
 	memset(rp, 0, sizeof(*rp) * nfds);
+
+	rw_enter_write(&unp_df_lock);
 	SLIST_INSERT_HEAD(&unp_deferred, defer, ud_link);
+	rw_exit_write(&unp_df_lock);
 
 	task_add(systqmp, &unp_gc_task);
 }

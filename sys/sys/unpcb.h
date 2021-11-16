@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpcb.h,v 1.19 2021/11/06 17:35:14 mvs Exp $	*/
+/*	$OpenBSD: unpcb.h,v 1.20 2021/11/16 08:56:20 mvs Exp $	*/
 /*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
 
 /*
@@ -59,6 +59,7 @@
  *
  * Locks used to protect struct members:
  *      I       immutable after creation
+ *      G       unp_gc_lock
  *      U       unp_lock
  *      a       atomic
  */
@@ -75,9 +76,10 @@ struct	unpcb {
 	struct	mbuf *unp_addr;		/* [U] bound address of socket */
 	long	unp_msgcount;		/* [a] references from socket rcv buf */
 	int	unp_flags;		/* [U] this unpcb contains peer eids */
+	int	unp_gcflags;		/* [G] garbge collector flags */
 	struct	sockpeercred unp_connid;/* [U] id of peer process */
 	struct	timespec unp_ctime;	/* [I] holds creation time */
-	LIST_ENTRY(unpcb) unp_link;	/* [U] link in per-AF list of sockets */
+	LIST_ENTRY(unpcb) unp_link;	/* [G] link in per-AF list of sockets */
 };
 
 /*
@@ -85,11 +87,15 @@ struct	unpcb {
  */
 #define UNP_FEIDS	0x01		/* unp_connid contains information */
 #define UNP_FEIDSBIND	0x02		/* unp_connid was set by a bind */
-#define UNP_GCMARK	0x04		/* mark during unp_gc() */
-#define UNP_GCDEFER	0x08		/* ref'd, but not marked in this pass */
-#define UNP_GCDEAD	0x10		/* unref'd in this pass */
-#define UNP_BINDING	0x20		/* unp is binding now */
-#define UNP_CONNECTING	0x40		/* unp is connecting now */
+#define UNP_BINDING	0x04		/* unp is binding now */
+#define UNP_CONNECTING	0x08		/* unp is connecting now */
+
+/*
+ * flag bits in unp_gcflags
+ */
+#define UNP_GCMARK	0x01		/* mark during unp_gc() */
+#define UNP_GCDEFER	0x02		/* ref'd, but not marked in this pass */
+#define UNP_GCDEAD	0x04		/* unref'd in this pass */
 
 #define	sotounpcb(so)	((struct unpcb *)((so)->so_pcb))
 
