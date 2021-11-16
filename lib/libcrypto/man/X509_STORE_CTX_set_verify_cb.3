@@ -1,8 +1,26 @@
-.\"	$OpenBSD: X509_STORE_CTX_set_verify_cb.3,v 1.5 2020/03/29 17:05:02 schwarze Exp $
-.\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
+.\" $OpenBSD: X509_STORE_CTX_set_verify_cb.3,v 1.6 2021/11/16 14:07:57 schwarze Exp $
+.\" full merge up to: OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
+.\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
-.\" Copyright (c) 2009, 2016 The OpenSSL Project.  All rights reserved.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" Copyright (c) 2009 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -48,18 +66,24 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 29 2020 $
+.Dd $Mdocdate: November 16 2021 $
 .Dt X509_STORE_CTX_SET_VERIFY_CB 3
 .Os
 .Sh NAME
-.Nm X509_STORE_CTX_set_verify_cb
-.Nd set verification callback
+.Nm X509_STORE_CTX_set_verify_cb ,
+.Nm X509_STORE_CTX_get_verify_cb
+.Nd set and retrieve verification callback
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
 .Ft void
 .Fo X509_STORE_CTX_set_verify_cb
 .Fa "X509_STORE_CTX *ctx"
 .Fa "int (*verify_cb)(int ok, X509_STORE_CTX *ctx)"
+.Fc
+.Ft int
+.Fo "(*X509_STORE_CTX_get_verify_cb(X509_STORE_CTX *ctx))"
+.Fa "int ok"
+.Fa "X509_STORE_CTX *ctx"
 .Fc
 .Sh DESCRIPTION
 .Fn X509_STORE_CTX_set_verify_cb
@@ -73,7 +97,7 @@ The verification callback can be used to customise the operation of
 certificate verification, either by overriding error conditions or
 logging errors for debugging purposes.
 .Pp
-However a verification callback is
+However, a verification callback is
 .Sy not
 essential and the default operation is often sufficient.
 .Pp
@@ -108,6 +132,17 @@ In some cases (such as S/MIME verification) the
 structure is created and destroyed internally and the only way to set a
 custom verification callback is by inheriting it from the associated
 .Vt X509_STORE .
+.Sh RETURN VALUES
+.Fn X509_STORE_CTX_get_verify_cb
+returns a pointer to the current callback function
+used by the specified
+.Fa ctx .
+If no callback was set using
+.Fn X509_STORE_CTX_set_verify_cb ,
+that is a pointer to a built-in static function
+which does nothing except returning the
+.Fa ok
+argument passed to it.
 .Sh EXAMPLES
 Default callback operation:
 .Bd -literal
@@ -223,6 +258,10 @@ verify_callback(int ok, X509_STORE_CTX *ctx)
 .Fn X509_STORE_CTX_set_verify_cb
 first appeared in OpenSSL 0.9.6c and has been available since
 .Ox 3.2 .
+.Pp
+.Fn X509_STORE_CTX_get_verify_cb
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 7.1 .
 .Sh CAVEATS
 In general a verification callback should
 .Sy NOT
