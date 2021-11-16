@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.43 2020/08/13 01:00:03 cheloha Exp $
+.\"	$OpenBSD: select.2,v 1.44 2021/11/16 13:46:16 visa Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)select.2	8.2 (Berkeley) 3/25/94
 .\"
-.Dd $Mdocdate: August 13 2020 $
+.Dd $Mdocdate: November 16 2021 $
 .Dt SELECT 2
 .Os
 .Sh NAME
@@ -291,9 +291,3 @@ before and after the call to
 .Fn select ,
 and using
 .Xr timersub 3 .
-.Pp
-Internally to the kernel,
-.Fn select
-and
-.Fn pselect
-work poorly if multiple processes wait on the same file descriptor.

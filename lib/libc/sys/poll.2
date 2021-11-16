@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.36 2018/08/18 16:55:30 cheloha Exp $
+.\"	$OpenBSD: poll.2,v 1.37 2021/11/16 13:46:16 visa Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\"
-.Dd $Mdocdate: August 18 2018 $
+.Dd $Mdocdate: November 16 2021 $
 .Dt POLL 2
 .Os
 .Sh NAME
@@ -361,9 +361,3 @@ Similarly, the
 and
 .Dv POLLRDBAND
 flags are also equivalent.
-.Pp
-Internally to the kernel,
-.Fn poll
-and
-.Fn ppoll
-work poorly if multiple processes wait on the same file descriptor.
