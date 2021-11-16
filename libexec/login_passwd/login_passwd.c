@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_passwd.c,v 1.19 2021/01/02 20:32:20 millert Exp $	*/
+/*	$OpenBSD: login_passwd.c,v 1.20 2021/11/16 21:55:21 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -121,8 +121,7 @@ main(int argc, char *argv[])
 	if (wheel != NULL && strcmp(wheel, "yes") != 0) {
 		fprintf(back, BI_VALUE " errormsg %s\n",
 		    "you are not in group wheel");
-		fprintf(back, BI_REJECT "\n");
-		exit(1);
+		goto reject;
 	}
 
 	if (mode == 1) {
@@ -151,7 +150,7 @@ main(int argc, char *argv[])
 			pass = readpassphrase("Password:", pbuf, sizeof(pbuf),
 			    RPP_ECHO_OFF);
 			if (pass == NULL)
-				fprintf(back, BI_REJECT "\n");
+				goto reject;
 		}
 	}
 
@@ -168,6 +167,7 @@ main(int argc, char *argv[])
 		    exit(0);
 		}
 	}
+reject:
 	fprintf(back, BI_REJECT "\n");
 	exit(1);
 }
