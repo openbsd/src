@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.151 2021/11/16 16:30:42 kn Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.152 2021/11/16 16:37:52 kn Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1969,9 +1969,9 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 {
 	struct uw_forwarder_head	 new_forwarder_list;
 	struct uw_forwarder		*uw_forwarder, *tmp;
+	size_t				 addrsz;
 	int				 i, rdns_count, af, changed = 0;
-	char				 ntopbuf[INET6_ADDRSTRLEN], *src;
-	const char			*ns;
+	char				 hostbuf[INET6_ADDRSTRLEN], *src;
 
 	TAILQ_INIT(&new_forwarder_list);
 	af = rdns_proposal->rtdns.sr_family;
@@ -1979,65 +1979,62 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 
 	switch (af) {
 	case AF_INET:
-		rdns_count = (rdns_proposal->rtdns.sr_len -
-		    offsetof(struct sockaddr_rtdns, sr_dns)) /
-		    sizeof(struct in_addr);
+		addrsz = sizeof(struct in_addr);
 		break;
 	case AF_INET6:
-		rdns_count = (rdns_proposal->rtdns.sr_len -
-		    offsetof(struct sockaddr_rtdns, sr_dns)) /
-		    sizeof(struct in6_addr);
+		addrsz = sizeof(struct in6_addr);
 		break;
 	default:
 		log_warnx("%s: unsupported address family: %d", __func__, af);
 		return;
 	}
 
+	rdns_count = (rdns_proposal->rtdns.sr_len -
+	    offsetof(struct sockaddr_rtdns, sr_dns)) / addrsz;
+
 	for (i = 0; i < rdns_count; i++) {
 		struct sockaddr_storage ss;
 		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&ss;
-		struct in_addr addr4;
+		struct sockaddr_in *sin = (struct sockaddr_in *)&ss;
 		int err;
 
+		memset(&ss, 0, sizeof(ss));
+		ss.ss_family = af;
 		switch (af) {
 		case AF_INET:
-			memcpy(&addr4, src, sizeof(struct in_addr));
-			src += sizeof(struct in_addr);
-			if (addr4.s_addr == htonl(INADDR_LOOPBACK))
-				continue;
-			ns = inet_ntop(af, &addr4, ntopbuf,
-			    INET6_ADDRSTRLEN);
+			memcpy(&sin->sin_addr, src, addrsz);
+			if (sin->sin_addr.s_addr == htonl(INADDR_LOOPBACK))
+				goto skip;
+			ss.ss_len = sizeof(*sin);
 			break;
 		case AF_INET6:
-			memset(&ss, 0, sizeof(ss));
-			memcpy(&sin6->sin6_addr, src, sizeof(sin6->sin6_addr));
-			src += sizeof(struct in6_addr);
+			memcpy(&sin6->sin6_addr, src, addrsz);
 			if (IN6_IS_ADDR_LOOPBACK(&sin6->sin6_addr))
-				continue;
+				goto skip;
 			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
 				sin6->sin6_scope_id = rdns_proposal->if_index;
 			ss.ss_len = sizeof(*sin6);
-			ss.ss_family = af;
-			if ((err = getnameinfo((struct sockaddr *)&ss, ss.ss_len,
-			    ntopbuf, sizeof(ntopbuf),
-			    NULL, 0, NI_NUMERICHOST)) != 0) {
-				log_warnx("getnameinfo: %s", gai_strerror(err));
-				continue;
-			}
-			ns = ntopbuf;
 			break;
+		}
+		if ((err = getnameinfo((struct sockaddr *)&ss, ss.ss_len,
+		    hostbuf, sizeof(hostbuf), NULL, 0, NI_NUMERICHOST)) != 0) {
+			log_warnx("getnameinfo: %s", gai_strerror(err));
+			goto skip;
 		}
 
 		if ((uw_forwarder = calloc(1, sizeof(struct uw_forwarder))) ==
 		    NULL)
 			fatal(NULL);
-		if (strlcpy(uw_forwarder->ip, ns, sizeof(uw_forwarder->ip))
+		if (strlcpy(uw_forwarder->ip, hostbuf, sizeof(uw_forwarder->ip))
 		    >= sizeof(uw_forwarder->ip))
 			fatalx("strlcpy");
 		uw_forwarder->port = 53;
 		uw_forwarder->if_index = rdns_proposal->if_index;
 		uw_forwarder->src = rdns_proposal->src;
 		TAILQ_INSERT_TAIL(&new_forwarder_list, uw_forwarder, entry);
+
+skip:
+		src += addrsz;
 	}
 
 	TAILQ_FOREACH(tmp, &autoconf_forwarder_list, entry) {
