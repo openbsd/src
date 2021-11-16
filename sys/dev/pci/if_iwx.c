@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.119 2021/10/15 13:38:10 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.120 2021/11/16 12:56:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -6802,7 +6802,7 @@ iwx_phy_ctxt_update(struct iwx_softc *sc, struct iwx_phy_ctxt *phyctxt,
 		err = iwx_phy_ctxt_cmd(sc, phyctxt, chains_static,
 		    chains_dynamic, IWX_FW_CTXT_ACTION_ADD, apply_time, sco);
 		if (err) {
-			printf("%s: could not remove PHY context "
+			printf("%s: could not add PHY context "
 			    "(error %d)\n", DEVNAME(sc), err);
 			return err;
 		}
