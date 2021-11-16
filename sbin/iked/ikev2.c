@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.331 2021/11/15 22:37:35 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.332 2021/11/16 21:43:36 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -806,6 +806,7 @@ ikev2_auth_verify(struct iked *env, struct iked_sa *sa)
 		    print_map(ikeauth.auth_method,
 		    ikev2_auth_map));
 		ikev2_send_auth_failed(env, sa);
+		explicit_bzero(&ikeauth, sizeof(ikeauth));
 		return (-1);
 	}
 	ikeauth.auth_method = sa->sa_peerauth.id_type;
@@ -815,6 +816,7 @@ ikev2_auth_verify(struct iked *env, struct iked_sa *sa)
 		log_debug("%s: failed to get auth data",
 		    __func__);
 		ikev2_send_auth_failed(env, sa);
+		explicit_bzero(&ikeauth, sizeof(ikeauth));
 		return (-1);
 	}
 
@@ -827,6 +829,7 @@ ikev2_auth_verify(struct iked *env, struct iked_sa *sa)
 		log_info("%s: ikev2_msg_authverify failed",
 		    SPI_SA(sa, __func__));
 		ikev2_send_auth_failed(env, sa);
+		explicit_bzero(&ikeauth, sizeof(ikeauth));
 		return (-1);
 	}
 	if (sa->sa_eapmsk != NULL) {
@@ -834,6 +837,7 @@ ikev2_auth_verify(struct iked *env, struct iked_sa *sa)
 		    !sa->sa_hdr.sh_initiator)) == NULL) {
 			log_debug("%s: failed to get auth data",
 			    __func__);
+			explicit_bzero(&ikeauth, sizeof(ikeauth));
 			return (-1);
 		}
 
@@ -842,6 +846,7 @@ ikev2_auth_verify(struct iked *env, struct iked_sa *sa)
 		ibuf_release(authmsg);
 		if (ret != 0) {
 			ikev2_send_auth_failed(env, sa);
+			explicit_bzero(&ikeauth, sizeof(ikeauth));
 			return (-1);
 		}
 
@@ -851,6 +856,7 @@ ikev2_auth_verify(struct iked *env, struct iked_sa *sa)
 		sa_state(env, sa, IKEV2_STATE_EAP_SUCCESS);
 	}
 
+	explicit_bzero(&ikeauth, sizeof(ikeauth));
 	return (0);
 }
 

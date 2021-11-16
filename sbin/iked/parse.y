@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.135 2021/10/26 17:31:22 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.136 2021/11/16 21:43:36 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1043,6 +1043,7 @@ ikeauth		: /* empty */			{
 			memcpy(&$$, &$2, sizeof($$));
 			$$.auth_method = IKEV2_AUTH_SHARED_KEY_MIC;
 			$$.auth_eap = 0;
+			explicit_bzero(&$2, sizeof($2));
 		}
 		| EAP STRING			{
 			unsigned int i;
@@ -1178,7 +1179,7 @@ keyspec		: STRING			{
 				    sizeof($$.auth_data));
 				$$.auth_length = strlen($1);
 			}
-			free($1);
+			freezero($1, strlen($1));
 		}
 		| FILENAME STRING		{
 			if (parsekeyfile($2, &$$) != 0) {
@@ -2507,6 +2508,7 @@ create_ike(char *name, int af, struct ipsec_addr_wrap *ipproto,
 	pol.pol_flags = flags;
 	pol.pol_rdomain = rdomain;
 	memcpy(&pol.pol_auth, authtype, sizeof(struct iked_auth));
+	explicit_bzero(authtype, sizeof(*authtype));
 
 	if (name != NULL) {
 		if (strlcpy(pol.pol_name, name,
