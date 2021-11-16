@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.503 2021/11/11 12:35:01 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.504 2021/11/16 20:51:31 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1043,12 +1043,14 @@ struct _pfr_kentry {
 	struct radix_node	 _pfrke_node[2];
 	union pfsockaddr_union	 _pfrke_sa;
 	SLIST_ENTRY(pfr_kentry)	 _pfrke_workq;
+	SLIST_ENTRY(pfr_kentry)	 _pfrke_ioq;
 	struct pfr_kcounters	*_pfrke_counters;
 	time_t			 _pfrke_tzero;
 	u_int8_t		 _pfrke_af;
 	u_int8_t		 _pfrke_net;
 	u_int8_t		 _pfrke_flags;
 	u_int8_t		 _pfrke_type;
+	u_int8_t		 _pfrke_fb;
 };
 #define PFRKE_FLAG_NOT		0x01
 #define PFRKE_FLAG_MARK		0x02
@@ -1064,12 +1066,14 @@ struct pfr_kentry {
 #define pfrke_node	u._ke._pfrke_node
 #define pfrke_sa	u._ke._pfrke_sa
 #define pfrke_workq	u._ke._pfrke_workq
+#define pfrke_ioq	u._ke._pfrke_ioq
 #define pfrke_counters	u._ke._pfrke_counters
 #define pfrke_tzero	u._ke._pfrke_tzero
 #define pfrke_af	u._ke._pfrke_af
 #define pfrke_net	u._ke._pfrke_net
 #define pfrke_flags	u._ke._pfrke_flags
 #define pfrke_type	u._ke._pfrke_type
+#define pfrke_fb	u._ke._pfrke_fb
 
 struct pfr_kentry_route {
 	union {
@@ -1077,6 +1081,7 @@ struct pfr_kentry_route {
 	} u;
 
 	struct pfi_kif		*kif;
+	char			ifname[IFNAMSIZ];
 };
 
 struct pfr_kentry_cost {
@@ -1085,6 +1090,7 @@ struct pfr_kentry_cost {
 	} u;
 
 	struct pfi_kif		*kif;
+	char			ifname[IFNAMSIZ];
 	/* Above overlaps with pfr_kentry route */
 
 	u_int16_t		 weight;
@@ -1098,6 +1104,7 @@ struct pfr_kentry_all {
 	} u;
 };
 #define pfrke_rkif	u.kr.kif
+#define pfrke_rifname	u.kr.ifname
 
 SLIST_HEAD(pfr_ktableworkq, pfr_ktable);
 RB_HEAD(pfr_ktablehead, pfr_ktable);
