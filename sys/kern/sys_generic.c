@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.140 2021/11/12 04:34:22 visa Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.141 2021/11/16 13:48:23 visa Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -671,7 +671,7 @@ dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
 				goto done;
 			nsecs = MAX(1, MIN(TIMESPEC_TO_NSEC(timeout), MAXTSLP));
 		}
-		error = tsleep_nsec(&p->p_kq, PSOCK | PCATCH, "kqsel", nsecs);
+		error = tsleep_nsec(&nowake, PSOCK | PCATCH, "kqsel", nsecs);
 		/* select is not restarted after signals... */
 		if (error == ERESTART)
 			error = EINTR;
@@ -1166,7 +1166,7 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 			nsecs = MAX(1, MIN(TIMESPEC_TO_NSEC(timeout), MAXTSLP));
 		}
 
-		error = tsleep_nsec(&p->p_kq, PSOCK | PCATCH, "kqpoll", nsecs);
+		error = tsleep_nsec(&nowake, PSOCK | PCATCH, "kqpoll", nsecs);
 		if (error == ERESTART)
 			error = EINTR;
 		if (error == EWOULDBLOCK)
