@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.68 2021/02/06 18:01:02 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.69 2021/11/16 16:45:23 kn Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1342,23 +1342,6 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			break;
 
 		rtdns = (struct sockaddr_rtdns*)rti_info[RTAX_DNS];
-		switch (rtdns->sr_family) {
-		case AF_INET:
-			if ((rtdns->sr_len - 2) % sizeof(struct in_addr) != 0) {
-				log_warnx("ignoring invalid RTM_PROPOSAL");
-				return;
-			}
-			break;
-		case AF_INET6:
-			if ((rtdns->sr_len - 2) % sizeof(struct in6_addr) != 0) {
-				log_warnx("ignoring invalid RTM_PROPOSAL");
-				return;
-			}
-			break;
-		default:
-			log_warnx("ignoring invalid RTM_PROPOSAL");
-			return;
-		}
 		rdns_proposal.if_index = rtm->rtm_index;
 		rdns_proposal.src = rtm->rtm_priority;
 		memcpy(&rdns_proposal.rtdns, rtdns, sizeof(rdns_proposal.rtdns));

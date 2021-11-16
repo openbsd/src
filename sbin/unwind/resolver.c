@@ -1,4 +1,5 @@
-/*	$OpenBSD: resolver.c,v 1.152 2021/11/16 16:37:52 kn Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.153 2021/11/16 16:45:23 kn Exp $	*/
+
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1989,6 +1990,10 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 		return;
 	}
 
+	if ((rdns_proposal->rtdns.sr_len - 2) % addrsz != 0) {
+		log_warnx("ignoring invalid RTM_PROPOSAL");
+		return;
+	}
 	rdns_count = (rdns_proposal->rtdns.sr_len -
 	    offsetof(struct sockaddr_rtdns, sr_dns)) / addrsz;
 
