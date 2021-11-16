@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.150 2021/10/23 07:25:20 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.151 2021/11/16 16:30:42 kn Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1994,8 +1994,10 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 	}
 
 	for (i = 0; i < rdns_count; i++) {
+		struct sockaddr_storage ss;
+		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&ss;
 		struct in_addr addr4;
-		struct in6_addr addr6;
+		int err;
 
 		switch (af) {
 		case AF_INET:
@@ -2007,12 +2009,23 @@ replace_autoconf_forwarders(struct imsg_rdns_proposal *rdns_proposal)
 			    INET6_ADDRSTRLEN);
 			break;
 		case AF_INET6:
-			memcpy(&addr6, src, sizeof(struct in6_addr));
+			memset(&ss, 0, sizeof(ss));
+			memcpy(&sin6->sin6_addr, src, sizeof(sin6->sin6_addr));
 			src += sizeof(struct in6_addr);
-			if (IN6_IS_ADDR_LOOPBACK(&addr6))
+			if (IN6_IS_ADDR_LOOPBACK(&sin6->sin6_addr))
 				continue;
-			ns = inet_ntop(af, &addr6, ntopbuf,
-			    INET6_ADDRSTRLEN);
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+				sin6->sin6_scope_id = rdns_proposal->if_index;
+			ss.ss_len = sizeof(*sin6);
+			ss.ss_family = af;
+			if ((err = getnameinfo((struct sockaddr *)&ss, ss.ss_len,
+			    ntopbuf, sizeof(ntopbuf),
+			    NULL, 0, NI_NUMERICHOST)) != 0) {
+				log_warnx("getnameinfo: %s", gai_strerror(err));
+				continue;
+			}
+			ns = ntopbuf;
+			break;
 		}
 
 		if ((uw_forwarder = calloc(1, sizeof(struct uw_forwarder))) ==
