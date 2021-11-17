@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.18 2021/08/17 11:30:45 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.19 2021/11/17 06:22:14 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -304,8 +304,7 @@ uhidpp_match(struct device *parent, void *match, void *aux)
 	void *desc;
 	int descsiz, siz;
 
-	if (uha->reportid != HIDPP_REPORT_ID_SHORT &&
-	    uha->reportid != HIDPP_REPORT_ID_LONG)
+	if (!UHIDEV_CLAIM_MULTIPLE_REPORTID(uha))
 		return UMATCH_NONE;
 
 	if (usb_lookup(uhidpp_devs,
@@ -320,6 +319,8 @@ uhidpp_match(struct device *parent, void *match, void *aux)
 	if (siz != HIDPP_REPORT_LONG_LENGTH)
 		return UMATCH_NONE;
 
+	uha->claimed[HIDPP_REPORT_ID_SHORT] = 1;
+	uha->claimed[HIDPP_REPORT_ID_LONG] = 1;
 	return UMATCH_VENDOR_PRODUCT;
 }
 
