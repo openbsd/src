@@ -1,0 +1,167 @@
+.\" $OpenBSD: X509_STORE_CTX_set_verify.3,v 1.1 2021/11/17 16:08:32 schwarze Exp $
+.\"
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 17 2021 $
+.Dt X509_STORE_CTX_SET_VERIFY 3
+.Os
+.\" ds LIBRESSL_NEW_API
+.Sh NAME
+.if dLIBRESSL_NEW_API \{\
+.Nm X509_STORE_CTX_verify_fn ,
+.\}
+.Nm X509_STORE_CTX_set_verify ,
+.ie dLIBRESSL_NEW_API \{\
+.Nm X509_STORE_CTX_get_verify ,
+.Nm X509_STORE_set_verify ,
+.Nm X509_STORE_set_verify_func
+.\}
+.el \{\
+.Nm X509_STORE_CTX_get_verify
+.\}
+.Nd user-defined certificate chain verification function
+.Sh SYNOPSIS
+.In openssl/x509_vfy.h
+.if dLIBRESSL_NEW_API \{\
+.Ft typedef int
+.Fo "(*X509_STORE_CTX_verify_fn)"
+.Fa "X509_STORE_CTX *ctx"
+.Fc
+.\}
+.Ft void
+.Fo X509_STORE_CTX_set_verify
+.Fa "X509_STORE_CTX *ctx"
+.ie dLIBRESSL_NEW_API \{\
+.Fa "X509_STORE_CTX_verify_fn verify"
+.\}
+.el \{\
+.Fa "int (*verify)(X509_STORE_CTX *)"
+.\}
+.Fc
+.ie dLIBRESSL_NEW_API \{\
+.Ft X509_STORE_CTX_verify_fn
+.Fo X509_STORE_CTX_get_verify
+.\}
+.el \{\
+.Ft int
+.Fo "(*X509_STORE_CTX_get_verify(X509_STORE_CTX *ctx))"
+.\}
+.Fa "X509_STORE_CTX *ctx"
+.Fc
+.if dLIBRESSL_NEW_API \{\
+.Ft void
+.Fo X509_STORE_set_verify
+.Fa "X509_STORE *store"
+.Fa "X509_STORE_CTX_verify_fn verify"
+.Fc
+.Ft void
+.Fo X509_STORE_set_verify_func
+.Fa "X509_STORE *store"
+.Fa "X509_STORE_CTX_verify_fn verify"
+.Fc
+.\}
+.Sh DESCRIPTION
+.Fn X509_STORE_CTX_set_verify
+configures
+.Fa ctx
+to use the
+.Fa verify
+argument as the X.509 certificate chain verification function instead
+of the default verification function built into the library when
+.Xr X509_verify_cert 3
+is called.
+.Pp
+The
+.Fa verify
+function provided by the user is only called if the
+.Dv X509_V_FLAG_LEGACY_VERIFY
+or
+.Dv X509_V_FLAG_NO_ALT_CHAINS
+flag was set on
+.Fa ctx
+using
+.Xr X509_STORE_CTX_set_flags 3
+or
+.Xr X509_VERIFY_PARAM_set_flags 3 .
+Otherwise, it is ignored and a different algorithm is used that does
+not support replacing the verification function.
+.if dLIBRESSL_NEW_API \{\
+.Pp
+.Fn X509_STORE_set_verify
+saves the function pointer
+.Fa verify
+in the given
+.Fa store
+object.
+That pointer will be copied to an
+.Vt X509_STORE_CTX
+object when
+.Fa store
+is later passed as an argument to
+.Xr X509_STORE_CTX_init 3 .
+.Pp
+.Fn X509_STORE_set_verify_func
+is an alias for
+.Fn X509_STORE_set_verify
+implemented as a macro.
+.\}
+.Sh RETURN VALUES
+.if dLIBRESSL_NEW_API \{\
+.Fn X509_STORE_CTX_verify_fn
+is supposed to return 1 to indicate that the chain is valid
+or 0 if it is not or if an error occurred.
+.Pp
+.\}
+.Fn X509_STORE_CTX_get_verify
+returns a function pointer to the function previously set with
+.Fn X509_STORE_CTX_set_verify
+or
+.Xr X509_STORE_CTX_init 3 ,
+or
+.Dv NULL
+if
+.Fa ctx
+is uninitialized.
+.Sh SEE ALSO
+.Xr X509_STORE_CTX_init 3 ,
+.Xr X509_STORE_CTX_set_error 3 ,
+.Xr X509_STORE_CTX_set_flags 3 ,
+.Xr X509_STORE_CTX_set_verify_cb 3 ,
+.Xr X509_STORE_new 3 ,
+.Xr X509_STORE_set_flags 3 ,
+.Xr X509_STORE_set_verify_cb 3 ,
+.Xr X509_verify_cert 3 ,
+.Xr X509_VERIFY_PARAM_set_flags 3
+.Sh HISTORY
+.if dLIBRESSL_NEW_API \{\
+.Fn X509_STORE_set_verify_func
+first appeared in SSLeay 0.8.0 and has been available since
+.Ox 2.4 .
+.Pp
+.\}
+.Fn X509_STORE_CTX_set_verify
+and
+.Fn X509_STORE_CTX_get_verify
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 7.1 .
+.if dLIBRESSL_NEW_API \{\
+.Pp
+.Fn X509_STORE_CTX_verify_fn
+and
+.Fn X509_STORE_set_verify
+first appeared in OpenSSL 1.1.0 and have been available since
+.reminder Check the version number!
+.Ox 7.1 .
+.\}

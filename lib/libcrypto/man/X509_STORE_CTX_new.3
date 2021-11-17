@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_new.3,v 1.25 2021/10/18 18:20:39 schwarze Exp $
+.\" $OpenBSD: X509_STORE_CTX_new.3,v 1.26 2021/11/17 16:08:32 schwarze Exp $
 .\" full merge up to: OpenSSL aae41f8c Jun 25 09:47:15 2015 +0100
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 18 2021 $
+.Dd $Mdocdate: November 17 2021 $
 .Dt X509_STORE_CTX_NEW 3
 .Os
 .Sh NAME
@@ -323,9 +323,12 @@ if no set of additional certificates was provided.
 .Xr X509_STORE_CTX_get_error 3 ,
 .Xr X509_STORE_CTX_get_ex_new_index 3 ,
 .Xr X509_STORE_CTX_set_flags 3 ,
+.Xr X509_STORE_CTX_set_verify 3 ,
+.Xr X509_STORE_CTX_set_verify_cb 3 ,
 .Xr X509_STORE_get_by_subject 3 ,
 .Xr X509_STORE_new 3 ,
 .Xr X509_STORE_set1_param 3 ,
+.Xr X509_STORE_set_verify_cb 3 ,
 .Xr X509_verify_cert 3 ,
 .Xr X509_VERIFY_PARAM_inherit 3 ,
 .Xr X509_VERIFY_PARAM_set_flags 3

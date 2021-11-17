@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_set_verify_cb_func.3,v 1.10 2021/07/29 10:13:45 schwarze Exp $
+.\" $OpenBSD: X509_STORE_set_verify_cb_func.3,v 1.11 2021/11/17 16:08:32 schwarze Exp $
 .\" full merge up to: OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\" selective merge up to: OpenSSL 315c47e0 Dec 1 14:22:16 2020 +0100
 .\"
@@ -49,13 +49,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 29 2021 $
+.Dd $Mdocdate: November 17 2021 $
 .Dt X509_STORE_SET_VERIFY_CB_FUNC 3
 .Os
 .Sh NAME
 .Nm X509_STORE_set_verify_cb ,
-.Nm X509_STORE_set_verify_cb_func ,
-.Nm X509_STORE_set_verify_func
+.Nm X509_STORE_set_verify_cb_func
 .Nd set verification callback
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
@@ -68,11 +67,6 @@
 .Fo X509_STORE_set_verify_cb_func
 .Fa "X509_STORE *st"
 .Fa "int (*verify_cb)(int ok, X509_STORE_CTX *ctx)"
-.Fc
-.Ft void
-.Fo X509_STORE_set_verify_func
-.Fa "X509_STORE *st"
-.Fa "int (*verify_func)(X509_STORE_CTX *ctx)"
 .Fc
 .Sh DESCRIPTION
 .Fn X509_STORE_set_verify_cb
@@ -93,32 +87,16 @@ structure when it is initialized.
 This can be used to set the verification callback when the
 .Vt X509_STORE_CTX
 is otherwise inaccessible (for example during S/MIME verification).
-.Pp
-.Fn X509_STORE_set_verify_func
-sets the final chain verification function for
-.Fa st
-to
-.Fa verify_func .
-Its purpose is to go through the chain of certificates and check
-that all signatures are valid and that the current time is within
-the limits of each certificate's first and last validity time.
-The final chain verification function
-must return 0 on failure and 1 on success.
-If
-.Fn X509_STORE_set_verify_func
-is not called or called with
-.Fa verify_func
-set to a
-.Dv NULL
-pointer, the built-in default function is used.
 .Sh SEE ALSO
+.Xr X509_STORE_CTX_new 3 ,
+.Xr X509_STORE_CTX_set_verify 3 ,
 .Xr X509_STORE_CTX_set_verify_cb 3 ,
-.Xr X509_STORE_new 3
+.Xr X509_STORE_new 3 ,
+.Xr X509_STORE_set_flags 3 ,
+.Xr X509_verify_cert 3
 .Sh HISTORY
 .Fn X509_STORE_set_verify_cb_func
-and
-.Fn X509_STORE_set_verify_func
-first appeared in SSLeay 0.8.0 and have been available since
+first appeared in SSLeay 0.8.0 and has been available since
 .Ox 2.4 .
 .Pp
 .Fn X509_STORE_set_verify_cb
