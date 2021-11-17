@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.189 2021/11/10 20:24:22 bket Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.190 2021/11/17 18:00:24 bket Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -4559,6 +4559,23 @@ sppp_get_params(struct sppp *sp, struct ifreq *ifr)
 			return EFAULT;
 		}
 		free(spa, M_DEVBUF, sizeof(*spa));
+		break;
+	}
+	case SPPPIOGDNS:
+	{
+		struct sdnsreq *spd;
+
+		spd = malloc(sizeof(*spd), M_DEVBUF, M_WAITOK);
+
+		spd->cmd = cmd;
+		memcpy(spd->dns, sp->ipcp.dns, sizeof(spd->dns));
+
+		if (copyout(spd, (caddr_t)ifr->ifr_data, sizeof(*spd)) != 0) {
+			free(spd, M_DEVBUF, 0);
+			return EFAULT;
+		}
+
+		free(spd, M_DEVBUF, sizeof(*spd));
 		break;
 	}
 	default:

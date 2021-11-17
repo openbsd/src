@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sppp.h,v 1.29 2021/11/10 15:04:26 bket Exp $	*/
+/*	$OpenBSD: if_sppp.h,v 1.30 2021/11/17 18:00:24 bket Exp $	*/
 /*	$NetBSD: if_sppp.h,v 1.2.2.1 1999/04/04 06:57:39 explorer Exp $	*/
 
 /*
@@ -82,12 +82,21 @@ struct spppreq {
 	enum ppp_phase phase;	/* phase we're currently in */
 };
 
+#include <netinet/in.h>
+
+#define IPCP_MAX_DNSSRV	2
+struct sdnsreq {
+	int cmd;
+	struct in_addr dns[IPCP_MAX_DNSSRV];
+};
+
 #define SPPPIOGDEFS  ((int)(('S' << 24) + (1 << 16) + sizeof(struct spppreq)))
 #define SPPPIOSDEFS  ((int)(('S' << 24) + (2 << 16) + sizeof(struct spppreq)))
 #define SPPPIOGMAUTH ((int)(('S' << 24) + (3 << 16) + sizeof(struct sauthreq)))
 #define SPPPIOSMAUTH ((int)(('S' << 24) + (4 << 16) + sizeof(struct sauthreq)))
 #define SPPPIOGHAUTH ((int)(('S' << 24) + (5 << 16) + sizeof(struct sauthreq)))
 #define SPPPIOSHAUTH ((int)(('S' << 24) + (6 << 16) + sizeof(struct sauthreq)))
+#define SPPPIOGDNS   ((int)(('S' << 24) + (7 << 16) + sizeof(struct sdnsreq)))
 
 
 #ifdef _KERNEL
@@ -96,7 +105,6 @@ struct spppreq {
 #include <sys/task.h>
 
 #ifdef INET6
-#include <netinet/in.h>
 #include <netinet6/in6_var.h>
 #endif
 
@@ -132,7 +140,6 @@ struct sipcp {
 				  * original one here, in network byte order */
 	u_int32_t req_hisaddr;	/* remote address requested (IPv4) */
 	u_int32_t req_myaddr;	/* local address requested (IPv4) */
-#define IPCP_MAX_DNSSRV	2
 	struct in_addr dns[IPCP_MAX_DNSSRV]; /* IPv4 DNS servers (RFC 1877) */
 #ifdef INET6
 	struct in6_aliasreq req_ifid;	/* local ifid requested (IPv6) */

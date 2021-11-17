@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.449 2021/11/11 09:39:16 claudio Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.450 2021/11/17 18:00:24 bket Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -718,6 +718,7 @@ u_int	getwpacipher(const char *);
 void	print_cipherset(u_int32_t);
 
 void	spppauthinfo(struct sauthreq *, int);
+void	spppdnsinfo(struct sdnsreq *);
 
 /* Known address families */
 const struct afswtch {
@@ -5455,6 +5456,17 @@ spppauthinfo(struct sauthreq *spa, int d)
 }
 
 void
+spppdnsinfo(struct sdnsreq *spd)
+{
+	memset(spd, 0, sizeof(*spd));
+
+	ifr.ifr_data = (caddr_t)spd;
+	spd->cmd = SPPPIOGDNS;
+	if (ioctl(sock, SIOCGSPPPPARAMS, &ifr) == -1)
+		err(1, "SIOCGSPPPPARAMS(SPPPIOGDNS)");
+}
+
+void
 setspppproto(const char *val, int d)
 {
 	struct sauthreq spa;
@@ -5588,6 +5600,9 @@ sppp_status(void)
 {
 	struct spppreq spr;
 	struct sauthreq spa;
+	struct sdnsreq spd;
+	char astr[INET_ADDRSTRLEN];
+	int i, n;
 
 	bzero(&spr, sizeof(spr));
 
@@ -5627,6 +5642,16 @@ sppp_status(void)
 	if (spa.flags & AUTHFLAG_NORECHALLENGE)
 		printf("norechallenge ");
 	putchar('\n');
+
+	spppdnsinfo(&spd);
+	for (i = 0, n = 0; i < IPCP_MAX_DNSSRV; i++) {
+		if (spd.dns[i].s_addr == INADDR_ANY)
+			break;
+		printf("%s %s", n++ ? "" : "\tdns:",
+		    inet_ntop(AF_INET, &spd.dns[i], astr, sizeof(astr)));
+	}
+	if (n)
+		printf("\n");
 }
 
 void
