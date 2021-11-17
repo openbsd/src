@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.27 2021/09/20 17:32:39 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.28 2021/11/17 06:21:23 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -632,6 +632,9 @@ ucc_match(struct device *parent, void *match, void *aux)
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	void *desc;
 	int size;
+
+	if (UHIDEV_CLAIM_MULTIPLE_REPORTID(uha))
+		return UMATCH_NONE;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	if (hid_report_size(desc, size, hid_input, uha->reportid) == 0)
