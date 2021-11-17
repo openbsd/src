@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldom.conf.5,v 1.15 2020/11/06 21:32:09 kn Exp $
+.\" $OpenBSD: ldom.conf.5,v 1.16 2021/11/17 15:13:36 kn Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 6 2020 $
+.Dd $Mdocdate: November 17 2021 $
 .Dt LDOM.CONF 5 sparc64
 .Os
 .Sh NAME
@@ -32,7 +32,7 @@ The scope must be opened and closed with curly braces and contains
 one or more of the following keywords, each on a separate line.
 A scope with
 .Ar name
-.Cm primary
+.Dq primary
 configures resources for the primary domain.
 If no configuration for the primary domain exists it is assigned
 all CPU and memory resources not used by any guest domains.
@@ -152,5 +152,11 @@ fallback to
 .Dq factory-default
 upon resetting the machine.
 .Pp
-If in doubt, leave enough memory unused for the hypervisor to reserve.
-On bigger T4 based machines, 1024 megabytes has proven to suffice.
+If in doubt, assign
+.Ic memory
+to the
+.Dq primary
+.Ic domain
+explicitly,
+such that enough memory remains unused for the hypervisor to reserve.
+On T4 based machines, 1024 megabytes has proven to suffice.
