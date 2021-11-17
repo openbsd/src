@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.100 2021/11/15 15:36:24 anton Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.101 2021/11/17 06:20:30 anton Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -592,6 +592,7 @@ out2:
 out1:
 	DPRINTF(("uhidev_open: failed in someway"));
 	free(sc->sc_ibuf, M_USBDEV, sc->sc_isize);
+	sc->sc_ibuf = NULL;
 	scd->sc_state &= ~UHIDEV_OPEN;
 	sc->sc_refcnt = 0;
 	sc->sc_ipipe = NULL;
