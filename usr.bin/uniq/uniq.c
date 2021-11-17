@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.28 2021/11/01 23:20:35 cheloha Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.29 2021/11/17 23:09:38 cheloha Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ main(int argc, char *argv[])
 	char *prevline, *t1, *t2, *thisline;
 	FILE *ifp = NULL, *ofp = NULL;
 	size_t prevsize, thissize, tmpsize;
+	ssize_t len;
 	int ch;
 
 	setlocale(LC_CTYPE, "");
@@ -133,16 +134,21 @@ main(int argc, char *argv[])
 
 	prevsize = 0;
 	prevline = NULL;
-	if (getline(&prevline, &prevsize, ifp) == -1) {
+	if ((len = getline(&prevline, &prevsize, ifp)) == -1) {
 		free(prevline);
 		if (ferror(ifp))
 			err(1, "getline");
 		exit(0);
 	}
+	if (prevline[len - 1] == '\n')
+		prevline[len - 1] = '\0';
 	
 	thissize = 0;
 	thisline = NULL;
-	while (getline(&thisline, &thissize, ifp) != -1) {
+	while ((len = getline(&thisline, &thissize, ifp)) != -1) {
+		if (thisline[len - 1] == '\n')
+			thisline[len - 1] = '\0';
+
 		/* If requested get the chosen fields + character offsets. */
 		if (numfields || numchars) {
 			t1 = skip(thisline);
@@ -185,9 +191,9 @@ show(FILE *ofp, char *str)
 {
 	if ((dflag && repeats) || (uflag && !repeats)) {
 		if (cflag)
-			(void)fprintf(ofp, "%4d %s", repeats + 1, str);
+			fprintf(ofp, "%4d %s\n", repeats + 1, str);
 		else
-			(void)fprintf(ofp, "%s", str);
+			fprintf(ofp, "%s\n", str);
 	}
 }
 
