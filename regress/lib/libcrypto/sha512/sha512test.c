@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha512test.c,v 1.5 2021/11/18 15:23:24 tb Exp $	*/
+/*	$OpenBSD: sha512test.c,v 1.6 2021/11/18 21:37:57 tb Exp $	*/
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  * ====================================================================
@@ -141,7 +141,7 @@ main(int argc, char **argv) {
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
 		    (1000000 - i) < 288 ? 1000000 - i : 288);
 	EVP_DigestFinal_ex(evp, md, NULL);
-	EVP_MD_CTX_cleanup(evp);
+	EVP_MD_CTX_reset(evp);
 
 	if (memcmp(md, app_c3, sizeof(app_c3))) {
 		fflush(stdout);
@@ -179,7 +179,6 @@ main(int argc, char **argv) {
 	fprintf(stdout, ".");
 	fflush(stdout);
 
-	EVP_MD_CTX_init(evp);
 	EVP_DigestInit_ex(evp, EVP_sha384(), NULL);
 	for (i = 0; i < 1000000; i += 64)
 		EVP_DigestUpdate(evp,
