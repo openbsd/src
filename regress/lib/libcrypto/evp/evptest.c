@@ -1,4 +1,4 @@
-/*	$OpenBSD: evptest.c,v 1.10 2021/11/18 15:15:31 tb Exp $	*/
+/*	$OpenBSD: evptest.c,v 1.11 2021/11/18 21:18:28 tb Exp $	*/
 /* Written by Ben Laurie, 2001 */
 /*
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
@@ -296,7 +296,8 @@ test_digest(const char *digest, const unsigned char *plaintext, int pn,
 		ERR_print_errors_fp(stderr);
 		exit(101);
 	}
-	EVP_MD_CTX_cleanup(ctx);
+	EVP_MD_CTX_free(ctx);
+	ctx = NULL;
 
 	if (mdn != cn) {
 		fprintf(stderr, "Digest length mismatch, got %d expected %d\n",mdn,cn);
@@ -311,8 +312,6 @@ test_digest(const char *digest, const unsigned char *plaintext, int pn,
 	}
 
 	printf("\n");
-
-	EVP_MD_CTX_free(ctx);
 
 	return 1;
 }
