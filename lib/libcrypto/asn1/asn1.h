@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.56 2021/11/01 08:14:36 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.57 2021/11/18 16:00:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -162,6 +162,7 @@ DECLARE_STACK_OF(X509_ALGOR)
 #define DECLARE_ASN1_SET_OF(type) /* filled in by mkstack.pl */
 #define IMPLEMENT_ASN1_SET_OF(type) /* nothing, no longer needed */
 
+#ifndef LIBRESSL_INTERNAL
 /* We MUST make sure that, except for constness, asn1_ctx_st and
    asn1_const_ctx are exactly the same.  Fortunately, as soon as
    the old ASN1 parsing macros are gone, we can throw this away
@@ -193,6 +194,7 @@ typedef struct asn1_const_ctx_st {
 	const unsigned char **pp;/* variable */
 	int line;	/* used in error processing */
 } ASN1_const_CTX;
+#endif
 
 /* These are used internally in the ASN1_OBJECT to keep track of
  * whether the names and data need to be free()ed */
