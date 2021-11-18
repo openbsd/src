@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha512test.c,v 1.4 2018/07/17 17:06:50 tb Exp $	*/
+/*	$OpenBSD: sha512test.c,v 1.5 2021/11/18 15:23:24 tb Exp $	*/
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  * ====================================================================
@@ -84,7 +84,7 @@ int
 main(int argc, char **argv) {
 	unsigned char md[SHA512_DIGEST_LENGTH];
 	int		i;
-	EVP_MD_CTX	evp;
+	EVP_MD_CTX	*evp;
 
 #ifdef OPENSSL_IA32_SSE2
 	/* Alternative to this is to call OpenSSL_add_all_algorithms...
@@ -122,10 +122,14 @@ main(int argc, char **argv) {
 	fprintf(stdout, ".");
 	fflush(stdout);
 
-	EVP_MD_CTX_init(&evp);
-	EVP_DigestInit_ex(&evp, EVP_sha512(), NULL);
+	if ((evp = EVP_MD_CTX_new()) == NULL) {
+		fflush(stdout);
+		fprintf(stderr, "\nEVP_MD_CTX_new() failed.\n");
+		return 1;
+	}
+	EVP_DigestInit_ex(evp, EVP_sha512(), NULL);
 	for (i = 0; i < 1000000; i += 288)
-		EVP_DigestUpdate(&evp,
+		EVP_DigestUpdate(evp,
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
@@ -136,8 +140,8 @@ main(int argc, char **argv) {
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
 		    (1000000 - i) < 288 ? 1000000 - i : 288);
-	EVP_DigestFinal_ex(&evp, md, NULL);
-	EVP_MD_CTX_cleanup(&evp);
+	EVP_DigestFinal_ex(evp, md, NULL);
+	EVP_MD_CTX_cleanup(evp);
 
 	if (memcmp(md, app_c3, sizeof(app_c3))) {
 		fflush(stdout);
@@ -175,15 +179,15 @@ main(int argc, char **argv) {
 	fprintf(stdout, ".");
 	fflush(stdout);
 
-	EVP_MD_CTX_init(&evp);
-	EVP_DigestInit_ex(&evp, EVP_sha384(), NULL);
+	EVP_MD_CTX_init(evp);
+	EVP_DigestInit_ex(evp, EVP_sha384(), NULL);
 	for (i = 0; i < 1000000; i += 64)
-		EVP_DigestUpdate(&evp,
+		EVP_DigestUpdate(evp,
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
 		    (1000000 - i) < 64 ? 1000000 - i : 64);
-	EVP_DigestFinal_ex(&evp, md, NULL);
-	EVP_MD_CTX_cleanup(&evp);
+	EVP_DigestFinal_ex(evp, md, NULL);
+	EVP_MD_CTX_free(evp);
 
 	if (memcmp(md, app_d3, sizeof(app_d3))) {
 		fflush(stdout);

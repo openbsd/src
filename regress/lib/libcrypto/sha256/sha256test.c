@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha256test.c,v 1.3 2018/07/17 17:06:50 tb Exp $	*/
+/*	$OpenBSD: sha256test.c,v 1.4 2021/11/18 15:23:24 tb Exp $	*/
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  * ====================================================================
@@ -65,7 +65,7 @@ int
 main(int argc, char **argv) {
 	unsigned char md[SHA256_DIGEST_LENGTH];
 	int		i;
-	EVP_MD_CTX	evp;
+	EVP_MD_CTX	*evp;
 
 	fprintf(stdout, "Testing SHA-256 ");
 
@@ -90,18 +90,22 @@ main(int argc, char **argv) {
 	fprintf(stdout, ".");
 	fflush(stdout);
 
-	EVP_MD_CTX_init(&evp);
-	EVP_DigestInit_ex(&evp, EVP_sha256(), NULL);
+	if ((evp = EVP_MD_CTX_new()) == NULL) {
+		fflush(stdout);
+		fprintf(stderr, "\nEVP_MD_CTX_new() failed.\n");
+		return 1;
+	}
+	EVP_DigestInit_ex(evp, EVP_sha256(), NULL);
 	for (i = 0; i < 1000000; i += 160)
-		EVP_DigestUpdate(&evp,
+		EVP_DigestUpdate(evp,
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
 		    (1000000 - i) < 160 ? 1000000 - i : 160);
-	EVP_DigestFinal_ex(&evp, md, NULL);
-	EVP_MD_CTX_cleanup(&evp);
+	EVP_DigestFinal_ex(evp, md, NULL);
+	EVP_MD_CTX_cleanup(evp);
 
 	if (memcmp(md, app_b3, sizeof(app_b3))) {
 		fflush(stdout);
@@ -136,15 +140,15 @@ main(int argc, char **argv) {
 	fprintf(stdout, ".");
 	fflush(stdout);
 
-	EVP_MD_CTX_init(&evp);
-	EVP_DigestInit_ex (&evp, EVP_sha224(), NULL);
+	EVP_MD_CTX_init(evp);
+	EVP_DigestInit_ex (evp, EVP_sha224(), NULL);
 	for (i = 0; i < 1000000; i += 64)
-		EVP_DigestUpdate(&evp,
+		EVP_DigestUpdate(evp,
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
 		    (1000000 - i) < 64 ? 1000000 - i : 64);
-	EVP_DigestFinal_ex(&evp, md, NULL);
-	EVP_MD_CTX_cleanup(&evp);
+	EVP_DigestFinal_ex(evp, md, NULL);
+	EVP_MD_CTX_cleanup(evp);
 
 	if (memcmp(md, addenum_3, sizeof(addenum_3))) {
 		fflush(stdout);

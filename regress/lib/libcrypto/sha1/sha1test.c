@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1test.c,v 1.3 2018/07/17 17:06:50 tb Exp $	*/
+/*	$OpenBSD: sha1test.c,v 1.4 2021/11/18 15:23:24 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -83,10 +83,13 @@ int main(int argc, char *argv[])
 	char **P,**R;
 	static unsigned char buf[1000];
 	char *p,*r;
-	EVP_MD_CTX c;
+	EVP_MD_CTX *c;
 	unsigned char md[SHA_DIGEST_LENGTH];
 
-	EVP_MD_CTX_init(&c);
+	if ((c = EVP_MD_CTX_new()) == NULL) {
+		printf("EVP_MD_CTX_new() failed\n");
+		return 1;
+	}
 	P=test;
 	R=ret;
 	i=1;
@@ -108,10 +111,10 @@ int main(int argc, char *argv[])
 		}
 
 	memset(buf,'a',1000);
-	EVP_DigestInit_ex(&c,EVP_sha1(), NULL);
+	EVP_DigestInit_ex(c,EVP_sha1(), NULL);
 	for (i=0; i<1000; i++)
-		EVP_DigestUpdate(&c,buf,1000);
-	EVP_DigestFinal_ex(&c,md,NULL);
+		EVP_DigestUpdate(c,buf,1000);
+	EVP_DigestFinal_ex(c,md,NULL);
 	p=pt(md);
 
 	r=bigret;
@@ -124,7 +127,7 @@ int main(int argc, char *argv[])
 	else
 		printf("test 3 ok\n");
 
-	EVP_MD_CTX_cleanup(&c);
+	EVP_MD_CTX_free(c);
 	exit(err);
 	}
 
