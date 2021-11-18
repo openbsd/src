@@ -1,4 +1,4 @@
-/*	$OpenBSD: gost2814789t.c,v 1.4 2021/11/18 21:22:41 tb Exp $	*/
+/*	$OpenBSD: gost2814789t.c,v 1.5 2021/11/18 21:26:54 tb Exp $	*/
 /* vim: set fileencoding=ascii : Charset: ASCII */
 /* test/gostr2814789t.c */
 /* ====================================================================
@@ -1427,7 +1427,7 @@ engine_cipher_check:
 	    }
 	    siglen = 4;
 	    OPENSSL_assert(EVP_DigestSignFinal(mctx, bTest, &siglen));
-	    EVP_MD_CTX_cleanup(mctx);
+	    EVP_MD_CTX_reset(mctx);
 	    EVP_PKEY_free(mac_key);
 	    enlu = (int)tcs[t].ullLen;
 	    enlf = 0;
