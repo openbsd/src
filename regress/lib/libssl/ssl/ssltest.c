@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssltest.c,v 1.31 2021/10/31 16:56:17 tb Exp $ */
+/*	$OpenBSD: ssltest.c,v 1.32 2021/11/18 16:45:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -371,34 +371,45 @@ static void
 print_details(SSL *c_ssl, const char *prefix)
 {
 	const SSL_CIPHER *ciph;
-	X509 *cert;
+	X509 *cert = NULL;
+	EVP_PKEY *pkey;
 
 	ciph = SSL_get_current_cipher(c_ssl);
 	BIO_printf(bio_stdout, "%s%s, cipher %s %s",
 	    prefix, SSL_get_version(c_ssl), SSL_CIPHER_get_version(ciph),
 	    SSL_CIPHER_get_name(ciph));
-	cert = SSL_get_peer_certificate(c_ssl);
-	if (cert != NULL) {
-		EVP_PKEY *pkey = X509_get_pubkey(cert);
-		if (pkey != NULL) {
-			if (pkey->type == EVP_PKEY_RSA &&
-			    pkey->pkey.rsa != NULL &&
-			    pkey->pkey.rsa->n != NULL) {
-				BIO_printf(bio_stdout, ", %d bit RSA",
-				    BN_num_bits(pkey->pkey.rsa->n));
-			} else if (pkey->type == EVP_PKEY_DSA &&
-			    pkey->pkey.dsa != NULL &&
-			    pkey->pkey.dsa->p != NULL) {
-				BIO_printf(bio_stdout, ", %d bit DSA",
-				    BN_num_bits(pkey->pkey.dsa->p));
-			}
-			EVP_PKEY_free(pkey);
-		}
-		X509_free(cert);
+
+	if ((cert = SSL_get_peer_certificate(c_ssl)) == NULL)
+		goto out;
+	if ((pkey = X509_get0_pubkey(cert)) == NULL)
+		goto out;
+	if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA) {
+		RSA *rsa;
+
+		if ((rsa = EVP_PKEY_get0_RSA(pkey)) == NULL)
+			goto out;
+
+		BIO_printf(bio_stdout, ", %d bit RSA", RSA_bits(rsa));
+	} else if (EVP_PKEY_id(pkey) == EVP_PKEY_DSA) {
+		DSA *dsa;
+		const BIGNUM *p;
+
+		if ((dsa = EVP_PKEY_get0_DSA(pkey)) == NULL)
+			goto out;
+
+		DSA_get0_pqg(dsa, &p, NULL, NULL);
+
+		BIO_printf(bio_stdout, ", %d bit DSA", BN_num_bits(p));
 	}
-	/* The SSL API does not allow us to look at temporary RSA/DH keys,
-	 * otherwise we should print their lengths too */
+
+ out:
+	/*
+	 * The SSL API does not allow us to look at temporary RSA/DH keys,
+	 * otherwise we should print their lengths too
+	 */
 	BIO_printf(bio_stdout, "\n");
+
+	X509_free(cert);
 }
 
 int
