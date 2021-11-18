@@ -1,4 +1,4 @@
-/* $OpenBSD: a_d2i_fp.c,v 1.16 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: a_d2i_fp.c,v 1.17 2021/11/18 15:58:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,8 +150,9 @@ asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 {
 	BUF_MEM *b;
 	unsigned char *p;
-	int i;
-	ASN1_const_CTX c;
+	const unsigned char *q;
+	long slen;
+	int i, inf, tag, xclass;
 	size_t want = HEADER_SIZE;
 	int eos = 0;
 	size_t off = 0;
@@ -189,10 +190,9 @@ asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 		/* else data already loaded */
 
 		p = (unsigned char *) & (b->data[off]);
-		c.p = p;
-		c.inf = ASN1_get_object(&(c.p), &(c.slen), &(c.tag),
-		    &(c.xclass), len - off);
-		if (c.inf & 0x80) {
+		q = p;
+		inf = ASN1_get_object(&q, &slen, &tag, &xclass, len - off);
+		if (inf & 0x80) {
 			unsigned long e;
 
 			e = ERR_GET_REASON(ERR_peek_error());
@@ -201,10 +201,10 @@ asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 			else
 				ERR_clear_error(); /* clear error */
 		}
-		i = c.p - p;	/* header length */
+		i = q - p;	/* header length */
 		off += i;	/* end of data */
 
-		if (c.inf & 1) {
+		if (inf & 1) {
 			/* no data body so go round again */
 			eos++;
 			if (eos < 0) {
@@ -212,7 +212,7 @@ asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 				goto err;
 			}
 			want = HEADER_SIZE;
-		} else if (eos && (c.slen == 0) && (c.tag == V_ASN1_EOC)) {
+		} else if (eos && slen == 0 && tag == V_ASN1_EOC) {
 			/* eos value, so go back and read another header */
 			eos--;
 			if (eos <= 0)
@@ -220,8 +220,8 @@ asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 			else
 				want = HEADER_SIZE;
 		} else {
-			/* suck in c.slen bytes of data */
-			want = c.slen;
+			/* suck in slen bytes of data */
+			want = slen;
 			if (want > (len - off)) {
 				size_t chunk_max = ASN1_CHUNK_INITIAL_SIZE;
 
@@ -262,11 +262,11 @@ asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 						chunk_max *= 2;
 				}
 			}
-			if (off + c.slen < off) {
+			if (off + slen < off) {
 				ASN1error(ASN1_R_TOO_LONG);
 				goto err;
 			}
-			off += c.slen;
+			off += slen;
 			if (eos <= 0) {
 				break;
 			} else
