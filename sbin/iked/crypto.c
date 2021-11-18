@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.35 2021/11/18 22:42:02 tobhe Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.36 2021/11/18 22:59:03 tb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -551,10 +551,7 @@ cipher_free(struct iked_cipher *encr)
 {
 	if (encr == NULL)
 		return;
-	if (encr->encr_ctx != NULL) {
-		EVP_CIPHER_CTX_cleanup(encr->encr_ctx);
-		free(encr->encr_ctx);
-	}
+	EVP_CIPHER_CTX_free(encr->encr_ctx);
 	ibuf_release(encr->encr_iv);
 	ibuf_release(encr->encr_key);
 	free(encr);
