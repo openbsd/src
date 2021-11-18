@@ -1,4 +1,4 @@
-/*	$OpenBSD: gost2814789t.c,v 1.3 2021/11/18 15:18:25 tb Exp $	*/
+/*	$OpenBSD: gost2814789t.c,v 1.4 2021/11/18 21:22:41 tb Exp $	*/
 /* vim: set fileencoding=ascii : Charset: ASCII */
 /* test/gostr2814789t.c */
 /* ====================================================================
@@ -1396,7 +1396,7 @@ engine_cipher_check:
 		enlf = 0;
 	    else
 		EVP_EncryptFinal_ex(ectx, bTest1, &enlf);
-	    EVP_CIPHER_CTX_cleanup(ectx);
+	    EVP_CIPHER_CTX_reset(ectx);
 	    break;
 	case G89_IMIT:
 	    if ((mctx = EVP_MD_CTX_new()) == NULL)
