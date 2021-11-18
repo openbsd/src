@@ -1,5 +1,6 @@
-.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.12 2021/11/12 11:41:50 schwarze Exp $
-.\" Copyright (c) 2018 Ingo Schwarze <schwarze@openbsd.org>
+.\" $OpenBSD: X509_OBJECT_get0_X509.3,v 1.13 2021/11/18 10:09:24 schwarze Exp $
+.\"
+.\" Copyright (c) 2018, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -13,13 +14,15 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 12 2021 $
+.Dd $Mdocdate: November 18 2021 $
 .Dt X509_OBJECT_GET0_X509 3
 .Os
 .Sh NAME
 .Nm X509_OBJECT_get_type ,
+.Nm X509_OBJECT_new ,
 .Nm X509_OBJECT_up_ref_count ,
 .Nm X509_OBJECT_free_contents ,
+.Nm X509_OBJECT_free ,
 .Nm X509_OBJECT_get0_X509 ,
 .Nm X509_OBJECT_get0_X509_CRL ,
 .Nm X509_OBJECT_idx_by_subject ,
@@ -32,12 +35,20 @@
 .Fo X509_OBJECT_get_type
 .Fa "const X509_OBJECT *obj"
 .Fc
+.Ft X509_OBJECT *
+.Fo X509_OBJECT_new
+.Fa void
+.Fc
 .Ft int
 .Fo X509_OBJECT_up_ref_count
 .Fa "X509_OBJECT *obj"
 .Fc
 .Ft void
 .Fo X509_OBJECT_free_contents
+.Fa "X509_OBJECT *obj"
+.Fc
+.Ft void
+.Fo X509_OBJECT_free
 .Fa "X509_OBJECT *obj"
 .Fc
 .Ft X509 *
@@ -70,13 +81,9 @@ The
 .Vt X509_OBJECT
 structure is a shallow wrapper around one
 .Vt X509
-certificate object, one
+certificate object or one
 .Vt X509_CRL
-certificate revocation list object, one
-.Vt EVP_PKEY
-private key object, or one
-.Vt char *
-string.
+certificate revocation list object.
 The type of object stored at any given time can be inspected with
 .Fn X509_OBJECT_get_type .
 .Pp
@@ -85,6 +92,15 @@ Each
 object uses one stack of
 .Vt X509_OBJECT
 structures as its main storage area.
+.Pp
+.Fn X509_OBJECT_new
+allocates a new
+.Vt X509_OBJECT
+structure.
+It sets the object type to
+.Dv X509_LU_NONE
+and the pointer to the certificate or CRL to
+.Dv NULL .
 .Pp
 If
 .Fa obj
@@ -116,6 +132,13 @@ on that inner list.
 Otherwise, no action occurs.
 .Fn X509_OBJECT_free_contents
 does not free
+.Fa obj
+itself.
+.Pp
+.Fn X509_OBJECT_free
+calls
+.Fn X509_OBJECT_free_contents
+and then frees the storage used for the
 .Fa obj
 itself.
 .Pp
@@ -158,11 +181,17 @@ if
 .Fa obj
 contains a certificate,
 .Dv X509_LU_CRL
-if it contains a certificate revocation list,
-or 0 if an error occurs.
+if it contains a certificate revocation list, or
+.Dv X509_LU_NONE
+if it contains neither.
 .Pp
 .Fn X509_OBJECT_up_ref_count
 returns 1 on success and 0 on failure.
+.Pp
+.Fn X509_OBJECT_new
+returns the new object or
+.Dv NULL
+if memory allocation fails.
 .Pp
 .Fn X509_OBJECT_get0_X509
 returns an internal pointer to the certificate contained in
@@ -224,9 +253,11 @@ is
 .Dv NULL
 or no match is found.
 .Sh SEE ALSO
+.Xr STACK_OF 3 ,
 .Xr X509_CRL_new 3 ,
 .Xr X509_LOOKUP_new 3 ,
 .Xr X509_NAME_new 3 ,
+.Xr X509_new 3 ,
 .Xr X509_STORE_get0_objects 3 ,
 .Xr X509_STORE_get_by_subject 3 ,
 .Xr X509_STORE_load_locations 3 ,
@@ -251,3 +282,9 @@ and
 .Fn X509_OBJECT_get0_X509_CRL
 first appeared in OpenSSL 1.1.0 and have been available since
 .Ox 6.3 .
+.Pp
+.Fn X509_OBJECT_new
+and
+.Fn X509_OBJECT_free
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 7.1 .
