@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmactest.c,v 1.6 2021/11/18 15:20:33 tb Exp $	*/
+/*	$OpenBSD: hmactest.c,v 1.7 2021/11/18 20:11:55 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -192,8 +192,7 @@ main(int argc, char *argv[])
 	}
 	printf("test 4 ok\n");
  test5:
-	HMAC_CTX_cleanup(ctx);
-	HMAC_CTX_init(ctx);
+	HMAC_CTX_reset(ctx);
 	if (HMAC_Init_ex(ctx, test[4].key, test[4].key_len, NULL, NULL)) {
 		printf("Should fail to initialise HMAC with empty MD (test 5)\n");
 		err++;
@@ -282,8 +281,7 @@ main(int argc, char *argv[])
 		printf("test 5 ok\n");
 	}
  test6:
-	HMAC_CTX_cleanup(ctx);
-	HMAC_CTX_init(ctx);
+	HMAC_CTX_reset(ctx);
 	if (!HMAC_Init_ex(ctx, test[7].key, test[7].key_len, EVP_sha1(), NULL)) {
 		printf("Failed to initialise HMAC (test 6)\n");
 		err++;
