@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdsatest.c,v 1.6 2018/07/17 17:10:04 tb Exp $	*/
+/*	$OpenBSD: ecdsatest.c,v 1.7 2021/11/18 15:12:59 tb Exp $	*/
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -95,16 +95,17 @@ x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 	const char message[] = "abc";
 	unsigned char digest[20];
 	unsigned int  dgst_len = 0;
-	EVP_MD_CTX md_ctx;
+	EVP_MD_CTX *md_ctx = NULL;
 	EC_KEY    *key = NULL;
 	ECDSA_SIG *signature = NULL;
 	BIGNUM    *r = NULL, *s = NULL;
 
-	EVP_MD_CTX_init(&md_ctx);
+	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
+		goto x962_int_err;
 	/* get the message digest */
-	EVP_DigestInit(&md_ctx, EVP_ecdsa());
-	EVP_DigestUpdate(&md_ctx, (const void*)message, 3);
-	EVP_DigestFinal(&md_ctx, digest, &dgst_len);
+	EVP_DigestInit(md_ctx, EVP_ecdsa());
+	EVP_DigestUpdate(md_ctx, (const void*)message, 3);
+	EVP_DigestFinal(md_ctx, digest, &dgst_len);
 
 	BIO_printf(out, "testing %s: ", OBJ_nid2sn(nid));
 	/* create the key */
@@ -149,7 +150,7 @@ x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 		BN_free(r);
 	if (s)
 		BN_free(s);
-	EVP_MD_CTX_cleanup(&md_ctx);
+	EVP_MD_CTX_free(md_ctx);
 	return ret;
 }
 
