@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.43 2021/09/10 14:33:44 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.44 2021/11/18 18:01:08 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -226,7 +226,7 @@ extern "C" {
 #endif
 
 #ifndef OPENSSL_NO_DEPRECATED
-#define BN_FLG_FREE		0x8000	/* used for debuging */
+#define BN_FLG_FREE		0x8000	/* used for debugging */
 #endif
 #define BN_set_flags(b,n)	((b)->flags|=(n))
 #define BN_get_flags(b,n)	((b)->flags&(n))
