@@ -1,4 +1,4 @@
-/*	$Id: key.c,v 1.2 2019/06/17 15:41:59 florian Exp $ */
+/*	$Id: key.c,v 1.3 2021/11/18 17:26:43 tb Exp $ */
 /*
  * Copyright (c) 2019 Renaud Allard <renaud@allard.it>
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -136,8 +136,9 @@ key_load(FILE *f, const char *fname)
 	if (pkey == NULL) {
 		warnx("%s: PEM_read_PrivateKey", fname);
 		return NULL;
-	} else if (EVP_PKEY_type(pkey->type) == EVP_PKEY_RSA ||
-		   EVP_PKEY_type(pkey->type) == EVP_PKEY_EC )
+	}
+	if (EVP_PKEY_base_id(pkey) == EVP_PKEY_RSA ||
+	    EVP_PKEY_base_id(pkey) == EVP_PKEY_EC)
 		return pkey;
 
 	warnx("%s: unsupported key type", fname);

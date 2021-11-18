@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.21 2021/05/13 07:10:57 tb Exp $ */
+/*	$Id: acctproc.c,v 1.22 2021/11/18 17:26:43 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -140,7 +140,7 @@ op_thumbprint(int fd, EVP_PKEY *pkey)
 
 	/* Construct the thumbprint input itself. */
 
-	switch (EVP_PKEY_type(pkey->type)) {
+	switch (EVP_PKEY_base_id(pkey)) {
 	case EVP_PKEY_RSA:
 		if ((thumb = op_thumb_rsa(pkey)) != NULL)
 			break;
@@ -150,7 +150,7 @@ op_thumbprint(int fd, EVP_PKEY *pkey)
 			break;
 		goto out;
 	default:
-		warnx("EVP_PKEY_type: unknown key type");
+		warnx("EVP_PKEY_base_id: unknown key type");
 		goto out;
 	}
 
@@ -297,7 +297,7 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 		goto out;
 	}
 
-	switch (EVP_PKEY_type(pkey->type)) {
+	switch (EVP_PKEY_base_id(pkey)) {
 	case EVP_PKEY_RSA:
 		alg = "RS256";
 		evp_md = EVP_sha256();
@@ -318,7 +318,7 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 			goto out;
 		}
 	} else {
-		switch (EVP_PKEY_type(pkey->type)) {
+		switch (EVP_PKEY_base_id(pkey)) {
 		case EVP_PKEY_RSA:
 			if (!op_sign_rsa(&prot, pkey, nonce, url))
 				goto out;
@@ -328,7 +328,7 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 				goto out;
 			break;
 		default:
-			warnx("EVP_PKEY_type");
+			warnx("EVP_PKEY_base_id");
 			goto out;
 		}
 	}
@@ -373,7 +373,7 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 		goto out;
 	}
 
-	switch (EVP_PKEY_type(pkey->type)) {
+	switch (EVP_PKEY_base_id(pkey)) {
 	case EVP_PKEY_RSA:
 		if ((dig64 = base64buf_url((char *)dig, digsz)) == NULL) {
 			warnx("base64buf_url");
@@ -421,7 +421,7 @@ op_sign(int fd, EVP_PKEY *pkey, enum acctop op)
 
 		break;
 	default:
-		warnx("EVP_PKEY_type");
+		warnx("EVP_PKEY_base_id");
 		goto out;
 	}
 
