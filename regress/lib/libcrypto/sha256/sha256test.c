@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha256test.c,v 1.4 2021/11/18 15:23:24 tb Exp $	*/
+/*	$OpenBSD: sha256test.c,v 1.5 2021/11/18 21:25:01 tb Exp $	*/
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  * ====================================================================
@@ -105,7 +105,7 @@ main(int argc, char **argv) {
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
 		    (1000000 - i) < 160 ? 1000000 - i : 160);
 	EVP_DigestFinal_ex(evp, md, NULL);
-	EVP_MD_CTX_cleanup(evp);
+	EVP_MD_CTX_reset(evp);
 
 	if (memcmp(md, app_b3, sizeof(app_b3))) {
 		fflush(stdout);
@@ -140,7 +140,6 @@ main(int argc, char **argv) {
 	fprintf(stdout, ".");
 	fflush(stdout);
 
-	EVP_MD_CTX_init(evp);
 	EVP_DigestInit_ex (evp, EVP_sha224(), NULL);
 	for (i = 0; i < 1000000; i += 64)
 		EVP_DigestUpdate(evp,
@@ -148,7 +147,7 @@ main(int argc, char **argv) {
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
 		    (1000000 - i) < 64 ? 1000000 - i : 64);
 	EVP_DigestFinal_ex(evp, md, NULL);
-	EVP_MD_CTX_cleanup(evp);
+	EVP_MD_CTX_reset(evp);
 
 	if (memcmp(md, addenum_3, sizeof(addenum_3))) {
 		fflush(stdout);
