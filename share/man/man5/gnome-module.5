@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gnome-module.5,v 1.2 2021/07/25 11:29:42 espie Exp $
+.\"	$OpenBSD: gnome-module.5,v 1.3 2021/11/18 09:51:30 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 25 2021 $
+.Dd $Mdocdate: November 18 2021 $
 .Dt GNOME-MODULE 5
 .Os
 .Sh NAME
@@ -156,25 +156,22 @@ corresponding
 and
 .Ev RUN_DEPENDS .
 .Pp
-Some tools require the following goo in the PLIST:
+Some tools require the following tag in the PLIST:
 .Pp
 .Ar desktop-file-utils
 .Bd -literal -offset indent
-@exec %D/bin/update-desktop-database
-@unexec-delete %D/bin/update-desktop-database
+@tag update-desktop-database
 .Ed
 .Pp
 .Ar gtk-update-icon-cache
 ($icon-theme is the theme directory)
 .Bd -literal -offset indent
-@exec %D/bin/gtk-update-icon-cache -q -t %D/share/icons/$icon-theme
-@unexec-delete %D/bin/gtk-update-icon-cache -q -t %D/share/icons/$icon-theme
+@tag gtk-update-icon-cache %D/share/icons/$icon-theme
 .Ed
 .Pp
 .Ar shared-mime-info
 .Bd -literal -offset indent
-@exec %D/bin/update-mime-database %D/share/mime
-@unexec-delete %D/bin/update-mime-database %D/share/mime
+@tag update-mime-database
 .Ed
 .Sh SEE ALSO
 .Xr port-modules 5
