@@ -1,4 +1,4 @@
-/*	$OpenBSD: gost2814789t.c,v 1.2 2014/12/15 06:03:15 miod Exp $	*/
+/*	$OpenBSD: gost2814789t.c,v 1.3 2021/11/18 15:18:25 tb Exp $	*/
 /* vim: set fileencoding=ascii : Charset: ASCII */
 /* test/gostr2814789t.c */
 /* ====================================================================
@@ -1251,8 +1251,8 @@ int main(int argc, char *argv[])
     unsigned int t;
     uint64_t ullMaxLen = 6*1000*1000;
     int ignore = 0;
-    EVP_MD_CTX mctx;
-    EVP_CIPHER_CTX ectx;
+    EVP_MD_CTX *mctx = NULL;
+    EVP_CIPHER_CTX *ectx = NULL;
     EVP_PKEY *mac_key;
     unsigned char bDerive[EVP_MAX_KEY_LENGTH];
     unsigned char bTest[G89_MAX_TC_LEN];
@@ -1363,13 +1363,14 @@ int main(int argc, char *argv[])
 	case G89_CNT:
 	    ctype = cp_g89cnt;
 engine_cipher_check:
-	    EVP_CIPHER_CTX_init(&ectx);
-	    EVP_EncryptInit_ex(&ectx, ctype, NULL,
+	    if ((ectx = EVP_CIPHER_CTX_new()) == NULL)
+		    goto imit_fail;
+	    EVP_EncryptInit_ex(ectx, ctype, NULL,
 				    tcs[t].bRawKey, tcs[t].bIV);
-	    EVP_CIPHER_CTX_ctrl(&ectx, EVP_CTRL_GOST_SET_SBOX, OBJ_txt2nid(tcs[t].szParamSet), 0);
+	    EVP_CIPHER_CTX_ctrl(ectx, EVP_CTRL_GOST_SET_SBOX, OBJ_txt2nid(tcs[t].szParamSet), 0);
 	    if(G89_MAX_TC_LEN >= tcs[t].ullLen) {
 		enlu = sizeof(bTest);
-		EVP_EncryptUpdate(&ectx, bTest, &enlu, 
+		EVP_EncryptUpdate(ectx, bTest, &enlu,
 				    tcs[t].bIn, (int)tcs[t].ullLen);
 		l = (size_t)tcs[t].ullLen;
 	    } else {
@@ -1379,12 +1380,12 @@ engine_cipher_check:
 		    printf("B"); 
 		    fflush(NULL);
 		    enlu = sizeof(bTS);
-		    EVP_EncryptUpdate(&ectx, bTS, &enlu, 
+		    EVP_EncryptUpdate(ectx, bTS, &enlu,
 					    bZB, sizeof(bZB));
 		}
 		printf("b%" PRIu64 "/%" PRIu64, ullLeft, tcs[t].ullLen); 
 		fflush(NULL);
-		EVP_EncryptUpdate(&ectx, bTS, &enlu, 
+		EVP_EncryptUpdate(ectx, bTS, &enlu,
 					bZB, (int)ullLeft);
 		memcpy(bTest, &bTS[enlu-16], 16);
 		enlu = (int)tcs[t].ullLen;
@@ -1394,21 +1395,22 @@ engine_cipher_check:
 	    if (tcs[t].gMode == G89_ECB)
 		enlf = 0;
 	    else
-		EVP_EncryptFinal_ex(&ectx, bTest1, &enlf);
-	    EVP_CIPHER_CTX_cleanup(&ectx);
+		EVP_EncryptFinal_ex(ectx, bTest1, &enlf);
+	    EVP_CIPHER_CTX_cleanup(ectx);
 	    break;
 	case G89_IMIT:
-	    EVP_MD_CTX_init(&mctx);
+	    if ((mctx = EVP_MD_CTX_new()) == NULL)
+		    goto imit_fail;
 	    mac_key = EVP_PKEY_new_mac_key(
 				NID_id_Gost28147_89_MAC, NULL,
 				bDerive, mdl);
 	    if (!mac_key)
 		goto imit_fail;
-            EVP_DigestSignInit(&mctx, NULL, 
+            EVP_DigestSignInit(mctx, NULL,
 				    md_g89imit, NULL, mac_key);
-	    EVP_MD_CTX_ctrl(&mctx, EVP_MD_CTRL_GOST_SET_SBOX, OBJ_txt2nid(tcs[t].szParamSet), 0);
+	    EVP_MD_CTX_ctrl(mctx, EVP_MD_CTRL_GOST_SET_SBOX, OBJ_txt2nid(tcs[t].szParamSet), 0);
 	    if(G89_MAX_TC_LEN >= tcs[t].ullLen) {
-		EVP_DigestSignUpdate(&mctx, tcs[t].bIn, 
+		EVP_DigestSignUpdate(mctx, tcs[t].bIn,
 				    (unsigned int)tcs[t].ullLen);
 	    } else {
 		for(ullLeft = tcs[t].ullLen; 
@@ -1416,16 +1418,16 @@ engine_cipher_check:
 				    ullLeft -= sizeof(bZB)) {
 		    printf("B"); 
 		    fflush(NULL);
-		    EVP_DigestSignUpdate(&mctx, bZB, sizeof(bZB));
+		    EVP_DigestSignUpdate(mctx, bZB, sizeof(bZB));
 		}
 		printf("b%" PRIu64 "/%" PRIu64, ullLeft, tcs[t].ullLen); 
 		fflush(NULL);
-		EVP_DigestSignUpdate(&mctx, bZB, 
+		EVP_DigestSignUpdate(mctx, bZB,
 					(unsigned int)ullLeft);
 	    }
 	    siglen = 4;
-	    OPENSSL_assert(EVP_DigestSignFinal(&mctx, bTest, &siglen));
-	    EVP_MD_CTX_cleanup(&mctx);
+	    OPENSSL_assert(EVP_DigestSignFinal(mctx, bTest, &siglen));
+	    EVP_MD_CTX_cleanup(mctx);
 	    EVP_PKEY_free(mac_key);
 	    enlu = (int)tcs[t].ullLen;
 	    enlf = 0;
@@ -1454,6 +1456,8 @@ imit_fail:
     ERR_print_errors(bio_err);
     (void)BIO_flush(bio_err);
     BIO_free(bio_err);
+    EVP_CIPHER_CTX_free(ectx);
+    EVP_MD_CTX_free(mctx);
     return 0;
 }
 #endif
