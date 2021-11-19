@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.30 2021/11/19 07:56:53 dlg Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.31 2021/11/19 07:58:34 dlg Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -185,15 +185,15 @@ int		uchcom_find_endpoints(struct uchcom_softc *,
 void		uchcom_close_intr_pipe(struct uchcom_softc *);
 
 
-usbd_status 	uchcom_generic_control_out(struct uchcom_softc *sc,
+usbd_status	uchcom_generic_control_out(struct uchcom_softc *sc,
 		    uint8_t reqno, uint16_t value, uint16_t index);
-usbd_status	uchcom_generic_control_in(struct uchcom_softc *, uint8_t, 
+usbd_status	uchcom_generic_control_in(struct uchcom_softc *, uint8_t,
 		    uint16_t, uint16_t, void *, int, int *);
 usbd_status	uchcom_write_reg(struct uchcom_softc *, uint8_t, uint8_t,
 		    uint8_t, uint8_t);
 usbd_status	uchcom_read_reg(struct uchcom_softc *, uint8_t, uint8_t *,
 		    uint8_t, uint8_t *);
-usbd_status	uchcom_get_version(struct uchcom_softc *, uint8_t *); 
+usbd_status	uchcom_get_version(struct uchcom_softc *, uint8_t *);
 usbd_status	uchcom_read_status(struct uchcom_softc *, uint8_t *);
 usbd_status	uchcom_set_dtrrts_10(struct uchcom_softc *, uint8_t);
 usbd_status	uchcom_set_dtrrts_20(struct uchcom_softc *, uint8_t);
@@ -265,7 +265,7 @@ uchcom_attach(struct device *parent, struct device *self, void *aux)
 	struct usbd_device *dev = uaa->device;
 	struct uchcom_endpoints endpoints;
 
-        sc->sc_udev = dev;
+	sc->sc_udev = dev;
 	sc->sc_dtr = sc->sc_rts = -1;
 	sc->sc_release = uaa->release;
 
@@ -302,7 +302,7 @@ uchcom_attach(struct device *parent, struct device *self, void *aux)
 	uca.methods = &uchcom_methods;
 	uca.arg = sc;
 	uca.info = NULL;
-	
+
 	sc->sc_subdev = config_found_sm(self, &uca, ucomprint, ucomsubmatch);
 
 	return;
@@ -741,7 +741,7 @@ uchcom_set_line_control(struct uchcom_softc *sc, tcflag_t cflag)
 		printf("%s: cannot set LCR: %s\n",
 		    sc->sc_dev.dv_xname, usbd_errstr(err));
 		return EIO;
- 	}
+	}
 
 	return 0;
 }
