@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.164 2021/11/09 11:03:39 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.165 2021/11/19 09:47:30 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -649,7 +649,7 @@ check_fs_size(int fd, const char *cachedir)
 
 	if (fs.f_bavail < minsize / fs.f_frsize || fs.f_favail < minnode) {
 		fprintf(stderr, "WARNING: rpki-client may need more than "
-		    "the availabe disk space\n"
+		    "the available disk space\n"
 		    "on the file-system holding %s.\n", cachedir);
 		fprintf(stderr, "available space: %lldkB, "
 		    "suggested minimum %lldkB\n",
