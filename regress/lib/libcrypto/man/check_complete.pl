@@ -28,6 +28,7 @@ my @obsolete = qw(
     PKCS5_pbkdf2_set
     X509_EX_V_INIT
     X509_EXT_PACK_STRING X509_EXT_PACK_UNKNOWN
+    X509_VERIFY_PARAM_ID
 );
 
 my $MANW = 'man -M /usr/share/man -w';
@@ -160,6 +161,8 @@ try_again:
 		next;
 	}
 
+	# Handle macros.
+
 	if (my ($id) = /^#define\s+(\w+)\s+\S/) {
 		/\\$/ and $in_define = 1;
 		unless (system "$MANW -k Dv=$id > /dev/null 2>&1") {
@@ -216,18 +219,28 @@ try_again:
 		}
 		next;
 	}
-	if (/^typedef\s+(?:struct\s+)?\S+\s+(\w+);$/) {
-		unless (system "$MANW -k Vt=$1 > /dev/null 2>&1") {
+
+	# Handle variable type definitions.
+
+	if (my ($id) = /^typedef\s+(?:struct\s+)?\S+\s+(\w+);$/) {
+		unless (system "$MANW -k Vt=$id > /dev/null 2>&1") {
 			print "Vt $line\n" if $verbose;
+			next;
+		}
+		if (grep { $_ eq $id } @obsolete) {
+			print "V- $line\n" if $verbose;
 			next;
 		}
 		if ($verbose) {
 			print "XX $line\n";
 		} else {
-			warn "not found: typedef $1";
+			warn "not found: typedef $id";
 		}
 		next;
 	}
+
+	# Handle function declarations.
+
 	if (/^\w+(?:\(\w+\))?(?:\s+\w+)?\s+(?:\(?\*\s*)?(\w+)\(/) {
 		my $id = $1;
 		/\);$/ or $in_function = 1;
