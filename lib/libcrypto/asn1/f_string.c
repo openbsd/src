@@ -1,4 +1,4 @@
-/* $OpenBSD: f_string.c,v 1.18 2018/04/25 11:48:21 tb Exp $ */
+/* $OpenBSD: f_string.c,v 1.19 2021/11/19 09:58:41 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,26 +125,18 @@ a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
 			buf[--i] = '\0';
 		if (i == 0)
 			goto err_sl;
-		again = (buf[i - 1] == '\\');
-
-		for (j = i - 1; j > 0; j--) {
-			if (!(((buf[j] >= '0') && (buf[j] <= '9')) ||
-			    ((buf[j] >= 'a') && (buf[j] <= 'f')) ||
-			    ((buf[j] >= 'A') && (buf[j] <= 'F')))) {
-				i = j;
-				break;
-			}
-		}
+		if (buf[i - 1] == '\\') {
+			i--;
+			again = 1;
+		} else
+			again = 0;
 		buf[i] = '\0';
-		/* We have now cleared all the crap off the end of the
-		 * line */
 		if (i < 2)
 			goto err_sl;
 
 		bufp = (unsigned char *)buf;
 
 		k = 0;
-		i -= again;
 		if (i % 2 != 0) {
 			ASN1error(ASN1_R_ODD_NUMBER_OF_CHARS);
 			goto err;
