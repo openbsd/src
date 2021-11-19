@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.52 2021/11/07 15:52:38 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.53 2021/11/19 07:49:27 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -451,6 +451,8 @@ X509_OBJECT_free_contents(X509_OBJECT *a)
 		X509_CRL_free(a->data.crl);
 		break;
 	}
+	memset(a, 0, sizeof(*a));
+	a->type = X509_LU_NONE;
 }
 
 static int
