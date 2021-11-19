@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.379 2021/11/17 15:15:32 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.380 2021/11/19 13:05:19 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -10075,6 +10075,7 @@ iwm_stop(struct ifnet *ifp)
 	sc->ba_tx.stop_tidmask = 0;
 
 	sc->sc_newstate(ic, IEEE80211_S_INIT, -1);
+	sc->ns_nstate = IEEE80211_S_INIT;
 
 	timeout_del(&sc->sc_calib_to); /* XXX refcount? */
 	for (i = 0; i < nitems(sc->sc_rxba_data); i++) {
