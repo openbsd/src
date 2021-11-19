@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.18 2021/05/26 18:11:59 kettenis Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.19 2021/11/19 15:58:36 kettenis Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -49,6 +49,7 @@ struct futex {
 	LIST_ENTRY(futex)	 ft_list;	/* list of all futexes */
 	TAILQ_HEAD(, proc)	 ft_threads;	/* sleeping queue */
 	struct uvm_object	*ft_obj;	/* UVM object */
+	struct vm_amap		*ft_amap;	/* UVM amap */
 	voff_t			 ft_off;	/* UVM offset */
 	unsigned int		 ft_refcnt;	/* # of references */
 };
@@ -144,6 +145,7 @@ futex_get(uint32_t *uaddr, int flags)
 	vm_map_t map = &p->p_vmspace->vm_map;
 	vm_map_entry_t entry;
 	struct uvm_object *obj = NULL;
+	struct vm_amap *amap = NULL;
 	voff_t off = (vaddr_t)uaddr;
 	struct futex *f;
 	struct futex_list *ftlist = &p->p_p->ps_ftlist;
@@ -153,17 +155,25 @@ futex_get(uint32_t *uaddr, int flags)
 	if (!(flags & FT_PRIVATE)) {
 		vm_map_lock_read(map);
 		if (uvm_map_lookup_entry(map, (vaddr_t)uaddr, &entry) &&
-		    UVM_ET_ISOBJ(entry) && entry->object.uvm_obj &&
 		    entry->inheritance == MAP_INHERIT_SHARE) {
-			ftlist = &ftlist_shared;
-			obj = entry->object.uvm_obj;
-			off = entry->offset + ((vaddr_t)uaddr - entry->start);
+			if (UVM_ET_ISOBJ(entry)) {
+				ftlist = &ftlist_shared;
+				obj = entry->object.uvm_obj;
+				off = entry->offset +
+				    ((vaddr_t)uaddr - entry->start);
+			} else if (entry->aref.ar_amap) {
+				ftlist = &ftlist_shared;
+				amap = entry->aref.ar_amap;
+				off = ptoa(entry->aref.ar_pageoff) +
+				    ((vaddr_t)uaddr - entry->start);
+			}
 		}
 		vm_map_unlock_read(map);
 	}
 
 	LIST_FOREACH(f, ftlist, ft_list) {
-		if (f->ft_obj == obj && f->ft_off == off) {
+		if (f->ft_obj == obj && f->ft_amap == amap &&
+		    f->ft_off == off) {
 			f->ft_refcnt++;
 			break;
 		}
@@ -177,6 +187,7 @@ futex_get(uint32_t *uaddr, int flags)
 		f = pool_get(&ftpool, PR_WAITOK);
 		TAILQ_INIT(&f->ft_threads);
 		f->ft_obj = obj;
+		f->ft_amap = amap;
 		f->ft_off = off;
 		f->ft_refcnt = 1;
 		LIST_INSERT_HEAD(ftlist, f, ft_list);
