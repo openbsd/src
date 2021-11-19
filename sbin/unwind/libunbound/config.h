@@ -316,6 +316,9 @@
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #define HAVE_IFADDRS_H 1
 
+/* Define to 1 if you have the `if_nametoindex' function. */
+#define HAVE_IF_NAMETOINDEX 1
+
 /* Define to 1 if you have the `inet_aton' function. */
 #define HAVE_INET_ATON 1
 
