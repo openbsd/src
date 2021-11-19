@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_REQ_print_ex.3,v 1.1 2021/10/29 09:42:07 schwarze Exp $
+.\" $OpenBSD: X509_REQ_print_ex.3,v 1.2 2021/11/19 15:50:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 29 2021 $
+.Dd $Mdocdate: November 19 2021 $
 .Dt X509_REQ_PRINT_EX 3
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@ in decimal and hexadecimal notation.
 .It
 The subject name is printed with
 .Xr X509_NAME_print_ex 3 .
-.Pq X509_FLAG_NO_SUBJECT
+.Pq Dv X509_FLAG_NO_SUBJECT
 .It
 The public key algorithm is printed with
 .Xr i2a_ASN1_OBJECT 3 ,
@@ -92,7 +92,7 @@ and
 .Dv V_ASN1_IA5STRING
 are printed with
 .Xr BIO_write 3 .
-.Pq X509_FLAG_NO_ATTRIBUTES
+.Pq Dv X509_FLAG_NO_ATTRIBUTES
 .It
 The requested extensions are retrieved with
 .Xr X509_REQ_get_extensions 3
