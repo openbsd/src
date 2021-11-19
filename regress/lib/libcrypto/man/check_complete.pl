@@ -228,7 +228,7 @@ try_again:
 		}
 		next;
 	}
-	if (/^\w+(?:\(\w+\))?(?:\s+\w+)?(?:\s+|\s*\(?\*\s*)(\w+)\s*\(/) {
+	if (/^\w+(?:\(\w+\))?(?:\s+\w+)?\s+(?:\(?\*\s*)?(\w+)\(/) {
 		my $id = $1;
 		/\);$/ or $in_function = 1;
 		unless (system "$MANW $id > /dev/null 2>&1") {
