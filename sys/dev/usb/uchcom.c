@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.29 2021/11/02 09:52:40 dlg Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.30 2021/11/19 07:56:53 dlg Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -128,6 +128,7 @@ struct uchcom_softc
 	u_char			*sc_intr_buf;
 	int			 sc_isize;
 	/* */
+	int			 sc_release;
 	uint8_t			 sc_version;
 	int			 sc_dtr;
 	int			 sc_rts;
@@ -266,10 +267,11 @@ uchcom_attach(struct device *parent, struct device *self, void *aux)
 
         sc->sc_udev = dev;
 	sc->sc_dtr = sc->sc_rts = -1;
+	sc->sc_release = uaa->release;
 
 	DPRINTF(("\n\nuchcom attach: sc=%p\n", sc));
 
-	switch (uaa->release) {
+	switch (sc->sc_release) {
 	case UCHCOM_REV_CH340:
 		printf("%s: CH340\n", sc->sc_dev.dv_xname);
 		break;
@@ -678,6 +680,26 @@ uchcom_set_line_control(struct uchcom_softc *sc, tcflag_t cflag)
 {
 	usbd_status err;
 	uint8_t lcr = 0, lcr2 = 0;
+
+	if (sc->sc_release == UCHCOM_REV_CH340) {
+		/*
+		 * XXX: it is difficult to handle the line control
+		 * appropriately on CH340:
+		 *   work as chip default - CS8, no parity, !CSTOPB
+		 *   other modes are not supported.
+		 */
+		switch (ISSET(cflag, CSIZE)) {
+		case CS5:
+		case CS6:
+		case CS7:
+			return EINVAL;
+		case CS8:
+			break;
+		}
+		if (ISSET(cflag, PARENB) || ISSET(cflag, CSTOPB))
+			return EINVAL;
+		return 0;
+	}
 
 	err = uchcom_read_reg(sc, UCHCOM_REG_LCR, &lcr,
 	    UCHCOM_REG_LCR2, &lcr2);
