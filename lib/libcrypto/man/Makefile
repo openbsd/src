@@ -1,10 +1,11 @@
-# $OpenBSD: Makefile,v 1.216 2021/11/17 16:08:32 schwarze Exp $
+# $OpenBSD: Makefile,v 1.217 2021/11/19 16:00:54 schwarze Exp $
 
 .include <bsd.own.mk>
 
 MAN=	\
 	ACCESS_DESCRIPTION_new.3 \
 	AES_encrypt.3 \
+	ASN1_BIT_STRING_num_asc.3 \
 	ASN1_BIT_STRING_set.3 \
 	ASN1_INTEGER_get.3 \
 	ASN1_OBJECT_new.3 \
