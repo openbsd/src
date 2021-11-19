@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.91 2021/11/13 08:25:42 anton Exp $
+#	$OpenBSD: Makefile,v 1.92 2021/11/19 17:07:10 mvs Exp $
 
 SUBDIR+= __syscall
 SUBDIR+= accept access
@@ -22,7 +22,8 @@ SUBDIR+= setuid
 .endif
 SUBDIR+= signal sosplice stackjmp stackpivot syscall syscall_segment
 SUBDIR+= sysvmsg sysvsem sysvshm
-SUBDIR+= unalign unfdpass unfdpassfail ungc unixsock unveil unveil-unmount
+SUBDIR+= unalign unfdpass unfdpassfail ungc unsendrecvthr unixsock unveil
+SUBDIR+= unveil-unmount
 SUBDIR+= wait
 
 install:
