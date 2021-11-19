@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.123 2021/10/31 16:45:04 tb Exp $	 */
+/* $OpenBSD: x509.c,v 1.124 2021/11/19 23:15:59 tb Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -1264,12 +1264,12 @@ x509_cert_get_key(void *scert, void *keyp)
 	key = X509_get_pubkey(cert);
 
 	/* Check if we got the right key type.  */
-	if (key->type != EVP_PKEY_RSA) {
+	if (EVP_PKEY_id(key) != EVP_PKEY_RSA) {
 		log_print("x509_cert_get_key: public key is not a RSA key");
 		X509_free(cert);
 		return 0;
 	}
-	*(RSA **)keyp = RSAPublicKey_dup(key->pkey.rsa);
+	*(RSA **)keyp = RSAPublicKey_dup(EVP_PKEY_get0_RSA(key));
 
 	return *(RSA **)keyp == NULL ? 0 : 1;
 }
