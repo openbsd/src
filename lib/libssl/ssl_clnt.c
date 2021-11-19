@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.117 2021/10/25 10:01:46 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.118 2021/11/19 18:53:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2427,8 +2427,8 @@ ssl3_send_client_verify_ec(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 		goto err;
 	if ((signature = calloc(1, EVP_PKEY_size(pkey))) == NULL)
 		goto err;
-	if (!ECDSA_sign(pkey->save_type, &data[MD5_DIGEST_LENGTH],
-	    SHA_DIGEST_LENGTH, signature, &signature_len, pkey->pkey.ec)) {
+	if (!ECDSA_sign(0, &data[MD5_DIGEST_LENGTH], SHA_DIGEST_LENGTH,
+	    signature, &signature_len, pkey->pkey.ec)) {
 		SSLerror(s, ERR_R_ECDSA_LIB);
 		goto err;
 	}

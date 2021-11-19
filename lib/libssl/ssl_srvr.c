@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.123 2021/10/25 10:01:46 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.124 2021/11/19 18:53:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2241,7 +2241,7 @@ ssl3_get_cert_verify(SSL *s)
 			goto fatal_err;
 		}
 	} else if (pkey->type == EVP_PKEY_EC) {
-		verify = ECDSA_verify(pkey->save_type,
+		verify = ECDSA_verify(0,
 		    &(S3I(s)->hs.tls12.cert_verify[MD5_DIGEST_LENGTH]),
 		    SHA_DIGEST_LENGTH, CBS_data(&signature),
 		    CBS_len(&signature), pkey->pkey.ec);
