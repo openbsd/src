@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.21 2020/12/22 21:01:55 tobhe Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.22 2021/11/19 21:16:25 tobhe Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -149,6 +149,10 @@ ocsp_connect(struct iked *env, struct imsg *imsg)
 	oc->oc_sh = sh;
 	oc->oc_path = path;
 	oc->oc_url = strdup(url);
+	if (oc->oc_url == NULL) {
+		log_warn("%s: strdup failed", SPI_SH(&sh, __func__));
+		goto done;
+	}
 	path = NULL;
 
 	log_debug("%s: connect(%s, %s)", __func__, host, port);
