@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.77 2021/03/11 11:16:57 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.78 2021/11/19 04:00:53 guenther Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.7 1994/10/27 04:16:26 cgd Exp $	*/
 
 /*-
@@ -317,11 +317,11 @@
 #define	CPUID(code, eax, ebx, ecx, edx)                         \
 	__asm volatile("cpuid"                                  \
 	    : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)    \
-	    : "a" (code));
+	    : "a" (code))
 #define	CPUID_LEAF(code, leaf, eax, ebx, ecx, edx)		\
 	__asm volatile("cpuid"                                  \
 	    : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)    \
-	    : "a" (code), "c" (leaf));
+	    : "a" (code), "c" (leaf))
 
 
 /*
