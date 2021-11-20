@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.136 2021/11/16 21:43:36 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.137 2021/11/20 20:44:33 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -514,23 +514,14 @@ set		: SET ACTIVE	{ passive = 0; }
 		| SET STICKYADDRESS	{ stickyaddress = 1; }
 		| SET NOSTICKYADDRESS	{ stickyaddress = 0; }
 		| SET OCSP STRING		{
-			if ((ocsp_url = strdup($3)) == NULL) {
-				yyerror("cannot set ocsp_url");
-				YYERROR;
-			}
+			ocsp_url = $3;
 		}
 		| SET OCSP STRING TOLERATE time_spec {
-			if ((ocsp_url = strdup($3)) == NULL) {
-				yyerror("cannot set ocsp_url");
-				YYERROR;
-			}
+			ocsp_url = $3;
 			ocsp_tolerate = $5;
 		}
 		| SET OCSP STRING TOLERATE time_spec MAXAGE time_spec {
-			if ((ocsp_url = strdup($3)) == NULL) {
-				yyerror("cannot set ocsp_url");
-				YYERROR;
-			}
+			ocsp_url = $3;
 			ocsp_tolerate = $5;
 			ocsp_maxage = $7;
 		}
