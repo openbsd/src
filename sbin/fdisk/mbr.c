@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.109 2021/11/20 18:35:55 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.110 2021/11/20 21:35:52 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -66,11 +66,7 @@ MBR_init(struct mbr *mbr)
 	memcpy(&dp, &default_dmbr.dmbr_parts[0], sizeof(dp));
 	PRT_parse(&dp, 0, 0, &bootprt);
 
-	if (bootprt.prt_flag != DOSACTIVE)
-		obsdprt.prt_flag = DOSACTIVE;
-
 	/* Reserve first track, or first cyl, if possible. */
-	obsdprt.prt_id = DOSPTYP_OPENBSD;
 	if (disk.dk_heads > 1 || disk.dk_cylinders > 1)
 		obsdprt.prt_bs = disk.dk_sectors;
 	else
@@ -79,7 +75,6 @@ MBR_init(struct mbr *mbr)
 #if defined(__powerpc__) || defined(__mips__)
 	/* Now fix up for the MS-DOS boot partition on PowerPC/MIPS. */
 	bootprt.prt_flag = DOSACTIVE;	/* Boot from dos part */
-	obsdprt.prt_flag = 0;
 	if (bootprt.prt_ns > 0)
 		obsdprt.prt_bs = bootprt.prt_bs + bootprt.prt_ns;
 	if (obsdprt.prt_bs % spc != 0)
@@ -96,10 +91,18 @@ MBR_init(struct mbr *mbr)
 	while (daddr < DL_SECTOBLK(&dl, obsdprt.prt_bs))
 		daddr *= 2;
 	obsdprt.prt_bs = DL_BLKTOSEC(&dl, daddr);
-	obsdprt.prt_ns = disksz - obsdprt.prt_bs;
+
+	if (obsdprt.prt_bs >= disksz) {
+		memset(&obsdprt, 0, sizeof(obsdprt));
+	} else {
+		obsdprt.prt_ns = disksz - obsdprt.prt_bs;
+		obsdprt.prt_id = DOSPTYP_OPENBSD;
+		if (bootprt.prt_flag != DOSACTIVE)
+			obsdprt.prt_flag = DOSACTIVE;
+		PRT_fix_CHS(&obsdprt);
+	}
 
 	PRT_fix_CHS(&bootprt);
-	PRT_fix_CHS(&obsdprt);
 
 	memset(mbr, 0, sizeof(*mbr));
 	memcpy(mbr->mbr_code, default_dmbr.dmbr_boot, sizeof(mbr->mbr_code));
