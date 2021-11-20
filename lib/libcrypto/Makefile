@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.49 2021/11/01 20:53:08 tb Exp $
+# $OpenBSD: Makefile,v 1.50 2021/11/20 18:10:52 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -28,8 +28,8 @@ CFLAGS+= -DDSO_DLFCN -DHAVE_DLFCN_H -DHAVE_FUNOPEN
 CFLAGS+= -DOPENSSL_NO_HW_PADLOCK # XXX enable this?
 
 CFLAGS+= -I${LCRYPTO_SRC}
-CFLAGS+= -I${LCRYPTO_SRC}/asn1 -I${LCRYPTO_SRC}/bn -I${LCRYPTO_SRC}/evp
-CFLAGS+= -I${LCRYPTO_SRC}/modes -I${LCRYPTO_SRC}/x509
+CFLAGS+= -I${LCRYPTO_SRC}/asn1 -I${LCRYPTO_SRC}/bn -I${LCRYPTO_SRC}/bytestring
+CFLAGS+= -I${LCRYPTO_SRC}/evp -I${LCRYPTO_SRC}/modes -I${LCRYPTO_SRC}/x509
 
 # XXX FIXME ecdsa and ec should be merged
 CFLAGS+= -I${LCRYPTO_SRC}/ecdsa
@@ -84,6 +84,9 @@ SRCS+= bn_depr.c bn_const.c bn_x931p.c
 
 # buffer/
 SRCS+= buffer.c buf_err.c buf_str.c
+
+# bytestring/
+SRCS+= bs_ber.c bs_cbb.c bs_cbs.c
 
 # camellia/
 SRCS+= cmll_cfb.c cmll_ctr.c cmll_ecb.c cmll_ofb.c
@@ -290,6 +293,7 @@ SRCS+= pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c
 	${LCRYPTO_SRC}/bn \
 	${LCRYPTO_SRC}/bn/asm \
 	${LCRYPTO_SRC}/buffer \
+	${LCRYPTO_SRC}/bytestring \
 	${LCRYPTO_SRC}/camellia \
 	${LCRYPTO_SRC}/cast \
 	${LCRYPTO_SRC}/chacha \
