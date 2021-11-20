@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_STRING_length.3,v 1.26 2021/11/15 16:18:36 schwarze Exp $
+.\" $OpenBSD: ASN1_STRING_length.3,v 1.27 2021/11/20 11:49:08 schwarze Exp $
 .\" full merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" This file is a derived work.
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 15 2021 $
+.Dd $Mdocdate: November 20 2021 $
 .Dt ASN1_STRING_LENGTH 3
 .Os
 .Sh NAME
@@ -160,12 +160,15 @@ These functions manipulate
 structures.
 .Pp
 .Fn ASN1_STRING_cmp
-and
-.Fn ASN1_OCTET_STRING_cmp
-compare the type, the length, and the content of
+compares the type, the length, and the content of
 .Fa a
 and
 .Fa b .
+.Pp
+.Fn ASN1_OCTET_STRING_cmp
+does exactly the same as
+.Fn ASN1_STRING_cmp
+without providing any type safety.
 .Pp
 .Fn ASN1_STRING_data
 is similar to
@@ -177,10 +180,16 @@ Applications should use
 instead.
 .Pp
 .Fn ASN1_STRING_dup
-and
+allocates a new
+.Vt ASN1_STRING
+object and copies the type, length, data, and flags from
+.Fa a
+into it.
+.Pp
 .Fn ASN1_OCTET_STRING_dup
-copy
-.Fa a .
+does exactly the same as
+.Fn ASN1_STRING_dup
+without providing any type safety.
 .Pp
 .Fn ASN1_STRING_get0_data
 returns an internal pointer to the data of
@@ -211,13 +220,11 @@ bytes, and sets the data attribute to
 transferring ownership, without doing any validation.
 .Pp
 .Fn ASN1_STRING_set
-and
-.Fn ASN1_OCTET_STRING_set
-set the length attribute of
+sets the length attribute of
 .Fa str
 to
 .Fa len
-and copy that number of bytes from
+and copies that number of bytes from
 .Fa data
 into
 .Fa str ,
@@ -237,6 +244,11 @@ the content of
 remains uninitialized; that is not considered an error unless
 .Fa len
 is negative.
+.Pp
+.Fn ASN1_OCTET_STRING_set
+does exactly the same as
+.Fn ASN1_STRING_set
+without providing any type safety.
 .Pp
 .Fn ASN1_STRING_copy
 copies the length and data of
@@ -422,3 +434,16 @@ first appeared in OpenSSL 1.0.0 and has been available since
 .Fn ASN1_STRING_get0_data
 first appeared in OpenSSL 1.1.0 and has been available since
 .Ox 6.3 .
+.Sh BUGS
+.Fn ASN1_OCTET_STRING_cmp ,
+.Fn ASN1_OCTET_STRING_dup ,
+and
+.Fn ASN1_OCTET_STRING_set
+do not check whether their arguments are really of the type
+.Dv V_ASN1_OCTET_STRING .
+They may report success even if their arguments are of a wrong type.
+Consequently, even in case of success, the return value of
+.Fn ASN1_OCTET_STRING_dup
+is not guaranteed to be of the type
+.Dv V_ASN1_OCTET_STRING
+either.
