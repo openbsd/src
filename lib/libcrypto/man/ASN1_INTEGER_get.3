@@ -1,11 +1,11 @@
-.\" $OpenBSD: ASN1_INTEGER_get.3,v 1.3 2019/08/26 12:45:27 schwarze Exp $
+.\" $OpenBSD: ASN1_INTEGER_get.3,v 1.4 2021/11/20 13:06:26 schwarze Exp $
 .\" selective merge up to:
 .\" OpenSSL man3/ASN1_INTEGER_get_int64 df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2018, 2019 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2018, 2019, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -66,12 +66,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 26 2019 $
+.Dd $Mdocdate: November 20 2021 $
 .Dt ASN1_INTEGER_GET 3
 .Os
 .Sh NAME
 .Nm ASN1_INTEGER_get ,
 .Nm ASN1_INTEGER_set ,
+.Nm ASN1_INTEGER_cmp ,
+.Nm ASN1_INTEGER_dup ,
 .Nm BN_to_ASN1_INTEGER ,
 .Nm ASN1_INTEGER_to_BN ,
 .Nm i2a_ASN1_INTEGER ,
@@ -90,6 +92,15 @@
 .Fo ASN1_INTEGER_set
 .Fa "ASN1_INTEGER *a"
 .Fa "long v"
+.Fc
+.Ft int
+.Fo ASN1_INTEGER_cmp
+.Fa "const ASN1_INTEGER *a1"
+.Fa "const ASN1_INTEGER *a2"
+.Fc
+.Ft ASN1_INTEGER *
+.Fo ASN1_INTEGER_dup
+.Fa "const ASN1_INTEGER *a"
 .Fc
 .Ft ASN1_INTEGER *
 .Fo BN_to_ASN1_INTEGER
@@ -140,10 +151,34 @@ to the
 type.
 .Pp
 .Fn ASN1_INTEGER_set
-sets the value of
+sets the type of
+.Fa a
+to
+.Dv V_ASN1_INTEGER
+or
+.Dv V_ASN1_NEG_INTEGER
+depending on the sign of
+.Fa v
+and sets the value of
 .Fa a
 to
 .Fa v .
+.Pp
+.Fn ASN1_INTEGER_cmp
+compares the signed integer numbers represented by
+.Fa a1
+and
+.Fa a2 .
+.Pp
+.Fn ASN1_INTEGER_dup
+does exactly the same as
+.Xr ASN1_STRING_dup 3
+without providing any type safety,
+except that it fails if the
+.Xr ASN1_STRING_length 3
+of
+.Fa a
+is 0.
 .Pp
 .Fn BN_to_ASN1_INTEGER
 converts
@@ -215,6 +250,28 @@ and
 return 1 for success or 0 for failure.
 They only fail if a memory allocation error occurs.
 .Pp
+.Fn ASN1_INTEGER_cmp
+returns a value greater than, equal to, or less than 0
+if the signed integer number represented by
+.Fa a1
+is greater than, equal to, or less than
+the signed integer number represented by
+.Fa a2 ,
+respectively.
+.Pp
+.Fn ASN1_INTEGER_dup
+returns a pointer to a newly allocated
+.Vt ASN1_STRING
+structure or
+.Dv NULL
+if
+.Fa a
+is a
+.Dv NULL
+pointer, if the length of
+.Fa a
+is 0, or if memory allocation fails.
+.Pp
 .Fn BN_to_ASN1_INTEGER
 and
 .Fn BN_to_ASN1_ENUMERATED
@@ -249,7 +306,8 @@ or -1 if
 .Xr BIO_write 3
 fails.
 .Sh SEE ALSO
-.Xr ASN1_INTEGER_new 3
+.Xr ASN1_INTEGER_new 3 ,
+.Xr ASN1_STRING_length 3
 .Sh HISTORY
 .Fn ASN1_INTEGER_set
 first appeared in SSLeay 0.5.1.
@@ -259,6 +317,10 @@ first appeared in SSLeay 0.5.1.
 and
 .Fn i2a_ASN1_INTEGER
 first appeared in SSLeay 0.6.0.
+.Fn ASN1_INTEGER_cmp
+and
+.Fn ASN1_INTEGER_dup
+first appeared in SSLeay 0.6.5.
 These functions have been available since
 .Ox 2.3 .
 .Pp
@@ -283,3 +345,29 @@ The ambiguous return values of
 and
 .Fn ASN1_ENUMERATED_get
 imply that these functions should be avoided if possible.
+.Sh BUGS
+.Fn ASN1_INTEGER_cmp ,
+.Fn ASN1_INTEGER_dup ,
+.Fn ASN1_INTEGER_to_BN ,
+and
+.Fn i2a_ASN1_INTEGER
+do not check whether their arguments are really of the type
+.Dv V_ASN1_INTEGER
+or
+.Dv V_ASN1_NEG_INTEGER .
+They may report success even if their arguments are of a wrong type.
+Consequently, even in case of success, the return value of
+.Fn ASN1_INTEGER_dup
+is not guaranteed to be of the type
+.Dv V_ASN1_INTEGER
+or
+.Dv V_ASN1_NEG_INTEGER
+either.
+.Pp
+Similarly,
+.Fn ASN1_ENUMERATED_to_BN
+does not check whether its argument is really of the type
+.Dv V_ASN1_ENUMERATED
+or
+.Dv V_ASN1_NEG_ENUMERATED
+and may report success even if the argument is of a wrong type.
