@@ -1,4 +1,4 @@
-/*	$OpenBSD: clienttest.c,v 1.35 2021/08/30 17:34:01 tb Exp $ */
+/*	$OpenBSD: clienttest.c,v 1.36 2021/11/20 16:32:55 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -652,9 +652,8 @@ client_hello_test(int testno, const struct client_hello_test *cht)
 		goto failure;
 	}
 
-	rbio->references = 2;
-	wbio->references = 2;
-
+	BIO_up_ref(rbio);
+	BIO_up_ref(wbio);
 	SSL_set_bio(ssl, rbio, wbio);
 
 	if (SSL_connect(ssl) != 0) {
@@ -711,11 +710,6 @@ client_hello_test(int testno, const struct client_hello_test *cht)
  failure:
 	SSL_CTX_free(ssl_ctx);
 	SSL_free(ssl);
-
-	if (rbio != NULL)
-		rbio->references = 1;
-	if (wbio != NULL)
-		wbio->references = 1;
 
 	BIO_free(rbio);
 	BIO_free(wbio);
