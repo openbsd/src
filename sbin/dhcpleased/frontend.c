@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.23 2021/10/20 07:04:49 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.24 2021/11/20 17:54:40 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -946,6 +946,10 @@ build_packet(uint8_t message_type, char *if_name, uint32_t xid,
 			/* XXX check space */
 			memcpy(p, iface_conf->c_id, iface_conf->c_id_len);
 			p += iface_conf->c_id_len;
+		} else {
+			memcpy(dhcp_client_id + 3, hw_address, sizeof(*hw_address));
+			memcpy(p, dhcp_client_id, sizeof(dhcp_client_id));
+			p += sizeof(dhcp_client_id);
 		}
 		if (iface_conf->vc_id_len > 0) {
 			/* XXX check space */
