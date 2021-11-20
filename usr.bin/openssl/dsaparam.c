@@ -1,4 +1,4 @@
-/* $OpenBSD: dsaparam.c,v 1.11 2019/07/14 03:30:45 guenther Exp $ */
+/* $OpenBSD: dsaparam.c,v 1.12 2021/11/20 18:10:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -156,7 +156,7 @@ dsaparam_usage(void)
 	options_usage(dsaparam_options);
 }
 
-static int dsa_cb(int p, int n, BN_GENCB * cb);
+static int dsa_cb(int p, int n, BN_GENCB *cb);
 
 int
 dsaparam_main(int argc, char **argv)
@@ -164,6 +164,7 @@ dsaparam_main(int argc, char **argv)
 	DSA *dsa = NULL;
 	int i;
 	BIO *in = NULL, *out = NULL;
+	BN_GENCB *cb = NULL;
 	int ret = 1;
 	int numbits = -1;
 	char *strbits = NULL;
@@ -218,8 +219,14 @@ dsaparam_main(int argc, char **argv)
 	}
 
 	if (numbits > 0) {
-		BN_GENCB cb;
-		BN_GENCB_set(&cb, dsa_cb, bio_err);
+		if ((cb = BN_GENCB_new()) == NULL) {
+			BIO_printf(bio_err,
+			    "Error allocating BN_GENCB object\n");
+			goto end;
+		}
+
+		BN_GENCB_set(cb, dsa_cb, bio_err);
+
 		dsa = DSA_new();
 		if (!dsa) {
 			BIO_printf(bio_err, "Error allocating DSA object\n");
@@ -227,7 +234,7 @@ dsaparam_main(int argc, char **argv)
 		}
 		BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n", numbits);
 		BIO_printf(bio_err, "This could take some time\n");
-		if (!DSA_generate_parameters_ex(dsa, numbits, NULL, 0, NULL, NULL, &cb)) {
+		if (!DSA_generate_parameters_ex(dsa, numbits, NULL, 0, NULL, NULL, cb)) {
 			ERR_print_errors(bio_err);
 			BIO_printf(bio_err, "Error, DSA key generation failed\n");
 			goto end;
@@ -341,13 +348,14 @@ dsaparam_main(int argc, char **argv)
  end:
 	BIO_free(in);
 	BIO_free_all(out);
+	BN_GENCB_free(cb);
 	DSA_free(dsa);
 
 	return (ret);
 }
 
 static int
-dsa_cb(int p, int n, BN_GENCB * cb)
+dsa_cb(int p, int n, BN_GENCB *cb)
 {
 	char c = '*';
 
@@ -359,8 +367,8 @@ dsa_cb(int p, int n, BN_GENCB * cb)
 		c = '*';
 	if (p == 3)
 		c = '\n';
-	BIO_write(cb->arg, &c, 1);
-	(void) BIO_flush(cb->arg);
+	BIO_write(BN_GENCB_get_arg(cb), &c, 1);
+	(void) BIO_flush(BN_GENCB_get_arg(cb));
 #ifdef GENCB_TEST
 	if (stop_keygen_flag)
 		return 0;

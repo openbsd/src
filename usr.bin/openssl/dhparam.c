@@ -1,4 +1,4 @@
-/* $OpenBSD: dhparam.c,v 1.12 2019/07/14 03:30:45 guenther Exp $ */
+/* $OpenBSD: dhparam.c,v 1.13 2021/11/20 18:10:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -231,12 +231,13 @@ dhparam_usage()
 	options_usage(dhparam_options);
 }
 
-static int dh_cb(int p, int n, BN_GENCB * cb);
+static int dh_cb(int p, int n, BN_GENCB *cb);
 
 int
 dhparam_main(int argc, char **argv)
 {
 	BIO *in = NULL, *out = NULL;
+	BN_GENCB *cb = NULL;
 	char *num_bits = NULL;
 	DH *dh = NULL;
 	int num = 0;
@@ -283,15 +284,19 @@ dhparam_main(int argc, char **argv)
 	}
 
 	if (num) {
+		if ((cb = BN_GENCB_new()) == NULL) {
+			BIO_printf(bio_err,
+			    "Error allocating BN_GENCB object\n");
+			goto end;
+		}
 
-		BN_GENCB cb;
-		BN_GENCB_set(&cb, dh_cb, bio_err);
+		BN_GENCB_set(cb, dh_cb, bio_err);
 		if (dhparam_config.dsaparam) {
 			DSA *dsa = DSA_new();
 
 			BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n", num);
 			if (!dsa || !DSA_generate_parameters_ex(dsa, num,
-				NULL, 0, NULL, NULL, &cb)) {
+				NULL, 0, NULL, NULL, cb)) {
 				DSA_free(dsa);
 				ERR_print_errors(bio_err);
 				goto end;
@@ -306,7 +311,7 @@ dhparam_main(int argc, char **argv)
 			dh = DH_new();
 			BIO_printf(bio_err, "Generating DH parameters, %d bit long safe prime, generator %d\n", num, dhparam_config.g);
 			BIO_printf(bio_err, "This is going to take a long time\n");
-			if (!dh || !DH_generate_parameters_ex(dh, num, dhparam_config.g, &cb)) {
+			if (!dh || !DH_generate_parameters_ex(dh, num, dhparam_config.g, cb)) {
 				ERR_print_errors(bio_err);
 				goto end;
 			}
@@ -469,6 +474,7 @@ dhparam_main(int argc, char **argv)
  end:
 	BIO_free(in);
 	BIO_free_all(out);
+	BN_GENCB_free(cb);
 	DH_free(dh);
 
 	return (ret);
@@ -476,7 +482,7 @@ dhparam_main(int argc, char **argv)
 
 /* dh_cb is identical to dsa_cb in apps/dsaparam.c */
 static int
-dh_cb(int p, int n, BN_GENCB * cb)
+dh_cb(int p, int n, BN_GENCB *cb)
 {
 	char c = '*';
 
@@ -488,8 +494,8 @@ dh_cb(int p, int n, BN_GENCB * cb)
 		c = '*';
 	if (p == 3)
 		c = '\n';
-	BIO_write(cb->arg, &c, 1);
-	(void) BIO_flush(cb->arg);
+	BIO_write(BN_GENCB_get_arg(cb), &c, 1);
+	(void) BIO_flush(BN_GENCB_get_arg(cb));
 	return 1;
 }
 

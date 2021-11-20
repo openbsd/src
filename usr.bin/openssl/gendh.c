@@ -1,4 +1,4 @@
-/* $OpenBSD: gendh.c,v 1.11 2019/07/14 03:30:45 guenther Exp $ */
+/* $OpenBSD: gendh.c,v 1.12 2021/11/20 18:10:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,7 +84,7 @@
 
 #define DEFBITS	512
 
-static int dh_cb(int p, int n, BN_GENCB * cb);
+static int dh_cb(int p, int n, BN_GENCB *cb);
 
 static struct {
 	int g;
@@ -128,7 +128,7 @@ gendh_usage(void)
 int
 gendh_main(int argc, char **argv)
 {
-	BN_GENCB cb;
+	BN_GENCB *cb = NULL;
 	DH *dh = NULL;
 	int ret = 1, numbits = DEFBITS;
 	BIO *out = NULL;
@@ -141,7 +141,12 @@ gendh_main(int argc, char **argv)
 		}
 	}
 
-	BN_GENCB_set(&cb, dh_cb, bio_err);
+	if ((cb = BN_GENCB_new()) == NULL) {
+		BIO_printf(bio_err, "Error allocating BN_GENCB object\n");
+		goto end;
+	}
+
+	BN_GENCB_set(cb, dh_cb, bio_err);
 
 	memset(&gendh_config, 0, sizeof(gendh_config));
 
@@ -180,7 +185,7 @@ gendh_main(int argc, char **argv)
 	BIO_printf(bio_err, "This is going to take a long time\n");
 
 	if (((dh = DH_new()) == NULL) ||
-	    !DH_generate_parameters_ex(dh, numbits, gendh_config.g, &cb))
+	    !DH_generate_parameters_ex(dh, numbits, gendh_config.g, cb))
 		goto end;
 
 	if (!PEM_write_bio_DHparams(out, dh))
@@ -190,13 +195,14 @@ gendh_main(int argc, char **argv)
 	if (ret != 0)
 		ERR_print_errors(bio_err);
 	BIO_free_all(out);
+	BN_GENCB_free(cb);
 	DH_free(dh);
 
 	return (ret);
 }
 
 static int
-dh_cb(int p, int n, BN_GENCB * cb)
+dh_cb(int p, int n, BN_GENCB *cb)
 {
 	char c = '*';
 
@@ -208,8 +214,8 @@ dh_cb(int p, int n, BN_GENCB * cb)
 		c = '*';
 	if (p == 3)
 		c = '\n';
-	BIO_write(cb->arg, &c, 1);
-	(void) BIO_flush(cb->arg);
+	BIO_write(BN_GENCB_get_arg(cb), &c, 1);
+	(void) BIO_flush(BN_GENCB_get_arg(cb));
 	return 1;
 }
 #endif

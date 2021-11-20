@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.17 2019/07/24 14:23:25 inoguchi Exp $ */
+/* $OpenBSD: genrsa.c,v 1.18 2021/11/20 18:10:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -83,7 +83,7 @@
 
 #define DEFBITS	2048
 
-static int genrsa_cb(int p, int n, BN_GENCB * cb);
+static int genrsa_cb(int p, int n, BN_GENCB *cb);
 
 static struct {
 	const EVP_CIPHER *enc;
@@ -270,15 +270,16 @@ genrsa_usage(void)
 int
 genrsa_main(int argc, char **argv)
 {
-	BN_GENCB cb;
+	BN_GENCB *cb = NULL;
 	int ret = 1;
-	int i, num = DEFBITS;
-	char *numbits= NULL;
-	long l;
+	int num = DEFBITS;
+	char *numbits = NULL;
 	char *passout = NULL;
 	BIO *out = NULL;
-	BIGNUM *bn = BN_new();
+	BIGNUM *bn = NULL;
 	RSA *rsa = NULL;
+	const BIGNUM *rsa_e = NULL;
+	char *rsa_e_hex = NULL, *rsa_e_dec = NULL;
 
 	if (single_execution) {
 		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
@@ -287,10 +288,15 @@ genrsa_main(int argc, char **argv)
 		}
 	}
 
-	if (!bn)
+	if ((bn = BN_new()) == NULL)
 		goto err;
 
-	BN_GENCB_set(&cb, genrsa_cb, bio_err);
+	if ((cb = BN_GENCB_new()) == NULL) {
+		BIO_printf(bio_err, "Error allocating BN_GENCB object\n");
+		goto err;
+	}
+
+	BN_GENCB_set(cb, genrsa_cb, bio_err);
 
 	if ((out = BIO_new(BIO_s_file())) == NULL) {
 		BIO_printf(bio_err, "unable to create BIO for output\n");
@@ -333,22 +339,16 @@ genrsa_main(int argc, char **argv)
 		goto err;
 
 	if (!BN_set_word(bn, genrsa_config.f4) ||
-	    !RSA_generate_key_ex(rsa, num, bn, &cb))
+	    !RSA_generate_key_ex(rsa, num, bn, cb))
 		goto err;
 
-	/*
-	 * We need to do the following for when the base number size is <
-	 * long, esp windows 3.1 :-(.
-	 */
-	l = 0L;
-	for (i = 0; i < rsa->e->top; i++) {
-#ifndef _LP64
-		l <<= BN_BITS4;
-		l <<= BN_BITS4;
-#endif
-		l += rsa->e->d[i];
-	}
-	BIO_printf(bio_err, "e is %ld (0x%lX)\n", l, l);
+	RSA_get0_key(rsa, NULL, &rsa_e, NULL);
+	if ((rsa_e_hex = BN_bn2hex(rsa_e)) == NULL)
+		goto err;
+	if ((rsa_e_dec = BN_bn2dec(rsa_e)) == NULL)
+		goto err;
+
+	BIO_printf(bio_err, "e is %s (0x%s)\n", rsa_e_hex, rsa_e_dec);
 	{
 		PW_CB_DATA cb_data;
 		cb_data.password = passout;
@@ -361,8 +361,11 @@ genrsa_main(int argc, char **argv)
 	ret = 0;
  err:
 	BN_free(bn);
+	BN_GENCB_free(cb);
 	RSA_free(rsa);
 	BIO_free_all(out);
+	free(rsa_e_dec);
+	free(rsa_e_hex);
 	free(passout);
 
 	if (ret != 0)
@@ -372,7 +375,7 @@ genrsa_main(int argc, char **argv)
 }
 
 static int
-genrsa_cb(int p, int n, BN_GENCB * cb)
+genrsa_cb(int p, int n, BN_GENCB *cb)
 {
 	char c = '*';
 
@@ -384,7 +387,7 @@ genrsa_cb(int p, int n, BN_GENCB * cb)
 		c = '*';
 	if (p == 3)
 		c = '\n';
-	BIO_write(cb->arg, &c, 1);
-	(void) BIO_flush(cb->arg);
+	BIO_write(BN_GENCB_get_arg(cb), &c, 1);
+	(void) BIO_flush(BN_GENCB_get_arg(cb));
 	return 1;
 }
