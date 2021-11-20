@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.28 2021/09/02 11:30:15 inoguchi Exp $ */
+/* $OpenBSD: apps.h,v 1.29 2021/11/20 15:55:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -261,8 +261,8 @@ unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
 
 #define FORMAT_IISSGC	8	/* XXX this stupid macro helps us to avoid
 				 * adding yet another param to load_*key() */
-#define FORMAT_PEMRSA	9	/* PEM RSAPubicKey format */
-#define FORMAT_ASN1RSA	10	/* DER RSAPubicKey format */
+#define FORMAT_PEMRSA	9	/* PEM RSAPublicKey format */
+#define FORMAT_ASN1RSA	10	/* DER RSAPublicKey format */
 #define FORMAT_MSBLOB	11	/* MS Key blob format */
 #define FORMAT_PVK	12	/* MS PVK file format */
 
