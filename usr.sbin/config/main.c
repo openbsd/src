@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.62 2021/01/26 18:23:49 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.63 2021/11/20 03:13:37 jcs Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -131,7 +131,8 @@ int pflag = 0;
 char *sflag = NULL;
 char *bflag = NULL;
 char *startdir;
-char *cmdfile;
+char *cmdfile = NULL;
+FILE *cmdfp = NULL;
 
 int
 main(int argc, char *argv[])
@@ -211,6 +212,11 @@ main(int argc, char *argv[])
 #ifdef MAKE_BOOTSTRAP
 		errx(1, "UKC not available in this binary");
 #else
+		if (cmdfile != NULL) {
+			cmdfp = fopen(cmdfile, "r");
+			if (cmdfp == NULL)
+				err(1, "open %s", cmdfile);
+		}
 		return (ukc(argv[0], outfile, uflag, fflag));
 #endif
 	}

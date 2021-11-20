@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.10 2019/05/14 13:44:25 tedu Exp $	*/
+/*	$OpenBSD: misc.c,v 1.11 2021/11/20 03:13:37 jcs Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -62,32 +62,42 @@ int
 ask_cmd(cmd_t *cmd)
 {
 	char lbuf[100];
+	extern FILE *cmdfp;
 
 	/* Get input */
-	if (fgets(lbuf, sizeof lbuf, stdin) == NULL)
+	if (fgets(lbuf, sizeof lbuf, cmdfp ? cmdfp : stdin) == NULL) {
+		if (cmdfp) {
+			cmd->cmd[0] = '\0';
+			return -1;
+		}
 		errx(1, "eof");
+	}
+	if (cmdfp)
+		printf("%s", lbuf);
 	return parse_cmd(cmd, lbuf);
 }
 
 int
 ask_yn(const char *str)
 {
+	extern FILE *cmdfp;
 	int ch, first;
 
 	printf("%s [n] ", str);
 	fflush(stdout);
 
-	first = ch = getchar();
-	if (verbose) {
+	first = ch = getc(cmdfp ? cmdfp : stdin);
+	if (verbose || (cmdfp && ch != EOF)) {
 		printf("%c", ch);
 		fflush(stdout);
 	}
 	while (ch != '\n' && ch != EOF) {
-		ch = getchar();
+		ch = getc(cmdfp ? cmdfp : stdin);
 		if (verbose) {
 			printf("%c\n", ch);
 			fflush(stdout);
-		}
+		} else if (cmdfp)
+			putchar('\n');
 	}
 	if (ch == EOF || first == EOF)
 		errx(1, "eof");

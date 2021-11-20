@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.74 2021/11/02 22:26:46 kn Exp $
+.\"	$OpenBSD: config.8,v 1.75 2021/11/20 03:13:37 jcs Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     from: @(#)config.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: November 2 2021 $
+.Dd $Mdocdate: November 20 2021 $
 .Dt CONFIG 8
 .Os
 .Sh NAME
@@ -110,7 +110,8 @@ directories above the build directory).
 For kernel modification, the options are as follows:
 .Bl -tag -width Ds
 .It Fl c Ar cmdfile
-Read commands from the specified file instead of the standard input.
+Read commands and answers from the specified file instead of the standard
+input.
 Save and quit automatically when the end of file is reached.
 .It Fl e
 Allows the modification of kernel device configuration (see

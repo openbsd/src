@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.25 2019/09/06 21:30:31 cheloha Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.26 2021/11/20 03:13:37 jcs Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -1295,49 +1295,6 @@ add_history(int devno, short unit, short state, int newno)
 }
 
 int
-config_fromfile(const char *cmdfile) {
-	FILE *fp;
-	cmd_t cmd;
-	int i;
-
-	fp = fopen(cmdfile, "r");
-	if (fp == NULL)
-		err(1, "open %s", cmdfile);
-
-	/* Set up command table pointer */
-	cmd.table = cmd_table;
-
-	/* Edit cycle */
-	do {
-		char lbuf[100];
-
-		/* Get input */
-		if (fgets(lbuf, sizeof lbuf, fp) == NULL)
-			break;
-		parse_cmd(&cmd, lbuf);
-
-		if (cmd.cmd[0] == '\0')
-			continue;
-		for (i = 0; cmd_table[i].cmd != NULL; i++)
-			if (strstr(cmd_table[i].cmd, cmd.cmd) ==
-			    cmd_table[i].cmd)
-				break;
-
-		/* Check for valid command */
-		if (cmd_table[i].cmd == NULL) {
-			printf("Invalid command '%s'\n", cmd.cmd);
-			exit(1);
-		}
-		strlcpy(cmd.cmd, cmd_table[i].cmd, sizeof cmd.cmd);
-
-		/* Call function */
-		cmd_table[i].fcn(&cmd);
-
-	} while (1);
-	return 1;
-}
-
-int
 config(void)
 {
 	extern char *cmdfile;
@@ -1347,21 +1304,26 @@ config(void)
 	/* Set up command table pointer */
 	cmd.table = cmd_table;
 
-	if (cmdfile != NULL) {
-		return config_fromfile(cmdfile);
-	}
-
-	printf("Enter 'help' for information\n");
+	if (cmdfile == NULL)
+		printf("Enter 'help' for information\n");
 
 	/* Edit cycle */
 	do {
+		char lbuf[100];
+
 again:
-		printf("ukc> ");
-		fflush(stdout);
+		/* Get input */
+		if (cmdfile == NULL) {
+			printf("ukc> ");
+			fflush(stdout);
+		}
 		ask_cmd(&cmd);
 
-		if (cmd.cmd[0] == '\0')
+		if (cmd.cmd[0] == '\0') {
+			if (cmdfile != NULL)
+				return 1;
 			goto again;
+		}
 		for (i = 0; cmd_table[i].cmd != NULL; i++)
 			if (strstr(cmd_table[i].cmd, cmd.cmd) ==
 			    cmd_table[i].cmd)
@@ -1373,6 +1335,10 @@ again:
 
 		/* Check for valid command */
 		if (cmd_table[i].cmd == NULL) {
+			if (cmdfile == NULL) {
+				printf("Invalid command '%s'\n", cmd.cmd);
+				exit(1);
+			}
 			printf("Invalid command '%s'.  Try 'help'.\n", cmd.cmd);
 			continue;
 		} else
