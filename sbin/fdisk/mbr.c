@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.108 2021/11/20 15:29:45 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.109 2021/11/20 18:35:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -43,8 +43,8 @@ MBR_init(struct mbr *mbr)
 {
 	struct dos_partition	dp;
 	struct prt		bootprt, obsdprt;
-	uint64_t		adj;
 	daddr_t			daddr;
+	uint64_t		disksz;
 	const uint32_t		spc = disk.dk_heads * disk.dk_sectors;
 
 	memset(&gmbr, 0, sizeof(gmbr));
@@ -61,6 +61,7 @@ MBR_init(struct mbr *mbr)
 
 	memset(&obsdprt, 0, sizeof(obsdprt));
 	memset(&bootprt, 0, sizeof(bootprt));
+	disksz = disk.dk_cylinders * spc; /* Use only complete cylinders. */
 
 	memcpy(&dp, &default_dmbr.dmbr_parts[0], sizeof(dp));
 	PRT_parse(&dp, 0, 0, &bootprt);
@@ -94,12 +95,8 @@ MBR_init(struct mbr *mbr)
 	daddr = 1;
 	while (daddr < DL_SECTOBLK(&dl, obsdprt.prt_bs))
 		daddr *= 2;
-	adj = DL_BLKTOSEC(&dl, daddr) - obsdprt.prt_bs;
-	obsdprt.prt_bs += adj;
-
-	/* Use all space up to end of last complete cylinder. */
-	obsdprt.prt_ns = disk.dk_cylinders * spc;
-	obsdprt.prt_ns -= obsdprt.prt_bs;
+	obsdprt.prt_bs = DL_BLKTOSEC(&dl, daddr);
+	obsdprt.prt_ns = disksz - obsdprt.prt_bs;
 
 	PRT_fix_CHS(&bootprt);
 	PRT_fix_CHS(&obsdprt);
