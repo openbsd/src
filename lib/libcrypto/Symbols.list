@@ -428,9 +428,9 @@ BN_asc2bn
 BN_bin2bn
 BN_bn2bin
 BN_bn2binpad
-BN_bn2lebinpad
 BN_bn2dec
 BN_bn2hex
+BN_bn2lebinpad
 BN_bn2mpi
 BN_clear
 BN_clear_bit
@@ -3235,8 +3235,6 @@ X509_get_default_cert_dir_env
 X509_get_default_cert_file
 X509_get_default_cert_file_env
 X509_get_default_private_dir
-X509_get_extended_key_usage
-X509_get_extension_flags
 X509_get_ex_data
 X509_get_ex_new_index
 X509_get_ext
@@ -3245,6 +3243,8 @@ X509_get_ext_by_OBJ
 X509_get_ext_by_critical
 X509_get_ext_count
 X509_get_ext_d2i
+X509_get_extended_key_usage
+X509_get_extension_flags
 X509_get_issuer_name
 X509_get_key_usage
 X509_get_pubkey
@@ -3780,9 +3780,9 @@ i2d_X509_SIG
 i2d_X509_VAL
 i2d_X509_bio
 i2d_X509_fp
-i2d_re_X509_tbs
 i2d_re_X509_CRL_tbs
 i2d_re_X509_REQ_tbs
+i2d_re_X509_tbs
 i2o_ECPublicKey
 i2s_ASN1_ENUMERATED
 i2s_ASN1_ENUMERATED_TABLE
