@@ -28,10 +28,10 @@ static const time_t SCT_CLOCK_DRIFT_TOLERANCE = 300;
 CT_POLICY_EVAL_CTX *
 CT_POLICY_EVAL_CTX_new(void)
 {
-	CT_POLICY_EVAL_CTX *ctx = OPENSSL_zalloc(sizeof(CT_POLICY_EVAL_CTX));
+	CT_POLICY_EVAL_CTX *ctx = calloc(1, sizeof(CT_POLICY_EVAL_CTX));
 
 	if (ctx == NULL) {
-		CTerr(CT_F_CT_POLICY_EVAL_CTX_NEW, ERR_R_MALLOC_FAILURE);
+		CTerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 
@@ -49,7 +49,7 @@ CT_POLICY_EVAL_CTX_free(CT_POLICY_EVAL_CTX *ctx)
 		return;
 	X509_free(ctx->cert);
 	X509_free(ctx->issuer);
-	OPENSSL_free(ctx);
+	free(ctx);
 }
 
 int
@@ -83,13 +83,13 @@ CT_POLICY_EVAL_CTX_set_time(CT_POLICY_EVAL_CTX *ctx, uint64_t time_in_ms)
 	ctx->epoch_time_in_ms = time_in_ms;
 }
 
-X509*
+X509 *
 CT_POLICY_EVAL_CTX_get0_cert(const CT_POLICY_EVAL_CTX *ctx)
 {
 	return ctx->cert;
 }
 
-X509*
+X509 *
 CT_POLICY_EVAL_CTX_get0_issuer(const CT_POLICY_EVAL_CTX *ctx)
 {
 	return ctx->issuer;
@@ -98,7 +98,7 @@ CT_POLICY_EVAL_CTX_get0_issuer(const CT_POLICY_EVAL_CTX *ctx)
 const CTLOG_STORE *
 CT_POLICY_EVAL_CTX_get0_log_store(const CT_POLICY_EVAL_CTX *ctx)
 {
-    return ctx->log_store;
+	return ctx->log_store;
 }
 
 uint64_t

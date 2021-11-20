@@ -17,15 +17,17 @@
 #include <openssl/tls1.h>
 #include <openssl/x509.h>
 
+#include <string.h>
+
 #include "ct_local.h"
 
 SCT *
 SCT_new(void)
 {
-	SCT *sct = OPENSSL_zalloc(sizeof(*sct));
+	SCT *sct = calloc(1, sizeof(*sct));
 
 	if (sct == NULL) {
-		CTerr(CT_F_SCT_NEW, ERR_R_MALLOC_FAILURE);
+		CTerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 
@@ -40,11 +42,11 @@ SCT_free(SCT *sct)
 	if (sct == NULL)
 		return;
 
-	OPENSSL_free(sct->log_id);
-	OPENSSL_free(sct->ext);
-	OPENSSL_free(sct->sig);
-	OPENSSL_free(sct->sct);
-	OPENSSL_free(sct);
+	free(sct->log_id);
+	free(sct->ext);
+	free(sct->sig);
+	free(sct->sct);
+	free(sct);
 }
 
 void
@@ -57,7 +59,7 @@ int
 SCT_set_version(SCT *sct, sct_version_t version)
 {
 	if (version != SCT_VERSION_V1) {
-		CTerr(CT_F_SCT_SET_VERSION, CT_R_UNSUPPORTED_VERSION);
+		CTerror(CT_R_UNSUPPORTED_VERSION);
 		return 0;
 	}
 	sct->version = version;
@@ -78,7 +80,7 @@ SCT_set_log_entry_type(SCT *sct, ct_log_entry_type_t entry_type)
 	case CT_LOG_ENTRY_TYPE_NOT_SET:
 		break;
 	}
-	CTerr(CT_F_SCT_SET_LOG_ENTRY_TYPE, CT_R_UNSUPPORTED_ENTRY_TYPE);
+	CTerror(CT_R_UNSUPPORTED_ENTRY_TYPE);
 	return 0;
 }
 
@@ -86,11 +88,11 @@ int
 SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len)
 {
 	if (sct->version == SCT_VERSION_V1 && log_id_len != CT_V1_HASHLEN) {
-		CTerr(CT_F_SCT_SET0_LOG_ID, CT_R_INVALID_LOG_ID_LENGTH);
+		CTerror(CT_R_INVALID_LOG_ID_LENGTH);
 		return 0;
 	}
 
-	OPENSSL_free(sct->log_id);
+	free(sct->log_id);
 	sct->log_id = log_id;
 	sct->log_id_len = log_id_len;
 	sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
@@ -101,21 +103,22 @@ int
 SCT_set1_log_id(SCT *sct, const unsigned char *log_id, size_t log_id_len)
 {
 	if (sct->version == SCT_VERSION_V1 && log_id_len != CT_V1_HASHLEN) {
-		CTerr(CT_F_SCT_SET1_LOG_ID, CT_R_INVALID_LOG_ID_LENGTH);
+		CTerror(CT_R_INVALID_LOG_ID_LENGTH);
 		return 0;
 	}
 
-	OPENSSL_free(sct->log_id);
+	free(sct->log_id);
 	sct->log_id = NULL;
 	sct->log_id_len = 0;
 	sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 
 	if (log_id != NULL && log_id_len > 0) {
-		sct->log_id = OPENSSL_memdup(log_id, log_id_len);
+		sct->log_id = malloc(log_id_len);
 		if (sct->log_id == NULL) {
-			CTerr(CT_F_SCT_SET1_LOG_ID, ERR_R_MALLOC_FAILURE);
+			CTerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
+		memcpy(sct->log_id, log_id, log_id_len);
 		sct->log_id_len = log_id_len;
 	}
 	return 1;
@@ -134,17 +137,17 @@ SCT_set_signature_nid(SCT *sct, int nid)
 {
 	switch (nid) {
 	case NID_sha256WithRSAEncryption:
-		sct->hash_alg = TLSEXT_hash_sha256;
-		sct->sig_alg = TLSEXT_signature_rsa;
+		sct->hash_alg = 4; /* XXX */
+		sct->sig_alg = 1; /* XXX */
 		sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 		return 1;
 	case NID_ecdsa_with_SHA256:
-		sct->hash_alg = TLSEXT_hash_sha256;
-		sct->sig_alg = TLSEXT_signature_ecdsa;
+		sct->hash_alg = 4; /* XXX */
+		sct->sig_alg = 3; /* XXX */
 		sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 		return 1;
 	default:
-		CTerr(CT_F_SCT_SET_SIGNATURE_NID, CT_R_UNRECOGNIZED_SIGNATURE_NID);
+		CTerror(CT_R_UNRECOGNIZED_SIGNATURE_NID);
 		return 0;
 	}
 }
@@ -152,7 +155,7 @@ SCT_set_signature_nid(SCT *sct, int nid)
 void
 SCT_set0_extensions(SCT *sct, unsigned char *ext, size_t ext_len)
 {
-	OPENSSL_free(sct->ext);
+	free(sct->ext);
 	sct->ext = ext;
 	sct->ext_len = ext_len;
 	sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
@@ -161,17 +164,18 @@ SCT_set0_extensions(SCT *sct, unsigned char *ext, size_t ext_len)
 int
 SCT_set1_extensions(SCT *sct, const unsigned char *ext, size_t ext_len)
 {
-	OPENSSL_free(sct->ext);
+	free(sct->ext);
 	sct->ext = NULL;
 	sct->ext_len = 0;
 	sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 
 	if (ext != NULL && ext_len > 0) {
-		sct->ext = OPENSSL_memdup(ext, ext_len);
+		sct->ext = malloc(ext_len);
 		if (sct->ext == NULL) {
-			CTerr(CT_F_SCT_SET1_EXTENSIONS, ERR_R_MALLOC_FAILURE);
+			CTerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
+		memcpy(sct->ext, ext, ext_len);
 		sct->ext_len = ext_len;
 	}
 	return 1;
@@ -180,7 +184,7 @@ SCT_set1_extensions(SCT *sct, const unsigned char *ext, size_t ext_len)
 void
 SCT_set0_signature(SCT *sct, unsigned char *sig, size_t sig_len)
 {
-	OPENSSL_free(sct->sig);
+	free(sct->sig);
 	sct->sig = sig;
 	sct->sig_len = sig_len;
 	sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
@@ -189,17 +193,18 @@ SCT_set0_signature(SCT *sct, unsigned char *sig, size_t sig_len)
 int
 SCT_set1_signature(SCT *sct, const unsigned char *sig, size_t sig_len)
 {
-	OPENSSL_free(sct->sig);
+	free(sct->sig);
 	sct->sig = NULL;
 	sct->sig_len = 0;
 	sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
 
 	if (sig != NULL && sig_len > 0) {
-		sct->sig = OPENSSL_memdup(sig, sig_len);
+		sct->sig = malloc(sig_len);
 		if (sct->sig == NULL) {
-			CTerr(CT_F_SCT_SET1_SIGNATURE, ERR_R_MALLOC_FAILURE);
+			CTerror(ERR_R_MALLOC_FAILURE);
 			return 0;
 		}
+		memcpy(sct->sig, sig, sig_len);
 		sct->sig_len = sig_len;
 	}
 	return 1;
@@ -234,14 +239,15 @@ int
 SCT_get_signature_nid(const SCT *sct)
 {
 	if (sct->version == SCT_VERSION_V1) {
-		if (sct->hash_alg == TLSEXT_hash_sha256) {
+		/* XXX sigalg numbers */
+		if (sct->hash_alg == 4) {
 			switch (sct->sig_alg) {
-			case TLSEXT_signature_ecdsa:
+			case 3:
 				return NID_ecdsa_with_SHA256;
-			case TLSEXT_signature_rsa:
+			case 1:
 				return NID_sha256WithRSAEncryption;
 			default:
-				return NID_undef;
+                return NID_undef;
 			}
 		}
 	}
@@ -278,8 +284,8 @@ SCT_is_complete(const SCT *sct)
 int
 SCT_signature_is_complete(const SCT *sct)
 {
-	return SCT_get_signature_nid(sct) != NID_undef && sct->sig != NULL &&
-	    sct->sig_len > 0;
+	return SCT_get_signature_nid(sct) != NID_undef &&
+	    sct->sig != NULL && sct->sig_len > 0;
 }
 
 sct_source_t

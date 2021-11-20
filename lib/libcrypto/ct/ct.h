@@ -17,10 +17,9 @@
 #include <openssl/safestack.h>
 #include <openssl/x509.h>
 #include <openssl/cterr.h>
-#ifdef  __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /* Minimum RSA key size, from RFC6962 */
 #define SCT_MIN_RSA_BITS 2048
@@ -55,8 +54,8 @@ typedef enum {
 	SCT_VALIDATION_STATUS_UNKNOWN_VERSION
 } sct_validation_status_t;
 
-DEFINE_STACK_OF(SCT)
-DEFINE_STACK_OF(CTLOG)
+DECLARE_STACK_OF(SCT)
+DECLARE_STACK_OF(CTLOG)
 
 /******************************************
  * CT policy evaluation context functions *
@@ -128,12 +127,9 @@ SCT *SCT_new(void);
  * Creates a new SCT from some base64-encoded strings.
  * The caller is responsible for calling SCT_free when finished with the SCT.
  */
-SCT *SCT_new_from_base64(unsigned char version,
-                         const char *logid_base64,
-                         ct_log_entry_type_t entry_type,
-                         uint64_t timestamp,
-                         const char *extensions_base64,
-                         const char *signature_base64);
+SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
+    ct_log_entry_type_t entry_type, uint64_t timestamp,
+    const char *extensions_base64, const char *signature_base64);
 
 /*
  * Frees the SCT and the underlying data structures.
@@ -155,7 +151,7 @@ sct_version_t SCT_get_version(const SCT *sct);
  * Set the version of an SCT.
  * Returns 1 on success, 0 if the version is unrecognized.
  */
-__owur int SCT_set_version(SCT *sct, sct_version_t version);
+int SCT_set_version(SCT *sct, sct_version_t version);
 
 /*
  * Returns the log entry type of the SCT.
@@ -166,7 +162,7 @@ ct_log_entry_type_t SCT_get_log_entry_type(const SCT *sct);
  * Set the log entry type of an SCT.
  * Returns 1 on success, 0 otherwise.
  */
-__owur int SCT_set_log_entry_type(SCT *sct, ct_log_entry_type_t entry_type);
+int SCT_set_log_entry_type(SCT *sct, ct_log_entry_type_t entry_type);
 
 /*
  * Gets the ID of the log that an SCT came from.
@@ -180,14 +176,14 @@ size_t SCT_get0_log_id(const SCT *sct, unsigned char **log_id);
  * The SCT takes ownership of the specified pointer.
  * Returns 1 on success, 0 otherwise.
  */
-__owur int SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len);
+int SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len);
 
 /*
  * Set the log ID of an SCT.
  * This makes a copy of the log_id.
  * Returns 1 on success, 0 otherwise.
  */
-__owur int SCT_set1_log_id(SCT *sct, const unsigned char *log_id,
+int SCT_set1_log_id(SCT *sct, const unsigned char *log_id,
                            size_t log_id_len);
 
 /*
@@ -213,7 +209,7 @@ int SCT_get_signature_nid(const SCT *sct);
  * NID_ecdsa_with_SHA256.
  * Returns 1 on success, 0 otherwise.
  */
-__owur int SCT_set_signature_nid(SCT *sct, int nid);
+int SCT_set_signature_nid(SCT *sct, int nid);
 
 /*
  * Set *ext to point to the extension data for the SCT. ext must not be NULL.
@@ -233,7 +229,7 @@ void SCT_set0_extensions(SCT *sct, unsigned char *ext, size_t ext_len);
  * This takes a copy of the ext.
  * Returns 1 on success, 0 otherwise.
  */
-__owur int SCT_set1_extensions(SCT *sct, const unsigned char *ext,
+int SCT_set1_extensions(SCT *sct, const unsigned char *ext,
                                size_t ext_len);
 
 /*
@@ -253,8 +249,8 @@ void SCT_set0_signature(SCT *sct, unsigned char *sig, size_t sig_len);
  * Set the signature of an SCT to be a copy of the *sig specified.
  * Returns 1 on success, 0 otherwise.
  */
-__owur int SCT_set1_signature(SCT *sct, const unsigned char *sig,
-                              size_t sig_len);
+int SCT_set1_signature(SCT *sct, const unsigned char *sig,
+    size_t sig_len);
 
 /*
  * The origin of this SCT, e.g. TLS extension, OCSP response, etc.
@@ -265,7 +261,7 @@ sct_source_t SCT_get_source(const SCT *sct);
  * Set the origin of this SCT, e.g. TLS extension, OCSP response, etc.
  * Returns 1 on success, 0 otherwise.
  */
-__owur int SCT_set_source(SCT *sct, sct_source_t source);
+int SCT_set_source(SCT *sct, sct_source_t source);
 
 /*
  * Returns a text string describing the validation status of |sct|.
@@ -303,7 +299,7 @@ sct_validation_status_t SCT_get_validation_status(const SCT *sct);
  * Returns 0 if the SCT is invalid or could not be verified.
  * Returns -1 if an error occurs.
  */
-__owur int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx);
+int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx);
 
 /*
  * Validates the given list of SCTs with the provided context.
@@ -312,7 +308,7 @@ __owur int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx);
  * Returns 0 if at least one SCT is invalid or could not be verified.
  * Returns a negative integer if an error occurs.
  */
-__owur int SCT_LIST_validate(const STACK_OF(SCT) *scts,
+int SCT_LIST_validate(const STACK_OF(SCT) *scts,
     CT_POLICY_EVAL_CTX *ctx);
 
 
@@ -332,7 +328,7 @@ __owur int SCT_LIST_validate(const STACK_OF(SCT) *scts,
  * Returns < 0 on error, >= 0 indicating bytes written (or would have been)
  * on success.
  */
-__owur int i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp);
+int i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp);
 
 /*
  * Convert TLS format SCT list to a stack of SCTs.
@@ -359,7 +355,7 @@ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
  * Returns < 0 on error, >= 0 indicating bytes written (or would have been)
  * on success.
  */
-__owur int i2d_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp);
+int i2d_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp);
 
 /*
  * Parses an SCT list in DER format and returns it.
@@ -383,7 +379,7 @@ STACK_OF(SCT) *d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
  * to it.
  * The length of the SCT in TLS format will be returned.
  */
-__owur int i2o_SCT(const SCT *sct, unsigned char **out);
+int i2o_SCT(const SCT *sct, unsigned char **out);
 
 /*
  * Parses an SCT in TLS format and returns it.
@@ -416,8 +412,8 @@ CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
  * Returns 1 on success, 0 on failure.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
-int CTLOG_new_from_base64(CTLOG ** ct_log,
-                          const char *pkey_base64, const char *name);
+int CTLOG_new_from_base64(CTLOG **ct_log, const char *pkey_base64,
+    const char *name);
 
 /*
  * Deletes a CT log instance and its fields.
@@ -428,7 +424,7 @@ void CTLOG_free(CTLOG *log);
 const char *CTLOG_get0_name(const CTLOG *log);
 /* Gets the ID of the CT log */
 void CTLOG_get0_log_id(const CTLOG *log, const uint8_t **log_id,
-    size_t *log_id_len);
+                       size_t *log_id_len);
 /* Gets the public key of the CT log */
 EVP_PKEY *CTLOG_get0_public_key(const CTLOG *log);
 
@@ -458,16 +454,16 @@ const CTLOG *CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store,
  * Loads a CT log list into a |store| from a |file|.
  * Returns 1 if loading is successful, or 0 otherwise.
  */
-__owur int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file);
+int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file);
 
 /*
  * Loads the default CT log list into a |store|.
  * Returns 1 if loading is successful, or 0 otherwise.
  */
-__owur int CTLOG_STORE_load_default_file(CTLOG_STORE *store);
+int CTLOG_STORE_load_default_file(CTLOG_STORE *store);
 
-#  ifdef  __cplusplus
+#ifdef __cplusplus
 }
-#  endif
-# endif
+#endif
+#endif
 #endif

@@ -16,7 +16,8 @@
 #include <openssl/evp.h>
 #include <openssl/safestack.h>
 
-#include "internal/cryptlib.h"
+#include "cryptlib.h"
+
 
 /*
  * Information about a CT log server.
@@ -52,23 +53,23 @@ static CTLOG_STORE_LOAD_CTX *ctlog_store_load_ctx_new(void);
  * Deletes a CT log store load context.
  * Does not delete any of the fields.
  */
-static void ctlog_store_load_ctx_free(CTLOG_STORE_LOAD_CTX* ctx);
+static void ctlog_store_load_ctx_free(CTLOG_STORE_LOAD_CTX *ctx);
 
 static CTLOG_STORE_LOAD_CTX *
 ctlog_store_load_ctx_new(void)
 {
-	CTLOG_STORE_LOAD_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+	CTLOG_STORE_LOAD_CTX *ctx = calloc(1, sizeof(*ctx));
 
 	if (ctx == NULL)
-		CTerr(CT_F_CTLOG_STORE_LOAD_CTX_NEW, ERR_R_MALLOC_FAILURE);
+		CTerror(ERR_R_MALLOC_FAILURE);
 
 	return ctx;
 }
 
 static void
-ctlog_store_load_ctx_free(CTLOG_STORE_LOAD_CTX* ctx)
+ctlog_store_load_ctx_free(CTLOG_STORE_LOAD_CTX  *ctx)
 {
-	OPENSSL_free(ctx);
+	free(ctx);
 }
 
 /* Converts a log's public key into a SHA256 log ID */
@@ -80,24 +81,24 @@ ct_v1_log_id_from_pkey(EVP_PKEY *pkey, unsigned char log_id[CT_V1_HASHLEN])
 	int pkey_der_len = i2d_PUBKEY(pkey, &pkey_der);
 
 	if (pkey_der_len <= 0) {
-		CTerr(CT_F_CT_V1_LOG_ID_FROM_PKEY, CT_R_LOG_KEY_INVALID);
+		CTerror(CT_R_LOG_KEY_INVALID);
 		goto err;
 	}
 
 	SHA256(pkey_der, pkey_der_len, log_id);
 	ret = 1;
  err:
-	OPENSSL_free(pkey_der);
+	free(pkey_der);
 	return ret;
 }
 
 CTLOG_STORE *
 CTLOG_STORE_new(void)
 {
-	CTLOG_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
+	CTLOG_STORE *ret = calloc(1, sizeof(*ret));
 
 	if (ret == NULL) {
-		CTerr(CT_F_CTLOG_STORE_NEW, ERR_R_MALLOC_FAILURE);
+		CTerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 
@@ -106,8 +107,8 @@ CTLOG_STORE_new(void)
 		goto err;
 
 	return ret;
-err:
-	OPENSSL_free(ret);
+ err:
+	free(ret);
 	return NULL;
 }
 
@@ -116,24 +117,25 @@ CTLOG_STORE_free(CTLOG_STORE *store)
 {
 	if (store != NULL) {
 		sk_CTLOG_pop_free(store->logs, CTLOG_free);
-		OPENSSL_free(store);
+		free(store);
 	}
 }
 
 static int
 ctlog_new_from_conf(CTLOG **ct_log, const CONF *conf, const char *section)
 {
-	const char *description = NCONF_get_string(conf, section, "description");
+	const char *description = NCONF_get_string(conf, section,
+	    "description");
 	char *pkey_base64;
 
 	if (description == NULL) {
-		CTerr(CT_F_CTLOG_NEW_FROM_CONF, CT_R_LOG_CONF_MISSING_DESCRIPTION);
+		CTerror(CT_R_LOG_CONF_MISSING_DESCRIPTION);
 		return 0;
 	}
 
 	pkey_base64 = NCONF_get_string(conf, section, "key");
 	if (pkey_base64 == NULL) {
-		CTerr(CT_F_CTLOG_NEW_FROM_CONF, CT_R_LOG_CONF_MISSING_KEY);
+		CTerror(CT_R_LOG_CONF_MISSING_KEY);
 		return 0;
 	}
 
@@ -143,12 +145,7 @@ ctlog_new_from_conf(CTLOG **ct_log, const CONF *conf, const char *section)
 int
 CTLOG_STORE_load_default_file(CTLOG_STORE *store)
 {
-	const char *fpath = ossl_safe_getenv(CTLOG_FILE_EVP);
-
-	if (fpath == NULL)
-		fpath = CTLOG_FILE;
-
-	return CTLOG_STORE_load_file(store, fpath);
+	return CTLOG_STORE_load_file(store, CTLOG_FILE);
 }
 
 /*
@@ -170,12 +167,12 @@ ctlog_store_load_log(const char *log_name, int log_name_len, void *arg)
 	if (log_name == NULL)
 		return 1;
 
-	tmp = OPENSSL_strndup(log_name, log_name_len);
+	tmp = strndup(log_name, log_name_len);
 	if (tmp == NULL)
 		goto mem_err;
 
 	ret = ctlog_new_from_conf(&ct_log, load_ctx->conf, tmp);
-	OPENSSL_free(tmp);
+	free(tmp);
 
 	if (ret < 0) {
 		/* Propagate any internal error */
@@ -192,9 +189,9 @@ ctlog_store_load_log(const char *log_name, int log_name_len, void *arg)
 	}
 	return 1;
 
-mem_err:
+ mem_err:
 	CTLOG_free(ct_log);
-	CTerr(CT_F_CTLOG_STORE_LOAD_LOG, ERR_R_MALLOC_FAILURE);
+	CTerror(ERR_R_MALLOC_FAILURE);
 	return -1;
 }
 
@@ -213,24 +210,24 @@ CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file)
 		goto end;
 
 	if (NCONF_load(load_ctx->conf, file, NULL) <= 0) {
-		CTerr(CT_F_CTLOG_STORE_LOAD_FILE, CT_R_LOG_CONF_INVALID);
+		CTerror(CT_R_LOG_CONF_INVALID);
 		goto end;
 	}
 
 	enabled_logs = NCONF_get_string(load_ctx->conf, NULL, "enabled_logs");
 	if (enabled_logs == NULL) {
-		CTerr(CT_F_CTLOG_STORE_LOAD_FILE, CT_R_LOG_CONF_INVALID);
+		CTerror(CT_R_LOG_CONF_INVALID);
 		goto end;
 	}
 
 	if (!CONF_parse_list(enabled_logs, ',', 1, ctlog_store_load_log, load_ctx) ||
 	    load_ctx->invalid_log_entries > 0) {
-		CTerr(CT_F_CTLOG_STORE_LOAD_FILE, CT_R_LOG_CONF_INVALID);
+		CTerror(CT_R_LOG_CONF_INVALID);
 		goto end;
 	}
 
 	ret = 1;
-end:
+ end:
 	NCONF_free(load_ctx->conf);
 	ctlog_store_load_ctx_free(load_ctx);
 	return ret;
@@ -244,16 +241,16 @@ end:
 CTLOG *
 CTLOG_new(EVP_PKEY *public_key, const char *name)
 {
-	CTLOG *ret = OPENSSL_zalloc(sizeof(*ret));
+	CTLOG *ret = calloc(1, sizeof(*ret));
 
 	if (ret == NULL) {
-		CTerr(CT_F_CTLOG_NEW, ERR_R_MALLOC_FAILURE);
+		CTerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 
-	ret->name = OPENSSL_strdup(name);
+	ret->name = strdup(name);
 	if (ret->name == NULL) {
-		CTerr(CT_F_CTLOG_NEW, ERR_R_MALLOC_FAILURE);
+		CTerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -272,9 +269,9 @@ void
 CTLOG_free(CTLOG *log)
 {
 	if (log != NULL) {
-		OPENSSL_free(log->name);
+		free(log->name);
 		EVP_PKEY_free(log->public_key);
-		OPENSSL_free(log);
+		free(log);
 	}
 }
 
@@ -301,8 +298,8 @@ CTLOG_get0_public_key(const CTLOG *log)
  * Given a log ID, finds the matching log.
  * Returns NULL if no match found.
  */
-const CTLOG
-*CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store, const uint8_t *log_id,
+const CTLOG *
+CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store, const uint8_t *log_id,
     size_t log_id_len)
 {
 	int i;

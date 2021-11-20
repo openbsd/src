@@ -23,10 +23,10 @@
 SCT_CTX *
 SCT_CTX_new(void)
 {
-	SCT_CTX *sctx = OPENSSL_zalloc(sizeof(*sctx));
+	SCT_CTX *sctx = calloc(1, sizeof(*sctx));
 
 	if (sctx == NULL)
-		CTerr(CT_F_SCT_CTX_NEW, ERR_R_MALLOC_FAILURE);
+		CTerror(ERR_R_MALLOC_FAILURE);
 
 	return sctx;
 }
@@ -37,11 +37,11 @@ SCT_CTX_free(SCT_CTX *sctx)
 	if (sctx == NULL)
 		return;
 	EVP_PKEY_free(sctx->pkey);
-	OPENSSL_free(sctx->pkeyhash);
-	OPENSSL_free(sctx->ihash);
-	OPENSSL_free(sctx->certder);
-	OPENSSL_free(sctx->preder);
-	OPENSSL_free(sctx);
+	free(sctx->pkeyhash);
+	free(sctx->ihash);
+	free(sctx->certder);
+	free(sctx->preder);
+	free(sctx);
 }
 
 /*
@@ -66,7 +66,7 @@ ct_x509_get_ext(X509 *cert, int nid, int *is_duplicated)
  * AKID from the presigner certificate, if necessary.
  * Returns 1 on success, 0 otherwise.
  */
-__owur static int
+static int
 ct_x509_cert_fixup(X509 *cert, X509 *presigner)
 {
 	int preidx, certidx;
@@ -181,23 +181,23 @@ SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner)
 
 	X509_free(pretmp);
 
-	OPENSSL_free(sctx->certder);
+	free(sctx->certder);
 	sctx->certder = certder;
 	sctx->certderlen = certderlen;
 
-	OPENSSL_free(sctx->preder);
+	free(sctx->preder);
 	sctx->preder = preder;
 	sctx->prederlen = prederlen;
 
 	return 1;
  err:
-	OPENSSL_free(certder);
-	OPENSSL_free(preder);
+	free(certder);
+	free(preder);
 	X509_free(pretmp);
 	return 0;
 }
 
-__owur static int
+static int
 ct_public_key_hash(X509_PUBKEY *pkey, unsigned char **hash, size_t *hash_len)
 {
 	int ret = 0;
@@ -209,7 +209,7 @@ ct_public_key_hash(X509_PUBKEY *pkey, unsigned char **hash, size_t *hash_len)
 	if (*hash != NULL && *hash_len >= SHA256_DIGEST_LENGTH) {
 		md = *hash;
 	} else {
-		md = OPENSSL_malloc(SHA256_DIGEST_LENGTH);
+		md = malloc(SHA256_DIGEST_LENGTH);
 		if (md == NULL)
 			goto err;
 	}
@@ -223,7 +223,7 @@ ct_public_key_hash(X509_PUBKEY *pkey, unsigned char **hash, size_t *hash_len)
 		goto err;
 
 	if (md != *hash) {
-		OPENSSL_free(*hash);
+		free(*hash);
 		*hash = md;
 		*hash_len = SHA256_DIGEST_LENGTH;
 	}
@@ -231,8 +231,8 @@ ct_public_key_hash(X509_PUBKEY *pkey, unsigned char **hash, size_t *hash_len)
 	md = NULL;
 	ret = 1;
  err:
-	OPENSSL_free(md);
-	OPENSSL_free(der);
+	free(md);
+	free(der);
 	return ret;
 }
 

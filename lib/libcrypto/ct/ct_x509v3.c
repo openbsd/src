@@ -11,12 +11,14 @@
 # error "CT is disabled"
 #endif
 
+#include <string.h>
+
 #include "ct_local.h"
 
 static char *
 i2s_poison(const X509V3_EXT_METHOD *method, void *val)
 {
-	return OPENSSL_strdup("NULL");
+	return strdup("NULL");
 }
 
 static void *
@@ -63,8 +65,8 @@ x509_ext_d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp, long len)
 	return s;
 }
 
-static STACK_OF(SCT) *o
-csp_ext_d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp, long len)
+static STACK_OF(SCT) *
+ocsp_ext_d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp, long len)
 {
 	STACK_OF(SCT) *s = d2i_SCT_LIST(a, pp, len);
 
@@ -88,7 +90,7 @@ const X509V3_EXT_METHOD v3_ct_scts[3] = {
 	  NULL },
 
 	/* X509v3 extension to mark a certificate as a pre-certificate */
-	{ NID_ct_precert_poison, 0, ASN1_ITEM_ref(ASN1_NULL),
+	{ NID_ct_precert_poison, 0, &ASN1_NULL_it,
 	  NULL, NULL, NULL, NULL,
 	  i2s_poison, s2i_poison,
 	  NULL, NULL,

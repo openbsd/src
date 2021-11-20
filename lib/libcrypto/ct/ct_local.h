@@ -59,7 +59,10 @@ struct sct_st {
 	/* If version is not SCT_VERSION_V1, this contains the encoded SCT */
 	unsigned char *sct;
 	size_t sct_len;
-	/* If version is SCT_VERSION_V1, fields below contain components of the SCT */
+	/*
+	 * If version is SCT_VERSION_V1, fields below contain components of
+	 * the SCT
+	 */
 	unsigned char *log_id;
 	size_t log_id_len;
 	/*
@@ -98,7 +101,10 @@ struct sct_ctx_st {
 	/* pre-certificate encoding */
 	unsigned char *preder;
 	size_t prederlen;
-	/* milliseconds since epoch (to check that the SCT isn't from the future) */
+	/*
+	 * milliseconds since epoch (to check that the SCT isn't from the
+	 * future)
+	 */
 	uint64_t epoch_time_in_ms;
 };
 
@@ -107,7 +113,10 @@ struct ct_policy_eval_ctx_st {
 	X509 *cert;
 	X509 *issuer;
 	CTLOG_STORE *log_store;
-	/* milliseconds since epoch (to check that SCTs aren't from the future) */
+	/*
+	 * milliseconds since epoch (to check that the SCT isn't from the
+	 * future)
+	 */
 	uint64_t epoch_time_in_ms;
 };
 
@@ -129,7 +138,7 @@ void SCT_CTX_free(SCT_CTX *sctx);
  * extension, both must have one.
  * Returns 1 on success, 0 on failure.
  */
-__owur int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner);
+int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner);
 
 /*
  * Sets the issuer of the certificate that the SCT was created for.
@@ -138,7 +147,7 @@ __owur int SCT_CTX_set1_cert(SCT_CTX *sctx, X509 *cert, X509 *presigner);
  * Issuer must not be NULL.
  * Returns 1 on success, 0 on failure.
  */
-__owur int SCT_CTX_set1_issuer(SCT_CTX *sctx, const X509 *issuer);
+int SCT_CTX_set1_issuer(SCT_CTX *sctx, const X509 *issuer);
 
 /*
  * Sets the public key of the issuer of the certificate that the SCT was created
@@ -146,13 +155,13 @@ __owur int SCT_CTX_set1_issuer(SCT_CTX *sctx, const X509 *issuer);
  * The public key must not be NULL.
  * Returns 1 on success, 0 on failure.
  */
-__owur int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
+int SCT_CTX_set1_issuer_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
 
 /*
  * Sets the public key of the CT log that the SCT is from.
  * Returns 1 on success, 0 on failure.
  */
-__owur int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
+int SCT_CTX_set1_pubkey(SCT_CTX *sctx, X509_PUBKEY *pubkey);
 
 /*
  * Sets the time to evaluate the SCT against, in milliseconds since the Unix
@@ -168,13 +177,13 @@ void SCT_CTX_set_time(SCT_CTX *sctx, uint64_t time_in_ms);
  * Returns 1 if the SCT verifies successfully; any other value indicates
  * failure. See EVP_DigestVerifyFinal() for the meaning of those values.
  */
-__owur int SCT_CTX_verify(const SCT_CTX *sctx, const SCT *sct);
+int SCT_CTX_verify(const SCT_CTX *sctx, const SCT *sct);
 
 /*
  * Does this SCT have the minimum fields populated to be usable?
  * Returns 1 if so, 0 otherwise.
  */
-__owur int SCT_is_complete(const SCT *sct);
+int SCT_is_complete(const SCT *sct);
 
 /*
  * Does this SCT have the signature-related fields populated?
@@ -182,7 +191,7 @@ __owur int SCT_is_complete(const SCT *sct);
  * This checks that the signature and hash algorithms are set to supported
  * values and that the signature field is set.
  */
-__owur int SCT_signature_is_complete(const SCT *sct);
+int SCT_signature_is_complete(const SCT *sct);
 
 /*
  * TODO(RJPercival): Create an SCT_signature struct and make i2o_SCT_signature
@@ -197,7 +206,7 @@ __owur int SCT_signature_is_complete(const SCT *sct);
 * If |out| points to an allocated string, the signature will be written to it.
 * The length of the signature in TLS format will be returned.
 */
-__owur int i2o_SCT_signature(const SCT *sct, unsigned char **out);
+int i2o_SCT_signature(const SCT *sct, unsigned char **out);
 
 /*
 * Parses an SCT signature in TLS format and populates the |sct| with it.
@@ -208,7 +217,7 @@ __owur int i2o_SCT_signature(const SCT *sct, unsigned char **out);
 * If an error occurs, the SCT's signature NID may be updated whilst the
 * signature field itself remains unset.
 */
-__owur int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
+int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
 
 /*
  * Handlers for Certificate Transparency X509v3/OCSP extensions

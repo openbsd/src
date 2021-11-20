@@ -13,11 +13,12 @@
 
 #ifndef OPENSSL_NO_ERR
 
-static const ERR_STRING_DATA CT_str_functs[] = {
+static ERR_STRING_DATA CT_str_functs[] = {
 	{ERR_PACK(ERR_LIB_CT, CT_F_CTLOG_NEW, 0), "CTLOG_new"},
 	{ERR_PACK(ERR_LIB_CT, CT_F_CTLOG_NEW_FROM_BASE64, 0),
 	 "CTLOG_new_from_base64"},
-	{ERR_PACK(ERR_LIB_CT, CT_F_CTLOG_NEW_FROM_CONF, 0), "ctlog_new_from_conf"},
+	{ERR_PACK(ERR_LIB_CT, CT_F_CTLOG_NEW_FROM_CONF, 0),
+	 "ctlog_new_from_conf"},
 	{ERR_PACK(ERR_LIB_CT, CT_F_CTLOG_STORE_LOAD_CTX_NEW, 0),
 	 "ctlog_store_load_ctx_new"},
 	{ERR_PACK(ERR_LIB_CT, CT_F_CTLOG_STORE_LOAD_FILE, 0),
@@ -39,11 +40,14 @@ static const ERR_STRING_DATA CT_str_functs[] = {
 	{ERR_PACK(ERR_LIB_CT, CT_F_SCT_CTX_NEW, 0), "SCT_CTX_new"},
 	{ERR_PACK(ERR_LIB_CT, CT_F_SCT_CTX_VERIFY, 0), "SCT_CTX_verify"},
 	{ERR_PACK(ERR_LIB_CT, CT_F_SCT_NEW, 0), "SCT_new"},
-	{ERR_PACK(ERR_LIB_CT, CT_F_SCT_NEW_FROM_BASE64, 0), "SCT_new_from_base64"},
+	{ERR_PACK(ERR_LIB_CT, CT_F_SCT_NEW_FROM_BASE64, 0),
+	 "SCT_new_from_base64"},
 	{ERR_PACK(ERR_LIB_CT, CT_F_SCT_SET0_LOG_ID, 0), "SCT_set0_log_id"},
-	{ERR_PACK(ERR_LIB_CT, CT_F_SCT_SET1_EXTENSIONS, 0), "SCT_set1_extensions"},
+	{ERR_PACK(ERR_LIB_CT, CT_F_SCT_SET1_EXTENSIONS, 0),
+	 "SCT_set1_extensions"},
 	{ERR_PACK(ERR_LIB_CT, CT_F_SCT_SET1_LOG_ID, 0), "SCT_set1_log_id"},
-	{ERR_PACK(ERR_LIB_CT, CT_F_SCT_SET1_SIGNATURE, 0), "SCT_set1_signature"},
+	{ERR_PACK(ERR_LIB_CT, CT_F_SCT_SET1_SIGNATURE, 0),
+	 "SCT_set1_signature"},
 	{ERR_PACK(ERR_LIB_CT, CT_F_SCT_SET_LOG_ENTRY_TYPE, 0),
 	 "SCT_set_log_entry_type"},
 	{ERR_PACK(ERR_LIB_CT, CT_F_SCT_SET_SIGNATURE_NID, 0),
@@ -52,8 +56,9 @@ static const ERR_STRING_DATA CT_str_functs[] = {
 	{0, NULL}
 };
 
-static const ERR_STRING_DATA CT_str_reasons[] = {
-	{ERR_PACK(ERR_LIB_CT, 0, CT_R_BASE64_DECODE_ERROR), "base64 decode error"},
+static ERR_STRING_DATA CT_str_reasons[] = {
+	{ERR_PACK(ERR_LIB_CT, 0, CT_R_BASE64_DECODE_ERROR),
+	 "base64 decode error"},
 	{ERR_PACK(ERR_LIB_CT, 0, CT_R_INVALID_LOG_ID_LENGTH),
 	 "invalid log id length"},
 	{ERR_PACK(ERR_LIB_CT, 0, CT_R_LOG_CONF_INVALID), "log conf invalid"},
@@ -70,7 +75,8 @@ static const ERR_STRING_DATA CT_str_reasons[] = {
 	{ERR_PACK(ERR_LIB_CT, 0, CT_R_SCT_INVALID_SIGNATURE),
 	 "sct invalid signature"},
 	{ERR_PACK(ERR_LIB_CT, 0, CT_R_SCT_LIST_INVALID), "sct list invalid"},
-	{ERR_PACK(ERR_LIB_CT, 0, CT_R_SCT_LOG_ID_MISMATCH), "sct log id mismatch"},
+	{ERR_PACK(ERR_LIB_CT, 0, CT_R_SCT_LOG_ID_MISMATCH),
+	 "sct log id mismatch"},
 	{ERR_PACK(ERR_LIB_CT, 0, CT_R_SCT_NOT_SET), "sct not set"},
 	{ERR_PACK(ERR_LIB_CT, 0, CT_R_SCT_UNSUPPORTED_VERSION),
 	 "sct unsupported version"},
@@ -78,19 +84,19 @@ static const ERR_STRING_DATA CT_str_reasons[] = {
 	 "unrecognized signature nid"},
 	{ERR_PACK(ERR_LIB_CT, 0, CT_R_UNSUPPORTED_ENTRY_TYPE),
 	 "unsupported entry type"},
-	{ERR_PACK(ERR_LIB_CT, 0, CT_R_UNSUPPORTED_VERSION), "unsupported version"},
+	{ERR_PACK(ERR_LIB_CT, 0, CT_R_UNSUPPORTED_VERSION),
+	 "unsupported version"},
 	{0, NULL}
 };
 
 #endif
 
-int ERR_load_CT_strings(void)
+int
+ERR_load_CT_strings(void)
 {
-#ifndef OPENSSL_NO_ERR
 	if (ERR_func_error_string(CT_str_functs[0].error) == NULL) {
-		ERR_load_strings_const(CT_str_functs);
-		ERR_load_strings_const(CT_str_reasons);
+		ERR_load_strings(0, CT_str_functs);
+		ERR_load_strings(0, CT_str_reasons);
 	}
-#endif
 	return 1;
 }

@@ -16,6 +16,36 @@
 
 #include "ct_local.h"
 
+/*
+ * XXX public api in OpenSSL 1.1.0  but this is the only thing that uses it.
+ * so I am stuffing it here for the moment.
+ */
+static int
+BIO_hex_string(BIO *out, int indent, int width, unsigned char *data,
+    int datalen)
+{
+	int i, j = 0;
+
+	if (datalen < 1)
+		return 1;
+
+	for (i = 0; i < datalen - 1; i++) {
+		if (i && !j)
+			BIO_printf(out, "%*s", indent, "");
+
+		BIO_printf(out, "%02X:", data[i]);
+
+		j = (j + 1) % width;
+		if (!j)
+			BIO_printf(out, "\n");
+	}
+
+	if (i && !j)
+		BIO_printf(out, "%*s", indent, "");
+	BIO_printf(out, "%02X", data[datalen - 1]);
+	return 1;
+}
+
 static void
 SCT_signature_algorithms_print(const SCT *sct, BIO *out)
 {
@@ -35,13 +65,13 @@ timestamp_print(uint64_t timestamp, BIO *out)
 
 	if (gen == NULL)
 		return;
-	ASN1_GENERALIZEDTIME_adj(gen, (time_t)0,(int)(timestamp / 86400000),
+	ASN1_GENERALIZEDTIME_adj(gen, (time_t)0, (int)(timestamp / 86400000),
 	    (timestamp % 86400000) / 1000);
 	/*
 	 * Note GeneralizedTime from ASN1_GENERALIZETIME_adj is always 15
 	 * characters long with a final Z. Update it with fractional seconds.
 	 */
-	BIO_snprintf(genstr, sizeof(genstr), "%.14s.%03dZ",
+	snprintf(genstr, sizeof(genstr), "%.14s.%03dZ",
 	    ASN1_STRING_get0_data(gen), (unsigned int)(timestamp % 1000));
 	if (ASN1_GENERALIZEDTIME_set_string(gen, genstr))
 		ASN1_GENERALIZEDTIME_print(out, gen);
@@ -63,7 +93,7 @@ SCT_validation_status_string(const SCT *sct)
 	case SCT_VALIDATION_STATUS_INVALID:
 		return "invalid";
 	case SCT_VALIDATION_STATUS_VALID:
-	    return "valid";
+		return "valid";
 	}
 	return "unknown status";
 }

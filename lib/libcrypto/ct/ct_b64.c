@@ -34,19 +34,22 @@ ct_base64_decode(const char *in, unsigned char **out)
 	}
 
 	outlen = (inlen / 4) * 3;
-	outbuf = OPENSSL_malloc(outlen);
+	outbuf = malloc(outlen);
 	if (outbuf == NULL) {
-		CTerr(CT_F_CT_BASE64_DECODE, ERR_R_MALLOC_FAILURE);
+		CTerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
 	outlen = EVP_DecodeBlock(outbuf, (unsigned char *)in, inlen);
 	if (outlen < 0) {
-		CTerr(CT_F_CT_BASE64_DECODE, CT_R_BASE64_DECODE_ERROR);
+		CTerror(CT_R_BASE64_DECODE_ERROR);
 		goto err;
 	}
 
-	/* Subtract padding bytes from |outlen|.  Any more than 2 is malformed. */
+	/*
+	 * Subtract padding bytes from |outlen|.
+	 * Any more than 2 is malformed.
+	 */
 	i = 0;
 	while (in[--inlen] == '=') {
 		--outlen;
@@ -57,7 +60,7 @@ ct_base64_decode(const char *in, unsigned char **out)
 	*out = outbuf;
 	return outlen;
  err:
-	OPENSSL_free(outbuf);
+	free(outbuf);
 	return -1;
 }
 
@@ -72,7 +75,7 @@ SCT_new_from_base64(unsigned char version, const char *logid_base64,
 	int declen;
 
 	if (sct == NULL) {
-		CTerr(CT_F_SCT_NEW_FROM_BASE64, ERR_R_MALLOC_FAILURE);
+		CTerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
 
@@ -81,13 +84,13 @@ SCT_new_from_base64(unsigned char version, const char *logid_base64,
 	 * can only construct SCT versions that have been defined.
 	 */
 	if (!SCT_set_version(sct, version)) {
-		CTerr(CT_F_SCT_NEW_FROM_BASE64, CT_R_SCT_UNSUPPORTED_VERSION);
+		CTerror(CT_R_SCT_UNSUPPORTED_VERSION);
 		goto err;
 	}
 
 	declen = ct_base64_decode(logid_base64, &dec);
 	if (declen < 0) {
-		CTerr(CT_F_SCT_NEW_FROM_BASE64, X509_R_BASE64_DECODE_ERROR);
+		CTerror(X509_R_BASE64_DECODE_ERROR);
 		goto err;
 	}
 	if (!SCT_set0_log_id(sct, dec, declen))
@@ -96,7 +99,7 @@ SCT_new_from_base64(unsigned char version, const char *logid_base64,
 
 	declen = ct_base64_decode(extensions_base64, &dec);
 	if (declen < 0) {
-		CTerr(CT_F_SCT_NEW_FROM_BASE64, X509_R_BASE64_DECODE_ERROR);
+		CTerror(X509_R_BASE64_DECODE_ERROR);
 		goto err;
 	}
 	SCT_set0_extensions(sct, dec, declen);
@@ -104,14 +107,14 @@ SCT_new_from_base64(unsigned char version, const char *logid_base64,
 
 	declen = ct_base64_decode(signature_base64, &dec);
 	if (declen < 0) {
-		CTerr(CT_F_SCT_NEW_FROM_BASE64, X509_R_BASE64_DECODE_ERROR);
+		CTerror(X509_R_BASE64_DECODE_ERROR);
 		goto err;
 	}
 
 	p = dec;
 	if (o2i_SCT_signature(sct, &p, declen) <= 0)
 		goto err;
-	OPENSSL_free(dec);
+	free(dec);
 	dec = NULL;
 
 	SCT_set_timestamp(sct, timestamp);
@@ -122,7 +125,7 @@ SCT_new_from_base64(unsigned char version, const char *logid_base64,
 	return sct;
 
  err:
-	OPENSSL_free(dec);
+	free(dec);
 	SCT_free(sct);
 	return NULL;
 }
@@ -142,21 +145,21 @@ CTLOG_new_from_base64(CTLOG **ct_log, const char *pkey_base64, const char *name)
 	EVP_PKEY *pkey = NULL;
 
 	if (ct_log == NULL) {
-		CTerr(CT_F_CTLOG_NEW_FROM_BASE64, ERR_R_PASSED_INVALID_ARGUMENT);
+	        CTerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 
 	pkey_der_len = ct_base64_decode(pkey_base64, &pkey_der);
 	if (pkey_der_len < 0) {
-		CTerr(CT_F_CTLOG_NEW_FROM_BASE64, CT_R_LOG_CONF_INVALID_KEY);
+		CTerror(CT_R_LOG_CONF_INVALID_KEY);
 		return 0;
 	}
 
 	p = pkey_der;
 	pkey = d2i_PUBKEY(NULL, &p, pkey_der_len);
-	OPENSSL_free(pkey_der);
+	free(pkey_der);
 	if (pkey == NULL) {
-		CTerr(CT_F_CTLOG_NEW_FROM_BASE64, CT_R_LOG_CONF_INVALID_KEY);
+		CTerror(CT_R_LOG_CONF_INVALID_KEY);
 		return 0;
 	}
 
