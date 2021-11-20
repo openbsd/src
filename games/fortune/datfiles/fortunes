@@ -14557,7 +14557,7 @@ Unquestionably, there is progress.  The average American now pays out
 twice as much in taxes as he formerly got in wages.
 		-- H. L. Mencken
 %
-Usage: fortune -P [] -a [xsz] [Q: [file]] [rKe9] -v6[+] dataspec ... inputdir
+usage: fortune -P [] -a [xsz] [Q: [file]] [rKe9] -v6[+] dataspec ... inputdir
 %
 User n.:
 	A programmer who will believe anything you tell him.
