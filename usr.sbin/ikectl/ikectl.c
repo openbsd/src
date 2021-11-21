@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikectl.c,v 1.26 2020/06/10 17:44:44 kn Exp $	*/
+/*	$OpenBSD: ikectl.c,v 1.27 2021/11/21 22:44:08 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
@@ -59,6 +59,7 @@ struct imsgname imsgs[] = {
 	{ IMSG_CTL_RELOAD,		"reload",		NULL },
 	{ IMSG_CTL_RESET,		"reset",		NULL },
 	{ IMSG_CTL_SHOW_SA,		"show sa",		NULL },
+	{ IMSG_CTL_SHOW_CERTSTORE,	"show certstore",	NULL },
 	{ 0,				NULL,			NULL }
 
 };
@@ -302,6 +303,10 @@ main(int argc, char *argv[])
 		imsg_compose(ibuf, IMSG_CTL_SHOW_SA, 0, 0, -1, NULL, 0);
 		done = 0;
 		break;
+	case SHOW_CERTSTORE:
+		imsg_compose(ibuf, IMSG_CTL_SHOW_CERTSTORE, 0, 0, -1, NULL, 0);
+		done = 0;
+		break;
 	case RELOAD:
 		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);
 		break;
@@ -350,6 +355,7 @@ main(int argc, char *argv[])
 				done = monitor(&imsg);
 				break;
 			case SHOW_SA:
+			case SHOW_CERTSTORE:
 				done = show_string(&imsg);
 				break;
 			default:
@@ -401,9 +407,13 @@ show_string(struct imsg *imsg)
 {
 	int	done = 0;
 
-	if (imsg->hdr.type != IMSG_CTL_SHOW_SA)
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_SA:
+	case IMSG_CTL_SHOW_CERTSTORE:
+		break;
+	default:
 		return (done);
-
+	}
 	if (IMSG_DATA_SIZE(imsg) > 0)
 		printf("%s", (char *)imsg->data);
 	else

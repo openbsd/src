@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.16 2020/03/22 15:59:05 tobhe Exp $	*/
+/*	$OpenBSD: parser.h,v 1.17 2021/11/21 22:44:08 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2007-2013 Reyk Floeter <reyk@openbsd.org>
@@ -56,7 +56,8 @@ enum actions {
 	SHOW_CA,
 	SHOW_CA_CERTIFICATES,
 	SHOW_SA,
-	RESET_ID
+	RESET_ID,
+	SHOW_CERTSTORE
 };
 
 struct parse_result {

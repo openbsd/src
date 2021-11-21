@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.78 2021/02/24 22:17:48 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.79 2021/11/21 22:44:08 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -73,10 +73,13 @@ int	 ca_x509_subjectaltname_log(X509 *, const char *);
 int	 ca_x509_subjectaltname_get(X509 *cert, struct iked_id *);
 int	 ca_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 ca_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
+int	 ca_dispatch_control(int, struct privsep_proc *, struct imsg *);
+void 	 ca_store_info(struct iked *, const char *, X509_STORE *);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ca_dispatch_parent },
-	{ "ikev2",	PROC_IKEV2,	ca_dispatch_ikev2 }
+	{ "ikev2",	PROC_IKEV2,	ca_dispatch_ikev2 },
+	{ "control",	PROC_CONTROL,	ca_dispatch_control }
 };
 
 struct ca_store {
@@ -251,6 +254,27 @@ ca_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 		break;
 	case IMSG_AUTH:
 		ca_getauth(env, imsg);
+		break;
+	default:
+		return (-1);
+	}
+
+	return (0);
+}
+
+int
+ca_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
+{
+	struct iked	*env = p->p_env;
+	struct ca_store	*store = env->sc_priv;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_CERTSTORE:
+		ca_store_info(env, "CA", store->ca_cas);
+		ca_store_info(env, "CERT", store->ca_certs);
+		/* Send empty reply to indicate end of information. */
+		proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_CERTSTORE,
+		    NULL, 0);
 		break;
 	default:
 		return (-1);
@@ -1049,6 +1073,37 @@ ca_subjectpubkey_digest(X509 *x509, uint8_t *md, unsigned int *size)
 	free(buf);
 
 	return (0);
+}
+
+void
+ca_store_info(struct iked *env, const char *msg, X509_STORE *ctx)
+{
+	STACK_OF(X509_OBJECT)	*h;
+	X509_OBJECT		*xo;
+	X509			*cert;
+	int			 i;
+	X509_NAME		*subject;
+	char			*name;
+	char			*buf;
+	size_t			 buflen;
+
+	h = X509_STORE_get0_objects(ctx);
+	for (i = 0; i < sk_X509_OBJECT_num(h); i++) {
+		xo = sk_X509_OBJECT_value(h, i);
+		if (X509_OBJECT_get_type(xo) != X509_LU_X509)
+			continue;
+		cert = X509_OBJECT_get0_X509(xo);
+		if ((subject = X509_get_subject_name(cert)) == NULL ||
+		    (name = X509_NAME_oneline(subject, NULL, 0)) == NULL)
+			continue;
+		buflen = asprintf(&buf, "%s: %s\n", msg, name);
+		free(name);
+		if (buf == NULL)
+			continue;
+		proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_CERTSTORE,
+		    buf, buflen + 1);
+		free(buf);
+	}
 }
 
 struct ibuf *
