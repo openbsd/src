@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssltest.c,v 1.32 2021/11/18 16:45:28 tb Exp $ */
+/*	$OpenBSD: ssltest.c,v 1.33 2021/11/21 21:40:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1868,16 +1868,26 @@ get_dh1024()
 		0x02,
 	};
 	DH *dh;
+	BIGNUM *dh_p = NULL, *dh_g = NULL;
 
 	if ((dh = DH_new()) == NULL)
-		return (NULL);
-	dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
-	dh->g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
-	if ((dh->p == NULL) || (dh->g == NULL)) {
-		DH_free(dh);
-		return (NULL);
-	}
-	return (dh);
+		return NULL;
+
+	dh_p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
+	dh_g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
+	if (dh_p == NULL || dh_g == NULL)
+		goto err;
+
+	if (!DH_set0_pqg(dh, dh_p, NULL, dh_g))
+		goto err;
+
+	return dh;
+
+ err:
+	BN_free(dh_p);
+	BN_free(dh_g);
+	DH_free(dh);
+	return NULL;
 }
 
 static DH *
@@ -1910,15 +1920,26 @@ get_dh1024dsa()
 		0x07, 0xE7, 0x68, 0x1A, 0x82, 0x5D, 0x32, 0xA2,
 	};
 	DH *dh;
+	BIGNUM *dh_p = NULL, *dh_g = NULL;
 
 	if ((dh = DH_new()) == NULL)
-		return (NULL);
-	dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
-	dh->g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
-	if ((dh->p == NULL) || (dh->g == NULL)) {
-		DH_free(dh);
-		return (NULL);
-	}
-	dh->length = 160;
-	return (dh);
+		return NULL;
+
+	dh_p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), NULL);
+	dh_g = BN_bin2bn(dh1024_g, sizeof(dh1024_g), NULL);
+	if (dh_p == NULL || dh_g == NULL)
+		goto err;
+
+	if (!DH_set0_pqg(dh, dh_p, NULL, dh_g))
+		goto err;
+
+	DH_set_length(dh, 160);
+
+	return dh;
+
+ err:
+	BN_free(dh_p);
+	BN_free(dh_g);
+	DH_free(dh);
+	return NULL;
 }
