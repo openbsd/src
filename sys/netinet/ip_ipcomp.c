@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.87 2021/11/11 18:08:18 bluhm Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.88 2021/11/21 16:17:48 mvs Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -199,6 +199,7 @@ ipcomp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	/* Hard expiration */
 	if ((tdb->tdb_flags & TDBF_BYTES) &&
 	    (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)) {
+		ipsecstat_inc(ipsec_exctdb);
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
 		goto drop;
@@ -386,6 +387,7 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	/* Hard byte expiration */
 	if ((tdb->tdb_flags & TDBF_BYTES) &&
 	    (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)) {
+		ipsecstat_inc(ipsec_exctdb);
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
 		error = EINVAL;

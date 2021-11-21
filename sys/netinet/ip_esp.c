@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.187 2021/11/11 18:08:18 bluhm Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.188 2021/11/21 16:17:48 mvs Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -426,6 +426,7 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	/* Hard expiration */
 	if ((tdb->tdb_flags & TDBF_BYTES) &&
 	    (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes))	{
+		ipsecstat_inc(ipsec_exctdb);
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
 		goto drop;
@@ -782,6 +783,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	/* Hard byte expiration. */
 	if (tdb->tdb_flags & TDBF_BYTES &&
 	    tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes) {
+		ipsecstat_inc(ipsec_exctdb);
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
 		error = EINVAL;

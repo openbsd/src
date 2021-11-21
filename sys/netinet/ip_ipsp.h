@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.220 2021/11/16 13:53:14 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.221 2021/11/21 16:17:48 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -131,8 +131,9 @@ struct ipsecstat {
 	uint64_t	ipsec_idrops;		/* Dropped on input */
 	uint64_t	ipsec_odrops;		/* Dropped on output */
 	uint64_t	ipsec_crypto;		/* Crypto processing failure */
-	uint64_t	ipsec_notdb;		/* Expired while in crypto */
+	uint64_t	ipsec_notdb;		/* No TDB was found */
 	uint64_t	ipsec_noxform;		/* Crypto error */
+	uint64_t	ipsec_exctdb;		/* TDBs with hardlimit excess */
 };
 
 struct tdb_data {
@@ -168,6 +169,7 @@ enum ipsec_counters {
 	ipsec_crypto,
 	ipsec_notdb,
 	ipsec_noxform,
+	ipsec_exctdb,
 	ipsec_ncounters
 };
 

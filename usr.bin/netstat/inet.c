@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.171 2021/01/26 18:22:35 deraadt Exp $	*/
+/*	$OpenBSD: inet.c,v 1.172 2021/11/21 16:17:48 mvs Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -1046,6 +1046,7 @@ ipsec_stats(char *name)
 	p(ipsec_crypto, "\t%llu packet%s that failed crypto processing\n");
 	p(ipsec_noxform, "\t%llu packet%s for which no XFORM was set in TDB received\n");
 	p(ipsec_notdb, "\t%llu packet%s for which no TDB was found\n");
+	p(ipsec_exctdb, "\t%llu TDB%s with hardlimit excess\n");
 #undef p
 }
 

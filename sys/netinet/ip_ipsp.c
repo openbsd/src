@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.252 2021/11/21 02:54:56 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.253 2021/11/21 16:17:48 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -652,8 +652,10 @@ tdb_timeout(void *v)
 	NET_LOCK();
 	if (tdb->tdb_flags & TDBF_TIMER) {
 		/* If it's an "invalid" TDB do a silent expiration. */
-		if (!(tdb->tdb_flags & TDBF_INVALID))
+		if (!(tdb->tdb_flags & TDBF_INVALID)) {
+			ipsecstat_inc(ipsec_exctdb);
 			pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
+		}
 		tdb_delete(tdb);
 	}
 	NET_UNLOCK();
@@ -667,8 +669,10 @@ tdb_firstuse(void *v)
 	NET_LOCK();
 	if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) {
 		/* If the TDB hasn't been used, don't renew it. */
-		if (tdb->tdb_first_use != 0)
+		if (tdb->tdb_first_use != 0) {
+			ipsecstat_inc(ipsec_exctdb);
 			pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
+		}
 		tdb_delete(tdb);
 	}
 	NET_UNLOCK();

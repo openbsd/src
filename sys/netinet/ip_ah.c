@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.166 2021/11/11 18:08:18 bluhm Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.167 2021/11/21 16:17:48 mvs Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -614,6 +614,7 @@ ah_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	/* Hard expiration. */
 	if (tdb->tdb_flags & TDBF_BYTES &&
 	    tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes) {
+		ipsecstat_inc(ipsec_exctdb);
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
 		goto drop;
@@ -953,6 +954,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	/* Hard expiration. */
 	if (tdb->tdb_flags & TDBF_BYTES &&
 	    tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes) {
+		ipsecstat_inc(ipsec_exctdb);
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
 		error = EINVAL;
