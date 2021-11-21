@@ -1515,6 +1515,7 @@
 ./usr/share/man/man4/iha.4
 ./usr/share/man/man4/ihidev.4
 ./usr/share/man/man4/iic.4
+./usr/share/man/man4/iicmux.4
 ./usr/share/man/man4/ikbd.4
 ./usr/share/man/man4/ims.4
 ./usr/share/man/man4/imt.4
@@ -2282,6 +2283,7 @@
 ./usr/share/man/man7/roff.7
 ./usr/share/man/man7/script.7
 ./usr/share/man/man7/securelevel.7
+./usr/share/man/man7/smtpd-filters.7
 ./usr/share/man/man7/sndio.7
 ./usr/share/man/man7/symlink.7
 ./usr/share/man/man7/tbl.7
