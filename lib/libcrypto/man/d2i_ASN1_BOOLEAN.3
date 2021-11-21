@@ -1,4 +1,4 @@
-.\" $OpenBSD: d2i_ASN1_BOOLEAN.3,v 1.1 2021/11/21 15:11:01 schwarze Exp $
+.\" $OpenBSD: d2i_ASN1_BOOLEAN.3,v 1.2 2021/11/21 15:16:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -112,6 +112,12 @@ of an ASN.1 BOOLEAN value.
 .Xr ASN1_get_object 3 ,
 .Xr ASN1_item_d2i 3 ,
 .Xr ASN1_put_object 3
+.Sh STANDARDS
+ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
+Information technology - ASN.1 encoding rules:
+Specification of Basic Encoding Rules (BER), Canonical Encoding
+Rules (CER) and Distinguished Encoding Rules (DER),
+section 8.2: Encoding of a boolean value
 .Sh HISTORY
 .Fn d2i_ASN1_BOOLEAN
 and
