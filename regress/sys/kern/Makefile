@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.93 2021/11/19 17:14:38 mvs Exp $
+#	$OpenBSD: Makefile,v 1.94 2021/11/21 06:21:01 visa Exp $
 
 SUBDIR+= __syscall
 SUBDIR+= accept access
@@ -15,6 +15,7 @@ SUBDIR+= nanosleep noexec
 SUBDIR+= open
 SUBDIR+= pipe pledge poll pread preadv ptmget ptrace ptrace2 pty pwrite pwritev
 SUBDIR+= rcvtimeo realpath realpath-unmount recvwait rlimit-file
+SUBDIR+= select
 # The setuid subtest creates set user/group id binaries in the obj directory.
 # Do not run this test by default, it may trigger alerts from daily security.
 .ifmake clean || cleandir || obj
