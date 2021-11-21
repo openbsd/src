@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.261 2021/08/05 06:33:20 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.262 2021/11/21 06:48:15 jmc Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: August 5 2021 $
+.Dd $Mdocdate: November 21 2021 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -397,7 +397,10 @@ Register and execute
 filter
 .Ar filter-name
 from
-.Ar command .
+.Ar command ,
+conformant with the
+.Xr smtpd-filters 7
+API.
 If
 .Ar command
 starts with a slash it is executed with an absolute path,
@@ -857,7 +860,10 @@ which disables DHE cipher suites.
 Register an external process named
 .Ar proc-name
 from
-.Ar command .
+.Ar command ,
+conformant with the
+.Xr smtpd-filters 7
+API.
 Such processes may be used to share the same instance between multiple filters.
 If
 .Ar command
@@ -1257,6 +1263,7 @@ match from any for domain example.com action "local_mail"
 .Sh SEE ALSO
 .Xr mailer.conf 5 ,
 .Xr table 5 ,
+.Xr smtpd-filters 7 ,
 .Xr makemap 8 ,
 .Xr smtpd 8
 .Sh HISTORY
