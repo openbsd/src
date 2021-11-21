@@ -1,4 +1,4 @@
-/*	$OpenBSD: tee.c,v 1.12 2017/07/11 13:14:59 bluhm Exp $	*/
+/*	$OpenBSD: tee.c,v 1.13 2021/11/21 16:15:43 cheloha Exp $	*/
 /*	$NetBSD: tee.c,v 1.5 1994/12/09 01:43:39 jtc Exp $	*/
 
 /*
@@ -68,7 +68,6 @@ main(int argc, char *argv[])
 	struct list *p;
 	int fd;
 	ssize_t n, rval, wval;
-	char *bp;
 	int append, ch, exitval;
 	char buf[8192];
 
@@ -112,16 +111,14 @@ main(int argc, char *argv[])
 
 	while ((rval = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
 		SLIST_FOREACH(p, &head, next) {
-			n = rval;
-			bp = buf;
-			do {
-				if ((wval = write(p->fd, bp, n)) == -1) {
+			for (n = 0; n < rval; n += wval) {
+				wval = write(p->fd, buf + n, rval - n);
+				if (wval == -1) {
 					warn("%s", p->name);
 					exitval = 1;
 					break;
 				}
-				bp += wval;
-			} while (n -= wval);
+			}
 		}
 	}
 	if (rval == -1) {
