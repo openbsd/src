@@ -1,7 +1,11 @@
-#	$OpenBSD: files.fdt,v 1.159 2021/11/09 16:16:11 kn Exp $
+#	$OpenBSD: files.fdt,v 1.160 2021/11/21 11:02:21 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
+
+device	iicmux: i2cbus
+attach	iicmux at fdt
+file	dev/fdt/iicmux.c		iicmux
 
 device	pinctrl
 attach	pinctrl at fdt
