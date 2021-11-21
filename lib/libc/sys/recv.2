@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.47 2019/01/11 06:10:13 jsg Exp $
+.\"	$OpenBSD: recv.2,v 1.48 2021/11/21 23:44:55 jan Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)recv.2	8.3 (Berkeley) 2/21/94
 .\"
-.Dd $Mdocdate: January 11 2019 $
+.Dd $Mdocdate: November 21 2021 $
 .Dt RECV 2
 .Os
 .Sh NAME
@@ -170,13 +170,13 @@ This structure has the following form, as defined in
 .In sys/socket.h :
 .Bd -literal
 struct msghdr {
-	void		*msg_name;	/* optional address */
-	socklen_t	msg_namelen;	/* size of address */
-	struct iovec	*msg_iov;	/* scatter/gather array */
-	unsigned int	msg_iovlen;	/* # elements in msg_iov */
-	void		*msg_control;	/* ancillary data, see below */
-	socklen_t	msg_controllen; /* ancillary data buffer len */
-	int		msg_flags;	/* flags on received message */
+	void		*msg_name;	 /* optional address */
+	socklen_t	 msg_namelen;	 /* size of address */
+	struct iovec	*msg_iov;	 /* scatter/gather array */
+	unsigned int	 msg_iovlen;	 /* # elements in msg_iov */
+	void		*msg_control;	 /* ancillary data, see below */
+	socklen_t	 msg_controllen; /* ancillary data buffer len */
+	int		 msg_flags;	 /* flags on received message */
 };
 .Ed
 .Pp

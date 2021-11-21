@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nfssvc.2,v 1.23 2015/05/31 23:54:25 schwarze Exp $
+.\"	$OpenBSD: nfssvc.2,v 1.24 2021/11/21 23:44:55 jan Exp $
 .\"	$NetBSD: nfssvc.2,v 1.6 1995/02/27 12:35:08 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)nfssvc.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd $Mdocdate: May 31 2015 $
+.Dd $Mdocdate: November 21 2021 $
 .Dt NFSSVC 2
 .Os
 .Sh NAME
@@ -63,16 +63,16 @@ is called with the flag
 and a pointer to a structure:
 .Bd -literal
 struct nfsd_srvargs {
-        struct nfsd     *nsd_nfsd;   /* Pointer to in kernel nfsd struct */
-        uid_t           nsd_uid;        /* Effective uid mapped to cred */
-        u_int32_t       nsd_haddr;      /* IP address of client */
-        struct xucred   nsd_cr;         /* Cred. uid maps to */
-        int             nsd_authlen;    /* Length of auth string (ret) */
-        u_char          *nsd_authstr;   /* Auth string (ret) */
-        int             nsd_verflen;    /* and the verifier */
-        u_char          *nsd_verfstr;
-        struct timeval  nsd_timestamp;  /* timestamp from verifier */
-        u_int32_t       nsd_ttl;        /* credential ttl (sec) */
+    struct nfsd    *nsd_nfsd;	   /* Pointer to in kernel nfsd struct */
+    uid_t	    nsd_uid;	   /* Effective uid mapped to cred */
+    u_int32_t	    nsd_haddr;	   /* IP address of client */
+    struct xucred   nsd_cr;	   /* Cred. uid maps to */
+    int		    nsd_authlen;   /* Length of auth string (ret) */
+    u_char	   *nsd_authstr;   /* Auth string (ret) */
+    int		    nsd_verflen;   /* and the verifier */
+    u_char	   *nsd_verfstr;
+    struct timeval  nsd_timestamp; /* timestamp from verifier */
+    u_int32_t	    nsd_ttl;	   /* credential ttl (sec) */
 };
 .Ed
 .Pp
@@ -87,9 +87,9 @@ with the flag
 and a pointer to a structure:
 .Bd -literal
 struct nfsd_args {
-        int     sock;     /* Socket to serve */
-        caddr_t name;     /* Client address for connection based sockets */
-        int     namelen;  /* Length of name */
+    int	    sock;	/* Socket to serve */
+    caddr_t name;	/* Client address for connection based sockets */
+    int     namelen;	/* Length of name */
 };
 .Ed
 .Sh RETURN VALUES

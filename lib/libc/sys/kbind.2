@@ -1,4 +1,4 @@
-.\" $OpenBSD: kbind.2,v 1.3 2016/09/01 10:08:03 tedu Exp $
+.\" $OpenBSD: kbind.2,v 1.4 2021/11/21 23:44:55 jan Exp $
 .\"
 .\" Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 1 2016 $
+.Dd $Mdocdate: November 21 2021 $
 .Dt KBIND 2
 .Os
 .Sh NAME
@@ -24,8 +24,8 @@
 .In sys/unistd.h
 .Bd -literal
 struct __kbind {
-        void    *kb_addr;
-        size_t  kb_size;
+	void	*kb_addr;
+	size_t	 kb_size;
 };
 #define KBIND_BLOCK_MAX 2  /* powerpc and sparc64 need 2 blocks */
 #define KBIND_DATA_MAX  24 /* sparc64 needs 6, four-byte words */
