@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.122 2021/09/24 20:48:23 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.123 2021/11/21 11:41:18 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -1270,12 +1270,21 @@ func encodeDSAP1363Sig(wtSig string) (*C.uchar, C.int) {
 	s := C.CString(wtSig[sigLen/2:])
 	defer C.free(unsafe.Pointer(r))
 	defer C.free(unsafe.Pointer(s))
-	if C.BN_hex2bn(&cSig.r, r) == 0 {
+	var sigR *C.BIGNUM
+	var sigS *C.BIGNUM
+	defer C.BN_free(sigR)
+	defer C.BN_free(sigS)
+	if C.BN_hex2bn(&sigR, r) == 0 {
 		return nil, 0
 	}
-	if C.BN_hex2bn(&cSig.s, s) == 0 {
+	if C.BN_hex2bn(&sigS, s) == 0 {
 		return nil, 0
 	}
+	if C.DSA_SIG_set0(cSig, sigR, sigS) == 0 {
+		return nil, 0
+	}
+	sigR = nil
+	sigS = nil
 
 	derLen := C.i2d_DSA_SIG(cSig, nil)
 	if derLen == 0 {
@@ -1805,12 +1814,21 @@ func encodeECDSAWebCryptoSig(wtSig string) (*C.uchar, C.int) {
 	s := C.CString(wtSig[sigLen/2:])
 	defer C.free(unsafe.Pointer(r))
 	defer C.free(unsafe.Pointer(s))
-	if C.BN_hex2bn(&cSig.r, r) == 0 {
+	var sigR *C.BIGNUM
+	var sigS *C.BIGNUM
+	defer C.BN_free(sigR)
+	defer C.BN_free(sigS)
+	if C.BN_hex2bn(&sigR, r) == 0 {
 		return nil, 0
 	}
-	if C.BN_hex2bn(&cSig.s, s) == 0 {
+	if C.BN_hex2bn(&sigS, s) == 0 {
 		return nil, 0
 	}
+	if C.ECDSA_SIG_set0(cSig, sigR, sigS) == 0 {
+		return nil, 0
+	}
+	sigR = nil
+	sigS = nil
 
 	derLen := C.i2d_ECDSA_SIG(cSig, nil)
 	if derLen == 0 {
