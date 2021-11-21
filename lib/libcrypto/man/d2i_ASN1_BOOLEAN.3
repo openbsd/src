@@ -1,0 +1,126 @@
+.\" $OpenBSD: d2i_ASN1_BOOLEAN.3,v 1.1 2021/11/21 15:11:01 schwarze Exp $
+.\"
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 21 2021 $
+.Dt D2I_ASN1_BOOLEAN 3
+.Os
+.Sh NAME
+.Nm d2i_ASN1_BOOLEAN ,
+.Nm i2d_ASN1_BOOLEAN
+.Nd decode and encode an ASN.1 BOOLEAN value
+.Sh SYNOPSIS
+.In openssl/asn1.h
+.Bd -unfilled
+typedef int ASN1_BOOLEAN;
+.Ed
+.Pp
+.Ft int
+.Fo d2i_ASN1_BOOLEAN
+.Fa "int *val_out"
+.Fa "const unsigned char **der_in"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_ASN1_BOOLEAN
+.Fa "int val_in"
+.Fa "unsigned char **der_out"
+.Fc
+.Sh DESCRIPTION
+These functions decode and encode
+an ASN.1 value TRUE or FALSE of the type BOOLEAN.
+In contrast to most other ASN.1 types,
+the library does not represent the BOOLEAN type by a structure.
+Instead,
+.Vt ASN1_BOOLEAN
+is simply an alias for the type
+.Vt int .
+.Pp
+.Fn d2i_ASN1_BOOLEAN
+verifies that the BER-encoded value at
+.Pf * Fa der_in
+is of the type BOOLEAN
+and that the number encoded in the length octets is 1.
+At most
+.Fa length
+bytes are inspected.
+.Pp
+Unless
+.Fa val_out
+is a
+.Dv NULL
+pointer, it copies the integer value of the single content octet to
+.Pf * Fa val_out .
+In case of success,
+.Pf * Fa der_in
+is advanced by three bytes to the byte after the content octet.
+.Pp
+.Fn i2d_ASN1_BOOLEAN
+encodes an ASN.1 value of the type BOOLEAN using DER.
+Specifically, unless
+.Fa der_out
+is a
+.Dv NULL
+pointer, it writes the identifier octet for the type BOOLEAN,
+0x01, the single length octet 0x01, one single content octet containing
+.Fa val_in ,
+and no end-of-content octets to
+.Pf * Fa der_out
+and advances the pointer
+.Pf * Fa der_out
+by three bytes to the byte after the content octet.
+Making sure that three bytes can be written to
+.Pf * Fa der_out
+is the responsibility of the caller.
+.Pp
+If
+.Fa val_in
+is 0, it encodes the FALSE value.
+If
+.Fa val_in
+is in the range from 1 to 255 inclusive, it encodes the TRUE value.
+.Sh RETURN VALUES
+In case of success,
+.Fn d2i_ASN1_BOOLEAN
+returns the integer value of the content octet.
+The number 0 represents the FALSE value and any number in the range
+from 1 to 255 inclusive represents the TRUE value.
+If the
+.Fa length
+argument is less than 3, if parsing fails, if the ASN.1 object at
+.Pf * Fa der_in
+is not of the type BOOLEAN, or if the number of content octets is not 1,
+.Fn d2i_ASN1_BOOLEAN
+returns \-1 to indicate the error.
+.Pp
+.Fn i2d_ASN1_BOOLEAN
+always returns 3, which is the number of bytes in the BER encoding
+of an ASN.1 BOOLEAN value.
+.Sh SEE ALSO
+.Xr ASN1_get_object 3 ,
+.Xr ASN1_item_d2i 3 ,
+.Xr ASN1_put_object 3
+.Sh HISTORY
+.Fn d2i_ASN1_BOOLEAN
+and
+.Fn i2d_ASN1_BOOLEAN
+first appeared in SSLeay 0.6.2 and have been available since
+.Ox 2.4 .
+.Sh CAVEATS
+The behaviour of
+.Fn i2d_ASN1_BOOLEAN
+is unspecified if
+.Fa val_in
+is negative or larger than 255.
