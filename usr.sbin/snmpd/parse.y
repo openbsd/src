@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.72 2021/10/25 11:21:32 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.73 2021/11/21 13:33:53 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -1600,7 +1600,16 @@ host(const char *s, const char *port, int type, struct sockaddr_storage *ss,
 	bzero(&hints, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = type;
+	/*
+	 * Without AI_NUMERICHOST getaddrinfo might not resolve ip addresses
+	 * for families not specified in the "family" statement in resolv.conf.
+	 */
+	hints.ai_flags = AI_NUMERICHOST;
 	error = getaddrinfo(s, port, &hints, &res0);
+	if (error == EAI_NONAME) {
+		hints.ai_flags = 0;
+		error = getaddrinfo(s, port, &hints, &res0);
+	}
 	if (error == EAI_AGAIN || error == EAI_NODATA || error == EAI_NONAME)
 		return 0;
 	if (error) {
