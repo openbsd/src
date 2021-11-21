@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.191 2021/11/11 18:08:18 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.192 2021/11/21 02:54:56 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -311,8 +311,8 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 	}
 
 	if (sproto != IPPROTO_IPCOMP) {
-		if ((encif = enc_getif(tdbp->tdb_rdomain_post,
-		    tdbp->tdb_tap)) == NULL) {
+		encif = enc_getif(tdbp->tdb_rdomain_post, tdbp->tdb_tap);
+		if (encif == NULL) {
 			DPRINTF("no enc%u interface for SA %s/%08x/%u",
 			    tdbp->tdb_tap,
 			    ipsp_address(&dst_address, buf, sizeof(buf)),
@@ -583,7 +583,8 @@ ipsec_common_input_cb(struct mbuf **mp, struct tdb *tdbp, int skip, int protoff)
 	tdbp->tdb_idecompbytes += m->m_pkthdr.len;
 
 #if NBPFILTER > 0
-	if ((encif = enc_getif(tdbp->tdb_rdomain_post, tdbp->tdb_tap)) != NULL) {
+	encif = enc_getif(tdbp->tdb_rdomain_post, tdbp->tdb_tap);
+	if (encif != NULL) {
 		encif->if_ipackets++;
 		encif->if_ibytes += m->m_pkthdr.len;
 

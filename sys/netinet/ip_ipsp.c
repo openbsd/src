@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.251 2021/11/18 11:04:10 sthen Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.252 2021/11/21 02:54:56 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -335,8 +335,8 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
  * is really one of our addresses if we received the packet!
  */
 struct tdb *
-gettdb_dir(u_int rdomain, u_int32_t spi, union sockaddr_union *dst, u_int8_t proto,
-    int reverse)
+gettdb_dir(u_int rdomain, u_int32_t spi, union sockaddr_union *dst,
+    u_int8_t proto, int reverse)
 {
 	u_int32_t hashval;
 	struct tdb *tdbp;
@@ -1166,7 +1166,7 @@ ipsp_ids_free(struct ipsec_ids *ids)
 	if (--ids->id_refcount > 0)
 		return;
 
-	/* 
+	/*
 	 * Add second for the case ipsp_ids_gc() is already running and
 	 * awaits netlock to be released.
 	 */
