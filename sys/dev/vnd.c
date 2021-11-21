@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.173 2021/11/18 16:57:59 tb Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.174 2021/11/21 23:07:11 deraadt Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -473,7 +473,7 @@ fail:
 		}
 
 		/* Cannot put a vnd on top of a vnd */
-		if (major(vattr.va_rdev) == major(dev)) {
+		if (major(vattr.va_fsid) == major(dev)) {
 			error = EINVAL;
 			goto fail;
 		}
@@ -491,7 +491,7 @@ fail:
 
 		if ((error = disk_lock(&sc->sc_dk)) != 0) {
 			crfree(cred);
-			return (error);
+			goto fail;
 		}
 
 		/* Set geometry for device. */
