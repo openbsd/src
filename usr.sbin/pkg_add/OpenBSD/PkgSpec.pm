@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.49 2021/11/17 10:59:13 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.50 2021/11/21 10:15:52 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -203,7 +203,7 @@ sub parse
 		    (?:\>|\>\=|\<\=|\<|\=)?\d[^-%]*  # optional op + version
 		    |\* # or any version
 		)
-		(?:\-([^%]+))? # optional flavor part
+		(?:\-([^%]*))? # optional flavor part
 	    $/x) {
 		return undef;
 	}
