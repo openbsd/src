@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.117 2021/06/23 15:32:40 kettenis Exp $
+.\"	$OpenBSD: iic.4,v 1.118 2021/11/21 22:27:16 kettenis Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 23 2021 $
+.Dd $Mdocdate: November 21 2021 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -30,6 +30,7 @@
 .Cd "iic* at glxpcib?               # i386"
 .Cd "iic* at gscsio?                # i386"
 .Cd "iic* at ichiic?                # amd64 i386"
+.Cd "iic* at iicmux?                # arm64"
 .Cd "iic* at nviic?                 # amd64 i386"
 .Cd "iic* at pcamux?                # arm64"
 .Cd "iic* at pcfiic?                # sparc64"
@@ -261,6 +262,7 @@ Winbond W83793G temperature, voltage, and fan sensor
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr iicmux 4 ,
 .Xr iic 9
 .Sh HISTORY
 The
