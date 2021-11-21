@@ -1,6 +1,6 @@
-.\" $OpenBSD: ASN1_TIME_set.3,v 1.15 2019/06/06 01:06:58 schwarze Exp $
+.\" $OpenBSD: ASN1_TIME_set.3,v 1.16 2021/11/21 17:35:53 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
-.\" selective merge up to: OpenSSL b0edda11 Mar 20 13:00:17 2018 +0000
+.\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>
 .\" and Todd Short <tshort@akamai.com>.
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: November 21 2021 $
 .Dt ASN1_TIME_SET 3
 .Os
 .Sh NAME
@@ -69,6 +69,7 @@
 .Nm ASN1_TIME_print ,
 .Nm ASN1_UTCTIME_print ,
 .Nm ASN1_GENERALIZEDTIME_print ,
+.Nm ASN1_TIME_diff ,
 .Nm ASN1_UTCTIME_cmp_time_t ,
 .Nm ASN1_TIME_to_generalizedtime
 .Nd ASN.1 Time functions
@@ -151,6 +152,13 @@
 .Fo ASN1_GENERALIZEDTIME_print
 .Fa "BIO *b"
 .Fa "const ASN1_GENERALIZEDTIME *s"
+.Fc
+.Ft int
+.Fo ASN1_TIME_diff
+.Fa "int *pday"
+.Fa "int *psec"
+.Fa "const ASN1_TIME *from"
+.Fa "const ASN1_TIME *to"
 .Fc
 .Ft int
 .Fo ASN1_UTCTIME_cmp_time_t
@@ -273,6 +281,59 @@ The output of
 may include a fractional part following the second.
 .Pp
 The function
+.Fn ASN1_TIME_diff
+sets
+.Pf * Fa pday
+and
+.Pf * Fa psec
+to the time difference between
+.Fa from
+and
+.Fa to .
+If
+.Fa to
+represents a time later than
+.Fa from ,
+then one or both (depending on the time difference) of
+.Pf * Fa pday
+and
+.Pf * Fa psec
+will be positive.
+If
+.Fa to
+represents a time earlier than
+.Fa from ,
+then one or both of
+.Pf * Fa pday
+and
+.Pf * Fa psec
+will be negative.
+If
+.Fa to
+and
+.Fa from
+represent the same time, then
+.Pf * Fa pday
+and
+.Pf * Fa psec
+will both be zero.
+If both
+.Pf * Fa pday
+and
+.Pf * Fa psec
+are nonzero they will always have the same sign.
+The value of
+.Pf * Fa psec
+will always be less than the number of seconds in a day.
+If
+.Fa from
+or
+.Fa to
+is
+.Dv NULL ,
+the current time is used.
+.Pp
+The function
 .Fn ASN1_UTCTIME_cmp_time_t
 compares the two times represented by
 .Fa s
@@ -368,6 +429,10 @@ and
 return 1 if the time is successfully printed or 0 if an error
 occurred (I/O error or invalid time format).
 .Pp
+.Fn ASN1_TIME_diff
+returns 1 for success or 0 for failure.
+It can for example fail if a time structure passed in has invalid syntax.
+.Pp
 .Fn ASN1_UTCTIME_cmp_time_t
 returns \-1 if
 .Fa s
@@ -439,6 +504,10 @@ and
 .Fn ASN1_TIME_set_string
 first appeared in OpenSSL 1.0.0 and have been available since
 .Ox 4.9 .
+.Pp
+.Fn ASN1_TIME_diff
+first appeared in OpenSSL 1.0.2 and have been available since
+.Ox 7.1 .
 .Sh CAVEATS
 Some applications add offset times directly to a
 .Vt time_t
