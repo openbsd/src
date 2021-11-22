@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.216 2021/11/22 10:17:14 mglocker Exp $ */
+/*	$OpenBSD: ehci.c,v 1.217 2021/11/22 11:46:11 mglocker Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -368,7 +368,7 @@ ehci_init(struct ehci_softc *sc)
 	EOWRITE4(sc, EHCI_PERIODICLISTBASE, DMAADDR(&sc->sc_fldma, 0));
 
 	sc->sc_softitds = mallocarray(sc->sc_flsize,
-	    sizeof(struct ehci_soft_itd *), M_USB, M_NOWAIT | M_ZERO);
+	    sizeof(struct ehci_soft_itd *), M_USBHC, M_NOWAIT | M_ZERO);
 	if (sc->sc_softitds == NULL) {
 		usb_freemem(&sc->sc_bus, &sc->sc_fldma);
 		return (ENOMEM);
@@ -487,7 +487,7 @@ ehci_init(struct ehci_softc *sc)
 	ehci_free_sqh(sc, sc->sc_async_head);
 #endif
  bad1:
-	free(sc->sc_softitds, M_USB,
+	free(sc->sc_softitds, M_USBHC,
 	    sc->sc_flsize * sizeof(struct ehci_soft_itd *));
 	usb_freemem(&sc->sc_bus, &sc->sc_fldma);
 	return (err);
@@ -948,7 +948,7 @@ ehci_detach(struct device *self, int flags)
 
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
-	free(sc->sc_softitds, M_USB,
+	free(sc->sc_softitds, M_USBHC,
 	    sc->sc_flsize * sizeof(struct ehci_soft_itd *));
 	usb_freemem(&sc->sc_bus, &sc->sc_fldma);
 	/* XXX free other data structures XXX */
