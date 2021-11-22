@@ -1,4 +1,4 @@
-/*	$Id: revokeproc.c,v 1.18 2021/10/13 18:09:42 tb Exp $ */
+/*	$Id: revokeproc.c,v 1.19 2021/11/22 08:26:08 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -186,15 +186,17 @@ revokeproc(int fd, const char *certfile, int force,
 		if (bio == NULL) {
 			warnx("BIO_new");
 			goto out;
-		} else if (!X509V3_EXT_print(bio, ex, 0, 0)) {
+		}
+		if (!X509V3_EXT_print(bio, ex, 0, 0)) {
 			warnx("X509V3_EXT_print");
 			goto out;
-		} else if ((san = calloc(1, bio->num_write + 1)) == NULL) {
+		}
+		if ((san = calloc(1, BIO_number_written(bio) + 1)) == NULL) {
 			warn("calloc");
 			goto out;
 		}
-		ssz = BIO_read(bio, san, bio->num_write);
-		if (ssz < 0 || (unsigned)ssz != bio->num_write) {
+		ssz = BIO_read(bio, san, BIO_number_written(bio));
+		if (ssz < 0 || (unsigned)ssz != BIO_number_written(bio)) {
 			warnx("BIO_read");
 			goto out;
 		}
