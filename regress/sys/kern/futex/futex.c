@@ -1,4 +1,4 @@
-/*	$OpenBSD: futex.c,v 1.4 2021/06/11 10:30:36 kettenis Exp $ */
+/*	$OpenBSD: futex.c,v 1.5 2021/11/22 18:42:16 kettenis Exp $ */
 /*
  * Copyright (c) 2017 Martin Pieuchot
  *
@@ -86,6 +86,48 @@ main(int argc, char *argv[])
 	    MAP_SHARED, fd, 0);
 	assert(shlock != MAP_FAILED);
 	close(fd);
+
+	/* Wake another process. */
+	pid = fork();
+	assert(pid != -1);
+	if (pid == 0) {
+		usleep(50000);
+		futex_wake(shlock, -1, 0);
+		_exit(0);
+	} else {
+		assert(futex_twait(shlock, 0, 0, NULL, 0) == 0);
+		assert(waitpid(pid, &status, 0) == pid);
+		assert(WIFEXITED(status));
+		assert(WEXITSTATUS(status) == 0);
+	}
+
+	/* Cannot wake another process using a private futex. */
+	for (i = 1; i < 4; i++) {
+		pid = fork();
+		assert(pid != -1);
+		if (pid == 0) {
+			usleep(50000);
+			futex_wake(shlock, -1,
+			    (i & 1) ? FUTEX_PRIVATE_FLAG : 0);
+			_exit(0);
+		} else {
+			tmo.tv_sec = 0;
+			tmo.tv_nsec = 200000000;
+			assert(futex_twait(shlock, 0, CLOCK_REALTIME, &tmo,
+			    (i & 2) ? FUTEX_PRIVATE_FLAG : 0) == -1);
+			assert(errno == ETIMEDOUT);
+			assert(waitpid(pid, &status, 0) == pid);
+			assert(WIFEXITED(status));
+			assert(WEXITSTATUS(status) == 0);
+		}
+	}
+
+	assert(munmap(shlock, sizeof(*shlock)) == 0);
+
+	/* Create anonymous memory for sharing a lock. */
+	shlock = mmap(NULL, sizeof(*shlock), PROT_READ | PROT_WRITE,
+	    MAP_ANON | MAP_SHARED, -1, 0);
+	assert(shlock != MAP_FAILED);
 
 	/* Wake another process. */
 	pid = fork();
