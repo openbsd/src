@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.31 2021/09/23 15:34:00 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.32 2021/11/22 10:31:58 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1420,6 +1420,7 @@ struct iwx_gen3_bc_tbl {
 #define IWX_MAX_TID_COUNT	8
 #define IWX_FIRST_AGG_TX_QUEUE	(IWX_DQA_MGMT_QUEUE + 1)
 #define IWX_LAST_AGG_TX_QUEUE	(IWX_FIRST_AGG_TX_QUEUE + IWX_MAX_TID_COUNT - 1)
+#define IWX_NUM_TX_QUEUES	(IWX_LAST_AGG_TX_QUEUE + 1)
 
 /**
  * Max Tx window size is the max number of contiguous TFDs that the scheduler
