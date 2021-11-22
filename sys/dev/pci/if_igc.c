@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.4 2021/10/31 15:25:10 patrick Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.5 2021/11/22 14:00:52 jsg Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -1283,7 +1283,7 @@ igc_rxeof(struct rx_ring *rxr)
 	uint32_t ptype, staterr = 0;
 	uint16_t len, vtag;
 	uint8_t eop = 0;
-	int i;
+	int i, nextp;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return 0;
@@ -1340,6 +1340,17 @@ igc_rxeof(struct rx_ring *rxr)
 			panic("%s: igc_rxeof: NULL mbuf in slot %d "
 			    "(nrx %d, filled %d)", DEVNAME(sc), i,
 			    if_rxr_inuse(&rxr->rx_ring), rxr->last_desc_filled);
+		}
+
+		if (!eop) {
+			/*
+			 * Figure out the next descriptor of this frame.
+			 */
+			nextp = i + 1;
+			if (nextp == sc->num_rx_desc)
+				nextp = 0;
+			nxbuf = &rxr->rx_buffers[nextp];
+			/* prefetch(nxbuf); */
 		}
 
 		mp->m_len = len;
@@ -1736,7 +1747,7 @@ int
 igc_intr_link(void *arg)
 {
 	struct igc_softc *sc = (struct igc_softc *)arg;
-	uint32_t reg_icr;
+	uint32_t reg_icr = IGC_READ_REG(&sc->hw, IGC_ICR);
 
 	if (reg_icr & IGC_ICR_LSC) {
 		KERNEL_LOCK();
