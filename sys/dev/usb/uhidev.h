@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.h,v 1.39 2021/11/15 15:38:08 anton Exp $	*/
+/*	$OpenBSD: uhidev.h,v 1.40 2021/11/22 11:30:16 anton Exp $	*/
 /*	$NetBSD: uhidev.h,v 1.3 2002/10/08 09:56:17 dan Exp $	*/
 
 /*
@@ -80,7 +80,6 @@ struct uhidev_attach_arg {
 };
 
 #define UHIDEV_CLAIM_MULTIPLE_REPORTID(u)	((u)->claimed != NULL)
-#define	__UHIDEV_CLAIM_MULTIPLE_REPORTID	255	/* XXX */
 
 int uhidev_report_type_conv(int);
 void uhidev_get_report_desc(struct uhidev_softc *, void **, int *);
