@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.26 2021/11/22 10:31:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.27 2021/11/22 10:54:36 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -563,7 +563,7 @@ struct iwx_softc {
 	struct iwx_nvm_data sc_nvm;
 	struct iwx_bf_data sc_bf;
 
-	int sc_tx_timer;
+	int sc_tx_timer[IWX_NUM_TX_QUEUES];
 	int sc_rx_ba_sessions;
 
 	int sc_scan_last_antenna;
