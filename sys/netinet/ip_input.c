@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.363 2021/06/21 22:09:14 jca Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.364 2021/11/22 13:47:10 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1436,7 +1436,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 	struct ip *ip = mtod(m, struct ip *);
 	struct sockaddr_in *sin;
 	struct route ro;
-	int error, type = 0, code = 0, destmtu = 0, fake = 0, len;
+	int error = 0, type = 0, code = 0, destmtu = 0, fake = 0, len;
 	u_int32_t dest;
 
 	dest = 0;
@@ -1535,10 +1535,45 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 		goto freecopy;
 
 	switch (error) {
-
 	case 0:				/* forwarded, but need redirect */
 		/* type, code set above */
 		break;
+
+	case EMSGSIZE:
+		type = ICMP_UNREACH;
+		code = ICMP_UNREACH_NEEDFRAG;
+		if (rt != NULL) {
+			if (rt->rt_mtu) {
+				destmtu = rt->rt_mtu;
+			} else {
+				struct ifnet *destifp;
+
+				destifp = if_get(rt->rt_ifidx);
+				if (destifp != NULL)
+					destmtu = destifp->if_mtu;
+				if_put(destifp);
+			}
+		}
+		ipstat_inc(ips_cantfrag);
+		if (destmtu == 0)
+			goto freecopy;
+		break;
+
+	case EACCES:
+		/*
+		 * pf(4) blocked the packet. There is no need to send an ICMP
+		 * packet back since pf(4) takes care of it.
+		 */
+		goto freecopy;
+
+	case ENOBUFS:
+		/*
+		 * a router should not generate ICMP_SOURCEQUENCH as
+		 * required in RFC1812 Requirements for IP Version 4 Routers.
+		 * source quench could be a big problem under DoS attacks,
+		 * or the underlying interface is rate-limited.
+		 */
+		goto freecopy;
 
 	case ENETUNREACH:		/* shouldn't happen, checked above */
 	case EHOSTUNREACH:
@@ -1548,44 +1583,7 @@ ip_forward(struct mbuf *m, struct ifnet *ifp, struct rtentry *rt, int srcrt)
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_HOST;
 		break;
-
-	case EMSGSIZE:
-		type = ICMP_UNREACH;
-		code = ICMP_UNREACH_NEEDFRAG;
-
-#ifdef IPSEC
-		if (rt != NULL) {
-			if (rt->rt_mtu)
-				destmtu = rt->rt_mtu;
-			else {
-				struct ifnet *destifp;
-
-				destifp = if_get(rt->rt_ifidx);
-				if (destifp != NULL)
-					destmtu = destifp->if_mtu;
-				if_put(destifp);
-			}
-		}
-#endif /*IPSEC*/
-		ipstat_inc(ips_cantfrag);
-		break;
-
-	case EACCES:
-		/*
-		 * pf(4) blocked the packet. There is no need to send an ICMP
-		 * packet back since pf(4) takes care of it.
-		 */
-		goto freecopy;
-	case ENOBUFS:
-		/*
-		 * a router should not generate ICMP_SOURCEQUENCH as
-		 * required in RFC1812 Requirements for IP Version 4 Routers.
-		 * source quench could be a big problem under DoS attacks,
-		 * or the underlying interface is rate-limited.
-		 */
-		goto freecopy;
 	}
-
 	mcopy = m_copym(&mfake, 0, len, M_DONTWAIT);
 	if (mcopy)
 		icmp_error(mcopy, type, code, dest, destmtu);

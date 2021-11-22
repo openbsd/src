@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.101 2021/10/14 17:39:42 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.102 2021/11/22 13:47:10 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -88,7 +88,7 @@ ip6_forward(struct mbuf *m, struct rtentry *rt, int srcrt)
 	struct sockaddr_in6 *sin6;
 	struct route_in6 ro;
 	struct ifnet *ifp = NULL;
-	int error = 0, type = 0, code = 0;
+	int error = 0, type = 0, code = 0, destmtu = 0;
 	struct mbuf *mcopy = NULL;
 #ifdef IPSEC
 	struct tdb *tdb = NULL;
@@ -340,6 +340,7 @@ senderr:
 #endif
 	if (mcopy == NULL)
 		goto out;
+
 	switch (error) {
 	case 0:
 		if (type == ND_REDIRECT) {
@@ -349,7 +350,30 @@ senderr:
 		goto freecopy;
 
 	case EMSGSIZE:
-		/* xxx MTU is constant in PPP? */
+		type = ICMP6_PACKET_TOO_BIG;
+		code = 0;
+		if (rt != NULL) {
+			if (rt->rt_mtu) {
+				destmtu = rt->rt_mtu;
+			} else {
+				struct ifnet *destifp;
+
+				destifp = if_get(rt->rt_ifidx);
+				if (destifp != NULL)
+					destmtu = destifp->if_mtu;
+				if_put(destifp);
+			}
+		}
+		ip6stat_inc(ip6s_cantfrag);
+		if (destmtu == 0)
+			goto freecopy;
+		break;
+
+	case EACCES:
+		/*
+		 * pf(4) blocked the packet. There is no need to send an ICMP
+		 * packet back since pf(4) takes care of it.
+		 */
 		goto freecopy;
 
 	case ENOBUFS:
@@ -365,7 +389,7 @@ senderr:
 		code = ICMP6_DST_UNREACH_ADDR;
 		break;
 	}
-	icmp6_error(mcopy, type, code, 0);
+	icmp6_error(mcopy, type, code, destmtu);
 	goto out;
 
 freecopy:
