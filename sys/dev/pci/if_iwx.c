@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.121 2021/11/19 13:05:19 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.122 2021/11/22 10:47:55 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3264,7 +3264,7 @@ iwx_ampdu_rx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct iwx_softc *sc = IC2IFP(ic)->if_softc;
 
 	if (sc->sc_rx_ba_sessions >= IWX_MAX_RX_BA_SESSIONS ||
-	    tid > IWX_MAX_TID_COUNT)
+	    tid >= IWX_MAX_TID_COUNT)
 		return ENOSPC;
 
 	if (sc->ba_rx.start_tidmask & (1 << tid))
@@ -3286,7 +3286,7 @@ iwx_ampdu_rx_stop(struct ieee80211com *ic, struct ieee80211_node *ni,
 {
 	struct iwx_softc *sc = IC2IFP(ic)->if_softc;
 
-	if (tid > IWX_MAX_TID_COUNT || sc->ba_rx.stop_tidmask & (1 << tid))
+	if (tid >= IWX_MAX_TID_COUNT || sc->ba_rx.stop_tidmask & (1 << tid))
 		return;
 
 	sc->ba_rx.stop_tidmask = (1 << tid);
