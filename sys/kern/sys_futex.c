@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_futex.c,v 1.19 2021/11/19 15:58:36 kettenis Exp $ */
+/*	$OpenBSD: sys_futex.c,v 1.20 2021/11/22 14:57:17 visa Exp $ */
 
 /*
  * Copyright (c) 2016-2017 Martin Pieuchot
@@ -104,31 +104,25 @@ sys_futex(struct proc *p, void *v, register_t *retval)
 	if (op & FUTEX_PRIVATE_FLAG)
 		flags |= FT_PRIVATE;
 
+	rw_enter_write(&ftlock);
 	switch (op) {
 	case FUTEX_WAIT:
 	case FUTEX_WAIT_PRIVATE:
-		KERNEL_LOCK();
-		rw_enter_write(&ftlock);
 		error = futex_wait(uaddr, val, timeout, flags);
-		rw_exit_write(&ftlock);
-		KERNEL_UNLOCK();
 		break;
 	case FUTEX_WAKE:
 	case FUTEX_WAKE_PRIVATE:
-		rw_enter_write(&ftlock);
 		*retval = futex_wake(uaddr, val, flags);
-		rw_exit_write(&ftlock);
 		break;
 	case FUTEX_REQUEUE:
 	case FUTEX_REQUEUE_PRIVATE:
-		rw_enter_write(&ftlock);
 		*retval = futex_requeue(uaddr, val, g, (u_long)timeout, flags);
-		rw_exit_write(&ftlock);
 		break;
 	default:
 		error = ENOSYS;
 		break;
 	}
+	rw_exit_write(&ftlock);
 
 	return error;
 }
