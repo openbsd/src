@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolv.h,v 1.22 2019/01/14 06:23:06 otto Exp $	*/
+/*	$OpenBSD: resolv.h,v 1.23 2021/11/22 20:18:27 jca Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -191,6 +191,7 @@ struct __res_state_ext {
 /* DNSSEC extensions: use higher bit to avoid conflict with ISC use */
 #define	RES_USE_DNSSEC	0x20000000	/* use DNSSEC using OK bit in OPT */
 #define	RES_USE_CD	0x10000000	/* set Checking Disabled flag */
+#define	RES_TRUSTAD	0x80000000	/* Request AD, keep it in responses. */
 
 #define RES_DEFAULT	(RES_RECURSE | RES_DEFNAMES | RES_DNSRCH)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.39 2019/09/28 11:21:07 eric Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.40 2021/11/22 20:18:27 jca Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -42,6 +42,7 @@ static int udp_recv(struct asr_query *);
 static int tcp_write(struct asr_query *);
 static int tcp_read(struct asr_query *);
 static int validate_packet(struct asr_query *);
+static void clear_ad(struct asr_result *);
 static int setup_query(struct asr_query *, const char *, const char *, int, int);
 static int ensure_ibuf(struct asr_query *, size_t);
 static int iter_ns(struct asr_query *);
@@ -258,6 +259,8 @@ res_send_async_run(struct asr_query *as, struct asr_result *ar)
 		as->as.dns.ibuf = NULL;
 		ar->ar_errno = 0;
 		ar->ar_rcode = as->as.dns.rcode;
+		if (!(as->as_ctx->ac_options & RES_TRUSTAD))
+			clear_ad(ar);
 		async_set_state(as, ASR_STATE_HALT);
 		break;
 
@@ -378,6 +381,9 @@ setup_query(struct asr_query *as, const char *name, const char *dom,
 		h.flags |= RD_MASK;
 	if (as->as_ctx->ac_options & RES_USE_CD)
 		h.flags |= CD_MASK;
+	if (as->as_ctx->ac_options & RES_TRUSTAD)
+		h.flags |= AD_MASK;
+
 	h.qdcount = 1;
 	if (as->as_ctx->ac_options & (RES_USE_EDNS0 | RES_USE_DNSSEC))
 		h.arcount = 1;
@@ -745,6 +751,21 @@ validate_packet(struct asr_query *as)
     inval:
 	errno = EINVAL;
 	return (-1);
+}
+
+/*
+ * Clear AD flag in the answer.
+ */
+static void
+clear_ad(struct asr_result *ar)
+{
+	struct asr_dns_header	*h;
+	uint16_t		 flags;
+
+	h = (struct asr_dns_header *)ar->ar_data;
+	flags = ntohs(h->flags);
+	flags &= ~(AD_MASK);
+	h->flags = htons(flags);
 }
 
 /*

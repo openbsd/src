@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.62 2021/08/24 07:30:32 florian Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.63 2021/11/22 20:18:27 jca Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)resolver.5	5.12 (Berkeley) 5/10/91
 .\"
-.Dd $Mdocdate: August 24 2021 $
+.Dd $Mdocdate: November 22 2021 $
 .Dt RESOLV.CONF 5
 .Os
 .Sh NAME
@@ -259,6 +259,18 @@ first as an absolute name before any search list elements are appended to it.
 .It Cm tcp
 Forces the use of TCP for queries.
 Normal behaviour is to query via UDP but fall back to TCP on failure.
+.It Cm trust-ad
+A name server indicating that it performed DNSSEC validation by setting the
+Authentic Data (AD) flag in the answer can only be trusted if the
+name server itself is trusted and the network path is trusted.
+Generally this is not the case and the AD flag is cleared in the answer.
+The
+.Cm trust-ad
+option lets the system administrator indicate that the name server and the
+network path are trusted.
+This option is automatically enabled if
+.Nm resolv.conf
+only lists name servers on localhost.
 .El
 .El
 .Pp
