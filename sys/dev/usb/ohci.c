@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.162 2021/10/26 16:29:49 deraadt Exp $ */
+/*	$OpenBSD: ohci.c,v 1.163 2021/11/22 10:17:14 mglocker Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -720,7 +720,7 @@ ohci_init(struct ohci_softc *sc)
 		LIST_INIT(&sc->sc_hash_itds[i]);
 
 	if (ohcixfer == NULL) {
-		ohcixfer = malloc(sizeof(struct pool), M_DEVBUF, M_NOWAIT);
+		ohcixfer = malloc(sizeof(struct pool), M_USBHC, M_NOWAIT);
 		if (ohcixfer == NULL) {
 			printf("%s: unable to allocate pool descriptor\n",
 			    sc->sc_bus.bdev.dv_xname);

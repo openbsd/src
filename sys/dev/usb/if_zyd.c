@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.125 2020/07/31 10:49:33 mglocker Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.126 2021/11/22 10:17:14 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -633,7 +633,7 @@ zyd_free_rx_list(struct zyd_softc *sc)
 struct ieee80211_node *
 zyd_node_alloc(struct ieee80211com *ic)
 {
-	return malloc(sizeof (struct zyd_node), M_DEVBUF, M_NOWAIT | M_ZERO);
+	return malloc(sizeof (struct zyd_node), M_USBDEV, M_NOWAIT | M_ZERO);
 }
 
 int

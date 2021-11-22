@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.74 2021/08/09 07:21:48 jmatthew Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.75 2021/11/22 10:17:14 mglocker Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -409,7 +409,7 @@ wi_usb_detach(struct device *self, int flags)
 
 	while (sc->wi_usb_nummem) {
 		sc->wi_usb_nummem--;
-		free(sc->wi_usb_txmem[sc->wi_usb_nummem], M_DEVBUF,
+		free(sc->wi_usb_txmem[sc->wi_usb_nummem], M_USBDEV,
 		  sc->wi_usb_txmemsize[sc->wi_usb_nummem]);
 		sc->wi_usb_txmem[sc->wi_usb_nummem] = NULL;
 		sc->wi_usb_txmemsize[sc->wi_usb_nummem] = 0;
@@ -539,7 +539,7 @@ wi_cmd_usb(struct wi_softc *wsc, int cmd, int val0, int val1, int val2)
 		/* free alloc_nicmem regions */
 		while (sc->wi_usb_nummem) {
 			sc->wi_usb_nummem--;
-			free(sc->wi_usb_txmem[sc->wi_usb_nummem], M_DEVBUF,
+			free(sc->wi_usb_txmem[sc->wi_usb_nummem], M_USBDEV,
 			  sc->wi_usb_txmemsize[sc->wi_usb_nummem]);
 			sc->wi_usb_txmem[sc->wi_usb_nummem] = NULL;
 			sc->wi_usb_txmemsize[sc->wi_usb_nummem] = 0;
@@ -921,7 +921,7 @@ wi_alloc_nicmem_usb(struct wi_softc *wsc, int len, int *id)
 		return ENOMEM;
 	}
 
-	sc->wi_usb_txmem[nmem] = malloc(len, M_DEVBUF, M_WAITOK | M_CANFAIL);
+	sc->wi_usb_txmem[nmem] = malloc(len, M_USBDEV, M_WAITOK | M_CANFAIL);
 	if (sc->wi_usb_txmem[nmem] == NULL) {
 		sc->wi_usb_nummem--;
 		return ENOMEM;
@@ -1748,7 +1748,7 @@ wi_usb_thread(void *arg)
 	struct wi_usb_thread_info *wi_thread_info;
 	int s;
 
-	wi_thread_info = malloc(sizeof(*wi_thread_info), M_DEVBUF, M_WAITOK);
+	wi_thread_info = malloc(sizeof(*wi_thread_info), M_USBDEV, M_WAITOK);
 
 	/*
 	 * is there a remote possibility that the device could

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.62 2021/10/31 12:24:02 stsp Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.63 2021/11/22 10:17:14 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -1178,7 +1178,7 @@ athn_usb_node_alloc(struct ieee80211com *ic)
 {
 	struct athn_node *an;
 
-	an = malloc(sizeof(struct athn_node), M_DEVBUF, M_NOWAIT | M_ZERO);
+	an = malloc(sizeof(struct athn_node), M_USBDEV, M_NOWAIT | M_ZERO);
 	return (struct ieee80211_node *)an;
 }
 

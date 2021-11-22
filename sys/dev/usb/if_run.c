@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.134 2021/11/01 12:08:46 krw Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.135 2021/11/22 10:17:14 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1664,7 +1664,7 @@ run_read_eeprom(struct run_softc *sc)
 struct ieee80211_node *
 run_node_alloc(struct ieee80211com *ic)
 {
-	return malloc(sizeof (struct run_node), M_DEVBUF, M_NOWAIT | M_ZERO);
+	return malloc(sizeof (struct run_node), M_USBDEV, M_NOWAIT | M_ZERO);
 }
 
 int

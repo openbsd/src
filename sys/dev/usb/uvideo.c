@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.213 2021/05/31 21:06:48 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.214 2021/11/22 10:17:14 mglocker Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -1773,7 +1773,7 @@ uvideo_vs_alloc_frame(struct uvideo_softc *sc)
 		return (USBD_NOMEM);
 	}
 
-	fb->buf = malloc(fb->buf_size, M_DEVBUF, M_NOWAIT);
+	fb->buf = malloc(fb->buf_size, M_USBDEV, M_NOWAIT);
 	if (fb->buf == NULL) {
 		printf("%s: can't allocate frame buffer!\n", DEVNAME(sc));
 		return (USBD_NOMEM);
@@ -1797,12 +1797,12 @@ uvideo_vs_free_frame(struct uvideo_softc *sc)
 	struct uvideo_frame_buffer *fb = &sc->sc_frame_buffer;
 
 	if (fb->buf != NULL) {
-		free(fb->buf, M_DEVBUF, fb->buf_size);
+		free(fb->buf, M_USBDEV, fb->buf_size);
 		fb->buf = NULL;
 	}
 
 	if (sc->sc_mmap_buffer != NULL) {
-		free(sc->sc_mmap_buffer, M_DEVBUF, sc->sc_mmap_buffer_size);
+		free(sc->sc_mmap_buffer, M_USBDEV, sc->sc_mmap_buffer_size);
 		sc->sc_mmap_buffer = NULL;
 		sc->sc_mmap_buffer_size = 0;
 	}
@@ -3309,7 +3309,7 @@ uvideo_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 	}
 	buf_size_total = sc->sc_mmap_count * buf_size;
 	buf_size_total = round_page(buf_size_total); /* page align buffer */
-	sc->sc_mmap_buffer = malloc(buf_size_total, M_DEVBUF, M_NOWAIT);
+	sc->sc_mmap_buffer = malloc(buf_size_total, M_USBDEV, M_NOWAIT);
 	if (sc->sc_mmap_buffer == NULL) {
 		printf("%s: can't allocate mmap buffer!\n", DEVNAME(sc));
 		sc->sc_mmap_count = 0;

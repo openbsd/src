@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.95 2021/10/27 09:09:55 jasper Exp $ */
+/*	$OpenBSD: udl.c,v 1.96 2021/11/22 10:17:14 mglocker Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -640,7 +640,7 @@ udl_alloc_screen(void *v, const struct wsscreen_descr *type,
 
 	/* allocate character backing store */
 	sc->sc_cbs = mallocarray(sc->sc_ri.ri_rows, sc->sc_ri.ri_cols *
-	    sizeof(*sc->sc_cbs), M_DEVBUF, M_NOWAIT|M_ZERO);
+	    sizeof(*sc->sc_cbs), M_USBDEV, M_NOWAIT|M_ZERO);
 	if (sc->sc_cbs == NULL) {
 		printf("%s: can't allocate mem for character backing store!\n",
 		    DN(sc));
@@ -669,7 +669,7 @@ udl_free_screen(void *v, void *cookie)
 
 	/* free character backing store */
 	if (sc->sc_cbs != NULL)
-		free(sc->sc_cbs, M_DEVBUF, sc->sc_cbslen);
+		free(sc->sc_cbs, M_USBDEV, sc->sc_cbslen);
 
 	sc->sc_nscreens--;
 }
@@ -1418,7 +1418,7 @@ void
 udl_free_huffman(struct udl_softc *sc)
 {
 	if (sc->sc_huffman != NULL) {
-		free(sc->sc_huffman, M_DEVBUF, sc->sc_huffman_size);
+		free(sc->sc_huffman, M_USBDEV, sc->sc_huffman_size);
 		sc->sc_huffman = NULL;
 		sc->sc_huffman_size = 0;
 		DPRINTF(1, "%s: huffman table freed\n", DN(sc));
@@ -1434,7 +1434,7 @@ udl_fbmem_alloc(struct udl_softc *sc)
 	size = round_page(size);
 
 	if (sc->sc_fbmem == NULL) {
-		sc->sc_fbmem = malloc(size, M_DEVBUF, M_NOWAIT|M_ZERO);
+		sc->sc_fbmem = malloc(size, M_USBDEV, M_NOWAIT|M_ZERO);
 		if (sc->sc_fbmem == NULL)
 			return (-1);
 	}
@@ -1446,7 +1446,7 @@ void
 udl_fbmem_free(struct udl_softc *sc)
 {
 	if (sc->sc_fbmem != NULL) {
-		free(sc->sc_fbmem, M_DEVBUF, sc->sc_fbmemsize);
+		free(sc->sc_fbmem, M_USBDEV, sc->sc_fbmemsize);
 		sc->sc_fbmem = NULL;
 		sc->sc_fbmemsize = 0;
 	}
@@ -1500,7 +1500,7 @@ udl_cmd_alloc_buf(struct udl_softc *sc)
 {
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 
-	cb->buf = malloc(UDL_CMD_MAX_XFER_SIZE, M_DEVBUF, M_NOWAIT|M_ZERO);
+	cb->buf = malloc(UDL_CMD_MAX_XFER_SIZE, M_USBDEV, M_NOWAIT|M_ZERO);
 	if (cb->buf == NULL) {
 		printf("%s: %s: can't allocate buffer!\n",
 		    DN(sc), FUNC);
@@ -1518,7 +1518,7 @@ udl_cmd_free_buf(struct udl_softc *sc)
 	struct udl_cmd_buf *cb = &sc->sc_cmd_buf;
 
 	if (cb->buf != NULL) {
-		free(cb->buf, M_DEVBUF, UDL_CMD_MAX_XFER_SIZE);
+		free(cb->buf, M_USBDEV, UDL_CMD_MAX_XFER_SIZE);
 		cb->buf = NULL;
 	}
 	cb->off = 0;

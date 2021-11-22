@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.153 2021/10/26 16:29:49 deraadt Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.154 2021/11/22 10:17:14 mglocker Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -363,7 +363,7 @@ uhci_init(struct uhci_softc *sc)
 	uhci_reset(sc);
 
 	if (uhcixfer == NULL) {
-		uhcixfer = malloc(sizeof(struct pool), M_DEVBUF, M_NOWAIT);
+		uhcixfer = malloc(sizeof(struct pool), M_USBHC, M_NOWAIT);
 		if (uhcixfer == NULL) {
 			printf("%s: unable to allocate pool descriptor\n",
 			    sc->sc_bus.bdev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.161 2021/05/18 10:02:00 ratchov Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.162 2021/11/22 10:17:14 mglocker Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -719,7 +719,7 @@ uaudio_mkname(struct uaudio_softc *sc, char *templ, char *res)
 	while (1) {
 		if (n == NULL) {
 			n = malloc(sizeof(struct uaudio_name),
-			    M_DEVBUF, M_WAITOK);
+			    M_USBDEV, M_WAITOK);
 			n->templ = templ;
 			n->unit = 0;
 			n->next = sc->names;
@@ -799,7 +799,7 @@ uaudio_ranges_add(struct uaudio_ranges *r, int min, int max, int res)
 	/* XXX: use 'res' here */
 	r->nval += max - min + 1;
 
-	e = malloc(sizeof(struct uaudio_ranges_el), M_DEVBUF, M_WAITOK);
+	e = malloc(sizeof(struct uaudio_ranges_el), M_USBDEV, M_WAITOK);
 	e->min = min;
 	e->max = max;
 	e->res = res;
@@ -817,7 +817,7 @@ uaudio_ranges_clear(struct uaudio_ranges *r)
 
 	while ((e = r->el) != NULL) {
 		r->el = e->next;
-		free(e, M_DEVBUF, sizeof(struct uaudio_ranges_el));
+		free(e, M_USBDEV, sizeof(struct uaudio_ranges_el));
 	}
 	r->nval = 0;
 }
@@ -975,7 +975,7 @@ uaudio_req_ranges(struct uaudio_softc *sc,
 		if (sizeof(req_buf) >= req_size)
 			req = req_buf;
 		else
-			req = malloc(req_size, M_DEVBUF, M_WAITOK);
+			req = malloc(req_size, M_USBDEV, M_WAITOK);
 
 		p.rptr = p.wptr = req;
 		if (!uaudio_req(sc, UT_READ_CLASS_INTERFACE,
@@ -1003,7 +1003,7 @@ uaudio_req_ranges(struct uaudio_softc *sc,
 	}
 
 	if (req != req_buf)
-		free(req, M_DEVBUF, req_size);
+		free(req, M_USBDEV, req_size);
 
 	return 1;
 }
@@ -1126,7 +1126,7 @@ uaudio_feature_addent(struct uaudio_softc *sc,
 		return;
 	}
 
-	m = malloc(sizeof(struct uaudio_mixent), M_DEVBUF, M_WAITOK);
+	m = malloc(sizeof(struct uaudio_mixent), M_USBDEV, M_WAITOK);
 	m->chan = chan;
 	m->fname = features[uac_type].name;
 	m->type = features[uac_type].mix_type;
@@ -1140,13 +1140,13 @@ uaudio_feature_addent(struct uaudio_softc *sc,
 			&m->ranges)) {
 			printf("%s: failed to get ranges for %s control\n",
 			    DEVNAME(sc), m->fname);
-			free(m, M_DEVBUF, sizeof(struct uaudio_mixent));
+			free(m, M_USBDEV, sizeof(struct uaudio_mixent));
 			return;
 		}
 		if (m->ranges.el == NULL) {
 			printf("%s: skipped %s control with empty range\n",
 			    DEVNAME(sc), m->fname);
-			free(m, M_DEVBUF, sizeof(struct uaudio_mixent));
+			free(m, M_USBDEV, sizeof(struct uaudio_mixent));
 			return;
 		}
 #ifdef UAUDIO_DEBUG
@@ -1166,7 +1166,7 @@ uaudio_feature_addent(struct uaudio_softc *sc,
 		if (cmp == 0) {
 			DPRINTF("%02u: %s.%s: duplicate feature for chan %d\n",
 			    u->id, u->name, m->fname, m->chan);
-			free(m, M_DEVBUF, sizeof(struct uaudio_mixent));
+			free(m, M_USBDEV, sizeof(struct uaudio_mixent));
 			return;
 		}
 		if (cmp > 0)
@@ -1290,7 +1290,7 @@ uaudio_process_unit(struct uaudio_softc *sc,
 	 */
 	u = uaudio_unit_byid(sc, id);
 	if (u == NULL) {
-		u = malloc(sizeof(struct uaudio_unit), M_DEVBUF, M_WAITOK);
+		u = malloc(sizeof(struct uaudio_unit), M_USBDEV, M_WAITOK);
 		u->id = id;
 		u->type = subtype;
 		u->term = 0;
@@ -2556,7 +2556,7 @@ uaudio_process_as(struct uaudio_softc *sc,
 	unsigned int type, subtype;
 	int ispcm = 0;
 
-	a = malloc(sizeof(struct uaudio_alt), M_DEVBUF, M_WAITOK);
+	a = malloc(sizeof(struct uaudio_alt), M_USBDEV, M_WAITOK);
 	a->mode = 0;
 	a->nch = 0;
 	a->v1_rates = 0;
@@ -2592,7 +2592,7 @@ uaudio_process_as(struct uaudio_softc *sc,
 		}
 		if (!ispcm) {
 			DPRINTF("%s: non-pcm iface\n", __func__);
-			free(a, M_DEVBUF, sizeof(struct uaudio_alt));
+			free(a, M_USBDEV, sizeof(struct uaudio_alt));
 			return 1;
 		}
 	}
@@ -2616,7 +2616,7 @@ uaudio_process_as(struct uaudio_softc *sc,
 
 	if (a->mode == 0) {
 		printf("%s: no data endpoints found\n", DEVNAME(sc));
-		free(a, M_DEVBUF, sizeof(struct uaudio_alt));
+		free(a, M_USBDEV, sizeof(struct uaudio_alt));
 		return 1;
 	}
 
@@ -2644,7 +2644,7 @@ uaudio_process_as(struct uaudio_softc *sc,
 	*pa = a;
 	return 1;
 failed:
-	free(a, M_DEVBUF, sizeof(struct uaudio_alt));
+	free(a, M_USBDEV, sizeof(struct uaudio_alt));
 	return 0;
 }
 
@@ -2683,7 +2683,7 @@ uaudio_fixup_params(struct uaudio_softc *sc)
 				break;
 			}
 			p = malloc(sizeof(struct uaudio_params),
-			    M_DEVBUF, M_WAITOK);
+			    M_USBDEV, M_WAITOK);
 			p->palt = ap;
 			p->ralt = ar;
 			p->v1_rates = rates;
@@ -2700,7 +2700,7 @@ uaudio_fixup_params(struct uaudio_softc *sc)
 	if (sc->params_list == NULL) {
 		for (a = sc->alts; a != NULL; a = a->next) {
 			p = malloc(sizeof(struct uaudio_params),
-			    M_DEVBUF, M_WAITOK);
+			    M_USBDEV, M_WAITOK);
 			if (a->mode == AUMODE_PLAY) {
 				p->palt = a;
 				p->ralt = NULL;
@@ -2791,7 +2791,7 @@ uaudio_xfer_alloc(struct uaudio_softc *sc, struct uaudio_xfer *xfer,
 		return ENOMEM;
 
 	xfer->sizes = mallocarray(count,
-	    sizeof(xfer->sizes[0]), M_DEVBUF, M_WAITOK);
+	    sizeof(xfer->sizes[0]), M_USBDEV, M_WAITOK);
 	if (xfer->sizes == NULL)
 		return ENOMEM;
 
@@ -2811,7 +2811,7 @@ uaudio_xfer_free(struct uaudio_softc *sc, struct uaudio_xfer *xfer,
 		xfer->usb_xfer = NULL;
 	}
 	if (xfer->sizes != NULL) {
-		free(xfer->sizes, M_DEVBUF,
+		free(xfer->sizes, M_USBDEV,
 		    sizeof(xfer->sizes[0]) * count);
 		xfer->sizes = NULL;
 	}
@@ -3861,12 +3861,12 @@ uaudio_detach(struct device *self, int flags)
 
 	while ((alt = sc->alts) != NULL) {
 		sc->alts = alt->next;
-		free(alt, M_DEVBUF, sizeof(struct uaudio_alt));
+		free(alt, M_USBDEV, sizeof(struct uaudio_alt));
 	}
 
 	while ((params = sc->params_list) != NULL) {
 		sc->params_list = params->next;
-		free(params, M_DEVBUF, sizeof(struct uaudio_params));
+		free(params, M_USBDEV, sizeof(struct uaudio_params));
 	}
 
 	while ((unit = sc->unit_list) != NULL) {
@@ -3874,15 +3874,15 @@ uaudio_detach(struct device *self, int flags)
 		while ((mixent = unit->mixent_list) != NULL) {
 			unit->mixent_list = mixent->next;
 			uaudio_ranges_clear(&mixent->ranges);
-			free(mixent, M_DEVBUF, sizeof(struct uaudio_mixent));
+			free(mixent, M_USBDEV, sizeof(struct uaudio_mixent));
 		}
 		uaudio_ranges_clear(&unit->rates);
-		free(unit, M_DEVBUF, sizeof(struct uaudio_unit));
+		free(unit, M_USBDEV, sizeof(struct uaudio_unit));
 	}
 
 	while ((name = sc->names)) {
 		sc->names = name->next;
-		free(name, M_DEVBUF, sizeof(struct uaudio_name));
+		free(name, M_USBDEV, sizeof(struct uaudio_name));
 	}
 
 	return rv;

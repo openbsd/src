@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.61 2020/09/22 19:32:53 krw Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.62 2021/11/22 10:17:14 mglocker Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ umass_scsi_attach(struct umass_softc *sc)
 	struct umass_scsi_softc *scbus;
 	u_int16_t flags = 0;
 
-	scbus = malloc(sizeof(*scbus), M_DEVBUF, M_WAITOK | M_ZERO);
+	scbus = malloc(sizeof(*scbus), M_USBDEV, M_WAITOK | M_ZERO);
 
 	sc->bus = scbus;
 
@@ -136,7 +136,7 @@ umass_scsi_detach(struct umass_softc *sc, int flags)
 	if (scbus != NULL) {
 		if (scbus->sc_child != NULL)
 			rv = config_detach(scbus->sc_child, flags);
-		free(scbus, M_DEVBUF, sizeof(*scbus));
+		free(scbus, M_USBDEV, sizeof(*scbus));
 		sc->bus = NULL;
 	}
 

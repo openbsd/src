@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.11 2020/07/31 10:49:33 mglocker Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.12 2021/11/22 10:17:14 mglocker Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -1507,7 +1507,7 @@ utvfu_vs_alloc_frame(struct utvfu_softc *sc)
 	struct utvfu_frame_buf *fb = &sc->sc_fb;
 
 	fb->size = sc->sc_max_frame_sz;
-	fb->buf = malloc(fb->size, M_DEVBUF, M_NOWAIT);
+	fb->buf = malloc(fb->size, M_USBDEV, M_NOWAIT);
 	if (fb->buf == NULL) {
 		printf("%s: can't allocate frame buffer!\n", DEVNAME(sc));
 		return (ENOMEM);
@@ -1529,12 +1529,12 @@ utvfu_vs_free_frame(struct utvfu_softc *sc)
 	struct utvfu_frame_buf *fb = &sc->sc_fb;
 
 	if (fb->buf != NULL) {
-		free(fb->buf, M_DEVBUF, fb->size);
+		free(fb->buf, M_USBDEV, fb->size);
 		fb->buf = NULL;
 	}
 
 	if (sc->sc_mmap_buffer != NULL) {
-		free(sc->sc_mmap_buffer, M_DEVBUF, sc->sc_mmap_bufsz);
+		free(sc->sc_mmap_buffer, M_USBDEV, sc->sc_mmap_bufsz);
 		sc->sc_mmap_buffer = NULL;
 		memset(sc->sc_mmap, 0, sizeof(sc->sc_mmap));
 	}
@@ -1659,7 +1659,7 @@ utvfu_reqbufs(void *v, struct v4l2_requestbuffers *rb)
 		return (ENOMEM);
 	sc->sc_mmap_bufsz *= sc->sc_mmap_count;
 	sc->sc_mmap_bufsz = round_page(sc->sc_mmap_bufsz); /* page align */
-	sc->sc_mmap_buffer = malloc(sc->sc_mmap_bufsz, M_DEVBUF, M_NOWAIT);
+	sc->sc_mmap_buffer = malloc(sc->sc_mmap_bufsz, M_USBDEV, M_NOWAIT);
 	if (sc->sc_mmap_buffer == NULL) {
 		printf("%s: can't allocate mmap buffer!\n", DEVNAME(sc));
 		return (ENOMEM);
