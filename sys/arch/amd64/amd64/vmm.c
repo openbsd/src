@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.294 2021/10/26 16:29:49 deraadt Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.295 2021/11/22 12:55:40 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4301,9 +4301,10 @@ vm_run(struct vm_run_params *vrp)
 			rw_exit_write(&vmm_softc->vm_lock);
 		}
 		ret = 0;
-	} else if (ret == EAGAIN) {
+	} else if (ret == 0 || ret == EAGAIN) {
 		/* If we are exiting, populate exit data so vmd can help. */
-		vrp->vrp_exit_reason = vcpu->vc_gueststate.vg_exit_reason;
+		vrp->vrp_exit_reason = (ret == 0) ? VM_EXIT_NONE
+		    : vcpu->vc_gueststate.vg_exit_reason;
 		vrp->vrp_irqready = vcpu->vc_irqready;
 		vcpu->vc_state = VCPU_STATE_STOPPED;
 
@@ -4312,9 +4313,6 @@ vm_run(struct vm_run_params *vrp)
 			ret = EFAULT;
 		} else
 			ret = 0;
-	} else if (ret == 0) {
-		vrp->vrp_exit_reason = VM_EXIT_NONE;
-		vcpu->vc_state = VCPU_STATE_STOPPED;
 	} else {
 		vrp->vrp_exit_reason = VM_EXIT_TERMINATED;
 		vcpu->vc_state = VCPU_STATE_TERMINATED;
