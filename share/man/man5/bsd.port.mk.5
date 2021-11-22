@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.549 2021/11/22 11:07:50 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.550 2021/11/22 11:17:39 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -3995,17 +3995,25 @@ in order to avoid recursion.
 and
 .Ev FULLPKGNAME
 are special as well.
-You must set
+If
+.Ev PKGNAME
+is <stem>-<version>,
+then
 .Ev PKGNAME-sub
-or
-.Ev FULLPKGNAME-sub
-for each subpackage, but
+will be set to
+<stem>-sub-<version>
+by default, except for
+.Ev PKGNAME-main
+which has
+.Ev PKGNAME
+as a default.
+Normally,
 .Ev FULLPKGPATH-sub
-is set automatically to the right value.
-In very rare cases, one may override
-.Ev FULLPKGPATH-sub .
-(for instance, if one specific subpackage is not affected by option
-settings that affect other subpackages, e.g., for include files packs).
+is automatically set to the right value,
+but in very rare cases, one may need to override the default:
+for instance, if one specific subpackage is not affected by flavor
+settings that affect other subpackages, e.g., for include files packs,
+then the flavoring part of the fullpkgpath may need to be dropped.
 .Pp
 In terms of using the port, quite a few targets will have a subpackage
 specific subtarget:
