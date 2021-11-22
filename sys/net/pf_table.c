@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.138 2021/11/16 20:51:31 sashan Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.139 2021/11/22 12:56:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -321,8 +321,6 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	ACCEPT_FLAGS(flags, PFR_FLAG_DUMMY | PFR_FLAG_FEEDBACK);
 	if (pfr_validate_table(tbl, 0, flags & PFR_FLAG_USERIOCTL))
 		return (EINVAL);
-	if (kt->pfrkt_flags & PFR_TFLAG_CONST)
-		return (EPERM);
 	tmpkt = pfr_create_ktable(&pfr_nulltable, 0, 0,
 	    !(flags & PFR_FLAG_USERIOCTL));
 	if (tmpkt == NULL)
@@ -350,6 +348,11 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 		PF_UNLOCK();
 		NET_UNLOCK();
 		senderr(ESRCH);
+	}
+	if (kt->pfrkt_flags & PFR_TFLAG_CONST) {
+		PF_UNLOCK();
+		NET_UNLOCK();
+		senderr(EPERM);
 	}
 	SLIST_FOREACH(ke, &ioq, pfrke_ioq) {
 		pfr_kentry_kif_ref(ke);
