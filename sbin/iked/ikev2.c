@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.332 2021/11/16 21:43:36 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.333 2021/11/22 20:51:48 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2679,7 +2679,7 @@ ikev2_resp_informational(struct iked *env, struct iked_sa *sa,
 
 	/*
 	 * Include NAT_DETECTION notification on UPDATE_SA_ADDRESSES or if
-	 * the peer did include them, too (RFC 455, 3.8).
+	 * the peer did include them, too (RFC 4555, 3.8).
 	 */
 	if (sa->sa_mobike &&
 	    (msg->msg_update_sa_addresses || msg->msg_natt_rcvd)) {
