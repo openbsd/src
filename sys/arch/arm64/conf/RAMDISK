@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.160 2021/11/01 09:02:46 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.161 2021/11/22 20:25:50 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -80,6 +80,8 @@ ccp*		at fdt?		# AMD Cryptographic Co-processor
 com*		at fdt?
 
 # Generic devices
+iicmux*		at fdt?
+iic*		at iicmux?
 pinctrl*	at fdt? early 1
 plgpio*		at fdt? early 1
 plrtc*		at fdt?
@@ -334,6 +336,7 @@ mcprtc*		at iic?			# MCP794XX RTC
 mfokrtc*	at iic?			# M41T8X RTC
 pcfrtc*		at iic?			# PCF8523 RTC
 pcxrtc*		at iic?			# PCF8563 RTC
+pcyrtc*		at iic?			# PCF85063A/TP RTC
 rkpmic*		at iic?			# RK808 PMIC
 tcpci*		at iic?			# USB Type-C controller
 

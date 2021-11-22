@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.213 2021/11/09 16:16:11 kn Exp $
+# $OpenBSD: GENERIC,v 1.214 2021/11/22 20:25:50 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -92,6 +92,8 @@ ipmi*		at fdt?
 com*		at fdt?
 
 # Generic devices
+iicmux*		at fdt?
+iic*		at iicmux?
 pinctrl*	at fdt? early 1
 plgpio*		at fdt? early 1
 plrtc*		at fdt?
@@ -493,6 +495,7 @@ pcamux*		at iic?			# PCA9548 multiplexer
 iic*		at pcamux?
 pcfrtc*		at iic?			# PCF8523 RTC
 pcxrtc*		at iic?			# PCF8563 RTC
+pcyrtc*		at iic?			# PCF85063A/TP RTC
 rkpmic*		at iic?			# RK808 PMIC
 sypwr*		at iic?			# SY8106A regulator
 tcpci*		at iic?			# USB Type-C controller
