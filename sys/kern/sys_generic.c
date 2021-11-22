@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.141 2021/11/16 13:48:23 visa Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.142 2021/11/22 14:59:03 visa Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -1263,6 +1263,14 @@ ppollcollect(struct proc *p, struct kevent *kevp, struct pollfd *pl, u_int nfds)
 	 */
 	already_seen = (pl[i].revents != 0);
 
+	/* POLLNVAL preempts other events. */
+	if ((kevp->flags & EV_ERROR) && kevp->data == EBADF) {
+		pl[i].revents = POLLNVAL;
+		goto done;
+	} else if (pl[i].revents & POLLNVAL) {
+		goto done;
+	}
+
 	switch (kevp->filter) {
 	case EVFILT_READ:
 		if (kevp->flags & __EV_HUP)
@@ -1294,6 +1302,7 @@ ppollcollect(struct proc *p, struct kevent *kevp, struct pollfd *pl, u_int nfds)
 		KASSERT(0);
 	}
 
+done:
 	DPRINTFN(1, "poll get %lu/%d fd %d revents %02x serial %lu filt %d\n",
 	    i+1, nfds, pl[i].fd, pl[i].revents, (unsigned long)kevp->udata,
 	    kevp->filter);
