@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.101 2021/11/17 06:20:30 anton Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.102 2021/11/22 03:30:20 jsg Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -140,9 +140,10 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	struct uhidev_attach_arg uha;
-	int size, nrepid, repid, repsz;
+	int nrepid, repid, repsz;
 	int i;
 	void *desc = NULL;
+	int size = 0;
 	struct device *dev;
 
 	sc->sc_udev = uaa->device;
