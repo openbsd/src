@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.381 2021/11/22 10:23:42 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.382 2021/11/22 11:00:50 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5113,6 +5113,9 @@ iwm_rx_reorder(struct iwm_softc *sc, struct mbuf *m, int chanidx,
 	rxba = &sc->sc_rxba_data[baid];
 	if (rxba == NULL || tid != rxba->tid || rxba->sta_id != IWM_STATION_ID)
 		return 0;
+
+	if (rxba->timeout != 0)
+		getmicrouptime(&rxba->last_rx);
 
 	/* Bypass A-MPDU re-ordering in net80211. */
 	rxi->rxi_flags |= IEEE80211_RXI_AMPDU_DONE;
