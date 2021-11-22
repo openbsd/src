@@ -1,4 +1,4 @@
-/*	$OpenBSD: uwacom.c,v 1.4 2021/09/12 06:58:08 anton Exp $	*/
+/*	$OpenBSD: uwacom.c,v 1.5 2021/11/22 11:29:18 anton Exp $	*/
 
 /*
  * Copyright (c) 2016 Frank Groeneveld <frank@frankgroeneveld.nl>
@@ -74,6 +74,9 @@ uwacom_match(struct device *parent, void *match, void *aux)
 	struct uhidev_attach_arg *uha = aux;
 	int size;
 	void *desc;
+
+	if (UHIDEV_CLAIM_MULTIPLE_REPORTID(uha))
+		return (UMATCH_NONE);
 
 	if (usb_lookup(uwacom_devs, uha->uaa->vendor,
 	    uha->uaa->product) == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utpms.c,v 1.11 2020/10/23 21:23:58 tobhe Exp $	*/
+/*	$OpenBSD: utpms.c,v 1.12 2021/11/22 11:29:18 anton Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -268,6 +268,9 @@ utpms_match(struct device *parent, void *match, void *aux)
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	usb_interface_descriptor_t *id;
 	int i;
+
+	if (UHIDEV_CLAIM_MULTIPLE_REPORTID(uha))
+		return (UMATCH_NONE);
 
 	id = usbd_get_interface_descriptor(uha->uaa->iface);
 	if (id == NULL ||
