@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.142 2021/11/22 14:59:03 visa Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.143 2021/11/22 17:15:05 visa Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -81,9 +81,8 @@ int kqpoll_debug = 0;
 
 int pselregister(struct proc *, fd_set *[], fd_set *[], int, int *, int *);
 int pselcollect(struct proc *, struct kevent *, fd_set *[], int *);
-int ppollregister(struct proc *, struct pollfd *, int, int *);
-int ppollcollect(struct proc *, struct kevent *, struct pollfd *, u_int);
 
+void pollscan(struct proc *, struct pollfd *, u_int, register_t *);
 int pollout(struct pollfd *, struct pollfd *, u_int);
 int dopselect(struct proc *, int, fd_set *, fd_set *, fd_set *,
     struct timespec *, const sigset_t *, register_t *);
@@ -905,134 +904,31 @@ doselwakeup(struct selinfo *sip)
 	}
 }
 
-int
-ppollregister_evts(struct proc *p, struct kevent *kevp, int nkev,
-    struct pollfd *pl)
+void
+pollscan(struct proc *p, struct pollfd *pl, u_int nfd, register_t *retval)
 {
-	int i, error, nevents = 0;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	u_int i;
+	int n = 0;
 
-	KASSERT(pl->revents == 0);
-
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_STRUCT))
-		ktrevent(p, kevp, nkev);
-#endif
-	for (i = 0; i < nkev; i++, kevp++) {
-again:
-		error = kqueue_register(p->p_kq, kevp, p);
-		switch (error) {
-		case 0:
-			nevents++;
-			break;
-		case EOPNOTSUPP:/* No underlying kqfilter */
-		case EINVAL:	/* Unimplemented filter */
-			break;
-		case EBADF:	/* Bad file descriptor */
-			pl->revents |= POLLNVAL;
-			break;
-		case EPERM:	/* Specific to FIFO */
-			KASSERT(kevp->filter == EVFILT_WRITE);
-			if (nkev == 1) {
-				/*
-				 * If this is the only filter make sure
-				 * POLLHUP is passed to userland.
-				 */
-				kevp->filter = EVFILT_EXCEPT;
-				goto again;
-			}
-			break;
-		case EPIPE:	/* Specific to pipes */
-			KASSERT(kevp->filter == EVFILT_WRITE);
-			pl->revents |= POLLHUP;
-			break;
-		default:
-#ifdef DIAGNOSTIC
-			DPRINTFN(0, "poll err %lu fd %d revents %02x serial"
-			    " %lu filt %d ERROR=%d\n",
-			    ((unsigned long)kevp->udata - p->p_kq_serial),
-			    pl->fd, pl->revents, p->p_kq_serial, kevp->filter,
-			    error);
-#endif
-			/* FALLTHROUGH */
-		case ENXIO:	/* Device has been detached */
-			pl->revents |= POLLERR;
-			break;
-		}
-	}
-
-	return (nevents);
-}
-
-/*
- * Convert pollfd into kqueue events and register them on the
- * per-thread queue.
- *
- * Return the number of pollfd that triggered at least one error and aren't
- * completly monitored.  These pollfd should have the correponding error bit
- * set in `revents'.
- *
- * At most 3 events can correspond to a single pollfd.
- */
-int
-ppollregister(struct proc *p, struct pollfd *pl, int nfds, int *nregistered)
-{
-	int i, nkev, nevt, errcount = 0, forcehup = 0;
-	struct kevent kev[3], *kevp;
-
-	for (i = 0; i < nfds; i++) {
-		pl[i].events &= ~POLL_NOHUP;
-		pl[i].revents = 0;
-
-		if (pl[i].fd < 0)
+	for (i = 0; i < nfd; i++, pl++) {
+		/* Check the file descriptor. */
+		if (pl->fd < 0) {
+			pl->revents = 0;
 			continue;
-
-		if (pl[i].events == 0)
-			forcehup = 1;
-
-		DPRINTFN(1, "poll set %d/%d fd %d events %02x serial %lu\n",
-		    i+1, nfds, pl[i].fd, pl[i].events, p->p_kq_serial);
-
-		nevt = 0;
-		nkev = 0;
-		kevp = kev;
-		if (pl[i].events & (POLLIN | POLLRDNORM)) {
-			EV_SET(kevp, pl[i].fd, EVFILT_READ,
-			    EV_ADD|EV_ENABLE|__EV_POLL, 0, 0,
-			    (void *)(p->p_kq_serial + i));
-			nkev++;
-			kevp++;
 		}
-		if (pl[i].events & (POLLOUT | POLLWRNORM)) {
-			EV_SET(kevp, pl[i].fd, EVFILT_WRITE,
-			    EV_ADD|EV_ENABLE|__EV_POLL, 0, 0,
-			    (void *)(p->p_kq_serial + i));
-			nkev++;
-			kevp++;
-		}
-		if ((pl[i].events & (POLLPRI | POLLRDBAND)) || forcehup) {
-			int evff = forcehup ? 0 : NOTE_OOB;
-
-			EV_SET(kevp, pl[i].fd, EVFILT_EXCEPT,
-			    EV_ADD|EV_ENABLE|__EV_POLL, evff, 0,
-			    (void *)(p->p_kq_serial + i));
-			nkev++;
-			kevp++;
-		}
-
-		if (nkev == 0)
+		if ((fp = fd_getfile(fdp, pl->fd)) == NULL) {
+			pl->revents = POLLNVAL;
+			n++;
 			continue;
-
-		nevt = ppollregister_evts(p, kev, nkev, &pl[i]);
-		if (nevt == 0 && !forcehup)
-			errcount++;
-		*nregistered += nevt;
+		}
+		pl->revents = (*fp->f_ops->fo_poll)(fp, pl->events, p);
+		FRELE(fp, p);
+		if (pl->revents != 0)
+			n++;
 	}
-
-#ifdef DIAGNOSTIC
-	DPRINTFN(1, "poll registered = %d, errors = %d\n", *nregistered,
-	    errcount);
-#endif
-	return (errcount);
+	*retval = n;
 }
 
 /*
@@ -1122,10 +1018,11 @@ int
 doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
     struct timespec *timeout, const sigset_t *sigmask, register_t *retval)
 {
-	struct kqueue_scan_state scan;
-	struct pollfd pfds[4], *pl = pfds;
-	int error, ncollected, nevents = 0;
 	size_t sz;
+	struct pollfd pfds[4], *pl = pfds;
+	struct timespec elapsed, start, stop;
+	uint64_t nsecs;
+	int ncoll, i, s, error;
 
 	/* Standards say no more than MAX_OPEN; this is possibly better. */
 	if (nfds > min((int)lim_cur(RLIMIT_NOFILE), maxfiles))
@@ -1139,76 +1036,58 @@ doppoll(struct proc *p, struct pollfd *fds, u_int nfds,
 			return (EINVAL);
 	}
 
-	kqpoll_init(nfds);
-
 	sz = nfds * sizeof(*pl);
 
 	if ((error = copyin(fds, pl, sz)) != 0)
 		goto bad;
 
+	for (i = 0; i < nfds; i++) {
+		pl[i].events &= ~POLL_NOHUP;
+		pl[i].revents = 0;
+	}
+
 	if (sigmask)
 		dosigsuspend(p, *sigmask &~ sigcantmask);
 
-	/* Register kqueue events */
-	ncollected = ppollregister(p, pl, nfds, &nevents);
-
-	/*
-	 * The poll/select family of syscalls has been designed to
-	 * block when file descriptors are not available, even if
-	 * there's nothing to wait for.
-	 */
-	if (nevents == 0 && ncollected == 0) {
-		uint64_t nsecs = INFSLP;
-
-		if (timeout != NULL) {
-			if (!timespecisset(timeout))
-				goto done;
-			nsecs = MAX(1, MIN(TIMESPEC_TO_NSEC(timeout), MAXTSLP));
-		}
-
-		error = tsleep_nsec(&nowake, PSOCK | PCATCH, "kqpoll", nsecs);
-		if (error == ERESTART)
-			error = EINTR;
-		if (error == EWOULDBLOCK)
-			error = 0;
+retry:
+	ncoll = nselcoll;
+	atomic_setbits_int(&p->p_flag, P_SELECT);
+	pollscan(p, pl, nfds, retval);
+	if (*retval)
 		goto done;
+	if (timeout == NULL || timespecisset(timeout)) {
+		if (timeout != NULL) {
+			getnanouptime(&start);
+			nsecs = MIN(TIMESPEC_TO_NSEC(timeout), MAXTSLP);
+		} else
+			nsecs = INFSLP;
+		s = splhigh();
+		if ((p->p_flag & P_SELECT) == 0 || nselcoll != ncoll) {
+			splx(s);
+			goto retry;
+		}
+		atomic_clearbits_int(&p->p_flag, P_SELECT);
+		error = tsleep_nsec(&selwait, PSOCK | PCATCH, "poll", nsecs);
+		splx(s);
+		if (timeout != NULL) {
+			getnanouptime(&stop);
+			timespecsub(&stop, &start, &elapsed);
+			timespecsub(timeout, &elapsed, timeout);
+			if (timeout->tv_sec < 0)
+				timespecclear(timeout);
+		}
+		if (error == 0 || error == EWOULDBLOCK)
+			goto retry;
 	}
 
-	/* Collect at most `nevents' possibly waiting in kqueue_scan() */
-	kqueue_scan_setup(&scan, p->p_kq);
-	while (nevents > 0) {
-		struct kevent kev[KQ_NEVENTS];
-		int i, ready, count;
-
-		/* Maximum number of events per iteration */
-		count = MIN(nitems(kev), nevents);
-		ready = kqueue_scan(&scan, count, kev, timeout, p, &error);
-#ifdef KTRACE
-		if (KTRPOINT(p, KTR_STRUCT))
-			ktrevent(p, kev, ready);
-#endif
-		/* Convert back events that are ready. */
-		for (i = 0; i < ready; i++)
-			ncollected += ppollcollect(p, &kev[i], pl, nfds);
-
-		/*
-		 * Stop if there was an error or if we had enough
-		 * place to collect all events that were ready.
-		 */
-		if (error || ready < count)
-			break;
-
-		nevents -= ready;
-	}
-	kqueue_scan_finish(&scan);
-	*retval = ncollected;
 done:
+	atomic_clearbits_int(&p->p_flag, P_SELECT);
 	/*
 	 * NOTE: poll(2) is not restarted after a signal and EWOULDBLOCK is
 	 *       ignored (since the whole point is to see what would block).
 	 */
 	switch (error) {
-	case EINTR:
+	case ERESTART:
 		error = pollout(pl, fds, nfds);
 		if (error == 0)
 			error = EINTR;
@@ -1225,91 +1104,7 @@ done:
 bad:
 	if (pl != pfds)
 		free(pl, M_TEMP, sz);
-
-	kqpoll_done(nfds);
-
 	return (error);
-}
-
-/*
- * Convert given kqueue event into corresponding poll(2) revents bit.
- */
-int
-ppollcollect(struct proc *p, struct kevent *kevp, struct pollfd *pl, u_int nfds)
-{
-	int already_seen;
-	unsigned long i;
-
-	/*  Extract poll array index */
-	i = (unsigned long)kevp->udata - p->p_kq_serial;
-
-	if (i >= nfds) {
-		panic("%s: spurious kevp %p nfds %u udata 0x%lx serial 0x%lx",
-		    __func__, kevp, nfds,
-		    (unsigned long)kevp->udata, p->p_kq_serial);
-	}
-	if ((int)kevp->ident != pl[i].fd) {
-		panic("%s: kevp %p %lu/%d mismatch fd %d!=%d serial 0x%lx",
-		    __func__, kevp, i + 1, nfds, (int)kevp->ident, pl[i].fd,
-		    p->p_kq_serial);
-	}
-
-	/*
-	 * A given descriptor may already have generated an error
-	 * against another filter during kqueue_register().
-	 *
-	 * Make sure to set the appropriate flags but do not
-	 * increment `*retval' more than once.
-	 */
-	already_seen = (pl[i].revents != 0);
-
-	/* POLLNVAL preempts other events. */
-	if ((kevp->flags & EV_ERROR) && kevp->data == EBADF) {
-		pl[i].revents = POLLNVAL;
-		goto done;
-	} else if (pl[i].revents & POLLNVAL) {
-		goto done;
-	}
-
-	switch (kevp->filter) {
-	case EVFILT_READ:
-		if (kevp->flags & __EV_HUP)
-			pl[i].revents |= POLLHUP;
-		if (pl[i].events & (POLLIN | POLLRDNORM))
-			pl[i].revents |= pl[i].events & (POLLIN | POLLRDNORM);
-		break;
-	case EVFILT_WRITE:
-		/* POLLHUP and POLLOUT/POLLWRNORM are mutually exclusive */
-		if (kevp->flags & __EV_HUP) {
-			pl[i].revents |= POLLHUP;
-		} else if (pl[i].events & (POLLOUT | POLLWRNORM)) {
-			pl[i].revents |= pl[i].events & (POLLOUT | POLLWRNORM);
-		}
-		break;
-	case EVFILT_EXCEPT:
-		if (kevp->flags & __EV_HUP) {
-#ifdef DIAGNOSTIC
-			if (pl[i].events != 0 && pl[i].events != POLLOUT)
-				DPRINTFN(0, "weird events %x\n", pl[i].events);
-#endif
-			pl[i].revents |= POLLHUP;
-			break;
-		}
-		if (pl[i].events & (POLLPRI | POLLRDBAND))
-			pl[i].revents |= pl[i].events & (POLLPRI | POLLRDBAND);
-		break;
-	default:
-		KASSERT(0);
-	}
-
-done:
-	DPRINTFN(1, "poll get %lu/%d fd %d revents %02x serial %lu filt %d\n",
-	    i+1, nfds, pl[i].fd, pl[i].revents, (unsigned long)kevp->udata,
-	    kevp->filter);
-	if (!already_seen && (pl[i].revents != 0))
-		return (1);
-
-	return (0);
 }
 
 /*
