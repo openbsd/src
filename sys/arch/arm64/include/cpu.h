@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.22 2021/07/06 09:34:06 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.23 2021/11/22 19:22:59 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -91,6 +91,11 @@ struct cpu_info {
 	u_int			ci_acpi_proc_id;
 	int			ci_node;
 	struct cpu_info		*ci_self;
+
+#define __HAVE_CPU_TOPOLOGY
+	u_int32_t		ci_smt_id;
+	u_int32_t		ci_core_id;
+	u_int32_t		ci_pkg_id;
 
 	struct proc		*ci_curproc;
 	struct pmap		*ci_curpm;

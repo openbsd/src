@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.56 2021/10/24 17:52:28 mpi Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.57 2021/11/22 19:22:59 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -605,6 +605,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct cpu_info *ci;
 	uint64_t mpidr = READ_SPECIALREG(mpidr_el1);
+	uint64_t midr = READ_SPECIALREG(midr_el1);
 	uint64_t id_aa64mmfr1, sctlr;
 	uint32_t opp;
 
@@ -642,6 +643,10 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		int spinup_method = 0;
 		int timeout = 10000;
 		int len;
+
+		/* XXX SMP on Apple CPUs is busted. */
+		if (CPU_IMPL(midr) == CPU_IMPL_APPLE)
+			ci->ci_smt_id = 1;
 
 		len = OF_getprop(ci->ci_node, "enable-method",
 		    buf, sizeof(buf));
