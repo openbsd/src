@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcf8523.c,v 1.5 2021/04/24 10:15:15 mpi Exp $	*/
+/*	$OpenBSD: pcf8523.c,v 1.6 2021/11/22 20:19:23 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2005 Kimihiro Nonaka
@@ -30,11 +30,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/fcntl.h>
-#include <sys/uio.h>
-#include <sys/conf.h>
-#include <sys/event.h>
 
 #include <dev/clock_subr.h>
 
@@ -189,7 +184,7 @@ pcfrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 	if (pcfrtc_clock_write(sc, &dt) == 0)
 		return (-1);
 
-	/* Clear OS flag.  */
+	/* Clear OS flag. */
 	reg = pcfrtc_reg_read(sc, PCF8523_SECONDS);
 	if (reg & PCF8523_SECONDS_OS) {
 		reg &= ~PCF8523_SECONDS_OS;
@@ -263,7 +258,7 @@ pcfrtc_clock_read(struct pcfrtc_softc *sc, struct clock_ymdhms *dt)
 	dt->dt_mon = FROMBCD(regs[5] & PCF8523_MONTH_MASK);
 	dt->dt_year = FROMBCD(regs[6]) + 2000;
 
-	if ((regs[0] & PCF8523_SECONDS_OS))
+	if (regs[0] & PCF8523_SECONDS_OS)
 		return (0);
 
 	return (1);
