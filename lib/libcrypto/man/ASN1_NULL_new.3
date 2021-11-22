@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_NULL_new.3,v 1.1 2021/11/22 16:19:54 schwarze Exp $
+.\" $OpenBSD: ASN1_NULL_new.3,v 1.2 2021/11/22 19:32:32 job Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -39,7 +39,7 @@ This function does not allocate memory and cannot fail.
 .Pp
 .Fn ASN1_NULL_free
 has no effect whatsoever.
-In particular, i ignores the
+In particular, it ignores the
 .Fa val_in
 argument and does not free any memory.
 In normal use, application programs only pass the invalid pointer
