@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ASN1_OBJECT.3,v 1.9 2018/04/25 15:17:52 schwarze Exp $
+.\"	$OpenBSD: d2i_ASN1_OBJECT.3,v 1.10 2021/11/22 14:00:27 schwarze Exp $
 .\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2018 $
+.Dd $Mdocdate: November 22 2021 $
 .Dt D2I_ASN1_OBJECT 3
 .Os
 .Sh NAME
@@ -71,9 +71,16 @@ if an error occurs.
 returns the number of bytes successfully encoded
 or a value <= 0 if an error occurs.
 .Sh SEE ALSO
+.Xr a2d_ASN1_OBJECT 3 ,
 .Xr ASN1_item_d2i 3 ,
 .Xr ASN1_OBJECT_new 3 ,
 .Xr OBJ_nid2obj 3
+.Sh STANDARDS
+ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
+Information technology - ASN.1 encoding rules:
+Specification of Basic Encoding Rules (BER), Canonical Encoding
+Rules (CER) and Distinguished Encoding Rules (DER),
+section 8.19: Encoding of an object identifier value
 .Sh HISTORY
 .Fn d2i_ASN1_OBJECT
 and
