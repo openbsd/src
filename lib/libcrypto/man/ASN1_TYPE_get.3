@@ -1,5 +1,5 @@
-.\"	$OpenBSD: ASN1_TYPE_get.3,v 1.14 2021/11/23 14:58:08 schwarze Exp $
-.\"	OpenSSL 99d63d46 Mon Jun 6 00:43:05 2016 -0400
+.\" $OpenBSD: ASN1_TYPE_get.3,v 1.15 2021/11/23 17:53:59 schwarze Exp $
+.\" selective merge up to: OpenSSL 6328d367 Jul 4 21:58:30 2020 +0200
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
@@ -76,6 +76,8 @@
 .Nm ASN1_TYPE_set1 ,
 .Nm ASN1_TYPE_set_octetstring ,
 .Nm ASN1_TYPE_get_octetstring ,
+.Nm ASN1_TYPE_set_int_octetstring ,
+.Nm ASN1_TYPE_get_int_octetstring ,
 .Nm ASN1_TYPE_cmp
 .Nd ASN.1 objects of arbitrary type
 .Sh SYNOPSIS
@@ -110,6 +112,20 @@
 .Fo ASN1_TYPE_get_octetstring
 .Fa "const ASN1_TYPE *a"
 .Fa "unsigned char *buffer"
+.Fa "int buflen"
+.Fc
+.Ft int
+.Fo ASN1_TYPE_set_int_octetstring
+.Fa "ASN1_TYPE *a"
+.Fa "long num"
+.Fa "const unsigned char *data"
+.Fa "int len"
+.Fc
+.Ft int
+.Fo ASN1_TYPE_get_int_octetstring
+.Fa "const ASN1_TYPE *a",
+.Fa "long *num"
+.Fa "unsigned char *buffer",
 .Fa "int buflen"
 .Fc
 .Ft int
@@ -257,6 +273,40 @@ bytes, into the
 .Fa buffer
 provided by the caller.
 .Pp
+.Fn ASN1_TYPE_set_int_octetstring
+frees the value contained in
+.Fa a ,
+if any, sets its type to
+.Dv V_ASN1_SEQUENCE ,
+and sets its value to a two-element ASN.1 sequence consisting of
+an ASN.1 INTEGER object with the value
+.Fa num
+and an ASN.1 OCTET STRING object
+containing a copy of the
+.Fa len
+bytes pointed to by
+.Fa data .
+.Pp
+.Fn ASN1_TYPE_get_int_octetstring
+copies the integer value from the first element of the ASN.1 sequence
+.Fa a
+to
+.Pf * Fa num
+unless
+.Fa num
+is a
+.Dv NULL
+pointer and copies the octet string value from the second elememt,
+but not more than
+.Fa buflen
+bytes, into the
+.Fa buffer
+provided by the caller unless
+.Fa buffer
+is a
+.Dv NULL
+pointer.
+.Pp
 .Fn ASN1_TYPE_cmp
 checks that
 .Fa a
@@ -283,7 +333,7 @@ the two types could be absent OPTIONAL fields and so should match,
 however passing
 .Dv NULL
 values could also indicate a programming error (for example an
-unparseable type which returns
+unparsable type which returns
 .Dv NULL )
 for types which do
 .Sy not
@@ -309,10 +359,11 @@ For example, it will always happen for empty objects
 newly constructed with
 .Fn ASN1_TYPE_new .
 .Pp
-.Fn ASN1_TYPE_set1
+.Fn ASN1_TYPE_set1 ,
+.Fn ASN1_TYPE_set_octetstring ,
 and
-.Fn ASN1_TYPE_set_octetstring
-return 1 if the copying succeeds or 0 if it fails.
+.Fn ASN1_TYPE_set_int_octetstring
+return 1 on success or 0 on failure.
 .Pp
 .Fn ASN1_TYPE_get_octetstring
 returns the number of data bytes contained in the
@@ -324,6 +375,21 @@ or \-1 if
 is not of the type
 .Dv V_ASN1_OCTET_STRING
 or does not contain any object.
+If the return value is greater than the
+.Fa buflen
+argument, the content was truncated when copied to the
+.Fa buffer .
+.Pp
+.Fn ASN1_TYPE_get_int_octetstring
+returns the number of data bytes contained in the
+.Vt ASN1_OCTET_STRING
+object that is the second element of the ASN.1 sequence
+.Fa a
+or \-1 if
+.Fa a
+is not of the type
+.Dv V_ASN1_SEQUENCE
+or if decoding fails.
 If the return value is greater than the
 .Fa buflen
 argument, the content was truncated when copied to the
@@ -350,14 +416,16 @@ returns 0 for a match or non-zero for a mismatch.
 .Fn ASN1_TYPE_new
 and
 .Fn ASN1_TYPE_free
-first appeared in SSLeay 0.5.1.
+first appeared in SSLeay 0.5.1,
 .Fn ASN1_TYPE_get
 and
 .Fn ASN1_TYPE_set
 in SSLeay 0.8.0, and
-.Fn ASN1_TYPE_set_octetstring
+.Fn ASN1_TYPE_set_octetstring ,
+.Fn ASN1_TYPE_get_octetstring ,
+.Fn ASN1_TYPE_set_int_octetstring ,
 and
-.Fn ASN1_TYPE_get_octetstring
+.Fn ASN1_TYPE_get_int_octetstring
 in SSLeay 0.9.0.
 These functions have been available since
 .Ox 2.4 .
