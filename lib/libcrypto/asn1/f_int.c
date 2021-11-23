@@ -1,4 +1,4 @@
-/* $OpenBSD: f_int.c,v 1.20 2018/05/13 13:48:08 jsing Exp $ */
+/* $OpenBSD: f_int.c,v 1.21 2021/11/23 11:10:51 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,19 +126,12 @@ a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 			buf[--i] = '\0';
 		if (i == 0)
 			goto err_sl;
-		again = (buf[i - 1] == '\\');
-
-		for (j = 0; j < i; j++) {
-			if (!(((buf[j] >= '0') && (buf[j] <= '9')) ||
-			    ((buf[j] >= 'a') && (buf[j] <= 'f')) ||
-			    ((buf[j] >= 'A') && (buf[j] <= 'F')))) {
-				i = j;
-				break;
-			}
-		}
+		if (buf[i - 1] == '\\') {
+			i--;
+			again = 1;
+		} else
+			again = 0;
 		buf[i] = '\0';
-		/* We have now cleared all the crap off the end of the
-		 * line */
 		if (i < 2)
 			goto err_sl;
 
@@ -151,7 +144,6 @@ a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 			}
 		}
 		k = 0;
-		i -= again;
 		if (i % 2 != 0) {
 			ASN1error(ASN1_R_ODD_NUMBER_OF_CHARS);
 			goto err;
