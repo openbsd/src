@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.211 2021/08/21 03:00:02 gkoehler Exp $
+#	$OpenBSD: bsd.own.mk,v 1.212 2021/11/23 10:30:08 robert Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -51,8 +51,10 @@ BUILD_CLANG?=no
 
 .if !empty(LLD_ARCH:M${_arch})
 LINKER_VERSION?=lld
+AR_VERSION?=llvm
 .else
 LINKER_VERSION?=bfd
+AR_VERSION?=binutils
 .endif
 
 .if !empty(STATICPIE_ARCH:M${_arch})
