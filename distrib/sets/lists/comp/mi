@@ -1749,6 +1749,7 @@
 ./usr/share/man/man3/ASN1_BIT_STRING_num_asc.3
 ./usr/share/man/man3/ASN1_BIT_STRING_set.3
 ./usr/share/man/man3/ASN1_INTEGER_get.3
+./usr/share/man/man3/ASN1_NULL_new.3
 ./usr/share/man/man3/ASN1_OBJECT_new.3
 ./usr/share/man/man3/ASN1_PRINTABLE_type.3
 ./usr/share/man/man3/ASN1_STRING_TABLE_add.3
@@ -2236,6 +2237,7 @@
 ./usr/share/man/man3/X509at_get_attr.3
 ./usr/share/man/man3/X509v3_get_ext_by_NID.3
 ./usr/share/man/man3/__tfork_thread.3
+./usr/share/man/man3/a2d_ASN1_OBJECT.3
 ./usr/share/man/man3/a64l.3
 ./usr/share/man/man3/abort.3
 ./usr/share/man/man3/abs.3
