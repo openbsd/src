@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.333 2021/11/22 20:51:48 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.334 2021/11/23 13:52:51 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6574,7 +6574,7 @@ ikev2_child_sa_rekey(struct iked *env, struct iked_spi *rekey)
 	if (csa->csa_rekey)	/* See if it's already taken care of */
 		return (0);
 	if ((sa = csa->csa_ikesa) == NULL) {
-		log_warnx("%s: SA %s doesn't have a parent SA", __func__,
+		log_warnx("%s: not established, SPI %s", SPI_SA(sa, __func__),
 		    print_spi(rekey->spi, rekey->spi_size));
 		return (0);
 	}
@@ -6583,10 +6583,16 @@ ikev2_child_sa_rekey(struct iked *env, struct iked_spi *rekey)
 		    print_spi(rekey->spi, rekey->spi_size));
 		return (0);
 	}
-	if (sa->sa_stateflags & (IKED_REQ_CHILDSA|IKED_REQ_INF))
+	if (sa->sa_stateflags & (IKED_REQ_CHILDSA|IKED_REQ_INF)) {
+		log_info("%s: busy, retrying, SPI %s", SPI_SA(sa, __func__),
+		    print_spi(rekey->spi, rekey->spi_size));
 		return (-1);	/* busy, retry later */
-	if (sa->sa_tmpfail)
+	}
+	if (sa->sa_tmpfail) {
+		log_info("%s: peer busy, retrying, SPI %s", SPI_SA(sa, __func__),
+		    print_spi(rekey->spi, rekey->spi_size));
 		return (-1);	/* peer is busy, retry later */
+	}
 	if (csa->csa_allocated)	/* Peer SPI died first, get the local one */
 		rekey->spi = csa->csa_peerspi;
 	if (ikev2_send_create_child_sa(env, sa, rekey, rekey->spi_protoid, 0))
