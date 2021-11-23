@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.32 2018/05/02 15:48:38 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.33 2021/11/23 09:53:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -273,6 +273,7 @@ DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 	if (q != NULL) {
 		BN_free(dh->q);
 		dh->q = q;
+		dh->length = BN_num_bits(dh->q);
 	}
 	if (g != NULL) {
 		BN_free(dh->g);
