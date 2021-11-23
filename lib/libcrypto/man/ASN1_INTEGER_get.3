@@ -1,11 +1,11 @@
-.\" $OpenBSD: ASN1_INTEGER_get.3,v 1.4 2021/11/20 13:06:26 schwarze Exp $
+.\" $OpenBSD: ASN1_INTEGER_get.3,v 1.5 2021/11/23 13:52:27 schwarze Exp $
 .\" selective merge up to:
-.\" OpenSSL man3/ASN1_INTEGER_get_int64 df75c2bf Dec 9 01:02:36 2018 +0100
+.\" OpenSSL man3/ASN1_INTEGER_get_int64 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2018, 2019, 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2018, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 20 2021 $
+.Dd $Mdocdate: November 23 2021 $
 .Dt ASN1_INTEGER_GET 3
 .Os
 .Sh NAME
@@ -76,7 +76,6 @@
 .Nm ASN1_INTEGER_dup ,
 .Nm BN_to_ASN1_INTEGER ,
 .Nm ASN1_INTEGER_to_BN ,
-.Nm i2a_ASN1_INTEGER ,
 .Nm ASN1_ENUMERATED_get ,
 .Nm ASN1_ENUMERATED_set ,
 .Nm BN_to_ASN1_ENUMERATED ,
@@ -111,11 +110,6 @@
 .Fo ASN1_INTEGER_to_BN
 .Fa "const ASN1_INTEGER *ai"
 .Fa "BIGNUM *bn"
-.Fc
-.Ft int
-.Fo i2a_ASN1_INTEGER
-.Fa "BIO *out_bio"
-.Fa "const ASN1_INTEGER *a"
 .Fc
 .Ft long
 .Fo ASN1_ENUMERATED_get
@@ -212,16 +206,6 @@ Otherwise, the existing object
 .Fa bn
 is used instead.
 .Pp
-.Fn i2a_ASN1_INTEGER
-writes a hexadecimal representation of
-.Fa a
-to
-.Fa out_bio .
-The output optionally starts with a minus sign,
-followed by an even number of upper case ASCII hexadecimal digits.
-After each group of 70 digits, a backslash and a linefeed
-are inserted before the next digit.
-.Pp
 .Fn ASN1_ENUMERATED_get ,
 .Fn ASN1_ENUMERATED_set ,
 .Fn BN_to_ASN1_ENUMERATED ,
@@ -294,17 +278,6 @@ object of
 if an error occurs.
 They can fail if the passed type is incorrect (due to a programming error)
 or due to memory allocation failures.
-.Pp
-In case of success,
-.Fn i2a_ASN1_INTEGER
-returns the total number of bytes written, which is at least 2.
-It returns 0 if
-.Fa a
-is
-.Dv NULL
-or -1 if
-.Xr BIO_write 3
-fails.
 .Sh SEE ALSO
 .Xr ASN1_INTEGER_new 3 ,
 .Xr ASN1_STRING_length 3
@@ -313,9 +286,8 @@ fails.
 first appeared in SSLeay 0.5.1.
 .Fn ASN1_INTEGER_get ,
 .Fn BN_to_ASN1_INTEGER ,
-.Fn ASN1_INTEGER_to_BN ,
 and
-.Fn i2a_ASN1_INTEGER
+.Fn ASN1_INTEGER_to_BN
 first appeared in SSLeay 0.6.0.
 .Fn ASN1_INTEGER_cmp
 and
@@ -348,9 +320,8 @@ imply that these functions should be avoided if possible.
 .Sh BUGS
 .Fn ASN1_INTEGER_cmp ,
 .Fn ASN1_INTEGER_dup ,
-.Fn ASN1_INTEGER_to_BN ,
 and
-.Fn i2a_ASN1_INTEGER
+.Fn ASN1_INTEGER_to_BN
 do not check whether their arguments are really of the type
 .Dv V_ASN1_INTEGER
 or
