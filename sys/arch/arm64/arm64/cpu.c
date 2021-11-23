@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.57 2021/11/22 19:22:59 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.58 2021/11/23 01:03:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -605,7 +605,6 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	struct fdt_attach_args *faa = aux;
 	struct cpu_info *ci;
 	uint64_t mpidr = READ_SPECIALREG(mpidr_el1);
-	uint64_t midr = READ_SPECIALREG(midr_el1);
 	uint64_t id_aa64mmfr1, sctlr;
 	uint32_t opp;
 
@@ -638,6 +637,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 
 #ifdef MULTIPROCESSOR
 	if (ci->ci_flags & CPUF_AP) {
+		uint64_t midr = READ_SPECIALREG(midr_el1);
 		char buf[32];
 		uint64_t spinup_data = 0;
 		int spinup_method = 0;
