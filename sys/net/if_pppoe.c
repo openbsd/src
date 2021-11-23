@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.78 2021/07/19 19:00:58 stsp Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.79 2021/11/23 19:13:45 kn Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -586,7 +586,7 @@ breakbreak:
 		PPPOEDEBUG(("%s: session 0x%x connected\n",
 		    sc->sc_sppp.pp_if.if_xname, session));
 		sc->sc_state = PPPOE_STATE_SESSION;
-		microtime(&sc->sc_session_time);
+		getmicrouptime(&sc->sc_session_time);
 		sc->sc_sppp.pp_up(&sc->sc_sppp);	/* notify upper layers */
 
 		break;
