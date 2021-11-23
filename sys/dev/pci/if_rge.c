@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.15 2021/08/16 01:30:27 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.16 2021/11/23 01:44:44 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -1223,6 +1223,8 @@ rge_rxeof(struct rge_queues *q)
 
 		if ((rxstat & (RGE_RDCMDSTS_SOF | RGE_RDCMDSTS_EOF)) !=
 		    (RGE_RDCMDSTS_SOF | RGE_RDCMDSTS_EOF)) {
+			ifp->if_ierrors++;
+			m_freem(m);
 			rge_discard_rxbuf(q, i);
 			continue;
 		}
@@ -1237,6 +1239,7 @@ rge_rxeof(struct rge_queues *q)
 				m_freem(q->q_rx.rge_head);
 				q->q_rx.rge_head = q->q_rx.rge_tail = NULL;
 			}
+			m_freem(m);
 			rge_discard_rxbuf(q, i);
 			continue;
 		}
