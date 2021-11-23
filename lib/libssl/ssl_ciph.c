@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.124 2021/07/03 16:06:44 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.125 2021/11/23 18:26:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -681,7 +681,10 @@ ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method, int num_of_ciphers,
 	co_list_num = 0;	/* actual count of ciphers */
 	for (i = 0; i < num_of_ciphers; i++) {
 		c = ssl_method->get_cipher(i);
-		/* drop those that use any of that is not available */
+		/*
+		 * Drop any invalid ciphers and any which use unavailable
+		 * algorithms.
+		 */
 		if ((c != NULL) && c->valid &&
 		    !(c->algorithm_mkey & disabled_mkey) &&
 		    !(c->algorithm_auth & disabled_auth) &&
