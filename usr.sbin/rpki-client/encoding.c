@@ -1,4 +1,4 @@
-/*	$OpenBSD: encoding.c,v 1.9 2021/10/31 16:00:14 claudio Exp $  */
+/*	$OpenBSD: encoding.c,v 1.10 2021/11/24 15:24:16 claudio Exp $  */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -18,6 +18,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
@@ -185,3 +186,41 @@ hex_encode(const unsigned char *in, size_t insz)
 
 	return out;
 }
+
+/*
+ * Hex decode hexstring into the supplied buffer.
+ * Return 0 on success else -1, if buffer too small or bad encoding.
+ */
+int
+hex_decode(const char *hexstr, char *buf, size_t len)
+{
+	unsigned char ch, r;
+	size_t pos = 0;
+	int i;
+
+	while (*hexstr) {
+		r = 0;
+		for (i = 0; i < 2; i++) {
+			ch = hexstr[i];
+			if (isdigit(ch))
+				ch -= '0';
+			else if (islower(ch))
+				ch -= ('a' - 10);
+			else if (isupper(ch))
+				ch -= ('A' - 10);
+			else
+				return -1;
+			if (ch > 0xf)
+				return -1;
+			r = r << 4 | ch;
+		}
+		if (pos < len)
+			buf[pos++] = r;
+		else
+			return -1;
+
+		hexstr += 2;
+	}
+	return 0;
+}
+

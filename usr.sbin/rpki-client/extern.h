@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.96 2021/11/10 08:34:48 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.97 2021/11/24 15:24:16 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -538,6 +538,7 @@ int		 base64_decode(const unsigned char *, size_t,
 int		 base64_encode_len(size_t, size_t *);
 int		 base64_encode(const unsigned char *, size_t, char **);
 char		*hex_encode(const unsigned char *, size_t);
+int		 hex_decode(const char *, char *, size_t);
 
 
 /* Functions for moving data between processes. */

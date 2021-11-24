@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.11 2021/11/09 11:01:04 claudio Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.12 2021/11/24 15:24:16 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -464,6 +464,19 @@ notification_delta_done(struct notification_xml *nxml)
 void
 log_notification_xml(struct notification_xml *nxml)
 {
+	struct delta_item *d;
+	char *hash;
+
 	logx("session_id: %s, serial: %lld", nxml->session_id, nxml->serial);
 	logx("snapshot_uri: %s", nxml->snapshot_uri);
+	hash = hex_encode(nxml->snapshot_hash, sizeof(nxml->snapshot_hash));
+	logx("snapshot hash: %s", hash);
+	free(hash);
+
+	TAILQ_FOREACH(d, &nxml->delta_q, q) {
+		logx("delta serial %lld uri: %s", d->serial, d->uri);
+		hash = hex_encode(d->hash, sizeof(d->hash));
+		logx("delta hash: %s", hash);
+		free(hash);
+	}
 }

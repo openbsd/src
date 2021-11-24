@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.h,v 1.6 2021/10/29 09:27:36 claudio Exp $ */
+/*	$OpenBSD: rrdp.h,v 1.7 2021/11/24 15:24:16 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -35,14 +35,22 @@ enum rrdp_task {
 	DELTA,
 };
 
-/* rrdp generic */
-char	*xstrdup(const char *);
-int	 hex_decode(const char *, char *, size_t);
-
-/* publish or withdraw element */
 struct rrdp;
-struct publish_xml;
 
+struct publish_xml {
+	char			*uri;
+	char			*data;
+	char			 hash[SHA256_DIGEST_LENGTH];
+	size_t			 data_length;
+	enum publish_type	 type;
+};
+
+/* rrdp generic */
+char			*xstrdup(const char *);
+void			 rrdp_publish_file(struct rrdp *, struct publish_xml *,
+			    unsigned char *, size_t);
+
+/* rrdp util */
 struct publish_xml	*new_publish_xml(enum publish_type, char *,
 			    char *, size_t);
 void			 free_publish_xml(struct publish_xml *);
