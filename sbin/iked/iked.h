@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.196 2021/11/24 20:48:00 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.197 2021/11/24 21:06:21 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1104,7 +1104,7 @@ int	 pfkey_sa_add(struct iked *, struct iked_childsa *, struct iked_childsa *);
 int	 pfkey_sa_update_addresses(struct iked *, struct iked_childsa *);
 int	 pfkey_sa_delete(struct iked *, struct iked_childsa *);
 int	 pfkey_sa_last_used(struct iked *, struct iked_childsa *, uint64_t *);
-int	 pfkey_flush(int);
+int	 pfkey_flush(struct iked *);
 int	 pfkey_socket(struct iked *);
 void	 pfkey_init(struct iked *, int fd);
 
