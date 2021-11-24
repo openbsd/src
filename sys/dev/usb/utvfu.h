@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.h,v 1.4 2021/11/24 21:47:14 mglocker Exp $ */
+/*	$OpenBSD: utvfu.h,v 1.5 2021/11/24 22:03:05 mglocker Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * All rights reserved.
@@ -58,7 +58,6 @@
  * Higher numbers was seen to overly saturate the USB bus.
  */
 #define UTVFU_ISOC_TRANSFERS	3
-#define UTVFU_ISOC_PACKETS	8
 
 #define UTVFU_CHUNK_SIZE	256
 #define UTVFU_CHUNK		240
@@ -71,13 +70,13 @@
 #define UTVFU_SVIDEO_INPUT	1
 
 /* Chunk header. */
-#define UTVFU_MAGIC(hdr)	(hdr & 0xff000000U)
+#define UTVFU_MAGIC(hdr)	 (hdr & 0xff000000U)
 #define UTVFU_MAGIC_OK(hdr)	((hdr & 0xff000000U) == 0x88000000U)
 #define UTVFU_FRAME_ID(hdr)	((hdr & 0x00ff0000U) >> 16)
 #define UTVFU_ODD(hdr)		((hdr & 0x0000f000U) >> 15)
-#define UTVFU_CHUNK_NO(hdr)	(hdr & 0x00000fffU)
+#define UTVFU_CHUNK_NO(hdr)	 (hdr & 0x00000fffU)
 
-#define UTVFU_TV_STD  (V4L2_STD_525_60 | V4L2_STD_PAL)
+#define UTVFU_TV_STD		(V4L2_STD_525_60 | V4L2_STD_PAL)
 
 /* parameters for supported TV norms */
 struct utvfu_norm_params {
