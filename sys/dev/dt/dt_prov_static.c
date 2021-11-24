@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_static.c,v 1.10 2021/09/03 16:45:45 jasper Exp $ */
+/*	$OpenBSD: dt_prov_static.c,v 1.11 2021/11/24 09:47:49 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -76,6 +76,17 @@ DT_STATIC_PROBE2(vmm, guest_enter, "void *", "void *");
 DT_STATIC_PROBE3(vmm, guest_exit, "void *", "void *", "uint64_t");
 
 /*
+ * SMR
+ */
+DT_STATIC_PROBE3(smr, call, "void *", "void *", "int");
+DT_STATIC_PROBE2(smr, called, "void *", "void *");
+DT_STATIC_PROBE1(smr, barrier_enter, "int");
+DT_STATIC_PROBE1(smr, barrier_exit, "int");
+DT_STATIC_PROBE0(smr, wakeup);
+DT_STATIC_PROBE2(smr, thread, "uint64_t", "uint64_t");
+
+
+/*
  * List of all static probes
  */
 struct dt_probe *dtps_static[] = {
@@ -105,6 +116,13 @@ struct dt_probe *dtps_static[] = {
 	/* VMM */
 	&_DT_STATIC_P(vmm, guest_enter),
 	&_DT_STATIC_P(vmm, guest_exit),
+	/* SMR */
+	&_DT_STATIC_P(smr, call),
+	&_DT_STATIC_P(smr, called),
+	&_DT_STATIC_P(smr, barrier_enter),
+	&_DT_STATIC_P(smr, barrier_exit),
+	&_DT_STATIC_P(smr, wakeup),
+	&_DT_STATIC_P(smr, thread),
 };
 
 int
