@@ -1,4 +1,4 @@
-/* $OpenBSD: ext_dat.h,v 1.3 2021/09/02 21:27:26 job Exp $ */
+/* $OpenBSD: ext_dat.h,v 1.4 2021/11/24 19:22:14 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -73,6 +73,7 @@ extern X509V3_EXT_METHOD v3_crl_hold, v3_pci;
 extern X509V3_EXT_METHOD v3_policy_mappings, v3_policy_constraints;
 extern X509V3_EXT_METHOD v3_name_constraints, v3_inhibit_anyp, v3_idp;
 extern const X509V3_EXT_METHOD v3_addr, v3_asid;
+extern const X509V3_EXT_METHOD v3_ct_scts[3];
 
 /* This table will be searched using OBJ_bsearch so it *must* kept in
  * order of the ext_nid values.
@@ -129,6 +130,11 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
 	&v3_idp,
 	&v3_alt[2],
 	&v3_freshest_crl,
+#ifndef OPENSSL_NO_CT
+	&v3_ct_scts[0],
+	&v3_ct_scts[1],
+	&v3_ct_scts[2],
+#endif
 };
 
 /* Number of standard extensions */
