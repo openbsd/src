@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_vfy.c,v 1.17 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: ocsp_vfy.c,v 1.18 2021/11/24 19:29:19 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -96,10 +96,9 @@ OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs, X509_STORE *st,
 	if (!(flags & OCSP_NOSIGS)) {
 		EVP_PKEY *skey;
 
-		skey = X509_get_pubkey(signer);
+		skey = X509_get0_pubkey(signer);
 		if (skey) {
 			ret = OCSP_BASICRESP_verify(bs, skey, 0);
-			EVP_PKEY_free(skey);
 		}
 		if (!skey || ret <= 0) {
 			OCSPerror(OCSP_R_SIGNATURE_FAILURE);
