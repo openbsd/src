@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.53 2021/11/14 08:21:47 jsing Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.54 2021/11/24 05:38:12 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -1164,62 +1164,99 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 	x509_verify_chain_free(current_chain);
 
 	/*
-	 * Bring back the failure case we wanted to the xsc if
-	 * we saved one.
+	 * Do the new verifier style return, where we don't have an xsc
+	 * that allows a crazy callback to turn invalid things into valid.
 	 */
-	if (!x509_verify_ctx_restore_xsc_error(ctx))
-		goto err;
+	if (ctx->xsc == NULL) {
+		/*
+		 * Safety net:
+		 * We could not find a validated chain, and for some reason do not
+		 * have an error set.
+		 */
+		if (ctx->chains_count == 0 && ctx->error == X509_V_OK)
+			ctx->error = X509_V_ERR_UNSPECIFIED;
+
+		/*
+		 * If we are not using an xsc, and have no possibility for the
+		 * crazy OpenSSL callback API changing the results of
+		 * validation steps (because the callback can make validation
+		 * proceed in the presence of invalid certs), any chains we
+		 * have here are correctly built and verified.
+		 */
+		if (ctx->chains_count > 0)
+			ctx->error = X509_V_OK;
+
+		return ctx->chains_count;
+	}
 
 	/*
-	 * Safety net:
-	 * We could not find a validated chain, and for some reason do not
-	 * have an error set.
+	 * Otherwise we are doing compatibility with an xsc, which means that we
+	 * will have one chain, which might actually be a bogus chain because
+	 * the callback told us to ignore errors and proceed to build an invalid
+	 * chain. Possible return values from this include returning 1 with an
+	 * invalid chain and a value of xsc->error != X509_V_OK (It's tradition
+	 * that makes it ok).
 	 */
-	if (ctx->chains_count == 0 && ctx->error == X509_V_OK) {
-		ctx->error = X509_V_ERR_UNSPECIFIED;
-		if (ctx->xsc != NULL && ctx->xsc->error != X509_V_OK)
-			ctx->error = ctx->xsc->error;
-	}
 
-	/* Clear whatever errors happened if we have any validated chain */
-	if (ctx->chains_count > 0)
-		ctx->error = X509_V_OK;
+	if (ctx->chains_count > 0) {
+		/*
+		 * The chain we have using an xsc might not be a verified chain
+		 * if the callback perverted things while we built it to ignore
+		 * failures and proceed with chain building. We put this chain
+		 * and the error associated with it on the xsc.
+		 */
+		if (!x509_verify_ctx_set_xsc_chain(ctx, ctx->chains[0], 1, 1))
+			goto err;
 
-	if (ctx->xsc != NULL) {
-		ctx->xsc->error = ctx->error;
-		if (ctx->chains_count > 0) {
-			/* Take the first chain we found. */
-			if (!x509_verify_ctx_set_xsc_chain(ctx, ctx->chains[0],
-			    1, 1))
-				goto err;
-			ctx->xsc->error = X509_V_OK;
-			/*
-			 * Call the callback indicating success up our already
-			 * verified chain. The callback could still tell us to
-			 * fail.
-			 */
-			if(!x509_vfy_callback_indicate_success(ctx->xsc)) {
-				/* The callback can change the error code */
-				ctx->error = ctx->xsc->error;
-				goto err;
-			}
-		} else {
-			/*
-			 * We had a failure, indicate the failure, but
-			 * allow the callback to override at depth 0
-			 */
-			if (ctx->xsc->verify_cb(0, ctx->xsc)) {
-				ctx->xsc->error = X509_V_OK;
-				return 1;
-			}
+		/*
+		 * Call the callback for completion up our built
+		 * chain. The callback could still tell us to
+		 * fail. Since this chain might exist as the result of
+		 * callback doing perversions, we could still return
+		 * "success" with something other than X509_V_OK set
+		 * as the error.
+		 */
+		if (!x509_vfy_callback_indicate_completion(ctx->xsc))
+			goto err;
+	} else {
+		/*
+		 * We did not find a chain. Bring back the failure
+		 * case we wanted to the xsc if we saved one. If we
+		 * did not we should have just the leaf on the xsc.
+		 */
+		if (!x509_verify_ctx_restore_xsc_error(ctx))
+			goto err;
+
+		/*
+		 * Safety net, ensure we have an error set in the
+		 * failing case.
+		 */
+		if (ctx->xsc->error == X509_V_OK) {
+			if (ctx->error == X509_V_OK)
+				ctx->error = X509_V_ERR_UNSPECIFIED;
+			ctx->xsc->error = ctx->error;
 		}
+
+		/*
+		 * Let the callback override the return value
+		 * at depth 0 if it chooses to
+		 */
+		return ctx->xsc->verify_cb(0, ctx->xsc);
 	}
-	return (ctx->chains_count);
+
+	/* We only ever find one chain in compat mode with an xsc. */
+	return 1;
 
  err:
 	if (ctx->error == X509_V_OK)
 		ctx->error = X509_V_ERR_UNSPECIFIED;
-	if (ctx->xsc != NULL)
-		ctx->xsc->error = ctx->error;
+
+	if (ctx->xsc != NULL) {
+		if (ctx->xsc->error == X509_V_OK)
+			ctx->xsc->error = X509_V_ERR_UNSPECIFIED;
+		ctx->error = ctx->xsc->error;
+	}
+
 	return 0;
 }
+

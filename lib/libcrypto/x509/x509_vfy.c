@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.97 2021/11/13 18:24:45 schwarze Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.98 2021/11/24 05:38:12 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1989,8 +1989,12 @@ internal_verify(X509_STORE_CTX *ctx)
 	return x509_vfy_internal_verify(ctx, 0);
 }
 
+/*
+ * Internal verify, but with a chain where the verification
+ * math has already been performed.
+ */
 int
-x509_vfy_callback_indicate_success(X509_STORE_CTX *ctx)
+x509_vfy_callback_indicate_completion(X509_STORE_CTX *ctx)
 {
 	return x509_vfy_internal_verify(ctx, 1);
 }
