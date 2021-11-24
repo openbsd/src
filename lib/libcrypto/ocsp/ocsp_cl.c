@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_cl.c,v 1.19 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: ocsp_cl.c,v 1.20 2021/11/24 19:27:03 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -86,7 +86,7 @@ OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid)
 	if ((one = OCSP_ONEREQ_new()) == NULL)
 		goto err;
 	if (req != NULL) {
-	       	if (!sk_OCSP_ONEREQ_push(req->tbsRequest->requestList, one))
+		if (!sk_OCSP_ONEREQ_push(req->tbsRequest->requestList, one))
 			goto err;
 	}
 	OCSP_CERTID_free(one->reqCert);
