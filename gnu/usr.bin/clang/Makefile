@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2021/11/23 10:30:08 robert Exp $
+# $OpenBSD: Makefile,v 1.17 2021/11/24 15:15:19 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -21,8 +21,6 @@ SUBDIR+=include/llvm/${arch}
 .endfor
 
 SUBDIR+=libLLVM
-SUBDIR+=libLLVMDlltoolDriver
-SUBDIR+=libLLVMLibDriver
 SUBDIR+=llvm-config
 
 SUBDIR+=clang-tblgen
@@ -102,9 +100,14 @@ SUBDIR+=lldb
 SUBDIR+=lldb-server
 
 SUBDIR+=include/llvm-objcopy
-SUBDIR+=llvm-ar
 SUBDIR+=llvm-objcopy
 SUBDIR+=llvm-objdump
+
+.if ${AR_VERSION:L} == "llvm"
+SUBDIR+=libLLVMDlltoolDriver
+SUBDIR+=libLLVMLibDriver
+SUBDIR+=llvm-ar
+.endif
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
