@@ -1,5 +1,6 @@
-.\"     $OpenBSD: ASN1_item_d2i.3,v 1.13 2021/11/24 13:18:08 schwarze Exp $
-.\"     OpenSSL doc/man3/d2i_X509.pod b97fdb57 Nov 11 09:33:09 2016 +0100
+.\" $OpenBSD: ASN1_item_d2i.3,v 1.14 2021/11/24 13:30:56 schwarze Exp $
+.\" selective merge up to:
+.\" OpenSSL doc/man3/d2i_X509.pod 256989ce Jun 19 15:00:32 2020 +0200
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
@@ -350,9 +351,10 @@ if (len < 0)
 .Pp
 Attempt to decode a buffer:
 .Bd -literal -offset indent
-X509		*x;
-unsigned char	*buf, *p;
-int		 len;
+X509			*x;
+unsigned char		*buf;
+const unsigned char	*p;
+int			 len;
 
 /* Set up buf and len to point to the input buffer. */
 p = buf;
@@ -363,9 +365,10 @@ if (x == NULL)
 .Pp
 Equivalent technique:
 .Bd -literal -offset indent
-X509		*x;
-unsigned char	*buf, *p;
-int		 len;
+X509			*x;
+unsigned char		*buf;
+const unsigned char	*p;
+int			 len;
 
 /* Set up buf and len to point to the input buffer. */
 p = buf;
