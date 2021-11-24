@@ -1110,6 +1110,8 @@
 ./usr/include/openssl/conf.h
 ./usr/include/openssl/conf_api.h
 ./usr/include/openssl/crypto.h
+./usr/include/openssl/ct.h
+./usr/include/openssl/cterr.h
 ./usr/include/openssl/curve25519.h
 ./usr/include/openssl/des.h
 ./usr/include/openssl/dh.h
