@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.h,v 1.25 2016/11/04 17:30:30 miod Exp $ */
+/* $OpenBSD: cryptlib.h,v 1.26 2021/11/24 01:12:43 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,6 +71,9 @@ extern "C" {
 #define X509_PRIVATE_DIR	OPENSSLDIR "/private"
 #define X509_CERT_DIR_EVP        "SSL_CERT_DIR"
 #define X509_CERT_FILE_EVP       "SSL_CERT_FILE"
+
+#define CTLOG_FILE		OPENSSLDIR "/ct_log_list.cnf"
+#define CTLOG_FILE_EVP		"CTLOG_FILE"
 
 void OPENSSL_cpuid_setup(void);
 

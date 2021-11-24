@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.50 2021/11/20 18:10:52 jsing Exp $
+# $OpenBSD: Makefile,v 1.51 2021/11/24 01:12:43 beck Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -18,7 +18,7 @@ CFLAGS+= -Wall -Wundef
 .if ${COMPILER_VERSION:L} == "clang"
 CFLAGS+= -Werror
 .endif
-CFLAGS+= -DLIBRESSL_INTERNAL
+CFLAGS+= -DLIBRESSL_INTERNAL -DLIBRESSL_CRYPTO_INTERNAL
 
 .if !defined(NOPIC)
 CFLAGS+= -DDSO_DLFCN -DHAVE_DLFCN_H -DHAVE_FUNOPEN
@@ -111,6 +111,10 @@ SRCS+= comp_lib.c comp_err.c c_rle.c c_zlib.c
 # conf/
 SRCS+= conf_err.c conf_lib.c conf_api.c conf_def.c conf_mod.c
 SRCS+= conf_mall.c conf_sap.c
+
+# ct/
+SRCS += ct_b64.c ct_err.c ct_log.c ct_oct.c ct_policy.c
+SRCS += ct_prn.c ct_sct.c ct_sct_ctx.c ct_vfy.c ct_x509v3.c
 
 # curve25519/
 SRCS+= curve25519.c curve25519-generic.c
@@ -301,6 +305,7 @@ SRCS+= pcy_cache.c pcy_node.c pcy_data.c pcy_map.c pcy_tree.c pcy_lib.c
 	${LCRYPTO_SRC}/cms \
 	${LCRYPTO_SRC}/comp \
 	${LCRYPTO_SRC}/conf \
+	${LCRYPTO_SRC}/ct \
 	${LCRYPTO_SRC}/curve25519 \
 	${LCRYPTO_SRC}/des \
 	${LCRYPTO_SRC}/dh \
@@ -360,6 +365,8 @@ HDRS=\
 	${LCRYPTO_SRC}/conf/conf.h \
 	${LCRYPTO_SRC}/conf/conf_api.h \
 	${LCRYPTO_SRC}/crypto.h \
+	${LCRYPTO_SRC}/ct/ct.h \
+	${LCRYPTO_SRC}/ct/cterr.h \
 	${LCRYPTO_SRC}/curve25519/curve25519.h \
 	${LCRYPTO_SRC}/des/des.h \
 	${LCRYPTO_SRC}/dh/dh.h \

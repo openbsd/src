@@ -1,4 +1,4 @@
-/* $OpenBSD: safestack.h,v 1.18 2019/08/11 14:14:14 jsing Exp $ */
+/* $OpenBSD: safestack.h,v 1.19 2021/11/24 01:12:43 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -2178,5 +2178,51 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define lh_SSL_SESSION_stats_bio(lh,out) \
   LHM_lh_stats_bio(SSL_SESSION,lh,out)
 #define lh_SSL_SESSION_free(lh) LHM_lh_free(SSL_SESSION,lh)
+
+#ifdef LIBRESSL_CRYPTO_INTERNAL
+#define sk_CTLOG_new(cmp) SKM_sk_new(CTLOG, (cmp))
+#define sk_CTLOG_new_null() SKM_sk_new_null(CTLOG)
+#define sk_CTLOG_free(st) SKM_sk_free(CTLOG, (st))
+#define sk_CTLOG_num(st) SKM_sk_num(CTLOG, (st))
+#define sk_CTLOG_value(st, i) SKM_sk_value(CTLOG, (st), (i))
+#define sk_CTLOG_set(st, i, val) SKM_sk_set(CTLOG, (st), (i), (val))
+#define sk_CTLOG_zero(st) SKM_sk_zero(CTLOG, (st))
+#define sk_CTLOG_push(st, val) SKM_sk_push(CTLOG, (st), (val))
+#define sk_CTLOG_unshift(st, val) SKM_sk_unshift(CTLOG, (st), (val))
+#define sk_CTLOG_find(st, val) SKM_sk_find(CTLOG, (st), (val))
+#define sk_CTLOG_find_ex(st, val) SKM_sk_find_ex(CTLOG, (st), (val))
+#define sk_CTLOG_delete(st, i) SKM_sk_delete(CTLOG, (st), (i))
+#define sk_CTLOG_delete_ptr(st, ptr) SKM_sk_delete_ptr(CTLOG, (st), (ptr))
+#define sk_CTLOG_insert(st, val, i) SKM_sk_insert(CTLOG, (st), (val), (i))
+#define sk_CTLOG_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(CTLOG, (st), (cmp))
+#define sk_CTLOG_dup(st) SKM_sk_dup(CTLOG, st)
+#define sk_CTLOG_pop_free(st, free_func) SKM_sk_pop_free(CTLOG, (st), (free_func))
+#define sk_CTLOG_shift(st) SKM_sk_shift(CTLOG, (st))
+#define sk_CTLOG_pop(st) SKM_sk_pop(CTLOG, (st))
+#define sk_CTLOG_sort(st) SKM_sk_sort(CTLOG, (st))
+#define sk_CTLOG_is_sorted(st) SKM_sk_is_sorted(CTLOG, (st))
+
+#define sk_SCT_new(cmp) SKM_sk_new(SCT, (cmp))
+#define sk_SCT_new_null() SKM_sk_new_null(SCT)
+#define sk_SCT_free(st) SKM_sk_free(SCT, (st))
+#define sk_SCT_num(st) SKM_sk_num(SCT, (st))
+#define sk_SCT_value(st, i) SKM_sk_value(SCT, (st), (i))
+#define sk_SCT_set(st, i, val) SKM_sk_set(SCT, (st), (i), (val))
+#define sk_SCT_zero(st) SKM_sk_zero(SCT, (st))
+#define sk_SCT_push(st, val) SKM_sk_push(SCT, (st), (val))
+#define sk_SCT_unshift(st, val) SKM_sk_unshift(SCT, (st), (val))
+#define sk_SCT_find(st, val) SKM_sk_find(SCT, (st), (val))
+#define sk_SCT_find_ex(st, val) SKM_sk_find_ex(SCT, (st), (val))
+#define sk_SCT_delete(st, i) SKM_sk_delete(SCT, (st), (i))
+#define sk_SCT_delete_ptr(st, ptr) SKM_sk_delete_ptr(SCT, (st), (ptr))
+#define sk_SCT_insert(st, val, i) SKM_sk_insert(SCT, (st), (val), (i))
+#define sk_SCT_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(SCT, (st), (cmp))
+#define sk_SCT_dup(st) SKM_sk_dup(SCT, st)
+#define sk_SCT_pop_free(st, free_func) SKM_sk_pop_free(SCT, (st), (free_func))
+#define sk_SCT_shift(st) SKM_sk_shift(SCT, (st))
+#define sk_SCT_pop(st) SKM_sk_pop(SCT, (st))
+#define sk_SCT_sort(st) SKM_sk_sort(SCT, (st))
+#define sk_SCT_is_sorted(st) SKM_sk_is_sorted(SCT, (st))
+#endif
 
 #endif /* !defined HEADER_SAFESTACK_H */

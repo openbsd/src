@@ -1015,3 +1015,7 @@ id_ct_signedChecklist		1014
 id_kp_bgpsec_router		1015
 tlsfeature	1016
 id_ct_ASPA	1017
+ct_precert_scts	1018
+ct_precert_poison	1019
+ct_precert_signer	1020
+ct_cert_scts		1021

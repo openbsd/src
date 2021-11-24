@@ -1,4 +1,4 @@
-/* $OpenBSD: ossl_typ.h,v 1.14 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: ossl_typ.h,v 1.15 2021/11/24 01:12:43 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -175,5 +175,13 @@ typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from,
 typedef struct ocsp_req_ctx_st OCSP_REQ_CTX;
 typedef struct ocsp_response_st OCSP_RESPONSE;
 typedef struct ocsp_responder_id_st OCSP_RESPID;
+
+#ifdef LIBRESSL_CRYPTO_INTERNAL
+typedef struct sct_st SCT;
+typedef struct sct_ctx_st SCT_CTX;
+typedef struct ctlog_st CTLOG;
+typedef struct ctlog_store_st CTLOG_STORE;
+typedef struct ct_policy_eval_ctx_st CT_POLICY_EVAL_CTX;
+#endif
 
 #endif /* def HEADER_OPENSSL_TYPES_H */
