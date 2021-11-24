@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_smr.c,v 1.13 2021/11/24 09:47:49 claudio Exp $	*/
+/*	$OpenBSD: kern_smr.c,v 1.14 2021/11/24 13:16:00 visa Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -25,8 +25,8 @@
 #include <sys/proc.h>
 #include <sys/smr.h>
 #include <sys/time.h>
-#include <sys/witness.h>
 #include <sys/tracepoint.h>
+#include <sys/witness.h>
 
 #include <machine/cpu.h>
 
@@ -86,7 +86,6 @@ smr_thread(void *arg)
 	struct smr_entry_list deferred;
 	struct smr_entry *smr;
 	size_t count;
-	uint64_t nsec;
 
 	KERNEL_ASSERT_LOCKED();
 	KERNEL_UNLOCK();
@@ -130,11 +129,13 @@ smr_thread(void *arg)
 
 		getmicrouptime(&end);
 		timersub(&end, &start, &elapsed);
-		nsec = TIMEVAL_TO_NSEC(&elapsed);
-		if (nsec / 1000000000ULL >= 2 &&
-		    ratecheck(&loglast, &smr_logintvl))
-			printf("smr: dispatch took %lluus\n", nsec / 1000);
-		TRACEPOINT(smr, thread, nsec, count);
+		if (elapsed.tv_sec >= 2 &&
+		    ratecheck(&loglast, &smr_logintvl)) {
+			printf("smr: dispatch took %ld.%06lds\n",
+			    (long)elapsed.tv_sec,
+			    (long)elapsed.tv_usec);
+		}
+		TRACEPOINT(smr, thread, TIMEVAL_TO_NSEC(&elapsed), count);
 	}
 }
 
