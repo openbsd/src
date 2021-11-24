@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.54 2020/03/26 19:31:39 jca Exp $
+# $OpenBSD: PackageName.pm,v 1.55 2021/11/24 16:51:08 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -81,6 +81,13 @@ sub splitstem
 	}
 }
 
+sub pkg2stem
+{
+	my $s = splitstem(shift);
+	$s =~ tr/A-Z/a-z/;
+	return $s;
+
+}
 sub is_stem
 {
 	my $s = shift;
@@ -95,9 +102,7 @@ sub compile_stemlist
 {
 	my $hash = {};
 	for my $n (@_) {
-		my $stem = splitstem($n);
-		$hash->{$stem} = {} unless defined $hash->{$stem};
-		$hash->{$stem}{$n} = 1;
+		$hash->{pkg2stem($n)}{$n} = 1;
 	}
 	bless $hash, "OpenBSD::PackageLocator::_compiled_stemlist";
 }
@@ -105,7 +110,7 @@ sub compile_stemlist
 sub avail2stems
 {
 	my @avail = @_;
-	return OpenBSD::PackageName::compile_stemlist(@avail);
+	return compile_stemlist(@avail);
 }
 
 package OpenBSD::PackageLocator::_compiled_stemlist;
@@ -119,15 +124,14 @@ sub find
 sub add
 {
 	my ($self, $pkgname) = @_;
-	my $stem = OpenBSD::PackageName::splitstem($pkgname);
-	$self->{$stem}->{$pkgname} = 1;
+	$self->{OpenBSD::PackageName::pkg2stem($pkgname)}{$pkgname} = 1;
 }
 
 sub delete
 {
 	my ($self, $pkgname) = @_;
-	my $stem = OpenBSD::PackageName::splitstem($pkgname);
-	delete $self->{$stem}->{$pkgname};
+	my $stem = OpenBSD::PackageName::pkg2stem($pkgname);
+	delete $self->{$stem}{$pkgname};
 	if(keys %{$self->{$stem}} == 0) {
 		delete $self->{$stem};
 	}
