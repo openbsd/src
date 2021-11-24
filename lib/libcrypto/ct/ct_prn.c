@@ -71,8 +71,7 @@ timestamp_print(uint64_t timestamp, BIO *out)
 	 * Note GeneralizedTime from ASN1_GENERALIZETIME_adj is always 15
 	 * characters long with a final Z. Update it with fractional seconds.
 	 */
-	snprintf(genstr, sizeof(genstr), "%.14s.%03dZ",
-	    ASN1_STRING_get0_data(gen), (unsigned int)(timestamp % 1000));
+	snprintf(genstr, sizeof(genstr), "%.14sZ", ASN1_STRING_get0_data(gen));
 	if (ASN1_GENERALIZEDTIME_set_string(gen, genstr))
 		ASN1_GENERALIZEDTIME_print(out, gen);
 	ASN1_GENERALIZEDTIME_free(gen);
