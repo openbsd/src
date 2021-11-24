@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.374 2021/07/27 17:13:03 mvs Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.375 2021/11/24 18:48:33 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -86,13 +86,11 @@ static __inline u_int16_t __attribute__((__unused__))
 void in_delayed_cksum(struct mbuf *);
 int in_ifcap_cksum(struct mbuf *, struct ifnet *, int);
 
-#ifdef IPSEC
-struct tdb *
-ip_output_ipsec_lookup(struct mbuf *m, int hlen, int *error, struct inpcb *inp,
-    int ipsecflowinfo);
-int
-ip_output_ipsec_send(struct tdb *, struct mbuf *, struct route *, int);
-#endif /* IPSEC */
+struct tdb *ip_output_ipsec_lookup(struct mbuf *m, int hlen, int *error,
+    struct inpcb *inp, int ipsecflowinfo);
+void ip_output_ipsec_pmtu_update(struct tdb *, struct route *, struct in_addr,
+    int, int);
+int ip_output_ipsec_send(struct tdb *, struct mbuf *, struct route *, int);
 
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP
@@ -563,6 +561,36 @@ ip_output_ipsec_lookup(struct mbuf *m, int hlen, int *error, struct inpcb *inp,
 	return tdb;
 }
 
+void
+ip_output_ipsec_pmtu_update(struct tdb *tdb, struct route *ro,
+    struct in_addr dst, int rtableid, int transportmode)
+{
+	struct rtentry *rt = NULL;
+	int rt_mtucloned = 0;
+
+	/* Find a host route to store the mtu in */
+	if (ro != NULL)
+		rt = ro->ro_rt;
+	/* but don't add a PMTU route for transport mode SAs */
+	if (transportmode)
+		rt = NULL;
+	else if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0) {
+		rt = icmp_mtudisc_clone(dst, rtableid, 1);
+		rt_mtucloned = 1;
+	}
+	DPRINTF("spi %08x mtu %d rt %p cloned %d",
+	    ntohl(tdb->tdb_spi), tdb->tdb_mtu, rt, rt_mtucloned);
+	if (rt != NULL) {
+		rt->rt_mtu = tdb->tdb_mtu;
+		if (ro != NULL && ro->ro_rt != NULL) {
+			rtfree(ro->ro_rt);
+			ro->ro_rt = rtalloc(&ro->ro_dst, RT_RESOLVE, rtableid);
+		}
+		if (rt_mtucloned)
+			rtfree(rt);
+	}
+}
+
 int
 ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 {
@@ -570,7 +598,8 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 	struct ifnet *encif;
 #endif
 	struct ip *ip;
-	int error;
+	struct in_addr dst;
+	int error, rtableid;
 
 #if NPF > 0
 	/*
@@ -595,39 +624,17 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 
 	/* Check if we are allowed to fragment */
 	ip = mtod(m, struct ip *);
+	dst = ip->ip_dst;
+	rtableid = m->m_pkthdr.ph_rtableid;
 	if (ip_mtudisc && (ip->ip_off & htons(IP_DF)) && tdb->tdb_mtu &&
 	    ntohs(ip->ip_len) > tdb->tdb_mtu &&
 	    tdb->tdb_mtutimeout > gettime()) {
-		struct rtentry *rt = NULL;
-		int rt_mtucloned = 0;
-		int transportmode = 0;
+		int transportmode;
 
 		transportmode = (tdb->tdb_dst.sa.sa_family == AF_INET) &&
-		    (tdb->tdb_dst.sin.sin_addr.s_addr == ip->ip_dst.s_addr);
-
-		/* Find a host route to store the mtu in */
-		if (ro != NULL)
-			rt = ro->ro_rt;
-		/* but don't add a PMTU route for transport mode SAs */
-		if (transportmode)
-			rt = NULL;
-		else if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0) {
-			rt = icmp_mtudisc_clone(ip->ip_dst,
-			    m->m_pkthdr.ph_rtableid, 1);
-			rt_mtucloned = 1;
-		}
-		DPRINTF("spi %08x mtu %d rt %p cloned %d",
-		    ntohl(tdb->tdb_spi), tdb->tdb_mtu, rt, rt_mtucloned);
-		if (rt != NULL) {
-			rt->rt_mtu = tdb->tdb_mtu;
-			if (ro != NULL && ro->ro_rt != NULL) {
-				rtfree(ro->ro_rt);
-				ro->ro_rt = rtalloc(&ro->ro_dst, RT_RESOLVE,
-				    m->m_pkthdr.ph_rtableid);
-			}
-			if (rt_mtucloned)
-				rtfree(rt);
-		}
+		    (tdb->tdb_dst.sin.sin_addr.s_addr == dst.s_addr);
+		ip_output_ipsec_pmtu_update(tdb, ro, dst, rtableid,
+		    transportmode);
 		ipsec_adjust_mtu(m, tdb->tdb_mtu);
 		m_freem(m);
 		return EMSGSIZE;
@@ -648,6 +655,8 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 		ipsecstat_inc(ipsec_odrops);
 		tdb->tdb_odrops++;
 	}
+	if (ip_mtudisc && error == EMSGSIZE)
+		ip_output_ipsec_pmtu_update(tdb, ro, dst, rtableid, 0);
 	return error;
 }
 #endif /* IPSEC */

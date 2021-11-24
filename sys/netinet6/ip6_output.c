@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.260 2021/07/27 17:13:03 mvs Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.261 2021/11/24 18:48:33 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -143,6 +143,9 @@ static __inline u_int16_t __attribute__((__unused__))
     in6_cksum_phdr(const struct in6_addr *, const struct in6_addr *,
     u_int32_t, u_int32_t);
 void in6_delayed_cksum(struct mbuf *, u_int8_t);
+
+int ip6_output_ipsec_pmtu_update(struct tdb *, struct route_in6 *,
+    struct in6_addr *, int, int, int);
 
 /* Context for non-repeating IDs */
 struct idgen32_ctx ip6_id_ctx;
@@ -2772,6 +2775,51 @@ ip6_output_ipsec_lookup(struct mbuf *m, int *error, struct inpcb *inp)
 }
 
 int
+ip6_output_ipsec_pmtu_update(struct tdb *tdb, struct route_in6 *ro,
+    struct in6_addr *dst, int ifidx, int rtableid, int transportmode)
+{
+	struct rtentry *rt = NULL;
+	int rt_mtucloned = 0;
+
+	/* Find a host route to store the mtu in */
+	if (ro != NULL)
+		rt = ro->ro_rt;
+	/* but don't add a PMTU route for transport mode SAs */
+	if (transportmode)
+		rt = NULL;
+	else if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0) {
+		struct sockaddr_in6 sin6;
+		int error;
+
+		memset(&sin6, 0, sizeof(sin6));
+		sin6.sin6_family = AF_INET6;
+		sin6.sin6_len = sizeof(sin6);
+		sin6.sin6_addr = *dst;
+		sin6.sin6_scope_id = in6_addr2scopeid(ifidx, dst);
+		error = in6_embedscope(dst, &sin6, NULL);
+		if (error) {
+			/* should be impossible */
+			return error;
+		}
+		rt = icmp6_mtudisc_clone(&sin6, rtableid, 1);
+		rt_mtucloned = 1;
+	}
+	DPRINTF("spi %08x mtu %d rt %p cloned %d",
+	    ntohl(tdb->tdb_spi), tdb->tdb_mtu, rt, rt_mtucloned);
+	if (rt != NULL) {
+		rt->rt_mtu = tdb->tdb_mtu;
+		if (ro != NULL && ro->ro_rt != NULL) {
+			rtfree(ro->ro_rt);
+			ro->ro_rt = rtalloc(sin6tosa(&ro->ro_dst), RT_RESOLVE,
+			    rtableid);
+		}
+		if (rt_mtucloned)
+			rtfree(rt);
+	}
+	return 0;
+}
+
+int
 ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route_in6 *ro,
     int tunalready, int fwd)
 {
@@ -2779,7 +2827,8 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route_in6 *ro,
 	struct ifnet *encif;
 #endif
 	struct ip6_hdr *ip6;
-	int error;
+	struct in6_addr dst;
+	int error, ifidx, rtableid;
 
 #if NPF > 0
 	/*
@@ -2804,55 +2853,23 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route_in6 *ro,
 
 	/* Check if we are allowed to fragment */
 	ip6 = mtod(m, struct ip6_hdr *);
+	dst = ip6->ip6_dst;
+	ifidx = m->m_pkthdr.ph_ifidx;
+	rtableid = m->m_pkthdr.ph_rtableid;
 	if (ip_mtudisc && tdb->tdb_mtu &&
 	    sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen) > tdb->tdb_mtu &&
 	    tdb->tdb_mtutimeout > gettime()) {
-		struct rtentry *rt = NULL;
-		int rt_mtucloned = 0;
-		int transportmode = 0;
+		int transportmode;
 
 		transportmode = (tdb->tdb_dst.sa.sa_family == AF_INET6) &&
-		    (IN6_ARE_ADDR_EQUAL(&tdb->tdb_dst.sin6.sin6_addr,
-		    &ip6->ip6_dst));
-
-		/* Find a host route to store the mtu in */
-		if (ro != NULL)
-			rt = ro->ro_rt;
-		/* but don't add a PMTU route for transport mode SAs */
-		if (transportmode)
-			rt = NULL;
-		else if (rt == NULL || (rt->rt_flags & RTF_HOST) == 0) {
-			struct sockaddr_in6 sin6;
-
-			memset(&sin6, 0, sizeof(sin6));
-			sin6.sin6_family = AF_INET6;
-			sin6.sin6_len = sizeof(sin6);
-			sin6.sin6_addr = ip6->ip6_dst;
-			sin6.sin6_scope_id =
-			    in6_addr2scopeid(m->m_pkthdr.ph_ifidx,
-			    &ip6->ip6_dst);
-			error = in6_embedscope(&ip6->ip6_dst, &sin6, NULL);
-			if (error) {
-				/* should be impossible */
-				ipsecstat_inc(ipsec_odrops);
-				m_freem(m);
-				return error;
-			}
-			rt = icmp6_mtudisc_clone(&sin6,
-			    m->m_pkthdr.ph_rtableid, 1);
-			rt_mtucloned = 1;
-		}
-		DPRINTF("spi %08x mtu %d rt %p cloned %d",
-		    ntohl(tdb->tdb_spi), tdb->tdb_mtu, rt, rt_mtucloned);
-		if (rt != NULL) {
-			rt->rt_mtu = tdb->tdb_mtu;
-			if (ro != NULL && ro->ro_rt != NULL) {
-				rtfree(ro->ro_rt);
-				ro->ro_rt = rtalloc(sin6tosa(&ro->ro_dst),
-				    RT_RESOLVE, m->m_pkthdr.ph_rtableid);
-			}
-			if (rt_mtucloned)
-				rtfree(rt);
+		    (IN6_ARE_ADDR_EQUAL(&tdb->tdb_dst.sin6.sin6_addr, &dst));
+		error = ip6_output_ipsec_pmtu_update(tdb, ro, &dst, ifidx,
+		    rtableid, transportmode);
+		if (error) {
+			ipsecstat_inc(ipsec_odrops);
+			tdb->tdb_odrops++;
+			m_freem(m);
+			return error;
 		}
 		ipsec_adjust_mtu(m, tdb->tdb_mtu);
 		m_freem(m);
@@ -2874,6 +2891,8 @@ ip6_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route_in6 *ro,
 		ipsecstat_inc(ipsec_odrops);
 		tdb->tdb_odrops++;
 	}
+	if (ip_mtudisc && error == EMSGSIZE)
+		ip6_output_ipsec_pmtu_update(tdb, ro, &dst, ifidx, rtableid, 0);
 	return error;
 }
 #endif /* IPSEC */
