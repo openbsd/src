@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.h,v 1.3 2016/06/13 19:52:21 mglocker Exp $ */
+/*	$OpenBSD: utvfu.h,v 1.4 2021/11/24 21:47:14 mglocker Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * All rights reserved.
@@ -57,7 +57,7 @@
  * Number of concurrent isochronous urbs submitted.
  * Higher numbers was seen to overly saturate the USB bus.
  */
-#define UTVFU_ISOC_TRANSFERS	16
+#define UTVFU_ISOC_TRANSFERS	3
 #define UTVFU_ISOC_PACKETS	8
 
 #define UTVFU_CHUNK_SIZE	256
