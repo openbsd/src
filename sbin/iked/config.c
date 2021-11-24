@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.82 2021/10/12 09:27:21 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.83 2021/11/24 20:48:00 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -320,12 +320,12 @@ config_free_childsas(struct iked *env, struct iked_childsas *head,
 		TAILQ_REMOVE(head, csa, csa_entry);
 		if (csa->csa_loaded) {
 			RB_REMOVE(iked_activesas, &env->sc_activesas, csa);
-			(void)pfkey_sa_delete(env->sc_pfkey, csa);
+			(void)pfkey_sa_delete(env, csa);
 		}
 		if ((ipcomp = csa->csa_bundled) != NULL) {
 			log_debug("%s: free IPCOMP %p", __func__, ipcomp);
 			if (ipcomp->csa_loaded)
-				(void)pfkey_sa_delete(env->sc_pfkey, ipcomp);
+				(void)pfkey_sa_delete(env, ipcomp);
 			childsa_free(ipcomp);
 		}
 		childsa_free(csa);
@@ -482,7 +482,7 @@ config_setcoupled(struct iked *env, unsigned int couple)
 int
 config_getcoupled(struct iked *env, unsigned int type)
 {
-	return (pfkey_couple(env->sc_pfkey, &env->sc_sas,
+	return (pfkey_couple(env, &env->sc_sas,
 	    type == IMSG_CTL_COUPLE ? 1 : 0));
 }
 
@@ -639,7 +639,7 @@ config_setpfkey(struct iked *env)
 {
 	int	 s;
 
-	if ((s = pfkey_socket()) == -1)
+	if ((s = pfkey_socket(env)) == -1)
 		return (-1);
 	proc_compose_imsg(&env->sc_ps, PROC_IKEV2, -1,
 	    IMSG_PFKEY_SOCKET, -1, s, NULL, 0);

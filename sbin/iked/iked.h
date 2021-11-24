@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.195 2021/10/26 17:31:22 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.196 2021/11/24 20:48:00 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1096,16 +1096,16 @@ int	 eap_mschap_success(struct iked *, struct iked_sa *, int);
 int	 eap_challenge_request(struct iked *, struct iked_sa *, int);
 
 /* pfkey.c */
-int	 pfkey_couple(int, struct iked_sas *, int);
-int	 pfkey_flow_add(int fd, struct iked_flow *);
-int	 pfkey_flow_delete(int fd, struct iked_flow *);
-int	 pfkey_sa_init(int, struct iked_childsa *, uint32_t *);
-int	 pfkey_sa_add(int, struct iked_childsa *, struct iked_childsa *);
-int	 pfkey_sa_update_addresses(int, struct iked_childsa *);
-int	 pfkey_sa_delete(int, struct iked_childsa *);
-int	 pfkey_sa_last_used(int, struct iked_childsa *, uint64_t *);
+int	 pfkey_couple(struct iked *, struct iked_sas *, int);
+int	 pfkey_flow_add(struct iked *, struct iked_flow *);
+int	 pfkey_flow_delete(struct iked *, struct iked_flow *);
+int	 pfkey_sa_init(struct iked *, struct iked_childsa *, uint32_t *);
+int	 pfkey_sa_add(struct iked *, struct iked_childsa *, struct iked_childsa *);
+int	 pfkey_sa_update_addresses(struct iked *, struct iked_childsa *);
+int	 pfkey_sa_delete(struct iked *, struct iked_childsa *);
+int	 pfkey_sa_last_used(struct iked *, struct iked_childsa *, uint64_t *);
 int	 pfkey_flush(int);
-int	 pfkey_socket(void);
+int	 pfkey_socket(struct iked *);
 void	 pfkey_init(struct iked *, int fd);
 
 /* ca.c */

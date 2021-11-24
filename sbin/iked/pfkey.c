@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.77 2021/03/02 03:31:25 jsg Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.78 2021/11/24 20:48:00 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -101,17 +101,17 @@ static const struct pfkey_constmap pfkey_satype[] = {
 };
 
 int	pfkey_map(const struct pfkey_constmap *, uint16_t, uint8_t *);
-int	pfkey_flow(int, uint8_t, uint8_t, struct iked_flow *);
-int	pfkey_sa(int, uint8_t, uint8_t, struct iked_childsa *);
-int	pfkey_sa_getspi(int, uint8_t, struct iked_childsa *, uint32_t *);
-int	pfkey_sagroup(int, uint8_t, uint8_t,
+int	pfkey_flow(struct iked *, uint8_t, uint8_t, struct iked_flow *);
+int	pfkey_sa(struct iked *, uint8_t, uint8_t, struct iked_childsa *);
+int	pfkey_sa_getspi(struct iked *, uint8_t, struct iked_childsa *, uint32_t *);
+int	pfkey_sagroup(struct iked *, uint8_t, uint8_t,
 	    struct iked_childsa *, struct iked_childsa *);
 int	pfkey_write(int, struct sadb_msg *, struct iovec *, int,
 	    uint8_t **, ssize_t *);
 int	pfkey_reply(int, uint8_t **, ssize_t *);
 void	pfkey_dispatch(int, short, void *);
-int	pfkey_sa_lookup(int, struct iked_childsa *, uint64_t *);
-int	pfkey_sa_check_exists(int, struct iked_childsa *);
+int	pfkey_sa_lookup(struct iked *, struct iked_childsa *, uint64_t *);
+int	pfkey_sa_check_exists(struct iked *, struct iked_childsa *);
 
 struct sadb_ident *
 	pfkey_id2ident(struct iked_id *, unsigned int);
@@ -121,7 +121,7 @@ void	pfkey_timer_cb(int, short, void *);
 int	pfkey_process(struct iked *, struct pfkey_message *);
 
 int
-pfkey_couple(int sd, struct iked_sas *sas, int couple)
+pfkey_couple(struct iked *env, struct iked_sas *sas, int couple)
 {
 	struct iked_sa		*sa;
 	struct iked_flow	*flow;
@@ -129,7 +129,7 @@ pfkey_couple(int sd, struct iked_sas *sas, int couple)
 	const char		*mode[] = { "coupled", "decoupled" };
 
 	/* Socket is not ready */
-	if (sd == -1)
+	if (env->sc_pfkey == -1)
 		return (-1);
 
 	if (sadb_decoupled == !couple)
@@ -144,21 +144,21 @@ pfkey_couple(int sd, struct iked_sas *sas, int couple)
 	RB_FOREACH(sa, iked_sas, sas) {
 		TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
 			if (!csa->csa_loaded && couple)
-				(void)pfkey_sa_add(sd, csa, NULL);
+				(void)pfkey_sa_add(env, csa, NULL);
 			else if (csa->csa_loaded && !couple)
-				(void)pfkey_sa_delete(sd, csa);
+				(void)pfkey_sa_delete(env, csa);
 			if ((ipcomp = csa->csa_bundled) != NULL) {
 				if (!ipcomp->csa_loaded && couple)
-					(void)pfkey_sa_add(sd, ipcomp, csa);
+					(void)pfkey_sa_add(env, ipcomp, csa);
 				else if (ipcomp->csa_loaded && !couple)
-					(void)pfkey_sa_delete(sd, ipcomp);
+					(void)pfkey_sa_delete(env, ipcomp);
 			}
 		}
 		TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
 			if (!flow->flow_loaded && couple)
-				(void)pfkey_flow_add(sd, flow);
+				(void)pfkey_flow_add(env, flow);
 			else if (flow->flow_loaded && !couple)
-				(void)pfkey_flow_delete(sd, flow);
+				(void)pfkey_flow_delete(env, flow);
 		}
 	}
 
@@ -181,7 +181,7 @@ pfkey_map(const struct pfkey_constmap *map, uint16_t alg, uint8_t *pfkalg)
 }
 
 int
-pfkey_flow(int sd, uint8_t satype, uint8_t action, struct iked_flow *flow)
+pfkey_flow(struct iked *env, uint8_t satype, uint8_t action, struct iked_flow *flow)
 {
 	struct sadb_msg		 smsg;
 	struct iked_addr	*flow_src, *flow_dst;
@@ -442,7 +442,7 @@ pfkey_flow(int sd, uint8_t satype, uint8_t action, struct iked_flow *flow)
 	}
 #undef PAD
 
-	ret = pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL);
+	ret = pfkey_write(env->sc_pfkey, &smsg, iov, iov_cnt, NULL, NULL);
 
 	free(sa_srcid);
 	free(sa_dstid);
@@ -451,7 +451,7 @@ pfkey_flow(int sd, uint8_t satype, uint8_t action, struct iked_flow *flow)
 }
 
 int
-pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
+pfkey_sa(struct iked *env, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 {
 	struct sadb_msg		 smsg;
 	struct sadb_sa		 sadb;
@@ -832,7 +832,7 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 	}
 #undef PAD
 
-	ret = pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL);
+	ret = pfkey_write(env->sc_pfkey, &smsg, iov, iov_cnt, NULL, NULL);
 
 	free(sa_srcid);
 	free(sa_dstid);
@@ -841,7 +841,7 @@ pfkey_sa(int sd, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 }
 
 int
-pfkey_sa_lookup(int sd, struct iked_childsa *sa, uint64_t *last_used)
+pfkey_sa_lookup(struct iked *env, struct iked_childsa *sa, uint64_t *last_used)
 {
 	struct iked_policy	*pol = sa->csa_ikesa->sa_policy;
 	struct sadb_msg		*msg, smsg;
@@ -958,7 +958,7 @@ pfkey_sa_lookup(int sd, struct iked_childsa *sa, uint64_t *last_used)
 		iov_cnt++;
 	}
 
-	if ((ret = pfkey_write(sd, &smsg, iov, iov_cnt, &data, &n)) != 0)
+	if ((ret = pfkey_write(env->sc_pfkey, &smsg, iov, iov_cnt, &data, &n)) != 0)
 		return (-1);
 
 	msg = (struct sadb_msg *)data;
@@ -989,19 +989,19 @@ done:
 }
 
 int
-pfkey_sa_last_used(int sd, struct iked_childsa *sa, uint64_t *last_used)
+pfkey_sa_last_used(struct iked *env, struct iked_childsa *sa, uint64_t *last_used)
 {
-	return pfkey_sa_lookup(sd, sa, last_used);
+	return pfkey_sa_lookup(env, sa, last_used);
 }
 
 int
-pfkey_sa_check_exists(int sd, struct iked_childsa *sa)
+pfkey_sa_check_exists(struct iked *env, struct iked_childsa *sa)
 {
-	return pfkey_sa_lookup(sd, sa, NULL);
+	return pfkey_sa_lookup(env, sa, NULL);
 }
 
 int
-pfkey_sa_getspi(int sd, uint8_t satype, struct iked_childsa *sa,
+pfkey_sa_getspi(struct iked *env, uint8_t satype, struct iked_childsa *sa,
     uint32_t *spip)
 {
 	struct sadb_msg		*msg, smsg;
@@ -1097,7 +1097,7 @@ pfkey_sa_getspi(int sd, uint8_t satype, struct iked_childsa *sa,
 
 	*spip = 0;
 
-	if ((ret = pfkey_write(sd, &smsg, iov, iov_cnt, &data, &n)) != 0)
+	if ((ret = pfkey_write(env->sc_pfkey, &smsg, iov, iov_cnt, &data, &n)) != 0)
 		return (-1);
 
 	msg = (struct sadb_msg *)data;
@@ -1122,7 +1122,7 @@ done:
 }
 
 int
-pfkey_sagroup(int sd, uint8_t satype1, uint8_t action,
+pfkey_sagroup(struct iked *env, uint8_t satype1, uint8_t action,
     struct iked_childsa *sa1, struct iked_childsa *sa2)
 {
 	struct sadb_msg		smsg;
@@ -1278,11 +1278,11 @@ pfkey_sagroup(int sd, uint8_t satype1, uint8_t action,
 
 #undef PAD
 
-	return (pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL));
+	return (pfkey_write(env->sc_pfkey, &smsg, iov, iov_cnt, NULL, NULL));
 }
 
 int
-pfkey_write(int sd, struct sadb_msg *smsg, struct iovec *iov, int iov_cnt,
+pfkey_write(int fd, struct sadb_msg *smsg, struct iovec *iov, int iov_cnt,
     uint8_t **datap, ssize_t *lenp)
 {
 	ssize_t n, len = smsg->sadb_msg_len * 8;
@@ -1302,7 +1302,7 @@ pfkey_write(int sd, struct sadb_msg *smsg, struct iovec *iov, int iov_cnt,
 		}
 	}
 
-	if ((n = writev(sd, iov, iov_cnt)) == -1) {
+	if ((n = writev(fd, iov, iov_cnt)) == -1) {
 		log_warn("%s: writev failed: type %u len %zd",
 		    __func__, smsg->sadb_msg_type, len);
 		return (-1);
@@ -1311,12 +1311,12 @@ pfkey_write(int sd, struct sadb_msg *smsg, struct iovec *iov, int iov_cnt,
 		return (-1);
 	}
 
-	return (pfkey_reply(sd, datap, lenp));
+	return (pfkey_reply(fd, datap, lenp));
 }
 
 /* wait for pfkey response and returns 0 for ok, -1 for error, -2 for timeout */
 int
-pfkey_reply(int sd, uint8_t **datap, ssize_t *lenp)
+pfkey_reply(int fd, uint8_t **datap, ssize_t *lenp)
 {
 	struct pfkey_message	*pm;
 	struct sadb_msg		 hdr;
@@ -1325,7 +1325,7 @@ pfkey_reply(int sd, uint8_t **datap, ssize_t *lenp)
 	struct pollfd		pfd[1];
 	int			 n;
 
-	pfd[0].fd = sd;
+	pfd[0].fd = fd;
 	pfd[0].events = POLLIN;
 
 	for (;;) {
@@ -1346,7 +1346,7 @@ pfkey_reply(int sd, uint8_t **datap, ssize_t *lenp)
 			return (-2);	/* retry */
 		}
 
-		if (recv(sd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
+		if (recv(fd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
 			log_warn("%s: short recv", __func__);
 			return (-1);
 		}
@@ -1363,7 +1363,7 @@ pfkey_reply(int sd, uint8_t **datap, ssize_t *lenp)
 		}
 		len = hdr.sadb_msg_len * PFKEYV2_CHUNK;
 
-		if (read(sd, data, len) != len) {
+		if (read(fd, data, len) != len) {
 			log_warnx("%s: short read", __func__);
 			free(data);
 			return (-1);
@@ -1414,7 +1414,7 @@ pfkey_reply(int sd, uint8_t **datap, ssize_t *lenp)
 }
 
 int
-pfkey_flow_add(int fd, struct iked_flow *flow)
+pfkey_flow_add(struct iked *env, struct iked_flow *flow)
 {
 	uint8_t		 satype;
 
@@ -1424,7 +1424,7 @@ pfkey_flow_add(int fd, struct iked_flow *flow)
 	if (pfkey_map(pfkey_satype, flow->flow_saproto, &satype) == -1)
 		return (-1);
 
-	if (pfkey_flow(fd, satype, SADB_X_ADDFLOW, flow) == -1)
+	if (pfkey_flow(env, satype, SADB_X_ADDFLOW, flow) == -1)
 		return (-1);
 
 	flow->flow_loaded = 1;
@@ -1433,7 +1433,7 @@ pfkey_flow_add(int fd, struct iked_flow *flow)
 }
 
 int
-pfkey_flow_delete(int fd, struct iked_flow *flow)
+pfkey_flow_delete(struct iked *env, struct iked_flow *flow)
 {
 	uint8_t		satype;
 
@@ -1443,7 +1443,7 @@ pfkey_flow_delete(int fd, struct iked_flow *flow)
 	if (pfkey_map(pfkey_satype, flow->flow_saproto, &satype) == -1)
 		return (-1);
 
-	if (pfkey_flow(fd, satype, SADB_X_DELFLOW, flow) == -1)
+	if (pfkey_flow(env, satype, SADB_X_DELFLOW, flow) == -1)
 		return (-1);
 
 	flow->flow_loaded = 0;
@@ -1452,14 +1452,14 @@ pfkey_flow_delete(int fd, struct iked_flow *flow)
 }
 
 int
-pfkey_sa_init(int fd, struct iked_childsa *sa, uint32_t *spi)
+pfkey_sa_init(struct iked *env, struct iked_childsa *sa, uint32_t *spi)
 {
 	uint8_t		 satype;
 
 	if (pfkey_map(pfkey_satype, sa->csa_saproto, &satype) == -1)
 		return (-1);
 
-	if (pfkey_sa_getspi(fd, satype, sa, spi) == -1)
+	if (pfkey_sa_getspi(env, satype, sa, spi) == -1)
 		return (-1);
 
 	log_debug("%s: new spi 0x%08x", __func__, *spi);
@@ -1468,7 +1468,7 @@ pfkey_sa_init(int fd, struct iked_childsa *sa, uint32_t *spi)
 }
 
 int
-pfkey_sa_add(int fd, struct iked_childsa *sa, struct iked_childsa *last)
+pfkey_sa_add(struct iked *env, struct iked_childsa *sa, struct iked_childsa *last)
 {
 	uint8_t		 satype;
 	unsigned int	 cmd;
@@ -1485,25 +1485,25 @@ pfkey_sa_add(int fd, struct iked_childsa *sa, struct iked_childsa *last)
 	log_debug("%s: %s spi %s", __func__, cmd == SADB_ADD ? "add": "update",
 	    print_spi(sa->csa_spi.spi, 4));
 
-	rval = pfkey_sa(fd, satype, cmd, sa);
+	rval = pfkey_sa(env, satype, cmd, sa);
 	if (rval != 0) {
 		if (cmd == SADB_ADD) {
 			if (rval == -2) {
 				/* timeout: check for existence */
-				if (pfkey_sa_check_exists(fd, sa) == 0) {
+				if (pfkey_sa_check_exists(env, sa) == 0) {
 					log_debug("%s: SA exists after timeout",
 					    __func__);
 					goto loaded;
 				}
 			}
-			(void)pfkey_sa_delete(fd, sa);
+			(void)pfkey_sa_delete(env, sa);
 			return (-1);
 		}
 		if (sa->csa_allocated && !sa->csa_loaded && errno == ESRCH) {
 			/* Needed for recoupling local SAs */
 			log_debug("%s: SADB_UPDATE on local SA returned ESRCH,"
 			    " trying SADB_ADD", __func__);
-			if (pfkey_sa(fd, satype, SADB_ADD, sa) == -1)
+			if (pfkey_sa(env, satype, SADB_ADD, sa) == -1)
 				return (-1);
 		} else {
 			return (-1);
@@ -1512,9 +1512,9 @@ pfkey_sa_add(int fd, struct iked_childsa *sa, struct iked_childsa *last)
 
  loaded:
 	if (last != NULL) {
-		if (pfkey_sagroup(fd, satype,
+		if (pfkey_sagroup(env, satype,
 		    SADB_X_GRPSPIS, sa, last) == -1) {
-			(void)pfkey_sa_delete(fd, sa);
+			(void)pfkey_sa_delete(env, sa);
 			return (-1);
 		}
 	}
@@ -1524,7 +1524,7 @@ pfkey_sa_add(int fd, struct iked_childsa *sa, struct iked_childsa *last)
 }
 
 int
-pfkey_sa_update_addresses(int fd, struct iked_childsa *sa)
+pfkey_sa_update_addresses(struct iked *env, struct iked_childsa *sa)
 {
 	uint8_t		 satype;
 
@@ -1538,11 +1538,11 @@ pfkey_sa_update_addresses(int fd, struct iked_childsa *sa)
 	if (pfkey_map(pfkey_satype, sa->csa_saproto, &satype) == -1)
 		return (-1);
 	log_debug("%s: spi %s", __func__, print_spi(sa->csa_spi.spi, 4));
-	return pfkey_sa(fd, satype, IKED_SADB_UPDATE_SA_ADDRESSES, sa);
+	return pfkey_sa(env, satype, IKED_SADB_UPDATE_SA_ADDRESSES, sa);
 }
 
 int
-pfkey_sa_delete(int fd, struct iked_childsa *sa)
+pfkey_sa_delete(struct iked *env, struct iked_childsa *sa)
 {
 	uint8_t		satype;
 
@@ -1552,8 +1552,8 @@ pfkey_sa_delete(int fd, struct iked_childsa *sa)
 	if (pfkey_map(pfkey_satype, sa->csa_saproto, &satype) == -1)
 		return (-1);
 
-	if (pfkey_sa(fd, satype, SADB_DELETE, sa) == -1 &&
-	    pfkey_sa_check_exists(fd, sa) == 0)
+	if (pfkey_sa(env, satype, SADB_DELETE, sa) == -1 &&
+	    pfkey_sa_check_exists(env, sa) == 0)
 		return (-1);
 
 	sa->csa_loaded = 0;
@@ -1561,7 +1561,7 @@ pfkey_sa_delete(int fd, struct iked_childsa *sa)
 }
 
 int
-pfkey_flush(int sd)
+pfkey_flush(int fd)
 {
 	struct sadb_msg smsg;
 	struct iovec	iov[IOV_CNT];
@@ -1581,7 +1581,7 @@ pfkey_flush(int sd)
 	iov[iov_cnt].iov_len = sizeof(smsg);
 	iov_cnt++;
 
-	return (pfkey_write(sd, &smsg, iov, iov_cnt, NULL, NULL));
+	return (pfkey_write(fd, &smsg, iov, iov_cnt, NULL, NULL));
 }
 
 struct sadb_ident *
@@ -1632,7 +1632,7 @@ pfkey_id2ident(struct iked_id *id, unsigned int exttype)
 }
 
 int
-pfkey_socket(void)
+pfkey_socket(struct iked *env)
 {
 	int	 fd;
 
@@ -1692,7 +1692,7 @@ pfkey_init(struct iked *env, int fd)
 	iov.iov_base = &smsg;
 	iov.iov_len = sizeof(smsg);
 
-	if (pfkey_write(fd, &smsg, &iov, 1, NULL, NULL))
+	if (pfkey_write(env->sc_pfkey, &smsg, &iov, 1, NULL, NULL))
 		fatal("pfkey_init: failed to set up AH acquires");
 }
 
@@ -1713,7 +1713,7 @@ pfkey_find_ext(uint8_t *data, ssize_t len, int type)
 }
 
 void
-pfkey_dispatch(int sd, short event, void *arg)
+pfkey_dispatch(int fd, short event, void *arg)
 {
 	struct iked		*env = (struct iked *)arg;
 	struct pfkey_message	 pm, *pmp;
@@ -1721,7 +1721,7 @@ pfkey_dispatch(int sd, short event, void *arg)
 	ssize_t			 len;
 	uint8_t			*data;
 
-	if (recv(sd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
+	if (recv(fd, &hdr, sizeof(hdr), MSG_PEEK) != sizeof(hdr)) {
 		log_warn("%s: short recv", __func__);
 		return;
 	}
@@ -1738,7 +1738,7 @@ pfkey_dispatch(int sd, short event, void *arg)
 	}
 	len = hdr.sadb_msg_len * PFKEYV2_CHUNK;
 
-	if (read(sd, data, len) != len) {
+	if (read(fd, data, len) != len) {
 		log_warn("%s: short read", __func__);
 		free(data);
 		return;
@@ -1807,7 +1807,7 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 	struct sadb_x_policy	 sa_pol;
 	struct sockaddr		*ssrc, *sdst, *smask, *dmask, *speer;
 	struct iovec		 iov[IOV_CNT];
-	int			 ret = 0, iov_cnt, sd;
+	int			 ret = 0, iov_cnt, fd;
 	uint8_t			*reply;
 	ssize_t			 rlen;
 	const char		*errmsg = NULL;
@@ -1818,7 +1818,7 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 	if (!env || !data || !len)
 		return (0);
 
-	sd = env->sc_pfkey;
+	fd = env->sc_pfkey;
 	hdr = (struct sadb_msg *)data;
 
 	switch (hdr->sadb_msg_type) {
@@ -1873,7 +1873,7 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 		smsg.sadb_msg_len += sizeof(sa_pol) / 8;
 		iov_cnt++;
 
-		if (pfkey_write(sd, &smsg, iov, iov_cnt, &reply, &rlen)) {
+		if (pfkey_write(fd, &smsg, iov, iov_cnt, &reply, &rlen)) {
 			log_warnx("%s: failed to get a policy", __func__);
 			return (0);
 		}
