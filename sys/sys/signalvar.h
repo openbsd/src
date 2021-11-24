@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.50 2021/10/06 15:46:03 claudio Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.51 2021/11/24 10:28:55 claudio Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -73,8 +73,6 @@ struct	sigacts {
 
 /*
  * Signal properties and actions.
- * The array below categorizes the signals and their default actions
- * according to the following properties:
  */
 #define	SA_KILL		0x01		/* terminates process by default */
 #define	SA_CORE		0x02		/* ditto and coredumps */

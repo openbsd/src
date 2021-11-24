@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.288 2021/11/12 17:57:13 cheloha Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.289 2021/11/24 10:28:55 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -82,7 +82,10 @@ const struct filterops sig_filtops = {
 	.f_event	= filt_signal,
 };
 
-const int sigprop[NSIG + 1] = {
+/*
+ * The array below categorizes the signals and their default actions.
+ */
+const int sigprop[NSIG] = {
 	0,			/* unused */
 	SA_KILL,		/* SIGHUP */
 	SA_KILL,		/* SIGINT */
@@ -209,6 +212,17 @@ signal_init(void)
 }
 
 /*
+ * Initialize a new sigaltstack structure.
+ */
+void
+sigstkinit(struct sigaltstack *ss)
+{
+	ss->ss_flags = SS_DISABLE;
+	ss->ss_size = 0;
+	ss->ss_sp = NULL;
+}
+
+/*
  * Create an initial sigacts structure, using the same signal state
  * as pr.
  */
@@ -220,17 +234,6 @@ sigactsinit(struct process *pr)
 	ps = pool_get(&sigacts_pool, PR_WAITOK);
 	memcpy(ps, pr->ps_sigacts, sizeof(struct sigacts));
 	return (ps);
-}
-
-/*
- * Initialize a new sigaltstack structure.
- */
-void
-sigstkinit(struct sigaltstack *ss)
-{
-	ss->ss_flags = SS_DISABLE;
-	ss->ss_size = 0;
-	ss->ss_sp = NULL;
 }
 
 /*
