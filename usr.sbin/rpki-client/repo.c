@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.12 2021/11/15 16:32:15 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.13 2021/11/25 12:55:34 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1213,6 +1213,8 @@ repo_next_timeout(int timeout)
 	SLIST_FOREACH(rp, &repos, entry) {
 		if (repo_state(rp) == REPO_LOADING) {
 			int diff = rp->alarm - now;
+			if (diff < 0)
+				diff = 0;
 			diff *= 1000;
 			if (timeout == INFTIM || diff < timeout)
 				timeout = diff;
