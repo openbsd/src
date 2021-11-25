@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.103 2021/11/22 11:30:16 anton Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.104 2021/11/25 06:25:32 anton Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -256,16 +256,21 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	/* Look for a driver claiming multiple report IDs first. */
 	dev = config_found_sm(self, &uha, NULL, NULL);
 	if (dev != NULL) {
+		int nclaimed = 0;
+
 		for (repid = 0; repid < nrepid; repid++) {
+			if (!uha.claimed[repid])
+				continue;
+
+			nclaimed++;
 			/*
 			 * Could already be assigned by uhidev_set_report_dev().
 			 */
 			if (sc->sc_subdevs[repid] != NULL)
-				continue;
-
-			if (uha.claimed[repid])
 				sc->sc_subdevs[repid] = (struct uhidev *)dev;
 		}
+		KASSERTMSG(nclaimed > 0, "%s did not claim any report ids",
+		    dev->dv_xname);
 	}
 
 	free(uha.claimed, M_TEMP, nrepid);
