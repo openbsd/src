@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.221 2021/10/25 18:25:01 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.222 2021/11/25 13:46:02 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1043,8 +1043,17 @@ pfkeyv2_sa_flush(struct tdb *tdb, void *satype_vp, int last)
 {
 	if (!(*((u_int8_t *) satype_vp)) ||
 	    tdb->tdb_satype == *((u_int8_t *) satype_vp)) {
+		/* keep in sync with tdb_delete() */
+		NET_ASSERT_LOCKED();
+
+		if (tdb->tdb_flags & TDBF_DELETED)
+			return (0);
+		tdb->tdb_flags |= TDBF_DELETED;
+
 		tdb_unlink_locked(tdb);
-		tdb_free(tdb);
+		tdb_unbundle(tdb);
+		tdb_deltimeouts(tdb);
+		tdb_unref(tdb);
 	}
 	return (0);
 }
@@ -1327,7 +1336,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 
 			if ((rval = pfkeyv2_get_proto_alg(newsa->tdb_satype,
 			    &newsa->tdb_sproto, &alg))) {
-				tdb_free(freeme);
+				tdb_unref(freeme);
 				freeme = NULL;
 				NET_UNLOCK();
 				goto ret;
@@ -1363,7 +1372,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			    headers[SADB_X_EXT_DST_MASK],
 			    headers[SADB_X_EXT_PROTOCOL],
 			    headers[SADB_X_EXT_FLOW_TYPE]))) {
-				tdb_free(freeme);
+				tdb_unref(freeme);
 				freeme = NULL;
 				NET_UNLOCK();
 				goto ret;
@@ -1386,7 +1395,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			rval = tdb_init(newsa, alg, &ii);
 			if (rval) {
 				rval = EINVAL;
-				tdb_free(freeme);
+				tdb_unref(freeme);
 				freeme = NULL;
 				NET_UNLOCK();
 				goto ret;
@@ -1397,7 +1406,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			/* Delete old version of the SA, insert new one */
 			tdb_delete(sa2);
 			puttdb((struct tdb *) freeme);
-			sa2 = freeme = NULL;
+			freeme = NULL;
 		} else {
 			/*
 			 * The SA is already initialized, so we're only allowed to
@@ -1503,7 +1512,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			newsa->tdb_satype = smsg->sadb_msg_satype;
 			if ((rval = pfkeyv2_get_proto_alg(newsa->tdb_satype,
 			    &newsa->tdb_sproto, &alg))) {
-				tdb_free(freeme);
+				tdb_unref(freeme);
 				freeme = NULL;
 				NET_UNLOCK();
 				goto ret;
@@ -1541,7 +1550,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			    headers[SADB_X_EXT_DST_MASK],
 			    headers[SADB_X_EXT_PROTOCOL],
 			    headers[SADB_X_EXT_FLOW_TYPE]))) {
-				tdb_free(freeme);
+				tdb_unref(freeme);
 				freeme = NULL;
 				NET_UNLOCK();
 				goto ret;
@@ -1564,7 +1573,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 			rval = tdb_init(newsa, alg, &ii);
 			if (rval) {
 				rval = EINVAL;
-				tdb_free(freeme);
+				tdb_unref(freeme);
 				freeme = NULL;
 				NET_UNLOCK();
 				goto ret;
@@ -1596,7 +1605,6 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 		tdb_delete(sa2);
 		NET_UNLOCK();
 
-		sa2 = NULL;
 		break;
 
 	case SADB_X_ASKPOLICY:
@@ -1786,6 +1794,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 		    ssa->sadb_sa_spi, sunionp,
 		    SADB_X_GETSPROTO(sa_proto->sadb_protocol_proto));
 		if (tdb2 == NULL) {
+			tdb_unref(tdb1);
 			rval = ESRCH;
 			NET_UNLOCK();
 			goto ret;
@@ -1794,6 +1803,8 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 		/* Detect cycles */
 		for (tdb3 = tdb2; tdb3; tdb3 = tdb3->tdb_onext)
 			if (tdb3 == tdb1) {
+				tdb_unref(tdb1);
+				tdb_unref(tdb2);
 				rval = ESRCH;
 				NET_UNLOCK();
 				goto ret;
@@ -1801,12 +1812,16 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 
 		/* Maintenance */
 		if ((tdb1->tdb_onext) &&
-		    (tdb1->tdb_onext->tdb_inext == tdb1))
+		    (tdb1->tdb_onext->tdb_inext == tdb1)) {
+			tdb_unref(tdb1->tdb_onext->tdb_inext);
 			tdb1->tdb_onext->tdb_inext = NULL;
+		}
 
 		if ((tdb2->tdb_inext) &&
-		    (tdb2->tdb_inext->tdb_onext == tdb2))
+		    (tdb2->tdb_inext->tdb_onext == tdb2)) {
+			tdb_unref(tdb2->tdb_inext->tdb_onext);
 			tdb2->tdb_inext->tdb_onext = NULL;
+		}
 
 		/* Link them */
 		tdb1->tdb_onext = tdb2;
@@ -2008,10 +2023,12 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 				(caddr_t)&ipo->ipo_mask, rnh,
 				ipo->ipo_nodes, 0)) == NULL) {
 				/* Remove from linked list of policies on TDB */
-				if (ipo->ipo_tdb)
-					TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head,
+				if (ipo->ipo_tdb != NULL) {
+					TAILQ_REMOVE(
+					    &ipo->ipo_tdb->tdb_policy_head,
 					    ipo, ipo_tdb_next);
-
+					tdb_unref(ipo->ipo_tdb);
+				}
 				if (ipo->ipo_ids)
 					ipsp_ids_free(ipo->ipo_ids);
 				pool_put(&ipsec_policy_pool, ipo);
@@ -2127,6 +2144,10 @@ realret:
 	free(message, M_PFKEY, len);
 
 	free(sa1, M_PFKEY, sizeof(*sa1));
+
+	NET_LOCK();
+	tdb_unref(sa2);
+	NET_UNLOCK();
 
 	return (rval);
 }

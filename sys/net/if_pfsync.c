@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.298 2021/11/11 12:35:01 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.299 2021/11/25 13:46:02 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1325,11 +1325,13 @@ pfsync_update_net_tdb(struct pfsync_tdb *pt)
 		/* Neither replay nor byte counter should ever decrease. */
 		if (pt->rpl < tdb->tdb_rpl ||
 		    pt->cur_bytes < tdb->tdb_cur_bytes) {
+			tdb_unref(tdb);
 			goto bad;
 		}
 
 		tdb->tdb_rpl = pt->rpl;
 		tdb->tdb_cur_bytes = pt->cur_bytes;
+		tdb_unref(tdb);
 	}
 	return;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.264 2021/11/11 18:08:18 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.265 2021/11/25 13:46:02 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -514,11 +514,13 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		    IPSP_DIRECTION_IN, tdb, inp, 0);
 		if (error) {
 			udpstat_inc(udps_nosec);
+			tdb_unref(tdb);
 			goto bad;
 		}
 		/* create ipsec options while we know that tdb cannot be modified */
 		if (tdb && tdb->tdb_ids)
 			ipsecflowinfo = tdb->tdb_ids->id_flow;
+		tdb_unref(tdb);
 	}
 #endif /*IPSEC */
 

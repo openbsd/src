@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.253 2021/11/21 16:17:48 mvs Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.254 2021/11/25 13:46:02 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -85,7 +85,6 @@ void tdb_hashstats(void);
 #endif
 
 int		tdb_rehash(void);
-void		tdb_reaper(void *);
 void		tdb_timeout(void *);
 void		tdb_firstuse(void *);
 void		tdb_soft_timeout(void *);
@@ -297,9 +296,10 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 
 		/* Check whether we're using this SPI already. */
 		exists = gettdb(rdomain, spi, dst, sproto);
-		if (exists)
+		if (exists != NULL) {
+			tdb_unref(exists);
 			continue;
-
+		}
 
 		tdbp->tdb_spi = spi;
 		memcpy(&tdbp->tdb_dst.sa, &dst->sa, dst->sa.sa_len);
@@ -314,8 +314,9 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 		if (ipsec_keep_invalid > 0) {
 			tdbp->tdb_flags |= TDBF_TIMER;
 			tdbp->tdb_exp_timeout = ipsec_keep_invalid;
-			timeout_add_sec(&tdbp->tdb_timer_tmo,
-			    ipsec_keep_invalid);
+			if (timeout_add_sec(&tdbp->tdb_timer_tmo,
+			    ipsec_keep_invalid))
+				tdb_ref(tdbp);
 		}
 #endif
 
@@ -351,6 +352,7 @@ gettdb_dir(u_int rdomain, u_int32_t spi, union sockaddr_union *dst,
 		    !memcmp(&tdbp->tdb_dst, dst, dst->sa.sa_len))
 			break;
 
+	tdb_ref(tdbp);
 	mtx_leave(&tdb_sadb_mtx);
 	return tdbp;
 }
@@ -383,6 +385,7 @@ gettdbbysrcdst_dir(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
 			break;
 
 	if (tdbp != NULL) {
+		tdb_ref(tdbp);
 		mtx_leave(&tdb_sadb_mtx);
 		return tdbp;
 	}
@@ -402,6 +405,7 @@ gettdbbysrcdst_dir(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
 		    tdbp->tdb_src.sa.sa_family == AF_UNSPEC)
 			break;
 
+	tdb_ref(tdbp);
 	mtx_leave(&tdb_sadb_mtx);
 	return tdbp;
 }
@@ -469,6 +473,7 @@ gettdbbydst(u_int rdomain, union sockaddr_union *dst, u_int8_t sproto,
 			break;
 		}
 
+	tdb_ref(tdbp);
 	mtx_leave(&tdb_sadb_mtx);
 	return tdbp;
 }
@@ -499,6 +504,7 @@ gettdbbysrc(u_int rdomain, union sockaddr_union *src, u_int8_t sproto,
 			break;
 		}
 
+	tdb_ref(tdbp);
 	mtx_leave(&tdb_sadb_mtx);
 	return tdbp;
 }
@@ -548,6 +554,7 @@ tdb_printit(void *addr, int full, int (*pr)(const char *, ...))
 		DUMP(inext, "%p");
 		DUMP(onext, "%p");
 		DUMP(xform, "%p");
+		pr("%18s: %d\n", "refcnt", tdb->tdb_refcnt.refs);
 		DUMP(encalgxform, "%p");
 		DUMP(authalgxform, "%p");
 		DUMP(compalgxform, "%p");
@@ -607,6 +614,7 @@ tdb_printit(void *addr, int full, int (*pr)(const char *, ...))
 		pr(" %s", ipsp_address(&tdb->tdb_src, buf, sizeof(buf)));
 		pr("->%s", ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)));
 		pr(":%d", tdb->tdb_sproto);
+		pr(" #%d", tdb->tdb_refcnt.refs);
 		pr(" %08x\n", tdb->tdb_flags);
 	}
 }
@@ -658,6 +666,8 @@ tdb_timeout(void *v)
 		}
 		tdb_delete(tdb);
 	}
+	/* decrement refcount of the timeout argument */
+	tdb_unref(tdb);
 	NET_UNLOCK();
 }
 
@@ -675,6 +685,8 @@ tdb_firstuse(void *v)
 		}
 		tdb_delete(tdb);
 	}
+	/* decrement refcount of the timeout argument */
+	tdb_unref(tdb);
 	NET_UNLOCK();
 }
 
@@ -689,6 +701,8 @@ tdb_soft_timeout(void *v)
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 		tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
 	}
+	/* decrement refcount of the timeout argument */
+	tdb_unref(tdb);
 	NET_UNLOCK();
 }
 
@@ -704,6 +718,8 @@ tdb_soft_firstuse(void *v)
 			pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
 		tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
 	}
+	/* decrement refcount of the timeout argument */
+	tdb_unref(tdb);
 	NET_UNLOCK();
 }
 
@@ -894,12 +910,75 @@ tdb_unlink_locked(struct tdb *tdbp)
 }
 
 void
+tdb_unbundle(struct tdb *tdbp)
+{
+	if (tdbp->tdb_onext != NULL) {
+		if (tdbp->tdb_onext->tdb_inext == tdbp) {
+			tdb_unref(tdbp);	/* to us */
+			tdbp->tdb_onext->tdb_inext = NULL;
+		}
+		tdb_unref(tdbp->tdb_onext);	/* to other */
+		tdbp->tdb_onext = NULL;
+	}
+	if (tdbp->tdb_inext != NULL) {
+		if (tdbp->tdb_inext->tdb_onext == tdbp) {
+			tdb_unref(tdbp);	/* to us */
+			tdbp->tdb_inext->tdb_onext = NULL;
+		}
+		tdb_unref(tdbp->tdb_inext);	/* to other */
+		tdbp->tdb_inext = NULL;
+	}
+}
+
+void
+tdb_deltimeouts(struct tdb *tdbp)
+{
+	if (timeout_del(&tdbp->tdb_timer_tmo))
+		tdb_unref(tdbp);
+	if (timeout_del(&tdbp->tdb_first_tmo))
+		tdb_unref(tdbp);
+	if (timeout_del(&tdbp->tdb_stimer_tmo))
+		tdb_unref(tdbp);
+	if (timeout_del(&tdbp->tdb_sfirst_tmo))
+		tdb_unref(tdbp);
+}
+
+struct tdb *
+tdb_ref(struct tdb *tdb)
+{
+	if (tdb == NULL)
+		return NULL;
+	refcnt_take(&tdb->tdb_refcnt);
+	return tdb;
+}
+
+void
+tdb_unref(struct tdb *tdb)
+{
+	if (tdb == NULL)
+		return;
+	if (refcnt_rele(&tdb->tdb_refcnt) == 0)
+		return;
+	tdb_free(tdb);
+}
+
+void
 tdb_delete(struct tdb *tdbp)
 {
+	/* keep in sync with pfkeyv2_sa_flush() */
 	NET_ASSERT_LOCKED();
 
+	if (tdbp->tdb_flags & TDBF_DELETED)
+		return;
+	tdbp->tdb_flags |= TDBF_DELETED;
+
 	tdb_unlink(tdbp);
-	tdb_free(tdbp);
+	/* release tdb_onext/tdb_inext references */
+	tdb_unbundle(tdbp);
+	/* delete timeouts and release references */
+	tdb_deltimeouts(tdbp);
+	/* release the reference for tdb_unlink() */
+	tdb_unref(tdbp);
 }
 
 /*
@@ -914,6 +993,7 @@ tdb_alloc(u_int rdomain)
 
 	tdbp = pool_get(&tdb_pool, PR_WAITOK | PR_ZERO);
 
+	refcnt_init(&tdbp->tdb_refcnt);
 	TAILQ_INIT(&tdbp->tdb_policy_head);
 
 	/* Record establishment time. */
@@ -950,9 +1030,9 @@ tdb_free(struct tdb *tdbp)
 #endif
 
 	/* Cleanup SPD references. */
-	for (ipo = TAILQ_FIRST(&tdbp->tdb_policy_head); ipo;
-	    ipo = TAILQ_FIRST(&tdbp->tdb_policy_head))	{
+	while ((ipo = TAILQ_FIRST(&tdbp->tdb_policy_head)) != NULL) {
 		TAILQ_REMOVE(&tdbp->tdb_policy_head, ipo, ipo_tdb_next);
+		tdb_unref(ipo->ipo_tdb);
 		ipo->ipo_tdb = NULL;
 		ipo->ipo_last_searched = 0; /* Force a re-search. */
 	}
@@ -969,28 +1049,16 @@ tdb_free(struct tdb *tdbp)
 	}
 #endif
 
-	if ((tdbp->tdb_onext) && (tdbp->tdb_onext->tdb_inext == tdbp))
-		tdbp->tdb_onext->tdb_inext = NULL;
-
-	if ((tdbp->tdb_inext) && (tdbp->tdb_inext->tdb_onext == tdbp))
-		tdbp->tdb_inext->tdb_onext = NULL;
+	KASSERT(tdbp->tdb_onext == NULL);
+	KASSERT(tdbp->tdb_inext == NULL);
 
 	/* Remove expiration timeouts. */
 	tdbp->tdb_flags &= ~(TDBF_FIRSTUSE | TDBF_SOFT_FIRSTUSE | TDBF_TIMER |
 	    TDBF_SOFT_TIMER);
-	timeout_del(&tdbp->tdb_timer_tmo);
-	timeout_del(&tdbp->tdb_first_tmo);
-	timeout_del(&tdbp->tdb_stimer_tmo);
-	timeout_del(&tdbp->tdb_sfirst_tmo);
-
-	timeout_set_proc(&tdbp->tdb_timer_tmo, tdb_reaper, tdbp);
-	timeout_add(&tdbp->tdb_timer_tmo, 0);
-}
-
-void
-tdb_reaper(void *xtdbp)
-{
-	struct tdb *tdbp = xtdbp;
+	KASSERT(timeout_pending(&tdbp->tdb_timer_tmo) == 0);
+	KASSERT(timeout_pending(&tdbp->tdb_first_tmo) == 0);
+	KASSERT(timeout_pending(&tdbp->tdb_stimer_tmo) == 0);
+	KASSERT(timeout_pending(&tdbp->tdb_sfirst_tmo) == 0);
 
 	pool_put(&tdb_pool, tdbp);
 }

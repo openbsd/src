@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.370 2021/08/09 17:03:08 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.371 2021/11/25 13:46:02 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -380,12 +380,6 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 #ifdef INET6
 	struct ip6_hdr *ip6 = NULL;
 #endif /* INET6 */
-#ifdef IPSEC
-	struct m_tag *mtag;
-	struct tdb_ident *tdbi;
-	struct tdb *tdb;
-	int error;
-#endif /* IPSEC */
 #ifdef TCP_ECN
 	u_char iptos;
 #endif
@@ -571,16 +565,22 @@ findpcb:
 	}
 #ifdef IPSEC
 	if (ipsec_in_use) {
+		struct m_tag *mtag;
+		struct tdb *tdb = NULL;
+		int error;
+
 		/* Find most recent IPsec tag */
 		mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
 		if (mtag != NULL) {
+			struct tdb_ident *tdbi;
+
 			tdbi = (struct tdb_ident *)(mtag + 1);
 			tdb = gettdb(tdbi->rdomain, tdbi->spi,
 			    &tdbi->dst, tdbi->proto);
-		} else
-			tdb = NULL;
+		}
 		ipsp_spd_lookup(m, af, iphlen, &error, IPSP_DIRECTION_IN,
 		    tdb, inp, 0);
+		tdb_unref(tdb);
 		if (error) {
 			tcpstat_inc(tcps_rcvnosec);
 			goto drop;
@@ -2197,7 +2197,7 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 				continue;
 
 			if (sigp && timingsafe_bcmp(sigp, cp + 2, 16))
-				return (-1);
+				goto bad;
 
 			sigp = cp + 2;
 			break;
@@ -2248,7 +2248,7 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 
 	if ((sigp ? TF_SIGNATURE : 0) ^ (tp->t_flags & TF_SIGNATURE)) {
 		tcpstat_inc(tcps_rcvbadsig);
-		return (-1);
+		goto bad;
 	}
 
 	if (sigp) {
@@ -2256,22 +2256,30 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 
 		if (tdb == NULL) {
 			tcpstat_inc(tcps_rcvbadsig);
-			return (-1);
+			goto bad;
 		}
 
 		if (tcp_signature(tdb, tp->pf, m, th, iphlen, 1, sig) < 0)
-			return (-1);
+			goto bad;
 
 		if (timingsafe_bcmp(sig, sigp, 16)) {
 			tcpstat_inc(tcps_rcvbadsig);
-			return (-1);
+			goto bad;
 		}
 
 		tcpstat_inc(tcps_rcvgoodsig);
 	}
+
+	tdb_unref(tdb);
 #endif /* TCP_SIGNATURE */
 
 	return (0);
+
+ bad:
+#ifdef TCP_SIGNATURE
+	tdb_unref(tdb);
+#endif /* TCP_SIGNATURE */
+	return (-1);
 }
 
 u_long
@@ -4056,8 +4064,10 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		if (tcp_signature(tdb, sc->sc_src.sa.sa_family, m, th,
 		    hlen, 0, optp) < 0) {
 			m_freem(m);
+			tdb_unref(tdb);
 			return (EINVAL);
 		}
+		tdb_unref(tdb);
 		optp += 16;
 
 		/* Pad options list to the next 32 bit boundary and

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.91 2021/10/23 15:42:35 tobhe Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.92 2021/11/25 13:46:02 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -139,12 +139,16 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	 */
 	if (tdb->tdb_first_use == 0) {
 		tdb->tdb_first_use = gettime();
-		if (tdb->tdb_flags & TDBF_FIRSTUSE)
-			timeout_add_sec(&tdb->tdb_first_tmo,
-			    tdb->tdb_exp_first_use);
-		if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE)
-			timeout_add_sec(&tdb->tdb_sfirst_tmo,
-			    tdb->tdb_soft_first_use);
+		if (tdb->tdb_flags & TDBF_FIRSTUSE) {
+			if (timeout_add_sec(&tdb->tdb_first_tmo,
+			    tdb->tdb_exp_first_use))
+				tdb_ref(tdb);
+		}
+		if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) {
+			if (timeout_add_sec(&tdb->tdb_sfirst_tmo,
+			    tdb->tdb_soft_first_use))
+				tdb_ref(tdb);
+		}
 	}
 
 	/*
@@ -388,6 +392,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 #ifdef INET6
 	struct ip6_hdr *ip6;
 #endif /* INET6 */
+	struct tdb *tdbo;
 	struct tdb_ident *tdbi;
 	struct m_tag *mtag;
 	int roff, error;
@@ -501,9 +506,13 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	tdb->tdb_obytes += m->m_pkthdr.len;
 
 	/* If there's another (bundled) TDB to apply, do so. */
-	if (tdb->tdb_onext)
-		return ipsp_process_packet(m, tdb->tdb_onext,
+	tdbo = tdb_ref(tdb->tdb_onext);
+	if (tdbo != NULL) {
+		error = ipsp_process_packet(m, tdbo,
 		    tdb->tdb_dst.sa.sa_family, 0);
+		tdb_unref(tdbo);
+		return error;
+	}
 
 #if NPF > 0
 	/* Add pf tag if requested. */
@@ -615,13 +624,16 @@ ipsec_adjust_mtu(struct mbuf *m, u_int32_t mtu)
 		if (tdbp == NULL)
 			break;
 
-		if ((adjust = ipsec_hdrsz(tdbp)) == -1)
+		if ((adjust = ipsec_hdrsz(tdbp)) == -1) {
+			tdb_unref(tdbp);
 			break;
+		}
 
 		mtu -= adjust;
 		tdbp->tdb_mtu = mtu;
 		tdbp->tdb_mtutimeout = gettime() + ip_mtudisc_timeout;
 		DPRINTF("spi %08x mtu %d adjust %ld mbuf %p",
 		    ntohl(tdbp->tdb_spi), tdbp->tdb_mtu, adjust, m);
+		tdb_unref(tdbp);
 	}
 }

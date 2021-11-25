@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.104 2021/07/08 16:39:55 mvs Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.105 2021/11/25 13:46:02 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -368,9 +368,11 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	}
 
 	/* Do we have a cached entry ? If so, check if it's still valid. */
-	if ((ipo->ipo_tdb) && (ipo->ipo_tdb->tdb_flags & TDBF_INVALID)) {
+	if (ipo->ipo_tdb != NULL &&
+	    (ipo->ipo_tdb->tdb_flags & TDBF_INVALID)) {
 		TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
 		    ipo_tdb_next);
+		tdb_unref(ipo->ipo_tdb);
 		ipo->ipo_tdb = NULL;
 	}
 
@@ -398,7 +400,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			ids = ipsp_ids_lookup(ipsecflowinfo);
 
 		/* Check that the cached TDB (if present), is appropriate. */
-		if (ipo->ipo_tdb) {
+		if (ipo->ipo_tdb != NULL) {
 			if ((ipo->ipo_last_searched <= ipsec_last_added) ||
 			    (ipo->ipo_sproto != ipo->ipo_tdb->tdb_sproto) ||
 			    memcmp(dignore ? &sdst : &ipo->ipo_dst,
@@ -420,6 +422,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			/* Cached TDB was not good. */
 			TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
 			    ipo_tdb_next);
+			tdb_unref(ipo->ipo_tdb);
 			ipo->ipo_tdb = NULL;
 			ipo->ipo_last_searched = 0;
 		}
@@ -439,14 +442,14 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 				ipo->ipo_last_searched = getuptime();
 
 			/* Find an appropriate SA from the existing ones. */
-			ipo->ipo_tdb =
-			    gettdbbydst(rdomain,
-				dignore ? &sdst : &ipo->ipo_dst,
-				ipo->ipo_sproto,
-				ids ? ids: ipo->ipo_ids,
-				&ipo->ipo_addr, &ipo->ipo_mask);
-			if (ipo->ipo_tdb) {
-				TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head,
+			ipo->ipo_tdb = gettdbbydst(rdomain,
+			    dignore ? &sdst : &ipo->ipo_dst,
+			    ipo->ipo_sproto, ids ? ids: ipo->ipo_ids,
+			    &ipo->ipo_addr, &ipo->ipo_mask);
+			if (ipo->ipo_tdb != NULL) {
+				/* gettdbbydst() has already refcounted tdb */
+				TAILQ_INSERT_TAIL(
+				    &ipo->ipo_tdb->tdb_policy_head,
 				    ipo, ipo_tdb_next);
 				*error = 0;
 				return ipsp_spd_inp(m, af, hlen, error,
@@ -520,10 +523,12 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 					goto nomatchin;
 
 			/* Add it to the cache. */
-			if (ipo->ipo_tdb)
+			if (ipo->ipo_tdb != NULL) {
 				TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head,
 				    ipo, ipo_tdb_next);
-			ipo->ipo_tdb = tdbp;
+				tdb_unref(ipo->ipo_tdb);
+			}
+			ipo->ipo_tdb = tdb_ref(tdbp);
 			TAILQ_INSERT_TAIL(&tdbp->tdb_policy_head, ipo,
 			    ipo_tdb_next);
 			*error = 0;
@@ -535,7 +540,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		}
 
 		/* Check whether cached entry applies. */
-		if (ipo->ipo_tdb) {
+		if (ipo->ipo_tdb != NULL) {
 			/*
 			 * We only need to check that the correct
 			 * security protocol and security gateway are
@@ -551,8 +556,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			/* Not applicable, unlink. */
 			TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
 			    ipo_tdb_next);
-			ipo->ipo_last_searched = 0;
+			tdb_unref(ipo->ipo_tdb);
 			ipo->ipo_tdb = NULL;
+			ipo->ipo_last_searched = 0;
 		}
 
 		/* Find whether there exists an appropriate SA. */
@@ -560,14 +566,16 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			if (dignore == 0)
 				ipo->ipo_last_searched = getuptime();
 
-			ipo->ipo_tdb =
-			    gettdbbysrc(rdomain,
-				dignore ? &ssrc : &ipo->ipo_dst,
-				ipo->ipo_sproto, ipo->ipo_ids,
-				&ipo->ipo_addr, &ipo->ipo_mask);
-			if (ipo->ipo_tdb)
-				TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head,
+			ipo->ipo_tdb = gettdbbysrc(rdomain,
+			    dignore ? &ssrc : &ipo->ipo_dst,
+			    ipo->ipo_sproto, ipo->ipo_ids,
+			    &ipo->ipo_addr, &ipo->ipo_mask);
+			if (ipo->ipo_tdb != NULL) {
+				/* gettdbbysrc() has already refcounted tdb */
+				TAILQ_INSERT_TAIL(
+				    &ipo->ipo_tdb->tdb_policy_head,
 				    ipo, ipo_tdb_next);
+			}
 		}
   skipinputsearch:
 
@@ -637,9 +645,12 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 	    rn_delete(&ipo->ipo_addr, &ipo->ipo_mask, rnh, rn) == NULL)
 		return (ESRCH);
 
-	if (ipo->ipo_tdb != NULL)
+	if (ipo->ipo_tdb != NULL) {
 		TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
 		    ipo_tdb_next);
+		tdb_unref(ipo->ipo_tdb);
+		ipo->ipo_tdb = NULL;
+	}
 
 	while ((ipa = TAILQ_FIRST(&ipo->ipo_acquires)) != NULL)
 		ipsp_delete_acquire(ipa);

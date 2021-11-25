@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.75 2021/10/22 12:30:53 bluhm Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.76 2021/11/25 13:46:02 bluhm Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -299,8 +299,9 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 		if ((tdb->tdb_exp_timeout =
 		    sadb_lifetime->sadb_lifetime_addtime) != 0) {
 			tdb->tdb_flags |= TDBF_TIMER;
-			timeout_add_sec(&tdb->tdb_timer_tmo,
-			    tdb->tdb_exp_timeout);
+			if (timeout_add_sec(&tdb->tdb_timer_tmo,
+			    tdb->tdb_exp_timeout))
+				tdb_ref(tdb);
 		} else
 			tdb->tdb_flags &= ~TDBF_TIMER;
 
@@ -327,8 +328,9 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 		if ((tdb->tdb_soft_timeout =
 		    sadb_lifetime->sadb_lifetime_addtime) != 0) {
 			tdb->tdb_flags |= TDBF_SOFT_TIMER;
-			timeout_add_sec(&tdb->tdb_stimer_tmo,
-			    tdb->tdb_soft_timeout);
+			if (timeout_add_sec(&tdb->tdb_stimer_tmo,
+			    tdb->tdb_soft_timeout))
+				tdb_ref(tdb);
 		} else
 			tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
 
