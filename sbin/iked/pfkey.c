@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.79 2021/11/24 21:06:21 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.80 2021/11/25 19:41:03 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1814,7 +1814,7 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 	struct sadb_x_policy	 sa_pol;
 	struct sockaddr		*ssrc, *sdst, *smask, *dmask, *speer;
 	struct iovec		 iov[IOV_CNT];
-	int			 ret = 0, iov_cnt, fd;
+	int			 ret = 0, iov_cnt;
 	uint8_t			*reply;
 	ssize_t			 rlen;
 	const char		*errmsg = NULL;
@@ -1825,7 +1825,6 @@ pfkey_process(struct iked *env, struct pfkey_message *pm)
 	if (!env || !data || !len)
 		return (0);
 
-	fd = env->sc_pfkey;
 	hdr = (struct sadb_msg *)data;
 
 	switch (hdr->sadb_msg_type) {
