@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.124 2021/11/22 11:01:12 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.125 2021/11/25 14:51:26 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1377,6 +1377,11 @@ iwx_read_firmware(struct iwx_softc *sc)
 		case IWX_UCODE_TLV_TYPE_HCMD:
 		case IWX_UCODE_TLV_TYPE_REGIONS:
 		case IWX_UCODE_TLV_TYPE_TRIGGERS:
+		case IWX_UCODE_TLV_TYPE_CONF_SET:
+			break;
+
+		/* undocumented TLV found in iwx-cc-a0-67 image */
+		case 0x100000b:
 			break;
 
 		default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.32 2021/11/22 10:31:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.33 2021/11/25 14:51:26 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1243,7 +1243,8 @@ struct iwx_ucode_header {
 #define IWX_UCODE_TLV_TYPE_HCMD			(IWX_UCODE_TLV_DEBUG_BASE + 2)
 #define IWX_UCODE_TLV_TYPE_REGIONS		(IWX_UCODE_TLV_DEBUG_BASE + 3)
 #define IWX_UCODE_TLV_TYPE_TRIGGERS		(IWX_UCODE_TLV_DEBUG_BASE + 4)
-#define IWX_UCODE_TLV_DEBUG_MAX IWX_UCODE_TLV_TYPE_TRIGGERS
+#define IWX_UCODE_TLV_TYPE_CONF_SET		(IWX_UCODE_TLV_DEBUG_BASE + 5)
+#define IWX_UCODE_TLV_DEBUG_MAX IWX_UCODE_TLV_TYPE_CONF_SET
 
 
 struct iwx_ucode_tlv {
