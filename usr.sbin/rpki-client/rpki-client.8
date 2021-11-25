@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.49 2021/10/26 13:26:53 claudio Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.50 2021/11/25 14:03:40 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 26 2021 $
+.Dd $Mdocdate: November 25 2021 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -131,6 +131,8 @@ seconds of runtime, because normal practice will restart from
 .Xr cron 8 .
 Disable by specifying 0.
 Defaults to 1 hour.
+Individual Publication Points are timed out after one fourth of
+.Em timeout .
 .It Fl T Ar table
 For BIRD output generated with the
 .Fl B

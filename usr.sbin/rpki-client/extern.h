@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.97 2021/11/24 15:24:16 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.98 2021/11/25 14:03:40 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -626,8 +626,5 @@ int	mkpath(const char *);
 
 /* Maximum allowd repositories per tal */
 #define MAX_REPO_PER_TAL	1000
-
-/* Timeout for repository synchronisation, in seconds */
-#define MAX_REPO_TIMEOUT	(15 * 60)
 
 #endif /* ! EXTERN_H */

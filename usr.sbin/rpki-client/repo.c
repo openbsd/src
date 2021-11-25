@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.13 2021/11/25 12:55:34 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.14 2021/11/25 14:03:40 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -40,6 +40,7 @@
 extern struct stats	stats;
 extern int		noop;
 extern int		rrdpon;
+extern int		repo_timeout;
 
 enum repo_state {
 	REPO_LOADING = 0,
@@ -620,7 +621,7 @@ repo_alloc(int talid)
 
 	rp->id = ++repoid;
 	rp->talid = talid;
-	rp->alarm = getmonotime() + MAX_REPO_TIMEOUT;
+	rp->alarm = getmonotime() + repo_timeout;
 	TAILQ_INIT(&rp->queue);
 	SLIST_INSERT_HEAD(&repos, rp, entry);
 
@@ -1227,7 +1228,7 @@ static void
 repo_fail(struct repo *rp)
 {
 	/* reset the alarm since code may fallback to rsync */
-	rp->alarm = getmonotime() + MAX_REPO_TIMEOUT;
+	rp->alarm = getmonotime() + repo_timeout;
 
 	if (rp->ta)
 		http_finish(rp->ta->id, HTTP_FAILED, NULL);
