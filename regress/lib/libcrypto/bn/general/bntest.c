@@ -1,4 +1,4 @@
-/*	$OpenBSD: bntest.c,v 1.22 2021/11/18 14:59:44 tb Exp $	*/
+/*	$OpenBSD: bntest.c,v 1.23 2021/11/25 11:07:17 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -935,8 +935,8 @@ test_mont(BIO *bp, BN_CTX *ctx)
 				BIO_puts(bp, " * ");
 				CHECK_GOTO(BN_print(bp, b));
 				BIO_puts(bp, " % ");
-				/* XXX opaque BN */
-				CHECK_GOTO(BN_print(bp, &(mont->N)));
+				/* n == &mont->N */
+				CHECK_GOTO(BN_print(bp, n));
 				BIO_puts(bp, " - ");
 			}
 			CHECK_GOTO(BN_print(bp, A));
