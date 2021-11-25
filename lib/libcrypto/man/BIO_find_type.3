@@ -1,7 +1,24 @@
-.\"	$OpenBSD: BIO_find_type.3,v 1.9 2018/03/27 17:35:50 schwarze Exp $
-.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: BIO_find_type.3,v 1.10 2021/11/25 12:15:37 schwarze Exp $
+.\" full merge up to: OpenSSL 1cb7eff4 Sep 10 13:56:40 2019 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000, 2013, 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,28 +65,33 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: November 25 2021 $
 .Dt BIO_FIND_TYPE 3
 .Os
 .Sh NAME
 .Nm BIO_find_type ,
 .Nm BIO_next ,
-.Nm BIO_method_type
+.Nm BIO_method_type ,
+.Nm BIO_method_name
 .Nd BIO chain traversal
 .Sh SYNOPSIS
 .In openssl/bio.h
 .Ft BIO *
 .Fo BIO_find_type
-.Fa "BIO *b"
-.Fa "int bio_type"
+.Fa "BIO *bio"
+.Fa "int type"
 .Fc
 .Ft BIO *
 .Fo BIO_next
-.Fa "BIO *b"
+.Fa "BIO *bio"
 .Fc
 .Ft int
 .Fo BIO_method_type
-.Fa "const BIO *b"
+.Fa "const BIO *bio"
+.Fc
+.Ft const char *
+.Fo BIO_method_name
+.Fa "const BIO *bio"
 .Fc
 .Fd #define BIO_TYPE_NONE		0
 .Fd #define BIO_TYPE_MEM		(1|0x0400)
@@ -90,86 +112,113 @@
 .Fd #define BIO_TYPE_NULL_FILTER	(17|0x0200)
 .Fd #define BIO_TYPE_BER		(18|0x0200)
 .Fd #define BIO_TYPE_BIO		(19|0x0400)
+.Fd #define BIO_TYPE_LINEBUFFER	(20|0x0200)
+.Fd #define BIO_TYPE_DGRAM		(21|0x0400|0x0100)
+.Fd #define BIO_TYPE_ASN1		(22|0x0200)
+.Fd #define BIO_TYPE_COMP		(23|0x0200)
 .Fd #define BIO_TYPE_DESCRIPTOR	0x0100
 .Fd #define BIO_TYPE_FILTER		0x0200
 .Fd #define BIO_TYPE_SOURCE_SINK	0x0400
+.Fd #define BIO_TYPE_START		128
 .Sh DESCRIPTION
-The function
 .Fn BIO_find_type
-searches for a BIO of a given type in a chain, starting at BIO
-.Fa b .
-If
-.Fa bio_type
-is a specific type (such as
-.Dv BIO_TYPE_MEM ) ,
-then a search is made for a BIO of that type.
-If
-.Fa bio_type
-is a general type (such as
-.Dv BIO_TYPE_SOURCE_SINK ) ,
-then the next matching BIO of the given general type is searched for.
-.Fn BIO_find_type
-returns the next matching BIO or
-.Dv NULL
-if none is found.
+searches for a BIO matching the given
+.Fa type
+in the chain starting at
+.Fa bio .
+If the least significant byte of the
+.Fa type
+argument is non-zero, only exact matches of the
+.Fa type
+are accepted.
+Otherwise, a match only requires that any of the bits set in the
+.Fa type
+argument is also set in the candidate BIO.
 .Pp
-Note: not all the
+Not all the
 .Dv BIO_TYPE_*
-types above have corresponding BIO implementations.
+types shown above have corresponding BIO implementations.
+.Pp
+Types with a least significant byte in the range from 0 to
+.Dv BIO_TYPE_START ,
+inclusive, are reserved for BIO types built into the library.
+Types with a least significant byte greater than
+.Dv BIO_TYPE_START
+are available for user-defined BIO types; see
+.Xr BIO_get_new_index 3
+for details.
 .Pp
 .Fn BIO_next
-returns the next BIO in a chain.
-It can be used to traverse all BIOs in a chain or used in conjunction with
+returns the next BIO in the chain after
+.Fa bio .
+This function can be used to traverse all BIOs in a chain
+or in conjunction with
 .Fn BIO_find_type
 to find all BIOs of a certain type.
 .Pp
 .Fn BIO_method_type
-returns the type of a BIO.
+returns the type of the given
+.Fa bio .
+.Pp
+.Fn BIO_method_name
+returns an ASCII string representing the type of the
+.Fa bio .
 .Sh RETURN VALUES
 .Fn BIO_find_type
-returns a matching BIO or
+returns the next matching BIO or
 .Dv NULL
-for no match.
+if
+.Fa bio
+is a
+.Dv NULL
+pointer or if no matching BIO is found.
 .Pp
 .Fn BIO_next
-returns the next BIO in a chain.
+returns the next BIO or
+.Dv NULL
+if
+.Fa bio
+is a
+.Dv NULL
+pointer or points to the last BIO in a chain.
 .Pp
 .Fn BIO_method_type
-returns the type of the BIO
-.Fa b .
+returns one of the
+.Dv BIO_TYPE_*
+constants.
+.Pp
+.Fn BIO_method_name
+returns an internal pointer to a string.
 .Sh EXAMPLES
 Traverse a chain looking for digest BIOs:
 .Bd -literal -offset 2n
 BIO *btmp;
-btmp = in_bio;	/* in_bio is chain to search through */
 
-do {
+btmp = in_bio;	/* in_bio is the chain to search through */
+while (btmp != NULL) {
 	btmp = BIO_find_type(btmp, BIO_TYPE_MD);
 	if (btmp == NULL)
 		break;	/* Not found */
-	/* btmp is a digest BIO, do something with it ...*/
+
+	/* btmp is a digest BIO, do something with it ... */
 	...
 
 	btmp = BIO_next(btmp);
-} while(btmp);
+}
 .Ed
 .Sh SEE ALSO
+.Xr BIO_meth_new 3 ,
 .Xr BIO_new 3
 .Sh HISTORY
 .Fn BIO_method_type
+and
+.Fn BIO_method_name
 first appeared in SSLeay 0.6.0.
 .Fn BIO_find_type
 first appeared in SSLeay 0.6.6.
-Both functions have been available since
+These functions have been available since
 .Ox 2.4 .
 .Pp
 .Fn BIO_next
 first appeared in OpenSSL 0.9.6 and has been available since
 .Ox 2.9 .
-.Sh BUGS
-.Fn BIO_find_type
-in OpenSSL 0.9.5a and earlier could not be safely passed a
-.Dv NULL
-pointer for the
-.Fa b
-argument.
