@@ -21,7 +21,8 @@ our %args = (
 	    qr/Logging to FORWTLS \@tls:\/\/localhost:\d+/ => '>=4',
 	    qr/syslogd\[\d+\]: loghost .* connection error: /.
 		qr/certificate verification failed: /.
-		qr/self signed certificate in certificate chain/ => 1,
+		"(".qr/self signed certificate in certificate chain/."|".
+		qr/certificate signature failure/.")" => 1,
 	    get_testgrep() => 1,
 	},
 	cacrt => "fake-ca.crt",
