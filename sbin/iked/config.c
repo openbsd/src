@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.83 2021/11/24 20:48:00 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.84 2021/11/25 18:28:51 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -593,7 +593,7 @@ int
 config_getsocket(struct iked *env, struct imsg *imsg,
     void (*cb)(int, short, void *))
 {
-	struct iked_socket	*sock, **sock0, **sock1;
+	struct iked_socket	*sock, **sock0 = NULL, **sock1 = NULL;
 
 	log_debug("%s: received socket fd %d", __func__, imsg->fd);
 

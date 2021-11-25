@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.58 2021/09/01 15:30:06 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.59 2021/11/25 18:28:51 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -350,7 +350,7 @@ parent_sig_handler(int sig, short event, void *arg)
 		/* FALLTHROUGH */
 	case SIGCHLD:
 		do {
-			int len;
+			int len = 0;
 
 			pid = waitpid(-1, &status, WNOHANG);
 			if (pid <= 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.79 2021/11/21 22:44:08 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.80 2021/11/25 18:28:51 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -146,7 +146,7 @@ ca_getkey(struct privsep *ps, struct iked_id *key, enum imsg_type type)
 {
 	struct iked	*env = ps->ps_env;
 	struct ca_store	*store = env->sc_priv;
-	struct iked_id	*id;
+	struct iked_id	*id = NULL;
 	const char	*name;
 
 	if (store == NULL)
