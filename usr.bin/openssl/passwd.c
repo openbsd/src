@@ -1,4 +1,4 @@
-/* $OpenBSD: passwd.c,v 1.10 2019/07/14 03:30:46 guenther Exp $ */
+/* $OpenBSD: passwd.c,v 1.11 2021/11/25 16:53:58 tb Exp $ */
 
 #if defined OPENSSL_NO_MD5
 #define NO_MD5CRYPT_1
@@ -449,11 +449,9 @@ do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 	/* truncate password if necessary */
 	if ((strlen(passwd) > pw_maxlen)) {
 		if (!quiet)
-			/*
-			 * XXX: really we should know how to print a size_t,
-			 * not cast it
-			 */
-			BIO_printf(bio_err, "Warning: truncating password to %u characters\n", (unsigned) pw_maxlen);
+			BIO_printf(bio_err,
+			    "Warning: truncating password to %zu characters\n",
+			    pw_maxlen);
 		passwd[pw_maxlen] = 0;
 	}
 	assert(strlen(passwd) <= pw_maxlen);
