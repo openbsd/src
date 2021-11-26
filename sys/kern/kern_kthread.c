@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.45 2021/11/24 12:40:40 visa Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.46 2021/11/26 04:42:13 visa Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -94,12 +94,7 @@ kthread_exit(int ecode)
 		    curproc->p_p->ps_comm, curproc->p_tid, ecode);
 
 	exit1(curproc, ecode, 0, EXIT_NORMAL);
-
-	/*
-	 * XXX Fool the compiler.  Making exit1() __dead is a can
-	 * XXX of worms right now.
-	 */
-	for (;;);
+	/* NOTREACHED */
 }
 
 struct kthread_q {
