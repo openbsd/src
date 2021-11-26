@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.35 2021/10/23 16:11:30 tb Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.36 2021/11/26 16:40:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -188,19 +188,18 @@ ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 		 * Don't check the public/private key, this is mostly
 		 * for smart cards.
 		 */
-		if ((pkey->type == EVP_PKEY_RSA) &&
-			(RSA_flags(pkey->pkey.rsa) & RSA_METHOD_FLAG_NO_CHECK))
-;
-		else
-		if (!X509_check_private_key(c->pkeys[i].x509, pkey)) {
-			X509_free(c->pkeys[i].x509);
-			c->pkeys[i].x509 = NULL;
-			return 0;
+		if (EVP_PKEY_id(pkey) != EVP_PKEY_RSA ||
+		    !(RSA_flags(EVP_PKEY_get0_RSA(pkey)) & RSA_METHOD_FLAG_NO_CHECK)) {
+			if (!X509_check_private_key(c->pkeys[i].x509, pkey)) {
+				X509_free(c->pkeys[i].x509);
+				c->pkeys[i].x509 = NULL;
+				return 0;
+			}
 		}
 	}
 
 	EVP_PKEY_free(c->pkeys[i].privatekey);
-	CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+	EVP_PKEY_up_ref(pkey);
 	c->pkeys[i].privatekey = pkey;
 	c->key = &(c->pkeys[i]);
 
@@ -363,29 +362,28 @@ ssl_set_cert(CERT *c, X509 *x)
 	}
 
 	if (c->pkeys[i].privatekey != NULL) {
-		EVP_PKEY_copy_parameters(pkey, c->pkeys[i].privatekey);
+		EVP_PKEY *priv_key = c->pkeys[i].privatekey;
+
+		EVP_PKEY_copy_parameters(pkey, priv_key);
 		ERR_clear_error();
 
 		/*
 		 * Don't check the public/private key, this is mostly
 		 * for smart cards.
 		 */
-		if ((c->pkeys[i].privatekey->type == EVP_PKEY_RSA) &&
-			(RSA_flags(c->pkeys[i].privatekey->pkey.rsa) &
-		RSA_METHOD_FLAG_NO_CHECK))
-;
-		else
-		if (!X509_check_private_key(x, c->pkeys[i].privatekey)) {
-			/*
-			 * don't fail for a cert/key mismatch, just free
-			 * current private key (when switching to a different
-			 * cert & key, first this function should be used,
-			 * then ssl_set_pkey
-			 */
-			EVP_PKEY_free(c->pkeys[i].privatekey);
-			c->pkeys[i].privatekey = NULL;
-			/* clear error queue */
-			ERR_clear_error();
+		if (EVP_PKEY_id(priv_key) != EVP_PKEY_RSA ||
+		    !(RSA_flags(EVP_PKEY_get0_RSA(priv_key)) & RSA_METHOD_FLAG_NO_CHECK)) {
+			if (!X509_check_private_key(x, priv_key)) {
+				/*
+				 * don't fail for a cert/key mismatch, just free
+				 * current private key (when switching to a
+				 * different cert & key, first this function
+				 * should be used, then ssl_set_pkey.
+				 */
+				EVP_PKEY_free(c->pkeys[i].privatekey);
+				c->pkeys[i].privatekey = NULL;
+				ERR_clear_error();
+			}
 		}
 	}
 
