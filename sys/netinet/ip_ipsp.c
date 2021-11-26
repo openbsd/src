@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.255 2021/11/26 16:16:35 tobhe Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.256 2021/11/26 19:24:41 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -803,6 +803,8 @@ void
 puttdb_locked(struct tdb *tdbp)
 {
 	u_int32_t hashval;
+
+	MUTEX_ASSERT_LOCKED(&tdb_sadb_mtx);
 
 	hashval = tdb_hash(tdbp->tdb_spi, &tdbp->tdb_dst, tdbp->tdb_sproto);
 
