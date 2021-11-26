@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.99 2021/11/26 13:05:03 schwarze Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.100 2021/11/26 13:17:09 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2097,11 +2097,13 @@ X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 	/* first, populate the other certs */
 	for (j = i - 1; j >= 0; j--) {
 		ktmp2 = X509_get0_pubkey(sk_X509_value(chain, j));
-		EVP_PKEY_copy_parameters(ktmp2, ktmp);
+		if (!EVP_PKEY_copy_parameters(ktmp2, ktmp))
+			return 0;
 	}
 
 	if (pkey != NULL)
-		EVP_PKEY_copy_parameters(pkey, ktmp);
+		if (!EVP_PKEY_copy_parameters(pkey, ktmp))
+			return 0;
 	return 1;
 }
 
