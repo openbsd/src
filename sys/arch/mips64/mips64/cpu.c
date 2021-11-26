@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.80 2021/07/24 08:21:13 visa Exp $ */
+/*	$OpenBSD: cpu.c,v 1.81 2021/11/26 14:45:13 jsg Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -83,9 +83,9 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 	int fptype, vers_maj, vers_min;
 	int displayver;
 
+#ifdef MULTIPROCESSOR
 	if (cpuno == 0) {
 		ci = &cpu_info_primary;
-#ifdef MULTIPROCESSOR
 		ci->ci_flags |= CPUF_RUNNING | CPUF_PRESENT | CPUF_PRIMARY;
 		if (ncpusfound > 1) {
 			cpu_info_secondaries = (struct cpu_info *)
@@ -94,15 +94,14 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 			if (cpu_info_secondaries == NULL)
 				panic("unable to allocate cpu_info");
 		}
-#endif
-	}
-#ifdef MULTIPROCESSOR
-	else {
+	} else {
 		ci = &cpu_info_secondaries[cpuno - 1];
 		ci->ci_next = cpu_info_list->ci_next;
 		cpu_info_list->ci_next = ci;
 		ci->ci_flags |= CPUF_PRESENT;
 	}
+#else
+	ci = &cpu_info_primary;
 #endif
 	ci->ci_self = ci;
 	ci->ci_cpuid = cpuno;
