@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_mklocatedb.1,v 1.17 2014/07/13 15:54:28 espie Exp $
+.\"	$OpenBSD: pkg_mklocatedb.1,v 1.18 2021/11/26 12:08:35 espie Exp $
 .\" Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 13 2014 $
+.Dd $Mdocdate: November 26 2021 $
 .Dt PKG_MKLOCATEDB 1
 .Os
 .Sh NAME
@@ -89,6 +89,15 @@ Include keyword in each object full name.
 This is more accurate, but defeats
 .Xr locate 1
 compression.
+.Pp
+However, note that some meta annotations always make it into the database:
+.Cm @*exec* ,
+.Cm @define-tag ,
+.Cm @newgroup ,
+.Cm @newuser ,
+.Cm @option Ar no-default-conflict
+and
+.Cm @tag .
 .It Fl n
 Do not pipe output to
 .Pa /usr/libexec/locate.mklocatedb

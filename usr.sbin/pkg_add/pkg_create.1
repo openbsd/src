@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.121 2021/11/08 13:33:06 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.122 2021/11/26 12:08:35 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: November 8 2021 $
+.Dd $Mdocdate: November 26 2021 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -890,6 +890,14 @@ and
 .Cm @static-lib
 annotations are used by the debug packages infrastructure to figure out
 which files may contain debug information.
+.Pp
+Some of these annotations define information that are local to each port
+but global to the package ecosystem in general, and thus make it into
+the package locate database by default (for instance: tag, user, and group
+definitions).
+See
+.Xr pkg_mklocatedb 1
+for details.
 .Pp
 See
 .Xr package 5
