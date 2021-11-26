@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiiort.c,v 1.4 2021/06/25 17:41:22 patrick Exp $ */
+/* $OpenBSD: acpiiort.c,v 1.5 2021/11/26 15:21:26 patrick Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -167,13 +167,6 @@ acpiiort_device_map(struct aml_node *root, bus_dma_tag_t dmat)
 
 		if (map[i].flags & ACPI_IORT_MAPPING_SINGLE) {
 			rid = map[i].output_base;
-			break;
-		}
-
-		/* Mapping encodes number of IDs in the range minus one. */
-		if (map[i].input_base <= rid &&
-		    rid <= map[i].input_base + map[i].number_of_ids) {
-			rid = map[i].output_base + (rid - map[i].input_base);
 			break;
 		}
 	}
