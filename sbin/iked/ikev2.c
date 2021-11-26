@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.335 2021/11/24 20:48:00 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.336 2021/11/26 14:05:01 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6574,12 +6574,12 @@ ikev2_child_sa_rekey(struct iked *env, struct iked_spi *rekey)
 	if (csa->csa_rekey)	/* See if it's already taken care of */
 		return (0);
 	if ((sa = csa->csa_ikesa) == NULL) {
-		log_warnx("%s: not established, SPI %s", SPI_SA(sa, __func__),
+		log_warnx("%s: SA %s doesn't have a parent SA", __func__,
 		    print_spi(rekey->spi, rekey->spi_size));
 		return (0);
 	}
 	if (!sa_stateok(sa, IKEV2_STATE_ESTABLISHED)) {
-		log_warnx("%s: SA %s is not established", __func__,
+		log_warnx("%s: not established, SPI %s", SPI_SA(sa, __func__),
 		    print_spi(rekey->spi, rekey->spi_size));
 		return (0);
 	}
