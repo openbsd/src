@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_get_pubkey_parameters.3,v 1.1 2021/10/19 17:42:49 schwarze Exp $
+.\" $OpenBSD: X509_get_pubkey_parameters.3,v 1.2 2021/11/26 13:35:10 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 19 2021 $
+.Dd $Mdocdate: November 26 2021 $
 .Dt X509_GET_PUBKEY_PARAMETERS 3
 .Os
 .Sh NAME
@@ -86,18 +86,14 @@ contain complete public key parameters.
 .Fn X509_get_pubkey_parameters
 first appeared in SSLeay 0.8.0 and has been available since
 .Ox 2.4 .
-.Sh BUGS
-If an error occurs while copying parameters with
-.Xr EVP_PKEY_copy_parameters 3 ,
+.Sh CAVEATS
+If
 .Fn X509_get_pubkey_parameters
-indicates success regardless.
-In this case, it is possible that a part of the parameters was copied
-while another part remained in its former state, or that nothing got
-copied at all.
-.Pp
-Some errors of this kind, for example some kinds of key type
-mismatches and some kinds of memory allocation failures, can be
-detected by inspecting the error stack after
-.Fn X509_get_pubkey_parameters
-returns successfully, but some other kinds of algorithm-specific
-copying failures might be impossible to detect at all.
+fails and returns 0, a part of the parameters may or may not have
+been copied before the failure was detected, whereas other parts of
+.Fa pkey
+and
+.Fa chain
+may remain unchanged.
+So in case of failure, the state of the arguments may change
+and possibly become inconsistent.
