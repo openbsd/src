@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_power.c,v 1.1 2018/05/02 15:16:31 patrick Exp $	*/
+/*	$OpenBSD: ofw_power.c,v 1.2 2021/11/26 11:44:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -94,9 +94,21 @@ power_domain_do_enable_idx(int node, int idx, int on)
 }
 
 void
+power_domain_enable_idx(int node, int idx)
+{
+	power_domain_do_enable_idx(node, idx, 1);
+}
+
+void
 power_domain_enable(int node)
 {
 	power_domain_do_enable_idx(node, 0, 1);
+}
+
+void
+power_domain_disable_idx(int node, int idx)
+{
+	power_domain_do_enable_idx(node, idx, 0);
 }
 
 void

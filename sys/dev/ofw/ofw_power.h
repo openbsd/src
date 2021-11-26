@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_power.h,v 1.1 2018/05/02 15:16:31 patrick Exp $	*/
+/*	$OpenBSD: ofw_power.h,v 1.2 2021/11/26 11:44:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -31,6 +31,20 @@ struct power_domain_device {
 
 void	power_domain_register(struct power_domain_device *);
 void	power_domain_enable(int);
+void	power_domain_enable_idx(int, int);
 void	power_domain_disable(int);
+void	power_domain_disable_idx(int, int);
+
+static inline void
+power_domain_enable_all(int node)
+{
+	power_domain_enable_idx(node, -1);
+}
+
+static inline void
+power_domain_disable_all(int node)
+{
+	power_domain_disable_idx(node, -1);
+}
 
 #endif /* _DEV_OFW_POWER_H_ */
