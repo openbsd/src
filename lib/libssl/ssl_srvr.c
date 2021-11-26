@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.124 2021/11/19 18:53:10 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.125 2021/11/26 16:41:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1727,13 +1727,11 @@ ssl3_get_client_kex_rsa(SSL *s, CBS *cbs)
 	fakekey[1] = S3I(s)->hs.peer_legacy_version & 0xff;
 
 	pkey = s->cert->pkeys[SSL_PKEY_RSA].privatekey;
-	if ((pkey == NULL) || (pkey->type != EVP_PKEY_RSA) ||
-	    (pkey->pkey.rsa == NULL)) {
+	if (pkey == NULL || (rsa = EVP_PKEY_get0_RSA(pkey)) == NULL) {
 		al = SSL_AD_HANDSHAKE_FAILURE;
 		SSLerror(s, SSL_R_MISSING_RSA_CERTIFICATE);
 		goto fatal_err;
 	}
-	rsa = pkey->pkey.rsa;
 
 	pms_len = RSA_size(rsa);
 	if (pms_len < SSL_MAX_MASTER_KEY_LENGTH)
@@ -2226,10 +2224,17 @@ ssl3_get_cert_verify(SSL *s)
 			SSLerror(s, SSL_R_BAD_SIGNATURE);
 			goto fatal_err;
 		}
-	} else if (pkey->type == EVP_PKEY_RSA) {
+	} else if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA) {
+		RSA *rsa;
+
+		if ((rsa = EVP_PKEY_get0_RSA(pkey)) == NULL) {
+			al = SSL_AD_INTERNAL_ERROR;
+			SSLerror(s, ERR_R_EVP_LIB);
+			goto fatal_err;
+		}
 		verify = RSA_verify(NID_md5_sha1, S3I(s)->hs.tls12.cert_verify,
 		    MD5_DIGEST_LENGTH + SHA_DIGEST_LENGTH, CBS_data(&signature),
-		    CBS_len(&signature), pkey->pkey.rsa);
+		    CBS_len(&signature), rsa);
 		if (verify < 0) {
 			al = SSL_AD_DECRYPT_ERROR;
 			SSLerror(s, SSL_R_BAD_RSA_DECRYPT);
@@ -2240,19 +2245,26 @@ ssl3_get_cert_verify(SSL *s)
 			SSLerror(s, SSL_R_BAD_RSA_SIGNATURE);
 			goto fatal_err;
 		}
-	} else if (pkey->type == EVP_PKEY_EC) {
+	} else if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
+		EC_KEY *eckey;
+
+		if ((eckey = EVP_PKEY_get0_EC_KEY(pkey)) == NULL) {
+			al = SSL_AD_INTERNAL_ERROR;
+			SSLerror(s, ERR_R_EVP_LIB);
+			goto fatal_err;
+		}
 		verify = ECDSA_verify(0,
 		    &(S3I(s)->hs.tls12.cert_verify[MD5_DIGEST_LENGTH]),
 		    SHA_DIGEST_LENGTH, CBS_data(&signature),
-		    CBS_len(&signature), pkey->pkey.ec);
+		    CBS_len(&signature), eckey);
 		if (verify <= 0) {
 			al = SSL_AD_DECRYPT_ERROR;
 			SSLerror(s, SSL_R_BAD_ECDSA_SIGNATURE);
 			goto fatal_err;
 		}
 #ifndef OPENSSL_NO_GOST
-	} else if (pkey->type == NID_id_GostR3410_94 ||
-	    pkey->type == NID_id_GostR3410_2001) {
+	} else if (EVP_PKEY_id(pkey) == NID_id_GostR3410_94 ||
+	    EVP_PKEY_id(pkey) == NID_id_GostR3410_2001) {
 		unsigned char sigbuf[128];
 		unsigned int siglen = sizeof(sigbuf);
 		EVP_PKEY_CTX *pctx;

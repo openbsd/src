@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.86 2021/10/23 20:42:50 beck Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.87 2021/11/26 16:41:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -229,9 +229,7 @@ ssl_cert_dup(CERT *cert)
 
 		if (cert->pkeys[i].privatekey != NULL) {
 			ret->pkeys[i].privatekey = cert->pkeys[i].privatekey;
-			CRYPTO_add(&ret->pkeys[i].privatekey->references, 1,
-			CRYPTO_LOCK_EVP_PKEY);
-
+			EVP_PKEY_up_ref(ret->pkeys[i].privatekey);
 			switch (i) {
 				/*
 				 * If there was anything special to do for

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.118 2021/11/19 18:53:10 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.119 2021/11/26 16:41:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1925,6 +1925,7 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	unsigned char *enc_pms = NULL;
 	uint16_t max_legacy_version;
 	EVP_PKEY *pkey = NULL;
+	RSA *rsa;
 	int ret = -1;
 	int enc_len;
 	CBB epms;
@@ -1934,8 +1935,7 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	 */
 
 	pkey = X509_get_pubkey(sess_cert->peer_pkeys[SSL_PKEY_RSA].x509);
-	if (pkey == NULL || pkey->type != EVP_PKEY_RSA ||
-	    pkey->pkey.rsa == NULL) {
+	if (pkey == NULL || (rsa = EVP_PKEY_get0_RSA(pkey)) == NULL) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
@@ -1953,12 +1953,12 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	pms[1] = max_legacy_version & 0xff;
 	arc4random_buf(&pms[2], sizeof(pms) - 2);
 
-	if ((enc_pms = malloc(RSA_size(pkey->pkey.rsa))) == NULL) {
+	if ((enc_pms = malloc(RSA_size(rsa))) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	enc_len = RSA_public_encrypt(sizeof(pms), pms, enc_pms, pkey->pkey.rsa,
+	enc_len = RSA_public_encrypt(sizeof(pms), pms, enc_pms, rsa,
 	    RSA_PKCS1_PADDING);
 	if (enc_len <= 0) {
 		SSLerror(s, SSL_R_BAD_RSA_ENCRYPT);
@@ -2385,6 +2385,7 @@ static int
 ssl3_send_client_verify_rsa(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 {
 	CBB cbb_signature;
+	RSA *rsa;
 	unsigned char data[EVP_MAX_MD_SIZE];
 	unsigned char *signature = NULL;
 	unsigned int signature_len;
@@ -2395,8 +2396,10 @@ ssl3_send_client_verify_rsa(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 		goto err;
 	if ((signature = calloc(1, EVP_PKEY_size(pkey))) == NULL)
 		goto err;
-	if (RSA_sign(NID_md5_sha1, data, data_len, signature,
-	    &signature_len, pkey->pkey.rsa) <= 0 ) {
+	if ((rsa = EVP_PKEY_get0_RSA(pkey)) == NULL)
+		goto err;
+	if (RSA_sign(NID_md5_sha1, data, data_len, signature, &signature_len,
+	    rsa) <= 0 ) {
 		SSLerror(s, ERR_R_RSA_LIB);
 		goto err;
 	}
@@ -2418,6 +2421,7 @@ static int
 ssl3_send_client_verify_ec(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 {
 	CBB cbb_signature;
+	EC_KEY *eckey;
 	unsigned char data[EVP_MAX_MD_SIZE];
 	unsigned char *signature = NULL;
 	unsigned int signature_len;
@@ -2427,8 +2431,10 @@ ssl3_send_client_verify_ec(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 		goto err;
 	if ((signature = calloc(1, EVP_PKEY_size(pkey))) == NULL)
 		goto err;
+	if ((eckey = EVP_PKEY_get0_EC_KEY(pkey)) == NULL)
+		goto err;
 	if (!ECDSA_sign(0, &data[MD5_DIGEST_LENGTH], SHA_DIGEST_LENGTH,
-	    signature, &signature_len, pkey->pkey.ec)) {
+	    signature, &signature_len, eckey)) {
 		SSLerror(s, ERR_R_ECDSA_LIB);
 		goto err;
 	}
@@ -2543,15 +2549,15 @@ ssl3_send_client_verify(SSL *s)
 			if (!ssl3_send_client_verify_sigalgs(s, pkey, sigalg,
 			    &cert_verify))
 				goto err;
-		} else if (pkey->type == EVP_PKEY_RSA) {
+		} else if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA) {
 			if (!ssl3_send_client_verify_rsa(s, pkey, &cert_verify))
 				goto err;
-		} else if (pkey->type == EVP_PKEY_EC) {
+		} else if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
 			if (!ssl3_send_client_verify_ec(s, pkey, &cert_verify))
 				goto err;
 #ifndef OPENSSL_NO_GOST
-		} else if (pkey->type == NID_id_GostR3410_94 ||
-		    pkey->type == NID_id_GostR3410_2001) {
+		} else if (EVP_PKEY_id(pkey) == NID_id_GostR3410_94 ||
+		    EVP_PKEY_id(pkey) == NID_id_GostR3410_2001) {
 			if (!ssl3_send_client_verify_gost(s, pkey, &cert_verify))
 				goto err;
 #endif

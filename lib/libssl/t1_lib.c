@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.183 2021/10/25 10:01:46 jsing Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.184 2021/11/26 16:41:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -572,16 +572,17 @@ tls1_check_ec_server_key(SSL *s)
 	CERT_PKEY *cpk = s->cert->pkeys + SSL_PKEY_ECC;
 	uint16_t curve_id;
 	uint8_t comp_id;
+	EC_KEY *eckey;
 	EVP_PKEY *pkey;
 	int rv;
 
 	if (cpk->x509 == NULL || cpk->privatekey == NULL)
 		return (0);
-	if ((pkey = X509_get_pubkey(cpk->x509)) == NULL)
+	if ((pkey = X509_get0_pubkey(cpk->x509)) == NULL)
 		return (0);
-	rv = tls1_set_ec_id(&curve_id, &comp_id, pkey->pkey.ec);
-	EVP_PKEY_free(pkey);
-	if (rv != 1)
+	if ((eckey = EVP_PKEY_get0_EC_KEY(pkey)) == NULL)
+		return (0);
+	if ((rv = tls1_set_ec_id(&curve_id, &comp_id, eckey)) != 1)
 		return (0);
 
 	return tls1_check_ec_key(s, &curve_id, &comp_id);

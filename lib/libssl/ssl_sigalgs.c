@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.37 2021/06/29 19:36:14 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.38 2021/11/26 16:41:42 tb Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -246,7 +246,7 @@ static const struct ssl_sigalg *
 ssl_sigalg_for_legacy(SSL *s, EVP_PKEY *pkey)
 {
 	/* Default signature algorithms used for TLSv1.2 and earlier. */
-	switch (pkey->type) {
+	switch (EVP_PKEY_id(pkey)) {
 	case EVP_PKEY_RSA:
 		if (S3I(s)->hs.negotiated_tls_version < TLS1_2_VERSION)
 			return ssl_sigalg_lookup(SIGALG_RSA_PKCS1_MD5_SHA1);
@@ -267,12 +267,12 @@ ssl_sigalg_pkey_ok(SSL *s, const struct ssl_sigalg *sigalg, EVP_PKEY *pkey)
 {
 	if (sigalg == NULL || pkey == NULL)
 		return 0;
-	if (sigalg->key_type != pkey->type)
+	if (sigalg->key_type != EVP_PKEY_id(pkey))
 		return 0;
 
 	/* RSA PSS must have a sufficiently large RSA key. */
 	if ((sigalg->flags & SIGALG_FLAG_RSA_PSS)) {
-		if (pkey->type != EVP_PKEY_RSA ||
+		if (EVP_PKEY_id(pkey) != EVP_PKEY_RSA ||
 		    EVP_PKEY_size(pkey) < (2 * EVP_MD_size(sigalg->md()) + 2))
 			return 0;
 	}
@@ -286,7 +286,7 @@ ssl_sigalg_pkey_ok(SSL *s, const struct ssl_sigalg *sigalg, EVP_PKEY *pkey)
 		return 0;
 
 	/* Ensure that curve matches for EC keys. */
-	if (pkey->type == EVP_PKEY_EC) {
+	if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
 		if (sigalg->curve_nid == 0)
 			return 0;
 		if (EC_GROUP_get_curve_name(EC_KEY_get0_group(
