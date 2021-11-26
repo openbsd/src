@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.121 2021/05/20 12:34:35 bluhm Exp $	*/
+/*	$OpenBSD: trap.c,v 1.122 2021/11/26 14:59:42 jsg Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -461,13 +461,14 @@ brain_damage:
 		/* set up registers */
 		db_save_regs(frame);
 		db_find_sym_and_offset(frame->srr0, &name, &offset);
-#else
-		name = NULL;
-#endif
 		if (!name) {
 			name = "0";
 			offset = frame->srr0;
 		}
+#else
+		name = "0";
+		offset = frame->srr0;
+#endif
 		panic("trap type %x srr1 %x at %x (%s+0x%lx) lr %lx",
 		    type, frame->srr1, frame->srr0, name, offset, frame->lr);
 
