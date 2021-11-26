@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_parse_dump.3,v 1.1 2021/07/11 19:03:45 schwarze Exp $
+.\" $OpenBSD: ASN1_parse_dump.3,v 1.2 2021/11/26 13:48:21 jsg Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 11 2021 $
+.Dd $Mdocdate: November 26 2021 $
 .Dt ASN1_PARSE_DUMP 3
 .Os
 .Sh NAME
@@ -133,7 +133,7 @@ carriage returns and horizontal tabs, it is printed as an ASCII string.
 Otherwise, the
 .Fa dump
 argument decides the format.
-If it is zero, a raw hex dump is emissed, consisting of two hexadecimal
+If it is zero, a raw hex dump is emitted, consisting of two hexadecimal
 digits for every data byte.
 If
 .Fa dump
@@ -175,7 +175,7 @@ bytes.
 .Fn ASN1_parse
 is identical to
 .Fn ASN1_parse_dump
-woth 0 passed as the
+with 0 passed as the
 .Fa dump
 argument.
 .Sh RETURN VALUES

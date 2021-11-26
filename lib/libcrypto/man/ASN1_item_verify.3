@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_item_verify.3,v 1.1 2021/11/07 15:29:01 schwarze Exp $
+.\" $OpenBSD: ASN1_item_verify.3,v 1.2 2021/11/26 13:48:21 jsg Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 7 2021 $
+.Dd $Mdocdate: November 26 2021 $
 .Dt ASN1_ITEM_VERIFY 3
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@ and the private key corresponding to the public key
 .Fa pkey .
 .Sh RETURN VALUES
 .Fn ASN1_item_verify
-returns 1 if signure verification succeds, 0 if signature verification
+returns 1 if signature verification succeeds, 0 if signature verification
 fails, or \-1 if
 .Fa pkey
 is
