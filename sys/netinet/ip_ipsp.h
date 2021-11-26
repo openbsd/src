@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.222 2021/11/25 13:46:02 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.223 2021/11/26 16:16:35 tobhe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -337,7 +337,6 @@ struct tdb {				/* tunnel descriptor block */
 #define	TDBF_ALLOCATIONS	0x00008	/* Check the flows counters */
 #define	TDBF_INVALID		0x00010	/* This SPI is not valid yet/anymore */
 #define	TDBF_FIRSTUSE		0x00020	/* Expire after first use */
-#define	TDBF_DELETED		0x00040	/* This TDB has already been deleted */
 #define	TDBF_SOFT_TIMER		0x00080	/* Soft expiration */
 #define	TDBF_SOFT_BYTES		0x00100	/* Soft expiration */
 #define	TDBF_SOFT_ALLOCATIONS	0x00200	/* Soft expiration */
@@ -352,7 +351,7 @@ struct tdb {				/* tunnel descriptor block */
 
 #define TDBF_BITS ("\20" \
 	"\1UNIQUE\2TIMER\3BYTES\4ALLOCATIONS" \
-	"\5INVALID\6FIRSTUSE\7DELETED\10SOFT_TIMER" \
+	"\5INVALID\6FIRSTUSE\10SOFT_TIMER" \
 	"\11SOFT_BYTES\12SOFT_ALLOCATIONS\13SOFT_FIRSTUSE\14PFS" \
 	"\15TUNNELING" \
 	"\21USEDTUNNEL\22UDPENCAP\23PFSYNC\24PFSYNC_RPL" \
@@ -537,6 +536,8 @@ extern char ipsec_def_comp[];
 
 extern TAILQ_HEAD(ipsec_policy_head, ipsec_policy) ipsec_policy_head;
 
+extern struct mutex tdb_sadb_mtx;
+
 struct cryptop;
 
 /* Misc. */
@@ -565,14 +566,15 @@ struct	tdb *gettdbbysrcdst_dir(u_int, u_int32_t, union sockaddr_union *,
 #define gettdbbysrcdst(a,b,c,d,e) gettdbbysrcdst_dir((a),(b),(c),(d),(e),0)
 #define gettdbbysrcdst_rev(a,b,c,d,e) gettdbbysrcdst_dir((a),(b),(c),(d),(e),1)
 void	puttdb(struct tdb *);
+void	puttdb_locked(struct tdb *);
 void	tdb_delete(struct tdb *);
 struct	tdb *tdb_alloc(u_int);
 struct	tdb *tdb_ref(struct tdb *);
 void	tdb_unref(struct tdb *);
 void	tdb_free(struct tdb *);
 int	tdb_init(struct tdb *, u_int16_t, struct ipsecinit *);
-void	tdb_unlink(struct tdb *);
-void	tdb_unlink_locked(struct tdb *);
+int	tdb_unlink(struct tdb *);
+int	tdb_unlink_locked(struct tdb *);
 void	tdb_unbundle(struct tdb *);
 void	tdb_deltimeouts(struct tdb *);
 int	tdb_walk(u_int, int (*)(struct tdb *, void *, int), void *);

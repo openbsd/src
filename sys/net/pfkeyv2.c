@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.222 2021/11/25 13:46:02 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.223 2021/11/26 16:16:35 tobhe Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1046,11 +1046,8 @@ pfkeyv2_sa_flush(struct tdb *tdb, void *satype_vp, int last)
 		/* keep in sync with tdb_delete() */
 		NET_ASSERT_LOCKED();
 
-		if (tdb->tdb_flags & TDBF_DELETED)
+		if (tdb_unlink_locked(tdb) == 0)
 			return (0);
-		tdb->tdb_flags |= TDBF_DELETED;
-
-		tdb_unlink_locked(tdb);
 		tdb_unbundle(tdb);
 		tdb_deltimeouts(tdb);
 		tdb_unref(tdb);
@@ -1438,12 +1435,14 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 #endif
 			if (headers[SADB_EXT_ADDRESS_SRC] ||
 			    headers[SADB_EXT_ADDRESS_PROXY]) {
-				tdb_unlink(sa2);
+				mtx_enter(&tdb_sadb_mtx);
+				tdb_unlink_locked(sa2);
 				import_address((struct sockaddr *)&sa2->tdb_src,
 				    headers[SADB_EXT_ADDRESS_SRC]);
 				import_address((struct sockaddr *)&sa2->tdb_dst,
 				    headers[SADB_EXT_ADDRESS_PROXY]);
-				puttdb(sa2);
+				puttdb_locked(sa2);
+				mtx_leave(&tdb_sadb_mtx);
 			}
 		}
 		NET_UNLOCK();

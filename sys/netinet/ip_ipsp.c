@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.254 2021/11/25 13:46:02 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.255 2021/11/26 16:16:35 tobhe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -794,9 +794,16 @@ tdb_rehash(void)
 void
 puttdb(struct tdb *tdbp)
 {
+	mtx_enter(&tdb_sadb_mtx);
+	puttdb_locked(tdbp);
+	mtx_leave(&tdb_sadb_mtx);
+}
+
+void
+puttdb_locked(struct tdb *tdbp)
+{
 	u_int32_t hashval;
 
-	mtx_enter(&tdb_sadb_mtx);
 	hashval = tdb_hash(tdbp->tdb_spi, &tdbp->tdb_dst, tdbp->tdb_sproto);
 
 	/*
@@ -832,24 +839,29 @@ puttdb(struct tdb *tdbp)
 #endif /* IPSEC */
 
 	ipsec_last_added = getuptime();
-	mtx_leave(&tdb_sadb_mtx);
 }
 
-void
+int
 tdb_unlink(struct tdb *tdbp)
 {
+	int r;
+
 	mtx_enter(&tdb_sadb_mtx);
-	tdb_unlink_locked(tdbp);
+	r = tdb_unlink_locked(tdbp);
 	mtx_leave(&tdb_sadb_mtx);
+	return (r);
 }
 
-void
+int
 tdb_unlink_locked(struct tdb *tdbp)
 {
 	struct tdb *tdbpp;
 	u_int32_t hashval;
 
 	MUTEX_ASSERT_LOCKED(&tdb_sadb_mtx);
+
+	if (tdbp->tdb_dnext == NULL && tdbp->tdb_snext == NULL)
+		return (0);
 
 	hashval = tdb_hash(tdbp->tdb_spi, &tdbp->tdb_dst, tdbp->tdb_sproto);
 
@@ -907,6 +919,8 @@ tdb_unlink_locked(struct tdb *tdbp)
 		ipsecstat_inc(ipsec_prevtunnels);
 	}
 #endif /* IPSEC */
+
+	return (1);
 }
 
 void
@@ -968,11 +982,8 @@ tdb_delete(struct tdb *tdbp)
 	/* keep in sync with pfkeyv2_sa_flush() */
 	NET_ASSERT_LOCKED();
 
-	if (tdbp->tdb_flags & TDBF_DELETED)
+	if (tdb_unlink(tdbp) == 0)
 		return;
-	tdbp->tdb_flags |= TDBF_DELETED;
-
-	tdb_unlink(tdbp);
 	/* release tdb_onext/tdb_inext references */
 	tdb_unbundle(tdbp);
 	/* delete timeouts and release references */
