@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.86 2021/11/24 20:48:00 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.87 2021/11/26 16:22:44 patrick Exp $	*/
 
 /*
  * Copyright (c) 2020-2021 Tobias Heider <tobhe@openbsd.org>
@@ -111,6 +111,15 @@ policy_lookup(struct iked *env, struct iked_message *msg,
 		strlcpy(pol.pol_peerid.id_data, s+1,
 		    sizeof(pol.pol_peerid.id_data));
 		log_debug("%s: peerid '%s'", __func__, s+1);
+	}
+	if (msg->msg_localid.id_type &&
+	    ikev2_print_id(&msg->msg_localid, idstr, IKED_ID_SIZE) == 0 &&
+	    (s = strchr(idstr, '/')) != NULL) {
+		pol.pol_localid.id_type = msg->msg_localid.id_type;
+		pol.pol_localid.id_length = strlen(s+1);
+		strlcpy(pol.pol_localid.id_data, s+1,
+		    sizeof(pol.pol_localid.id_data));
+		log_debug("%s: localid '%s'", __func__, s+1);
 	}
 
 	/* Try to find a matching policy for this message */
