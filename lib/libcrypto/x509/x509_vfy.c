@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.98 2021/11/24 05:38:12 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.99 2021/11/26 13:05:03 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2079,17 +2079,15 @@ X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 		return 1;
 
 	for (i = 0; i < sk_X509_num(chain); i++) {
-		ktmp = X509_get_pubkey(sk_X509_value(chain, i));
+		ktmp = X509_get0_pubkey(sk_X509_value(chain, i));
 		if (ktmp == NULL) {
 			X509error(X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
 			return 0;
 		}
 		if (!EVP_PKEY_missing_parameters(ktmp))
 			break;
-		else {
-			EVP_PKEY_free(ktmp);
+		else
 			ktmp = NULL;
-		}
 	}
 	if (ktmp == NULL) {
 		X509error(X509_R_UNABLE_TO_FIND_PARAMETERS_IN_CHAIN);
@@ -2098,14 +2096,12 @@ X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 
 	/* first, populate the other certs */
 	for (j = i - 1; j >= 0; j--) {
-		ktmp2 = X509_get_pubkey(sk_X509_value(chain, j));
+		ktmp2 = X509_get0_pubkey(sk_X509_value(chain, j));
 		EVP_PKEY_copy_parameters(ktmp2, ktmp);
-		EVP_PKEY_free(ktmp2);
 	}
 
 	if (pkey != NULL)
 		EVP_PKEY_copy_parameters(pkey, ktmp);
-	EVP_PKEY_free(ktmp);
 	return 1;
 }
 
