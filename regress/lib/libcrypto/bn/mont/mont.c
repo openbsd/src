@@ -1,4 +1,4 @@
-/*	$OpenBSD: mont.c,v 1.4 2021/04/04 19:36:09 tb Exp $	*/
+/*	$OpenBSD: mont.c,v 1.5 2021/11/26 16:52:07 tb Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -35,6 +35,8 @@ int
 main(int argc, char *argv[])
 {
 	DH *dh = NULL;
+	BIGNUM *priv_key = NULL;
+	const BIGNUM *pub_key;
 	unsigned char *key = NULL;
 	unsigned char r[32 + 16 * 8];
 	size_t privsz;
@@ -50,16 +52,21 @@ main(int argc, char *argv[])
 			goto err;
 
 		/* force private key to be much larger than public one */
-		dh->priv_key = BN_bin2bn(r, privsz, NULL);
-		if (dh->priv_key == NULL)
+		priv_key = BN_bin2bn(r, privsz, NULL);
+		if (priv_key == NULL)
 			goto err;
+
+		if (!DH_set0_key(dh, NULL, priv_key))
+			goto err;
+		priv_key = NULL;
 
 		if (DH_generate_key(dh) == 0)
 			goto err;
 		key = malloc(DH_size(dh));
 		if (key == NULL)
 			err(1, "malloc");
-		if (DH_compute_key(key, dh->pub_key, dh) == -1)
+		DH_get0_key(dh, &pub_key, NULL);
+		if (DH_compute_key(key, pub_key, dh) == -1)
 			goto err;
 
 		free(key);
@@ -73,6 +80,7 @@ main(int argc, char *argv[])
  err:
 	ERR_print_errors_fp(stderr);
 	free(key);
+	BN_free(priv_key);
 	DH_free(dh);
 	return 1;
 }
