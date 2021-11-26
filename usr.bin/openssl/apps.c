@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.60 2021/03/31 17:13:54 tb Exp $ */
+/* $OpenBSD: apps.c,v 1.61 2021/11/26 16:23:27 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -160,12 +160,6 @@ static int set_table_opts(unsigned long *flags, const char *arg,
 static int set_multi_opts(unsigned long *flags, const char *arg,
     const NAME_EX_TBL *in_tbl);
 
-#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
-/* Looks like this stuff is worth moving into separate function */
-static EVP_PKEY *load_netscape_key(BIO *err, BIO *key, const char *file,
-    const char *key_descrip, int format);
-#endif
-
 int
 str2fmt(char *s)
 {
@@ -175,8 +169,6 @@ str2fmt(char *s)
 		return (FORMAT_ASN1);
 	else if ((*s == 'T') || (*s == 't'))
 		return (FORMAT_TEXT);
-	else if ((*s == 'N') || (*s == 'n'))
-		return (FORMAT_NETSCAPE);
 	else if ((*s == 'S') || (*s == 's'))
 		return (FORMAT_SMIME);
 	else if ((*s == 'M') || (*s == 'm'))
@@ -612,24 +604,7 @@ load_cert(BIO *err, const char *file, int format, const char *pass,
 
 	if (format == FORMAT_ASN1)
 		x = d2i_X509_bio(cert, NULL);
-	else if (format == FORMAT_NETSCAPE) {
-		NETSCAPE_X509 *nx;
-		nx = ASN1_item_d2i_bio(&NETSCAPE_X509_it,
-		    cert, NULL);
-		if (nx == NULL)
-			goto end;
-
-		if ((strncmp(NETSCAPE_CERT_HDR, (char *) nx->header->data,
-		    nx->header->length) != 0)) {
-			NETSCAPE_X509_free(nx);
-			BIO_printf(err,
-			    "Error reading header on certificate\n");
-			goto end;
-		}
-		x = nx->cert;
-		nx->cert = NULL;
-		NETSCAPE_X509_free(nx);
-	} else if (format == FORMAT_PEM)
+	else if (format == FORMAT_PEM)
 		x = PEM_read_bio_X509_AUX(cert, NULL, password_callback, NULL);
 	else if (format == FORMAT_PKCS12) {
 		if (!load_pkcs12(err, cert, cert_descrip, NULL, NULL,
@@ -684,10 +659,6 @@ load_key(BIO *err, const char *file, int format, int maybe_stdin,
 	} else if (format == FORMAT_PEM) {
 		pkey = PEM_read_bio_PrivateKey(key, NULL, password_callback, &cb_data);
 	}
-#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
-	else if (format == FORMAT_NETSCAPE || format == FORMAT_IISSGC)
-		pkey = load_netscape_key(err, key, file, key_descrip, format);
-#endif
 	else if (format == FORMAT_PKCS12) {
 		if (!load_pkcs12(err, key, key_descrip, password_callback, &cb_data,
 		    &pkey, NULL, NULL))
@@ -768,10 +739,6 @@ load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 	else if (format == FORMAT_PEM) {
 		pkey = PEM_read_bio_PUBKEY(key, NULL, password_callback, &cb_data);
 	}
-#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
-	else if (format == FORMAT_NETSCAPE || format == FORMAT_IISSGC)
-		pkey = load_netscape_key(err, key, file, key_descrip, format);
-#endif
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
 	else if (format == FORMAT_MSBLOB)
 		pkey = b2i_PublicKey_bio(key);
@@ -787,51 +754,6 @@ load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 		BIO_printf(err, "unable to load %s\n", key_descrip);
 	return (pkey);
 }
-
-#if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_RSA)
-static EVP_PKEY *
-load_netscape_key(BIO *err, BIO *key, const char *file,
-    const char *key_descrip, int format)
-{
-	EVP_PKEY *pkey;
-	BUF_MEM *buf;
-	RSA *rsa;
-	const unsigned char *p;
-	int size, i;
-
-	buf = BUF_MEM_new();
-	pkey = EVP_PKEY_new();
-	size = 0;
-	if (buf == NULL || pkey == NULL)
-		goto error;
-	for (;;) {
-		if (!BUF_MEM_grow_clean(buf, size + 1024 * 10))
-			goto error;
-		i = BIO_read(key, &(buf->data[size]), 1024 * 10);
-		size += i;
-		if (i == 0)
-			break;
-		if (i < 0) {
-			BIO_printf(err, "Error reading %s %s",
-			    key_descrip, file);
-			goto error;
-		}
-	}
-	p = (unsigned char *) buf->data;
-	rsa = d2i_RSA_NET(NULL, &p, (long) size, NULL,
-	    (format == FORMAT_IISSGC ? 1 : 0));
-	if (rsa == NULL)
-		goto error;
-	BUF_MEM_free(buf);
-	EVP_PKEY_set1_RSA(pkey, rsa);
-	return pkey;
-
- error:
-	BUF_MEM_free(buf);
-	EVP_PKEY_free(pkey);
-	return NULL;
-}
-#endif				/* ndef OPENSSL_NO_RC4 */
 
 static int
 load_certs_crls(BIO *err, const char *file, int format, const char *pass,

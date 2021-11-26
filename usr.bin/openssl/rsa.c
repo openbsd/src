@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.c,v 1.14 2019/07/14 03:30:46 guenther Exp $ */
+/* $OpenBSD: rsa.c,v 1.15 2021/11/26 16:23:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,7 +88,6 @@ static struct {
 	int pubin;
 	int pubout;
 	int pvk_encr;
-	int sgckey;
 	int text;
 } rsa_config;
 
@@ -215,12 +214,6 @@ static const struct option rsa_options[] = {
 		.opt.value = &rsa_config.pubout,
 	},
 	{
-		.name = "sgckey",
-		.desc = "Use modified NET algorithm for IIS and SGC keys",
-		.type = OPTION_FLAG,
-		.opt.flag = &rsa_config.sgckey,
-	},
-	{
 		.name = "text",
 		.desc = "Print in plain text in addition to encoded",
 		.type = OPTION_FLAG,
@@ -244,7 +237,7 @@ rsa_usage()
 	    "[-inform fmt]\n"
 	    "    [-modulus] [-noout] [-out file] [-outform fmt] "
 	    "[-passin src]\n"
-	    "    [-passout src] [-pubin] [-pubout] [-sgckey] [-text]\n\n");
+	    "    [-passout src] [-pubin] [-pubout] [-text]\n\n");
 	options_usage(rsa_options);
 	fprintf(stderr, "\n");
 
@@ -300,19 +293,14 @@ rsa_main(int argc, char **argv)
 					tmpformat = FORMAT_PEMRSA;
 				else if (rsa_config.informat == FORMAT_ASN1)
 					tmpformat = FORMAT_ASN1RSA;
-			} else if (rsa_config.informat == FORMAT_NETSCAPE &&
-			    rsa_config.sgckey)
-				tmpformat = FORMAT_IISSGC;
-			else
+			} else
 				tmpformat = rsa_config.informat;
 
 			pkey = load_pubkey(bio_err, rsa_config.infile,
 			    tmpformat, 1, passin, "Public Key");
 		} else
 			pkey = load_key(bio_err, rsa_config.infile,
-			    (rsa_config.informat == FORMAT_NETSCAPE &&
-			    rsa_config.sgckey ? FORMAT_IISSGC :
-			    rsa_config.informat), 1, passin, "Private Key");
+			    rsa_config.informat, 1, passin, "Private Key");
 
 		if (pkey != NULL)
 			rsa = EVP_PKEY_get1_RSA(pkey);
@@ -380,25 +368,7 @@ rsa_main(int argc, char **argv)
 				i = i2d_RSA_PUBKEY_bio(out, rsa);
 		} else
 			i = i2d_RSAPrivateKey_bio(out, rsa);
-	}
-#ifndef OPENSSL_NO_RC4
-	else if (rsa_config.outformat == FORMAT_NETSCAPE) {
-		unsigned char *p, *pp;
-		int size;
-
-		i = 1;
-		size = i2d_RSA_NET(rsa, NULL, NULL, rsa_config.sgckey);
-		if ((p = malloc(size)) == NULL) {
-			BIO_printf(bio_err, "Memory allocation failure\n");
-			goto end;
-		}
-		pp = p;
-		i2d_RSA_NET(rsa, &p, NULL, rsa_config.sgckey);
-		BIO_write(out, (char *) pp, size);
-		free(pp);
-	}
-#endif
-	else if (rsa_config.outformat == FORMAT_PEM) {
+	} else if (rsa_config.outformat == FORMAT_PEM) {
 		if (rsa_config.pubout || rsa_config.pubin) {
 			if (rsa_config.pubout == 2)
 				i = PEM_write_bio_RSAPublicKey(out, rsa);

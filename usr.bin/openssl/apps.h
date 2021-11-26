@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.29 2021/11/20 15:55:00 tb Exp $ */
+/* $OpenBSD: apps.h,v 1.30 2021/11/26 16:23:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -255,12 +255,10 @@ unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
 #define FORMAT_ASN1     1
 #define FORMAT_TEXT     2
 #define FORMAT_PEM      3
-#define FORMAT_NETSCAPE 4
+
 #define FORMAT_PKCS12   5
 #define FORMAT_SMIME    6
 
-#define FORMAT_IISSGC	8	/* XXX this stupid macro helps us to avoid
-				 * adding yet another param to load_*key() */
 #define FORMAT_PEMRSA	9	/* PEM RSAPublicKey format */
 #define FORMAT_ASN1RSA	10	/* DER RSAPublicKey format */
 #define FORMAT_MSBLOB	11	/* MS Key blob format */
@@ -269,8 +267,6 @@ unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
 #define EXT_COPY_NONE	0
 #define EXT_COPY_ADD	1
 #define EXT_COPY_ALL	2
-
-#define NETSCAPE_CERT_HDR	"certificate"
 
 #define APP_PASS_LEN	1024
 

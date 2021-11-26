@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.25 2021/10/23 15:44:39 tb Exp $ */
+/* $OpenBSD: x509.c,v 1.26 2021/11/26 16:23:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1298,16 +1298,6 @@ x509_main(int argc, char **argv)
 			i = PEM_write_bio_X509_AUX(out, x);
 		else
 			i = PEM_write_bio_X509(out, x);
-	} else if (x509_config.outformat == FORMAT_NETSCAPE) {
-		NETSCAPE_X509 nx;
-		ASN1_OCTET_STRING hdr;
-
-		hdr.data = (unsigned char *) NETSCAPE_CERT_HDR;
-		hdr.length = strlen(NETSCAPE_CERT_HDR);
-		nx.header = &hdr;
-		nx.cert = x;
-
-		i = ASN1_item_i2d_bio(&NETSCAPE_X509_it, out, &nx);
 	} else {
 		BIO_printf(bio_err,
 		    "bad output format specified for outfile\n");

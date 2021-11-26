@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.133 2021/10/23 11:36:44 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.134 2021/11/26 16:23:27 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: October 23 2021 $
+.Dd $Mdocdate: November 26 2021 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -4105,7 +4105,6 @@ Any additional fields will be treated as though they were a
 .Op Fl pvk-none | pvk-strong | pvk-weak
 .Op Fl RSAPublicKey_in
 .Op Fl RSAPublicKey_out
-.Op Fl sgckey
 .Op Fl text
 .Ek
 .El
@@ -4177,9 +4176,6 @@ and
 except
 .Cm RSAPublicKey
 format is used instead.
-.It Fl sgckey
-Use the modified NET algorithm used with some versions of Microsoft IIS
-and SGC keys.
 .It Fl text
 Print the public/private key components in plain text.
 .El
