@@ -1,0 +1,228 @@
+.\" $OpenBSD: BIO_f_asn1.3,v 1.1 2021/11/27 16:18:03 schwarze Exp $
+.\"
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: November 27 2021 $
+.Dt BIO_F_ASN1 3
+.Os
+.Sh NAME
+.Nm BIO_f_asn1 ,
+.Nm asn1_ps_func ,
+.Nm BIO_asn1_set_prefix ,
+.Nm BIO_asn1_get_prefix ,
+.Nm BIO_asn1_set_suffix ,
+.Nm BIO_asn1_get_suffix
+.Nd BER-encoding filter BIO
+.Sh SYNOPSIS
+.In openssl/asn1.h
+.Ft const BIO_METHOD *
+.Fn BIO_f_asn1 void
+.In openssl/bio.h
+.Ft typedef int
+.Fo asn1_ps_func
+.Fa "BIO *bio"
+.Fa "unsigned char **pbuf"
+.Fa "int *plen"
+.Fa "void *parg"
+.Fc
+.Ft int
+.Fo BIO_asn1_set_prefix
+.Fa "BIO *chain"
+.Fa "asn1_ps_func *prefix"
+.Fa "asn1_ps_func *prefix_free"
+.Fc
+.Ft int
+.Fo BIO_asn1_get_prefix
+.Fa "BIO *chain"
+.Fa "asn1_ps_func **pprefix"
+.Fa "asn1_ps_func **pprefix_free"
+.Fc
+.Ft int
+.Fo BIO_asn1_set_suffix
+.Fa "BIO *chain"
+.Fa "asn1_ps_func *suffix"
+.Fa "asn1_ps_func *suffix_free"
+.Fc
+.Ft int
+.Fo BIO_asn1_get_suffix
+.Fa "BIO *chain"
+.Fa "asn1_ps_func **psuffix"
+.Fa "asn1_ps_func **psuffix_free"
+.Fc
+.Sh DESCRIPTION
+.Fn BIO_f_asn1
+returns the
+.Qq asn1
+BIO method.
+BIOs created from it with
+.Xr BIO_new 3
+are filter BIOs intended to BER-encode data written to them
+and pass the encoded data on to the next BIO in the chain.
+Such BIOs operate as follows:
+.Bl -hang -width 1n
+.It Xr BIO_method_type 3
+returns
+.Dv BIO_TYPE_ASN1 .
+.It Xr BIO_method_name 3
+returns a pointer to the static string
+.Qq asn1 .
+.It Xr BIO_write 3
+writes the DER encoding of an ASN.1 OCTET STRING with the
+.Fa len
+content octets in
+.Fa buf
+to the next BIO in the chain.
+.Pp
+If a
+.Fa prefix
+function was installed with
+.Fn BIO_asn1_set_prefix ,
+that function is called before writing the object.
+It may for example produce additional output.
+If it fails, writing fails.
+.Pp
+If a
+.Fa prefix_free
+function was installed as well, that function is called
+after writing any output produced by
+.Fa prefix
+but before writing the object.
+Failure of
+.Fa prefix_free
+is silently ignored.
+.It Xr BIO_puts 3
+operates like
+.Xr BIO_write 3
+but uses the
+.Xr strlen 3
+of
+.Fa buf
+instead of a
+.Fa len
+argument.
+.It Xr BIO_flush 3
+calls the
+.Fa suffix
+callback function, if any.
+If that produces any output, it calls the
+.Fa suffix_free
+callback function, if any, silently ignoring failure.
+Finally, it calls
+.Xr BIO_flush 3
+on the next BIO in the chain.
+It fails if no data was previously written or if the
+.Fa suffix
+callback, writing, or
+.Xr BIO_flush 3
+on the next BIO fail.
+.It Xr BIO_ctrl 3
+with a
+.Fa cmd
+of
+.Dv BIO_C_SET_EX_ARG
+stores the pointer
+.Fa parg
+internally such that it will be passed to the
+.Fn asn1_ps_func
+callback functions.
+With a
+.Fa cmd
+of
+.Dv BIO_C_GET_EX_ARG ,
+it retrieves that pointer, storing it in
+.Pf * Fa parg .
+The commands
+.Dv BIO_C_SET_PREFIX ,
+.Dv BIO_C_GET_PREFIX ,
+.Dv BIO_C_SET_SUFFIX ,
+.Dv BIO_C_GET_SUFFIX ,
+and
+.Dv BIO_CTRL_FLUSH
+are used internally to implement
+.Fn BIO_asn1_set_prefix ,
+.Fn BIO_asn1_get_prefix ,
+.Fn BIO_asn1_set_suffix ,
+.Fn BIO_asn1_get_suffix
+and
+.Xr BIO_flush 3
+and are not intended for use by application programs.
+Other commands are merely forwarded to the next BIO in the chain.
+.It Xo
+.Xr BIO_read 3 ,
+.Xr BIO_gets 3 ,
+and
+.Xr BIO_callback_ctrl 3
+.Xc
+merely call the same function on the next BIO in the chain.
+.El
+.Pp
+If the above description of a function mentions the next BIO in the
+chain, that function fails if the asn1 BIO is the last BIO in the chain.
+.Pp
+.Fn BIO_asn1_set_prefix
+and
+.Fn BIO_asn1_get_prefix
+install and retrieve the
+.Fa prefix
+and
+.Fa prefix_free
+callback functions in and from the first asn1 BIO in the given
+.Fa chain .
+Similarly,
+.Fn BIO_asn1_set_suffix
+and
+.Fn BIO_asn1_get_suffix
+install and retrieve the
+.Fa suffix
+and
+.Fa suffix_free
+callback functions.
+Passing a
+.Dv NULL
+pointer for any of the
+.Fn asn1_ps_func
+arguments disables that particular callback.
+.Sh RETURN VALUES
+.Fn BIO_f_asn1
+always returns a pointer to a static built-in object.
+.Pp
+Functions of the type
+.Fn asn1_ps_func
+are supposed to return 1 on success or 0 on failure.
+.Pp
+.Fn BIO_asn1_set_prefix ,
+.Fn BIO_asn1_get_prefix ,
+.Fn BIO_asn1_set_suffix ,
+and
+.Fn BIO_asn1_get_suffix
+return 1 on success or 0 if
+.Fa chain
+is a
+.Dv NULL
+pointer or does not contain any asn1 BIO.
+They may return \-2 if a BIO is encountered in the
+.Fa chain
+that is not properly initialized.
+.Sh SEE ALSO
+.Xr ASN1_put_object 3 ,
+.Xr BIO_ctrl 3 ,
+.Xr BIO_new 3 ,
+.Xr BIO_next 3 ,
+.Xr BIO_write 3 ,
+.Xr i2d_ASN1_OCTET_STRING 3
+.Sh HISTORY
+These functions first appeared in OpenSSL 1.0.0
+and have been available since
+.Ox 4.9 .
