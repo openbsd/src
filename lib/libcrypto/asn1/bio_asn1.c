@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_asn1.c,v 1.13 2018/05/01 13:29:09 tb Exp $ */
+/* $OpenBSD: bio_asn1.c,v 1.14 2021/11/27 13:10:33 schwarze Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -118,7 +118,6 @@ static int asn1_bio_new(BIO *h);
 static int asn1_bio_free(BIO *data);
 static long asn1_bio_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
 
-static int asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size);
 static int asn1_bio_flush_ex(BIO *b, BIO_ASN1_BUF_CTX *ctx,
     asn1_ps_func *cleanup, asn1_bio_state_t next);
 static int asn1_bio_setup_ex(BIO *b, BIO_ASN1_BUF_CTX *ctx,
@@ -148,35 +147,23 @@ static int
 asn1_bio_new(BIO *b)
 {
 	BIO_ASN1_BUF_CTX *ctx;
-	ctx = malloc(sizeof(BIO_ASN1_BUF_CTX));
-	if (!ctx)
+
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
 		return 0;
-	if (!asn1_bio_init(ctx, DEFAULT_ASN1_BUF_SIZE)) {
+
+	if ((ctx->buf = malloc(DEFAULT_ASN1_BUF_SIZE)) == NULL) {
 		free(ctx);
 		return 0;
 	}
+	ctx->bufsize = DEFAULT_ASN1_BUF_SIZE;
+	ctx->asn1_class = V_ASN1_UNIVERSAL;
+	ctx->asn1_tag = V_ASN1_OCTET_STRING;
+	ctx->state = ASN1_STATE_START;
+
 	b->init = 1;
 	b->ptr = (char *)ctx;
 	b->flags = 0;
-	return 1;
-}
 
-static int
-asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size)
-{
-	ctx->buf = malloc(size);
-	if (!ctx->buf)
-		return 0;
-	ctx->bufsize = size;
-	ctx->bufpos = 0;
-	ctx->buflen = 0;
-	ctx->copylen = 0;
-	ctx->asn1_class = V_ASN1_UNIVERSAL;
-	ctx->asn1_tag = V_ASN1_OCTET_STRING;
-	ctx->ex_buf = NULL;
-	ctx->ex_pos = 0;
-	ctx->ex_len = 0;
-	ctx->state = ASN1_STATE_START;
 	return 1;
 }
 
