@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.8 2016/05/30 05:18:52 guenther Exp $ */
+/*	$OpenBSD: brk.S,v 1.9 2021/11/27 15:12:19 visa Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,8 +45,6 @@ __minbrk:
 FRAMESZ= MKFSIZ(1,1)
 GPOFF= FRAMESZ-2*REGSZ
 
-	.weak	brk
-
 LEAF(brk, FRAMESZ)
 	PTR_SUBU sp, FRAMESZ
 	SETUP_GP64(GPOFF, brk)
@@ -70,3 +68,4 @@ LEAF(brk, FRAMESZ)
 	PTR_ADDU sp, FRAMESZ
 	jr	t9
 END(brk)
+	.weak	brk
