@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll_close.c,v 1.1 2021/11/21 06:21:01 visa Exp $	*/
+/*	$OpenBSD: poll_close.c,v 1.2 2021/11/27 15:06:10 visa Exp $	*/
 
 /*
  * Copyright (c) 2021 Visa Hankala
@@ -88,7 +88,7 @@ thread_main(void *arg)
 	memset(pfd, 0, sizeof(pfd));
 	pfd[0].fd = sock[1];
 	pfd[0].events = POLLIN;
-	ret = poll(pfd, 1, 100);
+	ret = poll(pfd, 1, INFTIM);
 	assert(ret == 1);
 	assert(pfd[0].revents & POLLIN);
 
@@ -102,7 +102,7 @@ thread_main(void *arg)
 	memset(pfd, 0, sizeof(pfd));
 	pfd[0].fd = sock[1];
 	pfd[0].events = POLLIN;
-	ret = poll(pfd, 1, 100);
+	ret = poll(pfd, 1, INFTIM);
 	assert(ret == 1);
 	assert(pfd[0].revents & POLLNVAL);
 

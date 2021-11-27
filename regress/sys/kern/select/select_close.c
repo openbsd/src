@@ -1,4 +1,4 @@
-/*	$OpenBSD: select_close.c,v 1.1 2021/11/21 06:21:01 visa Exp $	*/
+/*	$OpenBSD: select_close.c,v 1.2 2021/11/27 15:06:10 visa Exp $	*/
 
 /*
  * Copyright (c) 2021 Visa Hankala
@@ -83,15 +83,12 @@ static void *
 thread_main(void *arg)
 {
 	fd_set rfds;
-	struct timeval tv;
 	int ret;
 	char b;
 
 	FD_ZERO(&rfds);
 	FD_SET(sock[1], &rfds);
-	tv.tv_sec = 0;
-	tv.tv_usec = 100000;
-	ret = select(sock[1] + 1, &rfds, NULL, NULL, &tv);
+	ret = select(sock[1] + 1, &rfds, NULL, NULL, NULL);
 	assert(ret == 1);
 	assert(FD_ISSET(sock[1], &rfds));
 
@@ -104,9 +101,7 @@ thread_main(void *arg)
 
 	FD_ZERO(&rfds);
 	FD_SET(sock[1], &rfds);
-	tv.tv_sec = 0;
-	tv.tv_usec = 100000;
-	ret = select(sock[1] + 1, &rfds, NULL, NULL, &tv);
+	ret = select(sock[1] + 1, &rfds, NULL, NULL, NULL);
 	assert(ret == -1);
 	assert(errno == EBADF);
 
