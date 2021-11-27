@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.382 2021/11/22 11:00:50 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.383 2021/11/27 11:22:26 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5569,8 +5569,6 @@ iwm_ampdu_tx_done(struct iwm_softc *sc, struct iwm_cmd_header *cmd_hdr,
 	    status != IWM_TX_STATUS_DIRECT_DONE);
 	uint16_t seq;
 
-	sc->sc_tx_timer = 0;
-
 	if (ic->ic_state != IEEE80211_S_RUN)
 		return;
 
@@ -5670,16 +5668,18 @@ iwm_rx_tx_cmd(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	bus_dmamap_sync(sc->sc_dmat, data->map, 0, IWM_RBUF_SIZE,
 	    BUS_DMASYNC_POSTREAD);
 
-	sc->sc_tx_timer = 0;
-
 	/* Sanity checks. */
 	if (sizeof(*tx_resp) > len)
 		return;
 	if (qid < IWM_FIRST_AGG_TX_QUEUE && tx_resp->frame_count > 1)
 		return;
+	if (qid > IWM_LAST_AGG_TX_QUEUE)
+		return;
 	if (sizeof(*tx_resp) + sizeof(ssn) +
 	    tx_resp->frame_count * sizeof(tx_resp->status) > len)
 		return;
+
+	sc->sc_tx_timer[qid] = 0;
 
 	txd = &ring->data[idx];
 	if (txd->m == NULL)
@@ -5790,7 +5790,7 @@ iwm_rx_compressed_ba(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	if (qid != IWM_FIRST_AGG_TX_QUEUE + ban->tid)
 		return;
 
-	sc->sc_tx_timer = 0;
+	sc->sc_tx_timer[qid] = 0;
 
 	ba = &ni->ni_tx_ba[ban->tid];
 	if (ba->ba_state != IEEE80211_BA_AGREED)
@@ -6732,6 +6732,9 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	if (++ring->queued > IWM_TX_RING_HIMARK) {
 		sc->qfullmsk |= 1 << ring->qid;
 	}
+
+	if (ic->ic_if.if_flags & IFF_UP)
+		sc->sc_tx_timer[ring->qid] = 15;
 
 	return 0;
 }
@@ -10011,10 +10014,8 @@ iwm_start(struct ifnet *ifp)
 			continue;
 		}
 
-		if (ifp->if_flags & IFF_UP) {
-			sc->sc_tx_timer = 15;
+		if (ifp->if_flags & IFF_UP)
 			ifp->if_timer = 1;
-		}
 	}
 
 	return;
@@ -10084,7 +10085,8 @@ iwm_stop(struct ifnet *ifp)
 		iwm_clear_reorder_buffer(sc, rxba);
 	}
 	iwm_led_blink_stop(sc);
-	ifp->if_timer = sc->sc_tx_timer = 0;
+	memset(sc->sc_tx_timer, 0, sizeof(sc->sc_tx_timer));
+	ifp->if_timer = 0;
 
 	splx(s);
 }
@@ -10093,21 +10095,30 @@ void
 iwm_watchdog(struct ifnet *ifp)
 {
 	struct iwm_softc *sc = ifp->if_softc;
+	int i;
 
 	ifp->if_timer = 0;
-	if (sc->sc_tx_timer > 0) {
-		if (--sc->sc_tx_timer == 0) {
-			printf("%s: device timeout\n", DEVNAME(sc));
-			if (ifp->if_flags & IFF_DEBUG) {
-				iwm_nic_error(sc);
-				iwm_dump_driver_status(sc);
+
+	/*
+	 * We maintain a separate timer for each Tx queue because
+	 * Tx aggregation queues can get "stuck" while other queues
+	 * keep working. The Linux driver uses a similar workaround.
+	 */
+	for (i = 0; i < nitems(sc->sc_tx_timer); i++) {
+		if (sc->sc_tx_timer[i] > 0) {
+			if (--sc->sc_tx_timer[i] == 0) {
+				printf("%s: device timeout\n", DEVNAME(sc));
+				if (ifp->if_flags & IFF_DEBUG) {
+					iwm_nic_error(sc);
+					iwm_dump_driver_status(sc);
+				}
+				if ((sc->sc_flags & IWM_FLAG_SHUTDOWN) == 0)
+					task_add(systq, &sc->init_task);
+				ifp->if_oerrors++;
+				return;
 			}
-			if ((sc->sc_flags & IWM_FLAG_SHUTDOWN) == 0)
-				task_add(systq, &sc->init_task);
-			ifp->if_oerrors++;
-			return;
+			ifp->if_timer = 1;
 		}
-		ifp->if_timer = 1;
 	}
 
 	ieee80211_watchdog(ifp);

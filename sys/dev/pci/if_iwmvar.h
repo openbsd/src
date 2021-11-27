@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.71 2021/10/11 09:03:22 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.72 2021/11/27 11:22:26 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -588,7 +588,7 @@ struct iwm_softc {
 
 	struct iwm_bf_data sc_bf;
 
-	int sc_tx_timer;
+	int sc_tx_timer[IWM_MAX_QUEUES];
 	int sc_rx_ba_sessions;
 	int tx_ba_queue_mask;
 
