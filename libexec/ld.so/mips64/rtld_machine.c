@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.33 2019/12/07 22:57:48 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.34 2021/11/27 15:13:09 visa Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -82,7 +82,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	for (i = 0; i < numrel; i++, relocs++) {
 		Elf_Addr r_addr = relocs->r_offset + loff;
 		const char *symn;
-		int type;
 
 		if (ELF_R_SYM(relocs->r_info) == 0xffffff)
 			continue;
@@ -90,7 +89,6 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		sym = object->dyn.symtab;
 		sym += ELF_R_SYM(relocs->r_info);
 		symn = object->dyn.strtab + sym->st_name;
-		type = ELF_R_TYPE(relocs->r_info);
 
 		this = NULL;
 		if (ELF_R_SYM(relocs->r_info)) {
