@@ -1,4 +1,4 @@
-/*	$OpenBSD: kexec.c,v 1.5 2020/09/02 16:07:31 deraadt Exp $	*/
+/*	$OpenBSD: kexec.c,v 1.6 2021/11/27 06:14:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -242,8 +242,10 @@ fail:
 		km_free(symaddr, symsize, &kv_any, &kp_kexec);
 	if (addr)
 		km_free(addr, size, &kv_any, &kp_kexec);
-	free(sh, M_TEMP, shsize);
-	free(ph, M_TEMP, phsize);
+	if (sh)
+		free(sh, M_TEMP, shsize);
+	if (ph)
+		free(ph, M_TEMP, phsize);
 	return error;
 }
 
