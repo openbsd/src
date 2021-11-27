@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll_close.c,v 1.2 2021/11/27 15:06:10 visa Exp $	*/
+/*	$OpenBSD: poll_close.c,v 1.3 2021/11/27 15:07:26 visa Exp $	*/
 
 /*
  * Copyright (c) 2021 Visa Hankala
@@ -132,7 +132,7 @@ main(void)
 	}
 
 	/* Let the thread settle in poll(). */
-	wait_wchan("kqread");
+	wait_wchan("poll");
 
 	/* Awaken poll(). */
 	write(sock[0], "x", 1);
@@ -153,7 +153,7 @@ main(void)
 	write(barrier[0], "x", 1);
 
 	/* Let the thread settle in poll(). */
-	wait_wchan("kqread");
+	wait_wchan("poll");
 
 	/* Close the fd to awaken poll(). */
 	close(sock[1]);
