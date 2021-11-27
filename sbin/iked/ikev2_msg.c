@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.81 2021/11/26 16:22:44 patrick Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.82 2021/11/27 21:50:05 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -193,7 +193,7 @@ ikev2_msg_cleanup(struct iked *env, struct iked_message *msg)
 		ibuf_release(msg->msg_nonce);
 		ibuf_release(msg->msg_ke);
 		ibuf_release(msg->msg_auth.id_buf);
-		ibuf_release(msg->msg_id.id_buf);
+		ibuf_release(msg->msg_peerid.id_buf);
 		ibuf_release(msg->msg_localid.id_buf);
 		ibuf_release(msg->msg_cert.id_buf);
 		ibuf_release(msg->msg_cookie);
@@ -207,7 +207,7 @@ ikev2_msg_cleanup(struct iked *env, struct iked_message *msg)
 		msg->msg_nonce = NULL;
 		msg->msg_ke = NULL;
 		msg->msg_auth.id_buf = NULL;
-		msg->msg_id.id_buf = NULL;
+		msg->msg_peerid.id_buf = NULL;
 		msg->msg_localid.id_buf = NULL;
 		msg->msg_cert.id_buf = NULL;
 		msg->msg_cookie = NULL;

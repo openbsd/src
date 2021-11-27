@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.87 2021/11/26 16:22:44 patrick Exp $	*/
+/*	$OpenBSD: policy.c,v 1.88 2021/11/27 21:50:05 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2020-2021 Tobias Heider <tobhe@openbsd.org>
@@ -103,10 +103,10 @@ policy_lookup(struct iked *env, struct iked_message *msg,
 		pol.pol_flags |= IKED_POLICY_TRANSPORT;
 	memcpy(&pol.pol_peer.addr, &msg->msg_peer, sizeof(msg->msg_peer));
 	memcpy(&pol.pol_local.addr, &msg->msg_local, sizeof(msg->msg_local));
-	if (msg->msg_id.id_type &&
-	    ikev2_print_id(&msg->msg_id, idstr, IKED_ID_SIZE) == 0 &&
+	if (msg->msg_peerid.id_type &&
+	    ikev2_print_id(&msg->msg_peerid, idstr, IKED_ID_SIZE) == 0 &&
 	    (s = strchr(idstr, '/')) != NULL) {
-		pol.pol_peerid.id_type = msg->msg_id.id_type;
+		pol.pol_peerid.id_type = msg->msg_peerid.id_type;
 		pol.pol_peerid.id_length = strlen(s+1);
 		strlcpy(pol.pol_peerid.id_data, s+1,
 		    sizeof(pol.pol_peerid.id_data));

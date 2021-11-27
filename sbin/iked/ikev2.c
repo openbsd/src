@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.336 2021/11/26 14:05:01 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.337 2021/11/27 21:50:05 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -887,7 +887,7 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 		id = &sa->sa_iid;
 
 	/* try to relookup the policy based on the peerid */
-	if (msg->msg_id.id_type && !sa->sa_hdr.sh_initiator) {
+	if (msg->msg_peerid.id_type && !sa->sa_hdr.sh_initiator) {
 		old = sa->sa_policy;
 
 		sa->sa_policy = NULL;
@@ -930,9 +930,9 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 		    old->pol_nflows) != 0 || msg->msg_policy != old) {
 
 			/* get dstid */
-			if (msg->msg_id.id_type) {
-				memcpy(id, &msg->msg_id, sizeof(*id));
-				bzero(&msg->msg_id, sizeof(msg->msg_id));
+			if (msg->msg_peerid.id_type) {
+				memcpy(id, &msg->msg_peerid, sizeof(*id));
+				bzero(&msg->msg_peerid, sizeof(msg->msg_peerid));
 			}
 			log_warnx("%s: policy mismatch", SPI_SA(sa, __func__));
 			ikev2_send_auth_failed(env, sa);
@@ -949,18 +949,18 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 	if (!msg->msg_auth.id_type &&
 	    !sa->sa_policy->pol_auth.auth_eap) {
 		/* get dstid */
-		if (msg->msg_id.id_type) {
-			memcpy(id, &msg->msg_id, sizeof(*id));
-			bzero(&msg->msg_id, sizeof(msg->msg_id));
+		if (msg->msg_peerid.id_type) {
+			memcpy(id, &msg->msg_peerid, sizeof(*id));
+			bzero(&msg->msg_peerid, sizeof(msg->msg_peerid));
 		}
 		log_debug("%s: missing auth payload", SPI_SA(sa, __func__));
 		ikev2_send_auth_failed(env, sa);
 		return (-1);
 	}
 
-	if (msg->msg_id.id_type) {
-		memcpy(id, &msg->msg_id, sizeof(*id));
-		bzero(&msg->msg_id, sizeof(msg->msg_id));
+	if (msg->msg_peerid.id_type) {
+		memcpy(id, &msg->msg_peerid, sizeof(*id));
+		bzero(&msg->msg_peerid, sizeof(msg->msg_peerid));
 
 		if (!sa->sa_hdr.sh_initiator) {
 			if ((authmsg = ikev2_msg_auth(env, sa,

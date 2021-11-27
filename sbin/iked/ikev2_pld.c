@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.120 2021/11/26 16:22:44 patrick Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.121 2021/11/27 21:50:05 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -761,7 +761,7 @@ ikev2_pld_id(struct iked *env, struct ikev2_payload *pld,
 
 	if (((sa->sa_hdr.sh_initiator && payload == IKEV2_PAYLOAD_IDr) ||
 	    (!sa->sa_hdr.sh_initiator && payload == IKEV2_PAYLOAD_IDi)))
-		idp = &msg->msg_parent->msg_id;
+		idp = &msg->msg_parent->msg_peerid;
 	else if (!sa->sa_hdr.sh_initiator && payload == IKEV2_PAYLOAD_IDr)
 		idp = &msg->msg_parent->msg_localid;
 	else {
