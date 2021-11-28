@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2_hcdddma.c,v 1.19 2021/09/04 10:19:28 mglocker Exp $	*/
+/*	$OpenBSD: dwc2_hcdddma.c,v 1.20 2021/11/28 09:25:02 mglocker Exp $	*/
 /*	$NetBSD: dwc2_hcdddma.c,v 1.6 2014/04/03 06:34:58 skrll Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ STATIC int dwc2_desc_list_alloc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 	qh->desc_list = KERNADDR(&qh->desc_list_usbdma, 0);
 	qh->desc_list_dma = DMAADDR(&qh->desc_list_usbdma, 0);
 
-	qh->n_bytes = malloc(sizeof(u32) * dwc2_max_desc_num(qh), M_DEVBUF,
+	qh->n_bytes = malloc(sizeof(u32) * dwc2_max_desc_num(qh), M_USBHC,
 	    M_ZERO | M_WAITOK);
 
 	if (!qh->n_bytes) {
@@ -129,7 +129,7 @@ STATIC void dwc2_desc_list_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 		qh->desc_list = NULL;
 	}
 
-	free(qh->n_bytes, M_DEVBUF, sizeof(u32) * dwc2_max_desc_num(qh));
+	free(qh->n_bytes, M_USBHC, sizeof(u32) * dwc2_max_desc_num(qh));
 	qh->n_bytes = NULL;
 }
 

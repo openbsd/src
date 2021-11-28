@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.58 2021/07/30 18:56:01 mglocker Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.59 2021/11/28 09:25:02 mglocker Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1481,7 +1481,7 @@ dwc2_init(struct dwc2_softc *sc)
 	pool_init(&sc->sc_qtdpool, sizeof(struct dwc2_qtd), 0, IPL_USB, 0,
 	    "dwc2qtd", NULL);
 
-	sc->sc_hsotg = malloc(sizeof(struct dwc2_hsotg), M_DEVBUF,
+	sc->sc_hsotg = malloc(sizeof(struct dwc2_hsotg), M_USBHC,
 	    M_ZERO | M_WAITOK);
 	sc->sc_hsotg->hsotg_sc = sc;
 	sc->sc_hsotg->dev = &sc->sc_bus.bdev;
@@ -1517,7 +1517,7 @@ dwc2_init(struct dwc2_softc *sc)
 		goto fail2;
 	}
 
-	hsotg->core_params = malloc(sizeof(*hsotg->core_params), M_DEVBUF,
+	hsotg->core_params = malloc(sizeof(*hsotg->core_params), M_USBHC,
 	    M_ZERO | M_WAITOK);
 	dwc2_set_all_params(hsotg->core_params, -1);
 
@@ -1557,7 +1557,7 @@ dwc2_init(struct dwc2_softc *sc)
 
 fail2:
 	err = -retval;
-	free(sc->sc_hsotg, M_DEVBUF, sizeof(struct dwc2_hsotg));
+	free(sc->sc_hsotg, M_USBHC, sizeof(struct dwc2_hsotg));
 	softintr_disestablish(sc->sc_rhc_si);
 
 	return err;
