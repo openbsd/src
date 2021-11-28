@@ -1,6 +1,6 @@
-.\" $OpenBSD: ASN1_put_object.3,v 1.2 2021/11/21 15:11:01 schwarze Exp $
+.\" $OpenBSD: ASN1_put_object.3,v 1.3 2021/11/28 15:48:12 schwarze Exp $
 .\"
-.\" Copyright (c) 2019 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2019, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,12 +14,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 21 2021 $
+.Dd $Mdocdate: November 28 2021 $
 .Dt ASN1_PUT_OBJECT 3
 .Os
 .Sh NAME
 .Nm ASN1_put_object ,
-.Nm ASN1_put_eoc
+.Nm ASN1_put_eoc ,
+.Nm ASN1_object_size
 .Nd start and end the BER encoding of an arbitrary ASN.1 data element
 .Sh SYNOPSIS
 .In openssl/asn1.h
@@ -27,13 +28,19 @@
 .Fo ASN1_put_object
 .Fa "unsigned char **ber_out"
 .Fa "int constructed"
-.Fa "int length"
+.Fa "int content_length"
 .Fa "int tag"
 .Fa "int class"
 .Fc
 .Ft int
 .Fo ASN1_put_eoc
 .Fa "unsigned char **ber_out"
+.Fc
+.Ft int
+.Fo ASN1_object_size
+.Fa "int constructed"
+.Fa "int content_length"
+.Fa "int tag"
 .Fc
 .Sh DESCRIPTION
 .Fn ASN1_put_object
@@ -81,10 +88,14 @@ is encoded in one or more following identifier bytes as needed.
 .Pp
 After completing the identifier byte(s),
 when using the definite form, the given
-.Fa length
-is encoded in one or more bytes as needed.
-Otherwise, the special byte 0x80 is written instead and the
-.Ar length
+.Fa content_length
+is encoded in one or more bytes as needed,
+using the long form if and only if the
+.Fa content_length
+is greater than 127.
+When using the indefinite form,
+the special byte 0x80 is written instead and the
+.Fa content_length
 argument is ignored.
 .Pp
 At the end,
@@ -100,9 +111,30 @@ which writes an end-of-content marker to
 consisting of two NUL bytes, and advances
 .Pf * Fa ber_out
 by two bytes.
+.Pp
+.Fn ASN1_object_size
+calculates the total length in bytes of the BER encoding
+of an ASN.1 data element with the given
+.Fa tag
+and the number of content bytes given by
+.Fa content_length .
+The
+.Fa constructed
+argument has the same meaning as for
+.Fn ASN1_put_object .
+The return value includes the identifier, length, and content bytes.
+If
+.Fa constructed
+is 2, it also includes the end-of-content bytes.
+For the definite form, only the short form is supported if the
+.Fa content_length
+is less than 128.
 .Sh RETURN VALUES
 .Fn ASN1_put_eoc
 returns the number of bytes written, which is always 2.
+.Pp
+.Fn ASN1_object_size
+returns the total number of bytes in the encoding of the data element.
 .Sh SEE ALSO
 .Xr ASN1_item_i2d 3 ,
 .Xr ASN1_TYPE_get 3 ,
@@ -111,20 +143,24 @@ returns the number of bytes written, which is always 2.
 .Xr i2d_ASN1_OBJECT 3 ,
 .Xr i2d_ASN1_OCTET_STRING 3 ,
 .Xr i2d_ASN1_SEQUENCE_ANY 3
+.Sh STANDARDS
+ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:
+Information technology - ASN.1 encoding rules:
+Specification of Basic Encoding Rules (BER), Canonical Encoding
+Rules (CER) and Distinguished Encoding Rules (DER),
+section 8.1: General rules for encoding
 .Sh HISTORY
 .Fn ASN1_put_object
-first appeared in SSLeay 0.5.1 and has been available since
+and
+.Fn ASN1_object_size
+first appeared in SSLeay 0.5.1 and have been available since
 .Ox 2.4 .
 .Pp
 .Fn ASN1_put_eoc
 first appeared in OpenSSL 0.9.8 and has been available since
 .Ox 4.5 .
 .Sh CAVEATS
-Neither
-.Fn ASN1_put_object
-nor
-.Fn ASN1_put_eoc
-do any sanity checking.
+None of these functions do any sanity checking.
 When called in inconsistent ways, invalid content may result in
 .Pf * Fa ber_out ,
 for example
@@ -156,12 +192,12 @@ etc. without the
 bit set
 .It
 a
-.Fa length
+.Fa content_length
 that makes no sense for the given
 .Fa tag
 .It
 a
-.Fa length
+.Fa content_length
 that disagrees with the following data
 .It
 a
