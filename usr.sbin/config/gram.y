@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.24 2015/01/16 06:40:16 deraadt Exp $	*/
+/*	$OpenBSD: gram.y,v 1.25 2021/11/28 19:26:03 deraadt Exp $	*/
 /*	$NetBSD: gram.y,v 1.14 1997/02/02 21:12:32 thorpej Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
  *	from: @(#)gram.y	8.1 (Berkeley) 6/6/93
  */
 
-#include <sys/param.h>	/* NODEV */
 #include <sys/types.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -387,7 +386,7 @@ swapdev_list:
 	dev_spec			{ $$ = $1; };
 
 dev_spec:
-	WORD				{ $$ = new_si($1, NODEV); } |
+	WORD				{ $$ = new_si($1, nodev); } |
 	major_minor			{ $$ = new_si(NULL, $1); };
 
 major_minor:

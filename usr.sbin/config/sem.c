@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.37 2019/02/05 02:17:32 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.38 2021/11/28 19:26:03 deraadt Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -41,8 +41,7 @@
  *	from: @(#)sem.c	8.1 (Berkeley) 6/6/93
  */
 
-#include <sys/param.h>	/* NODEV */
-
+#include <sys/types.h>
 #include <ctype.h>
 #include <err.h>
 #include <stdio.h>
@@ -320,7 +319,7 @@ badname:
 		dev->d_name = name;
 		dev->d_next = NULL;
 		dev->d_isdef = 0;
-		dev->d_major = NODEV;
+		dev->d_major = nodev;
 		dev->d_attrs = NULL;
 		dev->d_ihead = NULL;
 		dev->d_ipp = &dev->d_ihead;
@@ -489,7 +488,7 @@ void
 setmajor(struct devbase *d, int n)
 {
 
-	if (d != &errdev && d->d_major != NODEV)
+	if (d != &errdev && d->d_major != nodev)
 		error("device `%s' is already major %d",
 		    d->d_name, d->d_major);
 	else
@@ -527,19 +526,19 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	if ((part >= maxpartitions) || (part < 0))
 		panic("resolve");
 	if ((nv = *nvp) == NULL) {
-		dev_t	d = NODEV;
+		dev_t	d = nodev;
 		/*
 		 * Apply default.  Easiest to do this by number.
 		 * Make sure to retain NODEVness, if this is dflt's disposition.
 		 */
-		if (dflt->nv_int != NODEV) {
+		if (dflt->nv_int != nodev) {
 			maj = major(dflt->nv_int);
 			min = (minor(dflt->nv_int) / maxpartitions) + part;
 			d = makedev(maj, min);
 		}
 		*nvp = nv = newnv(NULL, NULL, NULL, d, NULL);
 	}
-	if (nv->nv_int != NODEV) {
+	if (nv->nv_int != nodev) {
 		/*
 		 * By the numbers.  Find the appropriate major number
 		 * to make a name.
@@ -584,7 +583,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 		return (1);
 	}
 	dev = ht_lookup(devbasetab, intern(buf));
-	if (dev == NULL || dev->d_major == NODEV) {
+	if (dev == NULL || dev->d_major == nodev) {
 		error("%s: can't make %s device from `%s'",
 		    name, what, nv->nv_str);
 		return (1);

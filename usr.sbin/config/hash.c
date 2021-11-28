@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.18 2015/01/17 07:37:14 deraadt Exp $	*/
+/*	$OpenBSD: hash.c,v 1.19 2021/11/28 19:26:03 deraadt Exp $	*/
 /*	$NetBSD: hash.c,v 1.4 1996/11/07 22:59:43 gwr Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  *	from: @(#)hash.c	8.1 (Berkeley) 6/6/93
  */
 
-#include <sys/param.h>	/* ALIGNBYTES */
+#include <sys/types.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -77,36 +77,8 @@ static struct hashtab strings;
 /* round up to next multiple of y, where y is a power of 2 */
 #define	ROUND(x, y) (((x) + (y) - 1) & ~((y) - 1))
 
-static void *poolalloc(size_t);
 static void ht_init(struct hashtab *, size_t);
 static void ht_expand(struct hashtab *);
-/*
- * Allocate space that will never be freed.
- */
-static void *
-poolalloc(size_t size)
-{
-	char *p;
-	size_t alloc;
-	static char *pool;
-	static size_t nleft;
-
-	if (nleft < size) {
-		/*
-		 * Compute a `good' size to allocate via malloc.
-		 * 16384 is a guess at a good page size for malloc;
-		 * 32 is a guess at malloc's overhead.
-		 */
-		alloc = ROUND(size + 32, 16384) - 32;
-		p = emalloc(alloc);
-		nleft = alloc - size;
-	} else {
-		p = pool;
-		nleft -= size;
-	}
-	pool = p + size;
-	return (p);
-}
 
 /*
  * Initialize a new hash table.  The size must be a power of 2.
@@ -161,10 +133,8 @@ static __inline struct hashent *
 newhashent(const char *name, u_int h)
 {
 	struct	hashent *hp;
-	char	*m;
 
-	m = poolalloc(sizeof(*hp) + ALIGNBYTES);
-	hp = (struct hashent *)ALIGN(m);
+	hp = emalloc(sizeof(*hp));
 	hp->h_name = name;
 	hp->h_hash = h;
 	hp->h_next = NULL;
@@ -211,7 +181,7 @@ intern(const char *s)
 		if (hp->h_hash == h && strcmp(hp->h_name, s) == 0)
 			return (hp->h_name);
 	l = strlen(s) + 1;
-	p = poolalloc(l);
+	p = malloc(l);
 	bcopy(s, p, l);
 	*hpp = newhashent(p, h);
 	if (++ht->ht_used > ht->ht_lim)

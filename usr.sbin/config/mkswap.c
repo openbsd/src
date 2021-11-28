@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkswap.c,v 1.18 2019/06/28 13:33:55 deraadt Exp $	*/
+/*	$OpenBSD: mkswap.c,v 1.19 2021/11/28 19:26:03 deraadt Exp $	*/
 /*	$NetBSD: mkswap.c,v 1.5 1996/08/31 20:58:27 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  *	from: @(#)mkswap.c	8.1 (Berkeley) 6/6/93
  */
 
-#include <sys/param.h>	/* NODEV */
+#include <sys/types.h>
 
 #include <err.h>
 #include <errno.h>
@@ -51,6 +51,8 @@
 
 #include "config.h"
 #include "sem.h"
+
+dev_t nodev = (dev_t)-1;
 
 static int mkoneswap(struct config *);
 
@@ -73,7 +75,7 @@ mkdevstr(dev_t d)
 {
 	static char buf[32];
 
-	if (d == NODEV)
+	if (d == nodev)
 		(void)snprintf(buf, sizeof buf, "NODEV");
 	else
 		(void)snprintf(buf, sizeof buf, "makedev(%u, %u)",
