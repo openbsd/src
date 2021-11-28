@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.59 2021/11/28 12:49:55 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.60 2021/11/28 12:51:52 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -830,6 +830,14 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		ifm = (struct if_msghdr *)rtm;
 		if_index = ifm->ifm_index;
 		if_name = if_indextoname(if_index, ifnamebuf);
+		if (if_name == NULL) {
+			log_debug("RTM_NEWADDR: lost if %d", if_index);
+			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
+			    &if_index, sizeof(if_index));
+			remove_iface(if_index);
+			break;
+		}
+
 		log_debug("RTM_NEWADDR: %s[%u]", if_name, if_index);
 		update_iface(if_index, if_name);
 		break;
@@ -837,6 +845,13 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		ifm = (struct if_msghdr *)rtm;
 		if_index = ifm->ifm_index;
 		if_name = if_indextoname(if_index, ifnamebuf);
+		if (if_name == NULL) {
+			log_debug("RTM_DELADDR: lost if %d", if_index);
+			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
+			    &if_index, sizeof(if_index));
+			remove_iface(if_index);
+			break;
+		}
 		if (rtm->rtm_addrs & RTA_IFA && rti_info[RTAX_IFA]->sa_family
 		    == AF_INET6) {
 			del_addr.if_index = if_index;
@@ -851,6 +866,13 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		ifm = (struct if_msghdr *)rtm;
 		if_index = ifm->ifm_index;
 		if_name = if_indextoname(if_index, ifnamebuf);
+		if (if_name == NULL) {
+			log_debug("RTM_CHGADDRATTR: lost if %d", if_index);
+			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
+			    &if_index, sizeof(if_index));
+			remove_iface(if_index);
+			break;
+		}
 		if (rtm->rtm_addrs & RTA_IFA && rti_info[RTAX_IFA]->sa_family
 		    == AF_INET6) {
 			sin6 = (struct sockaddr_in6 *) rti_info[RTAX_IFA];
@@ -904,6 +926,13 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			break;
 		if_index = ifm->ifm_index;
 		if_name = if_indextoname(if_index, ifnamebuf);
+		if (if_name == NULL) {
+			log_debug("RTM_DELETE: lost if %d", if_index);
+			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
+			    &if_index, sizeof(if_index));
+			remove_iface(if_index);
+			break;
+		}
 
 		del_route.if_index = if_index;
 		memcpy(&del_route.gw, rti_info[RTAX_GATEWAY],
