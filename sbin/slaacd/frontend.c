@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.58 2021/08/24 14:56:06 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.59 2021/11/28 12:49:55 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -793,30 +793,28 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 	switch (rtm->rtm_type) {
 	case RTM_IFINFO:
 		ifm = (struct if_msghdr *)rtm;
-		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
+		if_index = ifm->ifm_index;
+		if_name = if_indextoname(if_index, ifnamebuf);
 		if (if_name == NULL) {
-			log_debug("RTM_IFINFO: lost if %d", ifm->ifm_index);
-			if_index = ifm->ifm_index;
+			log_debug("RTM_IFINFO: lost if %d", if_index);
 			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0, 0,
 			    &if_index, sizeof(if_index));
 			remove_iface(if_index);
+			break;
+		}
+		xflags = get_xflags(if_name);
+		if (xflags == -1 || !(xflags & (IFXF_AUTOCONF6 |
+		    IFXF_AUTOCONF6TEMP))) {
+			log_debug("RTM_IFINFO: %s(%d) no(longer) autoconf6", if_name,
+			    if_index);
+			frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0,
+			    0, &if_index, sizeof(if_index));
+			remove_iface(if_index);
 		} else {
-			xflags = get_xflags(if_name);
-			if (xflags == -1 || !(xflags & (IFXF_AUTOCONF6 |
-			    IFXF_AUTOCONF6TEMP))) {
-				log_debug("RTM_IFINFO: %s(%d) no(longer) "
-				   "autoconf6", if_name, ifm->ifm_index);
-				if_index = ifm->ifm_index;
-				frontend_imsg_compose_engine(IMSG_REMOVE_IF, 0,
-				    0, &if_index, sizeof(if_index));
-				remove_iface(if_index);
-			} else {
-				update_iface(ifm->ifm_index, if_name);
+			update_iface(if_index, if_name);
 #ifndef	SMALL
-				update_autoconf_addresses(ifm->ifm_index,
-				    if_name);
+			update_autoconf_addresses(if_index, if_name);
 #endif	/* SMALL */
-			}
 		}
 		break;
 	case RTM_IFANNOUNCE:
@@ -830,27 +828,29 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		break;
 	case RTM_NEWADDR:
 		ifm = (struct if_msghdr *)rtm;
-		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
-		log_debug("RTM_NEWADDR: %s[%u]", if_name, ifm->ifm_index);
-		update_iface(ifm->ifm_index, if_name);
+		if_index = ifm->ifm_index;
+		if_name = if_indextoname(if_index, ifnamebuf);
+		log_debug("RTM_NEWADDR: %s[%u]", if_name, if_index);
+		update_iface(if_index, if_name);
 		break;
 	case RTM_DELADDR:
 		ifm = (struct if_msghdr *)rtm;
-		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
+		if_index = ifm->ifm_index;
+		if_name = if_indextoname(if_index, ifnamebuf);
 		if (rtm->rtm_addrs & RTA_IFA && rti_info[RTAX_IFA]->sa_family
 		    == AF_INET6) {
-			del_addr.if_index = ifm->ifm_index;
+			del_addr.if_index = if_index;
 			memcpy(&del_addr.addr, rti_info[RTAX_IFA], sizeof(
 			    del_addr.addr));
 			frontend_imsg_compose_engine(IMSG_DEL_ADDRESS,
 				    0, 0, &del_addr, sizeof(del_addr));
-			log_debug("RTM_DELADDR: %s[%u]", if_name,
-			    ifm->ifm_index);
+			log_debug("RTM_DELADDR: %s[%u]", if_name, if_index);
 		}
 		break;
 	case RTM_CHGADDRATTR:
 		ifm = (struct if_msghdr *)rtm;
-		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
+		if_index = ifm->ifm_index;
+		if_name = if_indextoname(if_index, ifnamebuf);
 		if (rtm->rtm_addrs & RTA_IFA && rti_info[RTAX_IFA]->sa_family
 		    == AF_INET6) {
 			sin6 = (struct sockaddr_in6 *) rti_info[RTAX_IFA];
@@ -869,13 +869,13 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 			}
 
 #ifndef	SMALL
-			log_debug("RTM_CHGADDRATTR: %s -%s",
+			log_debug("RTM_CHGADDRATTR: %s - %s",
 			    sin6_to_str(sin6),
 			    flags_to_str(ifr6.ifr_ifru.ifru_flags6));
 #endif	/* SMALL */
 
 			if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DUPLICATED) {
-				dup_addr.if_index = ifm->ifm_index;
+				dup_addr.if_index = if_index;
 				dup_addr.addr = *sin6;
 				frontend_imsg_compose_engine(IMSG_DUP_ADDRESS,
 				    0, 0, &dup_addr, sizeof(dup_addr));
@@ -902,10 +902,10 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		rl = (struct sockaddr_rtlabel *)rti_info[RTAX_LABEL];
 		if (strcmp(rl->sr_label, SLAACD_RTA_LABEL) != 0)
 			break;
+		if_index = ifm->ifm_index;
+		if_name = if_indextoname(if_index, ifnamebuf);
 
-		if_name = if_indextoname(ifm->ifm_index, ifnamebuf);
-
-		del_route.if_index = ifm->ifm_index;
+		del_route.if_index = if_index;
 		memcpy(&del_route.gw, rti_info[RTAX_GATEWAY],
 		    sizeof(del_route.gw));
 		in6 = &del_route.gw.sin6_addr;
