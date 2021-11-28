@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.14 2021/11/28 13:57:37 mglocker Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.15 2021/11/28 14:10:32 mglocker Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -124,11 +124,13 @@ utvfu_set_regs(struct utvfu_softc *sc, const uint16_t regs[][2], int size)
 int
 utvfu_max_frame_size(void)
 {
-	int	i, sz = 0;
+	int i, sz = 0;
+
 	for (i = 0; i < nitems(utvfu_norm_params); i++) {
 		if (sz < utvfu_norm_params[i].frame_len)
 			sz = utvfu_norm_params[i].frame_len;
 	}
+
 	return (sz);
 }
 
