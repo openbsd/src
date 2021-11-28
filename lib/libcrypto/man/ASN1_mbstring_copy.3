@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_mbstring_copy.3,v 1.3 2021/11/15 13:39:40 schwarze Exp $
+.\" $OpenBSD: ASN1_mbstring_copy.3,v 1.4 2021/11/28 17:40:14 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 15 2021 $
+.Dd $Mdocdate: November 28 2021 $
 .Dt ASN1_MBSTRING_COPY 3
 .Os
 .Sh NAME
@@ -23,7 +23,8 @@
 .Nm ASN1_STRING_set_by_NID ,
 .Nm ASN1_STRING_set_default_mask ,
 .Nm ASN1_STRING_set_default_mask_asc ,
-.Nm ASN1_STRING_get_default_mask
+.Nm ASN1_STRING_get_default_mask ,
+.Nm ASN1_tag2bit
 .Nd copy a mutibyte string into an ASN.1 string object
 .Sh SYNOPSIS
 .In openssl/asn1.h
@@ -63,6 +64,8 @@
 .Fc
 .Ft unsigned long
 .Fn ASN1_STRING_get_default_mask void
+.Ft unsigned long
+.Fn ASN1_tag2bit "int tag"
 .Sh DESCRIPTION
 .Fn ASN1_mbstring_copy
 interprets
@@ -225,6 +228,49 @@ the rest of it is interpreted as an
 .Vt unsigned long
 value using
 .Xr strtoul 3 .
+.Pp
+.Fn ASN1_tag2bit
+translates ASN.1 data types to type bits as follows:
+.Bl -column V_ASN1_OBJECT_DESCRIPTOR B_ASN1_UNIVERSALSTRING
+.It Fa tag                      Ta return value
+.It Dv V_ASN1_BIT_STRING        Ta Dv B_ASN1_BIT_STRING
+.It Dv V_ASN1_BMPSTRING         Ta Dv B_ASN1_BMPSTRING
+.It Dv V_ASN1_BOOLEAN           Ta 0
+.It Dv V_ASN1_ENUMERATED        Ta Dv B_ASN1_UNKNOWN
+.It Dv V_ASN1_EOC               Ta 0
+.It Dv V_ASN1_EXTERNAL          Ta Dv B_ASN1_UNKNOWN
+.It Dv V_ASN1_GENERALIZEDTIME   Ta Dv B_ASN1_GENERALIZEDTIME
+.It Dv V_ASN1_GENERALSTRING     Ta Dv B_ASN1_GENERALSTRING
+.It Dv V_ASN1_GRAPHICSTRING     Ta Dv B_ASN1_GRAPHICSTRING
+.It Dv V_ASN1_IA5STRING         Ta Dv B_ASN1_IA5STRING
+.It Dv V_ASN1_INTEGER           Ta 0
+.It Dv V_ASN1_ISO64STRING       Ta Dv B_ASN1_ISO64STRING
+.It Dv V_ASN1_NULL              Ta 0
+.It Dv V_ASN1_NUMERICSTRING     Ta Dv B_ASN1_NUMERICSTRING
+.It Dv V_ASN1_OBJECT            Ta 0
+.It Dv V_ASN1_OBJECT_DESCRIPTOR Ta Dv B_ASN1_UNKNOWN
+.It Dv V_ASN1_OCTET_STRING      Ta Dv B_ASN1_OCTET_STRING
+.It Dv V_ASN1_PRINTABLESTRING   Ta Dv B_ASN1_PRINTABLESTRING
+.It Dv V_ASN1_REAL              Ta Dv B_ASN1_UNKNOWN
+.It Dv V_ASN1_SEQUENCE          Ta Dv B_ASN1_SEQUENCE
+.It Dv V_ASN1_SET               Ta 0
+.It Dv V_ASN1_T61STRING         Ta Dv B_ASN1_T61STRING
+.It Dv V_ASN1_TELETEXSTRING     Ta Dv B_ASN1_TELETEXSTRING
+.It Dv V_ASN1_UNDEF             Ta 0
+.It Dv V_ASN1_UNIVERSALSTRING   Ta Dv B_ASN1_UNIVERSALSTRING
+.It Dv V_ASN1_UTCTIME           Ta Dv B_ASN1_UTCTIME
+.It Dv V_ASN1_UTF8STRING        Ta Dv B_ASN1_UTF8STRING
+.It Dv V_ASN1_VIDEOTEXSTRING    Ta Dv B_ASN1_VIDEOTEXSTRING
+.It Dv V_ASN1_VISIBLESTRING     Ta Dv B_ASN1_VISIBLESTRING
+.It 11, 13, 14, 15, 29          Ta Dv B_ASN1_UNKNOWN
+.It Dv other Po < 0, > 30 Pc    Ta Dv 0
+.El
+.Pp
+In typical usage, the calling code calculates the bitwise AND
+of the return value and a mask describing data types
+that the calling code is willing to use.
+If the result of the AND operation is non-zero, the data type is
+adequate; otherwise, the calling code may need to raise an error.
 .Sh RETURN VALUES
 .Fn ASN1_mbstring_copy
 and
@@ -269,6 +315,11 @@ is invalid.
 .Pp
 .Fn ASN1_STRING_get_default_mask
 returns the global mask.
+.Pp
+.Fn ASN1_tag2bit
+returns a
+.Dv B_ASN1_*
+constant or 0.
 .Sh SEE ALSO
 .Xr ASN1_PRINTABLE_type 3 ,
 .Xr ASN1_STRING_new 3 ,
@@ -276,9 +327,19 @@ returns the global mask.
 .Xr ASN1_STRING_TABLE_get 3 ,
 .Xr ASN1_UNIVERSALSTRING_to_string 3
 .Sh HISTORY
-These functions first appeared in OpenSSL 0.9.5
-and have been available since
+.Fn ASN1_mbstring_copy ,
+.Fn ASN1_mbstring_ncopy ,
+.Fn ASN1_STRING_set_by_NID ,
+.Fn ASN1_STRING_set_default_mask ,
+.Fn ASN1_STRING_set_default_mask_asc ,
+and
+.Fn ASN1_STRING_get_default_mask
+first appeared in OpenSSL 0.9.5 and have been available since
 .Ox 2.7 .
+.Pp
+.Fn ASN1_tag2bit
+first appeared in OpenSSL 0.9.7 and has been available since
+.Ox 3.2 .
 .Sh BUGS
 If integer overflow occurs in
 .Fn ASN1_STRING_set_default_mask_asc
