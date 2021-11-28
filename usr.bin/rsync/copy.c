@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.c,v 1.2 2021/10/24 21:24:17 deraadt Exp $ */
+/*	$OpenBSD: copy.c,v 1.3 2021/11/28 19:28:42 deraadt Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  *
@@ -15,13 +15,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* MAXBSIZE */
+#include <sys/types.h>
 
 #include <err.h>
 #include <fcntl.h>
 #include <unistd.h>
 
 #include "extern.h"
+
+#define _MAXBSIZE (64 * 1024)
 
 /*
  * Return true if all bytes in buffer are zero.
@@ -42,7 +44,7 @@ iszero(const void *b, size_t len)
 static int
 copy_internal(int fromfd, int tofd)
 {
-	char buf[MAXBSIZE];
+	char buf[_MAXBSIZE];
 	ssize_t r, w;
 
 	while ((r = read(fromfd, buf, sizeof(buf))) > 0) {

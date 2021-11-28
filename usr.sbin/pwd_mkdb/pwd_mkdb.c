@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwd_mkdb.c,v 1.58 2021/10/24 21:24:19 deraadt Exp $	*/
+/*	$OpenBSD: pwd_mkdb.c,v 1.59 2021/11/28 19:28:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXBSIZE */
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <db.h>
@@ -51,6 +51,8 @@
 #include <util.h>
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
+#define _MAXBSIZE	(64 * 1024)
 
 #define	INSECURE	1
 #define	SECURE		2
@@ -106,7 +108,7 @@ main(int argc, char **argv)
 	uid_t olduid;
 	gid_t shadow;
 	int ch, tfd, makeold, secureonly, flags, checkonly;
-	char *username, buf[MAX(PATH_MAX, LINE_MAX * 2)];
+	char *username, buf[MAXIMUM(PATH_MAX, LINE_MAX * 2)];
 
 	flags = checkonly = makeold = secureonly = 0;
 	username = NULL;
@@ -383,14 +385,14 @@ fmt:		fatalc(EFTYPE, "%s", pname);
 void
 cp(char *from, char *to, mode_t mode)
 {
-	static char buf[MAXBSIZE];
+	static char buf[_MAXBSIZE];
 	int from_fd, rcount, to_fd, wcount;
 
 	if ((from_fd = open(from, O_RDONLY)) == -1)
 		fatal("%s", from);
 	if ((to_fd = open(to, O_WRONLY|O_CREAT|O_EXCL, mode)) == -1)
 		fatal("%s", to);
-	while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
+	while ((rcount = read(from_fd, buf, sizeof buf)) > 0) {
 		wcount = write(to_fd, buf, rcount);
 		if (rcount != wcount || wcount == -1)
 			fatal("%s to %s", from, to);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcs.c,v 1.88 2019/01/09 17:57:05 joris Exp $	*/
+/*	$OpenBSD: rcs.c,v 1.89 2021/11/28 19:28:42 deraadt Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -24,7 +24,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXBSIZE */
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -43,6 +43,8 @@
 #include "rcsprog.h"
 #include "rcsutil.h"
 #include "xmalloc.h"
+
+#define _MAXBSIZE (64 * 1024)
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
@@ -395,8 +397,8 @@ rcs_movefile(char *from, char *to, mode_t perm, u_int to_flags)
 		return (-1);
 	}
 
-	buf = xmalloc(MAXBSIZE);
-	while ((nread = fread(buf, sizeof(char), MAXBSIZE, src)) != 0) {
+	buf = xmalloc(_MAXBSIZE);
+	while ((nread = fread(buf, sizeof(char), _MAXBSIZE, src)) != 0) {
 		if (ferror(src)) {
 			warnx("failed to read `%s'", from);
 			(void)unlink(to);

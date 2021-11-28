@@ -1,4 +1,4 @@
-/*	$OpenBSD: wc.c,v 1.28 2021/11/16 23:34:24 cheloha Exp $	*/
+/*	$OpenBSD: wc.c,v 1.29 2021/11/28 19:28:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -29,7 +29,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXBSIZE */
 #include <sys/stat.h>
 
 #include <fcntl.h>
@@ -42,6 +41,8 @@
 #include <util.h>
 #include <wchar.h>
 #include <wctype.h>
+
+#define	_MAXBSIZE (64 * 1024)
 
 int64_t	tlinect, twordct, tcharct;
 int	doline, doword, dochar, humanchar, multibyte;
@@ -145,8 +146,8 @@ cnt(const char *path)
 	}
 
 	if (!doword && !multibyte) {
-		if (bufsz < MAXBSIZE &&
-		    (buf = realloc(buf, MAXBSIZE)) == NULL)
+		if (bufsz < _MAXBSIZE &&
+		    (buf = realloc(buf, _MAXBSIZE)) == NULL)
 			err(1, NULL);
 		/*
 		 * Line counting is split out because it's a lot
@@ -154,7 +155,7 @@ cnt(const char *path)
 		 * the word count requires some logic.
 		 */
 		if (doline) {
-			while ((len = read(fd, buf, MAXBSIZE)) > 0) {
+			while ((len = read(fd, buf, _MAXBSIZE)) > 0) {
 				charct += len;
 				for (C = buf; len--; ++C)
 					if (*C == '\n')
@@ -184,7 +185,7 @@ cnt(const char *path)
 				    || ifmt == S_IFDIR) {
 					charct = sbuf.st_size;
 				} else {
-					while ((len = read(fd, buf, MAXBSIZE)) > 0)
+					while ((len = read(fd, buf, _MAXBSIZE)) > 0)
 						charct += len;
 					if (len == -1) {
 						warn("%s", file);

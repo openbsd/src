@@ -1,4 +1,4 @@
-/*	$OpenBSD: split.c,v 1.22 2021/10/24 21:24:17 deraadt Exp $	*/
+/*	$OpenBSD: split.c,v 1.23 2021/11/28 19:28:42 deraadt Exp $	*/
 /*	$NetBSD: split.c,v 1.5 1995/08/31 22:22:05 jtc Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXBSIZE */
 #include <sys/types.h>
 
 #include <ctype.h>
@@ -43,13 +42,15 @@
 #include <unistd.h>
 #include <regex.h>
 
+#define _MAXBSIZE (64 * 1024)
+
 #define DEFLINE	1000			/* Default num lines per file. */
 
 ssize_t	 bytecnt;			/* Byte count to split on. */
 long	 numlines;			/* Line count to split on. */
 int	 file_open;			/* If a file open. */
 int	 ifd = -1, ofd = -1;		/* Input/output file descriptors. */
-char	 bfr[MAXBSIZE];			/* I/O buffer. */
+char	 bfr[_MAXBSIZE];		/* I/O buffer. */
 char	 fname[PATH_MAX];		/* File name prefix. */
 regex_t	 rgx;
 int	 pflag;
@@ -176,7 +177,7 @@ split1(void)
 	char *C;
 
 	for (bcnt = 0;;)
-		switch ((len = read(ifd, bfr, MAXBSIZE))) {
+		switch ((len = read(ifd, bfr, sizeof(bfr)))) {
 		case 0:
 			exit(0);
 		case -1:

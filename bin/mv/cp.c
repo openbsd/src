@@ -1,4 +1,4 @@
-/*	$OpenBSD: cp.c,v 1.9 2021/10/24 21:24:21 deraadt Exp $	*/
+/*	$OpenBSD: cp.c,v 1.10 2021/11/28 19:28:41 deraadt Exp $	*/
 /*	$NetBSD: cp.c,v 1.14 1995/09/07 06:14:51 jtc Exp $	*/
 
 /*
@@ -386,7 +386,7 @@ copy(char *argv[], enum op type, int fts_options)
 }
 
 
-/*	$OpenBSD: cp.c,v 1.9 2021/10/24 21:24:21 deraadt Exp $	*/
+/*	$OpenBSD: cp.c,v 1.10 2021/11/28 19:28:41 deraadt Exp $	*/
 /*	$NetBSD: utils.c,v 1.6 1997/02/26 14:40:51 cgd Exp $	*/
 
 /*-
@@ -418,7 +418,7 @@ copy(char *argv[], enum op type, int fts_options)
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>		/* MAXBSIZE */
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/time.h>
@@ -433,6 +433,8 @@ copy(char *argv[], enum op type, int fts_options)
 #include <unistd.h>
 #include <limits.h>
 
+#define _MAXBSIZE	(64 * 1024)
+
 static int
 copy_file(FTSENT *entp, int dne)
 {
@@ -440,17 +442,18 @@ copy_file(FTSENT *entp, int dne)
 	static char *zeroes;
 	struct stat *fs;
 	int ch, checkch, from_fd, rcount, rval, to_fd, wcount;
+	const size_t buflen = _MAXBSIZE;
 #ifdef VM_AND_BUFFER_CACHE_SYNCHRONIZED
 	char *p;
 #endif
 
 	if (!buf) {
-		buf = malloc(MAXBSIZE);
+		buf = malloc(buflen);
 		if (!buf)
 			err(1, "malloc");
 	}
 	if (!zeroes) {
-		zeroes = calloc(1, MAXBSIZE);
+		zeroes = calloc(1, buflen);
 		if (!zeroes)
 			err(1, "calloc");
 	}
@@ -532,7 +535,7 @@ copy_file(FTSENT *entp, int dne)
 		struct stat tosb;
 		if (!fstat(to_fd, &tosb) && S_ISREG(tosb.st_mode))
 			skipholes = 1;
-		while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
+		while ((rcount = read(from_fd, buf, buflen)) > 0) {
 			if (skipholes && memcmp(buf, zeroes, rcount) == 0)
 				wcount = lseek(to_fd, rcount, SEEK_CUR) == -1 ? -1 : rcount;
 			else

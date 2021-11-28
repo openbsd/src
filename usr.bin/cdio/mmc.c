@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmc.c,v 1.32 2020/09/01 17:20:02 krw Exp $	*/
+/*	$OpenBSD: mmc.c,v 1.33 2021/11/28 19:28:42 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Michael Coulter <mjc@openbsd.org>
  *
@@ -15,11 +15,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
 #include <sys/limits.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <sys/scsiio.h>
-#include <sys/param.h>	/* setbit, isset */
 #include <scsi/cd.h>
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
@@ -274,7 +273,7 @@ get_media_capabilities(u_int8_t *cap, int rt)
 				    "" );
 			}
 		}
-		setbit(cap, feature);
+		cdio_setbit(cap, feature);
 	}
 
 	return (0);
@@ -288,7 +287,7 @@ set_speed(int wspeed)
 
 	memset(&scr, 0, sizeof(scr));
 	scr.cmd[0] = SET_CD_SPEED;
-	scr.cmd[1] = (isset(mediacap, MMC_FEATURE_CDRW_CAV)) != 0;
+	scr.cmd[1] = (cdio_isset(mediacap, MMC_FEATURE_CDRW_CAV)) != 0;
 	*(u_int16_t *)(scr.cmd + 2) = htobe16(DRIVE_SPEED_OPTIMAL);
 	*(u_int16_t *)(scr.cmd + 4) = htobe16(wspeed);
 

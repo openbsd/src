@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.82 2021/10/24 21:24:16 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.83 2021/11/28 19:28:41 deraadt Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -52,7 +52,7 @@
  * $FreeBSD: cdcontrol.c,v 1.13 1996/06/25 21:01:27 ache Exp $
  */
 
-#include <sys/param.h>	/* isset */
+#include <sys/types.h>
 #include <sys/cdio.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
@@ -526,7 +526,7 @@ run(int cmd, char *arg)
 			warnx("Can't determine media type");
 			return (0);
 		}
-		if (isset(mediacap, MMC_FEATURE_CDRW_WRITE) == 0 &&
+		if (cdio_isset(mediacap, MMC_FEATURE_CDRW_WRITE) == 0 &&
 		    get_media_type() != MEDIATYPE_CDRW) {
 			warnx("The media doesn't support blanking");
 			return (0);
@@ -669,7 +669,7 @@ tao(int argc, char **argv)
 		exit(1);
 	if (get_media_capabilities(mediacap, 1) == -1)
 		errx(1, "Can't determine media type");
-	if (isset(mediacap, MMC_FEATURE_CD_TAO) == 0)
+	if (cdio_isset(mediacap, MMC_FEATURE_CD_TAO) == 0)
 		errx(1, "The media can't be written in TAO mode");
 
 	get_disc_size(&availblk);

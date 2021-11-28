@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.33 2019/06/28 13:35:00 deraadt Exp $	*/
+/*	$OpenBSD: remote.c,v 1.34 2021/11/28 19:28:42 deraadt Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* MAXBSIZE */
+#include <sys/types.h>
 #include <sys/stat.h>
 
 #include <errno.h>
@@ -29,6 +29,7 @@
 #include "remote.h"
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define _MAXBSIZE	(64 * 1024)
 
 struct cvs_resp *
 cvs_remote_get_response_info(const char *response)
@@ -128,7 +129,7 @@ void
 cvs_remote_receive_file(int fd, size_t len)
 {
 	FILE *in;
-	char data[MAXBSIZE];
+	char data[_MAXBSIZE];
 	size_t nread, nleft, toread;
 
 	if (cvs_server_active)
@@ -139,7 +140,7 @@ cvs_remote_receive_file(int fd, size_t len)
 	nleft = len;
 
 	while (nleft > 0) {
-		toread = MINIMUM(nleft, MAXBSIZE);
+		toread = MINIMUM(nleft, sizeof data);
 
 		nread = fread(data, sizeof(char), toread, in);
 		if (nread == 0)
@@ -165,7 +166,7 @@ cvs_remote_send_file(const char *path, int _fd)
 	size_t ret, rw;
 	off_t total;
 	struct stat st;
-	char buf[18], data[MAXBSIZE];
+	char buf[18], data[_MAXBSIZE];
 
 	if (cvs_server_active)
 		out = stdout;
@@ -194,7 +195,7 @@ cvs_remote_send_file(const char *path, int _fd)
 		fatal("cvs_remote_send_file: fdopen %s", strerror(errno));
 
 	total = 0;
-	while ((ret = fread(data, sizeof(char), MAXBSIZE, in)) != 0) {
+	while ((ret = fread(data, sizeof(char), sizeof data, in)) != 0) {
 		rw = fwrite(data, sizeof(char), ret, out);
 		if (rw != ret)
 			fatal("failed to write %zu bytes", ret);

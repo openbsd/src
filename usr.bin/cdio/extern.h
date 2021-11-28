@@ -1,4 +1,4 @@
-/* $OpenBSD: extern.h,v 1.16 2021/01/18 00:44:00 mortimer Exp $ */
+/* $OpenBSD: extern.h,v 1.17 2021/11/28 19:28:42 deraadt Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -25,6 +25,9 @@
  */
 
 #include <sys/queue.h>
+
+#define cdio_isset(a,i)      ((a)[(i)>>3] & (1<<((i)&(NBBY-1))))
+#define cdio_setbit(a,i)     ((a)[(i)>>3] |= 1<<((i)&(NBBY-1)))
 
 struct cd_toc_entry;
 struct track_info {
