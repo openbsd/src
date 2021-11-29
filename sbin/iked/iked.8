@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.8,v 1.28 2020/11/20 13:03:00 jmc Exp $
+.\" $OpenBSD: iked.8,v 1.29 2021/11/29 12:27:18 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 20 2020 $
+.Dd $Mdocdate: November 29 2021 $
 .Dt IKED 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd Internet Key Exchange version 2 (IKEv2) daemon
 .Sh SYNOPSIS
 .Nm iked
-.Op Fl dnSTtv
+.Op Fl dnSTtvV
 .Op Fl D Ar macro Ns = Ns Ar value
 .Op Fl f Ar file
 .Op Fl p Ar udpencap_port
@@ -109,6 +109,8 @@ This option is only recommended for testing; the default is to
 negotiate NAT-Traversal with the peers.
 .It Fl v
 Produce more verbose output.
+.It Fl V
+Show the version and exit.
 .El
 .Sh PUBLIC KEY AUTHENTICATION
 It is possible to store trusted public keys to make them directly

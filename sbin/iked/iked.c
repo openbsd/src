@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.59 2021/11/25 18:28:51 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.60 2021/11/29 12:27:18 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -36,6 +36,7 @@
 
 #include "iked.h"
 #include "ikev2.h"
+#include "version.h"
 
 __dead void usage(void);
 
@@ -78,7 +79,7 @@ main(int argc, char *argv[])
 
 	log_init(1, LOG_DAEMON);
 
-	while ((c = getopt(argc, argv, "6D:df:np:Ss:Ttv")) != -1) {
+	while ((c = getopt(argc, argv, "6D:df:np:Ss:TtvV")) != -1) {
 		switch (c) {
 		case '6':
 			log_warnx("the -6 option is ignored and will be "
@@ -127,6 +128,9 @@ main(int argc, char *argv[])
 			verbose++;
 			opts |= IKED_OPT_VERBOSE;
 			break;
+		case 'V':
+			fprintf(stderr, "OpenIKED %s\n", IKED_VERSION);
+			return 0;
 		default:
 			usage();
 		}
