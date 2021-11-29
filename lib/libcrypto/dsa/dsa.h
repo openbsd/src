@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.30 2018/03/17 15:19:12 tb Exp $ */
+/* $OpenBSD: dsa.h,v 1.31 2021/11/29 20:13:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -247,9 +247,12 @@ int	DSA_print(BIO *bp, const DSA *x, int off);
 int	DSAparams_print_fp(FILE *fp, const DSA *x);
 int	DSA_print_fp(FILE *bp, const DSA *x, int off);
 
-#define DSS_prime_checks 50
-/* Primality test according to FIPS PUB 186[-1], Appendix 2.1:
- * 50 rounds of Rabin-Miller */
+/*
+ * Primality test according to FIPS PUB 186-4, Appendix C.3. Set the number
+ * to 64 rounds of Miller-Rabin, which corresponds to 128 bits of security.
+ * This is necessary for keys of size >= 3072.
+ */
+#define DSS_prime_checks 64
 #define DSA_is_prime(n, callback, cb_arg) \
 	BN_is_prime(n, DSS_prime_checks, callback, NULL, cb_arg)
 
