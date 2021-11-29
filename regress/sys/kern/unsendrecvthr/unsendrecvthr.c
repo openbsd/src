@@ -1,4 +1,4 @@
-/* $OpenBSD: unsendrecvthr.c,v 1.1 2021/11/19 17:07:10 mvs Exp $ */
+/* $OpenBSD: unsendrecvthr.c,v 1.2 2021/11/29 21:25:09 mvs Exp $ */
 
 /*
  * Copyright (c) 2021 Vitaliy Makkoveev <mvs@openbsd.org>
@@ -34,6 +34,7 @@
 #include <err.h>
 #include <pthread.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 static pthread_mutex_t therr_mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -149,11 +150,10 @@ thr_rx(void *arg)
 int
 main(int argc, char *argv[])
 {
-	struct timeval testtime = {
+	struct timespec testtime = {
 		.tv_sec = 60,
-		.tv_usec = 0,
+		.tv_nsec = 0,
 	};
-	struct timeval *tv = &testtime;
 
 	int mib[2], ncpu;
 	size_t len;
@@ -165,7 +165,7 @@ main(int argc, char *argv[])
 	int s[2], i, j;
 
 	if (argc == 2 && !strcmp(argv[1], "--infinite"))
-		tv = NULL;
+		testtime.tv_sec = (10 * 365 * 86400);
 
 	mib[0] = CTL_HW;
 	mib[1] = HW_NCPUONLINE;
@@ -224,7 +224,7 @@ main(int argc, char *argv[])
 		}
 	}
 
-	select(0, NULL, NULL, NULL, tv);
+	nanosleep(&testtime, NULL);
 
 	return 0;
 }
