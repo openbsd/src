@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_kex.c,v 1.2 2020/04/18 14:07:56 jsing Exp $ */
+/* $OpenBSD: ssl_kex.c,v 1.3 2021/11/29 16:00:32 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -17,12 +17,155 @@
 
 #include <stdlib.h>
 
+#include <openssl/dh.h>
 #include <openssl/ec.h>
 #include <openssl/ecdh.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
 #include "bytestring.h"
+
+int
+ssl_kex_generate_dhe(DH *dh, DH *dh_params)
+{
+	BN_free(dh->p);
+	BN_free(dh->g);
+	dh->p = NULL;
+	dh->g = NULL;
+
+	if ((dh->p = BN_dup(dh_params->p)) == NULL)
+		return 0;
+	if ((dh->g = BN_dup(dh_params->g)) == NULL)
+		return 0;
+
+	if (!DH_generate_key(dh))
+		return 0;
+
+	return 1;
+}
+
+int
+ssl_kex_params_dhe(DH *dh, CBB *cbb)
+{
+	int dh_p_len, dh_g_len;
+	CBB dh_p, dh_g;
+	uint8_t *data;
+
+	if ((dh_p_len = BN_num_bytes(dh->p)) <= 0)
+		return 0;
+	if ((dh_g_len = BN_num_bytes(dh->g)) <= 0)
+		return 0;
+
+	if (!CBB_add_u16_length_prefixed(cbb, &dh_p))
+		return 0;
+	if (!CBB_add_space(&dh_p, &data, dh_p_len))
+		return 0;
+	if (BN_bn2bin(dh->p, data) != dh_p_len)
+		return 0;
+
+	if (!CBB_add_u16_length_prefixed(cbb, &dh_g))
+		return 0;
+	if (!CBB_add_space(&dh_g, &data, dh_g_len))
+		return 0;
+	if (BN_bn2bin(dh->g, data) != dh_g_len)
+		return 0;
+
+	if (!CBB_flush(cbb))
+		return 0;
+
+	return 1;
+}
+
+int
+ssl_kex_public_dhe(DH *dh, CBB *cbb)
+{
+	uint8_t *data;
+	int dh_y_len;
+	CBB dh_y;
+
+	if ((dh_y_len = BN_num_bytes(dh->pub_key)) <= 0)
+		return 0;
+
+	if (!CBB_add_u16_length_prefixed(cbb, &dh_y))
+		return 0;
+	if (!CBB_add_space(&dh_y, &data, dh_y_len))
+		return 0;
+	if (BN_bn2bin(dh->pub_key, data) != dh_y_len)
+		return 0;
+
+	if (!CBB_flush(cbb))
+		return 0;
+
+	return 1;
+}
+
+int
+ssl_kex_peer_params_dhe(DH *dh, CBS *cbs)
+{
+	CBS dh_p, dh_g;
+
+	BN_free(dh->p);
+	BN_free(dh->g);
+	dh->p = NULL;
+	dh->g = NULL;
+
+	if (!CBS_get_u16_length_prefixed(cbs, &dh_p))
+		return 0;
+	if (!CBS_get_u16_length_prefixed(cbs, &dh_g))
+		return 0;
+
+	if ((dh->p = BN_bin2bn(CBS_data(&dh_p), CBS_len(&dh_p), NULL)) == NULL)
+		return 0;
+	if ((dh->g = BN_bin2bn(CBS_data(&dh_g), CBS_len(&dh_g), NULL)) == NULL)
+		return 0;
+
+	return 1;
+}
+
+int
+ssl_kex_peer_public_dhe(DH *dh, CBS *cbs)
+{
+	CBS dh_y;
+
+	BN_free(dh->pub_key);
+	dh->pub_key = NULL;
+
+	if (!CBS_get_u16_length_prefixed(cbs, &dh_y))
+		return 0;
+	if ((dh->pub_key = BN_bin2bn(CBS_data(&dh_y), CBS_len(&dh_y),
+	    NULL)) == NULL)
+		return 0;
+
+	return 1;
+}
+
+int
+ssl_kex_derive_dhe(DH *dh, DH *dh_peer,
+    uint8_t **shared_key, size_t *shared_key_len)
+{
+	uint8_t *key = NULL;
+	int key_len = 0;
+	int ret = 0;
+
+	if ((key_len = DH_size(dh)) <= 0)
+		goto err;
+	if ((key = calloc(1, key_len)) == NULL)
+		goto err;
+
+	if ((key_len = DH_compute_key(key, dh_peer->pub_key, dh)) <= 0)
+		goto err;
+
+	*shared_key = key;
+	*shared_key_len = key_len;
+	key = NULL;
+
+	ret = 1;
+
+ err:
+	freezero(key, key_len);
+
+	return ret;
+}
 
 int
 ssl_kex_dummy_ecdhe_x25519(EVP_PKEY *pkey)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.119 2021/11/26 16:41:42 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.120 2021/11/29 16:00:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1223,46 +1223,24 @@ ssl3_get_server_certificate(SSL *s)
 static int
 ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 {
-	CBS dhp, dhg, dhpk;
-	BN_CTX *bn_ctx = NULL;
 	SESS_CERT *sc = NULL;
 	DH *dh = NULL;
 	long alg_a;
-	int al;
 
 	alg_a = S3I(s)->hs.cipher->algorithm_auth;
 	sc = s->session->sess_cert;
 
-	if ((dh = DH_new()) == NULL) {
-		SSLerror(s, ERR_R_DH_LIB);
+	if ((dh = DH_new()) == NULL)
 		goto err;
-	}
 
-	if (!CBS_get_u16_length_prefixed(cbs, &dhp))
+	if (!ssl_kex_peer_params_dhe(dh, cbs))
 		goto decode_err;
-	if ((dh->p = BN_bin2bn(CBS_data(&dhp), CBS_len(&dhp), NULL)) == NULL) {
-		SSLerror(s, ERR_R_BN_LIB);
-		goto err;
-	}
-
-	if (!CBS_get_u16_length_prefixed(cbs, &dhg))
+	if (!ssl_kex_peer_public_dhe(dh, cbs))
 		goto decode_err;
-	if ((dh->g = BN_bin2bn(CBS_data(&dhg), CBS_len(&dhg), NULL)) == NULL) {
-		SSLerror(s, ERR_R_BN_LIB);
-		goto err;
-	}
-
-	if (!CBS_get_u16_length_prefixed(cbs, &dhpk))
-		goto decode_err;
-	if ((dh->pub_key = BN_bin2bn(CBS_data(&dhpk), CBS_len(&dhpk),
-	    NULL)) == NULL) {
-		SSLerror(s, ERR_R_BN_LIB);
-		goto err;
-	}
 
 	/*
 	 * Check the strength of the DH key just constructed.
-	 * Discard keys weaker than 1024 bits.
+	 * Reject keys weaker than 1024 bits.
 	 */
 	if (DH_size(dh) < 1024 / 8) {
 		SSLerror(s, SSL_R_BAD_DH_P_LENGTH);
@@ -1280,13 +1258,11 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	return (1);
 
  decode_err:
-	al = SSL_AD_DECODE_ERROR;
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
-	ssl3_send_alert(s, SSL3_AL_FATAL, al);
+	ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
 
  err:
 	DH_free(dh);
-	BN_CTX_free(bn_ctx);
 
 	return (-1);
 }
@@ -1988,59 +1964,38 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 static int
 ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 {
-	DH *dh_srvr = NULL, *dh_clnt = NULL;
-	unsigned char *key = NULL;
-	int key_size = 0, key_len;
-	unsigned char *data;
+	DH *dh_clnt = NULL;
+	DH *dh_srvr;
+	uint8_t *key = NULL;
+	size_t key_len = 0;
 	int ret = -1;
-	CBB dh_Yc;
 
-	/* Ensure that we have an ephemeral key for DHE. */
-	if (sess_cert->peer_dh_tmp == NULL) {
+	/* Ensure that we have an ephemeral key from the server for DHE. */
+	if ((dh_srvr = sess_cert->peer_dh_tmp) == NULL) {
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
 		SSLerror(s, SSL_R_UNABLE_TO_FIND_DH_PARAMETERS);
 		goto err;
 	}
-	dh_srvr = sess_cert->peer_dh_tmp;
 
-	/* Generate a new random key. */
-	if ((dh_clnt = DHparams_dup(dh_srvr)) == NULL) {
-		SSLerror(s, ERR_R_DH_LIB);
+	if ((dh_clnt = DH_new()) == NULL)
 		goto err;
-	}
-	if (!DH_generate_key(dh_clnt)) {
-		SSLerror(s, ERR_R_DH_LIB);
+
+	if (!ssl_kex_generate_dhe(dh_clnt, dh_srvr))
 		goto err;
-	}
-	if ((key_size = DH_size(dh_clnt)) <= 0) {
-		SSLerror(s, ERR_R_DH_LIB);
+	if (!ssl_kex_public_dhe(dh_clnt, cbb))
 		goto err;
-	}
-	if ((key = malloc(key_size)) == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
+
+	if (!ssl_kex_derive_dhe(dh_clnt, dh_srvr, &key, &key_len))
 		goto err;
-	}
-	if ((key_len = DH_compute_key(key, dh_srvr->pub_key, dh_clnt)) <= 0) {
-		SSLerror(s, ERR_R_DH_LIB);
-		goto err;
-	}
 
 	if (!tls12_derive_master_secret(s, key, key_len))
-		goto err;
-
-	if (!CBB_add_u16_length_prefixed(cbb, &dh_Yc))
-		goto err;
-	if (!CBB_add_space(&dh_Yc, &data, BN_num_bytes(dh_clnt->pub_key)))
-		goto err;
-	BN_bn2bin(dh_clnt->pub_key, data);
-	if (!CBB_flush(cbb))
 		goto err;
 
 	ret = 1;
 
  err:
 	DH_free(dh_clnt);
-	freezero(key, key_size);
+	freezero(key, key_len);
 
 	return (ret);
 }
@@ -2072,6 +2027,7 @@ ssl3_send_client_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, CBB *cbb)
 
 	if (!ssl_kex_derive_ecdhe_ecp(ecdh, sc->peer_ecdh_tmp, &key, &key_len))
 		goto err;
+
 	if (!tls12_derive_master_secret(s, key, key_len))
 		goto err;
 
