@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.26 2021/01/18 00:49:09 mortimer Exp $ */
+/*	$OpenBSD: if.c,v 1.27 2021/11/29 06:39:23 deraadt Exp $ */
 /*
  * Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* roundup */
+#include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))
 
 #include "systat.h"
 

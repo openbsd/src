@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.77 2021/01/16 17:42:52 claudio Exp $	*/
+/*	$OpenBSD: if.c,v 1.78 2021/11/29 06:39:23 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* roundup() */
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/protosw.h>
@@ -54,6 +53,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
+
+#define roundup(x, y)   ((((x)+((y)-1))/(y))*(y))
 
 #include "netstat.h"
 
