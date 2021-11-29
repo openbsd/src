@@ -26,6 +26,8 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 
+#define MINIMUM(a,b)	(((a)<(b))?(a):(b))
+
 enum test_predicate {
 	TEST_EQ, TEST_NE, TEST_LT, TEST_LE, TEST_GT, TEST_GE
 };

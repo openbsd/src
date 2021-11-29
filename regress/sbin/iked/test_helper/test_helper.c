@@ -18,9 +18,9 @@
 /* Utility functions/framework for regress tests */
 
 #include <sys/types.h>
-#include <sys/param.h>
 
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -269,8 +269,10 @@ assert_mem(const char *file, int line, const char *a1, const char *a2,
 
 	TEST_CHECK_INT(r, pred);
 	test_header(file, line, a1, a2, "STRING", pred);
-	fprintf(stderr, "%12s = %s (len %zu)\n", a1, tohex(aa1, MIN(l, 256)), l);
-	fprintf(stderr, "%12s = %s (len %zu)\n", a2, tohex(aa2, MIN(l, 256)), l);
+	fprintf(stderr, "%12s = %s (len %zu)\n", a1,
+	    tohex(aa1, MINIMUM(l, 256)), l);
+	fprintf(stderr, "%12s = %s (len %zu)\n", a2,
+	    tohex(aa2, MINIMUM(l, 256)), l);
 	test_die();
 }
 
@@ -301,7 +303,7 @@ assert_mem_filled(const char *file, int line, const char *a1,
 	TEST_CHECK_INT(r, pred);
 	test_header(file, line, a1, NULL, "MEM_ZERO", pred);
 	fprintf(stderr, "%20s = %s%s (len %zu)\n", a1,
-	    tohex(aa1, MIN(l, 20)), l > 20 ? "..." : "", l);
+	    tohex(aa1, MINIMUM(l, 20)), l > 20 ? "..." : "", l);
 	snprintf(tmp, sizeof(tmp), "(%s)[%zu]", a1, where);
 	fprintf(stderr, "%20s = 0x%02x (expected 0x%02x)\n", tmp,
 	    ((u_char *)aa1)[where], v);

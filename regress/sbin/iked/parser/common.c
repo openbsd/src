@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.10 2021/02/04 20:45:13 tobhe Exp $ */
+/*	$OpenBSD: common.c,v 1.11 2021/11/29 15:56:33 tobhe Exp $ */
 /*
  * A bunch of stub functions so we can compile and link ikev2_pld.c
  * in a standalone program for testing purposes.
@@ -7,7 +7,6 @@
  */
 
 #include <sys/socket.h>
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/uio.h>
 
