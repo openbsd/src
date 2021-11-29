@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.125 2021/11/26 16:41:42 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.126 2021/11/29 16:03:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1309,9 +1309,7 @@ ssl3_send_server_done(SSL *s)
 static int
 ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
 {
-	CBB dh_p, dh_g, dh_Ys;
 	DH *dh = NULL, *dhp;
-	unsigned char *data;
 	int al;
 
 	if (s->cert->dh_tmp_auto != 0) {
@@ -1350,28 +1348,9 @@ ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
 		goto err;
 	}
 
-	/*
-	 * Serialize the DH parameters and public key.
-	 */
-	if (!CBB_add_u16_length_prefixed(cbb, &dh_p))
+	if (!ssl_kex_params_dhe(dh, cbb))
 		goto err;
-	if (!CBB_add_space(&dh_p, &data, BN_num_bytes(dh->p)))
-		goto err;
-	BN_bn2bin(dh->p, data);
-
-	if (!CBB_add_u16_length_prefixed(cbb, &dh_g))
-		goto err;
-	if (!CBB_add_space(&dh_g, &data, BN_num_bytes(dh->g)))
-		goto err;
-	BN_bn2bin(dh->g, data);
-
-	if (!CBB_add_u16_length_prefixed(cbb, &dh_Ys))
-		goto err;
-	if (!CBB_add_space(&dh_Ys, &data, BN_num_bytes(dh->pub_key)))
-		goto err;
-	BN_bn2bin(dh->pub_key, data);
-
-	if (!CBB_flush(cbb))
+	if (!ssl_kex_public_dhe(dh, cbb))
 		goto err;
 
 	return (1);
