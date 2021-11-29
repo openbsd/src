@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.29 2021/05/28 18:01:39 tobhe Exp $	*/
+/*	$OpenBSD: dh.c,v 1.30 2021/11/29 06:43:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -16,12 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* roundup */
-#include <string.h>
+#include <sys/types.h>
 
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#include <string.h>
 #include <event.h>
 #include <imsg.h>
 
@@ -271,7 +271,7 @@ const struct group_id ike_groups[] = {
 	/* "Private use" extensions */
 	/* PQC KEM */
 	{ GROUP_SNTRUP761X25519, 1035,
-	   (MAX(crypto_kem_sntrup761_PUBLICKEYBYTES,
+	   (MAXIMUM(crypto_kem_sntrup761_PUBLICKEYBYTES,
 	        crypto_kem_sntrup761_CIPHERTEXTBYTES) +
 	    CURVE25519_SIZE) * 8 }
 };

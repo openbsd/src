@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.82 2021/11/27 21:50:05 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.83 2021/11/29 06:43:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* roundup */
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -852,7 +852,7 @@ ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 
 		/* Encrypt message and add as an E payload */
 		data = ibuf_seek(in, offset, 0);
-		if ((e = ibuf_new(data, MIN(left, max_len))) == NULL) {
+		if ((e = ibuf_new(data, MINIMUM(left, max_len))) == NULL) {
 			goto done;
 		}
 
@@ -886,8 +886,8 @@ ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 		if (ikev2_msg_send(env, &resp) == -1)
 			goto done;
 
-		offset += MIN(left, max_len);
-		left -= MIN(left, max_len);
+		offset += MINIMUM(left, max_len);
+		left -= MINIMUM(left, max_len);
 		frag_num++;
 
 		/* MUST be zero after first fragment */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.337 2021/11/27 21:50:05 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.338 2021/11/29 06:43:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* roundup */
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
@@ -4177,7 +4177,7 @@ ikev2_nonce_cmp(struct ibuf *a, struct ibuf *b)
 
 	alen = ibuf_length(a);
 	blen = ibuf_length(b);
-	len = MIN(alen, blen);
+	len = MINIMUM(alen, blen);
 	ret = memcmp(ibuf_data(a), ibuf_data(b), len);
 	if (ret == 0)
 		ret = (alen < blen ? -1 : 1);
