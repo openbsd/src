@@ -1,4 +1,4 @@
-/* $OpenBSD: undgram_conclose.c,v 1.1 2021/11/19 17:14:38 mvs Exp $ */
+/* $OpenBSD: undgram_conclose.c,v 1.2 2021/11/29 21:21:26 mvs Exp $ */
 
 /*
  * Copyright (c) 2021 Vitaliy Makkoveev <mvs@openbsd.org>
@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/un.h>
 #include <stdarg.h>
@@ -112,6 +113,8 @@ main(int argc, char *argv[])
 	pthread_t thr;
 	int error, i;
 
+	umask(0077);
+
 	if (argc == 2 && !strcmp(argv[1], "--infinite"))
 		tv = NULL;
 
@@ -128,7 +131,7 @@ main(int argc, char *argv[])
 	sun.sun_len = sizeof(sun);
 	sun.sun_family = AF_UNIX;
 	snprintf(sun.sun_path, sizeof(sun.sun_path) - 1,
-		"/tmp/socket%d", getpid());
+	    "undgram_conclose.socket");
 
 	if ((error = pthread_create(&thr, NULL, thr_close, &sun)))
 		therrc(1, error, "pthread_create");

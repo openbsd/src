@@ -1,4 +1,4 @@
-/* $OpenBSD: unconacc.c,v 1.1 2021/11/29 13:05:04 mvs Exp $ */
+/* $OpenBSD: unconacc.c,v 1.2 2021/11/29 21:21:26 mvs Exp $ */
 
 /*
  * Copyright (c) 2021 Vitaliy Makkoveev <mvs@openbsd.org>
@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/un.h>
 #include <stdarg.h>
@@ -134,6 +135,8 @@ main(int argc, char *argv[])
 
 	int i;
 
+	umask(0077);
+
 	if (argc == 2 && !strcmp(argv[1], "--infinite"))
 		tv = NULL;
 
@@ -149,8 +152,7 @@ main(int argc, char *argv[])
 	memset(&sun, 0, sizeof(sun));
 	sun.sun_len = sizeof(sun);
 	sun.sun_family = AF_UNIX;
-	snprintf(sun.sun_path, sizeof(sun.sun_path) - 1,
-		"/tmp/socket%d", getpid());
+	snprintf(sun.sun_path, sizeof(sun.sun_path) - 1, "unconacc.socket");
 
 	if ((s = socket(AF_UNIX, SOCK_STREAM, 0)) < 0)
 		err(1, "socket");

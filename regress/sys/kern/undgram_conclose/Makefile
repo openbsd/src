@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2021/11/19 17:14:38 mvs Exp $
+# $OpenBSD: Makefile,v 1.2 2021/11/29 21:21:26 mvs Exp $
 
 # Copyright (c) 2021 Makkoveev Vitaliy <mvs@openbsd.org>
 #
@@ -18,5 +18,7 @@ WARNINGS = yes
 
 PROG = undgram_conclose
 LDADD+= -lpthread
+
+CLEANFILES += undgram_conclose.socket
 
 .include <bsd.regress.mk>

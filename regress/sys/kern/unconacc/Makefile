@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2021/11/29 13:05:04 mvs Exp $
+# $OpenBSD: Makefile,v 1.2 2021/11/29 21:21:26 mvs Exp $
 
 # Copyright (c) 2021 Makkoveev Vitaliy <mvs@openbsd.org>
 #
@@ -18,5 +18,7 @@ WARNINGS = yes
 
 PROG = unconacc
 LDADD+= -lpthread
+
+CLEANFILES += unconacc.socket
 
 .include <bsd.regress.mk>
