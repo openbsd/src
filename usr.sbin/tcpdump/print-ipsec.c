@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipsec.c,v 1.26 2020/01/24 22:46:37 procter Exp $	*/
+/*	$OpenBSD: print-ipsec.c,v 1.27 2021/11/29 18:50:16 tb Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -59,7 +59,7 @@ struct esp_hdr {
 
 static int espinit = 0;
 static int espauthlen = 12;
-static EVP_CIPHER_CTX ctx;
+static EVP_CIPHER_CTX *ctx;
 
 int
 esp_init (char *espspec)
@@ -105,8 +105,12 @@ esp_init (char *espspec)
 		}
 		key[i] = strtoul(s, NULL, 16);
 	}
-	EVP_CIPHER_CTX_init(&ctx);
-	if (EVP_CipherInit(&ctx, evp, key, NULL, 0) < 0) {
+	if ((ctx = EVP_CIPHER_CTX_new()) == NULL) {
+		free(key);
+		error("espkey init failed");
+	}
+	if (!EVP_CipherInit(ctx, evp, key, NULL, 0)) {
+		EVP_CIPHER_CTX_free(ctx);
 		free(key);
 		error("espkey init failed");
 	}
@@ -115,16 +119,16 @@ esp_init (char *espspec)
 	return (0);
 }
 
-void 
+void
 esp_decrypt (const u_char *bp, u_int len, const u_char *bp2)
 {
 	const struct ip *ip;
 	u_char *data, pad, nh;
 	int blocksz;
- 
+
 	ip = (const struct ip *)bp2;
 
-	blocksz = EVP_CIPHER_CTX_block_size(&ctx);
+	blocksz = EVP_CIPHER_CTX_block_size(ctx);
 
 	/* Skip fragments and short packets */
 	if (ntohs(ip->ip_off) & 0x3fff)
@@ -149,12 +153,15 @@ esp_decrypt (const u_char *bp, u_int len, const u_char *bp2)
 	len -= espauthlen;
 
 	/* the first block contains the IV */
-	EVP_CipherInit(&ctx, NULL, NULL, data, 0);
+	if (!EVP_CipherInit(ctx, NULL, NULL, data, 0))
+		return;
+
 	len -= blocksz;
 	data += blocksz;
 
 	/* decrypt remaining payload */
-	EVP_Cipher(&ctx, data, data, len);
+	if (!EVP_Cipher(ctx, data, data, len))
+		return;
 
 	nh = data[len - 1];
 	pad = data[len - 2];
