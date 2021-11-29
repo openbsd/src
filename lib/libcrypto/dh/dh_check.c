@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.19 2021/11/29 19:47:47 tb Exp $ */
+/* $OpenBSD: dh_check.c,v 1.20 2021/11/29 19:54:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,8 @@
 #include <openssl/dh.h>
 
 #include "bn_lcl.h"
+
+#define DH_NUMBER_ITERATIONS_FOR_PRIME 64
 
 int
 DH_check_params(const DH *dh, int *flags)
@@ -140,7 +142,8 @@ DH_check(const DH *dh, int *flags)
 			if (!BN_is_one(residue))
 				*flags |= DH_NOT_SUITABLE_GENERATOR;
 		}
-		is_prime = BN_is_prime_ex(dh->q, BN_prime_checks, ctx, NULL);
+		is_prime = BN_is_prime_ex(dh->q, DH_NUMBER_ITERATIONS_FOR_PRIME,
+		    ctx, NULL);
 		if (is_prime < 0)
 			goto err;
 		if (is_prime == 0)
@@ -154,7 +157,8 @@ DH_check(const DH *dh, int *flags)
 			*flags |= DH_CHECK_INVALID_J_VALUE;
 	}
 
-	is_prime = BN_is_prime_ex(dh->p, BN_prime_checks, ctx, NULL);
+	is_prime = BN_is_prime_ex(dh->p, DH_NUMBER_ITERATIONS_FOR_PRIME,
+	    ctx, NULL);
 	if (is_prime < 0)
 		goto err;
 	if (is_prime == 0)
@@ -166,7 +170,8 @@ DH_check(const DH *dh, int *flags)
 			goto err;
 		if (!BN_rshift1(q, dh->p))
 			goto err;
-		is_prime = BN_is_prime_ex(q, BN_prime_checks, ctx, NULL);
+		is_prime = BN_is_prime_ex(q, DH_NUMBER_ITERATIONS_FOR_PRIME,
+		    ctx, NULL);
 		if (is_prime < 0)
 			goto err;
 		if (is_prime == 0)
