@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.257 2021/11/29 15:39:59 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.258 2021/11/29 19:19:00 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -186,7 +186,7 @@ const struct xformsw *const xformswNXFORMSW = &xformsw[nitems(xformsw)];
 #define	TDB_HASHSIZE_INIT	32
 
 /* Protected by the tdb_sadb_mtx. */
-struct mutex tdb_sadb_mtx = MUTEX_INITIALIZER(IPL_NET);
+struct mutex tdb_sadb_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
 static SIPHASH_KEY tdbkey;
 static struct tdb **tdbh;
 static struct tdb **tdbdst;
