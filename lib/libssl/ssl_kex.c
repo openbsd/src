@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_kex.c,v 1.3 2021/11/29 16:00:32 jsing Exp $ */
+/* $OpenBSD: ssl_kex.c,v 1.4 2021/11/29 18:48:22 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -28,20 +28,30 @@
 int
 ssl_kex_generate_dhe(DH *dh, DH *dh_params)
 {
-	BN_free(dh->p);
-	BN_free(dh->g);
-	dh->p = NULL;
-	dh->g = NULL;
+	BIGNUM *p = NULL, *g = NULL;
+	int ret = 0;
 
-	if ((dh->p = BN_dup(dh_params->p)) == NULL)
-		return 0;
-	if ((dh->g = BN_dup(dh_params->g)) == NULL)
-		return 0;
+	if ((p = BN_dup(dh_params->p)) == NULL)
+		goto err;
+	if ((g = BN_dup(dh_params->g)) == NULL)
+		goto err;
+
+	if (!DH_set0_pqg(dh, p, NULL, g))
+		goto err;
+
+	p = NULL;
+	g = NULL;
 
 	if (!DH_generate_key(dh))
-		return 0;
+		goto err;
 
-	return 1;
+	ret = 1;
+
+ err:
+	BN_free(p);
+	BN_free(g);
+
+	return ret;
 }
 
 int
@@ -103,40 +113,58 @@ int
 ssl_kex_peer_params_dhe(DH *dh, CBS *cbs)
 {
 	CBS dh_p, dh_g;
-
-	BN_free(dh->p);
-	BN_free(dh->g);
-	dh->p = NULL;
-	dh->g = NULL;
+	BIGNUM *p = NULL, *g = NULL;
+	int ret = 0;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &dh_p))
-		return 0;
+		goto err;
 	if (!CBS_get_u16_length_prefixed(cbs, &dh_g))
-		return 0;
+		goto err;
 
-	if ((dh->p = BN_bin2bn(CBS_data(&dh_p), CBS_len(&dh_p), NULL)) == NULL)
-		return 0;
-	if ((dh->g = BN_bin2bn(CBS_data(&dh_g), CBS_len(&dh_g), NULL)) == NULL)
-		return 0;
+	if ((p = BN_bin2bn(CBS_data(&dh_p), CBS_len(&dh_p), NULL)) == NULL)
+		goto err;
+	if ((g = BN_bin2bn(CBS_data(&dh_g), CBS_len(&dh_g), NULL)) == NULL)
+		goto err;
 
-	return 1;
+	if (!DH_set0_pqg(dh, p, NULL, g))
+		goto err;
+
+	p = NULL;
+	g = NULL;
+
+	ret = 1;
+
+ err:
+	BN_free(p);
+	BN_free(g);
+
+	return ret;
 }
 
 int
 ssl_kex_peer_public_dhe(DH *dh, CBS *cbs)
 {
 	CBS dh_y;
-
-	BN_free(dh->pub_key);
-	dh->pub_key = NULL;
+	BIGNUM *pub_key = NULL;
+	int ret = 0;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &dh_y))
-		return 0;
-	if ((dh->pub_key = BN_bin2bn(CBS_data(&dh_y), CBS_len(&dh_y),
+		goto err;
+	if ((pub_key = BN_bin2bn(CBS_data(&dh_y), CBS_len(&dh_y),
 	    NULL)) == NULL)
-		return 0;
+		goto err;
 
-	return 1;
+	if (!DH_set0_key(dh, pub_key, NULL))
+		goto err;
+
+	pub_key = NULL;
+
+	ret = 1;
+
+ err:
+	BN_free(pub_key);
+
+	return ret;
 }
 
 int
