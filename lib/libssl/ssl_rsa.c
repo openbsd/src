@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.36 2021/11/26 16:40:02 tb Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.37 2021/11/29 18:36:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,7 +91,7 @@ SSL_use_certificate_file(SSL *ssl, const char *file, int type)
 	int ret = 0;
 	X509 *x = NULL;
 
-	in = BIO_new(BIO_s_file_internal());
+	in = BIO_new(BIO_s_file());
 	if (in == NULL) {
 		SSLerror(ssl, ERR_R_BUF_LIB);
 		goto end;
@@ -214,7 +214,7 @@ SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type)
 	BIO *in;
 	RSA *rsa = NULL;
 
-	in = BIO_new(BIO_s_file_internal());
+	in = BIO_new(BIO_s_file());
 	if (in == NULL) {
 		SSLerror(ssl, ERR_R_BUF_LIB);
 		goto end;
@@ -283,7 +283,7 @@ SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
 	BIO *in;
 	EVP_PKEY *pkey = NULL;
 
-	in = BIO_new(BIO_s_file_internal());
+	in = BIO_new(BIO_s_file());
 	if (in == NULL) {
 		SSLerror(ssl, ERR_R_BUF_LIB);
 		goto end;
@@ -406,7 +406,7 @@ SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
 	int ret = 0;
 	X509 *x = NULL;
 
-	in = BIO_new(BIO_s_file_internal());
+	in = BIO_new(BIO_s_file());
 	if (in == NULL) {
 		SSLerrorx(ERR_R_BUF_LIB);
 		goto end;
@@ -487,7 +487,7 @@ SSL_CTX_use_RSAPrivateKey_file(SSL_CTX *ctx, const char *file, int type)
 	BIO *in;
 	RSA *rsa = NULL;
 
-	in = BIO_new(BIO_s_file_internal());
+	in = BIO_new(BIO_s_file());
 	if (in == NULL) {
 		SSLerrorx(ERR_R_BUF_LIB);
 		goto end;
@@ -553,7 +553,7 @@ SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
 	BIO *in;
 	EVP_PKEY *pkey = NULL;
 
-	in = BIO_new(BIO_s_file_internal());
+	in = BIO_new(BIO_s_file());
 	if (in == NULL) {
 		SSLerrorx(ERR_R_BUF_LIB);
 		goto end;
@@ -659,7 +659,7 @@ use_certificate_chain_file(const char *file, CERT *cert,
 	BIO *in;
 	int ret = 0;
 
-	in = BIO_new(BIO_s_file_internal());
+	in = BIO_new(BIO_s_file());
 	if (in == NULL) {
 		SSLerrorx(ERR_R_BUF_LIB);
 		goto end;
