@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.101 2021/04/26 22:58:27 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.102 2021/11/29 05:17:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* nitems */
+#include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/wait.h>
@@ -29,7 +29,6 @@
 #include <dev/isa/isareg.h>
 #include <dev/pci/pcireg.h>
 
-#include <machine/param.h>
 #include <machine/psl.h>
 #include <machine/specialreg.h>
 #include <machine/vmmvar.h>

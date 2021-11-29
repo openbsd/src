@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.65 2021/09/01 11:08:21 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.66 2021/11/29 05:17:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/param.h>	/* PAGE_SIZE */
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
@@ -30,7 +31,6 @@
 #include <dev/isa/isareg.h>
 #include <dev/pci/pcireg.h>
 
-#include <machine/param.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/specialreg.h>

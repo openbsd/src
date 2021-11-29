@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.126 2021/07/18 11:55:45 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.127 2021/11/29 05:17:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* nitems */
+#include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/wait.h>
 #include <sys/cdefs.h>
@@ -966,7 +966,7 @@ vmd_configure(void)
 
 	if (!(env->vmd_cfg.cfg_flags & VMD_CFG_STAGGERED_START)) {
 		env->vmd_cfg.delay.tv_sec = VMD_DEFAULT_STAGGERED_START_DELAY;
-		if (sysctl(ncpu_mib, NELEM(ncpu_mib), &ncpus, &ncpus_sz, NULL, 0) == -1)
+		if (sysctl(ncpu_mib, nitems(ncpu_mib), &ncpus, &ncpus_sz, NULL, 0) == -1)
 			ncpus = 1;
 		env->vmd_cfg.parallelism = ncpus;
 		log_debug("%s: setting staggered start configuration to "

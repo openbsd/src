@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.106 2021/09/01 11:08:21 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.107 2021/11/29 05:17:35 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -39,7 +39,8 @@
 #define SET(_v, _m)		((_v) |= (_m))
 #define CLR(_v, _m)		((_v) &= ~(_m))
 #define ISSET(_v, _m)		((_v) & (_m))
-#define NELEM(a) (sizeof(a) / sizeof((a)[0]))
+
+#define nitems(_a)      (sizeof((_a)) / sizeof((_a)[0]))
 
 #define VMD_USER		"_vmd"
 #define VMD_CONF		"/etc/vm.conf"
