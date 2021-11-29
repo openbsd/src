@@ -1,4 +1,4 @@
-/* $OpenBSD: window-customize.c,v 1.12 2021/08/21 17:25:32 nicm Exp $ */
+/* $OpenBSD: window-customize.c,v 1.13 2021/11/29 11:01:51 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -398,11 +398,11 @@ window_customize_build_options(struct window_customize_modedata *data,
 
 	for (i = 0; i < size; i++) {
 		if (oo2 != NULL)
-			o = options_get(oo0, list[i]);
+			o = options_get(oo2, list[i]);
 		if (o == NULL && oo1 != NULL)
 			o = options_get(oo1, list[i]);
 		if (o == NULL)
-			o = options_get(oo2, list[i]);
+			o = options_get(oo0, list[i]);
 		if (options_owner(o) == oo2)
 			scope = scope2;
 		else if (options_owner(o) == oo1)
