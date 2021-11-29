@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.295 2021/11/22 12:55:40 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.296 2021/11/29 15:55:36 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1368,7 +1368,7 @@ vmclear_on_cpu(struct cpu_info *ci)
 static int
 vmx_remote_vmclear(struct cpu_info *ci, struct vcpu *vcpu)
 {
-	int ret = 0, nticks = 100000;
+	int ret = 0, nticks = 200000000;
 
 	rw_enter_write(&ci->ci_vmcs_lock);
 	atomic_swap_ulong(&ci->ci_vmcs_pa, vcpu->vc_control_pa);
