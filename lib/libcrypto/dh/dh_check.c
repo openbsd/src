@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.18 2021/11/29 19:41:02 tb Exp $ */
+/* $OpenBSD: dh_check.c,v 1.19 2021/11/29 19:47:47 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,6 +61,8 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
+#include "bn_lcl.h"
+
 int
 DH_check_params(const DH *dh, int *flags)
 {
@@ -104,65 +106,78 @@ DH_check_params(const DH *dh, int *flags)
 }
 
 /*
- * Check that p is a safe prime and
- * if g is 2, 3 or 5, check that it is a suitable generator
- * where
- * for 2, p mod 24 == 11
- * for 3, p mod 12 == 5
- * for 5, p mod 10 == 3 or 7
- * should hold.
+ * Check that p is a safe prime and that g is a suitable generator.
  */
 
 int
-DH_check(const DH *dh, int *ret)
+DH_check(const DH *dh, int *flags)
 {
-	int is_prime, ok = 0;
 	BN_CTX *ctx = NULL;
-	BN_ULONG l;
-	BIGNUM *q = NULL;
+	int is_prime;
+	int ok = 0;
 
-	*ret = 0;
+	*flags = 0;
+
+	if (!DH_check_params(dh, flags))
+		goto err;
+
 	ctx = BN_CTX_new();
 	if (ctx == NULL)
 		goto err;
-	q = BN_new();
-	if (q == NULL)
-		goto err;
+	BN_CTX_start(ctx);
 
-	if (BN_is_word(dh->g, DH_GENERATOR_2)) {
-		l = BN_mod_word(dh->p, 24);
-		if (l == (BN_ULONG)-1)
+	if (dh->q != NULL) {
+		BIGNUM *quotient, *residue;
+
+		if ((quotient = BN_CTX_get(ctx)) == NULL)
 			goto err;
-		if (l != 11)
-			*ret |= DH_NOT_SUITABLE_GENERATOR;
-	} else if (BN_is_word(dh->g, DH_GENERATOR_5)) {
-		l = BN_mod_word(dh->p, 10);
-		if (l == (BN_ULONG)-1)
+		if ((residue = BN_CTX_get(ctx)) == NULL)
 			goto err;
-		if (l != 3 && l != 7)
-			*ret |= DH_NOT_SUITABLE_GENERATOR;
-	} else
-		*ret |= DH_UNABLE_TO_CHECK_GENERATOR;
+		if ((*flags & DH_NOT_SUITABLE_GENERATOR) == 0) {
+			/* Check g^q == 1 mod p */
+			if (!BN_mod_exp_ct(residue, dh->g, dh->q, dh->p, ctx))
+				goto err;
+			if (!BN_is_one(residue))
+				*flags |= DH_NOT_SUITABLE_GENERATOR;
+		}
+		is_prime = BN_is_prime_ex(dh->q, BN_prime_checks, ctx, NULL);
+		if (is_prime < 0)
+			goto err;
+		if (is_prime == 0)
+			*flags |= DH_CHECK_Q_NOT_PRIME;
+		/* Check p == 1 mod q, i.e., q divides p - 1 */
+		if (!BN_div_ct(quotient, residue, dh->p, dh->q, ctx))
+			goto err;
+		if (!BN_is_one(residue))
+			*flags |= DH_CHECK_INVALID_Q_VALUE;
+		if (dh->j != NULL && BN_cmp(dh->j, quotient) != 0)
+			*flags |= DH_CHECK_INVALID_J_VALUE;
+	}
 
 	is_prime = BN_is_prime_ex(dh->p, BN_prime_checks, ctx, NULL);
 	if (is_prime < 0)
 		goto err;
 	if (is_prime == 0)
-		*ret |= DH_CHECK_P_NOT_PRIME;
-	else {
+		*flags |= DH_CHECK_P_NOT_PRIME;
+	else if (dh->q == NULL) {
+		BIGNUM *q;
+
+		if ((q = BN_CTX_get(ctx)) == NULL)
+			goto err;
 		if (!BN_rshift1(q, dh->p))
 			goto err;
 		is_prime = BN_is_prime_ex(q, BN_prime_checks, ctx, NULL);
 		if (is_prime < 0)
 			goto err;
 		if (is_prime == 0)
-			*ret |= DH_CHECK_P_NOT_SAFE_PRIME;
+			*flags |= DH_CHECK_P_NOT_SAFE_PRIME;
 	}
+
 	ok = 1;
 
  err:
+	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
-	BN_free(q);
 	return ok;
 }
 
