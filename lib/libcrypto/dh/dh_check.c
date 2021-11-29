@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.20 2021/11/29 19:54:07 tb Exp $ */
+/* $OpenBSD: dh_check.c,v 1.21 2021/11/29 20:02:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -187,22 +187,57 @@ DH_check(const DH *dh, int *flags)
 }
 
 int
-DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
+DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *flags)
 {
-	BIGNUM *q = NULL;
+	BN_CTX *ctx = NULL;
+	BIGNUM *max_pub_key;
+	int ok = 0;
 
-	*ret = 0;
-	q = BN_new();
-	if (q == NULL)
-		return 0;
-	BN_set_word(q, 1);
-	if (BN_cmp(pub_key, q) <= 0)
-		*ret |= DH_CHECK_PUBKEY_TOO_SMALL;
-	BN_copy(q, dh->p);
-	BN_sub_word(q, 1);
-	if (BN_cmp(pub_key, q) >= 0)
-		*ret |= DH_CHECK_PUBKEY_TOO_LARGE;
+	*flags = 0;
 
-	BN_free(q);
-	return 1;
+	if ((ctx = BN_CTX_new()) == NULL)
+		goto err;
+	BN_CTX_start(ctx);
+	if ((max_pub_key = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	/*
+	 * Check that 1 < pub_key < dh->p - 1
+	 */
+
+	if (BN_cmp(pub_key, BN_value_one()) <= 0)
+		*flags |= DH_CHECK_PUBKEY_TOO_SMALL;
+
+	/* max_pub_key = dh->p - 1 */
+	if (BN_copy(max_pub_key, dh->p) == NULL)
+		goto err;
+	if (!BN_sub_word(max_pub_key, 1))
+		goto err;
+
+	if (BN_cmp(pub_key, max_pub_key) >= 0)
+		*flags |= DH_CHECK_PUBKEY_TOO_LARGE;
+
+	/*
+	 * If dh->q is set, check that pub_key^q == 1 mod p
+	 */
+
+	if (dh->q != NULL) {
+		BIGNUM *residue;
+
+		if ((residue = BN_CTX_get(ctx)) == NULL)
+			goto err;
+
+		if (!BN_mod_exp_ct(residue, pub_key, dh->q, dh->p, ctx))
+			goto err;
+		if (!BN_is_one(residue))
+			*flags = DH_CHECK_PUBKEY_INVALID;
+	}
+
+	ok = 1;
+
+ err:
+	BN_CTX_end(ctx);
+	BN_CTX_free(ctx);
+
+	return ok;
 }
