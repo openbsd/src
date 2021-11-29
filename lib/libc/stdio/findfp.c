@@ -1,4 +1,4 @@
-/*	$OpenBSD: findfp.c,v 1.19 2016/04/05 04:29:21 guenther Exp $ */
+/*	$OpenBSD: findfp.c,v 1.20 2021/11/29 03:20:37 deraadt Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* ALIGN */
+#include <sys/param.h>	/* ALIGN ALIGNBYTES */
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
