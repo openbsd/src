@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.128 2020/04/28 13:11:32 espie Exp $
+.\" $OpenBSD: ports.7,v 1.129 2021/11/29 14:06:03 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: April 28 2020 $
+.Dd $Mdocdate: November 29 2021 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -72,10 +72,12 @@ The ports master Makefile, normally located in
 (but see
 .Ev PORTSDIR
 below)
-offers a few useful targets.
-.Bl -tag -width configure
+offers a few deprecated targets for the time being.
+.Bl -tag -width print-index
 .It Cm print-index
-display the contents of the index in a user-friendly way,
+display the contents of the index in a
+.Sq user-friendly
+way,
 .It Cm search
 invoked with a key, e.g.,
 .Ic make search key=foo ,
@@ -85,7 +87,7 @@ retrieve information relevant to a given port (obsolescent).
 Starting in
 .Ox 4.0 ,
 there is a port,
-.Pa databases/sqlports
+.Pa databases/sqlports ,
 that builds an sqlite database containing most information relevant to
 every port in the ports tree.
 This database can be searched using any tool able to manipulate such
@@ -98,7 +100,13 @@ All static index generating information has now been superseded by the
 or
 .Pa pkglocatedb
 packages, which contain
-similar information to the old INDEX file, but are more frequently updated.
+similar information to the old INDEX file, but are frequently updated.
+See
+.Pa databases/sqlports
+.Pa databases/pkglocatedb
+and
+.Xr pkg_mklocatedb 1
+for details.
 .Sh SELECTING A SET OF PORTS
 One can define
 .Ev SUBDIRLIST
