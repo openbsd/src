@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.58 2021/11/12 04:34:23 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.59 2021/11/29 15:54:04 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -251,8 +251,6 @@ struct knote {
 #define KN_DETACHED	0x0008			/* knote is detached */
 #define KN_PROCESSING	0x0010			/* knote is being processed */
 #define KN_WAITING	0x0020			/* waiting on processing */
-#define KN_ATTACHED	0x0040			/* knote is attached to
-						 * a knlist of the kqueue */
 
 #define kn_id		kn_kevent.ident		/* [I] */
 #define kn_filter	kn_kevent.filter	/* [I] */
