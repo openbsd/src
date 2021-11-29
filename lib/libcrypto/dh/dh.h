@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.h,v 1.25 2018/02/22 16:41:04 jsing Exp $ */
+/* $OpenBSD: dh.h,v 1.26 2021/11/29 19:34:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -156,10 +156,14 @@ struct dh_st
 #define DH_CHECK_P_NOT_SAFE_PRIME	0x02
 #define DH_UNABLE_TO_CHECK_GENERATOR	0x04
 #define DH_NOT_SUITABLE_GENERATOR	0x08
+#define DH_CHECK_Q_NOT_PRIME		0x10
+#define DH_CHECK_INVALID_Q_VALUE	0x20
+#define DH_CHECK_INVALID_J_VALUE	0x40
 
 /* DH_check_pub_key error codes */
 #define DH_CHECK_PUBKEY_TOO_SMALL	0x01
 #define DH_CHECK_PUBKEY_TOO_LARGE	0x02
+#define DH_CHECK_PUBKEY_INVALID		0x04
 
 /* primes p where (p-1)/2 is prime too are called "safe"; we define
    this for backward compatibility: */
