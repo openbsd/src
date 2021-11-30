@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.23 2021/11/29 06:42:13 deraadt Exp $	*/
+/*	$OpenBSD: dh.c,v 1.24 2021/11/30 18:12:44 tb Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -335,14 +335,24 @@ int
 modp_init(struct group *group)
 {
 	DH	*dh;
+	BIGNUM	*p = NULL, *g = NULL;
 
 	if ((dh = DH_new()) == NULL)
 		return (-1);
 	group->dh = dh;
 
-	if (!BN_hex2bn(&dh->p, group->spec->prime) ||
-	    !BN_hex2bn(&dh->g, group->spec->generator))
+	if (!BN_hex2bn(&p, group->spec->prime) ||
+	    !BN_hex2bn(&g, group->spec->generator)) {
+		BN_free(p);
+		BN_free(g);
 		return (-1);
+	}
+
+	if (!DH_set0_pqg(dh, p, NULL, g)) {
+		BN_free(p);
+		BN_free(g);
+		return (-1);
+	}
 
 	return (0);
 }
