@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.338 2021/11/29 06:43:42 deraadt Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.339 2021/11/30 17:47:30 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4836,8 +4836,8 @@ ikev2_resp_create_child_sa(struct iked *env, struct iked_message *msg)
 		goto done;
 
 	if ((len = ikev2_add_proposals(env, nsa ? nsa : sa, e,
-		nsa ? &nsa->sa_proposals : &proposals,
-		protoid, 0, nsa ? 1 : 0, 0)) == -1)
+	    nsa ? &nsa->sa_proposals : &proposals,
+	    protoid, 0, nsa ? 1 : 0, 0)) == -1)
 		goto done;
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_NONCE) == -1)
