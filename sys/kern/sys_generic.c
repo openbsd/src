@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.143 2021/11/22 17:15:05 visa Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.144 2021/11/30 02:58:33 visa Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -600,6 +600,7 @@ dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
     struct timespec *timeout, const sigset_t *sigmask, register_t *retval)
 {
 	struct kqueue_scan_state scan;
+	struct timespec zerots = {};
 	fd_mask bits[6];
 	fd_set *pibits[3], *pobits[3];
 	int error, ncollected = 0, nevents = 0;
@@ -678,6 +679,10 @@ dopselect(struct proc *p, int nd, fd_set *in, fd_set *ou, fd_set *ex,
 			error = 0;
 		goto done;
 	}
+
+	/* Do not block if registering found pending events. */
+	if (ncollected > 0)
+		timeout = &zerots;
 
 	/* Collect at most `nevents' possibly waiting in kqueue_scan() */
 	kqueue_scan_setup(&scan, p->p_kq);
