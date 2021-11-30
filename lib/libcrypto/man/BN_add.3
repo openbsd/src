@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_add.3,v 1.13 2018/04/29 15:58:21 schwarze Exp $
+.\"	$OpenBSD: BN_add.3,v 1.14 2021/11/30 18:34:35 tb Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 29 2018 $
+.Dd $Mdocdate: November 30 2021 $
 .Dt BN_ADD 3
 .Os
 .Sh NAME
@@ -92,14 +92,14 @@
 .Ft int
 .Fo BN_mul
 .Fa "BIGNUM *r"
-.Fa "BIGNUM *a"
-.Fa "BIGNUM *b"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
 .Fa "BN_CTX *ctx"
 .Fc
 .Ft int
 .Fo BN_sqr
 .Fa "BIGNUM *r"
-.Fa "BIGNUM *a"
+.Fa "const BIGNUM *a"
 .Fa "BN_CTX *ctx"
 .Fc
 .Ft int
@@ -127,45 +127,45 @@
 .Ft int
 .Fo BN_mod_add
 .Fa "BIGNUM *r"
-.Fa "BIGNUM *a"
-.Fa "BIGNUM *b"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
 .Fa "const BIGNUM *m"
 .Fa "BN_CTX *ctx"
 .Fc
 .Ft int
 .Fo BN_mod_sub
 .Fa "BIGNUM *r"
-.Fa "BIGNUM *a"
-.Fa "BIGNUM *b"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
 .Fa "const BIGNUM *m"
 .Fa "BN_CTX *ctx"
 .Fc
 .Ft int
 .Fo BN_mod_mul
 .Fa "BIGNUM *r"
-.Fa "BIGNUM *a"
-.Fa "BIGNUM *b"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
 .Fa "const BIGNUM *m"
 .Fa "BN_CTX *ctx"
 .Fc
 .Ft int
 .Fo BN_mod_sqr
 .Fa "BIGNUM *r"
-.Fa "BIGNUM *a"
+.Fa "const BIGNUM *a"
 .Fa "const BIGNUM *m"
 .Fa "BN_CTX *ctx"
 .Fc
 .Ft int
 .Fo BN_exp
 .Fa "BIGNUM *r"
-.Fa "BIGNUM *a"
-.Fa "BIGNUM *p"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *p"
 .Fa "BN_CTX *ctx"
 .Fc
 .Ft int
 .Fo BN_mod_exp
 .Fa "BIGNUM *r"
-.Fa "BIGNUM *a"
+.Fa "const BIGNUM *a"
 .Fa "const BIGNUM *p"
 .Fa "const BIGNUM *m"
 .Fa "BN_CTX *ctx"
@@ -173,8 +173,8 @@
 .Ft int
 .Fo BN_gcd
 .Fa "BIGNUM *r"
-.Fa "BIGNUM *a"
-.Fa "BIGNUM *b"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
 .Fa "BN_CTX *ctx"
 .Fc
 .Sh DESCRIPTION

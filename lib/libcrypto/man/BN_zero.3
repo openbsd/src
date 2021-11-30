@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_zero.3,v 1.9 2018/03/27 17:35:50 schwarze Exp $
+.\" $OpenBSD: BN_zero.3,v 1.10 2021/11/30 18:34:35 tb Exp $
 .\" full merge up to: OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\" selective merge up to: OpenSSL b713c4ff Jan 22 14:41:09 2018 -0500
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: November 30 2021 $
 .Dt BN_ZERO 3
 .Os
 .Sh NAME
@@ -81,7 +81,7 @@
 .Fc
 .Ft BN_ULONG
 .Fo BN_get_word
-.Fa "BIGNUM *a"
+.Fa "const BIGNUM *a"
 .Fc
 .Sh DESCRIPTION
 .Vt BN_ULONG
