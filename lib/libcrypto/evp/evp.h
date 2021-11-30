@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.85 2021/11/01 08:14:36 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.86 2021/11/30 18:20:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -375,14 +375,17 @@ struct evp_cipher_st {
 #define 	EVP_CTRL_RAND_KEY		0x6
 #define 	EVP_CTRL_PBE_PRF_NID		0x7
 #define 	EVP_CTRL_COPY			0x8
-#define 	EVP_CTRL_GCM_SET_IVLEN		0x9
-#define 	EVP_CTRL_GCM_GET_TAG		0x10
-#define 	EVP_CTRL_GCM_SET_TAG		0x11
+#define		EVP_CTRL_AEAD_SET_IVLEN		0x9
+#define		EVP_CTRL_AEAD_GET_TAG		0x10
+#define		EVP_CTRL_AEAD_SET_TAG		0x11
+#define		EVP_CTRL_GCM_SET_IVLEN		EVP_CTRL_AEAD_SET_IVLEN
+#define		EVP_CTRL_GCM_GET_TAG		EVP_CTRL_AEAD_GET_TAG
+#define		EVP_CTRL_GCM_SET_TAG		EVP_CTRL_AEAD_SET_TAG
 #define		EVP_CTRL_GCM_SET_IV_FIXED	0x12
 #define		EVP_CTRL_GCM_IV_GEN		0x13
-#define		EVP_CTRL_CCM_SET_IVLEN		EVP_CTRL_GCM_SET_IVLEN
-#define		EVP_CTRL_CCM_GET_TAG		EVP_CTRL_GCM_GET_TAG
-#define		EVP_CTRL_CCM_SET_TAG		EVP_CTRL_GCM_SET_TAG
+#define		EVP_CTRL_CCM_SET_IVLEN		EVP_CTRL_AEAD_SET_IVLEN
+#define		EVP_CTRL_CCM_GET_TAG		EVP_CTRL_AEAD_GET_TAG
+#define		EVP_CTRL_CCM_SET_TAG		EVP_CTRL_AEAD_SET_TAG
 #define		EVP_CTRL_CCM_SET_L		0x14
 #define		EVP_CTRL_CCM_SET_MSGLEN		0x15
 /* AEAD cipher deduces payload length and returns number of bytes
