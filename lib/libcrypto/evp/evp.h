@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.86 2021/11/30 18:20:06 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.87 2021/11/30 18:27:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -327,23 +327,23 @@ struct evp_cipher_st {
 #define		EVP_CIPH_CCM_MODE		0x7
 #define		EVP_CIPH_XTS_MODE		0x10001
 #define		EVP_CIPH_WRAP_MODE		0x10002
-#define 	EVP_CIPH_MODE			0xF0007
+#define		EVP_CIPH_MODE			0xF0007
 /* Set if variable length cipher */
-#define 	EVP_CIPH_VARIABLE_LENGTH	0x8
+#define		EVP_CIPH_VARIABLE_LENGTH	0x8
 /* Set if the iv handling should be done by the cipher itself */
-#define 	EVP_CIPH_CUSTOM_IV		0x10
+#define		EVP_CIPH_CUSTOM_IV		0x10
 /* Set if the cipher's init() function should be called if key is NULL */
-#define 	EVP_CIPH_ALWAYS_CALL_INIT	0x20
+#define		EVP_CIPH_ALWAYS_CALL_INIT	0x20
 /* Call ctrl() to init cipher parameters */
-#define 	EVP_CIPH_CTRL_INIT		0x40
+#define		EVP_CIPH_CTRL_INIT		0x40
 /* Don't use standard key length function */
-#define 	EVP_CIPH_CUSTOM_KEY_LENGTH	0x80
+#define		EVP_CIPH_CUSTOM_KEY_LENGTH	0x80
 /* Don't use standard block padding */
-#define 	EVP_CIPH_NO_PADDING		0x100
+#define		EVP_CIPH_NO_PADDING		0x100
 /* cipher handles random key generation */
-#define 	EVP_CIPH_RAND_KEY		0x200
+#define		EVP_CIPH_RAND_KEY		0x200
 /* cipher has its own additional copying logic */
-#define 	EVP_CIPH_CUSTOM_COPY		0x400
+#define		EVP_CIPH_CUSTOM_COPY		0x400
 /* Allow use default ASN1 get/set iv */
 #define		EVP_CIPH_FLAG_DEFAULT_ASN1	0x1000
 /* Buffer length in bits not bytes: CFB1 mode only */
@@ -355,7 +355,7 @@ struct evp_cipher_st {
 /* Cipher handles any and all padding logic as well
  * as finalisation.
  */
-#define 	EVP_CIPH_FLAG_CUSTOM_CIPHER	0x100000
+#define		EVP_CIPH_FLAG_CUSTOM_CIPHER	0x100000
 #define		EVP_CIPH_FLAG_AEAD_CIPHER	0x200000
 
 /*
@@ -367,14 +367,14 @@ struct evp_cipher_st {
 /* ctrl() values */
 
 #define		EVP_CTRL_INIT			0x0
-#define 	EVP_CTRL_SET_KEY_LENGTH		0x1
-#define 	EVP_CTRL_GET_RC2_KEY_BITS	0x2
-#define 	EVP_CTRL_SET_RC2_KEY_BITS	0x3
-#define 	EVP_CTRL_GET_RC5_ROUNDS		0x4
-#define 	EVP_CTRL_SET_RC5_ROUNDS		0x5
-#define 	EVP_CTRL_RAND_KEY		0x6
-#define 	EVP_CTRL_PBE_PRF_NID		0x7
-#define 	EVP_CTRL_COPY			0x8
+#define		EVP_CTRL_SET_KEY_LENGTH		0x1
+#define		EVP_CTRL_GET_RC2_KEY_BITS	0x2
+#define		EVP_CTRL_SET_RC2_KEY_BITS	0x3
+#define		EVP_CTRL_GET_RC5_ROUNDS		0x4
+#define		EVP_CTRL_SET_RC5_ROUNDS		0x5
+#define		EVP_CTRL_RAND_KEY		0x6
+#define		EVP_CTRL_PBE_PRF_NID		0x7
+#define		EVP_CTRL_COPY			0x8
 #define		EVP_CTRL_AEAD_SET_IVLEN		0x9
 #define		EVP_CTRL_AEAD_GET_TAG		0x10
 #define		EVP_CTRL_AEAD_SET_TAG		0x11
@@ -1117,7 +1117,7 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 #define EVP_PKEY_CTRL_DIGESTINIT	7
 
 /* Used by GOST key encryption in TLS */
-#define EVP_PKEY_CTRL_SET_IV 		8
+#define EVP_PKEY_CTRL_SET_IV		8
 
 #define EVP_PKEY_CTRL_CMS_ENCRYPT	9
 #define EVP_PKEY_CTRL_CMS_DECRYPT	10
