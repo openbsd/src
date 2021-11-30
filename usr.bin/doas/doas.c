@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.92 2021/10/13 17:41:14 millert Exp $ */
+/* $OpenBSD: doas.c,v 1.93 2021/11/30 20:08:15 tobias Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -172,7 +172,7 @@ parseconfig(const char *filename, int checkperms)
 
 	yyparse();
 	fclose(yyfp);
-	if (parse_errors)
+	if (parse_error)
 		exit(1);
 }
 
