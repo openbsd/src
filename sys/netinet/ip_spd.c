@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.105 2021/11/25 13:46:02 bluhm Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.106 2021/11/30 13:17:43 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -41,6 +41,8 @@
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
 
+struct	tdb *ipsp_spd_inp(struct mbuf *, int *, struct inpcb *,
+	    struct ipsec_policy *);
 int	ipsp_acquire_sa(struct ipsec_policy *, union sockaddr_union *,
 	    union sockaddr_union *, struct sockaddr_encap *, struct mbuf *);
 struct	ipsec_acquire *ipsp_pending_acquire(struct ipsec_policy *,
@@ -307,16 +309,14 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		 * system-wide policies.
 		 */
 		*error = 0;
-		return ipsp_spd_inp(m, af, hlen, error, direction,
-		    tdbp, inp, NULL);
+		return ipsp_spd_inp(m, error, inp, NULL);
 	}
 	ipo = (struct ipsec_policy *)rn;
 
 	switch (ipo->ipo_type) {
 	case IPSP_PERMIT:
 		*error = 0;
-		return ipsp_spd_inp(m, af, hlen, error, direction, tdbp,
-		    inp, ipo);
+		return ipsp_spd_inp(m, error, inp, ipo);
 
 	case IPSP_DENY:
 		*error = EHOSTUNREACH;
@@ -415,8 +415,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 			/* Cached entry is good. */
 			*error = 0;
-			return ipsp_spd_inp(m, af, hlen, error, direction,
-			    tdbp, inp, ipo);
+			return ipsp_spd_inp(m, error, inp, ipo);
 
   nomatchout:
 			/* Cached TDB was not good. */
@@ -452,8 +451,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 				    &ipo->ipo_tdb->tdb_policy_head,
 				    ipo, ipo_tdb_next);
 				*error = 0;
-				return ipsp_spd_inp(m, af, hlen, error,
-				    direction, tdbp, inp, ipo);
+				return ipsp_spd_inp(m, error, inp, ipo);
 			}
 		}
 
@@ -481,8 +479,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			/* FALLTHROUGH */
 		case IPSP_IPSEC_USE:
 			*error = 0;
-			return ipsp_spd_inp(m, af, hlen, error, direction,
-			    tdbp, inp, ipo);
+			return ipsp_spd_inp(m, error, inp, ipo);
 		}
 	} else { /* IPSP_DIRECTION_IN */
 		if (tdbp != NULL) {
@@ -507,8 +504,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			/* Direct match in the cache. */
 			if (ipo->ipo_tdb == tdbp) {
 				*error = 0;
-				return ipsp_spd_inp(m, af, hlen, error,
-				    direction, tdbp, inp, ipo);
+				return ipsp_spd_inp(m, error, inp, ipo);
 			}
 
 			if (memcmp(dignore ? &ssrc : &ipo->ipo_dst,
@@ -532,8 +528,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			TAILQ_INSERT_TAIL(&tdbp->tdb_policy_head, ipo,
 			    ipo_tdb_next);
 			*error = 0;
-			return ipsp_spd_inp(m, af, hlen, error, direction,
-			    tdbp, inp, ipo);
+			return ipsp_spd_inp(m, error, inp, ipo);
 
   nomatchin: /* Nothing needed here, falling through */
 	;
@@ -603,8 +598,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			/* If appropriate SA exists, don't acquire another. */
 			if (ipo->ipo_tdb) {
 				*error = 0;
-				return ipsp_spd_inp(m, af, hlen, error,
-				    direction, tdbp, inp, ipo);
+				return ipsp_spd_inp(m, error, inp, ipo);
 			}
 
 			/* Acquire SA through key management. */
@@ -614,8 +608,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			/* FALLTHROUGH */
 		case IPSP_IPSEC_USE:
 			*error = 0;
-			return ipsp_spd_inp(m, af, hlen, error, direction,
-			    tdbp, inp, ipo);
+			return ipsp_spd_inp(m, error, inp, ipo);
 		}
 	}
 
@@ -832,8 +825,8 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
  * Deal with PCB security requirements.
  */
 struct tdb *
-ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
-    struct tdb *tdbp, struct inpcb *inp, struct ipsec_policy *ipo)
+ipsp_spd_inp(struct mbuf *m, int *error, struct inpcb *inp,
+    struct ipsec_policy *ipo)
 {
 	/* Sanity check. */
 	if (inp == NULL)
