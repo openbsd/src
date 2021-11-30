@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.29 2021/09/02 10:11:21 mlarkin Exp $
+#	$OpenBSD: GENERIC,v 1.30 2021/11/30 02:13:55 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -133,6 +133,8 @@ uwacom*		at uhidev?		# USB Wacom tablet
 wsmouse* 	at uwacom? mux 0
 ukbd*		at uhidev?
 wskbd*		at ukbd? mux 1
+uhid*		at uhidev?		# USB generic HID support
+fido*		at uhidev?		# FIDO/U2F security key support
 udl*		at uhub?		# DisplayLink USB displays
 wsdisplay* 	at udl?
 umass*		at uhub?

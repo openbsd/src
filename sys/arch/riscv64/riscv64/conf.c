@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 2021/11/11 10:03:09 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 2021/11/30 02:13:57 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -91,6 +91,8 @@ cdev_decl(lpt);
 #include "radio.h"
 #include "drm.h"
 cdev_decl(drm);
+#include "uhid.h"
+#include "fido.h"
 
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -178,7 +180,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 60: i4b phone device */
 	/* End of reserved slots for isdn4bsd. */
 	cdev_notdef(),			/* 61: USB controller */
-	cdev_notdef(),			/* 62: USB generic HID */
+	cdev_usbdev_init(NUHID,uhid),	/* 62: USB generic HID */
 	cdev_notdef(),			/* 63: USB generic driver */
 	cdev_notdef(),			/* 64: USB printers */
 	cdev_notdef(),			/* 65: urio */
@@ -219,7 +221,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 95 */
 	cdev_ipmi_init(NIPMI,ipmi),	/* 96: ipmi */
 	cdev_notdef(),			/* 97: was switch(4) */
-	cdev_notdef(),			/* 98: FIDO/U2F security key */
+	cdev_fido_init(NFIDO,fido),	/* 98: FIDO/U2F security key */
 	cdev_pppx_init(NPPPX,pppac),	/* 99: PPP Access Concentrator */
 	cdev_notdef(),			/* 100: USB joystick/gamecontroller */
 };
