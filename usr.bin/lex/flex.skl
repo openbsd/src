@@ -1,4 +1,4 @@
-/*	$OpenBSD: flex.skl,v 1.17 2020/08/06 17:23:29 deraadt Exp $	*/
+/*	$OpenBSD: flex.skl,v 1.18 2021/11/30 15:50:06 millert Exp $	*/
 
 %# -*-C-*- vi: set ft=c:
 %# This file is processed in several stages.
@@ -1806,7 +1806,7 @@ m4_ifdef( [[M4_YY_USES_REJECT]],
     M4_YY_DECL_GUTS_VAR(); /* This var may be unused depending upon options. */
 %% [17.0] code to find the next state, and perhaps do backing up, goes here
 
-	M4_YY_NOOP_GUTS_VAR();
+    M4_YY_NOOP_GUTS_VAR();
 	return yy_is_jam ? 0 : yy_current_state;
 }
 
