@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_kex.c,v 1.4 2021/11/29 18:48:22 tb Exp $ */
+/* $OpenBSD: ssl_kex.c,v 1.5 2021/11/30 18:17:03 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -320,8 +320,8 @@ ssl_kex_derive_ecdhe_ecp(EC_KEY *ecdh, EC_KEY *ecdh_peer,
     uint8_t **shared_key, size_t *shared_key_len)
 {
 	const EC_POINT *point;
-	uint8_t *sk = NULL;
-	int sk_len = 0;
+	uint8_t *key = NULL;
+	int key_len = 0;
 	int ret = 0;
 
 	if (!EC_GROUP_check(EC_KEY_get0_group(ecdh), NULL))
@@ -332,22 +332,22 @@ ssl_kex_derive_ecdhe_ecp(EC_KEY *ecdh, EC_KEY *ecdh_peer,
 	if ((point = EC_KEY_get0_public_key(ecdh_peer)) == NULL)
 		goto err;
 
-	if ((sk_len = ECDH_size(ecdh)) <= 0)
+	if ((key_len = ECDH_size(ecdh)) <= 0)
 		goto err;
-	if ((sk = calloc(1, sk_len)) == NULL)
-		goto err;
-
-	if (ECDH_compute_key(sk, sk_len, point, ecdh, NULL) <= 0)
+	if ((key = calloc(1, key_len)) == NULL)
 		goto err;
 
-	*shared_key = sk;
-	*shared_key_len = sk_len;
-	sk = NULL;
+	if (ECDH_compute_key(key, key_len, point, ecdh, NULL) <= 0)
+		goto err;
+
+	*shared_key = key;
+	*shared_key_len = key_len;
+	key = NULL;
 
 	ret = 1;
 
  err:
-	freezero(sk, sk_len);
+	freezero(key, key_len);
 
 	return ret;
 }
