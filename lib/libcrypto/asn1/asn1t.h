@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.15 2019/08/20 13:10:09 inoguchi Exp $ */
+/* $OpenBSD: asn1t.h,v 1.16 2021/11/30 18:32:55 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -92,7 +92,7 @@ extern "C" {
 /* Macros to aid ASN1 template writing */
 
 #define ASN1_ITEM_TEMPLATE(tname) \
-	static const ASN1_TEMPLATE tname##_item_tt 
+	static const ASN1_TEMPLATE tname##_item_tt
 
 #define ASN1_ITEM_TEMPLATE_END(tname) \
 	;\
@@ -120,29 +120,30 @@ extern "C" {
 
 
 /* This is a ASN1 type which just embeds a template */
- 
-/* This pair helps declare a SEQUENCE. We can do:
+
+/*
+ * This pair helps declare a SEQUENCE. We can do:
  *
- * 	ASN1_SEQUENCE(stname) = {
- * 		... SEQUENCE components ...
- * 	} ASN1_SEQUENCE_END(stname)
+ *	ASN1_SEQUENCE(stname) = {
+ *		... SEQUENCE components ...
+ *	} ASN1_SEQUENCE_END(stname)
  *
- * 	This will produce an ASN1_ITEM called stname_it
+ *	This will produce an ASN1_ITEM called stname_it
  *	for a structure called stname.
  *
- * 	If you want the same structure but a different
+ *	If you want the same structure but a different
  *	name then use:
  *
- * 	ASN1_SEQUENCE(itname) = {
- * 		... SEQUENCE components ...
- * 	} ASN1_SEQUENCE_END_name(stname, itname)
+ *	ASN1_SEQUENCE(itname) = {
+ *		... SEQUENCE components ...
+ *	} ASN1_SEQUENCE_END_name(stname, itname)
  *
  *	This will create an item called itname_it using
  *	a structure called stname.
  */
 
 #define ASN1_SEQUENCE(tname) \
-	static const ASN1_TEMPLATE tname##_seq_tt[] 
+	static const ASN1_TEMPLATE tname##_seq_tt[]
 
 #define ASN1_SEQUENCE_END(stname) ASN1_SEQUENCE_END_name(stname, stname)
 
@@ -263,13 +264,14 @@ extern "C" {
 	ASN1_ITEM_end(tname)
 
 
-/* This pair helps declare a CHOICE type. We can do:
+/*
+ * This pair helps declare a CHOICE type. We can do:
  *
- * 	ASN1_CHOICE(chname) = {
- * 		... CHOICE options ...
- * 	ASN1_CHOICE_END(chname)
+ *	ASN1_CHOICE(chname) = {
+ *		... CHOICE options ...
+ *	ASN1_CHOICE_END(chname)
  *
- * 	This will produce an ASN1_ITEM called chname_it
+ *	This will produce an ASN1_ITEM called chname_it
  *	for a structure called chname. The structure
  *	definition must look like this:
  *	typedef struct {
@@ -279,14 +281,14 @@ extern "C" {
  *			ASN1_SOMEOTHER *opt2;
  *		} value;
  *	} chname;
- *	
+ *
  *	the name of the selector must be 'type'.
- * 	to use an alternative selector name use the
+ *	to use an alternative selector name use the
  *      ASN1_CHOICE_END_selector() version.
  */
 
 #define ASN1_CHOICE(tname) \
-	static const ASN1_TEMPLATE tname##_ch_tt[] 
+	static const ASN1_TEMPLATE tname##_ch_tt[]
 
 #define ASN1_CHOICE_cb(tname, cb) \
 	static const ASN1_AUX tname##_aux = {NULL, 0, 0, 0, cb, 0}; \
@@ -437,7 +439,7 @@ extern "C" {
 /* Macros for the ASN1_ADB structure */
 
 #define ASN1_ADB(name) \
-	static const ASN1_ADB_TABLE name##_adbtbl[] 
+	static const ASN1_ADB_TABLE name##_adbtbl[]
 
 
 #define ASN1_ADB_END(name, flags, field, app_table, def, none) \
@@ -456,7 +458,7 @@ extern "C" {
 #define ADB_ENTRY(val, template) {val, template}
 
 #define ASN1_ADB_TEMPLATE(name) \
-	static const ASN1_TEMPLATE name##_tt 
+	static const ASN1_TEMPLATE name##_tt
 
 #endif /* !LIBRESSL_INTERNAL */
 
@@ -467,13 +469,13 @@ extern "C" {
  */
 
 struct ASN1_TEMPLATE_st {
-unsigned long flags;		/* Various flags */
-long tag;			/* tag, not used if no tagging */
-unsigned long offset;		/* Offset of this field in structure */
+	unsigned long flags;		/* Various flags */
+	long tag;			/* tag, not used if no tagging */
+	unsigned long offset;		/* Offset of this field in structure */
 #ifndef NO_ASN1_FIELD_NAMES
-const char *field_name;		/* Field name */
+	const char *field_name;		/* Field name */
 #endif
-ASN1_ITEM_EXP *item;		/* Relevant ASN1_ITEM or ASN1_ADB */
+	ASN1_ITEM_EXP *item;		/* Relevant ASN1_ITEM or ASN1_ADB */
 };
 
 /* Macro to extract ASN1_ITEM and ASN1_ADB pointer from ASN1_TEMPLATE */
@@ -540,24 +542,25 @@ struct ASN1_ADB_TABLE_st {
 /* context specific EXPLICIT */
 #define ASN1_TFLG_EXPLICIT	ASN1_TFLG_EXPTAG|ASN1_TFLG_CONTEXT
 
-/* If tagging is in force these determine the
- * type of tag to use. Otherwise the tag is
- * determined by the underlying type. These 
- * values reflect the actual octet format.
+/*
+ * If tagging is in force these determine the type of tag to use. Otherwiser
+ * the tag is determined by the underlying type. These values reflect the
+ * actual octet format.
  */
 
-/* Universal tag */ 
+/* Universal tag */
 #define ASN1_TFLG_UNIVERSAL	(0x0<<6)
-/* Application tag */ 
+/* Application tag */
 #define ASN1_TFLG_APPLICATION	(0x1<<6)
-/* Context specific tag */ 
+/* Context specific tag */
 #define ASN1_TFLG_CONTEXT	(0x2<<6)
-/* Private tag */ 
+/* Private tag */
 #define ASN1_TFLG_PRIVATE	(0x3<<6)
 
 #define ASN1_TFLG_TAG_CLASS	(0x3<<6)
 
-/* These are for ANY DEFINED BY type. In this case
+/*
+ * These are for ANY DEFINED BY type. In this case
  * the 'item' field points to an ASN1_ADB structure
  * which contains a table of values to decode the
  * relevant type
@@ -569,7 +572,8 @@ struct ASN1_ADB_TABLE_st {
 
 #define ASN1_TFLG_ADB_INT	(0x1<<9)
 
-/* This flag means a parent structure is passed
+/*
+ * This flag means a parent structure is passed
  * instead of the field: this is useful is a
  * SEQUENCE is being combined with a CHOICE for
  * example. Since this means the structure and
@@ -579,7 +583,8 @@ struct ASN1_ADB_TABLE_st {
 
 #define ASN1_TFLG_COMBINE	(0x1<<10)
 
-/* This flag when present in a SEQUENCE OF, SET OF
+/*
+ * This flag when present in a SEQUENCE OF, SET OF
  * or EXPLICIT causes indefinite length constructed
  * encoding to be used if required.
  */
@@ -589,14 +594,14 @@ struct ASN1_ADB_TABLE_st {
 /* This is the actual ASN1 item itself */
 
 struct ASN1_ITEM_st {
-char itype;			/* The item type, primitive, SEQUENCE, CHOICE or extern */
-long utype;			/* underlying type */
-const ASN1_TEMPLATE *templates;	/* If SEQUENCE or CHOICE this contains the contents */
-long tcount;			/* Number of templates if SEQUENCE or CHOICE */
-const void *funcs;		/* functions that handle this type */
-long size;			/* Structure size (usually)*/
+	char itype;			/* The item type, primitive, SEQUENCE, CHOICE or extern */
+	long utype;			/* underlying type */
+	const ASN1_TEMPLATE *templates;	/* If SEQUENCE or CHOICE this contains the contents */
+	long tcount;			/* Number of templates if SEQUENCE or CHOICE */
+	const void *funcs;		/* functions that handle this type */
+	long size;			/* Structure size (usually)*/
 #ifndef NO_ASN1_FIELD_NAMES
-const char *sname;		/* Structure name */
+	const char *sname;		/* Structure name */
 #endif
 };
 
@@ -606,7 +611,7 @@ const char *sname;		/* Structure name */
  * For PRIMITIVE types the underlying type
  * determines the behaviour if items is NULL.
  *
- * Otherwise templates must contain a single 
+ * Otherwise templates must contain a single
  * template and the type is treated in the
  * same way as the type specified in the template.
  *
@@ -620,7 +625,7 @@ const char *sname;		/* Structure name */
  * selector.
  *
  * The 'funcs' field is used for application
- * specific functions. 
+ * specific functions.
  *
  * The EXTERN type uses a new style d2i/i2d.
  * The new style should be used where possible
@@ -657,7 +662,7 @@ const char *sname;		/* Structure name */
  * like CHOICE
  */
 
-struct ASN1_TLC_st{
+struct ASN1_TLC_st {
 	char valid;	/* Values below are valid */
 	int ret;	/* return value */
 	long plen;	/* length */
@@ -680,8 +685,8 @@ typedef int ASN1_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM 
 typedef int ASN1_ex_new_func(ASN1_VALUE **pval, const ASN1_ITEM *it);
 typedef void ASN1_ex_free_func(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
-typedef int ASN1_ex_print_func(BIO *out, ASN1_VALUE **pval, 
-						int indent, const char *fname, 
+typedef int ASN1_ex_print_func(BIO *out, ASN1_VALUE **pval,
+						int indent, const char *fname,
 						const ASN1_PCTX *pctx);
 
 typedef int ASN1_primitive_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype, const ASN1_ITEM *it);
@@ -719,7 +724,7 @@ typedef struct ASN1_PRIMITIVE_FUNCS_st {
  * used. This is most useful where the supplied routines
  * *almost* do the right thing but need some extra help
  * at a few points. If the callback returns zero then
- * it is assumed a fatal error has occurred and the 
+ * it is assumed a fatal error has occurred and the
  * main operation should be abandoned.
  *
  * If major changes in the default behaviour are required
@@ -853,13 +858,13 @@ typedef struct ASN1_STREAM_ARG_st {
 	int i2d_##fname(stname *a, unsigned char **out) \
 	{ \
 		return ASN1_item_i2d((ASN1_VALUE *)a, out, ASN1_ITEM_rptr(itname));\
-	} 
+	}
 
 #define IMPLEMENT_ASN1_NDEF_FUNCTION(stname) \
 	int i2d_##stname##_NDEF(stname *a, unsigned char **out) \
 	{ \
 		return ASN1_item_ndef_i2d((ASN1_VALUE *)a, out, ASN1_ITEM_rptr(stname));\
-	} 
+	}
 
 /* This includes evil casts to remove const: they will go away when full
  * ASN1 constification is done.
@@ -872,7 +877,7 @@ typedef struct ASN1_STREAM_ARG_st {
 	int i2d_##fname(const stname *a, unsigned char **out) \
 	{ \
 		return ASN1_item_i2d((ASN1_VALUE *)a, out, ASN1_ITEM_rptr(itname));\
-	} 
+	}
 
 #define IMPLEMENT_ASN1_DUP_FUNCTION(stname) \
 	stname * stname##_dup(stname *x) \
@@ -889,7 +894,7 @@ typedef struct ASN1_STREAM_ARG_st {
 	{ \
 		return ASN1_item_print(out, (ASN1_VALUE *)x, indent, \
 			ASN1_ITEM_rptr(itname), pctx); \
-	} 
+	}
 
 #define IMPLEMENT_ASN1_FUNCTIONS_const(name) \
 		IMPLEMENT_ASN1_FUNCTIONS_const_fname(name, name, name)
