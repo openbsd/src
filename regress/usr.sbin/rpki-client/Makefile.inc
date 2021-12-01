@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.15 2021/10/24 17:54:28 claudio Exp $
+# $OpenBSD: Makefile.inc,v 1.16 2021/12/01 09:03:19 claudio Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -8,6 +8,7 @@ PROGS += test-gbr
 PROGS += test-mft
 PROGS += test-roa
 PROGS += test-tal
+PROGS += test-rrdp
 
 .for p in ${PROGS}
 REGRESS_TARGETS += run-regress-$p
@@ -50,3 +51,35 @@ SRCS_test-tal+=	test-tal.c tal.c ip.c io.c log.c validate.c \
 		encoding.c print.c dummy.c
 run-regress-test-tal: test-tal
 	./test-tal -v ${.CURDIR}/../tal/*.tal
+
+SRCS_test-rrdp+=	test-rrdp.c rrdp_delta.c rrdp_notification.c \
+			rrdp_snapshot.c rrdp_util.c \
+			log.c encoding.c ip.c validate.c dummy.c
+LDADD_test-rrdp+=	-lexpat ${LDADD}
+DPADD_test-rrdp+=	${LIBEXPAT} ${DPADD}
+run-regress-test-rrdp: test-rrdp
+	./test-rrdp \
+	-n < ${.CURDIR}/../rrdp/notification.xml 2>&1 | tee rrdp-r1.out
+	cmp ${.CURDIR}/../rrdp/rrdp-r1.out rrdp-r1.out
+
+	./test-rrdp -S 8fe05c2e-047d-49e7-8398-cd4250a572b1 -N 50500 \
+	-n < ${.CURDIR}/../rrdp/notification.xml 2>&1 | tee rrdp-r2.out
+	cmp ${.CURDIR}/../rrdp/rrdp-r2.out rrdp-r2.out
+	
+	./test-rrdp -S 9b3f7e31-4979-ef8c-d818-73e4dadc3e6b -N 13755 \
+	-H 27571e365a4c87b51a03731415ce2118cc268d686db3209ae752f01ba2d74bc5 \
+	-d < ${.CURDIR}/../rrdp/delta.xml 2>&1 | tee rrdp-r3.out
+	cmp ${.CURDIR}/../rrdp/rrdp-r3.out rrdp-r3.out
+
+	./test-rrdp -S 7e7d2563-5bbb-40b0-8723-6a2e90c85d9e -N 28483 \
+	-H 2a051bfd199150fe6bcdc777d09e70fe1acdf239fbf98ba378a793685e5adb21 \
+	-s < ${.CURDIR}/../rrdp/snapshot.xml 2>&1 | tee rrdp-r4.out
+	cmp ${.CURDIR}/../rrdp/rrdp-r4.out rrdp-r4.out
+
+	./test-rrdp \
+	-n < ${.CURDIR}/../rrdp/xxe.xml 2>&1 | tee rrdp-r5.out
+	cmp ${.CURDIR}/../rrdp/rrdp-r5.out rrdp-r5.out
+
+	./test-rrdp \
+	-n < ${.CURDIR}/../rrdp/billion_lol.xml 2>&1 | tee rrdp-r6.out
+	cmp ${.CURDIR}/../rrdp/rrdp-r6.out rrdp-r6.out
