@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.375 2021/11/24 18:48:33 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.376 2021/12/01 12:51:09 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -86,8 +86,8 @@ static __inline u_int16_t __attribute__((__unused__))
 void in_delayed_cksum(struct mbuf *);
 int in_ifcap_cksum(struct mbuf *, struct ifnet *, int);
 
-struct tdb *ip_output_ipsec_lookup(struct mbuf *m, int hlen, int *error,
-    struct inpcb *inp, int ipsecflowinfo);
+int ip_output_ipsec_lookup(struct mbuf *m, int hlen, struct inpcb *inp,
+    struct tdb **, int ipsecflowinfo);
 void ip_output_ipsec_pmtu_update(struct tdb *, struct route *, struct in_addr,
     int, int);
 int ip_output_ipsec_send(struct tdb *, struct mbuf *, struct route *, int);
@@ -244,9 +244,9 @@ reroute:
 #ifdef IPSEC
 	if (ipsec_in_use || inp != NULL) {
 		/* Do we have any pending SAs to apply ? */
-		tdb = ip_output_ipsec_lookup(m, hlen, &error, inp,
+		error = ip_output_ipsec_lookup(m, hlen, inp, &tdb,
 		    ipsecflowinfo);
-		if (error != 0) {
+		if (error) {
 			/* Should silently drop packet */
 			if (error == -EINVAL)
 				error = 0;
@@ -531,19 +531,22 @@ bad:
 }
 
 #ifdef IPSEC
-struct tdb *
-ip_output_ipsec_lookup(struct mbuf *m, int hlen, int *error, struct inpcb *inp,
-    int ipsecflowinfo)
+int
+ip_output_ipsec_lookup(struct mbuf *m, int hlen, struct inpcb *inp,
+    struct tdb **tdbout, int ipsecflowinfo)
 {
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct tdb *tdb;
+	int error;
 
 	/* Do we have any pending SAs to apply ? */
-	tdb = ipsp_spd_lookup(m, AF_INET, hlen, error, IPSP_DIRECTION_OUT,
-	    NULL, inp, ipsecflowinfo);
-	if (tdb == NULL)
-		return NULL;
+	error = ipsp_spd_lookup(m, AF_INET, hlen, IPSP_DIRECTION_OUT,
+	    NULL, inp, &tdb, ipsecflowinfo);
+	if (error || tdb == NULL) {
+		*tdbout = NULL;
+		return error;
+	}
 	/* Loop detection */
 	for (mtag = m_tag_first(m); mtag != NULL; mtag = m_tag_next(m, mtag)) {
 		if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE)
@@ -555,10 +558,12 @@ ip_output_ipsec_lookup(struct mbuf *m, int hlen, int *error, struct inpcb *inp,
 		    !memcmp(&tdbi->dst, &tdb->tdb_dst,
 		    sizeof(union sockaddr_union))) {
 			/* no IPsec needed */
-			return NULL;
+			*tdbout = NULL;
+			return 0;
 		}
 	}
-	return tdb;
+	*tdbout = tdb;
+	return 0;
 }
 
 void

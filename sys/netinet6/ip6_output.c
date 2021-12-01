@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.261 2021/11/24 18:48:33 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.262 2021/12/01 12:51:09 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -221,8 +221,8 @@ ip6_output(struct mbuf *m, struct ip6_pktopts *opt, struct route_in6 *ro,
 
 #ifdef IPSEC
 	if (ipsec_in_use || inp) {
-		tdb = ip6_output_ipsec_lookup(m, &error, inp);
-		if (error != 0) {
+		error = ip6_output_ipsec_lookup(m, inp, &tdb);
+		if (error) {
 			/*
 			 * -EINVAL is used to indicate that the packet should
 			 * be silently dropped, typically because we've asked
@@ -2739,12 +2739,13 @@ in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 }
 
 #ifdef IPSEC
-struct tdb *
-ip6_output_ipsec_lookup(struct mbuf *m, int *error, struct inpcb *inp)
+int
+ip6_output_ipsec_lookup(struct mbuf *m, struct inpcb *inp, struct tdb **tdbout)
 {
 	struct tdb *tdb;
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
+	int error;
 
 	/*
 	 * Check if there was an outgoing SA bound to the flow
@@ -2752,11 +2753,12 @@ ip6_output_ipsec_lookup(struct mbuf *m, int *error, struct inpcb *inp)
 	 */
 
 	/* Do we have any pending SAs to apply ? */
-	tdb = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
-	    error, IPSP_DIRECTION_OUT, NULL, inp, 0);
-
-	if (tdb == NULL)
-		return NULL;
+	error = ipsp_spd_lookup(m, AF_INET6, sizeof(struct ip6_hdr),
+	    IPSP_DIRECTION_OUT, NULL, inp, &tdb, 0);
+	if (error || tdb == NULL) {
+		*tdbout = NULL;
+		return error;
+	}
 	/* Loop detection */
 	for (mtag = m_tag_first(m); mtag != NULL; mtag = m_tag_next(m, mtag)) {
 		if (mtag->m_tag_id != PACKET_TAG_IPSEC_OUT_DONE)
@@ -2768,10 +2770,12 @@ ip6_output_ipsec_lookup(struct mbuf *m, int *error, struct inpcb *inp)
 		    !memcmp(&tdbi->dst, &tdb->tdb_dst,
 		    sizeof(union sockaddr_union))) {
 			/* no IPsec needed */
-			return NULL;
+			*tdbout = NULL;
+			return 0;
 		}
 	}
-	return tdb;
+	*tdbout = tdb;
+	return 0;
 }
 
 int

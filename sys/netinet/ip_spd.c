@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.106 2021/11/30 13:17:43 bluhm Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.107 2021/12/01 12:51:09 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -41,8 +41,8 @@
 #include <netinet/ip_ipsp.h>
 #include <net/pfkeyv2.h>
 
-struct	tdb *ipsp_spd_inp(struct mbuf *, int *, struct inpcb *,
-	    struct ipsec_policy *);
+int	ipsp_spd_inp(struct mbuf *, struct inpcb *, struct ipsec_policy *,
+	    struct tdb **);
 int	ipsp_acquire_sa(struct ipsec_policy *, union sockaddr_union *,
 	    union sockaddr_union *, struct sockaddr_encap *, struct mbuf *);
 struct	ipsec_acquire *ipsp_pending_acquire(struct ipsec_policy *,
@@ -135,18 +135,19 @@ spd_table_walk(unsigned int rtableid,
  * the mbuf is. hlen is the offset of the transport protocol header
  * in the mbuf.
  *
- * Return combinations (of return value and in *error):
- * - NULL/0 -> no IPsec required on packet
- * - NULL/-EINVAL -> silently drop the packet
- * - NULL/errno -> drop packet and return error
- * or a pointer to a TDB (and 0 in *error).
+ * Return combinations (of return value and *tdbout):
+ * - -EINVAL -> silently drop the packet
+ * - errno   -> drop packet and return error
+ * - 0/NULL  -> no IPsec required on packet
+ * - 0/TDB   -> do IPsec
  *
  * In the case of incoming flows, only the first three combinations are
  * returned.
  */
-struct tdb *
-ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
-    struct tdb *tdbp, struct inpcb *inp, u_int32_t ipsecflowinfo)
+int
+ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
+    struct tdb *tdbp, struct inpcb *inp, struct tdb **tdbout,
+    u_int32_t ipsecflowinfo)
 {
 	struct radix_node_head *rnh;
 	struct radix_node *rn;
@@ -154,7 +155,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	struct sockaddr_encap *ddst, dst;
 	struct ipsec_policy *ipo;
 	struct ipsec_ids *ids = NULL;
-	int signore = 0, dignore = 0;
+	int error, signore = 0, dignore = 0;
 	u_int rdomain = rtable_l2(m->m_pkthdr.ph_rtableid);
 
 	NET_ASSERT_LOCKED();
@@ -164,8 +165,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	 * continuing with the SPD lookup.
 	 */
 	if (!ipsec_in_use && inp == NULL) {
-		*error = 0;
-		return NULL;
+		if (tdbout != NULL)
+			*tdbout = NULL;
+		return 0;
 	}
 
 	/*
@@ -175,8 +177,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 	    (inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS) &&
 	    (inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS) &&
 	    (inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS)) {
-		*error = 0;
-		return NULL;
+		if (tdbout != NULL)
+			*tdbout = NULL;
+		return 0;
 	}
 
 	memset(&dst, 0, sizeof(dst));
@@ -188,10 +191,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 	switch (af) {
 	case AF_INET:
-		if (hlen < sizeof (struct ip) || m->m_pkthdr.len < hlen) {
-			*error = EINVAL;
-			return NULL;
-		}
+		if (hlen < sizeof (struct ip) || m->m_pkthdr.len < hlen)
+			return EINVAL;
+
 		ddst->sen_direction = direction;
 		ddst->sen_type = SENT_IP4;
 
@@ -215,10 +217,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		case IPPROTO_UDP:
 		case IPPROTO_TCP:
 			/* Make sure there's enough data in the packet. */
-			if (m->m_pkthdr.len < hlen + 2 * sizeof(u_int16_t)) {
-				*error = EINVAL;
-				return NULL;
-			}
+			if (m->m_pkthdr.len < hlen + 2 * sizeof(u_int16_t))
+				return EINVAL;
 
 			/*
 			 * Luckily, the offset of the src/dst ports in
@@ -241,10 +241,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 #ifdef INET6
 	case AF_INET6:
-		if (hlen < sizeof (struct ip6_hdr) || m->m_pkthdr.len < hlen) {
-			*error = EINVAL;
-			return NULL;
-		}
+		if (hlen < sizeof (struct ip6_hdr) || m->m_pkthdr.len < hlen)
+			return EINVAL;
+
 		ddst->sen_type = SENT_IP6;
 		ddst->sen_ip6_direction = direction;
 
@@ -271,10 +270,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		case IPPROTO_UDP:
 		case IPPROTO_TCP:
 			/* Make sure there's enough data in the packet. */
-			if (m->m_pkthdr.len < hlen + 2 * sizeof(u_int16_t)) {
-				*error = EINVAL;
-				return NULL;
-			}
+			if (m->m_pkthdr.len < hlen + 2 * sizeof(u_int16_t))
+				return EINVAL;
 
 			/*
 			 * Luckily, the offset of the src/dst ports in
@@ -297,8 +294,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 #endif /* INET6 */
 
 	default:
-		*error = EAFNOSUPPORT;
-		return NULL;
+		return EAFNOSUPPORT;
 	}
 
 	/* Actual SPD lookup. */
@@ -308,19 +304,16 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		 * Return whatever the socket requirements are, there are no
 		 * system-wide policies.
 		 */
-		*error = 0;
-		return ipsp_spd_inp(m, error, inp, NULL);
+		return ipsp_spd_inp(m, inp, NULL, tdbout);
 	}
 	ipo = (struct ipsec_policy *)rn;
 
 	switch (ipo->ipo_type) {
 	case IPSP_PERMIT:
-		*error = 0;
-		return ipsp_spd_inp(m, error, inp, ipo);
+		return ipsp_spd_inp(m, inp, ipo, tdbout);
 
 	case IPSP_DENY:
-		*error = EHOSTUNREACH;
-		return NULL;
+		return EHOSTUNREACH;
 
 	case IPSP_IPSEC_USE:
 	case IPSP_IPSEC_ACQUIRE:
@@ -330,8 +323,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		break;
 
 	default:
-		*error = EINVAL;
-		return NULL;
+		return EINVAL;
 	}
 
 	/* Check for non-specific destination in the policy. */
@@ -391,8 +383,9 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			/* Direct match. */
 			if (dignore ||
 			    !memcmp(&sdst, &ipo->ipo_dst, sdst.sa.sa_len)) {
-				*error = 0;
-				return NULL;
+				if (tdbout != NULL)
+					*tdbout = NULL;
+				return 0;
 			}
 		}
 
@@ -414,8 +407,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 				goto nomatchout;
 
 			/* Cached entry is good. */
-			*error = 0;
-			return ipsp_spd_inp(m, error, inp, ipo);
+			return ipsp_spd_inp(m, inp, ipo, tdbout);
 
   nomatchout:
 			/* Cached TDB was not good. */
@@ -450,8 +442,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 				TAILQ_INSERT_TAIL(
 				    &ipo->ipo_tdb->tdb_policy_head,
 				    ipo, ipo_tdb_next);
-				*error = 0;
-				return ipsp_spd_inp(m, error, inp, ipo);
+				return ipsp_spd_inp(m, inp, ipo, tdbout);
 			}
 		}
 
@@ -462,14 +453,12 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			if (ipsp_acquire_sa(ipo,
 			    dignore ? &sdst : &ipo->ipo_dst,
 			    signore ? NULL : &ipo->ipo_src, ddst, m) != 0) {
-				*error = EACCES;
-				return NULL;
+				return EACCES;
 			}
 
 			/* FALLTHROUGH */
 		case IPSP_IPSEC_DONTACQ:
-			*error = -EINVAL; /* Silently drop packet. */
-			return NULL;
+			return -EINVAL;  /* Silently drop packet. */
 
 		case IPSP_IPSEC_ACQUIRE:
 			/* Acquire SA through key management. */
@@ -478,8 +467,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 			/* FALLTHROUGH */
 		case IPSP_IPSEC_USE:
-			*error = 0;
-			return ipsp_spd_inp(m, error, inp, ipo);
+			return ipsp_spd_inp(m, inp, ipo, tdbout);
 		}
 	} else { /* IPSP_DIRECTION_IN */
 		if (tdbp != NULL) {
@@ -502,10 +490,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 				tdbp = tdbp->tdb_inext;
 
 			/* Direct match in the cache. */
-			if (ipo->ipo_tdb == tdbp) {
-				*error = 0;
-				return ipsp_spd_inp(m, error, inp, ipo);
-			}
+			if (ipo->ipo_tdb == tdbp)
+				return ipsp_spd_inp(m, inp, ipo, tdbout);
 
 			if (memcmp(dignore ? &ssrc : &ipo->ipo_dst,
 			    &tdbp->tdb_src, tdbp->tdb_src.sa.sa_len) ||
@@ -527,8 +513,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 			ipo->ipo_tdb = tdb_ref(tdbp);
 			TAILQ_INSERT_TAIL(&tdbp->tdb_policy_head, ipo,
 			    ipo_tdb_next);
-			*error = 0;
-			return ipsp_spd_inp(m, error, inp, ipo);
+			return ipsp_spd_inp(m, inp, ipo, tdbout);
 
   nomatchin: /* Nothing needed here, falling through */
 	;
@@ -577,29 +562,23 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 		switch (ipo->ipo_type) {
 		case IPSP_IPSEC_REQUIRE:
 			/* If appropriate SA exists, don't acquire another. */
-			if (ipo->ipo_tdb) {
-				*error = -EINVAL;
-				return NULL;
-			}
+			if (ipo->ipo_tdb != NULL)
+				return -EINVAL;  /* Silently drop packet. */
 
 			/* Acquire SA through key management. */
-			if ((*error = ipsp_acquire_sa(ipo,
+			if ((error = ipsp_acquire_sa(ipo,
 			    dignore ? &ssrc : &ipo->ipo_dst,
 			    signore ? NULL : &ipo->ipo_src, ddst, m)) != 0)
-				return NULL;
+				return error;
 
 			/* FALLTHROUGH */
 		case IPSP_IPSEC_DONTACQ:
-			/* Drop packet. */
-			*error = -EINVAL;
-			return NULL;
+			return -EINVAL;  /* Silently drop packet. */
 
 		case IPSP_IPSEC_ACQUIRE:
 			/* If appropriate SA exists, don't acquire another. */
-			if (ipo->ipo_tdb) {
-				*error = 0;
-				return ipsp_spd_inp(m, error, inp, ipo);
-			}
+			if (ipo->ipo_tdb != NULL)
+				return ipsp_spd_inp(m, inp, ipo, tdbout);
 
 			/* Acquire SA through key management. */
 			ipsp_acquire_sa(ipo, dignore ? &ssrc : &ipo->ipo_dst,
@@ -607,14 +586,12 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 
 			/* FALLTHROUGH */
 		case IPSP_IPSEC_USE:
-			*error = 0;
-			return ipsp_spd_inp(m, error, inp, ipo);
+			return ipsp_spd_inp(m, inp, ipo, tdbout);
 		}
 	}
 
 	/* Shouldn't ever get this far. */
-	*error = EINVAL;
-	return NULL;
+	return EINVAL;
 }
 
 /*
@@ -824,9 +801,9 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 /*
  * Deal with PCB security requirements.
  */
-struct tdb *
-ipsp_spd_inp(struct mbuf *m, int *error, struct inpcb *inp,
-    struct ipsec_policy *ipo)
+int
+ipsp_spd_inp(struct mbuf *m, struct inpcb *inp, struct ipsec_policy *ipo,
+    struct tdb **tdbout)
 {
 	/* Sanity check. */
 	if (inp == NULL)
@@ -844,14 +821,16 @@ ipsp_spd_inp(struct mbuf *m, int *error, struct inpcb *inp,
 	    inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_AVAIL)
 		goto justreturn;
 
-	*error = -EINVAL;
-	return NULL;
+	return -EINVAL;  /* Silently drop packet. */
 
  justreturn:
-	if (ipo != NULL)
-		return ipo->ipo_tdb;
-	else
-		return NULL;
+	if (tdbout != NULL) {
+		if (ipo != NULL)
+			*tdbout = ipo->ipo_tdb;
+		else
+			*tdbout = NULL;
+	}
+	return 0;
 }
 
 /*
