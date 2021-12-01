@@ -1,4 +1,4 @@
-/* $OpenBSD: undgram_conclose.c,v 1.3 2021/11/29 21:25:09 mvs Exp $ */
+/* $OpenBSD: undgram_conclose.c,v 1.4 2021/12/01 10:24:40 mvs Exp $ */
 
 /*
  * Copyright (c) 2021 Vitaliy Makkoveev <mvs@openbsd.org>
@@ -97,6 +97,8 @@ thr_conn(void *arg)
 	return NULL;
 }
 
+static struct sockaddr_un sun;
+
 int
 main(int argc, char *argv[])
 {
@@ -108,8 +110,6 @@ main(int argc, char *argv[])
 	int mib[2], ncpu;
 	size_t len;
 
-	struct sockaddr_un sun;
-	
 	pthread_t thr;
 	int error, i;
 
