@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.80 2021/11/25 18:28:51 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.81 2021/12/01 16:42:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -74,7 +74,7 @@ int	 ca_x509_subjectaltname_get(X509 *cert, struct iked_id *);
 int	 ca_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 ca_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
 int	 ca_dispatch_control(int, struct privsep_proc *, struct imsg *);
-void 	 ca_store_info(struct iked *, const char *, X509_STORE *);
+void	 ca_store_info(struct iked *, const char *, X509_STORE *);
 
 static struct privsep_proc procs[] = {
 	{ "parent",	PROC_PARENT,	ca_dispatch_parent },
@@ -126,7 +126,7 @@ ca_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 void
 ca_shutdown(struct privsep_proc *p)
 {
-	struct iked             *env = p->p_env;
+	struct iked		*env = p->p_env;
 	struct ca_store		*store;
 
 	if (env == NULL)
@@ -1765,7 +1765,7 @@ ca_x509_subjectaltname_do(X509 *cert, int mode, const char *logmsg,
 				if ((sanid.id_buf = ibuf_new(data, len))
 				    == NULL) {
 					log_debug("%s: failed to get id buffer",
-					     __func__);
+					    __func__);
 					continue;
 				}
 				ikev2_print_id(&sanid, idstr, sizeof(idstr));

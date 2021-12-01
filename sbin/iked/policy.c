@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.88 2021/11/27 21:50:05 tobhe Exp $	*/
+/*	$OpenBSD: policy.c,v 1.89 2021/12/01 16:42:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2020-2021 Tobias Heider <tobhe@openbsd.org>
@@ -899,7 +899,7 @@ sa_dstid_remove(struct iked *env, struct iked_sa *sa)
 static __inline int
 sa_dstid_cmp(struct iked_sa *a, struct iked_sa *b)
 {
-	struct iked_id          *aid = NULL, *bid = NULL;
+	struct iked_id		*aid = NULL, *bid = NULL;
 	size_t			 alen, blen;
 	uint8_t			*aptr, *bptr;
 

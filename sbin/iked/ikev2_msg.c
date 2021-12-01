@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.83 2021/11/29 06:43:42 deraadt Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.84 2021/12/01 16:42:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -793,11 +793,11 @@ ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 	struct ikev2_frag_payload	*frag;
 	sa_family_t			 sa_fam;
 	size_t				 ivlen, integrlen, blocklen;
-	size_t 				 max_len, left,  offset=0;
+	size_t				 max_len, left,  offset=0;
 	size_t				 frag_num = 1, frag_total;
 	uint8_t				*data;
 	uint32_t			 msgid;
-	int 				 ret = -1;
+	int				 ret = -1;
 
 	if (sa == NULL ||
 	    sa->sa_encr == NULL ||
@@ -816,7 +816,7 @@ ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 	integrlen = hash_length(sa->sa_integr);
 	max_len = (sa_fam == AF_INET ? IKEV2_MAXLEN_IPV4_FRAG
 	    : IKEV2_MAXLEN_IPV6_FRAG)
-                  - ivlen - blocklen - integrlen;
+	    - ivlen - blocklen - integrlen;
 
 	/* Total number of fragments to send */
 	frag_total = (left / max_len) + 1;
@@ -834,7 +834,7 @@ ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 		/* IKE header */
 		if ((hdr = ikev2_add_header(buf, sa, resp.msg_msgid,
 		    IKEV2_PAYLOAD_SKF, exchange, response ? IKEV2_FLAG_RESPONSE
-		        : 0)) == NULL)
+		    : 0)) == NULL)
 			goto done;
 
 		/* Payload header */

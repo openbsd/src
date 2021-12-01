@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.14 2021/09/06 13:29:17 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.15 2021/12/01 16:42:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -423,14 +423,14 @@ vroute_insertdns(struct iked *env, int ifidx, struct sockaddr *addr)
 {
 	struct iked_vroute_sc	*ivr = env->sc_vroute;
 	struct vroute_dns	*dns;
-	
+
 	dns = calloc(1, sizeof(*dns));
 	if (dns == NULL)
 		fatalx("%s: calloc.", __func__);
 
 	memcpy(&dns->vd_addr, addr, addr->sa_len);
 	dns->vd_ifidx = ifidx;
-	
+
 	ivr->ivr_dns = dns;
 }
 

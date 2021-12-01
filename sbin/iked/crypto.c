@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.37 2021/11/29 06:43:42 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.38 2021/12/01 16:42:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -638,8 +638,8 @@ cipher_final(struct iked_cipher *encr)
 
 	/*
 	 * We always have EVP_CIPH_NO_PADDING set.  This means arg
-         * out is not used and olen should always be 0.
-         */
+	 * out is not used and olen should always be 0.
+	 */
 	if (EVP_CipherFinal_ex(encr->encr_ctx, NULL, &olen) != 1) {
 		ca_sslerror(__func__);
 		return (-1);
@@ -926,7 +926,7 @@ _dsa_verify_init(struct iked_dsa *dsa, const uint8_t *sig, size_t len)
 int
 dsa_init(struct iked_dsa *dsa, const void *buf, size_t len)
 {
-	int	 	 ret;
+	int		 ret;
 	EVP_PKEY_CTX	*pctx = NULL;
 
 	if (dsa->dsa_hmac) {

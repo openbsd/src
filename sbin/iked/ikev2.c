@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.339 2021/11/30 17:47:30 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.340 2021/12/01 16:42:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3095,7 +3095,7 @@ ikev2_handle_notifies(struct iked *env, struct iked_message *msg)
 		case IKEV2_EXCHANGE_CREATE_CHILD_SA:
 			if (!(sa->sa_stateflags & IKED_REQ_CHILDSA)) {
 				log_debug("%s: IKED_REQ_CHILDSA missing",
-				     __func__);
+				    __func__);
 				return (-1);
 			}
 			sa->sa_stateflags &= ~IKED_REQ_CHILDSA;
@@ -4525,7 +4525,7 @@ ikev2_ikesa_enable(struct iked *env, struct iked_sa *sa, struct iked_sa *nsa)
 	nsa->sa_cp_dns = sa->sa_cp_dns;
 	sa->sa_cp_dns = NULL;
 	/* Transfer other attributes */
-        if (sa->sa_dstid_entry_valid) {
+	if (sa->sa_dstid_entry_valid) {
 		sa_dstid_remove(env, sa);
 		sa_dstid_insert(env, nsa);
 	}
@@ -6939,7 +6939,7 @@ ikev2_cp_setaddr_pool(struct iked *env, struct iked_sa *sa,
 				return (-1);
 			}
 			if (RB_FIND(iked_addrpool, &env->sc_addrpool,
-			     &key)) {
+			    &key)) {
 				*errstr = "requested addr in use";
 				return (-1);
 			}
@@ -7161,7 +7161,7 @@ ikev2_update_sa_addresses(struct iked *env, struct iked_sa *sa)
 		if ((ipcomp = csa->csa_bundled) != NULL &&
 		    ipcomp->csa_loaded)
 			if (pfkey_sa_update_addresses(env, ipcomp)
-			     != 0)
+			    != 0)
 				log_debug("%s: failed to update sa", __func__);
 	}
 

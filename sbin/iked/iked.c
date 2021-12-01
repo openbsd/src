@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.61 2021/11/29 13:20:24 jmc Exp $	*/
+/*	$OpenBSD: iked.c,v 1.62 2021/12/01 16:42:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -316,7 +316,7 @@ parent_reload(struct iked *env, int reset, const char *filename)
 		config_setcoupled(env, env->sc_decoupled ? 0 : 1);
 		config_setocsp(env);
 		config_setcertpartialchain(env);
- 		/* Must be last */
+		/* Must be last */
 		config_setmode(env, env->sc_passive ? 1 : 0);
 	} else {
 		config_setreset(env, reset, PROC_IKEV2);
