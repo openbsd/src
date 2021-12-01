@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_hppa.c,v 1.10 2015/12/19 18:40:30 mmcc Exp $	*/
+/*	$OpenBSD: kvm_hppa.c,v 1.11 2021/12/01 16:53:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002, Miodrag Vallat.
@@ -25,7 +25,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 

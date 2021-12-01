@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_powerpc64.c,v 1.1 2020/06/28 09:46:58 kettenis Exp $	*/
+/*	$OpenBSD: kvm_powerpc64.c,v 1.2 2021/12/01 16:53:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2007 Miodrag Vallat.
@@ -17,10 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* MAXCOMLEN */
+#include <sys/types.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
-#include <sys/vnode.h>
 
 #include <unistd.h>
 #include <stdlib.h>

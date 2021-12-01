@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_amd64.c,v 1.14 2021/09/10 00:02:43 deraadt Exp $	*/
+/*	$OpenBSD: kvm_amd64.c,v 1.15 2021/12/01 16:53:28 deraadt Exp $	*/
 /*	$NetBSD: kvm_x86_64.c,v 1.3 2002/06/05 22:01:55 fvdl Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
  * x86-64 machine dependent routines for kvm.
  */
 
-#include <sys/param.h>	/* MAXCOMLEN ALIGN */
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
@@ -194,7 +193,7 @@ _kvm_pa2off(kvm_t *kd, paddr_t pa)
 	int i;
 
 	cpu_kh = kd->cpu_data;
-	ramsegs = (void *)((char *)(void *)cpu_kh + ALIGN(sizeof *cpu_kh));
+	ramsegs = (void *)((char *)(void *)cpu_kh + _ALIGN(sizeof *cpu_kh));
 
 	off = 0;
 	for (i = 0; i < cpu_kh->nmemsegs; i++) {

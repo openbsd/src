@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_alpha.c,v 1.16 2015/12/19 18:40:30 mmcc Exp $	*/
+/*	$OpenBSD: kvm_alpha.c,v 1.17 2021/12/01 16:53:28 deraadt Exp $	*/
 /*	$NetBSD: kvm_alpha.c,v 1.5 1996/10/01 21:12:05 cgd Exp $	*/
 
 /*
@@ -30,7 +30,8 @@
 
 #define __KVM_ALPHA_PRIVATE	     /* see <machine/pte.h> */
 
-#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/kcore.h>
@@ -194,7 +195,7 @@ _kvm_pa2off(kvm_t *kd, paddr_t pa)
 	int i;
 
 	cpu_kh = kd->cpu_data;
-	ramsegs = (phys_ram_seg_t *)((char *)cpu_kh + ALIGN(sizeof *cpu_kh));
+	ramsegs = (phys_ram_seg_t *)((char *)cpu_kh + _ALIGN(sizeof *cpu_kh));
 
 	off = 0;
 	for (i = 0; i < cpu_kh->nmemsegs; i++) {
