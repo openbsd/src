@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.258 2021/11/29 19:19:00 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.259 2021/12/01 22:34:31 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -843,27 +843,21 @@ puttdb_locked(struct tdb *tdbp)
 	ipsec_last_added = getuptime();
 }
 
-int
+void
 tdb_unlink(struct tdb *tdbp)
 {
-	int r;
-
 	mtx_enter(&tdb_sadb_mtx);
-	r = tdb_unlink_locked(tdbp);
+	tdb_unlink_locked(tdbp);
 	mtx_leave(&tdb_sadb_mtx);
-	return (r);
 }
 
-int
+void
 tdb_unlink_locked(struct tdb *tdbp)
 {
 	struct tdb *tdbpp;
 	u_int32_t hashval;
 
 	MUTEX_ASSERT_LOCKED(&tdb_sadb_mtx);
-
-	if (tdbp->tdb_dnext == NULL && tdbp->tdb_snext == NULL)
-		return (0);
 
 	hashval = tdb_hash(tdbp->tdb_spi, &tdbp->tdb_dst, tdbp->tdb_sproto);
 
@@ -921,8 +915,6 @@ tdb_unlink_locked(struct tdb *tdbp)
 		ipsecstat_inc(ipsec_prevtunnels);
 	}
 #endif /* IPSEC */
-
-	return (1);
 }
 
 void
@@ -984,8 +976,10 @@ tdb_delete(struct tdb *tdbp)
 	/* keep in sync with pfkeyv2_sa_flush() */
 	NET_ASSERT_LOCKED();
 
-	if (tdb_unlink(tdbp) == 0)
+	if (tdbp->tdb_flags & TDBF_DELETED)
 		return;
+	tdbp->tdb_flags |= TDBF_DELETED;
+	tdb_unlink(tdbp);
 	/* release tdb_onext/tdb_inext references */
 	tdb_unbundle(tdbp);
 	/* delete timeouts and release references */

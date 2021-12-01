@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.224 2021/11/29 15:39:59 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.225 2021/12/01 22:34:31 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1046,8 +1046,10 @@ pfkeyv2_sa_flush(struct tdb *tdb, void *satype_vp, int last)
 		/* keep in sync with tdb_delete() */
 		NET_ASSERT_LOCKED();
 
-		if (tdb_unlink_locked(tdb) == 0)
+		if (tdb->tdb_flags & TDBF_DELETED)
 			return (0);
+		tdb->tdb_flags |= TDBF_DELETED;
+		tdb_unlink_locked(tdb);
 		tdb_unbundle(tdb);
 		tdb_deltimeouts(tdb);
 		tdb_unref(tdb);
