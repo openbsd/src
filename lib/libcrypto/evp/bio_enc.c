@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_enc.c,v 1.22 2018/08/24 19:30:24 tb Exp $ */
+/* $OpenBSD: bio_enc.c,v 1.23 2021/12/01 09:06:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -383,26 +383,6 @@ enc_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
 	}
 	return (ret);
 }
-
-/*
-void BIO_set_cipher_ctx(b,c)
-BIO *b;
-EVP_CIPHER_ctx *c;
-	{
-	if (b == NULL) return;
-
-	if ((b->callback != NULL) &&
-		(b->callback(b,BIO_CB_CTRL,(char *)c,BIO_CTRL_SET,e,0L) <= 0))
-		return;
-
-	b->init=1;
-	ctx=(BIO_ENC_CTX *)b->ptr;
-	memcpy(ctx->cipher,c,sizeof(EVP_CIPHER_CTX));
-
-	if (b->callback != NULL)
-		b->callback(b,BIO_CB_CTRL,(char *)c,BIO_CTRL_SET,e,1L);
-	}
-*/
 
 int
 BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
