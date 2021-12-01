@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-enc.c,v 1.16 2017/08/29 21:10:20 deraadt Exp $	*/
+/*	$OpenBSD: print-enc.c,v 1.17 2021/12/01 18:28:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -27,11 +27,11 @@
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
-#include <sys/mbuf.h>
 
-struct rtentry;
 #include <net/if.h>
 #include <netinet/ip_ipsp.h>
+
+#include <sys/mbuf.h>
 #include <net/if_enc.h>
 
 #include <netinet/in.h>

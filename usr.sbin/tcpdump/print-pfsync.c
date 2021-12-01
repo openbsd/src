@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pfsync.c,v 1.43 2017/01/20 09:36:42 claudio Exp $	*/
+/*	$OpenBSD: print-pfsync.c,v 1.44 2021/12/01 18:28:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -31,9 +31,6 @@
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
-#ifdef __STDC__
-struct rtentry;
-#endif
 #include <net/if.h>
 
 #include <netinet/in.h>

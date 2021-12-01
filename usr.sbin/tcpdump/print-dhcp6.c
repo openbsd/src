@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-dhcp6.c,v 1.12 2019/12/02 22:07:20 dlg Exp $	*/
+/*	$OpenBSD: print-dhcp6.c,v 1.13 2021/12/01 18:28:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -19,8 +19,6 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 
-struct mbuf;
-struct rtentry;
 #include <net/if.h>
 
 #include <netinet/in.h>

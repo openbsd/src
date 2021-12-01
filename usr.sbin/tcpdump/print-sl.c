@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sl.c,v 1.21 2018/10/22 16:12:45 kn Exp $	*/
+/*	$OpenBSD: print-sl.c,v 1.22 2021/12/01 18:28:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,6 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
-struct rtentry;
 #include <net/if.h>
 
 #include <netinet/in.h>

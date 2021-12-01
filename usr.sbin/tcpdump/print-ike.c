@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.39 2020/01/24 22:46:36 procter Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.40 2021/12/01 18:28:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -30,8 +30,6 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 
-struct mbuf;
-struct rtentry;
 #include <net/if.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>

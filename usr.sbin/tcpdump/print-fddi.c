@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-fddi.c,v 1.18 2020/01/24 22:46:36 procter Exp $	*/
+/*	$OpenBSD: print-fddi.c,v 1.19 2021/12/01 18:28:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,8 +27,6 @@
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
-struct mbuf;
-struct rtentry;
 #include <net/if.h>
 
 #include <netinet/in.h>

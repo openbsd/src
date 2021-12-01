@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ppp.c,v 1.35 2021/03/02 00:39:57 jsg Exp $	*/
+/*	$OpenBSD: print-ppp.c,v 1.36 2021/12/01 18:28:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -27,8 +27,6 @@
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
-struct mbuf;
-struct rtentry;
 #include <net/if.h>
 
 #include <netinet/in.h>

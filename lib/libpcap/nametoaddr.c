@@ -1,4 +1,4 @@
-/*	$OpenBSD: nametoaddr.c,v 1.23 2021/09/10 00:01:13 deraadt Exp $	*/
+/*	$OpenBSD: nametoaddr.c,v 1.24 2021/12/01 18:28:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -27,9 +27,6 @@
 #include <sys/types.h>				/* concession to AIX */
 #include <sys/socket.h>
 #include <sys/time.h>
-
-struct mbuf;
-struct rtentry;
 
 #include <net/if.h>
 #include <netinet/in.h>

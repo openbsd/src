@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-null.c,v 1.24 2020/07/21 01:09:03 kn Exp $	*/
+/*	$OpenBSD: print-null.c,v 1.25 2021/12/01 18:28:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -26,8 +26,6 @@
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
-struct mbuf;
-struct rtentry;
 #include <net/if.h>
 
 #include <netinet/in.h>

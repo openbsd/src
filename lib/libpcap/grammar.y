@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: grammar.y,v 1.22 2020/08/03 03:40:02 dlg Exp $	*/
+/*	$OpenBSD: grammar.y,v 1.23 2021/12/01 18:28:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -26,9 +26,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
-
-struct mbuf;
-struct rtentry;
 
 #include <net/if.h>
 

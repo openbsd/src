@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-raw.c,v 1.8 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-raw.c,v 1.9 2021/12/01 18:28:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -26,8 +26,6 @@
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
-struct mbuf;
-struct rtentry;
 #include <net/if.h>
 
 #include <netinet/in.h>

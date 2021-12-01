@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ntp.c,v 1.19 2020/01/24 22:46:37 procter Exp $	*/
+/*	$OpenBSD: print-ntp.c,v 1.20 2021/12/01 18:28:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,8 +28,6 @@
 #include <sys/time.h>
 #include <sys/socket.h>
 
-struct mbuf;
-struct rtentry;
 #include <net/if.h>
 
 #include <netinet/in.h>

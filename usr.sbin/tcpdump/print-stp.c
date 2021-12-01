@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-stp.c,v 1.9 2015/01/16 06:40:21 deraadt Exp $	*/
+/*	$OpenBSD: print-stp.c,v 1.10 2021/12/01 18:28:46 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -35,8 +35,6 @@
 #include <sys/file.h>
 #include <sys/ioctl.h>
 
-struct mbuf;
-struct rtentry;
 #include <net/if.h>
 
 #include <netinet/in.h>
