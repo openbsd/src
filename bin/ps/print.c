@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.77 2021/08/28 20:54:54 chrisz Exp $	*/
+/*	$OpenBSD: print.c,v 1.78 2021/12/01 18:21:23 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -30,8 +30,9 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXCOMLEN PZERO NODEV */
+#include <sys/param.h>	/* PZERO NODEV */
 #include <sys/types.h>
+#include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 
