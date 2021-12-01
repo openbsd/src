@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.69 2021/10/06 00:42:46 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.70 2021/12/01 16:51:57 deraadt Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXCOMLEN MID_MACHINE ALIGN */
+#include <sys/param.h>	/* MAXCOMLEN MID_MACHINE */
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -461,7 +461,7 @@ kvm_dump_mkheader(kvm_t *kd, off_t dump_off)
 		_kvm_err(kd, 0, "invalid magic in cpu_hdr");
 		return (-1);
 	}
-	hdr_size = ALIGN(sizeof(cpu_hdr));
+	hdr_size = _ALIGN(sizeof(cpu_hdr));
 
 	/*
 	 * Read the CPU segment.
@@ -496,8 +496,8 @@ kvm_dump_mkheader(kvm_t *kd, off_t dump_off)
 	if (kd->kcore_hdr == NULL)
 		goto fail;
 
-	kd->kcore_hdr->c_hdrsize    = ALIGN(sizeof(kcore_hdr_t));
-	kd->kcore_hdr->c_seghdrsize = ALIGN(sizeof(kcore_seg_t));
+	kd->kcore_hdr->c_hdrsize    = _ALIGN(sizeof(kcore_hdr_t));
+	kd->kcore_hdr->c_seghdrsize = _ALIGN(sizeof(kcore_seg_t));
 	kd->kcore_hdr->c_nseg       = 2;
 	CORE_SETMAGIC(*(kd->kcore_hdr), KCORE_MAGIC, MID_MACHINE,0);
 
@@ -566,7 +566,7 @@ kvm_dump_wrtheader(kvm_t *kd, FILE *fp, int dumpsize)
 	 * Write the cpu header
 	 */
 	CORE_SETMAGIC(seghdr, KCORESEG_MAGIC, 0, CORE_CPU);
-	seghdr.c_size = (u_long)ALIGN(kd->cpu_dsize);
+	seghdr.c_size = (u_long)_ALIGN(kd->cpu_dsize);
 	if (fwrite(&seghdr, sizeof(seghdr), 1, fp) < 1) {
 		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
 		return (-1);
