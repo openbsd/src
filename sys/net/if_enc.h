@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.h,v 1.12 2014/12/08 10:46:14 mpi Exp $	*/
+/*	$OpenBSD: if_enc.h,v 1.13 2021/12/01 21:48:00 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2010 Reyk Floeter <reyk@vantronix.net>
@@ -25,7 +25,7 @@
 struct enchdr {
 	u_int32_t af;
 	u_int32_t spi;
-	u_int32_t flags;
+	u_int32_t flags;	/* similar to mbuf m_flags */
 };
 
 #ifdef _KERNEL
