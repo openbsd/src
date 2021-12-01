@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.31 2020/12/09 18:10:19 krw Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.32 2021/12/01 17:25:35 kettenis Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -520,7 +520,7 @@ devopen(struct open_file *of, const char *name, char **file)
 	char fname[256];
 	char buf[DEV_BSIZE];
 	struct disklabel label;
-	int handle, part;
+	int dhandle, ihandle, part, parent;
 	int error = 0;
 #ifdef SOFTRAID
 	char volno;
@@ -647,23 +647,24 @@ devopen(struct open_file *of, const char *name, char **file)
 		return 0;
 	}
 #endif
-	if ((handle = OF_finddevice(fname)) == -1)
+	if ((dhandle = OF_finddevice(fname)) == -1)
 		return ENOENT;
+
 	DNPRINTF(BOOT_D_OFDEV, "devopen: found %s\n", fname);
-	if (OF_getprop(handle, "name", buf, sizeof buf) < 0)
+	if (OF_getprop(dhandle, "name", buf, sizeof buf) < 0)
 		return ENXIO;
 	DNPRINTF(BOOT_D_OFDEV, "devopen: %s is called %s\n", fname, buf);
-	if (OF_getprop(handle, "device_type", buf, sizeof buf) < 0)
+	if (OF_getprop(dhandle, "device_type", buf, sizeof buf) < 0)
 		return ENXIO;
 	DNPRINTF(BOOT_D_OFDEV, "devopen: %s is a %s device\n", fname, buf);
 	DNPRINTF(BOOT_D_OFDEV, "devopen: opening %s\n", fname);
-	if ((handle = OF_open(fname)) == -1) {
+	if ((ihandle = OF_open(fname)) == -1) {
 		DNPRINTF(BOOT_D_OFDEV, "devopen: open of %s failed\n", fname);
 		return ENXIO;
 	}
 	DNPRINTF(BOOT_D_OFDEV, "devopen: %s is now open\n", fname);
 	bzero(&ofdev, sizeof ofdev);
-	ofdev.handle = handle;
+	ofdev.handle = ihandle;
 	ofdev.type = OFDEV_DISK;
 	ofdev.bsize = DEV_BSIZE;
 	if (!strcmp(buf, "block")) {
@@ -685,6 +686,16 @@ devopen(struct open_file *of, const char *name, char **file)
 
 		of->f_dev = devsw;
 		of->f_devdata = &ofdev;
+
+		/* Some PROMS have buggy writing code for IDE block devices */
+		parent = OF_parent(dhandle);
+		if (parent && OF_getprop(parent, "device_type", buf,
+		    sizeof(buf)) > 0 && strcmp(buf, "ide") == 0) {
+			DNPRINTF(BOOT_D_OFDEV, 
+			    "devopen: Disable writing for IDE block device\n");
+			of->f_flags |= F_NOWRITE;
+		}
+
 #ifdef SPARC_BOOT_UFS
 		bcopy(&file_system_ufs, &file_system[nfsys++], sizeof file_system[0]);
 		bcopy(&file_system_ufs2, &file_system[nfsys++], sizeof file_system[0]);
@@ -712,7 +723,7 @@ devopen(struct open_file *of, const char *name, char **file)
 bad:
 	DNPRINTF(BOOT_D_OFDEV, "devopen: error %d, cannot open device\n",
 	    error);
-	OF_close(handle);
+	OF_close(ihandle);
 	ofdev.handle = -1;
 	return error;
 }

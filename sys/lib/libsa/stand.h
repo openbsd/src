@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.71 2021/10/24 17:49:19 deraadt Exp $	*/
+/*	$OpenBSD: stand.h,v 1.72 2021/12/01 17:25:35 kettenis Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -107,10 +107,11 @@ struct open_file {
 extern struct open_file files[];
 
 /* f_flags values */
-#define	F_READ		0x0001	/* file opened for reading */
-#define	F_WRITE		0x0002	/* file opened for writing */
-#define	F_RAW		0x0004	/* raw device open - no file system */
-#define F_NODEV		0x0008	/* network open - no device */
+#define F_READ          0x0001 /* file opened for reading */
+#define F_WRITE         0x0002 /* file opened for writing */
+#define F_RAW           0x0004 /* raw device open - no file system */
+#define F_NODEV         0x0008 /* network open - no device */
+#define F_NOWRITE       0x0010 /* bootblock writing broken or unsupported */
 
 #define isupper(c)	((c) >= 'A' && (c) <= 'Z')
 #define islower(c)	((c) >= 'a' && (c) <= 'z')

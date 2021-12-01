@@ -1,4 +1,4 @@
-/*	$OpenBSD: fchmod.c,v 1.1 2019/08/03 15:22:17 deraadt Exp $	*/
+/*	$OpenBSD: fchmod.c,v 1.2 2021/12/01 17:25:35 kettenis Exp $	*/
 /*	$NetBSD: stat.c,v 1.3 1994/10/26 05:45:07 cgd Exp $	*/
 
 /*-
@@ -50,6 +50,11 @@ fchmod(int fd, mode_t m)
 
 	/* operation not defined on raw devices */
 	if (f->f_flags & F_RAW) {
+		errno = EOPNOTSUPP;
+		return (-1);
+	}
+	/* writing is broken or unsupported */
+	if (f->f_flags & F_NOWRITE) {
 		errno = EOPNOTSUPP;
 		return (-1);
 	}
