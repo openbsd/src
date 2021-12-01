@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_powerpc.c,v 1.11 2021/12/01 16:53:28 deraadt Exp $	*/
+/*	$OpenBSD: kvm_powerpc.c,v 1.12 2021/12/01 21:45:19 deraadt Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -35,12 +35,10 @@
  * PowerPC machine dependent routines for kvm.
  */
 
-#include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
-#include <sys/core.h>
 #include <sys/kcore.h>
 #include <unistd.h>
 #include <nlist.h>

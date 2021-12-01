@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_m88k.c,v 1.7 2021/12/01 16:53:28 deraadt Exp $	*/
+/*	$OpenBSD: kvm_m88k.c,v 1.8 2021/12/01 21:45:19 deraadt Exp $	*/
 /*	$NetBSD: kvm_alpha.c,v 1.2 1995/09/29 03:57:48 cgd Exp $	*/
 
 /*
@@ -28,7 +28,6 @@
  * rights to redistribute these changes.
  */
 
-#include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
