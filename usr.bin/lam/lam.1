@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lam.1,v 1.10 2018/07/29 11:27:14 schwarze Exp $
+.\"	$OpenBSD: lam.1,v 1.11 2021/12/02 15:15:29 jmc Exp $
 .\"	$NetBSD: lam.1,v 1.4 2002/02/08 01:36:25 ross Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)lam.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 29 2018 $
+.Dd $Mdocdate: December 2 2021 $
 .Dt LAM 1
 .Os
 .Sh NAME
@@ -38,10 +38,10 @@
 .Nd laminate files
 .Sh SYNOPSIS
 .Nm
-.Op Fl f Ar min.max
-.Op Fl p Ar min.max
-.Op Fl s Ar sepstring
-.Op Fl t Ar c
+.Op Fl F\*(Baf Ar min.max
+.Op Fl P\*(Bap Ar min.max
+.Op Fl S\*(Bas Ar sepstring
+.Op Fl T\*(Bat Ar c
 .Ar
 .Sh DESCRIPTION
 .Nm
@@ -57,14 +57,9 @@ The name
 .Dq \&-
 means the standard input, and may be repeated.
 .Pp
-Normally, each option affects only the
-.Ar file
-after it.
-If the option letter is capitalized it affects all subsequent files
-until it appears again uncapitalized.
-The options are described below.
+The options are as follows:
 .Bl -tag -width "-s sepstring"
-.It Fl f Ar min.max
+.It Fl F\*(Baf Ar min.max
 Print line fragments according to the format string
 .Ar min.max ,
 where
@@ -79,21 +74,53 @@ instead of blanks, and if it begins with a
 .Sq \&- ,
 the fragment will be left-adjusted
 within the field.
-.It Fl p Ar min.max
+.Pp
+If
+.Fl f
+is used, it affects only the file after it;
+if
+.Fl F
+is used, it affects all subsequent files
+until it appears again uncapitalized.
+.It Fl P\*(Bap Ar min.max
 Like
 .Fl f ,
 but pad this file's field when end-of-file is reached
 and other files are still active.
-.It Fl s Ar sepstring
+.Pp
+If
+.Fl p
+is used, it affects only the file after it;
+if
+.Fl P
+is used, it affects all subsequent files
+until it appears again uncapitalized.
+.It Fl S\*(Bas Ar sepstring
 Print
 .Ar sepstring
 before printing line fragments from the next file.
 This option may appear after the last file.
-.It Fl t Ar c
+.Pp
+If
+.Fl s
+is used, it affects only the file after it;
+if
+.Fl S
+is used, it affects all subsequent files
+until it appears again uncapitalized.
+.It Fl T\*(Bat Ar c
 The input line terminator is
 .Ar c
 instead of a newline.
 The newline normally appended to each output line is omitted.
+.Pp
+If
+.Fl t
+is used, it affects only the file after it;
+if
+.Fl T
+is used, it affects all subsequent files
+until it appears again uncapitalized.
 .El
 .Pp
 To print files simultaneously for easy viewing use
