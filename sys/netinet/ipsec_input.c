@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.194 2021/12/01 12:51:09 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.195 2021/12/02 12:39:15 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1009,8 +1009,10 @@ esp4_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 int
 ipsec_protoff(struct mbuf *m, int off, int af)
 {
+#ifdef INET6
 	struct ip6_ext ip6e;
 	int protoff, nxt, l;
+#endif /* INET6 */
 
 	switch (af) {
 	case AF_INET:
@@ -1018,11 +1020,12 @@ ipsec_protoff(struct mbuf *m, int off, int af)
 #ifdef INET6
 	case AF_INET6:
 		break;
-#endif
+#endif /* INET6 */
 	default:
 		unhandled_af(af);
 	}
 
+#ifdef INET6
 	if (off < sizeof(struct ip6_hdr))
 		return -1;
 
@@ -1057,6 +1060,7 @@ ipsec_protoff(struct mbuf *m, int off, int af)
 
 	protoff += offsetof(struct ip6_ext, ip6e_nxt);
 	return protoff;
+#endif /* INET6 */
 }
 
 int

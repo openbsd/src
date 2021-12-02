@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.92 2021/11/25 13:46:02 bluhm Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.93 2021/12/02 12:39:15 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -162,13 +162,16 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 		 * doing tunneling.
 		 */
 		if (af == tdb->tdb_dst.sa.sa_family) {
-			if (af == AF_INET)
+			switch (af) {
+			case AF_INET:
 				hlen = sizeof(struct ip);
-
+				break;
 #ifdef INET6
-			if (af == AF_INET6)
+			case AF_INET6:
 				hlen = sizeof(struct ip6_hdr);
+				break;
 #endif /* INET6 */
+			}
 
 			/* Bring the network header in the first mbuf. */
 			if (m->m_len < hlen) {
