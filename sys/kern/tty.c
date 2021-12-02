@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.170 2021/10/24 00:02:25 jsg Exp $	*/
+/*	$OpenBSD: tty.c,v 1.171 2021/12/02 15:13:49 deraadt Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1901,7 +1901,7 @@ ttyrub(int c, struct tty *tp)
 {
 	u_char *cp;
 	int savecol;
-	int tabc, s;
+	int tabc, s, cc;
 
 	if (!ISSET(tp->t_lflag, ECHO) || ISSET(tp->t_lflag, EXTPROC))
 		return 0;
@@ -1937,8 +1937,8 @@ ttyrub(int c, struct tty *tp)
 				SET(tp->t_state, TS_CNTTB);
 				SET(tp->t_lflag, FLUSHO);
 				tp->t_column = tp->t_rocol;
-				for (cp = firstc(&tp->t_rawq, &tabc); cp;
-				    cp = nextc(&tp->t_rawq, cp, &tabc))
+				for (cp = firstc(&tp->t_rawq, &tabc, &cc); cp;
+				    cp = nextc(&tp->t_rawq, cp, &tabc, &cc))
 					ttyecho(tabc, tp);
 				CLR(tp->t_lflag, FLUSHO);
 				CLR(tp->t_state, TS_CNTTB);
@@ -1995,7 +1995,7 @@ int
 ttyretype(struct tty *tp)
 {
 	u_char *cp;
-	int s, c;
+	int s, c, cc;
 
 	/* Echo the reprint character. */
 	if (tp->t_cc[VREPRINT] != _POSIX_VDISABLE)
@@ -2004,9 +2004,11 @@ ttyretype(struct tty *tp)
 	(void)ttyoutput('\n', tp);
 
 	s = spltty();
-	for (cp = firstc(&tp->t_canq, &c); cp; cp = nextc(&tp->t_canq, cp, &c))
+	for (cp = firstc(&tp->t_canq, &c, &cc); cp;
+	    cp = nextc(&tp->t_canq, cp, &c, &cc))
 		ttyecho(c, tp);
-	for (cp = firstc(&tp->t_rawq, &c); cp; cp = nextc(&tp->t_rawq, cp, &c))
+	for (cp = firstc(&tp->t_rawq, &c, &cc); cp;
+	    cp = nextc(&tp->t_rawq, cp, &c, &cc))
 		ttyecho(c, tp);
 	CLR(tp->t_state, TS_ERASE);
 	splx(s);

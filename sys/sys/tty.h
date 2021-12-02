@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.39 2020/07/14 14:33:06 deraadt Exp $	*/
+/*	$OpenBSD: tty.h,v 1.40 2021/12/02 15:13:49 deraadt Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -260,7 +260,8 @@ void	 clist_init(void);
 int	 getc(struct clist *q);
 void	 ndflush(struct clist *q, int cc);
 int	 ndqb(struct clist *q, int flag);
-u_char	*nextc(struct clist *q, u_char *cp, int *c);
+u_char	*firstc(struct clist *clp, int *c, int *cc);
+u_char	*nextc(struct clist *q, u_char *cp, int *c, int *cc);
 int	 putc(int c, struct clist *q);
 int	 q_to_b(struct clist *q, u_char *cp, int cc);
 int	 unputc(struct clist *q);
@@ -300,7 +301,6 @@ void	 ttytstamp(struct tty *tp, int octs, int ncts, int odcd, int ndcd);
 void	tty_init(void);
 struct tty *ttymalloc(int);
 void	 ttyfree(struct tty *);
-u_char	*firstc(struct clist *clp, int *c);
 
 int	cttyopen(dev_t, int, int, struct proc *);
 int	cttyread(dev_t, struct uio *, int);
