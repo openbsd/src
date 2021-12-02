@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1184 2021/11/02 16:54:01 kn Exp $
+#	$OpenBSD: install.sub,v 1.1185 2021/12/02 17:18:39 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3258,17 +3258,19 @@ do_upgrade() {
 	# Configure the network.
 	enable_network
 
-	# Fetch list of mirror servers and installer choices from previous runs.
-	start_cgiinfo
-
 	# Create a skeletal /etc/fstab which is usable for the upgrade process.
 	munge_fstab
+
+	# Do not need to look in /mnt anymore
+	umount /mnt || { echo "Can't umount $ROOTDEV!"; exit; }
+
+	# Fetch list of mirror servers and installer choices from previous runs.
+	start_cgiinfo
 
 	# fsck -p non-root filesystems in /etc/fstab.
 	check_fs
 
 	# Mount filesystems in /etc/fstab.
-	umount /mnt || { echo "Can't umount $ROOTDEV!"; exit; }
 	mount_fs
 
 	rm -f /mnt/bsd.upgrade /mnt/auto_upgrade.conf
