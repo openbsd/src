@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2020/12/17 00:51:13 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.14 2021/12/02 17:10:53 kn Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-AnyEvent		provide framework for multiple event loops
@@ -16,7 +16,7 @@ PERL_REQUIRE != perl -Mstrict -Mwarnings -e ' \
 .if ! empty (PERL_REQUIRE)
 regress:
 	@echo "${PERL_REQUIRE}"
-	@echo install these perl packages for additional tests
+	@echo 'run "pkg_add p5-AnyEvent p5-Hash-Merge p5-YAML"'
 	@echo SKIPPED
 .endif
 
