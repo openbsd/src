@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsearch.c,v 1.8 2016/10/22 19:19:34 tb Exp $ */
+/*	$OpenBSD: bsearch.c,v 1.9 2021/12/02 20:58:01 cheloha Exp $ */
 /*
  * Copyright (c) 1990 Regents of the University of California.
  * All rights reserved.
@@ -51,8 +51,9 @@ bsearch(const void *key, const void *base0, size_t nmemb, size_t size,
     int (*compar)(const void *, const void *))
 {
 	const char *base = base0;
-	int lim, cmp;
 	const void *p;
+	size_t lim;
+	int cmp;
 
 	for (lim = nmemb; lim != 0; lim >>= 1) {
 		p = base + (lim >> 1) * size;
