@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.40 2021/12/03 17:23:16 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.41 2021/12/03 17:27:34 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -115,45 +115,40 @@ ASN1_tag2bit(int tag)
 	return tag2bit[tag];
 }
 
-/* Macro to initialize and invalidate the cache */
-
-#define asn1_tlc_clear(c)	if (c) (c)->valid = 0
-/* Version to avoid compiler warning about 'c' always non-NULL */
-#define asn1_tlc_clear_nc(c)	(c)->valid = 0
-
-/* Decode an ASN1 item, this currently behaves just
- * like a standard 'd2i' function. 'in' points to
- * a buffer to read the data from, in future we will
- * have more advanced versions that can input data
- * a piece at a time and this will simply be a special
- * case.
- */
+static void
+asn1_tlc_invalidate(ASN1_TLC *ctx)
+{
+	if (ctx != NULL)
+		ctx->valid = 0;
+}
 
 ASN1_VALUE *
 ASN1_item_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
     const ASN1_ITEM *it)
 {
-	ASN1_TLC c;
 	ASN1_VALUE *ptmpval = NULL;
+	ASN1_TLC ctx;
 
-	if (!pval)
+	asn1_tlc_invalidate(&ctx);
+
+	if (pval == NULL)
 		pval = &ptmpval;
-	asn1_tlc_clear_nc(&c);
-	if (asn1_item_ex_d2i(pval, in, len, it, -1, 0, 0, &c, 0) > 0)
-		return *pval;
-	return NULL;
+	if (asn1_item_ex_d2i(pval, in, len, it, -1, 0, 0, &ctx, 0) <= 0)
+		return NULL;
+
+	return *pval;
 }
 
 int
 ASN1_template_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
     const ASN1_TEMPLATE *tt)
 {
-	ASN1_TLC c;
+	ASN1_TLC ctx;
 
-	asn1_tlc_clear_nc(&c);
-	return asn1_template_ex_d2i(pval, in, len, tt, 0, &c, 0);
+	asn1_tlc_invalidate(&ctx);
+
+	return asn1_template_ex_d2i(pval, in, len, tt, 0, &ctx, 0);
 }
-
 
 /* Decode an item, taking care of IMPLICIT tagging, if any.
  * If 'opt' set and tag mismatch return -1 to handle OPTIONAL
@@ -749,10 +744,9 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 		 * when we have a exact match wont work
 		 */
 		if (utype == V_ASN1_OTHER) {
-			asn1_tlc_clear(ctx);
-		}
-		/* SEQUENCE and SET must be constructed */
-		else if (!cst) {
+			asn1_tlc_invalidate(ctx);
+		} else if (!cst) {
+			/* SEQUENCE and SET must be constructed */
 			ASN1error(ASN1_R_TYPE_NOT_CONSTRUCTED);
 			return 0;
 		}
@@ -1148,7 +1142,7 @@ asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *inf,
 			 */
 			if (!(i & 0x81) && ((plen + ctx->hdrlen) > len)) {
 				ASN1error(ASN1_R_TOO_LONG);
-				asn1_tlc_clear(ctx);
+				asn1_tlc_invalidate(ctx);
 				return 0;
 			}
 		}
@@ -1156,7 +1150,7 @@ asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *inf,
 
 	if (i & 0x80) {
 		ASN1error(ASN1_R_BAD_OBJECT_HEADER);
-		asn1_tlc_clear(ctx);
+		asn1_tlc_invalidate(ctx);
 		return 0;
 	}
 	if (exptag >= 0) {
@@ -1166,13 +1160,13 @@ asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *inf,
 			 */
 			if (opt)
 				return -1;
-			asn1_tlc_clear(ctx);
+			asn1_tlc_invalidate(ctx);
 			ASN1error(ASN1_R_WRONG_TAG);
 			return 0;
 		}
 		/* We have a tag and class match:
 		 * assume we are going to do something with it */
-		asn1_tlc_clear(ctx);
+		asn1_tlc_invalidate(ctx);
 	}
 
 	if (i & 1)
