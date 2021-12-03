@@ -2786,8 +2786,6 @@
 ./usr/sbin/zic
 ./usr/share
 ./usr/share/btrace
-./usr/share/btrace/kprofile.bt
-./usr/share/btrace/runqlat.bt
 ./usr/share/calendar
 ./usr/share/calendar/calendar.all
 ./usr/share/calendar/calendar.birthday
