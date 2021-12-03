@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.239 2021/10/11 09:02:01 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.240 2021/12/03 12:40:15 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -2821,6 +2821,10 @@ ieee80211_recv_addba_req(struct ieee80211com *ic, struct mbuf *m,
 	ba = &ni->ni_rx_ba[tid];
 	/* The driver is still processing an ADDBA request for this tid. */
 	if (ba->ba_state == IEEE80211_BA_REQUESTED)
+		return;
+	/* If we are in the process of roaming between APs, ignore. */
+	if ((ic->ic_flags & IEEE80211_F_BGSCAN) &&
+	    (ic->ic_xflags & IEEE80211_F_TX_MGMT_ONLY))
 		return;
 	/* check if we already have a Block Ack agreement for this RA/TID */
 	if (ba->ba_state == IEEE80211_BA_AGREED) {
