@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.35 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x_crl.c,v 1.36 2021/12/03 17:07:53 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -660,14 +660,15 @@ X509_CRL_METHOD_new(int (*crl_init)(X509_CRL *crl),
 {
 	X509_CRL_METHOD *m;
 
-	m = malloc(sizeof(X509_CRL_METHOD));
-	if (!m)
+	if ((m = calloc(1, sizeof(X509_CRL_METHOD))) == NULL)
 		return NULL;
+
 	m->crl_init = crl_init;
 	m->crl_free = crl_free;
 	m->crl_lookup = crl_lookup;
 	m->crl_verify = crl_verify;
 	m->flags = X509_CRL_METHOD_DYNAMIC;
+
 	return m;
 }
 
