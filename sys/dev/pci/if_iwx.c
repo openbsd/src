@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.127 2021/12/03 13:17:32 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.128 2021/12/03 14:32:08 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9397,7 +9397,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_INTEL_WL_22500_1:
-		sc->sc_fwname = "iwx-cc-a0-63";
+		sc->sc_fwname = "iwx-cc-a0-67";
 		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
 		sc->sc_integrated = 0;
 		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_NONE;
@@ -9414,7 +9414,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 
-		sc->sc_fwname = "iwx-QuZ-a0-hr-b0-63";
+		sc->sc_fwname = "iwx-QuZ-a0-hr-b0-67";
 		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
 		sc->sc_integrated = 1;
 		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_200;
