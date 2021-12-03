@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.107 2021/12/01 12:51:09 bluhm Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.108 2021/12/03 17:18:34 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -825,9 +825,10 @@ ipsp_spd_inp(struct mbuf *m, struct inpcb *inp, struct ipsec_policy *ipo,
 
  justreturn:
 	if (tdbout != NULL) {
-		if (ipo != NULL)
+		if (ipo != NULL) {
+			tdb_ref(ipo->ipo_tdb);
 			*tdbout = ipo->ipo_tdb;
-		else
+		} else
 			*tdbout = NULL;
 	}
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.376 2021/12/01 12:51:09 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.377 2021/12/03 17:18:34 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -523,6 +523,9 @@ done:
 	if (ro == &iproute && ro->ro_rt)
 		rtfree(ro->ro_rt);
 	if_put(ifp);
+#ifdef IPSEC
+	tdb_unref(tdb);
+#endif /* IPSEC */
 	return (error);
 
 bad:
@@ -558,6 +561,7 @@ ip_output_ipsec_lookup(struct mbuf *m, int hlen, struct inpcb *inp,
 		    !memcmp(&tdbi->dst, &tdb->tdb_dst,
 		    sizeof(union sockaddr_union))) {
 			/* no IPsec needed */
+			tdb_unref(tdb);
 			*tdbout = NULL;
 			return 0;
 		}

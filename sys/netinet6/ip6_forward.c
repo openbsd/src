@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.103 2021/12/01 12:51:09 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.104 2021/12/03 17:18:34 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -397,4 +397,7 @@ freecopy:
 out:
 	rtfree(rt);
 	if_put(ifp);
+#ifdef IPSEC
+	tdb_unref(tdb);
+#endif /* IPSEC */
 }
