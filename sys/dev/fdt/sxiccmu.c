@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.29 2021/10/24 17:52:27 mpi Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.30 2021/12/03 19:22:42 uaa Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -1311,15 +1311,30 @@ sxiccmu_h3_r_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 	return 0;
 }
 
+/* Allwinner H6 */
+#define H6_AHB3_CFG_REG		0x051c
+#define H6_AHB3_CLK_FACTOR_N(x)	(((x) >> 8) & 0x3)
+#define H6_AHB3_CLK_FACTOR_M(x)	(((x) >> 0) & 0x3)
+
 uint32_t
 sxiccmu_h6_get_frequency(struct sxiccmu_softc *sc, uint32_t idx)
 {
+	uint32_t reg, m, n;
+	uint32_t freq;
+
 	switch (idx) {
 	case H6_CLK_PLL_PERIPH0:
 		/* Not hardcoded, but recommended. */
 		return 600000000;
 	case H6_CLK_PLL_PERIPH0_2X:
 		return sxiccmu_h6_get_frequency(sc, H6_CLK_PLL_PERIPH0) * 2;
+	case H6_CLK_AHB3:
+		reg = SXIREAD4(sc, H6_AHB3_CFG_REG);
+		/* assume PLL_PERIPH0 source */
+		freq = sxiccmu_h6_get_frequency(sc, H6_CLK_PLL_PERIPH0);
+		m = H6_AHB3_CLK_FACTOR_M(reg) + 1;
+		n = 1 << H6_AHB3_CLK_FACTOR_N(reg);
+		return freq / (m * n);
 	case H6_CLK_APB2:
 		/* XXX Controlled by a MUX. */
 		return 24000000;

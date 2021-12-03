@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_fdt.c,v 1.7 2021/10/24 17:52:26 mpi Exp $ */
+/*	$OpenBSD: ehci_fdt.c,v 1.8 2021/12/03 19:22:42 uaa Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -174,6 +174,7 @@ struct ehci_phy ehci_phys[] = {
 	{ "allwinner,sun8i-h3-usb-phy", sun4i_phy_init },
 	{ "allwinner,sun8i-r40-usb-phy", sun4i_phy_init },
 	{ "allwinner,sun8i-v3s-usb-phy", sun4i_phy_init },
+	{ "allwinner,sun50i-h6-usb-phy", sun4i_phy_init },
 	{ "allwinner,sun50i-a64-usb-phy", sun4i_phy_init },
 	{ "allwinner,sun9i-a80-usb-phy", sun9i_phy_init },
 };
@@ -274,6 +275,7 @@ sun4i_phy_init(struct ehci_fdt_softc *sc, uint32_t *cells)
 	 */
 	if (OF_is_compatible(node, "allwinner,sun8i-h3-usb-phy") ||
 	    OF_is_compatible(node, "allwinner,sun8i-r40-usb-phy") ||
+	    OF_is_compatible(node, "allwinner,sun50i-h6-usb-phy") ||
 	    OF_is_compatible(node, "allwinner,sun50i-a64-usb-phy")) {
 		val = bus_space_read_4(sc->sc.iot, sc->sc.ioh, 0x810);
 		val &= ~(1 << 1);

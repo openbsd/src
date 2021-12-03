@@ -408,6 +408,7 @@ struct sxiccmu_ccu_bit sun8i_h3_r_gates[] = {
 
 #define H6_CLK_PLL_PERIPH0	3
 #define H6_CLK_PLL_PERIPH0_2X	4
+#define H6_CLK_AHB3		25
 #define H6_CLK_APB1		26
 #define H6_CLK_APB2		27
 #define H6_CLK_MMC0		64
@@ -420,8 +421,12 @@ struct sxiccmu_ccu_bit sun8i_h3_r_gates[] = {
 #define H6_CLK_BUS_UART1	71
 #define H6_CLK_BUS_UART2	72
 #define H6_CLK_BUS_UART3	73
+#define H6_CLK_BUS_EMAC		84
 #define H6_CLK_USB_OHCI0	104
+#define H6_CLK_USB_PHY0		105
+#define H6_CLK_USB_PHY1		106
 #define H6_CLK_USB_OHCI3	107
+#define H6_CLK_USB_PHY3		108
 #define H6_CLK_BUS_OHCI0	111
 #define H6_CLK_BUS_OHCI3	112
 #define H6_CLK_BUS_EHCI0	113
@@ -440,8 +445,12 @@ struct sxiccmu_ccu_bit sun50i_h6_gates[] = {
 	[H6_CLK_BUS_UART1] = { 0x090c, 1, H6_CLK_APB2 },
 	[H6_CLK_BUS_UART2] = { 0x090c, 2, H6_CLK_APB2 },
 	[H6_CLK_BUS_UART3] = { 0x090c, 3, H6_CLK_APB2 },
+	[H6_CLK_BUS_EMAC] = { 0x097c, 0, H6_CLK_AHB3 },
 	[H6_CLK_USB_OHCI0] = { 0x0a70, 31 },
+	[H6_CLK_USB_PHY0] = { 0x0a70, 29 },
+	[H6_CLK_USB_PHY1] = { 0x0a74, 29 },
 	[H6_CLK_USB_OHCI3] = { 0x0a7c, 31 },
+	[H6_CLK_USB_PHY3] = { 0x0a7c, 29 },
 	[H6_CLK_BUS_OHCI0] = { 0x0a8c, 0 },
 	[H6_CLK_BUS_OHCI3] = { 0x0a8c, 3 },
 	[H6_CLK_BUS_EHCI0] = { 0x0a8c, 4 },
@@ -451,10 +460,12 @@ struct sxiccmu_ccu_bit sun50i_h6_gates[] = {
 #define H6_R_CLK_APB1		2
 #define H6_R_CLK_APB2		3
 #define H6_R_CLK_APB2_I2C	8
+#define H6_R_CLK_APB2_RSB	13
 
 struct sxiccmu_ccu_bit sun50i_h6_r_gates[] = {
 	[H6_R_CLK_APB1] = { 0xffff, 0xff },
-	[H6_R_CLK_APB2_I2C] = { 0x019c, 1, H6_R_CLK_APB2 },
+	[H6_R_CLK_APB2_I2C] = { 0x019c, 0, H6_R_CLK_APB2 },
+	[H6_R_CLK_APB2_RSB] = { 0x01bc, 0, H6_R_CLK_APB2 },
 };
 
 /* R40 */
@@ -833,6 +844,10 @@ struct sxiccmu_ccu_bit sun8i_h3_r_resets[] = {
 #define H6_RST_BUS_UART1	22
 #define H6_RST_BUS_UART2	23
 #define H6_RST_BUS_UART3	24
+#define H6_RST_BUS_EMAC		33
+#define H6_RST_USB_PHY0		44
+#define H6_RST_USB_PHY1		45
+#define H6_RST_USB_PHY3		46
 #define H6_RST_BUS_OHCI0	48
 #define H6_RST_BUS_OHCI3	49
 #define H6_RST_BUS_EHCI0	50
@@ -846,6 +861,10 @@ struct sxiccmu_ccu_bit sun50i_h6_resets[] = {
 	[H6_RST_BUS_UART1] = { 0x090c, 17 },
 	[H6_RST_BUS_UART2] = { 0x090c, 18 },
 	[H6_RST_BUS_UART3] = { 0x090c, 19 },
+	[H6_RST_BUS_EMAC] = { 0x097c, 16 },
+	[H6_RST_USB_PHY0] = { 0x0a70, 30 },
+	[H6_RST_USB_PHY1] = { 0x0a74, 30 },
+	[H6_RST_USB_PHY3] = { 0x0a7c, 30 },
 	[H6_RST_BUS_OHCI0] = { 0x0a8c, 16 },
 	[H6_RST_BUS_OHCI3] = { 0x0a8c, 19 },
 	[H6_RST_BUS_EHCI0] = { 0x0a8c, 20 },
@@ -853,9 +872,11 @@ struct sxiccmu_ccu_bit sun50i_h6_resets[] = {
 };
 
 #define H6_R_RST_APB2_I2C	4
+#define H6_R_RST_APB2_RSB	7
 
 struct sxiccmu_ccu_bit sun50i_h6_r_resets[] = {
 	[H6_R_RST_APB2_I2C] = { 0x019c, 16 },
+	[H6_R_RST_APB2_RSB] = { 0x01bc, 16 },
 };
 
 /* R40 */
