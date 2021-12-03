@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.89 2021/10/11 09:01:06 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.90 2021/12/03 12:41:36 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -518,6 +518,7 @@ struct ieee80211_node *ieee80211_dup_bss(struct ieee80211com *,
 		const u_int8_t *);
 struct ieee80211_node *ieee80211_find_node(struct ieee80211com *,
 		const u_int8_t *);
+void ieee80211_node_tx_ba_clear(struct ieee80211_node *, int);
 void ieee80211_ba_del(struct ieee80211_node *);
 struct ieee80211_node *ieee80211_find_rxnode(struct ieee80211com *,
 		const struct ieee80211_frame *);
@@ -553,6 +554,7 @@ void ieee80211_node_join(struct ieee80211com *,
 void ieee80211_node_leave(struct ieee80211com *,
 		struct ieee80211_node *);
 int ieee80211_match_bss(struct ieee80211com *, struct ieee80211_node *, int);
+void ieee80211_node_tx_stopped(struct ieee80211com *, struct ieee80211_node *);
 struct ieee80211_node *ieee80211_node_choose_bss(struct ieee80211com *, int,
 		struct ieee80211_node **);
 void ieee80211_node_join_bss(struct ieee80211com *, struct ieee80211_node *);

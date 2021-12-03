@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.107 2021/10/11 09:02:01 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.108 2021/12/03 12:41:36 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -212,6 +212,8 @@ struct ieee80211_defrag {
 
 #define IEEE80211_GROUP_NKID	6
 
+struct ieee80211_node_switch_bss_arg;
+
 struct ieee80211com {
 	struct arpcom		ic_ac;
 	LIST_ENTRY(ieee80211com) ic_list;	/* chain of all ieee80211com */
@@ -248,6 +250,9 @@ struct ieee80211com {
 	void			(*ic_updateprot)(struct ieee80211com *);
 	void			(*ic_updatechan)(struct ieee80211com *);
 	int			(*ic_bgscan_start)(struct ieee80211com *);
+	void			(*ic_bgscan_done)(struct ieee80211com *,
+				    struct ieee80211_node_switch_bss_arg *,
+				    size_t);
 	struct timeout		ic_bgscan_timeout;
 	uint32_t		ic_bgscan_fail;
 	u_int8_t		ic_myaddr[IEEE80211_ADDR_LEN];

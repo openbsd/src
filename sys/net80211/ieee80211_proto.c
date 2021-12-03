@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.105 2021/10/11 09:01:06 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.106 2021/12/03 12:41:36 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -733,14 +733,9 @@ ieee80211_delba_request(struct ieee80211com *ic, struct ieee80211_node *ni,
 	}
 	if (dir) {
 		/* MLME-DELBA.confirm(Originator) */
-		struct ieee80211_tx_ba *ba = &ni->ni_tx_ba[tid];
-
 		if (ic->ic_ampdu_tx_stop != NULL)
 			ic->ic_ampdu_tx_stop(ic, ni, tid);
-
-		ba->ba_state = IEEE80211_BA_INIT;
-		/* stop Block Ack inactivity timer */
-		timeout_del(&ba->ba_to);
+		ieee80211_node_tx_ba_clear(ni, tid);
 	} else {
 		/* MLME-DELBA.confirm(Recipient) */
 		struct ieee80211_rx_ba *ba = &ni->ni_rx_ba[tid];
