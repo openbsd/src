@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.125 2021/11/25 14:51:26 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.126 2021/12/03 12:42:39 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -298,6 +298,7 @@ void	iwx_nic_config(struct iwx_softc *);
 int	iwx_nic_rx_init(struct iwx_softc *);
 int	iwx_nic_init(struct iwx_softc *);
 int	iwx_enable_txq(struct iwx_softc *, int, int, int, int);
+int	iwx_disable_txq(struct iwx_softc *sc, int, int, uint8_t);
 void	iwx_post_alive(struct iwx_softc *);
 int	iwx_schedule_session_protection(struct iwx_softc *, struct iwx_node *,
 	    uint32_t);
@@ -420,6 +421,9 @@ void	iwx_add_task(struct iwx_softc *, struct taskq *, struct task *);
 void	iwx_del_task(struct iwx_softc *, struct taskq *, struct task *);
 int	iwx_scan(struct iwx_softc *);
 int	iwx_bgscan(struct ieee80211com *);
+void	iwx_bgscan_done(struct ieee80211com *,
+	    struct ieee80211_node_switch_bss_arg *, size_t);
+void	iwx_bgscan_done_task(void *);
 int	iwx_umac_scan_abort(struct iwx_softc *);
 int	iwx_scan_abort(struct iwx_softc *);
 int	iwx_enable_mgmt_queue(struct iwx_softc *);
@@ -2591,6 +2595,49 @@ iwx_enable_txq(struct iwx_softc *sc, int sta_id, int qid, int tid,
 
 	sc->qenablemsk |= (1 << qid);
 	ring->tid = tid;
+out:
+	iwx_free_resp(sc, &hcmd);
+	return err;
+}
+
+int
+iwx_disable_txq(struct iwx_softc *sc, int sta_id, int qid, uint8_t tid)
+{
+	struct iwx_tx_queue_cfg_cmd cmd;
+	struct iwx_rx_packet *pkt;
+	struct iwx_tx_queue_cfg_rsp *resp;
+	struct iwx_host_cmd hcmd = {
+		.id = IWX_SCD_QUEUE_CFG,
+		.flags = IWX_CMD_WANT_RESP,
+		.resp_pkt_len = sizeof(*pkt) + sizeof(*resp),
+	};
+	struct iwx_tx_ring *ring = &sc->txq[qid];
+	int err;
+
+	memset(&cmd, 0, sizeof(cmd));
+	cmd.sta_id = sta_id;
+	cmd.tid = tid;
+	cmd.flags = htole16(0); /* clear "queue enabled" flag */
+	cmd.cb_size = htole32(0);
+	cmd.byte_cnt_addr = htole64(0);
+	cmd.tfdq_addr = htole64(0);
+
+	hcmd.data[0] = &cmd;
+	hcmd.len[0] = sizeof(cmd);
+
+	err = iwx_send_cmd(sc, &hcmd);
+	if (err)
+		return err;
+
+	pkt = hcmd.resp_pkt;
+	if (!pkt || (pkt->hdr.flags & IWX_CMD_FAILED_MSK)) {
+		DPRINTF(("SCD_QUEUE_CFG command failed\n"));
+		err = EIO;
+		goto out;
+	}
+
+	sc->qenablemsk &= ~(1 << qid);
+	iwx_reset_tx_ring(sc, ring);
 out:
 	iwx_free_resp(sc, &hcmd);
 	return err;
@@ -6627,6 +6674,78 @@ iwx_bgscan(struct ieee80211com *ic)
 	return 0;
 }
 
+void
+iwx_bgscan_done(struct ieee80211com *ic,
+    struct ieee80211_node_switch_bss_arg *arg, size_t arg_size)
+{
+	struct iwx_softc *sc = ic->ic_softc;
+
+	free(sc->bgscan_unref_arg, M_DEVBUF, sc->bgscan_unref_arg_size);
+	sc->bgscan_unref_arg = arg;
+	sc->bgscan_unref_arg_size = arg_size;
+	iwx_add_task(sc, sc->sc_nswq, &sc->bgscan_done_task);
+}
+
+void
+iwx_bgscan_done_task(void *arg)
+{
+	struct iwx_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwx_node *in = (void *)ic->ic_bss;
+	struct ieee80211_node *ni = &in->in_ni;
+	int tid, err = 0, s = splnet();
+
+	if ((sc->sc_flags & IWX_FLAG_SHUTDOWN) ||
+	    (ic->ic_flags & IEEE80211_F_BGSCAN) == 0 ||
+	    ic->ic_state != IEEE80211_S_RUN) {
+		err = ENXIO;
+		goto done;
+	}
+
+	err = iwx_flush_sta(sc, in);
+	if (err)
+		goto done;
+
+	for (tid = 0; tid < IWX_MAX_TID_COUNT; tid++) {
+		int qid = IWX_FIRST_AGG_TX_QUEUE + tid;
+
+		if (sc->aggqid[tid] == 0)
+			continue;
+
+		err = iwx_disable_txq(sc, IWX_STATION_ID, qid, tid);
+		if (err)
+			goto done;
+#if 0 /* disabled for now; we are going to DEAUTH soon anyway */
+		IEEE80211_SEND_ACTION(ic, ni, IEEE80211_CATEG_BA,
+		    IEEE80211_ACTION_DELBA,
+		    IEEE80211_REASON_AUTH_LEAVE << 16 |
+		    IEEE80211_FC1_DIR_TODS << 8 | tid);
+#endif
+		ieee80211_node_tx_ba_clear(ni, tid);
+		sc->aggqid[tid] = 0;
+	}
+
+	/*
+	 * Tx queues have been flushed and Tx agg has been stopped.
+	 * Allow roaming to proceed.
+	 */
+	ni->ni_unref_arg = sc->bgscan_unref_arg;
+	ni->ni_unref_arg_size = sc->bgscan_unref_arg_size;
+	sc->bgscan_unref_arg = NULL;
+	sc->bgscan_unref_arg_size = 0;
+	ieee80211_node_tx_stopped(ic, &in->in_ni);
+done:
+	if (err) {
+		free(sc->bgscan_unref_arg, M_DEVBUF, sc->bgscan_unref_arg_size);
+		sc->bgscan_unref_arg = NULL;
+		sc->bgscan_unref_arg_size = 0;
+		if ((sc->sc_flags & IWX_FLAG_SHUTDOWN) == 0)
+			task_add(systq, &sc->init_task);
+	}
+	refcnt_rele_wake(&sc->task_refs);
+	splx(s);
+}
+
 int
 iwx_umac_scan_abort(struct iwx_softc *sc)
 {
@@ -7442,6 +7561,7 @@ iwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		sc->setkey_cur = sc->setkey_tail = sc->setkey_nkeys = 0;
 		iwx_del_task(sc, systq, &sc->mac_ctxt_task);
 		iwx_del_task(sc, systq, &sc->phy_ctxt_task);
+		iwx_del_task(sc, systq, &sc->bgscan_done_task);
 	}
 
 	sc->ns_nstate = nstate;
@@ -8012,10 +8132,15 @@ iwx_stop(struct ifnet *ifp)
 	sc->setkey_cur = sc->setkey_tail = sc->setkey_nkeys = 0;
 	iwx_del_task(sc, systq, &sc->mac_ctxt_task);
 	iwx_del_task(sc, systq, &sc->phy_ctxt_task);
+	iwx_del_task(sc, systq, &sc->bgscan_done_task);
 	KASSERT(sc->task_refs.refs >= 1);
 	refcnt_finalize(&sc->task_refs, "iwxstop");
 
 	iwx_stop_device(sc);
+
+	free(sc->bgscan_unref_arg, M_DEVBUF, sc->bgscan_unref_arg_size);
+	sc->bgscan_unref_arg = NULL;
+	sc->bgscan_unref_arg_size = 0;
 
 	/* Reset soft state. */
 
@@ -9413,9 +9538,11 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->setkey_task, iwx_setkey_task, sc);
 	task_set(&sc->mac_ctxt_task, iwx_mac_ctxt_task, sc);
 	task_set(&sc->phy_ctxt_task, iwx_phy_ctxt_task, sc);
+	task_set(&sc->bgscan_done_task, iwx_bgscan_done_task, sc);
 
 	ic->ic_node_alloc = iwx_node_alloc;
 	ic->ic_bgscan_start = iwx_bgscan;
+	ic->ic_bgscan_done = iwx_bgscan_done;
 	ic->ic_set_key = iwx_set_key;
 	ic->ic_delete_key = iwx_delete_key;
 

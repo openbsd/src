@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.28 2021/11/25 14:51:26 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.29 2021/12/03 12:42:39 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -565,6 +565,10 @@ struct iwx_softc {
 
 	int sc_tx_timer[IWX_NUM_TX_QUEUES];
 	int sc_rx_ba_sessions;
+
+	struct task bgscan_done_task;
+	struct ieee80211_node_switch_bss_arg *bgscan_unref_arg;
+	size_t	bgscan_unref_arg_size;
 
 	int sc_scan_last_antenna;
 
