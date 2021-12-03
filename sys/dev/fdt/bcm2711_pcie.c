@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.7 2021/10/16 17:14:41 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.8 2021/12/03 18:23:41 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -60,6 +60,7 @@ struct bcmpcie_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	bus_dma_tag_t		sc_dmat;
 
 	int			sc_node;
 	int			sc_acells;
@@ -68,9 +69,13 @@ struct bcmpcie_softc {
 	int			sc_pscells;
 	struct bcmpcie_range	*sc_ranges;
 	int			sc_nranges;
+	struct bcmpcie_range	*sc_dmaranges;
+	int			sc_ndmaranges;
 
 	struct bus_space	sc_bus_iot;
 	struct bus_space	sc_bus_memt;
+
+	struct machine_bus_dma_tag sc_dma;
 
 	struct machine_pci_chipset sc_pc;
 	int			sc_bus;
@@ -115,6 +120,8 @@ int	bcmpcie_bs_iomap(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 int	bcmpcie_bs_memmap(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
+int	bcmpcie_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
 
 void
 bcmpcie_attach(struct device *parent, struct device *self, void *aux)
@@ -145,6 +152,7 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_node = faa->fa_node;
+	sc->sc_dmat = faa->fa_dmat;
 
 	sc->sc_acells = OF_getpropint(sc->sc_node, "#address-cells",
 	    faa->fa_acells);
@@ -153,6 +161,7 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pacells = faa->fa_acells;
 	sc->sc_pscells = faa->fa_scells;
 
+	/* Memory and IO space translations. */
 	rangeslen = OF_getproplen(sc->sc_node, "ranges");
 	if (rangeslen <= 0 || (rangeslen % sizeof(uint32_t)) ||
 	     (rangeslen / sizeof(uint32_t)) % (sc->sc_acells +
@@ -168,7 +177,7 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	nranges = (rangeslen / sizeof(uint32_t)) /
 	    (sc->sc_acells + sc->sc_pacells + sc->sc_scells);
 	sc->sc_ranges = mallocarray(nranges,
-	    sizeof(struct bcmpcie_range), M_TEMP, M_WAITOK);
+	    sizeof(struct bcmpcie_range), M_DEVBUF, M_WAITOK);
 	sc->sc_nranges = nranges;
 
 	for (i = 0, j = 0; i < sc->sc_nranges; i++) {
@@ -191,6 +200,50 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	free(ranges, M_TEMP, rangeslen);
+
+	/* DMA translations */
+	rangeslen = OF_getproplen(sc->sc_node, "dma-ranges");
+	if (rangeslen > 0) {
+		if ((rangeslen % sizeof(uint32_t)) ||
+		     (rangeslen / sizeof(uint32_t)) % (sc->sc_acells +
+		     sc->sc_pacells + sc->sc_scells)) {
+			printf(": invalid dma-ranges property\n");
+			free(sc->sc_ranges, M_DEVBUF,
+			    sc->sc_nranges * sizeof(struct bcmpcie_range));
+			return;
+		}
+
+		ranges = malloc(rangeslen, M_TEMP, M_WAITOK);
+		OF_getpropintarray(sc->sc_node, "dma-ranges", ranges,
+		    rangeslen);
+
+		nranges = (rangeslen / sizeof(uint32_t)) /
+		    (sc->sc_acells + sc->sc_pacells + sc->sc_scells);
+		sc->sc_dmaranges = mallocarray(nranges,
+		    sizeof(struct bcmpcie_range), M_DEVBUF, M_WAITOK);
+		sc->sc_ndmaranges = nranges;
+
+		for (i = 0, j = 0; i < sc->sc_ndmaranges; i++) {
+			sc->sc_dmaranges[i].flags = ranges[j++];
+			sc->sc_dmaranges[i].pci_base = ranges[j++];
+			if (sc->sc_acells - 1 == 2) {
+				sc->sc_dmaranges[i].pci_base <<= 32;
+				sc->sc_dmaranges[i].pci_base |= ranges[j++];
+			}
+			sc->sc_dmaranges[i].phys_base = ranges[j++];
+			if (sc->sc_pacells == 2) {
+				sc->sc_dmaranges[i].phys_base <<= 32;
+				sc->sc_dmaranges[i].phys_base |= ranges[j++];
+			}
+			sc->sc_dmaranges[i].size = ranges[j++];
+			if (sc->sc_scells == 2) {
+				sc->sc_dmaranges[i].size <<= 32;
+				sc->sc_dmaranges[i].size |= ranges[j++];
+			}
+		}
+
+		free(ranges, M_TEMP, rangeslen);
+	}
 
 	/*
 	 * Reprogram the outbound window to match the configuration in
@@ -226,6 +279,10 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus_memt.bus_private = sc;
 	sc->sc_bus_memt._space_map = bcmpcie_bs_memmap;
 
+	memcpy(&sc->sc_dma, sc->sc_dmat, sizeof(sc->sc_dma));
+	sc->sc_dma._dmamap_load_buffer = bcmpcie_dmamap_load_buffer;
+	sc->sc_dma._cookie = sc;
+
 	sc->sc_pc.pc_conf_v = sc;
 	sc->sc_pc.pc_attach_hook = bcmpcie_attach_hook;
 	sc->sc_pc.pc_bus_maxdevs = bcmpcie_bus_maxdevs;
@@ -248,7 +305,7 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_bus_iot;
 	pba.pba_memt = &sc->sc_bus_memt;
-	pba.pba_dmat = faa->fa_dmat;
+	pba.pba_dmat = &sc->sc_dma;
 	pba.pba_pc = &sc->sc_pc;
 	pba.pba_domain = pci_ndomains++;
 	pba.pba_bus = 0;
@@ -433,4 +490,48 @@ bcmpcie_bs_memmap(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 	}
 	
 	return ENXIO;
+}
+
+int
+bcmpcie_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+    bus_size_t buflen, struct proc *p, int flags, paddr_t *lastaddrp,
+    int *segp, int first)
+{
+	struct bcmpcie_softc *sc = t->_cookie;
+	int seg, firstseg = *segp;
+	int error;
+
+	error = sc->sc_dmat->_dmamap_load_buffer(sc->sc_dmat, map, buf, buflen,
+	    p, flags, lastaddrp, segp, first);
+	if (error)
+		return error;
+
+	if (sc->sc_dmaranges == NULL)
+		return 0;
+
+	/* For each segment. */
+	for (seg = firstseg; seg <= *segp; seg++) {
+		uint64_t addr = map->dm_segs[seg].ds_addr;
+		uint64_t size = map->dm_segs[seg].ds_len;
+		int i;
+
+		/* For each range. */
+		for (i = 0; i < sc->sc_ndmaranges; i++) {
+			uint64_t pci_start = sc->sc_dmaranges[i].pci_base;
+			uint64_t phys_start = sc->sc_dmaranges[i].phys_base;
+			uint64_t phys_end = phys_start +
+			    sc->sc_dmaranges[i].size;
+
+			if (addr >= phys_start && addr + size <= phys_end) {
+				map->dm_segs[seg].ds_addr -= phys_start;
+				map->dm_segs[seg].ds_addr += pci_start;
+				break;
+			}
+		}
+
+		if (i == sc->sc_ndmaranges)
+			return EINVAL;
+	}
+
+	return 0;
 }
