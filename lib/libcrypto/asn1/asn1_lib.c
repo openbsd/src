@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.46 2021/11/13 20:44:00 schwarze Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.47 2021/12/03 17:01:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -359,18 +359,15 @@ ASN1_STRING_new(void)
 ASN1_STRING *
 ASN1_STRING_type_new(int type)
 {
-	ASN1_STRING *ret;
+	ASN1_STRING *a;
 
-	ret = malloc(sizeof(ASN1_STRING));
-	if (ret == NULL) {
+	if ((a = calloc(1, sizeof(ASN1_STRING))) == NULL) {
 		ASN1error(ERR_R_MALLOC_FAILURE);
-		return (NULL);
+		return NULL;
 	}
-	ret->length = 0;
-	ret->type = type;
-	ret->data = NULL;
-	ret->flags = 0;
-	return (ret);
+	a->type = type;
+
+	return a;
 }
 
 void
