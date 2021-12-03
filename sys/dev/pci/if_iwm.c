@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.383 2021/11/27 11:22:26 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.384 2021/12/03 12:43:17 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -477,6 +477,9 @@ void	iwm_add_task(struct iwm_softc *, struct taskq *, struct task *);
 void	iwm_del_task(struct iwm_softc *, struct taskq *, struct task *);
 int	iwm_scan(struct iwm_softc *);
 int	iwm_bgscan(struct ieee80211com *);
+void	iwm_bgscan_done(struct ieee80211com *,
+	    struct ieee80211_node_switch_bss_arg *, size_t);
+void	iwm_bgscan_done_task(void *);
 int	iwm_umac_scan_abort(struct iwm_softc *);
 int	iwm_lmac_scan_abort(struct iwm_softc *);
 int	iwm_scan_abort(struct iwm_softc *);
@@ -8287,6 +8290,81 @@ iwm_bgscan(struct ieee80211com *ic)
 	return 0;
 }
 
+void
+iwm_bgscan_done(struct ieee80211com *ic,
+    struct ieee80211_node_switch_bss_arg *arg, size_t arg_size)
+{
+	struct iwm_softc *sc = ic->ic_softc;
+
+	free(sc->bgscan_unref_arg, M_DEVBUF, sc->bgscan_unref_arg_size);
+	sc->bgscan_unref_arg = arg;
+	sc->bgscan_unref_arg_size = arg_size;
+	iwm_add_task(sc, sc->sc_nswq, &sc->bgscan_done_task);
+}
+
+void
+iwm_bgscan_done_task(void *arg)
+{
+	struct iwm_softc *sc = arg;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwm_node *in = (void *)ic->ic_bss;
+	struct ieee80211_node *ni = &in->in_ni;
+	int tid, err = 0, s = splnet();
+
+	if ((sc->sc_flags & IWM_FLAG_SHUTDOWN) ||
+	    (ic->ic_flags & IEEE80211_F_BGSCAN) == 0 ||
+	    ic->ic_state != IEEE80211_S_RUN) {
+		err = ENXIO;
+		goto done;
+	}
+
+	for (tid = 0; tid < IWM_MAX_TID_COUNT; tid++) {
+		int qid = IWM_FIRST_AGG_TX_QUEUE + tid;
+
+		if ((sc->tx_ba_queue_mask & (1 << qid)) == 0)
+			continue;
+
+		err = iwm_sta_tx_agg(sc, ni, tid, 0, 0, 0);
+		if (err)
+			goto done;
+		err = iwm_disable_txq(sc, IWM_STATION_ID, qid, tid);
+		if (err)
+			goto done;
+		in->tfd_queue_msk &= ~(1 << qid);
+#if 0 /* disabled for now; we are going to DEAUTH soon anyway */
+		IEEE80211_SEND_ACTION(ic, ni, IEEE80211_CATEG_BA,
+		    IEEE80211_ACTION_DELBA,
+		    IEEE80211_REASON_AUTH_LEAVE << 16 |
+		    IEEE80211_FC1_DIR_TODS << 8 | tid);
+#endif
+		ieee80211_node_tx_ba_clear(ni, tid);
+	}
+
+	err = iwm_flush_sta(sc, in);
+	if (err)
+		goto done;
+
+	/*
+	 * Tx queues have been flushed and Tx agg has been stopped.
+	 * Allow roaming to proceed.
+	 */
+	ni->ni_unref_arg = sc->bgscan_unref_arg;
+	ni->ni_unref_arg_size = sc->bgscan_unref_arg_size;
+	sc->bgscan_unref_arg = NULL;
+	sc->bgscan_unref_arg_size = 0;
+	ieee80211_node_tx_stopped(ic, &in->in_ni);
+done:
+	if (err) {
+		free(sc->bgscan_unref_arg, M_DEVBUF, sc->bgscan_unref_arg_size);
+		sc->bgscan_unref_arg = NULL;
+		sc->bgscan_unref_arg_size = 0;
+		if ((sc->sc_flags & IWM_FLAG_SHUTDOWN) == 0)
+			task_add(systq, &sc->init_task);
+	}
+	refcnt_rele_wake(&sc->task_refs);
+	splx(s);
+}
+
 int
 iwm_umac_scan_abort(struct iwm_softc *sc)
 {
@@ -9141,6 +9219,7 @@ iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		iwm_del_task(sc, systq, &sc->ba_task);
 		iwm_del_task(sc, systq, &sc->mac_ctxt_task);
 		iwm_del_task(sc, systq, &sc->phy_ctxt_task);
+		iwm_del_task(sc, systq, &sc->bgscan_done_task);
 	}
 
 	sc->ns_nstate = nstate;
@@ -10039,10 +10118,15 @@ iwm_stop(struct ifnet *ifp)
 	iwm_del_task(sc, systq, &sc->ba_task);
 	iwm_del_task(sc, systq, &sc->mac_ctxt_task);
 	iwm_del_task(sc, systq, &sc->phy_ctxt_task);
+	iwm_del_task(sc, systq, &sc->bgscan_done_task);
 	KASSERT(sc->task_refs.refs >= 1);
 	refcnt_finalize(&sc->task_refs, "iwmstop");
 
 	iwm_stop_device(sc);
+
+	free(sc->bgscan_unref_arg, M_DEVBUF, sc->bgscan_unref_arg_size);
+	sc->bgscan_unref_arg = NULL;
+	sc->bgscan_unref_arg_size = 0;
 
 	/* Reset soft state. */
 
@@ -11517,9 +11601,11 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	task_set(&sc->ba_task, iwm_ba_task, sc);
 	task_set(&sc->mac_ctxt_task, iwm_mac_ctxt_task, sc);
 	task_set(&sc->phy_ctxt_task, iwm_phy_ctxt_task, sc);
+	task_set(&sc->bgscan_done_task, iwm_bgscan_done_task, sc);
 
 	ic->ic_node_alloc = iwm_node_alloc;
 	ic->ic_bgscan_start = iwm_bgscan;
+	ic->ic_bgscan_done = iwm_bgscan_done;
 	ic->ic_set_key = iwm_set_key;
 	ic->ic_delete_key = iwm_delete_key;
 
