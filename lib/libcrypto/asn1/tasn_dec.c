@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.38 2020/12/08 15:06:42 tb Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.39 2021/12/03 17:22:10 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -83,6 +83,9 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
     char *inf, char *cst, const unsigned char **in, long len, int exptag,
     int expclass, char opt, ASN1_TLC *ctx);
 
+static int asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in,
+    long len, const ASN1_ITEM *it, int tag, int aclass, char opt, ASN1_TLC *ctx,
+    int depth);
 static int asn1_template_ex_d2i(ASN1_VALUE **pval, const unsigned char **in,
     long len, const ASN1_TEMPLATE *tt, char opt, ASN1_TLC *ctx, int depth);
 static int asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in,
@@ -136,7 +139,7 @@ ASN1_item_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 	if (!pval)
 		pval = &ptmpval;
 	asn1_tlc_clear_nc(&c);
-	if (ASN1_item_ex_d2i(pval, in, len, it, -1, 0, 0, &c) > 0)
+	if (asn1_item_ex_d2i(pval, in, len, it, -1, 0, 0, &c, 0) > 0)
 		return *pval;
 	return NULL;
 }
