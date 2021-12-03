@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.39 2021/12/03 17:22:10 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.40 2021/12/03 17:23:16 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -56,14 +56,14 @@
  *
  */
 
-
 #include <stddef.h>
 #include <string.h>
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
-#include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+#include <openssl/objects.h>
 
 /* Constructed types with a recursive definition (such as can be found in PKCS7)
  * could eventually exceed the stack given malicious input with excessive
