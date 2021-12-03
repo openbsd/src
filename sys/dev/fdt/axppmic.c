@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.11 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.12 2021/12/03 19:17:27 uaa Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -293,6 +293,7 @@ struct axppmic_device axppmic_devices[] = {
 	{ "x-powers,axp221", "AXP221", axp221_regdata, axp221_sensdata },
 	{ "x-powers,axp223", "AXP223", axp221_regdata, axp221_sensdata },
 	{ "x-powers,axp803", "AXP803", axp803_regdata, axp803_sensdata },
+	{ "x-powers,axp805", "AXP805", axp806_regdata },
 	{ "x-powers,axp806", "AXP806", axp806_regdata },
 	{ "x-powers,axp809", "AXP809", axp809_regdata, axp221_sensdata }
 };
@@ -491,8 +492,10 @@ axppmic_attach_common(struct axppmic_softc *sc, const char *name, int node)
 	sc->sc_sensdata = device->sensdata;
 
 	/* Switch AXP806 into master or slave mode. */
-	if (strcmp(name, "x-powers,axp806") == 0) {
-	    if (OF_getproplen(node, "x-powers,master-mode") == 0) {
+	if (strcmp(name, "x-powers,axp805") == 0 ||
+	    strcmp(name, "x-powers,axp806") == 0) {
+	    if (OF_getproplen(node, "x-powers,master-mode") == 0 ||
+	        OF_getproplen(node, "x-powers,self-working-mode") == 0) {
 			axppmic_write_reg(sc, AXP806_REG_ADDR_EXT,
 			    AXP806_REG_ADDR_EXT_MASTER_MODE);
 		} else {
