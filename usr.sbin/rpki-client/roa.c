@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.32 2021/11/05 10:50:41 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.33 2021/12/03 12:56:19 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -180,6 +180,11 @@ roa_parse_ipfam(const ASN1_OCTET_STRING *os, struct parse *p)
 	}
 
 	/* will be called multiple times so use recallocarray */
+	if (p->res->ipsz + sk_ASN1_TYPE_num(sseq) >= MAX_IP_SIZE) {
+		warnx("%s: too many IPAddress entries: limit %d",
+		    p->fn, MAX_IP_SIZE);
+		goto out;
+	}
 	p->res->ips = recallocarray(p->res->ips, p->res->ipsz,
 	    p->res->ipsz + sk_ASN1_TYPE_num(sseq), sizeof(struct roa_ip));
 	if (p->res->ips == NULL)
