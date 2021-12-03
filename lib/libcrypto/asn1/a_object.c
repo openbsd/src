@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.32 2021/05/01 13:16:30 tb Exp $ */
+/* $OpenBSD: a_object.c,v 1.33 2021/12/03 16:58:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -354,20 +354,15 @@ err:
 ASN1_OBJECT *
 ASN1_OBJECT_new(void)
 {
-	ASN1_OBJECT *ret;
+	ASN1_OBJECT *a;
 
-	ret = malloc(sizeof(ASN1_OBJECT));
-	if (ret == NULL) {
+	if ((a = calloc(1, sizeof(ASN1_OBJECT))) == NULL) {
 		ASN1error(ERR_R_MALLOC_FAILURE);
 		return (NULL);
 	}
-	ret->length = 0;
-	ret->data = NULL;
-	ret->nid = 0;
-	ret->sn = NULL;
-	ret->ln = NULL;
-	ret->flags = ASN1_OBJECT_FLAG_DYNAMIC;
-	return (ret);
+	a->flags = ASN1_OBJECT_FLAG_DYNAMIC;
+
+	return a;
 }
 
 void
