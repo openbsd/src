@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.260 2021/12/02 12:39:15 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.261 2021/12/03 19:04:49 tobhe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -90,6 +90,7 @@ void		tdb_firstuse(void *);
 void		tdb_soft_timeout(void *);
 void		tdb_soft_firstuse(void *);
 int		tdb_hash(u_int32_t, union sockaddr_union *, u_int8_t);
+void		tdb_dodelete(struct tdb *, int locked);
 
 int ipsec_in_use = 0;
 u_int64_t ipsec_last_added = 0;
@@ -977,13 +978,29 @@ tdb_unref(struct tdb *tdb)
 void
 tdb_delete(struct tdb *tdbp)
 {
-	/* keep in sync with pfkeyv2_sa_flush() */
+	tdb_dodelete(tdbp, 0);
+}
+
+void
+tdb_delete_locked(struct tdb *tdbp)
+{
+	MUTEX_ASSERT_LOCKED(&tdb_sadb_mtx);
+	tdb_dodelete(tdbp, 1);
+}
+
+void
+tdb_dodelete(struct tdb *tdbp, int locked)
+{
 	NET_ASSERT_LOCKED();
 
 	if (tdbp->tdb_flags & TDBF_DELETED)
 		return;
 	tdbp->tdb_flags |= TDBF_DELETED;
-	tdb_unlink(tdbp);
+	if (locked)
+		tdb_unlink_locked(tdbp);
+	else
+		tdb_unlink(tdbp);
+
 	/* release tdb_onext/tdb_inext references */
 	tdb_unbundle(tdbp);
 	/* delete timeouts and release references */

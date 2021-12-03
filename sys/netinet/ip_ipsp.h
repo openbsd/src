@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.226 2021/12/01 22:34:31 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.227 2021/12/03 19:04:49 tobhe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -569,6 +569,7 @@ struct	tdb *gettdbbysrcdst_dir(u_int, u_int32_t, union sockaddr_union *,
 void	puttdb(struct tdb *);
 void	puttdb_locked(struct tdb *);
 void	tdb_delete(struct tdb *);
+void	tdb_delete_locked(struct tdb *);
 struct	tdb *tdb_alloc(u_int);
 struct	tdb *tdb_ref(struct tdb *);
 void	tdb_unref(struct tdb *);
