@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.21 2019/11/02 16:06:25 inoguchi Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.22 2021/12/03 14:18:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -340,34 +340,21 @@ EVP_PKEY_asn1_new(int id, int flags, const char *pem_str, const char *info)
 void
 EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst, const EVP_PKEY_ASN1_METHOD *src)
 {
-	dst->pub_decode = src->pub_decode;
-	dst->pub_encode = src->pub_encode;
-	dst->pub_cmp = src->pub_cmp;
-	dst->pub_print = src->pub_print;
+	EVP_PKEY_ASN1_METHOD preserve;
 
-	dst->priv_decode = src->priv_decode;
-	dst->priv_encode = src->priv_encode;
-	dst->priv_print = src->priv_print;
+	preserve.pkey_id = dst->pkey_id;
+	preserve.pkey_base_id = dst->pkey_base_id;
+	preserve.pkey_flags = dst->pkey_flags;
+	preserve.pem_str = dst->pem_str;
+	preserve.info = dst->info;
 
-	dst->old_priv_encode = src->old_priv_encode;
-	dst->old_priv_decode = src->old_priv_decode;
+	*dst = *src;
 
-	dst->pkey_size = src->pkey_size;
-	dst->pkey_bits = src->pkey_bits;
-
-	dst->param_decode = src->param_decode;
-	dst->param_encode = src->param_encode;
-	dst->param_missing = src->param_missing;
-	dst->param_copy = src->param_copy;
-	dst->param_cmp = src->param_cmp;
-	dst->param_print = src->param_print;
-	dst->sig_print = src->sig_print;
-
-	dst->pkey_free = src->pkey_free;
-	dst->pkey_ctrl = src->pkey_ctrl;
-
-	dst->item_sign = src->item_sign;
-	dst->item_verify = src->item_verify;
+	dst->pkey_id = preserve.pkey_id;
+	dst->pkey_base_id = preserve.pkey_base_id;
+	dst->pkey_flags = preserve.pkey_flags;
+	dst->pem_str = preserve.pem_str;
+	dst->info = preserve.info;
 }
 
 void

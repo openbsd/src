@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.16 2019/11/01 15:08:57 jsing Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.17 2021/12/03 14:18:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -272,42 +272,15 @@ EVP_PKEY_meth_get0_info(int *ppkey_id, int *pflags, const EVP_PKEY_METHOD *meth)
 void
 EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst, const EVP_PKEY_METHOD *src)
 {
-	dst->init = src->init;
-	dst->copy = src->copy;
-	dst->cleanup = src->cleanup;
+	EVP_PKEY_METHOD preserve;
 
-	dst->paramgen_init = src->paramgen_init;
-	dst->paramgen = src->paramgen;
+	preserve.pkey_id = dst->pkey_id;
+	preserve.flags = dst->flags;
 
-	dst->keygen_init = src->keygen_init;
-	dst->keygen = src->keygen;
+	*dst = *src;
 
-	dst->sign_init = src->sign_init;
-	dst->sign = src->sign;
-
-	dst->verify_init = src->verify_init;
-	dst->verify = src->verify;
-
-	dst->verify_recover_init = src->verify_recover_init;
-	dst->verify_recover = src->verify_recover;
-
-	dst->signctx_init = src->signctx_init;
-	dst->signctx = src->signctx;
-
-	dst->verifyctx_init = src->verifyctx_init;
-	dst->verifyctx = src->verifyctx;
-
-	dst->encrypt_init = src->encrypt_init;
-	dst->encrypt = src->encrypt;
-
-	dst->decrypt_init = src->decrypt_init;
-	dst->decrypt = src->decrypt;
-
-	dst->derive_init = src->derive_init;
-	dst->derive = src->derive;
-
-	dst->ctrl = src->ctrl;
-	dst->ctrl_str = src->ctrl_str;
+	dst->pkey_id = preserve.pkey_id;
+	dst->flags = preserve.flags;
 }
 
 void
