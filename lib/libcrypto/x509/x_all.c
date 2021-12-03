@@ -1,4 +1,4 @@
-/* $OpenBSD: x_all.c,v 1.24 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x_all.c,v 1.25 2021/12/03 16:46:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -219,31 +219,6 @@ i2d_RSAPublicKey_fp(FILE *fp, RSA *rsa)
 {
 	return ASN1_item_i2d_fp(&RSAPublicKey_it, fp, rsa);
 }
-
-RSA *
-d2i_RSA_PUBKEY_bio(BIO *bp, RSA **rsa)
-{
-	return ASN1_d2i_bio_of(RSA, RSA_new, d2i_RSA_PUBKEY, bp, rsa);
-}
-
-int
-i2d_RSA_PUBKEY_bio(BIO *bp, RSA *rsa)
-{
-	return ASN1_i2d_bio_of(RSA, i2d_RSA_PUBKEY, bp, rsa);
-}
-
-int
-i2d_RSA_PUBKEY_fp(FILE *fp, RSA *rsa)
-{
-	return ASN1_i2d_fp((I2D_OF(void))i2d_RSA_PUBKEY, fp, rsa);
-}
-
-RSA *
-d2i_RSA_PUBKEY_fp(FILE *fp, RSA **rsa)
-{
-	return ASN1_d2i_fp((void *(*)(void))RSA_new,
-	    (D2I_OF(void))d2i_RSA_PUBKEY, fp, (void **)rsa);
-}
 #endif
 
 #ifndef OPENSSL_NO_DSA
@@ -270,30 +245,6 @@ i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa)
 {
 	return ASN1_item_i2d_fp(&DSAPrivateKey_it, fp, dsa);
 }
-
-DSA *
-d2i_DSA_PUBKEY_bio(BIO *bp, DSA **dsa)
-{
-	return ASN1_d2i_bio_of(DSA, DSA_new, d2i_DSA_PUBKEY, bp, dsa);
-}
-
-int
-i2d_DSA_PUBKEY_bio(BIO *bp, DSA *dsa)
-{
-	return ASN1_i2d_bio_of(DSA, i2d_DSA_PUBKEY, bp, dsa);
-}
-
-DSA *
-d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa)
-{
-	return ASN1_d2i_fp_of(DSA, DSA_new, d2i_DSA_PUBKEY, fp, dsa);
-}
-
-int
-i2d_DSA_PUBKEY_fp(FILE *fp, DSA *dsa)
-{
-	return ASN1_i2d_fp_of(DSA, i2d_DSA_PUBKEY, fp, dsa);
-}
 #endif
 
 #ifndef OPENSSL_NO_EC
@@ -319,29 +270,6 @@ int
 i2d_ECPrivateKey_fp(FILE *fp, EC_KEY *eckey)
 {
 	return ASN1_i2d_fp_of(EC_KEY, i2d_ECPrivateKey, fp, eckey);
-}
-
-EC_KEY *
-d2i_EC_PUBKEY_bio(BIO *bp, EC_KEY **eckey)
-{
-	return ASN1_d2i_bio_of(EC_KEY, EC_KEY_new, d2i_EC_PUBKEY, bp, eckey);
-}
-
-int
-i2d_EC_PUBKEY_bio(BIO *bp, EC_KEY *ecdsa)
-{
-	return ASN1_i2d_bio_of(EC_KEY, i2d_EC_PUBKEY, bp, ecdsa);
-}
-EC_KEY *
-d2i_EC_PUBKEY_fp(FILE *fp, EC_KEY **eckey)
-{
-	return ASN1_d2i_fp_of(EC_KEY, EC_KEY_new, d2i_EC_PUBKEY, fp, eckey);
-}
-
-int
-i2d_EC_PUBKEY_fp(FILE *fp, EC_KEY *eckey)
-{
-	return ASN1_i2d_fp_of(EC_KEY, i2d_EC_PUBKEY, fp, eckey);
 }
 #endif
 
@@ -421,30 +349,6 @@ int
 i2d_PrivateKey_fp(FILE *fp, EVP_PKEY *pkey)
 {
 	return ASN1_i2d_fp_of(EVP_PKEY, i2d_PrivateKey, fp, pkey);
-}
-
-EVP_PKEY *
-d2i_PUBKEY_bio(BIO *bp, EVP_PKEY **a)
-{
-	return ASN1_d2i_bio_of(EVP_PKEY, EVP_PKEY_new, d2i_PUBKEY, bp, a);
-}
-
-int
-i2d_PUBKEY_bio(BIO *bp, EVP_PKEY *pkey)
-{
-	return ASN1_i2d_bio_of(EVP_PKEY, i2d_PUBKEY, bp, pkey);
-}
-
-int
-i2d_PUBKEY_fp(FILE *fp, EVP_PKEY *pkey)
-{
-	return ASN1_i2d_fp_of(EVP_PKEY, i2d_PUBKEY, fp, pkey);
-}
-
-EVP_PKEY *
-d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **a)
-{
-	return ASN1_d2i_fp_of(EVP_PKEY, EVP_PKEY_new, d2i_PUBKEY, fp, a);
 }
 
 int

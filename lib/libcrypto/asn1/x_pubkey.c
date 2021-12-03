@@ -1,4 +1,4 @@
-/* $OpenBSD: x_pubkey.c,v 1.28 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x_pubkey.c,v 1.29 2021/12/03 16:46:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,7 +110,6 @@ const ASN1_ITEM X509_PUBKEY_it = {
 	.size = sizeof(X509_PUBKEY),
 	.sname = "X509_PUBKEY",
 };
-
 
 X509_PUBKEY *
 d2i_X509_PUBKEY(X509_PUBKEY **a, const unsigned char **in, long len)
@@ -240,168 +239,473 @@ X509_PUBKEY_get(X509_PUBKEY *key)
 	return pkey;
 }
 
-/* Now two pseudo ASN1 routines that take an EVP_PKEY structure
- * and encode or decode as X509_PUBKEY
+/*
+ * Decode an X509_PUBKEY into the specified key type.
  */
-
-EVP_PKEY *
-d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length)
+static int
+pubkey_ex_d2i(int pkey_type, ASN1_VALUE **pval, const unsigned char **in,
+    long len, const ASN1_ITEM *it)
 {
-	X509_PUBKEY *xpk;
-	EVP_PKEY *pktmp;
-	xpk = d2i_X509_PUBKEY(NULL, pp, length);
-	if (!xpk)
-		return NULL;
-	pktmp = X509_PUBKEY_get(xpk);
-	X509_PUBKEY_free(xpk);
-	if (!pktmp)
-		return NULL;
-	if (a) {
-		EVP_PKEY_free(*a);
-		*a = pktmp;
+	const ASN1_EXTERN_FUNCS *ef = it->funcs;
+	const unsigned char *p = *in;
+	X509_PUBKEY *xpk = NULL;
+	ASN1_VALUE *key = NULL;
+	EVP_PKEY *pkey = NULL;
+	int ret = 0;
+
+	if ((xpk = d2i_X509_PUBKEY(NULL, &p, len)) == NULL)
+		goto err;
+	if ((pkey = X509_PUBKEY_get(xpk)) == NULL)
+		goto err;
+
+	switch (pkey_type) {
+	case EVP_PKEY_NONE:
+		key = (ASN1_VALUE *)pkey;
+		pkey = NULL;
+		break;
+
+	case EVP_PKEY_DSA:
+		key = (ASN1_VALUE *)EVP_PKEY_get1_DSA(pkey);
+		break;
+
+	case EVP_PKEY_RSA:
+		key = (ASN1_VALUE *)EVP_PKEY_get1_RSA(pkey);
+		break;
+
+	case EVP_PKEY_EC:
+		key = (ASN1_VALUE *)EVP_PKEY_get1_EC_KEY(pkey);
+		break;
+
+	default:
+		goto err;
 	}
-	return pktmp;
+
+	if (key == NULL)
+		goto err;
+
+	ef->asn1_ex_free(pval, it);
+
+	*pval = key;
+	*in = p;
+	ret = 1;
+
+ err:
+	EVP_PKEY_free(pkey);
+	X509_PUBKEY_free(xpk);
+
+	return ret;
 }
 
-int
-i2d_PUBKEY(EVP_PKEY *a, unsigned char **pp)
+/*
+ * Encode the specified key type into an X509_PUBKEY.
+ */
+static int
+pubkey_ex_i2d(int pkey_type, ASN1_VALUE **pval, unsigned char **out,
+    const ASN1_ITEM *it)
 {
 	X509_PUBKEY *xpk = NULL;
-	int ret;
-	if (!a)
-		return 0;
-	if (!X509_PUBKEY_set(&xpk, a))
-		return 0;
-	ret = i2d_X509_PUBKEY(xpk, pp);
+	EVP_PKEY *pkey, *pktmp;
+	int ret = -1;
+
+	if ((pkey = pktmp = EVP_PKEY_new()) == NULL)
+		goto err;
+
+	switch (pkey_type) {
+	case EVP_PKEY_NONE:
+		pkey = (EVP_PKEY *)*pval;
+		break;
+
+	case EVP_PKEY_DSA:
+		if (!EVP_PKEY_set1_DSA(pkey, (DSA *)*pval))
+			goto err;
+		break;
+
+	case EVP_PKEY_RSA:
+		if (!EVP_PKEY_set1_RSA(pkey, (RSA *)*pval))
+			goto err;
+		break;
+
+	case EVP_PKEY_EC:
+		if (!EVP_PKEY_set1_EC_KEY(pkey, (EC_KEY*)*pval))
+			goto err;
+		break;
+
+	default:
+		goto err;
+	}
+
+	if (!X509_PUBKEY_set(&xpk, pkey))
+		goto err;
+
+	ret = i2d_X509_PUBKEY(xpk, out);
+
+ err:
+	EVP_PKEY_free(pktmp);
 	X509_PUBKEY_free(xpk);
+
 	return ret;
 }
 
-/* The following are equivalents but which return RSA and DSA
- * keys
- */
-#ifndef OPENSSL_NO_RSA
-RSA *
-d2i_RSA_PUBKEY(RSA **a, const unsigned char **pp, long length)
+static int
+pkey_pubkey_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-	EVP_PKEY *pkey;
-	RSA *key;
-	const unsigned char *q;
-	q = *pp;
-	pkey = d2i_PUBKEY(NULL, &q, length);
-	if (!pkey)
-		return NULL;
-	key = EVP_PKEY_get1_RSA(pkey);
-	EVP_PKEY_free(pkey);
-	if (!key)
-		return NULL;
-	*pp = q;
-	if (a) {
-		RSA_free(*a);
-		*a = key;
-	}
-	return key;
+	if ((*pval = (ASN1_VALUE *)EVP_PKEY_new()) == NULL)
+		return 0;
+
+	return 1;
+}
+
+static void
+pkey_pubkey_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+	EVP_PKEY_free((EVP_PKEY *)*pval);
+	*pval = NULL;
+}
+
+static int
+pkey_pubkey_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
+    const ASN1_ITEM *it, int tag, int aclass, char opt, ASN1_TLC *ctx)
+{
+	return pubkey_ex_d2i(EVP_PKEY_NONE, pval, in, len, it);
+}
+
+static int
+pkey_pubkey_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it,
+    int tag, int aclass)
+{
+	return pubkey_ex_i2d(EVP_PKEY_NONE, pval, out, it);
+}
+
+const ASN1_EXTERN_FUNCS pkey_pubkey_asn1_ff = {
+	.app_data = NULL,
+	.asn1_ex_new = pkey_pubkey_ex_new,
+	.asn1_ex_free = pkey_pubkey_ex_free,
+	.asn1_ex_clear = NULL,
+	.asn1_ex_d2i = pkey_pubkey_ex_d2i,
+	.asn1_ex_i2d = pkey_pubkey_ex_i2d,
+	.asn1_ex_print = NULL,
+};
+
+const ASN1_ITEM EVP_PKEY_PUBKEY_it = {
+	.itype = ASN1_ITYPE_EXTERN,
+	.utype = 0,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = &pkey_pubkey_asn1_ff,
+	.size = 0,
+	.sname = NULL,
+};
+
+EVP_PKEY *
+d2i_PUBKEY(EVP_PKEY **pkey, const unsigned char **in, long len)
+{
+	return (EVP_PKEY *)ASN1_item_d2i((ASN1_VALUE **)pkey, in, len,
+	    &EVP_PKEY_PUBKEY_it);
 }
 
 int
-i2d_RSA_PUBKEY(RSA *a, unsigned char **pp)
+i2d_PUBKEY(EVP_PKEY *pkey, unsigned char **out)
 {
-	EVP_PKEY *pktmp;
-	int ret;
-	if (!a)
+	return ASN1_item_i2d((ASN1_VALUE *)pkey, out, &EVP_PKEY_PUBKEY_it);
+}
+
+EVP_PKEY *
+d2i_PUBKEY_bio(BIO *bp, EVP_PKEY **pkey)
+{
+	return (EVP_PKEY *)ASN1_item_d2i_bio(&EVP_PKEY_PUBKEY_it, bp,
+	    (ASN1_VALUE **)pkey);
+}
+
+int
+i2d_PUBKEY_bio(BIO *bp, EVP_PKEY *pkey)
+{
+	return ASN1_item_i2d_bio(&EVP_PKEY_PUBKEY_it, bp, (ASN1_VALUE *)pkey);
+}
+
+EVP_PKEY *
+d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **pkey)
+{
+	return (EVP_PKEY *)ASN1_item_d2i_fp(&EVP_PKEY_PUBKEY_it, fp,
+	    (ASN1_VALUE **)pkey);
+}
+
+int
+i2d_PUBKEY_fp(FILE *fp, EVP_PKEY *pkey)
+{
+	return ASN1_item_i2d_fp(&EVP_PKEY_PUBKEY_it, fp, (ASN1_VALUE *)pkey);
+}
+
+/*
+ * The following are equivalents but which return RSA and DSA keys.
+ */
+#ifndef OPENSSL_NO_RSA
+
+static int
+rsa_pubkey_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+	if ((*pval = (ASN1_VALUE *)RSA_new()) == NULL)
 		return 0;
-	pktmp = EVP_PKEY_new();
-	if (!pktmp) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-	EVP_PKEY_set1_RSA(pktmp, a);
-	ret = i2d_PUBKEY(pktmp, pp);
-	EVP_PKEY_free(pktmp);
-	return ret;
+
+	return 1;
+}
+
+static void
+rsa_pubkey_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+	RSA_free((RSA *)*pval);
+	*pval = NULL;
+}
+
+static int
+rsa_pubkey_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
+    const ASN1_ITEM *it, int tag, int aclass, char opt, ASN1_TLC *ctx)
+{
+	return pubkey_ex_d2i(EVP_PKEY_RSA, pval, in, len, it);
+}
+
+static int
+rsa_pubkey_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it,
+    int tag, int aclass)
+{
+	return pubkey_ex_i2d(EVP_PKEY_RSA, pval, out, it);
+}
+
+const ASN1_EXTERN_FUNCS rsa_pubkey_asn1_ff = {
+	.app_data = NULL,
+	.asn1_ex_new = rsa_pubkey_ex_new,
+	.asn1_ex_free = rsa_pubkey_ex_free,
+	.asn1_ex_clear = NULL,
+	.asn1_ex_d2i = rsa_pubkey_ex_d2i,
+	.asn1_ex_i2d = rsa_pubkey_ex_i2d,
+	.asn1_ex_print = NULL,
+};
+
+const ASN1_ITEM RSA_PUBKEY_it = {
+	.itype = ASN1_ITYPE_EXTERN,
+	.utype = 0,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = &rsa_pubkey_asn1_ff,
+	.size = 0,
+	.sname = NULL,
+};
+
+RSA *
+d2i_RSA_PUBKEY(RSA **rsa, const unsigned char **in, long len)
+{
+	return (RSA *)ASN1_item_d2i((ASN1_VALUE **)rsa, in, len,
+	    &RSA_PUBKEY_it);
+}
+
+int
+i2d_RSA_PUBKEY(RSA *rsa, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)rsa, out, &RSA_PUBKEY_it);
+}
+
+RSA *
+d2i_RSA_PUBKEY_bio(BIO *bp, RSA **rsa)
+{
+	return (RSA *)ASN1_item_d2i_bio(&RSA_PUBKEY_it, bp, (ASN1_VALUE **)rsa);
+}
+
+int
+i2d_RSA_PUBKEY_bio(BIO *bp, RSA *rsa)
+{
+	return ASN1_item_i2d_bio(&RSA_PUBKEY_it, bp, (ASN1_VALUE *)rsa);
+}
+
+RSA *
+d2i_RSA_PUBKEY_fp(FILE *fp, RSA **rsa)
+{
+	return (RSA *)ASN1_item_d2i_fp(&RSA_PUBKEY_it, fp, (ASN1_VALUE **)rsa);
+}
+
+int
+i2d_RSA_PUBKEY_fp(FILE *fp, RSA *rsa)
+{
+	return ASN1_item_i2d_fp(&RSA_PUBKEY_it, fp, (ASN1_VALUE *)rsa);
 }
 #endif
 
 #ifndef OPENSSL_NO_DSA
-DSA *
-d2i_DSA_PUBKEY(DSA **a, const unsigned char **pp, long length)
+
+static int
+dsa_pubkey_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-	EVP_PKEY *pkey;
-	DSA *key;
-	const unsigned char *q;
-	q = *pp;
-	pkey = d2i_PUBKEY(NULL, &q, length);
-	if (!pkey)
-		return NULL;
-	key = EVP_PKEY_get1_DSA(pkey);
-	EVP_PKEY_free(pkey);
-	if (!key)
-		return NULL;
-	*pp = q;
-	if (a) {
-		DSA_free(*a);
-		*a = key;
-	}
-	return key;
+	if ((*pval = (ASN1_VALUE *)DSA_new()) == NULL)
+		return 0;
+
+	return 1;
+}
+
+static void
+dsa_pubkey_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+	DSA_free((DSA *)*pval);
+	*pval = NULL;
+}
+
+static int
+dsa_pubkey_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
+    const ASN1_ITEM *it, int tag, int aclass, char opt, ASN1_TLC *ctx)
+{
+	return pubkey_ex_d2i(EVP_PKEY_DSA, pval, in, len, it);
+}
+
+static int
+dsa_pubkey_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it,
+    int tag, int aclass)
+{
+	return pubkey_ex_i2d(EVP_PKEY_DSA, pval, out, it);
+}
+
+const ASN1_EXTERN_FUNCS dsa_pubkey_asn1_ff = {
+	.app_data = NULL,
+	.asn1_ex_new = dsa_pubkey_ex_new,
+	.asn1_ex_free = dsa_pubkey_ex_free,
+	.asn1_ex_clear = NULL,
+	.asn1_ex_d2i = dsa_pubkey_ex_d2i,
+	.asn1_ex_i2d = dsa_pubkey_ex_i2d,
+	.asn1_ex_print = NULL,
+};
+
+const ASN1_ITEM DSA_PUBKEY_it = {
+	.itype = ASN1_ITYPE_EXTERN,
+	.utype = 0,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = &dsa_pubkey_asn1_ff,
+	.size = 0,
+	.sname = NULL,
+};
+
+DSA *
+d2i_DSA_PUBKEY(DSA **dsa, const unsigned char **in, long len)
+{
+	return (DSA *)ASN1_item_d2i((ASN1_VALUE **)dsa, in, len,
+	    &DSA_PUBKEY_it);
 }
 
 int
-i2d_DSA_PUBKEY(DSA *a, unsigned char **pp)
+i2d_DSA_PUBKEY(DSA *dsa, unsigned char **out)
 {
-	EVP_PKEY *pktmp;
-	int ret;
-	if (!a)
-		return 0;
-	pktmp = EVP_PKEY_new();
-	if (!pktmp) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-	EVP_PKEY_set1_DSA(pktmp, a);
-	ret = i2d_PUBKEY(pktmp, pp);
-	EVP_PKEY_free(pktmp);
-	return ret;
+	return ASN1_item_i2d((ASN1_VALUE *)dsa, out, &DSA_PUBKEY_it);
 }
+
+DSA *
+d2i_DSA_PUBKEY_bio(BIO *bp, DSA **dsa)
+{
+	return (DSA *)ASN1_item_d2i_bio(&DSA_PUBKEY_it, bp, (ASN1_VALUE **)dsa);
+}
+
+int
+i2d_DSA_PUBKEY_bio(BIO *bp, DSA *dsa)
+{
+	return ASN1_item_i2d_bio(&DSA_PUBKEY_it, bp, (ASN1_VALUE *)dsa);
+}
+
+DSA *
+d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa)
+{
+	return (DSA *)ASN1_item_d2i_fp(&DSA_PUBKEY_it, fp, (ASN1_VALUE **)dsa);
+}
+
+int
+i2d_DSA_PUBKEY_fp(FILE *fp, DSA *dsa)
+{
+	return ASN1_item_i2d_fp(&DSA_PUBKEY_it, fp, (ASN1_VALUE *)dsa);
+}
+
 #endif
 
 #ifndef OPENSSL_NO_EC
-EC_KEY *
-d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length)
+
+static int
+ec_pubkey_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-	EVP_PKEY *pkey;
-	EC_KEY *key;
-	const unsigned char *q;
-	q = *pp;
-	pkey = d2i_PUBKEY(NULL, &q, length);
-	if (!pkey)
-		return (NULL);
-	key = EVP_PKEY_get1_EC_KEY(pkey);
-	EVP_PKEY_free(pkey);
-	if (!key)
-		return (NULL);
-	*pp = q;
-	if (a) {
-		EC_KEY_free(*a);
-		*a = key;
-	}
-	return (key);
+	if ((*pval = (ASN1_VALUE *)EC_KEY_new()) == NULL)
+		return 0;
+
+	return 1;
+}
+
+static void
+ec_pubkey_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+	EC_KEY_free((EC_KEY *)*pval);
+	*pval = NULL;
+}
+
+static int
+ec_pubkey_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
+    const ASN1_ITEM *it, int tag, int aclass, char opt, ASN1_TLC *ctx)
+{
+	return pubkey_ex_d2i(EVP_PKEY_EC, pval, in, len, it);
+}
+
+static int
+ec_pubkey_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it,
+    int tag, int aclass)
+{
+	return pubkey_ex_i2d(EVP_PKEY_EC, pval, out, it);
+}
+
+const ASN1_EXTERN_FUNCS ec_pubkey_asn1_ff = {
+	.app_data = NULL,
+	.asn1_ex_new = ec_pubkey_ex_new,
+	.asn1_ex_free = ec_pubkey_ex_free,
+	.asn1_ex_clear = NULL,
+	.asn1_ex_d2i = ec_pubkey_ex_d2i,
+	.asn1_ex_i2d = ec_pubkey_ex_i2d,
+	.asn1_ex_print = NULL,
+};
+
+const ASN1_ITEM EC_PUBKEY_it = {
+	.itype = ASN1_ITYPE_EXTERN,
+	.utype = 0,
+	.templates = NULL,
+	.tcount = 0,
+	.funcs = &ec_pubkey_asn1_ff,
+	.size = 0,
+	.sname = NULL,
+};
+
+EC_KEY *
+d2i_EC_PUBKEY(EC_KEY **ec, const unsigned char **in, long len)
+{
+	return (EC_KEY *)ASN1_item_d2i((ASN1_VALUE **)ec, in, len,
+	    &EC_PUBKEY_it);
 }
 
 int
-i2d_EC_PUBKEY(EC_KEY *a, unsigned char **pp)
+i2d_EC_PUBKEY(EC_KEY *ec, unsigned char **out)
 {
-	EVP_PKEY *pktmp;
-	int ret;
-	if (!a)
-		return (0);
-	if ((pktmp = EVP_PKEY_new()) == NULL) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
-		return (0);
-	}
-	EVP_PKEY_set1_EC_KEY(pktmp, a);
-	ret = i2d_PUBKEY(pktmp, pp);
-	EVP_PKEY_free(pktmp);
-	return (ret);
+	return ASN1_item_i2d((ASN1_VALUE *)ec, out, &EC_PUBKEY_it);
+}
+
+EC_KEY *
+d2i_EC_PUBKEY_bio(BIO *bp, EC_KEY **ec)
+{
+	return (EC_KEY *)ASN1_item_d2i_bio(&EC_PUBKEY_it, bp, (ASN1_VALUE **)ec);
+}
+
+int
+i2d_EC_PUBKEY_bio(BIO *bp, EC_KEY *ec)
+{
+	return ASN1_item_i2d_bio(&EC_PUBKEY_it, bp, (ASN1_VALUE *)ec);
+}
+
+EC_KEY *
+d2i_EC_PUBKEY_fp(FILE *fp, EC_KEY **ec)
+{
+	return (EC_KEY *)ASN1_item_d2i_fp(&EC_PUBKEY_it, fp, (ASN1_VALUE **)ec);
+}
+
+int
+i2d_EC_PUBKEY_fp(FILE *fp, EC_KEY *ec)
+{
+	return ASN1_item_i2d_fp(&EC_PUBKEY_it, fp, (ASN1_VALUE *)ec);
 }
 #endif
 
