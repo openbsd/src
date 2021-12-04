@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.45 2021/12/04 15:48:23 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.46 2021/12/04 15:53:01 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -228,8 +228,14 @@ extern "C" {
 #ifndef OPENSSL_NO_DEPRECATED
 #define BN_FLG_FREE		0x8000	/* used for debugging */
 #endif
+#if defined(LIBRESSL_OPAQUE_BN) || defined(LIBRESSL_CRYPTO_INTERNAL)
+void BN_set_flags(BIGNUM *b, int n);
+int BN_get_flags(const BIGNUM *b, int n);
+void BN_with_flags(BIGNUM *dest, const BIGNUM *src, int flags);
+#else
 #define BN_set_flags(b,n)	((b)->flags|=(n))
 #define BN_get_flags(b,n)	((b)->flags&(n))
+#endif
 
 /* Values for |top| in BN_rand() */
 #define BN_RAND_TOP_ANY    -1
@@ -240,6 +246,7 @@ extern "C" {
 #define BN_RAND_BOTTOM_ANY  0
 #define BN_RAND_BOTTOM_ODD  1
 
+#if !defined(LIBRESSL_OPAQUE_BN) && !defined(LIBRESSL_CRYPTO_INTERNAL)
 /* get a clone of a BIGNUM with changed flags, for *temporary* use only
  * (the two BIGNUMs cannot not be used in parallel!) */
 #define BN_with_flags(dest,b,n)  ((dest)->d=(b)->d, \
@@ -250,6 +257,7 @@ extern "C" {
                                                  |  ((b)->flags & ~BN_FLG_MALLOCED) \
                                                  |  BN_FLG_STATIC_DATA \
                                                  |  (n)))
+#endif
 
 struct bignum_st {
 	BN_ULONG *d;	/* Pointer to an array of 'BN_BITS2' bit chunks. */

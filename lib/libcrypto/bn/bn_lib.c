@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.49 2021/12/04 15:48:23 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.50 2021/12/04 15:53:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -136,6 +136,30 @@ BN_get_params(int which)
 		return (0);
 }
 #endif
+
+void
+BN_set_flags(BIGNUM *b, int n)
+{
+	b->flags |= n;
+}
+
+int
+BN_get_flags(const BIGNUM *b, int n)
+{
+	return b->flags & n;
+}
+
+void
+BN_with_flags(BIGNUM *dest, const BIGNUM *b, int flags)
+{
+	int dest_flags;
+
+	dest_flags = (dest->flags & BN_FLG_MALLOCED) |
+	    (b->flags & ~BN_FLG_MALLOCED) | BN_FLG_STATIC_DATA | flags;
+
+	*dest = *b;
+	dest->flags = dest_flags;
+}
 
 const BIGNUM *
 BN_value_one(void)
