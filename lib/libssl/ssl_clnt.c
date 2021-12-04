@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.120 2021/11/29 16:00:32 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.121 2021/12/04 13:15:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1223,6 +1223,7 @@ ssl3_get_server_certificate(SSL *s)
 static int
 ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 {
+	int invalid_key;
 	SESS_CERT *sc = NULL;
 	DH *dh = NULL;
 	long alg_a;
@@ -1235,7 +1236,7 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 
 	if (!ssl_kex_peer_params_dhe(dh, cbs))
 		goto decode_err;
-	if (!ssl_kex_peer_public_dhe(dh, cbs))
+	if (!ssl_kex_peer_public_dhe(dh, cbs, &invalid_key))
 		goto decode_err;
 
 	/*
@@ -1244,6 +1245,11 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	 */
 	if (DH_size(dh) < 1024 / 8) {
 		SSLerror(s, SSL_R_BAD_DH_P_LENGTH);
+		goto err;
+	}
+	if (invalid_key) {
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
+		SSLerror(s, SSL_R_BAD_DH_PUB_KEY_LENGTH);
 		goto err;
 	}
 

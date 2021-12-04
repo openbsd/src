@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_kex.c,v 1.5 2021/11/30 18:17:03 tb Exp $ */
+/* $OpenBSD: ssl_kex.c,v 1.6 2021/12/04 13:15:10 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -142,22 +142,30 @@ ssl_kex_peer_params_dhe(DH *dh, CBS *cbs)
 }
 
 int
-ssl_kex_peer_public_dhe(DH *dh, CBS *cbs)
+ssl_kex_peer_public_dhe(DH *dh, CBS *cbs, int *invalid_key)
 {
-	CBS dh_y;
 	BIGNUM *pub_key = NULL;
+	int check_flags;
+	CBS dh_y;
 	int ret = 0;
+
+	*invalid_key = 0;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &dh_y))
 		goto err;
+
 	if ((pub_key = BN_bin2bn(CBS_data(&dh_y), CBS_len(&dh_y),
 	    NULL)) == NULL)
 		goto err;
 
 	if (!DH_set0_key(dh, pub_key, NULL))
 		goto err;
-
 	pub_key = NULL;
+
+	if (!DH_check_pub_key(dh, dh->pub_key, &check_flags))
+		goto err;
+	if (check_flags != 0)
+		*invalid_key = 1;
 
 	ret = 1;
 

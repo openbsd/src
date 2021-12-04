@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.369 2021/11/29 16:00:32 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.370 2021/12/04 13:15:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1451,7 +1451,7 @@ int ssl_kex_generate_dhe(DH *dh, DH *dh_params);
 int ssl_kex_params_dhe(DH *dh, CBB *cbb);
 int ssl_kex_public_dhe(DH *dh, CBB *cbb);
 int ssl_kex_peer_params_dhe(DH *dh, CBS *cbs);
-int ssl_kex_peer_public_dhe(DH *dh, CBS *cbs);
+int ssl_kex_peer_public_dhe(DH *dh, CBS *cbs, int *invalid_key);
 int ssl_kex_derive_dhe(DH *dh, DH *dh_peer,
     uint8_t **shared_key, size_t *shared_key_len);
 
