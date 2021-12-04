@@ -1,4 +1,4 @@
-/* $OpenBSD: d2i_pu.c,v 1.14 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: a_pubkey.c,v 1.1 2021/12/04 15:38:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -133,4 +133,26 @@ err:
 	if (a == NULL || *a != ret)
 		EVP_PKEY_free(ret);
 	return (NULL);
+}
+
+int
+i2d_PublicKey(EVP_PKEY *a, unsigned char **pp)
+{
+	switch (a->type) {
+#ifndef OPENSSL_NO_RSA
+	case EVP_PKEY_RSA:
+		return (i2d_RSAPublicKey(a->pkey.rsa, pp));
+#endif
+#ifndef OPENSSL_NO_DSA
+	case EVP_PKEY_DSA:
+		return (i2d_DSAPublicKey(a->pkey.dsa, pp));
+#endif
+#ifndef OPENSSL_NO_EC
+	case EVP_PKEY_EC:
+		return (i2o_ECPublicKey(a->pkey.ec, pp));
+#endif
+	default:
+		ASN1error(ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
+		return (-1);
+	}
 }
