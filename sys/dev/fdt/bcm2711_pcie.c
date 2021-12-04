@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.8 2021/12/03 18:23:41 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.9 2021/12/04 16:08:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -122,6 +122,8 @@ int	bcmpcie_bs_memmap(bus_space_tag_t, bus_addr_t, bus_size_t, int,
 	    bus_space_handle_t *);
 int	bcmpcie_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int, paddr_t *, int *, int);
+int	bcmpcie_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
 
 void
 bcmpcie_attach(struct device *parent, struct device *self, void *aux)
@@ -281,6 +283,7 @@ bcmpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	memcpy(&sc->sc_dma, sc->sc_dmat, sizeof(sc->sc_dma));
 	sc->sc_dma._dmamap_load_buffer = bcmpcie_dmamap_load_buffer;
+	sc->sc_dma._dmamap_load_raw = bcmpcie_dmamap_load_raw;
 	sc->sc_dma._cookie = sc;
 
 	sc->sc_pc.pc_conf_v = sc;
@@ -511,6 +514,45 @@ bcmpcie_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	/* For each segment. */
 	for (seg = firstseg; seg <= *segp; seg++) {
+		uint64_t addr = map->dm_segs[seg].ds_addr;
+		uint64_t size = map->dm_segs[seg].ds_len;
+		int i;
+
+		/* For each range. */
+		for (i = 0; i < sc->sc_ndmaranges; i++) {
+			uint64_t pci_start = sc->sc_dmaranges[i].pci_base;
+			uint64_t phys_start = sc->sc_dmaranges[i].phys_base;
+			uint64_t phys_end = phys_start +
+			    sc->sc_dmaranges[i].size;
+
+			if (addr >= phys_start && addr + size <= phys_end) {
+				map->dm_segs[seg].ds_addr -= phys_start;
+				map->dm_segs[seg].ds_addr += pci_start;
+				break;
+			}
+		}
+
+		if (i == sc->sc_ndmaranges)
+			return EINVAL;
+	}
+
+	return 0;
+}
+
+int
+bcmpcie_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
+{
+	struct bcmpcie_softc *sc = t->_cookie;
+	int seg, error;
+
+	error = sc->sc_dmat->_dmamap_load_raw(sc->sc_dmat, map,
+	     segs, nsegs, size, flags);
+	if (error)
+		return error;
+
+	/* For each segment. */
+	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		uint64_t addr = map->dm_segs[seg].ds_addr;
 		uint64_t size = map->dm_segs[seg].ds_len;
 		int i;
