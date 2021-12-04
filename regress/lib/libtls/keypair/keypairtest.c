@@ -1,4 +1,4 @@
-/* $OpenBSD: keypairtest.c,v 1.4 2018/04/07 16:42:17 jsing Exp $ */
+/* $OpenBSD: keypairtest.c,v 1.5 2021/12/04 09:04:36 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -186,6 +186,9 @@ do_keypair_tests(void)
  done:
 	X509_free(x509_cert);
 	free(hash);
+	free((uint8_t *)cert);
+	free((uint8_t *)key);
+	free((uint8_t *)ocsp_staple);
 
 	return (failed);
 }
