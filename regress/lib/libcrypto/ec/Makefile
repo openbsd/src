@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.5 2021/04/21 20:15:08 tb Exp $
+#	$OpenBSD: Makefile,v 1.6 2021/12/04 05:15:09 jsing Exp $
 
 PROGS +=		ectest
+PROGS +=		ec_asn1_test
 PROGS +=		ec_point_conversion
 
 .for t in ${PROGS}
@@ -10,7 +11,8 @@ REGRESS_TARGETS +=	run-$t
 LDADD =			${CRYPTO_INT}
 DPADD =			${LIBCRYPTO}
 WARNINGS =		Yes
-CFLAGS +=		-DLIBRESSL_INTERNAL -Wall -Wundef -Werror
+CFLAGS +=		-DLIBRESSL_CRYPTO_INTERNAL -DLIBRESSL_INTERNAL
+CFLAGS +=		-Wall -Wundef -Werror
 
 CLEANFILES +=		${PROGS}
 
