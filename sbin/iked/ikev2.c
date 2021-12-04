@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.340 2021/12/01 16:42:12 deraadt Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.341 2021/12/04 13:07:17 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1464,7 +1464,7 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 	struct ikev2_payload		*pld;
 	struct ikev2_cert		*cert;
 	struct ikev2_auth		*auth;
-	struct iked_id			*id, *certid;
+	struct iked_id			*id, *certid, peerid;
 	struct ibuf			*e = NULL;
 	uint8_t				 firstpayload;
 	int				 ret = -1;
@@ -1485,13 +1485,28 @@ ikev2_init_ike_auth(struct iked *env, struct iked_sa *sa)
 	id = &sa->sa_iid;
 	certid = &sa->sa_icert;
 
-	/* ID payload */
+	/* ID payloads */
 	if ((pld = ikev2_add_payload(e)) == NULL)
 		goto done;
 	firstpayload = IKEV2_PAYLOAD_IDi;
 	if (ibuf_cat(e, id->id_buf) != 0)
 		goto done;
 	len = ibuf_size(id->id_buf);
+
+	if (pol->pol_peerid.id_type) {
+		bzero(&peerid, sizeof(peerid));
+		if (ikev2_policy2id(&pol->pol_peerid, &peerid, 0) != 0) {
+			log_debug("%s: failed to get remote id", __func__);
+			goto done;
+		}
+		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_IDr) == -1)
+			goto done;
+		if ((pld = ikev2_add_payload(e)) == NULL)
+			goto done;
+		if (ibuf_cat(e, peerid.id_buf) != 0)
+			goto done;
+		len = ibuf_size(peerid.id_buf);
+	}
 
 	/* CERT payload */
 	if ((sa->sa_stateinit & IKED_REQ_CERT) &&
