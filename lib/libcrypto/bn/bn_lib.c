@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.50 2021/12/04 15:53:01 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.51 2021/12/04 15:59:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1059,6 +1059,44 @@ BN_swap_ct(BN_ULONG condition, BIGNUM *a, BIGNUM *b, size_t nwords)
 	}
 
 	return 1;
+}
+
+void
+BN_zero_ex(BIGNUM *a)
+{
+	a->neg = 0;
+	a->top = 0;
+	/* XXX: a->flags &= ~BN_FIXED_TOP */
+}
+
+int
+BN_abs_is_word(const BIGNUM *a, const BN_ULONG w)
+{
+	return (a->top == 1 && a->d[0] == w) || (w == 0 && a->top == 0);
+}
+
+int
+BN_is_zero(const BIGNUM *a)
+{
+	return a->top == 0;
+}
+
+int
+BN_is_one(const BIGNUM *a)
+{
+	return BN_abs_is_word(a, 1) && !a->neg;
+}
+
+int
+BN_is_word(const BIGNUM *a, const BN_ULONG w)
+{
+	return BN_abs_is_word(a, w) && (w == 0 || !a->neg);
+}
+
+int
+BN_is_odd(const BIGNUM *a)
+{
+	return a->top > 0 && (a->d[0] & 1);
 }
 
 BN_GENCB *

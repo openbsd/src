@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.46 2021/12/04 15:53:01 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.47 2021/12/04 15:59:52 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -409,10 +409,21 @@ void *BN_GENCB_get_arg(BN_GENCB *cb);
 				(b) >=  308 ?  8 : \
 				(b) >=  55  ? 27 : \
 				/* b >= 6 */ 34)
- 
+
 #define BN_num_bytes(a)	((BN_num_bits(a)+7)/8)
 
-/* Note that BN_abs_is_word didn't work reliably for w == 0 until 0.9.8 */
+#if defined(LIBRESSL_OPAQUE_BN) || defined(LIBRESSL_CRYPTO_INTERNAL)
+int BN_abs_is_word(const BIGNUM *a, const BN_ULONG w);
+int BN_is_zero(const BIGNUM *a);
+int BN_is_one(const BIGNUM *a);
+int BN_is_word(const BIGNUM *a, const BN_ULONG w);
+int BN_is_odd(const BIGNUM *a);
+
+#define BN_one(a)	BN_set_word((a), 1)
+
+void BN_zero_ex(BIGNUM *a);
+
+#else
 #define BN_abs_is_word(a,w) ((((a)->top == 1) && ((a)->d[0] == (BN_ULONG)(w))) || \
 				(((w) == 0) && ((a)->top == 0)))
 #define BN_is_zero(a)       ((a)->top == 0)
@@ -427,6 +438,7 @@ void *BN_GENCB_get_arg(BN_GENCB *cb);
 		_tmp_bn->top = 0; \
 		_tmp_bn->neg = 0; \
 	} while(0)
+#endif /* LIBRESSL_OPAQUE_BN */
 
 #ifdef OPENSSL_NO_DEPRECATED
 #define BN_zero(a)	BN_zero_ex(a)
