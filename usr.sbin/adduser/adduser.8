@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.46 2017/06/09 16:46:57 tedu Exp $
+.\"	$OpenBSD: adduser.8,v 1.47 2021/12/04 07:31:38 jmc Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $From: adduser.8,v 1.12 1996/08/28 17:54:13 adam Exp $
-.Dd $Mdocdate: June 9 2017 $
+.Dd $Mdocdate: December 4 2021 $
 .Dt ADDUSER 8
 .Os
 .Sh NAME
@@ -329,11 +329,13 @@ is run.
 .\" details.
 .\" .El
 .Sh FILES
-.Bl -tag -width /etc/adduser.messageX -compact
+.Bl -tag -width /etc/adduser.message.bakX -compact
 .It Pa /etc/master.passwd
 user database
 .It Pa /etc/group
 group database
+.It Pa /etc/group.bak
+backup of original group database
 .It Pa /etc/shells
 shell database
 .It Pa /etc/ptmp
@@ -341,9 +343,13 @@ lock file for the passwd database
 .It Pa /etc/adduser.conf
 configuration file for
 .Nm adduser
+.It Pa /etc/adduser.conf.bak
+backup of original configuration file
 .It Pa /etc/adduser.message
 message file for
 .Nm
+.It Pa /etc/adduser.message.bak
+backup of original message file
 .It Pa /etc/skel
 skeletal login directory
 .It Pa /var/log/adduser
