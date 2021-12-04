@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha256test.c,v 1.5 2021/11/18 21:25:01 tb Exp $	*/
+/*	$OpenBSD: sha256test.c,v 1.6 2021/12/04 07:58:10 tb Exp $	*/
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  * ====================================================================
@@ -65,7 +65,8 @@ int
 main(int argc, char **argv) {
 	unsigned char md[SHA256_DIGEST_LENGTH];
 	int		i;
-	EVP_MD_CTX	*evp;
+	int		ret = 1;
+	EVP_MD_CTX	*evp = NULL;
 
 	fprintf(stdout, "Testing SHA-256 ");
 
@@ -73,7 +74,7 @@ main(int argc, char **argv) {
 	if (memcmp(md, app_b1, sizeof(app_b1))) {
 		fflush(stdout);
 		fprintf(stderr, "\nTEST 1 of 3 failed.\n");
-		return 1;
+		goto err;
 	}
 	fprintf(stdout, ".");
 	fflush(stdout);
@@ -85,7 +86,7 @@ main(int argc, char **argv) {
 	if (memcmp(md, app_b2, sizeof(app_b2))) {
 		fflush(stdout);
 		fprintf(stderr, "\nTEST 2 of 3 failed.\n");
-		return 1;
+		goto err;
 	}
 	fprintf(stdout, ".");
 	fflush(stdout);
@@ -93,7 +94,7 @@ main(int argc, char **argv) {
 	if ((evp = EVP_MD_CTX_new()) == NULL) {
 		fflush(stdout);
 		fprintf(stderr, "\nEVP_MD_CTX_new() failed.\n");
-		return 1;
+		goto err;
 	}
 	EVP_DigestInit_ex(evp, EVP_sha256(), NULL);
 	for (i = 0; i < 1000000; i += 160)
@@ -110,7 +111,7 @@ main(int argc, char **argv) {
 	if (memcmp(md, app_b3, sizeof(app_b3))) {
 		fflush(stdout);
 		fprintf(stderr, "\nTEST 3 of 3 failed.\n");
-		return 1;
+		goto err;
 	}
 	fprintf(stdout, ".");
 	fflush(stdout);
@@ -123,7 +124,7 @@ main(int argc, char **argv) {
 	if (memcmp(md, addenum_1, sizeof(addenum_1))) {
 		fflush(stdout);
 		fprintf(stderr, "\nTEST 1 of 3 failed.\n");
-		return 1;
+		goto err;
 	}
 	fprintf(stdout, ".");
 	fflush(stdout);
@@ -135,7 +136,7 @@ main(int argc, char **argv) {
 	if (memcmp(md, addenum_2, sizeof(addenum_2))) {
 		fflush(stdout);
 		fprintf(stderr, "\nTEST 2 of 3 failed.\n");
-		return 1;
+		goto err;
 	}
 	fprintf(stdout, ".");
 	fflush(stdout);
@@ -152,7 +153,7 @@ main(int argc, char **argv) {
 	if (memcmp(md, addenum_3, sizeof(addenum_3))) {
 		fflush(stdout);
 		fprintf(stderr, "\nTEST 3 of 3 failed.\n");
-		return 1;
+		goto err;
 	}
 	fprintf(stdout, ".");
 	fflush(stdout);
@@ -160,6 +161,11 @@ main(int argc, char **argv) {
 	fprintf(stdout, " passed.\n");
 	fflush(stdout);
 
-	return 0;
+	ret = 0;
+
+ err:
+	EVP_MD_CTX_free(evp);
+
+	return ret;
 }
 #endif
