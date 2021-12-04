@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.44 2021/11/18 18:01:08 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.45 2021/12/04 15:48:23 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -297,10 +297,19 @@ struct bn_gencb_st {
 
 BN_GENCB *BN_GENCB_new(void);
 void BN_GENCB_free(BN_GENCB *cb);
-void *BN_GENCB_get_arg(BN_GENCB *cb);
 
 /* Wrapper function to make using BN_GENCB easier,  */
 int BN_GENCB_call(BN_GENCB *cb, int a, int b);
+
+#if defined(LIBRESSL_OPAQUE_BN) || defined(LIBRESSL_CRYPTO_INTERNAL)
+/* Populate a BN_GENCB structure with an "old"-style callback */
+void BN_GENCB_set_old(BN_GENCB *gencb, void (*callback)(int, int, void *),
+    void *cb_arg);
+
+/* Populate a BN_GENCB structure with a "new"-style callback */
+void BN_GENCB_set(BN_GENCB *gencb, int (*callback)(int, int, BN_GENCB *),
+    void *cb_arg);
+#else
 /* Macro to populate a BN_GENCB structure with an "old"-style callback */
 #define BN_GENCB_set_old(gencb, callback, cb_arg) { \
 		BN_GENCB *tmp_gencb = (gencb); \
@@ -313,6 +322,9 @@ int BN_GENCB_call(BN_GENCB *cb, int a, int b);
 		tmp_gencb->ver = 2; \
 		tmp_gencb->arg = (cb_arg); \
 		tmp_gencb->cb.cb_2 = (callback); }
+#endif /* !LIBRESSL_CRYPTO_INTERNAL */
+
+void *BN_GENCB_get_arg(BN_GENCB *cb);
 
 #define BN_prime_checks 0 /* default: select number of iterations
 			     based on the size of the number */

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.48 2021/09/08 12:19:17 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.49 2021/12/04 15:48:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1054,6 +1054,24 @@ BN_GENCB_free(BN_GENCB *cb)
 	if (cb == NULL)
 		return;
 	free(cb);
+}
+
+/* Populate a BN_GENCB structure with an "old"-style callback */
+void
+BN_GENCB_set_old(BN_GENCB *gencb, void (*cb)(int, int, void *), void *cb_arg)
+{
+	gencb->ver = 1;
+	gencb->cb.cb_1 = cb;
+	gencb->arg = cb_arg;
+}
+
+/* Populate a BN_GENCB structure with a "new"-style callback */
+void
+BN_GENCB_set(BN_GENCB *gencb, int (*cb)(int, int, BN_GENCB *), void *cb_arg)
+{
+	gencb->ver = 2;
+	gencb->cb.cb_2 = cb;
+	gencb->arg = cb_arg;
 }
 
 void *
