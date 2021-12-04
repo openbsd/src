@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.279 2021/11/14 22:31:29 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.280 2021/12/04 14:03:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -147,7 +147,6 @@
 #include <limits.h>
 #include <stdio.h>
 
-#include <openssl/bn.h>
 #include <openssl/dh.h>
 #include <openssl/lhash.h>
 #include <openssl/objects.h>
@@ -2319,54 +2318,29 @@ ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher, const EVP_MD **pmd,
 	return (pkey);
 }
 
-DH *
-ssl_get_auto_dh(SSL *s)
+size_t
+ssl_dhe_params_auto_key_bits(SSL *s)
 {
 	CERT_PKEY *cpk;
-	int keylen;
-	DH *dhp;
+	int key_bits;
 
 	if (s->cert->dh_tmp_auto == 2) {
-		keylen = 1024;
+		key_bits = 1024;
 	} else if (S3I(s)->hs.cipher->algorithm_auth & SSL_aNULL) {
-		keylen = 1024;
+		key_bits = 1024;
 		if (S3I(s)->hs.cipher->strength_bits == 256)
-			keylen = 3072;
+			key_bits = 3072;
 	} else {
 		if ((cpk = ssl_get_server_send_pkey(s)) == NULL)
-			return (NULL);
+			return 0;
 		if (cpk->privatekey == NULL ||
 		    EVP_PKEY_get0_RSA(cpk->privatekey) == NULL)
-			return (NULL);
-		if ((keylen = EVP_PKEY_bits(cpk->privatekey)) <= 0)
-			return (NULL);
+			return 0;
+		if ((key_bits = EVP_PKEY_bits(cpk->privatekey)) <= 0)
+			return 0;
 	}
 
-	if ((dhp = DH_new()) == NULL)
-		return (NULL);
-
-	dhp->g = BN_new();
-	if (dhp->g != NULL)
-		BN_set_word(dhp->g, 2);
-
-	if (keylen >= 8192)
-		dhp->p = get_rfc3526_prime_8192(NULL);
-	else if (keylen >= 4096)
-		dhp->p = get_rfc3526_prime_4096(NULL);
-	else if (keylen >= 3072)
-		dhp->p = get_rfc3526_prime_3072(NULL);
-	else if (keylen >= 2048)
-		dhp->p = get_rfc3526_prime_2048(NULL);
-	else if (keylen >= 1536)
-		dhp->p = get_rfc3526_prime_1536(NULL);
-	else
-		dhp->p = get_rfc2409_prime_1024(NULL);
-
-	if (dhp->p == NULL || dhp->g == NULL) {
-		DH_free(dhp);
-		return (NULL);
-	}
-	return (dhp);
+	return key_bits;
 }
 
 static int

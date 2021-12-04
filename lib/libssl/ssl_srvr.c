@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.126 2021/11/29 16:03:56 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.127 2021/12/04 14:03:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1309,43 +1309,38 @@ ssl3_send_server_done(SSL *s)
 static int
 ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
 {
-	DH *dh = NULL, *dhp;
+	DH *dh = NULL;
 	int al;
 
+	if ((dh = DH_new()) == NULL)
+		goto err;
+
 	if (s->cert->dh_tmp_auto != 0) {
-		if ((dhp = ssl_get_auto_dh(s)) == NULL) {
+		size_t key_bits;
+
+		if ((key_bits = ssl_dhe_params_auto_key_bits(s)) == 0) {
 			al = SSL_AD_INTERNAL_ERROR;
 			SSLerror(s, ERR_R_INTERNAL_ERROR);
 			goto fatal_err;
 		}
-	} else
-		dhp = s->cert->dh_tmp;
 
-	if (dhp == NULL && s->cert->dh_tmp_cb != NULL)
-		dhp = s->cert->dh_tmp_cb(s, 0,
-		    SSL_C_PKEYLENGTH(S3I(s)->hs.cipher));
+		if (!ssl_kex_generate_dhe_params_auto(dh, key_bits))
+			goto err;
+	} else {
+		DH *dh_params = s->cert->dh_tmp;
 
-	if (dhp == NULL) {
-		al = SSL_AD_HANDSHAKE_FAILURE;
-		SSLerror(s, SSL_R_MISSING_TMP_DH_KEY);
-		goto fatal_err;
-	}
+		if (dh_params == NULL && s->cert->dh_tmp_cb != NULL)
+			dh_params = s->cert->dh_tmp_cb(s, 0,
+			    SSL_C_PKEYLENGTH(S3I(s)->hs.cipher));
 
-	if (S3I(s)->tmp.dh != NULL) {
-		SSLerror(s, ERR_R_INTERNAL_ERROR);
-		goto err;
-	}
+		if (dh_params == NULL) {
+			al = SSL_AD_HANDSHAKE_FAILURE;
+			SSLerror(s, SSL_R_MISSING_TMP_DH_KEY);
+			goto fatal_err;
+		}
 
-	if (s->cert->dh_tmp_auto != 0) {
-		dh = dhp;
-	} else if ((dh = DHparams_dup(dhp)) == NULL) {
-		SSLerror(s, ERR_R_DH_LIB);
-		goto err;
-	}
-	S3I(s)->tmp.dh = dh;
-	if (!DH_generate_key(dh)) {
-		SSLerror(s, ERR_R_DH_LIB);
-		goto err;
+		if (!ssl_kex_generate_dhe(dh, dh_params))
+			goto err;
 	}
 
 	if (!ssl_kex_params_dhe(dh, cbb))
@@ -1353,12 +1348,20 @@ ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
 	if (!ssl_kex_public_dhe(dh, cbb))
 		goto err;
 
-	return (1);
+	if (S3I(s)->tmp.dh != NULL) {
+		SSLerror(s, ERR_R_INTERNAL_ERROR);
+		goto err;
+	}
+	S3I(s)->tmp.dh = dh;
+
+	return 1;
 
  fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-	return (-1);
+	DH_free(dh);
+
+	return -1;
 }
 
 static int
@@ -1787,53 +1790,35 @@ ssl3_get_client_kex_rsa(SSL *s, CBS *cbs)
 static int
 ssl3_get_client_kex_dhe(SSL *s, CBS *cbs)
 {
-	int key_size = 0;
-	int key_is_invalid, key_len, al;
-	unsigned char *key = NULL;
-	BIGNUM *bn = NULL;
-	CBS dh_Yc;
-	DH *dh;
+	DH *dh_clnt = NULL;
+	DH *dh_srvr;
+	int invalid_key;
+	uint8_t *key = NULL;
+	size_t key_len = 0;
+	int ret = -1;
 
-	if (!CBS_get_u16_length_prefixed(cbs, &dh_Yc))
-		goto decode_err;
-	if (CBS_len(cbs) != 0)
-		goto decode_err;
-
-	if (S3I(s)->tmp.dh == NULL) {
-		al = SSL_AD_HANDSHAKE_FAILURE;
+	if ((dh_srvr = S3I(s)->tmp.dh) == NULL) {
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
 		SSLerror(s, SSL_R_MISSING_TMP_DH_KEY);
-		goto fatal_err;
-	}
-	dh = S3I(s)->tmp.dh;
-
-	if ((bn = BN_bin2bn(CBS_data(&dh_Yc), CBS_len(&dh_Yc), NULL)) == NULL) {
-		SSLerror(s, SSL_R_BN_LIB);
 		goto err;
 	}
 
-	if ((key_size = DH_size(dh)) <= 0) {
-		SSLerror(s, ERR_R_DH_LIB);
+	if ((dh_clnt = DHparams_dup(dh_srvr)) == NULL)
+		goto err;
+
+	if (!ssl_kex_peer_public_dhe(dh_clnt, cbs, &invalid_key)) {
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+		SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
 		goto err;
 	}
-	if ((key = malloc(key_size)) == NULL) {
-		SSLerror(s, ERR_R_MALLOC_FAILURE);
+	if (invalid_key) {
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
+		SSLerror(s, SSL_R_BAD_DH_PUB_KEY_LENGTH);
 		goto err;
 	}
-	if (!DH_check_pub_key(dh, bn, &key_is_invalid)) {
-		al = SSL_AD_INTERNAL_ERROR;
-		SSLerror(s, ERR_R_DH_LIB);
-		goto fatal_err;
-	}
-	if (key_is_invalid) {
-		al = SSL_AD_ILLEGAL_PARAMETER;
-		SSLerror(s, ERR_R_DH_LIB);
-		goto fatal_err;
-	}
-	if ((key_len = DH_compute_key(key, bn, dh)) <= 0) {
-		al = SSL_AD_INTERNAL_ERROR;
-		SSLerror(s, ERR_R_DH_LIB);
-		goto fatal_err;
-	}
+
+	if (!ssl_kex_derive_dhe(dh_srvr, dh_clnt, &key, &key_len))
+		goto err;
 
 	if (!tls12_derive_master_secret(s, key, key_len))
 		goto err;
@@ -1841,21 +1826,13 @@ ssl3_get_client_kex_dhe(SSL *s, CBS *cbs)
 	DH_free(S3I(s)->tmp.dh);
 	S3I(s)->tmp.dh = NULL;
 
-	freezero(key, key_size);
-	BN_clear_free(bn);
+	ret = 1;
 
-	return (1);
-
- decode_err:
-	al = SSL_AD_DECODE_ERROR;
-	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
- fatal_err:
-	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-	freezero(key, key_size);
-	BN_clear_free(bn);
+	freezero(key, key_len);
+	DH_free(dh_clnt);
 
-	return (-1);
+	return ret;
 }
 
 static int

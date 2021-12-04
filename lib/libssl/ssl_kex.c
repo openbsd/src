@@ -1,6 +1,6 @@
-/* $OpenBSD: ssl_kex.c,v 1.7 2021/12/04 13:50:35 jsing Exp $ */
+/* $OpenBSD: ssl_kex.c,v 1.8 2021/12/04 14:03:22 jsing Exp $ */
 /*
- * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,6 +17,7 @@
 
 #include <stdlib.h>
 
+#include <openssl/bn.h>
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include <openssl/ecdh.h>
@@ -40,7 +41,50 @@ ssl_kex_generate_dhe(DH *dh, DH *dh_params)
 
 	if (!DH_set0_pqg(dh, p, NULL, g))
 		goto err;
+	p = NULL;
+	g = NULL;
 
+	if (!DH_generate_key(dh))
+		goto err;
+
+	ret = 1;
+
+ err:
+	BN_free(p);
+	BN_free(g);
+
+	return ret;
+}
+
+int
+ssl_kex_generate_dhe_params_auto(DH *dh, size_t key_bits)
+{
+	BIGNUM *p = NULL, *g = NULL;
+	int ret = 0;
+
+	if (key_bits >= 8192)
+		p = get_rfc3526_prime_8192(NULL);
+	else if (key_bits >= 4096)
+		p = get_rfc3526_prime_4096(NULL);
+	else if (key_bits >= 3072)
+		p = get_rfc3526_prime_3072(NULL);
+	else if (key_bits >= 2048)
+		p = get_rfc3526_prime_2048(NULL);
+	else if (key_bits >= 1536)
+		p = get_rfc3526_prime_1536(NULL);
+	else
+		p = get_rfc2409_prime_1024(NULL);
+
+	if (p == NULL)
+		goto err;
+
+	if ((g = BN_new()) == NULL)
+		goto err;
+	if (!BN_set_word(g, 2))
+		goto err;
+
+	if (!DH_set0_pqg(dh, p, NULL, g))
+		goto err;
 	p = NULL;
 	g = NULL;
 
