@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.51 2021/12/04 15:59:52 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.52 2021/12/04 16:02:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1097,6 +1097,12 @@ int
 BN_is_odd(const BIGNUM *a)
 {
 	return a->top > 0 && (a->d[0] & 1);
+}
+
+int
+BN_is_negative(const BIGNUM *a)
+{
+	return a->neg != 0;
 }
 
 BN_GENCB *

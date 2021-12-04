@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.47 2021/12/04 15:59:52 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.48 2021/12/04 16:02:44 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -485,11 +485,16 @@ int	BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx);
  * \param  n  0 if the BIGNUM b should be positive and a value != 0 otherwise
  */
 void	BN_set_negative(BIGNUM *b, int n);
+
+#if defined(LIBRESSL_OPAQUE_BN) || defined(LIBRESSL_CRYPTO_INTERNAL)
+int BN_is_negative(const BIGNUM *b);
+#else
 /** BN_is_negative returns 1 if the BIGNUM is negative
  * \param  a  pointer to the BIGNUM object
  * \return 1 if a < 0 and 0 otherwise
  */
 #define BN_is_negative(a) ((a)->neg != 0)
+#endif
 
 #ifndef LIBRESSL_INTERNAL
 int	BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
