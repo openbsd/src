@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.49 2021/12/04 16:05:46 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.50 2021/12/04 16:11:10 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -259,6 +259,7 @@ void BN_with_flags(BIGNUM *dest, const BIGNUM *src, int flags);
                                                  |  (n)))
 #endif
 
+/* Move to bn_lcl.h */
 struct bignum_st {
 	BN_ULONG *d;	/* Pointer to an array of 'BN_BITS2' bit chunks. */
 	int top;	/* Index of last used d +1. */
@@ -268,6 +269,7 @@ struct bignum_st {
 	int flags;
 };
 
+/* Move to bn_lcl.h */
 /* Used for montgomery multiplication */
 struct bn_mont_ctx_st {
 	int ri;        /* number of bits in R */
@@ -280,6 +282,7 @@ struct bn_mont_ctx_st {
 	int flags;
 };
 
+/* Move to bn_lcl.h */
 /* Used for reciprocal division/mod functions
  * It cannot be shared between threads
  */
@@ -291,6 +294,7 @@ struct bn_recp_ctx_st {
 	int flags;
 };
 
+/* Move to bn_lcl.h */
 /* Used for slow "generation" functions. */
 struct bn_gencb_st {
 	unsigned int ver;	/* To handle binary (in)compatibility */
