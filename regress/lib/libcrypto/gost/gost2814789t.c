@@ -1,4 +1,4 @@
-/*	$OpenBSD: gost2814789t.c,v 1.5 2021/11/18 21:26:54 tb Exp $	*/
+/*	$OpenBSD: gost2814789t.c,v 1.6 2021/12/04 08:15:16 tb Exp $	*/
 /* vim: set fileencoding=ascii : Charset: ASCII */
 /* test/gostr2814789t.c */
 /* ====================================================================
@@ -1270,17 +1270,19 @@ int main(int argc, char *argv[])
     const EVP_CIPHER *cp_g89cnt = NULL;
     const EVP_CIPHER *ctype = NULL;
     const EVP_MD *md_g89imit = NULL;
+    int ret = 0;
 
     printf("Testing GOST 28147-89 ");
 
     if(1 < argc) {
        if(1 != sscanf(argv[1], "%" SCNu64, &ullMaxLen) ||
-          ( 2 < argc ? 
+          ( 2 < argc ?
             1 != sscanf(argv[2], "%d", &ignore) : 0)) {
            fflush(NULL);
-           fprintf(stderr, "Usage: %s [maxlen [ignore-error]]\n", 
+           fprintf(stderr, "Usage: %s [maxlen [ignore-error]]\n",
                                argv[0]);
-           return 1;
+           ret = 1;
+           goto out;
        }
     }
 
@@ -1297,35 +1299,40 @@ int main(int argc, char *argv[])
 	fflush(NULL);
 	fprintf(stderr, "\"" SN_id_GostR3411_94 "\" - not found\n");
 	if(!ignore) {
-	    return 7;
+	    ret = 7;
+	    goto out;
 	}
     }
     if(NULL == (cp_g89cfb = EVP_get_cipherbyname(SN_id_Gost28147_89))) {
 	fflush(NULL);
 	fprintf(stderr, "\"" SN_id_Gost28147_89 "\" - not found\n");
 	if(!ignore) {
-	    return 8;
+	    ret = 8;
+	    goto out;
 	}
     }
     if(NULL == (cp_g89cnt = EVP_get_cipherbyname(SN_gost89_cnt))) {
 	fflush(NULL);
 	fprintf(stderr, "\"" SN_gost89_cnt "\" - not found\n");
 	if(!ignore) {
-	    return 9;
+	    ret = 9;
+	    goto out;
 	}
     }
     if(NULL == (cp_g89ecb = EVP_get_cipherbyname(SN_gost89_ecb))) {
 	fflush(NULL);
 	fprintf(stderr, "\"" SN_gost89_ecb "\" - not found\n");
 	if(!ignore) {
-	    return 8;
+	    ret = 8;
+	    goto out;
 	}
     }
     if(NULL == (md_g89imit = EVP_get_digestbyname(SN_id_Gost28147_89_MAC))) {
 	fflush(NULL);
 	fprintf(stderr, "\"" SN_id_Gost28147_89_MAC "\" - not found\n");
 	if(!ignore) {
-	    return 10;
+	    ret = 10;
+	    goto out;
 	}
     }
 
@@ -1334,15 +1341,16 @@ int main(int argc, char *argv[])
 	if(NULL != tcs[t].szDerive) {
 	memset(bDerive, 0x3c, sizeof(bDerive));
 	mdl = sizeof(bDerive);
-	EVP_Digest(tcs[t].szDerive, strlen(tcs[t].szDerive), 
+	EVP_Digest(tcs[t].szDerive, strlen(tcs[t].szDerive),
 			bDerive, &mdl,
 			md_gost94, NULL);
 	if(0 != memcmp(tcs[t].bRawKey, bDerive, mdl)) {
 	    fflush(NULL);
 	    fprintf(stderr, "Engine test t=%d "
-	    		"derive key error.\n", t);
+			"derive key error.\n", t);
 	    if(!ignore) {
-		return 12;
+		ret = 12;
+		goto out;
 	    }
 	}
 	}
@@ -1374,16 +1382,16 @@ engine_cipher_check:
 				    tcs[t].bIn, (int)tcs[t].ullLen);
 		l = (size_t)tcs[t].ullLen;
 	    } else {
-		for(ullLeft = tcs[t].ullLen; 
-			    ullLeft >= sizeof(bZB); 
+		for(ullLeft = tcs[t].ullLen;
+			    ullLeft >= sizeof(bZB);
 				    ullLeft -= sizeof(bZB)) {
-		    printf("B"); 
+		    printf("B");
 		    fflush(NULL);
 		    enlu = sizeof(bTS);
 		    EVP_EncryptUpdate(ectx, bTS, &enlu,
 					    bZB, sizeof(bZB));
 		}
-		printf("b%" PRIu64 "/%" PRIu64, ullLeft, tcs[t].ullLen); 
+		printf("b%" PRIu64 "/%" PRIu64, ullLeft, tcs[t].ullLen);
 		fflush(NULL);
 		EVP_EncryptUpdate(ectx, bTS, &enlu,
 					bZB, (int)ullLeft);
@@ -1413,14 +1421,14 @@ engine_cipher_check:
 		EVP_DigestSignUpdate(mctx, tcs[t].bIn,
 				    (unsigned int)tcs[t].ullLen);
 	    } else {
-		for(ullLeft = tcs[t].ullLen; 
-			    ullLeft >= sizeof(bZB); 
+		for(ullLeft = tcs[t].ullLen;
+			    ullLeft >= sizeof(bZB);
 				    ullLeft -= sizeof(bZB)) {
-		    printf("B"); 
+		    printf("B");
 		    fflush(NULL);
 		    EVP_DigestSignUpdate(mctx, bZB, sizeof(bZB));
 		}
-		printf("b%" PRIu64 "/%" PRIu64, ullLeft, tcs[t].ullLen); 
+		printf("b%" PRIu64 "/%" PRIu64, ullLeft, tcs[t].ullLen);
 		fflush(NULL);
 		EVP_DigestSignUpdate(mctx, bZB,
 					(unsigned int)ullLeft);
@@ -1441,7 +1449,8 @@ imit_fail:
 	    fprintf(stderr, "\nEngine test t=%d len=%" PRIu64
 			    " mode=%d failed.\n", t, tcs[t].ullLen, tcs[t].gMode);
 	    if(!ignore) {
-	    	return 13;
+		ret = 13;
+		goto out;
 	    }
 	} else {
 	    printf(".");
@@ -1452,12 +1461,14 @@ imit_fail:
     printf(" passed\n");
     fflush(NULL);
 
+ out:
+
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
     ERR_print_errors(bio_err);
     (void)BIO_flush(bio_err);
     BIO_free(bio_err);
     EVP_CIPHER_CTX_free(ectx);
     EVP_MD_CTX_free(mctx);
-    return 0;
+    return ret;
 }
 #endif
