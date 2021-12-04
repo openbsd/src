@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.296 2021/11/29 15:55:36 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.297 2021/12/04 18:51:36 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3028,12 +3028,22 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	    IA32_VMX_ACTIVATE_SECONDARY_CONTROLS, 1)) {
 		if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED2_CTLS,
 		    IA32_VMX_ENABLE_VPID, 1)) {
-			if (vmm_alloc_vpid(&vpid)) {
+
+			/* We may sleep during allocation, so reload VMCS. */
+			vcpu->vc_last_pcpu = curcpu();
+			ret = vmm_alloc_vpid(&vpid);
+			if (vcpu_reload_vmcs_vmx(vcpu)) {
+				printf("%s: failed to reload vmcs\n", __func__);
+				ret = EINVAL;
+				goto exit;
+			}
+			if (ret) {
 				DPRINTF("%s: could not allocate VPID\n",
 				    __func__);
 				ret = EINVAL;
 				goto exit;
 			}
+
 			if (vmwrite(VMCS_GUEST_VPID, vpid)) {
 				DPRINTF("%s: error setting guest VPID\n",
 				    __func__);
@@ -5549,7 +5559,7 @@ svm_handle_np_fault(struct vcpu *vcpu)
  *
  * Return Values:
  *  0: if successful
- *  EINVAL: if fault type could not be determined
+ *  EINVAL: if fault type could not be determined or VMCS reload fails
  *  EAGAIN: if a protection fault occurred, ie writing to a read-only page
  *  errno: if uvm_fault(9) fails to wire in the page
  */
@@ -5569,10 +5579,14 @@ vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 		return (EAGAIN);
 	}
 
-	KERNEL_LOCK();
+	/* We may sleep during uvm_fault(9), so reload VMCS. */
+	vcpu->vc_last_pcpu = curcpu();
 	ret = uvm_fault(vcpu->vc_parent->vm_map, gpa, VM_FAULT_WIRE,
 	    PROT_READ | PROT_WRITE | PROT_EXEC);
-	KERNEL_UNLOCK();
+	if (vcpu_reload_vmcs_vmx(vcpu)) {
+		printf("%s: failed to reload vmcs\n", __func__);
+		return (EINVAL);
+	}
 
 	if (ret)
 		printf("%s: uvm_fault returns %d, GPA=0x%llx, rip=0x%llx\n",
@@ -5962,7 +5976,16 @@ vmx_load_pdptes(struct vcpu *vcpu)
 
 	ret = 0;
 
-	cr3_host_virt = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any, &kp_none, &kd_waitok);
+	/* We may sleep during km_alloc(9), so reload VMCS. */
+	vcpu->vc_last_pcpu = curcpu();
+	cr3_host_virt = (vaddr_t)km_alloc(PAGE_SIZE, &kv_any, &kp_none,
+	    &kd_waitok);
+	if (vcpu_reload_vmcs_vmx(vcpu)) {
+		printf("%s: failed to reload vmcs\n", __func__);
+		ret = EINVAL;
+		goto exit;
+	}
+
 	if (!cr3_host_virt) {
 		printf("%s: can't allocate address for guest CR3 mapping\n",
 		    __func__);
@@ -5998,7 +6021,15 @@ vmx_load_pdptes(struct vcpu *vcpu)
 
 exit:
 	pmap_kremove(cr3_host_virt, PAGE_SIZE);
+
+	/* km_free(9) might sleep, so we need to reload VMCS. */
+	vcpu->vc_last_pcpu = curcpu();
 	km_free((void *)cr3_host_virt, PAGE_SIZE, &kv_any, &kp_none);
+	if (vcpu_reload_vmcs_vmx(vcpu)) {
+		printf("%s: failed to reload vmcs after km_free\n", __func__);
+		ret = EINVAL;
+	}
+
 	return (ret);
 }
 
