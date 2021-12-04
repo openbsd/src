@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_kex.c,v 1.6 2021/12/04 13:15:10 jsing Exp $ */
+/* $OpenBSD: ssl_kex.c,v 1.7 2021/12/04 13:50:35 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -24,6 +24,8 @@
 #include <openssl/objects.h>
 
 #include "bytestring.h"
+
+#define DHE_MINIMUM_BITS	1024
 
 int
 ssl_kex_generate_dhe(DH *dh, DH *dh_params)
@@ -110,11 +112,13 @@ ssl_kex_public_dhe(DH *dh, CBB *cbb)
 }
 
 int
-ssl_kex_peer_params_dhe(DH *dh, CBS *cbs)
+ssl_kex_peer_params_dhe(DH *dh, CBS *cbs, int *invalid_params)
 {
-	CBS dh_p, dh_g;
 	BIGNUM *p = NULL, *g = NULL;
+	CBS dh_p, dh_g;
 	int ret = 0;
+
+	*invalid_params = 0;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &dh_p))
 		goto err;
@@ -128,9 +132,13 @@ ssl_kex_peer_params_dhe(DH *dh, CBS *cbs)
 
 	if (!DH_set0_pqg(dh, p, NULL, g))
 		goto err;
-
 	p = NULL;
 	g = NULL;
+
+	/* XXX - consider calling DH_check(). */
+
+	if (DH_bits(dh) < DHE_MINIMUM_BITS)
+		*invalid_params = 1;
 
 	ret = 1;
 
