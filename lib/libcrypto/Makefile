@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.52 2021/12/04 15:38:10 jsing Exp $
+# $OpenBSD: Makefile,v 1.53 2021/12/04 16:29:25 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -28,13 +28,15 @@ CFLAGS+= -DDSO_DLFCN -DHAVE_DLFCN_H -DHAVE_FUNOPEN
 CFLAGS+= -DOPENSSL_NO_HW_PADLOCK # XXX enable this?
 
 CFLAGS+= -I${LCRYPTO_SRC}
-CFLAGS+= -I${LCRYPTO_SRC}/asn1 -I${LCRYPTO_SRC}/bn -I${LCRYPTO_SRC}/bytestring
-CFLAGS+= -I${LCRYPTO_SRC}/evp -I${LCRYPTO_SRC}/modes -I${LCRYPTO_SRC}/x509
-
-# XXX FIXME ecdsa and ec should be merged
-CFLAGS+= -I${LCRYPTO_SRC}/ecdsa
+CFLAGS+= -I${LCRYPTO_SRC}/asn1
+CFLAGS+= -I${LCRYPTO_SRC}/bn
+CFLAGS+= -I${LCRYPTO_SRC}/bytestring
+CFLAGS+= -I${LCRYPTO_SRC}/evp
 CFLAGS+= -I${LCRYPTO_SRC}/ec
 CFLAGS+= -I${LCRYPTO_SRC}/ecdh
+CFLAGS+= -I${LCRYPTO_SRC}/ecdsa
+CFLAGS+= -I${LCRYPTO_SRC}/modes
+CFLAGS+= -I${LCRYPTO_SRC}/x509
 
 VERSION_SCRIPT=	Symbols.map
 SYMBOL_LIST=	${.CURDIR}/Symbols.list
