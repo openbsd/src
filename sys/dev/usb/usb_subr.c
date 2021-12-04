@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.155 2021/02/24 04:06:45 jsg Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.156 2021/12/04 07:01:59 anton Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1086,11 +1086,8 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	/* Establish the default pipe. */
 	err = usbd_setup_pipe(dev, 0, &dev->def_ep, USBD_DEFAULT_INTERVAL,
 	    &dev->default_pipe);
-	if (err) {
-		usb_free_device(dev);
-		up->device = NULL;
-		return (err);
-	}
+	if (err)
+		goto fail;
 
 	dd = &dev->ddesc;
 
@@ -1137,12 +1134,8 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 			USB_MAX_IPACKET, dd);
 	}
 
-	if (err) {
-fail:
-		usb_free_device(dev);
-		up->device = NULL;
-		return (err);
-	}
+	if (err)
+		goto fail;
 
 	DPRINTF(("%s: adding unit addr=%d, rev=%02x, class=%d, subclass=%d, "
 		 "protocol=%d, maxpacket=%d, len=%d, speed=%d\n", __func__,
@@ -1152,9 +1145,8 @@ fail:
 
 	if ((dd->bDescriptorType != UDESC_DEVICE) ||
 	    (dd->bLength < USB_DEVICE_DESCRIPTOR_SIZE)) {
-		usb_free_device(dev);
-		up->device = NULL;
-		return (USBD_INVAL);
+		err = USBD_INVAL;
+		goto fail;
 	}
 
 	mps = dd->bMaxPacketSize;
@@ -1168,9 +1160,8 @@ fail:
 	if (mps != mps0) {
 		if ((speed == USB_SPEED_LOW) ||
 		    (mps != 8 && mps != 16 && mps != 32 && mps != 64)) {
-			usb_free_device(dev);
-			up->device = NULL;
-			return (USBD_INVAL);
+			err = USBD_INVAL;
+			goto fail;
 		}
 		USETW(dev->def_ep_desc.wMaxPacketSize, mps);
 	}
@@ -1179,9 +1170,8 @@ fail:
 	/* Set the address if the HC didn't do it already. */
 	if (bus->methods->dev_setaddr != NULL &&
 	    bus->methods->dev_setaddr(dev, addr)) {
-		usb_free_device(dev);
-		up->device = NULL;
-		return (USBD_SET_ADDR_FAILED);
+		err = USBD_SET_ADDR_FAILED;
+		goto fail;
  	}
 
 	/* Wait for device to settle before reloading the descriptor. */
@@ -1194,11 +1184,8 @@ fail:
 	dev->address = addr;
 
 	err = usbd_reload_device_desc(dev);
-	if (err) {
-		usb_free_device(dev);
-		up->device = NULL;
-		return (err);
-	}
+	if (err)
+		goto fail;
 
 	/* send disown request to handover 2.0 to 1.1. */
 	if (dev->quirks->uq_flags & UQ_EHCI_NEEDTO_DISOWN) {
@@ -1222,22 +1209,21 @@ fail:
 
 	/* Get device info and cache it */
 	err = usbd_cache_devinfo(dev);
-	if (err) {
-		usb_free_device(dev);
-		up->device = NULL;
-		return (err);
-  	}
+	if (err)
+		goto fail;
 
 	bus->devices[addr] = dev;
 
 	err = usbd_probe_and_attach(parent, dev, port, addr);
-	if (err) {
-		usb_free_device(dev);
-		up->device = NULL;
-		return (err);
-  	}
+	if (err)
+		goto fail;
 
   	return (USBD_NORMAL_COMPLETION);
+
+fail:
+	usb_free_device(dev);
+	up->device = NULL;
+	return (err);
 }
 
 usbd_status
