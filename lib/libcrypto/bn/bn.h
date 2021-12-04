@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.48 2021/12/04 16:02:44 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.49 2021/12/04 16:05:46 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -609,8 +609,13 @@ BN_MONT_CTX *BN_MONT_CTX_new(void );
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx);
 int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     BN_MONT_CTX *mont, BN_CTX *ctx);
+#if defined(LIBRESSL_OPAQUE_BN) || defined(LIBRESSL_CRYPTO_INTERNAL)
+int BN_to_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mont,
+    BN_CTX *ctx);
+#else
 #define BN_to_montgomery(r,a,mont,ctx)	BN_mod_mul_montgomery(\
 	(r),(a),&((mont)->RR),(mont),(ctx))
+#endif
 int BN_from_montgomery(BIGNUM *r, const BIGNUM *a,
     BN_MONT_CTX *mont, BN_CTX *ctx);
 void BN_MONT_CTX_free(BN_MONT_CTX *mont);
