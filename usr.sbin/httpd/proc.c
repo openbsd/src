@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.40 2021/04/20 21:11:56 dv Exp $	*/
+/*	$OpenBSD: proc.c,v 1.41 2021/12/04 06:52:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -417,6 +417,10 @@ proc_open(struct privsep *ps, int src, int dst)
 		for (j = 0; j < ps->ps_instances[dst]; j++) {
 			/* Don't create sockets for ourself. */
 			if (src == dst && i == j)
+				continue;
+
+			/* Servers don't talk to each other. */
+			if (src == PROC_SERVER && dst == PROC_SERVER)
 				continue;
 
 			pa = &ps->ps_pipes[src][i];
