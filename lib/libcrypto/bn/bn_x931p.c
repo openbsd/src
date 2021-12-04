@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_x931p.c,v 1.11 2019/01/20 01:56:59 tb Exp $ */
+/* $OpenBSD: bn_x931p.c,v 1.12 2021/12/04 16:09:59 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -154,7 +154,7 @@ BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2, const BIGNUM *Xp,
 	if (!BN_sub(p, p, t))
 		goto err;
 
-	if (p->neg && !BN_add(p, p, p1p2))
+	if (BN_is_negative(p) && !BN_add(p, p, p1p2))
 		goto err;
 
 	/* p now equals Rp */
