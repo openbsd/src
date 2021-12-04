@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_depr.c,v 1.7 2014/10/18 17:20:40 jsing Exp $ */
+/* $OpenBSD: dsa_depr.c,v 1.8 2021/12/04 16:08:32 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -67,6 +67,8 @@
 #include <openssl/dsa.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
+
+#include "bn_lcl.h"
 
 #ifndef OPENSSL_NO_DEPRECATED
 DSA *

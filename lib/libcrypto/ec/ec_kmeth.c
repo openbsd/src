@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_kmeth.c,v 1.5 2019/05/10 19:15:06 bcook Exp $	*/
+/*	$OpenBSD: ec_kmeth.c,v 1.6 2021/12/04 16:08:32 tb Exp $	*/
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -58,6 +58,7 @@
 #endif
 #include <openssl/err.h>
 
+#include "bn_lcl.h"
 #include "ec_lcl.h"
 #include "ecs_locl.h"
 

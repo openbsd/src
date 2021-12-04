@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_vrf.c,v 1.7 2019/01/19 01:12:48 tb Exp $ */
+/* $OpenBSD: ecs_vrf.c,v 1.8 2021/12/04 16:08:32 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -58,8 +58,10 @@
 
 #include <openssl/opensslconf.h>
 
+#include "bn_lcl.h"
 #include "ecs_locl.h"
 #include "ec_lcl.h"
+
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
