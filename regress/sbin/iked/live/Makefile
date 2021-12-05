@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2021/11/11 22:12:52 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.32 2021/12/05 20:21:14 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -363,6 +363,26 @@ run-dstid-multi:
 	    peer=${LEFT_ADDR}; dstid="dstid $$leftid"; \
 	    ${SETUP_CONFIG}; \
 	    dstid="dstid roflol"; \
+	    ${SETUP_CONFIG}; \
+	    ${DEPLOY_CONFIGS}
+	${SETUP_START}
+	flowtype=esp; ${TEST_FLOWS}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
+	${TEST_PING}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
+
+REGRESS_TARGETS += run-srcid-multi
+run-srcid-multi:
+	flowtype=esp; \
+	leftid=left-from-ca-both; \
+	rightid=right-from-ca-both; \
+	    side=left; srcid=$$leftid; local=${LEFT_ADDR}; peer=${RIGHT_ADDR}; \
+	    dstid="dstid $$rightid"; \
+	    ${SETUP_CONFIG}; \
+	    side=right; mode=passive; srcid="borked"; local=${RIGHT_ADDR}; \
+	    peer=${LEFT_ADDR}; dstid=""; \
+	    ${SETUP_CONFIG}; \
+	    srcid=$$rightid; \
+	    ${SETUP_CONFIG}; \
+	    srcid="roflol"; \
 	    ${SETUP_CONFIG}; \
 	    ${DEPLOY_CONFIGS}
 	${SETUP_START}
