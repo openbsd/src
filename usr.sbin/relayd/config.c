@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.42 2021/07/14 13:33:57 kn Exp $	*/
+/*	$OpenBSD: config.c,v 1.43 2021/12/05 13:48:14 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -192,13 +192,13 @@ config_purge(struct relayd *env, u_int reset)
 			TAILQ_REMOVE(env->sc_protos, proto, entry);
 			free(proto->style);
 			free(proto->tlscapass);
-			free(proto);
 			while ((keyname =
 			    TAILQ_FIRST(&proto->tlscerts)) != NULL) {
 				TAILQ_REMOVE(&proto->tlscerts, keyname, entry);
 				free(keyname->name);
 				free(keyname);
 			}
+			free(proto);
 		}
 		env->sc_protocount = 0;
 	}
