@@ -1,4 +1,4 @@
-/*	$OpenBSD: net80211.c,v 1.19 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: net80211.c,v 1.20 2021/12/05 22:36:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/select.h>		/* howmany() NBBY */
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 

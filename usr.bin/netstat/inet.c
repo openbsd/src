@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.172 2021/11/21 16:17:48 mvs Exp $	*/
+/*	$OpenBSD: inet.c,v 1.173 2021/12/05 22:36:19 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -31,7 +31,6 @@
  */
 
 #include <sys/queue.h>
-#include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/domain.h>
