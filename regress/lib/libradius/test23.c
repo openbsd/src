@@ -10,7 +10,7 @@ void test23(void)
 {
 	RADIUS_PACKET *packet;
 	RADIUS_PACKET *response;
-	HMAC_CTX ctx;
+	HMAC_CTX *ctx;
 
 	uint8_t packetdata[] = {
 		RADIUS_CODE_ACCESS_REQUEST, 0x7f, 0, 48,
@@ -42,12 +42,13 @@ void test23(void)
 	radius_put_message_authenticator(response, "sharedsecret");
 
 	radius_get_authenticator(response, responsedata + 4);
-	HMAC_Init(&ctx, "sharedsecret", 12, EVP_md5());
-	HMAC_Update(&ctx, responsedata, 4);
-	HMAC_Update(&ctx, packetdata + 4, 16);
-	HMAC_Update(&ctx, responsedata + 20, sizeof(responsedata) - 20);
-	HMAC_Final(&ctx, responsedata + sizeof(responsedata) - 16, NULL);
-	HMAC_cleanup(&ctx);
+	ctx = HMAC_CTX_new();
+	HMAC_Init_ex(ctx, "sharedsecret", 12, EVP_md5(), NULL);
+	HMAC_Update(ctx, responsedata, 4);
+	HMAC_Update(ctx, packetdata + 4, 16);
+	HMAC_Update(ctx, responsedata + 20, sizeof(responsedata) - 20);
+	HMAC_Final(ctx, responsedata + sizeof(responsedata) - 16, NULL);
+	HMAC_CTX_free(ctx);
 
 	CHECK(radius_get_length(response) == sizeof(responsedata));
 	CHECK(memcmp(radius_get_data(response), responsedata, sizeof(responsedata)) == 0);
