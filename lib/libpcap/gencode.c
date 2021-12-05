@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.58 2021/12/01 18:28:45 deraadt Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.59 2021/12/05 16:40:24 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -21,7 +21,6 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <sys/param.h>	/* ALIGN */
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/time.h>
@@ -106,22 +105,20 @@ static int variable_nl;
 static int nl_reg, iphl_reg;
 
 /*
- * We divy out chunks of memory rather than call malloc each time so
- * we don't have to worry about leaking memory.  It's probably
- * not a big deal if all this memory was wasted but it this ever
- * goes into a library that would probably not be a good idea.
+ * Track memory allocations, for bulk freeing at the end
  */
-#define NCHUNKS 16
-#define CHUNK0SIZE 1024
-struct chunk {
-	u_int n_left;
-	void *m;
+#define NMEMBAG 16
+#define MEMBAG0SIZE (4096 / sizeof (void *))
+struct membag {
+	u_int total;
+	u_int slot;
+	void **ptrs;	/* allocated array[total] to each malloc */
 };
 
-static struct chunk chunks[NCHUNKS];
-static int cur_chunk;
+static struct membag membag[NMEMBAG];
+static int cur_membag;
 
-static void *newchunk(u_int);
+static void *newchunk(size_t);
 static void freechunks(void);
 static __inline struct block *new_block(int);
 static __inline struct slist *new_stmt(int);
@@ -175,42 +172,44 @@ static struct slist *xfer_to_a(struct arth *);
 static struct block *gen_len(int, int);
 
 static void *
-newchunk(n)
-	u_int n;
+newchunk(size_t n)
 {
-	struct chunk *cp;
+	struct membag *m;
 	int k, size;
+	void *p;
 
-	/* XXX Round to structure boundary. */
-	n = ALIGN(n);
-
-	cp = &chunks[cur_chunk];
-	if (n > cp->n_left) {
-		++cp, k = ++cur_chunk;
-		if (k >= NCHUNKS)
+	m = &membag[cur_membag];
+	if (m->total != 0 && m->total - m->slot == 0) {
+		if (++cur_membag == NMEMBAG)
 			bpf_error("out of memory");
-		size = CHUNK0SIZE << k;
-		cp->m = calloc(1, size);
-		if (cp->m == NULL)
-			bpf_error("out of memory");
-
-		cp->n_left = size;
-		if (n > size)
-			bpf_error("out of memory");
+		m = &membag[cur_membag];
 	}
-	cp->n_left -= n;
-	return (void *)((char *)cp->m + cp->n_left);
+	if (m->total - m->slot == 0) {
+		m->ptrs = calloc(sizeof (char *), MEMBAG0SIZE << cur_membag);
+		if (m->ptrs == NULL)
+			bpf_error("out of memory");
+		m->total = MEMBAG0SIZE << cur_membag;
+		m->slot = 0;
+	}
+
+	p = calloc(1, n);
+	if (p == NULL)
+		bpf_error("out of memory");
+	m->ptrs[m->slot++] = p;
+	return (p);
 }
 
 static void
-freechunks()
+freechunks(void)
 {
-	int i;
+	int i, j;
 
-	cur_chunk = 0;
-	for (i = 0; i < NCHUNKS; ++i) {
-		free(chunks[i].m);
-		chunks[i].m = NULL;
+	for (i = 0; i <= cur_membag; i++) {
+		for (j = 0; j <= membag[i].slot; j++)
+			free(membag[i].ptrs[j]);
+		free(membag[i].ptrs);
+		membag[i].ptrs = NULL;
+		membag[i].slot = membag[i].total = 0;
 	}
 }
 
