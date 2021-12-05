@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.17 2021/10/24 16:59:14 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.18 2021/12/05 12:26:27 jsg Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -142,7 +142,7 @@ void
 io_read_buf_alloc(struct ibuf *b, void **res, size_t *sz)
 {
 	*res = NULL;
-	io_read_buf(b, sz, sizeof(sz));
+	io_read_buf(b, sz, sizeof(*sz));
 	if (*sz == 0)
 		return;
 	if ((*res = malloc(*sz)) == NULL)
