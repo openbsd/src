@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.21 2021/11/29 20:02:14 tb Exp $ */
+/* $OpenBSD: dh_check.c,v 1.22 2021/12/05 13:45:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,17 +68,10 @@
 int
 DH_check_params(const DH *dh, int *flags)
 {
-	BN_CTX *ctx = NULL;
-	BIGNUM *max_g;
+	BIGNUM *max_g = NULL;
 	int ok = 0;
 
 	*flags = 0;
-
-	if ((ctx = BN_CTX_new()) == NULL)
-		goto err;
-	BN_CTX_start(ctx);
-	if ((max_g = BN_CTX_get(ctx)) == NULL)
-		goto err;
 
 	if (!BN_is_odd(dh->p))
 		*flags |= DH_CHECK_P_NOT_PRIME;
@@ -90,7 +83,7 @@ DH_check_params(const DH *dh, int *flags)
 	if (BN_cmp(dh->g, BN_value_one()) <= 0)
 		*flags |= DH_NOT_SUITABLE_GENERATOR;
 	/* max_g = p - 1 */
-	if (BN_copy(max_g, dh->p) == NULL)
+	if ((max_g = BN_dup(dh->p)) == NULL)
 		goto err;
 	if (!BN_sub_word(max_g, 1))
 		goto err;
@@ -101,8 +94,7 @@ DH_check_params(const DH *dh, int *flags)
 	ok = 1;
 
  err:
-	BN_CTX_end(ctx);
-	BN_CTX_free(ctx);
+	BN_free(max_g);
 
 	return ok;
 }
