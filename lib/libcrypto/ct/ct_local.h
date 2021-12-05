@@ -1,3 +1,4 @@
+/*	$OpenBSD: ct_local.h,v 1.4 2021/12/05 09:37:46 tb Exp $ */
 /*
  * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
  *

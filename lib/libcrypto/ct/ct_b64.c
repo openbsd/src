@@ -1,3 +1,4 @@
+/*	$OpenBSD: ct_b64.c,v 1.4 2021/12/05 09:37:46 tb Exp $ */
 /*
  * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *

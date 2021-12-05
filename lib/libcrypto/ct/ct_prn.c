@@ -1,3 +1,4 @@
+/*	$OpenBSD: ct_prn.c,v 1.5 2021/12/05 09:37:46 tb Exp $ */
 /*
  * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
