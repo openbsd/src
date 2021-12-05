@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.85 2021/10/11 09:01:06 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.86 2021/12/05 11:33:45 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -193,6 +193,7 @@ ieee80211_ifattach(struct ifnet *ifp)
 	if_addgroup(ifp, "wlan");
 	ifp->if_priority = IF_WIRELESS_DEFAULT_PRIORITY;
 
+	task_set(&ic->ic_rtm_80211info_task, ieee80211_rtm_80211info_task, ic);
 	ieee80211_set_link_state(ic, LINK_STATE_DOWN);
 
 	timeout_set(&ic->ic_bgscan_timeout, ieee80211_bgscan_timeout, ifp);
@@ -203,6 +204,7 @@ ieee80211_ifdetach(struct ifnet *ifp)
 {
 	struct ieee80211com *ic = (void *)ifp;
 
+	task_del(systq, &ic->ic_rtm_80211info_task);
 	timeout_del(&ic->ic_bgscan_timeout);
 
 	/*

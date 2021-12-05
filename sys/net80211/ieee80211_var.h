@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.108 2021/12/03 12:41:36 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.109 2021/12/05 11:33:45 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -306,6 +306,7 @@ struct ieee80211com {
 	struct timeout		ic_inact_timeout; /* node inactivity timeout */
 	struct timeout		ic_node_cache_timeout;
 #endif
+	struct task		ic_rtm_80211info_task;
 	int			ic_des_esslen;
 	u_int8_t		ic_des_essid[IEEE80211_NWID_LEN];
 	struct ieee80211_channel *ic_des_chan;	/* desired channel */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.106 2021/12/03 12:41:36 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.107 2021/12/05 11:33:45 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -1288,6 +1288,31 @@ justcleanup:
 }
 
 void
+ieee80211_rtm_80211info_task(void *arg)
+{
+	struct ieee80211com *ic = arg;
+	struct ifnet *ifp = &ic->ic_if;
+	struct if_ieee80211_data ifie;
+	int s = splnet();
+
+	if (LINK_STATE_IS_UP(ifp->if_link_state)) {
+		memset(&ifie, 0, sizeof(ifie));
+		ifie.ifie_nwid_len = ic->ic_bss->ni_esslen;
+		memcpy(ifie.ifie_nwid, ic->ic_bss->ni_essid,
+		    sizeof(ifie.ifie_nwid));
+		memcpy(ifie.ifie_addr, ic->ic_bss->ni_bssid,
+		    sizeof(ifie.ifie_addr));
+		ifie.ifie_channel = ieee80211_chan2ieee(ic,
+		    ic->ic_bss->ni_chan);
+		ifie.ifie_flags = ic->ic_flags;
+		ifie.ifie_xflags = ic->ic_xflags;
+		rtm_80211info(&ic->ic_if, &ifie);
+	}
+
+	splx(s);
+}
+
+void
 ieee80211_set_link_state(struct ieee80211com *ic, int nstate)
 {
 	struct ifnet *ifp = &ic->ic_if;
@@ -1307,20 +1332,8 @@ ieee80211_set_link_state(struct ieee80211com *ic, int nstate)
 	}
 	if (nstate != ifp->if_link_state) {
 		ifp->if_link_state = nstate;
-		if (LINK_STATE_IS_UP(nstate)) {
-			struct if_ieee80211_data ifie;
-			memset(&ifie, 0, sizeof(ifie));
-			ifie.ifie_nwid_len = ic->ic_bss->ni_esslen;
-			memcpy(ifie.ifie_nwid, ic->ic_bss->ni_essid,
-			    sizeof(ifie.ifie_nwid));
-			memcpy(ifie.ifie_addr, ic->ic_bss->ni_bssid,
-			    sizeof(ifie.ifie_addr));
-			ifie.ifie_channel = ieee80211_chan2ieee(ic,
-			    ic->ic_bss->ni_chan);
-			ifie.ifie_flags = ic->ic_flags;
-			ifie.ifie_xflags = ic->ic_xflags;
-			rtm_80211info(&ic->ic_if, &ifie);
-		}
+		if (LINK_STATE_IS_UP(nstate))
+			task_add(systq, &ic->ic_rtm_80211info_task);
 		if_link_state_change(ifp);
 	}
 }
