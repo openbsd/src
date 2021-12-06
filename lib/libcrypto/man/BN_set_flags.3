@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_set_flags.3,v 1.4 2021/03/12 05:18:00 jsg Exp $
+.\"	$OpenBSD: BN_set_flags.3,v 1.5 2021/12/06 19:45:27 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 12 2021 $
+.Dd $Mdocdate: December 6 2021 $
 .Dt BN_SET_FLAGS 3
 .Os
 .Sh NAME
@@ -114,11 +114,6 @@ The
 .Fa flags
 argument has the same syntax as for
 .Fn BN_set_flags .
-.Pp
-These functions are currently implemented as macros, but they are
-likely to become real functions in the future when the
-.Vt BIGNUM
-data type will be made opaque.
 .Sh RETURN VALUES
 .Fn BN_get_flags
 returns zero or more of the above constants, OR'ed together.

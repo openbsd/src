@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_set_negative.3,v 1.5 2019/06/03 14:43:15 schwarze Exp $
+.\"	$OpenBSD: BN_set_negative.3,v 1.6 2021/12/06 19:45:27 schwarze Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 3 2019 $
+.Dd $Mdocdate: December 6 2021 $
 .Dt BN_SET_NEGATIVE 3
 .Os
 .Sh NAME
@@ -45,7 +45,6 @@ are non-zero, otherwise it sets it to positive.
 .Fn BN_is_negative
 tests the sign of
 .Fa b .
-It is currently implemented as a macro.
 .Sh RETURN VALUES
 .Fn BN_is_negative
 returns 1 if
