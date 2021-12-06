@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.70 2021/10/06 15:46:03 claudio Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.71 2021/12/06 21:21:10 guenther Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -900,7 +900,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	frame->fixreg[3] = retval[0] = arginfo.ps_nargvstr;
 	frame->fixreg[4] = retval[1] = (register_t)arginfo.ps_argvstr;
 	frame->fixreg[5] = (register_t)arginfo.ps_envstr;
-	frame->fixreg[6] = (register_t)pack->ep_emul_argp;
+	frame->fixreg[6] = (register_t)pack->ep_auxinfo;
 	frame->fixreg[12] = pack->ep_entry;
 	frame->srr0 = pack->ep_entry;
 	frame->srr1 = PSL_USER;

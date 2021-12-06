@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.223 2021/03/16 16:32:22 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.224 2021/12/06 21:21:10 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -47,6 +47,7 @@
 #include <sys/file.h>
 #include <sys/acct.h>
 #include <sys/exec.h>
+#include <sys/exec_elf.h>
 #include <sys/ktrace.h>
 #include <sys/resourcevar.h>
 #include <sys/wait.h>
@@ -294,7 +295,8 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	pack.ep_hdrvalid = 0;
 	pack.ep_ndp = &nid;
 	pack.ep_interp = NULL;
-	pack.ep_emul_arg = NULL;
+	pack.ep_args = NULL;
+	pack.ep_auxinfo = NULL;
 	VMCMDSET_INIT(&pack.ep_vmcmds);
 	pack.ep_vap = &attr;
 	pack.ep_emul = &emul_native;
@@ -490,7 +492,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	stack = (char *)(vm->vm_minsaddr - len);
 #endif
 	/* Now copy argc, args & environ to new stack */
-	if (!(*pack.ep_emul->e_copyargs)(&pack, &arginfo, stack, argp))
+	if (!copyargs(&pack, &arginfo, stack, argp))
 		goto exec_abort;
 
 	/* copy out the process's ps_strings structure */
@@ -732,8 +734,7 @@ bad:
 	}
 	if (pack.ep_interp != NULL)
 		pool_put(&namei_pool, pack.ep_interp);
-	if (pack.ep_emul_arg != NULL)
-		free(pack.ep_emul_arg, M_TEMP, pack.ep_emul_argsize);
+	free(pack.ep_args, M_TEMP, sizeof *pack.ep_args);
 	/* close and put the exec'd file */
 	vn_close(pack.ep_vp, FREAD, cred, p);
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
@@ -755,8 +756,7 @@ exec_abort:
 	uvm_unmap(&vm->vm_map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
 	if (pack.ep_interp != NULL)
 		pool_put(&namei_pool, pack.ep_interp);
-	if (pack.ep_emul_arg != NULL)
-		free(pack.ep_emul_arg, M_TEMP, pack.ep_emul_argsize);
+	free(pack.ep_args, M_TEMP, sizeof *pack.ep_args);
 	pool_put(&namei_pool, nid.ni_cnd.cn_pnbuf);
 	vn_close(pack.ep_vp, FREAD, cred, p);
 	km_free(argp, NCARGS, &kv_exec, &kp_pageable);
@@ -772,7 +772,7 @@ free_pack_abort:
 }
 
 
-void *
+int
 copyargs(struct exec_package *pack, struct ps_strings *arginfo, void *stack,
     void *argp)
 {
@@ -784,7 +784,7 @@ copyargs(struct exec_package *pack, struct ps_strings *arginfo, void *stack,
 	int envc = arginfo->ps_nenvstr;
 
 	if (copyout(&argc, cpp++, sizeof(argc)))
-		return (NULL);
+		return (0);
 
 	dp = (char *) (cpp + argc + envc + 2 + pack->ep_emul->e_arglen);
 	sp = argp;
@@ -795,22 +795,26 @@ copyargs(struct exec_package *pack, struct ps_strings *arginfo, void *stack,
 	for (; --argc >= 0; sp += len, dp += len)
 		if (copyout(&dp, cpp++, sizeof(dp)) ||
 		    copyoutstr(sp, dp, ARG_MAX, &len))
-			return (NULL);
+			return (0);
 
 	if (copyout(&nullp, cpp++, sizeof(nullp)))
-		return (NULL);
+		return (0);
 
 	arginfo->ps_envstr = cpp; /* remember location of envp for later */
 
 	for (; --envc >= 0; sp += len, dp += len)
 		if (copyout(&dp, cpp++, sizeof(dp)) ||
 		    copyoutstr(sp, dp, ARG_MAX, &len))
-			return (NULL);
+			return (0);
 
 	if (copyout(&nullp, cpp++, sizeof(nullp)))
-		return (NULL);
+		return (0);
 
-	return (cpp);
+	/* if this process needs auxinfo, note where to place it */
+	if (pack->ep_args != NULL)
+		pack->ep_auxinfo = cpp;
+
+	return (1);
 }
 
 int

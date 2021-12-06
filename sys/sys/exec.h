@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.44 2021/04/23 15:53:07 drahn Exp $	*/
+/*	$OpenBSD: exec.h,v 1.45 2021/12/06 21:21:10 guenther Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -111,6 +111,7 @@ struct exec_vmcmd_set {
 	struct	exec_vmcmd evs_start[EXEC_DEFAULT_VMCMD_SETSIZE];
 };
 
+struct elf_args;
 struct exec_package {
 	char	*ep_name;		/* file's name */
 	void	*ep_hdr;		/* file's exec header */
@@ -132,9 +133,8 @@ struct exec_package {
 	char	**ep_fa;		/* a fake args vector for scripts */
 	int	ep_fd;			/* a file descriptor we're holding */
 	struct  emul *ep_emul;		/* os emulation */
-	void	*ep_emul_arg;		/* emulation argument */
-	size_t	ep_emul_argsize;	/* emulation argument size */
-	void	*ep_emul_argp;		/* emulation argument pointer */
+	struct	elf_args *ep_args;	/* ELF info */
+	void	*ep_auxinfo;		/* userspace auxinfo address */
 	char	*ep_interp;		/* name of interpreter if any */
 };
 #define	EXEC_INDIR	0x0001		/* script handling already done */
@@ -157,11 +157,8 @@ int	vmcmd_map_pagedvn(struct proc *, struct exec_vmcmd *);
 int	vmcmd_map_readvn(struct proc *, struct exec_vmcmd *);
 int	vmcmd_map_zero(struct proc *, struct exec_vmcmd *);
 int	vmcmd_randomize(struct proc *, struct exec_vmcmd *);
-void	*copyargs(struct exec_package *,
-				    struct ps_strings *,
-				    void *, void *);
-void	setregs(struct proc *, struct exec_package *,
-				    u_long, register_t *);
+int	copyargs(struct exec_package *, struct ps_strings *, void *, void *);
+void	setregs(struct proc *, struct exec_package *, u_long, register_t *);
 int	check_exec(struct proc *, struct exec_package *);
 int	exec_setup_stack(struct proc *, struct exec_package *);
 int	exec_process_vmcmds(struct proc *, struct exec_package *);
