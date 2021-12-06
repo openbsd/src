@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.341 2021/12/04 13:07:17 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.342 2021/12/06 21:47:27 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -995,21 +995,14 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 		if (msg->msg_cp_addr) {
 			sa->sa_cp_addr = msg->msg_cp_addr;
 			msg->msg_cp_addr = NULL;
-			log_info("%s: obtained lease: %s", SPI_SA(sa, __func__),
-			    print_host((struct sockaddr *)&sa->sa_cp_addr->addr, NULL, 0));
 		}
 		if (msg->msg_cp_addr6) {
 			sa->sa_cp_addr6 = msg->msg_cp_addr6;
 			msg->msg_cp_addr6 = NULL;
-			log_info("%s: obtained lease: %s", SPI_SA(sa, __func__),
-			    print_host((struct sockaddr *)&sa->sa_cp_addr6->addr, NULL, 0));
 		}
 		if (msg->msg_cp_dns) {
 			sa->sa_cp_dns = msg->msg_cp_dns;
 			msg->msg_cp_dns = NULL;
-			log_debug("%s: DNS: %s", __func__,
-			    print_host((struct sockaddr *)&sa->sa_cp_dns->addr,
-			    NULL, 0));
 		}
 		sa->sa_cp = msg->msg_cp;
 	}
@@ -1029,6 +1022,21 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 		sa->sa_stateflags &= ~IKED_REQ_CERTVALID;
 		if (ca_setcert(env, &sa->sa_hdr, id, certtype, cert, certlen, PROC_CERT) == -1)
 			return (-1);
+	}
+
+	if (sa->sa_cp == IKEV2_CP_REPLY) {
+		if (sa->sa_cp_addr)
+			log_info("%s: obtained lease: %s", SPI_SA(sa, __func__),
+			    print_host((struct sockaddr *)&sa->sa_cp_addr->addr,
+			    NULL, 0));
+		if (sa->sa_cp_addr6)
+			log_info("%s: obtained lease: %s", SPI_SA(sa, __func__),
+			    print_host((struct sockaddr *)&sa->sa_cp_addr6->addr,
+			    NULL, 0));
+		if (sa->sa_cp_dns)
+			log_info("%s: obtained DNS: %s", SPI_SA(sa, __func__),
+			    print_host((struct sockaddr *)&sa->sa_cp_dns->addr,
+			    NULL, 0));
 	}
 
 	return ikev2_ike_auth(env, sa);
