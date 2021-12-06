@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.47 2021/08/27 17:15:57 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.48 2021/12/06 10:08:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -348,6 +348,8 @@ recalculate_size_skip_client(struct client *loop, __unused int type,
 	 * is not the current window - this is used for aggressive-resize.
 	 * Otherwise skip any session that doesn't contain the window.
 	 */
+	if (loop->session->curw == NULL)
+		return (1);
 	if (current)
 		return (loop->session->curw->window != w);
 	return (session_has(loop->session, w) == 0);

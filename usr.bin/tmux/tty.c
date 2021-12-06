@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.412 2021/11/29 11:05:28 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.413 2021/12/06 10:08:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -937,7 +937,9 @@ tty_update_window_offset(struct window *w)
 	struct client	*c;
 
 	TAILQ_FOREACH(c, &clients, entry) {
-		if (c->session != NULL && c->session->curw->window == w)
+		if (c->session != NULL &&
+		    c->session->curw != NULL &&
+		    c->session->curw->window == w)
 			tty_update_client_offset(c);
 	}
 }
