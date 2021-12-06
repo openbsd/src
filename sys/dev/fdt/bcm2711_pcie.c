@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.9 2021/12/04 16:08:02 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.10 2021/12/06 18:02:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -550,6 +550,9 @@ bcmpcie_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	     segs, nsegs, size, flags);
 	if (error)
 		return error;
+
+	if (sc->sc_dmaranges == NULL)
+		return 0;
 
 	/* For each segment. */
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
