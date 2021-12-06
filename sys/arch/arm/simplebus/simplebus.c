@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.17 2021/02/18 00:04:13 jsg Exp $ */
+/* $OpenBSD: simplebus.c,v 1.18 2021/12/06 20:01:54 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -36,6 +36,8 @@ void simplebus_attach_node(struct device *, int);
 int simplebus_bs_map(void *, uint64_t, bus_size_t, int, bus_space_handle_t *);
 int simplebus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
     bus_size_t, struct proc *, int, paddr_t *, int *, int);
+int simplebus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+    bus_dma_segment_t *, int, bus_size_t, int);
 
 struct cfattach simplebus_ca = {
 	sizeof(struct simplebus_softc), simplebus_match, simplebus_attach
@@ -99,6 +101,7 @@ simplebus_attach(struct device *parent, struct device *self, void *aux)
 
 	memcpy(&sc->sc_dma, sc->sc_dmat, sizeof(sc->sc_dma));
 	sc->sc_dma._dmamap_load_buffer = simplebus_dmamap_load_buffer;
+	sc->sc_dma._dmamap_load_raw = simplebus_dmamap_load_raw;
 	sc->sc_dma._cookie = sc;
 
 	sc->sc_dmarangeslen = OF_getproplen(sc->sc_node, "dma-ranges");
@@ -324,6 +327,64 @@ simplebus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 
 	/* For each segment. */
 	for (seg = firstseg; seg <= *segp; seg++) {
+		uint64_t addr, size, rfrom, rto, rsize;
+		uint32_t *range;
+
+		addr = map->dm_segs[seg].ds_addr;
+		size = map->dm_segs[seg].ds_len;
+
+		/* For each range. */
+		for (range = sc->sc_dmaranges; rlen >= rone;
+		     rlen -= rone, range += rone) {
+			/* Extract from and size, so we can see if we fit. */
+			rfrom = range[sc->sc_acells];
+			if (sc->sc_pacells == 2)
+				rfrom = (rfrom << 32) + range[sc->sc_acells + 1];
+
+			rsize = range[sc->sc_acells + sc->sc_pacells];
+			if (sc->sc_scells == 2)
+				rsize = (rsize << 32) +
+				    range[sc->sc_acells + sc->sc_pacells + 1];
+
+			/* Try next, if we're not in the range. */
+			if (addr < rfrom || (addr + size) > (rfrom + rsize))
+				continue;
+
+			/* All good, extract to address and translate. */
+			rto = range[0];
+			if (sc->sc_acells == 2)
+				rto = (rto << 32) + range[1];
+
+			map->dm_segs[seg].ds_addr -= rfrom;
+			map->dm_segs[seg].ds_addr += rto;
+			break;
+		}
+	}
+
+	return 0;
+}
+
+int
+simplebus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
+{
+	struct simplebus_softc *sc = t->_cookie;
+	int rlen, rone, seg;
+	int error;
+
+	error = sc->sc_dmat->_dmamap_load_raw(sc->sc_dmat, map,
+	     segs, nsegs, size, flags);
+	if (error)
+		return error;
+
+	if (sc->sc_dmaranges == NULL)
+		return 0;
+
+	rlen = sc->sc_dmarangeslen / sizeof(uint32_t);
+	rone = sc->sc_pacells + sc->sc_acells + sc->sc_scells;
+
+	/* For each segment. */
+	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		uint64_t addr, size, rfrom, rto, rsize;
 		uint32_t *range;
 
