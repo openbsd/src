@@ -1,4 +1,4 @@
-/* $OpenBSD: s_server.c,v 1.53 2021/10/31 16:47:27 tb Exp $ */
+/* $OpenBSD: s_server.c,v 1.54 2021/12/06 11:06:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -180,13 +180,13 @@
 static void s_server_init(void);
 static void sv_usage(void);
 static void print_stats(BIO *bp, SSL_CTX *ctx);
-static int sv_body(char *hostname, int s, unsigned char *context);
+static int sv_body(int s, unsigned char *context);
 static void close_accept_socket(void);
 static int init_ssl_connection(SSL *s);
 #ifndef OPENSSL_NO_DH
 static DH *load_dh_param(const char *dhfile);
 #endif
-static int www_body(char *hostname, int s, unsigned char *context);
+static int www_body(int s, unsigned char *context);
 static int generate_session_id(const SSL *ssl, unsigned char *id,
     unsigned int *id_len);
 static int ssl_servername_cb(SSL *s, int *ad, void *arg);
@@ -1531,7 +1531,7 @@ print_stats(BIO *bio, SSL_CTX *ssl_ctx)
 }
 
 static int
-sv_body(char *hostname, int s, unsigned char *context)
+sv_body(int s, unsigned char *context)
 {
 	char *buf = NULL;
 	int ret = 1;
@@ -1956,7 +1956,7 @@ load_dh_param(const char *dhfile)
 #endif
 
 static int
-www_body(char *hostname, int s, unsigned char *context)
+www_body(int s, unsigned char *context)
 {
 	char *buf = NULL;
 	int ret = 1;

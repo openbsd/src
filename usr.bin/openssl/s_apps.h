@@ -1,4 +1,4 @@
-/* $OpenBSD: s_apps.h,v 1.6 2021/08/29 12:33:15 tb Exp $ */
+/* $OpenBSD: s_apps.h,v 1.7 2021/12/06 11:06:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,7 +119,7 @@ extern int verify_depth;
 extern int verify_return_error;
 
 int do_server(int port, int type, int *ret,
-    int (*cb)(char *hostname, int s, unsigned char *context),
+    int (*cb)(int s, unsigned char *context),
     unsigned char *context, int naccept);
 #ifdef HEADER_X509_H
 int verify_callback(int ok, X509_STORE_CTX *ctx);

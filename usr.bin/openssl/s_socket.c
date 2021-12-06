@@ -1,4 +1,4 @@
-/* $OpenBSD: s_socket.c,v 1.12 2021/08/29 12:33:15 tb Exp $ */
+/* $OpenBSD: s_socket.c,v 1.13 2021/12/06 11:06:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,7 +75,7 @@
 
 static int init_server(int *sock, int port, int type);
 static int init_server_long(int *sock, int port, char *ip, int type);
-static int do_accept(int acc_sock, int *sock, char **host);
+static int do_accept(int acc_sock, int *sock);
 
 int
 init_client(int *sock, char *host, char *port, int type, int af)
@@ -131,11 +131,10 @@ init_client(int *sock, char *host, char *port, int type, int af)
 
 int
 do_server(int port, int type, int *ret,
-    int (*cb) (char *hostname, int s, unsigned char *context),
+    int (*cb)(int s, unsigned char *context),
     unsigned char *context, int naccept)
 {
 	int sock;
-	char *name = NULL;
 	int accept_socket = 0;
 	int i;
 
@@ -148,15 +147,14 @@ do_server(int port, int type, int *ret,
 	}
 	for (;;) {
 		if (type == SOCK_STREAM) {
-			if (do_accept(accept_socket, &sock, &name) == 0) {
+			if (do_accept(accept_socket, &sock) == 0) {
 				shutdown(accept_socket, SHUT_RD);
 				close(accept_socket);
 				return (0);
 			}
 		} else
 			sock = accept_socket;
-		i = (*cb) (name, sock, context);
-		free(name);
+		i = cb(sock, context);
 		if (type == SOCK_STREAM) {
 			shutdown(sock, SHUT_RDWR);
 			close(sock);
@@ -227,13 +225,13 @@ init_server(int *sock, int port, int type)
 }
 
 static int
-do_accept(int acc_sock, int *sock, char **host)
+do_accept(int acc_sock, int *sock)
 {
-	int ret;
 	struct hostent *h1, *h2;
 	static struct sockaddr_in from;
 	socklen_t len;
-/*	struct linger ling; */
+	char *host = NULL;
+	int ret;
 
  redoit:
 
@@ -249,47 +247,34 @@ do_accept(int acc_sock, int *sock, char **host)
 		perror("accept");
 		return (0);
 	}
-/*
-	ling.l_onoff=1;
-	ling.l_linger=0;
-	i=setsockopt(ret,SOL_SOCKET,SO_LINGER,(char *)&ling,sizeof(ling));
-	if (i == -1) { perror("linger"); return(0); }
-	i=0;
-	i=setsockopt(ret,SOL_SOCKET,SO_KEEPALIVE,(char *)&i,sizeof(i));
-	if (i == -1) { perror("keepalive"); return(0); }
-*/
 
-	if (host == NULL)
-		goto end;
 	h1 = gethostbyaddr((char *) &from.sin_addr.s_addr,
 	    sizeof(from.sin_addr.s_addr), AF_INET);
 	if (h1 == NULL) {
 		BIO_printf(bio_err, "bad gethostbyaddr\n");
-		*host = NULL;
-		/* return(0); */
 	} else {
-		if ((*host = strdup(h1->h_name)) == NULL) {
+		if ((host = strdup(h1->h_name)) == NULL) {
 			perror("strdup");
 			close(ret);
 			return (0);
 		}
 
-		h2 = gethostbyname(*host);
+		h2 = gethostbyname(host);
 		if (h2 == NULL) {
 			BIO_printf(bio_err, "gethostbyname failure\n");
 			close(ret);
-			free(*host);
+			free(host);
 			return (0);
 		}
 		if (h2->h_addrtype != AF_INET) {
 			BIO_printf(bio_err, "gethostbyname addr is not AF_INET\n");
 			close(ret);
-			free(*host);
+			free(host);
 			return (0);
 		}
 	}
 
- end:
+	free(host);
 	*sock = ret;
 	return (1);
 }
