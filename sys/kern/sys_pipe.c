@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.129 2021/10/24 06:59:54 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.130 2021/12/07 14:06:16 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -85,6 +85,10 @@ int	filt_pipewrite(struct knote *kn, long hint);
 int	filt_pipewritemodify(struct kevent *kev, struct knote *kn);
 int	filt_pipewriteprocess(struct knote *kn, struct kevent *kev);
 int	filt_pipewrite_common(struct knote *kn, struct pipe *rpipe);
+int	filt_pipeexcept(struct knote *kn, long hint);
+int	filt_pipeexceptmodify(struct kevent *kev, struct knote *kn);
+int	filt_pipeexceptprocess(struct knote *kn, struct kevent *kev);
+int	filt_pipeexcept_common(struct knote *kn, struct pipe *rpipe);
 
 const struct filterops pipe_rfiltops = {
 	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
@@ -102,6 +106,15 @@ const struct filterops pipe_wfiltops = {
 	.f_event	= filt_pipewrite,
 	.f_modify	= filt_pipewritemodify,
 	.f_process	= filt_pipewriteprocess,
+};
+
+const struct filterops pipe_efiltops = {
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
+	.f_attach	= NULL,
+	.f_detach	= filt_pipedetach,
+	.f_event	= filt_pipeexcept,
+	.f_modify	= filt_pipeexceptmodify,
+	.f_process	= filt_pipeexceptprocess,
 };
 
 /*
@@ -908,6 +921,11 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 		kn->kn_hook = wpipe;
 		klist_insert_locked(&wpipe->pipe_sel.si_note, kn);
 		break;
+	case EVFILT_EXCEPT:
+		kn->kn_fop = &pipe_efiltops;
+		kn->kn_hook = rpipe;
+		klist_insert_locked(&rpipe->pipe_sel.si_note, kn);
+		break;
 	default:
 		error = EINVAL;
 	}
@@ -1040,6 +1058,65 @@ filt_pipewriteprocess(struct knote *kn, struct kevent *kev)
 		active = 1;
 	else
 		active = filt_pipewrite_common(kn, rpipe);
+	if (active)
+		knote_submit(kn, kev);
+	rw_exit_write(rpipe->pipe_lock);
+
+	return (active);
+}
+
+int
+filt_pipeexcept_common(struct knote *kn, struct pipe *rpipe)
+{
+	struct pipe *wpipe;
+
+	rw_assert_wrlock(rpipe->pipe_lock);
+
+	wpipe = pipe_peer(rpipe);
+
+	if ((rpipe->pipe_state & PIPE_EOF) || wpipe == NULL) {
+		kn->kn_flags |= EV_EOF;
+		if (kn->kn_flags & __EV_POLL)
+			kn->kn_flags |= __EV_HUP;
+		return (1);
+	}
+
+	return (0);
+}
+
+int
+filt_pipeexcept(struct knote *kn, long hint)
+{
+	struct pipe *rpipe = kn->kn_fp->f_data;
+
+	return (filt_pipeexcept_common(kn, rpipe));
+}
+
+int
+filt_pipeexceptmodify(struct kevent *kev, struct knote *kn)
+{
+	struct pipe *rpipe = kn->kn_fp->f_data;
+	int active;
+
+	rw_enter_write(rpipe->pipe_lock);
+	knote_modify(kev, kn);
+	active = filt_pipeexcept_common(kn, rpipe);
+	rw_exit_write(rpipe->pipe_lock);
+
+	return (active);
+}
+
+int
+filt_pipeexceptprocess(struct knote *kn, struct kevent *kev)
+{
+	struct pipe *rpipe = kn->kn_fp->f_data;
+	int active;
+
+	rw_enter_write(rpipe->pipe_lock);
+	if (kev != NULL && (kn->kn_flags & EV_ONESHOT))
+		active = 1;
+	else
+		active = filt_pipeexcept_common(kn, rpipe);
 	if (active)
 		knote_submit(kn, kev);
 	rw_exit_write(rpipe->pipe_lock);
