@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.225 2021/12/07 04:19:24 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.226 2021/12/07 17:51:04 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -67,6 +67,7 @@
 
 #include <sys/timetc.h>
 
+struct uvm_object *sigobject;		/* shared sigcode object */
 struct uvm_object *timekeep_object;
 struct timekeep *timekeep;
 
@@ -80,7 +81,7 @@ const struct kmem_va_mode kv_exec = {
 /*
  * Map the shared signal code.
  */
-int exec_sigcode_map(struct process *, struct emul *);
+int exec_sigcode_map(struct process *);
 
 /*
  * Map the shared timekeep page.
@@ -691,7 +692,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 #endif
 
 	/* map the process's signal trampoline code */
-	if (exec_sigcode_map(pr, pack.ep_emul))
+	if (exec_sigcode_map(pr))
 		goto free_pack_abort;
 
 #ifdef __HAVE_EXEC_MD_MAP
@@ -818,14 +819,15 @@ copyargs(struct exec_package *pack, struct ps_strings *arginfo, void *stack,
 }
 
 int
-exec_sigcode_map(struct process *pr, struct emul *e)
+exec_sigcode_map(struct process *pr)
 {
+	extern char sigcode[], esigcode[], sigcoderet[];
 	vsize_t sz;
 
-	sz = (vaddr_t)e->e_esigcode - (vaddr_t)e->e_sigcode;
+	sz = (vaddr_t)esigcode - (vaddr_t)sigcode;
 
 	/*
-	 * If we don't have a sigobject for this emulation, create one.
+	 * If we don't have a sigobject yet, create one.
 	 *
 	 * sigobject is an anonymous memory object (just like SYSV shared
 	 * memory) that we keep a permanent reference to and that we map
@@ -835,20 +837,20 @@ exec_sigcode_map(struct process *pr, struct emul *e)
 	 * Then we map it with PROT_READ|PROT_EXEC into the process just
 	 * the way sys_mmap would map it.
 	 */
-	if (e->e_sigobject == NULL) {
+	if (sigobject == NULL) {
 		extern int sigfillsiz;
 		extern u_char sigfill[];
 		size_t off, left;
 		vaddr_t va;
 		int r;
 
-		e->e_sigobject = uao_create(sz, 0);
-		uao_reference(e->e_sigobject);	/* permanent reference */
+		sigobject = uao_create(sz, 0);
+		uao_reference(sigobject);	/* permanent reference */
 
-		if ((r = uvm_map(kernel_map, &va, round_page(sz), e->e_sigobject,
+		if ((r = uvm_map(kernel_map, &va, round_page(sz), sigobject,
 		    0, 0, UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
 		    MAP_INHERIT_SHARE, MADV_RANDOM, 0)))) {
-			uao_detach(e->e_sigobject);
+			uao_detach(sigobject);
 			return (ENOMEM);
 		}
 
@@ -858,23 +860,22 @@ exec_sigcode_map(struct process *pr, struct emul *e)
 			memcpy((caddr_t)va + off, sigfill, chunk);
 			left -= chunk;
 		}
-		memcpy((caddr_t)va, e->e_sigcode, sz);
+		memcpy((caddr_t)va, sigcode, sz);
 		uvm_unmap(kernel_map, va, va + round_page(sz));
 	}
 
 	pr->ps_sigcode = 0; /* no hint */
-	uao_reference(e->e_sigobject);
+	uao_reference(sigobject);
 	if (uvm_map(&pr->ps_vmspace->vm_map, &pr->ps_sigcode, round_page(sz),
-	    e->e_sigobject, 0, 0, UVM_MAPFLAG(PROT_READ | PROT_EXEC,
+	    sigobject, 0, 0, UVM_MAPFLAG(PROT_READ | PROT_EXEC,
 	    PROT_READ | PROT_WRITE | PROT_EXEC, MAP_INHERIT_COPY,
 	    MADV_RANDOM, UVM_FLAG_COPYONW | UVM_FLAG_SYSCALL))) {
-		uao_detach(e->e_sigobject);
+		uao_detach(sigobject);
 		return (ENOMEM);
 	}
 
 	/* Calculate PC at point of sigreturn entry */
-	pr->ps_sigcoderet = pr->ps_sigcode +
-	    (pr->ps_emul->e_esigret - pr->ps_emul->e_sigcode);
+	pr->ps_sigcoderet = pr->ps_sigcode + (sigcoderet - sigcode);
 
 	return (0);
 }

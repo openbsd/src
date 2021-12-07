@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.162 2021/12/07 04:19:24 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.163 2021/12/07 17:51:04 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -104,7 +104,6 @@ int	exec_elf_fixup(struct proc *, struct exec_package *);
 int	elf_os_pt_note_name(Elf_Note *);
 int	elf_os_pt_note(struct proc *, struct exec_package *, Elf_Ehdr *, int *);
 
-extern char sigcode[], esigcode[], sigcoderet[];
 #ifdef SYSCALL_DEBUG
 extern char *syscallnames[];
 #endif
@@ -136,9 +135,6 @@ struct emul emul_elf = {
 	setregs,
 	exec_elf_fixup,
 	coredump_elf,
-	sigcode,
-	esigcode,
-	sigcoderet
 };
 
 #define ELF_NOTE_NAME_OPENBSD	0x01

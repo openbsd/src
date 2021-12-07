@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.319 2021/12/07 04:19:24 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.320 2021/12/07 17:51:04 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -105,10 +105,6 @@ struct	emul {
 				  u_long, register_t *);
 	int	(*e_fixup)(struct proc *, struct exec_package *);
 	int	(*e_coredump)(struct proc *, void *cookie);
-	char	*e_sigcode;		/* Start of sigcode */
-	char	*e_esigcode;		/* End of sigcode */
-	char	*e_esigret;		/* sigaction RET position */
-	struct uvm_object *e_sigobject;	/* shared sigcode object */
 };
 
 /*
