@@ -20,13 +20,14 @@ use warnings;
 my @obsolete = qw(
     d2i_PBEPARAM d2i_PBE2PARAM d2i_PBKDF2PARAM
     i2d_PBEPARAM i2d_PBE2PARAM i2d_PBKDF2PARAM
+    NETSCAPE_SPKAC NETSCAPE_SPKI
     PBEPARAM PBEPARAM_free PBEPARAM_new
     PBE2PARAM PBE2PARAM_free PBE2PARAM_new
     PBKDF2PARAM PBKDF2PARAM_free PBKDF2PARAM_new
     PKCS5_pbe_set PKCS5_pbe_set0_algor
     PKCS5_pbe2_set PKCS5_pbe2_set_iv
     PKCS5_pbkdf2_set
-    X509_EX_V_INIT
+    X509_EX_V_INIT X509_EX_V_NETSCAPE_HACK
     X509_EXT_PACK_STRING X509_EXT_PACK_UNKNOWN
     X509_VERIFY_PARAM_ID
 );
@@ -106,10 +107,6 @@ try_again:
 			print "Vt $line\n" if $verbose;
 			next;
 		}
-		if ($id =~ /NETSCAPE/) {
-			print "V- $line\n" if $verbose;
-			next;
-		}
 		if (grep { $_ eq $id } @obsolete) {
 			print "V- $line\n" if $verbose;
 			next;
@@ -185,10 +182,6 @@ try_again:
 		}
 		unless (system qw/grep -qR/, '^\.\\\\" ' . $id . '\>',
 		    "$srcdir/") {
-			print "D- $line\n" if $verbose;
-			next;
-		}
-		if ($id =~ /NETSCAPE/) {
 			print "D- $line\n" if $verbose;
 			next;
 		}
@@ -285,7 +278,11 @@ try_again:
 			print "Fn $line\n" if $verbose;
 			next;
 		}
-		if ($id =~ /NETSCAPE/) {
+		# These functions are still provided by OpenSSL
+		# and still used by the Python test suite,
+		# but intentionally undocumented because nothing
+		# else uses them according to tb@, Dec 3, 2021.
+		if ($id =~ /NETSCAPE_(?:CERT_SEQUENCE|SPKAC|SPKI)/) {
 			print "F- $line\n" if $verbose;
 			next;
 		}
