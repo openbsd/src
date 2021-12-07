@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1185 2021/12/02 17:18:39 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1186 2021/12/07 04:13:22 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2318,7 +2318,7 @@ is_rootdisk() {
 				ls -d /mnt/{bin,dev,etc,home,mnt,root,sbin,tmp,usr,var}
 			fi
 			_rc=$?
-			umount -f /mnt
+			umount /mnt
 		fi
 		rm -f /dev/{r,}$_d?
 		return $_rc
@@ -3301,7 +3301,7 @@ check_unattendedupgrade() {
 				_rc=$?
 				((_rc == 0)) && cp /mnt/auto_upgrade.conf /
 				echo "Which disk is the root disk = ${_d}" >> /auto_upgrade.conf
-				umount -f /mnt
+				umount /mnt
 			fi
 			rm -f /dev/{r,}$_d?
 		fi
