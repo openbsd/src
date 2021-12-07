@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.230 2021/11/29 16:31:43 mvs Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.231 2021/12/07 22:17:02 guenther Exp $	*/
 
 /*
  * System call names.
@@ -7,7 +7,7 @@
  * created from;	OpenBSD: syscalls.master,v 1.220 2021/11/29 16:30:30 mvs Exp 
  */
 
-char *syscallnames[] = {
+const char *const syscallnames[] = {
 	"syscall",			/* 0 = syscall */
 	"exit",			/* 1 = exit */
 	"fork",			/* 2 = fork */

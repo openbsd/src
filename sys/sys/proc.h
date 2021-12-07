@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.320 2021/12/07 17:51:04 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.321 2021/12/07 22:17:03 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -95,16 +95,9 @@ struct uvm_object;
 union sigval;
 
 struct	emul {
-	char	e_name[8];		/* Symbolic name */
-	int	*e_errno;		/* Errno array */
 	int	e_nosys;		/* Offset of the nosys() syscall */
 	int	e_nsysent;		/* Number of system call entries */
 	struct sysent *e_sysent;	/* System call array */
-	char	**e_syscallnames;	/* System call name array */
-	void	(*e_setregs)(struct proc *, struct exec_package *,
-				  u_long, register_t *);
-	int	(*e_fixup)(struct proc *, struct exec_package *);
-	int	(*e_coredump)(struct proc *, void *cookie);
 };
 
 /*

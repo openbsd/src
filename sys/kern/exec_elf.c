@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.163 2021/12/07 17:51:04 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.164 2021/12/07 22:17:02 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -99,14 +99,8 @@ int	elf_check_header(Elf_Ehdr *);
 int	elf_read_from(struct proc *, struct vnode *, u_long, void *, int);
 void	elf_load_psection(struct exec_vmcmd_set *, struct vnode *,
 	    Elf_Phdr *, Elf_Addr *, Elf_Addr *, int *, int);
-int	coredump_elf(struct proc *, void *);
-int	exec_elf_fixup(struct proc *, struct exec_package *);
 int	elf_os_pt_note_name(Elf_Note *);
 int	elf_os_pt_note(struct proc *, struct exec_package *, Elf_Ehdr *, int *);
-
-#ifdef SYSCALL_DEBUG
-extern char *syscallnames[];
-#endif
 
 /* round up and down to page boundaries. */
 #define ELF_ROUND(a, b)		(((a) + (b) - 1) & ~((b) - 1))
@@ -122,19 +116,9 @@ extern char *syscallnames[];
  * This is the OpenBSD ELF emul
  */
 struct emul emul_elf = {
-	"native",
-	NULL,
 	SYS_syscall,
 	SYS_MAXSYSCALL,
 	sysent,
-#ifdef SYSCALL_DEBUG
-	syscallnames,
-#else
-	NULL,
-#endif
-	setregs,
-	exec_elf_fixup,
-	coredump_elf,
 };
 
 #define ELF_NOTE_NAME_OPENBSD	0x01

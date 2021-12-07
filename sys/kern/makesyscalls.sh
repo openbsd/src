@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$OpenBSD: makesyscalls.sh,v 1.13 2016/09/26 16:42:34 jca Exp $
+#	$OpenBSD: makesyscalls.sh,v 1.14 2021/12/07 22:17:02 guenther Exp $
 #	$NetBSD: makesyscalls.sh,v 1.26 1998/01/09 06:17:51 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
@@ -57,7 +57,7 @@ esac
 #	sysarghdr	the syscall argument struct definitions
 #	compatopts	those syscall types that are for 'compat' syscalls
 #	switchname	the name for the 'struct sysent' we define
-#	namesname	the name for the 'char *[]' we define
+#	namesname	the name for the 'const char *const[]' we define
 #	constprefix	the prefix for the system call constants
 #
 # NOTE THAT THIS makesyscalls.sh DOES NOT SUPPORT 'LIBCOMPAT'.
@@ -170,7 +170,7 @@ NR == 1 {
 	printf " * created from%s\n */\n\n", $0 > sysdcl
 
 	printf " * created from%s\n */\n\n", $0 > sysnames
-	printf "char *%s[] = {\n",namesname > sysnames
+	printf "const char *const %s[] = {\n",namesname > sysnames
 
 	printf " * created from%s\n */\n\n", $0 > sysnumhdr
 

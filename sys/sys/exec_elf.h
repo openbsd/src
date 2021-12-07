@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.92 2021/12/07 04:19:24 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.93 2021/12/07 22:17:03 guenther Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -799,6 +799,8 @@ extern Elf_Dyn		_DYNAMIC[];
 struct exec_package;
 
 int	exec_elf_makecmds(struct proc *, struct exec_package *);
+int	exec_elf_fixup(struct proc *, struct exec_package *);
+int	coredump_elf(struct proc *, void *);
 #endif /* _KERNEL */
 
 #define ELF_TARG_VER	1	/* The ver for which this code is intended */

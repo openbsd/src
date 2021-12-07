@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.290 2021/11/24 10:40:15 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.291 2021/12/07 22:17:02 guenther Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -64,6 +64,7 @@
 #include <sys/ttycom.h>
 #include <sys/pledge.h>
 #include <sys/witness.h>
+#include <sys/exec_elf.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -1578,9 +1579,6 @@ coredump(struct proc *p)
 	char *name;
 	const char *dir = "/var/crash";
 
-	if (pr->ps_emul->e_coredump == NULL)
-		return (EINVAL);
-
 	atomic_setbits_int(&pr->ps_flags, PS_COREDUMP);
 
 	/* Don't dump if will exceed file size limit. */
@@ -1681,7 +1679,7 @@ coredump(struct proc *p)
 	vref(vp);
 	error = vn_close(vp, FWRITE, cred, p);
 	if (error == 0)
-		error = (*pr->ps_emul->e_coredump)(p, &io);
+		error = coredump_elf(p, &io);
 	vrele(vp);
 out:
 	crfree(cred);

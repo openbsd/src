@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.60 2021/11/12 16:57:24 claudio Exp $ */
+/*	$OpenBSD: btrace.c,v 1.61 2021/12/07 22:17:03 guenther Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -62,7 +62,7 @@ char			*read_btfile(const char *, size_t *);
  */
 void			 dtpi_cache(int);
 void			 dtpi_print_list(void);
-char			*dtpi_func(struct dtioc_probe_info *);
+const char		*dtpi_func(struct dtioc_probe_info *);
 int			 dtpi_is_unit(const char *);
 struct dtioc_probe_info	*dtpi_get_by_value(const char *, const char *,
 			     const char *);
@@ -305,7 +305,7 @@ dtpi_print_list(void)
 	}
 }
 
-char *
+const char *
 dtpi_func(struct dtioc_probe_info *dtpi)
 {
 	char *sysnb, func[DTNAMESIZE];

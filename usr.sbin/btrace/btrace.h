@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.h,v 1.10 2021/10/03 22:01:48 dv Exp $ */
+/*	$OpenBSD: btrace.h,v 1.11 2021/12/07 22:17:03 guenther Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -59,6 +59,6 @@ void			 hist_print(struct hist *, const char *);
 int			 stmt_printf(struct bt_stmt *, struct dt_evt *);
 
 /* syscalls.c */
-extern char		*syscallnames[];
+extern const char	*const syscallnames[];
 
 #endif /* BTRACE_H */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.36 2019/04/02 11:00:22 deraadt Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.37 2021/12/07 22:17:02 guenther Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -95,6 +95,8 @@ __stack_smash_handler(char func[], int damaged)
 
 int	scdebug = SCDEBUG_CALLS|SCDEBUG_RETURNS|SCDEBUG_SHOWARGS;
 
+extern const char *const syscallnames[];
+
 void
 scdebug_call(struct proc *p, register_t code, const register_t args[])
 {
@@ -113,11 +115,11 @@ scdebug_call(struct proc *p, register_t code, const register_t args[])
 	     sy->sy_call == sys_nosys))
 		return;
 
-	printf("proc %d (%s): %s num ", pr->ps_pid, pr->ps_comm, em->e_name);
+	printf("proc %d (%s): num ", pr->ps_pid, pr->ps_comm);
 	if (code < 0 || code >= em->e_nsysent)
 		printf("OUT OF RANGE (%ld)", code);
 	else {
-		printf("%ld call: %s", code, em->e_syscallnames[code]);
+		printf("%ld call: %s", code, syscallnames[code]);
 		if (scdebug & SCDEBUG_SHOWARGS) {
 			printf("(");
 			for (i = 0; i < sy->sy_argsize / sizeof(register_t);
@@ -147,7 +149,7 @@ scdebug_ret(struct proc *p, register_t code, int error,
 	    sy->sy_call == sys_nosys))
 		return;
 		
-	printf("proc %d (%s): %s num ", pr->ps_pid, pr->ps_comm, em->e_name);
+	printf("proc %d (%s): num ", pr->ps_pid, pr->ps_comm);
 	if (code < 0 || code >= em->e_nsysent)
 		printf("OUT OF RANGE (%ld)", code);
 	else
