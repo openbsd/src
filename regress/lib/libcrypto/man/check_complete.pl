@@ -66,8 +66,8 @@ try_again:
 		$in_comment = 0;
 	}
 	while (/\/\*/) {
-		s/\/\*.*?\*\/// and next;
-		s/\/\*.*// and $in_comment = 1;
+		s/\s*\/\*.*?\*\/// and next;
+		s/\s*\/\*.*// and $in_comment = 1;
 	}
 
 	# End C++ stuff.
@@ -81,11 +81,19 @@ try_again:
 	# End declarations of structs.
 
 	if ($in_struct) {
+		if (/^\s*union\s+{$/) {
+			print "-s $line\n" if $verbose;
+			$in_struct++;
+			next;
+		}
 		unless (s/^\s*\}//) {
 			print "-s $line\n" if $verbose;
 			next;
 		}
-		$in_struct = 0;
+		if (--$in_struct && /^\s+\w+;$/) {
+			print "-s $line\n" if $verbose;
+			next;
+		}
 		unless ($in_typedef_struct) {
 			/^\s*;$/ or die "at end of struct: $_";
 			print "-s $line\n" if $verbose;
@@ -143,11 +151,13 @@ try_again:
 
 	if (/^\s*$/ ||
 	    /^DECLARE_STACK_OF\(\w+\)$/ ||
+	    /^TYPEDEF_D2I2D_OF\(\w+\);$/ ||
 	    /^#define HEADER_\w+_H$/ ||
 	    /^#endif$/ ||
 	    /^extern\s+const\s+ASN1_ITEM\s+\w+_it;$/ ||
 	    /^#include\s/ ||
-	    /^#ifn?def\s/) {
+	    /^#ifn?def\s/ ||
+	    /^#if defined/) {
 		print "-- $line\n" if $verbose;
 		next;
 	}
@@ -163,7 +173,7 @@ try_again:
 
 	# Handle macros.
 
-	if (my ($id) = /^#define\s+(\w+)\s+\S/) {
+	if (my ($id) = /^#\s*define\s+(\w+)\s+\S/) {
 		/\\$/ and $in_define = 1;
 		unless (system "$MANW -k Dv=$id > /dev/null 2>&1") {
 			print "Dv $line\n" if $verbose;
@@ -182,7 +192,7 @@ try_again:
 			print "D- $line\n" if $verbose;
 			next;
 		}
-		if ($id =~ /^X509_[FR]_\w+$/) {
+		if ($id =~ /^(?:ASN1|X509(?:V3)?)_[FR]_\w+$/) {
 			print "D- $line\n" if $verbose;
 			next;
 		}
@@ -201,7 +211,7 @@ try_again:
 		}
 		next;
 	}
-	if (my ($id) = /^#define\s+(\w+)\(/) {
+	if (my ($id) = /^#\s*define\s+(\w+)\(/) {
 		/\\$/ and $in_define = 1;
 		unless (system "$MANW $id > /dev/null 2>&1") {
 			print "Fn $line\n" if $verbose;
@@ -220,9 +230,22 @@ try_again:
 		next;
 	}
 
-	# Handle variable type definitions.
+	# Handle variable type declarations.
 
-	if (my ($id) = /^typedef\s+(?:struct\s+)?\S+\s+(\w+);$/) {
+	if (my ($id) = /^struct\s+(\w+);$/) {
+		unless (system "$MANW -k Vt=$id > /dev/null 2>&1") {
+			print "Vt $line\n" if $verbose;
+			next;
+		}
+		if ($verbose) {
+			print "XX $line\n";
+		} else {
+			warn "not found: struct $id";
+		}
+		next;
+	}
+
+	if (my ($id) = /^typedef\s+(?:const\s+)?(?:struct\s+)?\S+\s+(\w+);$/) {
 		unless (system "$MANW -k Vt=$id > /dev/null 2>&1") {
 			print "Vt $line\n" if $verbose;
 			next;
@@ -239,9 +262,23 @@ try_again:
 		next;
 	}
 
+	if (my ($id) =/^typedef\s+\w+(?:\s+\*)?\s+\(\*(\w+)\)\(/) {
+		/\);$/ or $in_function = 1;
+		unless (system "$MANW $id > /dev/null 2>&1") {
+			print "Fn $line\n" if $verbose;
+			next;
+		}
+		if ($verbose) {
+			print "XX $line\n";
+		} else {
+			warn "not found: function type (*$id)()";
+		}
+		next;
+	}
+
 	# Handle function declarations.
 
-	if (/^\w+(?:\(\w+\))?(?:\s+\w+)?\s+(?:\(?\*\s*)?(\w+)\(/) {
+	if (/^\w+(?:\(\w+\))?(?:\s+\w+)*\s+(?:\(?\*\s*)?(\w+)\(/) {
 		my $id = $1;
 		/\);$/ or $in_function = 1;
 		unless (system "$MANW $id > /dev/null 2>&1") {
