@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.88 2021/05/10 18:01:24 mpi Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.89 2021/12/07 04:19:24 guenther Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@
 #include <sys/ptrace.h>
 #include <sys/uio.h>
 #include <sys/sched.h>
+#include <sys/exec_elf.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -681,7 +682,7 @@ ptrace_ustate(struct proc *p, int req, pid_t pid, void *addr, int data,
 		case PIOD_READ_AUXV:
 			req = PT_READ_D;
 			uio.uio_rw = UIO_READ;
-			temp = tr->ps_emul->e_arglen * sizeof(char *);
+			temp = ELF_AUX_WORDS * sizeof(char *);
 			if (uio.uio_offset > temp)
 				return EIO;
 			if (uio.uio_resid > temp - uio.uio_offset)

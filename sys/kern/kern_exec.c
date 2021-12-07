@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.224 2021/12/06 21:21:10 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.225 2021/12/07 04:19:24 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -417,7 +417,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	}
 
 	/* Now check if args & environ fit into new stack */
-	len = ((argc + envc + 2 + pack.ep_emul->e_arglen) * sizeof(char *) +
+	len = ((argc + envc + 2 + ELF_AUX_WORDS) * sizeof(char *) +
 	    sizeof(long) + dp + sgap + sizeof(struct ps_strings)) - argp;
 
 	len = (len + _STACKALIGNBYTES) &~ _STACKALIGNBYTES;
@@ -786,7 +786,7 @@ copyargs(struct exec_package *pack, struct ps_strings *arginfo, void *stack,
 	if (copyout(&argc, cpp++, sizeof(argc)))
 		return (0);
 
-	dp = (char *) (cpp + argc + envc + 2 + pack->ep_emul->e_arglen);
+	dp = (char *) (cpp + argc + envc + 2 + ELF_AUX_WORDS);
 	sp = argp;
 
 	/* XXX don't copy them out, remap them! */

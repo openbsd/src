@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.318 2021/12/06 21:21:10 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.319 2021/12/07 04:19:24 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -101,8 +101,6 @@ struct	emul {
 	int	e_nsysent;		/* Number of system call entries */
 	struct sysent *e_sysent;	/* System call array */
 	char	**e_syscallnames;	/* System call name array */
-	int	e_arglen;		/* Extra argument size in words */
-					/* Copy arguments on the stack */
 	void	(*e_setregs)(struct proc *, struct exec_package *,
 				  u_long, register_t *);
 	int	(*e_fixup)(struct proc *, struct exec_package *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.161 2021/12/06 21:21:10 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.162 2021/12/07 04:19:24 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -120,11 +120,6 @@ extern char *syscallnames[];
 #define ELF_MAX_VALID_PHDR 32
 
 /*
- * How many entries are in the AuxInfo array we pass to the process?
- */
-#define ELF_AUX_ENTRIES	9
-
-/*
  * This is the OpenBSD ELF emul
  */
 struct emul emul_elf = {
@@ -138,7 +133,6 @@ struct emul emul_elf = {
 #else
 	NULL,
 #endif
-	(sizeof(AuxInfo) * ELF_AUX_ENTRIES / sizeof(char *)),
 	setregs,
 	exec_elf_fixup,
 	coredump_elf,
@@ -1255,7 +1249,7 @@ coredump_notes_elf(struct proc *p, void *iocookie, size_t *sizep)
 
 	/* Second, write an NT_OPENBSD_AUXV note. */
 	notesize = sizeof(nhdr) + elfround(sizeof("OpenBSD")) +
-	    elfround(pr->ps_emul->e_arglen * sizeof(char *));
+	    elfround(ELF_AUX_WORDS * sizeof(char *));
 	if (iocookie) {
 		iov.iov_base = &pss;
 		iov.iov_len = sizeof(pss);
@@ -1275,7 +1269,7 @@ coredump_notes_elf(struct proc *p, void *iocookie, size_t *sizep)
 			return (EIO);
 
 		nhdr.namesz = sizeof("OpenBSD");
-		nhdr.descsz = pr->ps_emul->e_arglen * sizeof(char *);
+		nhdr.descsz = ELF_AUX_WORDS * sizeof(char *);
 		nhdr.type = NT_OPENBSD_AUXV;
 
 		error = coredump_write(iocookie, UIO_SYSSPACE,

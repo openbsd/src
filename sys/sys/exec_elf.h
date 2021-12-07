@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.91 2021/11/12 22:20:57 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.92 2021/12/07 04:19:24 guenther Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -790,6 +790,12 @@ extern Elf_Dyn		_DYNAMIC[];
 #endif
 
 #ifdef	_KERNEL
+/*
+ * How many entries are in the AuxInfo array we pass to the process?
+ */
+#define	ELF_AUX_ENTRIES	9
+#define	ELF_AUX_WORDS	(sizeof(AuxInfo) * ELF_AUX_ENTRIES / sizeof(char *))
+
 struct exec_package;
 
 int	exec_elf_makecmds(struct proc *, struct exec_package *);
