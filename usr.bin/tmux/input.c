@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.196 2021/11/11 09:31:16 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.197 2021/12/07 07:21:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2505,7 +2505,8 @@ input_osc_colour_reply(struct input_ctx *ictx, u_int n, int c)
 	    end = "\007";
     else
 	    end = "\033\\";
-    input_reply(ictx, "\033]%u;rgb:%02hhx/%02hhx/%02hhx%s", n, r, g, b, end);
+    input_reply(ictx, "\033]%u;rgb:%02hhx%02hhx/%02hhx%02hhx/%02hhx%02hhx%s",
+	n, r, r, g, g, b, b, end);
 }
 
 /* Handle the OSC 4 sequence for setting (multiple) palette entries. */
