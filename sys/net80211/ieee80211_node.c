@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.189 2021/12/03 12:41:36 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.190 2021/12/07 20:06:38 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -89,6 +89,8 @@ void ieee80211_node_join_11g(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_ht(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_rsn(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_11g(struct ieee80211com *, struct ieee80211_node *);
+void ieee80211_node_leave_pwrsave(struct ieee80211com *,
+    struct ieee80211_node *);
 void ieee80211_inact_timeout(void *);
 void ieee80211_node_cache_timeout(void *);
 #endif
@@ -2866,6 +2868,39 @@ ieee80211_node_leave_11g(struct ieee80211com *ic, struct ieee80211_node *ni)
 	}
 }
 
+void
+ieee80211_node_leave_pwrsave(struct ieee80211com *ic,
+    struct ieee80211_node *ni)
+{
+	struct mbuf_queue keep = MBUF_QUEUE_INITIALIZER(IFQ_MAXLEN, IPL_NET);
+	struct mbuf *m;
+
+	if (ni->ni_pwrsave == IEEE80211_PS_DOZE)
+		ni->ni_pwrsave = IEEE80211_PS_AWAKE;
+
+	if (mq_len(&ni->ni_savedq) > 0) {
+		if (ic->ic_set_tim != NULL)
+			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
+	}
+	while ((m = mq_dequeue(&ni->ni_savedq)) != NULL) {
+		if (ni->ni_refcnt > 0)
+			ieee80211_node_decref(ni);
+		m_freem(m);
+	}
+
+	/* Purge frames queued for transmission during DTIM. */
+	while ((m = mq_dequeue(&ic->ic_pwrsaveq)) != NULL) {
+		if (m->m_pkthdr.ph_cookie == ni) {
+			if (ni->ni_refcnt > 0)
+				ieee80211_node_decref(ni);
+			m_freem(m);
+		} else
+			mq_enqueue(&keep, m);
+	}
+	while ((m = mq_dequeue(&keep)) != NULL)
+		mq_enqueue(&ic->ic_pwrsaveq, m);
+}
+
 /*
  * Handle bookkeeping for station deauthentication/disassociation
  * when operating as an ap.
@@ -2887,13 +2922,7 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 		return;
 	}
 
-	if (ni->ni_pwrsave == IEEE80211_PS_DOZE)
-		ni->ni_pwrsave = IEEE80211_PS_AWAKE;
-
-	if (mq_purge(&ni->ni_savedq) > 0) {
-		if (ic->ic_set_tim != NULL)
-			(*ic->ic_set_tim)(ic, ni->ni_associd, 0);
-	}
+	ieee80211_node_leave_pwrsave(ic, ni);
 
 	if (ic->ic_flags & IEEE80211_F_RSNON)
 		ieee80211_node_leave_rsn(ic, ni);
