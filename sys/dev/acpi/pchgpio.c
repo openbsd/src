@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchgpio.c,v 1.8 2021/09/29 22:03:33 kettenis Exp $	*/
+/*	$OpenBSD: pchgpio.c,v 1.9 2021/12/07 18:06:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  * Copyright (c) 2020 James Hastings
@@ -236,7 +236,7 @@ const struct pchgpio_device tgl_h_device =
 	.pad_size = 16,
 	.gpi_is = 0x100,
 	.gpi_ie = 0x120,
-	.groups = tgl_lp_groups,
+	.groups = tgl_h_groups,
 	.ngroups = nitems(tgl_h_groups),
 	.npins = 480,
 };
