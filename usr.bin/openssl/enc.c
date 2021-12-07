@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.23 2019/07/25 11:42:12 bcook Exp $ */
+/* $OpenBSD: enc.c,v 1.24 2021/12/07 20:13:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -703,21 +703,25 @@ enc_main(int argc, char **argv)
 			BIO_set_callback_arg(benc, (char *) bio_err);
 		}
 		if (enc_config.printkey) {
+			int key_len, iv_len;
+
 			if (!enc_config.nosalt) {
 				printf("salt=");
 				for (i = 0; i < (int) sizeof(salt); i++)
 					printf("%02X", salt[i]);
 				printf("\n");
 			}
-			if (enc_config.cipher->key_len > 0) {
+			key_len = EVP_CIPHER_key_length(enc_config.cipher);
+			if (key_len > 0) {
 				printf("key=");
-				for (i = 0; i < enc_config.cipher->key_len; i++)
+				for (i = 0; i < key_len; i++)
 					printf("%02X", key[i]);
 				printf("\n");
 			}
-			if (enc_config.cipher->iv_len > 0) {
+			iv_len = EVP_CIPHER_iv_length(enc_config.cipher);
+			if (iv_len > 0) {
 				printf("iv =");
-				for (i = 0; i < enc_config.cipher->iv_len; i++)
+				for (i = 0; i < iv_len; i++)
 					printf("%02X", iv[i]);
 				printf("\n");
 			}
