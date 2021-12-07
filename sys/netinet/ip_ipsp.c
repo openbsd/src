@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.261 2021/12/03 19:04:49 tobhe Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.262 2021/12/07 17:28:46 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -923,6 +923,19 @@ tdb_unlink_locked(struct tdb *tdbp)
 }
 
 void
+tdb_cleanspd(struct tdb *tdbp)
+{
+	struct ipsec_policy *ipo;
+
+	while ((ipo = TAILQ_FIRST(&tdbp->tdb_policy_head)) != NULL) {
+		TAILQ_REMOVE(&tdbp->tdb_policy_head, ipo, ipo_tdb_next);
+		tdb_unref(ipo->ipo_tdb);
+		ipo->ipo_tdb = NULL;
+		ipo->ipo_last_searched = 0; /* Force a re-search. */
+	}
+}
+
+void
 tdb_unbundle(struct tdb *tdbp)
 {
 	if (tdbp->tdb_onext != NULL) {
@@ -1001,6 +1014,8 @@ tdb_dodelete(struct tdb *tdbp, int locked)
 	else
 		tdb_unlink(tdbp);
 
+	/* cleanup SPD references */
+	tdb_cleanspd(tdbp);
 	/* release tdb_onext/tdb_inext references */
 	tdb_unbundle(tdbp);
 	/* delete timeouts and release references */
@@ -1043,8 +1058,6 @@ tdb_alloc(u_int rdomain)
 void
 tdb_free(struct tdb *tdbp)
 {
-	struct ipsec_policy *ipo;
-
 	NET_ASSERT_LOCKED();
 
 	if (tdbp->tdb_xform) {
@@ -1057,13 +1070,7 @@ tdb_free(struct tdb *tdbp)
 	pfsync_delete_tdb(tdbp);
 #endif
 
-	/* Cleanup SPD references. */
-	while ((ipo = TAILQ_FIRST(&tdbp->tdb_policy_head)) != NULL) {
-		TAILQ_REMOVE(&tdbp->tdb_policy_head, ipo, ipo_tdb_next);
-		tdb_unref(ipo->ipo_tdb);
-		ipo->ipo_tdb = NULL;
-		ipo->ipo_last_searched = 0; /* Force a re-search. */
-	}
+	KASSERT(TAILQ_EMPTY(&tdbp->tdb_policy_head));
 
 	if (tdbp->tdb_ids) {
 		ipsp_ids_free(tdbp->tdb_ids);
