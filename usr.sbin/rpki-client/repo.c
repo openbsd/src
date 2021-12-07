@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.14 2021/11/25 14:03:40 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.15 2021/12/07 12:46:47 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -212,26 +212,15 @@ RB_GENERATE(filepath_tree, filepath, entry, filepathcmp);
 
 /*
  * Function to hash a string into a unique directory name.
- * prefixed with dir.
+ * Returned hash needs to be freed.
  */
 static char *
-hash_dir(const char *uri, const char *dir)
+hash_dir(const char *uri)
 {
-	const char hex[] = "0123456789abcdef";
 	unsigned char m[SHA256_DIGEST_LENGTH];
-	char hash[SHA256_DIGEST_LENGTH * 2 + 1];
-	char *out;
-	size_t i;
 
 	SHA256(uri, strlen(uri), m);
-	for (i = 0; i < SHA256_DIGEST_LENGTH; i++) {
-		hash[i * 2] = hex[m[i] >> 4];
-		hash[i * 2 + 1] = hex[m[i] & 0xf];
-	}
-	hash[SHA256_DIGEST_LENGTH * 2] = '\0';
-
-	asprintf(&out, "%s/%s", dir, hash);
-	return out;
+	return hex_encode(m, sizeof(m));
 }
 
 /*
@@ -239,13 +228,24 @@ hash_dir(const char *uri, const char *dir)
  * as prefix. Skip the proto:// in URI but keep everything else.
  */
 static char *
-rsync_dir(const char *uri, const char *dir)
+repo_dir(const char *uri, const char *dir, int hash)
 {
-	char *local, *out;
+	const char *local;
+	char *out, *hdir = NULL;
 
-	local = strchr(uri, ':') + strlen("://");
+	if (hash) {
+		local = hdir = hash_dir(uri);
+	} else {
+		local = strchr(uri, ':');
+		if (local != NULL)
+			local += strlen("://");
+		else
+			local = uri;
+	}
 
-	asprintf(&out, "%s/%s", dir, local);
+	if (asprintf(&out, "%s/%s", dir, local) == -1)
+		err(1, NULL);
+	free(hdir);
 	return out;
 }
 
@@ -397,8 +397,7 @@ ta_get(struct tal *tal, int nofetch)
 
 	if ((tr->descr = strdup(tal->descr)) == NULL)
 		err(1, NULL);
-	if (asprintf(&tr->basedir, "ta/%s", tal->descr) == -1)
-		err(1, NULL);
+	tr->basedir = repo_dir(tal->descr, "ta", 0);
 
 	/* steal URI infromation from TAL */
 	tr->urisz = tal->urisz;
@@ -469,7 +468,7 @@ rsync_get(const char *uri, int nofetch)
 	SLIST_INSERT_HEAD(&rsyncrepos, rr, entry);
 
 	rr->repouri = repo;
-	rr->basedir = rsync_dir(repo, "rsync");
+	rr->basedir = repo_dir(repo, "rsync", 0);
 
 	if (noop || nofetch) {
 		rr->state = REPO_DONE;
@@ -536,7 +535,7 @@ rrdp_get(const char *uri, int nofetch)
 
 	if ((rr->notifyuri = strdup(uri)) == NULL)
 		err(1, NULL);
-	rr->basedir = hash_dir(uri, "rrdp");
+	rr->basedir = repo_dir(uri, "rrdp", 1);
 
 	RB_INIT(&rr->added);
 	RB_INIT(&rr->deleted);
