@@ -1,4 +1,4 @@
-/* $OpenBSD: procname.c,v 1.17 2020/04/08 11:26:07 nicm Exp $ */
+/* $OpenBSD: procname.c,v 1.18 2021/12/07 00:38:42 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -138,7 +138,7 @@ char *
 get_proc_cwd(int fd)
 {
         int             name[] = { CTL_KERN, KERN_PROC_CWD, 0 };
-        static char     path[MAXPATHLEN];
+        static char     path[PATH_MAX];
         size_t          pathlen = sizeof path;
 
         if ((name[2] = tcgetpgrp(fd)) == -1)
