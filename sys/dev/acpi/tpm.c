@@ -1,4 +1,4 @@
-/* $OpenBSD: tpm.c,v 1.13 2021/10/23 16:39:03 dv Exp $ */
+/* $OpenBSD: tpm.c,v 1.14 2021/12/07 16:07:56 deraadt Exp $ */
 
 /*
  * Minimal interface to Trusted Platform Module chips implementing the
@@ -285,7 +285,7 @@ tpm_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_tpm_mode = TPM_CRB;
 			break;
 		default:
-			printf(": unsupported TPM2 start method\n");
+			printf(": unsupported TPM2 start method %d\n", start_method);
 			return;
 		}
 	}
