@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_acpi.c,v 1.16 2020/08/22 22:29:28 kettenis Exp $ */
+/* $OpenBSD: dwiic_acpi.c,v 1.17 2021/12/07 10:16:50 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -204,7 +204,7 @@ dwiic_acpi_parse_crs(int crsidx, union acpi_resource *crs, void *arg)
 	case SR_IRQ:
 		sc_crs->irq_int = ffs(letoh16(crs->sr_irq.irq_mask)) - 1;
 		/* Default is exclusive, active-high, edge triggered. */
-		if (AML_CRSLEN(crs) < 3)
+		if (AML_CRSLEN(crs) < 4)
 			flags = SR_IRQ_MODE;
 		else
 			flags = crs->sr_irq.irq_flags;
