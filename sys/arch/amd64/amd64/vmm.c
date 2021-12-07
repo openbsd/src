@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.297 2021/12/04 18:51:36 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.298 2021/12/07 07:58:56 anton Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1004,8 +1004,10 @@ vmx_mprotect_ept(vm_map_t vm_map, paddr_t sgpa, paddr_t egpa, int prot)
 				    __func__, ret, (uint64_t)addr);
 
 			pte = vmx_pmap_find_pte_ept(pmap, addr);
-			if (pte == NULL)
+			if (pte == NULL) {
+				KERNEL_UNLOCK();
 				return EFAULT;
+			}
 		}
 
 		if (prot & PROT_READ)
