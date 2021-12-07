@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.119 2021/10/23 14:42:08 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.120 2021/12/07 02:58:46 cheloha Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -275,8 +275,8 @@ uvn_reference(struct uvm_object *uobj)
 
 #ifdef DEBUG
 	if ((uvn->u_flags & UVM_VNODE_VALID) == 0) {
-		printf("uvn_reference: ref=%d, flags=0x%x\n", uvn->u_flags,
-		    uobj->uo_refs);
+		printf("uvn_reference: ref=%d, flags=0x%x\n",
+		    uobj->uo_refs, uvn->u_flags);
 		panic("uvn_reference: invalid state");
 	}
 #endif
