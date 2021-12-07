@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.279 2021/10/24 15:23:52 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.280 2021/12/07 18:30:26 deraadt Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1894,7 +1894,7 @@ uvm_map_inentry(struct proc *p, struct p_inentry *ie, vaddr_t addr,
 		if (!ok) {
 			KERNEL_LOCK();
 			printf(fmt, p->p_p->ps_comm, p->p_p->ps_pid, p->p_tid,
-			    addr, ie->ie_start, ie->ie_end);
+			    addr, ie->ie_start, ie->ie_end-1);
 			p->p_p->ps_acflag |= AMAP;
 			sv.sival_ptr = (void *)PROC_PC(p);
 			trapsignal(p, SIGSEGV, 0, SEGV_ACCERR, sv);
