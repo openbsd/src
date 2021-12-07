@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.81 2021/12/01 16:42:12 deraadt Exp $	*/
+/*	$OpenBSD: ca.c,v 1.82 2021/12/07 17:03:01 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -444,7 +444,9 @@ ca_setauth(struct iked *env, struct iked_sa *sa,
 int
 ca_getcert(struct iked *env, struct imsg *imsg)
 {
-	X509			*issuer = NULL;
+	struct ca_store		*store = env->sc_priv;
+	X509			*issuer = NULL, *cert;
+	EVP_PKEY		*certkey;
 	struct iked_sahdr	 sh;
 	uint8_t			 type;
 	uint8_t			*ptr;
@@ -474,6 +476,21 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 
 	switch (type) {
 	case IKEV2_CERT_X509_CERT:
+		/* Look in local cert storage first */
+		cert = ca_by_subjectaltname(store->ca_certs, &id);
+		if (cert) {
+			log_debug("%s: found local cert", __func__);
+			if ((certkey = X509_get_pubkey(cert)) != NULL) {
+				ret = ca_pubkey_serialize(certkey, &key);
+				EVP_PKEY_free(certkey);
+				if (ret == 0) {
+					ptr = ibuf_data(key.id_buf);
+					len = ibuf_length(key.id_buf);
+					type = key.id_type;
+					break;
+				}
+			}
+		}
 		if (env->sc_ocsp_url == NULL)
 			ret = ca_validate_cert(env, &id, ptr, len, NULL);
 		else {
