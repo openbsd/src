@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.158 2021/11/17 22:56:19 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.159 2021/12/07 01:19:47 mvs Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -960,8 +960,11 @@ restart:
 
 		fp = rp->fp;
 		rp++;
-		if ((unp = fptounp(fp)) != NULL)
-			atomic_dec_long(&unp->unp_msgcount);
+		if ((unp = fptounp(fp)) != NULL) {
+			rw_enter_write(&unp_gc_lock);
+			unp->unp_msgcount--;
+			rw_exit_write(&unp_gc_lock);
+		}
 	}
 
 	mtx_enter(&unp_rights_mtx);
@@ -1085,8 +1088,10 @@ morespace:
 		rp->flags = fdp->fd_ofileflags[fd] & UF_PLEDGED;
 		rp--;
 		if ((unp = fptounp(fp)) != NULL) {
-			atomic_inc_long(&unp->unp_msgcount);
+			rw_enter_write(&unp_gc_lock);
+			unp->unp_msgcount++;
 			unp->unp_file = fp;
+			rw_exit_write(&unp_gc_lock);
 		}
 	}
 	fdpunlock(fdp);
@@ -1099,8 +1104,11 @@ fail:
 	for ( ; i > 0; i--) {
 		rp++;
 		fp = rp->fp;
-		if ((unp = fptounp(fp)) != NULL)
-			atomic_dec_long(&unp->unp_msgcount);
+		if ((unp = fptounp(fp)) != NULL) {
+			rw_enter_write(&unp_gc_lock);
+			unp->unp_msgcount--;
+			rw_exit_write(&unp_gc_lock);
+		}
 		FRELE(fp, p);
 	}
 
@@ -1136,8 +1144,11 @@ unp_gc(void *arg __unused)
 			fp = defer->ud_fp[i].fp;
 			if (fp == NULL)
 				continue;
-			if ((unp = fptounp(fp)) != NULL)
-				atomic_dec_long(&unp->unp_msgcount);
+			if ((unp = fptounp(fp)) != NULL) {
+				rw_enter_write(&unp_gc_lock);
+				unp->unp_msgcount--;
+				rw_exit_write(&unp_gc_lock);
+			}
 			mtx_enter(&unp_rights_mtx);
 			unp_rights--;
 			mtx_leave(&unp_rights_mtx);
