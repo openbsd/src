@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.112 2021/12/01 22:37:30 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.113 2021/12/07 14:58:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -44,8 +44,6 @@ MBR_init(struct mbr *mbr)
 	struct dos_partition	dp;
 	struct prt		bootprt, obsdprt;
 	daddr_t			daddr;
-	uint64_t		disksz;
-	const uint32_t		spc = disk.dk_heads * disk.dk_sectors;
 
 	memset(&gmbr, 0, sizeof(gmbr));
 	memset(&gh, 0, sizeof(gh));
@@ -61,7 +59,6 @@ MBR_init(struct mbr *mbr)
 
 	memset(&obsdprt, 0, sizeof(obsdprt));
 	memset(&bootprt, 0, sizeof(bootprt));
-	disksz = disk.dk_cylinders * spc; /* Use only complete cylinders. */
 
 	if (disk.dk_bootprt.prt_ns > 0) {
 		bootprt = disk.dk_bootprt;
@@ -83,10 +80,10 @@ MBR_init(struct mbr *mbr)
 		daddr *= 2;
 	obsdprt.prt_bs = DL_BLKTOSEC(&dl, daddr);
 
-	if (obsdprt.prt_bs >= disksz) {
+	if (obsdprt.prt_bs >= disk.dk_size) {
 		memset(&obsdprt, 0, sizeof(obsdprt));
 	} else {
-		obsdprt.prt_ns = disksz - obsdprt.prt_bs;
+		obsdprt.prt_ns = disk.dk_size - obsdprt.prt_bs;
 		obsdprt.prt_id = DOSPTYP_OPENBSD;
 		if (bootprt.prt_flag != DOSACTIVE)
 			obsdprt.prt_flag = DOSACTIVE;
