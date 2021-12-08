@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.82 2021/12/07 17:03:01 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.83 2021/12/08 19:17:35 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -50,6 +50,7 @@ void	 ca_shutdown(struct privsep_proc *);
 void	 ca_reset(struct privsep *);
 int	 ca_reload(struct iked *);
 
+int	 ca_cert_local(struct iked *, X509 *);
 int	 ca_getreq(struct iked *, struct imsg *);
 int	 ca_getcert(struct iked *, struct imsg *);
 int	 ca_getauth(struct iked *, struct imsg *);
@@ -63,6 +64,8 @@ int	 ca_validate_pubkey(struct iked *, struct iked_static_id *,
 	    void *, size_t, struct iked_id *);
 int	 ca_validate_cert(struct iked *, struct iked_static_id *,
 	    void *, size_t, X509 **);
+EVP_PKEY *
+	 ca_id_to_pkey(struct iked_id *);
 int	 ca_privkey_to_method(struct iked_id *);
 struct ibuf *
 	 ca_x509_serialize(X509 *);
@@ -613,9 +616,12 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 
 			if ((cert = ca_by_issuer(store->ca_certs,
 			    subj, &id)) != NULL) {
-				/* XXX
-				 * should we re-validate our own cert here?
-				 */
+				if (!ca_cert_local(env, cert)) {
+					log_info("%s: found cert with matching "
+					    "ID but without matching key.",
+					    SPI_SH(&sh, __func__));
+					continue;
+				}
 				break;
 			}
 		}
@@ -1029,6 +1035,35 @@ ca_store_certs_info(const char *msg, X509_STORE *ctx)
 	}
 }
 
+int
+ca_cert_local(struct iked *env, X509  *cert)
+{
+	struct ca_store	*store = env->sc_priv;
+	EVP_PKEY	*certkey = NULL, *localpub = NULL;
+	int		 ret = 0;
+
+	if ((localpub = ca_id_to_pkey(&store->ca_pubkey)) == NULL)
+		goto done;
+
+	if ((certkey = X509_get_pubkey(cert)) == NULL) {
+		log_info("%s: no public key in cert", __func__);
+		goto done;
+	}
+
+	if (EVP_PKEY_cmp(certkey, localpub) != 1) {
+		log_debug("%s: certificate key mismatch", __func__);
+		goto done;
+	}
+
+	ret = 1;
+ done:
+	if (certkey != NULL)
+		EVP_PKEY_free(certkey);
+	if (localpub != NULL)
+		EVP_PKEY_free(localpub);
+	return (ret);
+}
+
 void
 ca_cert_info(const char *msg, X509 *cert)
 {
@@ -1287,6 +1322,47 @@ ca_privkey_serialize(EVP_PKEY *key, struct iked_id *id)
 	if (ec != NULL)
 		EC_KEY_free(ec);
 	return (ret);
+}
+
+EVP_PKEY *
+ca_id_to_pkey(struct iked_id *pubkey)
+{
+	BIO		*rawcert = NULL;
+	EVP_PKEY	*localkey = NULL, *out = NULL;
+	RSA		*localrsa = NULL;
+	EC_KEY		*localec = NULL;
+
+	if ((rawcert = BIO_new_mem_buf(ibuf_data(pubkey->id_buf),
+	    ibuf_length(pubkey->id_buf))) == NULL)
+		goto done;
+
+	if ((localkey = EVP_PKEY_new()) == NULL)
+		goto done;
+
+	if ((localrsa = d2i_RSAPublicKey_bio(rawcert, NULL))) {
+		if (EVP_PKEY_set1_RSA(localkey, localrsa) != 1)
+			goto done;
+	} else if (BIO_reset(rawcert) == 1 &&
+	    (localec = d2i_EC_PUBKEY_bio(rawcert, NULL))) {
+		if (EVP_PKEY_set1_EC_KEY(localkey, localec) != 1)
+				goto done;
+	} else {
+		log_info("%s: unknown public key type", __func__);
+		goto done;
+	}
+
+	out = localkey;
+	localkey = NULL;
+ done:
+	if (localkey != NULL)
+		EVP_PKEY_free(localkey);
+	if (localrsa != NULL)
+		RSA_free(localrsa);
+	if (localec != NULL)
+		EC_KEY_free(localec);
+	if (rawcert != NULL)
+		BIO_free(rawcert);
+	return (out);
 }
 
 int
