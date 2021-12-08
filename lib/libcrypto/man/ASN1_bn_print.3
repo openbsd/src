@@ -1,0 +1,118 @@
+.\" $OpenBSD: ASN1_bn_print.3,v 1.1 2021/12/08 21:52:29 schwarze Exp $
+.\"
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 8 2021 $
+.Dt ASN1_BN_PRINT 3
+.Os
+.Sh NAME
+.Nm ASN1_bn_print
+.Nd pretty-print a BIGNUM object
+.Sh SYNOPSIS
+.In openssl/asn1.h
+.Ft int
+.Fo ASN1_bn_print
+.Fa "BIO *bio_out"
+.Fa "const char *label"
+.Fa "const BIGNUM *bn"
+.Fa "unsigned char *buffer"
+.Fa "int indent"
+.Fc
+.Sh DESCRIPTION
+.Fn ASN1_bn_print
+prints
+.Fa bn
+to
+.Fa bio_out
+in human-readable form.
+Despite its name and the header file,
+this function has nothing to do with ASN.1.
+.Pp
+The caller is responsible for providing a
+.Fa buffer
+that is at least
+.Fn BN_num_bytes bn
++ 1 bytes long.
+To avoid a buffer overrun, be careful to not forget the
+.Dq plus one .
+It is unspecified what the buffer may contain after the function returns.
+.Pp
+If
+.Fa indent
+is greater than zero,
+.Fa indent
+space characters are printed first, but not more than 128.
+.Pp
+The NUL-terminated
+.Fa label
+is printed next.
+.Pp
+After that, there are three cases:
+.Bl -bullet
+.It
+If
+.Fa bn
+represents the number zero,
+.Qq 0
+is printed.
+.It
+If
+.Fa bn
+can be represented by the data type
+.Vt unsigned long ,
+it is printed in decimal notation,
+followed by hexadecimal notation in parentheses,
+both optionally preceded by a minus sign.
+.It
+Otherwise, the string
+.Qq Pq Negative
+is printed if appropriate, a new output line is started,
+and the indentation is increased by four space characters.
+The bytes of the value of
+.Fa bn
+are then printed in big-endian order, each byte represented
+by a two-digit hexadecimal number,
+and each but the last byte followed by a colon.
+A new output line is started after every group of 15 bytes.
+.El
+.Pp
+Finally, a newline character is printed to end the output.
+.Pp
+If
+.Fa bn
+is a
+.Dv NULL
+pointer, all arguments are ignored and nothing is printed.
+.Sh RETURN VALUES
+.Fn ASN1_bn_print
+returns 1
+if successful or if
+.Fa bn
+is a
+.Dv NULL
+pointer.
+It returns 0 if printing fails.
+.Sh SEE ALSO
+.Xr BIO_new 3 ,
+.Xr BIO_write 3 ,
+.Xr BN_is_negative 3 ,
+.Xr BN_is_zero 3 ,
+.Xr BN_new 3 ,
+.Xr BN_num_bytes 3 ,
+.Xr BN_print 3
+.Sh HISTORY
+.Fn ASN1_bn_print
+first appeared in OpenSSL 1.0.0 and has been available since
+.Ox 4.9 .
