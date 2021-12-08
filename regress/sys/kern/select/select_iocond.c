@@ -1,4 +1,4 @@
-/*	$OpenBSD: select_iocond.c,v 1.1 2021/12/06 05:52:07 visa Exp $	*/
+/*	$OpenBSD: select_iocond.c,v 1.2 2021/12/08 13:22:53 visa Exp $	*/
 
 /*
  * Copyright (c) 2021 Visa Hankala
@@ -453,30 +453,10 @@ proc_child(int fd, int bfd)
 
 		fdset_init(&rfd, &wfd, &efd, fd);
 		ret = select(fd + 1, &rfd, &wfd, &efd, &tv);
-#if defined(__linux__)
 		assert(ret == 2);
 		assert(FD_ISSET(fd, &rfd) != 0);
 		assert(FD_ISSET(fd, &wfd) != 0);
 		assert(FD_ISSET(fd, &efd) == 0);
-#else
-#if defined(__OpenBSD__)
-		/* XXX */
-		if (filetype == FTYPE_SOCKET_TCP) {
-			assert(ret == 3);
-			assert(FD_ISSET(fd, &rfd) != 0);
-			assert(FD_ISSET(fd, &wfd) != 0);
-			assert(FD_ISSET(fd, &efd) != 0);
-		} else {
-#endif /* __OpenBSD__ */
-		/* XXX */
-		assert(ret == 2);
-		assert(FD_ISSET(fd, &rfd) != 0);
-		assert(FD_ISSET(fd, &wfd) != 0);
-		assert(FD_ISSET(fd, &efd) == 0);
-#if defined(__OpenBSD__)
-		}
-#endif /* __OpenBSD__ */
-#endif
 		break;
 
 	case FTYPE_FIFO:
@@ -772,31 +752,10 @@ proc_parent(int fd, int bfd)
 
 		fdset_init(&rfd, &wfd, &efd, fd);
 		ret = select(fd + 1, &rfd, &wfd, &efd, &tv);
-#if defined(__linux__)
-		/* XXX */
 		assert(ret == 2);
 		assert(FD_ISSET(fd, &rfd) != 0);
 		assert(FD_ISSET(fd, &wfd) != 0);
 		assert(FD_ISSET(fd, &efd) == 0);
-#else
-#if defined(__OpenBSD__)
-		/* XXX */
-		if (filetype == FTYPE_SOCKET_TCP) {
-			assert(ret == 3);
-			assert(FD_ISSET(fd, &rfd) != 0);
-			assert(FD_ISSET(fd, &wfd) != 0);
-			assert(FD_ISSET(fd, &efd) != 0);
-		} else {
-#endif /* __OpenBSD__ */
-		/* XXX */
-		assert(ret == 2);
-		assert(FD_ISSET(fd, &rfd) != 0);
-		assert(FD_ISSET(fd, &wfd) != 0);
-		assert(FD_ISSET(fd, &efd) == 0);
-#if defined(__OpenBSD__)
-		}
-#endif /* __OpenBSD__ */
-#endif
 		break;
 
 	case FTYPE_FIFO:
@@ -820,32 +779,18 @@ proc_parent(int fd, int bfd)
 	switch (filetype) {
 	case FTYPE_FIFO:
 	case FTYPE_PIPE:
-#if defined(__OpenBSD__)
-		assert(ret == 2);
-		assert(FD_ISSET(fd, &rfd) != 0);
-		assert(FD_ISSET(fd, &wfd) == 0);
-		assert(FD_ISSET(fd, &efd) != 0);
-#else
 		assert(ret == 1);
 		assert(FD_ISSET(fd, &rfd) != 0);
 		assert(FD_ISSET(fd, &wfd) == 0);
 		assert(FD_ISSET(fd, &efd) == 0);
-#endif
 		break;
 	case FTYPE_PTY:
 	case FTYPE_SOCKET_TCP:
 	case FTYPE_SOCKET_UNIX:
-#if defined(__OpenBSD__)
-		assert(ret == 3);
-		assert(FD_ISSET(fd, &rfd) != 0);
-		assert(FD_ISSET(fd, &wfd) != 0);
-		assert(FD_ISSET(fd, &efd) != 0);
-#else
 		assert(ret == 2);
 		assert(FD_ISSET(fd, &rfd) != 0);
 		assert(FD_ISSET(fd, &wfd) != 0);
 		assert(FD_ISSET(fd, &efd) == 0);
-#endif
 		break;
 	case FTYPE_SOCKET_UDP:
 		assert(ret == 1);
