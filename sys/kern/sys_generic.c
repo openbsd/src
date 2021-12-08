@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.144 2021/11/30 02:58:33 visa Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.145 2021/12/08 13:03:52 visa Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -762,7 +762,7 @@ pselregister(struct proc *p, fd_set *pibits[3], fd_set *pobits[3], int nfd,
 				DPRINTFN(2, "select fd %d mask %d serial %lu\n",
 				    fd, msk, p->p_kq_serial);
 				EV_SET(&kev, fd, evf[msk],
-				    EV_ADD|EV_ENABLE|__EV_POLL,
+				    EV_ADD|EV_ENABLE|__EV_POLL|__EV_SELECT,
 				    evff[msk], 0, (void *)(p->p_kq_serial));
 #ifdef KTRACE
 				if (KTRPOINT(p, KTR_STRUCT))
@@ -775,7 +775,8 @@ pselregister(struct proc *p, fd_set *pibits[3], fd_set *pobits[3], int nfd,
 				/* FALLTHROUGH */
 				case EOPNOTSUPP:/* No underlying kqfilter */
 				case EINVAL:	/* Unimplemented filter */
-				case EPERM:	/* Specific to FIFO */
+				case EPERM:	/* Specific to FIFO and
+						 * __EV_SELECT */
 					error = 0;
 					break;
 				case EPIPE:	/* Specific to pipes */

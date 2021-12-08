@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.130 2021/12/07 14:06:16 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.131 2021/12/08 13:03:52 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -922,6 +922,11 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 		klist_insert_locked(&wpipe->pipe_sel.si_note, kn);
 		break;
 	case EVFILT_EXCEPT:
+		if (kn->kn_flags & __EV_SELECT) {
+			/* Prevent triggering exceptfds. */
+			error = EPERM;
+			break;
+		}
 		kn->kn_fop = &pipe_efiltops;
 		kn->kn_hook = rpipe;
 		klist_insert_locked(&rpipe->pipe_sel.si_note, kn);
