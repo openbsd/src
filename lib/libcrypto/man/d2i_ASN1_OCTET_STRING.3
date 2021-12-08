@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.12 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.13 2021/12/08 13:13:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: December 8 2021 $
 .Dt D2I_ASN1_OCTET_STRING 3
 .Os
 .Sh NAME
@@ -55,6 +55,9 @@
 .Nm i2d_ASN1_UTCTIME ,
 .Nm d2i_ASN1_TIME ,
 .Nm i2d_ASN1_TIME
+.\" i2c_ASN1_BIT_STRING, c2i_ASN1_BIT_STRING, and c2i_ASN1_INTEGER
+.\" are intentionally undocumented because they are unused in
+.\" real-world software and were removed from the OpenSSL 1.1.1 API
 .Nd decode and encode ASN1_STRING objects
 .Sh SYNOPSIS
 .In openssl/asn1.h
