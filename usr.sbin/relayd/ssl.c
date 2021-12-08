@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.35 2021/01/27 20:33:05 eric Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.36 2021/12/08 19:25:04 tb Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -123,16 +123,9 @@ ssl_update_certificate(const uint8_t *oldcert, size_t oldlen, EVP_PKEY *pkey,
 	BIO		*in, *out = NULL;
 	BUF_MEM		*bptr = NULL;
 	X509		*cert = NULL;
-	uint8_t		*newcert = NULL, *foo = NULL;
+	uint8_t		*newcert = NULL;
 
-	/* XXX BIO_new_mem_buf is not using const so work around this */
-	if ((foo = malloc(oldlen)) == NULL) {
-		log_warn("%s: malloc", __func__);
-		return (NULL);
-	}
-	memcpy(foo, oldcert, oldlen);
-
-	if ((in = BIO_new_mem_buf(foo, oldlen)) == NULL) {
+	if ((in = BIO_new_mem_buf(oldcert, oldlen)) == NULL) {
 		log_warnx("%s: BIO_new_mem_buf failed", __func__);
 		goto done;
 	}
@@ -193,7 +186,6 @@ ssl_update_certificate(const uint8_t *oldcert, size_t oldlen, EVP_PKEY *pkey,
 	*newlen = bptr->length;
 
 done:
-	free(foo);
 	if (in)
 		BIO_free(in);
 	if (out)
