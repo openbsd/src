@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsearch.c,v 1.6 2021/12/07 04:01:45 cheloha Exp $	*/
+/*	$OpenBSD: lsearch.c,v 1.7 2021/12/08 22:06:28 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,27 +37,27 @@
 #include <search.h>
 
 typedef int (*cmp_fn_t)(const void *, const void *);
-static void *linear_base(const void *, const void *, size_t *, size_t,
-    cmp_fn_t, int);
 
 void *
 lsearch(const void *key, void *base, size_t *nelp, size_t width,
     	cmp_fn_t compar)
 {
+	void *element = lfind(key, base, nelp, width, compar);
 
-	return(linear_base(key, base, nelp, width, compar, 1));
+	/*
+	 * Use memmove(3) to ensure the key is copied cleanly into the
+	 * array, even if the key overlaps with the end of the array.
+	 */
+	if (element == NULL) {
+		element = memmove((char *)base + *nelp * width, key, width);
+		*nelp += 1;
+	}
+	return element;
 }
 
 void *
 lfind(const void *key, const void *base, size_t *nelp, size_t width,
 	cmp_fn_t compar)
-{
-	return(linear_base(key, base, nelp, width, compar, 0));
-}
-
-static void *
-linear_base(const void *key, const void *base, size_t *nelp, size_t width,
-	cmp_fn_t compar, int add_flag)
 {
 	const char *element, *end;
 
@@ -65,25 +65,6 @@ linear_base(const void *key, const void *base, size_t *nelp, size_t width,
 	for (element = base; element < end; element += width)
 		if (!compar(key, element))		/* key found */
 			return((void *)element);
-
-	if (!add_flag)					/* key not found */
-		return(NULL);
-
-	/*
-	 * The UNIX System User's Manual, 1986 edition claims that
-	 * a NULL pointer is returned by lsearch with errno set
-	 * appropriately, if there is not enough room in the table
-	 * to add a new item.  This can't be done as none of these
-	 * routines have any method of determining the size of the
-	 * table.  This comment isn't in the 1986-87 System V
-	 * manual.
-	 */
-	++*nelp;
-
-	/*
-	 * Use memmove(3) to ensure the key is copied cleanly into the
-	 * array, even if the key overlaps with the end of the array.
-	 */
-	memmove((void *)end, key, width);
-	return((void *)end);
+	return NULL;
 }
+DEF_WEAK(lfind);

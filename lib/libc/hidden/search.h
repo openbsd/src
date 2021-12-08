@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.h,v 1.1 2015/10/04 08:36:57 guenther Exp $	*/
+/*	$OpenBSD: search.h,v 1.2 2021/12/08 22:06:28 cheloha Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -24,7 +24,7 @@ PROTO_DEPRECATED(hcreate);
 PROTO_DEPRECATED(hdestroy);
 PROTO_DEPRECATED(hsearch);
 PROTO_DEPRECATED(insque);
-PROTO_DEPRECATED(lfind);
+PROTO_NORMAL(lfind);
 PROTO_DEPRECATED(lsearch);
 PROTO_DEPRECATED(remque);
 PROTO_DEPRECATED(tdelete);
