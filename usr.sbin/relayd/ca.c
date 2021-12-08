@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.36 2021/03/23 16:34:31 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.37 2021/12/08 03:40:44 tb Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -88,7 +88,7 @@ hash_x509(X509 *cert, char *hash, size_t hashlen)
 	static const char	hex[] = "0123456789abcdef";
 	size_t			off;
 	char			digest[EVP_MAX_MD_SIZE];
-	int		 	dlen, i;
+	int			dlen, i;
 
 	if (X509_pubkey_digest(cert, EVP_sha256(), digest, &dlen) != 1)
 		fatalx("%s: X509_pubkey_digest failed", __func__);
