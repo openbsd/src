@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.262 2021/12/07 17:28:46 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.263 2021/12/08 14:24:18 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -243,8 +243,6 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 	u_int32_t spi;
 	int nums;
 
-	NET_ASSERT_LOCKED();
-
 	/* Don't accept ranges only encompassing reserved SPIs. */
 	if (sproto != IPPROTO_IPCOMP &&
 	    (tspi < sspi || tspi <= SPI_RESERVED_MAX)) {
@@ -343,6 +341,8 @@ gettdb_dir(u_int rdomain, u_int32_t spi, union sockaddr_union *dst,
 	u_int32_t hashval;
 	struct tdb *tdbp;
 
+	NET_ASSERT_LOCKED();
+
 	mtx_enter(&tdb_sadb_mtx);
 	hashval = tdb_hash(spi, dst, proto);
 
@@ -374,7 +374,7 @@ gettdbbysrcdst_dir(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
 	mtx_enter(&tdb_sadb_mtx);
 	hashval = tdb_hash(0, src, proto);
 
-	for (tdbp = tdbsrc[hashval]; tdbp != NULL; tdbp = tdbp->tdb_snext)
+	for (tdbp = tdbsrc[hashval]; tdbp != NULL; tdbp = tdbp->tdb_snext) {
 		if (tdbp->tdb_sproto == proto &&
 		    (spi == 0 || tdbp->tdb_spi == spi) &&
 		    ((!reverse && tdbp->tdb_rdomain == rdomain) ||
@@ -384,7 +384,7 @@ gettdbbysrcdst_dir(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
 		    !memcmp(&tdbp->tdb_dst, dst, dst->sa.sa_len)) &&
 		    !memcmp(&tdbp->tdb_src, src, src->sa.sa_len))
 			break;
-
+	}
 	if (tdbp != NULL) {
 		tdb_ref(tdbp);
 		mtx_leave(&tdb_sadb_mtx);
@@ -395,7 +395,7 @@ gettdbbysrcdst_dir(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
 	su_null.sa.sa_len = sizeof(struct sockaddr);
 	hashval = tdb_hash(0, &su_null, proto);
 
-	for (tdbp = tdbsrc[hashval]; tdbp != NULL; tdbp = tdbp->tdb_snext)
+	for (tdbp = tdbsrc[hashval]; tdbp != NULL; tdbp = tdbp->tdb_snext) {
 		if (tdbp->tdb_sproto == proto &&
 		    (spi == 0 || tdbp->tdb_spi == spi) &&
 		    ((!reverse && tdbp->tdb_rdomain == rdomain) ||
@@ -405,7 +405,7 @@ gettdbbysrcdst_dir(u_int rdomain, u_int32_t spi, union sockaddr_union *src,
 		    !memcmp(&tdbp->tdb_dst, dst, dst->sa.sa_len)) &&
 		    tdbp->tdb_src.sa.sa_family == AF_UNSPEC)
 			break;
-
+	}
 	tdb_ref(tdbp);
 	mtx_leave(&tdb_sadb_mtx);
 	return tdbp;
@@ -494,7 +494,7 @@ gettdbbysrc(u_int rdomain, union sockaddr_union *src, u_int8_t sproto,
 	mtx_enter(&tdb_sadb_mtx);
 	hashval = tdb_hash(0, src, sproto);
 
-	for (tdbp = tdbsrc[hashval]; tdbp != NULL; tdbp = tdbp->tdb_snext)
+	for (tdbp = tdbsrc[hashval]; tdbp != NULL; tdbp = tdbp->tdb_snext) {
 		if ((tdbp->tdb_sproto == sproto) &&
 		    (tdbp->tdb_rdomain == rdomain) &&
 		    ((tdbp->tdb_flags & TDBF_INVALID) == 0) &&
@@ -504,7 +504,7 @@ gettdbbysrc(u_int rdomain, union sockaddr_union *src, u_int8_t sproto,
 				continue;
 			break;
 		}
-
+	}
 	tdb_ref(tdbp);
 	mtx_leave(&tdb_sadb_mtx);
 	return tdbp;
@@ -900,8 +900,7 @@ tdb_unlink_locked(struct tdb *tdbp)
 
 	if (tdbsrc[hashval] == tdbp) {
 		tdbsrc[hashval] = tdbp->tdb_snext;
-	}
-	else {
+	} else {
 		for (tdbpp = tdbsrc[hashval]; tdbpp != NULL;
 		    tdbpp = tdbpp->tdb_snext) {
 			if (tdbpp->tdb_snext == tdbp) {
@@ -1031,8 +1030,6 @@ struct tdb *
 tdb_alloc(u_int rdomain)
 {
 	struct tdb *tdbp;
-
-	NET_ASSERT_LOCKED();
 
 	tdbp = pool_get(&tdb_pool, PR_WAITOK | PR_ZERO);
 

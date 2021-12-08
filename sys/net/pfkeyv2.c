@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.226 2021/12/03 19:04:49 tobhe Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.227 2021/12/08 14:24:18 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -799,6 +799,8 @@ pfkeyv2_get(struct tdb *tdb, void **headers, void **buffer, int *lenp,
 {
 	int rval, i;
 	void *p;
+
+	NET_ASSERT_LOCKED();
 
 	/* Find how much space we need */
 	i = sizeof(struct sadb_sa) + sizeof(struct sadb_lifetime) +
@@ -2347,6 +2349,8 @@ pfkeyv2_expire(struct tdb *tdb, u_int16_t type)
 	struct sadb_msg *smsg;
 	int rval = 0;
 	int i;
+
+	NET_ASSERT_LOCKED();
 
 	switch (tdb->tdb_sproto) {
 	case IPPROTO_AH:
