@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.321 2021/12/07 22:17:03 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.322 2021/12/09 00:26:10 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -86,21 +86,6 @@ struct	pgrp {
 };
 
 /*
- * One structure allocated per emulation.
- */
-struct exec_package;
-struct proc;
-struct ps_strings;
-struct uvm_object;
-union sigval;
-
-struct	emul {
-	int	e_nosys;		/* Offset of the nosys() syscall */
-	int	e_nsysent;		/* Number of system call entries */
-	struct sysent *e_sysent;	/* System call array */
-};
-
-/*
  * time usage: accumulated times in ticks
  * Once a second, each thread's immediate counts (p_[usi]ticks) are
  * accumulated into these.
@@ -127,6 +112,7 @@ struct tusage {
 #ifdef __need_process
 struct futex;
 LIST_HEAD(futex_list, futex);
+struct proc;
 struct tslpentry;
 TAILQ_HEAD(tslpqueue, tslpentry);
 struct unveil;
@@ -225,7 +211,6 @@ struct process {
 #define	ps_startcopy	ps_limit
 	struct	plimit *ps_limit;	/* [m,R] Process limits. */
 	struct	pgrp *ps_pgrp;		/* Pointer to process group. */
-	struct	emul *ps_emul;		/* Emulation information */
 
 	char	ps_comm[MAXCOMLEN+1];
 

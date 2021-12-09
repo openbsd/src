@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.10 2021/06/21 14:39:30 deraadt Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.11 2021/12/09 00:26:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -54,7 +54,6 @@ svc_handler(trapframe_t *frame)
 
 	ap = &frame->tf_a[0];
 	code = frame->tf_t[0];
-	callp = p->p_p->ps_emul->e_sysent;
 
 	switch (code) {
 	case SYS_syscall:
@@ -67,11 +66,11 @@ svc_handler(trapframe_t *frame)
 		break;
 	}
 
-	if (code < 0 || code >= p->p_p->ps_emul->e_nsysent) {
-		callp += p->p_p->ps_emul->e_nosys;
-	} else {
+	callp = sysent;
+	if (code < 0 || code >= SYS_MAXSYSCALL)
+		callp += SYS_syscall;
+	else
 		callp += code;
-	}
 	nargs = callp->sy_argsize / sizeof(register_t);
 	if (nargs <= nap) {
 		args = ap;

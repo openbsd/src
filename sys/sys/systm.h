@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.154 2021/06/02 00:39:25 cheloha Exp $	*/
+/*	$OpenBSD: systm.h,v 1.155 2021/12/09 00:26:10 guenther Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -114,7 +114,7 @@ struct process;
 
 typedef int	sy_call_t(struct proc *, void *, register_t *);
 
-extern struct sysent {		/* system call table */
+extern const struct sysent {	/* system call table */
 	short	sy_narg;	/* number of args */
 	short	sy_argsize;	/* total size of arguments */
 	int	sy_flags;

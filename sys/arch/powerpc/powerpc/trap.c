@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.122 2021/11/26 14:59:42 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.123 2021/12/09 00:26:11 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -236,11 +236,11 @@ trap(struct trapframe *frame)
 	struct vm_map *map;
 	vaddr_t va;
 	int access_type;
-	struct sysent *callp;
+	const struct sysent *callp;
 	size_t argsize;
 	register_t code, error;
 	register_t *params, rval[2], args[10];
-	int nsys, n;
+	int n;
 
 	if (frame->srr1 & PSL_PR) {
 		type |= EXC_USER;
@@ -357,9 +357,6 @@ trap(struct trapframe *frame)
 	case EXC_SC|EXC_USER:
 		uvmexp.syscalls++;
 
-		nsys = p->p_p->ps_emul->e_nsysent;
-		callp = p->p_p->ps_emul->e_sysent;
-
 		code = frame->fixreg[0];
 		params = frame->fixreg + FIRSTARG;
 
@@ -377,16 +374,16 @@ trap(struct trapframe *frame)
 			 * so as to maintain quad alignment
 			 * for the rest of the args.
 			 */
-			if (callp != sysent)
-				break;
 			params++;
 			code = *params++;
 			break;
 		default:
 			break;
 		}
-		if (code < 0 || code >= nsys)
-			callp += p->p_p->ps_emul->e_nosys;
+
+		callp = sysent;
+		if (code < 0 || code >= SYS_MAXSYSCALL)
+			callp += SYS_syscall;
 		else
 			callp += code;
 		argsize = callp->sy_argsize;

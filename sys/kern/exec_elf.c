@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.164 2021/12/07 22:17:02 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.165 2021/12/09 00:26:10 guenther Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -111,15 +111,6 @@ int	elf_os_pt_note(struct proc *, struct exec_package *, Elf_Ehdr *, int *);
  * be a reasonable limit for ELF, the most we have seen so far is 12
  */
 #define ELF_MAX_VALID_PHDR 32
-
-/*
- * This is the OpenBSD ELF emul
- */
-struct emul emul_elf = {
-	SYS_syscall,
-	SYS_MAXSYSCALL,
-	sysent,
-};
 
 #define ELF_NOTE_NAME_OPENBSD	0x01
 
@@ -546,12 +537,6 @@ exec_elf_makecmds(struct proc *p, struct exec_package *epp)
 		/* randomize exe_base for PIE */
 		exe_base = uvm_map_pie(base_ph->p_align);
 	}
-
-	/*
-	 * OK, we want a slightly different twist of the
-	 * standard emulation package for "real" elf.
-	 */
-	epp->ep_emul = &emul_elf;
 
 	/*
 	 * Verify this is an OpenBSD executable.  If it's marked that way

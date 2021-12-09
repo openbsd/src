@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.155 2021/10/24 15:29:10 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.156 2021/12/09 00:26:11 guenther Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -400,11 +400,11 @@ fault_common_no_miss:
 	case T_SYSCALL+T_USER:
 	    {
 		struct trapframe *locr0 = p->p_md.md_regs;
-		struct sysent *callp;
+		const struct sysent *callp;
 		unsigned int code;
 		register_t tpc;
 		uint32_t branch = 0;
-		int error, numarg, numsys;
+		int error, numarg;
 		struct args {
 			register_t i[8];
 		} args;
@@ -426,8 +426,7 @@ fault_common_no_miss:
 			    trapframe->pc, 0, branch);
 		} else
 			locr0->pc += 4;
-		callp = p->p_p->ps_emul->e_sysent;
-		numsys = p->p_p->ps_emul->e_nsysent;
+		callp = sysent;
 		code = locr0->v0;
 		switch (code) {
 		case SYS_syscall:
@@ -439,8 +438,8 @@ fault_common_no_miss:
 			 * platforms, which doesn't change anything here.
 			 */
 			code = locr0->a0;
-			if (code >= numsys)
-				callp += p->p_p->ps_emul->e_nosys; /* (illegal) */
+			if (code >= SYS_MAXSYSCALL)
+				callp += SYS_syscall;
 			else
 				callp += code;
 			numarg = callp->sy_argsize / sizeof(register_t);
@@ -459,8 +458,8 @@ fault_common_no_miss:
 			}
 			break;
 		default:
-			if (code >= numsys)
-				callp += p->p_p->ps_emul->e_nosys; /* (illegal) */
+			if (code >= SYS_MAXSYSCALL)
+				callp += SYS_syscall;
 			else
 				callp += code;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.45 2021/12/06 21:21:10 guenther Exp $	*/
+/*	$OpenBSD: exec.h,v 1.46 2021/12/09 00:26:10 guenther Exp $	*/
 /*	$NetBSD: exec.h,v 1.59 1996/02/09 18:25:09 christos Exp $	*/
 
 /*-
@@ -59,7 +59,7 @@ struct ps_strings {
 
 /*
  * Below the PS_STRINGS and sigtramp, we may require a gap on the stack
- * (used to copyin/copyout various emulation data structures).
+ * (used to copyin/copyout various XXX emulation data structures).
  */
 #define	STACKGAPLEN	(2*1024)	/* plenty enough for now */
 
@@ -132,7 +132,6 @@ struct exec_package {
 	u_int	ep_flags;		/* flags; see below. */
 	char	**ep_fa;		/* a fake args vector for scripts */
 	int	ep_fd;			/* a file descriptor we're holding */
-	struct  emul *ep_emul;		/* os emulation */
 	struct	elf_args *ep_args;	/* ELF info */
 	void	*ep_auxinfo;		/* userspace auxinfo address */
 	char	*ep_interp;		/* name of interpreter if any */

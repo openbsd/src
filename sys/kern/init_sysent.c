@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.231 2021/11/29 16:31:43 mvs Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.232 2021/12/09 00:26:10 guenther Exp $	*/
 
 /*
  * System call switch table.
@@ -16,7 +16,7 @@
 
 #define	s(type)	sizeof(type)
 
-struct sysent sysent[] = {
+const struct sysent sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 0 = syscall (indir) */
 	{ 1, s(struct sys_exit_args), 0,

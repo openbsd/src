@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.227 2021/12/07 22:17:02 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.228 2021/12/09 00:26:10 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -270,7 +270,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	char *stack;
 	struct ps_strings arginfo;
 	struct vmspace *vm;
-	extern struct emul emul_native;
 	struct vnode *otvp;
 
 	/* get other threads to stop */
@@ -300,7 +299,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	pack.ep_auxinfo = NULL;
 	VMCMDSET_INIT(&pack.ep_vmcmds);
 	pack.ep_vap = &attr;
-	pack.ep_emul = &emul_native;
 	pack.ep_flags = 0;
 
 	/* see if we can run it. */
@@ -713,9 +711,6 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	else
 		atomic_clearbits_int(&p->p_p->ps_flags, PS_WXNEEDED);
 
-	/* update ps_emul, the old value is no longer needed */
-	pr->ps_emul = pack.ep_emul;
-
 	atomic_clearbits_int(&pr->ps_flags, PS_INEXEC);
 	single_thread_clear(p, P_SUSPSIG);
 
@@ -884,8 +879,7 @@ exec_timekeep_map(struct process *pr)
 	size_t timekeep_sz = round_page(sizeof(struct timekeep));
 
 	/*
-	 * Similar to the sigcode object, except that there is a single
-	 * timekeep object, and not one per emulation.
+	 * Similar to the sigcode object
 	 */
 	if (timekeep_object == NULL) {
 		vaddr_t va = 0;

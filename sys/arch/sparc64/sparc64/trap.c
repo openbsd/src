@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.109 2021/05/05 07:29:01 mpi Exp $	*/
+/*	$OpenBSD: trap.c,v 1.110 2021/12/09 00:26:11 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1102,7 +1102,7 @@ out:
 void
 syscall(struct trapframe64 *tf, register_t code, register_t pc)
 {
-	int i, nsys, nap;
+	int i, nap;
 	int64_t *ap;
 	const struct sysent *callp;
 	struct proc *p = curproc;
@@ -1126,9 +1126,6 @@ syscall(struct trapframe64 *tf, register_t code, register_t pc)
 	new = code & SYSCALL_G2RFLAG;
 	code &= ~SYSCALL_G2RFLAG;
 
-	callp = p->p_p->ps_emul->e_sysent;
-	nsys = p->p_p->ps_emul->e_nsysent;
-
 	/*
 	 * The first six system call arguments are in the six %o registers.
 	 * Any arguments beyond that are in the `argument extension' area
@@ -1151,8 +1148,9 @@ syscall(struct trapframe64 *tf, register_t code, register_t pc)
 		break;
 	}
 
-	if (code < 0 || code >= nsys)
-		callp += p->p_p->ps_emul->e_nosys;
+	callp = sysent;
+	if (code < 0 || code >= SYS_MAXSYSCALL)
+		callp += SYS_syscall;
 	else {
 		register_t *argp;
 

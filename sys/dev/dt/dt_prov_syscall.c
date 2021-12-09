@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_syscall.c,v 1.6 2021/09/03 16:45:45 jasper Exp $ */
+/*	$OpenBSD: dt_prov_syscall.c,v 1.7 2021/12/09 00:26:11 guenther Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -21,11 +21,10 @@
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/atomic.h>
+#include <sys/systm.h>
 #include <sys/syscall.h>
 
 #include <dev/dt/dtvar.h>
-
-extern struct sysent sysent[];
 
 /* Arrays of probes per syscall. */
 struct dt_probe	**dtps_entry;

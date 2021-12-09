@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_xxx.c,v 1.37 2021/12/07 22:17:02 guenther Exp $	*/
+/*	$OpenBSD: kern_xxx.c,v 1.38 2021/12/09 00:26:10 guenther Exp $	*/
 /*	$NetBSD: kern_xxx.c,v 1.32 1996/04/22 01:38:41 christos Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ __stack_smash_handler(char func[], int damaged)
 
 #ifdef SYSCALL_DEBUG
 #include <sys/proc.h>
+#include <sys/syscall.h>
 
 #define	SCDEBUG_CALLS		0x0001	/* show calls */
 #define	SCDEBUG_RETURNS		0x0002	/* show returns */
@@ -101,28 +102,24 @@ void
 scdebug_call(struct proc *p, register_t code, const register_t args[])
 {
 	struct process *pr;
-	struct sysent *sy;
-	struct emul *em;
 	int i;
 
 	if (!(scdebug & SCDEBUG_CALLS))
 		return;
 
-	pr = p->p_p;
-	em = pr->ps_emul;
-	sy = &em->e_sysent[code];
-	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
-	     sy->sy_call == sys_nosys))
+	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= SYS_MAXSYSCALL ||
+	     sysent[code].sy_call == sys_nosys))
 		return;
 
+	pr = p->p_p;
 	printf("proc %d (%s): num ", pr->ps_pid, pr->ps_comm);
-	if (code < 0 || code >= em->e_nsysent)
+	if (code < 0 || code >= SYS_MAXSYSCALL)
 		printf("OUT OF RANGE (%ld)", code);
 	else {
 		printf("%ld call: %s", code, syscallnames[code]);
 		if (scdebug & SCDEBUG_SHOWARGS) {
 			printf("(");
-			for (i = 0; i < sy->sy_argsize / sizeof(register_t);
+			for (i = 0; i < sysent[code].sy_argsize / sizeof(register_t);
 			    i++)
 				printf("%s0x%lx", i == 0 ? "" : ", ", args[i]);
 			printf(")");
@@ -136,21 +133,17 @@ scdebug_ret(struct proc *p, register_t code, int error,
     const register_t retval[])
 {
 	struct process *pr;
-	struct sysent *sy;
-	struct emul *em;
 
 	if (!(scdebug & SCDEBUG_RETURNS))
 		return;
 
-	pr = p->p_p;
-	em = pr->ps_emul;
-	sy = &em->e_sysent[code];
-	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= em->e_nsysent ||
-	    sy->sy_call == sys_nosys))
+	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= SYS_MAXSYSCALL ||
+	    sysent[code].sy_call == sys_nosys))
 		return;
 		
+	pr = p->p_p;
 	printf("proc %d (%s): num ", pr->ps_pid, pr->ps_comm);
-	if (code < 0 || code >= em->e_nsysent)
+	if (code < 0 || code >= SYS_MAXSYSCALL)
 		printf("OUT OF RANGE (%ld)", code);
 	else
 		printf("%ld ret: err = %d, rv = 0x%lx,0x%lx", code,

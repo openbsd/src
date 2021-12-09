@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.119 2020/10/30 17:11:20 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.120 2021/12/09 00:26:11 guenther Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1141,8 +1141,8 @@ error_fatal(struct trapframe *frame)
 void
 m88100_syscall(register_t code, struct trapframe *tf)
 {
-	int i, nsys, nap;
-	struct sysent *callp;
+	int i, nap;
+	const struct sysent *callp;
 	struct proc *p = curproc;
 	int error;
 	register_t args[8] __aligned(8);
@@ -1150,9 +1150,6 @@ m88100_syscall(register_t code, struct trapframe *tf)
 	register_t *ap;
 
 	uvmexp.syscalls++;
-
-	callp = p->p_p->ps_emul->e_sysent;
-	nsys  = p->p_p->ps_emul->e_nsysent;
 
 	p->p_md.md_tf = tf;
 
@@ -1172,16 +1169,15 @@ m88100_syscall(register_t code, struct trapframe *tf)
 		nap--;
 		break;
 	case SYS___syscall:
-		if (callp != sysent)
-			break;
 		code = ap[_QUAD_LOWWORD];
 		ap += 2;
 		nap -= 2;
 		break;
 	}
 
-	if (code < 0 || code >= nsys)
-		callp += p->p_p->ps_emul->e_nosys;
+	callp = sysent;
+	if (code < 0 || code >= SYS_MAXSYSCALL)
+		callp += SYS_syscall;
 	else
 		callp += code;
 
@@ -1264,8 +1260,8 @@ m88100_syscall(register_t code, struct trapframe *tf)
 void
 m88110_syscall(register_t code, struct trapframe *tf)
 {
-	int i, nsys, nap;
-	struct sysent *callp;
+	int i, nap;
+	const struct sysent *callp;
 	struct proc *p = curproc;
 	int error;
 	register_t args[8] __aligned(8);
@@ -1273,9 +1269,6 @@ m88110_syscall(register_t code, struct trapframe *tf)
 	register_t *ap;
 
 	uvmexp.syscalls++;
-
-	callp = p->p_p->ps_emul->e_sysent;
-	nsys  = p->p_p->ps_emul->e_nsysent;
 
 	p->p_md.md_tf = tf;
 
@@ -1295,16 +1288,15 @@ m88110_syscall(register_t code, struct trapframe *tf)
 		nap--;
 		break;
 	case SYS___syscall:
-		if (callp != sysent)
-			break;
 		code = ap[_QUAD_LOWWORD];
 		ap += 2;
 		nap -= 2;
 		break;
 	}
 
-	if (code < 0 || code >= nsys)
-		callp += p->p_p->ps_emul->e_nosys;
+	callp = sysent;
+	if (code < 0 || code >= SYS_MAXSYSCALL)
+		callp += SYS_syscall;
 	else
 		callp += code;
 

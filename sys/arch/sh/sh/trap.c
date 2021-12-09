@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.48 2021/03/11 11:17:00 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.49 2021/12/09 00:26:11 guenther Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -512,7 +512,7 @@ syscall(struct proc *p, struct trapframe *tf)
 {
 	caddr_t params;
 	const struct sysent *callp;
-	int error, opc, nsys;
+	int error, opc;
 	size_t argsize;
 	register_t code, args[8], rval[2], ocode;
 
@@ -520,9 +520,6 @@ syscall(struct proc *p, struct trapframe *tf)
 
 	opc = tf->tf_spc;
 	ocode = code = tf->tf_r0;
-
-	nsys = p->p_p->ps_emul->e_nsysent;
-	callp = p->p_p->ps_emul->e_sysent;
 
 	params = (caddr_t)tf->tf_r15;
 
@@ -538,8 +535,6 @@ syscall(struct proc *p, struct trapframe *tf)
 		 * Like syscall, but code is a quad, so as to maintain
 		 * quad alignment for the rest of the arguments.
 		 */
-		if (callp != sysent)
-			break;
 #if _BYTE_ORDER == BIG_ENDIAN
 		code = tf->tf_r5;
 #else
@@ -549,14 +544,16 @@ syscall(struct proc *p, struct trapframe *tf)
 	default:
 		break;
 	}
-	if (code < 0 || code >= nsys)
-		callp += p->p_p->ps_emul->e_nosys;		/* illegal */
+
+	callp = sysent;
+	if (code < 0 || code >= SYS_MAXSYSCALL)
+		callp += SYS_syscall;
 	else
 		callp += code;
 	argsize = callp->sy_argsize;
 #ifdef DIAGNOSTIC
 	if (argsize > sizeof args) {
-		callp += p->p_p->ps_emul->e_nosys - code;
+		callp += SYS_syscall - code;
 		argsize = callp->sy_argsize;
 	}
 #endif

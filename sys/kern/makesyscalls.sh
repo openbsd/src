@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$OpenBSD: makesyscalls.sh,v 1.14 2021/12/07 22:17:02 guenther Exp $
+#	$OpenBSD: makesyscalls.sh,v 1.15 2021/12/09 00:26:10 guenther Exp $
 #	$NetBSD: makesyscalls.sh,v 1.26 1998/01/09 06:17:51 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
@@ -56,7 +56,7 @@ esac
 #	syssw		the syscall switch file
 #	sysarghdr	the syscall argument struct definitions
 #	compatopts	those syscall types that are for 'compat' syscalls
-#	switchname	the name for the 'struct sysent' we define
+#	switchname	the name for the 'const struct sysent' we define
 #	namesname	the name for the 'const char *const[]' we define
 #	constprefix	the prefix for the system call constants
 #
@@ -150,7 +150,7 @@ BEGIN {
 	}
 
 	printf "\n#define\ts(type)\tsizeof(type)\n\n" > sysent
-	printf "struct sysent %s[] = {\n",switchname > sysent
+	printf "const struct sysent %s[] = {\n",switchname > sysent
 
 	printf "/*\t\$OpenBSD\$\t*/\n\n" > sysnames
 	printf "/*\n * System call names.\n *\n" > sysnames

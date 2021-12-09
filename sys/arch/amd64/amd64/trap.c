@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.89 2021/06/02 00:39:26 cheloha Exp $	*/
+/*	$OpenBSD: trap.c,v 1.90 2021/12/09 00:26:11 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -521,7 +521,6 @@ syscall(struct trapframe *frame)
 	const struct sysent *callp;
 	struct proc *p;
 	int error;
-	int nsys;
 	size_t argsize, argoff;
 	register_t code, args[9], rval[2], *argp;
 
@@ -530,8 +529,6 @@ syscall(struct trapframe *frame)
 	p = curproc;
 
 	code = frame->tf_rax;
-	callp = p->p_p->ps_emul->e_sysent;
-	nsys = p->p_p->ps_emul->e_nsysent;
 	argp = &args[0];
 	argoff = 0;
 
@@ -549,8 +546,9 @@ syscall(struct trapframe *frame)
 		break;
 	}
 
-	if (code < 0 || code >= nsys)
-		callp += p->p_p->ps_emul->e_nosys;
+	callp = sysent;
+	if (code < 0 || code >= SYS_MAXSYSCALL)
+		callp += SYS_syscall;
 	else
 		callp += code;
 

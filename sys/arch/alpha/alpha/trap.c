@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.99 2020/11/07 16:12:20 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.100 2021/12/09 00:26:11 guenther Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -525,9 +525,9 @@ syscall(code, framep)
 	u_int64_t code;
 	struct trapframe *framep;
 {
-	struct sysent *callp;
+	const struct sysent *callp;
 	struct proc *p;
-	int error, numsys;
+	int error;
 	u_int64_t opc;
 	u_long rval[2];
 	u_long args[10];					/* XXX */
@@ -538,9 +538,6 @@ syscall(code, framep)
 	p->p_md.md_tf = framep;
 	framep->tf_regs[FRAME_SP] = alpha_pal_rdusp();
 	opc = framep->tf_regs[FRAME_PC] - 4;
-
-	callp = p->p_p->ps_emul->e_sysent;
-	numsys = p->p_p->ps_emul->e_nsysent;
 
 	switch(code) {
 	case SYS_syscall:
@@ -557,10 +554,11 @@ syscall(code, framep)
 	}
 
 	error = 0;
-	if (code < numsys)
-		callp += code;
+	callp = sysent;
+	if (code >= SYS_MAXSYSCALL)
+		callp += SYS_syscall;
 	else
-		callp += p->p_p->ps_emul->e_nosys;
+		callp += code;
 
 	nargs = callp->sy_narg + hidden;
 	switch (nargs) {
