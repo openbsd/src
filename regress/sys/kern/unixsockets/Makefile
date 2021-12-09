@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2021/12/09 17:41:51 mvs Exp $
+# $OpenBSD: Makefile,v 1.3 2021/12/09 23:26:48 mvs Exp $
 
 # Copyright (c) 2021 Makkoveev Vitaliy <mvs@openbsd.org>
 #
@@ -17,6 +17,9 @@
 WARNINGS = yes
 
 PROGS = undgram_selfconn ungc
+
+PROGS += unfdpassfail
+LDADD_unfdpassfail = -lpthread
 
 CLEANFILES += *.socket
 
