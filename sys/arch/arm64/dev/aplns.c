@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplns.c,v 1.5 2021/08/29 11:23:29 kettenis Exp $ */
+/*	$OpenBSD: aplns.c,v 1.6 2021/12/09 11:38:27 kettenis Exp $ */
 /*
  * Copyright (c) 2014, 2021 David Gwynne <dlg@openbsd.org>
  *
@@ -31,6 +31,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_misc.h>
+#include <dev/ofw/ofw_power.h>
 #include <dev/ofw/fdt.h>
 
 #include <scsi/scsi_all.h>
@@ -164,6 +165,8 @@ nvme_ans_attach(struct device *parent, struct device *self, void *aux)
 		printf("unable to map registers\n");
 		return;
 	}
+
+	power_domain_enable(faa->fa_node);
 
 	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_BIO,
 	    nvme_intr, sc, sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.46 2021/11/01 09:02:46 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.47 2021/12/09 11:38:26 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -167,6 +167,10 @@ file	arch/arm64/dev/aplpcie.c		aplpcie
 device	aplpinctrl
 attach	aplpinctrl at fdt
 file	arch/arm64/dev/aplpinctrl.c		aplpinctrl
+
+device	aplpmgr
+attach	aplpmgr at fdt
+file	arch/arm64/dev/aplpmgr.c		aplpmgr
 
 # Apple NVME Storage
 device	aplns {}
