@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.343 2021/12/09 13:36:59 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.344 2021/12/09 13:49:45 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1115,7 +1115,7 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		return;
 
 	if (msg->msg_nat_detected && sa->sa_natt == 0)
-		ikev2_enable_natt(env, sa, msg);
+		ikev2_enable_natt(env, sa, msg, 1);
 
 	switch (hdr->ike_exchange) {
 	case IKEV2_EXCHANGE_IKE_SA_INIT:
@@ -1194,7 +1194,7 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 
 void
 ikev2_enable_natt(struct iked *env, struct iked_sa *sa,
-    struct iked_message *msg)
+    struct iked_message *msg, int udpencap)
 {
 	struct iked_socket	*sock;
 	in_port_t		 port;
@@ -1217,7 +1217,8 @@ ikev2_enable_natt(struct iked *env, struct iked_sa *sa,
 	msg->msg_fd = sa->sa_fd = sock->sock_fd;
 	msg->msg_sock = sock;
 	sa->sa_natt = 1;
-	sa->sa_udpencap = 1;
+	if (udpencap)
+		sa->sa_udpencap = 1;
 
 	log_debug("%s: detected NAT, enabling UDP encapsulation,"
 	    " updated SA to peer %s local %s", __func__,
@@ -3072,7 +3073,8 @@ ikev2_handle_notifies(struct iked *env, struct iked_message *msg)
 		log_debug("%s: mobike enabled", __func__);
 		sa->sa_mobike = 1;
 		/* enforce natt */
-		sa->sa_natt = 1;
+		if (sa->sa_natt == 0 && sa->sa_udpencap == 0)
+			ikev2_enable_natt(env, sa, msg, 0);
 	}
 
 	if ((msg->msg_flags & IKED_MSG_FLAGS_NO_ADDITIONAL_SAS)

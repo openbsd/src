@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.202 2021/12/09 13:36:59 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.203 2021/12/09 13:49:45 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1015,7 +1015,7 @@ ssize_t	 ikev2_psk(struct iked_sa *, uint8_t *, size_t, uint8_t **);
 ssize_t	 ikev2_nat_detection(struct iked *, struct iked_message *,
 	    void *, size_t, unsigned int, int);
 void	 ikev2_enable_natt(struct iked *, struct iked_sa *,
-	    struct iked_message *);
+	    struct iked_message *, int);
 int	 ikev2_send_informational(struct iked *, struct iked_message *);
 int	 ikev2_send_ike_e(struct iked *, struct iked_sa *, struct ibuf *,
 	    uint8_t, uint8_t, int);
