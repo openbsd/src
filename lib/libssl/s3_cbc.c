@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_cbc.c,v 1.24 2021/05/16 14:10:43 jsing Exp $ */
+/* $OpenBSD: s3_cbc.c,v 1.25 2021/12/09 17:45:49 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2012 The OpenSSL Project.  All rights reserved.
  *
@@ -404,7 +404,7 @@ ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char* md_out,
 	unsigned char first_block[MAX_HASH_BLOCK_SIZE];
 	unsigned char mac_out[EVP_MAX_MD_SIZE];
 	unsigned int i, j, md_out_size_u;
-	EVP_MD_CTX md_ctx;
+	EVP_MD_CTX *md_ctx;
 	/* mdLengthSize is the number of bytes in the length field that terminates
 	* the hash. */
 	unsigned int md_length_size = 8;
@@ -605,9 +605,10 @@ ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char* md_out,
 			mac_out[j] |= block[j]&is_block_b;
 	}
 
-	EVP_MD_CTX_init(&md_ctx);
-	if (!EVP_DigestInit_ex(&md_ctx, ctx->digest, NULL /* engine */)) {
-		EVP_MD_CTX_cleanup(&md_ctx);
+	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
+		return 0;
+	if (!EVP_DigestInit_ex(md_ctx, EVP_MD_CTX_md(ctx), NULL /* engine */)) {
+		EVP_MD_CTX_free(md_ctx);
 		return 0;
 	}
 
@@ -615,13 +616,13 @@ ssl3_cbc_digest_record(const EVP_MD_CTX *ctx, unsigned char* md_out,
 	for (i = 0; i < md_block_size; i++)
 		hmac_pad[i] ^= 0x6a;
 
-	EVP_DigestUpdate(&md_ctx, hmac_pad, md_block_size);
-	EVP_DigestUpdate(&md_ctx, mac_out, md_size);
+	EVP_DigestUpdate(md_ctx, hmac_pad, md_block_size);
+	EVP_DigestUpdate(md_ctx, mac_out, md_size);
 
-	EVP_DigestFinal(&md_ctx, md_out, &md_out_size_u);
+	EVP_DigestFinal(md_ctx, md_out, &md_out_size_u);
 	if (md_out_size)
 		*md_out_size = md_out_size_u;
-	EVP_MD_CTX_cleanup(&md_ctx);
+	EVP_MD_CTX_free(md_ctx);
 
 	return 1;
 }
