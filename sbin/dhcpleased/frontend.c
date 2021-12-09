@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.24 2021/11/20 17:54:40 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.25 2021/12/09 16:20:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -70,6 +70,7 @@ struct iface {
 	struct imsg_ifinfo	 ifinfo;
 	int			 send_discover;
 	uint32_t		 xid;
+	struct in_addr		 ciaddr;
 	struct in_addr		 requested_ip;
 	struct in_addr		 server_identifier;
 	struct in_addr		 dhcp_server;
@@ -90,10 +91,10 @@ int		 get_xflags(char *);
 struct iface	*get_iface_by_id(uint32_t);
 void		 remove_iface(uint32_t);
 void		 set_bpfsock(int, uint32_t);
+void		 iface_data_from_imsg(struct iface*, struct imsg_req_dhcp *);
 ssize_t		 build_packet(uint8_t, char *, uint32_t, struct ether_addr *,
-		     struct in_addr *, struct in_addr *);
-void		 send_discover(struct iface *);
-void		 send_request(struct iface *);
+		     struct in_addr *, struct in_addr *, struct in_addr *);
+void		 send_packet(uint8_t, struct iface *);
 void		 bpf_send_packet(struct iface *, uint8_t *, ssize_t);
 int		 udp_send_packet(struct iface *, uint8_t *, ssize_t);
 #ifndef SMALL
@@ -480,39 +481,39 @@ frontend_dispatch_engine(int fd, short event, void *bula)
 			break;
 #endif	/* SMALL */
 		case IMSG_SEND_DISCOVER: {
-			struct imsg_req_discover	 imsg_req_discover;
-			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_req_discover))
+			struct imsg_req_dhcp	 imsg_req_dhcp;
+			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_req_dhcp))
 				fatalx("%s: IMSG_SEND_DISCOVER wrong "
 				    "length: %lu", __func__,
 				    IMSG_DATA_SIZE(imsg));
-			memcpy(&imsg_req_discover, imsg.data,
-			    sizeof(imsg_req_discover));
-			iface = get_iface_by_id(imsg_req_discover.if_index);
-			if (iface != NULL) {
-				iface->xid = imsg_req_discover.xid;
-				send_discover(iface);
-			}
+			memcpy(&imsg_req_dhcp, imsg.data,
+			    sizeof(imsg_req_dhcp));
+
+			iface = get_iface_by_id(imsg_req_dhcp.if_index);
+
+			if (iface == NULL)
+				break;
+
+			iface_data_from_imsg(iface, &imsg_req_dhcp);
+			send_packet(DHCPDISCOVER, iface);
 			break;
 		}
 		case IMSG_SEND_REQUEST: {
-			struct imsg_req_request	 imsg_req_request;
-			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_req_request))
+			struct imsg_req_dhcp	 imsg_req_dhcp;
+			if (IMSG_DATA_SIZE(imsg) != sizeof(imsg_req_dhcp))
 				fatalx("%s: IMSG_SEND_REQUEST wrong "
 				    "length: %lu", __func__,
 				    IMSG_DATA_SIZE(imsg));
-			memcpy(&imsg_req_request, imsg.data,
-			    sizeof(imsg_req_request));
-			iface = get_iface_by_id(imsg_req_request.if_index);
-			if (iface != NULL) {
-				iface->xid = imsg_req_request.xid;
-				iface->requested_ip.s_addr =
-				    imsg_req_request.requested_ip.s_addr;
-				iface->server_identifier.s_addr =
-				    imsg_req_request.server_identifier.s_addr;
-				iface->dhcp_server.s_addr =
-				    imsg_req_request.dhcp_server.s_addr;
-				send_request(iface);
-			}
+			memcpy(&imsg_req_dhcp, imsg.data,
+			    sizeof(imsg_req_dhcp));
+
+			iface = get_iface_by_id(imsg_req_dhcp.if_index);
+
+			if (iface == NULL)
+				break;
+
+			iface_data_from_imsg(iface, &imsg_req_dhcp);
+			send_packet(DHCPREQUEST, iface);
 			break;
 		}
 		default:
@@ -885,10 +886,20 @@ bpf_receive(int fd, short events, void *arg)
 	}
 }
 
+void
+iface_data_from_imsg(struct iface* iface, struct imsg_req_dhcp *imsg)
+{
+	iface->xid = imsg->xid;
+	iface->ciaddr.s_addr = imsg->ciaddr.s_addr;
+	iface->requested_ip.s_addr = imsg->requested_ip.s_addr;
+	iface->server_identifier.s_addr = imsg->server_identifier.s_addr;
+	iface->dhcp_server.s_addr = imsg->dhcp_server.s_addr;
+}
+
 ssize_t
 build_packet(uint8_t message_type, char *if_name, uint32_t xid,
-    struct ether_addr *hw_address, struct in_addr *requested_ip,
-    struct in_addr *server_identifier)
+    struct ether_addr *hw_address, struct in_addr *ciaddr, struct in_addr
+    *requested_ip, struct in_addr *server_identifier)
 {
 	static uint8_t	 dhcp_cookie[] = DHCP_COOKIE;
 	static uint8_t	 dhcp_message_type[] = {DHO_DHCP_MESSAGE_TYPE, 1,
@@ -926,6 +937,7 @@ build_packet(uint8_t message_type, char *if_name, uint32_t xid,
 	hdr->hops = 0;
 	hdr->xid = xid;
 	hdr->secs = 0;
+	hdr->ciaddr.s_addr = ciaddr->s_addr;
 	memcpy(hdr->chaddr, hw_address, sizeof(*hw_address));
 	p += sizeof(struct dhcp_hdr);
 	memcpy(p, dhcp_cookie, sizeof(dhcp_cookie));
@@ -966,20 +978,20 @@ build_packet(uint8_t message_type, char *if_name, uint32_t xid,
 	memcpy(p, dhcp_req_list, sizeof(dhcp_req_list));
 	p += sizeof(dhcp_req_list);
 
-	if (message_type == DHCPREQUEST) {
+	if (requested_ip->s_addr != INADDR_ANY) {
 		memcpy(dhcp_requested_address + 2, requested_ip,
 		    sizeof(*requested_ip));
 		memcpy(p, dhcp_requested_address,
 		    sizeof(dhcp_requested_address));
 		p += sizeof(dhcp_requested_address);
+	}
 
-		if (server_identifier->s_addr != INADDR_ANY) {
-			memcpy(dhcp_server_identifier + 2, server_identifier,
-			    sizeof(*server_identifier));
-			memcpy(p, dhcp_server_identifier,
-			    sizeof(dhcp_server_identifier));
-			p += sizeof(dhcp_server_identifier);
-		}
+	if (server_identifier->s_addr != INADDR_ANY) {
+		memcpy(dhcp_server_identifier + 2, server_identifier,
+		    sizeof(*server_identifier));
+		memcpy(p, dhcp_server_identifier,
+		    sizeof(dhcp_server_identifier));
+		p += sizeof(dhcp_server_identifier);
 	}
 
 	*p = DHO_END;
@@ -995,7 +1007,7 @@ build_packet(uint8_t message_type, char *if_name, uint32_t xid,
 }
 
 void
-send_discover(struct iface *iface)
+send_packet(uint8_t message_type, struct iface *iface)
 {
 	ssize_t			 pkt_len;
 	char			 ifnamebuf[IF_NAMESIZE], *if_name;
@@ -1004,27 +1016,17 @@ send_discover(struct iface *iface)
 		iface->send_discover = 1;
 		return;
 	}
+
 	iface->send_discover = 0;
 
-	if_name = if_indextoname(iface->ifinfo.if_index, ifnamebuf);
-	log_debug("DHCPDISCOVER on %s", if_name == NULL ? "?" : if_name);
+	if ((if_name = if_indextoname(iface->ifinfo.if_index, ifnamebuf)) == NULL)
+		return; /* iface went away, nothing to do */
 
-	pkt_len = build_packet(DHCPDISCOVER, if_name, iface->xid,
-	    &iface->ifinfo.hw_address, &iface->requested_ip, NULL);
-	bpf_send_packet(iface, dhcp_packet, pkt_len);
-}
+	log_debug("%s on %s", message_type == DHCPDISCOVER ? "DHCPDISCOVER" :
+	    "DHCPREQUEST", if_name);
 
-void
-send_request(struct iface *iface)
-{
-	ssize_t			 pkt_len;
-	char			 ifnamebuf[IF_NAMESIZE], *if_name;
-
-	if_name = if_indextoname(iface->ifinfo.if_index, ifnamebuf);
-	log_debug("DHCPREQUEST on %s", if_name == NULL ? "?" : if_name);
-
-	pkt_len = build_packet(DHCPREQUEST, if_name, iface->xid,
-	    &iface->ifinfo.hw_address, &iface->requested_ip,
+	pkt_len = build_packet(message_type, if_name, iface->xid,
+	    &iface->ifinfo.hw_address, &iface->ciaddr, &iface->requested_ip,
 	    &iface->server_identifier);
 	if (iface->dhcp_server.s_addr != INADDR_ANY) {
 		if (udp_send_packet(iface, dhcp_packet, pkt_len) == -1)
@@ -1162,7 +1164,7 @@ set_bpfsock(int bpfsock, uint32_t if_index)
 		    EV_PERSIST, bpf_receive, iface);
 		event_add(&iface->bpfev.ev, NULL);
 		if (iface->send_discover)
-			send_discover(iface);
+			send_packet(DHCPDISCOVER, iface);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.29 2021/11/14 18:13:19 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.30 2021/12/09 16:20:12 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1170,6 +1170,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			return;
 		}
 		iface->server_identifier.s_addr = server_identifier.s_addr;
+		iface->dhcp_server.s_addr = server_identifier.s_addr;
 		iface->requested_ip.s_addr = dhcp_hdr->yiaddr.s_addr;
 		state_transition(iface, IF_REQUESTING);
 		break;
@@ -1228,6 +1229,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 
 		clock_gettime(CLOCK_MONOTONIC, &iface->request_time);
 		iface->server_identifier.s_addr = server_identifier.s_addr;
+		iface->dhcp_server.s_addr = server_identifier.s_addr;
 		iface->requested_ip.s_addr = dhcp_hdr->yiaddr.s_addr;
 		iface->mask.s_addr = subnet_mask.s_addr;
 #ifndef SMALL
@@ -1354,11 +1356,8 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 	case IF_REBOOTING:
 		if (old_state == IF_REBOOTING)
 			iface->timo.tv_sec *= 2;
-		else {
-			/* make sure we send broadcast */
-			iface->dhcp_server.s_addr = INADDR_ANY;
+		else
 			iface->timo.tv_sec = START_EXP_BACKOFF;
-		}
 		request_dhcp_request(iface);
 		break;
 	case IF_REQUESTING:
@@ -1377,10 +1376,6 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 		break;
 	case IF_RENEWING:
 		if (old_state == IF_BOUND) {
-			iface->dhcp_server.s_addr =
-			    iface->server_identifier.s_addr;
-			iface->server_identifier.s_addr = INADDR_ANY;
-
 			iface->timo.tv_sec = (iface->rebinding_time -
 			    iface->renewal_time) / 2; /* RFC 2131 4.4.5 */
 		} else
@@ -1392,7 +1387,6 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 		break;
 	case IF_REBINDING:
 		if (old_state == IF_RENEWING) {
-			iface->dhcp_server.s_addr = INADDR_ANY;
 			iface->timo.tv_sec = (iface->lease_time -
 			    iface->rebinding_time) / 2; /* RFC 2131 4.4.5 */
 		} else
@@ -1470,28 +1464,90 @@ iface_timeout(int fd, short events, void *arg)
 void
 request_dhcp_discover(struct dhcpleased_iface *iface)
 {
-	struct imsg_req_discover	 imsg_req_discover;
+	struct imsg_req_dhcp	 imsg;
 
-	imsg_req_discover.if_index = iface->if_index;
-	imsg_req_discover.xid = iface->xid = arc4random();
-	engine_imsg_compose_frontend(IMSG_SEND_DISCOVER, 0, &imsg_req_discover,
-	    sizeof(imsg_req_discover));
+	memset(&imsg, 0, sizeof(imsg));
+
+	iface->xid = arc4random();
+	imsg.if_index = iface->if_index;
+	imsg.xid = iface->xid;
+
+	/*
+	 * similar to RFC 2131 4.3.6, Table 4 for DHCPDISCOVER
+	 * ------------------------------
+	 * |              | INIT         |
+	 * ------------------------------
+	 * |broad/unicast | broadcast    |
+	 * |server-ip     | MUST NOT     |
+	 * |requested-ip  | MAY          |
+	 * |ciaddr        | zero         |
+	 * ------------------------------
+	 *
+	 * Leaving everything at 0 from the memset results in this table with
+	 * requested-ip not set.
+	*/
+
+	engine_imsg_compose_frontend(IMSG_SEND_DISCOVER, 0, &imsg, sizeof(imsg));
 }
 
 void
 request_dhcp_request(struct dhcpleased_iface *iface)
 {
-	struct imsg_req_request	 imsg_req_request;
+	struct imsg_req_dhcp	 imsg;
 
 	iface->xid = arc4random();
-	imsg_req_request.if_index = iface->if_index;
-	imsg_req_request.xid = iface->xid;
-	imsg_req_request.server_identifier.s_addr =
-	    iface->server_identifier.s_addr;
-	imsg_req_request.requested_ip.s_addr = iface->requested_ip.s_addr;
-	imsg_req_request.dhcp_server.s_addr =  iface->dhcp_server.s_addr;
-	engine_imsg_compose_frontend(IMSG_SEND_REQUEST, 0, &imsg_req_request,
-	    sizeof(imsg_req_request));
+	imsg.if_index = iface->if_index;
+	imsg.xid = iface->xid;
+
+	/*
+	 * RFC 2131 4.3.6, Table 4
+	 * ---------------------------------------------------------------------
+	 * |              |REBOOTING    |REQUESTING   |RENEWING     |REBINDING |
+	 * ---------------------------------------------------------------------
+	 * |broad/unicast |broadcast    |broadcast    |unicast      |broadcast |
+	 * |server-ip     |MUST NOT     |MUST         |MUST NOT     |MUST NOT  |
+	 * |requested-ip  |MUST         |MUST         |MUST NOT     |MUST NOT  |
+	 * |ciaddr        |zero         |zero         |IP address   |IP address|
+	 * ---------------------------------------------------------------------
+	*/
+	switch (iface->state) {
+	case IF_DOWN:
+		fatalx("invalid state IF_DOWN in %s", __func__);
+		break;
+	case IF_INIT:
+		fatalx("invalid state IF_INIT in %s", __func__);
+		break;
+	case IF_BOUND:
+		fatalx("invalid state IF_BOUND in %s", __func__);
+		break;
+	case IF_REBOOTING:
+		imsg.dhcp_server.s_addr = INADDR_ANY;		/* broadcast */
+		imsg.server_identifier.s_addr = INADDR_ANY;	/* MUST NOT */
+		imsg.requested_ip = iface->requested_ip;	/* MUST */
+		imsg.ciaddr.s_addr = INADDR_ANY;		/* zero */
+		break;
+	case IF_REQUESTING:
+		imsg.dhcp_server.s_addr = INADDR_ANY;		/* broadcast */
+		imsg.server_identifier =
+		    iface->server_identifier;			/* MUST */
+		imsg.requested_ip = iface->requested_ip;	/* MUST */
+		imsg.ciaddr.s_addr = INADDR_ANY;		/* zero */
+		break;
+	case IF_RENEWING:
+		imsg.dhcp_server = iface->dhcp_server;		/* unicast */
+		imsg.server_identifier.s_addr = INADDR_ANY;	/* MUST NOT */
+		imsg.requested_ip.s_addr = INADDR_ANY;		/* MUST NOT */
+		imsg.ciaddr = iface->requested_ip;		/* IP address */
+		break;
+	case IF_REBINDING:
+		imsg.dhcp_server.s_addr = INADDR_ANY;		/* broadcast */
+		imsg.server_identifier.s_addr = INADDR_ANY;	/* MUST NOT */
+		imsg.requested_ip.s_addr = INADDR_ANY;		/* MUST NOT */
+		imsg.ciaddr = iface->requested_ip;		/* IP address */
+		break;
+	}
+
+	engine_imsg_compose_frontend(IMSG_SEND_REQUEST, 0, &imsg, sizeof(imsg));
 }
 
 void
