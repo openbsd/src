@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.41 2021/12/03 17:27:34 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.42 2021/12/09 16:56:15 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -1022,12 +1022,7 @@ asn1_collect(BUF_MEM *buf, const unsigned char **in, long len, char inf,
 
 	p = *in;
 	inf &= 1;
-	/* If no buffer and not indefinite length constructed just pass over
-	 * the encoded data */
-	if (!buf && !inf) {
-		*in += len;
-		return 1;
-	}
+
 	while (len > 0) {
 		q = p;
 		/* Check for EOC */
@@ -1073,14 +1068,14 @@ static int
 collect_data(BUF_MEM *buf, const unsigned char **p, long plen)
 {
 	int len;
-	if (buf) {
-		len = buf->length;
-		if (!BUF_MEM_grow_clean(buf, len + plen)) {
-			ASN1error(ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		memcpy(buf->data + len, *p, plen);
+
+	len = buf->length;
+	if (!BUF_MEM_grow_clean(buf, len + plen)) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		return 0;
 	}
+	memcpy(buf->data + len, *p, plen);
+
 	*p += plen;
 	return 1;
 }
