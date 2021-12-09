@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lesskey.1,v 1.17 2021/12/07 13:26:49 schwarze Exp $
+.\"	$OpenBSD: lesskey.1,v 1.18 2021/12/09 21:09:51 jmc Exp $
 .\"
 .\" Copyright (C) 2000-2012  Mark Nudelman
 .\"
@@ -22,12 +22,12 @@
 .\" WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-.Dd $Mdocdate: December 7 2021 $
+.Dd $Mdocdate: December 9 2021 $
 .Dt LESSKEY 1
 .Os
 .Sh NAME
 .Nm lesskey
-.Nd specify key bindings for less
+.Nd customize key bindings for less
 .Sh SYNOPSIS
 .Nm lesskey
 .Oo Fl o Ar output
@@ -37,7 +37,7 @@
 .Fl V | -version
 .Sh DESCRIPTION
 .Nm
-is used to specify a set of key bindings to be used by
+is used to change the default key bindings of
 .Xr less 1 .
 The input file is a text file which describes the key bindings.
 If the input file is
