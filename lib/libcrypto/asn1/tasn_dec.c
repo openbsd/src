@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.43 2021/12/09 16:58:44 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.44 2021/12/09 17:01:41 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -76,8 +76,6 @@ static int asn1_find_end(const unsigned char **in, long len, char inf);
 
 static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len,
     char inf, int tag, int aclass, int depth);
-
-static int collect_data(BUF_MEM *buf, const unsigned char **p, long plen);
 
 static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
     char *inf, char *cst, const unsigned char **in, long len, int exptag,
@@ -1053,8 +1051,17 @@ asn1_collect(BUF_MEM *buf, const unsigned char **in, long len, char inf,
 			if (!asn1_collect(buf, &p, plen, ininf, tag, aclass,
 			    depth + 1))
 				return 0;
-		} else if (plen && !collect_data(buf, &p, plen))
-			return 0;
+		} else if (plen > 0) {
+			size_t len = buf->length;
+
+			if (!BUF_MEM_grow_clean(buf, len + plen)) {
+				ASN1error(ERR_R_MALLOC_FAILURE);
+				return 0;
+			}
+			memcpy(buf->data + len, p, plen);
+
+			p += plen;
+		}
 		len -= p - q;
 	}
 	if (inf) {
@@ -1062,22 +1069,6 @@ asn1_collect(BUF_MEM *buf, const unsigned char **in, long len, char inf,
 		return 0;
 	}
 	*in = p;
-	return 1;
-}
-
-static int
-collect_data(BUF_MEM *buf, const unsigned char **p, long plen)
-{
-	int len;
-
-	len = buf->length;
-	if (!BUF_MEM_grow_clean(buf, len + plen)) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-	memcpy(buf->data + len, *p, plen);
-
-	*p += plen;
 	return 1;
 }
 
