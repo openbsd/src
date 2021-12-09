@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.342 2021/12/06 21:47:27 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.343 2021/12/09 13:36:59 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1068,8 +1068,6 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
     struct ike_header *hdr)
 {
 	struct iked_sa		*sa;
-	in_port_t		 port;
-	struct iked_socket	*sock;
 	struct iked_policy	*pol;
 
 	if (ikev2_msg_valid_ike_sa(env, hdr, msg) == -1) {
@@ -1116,30 +1114,8 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 	if (ikev2_handle_notifies(env, msg) != 0)
 		return;
 
-	if (msg->msg_nat_detected && sa->sa_natt == 0 &&
-	    (sock = ikev2_msg_getsocket(env,
-	    sa->sa_local.addr_af, 1)) != NULL) {
-		/*
-		 * Update address information and use the NAT-T
-		 * port and socket, if available.
-		 */
-		port = htons(socket_getport(
-		    (struct sockaddr *)&sock->sock_addr));
-		sa->sa_local.addr_port = port;
-		sa->sa_peer.addr_port = port;
-		(void)socket_af((struct sockaddr *)&sa->sa_local.addr, port);
-		(void)socket_af((struct sockaddr *)&sa->sa_peer.addr, port);
-
-		msg->msg_fd = sa->sa_fd = sock->sock_fd;
-		msg->msg_sock = sock;
-		sa->sa_natt = 1;
-		sa->sa_udpencap = 1;
-
-		log_debug("%s: detected NAT, enabling UDP encapsulation,"
-		    " updated SA to peer %s local %s", __func__,
-		    print_host((struct sockaddr *)&sa->sa_peer.addr, NULL, 0),
-		    print_host((struct sockaddr *)&sa->sa_local.addr, NULL, 0));
-	}
+	if (msg->msg_nat_detected && sa->sa_natt == 0)
+		ikev2_enable_natt(env, sa, msg);
 
 	switch (hdr->ike_exchange) {
 	case IKEV2_EXCHANGE_IKE_SA_INIT:
@@ -1214,6 +1190,39 @@ ikev2_init_recv(struct iked *env, struct iked_message *msg,
 		    print_map(hdr->ike_exchange, ikev2_exchange_map));
 		break;
 	}
+}
+
+void
+ikev2_enable_natt(struct iked *env, struct iked_sa *sa,
+    struct iked_message *msg)
+{
+	struct iked_socket	*sock;
+	in_port_t		 port;
+
+	sock = ikev2_msg_getsocket(env, sa->sa_local.addr_af, 1);
+	if (sock == NULL)
+		return;
+
+	/*
+	 * Update address information and use the NAT-T
+	 * port and socket, if available.
+	 */
+	port = htons(socket_getport(
+	    (struct sockaddr *)&sock->sock_addr));
+	sa->sa_local.addr_port = port;
+	sa->sa_peer.addr_port = port;
+	(void)socket_af((struct sockaddr *)&sa->sa_local.addr, port);
+	(void)socket_af((struct sockaddr *)&sa->sa_peer.addr, port);
+
+	msg->msg_fd = sa->sa_fd = sock->sock_fd;
+	msg->msg_sock = sock;
+	sa->sa_natt = 1;
+	sa->sa_udpencap = 1;
+
+	log_debug("%s: detected NAT, enabling UDP encapsulation,"
+	    " updated SA to peer %s local %s", __func__,
+	    print_host((struct sockaddr *)&sa->sa_peer.addr, NULL, 0),
+	    print_host((struct sockaddr *)&sa->sa_local.addr, NULL, 0));
 }
 
 void
