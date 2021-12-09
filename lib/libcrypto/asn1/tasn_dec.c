@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.42 2021/12/09 16:56:15 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.43 2021/12/09 16:58:44 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -1020,6 +1020,11 @@ asn1_collect(BUF_MEM *buf, const unsigned char **in, long len, char inf,
 	long plen;
 	char cst, ininf;
 
+	if (depth > ASN1_MAX_STRING_NEST) {
+		ASN1error(ASN1_R_NESTED_ASN1_STRING);
+		return 0;
+	}
+
 	p = *in;
 	inf &= 1;
 
@@ -1045,10 +1050,6 @@ asn1_collect(BUF_MEM *buf, const unsigned char **in, long len, char inf,
 
 		/* If indefinite length constructed update max length */
 		if (cst) {
-			if (depth >= ASN1_MAX_STRING_NEST) {
-				ASN1error(ASN1_R_NESTED_ASN1_STRING);
-				return 0;
-			}
 			if (!asn1_collect(buf, &p, plen, ininf, tag, aclass,
 			    depth + 1))
 				return 0;
