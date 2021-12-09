@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_NAME_add_entry_by_txt.3,v 1.14 2019/06/14 13:59:32 schwarze Exp $
+.\"	$OpenBSD: X509_NAME_add_entry_by_txt.3,v 1.15 2021/12/09 19:01:52 schwarze Exp $
 .\"	OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 14 2019 $
+.Dd $Mdocdate: December 9 2021 $
 .Dt X509_NAME_ADD_ENTRY_BY_TXT 3
 .Os
 .Sh NAME
@@ -275,7 +275,9 @@ first appeared in OpenSSL 0.9.5 and have been available since
 .Fa type
 can still be set to
 .Dv V_ASN1_APP_CHOOSE
-to use a different algorithm to determine field types.
+to use
+.Xr ASN1_PRINTABLE_type 3
+to determine field types.
 Since this form does not understand multicharacter types, performs
 no length checks, and can result in invalid field types, its use
 is strongly discouraged.
