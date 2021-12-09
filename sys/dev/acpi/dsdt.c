@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.c,v 1.263 2021/05/22 13:13:14 kettenis Exp $ */
+/* $OpenBSD: dsdt.c,v 1.264 2021/12/09 20:21:35 patrick Exp $ */
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
  *
@@ -1423,7 +1423,7 @@ aml_parseend(struct aml_scope *scope)
 		    "Bad scope... runover pos:%.4x new end:%.4x scope "
 		    "end:%.4x\n", aml_pc(pos), aml_pc(pos+len),
 		    aml_pc(scope->end));
-		pos = scope->end;
+		return scope->end;
 	}
 	return pos+len;
 }
