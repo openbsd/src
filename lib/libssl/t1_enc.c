@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.152 2021/10/23 15:02:27 jsing Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.153 2021/12/09 17:54:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -164,8 +164,8 @@ tls1_P_hash(const EVP_MD *md, const unsigned char *secret, size_t secret_len,
 {
 	unsigned char A1[EVP_MAX_MD_SIZE], hmac[EVP_MAX_MD_SIZE];
 	size_t A1_len, hmac_len;
-	EVP_MD_CTX ctx;
-	EVP_PKEY *mac_key;
+	EVP_MD_CTX *ctx = NULL;
+	EVP_PKEY *mac_key = NULL;
 	int ret = 0;
 	int chunk;
 	size_t i;
@@ -173,42 +173,43 @@ tls1_P_hash(const EVP_MD *md, const unsigned char *secret, size_t secret_len,
 	chunk = EVP_MD_size(md);
 	OPENSSL_assert(chunk >= 0);
 
-	EVP_MD_CTX_init(&ctx);
+	if ((ctx = EVP_MD_CTX_new()) == NULL)
+		goto err;
 
 	mac_key = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, secret, secret_len);
-	if (!mac_key)
+	if (mac_key == NULL)
 		goto err;
-	if (!EVP_DigestSignInit(&ctx, NULL, md, NULL, mac_key))
+	if (!EVP_DigestSignInit(ctx, NULL, md, NULL, mac_key))
 		goto err;
-	if (seed1 && !EVP_DigestSignUpdate(&ctx, seed1, seed1_len))
+	if (seed1 && !EVP_DigestSignUpdate(ctx, seed1, seed1_len))
 		goto err;
-	if (seed2 && !EVP_DigestSignUpdate(&ctx, seed2, seed2_len))
+	if (seed2 && !EVP_DigestSignUpdate(ctx, seed2, seed2_len))
 		goto err;
-	if (seed3 && !EVP_DigestSignUpdate(&ctx, seed3, seed3_len))
+	if (seed3 && !EVP_DigestSignUpdate(ctx, seed3, seed3_len))
 		goto err;
-	if (seed4 && !EVP_DigestSignUpdate(&ctx, seed4, seed4_len))
+	if (seed4 && !EVP_DigestSignUpdate(ctx, seed4, seed4_len))
 		goto err;
-	if (seed5 && !EVP_DigestSignUpdate(&ctx, seed5, seed5_len))
+	if (seed5 && !EVP_DigestSignUpdate(ctx, seed5, seed5_len))
 		goto err;
-	if (!EVP_DigestSignFinal(&ctx, A1, &A1_len))
+	if (!EVP_DigestSignFinal(ctx, A1, &A1_len))
 		goto err;
 
 	for (;;) {
-		if (!EVP_DigestSignInit(&ctx, NULL, md, NULL, mac_key))
+		if (!EVP_DigestSignInit(ctx, NULL, md, NULL, mac_key))
 			goto err;
-		if (!EVP_DigestSignUpdate(&ctx, A1, A1_len))
+		if (!EVP_DigestSignUpdate(ctx, A1, A1_len))
 			goto err;
-		if (seed1 && !EVP_DigestSignUpdate(&ctx, seed1, seed1_len))
+		if (seed1 && !EVP_DigestSignUpdate(ctx, seed1, seed1_len))
 			goto err;
-		if (seed2 && !EVP_DigestSignUpdate(&ctx, seed2, seed2_len))
+		if (seed2 && !EVP_DigestSignUpdate(ctx, seed2, seed2_len))
 			goto err;
-		if (seed3 && !EVP_DigestSignUpdate(&ctx, seed3, seed3_len))
+		if (seed3 && !EVP_DigestSignUpdate(ctx, seed3, seed3_len))
 			goto err;
-		if (seed4 && !EVP_DigestSignUpdate(&ctx, seed4, seed4_len))
+		if (seed4 && !EVP_DigestSignUpdate(ctx, seed4, seed4_len))
 			goto err;
-		if (seed5 && !EVP_DigestSignUpdate(&ctx, seed5, seed5_len))
+		if (seed5 && !EVP_DigestSignUpdate(ctx, seed5, seed5_len))
 			goto err;
-		if (!EVP_DigestSignFinal(&ctx, hmac, &hmac_len))
+		if (!EVP_DigestSignFinal(ctx, hmac, &hmac_len))
 			goto err;
 
 		if (hmac_len > out_len)
@@ -223,18 +224,18 @@ tls1_P_hash(const EVP_MD *md, const unsigned char *secret, size_t secret_len,
 		if (out_len == 0)
 			break;
 
-		if (!EVP_DigestSignInit(&ctx, NULL, md, NULL, mac_key))
+		if (!EVP_DigestSignInit(ctx, NULL, md, NULL, mac_key))
 			goto err;
-		if (!EVP_DigestSignUpdate(&ctx, A1, A1_len))
+		if (!EVP_DigestSignUpdate(ctx, A1, A1_len))
 			goto err;
-		if (!EVP_DigestSignFinal(&ctx, A1, &A1_len))
+		if (!EVP_DigestSignFinal(ctx, A1, &A1_len))
 			goto err;
 	}
 	ret = 1;
 
  err:
 	EVP_PKEY_free(mac_key);
-	EVP_MD_CTX_cleanup(&ctx);
+	EVP_MD_CTX_free(ctx);
 
 	explicit_bzero(A1, sizeof(A1));
 	explicit_bzero(hmac, sizeof(hmac));
@@ -256,7 +257,7 @@ tls1_PRF(SSL *s, const unsigned char *secret, size_t secret_len,
 	if (!ssl_get_handshake_evp_md(s, &md))
 		return (0);
 
-	if (md->type == NID_md5_sha1) {
+	if (EVP_MD_type(md) == NID_md5_sha1) {
 		/*
 		 * Partition secret between MD5 and SHA1, then XOR result.
 		 * If the secret length is odd, a one byte overlap is used.
