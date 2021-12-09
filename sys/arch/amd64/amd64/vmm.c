@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.298 2021/12/07 07:58:56 anton Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.299 2021/12/09 19:33:53 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6696,10 +6696,16 @@ int
 vmm_handle_cpuid(struct vcpu *vcpu)
 {
 	uint64_t insn_length, cr4;
-	uint64_t *rax, *rbx, *rcx, *rdx, cpuid_limit;
+	uint64_t *rax, *rbx, *rcx, *rdx;
 	struct vmcb *vmcb;
 	uint32_t eax, ebx, ecx, edx;
 	struct vmx_msr_store *msr_store;
+	int vmm_cpuid_level;
+
+	/* what's the cpuid level we support/advertise? */
+	vmm_cpuid_level = cpuid_level;
+	if (vmm_cpuid_level < 0x15 && tsc_is_invariant)
+		vmm_cpuid_level = 0x15;
 
 	if (vmm_softc->mode == VMM_MODE_VMX ||
 	    vmm_softc->mode == VMM_MODE_EPT) {
@@ -6715,10 +6721,17 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		}
 
 		rax = &vcpu->vc_gueststate.vg_rax;
+
+		/*
+		 * "CPUID leaves above 02H and below 80000000H are only
+		 * visible when IA32_MISC_ENABLE MSR has bit 22 set to its
+		 * default value 0"
+		 */
 		msr_store =
 		    (struct vmx_msr_store *)vcpu->vc_vmx_msr_exit_save_va;
-		cpuid_limit = msr_store[VCPU_REGS_MISC_ENABLE].vms_data &
-		    MISC_ENABLE_LIMIT_CPUID_MAXVAL;
+		if (msr_store[VCPU_REGS_MISC_ENABLE].vms_data &
+		    MISC_ENABLE_LIMIT_CPUID_MAXVAL)
+			vmm_cpuid_level = 0x02;
 	} else {
 		/* XXX: validate insn_length 2 */
 		insn_length = 2;
@@ -6737,45 +6750,29 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 	 *  value for basic or extended function for that processor then the
 	 *  data for the highest basic information leaf is returned."
 	 *
-	 * This means if rax is between cpuid_level and 0x40000000 (the start
-	 * of the hypervisor info leaves), clamp to cpuid_level. Also, if
-	 * rax is greater than the extended function info, clamp also to
-	 * cpuid_level.
+	 * "When CPUID returns the highest basic leaf information as a result
+	 *  of an invalid input EAX value, any dependence on input ECX value
+	 *  in the basic leaf is honored."
 	 *
-	 * Note that %rax may be overwritten here - that's ok since we are
-	 * going to reassign it a new value (based on the input parameter)
-	 * later anyway.
+	 * This means if rax is between vmm_cpuid_level and 0x40000000 (the start
+	 * of the hypervisor info leaves), clamp to vmm_cpuid_level, but without
+	 * altering subleaf.  Also, if rax is greater than the extended function
+	 * info, clamp also to vmm_cpuid_level.
 	 */
-	if ((*rax > cpuid_level && *rax < 0x40000000) ||
+	if ((*rax > vmm_cpuid_level && *rax < 0x40000000) ||
 	    (*rax > curcpu()->ci_pnfeatset)) {
 		DPRINTF("%s: invalid cpuid input leaf 0x%llx, guest rip="
 		    "0x%llx - resetting to 0x%x\n", __func__, *rax,
 		    vcpu->vc_gueststate.vg_rip - insn_length,
-		    cpuid_level);
-		*rax = cpuid_level;
-	}
-
-	/*
-	 * "CPUID leaves above 02H and below 80000000H are only visible when
-	 * IA32_MISC_ENABLE MSR has bit 22 set to its default value 0"
-	 */
-	if ((vmm_softc->mode == VMM_MODE_VMX || vmm_softc->mode == VMM_MODE_EPT)
-	    && cpuid_limit && (*rax > 0x02 && *rax < 0x80000000)) {
-		*rax = 0;
-		*rbx = 0;
-		*rcx = 0;
-		*rdx = 0;
-		return (0);
+		    vmm_cpuid_level);
+		*rax = vmm_cpuid_level;
 	}
 
 	CPUID_LEAF(*rax, 0, eax, ebx, ecx, edx);
 
 	switch (*rax) {
 	case 0x00:	/* Max level and vendor ID */
-		if (cpuid_level < 0x15 && tsc_is_invariant)
-			*rax = 0x15;
-		else
-			*rax = cpuid_level;
+		*rax = vmm_cpuid_level;
 		*rbx = *((uint32_t *)&cpu_vendor);
 		*rdx = *((uint32_t *)&cpu_vendor + 1);
 		*rcx = *((uint32_t *)&cpu_vendor + 2);
@@ -6916,16 +6913,15 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		break;
 	case 0x15:
 		if (cpuid_level >= 0x15) {
-			CPUID(0x15, *rax, *rbx, *rcx, *rdx);
-		} else if (tsc_is_invariant) {
+			*rax = eax;
+			*rbx = ebx;
+			*rcx = ecx;
+			*rdx = edx;
+		} else {
+			KASSERT(tsc_is_invariant);
 			*rax = 1;
 			*rbx = 100;
 			*rcx = tsc_frequency / 100;
-			*rdx = 0;
-		} else {
-			*rax = 0;
-			*rbx = 0;
-			*rcx = 0;
 			*rdx = 0;
 		}
 		break;
