@@ -1,6 +1,7 @@
-/*	$OpenBSD: aplhidev.c,v 1.2 2021/11/12 17:05:15 kettenis Exp $	*/
+/*	$OpenBSD: aplhidev.c,v 1.3 2021/12/09 20:47:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
+ * Copyright (c) 2013-2014 joshua stein <jcs@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -55,6 +56,9 @@
 #define APLHIDEV_KBD_REPORT	0x0110
 #define APLHIDEV_TP_REPORT	0x0210
 #define APLHIDEV_SET_LEDS	0x0151
+#define APLHIDEV_SET_MODE	0x0252
+#define  APLHIDEV_MODE_HID	0x00
+#define  APLHIDEV_MODE_RAW	0x01
 
 struct aplhidev_attach_args {
 	uint8_t	aa_reportid;
@@ -96,6 +100,13 @@ struct aplhidev_set_leds {
 	uint16_t		crc;
 };
 
+struct aplhidev_set_mode {
+	struct aplhidev_msghdr	hdr;
+	uint8_t			reportid;
+	uint8_t			mode;
+	uint16_t		crc;
+};
+
 struct aplhidev_softc {
 	struct device		sc_dev;
 	int			sc_node;
@@ -130,10 +141,11 @@ struct cfdriver aplhidev_cd = {
 
 void	aplhidev_get_descriptor(struct aplhidev_softc *, uint8_t);
 void	aplhidev_set_leds(struct aplhidev_softc *, uint8_t);
+void	aplhidev_set_mode(struct aplhidev_softc *, uint8_t);
 
 int	aplhidev_intr(void *);
-void	aplkbd_intr(struct device *, void *, size_t);
-void	aplms_intr(struct device *, void *, size_t);
+void	aplkbd_intr(struct device *, uint8_t *, size_t);
+void	aplms_intr(struct device *, uint8_t *, size_t);
 
 int
 aplhidev_match(struct device *parent, void *match, void *aux)
@@ -199,6 +211,8 @@ aplhidev_attach(struct device *parent, struct device *self, void *aux)
 		if (sc->sc_tpdesclen > 0)
 			break;
 	}
+
+	aplhidev_set_mode(sc, APLHIDEV_MODE_RAW);
 
 	printf("\n");
 
@@ -290,6 +304,39 @@ aplhidev_set_leds(struct aplhidev_softc *sc, uint8_t leds)
 	spi_release_bus(sc->sc_spi_tag, 0);
 }
 
+void
+aplhidev_set_mode(struct aplhidev_softc *sc, uint8_t mode)
+{
+	struct aplhidev_spi_packet packet;
+	struct aplhidev_set_mode *msg;
+	struct aplhidev_spi_status status;
+
+	memset(&packet, 0, sizeof(packet));
+	packet.flags = APLHIDEV_WRITE_PACKET;
+	packet.device = APLHIDEV_TP_DEVICE;
+	packet.len = sizeof(*msg);
+
+	msg = (void *)&packet.data[0];
+	msg->hdr.type = APLHIDEV_SET_MODE;
+	msg->hdr.device = APLHIDEV_TP_DEVICE;
+	msg->hdr.msgid = sc->sc_msgid++;
+	msg->hdr.cmdlen = sizeof(*msg) - sizeof(struct aplhidev_msghdr) - 2;
+	msg->hdr.rsplen = msg->hdr.cmdlen;
+	msg->reportid = APLHIDEV_TP_DEVICE;
+	msg->mode = mode;
+	msg->crc = crc16(0, (void *)msg, sizeof(*msg) - 2);
+
+	packet.crc = crc16(0, (void *)&packet, sizeof(packet) - 2);
+
+	spi_acquire_bus(sc->sc_spi_tag, 0);
+	spi_config(sc->sc_spi_tag, &sc->sc_spi_conf);
+	spi_transfer(sc->sc_spi_tag, (char *)&packet, NULL, sizeof(packet),
+	    SPI_KEEP_CS);
+	delay(100);
+	spi_read(sc->sc_spi_tag, (char *)&status, sizeof(status));
+	spi_release_bus(sc->sc_spi_tag, 0);
+}
+
 int
 aplhidev_intr(void *arg)
 {
@@ -315,7 +362,7 @@ aplhidev_intr(void *arg)
 	    packet.device == APLHIDEV_KBD_DEVICE &&
 	    hdr->type == APLHIDEV_KBD_REPORT) {
 		if (sc->sc_kbd)
-			aplkbd_intr(sc->sc_kbd, &packet.data[9], hdr->cmdlen - 1);
+			aplkbd_intr(sc->sc_kbd, &packet.data[8], hdr->cmdlen);
 		return 1;
 	}
 
@@ -324,7 +371,7 @@ aplhidev_intr(void *arg)
 	    packet.device == APLHIDEV_TP_DEVICE &&
 	    hdr->type == APLHIDEV_TP_REPORT) {
 		if (sc->sc_ms)
-			aplms_intr(sc->sc_ms, &packet.data[9], hdr->cmdlen - 1);
+			aplms_intr(sc->sc_ms, &packet.data[8], hdr->cmdlen);
 		return 1;
 	}
 
@@ -424,13 +471,13 @@ aplkbd_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-aplkbd_intr(struct device *self, void *report, size_t reportlen)
+aplkbd_intr(struct device *self, uint8_t *packet, size_t packetlen)
 {
 	struct aplkbd_softc *sc = (struct aplkbd_softc *)self;
 	struct hidkbd *kbd = &sc->sc_kbd;
 
 	if (kbd->sc_enabled)
-		hidkbd_input(kbd, report, reportlen);
+		hidkbd_input(kbd, &packet[1], packetlen - 1);
 }
 
 int
@@ -506,9 +553,49 @@ aplkbd_cnbell(void *v, u_int pitch, u_int period, u_int volume)
 
 /* Touchpad */
 
+/*
+ * The contents of the touchpad event packets is identical to those
+ * used by the ubcmtp(4) driver.  The relevant definitions and the
+ * code to decode the packets is replicated here.
+ */
+
+struct ubcmtp_finger {
+	uint16_t	origin;
+	uint16_t	abs_x;
+	uint16_t	abs_y;
+	uint16_t	rel_x;
+	uint16_t	rel_y;
+	uint16_t	tool_major;
+	uint16_t	tool_minor;
+	uint16_t	orientation;
+	uint16_t	touch_major;
+	uint16_t	touch_minor;
+	uint16_t	unused[2];
+	uint16_t	pressure;
+	uint16_t	multi;
+} __packed __attribute((aligned(2)));
+
+#define UBCMTP_MAX_FINGERS	16
+
+#define UBCMTP_TYPE4_TPOFF	(24 * sizeof(uint16_t))
+#define UBCMTP_TYPE4_BTOFF	31
+#define UBCMTP_TYPE4_FINGERPAD	(1 * sizeof(uint16_t))
+
+/* Use a constant, synaptics-compatible pressure value for now. */
+#define DEFAULT_PRESSURE	40
+
 struct aplms_softc {
 	struct device	sc_dev;
-	struct hidms	sc_ms;
+	struct device	*sc_wsmousedev;
+
+	int		sc_enabled;
+
+	int		tp_offset;
+	int		tp_fingerpad;
+
+	struct mtpoint	frame[UBCMTP_MAX_FINGERS];
+	int		contacts;
+	int		btn;
 };
 
 int	aplms_enable(void *);
@@ -532,6 +619,8 @@ struct cfdriver aplms_cd = {
 	NULL, "aplms", DV_DULL
 };
 
+int	aplms_configure(struct aplms_softc *);
+
 int
 aplms_match(struct device *parent, void *match, void *aux)
 {
@@ -544,63 +633,140 @@ void
 aplms_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct aplms_softc *sc = (struct aplms_softc *)self;
-	struct aplhidev_attach_args *aa = (struct aplhidev_attach_args *)aux;
-	struct hidms *ms = &sc->sc_ms;
+	struct wsmousedev_attach_args aa;
 
-	if (hidms_setup(self, ms, 0, APLHIDEV_TP_DEVICE,
-	    aa->aa_desc, aa->aa_desclen))
-		return;
+	printf("\n");
 
-	hidms_attach(ms, &aplms_accessops);
+	sc->tp_offset = UBCMTP_TYPE4_TPOFF;
+	sc->tp_fingerpad = UBCMTP_TYPE4_FINGERPAD;
+
+	aa.accessops = &aplms_accessops;
+	aa.accesscookie = sc;
+
+	sc->sc_wsmousedev = config_found(self, &aa, wsmousedevprint);
+	if (sc->sc_wsmousedev != NULL && aplms_configure(sc))
+		aplms_disable(sc);
+}
+
+int
+aplms_configure(struct aplms_softc *sc)
+{
+	struct wsmousehw *hw = wsmouse_get_hw(sc->sc_wsmousedev);
+
+	/* The values below are for the MacBookPro17,1 */
+	hw->type = WSMOUSE_TYPE_TOUCHPAD;
+	hw->hw_type = WSMOUSEHW_CLICKPAD;
+	hw->x_min = -6046;
+	hw->x_max = 6536;
+	hw->y_min = -164;
+	hw->y_max = 7439;
+	hw->mt_slots = UBCMTP_MAX_FINGERS;
+	hw->flags = WSMOUSEHW_MT_TRACKING;
+
+	return wsmouse_configure(sc->sc_wsmousedev, NULL, 0);
 }
 
 void
-aplms_intr(struct device *self, void *report, size_t reportlen)
+aplms_intr(struct device *self, uint8_t *packet, size_t packetlen)
 {
 	struct aplms_softc *sc = (struct aplms_softc *)self;
-	struct hidms *ms = &sc->sc_ms;
+	struct ubcmtp_finger *finger;
+	int off, s, btn, contacts;
 
-	if (ms->sc_enabled)
-		hidms_input(ms, report, reportlen);
+	if (!sc->sc_enabled)
+		return;
+
+	contacts = 0;
+	for (off = sc->tp_offset; off < packetlen;
+	    off += (sizeof(struct ubcmtp_finger) + sc->tp_fingerpad)) {
+		finger = (struct ubcmtp_finger *)(packet + off);
+
+		if ((int16_t)letoh16(finger->touch_major) == 0)
+			continue; /* finger lifted */
+
+		sc->frame[contacts].x = (int16_t)letoh16(finger->abs_x);
+		sc->frame[contacts].y = (int16_t)letoh16(finger->abs_y);
+		sc->frame[contacts].pressure = DEFAULT_PRESSURE;
+		contacts++;
+	}
+
+	btn = sc->btn;
+	sc->btn = !!((int16_t)letoh16(packet[UBCMTP_TYPE4_BTOFF]));
+
+	if (contacts || sc->contacts || sc->btn != btn) {
+		sc->contacts = contacts;
+		s = spltty();
+		wsmouse_buttons(sc->sc_wsmousedev, sc->btn);
+		wsmouse_mtframe(sc->sc_wsmousedev, sc->frame, contacts);
+		wsmouse_input_sync(sc->sc_wsmousedev);
+		splx(s);
+	}
 }
 
 int
 aplms_enable(void *v)
 {
 	struct aplms_softc *sc = v;
-	struct hidms *ms = &sc->sc_ms;
 
-	return hidms_enable(ms);
+	if (sc->sc_enabled)
+		return EBUSY;
+
+	sc->sc_enabled = 1;
+	return 0;
 }
 
 void
 aplms_disable(void *v)
 {
 	struct aplms_softc *sc = v;
-	struct hidms *ms = &sc->sc_ms;
 
-	hidms_disable(ms);
+	sc->sc_enabled = 0;
 }
 
 int
 aplms_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct aplms_softc *sc = v;
-	struct hidms *ms = &sc->sc_ms;
+	struct wsmousehw *hw = wsmouse_get_hw(sc->sc_wsmousedev);
+	struct wsmouse_calibcoords *wsmc = (struct wsmouse_calibcoords *)data;
+	int wsmode;
 
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
-		*(u_int *)data = WSMOUSE_TYPE_TOUCHPAD;
-		return 0;
+		*(u_int *)data = hw->type;
+		break;
+
+	case WSMOUSEIO_GCALIBCOORDS:
+		wsmc->minx = hw->x_min;
+		wsmc->maxx = hw->x_max;
+		wsmc->miny = hw->y_min;
+		wsmc->maxy = hw->y_max;
+		wsmc->swapxy = 0;
+		wsmc->resx = 0;
+		wsmc->resy = 0;
+		break;
+
+	case WSMOUSEIO_SETMODE:
+		wsmode = *(u_int *)data;
+		if (wsmode != WSMOUSE_COMPAT && wsmode != WSMOUSE_NATIVE) {
+			printf("%s: invalid mode %d\n", sc->sc_dev.dv_xname,
+			    wsmode);
+			return (EINVAL);
+		}
+		wsmouse_set_mode(sc->sc_wsmousedev, wsmode);
+		break;
+
 	default:
-		return hidms_ioctl(ms, cmd, data, flag, p);
+		return -1;
 	}
+
+	return 0;
 }
 
 #else
 
 void
-aplms_intr(struct device *self, void *report, size_t reportlen)
+aplms_intr(struct device *self, uint8_t *packet, size_t packetlen)
 {
 }
 
