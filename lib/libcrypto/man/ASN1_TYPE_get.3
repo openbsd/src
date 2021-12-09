@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_TYPE_get.3,v 1.16 2021/11/26 13:48:21 jsg Exp $
+.\" $OpenBSD: ASN1_TYPE_get.3,v 1.17 2021/12/09 18:50:26 schwarze Exp $
 .\" selective merge up to: OpenSSL 6328d367 Jul 4 21:58:30 2020 +0200
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 26 2021 $
+.Dd $Mdocdate: December 9 2021 $
 .Dt ASN1_TYPE_GET 3
 .Os
 .Sh NAME
@@ -134,8 +134,11 @@
 .Fa "const ASN1_TYPE *b"
 .Fc
 .Sh DESCRIPTION
+The
 .Vt ASN1_TYPE
-represents the ASN.1 ANY type.
+data type and the
+.Dv V_ASN1_ANY
+type identifier constant represent the ASN.1 ANY type.
 An
 .Vt ASN1_TYPE
 object can store an ASN.1 value of arbitrary type,
@@ -158,7 +161,7 @@ is a
 pointer, no action occurs.
 .Pp
 .Fn ASN1_TYPE_get
-returns the type of
+returns the type currently held by
 .Fa a ,
 represented by one of the
 .Dv V_ASN1_*
@@ -168,12 +171,12 @@ constants defined in
 .Fn ASN1_TYPE_set
 frees the value contained in
 .Fa a ,
-if any, and sets
-.Fa a
-to
-.Fa type
+if any, and sets the
+.Fa value
 and
-.Fa value .
+.Fa type
+now held in
+.Fa a .
 This function uses the pointer
 .Fa value
 internally so it must
@@ -181,7 +184,7 @@ internally so it must
 be freed up after the call.
 .Pp
 .Fn ASN1_TYPE_set1
-sets the type of
+sets the type held by
 .Fa a
 to
 .Fa type
@@ -312,7 +315,7 @@ checks that
 .Fa a
 and
 .Fa b
-have the same type, the same value, and are encoded in the same way.
+hold the same type, the same value, and are encoded in the same way.
 .Pp
 If the types agree and the values have the same meaning but are
 encoded differently, they are considered different.
@@ -348,7 +351,7 @@ object or
 if an error occurs.
 .Pp
 .Fn ASN1_TYPE_get
-returns the type of
+returns the type currently held by
 .Fa a
 or 0 if an error occurs.
 The latter can happen if
