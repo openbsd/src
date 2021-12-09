@@ -2632,6 +2632,7 @@
 ./usr/sbin/eigrpctl
 ./usr/sbin/eigrpd
 ./usr/sbin/ftp-proxy
+./usr/sbin/fw_install
 ./usr/sbin/fw_update
 ./usr/sbin/group
 ./usr/sbin/groupadd
@@ -2920,6 +2921,7 @@
 ./usr/share/misc/bc.library
 ./usr/share/misc/birthtoken
 ./usr/share/misc/countrycodes
+./usr/share/misc/firmware_patterns
 ./usr/share/misc/inter.phone
 ./usr/share/misc/iso3166.tab
 ./usr/share/misc/less.help
