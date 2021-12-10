@@ -1,4 +1,4 @@
-/* $OpenBSD: unconacc.c,v 1.4 2021/12/01 10:24:40 mvs Exp $ */
+/* $OpenBSD: unconacc.c,v 1.1 2021/12/10 00:50:18 mvs Exp $ */
 
 /*
  * Copyright (c) 2021 Vitaliy Makkoveev <mvs@openbsd.org>
