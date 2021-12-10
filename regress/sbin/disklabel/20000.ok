@@ -20,7 +20,7 @@ Writing MBR at offset 0.
   j:             5.4G         22098912  4.2BSD   2048 16384     1 # /usr/obj
   j:         11224576         22098912  4.2BSD   2048 16384     1 
   k:             3.6G         33323488  4.2BSD   2048 16384     1 # /home
-  k:          7638496         33323488  4.2BSD   2048 16384     1 
+  k:          7638560         33323488  4.2BSD   2048 16384     1 
 
 /dev/vnd0a / ffs rw 1 1
 /dev/vnd0k /home ffs rw 1 2

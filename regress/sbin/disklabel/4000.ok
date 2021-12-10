@@ -8,7 +8,7 @@ Writing MBR at offset 0.
   d:             2.5G          2283104  4.2BSD   2048 16384     1 # /usr
   d:          5162176          2283104  4.2BSD   2048 16384     1 
   e:             0.4G          7445280  4.2BSD   2048 16384     1 # /home
-  e:           748704          7445280  4.2BSD   2048 16384     1 
+  e:           748768          7445280  4.2BSD   2048 16384     1 
 
 /dev/vnd0a / ffs rw 1 1
 /dev/vnd0e /home ffs rw 1 2
