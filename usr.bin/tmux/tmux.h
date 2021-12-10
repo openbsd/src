@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1155 2021/11/15 10:58:13 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1156 2021/12/10 12:42:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1311,7 +1311,7 @@ struct tty {
 #define TTY_NOCURSOR 0x1
 #define TTY_FREEZE 0x2
 #define TTY_TIMER 0x4
-/* 0x8 unused */
+#define TTY_NOBLOCK 0x8
 #define TTY_STARTED 0x10
 #define TTY_OPENED 0x20
 /* 0x40 unused */
