@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.15 2021/12/09 19:01:52 schwarze Exp $
+.\" $OpenBSD: X509_NAME_ENTRY_get_object.3,v 1.16 2021/12/10 16:58:20 schwarze Exp $
 .\" full merge up to: OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\" selective merge up to: OpenSSL ca34e08d Dec 12 07:38:07 2018 +0100
 .\"
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 9 2021 $
+.Dd $Mdocdate: December 10 2021 $
 .Dt X509_NAME_ENTRY_GET_OBJECT 3
 .Os
 .Sh NAME
@@ -240,11 +240,26 @@ and
 .Fa len .
 If the
 .Fa type
+argument is positive and includes the
+.Fa MBSTRING_FLAG
+bit,
+.Xr ASN1_STRING_set_by_NID 3
+is used for setting the value, passing the
+.Fa type
+as the
+.Fa inform
+argument and using the
+.Fa nid
+corresponding to
+.Fa ne .
+Otherwise, if the
+.Fa type
 argument is
 .Dv V_ASN1_APP_CHOOSE ,
-the return value of
-.Xr ASN1_PRINTABLE_type 3
-is used instead.
+the type of
+.Fa ne
+is set to the return value of
+.Xr ASN1_PRINTABLE_type 3 .
 .Pp
 .Fn X509_NAME_ENTRY_create_by_txt ,
 .Fn X509_NAME_ENTRY_create_by_NID ,
