@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_mbstring_copy.3,v 1.4 2021/11/28 17:40:14 schwarze Exp $
+.\" $OpenBSD: ASN1_mbstring_copy.3,v 1.5 2021/12/10 16:19:52 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 28 2021 $
+.Dd $Mdocdate: December 10 2021 $
 .Dt ASN1_MBSTRING_COPY 3
 .Os
 .Sh NAME
@@ -119,6 +119,15 @@ The
 column indicates whether the type is considered acceptable if the
 .Fa mask
 argument has the special value 0.
+.Pp
+The following bit mask constants
+each include several of the bits listed above:
+.Bl -column B_ASN1_DIRECTORYSTRING_ MMM MMM MMM MMM MMM MMMM
+.It mask constant             Ta PRI Ta IA5 Ta T61 Ta BMP Ta UNI Ta UTF8
+.It Dv B_ASN1_DIRECTORYSTRING Ta yes Ta no  Ta yes Ta yes Ta yes Ta yes
+.It Dv DIRSTRING_TYPE         Ta yes Ta no  Ta yes Ta yes Ta no  Ta yes
+.It Dv PKCS9STRING_TYPE       Ta yes Ta yes Ta yes Ta yes Ta no  Ta yes
+.El
 .Pp
 If
 .Fa out
