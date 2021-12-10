@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.237 2021/12/05 22:00:42 cheloha Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.238 2021/12/10 05:34:42 guenther Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -136,13 +136,6 @@ sys___tfork(struct proc *p, void *v, register_t *retval)
 	if (TCB_INVALID(param.tf_tcb))
 		return EINVAL;
 #endif /* TCB_INVALID */
-
-	/*
-	 * kbind(2) can only be used if it is initialized before the
-	 * process goes multithreaded.
-	 */
-	if (p->p_p->ps_kbind_addr == 0)
-		p->p_p->ps_kbind_addr = BOGO_PC;
 
 	return thread_fork(p, param.tf_stack, param.tf_tcb, param.tf_tid,
 	    retval);
