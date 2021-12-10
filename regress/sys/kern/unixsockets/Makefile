@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2021/12/09 23:37:18 mvs Exp $
+# $OpenBSD: Makefile,v 1.5 2021/12/10 00:33:25 mvs Exp $
 
 # Copyright (c) 2021 Makkoveev Vitaliy <mvs@openbsd.org>
 #
@@ -17,6 +17,9 @@
 WARNINGS = yes
 
 PROGS = undgram_selfconn ungc
+
+PROGS += undgram_conclose
+LDADD_undgram_conclose = -lpthread
 
 PROGS += unfdpassfail
 LDADD_unfdpassfail = -lpthread

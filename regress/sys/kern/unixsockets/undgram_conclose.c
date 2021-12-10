@@ -1,4 +1,4 @@
-/* $OpenBSD: undgram_conclose.c,v 1.4 2021/12/01 10:24:40 mvs Exp $ */
+/* $OpenBSD: undgram_conclose.c,v 1.1 2021/12/10 00:33:25 mvs Exp $ */
 
 /*
  * Copyright (c) 2021 Vitaliy Makkoveev <mvs@openbsd.org>
