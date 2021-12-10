@@ -1,4 +1,4 @@
-.\"	$OpenBSD: less.1,v 1.58 2021/09/23 18:46:25 tobias Exp $
+.\"	$OpenBSD: less.1,v 1.59 2021/12/10 17:26:54 schwarze Exp $
 .\"
 .\" Copyright (C) 1984-2012  Mark Nudelman
 .\"
@@ -23,7 +23,7 @@
 .\" OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 23 2021 $
+.Dd $Mdocdate: December 10 2021 $
 .Dt LESS 1
 .Os
 .Sh NAME
@@ -852,7 +852,7 @@ If a right curly bracket appears in the bottom line displayed on the screen,
 the } command will go to the matching left curly bracket.
 The matching left curly bracket is positioned on the top
 line of the screen.
-If there is more than one right curly bracket on the top line,
+If there is more than one right curly bracket on the bottom line,
 a number N may be used to specify the N-th bracket on the line.
 .It Ic \&(
 Like {, but applies to parentheses rather than curly brackets.
