@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strnid.c,v 1.21 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: a_strnid.c,v 1.22 2021/12/11 22:34:36 schwarze Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -56,7 +56,6 @@
  *
  */
 
-#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -70,7 +69,8 @@ static int sk_table_cmp(const ASN1_STRING_TABLE * const *a,
     const ASN1_STRING_TABLE * const *b);
 
 
-/* This is the global mask for the mbstring functions: this is use to
+/*
+ * This is the global mask for the mbstring functions: this is used to
  * mask out certain types (such as BMPString and UTF8String) because
  * certain software (e.g. Netscape) has problems with them.
  */
@@ -89,7 +89,8 @@ ASN1_STRING_get_default_mask(void)
 	return global_mask;
 }
 
-/* This function sets the default to various "flavours" of configuration.
+/*
+ * This function sets the default to various "flavours" of configuration
  * based on an ASCII string. Currently this is:
  * MASK:XXXX : a numerical mask value.
  * nobmp : Don't use BMPStrings (just Printable, T61).
@@ -104,19 +105,19 @@ ASN1_STRING_set_default_mask_asc(const char *p)
 	unsigned long mask;
 	char *end;
 
-	if (!strncmp(p, "MASK:", 5)) {
-		if (!p[5])
+	if (strncmp(p, "MASK:", 5) == 0) {
+		if (p[5] == '\0')
 			return 0;
 		mask = strtoul(p + 5, &end, 0);
-		if (*end)
+		if (*end != '\0')
 			return 0;
-	} else if (!strcmp(p, "nombstr"))
+	} else if (strcmp(p, "nombstr") == 0)
 		mask = ~((unsigned long)(B_ASN1_BMPSTRING|B_ASN1_UTF8STRING));
-	else if (!strcmp(p, "pkix"))
+	else if (strcmp(p, "pkix") == 0)
 		mask = ~((unsigned long)B_ASN1_T61STRING);
-	else if (!strcmp(p, "utf8only"))
+	else if (strcmp(p, "utf8only") == 0)
 		mask = B_ASN1_UTF8STRING;
-	else if (!strcmp(p, "default"))
+	else if (strcmp(p, "default") == 0)
 		mask = 0xFFFFFFFFL;
 	else
 		return 0;
@@ -124,7 +125,8 @@ ASN1_STRING_set_default_mask_asc(const char *p)
 	return 1;
 }
 
-/* The following function generates an ASN1_STRING based on limits in a table.
+/*
+ * The following function generates an ASN1_STRING based on limits in a table.
  * Frequently the types and length of an ASN1_STRING are restricted by a
  * corresponding OID. For example certificates and certificate requests.
  */
@@ -137,12 +139,13 @@ ASN1_STRING_set_by_NID(ASN1_STRING **out, const unsigned char *in, int inlen,
 	ASN1_STRING *str = NULL;
 	unsigned long mask;
 	int ret;
-	if (!out)
+
+	if (out == NULL)
 		out = &str;
 	tbl = ASN1_STRING_TABLE_get(nid);
-	if (tbl) {
+	if (tbl != NULL) {
 		mask = tbl->mask;
-		if (!(tbl->flags & STABLE_NO_MASK))
+		if ((tbl->flags & STABLE_NO_MASK) == 0)
 			mask &= global_mask;
 		ret = ASN1_mbstring_ncopy(out, in, inlen, inform, mask,
 		    tbl->minsize, tbl->maxsize);
@@ -154,7 +157,8 @@ ASN1_STRING_set_by_NID(ASN1_STRING **out, const unsigned char *in, int inlen,
 	return *out;
 }
 
-/* Now the tables and helper functions for the string table:
+/*
+ * Now the tables and helper functions for the string table:
  */
 
 /* size limits: this stuff is taken straight from RFC3280 */
@@ -292,7 +296,7 @@ ASN1_STRING_TABLE_cleanup(void)
 	STACK_OF(ASN1_STRING_TABLE) *tmp;
 
 	tmp = stable;
-	if (!tmp)
+	if (tmp == NULL)
 		return;
 	stable = NULL;
 	sk_ASN1_STRING_TABLE_pop_free(tmp, st_free);
