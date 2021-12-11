@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplspi.c,v 1.2 2021/11/12 17:04:32 kettenis Exp $	*/
+/*	$OpenBSD: aplspi.c,v 1.3 2021/12/11 20:04:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -38,6 +38,8 @@
 #define  SPI_CONFIG_EN		(1 << 18)
 #define  SPI_CONFIG_PIOEN	(1 << 5)
 #define SPI_STATUS		0x08
+#define SPI_PIN			0x0c
+#define  SPI_PIN_CS		(1 << 1)
 #define SPI_TXDATA		0x10
 #define SPI_RXDATA		0x20
 #define SPI_CLKDIV		0x30
@@ -49,6 +51,11 @@
 #define SPI_AVAIL		0x10c
 #define  SPI_AVAIL_TX(avail)	((avail >> 8) & 0xff)
 #define  SPI_AVAIL_RX(avail)	((avail >> 24) & 0xff)
+#define SPI_SHIFTCFG		0x150
+#define  SPI_SHIFTCFG_OVERRIDE_CS	(1 << 24)
+#define SPI_PINCFG		0x154
+#define  SPI_PINCFG_KEEP_CS	(1 << 1)
+#define  SPI_PINCFG_CS_IDLE_VAL	(1 << 9)
 
 #define SPI_FIFO_SIZE		16
 
@@ -67,7 +74,7 @@ struct aplspi_softc {
 
 	int			sc_cs;
 	uint32_t		*sc_csgpio;
-	size_t			sc_csgpiolen;
+	int			sc_csgpiolen;
 	u_int			sc_cs_delay;
 };
 
@@ -140,6 +147,14 @@ aplspi_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pfreq = clock_get_frequency(sc->sc_node, NULL);
 
+	pinctrl_byname(sc->sc_node, "default");
+
+	/* Configure CS# pin for manual control. */
+	HWRITE4(sc, SPI_PIN, SPI_PIN_CS);
+	HCLR4(sc, SPI_SHIFTCFG, SPI_SHIFTCFG_OVERRIDE_CS);
+	HCLR4(sc, SPI_PINCFG, SPI_PINCFG_CS_IDLE_VAL);
+	HSET4(sc, SPI_PINCFG, SPI_PINCFG_KEEP_CS);
+
 	sc->sc_tag.sc_cookie = sc;
 	sc->sc_tag.sc_config = aplspi_config;
 	sc->sc_tag.sc_transfer = aplspi_transfer;
@@ -193,8 +208,12 @@ aplspi_clkdiv(struct aplspi_softc *sc, uint32_t freq)
 void
 aplspi_set_cs(struct aplspi_softc *sc, int cs, int on)
 {
-	if (sc->sc_csgpio && cs == 0)
-		gpio_controller_set_pin(sc->sc_csgpio, on);
+	if (cs == 0) {
+		if (sc->sc_csgpio)
+			gpio_controller_set_pin(sc->sc_csgpio, on);
+		else
+			HWRITE4(sc, SPI_PIN, on ? 0 : SPI_PIN_CS);
+	}
 }
 
 int
