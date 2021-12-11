@@ -1,4 +1,4 @@
-.\" $OpenBSD: d2i_X509_NAME.3,v 1.16 2021/07/20 17:31:32 schwarze Exp $
+.\" $OpenBSD: d2i_X509_NAME.3,v 1.17 2021/12/11 17:25:10 jmc Exp $
 .\" checked up to:
 .\" OpenSSL crypto/d2i_X509_NAME 4692340e Jun 7 15:49:08 2016 -0400 and
 .\" OpenSSL man3/X509_NAME_get0_der 99d63d46 Oct 26 13:56:48 2016 -0400
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 20 2021 $
+.Dd $Mdocdate: December 11 2021 $
 .Dt D2I_X509_NAME 3
 .Os
 .Sh NAME
@@ -129,7 +129,7 @@ using
 .Fn X509_NAME_dup ,
 and in case of success, it frees
 .Pf * Fa val_out
-and sets it to a pointer to the the new object.
+and sets it to a pointer to the new object.
 When the function fails, it never changes anything.
 In any case,
 .Fa val_in
