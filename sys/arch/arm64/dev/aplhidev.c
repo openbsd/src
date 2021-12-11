@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplhidev.c,v 1.3 2021/12/09 20:47:27 kettenis Exp $	*/
+/*	$OpenBSD: aplhidev.c,v 1.4 2021/12/11 20:36:26 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2013-2014 joshua stein <jcs@openbsd.org>
@@ -152,7 +152,7 @@ aplhidev_match(struct device *parent, void *match, void *aux)
 {
 	struct spi_attach_args *sa = aux;
 
-	if (strcmp(sa->sa_name, "apple,keyboard") == 0)
+	if (strcmp(sa->sa_name, "apple,spi-hid-transport") == 0)
 		return 1;
 
 	return 0;
