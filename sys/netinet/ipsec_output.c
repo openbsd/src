@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.93 2021/12/02 12:39:15 bluhm Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.94 2021/12/11 16:33:47 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -268,7 +268,9 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 			}
 
 			/* Remember that we appended a tunnel header. */
+			mtx_enter(&tdb->tdb_mtx);
 			tdb->tdb_flags |= TDBF_USEDTUNNEL;
+			mtx_leave(&tdb->tdb_mtx);
 		}
 	}
 

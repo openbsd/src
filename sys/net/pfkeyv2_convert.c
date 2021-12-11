@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.76 2021/11/25 13:46:02 bluhm Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.77 2021/12/11 16:33:46 bluhm Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -122,6 +122,7 @@ import_sa(struct tdb *tdb, struct sadb_sa *sadb_sa, struct ipsecinit *ii)
 	if (!sadb_sa)
 		return;
 
+	mtx_enter(&tdb->tdb_mtx);
 	if (ii) {
 		ii->ii_encalg = sadb_sa->sadb_sa_encrypt;
 		ii->ii_authalg = sadb_sa->sadb_sa_auth;
@@ -145,6 +146,7 @@ import_sa(struct tdb *tdb, struct sadb_sa *sadb_sa, struct ipsecinit *ii)
 
 	if (sadb_sa->sadb_sa_state != SADB_SASTATE_MATURE)
 		tdb->tdb_flags |= TDBF_INVALID;
+	mtx_leave(&tdb->tdb_mtx);
 }
 
 /*
@@ -282,6 +284,7 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 	if (!sadb_lifetime)
 		return;
 
+	mtx_enter(&tdb->tdb_mtx);
 	switch (type) {
 	case PFKEYV2_LIFETIME_HARD:
 		if ((tdb->tdb_exp_allocations =
@@ -348,6 +351,7 @@ import_lifetime(struct tdb *tdb, struct sadb_lifetime *sadb_lifetime, int type)
 		tdb->tdb_established = sadb_lifetime->sadb_lifetime_addtime;
 		tdb->tdb_first_use = sadb_lifetime->sadb_lifetime_usetime;
 	}
+	mtx_leave(&tdb->tdb_mtx);
 }
 
 /*

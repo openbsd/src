@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.263 2021/12/08 14:24:18 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.264 2021/12/11 16:33:47 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -311,11 +311,13 @@ reserve_spi(u_int rdomain, u_int32_t sspi, u_int32_t tspi,
 #ifdef IPSEC
 		/* Setup a "silent" expiration (since TDBF_INVALID's set). */
 		if (ipsec_keep_invalid > 0) {
+			mtx_enter(&tdbp->tdb_mtx);
 			tdbp->tdb_flags |= TDBF_TIMER;
 			tdbp->tdb_exp_timeout = ipsec_keep_invalid;
 			if (timeout_add_sec(&tdbp->tdb_timer_tmo,
 			    ipsec_keep_invalid))
 				tdb_ref(tdbp);
+			mtx_leave(&tdbp->tdb_mtx);
 		}
 #endif
 
@@ -701,11 +703,14 @@ tdb_soft_timeout(void *v)
 	struct tdb *tdb = v;
 
 	NET_LOCK();
+	mtx_enter(&tdb->tdb_mtx);
 	if (tdb->tdb_flags & TDBF_SOFT_TIMER) {
+		tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
+		mtx_leave(&tdb->tdb_mtx);
 		/* Soft expirations. */
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
-		tdb->tdb_flags &= ~TDBF_SOFT_TIMER;
-	}
+	} else
+		mtx_leave(&tdb->tdb_mtx);
 	/* decrement refcount of the timeout argument */
 	tdb_unref(tdb);
 	NET_UNLOCK();
@@ -717,12 +722,15 @@ tdb_soft_firstuse(void *v)
 	struct tdb *tdb = v;
 
 	NET_LOCK();
+	mtx_enter(&tdb->tdb_mtx);
 	if (tdb->tdb_flags & TDBF_SOFT_FIRSTUSE) {
+		tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
+		mtx_leave(&tdb->tdb_mtx);
 		/* If the TDB hasn't been used, don't renew it. */
 		if (tdb->tdb_first_use != 0)
 			pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
-		tdb->tdb_flags &= ~TDBF_SOFT_FIRSTUSE;
-	}
+	} else
+		mtx_leave(&tdb->tdb_mtx);
 	/* decrement refcount of the timeout argument */
 	tdb_unref(tdb);
 	NET_UNLOCK();
@@ -958,6 +966,9 @@ tdb_unbundle(struct tdb *tdbp)
 void
 tdb_deltimeouts(struct tdb *tdbp)
 {
+	mtx_enter(&tdbp->tdb_mtx);
+	tdbp->tdb_flags &= ~(TDBF_FIRSTUSE | TDBF_SOFT_FIRSTUSE | TDBF_TIMER |
+	    TDBF_SOFT_TIMER);
 	if (timeout_del(&tdbp->tdb_timer_tmo))
 		tdb_unref(tdbp);
 	if (timeout_del(&tdbp->tdb_first_tmo))
@@ -966,6 +977,7 @@ tdb_deltimeouts(struct tdb *tdbp)
 		tdb_unref(tdbp);
 	if (timeout_del(&tdbp->tdb_sfirst_tmo))
 		tdb_unref(tdbp);
+	mtx_leave(&tdbp->tdb_mtx);
 }
 
 struct tdb *
@@ -1005,9 +1017,13 @@ tdb_dodelete(struct tdb *tdbp, int locked)
 {
 	NET_ASSERT_LOCKED();
 
-	if (tdbp->tdb_flags & TDBF_DELETED)
+	mtx_enter(&tdbp->tdb_mtx);
+	if (tdbp->tdb_flags & TDBF_DELETED) {
+		mtx_leave(&tdbp->tdb_mtx);
 		return;
+	}
 	tdbp->tdb_flags |= TDBF_DELETED;
+	mtx_leave(&tdbp->tdb_mtx);
 	if (locked)
 		tdb_unlink_locked(tdbp);
 	else
@@ -1034,6 +1050,7 @@ tdb_alloc(u_int rdomain)
 	tdbp = pool_get(&tdb_pool, PR_WAITOK | PR_ZERO);
 
 	refcnt_init(&tdbp->tdb_refcnt);
+	mtx_init(&tdbp->tdb_mtx, IPL_SOFTNET);
 	TAILQ_INIT(&tdbp->tdb_policy_head);
 
 	/* Record establishment time. */
@@ -1085,8 +1102,6 @@ tdb_free(struct tdb *tdbp)
 	KASSERT(tdbp->tdb_inext == NULL);
 
 	/* Remove expiration timeouts. */
-	tdbp->tdb_flags &= ~(TDBF_FIRSTUSE | TDBF_SOFT_FIRSTUSE | TDBF_TIMER |
-	    TDBF_SOFT_TIMER);
 	KASSERT(timeout_pending(&tdbp->tdb_timer_tmo) == 0);
 	KASSERT(timeout_pending(&tdbp->tdb_first_tmo) == 0);
 	KASSERT(timeout_pending(&tdbp->tdb_stimer_tmo) == 0);

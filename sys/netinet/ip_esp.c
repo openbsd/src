@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.188 2021/11/21 16:17:48 mvs Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.189 2021/12/11 16:33:47 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -433,11 +433,15 @@ esp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	}
 
 	/* Notify on soft expiration */
+	mtx_enter(&tdb->tdb_mtx);
 	if ((tdb->tdb_flags & TDBF_SOFT_BYTES) &&
 	    (tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes)) {
+		tdb->tdb_flags &= ~TDBF_SOFT_BYTES;  /* Turn off checking */
+		mtx_leave(&tdb->tdb_mtx);
+		/* may sleep in solock() for the pfkey socket */
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
-		tdb->tdb_flags &= ~TDBF_SOFT_BYTES;       /* Turn off checking */
-	}
+	} else
+		mtx_leave(&tdb->tdb_mtx);
 
 	/* Get crypto descriptors */
 	crp = crypto_getreq(esph && espx ? 2 : 1);
@@ -781,8 +785,8 @@ esp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	espstat_add(esps_obytes, m->m_pkthdr.len - skip);
 
 	/* Hard byte expiration. */
-	if (tdb->tdb_flags & TDBF_BYTES &&
-	    tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes) {
+	if ((tdb->tdb_flags & TDBF_BYTES) &&
+	    (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)) {
 		ipsecstat_inc(ipsec_exctdb);
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
@@ -791,11 +795,15 @@ esp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	}
 
 	/* Soft byte expiration. */
-	if (tdb->tdb_flags & TDBF_SOFT_BYTES &&
-	    tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes) {
+	mtx_enter(&tdb->tdb_mtx);
+	if ((tdb->tdb_flags & TDBF_SOFT_BYTES) &&
+	    (tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes)) {
+		tdb->tdb_flags &= ~TDBF_SOFT_BYTES;  /* Turn off checking */
+		mtx_leave(&tdb->tdb_mtx);
+		/* may sleep in solock() for the pfkey socket */
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
-		tdb->tdb_flags &= ~TDBF_SOFT_BYTES;    /* Turn off checking. */
-	}
+	} else
+		mtx_leave(&tdb->tdb_mtx);
 
 	/*
 	 * Loop through mbuf chain; if we find a readonly mbuf,

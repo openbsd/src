@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.168 2021/12/02 12:39:15 bluhm Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.169 2021/12/11 16:33:46 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -612,8 +612,8 @@ ah_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	ahstat_add(ahs_ibytes, ibytes);
 
 	/* Hard expiration. */
-	if (tdb->tdb_flags & TDBF_BYTES &&
-	    tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes) {
+	if ((tdb->tdb_flags & TDBF_BYTES) &&
+	    (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)) {
 		ipsecstat_inc(ipsec_exctdb);
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
@@ -621,11 +621,15 @@ ah_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	}
 
 	/* Notify on expiration. */
-	if (tdb->tdb_flags & TDBF_SOFT_BYTES &&
-	    tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes) {
+	mtx_enter(&tdb->tdb_mtx);
+	if ((tdb->tdb_flags & TDBF_SOFT_BYTES) &&
+	    (tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes)) {
+		tdb->tdb_flags &= ~TDBF_SOFT_BYTES;  /* Turn off checking */
+		mtx_leave(&tdb->tdb_mtx);
+		/* may sleep in solock() for the pfkey socket */
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
-		tdb->tdb_flags &= ~TDBF_SOFT_BYTES;  /* Turn off checking. */
-	}
+	} else
+		mtx_leave(&tdb->tdb_mtx);
 
 	/* Get crypto descriptors. */
 	crp = crypto_getreq(1);
@@ -952,8 +956,8 @@ ah_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	ahstat_add(ahs_obytes, m->m_pkthdr.len - skip);
 
 	/* Hard expiration. */
-	if (tdb->tdb_flags & TDBF_BYTES &&
-	    tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes) {
+	if ((tdb->tdb_flags & TDBF_BYTES) &&
+	    (tdb->tdb_cur_bytes >= tdb->tdb_exp_bytes)) {
 		ipsecstat_inc(ipsec_exctdb);
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_HARD);
 		tdb_delete(tdb);
@@ -962,11 +966,15 @@ ah_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	}
 
 	/* Notify on expiration. */
-	if (tdb->tdb_flags & TDBF_SOFT_BYTES &&
-	    tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes) {
+	mtx_enter(&tdb->tdb_mtx);
+	if ((tdb->tdb_flags & TDBF_SOFT_BYTES) &&
+	    (tdb->tdb_cur_bytes >= tdb->tdb_soft_bytes)) {
+		tdb->tdb_flags &= ~TDBF_SOFT_BYTES;  /* Turn off checking */
+		mtx_leave(&tdb->tdb_mtx);
+		/* may sleep in solock() for the pfkey socket */
 		pfkeyv2_expire(tdb, SADB_EXT_LIFETIME_SOFT);
-		tdb->tdb_flags &= ~TDBF_SOFT_BYTES; /* Turn off checking */
-	}
+	} else
+		mtx_leave(&tdb->tdb_mtx);
 
 	/*
 	 * Loop through mbuf chain; if we find a readonly mbuf,

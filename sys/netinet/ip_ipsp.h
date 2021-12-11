@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.229 2021/12/08 14:24:18 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.230 2021/12/11 16:33:47 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -314,6 +314,7 @@ struct ipsec_policy {
  *	I	immutable after creation
  *	N	net lock
  *	s	tdb_sadb_mtx
+ *	m	tdb_mtx
  */
 struct tdb {				/* tunnel descriptor block */
 	/*
@@ -331,6 +332,7 @@ struct tdb {				/* tunnel descriptor block */
 	struct tdb	*tdb_onext;
 
 	struct refcnt	tdb_refcnt;
+	struct mutex	tdb_mtx;
 
 	const struct xformsw	*tdb_xform;		/* Transform to use */
 	const struct enc_xform	*tdb_encalgxform;	/* Enc algorithm */
@@ -364,7 +366,7 @@ struct tdb {				/* tunnel descriptor block */
 	"\21USEDTUNNEL\22UDPENCAP\23PFSYNC\24PFSYNC_RPL" \
 	"\25ESN")
 
-	u_int32_t	tdb_flags;	/* Flags related to this TDB */
+	u_int32_t	tdb_flags;	/* [m] Flags related to this TDB */
 
 	struct timeout	tdb_timer_tmo;
 	struct timeout	tdb_first_tmo;
