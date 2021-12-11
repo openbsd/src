@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strnid.c,v 1.22 2021/12/11 22:34:36 schwarze Exp $ */
+/* $OpenBSD: a_strnid.c,v 1.23 2021/12/11 22:58:48 schwarze Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -64,6 +64,8 @@
 #include <openssl/objects.h>
 
 static STACK_OF(ASN1_STRING_TABLE) *stable = NULL;
+
+static ASN1_STRING_TABLE *stable_get(int nid);
 static void st_free(ASN1_STRING_TABLE *tbl);
 static int sk_table_cmp(const ASN1_STRING_TABLE * const *a,
     const ASN1_STRING_TABLE * const *b);
@@ -235,20 +237,59 @@ ASN1_STRING_TABLE *
 ASN1_STRING_TABLE_get(int nid)
 {
 	int idx;
-	ASN1_STRING_TABLE *ttmp;
 	ASN1_STRING_TABLE fnd;
 
 	fnd.nid = nid;
-	ttmp = OBJ_bsearch_table(&fnd, tbl_standard,
+	if (stable != NULL) {
+		idx = sk_ASN1_STRING_TABLE_find(stable, &fnd);
+		if (idx >= 0)
+			return sk_ASN1_STRING_TABLE_value(stable, idx);
+	}
+	return OBJ_bsearch_table(&fnd, tbl_standard,
 	    sizeof(tbl_standard)/sizeof(ASN1_STRING_TABLE));
-	if (ttmp)
-		return ttmp;
-	if (!stable)
+}
+
+/*
+ * Return a string table pointer which can be modified: either directly
+ * from table or a copy of an internal value added to the table.
+ */
+
+static ASN1_STRING_TABLE *
+stable_get(int nid)
+{
+	ASN1_STRING_TABLE *tmp, *rv;
+
+	/* Always need a string table so allocate one if NULL */
+	if (stable == NULL) {
+		stable = sk_ASN1_STRING_TABLE_new(sk_table_cmp);
+		if (stable == NULL)
+			return NULL;
+	}
+	tmp = ASN1_STRING_TABLE_get(nid);
+	if (tmp != NULL && (tmp->flags & STABLE_FLAGS_MALLOC) != 0)
+		return tmp;
+
+	if ((rv = calloc(1, sizeof(*rv))) == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
 		return NULL;
-	idx = sk_ASN1_STRING_TABLE_find(stable, &fnd);
-	if (idx < 0)
+	}
+	if (!sk_ASN1_STRING_TABLE_push(stable, rv)) {
+		free(rv);
 		return NULL;
-	return sk_ASN1_STRING_TABLE_value(stable, idx);
+	}
+	if (tmp != NULL) {
+		rv->nid = tmp->nid;
+		rv->minsize = tmp->minsize;
+		rv->maxsize = tmp->maxsize;
+		rv->mask = tmp->mask;
+		rv->flags = tmp->flags | STABLE_FLAGS_MALLOC;
+	} else {
+		rv->nid = nid;
+		rv->minsize = -1;
+		rv->maxsize = -1;
+		rv->flags = STABLE_FLAGS_MALLOC;
+	}
+	return rv;
 }
 
 int
@@ -256,37 +297,20 @@ ASN1_STRING_TABLE_add(int nid, long minsize, long maxsize, unsigned long mask,
     unsigned long flags)
 {
 	ASN1_STRING_TABLE *tmp;
-	char new_nid = 0;
 
-	flags &= ~STABLE_FLAGS_MALLOC;
-	if (!stable)
-		stable = sk_ASN1_STRING_TABLE_new(sk_table_cmp);
-	if (!stable) {
+	if ((tmp = stable_get(nid)) == NULL) {
 		ASN1error(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	if (!(tmp = ASN1_STRING_TABLE_get(nid))) {
-		tmp = malloc(sizeof(ASN1_STRING_TABLE));
-		if (!tmp) {
-			ASN1error(ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		tmp->flags = flags | STABLE_FLAGS_MALLOC;
-		tmp->nid = nid;
-		new_nid = 1;
-	} else tmp->flags = (tmp->flags & STABLE_FLAGS_MALLOC) | flags;
-		if (minsize != -1)
+	if (minsize >= 0)
 		tmp->minsize = minsize;
-	if (maxsize != -1)
+	if (maxsize >= 0)
 		tmp->maxsize = maxsize;
-	tmp->mask = mask;
-	if (new_nid) {
-		if (sk_ASN1_STRING_TABLE_push(stable, tmp) == 0) {
-			free(tmp);
-			ASN1error(ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-	}
+	if (mask != 0)
+		tmp->mask = mask;
+	if (flags != 0)
+		tmp->flags = flags | STABLE_FLAGS_MALLOC;
+
 	return 1;
 }
 
