@@ -1,7 +1,8 @@
-.\"	$OpenBSD: ASN1_STRING_TABLE_add.3,v 1.5 2021/10/20 15:54:21 schwarze Exp $
-.\"	OpenSSL ASN1_STRING_TABLE_add.pod 7b608d08 Jul 27 01:18:50 2017 +0800
+.\" $OpenBSD: ASN1_STRING_TABLE_add.3,v 1.6 2021/12/11 18:51:25 schwarze Exp $
+.\" checked up to:
+.\" OpenSSL ASN1_STRING_TABLE_add.pod 7b608d08 Jul 27 01:18:50 2017 +0800
 .\"
-.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2017, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 20 2021 $
+.Dd $Mdocdate: December 11 2021 $
 .Dt ASN1_STRING_TABLE_ADD 3
 .Os
 .Sh NAME
@@ -51,20 +52,37 @@ The function
 changes the existing entry for
 .Fa nid
 or, if there is none, allocates a new entry.
-Each field of the entry is modified according to the function argument
+The fields of the entry are overwritten with the function arguments
 of the same name.
-The
+If
 .Fa minsize
-and
+or
 .Fa maxsize
-arguments overwrite the existing fields unless they are \-1.
-The
+is negative or
 .Fa mask
-argument always overwrites the existing field.
+is 0, that argument is ignored and the respective field remains unchanged,
+or for a new entry, it is set to \-1, \-1, 0, or
+.Dv STABLE_FLAGS_MALLOC ,
+respectively.
+.Pp
 The bits set in the
 .Fa flags
-argument are OR'ed into the existing field.
-No useful flags are currently defined, so passing 0 is recommended.
+argument are OR'ed into the existing field rather than overwriting it.
+The only useful flag is
+.Dv STABLE_NO_MASK .
+If it is set,
+.Xr ASN1_STRING_set_by_NID 3
+skips applying the global mask that can be set with
+.Xr ASN1_STRING_set_default_mask 3 .
+Otherwise, the table entry only accepts types
+permitted by both the global mask and the
+.Fa mask
+argument.
+Setting
+.Dv STABLE_FLAGS_MALLOC
+or any other bit in the
+.Fa mask
+argument has no effect.
 .Pp
 The function
 .Fn ASN1_STRING_TABLE_get
@@ -73,7 +91,8 @@ retrieves the entry for
 .Pp
 The function
 .Fn ASN1_STRING_TABLE_cleanup
-removes and frees all entries except the predefined ones.
+removes and frees all entries except the predefined ones
+and restores the predefined ones to their default state.
 .Sh RETURN VALUES
 The
 .Fn ASN1_STRING_TABLE_add
