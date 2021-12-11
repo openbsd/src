@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.153 2020/12/25 12:59:53 visa Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.154 2021/12/11 09:28:26 visa Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1973,7 +1973,7 @@ filt_ufsread(struct knote *kn, long hint)
 		return (1);
 	}
 
-	if (kn->kn_flags & __EV_POLL)
+	if (kn->kn_flags & (__EV_POLL | __EV_SELECT))
 		return (1);
 
 	return (kn->kn_data != 0);

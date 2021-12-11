@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.174 2021/11/29 15:54:04 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.175 2021/12/11 09:28:26 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1779,7 +1779,7 @@ knote_remove(struct proc *p, struct kqueue *kq, struct knlist *list, int purge)
 		 * This reuses the original knote for delivering the
 		 * notification so as to avoid allocating memory.
 		 */
-		if (!purge && (kn->kn_flags & __EV_POLL) &&
+		if (!purge && (kn->kn_flags & (__EV_POLL | __EV_SELECT)) &&
 		    !(p->p_kq == kq &&
 		      p->p_kq_serial > (unsigned long)kn->kn_udata) &&
 		    kn->kn_fop != &badfd_filtops) {

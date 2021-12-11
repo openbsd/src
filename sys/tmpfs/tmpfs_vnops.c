@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.50 2021/10/24 16:02:44 patrick Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.51 2021/12/11 09:28:26 visa Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -2670,7 +2670,7 @@ filt_tmpfsread(struct knote *kn, long hint)
 		return (1);
 	}
 
-	if (kn->kn_flags & __EV_POLL)
+	if (kn->kn_flags & (__EV_POLL | __EV_SELECT))
 		return (1);
 
 	return (kn->kn_data != 0);

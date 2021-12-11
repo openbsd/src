@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.106 2021/10/15 06:30:06 semarie Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.107 2021/12/11 09:28:26 visa Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -404,7 +404,7 @@ spec_kqfilter(void *v)
 
 	switch (ap->a_vp->v_type) {
 	default:
-		if (ap->a_kn->kn_flags & __EV_POLL)
+		if (ap->a_kn->kn_flags & (__EV_POLL | __EV_SELECT))
 			return seltrue_kqfilter(dev, ap->a_kn);
 		break;
 	case VCHR:

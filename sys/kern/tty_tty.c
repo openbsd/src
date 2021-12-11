@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.28 2021/03/10 10:21:47 jsg Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.29 2021/12/11 09:28:26 visa Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -159,7 +159,7 @@ cttykqfilter(dev_t dev, struct knote *kn)
 	struct vnode *ttyvp = cttyvp(curproc);
 
 	if (ttyvp == NULL) {
-		if (kn->kn_flags & __EV_POLL)
+		if (kn->kn_flags & (__EV_POLL | __EV_SELECT))
 			return (seltrue_kqfilter(dev, kn));
 		return (ENXIO);
 	}
