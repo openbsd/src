@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.33 2021/10/24 17:52:28 mpi Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.34 2021/12/11 20:07:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -462,6 +462,49 @@ acpipci_intr_swizzle(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 }
 
 int
+acpipci_getirq(int crsidx, union acpi_resource *crs, void *arg)
+{
+	int *irq = arg;
+
+	switch (AML_CRSTYPE(crs)) {
+	case SR_IRQ:
+		*irq = ffs(letoh16(crs->sr_irq.irq_mask)) - 1;
+		break;
+	case LR_EXTIRQ:
+		*irq = letoh32(crs->lr_extirq.irq[0]);
+		break;
+	default:
+		break;
+	}
+
+	return 0;
+}
+
+int
+acpipci_intr_link(struct acpipci_softc *sc, struct aml_value *val)
+{
+	struct aml_value res;
+	int64_t sta;
+	int irq = -1;
+
+	if (val->type == AML_OBJTYPE_OBJREF)
+		val = val->v_objref.ref;
+	if (val->type != AML_OBJTYPE_DEVICE)
+		return -1;
+
+	sta = acpi_getsta(sc->sc_acpi, val->node);
+	if ((sta & STA_PRESENT) == 0)
+		return -1;
+
+	if (aml_evalname(sc->sc_acpi, val->node, "_CRS", 0, NULL, &res))
+		return -1;
+	aml_parse_resource(&res, acpipci_getirq, &irq);
+	aml_freevalue(&res);
+
+	return irq;
+}
+
+int
 acpipci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 	struct acpipci_softc *sc = pa->pa_pc->pc_intr_v;
@@ -497,19 +540,26 @@ acpipci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 			continue;
 		if (val->v_package[0]->type != AML_OBJTYPE_INTEGER ||
 		    val->v_package[1]->type != AML_OBJTYPE_INTEGER ||
-		    val->v_package[2]->type != AML_OBJTYPE_INTEGER ||
 		    val->v_package[3]->type != AML_OBJTYPE_INTEGER)
 			continue;
-		    
+
 		addr = val->v_package[0]->v_integer;
 		pin = val->v_package[1]->v_integer;
-		source = val->v_package[2]->v_integer;
-		index = val->v_package[3]->v_integer;
 		if (ACPI_ADR_PCIDEV(addr) != pa->pa_device ||
 		    ACPI_ADR_PCIFUN(addr) != 0xffff ||
-		    pin != pa->pa_intrpin - 1 || source != 0)
+		    pin != pa->pa_intrpin - 1)
 			continue;
-		
+
+		if (val->v_package[2]->type == AML_OBJTYPE_INTEGER) {
+			source = val->v_package[2]->v_integer;
+			index = val->v_package[3]->v_integer;
+		} else {
+			source = 0;
+			index = acpipci_intr_link(sc, val->v_package[2]);
+		}
+		if (source != 0 || index == -1)
+			continue;
+
 		ihp->ih_pc = pa->pa_pc;
 		ihp->ih_tag = pa->pa_tag;
 		ihp->ih_intrpin = index;
