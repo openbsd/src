@@ -1,4 +1,4 @@
-/*	$OpenBSD: efipxe.c,v 1.11 2021/06/06 23:56:55 krw Exp $	*/
+/*	$OpenBSD: efipxe.c,v 1.12 2021/12/11 20:11:17 naddy Exp $	*/
 /*
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -311,12 +311,11 @@ int
 tftpopen(struct open_file *f, ...)
 {
 	EFI_STATUS status;
-	u_int unit, part;
+	u_int unit;
 	va_list ap;
 
 	va_start(ap, f);
 	unit = va_arg(ap, u_int);
-	part = va_arg(ap, u_int);
 	va_end(ap);
 
 	/* No PXE set -> no PXE available */
