@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.113 2021/12/07 14:58:32 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.114 2021/12/11 20:09:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -67,18 +67,22 @@ MBR_init(struct mbr *mbr)
 		PRT_parse(&dp, 0, 0, &bootprt);
 	}
 
-	if (bootprt.prt_ns > 0)
+	if (bootprt.prt_ns > 0) {
+		/* Start OpenBSD partition immediately after bootprt. */
 		obsdprt.prt_bs = bootprt.prt_bs + bootprt.prt_ns;
-	else if (disk.dk_heads > 1 || disk.dk_cylinders > 1)
-		obsdprt.prt_bs = disk.dk_sectors;
-	else
+	} else if (disk.dk_heads > 1 || disk.dk_cylinders > 1) {
+		/*
+		 * Start OpenBSD partition on power of 2 block number
+		 * after the first track.
+		 */
+		daddr = 1;
+		while (daddr < DL_SECTOBLK(&dl, disk.dk_sectors))
+			daddr *= 2;
+		obsdprt.prt_bs = DL_BLKTOSEC(&dl, daddr);
+	} else {
+		/* Start OpenBSD partition immediately after MBR. */
 		obsdprt.prt_bs = 1;
-
-	/* Start OpenBSD MBR partition on a power of 2 block number. */
-	daddr = 1;
-	while (daddr < DL_SECTOBLK(&dl, obsdprt.prt_bs))
-		daddr *= 2;
-	obsdprt.prt_bs = DL_BLKTOSEC(&dl, daddr);
+	}
 
 	if (obsdprt.prt_bs >= disk.dk_size) {
 		memset(&obsdprt, 0, sizeof(obsdprt));
