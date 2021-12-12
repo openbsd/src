@@ -1,4 +1,4 @@
-/* $OpenBSD: ossl_typ.h,v 1.15 2021/11/24 01:12:43 beck Exp $ */
+/* $OpenBSD: ossl_typ.h,v 1.16 2021/12/12 21:35:46 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -102,6 +102,10 @@ typedef struct evp_pkey_asn1_method_st EVP_PKEY_ASN1_METHOD;
 
 typedef struct evp_pkey_method_st EVP_PKEY_METHOD;
 typedef struct evp_pkey_ctx_st EVP_PKEY_CTX;
+
+typedef struct evp_Encode_Ctx_st EVP_ENCODE_CTX;
+
+typedef struct hmac_ctx_st HMAC_CTX;
 
 typedef struct dh_st DH;
 typedef struct dh_method DH_METHOD;

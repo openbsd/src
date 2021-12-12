@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.87 2021/11/30 18:27:04 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.88 2021/12/12 21:35:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,6 +119,7 @@
 extern "C" {
 #endif
 
+/* Move to evp_locl.h */
 /* Type needs to be a bit field
  * Sub-type needs to be for variations on the method, as in, can it do
  * arbitrary encryption.... */
@@ -163,6 +164,7 @@ typedef int evp_verify_method(int type, const unsigned char *m,
     void *key);
 
 #ifndef EVP_MD
+/* Move to evp_locl.h */
 struct env_md_st {
 	int type;
 	int pkey_type;
@@ -258,6 +260,7 @@ struct env_md_st {
 
 #endif /* !EVP_MD */
 
+/* Move to evp_locl.h. */
 struct env_md_ctx_st {
 	const EVP_MD *digest;
 	ENGINE *engine; /* functional reference if 'digest' is ENGINE-provided */
@@ -295,6 +298,7 @@ struct env_md_ctx_st {
 
 #define EVP_MD_CTX_FLAG_NO_INIT		0x0100 /* Don't initialize md_data */
 
+/* Move to evp_locl.h */
 struct evp_cipher_st {
 	int nid;
 	int block_size;
@@ -413,6 +417,7 @@ typedef struct evp_cipher_info_st {
 	unsigned char iv[EVP_MAX_IV_LENGTH];
 } EVP_CIPHER_INFO;
 
+/* Move to evp_locl.h */
 struct evp_cipher_ctx_st {
 	const EVP_CIPHER *cipher;
 	ENGINE *engine;	/* functional reference if 'cipher' is ENGINE-provided */
@@ -433,7 +438,9 @@ struct evp_cipher_ctx_st {
 	unsigned char final[EVP_MAX_BLOCK_LENGTH];/* possible final block */
 } /* EVP_CIPHER_CTX */;
 
-typedef struct evp_Encode_Ctx_st {
+/* Move to evp_locl.h */
+struct evp_Encode_Ctx_st {
+
 	int num;	/* number saved in a partial encode/decode */
 	int length;	/* The length is either the output line length
 			 * (in input bytes) or the shortest input line
@@ -443,7 +450,7 @@ typedef struct evp_Encode_Ctx_st {
 	unsigned char enc_data[80];	/* data to encode */
 	int line_num;	/* number read on current line */
 	int expect_nl;
-} EVP_ENCODE_CTX;
+} /* EVP_ENCODE_CTX */;
 
 /* Password based encryption function */
 typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
