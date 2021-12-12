@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.21 2021/10/23 11:36:44 tb Exp $ */
+/* $OpenBSD: req.c,v 1.22 2021/12/12 20:42:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1049,19 +1049,22 @@ req_main(int argc, char **argv)
 		EVP_PKEY *tpubkey;
 
 		if (req_config.x509)
-			tpubkey = X509_get_pubkey(x509ss);
+			tpubkey = X509_get0_pubkey(x509ss);
 		else
-			tpubkey = X509_REQ_get_pubkey(req);
+			tpubkey = X509_REQ_get0_pubkey(req);
 		if (tpubkey == NULL) {
 			fprintf(stdout, "Modulus=unavailable\n");
 			goto end;
 		}
 		fprintf(stdout, "Modulus=");
-		if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA)
-			BN_print(out, tpubkey->pkey.rsa->n);
-		else
+		if (EVP_PKEY_base_id(tpubkey) == EVP_PKEY_RSA) {
+			const BIGNUM *n = NULL;
+
+			RSA_get0_key(EVP_PKEY_get0_RSA(tpubkey), &n, NULL, NULL);
+
+			BN_print(out, n);
+		} else
 			fprintf(stdout, "Wrong Algorithm type");
-		EVP_PKEY_free(tpubkey);
 		fprintf(stdout, "\n");
 	}
 	if (!req_config.noout && !req_config.x509) {
@@ -1760,14 +1763,19 @@ int
 do_X509_sign(BIO * err, X509 * x, EVP_PKEY * pkey, const EVP_MD * md,
     STACK_OF(OPENSSL_STRING) * sigopts)
 {
+	EVP_MD_CTX *mctx;
 	int rv;
-	EVP_MD_CTX mctx;
-	EVP_MD_CTX_init(&mctx);
-	rv = do_sign_init(err, &mctx, pkey, md, sigopts);
+
+	if ((mctx = EVP_MD_CTX_new()) == NULL)
+		return 0;
+
+	rv = do_sign_init(err, mctx, pkey, md, sigopts);
 	if (rv > 0)
-		rv = X509_sign_ctx(x, &mctx);
-	EVP_MD_CTX_cleanup(&mctx);
-	return rv > 0 ? 1 : 0;
+		rv = X509_sign_ctx(x, mctx);
+
+	EVP_MD_CTX_free(mctx);
+
+	return rv > 0;
 }
 
 
@@ -1775,14 +1783,19 @@ int
 do_X509_REQ_sign(BIO * err, X509_REQ * x, EVP_PKEY * pkey, const EVP_MD * md,
     STACK_OF(OPENSSL_STRING) * sigopts)
 {
+	EVP_MD_CTX *mctx;
 	int rv;
-	EVP_MD_CTX mctx;
-	EVP_MD_CTX_init(&mctx);
-	rv = do_sign_init(err, &mctx, pkey, md, sigopts);
+
+	if ((mctx = EVP_MD_CTX_new()) == NULL)
+		return 0;
+
+	rv = do_sign_init(err, mctx, pkey, md, sigopts);
 	if (rv > 0)
-		rv = X509_REQ_sign_ctx(x, &mctx);
-	EVP_MD_CTX_cleanup(&mctx);
-	return rv > 0 ? 1 : 0;
+		rv = X509_REQ_sign_ctx(x, mctx);
+
+	EVP_MD_CTX_free(mctx);
+
+	return rv > 0;
 }
 
 
@@ -1792,13 +1805,18 @@ do_X509_CRL_sign(BIO * err, X509_CRL * x, EVP_PKEY * pkey, const EVP_MD * md,
     STACK_OF(OPENSSL_STRING) * sigopts)
 {
 	int rv;
-	EVP_MD_CTX mctx;
-	EVP_MD_CTX_init(&mctx);
-	rv = do_sign_init(err, &mctx, pkey, md, sigopts);
+	EVP_MD_CTX *mctx;
+
+	if ((mctx = EVP_MD_CTX_new()) == NULL)
+		return 0;
+
+	rv = do_sign_init(err, mctx, pkey, md, sigopts);
 	if (rv > 0)
-		rv = X509_CRL_sign_ctx(x, &mctx);
-	EVP_MD_CTX_cleanup(&mctx);
-	return rv > 0 ? 1 : 0;
+		rv = X509_CRL_sign_ctx(x, mctx);
+
+	EVP_MD_CTX_free(mctx);
+
+	return rv > 0;
 }
 
 static unsigned long
