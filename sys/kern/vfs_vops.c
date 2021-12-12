@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vops.c,v 1.33 2021/10/20 06:35:39 semarie Exp $	*/
+/*	$OpenBSD: vfs_vops.c,v 1.34 2021/12/12 09:14:59 visa Exp $	*/
 /*
  * Copyright (c) 2010 Thordur I. Bjornsson <thib@openbsd.org> 
  *
@@ -629,18 +629,19 @@ VOP_ADVLOCK(struct vnode *vp, void *id, int op, struct flock *fl, int flags)
 }
 
 int
-VOP_STRATEGY(struct buf *bp)
+VOP_STRATEGY(struct vnode *vp, struct buf *bp)
 {
 	struct vop_strategy_args a;
+	a.a_vp = vp;
 	a.a_bp = bp;
 
 	if ((ISSET(bp->b_flags, B_BC)) && (!ISSET(bp->b_flags, B_DMA)))
 		panic("Non dma reachable buffer passed to VOP_STRATEGY");
 
-	if (bp->b_vp->v_op->vop_strategy == NULL)
+	if (vp->v_op->vop_strategy == NULL)
 		return (EOPNOTSUPP);
 
-	return ((bp->b_vp->v_op->vop_strategy)(&a));
+	return ((vp->v_op->vop_strategy)(&a));
 }
 
 int

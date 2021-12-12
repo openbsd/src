@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.38 2021/10/19 06:09:39 semarie Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.39 2021/12/12 09:14:59 visa Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -203,7 +203,7 @@ dead_strategy(void *v)
 		splx(s);
 		return (EIO);
 	}
-	return (VOP_STRATEGY(ap->a_bp));
+	return (VOP_STRATEGY(ap->a_bp->b_vp, ap->a_bp));
 }
 
 int

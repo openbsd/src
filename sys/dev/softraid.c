@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.419 2021/05/16 15:10:19 deraadt Exp $ */
+/* $OpenBSD: softraid.c,v 1.420 2021/12/12 09:14:58 visa Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -441,7 +441,7 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t blkno,
 			vp->v_numoutput++;
 
 		LIST_INIT(&b.b_dep);
-		VOP_STRATEGY(&b);
+		VOP_STRATEGY(vp, &b);
 		biowait(&b);
 
 		if (b.b_flags & B_ERROR) {
@@ -4261,7 +4261,7 @@ sr_raid_startwu(struct sr_workunit *wu)
 	wu->swu_cb_active = 1;
 
 	TAILQ_FOREACH(ccb, &wu->swu_ccb, ccb_link)
-		VOP_STRATEGY(&ccb->ccb_buf);
+		VOP_STRATEGY(ccb->ccb_buf.b_vp, &ccb->ccb_buf);
 
 	wu->swu_cb_active = 0;
 }

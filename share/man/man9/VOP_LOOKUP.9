@@ -1,4 +1,4 @@
-.\" $OpenBSD: VOP_LOOKUP.9,v 1.44 2018/10/06 23:08:13 beck Exp $
+.\" $OpenBSD: VOP_LOOKUP.9,v 1.45 2021/12/12 09:14:58 visa Exp $
 .\"
 .\" Copyright (c) 2003 Ted Unangst
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 6 2018 $
+.Dd $Mdocdate: December 12 2021 $
 .Dt VOP_LOOKUP 9
 .Os
 .Sh NAME
@@ -264,6 +264,7 @@
 .Fc
 .Ft int
 .Fo VOP_STRATEGY
+.Fa "struct vnode *vp"
 .Fa "struct buf *bp"
 .Fc
 .Ft int
@@ -876,9 +877,11 @@ Both are locked on entry and unlocked on exit.
 The name of the directory for removal is additionally contained in
 .Fa cnp .
 .Pp
-.It Fn VOP_STRATEGY bp
-Call the appropriate strategy function for the device backing the
-buffer's vnode.
+.It Fn VOP_STRATEGY vp bp
+Call the appropriate strategy function for the device vnode
+.Fa vp
+to read or write the buffer
+.Fa bp .
 .Pp
 .It Fn VOP_SYMLINK dvp vpp cnp vap target
 Create a symbolic link with name

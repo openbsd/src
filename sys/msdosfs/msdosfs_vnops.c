@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.136 2021/12/11 09:28:26 visa Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.137 2021/12/12 09:14:59 visa Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -1810,7 +1810,7 @@ msdosfs_strategy(void *v)
 
 	vp = dep->de_devvp;
 	bp->b_dev = vp->v_rdev;
-	(vp->v_op->vop_strategy)(ap);
+	VOP_STRATEGY(vp, bp);
 	return (0);
 }
 

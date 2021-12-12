@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.162 2021/10/20 06:35:39 semarie Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.163 2021/12/12 09:14:59 visa Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -562,12 +562,13 @@ struct vop_advlock_args {
 };
 int VOP_ADVLOCK(struct vnode *, void *, int, struct flock *, int);
 
-/* Special cases: */
 struct vop_strategy_args {
+	struct vnode *a_vp;
 	struct buf *a_bp;
 };
-int VOP_STRATEGY(struct buf *);
+int VOP_STRATEGY(struct vnode *, struct buf *);
 
+/* Special cases: */
 struct vop_bwrite_args {
 	struct buf *a_bp;
 };

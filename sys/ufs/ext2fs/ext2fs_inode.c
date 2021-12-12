@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.64 2021/03/11 13:31:35 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.65 2021/12/12 09:14:59 visa Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.24 2001/06/19 12:59:18 wiz Exp $	*/
 
 /*
@@ -456,7 +456,7 @@ ext2fs_indirtrunc(struct inode *ip, int32_t lbn, int32_t dbn, int32_t lastbn, in
 		if (bp->b_bcount > bp->b_bufsize)
 			panic("ext2fs_indirtrunc: bad buffer size");
 		bp->b_blkno = dbn;
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(bp->b_vp, bp);
 		error = biowait(bp);
 	}
 	if (error) {

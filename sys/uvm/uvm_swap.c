@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.151 2021/11/11 09:34:27 tb Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.152 2021/12/12 09:14:59 visa Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1099,7 +1099,7 @@ swstrategy(struct buf *bp)
 
 		bp->b_blkno = bn;
       		splx(s);
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(bp->b_vp, bp);
 		return;
 	case VREG:
 		/* delegate to sw_reg_strategy function. */
@@ -1299,7 +1299,7 @@ sw_reg_start(struct swapdev *sdp)
 		if ((bp->b_flags & B_READ) == 0)
 			bp->b_vp->v_numoutput++;
 
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(bp->b_vp, bp);
 	}
 	sdp->swd_flags &= ~SWF_BUSY;
 }
@@ -1817,7 +1817,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	}
 
 	/* now we start the I/O, and if async, return. */
-	VOP_STRATEGY(bp);
+	VOP_STRATEGY(bp->b_vp, bp);
 	if (async)
 		return (VM_PAGER_PEND);
 

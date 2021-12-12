@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.68 2020/01/20 23:21:55 claudio Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.69 2021/12/12 09:14:59 visa Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -886,7 +886,7 @@ udf_strategy(void *v)
 		splx(s);
 	} else {
 		bp->b_dev = vp->v_rdev;
-		(up->u_devvp->v_op->vop_strategy)(ap);
+		VOP_STRATEGY(up->u_devvp, bp);
 	}
 
 	return (0);

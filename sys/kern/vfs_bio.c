@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.207 2021/09/05 11:44:46 mpi Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.208 2021/12/12 09:14:59 visa Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -444,7 +444,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, int async)
 		SET(bp->b_flags, B_READ | async);
 		bcstats.pendingreads++;
 		bcstats.numreads++;
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(bp->b_vp, bp);
 		/* Pay for the read. */
 		curproc->p_ru.ru_inblock++;			/* XXX */
 	} else if (async) {
@@ -675,7 +675,7 @@ bread_cluster(struct vnode *vp, daddr_t blkno, int size, struct buf **rbpp)
 
 	bcstats.pendingreads++;
 	bcstats.numreads++;
-	VOP_STRATEGY(bp);
+	VOP_STRATEGY(bp->b_vp, bp);
 	curproc->p_ru.ru_inblock++;
 
 out:
@@ -753,7 +753,7 @@ bwrite(struct buf *bp)
 	splx(s);
 	buf_flip_dma(bp);
 	SET(bp->b_flags, B_WRITEINPROG);
-	VOP_STRATEGY(bp);
+	VOP_STRATEGY(bp->b_vp, bp);
 
 	/*
 	 * If the queue is above the high water mark, wait till

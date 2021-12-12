@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.80 2019/07/25 01:43:21 cheloha Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.81 2021/12/12 09:14:59 visa Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -488,7 +488,7 @@ ffs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 		if (bp->b_bcount > bp->b_bufsize)
 			panic("ffs_indirtrunc: bad buffer size");
 		bp->b_blkno = dbn;
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(bp->b_vp, bp);
 		error = biowait(bp);
 	}
 	if (error) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.154 2021/12/11 09:28:26 visa Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.155 2021/12/12 09:14:59 visa Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -1608,7 +1608,7 @@ ufs_strategy(void *v)
 	}
 	vp = ip->i_devvp;
 	bp->b_dev = vp->v_rdev;
-	(vp->v_op->vop_strategy)(ap);
+	VOP_STRATEGY(vp, bp);
 	return (0);
 }
 
