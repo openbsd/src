@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.16 2021/12/12 20:22:08 tb Exp $ */
+/* $OpenBSD: ts.c,v 1.17 2021/12/12 20:22:59 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -552,7 +552,7 @@ create_digest(BIO * input, char *digest, const EVP_MD * md,
 		int length;
 
 		*md_value = malloc(md_value_len);
-		if (*md_value == 0)
+		if (*md_value == NULL)
 			goto err;
 
 		if ((md_ctx = EVP_MD_CTX_new()) == NULL)
