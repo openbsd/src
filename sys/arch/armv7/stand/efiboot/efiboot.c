@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.37 2021/10/26 14:10:02 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.38 2021/12/12 22:54:35 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -697,7 +697,6 @@ devboot(dev_t dev, char *p)
 {
 	struct diskinfo *dip;
 	int sd_boot_vol = 0;
-	int part_type = FS_UNUSED;
 
 	if (bootdev_dip == NULL) {
 		strlcpy(p, "tftp0a", 7);
@@ -709,13 +708,6 @@ devboot(dev_t dev, char *p)
 			break;
 		sd_boot_vol++;
 	}
-
-	/*
-	 * Determine the partition type for the 'a' partition of the
-	 * boot device.
-	 */
-	if ((bootdev_dip->flags & DISKINFO_FLAG_GOODLABEL) != 0)
-		part_type = bootdev_dip->disklabel.d_partitions[0].p_fstype;
 
 	strlcpy(p, "sd0a", 5);
 	p[2] = '0' + sd_boot_vol;
