@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.26 2021/11/26 16:23:27 tb Exp $ */
+/* $OpenBSD: x509.c,v 1.27 2021/12/12 20:28:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1053,12 +1053,20 @@ x509_main(int argc, char **argv)
 					goto end;
 				}
 				BIO_printf(STDout, "Modulus=");
-				if (pkey->type == EVP_PKEY_RSA)
-					BN_print(STDout, pkey->pkey.rsa->n);
-				else if (pkey->type == EVP_PKEY_DSA)
-					BN_print(STDout,
-					    pkey->pkey.dsa->pub_key);
-				else
+				if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA) {
+					RSA *rsa = EVP_PKEY_get0_RSA(pkey);
+					const BIGNUM *n = NULL;
+
+					RSA_get0_key(rsa, &n, NULL, NULL);
+					BN_print(STDout, n);
+				} else if (EVP_PKEY_id(pkey) == EVP_PKEY_DSA) {
+					DSA *dsa = EVP_PKEY_get0_DSA(pkey);
+					const BIGNUM *pub_key = NULL;
+
+					DSA_get0_key(dsa, &pub_key, NULL);
+
+					BN_print(STDout, pub_key);
+				} else
 					BIO_printf(STDout,
 					    "Wrong Algorithm type");
 				BIO_printf(STDout, "\n");
