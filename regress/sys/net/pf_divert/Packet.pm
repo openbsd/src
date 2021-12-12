@@ -1,4 +1,4 @@
-#	$OpenBSD: Packet.pm,v 1.4 2017/12/18 17:01:27 bluhm Exp $
+#	$OpenBSD: Packet.pm,v 1.5 2021/12/12 21:16:53 bluhm Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -23,7 +23,7 @@ use Carp;
 use Socket;
 use Socket6;
 use IO::Socket;
-use IO::Socket::INET6;
+use IO::Socket::IP -register;
 
 use constant IPPROTO_DIVERT => 258;
 
@@ -45,7 +45,7 @@ sub new {
 		    and die ref($self), " system '@cmd' failed: $?";
 	}
 
-	my $ds = do { local $> = 0; IO::Socket::INET6->new(
+	my $ds = do { local $> = 0; IO::Socket->new(
 	    Type	=> Socket::SOCK_RAW,
 	    Proto	=> IPPROTO_DIVERT,
 	    Domain	=> $self->{domain},

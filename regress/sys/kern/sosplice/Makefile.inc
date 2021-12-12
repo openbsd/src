@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.7 2021/12/12 10:56:49 bluhm Exp $
+#	$OpenBSD: Makefile.inc,v 1.8 2021/12/12 21:16:53 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-BSD-Socket-Splice	perl interface to OpenBSD socket splicing
-# p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
 # p5-Socket6		Perl defines relating to AF_INET6 sockets
 #
 # Check wether all required perl packages are installed.  If some

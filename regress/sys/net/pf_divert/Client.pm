@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.5 2017/12/18 17:01:27 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.6 2021/12/12 21:16:53 bluhm Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -23,7 +23,7 @@ use Carp;
 use Socket qw(IPPROTO_TCP TCP_NODELAY);
 use Socket6;
 use IO::Socket;
-use IO::Socket::INET6;
+use IO::Socket::IP -register;
 use constant SO_BINDANY => 0x1000;
 
 sub new {
@@ -53,11 +53,10 @@ sub new {
 
 	my $cs;
 	if ($self->{bindany}) {
-		do { local $> = 0; $cs = IO::Socket::INET6->new(
+		do { local $> = 0; $cs = IO::Socket->new(
 		    Type	=> $self->{socktype},
 		    Proto	=> $self->{protocol},
 		    Domain	=> $self->{domain},
-		    Blocking	=> ($self->{nonblocking} ? 0 : 1),
 		) } or die ref($self), " socket connect failed: $!";
 		do { local $> = 0; $cs->setsockopt(SOL_SOCKET, SO_BINDANY, 1) }
 		    or die ref($self), " setsockopt SO_BINDANY failed: $!";
@@ -66,11 +65,10 @@ sub new {
 		$cs->bind($rres[3])
 		    or die ref($self), " bind failed: $!";
 	} elsif ($self->{bindaddr} || $self->{bindport}) {
-		do { local $> = 0; $cs = IO::Socket::INET6->new(
+		do { local $> = 0; $cs = IO::Socket->new(
 		    Type	=> $self->{socktype},
 		    Proto	=> $self->{protocol},
 		    Domain	=> $self->{domain},
-		    Blocking	=> ($self->{nonblocking} ? 0 : 1),
 		    LocalAddr	=> $self->{bindaddr},
 		    LocalPort	=> $self->{bindport},
 		) } or die ref($self), " socket connect failed: $!";
@@ -93,11 +91,10 @@ sub new {
 sub child {
 	my $self = shift;
 
-	my $cs = $self->{cs} || do { local $> = 0; IO::Socket::INET6->new(
+	my $cs = $self->{cs} || do { local $> = 0; IO::Socket->new(
 	    Type	=> $self->{socktype},
 	    Proto	=> $self->{protocol},
 	    Domain	=> $self->{domain},
-	    Blocking	=> ($self->{nonblocking} ? 0 : 1),
 	) } or die ref($self), " socket connect failed: $!";
 	if ($self->{oobinline}) {
 		setsockopt($cs, SOL_SOCKET, SO_OOBINLINE, pack('i', 1))
@@ -125,6 +122,10 @@ sub child {
 	print STDERR "connect peer: ",$cs->peerhost()," ",$cs->peerport(),"\n";
 	$self->{bindaddr} = $cs->sockhost();
 	$self->{bindport} = $cs->sockport();
+	if ($self->{nonblocking}) {
+		$cs->blocking(0)
+		    or die ref($self), " set non-blocking connect failed: $!";
+	}
 
 	open(STDOUT, '>&', $cs)
 	    or die ref($self), " dup STDOUT failed: $!";

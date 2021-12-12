@@ -1,14 +1,12 @@
-#	$OpenBSD: Makefile,v 1.23 2020/12/17 00:51:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.24 2021/12/12 21:16:53 bluhm Exp $
 
 # The following ports must be installed for the regression tests:
-# p5-IO-Socket-INET6	object interface for AF_INET and AF_INET6 domain sockets
 # p5-Socket6		Perl defines relating to AF_INET6 sockets
 #
 # Check wether all required perl packages are installed.  If some
 # are missing print a warning and skip the tests, but do not fail.
 
 PERL_REQUIRE !=	perl -Mstrict -Mwarnings -e ' \
-    eval { require IO::Socket::INET6 } or print $@; \
     eval { require Socket6 } or print $@; \
 '
 .if ! empty(PERL_REQUIRE)
@@ -270,6 +268,6 @@ check-setup:
 	route -n get -inet6 ${FAKE_ADDR6} | grep 'gateway: ${REMOTE_ADDR6}$$'
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
 	ssh ${REMOTE_SSH} ${SUDO} pfctl -si | grep '^Status: Enabled '
-	ssh ${REMOTE_SSH} perl -MIO::Socket::INET6 -MSocket6 -e 1
+	ssh ${REMOTE_SSH} perl -MSocket6 -e 1
 
 .include <bsd.regress.mk>

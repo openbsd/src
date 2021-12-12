@@ -1,4 +1,4 @@
-#	$OpenBSD: Server.pm,v 1.5 2017/12/18 17:01:27 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.6 2021/12/12 21:16:53 bluhm Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -23,7 +23,7 @@ use Carp;
 use Socket qw(IPPROTO_TCP TCP_NODELAY);
 use Socket6;
 use IO::Socket;
-use IO::Socket::INET6;
+use IO::Socket::IP -register;
 
 sub new {
 	my $class = shift;
@@ -45,7 +45,7 @@ sub new {
 		    and die ref($self), " system '@cmd' failed: $?";
 	}
 
-	my $ls = do { local $> = 0; IO::Socket::INET6->new(
+	my $ls = do { local $> = 0; IO::Socket->new(
 	    Type	=> $self->{socktype},
 	    Proto	=> $self->{protocol},
 	    ReuseAddr	=> 1,
@@ -100,8 +100,10 @@ sub child {
 		print STDERR "accept peer: ",$as->peerhost()," ",
 		    $as->peerport(),"\n";
 	}
-	$as->blocking($self->{nonblocking} ? 0 : 1)
-	    or die ref($self), " non-blocking accept failed: $!";
+	if ($self->{nonblocking}) {
+		$as->blocking(0)
+		    or die ref($self), " set non-blocking accept failed: $!";
+	}
 
 	open(STDIN, '<&', $as)
 	    or die ref($self), " dup STDIN failed: $!";
