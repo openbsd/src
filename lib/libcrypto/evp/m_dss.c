@@ -1,4 +1,4 @@
-/* $OpenBSD: m_dss.c,v 1.16 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: m_dss.c,v 1.17 2021/12/12 21:30:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,6 +67,8 @@
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
+
+#include "evp_locl.h"
 
 #ifndef OPENSSL_NO_SHA
 

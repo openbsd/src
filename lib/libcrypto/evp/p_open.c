@@ -1,4 +1,4 @@
-/* $OpenBSD: p_open.c,v 1.19 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: p_open.c,v 1.20 2021/12/12 21:30:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,6 +68,8 @@
 #include <openssl/objects.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
+
+#include "evp_locl.h"
 
 int
 EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,

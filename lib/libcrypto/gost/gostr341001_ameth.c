@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.17 2021/04/20 17:16:38 tb Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.18 2021/12/12 21:30:14 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -63,6 +63,7 @@
 
 
 #include "asn1_locl.h"
+#include "evp_locl.h"
 #include "gost_locl.h"
 #include "gost_asn1.h"
 

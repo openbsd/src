@@ -1,4 +1,4 @@
-/* $OpenBSD: gost89imit_ameth.c,v 1.2 2014/11/09 23:06:52 miod Exp $ */
+/* $OpenBSD: gost89imit_ameth.c,v 1.3 2021/12/12 21:30:14 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -55,6 +55,7 @@
 #include <openssl/evp.h>
 
 #include "asn1_locl.h"
+#include "evp_locl.h"
 
 static void
 mackey_free_gost(EVP_PKEY *pk)

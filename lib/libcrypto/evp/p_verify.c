@@ -1,4 +1,4 @@
-/* $OpenBSD: p_verify.c,v 1.13 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p_verify.c,v 1.14 2021/12/12 21:30:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,8 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+
+#include "evp_locl.h"
 
 int
 EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,

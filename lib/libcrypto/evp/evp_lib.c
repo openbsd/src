@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_lib.c,v 1.18 2021/10/24 13:51:07 tb Exp $ */
+/* $OpenBSD: evp_lib.c,v 1.19 2021/12/12 21:30:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,8 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+
+#include "evp_locl.h"
 
 int
 EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)

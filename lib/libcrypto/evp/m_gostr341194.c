@@ -1,4 +1,4 @@
-/* $OpenBSD: m_gostr341194.c,v 1.2 2014/11/09 23:06:50 miod Exp $ */
+/* $OpenBSD: m_gostr341194.c,v 1.3 2021/12/12 21:30:13 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -48,6 +48,7 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  */
+
 #include <stdio.h>
 
 #include <openssl/opensslconf.h>
@@ -57,6 +58,8 @@
 #include <openssl/evp.h>
 #include <openssl/gost.h>
 #include <openssl/objects.h>
+
+#include "evp_locl.h"
 
 static int
 gostr341194_init(EVP_MD_CTX *ctx)

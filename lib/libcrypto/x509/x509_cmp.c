@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cmp.c,v 1.37 2021/11/04 23:52:34 beck Exp $ */
+/* $OpenBSD: x509_cmp.c,v 1.38 2021/12/12 21:30:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,6 +68,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "evp_locl.h"
 #include "x509_lcl.h"
 
 int

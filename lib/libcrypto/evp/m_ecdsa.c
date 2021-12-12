@@ -1,4 +1,4 @@
-/* $OpenBSD: m_ecdsa.c,v 1.8 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: m_ecdsa.c,v 1.9 2021/12/12 21:30:13 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -116,6 +116,8 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+
+#include "evp_locl.h"
 
 #ifndef OPENSSL_NO_SHA
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.22 2021/12/03 14:18:06 tb Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.23 2021/12/12 21:30:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -69,6 +69,7 @@
 #endif
 
 #include "asn1_locl.h"
+#include "evp_locl.h"
 
 extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[];
 extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;

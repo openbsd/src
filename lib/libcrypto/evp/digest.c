@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.31 2019/04/19 17:04:45 jsing Exp $ */
+/* $OpenBSD: digest.c,v 1.32 2021/12/12 21:30:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,6 +121,8 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+
+#include "evp_locl.h"
 
 int
 EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)

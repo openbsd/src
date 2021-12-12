@@ -1,4 +1,4 @@
-/* $OpenBSD: p_sign.c,v 1.14 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p_sign.c,v 1.15 2021/12/12 21:30:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,8 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+
+#include "evp_locl.h"
 
 int
 EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,

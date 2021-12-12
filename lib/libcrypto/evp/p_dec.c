@@ -1,4 +1,4 @@
-/* $OpenBSD: p_dec.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p_dec.c,v 1.12 2021/12/12 21:30:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,6 +68,8 @@
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
+
+#include "evp_locl.h"
 
 int
 EVP_PKEY_decrypt_old(unsigned char *key, const unsigned char *ek, int ekl,

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.26 2021/11/03 13:27:28 schwarze Exp $ */
+/* $OpenBSD: x509_req.c,v 1.27 2021/12/12 21:30:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,6 +70,7 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
+#include "evp_locl.h"
 #include "x509_lcl.h"
 
 X509_REQ *

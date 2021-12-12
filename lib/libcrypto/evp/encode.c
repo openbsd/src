@@ -1,4 +1,4 @@
-/* $OpenBSD: encode.c,v 1.28 2020/03/04 11:53:21 inoguchi Exp $ */
+/* $OpenBSD: encode.c,v 1.29 2021/12/12 21:30:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,6 +61,8 @@
 #include <string.h>
 
 #include <openssl/evp.h>
+
+#include "evp_locl.h"
 
 static unsigned char conv_ascii2bin(unsigned char a);
 #define conv_bin2ascii(a)	(data_bin2ascii[(a)&0x3f])

@@ -1,4 +1,4 @@
-/* $OpenBSD: cm_ameth.c,v 1.7 2014/07/12 16:03:37 miod Exp $ */
+/* $OpenBSD: cm_ameth.c,v 1.8 2021/12/12 21:30:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2010.
  */
@@ -57,6 +57,7 @@
 #include <openssl/evp.h>
 
 #include "asn1_locl.h"
+#include "evp_locl.h"
 
 /* CMAC "ASN1" method. This is just here to indicate the
  * maximum CMAC output length and to free up a CMAC

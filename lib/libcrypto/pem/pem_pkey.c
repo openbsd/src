@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_pkey.c,v 1.23 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: pem_pkey.c,v 1.24 2021/12/12 21:30:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,6 +74,7 @@
 #endif
 
 #include "asn1_locl.h"
+#include "evp_locl.h"
 
 int pem_check_suffix(const char *pem_str, const char *suffix);
 

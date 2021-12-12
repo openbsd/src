@@ -1,4 +1,4 @@
-/* $OpenBSD: n_pkey.c,v 1.33 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: n_pkey.c,v 1.34 2021/12/12 21:30:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,6 +69,7 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 
+#include "evp_locl.h"
 #include "x509_lcl.h"
 
 #ifndef OPENSSL_NO_RC4

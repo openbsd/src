@@ -1,4 +1,4 @@
-/* $OpenBSD: m_streebog.c,v 1.2 2014/11/09 23:06:50 miod Exp $ */
+/* $OpenBSD: m_streebog.c,v 1.3 2021/12/12 21:30:13 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -56,6 +56,8 @@
 #include <openssl/evp.h>
 #include <openssl/gost.h>
 #include <openssl/objects.h>
+
+#include "evp_locl.h"
 
 static int
 streebog_init256(EVP_MD_CTX *ctx)

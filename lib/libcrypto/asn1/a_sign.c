@@ -1,4 +1,4 @@
-/* $OpenBSD: a_sign.c,v 1.23 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: a_sign.c,v 1.24 2021/12/12 21:30:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,6 +123,7 @@
 #include <openssl/x509.h>
 
 #include "asn1_locl.h"
+#include "evp_locl.h"
 
 int
 ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,

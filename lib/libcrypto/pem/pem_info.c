@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_info.c,v 1.24 2020/07/25 11:53:37 schwarze Exp $ */
+/* $OpenBSD: pem_info.c,v 1.25 2021/12/12 21:30:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,6 +74,8 @@
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
+
+#include "evp_locl.h"
 
 STACK_OF(X509_INFO) *
 PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,

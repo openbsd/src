@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_key.c,v 1.26 2018/08/14 17:59:26 tb Exp $ */
+/* $OpenBSD: evp_key.c,v 1.27 2021/12/12 21:30:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,6 +64,8 @@
 #include <openssl/objects.h>
 #include <openssl/ui.h>
 #include <openssl/x509.h>
+
+#include "evp_locl.h"
 
 /* should be init to zeros. */
 static char prompt_string[80];

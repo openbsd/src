@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc4_hmac_md5.c,v 1.8 2017/01/31 13:17:21 inoguchi Exp $ */
+/* $OpenBSD: e_rc4_hmac_md5.c,v 1.9 2021/12/12 21:30:13 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -59,6 +59,8 @@
 #include <openssl/objects.h>
 #include <openssl/rc4.h>
 #include <openssl/md5.h>
+
+#include "evp_locl.h"
 
 /* FIXME: surely this is available elsewhere? */
 #define EVP_RC4_KEY_SIZE		16

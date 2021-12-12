@@ -1,4 +1,4 @@
-/* $OpenBSD: e_camellia.c,v 1.8 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: e_camellia.c,v 1.9 2021/12/12 21:30:13 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -61,6 +61,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/camellia.h>
+
 #include "evp_locl.h"
 
 static int camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
