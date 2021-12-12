@@ -1,4 +1,4 @@
-#	$OpenBSD: Relay.pm,v 1.2 2017/11/07 22:06:17 bluhm Exp $
+#	$OpenBSD: Relay.pm,v 1.3 2021/12/12 10:56:49 bluhm Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -23,7 +23,7 @@ use Carp;
 use Socket qw(IPPROTO_TCP TCP_NODELAY);
 use Socket6;
 use IO::Socket;
-use IO::Socket::INET6;
+use IO::Socket::IP -register;
 
 sub new {
 	my $class = shift;
@@ -42,7 +42,7 @@ sub new {
 	    or croak "$class connect addr not given";
 	$self->{connectport}
 	    or croak "$class connect port not given";
-	my $ls = IO::Socket::INET6->new(
+	my $ls = IO::Socket->new(
 	    Proto	=> $self->{protocol},
 	    ReuseAddr	=> 1,
 	    Domain	=> $self->{listendomain},
@@ -89,8 +89,10 @@ sub child {
 		print STDERR "accept peer: ",$as->peerhost()," ",
 		    $as->peerport(),"\n";
 	}
-	$as->blocking($self->{nonblocking} ? 0 : 1)
-	    or die ref($self), " non-blocking accept failed: $!";
+	if ($self->{nonblocking}) {
+		$as->blocking(0)
+		    or die ref($self), " set non-blocking accept failed: $!";
+	}
 
 	open(STDIN, '<&', $as)
 	    or die ref($self), " dup STDIN failed: $!";
@@ -106,10 +108,9 @@ sub child {
 		    and die ref($self), " select timeout";
 	}
 
-	my $cs = IO::Socket::INET6->new(
+	my $cs = IO::Socket->new(
 	    Proto	=> $self->{protocol},
 	    Domain	=> $self->{connectdomain},
-	    Blocking	=> ($self->{nonblocking} ? 0 : 1),
 	) or die ref($self), " socket connect failed: $!";
 	if ($self->{oobinline}) {
 		setsockopt($cs, SOL_SOCKET, SO_OOBINLINE, pack('i', 1))
@@ -137,6 +138,10 @@ sub child {
 	print STDERR "connect peer: ",$cs->peerhost()," ",$cs->peerport(),"\n";
 	$self->{bindaddr} = $cs->sockhost();
 	$self->{bindport} = $cs->sockport();
+	if ($self->{nonblocking}) {
+		$cs->blocking(0)
+		    or die ref($self), " set non-blocking connect failed: $!";
+	}
 
 	open(STDOUT, '>&', $cs)
 	    or die ref($self), " dup STDOUT failed: $!";

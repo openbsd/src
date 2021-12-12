@@ -1,4 +1,4 @@
-#	$OpenBSD: Client.pm,v 1.1.1.1 2013/01/03 17:36:37 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.2 2021/12/12 10:56:49 bluhm Exp $
 
 # Copyright (c) 2010-2012 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -23,7 +23,7 @@ use Carp;
 use Socket qw(IPPROTO_TCP TCP_NODELAY);
 use Socket6;
 use IO::Socket;
-use IO::Socket::INET6;
+use IO::Socket::IP -register;
 
 sub new {
 	my $class = shift;
@@ -42,10 +42,9 @@ sub new {
 	    or croak "$class connect port not given";
 
 	if ($self->{bindaddr}) {
-		my $cs = IO::Socket::INET6->new(
+		my $cs = IO::SocketIP->new(
 		    Proto	=> $self->{protocol},
 		    Domain	=> $self->{connectdomain},
-		    Blocking	=> ($self->{nonblocking} ? 0 : 1),
 		    LocalAddr	=> $self->{bindaddr},
 		    LocalPort	=> $self->{bindport},
 		) or die ref($self), " socket connect failed: $!";
@@ -60,10 +59,9 @@ sub new {
 sub child {
 	my $self = shift;
 
-	my $cs = $self->{cs} || IO::Socket::INET6->new(
+	my $cs = $self->{cs} || IO::Socket->new(
 	    Proto	=> $self->{protocol},
 	    Domain	=> $self->{connectdomain},
-	    Blocking	=> ($self->{nonblocking} ? 0 : 1),
 	) or die ref($self), " socket connect failed: $!";
 	if ($self->{oobinline}) {
 		setsockopt($cs, SOL_SOCKET, SO_OOBINLINE, pack('i', 1))
@@ -91,6 +89,10 @@ sub child {
 	print STDERR "connect peer: ",$cs->peerhost()," ",$cs->peerport(),"\n";
 	$self->{bindaddr} = $cs->sockhost();
 	$self->{bindport} = $cs->sockport();
+	if ($self->{nonblocking}) {
+		$cs->blocking(0)
+		    or die ref($self), " set non-blocking connect failed: $!";
+	}
 
 	open(STDOUT, '>&', $cs)
 	    or die ref($self), " dup STDOUT failed: $!";
