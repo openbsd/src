@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.222 2021/12/08 21:52:29 schwarze Exp $
+# $OpenBSD: Makefile,v 1.223 2021/12/12 17:31:18 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -48,6 +48,7 @@ MAN=	\
 	BIO_meth_new.3 \
 	BIO_new.3 \
 	BIO_new_CMS.3 \
+	BIO_new_NDEF.3 \
 	BIO_printf.3 \
 	BIO_push.3 \
 	BIO_read.3 \
