@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.28 2021/12/12 20:29:15 tb Exp $ */
+/* $OpenBSD: x509.c,v 1.29 2021/12/12 20:34:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -846,12 +846,11 @@ x509_main(int argc, char **argv)
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-		if ((pkey = X509_REQ_get_pubkey(req)) == NULL) {
+		if ((pkey = X509_REQ_get0_pubkey(req)) == NULL) {
 			BIO_printf(bio_err, "error unpacking public key\n");
 			goto end;
 		}
 		i = X509_REQ_verify(req, pkey);
-		EVP_PKEY_free(pkey);
 		if (i < 0) {
 			BIO_printf(bio_err, "Signature verification error\n");
 			ERR_print_errors(bio_err);
@@ -893,13 +892,12 @@ x509_main(int argc, char **argv)
 		    NULL) == NULL)
 			goto end;
 
-		if ((pkey = X509_REQ_get_pubkey(req)) == NULL)
+		if ((pkey = X509_REQ_get0_pubkey(req)) == NULL)
 			goto end;
 		if (!X509_set_pubkey(x, pkey)) {
 			EVP_PKEY_free(pkey);
 			goto end;
 		}
-		EVP_PKEY_free(pkey);
 	} else {
 		x = load_cert(bio_err, x509_config.infile, x509_config.informat,
 		    NULL, "Certificate");
@@ -1392,11 +1390,10 @@ x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest, X509 *x,
 	X509_STORE_CTX *xsc = NULL;
 	EVP_PKEY *upkey;
 
-	upkey = X509_get_pubkey(xca);
+	upkey = X509_get0_pubkey(xca);
 	if (upkey == NULL)
 		goto end;
 	EVP_PKEY_copy_parameters(upkey, pkey);
-	EVP_PKEY_free(upkey);
 
 	if ((xsc = X509_STORE_CTX_new()) == NULL)
 		goto end;
@@ -1507,12 +1504,11 @@ sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *digest,
 {
 	EVP_PKEY *pktmp;
 
-	pktmp = X509_get_pubkey(x);
+	pktmp = X509_get0_pubkey(x);
 	if (pktmp == NULL)
 		goto err;
 	EVP_PKEY_copy_parameters(pktmp, pkey);
 	EVP_PKEY_save_parameters(pktmp, 1);
-	EVP_PKEY_free(pktmp);
 
 	if (!X509_set_issuer_name(x, X509_get_subject_name(x)))
 		goto err;
