@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.58 2021/10/15 06:30:06 semarie Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.59 2021/12/12 09:17:17 visa Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -124,9 +124,9 @@ mfs_strategy(void *v)
 	struct vop_strategy_args *ap = v;
 	struct buf *bp = ap->a_bp;
 	struct mfsnode *mfsp;
-	struct vnode *vp;
+	struct vnode *vp = ap->a_vp;
 
-	if (!vfinddev(bp->b_dev, VBLK, &vp) || vp->v_usecount == 0)
+	if (vp->v_type != VBLK || vp->v_usecount == 0)
 		panic("mfs_strategy: bad dev");
 
 	mfsp = VTOMFS(vp);
