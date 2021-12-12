@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.22 2018/05/01 19:01:27 tb Exp $ */
+/* $OpenBSD: x_algor.c,v 1.23 2021/12/12 14:27:20 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -197,12 +197,10 @@ X509_ALGOR_get0(const ASN1_OBJECT **paobj, int *pptype, const void **ppval,
 void
 X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
 {
-	int param_type;
+	int param_type = V_ASN1_NULL;
 
-	if (md->flags & EVP_MD_FLAG_DIGALGID_ABSENT)
+	if ((EVP_MD_flags(md) & EVP_MD_FLAG_DIGALGID_ABSENT) != 0)
 		param_type = V_ASN1_UNDEF;
-	else
-		param_type = V_ASN1_NULL;
 
 	X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_MD_type(md)), param_type, NULL);
 }
