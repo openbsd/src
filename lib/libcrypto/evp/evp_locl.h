@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_locl.h,v 1.16 2019/10/29 07:52:17 jsing Exp $ */
+/* $OpenBSD: evp_locl.h,v 1.17 2021/12/12 21:21:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -55,6 +55,9 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
+#ifndef HEADER_EVP_LOCL_H
+#define HEADER_EVP_LOCL_H
 
 __BEGIN_HIDDEN_DECLS
 
@@ -370,3 +373,5 @@ struct evp_aead_st {
 int EVP_PKEY_CTX_md(EVP_PKEY_CTX *ctx, int optype, int cmd, const char *md_name);
 
 __END_HIDDEN_DECLS
+
+#endif /* !HEADER_EVP_LOCL_H */
