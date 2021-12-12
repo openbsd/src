@@ -1,4 +1,4 @@
-/* $OpenBSD: passwd.c,v 1.11 2021/11/25 16:53:58 tb Exp $ */
+/* $OpenBSD: passwd.c,v 1.12 2021/12/12 20:40:25 tb Exp $ */
 
 #if defined OPENSSL_NO_MD5
 #define NO_MD5CRYPT_1
@@ -306,7 +306,7 @@ md5crypt(const char *passwd, const char *magic, const char *salt)
 	char *salt_out;
 	int n;
 	unsigned int i;
-	EVP_MD_CTX md, md2;
+	EVP_MD_CTX *md = NULL, *md2 = NULL;
 	size_t passwd_len, salt_len;
 
 	passwd_len = strlen(passwd);
@@ -321,45 +321,74 @@ md5crypt(const char *passwd, const char *magic, const char *salt)
 	salt_len = strlen(salt_out);
 	assert(salt_len <= 8);
 
-	EVP_MD_CTX_init(&md);
-	EVP_DigestInit_ex(&md, EVP_md5(), NULL);
-	EVP_DigestUpdate(&md, passwd, passwd_len);
-	EVP_DigestUpdate(&md, "$", 1);
-	EVP_DigestUpdate(&md, magic, strlen(magic));
-	EVP_DigestUpdate(&md, "$", 1);
-	EVP_DigestUpdate(&md, salt_out, salt_len);
+	if ((md = EVP_MD_CTX_new()) == NULL)
+		goto err;
+	if (!EVP_DigestInit_ex(md, EVP_md5(), NULL))
+		goto err;
+	if (!EVP_DigestUpdate(md, passwd, passwd_len))
+		goto err;
+	if (!EVP_DigestUpdate(md, "$", 1))
+		goto err;
+	if (!EVP_DigestUpdate(md, magic, strlen(magic)))
+		goto err;
+	if (!EVP_DigestUpdate(md, "$", 1))
+		goto err;
+	if (!EVP_DigestUpdate(md, salt_out, salt_len))
+		goto err;
 
-	EVP_MD_CTX_init(&md2);
-	EVP_DigestInit_ex(&md2, EVP_md5(), NULL);
-	EVP_DigestUpdate(&md2, passwd, passwd_len);
-	EVP_DigestUpdate(&md2, salt_out, salt_len);
-	EVP_DigestUpdate(&md2, passwd, passwd_len);
-	EVP_DigestFinal_ex(&md2, buf, NULL);
+	if ((md2 = EVP_MD_CTX_new()) == NULL)
+		goto err;
+	if (!EVP_DigestInit_ex(md2, EVP_md5(), NULL))
+		goto err;
+	if (!EVP_DigestUpdate(md2, passwd, passwd_len))
+		goto err;
+	if (!EVP_DigestUpdate(md2, salt_out, salt_len))
+		goto err;
+	if (!EVP_DigestUpdate(md2, passwd, passwd_len))
+		goto err;
+	if (!EVP_DigestFinal_ex(md2, buf, NULL))
+		goto err;
 
-	for (i = passwd_len; i > sizeof buf; i -= sizeof buf)
-		EVP_DigestUpdate(&md, buf, sizeof buf);
-	EVP_DigestUpdate(&md, buf, i);
+	for (i = passwd_len; i > sizeof buf; i -= sizeof buf) {
+		if (!EVP_DigestUpdate(md, buf, sizeof buf))
+			goto err;
+	}
+	if (!EVP_DigestUpdate(md, buf, i))
+		goto err;
 
 	n = passwd_len;
 	while (n) {
-		EVP_DigestUpdate(&md, (n & 1) ? "\0" : passwd, 1);
+		if (!EVP_DigestUpdate(md, (n & 1) ? "\0" : passwd, 1))
+			goto err;
 		n >>= 1;
 	}
-	EVP_DigestFinal_ex(&md, buf, NULL);
+	if (!EVP_DigestFinal_ex(md, buf, NULL))
+		goto err;
 
 	for (i = 0; i < 1000; i++) {
-		EVP_DigestInit_ex(&md2, EVP_md5(), NULL);
-		EVP_DigestUpdate(&md2, (i & 1) ? (unsigned const char *) passwd : buf,
-		    (i & 1) ? passwd_len : sizeof buf);
-		if (i % 3)
-			EVP_DigestUpdate(&md2, salt_out, salt_len);
-		if (i % 7)
-			EVP_DigestUpdate(&md2, passwd, passwd_len);
-		EVP_DigestUpdate(&md2, (i & 1) ? buf : (unsigned const char *) passwd,
-		    (i & 1) ? sizeof buf : passwd_len);
-		EVP_DigestFinal_ex(&md2, buf, NULL);
+		if (!EVP_DigestInit_ex(md2, EVP_md5(), NULL))
+			goto err;
+		if (!EVP_DigestUpdate(md2,
+		    (i & 1) ? (unsigned const char *) passwd : buf,
+		    (i & 1) ? passwd_len : sizeof buf))
+			goto err;
+		if (i % 3) {
+			if (!EVP_DigestUpdate(md2, salt_out, salt_len))
+				goto err;
+		}
+		if (i % 7) {
+			if (!EVP_DigestUpdate(md2, passwd, passwd_len))
+				goto err;
+		}
+		if (!EVP_DigestUpdate(md2,
+		    (i & 1) ? buf : (unsigned const char *) passwd,
+		    (i & 1) ? sizeof buf : passwd_len))
+			goto err;
+		if (!EVP_DigestFinal_ex(md2, buf, NULL))
+			goto err;
 	}
-	EVP_MD_CTX_cleanup(&md2);
+	EVP_MD_CTX_free(md2);
+	md2 = NULL;
 
 	{
 		/* transform buf into output string */
@@ -394,9 +423,14 @@ md5crypt(const char *passwd, const char *magic, const char *salt)
 		*output = 0;
 		assert(strlen(out_buf) < sizeof(out_buf));
 	}
-	EVP_MD_CTX_cleanup(&md);
+	EVP_MD_CTX_free(md);
 
 	return out_buf;
+ err:
+	EVP_MD_CTX_free(md);
+	EVP_MD_CTX_free(md2);
+
+	return NULL;
 }
 #endif
 
@@ -463,7 +497,8 @@ do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 #endif
 #ifndef NO_MD5CRYPT_1
 	if (use1 || useapr1)
-		hash = md5crypt(passwd, (use1 ? "1" : "apr1"), *salt_p);
+		if ((hash = md5crypt(passwd, (use1 ? "1" : "apr1"), *salt_p)) == NULL)
+			goto err;
 #endif
 	assert(hash != NULL);
 
@@ -476,6 +511,8 @@ do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
 	return 1;
 
  err:
+	free(*salt_malloc_p);
+	*salt_malloc_p = NULL;
 	return 0;
 }
 #else
