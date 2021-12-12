@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_STRING_TABLE_add.3,v 1.6 2021/12/11 18:51:25 schwarze Exp $
+.\" $OpenBSD: ASN1_STRING_TABLE_add.3,v 1.7 2021/12/12 20:16:36 schwarze Exp $
 .\" checked up to:
 .\" OpenSSL ASN1_STRING_TABLE_add.pod 7b608d08 Jul 27 01:18:50 2017 +0800
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 11 2021 $
+.Dd $Mdocdate: December 12 2021 $
 .Dt ASN1_STRING_TABLE_ADD 3
 .Os
 .Sh NAME
@@ -46,6 +46,26 @@ Each entry is of the type
 .Vt ASN1_STRING_TABLE
 and contains information about one NID object.
 Some entries are predefined according to RFC 3280 appendix A.1.
+.Pp
+By default, the upper bounds for the number of characters in various kinds of
+.Vt ASN1_STRING
+objects are:
+.Pp
+.Bl -column -compact NID_organizationalUnitNa maxsi ub_organization_unit_na
+.It object type                   Ta maxsize Ta symbolic constant
+.It Dv NID_commonName             Ta 64      Ta ub_common_name
+.It Dv NID_countryName            Ta 2       Ta \(em
+.It Dv NID_givenName              Ta 32768   Ta ub_name
+.It Dv NID_initials               Ta 32768   Ta ub_name
+.It Dv NID_localityName           Ta 128     Ta ub_locality_name
+.It Dv NID_name                   Ta 32768   Ta ub_name
+.It Dv NID_organizationName       Ta 64      Ta ub_organization_name
+.It Dv NID_organizationalUnitName Ta 64      Ta ub_organization_unit_name
+.It Dv NID_pkcs9_emailAddress     Ta 128     Ta ub_email_address
+.It Dv NID_serialNumber           Ta 64      Ta ub_serial_number
+.It Dv NID_stateOrProvinceName    Ta 128     Ta ub_state_name
+.It Dv NID_surname                Ta 32768   Ta ub_name
+.El
 .Pp
 The function
 .Fn ASN1_STRING_TABLE_add
