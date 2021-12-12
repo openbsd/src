@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.c,v 1.25 2018/02/17 14:53:58 jsing Exp $ */
+/* $OpenBSD: hmac.c,v 1.26 2021/12/12 21:27:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,8 @@
 
 #include <openssl/err.h>
 #include <openssl/hmac.h>
+
+#include "hmac_local.h"
 
 int
 HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md,

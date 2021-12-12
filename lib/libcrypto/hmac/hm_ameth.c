@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_ameth.c,v 1.10 2015/09/10 15:56:25 jsing Exp $ */
+/* $OpenBSD: hm_ameth.c,v 1.11 2021/12/12 21:27:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -60,8 +60,10 @@
 #include <string.h>
 
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
 
 #include "asn1_locl.h"
+#include "hmac_local.h"
 
 #define HMAC_TEST_PRIVATE_KEY_FORMAT
 
