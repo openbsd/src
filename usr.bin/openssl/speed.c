@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.23 2018/07/13 18:36:56 cheloha Exp $ */
+/* $OpenBSD: speed.c,v 1.24 2021/12/12 20:35:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1031,24 +1031,28 @@ speed_main(int argc, char **argv)
 
 #if !defined(OPENSSL_NO_MD5) && !defined(OPENSSL_NO_HMAC)
 	if (doit[D_HMAC]) {
-		HMAC_CTX hctx;
+		HMAC_CTX *hctx;
 
-		HMAC_CTX_init(&hctx);
-		HMAC_Init_ex(&hctx, (unsigned char *) "This is a key...",
+		if ((hctx = HMAC_CTX_new()) == NULL) {
+			BIO_printf(bio_err, "Failed to allocate HMAC context.\n");
+			return 0;
+		}
+
+		HMAC_Init_ex(hctx, (unsigned char *) "This is a key...",
 		    16, EVP_md5(), NULL);
 
 		for (j = 0; j < SIZE_NUM; j++) {
 			print_message(names[D_HMAC], c[D_HMAC][j], lengths[j]);
 			Time_F(START);
 			for (count = 0, run = 1; COND(c[D_HMAC][j]); count++) {
-				HMAC_Init_ex(&hctx, NULL, 0, NULL, NULL);
-				HMAC_Update(&hctx, buf, lengths[j]);
-				HMAC_Final(&hctx, &(hmac[0]), NULL);
+				HMAC_Init_ex(hctx, NULL, 0, NULL, NULL);
+				HMAC_Update(hctx, buf, lengths[j]);
+				HMAC_Final(hctx, &(hmac[0]), NULL);
 			}
 			d = Time_F(STOP);
 			print_result(D_HMAC, j, count, d);
 		}
-		HMAC_CTX_cleanup(&hctx);
+		HMAC_CTX_free(hctx);
 	}
 #endif
 #ifndef OPENSSL_NO_SHA
@@ -1405,10 +1409,11 @@ speed_main(int argc, char **argv)
 	if (doit[D_EVP]) {
 		for (j = 0; j < SIZE_NUM; j++) {
 			if (evp_cipher) {
-				EVP_CIPHER_CTX ctx;
+				EVP_CIPHER_CTX *ctx;
 				int outl;
 
-				names[D_EVP] = OBJ_nid2ln(evp_cipher->nid);
+				names[D_EVP] =
+				    OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher));
 				/*
 				 * -O3 -fschedule-insns messes up an
 				 * optimization here!  names[D_EVP] somehow
@@ -1417,29 +1422,33 @@ speed_main(int argc, char **argv)
 				print_message(names[D_EVP], save_count,
 				    lengths[j]);
 
-				EVP_CIPHER_CTX_init(&ctx);
+				if ((ctx = EVP_CIPHER_CTX_new()) == NULL) {
+					BIO_printf(bio_err, "Failed to "
+					    "allocate cipher context.\n");
+					return 0;
+				}
 				if (decrypt)
-					EVP_DecryptInit_ex(&ctx, evp_cipher, NULL, key16, iv);
+					EVP_DecryptInit_ex(ctx, evp_cipher, NULL, key16, iv);
 				else
-					EVP_EncryptInit_ex(&ctx, evp_cipher, NULL, key16, iv);
-				EVP_CIPHER_CTX_set_padding(&ctx, 0);
+					EVP_EncryptInit_ex(ctx, evp_cipher, NULL, key16, iv);
+				EVP_CIPHER_CTX_set_padding(ctx, 0);
 
 				Time_F(START);
 				if (decrypt)
 					for (count = 0, run = 1; COND(save_count * 4 * lengths[0] / lengths[j]); count++)
-						EVP_DecryptUpdate(&ctx, buf, &outl, buf, lengths[j]);
+						EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[j]);
 				else
 					for (count = 0, run = 1; COND(save_count * 4 * lengths[0] / lengths[j]); count++)
-						EVP_EncryptUpdate(&ctx, buf, &outl, buf, lengths[j]);
+						EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[j]);
 				if (decrypt)
-					EVP_DecryptFinal_ex(&ctx, buf, &outl);
+					EVP_DecryptFinal_ex(ctx, buf, &outl);
 				else
-					EVP_EncryptFinal_ex(&ctx, buf, &outl);
+					EVP_EncryptFinal_ex(ctx, buf, &outl);
 				d = Time_F(STOP);
-				EVP_CIPHER_CTX_cleanup(&ctx);
+				EVP_CIPHER_CTX_free(ctx);
 			}
 			if (evp_md) {
-				names[D_EVP] = OBJ_nid2ln(evp_md->type);
+				names[D_EVP] = OBJ_nid2ln(EVP_MD_type(evp_md));
 				print_message(names[D_EVP], save_count,
 				    lengths[j]);
 
