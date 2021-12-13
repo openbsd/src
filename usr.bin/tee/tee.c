@@ -1,4 +1,4 @@
-/*	$OpenBSD: tee.c,v 1.13 2021/11/21 16:15:43 cheloha Exp $	*/
+/*	$OpenBSD: tee.c,v 1.14 2021/12/13 18:33:23 cheloha Exp $	*/
 /*	$NetBSD: tee.c,v 1.5 1994/12/09 01:43:39 jtc Exp $	*/
 
 /*
@@ -43,6 +43,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#define BSIZE (64 * 1024)
+
 struct list {
 	SLIST_ENTRY(list) next;
 	int fd;
@@ -69,7 +71,7 @@ main(int argc, char *argv[])
 	int fd;
 	ssize_t n, rval, wval;
 	int append, ch, exitval;
-	char buf[8192];
+	char *buf;
 
 	if (pledge("stdio wpath cpath", NULL) == -1)
 		err(1, "pledge");
@@ -109,7 +111,10 @@ main(int argc, char *argv[])
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	while ((rval = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
+	buf = malloc(BSIZE);
+	if (buf == NULL)
+		err(1, NULL);
+	while ((rval = read(STDIN_FILENO, buf, BSIZE)) > 0) {
 		SLIST_FOREACH(p, &head, next) {
 			for (n = 0; n < rval; n += wval) {
 				wval = write(p->fd, buf + n, rval - n);
@@ -121,6 +126,7 @@ main(int argc, char *argv[])
 			}
 		}
 	}
+	free(buf);
 	if (rval == -1) {
 		warn("read");
 		exitval = 1;
