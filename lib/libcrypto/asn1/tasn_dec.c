@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.44 2021/12/09 17:01:41 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.45 2021/12/13 17:50:24 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -56,6 +56,7 @@
  *
  */
 
+#include <limits.h>
 #include <stddef.h>
 #include <string.h>
 
@@ -64,6 +65,8 @@
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 #include <openssl/objects.h>
+
+#include "bytestring.h"
 
 /* Constructed types with a recursive definition (such as can be found in PKCS7)
  * could eventually exceed the stack given malicious input with excessive
@@ -74,7 +77,7 @@
 static int asn1_check_eoc(const unsigned char **in, long len);
 static int asn1_find_end(const unsigned char **in, long len, char inf);
 
-static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len,
+static int asn1_collect(CBB *cbb, const unsigned char **in, long len,
     char inf, int tag, int aclass, int depth);
 
 static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
@@ -681,13 +684,13 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 	long plen;
 	char cst, inf, free_cont = 0;
 	const unsigned char *p;
-	BUF_MEM buf;
 	const unsigned char *cont = NULL;
+	uint8_t *data = NULL;
+	size_t data_len = 0;
+	CBB cbb;
 	long len;
 
-	buf.length = 0;
-	buf.max = 0;
-	buf.data = NULL;
+	memset(&cbb, 0, sizeof(cbb));
 
 	if (!pval) {
 		ASN1error(ASN1_R_ILLEGAL_NULL);
@@ -758,28 +761,34 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 		} else {
 			len = p - cont + plen;
 			p += plen;
-			buf.data = NULL;
 		}
 	} else if (cst) {
-		/* Should really check the internal tags are correct but
+		/*
+		 * Should really check the internal tags are correct but
 		 * some things may get this wrong. The relevant specs
 		 * say that constructed string types should be OCTET STRINGs
 		 * internally irrespective of the type. So instead just check
 		 * for UNIVERSAL class and ignore the tag.
 		 */
-		if (!asn1_collect(&buf, &p, plen, inf, -1, V_ASN1_UNIVERSAL, 0)) {
-			free_cont = 1;
+		if (!CBB_init(&cbb, 0))
 			goto err;
-		}
-		len = buf.length;
-		/* Append a final null to string */
-		if (!BUF_MEM_grow_clean(&buf, len + 1)) {
-			ASN1error(ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-		buf.data[len] = 0;
-		cont = (const unsigned char *)buf.data;
+		if (!asn1_collect(&cbb, &p, plen, inf, -1, V_ASN1_UNIVERSAL, 0))
+			goto err;
+
+		/* Append a final NUL to string. */
+		if (!CBB_add_u8(&cbb, 0))
+			goto err;
+
+		if (!CBB_finish(&cbb, &data, &data_len))
+			goto err;
+
 		free_cont = 1;
+
+		if (data_len < 1 || data_len > LONG_MAX)
+			goto err;
+
+		cont = data;
+		len = data_len - 1;
 	} else {
 		cont = p;
 		len = plen;
@@ -793,9 +802,12 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 	*in = p;
 	ret = 1;
 
-err:
-	if (free_cont && buf.data)
-		free(buf.data);
+ err:
+	CBB_cleanup(&cbb);
+
+	if (free_cont)
+		freezero(data, data_len);
+
 	return ret;
 }
 
@@ -1011,7 +1023,7 @@ asn1_find_end(const unsigned char **in, long len, char inf)
 #endif
 
 static int
-asn1_collect(BUF_MEM *buf, const unsigned char **in, long len, char inf,
+asn1_collect(CBB *cbb, const unsigned char **in, long len, char inf,
     int tag, int aclass, int depth)
 {
 	const unsigned char *p, *q;
@@ -1048,18 +1060,12 @@ asn1_collect(BUF_MEM *buf, const unsigned char **in, long len, char inf,
 
 		/* If indefinite length constructed update max length */
 		if (cst) {
-			if (!asn1_collect(buf, &p, plen, ininf, tag, aclass,
+			if (!asn1_collect(cbb, &p, plen, ininf, tag, aclass,
 			    depth + 1))
 				return 0;
 		} else if (plen > 0) {
-			size_t len = buf->length;
-
-			if (!BUF_MEM_grow_clean(buf, len + plen)) {
-				ASN1error(ERR_R_MALLOC_FAILURE);
+			if (!CBB_add_bytes(cbb, p, plen))
 				return 0;
-			}
-			memcpy(buf->data + len, p, plen);
-
 			p += plen;
 		}
 		len -= p - q;
