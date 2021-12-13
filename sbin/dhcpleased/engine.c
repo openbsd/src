@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.31 2021/12/13 11:02:26 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.32 2021/12/13 11:03:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -848,7 +848,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		return;
 	}
 
-	if (dhcp_hdr->xid != iface->xid)
+	if (ntohl(dhcp_hdr->xid) != iface->xid)
 		return; /* silently ignore wrong xid */
 
 	if (rem < sizeof(cookie))
@@ -1770,7 +1770,7 @@ log_dhcp_hdr(struct dhcp_hdr *dhcp_hdr)
 	    "Unknown", dhcp_hdr->htype);
 	log_debug("dhcp_hdr hlen: %d", dhcp_hdr->hlen);
 	log_debug("dhcp_hdr hops: %d", dhcp_hdr->hops);
-	log_debug("dhcp_hdr xid: 0x%x", dhcp_hdr->xid);
+	log_debug("dhcp_hdr xid: 0x%x", ntohl(dhcp_hdr->xid));
 	log_debug("dhcp_hdr secs: %u", dhcp_hdr->secs);
 	log_debug("dhcp_hdr flags: 0x%x", dhcp_hdr->flags);
 	log_debug("dhcp_hdr ciaddr: %s", inet_ntop(AF_INET, &dhcp_hdr->ciaddr,

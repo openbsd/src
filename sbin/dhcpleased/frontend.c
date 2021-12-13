@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.26 2021/12/13 11:02:26 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.27 2021/12/13 11:03:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -935,7 +935,7 @@ build_packet(uint8_t message_type, char *if_name, uint32_t xid,
 	hdr->htype = HTYPE_ETHER;
 	hdr->hlen = 6;
 	hdr->hops = 0;
-	hdr->xid = xid;
+	hdr->xid = htonl(xid);
 	hdr->secs = 0;
 	hdr->ciaddr = *ciaddr;
 	memcpy(hdr->chaddr, hw_address, sizeof(*hw_address));
