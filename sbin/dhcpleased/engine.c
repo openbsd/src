@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.30 2021/12/09 16:20:12 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.31 2021/12/13 11:02:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -570,10 +570,10 @@ send_interface_info(struct dhcpleased_iface *iface, pid_t pid)
 	strlcpy(cei.state, if_state_name[iface->state], sizeof(cei.state));
 	memcpy(&cei.request_time, &iface->request_time,
 	    sizeof(cei.request_time));
-	cei.server_identifier.s_addr = iface->server_identifier.s_addr;
-	cei.dhcp_server.s_addr = iface->dhcp_server.s_addr;
-	cei.requested_ip.s_addr = iface->requested_ip.s_addr;
-	cei.mask.s_addr = iface->mask.s_addr;
+	cei.server_identifier = iface->server_identifier;
+	cei.dhcp_server = iface->dhcp_server;
+	cei.requested_ip = iface->requested_ip;
+	cei.mask = iface->mask;
 	cei.routes_len = iface->routes_len;
 	memcpy(cei.routes, iface->routes, sizeof(cei.routes));
 	memcpy(cei.nameservers, iface->nameservers, sizeof(cei.nameservers));
@@ -1169,9 +1169,9 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			    "offered IP address", __func__);
 			return;
 		}
-		iface->server_identifier.s_addr = server_identifier.s_addr;
-		iface->dhcp_server.s_addr = server_identifier.s_addr;
-		iface->requested_ip.s_addr = dhcp_hdr->yiaddr.s_addr;
+		iface->server_identifier = server_identifier;
+		iface->dhcp_server = server_identifier;
+		iface->requested_ip = dhcp_hdr->yiaddr;
 		state_transition(iface, IF_REQUESTING);
 		break;
 	case DHCPACK:
@@ -1228,10 +1228,10 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			rebinding_time = lease_time - (lease_time / 8);
 
 		clock_gettime(CLOCK_MONOTONIC, &iface->request_time);
-		iface->server_identifier.s_addr = server_identifier.s_addr;
-		iface->dhcp_server.s_addr = server_identifier.s_addr;
-		iface->requested_ip.s_addr = dhcp_hdr->yiaddr.s_addr;
-		iface->mask.s_addr = subnet_mask.s_addr;
+		iface->server_identifier = server_identifier;
+		iface->dhcp_server = server_identifier;
+		iface->requested_ip = dhcp_hdr->yiaddr;
+		iface->mask = subnet_mask;
 #ifndef SMALL
 		if (iface_conf != NULL && iface_conf->ignore & IGN_ROUTES) {
 			iface->routes_len = 0;
@@ -1260,7 +1260,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			    sizeof(iface->nameservers));
 		}
 
-		iface->siaddr.s_addr = dhcp_hdr->siaddr.s_addr;
+		iface->siaddr = dhcp_hdr->siaddr;
 
 		/* we made sure this is a string futher up */
 		strnvis(iface->file, dhcp_hdr->file, sizeof(iface->file),
@@ -1582,9 +1582,9 @@ send_configure_interface(struct dhcpleased_iface *iface)
 	memset(&imsg, 0, sizeof(imsg));
 	imsg.if_index = iface->if_index;
 	imsg.rdomain = iface->rdomain;
-	imsg.addr.s_addr = iface->requested_ip.s_addr;
-	imsg.mask.s_addr = iface->mask.s_addr;
-	imsg.siaddr.s_addr = iface->siaddr.s_addr;
+	imsg.addr = iface->requested_ip;
+	imsg.mask = iface->mask;
+	imsg.siaddr = iface->siaddr;
 	strlcpy(imsg.file, iface->file, sizeof(imsg.file));
 	strlcpy(imsg.domainname, iface->domainname, sizeof(imsg.domainname));
 	strlcpy(imsg.hostname, iface->hostname, sizeof(imsg.hostname));
@@ -1621,9 +1621,9 @@ send_deconfigure_interface(struct dhcpleased_iface *iface)
 
 	imsg.if_index = iface->if_index;
 	imsg.rdomain = iface->rdomain;
-	imsg.addr.s_addr = iface->requested_ip.s_addr;
-	imsg.mask.s_addr = iface->mask.s_addr;
-	imsg.siaddr.s_addr = iface->siaddr.s_addr;
+	imsg.addr = iface->requested_ip;
+	imsg.mask = iface->mask;
+	imsg.siaddr = iface->siaddr;
 	strlcpy(imsg.file, iface->file, sizeof(imsg.file));
 	strlcpy(imsg.domainname, iface->domainname, sizeof(imsg.domainname));
 	strlcpy(imsg.hostname, iface->hostname, sizeof(imsg.hostname));
@@ -1650,9 +1650,9 @@ send_routes_withdraw(struct dhcpleased_iface *iface)
 
 	imsg.if_index = iface->if_index;
 	imsg.rdomain = iface->rdomain;
-	imsg.addr.s_addr = iface->requested_ip.s_addr;
-	imsg.mask.s_addr = iface->mask.s_addr;
-	imsg.siaddr.s_addr = iface->siaddr.s_addr;
+	imsg.addr = iface->requested_ip;
+	imsg.mask = iface->mask;
+	imsg.siaddr = iface->siaddr;
 	strlcpy(imsg.file, iface->file, sizeof(imsg.file));
 	strlcpy(imsg.domainname, iface->domainname, sizeof(imsg.domainname));
 	strlcpy(imsg.hostname, iface->hostname, sizeof(imsg.hostname));

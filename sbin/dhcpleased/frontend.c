@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.25 2021/12/09 16:20:12 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.26 2021/12/13 11:02:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -890,10 +890,10 @@ void
 iface_data_from_imsg(struct iface* iface, struct imsg_req_dhcp *imsg)
 {
 	iface->xid = imsg->xid;
-	iface->ciaddr.s_addr = imsg->ciaddr.s_addr;
-	iface->requested_ip.s_addr = imsg->requested_ip.s_addr;
-	iface->server_identifier.s_addr = imsg->server_identifier.s_addr;
-	iface->dhcp_server.s_addr = imsg->dhcp_server.s_addr;
+	iface->ciaddr = imsg->ciaddr;
+	iface->requested_ip = imsg->requested_ip;
+	iface->server_identifier = imsg->server_identifier;
+	iface->dhcp_server = imsg->dhcp_server;
 }
 
 ssize_t
@@ -937,7 +937,7 @@ build_packet(uint8_t message_type, char *if_name, uint32_t xid,
 	hdr->hops = 0;
 	hdr->xid = xid;
 	hdr->secs = 0;
-	hdr->ciaddr.s_addr = ciaddr->s_addr;
+	hdr->ciaddr = *ciaddr;
 	memcpy(hdr->chaddr, hw_address, sizeof(*hw_address));
 	p += sizeof(struct dhcp_hdr);
 	memcpy(p, dhcp_cookie, sizeof(dhcp_cookie));
@@ -1043,7 +1043,7 @@ udp_send_packet(struct iface *iface, uint8_t *packet, ssize_t len)
 	memset(&to, 0, sizeof(to));
 	to.sin_family = AF_INET;
 	to.sin_len = sizeof(to);
-	to.sin_addr.s_addr = iface->dhcp_server.s_addr;
+	to.sin_addr = iface->dhcp_server;
 	to.sin_port = ntohs(SERVER_PORT);
 
 	if (sendto(iface->udpsock, packet, len, 0, (struct sockaddr *)&to,
@@ -1080,7 +1080,7 @@ bpf_send_packet(struct iface *iface, uint8_t *packet, ssize_t len)
 	ip.ip_ttl = 128;
 	ip.ip_p = IPPROTO_UDP;
 	ip.ip_sum = 0;
-	ip.ip_src.s_addr = 0;
+	ip.ip_src.s_addr = INADDR_ANY;
 	ip.ip_dst.s_addr = INADDR_BROADCAST;
 	ip.ip_sum = wrapsum(checksum((unsigned char *)&ip, sizeof(ip), 0));
 	iov[iovcnt].iov_base = &ip;

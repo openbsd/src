@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.21 2021/09/16 13:36:52 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.22 2021/12/13 11:02:26 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -785,16 +785,14 @@ configure_interface(struct imsg_configure_interface *imsg)
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
 
-		addr.s_addr = ((struct sockaddr_in *)ifa->ifa_addr)
-		    ->sin_addr.s_addr;
-		mask.s_addr = ((struct sockaddr_in *)ifa->ifa_netmask)
-		    ->sin_addr.s_addr;
+		addr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr;
+		mask = ((struct sockaddr_in *)ifa->ifa_netmask)->sin_addr;
 
 		if (imsg->addr.s_addr == addr.s_addr) {
 			if (imsg->mask.s_addr == mask.s_addr)
 				found = 1;
 			else {
-				req_sin_addr->sin_addr.s_addr = addr.s_addr;
+				req_sin_addr->sin_addr = addr;
 				if (ioctl(ioctl_sock, SIOCDIFADDR, &ifaliasreq)
 				    == -1) {
 					if (errno != EADDRNOTAVAIL)
@@ -805,12 +803,12 @@ configure_interface(struct imsg_configure_interface *imsg)
 		}
 	}
 
-	req_sin_addr->sin_addr.s_addr = imsg->addr.s_addr;
+	req_sin_addr->sin_addr = imsg->addr;
 	if (!found) {
 		req_sin_mask = (struct sockaddr_in *)&ifaliasreq.ifra_mask;
 		req_sin_mask->sin_family = AF_INET;
 		req_sin_mask->sin_len = sizeof(*req_sin_mask);
-		req_sin_mask->sin_addr.s_addr = imsg->mask.s_addr;
+		req_sin_mask->sin_addr = imsg->mask;
 		if (ioctl(ioctl_sock, SIOCAIFADDR, &ifaliasreq) == -1)
 			log_warn("SIOCAIFADDR");
 	}
@@ -931,7 +929,7 @@ deconfigure_interface(struct imsg_configure_interface *imsg)
 	req_sin_addr->sin_family = AF_INET;
 	req_sin_addr->sin_len = sizeof(*req_sin_addr);
 
-	req_sin_addr->sin_addr.s_addr = imsg->addr.s_addr;
+	req_sin_addr->sin_addr = imsg->addr;
 	if (ioctl(ioctl_sock, SIOCDIFADDR, &ifaliasreq) == -1) {
 		if (errno != EADDRNOTAVAIL)
 			log_warn("SIOCDIFADDR");
@@ -948,7 +946,7 @@ configure_routes(uint8_t rtm_type, struct imsg_configure_interface *imsg)
 	memset(&ifa, 0, sizeof(ifa));
 	ifa.sin_family = AF_INET;
 	ifa.sin_len = sizeof(ifa);
-	ifa.sin_addr.s_addr = imsg->addr.s_addr;
+	ifa.sin_addr = imsg->addr;
 
 	memset(&dst, 0, sizeof(dst));
 	dst.sin_family = AF_INET;
@@ -965,9 +963,9 @@ configure_routes(uint8_t rtm_type, struct imsg_configure_interface *imsg)
 	addrnet = imsg->addr.s_addr & imsg->mask.s_addr;
 
 	for (i = 0; i < imsg->routes_len; i++) {
-		dst.sin_addr.s_addr = imsg->routes[i].dst.s_addr;
-		mask.sin_addr.s_addr = imsg->routes[i].mask.s_addr;
-		gw.sin_addr.s_addr = imsg->routes[i].gw.s_addr;
+		dst.sin_addr = imsg->routes[i].dst;
+		mask.sin_addr = imsg->routes[i].mask;
+		gw.sin_addr = imsg->routes[i].gw;
 
 		if (gw.sin_addr.s_addr == INADDR_ANY) {
 			/* direct route */
@@ -988,8 +986,7 @@ configure_routes(uint8_t rtm_type, struct imsg_configure_interface *imsg)
 				configure_route(rtm_type, imsg->if_index,
 				    imsg->rdomain, &gw, &mask, &ifa, NULL,
 				    RTF_CLONING);
-				mask.sin_addr.s_addr =
-				    imsg->routes[i].mask.s_addr;
+				mask.sin_addr = imsg->routes[i].mask;
 			}
 
 			if (gw.sin_addr.s_addr == ifa.sin_addr.s_addr) {
