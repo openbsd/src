@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.32 2021/12/13 11:03:23 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.33 2021/12/13 16:12:10 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -616,6 +616,7 @@ engine_update_iface(struct imsg_ifinfo *imsg_ifinfo)
 		if ((iface = calloc(1, sizeof(*iface))) == NULL)
 			fatal("calloc");
 		iface->state = IF_DOWN;
+		iface->xid = arc4random();
 		iface->timo.tv_usec = arc4random_uniform(1000000);
 		evtimer_set(&iface->timer, iface_timeout, iface);
 		iface->if_index = imsg_ifinfo->if_index;
@@ -1309,6 +1310,9 @@ state_transition(struct dhcpleased_iface *iface, enum if_state new_state)
 	char		 ifnamebuf[IF_NAMESIZE], *if_name;
 
 	iface->state = new_state;
+	if (new_state != old_state)
+		iface->xid = arc4random();
+
 	switch (new_state) {
 	case IF_DOWN:
 		if (iface->requested_ip.s_addr == INADDR_ANY) {
@@ -1468,7 +1472,6 @@ request_dhcp_discover(struct dhcpleased_iface *iface)
 
 	memset(&imsg, 0, sizeof(imsg));
 
-	iface->xid = arc4random();
 	imsg.if_index = iface->if_index;
 	imsg.xid = iface->xid;
 
@@ -1495,7 +1498,6 @@ request_dhcp_request(struct dhcpleased_iface *iface)
 {
 	struct imsg_req_dhcp	 imsg;
 
-	iface->xid = arc4random();
 	imsg.if_index = iface->if_index;
 	imsg.xid = iface->xid;
 
