@@ -1,4 +1,4 @@
-/*	$Id: dnsproc.c,v 1.11 2020/05/10 15:06:07 florian Exp $ */
+/*	$Id: dnsproc.c,v 1.12 2021/12/13 13:30:39 jca Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -102,7 +102,6 @@ host_dns(const char *s, struct addr *vec)
 
 		dodbg("%s: DNS: %s", s, vec[vecsz].ip);
 		vecsz++;
-		break;
 	}
 
 	freeaddrinfo(res0);
