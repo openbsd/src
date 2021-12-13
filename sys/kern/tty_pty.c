@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.110 2021/10/24 00:02:25 jsg Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.111 2021/12/13 14:56:55 visa Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -727,6 +727,7 @@ filt_ptcexcept(struct knote *kn, long hint)
 {
 	struct pt_softc *pti = (struct pt_softc *)kn->kn_hook;
 	struct tty *tp;
+	int active = 0;
 
 	tp = pti->pt_tty;
 
@@ -736,18 +737,18 @@ filt_ptcexcept(struct knote *kn, long hint)
 		    ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl)) {
 			kn->kn_fflags |= NOTE_OOB;
 			kn->kn_data = 1;
-			return (1);
+			active = 1;
 		}
-		return (0);
-	}
-	if (!ISSET(tp->t_state, TS_CARR_ON)) {
-		kn->kn_flags |= EV_EOF;
-		if (kn->kn_flags & __EV_POLL)
-			kn->kn_flags |= __EV_HUP;
-		return (1);
 	}
 
-	return (0);
+	if (kn->kn_flags & __EV_POLL) {
+		if (!ISSET(tp->t_state, TS_CARR_ON)) {
+			kn->kn_flags |= __EV_HUP;
+			active = 1;
+		}
+	}
+
+	return (active);
 }
 
 const struct filterops ptcread_filtops = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.88 2021/12/13 14:54:22 visa Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.89 2021/12/13 14:56:55 visa Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -708,13 +708,11 @@ filt_fifoexcept_common(struct knote *kn, struct socket *so)
 
 	soassertlocked(so);
 
-	if (so->so_state & SS_CANTRCVMORE) {
-		kn->kn_flags |= EV_EOF;
-		if (kn->kn_flags & __EV_POLL) {
-			if (so->so_state & SS_ISDISCONNECTED)
-				kn->kn_flags |= __EV_HUP;
+	if (kn->kn_flags & __EV_POLL) {
+		if (so->so_state & SS_ISDISCONNECTED) {
+			kn->kn_flags |= __EV_HUP;
+			rv = 1;
 		}
-		rv = 1;
 	}
 
 	return (rv);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.269 2021/11/11 16:35:09 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.270 2021/12/13 14:56:55 visa Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -2263,14 +2263,13 @@ filt_soexcept_common(struct knote *kn, struct socket *so)
 			kn->kn_data -= so->so_oobmark;
 			rv = 1;
 		}
-	} else if (so->so_state & SS_CANTRCVMORE) {
-		kn->kn_flags |= EV_EOF;
-		if (kn->kn_flags & __EV_POLL) {
-			if (so->so_state & SS_ISDISCONNECTED)
-				kn->kn_flags |= __EV_HUP;
+	}
+
+	if (kn->kn_flags & __EV_POLL) {
+		if (so->so_state & SS_ISDISCONNECTED) {
+			kn->kn_flags |= __EV_HUP;
+			rv = 1;
 		}
-		kn->kn_fflags = so->so_error;
-		rv = 1;
 	}
 
 	return rv;
