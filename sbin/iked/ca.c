@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.85 2021/12/13 19:46:22 tb Exp $	*/
+/*	$OpenBSD: ca.c,v 1.86 2021/12/13 19:47:40 tb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1133,7 +1133,7 @@ ca_store_info(struct iked *env, const char *msg, X509_STORE *ctx)
 	X509_NAME		*subject;
 	char			*name;
 	char			*buf;
-	size_t			 buflen;
+	int			 buflen;
 
 	h = X509_STORE_get0_objects(ctx);
 	for (i = 0; i < sk_X509_OBJECT_num(h); i++) {
@@ -1146,7 +1146,7 @@ ca_store_info(struct iked *env, const char *msg, X509_STORE *ctx)
 			continue;
 		buflen = asprintf(&buf, "%s: %s\n", msg, name);
 		free(name);
-		if (buf == NULL)
+		if (buflen == -1)
 			continue;
 		proc_compose(&env->sc_ps, PROC_CONTROL, IMSG_CTL_SHOW_CERTSTORE,
 		    buf, buflen + 1);
