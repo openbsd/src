@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.223 2021/12/12 17:31:18 schwarze Exp $
+# $OpenBSD: Makefile,v 1.224 2021/12/13 13:46:09 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -278,6 +278,7 @@ MAN=	\
 	RSA_sign_ASN1_OCTET_STRING.3 \
 	RSA_size.3 \
 	SHA1.3 \
+	SMIME_crlf_copy.3 \
 	SMIME_read_CMS.3 \
 	SMIME_read_PKCS7.3 \
 	SMIME_write_CMS.3 \
@@ -411,6 +412,7 @@ MAN=	\
 	evp.3 \
 	get_rfc3526_prime_8192.3 \
 	i2a_ASN1_STRING.3 \
+	i2d_ASN1_bio_stream.3 \
 	i2d_CMS_bio_stream.3 \
 	i2d_PKCS7_bio_stream.3 \
 	lh_new.3 \
