@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strnid.c,v 1.23 2021/12/11 22:58:48 schwarze Exp $ */
+/* $OpenBSD: a_strnid.c,v 1.24 2021/12/13 14:06:17 schwarze Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -56,7 +56,10 @@
  *
  */
 
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/asn1.h>
@@ -106,11 +109,17 @@ ASN1_STRING_set_default_mask_asc(const char *p)
 {
 	unsigned long mask;
 	char *end;
+	int save_errno;
 
 	if (strncmp(p, "MASK:", 5) == 0) {
 		if (p[5] == '\0')
 			return 0;
+		save_errno = errno;
+		errno = 0;
 		mask = strtoul(p + 5, &end, 0);
+		if (errno == ERANGE && mask == ULONG_MAX)
+			return 0;
+		errno = save_errno;
 		if (*end != '\0')
 			return 0;
 	} else if (strcmp(p, "nombstr") == 0)
