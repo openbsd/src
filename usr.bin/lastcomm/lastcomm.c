@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.29 2019/09/09 20:02:27 bluhm Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.30 2021/12/13 16:37:37 deraadt Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* NODEV */
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/acct.h>
 
@@ -118,8 +118,7 @@ main(int argc, char *argv[])
 			    p < &ab.ac_comm[sizeof ab.ac_comm] && *p; ++p)
 				if (!isprint((unsigned char)*p))
 					*p = '?';
-		if (!*argv || requested(argv, &ab))
-		{
+		if (!*argv || requested(argv, &ab)) {
 			t = expand(ab.ac_utime) + expand(ab.ac_stime);
 			(void)printf("%-*.*s %-7s %-*.*s %-*.*s %6.2f secs %.16s",
 			    (int)sizeof ab.ac_comm,
@@ -199,7 +198,7 @@ getdev(dev_t dev)
 	static dev_t lastdev = (dev_t)-1;
 	static char *lastname;
 
-	if (dev == NODEV)			/* Special case. */
+	if (dev == -1)				/* Special case. */
 		return ("__");
 	if (dev == lastdev)			/* One-element cache. */
 		return (lastname);

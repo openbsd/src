@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.44 2021/01/29 00:31:41 rob Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.45 2021/12/13 16:37:37 deraadt Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -230,7 +230,7 @@ acct_process(struct proc *p)
 	    pr->ps_pgrp->pg_session->s_ttyp)
 		acct.ac_tty = pr->ps_pgrp->pg_session->s_ttyp->t_dev;
 	else
-		acct.ac_tty = NODEV;
+		acct.ac_tty = -1;
 
 	/* (8) The boolean flags that tell how process terminated or misbehaved. */
 	acct.ac_flag = pr->ps_acflag;
