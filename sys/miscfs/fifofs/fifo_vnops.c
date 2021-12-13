@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.87 2021/12/11 09:28:26 visa Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.88 2021/12/13 14:54:22 visa Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -543,6 +543,10 @@ fifo_kqfilter(void *v)
 		if (ap->a_kn->kn_flags & __EV_SELECT) {
 			/* Prevent triggering exceptfds. */
 			return (EPERM);
+		}
+		if ((ap->a_kn->kn_flags & __EV_POLL) == 0) {
+			/* Disallow usage through kevent(2). */
+			return (EINVAL);
 		}
 		ap->a_kn->kn_fop = &fifoexcept_filtops;
 		so = fip->fi_readsock;
