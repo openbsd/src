@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.91 2021/10/26 12:22:23 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.92 2021/12/13 09:42:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -373,7 +373,7 @@ screen_redraw_make_pane_status(struct client *c, struct window_pane *wp,
 		style_apply(&gc, w->options, "pane-active-border-style", ft);
 	else
 		style_apply(&gc, w->options, "pane-border-style", ft);
-	fmt = options_get_string(w->options, "pane-border-format");
+	fmt = options_get_string(wp->options, "pane-border-format");
 
 	expanded = format_expand_time(ft, fmt);
 	if (wp->sx < 4)
