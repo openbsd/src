@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpsetround.c,v 1.2 2017/03/22 07:32:34 guenther Exp $	*/
+/*	$OpenBSD: fpsetround.c,v 1.3 2021/12/13 18:28:39 deraadt Exp $	*/
 /*
  * Copyright (C) 2014 Andrew Turner
  * All rights reserved.
@@ -25,8 +25,6 @@
  * SUCH DAMAGE.
  *
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/types.h>
 #include <ieeefp.h>

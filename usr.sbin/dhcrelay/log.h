@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.1 2017/02/13 19:15:39 krw Exp $ */
+/*	$OpenBSD: log.h,v 1.2 2021/12/13 18:28:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -20,7 +20,6 @@
 #define LOG_H
 
 #include <stdarg.h>
-#include <sys/cdefs.h>
 
 void	log_init(int, int);
 void	log_procinit(const char *);

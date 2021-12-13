@@ -1,11 +1,10 @@
-/*	$OpenBSD: imsg_subr.h,v 1.1 2015/07/21 04:06:04 yasuoka Exp $	*/
+/*	$OpenBSD: imsg_subr.h,v 1.2 2021/12/13 18:28:40 deraadt Exp $	*/
 
 #ifndef _IMSG_SUBR_H
 #define _IMSG_SUBR_H
 
 struct imsgbuf;
 
-#include <sys/cdefs.h>
 __BEGIN_DECLS
 
 int	 imsg_sync_read(struct imsgbuf *, int);

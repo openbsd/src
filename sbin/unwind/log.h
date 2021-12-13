@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.1 2019/03/01 08:02:25 florian Exp $ */
+/*	$OpenBSD: log.h,v 1.2 2021/12/13 18:28:40 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -20,7 +20,6 @@
 #define LOG_H
 
 #include <stdarg.h>
-#include <sys/cdefs.h>
 
 /* XXX libunbound has these, too. It is easier to redefine them here for now */
 #define	log_init(n_debug, facility)	uw_log_init(n_debug, facility)

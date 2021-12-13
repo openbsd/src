@@ -46,7 +46,6 @@ struct module_handlers {
 			goto syntax_error;			\
 		}						\
 	} while (0 /* CONSTCOND */)
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 

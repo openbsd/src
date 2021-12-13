@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpgetsticky.c,v 1.1 2017/01/11 18:09:24 patrick Exp $	*/
+/*	$OpenBSD: fpgetsticky.c,v 1.2 2021/12/13 18:28:39 deraadt Exp $	*/
 /*
  * Copyright (C) 2014 Andrew Turner
  * All rights reserved.
@@ -25,8 +25,6 @@
  * SUCH DAMAGE.
  *
  */
-
-#include <sys/cdefs.h>
 
 #include <sys/types.h>
 #include <ieeefp.h>

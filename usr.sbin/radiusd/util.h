@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.2 2015/08/27 01:02:35 yasuoka Exp $	*/
+/*	$OpenBSD: util.h,v 1.3 2021/12/13 18:28:40 deraadt Exp $	*/
 
 #ifndef RADIUSD_UTIL_H
 #define	RADIUSD_UTIL_H
@@ -20,7 +20,6 @@
 
 #include <sys/socket.h>	/* for struct sockaddr */
 #include <netdb.h>	/* for struct addrinfo */
-#include <sys/cdefs.h>
 
 __BEGIN_DECLS
 

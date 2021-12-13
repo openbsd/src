@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.127 2021/11/29 05:17:35 deraadt Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.128 2021/12/13 18:28:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -19,7 +19,6 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/wait.h>
-#include <sys/cdefs.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/tty.h>
