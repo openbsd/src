@@ -1,4 +1,4 @@
-/*	$OpenBSD: nearbyint_test.c,v 1.2 2021/12/13 16:56:48 deraadt Exp $	*/
+/*	$OpenBSD: nearbyint_test.c,v 1.3 2021/12/13 18:04:28 deraadt Exp $	*/
 /*-
  * Copyright (c) 2010 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -34,9 +34,6 @@
  * - adapt tests for rint(3)
  * - tests for harder values (more mantissa bits than float)
  */
-
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
 
 #include <sys/types.h>
 #include <fenv.h>

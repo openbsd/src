@@ -1,4 +1,4 @@
-/*	$OpenBSD: rem_test.c,v 1.1 2021/10/22 18:00:23 mbuhl Exp $	*/
+/*	$OpenBSD: rem_test.c,v 1.2 2021/12/13 18:04:28 deraadt Exp $	*/
 /*-
  * Copyright (c) 2005-2008 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -32,9 +32,6 @@
  * remquo, remquof, and remquol.
  * Missing tests: fmod, fmodf.
  */
-
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
 
 #include <float.h>
 #include <math.h>

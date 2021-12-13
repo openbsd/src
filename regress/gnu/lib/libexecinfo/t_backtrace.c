@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_backtrace.c,v 1.1 2021/06/10 23:40:46 jca Exp $	*/
+/*	$OpenBSD: t_backtrace.c,v 1.2 2021/12/13 18:04:28 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -28,7 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
+
+#include <sys/types.h>
 
 #include <atf-c.h>
 #include <string.h>

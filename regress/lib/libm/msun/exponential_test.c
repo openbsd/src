@@ -1,4 +1,4 @@
-/*	$OpenBSD: exponential_test.c,v 1.2 2021/10/22 18:07:01 mbuhl Exp $	*/
+/*	$OpenBSD: exponential_test.c,v 1.3 2021/12/13 18:04:28 deraadt Exp $	*/
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -30,9 +30,6 @@
 /*
  * Tests for corner cases in exp*().
  */
-
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
 
 #include <fenv.h>
 #include <float.h>

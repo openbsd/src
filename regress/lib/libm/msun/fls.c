@@ -1,4 +1,4 @@
-/*	$OpenBSD: fls.c,v 1.1 2021/10/22 18:00:22 mbuhl Exp $	*/
+/*	$OpenBSD: fls.c,v 1.2 2021/12/13 18:04:28 deraadt Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
  *
@@ -31,9 +31,6 @@
  */
 
 #include "macros.h"
-
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
 
 #include <strings.h>
 

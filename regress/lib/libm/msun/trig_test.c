@@ -1,4 +1,4 @@
-/*	$OpenBSD: trig_test.c,v 1.2 2021/12/13 16:56:48 deraadt Exp $	*/
+/*	$OpenBSD: trig_test.c,v 1.3 2021/12/13 18:04:28 deraadt Exp $	*/
 /*-
  * Copyright (c) 2008 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -35,9 +35,6 @@
  * The program for generating representable numbers near multiples of pi is
  * available at http://www.cs.berkeley.edu/~wkahan/testpi/ .
  */
-
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
 
 #include <sys/types.h>
 

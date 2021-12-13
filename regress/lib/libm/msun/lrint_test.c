@@ -1,4 +1,4 @@
-/*	$OpenBSD: lrint_test.c,v 1.4 2021/10/22 18:00:22 mbuhl Exp $	*/
+/*	$OpenBSD: lrint_test.c,v 1.5 2021/12/13 18:04:28 deraadt Exp $	*/
 /*-
  * Copyright (c) 2005-2008 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -28,9 +28,6 @@
 /*
  * Test for lrint(), lrintf(), llrint(), and llrintf().
  */
-
-#include <sys/cdefs.h>
-/* $FreeBSD: head/lib/msun/tests/lrint_test.c 314650 2017-03-04 10:07:46Z ngie $ */
 
 #include <fenv.h>
 #include <limits.h>

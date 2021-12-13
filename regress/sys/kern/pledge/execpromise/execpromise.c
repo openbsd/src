@@ -1,4 +1,4 @@
-/*	$OpenBSD: execpromise.c,v 1.1 2017/12/16 11:00:49 florian Exp $	*/
+/*	$OpenBSD: execpromise.c,v 1.2 2021/12/13 18:04:28 deraadt Exp $	*/
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/cdefs.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 
 #include <err.h>

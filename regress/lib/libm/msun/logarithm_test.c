@@ -1,4 +1,4 @@
-/*	$OpenBSD: logarithm_test.c,v 1.2 2021/12/13 16:56:48 deraadt Exp $	*/
+/*	$OpenBSD: logarithm_test.c,v 1.3 2021/12/13 18:04:28 deraadt Exp $	*/
 /*-
  * Copyright (c) 2008-2010 David Schultz <das@FreeBSD.org>
  * All rights reserved.
@@ -30,9 +30,6 @@
 /*
  * Tests for corner cases in log*().
  */
-
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
 
 #include <sys/types.h>
 #include <fenv.h>
