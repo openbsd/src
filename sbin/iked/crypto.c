@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.38 2021/12/01 16:42:12 deraadt Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.39 2021/12/13 17:35:34 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -319,8 +319,7 @@ hash_free(struct iked_hash *hash)
 {
 	if (hash == NULL)
 		return;
-	if (hash->hash_ctx != NULL)
-		HMAC_CTX_free(hash->hash_ctx);
+	HMAC_CTX_free(hash->hash_ctx);
 	ibuf_release(hash->hash_key);
 	free(hash);
 }
@@ -764,9 +763,8 @@ dsa_free(struct iked_dsa *dsa)
 	if (dsa->dsa_hmac) {
 		HMAC_CTX_free((HMAC_CTX *)dsa->dsa_ctx);
 	} else {
-		EVP_MD_CTX_destroy((EVP_MD_CTX *)dsa->dsa_ctx);
-		if (dsa->dsa_key)
-			EVP_PKEY_free(dsa->dsa_key);
+		EVP_MD_CTX_free((EVP_MD_CTX *)dsa->dsa_ctx);
+		EVP_PKEY_free(dsa->dsa_key);
 	}
 
 	ibuf_release(dsa->dsa_keydata);
@@ -842,8 +840,7 @@ dsa_setkey(struct iked_dsa *dsa, void *key, size_t keylen, uint8_t type)
 		goto err;
 	}
 
-	if (cert != NULL)
-		X509_free(cert);
+	X509_free(cert);
 	BIO_free(rawcert);	/* temporary for parsing */
 
 	return (dsa->dsa_keydata);
@@ -853,16 +850,11 @@ dsa_setkey(struct iked_dsa *dsa, void *key, size_t keylen, uint8_t type)
  err:
 	log_debug("%s: error", __func__);
 
-	if (rsa != NULL)
-		RSA_free(rsa);
-	if (ec != NULL)
-		EC_KEY_free(ec);
-	if (pkey != NULL)
-		EVP_PKEY_free(pkey);
-	if (cert != NULL)
-		X509_free(cert);
-	if (rawcert != NULL)
-		BIO_free(rawcert);
+	RSA_free(rsa);
+	EC_KEY_free(ec);
+	EVP_PKEY_free(pkey);
+	X509_free(cert);
+	BIO_free(rawcert);
 	ibuf_release(dsa->dsa_keydata);
 	dsa->dsa_keydata = NULL;
 	return (NULL);
@@ -1078,8 +1070,8 @@ _dsa_sign_ecdsa(struct iked_dsa *dsa, uint8_t *ptr, size_t len)
 	ret = 0;
  done:
 	free(tmp);
-	if (obj)
-		ECDSA_SIG_free(obj);
+	ECDSA_SIG_free(obj);
+
 	return (ret);
 }
 
@@ -1180,8 +1172,8 @@ _dsa_verify_prepare(struct iked_dsa *dsa, uint8_t **sigp, size_t *lenp,
 	BN_clear_free(r);
 	BN_clear_free(s);
 	free(ptr);
-	if (obj)
-		ECDSA_SIG_free(obj);
+	ECDSA_SIG_free(obj);
+
 	return (ret);
 }
 

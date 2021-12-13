@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp.c,v 1.22 2021/11/19 21:16:25 tobhe Exp $ */
+/*	$OpenBSD: ocsp.c,v 1.23 2021/12/13 17:35:34 tobhe Exp $ */
 
 /*
  * Copyright (c) 2014 Markus Friedl
@@ -322,20 +322,16 @@ ocsp_validate_cert(struct iked *env, void *data, size_t len,
 	ret = proc_composev(&env->sc_ps, PROC_PARENT, IMSG_OCSP_FD,
 	    iov, iovcnt);
 
-	if (aia)
-		X509_email_free(aia);	/* free stack of openssl strings */
+	X509_email_free(aia);	/* free stack of openssl strings */
 
 	return (ret);
 
  err:
 	ca_sslerror(__func__);
 	free(ioe);
-	if (rawcert != NULL)
-		BIO_free(rawcert);
-	if (cert != NULL)
-		X509_free(cert);
-	if (id != NULL)
-		OCSP_CERTID_free(id);
+	BIO_free(rawcert);
+	X509_free(cert);
+	OCSP_CERTID_free(id);
 	ocsp_validate_finish(ocsp, 0);	/* failed */
 	return (-1);
 }
@@ -349,15 +345,9 @@ ocsp_free(struct iked_ocsp *ocsp)
 			close(ocsp->ocsp_sock->sock_fd);
 			free(ocsp->ocsp_sock);
 		}
-		if (ocsp->ocsp_cbio != NULL)
-			BIO_free_all(ocsp->ocsp_cbio);
-
-		if (ocsp->ocsp_req_ctx != NULL)
-			OCSP_REQ_CTX_free(ocsp->ocsp_req_ctx);
-
-		if (ocsp->ocsp_req != NULL)
-			OCSP_REQUEST_free(ocsp->ocsp_req);
-
+		BIO_free_all(ocsp->ocsp_cbio);
+		OCSP_REQ_CTX_free(ocsp->ocsp_req_ctx);
+		OCSP_REQUEST_free(ocsp->ocsp_req);
 		free(ocsp);
 	}
 }
@@ -471,12 +461,10 @@ ocsp_load_certs(const char *file)
 	}
 
  done:
-	if (bio)
-		BIO_free(bio);
-	if (xis)
-		sk_X509_INFO_pop_free(xis, X509_INFO_free);
-	if (certs && sk_X509_num(certs) <= 0) {
-		sk_X509_pop_free(certs, X509_free);
+	BIO_free(bio);
+	sk_X509_INFO_pop_free(xis, X509_INFO_free);
+	if (sk_X509_num(certs) <= 0) {
+		sk_X509_free(certs);
 		certs = NULL;
 	}
 	return (certs);
@@ -599,14 +587,10 @@ ocsp_parse_response(struct iked_ocsp *ocsp, OCSP_RESPONSE *resp)
 	if (!valid) {
 		log_debug("%s: status: %s", __func__, errstr);
 	}
-	if (store)
-		X509_STORE_free(store);
-	if (verify_other)
-		sk_X509_pop_free(verify_other, X509_free);
-	if (resp)
-		OCSP_RESPONSE_free(resp);
-	if (bs)
-		OCSP_BASICRESP_free(bs);
+	X509_STORE_free(store);
+	sk_X509_pop_free(verify_other, X509_free);
+	OCSP_RESPONSE_free(resp);
+	OCSP_BASICRESP_free(bs);
 
 	ocsp_validate_finish(ocsp, valid);
 }
