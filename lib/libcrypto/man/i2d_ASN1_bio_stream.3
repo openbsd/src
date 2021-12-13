@@ -1,4 +1,4 @@
-.\" $OpenBSD: i2d_ASN1_bio_stream.3,v 1.1 2021/12/13 13:46:09 schwarze Exp $
+.\" $OpenBSD: i2d_ASN1_bio_stream.3,v 1.2 2021/12/13 17:24:39 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -83,7 +83,8 @@ is intended to return 1 on success or 0 on failure.
 .Xr BIO_push 3 ,
 .Xr i2d_CMS_bio_stream 3 ,
 .Xr i2d_PKCS7_bio_stream 3 ,
-.Xr SMIME_crlf_copy 3
+.Xr SMIME_crlf_copy 3 ,
+.Xr SMIME_write_ASN1 3
 .Sh HISTORY
 .Fn i2d_ASN1_bio_stream
 first appeared in OpenSSL 1.0.0 and has been available since
