@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_ptrace.c,v 1.4 2020/11/09 23:18:51 bluhm Exp $	*/
+/*	$OpenBSD: t_ptrace.c,v 1.5 2021/12/13 16:56:48 deraadt Exp $	*/
 /*	$NetBSD: t_ptrace.c,v 1.4 2018/05/14 12:44:40 kamil Exp $	*/
 
 /*-
@@ -29,16 +29,13 @@
 
 #include "macros.h"
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace.c,v 1.4 2018/05/14 12:44:40 kamil Exp $");
-
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <unistd.h>
 
 #include "atf-c.h"

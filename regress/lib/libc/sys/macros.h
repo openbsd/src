@@ -1,7 +1,6 @@
-/*	$OpenBSD: macros.h,v 1.4 2021/09/02 15:28:41 mbuhl Exp $	*/
+/*	$OpenBSD: macros.h,v 1.5 2021/12/13 16:56:48 deraadt Exp $	*/
 /* Public domain - Moritz Buhl */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stdint.h>
 #include <sys/sysctl.h>
@@ -11,8 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#define __RCSID(str)
-#define __COPYRIGHT(str)
+#define nitems(_a)     (sizeof((_a)) / sizeof((_a)[0]))
 
 #define __arraycount(_a)	nitems(_a)
 #define __unreachable()		atf_tc_fail("unreachable")

@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_mlock.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
+/*	$OpenBSD: t_mlock.c,v 1.3 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_mlock.c,v 1.8 2020/01/24 08:45:16 skrll Exp $ */
 
 /*-
@@ -31,9 +31,6 @@
  */
 
 #include "macros.h"
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mlock.c,v 1.8 2020/01/24 08:45:16 skrll Exp $");
 
 #include <sys/mman.h>
 #include <sys/resource.h>

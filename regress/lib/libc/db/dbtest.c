@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbtest.c,v 1.18 2021/10/24 21:24:20 deraadt Exp $	*/
+/*	$OpenBSD: dbtest.c,v 1.19 2021/12/13 16:56:48 deraadt Exp $	*/
 /*	$NetBSD: dbtest.c,v 1.8 1996/05/03 21:57:48 cgd Exp $	*/
 
 /*-
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
@@ -44,6 +43,8 @@
 #include <unistd.h>
 
 #include <db.h>
+
+#define MINIMUM(a, b)    (((a) < (b)) ? (a) : (b))
 
 enum S { COMMAND, COMPARE, GET, PUT, REMOVE, SEQ, SEQFLAG, KEY, DATA };
 
@@ -340,7 +341,7 @@ compare(db1, db2)
 		printf("compare failed: key->data len %lu != data len %lu\n",
 		    db1->size, db2->size);
 
-	len = MIN(db1->size, db2->size);
+	len = MINIMUM(db1->size, db2->size);
 	for (p1 = db1->data, p2 = db2->data; len--;)
 		if (*p1++ != *p2++) {
 			printf("compare failed at offset %ld\n",
@@ -371,7 +372,7 @@ get(dbp, kp)
 			(void)write(ofd, NOSUCHKEY, sizeof(NOSUCHKEY) - 1);
 		else
 			(void)fprintf(stderr, "%lu: %.*s: %s", lineno,
-			    MIN((int)kp->size, 20), kp->data, NOSUCHKEY);
+			    MINIMUM((int)kp->size, 20), kp->data, NOSUCHKEY);
 #undef	NOSUCHKEY
 		break;
 	}
@@ -428,7 +429,7 @@ rem(dbp, kp)
 			(void)write(ofd, NOSUCHKEY, sizeof(NOSUCHKEY) - 1);
 		else if (flags != R_CURSOR)
 			(void)fprintf(stderr, "%lu: %.*s: %s", lineno,
-			    MIN((int)kp->size, 20), kp->data, NOSUCHKEY);
+			    MINIMUM((int)kp->size, 20), kp->data, NOSUCHKEY);
 		else
 			(void)fprintf(stderr,
 			    "%lu: rem of cursor failed\n", lineno);
@@ -472,7 +473,7 @@ seq(dbp, kp)
 			(void)write(ofd, NOSUCHKEY, sizeof(NOSUCHKEY) - 1);
 		else if (flags == R_CURSOR)
 			(void)fprintf(stderr, "%lu: %.*s: %s", lineno,
-			    MIN((int)kp->size, 20), kp->data, NOSUCHKEY);
+			    MINIMUM((int)kp->size, 20), kp->data, NOSUCHKEY);
 		else
 			(void)fprintf(stderr,
 			    "%lu: seq (%s) failed\n", lineno, sflags(flags));

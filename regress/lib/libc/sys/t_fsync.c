@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_fsync.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
+/*	$OpenBSD: t_fsync.c,v 1.3 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_fsync.c,v 1.2 2012/03/18 07:00:52 jruoho Exp $ */
 
 /*-
@@ -31,9 +31,6 @@
  */
 
 #include "macros.h"
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fsync.c,v 1.2 2012/03/18 07:00:52 jruoho Exp $");
 
 #include <errno.h>
 #include <fcntl.h>

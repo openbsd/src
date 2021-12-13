@@ -1,4 +1,4 @@
-/*	$OpenBSD: msgtest.c,v 1.6 2008/06/26 05:42:06 ray Exp $	*/
+/*	$OpenBSD: msgtest.c,v 1.7 2021/12/13 16:56:50 deraadt Exp $	*/
 /*	$NetBSD: msgtest.c,v 1.6 2001/02/19 22:44:41 cgd Exp $	*/
 
 /*-
@@ -35,7 +35,6 @@
  * Test the SVID-compatible Message Queue facility.
  */
 
-#include <sys/param.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/wait.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_mkdir.c,v 1.1.1.1 2019/11/19 19:57:03 bluhm Exp $	*/
+/*	$OpenBSD: t_mkdir.c,v 1.2 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_mkdir.c,v 1.2 2011/10/15 07:38:31 jruoho Exp $ */
 
 /*-
@@ -31,11 +31,6 @@
  */
 
 #include "macros.h"
-
-#include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2008\
- The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mkdir.c,v 1.2 2011/10/15 07:38:31 jruoho Exp $");
 
 #include <sys/stat.h>
 #include <sys/wait.h>

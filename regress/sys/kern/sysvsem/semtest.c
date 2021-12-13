@@ -34,7 +34,6 @@
  * Test the SVID-compatible Semaphore facility.
  */
 
-#include <sys/param.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/wait.h>

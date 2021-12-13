@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_getlogin.c,v 1.1.1.1 2019/11/19 19:57:03 bluhm Exp $	*/
+/*	$OpenBSD: t_getlogin.c,v 1.2 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_getlogin.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $ */
 
 /*-
@@ -32,16 +32,13 @@
 
 #include "macros.h"
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getlogin.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $");
-
-#include <sys/param.h>
 #include <sys/wait.h>
 
 #include "atf-c.h"
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <unistd.h>
 
 ATF_TC(getlogin_r_err);
@@ -65,7 +62,7 @@ ATF_TC_HEAD(getlogin_same, tc)
 
 ATF_TC_BODY(getlogin_same, tc)
 {
-	char buf[MAXLOGNAME];
+	char buf[LOGIN_NAME_MAX];
 	char *str;
 
 	str = getlogin();
@@ -128,7 +125,7 @@ ATF_TC_HEAD(setlogin_err, tc)
 
 ATF_TC_BODY(setlogin_err, tc)
 {
-	char buf[MAXLOGNAME + 1];
+	char buf[LOGIN_NAME_MAX + 1];
 	char *name;
 	pid_t pid;
 	int sta;

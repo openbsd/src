@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptotest.c,v 1.2 2016/09/02 16:54:28 mikeb Exp $	*/
+/*	$OpenBSD: cryptotest.c,v 1.3 2021/12/13 16:56:49 deraadt Exp $	*/
 /*	$EOM: cryptotest.c,v 1.5 1998/10/07 16:40:49 niklas Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
  * This code was written under funding by Ericsson Radio Systems.
  */
 
-#include <sys/param.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <stdio.h>

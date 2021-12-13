@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_setrlimit.c,v 1.1 2021/09/02 12:40:44 mbuhl Exp $	*/
+/*	$OpenBSD: t_setrlimit.c,v 1.2 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_setrlimit.c,v 1.7 2020/10/13 06:58:57 rin Exp $ */
 
 /*-
@@ -30,9 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include "macros.h"
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_setrlimit.c,v 1.7 2020/10/13 06:58:57 rin Exp $");
 
 #include <sys/resource.h>
 #include <sys/mman.h>

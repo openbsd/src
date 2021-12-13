@@ -8,7 +8,7 @@
  * contain any X's
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 
@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <unistd.h>
 
 #define MAX_TEMPLATE_LEN	10
@@ -110,7 +111,7 @@ int
 main(void)
 {
 	struct stat sb, fsb;
-	char cwd[MAXPATHLEN + 1];
+	char cwd[PATH_MAX + 1];
 	char *p;
 	size_t clen;
 	int i;

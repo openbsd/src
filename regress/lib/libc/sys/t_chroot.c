@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_chroot.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
+/*	$OpenBSD: t_chroot.c,v 1.3 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_chroot.c,v 1.2 2017/01/10 22:36:29 christos Exp $ */
 
 /*-
@@ -31,9 +31,6 @@
  */
 
 #include "macros.h"
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_chroot.c,v 1.2 2017/01/10 22:36:29 christos Exp $");
 
 #include <sys/wait.h>
 #include <sys/stat.h>

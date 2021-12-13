@@ -1,4 +1,4 @@
-/*      $OpenBSD: des3.c,v 1.9 2014/08/15 15:13:38 mikeb Exp $  */
+/*      $OpenBSD: des3.c,v 1.10 2021/12/13 16:56:49 deraadt Exp $  */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -24,7 +24,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <openssl/des.h>
 #include <err.h>
 #include <fcntl.h>

@@ -1,10 +1,10 @@
-/*	$OpenBSD: sfuid.c,v 1.3 2017/01/13 15:28:02 kettenis Exp $	*/
+/*	$OpenBSD: sfuid.c,v 1.4 2021/12/13 16:56:49 deraadt Exp $	*/
 
 /*
  * Written by Michael Shalayeff, 2004. Public Domain.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <signal.h>
 #include <unistd.h>
 #include <stdio.h>

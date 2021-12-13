@@ -1,9 +1,9 @@
-/* $OpenBSD: monotonicrelapse.c,v 1.2 2019/06/17 08:19:30 anton Exp $ */
+/* $OpenBSD: monotonicrelapse.c,v 1.3 2021/12/13 16:56:49 deraadt Exp $ */
 /*
  * Scott Cheloha <scottcheloha@gmail.com>, 2019.  Public Domain.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
 

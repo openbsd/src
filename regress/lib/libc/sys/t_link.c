@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_link.c,v 1.1.1.1 2019/11/19 19:57:03 bluhm Exp $	*/
+/*	$OpenBSD: t_link.c,v 1.2 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_link.c,v 1.3 2017/01/13 20:42:36 christos Exp $ */
 
 /*-
@@ -32,10 +32,6 @@
 
 #include "macros.h"
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_link.c,v 1.3 2017/01/13 20:42:36 christos Exp $");
-
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include "atf-c.h"
@@ -112,7 +108,7 @@ ATF_TC_HEAD(link_err, tc)
 
 ATF_TC_BODY(link_err, tc)
 {
-	char buf[MAXPATHLEN + 1];
+	char buf[PATH_MAX + 1];
 	int fd;
 
 	(void)memset(buf, 'x', sizeof(buf));

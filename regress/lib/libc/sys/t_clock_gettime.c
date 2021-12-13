@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_clock_gettime.c,v 1.2 2021/09/02 12:40:44 mbuhl Exp $	*/
+/*	$OpenBSD: t_clock_gettime.c,v 1.3 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_clock_gettime.c,v 1.3 2017/01/13 21:30:41 christos Exp $ */
 
 /*-
@@ -58,12 +58,6 @@
 
 #include "macros.h"
 
-#include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2008\
- The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_clock_gettime.c,v 1.3 2017/01/13 21:30:41 christos Exp $");
-
-#include <sys/param.h>
 #include <sys/sysctl.h>
 
 

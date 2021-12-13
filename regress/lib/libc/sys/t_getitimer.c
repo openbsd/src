@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_getitimer.c,v 1.3 2020/11/09 23:18:51 bluhm Exp $	*/
+/*	$OpenBSD: t_getitimer.c,v 1.4 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_getitimer.c,v 1.3 2019/07/13 12:44:02 gson Exp $ */
 
 /*-
@@ -31,9 +31,6 @@
  */
 
 #include "macros.h"
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getitimer.c,v 1.3 2019/07/13 12:44:02 gson Exp $");
 
 #include <sys/time.h>
 

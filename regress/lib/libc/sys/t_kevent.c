@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_kevent.c,v 1.1 2021/09/02 12:40:44 mbuhl Exp $	*/
+/*	$OpenBSD: t_kevent.c,v 1.2 2021/12/13 16:56:48 deraadt Exp $	*/
 /*	$NetBSD: t_kevent.c,v 1.9 2020/10/31 01:08:32 christos Exp $ */
 
 /*-
@@ -30,9 +30,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include "macros.h"
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_kevent.c,v 1.9 2020/10/31 01:08:32 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>

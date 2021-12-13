@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_syscall.c,v 1.3 2021/09/02 12:40:44 mbuhl Exp $	*/
+/*	$OpenBSD: t_syscall.c,v 1.4 2021/12/13 16:56:48 deraadt Exp $	*/
 /*	$NetBSD: t_syscall.c,v 1.4 2021/01/18 05:44:20 simonb Exp $	*/
 
 /*-
@@ -31,10 +31,6 @@
  */
 
 #include "macros.h"
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_syscall.c,v 1.4 2021/01/18 05:44:20 simonb Exp $");
-
 
 #include "atf-c.h"
 #include <stdio.h>

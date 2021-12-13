@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscalls.c,v 1.30 2021/08/30 09:09:21 claudio Exp $	*/
+/*	$OpenBSD: syscalls.c,v 1.31 2021/12/13 16:56:50 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -26,7 +26,6 @@
 #include <sys/errno.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
-#include <sys/param.h>
 #include <sys/mount.h>
 
 pid_t child;

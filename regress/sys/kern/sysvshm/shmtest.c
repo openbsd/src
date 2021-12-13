@@ -34,7 +34,6 @@
  * Test the SVID-compatible Shared Memory facility.
  */
 
-#include <sys/param.h>
 #include <sys/ipc.h>
 #include <sys/mman.h>
 #include <sys/shm.h>

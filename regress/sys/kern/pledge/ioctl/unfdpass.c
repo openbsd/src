@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.1 2017/01/26 04:58:08 benno Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.2 2021/12/13 16:56:50 deraadt Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
  * is then used for ioctl()
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>

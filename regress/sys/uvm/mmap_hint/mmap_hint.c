@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmap_hint.c,v 1.5 2017/07/13 11:24:58 bluhm Exp $	*/
+/*	$OpenBSD: mmap_hint.c,v 1.6 2021/12/13 16:56:50 deraadt Exp $	*/
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/param.h>	/* PAGE_SIZE PAGE_MASK */
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/tree.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509test.c,v 1.2 2014/11/18 20:51:00 krw Exp $	*/
+/*	$OpenBSD: x509test.c,v 1.3 2021/12/13 16:56:49 deraadt Exp $	*/
 /*	$EOM: x509test.c,v 1.9 2000/12/21 15:24:25 ho Exp $	*/
 
 /*
@@ -39,7 +39,6 @@
  * isakmpd.
  */
 
-#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>

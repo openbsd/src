@@ -29,13 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 
 #include <err.h>
 #include <errno.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -47,7 +47,7 @@
 int
 main(int argc, char **argv)
 {
-	char *buffer, command[MAXPATHLEN];
+	char *buffer, command[PATH_MAX];
 	int index, in;
 	FILE *pipe;
 

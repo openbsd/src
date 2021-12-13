@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace_test.c,v 1.3 2020/04/03 13:17:12 jca Exp $ */
+/*	$OpenBSD: ptrace_test.c,v 1.4 2021/12/13 16:56:50 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2015 John Baldwin <jhb@FreeBSD.org>
@@ -27,13 +27,11 @@
 
 #include "macros.h"
 
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
-
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/file.h>
 #include <sys/time.h>
+#include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/queue.h>
@@ -50,6 +48,8 @@ __FBSDID("$FreeBSD$");
 #include <stdlib.h>
 #include <unistd.h>
 #include "atf-c.h"
+
+#define nitems(_a)     (sizeof((_a)) / sizeof((_a)[0]))
 
 /*
  * A variant of ATF_REQUIRE that is suitable for use in child

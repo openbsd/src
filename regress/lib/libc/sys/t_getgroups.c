@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_getgroups.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
+/*	$OpenBSD: t_getgroups.c,v 1.3 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_getgroups.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $ */
 
 /*-
@@ -31,9 +31,6 @@
  */
 
 #include "macros.h"
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getgroups.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $");
 
 #include <sys/wait.h>
 

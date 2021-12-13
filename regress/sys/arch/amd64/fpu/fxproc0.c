@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxproc0.c,v 1.1.1.1 2018/08/21 18:35:18 bluhm Exp $	*/
+/*	$OpenBSD: fxproc0.c,v 1.2 2021/12/13 16:56:49 deraadt Exp $	*/
 /*
  * Copyright (c) 2018 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -15,7 +15,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <machine/fpu.h>
@@ -28,6 +29,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+#define nitems(_a)     (sizeof((_a)) / sizeof((_a)[0]))
 
 void __dead usage(void);
 void fenv_proc(kvm_t *, unsigned long);

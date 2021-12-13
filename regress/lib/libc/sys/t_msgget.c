@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_msgget.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
+/*	$OpenBSD: t_msgget.c,v 1.3 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_msgget.c,v 1.3 2017/10/08 08:31:05 kre Exp $ */
 
 /*-
@@ -32,9 +32,6 @@
 
 #include "macros.h"
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_msgget.c,v 1.3 2017/10/08 08:31:05 kre Exp $");
-
 #include <sys/msg.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
@@ -45,6 +42,7 @@ __RCSID("$NetBSD: t_msgget.c,v 1.3 2017/10/08 08:31:05 kre Exp $");
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <string.h>
 #include <sysexits.h>
 #include <time.h>

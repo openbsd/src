@@ -1,6 +1,6 @@
-/*	$OpenBSD: mmap-sysctl-copyin.c,v 1.2 2017/01/13 01:33:14 bluhm Exp $	*/
+/*	$OpenBSD: mmap-sysctl-copyin.c,v 1.3 2021/12/13 16:56:50 deraadt Exp $	*/
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
@@ -15,6 +15,7 @@
 #include <err.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>

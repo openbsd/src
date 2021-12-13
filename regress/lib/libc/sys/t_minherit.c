@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_minherit.c,v 1.1 2021/09/02 12:40:44 mbuhl Exp $	*/
+/*	$OpenBSD: t_minherit.c,v 1.2 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_minherit.c,v 1.1 2014/07/18 12:34:52 christos Exp $ */
 
 /*-
@@ -31,10 +31,6 @@
  */
 #include "macros.h"
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_minherit.c,v 1.1 2014/07/18 12:34:52 christos Exp $");
-
-#include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
@@ -43,6 +39,7 @@ __RCSID("$NetBSD: t_minherit.c,v 1.1 2014/07/18 12:34:52 christos Exp $");
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <unistd.h>
 
 #include "atf-c.h"

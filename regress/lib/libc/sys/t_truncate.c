@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_truncate.c,v 1.2 2021/10/24 21:24:20 deraadt Exp $	*/
+/*	$OpenBSD: t_truncate.c,v 1.3 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_truncate.c,v 1.3 2017/01/13 20:03:51 christos Exp $ */
 
 /*-
@@ -31,9 +31,6 @@
  */
 
 #include "macros.h"
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_truncate.c,v 1.3 2017/01/13 20:03:51 christos Exp $");
 
 #include <sys/stat.h>
 

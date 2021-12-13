@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_getrusage.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
+/*	$OpenBSD: t_getrusage.c,v 1.3 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_getrusage.c,v 1.8 2018/05/09 08:45:03 mrg Exp $ */
 
 /*-
@@ -31,9 +31,6 @@
  */
 
 #include "macros.h"
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getrusage.c,v 1.8 2018/05/09 08:45:03 mrg Exp $");
 
 #include <sys/resource.h>
 #include <sys/time.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_revoke.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
+/*	$OpenBSD: t_revoke.c,v 1.3 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_revoke.c,v 1.2 2017/01/13 21:15:57 christos Exp $ */
 
 /*-
@@ -31,9 +31,6 @@
  */
 
 #include "macros.h"
-
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_revoke.c,v 1.2 2017/01/13 21:15:57 christos Exp $");
 
 #include <sys/resource.h>
 #include <sys/wait.h>

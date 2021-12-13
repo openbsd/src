@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_gettimeofday.c,v 1.4 2021/09/27 14:07:44 mbuhl Exp $	*/
+/*	$OpenBSD: t_gettimeofday.c,v 1.5 2021/12/13 16:56:48 deraadt Exp $	*/
 /* $NetBSD: t_gettimeofday.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $ */
 
 /*-
@@ -32,13 +32,11 @@
 
 #include "macros.h"
 
-#include <sys/cdefs.h>
-__RCSID("$NetBSD: t_gettimeofday.c,v 1.1 2011/07/07 06:57:53 jruoho Exp $");
-
 #include <sys/time.h>
 
 #include "atf-c.h"
 #include <errno.h>
+#include <signal.h>
 #include <string.h>
 
 #ifdef __OpenBSD__

@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_fork.c,v 1.4 2021/09/28 05:39:24 anton Exp $	*/
+/*	$OpenBSD: t_fork.c,v 1.5 2021/12/13 16:56:48 deraadt Exp $	*/
 /*	$NetBSD: t_fork.c,v 1.4 2019/04/06 15:41:54 kamil Exp $	*/
 
 /*-
@@ -28,16 +28,11 @@
  */
 #include "macros.h"
 
-#include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2018, 2019\
- The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_fork.c,v 1.4 2019/04/06 15:41:54 kamil Exp $");
-
-#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/signal.h>
 #ifdef __OpenBSD__
 #include <sys/proc.h>
 #endif
-#include <sys/types.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
 #include <sched.h>

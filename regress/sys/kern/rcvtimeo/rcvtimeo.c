@@ -1,8 +1,7 @@
-/*	$OpenBSD: rcvtimeo.c,v 1.5 2014/07/19 18:11:12 miod Exp $	*/
+/*	$OpenBSD: rcvtimeo.c,v 1.6 2021/12/13 16:56:50 deraadt Exp $	*/
 
 /*	Written by Michael Shalayeff, 2002, Public Domain */
 
-#include <sys/param.h>
 #include <sys/socket.h>
 
 #include <netinet/in.h>

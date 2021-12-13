@@ -4,8 +4,6 @@
  * Public domain.
  */
 
-#include <sys/param.h>
-
 #include <libgen.h>
 #include <stdio.h>
 #include <string.h>
@@ -16,7 +14,7 @@
 int
 main(void)
 {
-	char path[2 * MAXPATHLEN];
+	char path[2 * PATH_MAX];
 	char dname[128];
 	const char *dir = "junk";
 	const char *fname = "/file.name.ext";
@@ -39,7 +37,7 @@ main(void)
 	 * 1) path is NULL
 	 * 2) path is the empty string
 	 * 3) path is composed entirely of slashes
-	 * 4) the resulting name is larger than MAXPATHLEN
+	 * 4) the resulting name is larger than PATH_MAX
 	 *
 	 * The first two cases require that a pointer
 	 * to the string "." be returned.
@@ -62,7 +60,7 @@ main(void)
 		errx(1, "2: dirname(%s) = %s != .", path, str);
 
 	/* Case 3 */
-	for (i = 0; i < MAXPATHLEN - 1; i++)
+	for (i = 0; i < PATH_MAX - 1; i++)
 		strlcat(path, "/", sizeof(path));	/* path cleared above */
 	str = dirname(path);
 	if (strcmp(str, "/") != 0)
@@ -70,7 +68,7 @@ main(void)
 
 	/* Case 4 */
 	strlcpy(path, "/", sizeof(path));		/* reset path */
-	for (i = 0; i <= MAXPATHLEN; i += strlen(dir))
+	for (i = 0; i <= PATH_MAX; i += strlen(dir))
 		strlcat(path, dir, sizeof(path));
 	strlcat(path, fname, sizeof(path));
 	str = dirname(path);

@@ -1,4 +1,4 @@
-/*      $OpenBSD: aestest.c,v 1.4 2017/04/30 21:34:45 mikeb Exp $  */
+/*      $OpenBSD: aestest.c,v 1.5 2021/12/13 16:56:49 deraadt Exp $  */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -30,7 +30,7 @@
  * Dr Brian Gladman:  http://fp.gladman.plus.com/AES/
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <crypto/aes.h>
 #include <err.h>
 #include <stdio.h>

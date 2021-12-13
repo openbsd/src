@@ -1,11 +1,10 @@
-/*	$OpenBSD: copy.c,v 1.5 2016/08/19 01:37:50 deraadt Exp $	*/
+/*	$OpenBSD: copy.c,v 1.6 2021/12/13 16:56:49 deraadt Exp $	*/
 
 /* Written by Ted Unangst 2004 Public Domain */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/sysctl.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/syslimits.h>
