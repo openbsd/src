@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_typ.c,v 1.13 2015/07/24 15:09:52 jsing Exp $ */
+/* $OpenBSD: tasn_typ.c,v 1.14 2021/12/13 17:56:15 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -711,6 +711,26 @@ const ASN1_ITEM ASN1_BOOLEAN_it = {
 	.size = -1,
 	.sname = "ASN1_BOOLEAN",
 };
+
+int
+i2d_ASN1_BOOLEAN(int a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)(long)(a), out, &ASN1_BOOLEAN_it);
+}
+
+int
+d2i_ASN1_BOOLEAN(int *a, const unsigned char **in, long len)
+{
+	ASN1_BOOLEAN abool;
+
+	if (ASN1_item_d2i((ASN1_VALUE **)&abool, in, len, &ASN1_BOOLEAN_it) == NULL)
+		return -1;
+
+	if (a != NULL)
+		*a = abool;
+
+	return abool;
+}
 
 const ASN1_ITEM ASN1_TBOOLEAN_it = {
 	.itype = ASN1_ITYPE_PRIMITIVE,
