@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2021/12/10 00:50:18 mvs Exp $
+# $OpenBSD: Makefile,v 1.7 2021/12/14 15:57:57 mvs Exp $
 
 # Copyright (c) 2021 Makkoveev Vitaliy <mvs@openbsd.org>
 #
@@ -16,7 +16,7 @@
 
 WARNINGS = yes
 
-PROGS = undgram_selfconn ungc
+PROGS = undgram_selfconn ungc unixsock_test
 
 PROGS += unconacc
 LDADD_unconacc = -lpthread
