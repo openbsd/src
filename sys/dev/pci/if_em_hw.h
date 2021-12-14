@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.84 2021/01/24 10:21:43 jsg Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.85 2021/12/14 10:48:10 patrick Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -361,6 +361,10 @@ int32_t em_phy_reset(struct em_hw *hw);
 int32_t em_phy_get_info(struct em_hw *hw, struct em_phy_info *phy_info);
 int32_t em_validate_mdi_setting(struct em_hw *hw);
 void em_phy_powerdown_workaround(struct em_hw *hw);
+int em_sgmii_uses_mdio_82575(struct em_hw *);
+int32_t em_read_phy_reg_i2c(struct em_hw *, uint32_t, uint16_t *);
+int32_t em_write_phy_reg_i2c(struct em_hw *, uint32_t, uint16_t);
+int32_t em_read_sfp_data_byte(struct em_hw *, uint16_t, uint8_t *);
 
 /* EEPROM Functions */
 int32_t em_init_eeprom_params(struct em_hw *hw);
@@ -1095,6 +1099,7 @@ struct em_ffvt_entry {
 #define E1000_FLSWDATA 0x01034  /* FLASH data register */
 #define E1000_FLSWCNT  0x01038  /* FLASH Access Counter */
 #define E1000_FLOP     0x0103C  /* FLASH Opcode Register */
+#define E1000_I2CCMD   0x01028  /* SFPI2C Command Register - RW */
 #define E1000_ERT      0x02008  /* Early Rx Threshold - RW */
 #define E1000_FCRTL    0x02160  /* Flow Control Receive Threshold Low - RW */
 #define E1000_FCRTH    0x02168  /* Flow Control Receive Threshold High - RW */
@@ -1492,6 +1497,7 @@ struct em_hw {
     uint16_t swfw;
     boolean_t eee_enable;
     int sw_flag;
+    boolean_t sgmii_active;
 };
 
 #define E1000_EEPROM_SWDPIN0   0x0001   /* SWDPIN 0 EEPROM Value */
@@ -1528,6 +1534,16 @@ struct em_hw {
 #define E1000_CTRL_LANPHYPC_VALUE    0x00020000 /* SW value of LANPHYPC */
 #define E1000_CTRL_EXT_FORCE_SMBUS   0x00000800 /* Force SMBus mode */
 #define E1000_CTRL_EXT_PHYPDEN       0x00100000
+#define E1000_I2CCMD_REG_ADDR_SHIFT	16
+#define E1000_I2CCMD_PHY_ADDR_SHIFT	24
+#define E1000_I2CCMD_OPCODE_READ	0x08000000
+#define E1000_I2CCMD_OPCODE_WRITE	0x00000000
+#define E1000_I2CCMD_READY		0x20000000
+#define E1000_I2CCMD_ERROR		0x80000000
+#define E1000_I2CCMD_SFP_DATA_ADDR(a)	(0x0000 + (a))
+#define E1000_I2CCMD_SFP_DIAG_ADDR(a)	(0x0100 + (a))
+#define E1000_MAX_SGMII_PHY_REG_ADDR	255
+#define E1000_I2CCMD_PHY_TIMEOUT	200
 
 #define E1000_CTRL_SWDPIN0  0x00040000  /* SWDPIN 0 value */
 #define E1000_CTRL_SWDPIN1  0x00080000  /* SWDPIN 1 value */
@@ -3789,5 +3805,29 @@ union ich8_hws_flash_regacc {
         ((uint16_t)(((offset) & MAX_PHY_REG_ADDRESS) |\
          (((offset) >> (PHY_UPPER_SHIFT - PHY_PAGE_SHIFT)) &\
                 ~MAX_PHY_REG_ADDRESS)))
+
+/* SFP modules ID memory locations */
+#define E1000_SFF_IDENTIFIER_OFFSET     0x00
+#define E1000_SFF_IDENTIFIER_SFF        0x02
+#define E1000_SFF_IDENTIFIER_SFP        0x03
+
+#define E1000_SFF_ETH_FLAGS_OFFSET      0x06
+/* Flags for SFP modules compatible with ETH up to 1Gb */
+struct sfp_e1000_flags {
+        uint8_t e1000_base_sx:1;
+        uint8_t e1000_base_lx:1;
+        uint8_t e1000_base_cx:1;
+        uint8_t e1000_base_t:1;
+        uint8_t e100_base_lx:1;
+        uint8_t e100_base_fx:1;
+        uint8_t e10_base_bx10:1;
+        uint8_t e10_base_px:1;
+};
+
+/* Vendor OUIs: format of OUI is 0x[byte0][byte1][byte2][00] */
+#define E1000_SFF_VENDOR_OUI_TYCO       0x00407600
+#define E1000_SFF_VENDOR_OUI_FTL        0x00906500
+#define E1000_SFF_VENDOR_OUI_AVAGO      0x00176A00
+#define E1000_SFF_VENDOR_OUI_INTEL      0x001B2100
 
 #endif /* _EM_HW_H_ */

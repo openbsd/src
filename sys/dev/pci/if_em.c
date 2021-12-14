@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.358 2021/01/24 10:21:43 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.359 2021/12/14 10:48:10 patrick Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -296,6 +296,7 @@ u_int32_t em_fill_descriptors(u_int64_t address, u_int32_t length,
 void em_flush_tx_ring(struct em_queue *);
 void em_flush_rx_ring(struct em_queue *);
 void em_flush_desc_rings(struct em_softc *);
+int em_get_sffpage(struct em_softc *, struct if_sffpage *);
 
 #ifndef SMALL_KERNEL
 /* MSIX/Multiqueue functions */
@@ -408,6 +409,8 @@ em_attach(struct device *parent, struct device *self, void *aux)
 
 	timeout_set(&sc->timer_handle, em_local_timer, sc);
 	timeout_set(&sc->tx_fifo_timer_handle, em_82547_move_tail, sc);
+
+	rw_init(&sc->sfflock, "emsff");
 
 	/* Determine hardware revision */
 	em_identify_hardware(sc);
@@ -762,6 +765,15 @@ em_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	case SIOCGIFRXR:
 		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
 		    NULL, EM_MCLBYTES, &sc->queues->rx.sc_rx_ring);
+		break;
+
+	case SIOCGIFSFFPAGE:
+		error = rw_enter(&sc->sfflock, RW_WRITE|RW_INTR);
+		if (error != 0)
+			break;
+
+		error = em_get_sffpage(sc, (struct if_sffpage *)data);
+		rw_exit(&sc->sfflock);
 		break;
 
 	default:
@@ -4024,6 +4036,34 @@ em_allocate_desc_rings(struct em_softc *sc)
 		}
 		que->rx.sc_rx_desc_ring =
 		    (struct em_rx_desc *)que->rx.sc_rx_dma.dma_vaddr;
+	}
+
+	return (0);
+}
+
+int
+em_get_sffpage(struct em_softc *sc, struct if_sffpage *sff)
+{
+	struct em_hw *hw = &sc->hw;
+	size_t i;
+	int off;
+
+	if (hw->mac_type != em_82575 && hw->mac_type != em_82580 &&
+	    hw->mac_type != em_82576 &&
+	    hw->mac_type != em_i210 && hw->mac_type != em_i350)
+		return (ENODEV);
+
+	if (sff->sff_addr == IFSFF_ADDR_EEPROM)
+		off = E1000_I2CCMD_SFP_DATA_ADDR(0);
+	else if (sff->sff_addr == IFSFF_ADDR_DDM)
+		off = E1000_I2CCMD_SFP_DIAG_ADDR(0);
+	else
+		return (EIO);
+
+	for (i = 0; i < sizeof(sff->sff_data); i++) {
+		if (em_read_sfp_data_byte(hw, off + i,
+		    &sff->sff_data[i]) != E1000_SUCCESS)
+			return (EIO);
 	}
 
 	return (0);
