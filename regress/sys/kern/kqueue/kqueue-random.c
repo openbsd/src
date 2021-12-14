@@ -1,8 +1,9 @@
-/*	$OpenBSD: kqueue-random.c,v 1.12 2021/12/13 16:56:49 deraadt Exp $	*/
+/*	$OpenBSD: kqueue-random.c,v 1.13 2021/12/14 06:26:15 anton Exp $	*/
 /*	Written by Michael Shalayeff, 2002, Public Domain	*/
 
 #include <sys/types.h>
 #include <sys/event.h>
+#include <sys/time.h>
 
 #include <err.h>
 #include <fcntl.h>
