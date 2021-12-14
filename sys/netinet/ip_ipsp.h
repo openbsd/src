@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.230 2021/12/11 16:33:47 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.231 2021/12/14 17:50:37 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -257,6 +257,10 @@ struct ipsec_acquire {
 	TAILQ_ENTRY(ipsec_acquire)	ipa_next;
 };
 
+/*
+ * Locks used to protect struct members in this file:
+ *	p	ipo_tdb_mtx		link policy to TDB global mutex
+ */
 struct ipsec_policy {
 	struct radix_node	ipo_nodes[2];	/* radix tree glue */
 	struct sockaddr_encap	ipo_addr;
@@ -274,7 +278,7 @@ struct ipsec_policy {
 						 * mode was used.
 						 */
 
-	u_int64_t		ipo_last_searched;	/* Timestamp of last lookup */
+	u_int64_t	ipo_last_searched;	/* [p] Timestamp of lookup */
 
 	u_int8_t		ipo_flags;	/* See IPSP_POLICY_* definitions */
 	u_int8_t		ipo_type;	/* USE/ACQUIRE/... */
@@ -283,7 +287,7 @@ struct ipsec_policy {
 
 	int                     ipo_ref_count;
 
-	struct tdb		*ipo_tdb;		/* Cached entry */
+	struct tdb		*ipo_tdb;	/* [p] Cached TDB entry */
 
 	struct ipsec_ids	*ipo_ids;
 
@@ -313,8 +317,9 @@ struct ipsec_policy {
  * Locks used to protect struct members in this file:
  *	I	immutable after creation
  *	N	net lock
- *	s	tdb_sadb_mtx
  *	m	tdb_mtx
+ *	p	ipo_tdb_mtx		link policy to TDB global mutex
+ *	s	tdb_sadb_mtx		SA database global mutex
  */
 struct tdb {				/* tunnel descriptor block */
 	/*
@@ -438,7 +443,7 @@ struct tdb {				/* tunnel descriptor block */
 	struct sockaddr_encap   tdb_filter; /* What traffic is acceptable */
 	struct sockaddr_encap   tdb_filtermask; /* And the mask */
 
-	TAILQ_HEAD(tdb_policy_head, ipsec_policy)	tdb_policy_head;
+	TAILQ_HEAD(tdb_policy_head, ipsec_policy) tdb_policy_head; /* [p] */
 	TAILQ_ENTRY(tdb)	tdb_sync_entry;
 };
 #define tdb_ipackets		tdb_data.tdd_ipackets
@@ -546,6 +551,7 @@ extern char ipsec_def_comp[];
 extern TAILQ_HEAD(ipsec_policy_head, ipsec_policy) ipsec_policy_head;
 
 extern struct mutex tdb_sadb_mtx;
+extern struct mutex ipo_tdb_mtx;
 
 struct cryptop;
 

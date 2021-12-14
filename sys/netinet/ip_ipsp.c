@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.264 2021/12/11 16:33:47 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.265 2021/12/14 17:50:37 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -934,12 +934,14 @@ tdb_cleanspd(struct tdb *tdbp)
 {
 	struct ipsec_policy *ipo;
 
+	mtx_enter(&ipo_tdb_mtx);
 	while ((ipo = TAILQ_FIRST(&tdbp->tdb_policy_head)) != NULL) {
 		TAILQ_REMOVE(&tdbp->tdb_policy_head, ipo, ipo_tdb_next);
 		tdb_unref(ipo->ipo_tdb);
 		ipo->ipo_tdb = NULL;
 		ipo->ipo_last_searched = 0; /* Force a re-search. */
 	}
+	mtx_leave(&ipo_tdb_mtx);
 }
 
 void

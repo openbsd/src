@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.227 2021/12/08 14:24:18 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.228 2021/12/14 17:50:37 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2004,12 +2004,15 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 				(caddr_t)&ipo->ipo_mask, rnh,
 				ipo->ipo_nodes, 0)) == NULL) {
 				/* Remove from linked list of policies on TDB */
+				mtx_enter(&ipo_tdb_mtx);
 				if (ipo->ipo_tdb != NULL) {
 					TAILQ_REMOVE(
 					    &ipo->ipo_tdb->tdb_policy_head,
 					    ipo, ipo_tdb_next);
 					tdb_unref(ipo->ipo_tdb);
+					ipo->ipo_tdb = NULL;
 				}
+				mtx_leave(&ipo_tdb_mtx);
 				if (ipo->ipo_ids)
 					ipsp_ids_free(ipo->ipo_ids);
 				pool_put(&ipsec_policy_pool, ipo);
