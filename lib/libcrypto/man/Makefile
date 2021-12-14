@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.227 2021/12/14 14:30:50 schwarze Exp $
+# $OpenBSD: Makefile,v 1.228 2021/12/14 15:22:49 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -283,6 +283,7 @@ MAN=	\
 	SMIME_read_ASN1.3 \
 	SMIME_read_CMS.3 \
 	SMIME_read_PKCS7.3 \
+	SMIME_text.3 \
 	SMIME_write_ASN1.3 \
 	SMIME_write_CMS.3 \
 	SMIME_write_PKCS7.3 \
