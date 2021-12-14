@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.14 2021/12/10 16:19:52 schwarze Exp $
+.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.15 2021/12/14 20:14:22 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 10 2021 $
+.Dd $Mdocdate: December 14 2021 $
 .Dt D2I_ASN1_OCTET_STRING 3
 .Os
 .Sh NAME
@@ -366,10 +366,10 @@ for more details about the
 constants.
 .Bl -column d2i_DIRECTORYSTRING() B_ASN1_DIRECTORYSTRING -offset indent
 .It decoding function      Ta mask constant
-.It Fn d2i_DIRECTORYSTRING Ta B_ASN1_DIRECTORYSTRING
-.It Fn d2i_ASN1_PRINTABLE  Ta B_ASN1_PRINTABLE
-.It Fn d2i_DISPLAYTEXT     Ta B_ASN1_DISPLAYTEXT
-.It Fn d2i_ASN1_TIME       Ta B_ASN1_TIME
+.It Fn d2i_DIRECTORYSTRING Ta Dv B_ASN1_DIRECTORYSTRING
+.It Fn d2i_ASN1_PRINTABLE  Ta Dv B_ASN1_PRINTABLE
+.It Fn d2i_DISPLAYTEXT     Ta Dv B_ASN1_DISPLAYTEXT
+.It Fn d2i_ASN1_TIME       Ta Dv B_ASN1_TIME
 .El
 .Pp
 .Fn d2i_ASN1_UINTEGER
