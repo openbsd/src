@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2021/12/14 15:57:57 mvs Exp $
+# $OpenBSD: Makefile,v 1.8 2021/12/14 16:12:48 mvs Exp $
 
 # Copyright (c) 2021 Makkoveev Vitaliy <mvs@openbsd.org>
 #
@@ -29,6 +29,9 @@ LDADD_unfdpassfail = -lpthread
 
 PROGS += unsendrecvthr
 LDADD_unsendrecvthr = -lpthread
+
+PROGS += unsopassgc
+LDADD_unsopassgc = -lpthread
 
 CLEANFILES += *.socket
 
