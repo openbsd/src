@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.22 2021/09/26 12:39:25 krw Exp $
+#	$OpenBSD: install.md,v 1.23 2021/12/14 11:01:58 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,12 +65,14 @@ md_installboot() {
 		cp $_mdec/u-boot.bin /mnt/mnt/
 		mkdir -p /mnt/mnt/overlays
 		cp $_mdec/disable-bt.dtbo /mnt/mnt/overlays
-		cat > /mnt/mnt/config.txt<<-__EOT
-			arm_64bit=1
-			enable_uart=1
-			dtoverlay=disable-bt
-			kernel=u-boot.bin
-		__EOT
+		if [[ ! -f /mnt/mnt/config.txt ]]; then
+			cat > /mnt/mnt/config.txt<<-__EOT
+				arm_64bit=1
+				enable_uart=1
+				dtoverlay=disable-bt
+				kernel=u-boot.bin
+			__EOT
+		fi
 		;;
 	esac
 }
