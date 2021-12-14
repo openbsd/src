@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.36 2021/10/26 14:10:02 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.37 2021/12/14 11:05:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -47,6 +47,7 @@ EFI_SYSTEM_TABLE	*ST;
 EFI_BOOT_SERVICES	*BS;
 EFI_RUNTIME_SERVICES	*RS;
 EFI_HANDLE		 IH, efi_bootdp;
+void			*fdt = NULL;
 
 EFI_PHYSICAL_ADDRESS	 heap;
 UINTN			 heapsiz = 1 * 1024 * 1024;
@@ -60,6 +61,9 @@ static EFI_GUID		 imgp_guid = LOADED_IMAGE_PROTOCOL;
 static EFI_GUID		 blkio_guid = BLOCK_IO_PROTOCOL;
 static EFI_GUID		 devp_guid = DEVICE_PATH_PROTOCOL;
 static EFI_GUID		 gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
+static EFI_GUID		 fdt_guid = FDT_TABLE_GUID;
+
+#defin efi_guidcmp(_a, _b)	memcmp((_a), (_b), sizeof(EFI_GUID))
 
 int efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
 int efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
@@ -76,6 +80,7 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 	EFI_LOADED_IMAGE	*imgp;
 	EFI_DEVICE_PATH		*dp = NULL;
 	EFI_STATUS		 status;
+	int			 i;
 
 	ST = systab;
 	BS = ST->BootServices;
@@ -92,6 +97,13 @@ efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
 		    (void **)&dp);
 	if (status == EFI_SUCCESS)
 		efi_bootdp = dp;
+
+	for (i = 0; i < ST->NumberOfTableEntries; i++) {
+		if (efi_guidcmp(&fdt_guid,
+		    &ST->ConfigurationTable[i].VendorGuid) == 0)
+			fdt = ST->ConfigurationTable[i].VendorTable;
+	}
+	fdt_init(fdt);
 
 	progname = "BOOTAA64";
 
@@ -518,11 +530,7 @@ efi_dma_constraint(void)
 }
 
 int acpi = 0;
-void *fdt = NULL;
 char *bootmac = NULL;
-static EFI_GUID fdt_guid = FDT_TABLE_GUID;
-
-#define	efi_guidcmp(_a, _b)	memcmp((_a), (_b), sizeof(EFI_GUID))
 
 void *
 efi_makebootargs(char *bootargs, int howto)
@@ -535,15 +543,6 @@ efi_makebootargs(char *bootargs, int howto)
 	EFI_PHYSICAL_ADDRESS addr;
 	void *node;
 	size_t len;
-	int i;
-
-	if (fdt == NULL) {
-		for (i = 0; i < ST->NumberOfTableEntries; i++) {
-			if (efi_guidcmp(&fdt_guid,
-			    &ST->ConfigurationTable[i].VendorGuid) == 0)
-				fdt = ST->ConfigurationTable[i].VendorTable;
-		}
-	}
 
 	if (fdt == NULL || acpi)
 		fdt = efi_acpi();
@@ -993,6 +992,34 @@ efi_memprobe_find(UINTN pages, UINTN align, EFI_PHYSICAL_ADDRESS *addr)
 		}
 	}
 	return EFI_OUT_OF_RESOURCES;
+}
+
+int
+mdrandom(char *buf, size_t buflen)
+{
+	char *random;
+	void *node;
+	int i, len, ret = -1;
+
+	node = fdt_find_node("/chosen");
+	if (!node)
+		return -1;
+
+	len = fdt_node_property(node, "rng-seed", &random);
+	if (len > 0) {
+		for (i = 0; i < buflen; i++)
+			buf[i] ^= random[i % len];
+		ret = 0;
+	}
+
+	len = fdt_node_property(node, "kaslr-seed", &random);
+	if (len > 0) {
+		for (i = 0; i < buflen; i++)
+			buf[i] ^= random[i % len];
+		ret = 0;
+	}
+
+	return ret;
 }
 
 /*
