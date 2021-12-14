@@ -89,7 +89,6 @@ static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 #else
 static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 {
-	uint8_t __iomem *bios;
 	bus_size_t size = 256 * 1024; /* ??? */
 	bus_space_handle_t bsh;
 	bus_space_tag_t bst = rdev->memt;
@@ -100,26 +99,19 @@ static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 
 	rdev->bios = NULL;
 
-	if (bus_space_map(bst, rdev->fb_aper_offset, size, BUS_SPACE_MAP_LINEAR, &bsh) != 0)
+	if (bus_space_map(bst, rdev->fb_aper_offset, size, 0, &bsh) != 0)
 		return false;
-
-	bios = bus_space_vaddr(rdev->memt, bsh);
-	if (bios == NULL) {
-		bus_space_unmap(bst, bsh, size);
-		return false;
-	}
-	if (size == 0 || bios[0] != 0x55 || bios[1] != 0xaa) {
-		bus_space_unmap(bst, bsh, size);
-		return false;
-	}
 
 	rdev->bios = kmalloc(size, GFP_KERNEL);
-	if (rdev->bios == NULL) {
-		bus_space_unmap(bst, bsh, size);
+	bus_space_read_region_1(rdev->memt, bsh, 0, rdev->bios, size);
+	bus_space_unmap(bst, bsh, size);
+
+	if (size == 0 || rdev->bios[0] != 0x55 || rdev->bios[1] != 0xaa) {
+		kfree(rdev->bios);
+		rdev->bios = NULL;
 		return false;
 	}
-	memcpy_fromio(rdev->bios, bios, size);
-	bus_space_unmap(bst, bsh, size);
+
 	return true;
 }
 #endif
@@ -156,7 +148,6 @@ static bool radeon_read_bios(struct radeon_device *rdev)
 #else
 static bool radeon_read_bios(struct radeon_device *rdev)
 {
-	uint8_t __iomem *bios;
 	bus_size_t size;
 	pcireg_t address, mask;
 	bus_space_handle_t romh;
@@ -174,27 +165,22 @@ static bool radeon_read_bios(struct radeon_device *rdev)
 	size = PCI_ROM_SIZE(mask);
 	if (size == 0)
 		return false;
-	rc = bus_space_map(rdev->memt, PCI_ROM_ADDR(address), size,
-	    BUS_SPACE_MAP_LINEAR, &romh);
+	rc = bus_space_map(rdev->memt, PCI_ROM_ADDR(address), size, 0, &romh);
 	if (rc != 0) {
 		printf(": can't map PCI ROM (%d)\n", rc);
 		return false;
 	}
-	bios = (uint8_t *)bus_space_vaddr(rdev->memt, romh);
-	if (!bios) {
-		printf(": bus_space_vaddr failed\n");
+	
+	rdev->bios = kmalloc(size, GFP_KERNEL);
+	bus_space_read_region_1(rdev->memt, romh, 0, rdev->bios, size);
+	bus_space_unmap(rdev->memt, romh, size);
+
+	if (size == 0 || rdev->bios[0] != 0x55 || rdev->bios[1] != 0xaa) {
+		kfree(rdev->bios);
+		rdev->bios = NULL;
 		return false;
 	}
-
-	if (size == 0 || bios[0] != 0x55 || bios[1] != 0xaa)
-		goto fail;
-	rdev->bios = kmalloc(size, GFP_KERNEL);
-	memcpy(rdev->bios, bios, size);
-	bus_space_unmap(rdev->memt, romh, size);
 	return true;
-fail:
-	bus_space_unmap(rdev->memt, romh, size);
-	return false;
 }
 
 #endif

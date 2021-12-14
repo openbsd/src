@@ -200,7 +200,6 @@ bool amdgpu_read_bios(struct amdgpu_device *adev)
 #else
 bool amdgpu_read_bios(struct amdgpu_device *adev)
 {
-	uint8_t __iomem *bios;
 	size_t size;
 	pcireg_t address, mask;
 	bus_space_handle_t romh;
@@ -218,25 +217,15 @@ bool amdgpu_read_bios(struct amdgpu_device *adev)
 	size = PCI_ROM_SIZE(mask);
 	if (size == 0)
 		return false;
-	rc = bus_space_map(adev->memt, PCI_ROM_ADDR(address), size,
-	    BUS_SPACE_MAP_LINEAR, &romh);
+	rc = bus_space_map(adev->memt, PCI_ROM_ADDR(address), size, 0, &romh);
 	if (rc != 0) {
 		printf(": can't map PCI ROM (%d)\n", rc);
 		return false;
 	}
-	bios = (uint8_t *)bus_space_vaddr(adev->memt, romh);
-	if (!bios) {
-		printf(": bus_space_vaddr failed\n");
-		return false;
-	}
 
 	adev->bios = kzalloc(size, GFP_KERNEL);
-	if (adev->bios == NULL) {
-		bus_space_unmap(adev->memt, romh, size);
-		return false;
-	}
 	adev->bios_size = size;
-	memcpy_fromio(adev->bios, bios, size);
+	bus_space_read_region_1(adev->memt, romh, 0, adev->bios, size);
 	bus_space_unmap(adev->memt, romh, size);
 
 	if (!check_atom_bios(adev->bios, size)) {
