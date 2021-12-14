@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.89 2021/12/13 14:56:55 visa Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.90 2021/12/14 15:53:42 visa Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -584,10 +584,12 @@ filt_fiforead_common(struct knote *kn, struct socket *so)
 		if (kn->kn_flags & __EV_POLL) {
 			if (so->so_state & SS_ISDISCONNECTED)
 				kn->kn_flags |= __EV_HUP;
+			else
+				kn->kn_flags &= ~__EV_HUP;
 		}
 		rv = 1;
 	} else {
-		kn->kn_flags &= ~EV_EOF;
+		kn->kn_flags &= ~(EV_EOF | __EV_HUP);
 		rv = (kn->kn_data > 0);
 	}
 
@@ -712,6 +714,8 @@ filt_fifoexcept_common(struct knote *kn, struct socket *so)
 		if (so->so_state & SS_ISDISCONNECTED) {
 			kn->kn_flags |= __EV_HUP;
 			rv = 1;
+		} else {
+			kn->kn_flags &= ~__EV_HUP;
 		}
 	}
 
