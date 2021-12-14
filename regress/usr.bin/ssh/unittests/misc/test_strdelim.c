@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_strdelim.c,v 1.2 2021/05/21 03:59:01 djm Exp $ */
+/* 	$OpenBSD: test_strdelim.c,v 1.3 2021/12/14 21:25:27 deraadt Exp $ */
 /*
  * Regress test for misc strdelim() and co
  *
@@ -6,7 +6,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>

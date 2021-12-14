@@ -1,4 +1,4 @@
-/* 	$OpenBSD: test_convtime.c,v 1.1 2021/03/19 03:25:01 djm Exp $ */
+/* 	$OpenBSD: test_convtime.c,v 1.2 2021/12/14 21:25:27 deraadt Exp $ */
 /*
  * Regress test for misc time conversion functions.
  *
@@ -6,10 +6,10 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 
 #include "test_helper.h"

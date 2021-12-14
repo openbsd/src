@@ -1,4 +1,4 @@
-/* 	$OpenBSD: common.c,v 1.4 2020/01/26 00:09:50 djm Exp $ */
+/* 	$OpenBSD: common.c,v 1.5 2021/12/14 21:25:27 deraadt Exp $ */
 /*
  * Helpers for key API tests
  *
@@ -6,7 +6,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/* 	$OpenBSD: tests.c,v 1.7 2020/07/15 06:43:16 dtucker Exp $ */
+/* 	$OpenBSD: tests.c,v 1.8 2021/12/14 21:25:27 deraadt Exp $ */
 /*
  * Regress test for matching functions
  *
@@ -6,7 +6,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
