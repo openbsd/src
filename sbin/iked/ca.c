@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.86 2021/12/13 19:47:40 tb Exp $	*/
+/*	$OpenBSD: ca.c,v 1.87 2021/12/14 13:44:36 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -65,7 +65,7 @@ int	 ca_validate_pubkey(struct iked *, struct iked_static_id *,
 int	 ca_validate_cert(struct iked *, struct iked_static_id *,
 	    void *, size_t, X509 **);
 EVP_PKEY *
-	 ca_id_to_pkey(struct iked_id *);
+	 ca_bytes_to_pkey(uint8_t *, size_t);
 int	 ca_privkey_to_method(struct iked_id *);
 struct ibuf *
 	 ca_x509_serialize(X509 *);
@@ -1042,7 +1042,8 @@ ca_cert_local(struct iked *env, X509  *cert)
 	EVP_PKEY	*certkey = NULL, *localpub = NULL;
 	int		 ret = 0;
 
-	if ((localpub = ca_id_to_pkey(&store->ca_pubkey)) == NULL)
+	if ((localpub = ca_bytes_to_pkey(ibuf_data(store->ca_pubkey.id_buf),
+	    ibuf_length(store->ca_pubkey.id_buf))) == NULL)
 		goto done;
 
 	if ((certkey = X509_get0_pubkey(cert)) == NULL) {
@@ -1315,27 +1316,26 @@ ca_privkey_serialize(EVP_PKEY *key, struct iked_id *id)
 }
 
 EVP_PKEY *
-ca_id_to_pkey(struct iked_id *pubkey)
+ca_bytes_to_pkey(uint8_t *data, size_t len)
 {
 	BIO		*rawcert = NULL;
 	EVP_PKEY	*localkey = NULL, *out = NULL;
 	RSA		*localrsa = NULL;
 	EC_KEY		*localec = NULL;
 
-	if ((rawcert = BIO_new_mem_buf(ibuf_data(pubkey->id_buf),
-	    ibuf_length(pubkey->id_buf))) == NULL)
+	if ((rawcert = BIO_new_mem_buf(data, len)) == NULL)
 		goto done;
 
 	if ((localkey = EVP_PKEY_new()) == NULL)
-		goto done;
+		goto sslerr;
 
 	if ((localrsa = d2i_RSAPublicKey_bio(rawcert, NULL))) {
 		if (EVP_PKEY_set1_RSA(localkey, localrsa) != 1)
-			goto done;
+			goto sslerr;
 	} else if (BIO_reset(rawcert) == 1 &&
 	    (localec = d2i_EC_PUBKEY_bio(rawcert, NULL))) {
 		if (EVP_PKEY_set1_EC_KEY(localkey, localec) != 1)
-				goto done;
+			goto sslerr;
 	} else {
 		log_info("%s: unknown public key type", __func__);
 		goto done;
@@ -1343,6 +1343,10 @@ ca_id_to_pkey(struct iked_id *pubkey)
 
 	out = localkey;
 	localkey = NULL;
+
+ sslerr:
+	if (out == NULL)
+		ca_sslerror(__func__);
  done:
 	EVP_PKEY_free(localkey);
 	RSA_free(localrsa);
@@ -1510,9 +1514,7 @@ int
 ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
     void *data, size_t len, struct iked_id *out)
 {
-	BIO		*rawcert = NULL;
-	RSA		*peerrsa = NULL, *localrsa = NULL;
-	EC_KEY		*peerec = NULL;
+	RSA		*localrsa = NULL;
 	EVP_PKEY	*peerkey = NULL, *localkey = NULL;
 	int		 ret = -1;
 	FILE		*fp = NULL;
@@ -1547,24 +1549,8 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 		peerkey = (EVP_PKEY *)data;
 	}
 	if (len > 0) {
-		if ((rawcert = BIO_new_mem_buf(data, len)) == NULL)
+		if ((peerkey = ca_bytes_to_pkey(data, len)) == NULL)
 			goto done;
-
-		if ((peerkey = EVP_PKEY_new()) == NULL)
-			goto sslerr;
-		if ((peerrsa = d2i_RSAPublicKey_bio(rawcert, NULL))) {
-			if (!EVP_PKEY_set1_RSA(peerkey, peerrsa)) {
-				goto sslerr;
-			}
-		} else if (BIO_reset(rawcert) == 1 &&
-		    (peerec = d2i_EC_PUBKEY_bio(rawcert, NULL))) {
-			if (!EVP_PKEY_set1_EC_KEY(peerkey, peerec)) {
-				goto sslerr;
-			}
-		} else {
-			log_debug("%s: unknown key type received", __func__);
-			goto sslerr;
-		}
 	}
 
 	lc_idtype(idstr);
@@ -1615,10 +1601,7 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
  done:
 	ibuf_release(idp.id_buf);
 	EVP_PKEY_free(localkey);
-	RSA_free(peerrsa);
-	EC_KEY_free(peerec);
 	RSA_free(localrsa);
-	BIO_free(rawcert);
 	if (len > 0)
 		EVP_PKEY_free(peerkey);
 
