@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.171 2021/12/02 15:13:49 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.172 2021/12/14 15:32:20 visa Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -1154,18 +1154,19 @@ int
 filt_ttyread(struct knote *kn, long hint)
 {
 	struct tty *tp = kn->kn_hook;
-	int s;
+	int active, s;
 
 	s = spltty();
 	kn->kn_data = ttnread(tp);
-	splx(s);
+	active = (kn->kn_data > 0);
 	if (!ISSET(tp->t_cflag, CLOCAL) && !ISSET(tp->t_state, TS_CARR_ON)) {
 		kn->kn_flags |= EV_EOF;
 		if (kn->kn_flags & __EV_POLL)
 			kn->kn_flags |= __EV_HUP;
-		return (1);
+		active = 1;
 	}
-	return (kn->kn_data > 0);
+	splx(s);
+	return (active);
 }
 
 void
