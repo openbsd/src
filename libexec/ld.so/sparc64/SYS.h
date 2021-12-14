@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.2 2021/12/13 18:28:39 deraadt Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.3 2021/12/14 02:17:39 deraadt Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/cdefs.h>
 #include <sys/syscall.h>
 #include <machine/trap.h>
 #include <machine/asm.h>
