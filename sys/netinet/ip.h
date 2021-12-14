@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.h,v 1.19 2020/01/26 09:39:36 djm Exp $	*/
+/*	$OpenBSD: ip.h,v 1.20 2021/12/14 23:47:36 dtucker Exp $	*/
 /*	$NetBSD: ip.h,v 1.9 1995/05/15 01:22:44 cgd Exp $	*/
 
 /*
@@ -95,10 +95,12 @@ struct ip {
 #define	IPTOS_PREC_ROUTINE		0x00
 
 /*
- * Definitions for DiffServ Codepoints as per RFC2474
+ * Definitions for DiffServ Codepoints as per RFCs 2474, 3246, 4594 & 8622.
+ * These are the 6 most significant bits as they appear on the wire, so the
+ * two least significant bits must be zero.
  */
 #define	IPTOS_DSCP_CS0		0x00
-#define	IPTOS_DSCP_LE		0x01
+#define	IPTOS_DSCP_LE		0x04
 #define	IPTOS_DSCP_CS1		0x20
 #define	IPTOS_DSCP_AF11		0x28
 #define	IPTOS_DSCP_AF12		0x30
