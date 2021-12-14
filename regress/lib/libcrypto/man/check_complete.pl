@@ -18,7 +18,42 @@ use strict;
 use warnings;
 
 my @obsolete = qw(
+    ASN1_dup ASN1_d2i_bio ASN1_d2i_bio_of ASN1_d2i_fp ASN1_d2i_fp_of
+    ASN1_i2d_bio ASN1_i2d_bio_of ASN1_i2d_bio_of_const
+    ASN1_i2d_fp ASN1_i2d_fp_of ASN1_i2d_fp_of_const
+    ASN1_LONG_UNDEF
+    ASN1_OBJECT_FLAG_CRITICAL ASN1_OBJECT_FLAG_DYNAMIC
+    ASN1_OBJECT_FLAG_DYNAMIC_DATA ASN1_OBJECT_FLAG_DYNAMIC_STRINGS
+    ASN1_STRING_FLAG_BITS_LEFT ASN1_STRING_FLAG_CONT
+    ASN1_STRING_FLAG_MSTRING ASN1_STRING_FLAG_NDEF
+    CHARTYPE_FIRST_ESC_2253 CHARTYPE_LAST_ESC_2253 CHARTYPE_PRINTABLESTRING
+    d2i_NETSCAPE_X509
+    NETSCAPE_X509_free NETSCAPE_X509_new
+    i2d_NETSCAPE_X509
+    ub_title
+    V_ASN1_PRIMATIVE_TAG
+    X509_algor_st
+    X509_EX_V_INIT X509_EX_V_NETSCAPE_HACK
+    X509_EXT_PACK_STRING X509_EXT_PACK_UNKNOWN
+    X509_VERIFY_PARAM_ID
+);
+
+# postponed
+push @obsolete, qw(
+    ASN1_ITEM_ptr ASN1_ITEM_ref ASN1_ITEM_rptr
+    CHECKED_D2I_OF CHECKED_I2D_OF CHECKED_NEW_OF CHECKED_PPTR_OF CHECKED_PTR_OF
+    DECLARE_ASN1_ALLOC_FUNCTIONS DECLARE_ASN1_ALLOC_FUNCTIONS_name
+    DECLARE_ASN1_ENCODE_FUNCTIONS DECLARE_ASN1_ENCODE_FUNCTIONS_const
+    DECLARE_ASN1_FUNCTIONS DECLARE_ASN1_FUNCTIONS_const
+    DECLARE_ASN1_FUNCTIONS_fname DECLARE_ASN1_FUNCTIONS_name
+    DECLARE_ASN1_ITEM
+    DECLARE_ASN1_NDEF_FUNCTION
+    DECLARE_ASN1_PRINT_FUNCTION DECLARE_ASN1_PRINT_FUNCTION_fname
+    DECLARE_ASN1_SET_OF
+    D2I_OF
     d2i_PBEPARAM d2i_PBE2PARAM d2i_PBKDF2PARAM
+    IMPLEMENT_ASN1_SET_OF
+    I2D_OF I2D_OF_const
     i2d_PBEPARAM i2d_PBE2PARAM i2d_PBKDF2PARAM
     NETSCAPE_SPKAC NETSCAPE_SPKI
     PBEPARAM PBEPARAM_free PBEPARAM_new
@@ -27,9 +62,7 @@ my @obsolete = qw(
     PKCS5_pbe_set PKCS5_pbe_set0_algor
     PKCS5_pbe2_set PKCS5_pbe2_set_iv
     PKCS5_pbkdf2_set
-    X509_EX_V_INIT X509_EX_V_NETSCAPE_HACK
-    X509_EXT_PACK_STRING X509_EXT_PACK_UNKNOWN
-    X509_VERIFY_PARAM_ID
+    TYPEDEF_D2I_OF TYPEDEF_D2I2D_OF TYPEDEF_I2D_OF
 );
 
 my $MANW = 'man -M /usr/share/man -w';
@@ -180,8 +213,12 @@ try_again:
 			print "Fn $line\n" if $verbose;
 			next;
 		}
-		unless (system qw/grep -qR/, '^\.\\\\" ' . $id . '\>',
+		unless (system qw/grep -qR/, '^\.\\\\" .*\<' . $id . '\>',
 		    "$srcdir/") {
+			print "D- $line\n" if $verbose;
+			next;
+		}
+		if ($id =~ /^ASN1_PCTX_FLAGS_\w+$/) {
 			print "D- $line\n" if $verbose;
 			next;
 		}
@@ -210,8 +247,12 @@ try_again:
 			print "Fn $line\n" if $verbose;
 			next;
 		}
-		unless (system qw/grep -qR/, '^\.\\\\" .*' . $id . '(3)',
+		unless (system qw/grep -qR/, '^\.\\\\" .*\<' . $id . '(3)',
 		    "$srcdir/") {
+			print "F- $line\n" if $verbose;
+			next;
+		}
+		if (grep { $_ eq $id } @obsolete) {
 			print "F- $line\n" if $verbose;
 			next;
 		}
@@ -228,6 +269,10 @@ try_again:
 	if (my ($id) = /^struct\s+(\w+);$/) {
 		unless (system "$MANW -k Vt=$id > /dev/null 2>&1") {
 			print "Vt $line\n" if $verbose;
+			next;
+		}
+		if (grep { $_ eq $id } @obsolete) {
+			print "V- $line\n" if $verbose;
 			next;
 		}
 		if ($verbose) {
@@ -286,12 +331,16 @@ try_again:
 			print "F- $line\n" if $verbose;
 			next;
 		}
-		unless (system qw/grep -qR/, '^\.\\\\" .*' . $id . '\>',
+		unless (system qw/grep -qR/, '^\.\\\\" .*\<' . $id . '\>',
 		    "$srcdir/") {
 			print "F- $line\n" if $verbose;
 			next;
 		}
 		if (grep { $_ eq $id } @obsolete) {
+			print "F- $line\n" if $verbose;
+			next;
+		}
+		if ($id =~ /^ASN1_PCTX_\w+$/) {
 			print "F- $line\n" if $verbose;
 			next;
 		}
