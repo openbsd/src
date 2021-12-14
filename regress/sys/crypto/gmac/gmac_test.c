@@ -1,4 +1,4 @@
-/*      $OpenBSD: gmac_test.c,v 1.6 2021/12/13 16:56:49 deraadt Exp $  */
+/*      $OpenBSD: gmac_test.c,v 1.7 2021/12/14 06:27:48 deraadt Exp $  */
 
 /*
  * Copyright (c) 2010 Mike Belopuhov <mikeb@openbsd.org>
@@ -25,6 +25,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+
+#define MINIMUM(a, b)       (((a) < (b)) ? (a) : (b))
 
 int debug = 0;
 
@@ -650,12 +652,12 @@ dogmac(const unsigned char *key, size_t klen,
 
 	for (i = 0; i < aadlen; i += GMAC_BLOCK_LEN) {
 		memset(blk, 0, GMAC_BLOCK_LEN);
-		memcpy(blk, aad + i, MIN(aadlen - i, GMAC_BLOCK_LEN));
+		memcpy(blk, aad + i, MINIMUM(aadlen - i, GMAC_BLOCK_LEN));
 		AES_GMAC_Update(&ctx, blk, GMAC_BLOCK_LEN);
 	}
 
 	for (i = 0; i < len; i += GMAC_BLOCK_LEN) {
-		int dlen = MIN(len - i, GMAC_BLOCK_LEN);
+		int dlen = MINIMUM(len - i, GMAC_BLOCK_LEN);
 		AES_GMAC_Update(&ctx, in + i, dlen);
 	}
 
