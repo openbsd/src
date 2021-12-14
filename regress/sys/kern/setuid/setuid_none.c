@@ -1,10 +1,11 @@
-/*	$OpenBSD: setuid_none.c,v 1.2 2021/12/13 16:56:50 deraadt Exp $	*/
+/*	$OpenBSD: setuid_none.c,v 1.3 2021/12/14 06:28:13 deraadt Exp $	*/
 /*
  *	Written by Bret Stephen Lambert <blambert@openbsd.org> 2014
  *	Public Domain.
  */
 
 #include <sys/types.h>
+#include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
