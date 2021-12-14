@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.55 2021/12/13 17:56:15 jsing Exp $
+# $OpenBSD: Makefile,v 1.56 2021/12/14 17:35:21 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -65,7 +65,7 @@ SRCS+= f_int.c f_string.c n_pkey.c
 SRCS+= f_enum.c x_pkey.c x_exten.c bio_asn1.c bio_ndef.c asn_mime.c
 SRCS+= asn1_gen.c asn1_par.c asn1_lib.c asn1_err.c a_strnid.c
 SRCS+= evp_asn1.c asn_pack.c p5_pbe.c p5_pbev2.c p8_pkey.c asn_moid.c
-SRCS+= a_time_tm.c
+SRCS+= a_time_tm.c asn1_types.c
 
 # bf/
 SRCS+= bf_skey.c bf_ecb.c bf_cfb64.c bf_ofb64.c

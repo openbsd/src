@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_par.c,v 1.29 2021/12/13 17:58:41 tb Exp $ */
+/* $OpenBSD: asn1_par.c,v 1.30 2021/12/14 17:35:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -379,26 +379,4 @@ end:
 	ASN1_ENUMERATED_free(ae);
 	*pp = p;
 	return (ret);
-}
-
-const char *
-ASN1_tag2str(int tag)
-{
-	static const char * const tag2str[] = {
-		"EOC", "BOOLEAN", "INTEGER", "BIT STRING", "OCTET STRING", /* 0-4 */
-		"NULL", "OBJECT", "OBJECT DESCRIPTOR", "EXTERNAL", "REAL", /* 5-9 */
-		"ENUMERATED", "<ASN1 11>", "UTF8STRING", "<ASN1 13>", 	    /* 10-13 */
-		"<ASN1 14>", "<ASN1 15>", "SEQUENCE", "SET", 		    /* 15-17 */
-		"NUMERICSTRING", "PRINTABLESTRING", "T61STRING",	    /* 18-20 */
-		"VIDEOTEXSTRING", "IA5STRING", "UTCTIME", "GENERALIZEDTIME", /* 21-24 */
-		"GRAPHICSTRING", "VISIBLESTRING", "GENERALSTRING",	    /* 25-27 */
-		"UNIVERSALSTRING", "<ASN1 29>", "BMPSTRING"		    /* 28-30 */
-	};
-
-	if ((tag == V_ASN1_NEG_INTEGER) || (tag == V_ASN1_NEG_ENUMERATED))
-		tag &= ~0x100;
-
-	if (tag < 0 || tag > 30)
-		return "(unknown)";
-	return tag2str[tag];
 }

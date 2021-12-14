@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.45 2021/12/13 17:50:24 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.46 2021/12/14 17:35:21 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -94,27 +94,6 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in,
 static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in,
     long len, const ASN1_ITEM *it, int tag, int aclass, char opt,
     ASN1_TLC *ctx);
-
-/* Table to convert tags to bit values, used for MSTRING type */
-static const unsigned long tag2bit[32] = {
-	0,	0,	0,	B_ASN1_BIT_STRING,	/* tags  0 -  3 */
-	B_ASN1_OCTET_STRING,	0,	0,		B_ASN1_UNKNOWN,/* tags  4- 7 */
-	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,	B_ASN1_UNKNOWN,/* tags  8-11 */
-	B_ASN1_UTF8STRING,B_ASN1_UNKNOWN,B_ASN1_UNKNOWN,B_ASN1_UNKNOWN,/* tags 12-15 */
-	B_ASN1_SEQUENCE,0,B_ASN1_NUMERICSTRING,B_ASN1_PRINTABLESTRING, /* tags 16-19 */
-	B_ASN1_T61STRING,B_ASN1_VIDEOTEXSTRING,B_ASN1_IA5STRING,       /* tags 20-22 */
-	B_ASN1_UTCTIME, B_ASN1_GENERALIZEDTIME,			       /* tags 23-24 */
-	B_ASN1_GRAPHICSTRING,B_ASN1_ISO64STRING,B_ASN1_GENERALSTRING,  /* tags 25-27 */
-	B_ASN1_UNIVERSALSTRING,B_ASN1_UNKNOWN,B_ASN1_BMPSTRING,B_ASN1_UNKNOWN, /* tags 28-31 */
-};
-
-unsigned long
-ASN1_tag2bit(int tag)
-{
-	if ((tag < 0) || (tag > 30))
-		return 0;
-	return tag2bit[tag];
-}
 
 static void
 asn1_tlc_invalidate(ASN1_TLC *ctx)
