@@ -1,4 +1,4 @@
-#	$OpenBSD: Relay.pm,v 1.3 2021/12/12 10:56:49 bluhm Exp $
+#	$OpenBSD: Relay.pm,v 1.4 2021/12/14 12:37:49 bluhm Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -20,6 +20,7 @@ use warnings;
 package Relay;
 use parent 'Proc';
 use Carp;
+use Errno 'EINPROGRESS';
 use Socket qw(IPPROTO_TCP TCP_NODELAY);
 use Socket6;
 use IO::Socket;
@@ -130,9 +131,13 @@ sub child {
 		setsockopt($cs, IPPROTO_TCP, TCP_NODELAY, pack('i', 1))
 		    or die ref($self), " set nodelay connect failed: $!";
 	}
+	if ($self->{connectnonblocking}) {
+		$cs->blocking(0)
+		    or die ref($self), " set non-blocking connect failed: $!";
+	}
 	my @rres = getaddrinfo($self->{connectaddr}, $self->{connectport},
 	    $self->{connectdomain}, SOCK_STREAM);
-	$cs->connect($rres[3])
+	$cs->connect($rres[3]) || $!{EINPROGRESS}
 	    or die ref($self), " connect failed: $!";
 	print STDERR "connect sock: ",$cs->sockhost()," ",$cs->sockport(),"\n";
 	print STDERR "connect peer: ",$cs->peerhost()," ",$cs->peerport(),"\n";

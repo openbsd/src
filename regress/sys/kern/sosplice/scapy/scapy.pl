@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-#	$OpenBSD: scapy.pl,v 1.4 2020/12/27 14:37:54 bluhm Exp $
+#	$OpenBSD: scapy.pl,v 1.5 2021/12/14 12:37:49 bluhm Exp $
 
 # Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -72,7 +72,7 @@ if ($mode eq "relay") {
 	    sndbuf		=> 2**12,
 	    down		=> "Broken pipe|Connection reset by peer",
 	    clientreadable	=> $testfile =~ /delay-connect/ ? 1 : 0,
-	    nonblocking		=> 1,
+	    connectnonblocking	=> 1,
 	);
 	open(my $log, '<', $r->{logfile})
 	    or die "Remote log file open failed: $!";
