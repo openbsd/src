@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.1 2021/11/20 18:10:52 jsing Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.2 2021/12/15 18:02:39 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -134,6 +134,18 @@ int CBS_get_u24(CBS *cbs, uint32_t *out);
 int CBS_get_u32(CBS *cbs, uint32_t *out);
 
 /*
+ * CBS_get_u64 sets |*out| to the next, big-endian uint64_t value from |cbs|
+ * and advances |cbs|. It returns one on success and zero on error.
+ */
+int CBS_get_u64(CBS *cbs, uint64_t *out);
+
+/*
+ * CBS_get_last_u8 sets |*out| to the last uint8_t from |cbs| and shortens
+ * |cbs|. It returns one on success and zero on error.
+ */
+int CBS_get_last_u8(CBS *cbs, uint8_t *out);
+
+/*
  * CBS_get_bytes sets |*out| to the next |len| bytes from |cbs| and advances
  * |cbs|. It returns one on success and zero on error.
  */
@@ -159,6 +171,36 @@ int CBS_get_u16_length_prefixed(CBS *cbs, CBS *out);
  * returns one on success and zero on error.
  */
 int CBS_get_u24_length_prefixed(CBS *cbs, CBS *out);
+
+/*
+ * CBS_peek_u8 sets |*out| to the next uint8_t from |cbs|, but does not advance
+ * |cbs|. It returns one on success and zero on error.
+ */
+int CBS_peek_u8(CBS *cbs, uint8_t *out);
+
+/*
+ * CBS_peek_u16 sets |*out| to the next, big-endian uint16_t from |cbs|, but
+ * does not advance |cbs|. It returns one on success and zero on error.
+ */
+int CBS_peek_u16(CBS *cbs, uint16_t *out);
+
+/*
+ * CBS_peek_u24 sets |*out| to the next, big-endian 24-bit value from |cbs|, but
+ * does not advance |cbs|. It returns one on success and zero on error.
+ */
+int CBS_peek_u24(CBS *cbs, uint32_t *out);
+
+/*
+ * CBS_peek_u32 sets |*out| to the next, big-endian uint32_t value from |cbs|,
+ * but does not advance |cbs|. It returns one on success and zero on error.
+ */
+int CBS_peek_u32(CBS *cbs, uint32_t *out);
+
+/*
+ * CBS_peek_last_u8 sets |*out| to the last uint8_t from |cbs|, but does not
+ * shorten |cbs|. It returns one on success and zero on error.
+ */
+int CBS_peek_last_u8(CBS *cbs, uint8_t *out);
 
 
 /* Parsing ASN.1 */

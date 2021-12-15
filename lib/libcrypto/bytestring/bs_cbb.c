@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.1 2021/11/20 18:10:52 jsing Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.2 2021/12/15 18:02:39 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
