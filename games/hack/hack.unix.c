@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.unix.c,v 1.20 2016/09/11 14:21:17 tb Exp $	*/
+/*	$OpenBSD: hack.unix.c,v 1.21 2021/12/15 16:29:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -160,7 +160,7 @@ void
 gethdate(char *name)
 {
 	char *p, *np, *path;
-	char filename[PATH_MAX+1];
+	char filename[PATH_MAX];
 
 	if (strchr(name, '/') != NULL || (p = getenv("PATH")) == NULL)
 		p = "";
