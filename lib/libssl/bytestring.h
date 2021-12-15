@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.19 2021/05/16 10:58:27 jsing Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.20 2021/12/15 17:23:34 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -132,6 +132,12 @@ int CBS_get_u24(CBS *cbs, uint32_t *out);
  * and advances |cbs|. It returns one on success and zero on error.
  */
 int CBS_get_u32(CBS *cbs, uint32_t *out);
+
+/*
+ * CBS_get_last_u8 sets |*out| to the last uint8_t from |cbs| and shortens
+ * |cbs|. It returns one on success and zero on error.
+ */
+int CBS_get_last_u8(CBS *cbs, uint8_t *out);
 
 /*
  * CBS_get_bytes sets |*out| to the next |len| bytes from |cbs| and advances
