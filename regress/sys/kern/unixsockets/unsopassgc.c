@@ -1,4 +1,4 @@
-/* $OpenBSD: unsopassgc.c,v 1.2 2021/12/15 21:25:55 bluhm Exp $ */
+/* $OpenBSD: unsopassgc.c,v 1.3 2021/12/15 22:29:55 mvs Exp $ */
 
 /*
  * Copyright (c) 2021 Vitaliy Makkoveev <mvs@openbsd.org>
@@ -269,7 +269,7 @@ main(int argc, char *argv[])
 		thr_pass_args[i].passfd = thr_pass_args[i].s[0];
 	}
 
-	thr_gc_arg->passfd = thr_pass_args[i].s[0];
+	thr_gc_arg->passfd = thr_pass_args[0].s[0];
 
 	for (i = 0; i < ncpu; ++i) {
 		error = pthread_create(&thr, NULL,
