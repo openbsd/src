@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.h,v 1.35 2021/04/20 21:11:56 dv Exp $ */
+/*	$OpenBSD: ldapd.h,v 1.36 2021/12/15 04:00:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -283,7 +283,7 @@ struct auth_res
 };
 
 struct open_req {
-	char			 path[PATH_MAX+1];
+	char			 path[PATH_MAX];
 	unsigned int		 rdonly;
 };
 

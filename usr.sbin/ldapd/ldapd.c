@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.29 2021/07/14 13:33:57 kn Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.30 2021/12/15 04:00:15 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -381,8 +381,8 @@ ldapd_open_request(struct imsgev *iev, struct imsg *imsg)
 	if (imsg->hdr.len != sizeof(*oreq) + IMSG_HEADER_SIZE)
 		fatal("invalid size of open request");
 
-	/* make sure path is null-terminated */
-	oreq->path[PATH_MAX] = '\0';
+	if (oreq->path[PATH_MAX-1] != '\0')
+		fatal("bogus path");
 
 	if (strncmp(oreq->path, datadir, strlen(datadir)) != 0) {
 		log_warnx("refusing to open file %s", oreq->path);
