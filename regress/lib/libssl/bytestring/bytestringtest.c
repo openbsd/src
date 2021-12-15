@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestringtest.c,v 1.14 2021/04/04 19:55:46 tb Exp $	*/
+/*	$OpenBSD: bytestringtest.c,v 1.15 2021/12/15 17:37:42 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -63,10 +63,14 @@ test_skip(void)
 static int
 test_get_u(void)
 {
-	static const uint8_t kData[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+	static const uint8_t kData[] = {
+		1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+		11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+	};
 	uint8_t u8;
 	uint16_t u16;
 	uint32_t u32;
+	uint64_t u64;
 	CBS data;
 
 	CBS_init(&data, kData, sizeof(kData));
@@ -79,7 +83,14 @@ test_get_u(void)
 	CHECK(u32 == 0x40506);
 	CHECK(CBS_get_u32(&data, &u32));
 	CHECK(u32 == 0x708090a);
+	CHECK(CBS_get_u64(&data, &u64));
+	CHECK(u64 == 0x0b0c0d0e0f101112U);
+	CHECK(CBS_get_last_u8(&data, &u8));
+	CHECK(u8 == 20);
+	CHECK(CBS_get_last_u8(&data, &u8));
+	CHECK(u8 == 19);
 	CHECK(!CBS_get_u8(&data, &u8));
+	CHECK(!CBS_get_last_u8(&data, &u8));
 
 	return 1;
 }
@@ -127,6 +138,42 @@ test_get_prefixed_bad(void)
 
 	CBS_init(&data, kData3, sizeof(kData3));
 	CHECK(!CBS_get_u24_length_prefixed(&data, &prefixed));
+
+	return 1;
+}
+
+static int
+test_peek_u(void)
+{
+	static const uint8_t kData[] = {
+		1, 2, 3, 4, 5, 6, 7, 8, 9,
+	};
+	uint8_t u8;
+	uint16_t u16;
+	uint32_t u32;
+	CBS data;
+
+	CBS_init(&data, kData, sizeof(kData));
+
+	CHECK(CBS_peek_u8(&data, &u8));
+	CHECK(u8 == 1);
+	CHECK(CBS_peek_u16(&data, &u16));
+	CHECK(u16 == 0x102);
+	CHECK(CBS_peek_u24(&data, &u32));
+	CHECK(u32 == 0x10203);
+	CHECK(CBS_peek_u32(&data, &u32));
+	CHECK(u32 == 0x1020304);
+	CHECK(CBS_get_u32(&data, &u32));
+	CHECK(u32 == 0x1020304);
+	CHECK(CBS_peek_last_u8(&data, &u8));
+	CHECK(u8 == 9);
+	CHECK(CBS_peek_u32(&data, &u32));
+	CHECK(u32 == 0x5060708);
+	CHECK(CBS_get_u32(&data, &u32));
+	CHECK(u32 == 0x5060708);
+	CHECK(CBS_get_u8(&data, &u8));
+	CHECK(u8 == 9);
+	CHECK(!CBS_get_u8(&data, &u8));
 
 	return 1;
 }
@@ -894,6 +941,7 @@ main(void)
 	failed |= !test_get_u();
 	failed |= !test_get_prefixed();
 	failed |= !test_get_prefixed_bad();
+	failed |= !test_peek_u();
 	failed |= !test_get_asn1();
 	failed |= !test_cbb_basic();
 	failed |= !test_cbb_add_space();
