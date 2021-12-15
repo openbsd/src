@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.126 2021/03/10 10:21:49 jsg Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.127 2021/12/15 17:21:08 deraadt Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -330,6 +330,7 @@ mrt6_sysctl_mif(void *oldp, size_t *oldlenp)
 
 	given = *oldlenp;
 	needed = 0;
+	memset(&minfo, 0, sizeof minfo);
 	TAILQ_FOREACH(ifp, &ifnet, if_list) {
 		if ((mifp = (struct mif6 *)ifp->if_mcast6) == NULL)
 			continue;
