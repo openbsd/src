@@ -1,4 +1,4 @@
-/* $OpenBSD: ungc.c,v 1.1 2021/12/09 17:42:59 mvs Exp $ */
+/* $OpenBSD: ungc.c,v 1.2 2021/12/15 21:25:55 bluhm Exp $ */
 
 /*
  * Copyright (c) 2021 Vitaliy Makkoveev <mvs@openbsd.org>
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 	while (1) {
 		if (socketpair(AF_UNIX, SOCK_STREAM|O_NONBLOCK, 0, s) < 0)
 			err(1, "socketpair");
-	
+
 		iov_buf = 0;
 		iov.iov_base = &iov_buf;
 		iov.iov_len = sizeof(iov_buf);

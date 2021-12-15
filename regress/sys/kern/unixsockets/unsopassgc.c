@@ -1,4 +1,4 @@
-/* $OpenBSD: unsopassgc.c,v 1.1 2021/12/14 16:12:48 mvs Exp $ */
+/* $OpenBSD: unsopassgc.c,v 1.2 2021/12/15 21:25:55 bluhm Exp $ */
 
 /*
  * Copyright (c) 2021 Vitaliy Makkoveev <mvs@openbsd.org>
@@ -19,7 +19,7 @@
 /*
  * Try to beak unix(4) sockets garbage collector and make it to clean
  * `so_rcv' buffer of alive socket. Successful breakage should produce
- * kernel panic. 
+ * kernel panic.
  */
 
 #include <sys/types.h>
@@ -88,7 +88,7 @@ static struct thr_pass_arg {
 } *thr_pass_args;
 
 static struct thr_gc_arg {
-	int passfd;	
+	int passfd;
 } *thr_gc_arg;
 
 static void *
@@ -168,11 +168,11 @@ thr_recv(void *arg)
 		if(!(cmsgh = CMSG_FIRSTHDR(&msgh)))
 			therrx(1, "bad cmsg header");
 		if(cmsgh->cmsg_level != SOL_SOCKET)
-			therrx(1, "bad cmsg level");	
+			therrx(1, "bad cmsg level");
 		if(cmsgh->cmsg_type != SCM_RIGHTS)
-			therrx(1, "bad cmsg type");	
+			therrx(1, "bad cmsg type");
 		if(cmsgh->cmsg_len != CMSG_LEN(sizeof(fd) * PASSFD_NUM))
-			therrx(1, "bad cmsg length");	
+			therrx(1, "bad cmsg length");
 
 		for (i = 0; i < PASSFD_NUM; ++i) {
 			fd = *((int *)CMSG_DATA(cmsgh) + i);
