@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2020/11/29 20:04:36 tb Exp $ */
+/*	$OpenBSD: util.c,v 1.14 2021/12/15 20:43:31 tb Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -25,11 +25,12 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <zlib.h>
-#include <errno.h>
 
 #include "ldapd.h"
 #include "log.h"
