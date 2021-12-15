@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.64 2021/09/16 19:25:30 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.65 2021/12/15 17:57:45 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -528,8 +528,7 @@ tls13_record_layer_open_record_plaintext(struct tls13_record_layer *rl)
 static int
 tls13_record_layer_open_record_protected(struct tls13_record_layer *rl)
 {
-	CBS header, enc_record;
-	ssize_t inner_len;
+	CBS header, enc_record, inner;
 	uint8_t *content = NULL;
 	size_t content_len = 0;
 	uint8_t content_type;
@@ -571,22 +570,24 @@ tls13_record_layer_open_record_protected(struct tls13_record_layer *rl)
 	 * it may be followed by padding that consists of one or more zeroes.
 	 * Time to hunt for that elusive content type!
 	 */
-	/* XXX - CBS from end? CBS_get_end_u8()? */
-	inner_len = out_len - 1;
-	while (inner_len >= 0 && content[inner_len] == 0)
-		inner_len--;
-	if (inner_len < 0) {
+	CBS_init(&inner, content, out_len);
+	content_type = 0;
+	while (CBS_get_last_u8(&inner, &content_type)) {
+		if (content_type != 0)
+			break;
+	}
+	if (content_type == 0) {
 		/* Unexpected message per RFC 8446 section 5.4. */
 		rl->alert = TLS13_ALERT_UNEXPECTED_MESSAGE;
 		goto err;
 	}
-	if (inner_len > TLS13_RECORD_MAX_PLAINTEXT_LEN) {
+	if (CBS_len(&inner) > TLS13_RECORD_MAX_PLAINTEXT_LEN) {
 		rl->alert = TLS13_ALERT_RECORD_OVERFLOW;
 		goto err;
 	}
-	content_type = content[inner_len];
 
-	tls_content_set_data(rl->rcontent, content_type, content, inner_len);
+	tls_content_set_data(rl->rcontent, content_type, CBS_data(&inner),
+	    CBS_len(&inner));
 
 	return 1;
 
