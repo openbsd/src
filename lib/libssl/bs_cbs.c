@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.22 2021/12/15 17:23:34 jsing Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.23 2021/12/15 17:30:20 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -188,6 +188,23 @@ int
 CBS_get_u32(CBS *cbs, uint32_t *out)
 {
 	return cbs_get_u(cbs, out, 4);
+}
+
+int
+CBS_get_u64(CBS *cbs, uint64_t *out)
+{
+	uint32_t a, b;
+
+	if (cbs->len < 8)
+		return 0;
+
+	if (!CBS_get_u32(cbs, &a))
+		return 0;
+	if (!CBS_get_u32(cbs, &b))
+		return 0;
+
+	*out = (uint64_t)a << 32 | b;
+	return 1;
 }
 
 int
