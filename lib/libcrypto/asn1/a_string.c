@@ -1,4 +1,4 @@
-/* $OpenBSD: f_int.c,v 1.21 2021/11/23 11:10:51 schwarze Exp $ */
+/* $OpenBSD: a_string.c,v 1.1 2021/12/15 18:00:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,13 +57,160 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 
 #include <openssl/asn1.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 
 int
-i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
+ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
+{
+	if (str == NULL)
+		return 0;
+	if (!ASN1_STRING_set(dst, str->data, str->length))
+		return 0;
+	dst->type = str->type;
+	dst->flags = str->flags;
+	return 1;
+}
+
+ASN1_STRING *
+ASN1_STRING_dup(const ASN1_STRING *str)
+{
+	ASN1_STRING *ret;
+
+	if (!str)
+		return NULL;
+	ret = ASN1_STRING_new();
+	if (!ret)
+		return NULL;
+	if (!ASN1_STRING_copy(ret, str)) {
+		ASN1_STRING_free(ret);
+		return NULL;
+	}
+	return ret;
+}
+
+int
+ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
+{
+	const char *data = _data;
+
+	if (len < 0) {
+		if (data == NULL)
+			return (0);
+		else
+			len = strlen(data);
+	}
+	if ((str->length < len) || (str->data == NULL)) {
+		unsigned char *tmp;
+		tmp = realloc(str->data, len + 1);
+		if (tmp == NULL) {
+			ASN1error(ERR_R_MALLOC_FAILURE);
+			return (0);
+		}
+		str->data = tmp;
+	}
+	str->length = len;
+	if (data != NULL) {
+		memmove(str->data, data, len);
+	}
+	str->data[str->length] = '\0';
+	return (1);
+}
+
+void
+ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
+{
+	freezero(str->data, str->length);
+	str->data = data;
+	str->length = len;
+}
+
+ASN1_STRING *
+ASN1_STRING_new(void)
+{
+	return (ASN1_STRING_type_new(V_ASN1_OCTET_STRING));
+}
+
+ASN1_STRING *
+ASN1_STRING_type_new(int type)
+{
+	ASN1_STRING *a;
+
+	if ((a = calloc(1, sizeof(ASN1_STRING))) == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+	a->type = type;
+
+	return a;
+}
+
+void
+ASN1_STRING_free(ASN1_STRING *a)
+{
+	if (a == NULL)
+		return;
+	if (a->data != NULL && !(a->flags & ASN1_STRING_FLAG_NDEF))
+		freezero(a->data, a->length);
+	free(a);
+}
+
+int
+ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
+{
+	int cmp;
+
+	if (a == NULL || b == NULL)
+		return -1;
+	if ((cmp = (a->length - b->length)) != 0)
+		return cmp;
+	if ((cmp = memcmp(a->data, b->data, a->length)) != 0)
+		return cmp;
+
+	return (a->type - b->type);
+}
+
+void
+asn1_add_error(const unsigned char *address, int offset)
+{
+	ERR_asprintf_error_data("offset=%d", offset);
+}
+
+int
+ASN1_STRING_length(const ASN1_STRING *x)
+{
+	return (x->length);
+}
+
+void
+ASN1_STRING_length_set(ASN1_STRING *x, int len)
+{
+	x->length = len;
+}
+
+int
+ASN1_STRING_type(const ASN1_STRING *x)
+{
+	return (x->type);
+}
+
+unsigned char *
+ASN1_STRING_data(ASN1_STRING *x)
+{
+	return (x->data);
+}
+
+const unsigned char *
+ASN1_STRING_get0_data(const ASN1_STRING *x)
+{
+	return (x->data);
+}
+
+int
+i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, int type)
 {
 	int i, n = 0;
 	static const char h[] = "0123456789ABCDEF";
@@ -72,16 +219,10 @@ i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
 	if (a == NULL)
 		return (0);
 
-	if (a->type & V_ASN1_NEG) {
-		if (BIO_write(bp, "-", 1) != 1)
+	if (a->length == 0) {
+		if (BIO_write(bp, "0", 1) != 1)
 			goto err;
 		n = 1;
-	}
-
-	if (a->length == 0) {
-		if (BIO_write(bp, "00", 2) != 2)
-			goto err;
-		n += 2;
 	} else {
 		for (i = 0; i < a->length; i++) {
 			if ((i != 0) && (i % 35 == 0)) {
@@ -103,26 +244,31 @@ err:
 }
 
 int
-a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
+a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
 {
 	int ret = 0;
-	int i, j,k, m,n, again, bufsize;
+	int i, j, k, m, n, again, bufsize;
 	unsigned char *s = NULL, *sp;
 	unsigned char *bufp;
-	int num = 0, slen = 0, first = 1;
-
-	bs->type = V_ASN1_INTEGER;
+	int first = 1;
+	size_t num = 0, slen = 0;
 
 	bufsize = BIO_gets(bp, buf, size);
 	for (;;) {
-		if (bufsize < 1)
-			goto err_sl;
+		if (bufsize < 1) {
+			if (first)
+				break;
+			else
+				goto err_sl;
+		}
+		first = 0;
+
 		i = bufsize;
-		if (buf[i - 1] == '\n')
+		if (buf[i-1] == '\n')
 			buf[--i] = '\0';
 		if (i == 0)
 			goto err_sl;
-		if (buf[i - 1] == '\r')
+		if (buf[i-1] == '\r')
 			buf[--i] = '\0';
 		if (i == 0)
 			goto err_sl;
@@ -136,13 +282,7 @@ a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 			goto err_sl;
 
 		bufp = (unsigned char *)buf;
-		if (first) {
-			first = 0;
-			if ((bufp[0] == '0') && (buf[1] == '0')) {
-				bufp += 2;
-				i -= 2;
-			}
-		}
+
 		k = 0;
 		if (i % 2 != 0) {
 			ASN1error(ASN1_R_ODD_NUMBER_OF_CHARS);
@@ -150,7 +290,8 @@ a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 		}
 		i /= 2;
 		if (num + i > slen) {
-			if ((sp = recallocarray(s, slen, num + i, 1)) == NULL) {
+			sp = realloc(s, num + i);
+			if (sp == NULL) {
 				ASN1error(ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
