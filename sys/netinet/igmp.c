@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.76 2020/08/17 16:25:34 gnezdo Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.77 2021/12/15 15:58:01 bluhm Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -117,11 +117,7 @@ igmp_init(void)
 	LIST_INIT(&rti_head);
 
 	igmpcounters = counters_alloc(igps_ncounters);
-	router_alert = m_get(M_DONTWAIT, MT_DATA);
-	if (router_alert == NULL) {
-		printf("%s: no mbuf\n", __func__);
-		return;
-	}
+	router_alert = m_get(M_WAIT, MT_DATA);
 
 	/*
 	 * Construct a Router Alert option (RAO) to use in report
@@ -142,7 +138,6 @@ igmp_init(void)
 	router_alert->m_len = sizeof(ra->ipopt_dst) + ra->ipopt_list[1];
 }
 
-/* Return -1 for error. */
 int
 rti_fill(struct in_multi *inm)
 {
@@ -158,9 +153,7 @@ rti_fill(struct in_multi *inm)
 		}
 	}
 
-	rti = malloc(sizeof(*rti), M_MRTABLE, M_NOWAIT);
-	if (rti == NULL)
-		return (-1);
+	rti = malloc(sizeof(*rti), M_MRTABLE, M_WAITOK);
 	rti->rti_ifidx = inm->inm_ifidx;
 	rti->rti_type = IGMP_v2_ROUTER;
 	LIST_INSERT_HEAD(&rti_head, rti, rti_list);
@@ -501,9 +494,7 @@ igmp_joingroup(struct in_multi *inm)
 
 	if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
 	    ifp && (ifp->if_flags & IFF_LOOPBACK) == 0) {
-		if ((i = rti_fill(inm)) == -1)
-			goto out;
-
+		i = rti_fill(inm);
 		igmp_sendpkt(ifp, inm, i, 0);
 		inm->inm_state = IGMP_DELAYING_MEMBER;
 		inm->inm_timer = IGMP_RANDOM_DELAY(
@@ -512,7 +503,6 @@ igmp_joingroup(struct in_multi *inm)
 	} else
 		inm->inm_timer = 0;
 
-out:
 	if_put(ifp);
 }
 
