@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.37 2021/12/14 11:05:37 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.38 2021/12/15 00:37:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -63,7 +63,7 @@ static EFI_GUID		 devp_guid = DEVICE_PATH_PROTOCOL;
 static EFI_GUID		 gop_guid = EFI_GRAPHICS_OUTPUT_PROTOCOL_GUID;
 static EFI_GUID		 fdt_guid = FDT_TABLE_GUID;
 
-#defin efi_guidcmp(_a, _b)	memcmp((_a), (_b), sizeof(EFI_GUID))
+#define efi_guidcmp(_a, _b)	memcmp((_a), (_b), sizeof(EFI_GUID))
 
 int efi_device_path_depth(EFI_DEVICE_PATH *dp, int);
 int efi_device_path_ncmp(EFI_DEVICE_PATH *, EFI_DEVICE_PATH *, int);
