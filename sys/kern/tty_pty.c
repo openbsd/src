@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.111 2021/12/13 14:56:55 visa Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.112 2021/12/15 15:30:47 visa Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -667,6 +667,7 @@ filt_ptcread(struct knote *kn, long hint)
 {
 	struct pt_softc *pti = (struct pt_softc *)kn->kn_hook;
 	struct tty *tp;
+	int active;
 
 	tp = pti->pt_tty;
 	kn->kn_data = 0;
@@ -678,15 +679,18 @@ filt_ptcread(struct knote *kn, long hint)
 		    ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl))
 			kn->kn_data++;
 	}
+	active = (kn->kn_data > 0);
 
 	if (!ISSET(tp->t_state, TS_CARR_ON)) {
 		kn->kn_flags |= EV_EOF;
 		if (kn->kn_flags & __EV_POLL)
 			kn->kn_flags |= __EV_HUP;
-		return (1);
+		active = 1;
+	} else {
+		kn->kn_flags &= ~(EV_EOF | __EV_HUP);
 	}
 
-	return (kn->kn_data > 0);
+	return (active);
 }
 
 void
@@ -705,6 +709,7 @@ filt_ptcwrite(struct knote *kn, long hint)
 {
 	struct pt_softc *pti = (struct pt_softc *)kn->kn_hook;
 	struct tty *tp;
+	int active;
 
 	tp = pti->pt_tty;
 	kn->kn_data = 0;
@@ -718,8 +723,19 @@ filt_ptcwrite(struct knote *kn, long hint)
 			kn->kn_data = tp->t_canq.c_cn -
 			    (tp->t_rawq.c_cc + tp->t_canq.c_cc);
 	}
+	active = (kn->kn_data > 0);
 
-	return (kn->kn_data > 0);
+	/* Write-side HUP condition is only for poll(2) and select(2). */
+	if (kn->kn_flags & (__EV_POLL | __EV_SELECT)) {
+		if (!ISSET(tp->t_state, TS_CARR_ON)) {
+			kn->kn_flags |= __EV_HUP;
+			active = 1;
+		} else {
+			kn->kn_flags &= ~__EV_HUP;
+		}
+	}
+
+	return (active);
 }
 
 int
@@ -745,6 +761,8 @@ filt_ptcexcept(struct knote *kn, long hint)
 		if (!ISSET(tp->t_state, TS_CARR_ON)) {
 			kn->kn_flags |= __EV_HUP;
 			active = 1;
+		} else {
+			kn->kn_flags &= ~__EV_HUP;
 		}
 	}
 

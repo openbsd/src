@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.172 2021/12/14 15:32:20 visa Exp $	*/
+/*	$OpenBSD: tty.c,v 1.173 2021/12/15 15:30:47 visa Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -78,6 +78,7 @@ int	filt_ttyread(struct knote *kn, long hint);
 void 	filt_ttyrdetach(struct knote *kn);
 int	filt_ttywrite(struct knote *kn, long hint);
 void 	filt_ttywdetach(struct knote *kn);
+int	filt_ttyexcept(struct knote *kn, long hint);
 void	ttystats_init(struct itty **, int *, size_t *);
 int	ttywait_nsec(struct tty *, uint64_t);
 int	ttysleep_nsec(struct tty *, void *, int, char *, uint64_t);
@@ -1110,6 +1111,13 @@ const struct filterops ttywrite_filtops = {
 	.f_event	= filt_ttywrite,
 };
 
+const struct filterops ttyexcept_filtops = {
+	.f_flags	= FILTEROP_ISFD,
+	.f_attach	= NULL,
+	.f_detach	= filt_ttyrdetach,
+	.f_event	= filt_ttyexcept,
+};
+
 int
 ttkqfilter(dev_t dev, struct knote *kn)
 {
@@ -1125,6 +1133,18 @@ ttkqfilter(dev_t dev, struct knote *kn)
 	case EVFILT_WRITE:
 		klist = &tp->t_wsel.si_note;
 		kn->kn_fop = &ttywrite_filtops;
+		break;
+	case EVFILT_EXCEPT:
+		if (kn->kn_flags & __EV_SELECT) {
+			/* Prevent triggering exceptfds. */
+			return (EPERM);
+		}
+		if ((kn->kn_flags & __EV_POLL) == 0) {
+			/* Disallow usage through kevent(2). */
+			return (EINVAL);
+		}
+		klist = &tp->t_rsel.si_note;
+		kn->kn_fop = &ttyexcept_filtops;
 		break;
 	default:
 		return (EINVAL);
@@ -1164,6 +1184,8 @@ filt_ttyread(struct knote *kn, long hint)
 		if (kn->kn_flags & __EV_POLL)
 			kn->kn_flags |= __EV_HUP;
 		active = 1;
+	} else {
+		kn->kn_flags &= ~(EV_EOF | __EV_HUP);
 	}
 	splx(s);
 	return (active);
@@ -1184,13 +1206,45 @@ int
 filt_ttywrite(struct knote *kn, long hint)
 {
 	struct tty *tp = kn->kn_hook;
-	int canwrite, s;
+	int active, s;
 
 	s = spltty();
 	kn->kn_data = tp->t_outq.c_cn - tp->t_outq.c_cc;
-	canwrite = (tp->t_outq.c_cc <= tp->t_lowat);
+	active = (tp->t_outq.c_cc <= tp->t_lowat);
+
+	/* Write-side HUP condition is only for poll(2) and select(2). */
+	if (kn->kn_flags & (__EV_POLL | __EV_SELECT)) {
+		if (!ISSET(tp->t_cflag, CLOCAL) &&
+		    !ISSET(tp->t_state, TS_CARR_ON)) {
+			kn->kn_flags |= __EV_HUP;
+			active = 1;
+		} else {
+			kn->kn_flags &= ~__EV_HUP;
+		}
+	}
 	splx(s);
-	return (canwrite);
+	return (active);
+}
+
+int
+filt_ttyexcept(struct knote *kn, long hint)
+{
+	struct tty *tp = kn->kn_hook;
+	int active = 0;
+	int s;
+
+	s = spltty();
+	if (kn->kn_flags & __EV_POLL) {
+		if (!ISSET(tp->t_cflag, CLOCAL) &&
+		    !ISSET(tp->t_state, TS_CARR_ON)) {
+			kn->kn_flags |= __EV_HUP;
+			active = 1;
+		} else {
+			kn->kn_flags &= ~__EV_HUP;
+		}
+	}
+	splx(s);
+	return (active);
 }
 
 static int
