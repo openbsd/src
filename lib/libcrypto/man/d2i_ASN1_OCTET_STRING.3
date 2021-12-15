@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.15 2021/12/14 20:14:22 schwarze Exp $
+.\"	$OpenBSD: d2i_ASN1_OCTET_STRING.3,v 1.16 2021/12/15 15:29:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 14 2021 $
+.Dd $Mdocdate: December 15 2021 $
 .Dt D2I_ASN1_OCTET_STRING 3
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm i2d_ASN1_BIT_STRING ,
 .Nm d2i_ASN1_INTEGER ,
 .Nm i2d_ASN1_INTEGER ,
+.Nm i2c_ASN1_INTEGER ,
 .Nm d2i_ASN1_UINTEGER ,
 .Nm d2i_ASN1_ENUMERATED ,
 .Nm i2d_ASN1_ENUMERATED ,
@@ -91,6 +92,11 @@
 .Fc
 .Ft int
 .Fo i2d_ASN1_INTEGER
+.Fa "ASN1_INTEGER *val_in"
+.Fa "unsigned char **der_out"
+.Fc
+.Ft int
+.Fo i2c_ASN1_INTEGER
 .Fa "ASN1_INTEGER *val_in"
 .Fa "unsigned char **der_out"
 .Fc
@@ -273,10 +279,9 @@ objects.
 For details about the semantics, examples, caveats, and bugs, see
 .Xr ASN1_item_d2i 3 .
 .Pp
-The format consists of one identifier octet,
-one or more length octets,
-and one or more content octets.
-The identifier octets and corresponding ASN.1 types are as follows:
+The format consists of one identifier byte, one or more length bytes,
+and one or more content bytes.
+The identifier bytes and corresponding ASN.1 types are as follows:
 .Bl -column ASN1_GENERALIZEDTIME identifier
 .It Em OpenSSL type Ta Em identifier Ta Em ASN.1 type
 .It Ta
@@ -295,6 +300,27 @@ The identifier octets and corresponding ASN.1 types are as follows:
 .It Vt ASN1_GENERALIZEDTIME Ta 0x18 Ta GeneralizedTime
 .It Vt ASN1_UTCTIME         Ta 0x17 Ta UTCTime
 .El
+.Pp
+.Fn i2c_ASN1_INTEGER
+writes only the content bytes of
+.Fa val_in
+to
+.Pf * Fa der_out
+and advances
+.Pf * Fa der_out
+to the byte after the last one written.
+The identifier and content length bytes are not written.
+It is the responsibility of the caller to make sure that the buffer
+pointed to by
+.Pf * Fa der_out
+is long enough, such that no buffer overflow can occur.
+This function does not support automatic memory allocation.
+If
+.Fa der_out
+is a
+.Dv NULL
+pointer, the function only calculates the number of content bytes
+that would be written, without writing them anywhere.
 .Pp
 .Fn d2i_DIRECTORYSTRING
 and
@@ -320,7 +346,7 @@ and
 .Fn i2d_DIRECTORYSTRING
 that also accept IA5String, NumericString, BIT STRING, and SEQUENCE
 ASN.1 values as well as ASN.1 values with unknown identifier
-octets (0x07, 0x08, 0x09, 0x0b, 0x0d, 0x0e, 0x0f, 0x1d, and 0x1f).
+bytes (0x07, 0x08, 0x09, 0x0b, 0x0d, 0x0e, 0x0f, 0x1d, and 0x1f).
 Even though the standard requires the use of
 .Vt DirectoryString
 in the relative distinguished names described in
@@ -392,6 +418,15 @@ The
 .Fn i2d_*
 encoding functions return the number of bytes successfully encoded
 or a negative value if an error occurs.
+.Pp
+.Fn i2c_ASN1_INTEGER
+returns the number of content bytes that were or would be written or 0 if
+.Fa val_in
+is a
+.Dv NULL
+pointer or if its
+.Xr ASN1_STRING_length 3
+is negative.
 .Sh SEE ALSO
 .Xr ASN1_item_d2i 3 ,
 .Xr ASN1_STRING_new 3
@@ -448,6 +483,10 @@ and
 first appeared in OpenSSL 0.9.3.
 These functions have been available since
 .Ox 2.6 .
+.Pp
+.Fn i2c_ASN1_INTEGER
+first appeared in OpenSSL 0.9.6 and has been available since
+.Ox 2.9 .
 .Pp
 .Fn d2i_ASN1_UNIVERSALSTRING ,
 .Fn i2d_ASN1_UNIVERSALSTRING ,
