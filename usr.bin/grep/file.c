@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.16 2021/03/10 21:55:22 millert Exp $	*/
+/*	$OpenBSD: file.c,v 1.17 2021/12/15 19:22:44 tb Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -30,8 +30,10 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <zlib.h>
 
 #include "grep.h"
