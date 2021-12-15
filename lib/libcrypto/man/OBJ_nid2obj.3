@@ -1,5 +1,6 @@
-.\"	$OpenBSD: OBJ_nid2obj.3,v 1.15 2021/07/05 17:57:16 schwarze Exp $
-.\"	OpenSSL c264592d May 14 11:28:00 2006 +0000
+.\" $OpenBSD: OBJ_nid2obj.3,v 1.16 2021/12/15 20:07:51 schwarze Exp $
+.\" full merge up to: OpenSSL c264592d May 14 11:28:00 2006 +0000
+.\" selective merge up to: OpenSSL 35fd9953 May 28 14:49:38 2019 +0200
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
@@ -19,7 +20,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
-.\" Copyright (c) 2002, 2006, 2015, 2016 The OpenSSL Project.
+.\" Copyright (c) 2002, 2006, 2016 The OpenSSL Project.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -66,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 5 2021 $
+.Dd $Mdocdate: December 15 2021 $
 .Dt OBJ_NID2OBJ 3
 .Os
 .Sh NAME
@@ -81,8 +82,6 @@
 .Nm OBJ_obj2txt ,
 .Nm OBJ_cmp ,
 .Nm OBJ_dup ,
-.Nm OBJ_create ,
-.Nm OBJ_cleanup ,
 .Nm i2t_ASN1_OBJECT ,
 .Nm i2a_ASN1_OBJECT
 .Nd inspect and create ASN.1 object identifiers
@@ -137,14 +136,6 @@
 .Fo OBJ_dup
 .Fa "const ASN1_OBJECT *o"
 .Fc
-.Ft int
-.Fo OBJ_create
-.Fa "const char *oid"
-.Fa "const char *sn"
-.Fa "const char *ln"
-.Fc
-.Ft void
-.Fn OBJ_cleanup void
 .In openssl/asn1.h
 .Ft int
 .Fo i2t_ASN1_OBJECT
@@ -286,29 +277,6 @@ just returns
 .Fa o
 itself.
 .Pp
-.Fn OBJ_create
-adds a new object to the internal table.
-.Fa oid
-is the numerical form of the object,
-.Fa sn
-the short name and
-.Fa ln
-the long name.
-A new NID is returned for the created object.
-.Pp
-The new object added to the internal table and all the data
-contained in it is marked as not dynamically allocated.
-Consequently, retrieving it with
-.Fn OBJ_nid2obj
-or a similar function and then calling
-.Xr ASN1_OBJECT_free 3
-on the returned pointer will have no effect.
-.Pp
-.Fn OBJ_cleanup
-cleans up the internal object table: this should be called before
-an application exits if any new objects were added using
-.Fn OBJ_create .
-.Pp
 Objects can have a short name, a long name, and a numerical
 identifier (NID) associated with them.
 A standard set of objects is represented in an internal table.
@@ -323,7 +291,7 @@ For example, the OID for commonName has the following definitions:
 .Ed
 .Pp
 New objects can be added by calling
-.Fn OBJ_create .
+.Xr OBJ_create 3 .
 .Pp
 Table objects have certain advantages over other objects: for example
 their NIDs can be used in a C language switch statement.
@@ -385,11 +353,6 @@ and
 .Fa b
 are identical, or non-zero otherwise.
 .Pp
-.Fn OBJ_create
-returns the new NID or
-.Dv NID_undef
-if an error occurs.
-.Pp
 In some cases of failure of
 .Fn OBJ_nid2obj ,
 .Fn OBJ_nid2ln ,
@@ -398,7 +361,6 @@ In some cases of failure of
 .Fn OBJ_txt2obj ,
 .Fn OBJ_obj2txt ,
 .Fn OBJ_dup ,
-.Fn OBJ_create ,
 .Fn i2t_ASN1_OBJECT ,
 and
 .Fn i2a_ASN1_OBJECT ,
@@ -419,14 +381,6 @@ if (OBJ_obj2nid(obj) == NID_commonName)
 	/* Do something */
 .Ed
 .Pp
-Create a new NID and initialize an object from it:
-.Bd -literal -offset indent
-int new_nid;
-ASN1_OBJECT *obj;
-new_nid = OBJ_create("1.2.3.4", "NewOID", "New Object Identifier");
-obj = OBJ_nid2obj(new_nid);
-.Ed
-.Pp
 Create a new object directly:
 .Bd -literal -offset indent
 obj = OBJ_txt2obj("1.2.3.4", 1);
@@ -434,7 +388,8 @@ obj = OBJ_txt2obj("1.2.3.4", 1);
 .Sh SEE ALSO
 .Xr ASN1_OBJECT_new 3 ,
 .Xr BIO_new 3 ,
-.Xr d2i_ASN1_OBJECT 3
+.Xr d2i_ASN1_OBJECT 3 ,
+.Xr OBJ_create 3
 .Sh HISTORY
 .Fn OBJ_nid2obj ,
 .Fn OBJ_nid2ln ,
@@ -448,11 +403,7 @@ and
 .Fn OBJ_dup
 first appeared in SSLeay 0.5.1.
 .Fn i2a_ASN1_OBJECT
-first appeared in SSLeay 0.6.0,
-.Fn OBJ_cleanup
-in SSLeay 0.8.0, and
-.Fn OBJ_create
-and
+first appeared in SSLeay 0.6.0, and
 .Fn i2t_ASN1_OBJECT
 in SSLeay 0.9.0.
 All these functions have been available since
