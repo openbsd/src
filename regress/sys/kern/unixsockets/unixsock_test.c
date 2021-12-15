@@ -1,4 +1,4 @@
-/* $OpenBSD: unixsock_test.c,v 1.1 2021/12/14 15:57:57 mvs Exp $ */
+/* $OpenBSD: unixsock_test.c,v 1.2 2021/12/15 20:41:28 bluhm Exp $ */
 /* Written by Claudio Jeker in 2011 */
 /* Public domain */
 #include <sys/types.h>
@@ -16,7 +16,7 @@
 char path[1024];
 char *dir;
 
-int
+static int
 test_bind(struct sockaddr_un *sun, socklen_t slen)
 {
 	int s, e, r;
@@ -34,7 +34,7 @@ test_bind(struct sockaddr_un *sun, socklen_t slen)
 	return r;
 }
 
-int
+static int
 test_connect(struct sockaddr_un *sun, socklen_t slen, struct sockaddr_un *b)
 {
 	int s, s2, e, r;
