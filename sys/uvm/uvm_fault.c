@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.121 2021/10/12 07:38:22 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.122 2021/12/15 12:53:53 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -326,7 +326,8 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			if (pg->uobject) {
 				/* Owner of page is UVM object. */
 				uvmfault_unlockall(ufi, amap, NULL);
-				tsleep_nsec(pg, PVM, "anonget1", INFSLP);
+				rwsleep_nsec(pg, pg->uobject->vmobjlock,
+				    PVM | PNORELOCK, "anonget1", INFSLP);
 			} else {
 				/* Owner of page is anon. */
 				uvmfault_unlockall(ufi, NULL, NULL);
@@ -620,6 +621,7 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 			 */
 			if (uobj != NULL && uobj->pgops->pgo_fault != NULL) {
 				KERNEL_LOCK();
+				rw_enter(uobj->vmobjlock, RW_WRITE);
 				error = uobj->pgops->pgo_fault(&ufi,
 				    flt.startva, pages, flt.npages,
 				    flt.centeridx, fault_type, flt.access_type,
@@ -793,10 +795,10 @@ uvm_fault_check(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			voff_t uoff;
 
 			uoff = (flt->startva - ufi->entry->start) + ufi->entry->offset;
-			KERNEL_LOCK();
+			rw_enter(uobj->vmobjlock, RW_WRITE);
 			(void) uobj->pgops->pgo_flush(uobj, uoff, uoff +
 			    ((vsize_t)nback << PAGE_SHIFT), PGO_DEACTIVATE);
-			KERNEL_UNLOCK();
+			rw_exit(uobj->vmobjlock);
 		}
 
 		/* now forget about the backpages */
@@ -1098,6 +1100,8 @@ uvm_fault_lower_lookup(
 	int lcv, gotpages;
 	vaddr_t currva;
 
+	rw_enter(uobj->vmobjlock, RW_WRITE);
+
 	counters_inc(uvmexp_counters, flt_lget);
 	gotpages = flt->npages;
 	(void) uobj->pgops->pgo_get(uobj,
@@ -1212,6 +1216,14 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 	 */
 
 	/*
+	 * locked:
+	 */
+	KASSERT(amap == NULL ||
+	    rw_write_held(amap->am_lock));
+	KASSERT(uobj == NULL ||
+	    rw_write_held(uobj->vmobjlock));
+
+	/*
 	 * note that uobjpage can not be PGO_DONTCARE at this point.  we now
 	 * set uobjpage to PGO_DONTCARE if we are doing a zero fill.  if we
 	 * have a backing object, check and see if we are going to promote
@@ -1268,6 +1280,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 				return (EIO);
 
 			uobjpage = PGO_DONTCARE;
+			uobj = NULL;
 			promote = TRUE;
 		}
 
@@ -1275,6 +1288,12 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		locked = uvmfault_relock(ufi);
 		if (locked && amap != NULL)
 			amap_lock(amap);
+
+		/* might be changed */
+		if (uobjpage != PGO_DONTCARE) {
+			uobj = uobjpage->uobject;
+			rw_enter(uobj->vmobjlock, RW_WRITE);
+		}
 
 		/*
 		 * Re-verify that amap slot is still free. if there is
@@ -1300,10 +1319,12 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			atomic_clearbits_int(&uobjpage->pg_flags,
 			    PG_BUSY|PG_WANTED);
 			UVM_PAGE_OWN(uobjpage, NULL);
+		}
+
+		if (locked == FALSE) {
+			rw_exit(uobj->vmobjlock);
 			return ERESTART;
 		}
-		if (locked == FALSE)
-			return ERESTART;
 
 		/*
 		 * we have the data in uobjpage which is PG_BUSY
@@ -1423,6 +1444,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 			uvm_lock_pageq();
 			uvm_pageactivate(uobjpage);
 			uvm_unlock_pageq();
+			rw_exit(uobj->vmobjlock);
 			uobj = NULL;
 		} else {
 			counters_inc(uvmexp_counters, flt_przero);
@@ -1434,7 +1456,7 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 
 		if (amap_add(&ufi->entry->aref,
 		    ufi->orig_rvaddr - ufi->entry->start, anon, 0)) {
-			uvmfault_unlockall(ufi, amap, NULL);
+			uvmfault_unlockall(ufi, amap, uobj);
 			uvm_anfree(anon);
 			counters_inc(uvmexp_counters, flt_noamap);
 
@@ -1483,25 +1505,32 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		return ERESTART;
 	}
 
-	uvm_lock_pageq();
-
 	if (fault_type == VM_FAULT_WIRE) {
+		uvm_lock_pageq();
 		uvm_pagewire(pg);
+		uvm_unlock_pageq();
 		if (pg->pg_flags & PQ_AOBJ) {
 			/*
 			 * since the now-wired page cannot be paged out,
 			 * release its swap resources for others to use.
-			 * since an aobj page with no swap cannot be PG_CLEAN,
-			 * clear its clean flag now.
+			 * since an aobj page with no swap cannot be clean,
+			 * mark it dirty now.
+			 *
+			 * use pg->uobject here.  if the page is from a
+			 * tmpfs vnode, the pages are backed by its UAO and
+			 * not the vnode.
 			 */
+			KASSERT(uobj != NULL);
+			KASSERT(uobj->vmobjlock == pg->uobject->vmobjlock);
 			atomic_clearbits_int(&pg->pg_flags, PG_CLEAN);
 			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
 		}
 	} else {
 		/* activate it */
+		uvm_lock_pageq();
 		uvm_pageactivate(pg);
+		uvm_unlock_pageq();
 	}
-	uvm_unlock_pageq();
 
 	if (pg->pg_flags & PG_WANTED)
 		wakeup(pg);
@@ -1567,7 +1596,7 @@ uvm_fault_unwire(vm_map_t map, vaddr_t start, vaddr_t end)
 void
 uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 {
-	vm_map_entry_t entry, next;
+	vm_map_entry_t entry, oentry = NULL, next;
 	pmap_t pmap = vm_map_pmap(map);
 	vaddr_t va;
 	paddr_t pa;
@@ -1578,11 +1607,8 @@ uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 	/*
 	 * we assume that the area we are unwiring has actually been wired
 	 * in the first place.   this means that we should be able to extract
-	 * the PAs from the pmap.   we also lock out the page daemon so that
-	 * we can call uvm_pageunwire.
+	 * the PAs from the pmap.
 	 */
-
-	uvm_lock_pageq();
 
 	/*
 	 * find the beginning map entry for the region.
@@ -1606,17 +1632,33 @@ uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 		}
 
 		/*
+		 * lock it.
+		 */
+		if (entry != oentry) {
+			if (oentry != NULL) {
+				uvm_map_unlock_entry(oentry);
+			}
+			uvm_map_lock_entry(entry);
+			oentry = entry;
+		}
+
+		/*
 		 * if the entry is no longer wired, tell the pmap.
 		 */
 		if (VM_MAPENT_ISWIRED(entry) == 0)
 			pmap_unwire(pmap, va);
 
 		pg = PHYS_TO_VM_PAGE(pa);
-		if (pg)
+		if (pg) {
+			uvm_lock_pageq();
 			uvm_pageunwire(pg);
+			uvm_unlock_pageq();
+		}
 	}
 
-	uvm_unlock_pageq();
+	if (oentry != NULL) {
+		uvm_map_unlock_entry(entry);
+	}
 }
 
 /*
@@ -1650,6 +1692,8 @@ void
 uvmfault_unlockall(struct uvm_faultinfo *ufi, struct vm_amap *amap,
     struct uvm_object *uobj)
 {
+	if (uobj)
+		rw_exit(uobj->vmobjlock);
 	if (amap != NULL)
 		amap_unlock(amap);
 	uvmfault_unlockmaps(ufi, FALSE);

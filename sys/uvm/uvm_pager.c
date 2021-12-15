@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.76 2021/03/26 13:40:05 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.77 2021/12/15 12:53:53 mpi Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -134,6 +134,24 @@ uvm_pseg_get(int flags)
 	int i;
 	struct uvm_pseg *pseg;
 
+	/*
+	 * XXX Prevent lock ordering issue in uvm_unmap_detach().  A real
+	 * fix would be to move the KERNEL_LOCK() out of uvm_unmap_detach().
+	 *
+	 *  witness_checkorder() at witness_checkorder+0xba0
+	 *  __mp_lock() at __mp_lock+0x5f
+	 *  uvm_unmap_detach() at uvm_unmap_detach+0xc5
+	 *  uvm_map() at uvm_map+0x857
+	 *  uvm_km_valloc_try() at uvm_km_valloc_try+0x65
+	 *  uvm_pseg_get() at uvm_pseg_get+0x6f
+	 *  uvm_pagermapin() at uvm_pagermapin+0x45
+	 *  uvn_io() at uvn_io+0xcf
+	 *  uvn_get() at uvn_get+0x156
+	 *  uvm_fault_lower() at uvm_fault_lower+0x28a
+	 *  uvm_fault() at uvm_fault+0x1b3
+	 *  upageflttrap() at upageflttrap+0x62
+	 */
+	KERNEL_LOCK();
 	mtx_enter(&uvm_pseg_lck);
 
 pager_seg_restart:
@@ -159,6 +177,7 @@ pager_seg_restart:
 			if (!UVM_PSEG_INUSE(pseg, i)) {
 				pseg->use |= 1 << i;
 				mtx_leave(&uvm_pseg_lck);
+				KERNEL_UNLOCK();
 				return pseg->start + i * MAXBSIZE;
 			}
 		}
@@ -171,6 +190,7 @@ pager_seg_fail:
 	}
 
 	mtx_leave(&uvm_pseg_lck);
+	KERNEL_UNLOCK();
 	return 0;
 }
 
@@ -543,11 +563,15 @@ ReTry:
 			/* XXX daddr_t -> int */
 			int nswblk = (result == VM_PAGER_AGAIN) ? swblk : 0;
 			if (pg->pg_flags & PQ_ANON) {
+				rw_enter(pg->uanon->an_lock, RW_WRITE);
 				pg->uanon->an_swslot = nswblk;
+				rw_exit(pg->uanon->an_lock);
 			} else {
+				rw_enter(pg->uobject->vmobjlock, RW_WRITE);
 				uao_set_swslot(pg->uobject,
 					       pg->offset >> PAGE_SHIFT,
 					       nswblk);
+				rw_exit(pg->uobject->vmobjlock);
 			}
 		}
 		if (result == VM_PAGER_AGAIN) {
@@ -612,6 +636,8 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
 {
 	int lcv;
 
+	KASSERT(uobj == NULL || rw_write_held(uobj->vmobjlock));
+
 	/* drop all pages but "pg" */
 	for (lcv = 0 ; lcv < *npages ; lcv++) {
 		/* skip "pg" or empty slot */
@@ -625,10 +651,13 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
 		 */
 		if (!uobj) {
 			if (ppsp[lcv]->pg_flags & PQ_ANON) {
+				rw_enter(ppsp[lcv]->uanon->an_lock, RW_WRITE);
 				if (flags & PGO_REALLOCSWAP)
 					  /* zap swap block */
 					  ppsp[lcv]->uanon->an_swslot = 0;
 			} else {
+				rw_enter(ppsp[lcv]->uobject->vmobjlock,
+				    RW_WRITE);
 				if (flags & PGO_REALLOCSWAP)
 					uao_set_swslot(ppsp[lcv]->uobject,
 					    ppsp[lcv]->offset >> PAGE_SHIFT, 0);
@@ -649,7 +678,6 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
 				UVM_PAGE_OWN(ppsp[lcv], NULL);
 
 				/* kills anon and frees pg */
-				rw_enter(ppsp[lcv]->uanon->an_lock, RW_WRITE);
 				uvm_anon_release(ppsp[lcv]->uanon);
 
 				continue;
@@ -671,6 +699,14 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
 			pmap_clear_reference(ppsp[lcv]);
 			pmap_clear_modify(ppsp[lcv]);
 			atomic_setbits_int(&ppsp[lcv]->pg_flags, PG_CLEAN);
+		}
+
+		/* if anonymous cluster, unlock object and move on */
+		if (!uobj) {
+			if (ppsp[lcv]->pg_flags & PQ_ANON)
+				rw_exit(ppsp[lcv]->uanon->an_lock);
+			else
+				rw_exit(ppsp[lcv]->uobject->vmobjlock);
 		}
 	}
 }
@@ -736,6 +772,7 @@ uvm_aio_aiodone(struct buf *bp)
 			swap = (pg->pg_flags & PQ_SWAPBACKED) != 0;
 			if (!swap) {
 				uobj = pg->uobject;
+				rw_enter(uobj->vmobjlock, RW_WRITE);
 			}
 		}
 		KASSERT(swap || pg->uobject == uobj);
@@ -763,6 +800,9 @@ uvm_aio_aiodone(struct buf *bp)
 		}
 	}
 	uvm_page_unbusy(pgs, npages);
+	if (!swap) {
+		rw_exit(uobj->vmobjlock);
+	}
 
 #ifdef UVM_SWAP_ENCRYPT
 freed:

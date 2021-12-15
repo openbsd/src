@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.146 2021/10/24 15:23:52 mpi Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.147 2021/12/15 12:53:53 mpi Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -249,13 +249,15 @@ uvm_km_pgremove(struct uvm_object *uobj, vaddr_t startva, vaddr_t endva)
 	int swpgonlydelta = 0;
 
 	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
+	KASSERT(rw_write_held(uobj->vmobjlock));
 
 	pmap_remove(pmap_kernel(), startva, endva);
 	for (curoff = start ; curoff < end ; curoff += PAGE_SIZE) {
 		pp = uvm_pagelookup(uobj, curoff);
 		if (pp && pp->pg_flags & PG_BUSY) {
 			atomic_setbits_int(&pp->pg_flags, PG_WANTED);
-			tsleep_nsec(pp, PVM, "km_pgrm", INFSLP);
+			rwsleep_nsec(pp, uobj->vmobjlock, PVM, "km_pgrm",
+			    INFSLP);
 			curoff -= PAGE_SIZE; /* loop back to us */
 			continue;
 		}
@@ -383,6 +385,9 @@ uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 		return (0);
 	}
 
+	if (obj != NULL)
+		rw_enter(obj->vmobjlock, RW_WRITE);
+
 	loopva = kva;
 	while (loopva != kva + size) {
 		pg = TAILQ_FIRST(&pgl);
@@ -408,6 +413,9 @@ uvm_km_kmemalloc_pla(struct vm_map *map, struct uvm_object *obj, vsize_t size,
 	}
 	KASSERT(TAILQ_EMPTY(&pgl));
 	pmap_update(pmap_kernel());
+
+	if (obj != NULL)
+		rw_exit(obj->vmobjlock);
 
 	return kva;
 }
@@ -474,12 +482,14 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 	/* now allocate the memory.  we must be careful about released pages. */
 	loopva = kva;
 	while (size) {
+		rw_enter(uvm.kernel_object->vmobjlock, RW_WRITE);
 		/* allocate ram */
 		pg = uvm_pagealloc(uvm.kernel_object, offset, NULL, 0);
 		if (pg) {
 			atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}
+		rw_exit(uvm.kernel_object->vmobjlock);
 		if (__predict_false(pg == NULL)) {
 			if (curproc == uvm.pagedaemon_proc) {
 				/*

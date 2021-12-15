@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.101 2021/10/24 13:46:14 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.102 2021/12/15 12:53:53 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ const struct uvm_pagerops aobj_pager = {
  * deadlock.
  */
 static LIST_HEAD(aobjlist, uvm_aobj) uao_list = LIST_HEAD_INITIALIZER(uao_list);
-static struct mutex uao_list_lock = MUTEX_INITIALIZER(IPL_NONE);
+static struct mutex uao_list_lock = MUTEX_INITIALIZER(IPL_MPFLOOR);
 
 
 /*
@@ -277,6 +277,7 @@ uao_find_swslot(struct uvm_object *uobj, int pageidx)
  * uao_set_swslot: set the swap slot for a page in an aobj.
  *
  * => setting a slot to zero frees the slot
+ * => object must be locked by caller
  * => we return the old slot number, or -1 if we failed to allocate
  *    memory to record the new slot number
  */
@@ -286,7 +287,7 @@ uao_set_swslot(struct uvm_object *uobj, int pageidx, int slot)
 	struct uvm_aobj *aobj = (struct uvm_aobj *)uobj;
 	int oldslot;
 
-	KERNEL_ASSERT_LOCKED();
+	KASSERT(rw_write_held(uobj->vmobjlock) || uobj->uo_refs == 0);
 	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
 
 	/*
@@ -358,7 +359,9 @@ uao_free(struct uvm_aobj *aobj)
 	struct uvm_object *uobj = &aobj->u_obj;
 
 	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
+	KASSERT(rw_write_held(uobj->vmobjlock));
 	uao_dropswap_range(uobj, 0, 0);
+	rw_exit(uobj->vmobjlock);
 
 	if (UAO_USES_SWHASH(aobj)) {
 		/*
@@ -671,6 +674,7 @@ struct uvm_object *
 uao_create(vsize_t size, int flags)
 {
 	static struct uvm_aobj kernel_object_store;
+	static struct rwlock bootstrap_kernel_object_lock;
 	static int kobj_alloced = 0;
 	int pages = round_page(size) >> PAGE_SHIFT;
 	struct uvm_aobj *aobj;
@@ -742,6 +746,11 @@ uao_create(vsize_t size, int flags)
 	 * Initialise UVM object.
 	 */
 	uvm_obj_init(&aobj->u_obj, &aobj_pager, refs);
+	if (flags & UAO_FLAG_KERNOBJ) {
+		/* Use a temporary static lock for kernel_object. */
+		rw_init(&bootstrap_kernel_object_lock, "kobjlk");
+		uvm_obj_setlock(&aobj->u_obj, &bootstrap_kernel_object_lock);
+	}
 
 	/*
  	 * now that aobj is ready, add it to the global list
@@ -822,20 +831,20 @@ uao_detach(struct uvm_object *uobj)
 	 * involved in is complete), release any swap resources and free
 	 * the page itself.
 	 */
-	uvm_lock_pageq();
-	while((pg = RBT_ROOT(uvm_objtree, &uobj->memt)) != NULL) {
+	rw_enter(uobj->vmobjlock, RW_WRITE);
+	while ((pg = RBT_ROOT(uvm_objtree, &uobj->memt)) != NULL) {
+		pmap_page_protect(pg, PROT_NONE);
 		if (pg->pg_flags & PG_BUSY) {
 			atomic_setbits_int(&pg->pg_flags, PG_WANTED);
-			uvm_unlock_pageq();
-			tsleep_nsec(pg, PVM, "uao_det", INFSLP);
-			uvm_lock_pageq();
+			rwsleep_nsec(pg, uobj->vmobjlock, PVM, "uao_det",
+			    INFSLP);
 			continue;
 		}
-		pmap_page_protect(pg, PROT_NONE);
 		uao_dropswap(&aobj->u_obj, pg->offset >> PAGE_SHIFT);
+		uvm_lock_pageq();
 		uvm_pagefree(pg);
+		uvm_unlock_pageq();
 	}
-	uvm_unlock_pageq();
 
 	/*
 	 * Finally, free the anonymous UVM object itself.
@@ -864,7 +873,7 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	voff_t curoff;
 
 	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
-	KERNEL_ASSERT_LOCKED();
+	KASSERT(rw_write_held(uobj->vmobjlock));
 
 	if (flags & PGO_ALLPAGES) {
 		start = 0;
@@ -901,7 +910,8 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		/* Make sure page is unbusy, else wait for it. */
 		if (pp->pg_flags & PG_BUSY) {
 			atomic_setbits_int(&pp->pg_flags, PG_WANTED);
-			tsleep_nsec(pp, PVM, "uaoflsh", INFSLP);
+			rwsleep_nsec(pp, uobj->vmobjlock, PVM, "uaoflsh",
+			    INFSLP);
 			curoff -= PAGE_SIZE;
 			continue;
 		}
@@ -972,7 +982,7 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
  * 2: page is zero-fill    -> allocate a new page and zero it.
  * 3: page is swapped out  -> fetch the page from swap.
  *
- * cases 1 and 2 can be handled with PGO_LOCKED, case 3 cannot.
+ * cases 1 can be handled with PGO_LOCKED, cases 2 and 3 cannot.
  * so, if the "center" page hits case 3 (or any page, with PGO_ALLPAGES),
  * then we will need to return VM_PAGER_UNLOCK.
  *
@@ -992,7 +1002,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 	boolean_t done;
 
 	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
-	KERNEL_ASSERT_LOCKED();
+	KASSERT(rw_write_held(uobj->vmobjlock));
 
 	/*
  	 * get number of pages
@@ -1115,7 +1125,10 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 				/* out of RAM? */
 				if (ptmp == NULL) {
+					rw_exit(uobj->vmobjlock);
 					uvm_wait("uao_getpage");
+					rw_enter(uobj->vmobjlock, RW_WRITE);
+					/* goto top of pps while loop */
 					continue;
 				}
 
@@ -1135,7 +1148,8 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			/* page is there, see if we need to wait on it */
 			if ((ptmp->pg_flags & PG_BUSY) != 0) {
 				atomic_setbits_int(&ptmp->pg_flags, PG_WANTED);
-				tsleep_nsec(ptmp, PVM, "uao_get", INFSLP);
+				rwsleep_nsec(ptmp, uobj->vmobjlock, PVM,
+				    "uao_get", INFSLP);
 				continue;	/* goto top of pps while loop */
 			}
 
@@ -1169,8 +1183,12 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 		} else {
 			/*
 			 * page in the swapped-out page.
+			 * unlock object for i/o, relock when done.
 			 */
+
+			rw_exit(uobj->vmobjlock);
 			rv = uvm_swap_get(ptmp, swslot, PGO_SYNCIO);
+			rw_enter(uobj->vmobjlock, RW_WRITE);
 
 			/*
 			 * I/O done.  check for errors.
@@ -1194,6 +1212,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				uvm_lock_pageq();
 				uvm_pagefree(ptmp);
 				uvm_unlock_pageq();
+				rw_exit(uobj->vmobjlock);
 
 				return rv;
 			}
@@ -1215,11 +1234,14 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 
 	}	/* lcv loop */
 
+	rw_exit(uobj->vmobjlock);
 	return VM_PAGER_OK;
 }
 
 /*
  * uao_dropswap:  release any swap resources from this aobj page.
+ *
+ * => aobj must be locked or have a reference count of 0.
  */
 int
 uao_dropswap(struct uvm_object *uobj, int pageidx)
@@ -1238,6 +1260,7 @@ uao_dropswap(struct uvm_object *uobj, int pageidx)
 /*
  * page in every page in every aobj that is paged-out to a range of swslots.
  * 
+ * => aobj must be locked and is returned locked.
  * => returns TRUE if pagein was aborted due to lack of memory.
  */
 boolean_t
@@ -1272,7 +1295,9 @@ uao_swap_off(int startslot, int endslot)
 		/*
 		 * Page in all pages in the swap slot range.
 		 */
+		rw_enter(aobj->u_obj.vmobjlock, RW_WRITE);
 		rv = uao_pagein(aobj, startslot, endslot);
+		rw_exit(aobj->u_obj.vmobjlock);
 
 		/* Drop the reference of the current object. */
 		uao_detach(&aobj->u_obj);
@@ -1375,14 +1400,21 @@ restart:
 static boolean_t
 uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 {
+	struct uvm_object *uobj = &aobj->u_obj;
 	struct vm_page *pg;
 	int rv, slot, npages;
 
 	pg = NULL;
 	npages = 1;
+
+	KASSERT(rw_write_held(uobj->vmobjlock));
 	rv = uao_get(&aobj->u_obj, (voff_t)pageidx << PAGE_SHIFT,
 	    &pg, &npages, 0, PROT_READ | PROT_WRITE, 0, 0);
 
+	/*
+	 * relock and finish up.
+	 */
+	rw_enter(uobj->vmobjlock, RW_WRITE);
 	switch (rv) {
 	case VM_PAGER_OK:
 		break;
@@ -1430,7 +1462,7 @@ uao_dropswap_range(struct uvm_object *uobj, voff_t start, voff_t end)
 	int swpgonlydelta = 0;
 
 	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
-	/* KASSERT(mutex_owned(uobj->vmobjlock)); */
+	KASSERT(rw_write_held(uobj->vmobjlock));
 
 	if (end == 0) {
 		end = INT64_MAX;

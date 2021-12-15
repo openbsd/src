@@ -268,8 +268,10 @@ shmem_truncate(struct drm_i915_gem_object *obj)
 #ifdef __linux__
 	shmem_truncate_range(file_inode(obj->base.filp), 0, (loff_t)-1);
 #else
+	rw_enter(obj->base.uao->vmobjlock, RW_WRITE);
 	obj->base.uao->pgops->pgo_flush(obj->base.uao, 0, obj->base.size,
 	    PGO_ALLPAGES | PGO_FREE);
+	rw_exit(obj->base.uao->vmobjlock);
 #endif
 	obj->mm.madv = __I915_MADV_PURGED;
 	obj->mm.pages = ERR_PTR(-EFAULT);

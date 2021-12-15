@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_device.c,v 1.65 2021/10/23 14:42:08 mpi Exp $	*/
+/*	$OpenBSD: uvm_device.c,v 1.66 2021/12/15 12:53:53 mpi Exp $	*/
 /*	$NetBSD: uvm_device.c,v 1.30 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -166,7 +166,9 @@ udv_attach(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
 			/*
 			 * bump reference count, unhold, return.
 			 */
+			rw_enter(lcv->u_obj.vmobjlock, RW_WRITE);
 			lcv->u_obj.uo_refs++;
+			rw_exit(lcv->u_obj.vmobjlock);
 
 			mtx_enter(&udv_lock);
 			if (lcv->u_flags & UVM_DEVICE_WANTED)
@@ -228,8 +230,9 @@ udv_attach(dev_t device, vm_prot_t accessprot, voff_t off, vsize_t size)
 static void
 udv_reference(struct uvm_object *uobj)
 {
-	KERNEL_ASSERT_LOCKED();
+	rw_enter(uobj->vmobjlock, RW_WRITE);
 	uobj->uo_refs++;
+	rw_exit(uobj->vmobjlock);
 }
 
 /*
@@ -248,8 +251,10 @@ udv_detach(struct uvm_object *uobj)
 	 * loop until done
 	 */
 again:
+	rw_enter(uobj->vmobjlock, RW_WRITE);
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
+		rw_exit(uobj->vmobjlock);
 		return;
 	}
 	KASSERT(uobj->uo_npages == 0 && RBT_EMPTY(uvm_objtree, &uobj->memt));
@@ -260,10 +265,7 @@ again:
 	mtx_enter(&udv_lock);
 	if (udv->u_flags & UVM_DEVICE_HOLD) {
 		udv->u_flags |= UVM_DEVICE_WANTED;
-		/*
-		 * lock interleaving. -- this is ok in this case since the
-		 * locks are both IPL_NONE
-		 */
+		rw_exit(uobj->vmobjlock);
 		msleep_nsec(udv, &udv_lock, PVM | PNORELOCK, "udv_detach",
 		    INFSLP);
 		goto again;
@@ -276,6 +278,7 @@ again:
 	if (udv->u_flags & UVM_DEVICE_WANTED)
 		wakeup(udv);
 	mtx_leave(&udv_lock);
+	rw_exit(uobj->vmobjlock);
 
 	uvm_obj_destroy(uobj);
 	free(udv, M_TEMP, sizeof(*udv));

@@ -1006,6 +1006,8 @@ radeon_ttm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, vm_page_t *pps,
 	struct radeon_device *rdev;
 	int r;
 
+	KASSERT(rw_write_held(ufi->entry->object.uvm_obj->vmobjlock));
+
 	bo = (struct drm_gem_object *)ufi->entry->object.uvm_obj;
 	rdev = bo->dev->dev_private;
 	down_read(&rdev->pm.mclk_lock);
