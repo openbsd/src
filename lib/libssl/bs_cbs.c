@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbs.c,v 1.23 2021/12/15 17:30:20 jsing Exp $	*/
+/*	$OpenBSD: bs_cbs.c,v 1.24 2021/12/15 17:36:49 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -44,6 +44,16 @@ cbs_get(CBS *cbs, const uint8_t **p, size_t n)
 	*p = cbs->data;
 	cbs->data += n;
 	cbs->len -= n;
+	return 1;
+}
+
+static int
+cbs_peek(CBS *cbs, const uint8_t **p, size_t n)
+{
+	if (cbs->len < n)
+		return 0;
+
+	*p = cbs->data;
 	return 1;
 }
 
@@ -257,6 +267,73 @@ int
 CBS_get_u24_length_prefixed(CBS *cbs, CBS *out)
 {
 	return cbs_get_length_prefixed(cbs, out, 3);
+}
+
+static int
+cbs_peek_u(CBS *cbs, uint32_t *out, size_t len)
+{
+	uint32_t result = 0;
+	size_t i;
+	const uint8_t *data;
+
+	if (len < 1 || len > 4)
+		return 0;
+
+	if (!cbs_peek(cbs, &data, len))
+		return 0;
+
+	for (i = 0; i < len; i++) {
+		result <<= 8;
+		result |= data[i];
+	}
+	*out = result;
+	return 1;
+}
+
+int
+CBS_peek_u8(CBS *cbs, uint8_t *out)
+{
+	const uint8_t *v;
+
+	if (!cbs_peek(cbs, &v, 1))
+		return 0;
+
+	*out = *v;
+	return 1;
+}
+
+int
+CBS_peek_u16(CBS *cbs, uint16_t *out)
+{
+	uint32_t v;
+
+	if (!cbs_peek_u(cbs, &v, 2))
+		return 0;
+
+	*out = v;
+	return 1;
+}
+
+int
+CBS_peek_u24(CBS *cbs, uint32_t *out)
+{
+	return cbs_peek_u(cbs, out, 3);
+}
+
+int
+CBS_peek_u32(CBS *cbs, uint32_t *out)
+{
+	return cbs_peek_u(cbs, out, 4);
+}
+
+int
+CBS_peek_last_u8(CBS *cbs, uint8_t *out)
+{
+	if (cbs->len == 0)
+		return 0;
+
+	*out = cbs->data[cbs->len - 1];
+	return 1;
 }
 
 int
