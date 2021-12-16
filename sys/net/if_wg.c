@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.18 2021/08/05 13:37:04 sthen Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.19 2021/12/16 00:54:42 deraadt Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -599,9 +599,8 @@ wg_aip_add(struct wg_softc *sc, struct wg_peer *peer, struct wg_aip_io *d)
 	default: return EAFNOSUPPORT;
 	}
 
-	if ((aip = pool_get(&wg_aip_pool, PR_NOWAIT)) == NULL)
+	if ((aip = pool_get(&wg_aip_pool, PR_NOWAIT|PR_ZERO)) == NULL)
 		return ENOBUFS;
-	bzero(aip, sizeof(*aip));
 
 	rw_enter_write(&root->ar_lock);
 	node = art_insert(root, &aip->a_node, &d->a_addr, d->a_cidr);
