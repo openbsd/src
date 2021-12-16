@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius_msgauth.c,v 1.1 2015/07/20 23:52:29 yasuoka Exp $ */
+/*	$OpenBSD: radius_msgauth.c,v 1.2 2021/12/16 17:32:51 tb Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -41,30 +41,38 @@
 
 #include "radius_local.h"
 
-static void
+static int
 radius_calc_message_authenticator(RADIUS_PACKET * packet, const char *secret,
     void *ma)
 {
 	const RADIUS_ATTRIBUTE	*attr;
 	const RADIUS_ATTRIBUTE	*end;
 	u_char			 zero16[16];
-	HMAC_CTX		 ctx;
+	HMAC_CTX		*ctx;
 	int			 mdlen;
+	int			 ret = -1;
 
 	memset(zero16, 0, sizeof(zero16));
 
-	HMAC_Init(&ctx, secret, strlen(secret), EVP_md5());
+	if ((ctx = HMAC_CTX_new()) == NULL)
+		goto err;
+
+	if (!HMAC_Init_ex(ctx, secret, strlen(secret), EVP_md5(), NULL))
+		goto err;
 
 	/*
 	 * Traverse the radius packet.
 	 */
 	if (packet->request != NULL) {
-		HMAC_Update(&ctx, (const u_char *)packet->pdata, 4);
-		HMAC_Update(&ctx, (unsigned char *)packet->request->pdata
-		    ->authenticator, 16);
+		if (!HMAC_Update(ctx, (const u_char *)packet->pdata, 4))
+			goto err;
+		if (!HMAC_Update(ctx, (unsigned char *)packet->request->pdata
+		    ->authenticator, 16))
+			goto err;
 	} else {
-		HMAC_Update(&ctx, (const u_char *)packet->pdata,
-		    sizeof(RADIUS_PACKET_DATA));
+		if (!HMAC_Update(ctx, (const u_char *)packet->pdata,
+		    sizeof(RADIUS_PACKET_DATA)))
+			goto err;
 	}
 
 	attr = ATTRS_BEGIN(packet->pdata);
@@ -72,15 +80,26 @@ radius_calc_message_authenticator(RADIUS_PACKET * packet, const char *secret,
 
 	for (; attr < end; ATTRS_ADVANCE(attr)) {
 		if (attr->type == RADIUS_TYPE_MESSAGE_AUTHENTICATOR) {
-			HMAC_Update(&ctx, (u_char *)attr, 2);
-			HMAC_Update(&ctx, (u_char *)zero16, sizeof(zero16));
-		} else
-			HMAC_Update(&ctx, (u_char *)attr, (int) attr->length);
+			if (!HMAC_Update(ctx, (u_char *)attr, 2))
+				goto err;
+			if (!HMAC_Update(ctx, (u_char *)zero16, sizeof(zero16)))
+				goto err;
+		} else {
+			if (!HMAC_Update(ctx, (u_char *)attr,
+			    (int)attr->length))
+				goto err;
+		}
 	}
 
-	HMAC_Final(&ctx, (u_char *)ma, &mdlen);
+	if (!HMAC_Final(ctx, (u_char *)ma, &mdlen))
+		goto err;
 
-	HMAC_cleanup(&ctx);
+	ret = 0;
+
+ err:
+	HMAC_CTX_free(ctx);
+
+	return (ret);
 }
 
 int
@@ -105,7 +124,8 @@ radius_set_message_authenticator(RADIUS_PACKET * packet, const char *secret)
 {
 	u_char	 ma[16];
 
-	radius_calc_message_authenticator(packet, secret, ma);
+	if (radius_calc_message_authenticator(packet, secret, ma) != 0)
+		return (-1);
 
 	return (radius_set_raw_attr(packet, RADIUS_TYPE_MESSAGE_AUTHENTICATOR,
 	    ma, sizeof(ma)));
@@ -118,7 +138,8 @@ radius_check_message_authenticator(RADIUS_PACKET * packet, const char *secret)
 	size_t	 len;
 	u_char	 ma0[16], ma1[16];
 
-	radius_calc_message_authenticator(packet, secret, ma0);
+	if (radius_calc_message_authenticator(packet, secret, ma0) != 0)
+		return (-1);
 
 	len = sizeof(ma1);
 	if ((rval = radius_get_raw_attr(packet,
