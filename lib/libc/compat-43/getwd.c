@@ -1,4 +1,4 @@
-/*	$OpenBSD: getwd.c,v 1.12 2017/11/28 06:55:49 tb Exp $ */
+/*	$OpenBSD: getwd.c,v 1.13 2021/12/16 19:12:43 millert Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,15 +34,17 @@
 #include <string.h>
 #include <unistd.h>
 
+int __getcwd(char *buf, size_t len);
+PROTO_NORMAL(__getcwd);
+
 char *
 getwd(char *buf)
 {
-	char *p;
-
-	if ((p = getcwd(buf, PATH_MAX)))
-		return(p);
-	strlcpy(buf, strerror(errno), PATH_MAX);
-	return(NULL);
+	if (__getcwd(buf, PATH_MAX) == -1) {
+		strlcpy(buf, strerror(errno), PATH_MAX);
+		return NULL;
+	}
+	return buf;
 }
 
 __warn_references(getwd,
