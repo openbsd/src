@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.68 2020/12/12 22:59:21 jan Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.69 2021/12/16 02:01:59 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -706,11 +706,12 @@ pf_get_transaddr(struct pf_rule *r, struct pf_pdesc *pd,
 		nport = 0;
 		if (r->rdr.proxy_port[1]) {
 			u_int32_t	tmp_nport;
+			u_int16_t	div;
 
-			tmp_nport = ((ntohs(pd->ndport) -
-			    ntohs(r->dst.port[0])) %
-			    (r->rdr.proxy_port[1] -
-			    r->rdr.proxy_port[0] + 1)) +
+			div = r->rdr.proxy_port[1] - r->rdr.proxy_port[0] + 1;
+			div = (div == 0) ? 1 : div;
+
+			tmp_nport = ((ntohs(pd->ndport) - ntohs(r->dst.port[0])) % div) +
 			    r->rdr.proxy_port[0];
 
 			/* wrap around if necessary */
