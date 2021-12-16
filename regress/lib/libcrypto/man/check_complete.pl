@@ -17,55 +17,77 @@
 use strict;
 use warnings;
 
-my @obsolete = qw(
-    ASN1_const_CTX ASN1_CTX
-    ASN1_dup ASN1_d2i_bio ASN1_d2i_bio_of ASN1_d2i_fp ASN1_d2i_fp_of
-    ASN1_ENCODING
-    ASN1_i2d_bio ASN1_i2d_bio_of ASN1_i2d_bio_of_const
-    ASN1_i2d_fp ASN1_i2d_fp_of ASN1_i2d_fp_of_const
-    ASN1_LONG_UNDEF
-    ASN1_OBJECT_FLAG_CRITICAL ASN1_OBJECT_FLAG_DYNAMIC
-    ASN1_OBJECT_FLAG_DYNAMIC_DATA ASN1_OBJECT_FLAG_DYNAMIC_STRINGS
-    ASN1_STRING_FLAG_BITS_LEFT ASN1_STRING_FLAG_CONT
-    ASN1_STRING_FLAG_MSTRING ASN1_STRING_FLAG_NDEF
-    CHARTYPE_FIRST_ESC_2253 CHARTYPE_LAST_ESC_2253 CHARTYPE_PRINTABLESTRING
-    d2i_NETSCAPE_X509
-    NETSCAPE_X509 NETSCAPE_X509_free NETSCAPE_X509_new
-    i2d_NETSCAPE_X509
-    ub_title
-    V_ASN1_PRIMATIVE_TAG
-    X509_algor_st
-    X509_EX_V_INIT X509_EX_V_NETSCAPE_HACK
-    X509_EXT_PACK_STRING X509_EXT_PACK_UNKNOWN
-    X509_VERIFY_PARAM_ID
+my %internal = (
+    asn1 => [qw(
+	ASN1_ENCODING
+	ASN1_OBJECT_FLAG_CRITICAL ASN1_OBJECT_FLAG_DYNAMIC
+	ASN1_OBJECT_FLAG_DYNAMIC_DATA ASN1_OBJECT_FLAG_DYNAMIC_STRINGS
+	ASN1_STRING_FLAG_BITS_LEFT ASN1_STRING_FLAG_CONT
+	ASN1_STRING_FLAG_MSTRING ASN1_STRING_FLAG_NDEF
+	CHARTYPE_FIRST_ESC_2253 CHARTYPE_LAST_ESC_2253 CHARTYPE_PRINTABLESTRING
+    )],
+    objects => [qw(
+	OBJ_bsearch OBJ_bsearch_ OBJ_bsearch_ex OBJ_bsearch_ex_
+    )],
+    x509_vfy => [qw(
+	X509_VERIFY_PARAM_ID
+    )]
 );
 
-# postponed
-push @obsolete, qw(
-    ASN1_ITEM_EXP ASN1_ITEM_ptr ASN1_ITEM_ref ASN1_ITEM_rptr
-    ASN1_TEMPLATE ASN1_TLC
-    CHECKED_D2I_OF CHECKED_I2D_OF CHECKED_NEW_OF CHECKED_PPTR_OF CHECKED_PTR_OF
-    DECLARE_ASN1_ALLOC_FUNCTIONS DECLARE_ASN1_ALLOC_FUNCTIONS_name
-    DECLARE_ASN1_ENCODE_FUNCTIONS DECLARE_ASN1_ENCODE_FUNCTIONS_const
-    DECLARE_ASN1_FUNCTIONS DECLARE_ASN1_FUNCTIONS_const
-    DECLARE_ASN1_FUNCTIONS_fname DECLARE_ASN1_FUNCTIONS_name
-    DECLARE_ASN1_ITEM
-    DECLARE_ASN1_NDEF_FUNCTION
-    DECLARE_ASN1_PRINT_FUNCTION DECLARE_ASN1_PRINT_FUNCTION_fname
-    DECLARE_ASN1_SET_OF
-    D2I_OF
-    d2i_PBEPARAM d2i_PBE2PARAM d2i_PBKDF2PARAM
-    IMPLEMENT_ASN1_SET_OF
-    I2D_OF I2D_OF_const
-    i2d_PBEPARAM i2d_PBE2PARAM i2d_PBKDF2PARAM
-    NETSCAPE_SPKAC NETSCAPE_SPKI
-    PBEPARAM PBEPARAM_free PBEPARAM_new
-    PBE2PARAM PBE2PARAM_free PBE2PARAM_new
-    PBKDF2PARAM PBKDF2PARAM_free PBKDF2PARAM_new
-    PKCS5_pbe_set PKCS5_pbe_set0_algor
-    PKCS5_pbe2_set PKCS5_pbe2_set_iv
-    PKCS5_pbkdf2_set
-    TYPEDEF_D2I_OF TYPEDEF_D2I2D_OF TYPEDEF_I2D_OF
+my %obsolete = (
+    asn1 => [qw(
+	ASN1_const_CTX ASN1_CTX
+	ASN1_dup ASN1_d2i_bio ASN1_d2i_bio_of ASN1_d2i_fp ASN1_d2i_fp_of
+	ASN1_i2d_bio ASN1_i2d_bio_of ASN1_i2d_bio_of_const
+	ASN1_i2d_fp ASN1_i2d_fp_of ASN1_i2d_fp_of_const
+	ASN1_LONG_UNDEF
+	d2i_NETSCAPE_X509 i2d_NETSCAPE_X509
+	NETSCAPE_X509 NETSCAPE_X509_free NETSCAPE_X509_new
+	ub_title
+	V_ASN1_PRIMATIVE_TAG
+	X509_algor_st
+    )],
+    objects => [qw(
+	_DECLARE_OBJ_BSEARCH_CMP_FN
+	DECLARE_OBJ_BSEARCH_CMP_FN DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN
+	IMPLEMENT_OBJ_BSEARCH_CMP_FN IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN
+    )],
+    x509 => [qw(
+	X509_EX_V_INIT X509_EX_V_NETSCAPE_HACK
+	X509_EXT_PACK_STRING X509_EXT_PACK_UNKNOWN
+    )]
+);
+
+my %postponed = (
+    asn1 => [qw(
+	ASN1_ITEM_EXP ASN1_ITEM_ptr ASN1_ITEM_ref ASN1_ITEM_rptr
+	ASN1_TEMPLATE ASN1_TLC
+	CHECKED_D2I_OF CHECKED_I2D_OF CHECKED_NEW_OF
+	CHECKED_PPTR_OF CHECKED_PTR_OF
+	DECLARE_ASN1_ALLOC_FUNCTIONS DECLARE_ASN1_ALLOC_FUNCTIONS_name
+	DECLARE_ASN1_ENCODE_FUNCTIONS DECLARE_ASN1_ENCODE_FUNCTIONS_const
+	DECLARE_ASN1_FUNCTIONS DECLARE_ASN1_FUNCTIONS_const
+	DECLARE_ASN1_FUNCTIONS_fname DECLARE_ASN1_FUNCTIONS_name
+	DECLARE_ASN1_ITEM
+	DECLARE_ASN1_NDEF_FUNCTION
+	DECLARE_ASN1_PRINT_FUNCTION DECLARE_ASN1_PRINT_FUNCTION_fname
+	DECLARE_ASN1_SET_OF
+	D2I_OF
+	IMPLEMENT_ASN1_SET_OF
+	I2D_OF I2D_OF_const
+	TYPEDEF_D2I_OF TYPEDEF_D2I2D_OF TYPEDEF_I2D_OF
+    )],
+    x509 => [qw(
+	d2i_PBEPARAM d2i_PBE2PARAM d2i_PBKDF2PARAM
+	i2d_PBEPARAM i2d_PBE2PARAM i2d_PBKDF2PARAM
+	NETSCAPE_SPKAC NETSCAPE_SPKI
+	PBEPARAM PBEPARAM_free PBEPARAM_new
+	PBE2PARAM PBE2PARAM_free PBE2PARAM_new
+	PBKDF2PARAM PBKDF2PARAM_free PBKDF2PARAM_new
+	PKCS5_pbe_set PKCS5_pbe_set0_algor
+	PKCS5_pbe2_set PKCS5_pbe2_set_iv
+	PKCS5_pbkdf2_set
+    )]
 );
 
 my $MANW = 'man -M /usr/share/man -w';
@@ -78,6 +100,7 @@ my $in_define = 0;
 my $in_function = 0;
 my $in_struct = 0;
 my $in_typedef_struct = 0;
+my %undoc = ();
 my $verbose = 0;
 
 if (defined $ARGV[0] && $ARGV[0] eq '-v') {
@@ -87,6 +110,10 @@ if (defined $ARGV[0] && $ARGV[0] eq '-v') {
 $#ARGV == 0 or die "usage: $0 [-v] headername";
 $hfile .= "/$ARGV[0].h";
 open my $in_fh, '<', $hfile or die "$hfile: $!";
+
+$undoc{$_} = 1 foreach @{$internal{$ARGV[0]}};
+$undoc{$_} = 1 foreach @{$obsolete{$ARGV[0]}};
+$undoc{$_} = 1 foreach @{$postponed{$ARGV[0]}};
 
 while (<$in_fh>) {
 try_again:
@@ -143,8 +170,9 @@ try_again:
 			print "Vt $line\n" if $verbose;
 			next;
 		}
-		if (grep { $_ eq $id } @obsolete) {
+		if ($undoc{$id}) {
 			print "V- $line\n" if $verbose;
+			delete $undoc{$id};
 			next;
 		}
 		if ($verbose) {
@@ -186,7 +214,9 @@ try_again:
 	    /^DECLARE_STACK_OF\(\w+\)$/ ||
 	    /^TYPEDEF_D2I2D_OF\(\w+\);$/ ||
 	    /^#define HEADER_\w+_H$/ ||
+	    /^#define USE_OBJ_MAC$/ ||
 	    /^#endif$/ ||
+	    /^#else$/ ||
 	    /^extern\s+const\s+ASN1_ITEM\s+\w+_it;$/ ||
 	    /^#include\s/ ||
 	    /^#ifn?def\s/ ||
@@ -233,8 +263,13 @@ try_again:
 			print "D- $line\n" if $verbose;
 			next;
 		}
-		if (grep { $_ eq $id } @obsolete) {
+		if ($id =~ /^(?:SN|LN|NID|OBJ)_\w+$/) {
 			print "D- $line\n" if $verbose;
+			next;
+		}
+		if ($undoc{$id}) {
+			print "D- $line\n" if $verbose;
+			delete $undoc{$id};
 			next;
 		}
 		if ($verbose) {
@@ -250,19 +285,35 @@ try_again:
 			print "Fn $line\n" if $verbose;
 			next;
 		}
-		unless (system qw/grep -qR/, '^\.\\\\" .*\<' . $id . '(3)',
+		unless (system qw/grep -qR/, '^\.\\\\" .*\<' . $id . '\>',
 		    "$srcdir/") {
 			print "F- $line\n" if $verbose;
 			next;
 		}
-		if (grep { $_ eq $id } @obsolete) {
+		if ($undoc{$id}) {
 			print "F- $line\n" if $verbose;
+			delete $undoc{$id};
 			next;
 		}
 		if ($verbose) {
 			print "XX $line\n";
 		} else {
 			warn "not found: #define $id()";
+		}
+		next;
+	}
+
+	# Handle global variables.
+
+	if (my ($id) = /^extern\s+int\s+(\w+);$/) {
+		unless (system "$MANW -k Va=$id > /dev/null 2>&1") {
+			print "Va $line\n" if $verbose;
+			next;
+		}
+		if ($verbose) {
+			print "XX $line\n";
+		} else {
+			warn "not found: extern int $id";
 		}
 		next;
 	}
@@ -274,8 +325,9 @@ try_again:
 			print "Vt $line\n" if $verbose;
 			next;
 		}
-		if (grep { $_ eq $id } @obsolete) {
+		if ($undoc{$id}) {
 			print "V- $line\n" if $verbose;
+			delete $undoc{$id};
 			next;
 		}
 		if ($verbose) {
@@ -291,8 +343,9 @@ try_again:
 			print "Vt $line\n" if $verbose;
 			next;
 		}
-		if (grep { $_ eq $id } @obsolete) {
+		if ($undoc{$id}) {
 			print "V- $line\n" if $verbose;
+			delete $undoc{$id};
 			next;
 		}
 		if ($verbose) {
@@ -339,8 +392,9 @@ try_again:
 			print "F- $line\n" if $verbose;
 			next;
 		}
-		if (grep { $_ eq $id } @obsolete) {
+		if ($undoc{$id}) {
 			print "F- $line\n" if $verbose;
+			delete $undoc{$id};
 			next;
 		}
 		if ($id =~ /^ASN1_PCTX_\w+$/) {
@@ -360,6 +414,6 @@ try_again:
 	}
 	die "parse error: $_";
 }
-
 close $in_fh;
+warn "expected as undocumented but not found: $_" foreach keys %undoc;
 exit 0;
