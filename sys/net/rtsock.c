@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.322 2021/09/14 09:15:55 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.323 2021/12/16 09:33:56 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -2219,7 +2219,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 		if (*given < w.w_needed)
 			return (ENOMEM);
 	} else
-		*given = (11 * w.w_needed) / 10;
+		*given = w.w_needed + w.w_needed / 10;
 
 	return (error);
 }
