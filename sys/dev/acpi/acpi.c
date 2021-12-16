@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.402 2021/12/07 10:15:25 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.403 2021/12/16 08:03:17 anton Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3140,7 +3140,6 @@ const char *acpi_isa_hids[] = {
 	"PNP0303",	/* IBM Enhanced Keyboard (101/102-key, PS/2 Mouse) */
 	"PNP0400",	/* Standard LPT Parallel Port */
 	"PNP0401",	/* ECP Parallel Port */
-	"PNP0501",	/* 16550A-compatible COM Serial Port */
 	"PNP0700",	/* PC-class Floppy Disk Controller */
 	"PNP0F03",	/* Microsoft PS/2-style Mouse */
 	"PNP0F13",	/* PS/2 Mouse */
