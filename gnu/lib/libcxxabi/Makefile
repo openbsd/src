@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2021/04/28 13:06:20 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2021/12/17 14:55:44 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,8 @@ SRCDIR=		${.CURDIR}/../../../gnu/llvm/libcxxabi/src
 SHDRDIR=	${.CURDIR}/../../../gnu/llvm/libcxx/include
 UHDRDIR=	${.CURDIR}/../../../gnu/llvm/libunwind/include
 CXXINCLUDEDIR=	/usr/include/c++/v1
+
+LOCALHDRDIR=    ${.CURDIR}/../libcxx/include/c++/v1
 
 .PATH: ${SRCDIR} ${.CURDIR}/../../../gnu/llvm/libunwind/src
 
@@ -46,7 +48,8 @@ SRCS+=		abort_message.cpp \
 		UnwindRegistersSave.S \
 		libunwind.cpp
 
-CPPFLAGS+=	-Wall -I${SHDRDIR} -I${HDRDIR} -I${UHDRDIR}
+CPPFLAGS+=	-Wall -I${SHDRDIR} -I${HDRDIR} -I${UHDRDIR} \
+						-I${LOCALHDRDIR} -I${SHDRDIR}/../
 CPPFLAGS+=	-D_LIBUNWIND_IS_NATIVE_ONLY
 CPPFLAGS+=	-D_LIBCXXABI_BUILDING_LIBRARY
 CPPFLAGS+=	-DNDEBUG

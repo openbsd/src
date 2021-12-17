@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2021/04/28 12:55:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.10 2021/12/17 14:55:47 patrick Exp $
 
 LIB=	lldbPluginProcess
 NOPIC=
@@ -9,6 +9,8 @@ NOPROFILE=
 SRCS=	NativeProcessOpenBSD.cpp \
 	NativeRegisterContextOpenBSD.cpp \
 	NativeRegisterContextOpenBSD_arch.cpp \
+	NativeRegisterContextOpenBSD_arm64.cpp \
+	NativeRegisterContextOpenBSD_x86_64.cpp \
 	NativeThreadOpenBSD.cpp
 
 # Process/POSIX
@@ -42,10 +44,15 @@ SRCS+=	AuxVector.cpp \
 	InferiorCallPOSIX.cpp \
 	LinuxProcMaps.cpp \
 	LinuxSignals.cpp \
+	MemoryTagManagerAArch64MTE.cpp \
 	MipsLinuxSignals.cpp \
+	NativeProcessSoftwareSingleStep.cpp \
+	NativeRegisterContextDBReg_arm64.cpp \
+	NativeRegisterContextDBReg_x86.cpp \
 	NativeRegisterContextRegisterInfo.cpp \
 	NetBSDSignals.cpp \
 	OpenBSDSignals.cpp \
+	RegisterContext_x86.cpp \
 	RegisterContextDarwin_arm.cpp \
 	RegisterContextDarwin_arm64.cpp \
 	RegisterContextDarwin_i386.cpp \
@@ -58,8 +65,6 @@ SRCS+=	AuxVector.cpp \
 	RegisterContextHistory.cpp \
 	RegisterContextLinux_i386.cpp \
 	RegisterContextLinux_x86_64.cpp \
-	RegisterContextLinux_mips64.cpp \
-	RegisterContextLinux_mips.cpp \
 	RegisterContextLinux_s390x.cpp \
 	RegisterContextMach_arm.cpp \
 	RegisterContextMach_i386.cpp \
@@ -111,6 +116,9 @@ SRCS+=	MinidumpTypes.cpp \
 	ProcessMinidump.cpp \
 	ThreadMinidump.cpp
 
+# Process/scripted
+SRCS+=	ScriptedProcess.cpp
+
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/OpenBSD
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/POSIX
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/gdb-remote
@@ -118,6 +126,7 @@ SRCS+=	MinidumpTypes.cpp \
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/elf-core
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/mach-core
 .PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/minidump
+.PATH:	${.CURDIR}/../../../llvm/lldb/source/Plugins/Process/scripted
 
 install:
 	@# Nothing here so far ...

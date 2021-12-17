@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2021/04/28 12:55:39 patrick Exp $
+# $OpenBSD: Makefile,v 1.10 2021/12/17 14:55:45 patrick Exp $
 
 LIB=	LLVMMC
 NOPROFILE=
@@ -38,6 +38,7 @@ SRCS+=	ConstantPools.cpp \
 	MCObjectFileInfo.cpp \
 	MCObjectStreamer.cpp \
 	MCObjectWriter.cpp \
+	MCPseudoProbe.cpp \
 	MCRegisterInfo.cpp \
 	MCSchedule.cpp \
 	MCSection.cpp \

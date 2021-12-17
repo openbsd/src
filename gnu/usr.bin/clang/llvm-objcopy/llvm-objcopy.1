@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "LLVM-OBJCOPY" "1" "2021-07-28" "11" "LLVM"
+.TH "LLVM-OBJCOPY" "1" "2021-08-29" "13" "LLVM"
 .SH NAME
 llvm-objcopy \- object copying and editing tool
 .
@@ -85,7 +85,7 @@ headers.
 .B \-\-discard\-all, \-x
 Remove most local symbols from the output. Different file formats may limit
 this to a subset of the local symbols. For example, file and section symbols in
-ELF objects will not be discarded.
+ELF objects will not be discarded. Additionally, remove all debug sections.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -408,26 +408,6 @@ section references. Any invalid sh_link fields will be set to zero.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B \-\-build\-id\-link\-dir <dir>
-Set the directory used by \fI\%\-\-build\-id\-link\-input\fP and
-\fI\%\-\-build\-id\-link\-output\fP\&.
-.UNINDENT
-.INDENT 0.0
-.TP
-.B \-\-build\-id\-link\-input <suffix>
-Hard\-link the input to \fB<dir>/xx/xxx<suffix>\fP, where \fB<dir>\fP is the directory
-specified by \fI\%\-\-build\-id\-link\-dir\fP\&. The path used is derived from the
-hex build ID.
-.UNINDENT
-.INDENT 0.0
-.TP
-.B \-\-build\-id\-link\-output <suffix>
-Hard\-link the output to \fB<dir>/xx/xxx<suffix>\fP, where \fB<dir>\fP is the directory
-specified by \fI\%\-\-build\-id\-link\-dir\fP\&. The path used is derived from the
-hex build ID.
-.UNINDENT
-.INDENT 0.0
-.TP
 .B \-\-change\-start <incr>, \-\-adjust\-start
 Add \fB<incr>\fP to the program\(aqs start address. Can be specified multiple
 times, in which case the values will be applied cumulatively.
@@ -649,6 +629,12 @@ a \(aq#\(aq. Can be specified multiple times to read names from multiple files.
 .TP
 .B \-\-weaken
 Mark all defined global symbols as weak in the output.
+.UNINDENT
+.SH MACH-O-SPECIFIC OPTIONS
+.INDENT 0.0
+.TP
+.B \-\-keep\-undefined
+Keep undefined symbols, even if they would otherwise be stripped.
 .UNINDENT
 .SH SUPPORTED FORMATS
 .sp

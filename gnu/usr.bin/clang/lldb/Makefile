@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.10 2021/04/28 12:55:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.11 2021/12/17 14:55:47 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -80,6 +80,11 @@ Options.inc: Options.td
 	${.OBJDIR}/../llvm-tblgen/llvm-tblgen -gen-opt-parser-defs \
 		-I ${LLVM_SRCS}/include \
 		-o ${.TARGET} ${.ALLSRC}
+
+BUILDFIRST=	VCSVersion.inc
+
+VCSVersion.inc:
+	touch $@
 
 LDADD+= -L ${.OBJDIR}/../libLLVM -lLLVM
 

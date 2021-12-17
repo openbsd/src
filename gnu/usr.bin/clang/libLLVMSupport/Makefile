@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2021/04/28 12:55:40 patrick Exp $
+# $OpenBSD: Makefile,v 1.13 2021/12/17 14:55:46 patrick Exp $
 
 LIB=	LLVMSupport
 NOPIC=
@@ -13,6 +13,7 @@ SRCS=	AArch64TargetParser.cpp \
 	ABIBreak.cpp \
 	ARMTargetParser.cpp \
 	AMDGPUMetadata.cpp \
+	APFixedPoint.cpp \
 	APFloat.cpp \
 	APInt.cpp \
 	APSInt.cpp \
@@ -49,7 +50,6 @@ SRCS=	AArch64TargetParser.cpp \
 	SupportError.cpp \
 	ErrorHandling.cpp \
 	ExtensibleRTTI.cpp \
-	FileCheck.cpp \
 	FileCollector.cpp \
 	FileUtilities.cpp \
 	FileOutputBuffer.cpp \
@@ -60,6 +60,7 @@ SRCS=	AArch64TargetParser.cpp \
 	GraphWriter.cpp \
 	Hashing.cpp \
 	InitLLVM.cpp \
+	InstructionCost.cpp \
 	IntEqClasses.cpp \
 	IntervalMap.cpp \
 	ItaniumManglingCanonicalizer.cpp \
@@ -74,6 +75,7 @@ SRCS=	AArch64TargetParser.cpp \
 	MathExtras.cpp \
 	MemAlloc.cpp \
 	MemoryBuffer.cpp \
+	MemoryBufferRef.cpp \
 	MD5.cpp \
 	NativeFormatting.cpp \
 	OptimizedStructLayout.cpp \
@@ -110,6 +112,7 @@ SRCS=	AArch64TargetParser.cpp \
 	TrigramIndex.cpp \
 	Triple.cpp \
 	Twine.cpp \
+	TypeSize.cpp \
 	Unicode.cpp \
 	UnicodeCaseFold.cpp \
 	VersionTuple.cpp \

@@ -58,7 +58,7 @@
 .include "../libLLVM${LLVM_ARCH}Desc/Makefile"
 .include "../libLLVM${LLVM_ARCH}Disassembler/Makefile"
 .include "../libLLVM${LLVM_ARCH}Info/Makefile"
-.if "${LLVM_ARCH}" == "AArch64" || "${LLVM_ARCH}" == "ARM" || "${LLVM_ARCH}" == "RISCV"
+.if "${LLVM_ARCH}" == "AArch64" || "${LLVM_ARCH}" == "ARM"
 .include "../libLLVM${LLVM_ARCH}Utils/Makefile"
 .endif
 .include "../libLLVMipo/Makefile"

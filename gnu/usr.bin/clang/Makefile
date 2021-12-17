@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.17 2021/11/24 15:15:19 robert Exp $
+# $OpenBSD: Makefile,v 1.18 2021/12/17 14:55:44 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,6 @@ SUBDIR+=libLLVMSupport
 SUBDIR+=libLLVMTableGen
 SUBDIR+=llvm-tblgen
 SUBDIR+=include/llvm/IR
-SUBDIR+=include/llvm/Transforms/InstCombine
 SUBDIR+=include/llvm/Frontend/OpenACC
 SUBDIR+=include/llvm/Frontend/OpenMP
 
@@ -101,6 +100,7 @@ SUBDIR+=lldb-server
 
 SUBDIR+=include/llvm-objcopy
 SUBDIR+=llvm-objcopy
+SUBDIR+=include/llvm-objdump
 SUBDIR+=llvm-objdump
 
 .if ${AR_VERSION:L} == "llvm"

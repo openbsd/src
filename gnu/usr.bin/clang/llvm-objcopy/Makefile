@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2021/08/02 08:50:52 patrick Exp $
+# $OpenBSD: Makefile,v 1.2 2021/12/17 14:55:47 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -6,25 +6,23 @@ PROG=	llvm-objcopy
 BINDIR=	/usr/bin
 LIBEXECDIR=/usr/libexec
 
-SRCS=	Buffer.cpp \
+SRCS=	ConfigManager.cpp \
+	llvm-objcopy.cpp \
 	COFFObjcopy.cpp \
 	COFFObject.cpp \
 	COFFReader.cpp \
 	COFFWriter.cpp \
-	CopyConfig.cpp \
-	ELFConfig.cpp \
 	ELFObjcopy.cpp \
 	ELFObject.cpp \
-	MachOLayoutBuilder.cpp \
 	MachOObjcopy.cpp \
-	MachOObject.cpp \
 	MachOReader.cpp \
 	MachOWriter.cpp \
-	WasmObjcopy.cpp \
+	MachOLayoutBuilder.cpp \
+	MachOObject.cpp \
 	WasmObject.cpp \
 	WasmReader.cpp \
 	WasmWriter.cpp \
-	llvm-objcopy.cpp
+	WasmObjcopy.cpp
 
 COFFObject.cpp:
 	ln -s ${.CURDIR}/../../../llvm/llvm/tools/llvm-objcopy/COFF/Object.cpp $@

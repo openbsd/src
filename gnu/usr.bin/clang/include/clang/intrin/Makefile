@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.24 2021/04/28 12:55:37 patrick Exp $
+# $OpenBSD: Makefile,v 1.25 2021/12/17 14:55:44 patrick Exp $
 
 .include <bsd.own.mk>
 
-LLVM_V=			11.1.0
+LLVM_V=			13.0.0
 CLANG_INTR_INCDIR=	/usr/lib/clang/${LLVM_V}/include
 
 TBLGEN= ${.OBJDIR}/../../../clang-tblgen/clang-tblgen
@@ -59,6 +59,7 @@ HEADERS+=	adxintrin.h \
 		avx512vnniintrin.h \
 		avx512vlvnniintrin.h \
 		avxintrin.h \
+		avxvnniintrin.h \
 		bmi2intrin.h \
 		bmiintrin.h \
 		cetintrin.h \
@@ -75,9 +76,11 @@ HEADERS+=	adxintrin.h \
 		fmaintrin.h \
 		fxsrintrin.h \
 		gfniintrin.h \
+		hresetintrin.h \
 		ia32intrin.h \
 		immintrin.h \
 		invpcidintrin.h \
+		keylockerintrin.h \
 		lwpintrin.h \
 		lzcntintrin.h \
 		mm3dnow.h \
@@ -101,6 +104,7 @@ HEADERS+=	adxintrin.h \
 		tbmintrin.h \
 		tmmintrin.h \
 		tsxldtrkintrin.h \
+		uintrintrin.h \
 		vaesintrin.h \
 		vpclmulqdqintrin.h \
 		waitpkgintrin.h \
@@ -109,6 +113,7 @@ HEADERS+=	adxintrin.h \
 		wmmintrin.h \
 		__wmmintrin_aes.h \
 		__wmmintrin_pclmul.h \
+		x86gprintrin.h \
 		x86intrin.h \
 		xmmintrin.h \
 		xopintrin.h \
@@ -121,6 +126,8 @@ HEADERS+=	adxintrin.h \
 HEADERS+=	altivec.h \
 		htmintrin.h \
 		htmxlintrin.h
+.elif ${MACHINE_ARCH} == "riscv64"
+GEN+=		riscv_vector.h
 .endif
 
 all:	${HEADERS}
@@ -158,6 +165,10 @@ arm_mve.h: ${CLANG_INC}/clang/Basic/arm_mve.td
 
 arm_cde.h: ${CLANG_INC}/clang/Basic/arm_cde.td
 	${TBLGEN} -gen-arm-cde-header -I${CLANG_INC}/clang/Basic \
+	    -o ${.TARGET} ${.ALLSRC}
+
+riscv_vector.h: ${CLANG_INC}/clang/Basic/riscv_vector.td
+	${TBLGEN} -gen-riscv-vector-header -I${CLANG_INC}/clang/Basic \
 	    -o ${.TARGET} ${.ALLSRC}
 
 .include <bsd.obj.mk>

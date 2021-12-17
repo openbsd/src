@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:38 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2021/12/17 14:55:45 patrick Exp $
 
 LIB=	LLVMAMDGPUCodeGen
 NOPROFILE=
@@ -9,6 +9,7 @@ CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/AMDGPU \
 SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUAlwaysInlinePass.cpp \
 	AMDGPUAnnotateKernelFeatures.cpp \
+	AMDGPUAttributor.cpp \
 	AMDGPUAnnotateUniformValues.cpp \
 	AMDGPUArgumentUsageInfo.cpp \
 	AMDGPUAsmPrinter.cpp \
@@ -19,22 +20,26 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUFixFunctionBitcasts.cpp \
 	AMDGPUFrameLowering.cpp \
 	AMDGPUHSAMetadataStreamer.cpp \
+	AMDGPUInstCombineIntrinsic.cpp \
 	AMDGPUInstrInfo.cpp \
 	AMDGPUInstructionSelector.cpp \
 	AMDGPUISelDAGToDAG.cpp \
 	AMDGPUISelLowering.cpp \
 	AMDGPUGlobalISelUtils.cpp \
+	AMDGPULateCodeGenPrepare.cpp \
 	AMDGPULegalizerInfo.cpp \
 	AMDGPULibCalls.cpp \
 	AMDGPULibFunc.cpp \
 	AMDGPULowerIntrinsics.cpp \
 	AMDGPULowerKernelArguments.cpp \
 	AMDGPULowerKernelAttributes.cpp \
+	AMDGPULowerModuleLDSPass.cpp \
 	AMDGPUMachineCFGStructurizer.cpp \
 	AMDGPUMachineFunction.cpp \
 	AMDGPUMachineModuleInfo.cpp \
 	AMDGPUMacroFusion.cpp \
 	AMDGPUMCInstLower.cpp \
+	AMDGPUMIRFormatter.cpp \
 	AMDGPUOpenCLEnqueuedBlockLowering.cpp \
 	AMDGPUPostLegalizerCombiner.cpp \
 	AMDGPUPreLegalizerCombiner.cpp \
@@ -42,6 +47,7 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUPropagateAttributes.cpp \
 	AMDGPURegBankCombiner.cpp \
 	AMDGPURegisterBankInfo.cpp \
+	AMDGPUReplaceLDSUseWithPointer.cpp \
 	AMDGPURewriteOutArguments.cpp \
 	AMDGPUSubtarget.cpp \
 	AMDGPUTargetMachine.cpp \
@@ -49,10 +55,10 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	AMDGPUTargetTransformInfo.cpp \
 	AMDGPUUnifyDivergentExitNodes.cpp \
 	AMDGPUUnifyMetadata.cpp \
-	AMDGPUInline.cpp \
 	AMDGPUPerfHintAnalysis.cpp \
 	AMDILCFGStructurizer.cpp \
 	AMDGPUPrintfRuntimeBinding.cpp \
+	AMDGPUResourceUsageAnalysis.cpp \
 	GCNHazardRecognizer.cpp \
 	GCNIterativeScheduler.cpp \
 	GCNMinRegStrategy.cpp \
@@ -72,17 +78,15 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	R600OptimizeVectorRegisters.cpp \
 	R600Packetizer.cpp \
 	R600RegisterInfo.cpp \
-	SIAddIMGInit.cpp \
 	SIAnnotateControlFlow.cpp \
 	SIFixSGPRCopies.cpp \
-	SIFixupVectorISel.cpp \
 	SIFixVGPRCopies.cpp \
 	SIPreAllocateWWMRegs.cpp \
 	SIFoldOperands.cpp \
 	SIFormMemoryClauses.cpp \
 	SIFrameLowering.cpp \
 	SIInsertHardClauses.cpp \
-	SIInsertSkips.cpp \
+	SILateBranchLowering.cpp \
 	SIInsertWaitcnts.cpp \
 	SIInstrInfo.cpp \
 	SIISelLowering.cpp \
@@ -95,17 +99,18 @@ SRCS+=	AMDGPUAliasAnalysis.cpp \
 	SIMemoryLegalizer.cpp \
 	SIOptimizeExecMasking.cpp \
 	SIOptimizeExecMaskingPreRA.cpp \
+	SIOptimizeVGPRLiveRange.cpp \
 	SIPeepholeSDWA.cpp \
 	SIPostRABundler.cpp \
 	SIPreEmitPeephole.cpp \
+	SIProgramInfo.cpp \
 	SIRegisterInfo.cpp \
-	SIRemoveShortExecBranches.cpp \
 	SIShrinkInstructions.cpp \
 	SIWholeQuadMode.cpp \
 	GCNILPSched.cpp \
-	GCNRegBankReassign.cpp \
 	GCNNSAReassign.cpp \
 	GCNDPPCombine.cpp \
+	GCNPreRAOptimizations.cpp \
 	SIModeRegister.cpp
 
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/Target/AMDGPU

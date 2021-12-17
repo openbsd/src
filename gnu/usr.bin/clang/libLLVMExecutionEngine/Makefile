@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2021/04/28 12:55:39 patrick Exp $
+# $OpenBSD: Makefile,v 1.7 2021/12/17 14:55:45 patrick Exp $
 
 LIB=	LLVMExecutionEngine
 NOPROFILE=
@@ -29,42 +29,53 @@ SRCS+=	JITLink.cpp \
 	MachO_x86_64.cpp \
 	MachOLinkGraphBuilder.cpp \
 	ExecutionEngineELF.cpp \
-	ELF_x86_64.cpp
+	ELFLinkGraphBuilder.cpp \
+	ELF_riscv.cpp \
+	ELF_x86_64.cpp \
+	riscv.cpp \
+	x86_64.cpp
 
 # MCJIT
 SRCS+=	MCJIT.cpp
 
-# OrcError
+# OrcShared
 SRCS+=	OrcError.cpp \
-	RPCError.cpp \
+	RPCError.cpp
 
-# OrcJIT
+# OrcTargetProcess
+SRCS+=	JITLoaderGDB.cpp \
+	RegisterEHFrames.cpp \
+	TargetExecutionUtils.cpp
+
+# Orc
 SRCS+=	CompileOnDemandLayer.cpp \
 	CompileUtils.cpp \
 	ExecutionEngineCore.cpp \
+	DebugObjectManagerPlugin.cpp \
 	DebugUtils.cpp \
+	EPCDynamicLibrarySearchGenerator.cpp \
+	EPCDebugObjectRegistrar.cpp \
+	EPCEHFrameRegistrar.cpp \
+	EPCIndirectionUtils.cpp \
 	ExecutionUtils.cpp \
 	IndirectionUtils.cpp \
 	IRCompileLayer.cpp \
 	IRTransformLayer.cpp \
 	JITTargetMachineBuilder.cpp \
 	LazyReexports.cpp \
-	Legacy.cpp \
 	Layer.cpp \
 	LLJIT.cpp \
 	MachOPlatform.cpp \
 	Mangling.cpp \
-	NullResolver.cpp \
 	ObjectLinkingLayer.cpp \
 	ObjectTransformLayer.cpp \
 	OrcABISupport.cpp \
-	OrcCBindings.cpp \
 	OrcV2CBindings.cpp \
-	OrcMCJITReplacement.cpp \
 	RTDyldObjectLinkingLayer.cpp \
-	ThreadSafeModule.cpp \
 	Speculation.cpp \
-	SpeculateAnalyses.cpp
+	SpeculateAnalyses.cpp \
+	ExecutorProcessControl.cpp \
+	ThreadSafeModule.cpp
 
 # RuntimeDyld
 SRCS+=	JITSymbol.cpp \
@@ -92,7 +103,8 @@ ExecutionEngineELF.cpp:
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/JITLink
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/MCJIT
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/Orc
-.PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/OrcError
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/Orc/Shared
+.PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/Orc/TargetProcess
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/RuntimeDyld
 .PATH:	${.CURDIR}/../../../llvm/llvm/lib/ExecutionEngine/RuntimeDyld/Targets
 

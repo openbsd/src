@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2021/04/28 12:55:40 patrick Exp $
+# $OpenBSD: Makefile,v 1.10 2021/12/17 14:55:46 patrick Exp $
 
 LIB=	clangBasic
 NOPIC=
@@ -14,26 +14,30 @@ SRCS=	Attributes.cpp \
 	CharInfo.cpp \
 	CodeGenOptions.cpp \
 	Cuda.cpp \
+	DarwinSDKInfo.cpp \
 	Diagnostic.cpp \
 	DiagnosticIDs.cpp \
 	DiagnosticOptions.cpp \
 	ExpressionTraits.cpp \
+	FileEntry.cpp \
 	FileManager.cpp \
 	FileSystemStatCache.cpp \
-	FixedPoint.cpp \
 	IdentifierTable.cpp \
 	LangOptions.cpp \
 	LangStandards.cpp \
 	Module.cpp \
 	ObjCRuntime.cpp \
+	OpenCLOptions.cpp \
 	OpenMPKinds.cpp \
 	OperatorPrecedence.cpp \
-	SanitizerBlacklist.cpp \
+	ProfileList.cpp \
+	NoSanitizeList.cpp \
 	SanitizerSpecialCaseList.cpp \
 	Sanitizers.cpp \
 	SourceLocation.cpp \
 	SourceManager.cpp \
 	Stack.cpp \
+	TargetID.cpp \
 	TargetInfo.cpp \
 	Targets.cpp \
 	TokenKinds.cpp \
@@ -53,6 +57,7 @@ SRCS+=	AArch64.cpp \
 	Hexagon.cpp \
 	Lanai.cpp \
 	Le64.cpp \
+	M68k.cpp \
 	MSP430.cpp \
 	Mips.cpp \
 	NVPTX.cpp \
@@ -71,6 +76,11 @@ SRCS+=	AArch64.cpp \
 
 .PATH:	${.CURDIR}/../../../llvm/clang/lib/Basic
 .PATH:	${.CURDIR}/../../../llvm/clang/lib/Basic/Targets
+
+BUILDFIRST=	VCSVersion.inc
+
+VCSVersion.inc:
+	touch $@
 
 install:
 	@# Nothing here so far ...

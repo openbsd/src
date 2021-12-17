@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2021/04/28 12:55:38 patrick Exp $
+# $OpenBSD: Makefile,v 1.13 2021/12/17 14:55:45 patrick Exp $
 
 LIB=	LLVMAnalysis
 NOPROFILE=
@@ -30,24 +30,29 @@ SRCS+=	AliasAnalysis.cpp \
 	CodeMetrics.cpp \
 	ConstantFolding.cpp \
 	DDG.cpp \
+	DDGPrinter.cpp \
+	ConstraintSystem.cpp \
 	Delinearization.cpp \
 	DemandedBits.cpp \
 	DependenceAnalysis.cpp \
 	DependenceGraphBuilder.cpp \
+	DevelopmentModeInlineAdvisor.cpp \
 	DivergenceAnalysis.cpp \
 	DomPrinter.cpp \
 	DomTreeUpdater.cpp \
 	DominanceFrontier.cpp \
 	EHPersonalities.cpp \
+	FunctionPropertiesAnalysis.cpp \
 	GlobalsModRef.cpp \
 	GuardUtils.cpp \
 	HeatUtils.cpp \
+	IRSimilarityIdentifier.cpp \
 	IVDescriptors.cpp \
 	IVUsers.cpp \
+	ImportedFunctionsInliningStatistics.cpp \
 	IndirectCallPromotionAnalysis.cpp \
 	InlineCost.cpp \
 	InlineAdvisor.cpp \
-	InlineFeaturesAnalysis.cpp \
 	InlineSizeEstimatorAnalysis.cpp \
 	InstCount.cpp \
 	InstructionPrecedenceTracking.cpp \
@@ -68,6 +73,7 @@ SRCS+=	AliasAnalysis.cpp \
 	LoopUnrollAnalyzer.cpp \
 	LoopInfo.cpp \
 	LoopPass.cpp \
+	MLInlineAdvisor.cpp \
 	MemDepPrinter.cpp \
 	MemDerefPrinter.cpp \
 	MemoryBuiltins.cpp \
@@ -82,6 +88,7 @@ SRCS+=	AliasAnalysis.cpp \
 	ObjCARCAnalysisUtils.cpp \
 	ObjCARCInstKind.cpp \
 	OptimizationRemarkEmitter.cpp \
+	OverflowInstAnalysis.cpp \
 	PHITransAddr.cpp \
 	PhiValues.cpp \
 	PostDominators.cpp \
@@ -90,6 +97,8 @@ SRCS+=	AliasAnalysis.cpp \
 	RegionInfo.cpp \
 	RegionPass.cpp \
 	RegionPrinter.cpp \
+	ReleaseModeModelRunner.cpp \
+	ReplayInlineAdvisor.cpp \
 	ScalarEvolution.cpp \
 	ScalarEvolutionAliasAnalysis.cpp \
 	ScalarEvolutionDivision.cpp \
@@ -98,6 +107,7 @@ SRCS+=	AliasAnalysis.cpp \
 	StackSafetyAnalysis.cpp \
 	SyncDependenceAnalysis.cpp \
 	SyntheticCountsUtils.cpp \
+	TFUtils.cpp \
 	TargetLibraryInfo.cpp \
 	TargetTransformInfo.cpp \
 	Trace.cpp \

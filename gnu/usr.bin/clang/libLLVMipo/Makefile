@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2021/04/28 12:55:40 patrick Exp $
+# $OpenBSD: Makefile,v 1.14 2021/12/17 14:55:46 patrick Exp $
 
 LIB=	LLVMipo
 NOPROFILE=
@@ -7,6 +7,7 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms
 CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms/IPO
 
 SRCS+=	AlwaysInliner.cpp \
+	Annotation2Metadata.cpp \
 	ArgumentPromotion.cpp \
 	Attributor.cpp \
 	AttributorAttributes.cpp \
@@ -21,12 +22,13 @@ SRCS+=	AlwaysInliner.cpp \
 	ForceFunctionAttrs.cpp \
 	FunctionAttrs.cpp \
 	FunctionImport.cpp \
+	FunctionSpecialization.cpp \
 	GlobalDCE.cpp \
 	GlobalOpt.cpp \
 	GlobalSplit.cpp \
 	HotColdSplitting.cpp \
-	IPConstantPropagation.cpp \
 	IPO.cpp \
+	IROutliner.cpp \
 	InferFunctionAttrs.cpp \
 	InlineSimple.cpp \
 	Inliner.cpp \
@@ -38,7 +40,9 @@ SRCS+=	AlwaysInliner.cpp \
 	PartialInlining.cpp \
 	PassManagerBuilder.cpp \
 	PruneEH.cpp \
+	SampleContextTracker.cpp \
 	SampleProfile.cpp \
+	SampleProfileProbe.cpp \
 	ipoSCCP.cpp \
 	StripDeadPrototypes.cpp \
 	StripSymbols.cpp \

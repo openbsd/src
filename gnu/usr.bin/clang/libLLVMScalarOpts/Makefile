@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2021/04/28 12:55:40 patrick Exp $
+# $OpenBSD: Makefile,v 1.14 2021/12/17 14:55:46 patrick Exp $
 
 LIB=	LLVMScalarOpts
 NOPROFILE=
@@ -8,13 +8,15 @@ CPPFLAGS+=	-I${LLVM_SRCS}/include/llvm/Transforms/Scalar
 
 SRCS+=	ADCE.cpp \
 	AlignmentFromAssumptions.cpp \
+	AnnotationRemarks.cpp \
 	BDCE.cpp \
 	CallSiteSplitting.cpp \
 	ConstantHoisting.cpp \
-	ConstantProp.cpp \
+	ConstraintElimination.cpp \
 	CorrelatedValuePropagation.cpp \
 	DCE.cpp \
 	DeadStoreElimination.cpp \
+	DFAJumpThreading.cpp \
 	DivRemPairs.cpp \
 	EarlyCSE.cpp \
 	FlattenCFGPass.cpp \
@@ -31,6 +33,7 @@ SRCS+=	ADCE.cpp \
 	JumpThreading.cpp \
 	LICM.cpp \
 	LoopAccessAnalysisPrinter.cpp \
+	LoopBoundSplit.cpp \
 	LoopSink.cpp \
 	LoopDeletion.cpp \
 	LoopDataPrefetch.cpp \
@@ -39,6 +42,7 @@ SRCS+=	ADCE.cpp \
 	LoopIdiomRecognize.cpp \
 	LoopInstSimplify.cpp \
 	LoopInterchange.cpp \
+	LoopFlatten.cpp \
 	LoopLoadElimination.cpp \
 	LoopPassManager.cpp \
 	LoopPredication.cpp \
@@ -71,12 +75,12 @@ SRCS+=	ADCE.cpp \
 	SROA.cpp \
 	Scalar.cpp \
 	Scalarizer.cpp \
+	ScalarizeMaskedMemIntrin.cpp \
 	SeparateConstOffsetFromGEP.cpp \
 	SimpleLoopUnswitch.cpp \
 	SimplifyCFGPass.cpp \
 	Sink.cpp \
 	SpeculativeExecution.cpp \
-	SpeculateAroundPHIs.cpp \
 	StraightLineStrengthReduce.cpp \
 	StructurizeCFG.cpp \
 	TailRecursionElimination.cpp \

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2021/04/29 05:32:01 drahn Exp $
+# $OpenBSD: Makefile,v 1.2 2021/12/17 14:55:44 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ HDRS=	RISCVGenAsmMatcher.inc RISCVGenAsmWriter.inc \
 	RISCVGenInstrInfo.inc RISCVGenRegisterInfo.inc \
 	RISCVGenSubtargetInfo.inc \
 	RISCVGenMCCodeEmitter.inc RISCVGenMCPseudoLowering.inc \
-	RISCVGenSystemOperands.inc RISCVGenRegisterBank.inc \
+	RISCVGenSearchableTables.inc RISCVGenRegisterBank.inc \
 	RISCVGenGlobalISel.inc RISCVGenCompressInstEmitter.inc
 
 # RISCVGenGICombiner.inc  RISCVGenFastISel.inc 
@@ -78,7 +78,7 @@ RISCVGenMCPseudoLowering.inc: ${LLVM_SRCS}/lib/Target/RISCV/RISCV.td
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/RISCV \
 		-o ${.TARGET} ${.ALLSRC}
 
-RISCVGenSystemOperands.inc: ${LLVM_SRCS}/lib/Target/RISCV/RISCV.td
+RISCVGenSearchableTables.inc: ${LLVM_SRCS}/lib/Target/RISCV/RISCV.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-searchable-tables \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/RISCV \
 		-o ${.TARGET} ${.ALLSRC}

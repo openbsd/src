@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2021/04/28 12:55:38 patrick Exp $
+# $OpenBSD: Makefile,v 1.4 2021/12/17 14:55:44 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -30,6 +30,8 @@ HDRS+=	R600GenAsmWriter.inc \
 	R600GenMCCodeEmitter.inc \
 	R600GenRegisterInfo.inc \
 	R600GenSubtargetInfo.inc
+
+HDRS+=	InstCombineTables.inc
 
 all: ${HDRS}
 
@@ -138,6 +140,11 @@ R600GenRegisterInfo.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/R600.td
 		-o ${.TARGET} ${.ALLSRC}
 R600GenSubtargetInfo.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/R600.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-subtarget \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AMDGPU \
+		-o ${.TARGET} ${.ALLSRC}
+
+InstCombineTables.inc: ${LLVM_SRCS}/lib/Target/AMDGPU/InstCombineTables.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-searchable-tables \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/AMDGPU \
 		-o ${.TARGET} ${.ALLSRC}
 

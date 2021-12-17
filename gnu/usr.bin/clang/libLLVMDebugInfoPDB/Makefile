@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2021/04/28 12:55:39 patrick Exp $
+# $OpenBSD: Makefile,v 1.7 2021/12/17 14:55:45 patrick Exp $
 
 LIB=	LLVMDebugInfoPDB
 NOPROFILE=
@@ -23,9 +23,11 @@ SRCS+=	DbiModuleDescriptor.cpp \
 	NativeEnumInjectedSources.cpp \
 	NativeEnumLineNumbers.cpp \
 	NativeEnumModules.cpp \
+	NativeEnumSymbols.cpp \
 	NativeEnumTypes.cpp \
 	NativeExeSymbol.cpp \
 	NativeFunctionSymbol.cpp \
+	NativeInlineSiteSymbol.cpp \
 	NativeLineNumber.cpp \
 	NativePublicSymbol.cpp \
 	NativeRawSymbol.cpp \

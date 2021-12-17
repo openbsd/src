@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2021/04/28 12:55:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2021/12/17 14:55:47 patrick Exp $
 
 LIB=	lldbTarget
 NOPIC=
@@ -22,6 +22,7 @@ SRCS=	ABI.cpp \
 	PathMappingList.cpp \
 	Platform.cpp \
 	Process.cpp \
+	ProcessTrace.cpp \
 	Queue.cpp \
 	QueueItem.cpp \
 	QueueList.cpp \
@@ -63,6 +64,10 @@ SRCS=	ABI.cpp \
 	ThreadPlanTracer.cpp \
 	ThreadPlanStack.cpp \
 	ThreadSpec.cpp \
+	Trace.cpp \
+	TraceCursor.cpp \
+	TraceExporter.cpp \
+	TraceInstructionDumper.cpp \
 	UnixSignals.cpp \
 	UnwindAssembly.cpp \
 	UnwindLLDB.cpp

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2021/04/28 12:55:40 patrick Exp $
+# $OpenBSD: Makefile,v 1.8 2021/12/17 14:55:46 patrick Exp $
 
 LIB=	clangFrontend
 NOPIC=
@@ -21,7 +21,6 @@ SRCS=	ASTConsumers.cpp \
 	FrontendAction.cpp \
 	FrontendActions.cpp \
 	FrontendOptions.cpp \
-	FrontendTiming.cpp \
 	HeaderIncludeGen.cpp \
 	InitHeaderSearch.cpp \
 	InitPreprocessor.cpp \

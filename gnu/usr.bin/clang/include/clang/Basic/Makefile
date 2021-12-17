@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2021/04/28 12:55:37 patrick Exp $
+# $OpenBSD: Makefile,v 1.9 2021/12/17 14:55:44 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -41,7 +41,9 @@ GEN+= DiagnosticGroups.inc \
 	arm_cde_builtins.inc \
 	arm_cde_builtin_cg.inc \
 	arm_cde_builtin_sema.inc \
-	arm_cde_builtin_aliases.inc
+	arm_cde_builtin_aliases.inc \
+	riscv_vector_builtins.inc \
+	riscv_vector_builtin_cg.inc
 
 all: ${GEN}
 
@@ -133,6 +135,14 @@ arm_cde_builtin_sema.inc: ${CLANG_INC}/clang/Basic/arm_cde.td
 
 arm_cde_builtin_aliases.inc: ${CLANG_INC}/clang/Basic/arm_cde.td
 	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-arm-cde-builtin-aliases \
+		-o ${.TARGET} ${.ALLSRC}
+
+riscv_vector_builtins.inc: ${CLANG_INC}/clang/Basic/riscv_vector.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-riscv-vector-builtins \
+		-o ${.TARGET} ${.ALLSRC}
+
+riscv_vector_builtin_cg.inc: ${CLANG_INC}/clang/Basic/riscv_vector.td
+	${TBLGEN} -I${CLANG_INC}/clang/Basic -gen-riscv-vector-builtin-codegen \
 		-o ${.TARGET} ${.ALLSRC}
 
 .include <bsd.obj.mk>

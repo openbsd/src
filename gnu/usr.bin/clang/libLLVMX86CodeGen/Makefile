@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.16 2021/04/28 12:55:40 patrick Exp $
+# $OpenBSD: Makefile,v 1.17 2021/12/17 14:55:46 patrick Exp $
 
 LIB=	LLVMX86CodeGen
 NOPROFILE=
@@ -11,9 +11,15 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86CallingConv.cpp \
 	X86CallLowering.cpp \
 	X86CmovConversion.cpp \
-	X86CondBrFolding.cpp \
 	X86DomainReassignment.cpp \
 	X86DiscriminateMemOps.cpp \
+	X86LowerTileCopy.cpp \
+	X86LowerAMXType.cpp \
+	X86PreAMXConfig.cpp \
+	X86LowerAMXIntrinsics.cpp \
+	X86TileConfig.cpp \
+	X86FastTileConfig.cpp \
+	X86PreTileConfig.cpp \
 	X86ExpandPseudo.cpp \
 	X86FastISel.cpp \
 	X86FixupBWInsts.cpp \
@@ -31,6 +37,7 @@ SRCS+=	X86AsmPrinter.cpp \
 	X86IndirectThunks.cpp \
 	X86InterleavedAccess.cpp \
 	X86InsertPrefetch.cpp \
+	X86InstCombineIntrinsic.cpp \
 	X86InstrFMA3Info.cpp \
 	X86InstrFoldTables.cpp \
 	X86InstrInfo.cpp \

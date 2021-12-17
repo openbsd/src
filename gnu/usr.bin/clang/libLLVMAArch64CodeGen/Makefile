@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2021/04/28 12:55:38 patrick Exp $
+# $OpenBSD: Makefile,v 1.12 2021/12/17 14:55:45 patrick Exp $
 
 LIB=	LLVMAArch64CodeGen
 NOPROFILE=
@@ -8,10 +8,14 @@ CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/AArch64 \
 
 # GISel
 SRCS+=	AArch64CallLowering.cpp \
+	AArch64GlobalISelUtils.cpp \
 	AArch64InstructionSelector.cpp \
 	AArch64LegalizerInfo.cpp \
+	AArch64O0PreLegalizerCombiner.cpp \
 	AArch64PreLegalizerCombiner.cpp \
 	AArch64PostLegalizerCombiner.cpp \
+	AArch64PostLegalizerLowering.cpp \
+	AArch64PostSelectOptimize.cpp \
 	AArch64RegisterBankInfo.cpp
 
 SRCS+=	AArch64A57FPLoadBalancing.cpp \
@@ -37,6 +41,7 @@ SRCS+=	AArch64A57FPLoadBalancing.cpp \
 	AArch64ISelLowering.cpp \
 	AArch64InstrInfo.cpp \
 	AArch64LoadStoreOptimizer.cpp \
+	AArch64LowerHomogeneousPrologEpilog.cpp \
 	AArch64MachineFunctionInfo.cpp \
 	AArch64MacroFusion.cpp \
 	AArch64MCInstLower.cpp \

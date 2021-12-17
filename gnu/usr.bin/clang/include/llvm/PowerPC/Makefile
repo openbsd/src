@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2021/04/28 12:55:38 patrick Exp $
+# $OpenBSD: Makefile,v 1.5 2021/12/17 14:55:44 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,9 @@ HDRS=	PPCGenAsmMatcher.inc \
 	PPCGenMCCodeEmitter.inc \
 	PPCGenRegisterInfo.inc \
 	PPCGenSubtargetInfo.inc \
-	PPCGenExegesis.inc
+	PPCGenExegesis.inc \
+	PPCGenRegisterBank.inc \
+	PPCGenGlobalISel.inc
 
 all: ${HDRS}
 
@@ -76,6 +78,16 @@ PPCGenSubtargetInfo.inc: ${LLVM_SRCS}/lib/Target/PowerPC/PPC.td
 
 PPCGenExegesis.inc: ${LLVM_SRCS}/lib/Target/PowerPC/PPC.td
 	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-exegesis \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/PowerPC \
+		-o ${.TARGET} ${.ALLSRC}
+
+PPCGenRegisterBank.inc: ${LLVM_SRCS}/lib/Target/PowerPC/PPC.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-register-bank \
+		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/PowerPC \
+		-o ${.TARGET} ${.ALLSRC}
+
+PPCGenGlobalISel.inc: ${LLVM_SRCS}/lib/Target/PowerPC/PPC.td
+	${.OBJDIR}/../../../llvm-tblgen/llvm-tblgen -gen-global-isel \
 		-I${LLVM_SRCS}/include -I${LLVM_SRCS}/lib/Target/PowerPC \
 		-o ${.TARGET} ${.ALLSRC}
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2021/04/28 12:55:39 patrick Exp $
+# $OpenBSD: Makefile,v 1.12 2021/12/17 14:55:45 patrick Exp $
 
 LIB=	LLVMCore
 NOPROFILE=
@@ -8,9 +8,11 @@ CPPFLAGS+=	-I${.OBJDIR}/../include/llvm/IR \
 
 SRCS+=	AbstractCallSite.cpp \
 	AsmWriter.cpp \
+	Assumptions.cpp \
 	Attributes.cpp \
 	AutoUpgrade.cpp \
 	BasicBlock.cpp \
+	BuiltinGCs.cpp \
 	Comdat.cpp \
 	ConstantFold.cpp \
 	ConstantRange.cpp \
@@ -27,6 +29,7 @@ SRCS+=	AbstractCallSite.cpp \
 	Dominators.cpp \
 	FPEnv.cpp \
 	Function.cpp \
+	GCStrategy.cpp \
 	GVMaterializer.cpp \
 	Globals.cpp \
 	IRBuilder.cpp \
@@ -51,9 +54,13 @@ SRCS+=	AbstractCallSite.cpp \
 	PassManager.cpp \
 	PassRegistry.cpp \
 	PassTimingInfo.cpp \
+	PrintPasses.cpp \
 	SafepointIRVerifier.cpp \
 	ProfileSummary.cpp \
+	PseudoProbe.cpp \
+	ReplaceConstant.cpp \
 	Statepoint.cpp \
+	StructuralHash.cpp \
 	Type.cpp \
 	TypeFinder.cpp \
 	Use.cpp \

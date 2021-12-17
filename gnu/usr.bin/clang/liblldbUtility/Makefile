@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2021/12/17 14:55:47 patrick Exp $
 
 LIB=	lldbUtility
 NOPIC=
@@ -32,6 +32,7 @@ SRCS=	ArchSpec.cpp \
 	RegularExpression.cpp \
 	Reproducer.cpp \
 	ReproducerInstrumentation.cpp \
+	ReproducerProvider.cpp \
 	Scalar.cpp \
 	SelectHelper.cpp \
 	State.cpp \
@@ -46,6 +47,9 @@ SRCS=	ArchSpec.cpp \
 	StructuredData.cpp \
 	TildeExpressionResolver.cpp \
 	Timer.cpp \
+	TraceGDBRemotePackets.cpp \
+	TraceIntelPTGDBRemotePackets.cpp \
+	UnimplementedError.cpp \
 	UUID.cpp \
 	UriParser.cpp \
 	UserID.cpp \

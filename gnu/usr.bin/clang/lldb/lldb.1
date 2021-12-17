@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH "LLDB" "1" "May 01, 2021" "11" "LLDB"
+.TH "LLDB" "1" "Aug 29, 2021" "" "LLDB"
 .SH NAME
 lldb \- LLDB Documentation
 .
@@ -383,11 +383,17 @@ For instance, "apropos breakpoint" will list any command that has the word
 \fBlldb\fP reads things like settings, aliases and commands from the
 \&.lldbinit file.
 .sp
-First, it will read the application specific init file whose name is
-~/.lldbinit followed by a "\-" and the name of the current program. This would
-be ~/.lldbinit\-lldb for the command line \fBlldb\fP and ~/.lldbinit\-Xcode
-for Xcode. If there is no application specific init file, the global
-~/.lldbinit is read.
+First, \fBlldb\fP will try to read the application specific init file
+whose name is ~/.lldbinit followed by a "\-" and the name of the current
+program. This would be ~/.lldbinit\-lldb for the command line \fBlldb\fP
+and ~/.lldbinit\-Xcode for Xcode. If there is no application specific init
+file, \fBlldb\fP will look for an init file in the home directory.
+If launched with a \fI\%REPL\fP option, it will first look for a REPL configuration
+file, specific to the REPL language. The init file should be named as follow:
+\fB\&.lldbinit\-<language>\-repl\fP (i.e. \fB\&.lldbinit\-swift\-repl\fP). If this file doesn\(aqt
+exist, or \fBlldb\fP wasn\(aqt launch with \fI\%REPL\fP, meaning there is neither
+a REPL init file nor an application specific init file, \fBlldb\fP will fallback to
+the global ~/.lldbinit.
 .sp
 Secondly, it will look for an .lldbinit file in the current working directory.
 For security reasons, \fBlldb\fP will print a warning and not source this

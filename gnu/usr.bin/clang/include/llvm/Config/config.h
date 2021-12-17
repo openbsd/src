@@ -57,6 +57,22 @@
 /* Define if dladdr() is available on this platform. */
 #define HAVE_DLADDR 1
 
+/* test from libunwind */
+#if defined(__arm__) && !defined(__USING_SJLJ_EXCEPTIONS__) && \
+    !defined(__ARM_DWARF_EH__)
+/* Define to 1 if we can register EH frames on this platform. */
+/* #undef HAVE_REGISTER_FRAME */
+
+/* Define to 1 if we can deregister EH frames on this platform. */
+/* #undef HAVE_DEREGISTER_FRAME */
+#else
+/* Define to 1 if we can register EH frames on this platform. */
+#define HAVE_REGISTER_FRAME 1
+
+/* Define to 1 if we can deregister EH frames on this platform. */
+#define HAVE_DEREGISTER_FRAME 1
+#endif
+
 /* Define to 1 if you have the <errno.h> header file. */
 #define HAVE_ERRNO_H 1
 
@@ -99,6 +115,9 @@
 /* Define to 1 if you have the `pfm' library (-lpfm). */
 /* #undef HAVE_LIBPFM */
 
+/* Define to 1 if the `perf_branch_entry' struct has field cycles. */
+/* #undef LIBPFM_HAS_FIELD_CYCLES */
+
 /* Define to 1 if you have the `psapi' library (-lpsapi). */
 /* #undef HAVE_LIBPSAPI */
 
@@ -110,9 +129,6 @@
 
 /* Define to 1 if you have the `pthread_setname_np' function. */
 /* #undef HAVE_PTHREAD_SETNAME_NP */
-
-/* Define to 1 if you have the `z' library (-lz). */
-#define HAVE_LIBZ 1
 
 /* Define to 1 if you have the <link.h> header file. */
 /* #undef HAVE_LINK_H */
@@ -128,6 +144,9 @@
 
 /* Define if mallinfo() is available on this platform. */
 /* #undef HAVE_MALLINFO */
+
+/* Define to 1 if you have the `mallinfo2' function. */
+/* #undef HAVE_MALLINFO2 */
 
 /* Define to 1 if you have the <malloc/malloc.h> header file. */
 /* #undef HAVE_MALLOC_MALLOC_H */
@@ -161,12 +180,6 @@
 
 /* Define to 1 if you have the `setenv' function. */
 #define HAVE_SETENV 1
-
-/* Define to 1 if you have the `sched_getaffinity' function. */
-/* #undef HAVE_SCHED_GETAFFINITY */
-
-/* Define to 1 if you have the `CPU_COUNT' macro. */
-/* #undef HAVE_CPU_COUNT */
 
 /* Define to 1 if you have the `setrlimit' function. */
 #define HAVE_SETRLIMIT 1
@@ -214,10 +227,7 @@
 /* #undef HAVE_SYS_TYPES_H */
 
 /* Define if the setupterm() function is supported this platform. */
-/* #undef HAVE_TERMINFO */
-
-/* Define if the xar_open() function is supported this platform. */
-/* #undef HAVE_LIBXAR */
+/* #undef LLVM_ENABLE_TERMINFO */
 
 /* Define to 1 if you have the <termios.h> header file. */
 #define HAVE_TERMIOS_H 1
@@ -227,9 +237,6 @@
 
 /* Define to 1 if you have the <valgrind/valgrind.h> header file. */
 /* #define HAVE_VALGRIND_VALGRIND_H 1 */
-
-/* Define to 1 if you have the <zlib.h> header file. */
-#define HAVE_ZLIB_H 1
 
 /* Have host's _alloca */
 /* #undef HAVE__ALLOCA */
@@ -296,7 +303,7 @@
 
 /* Target triple LLVM will generate code for by default */
 /* Doesn't use `cmakedefine` because it is allowed to be empty. */
-/* #define LLVM_DEFAULT_TARGET_TRIPLE "amd64-unknown-openbsd6.8" */
+/* #define LLVM_DEFAULT_TARGET_TRIPLE "amd64-unknown-openbsd7.0" */
 
 /* Define if zlib compression is available */
 /* #define LLVM_ENABLE_ZLIB 1 */
@@ -311,10 +318,13 @@
 #define LLVM_VERSION_PRINTER_SHOW_HOST_TARGET_INFO 1
 
 /* Define if libxml2 is supported on this platform. */
-/* #undef LLVM_LIBXML2_ENABLED */
+/* #undef LLVM_ENABLE_LIBXML2 */
 
 /* Define to the extension used for shared libraries, say, ".so". */
 #define LTDL_SHLIB_EXT ".so"
+
+/* Define to the extension used for plugin libraries, say, ".so". */
+#define LLVM_PLUGIN_EXT ".so"
 
 /* Define to the address where bug reports for this package should be sent. */
 #define PACKAGE_BUGREPORT "https://bugs.llvm.org/"
@@ -323,10 +333,10 @@
 #define PACKAGE_NAME "LLVM"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "LLVM 11.1.0"
+#define PACKAGE_STRING "LLVM 13.0.0"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "11.1.0"
+#define PACKAGE_VERSION "13.0.0"
 
 /* Define to the vendor of this package. */
 /* #undef PACKAGE_VENDOR */
@@ -349,7 +359,6 @@
 /* Define to the default GlobalISel coverage file prefix */
 /* #undef LLVM_GISEL_COV_PREFIX */
 
-/* Whether Timers signpost passes in Xcode Instruments */
-#define LLVM_SUPPORT_XCODE_SIGNPOSTS 0
+/* #undef HAVE_PROC_PID_RUSAGE */
 
 #endif

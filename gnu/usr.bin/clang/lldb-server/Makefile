@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/04/28 12:55:42 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2021/12/17 14:55:47 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -75,6 +75,15 @@ LLVM_LIBDEPS=	clangAST \
     lldbTarget \
     lldbUtility
 
+BUILDFIRST=	VCSVersion.inc LLGSOptions.inc
+
+VCSVersion.inc:
+	touch $@
+
+LLGSOptions.inc: ${.CURDIR}/../../../llvm/lldb/tools/lldb-server/LLGSOptions.td
+	${.OBJDIR}/../llvm-tblgen/llvm-tblgen -gen-opt-parser-defs \
+		-I ${LLVM_SRCS}/include \
+		-o ${.TARGET} ${.ALLSRC}
 
 LDADD+= -L ${.OBJDIR}/../libLLVM -lLLVM
 

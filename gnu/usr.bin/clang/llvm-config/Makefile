@@ -1,12 +1,12 @@
-# $OpenBSD: Makefile,v 1.6 2021/04/29 05:51:57 jsg Exp $
+# $OpenBSD: Makefile,v 1.7 2021/12/17 14:55:47 patrick Exp $
 
 PROG=	llvm-config
 BINDIR= /usr/bin
 
 NATIVE_ARCHS=AArch64 ARM Mips PowerPC RISCV Sparc X86
 
-PYTHON=		python3
-LLVMBUILD=	${.CURDIR}/../../../llvm/llvm/utils/llvm-build/llvm-build
+CMAKE=		cmake
+LLVMROOT=	${.CURDIR}/../../../llvm/llvm
 
 .include <bsd.own.mk>
 SRCS=	llvm-config.cpp
@@ -32,10 +32,10 @@ LLVM_LIBDEPS=	LLVMTableGen LLVMSupport
 
 reconf:
 .for arch in ${NATIVE_ARCHS}
-	${PYTHON} -B ${LLVMBUILD} \
-	    --native-target ${LLVM_ARCH} \
-	    --enable-targets "${arch} AMDGPU" \
-	    --write-library-table ${.CURDIR}/LibraryDependencies.inc.${arch}
+	mkdir ${.CURDIR}/CMakeGen
+	cd ${.CURDIR}/CMakeGen && ${CMAKE} -DLLVM_TARGETS_TO_BUILD="${arch};AMDGPU" ${LLVMROOT}
+	mv ${.CURDIR}/CMakeGen/tools/llvm-config/LibraryDependencies.inc ${.CURDIR}/LibraryDependencies.inc.${arch}
+	rm -rf ${.CURDIR}/CMakeGen
 .endfor
 
 CLEANFILES+= BuildVariables.inc LibraryDependencies.inc
