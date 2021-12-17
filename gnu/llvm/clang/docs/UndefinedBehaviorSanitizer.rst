@@ -153,6 +153,8 @@ Available checks are:
      unsigned overflow in C++. You can use ``-fsanitize=shift-base`` or
      ``-fsanitize=shift-exponent`` to check only left-hand side or
      right-hand side of shift operation, respectively.
+  -  ``-fsanitize=unsigned-shift-base``: check that an unsigned left-hand side of
+     a left shift operation doesn't overflow.
   -  ``-fsanitize=signed-integer-overflow``: Signed integer overflow, where the
      result of a signed integer computation cannot be represented in its type.
      This includes all the checks covered by ``-ftrapv``, as well as checks for
@@ -268,8 +270,8 @@ This attribute may not be
 supported by other compilers, so consider using it together with
 ``#if defined(__clang__)``.
 
-Suppressing Errors in Recompiled Code (Blacklist)
--------------------------------------------------
+Suppressing Errors in Recompiled Code (Ignorelist)
+--------------------------------------------------
 
 UndefinedBehaviorSanitizer supports ``src`` and ``fun`` entity types in
 :doc:`SanitizerSpecialCaseList`, that can be used to suppress error reports

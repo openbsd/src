@@ -47,7 +47,7 @@ template <typename M> TestMatch matchCode(StringRef Code, M Matcher) {
   ASTContext &Context = ASTUnit->getASTContext();
   assert(!Context.getDiagnostics().hasErrorOccurred() && "Compilation error");
 
-  TraversalKindScope RAII(Context, ast_type_traits::TK_AsIs);
+  TraversalKindScope RAII(Context, TK_AsIs);
   auto Matches = ast_matchers::match(Matcher, Context);
   // We expect a single, exact match.
   assert(Matches.size() != 0 && "no matches found");
@@ -193,8 +193,92 @@ TEST(RangeSelectorTest, AfterOp) {
                        HasValue(EqualsCharSourceRange(ExpectedAfter)));
 }
 
+// Gets the spelling location `Length` characters after the start of AST node
+// `Id`.
+static SourceLocation getSpellingLocAfter(const MatchResult &Result,
+                                          StringRef Id, int Length) {
+  const auto *E = Result.Nodes.getNodeAs<Expr>(Id);
+  assert(E != nullptr);
+  return Result.SourceManager->getSpellingLoc(E->getBeginLoc())
+      .getLocWithOffset(Length);
+}
+
+// Test with a range that is the entire macro arg, but does not end the
+// expansion itself.
+TEST(RangeSelectorTest, AfterOpInMacroArg) {
+  StringRef Code = R"cc(
+#define ISNULL(x) x == nullptr
+    bool g() { int* y; return ISNULL(y); }
+  )cc";
+
+  TestMatch Match =
+      matchCode(Code, declRefExpr(to(namedDecl(hasName("y")))).bind("yvar"));
+  int YVarLen = 1;
+  SourceLocation After = getSpellingLocAfter(Match.Result, "yvar", YVarLen);
+  CharSourceRange Expected = CharSourceRange::getCharRange(After, After);
+  EXPECT_THAT_EXPECTED(after(node("yvar"))(Match.Result),
+                       HasValue(EqualsCharSourceRange(Expected)));
+}
+
+// Test with a range that is the entire macro arg and ends the expansion itself.
+TEST(RangeSelectorTest, AfterOpInMacroArgEndsExpansion) {
+  StringRef Code = R"cc(
+#define ISNULL(x) nullptr == x
+    bool g() { int* y; return ISNULL(y); }
+  )cc";
+
+  TestMatch Match =
+      matchCode(Code, declRefExpr(to(namedDecl(hasName("y")))).bind("yvar"));
+  int YVarLen = 1;
+  SourceLocation After = getSpellingLocAfter(Match.Result, "yvar", YVarLen);
+  CharSourceRange Expected = CharSourceRange::getCharRange(After, After);
+  EXPECT_THAT_EXPECTED(after(node("yvar"))(Match.Result),
+                       HasValue(EqualsCharSourceRange(Expected)));
+}
+
+TEST(RangeSelectorTest, AfterOpInPartOfMacroArg) {
+  StringRef Code = R"cc(
+#define ISNULL(x) x == nullptr
+    int* f(int*);
+    bool g() { int* y; return ISNULL(f(y)); }
+  )cc";
+
+  TestMatch Match =
+      matchCode(Code, declRefExpr(to(namedDecl(hasName("y")))).bind("yvar"));
+  int YVarLen = 1;
+  SourceLocation After = getSpellingLocAfter(Match.Result, "yvar", YVarLen);
+  CharSourceRange Expected = CharSourceRange::getCharRange(After, After);
+  EXPECT_THAT_EXPECTED(after(node("yvar"))(Match.Result),
+                       HasValue(EqualsCharSourceRange(Expected)));
+}
+
+TEST(RangeSelectorTest, BetweenOp) {
+  StringRef Code = R"cc(
+    int f(int x, int y, int z) { return 3; }
+    int g() { return f(3, /* comment */ 7 /* comment */, 9); }
+  )cc";
+  auto Matcher = callExpr(hasArgument(0, expr().bind("a0")),
+                          hasArgument(1, expr().bind("a1")));
+  RangeSelector R = between(node("a0"), node("a1"));
+  TestMatch Match = matchCode(Code, Matcher);
+  EXPECT_THAT_EXPECTED(select(R, Match), HasValue(", /* comment */ "));
+}
+
+TEST(RangeSelectorTest, BetweenOpParsed) {
+  StringRef Code = R"cc(
+    int f(int x, int y, int z) { return 3; }
+    int g() { return f(3, /* comment */ 7 /* comment */, 9); }
+  )cc";
+  auto Matcher = callExpr(hasArgument(0, expr().bind("a0")),
+                          hasArgument(1, expr().bind("a1")));
+  auto R = parseRangeSelector(R"rs(between(node("a0"), node("a1")))rs");
+  ASSERT_THAT_EXPECTED(R, llvm::Succeeded());
+  TestMatch Match = matchCode(Code, Matcher);
+  EXPECT_THAT_EXPECTED(select(*R, Match), HasValue(", /* comment */ "));
+}
+
 // Node-id specific version.
-TEST(RangeSelectorTest, RangeOpNodes) {
+TEST(RangeSelectorTest, EncloseOpNodes) {
   StringRef Code = R"cc(
     int f(int x, int y, int z) { return 3; }
     int g() { return f(/* comment */ 3, 7 /* comment */, 9); }
@@ -206,7 +290,7 @@ TEST(RangeSelectorTest, RangeOpNodes) {
   EXPECT_THAT_EXPECTED(select(R, Match), HasValue("3, 7"));
 }
 
-TEST(RangeSelectorTest, RangeOpGeneral) {
+TEST(RangeSelectorTest, EncloseOpGeneral) {
   StringRef Code = R"cc(
     int f(int x, int y, int z) { return 3; }
     int g() { return f(/* comment */ 3, 7 /* comment */, 9); }
@@ -218,7 +302,7 @@ TEST(RangeSelectorTest, RangeOpGeneral) {
   EXPECT_THAT_EXPECTED(select(R, Match), HasValue("3, 7"));
 }
 
-TEST(RangeSelectorTest, RangeOpNodesParsed) {
+TEST(RangeSelectorTest, EncloseOpNodesParsed) {
   StringRef Code = R"cc(
     int f(int x, int y, int z) { return 3; }
     int g() { return f(/* comment */ 3, 7 /* comment */, 9); }
@@ -231,7 +315,7 @@ TEST(RangeSelectorTest, RangeOpNodesParsed) {
   EXPECT_THAT_EXPECTED(select(*R, Match), HasValue("3, 7"));
 }
 
-TEST(RangeSelectorTest, RangeOpGeneralParsed) {
+TEST(RangeSelectorTest, EncloseOpGeneralParsed) {
   StringRef Code = R"cc(
     int f(int x, int y, int z) { return 3; }
     int g() { return f(/* comment */ 3, 7 /* comment */, 9); }
@@ -371,6 +455,35 @@ TEST(RangeSelectorTest, NameOpCtorInitializer) {
   const char *Init = "init";
   TestMatch Match = matchCode(Code, cxxCtorInitializer().bind(Init));
   EXPECT_THAT_EXPECTED(select(name(Init), Match), HasValue("field"));
+}
+
+TEST(RangeSelectorTest, NameOpTypeLoc) {
+  StringRef Code = R"cc(
+    namespace ns {
+    struct Foo {
+      Foo();
+      Foo(int);
+      Foo(int, int);
+    };
+    }  // namespace ns
+
+    ns::Foo a;
+    auto b = ns::Foo(3);
+    auto c = ns::Foo(1, 2);
+  )cc";
+  const char *CtorTy = "ctor_ty";
+  // Matches declaration of `a`
+  TestMatch MatchA = matchCode(
+      Code, varDecl(hasName("a"), hasTypeLoc(typeLoc().bind(CtorTy))));
+  EXPECT_THAT_EXPECTED(select(name(CtorTy), MatchA), HasValue("Foo"));
+  // Matches call of Foo(int)
+  TestMatch MatchB = matchCode(
+      Code, cxxFunctionalCastExpr(hasTypeLoc(typeLoc().bind(CtorTy))));
+  EXPECT_THAT_EXPECTED(select(name(CtorTy), MatchB), HasValue("Foo"));
+  // Matches call of Foo(int, int)
+  TestMatch MatchC = matchCode(
+      Code, cxxTemporaryObjectExpr(hasTypeLoc(typeLoc().bind(CtorTy))));
+  EXPECT_THAT_EXPECTED(select(name(CtorTy), MatchC), HasValue("Foo"));
 }
 
 TEST(RangeSelectorTest, NameOpErrors) {

@@ -48,8 +48,8 @@ add_clang_library(clang-cpp
                   ${_OBJECTS}
                   LINK_LIBS
                   ${_DEPS})
-
-    set_target_properties(clang-cpp
-      PROPERTIES
-      VERSION ${LIBCLANG_LIBRARY_VERSION}
-      SOVERSION ${LIBCLANG_LIBRARY_VERSION})
+# Optimize function calls for default visibility definitions to avoid PLT and
+# reduce dynamic relocations.
+if (NOT APPLE AND NOT MINGW)
+  target_link_options(clang-cpp PRIVATE LINKER:-Bsymbolic-functions)
+endif()

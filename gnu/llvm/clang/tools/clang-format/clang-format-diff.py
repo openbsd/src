@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #===- clang-format-diff.py - ClangFormat Diff Reformatter ----*- python -*--===#
 #
@@ -47,8 +47,8 @@ def main():
                       help='custom pattern selecting file paths to reformat '
                       '(case sensitive, overrides -iregex)')
   parser.add_argument('-iregex', metavar='PATTERN', default=
-                      r'.*\.(cpp|cc|c\+\+|cxx|c|cl|h|hh|hpp|m|mm|inc|js|ts|proto'
-                      r'|protodevel|java|cs)',
+                      r'.*\.(cpp|cc|c\+\+|cxx|c|cl|h|hh|hpp|hxx|m|mm|inc|js|ts'
+                      r'|proto|protodevel|java|cs|json)',
                       help='custom pattern selecting file paths to reformat '
                       '(case insensitive, overridden by -regex)')
   parser.add_argument('-sort-includes', action='store_true', default=False,
@@ -103,11 +103,19 @@ def main():
     command.extend(lines)
     if args.style:
       command.extend(['-style', args.style])
-    p = subprocess.Popen(command,
-                         stdout=subprocess.PIPE,
-                         stderr=None,
-                         stdin=subprocess.PIPE,
-                         universal_newlines=True)
+
+    try:
+      p = subprocess.Popen(command,
+                           stdout=subprocess.PIPE,
+                           stderr=None,
+                           stdin=subprocess.PIPE,
+                           universal_newlines=True)
+    except OSError as e:
+      # Give the user more context when clang-format isn't
+      # found/isn't executable, etc.
+      raise RuntimeError(
+        'Failed to run "%s" - %s"' % (" ".join(command), e.strerror))
+
     stdout, stderr = p.communicate()
     if p.returncode != 0:
       sys.exit(p.returncode)

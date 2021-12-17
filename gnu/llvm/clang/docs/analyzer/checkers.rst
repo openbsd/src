@@ -438,7 +438,7 @@ optin.cplusplus.UninitializedObject (C++)
 
 This checker reports uninitialized fields in objects created after a constructor
 call. It doesn't only find direct uninitialized fields, but rather makes a deep
-inspection of the object, analyzing all of it's fields subfields.
+inspection of the object, analyzing all of its fields' subfields.
 The checker regards inherited fields as direct fields, so one will receive
 warnings for uninitialized inherited data members as well.
 
@@ -1423,6 +1423,25 @@ Raw pointers and references to uncounted types can't be used as class members. O
    // ...
  };
 
+.. _webkit-UncountedLambdaCapturesChecker:
+
+webkit.UncountedLambdaCapturesChecker
+"""""""""""""""""""""""""""""""""""""
+Raw pointers and references to uncounted types can't be captured in lambdas. Only ref-counted types are allowed.
+
+.. code-block:: cpp
+
+ struct RefCntbl {
+   void ref() {}
+   void deref() {}
+ };
+
+ void foo(RefCntbl* a, RefCntbl& b) {
+   [&, a](){ // warn about 'a'
+     do_something(b); // warn about 'b'
+   };
+ };
+
 .. _alpha-checkers:
 
 Experimental Checkers
@@ -1457,6 +1476,9 @@ Reports similar pieces of code.
    return y;
  }
 
+alpha.core
+^^^^^^^^^^
+
 .. _alpha-core-BoolAssignment:
 
 alpha.core.BoolAssignment (ObjC)
@@ -1468,9 +1490,6 @@ Warn about assigning non-{0,1} values to boolean variables.
  void test() {
    BOOL b = -1; // warn
  }
-
-alpha.core
-^^^^^^^^^^
 
 .. _alpha-core-C11Lock:
 
@@ -1745,7 +1764,7 @@ Check for integer to enumeration casts that could result in undefined values.
  void foo() {
    TestEnum t = static_cast(-1);
        // warn: the value provided to the cast expression is not in
-                the valid range of values for the enum
+       //       the valid range of values for the enum
 
 .. _alpha-cplusplus-InvalidatedIterator:
 
@@ -2519,6 +2538,54 @@ We also define a set of safe transformations which if passed a safe value as an 
 - casts
 - unary operators like ``&`` or ``*``
 
+alpha.webkit.UncountedLocalVarsChecker
+""""""""""""""""""""""""""""""""""""""
+The goal of this rule is to make sure that any uncounted local variable is backed by a ref-counted object with lifetime that is strictly larger than the scope of the uncounted local variable. To be on the safe side we require the scope of an uncounted variable to be embedded in the scope of ref-counted object that backs it.
+
+These are examples of cases that we consider safe:
+
+  .. code-block:: cpp
+
+    void foo1() {
+      RefPtr<RefCountable> counted;
+      // The scope of uncounted is EMBEDDED in the scope of counted.
+      {
+        RefCountable* uncounted = counted.get(); // ok
+      }
+    }
+
+    void foo2(RefPtr<RefCountable> counted_param) {
+      RefCountable* uncounted = counted_param.get(); // ok
+    }
+
+    void FooClass::foo_method() {
+      RefCountable* uncounted = this; // ok
+    }
+
+Here are some examples of situations that we warn about as they *might* be potentially unsafe. The logic is that either we're able to guarantee that an argument is safe or it's considered if not a bug then bug-prone.
+
+  .. code-block:: cpp
+
+    void foo1() {
+      RefCountable* uncounted = new RefCountable; // warn
+    }
+
+    RefCountable* global_uncounted;
+    void foo2() {
+      RefCountable* uncounted = global_uncounted; // warn
+    }
+
+    void foo3() {
+      RefPtr<RefCountable> counted;
+      // The scope of uncounted is not EMBEDDED in the scope of counted.
+      RefCountable* uncounted = counted.get(); // warn
+    }
+
+We don't warn about these cases - we don't consider them necessarily safe but since they are very common and usually safe we'd introduce a lot of false positives otherwise:
+- variable defined in condition part of an ```if``` statement
+- variable defined in init statement condition of a ```for``` statement
+
+For the time being we also don't warn about uninitialized uncounted local variables.
 
 Debug Checkers
 ---------------

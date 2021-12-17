@@ -79,7 +79,6 @@ print >> out_file, '''\
 <!--*************************************************************************-->
 <h1>C++ Defect Report Support in Clang</h1>
 <!--*************************************************************************-->
-<p>Last updated: $Date$</p>
 
 <h2 id="cxxdr">C++ defect report implementation status</h2>
 
@@ -93,7 +92,7 @@ print >> out_file, '''\
     <th>Available in Clang?</th>
   </tr>'''
 
-latest_release = 10
+latest_release = 11
 
 def availability(issue):
   status = status_map.get(issue, 'unknown')

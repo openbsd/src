@@ -14,7 +14,7 @@
 using namespace clang::ast_matchers;
 
 namespace clang {
-namespace ast_type_traits {
+namespace {
 
 TEST(ASTNodeKind, NoKind) {
   EXPECT_FALSE(ASTNodeKind().isBaseOf(ASTNodeKind()));
@@ -37,6 +37,18 @@ TEST(ASTNodeKind, Bases) {
   EXPECT_FALSE(DNT<VarDecl>().isBaseOf(DNT<Decl>()));
 
   EXPECT_TRUE(DNT<Decl>().isSame(DNT<Decl>()));
+}
+
+TEST(DynTypedNode, Clades) {
+  EXPECT_TRUE(DNT<Stmt>().getCladeKind().isSame(DNT<Stmt>()));
+  EXPECT_TRUE(DNT<Decl>().getCladeKind().isSame(DNT<Decl>()));
+
+  EXPECT_TRUE(DNT<CXXMethodDecl>().getCladeKind().isSame(DNT<Decl>()));
+  EXPECT_TRUE(DNT<CXXMemberCallExpr>().getCladeKind().isSame(DNT<Stmt>()));
+
+  EXPECT_FALSE(DNT<CXXMemberCallExpr>().getCladeKind().isSame(DNT<Decl>()));
+
+  EXPECT_TRUE(ASTNodeKind().getCladeKind().isNone());
 }
 
 TEST(ASTNodeKind, BaseDistances) {
@@ -179,5 +191,5 @@ TEST(DynTypedNode, QualType) {
   EXPECT_FALSE(Node < Node);
 }
 
-}  // namespace ast_type_traits
+} // namespace
 }  // namespace clang

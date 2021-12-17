@@ -9,6 +9,8 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclGroup.h"
+#include "clang/Driver/Compilation.h"
+#include "clang/Driver/Driver.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
@@ -18,6 +20,7 @@
 #include "clang/Tooling/Tooling.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/Host.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
@@ -219,6 +222,142 @@ TEST(ToolInvocation, TestVirtualModulesCompilation) {
   InMemoryFileSystem->addFile("def/module.map", 0,
                               llvm::MemoryBuffer::getMemBuffer("\n"));
   EXPECT_TRUE(Invocation.run());
+}
+
+struct DiagnosticConsumerExpectingSourceManager : public DiagnosticConsumer {
+  bool SawSourceManager;
+
+  DiagnosticConsumerExpectingSourceManager() : SawSourceManager(false) {}
+
+  void HandleDiagnostic(clang::DiagnosticsEngine::Level,
+                        const clang::Diagnostic &info) override {
+    SawSourceManager = info.hasSourceManager();
+  }
+};
+
+TEST(ToolInvocation, DiagConsumerExpectingSourceManager) {
+  llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem> OverlayFileSystem(
+      new llvm::vfs::OverlayFileSystem(llvm::vfs::getRealFileSystem()));
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> InMemoryFileSystem(
+      new llvm::vfs::InMemoryFileSystem);
+  OverlayFileSystem->pushOverlay(InMemoryFileSystem);
+  llvm::IntrusiveRefCntPtr<FileManager> Files(
+      new FileManager(FileSystemOptions(), OverlayFileSystem));
+  std::vector<std::string> Args;
+  Args.push_back("tool-executable");
+  // Note: intentional error; user probably meant -ferror-limit=0.
+  Args.push_back("-ferror-limit=-1");
+  Args.push_back("-fsyntax-only");
+  Args.push_back("test.cpp");
+  clang::tooling::ToolInvocation Invocation(
+      Args, std::make_unique<SyntaxOnlyAction>(), Files.get());
+  InMemoryFileSystem->addFile(
+      "test.cpp", 0, llvm::MemoryBuffer::getMemBuffer("int main() {}\n"));
+
+  DiagnosticConsumerExpectingSourceManager Consumer;
+  Invocation.setDiagnosticConsumer(&Consumer);
+
+  EXPECT_TRUE(Invocation.run());
+  EXPECT_TRUE(Consumer.SawSourceManager);
+}
+
+namespace {
+/// Overlays the real filesystem with the given VFS and returns the result.
+llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem>
+overlayRealFS(llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> VFS) {
+  auto RFS = llvm::vfs::getRealFileSystem();
+  auto OverlayFS = llvm::makeIntrusiveRefCnt<llvm::vfs::OverlayFileSystem>(RFS);
+  OverlayFS->pushOverlay(VFS);
+  return OverlayFS;
+}
+
+struct CommandLineExtractorTest : public ::testing::Test {
+  llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> InMemoryFS;
+  llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
+  driver::Driver Driver;
+
+public:
+  CommandLineExtractorTest()
+      : InMemoryFS(new llvm::vfs::InMemoryFileSystem),
+        Diags(CompilerInstance::createDiagnostics(new DiagnosticOptions)),
+        Driver("clang", llvm::sys::getDefaultTargetTriple(), *Diags,
+               "clang LLVM compiler", overlayRealFS(InMemoryFS)) {}
+
+  void addFile(StringRef Name, StringRef Content) {
+    InMemoryFS->addFile(Name, 0, llvm::MemoryBuffer::getMemBuffer(Content));
+  }
+
+  const llvm::opt::ArgStringList *
+  extractCC1Arguments(llvm::ArrayRef<const char *> Argv) {
+    const std::unique_ptr<driver::Compilation> Compilation(
+        Driver.BuildCompilation(llvm::makeArrayRef(Argv)));
+
+    return getCC1Arguments(Diags.get(), Compilation.get());
+  }
+};
+} // namespace
+
+TEST_F(CommandLineExtractorTest, AcceptOffloading) {
+  addFile("test.c", "int main() {}\n");
+  const char *Args[] = {"clang",     "-target",  "arm64-apple-macosx11.0.0",
+                        "-x",        "hip",      "test.c",
+                        "-nogpulib", "-nogpuinc"};
+  EXPECT_NE(extractCC1Arguments(Args), nullptr);
+}
+
+TEST_F(CommandLineExtractorTest, AcceptOffloadingCompile) {
+  addFile("test.c", "int main() {}\n");
+  const char *Args[] = {"clang",  "-target",   "arm64-apple-macosx11.0.0",
+                        "-c",     "-x",        "hip",
+                        "test.c", "-nogpulib", "-nogpuinc"};
+  EXPECT_NE(extractCC1Arguments(Args), nullptr);
+}
+
+TEST_F(CommandLineExtractorTest, AcceptOffloadingSyntaxOnly) {
+  addFile("test.c", "int main() {}\n");
+  const char *Args[] = {
+      "clang",         "-target",   "arm64-apple-macosx11.0.0",
+      "-fsyntax-only", "-x",        "hip",
+      "test.c",        "-nogpulib", "-nogpuinc"};
+  EXPECT_NE(extractCC1Arguments(Args), nullptr);
+}
+
+TEST_F(CommandLineExtractorTest, AcceptExternalAssembler) {
+  addFile("test.c", "int main() {}\n");
+  const char *Args[] = {
+      "clang", "-target", "arm64-apple-macosx11.0.0", "-fno-integrated-as",
+      "-c",    "test.c"};
+  EXPECT_NE(extractCC1Arguments(Args), nullptr);
+}
+
+TEST_F(CommandLineExtractorTest, AcceptEmbedBitcode) {
+  addFile("test.c", "int main() {}\n");
+  const char *Args[] = {"clang", "-target",         "arm64-apple-macosx11.0.0",
+                        "-c",    "-fembed-bitcode", "test.c"};
+  EXPECT_NE(extractCC1Arguments(Args), nullptr);
+}
+
+TEST_F(CommandLineExtractorTest, AcceptSaveTemps) {
+  addFile("test.c", "int main() {}\n");
+  const char *Args[] = {"clang", "-target",     "arm64-apple-macosx11.0.0",
+                        "-c",    "-save-temps", "test.c"};
+  EXPECT_NE(extractCC1Arguments(Args), nullptr);
+}
+
+TEST_F(CommandLineExtractorTest, RejectMultipleArchitectures) {
+  addFile("test.c", "int main() {}\n");
+  const char *Args[] = {"clang", "-target", "arm64-apple-macosx11.0.0",
+                        "-arch", "x86_64",  "-arch",
+                        "arm64", "-c",      "test.c"};
+  EXPECT_EQ(extractCC1Arguments(Args), nullptr);
+}
+
+TEST_F(CommandLineExtractorTest, RejectMultipleInputFiles) {
+  addFile("one.c", "void one() {}\n");
+  addFile("two.c", "void two() {}\n");
+  const char *Args[] = {"clang", "-target", "arm64-apple-macosx11.0.0",
+                        "-c",    "one.c",   "two.c"};
+  EXPECT_EQ(extractCC1Arguments(Args), nullptr);
 }
 
 struct VerifyEndCallback : public SourceFileCallbacks {
@@ -563,6 +702,40 @@ TEST(ClangToolTest, StripDependencyFileAdjusterShowIncludes) {
   EXPECT_TRUE(HasFlag("-c"));
 }
 
+// Check getClangStripDependencyFileAdjuster doesn't strip args when using the
+// MSVC cl.exe driver
+TEST(ClangToolTest, StripDependencyFileAdjusterMsvc) {
+  FixedCompilationDatabase Compilations(
+      "/", {"--driver-mode=cl", "-MD", "-MDd", "-MT", "-O1", "-MTd", "-MP"});
+
+  ClangTool Tool(Compilations, std::vector<std::string>(1, "/a.cc"));
+  Tool.mapVirtualFile("/a.cc", "void a() {}");
+
+  std::unique_ptr<FrontendActionFactory> Action(
+      newFrontendActionFactory<SyntaxOnlyAction>());
+
+  CommandLineArguments FinalArgs;
+  ArgumentsAdjuster CheckFlagsAdjuster =
+      [&FinalArgs](const CommandLineArguments &Args, StringRef /*unused*/) {
+        FinalArgs = Args;
+        return Args;
+      };
+  Tool.clearArgumentsAdjusters();
+  Tool.appendArgumentsAdjuster(getClangStripDependencyFileAdjuster());
+  Tool.appendArgumentsAdjuster(CheckFlagsAdjuster);
+  Tool.run(Action.get());
+
+  auto HasFlag = [&FinalArgs](const std::string &Flag) {
+    return llvm::find(FinalArgs, Flag) != FinalArgs.end();
+  };
+  EXPECT_TRUE(HasFlag("-MD"));
+  EXPECT_TRUE(HasFlag("-MDd"));
+  EXPECT_TRUE(HasFlag("-MT"));
+  EXPECT_TRUE(HasFlag("-O1"));
+  EXPECT_TRUE(HasFlag("-MTd"));
+  EXPECT_TRUE(HasFlag("-MP"));
+}
+
 // Check getClangStripPluginsAdjuster strips plugin related args.
 TEST(ClangToolTest, StripPluginsAdjuster) {
   FixedCompilationDatabase Compilations(
@@ -621,7 +794,7 @@ TEST(addTargetAndModeForProgramName, AddsTargetAndMode) {
   addTargetAndModeForProgramName(Args, "");
   EXPECT_EQ((std::vector<std::string>{"clang", "-foo"}), Args);
   addTargetAndModeForProgramName(Args, Target + "-g++");
-  EXPECT_EQ((std::vector<std::string>{"clang", "-target", Target,
+  EXPECT_EQ((std::vector<std::string>{"clang", "--target=" + Target,
                                       "--driver-mode=g++", "-foo"}),
             Args);
 }
@@ -635,7 +808,7 @@ TEST(addTargetAndModeForProgramName, PathIgnored) {
 
   std::vector<std::string> Args = {"clang", "-foo"};
   addTargetAndModeForProgramName(Args, ToolPath);
-  EXPECT_EQ((std::vector<std::string>{"clang", "-target", Target,
+  EXPECT_EQ((std::vector<std::string>{"clang", "--target=" + Target,
                                       "--driver-mode=g++", "-foo"}),
             Args);
 }
@@ -650,10 +823,10 @@ TEST(addTargetAndModeForProgramName, IgnoresExistingTarget) {
                                       "-target", "something"}),
             Args);
 
-  std::vector<std::string> ArgsAlt = {"clang", "-foo", "-target=something"};
+  std::vector<std::string> ArgsAlt = {"clang", "-foo", "--target=something"};
   addTargetAndModeForProgramName(ArgsAlt, Target + "-g++");
   EXPECT_EQ((std::vector<std::string>{"clang", "--driver-mode=g++", "-foo",
-                                      "-target=something"}),
+                                      "--target=something"}),
             ArgsAlt);
 }
 
@@ -663,15 +836,9 @@ TEST(addTargetAndModeForProgramName, IgnoresExistingMode) {
 
   std::vector<std::string> Args = {"clang", "-foo", "--driver-mode=abc"};
   addTargetAndModeForProgramName(Args, Target + "-g++");
-  EXPECT_EQ((std::vector<std::string>{"clang", "-target", Target, "-foo",
+  EXPECT_EQ((std::vector<std::string>{"clang", "--target=" + Target, "-foo",
                                       "--driver-mode=abc"}),
             Args);
-
-  std::vector<std::string> ArgsAlt = {"clang", "-foo", "--driver-mode", "abc"};
-  addTargetAndModeForProgramName(ArgsAlt, Target + "-g++");
-  EXPECT_EQ((std::vector<std::string>{"clang", "-target", Target, "-foo",
-                                      "--driver-mode", "abc"}),
-            ArgsAlt);
 }
 
 #ifndef _WIN32

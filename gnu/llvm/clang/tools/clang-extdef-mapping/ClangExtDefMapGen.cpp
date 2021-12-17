@@ -104,7 +104,7 @@ void MapExtDefNamesConsumer::addIfInMain(const DeclaratorDecl *DD,
 class MapExtDefNamesAction : public ASTFrontendAction {
 protected:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 llvm::StringRef) {
+                                                 llvm::StringRef) override {
     return std::make_unique<MapExtDefNamesConsumer>(CI.getASTContext());
   }
 };
@@ -119,8 +119,13 @@ int main(int argc, const char **argv) {
   const char *Overview = "\nThis tool collects the USR name and location "
                          "of external definitions in the source files "
                          "(excluding headers).\n";
-  CommonOptionsParser OptionsParser(argc, argv, ClangExtDefMapGenCategory,
-                                    cl::ZeroOrMore, Overview);
+  auto ExpectedParser = CommonOptionsParser::create(
+      argc, argv, ClangExtDefMapGenCategory, cl::ZeroOrMore, Overview);
+  if (!ExpectedParser) {
+    llvm::errs() << ExpectedParser.takeError();
+    return 1;
+  }
+  CommonOptionsParser &OptionsParser = ExpectedParser.get();
 
   ClangTool Tool(OptionsParser.getCompilations(),
                  OptionsParser.getSourcePathList());
