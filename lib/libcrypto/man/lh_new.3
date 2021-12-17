@@ -1,5 +1,8 @@
-.\"	$OpenBSD: lh_new.3,v 1.7 2020/03/28 22:40:58 schwarze Exp $
-.\"	OpenSSL 1bc74519 May 20 08:11:46 2016 -0400
+.\" $OpenBSD: lh_new.3,v 1.8 2021/12/17 16:32:07 schwarze Exp $
+.\" full merge up to:
+.\" OpenSSL doc/crypto/lhash.pod 1bc74519 May 20 08:11:46 2016 -0400
+.\" selective merge up to:
+.\" OpenSSL doc/man3/OPENSSL_LH_COMPFUNC.pod 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" --------------------------------------------------------------------------
 .\" Major patches to this file were contributed by
@@ -115,7 +118,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: March 28 2020 $
+.Dd $Mdocdate: December 17 2021 $
 .Dt LH_NEW 3
 .Os
 .Sh NAME
@@ -126,7 +129,12 @@
 .Nm lh_retrieve ,
 .Nm lh_doall ,
 .Nm lh_doall_arg ,
-.Nm lh_error
+.Nm lh_error ,
+.Nm LHASH_COMP_FN_TYPE ,
+.Nm LHASH_HASH_FN_TYPE ,
+.Nm LHASH_DOALL_FN_TYPE ,
+.Nm LHASH_DOALL_ARG_FN_TYPE ,
+.Nm lh_strhash
 .Nd dynamic hash table
 .Sh SYNOPSIS
 .In openssl/lhash.h
@@ -149,7 +157,7 @@
 .Fc
 .Ft <type> *
 .Fo lh_<type>_retrieve
-.Fa "LHASH_OF<type>) *table"
+.Fa "LHASH_OF(<type>) *table"
 .Fa "<type> *data"
 .Fc
 .Ft void
@@ -185,6 +193,10 @@
 .Fo (*LHASH_DOALL_ARG_FN_TYPE)
 .Fa "const void *"
 .Fa "const void *"
+.Fc
+.Ft unsigned long
+.Fo lh_strhash
+.Fa "const char *c"
 .Fc
 .Sh DESCRIPTION
 This library implements type-checked dynamic hash tables.
@@ -507,10 +519,7 @@ compares and 10 linked list traverses.
 This will be much less expensive that 10 calls to your compare function.
 .Pp
 .Fn lh_strhash
-is a demo string hashing function:
-.Pp
-.Dl unsigned long lh_strhash(const char *c);
-.Pp
+is a demo string hashing function.
 Since the LHASH routines would normally be passed structures, this
 routine would not normally be passed to
 .Fn lh_<type>_new ,
@@ -525,8 +534,9 @@ rather it would be used in the function passed to
 .Fn lh_insert ,
 .Fn lh_delete ,
 .Fn lh_retrieve ,
+.Fn lh_doall ,
 and
-.Fn lh_doall
+.Fn lh_strhash
 appeared in SSLeay 0.4 or earlier.
 .Fn lh_doall_arg
 first appeared in SSLeay 0.5.1.
