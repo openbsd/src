@@ -70,29 +70,36 @@ function(clang_compile object_file source)
   if (TARGET CompilerRTUnitTestCheckCxx)
     list(APPEND SOURCE_DEPS CompilerRTUnitTestCheckCxx)
   endif()
-  string(REGEX MATCH "[.](cc|cpp)$" is_cxx ${source_rpath})
-  string(REGEX MATCH "[.](m|mm)$" is_objc ${source_rpath})
-  if(is_cxx)
-    string(REPLACE " " ";" global_flags "${CMAKE_CXX_FLAGS}")
+  if(COMPILER_RT_STANDALONE_BUILD)
+    # Only add global flags in standalone build.
+    string(REGEX MATCH "[.](cc|cpp)$" is_cxx ${source_rpath})
+    if(is_cxx)
+      string(REPLACE " " ";" global_flags "${CMAKE_CXX_FLAGS}")
+    else()
+      string(REPLACE " " ";" global_flags "${CMAKE_C_FLAGS}")
+    endif()
+
+    if (MSVC)
+      translate_msvc_cflags(global_flags "${global_flags}")
+    endif()
+
+    if (APPLE)
+      set(global_flags ${OSX_SYSROOT_FLAG} ${global_flags})
+    endif()
+
+    # Ignore unknown warnings. CMAKE_CXX_FLAGS may contain GCC-specific options
+    # which are not supported by Clang.
+    list(APPEND global_flags -Wno-unknown-warning-option)
+    set(compile_flags ${global_flags} ${SOURCE_CFLAGS})
   else()
-    string(REPLACE " " ";" global_flags "${CMAKE_C_FLAGS}")
+    set(compile_flags ${SOURCE_CFLAGS})
   endif()
 
-  if (MSVC)
-    translate_msvc_cflags(global_flags "${global_flags}")
-  endif()
-
-  if (APPLE)
-    set(global_flags ${OSX_SYSROOT_FLAG} ${global_flags})
-  endif()
+  string(REGEX MATCH "[.](m|mm)$" is_objc ${source_rpath})
   if (is_objc)
-    list(APPEND global_flags -ObjC)
+    list(APPEND compile_flags "-ObjC")
   endif()
 
-  # Ignore unknown warnings. CMAKE_CXX_FLAGS may contain GCC-specific options
-  # which are not supported by Clang.
-  list(APPEND global_flags -Wno-unknown-warning-option)
-  set(compile_flags ${global_flags} ${SOURCE_CFLAGS})
   add_custom_command(
     OUTPUT ${object_file}
     COMMAND ${COMPILER_RT_TEST_COMPILER} ${compile_flags} -c
@@ -136,7 +143,7 @@ macro(clang_compiler_add_cxx_check)
       COMMAND bash -c "${CMD}"
       COMMENT "Checking that just-built clang can find C++ headers..."
       VERBATIM)
-    if (NOT COMPILER_RT_STANDALONE_BUILD AND NOT RUNTIMES_BUILD)
+    if (NOT COMPILER_RT_STANDALONE_BUILD AND NOT LLVM_RUNTIMES_BUILD)
       ADD_DEPENDENCIES(CompilerRTUnitTestCheckCxx clang)
     endif()
   endif()

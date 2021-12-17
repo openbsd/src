@@ -23,7 +23,6 @@ set(ASAN_SOURCES
   asan_posix.cpp
   asan_premap_shadow.cpp
   asan_report.cpp
-  asan_rtems.cpp
   asan_rtl.cpp
   asan_shadow_setup.cpp
   asan_stack.cpp
@@ -63,9 +62,7 @@ SET(ASAN_HEADERS
   asan_interface_internal.h
   asan_internal.h
   asan_lock.h
-  asan_malloc_local.h
   asan_mapping.h
-  asan_mapping_myriad.h
   asan_poisoning.h
   asan_premap_shadow.h
   asan_report.h
@@ -111,10 +108,6 @@ append_list_if(COMPILER_RT_HAS_LIBPTHREAD pthread ASAN_DYNAMIC_LIBS)
 append_list_if(COMPILER_RT_HAS_LIBLOG log ASAN_DYNAMIC_LIBS)
 append_list_if(MINGW "${MINGW_LIBRARIES}" ASAN_DYNAMIC_LIBS)
 
-if (TARGET cxx-headers OR HAVE_LIBCXX)
-  set(ASAN_DEPS cxx-headers)
-endif()
-
 # Compile ASan sources into an object library.
 
 add_compiler_rt_object_libraries(RTAsan_dynamic
@@ -123,8 +116,7 @@ add_compiler_rt_object_libraries(RTAsan_dynamic
   SOURCES ${ASAN_SOURCES} ${ASAN_CXX_SOURCES}
   ADDITIONAL_HEADERS ${ASAN_HEADERS}
   CFLAGS ${ASAN_DYNAMIC_CFLAGS}
-  DEFS ${ASAN_DYNAMIC_DEFINITIONS}
-  DEPS ${ASAN_DEPS})
+  DEFS ${ASAN_DYNAMIC_DEFINITIONS})
 
 if(NOT APPLE)
   add_compiler_rt_object_libraries(RTAsan
@@ -132,30 +124,26 @@ if(NOT APPLE)
     SOURCES ${ASAN_SOURCES}
     ADDITIONAL_HEADERS ${ASAN_HEADERS}
     CFLAGS ${ASAN_CFLAGS}
-    DEFS ${ASAN_COMMON_DEFINITIONS}
-    DEPS ${ASAN_DEPS})
+    DEFS ${ASAN_COMMON_DEFINITIONS})
   add_compiler_rt_object_libraries(RTAsan_cxx
     ARCHS ${ASAN_SUPPORTED_ARCH}
     SOURCES ${ASAN_CXX_SOURCES}
     ADDITIONAL_HEADERS ${ASAN_HEADERS}
     CFLAGS ${ASAN_CFLAGS}
-    DEFS ${ASAN_COMMON_DEFINITIONS}
-    DEPS ${ASAN_DEPS})
+    DEFS ${ASAN_COMMON_DEFINITIONS})
   add_compiler_rt_object_libraries(RTAsan_preinit
     ARCHS ${ASAN_SUPPORTED_ARCH}
     SOURCES ${ASAN_PREINIT_SOURCES}
     ADDITIONAL_HEADERS ${ASAN_HEADERS}
     CFLAGS ${ASAN_CFLAGS}
-    DEFS ${ASAN_COMMON_DEFINITIONS}
-    DEPS ${ASAN_DEPS})
+    DEFS ${ASAN_COMMON_DEFINITIONS})
 
   file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/dummy.cpp "")
   add_compiler_rt_object_libraries(RTAsan_dynamic_version_script_dummy
     ARCHS ${ASAN_SUPPORTED_ARCH}
     SOURCES ${CMAKE_CURRENT_BINARY_DIR}/dummy.cpp
     CFLAGS ${ASAN_DYNAMIC_CFLAGS}
-    DEFS ${ASAN_DYNAMIC_DEFINITIONS}
-    DEPS ${ASAN_DEPS})
+    DEFS ${ASAN_DYNAMIC_DEFINITIONS})
 endif()
 
 # Build ASan runtimes shipped with Clang.
@@ -224,7 +212,7 @@ else()
     PARENT_TARGET asan)
 
   foreach(arch ${ASAN_SUPPORTED_ARCH})
-    if (UNIX)
+    if (COMPILER_RT_HAS_VERSION_SCRIPT)
       add_sanitizer_rt_version_list(clang_rt.asan-dynamic-${arch}
                                     LIBS clang_rt.asan-${arch} clang_rt.asan_cxx-${arch}
                                     EXTRA asan.syms.extra)
@@ -232,7 +220,7 @@ else()
            -Wl,--version-script,${CMAKE_CURRENT_BINARY_DIR}/clang_rt.asan-dynamic-${arch}.vers)
       # The Solaris 11.4 linker supports a subset of GNU ld version scripts,
       # but requires a special option to enable it.
-      if (OS_NAME MATCHES "SunOS")
+      if (COMPILER_RT_HAS_GNU_VERSION_SCRIPT_COMPAT)
           list(APPEND VERSION_SCRIPT_FLAG -Wl,-z,gnu-version-script-compat)
       endif()
       set_property(SOURCE
@@ -250,8 +238,7 @@ else()
         ARCHS ${arch}
         SOURCES asan_win_weak_interception.cpp
         CFLAGS ${ASAN_CFLAGS} -DSANITIZER_DYNAMIC
-        DEFS ${ASAN_COMMON_DEFINITIONS}
-        DEPS ${ASAN_DEPS})
+        DEFS ${ASAN_COMMON_DEFINITIONS})
       set(ASAN_DYNAMIC_WEAK_INTERCEPTION
           AsanWeakInterception
           UbsanWeakInterception
@@ -296,8 +283,7 @@ else()
         SOURCES asan_globals_win.cpp
                 asan_win_dll_thunk.cpp
         CFLAGS ${ASAN_CFLAGS} -DSANITIZER_DLL_THUNK
-        DEFS ${ASAN_COMMON_DEFINITIONS}
-        DEPS ${ASAN_DEPS})
+        DEFS ${ASAN_COMMON_DEFINITIONS})
 
       add_compiler_rt_runtime(clang_rt.asan_dll_thunk
         STATIC
@@ -322,8 +308,7 @@ else()
         SOURCES asan_globals_win.cpp
                 asan_win_dynamic_runtime_thunk.cpp
         CFLAGS ${ASAN_CFLAGS} ${DYNAMIC_RUNTIME_THUNK_CFLAGS}
-        DEFS ${ASAN_COMMON_DEFINITIONS}
-        DEPS ${ASAN_DEPS})
+        DEFS ${ASAN_COMMON_DEFINITIONS})
 
       add_compiler_rt_runtime(clang_rt.asan_dynamic_runtime_thunk
         STATIC
@@ -339,7 +324,7 @@ else()
   endforeach()
 endif()
 
-add_compiler_rt_resource_file(asan_blacklist asan_blacklist.txt asan)
+add_compiler_rt_resource_file(asan_ignorelist asan_ignorelist.txt asan)
 
 add_subdirectory(scripts)
 

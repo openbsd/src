@@ -10,6 +10,7 @@
 import optparse
 import re
 import sys
+from io import open
 
 # Compile regex once for all files
 runRegex = re.compile(r'(?<!-o)(?<!%run) %t\s')
@@ -45,7 +46,7 @@ def LintFile(p):
     The number of errors detected.
   """
   errs = 0
-  with open(p, 'r') as f:
+  with open(p, 'r', encoding='utf-8') as f:
     for i, s in enumerate(f.readlines(), start=1):
       msg, col = LintLine(s)
       if msg != None:

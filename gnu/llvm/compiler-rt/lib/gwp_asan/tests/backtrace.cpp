@@ -8,6 +8,7 @@
 
 #include <string>
 
+#include "gwp_asan/common.h"
 #include "gwp_asan/crash_handler.h"
 #include "gwp_asan/tests/harness.h"
 
@@ -29,7 +30,7 @@ __attribute__((optnone)) void TouchMemory(void *Ptr) {
   *(reinterpret_cast<volatile char *>(Ptr)) = 7;
 }
 
-TEST_F(BacktraceGuardedPoolAllocator, DoubleFree) {
+TEST_F(BacktraceGuardedPoolAllocatorDeathTest, DoubleFree) {
   void *Ptr = AllocateMemory(GPA);
   DeallocateMemory(GPA, Ptr);
 
@@ -44,7 +45,12 @@ TEST_F(BacktraceGuardedPoolAllocator, DoubleFree) {
   ASSERT_DEATH(DeallocateMemory2(GPA, Ptr), DeathRegex);
 }
 
-TEST_F(BacktraceGuardedPoolAllocator, UseAfterFree) {
+TEST_F(BacktraceGuardedPoolAllocatorDeathTest, UseAfterFree) {
+#if defined(__linux__) && __ARM_ARCH == 7
+  // Incomplete backtrace on Armv7 Linux
+  GTEST_SKIP();
+#endif
+
   void *Ptr = AllocateMemory(GPA);
   DeallocateMemory(GPA, Ptr);
 
@@ -76,9 +82,46 @@ TEST(Backtrace, Short) {
 TEST(Backtrace, ExceedsStorableLength) {
   gwp_asan::AllocationMetadata Meta;
   Meta.AllocationTrace.RecordBacktrace(
-      [](uintptr_t * /* TraceBuffer */, size_t /* Size */) -> size_t {
-        return SIZE_MAX; // Wow, that's big!
+      [](uintptr_t *TraceBuffer, size_t Size) -> size_t {
+        // Need to inintialise the elements that will be packed.
+        memset(TraceBuffer, 0u, Size * sizeof(*TraceBuffer));
+
+        // Indicate that there were more frames, and we just didn't have enough
+        // room to store them.
+        return Size * 2;
+      });
+  // Retrieve a frame from the collected backtrace, make sure it works E2E.
+  uintptr_t TraceOutput;
+  EXPECT_EQ(gwp_asan::AllocationMetadata::kMaxTraceLengthToCollect,
+            __gwp_asan_get_allocation_trace(&Meta, &TraceOutput, 1));
+}
+
+TEST(Backtrace, ExceedsRetrievableAllocLength) {
+  gwp_asan::AllocationMetadata Meta;
+  constexpr size_t kNumFramesToStore = 3u;
+  Meta.AllocationTrace.RecordBacktrace(
+      [](uintptr_t *TraceBuffer, size_t /* Size */) -> size_t {
+        memset(TraceBuffer, kNumFramesToStore,
+               kNumFramesToStore * sizeof(*TraceBuffer));
+        return kNumFramesToStore;
       });
   uintptr_t TraceOutput;
-  EXPECT_EQ(1u, __gwp_asan_get_allocation_trace(&Meta, &TraceOutput, 1));
+  // Ask for one element, get told that there's `kNumFramesToStore` available.
+  EXPECT_EQ(kNumFramesToStore,
+            __gwp_asan_get_allocation_trace(&Meta, &TraceOutput, 1));
+}
+
+TEST(Backtrace, ExceedsRetrievableDeallocLength) {
+  gwp_asan::AllocationMetadata Meta;
+  constexpr size_t kNumFramesToStore = 3u;
+  Meta.DeallocationTrace.RecordBacktrace(
+      [](uintptr_t *TraceBuffer, size_t /* Size */) -> size_t {
+        memset(TraceBuffer, kNumFramesToStore,
+               kNumFramesToStore * sizeof(*TraceBuffer));
+        return kNumFramesToStore;
+      });
+  uintptr_t TraceOutput;
+  // Ask for one element, get told that there's `kNumFramesToStore` available.
+  EXPECT_EQ(kNumFramesToStore,
+            __gwp_asan_get_deallocation_trace(&Meta, &TraceOutput, 1));
 }

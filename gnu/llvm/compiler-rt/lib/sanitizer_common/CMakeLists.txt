@@ -16,13 +16,12 @@ set(SANITIZER_SOURCES_NOTERMINATION
   sanitizer_linux.cpp
   sanitizer_linux_s390.cpp
   sanitizer_mac.cpp
+  sanitizer_mutex.cpp
   sanitizer_netbsd.cpp
-  sanitizer_openbsd.cpp
   sanitizer_persistent_allocator.cpp
   sanitizer_platform_limits_freebsd.cpp
   sanitizer_platform_limits_linux.cpp
   sanitizer_platform_limits_netbsd.cpp
-  sanitizer_platform_limits_openbsd.cpp
   sanitizer_platform_limits_posix.cpp
   sanitizer_platform_limits_solaris.cpp
   sanitizer_posix.cpp
@@ -33,7 +32,6 @@ set(SANITIZER_SOURCES_NOTERMINATION
   sanitizer_procmaps_linux.cpp
   sanitizer_procmaps_mac.cpp
   sanitizer_procmaps_solaris.cpp
-  sanitizer_rtems.cpp
   sanitizer_solaris.cpp
   sanitizer_stoptheworld_fuchsia.cpp
   sanitizer_stoptheworld_mac.cpp
@@ -75,6 +73,7 @@ set(SANITIZER_COVERAGE_SOURCES
 
 set(SANITIZER_SYMBOLIZER_SOURCES
   sanitizer_allocator_report.cpp
+  sanitizer_chained_origin_depot.cpp
   sanitizer_stackdepot.cpp
   sanitizer_stacktrace.cpp
   sanitizer_stacktrace_libcdep.cpp
@@ -121,6 +120,7 @@ set(SANITIZER_IMPL_HEADERS
   sanitizer_atomic_msvc.h
   sanitizer_bitvector.h
   sanitizer_bvgraph.h
+  sanitizer_chained_origin_depot.h
   sanitizer_common.h
   sanitizer_common_interceptors.inc
   sanitizer_common_interceptors_format.inc
@@ -159,7 +159,6 @@ set(SANITIZER_IMPL_HEADERS
   sanitizer_platform.h
   sanitizer_platform_interceptors.h
   sanitizer_platform_limits_netbsd.h
-  sanitizer_platform_limits_openbsd.h
   sanitizer_platform_limits_posix.h
   sanitizer_platform_limits_solaris.h
   sanitizer_posix.h
@@ -168,7 +167,6 @@ set(SANITIZER_IMPL_HEADERS
   sanitizer_quarantine.h
   sanitizer_report_decorator.h
   sanitizer_ring_buffer.h
-  sanitizer_rtems.h
   sanitizer_signal_interceptors.inc
   sanitizer_stackdepot.h
   sanitizer_stackdepotbase.h
@@ -181,13 +179,14 @@ set(SANITIZER_IMPL_HEADERS
   sanitizer_symbolizer_internal.h
   sanitizer_symbolizer_libbacktrace.h
   sanitizer_symbolizer_mac.h
-  sanitizer_symbolizer_rtems.h
   sanitizer_syscall_generic.inc
   sanitizer_syscall_linux_aarch64.inc
   sanitizer_syscall_linux_arm.inc
   sanitizer_syscall_linux_x86_64.inc
+  sanitizer_syscall_linux_riscv64.inc
   sanitizer_syscalls_netbsd.inc
   sanitizer_thread_registry.h
+  sanitizer_thread_safety.h
   sanitizer_tls_get_addr.h
   sanitizer_vector.h
   sanitizer_win.h

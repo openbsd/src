@@ -10,9 +10,10 @@
 //
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_stackdepot.h"
+
+#include "gtest/gtest.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_libc.h"
-#include "gtest/gtest.h"
 
 namespace __sanitizer {
 
@@ -62,6 +63,27 @@ TEST(SanitizerCommon, StackDepotSeveral) {
   StackTrace s2(array2, ARRAY_SIZE(array2));
   u32 i2 = StackDepotPut(s2);
   EXPECT_NE(i1, i2);
+}
+
+#if SANITIZER_WINDOWS
+// CaptureStderr does not work on Windows.
+#define Maybe_StackDepotPrint DISABLED_StackDepotPrint
+#else
+#define Maybe_StackDepotPrint StackDepotPrint
+#endif
+TEST(SanitizerCommon, Maybe_StackDepotPrint) {
+  uptr array1[] = {0x111, 0x222, 0x333, 0x444, 0x777};
+  StackTrace s1(array1, ARRAY_SIZE(array1));
+  u32 i1 = StackDepotPut(s1);
+  uptr array2[] = {0x1111, 0x2222, 0x3333, 0x4444, 0x8888, 0x9999};
+  StackTrace s2(array2, ARRAY_SIZE(array2));
+  u32 i2 = StackDepotPut(s2);
+  EXPECT_NE(i1, i2);
+  EXPECT_EXIT((StackDepotPrintAll(), exit(0)), ::testing::ExitedWithCode(0),
+              "Stack for id .*#0 0x1.*#1 0x2.*#2 0x3.*#3 0x4.*#4 0x7.*");
+  EXPECT_EXIT(
+      (StackDepotPrintAll(), exit(0)), ::testing::ExitedWithCode(0),
+      "Stack for id .*#0 0x1.*#1 0x2.*#2 0x3.*#3 0x4.*#4 0x8.*#5 0x9.*");
 }
 
 TEST(SanitizerCommon, StackDepotReverseMap) {

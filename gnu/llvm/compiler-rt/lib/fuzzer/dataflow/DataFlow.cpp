@@ -36,7 +36,7 @@
 // Run:
 //   # Collect data flow and coverage for INPUT_FILE
 //   # write to OUTPUT_FILE (default: stdout)
-//   export DFSAN_OPTIONS=fast16labels=1:warn_unimplemented=0
+//   export DFSAN_OPTIONS=warn_unimplemented=0
 //   ./a.out INPUT_FILE [OUTPUT_FILE]
 //
 //   # Print all instrumented functions. llvm-symbolizer must be present in PATH
@@ -80,7 +80,7 @@ static inline bool BlockIsEntry(size_t BlockIdx) {
   return __dft.PCsBeg[BlockIdx * 2 + 1] & PCFLAG_FUNC_ENTRY;
 }
 
-const int kNumLabels = 16;
+const int kNumLabels = 8;
 
 // Prints all instrumented functions.
 static int PrintFunctions() {
@@ -90,8 +90,8 @@ static int PrintFunctions() {
   //      We'll need to make a proper in-process symbolizer work with DFSan.
   FILE *Pipe = popen("sed 's/(+/ /g; s/).*//g' "
                      "| llvm-symbolizer "
-                     "| grep 'dfs\\$' "
-                     "| sed 's/dfs\\$//g' "
+                     "| grep '\\.dfsan' "
+                     "| sed 's/\\.dfsan//g' "
                      "| c++filt",
                      "w");
   for (size_t I = 0; I < __dft.NumGuards; I++) {

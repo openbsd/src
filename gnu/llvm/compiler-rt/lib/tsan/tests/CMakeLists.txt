@@ -5,13 +5,20 @@ set_target_properties(TsanUnitTests PROPERTIES
   FOLDER "Compiler-RT Tests")
 
 set(TSAN_UNITTEST_CFLAGS
-  ${TSAN_CFLAGS}
   ${COMPILER_RT_UNITTEST_CFLAGS}
   ${COMPILER_RT_GTEST_CFLAGS}
   -I${COMPILER_RT_SOURCE_DIR}/include
   -I${COMPILER_RT_SOURCE_DIR}/lib
   -I${COMPILER_RT_SOURCE_DIR}/lib/tsan/rtl
-  -DGTEST_HAS_RTTI=0)
+  -DGTEST_HAS_RTTI=0
+  -fno-rtti
+)
+
+if(COMPILER_RT_TSAN_DEBUG_OUTPUT)
+  # Need to match these flags with the runtime.
+  list(APPEND TSAN_UNITTEST_CFLAGS -DTSAN_COLLECT_STATS=1
+                                   -DTSAN_DEBUG_OUTPUT=2)
+endif()
 
 set(TSAN_TEST_ARCH ${TSAN_SUPPORTED_ARCH})
 
@@ -53,6 +60,12 @@ foreach (header ${TSAN_HEADERS})
   list(APPEND TSAN_RTL_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/../${header})
 endforeach()
 
+set(TSAN_DEPS gtest tsan)
+# TSan uses C++ standard library headers.
+if (TARGET cxx-headers OR HAVE_LIBCXX)
+  set(TSAN_DEPS cxx-headers)
+endif()
+
 # add_tsan_unittest(<name>
 #                   SOURCES <sources list>
 #                   HEADERS <extra headers list>)
@@ -66,7 +79,7 @@ macro(add_tsan_unittest testname)
         SOURCES ${TEST_SOURCES} ${COMPILER_RT_GTEST_SOURCE}
         RUNTIME ${TSAN_TEST_RUNTIME}
         COMPILE_DEPS ${TEST_HEADERS} ${TSAN_RTL_HEADERS}
-        DEPS gtest tsan
+        DEPS ${TSAN_DEPS}
         CFLAGS ${TSAN_UNITTEST_CFLAGS}
         LINK_FLAGS ${LINK_FLAGS})
     endforeach()
