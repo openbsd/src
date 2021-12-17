@@ -2,12 +2,15 @@ static_library("JITLink") {
   output_name = "LLVMJITLink"
   deps = [
     "//llvm/lib/BinaryFormat",
+    "//llvm/lib/ExecutionEngine/Orc/Shared",
     "//llvm/lib/Object",
     "//llvm/lib/Support",
   ]
   sources = [
     "EHFrameSupport.cpp",
     "ELF.cpp",
+    "ELFLinkGraphBuilder.cpp",
+    "ELF_riscv.cpp",
     "ELF_x86_64.cpp",
     "JITLink.cpp",
     "JITLinkGeneric.cpp",
@@ -16,5 +19,7 @@ static_library("JITLink") {
     "MachOLinkGraphBuilder.cpp",
     "MachO_arm64.cpp",
     "MachO_x86_64.cpp",
+    "riscv.cpp",
+    "x86_64.cpp",
   ]
 }

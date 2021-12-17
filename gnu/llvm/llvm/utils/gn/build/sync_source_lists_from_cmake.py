@@ -26,20 +26,20 @@ import sys
 def patch_gn_file(gn_file, add, remove):
     with open(gn_file) as f:
         gn_contents = f.read()
-
-    srcs_tok = 'sources = [\n'
-    tokloc = gn_contents.find(srcs_tok)
-
-    if tokloc == -1: raise ValueError(gn_file + ': Failed to find source list')
-    if gn_contents.find(srcs_tok, tokloc + 1) != -1:
-        raise ValueError(gn_file + ': Multiple source lists')
-    if gn_contents.find('# NOSORT', 0, tokloc) != -1:
-        raise ValueError(gn_file + ': Found # NOSORT, needs manual merge')
-
-    tokloc += len(srcs_tok)
-    for a in add:
-        gn_contents = (gn_contents[:tokloc] + ('"%s",' % a) +
-                       gn_contents[tokloc:])
+    if add:
+        srcs_tok = 'sources = ['
+        tokloc = gn_contents.find(srcs_tok)
+        while gn_contents.startswith('sources = []', tokloc):
+            tokloc = gn_contents.find(srcs_tok, tokloc + 1)
+        if tokloc == -1: raise ValueError(gn_file + ': No source list')
+        if gn_contents.find(srcs_tok, tokloc + 1) != -1:
+            raise ValueError(gn_file + ': Multiple source lists')
+        if gn_contents.find('# NOSORT', 0, tokloc) != -1:
+            raise ValueError(gn_file + ': Found # NOSORT, needs manual merge')
+        tokloc += len(srcs_tok)
+        for a in add:
+            gn_contents = (gn_contents[:tokloc] + ('"%s",' % a) +
+                           gn_contents[tokloc:])
     for r in remove:
         gn_contents = gn_contents.replace('"%s",' % r, '')
     with open(gn_file, 'w') as f:
@@ -54,11 +54,16 @@ def sync_source_lists(write):
     # Use shell=True on Windows in case git is a bat file.
     def git(args): subprocess.check_call(['git'] + args, shell=os.name == 'nt')
     def git_out(args):
-        return subprocess.check_output(['git'] + args, shell=os.name == 'nt')
+        return subprocess.check_output(['git'] + args, shell=os.name == 'nt',
+                                       universal_newlines=True)
     gn_files = git_out(['ls-files', '*BUILD.gn']).splitlines()
 
     # Matches e.g. |   "foo.cpp",|, captures |foo| in group 1.
-    gn_cpp_re = re.compile(r'^\s*"([^"]+\.(?:cpp|c|h|S))",$', re.MULTILINE)
+    gn_cpp_re = re.compile(r'^\s*"([^$"]+\.(?:cpp|c|h|S))",$', re.MULTILINE)
+    # Matches e.g. |   bar_sources = [ "foo.cpp" ]|, captures |foo| in group 1.
+    gn_cpp_re2 = re.compile(
+        r'^\s*(?:.*_)?sources \+?= \[ "([^$"]+\.(?:cpp|c|h|S))" ]$',
+        re.MULTILINE)
     # Matches e.g. |   foo.cpp|, captures |foo| in group 1.
     cmake_cpp_re = re.compile(r'^\s*([A-Za-z_0-9./-]+\.(?:cpp|c|h|S))$',
                               re.MULTILINE)
@@ -88,6 +93,7 @@ def sync_source_lists(write):
         def get_sources(source_re, text):
             return set([m.group(1) for m in source_re.finditer(text)])
         gn_cpp = get_sources(gn_cpp_re, open(gn_file).read())
+        gn_cpp |= get_sources(gn_cpp_re2, open(gn_file).read())
         cmake_cpp = get_sources(cmake_cpp_re, open(cmake_file).read())
 
         if gn_cpp == cmake_cpp:

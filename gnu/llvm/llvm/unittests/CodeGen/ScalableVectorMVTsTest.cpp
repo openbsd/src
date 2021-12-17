@@ -18,7 +18,7 @@ using namespace llvm;
 namespace {
 
 TEST(ScalableVectorMVTsTest, IntegerMVTs) {
-  for (auto VecTy : MVT::integer_scalable_vector_valuetypes()) {
+  for (MVT VecTy : MVT::integer_scalable_vector_valuetypes()) {
     ASSERT_TRUE(VecTy.isValid());
     ASSERT_TRUE(VecTy.isInteger());
     ASSERT_TRUE(VecTy.isVector());
@@ -30,7 +30,7 @@ TEST(ScalableVectorMVTsTest, IntegerMVTs) {
 }
 
 TEST(ScalableVectorMVTsTest, FloatMVTs) {
-  for (auto VecTy : MVT::fp_scalable_vector_valuetypes()) {
+  for (MVT VecTy : MVT::fp_scalable_vector_valuetypes()) {
     ASSERT_TRUE(VecTy.isValid());
     ASSERT_TRUE(VecTy.isFloatingPoint());
     ASSERT_TRUE(VecTy.isVector());
@@ -49,48 +49,50 @@ TEST(ScalableVectorMVTsTest, HelperFuncs) {
   ASSERT_TRUE(Vnx4i32.isScalableVector());
 
   // Create with separate llvm::ElementCount
-  auto EltCnt = ElementCount(2, true);
+  auto EltCnt = ElementCount::getScalable(2);
   EVT Vnx2i32 = EVT::getVectorVT(Ctx, MVT::i32, EltCnt);
   ASSERT_TRUE(Vnx2i32.isScalableVector());
 
   // Create with inline llvm::ElementCount
-  EVT Vnx2i64 = EVT::getVectorVT(Ctx, MVT::i64, {2, true});
+  EVT Vnx2i64 = EVT::getVectorVT(Ctx, MVT::i64, ElementCount::getScalable(2));
   ASSERT_TRUE(Vnx2i64.isScalableVector());
 
   // Check that changing scalar types/element count works
   EXPECT_EQ(Vnx2i32.widenIntegerVectorElementType(Ctx), Vnx2i64);
   EXPECT_EQ(Vnx4i32.getHalfNumVectorElementsVT(Ctx), Vnx2i32);
 
-  // Check that overloaded '*' and '/' operators work
+  // Check that operators work
   EXPECT_EQ(EVT::getVectorVT(Ctx, MVT::i64, EltCnt * 2), MVT::nxv4i64);
-  EXPECT_EQ(EVT::getVectorVT(Ctx, MVT::i64, EltCnt / 2), MVT::nxv1i64);
+  EXPECT_EQ(EVT::getVectorVT(Ctx, MVT::i64, EltCnt.divideCoefficientBy(2)),
+            MVT::nxv1i64);
 
   // Check that float->int conversion works
-  EVT Vnx2f64 = EVT::getVectorVT(Ctx, MVT::f64, {2, true});
+  EVT Vnx2f64 = EVT::getVectorVT(Ctx, MVT::f64, ElementCount::getScalable(2));
   EXPECT_EQ(Vnx2f64.changeTypeToInteger(), Vnx2i64);
 
   // Check fields inside llvm::ElementCount
   EltCnt = Vnx4i32.getVectorElementCount();
-  EXPECT_EQ(EltCnt.Min, 4U);
-  ASSERT_TRUE(EltCnt.Scalable);
+  EXPECT_EQ(EltCnt.getKnownMinValue(), 4U);
+  ASSERT_TRUE(EltCnt.isScalable());
 
   // Check that fixed-length vector types aren't scalable.
   EVT V8i32 = EVT::getVectorVT(Ctx, MVT::i32, 8);
   ASSERT_FALSE(V8i32.isScalableVector());
-  EVT V4f64 = EVT::getVectorVT(Ctx, MVT::f64, {4, false});
+  EVT V4f64 = EVT::getVectorVT(Ctx, MVT::f64, ElementCount::getFixed(4));
   ASSERT_FALSE(V4f64.isScalableVector());
 
   // Check that llvm::ElementCount works for fixed-length types.
   EltCnt = V8i32.getVectorElementCount();
-  EXPECT_EQ(EltCnt.Min, 8U);
-  ASSERT_FALSE(EltCnt.Scalable);
+  EXPECT_EQ(EltCnt.getKnownMinValue(), 8U);
+  ASSERT_FALSE(EltCnt.isScalable());
 }
 
 TEST(ScalableVectorMVTsTest, IRToVTTranslation) {
   LLVMContext Ctx;
 
   Type *Int64Ty = Type::getInt64Ty(Ctx);
-  VectorType *ScV8Int64Ty = VectorType::get(Int64Ty, {8, true});
+  VectorType *ScV8Int64Ty =
+      VectorType::get(Int64Ty, ElementCount::getScalable(8));
 
   // Check that we can map a scalable IR type to an MVT 
   MVT Mnxv8i64 = MVT::getVT(ScV8Int64Ty);
@@ -110,7 +112,7 @@ TEST(ScalableVectorMVTsTest, IRToVTTranslation) {
 TEST(ScalableVectorMVTsTest, VTToIRTranslation) {
   LLVMContext Ctx;
 
-  EVT Enxv4f64 = EVT::getVectorVT(Ctx, MVT::f64, {4, true});
+  EVT Enxv4f64 = EVT::getVectorVT(Ctx, MVT::f64, ElementCount::getScalable(4));
 
   Type *Ty = Enxv4f64.getTypeForEVT(Ctx);
   VectorType *ScV4Float64Ty = cast<VectorType>(Ty);
@@ -137,19 +139,23 @@ TEST(ScalableVectorMVTsTest, SizeQueries) {
   EXPECT_EQ(nxv4i32.getSizeInBits(), nxv2i64.getSizeInBits());
   EXPECT_EQ(nxv2f64.getSizeInBits(), nxv2i64.getSizeInBits());
   EXPECT_NE(nxv2i32.getSizeInBits(), nxv4i32.getSizeInBits());
-  EXPECT_LT(nxv2i32.getSizeInBits(), nxv2i64.getSizeInBits());
-  EXPECT_LE(nxv4i32.getSizeInBits(), nxv2i64.getSizeInBits());
-  EXPECT_GT(nxv4i32.getSizeInBits(), nxv2i32.getSizeInBits());
-  EXPECT_GE(nxv2i64.getSizeInBits(), nxv4i32.getSizeInBits());
+  EXPECT_LT(nxv2i32.getSizeInBits().getKnownMinSize(),
+            nxv2i64.getSizeInBits().getKnownMinSize());
+  EXPECT_LE(nxv4i32.getSizeInBits().getKnownMinSize(),
+            nxv2i64.getSizeInBits().getKnownMinSize());
+  EXPECT_GT(nxv4i32.getSizeInBits().getKnownMinSize(),
+            nxv2i32.getSizeInBits().getKnownMinSize());
+  EXPECT_GE(nxv2i64.getSizeInBits().getKnownMinSize(),
+            nxv4i32.getSizeInBits().getKnownMinSize());
 
   // Check equivalence and ordering on fixed types.
   EXPECT_EQ(v4i32.getSizeInBits(), v2i64.getSizeInBits());
   EXPECT_EQ(v2f64.getSizeInBits(), v2i64.getSizeInBits());
   EXPECT_NE(v2i32.getSizeInBits(), v4i32.getSizeInBits());
-  EXPECT_LT(v2i32.getSizeInBits(), v2i64.getSizeInBits());
-  EXPECT_LE(v4i32.getSizeInBits(), v2i64.getSizeInBits());
-  EXPECT_GT(v4i32.getSizeInBits(), v2i32.getSizeInBits());
-  EXPECT_GE(v2i64.getSizeInBits(), v4i32.getSizeInBits());
+  EXPECT_LT(v2i32.getFixedSizeInBits(), v2i64.getFixedSizeInBits());
+  EXPECT_LE(v4i32.getFixedSizeInBits(), v2i64.getFixedSizeInBits());
+  EXPECT_GT(v4i32.getFixedSizeInBits(), v2i32.getFixedSizeInBits());
+  EXPECT_GE(v2i64.getFixedSizeInBits(), v4i32.getFixedSizeInBits());
 
   // Check that scalable and non-scalable types with the same minimum size
   // are not considered equal.
@@ -157,8 +163,8 @@ TEST(ScalableVectorMVTsTest, SizeQueries) {
   ASSERT_FALSE(v2i64.getSizeInBits() == nxv2f64.getSizeInBits());
 
   // Check that we can obtain a known-exact size from a non-scalable type.
-  EXPECT_EQ(v4i32.getSizeInBits(), 128U);
-  EXPECT_EQ(v2i64.getSizeInBits().getFixedSize(), 128U);
+  EXPECT_EQ(v4i32.getFixedSizeInBits(), 128U);
+  EXPECT_EQ(v2i64.getFixedSizeInBits(), 128U);
 
   // Check that we can query the known minimum size for both scalable and
   // fixed length types.
@@ -174,7 +180,8 @@ TEST(ScalableVectorMVTsTest, SizeQueries) {
   // Check convenience size scaling methods.
   EXPECT_EQ(v2i32.getSizeInBits() * 2, v4i32.getSizeInBits());
   EXPECT_EQ(2 * nxv2i32.getSizeInBits(), nxv4i32.getSizeInBits());
-  EXPECT_EQ(nxv2f64.getSizeInBits() / 2, nxv2i32.getSizeInBits());
+  EXPECT_EQ(nxv2f64.getSizeInBits().divideCoefficientBy(2),
+            nxv2i32.getSizeInBits());
 }
 
 } // end anonymous namespace

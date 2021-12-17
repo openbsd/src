@@ -67,7 +67,7 @@ way to model this. Again, this tutorial won't dwell on good software
 engineering practices: for our purposes, adding a virtual method is
 simplest.
 
-The second thing we want is an "LogError" method like we used for the
+The second thing we want is a "LogError" method like we used for the
 parser, which will be used to report errors found during code generation
 (for example, use of an undeclared parameter):
 
@@ -90,7 +90,7 @@ detail, we just need a single instance to pass into APIs that require it.
 
 The ``Builder`` object is a helper object that makes it easy to generate
 LLVM instructions. Instances of the
-`IRBuilder <https://llvm.org/doxygen/IRBuilder_8h-source.html>`_
+`IRBuilder <https://llvm.org/doxygen/IRBuilder_8h_source.html>`_
 class template keep track of the current place to insert instructions
 and has methods to create new instructions.
 

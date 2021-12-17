@@ -57,7 +57,7 @@ TEST(VerifierTest, Freeze) {
   ConstantInt *CI = ConstantInt::get(ITy, 0);
 
   // Valid type : freeze(<2 x i32>)
-  Constant *CV = ConstantVector::getSplat({2, false}, CI);
+  Constant *CV = ConstantVector::getSplat(ElementCount::getFixed(2), CI);
   FreezeInst *FI_vec = new FreezeInst(CV);
   FI_vec->insertBefore(RI);
 
@@ -106,7 +106,7 @@ TEST(VerifierTest, InvalidRetAttribute) {
   raw_string_ostream ErrorOS(Error);
   EXPECT_TRUE(verifyModule(M, &ErrorOS));
   EXPECT_TRUE(StringRef(ErrorOS.str()).startswith(
-      "Attribute 'uwtable' only applies to functions!"));
+      "Attribute 'uwtable' does not apply to function return values"));
 }
 
 TEST(VerifierTest, CrossModuleRef) {
@@ -236,6 +236,38 @@ TEST(VerifierTest, DetectInvalidDebugInfo) {
     M.eraseNamedMetadata(M.getOrInsertNamedMetadata("llvm.dbg.cu"));
     EXPECT_TRUE(verifyModule(M));
   }
+}
+
+TEST(VerifierTest, MDNodeWrongContext) {
+  LLVMContext C1, C2;
+  auto *Node = MDNode::get(C1, None);
+
+  Module M("M", C2);
+  auto *NamedNode = M.getOrInsertNamedMetadata("test");
+  NamedNode->addOperand(Node);
+
+  std::string Error;
+  raw_string_ostream ErrorOS(Error);
+  EXPECT_TRUE(verifyModule(M, &ErrorOS));
+  EXPECT_TRUE(StringRef(ErrorOS.str())
+                  .startswith("MDNode context does not match Module context!"));
+}
+
+TEST(VerifierTest, AttributesWrongContext) {
+  LLVMContext C1, C2;
+  Module M1("M", C1);
+  FunctionType *FTy1 =
+      FunctionType::get(Type::getVoidTy(C1), /*isVarArg=*/false);
+  Function *F1 = Function::Create(FTy1, Function::ExternalLinkage, "foo", M1);
+  F1->setDoesNotReturn();
+
+  Module M2("M", C2);
+  FunctionType *FTy2 =
+      FunctionType::get(Type::getVoidTy(C2), /*isVarArg=*/false);
+  Function *F2 = Function::Create(FTy2, Function::ExternalLinkage, "foo", M2);
+  F2->copyAttributesFrom(F1);
+
+  EXPECT_TRUE(verifyFunction(*F2));
 }
 
 } // end anonymous namespace

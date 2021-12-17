@@ -26,9 +26,9 @@ using namespace llvm;
 /// Replaces BB Terminator with one that only contains Chunk BBs
 static void replaceBranchTerminator(BasicBlock &BB,
                                     std::set<BasicBlock *> BBsToKeep) {
-  auto Term = BB.getTerminator();
+  auto *Term = BB.getTerminator();
   std::vector<BasicBlock *> ChunkSucessors;
-  for (auto Succ : successors(&BB))
+  for (auto *Succ : successors(&BB))
     if (BBsToKeep.count(Succ))
       ChunkSucessors.push_back(Succ);
 
@@ -36,15 +36,19 @@ static void replaceBranchTerminator(BasicBlock &BB,
   if (ChunkSucessors.size() == Term->getNumSuccessors())
     return;
 
-  bool IsBranch = isa<BranchInst>(Term);
+  bool IsBranch = isa<BranchInst>(Term) || isa<InvokeInst>(Term);
   Value *Address = nullptr;
-  if (auto IndBI = dyn_cast<IndirectBrInst>(Term))
+  if (auto *IndBI = dyn_cast<IndirectBrInst>(Term))
     Address = IndBI->getAddress();
 
+  Term->replaceAllUsesWith(UndefValue::get(Term->getType()));
   Term->eraseFromParent();
 
   if (ChunkSucessors.empty()) {
-    ReturnInst::Create(BB.getContext(), nullptr, &BB);
+    auto *FnRetTy = BB.getParent()->getReturnType();
+    ReturnInst::Create(BB.getContext(),
+                       FnRetTy->isVoidTy() ? nullptr : UndefValue::get(FnRetTy),
+                       &BB);
     return;
   }
 
@@ -52,9 +56,9 @@ static void replaceBranchTerminator(BasicBlock &BB,
     BranchInst::Create(ChunkSucessors[0], &BB);
 
   if (Address) {
-    auto NewIndBI =
+    auto *NewIndBI =
         IndirectBrInst::Create(Address, ChunkSucessors.size(), &BB);
-    for (auto Dest : ChunkSucessors)
+    for (auto *Dest : ChunkSucessors)
       NewIndBI->addDestination(Dest);
   }
 }
@@ -65,7 +69,10 @@ static void replaceBranchTerminator(BasicBlock &BB,
 static void removeUninterestingBBsFromSwitch(SwitchInst &SwInst,
                                              std::set<BasicBlock *> BBsToKeep) {
   if (!BBsToKeep.count(SwInst.getDefaultDest())) {
-    ReturnInst::Create(SwInst.getContext(), nullptr, SwInst.getParent());
+    auto *FnRetTy = SwInst.getParent()->getParent()->getReturnType();
+    ReturnInst::Create(SwInst.getContext(),
+                       FnRetTy->isVoidTy() ? nullptr : UndefValue::get(FnRetTy),
+                       SwInst.getParent());
     SwInst.eraseFromParent();
   } else
     for (int I = 0, E = SwInst.getNumCases(); I != E; ++I) {

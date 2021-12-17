@@ -31,21 +31,21 @@ public:
 
 } // namespace
 
-static WasmYAML::Table makeTable(const wasm::WasmTable &Table) {
-  WasmYAML::Table T;
-  T.ElemType = Table.ElemType;
-  T.TableLimits.Flags = Table.Limits.Flags;
-  T.TableLimits.Initial = Table.Limits.Initial;
-  T.TableLimits.Maximum = Table.Limits.Maximum;
-  return T;
-}
-
 static WasmYAML::Limits makeLimits(const wasm::WasmLimits &Limits) {
   WasmYAML::Limits L;
   L.Flags = Limits.Flags;
-  L.Initial = Limits.Initial;
+  L.Minimum = Limits.Minimum;
   L.Maximum = Limits.Maximum;
   return L;
+}
+
+static WasmYAML::Table makeTable(uint32_t Index,
+                                 const wasm::WasmTableType &Type) {
+  WasmYAML::Table T;
+  T.Index = Index;
+  T.ElemType = Type.ElemType;
+  T.TableLimits = makeLimits(Type.Limits);
+  return T;
 }
 
 std::unique_ptr<WasmYAML::CustomSection>
@@ -64,11 +64,18 @@ WasmDumper::dumpCustomSection(const WasmSection &WasmSec) {
   } else if (WasmSec.Name == "name") {
     std::unique_ptr<WasmYAML::NameSection> NameSec =
         std::make_unique<WasmYAML::NameSection>();
-    for (const llvm::wasm::WasmFunctionName &Func : Obj.debugNames()) {
+    for (const llvm::wasm::WasmDebugName &Name : Obj.debugNames()) {
       WasmYAML::NameEntry NameEntry;
-      NameEntry.Name = Func.Name;
-      NameEntry.Index = Func.Index;
-      NameSec->FunctionNames.push_back(NameEntry);
+      NameEntry.Name = Name.Name;
+      NameEntry.Index = Name.Index;
+      if (Name.Type == llvm::wasm::NameType::FUNCTION) {
+        NameSec->FunctionNames.push_back(NameEntry);
+      } else if (Name.Type == llvm::wasm::NameType::GLOBAL) {
+        NameSec->GlobalNames.push_back(NameEntry);
+      } else {
+        assert(Name.Type == llvm::wasm::NameType::DATA_SEGMENT);
+        NameSec->DataSegmentNames.push_back(NameEntry);
+      }
     }
     CustomSec = std::move(NameSec);
   } else if (WasmSec.Name == "linking") {
@@ -93,7 +100,7 @@ WasmDumper::dumpCustomSection(const WasmSection &WasmSec) {
         SegmentInfo.Name = Segment.Data.Name;
         SegmentInfo.Index = SegmentIndex;
         SegmentInfo.Alignment = Segment.Data.Alignment;
-        SegmentInfo.Flags = Segment.Data.LinkerFlags;
+        SegmentInfo.Flags = Segment.Data.LinkingFlags;
         LinkingSec->SegmentInfos.push_back(SegmentInfo);
       }
       if (Segment.Data.Comdat != UINT32_MAX) {
@@ -101,6 +108,14 @@ WasmDumper::dumpCustomSection(const WasmSection &WasmSec) {
             WasmYAML::ComdatEntry{wasm::WASM_COMDAT_DATA, SegmentIndex});
       }
       SegmentIndex++;
+    }
+    uint32_t SectionIndex = 0;
+    for (const auto &Sec : Obj.sections()) {
+      const WasmSection &WasmSec = Obj.getWasmSection(Sec);
+      if (WasmSec.Comdat != UINT32_MAX)
+        LinkingSec->Comdats[WasmSec.Comdat].Entries.emplace_back(
+            WasmYAML::ComdatEntry{wasm::WASM_COMDAT_SECTION, SectionIndex});
+      SectionIndex++;
     }
 
     uint32_t SymbolIndex = 0;
@@ -116,7 +131,8 @@ WasmDumper::dumpCustomSection(const WasmSection &WasmSec) {
         break;
       case wasm::WASM_SYMBOL_TYPE_FUNCTION:
       case wasm::WASM_SYMBOL_TYPE_GLOBAL:
-      case wasm::WASM_SYMBOL_TYPE_EVENT:
+      case wasm::WASM_SYMBOL_TYPE_TABLE:
+      case wasm::WASM_SYMBOL_TYPE_TAG:
         Info.ElementIndex = Symbol.ElementIndex;
         break;
       case wasm::WASM_SYMBOL_TYPE_SECTION:
@@ -222,12 +238,14 @@ ErrorOr<WasmYAML::Object *> WasmDumper::dump() {
           Im.GlobalImport.Type = Import.Global.Type;
           Im.GlobalImport.Mutable = Import.Global.Mutable;
           break;
-        case wasm::WASM_EXTERNAL_EVENT:
-          Im.EventImport.Attribute = Import.Event.Attribute;
-          Im.EventImport.SigIndex = Import.Event.SigIndex;
+        case wasm::WASM_EXTERNAL_TAG:
+          Im.TagImport.Attribute = Import.Tag.Attribute;
+          Im.TagImport.SigIndex = Import.Tag.SigIndex;
           break;
         case wasm::WASM_EXTERNAL_TABLE:
-          Im.TableImport = makeTable(Import.Table);
+          // FIXME: Currently we always output an index of 0 for any imported
+          // table.
+          Im.TableImport = makeTable(0, Import.Table);
           break;
         case wasm::WASM_EXTERNAL_MEMORY:
           Im.Memory = makeLimits(Import.Memory);
@@ -249,7 +267,7 @@ ErrorOr<WasmYAML::Object *> WasmDumper::dump() {
     case wasm::WASM_SEC_TABLE: {
       auto TableSec = std::make_unique<WasmYAML::TableSection>();
       for (const wasm::WasmTable &Table : Obj.tables()) {
-        TableSec->Tables.push_back(makeTable(Table));
+        TableSec->Tables.push_back(makeTable(Table.Index, Table.Type));
       }
       S = std::move(TableSec);
       break;
@@ -262,16 +280,16 @@ ErrorOr<WasmYAML::Object *> WasmDumper::dump() {
       S = std::move(MemorySec);
       break;
     }
-    case wasm::WASM_SEC_EVENT: {
-      auto EventSec = std::make_unique<WasmYAML::EventSection>();
-      for (auto &Event : Obj.events()) {
-        WasmYAML::Event E;
-        E.Index = Event.Index;
-        E.Attribute = Event.Type.Attribute;
-        E.SigIndex = Event.Type.SigIndex;
-        EventSec->Events.push_back(E);
+    case wasm::WASM_SEC_TAG: {
+      auto TagSec = std::make_unique<WasmYAML::TagSection>();
+      for (auto &Tag : Obj.tags()) {
+        WasmYAML::Tag T;
+        T.Index = Tag.Index;
+        T.Attribute = Tag.Type.Attribute;
+        T.SigIndex = Tag.Type.SigIndex;
+        TagSec->Tags.push_back(T);
       }
-      S = std::move(EventSec);
+      S = std::move(TagSec);
       break;
     }
     case wasm::WASM_SEC_GLOBAL: {
@@ -309,11 +327,11 @@ ErrorOr<WasmYAML::Object *> WasmDumper::dump() {
       auto ElemSec = std::make_unique<WasmYAML::ElemSection>();
       for (auto &Segment : Obj.elements()) {
         WasmYAML::ElemSegment Seg;
-        Seg.TableIndex = Segment.TableIndex;
+        Seg.Flags = Segment.Flags;
+        Seg.TableNumber = Segment.TableNumber;
+        Seg.ElemKind = Segment.ElemKind;
         Seg.Offset = Segment.Offset;
-        for (auto &Func : Segment.Functions) {
-          Seg.Functions.push_back(Func);
-        }
+        append_range(Seg.Functions, Segment.Functions);
         ElemSec->Segments.push_back(Seg);
       }
       S = std::move(ElemSec);

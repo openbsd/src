@@ -5,6 +5,7 @@ set(LLVM_LINK_COMPONENTS
   Support
   Passes
   TransformUtils
+  ScalarOpts
   )
 
 add_llvm_unittest(IRTests
@@ -18,6 +19,7 @@ add_llvm_unittest(IRTests
   DataLayoutTest.cpp
   DebugInfoTest.cpp
   DebugTypeODRUniquingTest.cpp
+  DemandedBitsTest.cpp
   DominatorTreeTest.cpp
   DominatorTreeBatchUpdatesTest.cpp
   FunctionTest.cpp

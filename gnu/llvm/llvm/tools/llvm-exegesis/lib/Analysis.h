@@ -39,7 +39,8 @@ public:
   Analysis(const Target &Target, std::unique_ptr<MCInstrInfo> InstrInfo,
            const InstructionBenchmarkClustering &Clustering,
            double AnalysisInconsistencyEpsilon,
-           bool AnalysisDisplayUnstableOpcodes);
+           bool AnalysisDisplayUnstableOpcodes,
+           const std::string &ForceCpuName = "");
 
   // Prints a csv of instructions for each cluster.
   struct PrintClusters {};
@@ -111,7 +112,6 @@ private:
                     const char *Separator) const;
 
   const InstructionBenchmarkClustering &Clustering_;
-  MCObjectFileInfo ObjectFileInfo_;
   std::unique_ptr<MCContext> Context_;
   std::unique_ptr<MCSubtargetInfo> SubtargetInfo_;
   std::unique_ptr<MCInstrInfo> InstrInfo_;

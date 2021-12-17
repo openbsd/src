@@ -5,6 +5,7 @@ def OptFlag2 : OptionFlag;
 def OptFlag3 : OptionFlag;
 
 def A : Flag<["-"], "A">, HelpText<"The A option">, Flags<[OptFlag1]>;
+def AB : Flag<["-"], "AB">;
 def B : Joined<["-"], "B">, HelpText<"The B option">, MetaVarName<"B">, Flags<[OptFlag2]>;
 def C : Separate<["-"], "C">, HelpText<"The C option">, MetaVarName<"C">, Flags<[OptFlag1]>;
 def SLASH_C : Separate<["/", "-"], "C">, HelpText<"The C option">, MetaVarName<"C">, Flags<[OptFlag3]>;
@@ -43,3 +44,17 @@ def Blurmpq : Flag<["--"], "blurmp">;
 def Blurmpq_eq : Flag<["--"], "blurmp=">;
 
 def DashDash : Option<["--"], "", KIND_REMAINING_ARGS>;
+
+class XOpts<string base> : KeyPathAndMacro<"X->", base> {}
+
+def marshalled_flag_d : Flag<["-"], "marshalled-flag-d">,
+  MarshallingInfoFlag<XOpts<"MarshalledFlagD">>;
+def marshalled_flag_c : Flag<["-"], "marshalled-flag-c">,
+  MarshallingInfoFlag<XOpts<"MarshalledFlagC">>,
+  ImpliedByAnyOf<[marshalled_flag_d.KeyPath], "true">;
+def marshalled_flag_b : Flag<["-"], "marshalled-flag-b">,
+  MarshallingInfoFlag<XOpts<"MarshalledFlagB">>,
+  ImpliedByAnyOf<[marshalled_flag_d.KeyPath], "true">;
+def marshalled_flag_a : Flag<["-"], "marshalled-flag-a">,
+  MarshallingInfoFlag<XOpts<"MarshalledFlagA">>,
+  ImpliedByAnyOf<[marshalled_flag_c.KeyPath, marshalled_flag_b.KeyPath]>;

@@ -55,7 +55,6 @@ private:
   static void
   accumulateCounterValues(const llvm::SmallVector<int64_t, 4> &NewValues,
                           llvm::SmallVector<int64_t, 4> *Result) {
-
     const size_t NumValues = std::max(NewValues.size(), Result->size());
     if (NumValues > Result->size())
       Result->resize(NumValues, 0);
@@ -72,10 +71,10 @@ private:
     SmallVector<StringRef, 2> CounterNames;
     StringRef(Counters).split(CounterNames, '+');
     char *const ScratchPtr = Scratch->ptr();
+    const ExegesisTarget &ET = State.getExegesisTarget();
     for (auto &CounterName : CounterNames) {
       CounterName = CounterName.trim();
-      auto CounterOrError =
-          State.getExegesisTarget().createCounter(CounterName, State);
+      auto CounterOrError = ET.createCounter(CounterName, State);
 
       if (!CounterOrError)
         return CounterOrError.takeError();
@@ -94,6 +93,7 @@ private:
                 .concat(std::to_string(Reserved)));
       Scratch->clear();
       {
+        auto PS = ET.withSavedState();
         CrashRecoveryContext CRC;
         CrashRecoveryContext::Enable();
         const bool Crashed = !CRC.RunSafely([this, Counter, ScratchPtr]() {
@@ -102,14 +102,25 @@ private:
           Counter->stop();
         });
         CrashRecoveryContext::Disable();
-        // FIXME: Better diagnosis.
-        if (Crashed)
-          return make_error<SnippetCrash>("snippet crashed while running");
+        PS.reset();
+        if (Crashed) {
+          std::string Msg = "snippet crashed while running";
+#ifdef LLVM_ON_UNIX
+          // See "Exit Status for Commands":
+          // https://pubs.opengroup.org/onlinepubs/9699919799/xrat/V4_xcu_chap02.html
+          constexpr const int kSigOffset = 128;
+          if (const char *const SigName = strsignal(CRC.RetCode - kSigOffset)) {
+            Msg += ": ";
+            Msg += SigName;
+          }
+#endif
+          return make_error<SnippetCrash>(std::move(Msg));
+        }
       }
-      auto ValueOrError = Counter->readOrError();
+
+      auto ValueOrError = Counter->readOrError(Function.getFunctionBytes());
       if (!ValueOrError)
         return ValueOrError.takeError();
-
       accumulateCounterValues(ValueOrError.get(), &CounterValues);
     }
     return CounterValues;
@@ -122,7 +133,7 @@ private:
 } // namespace
 
 Expected<InstructionBenchmark> BenchmarkRunner::runConfiguration(
-    const BenchmarkCode &BC, unsigned NumRepetitions,
+    const BenchmarkCode &BC, unsigned NumRepetitions, unsigned LoopBodySize,
     ArrayRef<std::unique_ptr<const SnippetRepetitor>> Repetitors,
     bool DumpObjectToDisk) const {
   InstructionBenchmark InstrBenchmark;
@@ -157,29 +168,29 @@ Expected<InstructionBenchmark> BenchmarkRunner::runConfiguration(
     // Assemble at least kMinInstructionsForSnippet instructions by repeating
     // the snippet for debug/analysis. This is so that the user clearly
     // understands that the inside instructions are repeated.
-    constexpr const int kMinInstructionsForSnippet = 16;
+    const int MinInstructionsForSnippet = 4 * Instructions.size();
+    const int LoopBodySizeForSnippet = 2 * Instructions.size();
     {
       SmallString<0> Buffer;
       raw_svector_ostream OS(Buffer);
       if (Error E = assembleToStream(
               State.getExegesisTarget(), State.createTargetMachine(),
               BC.LiveIns, BC.Key.RegisterInitialValues,
-              Repetitor->Repeat(Instructions, kMinInstructionsForSnippet),
+              Repetitor->Repeat(Instructions, MinInstructionsForSnippet,
+                                LoopBodySizeForSnippet),
               OS)) {
         return std::move(E);
       }
       const ExecutableFunction EF(State.createTargetMachine(),
                                   getObjectFromBuffer(OS.str()));
       const auto FnBytes = EF.getFunctionBytes();
-      InstrBenchmark.AssembledSnippet.insert(
-          InstrBenchmark.AssembledSnippet.end(), FnBytes.begin(),
-          FnBytes.end());
+      llvm::append_range(InstrBenchmark.AssembledSnippet, FnBytes);
     }
 
     // Assemble NumRepetitions instructions repetitions of the snippet for
     // measurements.
-    const auto Filler =
-        Repetitor->Repeat(Instructions, InstrBenchmark.NumRepetitions);
+    const auto Filler = Repetitor->Repeat(
+        Instructions, InstrBenchmark.NumRepetitions, LoopBodySize);
 
     object::OwningBinary<object::ObjectFile> ObjectFile;
     if (DumpObjectToDisk) {

@@ -11,19 +11,6 @@
 #
 # Project-wide settings
 
-# Where gtest's .h files can be found.
-include_directories(
-  googletest/include
-  googletest
-  googlemock/include
-  googlemock
-  )
-
-# LLVM requires C++11 but gtest doesn't correctly detect the availability
-# of C++11 on MSVC, so we force it on.
-add_definitions(-DGTEST_LANG_CXX11=1)
-add_definitions(-DGTEST_HAS_TR1_TUPLE=0)
-
 if(WIN32)
   add_definitions(-DGTEST_OS_WINDOWS=1)
 endif()
@@ -47,10 +34,6 @@ endif()
 set(LLVM_REQUIRES_RTTI 1)
 add_definitions( -DGTEST_HAS_RTTI=0 )
 
-if (NOT LLVM_ENABLE_THREADS)
-  add_definitions( -DGTEST_HAS_PTHREAD=0 )
-endif()
-
 find_library(LLVM_PTHREAD_LIBRARY_PATH pthread)
 if (LLVM_PTHREAD_LIBRARY_PATH)
   list(APPEND LIBS pthread)
@@ -69,6 +52,23 @@ add_llvm_library(gtest
   # This is a library meant only for the build tree.
   BUILDTREE_ONLY
 )
+
+# The googletest and googlemock sources don't presently use the 'override'
+# keyword, which leads to lots of warnings from -Wsuggest-override. Disable
+# that warning here for any targets that link to gtest.
+if(CXX_SUPPORTS_SUGGEST_OVERRIDE_FLAG)
+  add_definitions("-Wno-suggest-override")
+  set_target_properties(gtest PROPERTIES INTERFACE_COMPILE_OPTIONS "-Wno-suggest-override")
+endif()
+
+if (NOT LLVM_ENABLE_THREADS)
+  target_compile_definitions(gtest PUBLIC GTEST_HAS_PTHREAD=0)
+endif ()
+
+target_include_directories(gtest
+  PUBLIC googletest/include googlemock/include
+  PRIVATE googletest googlemock
+  )
 
 add_subdirectory(UnitTestMain)
 

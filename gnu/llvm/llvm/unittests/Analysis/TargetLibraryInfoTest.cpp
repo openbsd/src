@@ -61,7 +61,7 @@ protected:
 TEST_F(TargetLibraryInfoTest, InvalidProto) {
   parseAssembly("%foo = type { %foo }\n");
 
-  auto *StructTy = M->getTypeByName("foo");
+  auto *StructTy = StructType::getTypeByName(Context, "foo");
   auto *InvalidFTy = FunctionType::get(StructTy, /*isVarArg=*/false);
 
   for (unsigned FI = 0; FI != LibFunc::NumLibFuncs; ++FI) {
@@ -481,6 +481,7 @@ TEST_F(TargetLibraryInfoTest, ValidProto) {
       "declare i8* @__strcpy_chk(i8*, i8*, i64)\n"
       "declare i8* @__strncpy_chk(i8*, i8*, i64, i64)\n"
       "declare i8* @__memccpy_chk(i8*, i8*, i32, i64)\n"
+      "declare i8* @__mempcpy_chk(i8*, i8*, i64, i64)\n"
       "declare i32 @__snprintf_chk(i8*, i64, i32, i64, i8*, ...)\n"
       "declare i32 @__sprintf_chk(i8*, i32, i64, i8*, ...)\n"
       "declare i8* @__strcat_chk(i8*, i8*, i64)\n"
@@ -494,6 +495,9 @@ TEST_F(TargetLibraryInfoTest, ValidProto) {
       "declare i8* @memalign(i64, i64)\n"
       "declare i8* @mempcpy(i8*, i8*, i64)\n"
       "declare i8* @memrchr(i8*, i32, i64)\n"
+
+      "declare void @__atomic_load(i64, i8*, i8*, i32)\n"
+      "declare void @__atomic_store(i64, i8*, i8*, i32)\n"
 
       // These are similar to the FILE* fgetc/fputc.
       "declare i32 @_IO_getc(%struct*)\n"
@@ -576,6 +580,16 @@ TEST_F(TargetLibraryInfoTest, ValidProto) {
       "declare double @__sinh_finite(double)\n"
       "declare float @__sinhf_finite(float)\n"
       "declare x86_fp80 @__sinhl_finite(x86_fp80)\n"
+
+      // These functions are aix vec allocation/free routines
+      "declare i8* @vec_calloc(i64, i64)\n"
+      "declare i8* @vec_malloc(i64)\n"
+      "declare i8* @vec_realloc(i8*, i64)\n"
+      "declare void @vec_free(i8*)\n"
+
+      // These functions are OpenMP Offloading allocation / free routines
+      "declare i8* @__kmpc_alloc_shared(i64)\n"
+      "declare void @__kmpc_free_shared(i8*, i64)\n"
       );
 
   for (unsigned FI = 0; FI != LibFunc::NumLibFuncs; ++FI) {

@@ -1,35 +1,35 @@
-set(CommonMLSources MLInlineAdvisor.cpp)
-set(ReleaseModeMLSources ReleaseModeModelRunner.cpp)
-set(DevelopmentModeMLSources TFUtils.cpp)
-
 if (DEFINED LLVM_HAVE_TF_AOT OR DEFINED LLVM_HAVE_TF_API)
-  set(MLPolicySources ${CommonMLSources})
+  include(TensorFlowCompile)
+  set(LLVM_INLINER_MODEL_PATH_DEFAULT "models/inliner-Oz")
+
+  # This url points to the most recent most which is known to be compatible with
+  # LLVM. When better models are published, this url should be updated to aid
+  # discoverability.
+  set(LLVM_INLINER_MODEL_CURRENT_URL "https://github.com/google/ml-compiler-opt/releases/download/inlining-Oz-v1.0/inlining-Oz-99f0063-v1.0.tar.gz")
+
   if (DEFINED LLVM_HAVE_TF_AOT)
-    include(TensorFlowCompile)
-    tfcompile(models/inliner serve action InlinerSizeModel llvm::InlinerSizeModel)
-    list(APPEND ReleaseModeMLSources
-      $<TARGET_OBJECTS:tf_xla_runtime_objects>
-      ${GENERATED_OBJS}
+    # If the path is empty, autogenerate the model
+    if (NOT DEFINED LLVM_INLINER_MODEL_PATH OR "${LLVM_INLINER_MODEL_PATH}" STREQUAL "")
+      set(LLVM_INLINER_MODEL_PATH "autogenerate")
+      message(WARNING "LLVM_INLINER_MODEL_PATH was not set: autogenerating a model to finish the build.")
+    endif()
+
+    tf_find_and_compile(
+      ${LLVM_INLINER_MODEL_PATH}
+      ${LLVM_INLINER_MODEL_CURRENT_URL}
+      ${LLVM_INLINER_MODEL_PATH_DEFAULT}
+      "models/inlining/config.py"
+      serve
+      action
+      InlinerSizeModel
+      llvm::InlinerSizeModel
     )
-    LIST(APPEND MLPolicySources ${ReleaseModeMLSources})
-  else()
-    LIST(APPEND LLVM_OPTIONAL_SOURCES ${ReleaseModeMLSources})
   endif()
 
   if (DEFINED LLVM_HAVE_TF_API)
-    LIST(APPEND MLPolicySources ${DevelopmentModeMLSources})
-    LIST(APPEND MLLinkDeps ${tensorflow_c_api})
-  else()
-    LIST(APPEND LLVM_OPTIONAL_SOURCES ${DevelopmentModeMLSources})
+    list(APPEND MLLinkDeps ${tensorflow_c_api} ${tensorflow_fx})
   endif()
-else()
-  LIST(APPEND LLVM_OPTIONAL_SOURCES 
-    ${CommonMLSources}
-    ${DevelopmentModeMLSources}
-    ${ReleaseModeMLSources}
-    )
 endif()
-  
 
 add_llvm_component_library(LLVMAnalysis
   AliasAnalysis.cpp
@@ -57,24 +57,29 @@ add_llvm_component_library(LLVMAnalysis
   CodeMetrics.cpp
   ConstantFolding.cpp
   DDG.cpp
+  DDGPrinter.cpp
+  ConstraintSystem.cpp
   Delinearization.cpp
   DemandedBits.cpp
   DependenceAnalysis.cpp
   DependenceGraphBuilder.cpp
+  DevelopmentModeInlineAdvisor.cpp
   DivergenceAnalysis.cpp
   DomPrinter.cpp
   DomTreeUpdater.cpp
   DominanceFrontier.cpp
   EHPersonalities.cpp
+  FunctionPropertiesAnalysis.cpp
   GlobalsModRef.cpp
   GuardUtils.cpp
   HeatUtils.cpp
+  IRSimilarityIdentifier.cpp
   IVDescriptors.cpp
   IVUsers.cpp
+  ImportedFunctionsInliningStatistics.cpp
   IndirectCallPromotionAnalysis.cpp
   InlineCost.cpp
   InlineAdvisor.cpp
-  InlineFeaturesAnalysis.cpp
   InlineSizeEstimatorAnalysis.cpp
   InstCount.cpp
   InstructionPrecedenceTracking.cpp
@@ -95,6 +100,7 @@ add_llvm_component_library(LLVMAnalysis
   LoopUnrollAnalyzer.cpp
   LoopInfo.cpp
   LoopPass.cpp
+  MLInlineAdvisor.cpp
   MemDepPrinter.cpp
   MemDerefPrinter.cpp
   MemoryBuiltins.cpp
@@ -109,6 +115,7 @@ add_llvm_component_library(LLVMAnalysis
   ObjCARCAnalysisUtils.cpp
   ObjCARCInstKind.cpp
   OptimizationRemarkEmitter.cpp
+  OverflowInstAnalysis.cpp
   PHITransAddr.cpp
   PhiValues.cpp
   PostDominators.cpp
@@ -117,6 +124,8 @@ add_llvm_component_library(LLVMAnalysis
   RegionInfo.cpp
   RegionPass.cpp
   RegionPrinter.cpp
+  ReleaseModeModelRunner.cpp
+  ReplayInlineAdvisor.cpp
   ScalarEvolution.cpp
   ScalarEvolutionAliasAnalysis.cpp
   ScalarEvolutionDivision.cpp
@@ -125,6 +134,7 @@ add_llvm_component_library(LLVMAnalysis
   StackSafetyAnalysis.cpp
   SyncDependenceAnalysis.cpp
   SyntheticCountsUtils.cpp
+  TFUtils.cpp
   TargetLibraryInfo.cpp
   TargetTransformInfo.cpp
   Trace.cpp
@@ -136,14 +146,22 @@ add_llvm_component_library(LLVMAnalysis
   ValueTracking.cpp
   VectorUtils.cpp
   VFABIDemangling.cpp
-  ${MLPolicySources}
+  ${GeneratedMLSources}
 
   ADDITIONAL_HEADER_DIRS
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Analysis
 
   DEPENDS
   intrinsics_gen
+  ${MLDeps}
 
   LINK_LIBS
   ${MLLinkDeps}
+
+  LINK_COMPONENTS
+  BinaryFormat
+  Core
+  Object
+  ProfileData
+  Support
   )

@@ -38,6 +38,8 @@ source_set("sources") {
     "sanitizer_atomic_msvc.h",
     "sanitizer_bitvector.h",
     "sanitizer_bvgraph.h",
+    "sanitizer_chained_origin_depot.cpp",
+    "sanitizer_chained_origin_depot.h",
     "sanitizer_common.cpp",
     "sanitizer_common.h",
     "sanitizer_common_libcdep.cpp",
@@ -79,9 +81,9 @@ source_set("sources") {
     "sanitizer_mac.cpp",
     "sanitizer_mac.h",
     "sanitizer_mac_libcdep.cpp",
+    "sanitizer_mutex.cpp",
     "sanitizer_mutex.h",
     "sanitizer_netbsd.cpp",
-    "sanitizer_openbsd.cpp",
     "sanitizer_persistent_allocator.cpp",
     "sanitizer_persistent_allocator.h",
     "sanitizer_placement_new.h",
@@ -91,8 +93,6 @@ source_set("sources") {
     "sanitizer_platform_limits_linux.cpp",
     "sanitizer_platform_limits_netbsd.cpp",
     "sanitizer_platform_limits_netbsd.h",
-    "sanitizer_platform_limits_openbsd.cpp",
-    "sanitizer_platform_limits_openbsd.h",
     "sanitizer_platform_limits_posix.cpp",
     "sanitizer_platform_limits_posix.h",
     "sanitizer_platform_limits_solaris.cpp",
@@ -112,8 +112,6 @@ source_set("sources") {
     "sanitizer_quarantine.h",
     "sanitizer_report_decorator.h",
     "sanitizer_ring_buffer.h",
-    "sanitizer_rtems.cpp",
-    "sanitizer_rtems.h",
     "sanitizer_solaris.cpp",
     "sanitizer_stackdepot.cpp",
     "sanitizer_stackdepot.h",
@@ -143,11 +141,11 @@ source_set("sources") {
     "sanitizer_symbolizer_markup.cpp",
     "sanitizer_symbolizer_posix_libcdep.cpp",
     "sanitizer_symbolizer_report.cpp",
-    "sanitizer_symbolizer_rtems.h",
     "sanitizer_symbolizer_win.cpp",
     "sanitizer_termination.cpp",
     "sanitizer_thread_registry.cpp",
     "sanitizer_thread_registry.h",
+    "sanitizer_thread_safety.h",
     "sanitizer_tls_get_addr.cpp",
     "sanitizer_tls_get_addr.h",
     "sanitizer_type_traits.cpp",
@@ -170,8 +168,5 @@ source_set("nolibc_sources") {
   configs -= [ "//llvm/utils/gn/build:llvm_code" ]
   configs += [ "//llvm/utils/gn/build:crt_code" ]
   deps = [ "//llvm/utils/gn/build/libs/pthread" ]
-  sources = [
-    # Make `gn format` not collapse this, for sync_source_lists_from_cmake.py.
-    "sanitizer_common_nolibc.cpp",
-  ]
+  sources = [ "sanitizer_common_nolibc.cpp" ]
 }

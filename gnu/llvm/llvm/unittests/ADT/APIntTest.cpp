@@ -1461,7 +1461,10 @@ TEST(APIntTest, mul_clear) {
   APInt ValC(65, 0);
   ValC = ValA * ValB;
   ValA *= ValB;
-  EXPECT_EQ(ValA.toString(10, false), ValC.toString(10, false));
+  SmallString<16> StrA, StrC;
+  ValA.toString(StrA, 10, false);
+  ValC.toString(StrC, 10, false);
+  EXPECT_EQ(std::string(StrA), std::string(StrC));
 }
 
 TEST(APIntTest, Rotate) {
@@ -1783,8 +1786,9 @@ TEST(APIntTest, isShiftedMask) {
   }
 }
 
-// Test that self-move works, but only when we're using MSVC.
-#if defined(_MSC_VER)
+// Test that self-move works with EXPENSIVE_CHECKS. It calls std::shuffle which
+// does self-move on some platforms.
+#ifdef EXPENSIVE_CHECKS
 #if defined(__clang__)
 // Disable the pragma warning from versions of Clang without -Wself-move
 #pragma clang diagnostic push
@@ -1813,7 +1817,7 @@ TEST(APIntTest, SelfMoveAssignment) {
 #pragma clang diagnostic pop
 #pragma clang diagnostic pop
 #endif
-#endif // _MSC_VER
+#endif // EXPENSIVE_CHECKS
 
 TEST(APIntTest, byteSwap) {
   EXPECT_EQ(0x00000000, APInt(16, 0x0000).byteSwap());
@@ -1993,23 +1997,44 @@ TEST(APIntTest, extractBits) {
   APInt i32(32, 0x1234567);
   EXPECT_EQ(0x3456, i32.extractBits(16, 4));
 
+  APInt i64(64, 0x01234567FFFFFFFFull);
+  EXPECT_EQ(0xFFFFFFFF, i64.extractBits(32, 0));
+  EXPECT_EQ(0xFFFFFFFF, i64.trunc(32));
+  EXPECT_EQ(0x01234567, i64.extractBits(32, 32));
+  EXPECT_EQ(0x01234567, i64.lshr(32).trunc(32));
+
   APInt i257(257, 0xFFFFFFFFFF0000FFull, true);
   EXPECT_EQ(0xFFu, i257.extractBits(16, 0));
+  EXPECT_EQ(0xFFu, i257.lshr(0).trunc(16));
   EXPECT_EQ((0xFFu >> 1), i257.extractBits(16, 1));
+  EXPECT_EQ((0xFFu >> 1), i257.lshr(1).trunc(16));
   EXPECT_EQ(-1, i257.extractBits(32, 64).getSExtValue());
+  EXPECT_EQ(-1, i257.lshr(64).trunc(32).getSExtValue());
   EXPECT_EQ(-1, i257.extractBits(128, 128).getSExtValue());
+  EXPECT_EQ(-1, i257.lshr(128).trunc(128).getSExtValue());
   EXPECT_EQ(-1, i257.extractBits(66, 191).getSExtValue());
+  EXPECT_EQ(-1, i257.lshr(191).trunc(66).getSExtValue());
   EXPECT_EQ(static_cast<int64_t>(0xFFFFFFFFFF80007Full),
             i257.extractBits(128, 1).getSExtValue());
   EXPECT_EQ(static_cast<int64_t>(0xFFFFFFFFFF80007Full),
+            i257.lshr(1).trunc(128).getSExtValue());
+  EXPECT_EQ(static_cast<int64_t>(0xFFFFFFFFFF80007Full),
             i257.extractBits(129, 1).getSExtValue());
+  EXPECT_EQ(static_cast<int64_t>(0xFFFFFFFFFF80007Full),
+            i257.lshr(1).trunc(129).getSExtValue());
 
   EXPECT_EQ(APInt(48, 0),
             APInt(144, "281474976710655", 10).extractBits(48, 48));
+  EXPECT_EQ(APInt(48, 0),
+            APInt(144, "281474976710655", 10).lshr(48).trunc(48));
   EXPECT_EQ(APInt(48, 0x0000ffffffffffffull),
             APInt(144, "281474976710655", 10).extractBits(48, 0));
+  EXPECT_EQ(APInt(48, 0x0000ffffffffffffull),
+            APInt(144, "281474976710655", 10).lshr(0).trunc(48));
   EXPECT_EQ(APInt(48, 0x00007fffffffffffull),
             APInt(144, "281474976710655", 10).extractBits(48, 1));
+  EXPECT_EQ(APInt(48, 0x00007fffffffffffull),
+            APInt(144, "281474976710655", 10).lshr(1).trunc(48));
 }
 
 TEST(APIntTest, extractBitsAsZExtValue) {
@@ -2574,6 +2599,13 @@ TEST(APIntTest, sext) {
   EXPECT_EQ(63U, i32_neg1.countLeadingOnes());
   EXPECT_EQ(0U, i32_neg1.countTrailingZeros());
   EXPECT_EQ(63U, i32_neg1.countPopulation());
+}
+
+TEST(APIntTest, truncOrSelf) {
+  APInt val(32, 0xFFFFFFFF);
+  EXPECT_EQ(0xFFFF, val.truncOrSelf(16));
+  EXPECT_EQ(0xFFFFFFFF, val.truncOrSelf(32));
+  EXPECT_EQ(0xFFFFFFFF, val.truncOrSelf(64));
 }
 
 TEST(APIntTest, multiply) {

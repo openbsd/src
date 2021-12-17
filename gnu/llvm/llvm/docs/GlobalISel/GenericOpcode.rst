@@ -153,7 +153,7 @@ G_BITCAST
 ^^^^^^^^^
 
 Reinterpret a value as a new type. This is usually done without
-changing any bits but this is not always the case due a sublety in the
+changing any bits but this is not always the case due a subtlety in the
 definition of the :ref:`LLVM-IR Bitcast Instruction <i_bitcast>`. It
 is allowed to bitcast between pointers with the same size, but
 different address spaces.
@@ -186,10 +186,18 @@ Extract a register of the specified size, starting from the block given by
 index. This will almost certainly be mapped to sub-register COPYs after
 register banks have been selected.
 
+.. code-block:: none
+
+  %3:_(s32) = G_EXTRACT %2:_(s64), 32
+
 G_INSERT
 ^^^^^^^^
 
 Insert a smaller register into a larger one at the specified bit-index.
+
+.. code-block:: none
+
+  %2:_(s64) = G_INSERT %0:(_s64), %1:_(s32), 0
 
 G_MERGE_VALUES
 ^^^^^^^^^^^^^^
@@ -233,6 +241,45 @@ Reverse the order of the bits in a scalar.
 
   %1:_(s32) = G_BITREVERSE %0:_(s32)
 
+G_SBFX, G_UBFX
+^^^^^^^^^^^^^^
+
+Extract a range of bits from a register.
+
+The source operands are registers as follows:
+
+- Source
+- The least-significant bit for the extraction
+- The width of the extraction
+
+The least-significant bit (lsb) and width operands are in the range:
+
+::
+
+      0 <= lsb < lsb + width <= source bitwidth, where all values are unsigned
+
+G_SBFX sign-extends the result, while G_UBFX zero-extends the result.
+
+.. code-block:: none
+
+  ; Extract 5 bits starting at bit 1 from %x and store them in %a.
+  ; Sign-extend the result.
+  ;
+  ; Example:
+  ; %x = 0...0000[10110]1 ---> %a = 1...111111[10110]
+  %lsb_one = G_CONSTANT i32 1
+  %width_five = G_CONSTANT i32 5
+  %a:_(s32) = G_SBFX %x, %lsb_one, %width_five
+
+  ; Extract 3 bits starting at bit 2 from %x and store them in %b. Zero-extend
+  ; the result.
+  ;
+  ; Example:
+  ; %x = 1...11111[100]11 ---> %b = 0...00000[100]
+  %lsb_two = G_CONSTANT i32 2
+  %width_three = G_CONSTANT i32 3
+  %b:_(s32) = G_UBFX %x, %lsb_two, %width_three
+
 Integer Operations
 -------------------
 
@@ -245,10 +292,19 @@ These each perform their respective integer arithmetic on a scalar.
 
   %2:_(s32) = G_ADD %0:_(s32), %1:_(s32)
 
-G_SADDSAT, G_UADDSAT, G_SSUBSAT, G_USUBSAT
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+G_SDIVREM, G_UDIVREM
+^^^^^^^^^^^^^^^^^^^^
 
-Signed and unsigned addition and subtraction with saturation.
+Perform integer division and remainder thereby producing two results.
+
+.. code-block:: none
+
+  %div:_(s32), %rem:_(s32) = G_SDIVREM %0:_(s32), %1:_(s32)
+
+G_SADDSAT, G_UADDSAT, G_SSUBSAT, G_USUBSAT, G_SSHLSAT, G_USHLSAT
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Signed and unsigned addition, subtraction and left shift with saturation.
 
 .. code-block:: none
 
@@ -258,6 +314,11 @@ G_SHL, G_LSHR, G_ASHR
 ^^^^^^^^^^^^^^^^^^^^^
 
 Shift the bits of a scalar left or right inserting zeros (sign-bit for G_ASHR).
+
+G_ROTR, G_ROTL
+^^^^^^^^^^^^^^
+
+Rotate the bits right (G_ROTR) or left (G_ROTL).
 
 G_ICMP
 ^^^^^^
@@ -308,6 +369,16 @@ Take the minimum/maximum of two values.
 .. code-block:: none
 
   %5:_(s32) = G_SMIN %6, %2
+
+G_ABS
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Take the absolute value of a signed integer. The absolute value of the minimum
+negative value (e.g. the 8-bit value `0x80`) is defined to be itself.
+
+.. code-block:: none
+
+  %1:_(s32) = G_ABS %0
 
 G_UADDO, G_SADDO, G_USUBO, G_SSUBO, G_SMULO, G_UMULO
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -535,6 +606,45 @@ Concatenate two vectors and shuffle the elements according to the mask operand.
 The mask operand should be an IR Constant which exactly matches the
 corresponding mask for the IR shufflevector instruction.
 
+Vector Reduction Operations
+---------------------------
+
+These operations represent horizontal vector reduction, producing a scalar result.
+
+G_VECREDUCE_SEQ_FADD, G_VECREDUCE_SEQ_FMUL
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The SEQ variants perform reductions in sequential order. The first operand is
+an initial scalar accumulator value, and the second operand is the vector to reduce.
+
+G_VECREDUCE_FADD, G_VECREDUCE_FMUL
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+These reductions are relaxed variants which may reduce the elements in any order.
+
+G_VECREDUCE_FMAX, G_VECREDUCE_FMIN
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+FMIN/FMAX nodes can have flags, for NaN/NoNaN variants.
+
+
+Integer/bitwise reductions
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* G_VECREDUCE_ADD
+* G_VECREDUCE_MUL
+* G_VECREDUCE_AND
+* G_VECREDUCE_OR
+* G_VECREDUCE_XOR
+* G_VECREDUCE_SMAX
+* G_VECREDUCE_SMIN
+* G_VECREDUCE_UMAX
+* G_VECREDUCE_UMIN
+
+Integer reductions may have a result type larger than the vector element type.
+However, the reduction is performed using the vector element type and the value
+in the top bits is unspecified.
+
 Memory Operations
 -----------------
 
@@ -604,6 +714,36 @@ G_FENCE
 .. caution::
 
   I couldn't find any documentation on this at the time of writing.
+
+G_MEMCPY
+^^^^^^^^
+
+Generic memcpy. Expects two MachineMemOperands covering the store and load
+respectively, in addition to explicit operands.
+
+G_MEMCPY_INLINE
+^^^^^^^^^^^^^^^
+
+Generic inlined memcpy. Like G_MEMCPY, but it is guaranteed that this version
+will not be lowered as a call to an external function. Currently the size
+operand is required to evaluate as a constant (not an immediate), though that is
+expected to change when llvm.memcpy.inline is taught to support dynamic sizes.
+
+G_MEMMOVE
+^^^^^^^^^
+
+Generic memmove. Similar to G_MEMCPY, but the source and destination memory
+ranges are allowed to overlap.
+
+G_MEMSET
+^^^^^^^^
+
+Generic memset. Expects a MachineMemOperand in addition to explicit operands.
+
+G_BZERO
+^^^^^^^
+
+Generic bzero. Expects a MachineMemOperand in addition to explicit operands.
 
 Control Flow
 ------------
@@ -681,8 +821,44 @@ G_DYN_STACKALLOC
 ^^^^^^^^^^^^^^^^
 
 Dynamically realigns the stack pointer to the specified size and alignment.
-An alignment value of `0` or `1` mean no specific alignment.
+An alignment value of `0` or `1` means no specific alignment.
 
 .. code-block:: none
 
   %8:_(p0) = G_DYN_STACKALLOC %7(s64), 32
+
+Optimization Hints
+------------------
+
+These instructions do not correspond to any target instructions. They act as
+hints for various combines.
+
+G_ASSERT_SEXT, G_ASSERT_ZEXT
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This signifies that the contents of a register were previously extended from a
+smaller type.
+
+The smaller type is denoted using an immediate operand. For scalars, this is the
+width of the entire smaller type. For vectors, this is the width of the smaller
+element type.
+
+.. code-block:: none
+
+  %x_was_zexted:_(s32) = G_ASSERT_ZEXT %x(s32), 16
+  %y_was_zexted:_(<2 x s32>) = G_ASSERT_ZEXT %y(<2 x s32>), 16
+
+  %z_was_sexted:_(s32) = G_ASSERT_SEXT %z(s32), 8
+
+G_ASSERT_SEXT and G_ASSERT_ZEXT act like copies, albeit with some restrictions.
+
+The source and destination registers must
+
+- Be virtual
+- Belong to the same register class
+- Belong to the same register bank
+
+It should always be safe to
+
+- Look through the source register
+- Replace the destination register with the source register

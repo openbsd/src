@@ -127,6 +127,9 @@ postscript or some other suitable format.
 This pass, only available in ``opt``, prints the control flow graph into a
 ``.dot`` graph.  This graph can then be processed with the :program:`dot` tool
 to convert it to postscript or some other suitable format.
+Additionally the ``-cfg-func-name=<substring>`` option can be used to filter the
+functions that are printed. All functions that contain the specified substring
+will be printed.
 
 ``-dot-cfg-only``: Print CFG of function to "dot" file (with no function bodies)
 --------------------------------------------------------------------------------
@@ -135,6 +138,9 @@ This pass, only available in ``opt``, prints the control flow graph into a
 ``.dot`` graph, omitting the function bodies.  This graph can then be processed
 with the :program:`dot` tool to convert it to postscript or some other suitable
 format.
+Additionally the ``-cfg-func-name=<substring>`` option can be used to filter the
+functions that are printed. All functions that contain the specified substring
+will be printed.
 
 ``-dot-dom``: Print dominance tree of function to "dot" file
 ------------------------------------------------------------
@@ -336,7 +342,7 @@ graph at only two spots.  Furthermore, a hierarchical region tree is built.
 ``-scalar-evolution``: Scalar Evolution Analysis
 ------------------------------------------------
 
-The ``ScalarEvolution`` analysis can be used to analyze and catagorize scalar
+The ``ScalarEvolution`` analysis can be used to analyze and categorize scalar
 expressions in loops.  It specializes in recognizing general induction
 variables, representing them with the abstract and opaque ``SCEV`` class.
 Given this analysis, trip counts of loops and other important properties can be
@@ -460,27 +466,6 @@ shared.  This is useful because some passes (i.e., TraceValues) insert a lot of
 string constants into the program, regardless of whether or not an existing
 string is available.
 
-``-constprop``: Simple constant propagation
--------------------------------------------
-
-This pass implements constant propagation and merging.  It looks for
-instructions involving only constant operands and replaces them with a constant
-value instead of an instruction.  For example:
-
-.. code-block:: llvm
-
-  add i32 1, 2
-
-becomes
-
-.. code-block:: llvm
-
-  i32 3
-
-NOTE: this pass has a habit of making definitions be dead.  It is a good idea
-to run a :ref:`Dead Instruction Elimination <passes-die>` pass sometime after
-running this pass.
-
 .. _passes-dce:
 
 ``-dce``: Dead Code Elimination
@@ -522,10 +507,10 @@ instructions that are obviously dead.
 A trivial dead store elimination that only considers basic-block local
 redundant stores.
 
-.. _passes-functionattrs:
+.. _passes-function-attrs:
 
-``-functionattrs``: Deduce function attributes
-----------------------------------------------
+``-function-attrs``: Deduce function attributes
+-----------------------------------------------
 
 A simple interprocedural pass which walks the call-graph, looking for functions
 which do not access or only read non-local memory, and marking them
@@ -651,7 +636,7 @@ This pass can also simplify calls to specific well-known function calls (e.g.
 runtime library functions).  For example, a call ``exit(3)`` that occurs within
 the ``main()`` function can be transformed into simply ``return 3``. Whether or
 not library calls are simplified is controlled by the
-:ref:`-functionattrs <passes-functionattrs>` pass and LLVM's knowledge of
+:ref:`-function-attrs <passes-function-attrs>` pass and LLVM's knowledge of
 library calls on different targets.
 
 .. _passes-aggressive-instcombine:
@@ -675,15 +660,6 @@ instcombine pass.
 This pass loops over all of the functions in the input module, looking for a
 main function.  If a main function is found, all other functions and all global
 variables with initializers are marked as internal.
-
-``-ipconstprop``: Interprocedural constant propagation
-------------------------------------------------------
-
-This pass implements an *extremely* simple interprocedural constant propagation
-pass.  It could certainly be improved in many different ways, like using a
-worklist.  This pass makes arguments dead, but does not remove them.  The
-existing dead argument elimination pass should be run after this to clean up
-the mess.
 
 ``-ipsccp``: Interprocedural Sparse Conditional Constant Propagation
 --------------------------------------------------------------------
@@ -749,6 +725,12 @@ code from the body of a loop as possible.  It does this by either hoisting code
 into the preheader block, or by sinking code to the exit blocks if it is safe.
 This pass also promotes must-aliased memory locations in the loop to live in
 registers, thus hoisting and sinking "invariant" loads and stores.
+
+Hoisting operations out of loops is a canonicalization transform. It enables
+and simplifies subsequent optimizations in the middle-end. Rematerialization
+of hoisted instructions to reduce register pressure is the responsibility of
+the back-end, which has more accurate information about register pressure and
+also handles other optimizations than LICM that increase live-ranges.
 
 This pass uses alias analysis for two purposes:
 
@@ -997,6 +979,11 @@ corresponding to the reverse post order traversal of current function (starting
 at 2), which effectively gives values in deep loops higher rank than values not
 in loops.
 
+``-rel-lookup-table-converter``: Relative lookup table converter
+----------------------------------------------------------------
+
+This pass converts lookup tables to PIC-friendly relative lookup tables.
+
 ``-reg2mem``: Demote all values to stack slots
 ----------------------------------------------
 
@@ -1138,7 +1125,7 @@ algorithm:
    return returns something else (like constant 0), and can still be TRE'd.  It
    can be TRE'd if *all other* return instructions in the function return the
    exact same value.
-#. If it can prove that callees do not access theier caller stack frame, they
+#. If it can prove that callees do not access their caller stack frame, they
    are marked as eligible for tail call elimination (by the code generator).
 
 Utility Passes
@@ -1211,12 +1198,18 @@ instead just tries to ensure that code is well-formed.
 -----------------------------------
 
 Displays the control flow graph using the GraphViz tool.
+Additionally the ``-cfg-func-name=<substring>`` option can be used to filter the
+functions that are displayed. All functions that contain the specified substring
+will be displayed.
 
 ``-view-cfg-only``: View CFG of function (with no function bodies)
 ------------------------------------------------------------------
 
 Displays the control flow graph using the GraphViz tool, but omitting function
 bodies.
+Additionally the ``-cfg-func-name=<substring>`` option can be used to filter the
+functions that are displayed. All functions that contain the specified substring
+will be displayed.
 
 ``-view-dom``: View dominance tree of function
 ----------------------------------------------

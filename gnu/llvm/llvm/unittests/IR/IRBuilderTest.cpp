@@ -127,6 +127,12 @@ TEST_F(IRBuilderTest, Intrinsics) {
   EXPECT_EQ(II->getIntrinsicID(), Intrinsic::roundeven);
   EXPECT_FALSE(II->hasNoInfs());
   EXPECT_FALSE(II->hasNoNaNs());
+
+  Call = Builder.CreateIntrinsic(
+      Intrinsic::set_rounding, {},
+      {Builder.getInt32(static_cast<uint32_t>(RoundingMode::TowardZero))});
+  II = cast<IntrinsicInst>(Call);
+  EXPECT_EQ(II->getIntrinsicID(), Intrinsic::set_rounding);
 }
 
 TEST_F(IRBuilderTest, IntrinsicsWithScalableVectors) {
@@ -172,6 +178,40 @@ TEST_F(IRBuilderTest, IntrinsicsWithScalableVectors) {
   EXPECT_EQ(FTy->getReturnType(), VecTy);
   for (unsigned i = 0; i != ArgTys.size(); ++i)
     EXPECT_EQ(FTy->getParamType(i), ArgTys[i]->getType());
+}
+
+TEST_F(IRBuilderTest, CreateVScale) {
+  IRBuilder<> Builder(BB);
+
+  Constant *Zero = Builder.getInt32(0);
+  Value *VScale = Builder.CreateVScale(Zero);
+  EXPECT_TRUE(isa<ConstantInt>(VScale) && cast<ConstantInt>(VScale)->isZero());
+}
+
+TEST_F(IRBuilderTest, CreateStepVector) {
+  IRBuilder<> Builder(BB);
+
+  // Fixed width vectors
+  Type *DstVecTy = VectorType::get(Builder.getInt32Ty(), 4, false);
+  Value *StepVec = Builder.CreateStepVector(DstVecTy);
+  EXPECT_TRUE(isa<Constant>(StepVec));
+  EXPECT_EQ(StepVec->getType(), DstVecTy);
+
+  const auto *VectorValue = cast<Constant>(StepVec);
+  for (unsigned i = 0; i < 4; i++) {
+    EXPECT_TRUE(isa<ConstantInt>(VectorValue->getAggregateElement(i)));
+    ConstantInt *El = cast<ConstantInt>(VectorValue->getAggregateElement(i));
+    EXPECT_EQ(El->getValue(), i);
+  }
+
+  // Scalable vectors
+  DstVecTy = VectorType::get(Builder.getInt32Ty(), 4, true);
+  StepVec = Builder.CreateStepVector(DstVecTy);
+  EXPECT_TRUE(isa<CallInst>(StepVec));
+  CallInst *Call = cast<CallInst>(StepVec);
+  FunctionType *FTy = Call->getFunctionType();
+  EXPECT_EQ(FTy->getReturnType(), DstVecTy);
+  EXPECT_EQ(Call->getIntrinsicID(), Intrinsic::experimental_stepvector);
 }
 
 TEST_F(IRBuilderTest, ConstrainedFP) {
@@ -330,6 +370,33 @@ TEST_F(IRBuilderTest, ConstrainedFPIntrinsics) {
   CII = cast<ConstrainedFPIntrinsic>(V);
   EXPECT_EQ(Intrinsic::experimental_constrained_roundeven, CII->getIntrinsicID());
   EXPECT_EQ(fp::ebStrict, CII->getExceptionBehavior());
+}
+
+TEST_F(IRBuilderTest, ConstrainedFPFunctionCall) {
+  IRBuilder<> Builder(BB);
+
+  // Create an empty constrained FP function.
+  FunctionType *FTy = FunctionType::get(Type::getVoidTy(Ctx),
+                                        /*isVarArg=*/false);
+  Function *Callee =
+      Function::Create(FTy, Function::ExternalLinkage, "", M.get());
+  BasicBlock *CalleeBB = BasicBlock::Create(Ctx, "", Callee);
+  IRBuilder<> CalleeBuilder(CalleeBB);
+  CalleeBuilder.setIsFPConstrained(true);
+  CalleeBuilder.setConstrainedFPFunctionAttr();
+  CalleeBuilder.CreateRetVoid();
+
+  // Now call the empty constrained FP function.
+  Builder.setIsFPConstrained(true);
+  Builder.setConstrainedFPFunctionAttr();
+  CallInst *FCall = Builder.CreateCall(Callee, None);
+
+  // Check the attributes to verify the strictfp attribute is on the call.
+  EXPECT_TRUE(FCall->getAttributes().getFnAttributes().hasAttribute(
+      Attribute::StrictFP));
+
+  Builder.CreateRetVoid();
+  EXPECT_FALSE(verifyModule(*M));
 }
 
 TEST_F(IRBuilderTest, Lifetime) {
@@ -743,7 +810,7 @@ TEST_F(IRBuilderTest, DIBuilder) {
       CU, "bar", "", File, 1, Type, 1, DINode::FlagZero,
       DISubprogram::SPFlagDefinition | DISubprogram::SPFlagOptimized);
   auto BadScope = DIB.createLexicalBlockFile(BarSP, File, 0);
-  I->setDebugLoc(DebugLoc::get(2, 0, BadScope));
+  I->setDebugLoc(DILocation::get(Ctx, 2, 0, BadScope));
   DIB.finalize();
   EXPECT_TRUE(verifyModule(*M));
 }
@@ -765,8 +832,8 @@ TEST_F(IRBuilderTest, createArtificialSubprogram) {
   F->setSubprogram(SP);
   AllocaInst *I = Builder.CreateAlloca(Builder.getInt8Ty());
   ReturnInst *R = Builder.CreateRetVoid();
-  I->setDebugLoc(DebugLoc::get(3, 2, SP));
-  R->setDebugLoc(DebugLoc::get(4, 2, SP));
+  I->setDebugLoc(DILocation::get(Ctx, 3, 2, SP));
+  R->setDebugLoc(DILocation::get(Ctx, 4, 2, SP));
   DIB.finalize();
   EXPECT_FALSE(verifyModule(*M));
 
@@ -794,7 +861,8 @@ TEST_F(IRBuilderTest, createArtificialSubprogram) {
   DebugLoc DL = I->getDebugLoc();
   DenseMap<const MDNode *, MDNode *> IANodes;
   auto IA = DebugLoc::appendInlinedAt(DL, InlinedAtNode, Ctx, IANodes);
-  auto NewDL = DebugLoc::get(DL.getLine(), DL.getCol(), DL.getScope(), IA);
+  auto NewDL =
+      DILocation::get(Ctx, DL.getLine(), DL.getCol(), DL.getScope(), IA);
   I->setDebugLoc(NewDL);
   EXPECT_FALSE(verifyModule(*M));
 

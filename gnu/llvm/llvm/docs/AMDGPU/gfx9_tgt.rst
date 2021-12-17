@@ -5,10 +5,10 @@
     *                                                *
     **************************************************
 
-.. _amdgpu_synid9_tgt:
+.. _amdgpu_synid_gfx9_tgt:
 
 tgt
-===========================
+===
 
 An export target:
 
@@ -21,4 +21,3 @@ An export target:
     mrtz           Copy pixel depth (Z) data.
     null           Copy nothing.
     ============== ===================================
-

@@ -135,6 +135,8 @@ static_library("Checkers") {
     "WebKit/PtrTypesSemantics.cpp",
     "WebKit/RefCntblBaseVirtualDtorChecker.cpp",
     "WebKit/UncountedCallArgsChecker.cpp",
+    "WebKit/UncountedLambdaCapturesChecker.cpp",
+    "WebKit/UncountedLocalVarsChecker.cpp",
     "cert/PutenvWithAutoChecker.cpp",
   ]
 }

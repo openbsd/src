@@ -489,7 +489,7 @@ struct SalvageDebugInfoTest : ::testing::Test {
   std::unique_ptr<Module> M;
   Function *F = nullptr;
 
-  void SetUp() {
+  void SetUp() override {
     M = parseIR(C,
                 R"(
       define void @f() !dbg !8 {
@@ -524,7 +524,9 @@ struct SalvageDebugInfoTest : ::testing::Test {
   }
 
   bool doesDebugValueDescribeX(const DbgValueInst &DI) {
-    const auto &CI = *cast<ConstantInt>(DI.getValue());
+    if (DI.getNumVariableLocationOps() != 1u)
+      return false;
+    const auto &CI = *cast<ConstantInt>(DI.getValue(0));
     if (CI.isZero())
       return DI.getExpression()->getElements().equals(
           {dwarf::DW_OP_plus_uconst, 1, dwarf::DW_OP_stack_value});
@@ -534,7 +536,9 @@ struct SalvageDebugInfoTest : ::testing::Test {
   }
 
   bool doesDebugValueDescribeY(const DbgValueInst &DI) {
-    const auto &CI = *cast<ConstantInt>(DI.getValue());
+    if (DI.getNumVariableLocationOps() != 1u)
+      return false;
+    const auto &CI = *cast<ConstantInt>(DI.getVariableLocationOp(0));
     if (CI.isZero())
       return DI.getExpression()->getElements().equals(
           {dwarf::DW_OP_plus_uconst, 1, dwarf::DW_OP_plus_uconst, 2,
@@ -619,7 +623,7 @@ TEST(Local, ChangeToUnreachable) {
 
   ASSERT_TRUE(isa<ReturnInst>(&A));
   // One instruction should be affected.
-  EXPECT_EQ(changeToUnreachable(&A, /*UseLLVMTrap*/false), 1U);
+  EXPECT_EQ(changeToUnreachable(&A), 1U);
 
   Instruction &B = BB.front();
 
@@ -758,13 +762,15 @@ TEST(Local, ReplaceAllDbgUsesWith) {
   EXPECT_TRUE(replaceAllDbgUsesWith(A, F_, F_, DT));
 
   auto *ADbgVal = cast<DbgValueInst>(A.getNextNode());
-  EXPECT_EQ(ConstantInt::get(A.getType(), 0), ADbgVal->getVariableLocation());
+  EXPECT_EQ(ADbgVal->getNumVariableLocationOps(), 1u);
+  EXPECT_EQ(ConstantInt::get(A.getType(), 0), ADbgVal->getVariableLocationOp(0));
 
   // Introduce a use-before-def. Check that the dbg.values for %f become undef.
   EXPECT_TRUE(replaceAllDbgUsesWith(F_, G, G, DT));
 
   auto *FDbgVal = cast<DbgValueInst>(F_.getNextNode());
-  EXPECT_TRUE(isa<UndefValue>(FDbgVal->getVariableLocation()));
+  EXPECT_EQ(FDbgVal->getNumVariableLocationOps(), 1u);
+  EXPECT_TRUE(FDbgVal->isUndef());
 
   SmallVector<DbgValueInst *, 1> FDbgVals;
   findDbgValues(FDbgVals, &F_);
@@ -998,8 +1004,12 @@ TEST(Local, SimplifyCFGWithNullAC) {
   }
   ASSERT_TRUE(TestBB);
 
+  DominatorTree DT(F);
+  DomTreeUpdater DTU(DT, DomTreeUpdater::UpdateStrategy::Eager);
+
   // %test.bb is expected to be simplified by FoldCondBranchOnPHI.
-  EXPECT_TRUE(simplifyCFG(TestBB, TTI, Options));
+  EXPECT_TRUE(simplifyCFG(TestBB, TTI,
+                          RequireAndPreserveDomTree ? &DTU : nullptr, Options));
 }
 
 TEST(Local, CanReplaceOperandWithVariable) {

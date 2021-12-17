@@ -51,12 +51,26 @@ You will also need the `CMake <http://www.cmake.org/>`_ build system since it
 generates the project files you will use to build with.
 
 If you would like to run the LLVM tests you will need `Python
-<http://www.python.org/>`_. Version 2.7 and newer are known to work. You will
+<http://www.python.org/>`_. Version 3.6 and newer are known to work. You will
 need `GnuWin32 <http://gnuwin32.sourceforge.net/>`_ tools, too.
 
 Do not install the LLVM directory tree into a path containing spaces (e.g.
 ``C:\Documents and Settings\...``) as the configure step will fail.
 
+To simplify the installation procedure, you can also use 
+`Chocolatey <https://chocolatey.org/>`_ as package manager. After the
+`installation <https://chocolatey.org/install>`_ of Chocolatey, run these
+commands in an admin shell to install the required tools:
+
+.. code-block:: bat
+
+   choco install -y ninja git cmake gnuwin python3
+   pip3 install psutil
+
+There is also a Windows 
+`Dockerfile <https://github.com/llvm/llvm-zorg/blob/main/buildbot/google/docker/windows-base-vscode2019/Dockerfile>`_ 
+with the entire build tool chain. This can be used to test the build with a
+tool chain different from your host installation or to create build servers. 
 
 Getting Started
 ===============

@@ -1,7 +1,30 @@
-set(system_libs)
-if ( LLVM_ENABLE_ZLIB AND HAVE_LIBZ )
-  set(system_libs ${system_libs} ${ZLIB_LIBRARIES})
+include(GetLibraryName)
+
+# Ensure that libSupport does not carry any static global initializer.
+# libSupport can be embedded in use cases where we don't want to load all
+# cl::opt unless we want to parse the command line.
+# ManagedStatic can be used to enable lazy-initialization of globals.
+# We don't use `add_flag_if_supported` as instead of compiling an empty file we
+# check if the current platform is able to compile global std::mutex with this
+# flag (Linux can, Darwin can't for example).
+check_cxx_compiler_flag("-Werror=global-constructors" HAS_WERROR_GLOBAL_CTORS)
+if (HAS_WERROR_GLOBAL_CTORS)
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror=global-constructors")
+  CHECK_CXX_SOURCE_COMPILES("
+  #include <mutex>
+  static std::mutex TestGlobalCtorDtor;
+  static std::recursive_mutex TestGlobalCtorDtor2;
+  int main() { (void)TestGlobalCtorDtor; (void)TestGlobalCtorDtor2; return 0;}
+  " LLVM_HAS_NOGLOBAL_CTOR_MUTEX)
+  if (NOT LLVM_HAS_NOGLOBAL_CTOR_MUTEX)
+    string(REPLACE "-Werror=global-constructors" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+  endif()
 endif()
+
+if(LLVM_ENABLE_ZLIB)
+  set(imported_libs ZLIB::ZLIB)
+endif()
+
 if( MSVC OR MINGW )
   # libuuid required for FOLDERID_Profile usage in lib/Support/Windows/Path.inc.
   # advapi32 required for CryptAcquireContextW in lib/Support/Windows/Path.inc.
@@ -21,10 +44,8 @@ elseif( CMAKE_HOST_UNIX )
     STRING(REGEX REPLACE "^lib" "" Backtrace_LIBFILE ${Backtrace_LIBFILE})
     set(system_libs ${system_libs} ${Backtrace_LIBFILE})
   endif()
-  if(LLVM_ENABLE_TERMINFO)
-    if(HAVE_TERMINFO)
-      set(system_libs ${system_libs} ${TERMINFO_LIBS})
-    endif()
+  if( LLVM_ENABLE_TERMINFO )
+    set(imported_libs ${imported_libs} "${TERMINFO_LIB}")
   endif()
   if( LLVM_ENABLE_THREADS AND (HAVE_LIBATOMIC OR HAVE_CXX_LIBATOMICS64) )
     set(system_libs ${system_libs} atomic)
@@ -36,6 +57,10 @@ elseif( CMAKE_HOST_UNIX )
   if( FUCHSIA )
     set(system_libs ${system_libs} zircon)
   endif()
+  if ( HAIKU )
+    add_definitions(-D_BSD_SOURCE)
+    set(system_libs ${system_libs} bsd)
+  endif()
 endif( MSVC OR MINGW )
 
 # Delay load shell32.dll if possible to speed up process startup.
@@ -46,9 +71,34 @@ endif()
 
 # Link Z3 if the user wants to build it.
 if(LLVM_WITH_Z3)
-  set(Z3_LINK_FILES ${Z3_LIBRARIES})
-else()
-  set(Z3_LINK_FILES "")
+  set(system_libs ${system_libs} ${Z3_LIBRARIES})
+endif()
+
+# Override the C runtime allocator on Windows and embed it into LLVM tools & libraries
+if(LLVM_INTEGRATED_CRT_ALLOC)
+  if (CMAKE_BUILD_TYPE AND NOT ${LLVM_USE_CRT_${uppercase_CMAKE_BUILD_TYPE}} MATCHES "^(MT|MTd)$")
+    message(FATAL_ERROR "LLVM_INTEGRATED_CRT_ALLOC only works with /MT or /MTd. Use LLVM_USE_CRT_${uppercase_CMAKE_BUILD_TYPE} to set the appropriate option.")
+  endif()
+
+  string(REGEX REPLACE "(/|\\\\)$" "" LLVM_INTEGRATED_CRT_ALLOC "${LLVM_INTEGRATED_CRT_ALLOC}")
+
+  if(NOT EXISTS "${LLVM_INTEGRATED_CRT_ALLOC}")
+    message(FATAL_ERROR "Cannot find the path to `git clone` for the CRT allocator! (${LLVM_INTEGRATED_CRT_ALLOC}). Currently, rpmalloc, snmalloc and mimalloc are supported.")
+  endif()
+
+  if(LLVM_INTEGRATED_CRT_ALLOC MATCHES "rpmalloc$")
+    add_definitions(-DENABLE_OVERRIDE -DENABLE_PRELOAD)
+    set(ALLOCATOR_FILES "${LLVM_INTEGRATED_CRT_ALLOC}/rpmalloc/rpmalloc.c")
+  elseif(LLVM_INTEGRATED_CRT_ALLOC MATCHES "snmalloc$")
+    set(ALLOCATOR_FILES "${LLVM_INTEGRATED_CRT_ALLOC}/src/override/malloc.cc" "${LLVM_INTEGRATED_CRT_ALLOC}/src/override/new.cc")
+    set(system_libs ${system_libs} "mincore.lib" "-INCLUDE:malloc")
+  elseif(LLVM_INTEGRATED_CRT_ALLOC MATCHES "mimalloc$")
+    set(MIMALLOC_LIB "${LLVM_INTEGRATED_CRT_ALLOC}/out/msvc-x64/Release/mimalloc-static.lib")
+    if(NOT EXISTS "${MIMALLOC_LIB}")
+	  message(FATAL_ERROR "Cannot find the mimalloc static library. To build it, first apply the patch from https://github.com/microsoft/mimalloc/issues/268 then build the Release x64 target through ${LLVM_INTEGRATED_CRT_ALLOC}\\ide\\vs2019\\mimalloc.sln")
+    endif()
+    set(system_libs ${system_libs} "${MIMALLOC_LIB}" "-INCLUDE:malloc")
+  endif()
 endif()
 
 add_llvm_component_library(LLVMSupport
@@ -56,6 +106,7 @@ add_llvm_component_library(LLVMSupport
   ABIBreak.cpp
   ARMTargetParser.cpp
   AMDGPUMetadata.cpp
+  APFixedPoint.cpp
   APFloat.cpp
   APInt.cpp
   APSInt.cpp
@@ -63,6 +114,7 @@ add_llvm_component_library(LLVMSupport
   ARMAttributeParser.cpp
   ARMWinEH.cpp
   Allocator.cpp
+  AutoConvert.cpp
   BinaryStreamError.cpp
   BinaryStreamReader.cpp
   BinaryStreamRef.cpp
@@ -92,7 +144,6 @@ add_llvm_component_library(LLVMSupport
   Error.cpp
   ErrorHandling.cpp
   ExtensibleRTTI.cpp
-  FileCheck.cpp
   FileCollector.cpp
   FileUtilities.cpp
   FileOutputBuffer.cpp
@@ -103,6 +154,7 @@ add_llvm_component_library(LLVMSupport
   GraphWriter.cpp
   Hashing.cpp
   InitLLVM.cpp
+  InstructionCost.cpp
   IntEqClasses.cpp
   IntervalMap.cpp
   ItaniumManglingCanonicalizer.cpp
@@ -117,6 +169,7 @@ add_llvm_component_library(LLVMSupport
   MathExtras.cpp
   MemAlloc.cpp
   MemoryBuffer.cpp
+  MemoryBufferRef.cpp
   MD5.cpp
   NativeFormatting.cpp
   OptimizedStructLayout.cpp
@@ -131,6 +184,7 @@ add_llvm_component_library(LLVMSupport
   ScaledNumber.cpp
   ScopedPrinter.cpp
   SHA1.cpp
+  SHA256.cpp
   Signposts.cpp
   SmallPtrSet.cpp
   SmallVector.cpp
@@ -153,6 +207,7 @@ add_llvm_component_library(LLVMSupport
   TrigramIndex.cpp
   Triple.cpp
   Twine.cpp
+  TypeSize.cpp
   Unicode.cpp
   UnicodeCaseFold.cpp
   VersionTuple.cpp
@@ -170,6 +225,8 @@ add_llvm_component_library(LLVMSupport
   regstrlcpy.c
   xxhash.cpp
   Z3Solver.cpp
+
+  ${ALLOCATOR_FILES}
 
 # System
   Atomic.cpp
@@ -194,10 +251,49 @@ add_llvm_component_library(LLVMSupport
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/ADT
   ${LLVM_MAIN_INCLUDE_DIR}/llvm/Support
   ${Backtrace_INCLUDE_DIRS}
-  LINK_LIBS ${system_libs} ${delayload_flags} ${Z3_LINK_FILES}
+
+  LINK_LIBS
+  ${system_libs} ${imported_libs} ${delayload_flags}
+
+  LINK_COMPONENTS
+  Demangle
   )
 
-set_property(TARGET LLVMSupport PROPERTY LLVM_SYSTEM_LIBS "${system_libs}")
+set(llvm_system_libs ${system_libs})
+
+# This block is only needed for llvm-config. When we deprecate llvm-config and
+# move to using CMake export, this block can be removed.
+if(LLVM_ENABLE_ZLIB)
+  # CMAKE_BUILD_TYPE is only meaningful to single-configuration generators.
+  if(CMAKE_BUILD_TYPE)
+    string(TOUPPER ${CMAKE_BUILD_TYPE} build_type)
+    get_property(zlib_library TARGET ZLIB::ZLIB PROPERTY LOCATION_${build_type})
+  endif()
+  if(NOT zlib_library)
+    get_property(zlib_library TARGET ZLIB::ZLIB PROPERTY LOCATION)
+  endif()
+  get_library_name(${zlib_library} zlib_library)
+  set(llvm_system_libs ${llvm_system_libs} "${zlib_library}")
+endif()
+
+if(LLVM_ENABLE_TERMINFO)
+  get_library_name(${TERMINFO_LIB} terminfo_library)
+  set(llvm_system_libs ${llvm_system_libs} "${terminfo_library}")
+endif()
+
+set_property(TARGET LLVMSupport PROPERTY LLVM_SYSTEM_LIBS "${llvm_system_libs}")
+
+
+if(LLVM_INTEGRATED_CRT_ALLOC)
+  if(LLVM_INTEGRATED_CRT_ALLOC MATCHES "snmalloc$")
+    set_property(TARGET LLVMSupport PROPERTY CXX_STANDARD 17)
+    add_definitions(-D_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING)
+    if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND
+        "${CMAKE_SYSTEM_PROCESSOR}" MATCHES "x86_64")
+      set_property(TARGET LLVMSupport PROPERTY COMPILE_FLAGS "-mcx16")
+    endif()
+  endif()
+endif()
 
 if(LLVM_WITH_Z3)
   target_include_directories(LLVMSupport SYSTEM

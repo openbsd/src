@@ -20,6 +20,50 @@
 using namespace llvm;
 using namespace llvm::jitlink;
 
+static bool isELFGOTSection(Section &S) { return S.getName() == "$__GOT"; }
+
+static bool isELFStubsSection(Section &S) { return S.getName() == "$__STUBS"; }
+
+static Expected<Edge &> getFirstRelocationEdge(LinkGraph &G, Block &B) {
+  auto EItr = std::find_if(B.edges().begin(), B.edges().end(),
+                           [](Edge &E) { return E.isRelocation(); });
+  if (EItr == B.edges().end())
+    return make_error<StringError>("GOT entry in " + G.getName() + ", \"" +
+                                       B.getSection().getName() +
+                                       "\" has no relocations",
+                                   inconvertibleErrorCode());
+  return *EItr;
+}
+
+static Expected<Symbol &> getELFGOTTarget(LinkGraph &G, Block &B) {
+  auto E = getFirstRelocationEdge(G, B);
+  if (!E)
+    return E.takeError();
+  auto &TargetSym = E->getTarget();
+  if (!TargetSym.hasName())
+    return make_error<StringError>(
+        "GOT entry in " + G.getName() + ", \"" +
+            TargetSym.getBlock().getSection().getName() +
+            "\" points to anonymous "
+            "symbol",
+        inconvertibleErrorCode());
+  return TargetSym;
+}
+
+static Expected<Symbol &> getELFStubTarget(LinkGraph &G, Block &B) {
+  auto E = getFirstRelocationEdge(G, B);
+  if (!E)
+    return E.takeError();
+  auto &GOTSym = E->getTarget();
+  if (!GOTSym.isDefined() || !isELFGOTSection(GOTSym.getBlock().getSection()))
+    return make_error<StringError>(
+        "Stubs entry in " + G.getName() + ", \"" +
+            GOTSym.getBlock().getSection().getName() +
+            "\" does not point to GOT entry",
+        inconvertibleErrorCode());
+  return getELFGOTTarget(G, GOTSym.getBlock());
+}
+
 namespace llvm {
 
 Error registerELFGraphInfo(Session &S, LinkGraph &G) {
@@ -53,6 +97,9 @@ Error registerELFGraphInfo(Session &S, LinkGraph &G) {
                                          "\"",
                                      inconvertibleErrorCode());
 
+    bool isGOTSection = isELFGOTSection(Sec);
+    bool isStubsSection = isELFStubsSection(Sec);
+
     bool SectionContainsContent = false;
     bool SectionContainsZeroFill = false;
 
@@ -64,8 +111,35 @@ Error registerELFGraphInfo(Session &S, LinkGraph &G) {
       if (Sym->getAddress() > LastSym->getAddress())
         LastSym = Sym;
 
+      if (isGOTSection) {
+        if (Sym->isSymbolZeroFill())
+          return make_error<StringError>("zero-fill atom in GOT section",
+                                         inconvertibleErrorCode());
+
+        // If this is a GOT symbol with size (i.e. not the GOT start symbol)
+        // then add it to the GOT entry info table.
+        if (Sym->getSize() != 0) {
+          if (auto TS = getELFGOTTarget(G, Sym->getBlock()))
+            FileInfo.GOTEntryInfos[TS->getName()] = {Sym->getSymbolContent(),
+                                                     Sym->getAddress()};
+          else
+            return TS.takeError();
+        }
+        SectionContainsContent = true;
+      } else if (isStubsSection) {
+        if (Sym->isSymbolZeroFill())
+          return make_error<StringError>("zero-fill atom in Stub section",
+                                         inconvertibleErrorCode());
+
+        if (auto TS = getELFStubTarget(G, Sym->getBlock()))
+          FileInfo.StubInfos[TS->getName()] = {Sym->getSymbolContent(),
+                                               Sym->getAddress()};
+        else
+          return TS.takeError();
+        SectionContainsContent = true;
+      }
+
       if (Sym->hasName()) {
-        dbgs() << "Symbol: " << Sym->getName() << "\n";
         if (Sym->isSymbolZeroFill()) {
           S.SymbolInfos[Sym->getName()] = {Sym->getSize(), Sym->getAddress()};
           SectionContainsZeroFill = true;
@@ -90,7 +164,7 @@ Error registerELFGraphInfo(Session &S, LinkGraph &G) {
       FileInfo.SectionInfos[Sec.getName()] = {SecSize, SecAddr};
     else
       FileInfo.SectionInfos[Sec.getName()] = {
-          StringRef(FirstSym->getBlock().getContent().data(), SecSize),
+          ArrayRef<char>(FirstSym->getBlock().getContent().data(), SecSize),
           SecAddr};
   }
 

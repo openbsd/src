@@ -93,11 +93,11 @@ TEST(Option, OptionParsing) {
   // Check the help text.
   std::string Help;
   raw_string_ostream RSO(Help);
-  T.PrintHelp(RSO, "test", "title!");
+  T.printHelp(RSO, "test", "title!");
   EXPECT_NE(std::string::npos, Help.find("-A"));
 
   // Check usage line.
-  T.PrintHelp(RSO, "name [options] file...", "title!");
+  T.printHelp(RSO, "name [options] file...", "title!");
   EXPECT_NE(std::string::npos, Help.find("USAGE: name [options] file...\n"));
 
   // Test aliases.
@@ -331,4 +331,48 @@ TEST(DISABLED_Option, FindNearestFIXME) {
   EXPECT_EQ(1U, T.findNearest("--erbghFoo", Nearest));
   EXPECT_EQ(Nearest, "--ermghFoo");
 
+}
+
+TEST(Option, ParseGroupedShortOptions) {
+  TestOptTable T;
+  T.setGroupedShortOptions(true);
+  unsigned MAI, MAC;
+
+  // Grouped short options can be followed by a long Flag (-Joo), or a non-Flag
+  // option (-C=1).
+  const char *Args1[] = {"-AIJ", "-AIJoo", "-AC=1"};
+  InputArgList AL = T.ParseArgs(Args1, MAI, MAC);
+  EXPECT_TRUE(AL.hasArg(OPT_A));
+  EXPECT_TRUE(AL.hasArg(OPT_H));
+  ASSERT_EQ((size_t)2, AL.getAllArgValues(OPT_B).size());
+  EXPECT_EQ("foo", AL.getAllArgValues(OPT_B)[0]);
+  EXPECT_EQ("bar", AL.getAllArgValues(OPT_B)[1]);
+  ASSERT_TRUE(AL.hasArg(OPT_C));
+  EXPECT_EQ("1", AL.getAllArgValues(OPT_C)[0]);
+
+  // Prefer a long option to a short option.
+  const char *Args2[] = {"-AB"};
+  InputArgList AL2 = T.ParseArgs(Args2, MAI, MAC);
+  EXPECT_TRUE(!AL2.hasArg(OPT_A));
+  EXPECT_TRUE(AL2.hasArg(OPT_AB));
+
+  // Short options followed by a long option. We probably should disallow this.
+  const char *Args3[] = {"-AIblorp"};
+  InputArgList AL3 = T.ParseArgs(Args3, MAI, MAC);
+  EXPECT_TRUE(AL3.hasArg(OPT_A));
+  EXPECT_TRUE(AL3.hasArg(OPT_Blorp));
+}
+
+TEST(Option, UnknownOptions) {
+  TestOptTable T;
+  unsigned MAI, MAC;
+  const char *Args[] = {"-u", "--long", "0"};
+  for (int I = 0; I < 2; ++I) {
+    T.setGroupedShortOptions(I != 0);
+    InputArgList AL = T.ParseArgs(Args, MAI, MAC);
+    const std::vector<std::string> Unknown = AL.getAllArgValues(OPT_UNKNOWN);
+    ASSERT_EQ((size_t)2, Unknown.size());
+    EXPECT_EQ("-u", Unknown[0]);
+    EXPECT_EQ("--long", Unknown[1]);
+  }
 }

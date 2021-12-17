@@ -2,6 +2,7 @@ static_library("MC") {
   output_name = "LLVMMC"
   deps = [
     "//llvm/include/llvm/Config:config",
+    "//llvm/lib/BinaryFormat",
     "//llvm/lib/DebugInfo/CodeView",
     "//llvm/lib/Support",
   ]
@@ -43,6 +44,7 @@ static_library("MC") {
     "MCObjectFileInfo.cpp",
     "MCObjectStreamer.cpp",
     "MCObjectWriter.cpp",
+    "MCPseudoProbe.cpp",
     "MCRegisterInfo.cpp",
     "MCSchedule.cpp",
     "MCSection.cpp",

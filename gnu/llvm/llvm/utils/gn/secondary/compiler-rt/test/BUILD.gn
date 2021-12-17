@@ -1,6 +1,7 @@
 import("//compiler-rt/target.gni")
 import("//compiler-rt/test/test.gni")
 import("//llvm/triples.gni")
+import("//llvm/utils/gn/build/buildflags.gni")
 import("//llvm/utils/gn/build/libs/zlib/enable.gni")
 import("//llvm/utils/gn/build/toolchain/compiler.gni")
 import("//llvm/utils/gn/build/write_cmake_config.gni")
@@ -37,6 +38,7 @@ write_cmake_config("lit_common_configured") {
     "LLVM_LIBCXX_USED=0",
 
     "GOLD_EXECUTABLE=ld",
+    "GNU_LD_EXECUTABLE=ld",
     "COMPILER_RT_RESOLVED_TEST_COMPILER=" +
         rebase_path("$root_build_dir/bin/clang"),
     "COMPILER_RT_TEST_COMPILER_ID=Clang",
@@ -47,14 +49,22 @@ write_cmake_config("lit_common_configured") {
         rebase_path(crt_current_out_dir),
     "COMPILER_RT_EMULATOR=",
     "COMPILER_RT_ASAN_SHADOW_SCALE=",
+    "COMPILER_RT_MEMPROF_SHADOW_SCALE=",
+    "COMPILER_RT_TEST_STANDALONE_BUILD_LIBS_PYBOOL=False",
+    "COMPILER_RT_TEST_USE_LLD_PYBOOL=0",  # FIXME: base off use_lld?
     "SANITIZER_CAN_USE_CXXABI_PYBOOL=True",
     "COMPILER_RT_HAS_LLD_PYBOOL=True",
     "COMPILER_RT_HAS_GWP_ASAN_PYBOOL=False",
-    "LLVM_ENABLE_EXPENSIVE_CHECKS_PYBOOL=False",
     "HAVE_RPC_XDR_H=0",
-    "ANDROID_NDK_VERSION=19",
+    "ANDROID_API_LEVEL=$android_api_level",
     "ANDROID_SERIAL_FOR_TESTING=$android_serial_for_testing",
   ]
+
+  if (llvm_enable_expensive_checks) {
+    values += [ "LLVM_ENABLE_EXPENSIVE_CHECKS_PYBOOL=True" ]
+  } else {
+    values += [ "LLVM_ENABLE_EXPENSIVE_CHECKS_PYBOOL=False" ]
+  }
 
   if (host_cpu == "x64") {
     values += [ "HOST_ARCH=x86_64" ]
@@ -85,8 +95,8 @@ write_cmake_config("lit_common_configured") {
   }
 
   if (llvm_enable_zlib) {
-    values += [ "HAVE_LIBZ=1" ]
+    values += [ "LLVM_ENABLE_ZLIB=1" ]
   } else {
-    values += [ "HAVE_LIBZ=0" ]
+    values += [ "LLVM_ENABLE_ZLIB=0" ]
   }
 }

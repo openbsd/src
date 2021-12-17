@@ -387,7 +387,7 @@ now is:
     -quiet        - Don't print informational messages
 
 In this case, it is sort of awkward that flag names correspond directly to enum
-names, because we probably don't want a enum definition named "``g``" in our
+names, because we probably don't want an enum definition named "``g``" in our
 program.  Because of this, we can alternatively write this example like this:
 
 .. code-block:: c++
@@ -475,7 +475,7 @@ Parsing a list of options
 Now that we have the standard run-of-the-mill argument types out of the way,
 lets get a little wild and crazy.  Lets say that we want our optimizer to accept
 a **list** of optimizations to perform, allowing duplicates.  For example, we
-might want to run: "``compiler -dce -constprop -inline -dce -strip``".  In this
+might want to run: "``compiler -dce -instsimplify -inline -dce -strip``".  In this
 case, the order of the arguments and the number of appearances is very
 important.  This is what the "``cl::list``" template is for.  First, start by
 defining an enum of the optimizations that you would like to perform:
@@ -484,7 +484,7 @@ defining an enum of the optimizations that you would like to perform:
 
   enum Opts {
     // 'inline' is a C++ keyword, so name it 'inlining'
-    dce, constprop, inlining, strip
+    dce, instsimplify, inlining, strip
   };
 
 Then define your "``cl::list``" variable:
@@ -494,7 +494,7 @@ Then define your "``cl::list``" variable:
   cl::list<Opts> OptimizationList(cl::desc("Available Optimizations:"),
     cl::values(
       clEnumVal(dce               , "Dead Code Elimination"),
-      clEnumVal(constprop         , "Constant Propagation"),
+      clEnumVal(instsimplify      , "Instruction Simplification"),
      clEnumValN(inlining, "inline", "Procedure Integration"),
       clEnumVal(strip             , "Strip Symbols")));
 
@@ -553,16 +553,16 @@ Reworking the above list example, we could replace `cl::list`_ with `cl::bits`_:
   cl::bits<Opts> OptimizationBits(cl::desc("Available Optimizations:"),
     cl::values(
       clEnumVal(dce               , "Dead Code Elimination"),
-      clEnumVal(constprop         , "Constant Propagation"),
+      clEnumVal(instsimplify      , "Instruction Simplification"),
      clEnumValN(inlining, "inline", "Procedure Integration"),
       clEnumVal(strip             , "Strip Symbols")));
 
-To test to see if ``constprop`` was specified, we can use the ``cl:bits::isSet``
+To test to see if ``instsimplify`` was specified, we can use the ``cl:bits::isSet``
 function:
 
 .. code-block:: c++
 
-  if (OptimizationBits.isSet(constprop)) {
+  if (OptimizationBits.isSet(instsimplify)) {
     ...
   }
 
@@ -661,7 +661,7 @@ declared, the command line option ``-help-list`` becomes visible which will
 print the command line options as uncategorized list.
 
 Note that Options that are not explicitly categorized will be placed in the
-``cl::GeneralCategory`` category.
+``cl::getGeneralCategory()`` category.
 
 .. _Reference Guide:
 
@@ -1368,29 +1368,6 @@ option variables once ``argc`` and ``argv`` are available.
 The ``cl::ParseCommandLineOptions`` function requires two parameters (``argc``
 and ``argv``), but may also take an optional third parameter which holds
 `additional extra text`_ to emit when the ``-help`` option is invoked.
-
-.. _cl::ParseEnvironmentOptions:
-
-The ``cl::ParseEnvironmentOptions`` function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The ``cl::ParseEnvironmentOptions`` function has mostly the same effects as
-`cl::ParseCommandLineOptions`_, except that it is designed to take values for
-options from an environment variable, for those cases in which reading the
-command line is not convenient or desired. It fills in the values of all the
-command line option variables just like `cl::ParseCommandLineOptions`_ does.
-
-It takes four parameters: the name of the program (since ``argv`` may not be
-available, it can't just look in ``argv[0]``), the name of the environment
-variable to examine, and the optional `additional extra text`_ to emit when the
-``-help`` option is invoked.
-
-``cl::ParseEnvironmentOptions`` will break the environment variable's value up
-into words and then process them using `cl::ParseCommandLineOptions`_.
-**Note:** Currently ``cl::ParseEnvironmentOptions`` does not support quoting, so
-an environment variable containing ``-option "foo bar"`` will be parsed as three
-words, ``-option``, ``"foo``, and ``bar"``, which is different from what you
-would get from the shell with the same input.
 
 The ``cl::SetVersionPrinter`` function
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

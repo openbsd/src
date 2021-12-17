@@ -112,6 +112,20 @@ def str_to_commandline(value):
     return []
   return shlex.split(value)
 
+
+def infer_dependent_args(args):
+  if not args.clang:
+    if not args.llvm_bin:
+      args.clang = 'clang'
+    else:
+      args.clang = os.path.join(args.llvm_bin, 'clang')
+  if not args.opt:
+    if not args.llvm_bin:
+      args.opt = 'opt'
+    else:
+      args.opt = os.path.join(args.llvm_bin, 'opt')
+
+
 def config():
   parser = argparse.ArgumentParser(
       description=__doc__,
@@ -131,14 +145,14 @@ def config():
       help='Use more regex for x86 matching to reduce diffs between various subtargets')
   parser.add_argument('--function-signature', action='store_true',
                       help='Keep function signature information around for the check line')
+  parser.add_argument('--check-attributes', action='store_true',
+                      help='Check "Function Attributes" for functions')
+  parser.add_argument('--check-globals', action='store_true',
+                      help='Check global entries (global variables, metadata, attribute sets, ...) for functions')
   parser.add_argument('tests', nargs='+')
   args = common.parse_commandline_args(parser)
+  infer_dependent_args(args)
 
-  if args.clang is None:
-    if args.llvm_bin is None:
-      args.clang = 'clang'
-    else:
-      args.clang = os.path.join(args.llvm_bin, 'clang')
   if not distutils.spawn.find_executable(args.clang):
     print('Please specify --llvm-bin or --clang', file=sys.stderr)
     sys.exit(1)
@@ -155,11 +169,6 @@ def config():
     common.warn('Could not determine clang builtins directory, some tests '
                 'might not update correctly.')
 
-  if args.opt is None:
-    if args.llvm_bin is None:
-      args.opt = 'opt'
-    else:
-      args.opt = os.path.join(args.llvm_bin, 'opt')
   if not distutils.spawn.find_executable(args.opt):
     # Many uses of this tool will not need an opt binary, because it's only
     # needed for updating a test that runs clang | opt | FileCheck. So we
@@ -169,7 +178,8 @@ def config():
   return args, parser
 
 
-def get_function_body(args, filename, clang_args, extra_commands, prefixes, triple_in_cmd, func_dict):
+def get_function_body(builder, args, filename, clang_args, extra_commands,
+                      prefixes):
   # TODO Clean up duplication of asm/common build_function_body_dictionary
   # Invoke external tool and extract function bodies.
   raw_tool_output = common.invoke_tool(args.clang, clang_args, filename)
@@ -187,24 +197,39 @@ def get_function_body(args, filename, clang_args, extra_commands, prefixes, trip
       raw_tool_output = common.invoke_tool(extra_args[0],
                                            extra_args[1:], f.name)
   if '-emit-llvm' in clang_args:
-    common.build_function_body_dictionary(
-            common.OPT_FUNCTION_RE, common.scrub_body, [],
-            raw_tool_output, prefixes, func_dict, args.verbose, args.function_signature)
+    builder.process_run_line(
+            common.OPT_FUNCTION_RE, common.scrub_body, raw_tool_output,
+            prefixes)
   else:
     print('The clang command line should include -emit-llvm as asm tests '
           'are discouraged in Clang testsuite.', file=sys.stderr)
     sys.exit(1)
 
+def exec_run_line(exe):
+  popen = subprocess.Popen(exe, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+  stdout, stderr = popen.communicate()
+  if popen.returncode != 0:
+    sys.stderr.write('Failed to run ' + ' '.join(exe) + '\n')
+    sys.stderr.write(stderr)
+    sys.stderr.write(stdout)
+    sys.exit(3)
 
 def main():
   initial_args, parser = config()
   script_name = os.path.basename(__file__)
 
   for ti in common.itertests(initial_args.tests, parser, 'utils/' + script_name,
-                             comment_prefix='//'):
-    # Build a list of clang command lines and check prefixes from RUN lines.
+                             comment_prefix='//', argparse_callback=infer_dependent_args):
+    # Build a list of filechecked and non-filechecked RUN lines.
     run_list = []
     line2spell_and_mangled_list = collections.defaultdict(list)
+
+    subs = {
+      '%s' : ti.path,
+      '%t' : tempfile.NamedTemporaryFile().name,
+      '%S' : os.getcwd(),
+    }
+
     for l in ti.run_lines:
       commands = [cmd.strip() for cmd in l.split('|')]
 
@@ -213,25 +238,32 @@ def main():
       if m:
         triple_in_cmd = m.groups()[0]
 
-      # Apply %clang substitution rule, replace %s by `filename`, and append args.clang_args
-      clang_args = shlex.split(commands[0])
-      if clang_args[0] not in SUBST:
-        print('WARNING: Skipping non-clang RUN line: ' + l, file=sys.stderr)
+      # Parse executable args.
+      exec_args = shlex.split(commands[0])
+      # Execute non-clang runline.
+      if exec_args[0] not in SUBST:
+        # Do lit-like substitutions.
+        for s in subs:
+          exec_args = [i.replace(s, subs[s]) if s in i else i for i in exec_args]
+        run_list.append((None, exec_args, None, None))
         continue
+      # This is a clang runline, apply %clang substitution rule, do lit-like substitutions,
+      # and append args.clang_args
+      clang_args = exec_args
       clang_args[0:1] = SUBST[clang_args[0]]
-      clang_args = [ti.path if i == '%s' else i for i in clang_args] + ti.args.clang_args
-
-      # Permit piping the output through opt
-      if not (len(commands) == 2 or
-              (len(commands) == 3 and commands[1].startswith('opt'))):
-        print('WARNING: Skipping non-clang RUN line: ' + l, file=sys.stderr)
+      for s in subs:
+        clang_args = [i.replace(s, subs[s]) if s in i else i for i in clang_args]
+      clang_args += ti.args.clang_args
 
       # Extract -check-prefix in FileCheck args
       filecheck_cmd = commands[-1]
       common.verify_filecheck_prefixes(filecheck_cmd)
       if not filecheck_cmd.startswith('FileCheck '):
-        print('WARNING: Skipping non-FileChecked RUN line: ' + l, file=sys.stderr)
+        # Execute non-filechecked clang runline.
+        exe = [ti.args.clang] + clang_args
+        run_list.append((None, exe, None, None))
         continue
+
       check_prefixes = [item for m in common.CHECK_PREFIX_RE.finditer(filecheck_cmd)
                                for item in m.group(1).split(',')]
       if not check_prefixes:
@@ -239,60 +271,128 @@ def main():
       run_list.append((check_prefixes, clang_args, commands[1:-1], triple_in_cmd))
 
     # Execute clang, generate LLVM IR, and extract functions.
-    func_dict = {}
-    for p in run_list:
-      prefixes = p[0]
-      for prefix in prefixes:
-        func_dict.update({prefix: dict()})
-    for prefixes, clang_args, extra_commands, triple_in_cmd in run_list:
+
+    # Store only filechecked runlines.
+    filecheck_run_list = [i for i in run_list if i[0]]
+    builder = common.FunctionTestBuilder(
+      run_list=filecheck_run_list,
+      flags=ti.args,
+      scrubber_args=[],
+      path=ti.path)
+
+    for prefixes, args, extra_commands, triple_in_cmd in run_list:
+      # Execute non-filechecked runline.
+      if not prefixes:
+        print('NOTE: Executing non-FileChecked RUN line: ' + ' '.join(args), file=sys.stderr)
+        exec_run_line(args)
+        continue
+
+      clang_args = args
       common.debug('Extracted clang cmd: clang {}'.format(clang_args))
       common.debug('Extracted FileCheck prefixes: {}'.format(prefixes))
 
-      get_function_body(ti.args, ti.path, clang_args, extra_commands, prefixes, triple_in_cmd, func_dict)
+      get_function_body(builder, ti.args, ti.path, clang_args, extra_commands,
+                        prefixes)
 
       # Invoke clang -Xclang -ast-dump=json to get mapping from start lines to
       # mangled names. Forward all clang args for now.
       for k, v in get_line2spell_and_mangled(ti.args, clang_args).items():
         line2spell_and_mangled_list[k].append(v)
 
-    prefix_set = set([prefix for p in run_list for prefix in p[0]])
+    func_dict = builder.finish_and_get_func_dict()
+    global_vars_seen_dict = {}
+    prefix_set = set([prefix for p in filecheck_run_list for prefix in p[0]])
     output_lines = []
-    for line_info in ti.iterlines(output_lines):
-      idx = line_info.line_number
-      line = line_info.line
-      args = line_info.args
-      include_line = True
-      m = common.CHECK_RE.match(line)
-      if m and m.group(1) in prefix_set:
-        continue  # Don't append the existing CHECK lines
-      if idx in line2spell_and_mangled_list:
-        added = set()
-        for spell, mangled in line2spell_and_mangled_list[idx]:
-          # One line may contain multiple function declarations.
-          # Skip if the mangled name has been added before.
-          # The line number may come from an included file,
-          # we simply require the spelling name to appear on the line
-          # to exclude functions from other files.
-          if mangled in added or spell not in line:
-            continue
-          if args.functions is None or any(re.search(regex, spell) for regex in args.functions):
-            last_line = output_lines[-1].strip()
-            while last_line == '//':
-              # Remove the comment line since we will generate a new  comment
-              # line as part of common.add_ir_checks()
-              output_lines.pop()
+    has_checked_pre_function_globals = False
+
+    include_generated_funcs = common.find_arg_in_test(ti,
+                                                      lambda args: ti.args.include_generated_funcs,
+                                                      '--include-generated-funcs',
+                                                      True)
+
+    if include_generated_funcs:
+      # Generate the appropriate checks for each function.  We need to emit
+      # these in the order according to the generated output so that CHECK-LABEL
+      # works properly.  func_order provides that.
+
+      # It turns out that when clang generates functions (for example, with
+      # -fopenmp), it can sometimes cause functions to be re-ordered in the
+      # output, even functions that exist in the source file.  Therefore we
+      # can't insert check lines before each source function and instead have to
+      # put them at the end.  So the first thing to do is dump out the source
+      # lines.
+      common.dump_input_lines(output_lines, ti, prefix_set, '//')
+
+      # Now generate all the checks.
+      def check_generator(my_output_lines, prefixes, func):
+        if '-emit-llvm' in clang_args:
+          common.add_ir_checks(my_output_lines, '//',
+                               prefixes,
+                               func_dict, func, False,
+                               ti.args.function_signature,
+                               global_vars_seen_dict)
+        else:
+          asm.add_asm_checks(my_output_lines, '//',
+                             prefixes,
+                             func_dict, func)
+
+      if ti.args.check_globals:
+        common.add_global_checks(builder.global_var_dict(), '//', run_list,
+                                 output_lines, global_vars_seen_dict, True,
+                                 True)
+      common.add_checks_at_end(output_lines, filecheck_run_list, builder.func_order(),
+                               '//', lambda my_output_lines, prefixes, func:
+                               check_generator(my_output_lines,
+                                               prefixes, func))
+    else:
+      # Normal mode.  Put checks before each source function.
+      for line_info in ti.iterlines(output_lines):
+        idx = line_info.line_number
+        line = line_info.line
+        args = line_info.args
+        include_line = True
+        m = common.CHECK_RE.match(line)
+        if m and m.group(1) in prefix_set:
+          continue  # Don't append the existing CHECK lines
+        # Skip special separator comments added by commmon.add_global_checks.
+        if line.strip() == '//' + common.SEPARATOR:
+          continue
+        if idx in line2spell_and_mangled_list:
+          added = set()
+          for spell, mangled in line2spell_and_mangled_list[idx]:
+            # One line may contain multiple function declarations.
+            # Skip if the mangled name has been added before.
+            # The line number may come from an included file,
+            # we simply require the spelling name to appear on the line
+            # to exclude functions from other files.
+            if mangled in added or spell not in line:
+              continue
+            if args.functions is None or any(re.search(regex, spell) for regex in args.functions):
               last_line = output_lines[-1].strip()
-            if added:
-              output_lines.append('//')
-            added.add(mangled)
-            common.add_ir_checks(output_lines, '//', run_list, func_dict, mangled,
-                                 False, args.function_signature)
-            if line.rstrip('\n') == '//':
-              include_line = False
+              while last_line == '//':
+                # Remove the comment line since we will generate a new  comment
+                # line as part of common.add_ir_checks()
+                output_lines.pop()
+                last_line = output_lines[-1].strip()
+              if ti.args.check_globals and not has_checked_pre_function_globals:
+                common.add_global_checks(builder.global_var_dict(), '//',
+                                         run_list, output_lines,
+                                         global_vars_seen_dict, True, True)
+                has_checked_pre_function_globals = True
+              if added:
+                output_lines.append('//')
+              added.add(mangled)
+              common.add_ir_checks(output_lines, '//', filecheck_run_list, func_dict, mangled,
+                                   False, args.function_signature, global_vars_seen_dict)
+              if line.rstrip('\n') == '//':
+                include_line = False
 
-      if include_line:
-        output_lines.append(line.rstrip('\n'))
+        if include_line:
+          output_lines.append(line.rstrip('\n'))
 
+    if ti.args.check_globals:
+      common.add_global_checks(builder.global_var_dict(), '//', run_list,
+                               output_lines, global_vars_seen_dict, True, False)
     common.debug('Writing %d lines to %s...' % (len(output_lines), ti.path))
     with open(ti.path, 'wb') as f:
       f.writelines(['{}\n'.format(l).encode('utf-8') for l in output_lines])

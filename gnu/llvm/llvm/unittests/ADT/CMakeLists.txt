@@ -4,6 +4,7 @@ set(LLVM_LINK_COMPONENTS
 
 add_llvm_unittest(ADTTests
   AnyTest.cpp
+  APFixedPointTest.cpp
   APFloatTest.cpp
   APIntTest.cpp
   APSIntTest.cpp
@@ -54,6 +55,7 @@ add_llvm_unittest(ADTTests
   RangeAdapterTest.cpp
   SCCIteratorTest.cpp
   STLExtrasTest.cpp
+  STLForwardCompatTest.cpp
   ScopeExitTest.cpp
   SequenceTest.cpp
   SetVectorTest.cpp

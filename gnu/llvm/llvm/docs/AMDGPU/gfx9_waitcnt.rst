@@ -5,10 +5,10 @@
     *                                                *
     **************************************************
 
-.. _amdgpu_synid9_waitcnt:
+.. _amdgpu_synid_gfx9_waitcnt:
 
 waitcnt
-===========================
+=======
 
 Counts of outstanding instructions to wait for.
 
@@ -62,4 +62,3 @@ Examples:
     s_waitcnt expcnt(2) lgkmcnt(3)
     s_waitcnt vmcnt(1), expcnt(2), lgkmcnt(3)
     s_waitcnt vmcnt(1) & lgkmcnt_sat(100) & expcnt(2)
-

@@ -39,7 +39,7 @@ struct InstrProfTest : ::testing::Test {
   InstrProfWriter Writer;
   std::unique_ptr<IndexedInstrProfReader> Reader;
 
-  void SetUp() { Writer.setOutputSparse(false); }
+  void SetUp() override { Writer.setOutputSparse(false); }
 
   void readProfile(std::unique_ptr<MemoryBuffer> Profile,
                    std::unique_ptr<MemoryBuffer> Remapping = nullptr) {
@@ -51,12 +51,12 @@ struct InstrProfTest : ::testing::Test {
 };
 
 struct SparseInstrProfTest : public InstrProfTest {
-  void SetUp() { Writer.setOutputSparse(true); }
+  void SetUp() override { Writer.setOutputSparse(true); }
 };
 
 struct MaybeSparseInstrProfTest : public InstrProfTest,
                                   public ::testing::WithParamInterface<bool> {
-  void SetUp() { Writer.setOutputSparse(GetParam()); }
+  void SetUp() override { Writer.setOutputSparse(GetParam()); }
 };
 
 TEST_P(MaybeSparseInstrProfTest, write_and_read_empty_profile) {
@@ -1041,8 +1041,8 @@ TEST_F(SparseInstrProfTest, preserve_no_records) {
   ASSERT_TRUE(I == E);
 }
 
-INSTANTIATE_TEST_CASE_P(MaybeSparse, MaybeSparseInstrProfTest,
-                        ::testing::Bool(),);
+INSTANTIATE_TEST_SUITE_P(MaybeSparse, MaybeSparseInstrProfTest,
+                         ::testing::Bool());
 
 #if defined(_LP64) && defined(EXPENSIVE_CHECKS)
 TEST(ProfileReaderTest, ReadsLargeFiles) {

@@ -5,10 +5,10 @@
     *                                                *
     **************************************************
 
-.. _amdgpu_synid9_attr:
+.. _amdgpu_synid_gfx9_attr:
 
 attr
-===========================
+====
 
 Interpolation attribute and channel:
 
@@ -27,4 +27,3 @@ Examples:
 
     v_interp_p1_f32 v1, v0, attr0.x
     v_interp_p1_f32 v1, v0, attr32.w
-

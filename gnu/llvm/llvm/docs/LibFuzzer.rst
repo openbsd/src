@@ -571,7 +571,7 @@ Periodically restart both fuzzers so that they can use each other's findings.
 Currently, there is no simple way to run both fuzzing engines in parallel while sharing the same corpus dir.
 
 You may also use AFL on your target function ``LLVMFuzzerTestOneInput``:
-see an example `here <https://github.com/llvm/llvm-project/tree/master/compiler-rt/lib/fuzzer/afl>`__.
+see an example `here <https://github.com/llvm/llvm-project/tree/main/compiler-rt/lib/fuzzer/afl>`__.
 
 How good is my fuzzer?
 ----------------------
@@ -617,6 +617,35 @@ really need to access ``argv``/``argc``.
     return 0;
    }
 
+Using libFuzzer as a library
+----------------------------
+If the code being fuzzed must provide its own `main`, it's possible to
+invoke libFuzzer as a library. Be sure to pass ``-fsanitize=fuzzer-no-link``
+during compilation, and link your binary against the no-main version of
+libFuzzer. On Linux installations, this is typically located at:
+
+.. code-block:: bash
+
+  /usr/lib/<llvm-version>/lib/clang/<clang-version>/lib/linux/libclang_rt.fuzzer_no_main-<architecture>.a
+
+If building libFuzzer from source, this is located at the following path
+in the build output directory:
+
+.. code-block:: bash
+
+  lib/linux/libclang_rt.fuzzer_no_main-<architecture>.a
+
+From here, the code can do whatever setup it requires, and when it's ready
+to start fuzzing, it can call `LLVMFuzzerRunDriver`, passing in the program
+arguments and a callback. This callback is invoked just like
+`LLVMFuzzerTestOneInput`, and has the same signature.
+
+.. code-block:: c++
+
+  extern "C" int LLVMFuzzerRunDriver(int *argc, char ***argv,
+                    int (*UserCb)(const uint8_t *Data, size_t Size));
+
+
 
 Leaks
 -----
@@ -644,9 +673,9 @@ Developing libFuzzer
 
 LibFuzzer is built as a part of LLVM project by default on macos and Linux.
 Users of other operating systems can explicitly request compilation using
-``-DLIBFUZZER_ENABLE=YES`` flag.
+``-DCOMPILER_RT_BUILD_LIBFUZZER=ON`` flag.
 Tests are run using ``check-fuzzer`` target from the build directory
-which was configured with ``-DLIBFUZZER_ENABLE_TESTS=ON`` flag.
+which was configured with ``-DCOMPILER_RT_INCLUDE_TESTS=ON`` flag.
 
 .. code-block:: console
 
@@ -786,7 +815,7 @@ Trophies
 .. _AddressSanitizer: https://clang.llvm.org/docs/AddressSanitizer.html
 .. _LeakSanitizer: https://clang.llvm.org/docs/LeakSanitizer.html
 .. _Heartbleed: http://en.wikipedia.org/wiki/Heartbleed
-.. _FuzzerInterface.h: https://github.com/llvm/llvm-project/blob/master/compiler-rt/lib/fuzzer/FuzzerInterface.h
+.. _FuzzerInterface.h: https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/fuzzer/FuzzerInterface.h
 .. _3.7.0: https://llvm.org/releases/3.7.0/docs/LibFuzzer.html
 .. _building Clang from trunk: https://clang.llvm.org/get_started.html
 .. _MemorySanitizer: https://clang.llvm.org/docs/MemorySanitizer.html

@@ -12,9 +12,9 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/raw_ostream.h"
 #ifdef HAVE_LIBPFM
-#include "perfmon/perf_event.h"
-#include "perfmon/pfmlib.h"
-#include "perfmon/pfmlib_perf_event.h"
+#include <perfmon/perf_event.h>
+#include <perfmon/pfmlib.h>
+#include <perfmon/pfmlib_perf_event.h>
 #endif
 
 #include <cassert>
@@ -128,7 +128,8 @@ int64_t Counter::read() const {
   return -1;
 }
 
-llvm::Expected<llvm::SmallVector<int64_t, 4>> Counter::readOrError() const {
+llvm::Expected<llvm::SmallVector<int64_t, 4>>
+Counter::readOrError(StringRef /*unused*/) const {
   int64_t Count = 0;
   ssize_t ReadSize = ::read(FileDescriptor, &Count, sizeof(Count));
   if (ReadSize != sizeof(Count))
@@ -152,7 +153,8 @@ void Counter::stop() {}
 
 int64_t Counter::read() const { return 42; }
 
-llvm::Expected<llvm::SmallVector<int64_t, 4>> Counter::readOrError() const {
+llvm::Expected<llvm::SmallVector<int64_t, 4>>
+Counter::readOrError(StringRef /*unused*/) const {
   return llvm::make_error<llvm::StringError>("Not implemented",
                                              llvm::errc::io_error);
 }

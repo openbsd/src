@@ -10,6 +10,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/DebugInfo.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/Function.h"
@@ -1314,6 +1315,151 @@ TEST_F(DISubrangeTest, fortranAllocatableExpr) {
   EXPECT_NE(N, DISubrange::get(Context, nullptr, LVother, UE, SE));
 }
 
+typedef MetadataTest DIGenericSubrangeTest;
+
+TEST_F(DIGenericSubrangeTest, fortranAssumedRankInt) {
+  DILocalScope *Scope = getSubprogram();
+  DIFile *File = getFile();
+  DIType *Type = getDerivedType();
+  DINode::DIFlags Flags = static_cast<DINode::DIFlags>(7);
+  auto *LI = DIExpression::get(
+      Context, {dwarf::DW_OP_consts, static_cast<uint64_t>(-10)});
+  auto *UI = DIExpression::get(Context, {dwarf::DW_OP_consts, 10});
+  auto *SI = DIExpression::get(Context, {dwarf::DW_OP_consts, 4});
+  auto *UIother = DIExpression::get(Context, {dwarf::DW_OP_consts, 20});
+  auto *UVother = DILocalVariable::get(Context, Scope, "ubother", File, 8, Type,
+                                       2, Flags, 8);
+  auto *UEother = DIExpression::get(Context, {5, 6});
+  auto *LIZero = DIExpression::get(Context, {dwarf::DW_OP_consts, 0});
+  auto *UIZero = DIExpression::get(Context, {dwarf::DW_OP_consts, 0});
+
+  auto *N = DIGenericSubrange::get(Context, nullptr, LI, UI, SI);
+
+  auto Lower = N->getLowerBound();
+  ASSERT_TRUE(Lower);
+  ASSERT_TRUE(Lower.is<DIExpression *>());
+  EXPECT_EQ(dyn_cast_or_null<DIExpression>(LI), Lower.get<DIExpression *>());
+
+  auto Upper = N->getUpperBound();
+  ASSERT_TRUE(Upper);
+  ASSERT_TRUE(Upper.is<DIExpression *>());
+  EXPECT_EQ(dyn_cast_or_null<DIExpression>(UI), Upper.get<DIExpression *>());
+
+  auto Stride = N->getStride();
+  ASSERT_TRUE(Stride);
+  ASSERT_TRUE(Stride.is<DIExpression *>());
+  EXPECT_EQ(dyn_cast_or_null<DIExpression>(SI), Stride.get<DIExpression *>());
+
+  EXPECT_EQ(N, DIGenericSubrange::get(Context, nullptr, LI, UI, SI));
+
+  EXPECT_NE(N, DIGenericSubrange::get(Context, nullptr, LI, UIother, SI));
+  EXPECT_NE(N, DIGenericSubrange::get(Context, nullptr, LI, UEother, SI));
+  EXPECT_NE(N, DIGenericSubrange::get(Context, nullptr, LI, UVother, SI));
+
+  auto *NZeroLower = DIGenericSubrange::get(Context, nullptr, LIZero, UI, SI);
+  EXPECT_NE(NZeroLower,
+            DIGenericSubrange::get(Context, nullptr, nullptr, UI, SI));
+
+  auto *NZeroUpper = DIGenericSubrange::get(Context, nullptr, LI, UIZero, SI);
+  EXPECT_NE(NZeroUpper,
+            DIGenericSubrange::get(Context, nullptr, LI, nullptr, SI));
+}
+
+TEST_F(DIGenericSubrangeTest, fortranAssumedRankVar) {
+  DILocalScope *Scope = getSubprogram();
+  DIFile *File = getFile();
+  DIType *Type = getDerivedType();
+  DINode::DIFlags Flags = static_cast<DINode::DIFlags>(7);
+  auto *LV =
+      DILocalVariable::get(Context, Scope, "lb", File, 8, Type, 2, Flags, 8);
+  auto *UV =
+      DILocalVariable::get(Context, Scope, "ub", File, 8, Type, 2, Flags, 8);
+  auto *SV =
+      DILocalVariable::get(Context, Scope, "st", File, 8, Type, 2, Flags, 8);
+  auto *SVother = DILocalVariable::get(Context, Scope, "stother", File, 8, Type,
+                                       2, Flags, 8);
+  auto *SIother = DIExpression::get(
+      Context, {dwarf::DW_OP_consts, static_cast<uint64_t>(-1)});
+  auto *SEother = DIExpression::get(Context, {5, 6});
+
+  auto *N = DIGenericSubrange::get(Context, nullptr, LV, UV, SV);
+
+  auto Lower = N->getLowerBound();
+  ASSERT_TRUE(Lower);
+  ASSERT_TRUE(Lower.is<DIVariable *>());
+  EXPECT_EQ(LV, Lower.get<DIVariable *>());
+
+  auto Upper = N->getUpperBound();
+  ASSERT_TRUE(Upper);
+  ASSERT_TRUE(Upper.is<DIVariable *>());
+  EXPECT_EQ(UV, Upper.get<DIVariable *>());
+
+  auto Stride = N->getStride();
+  ASSERT_TRUE(Stride);
+  ASSERT_TRUE(Stride.is<DIVariable *>());
+  EXPECT_EQ(SV, Stride.get<DIVariable *>());
+
+  EXPECT_EQ(N, DIGenericSubrange::get(Context, nullptr, LV, UV, SV));
+
+  EXPECT_NE(N, DIGenericSubrange::get(Context, nullptr, LV, UV, SVother));
+  EXPECT_NE(N, DIGenericSubrange::get(Context, nullptr, LV, UV, SEother));
+  EXPECT_NE(N, DIGenericSubrange::get(Context, nullptr, LV, UV, SIother));
+}
+
+TEST_F(DIGenericSubrangeTest, useDIBuilder) {
+  DILocalScope *Scope = getSubprogram();
+  DIFile *File = getFile();
+  DIType *Type = getDerivedType();
+  DINode::DIFlags Flags = static_cast<DINode::DIFlags>(7);
+  auto *LV =
+      DILocalVariable::get(Context, Scope, "lb", File, 8, Type, 2, Flags, 8);
+  auto *UE = DIExpression::get(Context, {2, 3});
+  auto *SE = DIExpression::get(Context, {3, 4});
+
+  auto *LVother = DILocalVariable::get(Context, Scope, "lbother", File, 8, Type,
+                                       2, Flags, 8);
+  auto *LIother = DIExpression::get(
+      Context, {dwarf::DW_OP_consts, static_cast<uint64_t>(-1)});
+
+  Module M("M", Context);
+  DIBuilder DIB(M);
+
+  auto *N = DIB.getOrCreateGenericSubrange(
+      DIGenericSubrange::BoundType(nullptr), DIGenericSubrange::BoundType(LV),
+      DIGenericSubrange::BoundType(UE), DIGenericSubrange::BoundType(SE));
+
+  auto Lower = N->getLowerBound();
+  ASSERT_TRUE(Lower);
+  ASSERT_TRUE(Lower.is<DIVariable *>());
+  EXPECT_EQ(LV, Lower.get<DIVariable *>());
+
+  auto Upper = N->getUpperBound();
+  ASSERT_TRUE(Upper);
+  ASSERT_TRUE(Upper.is<DIExpression *>());
+  EXPECT_EQ(UE, Upper.get<DIExpression *>());
+
+  auto Stride = N->getStride();
+  ASSERT_TRUE(Stride);
+  ASSERT_TRUE(Stride.is<DIExpression *>());
+  EXPECT_EQ(SE, Stride.get<DIExpression *>());
+
+  EXPECT_EQ(
+      N, DIB.getOrCreateGenericSubrange(DIGenericSubrange::BoundType(nullptr),
+                                        DIGenericSubrange::BoundType(LV),
+                                        DIGenericSubrange::BoundType(UE),
+                                        DIGenericSubrange::BoundType(SE)));
+
+  EXPECT_NE(
+      N, DIB.getOrCreateGenericSubrange(DIGenericSubrange::BoundType(nullptr),
+                                        DIGenericSubrange::BoundType(LVother),
+                                        DIGenericSubrange::BoundType(UE),
+                                        DIGenericSubrange::BoundType(SE)));
+  EXPECT_NE(
+      N, DIB.getOrCreateGenericSubrange(DIGenericSubrange::BoundType(nullptr),
+                                        DIGenericSubrange::BoundType(LIother),
+                                        DIGenericSubrange::BoundType(UE),
+                                        DIGenericSubrange::BoundType(SE)));
+}
 typedef MetadataTest DIEnumeratorTest;
 
 TEST_F(DIEnumeratorTest, get) {
@@ -1780,6 +1926,16 @@ TEST_F(DICompositeTypeTest, dynamicArray) {
   uint64_t Elements2[] = {dwarf::DW_OP_constu, 0};
   Metadata *DataLocation2 = DIExpression::get(Context, Elements2);
 
+  uint64_t Elements3[] = {dwarf::DW_OP_constu, 3};
+  Metadata *Rank1 = DIExpression::get(Context, Elements3);
+
+  uint64_t Elements4[] = {dwarf::DW_OP_constu, 4};
+  Metadata *Rank2 = DIExpression::get(Context, Elements4);
+
+  ConstantInt *RankInt1 = ConstantInt::get(Context, APInt(7, 0));
+  ConstantAsMetadata *RankConst1 = ConstantAsMetadata::get(RankInt1);
+  ConstantInt *RankInt2 = ConstantInt::get(Context, APInt(6, 0));
+  ConstantAsMetadata *RankConst2 = ConstantAsMetadata::get(RankInt2);
   auto *N1 = DICompositeType::get(
       Context, Tag, Name, File, Line, Scope, BaseType, SizeInBits, AlignInBits,
       OffsetInBits, Flags, nullptr, RuntimeLang, nullptr, nullptr, Identifier,
@@ -1817,6 +1973,44 @@ TEST_F(DICompositeTypeTest, dynamicArray) {
   EXPECT_EQ(N2, Same2);
   EXPECT_NE(Same2, Other2);
   EXPECT_EQ(N2->getDataLocationExp(), DataLocation1);
+
+  auto *N3 = DICompositeType::get(
+      Context, Tag, Name, File, Line, Scope, BaseType, SizeInBits, AlignInBits,
+      OffsetInBits, Flags, nullptr, RuntimeLang, nullptr, nullptr, Identifier,
+      nullptr, DataLocation1, nullptr, nullptr, Rank1);
+
+  auto *Same3 = DICompositeType::get(
+      Context, Tag, Name, File, Line, Scope, BaseType, SizeInBits, AlignInBits,
+      OffsetInBits, Flags, nullptr, RuntimeLang, nullptr, nullptr, Identifier,
+      nullptr, DataLocation1, nullptr, nullptr, Rank1);
+
+  auto *Other3 = DICompositeType::get(
+      Context, Tag, Name, File, Line, Scope, BaseType, SizeInBits, AlignInBits,
+      OffsetInBits, Flags, nullptr, RuntimeLang, nullptr, nullptr, Identifier,
+      nullptr, DataLocation1, nullptr, nullptr, Rank2);
+
+  EXPECT_EQ(N3, Same3);
+  EXPECT_NE(Same3, Other3);
+  EXPECT_EQ(N3->getRankExp(), Rank1);
+
+  auto *N4 = DICompositeType::get(
+      Context, Tag, Name, File, Line, Scope, BaseType, SizeInBits, AlignInBits,
+      OffsetInBits, Flags, nullptr, RuntimeLang, nullptr, nullptr, Identifier,
+      nullptr, DataLocation1, nullptr, nullptr, RankConst1);
+
+  auto *Same4 = DICompositeType::get(
+      Context, Tag, Name, File, Line, Scope, BaseType, SizeInBits, AlignInBits,
+      OffsetInBits, Flags, nullptr, RuntimeLang, nullptr, nullptr, Identifier,
+      nullptr, DataLocation1, nullptr, nullptr, RankConst1);
+
+  auto *Other4 = DICompositeType::get(
+      Context, Tag, Name, File, Line, Scope, BaseType, SizeInBits, AlignInBits,
+      OffsetInBits, Flags, nullptr, RuntimeLang, nullptr, nullptr, Identifier,
+      nullptr, DataLocation1, nullptr, nullptr, RankConst2);
+
+  EXPECT_EQ(N4, Same4);
+  EXPECT_NE(Same4, Other4);
+  EXPECT_EQ(N4->getRankConst(), RankInt1);
 }
 
 typedef MetadataTest DISubroutineTypeTest;
@@ -2265,9 +2459,10 @@ TEST_F(DIModuleTest, get) {
   StringRef Includes = "-I.";
   StringRef APINotes = "/tmp/m.apinotes";
   unsigned LineNo = 4;
+  bool IsDecl = true;
 
   auto *N = DIModule::get(Context, File, Scope, Name, ConfigMacro, Includes,
-                          APINotes, LineNo);
+                          APINotes, LineNo, IsDecl);
 
   EXPECT_EQ(dwarf::DW_TAG_module, N->getTag());
   EXPECT_EQ(File, N->getFile());
@@ -2277,22 +2472,25 @@ TEST_F(DIModuleTest, get) {
   EXPECT_EQ(Includes, N->getIncludePath());
   EXPECT_EQ(APINotes, N->getAPINotesFile());
   EXPECT_EQ(LineNo, N->getLineNo());
+  EXPECT_EQ(IsDecl, N->getIsDecl());
   EXPECT_EQ(N, DIModule::get(Context, File, Scope, Name, ConfigMacro, Includes,
-                             APINotes, LineNo));
+                             APINotes, LineNo, IsDecl));
   EXPECT_NE(N, DIModule::get(Context, getFile(), getFile(), Name, ConfigMacro,
-                             Includes, APINotes, LineNo));
+                             Includes, APINotes, LineNo, IsDecl));
   EXPECT_NE(N, DIModule::get(Context, File, Scope, "other", ConfigMacro,
-                             Includes, APINotes, LineNo));
+                             Includes, APINotes, LineNo, IsDecl));
   EXPECT_NE(N, DIModule::get(Context, File, Scope, Name, "other", Includes,
-                             APINotes, LineNo));
+                             APINotes, LineNo, IsDecl));
   EXPECT_NE(N, DIModule::get(Context, File, Scope, Name, ConfigMacro, "other",
-                             APINotes, LineNo));
+                             APINotes, LineNo, IsDecl));
   EXPECT_NE(N, DIModule::get(Context, File, Scope, Name, ConfigMacro, Includes,
-                             "other", LineNo));
+                             "other", LineNo, IsDecl));
   EXPECT_NE(N, DIModule::get(Context, getFile(), Scope, Name, ConfigMacro,
-                             Includes, APINotes, LineNo));
+                             Includes, APINotes, LineNo, IsDecl));
   EXPECT_NE(N, DIModule::get(Context, File, Scope, Name, ConfigMacro, Includes,
-                             APINotes, 5));
+                             APINotes, 5, IsDecl));
+  EXPECT_NE(N, DIModule::get(Context, File, Scope, Name, ConfigMacro, Includes,
+                             APINotes, LineNo, false));
 
   TempDIModule Temp = N->clone();
   EXPECT_EQ(N, MDNode::replaceWithUniqued(std::move(Temp)));
@@ -2668,6 +2866,34 @@ TEST_F(DIExpressionTest, createFragmentExpression) {
 #undef EXPECT_INVALID_FRAGMENT
 }
 
+TEST_F(DIExpressionTest, replaceArg) {
+#define EXPECT_REPLACE_ARG_EQ(Expr, OldArg, NewArg, ...)                       \
+  do {                                                                         \
+    uint64_t Elements[] = {__VA_ARGS__};                                       \
+    ArrayRef<uint64_t> Expected = Elements;                                    \
+    DIExpression *Expression = DIExpression::replaceArg(Expr, OldArg, NewArg); \
+    EXPECT_EQ(Expression->getElements(), Expected);                            \
+  } while (false)
+
+  auto N = DIExpression::get(
+      Context, {dwarf::DW_OP_LLVM_arg, 0, dwarf::DW_OP_LLVM_arg, 1,
+                dwarf::DW_OP_plus, dwarf::DW_OP_LLVM_arg, 2, dwarf::DW_OP_mul});
+  EXPECT_REPLACE_ARG_EQ(N, 0, 1, dwarf::DW_OP_LLVM_arg, 0,
+                        dwarf::DW_OP_LLVM_arg, 0, dwarf::DW_OP_plus,
+                        dwarf::DW_OP_LLVM_arg, 1, dwarf::DW_OP_mul);
+  EXPECT_REPLACE_ARG_EQ(N, 0, 2, dwarf::DW_OP_LLVM_arg, 1,
+                        dwarf::DW_OP_LLVM_arg, 0, dwarf::DW_OP_plus,
+                        dwarf::DW_OP_LLVM_arg, 1, dwarf::DW_OP_mul);
+  EXPECT_REPLACE_ARG_EQ(N, 2, 0, dwarf::DW_OP_LLVM_arg, 0,
+                        dwarf::DW_OP_LLVM_arg, 1, dwarf::DW_OP_plus,
+                        dwarf::DW_OP_LLVM_arg, 0, dwarf::DW_OP_mul);
+  EXPECT_REPLACE_ARG_EQ(N, 2, 1, dwarf::DW_OP_LLVM_arg, 0,
+                        dwarf::DW_OP_LLVM_arg, 1, dwarf::DW_OP_plus,
+                        dwarf::DW_OP_LLVM_arg, 1, dwarf::DW_OP_mul);
+
+#undef EXPECT_REPLACE_ARG_EQ
+}
+
 typedef MetadataTest DIObjCPropertyTest;
 
 TEST_F(DIObjCPropertyTest, get) {
@@ -2856,6 +3082,42 @@ TEST_F(ValueAsMetadataTest, CollidingDoubleUpdates) {
 
   // Clean up Temp for teardown.
   Temp->replaceAllUsesWith(nullptr);
+}
+
+typedef MetadataTest DIArgListTest;
+
+TEST_F(DIArgListTest, get) {
+  SmallVector<ValueAsMetadata *, 2> VMs;
+  VMs.push_back(
+      ConstantAsMetadata::get(ConstantInt::get(Context, APInt(8, 0))));
+  VMs.push_back(
+      ConstantAsMetadata::get(ConstantInt::get(Context, APInt(2, 0))));
+  DIArgList *DV0 = DIArgList::get(Context, VMs);
+  DIArgList *DV1 = DIArgList::get(Context, VMs);
+  EXPECT_EQ(DV0, DV1);
+}
+
+TEST_F(DIArgListTest, UpdatesOnRAUW) {
+  Type *Ty = Type::getInt1PtrTy(Context);
+  ConstantAsMetadata *CI =
+      ConstantAsMetadata::get(ConstantInt::get(Context, APInt(8, 0)));
+  std::unique_ptr<GlobalVariable> GV0(
+      new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage));
+  auto *MD0 = ValueAsMetadata::get(GV0.get());
+
+  SmallVector<ValueAsMetadata *, 2> VMs;
+  VMs.push_back(CI);
+  VMs.push_back(MD0);
+  auto *AL = DIArgList::get(Context, VMs);
+  EXPECT_EQ(AL->getArgs()[0], CI);
+  EXPECT_EQ(AL->getArgs()[1], MD0);
+
+  std::unique_ptr<GlobalVariable> GV1(
+      new GlobalVariable(Ty, false, GlobalValue::ExternalLinkage));
+  auto *MD1 = ValueAsMetadata::get(GV1.get());
+  GV0->replaceAllUsesWith(GV1.get());
+  EXPECT_EQ(AL->getArgs()[0], CI);
+  EXPECT_EQ(AL->getArgs()[1], MD1);
 }
 
 typedef MetadataTest TrackingMDRefTest;
