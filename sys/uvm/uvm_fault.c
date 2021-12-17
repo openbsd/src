@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.122 2021/12/15 12:53:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.123 2021/12/17 14:18:15 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1322,7 +1322,8 @@ uvm_fault_lower(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		}
 
 		if (locked == FALSE) {
-			rw_exit(uobj->vmobjlock);
+			if (uobjpage != PGO_DONTCARE)
+				rw_exit(uobj->vmobjlock);
 			return ERESTART;
 		}
 
