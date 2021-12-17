@@ -1,7 +1,7 @@
 # Check if lld is built as a standalone project.
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   project(lld)
-  cmake_minimum_required(VERSION 3.4.3)
+  cmake_minimum_required(VERSION 3.13.4)
 
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
   set(LLD_BUILT_STANDALONE TRUE)
@@ -35,6 +35,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   set(LLVM_MAIN_SRC_DIR ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
 
   file(TO_CMAKE_PATH ${LLVM_OBJ_ROOT} LLVM_BINARY_DIR)
+  file(TO_CMAKE_PATH ${LLVM_CMAKE_PATH} LLVM_CMAKE_PATH)
 
   if(NOT EXISTS "${LLVM_CMAKE_PATH}/LLVMConfig.cmake")
     message(FATAL_ERROR "LLVMConfig.cmake not found")
@@ -54,42 +55,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   include(AddLLVM)
   include(TableGen)
   include(HandleLLVMOptions)
+  include(GetErrcMessages)
   include(CheckAtomic)
 
   if(LLVM_INCLUDE_TESTS)
-    if(CMAKE_VERSION VERSION_LESS 3.12)
-      include(FindPythonInterp)
-      if(NOT PYTHONINTERP_FOUND)
-        message(FATAL_ERROR
-  "Unable to find Python interpreter, required for testing.
-
-  Please install Python or specify the PYTHON_EXECUTABLE CMake variable.")
-      endif()
-
-      if(${PYTHON_VERSION_STRING} VERSION_LESS 2.7)
-        message(FATAL_ERROR "Python 2.7 or newer is required")
-      endif()
-
-      add_executable(Python3::Interpeter IMPORTED)
-      set_target_properties(Python3::Interpreter PROPERTIES
-        IMPORTED_LOCATION ${PYTHON_EXECUTABLE})
-      set(Python3_EXECUTABLE ${PYTHON_EXECUTABLE})
-    else()
-      find_package(Python3 COMPONENTS Interpreter)
-      if(NOT Python3_Interpreter_FOUND)
-        message(WARNING "Python3 not found, using python2 as a fallback")
-        find_package(Python2 COMPONENTS Interpreter REQUIRED)
-        if(Python2_VERSION VERSION_LESS 2.7)
-          message(SEND_ERROR "Python 2.7 or newer is required")
-        endif()
-
-        # Treat python2 as python3
-        add_executable(Python3::Interpreter IMPORTED)
-        set_target_properties(Python3::Interpreter PROPERTIES
-          IMPORTED_LOCATION ${Python2_EXECUTABLE})
-        set(Python3_EXECUTABLE ${Python2_EXECUTABLE})
-      endif()
-    endif()
+    find_package(Python3 ${LLVM_MINIMUM_PYTHON_VERSION} REQUIRED
+      COMPONENTS Interpreter)
 
     # Check prebuilt llvm/utils.
     if(EXISTS ${LLVM_TOOLS_BINARY_DIR}/FileCheck${CMAKE_EXECUTABLE_SUFFIX}
@@ -129,6 +100,8 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
       endif()
       set(LLVM_LIT_ARGS "${LIT_ARGS_DEFAULT}" CACHE STRING "Default options for lit")
 
+      get_errc_messages(LLVM_LIT_ERRC_MESSAGES)
+
       # On Win32 hosts, provide an option to specify the path to the GnuWin32 tools.
       if(WIN32 AND NOT CYGWIN)
         set(LLVM_LIT_TOOLS_DIR "" CACHE PATH "Path to GnuWin32 tools")
@@ -136,6 +109,10 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     else()
       set(LLVM_INCLUDE_TESTS OFF)
     endif()
+  endif()
+
+  if(LLVM_HAVE_LIBXAR)
+    set(XAR_LIB xar)
   endif()
 endif()
 
@@ -193,6 +170,12 @@ endif()
 option(LLD_BUILD_TOOLS
   "Build the lld tools. If OFF, just generate build targets." ON)
 
+option(LLD_DEFAULT_LD_LLD_IS_MINGW
+    "Use MinGW as the default backend for ld.lld. If OFF, ELF will be used." OFF)
+if (LLD_DEFAULT_LD_LLD_IS_MINGW)
+  add_definitions("-DLLD_DEFAULT_LD_LLD_IS_MINGW=1")
+endif()
+
 if (MSVC)
   add_definitions(-wd4530) # Suppress 'warning C4530: C++ exception handler used, but unwind semantics are not enabled.'
   add_definitions(-wd4062) # Suppress 'warning C4062: enumerator X in switch of enum Y is not handled' from system header.
@@ -208,7 +191,6 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     DESTINATION include
     FILES_MATCHING
     PATTERN "*.h"
-    PATTERN ".svn" EXCLUDE
     )
 endif()
 
