@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_sct.c,v 1.4 2021/12/05 09:37:46 tb Exp $ */
+/*	$OpenBSD: ct_sct.c,v 1.5 2021/12/17 11:25:22 tb Exp $ */
 /*
  * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -248,7 +248,7 @@ SCT_get_signature_nid(const SCT *sct)
 			case 1:
 				return NID_sha256WithRSAEncryption;
 			default:
-                return NID_undef;
+				return NID_undef;
 			}
 		}
 	}
