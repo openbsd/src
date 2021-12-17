@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.25 2021/12/17 14:59:21 patrick Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.26 2021/12/17 17:06:39 jca Exp $
 
 .include <bsd.own.mk>
 
@@ -8,9 +8,6 @@ SUBDIRS=	opcodes bfd
 CONF_SUBDIRS=	opcodes bfd
 
 CFLAGS+=	${PIE_DEFAULT}
-.if ${COMPILER_VERSION:Mclang}
-CFLAGS+=	-Wno-unused-but-set-variable -Wno-null-pointer-subtraction
-.endif
 XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDSTATIC}"
 # This allows moving the whole binutils installation around for 
 # testing purposes
@@ -104,6 +101,7 @@ do-config: .USE
 	sh ${.CURDIR}/configure --prefix=${PREFIX} \
 	    --infodir='$${prefix}/share/info' \
 	    --disable-nls --disable-gdbtk --disable-install-libbfd ${CF} \
+	    --disable-werror \
 	    ${CONFIGTARGET}
 	cd ${.OBJDIR} && \
 	    sed -e 's,SUBDIRS *=,SUBDIRS ?=,' <Makefile >Makefile.tmp && \
