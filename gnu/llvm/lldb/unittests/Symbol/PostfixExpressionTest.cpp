@@ -111,7 +111,7 @@ ParseFPOAndStringify(llvm::StringRef prog) {
       ParseFPOProgram(prog, alloc);
   std::vector<std::pair<std::string, std::string>> result;
   for (const auto &p : parsed)
-    result.emplace_back(p.first, ASTPrinter::Print(p.second));
+    result.emplace_back(p.first.str(), ASTPrinter::Print(p.second));
   return result;
 }
 
@@ -158,7 +158,7 @@ static std::string ParseAndGenerateDWARF(llvm::StringRef expr) {
   std::string result;
   llvm::raw_string_ostream os(result);
   llvm::DWARFExpression(extractor, addr_size, llvm::dwarf::DWARF32)
-      .print(os, nullptr, nullptr);
+      .print(os, llvm::DIDumpOptions(), nullptr, nullptr);
   return std::move(os.str());
 }
 

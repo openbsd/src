@@ -25,7 +25,8 @@ public:
   // Static functions.
   static lldb::ProcessSP CreateInstance(lldb::TargetSP target_sp,
                                         lldb::ListenerSP listener_sp,
-                                        const FileSpec *);
+                                        const FileSpec *,
+                                        bool can_connect);
 
   static void Initialize();
 
@@ -68,8 +69,8 @@ public:
   bool CanDebug(lldb::TargetSP target_sp,
                 bool plugin_specified_by_name) override;
   bool DestroyRequiresHalt() override { return false; }
-  bool UpdateThreadList(ThreadList &old_thread_list,
-                        ThreadList &new_thread_list) override;
+  bool DoUpdateThreadList(ThreadList &old_thread_list,
+                          ThreadList &new_thread_list) override;
   bool IsAlive() override;
 
   size_t DoReadMemory(lldb::addr_t vm_addr, void *buf, size_t size,

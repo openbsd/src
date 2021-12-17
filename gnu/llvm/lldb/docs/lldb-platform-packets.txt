@@ -113,7 +113,7 @@ incompatible with the flags that gdb specifies.
 //     3. {optional} working directory ascii-hex encoded
 //
 //  Response is F followed by the return value of the command (base 16),
-//  followed by a another number, followed by the output of the command
+//  followed by another number, followed by the output of the command
 /   in binary-escaped-data encoding.
 
 //----------------------------------------------------------------------
@@ -236,6 +236,27 @@ incompatible with the flags that gdb specifies.
 // 
 //  Continues to return the results of the qfProcessInfo.  Once all matches
 //  have been sent, Exx is returned to indicate end of matches.
+
+//----------------------------------------------------------------------
+// qPathComplete
+//
+// BRIEF
+//   Get a list of matched disk files/directories by passing a boolean flag
+//   and a partial path.
+//
+// EXAMPLE
+//
+//   receive: qPathComplete:0,6d61696e
+//   send:    M6d61696e2e637070
+//   receive: qPathComplete:1,746573
+//   send:    M746573742f,74657374732f
+//
+//   If the first argument is zero, the result should contain all
+//   files (including directories) starting with the given path. If the
+//   argument is one, the result should contain only directories.
+//
+//   The result should be a comma-separated list of hex-encoded paths.
+//   Paths denoting a directory should end with a directory separator ('/' or '\').
 
 //----------------------------------------------------------------------
 // vFile:size:
@@ -390,6 +411,11 @@ incompatible with the flags that gdb specifies.
 //
 //  Response is F, followed by the number of bytes read (base 10), a
 //  semicolon, followed by the data in the binary-escaped-data encoding.
+//
+//  COMPATIBILITY
+//    The gdb-remote serial protocol documentation says that numbers
+//    in "vFile:" packets should be hexadecimal. Instead lldb uses
+//    decimal.
 
 
 //----------------------------------------------------------------------
@@ -409,7 +435,11 @@ incompatible with the flags that gdb specifies.
 //     3. binary-escaped-data to be written
 //
 //  Response is F, followed by the number of bytes written (base 10)
-
+//
+//  COMPATIBILITY
+//    The gdb-remote serial protocol documentation says that numbers
+//    in "vFile:" packets should be hexadecimal. Instead lldb uses
+//    decimal.
 
 
 

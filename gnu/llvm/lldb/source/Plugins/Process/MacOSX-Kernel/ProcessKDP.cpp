@@ -6,8 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <errno.h>
-#include <stdlib.h>
+#include <cerrno>
+#include <cstdlib>
 
 #include <memory>
 #include <mutex>
@@ -73,7 +73,7 @@ public:
     m_collection_sp->Initialize(g_processkdp_properties);
   }
 
-  virtual ~PluginProperties() {}
+  virtual ~PluginProperties() = default;
 
   uint64_t GetPacketTimeout() {
     const uint32_t idx = ePropertyKDPPacketTimeout;
@@ -111,7 +111,8 @@ void ProcessKDP::Terminate() {
 
 lldb::ProcessSP ProcessKDP::CreateInstance(TargetSP target_sp,
                                            ListenerSP listener_sp,
-                                           const FileSpec *crash_file_path) {
+                                           const FileSpec *crash_file_path,
+                                           bool can_connect) {
   lldb::ProcessSP process_sp;
   if (crash_file_path == NULL)
     process_sp = std::make_shared<ProcessKDP>(target_sp, listener_sp);
@@ -507,8 +508,8 @@ lldb::ThreadSP ProcessKDP::GetKernelThread() {
   return thread_sp;
 }
 
-bool ProcessKDP::UpdateThreadList(ThreadList &old_thread_list,
-                                  ThreadList &new_thread_list) {
+bool ProcessKDP::DoUpdateThreadList(ThreadList &old_thread_list,
+                                    ThreadList &new_thread_list) {
   // locker will keep a mutex locked until it goes out of scope
   Log *log(ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_THREAD));
   LLDB_LOGV(log, "pid = {0}", GetID());
@@ -644,6 +645,9 @@ Status ProcessKDP::DoDeallocateMemory(lldb::addr_t addr) {
 }
 
 Status ProcessKDP::EnableBreakpointSite(BreakpointSite *bp_site) {
+  if (bp_site->HardwareRequired())
+    return Status("Hardware breakpoints are not supported.");
+
   if (m_comm.LocalBreakpointsAreSupported()) {
     Status error;
     if (!bp_site->IsEnabled()) {
@@ -873,7 +877,7 @@ private:
   OptionGroupUInt64 m_command_byte;
   OptionGroupString m_packet_data;
 
-  virtual Options *GetOptions() { return &m_option_group; }
+  Options *GetOptions() override { return &m_option_group; }
 
 public:
   CommandObjectProcessKDPPacketSend(CommandInterpreter &interpreter)
@@ -898,15 +902,14 @@ public:
     m_option_group.Finalize();
   }
 
-  ~CommandObjectProcessKDPPacketSend() {}
+  ~CommandObjectProcessKDPPacketSend() = default;
 
-  bool DoExecute(Args &command, CommandReturnObject &result) {
+  bool DoExecute(Args &command, CommandReturnObject &result) override {
     const size_t argc = command.GetArgumentCount();
     if (argc == 0) {
       if (!m_command_byte.GetOptionValue().OptionWasSet()) {
         result.AppendError(
             "the --command option must be set to a valid command byte");
-        result.SetStatus(eReturnStatusFailed);
       } else {
         const uint64_t command_byte =
             m_command_byte.GetOptionValue().GetUInt64Value(0);
@@ -929,7 +932,6 @@ public:
                                                "even number of ASCII hex "
                                                "characters: '%s'",
                                                ascii_hex_bytes_cstr);
-                  result.SetStatus(eReturnStatusFailed);
                   return false;
                 }
                 payload_bytes.resize(ascii_hex_bytes_cstr_len / 2);
@@ -939,7 +941,6 @@ public:
                                                "ASCII hex characters (no "
                                                "spaces or hex prefixes): '%s'",
                                                ascii_hex_bytes_cstr);
-                  result.SetStatus(eReturnStatusFailed);
                   return false;
                 }
               }
@@ -966,30 +967,25 @@ public:
                 else
                   result.AppendErrorWithFormat("unknown error 0x%8.8x",
                                                error.GetError());
-                result.SetStatus(eReturnStatusFailed);
                 return false;
               }
             } else {
               result.AppendErrorWithFormat("process must be stopped in order "
                                            "to send KDP packets, state is %s",
                                            StateAsCString(state));
-              result.SetStatus(eReturnStatusFailed);
             }
           } else {
             result.AppendError("invalid process");
-            result.SetStatus(eReturnStatusFailed);
           }
         } else {
           result.AppendErrorWithFormat("invalid command byte 0x%" PRIx64
                                        ", valid values are 1 - 255",
                                        command_byte);
-          result.SetStatus(eReturnStatusFailed);
         }
       }
     } else {
       result.AppendErrorWithFormat("'%s' takes no arguments, only options.",
                                    m_cmd_name.c_str());
-      result.SetStatus(eReturnStatusFailed);
     }
     return false;
   }
@@ -1007,7 +1003,7 @@ public:
         CommandObjectSP(new CommandObjectProcessKDPPacketSend(interpreter)));
   }
 
-  ~CommandObjectProcessKDPPacket() {}
+  ~CommandObjectProcessKDPPacket() = default;
 };
 
 class CommandObjectMultiwordProcessKDP : public CommandObjectMultiword {
@@ -1021,7 +1017,7 @@ public:
                                  interpreter)));
   }
 
-  ~CommandObjectMultiwordProcessKDP() {}
+  ~CommandObjectMultiwordProcessKDP() = default;
 };
 
 CommandObject *ProcessKDP::GetPluginCommandObject() {

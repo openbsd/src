@@ -27,8 +27,6 @@ std::string lldb_private::GetInputFilePath(const llvm::Twine &name) {
 }
 
 llvm::Expected<TestFile> TestFile::fromYaml(llvm::StringRef Yaml) {
-  assert(testing::UnitTest::GetInstance()->current_test_info());
-
   std::string Buffer;
   llvm::raw_string_ostream OS(Buffer);
   llvm::yaml::Input YIn(Yaml);
@@ -40,8 +38,8 @@ llvm::Expected<TestFile> TestFile::fromYaml(llvm::StringRef Yaml) {
 
 llvm::Expected<TestFile> TestFile::fromYamlFile(const llvm::Twine &Name) {
   auto BufferOrError =
-      llvm::MemoryBuffer::getFile(GetInputFilePath(Name), /*FileSize*/ -1,
-                                  /*RequiresNullTerminator*/ false);
+      llvm::MemoryBuffer::getFile(GetInputFilePath(Name), /*IsText=*/false,
+                                  /*RequiresNullTerminator=*/false);
   if (!BufferOrError)
     return llvm::errorCodeToError(BufferOrError.getError());
   return fromYaml(BufferOrError.get()->getBuffer());

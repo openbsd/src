@@ -56,7 +56,7 @@ add_optional_dependency(LLDB_ENABLE_LIBEDIT "Enable editline support in LLDB" Li
 add_optional_dependency(LLDB_ENABLE_CURSES "Enable curses support in LLDB" CursesAndPanel CURSESANDPANEL_FOUND)
 add_optional_dependency(LLDB_ENABLE_LZMA "Enable LZMA compression support in LLDB" LibLZMA LIBLZMA_FOUND)
 add_optional_dependency(LLDB_ENABLE_LUA "Enable Lua scripting support in LLDB" LuaAndSwig LUAANDSWIG_FOUND)
-add_optional_dependency(LLDB_ENABLE_PYTHON "Enable Python scripting support in LLDB" PythonInterpAndLibs PYTHONINTERPANDLIBS_FOUND)
+add_optional_dependency(LLDB_ENABLE_PYTHON "Enable Python scripting support in LLDB" PythonAndSwig PYTHONANDSWIG_FOUND)
 add_optional_dependency(LLDB_ENABLE_LIBXML2 "Enable Libxml 2 support in LLDB" LibXml2 LIBXML2_FOUND VERSION 2.8)
 
 option(LLDB_USE_SYSTEM_SIX "Use six.py shipped with system and do not install a copy of it" OFF)
@@ -65,6 +65,7 @@ option(LLDB_BUILD_FRAMEWORK "Build LLDB.framework (Darwin only)" OFF)
 option(LLDB_NO_INSTALL_DEFAULT_RPATH "Disable default RPATH settings in binaries" OFF)
 option(LLDB_USE_SYSTEM_DEBUGSERVER "Use the system's debugserver for testing (Darwin only)." OFF)
 option(LLDB_SKIP_STRIP "Whether to skip stripping of binaries when installing lldb." OFF)
+option(LLDB_SKIP_DSYM "Whether to skip generating a dSYM when installing lldb." OFF)
 
 if (LLDB_USE_SYSTEM_DEBUGSERVER)
   # The custom target for the system debugserver has no install target, so we
@@ -78,11 +79,6 @@ endif()
 if(LLDB_BUILD_FRAMEWORK)
   if(NOT APPLE)
     message(FATAL_ERROR "LLDB.framework can only be generated when targeting Apple platforms")
-  endif()
-  # CMake 3.6 did not correctly emit POST_BUILD commands for Apple Framework targets
-  # CMake < 3.8 did not have the BUILD_RPATH target property
-  if(CMAKE_VERSION VERSION_LESS 3.8)
-    message(FATAL_ERROR "LLDB_BUILD_FRAMEWORK is not supported on CMake < 3.8")
   endif()
 
   set(LLDB_FRAMEWORK_VERSION A CACHE STRING "LLDB.framework version (default is A)")
@@ -148,9 +144,9 @@ if (LLDB_ENABLE_PYTHON)
     "Embed PYTHONHOME in the binary. If set to OFF, PYTHONHOME environment variable will be used to to locate Python."
     ${default_embed_python_home})
 
-  include_directories(${PYTHON_INCLUDE_DIRS})
+  include_directories(${Python3_INCLUDE_DIRS})
   if (LLDB_EMBED_PYTHON_HOME)
-    get_filename_component(PYTHON_HOME "${PYTHON_EXECUTABLE}" DIRECTORY)
+    get_filename_component(PYTHON_HOME "${Python3_EXECUTABLE}" DIRECTORY)
     set(LLDB_PYTHON_HOME "${PYTHON_HOME}" CACHE STRING
       "Path to use as PYTHONHOME in lldb. If a relative path is specified, it will be resolved at runtime relative to liblldb directory.")
   endif()
@@ -164,36 +160,21 @@ endif ()
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/../clang/include")
 
 # Disable GCC warnings
-check_cxx_compiler_flag("-Wno-deprecated-declarations"
-                        CXX_SUPPORTS_NO_DEPRECATED_DECLARATIONS)
-if (CXX_SUPPORTS_NO_DEPRECATED_DECLARATIONS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
-endif ()
+check_cxx_compiler_flag("-Wno-deprecated-declarations" CXX_SUPPORTS_NO_DEPRECATED_DECLARATIONS)
+append_if(CXX_SUPPORTS_NO_DEPRECATED_DECLARATIONS "-Wno-deprecated-declarations" CMAKE_CXX_FLAGS)
 
-check_cxx_compiler_flag("-Wno-unknown-pragmas"
-                        CXX_SUPPORTS_NO_UNKNOWN_PRAGMAS)
-if (CXX_SUPPORTS_NO_UNKNOWN_PRAGMAS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unknown-pragmas")
-endif ()
+check_cxx_compiler_flag("-Wno-unknown-pragmas" CXX_SUPPORTS_NO_UNKNOWN_PRAGMAS)
+append_if(CXX_SUPPORTS_NO_UNKNOWN_PRAGMAS "-Wno-unknown-pragmas" CMAKE_CXX_FLAGS)
 
-check_cxx_compiler_flag("-Wno-strict-aliasing"
-                        CXX_SUPPORTS_NO_STRICT_ALIASING)
-if (CXX_SUPPORTS_NO_STRICT_ALIASING)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-strict-aliasing")
-endif ()
+check_cxx_compiler_flag("-Wno-strict-aliasing" CXX_SUPPORTS_NO_STRICT_ALIASING)
+append_if(CXX_SUPPORTS_NO_STRICT_ALIASING "-Wno-strict-aliasing" CMAKE_CXX_FLAGS)
 
 # Disable Clang warnings
-check_cxx_compiler_flag("-Wno-deprecated-register"
-                        CXX_SUPPORTS_NO_DEPRECATED_REGISTER)
-if (CXX_SUPPORTS_NO_DEPRECATED_REGISTER)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register")
-endif ()
+check_cxx_compiler_flag("-Wno-deprecated-register" CXX_SUPPORTS_NO_DEPRECATED_REGISTER)
+append_if(CXX_SUPPORTS_NO_DEPRECATED_REGISTER "-Wno-deprecated-register" CMAKE_CXX_FLAGS)
 
-check_cxx_compiler_flag("-Wno-vla-extension"
-                        CXX_SUPPORTS_NO_VLA_EXTENSION)
-if (CXX_SUPPORTS_NO_VLA_EXTENSION)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-vla-extension")
-endif ()
+check_cxx_compiler_flag("-Wno-vla-extension" CXX_SUPPORTS_NO_VLA_EXTENSION)
+append_if(CXX_SUPPORTS_NO_VLA_EXTENSION "-Wno-vla-extension" CMAKE_CXX_FLAGS)
 
 # Disable MSVC warnings
 if( MSVC )
@@ -248,7 +229,6 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     DESTINATION include
     FILES_MATCHING
     PATTERN "*.h"
-    PATTERN ".svn" EXCLUDE
     PATTERN ".cmake" EXCLUDE
     )
 
@@ -257,7 +237,6 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
     DESTINATION include
     FILES_MATCHING
     PATTERN "*.h"
-    PATTERN ".svn" EXCLUDE
     PATTERN ".cmake" EXCLUDE
     )
 
@@ -270,9 +249,33 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
   endif()
 endif()
 
+
+# If LLDB is building against a prebuilt Clang, then the Clang resource
+# directory that LLDB is using for its embedded Clang instance needs to point
+# to the resource directory of the used Clang installation.
+if (NOT TARGET clang-resource-headers)
+  set(LLDB_CLANG_RESOURCE_DIR_NAME "${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}.${LLVM_VERSION_PATCH}")
+  # Iterate over the possible places where the external resource directory
+  # could be and pick the first that exists.
+  foreach(CANDIDATE "${Clang_DIR}/../.." "${LLVM_DIR}" "${LLVM_LIBRARY_DIRS}"
+                    "${LLVM_BUILD_LIBRARY_DIR}"
+                    "${LLVM_BINARY_DIR}/lib${LLVM_LIBDIR_SUFFIX}")
+    # Build the resource directory path by appending 'clang/<version number>'.
+    set(CANDIDATE_RESOURCE_DIR "${CANDIDATE}/clang/${LLDB_CLANG_RESOURCE_DIR_NAME}")
+    if (IS_DIRECTORY "${CANDIDATE_RESOURCE_DIR}")
+      set(LLDB_EXTERNAL_CLANG_RESOURCE_DIR "${CANDIDATE_RESOURCE_DIR}")
+      break()
+    endif()
+  endforeach()
+
+  if (NOT LLDB_EXTERNAL_CLANG_RESOURCE_DIR)
+    message(FATAL_ERROR "Expected directory for clang-resource headers not found: ${LLDB_EXTERNAL_CLANG_RESOURCE_DIR}")
+  endif()
+endif()
+
 # Find Apple-specific libraries or frameworks that may be needed.
 if (APPLE)
-  if(NOT IOS)
+  if(NOT APPLE_EMBEDDED)
     find_library(CARBON_LIBRARY Carbon)
     find_library(CORE_SERVICES_LIBRARY CoreServices)
   endif()
@@ -312,5 +315,4 @@ if ((CMAKE_SYSTEM_NAME MATCHES "Android") AND LLVM_BUILD_STATIC AND
   add_definitions(-DANDROID_USE_ACCEPT_WORKAROUND)
 endif()
 
-find_package(Backtrace)
 include(LLDBGenerateConfig)

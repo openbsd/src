@@ -305,6 +305,33 @@ TEST(ArchSpecTest, Compatibility) {
     ArchSpec B("x86_64-apple-ios-simulator");
     ASSERT_FALSE(A.IsExactMatch(B));
     ASSERT_FALSE(A.IsCompatibleMatch(B));
+    ASSERT_FALSE(B.IsExactMatch(A));
+    ASSERT_FALSE(B.IsCompatibleMatch(A));
+  }
+  {
+    ArchSpec A("x86_64-apple-ios");
+    ArchSpec B("x86_64-apple-ios-simulator");
+    ASSERT_FALSE(A.IsExactMatch(B));
+    ASSERT_FALSE(A.IsCompatibleMatch(B));
+    ASSERT_FALSE(B.IsExactMatch(A));
+    ASSERT_FALSE(B.IsCompatibleMatch(A));
+  }
+  {
+    // FIXME: This is surprisingly not equivalent to "x86_64-*-*".
+    ArchSpec A("x86_64");
+    ArchSpec B("x86_64-apple-ios-simulator");
+    ASSERT_FALSE(A.IsExactMatch(B));
+    ASSERT_TRUE(A.IsCompatibleMatch(B));
+    ASSERT_FALSE(B.IsExactMatch(A));
+    ASSERT_TRUE(B.IsCompatibleMatch(A));
+  }
+  {
+    ArchSpec A("arm64-apple-ios");
+    ArchSpec B("arm64-apple-ios-simulator");
+    ASSERT_FALSE(A.IsExactMatch(B));
+    ASSERT_FALSE(A.IsCompatibleMatch(B));
+    ASSERT_FALSE(B.IsCompatibleMatch(A));
+    ASSERT_FALSE(B.IsCompatibleMatch(A));
   }
   {
     ArchSpec A("arm64-*-*");
@@ -327,6 +354,40 @@ TEST(ArchSpecTest, Compatibility) {
     // FIXME: The exact match also looks unintuitive.
     ASSERT_TRUE(A.IsExactMatch(B));
     ASSERT_TRUE(A.IsCompatibleMatch(B));
+  }
+  {
+    ArchSpec A("x86_64");
+    ArchSpec B("x86_64-apple-ios12.0.0-macabi");
+    // FIXME: The exact match also looks unintuitive.
+    ASSERT_TRUE(A.IsExactMatch(B));
+    ASSERT_TRUE(A.IsCompatibleMatch(B));
+  }
+  {
+    ArchSpec A("x86_64-apple-ios12.0.0");
+    ArchSpec B("x86_64-apple-ios12.0.0-macabi");
+    ASSERT_FALSE(A.IsExactMatch(B));
+    ASSERT_FALSE(A.IsCompatibleMatch(B));
+  }
+  {
+    ArchSpec A("x86_64-apple-macosx10.14.2");
+    ArchSpec B("x86_64-apple-ios12.0.0-macabi");
+    ASSERT_FALSE(A.IsExactMatch(B));
+    ASSERT_TRUE(A.IsCompatibleMatch(B));
+  }
+  {
+    ArchSpec A("x86_64-apple-macosx10.14.2");
+    ArchSpec B("x86_64-apple-ios12.0.0-macabi");
+    // ios-macabi wins.
+    A.MergeFrom(B);
+    ASSERT_TRUE(A.IsExactMatch(B));
+  }
+  {
+    ArchSpec A("x86_64-apple-macosx10.14.2");
+    ArchSpec B("x86_64-apple-ios12.0.0-macabi");
+    ArchSpec C(B);
+    // ios-macabi wins.
+    B.MergeFrom(A);
+    ASSERT_TRUE(B.IsExactMatch(C));
   }
 }
 

@@ -9,13 +9,13 @@ and results of a single test run.
 
 # System modules
 import os
+import traceback
 
 # Third-party modules
 import unittest2
 
 # LLDB Modules
 from . import configuration
-from lldbsuite.test_event.event_builder import EventBuilder
 from lldbsuite.test_event import build_exception
 
 
@@ -72,7 +72,6 @@ class LLDBTestResult(unittest2.TextTestResult):
         # This counts from 1 .. suite.countTestCases().
         self.counter = 0
         (width, height) = LLDBTestResult.getTerminalSize()
-        self.results_formatter = configuration.results_formatter_object
 
     def _config_string(self, test):
         compiler = getattr(test, "getCompiler", None)
@@ -113,7 +112,7 @@ class LLDBTestResult(unittest2.TextTestResult):
     def _getFileBasedCategories(self, test):
         """
         Returns the list of categories to which this test case belongs by
-        collecting values of ".categories" files. We start at the folder the test is in
+        collecting values of "categories" files. We start at the folder the test is in
         and traverse the hierarchy upwards until the test-suite root directory.
         """
         start_path = self._getTestPath(test)
@@ -127,7 +126,7 @@ class LLDBTestResult(unittest2.TextTestResult):
 
         categories = set()
         while not os.path.samefile(folder, test_root):
-            categories_file_name = os.path.join(folder, ".categories")
+            categories_file_name = os.path.join(folder, "categories")
             if os.path.exists(categories_file_name):
                 categories_file = open(categories_file_name, 'r')
                 categories_str = categories_file.readline().strip()
@@ -181,9 +180,6 @@ class LLDBTestResult(unittest2.TextTestResult):
         if self.showAll:
             self.stream.write(self.fmt % self.counter)
         super(LLDBTestResult, self).startTest(test)
-        if self.results_formatter:
-            self.results_formatter.handle_event(
-                EventBuilder.event_for_start(test))
 
     def addSuccess(self, test):
         if (self.checkExclusion(
@@ -197,9 +193,6 @@ class LLDBTestResult(unittest2.TextTestResult):
         self.stream.write(
             "PASS: LLDB (%s) :: %s\n" %
             (self._config_string(test), str(test)))
-        if self.results_formatter:
-            self.results_formatter.handle_event(
-                EventBuilder.event_for_success(test))
 
     def _isBuildError(self, err_tuple):
         exception = err_tuple[1]
@@ -228,13 +221,6 @@ class LLDBTestResult(unittest2.TextTestResult):
         self.stream.write(
             "FAIL: LLDB (%s) :: %s\n" %
             (self._config_string(test), str(test)))
-        if self.results_formatter:
-            # Handle build errors as a separate event type
-            if self._isBuildError(err):
-                error_event = EventBuilder.event_for_build_error(test, err)
-            else:
-                error_event = EventBuilder.event_for_error(test, err)
-            self.results_formatter.handle_event(error_event)
 
     def addCleanupError(self, test, err):
         configuration.sdir_has_content = True
@@ -243,12 +229,8 @@ class LLDBTestResult(unittest2.TextTestResult):
         if method:
             method()
         self.stream.write(
-            "CLEANUP ERROR: LLDB (%s) :: %s\n" %
-            (self._config_string(test), str(test)))
-        if self.results_formatter:
-            self.results_formatter.handle_event(
-                EventBuilder.event_for_cleanup_error(
-                    test, err))
+            "CLEANUP ERROR: LLDB (%s) :: %s\n%s\n" %
+            (self._config_string(test), str(test), traceback.format_exc()))
 
     def addFailure(self, test, err):
         if (self.checkExclusion(
@@ -274,9 +256,6 @@ class LLDBTestResult(unittest2.TextTestResult):
                         category] = configuration.failures_per_category[category] + 1
                 else:
                     configuration.failures_per_category[category] = 1
-        if self.results_formatter:
-            self.results_formatter.handle_event(
-                EventBuilder.event_for_failure(test, err))
 
     def addExpectedFailure(self, test, err, bugnumber):
         configuration.sdir_has_content = True
@@ -287,10 +266,6 @@ class LLDBTestResult(unittest2.TextTestResult):
         self.stream.write(
             "XFAIL: LLDB (%s) :: %s\n" %
             (self._config_string(test), str(test)))
-        if self.results_formatter:
-            self.results_formatter.handle_event(
-                EventBuilder.event_for_expected_failure(
-                    test, err, bugnumber))
 
     def addSkip(self, test, reason):
         configuration.sdir_has_content = True
@@ -301,9 +276,6 @@ class LLDBTestResult(unittest2.TextTestResult):
         self.stream.write(
             "UNSUPPORTED: LLDB (%s) :: %s (%s) \n" %
             (self._config_string(test), str(test), reason))
-        if self.results_formatter:
-            self.results_formatter.handle_event(
-                EventBuilder.event_for_skip(test, reason))
 
     def addUnexpectedSuccess(self, test, bugnumber):
         configuration.sdir_has_content = True
@@ -314,7 +286,3 @@ class LLDBTestResult(unittest2.TextTestResult):
         self.stream.write(
             "XPASS: LLDB (%s) :: %s\n" %
             (self._config_string(test), str(test)))
-        if self.results_formatter:
-            self.results_formatter.handle_event(
-                EventBuilder.event_for_unexpected_success(
-                    test, bugnumber))

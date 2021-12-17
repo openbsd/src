@@ -8,7 +8,7 @@
 
 #include "SymbolVendorMacOSX.h"
 
-#include <string.h>
+#include <cstring>
 
 #include "Plugins/ObjectFile/Mach-O/ObjectFileMachO.h"
 #include "lldb/Core/Module.h"
@@ -20,7 +20,7 @@
 #include "lldb/Symbol/LocateSymbolFile.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Target.h"
-#include "lldb/Utility/Reproducer.h"
+#include "lldb/Utility/ReproducerProvider.h"
 #include "lldb/Utility/StreamString.h"
 #include "lldb/Utility/Timer.h"
 
@@ -32,9 +32,6 @@ LLDB_PLUGIN_DEFINE(SymbolVendorMacOSX)
 // SymbolVendorMacOSX constructor
 SymbolVendorMacOSX::SymbolVendorMacOSX(const lldb::ModuleSP &module_sp)
     : SymbolVendor(module_sp) {}
-
-// Destructor
-SymbolVendorMacOSX::~SymbolVendorMacOSX() {}
 
 static bool UUIDsMatch(Module *module, ObjectFile *ofile,
                        lldb_private::Stream *feedback_strm) {
@@ -299,7 +296,7 @@ SymbolVendorMacOSX::CreateInstance(const lldb::ModuleSP &module_sp,
           if (repro::Generator *g =
                   repro::Reproducer::Instance().GetGenerator()) {
             repro::FileProvider &fp = g->GetOrCreate<repro::FileProvider>();
-            fp.recordInterestingDirectory(dsym_root);
+            fp.RecordInterestingDirectoryRecursive(dsym_root);
           }
         }
         return symbol_vendor;

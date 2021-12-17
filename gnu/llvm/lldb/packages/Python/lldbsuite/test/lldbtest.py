@@ -67,6 +67,7 @@ from . import lldbutil
 from . import test_categories
 from lldbsuite.support import encoded_file
 from lldbsuite.support import funcutils
+from lldbsuite.test.builders import get_builder
 
 # See also dotest.parseOptionsAndInitTestdirs(), where the environment variables
 # LLDB_COMMAND_TRACE is set from '-t' option.
@@ -125,6 +126,8 @@ OBJECT_PRINTED_CORRECTLY = "Object printed correctly"
 
 SOURCE_DISPLAYED_CORRECTLY = "Source code displayed correctly"
 
+STEP_IN_SUCCEEDED = "Thread step-in succeeded"
+
 STEP_OUT_SUCCEEDED = "Thread step-out succeeded"
 
 STOPPED_DUE_TO_EXC_BAD_ACCESS = "Process should be stopped due to bad access exception"
@@ -178,27 +181,27 @@ WATCHPOINT_CREATED = "Watchpoint created successfully"
 
 
 def CMD_MSG(str):
-    '''A generic "Command '%s' returns successfully" message generator.'''
-    return "Command '%s' returns successfully" % str
+    '''A generic "Command '%s' did not return successfully" message generator.'''
+    return "Command '%s' did not return successfully" % str
 
 
 def COMPLETION_MSG(str_before, str_after, completions):
-    '''A generic message generator for the completion mechanism.'''
+    '''A generic assertion failed message generator for the completion mechanism.'''
     return ("'%s' successfully completes to '%s', but completions were:\n%s"
            % (str_before, str_after, "\n".join(completions)))
 
 
 def EXP_MSG(str, actual, exe):
-    '''A generic "'%s' returns expected result" message generator if exe.
-    Otherwise, it generates "'%s' matches expected result" message.'''
+    '''A generic "'%s' returned unexpected result" message generator if exe.
+    Otherwise, it generates "'%s' does not match expected result" message.'''
 
-    return "'%s' %s expected result, got '%s'" % (
-        str, 'returns' if exe else 'matches', actual.strip())
+    return "'%s' %s result, got '%s'" % (
+        str, 'returned unexpected' if exe else 'does not match expected', actual.strip())
 
 
 def SETTING_MSG(setting):
-    '''A generic "Value of setting '%s' is correct" message generator.'''
-    return "Value of setting '%s' is correct" % setting
+    '''A generic "Value of setting '%s' is not correct" message generator.'''
+    return "Value of setting '%s' is not correct" % setting
 
 
 def line_number(filename, string_to_match):
@@ -242,6 +245,77 @@ def which(program):
                 return exe_file
     return None
 
+class ValueCheck:
+    def __init__(self, name=None, value=None, type=None, summary=None,
+                 children=None):
+        """
+        :param name: The name that the SBValue should have. None if the summary
+                     should not be checked.
+        :param summary: The summary that the SBValue should have. None if the
+                        summary should not be checked.
+        :param value: The value that the SBValue should have. None if the value
+                      should not be checked.
+        :param type: The type that the SBValue result should have. None if the
+                     type should not be checked.
+        :param children: A list of ValueChecks that need to match the children
+                         of this SBValue. None if children shouldn't be checked.
+                         The order of checks is the order of the checks in the
+                         list. The number of checks has to match the number of
+                         children.
+        """
+        self.expect_name = name
+        self.expect_value = value
+        self.expect_type = type
+        self.expect_summary = summary
+        self.children = children
+
+    def check_value(self, test_base, val, error_msg=None):
+        """
+        Checks that the given value matches the currently set properties
+        of this ValueCheck. If a match failed, the given TestBase will
+        be used to emit an error. A custom error message can be specified
+        that will be used to describe failed check for this SBValue (but
+        not errors in the child values).
+        """
+
+        this_error_msg = error_msg if error_msg else ""
+        this_error_msg += "\nChecking SBValue: " + str(val)
+
+        test_base.assertSuccess(val.GetError())
+
+        if self.expect_name:
+            test_base.assertEqual(self.expect_name, val.GetName(),
+                                  this_error_msg)
+        if self.expect_value:
+            test_base.assertEqual(self.expect_value, val.GetValue(),
+                                  this_error_msg)
+        if self.expect_type:
+            test_base.assertEqual(self.expect_type, val.GetDisplayTypeName(),
+                                  this_error_msg)
+        if self.expect_summary:
+            test_base.assertEqual(self.expect_summary, val.GetSummary(),
+                                  this_error_msg)
+        if self.children is not None:
+            self.check_value_children(test_base, val, error_msg)
+
+    def check_value_children(self, test_base, val, error_msg=None):
+        """
+        Checks that the children of a SBValue match a certain structure and
+        have certain properties.
+
+        :param test_base: The current test's TestBase object.
+        :param val: The SBValue to check.
+        """
+
+        this_error_msg = error_msg if error_msg else ""
+        this_error_msg += "\nChecking SBValue: " + str(val)
+
+        test_base.assertEqual(len(self.children), val.GetNumChildren(), this_error_msg)
+
+        for i in range(0, val.GetNumChildren()):
+            expected_child = self.children[i]
+            actual_child = val.GetChildAtIndex(i)
+            expected_child.check_value(test_base, actual_child, error_msg)
 
 class recording(SixStringIO):
     """
@@ -310,7 +384,8 @@ class _LocalProcess(_BaseProcess):
             [executable] + args,
             stdout=open(
                 os.devnull) if not self._trace_on else None,
-            stdin=PIPE)
+            stdin=PIPE,
+            preexec_fn=lldbplatformutil.enable_attach)
 
     def terminate(self):
         if self._proc.poll() is None:
@@ -426,7 +501,7 @@ def system(commands, **kwargs):
         process = Popen(
             shellCommand,
             stdout=PIPE,
-            stderr=PIPE,
+            stderr=STDOUT,
             shell=True,
             **kwargs)
         pid = process.pid
@@ -440,14 +515,12 @@ def system(commands, **kwargs):
             cpe = CalledProcessError(retcode, cmd)
             # Ensure caller can access the stdout/stderr.
             cpe.lldb_extensions = {
-                "stdout_content": this_output,
-                "stderr_content": this_error,
+                "combined_output": this_output,
                 "command": shellCommand
             }
             raise cpe
-        output = output + this_output.decode("utf-8")
-        error = error + this_error.decode("utf-8")
-    return (output, error)
+        output = output + this_output.decode("utf-8", errors='ignore')
+    return output
 
 
 def getsource_if_available(obj):
@@ -463,17 +536,7 @@ def getsource_if_available(obj):
 
 
 def builder_module():
-    if sys.platform.startswith("freebsd"):
-        return __import__("builder_freebsd")
-    if sys.platform.startswith("openbsd"):
-        return __import__("builder_openbsd")
-    if sys.platform.startswith("netbsd"):
-        return __import__("builder_netbsd")
-    if sys.platform.startswith("linux"):
-        # sys.platform with Python-3.x returns 'linux', but with
-        # Python-2.x it returns 'linux2'.
-        return __import__("builder_linux")
-    return __import__("builder_" + sys.platform)
+    return get_builder(sys.platform)
 
 
 class Base(unittest2.TestCase):
@@ -498,8 +561,12 @@ class Base(unittest2.TestCase):
             mydir = TestBase.compute_mydir(__file__)
         '''
         # /abs/path/to/packages/group/subdir/mytest.py -> group/subdir
-        rel_prefix = test_file[len(os.environ["LLDB_TEST_SRC"]) + 1:]
-        return os.path.dirname(rel_prefix)
+        lldb_test_src = configuration.test_src_root
+        if not test_file.startswith(lldb_test_src):
+          raise Exception(
+              "Test file '%s' must reside within lldb_test_src "
+              "(which is '%s')." % (test_file, lldb_test_src))
+        return os.path.dirname(os.path.relpath(test_file, start=lldb_test_src))
 
     def TraceOn(self):
         """Returns True if we are in trace mode (tracing detailed test execution)."""
@@ -522,15 +589,11 @@ class Base(unittest2.TestCase):
         # Save old working directory.
         cls.oldcwd = os.getcwd()
 
-        # Change current working directory if ${LLDB_TEST_SRC} is defined.
-        # See also dotest.py which sets up ${LLDB_TEST_SRC}.
-        if ("LLDB_TEST_SRC" in os.environ):
-            full_dir = os.path.join(os.environ["LLDB_TEST_SRC"],
-                                    cls.mydir)
-            if traceAlways:
-                print("Change dir to:", full_dir, file=sys.stderr)
-            os.chdir(full_dir)
-            lldb.SBReproducer.SetWorkingDirectory(full_dir)
+        full_dir = os.path.join(configuration.test_src_root, cls.mydir)
+        if traceAlways:
+            print("Change dir to:", full_dir, file=sys.stderr)
+        os.chdir(full_dir)
+        lldb.SBReproducer.SetWorkingDirectory(full_dir)
 
         # Set platform context.
         cls.platformContext = lldbplatformutil.createPlatformContext()
@@ -664,7 +727,7 @@ class Base(unittest2.TestCase):
 
     def getSourceDir(self):
         """Return the full path to the current test."""
-        return os.path.join(os.environ["LLDB_TEST_SRC"], self.mydir)
+        return os.path.join(configuration.test_src_root, self.mydir)
 
     def getBuildDirBasename(self):
         return self.__class__.__module__ + "." + self.testMethodName
@@ -718,6 +781,12 @@ class Base(unittest2.TestCase):
             # different binaries with the same UUID, because they only
             # differ in the debug info, which is not being hashed.
             "settings set symbols.enable-external-lookup false",
+
+            # Inherit the TCC permissions from the inferior's parent.
+            "settings set target.inherit-tcc true",
+
+            # Kill rather than detach from the inferior if something goes wrong.
+            "settings set target.detach-on-error false",
 
             # Disable fix-its by default so that incorrect expressions in tests don't
             # pass just because Clang thinks it has a fix-it.
@@ -800,11 +869,13 @@ class Base(unittest2.TestCase):
         # List of spawned subproces.Popen objects
         self.subprocesses = []
 
-        # List of forked process PIDs
-        self.forkedProcessPids = []
-
         # List of log files produced by the current test.
         self.log_files = []
+
+        # Create the build directory.
+        # The logs are stored in the build directory, so we have to create it
+        # before creating the first log file.
+        self.makeBuildDir()
 
         session_file = self.getLogBasenameForCurrentTest()+".log"
         self.log_files.append(session_file)
@@ -856,29 +927,17 @@ class Base(unittest2.TestCase):
         self.setPlatformWorkingDir()
         self.enableLogChannelsForCurrentTest()
 
-        lib_dir = os.environ["LLDB_LIB_DIR"]
-        self.dsym = None
+        self.lib_lldb = None
         self.framework_dir = None
-        self.darwinWithFramework = self.platformIsDarwin()
-        if sys.platform.startswith("darwin"):
-            # Handle the framework environment variable if it is set
-            if hasattr(lldbtest_config, 'lldb_framework_path'):
-                framework_path = lldbtest_config.lldb_framework_path
-                # Framework dir should be the directory containing the framework
-                self.framework_dir = framework_path[:framework_path.rfind('LLDB.framework')]
-            # If a framework dir was not specified assume the Xcode build
-            # directory layout where the framework is in LLDB_LIB_DIR.
-            else:
-                self.framework_dir = lib_dir
-            self.dsym = os.path.join(self.framework_dir, 'LLDB.framework', 'LLDB')
-            # If the framework binary doesn't exist, assume we didn't actually
-            # build a framework, and fallback to standard *nix behavior by
-            # setting framework_dir and dsym to None.
-            if not os.path.exists(self.dsym):
-                self.framework_dir = None
-                self.dsym = None
-                self.darwinWithFramework = False
-        self.makeBuildDir()
+        self.darwinWithFramework = False
+
+        if sys.platform.startswith("darwin") and configuration.lldb_framework_path:
+            framework = configuration.lldb_framework_path
+            lib = os.path.join(framework, 'LLDB')
+            if os.path.exists(lib):
+                self.framework_dir = os.path.dirname(framework)
+                self.lib_lldb = lib
+                self.darwinWithFramework = self.platformIsDarwin()
 
     def setAsync(self, value):
         """ Sets async mode to True/False and ensures it is reset after the testcase completes."""
@@ -887,18 +946,11 @@ class Base(unittest2.TestCase):
         self.addTearDownHook(lambda: self.dbg.SetAsync(old_async))
 
     def cleanupSubprocesses(self):
-        # Ensure any subprocesses are cleaned up
-        for p in self.subprocesses:
+        # Terminate subprocesses in reverse order from how they were created.
+        for p in reversed(self.subprocesses):
             p.terminate()
             del p
         del self.subprocesses[:]
-        # Ensure any forked processes are cleaned up
-        for pid in self.forkedProcessPids:
-            try:
-                os.kill(pid, signal.SIGTERM)
-            except OSError:
-                pass
-        del self.forkedProcessPids[:]
 
     def spawnSubprocess(self, executable, args=[], install_remote=True):
         """ Creates a subprocess.Popen object with the specified executable and arguments,
@@ -909,23 +961,6 @@ class Base(unittest2.TestCase):
         proc.launch(executable, args)
         self.subprocesses.append(proc)
         return proc
-
-    def forkSubprocess(self, executable, args=[]):
-        """ Fork a subprocess with its own group ID.
-        """
-        child_pid = os.fork()
-        if child_pid == 0:
-            # If more I/O support is required, this can be beefed up.
-            fd = os.open(os.devnull, os.O_RDWR)
-            os.dup2(fd, 1)
-            os.dup2(fd, 2)
-            # This call causes the child to have its of group ID
-            os.setpgid(0, 0)
-            os.execvp(executable, [executable] + args)
-        # Give the child time to get through the execvp() call
-        time.sleep(0.1)
-        self.forkedProcessPids.append(child_pid)
-        return child_pid
 
     def HideStdout(self):
         """Hide output to stdout from the user.
@@ -1049,6 +1084,17 @@ class Base(unittest2.TestCase):
         lldb.SBDebugger.Destroy(self.dbg)
         del self.dbg
 
+        # All modules should be orphaned now so that they can be cleared from
+        # the shared module cache.
+        lldb.SBModule.GarbageCollectAllocatedModules()
+
+        # Modules are not orphaned during reproducer replay because they're
+        # leaked on purpose.
+        if not configuration.is_reproducer():
+            # Assert that the global module cache is empty.
+            self.assertEqual(lldb.SBModule.GetNumberAllocatedModules(), 0)
+
+
     # =========================================================
     # Various callbacks to allow introspection of test progress
     # =========================================================
@@ -1117,45 +1163,12 @@ class Base(unittest2.TestCase):
     def getRerunArgs(self):
         return " -f %s.%s" % (self.__class__.__name__, self._testMethodName)
 
-    def getLogBasenameForCurrentTest(self, prefix=None):
+    def getLogBasenameForCurrentTest(self, prefix="Incomplete"):
         """
         returns a partial path that can be used as the beginning of the name of multiple
         log files pertaining to this test
-
-        <session-dir>/<arch>-<compiler>-<test-file>.<test-class>.<test-method>
         """
-        dname = os.path.join(os.environ["LLDB_TEST_SRC"],
-                             os.environ["LLDB_SESSION_DIRNAME"])
-        if not os.path.isdir(dname):
-            os.mkdir(dname)
-
-        components = []
-        if prefix is not None:
-            components.append(prefix)
-        for c in configuration.session_file_format:
-            if c == 'f':
-                components.append(self.__class__.__module__)
-            elif c == 'n':
-                components.append(self.__class__.__name__)
-            elif c == 'c':
-                compiler = self.getCompiler()
-
-                if compiler[1] == ':':
-                    compiler = compiler[2:]
-                if os.path.altsep is not None:
-                    compiler = compiler.replace(os.path.altsep, os.path.sep)
-                path_components = [x for x in compiler.split(os.path.sep) if x != ""]
-
-                # Add at most 4 path components to avoid generating very long
-                # filenames
-                components.extend(path_components[-4:])
-            elif c == 'a':
-                components.append(self.getArchitecture())
-            elif c == 'm':
-                components.append(self.testMethodName)
-        fname = "-".join(components)
-
-        return os.path.join(dname, fname)
+        return os.path.join(self.getBuildDir(), prefix)
 
     def dumpSessionInfo(self):
         """
@@ -1215,7 +1228,7 @@ class Base(unittest2.TestCase):
         # process the log files
         if prefix != 'Success' or lldbtest_config.log_success:
             # keep all log files, rename them to include prefix
-            src_log_basename = self.getLogBasenameForCurrentTest(None)
+            src_log_basename = self.getLogBasenameForCurrentTest()
             dst_log_basename = self.getLogBasenameForCurrentTest(prefix)
             for src in self.log_files:
                 if os.path.isfile(src):
@@ -1255,6 +1268,41 @@ class Base(unittest2.TestCase):
         if re.match("powerpc64le", arch):
             return True
         return False
+
+    def getCPUInfo(self):
+        triple = self.dbg.GetSelectedPlatform().GetTriple()
+
+        # TODO other platforms, please implement this function
+        if not re.match(".*-.*-linux", triple):
+            return ""
+
+        # Need to do something different for non-Linux/Android targets
+        cpuinfo_path = self.getBuildArtifact("cpuinfo")
+        if configuration.lldb_platform_name:
+            self.runCmd('platform get-file "/proc/cpuinfo" ' + cpuinfo_path)
+        else:
+            cpuinfo_path = "/proc/cpuinfo"
+
+        try:
+            with open(cpuinfo_path, 'r') as f:
+                cpuinfo = f.read()
+        except:
+            return ""
+
+        return cpuinfo
+
+    def isAArch64(self):
+        """Returns true if the architecture is AArch64."""
+        return self.getArchitecture().lower() == "aarch64"
+
+    def isAArch64SVE(self):
+        return self.isAArch64() and "sve" in self.getCPUInfo()
+
+    def isAArch64MTE(self):
+        return self.isAArch64() and "mte" in self.getCPUInfo()
+
+    def isAArch64PAuth(self):
+        return self.isAArch64() and "paca" in self.getCPUInfo()
 
     def getArchitecture(self):
         """Returns the architecture in effect the test suite is running with."""
@@ -1304,15 +1352,13 @@ class Base(unittest2.TestCase):
         """ Returns a string that represents the compiler version.
             Supports: llvm, clang.
         """
-        version = 'unknown'
-
         compiler = self.getCompilerBinary()
-        version_output = system([[compiler, "-v"]])[1]
+        version_output = system([[compiler, "--version"]])
         for line in version_output.split(os.linesep):
-            m = re.search('version ([0-9\.]+)', line)
+            m = re.search('version ([0-9.]+)', line)
             if m:
-                version = m.group(1)
-        return version
+                return m.group(1)
+        return 'unknown'
 
     def getDwarfVersion(self):
         """ Returns the dwarf version generated by clang or '0'. """
@@ -1351,25 +1397,35 @@ class Base(unittest2.TestCase):
            Use compiler_version[0] to specify the operator used to determine if a match has occurred.
            Any operator other than the following defaults to an equality test:
              '>', '>=', "=>", '<', '<=', '=<', '!=', "!" or 'not'
+
+           If the current compiler version cannot be determined, we assume it is close to the top
+           of trunk, so any less-than or equal-to comparisons will return False, and any
+           greater-than or not-equal-to comparisons will return True.
         """
-        if (compiler_version is None):
+        if compiler_version is None:
             return True
         operator = str(compiler_version[0])
         version = compiler_version[1]
 
-        if (version is None):
+        if version is None:
             return True
-        if (operator == '>'):
-            return LooseVersion(self.getCompilerVersion()) > LooseVersion(version)
-        if (operator == '>=' or operator == '=>'):
-            return LooseVersion(self.getCompilerVersion()) >= LooseVersion(version)
-        if (operator == '<'):
-            return LooseVersion(self.getCompilerVersion()) < LooseVersion(version)
-        if (operator == '<=' or operator == '=<'):
-            return LooseVersion(self.getCompilerVersion()) <= LooseVersion(version)
-        if (operator == '!=' or operator == '!' or operator == 'not'):
-            return str(version) not in str(self.getCompilerVersion())
-        return str(version) in str(self.getCompilerVersion())
+
+        test_compiler_version = self.getCompilerVersion()
+        if test_compiler_version == 'unknown':
+            # Assume the compiler version is at or near the top of trunk.
+            return operator in ['>', '>=', '!', '!=', 'not']
+
+        if operator == '>':
+            return LooseVersion(test_compiler_version) > LooseVersion(version)
+        if operator == '>=' or operator == '=>':
+            return LooseVersion(test_compiler_version) >= LooseVersion(version)
+        if operator == '<':
+            return LooseVersion(test_compiler_version) < LooseVersion(version)
+        if operator == '<=' or operator == '=<':
+            return LooseVersion(test_compiler_version) <= LooseVersion(version)
+        if operator == '!=' or operator == '!' or operator == 'not':
+            return str(version) not in str(test_compiler_version)
+        return str(version) in str(test_compiler_version)
 
     def expectedCompiler(self, compilers):
         """Returns True iff any element of compilers is a sub-string of the current compiler."""
@@ -1442,7 +1498,7 @@ class Base(unittest2.TestCase):
                  'EXE': exe_name,
                  'CFLAGS_EXTRAS': "%s %s" % (stdflag, stdlibflag),
                  'FRAMEWORK_INCLUDES': "-F%s" % self.framework_dir,
-                 'LD_EXTRAS': "%s -Wl,-rpath,%s" % (self.dsym, self.framework_dir),
+                 'LD_EXTRAS': "%s -Wl,-rpath,%s" % (self.lib_lldb, self.framework_dir),
                  }
         elif sys.platform.startswith('win'):
             d = {
@@ -1453,7 +1509,7 @@ class Base(unittest2.TestCase):
                                                  os.path.join(
                                                      os.environ["LLDB_SRC"],
                                                      "include")),
-                'LD_EXTRAS': "-L%s -lliblldb" % os.environ["LLDB_IMPLIB_DIR"]}
+                'LD_EXTRAS': "-L%s -lliblldb" % lib_dir}
         else:
             d = {
                 'CXX_SOURCES': sources,
@@ -1482,7 +1538,7 @@ class Base(unittest2.TestCase):
                  'DYLIB_NAME': lib_name,
                  'CFLAGS_EXTRAS': "%s -stdlib=libc++" % stdflag,
                  'FRAMEWORK_INCLUDES': "-F%s" % self.framework_dir,
-                 'LD_EXTRAS': "%s -Wl,-rpath,%s -dynamiclib" % (self.dsym, self.framework_dir),
+                 'LD_EXTRAS': "%s -Wl,-rpath,%s -dynamiclib" % (self.lib_lldb, self.framework_dir),
                  }
         elif self.getPlatform() == 'windows':
             d = {
@@ -1492,7 +1548,7 @@ class Base(unittest2.TestCase):
                                                os.path.join(
                                                    os.environ["LLDB_SRC"],
                                                    "include")),
-                'LD_EXTRAS': "-shared -l%s\liblldb.lib" % self.os.environ["LLDB_IMPLIB_DIR"]}
+                'LD_EXTRAS': "-shared -l%s\liblldb.lib" % lib_dir}
         else:
             d = {
                 'DYLIB_CXX_SOURCES': sources,
@@ -1523,6 +1579,10 @@ class Base(unittest2.TestCase):
         """Platform specific way to build the default binaries."""
         testdir = self.mydir
         testname = self.getBuildDirBasename()
+
+        if not architecture and configuration.arch:
+            architecture = configuration.arch
+
         if self.getDebugInfo():
             raise Exception("buildDefault tests must set NO_DEBUG_INFO_TESTCASE")
         module = builder_module()
@@ -1637,7 +1697,7 @@ class Base(unittest2.TestCase):
         """
         yaml2obj_bin = configuration.get_yaml2obj_path()
         if not yaml2obj_bin:
-            self.assertTrue(False, "No valid FileCheck executable specified")
+            self.assertTrue(False, "No valid yaml2obj executable specified")
         command = [yaml2obj_bin, "-o=%s" % obj_path, yaml_path]
         system([command])
 
@@ -1694,6 +1754,19 @@ class Base(unittest2.TestCase):
                 "Don't know how to do cleanup with dictionary: " +
                 dictionary)
 
+    def invoke(self, obj, name, trace=False):
+        """Use reflection to call a method dynamically with no argument."""
+        trace = (True if traceAlways else trace)
+
+        method = getattr(obj, name)
+        import inspect
+        self.assertTrue(inspect.ismethod(method),
+                        name + "is a method name of object: " + str(obj))
+        result = method()
+        with recording(self, trace) as sbuf:
+            print(str(method) + ":", result, file=sbuf)
+        return result
+
     def getLLDBLibraryEnvVal(self):
         """ Returns the path that the OS-specific library search environment variable
             (self.dylibPath) should be set to in order for a program to find the LLDB
@@ -1702,19 +1775,23 @@ class Base(unittest2.TestCase):
         """
         existing_library_path = os.environ[
             self.dylibPath] if self.dylibPath in os.environ else None
-        lib_dir = os.environ["LLDB_LIB_DIR"]
         if existing_library_path:
-            return "%s:%s" % (existing_library_path, lib_dir)
-        elif sys.platform.startswith("darwin"):
-            return os.path.join(lib_dir, 'LLDB.framework')
-        else:
-            return lib_dir
+            return "%s:%s" % (existing_library_path, configuration.lldb_libs_dir)
+        if sys.platform.startswith("darwin") and configuration.lldb_framework_path:
+            return configuration.lldb_framework_path
+        return configuration.lldb_libs_dir
 
     def getLibcPlusPlusLibs(self):
         if self.getPlatform() in ('freebsd', 'linux', 'netbsd', 'openbsd'):
             return ['libc++.so.1']
         else:
             return ['libc++.1.dylib', 'libc++abi.']
+
+    def run_platform_command(self, cmd):
+        platform = self.dbg.GetSelectedPlatform()
+        shell_command = lldb.SBPlatformShellCommand(cmd)
+        err = platform.Run(shell_command)
+        return (err, shell_command.GetStatus(), shell_command.GetOutput())
 
 # Metaclass for TestBase to change the list of test metods when a new TestCase is loaded.
 # We change the test methods to create a new test method for each test for each debug info we are
@@ -1825,7 +1902,7 @@ class TestBase(Base):
         - The build methods buildDefault, buildDsym, and buildDwarf are used to
           build the binaries used during a particular test scenario.  A plugin
           should be provided for the sys.platform running the test suite.  The
-          Mac OS X implementation is located in plugins/darwin.py.
+          Mac OS X implementation is located in builders/darwin.py.
     """
 
     # Subclasses can set this to true (if they don't depend on debug info) to avoid running the
@@ -1861,6 +1938,7 @@ class TestBase(Base):
             header.startswith("SB") and header.endswith(".h"))]
         includes = '\n'.join(list)
         new_content = content.replace('%include_SB_APIs%', includes)
+        new_content = new_content.replace('%SOURCE_DIR%', self.getSourceDir())
         src = os.path.join(self.getBuildDir(), source)
         with open(src, 'w') as f:
             f.write(new_content)
@@ -1908,8 +1986,7 @@ class TestBase(Base):
         shlib_prefix = self.platformContext.shlib_prefix
         shlib_extension = '.' + self.platformContext.shlib_extension
 
-        working_dir = self.get_process_working_directory()
-        environment = ['%s=%s' % (shlib_environment_var, working_dir)]
+        dirs = []
         # Add any shared libraries to our target if remote so they get
         # uploaded into the working directory on the remote side
         for name in shlibs:
@@ -1932,6 +2009,7 @@ class TestBase(Base):
                 # Make sure we found the local shared library in the above code
                 self.assertTrue(os.path.exists(local_shlib_path))
 
+
             # Add the shared library to our target
             shlib_module = target.AddModule(local_shlib_path, None, None, None)
             if lldb.remote_platform:
@@ -1941,8 +2019,15 @@ class TestBase(Base):
                     os.path.basename(local_shlib_path))
                 shlib_module.SetRemoteInstallFileSpec(
                     lldb.SBFileSpec(remote_shlib_path, False))
+                dir_to_add = self.get_process_working_directory()
+            else:
+                dir_to_add = os.path.dirname(local_shlib_path)
 
-        return environment
+            if dir_to_add not in dirs:
+                dirs.append(dir_to_add)
+
+        env_value = self.platformContext.shlib_path_separator.join(dirs)
+        return ['%s=%s' % (shlib_environment_var, env_value)]
 
     def registerSanitizerLibrariesWithTarget(self, target):
         runtimes = []
@@ -2006,13 +2091,9 @@ class TestBase(Base):
         for target in targets:
             self.dbg.DeleteTarget(target)
 
-        # Modules are not orphaned during reproducer replay because they're
-        # leaked on purpose.
         if not configuration.is_reproducer():
             # Assert that all targets are deleted.
-            assert self.dbg.GetNumTargets() == 0
-            # Assert that the global module cache is empty.
-            assert lldb.SBModule.GetNumberAllocatedModules() == 0
+            self.assertEqual(self.dbg.GetNumTargets(), 0)
 
         # Do this last, to make sure it's in reverse order from how we setup.
         Base.tearDown(self)
@@ -2039,7 +2120,7 @@ class TestBase(Base):
         return status.
         """
         # Fail fast if 'cmd' is not meaningful.
-        if not cmd or len(cmd) == 0:
+        if cmd is None:
             raise Exception("Bad 'cmd' parameter encountered")
 
         trace = (True if traceAlways else trace)
@@ -2248,6 +2329,17 @@ class TestBase(Base):
         self.assertItemsEqual(completions, list(match_strings)[1:],
                               "List of returned completion is wrong")
 
+    def completions_contain(self, command, completions):
+        """Checks that the completions for the given command contain the given
+        list of completions."""
+        interp = self.dbg.GetCommandInterpreter()
+        match_strings = lldb.SBStringList()
+        interp.HandleCompletion(command, len(command), 0, -1, match_strings)
+        for completion in completions:
+            # match_strings is a 1-indexed list, so we have to slice...
+            self.assertIn(completion, list(match_strings)[1:],
+                          "Couldn't find expected completion")
+
     def filecheck(
             self,
             command,
@@ -2344,6 +2436,22 @@ FileCheck output:
         set to False, the 'str' is treated as a string to be matched/not-matched
         against the golden input.
         """
+        # Catch cases where `expect` has been miscalled. Specifically, prevent
+        # this easy to make mistake:
+        #     self.expect("lldb command", "some substr")
+        # The `msg` parameter is used only when a failed match occurs. A failed
+        # match can only occur when one of `patterns`, `startstr`, `endstr`, or
+        # `substrs` has been given. Thus, if a `msg` is given, it's an error to
+        # not also provide one of the matcher parameters.
+        if msg and not (patterns or startstr or endstr or substrs or error):
+            assert False, "expect() missing a matcher argument"
+
+        # Check `patterns` and `substrs` are not accidentally given as strings.
+        assert not isinstance(patterns, six.string_types), \
+            "patterns must be a collection of strings"
+        assert not isinstance(substrs, six.string_types), \
+            "substrs must be a collection of strings"
+
         trace = (True if traceAlways else trace)
 
         if exe:
@@ -2374,58 +2482,76 @@ FileCheck output:
             with recording(self, trace) as sbuf:
                 print("looking at:", output, file=sbuf)
 
-        # The heading says either "Expecting" or "Not expecting".
-        heading = "Expecting" if matching else "Not expecting"
+        expecting_str = "Expecting" if matching else "Not expecting"
+        def found_str(matched):
+            return "was found" if matched else "was not found"
 
-        # Start from the startstr, if specified.
-        # If there's no startstr, set the initial state appropriately.
-        matched = output.startswith(startstr) if startstr else (
-            True if matching else False)
+        # To be used as assert fail message and/or trace content
+        log_lines = [
+                "{}:".format("Ran command" if exe else "Checking string"),
+                "\"{}\"".format(str),
+                # Space out command and output
+                "",
+        ]
+        if exe:
+            # Newline before output to make large strings more readable
+            log_lines.append("Got output:\n{}".format(output))
 
+        # Assume that we start matched if we want a match
+        # Meaning if you have no conditions, matching or
+        # not matching will always pass
+        matched = matching
+
+        # We will stop checking on first failure
         if startstr:
-            with recording(self, trace) as sbuf:
-                print("%s start string: %s" % (heading, startstr), file=sbuf)
-                print("Matched" if matched else "Not matched", file=sbuf)
+            matched = output.startswith(startstr)
+            log_lines.append("{} start string: \"{}\" ({})".format(
+                    expecting_str, startstr, found_str(matched)))
 
-        # Look for endstr, if specified.
-        keepgoing = matched if matching else not matched
-        if endstr:
+        if endstr and matched == matching:
             matched = output.endswith(endstr)
-            with recording(self, trace) as sbuf:
-                print("%s end string: %s" % (heading, endstr), file=sbuf)
-                print("Matched" if matched else "Not matched", file=sbuf)
+            log_lines.append("{} end string: \"{}\" ({})".format(
+                    expecting_str, endstr, found_str(matched)))
 
-        # Look for sub strings, if specified.
-        keepgoing = matched if matching else not matched
-        if substrs and keepgoing:
+        if substrs and matched == matching:
             start = 0
             for substr in substrs:
                 index = output[start:].find(substr)
                 start = start + index if ordered and matching else 0
                 matched = index != -1
-                with recording(self, trace) as sbuf:
-                    print("%s sub string: %s" % (heading, substr), file=sbuf)
-                    print("Matched" if matched else "Not matched", file=sbuf)
-                keepgoing = matched if matching else not matched
-                if not keepgoing:
+                log_lines.append("{} sub string: \"{}\" ({})".format(
+                        expecting_str, substr, found_str(matched)))
+
+                if matched != matching:
                     break
 
-        # Search for regular expression patterns, if specified.
-        keepgoing = matched if matching else not matched
-        if patterns and keepgoing:
+        if patterns and matched == matching:
             for pattern in patterns:
-                # Match Objects always have a boolean value of True.
-                matched = bool(re.search(pattern, output))
-                with recording(self, trace) as sbuf:
-                    print("%s pattern: %s" % (heading, pattern), file=sbuf)
-                    print("Matched" if matched else "Not matched", file=sbuf)
-                keepgoing = matched if matching else not matched
-                if not keepgoing:
+                matched = re.search(pattern, output)
+
+                pattern_line = "{} regex pattern: \"{}\" ({}".format(
+                        expecting_str, pattern, found_str(matched))
+                if matched:
+                    pattern_line += ", matched \"{}\"".format(
+                            matched.group(0))
+                pattern_line += ")"
+                log_lines.append(pattern_line)
+
+                # Convert to bool because match objects
+                # are True-ish but != True itself
+                matched = bool(matched)
+                if matched != matching:
                     break
 
-        self.assertTrue(matched if matching else not matched,
-                        msg + "\nCommand output:\n" + EXP_MSG(str, output, exe)
-                        if msg else EXP_MSG(str, output, exe))
+        # If a check failed, add any extra assert message
+        if msg is not None and matched != matching:
+            log_lines.append(msg)
+
+        log_msg = "\n".join(log_lines)
+        with recording(self, trace) as sbuf:
+            print(log_msg, file=sbuf)
+        if matched != matching:
+            self.fail(log_msg)
 
     def expect_expr(
             self,
@@ -2433,6 +2559,7 @@ FileCheck output:
             result_summary=None,
             result_value=None,
             result_type=None,
+            result_children=None
             ):
         """
         Evaluates the given expression and verifies the result.
@@ -2440,6 +2567,8 @@ FileCheck output:
         :param result_summary: The summary that the expression should have. None if the summary should not be checked.
         :param result_value: The value that the expression should have. None if the value should not be checked.
         :param result_type: The type that the expression result should have. None if the type should not be checked.
+        :param result_children: The expected children of the expression result
+                                as a list of ValueChecks. None if the children shouldn't be checked.
         """
         self.assertTrue(expr.strip() == expr, "Expression contains trailing/leading whitespace: '" + expr + "'")
 
@@ -2456,31 +2585,46 @@ FileCheck output:
             options.SetLanguage(frame.GuessLanguage())
             eval_result = self.frame().EvaluateExpression(expr, options)
         else:
-            eval_result = self.target().EvaluateExpression(expr, options)
+            target = self.target()
+            # If there is no selected target, run the expression in the dummy
+            # target.
+            if not target.IsValid():
+                target = self.dbg.GetDummyTarget()
+            eval_result = target.EvaluateExpression(expr, options)
 
-        self.assertSuccess(eval_result.GetError())
+        value_check = ValueCheck(type=result_type, value=result_value,
+                                 summary=result_summary, children=result_children)
+        value_check.check_value(self, eval_result, str(eval_result))
+        return eval_result
 
-        if result_type:
-            self.assertEqual(result_type, eval_result.GetDisplayTypeName())
+    def expect_var_path(
+            self,
+            var_path,
+            summary=None,
+            value=None,
+            type=None,
+            children=None
+            ):
+        """
+        Evaluates the given variable path and verifies the result.
+        See also 'frame variable' and SBFrame.GetValueForVariablePath.
+        :param var_path: The variable path as a string.
+        :param summary: The summary that the variable should have. None if the summary should not be checked.
+        :param value: The value that the variable should have. None if the value should not be checked.
+        :param type: The type that the variable result should have. None if the type should not be checked.
+        :param children: The expected children of the variable  as a list of ValueChecks.
+                         None if the children shouldn't be checked.
+        """
+        self.assertTrue(var_path.strip() == var_path,
+                        "Expression contains trailing/leading whitespace: '" + var_path + "'")
 
-        if result_value:
-            self.assertEqual(result_value, eval_result.GetValue())
+        frame = self.frame()
+        eval_result = frame.GetValueForVariablePath(var_path)
 
-        if result_summary:
-            self.assertEqual(result_summary, eval_result.GetSummary())
-
-    def invoke(self, obj, name, trace=False):
-        """Use reflection to call a method dynamically with no argument."""
-        trace = (True if traceAlways else trace)
-
-        method = getattr(obj, name)
-        import inspect
-        self.assertTrue(inspect.ismethod(method),
-                        name + "is a method name of object: " + str(obj))
-        result = method()
-        with recording(self, trace) as sbuf:
-            print(str(method) + ":", result, file=sbuf)
-        return result
+        value_check = ValueCheck(type=type, value=value,
+                                 summary=summary, children=children)
+        value_check.check_value(self, eval_result, str(eval_result))
+        return eval_result
 
     def build(
             self,
@@ -2489,6 +2633,9 @@ FileCheck output:
             dictionary=None):
         """Platform specific way to build the default binaries."""
         module = builder_module()
+
+        if not architecture and configuration.arch:
+            architecture = configuration.arch
 
         dictionary = lldbplatformutil.finalize_build_dictionary(dictionary)
         if self.getDebugInfo() is None:
@@ -2504,18 +2651,37 @@ FileCheck output:
         else:
             self.fail("Can't build for debug info: %s" % self.getDebugInfo())
 
-    def run_platform_command(self, cmd):
-        platform = self.dbg.GetSelectedPlatform()
-        shell_command = lldb.SBPlatformShellCommand(cmd)
-        err = platform.Run(shell_command)
-        return (err, shell_command.GetStatus(), shell_command.GetOutput())
-
     """Assert that an lldb.SBError is in the "success" state."""
     def assertSuccess(self, obj, msg=None):
         if not obj.Success():
             error = obj.GetCString()
             self.fail(self._formatMessage(msg,
                 "'{}' is not success".format(error)))
+
+    def createTestTarget(self, file_path=None, msg=None):
+        """
+        Creates a target from the file found at the given file path.
+        Asserts that the resulting target is valid.
+        :param file_path: The file path that should be used to create the target.
+                          The default argument opens the current default test
+                          executable in the current test directory.
+        :param msg: A custom error message.
+        """
+        if file_path is None:
+            file_path = self.getBuildArtifact("a.out")
+        error = lldb.SBError()
+        triple = ""
+        platform = ""
+        load_dependent_modules = True
+        target = self.dbg.CreateTarget(file_path, triple, platform,
+                                       load_dependent_modules, error)
+        if error.Fail():
+            err = "Couldn't create target for path '{}': {}".format(file_path,
+                                                                    str(error))
+            self.fail(self._formatMessage(msg, err))
+
+        self.assertTrue(target.IsValid(), "Got invalid target without error")
+        return target
 
     # =================================================
     # Misc. helper methods for debugging test execution

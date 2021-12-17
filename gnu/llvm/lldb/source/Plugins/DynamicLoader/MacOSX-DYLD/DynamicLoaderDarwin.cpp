@@ -16,6 +16,7 @@
 #include "lldb/Core/Section.h"
 #include "lldb/Expression/DiagnosticManager.h"
 #include "lldb/Host/FileSystem.h"
+#include "lldb/Host/HostInfo.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/ABI.h"
@@ -35,7 +36,7 @@
 
 //#define ENABLE_DEBUG_PRINTF // COMMENT THIS LINE OUT PRIOR TO CHECKIN
 #ifdef ENABLE_DEBUG_PRINTF
-#include <stdio.h>
+#include <cstdio>
 #define DEBUG_PRINTF(fmt, ...) printf(fmt, ##__VA_ARGS__)
 #else
 #define DEBUG_PRINTF(fmt, ...)
@@ -59,7 +60,7 @@ DynamicLoaderDarwin::DynamicLoaderDarwin(Process *process)
       m_dyld_image_infos_stop_id(UINT32_MAX), m_dyld(), m_mutex() {}
 
 // Destructor
-DynamicLoaderDarwin::~DynamicLoaderDarwin() {}
+DynamicLoaderDarwin::~DynamicLoaderDarwin() = default;
 
 /// Called after attaching a process.
 ///
@@ -123,19 +124,39 @@ ModuleSP DynamicLoaderDarwin::FindTargetModuleForImageInfo(
       module_sp.reset();
   }
 
-  if (!module_sp) {
-    if (can_create) {
-      // We'll call Target::ModulesDidLoad after all the modules have been
-      // added to the target, don't let it be called for every one.
-      module_sp = target.GetOrCreateModule(module_spec, false /* notify */);
-      if (!module_sp || module_sp->GetObjectFile() == nullptr)
-        module_sp = m_process->ReadModuleFromMemory(image_info.file_spec,
-                                                    image_info.address);
+  if (module_sp || !can_create)
+    return module_sp;
 
-      if (did_create_ptr)
-        *did_create_ptr = (bool)module_sp;
+  if (HostInfo::GetArchitecture().IsCompatibleMatch(target.GetArchitecture())) {
+    // When debugging on the host, we are most likely using the same shared
+    // cache as our inferior. The dylibs from the shared cache might not
+    // exist on the filesystem, so let's use the images in our own memory
+    // to create the modules.
+    // Check if the requested image is in our shared cache.
+    SharedCacheImageInfo image_info =
+        HostInfo::GetSharedCacheImageInfo(module_spec.GetFileSpec().GetPath());
+
+    // If we found it and it has the correct UUID, let's proceed with
+    // creating a module from the memory contents.
+    if (image_info.uuid &&
+        (!module_spec.GetUUID() || module_spec.GetUUID() == image_info.uuid)) {
+      ModuleSpec shared_cache_spec(module_spec.GetFileSpec(), image_info.uuid,
+                                   image_info.data_sp);
+      module_sp =
+          target.GetOrCreateModule(shared_cache_spec, false /* notify */);
     }
   }
+  // We'll call Target::ModulesDidLoad after all the modules have been
+  // added to the target, don't let it be called for every one.
+  if (!module_sp)
+    module_sp = target.GetOrCreateModule(module_spec, false /* notify */);
+  if (!module_sp || module_sp->GetObjectFile() == nullptr)
+    module_sp = m_process->ReadModuleFromMemory(image_info.file_spec,
+                                                image_info.address);
+
+  if (did_create_ptr)
+    *did_create_ptr = (bool)module_sp;
+
   return module_sp;
 }
 
@@ -195,15 +216,11 @@ void DynamicLoaderDarwin::UnloadAllImages() {
   const ModuleList &target_modules = target.GetImages();
   std::lock_guard<std::recursive_mutex> guard(target_modules.GetMutex());
 
-  size_t num_modules = target_modules.GetSize();
   ModuleSP dyld_sp(GetDYLDModule());
-
-  for (size_t i = 0; i < num_modules; i++) {
-    ModuleSP module_sp = target_modules.GetModuleAtIndexUnlocked(i);
-
+  for (ModuleSP module_sp : target_modules.Modules()) {
     // Don't remove dyld - else we'll lose our breakpoint notifying us about
     // libraries being re-loaded...
-    if (module_sp.get() != nullptr && module_sp.get() != dyld_sp.get()) {
+    if (module_sp && module_sp != dyld_sp) {
       UnloadSections(module_sp);
       unloaded_modules_list.Append(module_sp);
     }
@@ -556,7 +573,8 @@ void DynamicLoaderDarwin::UpdateSpecialBinariesFromNewImageInfos(
     }
   }
 
-  if (exe_idx != UINT32_MAX) {
+  // Set the target executable if we haven't found one so far.
+  if (exe_idx != UINT32_MAX && !target.GetExecutableModule()) {
     const bool can_create = true;
     ModuleSP exe_module_sp(FindTargetModuleForImageInfo(image_infos[exe_idx],
                                                         can_create, nullptr));
@@ -1068,7 +1086,7 @@ DynamicLoaderDarwin::GetThreadLocalData(const lldb::ModuleSP module_sp,
     Status error;
     const size_t tsl_data_size = addr_size * 3;
     Target &target = m_process->GetTarget();
-    if (target.ReadMemory(tls_addr, false, buf, tsl_data_size, error) ==
+    if (target.ReadMemory(tls_addr, buf, tsl_data_size, error, true) ==
         tsl_data_size) {
       const ByteOrder byte_order = m_process->GetByteOrder();
       DataExtractor data(buf, sizeof(buf), byte_order, addr_size);
@@ -1091,7 +1109,7 @@ DynamicLoaderDarwin::GetThreadLocalData(const lldb::ModuleSP module_sp,
         StackFrameSP frame_sp = thread_sp->GetStackFrameAtIndex(0);
         if (frame_sp) {
           TypeSystemClang *clang_ast_context =
-              TypeSystemClang::GetScratch(target);
+              ScratchTypeSystemClang::GetForTarget(target);
 
           if (!clang_ast_context)
             return LLDB_INVALID_ADDRESS;

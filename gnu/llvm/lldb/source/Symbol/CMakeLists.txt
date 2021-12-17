@@ -14,7 +14,6 @@ add_lldb_library(lldbSymbol
   CompilerType.cpp
   DWARFCallFrameInfo.cpp
   DebugMacros.cpp
-  Declaration.cpp
   DeclVendor.cpp
   FuncUnwinders.cpp
   Function.cpp
@@ -45,7 +44,6 @@ add_lldb_library(lldbSymbol
     lldbHost
     lldbTarget
     lldbUtility
-    lldbPluginObjCLanguage
 
   LINK_COMPONENTS
     Support

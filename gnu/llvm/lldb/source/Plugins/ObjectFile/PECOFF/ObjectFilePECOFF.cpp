@@ -43,45 +43,16 @@ using namespace lldb_private;
 
 LLDB_PLUGIN_DEFINE(ObjectFilePECOFF)
 
-struct CVInfoPdb70 {
-  // 16-byte GUID
-  struct _Guid {
-    llvm::support::ulittle32_t Data1;
-    llvm::support::ulittle16_t Data2;
-    llvm::support::ulittle16_t Data3;
-    uint8_t Data4[8];
-  } Guid;
-
-  llvm::support::ulittle32_t Age;
-};
-
 static UUID GetCoffUUID(llvm::object::COFFObjectFile &coff_obj) {
   const llvm::codeview::DebugInfo *pdb_info = nullptr;
   llvm::StringRef pdb_file;
 
-  // This part is similar with what has done in minidump parser.
   if (!coff_obj.getDebugPDBInfo(pdb_info, pdb_file) && pdb_info) {
     if (pdb_info->PDB70.CVSignature == llvm::OMF::Signature::PDB70) {
-      using llvm::support::endian::read16be;
-      using llvm::support::endian::read32be;
-
-      const uint8_t *sig = pdb_info->PDB70.Signature;
-      struct CVInfoPdb70 info;
-      info.Guid.Data1 = read32be(sig);
-      sig += 4;
-      info.Guid.Data2 = read16be(sig);
-      sig += 2;
-      info.Guid.Data3 = read16be(sig);
-      sig += 2;
-      memcpy(info.Guid.Data4, sig, 8);
-
-      // Return 20-byte UUID if the Age is not zero
-      if (pdb_info->PDB70.Age) {
-        info.Age = read32be(&pdb_info->PDB70.Age);
-        return UUID::fromOptionalData(&info, sizeof(info));
-      }
-      // Otherwise return 16-byte GUID
-      return UUID::fromOptionalData(&info.Guid, sizeof(info.Guid));
+      UUID::CvRecordPdb70 info;
+      memcpy(&info.Uuid, pdb_info->PDB70.Signature, sizeof(info.Uuid));
+      info.Age = pdb_info->PDB70.Age;
+      return UUID::fromCvRecord(info);
     }
   }
 
@@ -142,7 +113,6 @@ ObjectFile *ObjectFilePECOFF::CreateInstance(const lldb::ModuleSP &module_sp,
   // Cache coff binary.
   if (!objfile_up->CreateBinary())
     return nullptr;
-
   return objfile_up.release();
 }
 
@@ -219,7 +189,9 @@ size_t ObjectFilePECOFF::GetModuleSpecifications(
 
 bool ObjectFilePECOFF::SaveCore(const lldb::ProcessSP &process_sp,
                                 const lldb_private::FileSpec &outfile,
+                                lldb::SaveCoreStyle &core_style,
                                 lldb_private::Status &error) {
+  core_style = eSaveCoreFull;
   return SaveMiniDump(process_sp, outfile, error);
 }
 
@@ -291,7 +263,7 @@ ObjectFilePECOFF::ObjectFilePECOFF(const lldb::ModuleSP &module_sp,
   ::memset(&m_coff_header, 0, sizeof(m_coff_header));
 }
 
-ObjectFilePECOFF::~ObjectFilePECOFF() {}
+ObjectFilePECOFF::~ObjectFilePECOFF() = default;
 
 bool ObjectFilePECOFF::ParseHeader() {
   ModuleSP module_sp(GetModule());
@@ -543,12 +515,6 @@ DataExtractor ObjectFilePECOFF::ReadImageData(uint32_t offset, size_t size) {
   if (m_data.ValidOffsetForDataOfSize(offset, size))
     return DataExtractor(m_data, offset, size);
 
-  if (m_file) {
-    // A bit of a hack, but we intend to write to this buffer, so we can't
-    // mmap it.
-    auto buffer_sp = MapFileData(m_file, size, offset);
-    return DataExtractor(buffer_sp, GetByteOrder(), GetAddressByteSize());
-  }
   ProcessSP process_sp(m_process_wp.lock());
   DataExtractor data;
   if (process_sp) {
@@ -651,12 +617,6 @@ Symtab *ObjectFilePECOFF::GetSymtab() {
         if (strtab_size > 0) {
           DataExtractor strtab_data = ReadImageData(
               m_coff_header.symoff + symbol_data_size, strtab_size);
-
-          // First 4 bytes should be zeroed after strtab_size has been read,
-          // because it is used as offset 0 to encode a NULL string.
-          uint32_t *strtab_data_start = const_cast<uint32_t *>(
-              reinterpret_cast<const uint32_t *>(strtab_data.GetDataStart()));
-          ::memset(&strtab_data_start[0], 0, sizeof(uint32_t));
 
           offset = 0;
           std::string symbol_name;
@@ -864,7 +824,6 @@ void ObjectFilePECOFF::CreateSections(SectionList &unified_section_list) {
   if (m_sections_up)
     return;
   m_sections_up = std::make_unique<SectionList>();
-
   ModuleSP module_sp(GetModule());
   if (module_sp) {
     std::lock_guard<std::recursive_mutex> guard(module_sp->GetMutex());

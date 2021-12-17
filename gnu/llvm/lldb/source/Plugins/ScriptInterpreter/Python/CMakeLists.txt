@@ -11,6 +11,8 @@ add_lldb_library(lldbPluginScriptInterpreterPython PLUGIN
   PythonDataObjects.cpp
   PythonReadline.cpp
   ScriptInterpreterPython.cpp
+  ScriptedProcessPythonInterface.cpp
+  SWIGPythonBridge.cpp
 
   LINK_LIBS
     lldbBreakpoint
@@ -19,7 +21,7 @@ add_lldb_library(lldbPluginScriptInterpreterPython PLUGIN
     lldbHost
     lldbInterpreter
     lldbTarget
-    ${PYTHON_LIBRARIES}
+    ${Python3_LIBRARIES}
     ${LLDB_LIBEDIT_LIBS}
 
   LINK_COMPONENTS

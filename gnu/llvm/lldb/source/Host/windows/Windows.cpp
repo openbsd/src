@@ -13,34 +13,14 @@
 
 #include "llvm/Support/ConvertUTF.h"
 
-#include <assert.h>
+#include <cassert>
+#include <cctype>
 #include <cerrno>
-#include <ctype.h>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <io.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-namespace {
-bool utf8ToWide(const char *utf8, wchar_t *buf, size_t bufSize) {
-  const llvm::UTF8 *sourceStart = reinterpret_cast<const llvm::UTF8 *>(utf8);
-  size_t sourceLen = strlen(utf8) + 1 /* convert null too */;
-  llvm::UTF16 *target = reinterpret_cast<llvm::UTF16 *>(buf);
-  llvm::ConversionFlags flags = llvm::strictConversion;
-  return llvm::ConvertUTF8toUTF16(&sourceStart, sourceStart + sourceLen, &target,
-                            target + bufSize, flags) == llvm::conversionOK;
-}
-
-bool wideToUtf8(const wchar_t *wide, char *buf, size_t bufSize) {
-  const llvm::UTF16 *sourceStart = reinterpret_cast<const llvm::UTF16 *>(wide);
-  size_t sourceLen = wcslen(wide) + 1 /* convert null too */;
-  llvm::UTF8 *target = reinterpret_cast<llvm::UTF8 *>(buf);
-  llvm::ConversionFlags flags = llvm::strictConversion;
-  return llvm::ConvertUTF16toUTF8(&sourceStart, sourceStart + sourceLen, &target,
-                            target + bufSize, flags) == llvm::conversionOK;
-}
-}
 
 int vasprintf(char **ret, const char *fmt, va_list ap) {
   char *buf;
@@ -80,89 +60,6 @@ char *strcasestr(const char *s, const char *find) {
     s--;
   }
   return const_cast<char *>(s);
-}
-
-char *realpath(const char *name, char *resolved) {
-  char *retname = NULL;
-
-  /* SUSv3 says we must set `errno = EINVAL', and return NULL,
-  * if `name' is passed as a NULL pointer.
-  */
-  if (name == NULL) {
-    errno = EINVAL;
-    return NULL;
-  }
-
-  /* Otherwise, `name' must refer to a readable filesystem object,
-  * if we are going to resolve its absolute path name.
-  */
-  wchar_t wideNameBuffer[PATH_MAX];
-  wchar_t *wideName = wideNameBuffer;
-  if (!utf8ToWide(name, wideName, PATH_MAX)) {
-    errno = EINVAL;
-    return NULL;
-  }
-
-  if (_waccess(wideName, 4) != 0)
-    return NULL;
-
-  /* If `name' didn't point to an existing entity,
-  * then we don't get to here; we simply fall past this block,
-  * returning NULL, with `errno' appropriately set by `access'.
-  *
-  * When we _do_ get to here, then we can use `_fullpath' to
-  * resolve the full path for `name' into `resolved', but first,
-  * check that we have a suitable buffer, in which to return it.
-  */
-
-  if ((retname = resolved) == NULL) {
-    /* Caller didn't give us a buffer, so we'll exercise the
-    * option granted by SUSv3, and allocate one.
-    *
-    * `_fullpath' would do this for us, but it uses `malloc', and
-    * Microsoft's implementation doesn't set `errno' on failure.
-    * If we don't do this explicitly ourselves, then we will not
-    * know if `_fullpath' fails on `malloc' failure, or for some
-    * other reason, and we want to set `errno = ENOMEM' for the
-    * `malloc' failure case.
-    */
-
-    retname = (char *)malloc(PATH_MAX);
-    if (retname == NULL) {
-      errno = ENOMEM;
-      return NULL;
-    }
-  }
-
-  /* Otherwise, when we do have a valid buffer,
-  * `_fullpath' should only fail if the path name is too long.
-  */
-
-  wchar_t wideFullPathBuffer[PATH_MAX];
-  wchar_t *wideFullPath;
-  if ((wideFullPath = _wfullpath(wideFullPathBuffer, wideName, PATH_MAX)) ==
-      NULL) {
-    errno = ENAMETOOLONG;
-    return NULL;
-  }
-
-  // Do a LongPath<->ShortPath roundtrip so that case is resolved by OS
-  // FIXME: Check for failure
-  size_t initialLength = wcslen(wideFullPath);
-  GetShortPathNameW(wideFullPath, wideNameBuffer, PATH_MAX);
-  GetLongPathNameW(wideNameBuffer, wideFullPathBuffer, initialLength + 1);
-
-  // Convert back to UTF-8
-  if (!wideToUtf8(wideFullPathBuffer, retname, PATH_MAX)) {
-    errno = EINVAL;
-    return NULL;
-  }
-
-  // Force drive to be upper case
-  if (retname[1] == ':')
-    retname[0] = toupper(retname[0]);
-
-  return retname;
 }
 
 #ifdef _MSC_VER

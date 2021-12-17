@@ -21,8 +21,6 @@ class PlatformRemoteAppleBridge : public PlatformRemoteDarwinDevice {
 public:
   PlatformRemoteAppleBridge();
 
-  ~PlatformRemoteAppleBridge() override = default;
-
   // Class Functions
   static lldb::PlatformSP CreateInstance(bool force,
                                          const lldb_private::ArchSpec *arch);
@@ -50,17 +48,8 @@ public:
                                        lldb_private::ArchSpec &arch) override;
 
 protected:
-
-  // lldb_private::PlatformRemoteDarwinDevice functions
-
-  void GetDeviceSupportDirectoryNames (std::vector<std::string> &dirnames) override;
-
-  std::string GetPlatformName () override;
-
-private:
-  PlatformRemoteAppleBridge(const PlatformRemoteAppleBridge &) = delete;
-  const PlatformRemoteAppleBridge &
-  operator=(const PlatformRemoteAppleBridge &) = delete;
+  llvm::StringRef GetDeviceSupportDirectoryName() override;
+  llvm::StringRef GetPlatformName() override;
 };
 
 #endif // LLDB_SOURCE_PLUGINS_PLATFORM_MACOSX_PLATFORMREMOTEAPPLEBRIDGE_H

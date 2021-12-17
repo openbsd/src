@@ -21,11 +21,6 @@ class ArchSpec;
 class HostInfoMacOSX : public HostInfoPosix {
   friend class HostInfoBase;
 
-private:
-  // Static class, unconstructable.
-  HostInfoMacOSX() = delete;
-  ~HostInfoMacOSX() = delete;
-
 public:
   static llvm::VersionTuple GetOSVersion();
   static llvm::VersionTuple GetMacCatalystVersion();
@@ -37,6 +32,11 @@ public:
 
   /// Query xcrun to find an Xcode SDK directory.
   static llvm::StringRef GetXcodeSDKPath(XcodeSDK sdk);
+
+  /// Shared cache utilities
+  static SharedCacheImageInfo
+  GetSharedCacheImageInfo(llvm::StringRef image_name);
+
 protected:
   static bool ComputeSupportExeDirectory(FileSpec &file_spec);
   static void ComputeHostArchitectureSupport(ArchSpec &arch_32,

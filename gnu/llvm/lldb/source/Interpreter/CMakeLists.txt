@@ -11,8 +11,6 @@ add_lldb_library(lldbInterpreter
   CommandHistory.cpp
   CommandInterpreter.cpp
   CommandObject.cpp
-  CommandObjectRegexCommand.cpp
-  CommandObjectScript.cpp
   CommandOptionValidators.cpp
   CommandReturnObject.cpp
   OptionArgParser.cpp
@@ -35,6 +33,7 @@ add_lldb_library(lldbInterpreter
   OptionValueChar.cpp
   OptionValueDictionary.cpp
   OptionValueEnumeration.cpp
+  OptionValueFileColonLine.cpp
   OptionValueFileSpec.cpp
   OptionValueFileSpecList.cpp
   OptionValueFormat.cpp

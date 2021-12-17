@@ -35,7 +35,7 @@
 
 //#define ENABLE_DEBUG_PRINTF // COMMENT THIS LINE OUT PRIOR TO CHECKIN
 #ifdef ENABLE_DEBUG_PRINTF
-#include <stdio.h>
+#include <cstdio>
 #define DEBUG_PRINTF(fmt, ...) printf(fmt, ##__VA_ARGS__)
 #else
 #define DEBUG_PRINTF(fmt, ...)
@@ -107,7 +107,7 @@ public:
     m_collection_sp->Initialize(g_dynamicloaderdarwinkernel_properties);
   }
 
-  ~DynamicLoaderDarwinKernelProperties() override {}
+  ~DynamicLoaderDarwinKernelProperties() override = default;
 
   bool GetLoadKexts() const {
     const uint32_t idx = ePropertyLoadKexts;
@@ -400,7 +400,7 @@ DynamicLoaderDarwinKernel::ReadMachHeader(addr_t addr, Process *process, llvm::M
     *read_error = false;
 
   // Read the mach header and see whether it looks like a kernel
-  if (process->DoReadMemory (addr, &header, sizeof(header), error) !=
+  if (process->ReadMemory(addr, &header, sizeof(header), error) !=
       sizeof(header)) {
     if (read_error)
       *read_error = true;
@@ -517,12 +517,8 @@ DynamicLoaderDarwinKernel::DynamicLoaderDarwinKernel(Process *process,
   Status error;
   PlatformSP platform_sp(
       Platform::Create(PlatformDarwinKernel::GetPluginNameStatic(), error));
-  // Only select the darwin-kernel Platform if we've been asked to load kexts.
-  // It can take some time to scan over all of the kext info.plists and that
-  // shouldn't be done if kext loading is explicitly disabled.
-  if (platform_sp.get() && GetGlobalProperties()->GetLoadKexts()) {
+  if (platform_sp.get())
     process->GetTarget().SetPlatform(platform_sp);
-  }
 }
 
 // Destructor
@@ -794,7 +790,7 @@ bool DynamicLoaderDarwinKernel::KextImageInfo::LoadImageUsingMemoryModule(
 
       // For the kernel, we really do need an on-disk file copy of the binary
       // to do anything useful. This will force a call to dsymForUUID if it
-      // exists, instead of depending on the DebugSymbols preferences being 
+      // exists, instead of depending on the DebugSymbols preferences being
       // set.
       if (IsKernel()) {
         if (Symbols::DownloadObjectAndSymbolFile(module_spec, true)) {
@@ -1097,16 +1093,16 @@ bool DynamicLoaderDarwinKernel::ReadKextSummaryHeader() {
     uint8_t buf[24];
     DataExtractor data(buf, sizeof(buf), byte_order, addr_size);
     const size_t count = 4 * sizeof(uint32_t) + addr_size;
-    const bool prefer_file_cache = false;
+    const bool force_live_memory = true;
     if (m_process->GetTarget().ReadPointerFromMemory(
-            m_kext_summary_header_ptr_addr, prefer_file_cache, error,
-            m_kext_summary_header_addr)) {
+            m_kext_summary_header_ptr_addr, error,
+            m_kext_summary_header_addr, force_live_memory)) {
       // We got a valid address for our kext summary header and make sure it
       // isn't NULL
       if (m_kext_summary_header_addr.IsValid() &&
           m_kext_summary_header_addr.GetFileAddress() != 0) {
         const size_t bytes_read = m_process->GetTarget().ReadMemory(
-            m_kext_summary_header_addr, prefer_file_cache, buf, count, error);
+            m_kext_summary_header_addr, buf, count, error, force_live_memory);
         if (bytes_read == count) {
           lldb::offset_t offset = 0;
           m_kext_summary_header.version = data.GetU32(&offset);
@@ -1377,10 +1373,9 @@ uint32_t DynamicLoaderDarwinKernel::ReadKextSummaries(
   DataBufferHeap data(count, 0);
   Status error;
 
-  const bool prefer_file_cache = false;
+  const bool force_live_memory = true;
   const size_t bytes_read = m_process->GetTarget().ReadMemory(
-      kext_summary_addr, prefer_file_cache, data.GetBytes(), data.GetByteSize(),
-      error);
+      kext_summary_addr, data.GetBytes(), data.GetByteSize(), error, force_live_memory);
   if (bytes_read == count) {
 
     DataExtractor extractor(data.GetBytes(), data.GetByteSize(), endian,

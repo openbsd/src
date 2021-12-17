@@ -64,8 +64,8 @@ protected:
   std::string m_device_support_directory;
   std::string m_device_support_directory_for_os_version;
   std::string m_build_update;
-  uint32_t m_last_module_sdk_idx;
-  uint32_t m_connected_module_sdk_idx;
+  uint32_t m_last_module_sdk_idx = UINT32_MAX;
+  uint32_t m_connected_module_sdk_idx = UINT32_MAX;
 
   bool UpdateSDKDirectoryInfosIfNeeded();
 
@@ -97,10 +97,8 @@ protected:
   // UINT32_MAX if that SDK not found.
   uint32_t GetSDKIndexBySDKDirectoryInfo(const SDKDirectoryInfo *sdk_info);
 
-
-  virtual void GetDeviceSupportDirectoryNames (std::vector<std::string> &dirnames) = 0;
-
-  virtual std::string GetPlatformName () = 0;
+  virtual llvm::StringRef GetDeviceSupportDirectoryName() = 0;
+  virtual llvm::StringRef GetPlatformName() = 0;
 
 private:
   PlatformRemoteDarwinDevice(const PlatformRemoteDarwinDevice &) = delete;
