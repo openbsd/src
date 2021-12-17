@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.octeon,v 1.59 2021/11/27 00:49:22 jsg Exp $
+#	$OpenBSD: Makefile.octeon,v 1.60 2021/12/17 14:59:22 patrick Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -47,7 +47,8 @@ COPTIMIZE?=	-Oz
 .if ${COMPILER_VERSION:Mclang}
 NO_INTEGR_AS=	-no-integrated-as
 CMACHFLAGS+=	-fomit-frame-pointer
-CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion
+CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion \
+		-Wno-unused-but-set-variable -Wno-gnu-folding-constant
 .endif
 
 DEBUG?=		-g

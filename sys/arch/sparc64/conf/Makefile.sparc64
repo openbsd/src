@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sparc64,v 1.103 2021/01/28 17:39:03 deraadt Exp $
+#	$OpenBSD: Makefile.sparc64,v 1.104 2021/12/17 14:59:22 patrick Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -45,7 +45,8 @@ COPTIMIZE?=	-Oz
 .endif
 .if ${COMPILER_VERSION:Mclang}
 CWARNFLAGS+=	-Wno-unused-command-line-argument
-CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion
+CWARNFLAGS+=	-Wno-address-of-packed-member -Wno-constant-conversion \
+		-Wno-unused-but-set-variable -Wno-gnu-folding-constant
 .endif
 
 DEBUG?=		-g

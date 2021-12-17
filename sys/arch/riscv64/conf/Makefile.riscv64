@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.riscv64,v 1.13 2021/11/27 00:49:22 jsg Exp $
+#	$OpenBSD: Makefile.riscv64,v 1.14 2021/12/17 14:59:22 patrick Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -28,6 +28,7 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D__${_mach}__ -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-pointer-sign \
 		-Wno-constant-conversion -Wno-address-of-packed-member \
+		-Wno-unused-but-set-variable -Wno-gnu-folding-constant \
 		-Wframe-larger-than=2047
 
 CMACHFLAGS=	-march=rv64gc -mcmodel=medany -mno-relax \

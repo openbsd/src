@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.powerpc64,v 1.11 2021/11/27 00:49:22 jsg Exp $
+#	$OpenBSD: Makefile.powerpc64,v 1.12 2021/12/17 14:59:22 patrick Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -48,6 +48,7 @@ CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -MD -MP
 CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-pointer-sign \
 		-Wno-constant-conversion -Wno-address-of-packed-member \
+		-Wno-unused-but-set-variable -Wno-gnu-folding-constant \
 		-Wframe-larger-than=2047
 
 CMACHFLAGS=	-mabi=elfv2 -msoft-float -mno-altivec -mno-vsx
