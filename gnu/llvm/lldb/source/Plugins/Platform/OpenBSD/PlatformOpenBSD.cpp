@@ -9,7 +9,7 @@
 #include "PlatformOpenBSD.h"
 #include "lldb/Host/Config.h"
 
-#include <stdio.h>
+#include <cstdio>
 #if LLDB_ENABLE_POSIX
 #include <sys/utsname.h>
 #endif
@@ -122,8 +122,6 @@ void PlatformOpenBSD::Terminate() {
 PlatformOpenBSD::PlatformOpenBSD(bool is_host)
     : PlatformPOSIX(is_host) // This is the local host platform
 {}
-
-PlatformOpenBSD::~PlatformOpenBSD() = default;
 
 bool PlatformOpenBSD::GetSupportedArchitectureAtIndex(uint32_t idx,
                                                       ArchSpec &arch) {
@@ -251,12 +249,12 @@ PlatformOpenBSD::DebugProcess(ProcessLaunchInfo &launch_info, Debugger &debugger
   }
 
   // Mark target as currently selected target.
-  debugger.GetTargetList().SetSelectedTarget(target);
+  //debugger.GetTargetList().SetSelectedTarget(target);
 
   // Now create the gdb-remote process.
   LLDB_LOG(log, "having target create process with gdb-remote plugin");
   process_sp = target->CreateProcess(
-      launch_info.GetListener(), "gdb-remote", nullptr);
+      launch_info.GetListener(), "gdb-remote", nullptr, true);
 
   if (!process_sp) {
     error.SetErrorString("CreateProcess() failed for gdb-remote process");

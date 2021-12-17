@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined(__arm64__) || defined(__aarch64__)
+
 #include <elf.h>
 #include <err.h>
 #include <stdint.h>
@@ -120,7 +122,7 @@ static RegisterInfoInterface *
 CreateRegisterInfoInterface(const ArchSpec &target_arch) {
   assert((HostInfo::GetArchitecture().GetAddressByteSize() == 8) &&
          "Register setting path assumes this is a 64-bit host");
-  return new RegisterInfoPOSIX_arm64(target_arch);
+  return new RegisterInfoPOSIX_arm64(target_arch, 0);
 }
 
 static llvm::APInt uint128ToAPInt(__uint128_t in) {
@@ -556,3 +558,4 @@ int NativeRegisterContextOpenBSD_arm64::WriteRegisterSet(uint32_t set) {
   }
   return -1;
 }
+#endif

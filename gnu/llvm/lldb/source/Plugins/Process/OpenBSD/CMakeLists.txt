@@ -2,6 +2,8 @@ add_lldb_library(lldbPluginProcessOpenBSD
   NativeProcessOpenBSD.cpp
   NativeRegisterContextOpenBSD.cpp
   NativeRegisterContextOpenBSD_arch.cpp
+  NativeRegisterContextOpenBSD_arm64.cpp
+  NativeRegisterContextOpenBSD_x86_64.cpp
   NativeThreadOpenBSD.cpp
 
   LINK_LIBS

@@ -338,12 +338,12 @@ number of cross compilers, or may only support a native target.
 .. option:: --print-supported-cpus
 
   Print out a list of supported processors for the given target (specified
-  through --target=<architecture> or -arch <architecture>). If no target is
-  specified, the system default target will be used.
+  through ``--target=<architecture>`` or :option:`-arch` ``<architecture>``). If no
+  target is specified, the system default target will be used.
 
 .. option:: -mcpu=?, -mtune=?
 
-  Aliases of --print-supported-cpus
+  Acts as an alias for :option:`--print-supported-cpus`.
 
 .. option:: -march=<cpu>
 
@@ -432,6 +432,12 @@ Code Generation Options
   debug information.  This is the default on Darwin.  Note that Clang will
   never emit type information for types that are not referenced at all by the
   program.
+
+.. option:: -feliminate-unused-debug-types
+
+  By default, Clang does not emit type information for types that are defined
+  but not used in a program. To retain the debug info for these unused types,
+  the negation **-fno-eliminate-unused-debug-types** can be used.
 
 .. option:: -fexceptions
 

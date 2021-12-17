@@ -18,8 +18,6 @@ class PlatformOpenBSD : public PlatformPOSIX {
 public:
   PlatformOpenBSD(bool is_host);
 
-  ~PlatformOpenBSD() override;
-
   static void Initialize();
 
   static void Terminate();
@@ -58,9 +56,6 @@ public:
 
   lldb_private::FileSpec LocateExecutable(const char *basename) override;
 
-private:
-  PlatformOpenBSD(const PlatformOpenBSD &) = delete;
-  const PlatformOpenBSD &operator=(const PlatformOpenBSD &) = delete;
 };
 
 } // namespace platform_openbsd

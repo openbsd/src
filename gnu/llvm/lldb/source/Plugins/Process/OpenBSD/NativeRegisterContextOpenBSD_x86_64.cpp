@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+#if defined(__x86_64__)
+
+
 #include <elf.h>
 #include <err.h>
 #include <stdint.h>
@@ -69,8 +72,9 @@ static_assert(
 static const uint32_t g_fpu_regnums_x86_64[] = {
     lldb_fctrl_x86_64,     lldb_fstat_x86_64, lldb_ftag_x86_64,
     lldb_fop_x86_64,       lldb_fiseg_x86_64, lldb_fioff_x86_64,
-    lldb_foseg_x86_64,     lldb_fooff_x86_64, lldb_mxcsr_x86_64,
-    lldb_mxcsrmask_x86_64, lldb_st0_x86_64,   lldb_st1_x86_64,
+    lldb_fip_x86_64,       lldb_foseg_x86_64, lldb_fooff_x86_64,
+    lldb_fdp_x86_64,       lldb_mxcsr_x86_64, lldb_mxcsrmask_x86_64,
+    lldb_st0_x86_64,       lldb_st1_x86_64,
     lldb_st2_x86_64,       lldb_st3_x86_64,   lldb_st4_x86_64,
     lldb_st5_x86_64,       lldb_st6_x86_64,   lldb_st7_x86_64,
     lldb_mm0_x86_64,       lldb_mm1_x86_64,   lldb_mm2_x86_64,
@@ -670,3 +674,4 @@ Status NativeRegisterContextOpenBSD_x86_64::WriteAllRegisterValues(
 
   return error;
 }
+#endif

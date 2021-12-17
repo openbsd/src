@@ -9,8 +9,8 @@
 #include "lldb/Host/openbsd/HostInfoOpenBSD.h"
 #include "lldb/Host/FileSystem.h"
 
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <unistd.h>
 #include <sys/sysctl.h>
 #include <sys/types.h>

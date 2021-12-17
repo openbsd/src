@@ -26,8 +26,12 @@
 #define _LIBUNWIND_HIGHEST_DWARF_REGISTER_SPARC64   32
 #define _LIBUNWIND_HIGHEST_DWARF_REGISTER_HEXAGON   34
 #define _LIBUNWIND_HIGHEST_DWARF_REGISTER_RISCV     64
+#define _LIBUNWIND_HIGHEST_DWARF_REGISTER_VE        143
 
 #if defined(_LIBUNWIND_IS_NATIVE_ONLY)
+# if defined(__linux__)
+#  define _LIBUNWIND_TARGET_LINUX 1
+# endif
 # if defined(__i386__)
 #  define _LIBUNWIND_TARGET_I386
 #  define _LIBUNWIND_CONTEXT_SIZE 8
@@ -133,14 +137,26 @@
   #define _LIBUNWIND_CONTEXT_SIZE 16
   #define _LIBUNWIND_CURSOR_SIZE 23
 # elif defined(__riscv)
-#  if __riscv_xlen == 64
-#    define _LIBUNWIND_TARGET_RISCV 1
-#    define _LIBUNWIND_CONTEXT_SIZE 64
-#    define _LIBUNWIND_CURSOR_SIZE 76
+#  define _LIBUNWIND_TARGET_RISCV 1
+#  if defined(__riscv_flen)
+#   define RISCV_FLEN __riscv_flen
 #  else
-#    error "Unsupported RISC-V ABI"
+#   define RISCV_FLEN 0
+#  endif
+#  define _LIBUNWIND_CONTEXT_SIZE (32 * (__riscv_xlen + RISCV_FLEN) / 64)
+#  if __riscv_xlen == 32
+#   define _LIBUNWIND_CURSOR_SIZE (_LIBUNWIND_CONTEXT_SIZE + 7)
+#  elif __riscv_xlen == 64
+#   define _LIBUNWIND_CURSOR_SIZE (_LIBUNWIND_CONTEXT_SIZE + 12)
+#  else
+#   error "Unsupported RISC-V ABI"
 #  endif
 # define _LIBUNWIND_HIGHEST_DWARF_REGISTER _LIBUNWIND_HIGHEST_DWARF_REGISTER_RISCV
+# elif defined(__ve__)
+#  define _LIBUNWIND_TARGET_VE 1
+#  define _LIBUNWIND_CONTEXT_SIZE 67
+#  define _LIBUNWIND_CURSOR_SIZE 79
+#  define _LIBUNWIND_HIGHEST_DWARF_REGISTER _LIBUNWIND_HIGHEST_DWARF_REGISTER_VE
 # else
 #  error "Unsupported architecture."
 # endif
@@ -158,6 +174,7 @@
 # define _LIBUNWIND_TARGET_SPARC64 1
 # define _LIBUNWIND_TARGET_HEXAGON 1
 # define _LIBUNWIND_TARGET_RISCV 1
+# define _LIBUNWIND_TARGET_VE 1
 # define _LIBUNWIND_CONTEXT_SIZE 167
 # define _LIBUNWIND_CURSOR_SIZE 179
 # define _LIBUNWIND_HIGHEST_DWARF_REGISTER 287
