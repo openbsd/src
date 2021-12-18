@@ -1,4 +1,4 @@
-/*	$OpenBSD: unwind.c,v 1.66 2021/10/22 15:11:51 florian Exp $	*/
+/*	$OpenBSD: unwind.c,v 1.67 2021/12/18 10:34:19 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -897,8 +897,8 @@ imsg_receive_config(struct imsg *imsg, struct uw_conf **xconf)
 		RB_INIT(&nconf->force);
 		break;
 	case IMSG_RECONF_BLOCKLIST_FILE:
-		/* make sure this is a string */
-		((char *)imsg->data)[IMSG_DATA_SIZE(*imsg) - 1] = '\0';
+		if (((char *)imsg->data)[IMSG_DATA_SIZE(*imsg) - 1] != '\0')
+			fatalx("Invalid blocklist file");
 		if ((nconf->blocklist_file = strdup(imsg->data)) ==
 		    NULL)
 			fatal("%s: strdup", __func__);

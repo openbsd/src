@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.153 2021/11/16 16:45:23 kn Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.154 2021/12/18 10:34:19 florian Exp $	*/
 
 
 /*
@@ -535,8 +535,9 @@ resolver_dispatch_frontend(int fd, short event, void *bula)
 			show_mem(imsg.hdr.pid);
 			break;
 		case IMSG_NEW_TA:
-			/* make sure this is a string */
-			((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] = '\0';
+			if (((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] !=
+			    '\0')
+				fatalx("Invalid trust anchor");
 			ta = imsg.data;
 			add_new_ta(&new_trust_anchors, ta);
 			break;

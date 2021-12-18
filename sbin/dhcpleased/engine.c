@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.33 2021/12/13 16:12:10 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.34 2021/12/18 10:34:19 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -452,6 +452,8 @@ engine_dispatch_main(int fd, short event, void *bula)
 				fatalx("%s: IMSG_UPDATE_IF wrong length: %lu",
 				    __func__, IMSG_DATA_SIZE(imsg));
 			memcpy(&imsg_ifinfo, imsg.data, sizeof(imsg_ifinfo));
+			if (imsg_ifinfo.lease[LEASE_SIZE - 1] != '\0')
+				fatalx("Invalid lease");
 			engine_update_iface(&imsg_ifinfo);
 			break;
 #ifndef SMALL
@@ -1741,9 +1743,6 @@ void
 parse_lease(struct dhcpleased_iface *iface, struct imsg_ifinfo *imsg_ifinfo)
 {
 	char	*p, *p1;
-
-	/* make sure this is a string */
-	imsg_ifinfo->lease[sizeof(imsg_ifinfo->lease) - 1] = '\0';
 
 	iface->requested_ip.s_addr = INADDR_ANY;
 
