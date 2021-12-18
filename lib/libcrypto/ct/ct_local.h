@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_local.h,v 1.4 2021/12/05 09:37:46 tb Exp $ */
+/*	$OpenBSD: ct_local.h,v 1.5 2021/12/18 15:59:50 jsing Exp $ */
 /*
  * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -9,25 +9,23 @@
  */
 
 #include <stddef.h>
+
 #include <openssl/ct.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/safestack.h>
 
-/*
- * From RFC6962: opaque SerializedSCT<1..2^16-1>; struct { SerializedSCT
- * sct_list <1..2^16-1>; } SignedCertificateTimestampList;
- */
+/* Number of bytes in an SCT v1 LogID - see RFC 6962 section 3.2. */
+#define CT_V1_LOG_ID_LEN	32
+
+/* Maximum size of an SCT - see RFC 6962 section 3.3. */
 #define MAX_SCT_SIZE            65535
 #define MAX_SCT_LIST_SIZE       MAX_SCT_SIZE
 
 /*
- * Macros to read and write integers in network-byte order.
+ * Macros to write integers in network-byte order.
  */
-
-#define n2s(c,s)        ((s=(((unsigned int)((c)[0]))<< 8)| \
-                            (((unsigned int)((c)[1]))    )),c+=2)
 
 #define s2n(s,c)        ((c[0]=(unsigned char)(((s)>> 8)&0xff), \
                           c[1]=(unsigned char)(((s)    )&0xff)),c+=2)
@@ -35,15 +33,6 @@
 #define l2n3(l,c)       ((c[0]=(unsigned char)(((l)>>16)&0xff), \
                           c[1]=(unsigned char)(((l)>> 8)&0xff), \
                           c[2]=(unsigned char)(((l)    )&0xff)),c+=3)
-
-#define n2l8(c,l)       (l =((uint64_t)(*((c)++)))<<56, \
-                         l|=((uint64_t)(*((c)++)))<<48, \
-                         l|=((uint64_t)(*((c)++)))<<40, \
-                         l|=((uint64_t)(*((c)++)))<<32, \
-                         l|=((uint64_t)(*((c)++)))<<24, \
-                         l|=((uint64_t)(*((c)++)))<<16, \
-                         l|=((uint64_t)(*((c)++)))<< 8, \
-                         l|=((uint64_t)(*((c)++))))
 
 #define l2n8(l,c)       (*((c)++)=(unsigned char)(((l)>>56)&0xff), \
                          *((c)++)=(unsigned char)(((l)>>48)&0xff), \

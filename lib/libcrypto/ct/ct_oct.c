@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_oct.c,v 1.4 2021/12/05 09:37:46 tb Exp $ */
+/*	$OpenBSD: ct_oct.c,v 1.5 2021/12/18 15:59:50 jsing Exp $ */
 /*
  * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -20,148 +20,164 @@
 #include <openssl/ct.h>
 #include <openssl/err.h>
 
+#include "bytestring.h"
 #include "ct_local.h"
+
+static int
+o2i_SCT_signature_internal(SCT *sct, CBS *cbs)
+{
+	uint8_t hash_alg, sig_alg;
+	CBS signature;
+
+	if (sct->version != SCT_VERSION_V1) {
+		CTerror(CT_R_UNSUPPORTED_VERSION);
+		return 0;
+	}
+
+	/*
+	 * Parse a digitally-signed element - see RFC 6962 section 3.2 and
+	 * RFC 5246 sections 4.7 and 7.4.1.4.1.
+	 */
+	if (!CBS_get_u8(cbs, &hash_alg))
+		goto err_invalid;
+	if (!CBS_get_u8(cbs, &sig_alg))
+		goto err_invalid;
+	if (!CBS_get_u16_length_prefixed(cbs, &signature))
+		goto err_invalid;
+	if (CBS_len(cbs) != 0)
+		goto err_invalid;
+
+	/*
+	 * Reject empty signatures since they are invalid for all supported
+	 * algorithms (this really should be done by SCT_set1_signature()).
+	 */
+	if (CBS_len(&signature) == 0)
+		goto err_invalid;
+
+	sct->hash_alg = hash_alg;
+	sct->sig_alg = sig_alg;
+
+	if (SCT_get_signature_nid(sct) == NID_undef)
+		goto err_invalid;
+
+	if (!SCT_set1_signature(sct, CBS_data(&signature), CBS_len(&signature)))
+		return 0;
+
+	return 1;
+
+ err_invalid:
+	CTerror(CT_R_SCT_INVALID_SIGNATURE);
+	return 0;
+}
 
 int
 o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
 {
-	size_t siglen;
-	size_t len_remaining = len;
-	const unsigned char *p;
+	size_t sig_len;
+	CBS cbs;
 
-	if (sct->version != SCT_VERSION_V1) {
-		CTerror(CT_R_UNSUPPORTED_VERSION);
+	CBS_init(&cbs, *in, len);
+
+	if (!o2i_SCT_signature_internal(sct, &cbs))
 		return -1;
-	}
-	/*
-	 * digitally-signed struct header: (1 byte) Hash algorithm (1 byte)
-	 * Signature algorithm (2 bytes + ?) Signature
-	 *
-	 * This explicitly rejects empty signatures: they're invalid for
-	 * all supported algorithms.
-	 */
-	if (len <= 4) {
-		CTerror(CT_R_SCT_INVALID_SIGNATURE);
+
+	sig_len = len - CBS_len(&cbs);
+	if (sig_len > INT_MAX)
 		return -1;
+
+	*in = CBS_data(&cbs);
+
+	return sig_len;
+}
+
+static int
+o2i_SCT_internal(SCT **out_sct, CBS *cbs)
+{
+	SCT *sct = NULL;
+	uint8_t version;
+
+	*out_sct = NULL;
+
+	if ((sct = SCT_new()) == NULL)
+		goto err;
+
+	if (CBS_len(cbs) > MAX_SCT_SIZE)
+		goto err_invalid;
+	if (!CBS_peek_u8(cbs, &version))
+		goto err_invalid;
+
+	sct->version = version;
+
+	if (version == SCT_VERSION_V1) {
+		CBS extensions, log_id;
+		uint64_t timestamp;
+
+		/*
+		 * Parse a v1 SignedCertificateTimestamp - see RFC 6962
+		 * section 3.2.
+		 */
+		if (!CBS_get_u8(cbs, &version))
+			goto err_invalid;
+		if (!CBS_get_bytes(cbs, &log_id, CT_V1_LOG_ID_LEN))
+			goto err_invalid;
+		if (!CBS_get_u64(cbs, &timestamp))
+			goto err_invalid;
+		if (!CBS_get_u16_length_prefixed(cbs, &extensions))
+			goto err_invalid;
+
+		if (!CBS_stow(&log_id, &sct->log_id, &sct->log_id_len))
+			goto err;
+
+		sct->timestamp = timestamp;
+
+		if (!CBS_stow(&extensions, &sct->ext, &sct->ext_len))
+			goto err;
+
+		if (!o2i_SCT_signature_internal(sct, cbs))
+			goto err;
+
+		if (CBS_len(cbs) != 0)
+			goto err_invalid;
+	} else {
+		/* If not V1 just cache encoding. */
+		if (!CBS_stow(cbs, &sct->sct, &sct->sct_len))
+			goto err;
 	}
 
-	p = *in;
-	/* Get hash and signature algorithm */
-	sct->hash_alg = *p++;
-	sct->sig_alg = *p++;
-	if (SCT_get_signature_nid(sct) == NID_undef) {
-		CTerror(CT_R_SCT_INVALID_SIGNATURE);
-		return -1;
-	}
-	/*
-	 * Retrieve signature and check it is consistent with the buffer 
-	 * length
-	 */
-	n2s(p, siglen);
-	len_remaining -= (p - *in);
-	if (siglen > len_remaining) {
-		CTerror(CT_R_SCT_INVALID_SIGNATURE);
-		return -1;
-	}
+	*out_sct = sct;
 
-	if (SCT_set1_signature(sct, p, siglen) != 1)
-		return -1;
-	len_remaining -= siglen;
-	*in = p + siglen;
+	return 1;
 
-	return len - len_remaining;
+ err_invalid:
+	CTerror(CT_R_SCT_INVALID);
+ err:
+	SCT_free(sct);
+
+	return 0;
 }
 
 SCT *
 o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
 {
-	SCT *sct = NULL;
-	const unsigned char *p;
+	SCT *sct;
+	CBS cbs;
 
-	/*
-	 * XXX paging Dr Sing. please report to this function for an emergency
-	 * CBS/CBB implantation surgery. Stat.
-	 */
-
-	if (len == 0 || len > MAX_SCT_SIZE) {
-		CTerror(CT_R_SCT_INVALID);
-		goto err;
-	}
-
-	if ((sct = SCT_new()) == NULL)
-		goto err;
-
-	p = *in;
-
-	sct->version = *p;
-	if (sct->version == SCT_VERSION_V1) {
-		int sig_len;
-		size_t len2;
-		/*-
-		 * Fixed-length header:
-		 *   struct {
-		 *     Version sct_version;     (1 byte)
-		 *     log_id id;               (32 bytes)
-		 *     uint64 timestamp;        (8 bytes)
-		 *     CtExtensions extensions; (2 bytes + ?)
-		 *   }
-		 */
-		if (len < 43) {
-			CTerror(CT_R_SCT_INVALID);
-			goto err;
-		}
-		len -= 43;
-		p++;
-		sct->log_id = malloc(CT_V1_HASHLEN);
-		if (sct->log_id == NULL)
-			goto err;
-		memcpy(sct->log_id, p, CT_V1_HASHLEN);
-		sct->log_id_len = CT_V1_HASHLEN;
-		p += CT_V1_HASHLEN;
-
-		n2l8(p, sct->timestamp);
-
-		n2s(p, len2);
-		if (len < len2) {
-			CTerror(CT_R_SCT_INVALID);
-			goto err;
-		}
-		if (len2 > 0) {
-			sct->ext = malloc(len2);
-			if (sct->ext == NULL)
-				goto err;
-			memcpy(sct->ext, p, len2);
-		}
-		sct->ext_len = len2;
-		p += len2;
-		len -= len2;
-
-		sig_len = o2i_SCT_signature(sct, &p, len);
-		if (sig_len <= 0) {
-			CTerror(CT_R_SCT_INVALID);
-			goto err;
-		}
-		len -= sig_len;
-		*in = p + len;
-	} else {
-		/* If not V1 just cache encoding */
-		sct->sct = malloc(len);
-		if (sct->sct == NULL)
-			goto err;
-		memcpy(sct->sct, p, len);
-		sct->sct_len = len;
-		*in = p + len;
-	}
+	CBS_init(&cbs, *in, len);
 
 	if (psct != NULL) {
 		SCT_free(*psct);
-		*psct = sct;
+		*psct = NULL;
 	}
 
+	if (!o2i_SCT_internal(&sct, &cbs))
+		return NULL;
+
+	if (psct != NULL)
+		*psct = sct;
+
+	*in = CBS_data(&cbs);
+
 	return sct;
- err:
-	SCT_free(sct);
-	return NULL;
 }
 
 int
@@ -271,52 +287,39 @@ i2o_SCT(const SCT *sct, unsigned char **out)
 }
 
 STACK_OF(SCT) *
-o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp, size_t len)
+o2i_SCT_LIST(STACK_OF(SCT) **scts, const unsigned char **pp, size_t len)
 {
+	CBS cbs, cbs_scts, cbs_sct;
 	STACK_OF(SCT) *sk = NULL;
-	size_t list_len, sct_len;
 
-	if (len < 2 || len > MAX_SCT_LIST_SIZE) {
-		CTerror(CT_R_SCT_LIST_INVALID);
-		return NULL;
-	}
+	CBS_init(&cbs, *pp, len);
 
-	n2s(*pp, list_len);
-	if (list_len != len - 2) {
-		CTerror(CT_R_SCT_LIST_INVALID);
-		return NULL;
-	}
+	if (CBS_len(&cbs) > MAX_SCT_LIST_SIZE)
+		goto err_invalid;
+	if (!CBS_get_u16_length_prefixed(&cbs, &cbs_scts))
+		goto err_invalid;
+	if (CBS_len(&cbs) != 0)
+		goto err_invalid;
 
-	if (a == NULL || *a == NULL) {
-		sk = sk_SCT_new_null();
-		if (sk == NULL)
+	if (scts == NULL || *scts == NULL) {
+		if ((sk = sk_SCT_new_null()) == NULL)
 			return NULL;
 	} else {
 		SCT *sct;
 
 		/* Use the given stack, but empty it first. */
-		sk = *a;
+		sk = *scts;
 		while ((sct = sk_SCT_pop(sk)) != NULL)
 			SCT_free(sct);
 	}
 
-	while (list_len > 0) {
+	while (CBS_len(&cbs_scts) > 0) {
 		SCT *sct;
 
-		if (list_len < 2) {
-			CTerror(CT_R_SCT_LIST_INVALID);
-			goto err;
-		}
-		n2s(*pp, sct_len);
-		list_len -= 2;
+		if (!CBS_get_u16_length_prefixed(&cbs_scts, &cbs_sct))
+			goto err_invalid;
 
-		if (sct_len == 0 || sct_len > list_len) {
-			CTerror(CT_R_SCT_LIST_INVALID);
-			goto err;
-		}
-		list_len -= sct_len;
-
-		if ((sct = o2i_SCT(NULL, pp, sct_len)) == NULL)
+		if (!o2i_SCT_internal(&sct, &cbs_sct))
 			goto err;
 		if (!sk_SCT_push(sk, sct)) {
 			SCT_free(sct);
@@ -324,13 +327,19 @@ o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp, size_t len)
 		}
 	}
 
-	if (a != NULL && *a == NULL)
-		*a = sk;
+	if (scts != NULL && *scts == NULL)
+		*scts = sk;
+
+	*pp = CBS_data(&cbs);
+
 	return sk;
 
+ err_invalid:
+	CTerror(CT_R_SCT_LIST_INVALID);
  err:
-	if (a == NULL || *a == NULL)
+	if (scts == NULL || *scts == NULL)
 		SCT_LIST_free(sk);
+
 	return NULL;
 }
 
