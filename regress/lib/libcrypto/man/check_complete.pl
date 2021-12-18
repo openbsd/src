@@ -26,8 +26,12 @@ my %internal = (
 	ASN1_STRING_FLAG_MSTRING ASN1_STRING_FLAG_NDEF
 	CHARTYPE_FIRST_ESC_2253 CHARTYPE_LAST_ESC_2253 CHARTYPE_PRINTABLESTRING
     )],
+    bn => [qw(
+	BN_MUL_COMBA BN_RECURSION BN_SQR_COMBA
+    )],
     objects => [qw(
 	OBJ_bsearch OBJ_bsearch_ OBJ_bsearch_ex OBJ_bsearch_ex_
+	USE_OBJ_MAC
     )],
     x509_vfy => [qw(
 	X509_VERIFY_PARAM_ID
@@ -214,13 +218,13 @@ try_again:
 	    /^DECLARE_STACK_OF\(\w+\)$/ ||
 	    /^TYPEDEF_D2I2D_OF\(\w+\);$/ ||
 	    /^#define HEADER_\w+_H$/ ||
-	    /^#define USE_OBJ_MAC$/ ||
 	    /^#endif$/ ||
 	    /^#else$/ ||
 	    /^extern\s+const\s+ASN1_ITEM\s+\w+_it;$/ ||
 	    /^#include\s/ ||
 	    /^#ifn?def\s/ ||
-	    /^#if defined/) {
+	    /^#if !?defined/ ||
+	    /^#undef\s+BN_LLONG$/) {
 		print "-- $line\n" if $verbose;
 		next;
 	}
@@ -255,7 +259,7 @@ try_again:
 			print "D- $line\n" if $verbose;
 			next;
 		}
-		if ($id =~ /^(?:ASN1|X509(?:V3)?)_[FR]_\w+$/) {
+		if ($id =~ /^(?:ASN1|BN|X509(?:V3)?)_[FR]_\w+$/) {
 			print "D- $line\n" if $verbose;
 			next;
 		}
@@ -299,6 +303,19 @@ try_again:
 			print "XX $line\n";
 		} else {
 			warn "not found: #define $id()";
+		}
+		next;
+	}
+	if (my ($id) = /^#\s*define\s+(\w+)$/) {
+		if ($undoc{$id}) {
+			print "-- $line\n" if $verbose;
+			delete $undoc{$id};
+			next;
+		}
+		if ($verbose) {
+			print "XX $line\n";
+		} else {
+			warn "not found: #define $id";
 		}
 		next;
 	}
@@ -407,6 +424,10 @@ try_again:
 			warn "not found: function $id()";
 		}
 		next;
+	}
+	if (/^int$/) {
+		$_ .= ' ' . <$in_fh>;
+		goto try_again;
 	}
 	if (/ \*$/) {
 		$_ .= <$in_fh>;
