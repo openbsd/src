@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_item_sign.3,v 1.1 2021/11/07 15:29:01 schwarze Exp $
+.\" $OpenBSD: ASN1_item_sign.3,v 1.2 2021/12/18 17:47:44 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 7 2021 $
+.Dd $Mdocdate: December 18 2021 $
 .Dt ASN1_ITEM_SIGN 3
 .Os
 .Sh NAME
@@ -116,6 +116,7 @@ is not fully initialized.
 .\" We do not provide EVP_PKEY_asn1_set_item(3).
 .\" .Xr EVP_PKEY_asn1_new 3 ,
 .Xr EVP_PKEY_new 3 ,
+.Xr OBJ_find_sigid_by_algs 3 ,
 .Xr X509_ALGOR_new 3
 .Sh HISTORY
 .Fn ASN1_item_sign

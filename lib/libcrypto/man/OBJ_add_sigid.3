@@ -1,0 +1,124 @@
+.\" $OpenBSD: OBJ_add_sigid.3,v 1.1 2021/12/18 17:47:45 schwarze Exp $
+.\"
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: December 18 2021 $
+.Dt OBJ_ADD_SIGID 3
+.Os
+.Sh NAME
+.Nm OBJ_add_sigid ,
+.Nm OBJ_sigid_free ,
+.Nm OBJ_find_sigid_algs ,
+.Nm OBJ_find_sigid_by_algs
+.Nd signature algorithm mappings
+.Sh SYNOPSIS
+.In openssl/objects.h
+.Ft int
+.Fo OBJ_add_sigid
+.Fa "int signature"
+.Fa "int digest"
+.Fa "int encryption"
+.Fc
+.Ft void
+.Fn OBJ_sigid_free void
+.Ft int
+.Fo OBJ_find_sigid_algs
+.Fa "int signature"
+.Fa "int *pdigest"
+.Fa "int *pencryption"
+.Fc
+.Ft int
+.Fo OBJ_find_sigid_by_algs
+.Fa "int *psignature"
+.Fa "int digest"
+.Fa "int encryption"
+.Fc
+.Sh DESCRIPTION
+.Fn OBJ_add_sigid
+defines the
+.Fa signature
+algorithm to use the specified
+.Fa digest
+and
+.Fa encryption
+algorithms.
+Making sure that this does not conflict with earlier invocations of
+.Fn OBJ_add_sigid
+is the responsibility of the caller.
+Definitions made with
+.Fn OBJ_add_sigid
+take precedence over definitions built into the library.
+.Pp
+.Fn OBJ_sigid_free
+deletes all definitions made with
+.Fn OBJ_add_sigid .
+.Pp
+.Fn OBJ_find_sigid_algs
+looks up the
+.Fa signature
+algorithm.
+If it is found, the associated digest algorithm is stored in
+.Pf * Fa pdigest
+unless
+.Fa pdigest
+is a
+.Dv NULL
+pointer, and the associated encryption algorithm is stored in
+.Pf * Fa pencryption
+unless
+.Fa pencryption
+is a
+.Dv NULL
+pointer.
+.Pp
+.Fn OBJ_find_sigid_by_algs
+looks up the pair
+.Pq Fa digest , encryption .
+If it is found, the associated signature algorithm is stored in
+.Pf * Fa psignature
+unless
+.Fa psignature
+is a
+.Dv NULL
+pointer.
+.Sh RETURN VALUES
+.Fn OBJ_add_sigid
+returns 1 on success or 0 if memory allocation fails.
+.Pp
+.Fn OBJ_find_sigid_algs
+returns 1 if a definition of the
+.Fa signature
+algorithm is found or 0 if a definition of the
+.Fa signature
+algorithm is neither built into the library nor provided with
+.Fn OBJ_add_sigid .
+.Pp
+.Fn OBJ_find_sigid_by_algs
+returns 1 if a signature algorithm using the specified
+.Fa digest
+and
+.Fa encryption
+algorithms is defined or 0 if the definition of such an algorithm
+is neither built into the library nor provided with
+.Fn OBJ_add_sigid .
+.Sh SEE ALSO
+.Xr EVP_cleanup 3 ,
+.Xr OBJ_create 3 ,
+.Xr OBJ_NAME_add 3 ,
+.Xr OBJ_nid2obj 3
+.Sh HISTORY
+These functions first appeared in OpenSSL 1.0.0
+and have been available since
+.Ox 4.9 .

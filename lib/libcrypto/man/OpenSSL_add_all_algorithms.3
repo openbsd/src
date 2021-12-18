@@ -1,4 +1,4 @@
-.\" $OpenBSD: OpenSSL_add_all_algorithms.3,v 1.10 2021/12/17 17:56:14 schwarze Exp $
+.\" $OpenBSD: OpenSSL_add_all_algorithms.3,v 1.11 2021/12/18 17:47:45 schwarze Exp $
 .\" full merge up to: OpenSSL b3696a55 Sep 2 09:35:50 2017 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 17 2021 $
+.Dd $Mdocdate: December 18 2021 $
 .Dt OPENSSL_ADD_ALL_ALGORITHMS 3
 .Os
 .Sh NAME
@@ -100,15 +100,20 @@ only the first call has an effect.
 .Fn EVP_cleanup
 removes all ciphers and digests from the table and also calls
 .Xr OBJ_NAME_cleanup 3
-with an argument of \-1, thus resetting the global associative array
-to its default state, removing all types, key-value pairs, and aliases
-from it, including any that are unrelated to the EVP library.
+with an argument of \-1 and
+.Xr OBJ_sigid_free 3 ,
+thus resetting the global associative array of names
+and all signature algorithm definitions to their default states,
+removing all application-defined types, key-value pairs, aliases,
+and signature algorithm definitions,
+including any that are unrelated to the EVP library.
 .Sh SEE ALSO
 .Xr evp 3 ,
 .Xr EVP_DigestInit 3 ,
 .Xr EVP_EncryptInit 3 ,
 .Xr OBJ_cleanup 3 ,
 .Xr OBJ_NAME_add 3 ,
+.Xr OBJ_sigid_free 3 ,
 .Xr OPENSSL_config 3
 .Sh HISTORY
 .Fn EVP_cleanup

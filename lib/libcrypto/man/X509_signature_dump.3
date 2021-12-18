@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_signature_dump.3,v 1.1 2021/07/06 16:05:44 schwarze Exp $
+.\" $OpenBSD: X509_signature_dump.3,v 1.2 2021/12/18 17:47:45 schwarze Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 6 2021 $
+.Dd $Mdocdate: December 18 2021 $
 .Dt X509_SIGNATURE_DUMP 3
 .Os
 .Sh NAME
@@ -72,6 +72,7 @@ They fail and return as soon as any write operation fails.
 .Xr ASN1_STRING_print_ex 3 ,
 .Xr BIO_new 3 ,
 .Xr EVP_PKEY_asn1_new 3 ,
+.Xr OBJ_find_sigid_algs 3 ,
 .Xr X509_ALGOR_new 3 ,
 .Xr X509_get0_signature 3
 .Sh HISTORY
