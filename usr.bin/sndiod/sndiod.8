@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.11 2021/07/16 15:05:58 sthen Exp $
+.\"	$OpenBSD: sndiod.8,v 1.12 2021/12/18 21:41:49 jmc Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 16 2021 $
+.Dd $Mdocdate: December 18 2021 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -186,11 +186,11 @@ Examples:
 .Va u8 , s16le , s24le3 , s24le4lsb .
 .It Fl F Ar device
 Specify an alternate device to use.
-If it doesn't work, the one given with the last
+If it doesn't work, the one given with the previous
 .Fl f
 or
 .Fl F
-options will be used.
+option will be used.
 For instance, specifying a USB device following a
 PCI device allows
 .Nm
