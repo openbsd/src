@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_local.h,v 1.6 2021/12/18 16:34:52 tb Exp $ */
+/*	$OpenBSD: ct_local.h,v 1.7 2021/12/18 17:26:54 tb Exp $ */
 /*
  * Written by Rob Percival (robpercival@google.com) for the OpenSSL project.
  */
@@ -232,24 +232,24 @@ int SCT_signature_is_complete(const SCT *sct);
  */
 
 /*
-* Serialize (to TLS format) an |sct| signature and write it to |out|.
-* If |out| is null, no signature will be output but the length will be returned.
-* If |out| points to a null pointer, a string will be allocated to hold the
-* TLS-format signature. It is the responsibility of the caller to free it.
-* If |out| points to an allocated string, the signature will be written to it.
-* The length of the signature in TLS format will be returned.
-*/
+ * Serialize (to TLS format) an |sct| signature and write it to |out|.
+ * If |out| is null, no signature will be output but the length will be returned.
+ * If |out| points to a null pointer, a string will be allocated to hold the
+ * TLS-format signature. It is the responsibility of the caller to free it.
+ * If |out| points to an allocated string, the signature will be written to it.
+ * The length of the signature in TLS format will be returned.
+ */
 int i2o_SCT_signature(const SCT *sct, unsigned char **out);
 
 /*
-* Parses an SCT signature in TLS format and populates the |sct| with it.
-* |in| should be a pointer to a string containing the TLS-format signature.
-* |in| will be advanced to the end of the signature if parsing succeeds.
-* |len| should be the length of the signature in |in|.
-* Returns the number of bytes parsed, or a negative integer if an error occurs.
-* If an error occurs, the SCT's signature NID may be updated whilst the
-* signature field itself remains unset.
-*/
+ * Parses an SCT signature in TLS format and populates the |sct| with it.
+ * |in| should be a pointer to a string containing the TLS-format signature.
+ * |in| will be advanced to the end of the signature if parsing succeeds.
+ * |len| should be the length of the signature in |in|.
+ * Returns the number of bytes parsed, or a negative integer if an error occurs.
+ * If an error occurs, the SCT's signature NID may be updated whilst the
+ * signature field itself remains unset.
+ */
 int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
 
 /*
