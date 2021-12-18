@@ -1,5 +1,5 @@
-.\"	$OpenBSD: BN_cmp.3,v 1.8 2021/12/06 19:45:27 schwarze Exp $
-.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\" $OpenBSD: BN_cmp.3,v 1.9 2021/12/18 21:11:50 schwarze Exp $
+.\" full merge up to: OpenSSL 5b31b9df Aug 4 10:45:52 2021 +0300
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
 .\" Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 6 2021 $
+.Dd $Mdocdate: December 18 2021 $
 .Dt BN_CMP 3
 .Os
 .Sh NAME
@@ -57,6 +57,7 @@
 .Nm BN_is_zero ,
 .Nm BN_is_one ,
 .Nm BN_is_word ,
+.Nm BN_abs_is_word ,
 .Nm BN_is_odd
 .Nd BIGNUM comparison and test functions
 .Sh SYNOPSIS
@@ -82,7 +83,12 @@
 .Ft int
 .Fo BN_is_word
 .Fa "const BIGNUM *a"
-.Fa "BN_ULONG w"
+.Fa "const BN_ULONG w"
+.Fc
+.Ft int
+.Fo BN_abs_is_word
+.Fa "const BIGNUM *a"
+.Fa "const BN_ULONG w"
 .Fc
 .Ft int
 .Fo BN_is_odd
@@ -106,6 +112,11 @@ test if
 equals 0, 1, or
 .Fa w
 respectively.
+.Fn BN_abs_is_word
+tests if the absolute value of
+.Fa a
+equals
+.Fa w .
 .Fn BN_is_odd
 tests if a is odd.
 .Sh RETURN VALUES
@@ -125,6 +136,7 @@ and
 .Fn BN_is_zero ,
 .Fn BN_is_one ,
 .Fn BN_is_word ,
+.Fn BN_abs_is_word ,
 and
 .Fn BN_is_odd
 return 1 if the condition is true, 0 otherwise.
@@ -140,5 +152,9 @@ and
 first appeared in SSLeay 0.5.1.
 .Fn BN_is_odd
 first appeared in SSLeay 0.8.0.
-All these functions have been available since
+These functions have been available since
 .Ox 2.4 .
+.Pp
+.Fn BN_abs_is_word
+first appeared in OpenSSL 0.9.7 and has been available since
+.Ox 3.2 .
