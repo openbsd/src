@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_sct.c,v 1.5 2021/12/17 11:25:22 tb Exp $ */
+/*	$OpenBSD: ct_sct.c,v 1.6 2021/12/18 15:58:59 jsing Exp $ */
 /*
  * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -51,9 +51,9 @@ SCT_free(SCT *sct)
 }
 
 void
-SCT_LIST_free(STACK_OF(SCT) *a)
+SCT_LIST_free(STACK_OF(SCT) *scts)
 {
-	sk_SCT_pop_free(a, SCT_free);
+	sk_SCT_pop_free(scts, SCT_free);
 }
 
 int
