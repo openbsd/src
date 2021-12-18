@@ -1,6 +1,6 @@
-/*	$OpenBSD: ofw_misc.c,v 1.33 2021/06/25 17:41:22 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.34 2021/12/18 09:19:25 kettenis Exp $	*/
 /*
- * Copyright (c) 2017 Mark Kettenis
+ * Copyright (c) 2017-2021 Mark Kettenis
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1042,4 +1042,130 @@ iommu_reserve_region_pci(int node, uint32_t rid, bus_addr_t addr,
 		return;
 
 	return iommu_device_do_reserve(phandle, &sid, addr, size);
+}
+
+/*
+ * Mailbox support.
+ */
+
+struct mbox_channel {
+	struct mbox_device	*mc_md;
+	void			*mc_cookie;
+};
+
+LIST_HEAD(, mbox_device) mbox_devices =
+	LIST_HEAD_INITIALIZER(mbox_devices);
+
+void
+mbox_register(struct mbox_device *md)
+{
+	md->md_cells = OF_getpropint(md->md_node, "#mbox-cells", 0);
+	md->md_phandle = OF_getpropint(md->md_node, "phandle", 0);
+	if (md->md_phandle == 0)
+		return;
+
+	LIST_INSERT_HEAD(&mbox_devices, md, md_list);
+}
+
+struct mbox_channel *
+mbox_channel_cells(uint32_t *cells, struct mbox_client *client)
+{
+	struct mbox_device *md;
+	struct mbox_channel *mc;
+	uint32_t phandle = cells[0];
+	void *cookie;
+
+	LIST_FOREACH(md, &mbox_devices, md_list) {
+		if (md->md_phandle == phandle)
+			break;
+	}
+
+	if (md && md->md_channel) {
+		cookie = md->md_channel(md->md_cookie, &cells[1], client);
+		if (cookie) {
+			mc = malloc(sizeof(*mc), M_DEVBUF, M_WAITOK);
+			mc->mc_md = md;
+			mc->mc_cookie = cookie;
+			return mc;
+		}
+	}
+
+	return NULL;
+}
+
+uint32_t *
+mbox_next_mbox(uint32_t *cells)
+{
+	uint32_t phandle = cells[0];
+	int node, ncells;
+
+	node = OF_getnodebyphandle(phandle);
+	if (node == 0)
+		return NULL;
+
+	ncells = OF_getpropint(node, "#mbox-cells", 0);
+	return cells + ncells + 1;
+}
+
+struct mbox_channel *
+mbox_channel_idx(int node, int idx, struct mbox_client *client)
+{
+	struct mbox_channel *mc = NULL;
+	uint32_t *mboxes;
+	uint32_t *mbox;
+	int len;
+
+	len = OF_getproplen(node, "mboxes");
+	if (len <= 0)
+		return NULL;
+
+	mboxes = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "mboxes", mboxes, len);
+
+	mbox = mboxes;
+	while (mbox && mbox < mboxes + (len / sizeof(uint32_t))) {
+		if (idx == 0) {
+			mc = mbox_channel_cells(mbox, client);
+			break;
+		}
+		mbox = mbox_next_mbox(mbox);
+		idx--;
+	}
+
+	free(mboxes, M_TEMP, len);
+	return mc;
+}
+
+struct mbox_channel *
+mbox_channel(int node, const char *name, struct mbox_client *client)
+{
+	int idx;
+
+	idx = OF_getindex(node, name, "mbox-names");
+	if (idx == -1)
+		return NULL;
+
+	return mbox_channel_idx(node, idx, client);
+}
+
+int
+mbox_send(struct mbox_channel *mc, const void *data, size_t len)
+{
+	struct mbox_device *md = mc->mc_md;
+
+	if (md->md_send)
+		return md->md_send(mc->mc_cookie, data, len);
+
+	return ENXIO;
+}
+
+int
+mbox_recv(struct mbox_channel *mc, void *data, size_t len)
+{
+	struct mbox_device *md = mc->mc_md;
+
+	if (md->md_recv)
+		return md->md_recv(mc->mc_cookie, data, len);
+
+	return ENXIO;
 }

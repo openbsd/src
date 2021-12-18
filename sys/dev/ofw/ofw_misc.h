@@ -1,6 +1,6 @@
-/*	$OpenBSD: ofw_misc.h,v 1.21 2021/06/25 17:41:22 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.22 2021/12/18 09:19:25 kettenis Exp $	*/
 /*
- * Copyright (c) 2017 Mark Kettenis
+ * Copyright (c) 2017-2021 Mark Kettenis
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -253,5 +253,34 @@ void	iommu_device_register(struct iommu_device *);
 bus_dma_tag_t iommu_device_map(int, bus_dma_tag_t);
 bus_dma_tag_t iommu_device_map_pci(int, uint32_t, bus_dma_tag_t);
 void	iommu_reserve_region_pci(int, uint32_t, bus_addr_t, bus_size_t);
+
+/* Mailbox support */
+
+struct mbox_client {
+	void	(*mc_rx_callback)(void *);
+	void	*mc_rx_arg;
+};
+
+struct mbox_channel;
+
+struct mbox_device {
+	int	md_node;
+	void	*md_cookie;
+	void	*(*md_channel)(void *, uint32_t *, struct mbox_client *);
+	int	(*md_recv)(void *, void *, size_t);
+	int	(*md_send)(void *, const void *, size_t);
+
+	LIST_ENTRY(mbox_device) md_list;
+	uint32_t md_phandle;
+	uint32_t md_cells;
+};
+
+void	mbox_register(struct mbox_device *);
+
+struct mbox_channel *mbox_channel(int, const char *, struct mbox_client *);
+struct mbox_channel *mbox_channel_idx(int, int, struct mbox_client *);
+
+int	mbox_send(struct mbox_channel *, const void *, size_t);
+int	mbox_recv(struct mbox_channel *, void *, size_t);
 
 #endif /* _DEV_OFW_MISC_H_ */
