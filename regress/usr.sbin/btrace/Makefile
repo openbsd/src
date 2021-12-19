@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.24 2021/12/02 17:09:46 kn Exp $
+# $OpenBSD: Makefile,v 1.25 2021/12/19 01:07:50 guenther Exp $
 
 BTRACE?=		 /usr/sbin/btrace
-ALLOWDT!=		sysctl -n kern.allowdt
+ALLOWDT!=		sysctl -n kern.allowdt 2>/dev/null
 
 # scripts that don't need /dev/dt
 BT_LANG_SCRIPTS=	arithm beginend boolean comments delete exit \
