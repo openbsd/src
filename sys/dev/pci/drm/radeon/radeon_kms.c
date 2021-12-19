@@ -360,34 +360,15 @@ radeondrm_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
 	struct sunfb *sf = v;
 	struct radeon_device *rdev = sf->sf_ro.ri_hw;
-	struct drm_device *dev = rdev->ddev;
-	uint16_t red, green, blue;
-	uint16_t *r_base, *g_base, *b_base;
-	struct drm_crtc *crtc;
-	int i, ret = 0;
 
-	for (i = 0; i < rdev->num_crtc; i++) {
-		struct drm_modeset_acquire_ctx ctx;
-		crtc = &rdev->mode_info.crtcs[i]->base;
-
-		red = (r << 8) | r;
-		green = (g << 8) | g;
-		blue = (b << 8) | b;
-
-		DRM_MODESET_LOCK_ALL_BEGIN(dev, ctx, 0, ret);
-
-		r_base = crtc->gamma_store;
-		g_base = r_base + crtc->gamma_size;
-		b_base = g_base + crtc->gamma_size;
-
-		*r_base = red >> 6;
-		*g_base = green >> 6;
-		*b_base = blue >> 6;
-
-		crtc->funcs->gamma_set(crtc, r_base, g_base, b_base,
-		    crtc->gamma_size, &ctx);
-
-		DRM_MODESET_LOCK_ALL_END(dev, ctx, ret);
+	/* see legacy_crtc_load_lut() */
+	if (rdev->family < CHIP_RS600) {
+		WREG8(RADEON_PALETTE_INDEX, index);
+		WREG32(RADEON_PALETTE_30_DATA,
+		    (r << 22) | (g << 12) | (b << 2));
+	} else {
+		printf("%s: setcolor family %d not handled\n",
+		    rdev->self.dv_xname, rdev->family);
 	}
 }
 #endif
