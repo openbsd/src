@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.48 2021/12/19 13:07:36 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.49 2021/12/19 23:47:24 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -120,6 +120,9 @@ include "dev/sdmmc/files.sdmmc"
 # Machine-independent FDT drivers
 include "dev/fdt/files.fdt"
 
+define	rtkit
+file	arch/arm64/dev/rtkit.c			rtkit
+
 device	ampintc: fdt
 attach	ampintc at fdt
 device	ampintcmsi
@@ -177,7 +180,7 @@ attach	aplpmgr at fdt
 file	arch/arm64/dev/aplpmgr.c		aplpmgr
 
 # Apple NVME Storage
-device	aplns {}
+device	aplns {}: rtkit
 attach	aplns at fdt
 attach	nvme at aplns with nvme_ans
 file	arch/arm64/dev/aplns.c			aplns | nvme_ans

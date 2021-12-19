@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplns.c,v 1.6 2021/12/09 11:38:27 kettenis Exp $ */
+/*	$OpenBSD: aplns.c,v 1.7 2021/12/19 23:47:24 kettenis Exp $ */
 /*
  * Copyright (c) 2014, 2021 David Gwynne <dlg@openbsd.org>
  *
@@ -40,7 +40,20 @@
 #include <dev/ic/nvmereg.h>
 #include <dev/ic/nvmevar.h>
 
+#include <arm64/dev/rtkit.h>
+
+#define ANS_CPU_CTRL		0x0044
+#define ANS_CPU_CTRL_RUN	(1 << 4)
+
+#define ANS_MAX_PEND_CMDS_CTRL	0x01210
+#define  ANS_MAX_QUEUE_DEPTH	64
+#define ANS_BOOT_STATUS		0x01300
+#define  ANS_BOOT_STATUS_OK	0xde71ce55
 #define ANS_MODESEL_REG		0x01304
+#define ANS_UNKNOWN_CTRL	0x24008
+#define  ANS_PRP_NULL_CHECK	(1 << 11)
+#define ANS_LINEAR_SQ_CTRL	0x24908
+#define  ANS_LINEAR_SQ_CTRL_EN	(1 << 0)
 #define ANS_LINEAR_ASQ_DB	0x2490c
 #define ANS_LINEAR_IOSQ_DB	0x24910
 
@@ -100,7 +113,10 @@ aplns_attach(struct device *parent, struct device *self, void *aux)
 
 struct nvme_ans_softc {
 	struct nvme_softc	 asc_nvme;
+	bus_space_tag_t		 asc_iot;
+	bus_space_handle_t	 asc_ioh;
 
+	struct mbox_channel	*asc_mbox;
 	struct nvme_dmamem	*asc_nvmmu;
 };
 
@@ -156,13 +172,25 @@ nvme_ans_attach(struct device *parent, struct device *self, void *aux)
 	struct nvme_ans_softc *asc = (struct nvme_ans_softc *)self;
 	struct nvme_softc *sc = &asc->asc_nvme;
 	struct fdt_attach_args *faa = aux;
+	uint32_t ctrl, status;
 
-	printf(": ");
+	if (faa->fa_nreg < 2) {
+		printf(": no registers\n");
+		return;
+	}
 
-	if (bus_space_map(faa->fa_iot,
-	    faa->fa_reg[0].addr, faa->fa_reg[0].size,
-	    0, &sc->sc_ioh) != 0) {
-		printf("unable to map registers\n");
+	sc->sc_iot = faa->fa_iot;
+	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
+	    faa->fa_reg[0].size, 0, &sc->sc_ioh) != 0) {
+		printf(": can't map registers\n");
+		return;
+	}
+
+	asc->asc_iot = faa->fa_iot;
+	if (bus_space_map(asc->asc_iot, faa->fa_reg[1].addr,
+	    faa->fa_reg[1].size, 0, &asc->asc_ioh)) {
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+		printf(": can't map registers\n");
 		return;
 	}
 
@@ -171,12 +199,42 @@ nvme_ans_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_BIO,
 	    nvme_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("unable to establish interrupt\n");
+		printf(": can't establish interrupt\n");
 		goto unmap;
 	}
 
+	asc->asc_mbox = mbox_channel(faa->fa_node, NULL, NULL);
+	if (asc->asc_mbox == NULL) {
+		printf(": can't map mailbox channel\n");
+		goto disestablish;
+	}
+
+	ctrl = bus_space_read_4(asc->asc_iot, asc->asc_ioh, ANS_CPU_CTRL);
+	bus_space_write_4(asc->asc_iot, asc->asc_ioh, ANS_CPU_CTRL,
+	    ctrl | ANS_CPU_CTRL_RUN);
+
+	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ANS_BOOT_STATUS);
+	if (status != ANS_BOOT_STATUS_OK)
+		rtkit_init(asc->asc_mbox);
+
+	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ANS_BOOT_STATUS);
+	if (status != ANS_BOOT_STATUS_OK) {
+		printf(": firmware not ready\n");
+		goto disestablish;
+	}
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANS_LINEAR_SQ_CTRL,
+	    ANS_LINEAR_SQ_CTRL_EN);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANS_MAX_PEND_CMDS_CTRL,
+	    (ANS_MAX_QUEUE_DEPTH << 16) | ANS_MAX_QUEUE_DEPTH);
+
+	ctrl = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ANS_UNKNOWN_CTRL);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ANS_UNKNOWN_CTRL,
+	    ctrl & ~ANS_PRP_NULL_CHECK);
+
+	printf(": ");
+
 	sc->sc_dmat = faa->fa_dmat;
-	sc->sc_iot = faa->fa_iot;
 	sc->sc_ios = faa->fa_reg[0].size;
 	sc->sc_ops = &nvme_ans_ops;
 	sc->sc_openings = 1;
@@ -193,7 +251,8 @@ disestablish:
 	sc->sc_ih = NULL;
 
 unmap:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+	bus_space_unmap(asc->asc_iot, asc->asc_ioh, faa->fa_reg[1].size);
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
 	sc->sc_ios = 0;
 }
 
