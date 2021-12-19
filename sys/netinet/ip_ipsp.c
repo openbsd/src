@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.265 2021/12/14 17:50:37 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.266 2021/12/19 23:30:08 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -90,7 +90,6 @@ void		tdb_firstuse(void *);
 void		tdb_soft_timeout(void *);
 void		tdb_soft_firstuse(void *);
 int		tdb_hash(u_int32_t, union sockaddr_union *, u_int8_t);
-void		tdb_dodelete(struct tdb *, int locked);
 
 int ipsec_in_use = 0;
 u_int64_t ipsec_last_added = 0;
@@ -627,30 +626,36 @@ tdb_printit(void *addr, int full, int (*pr)(const char *, ...))
 int
 tdb_walk(u_int rdomain, int (*walker)(struct tdb *, void *, int), void *arg)
 {
-	int i, rval = 0;
-	struct tdb *tdbp, *next;
+	SIMPLEQ_HEAD(, tdb) tdblist;
+	struct tdb *tdbp;
+	int i, rval;
 
 	/*
-	 * The walker may aquire the kernel lock.  Grab it here to keep
-	 * the lock order.
+	 * The walker may sleep.  So we cannot hold the tdb_sadb_mtx while
+	 * traversing the tdb_hnext list.  Create a new tdb_walk list with
+	 * exclusive netlock protection.
 	 */
-	KERNEL_LOCK();
+	NET_ASSERT_WLOCKED();
+	SIMPLEQ_INIT(&tdblist);
+
 	mtx_enter(&tdb_sadb_mtx);
 	for (i = 0; i <= tdb_hashmask; i++) {
-		for (tdbp = tdbh[i]; rval == 0 && tdbp != NULL; tdbp = next) {
-			next = tdbp->tdb_hnext;
-
+		for (tdbp = tdbh[i]; tdbp != NULL; tdbp = tdbp->tdb_hnext) {
 			if (rdomain != tdbp->tdb_rdomain)
 				continue;
-
-			if (i == tdb_hashmask && next == NULL)
-				rval = walker(tdbp, (void *)arg, 1);
-			else
-				rval = walker(tdbp, (void *)arg, 0);
+			tdb_ref(tdbp);
+			SIMPLEQ_INSERT_TAIL(&tdblist, tdbp, tdb_walk);
 		}
 	}
 	mtx_leave(&tdb_sadb_mtx);
-	KERNEL_UNLOCK();
+
+	rval = 0;
+	while ((tdbp = SIMPLEQ_FIRST(&tdblist)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&tdblist, tdb_walk);
+		if (rval == 0)
+			rval = walker(tdbp, arg, SIMPLEQ_EMPTY(&tdblist));
+		tdb_unref(tdbp);
+	}
 
 	return rval;
 }
@@ -763,7 +768,6 @@ tdb_rehash(void)
 		free(new_srcaddr, M_TDB, 0);
 		return (ENOMEM);
 	}
-
 
 	for (i = 0; i <= old_hashmask; i++) {
 		for (tdbp = tdbh[i]; tdbp != NULL; tdbp = tdbnp) {
@@ -1004,19 +1008,6 @@ tdb_unref(struct tdb *tdb)
 void
 tdb_delete(struct tdb *tdbp)
 {
-	tdb_dodelete(tdbp, 0);
-}
-
-void
-tdb_delete_locked(struct tdb *tdbp)
-{
-	MUTEX_ASSERT_LOCKED(&tdb_sadb_mtx);
-	tdb_dodelete(tdbp, 1);
-}
-
-void
-tdb_dodelete(struct tdb *tdbp, int locked)
-{
 	NET_ASSERT_LOCKED();
 
 	mtx_enter(&tdbp->tdb_mtx);
@@ -1026,10 +1017,7 @@ tdb_dodelete(struct tdb *tdbp, int locked)
 	}
 	tdbp->tdb_flags |= TDBF_DELETED;
 	mtx_leave(&tdbp->tdb_mtx);
-	if (locked)
-		tdb_unlink_locked(tdbp);
-	else
-		tdb_unlink(tdbp);
+	tdb_unlink(tdbp);
 
 	/* cleanup SPD references */
 	tdb_cleanspd(tdbp);

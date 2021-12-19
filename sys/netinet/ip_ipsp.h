@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.231 2021/12/14 17:50:37 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.232 2021/12/19 23:30:08 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -335,6 +335,7 @@ struct tdb {				/* tunnel descriptor block */
 	struct tdb	*tdb_snext;	/* [s] src/sproto table */
 	struct tdb	*tdb_inext;
 	struct tdb	*tdb_onext;
+	SIMPLEQ_ENTRY(tdb) tdb_walk;	/* [N] temp list for tdb walker */
 
 	struct refcnt	tdb_refcnt;
 	struct mutex	tdb_mtx;
@@ -583,7 +584,6 @@ struct	tdb *gettdbbysrcdst_dir(u_int, u_int32_t, union sockaddr_union *,
 void	puttdb(struct tdb *);
 void	puttdb_locked(struct tdb *);
 void	tdb_delete(struct tdb *);
-void	tdb_delete_locked(struct tdb *);
 struct	tdb *tdb_alloc(u_int);
 struct	tdb *tdb_ref(struct tdb *);
 void	tdb_unref(struct tdb *);
