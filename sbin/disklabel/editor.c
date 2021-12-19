@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.369 2021/11/09 16:53:18 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.370 2021/12/19 19:26:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -2535,7 +2535,7 @@ alignpartition(struct disklabel *lp, int partno, u_int64_t startalign,
 		stop = maxstop;
 
 	if (stop <= start) {
-		fprintf(stderr, "'%c' aligned size <= 0\n", 'a' + partno);
+		fprintf(stderr, "not enough space\n");
 		return (1);
 	}
 
