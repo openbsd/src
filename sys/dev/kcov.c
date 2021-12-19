@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.39 2021/12/18 08:24:31 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.40 2021/12/19 07:45:59 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -554,13 +554,6 @@ kd_curproc(int mode)
 	struct kcov_dev *kd;
 
 	/*
-	 * Do not trace if the kernel has panicked. This could happen if curproc
-	 * had kcov enabled while panicking.
-	 */
-	if (__predict_false(panicstr || db_active))
-		return (NULL);
-
-	/*
 	 * Do not trace before kcovopen() has been called at least once.
 	 * At this point, all secondary CPUs have booted and accessing curcpu()
 	 * is safe.
@@ -571,8 +564,18 @@ kd_curproc(int mode)
 	kd = curproc->p_kd;
 	if (__predict_true(kd == NULL) || kd->kd_mode != mode)
 		return (NULL);
+
+	/*
+	 * Do not trace if the kernel has panicked. This could happen if curproc
+	 * had kcov enabled while panicking.
+	 */
+	if (__predict_false(panicstr || db_active))
+		return (NULL);
+
+	/* Do not trace in interrupt context unless this is a remote section. */
 	if (inintr() && kd->kd_intr == 0)
 		return (NULL);
+
 	return (kd);
 
 }
