@@ -1,9 +1,26 @@
-.\" $OpenBSD: BN_zero.3,v 1.10 2021/11/30 18:34:35 tb Exp $
+.\" $OpenBSD: BN_zero.3,v 1.11 2021/12/19 16:18:34 schwarze Exp $
 .\" full merge up to: OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\" selective merge up to: OpenSSL b713c4ff Jan 22 14:41:09 2018 -0500
 .\"
-.\" This file was written by Ulf Moeller <ulf@openssl.org>.
-.\" Copyright (c) 2000, 2001, 2002, 2018 The OpenSSL Project.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Ulf Moeller <ulf@openssl.org>.
+.\" Copyright (c) 2000, 2001, 2018 The OpenSSL Project.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -50,10 +67,11 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 30 2021 $
+.Dd $Mdocdate: December 19 2021 $
 .Dt BN_ZERO 3
 .Os
 .Sh NAME
+.Nm BN_zero_ex ,
 .Nm BN_zero ,
 .Nm BN_one ,
 .Nm BN_value_one ,
@@ -62,6 +80,10 @@
 .Nd BIGNUM assignment operations
 .Sh SYNOPSIS
 .In openssl/bn.h
+.Ft void
+.Fo BN_zero_ex
+.Fa "BIGNUM *a"
+.Fc
 .Ft int
 .Fo BN_zero
 .Fa "BIGNUM *a"
@@ -88,7 +110,7 @@
 is a macro that expands to an unsigned integral type optimized
 for the most efficient implementation on the local platform.
 .Pp
-.Fn BN_zero ,
+.Fn BN_zero_ex ,
 .Fn BN_one ,
 and
 .Fn BN_set_word
@@ -97,6 +119,12 @@ set
 to the values 0, 1 and
 .Fa w
 respectively.
+.Fn BN_zero
+is a deprecated version of
+.Fn BN_zero_ex
+that may attempt to allocate memory; consequently, and in contrast to
+.Fn BN_zero_ex ,
+it may fail.
 .Fn BN_zero
 and
 .Fn BN_one
@@ -137,8 +165,12 @@ and
 first appeared in SSLeay 0.5.1.
 .Fn BN_get_word
 first appeared in SSLeay 0.6.0.
-All these functions have been available since
+These functions have been available since
 .Ox 2.4 .
+.Pp
+.Fn BN_zero_ex
+first appeared in OpenSSL 0.9.8 and has been available since
+.Ox 4.5 .
 .Sh BUGS
 Someone might change the constant.
 .Pp
