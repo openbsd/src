@@ -193,6 +193,7 @@ void radeondrm_enter_ddb(void *, void *);
 #ifdef __sparc64__
 void radeondrm_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 #endif
+void radeondrm_setpal(struct radeon_device *, struct rasops_info *);
 
 struct wsscreen_descr radeondrm_stdscreen = {
 	"std",
@@ -303,36 +304,12 @@ radeondrm_doswitch(void *v)
 {
 	struct rasops_info *ri = v;
 	struct radeon_device *rdev = ri->ri_hw;
-#ifndef __sparc64__
-	struct drm_device *dev = rdev->ddev;
-	struct drm_crtc *crtc;
-	uint16_t *r_base, *g_base, *b_base;
-	int i, ret = 0;
-#endif
 
 	rasops_show_screen(ri, rdev->switchcookie, 0, NULL, NULL);
 #ifdef __sparc64__
 	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
 #else
-	for (i = 0; i < rdev->num_crtc; i++) {
-		struct drm_modeset_acquire_ctx ctx;
-		crtc = &rdev->mode_info.crtcs[i]->base;
-
-		r_base = crtc->gamma_store;
-		g_base = r_base + crtc->gamma_size;
-		b_base = g_base + crtc->gamma_size;
-
-		DRM_MODESET_LOCK_ALL_BEGIN(dev, ctx, 0, ret);
-
-		*r_base = rasops_cmap[3 * i] << 2;
-		*g_base = rasops_cmap[(3 * i) + 1] << 2;
-		*b_base = rasops_cmap[(3 * i) + 2] << 2;
-
-		crtc->funcs->gamma_set(crtc, r_base, g_base, b_base,
-		    crtc->gamma_size, &ctx);
-
-		DRM_MODESET_LOCK_ALL_END(dev, ctx, ret);
-	}
+	radeondrm_setpal(rdev, ri);
 #endif
 	drm_fb_helper_restore_fbdev_mode_unlocked((void *)rdev->mode_info.rfbdev);
 
@@ -372,6 +349,41 @@ radeondrm_setcolor(void *v, u_int index, u_int8_t r, u_int8_t g, u_int8_t b)
 	}
 }
 #endif
+
+void
+radeondrm_setpal(struct radeon_device *rdev, struct rasops_info *ri)
+{
+	struct drm_device *dev = rdev->ddev;
+	struct drm_crtc *crtc;
+	uint16_t *r_base, *g_base, *b_base;
+	int i, index, ret = 0;
+	const u_char *p;
+
+	if (ri->ri_depth != 8)
+		return;
+
+	for (i = 0; i < rdev->num_crtc; i++) {
+		struct drm_modeset_acquire_ctx ctx;
+		crtc = &rdev->mode_info.crtcs[i]->base;
+
+		r_base = crtc->gamma_store;
+		g_base = r_base + crtc->gamma_size;
+		b_base = g_base + crtc->gamma_size;
+
+		DRM_MODESET_LOCK_ALL_BEGIN(dev, ctx, 0, ret);
+
+		p = rasops_cmap;
+		for (index = 0; index < 256; index++) {
+			r_base[index] = *p++ << 8;
+			g_base[index] = *p++ << 8;
+			b_base[index] = *p++ << 8;
+		}
+
+		crtc->funcs->gamma_set(crtc, NULL, NULL, NULL, 0, NULL);
+
+		DRM_MODESET_LOCK_ALL_END(dev, ctx, ret);
+	}
+}
 
 #ifdef __linux__
 /**
@@ -798,6 +810,8 @@ radeondrm_attachhook(struct device *self)
 
 #ifdef __sparc64__
 	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
+#else
+	radeondrm_setpal(rdev, ri);
 #endif
 
 #ifndef __sparc64__
