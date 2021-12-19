@@ -1,9 +1,26 @@
-.\"	$OpenBSD: BN_add.3,v 1.14 2021/11/30 18:34:35 tb Exp $
-.\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
+.\" $OpenBSD: BN_add.3,v 1.15 2021/12/19 18:39:32 schwarze Exp $
+.\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
-.\" This file was written by Ulf Moeller <ulf@openssl.org>
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Ulf Moeller <ulf@openssl.org>
 .\" and Bodo Moeller <bodo@openssl.org>.
-.\" Copyright (c) 2000, 2001, 2015 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2000, 2015 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -49,12 +66,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 30 2021 $
+.Dd $Mdocdate: December 19 2021 $
 .Dt BN_ADD 3
 .Os
 .Sh NAME
 .Nm BN_add ,
+.Nm BN_uadd ,
 .Nm BN_sub ,
+.Nm BN_usub ,
 .Nm BN_mul ,
 .Nm BN_sqr ,
 .Nm BN_div ,
@@ -84,7 +103,19 @@
 .Fa "const BIGNUM *b"
 .Fc
 .Ft int
+.Fo BN_uadd
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fc
+.Ft int
 .Fo BN_sub
+.Fa "BIGNUM *r"
+.Fa "const BIGNUM *a"
+.Fa "const BIGNUM *b"
+.Fc
+.Ft int
+.Fo BN_usub
 .Fa "BIGNUM *r"
 .Fa "const BIGNUM *a"
 .Fa "const BIGNUM *b"
@@ -194,6 +225,22 @@ as
 or
 .Fa b .
 .Pp
+.Fn BN_uadd
+adds the absolute values of
+.Fa a
+and
+.Fa b
+and places the result in
+.Fa r
+.Pq Li r=|a|+|b|\& .
+.Fa r
+may be the same
+.Vt BIGNUM
+as
+.Fa a
+or
+.Fa b .
+.Pp
 .Fn BN_sub
 subtracts
 .Fa b
@@ -202,6 +249,28 @@ from
 and places the result in
 .Fa r
 .Pq Li r=a-b .
+.Fa r
+may be the same
+.Vt BIGNUM
+as
+.Fa a
+or
+.Fa b .
+.Pp
+.Fn BN_usub
+subtracts the absolute value of
+.Fa b
+from the absolute value of
+.Fa a
+and places the result in
+.Fa r
+.Pq Li r=|a|-|b|\& .
+It requires the absolute value of
+.Fa a
+to be greater than the absolute value of
+.Fa b ;
+otherwise, it will sometimes fail
+and sometimes silently produce wrong results.
 .Fa r
 may be the same
 .Vt BIGNUM
@@ -422,11 +491,13 @@ first appeared in SSLeay 0.9.0.
 All these functions have been available since
 .Ox 2.4 .
 .Pp
-The
+.Fn BN_uadd ,
+.Fn BN_usub ,
+and the
 .Fa ctx
 argument to
 .Fn BN_mul
-was added in SSLeay 0.9.1 and
+first appeared in SSLeay 0.9.1 and have been available since
 .Ox 2.6 .
 .Pp
 .Fn BN_nnmod ,
