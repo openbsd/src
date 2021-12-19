@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.35 2021/12/15 04:00:15 deraadt Exp $ */
+/*	$OpenBSD: ldape.c,v 1.36 2021/12/19 12:19:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -432,7 +432,7 @@ ldape(int debug, int verbose, char *csockpath)
 				fatal("ldape: couldn't allocate tls context");
 
 			if (tls_configure(l->tls, l->ssl->config)) {
-				log_warn("ldape: %s", tls_error(l->tls));
+				log_warnx("ldape: %s", tls_error(l->tls));
 				fatal("ldape: couldn't configure tls");
 			}
 		}
