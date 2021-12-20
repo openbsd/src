@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1981 2021/10/31 14:41:00 patrick Exp 
+ *	OpenBSD: pcidevs,v 1.1982 2021/12/20 15:04:58 stsp Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5000,7 +5000,7 @@
 #define	PCI_PRODUCT_INTEL_GLK_PCIE_4	0x31d9		/* Gemini Lake PCIE */
 #define	PCI_PRODUCT_INTEL_GLK_PCIE_5	0x31da		/* Gemini Lake PCIE */
 #define	PCI_PRODUCT_INTEL_GLK_PCIE_6	0x31db		/* Gemini Lake PCIE */
-#define	PCI_PRODUCT_INTEL_GLK_WL	0x31dc		/* Gemini Lake CNVi */
+#define	PCI_PRODUCT_INTEL_WL_9560_3	0x31dc		/* AC 9560 */
 #define	PCI_PRODUCT_INTEL_GLK_AHCI	0x31e3		/* Gemini Lake AHCI */
 #define	PCI_PRODUCT_INTEL_GLK_LPC	0x31e8		/* Gemini Lake LPC */
 #define	PCI_PRODUCT_INTEL_GLK_UART_4	0x31ee		/* Gemini Lake HSUART */

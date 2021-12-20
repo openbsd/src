@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1981 2021/10/31 14:41:00 patrick Exp 
+ *	OpenBSD: pcidevs,v 1.1982 2021/12/20 15:04:58 stsp Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -17388,8 +17388,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Gemini Lake PCIE",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GLK_WL,
-	    "Gemini Lake CNVi",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_9560_3,
+	    "AC 9560",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GLK_AHCI,
