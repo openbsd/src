@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.57 2021/10/23 12:48:17 kettenis Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.58 2021/12/20 19:24:32 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -284,6 +284,7 @@ void		 bwfm_pci_flowring_create(struct bwfm_pci_softc *,
 		     struct mbuf *);
 void		 bwfm_pci_flowring_create_cb(struct bwfm_softc *, void *);
 void		 bwfm_pci_flowring_delete(struct bwfm_pci_softc *, int);
+void		 bwfm_pci_flowring_delete_cb(struct bwfm_softc *, void *);
 
 int		 bwfm_pci_preinit(struct bwfm_softc *);
 void		 bwfm_pci_stop(struct bwfm_softc *);
@@ -1542,6 +1543,7 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf, struct mbuf_list *ml)
 	struct msgbuf_common_hdr *msg;
 	struct msgbuf_flowring_create_resp *fcr;
 	struct msgbuf_flowring_delete_resp *fdr;
+	struct bwfm_cmd_flowring_create fdcmd;
 	struct bwfm_pci_msgring *ring;
 	struct mbuf *m;
 	int flowid;
@@ -1596,8 +1598,9 @@ bwfm_pci_msg_rx(struct bwfm_pci_softc *sc, void *buf, struct mbuf_list *ml)
 			    DEVNAME(sc), flowid);
 			break;
 		}
-		bwfm_pci_dmamem_free(sc, ring->ring);
-		ring->status = RING_CLOSED;
+		fdcmd.flowid = flowid;
+		bwfm_do_async(&sc->sc_sc, bwfm_pci_flowring_delete_cb,
+		    &fdcmd, sizeof(fdcmd));
 		break;
 	case MSGBUF_TYPE_IOCTLPTR_REQ_ACK:
 		m = bwfm_pci_pktid_free(sc, &sc->sc_ioctl_pkts,
@@ -1993,6 +1996,18 @@ bwfm_pci_flowring_delete(struct bwfm_pci_softc *sc, int flowid)
 
 	bwfm_pci_ring_write_commit(sc, &sc->sc_ctrl_submit);
 	splx(s);
+}
+
+void
+bwfm_pci_flowring_delete_cb(struct bwfm_softc *bwfm, void *arg)
+{
+	struct bwfm_pci_softc *sc = (void *)bwfm;
+	struct bwfm_cmd_flowring_create *cmd = arg;
+	struct bwfm_pci_msgring *ring;
+
+	ring = &sc->sc_flowrings[cmd->flowid];
+	bwfm_pci_dmamem_free(sc, ring->ring);
+	ring->status = RING_CLOSED;
 }
 
 void
