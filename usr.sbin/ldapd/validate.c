@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.12 2019/10/24 12:39:26 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.13 2021/12/20 13:18:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -313,6 +313,7 @@ validate_entry(const char *dn, struct ber_element *entry, int relax)
 	objclass = objclass->be_next;		/* skip attribute description */
 	for (a = objclass->be_sub; a != NULL; a = a->be_next) {
 		if (ober_get_string(a, &s) != 0) {
+			log_debug("invalid ObjectClass encoding");
 			rc = LDAP_INVALID_SYNTAX;
 			goto done;
 		}
@@ -396,6 +397,7 @@ validate_entry(const char *dn, struct ber_element *entry, int relax)
 	 */
 	for (a = entry->be_sub; a != NULL; a = a->be_next) {
 		if (ober_scanf_elements(a, "{se{", &s, &vals) != 0) {
+			log_debug("invalid attribute encoding");
 			rc = LDAP_INVALID_SYNTAX;
 			goto done;
 		}
