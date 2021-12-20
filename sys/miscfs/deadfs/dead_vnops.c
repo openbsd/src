@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.39 2021/12/12 09:14:59 visa Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.40 2021/12/20 16:22:24 visa Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -178,6 +178,11 @@ dead_kqfilter(void *v)
 	switch (ap->a_kn->kn_filter) {
 	case EVFILT_READ:
 	case EVFILT_WRITE:
+		ap->a_kn->kn_fop = &dead_filtops;
+		break;
+	case EVFILT_EXCEPT:
+		if ((ap->a_kn->kn_flags & __EV_POLL) == 0)
+			return (EINVAL);
 		ap->a_kn->kn_fop = &dead_filtops;
 		break;
 	default:
