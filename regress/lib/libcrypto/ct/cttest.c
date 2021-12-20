@@ -1,4 +1,4 @@
-/* $OpenBSD: cttest.c,v 1.1 2021/12/05 13:01:08 jsing Exp $ */
+/* $OpenBSD: cttest.c,v 1.2 2021/12/20 16:52:26 jsing Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -62,6 +62,8 @@ const uint8_t scts_asn1[] = {
 	0x49, 0x00, 0xc4, 0x57, 0xb8,
 };
 
+const char *sct_log_id1_base64 = "KXm+8J45OSHwVnOfY6V35b5XfZxgCvj5TV0mXCVdx4Q=";
+
 const uint8_t sct_signature1[] = {
 	0x30, 0x46, 0x02, 0x21, 0x00, 0x93, 0xed, 0x3a,
 	0x65, 0x98, 0x9a, 0x85, 0xf0, 0x3b, 0x3c, 0x26,
@@ -74,6 +76,12 @@ const uint8_t sct_signature1[] = {
 	0x4e, 0x02, 0xe8, 0xdb, 0x24, 0x65, 0x1e, 0xc8
 };
 
+const char *sct_signature1_base64 =
+    "BAMASDBGAiEAk+06ZZiahfA7PCb3UpTXkkjCwGTLAfXs921B4L0oVq0CIQDCT5L7oLvvVWeABh"
+    "AH57mxlqepi7LL05xOAujbJGUeyA==";
+
+const char *sct_log_id2_base64 = "b1N2rDHwMRnYmQCkURX/dxUcEdkCwQApBo2yCJo32RM=";
+
 const uint8_t sct_signature2[] = {
 	0x30, 0x44, 0x02, 0x20, 0x26, 0xc9, 0x12, 0x28,
 	0x70, 0x2d, 0x15, 0x05, 0xa7, 0xa2, 0xea, 0x12,
@@ -85,6 +93,10 @@ const uint8_t sct_signature2[] = {
 	0x32, 0xb8, 0x23, 0x1e, 0x7e, 0xfa, 0x7d, 0x83,
 	0xa5, 0x49, 0x00, 0xc4, 0x57, 0xb8
 };
+
+const char *sct_signature2_base64 =
+    "BAMARjBEAiAmyRIocC0VBaei6hIa/zk2X5PfgzZf7Qc4uApA4Y25+gIgYa4rhr2OhmUr+2Ph2n"
+    "ez88UqMrgjHn76fYOlSQDEV7g=";
 
 struct sct_data {
 	uint8_t version;
@@ -336,6 +348,49 @@ ct_sct_test(void)
 	return failed;
 }
 
+static int
+ct_sct_base64_test(void)
+{
+	SCT *sct1 = NULL, *sct2 = NULL;
+	STACK_OF(SCT) *scts = NULL;
+	int failed = 1;
+
+	if ((sct1 = SCT_new_from_base64(SCT_VERSION_V1, sct_log_id1_base64,
+	    CT_LOG_ENTRY_TYPE_X509, 1637344157551, "",
+	    sct_signature1_base64)) == NULL) {
+		fprintf(stderr, "FAIL: SCT_new_from_base64() failed\n");
+		ERR_print_errors_fp(stderr);
+		goto failure;
+	}
+	if ((sct2 = SCT_new_from_base64(SCT_VERSION_V1, sct_log_id2_base64,
+	    CT_LOG_ENTRY_TYPE_X509, 1637344157755, "",
+	    sct_signature2_base64)) == NULL) {
+		fprintf(stderr, "FAIL: SCT_new_from_base64() failed\n");
+		ERR_print_errors_fp(stderr);
+		goto failure;
+	}
+	if ((scts = sk_SCT_new_null()) == NULL)
+		goto failure;
+	if (!sk_SCT_push(scts, sct1))
+		goto failure;
+	sct1 = NULL;
+	if (!sk_SCT_push(scts, sct2))
+		goto failure;
+	sct2 = NULL;
+
+	if (!ct_compare_test_scts(scts))
+		goto failure;
+
+	failed = 0;
+
+ failure:
+	SCT_LIST_free(scts);
+	SCT_free(sct1);
+	SCT_free(sct2);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -350,6 +405,7 @@ main(int argc, char **argv)
 
 	failed |= ct_cert_test();
 	failed |= ct_sct_test();
+	failed |= ct_sct_base64_test();
 
 	return (failed);
 }
