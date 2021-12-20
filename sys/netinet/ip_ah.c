@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.170 2021/12/20 15:59:09 mvs Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.171 2021/12/20 17:09:18 tobhe Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -537,7 +537,7 @@ ah_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	uint32_t btsx, esn;
 	uint8_t *ptr = NULL;
 	uint8_t hl;
-	int error, rplen, clen;
+	int error, rplen;
 	uint64_t ibytes;
 #ifdef ENCDEBUG
 	char buf[INET6_ADDRSTRLEN];
@@ -699,9 +699,6 @@ ah_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 		ipsecstat_inc(ipsec_noxform);
 		goto drop;
 	}
-
-	/* Length of data after processing */
-	clen = crp->crp_olen;
 
 	/* Release the crypto descriptors */
 	crypto_freereq(crp);
