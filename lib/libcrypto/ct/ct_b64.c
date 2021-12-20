@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_b64.c,v 1.5 2021/12/18 16:34:52 tb Exp $ */
+/*	$OpenBSD: ct_b64.c,v 1.6 2021/12/20 17:19:19 jsing Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
  * (steve@openssl.org) for the OpenSSL project 2014.
@@ -64,6 +64,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
+#include "bytestring.h"
 #include "ct_local.h"
 
 /*
@@ -119,12 +120,12 @@ SCT_new_from_base64(unsigned char version, const char *logid_base64,
     ct_log_entry_type_t entry_type, uint64_t timestamp,
     const char *extensions_base64, const char *signature_base64)
 {
-	SCT *sct = SCT_new();
 	unsigned char *dec = NULL;
-	const unsigned char* p = NULL;
 	int declen;
+	SCT *sct;
+	CBS cbs;
 
-	if (sct == NULL) {
+	if ((sct = SCT_new()) == NULL) {
 		CTerror(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
@@ -161,8 +162,8 @@ SCT_new_from_base64(unsigned char version, const char *logid_base64,
 		goto err;
 	}
 
-	p = dec;
-	if (o2i_SCT_signature(sct, &p, declen) <= 0)
+	CBS_init(&cbs, dec, declen);
+	if (!o2i_SCT_signature(sct, &cbs))
 		goto err;
 	free(dec);
 	dec = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_oct.c,v 1.6 2021/12/18 16:34:52 tb Exp $ */
+/*	$OpenBSD: ct_oct.c,v 1.7 2021/12/20 17:19:19 jsing Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
  * (steve@openssl.org) for the OpenSSL project 2014.
@@ -72,8 +72,8 @@
 #include "bytestring.h"
 #include "ct_local.h"
 
-static int
-o2i_SCT_signature_internal(SCT *sct, CBS *cbs)
+int
+o2i_SCT_signature(SCT *sct, CBS *cbs)
 {
 	uint8_t hash_alg, sig_alg;
 	CBS signature;
@@ -119,26 +119,6 @@ o2i_SCT_signature_internal(SCT *sct, CBS *cbs)
 	return 0;
 }
 
-int
-o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
-{
-	size_t sig_len;
-	CBS cbs;
-
-	CBS_init(&cbs, *in, len);
-
-	if (!o2i_SCT_signature_internal(sct, &cbs))
-		return -1;
-
-	sig_len = len - CBS_len(&cbs);
-	if (sig_len > INT_MAX)
-		return -1;
-
-	*in = CBS_data(&cbs);
-
-	return sig_len;
-}
-
 static int
 o2i_SCT_internal(SCT **out_sct, CBS *cbs)
 {
@@ -182,7 +162,7 @@ o2i_SCT_internal(SCT **out_sct, CBS *cbs)
 		if (!CBS_stow(&extensions, &sct->ext, &sct->ext_len))
 			goto err;
 
-		if (!o2i_SCT_signature_internal(sct, cbs))
+		if (!o2i_SCT_signature(sct, cbs))
 			goto err;
 
 		if (CBS_len(cbs) != 0)

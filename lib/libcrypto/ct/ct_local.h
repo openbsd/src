@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_local.h,v 1.7 2021/12/18 17:26:54 tb Exp $ */
+/*	$OpenBSD: ct_local.h,v 1.8 2021/12/20 17:19:19 jsing Exp $ */
 /*
  * Written by Rob Percival (robpercival@google.com) for the OpenSSL project.
  */
@@ -55,9 +55,11 @@
 
 #include <openssl/ct.h>
 #include <openssl/evp.h>
+#include <openssl/safestack.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/safestack.h>
+
+#include "bytestring.h"
 
 /* Number of bytes in an SCT v1 LogID - see RFC 6962 section 3.2. */
 #define CT_V1_LOG_ID_LEN	32
@@ -250,7 +252,7 @@ int i2o_SCT_signature(const SCT *sct, unsigned char **out);
  * If an error occurs, the SCT's signature NID may be updated whilst the
  * signature field itself remains unset.
  */
-int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len);
+int o2i_SCT_signature(SCT *sct, CBS *cbs);
 
 /*
  * Handlers for Certificate Transparency X509v3/OCSP extensions
