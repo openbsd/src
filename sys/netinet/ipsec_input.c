@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.197 2021/12/08 14:24:18 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.198 2021/12/20 15:23:32 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1000,7 +1000,7 @@ ipsec_protoff(struct mbuf *m, int off, int af)
 			l = (ip6e.ip6e_len + 1) << 3;
 #ifdef DIAGNOSTIC
 		if (l <= 0)
-			panic("ah6_input: l went zero or negative");
+			panic("%s: l went zero or negative", __func__);
 #endif
 
 		nxt = ip6e.ip6e_nxt;
