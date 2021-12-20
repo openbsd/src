@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.65 2021/10/11 09:03:22 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.66 2021/12/20 15:08:10 stsp Exp $	*/
 
 /******************************************************************************
  *
@@ -982,6 +982,7 @@ struct iwm_tlv_calib_ctrl {
 #define IWM_FW_PHY_CFG_TX_CHAIN		(0xf << IWM_FW_PHY_CFG_TX_CHAIN_POS)
 #define IWM_FW_PHY_CFG_RX_CHAIN_POS	20
 #define IWM_FW_PHY_CFG_RX_CHAIN		(0xf << IWM_FW_PHY_CFG_RX_CHAIN_POS)
+#define IWM_FW_PHY_CFG_SHARED_CLK	(1U << 31)
 
 #define IWM_UCODE_MAX_CS		1
 

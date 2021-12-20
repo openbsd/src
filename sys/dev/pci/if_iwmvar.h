@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.73 2021/12/03 12:43:17 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.74 2021/12/20 15:08:10 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -580,7 +580,8 @@ struct iwm_softc {
 	bus_size_t sc_fwdmasegsz;
 	size_t sc_nvm_max_section_size;
 	struct iwm_fw_info sc_fw;
-	int sc_fw_phy_config;
+	uint32_t sc_fw_phy_config;
+	uint32_t sc_extra_phy_config;
 	struct iwm_tlv_calib_ctrl sc_default_calib[IWM_UCODE_TYPE_MAX];
 
 	struct iwm_nvm_data sc_nvm;

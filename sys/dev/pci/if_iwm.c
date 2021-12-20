@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.384 2021/12/03 12:43:17 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.385 2021/12/20 15:08:10 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4287,7 +4287,8 @@ iwm_send_phy_cfg_cmd(struct iwm_softc *sc)
 	struct iwm_phy_cfg_cmd phy_cfg_cmd;
 	enum iwm_ucode_type ucode_type = sc->sc_uc_current;
 
-	phy_cfg_cmd.phy_cfg = htole32(sc->sc_fw_phy_config);
+	phy_cfg_cmd.phy_cfg = htole32(sc->sc_fw_phy_config |
+	    sc->sc_extra_phy_config);
 	phy_cfg_cmd.calib_control.event_trigger =
 	    sc->sc_default_calib[ucode_type].event_trigger;
 	phy_cfg_cmd.calib_control.flow_trigger =
@@ -11177,6 +11178,7 @@ static const struct pci_matchid iwm_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_9260_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_9560_1 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_9560_2 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_9560_3 },
 };
 
 int
@@ -11405,6 +11407,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	case PCI_PRODUCT_INTEL_WL_9560_1:
 	case PCI_PRODUCT_INTEL_WL_9560_2:
+	case PCI_PRODUCT_INTEL_WL_9560_3:
 		sc->sc_fwname = "iwm-9000-46";
 		sc->host_interrupt_operation_mode = 0;
 		sc->sc_device_family = IWM_DEVICE_FAMILY_9000;
@@ -11412,7 +11415,11 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_nvm_max_section_size = 32768;
 		sc->sc_mqrx_supported = 1;
 		sc->sc_integrated = 1;
-		sc->sc_xtal_latency = 650;
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_WL_9560_3) {
+			sc->sc_xtal_latency = 670;
+			sc->sc_extra_phy_config = IWM_FW_PHY_CFG_SHARED_CLK;
+		} else
+			sc->sc_xtal_latency = 650;
 		break;
 	default:
 		printf("%s: unknown adapter type\n", DEVNAME(sc));
