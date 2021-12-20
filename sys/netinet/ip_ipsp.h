@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.232 2021/12/19 23:30:08 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.233 2021/12/20 15:59:10 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -134,17 +134,6 @@ struct ipsecstat {
 	uint64_t	ipsec_notdb;		/* No TDB was found */
 	uint64_t	ipsec_noxform;		/* Crypto error */
 	uint64_t	ipsec_exctdb;		/* TDBs with hardlimit excess */
-};
-
-struct tdb_data {
-	uint64_t	tdd_ipackets;		/* Input IPsec packets */
-	uint64_t	tdd_opackets;		/* Output IPsec packets */
-	uint64_t	tdd_ibytes;		/* Input bytes */
-	uint64_t	tdd_obytes;		/* Output bytes */
-	uint64_t	tdd_idrops;		/* Dropped on input */
-	uint64_t	tdd_odrops;		/* Dropped on output */
-	uint64_t	tdd_idecompbytes;	/* Input bytes, decompressed */
-	uint64_t	tdd_ouncompbytes;	/* Output bytes, uncompressed */
 };
 
 #ifdef _KERNEL
@@ -401,7 +390,8 @@ struct tdb {				/* tunnel descriptor block */
 	u_int64_t	tdb_last_used;	/* When was this SA last used */
 	u_int64_t	tdb_last_marked;/* Last SKIPCRYPTO status change */
 
-	struct tdb_data	tdb_data;	/* stats about this TDB */
+	struct cpumem   *tdb_counters;  /* stats about this TDB */
+
 	u_int64_t	tdb_cryptoid;	/* Crypto session ID */
 
 	u_int32_t	tdb_spi;	/* [I] SPI */
@@ -447,15 +437,37 @@ struct tdb {				/* tunnel descriptor block */
 	TAILQ_HEAD(tdb_policy_head, ipsec_policy) tdb_policy_head; /* [p] */
 	TAILQ_ENTRY(tdb)	tdb_sync_entry;
 };
-#define tdb_ipackets		tdb_data.tdd_ipackets
-#define tdb_opackets		tdb_data.tdd_opackets
-#define tdb_ibytes		tdb_data.tdd_ibytes
-#define tdb_obytes		tdb_data.tdd_obytes
-#define tdb_idrops		tdb_data.tdd_idrops
-#define tdb_odrops		tdb_data.tdd_odrops
-#define tdb_idecompbytes	tdb_data.tdd_idecompbytes
-#define tdb_ouncompbytes	tdb_data.tdd_ouncompbytes
 
+enum tdb_counters {
+	tdb_ipackets,           /* Input IPsec packets */
+	tdb_opackets,           /* Output IPsec packets */
+	tdb_ibytes,             /* Input bytes */
+	tdb_obytes,             /* Output bytes */
+	tdb_idrops,             /* Dropped on input */
+	tdb_odrops,             /* Dropped on output */
+	tdb_idecompbytes,       /* Input bytes, decompressed */
+	tdb_ouncompbytes,       /* Output bytes, uncompressed */
+	tdb_ncounters
+};
+
+static inline void
+tdbstat_inc(struct tdb *tdb, enum tdb_counters c)
+{
+	counters_inc(tdb->tdb_counters, c);
+}
+
+static inline void
+tdbstat_add(struct tdb *tdb, enum tdb_counters c, uint64_t v)
+{
+	counters_add(tdb->tdb_counters, c, v);
+}
+
+static inline void
+tdbstat_pkt(struct tdb *tdb, enum tdb_counters pc, enum tdb_counters bc,
+    uint64_t bytes)
+{
+	counters_pkt(tdb->tdb_counters, pc, bc, bytes);
+}
 
 struct tdb_ident {
 	u_int32_t spi;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.94 2021/12/11 16:33:47 bluhm Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.95 2021/12/20 15:59:10 mvs Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -367,7 +367,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	}
 
 	ipsecstat_add(ipsec_ouncompbytes, m->m_pkthdr.len);
-	tdb->tdb_ouncompbytes += m->m_pkthdr.len;
+	tdbstat_add(tdb, tdb_ouncompbytes, m->m_pkthdr.len);
 
 	/* Non expansion policy for IPCOMP */
 	if (tdb->tdb_sproto == IPPROTO_IPCOMP) {
@@ -507,8 +507,7 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	m_tag_prepend(m, mtag);
 
 	ipsecstat_pkt(ipsec_opackets, ipsec_obytes, m->m_pkthdr.len);
-	tdb->tdb_opackets++;
-	tdb->tdb_obytes += m->m_pkthdr.len;
+	tdbstat_pkt(tdb, tdb_opackets, tdb_obytes, m->m_pkthdr.len);
 
 	/* If there's another (bundled) TDB to apply, do so. */
 	tdbo = tdb_ref(tdb->tdb_onext);

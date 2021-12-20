@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.77 2021/12/11 16:33:46 bluhm Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.78 2021/12/20 15:59:09 mvs Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -963,18 +963,21 @@ export_satype(void **p, struct tdb *tdb)
 void
 export_counter(void **p, struct tdb *tdb)
 {
+	uint64_t counters[tdb_ncounters];
 	struct sadb_x_counter *scnt = (struct sadb_x_counter *)*p;
+
+	counters_read(tdb->tdb_counters, counters, tdb_ncounters);
 
 	scnt->sadb_x_counter_len = sizeof(struct sadb_x_counter) /
 	    sizeof(uint64_t);
 	scnt->sadb_x_counter_pad = 0;
-	scnt->sadb_x_counter_ipackets = tdb->tdb_ipackets;
-	scnt->sadb_x_counter_opackets = tdb->tdb_opackets;
-	scnt->sadb_x_counter_ibytes = tdb->tdb_ibytes;
-	scnt->sadb_x_counter_obytes = tdb->tdb_obytes;
-	scnt->sadb_x_counter_idrops = tdb->tdb_idrops;
-	scnt->sadb_x_counter_odrops = tdb->tdb_odrops;
-	scnt->sadb_x_counter_idecompbytes = tdb->tdb_idecompbytes;
-	scnt->sadb_x_counter_ouncompbytes = tdb->tdb_ouncompbytes;
+	scnt->sadb_x_counter_ipackets = counters[tdb_ipackets];
+	scnt->sadb_x_counter_opackets = counters[tdb_opackets];
+	scnt->sadb_x_counter_ibytes = counters[tdb_ibytes];
+	scnt->sadb_x_counter_obytes = counters[tdb_obytes];
+	scnt->sadb_x_counter_idrops = counters[tdb_idrops];
+	scnt->sadb_x_counter_odrops = counters[tdb_odrops];
+	scnt->sadb_x_counter_idecompbytes = counters[tdb_idecompbytes];
+	scnt->sadb_x_counter_ouncompbytes = counters[tdb_ouncompbytes];
 	*p += sizeof(struct sadb_x_counter);
 }
