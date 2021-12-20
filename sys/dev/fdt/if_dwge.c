@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.12 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.13 2021/12/20 04:21:32 jmatthew Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -234,6 +234,7 @@ struct dwge_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
+	void			*sc_ih;
 
 	struct arpcom		sc_ac;
 #define sc_lladdr	sc_ac.ac_enaddr
@@ -247,7 +248,6 @@ struct dwge_softc {
 	struct dwge_buf		*sc_txbuf;
 	struct dwge_desc	*sc_txdesc;
 	int			sc_tx_prod;
-	int			sc_tx_cnt;
 	int			sc_tx_cons;
 
 	struct dwge_dmamem	*sc_rxring;
@@ -289,7 +289,7 @@ uint32_t dwge_read(struct dwge_softc *, bus_addr_t);
 void	dwge_write(struct dwge_softc *, bus_addr_t, uint32_t);
 
 int	dwge_ioctl(struct ifnet *, u_long, caddr_t);
-void	dwge_start(struct ifnet *);
+void	dwge_start(struct ifqueue *);
 void	dwge_watchdog(struct ifnet *);
 
 int	dwge_media_change(struct ifnet *);
@@ -312,7 +312,7 @@ void	dwge_rx_proc(struct dwge_softc *);
 void	dwge_up(struct dwge_softc *);
 void	dwge_down(struct dwge_softc *);
 void	dwge_iff(struct dwge_softc *);
-int	dwge_encap(struct dwge_softc *, struct mbuf *, int *);
+int	dwge_encap(struct dwge_softc *, struct mbuf *, int *, int *);
 
 void	dwge_reset(struct dwge_softc *);
 void	dwge_stop_dma(struct dwge_softc *);
@@ -422,8 +422,9 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 	ifp = &sc->sc_ac.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_xflags = IFXF_MPSAFE;
 	ifp->if_ioctl = dwge_ioctl;
-	ifp->if_start = dwge_start;
+	ifp->if_qstart = dwge_start;
 	ifp->if_watchdog = dwge_watchdog;
 	ifq_set_maxlen(&ifp->if_snd, DWGE_NTXDESC - 1);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
@@ -535,8 +536,10 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 	dwge_write(sc, GMAC_MMC_TX_INT_MSK, 0xffffffff);
 	dwge_write(sc, GMAC_MMC_IPC_INT_MSK, 0xffffffff);
 
-	fdt_intr_establish(faa->fa_node, IPL_NET, dwge_intr, sc,
-	    sc->sc_dev.dv_xname);
+	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_NET | IPL_MPSAFE,
+	    dwge_intr, sc, sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL)
+		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
 }
 
 void
@@ -612,11 +615,12 @@ dwge_lladdr_write(struct dwge_softc *sc)
 }
 
 void
-dwge_start(struct ifnet *ifp)
+dwge_start(struct ifqueue *ifq)
 {
+	struct ifnet *ifp = ifq->ifq_if;
 	struct dwge_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-	int error, idx;
+	int error, idx, left, used;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
@@ -628,26 +632,28 @@ dwge_start(struct ifnet *ifp)
 		return;
 
 	idx = sc->sc_tx_prod;
-	while ((sc->sc_txdesc[idx].sd_status & TDES0_OWN) == 0) {
-		m = ifq_deq_begin(&ifp->if_snd);
+	left = sc->sc_tx_cons;
+	if (left <= idx)
+		left += DWGE_NTXDESC;
+	left -= idx;
+	used = 0;
+
+	for (;;) {
+		if (used + DWGE_NTXSEGS + 1 > left) {
+			ifq_set_oactive(ifq);
+			break;
+		}
+
+		m = ifq_dequeue(ifq);
 		if (m == NULL)
 			break;
 
-		error = dwge_encap(sc, m, &idx);
-		if (error == ENOBUFS) {
-			ifq_deq_rollback(&ifp->if_snd, m);
-			ifq_set_oactive(&ifp->if_snd);
-			break;
-		}
+		error = dwge_encap(sc, m, &idx, &used);
 		if (error == EFBIG) {
-			ifq_deq_commit(&ifp->if_snd, m);
 			m_freem(m); /* give up: drop it */
 			ifp->if_oerrors++;
 			continue;
 		}
-
-		/* Now we are committed to transmit the packet. */
-		ifq_deq_commit(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
@@ -660,6 +666,8 @@ dwge_start(struct ifnet *ifp)
 
 		/* Set a timeout in case the chip goes out to lunch. */
 		ifp->if_timer = 5;
+
+		dwge_write(sc, GMAC_TX_POLL_DEMAND, 0xffffffff);
 	}
 }
 
@@ -901,7 +909,7 @@ dwge_tx_proc(struct dwge_softc *sc)
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	txfree = 0;
-	while (sc->sc_tx_cnt > 0) {
+	while (sc->sc_tx_cons != sc->sc_tx_prod) {
 		idx = sc->sc_tx_cons;
 		KASSERT(idx < DWGE_NTXDESC);
 
@@ -920,7 +928,6 @@ dwge_tx_proc(struct dwge_softc *sc)
 		}
 
 		txfree++;
-		sc->sc_tx_cnt--;
 
 		if (sc->sc_tx_cons == (DWGE_NTXDESC - 1))
 			sc->sc_tx_cons = 0;
@@ -930,7 +937,7 @@ dwge_tx_proc(struct dwge_softc *sc)
 		txd->sd_status = 0;
 	}
 
-	if (sc->sc_tx_cnt == 0)
+	if (sc->sc_tx_cons == sc->sc_tx_prod)
 		ifp->if_timer = 0;
 
 	if (txfree) {
@@ -947,7 +954,7 @@ dwge_rx_proc(struct dwge_softc *sc)
 	struct dwge_buf *rxb;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
-	int idx, len;
+	int idx, len, cnt, put;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
@@ -956,7 +963,9 @@ dwge_rx_proc(struct dwge_softc *sc)
 	    DWGE_DMA_LEN(sc->sc_rxring),
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	while (if_rxr_inuse(&sc->sc_rx_ring) > 0) {
+	cnt = if_rxr_inuse(&sc->sc_rx_ring);
+	put = 0;
+	while (put < cnt) {
 		idx = sc->sc_rx_cons;
 		KASSERT(idx < DWGE_NRXDESC);
 
@@ -982,13 +991,14 @@ dwge_rx_proc(struct dwge_softc *sc)
 
 		ml_enqueue(&ml, m);
 
-		if_rxr_put(&sc->sc_rx_ring, 1);
+		put++;
 		if (sc->sc_rx_cons == (DWGE_NRXDESC - 1))
 			sc->sc_rx_cons = 0;
 		else
 			sc->sc_rx_cons++;
 	}
 
+	if_rxr_put(&sc->sc_rx_ring, put);
 	if (ifiq_input(&ifp->if_rcv, &ml))
 		if_rxr_livelocked(&sc->sc_rx_ring);
 
@@ -1030,7 +1040,6 @@ dwge_up(struct dwge_softc *sc)
 	    0, DWGE_DMA_LEN(sc->sc_txring), BUS_DMASYNC_PREWRITE);
 
 	sc->sc_tx_prod = sc->sc_tx_cons = 0;
-	sc->sc_tx_cnt = 0;
 
 	dwge_write(sc, GMAC_TX_DESC_LIST_ADDR, DWGE_DMA_DVA(sc->sc_txring));
 
@@ -1123,6 +1132,9 @@ dwge_down(struct dwge_softc *sc)
 
 	dwge_write(sc, GMAC_INT_ENA, 0);
 
+	intr_barrier(sc->sc_ih);
+	ifq_barrier(&ifp->if_snd);
+
 	for (i = 0; i < DWGE_NTXDESC; i++) {
 		txb = &sc->sc_txbuf[i];
 		if (txb->tb_m) {
@@ -1208,7 +1220,7 @@ dwge_iff(struct dwge_softc *sc)
 }
 
 int
-dwge_encap(struct dwge_softc *sc, struct mbuf *m, int *idx)
+dwge_encap(struct dwge_softc *sc, struct mbuf *m, int *idx, int *used)
 {
 	struct dwge_desc *txd, *txd_start;
 	bus_dmamap_t map;
@@ -1222,11 +1234,6 @@ dwge_encap(struct dwge_softc *sc, struct mbuf *m, int *idx)
 			return (EFBIG);
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT))
 			return (EFBIG);
-	}
-
-	if (map->dm_nsegs > (DWGE_NTXDESC - sc->sc_tx_cnt - 2)) {
-		bus_dmamap_unload(sc->sc_dmat, map);
-		return (ENOBUFS);
 	}
 
 	/* Sync the DMA map. */
@@ -1262,15 +1269,14 @@ dwge_encap(struct dwge_softc *sc, struct mbuf *m, int *idx)
 	bus_dmamap_sync(sc->sc_dmat, DWGE_DMA_MAP(sc->sc_txring),
 	    *idx * sizeof(*txd), sizeof(*txd), BUS_DMASYNC_PREWRITE);
 
-	dwge_write(sc, GMAC_TX_POLL_DEMAND, 0xffffffff);
 
 	KASSERT(sc->sc_txbuf[cur].tb_m == NULL);
 	sc->sc_txbuf[*idx].tb_map = sc->sc_txbuf[cur].tb_map;
 	sc->sc_txbuf[cur].tb_map = map;
 	sc->sc_txbuf[cur].tb_m = m;
 
-	sc->sc_tx_cnt += map->dm_nsegs;
 	*idx = frag;
+	*used += map->dm_nsegs;
 
 	return (0);
 }
