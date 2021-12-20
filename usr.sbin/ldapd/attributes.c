@@ -1,4 +1,4 @@
-/*	$OpenBSD: attributes.c,v 1.6 2019/10/24 12:39:26 tb Exp $ */
+/*	$OpenBSD: attributes.c,v 1.7 2021/12/20 13:26:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2009 Martin Hedenfalk <martin@bzero.se>
@@ -181,7 +181,7 @@ ldap_del_attribute(struct ber_element *entry, const char *attrdesc)
 
 	attr = entry->be_sub;
 	while (attr) {
-		if (ober_scanf_elements(attr, "{s(", &s) != 0) {
+		if (ober_scanf_elements(attr, "{s", &s) != 0) {
 			log_warnx("failed to parse attribute");
 			return -1;
 		}
@@ -240,6 +240,9 @@ ldap_del_values(struct ber_element *elm, struct ber_element *vals)
 			prev = v;
 		}
 	}
+
+	if (old_vals->be_sub == NULL)
+		return 1;
 
 	return 0;
 }
