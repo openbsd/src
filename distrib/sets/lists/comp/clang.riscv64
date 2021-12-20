@@ -2164,7 +2164,6 @@
 ./usr/lib/clang/13.0.0
 ./usr/lib/clang/13.0.0/include
 ./usr/lib/clang/13.0.0/include/module.modulemap
-./usr/lib/clang/13.0.0/include/riscv_vector.h
 ./usr/lib/clang/13.0.0/include/stdalign.h
 ./usr/lib/clang/13.0.0/include/stdatomic.h
 ./usr/lib/clang/13.0.0/include/stdnoreturn.h
