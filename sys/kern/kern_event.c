@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.176 2021/12/20 16:21:07 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.177 2021/12/20 16:24:32 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -636,6 +636,17 @@ seltrue_kqfilter(dev_t dev, struct knote *kn)
 static int
 filt_dead(struct knote *kn, long hint)
 {
+	if (kn->kn_filter == EVFILT_EXCEPT) {
+		/*
+		 * Do not deliver event because there is no out-of-band data.
+		 * However, let HUP condition pass for poll(2).
+		 */
+		if ((kn->kn_flags & __EV_POLL) == 0) {
+			kn->kn_flags |= EV_DISABLE;
+			return (0);
+		}
+	}
+
 	kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 	if (kn->kn_flags & __EV_POLL)
 		kn->kn_flags |= __EV_HUP;
