@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1981 2021/10/31 14:41:00 patrick Exp $
+$OpenBSD: pcidevs,v 1.1982 2021/12/20 15:04:58 stsp Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -4995,7 +4995,7 @@ product INTEL GLK_PCIE_3	0x31d8	Gemini Lake PCIE
 product INTEL GLK_PCIE_4	0x31d9	Gemini Lake PCIE
 product INTEL GLK_PCIE_5	0x31da	Gemini Lake PCIE
 product INTEL GLK_PCIE_6	0x31db	Gemini Lake PCIE
-product INTEL GLK_WL		0x31dc	Gemini Lake CNVi
+product INTEL WL_9560_3		0x31dc	AC 9560
 product INTEL GLK_AHCI		0x31e3	Gemini Lake AHCI
 product INTEL GLK_LPC		0x31e8	Gemini Lake LPC
 product INTEL GLK_UART_4	0x31ee	Gemini Lake HSUART
