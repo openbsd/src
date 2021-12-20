@@ -327,6 +327,7 @@
 ./usr/include/dev/ic/mpuvar.h
 ./usr/include/dev/ic/mtd8xxreg.h
 ./usr/include/dev/ic/mtd8xxvar.h
+./usr/include/dev/ic/mtwreg.h
 ./usr/include/dev/ic/ncr53c9xreg.h
 ./usr/include/dev/ic/ncr53c9xvar.h
 ./usr/include/dev/ic/ne2000reg.h
@@ -767,6 +768,7 @@
 ./usr/include/dev/usb/if_kuereg.h
 ./usr/include/dev/usb/if_kuevar.h
 ./usr/include/dev/usb/if_mosreg.h
+./usr/include/dev/usb/if_mtwvar.h
 ./usr/include/dev/usb/if_muereg.h
 ./usr/include/dev/usb/if_otusreg.h
 ./usr/include/dev/usb/if_ralreg.h
