@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.331 2021/10/11 10:55:31 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.332 2021/12/20 09:02:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3148,6 +3148,11 @@ window_copy_cellstring(const struct grid_line *gl, u_int px, size_t *size,
 	}
 
 	utf8_to_data(gl->extddata[gce->offset].data, &ud);
+	if (ud.size == 0) {
+		*size = 0;
+		*allocated = 0;
+		return (NULL);
+	}
 	*size = ud.size;
 	*allocated = 1;
 
