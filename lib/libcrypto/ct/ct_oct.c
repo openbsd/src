@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_oct.c,v 1.7 2021/12/20 17:19:19 jsing Exp $ */
+/*	$OpenBSD: ct_oct.c,v 1.8 2021/12/20 17:23:07 jsing Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
  * (steve@openssl.org) for the OpenSSL project 2014.
@@ -316,10 +316,10 @@ i2o_SCT(const SCT *sct, unsigned char **out)
 }
 
 STACK_OF(SCT) *
-o2i_SCT_LIST(STACK_OF(SCT) **scts, const unsigned char **pp, size_t len)
+o2i_SCT_LIST(STACK_OF(SCT) **out_scts, const unsigned char **pp, size_t len)
 {
 	CBS cbs, cbs_scts, cbs_sct;
-	STACK_OF(SCT) *sk = NULL;
+	STACK_OF(SCT) *scts = NULL;
 
 	CBS_init(&cbs, *pp, len);
 
@@ -330,17 +330,13 @@ o2i_SCT_LIST(STACK_OF(SCT) **scts, const unsigned char **pp, size_t len)
 	if (CBS_len(&cbs) != 0)
 		goto err_invalid;
 
-	if (scts == NULL || *scts == NULL) {
-		if ((sk = sk_SCT_new_null()) == NULL)
-			return NULL;
-	} else {
-		SCT *sct;
-
-		/* Use the given stack, but empty it first. */
-		sk = *scts;
-		while ((sct = sk_SCT_pop(sk)) != NULL)
-			SCT_free(sct);
+	if (out_scts != NULL) {
+		SCT_LIST_free(*out_scts);
+		*out_scts = NULL;
 	}
+
+	if ((scts = sk_SCT_new_null()) == NULL)
+		return NULL;
 
 	while (CBS_len(&cbs_scts) > 0) {
 		SCT *sct;
@@ -350,24 +346,23 @@ o2i_SCT_LIST(STACK_OF(SCT) **scts, const unsigned char **pp, size_t len)
 
 		if (!o2i_SCT_internal(&sct, &cbs_sct))
 			goto err;
-		if (!sk_SCT_push(sk, sct)) {
+		if (!sk_SCT_push(scts, sct)) {
 			SCT_free(sct);
 			goto err;
 		}
 	}
 
-	if (scts != NULL && *scts == NULL)
-		*scts = sk;
+	if (out_scts != NULL)
+		*out_scts = scts;
 
 	*pp = CBS_data(&cbs);
 
-	return sk;
+	return scts;
 
  err_invalid:
 	CTerror(CT_R_SCT_LIST_INVALID);
  err:
-	if (scts == NULL || *scts == NULL)
-		SCT_LIST_free(sk);
+	SCT_LIST_free(scts);
 
 	return NULL;
 }
