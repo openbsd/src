@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.175 2021/12/11 09:28:26 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.176 2021/12/20 16:21:07 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -584,14 +584,18 @@ int
 filt_seltruemodify(struct kevent *kev, struct knote *kn)
 {
 	knote_modify(kev, kn);
-	return (1);
+	return (kn->kn_fop->f_event(kn, 0));
 }
 
 int
 filt_seltrueprocess(struct knote *kn, struct kevent *kev)
 {
-	knote_submit(kn, kev);
-	return (1);
+	int active;
+
+	active = kn->kn_fop->f_event(kn, 0);
+	if (active)
+		knote_submit(kn, kev);
+	return (active);
 }
 
 /*
