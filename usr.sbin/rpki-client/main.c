@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.167 2021/11/25 15:03:04 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.168 2021/12/21 17:50:27 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -397,22 +397,22 @@ queue_add_from_mft_set(const struct mft *mft)
  * Add a local TAL file (RFC 7730) to the queue of files to fetch.
  */
 static void
-queue_add_tal(const char *file, int id)
+queue_add_tal(const char *file, int talid)
 {
 	unsigned char	*buf;
 	char		*nfile;
 	size_t		 len;
 
-	if ((nfile = strdup(file)) == NULL)
-		err(1, NULL);
 	buf = load_file(file, &len);
 	if (buf == NULL) {
 		warn("%s", file);
 		return;
 	}
 
+	if ((nfile = strdup(file)) == NULL)
+		err(1, NULL);
 	/* Not in a repository, so directly add to queue. */
-	entityq_add(nfile, RTYPE_TAL, NULL, buf, len, id);
+	entityq_add(nfile, RTYPE_TAL, NULL, buf, len, talid);
 }
 
 /*
@@ -437,8 +437,7 @@ queue_add_from_tal(struct tal *tal)
 	/* steal the pkey from the tal structure */
 	data = tal->pkey;
 	tal->pkey = NULL;
-	entityq_add(NULL, RTYPE_CER, repo, data,
-	    tal->pkeysz, tal->id);
+	entityq_add(NULL, RTYPE_CER, repo, data, tal->pkeysz, tal->id);
 }
 
 /*
