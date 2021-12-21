@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.21 2021/12/21 07:44:22 jsg Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.22 2021/12/21 11:46:01 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -233,7 +233,6 @@ struct uhidpp_softc {
 	struct uhidpp_report *sc_req;	/* [m] synchronous request buffer */
 	struct uhidpp_report *sc_resp;	/* [m] synchronous response buffer */
 	u_int sc_resp_state;		/* [m] synchronous response state */
-
 };
 
 int uhidpp_match(struct device *, void *, void *);
@@ -254,7 +253,7 @@ int uhidpp_is_notification(struct uhidpp_softc *, struct uhidpp_report *);
 
 static int uhidpp_has_sensors(struct uhidpp_softc *);
 
-int hidpp_get_protocol_version(struct uhidpp_softc  *, uint8_t, uint8_t *,
+int hidpp_get_protocol_version(struct uhidpp_softc *, uint8_t, uint8_t *,
     uint8_t *);
 
 int hidpp10_get_name(struct uhidpp_softc *, uint8_t, char *, size_t);
@@ -275,8 +274,8 @@ int hidpp20_battery_get_capability(struct uhidpp_softc *, uint8_t, uint8_t,
 int hidpp20_battery_status_is_charging(uint8_t);
 
 int hidpp_send_validate(uint8_t, int);
-int hidpp_send_rap_report(struct uhidpp_softc *, uint8_t, uint8_t,
-    uint8_t, uint8_t, uint8_t *, int, struct uhidpp_report *);
+int hidpp_send_rap_report(struct uhidpp_softc *, uint8_t, uint8_t, uint8_t,
+    uint8_t, uint8_t *, int, struct uhidpp_report *);
 int hidpp_send_fap_report(struct uhidpp_softc *, uint8_t, uint8_t, uint8_t,
     uint8_t, uint8_t *, int, struct uhidpp_report *);
 int hidpp_send_report(struct uhidpp_softc *, uint8_t, struct uhidpp_report *,
@@ -308,7 +307,7 @@ uhidpp_match(struct device *parent, void *match, void *aux)
 		return UMATCH_NONE;
 
 	if (usb_lookup(uhidpp_devs,
-		    uha->uaa->vendor, uha->uaa->product) == NULL)
+	    uha->uaa->vendor, uha->uaa->product) == NULL)
 		return UMATCH_NONE;
 
 	uhidev_get_report_desc(uha->parent, &desc, &descsiz);
@@ -330,8 +329,8 @@ uhidpp_attach(struct device *parent, struct device *self, void *aux)
 	struct uhidpp_softc *sc = (struct uhidpp_softc *)self;
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)aux;
 	struct usb_attach_arg *uaa = uha->uaa;
-	int error, i;
 	int npaired = 0;
+	int error, i;
 
 	sc->sc_hdev.sc_intr = uhidpp_intr;
 	sc->sc_hdev.sc_udev = uaa->device;
@@ -611,7 +610,6 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 			    "error=%d\n", __func__, dev->d_id, error);
 			return;
 		}
-
 	} else {
 		return;
 	}
@@ -824,7 +822,6 @@ uhidpp_consume_notification(struct uhidpp_softc *sc, struct uhidpp_report *rep)
 	return 0;
 }
 
-
 /*
  * Returns non-zero if the given report is a notification. Otherwise, it must be
  * a response.
@@ -844,7 +841,7 @@ uhidpp_is_notification(struct uhidpp_softc *sc, struct uhidpp_report *rep)
 
 	/* An error must always be a response. */
 	if ((rep->rap.sub_id == HIDPP_ERROR ||
-		    rep->fap.feature_idx == HIDPP20_ERROR) &&
+	    rep->fap.feature_idx == HIDPP20_ERROR) &&
 	    rep->fap.funcidx_swid == sc->sc_req->fap.feature_idx &&
 	    rep->fap.params[0] == sc->sc_req->fap.funcidx_swid)
 		return 0;
@@ -859,7 +856,7 @@ uhidpp_has_sensors(struct uhidpp_softc *sc)
 }
 
 int
-hidpp_get_protocol_version(struct uhidpp_softc  *sc, uint8_t device_id,
+hidpp_get_protocol_version(struct uhidpp_softc *sc, uint8_t device_id,
     uint8_t *major, uint8_t *minor)
 {
 	struct uhidpp_report resp;
@@ -1207,7 +1204,8 @@ int
 hidpp_send_report(struct uhidpp_softc *sc, uint8_t report_id,
     struct uhidpp_report *req, struct uhidpp_report *resp)
 {
-	int error = 0, len, n;
+	int error = 0;
+	int len, n;
 
 	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
