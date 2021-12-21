@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchgpio.c,v 1.9 2021/12/07 18:06:08 kettenis Exp $	*/
+/*	$OpenBSD: pchgpio.c,v 1.10 2021/12/21 20:53:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  * Copyright (c) 2020 James Hastings
@@ -261,6 +261,8 @@ pchgpio_match(struct device *parent, void *match, void *aux)
 	struct acpi_attach_args *aaa = aux;
 	struct cfdata *cf = match;
 
+	if (aaa->aaa_naddr < 1 || aaa->aaa_nirq < 1)
+		return 0;
 	return acpi_matchhids(aaa, pchgpio_hids, cf->cf_driver->cd_name);
 }
 
@@ -275,16 +277,6 @@ pchgpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
 	printf(" %s", sc->sc_node->name);
-
-	if (aaa->aaa_naddr < 1) {
-		printf(": no registers\n");
-		return;
-	}
-
-	if (aaa->aaa_nirq < 1) {
-		printf(": no interrupt\n");
-		return;
-	}
 
 	printf(" addr");
 

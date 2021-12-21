@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdgpio.c,v 1.5 2021/05/16 08:50:59 jsg Exp $	*/
+/*	$OpenBSD: amdgpio.c,v 1.6 2021/12/21 20:53:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2019 James Hastings
@@ -93,6 +93,8 @@ amdgpio_match(struct device *parent, void *match, void *aux)
 	struct acpi_attach_args *aaa = aux;
 	struct cfdata *cf = match;
 
+	if (aaa->aaa_naddr < 1 || aaa->aaa_nirq < 1)
+		return 0;
 	return acpi_matchhids(aaa, amdgpio_hids, cf->cf_driver->cd_name);
 }
 
@@ -106,16 +108,6 @@ amdgpio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
 	printf(" %s", sc->sc_node->name);
-
-	if (aaa->aaa_naddr < 1) {
-		printf(": no registers\n");
-		return;
-	}
-
-	if (aaa->aaa_nirq < 1) {
-		printf(": no interrupt\n");
-		return;
-	}
 
 	if (aml_evalinteger(sc->sc_acpi, sc->sc_node, "_UID", 0, NULL, &uid)) {
 		printf(": can't find uid\n");

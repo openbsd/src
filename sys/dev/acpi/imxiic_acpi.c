@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic_acpi.c,v 1.2 2021/07/24 10:52:07 patrick Exp $ */
+/* $OpenBSD: imxiic_acpi.c,v 1.3 2021/12/21 20:53:46 kettenis Exp $ */
 /*
  * Copyright (c) 2015, 2016 joshua stein <jcs@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -67,6 +67,8 @@ imxiic_acpi_match(struct device *parent, void *match, void *aux)
 	struct acpi_attach_args *aaa = aux;
 	struct cfdata *cf = match;
 
+	if (aaa->aaa_naddr < 1)
+		return 0;
 	return acpi_matchhids(aaa, imxiic_hids, cf->cf_driver->cd_name);
 }
 
@@ -82,11 +84,6 @@ imxiic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	ac->ac_devnode = aaa->aaa_node;
 
 	printf(" %s", ac->ac_devnode->name);
-
-	if (aaa->aaa_naddr < 1) {
-		printf(": no registers\n");
-		return;
-	}
 
 	printf(" addr 0x%llx/0x%llx", aaa->aaa_addr[0], aaa->aaa_size[0]);
 

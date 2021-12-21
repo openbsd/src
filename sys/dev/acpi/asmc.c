@@ -1,4 +1,4 @@
-/*	$OpenBSD: asmc.c,v 1.3 2020/12/12 09:44:27 mglocker Exp $	*/
+/*	$OpenBSD: asmc.c,v 1.4 2021/12/21 20:53:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
  *
@@ -242,6 +242,8 @@ asmc_match(struct device *parent, void *match, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct cfdata *cf = match;
 
+	if (aa->aaa_naddr < 1)
+		return 0;
 	return acpi_matchhids(aa, asmc_hids, cf->cf_driver->cd_name);
 }
 
@@ -279,11 +281,6 @@ asmc_attach(struct device *parent, struct device *self, void *aux)
 
 	if (!(aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CID", 0, NULL, &res)))
 		printf(" (%s)", res.v_string);
-
-	if (aaa->aaa_naddr < 1) {
-		printf(": no registers\n");
-		return;
-	}
 
 	printf (" addr 0x%llx/0x%llx", aaa->aaa_addr[0], aaa->aaa_size[0]);
 

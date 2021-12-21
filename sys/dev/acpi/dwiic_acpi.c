@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_acpi.c,v 1.17 2021/12/07 10:16:50 kettenis Exp $ */
+/* $OpenBSD: dwiic_acpi.c,v 1.18 2021/12/21 20:53:46 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -91,6 +91,8 @@ dwiic_acpi_match(struct device *parent, void *match, void *aux)
 	struct acpi_attach_args *aaa = aux;
 	struct cfdata *cf = match;
 
+	if (aaa->aaa_naddr < 1)
+		return 0;
 	return acpi_matchhids(aaa, dwiic_hids, cf->cf_driver->cd_name);
 }
 
@@ -107,11 +109,6 @@ dwiic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	memcpy(&sc->sc_hid, aaa->aaa_dev, sizeof(sc->sc_hid));
 
 	printf(" %s", sc->sc_devnode->name);
-
-	if (aaa->aaa_naddr < 1) {
-		printf(": no registers\n");
-		return;
-	}
 
 	if (aml_evalname(sc->sc_acpi, sc->sc_devnode, "_CRS", 0, NULL, &res)) {
 		printf(", no _CRS method\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart_acpi.c,v 1.4 2020/05/08 11:18:01 kettenis Exp $	*/
+/*	$OpenBSD: pluart_acpi.c,v 1.5 2021/12/21 20:53:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -58,6 +58,8 @@ pluart_acpi_match(struct device *parent, void *match, void *aux)
 	struct acpi_attach_args *aaa = aux;
 	struct cfdata *cf = match;
 
+	if (aaa->aaa_naddr < 1 || aaa->aaa_nirq < 1)
+		return 0;
 	return acpi_matchhids(aaa, pluart_hids, cf->cf_driver->cd_name);
 }
 
@@ -70,16 +72,6 @@ pluart_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
 	printf(" %s", sc->sc_node->name);
-
-	if (aaa->aaa_naddr < 1) {
-		printf(": no registers\n");
-		return;
-	}
-
-	if (aaa->aaa_nirq < 1) {
-		printf(": no interrupt\n");
-		return;
-	}
 
 	printf(" addr 0x%llx/0x%llx", aaa->aaa_addr[0], aaa->aaa_size[0]);
 	printf(" irq %d", aaa->aaa_irq[0]);
