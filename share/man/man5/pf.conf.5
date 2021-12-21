@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.588 2021/11/01 07:51:51 landry Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.589 2021/12/21 00:23:15 jmatthew Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 1 2021 $
+.Dd $Mdocdate: December 21 2021 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1538,7 +1538,7 @@ set timeout { adaptive.start 60000, adaptive.end 120000 }
 set limit states 100000
 .Ed
 .Pp
-With 9000 state table entries, the timeout values are scaled to 50%
+With 90000 state table entries, the timeout values are scaled to 50%
 (tcp.first 60, tcp.established 43200).
 .El
 .Pp
