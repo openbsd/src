@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.15 2021/12/07 12:46:47 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.16 2021/12/21 16:16:15 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -381,7 +381,7 @@ ta_fetch(struct tarepo *tr)
 }
 
 static struct tarepo *
-ta_get(struct tal *tal, int nofetch)
+ta_get(struct tal *tal)
 {
 	struct tarepo *tr;
 
@@ -405,7 +405,7 @@ ta_get(struct tal *tal, int nofetch)
 	tal->urisz = 0;
 	tal->uri = NULL;
 
-	if (noop || nofetch) {
+	if (noop) {
 		tr->state = REPO_DONE;
 		logx("ta/%s: using cache", tr->descr);
 		/* there is nothing in the queue so no need to flush */
@@ -1087,7 +1087,6 @@ struct repo *
 ta_lookup(int id, struct tal *tal)
 {
 	struct repo	*rp;
-	int		 nofetch = 0;
 
 	/* Look up in repository table. (Lookup should actually fail here) */
 	SLIST_FOREACH(rp, &repos, entry) {
@@ -1099,13 +1098,7 @@ ta_lookup(int id, struct tal *tal)
 	if ((rp->repouri = strdup(tal->descr)) == NULL)
 		err(1, NULL);
 
-	if (++talrepocnt[id] >= MAX_REPO_PER_TAL) {
-		if (talrepocnt[id] == MAX_REPO_PER_TAL)
-			warnx("too many repositories under %s", tals[id]);
-		nofetch = 1;
-	}
-
-	rp->ta = ta_get(tal, nofetch);
+	rp->ta = ta_get(tal);
 
 	return rp;
 }
