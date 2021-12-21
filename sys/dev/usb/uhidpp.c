@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.20 2021/12/05 15:35:32 jsg Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.21 2021/12/21 07:44:22 jsg Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -1207,7 +1207,7 @@ int
 hidpp_send_report(struct uhidpp_softc *sc, uint8_t report_id,
     struct uhidpp_report *req, struct uhidpp_report *resp)
 {
-	int error, len, n;
+	int error = 0, len, n;
 
 	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
