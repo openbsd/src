@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.40 2021/12/19 07:45:59 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.41 2021/12/21 06:08:57 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -358,8 +358,12 @@ kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case KIOENABLE:
 		/* Only one kcov descriptor can be enabled per thread. */
-		if (p->p_kd != NULL || kd->kd_state != KCOV_STATE_READY) {
+		if (p->p_kd != NULL) {
 			error = EBUSY;
+			break;
+		}
+		if (kd->kd_state != KCOV_STATE_READY) {
+			error = ENXIO;
 			break;
 		}
 		mode = *((int *)data);
@@ -375,9 +379,12 @@ kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 	case KIODISABLE:
 		/* Only the enabled thread may disable itself. */
-		if ((p->p_kd != kd && kd->kd_kr == NULL) ||
-		    kd->kd_state != KCOV_STATE_TRACE) {
-			error = EBUSY;
+		if ((p->p_kd != kd && kd->kd_kr == NULL)) {
+			error = EPERM;
+			break;
+		}
+		if (kd->kd_state != KCOV_STATE_TRACE) {
+			error = ENXIO;
 			break;
 		}
 		kd->kd_state = KCOV_STATE_READY;
@@ -772,13 +779,16 @@ kcov_remote_attach(struct kcov_dev *kd, struct kio_remote_attach *arg)
 	MUTEX_ASSERT_LOCKED(&kcov_mtx);
 
 	if (kd->kd_state != KCOV_STATE_READY)
-		return (EBUSY);
+		return (ENXIO);
 
-	if (arg->subsystem == KCOV_REMOTE_COMMON)
+	if (arg->subsystem == KCOV_REMOTE_COMMON) {
 		kr = kcov_remote_register_locked(KCOV_REMOTE_COMMON,
 		    curproc->p_p);
-	if (kr == NULL)
+		if (kr == NULL)
+			return (EBUSY);
+	} else {
 		return (EINVAL);
+	}
 
 	kr->kr_state = KCOV_STATE_READY;
 	kr->kr_kd = kd;
