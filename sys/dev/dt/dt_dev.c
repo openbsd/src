@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.17 2021/12/20 22:28:48 bluhm Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.18 2021/12/21 09:35:08 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -141,8 +141,6 @@ dtattach(struct device *parent, struct device *self, void *aux)
 #ifdef DDBPROF
 	dt_nprobes += dt_prov_kprobe_init();
 #endif
-
-	printf("dt: %u probes\n", dt_nprobes);
 }
 
 int
