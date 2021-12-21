@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.174 2021/11/21 23:07:11 deraadt Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.175 2021/12/21 06:11:16 anton Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -532,11 +532,12 @@ fail:
 		break;
 	    }
 	case VNDIOCCLR:
-		if ((sc->sc_flags & VNF_INITED) == 0)
-			return (ENXIO);
-
 		if ((error = disk_lock(&sc->sc_dk)) != 0)
 			return (error);
+		if ((sc->sc_flags & VNF_INITED) == 0) {
+			disk_unlock(&sc->sc_dk);
+			return (ENXIO);
+		}
 
 		/*
 		 * Don't unconfigure if any other partitions are open
