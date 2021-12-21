@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.78 2020/11/19 04:08:46 gnezdo Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.79 2021/12/21 06:12:49 anton Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -225,7 +225,9 @@ sys_shmat(struct proc *p, void *v, register_t *retval)
 	if (shmmap_h == NULL) {
 		size = sizeof(int) +
 		    shminfo.shmseg * sizeof(struct shmmap_state);
-		shmmap_h = malloc(size, M_SHM, M_WAITOK);
+		shmmap_h = malloc(size, M_SHM, M_WAITOK | M_CANFAIL);
+		if (shmmap_h == NULL)
+			return (ENOMEM);
 		shmmap_h->shmseg = shminfo.shmseg;
 		for (i = 0, shmmap_s = shmmap_h->state; i < shmmap_h->shmseg;
 		    i++, shmmap_s++)
