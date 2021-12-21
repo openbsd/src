@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.33 2021/12/07 17:26:14 tobhe Exp $
+#	$OpenBSD: Makefile,v 1.34 2021/12/21 13:50:35 tobhe Exp $
 
 # Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
 #
@@ -114,6 +114,9 @@ SETUP_CONFIG = \
 	if [ "$$singleikesa" = true ]; then \
 		global="$${global}set enforcesingleikesa\n"; \
 	fi; \
+	if [ "$$intermediate" = true ]; then \
+		global="$${global}set cert_partial_chain\n"; \
+	fi; \
 	confstr=""; \
 	if [ -n "$$config_address" ]; then \
 		if [ "$$side" = left ]; then \
@@ -192,6 +195,16 @@ SETUP_CERT = \
 	     -req -in $$name-from-$$caname.csr -CA $$caname.crt -CAkey $$caname.key \
 	     -CAcreateserial -out $$name-from-$$caname.crt
 
+SETUP_INTERMEDIATE = \
+	echo "ALTNAME = $$name-from-$$caname" > $$name-from-$$caname.cnf; \
+	cat ${.CURDIR}/crt.in >> $$name-from-$$caname.cnf; \
+	openssl genrsa -out $$name-from-$$caname.key 2048; \
+	openssl req -config $$name-from-$$caname.cnf -new -key $$name-from-$$caname.key -nodes \
+	    -out $$name-from-$$caname.csr; \
+	openssl x509 -extfile $$name-from-$$caname.cnf -extensions v3_intermediate_ca \
+	    -req -in $$name-from-$$caname.csr -CA $$caname.crt -CAkey $$caname.key \
+	    -CAcreateserial -out $$name-from-$$caname.crt
+
 SETUP_CA = \
 	openssl genrsa -out $$caname.key 2048; \
 	openssl req -subj "/C=DE/ST=Bavaria/L=Munich/O=iked/CN=$$caname" \
@@ -209,21 +222,27 @@ cleanup:
 
 setup_certs: ca-both.crt left-from-ca-both.crt left.key right-from-ca-both.crt \
     right.key ca-left.crt right-from-ca-left.crt ca-right.crt left-from-ca-right.crt \
-    ca-none.crt left-from-ca-none.crt right-from-ca-none.crt
+    ca-none.crt left-from-ca-none.crt right-from-ca-none.crt \
+    intermediate-from-ca-none.crt left-from-intermediate-from-ca-none.crt \
+    right-from-intermediate-from-ca-none.crt
 	echo "cd /etc/iked\n \
 	    put left-from-ca-both.crt certs\n \
 	    put left-from-ca-right.crt certs\n \
 	    put left-from-ca-none.crt certs\n \
+	    put left-from-intermediate-from-ca-none.crt certs\n \
 	    put right-from-ca-none.crt certs\n \
 	    put left.key private/local.key\n \
+	    put intermediate-from-ca-none.crt ca\n \
 	    put ca-left.crt ca\n \
 	    put ca-both.crt ca\n" | sftp ${LEFT_SSH} -q; \
 	echo "cd /etc/iked\n \
 	    put right-from-ca-both.crt certs\n \
 	    put right-from-ca-left.crt certs\n \
 	    put right-from-ca-none.crt certs\n \
+	    put right-from-intermediate-from-ca-none.crt certs\n \
 	    put left-from-ca-none.crt certs\n \
 	    put right.key private/local.key\n \
+	    put intermediate-from-ca-none.crt ca\n \
 	    put ca-right.crt ca\n \
 	    put ca-both.crt ca\n" | sftp ${RIGHT_SSH} -q; \
 	ssh ${LEFT_SSH} "openssl rsa -in /etc/iked/private/local.key -pubout > /etc/iked/local.pub"; \
@@ -274,6 +293,17 @@ left-from-ca-none.crt left.key: ca-none.crt ca-none.key
 
 right-from-ca-none.crt right.key: ca-none.crt ca-none.key
 	caname=ca-none; name=right; ${SETUP_CERT}
+
+intermediate-from-ca-none.crt intermediate-from-ca-none.key:
+	caname=ca-none name=intermediate; ${SETUP_INTERMEDIATE}
+
+left-from-intermediate-from-ca-none.crt left.key: \
+     intermediate-from-ca-none.crt intermediate-from-ca-none.key
+	caname=intermediate-from-ca-none; name=left; ${SETUP_CERT}
+
+right-from-intermediate-from-ca-none.crt right.key: \
+     intermediate-from-ca-none.crt intermediate-from-ca-none.key
+	caname=intermediate-from-ca-none; name=right; ${SETUP_CERT}
 
 REGRESS_TARGETS = run-ping-fail
 run-ping-fail:
@@ -487,6 +517,25 @@ run-psk:
 	if [[ $$_ret -ne 0 ]]; then exit 1; fi
 	${TEST_PING}; \
 	if [[ $$_ret -ne 0 ]]; then exit 1; fi
+
+REGRESS_TARGETS += run-intermediate-fail
+run-intermediate-fail:
+	leftid=left-from-intermediate-from-ca-none; \
+	rightid=right-from-intermediate-from-ca-none; \
+	    ${SETUP_CONFIGS}
+	${SETUP_START}
+	flowtype=esp; ${TEST_FLOWS}; if [[ $$_ret -ne 1 ]]; then exit 1; fi
+	${TEST_PING}; if [[ $$_ret -ne 1 ]]; then exit 1; fi
+
+REGRESS_TARGETS += run-intermediate
+run-intermediate:
+	intermediate=true; \
+	leftid=left-from-intermediate-from-ca-none; \
+	rightid=right-from-intermediate-from-ca-none; \
+	    ${SETUP_CONFIGS}
+	${SETUP_START}
+	if [[ $$_ret -ne 0 ]]; then exit 1; fi
+	${TEST_PING}; if [[ $$_ret -ne 0 ]]; then exit 1; fi
 
 REGRESS_TARGETS += run-fragmentation
 run-fragmentation:
