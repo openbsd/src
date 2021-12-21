@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_acpi.c,v 1.4 2021/12/21 06:09:47 anton Exp $	*/
+/*	$OpenBSD: com_acpi.c,v 1.5 2021/12/21 06:10:29 anton Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -73,7 +73,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct com_acpi_softc *sc = (struct com_acpi_softc *)self;
 	struct acpi_attach_args *aaa = aux;
-	int (*intrfn)(void *) = comintr;
+	int (*intr)(void *) = comintr;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
@@ -88,7 +88,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	    COM_FREQ);
 
 	if (com_acpi_is_designware(aaa->aaa_dev)) {
-		intrfn = com_acpi_intr_designware;
+		intr = com_acpi_intr_designware;
 		sc->sc.sc_uarttype = COM_UART_16550;
 		sc->sc.sc_reg_width = acpi_getpropint(sc->sc_node,
 		    "reg-io-width", 4);
@@ -114,7 +114,7 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_ih = acpi_intr_establish(aaa->aaa_irq[0], aaa->aaa_irq_flags[0],
-	    IPL_TTY, intrfn, sc, sc->sc.sc_dev.dv_xname);
+	    IPL_TTY, intr, sc, sc->sc.sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": can't establish interrupt\n");
 		return;
