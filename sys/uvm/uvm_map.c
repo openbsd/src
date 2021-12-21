@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.281 2021/12/15 12:53:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.282 2021/12/21 22:21:32 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2420,7 +2420,7 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 			first->wired_count--;
 			if (!VM_MAPENT_ISWIRED(first)) {
 				uvm_fault_unwire_locked(map,
-				    iter->start, iter->end);
+				    first->start, first->end);
 			}
 		}
 
