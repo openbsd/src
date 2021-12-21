@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnd.c,v 1.175 2021/12/21 06:11:16 anton Exp $	*/
+/*	$OpenBSD: vnd.c,v 1.176 2021/12/21 06:12:03 anton Exp $	*/
 /*	$NetBSD: vnd.c,v 1.26 1996/03/30 23:06:11 christos Exp $	*/
 
 /*
@@ -421,8 +421,9 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	    {
 		char name[VNDNLEN], key[BLF_MAXUTILIZED];
 		struct nameidata nd;
-		struct ucred *cred;
+		struct ucred *cred = NULL;
 		size_t size;
+		int vplocked;
 		int rw;
 
 		if (sc->sc_flags & VNF_INITED)
@@ -463,12 +464,16 @@ vndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		}
 		if (error)
 			return (error);
+		vplocked = 1;
 
 		error = VOP_GETATTR(nd.ni_vp, &vattr, p->p_ucred, p);
 		if (error) {
 fail:
-			VOP_UNLOCK(nd.ni_vp);
+			if (vplocked)
+				VOP_UNLOCK(nd.ni_vp);
 			vn_close(nd.ni_vp, rw, p->p_ucred, p);
+			if (cred != NULL)
+				crfree(cred);
 			return (error);
 		}
 
@@ -482,6 +487,7 @@ fail:
 			goto fail;
 
 		VOP_UNLOCK(nd.ni_vp);
+		vplocked = 0;
 
 		if (nd.ni_vp->v_type == VBLK) {
 			size = vndbdevsize(nd.ni_vp, p);
@@ -489,8 +495,10 @@ fail:
 		} else
 			size = vattr.va_size / vio->vnd_secsize;
 
-		if ((error = disk_lock(&sc->sc_dk)) != 0) {
-			crfree(cred);
+		if ((error = disk_lock(&sc->sc_dk)) != 0)
+			goto fail;
+		if (sc->sc_flags & VNF_INITED) {
+			error = EBUSY;
 			goto fail;
 		}
 
