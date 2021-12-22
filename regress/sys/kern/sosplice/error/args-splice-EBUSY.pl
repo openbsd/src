@@ -2,25 +2,25 @@
 
 use strict;
 use warnings;
-use IO::Socket;
+use IO::Socket::IP;
 use BSD::Socket::Splice "SO_SPLICE";
 
 our %args = (
     errno => 'EBUSY',
     func => sub {
-	my $sl = IO::Socket::INET->new(
+	my $sl = IO::Socket::IP->new(
 	    Proto => "tcp",
 	    Listen => 5,
 	    LocalAddr => "127.0.0.1",
 	) or die "socket listen failed: $!";
 
-	my $s = IO::Socket::INET->new(
+	my $s = IO::Socket::IP->new(
 	    Proto => "tcp",
 	    PeerAddr => $sl->sockhost(),
 	    PeerPort => $sl->sockport(),
 	) or die "socket connect failed: $!";
 
-	my $ss = IO::Socket::INET->new(
+	my $ss = IO::Socket::IP->new(
 	    Proto => "tcp",
 	    PeerAddr => $sl->sockhost(),
 	    PeerPort => $sl->sockport(),
@@ -29,7 +29,7 @@ our %args = (
 	$s->setsockopt(SOL_SOCKET, SO_SPLICE, pack('i', $ss->fileno()))
 	    or die "splice failed: $!";
 
-	my $so = IO::Socket::INET->new(
+	my $so = IO::Socket::IP->new(
 	    Proto => "tcp",
 	    PeerAddr => $sl->sockhost(),
 	    PeerPort => $sl->sockport(),

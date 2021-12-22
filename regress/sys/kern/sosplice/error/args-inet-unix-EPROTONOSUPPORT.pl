@@ -2,14 +2,14 @@
 
 use strict;
 use warnings;
-use IO::Socket;
-use BSD::Socket::Splice "SO_SPLICE";
+use IO::Socket::IP;
 use IO::Socket::UNIX;
+use BSD::Socket::Splice "SO_SPLICE";
 
 our %args = (
     errno => 'EPROTONOSUPPORT',
     func => sub {
-	my $s = IO::Socket::INET->new(
+	my $s = IO::Socket::IP->new(
 	    Proto => "udp",
 	    LocalAddr => "127.0.0.1",
 	) or die "socket bind failed: $!";

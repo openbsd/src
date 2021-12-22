@@ -2,18 +2,18 @@
 
 use strict;
 use warnings;
-use IO::Socket;
+use IO::Socket::IP;
 use BSD::Socket::Splice "SO_SPLICE";
 
 our %args = (
     errno => 'ENOTCONN',
     func => sub {
-	my $sb = IO::Socket::INET->new(
+	my $sb = IO::Socket::IP->new(
 	    Proto => "udp",
 	    LocalAddr => "127.0.0.1",
 	) or die "socket bind failed: $!";
 
-	my $sc = IO::Socket::INET->new(
+	my $sc = IO::Socket::IP->new(
 	    Proto => "udp",
 	    PeerAddr => $sb->sockhost(),
 	    PeerPort => $sb->sockport(),

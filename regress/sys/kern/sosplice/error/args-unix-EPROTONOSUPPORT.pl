@@ -2,9 +2,8 @@
 
 use strict;
 use warnings;
-use IO::Socket;
-use BSD::Socket::Splice "SO_SPLICE";
 use IO::Socket::UNIX;
+use BSD::Socket::Splice "SO_SPLICE";
 
 our %args = (
     errno => 'EPROTONOSUPPORT',
