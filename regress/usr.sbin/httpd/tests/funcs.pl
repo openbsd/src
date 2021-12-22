@@ -1,6 +1,6 @@
-#	$OpenBSD: funcs.pl,v 1.8 2017/07/14 13:31:44 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.9 2021/12/22 15:54:01 bluhm Exp $
 
-# Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2021 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,6 @@ use Digest::MD5;
 use Socket;
 use Socket6;
 use IO::Socket;
-use IO::Socket::INET6;
 
 sub find_ports {
 	my %args = @_;
@@ -33,7 +32,7 @@ sub find_ports {
 
 	my @sockets = (1..$num);
 	foreach my $s (@sockets) {
-		$s = IO::Socket::INET6->new(
+		$s = IO::Socket::IP->new(
 		    Proto  => "tcp",
 		    Domain => $domain,
 		    $addr ? (LocalAddr => $addr) : (),
