@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.91 2021/10/23 12:48:17 kettenis Exp $ */
+/* $OpenBSD: bwfm.c,v 1.92 2021/12/22 19:37:33 tobhe Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -573,6 +573,7 @@ bwfm_stop(struct ifnet *ifp)
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_INFRA, 0);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_UP, 1);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, BWFM_PM_FAST_PS);
+	bwfm_fwvar_var_set_int(sc, "mpc", 1);
 
 	if (sc->sc_bus_ops->bs_stop)
 		sc->sc_bus_ops->bs_stop(sc);
@@ -2081,6 +2082,7 @@ bwfm_hostap(struct bwfm_softc *sc)
 	bwfm_fwvar_var_set_int(sc, "auth", BWFM_AUTH_OPEN);
 	bwfm_fwvar_var_set_int(sc, "mfp", BWFM_MFP_NONE);
 
+	bwfm_fwvar_var_set_int(sc, "mpc", 0);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_INFRA, 1);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_AP, 1);
 	bwfm_fwvar_var_set_int(sc, "chanspec",
