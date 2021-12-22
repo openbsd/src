@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.199 2021/12/20 15:59:10 mvs Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.200 2021/12/22 13:37:46 tobhe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -191,7 +191,6 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 	struct mbuf *m = *mp;
 	union sockaddr_union dst_address;
 	struct tdb *tdbp = NULL;
-	struct ifnet *encif;
 	u_int32_t spi;
 	u_int16_t cpi;
 	int prot;
@@ -308,21 +307,6 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 		    ntohl(spi), tdbp->tdb_sproto);
 		IPSEC_ISTAT(esps_noxform, ahs_noxform, ipcomps_noxform);
 		goto drop;
-	}
-
-	if (sproto != IPPROTO_IPCOMP) {
-		encif = enc_getif(tdbp->tdb_rdomain_post, tdbp->tdb_tap);
-		if (encif == NULL) {
-			DPRINTF("no enc%u interface for SA %s/%08x/%u",
-			    tdbp->tdb_tap,
-			    ipsp_address(&dst_address, buf, sizeof(buf)),
-			    ntohl(spi), tdbp->tdb_sproto);
-			IPSEC_ISTAT(esps_pdrops, ahs_pdrops, ipcomps_pdrops);
-			goto drop;
-		}
-
-		/* XXX This conflicts with the scoped nature of IPv6 */
-		m->m_pkthdr.ph_ifidx = encif->if_index;
 	}
 
 	/* Register first use, setup expiration timer. */
@@ -544,6 +528,10 @@ ipsec_common_input_cb(struct mbuf **mp, struct tdb *tdbp, int skip, int protoff)
 		encif->if_ipackets++;
 		encif->if_ibytes += m->m_pkthdr.len;
 
+		if (sproto != IPPROTO_IPCOMP) {
+			/* XXX This conflicts with the scoped nature of IPv6 */
+			m->m_pkthdr.ph_ifidx = encif->if_index;
+		}
 		if (encif->if_bpf) {
 			struct enchdr hdr;
 
