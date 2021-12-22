@@ -1,6 +1,6 @@
-#	$OpenBSD: Client.pm,v 1.13 2020/11/07 16:02:19 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.14 2021/12/22 11:50:28 bluhm Exp $
 
-# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2021 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -22,8 +22,7 @@ use parent 'Proc';
 use Carp;
 use Socket qw(:DEFAULT IPPROTO_TCP TCP_NODELAY);
 use Socket6;
-use IO::Socket;
-use IO::Socket::INET6;
+use IO::Socket::IP;
 use IO::Socket::SSL;
 
 sub new {
@@ -50,10 +49,12 @@ sub child {
 	delete $self->{cs};
 
 	$SSL_ERROR = "";
-	my $iosocket = $self->{ssl} ? "IO::Socket::SSL" : "IO::Socket::INET6";
+	my $iosocket = $self->{ssl} ? "IO::Socket::SSL" : "IO::Socket::IP";
 	my $cs = $iosocket->new(
 	    Proto		=> "tcp",
 	    Domain		=> $self->{connectdomain},
+	    # IO::Socket::IP calls the domain family
+	    Family		=> $self->{connectdomain},
 	    PeerAddr		=> $self->{connectaddr},
 	    PeerPort		=> $self->{connectport},
 	    SSL_verify_mode	=> SSL_VERIFY_NONE,

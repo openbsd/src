@@ -1,6 +1,6 @@
-#	$OpenBSD: funcs.pl,v 1.24 2021/03/24 21:03:06 benno Exp $
+#	$OpenBSD: funcs.pl,v 1.25 2021/12/22 11:50:28 bluhm Exp $
 
-# Copyright (c) 2010-2017 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2021 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,7 @@ use Digest::MD5;
 use Socket;
 use Socket6;
 use IO::Socket;
-use IO::Socket::INET6;
+use IO::Socket::IP;
 
 sub find_ports {
 	my %args = @_;
@@ -33,9 +33,9 @@ sub find_ports {
 
 	my @sockets = (1..$num);
 	foreach my $s (@sockets) {
-		$s = IO::Socket::INET6->new(
+		$s = IO::Socket::IP->new(
 		    Proto  => "tcp",
-		    Domain => $domain,
+		    Family => $domain,
 		    $addr ? (LocalAddr => $addr) : (),
 		) or die "find_ports: create and bind socket failed: $!";
 	}

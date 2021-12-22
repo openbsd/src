@@ -1,6 +1,6 @@
-#	$OpenBSD: Server.pm,v 1.14 2020/11/07 16:02:20 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.15 2021/12/22 11:50:28 bluhm Exp $
 
-# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2021 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,8 +23,7 @@ use Carp;
 use Config;
 use Socket qw(:DEFAULT IPPROTO_TCP TCP_NODELAY);
 use Socket6;
-use IO::Socket;
-use IO::Socket::INET6;
+use IO::Socket::IP;
 use IO::Socket::SSL;
 
 sub new {
@@ -36,11 +35,13 @@ sub new {
 	$self->{listendomain}
 	    or croak "$class listen domain not given";
 	$SSL_ERROR = "";
-	my $iosocket = $self->{ssl} ? "IO::Socket::SSL" : "IO::Socket::INET6";
+	my $iosocket = $self->{ssl} ? "IO::Socket::SSL" : "IO::Socket::IP";
 	my $ls = $iosocket->new(
 	    Proto		=> "tcp",
 	    ReuseAddr		=> 1,
 	    Domain		=> $self->{listendomain},
+	    # IO::Socket::IP calls the domain family
+	    Family		=> $self->{listendomain},
 	    $self->{listenaddr} ? (LocalAddr => $self->{listenaddr}) : (),
 	    $self->{listenport} ? (LocalPort => $self->{listenport}) : (),
 	    SSL_server          => 1,
