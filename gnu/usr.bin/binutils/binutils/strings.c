@@ -540,7 +540,7 @@ print_strings (const char *filename, FILE *stream, file_off address,
 	  case 10:
 #if __STDC_VERSION__ >= 199901L || (defined(__GNUC__) && __GNUC__ >= 2)
 	    if (sizeof (start) > sizeof (long))
-	      printf ("%7Ld ", (unsigned long long) start);
+	      printf ("%7lld ", (unsigned long long) start);
 	    else
 #else
 # if !BFD_HOST_64BIT_LONG
@@ -555,7 +555,7 @@ print_strings (const char *filename, FILE *stream, file_off address,
 	  case 16:
 #if __STDC_VERSION__ >= 199901L || (defined(__GNUC__) && __GNUC__ >= 2)
 	    if (sizeof (start) > sizeof (long))
-	      printf ("%7Lx ", (unsigned long long) start);
+	      printf ("%7llx ", (unsigned long long) start);
 	    else
 #else
 # if !BFD_HOST_64BIT_LONG
