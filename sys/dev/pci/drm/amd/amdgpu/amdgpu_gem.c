@@ -616,7 +616,7 @@ int amdgpu_gem_va_ioctl(struct drm_device *dev, void *data,
 
 	if (args->va_address < AMDGPU_VA_RESERVED_SIZE) {
 		dev_dbg(&dev->pdev->dev,
-			"va_address 0x%LX is in reserved area 0x%LX\n",
+			"va_address 0x%llX is in reserved area 0x%llX\n",
 			args->va_address, AMDGPU_VA_RESERVED_SIZE);
 		return -EINVAL;
 	}
@@ -624,7 +624,7 @@ int amdgpu_gem_va_ioctl(struct drm_device *dev, void *data,
 	if (args->va_address >= AMDGPU_GMC_HOLE_START &&
 	    args->va_address < AMDGPU_GMC_HOLE_END) {
 		dev_dbg(&dev->pdev->dev,
-			"va_address 0x%LX is in VA hole 0x%LX-0x%LX\n",
+			"va_address 0x%llX is in VA hole 0x%llX-0x%llX\n",
 			args->va_address, AMDGPU_GMC_HOLE_START,
 			AMDGPU_GMC_HOLE_END);
 		return -EINVAL;
