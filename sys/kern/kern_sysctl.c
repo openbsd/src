@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.396 2021/10/30 23:24:48 deraadt Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.397 2021/12/22 22:20:13 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -2132,12 +2132,19 @@ sysctl_diskinit(int update, struct proc *p)
 	struct diskstats *sdk;
 	struct disk *dk;
 	const char *duid;
-	int i, tlen, l;
+	int i, changed = 0;
+
+	KERNEL_ASSERT_LOCKED();
 
 	if ((i = rw_enter(&sysctl_disklock, RW_WRITE|RW_INTR)) != 0)
 		return i;
 
-	if (disk_change) {
+	/* Run in a loop, disks may change while malloc sleeps. */
+	while (disk_change) {
+		int tlen;
+
+		disk_change = 0;
+
 		for (dk = TAILQ_FIRST(&disklist), tlen = 0; dk;
 		    dk = TAILQ_NEXT(dk, dk_link)) {
 			if (dk->dk_name)
@@ -2146,10 +2153,12 @@ sysctl_diskinit(int update, struct proc *p)
 		}
 		tlen++;
 
-		if (disknames)
-			free(disknames, M_SYSCTL, disknameslen);
-		if (diskstats)
-			free(diskstats, M_SYSCTL, diskstatslen);
+		/*
+		 * The sysctl_disklock ensures that no other process can
+		 * allocate disknames and diskstats while our malloc sleeps.
+		 */
+		free(disknames, M_SYSCTL, disknameslen);
+		free(diskstats, M_SYSCTL, diskstatslen);
 		diskstats = NULL;
 		disknames = NULL;
 		diskstats = mallocarray(disk_count, sizeof(struct diskstats),
@@ -2158,13 +2167,18 @@ sysctl_diskinit(int update, struct proc *p)
 		disknames = malloc(tlen, M_SYSCTL, M_WAITOK|M_ZERO);
 		disknameslen = tlen;
 		disknames[0] = '\0';
+		changed = 1;
+	}
+
+	if (changed) {
+		int l;
 
 		for (dk = TAILQ_FIRST(&disklist), i = 0, l = 0; dk;
 		    dk = TAILQ_NEXT(dk, dk_link), i++) {
 			duid = NULL;
 			if (dk->dk_label && !duid_iszero(dk->dk_label->d_uid))
 				duid = duid_format(dk->dk_label->d_uid);
-			snprintf(disknames + l, tlen - l, "%s:%s,",
+			snprintf(disknames + l, disknameslen - l, "%s:%s,",
 			    dk->dk_name ? dk->dk_name : "",
 			    duid ? duid : "");
 			l += strlen(disknames + l);
@@ -2187,7 +2201,6 @@ sysctl_diskinit(int update, struct proc *p)
 		/* Eliminate trailing comma */
 		if (l != 0)
 			disknames[l - 1] = '\0';
-		disk_change = 0;
 	} else if (update) {
 		/* Just update, number of drives hasn't changed */
 		for (dk = TAILQ_FIRST(&disklist), i = 0; dk;
