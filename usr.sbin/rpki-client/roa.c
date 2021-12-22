@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.33 2021/12/03 12:56:19 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.34 2021/12/22 08:44:15 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -50,7 +50,7 @@ roa_parse_addr(const ASN1_OCTET_STRING *os, enum afi afi, struct parse *p)
 	size_t			 dsz = os->length;
 	int			 rc = 0;
 	const ASN1_TYPE		*t;
-	const ASN1_INTEGER	*maxlength = NULL;
+	const ASN1_INTEGER	*maxlength;
 	long			 maxlen;
 	struct ip_addr		 addr;
 	struct roa_ip		*res;
@@ -83,6 +83,7 @@ roa_parse_addr(const ASN1_OCTET_STRING *os, enum afi afi, struct parse *p)
 		    "invalid IP address", p->fn);
 		goto out;
 	}
+	maxlen = addr.prefixlen;
 
 	if (sk_ASN1_TYPE_num(seq) == 2) {
 		t = sk_ASN1_TYPE_value(seq, 1);
@@ -115,7 +116,7 @@ roa_parse_addr(const ASN1_OCTET_STRING *os, enum afi afi, struct parse *p)
 
 	res->addr = addr;
 	res->afi = afi;
-	res->maxlength = (maxlength == NULL) ? addr.prefixlen : maxlen;
+	res->maxlength = maxlen;
 	ip_roa_compose_ranges(res);
 
 	rc = 1;
