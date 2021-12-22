@@ -1,6 +1,6 @@
-#	$OpenBSD: Client.pm,v 1.15 2021/03/09 15:16:28 bluhm Exp $
+#	$OpenBSD: Client.pm,v 1.16 2021/12/22 15:14:13 bluhm Exp $
 
-# Copyright (c) 2010-2020 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2021 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,6 @@ use Carp;
 use Socket;
 use Socket6;
 use IO::Socket;
-use IO::Socket::INET6;
 use IO::Socket::SSL;
 use Sys::Syslog qw(:standard :extended :macros);
 
@@ -69,7 +68,7 @@ sub child {
 		} else {
 			$SSL_ERROR = "";
 			my $iosocket = $self->{connectproto} eq "tls" ?
-			    "IO::Socket::SSL" : "IO::Socket::INET6";
+			    "IO::Socket::SSL" : "IO::Socket::IP";
 			my $proto = $self->{connectproto};
 			$proto = "tcp" if $proto eq "tls";
 			$cs = $iosocket->new(

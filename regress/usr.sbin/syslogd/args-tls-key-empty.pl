@@ -23,7 +23,7 @@ our %args = (
     client => {
 	func => sub {
 	    my $self = shift;
-	    IO::Socket::INET6->new(
+	    IO::Socket::IP->new(
 		Domain              => AF_INET,
 		Proto               => "tcp",
 		PeerAddr            => "127.0.0.1",

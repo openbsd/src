@@ -1,6 +1,6 @@
-#	$OpenBSD: Server.pm,v 1.13 2020/10/16 22:46:45 bluhm Exp $
+#	$OpenBSD: Server.pm,v 1.14 2021/12/22 15:14:13 bluhm Exp $
 
-# Copyright (c) 2010-2020 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2021 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,6 @@ use Carp;
 use Socket;
 use Socket6;
 use IO::Socket;
-use IO::Socket::INET6;
 use IO::Socket::SSL;
 
 sub new {
@@ -45,7 +44,7 @@ sub listen {
 	my $self = shift;
 	$SSL_ERROR = "";
 	my $iosocket = $self->{listenproto} eq "tls" ?
-	    "IO::Socket::SSL" : "IO::Socket::INET6";
+	    "IO::Socket::SSL" : "IO::Socket::IP";
 	my $proto = $self->{listenproto};
 	$proto = "tcp" if $proto eq "tls";
 	my $ls = $iosocket->new(

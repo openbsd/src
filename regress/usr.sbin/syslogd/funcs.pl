@@ -1,6 +1,6 @@
-#	$OpenBSD: funcs.pl,v 1.38 2020/11/06 03:26:18 bluhm Exp $
+#	$OpenBSD: funcs.pl,v 1.39 2021/12/22 15:14:13 bluhm Exp $
 
-# Copyright (c) 2010-2015 Alexander Bluhm <bluhm@openbsd.org>
+# Copyright (c) 2010-2021 Alexander Bluhm <bluhm@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -25,7 +25,6 @@ use Socket6;
 use Sys::Syslog qw(:standard :extended :macros);
 use Time::HiRes 'sleep';
 use IO::Socket;
-use IO::Socket::INET6;
 use IO::Socket::SSL;
 
 my $firstlog = "syslogd regress test first message";
@@ -45,7 +44,7 @@ sub find_ports {
 
 	my @sockets = (1..$num);
 	foreach my $s (@sockets) {
-		$s = IO::Socket::INET6->new(
+		$s = IO::Socket::IP->new(
 		    Domain    => $domain,
 		    LocalAddr => $addr,
 		    Proto     => $proto,
