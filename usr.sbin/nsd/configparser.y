@@ -542,9 +542,9 @@ cpus:
       /* Users may specify "0 1", "0" "1", 0 1 or a combination thereof. */
       for(str = $2; (tok = strtok_r(str, " \t", &ptr)); str = NULL) {
         struct cpu_option *opt =
-          region_alloc(cfg_parser->opt->region, sizeof(*opt));
+          region_alloc_zero(cfg_parser->opt->region, sizeof(*opt));
         cpu = 0;
-        if(!parse_number(tok, &cpu) || opt->cpu < 0) {
+        if(!parse_number(tok, &cpu) || cpu < 0) {
           yyerror("expected a positive number");
           YYABORT;
         }

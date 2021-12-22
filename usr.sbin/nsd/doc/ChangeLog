@@ -1,3 +1,21 @@
+2 December 2021: Wouter
+	- Fix socket_partitioning unit test for FreeBSD.
+	- Fix SVCB test to work around older dig with drill.
+
+1 December 2021: Wouter
+	- Set up for branch for 4.3.9 release.
+	- Fix unit tests for new answer-cookie default.
+
+30 November 2021: Wouter
+	- Fix to remove git tracking and ci information from release tarballs.
+
+3 November 2021: Wouter
+	- Fix #198: nsd-control reconfig core dump.
+
+12 October 2021: Wouter
+	- Tag for 4.3.8 release, from 4.3.8rc2. The main branch continues
+	  with version 4.3.9 in development.
+
 7 October 2021: Wouter
 	- Set default for answer-cookie to no. Because in server deployments
 	  with mixed server software, a default of yes causes issues.
