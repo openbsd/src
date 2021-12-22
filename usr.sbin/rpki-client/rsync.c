@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.30 2021/11/03 14:59:37 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.31 2021/12/22 09:35:14 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -42,9 +42,9 @@
  * of which process maps to which request.
  */
 struct	rsyncproc {
-	char	*uri; /* uri of this rsync proc */
-	size_t	 id; /* identity of request */
-	pid_t	 pid; /* pid of process or 0 if unassociated */
+	char		*uri; /* uri of this rsync proc */
+	unsigned int	 id; /* identity of request */
+	pid_t	 	 pid; /* pid of process or 0 if unassociated */
 };
 
 /*
@@ -182,7 +182,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 
 	for (;;) {
 		char *uri = NULL, *dst = NULL;
-		size_t id;
+		unsigned int id;
 		pid_t pid;
 		int st;
 
@@ -222,7 +222,8 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 				}
 
 				b = io_new_buffer();
-				io_simple_buffer(b, &ids[i].id, sizeof(size_t));
+				io_simple_buffer(b, &ids[i].id,
+				     sizeof(ids[i].id));
 				io_simple_buffer(b, &ok, sizeof(ok));
 				io_close_buffer(&msgq, b);
 

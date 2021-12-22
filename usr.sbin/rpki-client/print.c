@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.2 2021/10/25 14:07:56 claudio Exp $ */
+/*	$OpenBSD: print.c,v 1.3 2021/12/22 09:35:14 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -151,7 +151,7 @@ roa_print(const struct roa *p)
 	for (i = 0; i < p->ipsz; i++) {
 		ip_addr_print(&p->ips[i].addr,
 			p->ips[i].afi, buf, sizeof(buf));
-		printf("%5zu: %s maxlen: %zu\n", i + 1,
+		printf("%5zu: %s maxlen: %hhu\n", i + 1,
 			buf, p->ips[i].maxlength);
 	}
 }

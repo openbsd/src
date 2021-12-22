@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.168 2021/12/21 17:50:27 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.169 2021/12/22 09:35:14 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -228,7 +228,7 @@ entityq_add(char *file, enum rtype type, struct repo *rp,
 }
 
 static void
-rrdp_file_resp(size_t id, int ok)
+rrdp_file_resp(unsigned int id, int ok)
 {
 	enum rrdp_msg type = RRDP_FILE;
 	struct ibuf *b;
@@ -241,7 +241,7 @@ rrdp_file_resp(size_t id, int ok)
 }
 
 void
-rrdp_fetch(size_t id, const char *uri, const char *local,
+rrdp_fetch(unsigned int id, const char *uri, const char *local,
     struct rrdp_session *s)
 {
 	enum rrdp_msg type = RRDP_START;
@@ -262,7 +262,7 @@ rrdp_fetch(size_t id, const char *uri, const char *local,
  * Request a repository sync via rsync URI to directory local.
  */
 void
-rsync_fetch(size_t id, const char *uri, const char *local)
+rsync_fetch(unsigned int id, const char *uri, const char *local)
 {
 	struct ibuf	*b;
 
@@ -277,7 +277,7 @@ rsync_fetch(size_t id, const char *uri, const char *local)
  * Request a file from a https uri, data is written to the file descriptor fd.
  */
 void
-http_fetch(size_t id, const char *uri, const char *last_mod, int fd)
+http_fetch(unsigned int id, const char *uri, const char *last_mod, int fd)
 {
 	struct ibuf	*b;
 
@@ -295,7 +295,7 @@ http_fetch(size_t id, const char *uri, const char *last_mod, int fd)
  * Create a pipe and pass the pipe endpoints to the http and rrdp process.
  */
 static void
-rrdp_http_fetch(size_t id, const char *uri, const char *last_mod)
+rrdp_http_fetch(unsigned int id, const char *uri, const char *last_mod)
 {
 	enum rrdp_msg type = RRDP_HTTP_INI;
 	struct ibuf *b;
@@ -314,7 +314,7 @@ rrdp_http_fetch(size_t id, const char *uri, const char *last_mod)
 }
 
 void
-rrdp_http_done(size_t id, enum http_result res, const char *last_mod)
+rrdp_http_done(unsigned int id, enum http_result res, const char *last_mod)
 {
 	enum rrdp_msg type = RRDP_HTTP_FIN;
 	struct ibuf *b;
@@ -562,7 +562,8 @@ rrdp_process(struct ibuf *b)
 	struct rrdp_session s;
 	char *uri, *last_mod, *data;
 	char hash[SHA256_DIGEST_LENGTH];
-	size_t dsz, id;
+	size_t dsz;
+	unsigned int id;
 	int ok;
 
 	io_read_buf(b, &type, sizeof(type));
@@ -673,9 +674,9 @@ suicide(int sig __attribute__((unused)))
 int
 main(int argc, char *argv[])
 {
-	int		 rc, c, st, proc, rsync, http, rrdp, ok, hangup = 0;
+	int		 rc, c, st, proc, rsync, http, rrdp, hangup = 0;
 	int		 fl = SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK;
-	size_t		 i, id;
+	size_t		 i;
 	pid_t		 pid, procpid, rsyncpid, httppid, rrdppid;
 	int		 fd[2];
 	struct pollfd	 pfd[NPFD];
@@ -1068,6 +1069,9 @@ main(int argc, char *argv[])
 		if ((pfd[1].revents & POLLIN)) {
 			b = io_buf_read(rsync, &rsyncbuf);
 			if (b != NULL) {
+				unsigned int id;
+				int ok;
+
 				io_read_buf(b, &id, sizeof(id));
 				io_read_buf(b, &ok, sizeof(ok));
 				rsync_finish(id, ok);
@@ -1078,6 +1082,7 @@ main(int argc, char *argv[])
 		if ((pfd[2].revents & POLLIN)) {
 			b = io_buf_read(http, &httpbuf);
 			if (b != NULL) {
+				unsigned int id;
 				enum http_result res;
 				char *last_mod;
 

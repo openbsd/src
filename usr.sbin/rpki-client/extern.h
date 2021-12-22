@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.98 2021/11/25 14:03:40 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.99 2021/12/22 09:35:14 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -179,10 +179,10 @@ struct mft {
  */
 struct roa_ip {
 	enum afi	 afi; /* AFI value */
-	size_t		 maxlength; /* max length or zero */
+	struct ip_addr	 addr; /* the address prefix itself */
 	unsigned char	 min[16]; /* full range minimum */
 	unsigned char	 max[16]; /* full range maximum */
-	struct ip_addr	 addr; /* the address prefix itself */
+	unsigned char	 maxlength; /* max length or zero */
 };
 
 /*
@@ -498,8 +498,8 @@ void		 proc_rrdp(int);
 
 /* Repository handling */
 int		 filepath_add(struct filepath_tree *, char *);
-void		 rrdp_save_state(size_t, struct rrdp_session *);
-int		 rrdp_handle_file(size_t, enum publish_type, char *,
+void		 rrdp_save_state(unsigned int, struct rrdp_session *);
+int		 rrdp_handle_file(unsigned int, enum publish_type, char *,
 		    char *, size_t, char *, size_t);
 char		*repo_filename(const struct repo *, const char *);
 struct repo	*ta_lookup(int, struct tal *);
@@ -508,15 +508,15 @@ int		 repo_queued(struct repo *, struct entity *);
 void		 repo_cleanup(struct filepath_tree *);
 void		 repo_free(void);
 
-void		 rsync_finish(size_t, int);
-void		 http_finish(size_t, enum http_result, const char *);
-void		 rrdp_finish(size_t, int);
+void		 rsync_finish(unsigned int, int);
+void		 http_finish(unsigned int, enum http_result, const char *);
+void		 rrdp_finish(unsigned int, int);
 
-void		 rsync_fetch(size_t, const char *, const char *);
-void		 http_fetch(size_t, const char *, const char *, int);
-void		 rrdp_fetch(size_t, const char *, const char *,
+void		 rsync_fetch(unsigned int, const char *, const char *);
+void		 http_fetch(unsigned int, const char *, const char *, int);
+void		 rrdp_fetch(unsigned int, const char *, const char *,
 		    struct rrdp_session *);
-void		 rrdp_http_done(size_t, enum http_result, const char *);
+void		 rrdp_http_done(unsigned int, enum http_result, const char *);
 
 int		 repo_next_timeout(int);
 void		 repo_check_timeout(void);

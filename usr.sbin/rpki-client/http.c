@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.50 2021/11/10 09:13:30 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.51 2021/12/22 09:35:14 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -140,7 +140,7 @@ struct http_request {
 	char			*host;
 	char			*port;
 	const char		*path;	/* points into uri */
-	size_t			 id;
+	unsigned int		 id;
 	int			 outfd;
 	int			 redirect_loop;
 };
@@ -150,7 +150,7 @@ TAILQ_HEAD(http_req_queue, http_request);
 static struct http_conn_list	active = LIST_HEAD_INITIALIZER(active);
 static struct http_conn_list	idle = LIST_HEAD_INITIALIZER(idle);
 static struct http_req_queue	queue = TAILQ_HEAD_INITIALIZER(queue);
-static size_t http_conn_count;
+static unsigned int http_conn_count;
 
 static struct msgbuf msgq;
 static struct sockaddr_storage http_bindaddr;
@@ -159,10 +159,10 @@ static uint8_t *tls_ca_mem;
 static size_t tls_ca_size;
 
 /* HTTP request API */
-static void	http_req_new(size_t, char *, char *, int, int);
+static void	http_req_new(unsigned int, char *, char *, int, int);
 static void	http_req_free(struct http_request *);
-static void	http_req_done(size_t, enum http_result, const char *);
-static void	http_req_fail(size_t);
+static void	http_req_done(unsigned int, enum http_result, const char *);
+static void	http_req_fail(unsigned int);
 static int	http_req_schedule(struct http_request *);
 
 /* HTTP connection API */
@@ -509,7 +509,8 @@ http_resolv(struct addrinfo **res, const char *host, const char *port)
  * Create and queue a new request.
  */
 static void
-http_req_new(size_t id, char *uri, char *modified_since, int count, int outfd)
+http_req_new(unsigned int id, char *uri, char *modified_since, int count,
+    int outfd)
 {
 	struct http_request *req;
 	char *host, *port, *path;
@@ -560,7 +561,7 @@ http_req_free(struct http_request *req)
  * Enqueue request response
  */
 static void
-http_req_done(size_t id, enum http_result res, const char *last_modified)
+http_req_done(unsigned int id, enum http_result res, const char *last_modified)
 {
 	struct ibuf *b;
 
@@ -575,7 +576,7 @@ http_req_done(size_t id, enum http_result res, const char *last_modified)
  * Enqueue request failure response
  */
 static void
-http_req_fail(size_t id)
+http_req_fail(unsigned int id)
 {
 	struct ibuf *b;
 	enum http_result res = HTTP_FAILED;
@@ -1862,7 +1863,7 @@ proc_http(char *bind_addr, int fd)
 		if (pfds[0].revents & POLLIN) {
 			b = io_buf_recvfd(fd, &inbuf);
 			if (b != NULL) {
-				size_t id;
+				unsigned int id;
 				char *uri;
 				char *mod;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.18 2021/11/24 15:24:16 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.19 2021/12/22 09:35:14 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -49,7 +49,7 @@ static struct msgbuf	msgq;
 
 struct rrdp {
 	TAILQ_ENTRY(rrdp)	 entry;
-	size_t			 id;
+	unsigned int		 id;
 	char			*notifyuri;
 	char			*local;
 	char			*last_mod;
@@ -89,7 +89,7 @@ xstrdup(const char *s)
  * ok should only be set to 1 if the cache is now up-to-date.
  */
 static void
-rrdp_done(size_t id, int ok)
+rrdp_done(unsigned int id, int ok)
 {
 	enum rrdp_msg type = RRDP_END;
 	struct ibuf *b;
@@ -110,7 +110,7 @@ rrdp_done(size_t id, int ok)
  * should be set to NULL, else it should point to a proper date string.
  */
 static void
-rrdp_http_req(size_t id, const char *uri, const char *last_mod)
+rrdp_http_req(unsigned int id, const char *uri, const char *last_mod)
 {
 	enum rrdp_msg type = RRDP_HTTP_REQ;
 	struct ibuf *b;
@@ -167,7 +167,7 @@ rrdp_publish_file(struct rrdp *s, struct publish_xml *pxml,
 }
 
 static struct rrdp *
-rrdp_new(size_t id, char *local, char *notify, char *session_id,
+rrdp_new(unsigned int id, char *local, char *notify, char *session_id,
     long long serial, char *last_mod)
 {
 	struct rrdp *s;
@@ -223,7 +223,7 @@ rrdp_free(struct rrdp *s)
 }
 
 static struct rrdp *
-rrdp_get(size_t id)
+rrdp_get(unsigned int id)
 {
 	struct rrdp *s;
 
@@ -236,7 +236,7 @@ rrdp_get(size_t id)
 static void
 rrdp_failed(struct rrdp *s)
 {
-	size_t id = s->id;
+	unsigned int id = s->id;
 
 	/* reset file state before retrying */
 	s->file_failed = 0;
@@ -264,7 +264,7 @@ rrdp_failed(struct rrdp *s)
 static void
 rrdp_finished(struct rrdp *s)
 {
-	size_t id = s->id;
+	unsigned int id = s->id;
 
 	/* check if all parts of the process have finished */
 	if ((s->state & RRDP_STATE_DONE) != RRDP_STATE_DONE)
@@ -365,7 +365,7 @@ rrdp_input_handler(int fd)
 	enum rrdp_msg type;
 	enum http_result res;
 	long long serial;
-	size_t id;
+	unsigned int id;
 	int ok;
 
 	b = io_buf_recvfd(fd, &inbuf);
@@ -392,7 +392,7 @@ rrdp_input_handler(int fd)
 			errx(1, "expected fd not received");
 		s = rrdp_get(id);
 		if (s == NULL)
-			errx(1, "rrdp session %zu does not exist", id);
+			errx(1, "rrdp session %u does not exist", id);
 		if (s->state != RRDP_STATE_WAIT)
 			errx(1, "%s: bad internal state", s->local);
 
@@ -407,7 +407,7 @@ rrdp_input_handler(int fd)
 
 		s = rrdp_get(id);
 		if (s == NULL)
-			errx(1, "rrdp session %zu does not exist", id);
+			errx(1, "rrdp session %u does not exist", id);
 		if (!(s->state & RRDP_STATE_PARSE))
 			errx(1, "%s: bad internal state", s->local);
 
@@ -419,7 +419,7 @@ rrdp_input_handler(int fd)
 	case RRDP_FILE:
 		s = rrdp_get(id);
 		if (s == NULL)
-			errx(1, "rrdp session %zu does not exist", id);
+			errx(1, "rrdp session %u does not exist", id);
 		if (b->fd != -1)
 			errx(1, "received unexpected fd");
 		io_read_buf(b, &ok, sizeof(ok));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.16 2021/12/21 16:16:15 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.17 2021/12/22 09:35:14 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -61,7 +61,7 @@ struct rrdprepo {
 	char			*temp;
 	struct filepath_tree	 added;
 	struct filepath_tree	 deleted;
-	size_t			 id;
+	unsigned int		 id;
 	enum repo_state		 state;
 };
 SLIST_HEAD(, rrdprepo)	rrdprepos = SLIST_HEAD_INITIALIZER(rrdprepos);
@@ -70,7 +70,7 @@ struct rsyncrepo {
 	SLIST_ENTRY(rsyncrepo)	 entry;
 	char			*repouri;
 	char			*basedir;
-	size_t			 id;
+	unsigned int		 id;
 	enum repo_state		 state;
 };
 SLIST_HEAD(, rsyncrepo)	rsyncrepos = SLIST_HEAD_INITIALIZER(rsyncrepos);
@@ -83,7 +83,7 @@ struct tarepo {
 	char			**uri;
 	size_t			 urisz;
 	size_t			 uriidx;
-	size_t			 id;
+	unsigned int		 id;
 	enum repo_state		 state;
 };
 SLIST_HEAD(, tarepo)	tarepos = SLIST_HEAD_INITIALIZER(tarepos);
@@ -98,12 +98,12 @@ struct	repo {
 	struct entityq		 queue;		/* files waiting for repo */
 	time_t			 alarm;		/* sync timeout */
 	int			 talid;
-	size_t			 id;		/* identifier */
+	unsigned int		 id;		/* identifier */
 };
 SLIST_HEAD(, repo)	repos = SLIST_HEAD_INITIALIZER(repos);
 
 /* counter for unique repo id */
-size_t			repoid;
+unsigned int		repoid;
 
 /*
  * Database of all file path accessed during a run.
@@ -421,7 +421,7 @@ ta_get(struct tal *tal)
 }
 
 static struct tarepo *
-ta_find(size_t id)
+ta_find(unsigned int id)
 {
 	struct tarepo *tr;
 
@@ -490,7 +490,7 @@ rsync_get(const char *uri, int nofetch)
 }
 
 static struct rsyncrepo *
-rsync_find(size_t id)
+rsync_find(unsigned int id)
 {
 	struct rsyncrepo *rr;
 
@@ -563,7 +563,7 @@ rrdp_get(const char *uri, int nofetch)
 }
 
 static struct rrdprepo *
-rrdp_find(size_t id)
+rrdp_find(unsigned int id)
 {
 	struct rrdprepo *rr;
 
@@ -710,7 +710,7 @@ fail:
  * Carefully write the RRDP session state file back.
  */
 void
-rrdp_save_state(size_t id, struct rrdp_session *state)
+rrdp_save_state(unsigned int id, struct rrdp_session *state)
 {
 	struct rrdprepo *rr;
 	char *temp, *file;
@@ -719,7 +719,7 @@ rrdp_save_state(size_t id, struct rrdp_session *state)
 
 	rr = rrdp_find(id);
 	if (rr == NULL)
-		errx(1, "non-existant rrdp repo %zu", id);
+		errx(1, "non-existant rrdp repo %u", id);
 
 	file = rrdp_state_filename(rr, 0);
 	temp = rrdp_state_filename(rr, 1);
@@ -769,7 +769,7 @@ fail:
  * Returns 1 on success, 0 if the repo is corrupt, -1 on IO error
  */
 int
-rrdp_handle_file(size_t id, enum publish_type pt, char *uri,
+rrdp_handle_file(unsigned int id, enum publish_type pt, char *uri,
     char *hash, size_t hlen, char *data, size_t dlen)
 {
 	struct rrdprepo *rr;
@@ -780,7 +780,7 @@ rrdp_handle_file(size_t id, enum publish_type pt, char *uri,
 
 	rr = rrdp_find(id);
 	if (rr == NULL)
-		errx(1, "non-existant rrdp repo %zu", id);
+		errx(1, "non-existant rrdp repo %u", id);
 	if (rr->state == REPO_FAILED)
 		return -1;
 
@@ -929,7 +929,7 @@ rrdp_clean_temp(struct rrdprepo *rr)
  * RSYNC sync finished, either with or without success.
  */
 void
-rsync_finish(size_t id, int ok)
+rsync_finish(unsigned int id, int ok)
 {
 	struct rsyncrepo *rr;
 	struct tarepo *tr;
@@ -960,7 +960,7 @@ rsync_finish(size_t id, int ok)
 
 	rr = rsync_find(id);
 	if (rr == NULL)
-		errx(1, "unknown rsync repo %zu", id);
+		errx(1, "unknown rsync repo %u", id);
 
 	/* repository changed state already, ignore request */
 	if (rr->state != REPO_LOADING)
@@ -985,14 +985,14 @@ rsync_finish(size_t id, int ok)
  * RRDP sync finshed, either with or without success.
  */
 void
-rrdp_finish(size_t id, int ok)
+rrdp_finish(unsigned int id, int ok)
 {
 	struct rrdprepo *rr;
 	struct repo *rp;
 
 	rr = rrdp_find(id);
 	if (rr == NULL)
-		errx(1, "unknown RRDP repo %zu", id);
+		errx(1, "unknown RRDP repo %u", id);
 	/* repository changed state already, ignore request */
 	if (rr->state != REPO_LOADING)
 		return;
@@ -1035,7 +1035,7 @@ rrdp_finish(size_t id, int ok)
  * over to the rrdp process.
  */
 void
-http_finish(size_t id, enum http_result res, const char *last_mod)
+http_finish(unsigned int id, enum http_result res, const char *last_mod)
 {
 	struct tarepo *tr;
 	struct repo *rp;
