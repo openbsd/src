@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpinctrl.c,v 1.2 2021/10/30 14:50:54 kettenis Exp $	*/
+/*	$OpenBSD: aplpinctrl.c,v 1.3 2021/12/23 20:48:24 patrick Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -266,15 +266,15 @@ aplpinctrl_intr(void *arg)
 	struct aplpinctrl_softc *sc = arg;
 	struct intrhand *ih;
 	uint32_t status, pending;
-	int pin, s;
+	int base, pin, s;
 
-	for (pin = 0; pin < sc->sc_ngpios; pin += 32) {
-		status = HREAD4(sc, GPIO_IRQ(0, pin));
+	for (base = 0; base < sc->sc_ngpios; base += 32) {
+		status = HREAD4(sc, GPIO_IRQ(0, base));
 		pending = status;
 
 		while (pending) {
 			pin = ffs(pending) - 1;
-			ih = sc->sc_handler[pin];
+			ih = sc->sc_handler[base + pin];
 
 			if (ih) {
 				s = splraise(ih->ih_ipl);
@@ -286,7 +286,7 @@ aplpinctrl_intr(void *arg)
 			pending &= ~(1 << pin);
 		}
 
-		HWRITE4(sc, GPIO_IRQ(0, pin), status);
+		HWRITE4(sc, GPIO_IRQ(0, base), status);
 	}
 
 	return 1;
