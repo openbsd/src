@@ -1,4 +1,4 @@
-/*	$OpenBSD: mksuncd.c,v 1.4 2019/06/28 13:32:48 deraadt Exp $	*/
+/*	$OpenBSD: mksuncd.c,v 1.5 2021/12/23 09:17:19 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -264,7 +264,7 @@ adjust_label(int f, struct sun_disklabel *slp, int part, off_t start, off_t size
 
 	if (start > 65535)
 		errx(1, "start too large! %lld", (long long)start);
-	if (part < 0 || part > 8)
+	if (part < 0 || part >= 8)
 		errx(1, "invalid partition: %d", part);
 	slp->sl_part[part].sdkp_cyloffset = start;
 	slp->sl_part[part].sdkp_nsectors =
