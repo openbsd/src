@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.22 2021/12/21 11:46:01 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.23 2021/12/23 12:14:15 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -202,7 +202,6 @@ struct uhidpp_device {
 		struct ksensor b_sens[UHIDPP_NSENSORS];
 		uint8_t b_feature_idx;
 		uint8_t b_level;
-		uint8_t b_next_level;
 		uint8_t b_status;
 		uint8_t b_nlevels;
 		uint8_t b_rechargeable;
@@ -268,7 +267,7 @@ int hidpp20_feature_get_count(struct uhidpp_softc *, uint8_t, uint8_t,
 int hidpp20_feature_get_id(struct uhidpp_softc *, uint8_t, uint8_t, uint8_t,
     uint16_t *, uint8_t *);
 int hidpp20_battery_get_level_status(struct uhidpp_softc *, uint8_t, uint8_t,
-    uint8_t *, uint8_t *, uint8_t *);
+    uint8_t *, uint8_t *);
 int hidpp20_battery_get_capability(struct uhidpp_softc *, uint8_t, uint8_t,
     uint8_t *, uint8_t *);
 int hidpp20_battery_status_is_charging(uint8_t);
@@ -669,8 +668,7 @@ uhidpp_device_refresh(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 
 		error = hidpp20_battery_get_level_status(sc, dev->d_id,
 		    dev->d_battery.b_feature_idx,
-		    &dev->d_battery.b_level, &dev->d_battery.b_next_level,
-		    &dev->d_battery.b_status);
+		    &dev->d_battery.b_level, &dev->d_battery.b_status);
 		if (error) {
 			DPRINTF("%s: battery status failure: device_id=%d, "
 			    "error=%d\n",
@@ -1070,7 +1068,7 @@ hidpp20_feature_get_id(struct uhidpp_softc *sc, uint8_t device_id,
 
 int
 hidpp20_battery_get_level_status(struct uhidpp_softc *sc, uint8_t device_id,
-    uint8_t feature_idx, uint8_t *level, uint8_t *next_level, uint8_t *status)
+    uint8_t feature_idx, uint8_t *level, uint8_t *status)
 {
 	struct uhidpp_report resp;
 	int error;
@@ -1085,7 +1083,7 @@ hidpp20_battery_get_level_status(struct uhidpp_softc *sc, uint8_t device_id,
 		return error;
 
 	*level = resp.fap.params[0];
-	*next_level = resp.fap.params[1];
+	/* next_level = resp.fap.params[1]; */
 	*status = resp.fap.params[2];
 
 	/*
