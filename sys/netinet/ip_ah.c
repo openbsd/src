@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.172 2021/12/23 12:21:48 bluhm Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.173 2021/12/23 22:35:11 bluhm Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -863,7 +863,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	struct cryptop *crp = NULL;
 	uint64_t replay64;
 	uint16_t iplen;
-	int error, rplen, roff, ilen, olen;
+	int error, rplen, roff;
 	uint8_t *ptr = NULL;
 	uint8_t prot;
 	struct ah *ah;
@@ -1120,9 +1120,6 @@ ah_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 		ipsecstat_inc(ipsec_noxform);
 		goto drop;
 	}
-
-	ilen = crp->crp_ilen;
-	olen = crp->crp_olen;
 
 	/* Release the crypto descriptors */
 	crypto_freereq(crp);
