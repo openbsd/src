@@ -1,4 +1,4 @@
-/*	$OpenBSD: direntry.h,v 1.1 2016/10/18 17:05:30 natano Exp $	*/
+/*	$OpenBSD: direntry.h,v 1.2 2021/12/23 04:37:12 jsg Exp $	*/
 /*	$NetBSD: direntry.h,v 1.13 1997/10/17 11:23:45 ws Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ struct winentry {
 
 void	unix2dostime(struct timespec *tsp, int minuteswest, u_int16_t *ddp,
 	    u_int16_t *dtp, u_int8_t *dhp);
-int	unix2dosfn(u_char *un, u_char dn[12], int unlen, u_int gen);
+int	unix2dosfn(u_char *un, u_char dn[11], int unlen, u_int gen);
 int	unix2winfn(u_char *un, int unlen, struct winentry *wep, int cnt,
 	    int chksum);
 int	winChkName(u_char *un, int unlen, struct winentry *wep, int chksum);
