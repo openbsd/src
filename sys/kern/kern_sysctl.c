@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.397 2021/12/22 22:20:13 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.398 2021/12/23 10:17:01 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -121,7 +121,6 @@
 extern struct forkstat forkstat;
 extern struct nchstats nchstats;
 extern int nselcoll, fscale;
-extern struct disklist_head disklist;
 extern fixpt_t ccpu;
 extern long numvnodes;
 extern int allowdt;
@@ -2132,12 +2131,12 @@ sysctl_diskinit(int update, struct proc *p)
 	struct diskstats *sdk;
 	struct disk *dk;
 	const char *duid;
-	int i, changed = 0;
+	int error, changed = 0;
 
 	KERNEL_ASSERT_LOCKED();
 
-	if ((i = rw_enter(&sysctl_disklock, RW_WRITE|RW_INTR)) != 0)
-		return i;
+	if ((error = rw_enter(&sysctl_disklock, RW_WRITE|RW_INTR)) != 0)
+		return error;
 
 	/* Run in a loop, disks may change while malloc sleeps. */
 	while (disk_change) {
@@ -2145,8 +2144,8 @@ sysctl_diskinit(int update, struct proc *p)
 
 		disk_change = 0;
 
-		for (dk = TAILQ_FIRST(&disklist), tlen = 0; dk;
-		    dk = TAILQ_NEXT(dk, dk_link)) {
+		tlen = 0;
+		TAILQ_FOREACH(dk, &disklist, dk_link) {
 			if (dk->dk_name)
 				tlen += strlen(dk->dk_name);
 			tlen += 18;	/* label uid + separators */
@@ -2173,8 +2172,9 @@ sysctl_diskinit(int update, struct proc *p)
 	if (changed) {
 		int l;
 
-		for (dk = TAILQ_FIRST(&disklist), i = 0, l = 0; dk;
-		    dk = TAILQ_NEXT(dk, dk_link), i++) {
+		l = 0;
+		sdk = diskstats;
+		TAILQ_FOREACH(dk, &disklist, dk_link) {
 			duid = NULL;
 			if (dk->dk_label && !duid_iszero(dk->dk_label->d_uid))
 				duid = duid_format(dk->dk_label->d_uid);
@@ -2182,7 +2182,6 @@ sysctl_diskinit(int update, struct proc *p)
 			    dk->dk_name ? dk->dk_name : "",
 			    duid ? duid : "");
 			l += strlen(disknames + l);
-			sdk = diskstats + i;
 			strlcpy(sdk->ds_name, dk->dk_name,
 			    sizeof(sdk->ds_name));
 			mtx_enter(&dk->dk_mtx);
@@ -2196,6 +2195,7 @@ sysctl_diskinit(int update, struct proc *p)
 			sdk->ds_timestamp = dk->dk_timestamp;
 			sdk->ds_time = dk->dk_time;
 			mtx_leave(&dk->dk_mtx);
+			sdk++;
 		}
 
 		/* Eliminate trailing comma */
@@ -2203,9 +2203,8 @@ sysctl_diskinit(int update, struct proc *p)
 			disknames[l - 1] = '\0';
 	} else if (update) {
 		/* Just update, number of drives hasn't changed */
-		for (dk = TAILQ_FIRST(&disklist), i = 0; dk;
-		    dk = TAILQ_NEXT(dk, dk_link), i++) {
-			sdk = diskstats + i;
+		sdk = diskstats;
+		TAILQ_FOREACH(dk, &disklist, dk_link) {
 			strlcpy(sdk->ds_name, dk->dk_name,
 			    sizeof(sdk->ds_name));
 			mtx_enter(&dk->dk_mtx);
@@ -2219,6 +2218,7 @@ sysctl_diskinit(int update, struct proc *p)
 			sdk->ds_timestamp = dk->dk_timestamp;
 			sdk->ds_time = dk->dk_time;
 			mtx_leave(&dk->dk_mtx);
+			sdk++;
 		}
 	}
 	rw_exit_write(&sysctl_disklock);
