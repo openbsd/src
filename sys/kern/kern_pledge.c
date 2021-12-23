@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.276 2021/11/15 17:14:51 deraadt Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.277 2021/12/23 18:50:32 guenther Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -173,6 +173,18 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_ftruncate] = PLEDGE_STDIO,
 	[SYS_lseek] = PLEDGE_STDIO,
 	[SYS_fpathconf] = PLEDGE_STDIO,
+
+#if 1
+	[SYS_pad_mquery] = PLEDGE_STDIO,
+	[SYS_pad_mmap] = PLEDGE_STDIO,
+	[SYS_pad_pread] = PLEDGE_STDIO,
+	[SYS_pad_preadv] = PLEDGE_STDIO,
+	[SYS_pad_pwrite] = PLEDGE_STDIO,
+	[SYS_pad_pwritev] = PLEDGE_STDIO,
+	[SYS_pad_ftruncate] = PLEDGE_STDIO,
+	[SYS_pad_lseek] = PLEDGE_STDIO,
+	[SYS_pad_truncate] = PLEDGE_WPATH,
+#endif
 
 	/*
 	 * Address selection required a network pledge ("inet",

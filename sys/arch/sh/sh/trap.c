@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.49 2021/12/09 00:26:11 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.50 2021/12/23 18:50:32 guenther Exp $	*/
 /*	$NetBSD: exception.c,v 1.32 2006/09/04 23:57:52 uwe Exp $	*/
 /*	$NetBSD: syscall.c,v 1.6 2006/03/07 07:21:50 thorpej Exp $	*/
 
@@ -513,13 +513,13 @@ syscall(struct proc *p, struct trapframe *tf)
 	caddr_t params;
 	const struct sysent *callp;
 	int error, opc;
-	size_t argsize;
-	register_t code, args[8], rval[2], ocode;
+	int argoff, argsize;
+	register_t code, args[8], rval[2];
 
 	uvmexp.syscalls++;
 
 	opc = tf->tf_spc;
-	ocode = code = tf->tf_r0;
+	code = tf->tf_r0;
 
 	params = (caddr_t)tf->tf_r15;
 
@@ -529,6 +529,7 @@ syscall(struct proc *p, struct trapframe *tf)
 		 * Code is first argument, followed by actual args.
 		 */
 	        code = tf->tf_r4;
+		argoff = 1;
 		break;
 	case SYS___syscall:
 		/*
@@ -540,8 +541,10 @@ syscall(struct proc *p, struct trapframe *tf)
 #else
 		code = tf->tf_r4;
 #endif
+		argoff = 2;
 		break;
 	default:
+		argoff = 0;
 		break;
 	}
 
@@ -558,46 +561,41 @@ syscall(struct proc *p, struct trapframe *tf)
 	}
 #endif
 
-	switch (ocode) {
-	case SYS_syscall:
-		if (argsize) {
-			args[0] = tf->tf_r5;
-			args[1] = tf->tf_r6;
-			args[2] = tf->tf_r7;
-			if (argsize > 3 * sizeof(int)) {
-				argsize -= 3 * sizeof(int);
-				if ((error = copyin(params, &args[3],
-				    argsize)))
-					goto bad;
-			}
+	if (argsize) {
+		register_t *ap;
+		int off_t_arg;
+
+		switch (code) {
+		default:		off_t_arg = 0;	break;
+		case SYS_lseek:
+		case SYS_truncate:
+		case SYS_ftruncate:	off_t_arg = 1;	break;
+		case SYS_preadv:
+		case SYS_pwritev:
+		case SYS_pread:
+		case SYS_pwrite:	off_t_arg = 3;	break;
 		}
-		break;
-	case SYS___syscall:
-		if (argsize) {
-			args[0] = tf->tf_r6;
-			args[1] = tf->tf_r7;
-			if (argsize > 2 * sizeof(int)) {
-				argsize -= 2 * sizeof(int);
-				if ((error = copyin(params, &args[2],
-				    argsize)))
-					goto bad;
-			}
+
+		ap = args;
+		switch (argoff) {
+		case 0:	*ap++ = tf->tf_r4; argsize -= sizeof(int);
+		case 1:	*ap++ = tf->tf_r5; argsize -= sizeof(int);
+		case 2: *ap++ = tf->tf_r6; argsize -= sizeof(int);
+			/*
+			 * off_t args aren't split between register
+			 * and stack, but rather r7 is skipped and
+			 * the entire off_t is on the stack.
+			 */
+			if (argoff + off_t_arg == 3)
+				break;
+			*ap++ = tf->tf_r7; argsize -= sizeof(int);
+			break;
 		}
-		break;
-	default:
-		if (argsize) {
-			args[0] = tf->tf_r4;
-			args[1] = tf->tf_r5;
-			args[2] = tf->tf_r6;
-			args[3] = tf->tf_r7;
-			if (argsize > 4 * sizeof(int)) {
-				argsize -= 4 * sizeof(int);
-				if ((error = copyin(params, &args[4],
-				    argsize)))
-					goto bad;
-			}
+
+		if (argsize > 0) {
+			if ((error = copyin(params, ap, argsize)))
+				goto bad;
 		}
-		break;
 	}
 
 	rval[0] = 0;

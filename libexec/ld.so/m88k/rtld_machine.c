@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.29 2019/12/07 22:57:48 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.30 2021/12/23 18:50:32 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -55,6 +55,7 @@
 #include "archdep.h"
 #include "resolve.h"
 
+int	_dl_cacheflush(unsigned long, size_t);
 Elf_Addr _dl_bind(elf_object_t *object, int reloff);
 void	_dl_md_reloc_gotp_ent(Elf_Addr, Elf_Addr, Elf_Addr);
 

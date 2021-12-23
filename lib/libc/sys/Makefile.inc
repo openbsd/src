@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.160 2021/06/11 10:29:33 kettenis Exp $
+#	$OpenBSD: Makefile.inc,v 1.161 2021/12/23 18:50:32 guenther Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -16,9 +16,9 @@ SRCS+=	posix_madvise.c pthread_sigmask.c \
 	w_clock_gettime.c w_gettimeofday.c microtime.c
 
 # glue for compat with old syscall interfaces.
-SRCS+=	ftruncate.c lseek.c mquery.c mmap.c ptrace.c semctl.c truncate.c \
+SRCS+=	ptrace.c semctl.c \
 	timer_create.c timer_delete.c timer_getoverrun.c timer_gettime.c \
-	timer_settime.c pread.c preadv.c pwrite.c pwritev.c
+	timer_settime.c
 
 # stack protector helper functions
 SRCS+=	stack_protector.c
@@ -33,11 +33,11 @@ CANCEL=	accept accept4 \
 	msgrcv msgsnd msync \
 	nanosleep \
 	open openat \
-	poll ppoll pselect \
+	poll ppoll pread preadv pselect pwrite pwritev \
 	read readv recvfrom recvmsg \
 	select sendmsg sendto \
 	wait4 write writev
-SRCS+=	${CANCEL:%=w_%.c} w_pread.c w_preadv.c w_pwrite.c w_pwritev.c
+SRCS+=	${CANCEL:%=w_%.c}
 
 # modules with default implementations on all architectures, unless overridden
 # below:
@@ -50,17 +50,17 @@ ASM=	__semctl.o __syscall.o __thrsigdivert.o \
 	faccessat.o fchdir.o fchflags.o fchmod.o fchmodat.o fchown.o \
 	fchownat.o fhopen.o fhstat.o fhstatfs.o \
 	flock.o fpathconf.o fstat.o fstatat.o fstatfs.o \
-	futex.o futimens.o futimes.o \
+	ftruncate.o futex.o futimens.o futimes.o \
 	getentropy.o getdents.o getfh.o getfsstat.o \
 	getgroups.o getitimer.o getpeername.o getpgid.o \
 	getpriority.o getresgid.o getresuid.o \
 	getrlimit.o getrusage.o getsid.o getsockname.o \
 	getsockopt.o ioctl.o \
 	kevent.o kill.o kqueue.o ktrace.o lchown.o \
-	link.o linkat.o listen.o lstat.o madvise.o \
-	minherit.o mkdir.o mkdirat.o mkfifo.o mkfifoat.o \
-	mknod.o mknodat.o mlock.o mlockall.o mount.o mprotect.o \
-	msgctl.o msgget.o munlock.o munlockall.o munmap.o \
+	link.o linkat.o listen.o lseek.o lstat.o \
+	madvise.o minherit.o mkdir.o mkdirat.o mkfifo.o mkfifoat.o \
+	mknod.o mknodat.o mlock.o mlockall.o mmap.o mount.o mprotect.o \
+	mquery.o msgctl.o msgget.o munlock.o munlockall.o munmap.o \
 	nfssvc.o \
 	pathconf.o pipe.o pipe2.o pledge.o profil.o \
 	quotactl.o \
@@ -73,7 +73,9 @@ ASM=	__semctl.o __syscall.o __thrsigdivert.o \
 	settimeofday.o setuid.o shmat.o shmctl.o shmdt.o \
 	shmget.o shutdown.o sigaltstack.o socket.o \
 	socketpair.o stat.o statfs.o swapctl.o symlink.o symlinkat.o \
-	sysarch.o sysctl.o thrkill.o unlink.o unlinkat.o \
+	sysarch.o sysctl.o \
+	thrkill.o truncate.o \
+	unlink.o unlinkat.o \
 	unmount.o unveil.o utimensat.o utimes.o utrace.o
 
 SRCS+=	${SRCS_${MACHINE_CPU}}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.144 2021/07/12 15:09:19 beck Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.145 2021/12/23 18:50:32 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -62,9 +62,10 @@
 #include <netdb.h>
 #include <poll.h>
 #include <signal.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <vis.h>
@@ -468,6 +469,10 @@ poctint(int arg)
 #define Phexlonglong	Phexlong
 #define phexll		NULL		/* not actually used on LP64 */
 
+/* no padding before long long arguments, nor at end */
+#define PAD64		0
+#define END64		end_of_args
+
 #else /* __LP64__ */
 
 /* on ILP32, long long arguments are passed as two 32bit args */
@@ -490,6 +495,17 @@ phexll(long arg2)
 		(void)printf("%lld", val);
 	return (0);
 }
+
+/*
+ * Some ILP32 archs naturally align off_t arguments to 8byte boundaries
+ * Get the compiler to tell if this arch is one of them.
+ */
+struct padding_test {
+	int padtest_one;
+	off_t padtest_two;
+};
+#define PAD64	(offsetof(struct padding_test,padtest_two) == 8)
+#define END64	(PAD64 ? PASS_LONGLONG : end_of_args)
 
 #endif /* __LP64__ */
 
@@ -799,8 +815,12 @@ static const formatter scargs[][8] = {
     [SYS_nfssvc]	= { Phexint, Pptr },
     [SYS_getfh]		= { Ppath, Pptr },
     [SYS_sysarch]	= { Pdecint, Pptr },
-    [SYS_pread]		= { Pfd, Pptr, Pbigsize, PAD, Poff_t },
-    [SYS_pwrite]	= { Pfd, Pptr, Pbigsize, PAD, Poff_t },
+    [SYS_pread]		= { Pfd, Pptr, Pbigsize, Poff_t, END64 },
+    [SYS_pwrite]        = { Pfd, Pptr, Pbigsize, Poff_t, END64 },
+#ifdef SYS_pad_pread
+    [SYS_pad_pread]	= { Pfd, Pptr, Pbigsize, PAD, Poff_t },
+    [SYS_pad_pwrite]	= { Pfd, Pptr, Pbigsize, PAD, Poff_t },
+#endif
     [SYS_setgid]	= { Gidname },
     [SYS_setegid]	= { Gidname },
     [SYS_seteuid]	= { Uidname },
@@ -809,10 +829,16 @@ static const formatter scargs[][8] = {
     [SYS_swapctl]	= { Swapctlname, Pptr, Pdecint },
     [SYS_getrlimit]	= { Rlimitname, Pptr },
     [SYS_setrlimit]	= { Rlimitname, Pptr },
-    [SYS_mmap]		= { Pptr, Pbigsize, Mmapprotname, Mmapflagsname, Pfd, PAD, Poff_t },
-    [SYS_lseek]		= { Pfd, PAD, Poff_t, Whencename },
-    [SYS_truncate]	= { Ppath, PAD, Poff_t },
-    [SYS_ftruncate]	= { Pfd, PAD, Poff_t },
+    [SYS_mmap]		= { Pptr, Pbigsize, Mmapprotname, Mmapflagsname, Pfd, Poff_t, END64 },
+    [SYS_lseek]		= { Pfd, Poff_t, Whencename, END64 },
+    [SYS_truncate]	= { Ppath, Poff_t, END64 },
+    [SYS_ftruncate]	= { Pfd, Poff_t, END64 },
+#ifdef SYS_pad_mmap
+    [SYS_pad_mmap]	= { Pptr, Pbigsize, Mmapprotname, Mmapflagsname, Pfd, PAD, Poff_t },
+    [SYS_pad_lseek]	= { Pfd, PAD, Poff_t, Whencename },
+    [SYS_pad_truncate]	= { Ppath, PAD, Poff_t },
+    [SYS_pad_ftruncate]	= { Pfd, PAD, Poff_t },
+#endif
     [SYS_sysctl]	= { Pptr, Pcount, Pptr, Pptr, Pptr, Psize },
     [SYS_mlock]		= { Pptr, Pbigsize },
     [SYS_munlock]	= { Pptr, Pbigsize },
@@ -831,14 +857,21 @@ static const formatter scargs[][8] = {
     [SYS_msync]		= { Pptr, Pbigsize, Msyncflagsname },
     [SYS_pipe]		= { Pptr },
     [SYS_fhopen]	= { Pptr, Openflagsname },
-    [SYS_preadv]	= { Pfd, Pptr, Pcount, PAD, Poff_t },
-    [SYS_pwritev]	= { Pfd, Pptr, Pcount, PAD, Poff_t },
+    [SYS_preadv]	= { Pfd, Pptr, Pcount, Poff_t, END64 },
+    [SYS_pwritev]	= { Pfd, Pptr, Pcount, Poff_t, END64 },
+#ifdef SYS_pad_preadv
+    [SYS_pad_preadv]	= { Pfd, Pptr, Pcount, PAD, Poff_t },
+    [SYS_pad_pwritev]	= { Pfd, Pptr, Pcount, PAD, Poff_t },
+#endif
     [SYS_mlockall]	= { Mlockallname },
     [SYS_getresuid]	= { Pptr, Pptr, Pptr },
     [SYS_setresuid]	= { Uidname, Uidname, Uidname },
     [SYS_getresgid]	= { Pptr, Pptr, Pptr },
     [SYS_setresgid]	= { Gidname, Gidname, Gidname },
-    [SYS_mquery]	= { Pptr, Pbigsize, Mmapprotname, Mmapflagsname, Pfd, PAD, Poff_t },
+    [SYS_mquery]	= { Pptr, Pbigsize, Mmapprotname, Mmapflagsname, Pfd, Poff_t, END64 },
+#ifdef SYS_pad_mquery
+    [SYS_pad_mquery]	= { Pptr, Pbigsize, Mmapprotname, Mmapflagsname, Pfd, PAD, Poff_t },
+#endif
     [SYS_closefrom]	= { Pfd },
     [SYS_sigaltstack]	= { Pptr, Pptr },
     [SYS_shmget]	= { Pkey_t, Pbigsize, Semgetname },
@@ -922,8 +955,11 @@ ktrsyscall(struct ktr_syscall *ktr, size_t ktrlen)
 	} else if (ktr->ktr_code < nitems(scargs)) {
 		const formatter *fmts = scargs[ktr->ktr_code];
 		int fmt;
+		int arg = 0;
 
-		while (narg && (fmt = *fmts) != 0) {
+		while (arg < narg && (fmt = *fmts) != 0) {
+			if (PAD64 && fmt == PASS_LONGLONG && (arg & 1))
+				goto skip;
 			if (sep)
 				putchar(sep);
 			sep = ',';
@@ -934,9 +970,11 @@ ktrsyscall(struct ktr_syscall *ktr, size_t ktrlen)
 			else if (long_formatters[-fmt](*ap))
 				sep = '\0';
 			fmts++;
+skip:
 			ap++;
-			narg--;
+			arg++;
 		}
+		narg -= arg;
 	}
 
 	while (narg > 0) {
@@ -1106,6 +1144,9 @@ doerr:
 		if (fancy) {
 			switch (code) {
 			case SYS_lseek:
+#ifdef SYS_pad_lseek
+			case SYS_pad_lseek:
+#endif
 				(void)printf("%lld", retll);
 				if (retll < 0 || retll > 9)
 					(void)printf("/%#llx", retll);

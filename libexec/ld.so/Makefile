@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.81 2021/06/26 14:46:48 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.82 2021/12/23 18:50:32 guenther Exp $
 
 SUBDIR=ldconfig ldd
 MAN=	ld.so.1
@@ -27,9 +27,16 @@ SRCS+=	path.c util.c sod.c strsep.c strtol.c dir.c library_subr.c
 SRCS+=	dl_uname.c dl_dirname.c strlcat.c strlen.c trace.c
 SRCS+=	malloc.c reallocarray.c tib.c ffs.c
 
-syscall=__syscall close exit fstat getdents getentropy getthrid issetugid \
-	mprotect munmap msyscall open pledge read __realpath sendsyslog \
+syscall=close exit fstat getdents getentropy getthrid issetugid kbind \
+	mmap mprotect munmap msyscall open pledge read __realpath sendsyslog \
 	__set_tcb sysctl thrkill utrace write
+
+.if (${MACHINE_ARCH} == "i386")
+syscall+=mquery
+SRCS+=	library_mquery.c
+.else
+SRCS+=	library.c
+.endif
 
 GEN_PREFIX=\t.file "${@:R}.c"\n\#include "SYS.h"
 .for _i in ${syscall}
@@ -40,12 +47,6 @@ dl_${_i}.o: SYS.h
 	    ${AFLAGS} -P -x assembler-with-cpp - ${DFLAGS} -MF \
 	    ${.TARGET:R}.d -o ${.TARGET}
 .endfor
-
-.if (${MACHINE_ARCH} == "i386")
-SRCS+=	library_mquery.c
-.else
-SRCS+=	library.c
-.endif
 
 .include "${.CURDIR}/${MACHINE_CPU}/Makefile.inc"
 .PATH:	${.CURDIR}/${MACHINE_CPU}

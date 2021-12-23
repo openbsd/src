@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.1 2021/04/28 15:16:26 drahn Exp $ */
+/*	$OpenBSD: syscall.h,v 1.1 2021/12/23 18:50:32 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -38,33 +38,30 @@
 #define _dl_mmap_error(__res) \
     ((long)__res < 0 && (long)__res >= -_dl_MAX_ERRNO)
 
+struct __kbind;
+
 int	_dl_close(int);
 __dead
 void	_dl_exit(int);
 int	_dl_fstat(int, struct stat *);
 ssize_t	_dl_getdents(int, char *, size_t);
-int	_dl_issetugid(void);
+int	_dl_getentropy(char *, size_t);
 int	_dl_getthrid(void);
+int	_dl_issetugid(void);
+int	_dl_kbind(const struct __kbind *, size_t, int64_t);
+void   *_dl_mmap(void *, size_t, int, int, int, off_t);
 int	_dl_mprotect(const void *, size_t, int);
+void   *_dl_mquery(void *, size_t, int, int, int, off_t);
+int	_dl_msyscall(void *addr, size_t len);
 int	_dl_munmap(const void *, size_t);
 int	_dl_open(const char *, int);
-int	_dl_msyscall(void *addr, size_t len);
-ssize_t	_dl_read(int, const char *, size_t);
 int	_dl_pledge(const char *, const char **);
-long	_dl___syscall(quad_t, ...);
-int	_dl_sysctl(const int *, u_int, void *, size_t *, void *, size_t);
-int	_dl_utrace(const char *, const void *, size_t);
-int	_dl_getentropy(char *, size_t);
+ssize_t	_dl_read(int, const char *, size_t);
 int	_dl_sendsyslog(const char *, size_t, int);
 void	_dl___set_tcb(void *);
+int	_dl_sysctl(const int *, u_int, void *, size_t *, void *, size_t);
 __dead
 void	_dl_thrkill(pid_t, int, void *);
-
-static inline void *
-_dl_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
-{
-	return (void *)_dl___syscall(SYS_mmap, addr, len, prot,
-	    flags, fd, 0, offset);
-}
+int	_dl_utrace(const char *, const void *, size_t);
 
 #endif /*__DL_SYSCALL_H__*/

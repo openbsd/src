@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.166 2021/12/10 05:34:42 guenther Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.167 2021/12/23 18:50:32 guenther Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -122,7 +122,6 @@ sys_mquery(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) prot;
 		syscallarg(int) flags;
 		syscallarg(int) fd;
-		syscallarg(long) pad;
 		syscallarg(off_t) pos;
 	} */ *uap = v;
 	struct file *fp;
@@ -212,7 +211,6 @@ sys_mmap(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) prot;
 		syscallarg(int) flags;
 		syscallarg(int) fd;
-		syscallarg(long) pad;
 		syscallarg(off_t) pos;
 	} */ *uap = v;
 	vaddr_t addr;
@@ -438,6 +436,38 @@ out:
 		FRELE(fp, p);
 	return error;
 }
+
+#if 1
+int
+sys_pad_mquery(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_pad_mquery_args *uap = v;
+	struct sys_mquery_args unpad;
+
+	SCARG(&unpad, addr) = SCARG(uap, addr);
+	SCARG(&unpad, len) = SCARG(uap, len);
+	SCARG(&unpad, prot) = SCARG(uap, prot);
+	SCARG(&unpad, flags) = SCARG(uap, flags);
+	SCARG(&unpad, fd) = SCARG(uap, fd);
+	SCARG(&unpad, pos) = SCARG(uap, pos);
+	return sys_mquery(p, &unpad, retval);
+}
+
+int
+sys_pad_mmap(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_pad_mmap_args *uap = v;
+	struct sys_mmap_args unpad;
+
+	SCARG(&unpad, addr) = SCARG(uap, addr);
+	SCARG(&unpad, len) = SCARG(uap, len);
+	SCARG(&unpad, prot) = SCARG(uap, prot);
+	SCARG(&unpad, flags) = SCARG(uap, flags);
+	SCARG(&unpad, fd) = SCARG(uap, fd);
+	SCARG(&unpad, pos) = SCARG(uap, pos);
+	return sys_mmap(p, &unpad, retval);
+}
+#endif
 
 /*
  * sys_msync: the msync system call (a front-end for flush)
@@ -1105,6 +1135,8 @@ sys_kbind(struct proc *p, void *v, register_t *retval)
 
 	/* a NULL paramp disables the syscall for the process */
 	if (paramp == NULL) {
+		if (pr->ps_kbind_addr != 0)
+			sigexit(p, SIGILL);
 		pr->ps_kbind_addr = BOGO_PC;
 		return 0;
 	}

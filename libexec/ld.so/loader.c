@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.193 2021/11/12 22:28:13 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.194 2021/12/23 18:50:32 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -491,7 +491,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 
 	if (_dl_bindnow) {
 		/* Lazy binding disabled, so disable kbind */
-		_dl___syscall(SYS_kbind, (void *)NULL, (size_t)0, (long long)0);
+		_dl_kbind(NULL, 0, 0);
 	}
 
 	DL_DEB(("ld.so loading: '%s'\n", __progname));
