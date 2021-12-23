@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.20 2021/12/18 16:58:20 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.21 2021/12/23 23:41:26 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1181,6 +1181,7 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 		unsigned char min[ADDR_RAW_BUF_LEN], max[ADDR_RAW_BUF_LEN];
 		unsigned afi, *safi = NULL, safi_;
 		const char *addr_chars = NULL;
+		const char *errstr;
 		int prefixlen, i1, i2, delim, length;
 
 		if (!name_cmp(val->name, "IPv4")) {
@@ -1260,8 +1261,11 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 
 		switch (delim) {
 		case '/':
-			prefixlen = (int)strtoul(s + i2, &t, 10);
-			if (t == s + i2 || *t != '\0') {
+			/* length contains the size of the address in bytes. */
+			if (length != 4 && length != 16)
+				goto err;
+			prefixlen = strtonum(s + i2, 0, 8 * length, &errstr);
+			if (errstr != NULL) {
 				X509V3error(X509V3_R_EXTENSION_VALUE_ERROR);
 				X509V3_conf_err(val);
 				goto err;
