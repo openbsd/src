@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.39 2020/07/10 13:26:38 patrick Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.40 2021/12/23 01:39:44 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -1188,7 +1188,6 @@ et_setmulti(struct et_softc *sc)
 	uint32_t rxmac_ctrl, pktfilt;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	uint8_t addr[ETHER_ADDR_LEN];
 	int i, count;
 
 	pktfilt = CSR_READ_4(sc, ET_PKTFILT);
@@ -1200,19 +1199,12 @@ et_setmulti(struct et_softc *sc)
 		goto back;
 	}
 
-	bcopy(etherbroadcastaddr, addr, ETHER_ADDR_LEN);
-
 	count = 0;
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
 		uint32_t *hp, h;
 
-		for (i = 0; i < ETHER_ADDR_LEN; i++) {
-			addr[i] &=  enm->enm_addrlo[i];
-		}
-
-		h = ether_crc32_be(LLADDR((struct sockaddr_dl *)addr),
-		    ETHER_ADDR_LEN);
+		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 		h = (h & 0x3f800000) >> 23;
 
 		hp = &hash[0];
