@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.200 2021/12/22 13:37:46 tobhe Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.201 2021/12/23 12:21:48 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -309,6 +309,7 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 		goto drop;
 	}
 
+	KERNEL_LOCK();
 	/* Register first use, setup expiration timer. */
 	if (tdbp->tdb_first_use == 0) {
 		tdbp->tdb_first_use = gettime();
@@ -336,6 +337,7 @@ ipsec_common_input(struct mbuf **mp, int skip, int protoff, int af, int sproto,
 		tdbstat_inc(tdbp, tdb_idrops);
 	}
 	tdb_unref(tdbp);
+	KERNEL_UNLOCK();
 	return prot;
 
  drop:

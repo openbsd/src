@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.90 2021/12/20 15:59:09 mvs Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.91 2021/12/23 12:21:48 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -171,13 +171,11 @@ ipcomp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 	crp->crp_buf = (caddr_t)m;
 	crp->crp_sid = tdb->tdb_cryptoid;
 
-	KERNEL_LOCK();
 	while ((error = crypto_invoke(crp)) == EAGAIN) {
 		/* Reset the session ID */
 		if (tdb->tdb_cryptoid != 0)
 			tdb->tdb_cryptoid = crp->crp_sid;
 	}
-	KERNEL_UNLOCK();
 	if (error) {
 		DPRINTF("crypto error %d", error);
 		ipsecstat_inc(ipsec_noxform);
@@ -459,13 +457,11 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	crp->crp_buf = (caddr_t)m;
 	crp->crp_sid = tdb->tdb_cryptoid;
 
-	KERNEL_LOCK();
 	while ((error = crypto_invoke(crp)) == EAGAIN) {
 		/* Reset the session ID */
 		if (tdb->tdb_cryptoid != 0)
 			tdb->tdb_cryptoid = crp->crp_sid;
 	}
-	KERNEL_UNLOCK();
 	if (error) {
 		DPRINTF("crypto error %d", error);
 		ipsecstat_inc(ipsec_noxform);

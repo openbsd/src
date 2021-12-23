@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.361 2021/12/03 17:18:34 bluhm Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.362 2021/12/23 12:21:48 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1625,12 +1625,15 @@ bridge_ipsec(struct ifnet *ifp, struct ether_header *eh, int hassnap,
 			if ((af == AF_INET) &&
 			    ip_mtudisc && (ip->ip_off & htons(IP_DF)) &&
 			    tdb->tdb_mtu && ntohs(ip->ip_len) > tdb->tdb_mtu &&
-			    tdb->tdb_mtutimeout > gettime())
+			    tdb->tdb_mtutimeout > gettime()) {
 				bridge_send_icmp_err(ifp, eh, m,
 				    hassnap, llc, tdb->tdb_mtu,
 				    ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG);
-			else
+			} else {
+				KERNEL_LOCK();
 				error = ipsp_process_packet(m, tdb, af, 0);
+				KERNEL_UNLOCK();
+			}
 			tdb_unref(tdb);
 			return (1);
 		} else

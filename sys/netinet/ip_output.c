@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.378 2021/12/20 15:59:10 mvs Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.379 2021/12/23 12:21:48 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -659,7 +659,9 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 	m->m_flags &= ~(M_MCAST | M_BCAST);
 
 	/* Callee frees mbuf */
+	KERNEL_LOCK();
 	error = ipsp_process_packet(m, tdb, AF_INET, 0);
+	KERNEL_UNLOCK();
 	if (error) {
 		ipsecstat_inc(ipsec_odrops);
 		tdbstat_inc(tdb, tdb_odrops);
