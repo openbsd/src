@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.1 2021/12/09 16:30:05 jsing Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.2 2021/12/23 18:12:58 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -110,7 +110,7 @@ asn1_boolean_test(void)
 
 	q = p;
 	if (d2i_ASN1_BOOLEAN(NULL, &q, len) != 1) {
-		fprintf(stderr, "FAIL: BOOLEAN true did not decode to 0\n");
+		fprintf(stderr, "FAIL: BOOLEAN true did not decode to 1\n");
 		goto failed;
 	}
 
