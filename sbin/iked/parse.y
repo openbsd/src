@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.138 2021/12/01 16:42:13 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.139 2021/12/23 09:15:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2488,7 +2488,7 @@ create_ike(char *name, int af, struct ipsec_addr_wrap *ipproto,
 	pol.pol_af = af;
 	pol.pol_saproto = saproto;
 	for (i = 0, ipp = ipproto; ipp; ipp = ipp->next, i++) {
-		if (i > IKED_IPPROTO_MAX) {
+		if (i >= IKED_IPPROTO_MAX) {
 			yyerror("too many protocols");
 			return (-1);
 		}
