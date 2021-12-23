@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.21 2021/12/23 23:41:26 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.22 2021/12/23 23:48:38 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -60,6 +60,7 @@
  * Implementation of RFC 3779 section 2.2.
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1216,14 +1217,44 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 		 * the other input values.
 		 */
 		if (safi != NULL) {
-			*safi = strtoul(val->value, &t, 0);
-			t += strspn(t, " \t");
-			if (*safi > 0xFF || *t++ != ':') {
+			unsigned long parsed_safi;
+			int saved_errno = errno;
+
+			errno = 0;
+			parsed_safi = strtoul(val->value, &t, 0);
+
+			/* Value must be present, then a tab, space or colon. */
+			if (val->value[0] == '\0' ||
+			    (*t != '\t' && *t != ' ' && *t != ':')) {
 				X509V3error(X509V3_R_INVALID_SAFI);
 				X509V3_conf_err(val);
 				goto err;
 			}
+			/* Range and overflow check. */
+			if ((errno == ERANGE && parsed_safi == ULONG_MAX) ||
+			    parsed_safi > 0xFF) {
+				X509V3error(X509V3_R_INVALID_SAFI);
+				X509V3_conf_err(val);
+				goto err;
+			}
+			errno = saved_errno;
+
+			*safi = parsed_safi;
+
+			/* Check possible whitespace is followed by a colon. */
 			t += strspn(t, " \t");
+			if (*t != ':') {
+				X509V3error(X509V3_R_INVALID_SAFI);
+				X509V3_conf_err(val);
+				goto err;
+			}
+
+			/* Skip over colon. */
+			t++;
+
+			/* Then over any trailing whitespace. */
+			t += strspn(t, " \t");
+
 			s = strdup(t);
 		} else {
 			s = strdup(val->value);
