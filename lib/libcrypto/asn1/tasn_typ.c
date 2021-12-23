@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_typ.c,v 1.14 2021/12/13 17:56:15 jsing Exp $ */
+/* $OpenBSD: tasn_typ.c,v 1.15 2021/12/23 18:04:41 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -715,7 +715,8 @@ const ASN1_ITEM ASN1_BOOLEAN_it = {
 int
 i2d_ASN1_BOOLEAN(int a, unsigned char **out)
 {
-	return ASN1_item_i2d((ASN1_VALUE *)(long)(a), out, &ASN1_BOOLEAN_it);
+	return ASN1_item_ex_i2d((ASN1_VALUE **)(long *)(&a), out,
+	    &ASN1_BOOLEAN_it, -1, 0);
 }
 
 int
@@ -723,7 +724,8 @@ d2i_ASN1_BOOLEAN(int *a, const unsigned char **in, long len)
 {
 	ASN1_BOOLEAN abool;
 
-	if (ASN1_item_d2i((ASN1_VALUE **)&abool, in, len, &ASN1_BOOLEAN_it) == NULL)
+	if (ASN1_item_ex_d2i((ASN1_VALUE **)&abool, in, len, &ASN1_BOOLEAN_it,
+	    -1, 0, 0, NULL) <= 0)
 		return -1;
 
 	if (a != NULL)
