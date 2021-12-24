@@ -36,7 +36,7 @@ getmonotime(void)
 }
 
 static void
-http_request(size_t id, const char *uri, const char *last_mod, int fd)
+http_request(unsigned int id, const char *uri, const char *last_mod, int fd)
 {
 	struct ibuf     *b;
 
@@ -68,7 +68,7 @@ static int
 http_response(int fd)
 {
 	struct ibuf *b, *httpbuf = NULL;
-	size_t id;
+	unsigned int id;
 	enum http_result res;
 	char *lastmod;
 
@@ -94,7 +94,7 @@ main(int argc, char **argv)
 	int error, fd[2], outfd, http;
 	int fl = SOCK_STREAM | SOCK_CLOEXEC;
 	char *uri, *file, *mod;
-	size_t req = 0;
+	unsigned int req = 0;
 
 	if (argc != 3 && argc != 4) {
 		fprintf(stderr, "usage: test-http uri file [last-modified]\n");

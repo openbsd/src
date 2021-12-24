@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-rrdp.c,v 1.1 2021/12/01 09:03:19 claudio Exp $ */
+/*	$OpenBSD: test-rrdp.c,v 1.2 2021/12/24 09:21:41 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -50,7 +50,7 @@
 
 struct rrdp {
 	TAILQ_ENTRY(rrdp)	 entry;
-	size_t			 id;
+	unsigned int		 id;
 	char			*notifyuri;
 	char			*local;
 	char			*last_mod;
@@ -128,7 +128,7 @@ rrdp_publish_file(struct rrdp *s, struct publish_xml *pxml,
 }
 
 static struct rrdp *
-rrdp_new(size_t id, char *local, char *notify, char *session_id,
+rrdp_new(unsigned int id, char *local, char *notify, char *session_id,
     long long serial, char *last_mod)
 {
 	struct rrdp *s;
@@ -180,7 +180,7 @@ static void
 rrdp_finished(struct rrdp *s)
 {
 	XML_Parser p = s->parser;
-	size_t id = s->id;
+	unsigned int id = s->id;
 
 	if (s->state & RRDP_STATE_PARSE_ERROR)
 		return;
