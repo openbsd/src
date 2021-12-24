@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.25 2021/12/24 02:22:16 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.26 2021/12/24 02:23:44 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -649,7 +649,8 @@ ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
 		/*
 		 * Make sure we're properly sorted (paranoia).
 		 */
-		OPENSSL_assert(ASN1_INTEGER_cmp(a_min, b_min) <= 0);
+		if (ASN1_INTEGER_cmp(a_min, b_min) > 0)
+			goto done;
 
 		/*
 		 * Punt inverted ranges.
@@ -736,7 +737,8 @@ ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
 	}
 
 	/* Paranoia */
-	OPENSSL_assert(ASIdentifierChoice_is_canonical(choice));
+	if (!ASIdentifierChoice_is_canonical(choice))
+		goto done;
 
 	ret = 1;
 
