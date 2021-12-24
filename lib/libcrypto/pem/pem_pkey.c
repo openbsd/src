@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_pkey.c,v 1.24 2021/12/12 21:30:14 tb Exp $ */
+/* $OpenBSD: pem_pkey.c,v 1.25 2021/12/24 12:59:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -152,11 +152,20 @@ int
 PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
     unsigned char *kstr, int klen, pem_password_cb *cb, void *u)
 {
-	char pem_str[80];
-
-	if (!x->ameth || x->ameth->priv_encode)
+	if (x->ameth == NULL || x->ameth->priv_encode != NULL)
 		return PEM_write_bio_PKCS8PrivateKey(bp, x, enc,
 		    (char *)kstr, klen, cb, u);
+
+	return PEM_write_bio_PrivateKey_traditional(bp, x, enc, kstr, klen, cb,
+	    u);
+}
+
+int
+PEM_write_bio_PrivateKey_traditional(BIO *bp, EVP_PKEY *x,
+    const EVP_CIPHER *enc, unsigned char *kstr, int klen, pem_password_cb *cb,
+    void *u)
+{
+	char pem_str[80];
 
 	(void) snprintf(pem_str, sizeof(pem_str), "%s PRIVATE KEY",
 	    x->ameth->pem_str);

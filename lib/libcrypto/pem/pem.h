@@ -1,4 +1,4 @@
-/* $OpenBSD: pem.h,v 1.20 2021/10/31 16:28:50 tb Exp $ */
+/* $OpenBSD: pem.h,v 1.21 2021/12/24 12:59:17 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -482,6 +482,11 @@ DECLARE_PEM_rw_cb(PrivateKey, EVP_PKEY)
 
 DECLARE_PEM_rw(PUBKEY, EVP_PKEY)
 
+#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_CRYPTO_INTERNAL)
+int PEM_write_bio_PrivateKey_traditional(BIO *bp, EVP_PKEY *x,
+    const EVP_CIPHER *enc, unsigned char *kstr, int klen, pem_password_cb *cb,
+    void *u);
+#endif
 int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, EVP_PKEY *x, int nid,
     char *kstr, int klen,
     pem_password_cb *cb, void *u);
