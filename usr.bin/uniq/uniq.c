@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.29 2021/11/17 23:09:38 cheloha Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.30 2021/12/24 17:59:28 cheloha Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -57,7 +57,7 @@ __dead void	usage(void);
 int
 main(int argc, char *argv[])
 {
-	char *prevline, *t1, *t2, *thisline;
+	char *p, *prevline, *t, *thisline, *tmp;
 	FILE *ifp = NULL, *ofp = NULL;
 	size_t prevsize, thissize, tmpsize;
 	ssize_t len;
@@ -142,6 +142,10 @@ main(int argc, char *argv[])
 	}
 	if (prevline[len - 1] == '\n')
 		prevline[len - 1] = '\0';
+	if (numfields || numchars)
+		p = skip(prevline);
+	else
+		p = prevline;
 	
 	thissize = 0;
 	thisline = NULL;
@@ -150,20 +154,20 @@ main(int argc, char *argv[])
 			thisline[len - 1] = '\0';
 
 		/* If requested get the chosen fields + character offsets. */
-		if (numfields || numchars) {
-			t1 = skip(thisline);
-			t2 = skip(prevline);
-		} else {
-			t1 = thisline;
-			t2 = prevline;
-		}
+		if (numfields || numchars)
+			t = skip(thisline);
+		else
+			t = thisline;
 
 		/* If different, print; set previous to new value. */
-		if ((iflag ? strcasecmp : strcmp)(t1, t2)) {
+		if ((iflag ? strcasecmp : strcmp)(p, t)) {
 			show(ofp, prevline);
-			t1 = prevline;
+			tmp = prevline;
 			prevline = thisline;
-			thisline = t1;
+			thisline = tmp;
+			tmp = p;
+			p = t;
+			t = tmp;
 			tmpsize = prevsize;
 			prevsize = thissize;
 			thissize = tmpsize;
