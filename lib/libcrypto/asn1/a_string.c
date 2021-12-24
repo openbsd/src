@@ -1,4 +1,4 @@
-/* $OpenBSD: a_string.c,v 1.1 2021/12/15 18:00:31 jsing Exp $ */
+/* $OpenBSD: a_string.c,v 1.2 2021/12/24 14:12:26 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,6 +63,51 @@
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 
+ASN1_STRING *
+ASN1_STRING_new(void)
+{
+	return (ASN1_STRING_type_new(V_ASN1_OCTET_STRING));
+}
+
+ASN1_STRING *
+ASN1_STRING_type_new(int type)
+{
+	ASN1_STRING *a;
+
+	if ((a = calloc(1, sizeof(ASN1_STRING))) == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
+	a->type = type;
+
+	return a;
+}
+
+void
+ASN1_STRING_free(ASN1_STRING *a)
+{
+	if (a == NULL)
+		return;
+	if (a->data != NULL && !(a->flags & ASN1_STRING_FLAG_NDEF))
+		freezero(a->data, a->length);
+	free(a);
+}
+
+int
+ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
+{
+	int cmp;
+
+	if (a == NULL || b == NULL)
+		return -1;
+	if ((cmp = (a->length - b->length)) != 0)
+		return cmp;
+	if ((cmp = memcmp(a->data, b->data, a->length)) != 0)
+		return cmp;
+
+	return (a->type - b->type);
+}
+
 int
 ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
 {
@@ -126,51 +171,6 @@ ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
 	freezero(str->data, str->length);
 	str->data = data;
 	str->length = len;
-}
-
-ASN1_STRING *
-ASN1_STRING_new(void)
-{
-	return (ASN1_STRING_type_new(V_ASN1_OCTET_STRING));
-}
-
-ASN1_STRING *
-ASN1_STRING_type_new(int type)
-{
-	ASN1_STRING *a;
-
-	if ((a = calloc(1, sizeof(ASN1_STRING))) == NULL) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	a->type = type;
-
-	return a;
-}
-
-void
-ASN1_STRING_free(ASN1_STRING *a)
-{
-	if (a == NULL)
-		return;
-	if (a->data != NULL && !(a->flags & ASN1_STRING_FLAG_NDEF))
-		freezero(a->data, a->length);
-	free(a);
-}
-
-int
-ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
-{
-	int cmp;
-
-	if (a == NULL || b == NULL)
-		return -1;
-	if ((cmp = (a->length - b->length)) != 0)
-		return cmp;
-	if ((cmp = memcmp(a->data, b->data, a->length)) != 0)
-		return cmp;
-
-	return (a->type - b->type);
 }
 
 void
