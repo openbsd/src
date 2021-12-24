@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.26 2021/12/24 02:23:44 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.27 2021/12/24 02:28:52 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -979,16 +979,22 @@ X509v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b)
  * Core code for RFC 3779 3.3 path validation.
  */
 static int
-asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
+asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
     ASIdentifiers *ext)
 {
 	ASIdOrRanges *child_as = NULL, *child_rdi = NULL;
 	int i, ret = 1, inherit_as = 0, inherit_rdi = 0;
 	X509 *x;
 
-	OPENSSL_assert(chain != NULL && sk_X509_num(chain) > 0);
-	OPENSSL_assert(ctx != NULL || ext != NULL);
-	OPENSSL_assert(ctx == NULL || ctx->verify_cb != NULL);
+	/* We need a non-empty chain to test against. */
+	if (sk_X509_num(chain) <= 0)
+		goto err;
+	/* We need either a store ctx or an extension to work with. */
+	if (ctx == NULL && ext == NULL)
+		goto err;
+	/* If there is a store ctx, it needs a verify_cb. */
+	if (ctx != NULL && ctx->verify_cb == NULL)
+		goto err;
 
 	/*
 	 * Figure out where to start.  If we don't have an extension to
@@ -1033,7 +1039,6 @@ asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
 	 */
 	for (i++; i < sk_X509_num(chain); i++) {
 		x = sk_X509_value(chain, i);
-		OPENSSL_assert(x != NULL);
 
 		if (x->rfc3779_asid == NULL) {
 			if (child_as != NULL || child_rdi != NULL)
@@ -1080,7 +1085,9 @@ asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
 	/*
 	 * Trust anchor can't inherit.
 	 */
-	OPENSSL_assert(x != NULL);
+
+	if (x == NULL)
+		goto err;
 
 	if (x->rfc3779_asid != NULL) {
 		if (x->rfc3779_asid->asnum != NULL &&
@@ -1093,6 +1100,12 @@ asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
 
  done:
 	return ret;
+
+ err:
+	if (ctx != NULL)
+		ctx->error = X509_V_ERR_UNSPECIFIED;
+
+	return 0;
 }
 
 #undef validation_err
@@ -1103,9 +1116,7 @@ asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
 int
 X509v3_asid_validate_path(X509_STORE_CTX *ctx)
 {
-	if (ctx->chain == NULL ||
-	    sk_X509_num(ctx->chain) == 0 ||
-	    ctx->verify_cb == NULL) {
+	if (sk_X509_num(ctx->chain) <= 0 || ctx->verify_cb == NULL) {
 		ctx->error = X509_V_ERR_UNSPECIFIED;
 		return 0;
 	}
@@ -1122,7 +1133,7 @@ X509v3_asid_validate_resource_set(STACK_OF(X509)*chain, ASIdentifiers *ext,
 {
 	if (ext == NULL)
 		return 1;
-	if (chain == NULL || sk_X509_num(chain) == 0)
+	if (sk_X509_num(chain) <= 0)
 		return 0;
 	if (!allow_inheritance && X509v3_asid_inherits(ext))
 		return 0;
