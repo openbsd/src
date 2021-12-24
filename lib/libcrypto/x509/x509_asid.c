@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.21 2021/12/24 02:04:00 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.22 2021/12/24 02:07:37 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -474,8 +474,6 @@ X509v3_asid_add_id_or_range(ASIdentifiers *asid, int which, ASN1_INTEGER *min,
 static int
 extract_min_max(ASIdOrRange *aor, ASN1_INTEGER **min, ASN1_INTEGER **max)
 {
-	OPENSSL_assert(aor != NULL);
-
 	switch (aor->type) {
 	case ASIdOrRange_id:
 		*min = aor->u.id;
