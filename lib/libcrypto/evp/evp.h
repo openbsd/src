@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.88 2021/12/12 21:35:46 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.89 2021/12/24 12:02:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -522,6 +522,9 @@ int EVP_CIPHER_CTX_set_iv(EVP_CIPHER_CTX *ctx,
 int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in);
 void * EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
 void EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data);
+#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_CRYPTO_INTERNAL)
+unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx);
+#endif
 #define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
 unsigned long EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx);
 #define EVP_CIPHER_CTX_mode(e)		(EVP_CIPHER_CTX_flags(e) & EVP_CIPH_MODE)

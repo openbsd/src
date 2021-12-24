@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_lib.c,v 1.19 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: evp_lib.c,v 1.20 2021/12/24 12:02:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -249,6 +249,12 @@ int
 EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher->iv_len;
+}
+
+unsigned char *
+EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx)
+{
+	return ctx->buf;
 }
 
 int
