@@ -1237,6 +1237,7 @@
 ./usr/share/man/man4/arm64/apldog.4
 ./usr/share/man/man4/arm64/aplhidev.4
 ./usr/share/man/man4/arm64/aplintc.4
+./usr/share/man/man4/arm64/apliic.4
 ./usr/share/man/man4/arm64/aplmbox.4
 ./usr/share/man/man4/arm64/aplns.4
 ./usr/share/man/man4/arm64/aplpcie.4
