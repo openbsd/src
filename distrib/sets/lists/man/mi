@@ -93,7 +93,6 @@
 ./usr/share/man/man1/fstat.1
 ./usr/share/man/man1/ftp.1
 ./usr/share/man/man1/fuser.1
-./usr/share/man/man1/fw_update.1
 ./usr/share/man/man1/gencat.1
 ./usr/share/man/man1/getcap.1
 ./usr/share/man/man1/getconf.1
@@ -1236,8 +1235,8 @@
 ./usr/share/man/man4/arm64/apldart.4
 ./usr/share/man/man4/arm64/apldog.4
 ./usr/share/man/man4/arm64/aplhidev.4
-./usr/share/man/man4/arm64/aplintc.4
 ./usr/share/man/man4/arm64/apliic.4
+./usr/share/man/man4/arm64/aplintc.4
 ./usr/share/man/man4/arm64/aplmbox.4
 ./usr/share/man/man4/arm64/aplns.4
 ./usr/share/man/man4/arm64/aplpcie.4
@@ -1675,6 +1674,7 @@
 ./usr/share/man/man4/mtd.4
 ./usr/share/man/man4/mtdphy.4
 ./usr/share/man/man4/mtio.4
+./usr/share/man/man4/mtw.4
 ./usr/share/man/man4/mue.4
 ./usr/share/man/man4/multicast.4
 ./usr/share/man/man4/mvclock.4
@@ -2372,6 +2372,7 @@
 ./usr/share/man/man8/fsirand.8
 ./usr/share/man/man8/ftp-proxy.8
 ./usr/share/man/man8/ftpd.8
+./usr/share/man/man8/fw_update.8
 ./usr/share/man/man8/genassym.sh.8
 ./usr/share/man/man8/getty.8
 ./usr/share/man/man8/group.8
