@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.49 2021/12/19 23:47:24 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.50 2021/12/24 00:01:39 patrick Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -150,6 +150,10 @@ file	arch/arm64/dev/apldog.c			apldog
 device	apldwusb: fdt
 attach	apldwusb at fdt
 file	arch/arm64/dev/apldwusb.c		apldwusb
+
+device	apliic: i2cbus
+attach	apliic at fdt
+file	arch/arm64/dev/apliic.c			apliic
 
 device	aplintc
 attach	aplintc at fdt
