@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.22 2021/12/23 23:48:38 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.23 2021/12/24 01:56:08 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1145,6 +1145,7 @@ int
 X509v3_addr_canonize(IPAddrBlocks *addr)
 {
 	int i;
+
 	for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
 		IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
 		if (f->ipAddressChoice->type ==
@@ -1153,10 +1154,11 @@ X509v3_addr_canonize(IPAddrBlocks *addr)
 		    X509v3_addr_get_afi(f)))
 			return 0;
 	}
+
 	(void)sk_IPAddressFamily_set_cmp_func(addr, IPAddressFamily_cmp);
 	sk_IPAddressFamily_sort(addr);
-	OPENSSL_assert(X509v3_addr_is_canonical(addr));
-	return 1;
+
+	return X509v3_addr_is_canonical(addr);
 }
 
 /*
