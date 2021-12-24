@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.23 2021/12/24 01:56:08 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.24 2021/12/24 02:02:37 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1493,9 +1493,15 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
 	int i, j, ret = 1;
 	X509 *x;
 
-	OPENSSL_assert(chain != NULL && sk_X509_num(chain) > 0);
-	OPENSSL_assert(ctx != NULL || ext != NULL);
-	OPENSSL_assert(ctx == NULL || ctx->verify_cb != NULL);
+	/* We need a non-empty chain to test against. */
+	if (sk_X509_num(chain) <= 0)
+		goto err;
+	/* We need either a store ctx or an extension to work with. */
+	if (ctx == NULL && ext == NULL)
+		goto err;
+	/* If there is a store ctx, it needs a verify_cb. */
+	if (ctx != NULL && ctx->verify_cb == NULL)
+		goto err;
 
 	/*
 	 * Figure out where to start. If we don't have an extension to check,
@@ -1588,6 +1594,12 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
  done:
 	sk_IPAddressFamily_free(child);
 	return ret;
+
+ err:
+	if (ctx != NULL)
+		ctx->error = X509_V_ERR_UNSPECIFIED;
+
+	return 0;
 }
 
 #undef validation_err
@@ -1598,9 +1610,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
 int
 X509v3_addr_validate_path(X509_STORE_CTX *ctx)
 {
-	if (ctx->chain == NULL ||
-	    sk_X509_num(ctx->chain) == 0 ||
-	    ctx->verify_cb == NULL) {
+	if (sk_X509_num(ctx->chain) <= 0 || ctx->verify_cb == NULL) {
 		ctx->error = X509_V_ERR_UNSPECIFIED;
 		return 0;
 	}
@@ -1612,12 +1622,12 @@ X509v3_addr_validate_path(X509_STORE_CTX *ctx)
  * Test whether chain covers extension.
  */
 int
-X509v3_addr_validate_resource_set(STACK_OF(X509)*chain, IPAddrBlocks *ext,
+X509v3_addr_validate_resource_set(STACK_OF(X509) *chain, IPAddrBlocks *ext,
     int allow_inheritance)
 {
 	if (ext == NULL)
 		return 1;
-	if (chain == NULL || sk_X509_num(chain) == 0)
+	if (sk_X509_num(chain) <= 0)
 		return 0;
 	if (!allow_inheritance && X509v3_addr_inherits(ext))
 		return 0;
