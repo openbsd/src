@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.27 2021/12/24 02:28:52 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.28 2021/12/24 02:30:15 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1128,7 +1128,7 @@ X509v3_asid_validate_path(X509_STORE_CTX *ctx)
  * Test whether chain covers extension.
  */
 int
-X509v3_asid_validate_resource_set(STACK_OF(X509)*chain, ASIdentifiers *ext,
+X509v3_asid_validate_resource_set(STACK_OF(X509) *chain, ASIdentifiers *ext,
     int allow_inheritance)
 {
 	if (ext == NULL)
