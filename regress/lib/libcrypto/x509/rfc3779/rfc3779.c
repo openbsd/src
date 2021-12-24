@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc3779.c,v 1.1 2021/12/24 03:00:37 tb Exp $ */
+/*	$OpenBSD: rfc3779.c,v 1.2 2021/12/24 03:11:56 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -383,9 +383,9 @@ get_IPAddrBlocks_it(void)
 static __unused IPAddrBlocks *
 d2i_IPAddrBlocks(IPAddrBlocks **addrs, const unsigned char **in, long len)
 {
-	const ASN1_ITEM_EXP *my_IPAddrBlocks_it = get_IPAddrBlocks_it();
+	const ASN1_ITEM_EXP *my_IPAddrBlocks_it;
 
-	if (my_IPAddrBlocks_it == NULL)
+	if ((my_IPAddrBlocks_it = get_IPAddrBlocks_it()) == NULL)
 		return NULL;
 
 	return (IPAddrBlocks *)ASN1_item_d2i((ASN1_VALUE **)addrs, in, len,
@@ -395,9 +395,9 @@ d2i_IPAddrBlocks(IPAddrBlocks **addrs, const unsigned char **in, long len)
 static int
 i2d_IPAddrBlocks(IPAddrBlocks *addrs, unsigned char **out)
 {
-	const ASN1_ITEM_EXP *my_IPAddrBlocks_it = get_IPAddrBlocks_it();
+	const ASN1_ITEM_EXP *my_IPAddrBlocks_it;
 
-	if (my_IPAddrBlocks_it == NULL)
+	if ((my_IPAddrBlocks_it = get_IPAddrBlocks_it()) == NULL)
 		return -1;
 
 	return ASN1_item_i2d((ASN1_VALUE *)addrs, out, my_IPAddrBlocks_it);
