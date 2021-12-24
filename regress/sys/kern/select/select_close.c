@@ -1,4 +1,4 @@
-/*	$OpenBSD: select_close.c,v 1.2 2021/11/27 15:06:10 visa Exp $	*/
+/*	$OpenBSD: select_close.c,v 1.3 2021/12/24 10:22:41 visa Exp $	*/
 
 /*
  * Copyright (c) 2021 Visa Hankala
@@ -25,59 +25,16 @@
 #include <sys/types.h>
 #include <sys/select.h>
 #include <sys/socket.h>
-#include <sys/sysctl.h>
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 
 static int	barrier[2];
 static int	sock[2];
-
-static int
-wait_wchan(const char *wchanname)
-{
-	struct kinfo_proc kps[3]; /* process + 2 threads */
-	struct timespec end, now;
-	size_t size;
-	unsigned int i;
-	int mib[6], ret;
-
-	clock_gettime(CLOCK_MONOTONIC, &now);
-	end = now;
-	end.tv_sec += 1;
-
-	mib[0] = CTL_KERN;
-	mib[1] = KERN_PROC;
-	mib[2] = KERN_PROC_PID | KERN_PROC_SHOW_THREADS;
-	mib[3] = getpid();
-	mib[4] = sizeof(kps[0]);
-	mib[5] = sizeof(kps) / sizeof(kps[0]);
-
-	for (;;) {
-		memset(kps, 0, sizeof(kps));
-		size = sizeof(kps);
-		ret = sysctl(mib, 6, kps, &size, NULL, 0);
-		if (ret == -1)
-			err(1, "sysctl");
-		for (i = 0; i < size / sizeof(kps[0]); i++) {
-			if (strncmp(kps[i].p_wmesg, wchanname,
-			    sizeof(kps[i].p_wmesg)) == 0)
-				return 0;
-		}
-
-		usleep(1000);
-		clock_gettime(CLOCK_MONOTONIC, &now);
-		if (timespeccmp(&now, &end, >=))
-			break;
-	}
-
-	errx(1, "wchan %s timeout", wchanname);
-}
 
 static void *
 thread_main(void *arg)
@@ -131,7 +88,7 @@ main(void)
 	}
 
 	/* Let the thread settle in select(). */
-	wait_wchan("kqread");
+	usleep(100000);
 
 	/* Awaken poll(). */
 	write(sock[0], "x", 1);
@@ -152,7 +109,7 @@ main(void)
 	write(barrier[0], "x", 1);
 
 	/* Let the thread settle in select(). */
-	wait_wchan("kqread");
+	usleep(100000);
 
 	/* Close the fd to awaken select(). */
 	close(sock[1]);
