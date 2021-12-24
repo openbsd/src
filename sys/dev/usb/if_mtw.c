@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtw.c,v 1.1 2021/12/20 13:59:02 hastings Exp $	*/
+/*	$OpenBSD: if_mtw.c,v 1.2 2021/12/24 06:53:18 hastings Exp $	*/
 /*
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2013-2014 Kevin Lo
@@ -70,7 +70,18 @@ int mtw_debug = 0;
 
 #define USB_ID(v, p)	{ USB_VENDOR_##v, USB_PRODUCT_##v##_##p }
 static const struct usb_devno mtw_devs[] = {
+	USB_ID(ASUS,		USBN10V2),
+	USB_ID(AZUREWAVE,	MT7601_1),
+	USB_ID(AZUREWAVE,	MT7601_2),
+	USB_ID(DLINK,		DWA127B1),
+	USB_ID(EDIMAX,		EW7711UANV2),
+	USB_ID(MEDIATEK,	MT7601_1),
+	USB_ID(MEDIATEK,	MT7601_2),
 	USB_ID(RALINK,		MT7601),
+	USB_ID(RALINK,		MT7601_2),
+	USB_ID(RALINK,		MT7601_3),
+	USB_ID(RALINK,		MT7601_4),
+	USB_ID(RALINK,		MT7601_5),
 };
 
 int		mtw_match(struct device *, void *, void *);
