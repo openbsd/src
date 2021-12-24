@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.270 2021/12/13 14:56:55 visa Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.271 2021/12/24 06:50:16 visa Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -2318,11 +2318,23 @@ filt_soexceptprocess(struct knote *kn, struct kevent *kev)
 int
 filt_solisten_common(struct knote *kn, struct socket *so)
 {
+	int active;
+
 	soassertlocked(so);
 
 	kn->kn_data = so->so_qlen;
+	active = (kn->kn_data != 0);
 
-	return (kn->kn_data != 0);
+	if (kn->kn_flags & (__EV_POLL | __EV_SELECT)) {
+		if (so->so_state & SS_ISDISCONNECTED) {
+			kn->kn_flags |= __EV_HUP;
+			active = 1;
+		} else {
+			active = soreadable(so);
+		}
+	}
+
+	return (active);
 }
 
 int
