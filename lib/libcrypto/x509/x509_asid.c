@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.20 2021/12/18 16:58:20 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.21 2021/12/24 02:04:00 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -361,7 +361,7 @@ ASIdOrRange_cmp(const ASIdOrRange *const *a_, const ASIdOrRange *const *b_)
 {
 	const ASIdOrRange *a = *a_, *b = *b_;
 
-    /* XXX: these asserts need to be replaced */
+	/* XXX: these asserts need to be replaced */
 	OPENSSL_assert((a->type == ASIdOrRange_id && a->u.id != NULL) ||
 	    (a->type == ASIdOrRange_range && a->u.range != NULL &&
 	     a->u.range->min != NULL && a->u.range->max != NULL));
