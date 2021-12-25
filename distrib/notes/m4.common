@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.130 2020/07/05 22:27:46 tj Exp $
+dnl	$OpenBSD: m4.common,v 1.131 2021/12/25 17:26:13 tj Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -875,7 +875,7 @@ define({:-OpenBSDXferCDROM-:},
 	the sets needed for installation, and a smaller cd{:--:}OSrev.iso
 	which contains just the installer, for a network install.
 
-	Windows 7 users should be able to do this by right clicking on the
+	Windows users should be able to do this by right clicking on the
 	install{:--:}OSrev.iso file and clicking burn to CD.
 
 	OpenBSD users should be able to do this with the cdio command.

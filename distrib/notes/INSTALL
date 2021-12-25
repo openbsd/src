@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.55 2019/11/27 23:41:23 nayden Exp $
+dnl	$OpenBSD: INSTALL,v 1.56 2021/12/25 17:26:13 tj Exp $
 include(INCLUDE/../m4.common)dnl
 includeit(features)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
@@ -82,12 +82,12 @@ includeit(hardware)
 Verifying the OpenBSD Installation Media:
 -----------------------------------------
 
-As of OpenBSD 5.5, installations are able to verify files for the next
+OpenBSD installations are able to verify files for the next
 release.  The OpenBSD OSREV release was signed with the
 /etc/signify/openbsd-{:--:}OSrev-base.pub release key.
 
-If you have an existing OpenBSD 5.5 or higher installation, you can run
-signify(1) to verify the signature and checksum.  For example, run the following
+If you have an existing OpenBSD installation, you can run signify(1)
+to verify the signature and checksum.  For example, run the following
 to verify that the cd{:--:}OSrev.iso file was distributed by the OpenBSD team:
 	signify -C -p /etc/signify/openbsd-{:--:}OSrev-base.pub -x SHA256.sig cd{:--:}OSrev.iso
 
