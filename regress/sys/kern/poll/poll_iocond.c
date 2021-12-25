@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll_iocond.c,v 1.1 2021/12/06 05:52:07 visa Exp $	*/
+/*	$OpenBSD: poll_iocond.c,v 1.2 2021/12/25 11:27:19 visa Exp $	*/
 
 /*
  * Copyright (c) 2021 Visa Hankala
@@ -804,14 +804,8 @@ proc_parent(int fd, int bfd)
 		assert(pfd[0].revents == POLLHUP);
 		assert(pfd[1].revents == POLLHUP);
 #else
-		/* XXX */
-		if (filetype == FTYPE_PTY) {
-			assert(pfd[0].revents == POLLHUP);
-			assert(pfd[1].revents == POLLHUP);
-		} else {
-			assert(pfd[0].revents == (POLLIN | POLLHUP));
-			assert(pfd[1].revents == POLLHUP);
-		}
+		assert(pfd[0].revents == (POLLIN | POLLHUP));
+		assert(pfd[1].revents == POLLHUP);
 #endif
 		break;
 	case FTYPE_SOCKET_TCP:
