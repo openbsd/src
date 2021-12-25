@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.60 2021/12/25 07:04:03 jsing Exp $
+# $OpenBSD: Makefile,v 1.61 2021/12/25 12:00:22 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -53,8 +53,8 @@ SRCS+= aes_ctr.c aes_ige.c aes_wrap.c
 
 # asn1/
 SRCS+= a_object.c a_bitstr.c a_time.c a_int.c a_octet.c a_pkey.c a_pubkey.c
-SRCS+= a_print.c a_type.c a_dup.c a_d2i_fp.c a_i2d_fp.c a_string.c
-SRCS+= a_enum.c a_utf8.c a_sign.c a_digest.c a_verify.c a_mbstr.c a_strex.c
+SRCS+= a_print.c a_type.c a_string.c
+SRCS+= a_enum.c a_utf8.c a_mbstr.c a_strex.c
 SRCS+= x_algor.c x_val.c x_pubkey.c x_sig.c x_req.c x_attrib.c x_bignum.c
 SRCS+= x_long.c x_name.c x_x509.c x_x509a.c x_crl.c x_info.c x_spki.c nsseq.c
 SRCS+= x_nx509.c
@@ -65,7 +65,7 @@ SRCS+= n_pkey.c
 SRCS+= x_pkey.c x_exten.c bio_asn1.c bio_ndef.c asn_mime.c
 SRCS+= asn1_gen.c asn1_par.c asn1_old_lib.c asn1_err.c a_strnid.c
 SRCS+= evp_asn1.c asn_pack.c p5_pbe.c p5_pbev2.c p8_pkey.c asn_moid.c
-SRCS+= a_time_tm.c asn1_types.c asn1_lib.c
+SRCS+= a_time_tm.c asn1_item.c asn1_old.c asn1_types.c asn1_lib.c
 
 # bf/
 SRCS+= bf_skey.c bf_ecb.c bf_cfb64.c bf_ofb64.c

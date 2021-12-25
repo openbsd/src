@@ -1,4 +1,4 @@
-/* $OpenBSD: a_sign.c,v 1.24 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.1 2021/12/25 12:00:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,21 +109,63 @@
  *
  */
 
-#include <sys/types.h>
+#include <limits.h>
 
-#include <stdio.h>
-#include <string.h>
-#include <time.h>
-
-#include <openssl/bn.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/objects.h>
 #include <openssl/x509.h>
 
 #include "asn1_locl.h"
 #include "evp_locl.h"
+
+/*
+ * ASN1_ITEM version of dup: this follows the model above except we don't need
+ * to allocate the buffer. At some point this could be rewritten to directly dup
+ * the underlying structure instead of doing and encode and decode.
+ */
+
+int
+ASN1_item_digest(const ASN1_ITEM *it, const EVP_MD *type, void *asn,
+    unsigned char *md, unsigned int *len)
+{
+	int i;
+	unsigned char *str = NULL;
+
+	i = ASN1_item_i2d(asn, &str, it);
+	if (!str)
+		return (0);
+
+	if (!EVP_Digest(str, i, md, len, type, NULL)) {
+		free(str);
+		return (0);
+	}
+
+	free(str);
+	return (1);
+}
+
+void *
+ASN1_item_dup(const ASN1_ITEM *it, void *x)
+{
+	unsigned char *b = NULL;
+	const unsigned char *p;
+	long i;
+	void *ret;
+
+	if (x == NULL)
+		return (NULL);
+
+	i = ASN1_item_i2d(x, &b, it);
+	if (b == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		return (NULL);
+	}
+	p = b;
+	ret = ASN1_item_d2i(NULL, &p, i, it);
+	free(b);
+	return (ret);
+}
 
 int
 ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
@@ -137,7 +179,6 @@ ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	}
 	return ASN1_item_sign_ctx(it, algor1, algor2, signature, asn, &ctx);
 }
-
 
 int
 ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
@@ -231,4 +272,324 @@ err:
 	freezero((char *)buf_in, inl);
 	freezero((char *)buf_out, outll);
 	return (outl);
+}
+
+int
+ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
+    ASN1_BIT_STRING *signature, void *asn, EVP_PKEY *pkey)
+{
+	EVP_MD_CTX ctx;
+	unsigned char *buf_in = NULL;
+	int ret = -1, inl;
+
+	int mdnid, pknid;
+
+	if (!pkey) {
+		ASN1error(ERR_R_PASSED_NULL_PARAMETER);
+		return -1;
+	}
+
+	if (signature->type == V_ASN1_BIT_STRING && signature->flags & 0x7)
+	{
+		ASN1error(ASN1_R_INVALID_BIT_STRING_BITS_LEFT);
+		return -1;
+	}
+
+	EVP_MD_CTX_init(&ctx);
+
+	/* Convert signature OID into digest and public key OIDs */
+	if (!OBJ_find_sigid_algs(OBJ_obj2nid(a->algorithm), &mdnid, &pknid)) {
+		ASN1error(ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
+		goto err;
+	}
+	if (mdnid == NID_undef) {
+		if (!pkey->ameth || !pkey->ameth->item_verify) {
+			ASN1error(ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
+			goto err;
+		}
+		ret = pkey->ameth->item_verify(&ctx, it, asn, a,
+		    signature, pkey);
+		/* Return value of 2 means carry on, anything else means we
+		 * exit straight away: either a fatal error of the underlying
+		 * verification routine handles all verification.
+		 */
+		if (ret != 2)
+			goto err;
+		ret = -1;
+	} else {
+		const EVP_MD *type;
+		type = EVP_get_digestbynid(mdnid);
+		if (type == NULL) {
+			ASN1error(ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM);
+			goto err;
+		}
+
+		/* Check public key OID matches public key type */
+		if (EVP_PKEY_type(pknid) != pkey->ameth->pkey_id) {
+			ASN1error(ASN1_R_WRONG_PUBLIC_KEY_TYPE);
+			goto err;
+		}
+
+		if (!EVP_DigestVerifyInit(&ctx, NULL, type, NULL, pkey)) {
+			ASN1error(ERR_R_EVP_LIB);
+			ret = 0;
+			goto err;
+		}
+
+	}
+
+	inl = ASN1_item_i2d(asn, &buf_in, it);
+
+	if (buf_in == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	if (!EVP_DigestVerifyUpdate(&ctx, buf_in, inl)) {
+		ASN1error(ERR_R_EVP_LIB);
+		ret = 0;
+		goto err;
+	}
+
+	freezero(buf_in, (unsigned int)inl);
+
+	if (EVP_DigestVerifyFinal(&ctx, signature->data,
+	    (size_t)signature->length) <= 0) {
+		ASN1error(ERR_R_EVP_LIB);
+		ret = 0;
+		goto err;
+	}
+	/* we don't need to zero the 'ctx' because we just checked
+	 * public information */
+	/* memset(&ctx,0,sizeof(ctx)); */
+	ret = 1;
+
+err:
+	EVP_MD_CTX_cleanup(&ctx);
+	return (ret);
+}
+
+#define HEADER_SIZE   8
+#define ASN1_CHUNK_INITIAL_SIZE (16 * 1024)
+int
+asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
+{
+	BUF_MEM *b;
+	unsigned char *p;
+	const unsigned char *q;
+	long slen;
+	int i, inf, tag, xclass;
+	size_t want = HEADER_SIZE;
+	int eos = 0;
+	size_t off = 0;
+	size_t len = 0;
+
+	b = BUF_MEM_new();
+	if (b == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		return -1;
+	}
+
+	ERR_clear_error();
+	for (;;) {
+		if (want >= (len - off)) {
+			want -= (len - off);
+
+			if (len + want < len ||
+			    !BUF_MEM_grow_clean(b, len + want)) {
+				ASN1error(ERR_R_MALLOC_FAILURE);
+				goto err;
+			}
+			i = BIO_read(in, &(b->data[len]), want);
+			if ((i < 0) && ((len - off) == 0)) {
+				ASN1error(ASN1_R_NOT_ENOUGH_DATA);
+				goto err;
+			}
+			if (i > 0) {
+				if (len + i < len) {
+					ASN1error(ASN1_R_TOO_LONG);
+					goto err;
+				}
+				len += i;
+			}
+		}
+		/* else data already loaded */
+
+		p = (unsigned char *) & (b->data[off]);
+		q = p;
+		inf = ASN1_get_object(&q, &slen, &tag, &xclass, len - off);
+		if (inf & 0x80) {
+			unsigned long e;
+
+			e = ERR_GET_REASON(ERR_peek_error());
+			if (e != ASN1_R_TOO_LONG)
+				goto err;
+			else
+				ERR_clear_error(); /* clear error */
+		}
+		i = q - p;	/* header length */
+		off += i;	/* end of data */
+
+		if (inf & 1) {
+			/* no data body so go round again */
+			eos++;
+			if (eos < 0) {
+				ASN1error(ASN1_R_HEADER_TOO_LONG);
+				goto err;
+			}
+			want = HEADER_SIZE;
+		} else if (eos && slen == 0 && tag == V_ASN1_EOC) {
+			/* eos value, so go back and read another header */
+			eos--;
+			if (eos <= 0)
+				break;
+			else
+				want = HEADER_SIZE;
+		} else {
+			/* suck in slen bytes of data */
+			want = slen;
+			if (want > (len - off)) {
+				size_t chunk_max = ASN1_CHUNK_INITIAL_SIZE;
+
+				want -= (len - off);
+				if (want > INT_MAX /* BIO_read takes an int length */ ||
+				    len+want < len) {
+					ASN1error(ASN1_R_TOO_LONG);
+					goto err;
+				}
+				while (want > 0) {
+					/*
+					 * Read content in chunks of increasing size
+					 * so we can return an error for EOF without
+					 * having to allocate the entire content length
+					 * in one go.
+					 */
+					size_t chunk = want > chunk_max ? chunk_max : want;
+
+					if (!BUF_MEM_grow_clean(b, len + chunk)) {
+						ASN1error(ERR_R_MALLOC_FAILURE);
+						goto err;
+					}
+					want -= chunk;
+					while (chunk > 0) {
+						i = BIO_read(in, &(b->data[len]), chunk);
+						if (i <= 0) {
+							ASN1error(ASN1_R_NOT_ENOUGH_DATA);
+							goto err;
+						}
+						/*
+						 * This can't overflow because |len+want|
+						 * didn't overflow.
+						 */
+						len += i;
+						chunk -= i;
+					}
+					if (chunk_max < INT_MAX/2)
+						chunk_max *= 2;
+				}
+			}
+			if (off + slen < off) {
+				ASN1error(ASN1_R_TOO_LONG);
+				goto err;
+			}
+			off += slen;
+			if (eos <= 0) {
+				break;
+			} else
+				want = HEADER_SIZE;
+		}
+	}
+
+	if (off > INT_MAX) {
+		ASN1error(ASN1_R_TOO_LONG);
+		goto err;
+	}
+
+	*pb = b;
+	return off;
+
+err:
+	if (b != NULL)
+		BUF_MEM_free(b);
+	return -1;
+}
+
+void *
+ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x)
+{
+	BUF_MEM *b = NULL;
+	const unsigned char *p;
+	void *ret = NULL;
+	int len;
+
+	len = asn1_d2i_read_bio(in, &b);
+	if (len < 0)
+		goto err;
+
+	p = (const unsigned char *)b->data;
+	ret = ASN1_item_d2i(x, &p, len, it);
+
+err:
+	if (b != NULL)
+		BUF_MEM_free(b);
+	return (ret);
+}
+
+void *
+ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x)
+{
+	BIO *b;
+	char *ret;
+
+	if ((b = BIO_new(BIO_s_file())) == NULL) {
+		ASN1error(ERR_R_BUF_LIB);
+		return (NULL);
+	}
+	BIO_set_fp(b, in, BIO_NOCLOSE);
+	ret = ASN1_item_d2i_bio(it, b, x);
+	BIO_free(b);
+	return (ret);
+}
+
+int
+ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x)
+{
+	unsigned char *b = NULL;
+	int i, j = 0, n, ret = 1;
+
+	n = ASN1_item_i2d(x, &b, it);
+	if (b == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		return (0);
+	}
+
+	for (;;) {
+		i = BIO_write(out, &(b[j]), n);
+		if (i == n)
+			break;
+		if (i <= 0) {
+			ret = 0;
+			break;
+		}
+		j += i;
+		n -= i;
+	}
+	free(b);
+	return (ret);
+}
+
+int
+ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x)
+{
+	BIO *b;
+	int ret;
+
+	if ((b = BIO_new(BIO_s_file())) == NULL) {
+		ASN1error(ERR_R_BUF_LIB);
+		return (0);
+	}
+	BIO_set_fp(b, out, BIO_NOCLOSE);
+	ret = ASN1_item_i2d_bio(it, b, x);
+	BIO_free(b);
+	return (ret);
 }

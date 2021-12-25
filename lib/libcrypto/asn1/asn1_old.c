@@ -1,4 +1,4 @@
-/* $OpenBSD: a_dup.c,v 1.14 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: asn1_old.c,v 1.1 2021/12/25 12:00:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,10 +56,14 @@
  * [including the GNU Public Licence.]
  */
 
+#include <limits.h>
 #include <stdio.h>
 
 #include <openssl/asn1.h>
+#include <openssl/buffer.h>
 #include <openssl/err.h>
+
+#include "asn1_locl.h"
 
 #ifndef NO_OLD_ASN1
 
@@ -88,31 +92,89 @@ ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x)
 	return (ret);
 }
 
-#endif
-
-/* ASN1_ITEM version of dup: this follows the model above except we don't need
- * to allocate the buffer. At some point this could be rewritten to directly dup
- * the underlying structure instead of doing and encode and decode.
- */
-
 void *
-ASN1_item_dup(const ASN1_ITEM *it, void *x)
+ASN1_d2i_fp(void *(*xnew)(void), d2i_of_void *d2i, FILE *in, void **x)
 {
-	unsigned char *b = NULL;
-	const unsigned char *p;
-	long i;
+	BIO *b;
 	void *ret;
 
-	if (x == NULL)
-		return (NULL);
-
-	i = ASN1_item_i2d(x, &b, it);
-	if (b == NULL) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
+	if ((b = BIO_new(BIO_s_file())) == NULL) {
+		ASN1error(ERR_R_BUF_LIB);
 		return (NULL);
 	}
-	p = b;
-	ret = ASN1_item_d2i(NULL, &p, i, it);
+	BIO_set_fp(b, in, BIO_NOCLOSE);
+	ret = ASN1_d2i_bio(xnew, d2i, b, x);
+	BIO_free(b);
+	return (ret);
+}
+
+void *
+ASN1_d2i_bio(void *(*xnew)(void), d2i_of_void *d2i, BIO *in, void **x)
+{
+	BUF_MEM *b = NULL;
+	const unsigned char *p;
+	void *ret = NULL;
+	int len;
+
+	len = asn1_d2i_read_bio(in, &b);
+	if (len < 0)
+		goto err;
+
+	p = (unsigned char *)b->data;
+	ret = d2i(x, &p, len);
+
+err:
+	if (b != NULL)
+		BUF_MEM_free(b);
+	return (ret);
+}
+
+int
+ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, void *x)
+{
+	BIO *b;
+	int ret;
+
+	if ((b = BIO_new(BIO_s_file())) == NULL) {
+		ASN1error(ERR_R_BUF_LIB);
+		return (0);
+	}
+	BIO_set_fp(b, out, BIO_NOCLOSE);
+	ret = ASN1_i2d_bio(i2d, b, x);
+	BIO_free(b);
+	return (ret);
+}
+
+int
+ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, unsigned char *x)
+{
+	char *b;
+	unsigned char *p;
+	int i, j = 0, n, ret = 1;
+
+	n = i2d(x, NULL);
+	b = malloc(n);
+	if (b == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		return (0);
+	}
+
+	p = (unsigned char *)b;
+	i2d(x, &p);
+
+	for (;;) {
+		i = BIO_write(out, &(b[j]), n);
+		if (i == n)
+			break;
+		if (i <= 0) {
+			ret = 0;
+			break;
+		}
+		j += i;
+		n -= i;
+	}
 	free(b);
 	return (ret);
 }
+
+#endif
