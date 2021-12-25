@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_old_lib.c,v 1.1 2021/12/15 18:12:10 jsing Exp $ */
+/* $OpenBSD: asn1_old_lib.c,v 1.2 2021/12/25 07:04:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,7 +63,8 @@
 #include <openssl/asn1.h>
 #include <openssl/err.h>
 
-static int asn1_get_length(const unsigned char **pp, int *inf, long *rl, int max);
+#include "asn1_locl.h"
+
 static void asn1_put_length(unsigned char **pp, int length);
 
 static int
@@ -96,101 +97,51 @@ int
 ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
     int *pclass, long omax)
 {
-	int i, ret;
-	long l;
-	const unsigned char *p = *pp;
-	int tag, xclass, inf;
-	long max = omax;
+	int constructed, indefinite;
+	uint32_t tag_number, length;
+	uint8_t tag_class;
+	CBS cbs;
+	int ret = 0;
 
-	if (!max)
-		goto err;
-	ret = (*p & V_ASN1_CONSTRUCTED);
-	xclass = (*p & V_ASN1_PRIVATE);
-	i = *p & V_ASN1_PRIMITIVE_TAG;
-	if (i == V_ASN1_PRIMITIVE_TAG) {		/* high-tag */
-		p++;
-		if (--max == 0)
-			goto err;
-		l = 0;
-		while (*p & 0x80) {
-			l <<= 7L;
-			l |= *(p++) & 0x7f;
-			if (--max == 0)
-				goto err;
-			if (l > (INT_MAX >> 7L))
-				goto err;
-		}
-		l <<= 7L;
-		l |= *(p++) & 0x7f;
-		tag = (int)l;
-		if (--max == 0)
-			goto err;
-	} else {
-		tag = i;
-		p++;
-		if (--max == 0)
-			goto err;
+	*pclass = 0;
+	*ptag = 0;
+	*plength = 0;
+
+	CBS_init(&cbs, *pp, omax);
+
+	if (!asn1_get_object_cbs(&cbs, 0, &tag_class, &constructed, &tag_number,
+	    &indefinite, &length)) {
+		ASN1error(ASN1_R_HEADER_TOO_LONG);
+		return 0x80;
 	}
-	*ptag = tag;
-	*pclass = xclass;
-	if (!asn1_get_length(&p, &inf, plength, (int)max))
-		goto err;
 
-	if (inf && !(ret & V_ASN1_CONSTRUCTED))
-		goto err;
+	if (tag_number > INT_MAX) {
+		ASN1error(ASN1_R_HEADER_TOO_LONG);
+		return 0x80;
+	}
 
-	if (*plength > (omax - (p - *pp))) {
+	/*
+	 * API insanity ahead... in this case we add an error to the stack and
+	 * signal an error by setting the 8th bit in the return value... but we
+	 * still provide all of the decoded data.
+	 */
+	if (length > CBS_len(&cbs)) {
 		ASN1error(ASN1_R_TOO_LONG);
-		/* Set this so that even if things are not long enough
-		 * the values are set correctly */
-		ret |= 0x80;
+		ret = 0x80;
 	}
-	*pp = p;
-	return (ret | inf);
 
-err:
-	ASN1error(ASN1_R_HEADER_TOO_LONG);
-	return (0x80);
-}
+	*pclass = tag_class << 6;
+	*ptag = tag_number;
+	*plength = length;
 
-static int
-asn1_get_length(const unsigned char **pp, int *inf, long *rl, int max)
-{
-	const unsigned char *p = *pp;
-	unsigned long ret = 0;
-	unsigned int i;
+	*pp = CBS_data(&cbs);
 
-	if (max-- < 1)
-		return (0);
-	if (*p == 0x80) {
-		*inf = 1;
-		ret = 0;
-		p++;
-	} else {
-		*inf = 0;
-		i = *p & 0x7f;
-		if (*(p++) & 0x80) {
-			if (max < (int)i)
-				return (0);
-			/* skip leading zeroes */
-			while (i && *p == 0) {
-				p++;
-				i--;
-			}
-			if (i > sizeof(long))
-				return 0;
-			while (i-- > 0) {
-				ret <<= 8L;
-				ret |= *(p++);
-			}
-		} else
-			ret = i;
-	}
-	if (ret > LONG_MAX)
-		return 0;
-	*pp = p;
-	*rl = (long)ret;
-	return (1);
+	if (constructed)
+		ret |= 1 << 5;
+	if (indefinite)
+		ret |= 1;
+
+	return ret;
 }
 
 /* class 0 is constructed
