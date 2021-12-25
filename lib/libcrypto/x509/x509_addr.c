@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.27 2021/12/25 15:43:13 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.28 2021/12/25 23:35:25 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -508,10 +508,8 @@ i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method, void *ext, BIO *out,
 			break;
 		case IPAddressChoice_addressesOrRanges:
 			BIO_puts(out, ":\n");
-			if (!i2r_IPAddressOrRanges(out,
-			    indent + 2,
-			    f->ipAddressChoice->
-			    u.addressesOrRanges, afi))
+			if (!i2r_IPAddressOrRanges(out, indent + 2,
+			    f->ipAddressChoice->u.addressesOrRanges, afi))
 				return 0;
 			break;
 		}
@@ -834,12 +832,10 @@ make_prefix_or_range(IPAddrBlocks *addr, const unsigned afi,
 		return NULL;
 	switch (afi) {
 	case IANA_AFI_IPV4:
-		(void)sk_IPAddressOrRange_set_cmp_func(aors,
-		    v4IPAddressOrRange_cmp);
+		sk_IPAddressOrRange_set_cmp_func(aors, v4IPAddressOrRange_cmp);
 		break;
 	case IANA_AFI_IPV6:
-		(void)sk_IPAddressOrRange_set_cmp_func(aors,
-		    v6IPAddressOrRange_cmp);
+		sk_IPAddressOrRange_set_cmp_func(aors, v6IPAddressOrRange_cmp);
 		break;
 	}
 	f->ipAddressChoice->type = IPAddressChoice_addressesOrRanges;
@@ -1492,7 +1488,7 @@ X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
  * X509_V_OK.
  */
 static int
-addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509)*chain,
+addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
     IPAddrBlocks *ext)
 {
 	IPAddrBlocks *child = NULL;
