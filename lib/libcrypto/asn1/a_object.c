@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.34 2021/12/25 07:48:09 jsing Exp $ */
+/* $OpenBSD: a_object.c,v 1.35 2021/12/25 08:52:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,10 +61,17 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
+
+const ASN1_ITEM ASN1_OBJECT_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_OBJECT,
+	.sname = "ASN1_OBJECT",
+};
 
 ASN1_OBJECT *
 ASN1_OBJECT_new(void)

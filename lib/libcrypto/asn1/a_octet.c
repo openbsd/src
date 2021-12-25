@@ -1,4 +1,4 @@
-/* $OpenBSD: a_octet.c,v 1.10 2015/07/29 14:58:34 jsing Exp $ */
+/* $OpenBSD: a_octet.c,v 1.11 2021/12/25 08:52:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,6 +59,26 @@
 #include <stdio.h>
 
 #include <openssl/asn1.h>
+#include <openssl/asn1t.h>
+
+const ASN1_ITEM ASN1_OCTET_STRING_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_OCTET_STRING,
+	.sname = "ASN1_OCTET_STRING",
+};
+
+ASN1_OCTET_STRING *
+ASN1_OCTET_STRING_new(void)
+{
+	return (ASN1_OCTET_STRING *)ASN1_item_new(&ASN1_OCTET_STRING_it);
+}
+
+void
+ASN1_OCTET_STRING_free(ASN1_OCTET_STRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_OCTET_STRING_it);
+}
+
 
 ASN1_OCTET_STRING *
 ASN1_OCTET_STRING_dup(const ASN1_OCTET_STRING *x)
@@ -76,4 +96,17 @@ int
 ASN1_OCTET_STRING_set(ASN1_OCTET_STRING *x, const unsigned char *d, int len)
 {
 	return ASN1_STRING_set(x, d, len);
+}
+
+int
+i2d_ASN1_OCTET_STRING(ASN1_OCTET_STRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_OCTET_STRING_it);
+}
+
+ASN1_OCTET_STRING *
+d2i_ASN1_OCTET_STRING(ASN1_OCTET_STRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_OCTET_STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_OCTET_STRING_it);
 }

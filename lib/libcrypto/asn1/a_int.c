@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.36 2021/12/25 07:48:09 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.37 2021/12/25 08:52:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -61,9 +61,28 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+
+const ASN1_ITEM ASN1_INTEGER_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_INTEGER,
+	.sname = "ASN1_INTEGER",
+};
+
+ASN1_INTEGER *
+ASN1_INTEGER_new(void)
+{
+	return (ASN1_INTEGER *)ASN1_item_new(&ASN1_INTEGER_it);
+}
+
+void
+ASN1_INTEGER_free(ASN1_INTEGER *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_INTEGER_it);
+}
 
 static int
 ASN1_INTEGER_valid(const ASN1_INTEGER *a)
@@ -567,6 +586,18 @@ err:
 	return (NULL);
 }
 
+int
+i2d_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_INTEGER_it);
+}
+
+ASN1_INTEGER *
+d2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **in, long len)
+{
+	return (ASN1_INTEGER *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_INTEGER_it);
+}
 
 /* This is a version of d2i_ASN1_INTEGER that ignores the sign bit of
  * ASN1 integers: some broken software can encode a positive INTEGER

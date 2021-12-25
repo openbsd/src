@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.32 2021/12/25 07:48:09 jsing Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.33 2021/12/25 08:52:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,9 +60,28 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
+
+const ASN1_ITEM ASN1_BIT_STRING_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_BIT_STRING,
+	.sname = "ASN1_BIT_STRING",
+};
+
+ASN1_BIT_STRING *
+ASN1_BIT_STRING_new(void)
+{
+	return (ASN1_BIT_STRING *)ASN1_item_new(&ASN1_BIT_STRING_it);
+}
+
+void
+ASN1_BIT_STRING_free(ASN1_BIT_STRING *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_BIT_STRING_it);
+}
 
 int
 ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
@@ -312,4 +331,17 @@ c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **pp, long len)
 		ASN1_BIT_STRING_free(ret);
 
 	return (NULL);
+}
+
+int
+i2d_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_BIT_STRING_it);
+}
+
+ASN1_BIT_STRING *
+d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **in, long len)
+{
+	return (ASN1_BIT_STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_BIT_STRING_it);
 }

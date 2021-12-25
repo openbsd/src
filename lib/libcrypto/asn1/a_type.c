@@ -1,4 +1,4 @@
-/* $OpenBSD: a_type.c,v 1.21 2019/10/24 16:36:10 jsing Exp $ */
+/* $OpenBSD: a_type.c,v 1.22 2021/12/25 08:52:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,6 +60,18 @@
 
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
+
+ASN1_TYPE *
+ASN1_TYPE_new(void)
+{
+	return (ASN1_TYPE *)ASN1_item_new(&ASN1_ANY_it);
+}
+
+void
+ASN1_TYPE_free(ASN1_TYPE *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_ANY_it);
+}
 
 int
 ASN1_TYPE_get(const ASN1_TYPE *a)
@@ -184,4 +196,17 @@ ASN1_TYPE_unpack_sequence(const ASN1_ITEM *it, const ASN1_TYPE *t)
 	if (t == NULL || t->type != V_ASN1_SEQUENCE || t->value.sequence == NULL)
 		return NULL;
 	return ASN1_item_unpack(t->value.sequence, it);
+}
+
+int
+i2d_ASN1_TYPE(ASN1_TYPE *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_ANY_it);
+}
+
+ASN1_TYPE *
+d2i_ASN1_TYPE(ASN1_TYPE **a, const unsigned char **in, long len)
+{
+	return (ASN1_TYPE *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_ANY_it);
 }

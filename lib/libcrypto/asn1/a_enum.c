@@ -1,4 +1,4 @@
-/* $OpenBSD: a_enum.c,v 1.21 2021/12/15 18:00:31 jsing Exp $ */
+/* $OpenBSD: a_enum.c,v 1.22 2021/12/25 08:52:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,6 +60,7 @@
 #include <stdio.h>
 
 #include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
@@ -68,6 +69,24 @@
  * Code for ENUMERATED type: identical to INTEGER apart from a different tag.
  * for comments on encoding see a_int.c
  */
+
+const ASN1_ITEM ASN1_ENUMERATED_it = {
+	.itype = ASN1_ITYPE_PRIMITIVE,
+	.utype = V_ASN1_ENUMERATED,
+	.sname = "ASN1_ENUMERATED",
+};
+
+ASN1_ENUMERATED *
+ASN1_ENUMERATED_new(void)
+{
+	return (ASN1_ENUMERATED *)ASN1_item_new(&ASN1_ENUMERATED_it);
+}
+
+void
+ASN1_ENUMERATED_free(ASN1_ENUMERATED *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ASN1_ENUMERATED_it);
+}
 
 int
 ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v)
@@ -319,4 +338,17 @@ err_sl:
 err:
 	free(s);
 	return (ret);
+}
+
+int
+i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_ENUMERATED_it);
+}
+
+ASN1_ENUMERATED *
+d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a, const unsigned char **in, long len)
+{
+	return (ASN1_ENUMERATED *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ASN1_ENUMERATED_it);
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_typ.c,v 1.15 2021/12/23 18:04:41 tb Exp $ */
+/* $OpenBSD: tasn_typ.c,v 1.16 2021/12/25 08:52:44 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -61,134 +61,6 @@
 
 /* Declarations for string types */
 
-const ASN1_ITEM ASN1_INTEGER_it = {
-	.itype = ASN1_ITYPE_PRIMITIVE,
-	.utype = V_ASN1_INTEGER,
-	.sname = "ASN1_INTEGER",
-};
-
-ASN1_INTEGER *
-d2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **in, long len)
-{
-	return (ASN1_INTEGER *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
-	    &ASN1_INTEGER_it);
-}
-
-int
-i2d_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **out)
-{
-	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_INTEGER_it);
-}
-
-ASN1_INTEGER *
-ASN1_INTEGER_new(void)
-{
-	return (ASN1_INTEGER *)ASN1_item_new(&ASN1_INTEGER_it);
-}
-
-void
-ASN1_INTEGER_free(ASN1_INTEGER *a)
-{
-	ASN1_item_free((ASN1_VALUE *)a, &ASN1_INTEGER_it);
-}
-
-
-const ASN1_ITEM ASN1_ENUMERATED_it = {
-	.itype = ASN1_ITYPE_PRIMITIVE,
-	.utype = V_ASN1_ENUMERATED,
-	.sname = "ASN1_ENUMERATED",
-};
-
-ASN1_ENUMERATED *
-d2i_ASN1_ENUMERATED(ASN1_ENUMERATED **a, const unsigned char **in, long len)
-{
-	return (ASN1_ENUMERATED *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
-	    &ASN1_ENUMERATED_it);
-}
-
-int
-i2d_ASN1_ENUMERATED(ASN1_ENUMERATED *a, unsigned char **out)
-{
-	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_ENUMERATED_it);
-}
-
-ASN1_ENUMERATED *
-ASN1_ENUMERATED_new(void)
-{
-	return (ASN1_ENUMERATED *)ASN1_item_new(&ASN1_ENUMERATED_it);
-}
-
-void
-ASN1_ENUMERATED_free(ASN1_ENUMERATED *a)
-{
-	ASN1_item_free((ASN1_VALUE *)a, &ASN1_ENUMERATED_it);
-}
-
-
-const ASN1_ITEM ASN1_BIT_STRING_it = {
-	.itype = ASN1_ITYPE_PRIMITIVE,
-	.utype = V_ASN1_BIT_STRING,
-	.sname = "ASN1_BIT_STRING",
-};
-
-ASN1_BIT_STRING *
-d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **in, long len)
-{
-	return (ASN1_BIT_STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
-	    &ASN1_BIT_STRING_it);
-}
-
-int
-i2d_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **out)
-{
-	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_BIT_STRING_it);
-}
-
-ASN1_BIT_STRING *
-ASN1_BIT_STRING_new(void)
-{
-	return (ASN1_BIT_STRING *)ASN1_item_new(&ASN1_BIT_STRING_it);
-}
-
-void
-ASN1_BIT_STRING_free(ASN1_BIT_STRING *a)
-{
-	ASN1_item_free((ASN1_VALUE *)a, &ASN1_BIT_STRING_it);
-}
-
-
-const ASN1_ITEM ASN1_OCTET_STRING_it = {
-	.itype = ASN1_ITYPE_PRIMITIVE,
-	.utype = V_ASN1_OCTET_STRING,
-	.sname = "ASN1_OCTET_STRING",
-};
-
-ASN1_OCTET_STRING *
-d2i_ASN1_OCTET_STRING(ASN1_OCTET_STRING **a, const unsigned char **in, long len)
-{
-	return (ASN1_OCTET_STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
-	    &ASN1_OCTET_STRING_it);
-}
-
-int
-i2d_ASN1_OCTET_STRING(ASN1_OCTET_STRING *a, unsigned char **out)
-{
-	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_OCTET_STRING_it);
-}
-
-ASN1_OCTET_STRING *
-ASN1_OCTET_STRING_new(void)
-{
-	return (ASN1_OCTET_STRING *)ASN1_item_new(&ASN1_OCTET_STRING_it);
-}
-
-void
-ASN1_OCTET_STRING_free(ASN1_OCTET_STRING *a)
-{
-	ASN1_item_free((ASN1_VALUE *)a, &ASN1_OCTET_STRING_it);
-}
-
-
 const ASN1_ITEM ASN1_NULL_it = {
 	.itype = ASN1_ITYPE_PRIMITIVE,
 	.utype = V_ASN1_NULL,
@@ -219,13 +91,6 @@ ASN1_NULL_free(ASN1_NULL *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_NULL_it);
 }
-
-
-const ASN1_ITEM ASN1_OBJECT_it = {
-	.itype = ASN1_ITYPE_PRIMITIVE,
-	.utype = V_ASN1_OBJECT,
-	.sname = "ASN1_OBJECT",
-};
 
 
 const ASN1_ITEM ASN1_UTF8STRING_it = {
@@ -552,12 +417,12 @@ ASN1_BMPSTRING_free(ASN1_BMPSTRING *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_BMPSTRING_it);
 }
 
-
 const ASN1_ITEM ASN1_ANY_it = {
 	.itype = ASN1_ITYPE_PRIMITIVE,
 	.utype = V_ASN1_ANY,
 	.sname = "ASN1_ANY",
 };
+
 
 /* Just swallow an ASN1_SEQUENCE in an ASN1_STRING */
 
@@ -567,31 +432,6 @@ const ASN1_ITEM ASN1_SEQUENCE_it = {
 	.sname = "ASN1_SEQUENCE",
 };
 
-
-ASN1_TYPE *
-d2i_ASN1_TYPE(ASN1_TYPE **a, const unsigned char **in, long len)
-{
-	return (ASN1_TYPE *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
-	    &ASN1_ANY_it);
-}
-
-int
-i2d_ASN1_TYPE(ASN1_TYPE *a, unsigned char **out)
-{
-	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_ANY_it);
-}
-
-ASN1_TYPE *
-ASN1_TYPE_new(void)
-{
-	return (ASN1_TYPE *)ASN1_item_new(&ASN1_ANY_it);
-}
-
-void
-ASN1_TYPE_free(ASN1_TYPE *a)
-{
-	ASN1_item_free((ASN1_VALUE *)a, &ASN1_ANY_it);
-}
 
 /* Multistring types */
 
