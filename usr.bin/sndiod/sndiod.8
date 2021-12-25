@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.13 2021/12/25 15:24:02 ratchov Exp $
+.\"	$OpenBSD: sndiod.8,v 1.14 2021/12/25 16:15:53 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -193,11 +193,6 @@ the one given with the previous
 or
 .Fl F
 option will be used.
-For instance, specifying a USB device following a
-PCI device allows
-.Nm
-to use the USB one preferably when it's connected
-and to fall back to the PCI one when it's disconnected.
 .It Fl f Ar device
 Add this
 .Xr sndio 7
@@ -539,6 +534,15 @@ Instead,
 must be used to change the
 .Va server.device
 control.
+.Pp
+For instance, specifying a USB device with
+.Fl F
+following a PCI device with
+.Fl f
+allows
+.Nm
+to use the USB one preferably when it's connected
+and to fall back to the PCI one when it's disconnected.
 .Sh EXAMPLES
 Start server using default parameters, creating an
 additional sub-device for output to channels 2:3 only (rear speakers
