@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.35 2021/12/15 18:00:31 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.36 2021/12/25 07:48:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -100,6 +100,148 @@ ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y)
 		return -ret;
 	else
 		return ret;
+}
+
+int
+ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
+{
+	int j, k;
+	unsigned int i;
+	unsigned char buf[sizeof(long) + 1];
+	long d;
+
+	a->type = V_ASN1_INTEGER;
+	/* XXX ssl/ssl_asn1.c:i2d_SSL_SESSION() depends upon this bound vae */
+	if (a->length < (int)(sizeof(long) + 1)) {
+		free(a->data);
+		a->data = calloc(1, sizeof(long) + 1);
+	}
+	if (a->data == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		return (0);
+	}
+	d = v;
+	if (d < 0) {
+		d = -d;
+		a->type = V_ASN1_NEG_INTEGER;
+	}
+
+	for (i = 0; i < sizeof(long); i++) {
+		if (d == 0)
+			break;
+		buf[i] = (int)d & 0xff;
+		d >>= 8;
+	}
+	j = 0;
+	for (k = i - 1; k >= 0; k--)
+		a->data[j++] = buf[k];
+	a->length = j;
+	return (1);
+}
+
+/*
+ * XXX this particular API is a gibbering eidrich horror that makes it
+ * impossible to determine valid return cases from errors.. "a bit
+ * ugly" is preserved for posterity, unfortunately this is probably
+ * unfixable without changing public API
+ */
+long
+ASN1_INTEGER_get(const ASN1_INTEGER *a)
+{
+	int neg = 0, i;
+	unsigned long r = 0;
+
+	if (a == NULL)
+		return (0L);
+	i = a->type;
+	if (i == V_ASN1_NEG_INTEGER)
+		neg = 1;
+	else if (i != V_ASN1_INTEGER)
+		return -1;
+
+	if (!ASN1_INTEGER_valid(a))
+		return -1; /* XXX best effort */
+
+	if (a->length > (int)sizeof(long)) {
+		/* hmm... a bit ugly, return all ones */
+		return -1;
+	}
+	if (a->data == NULL)
+		return 0;
+
+	for (i = 0; i < a->length; i++) {
+		r <<= 8;
+		r |= (unsigned char)a->data[i];
+	}
+
+	if (r > LONG_MAX)
+		return -1;
+
+	if (neg)
+		return -(long)r;
+	return (long)r;
+}
+
+ASN1_INTEGER *
+BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai)
+{
+	ASN1_INTEGER *ret;
+	int len, j;
+
+	if (ai == NULL)
+		ret = ASN1_INTEGER_new();
+	else
+		ret = ai;
+	if (ret == NULL) {
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		goto err;
+	}
+
+	if (!ASN1_INTEGER_valid(ret))
+		goto err;
+
+	if (BN_is_negative(bn))
+		ret->type = V_ASN1_NEG_INTEGER;
+	else
+		ret->type = V_ASN1_INTEGER;
+	j = BN_num_bits(bn);
+	len = ((j == 0) ? 0 : ((j / 8) + 1));
+	if (ret->length < len + 4) {
+		unsigned char *new_data = realloc(ret->data, len + 4);
+		if (!new_data) {
+			ASN1error(ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+		ret->data = new_data;
+	}
+	ret->length = BN_bn2bin(bn, ret->data);
+
+	/* Correct zero case */
+	if (!ret->length) {
+		ret->data[0] = 0;
+		ret->length = 1;
+	}
+	return (ret);
+
+err:
+	if (ret != ai)
+		ASN1_INTEGER_free(ret);
+	return (NULL);
+}
+
+BIGNUM *
+ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai, BIGNUM *bn)
+{
+	BIGNUM *ret;
+
+	if (!ASN1_INTEGER_valid(ai))
+		return (NULL);
+
+	if ((ret = BN_bin2bn(ai->data, ai->length, bn)) == NULL)
+		ASN1error(ASN1_R_BN_LIB);
+	else if (ai->type == V_ASN1_NEG_INTEGER)
+		BN_set_negative(ret, 1);
+	return (ret);
 }
 
 int
@@ -498,146 +640,4 @@ err:
 	if (a == NULL || *a != ret)
 		ASN1_INTEGER_free(ret);
 	return (NULL);
-}
-
-int
-ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
-{
-	int j, k;
-	unsigned int i;
-	unsigned char buf[sizeof(long) + 1];
-	long d;
-
-	a->type = V_ASN1_INTEGER;
-	/* XXX ssl/ssl_asn1.c:i2d_SSL_SESSION() depends upon this bound vae */
-	if (a->length < (int)(sizeof(long) + 1)) {
-		free(a->data);
-		a->data = calloc(1, sizeof(long) + 1);
-	}
-	if (a->data == NULL) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
-		return (0);
-	}
-	d = v;
-	if (d < 0) {
-		d = -d;
-		a->type = V_ASN1_NEG_INTEGER;
-	}
-
-	for (i = 0; i < sizeof(long); i++) {
-		if (d == 0)
-			break;
-		buf[i] = (int)d & 0xff;
-		d >>= 8;
-	}
-	j = 0;
-	for (k = i - 1; k >= 0; k--)
-		a->data[j++] = buf[k];
-	a->length = j;
-	return (1);
-}
-
-/*
- * XXX this particular API is a gibbering eidrich horror that makes it
- * impossible to determine valid return cases from errors.. "a bit
- * ugly" is preserved for posterity, unfortunately this is probably
- * unfixable without changing public API
- */
-long
-ASN1_INTEGER_get(const ASN1_INTEGER *a)
-{
-	int neg = 0, i;
-	unsigned long r = 0;
-
-	if (a == NULL)
-		return (0L);
-	i = a->type;
-	if (i == V_ASN1_NEG_INTEGER)
-		neg = 1;
-	else if (i != V_ASN1_INTEGER)
-		return -1;
-
-	if (!ASN1_INTEGER_valid(a))
-		return -1; /* XXX best effort */
-
-	if (a->length > (int)sizeof(long)) {
-		/* hmm... a bit ugly, return all ones */
-		return -1;
-	}
-	if (a->data == NULL)
-		return 0;
-
-	for (i = 0; i < a->length; i++) {
-		r <<= 8;
-		r |= (unsigned char)a->data[i];
-	}
-
-	if (r > LONG_MAX)
-		return -1;
-
-	if (neg)
-		return -(long)r;
-	return (long)r;
-}
-
-ASN1_INTEGER *
-BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai)
-{
-	ASN1_INTEGER *ret;
-	int len, j;
-
-	if (ai == NULL)
-		ret = ASN1_INTEGER_new();
-	else
-		ret = ai;
-	if (ret == NULL) {
-		ASN1error(ERR_R_NESTED_ASN1_ERROR);
-		goto err;
-	}
-
-	if (!ASN1_INTEGER_valid(ret))
-		goto err;
-
-	if (BN_is_negative(bn))
-		ret->type = V_ASN1_NEG_INTEGER;
-	else
-		ret->type = V_ASN1_INTEGER;
-	j = BN_num_bits(bn);
-	len = ((j == 0) ? 0 : ((j / 8) + 1));
-	if (ret->length < len + 4) {
-		unsigned char *new_data = realloc(ret->data, len + 4);
-		if (!new_data) {
-			ASN1error(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-		ret->data = new_data;
-	}
-	ret->length = BN_bn2bin(bn, ret->data);
-
-	/* Correct zero case */
-	if (!ret->length) {
-		ret->data[0] = 0;
-		ret->length = 1;
-	}
-	return (ret);
-
-err:
-	if (ret != ai)
-		ASN1_INTEGER_free(ret);
-	return (NULL);
-}
-
-BIGNUM *
-ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai, BIGNUM *bn)
-{
-	BIGNUM *ret;
-
-	if (!ASN1_INTEGER_valid(ai))
-		return (NULL);
-
-	if ((ret = BN_bin2bn(ai->data, ai->length, bn)) == NULL)
-		ASN1error(ASN1_R_BN_LIB);
-	else if (ai->type == V_ASN1_NEG_INTEGER)
-		BN_set_negative(ret, 1);
-	return (ret);
 }
