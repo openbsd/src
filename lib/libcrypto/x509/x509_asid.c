@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.29 2021/12/25 15:42:32 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.30 2021/12/25 15:46:05 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -60,7 +60,6 @@
  * Implementation of RFC 3779 section 3.2.
  */
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
