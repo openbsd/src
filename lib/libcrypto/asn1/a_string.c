@@ -1,4 +1,4 @@
-/* $OpenBSD: a_string.c,v 1.2 2021/12/24 14:12:26 jsing Exp $ */
+/* $OpenBSD: a_string.c,v 1.3 2021/12/25 12:11:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,8 @@
 #include <openssl/asn1.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+
+#include "asn1_locl.h"
 
 ASN1_STRING *
 ASN1_STRING_new(void)
@@ -207,6 +209,63 @@ const unsigned char *
 ASN1_STRING_get0_data(const ASN1_STRING *x)
 {
 	return (x->data);
+}
+
+int
+ASN1_STRING_print(BIO *bp, const ASN1_STRING *v)
+{
+	int i, n;
+	char buf[80];
+	const char *p;
+
+	if (v == NULL)
+		return (0);
+	n = 0;
+	p = (const char *)v->data;
+	for (i = 0; i < v->length; i++) {
+		if ((p[i] > '~') || ((p[i] < ' ') &&
+		    (p[i] != '\n') && (p[i] != '\r')))
+			buf[n] = '.';
+		else
+			buf[n] = p[i];
+		n++;
+		if (n >= 80) {
+			if (BIO_write(bp, buf, n) <= 0)
+				return (0);
+			n = 0;
+		}
+	}
+	if (n > 0)
+		if (BIO_write(bp, buf, n) <= 0)
+			return (0);
+	return (1);
+}
+
+/*
+ * Utility function: convert any string type to UTF8, returns number of bytes
+ * in output string or a negative error code
+ */
+int
+ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in)
+{
+	ASN1_STRING stmp, *str = &stmp;
+	int mbflag, ret;
+
+	if (!in)
+		return -1;
+
+	if ((mbflag = asn1_tag2charwidth(in->type)) == -1)
+		return -1;
+	mbflag |= MBSTRING_FLAG;
+
+	stmp.data = NULL;
+	stmp.length = 0;
+	ret = ASN1_mbstring_copy(&str, in->data, in->length, mbflag,
+	    B_ASN1_UTF8STRING);
+	if (ret < 0)
+		return ret;
+	*out = stmp.data;
+	return stmp.length;
 }
 
 int

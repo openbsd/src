@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strex.c,v 1.30 2021/12/14 17:35:21 jsing Exp $ */
+/* $OpenBSD: a_strex.c,v 1.31 2021/12/25 12:11:57 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -598,31 +598,4 @@ int
 ASN1_STRING_print_ex_fp(FILE *fp, const ASN1_STRING *str, unsigned long flags)
 {
 	return do_print_ex(send_fp_chars, fp, flags, str);
-}
-
-/* Utility function: convert any string type to UTF8, returns number of bytes
- * in output string or a negative error code
- */
-
-int
-ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in)
-{
-	ASN1_STRING stmp, *str = &stmp;
-	int mbflag, ret;
-
-	if (!in)
-		return -1;
-
-	if ((mbflag = asn1_tag2charwidth(in->type)) == -1)
-		return -1;
-	mbflag |= MBSTRING_FLAG;
-
-	stmp.data = NULL;
-	stmp.length = 0;
-	ret = ASN1_mbstring_copy(&str, in->data, in->length, mbflag,
-	    B_ASN1_UTF8STRING);
-	if (ret < 0)
-		return ret;
-	*out = stmp.data;
-	return stmp.length;
 }

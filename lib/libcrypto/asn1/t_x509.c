@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.35 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.36 2021/12/25 12:11:57 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -349,36 +349,6 @@ X509_signature_print(BIO *bp, const X509_ALGOR *sigalg, const ASN1_STRING *sig)
 	else if (BIO_puts(bp, "\n") <= 0)
 		return 0;
 	return 1;
-}
-
-int
-ASN1_STRING_print(BIO *bp, const ASN1_STRING *v)
-{
-	int i, n;
-	char buf[80];
-	const char *p;
-
-	if (v == NULL)
-		return (0);
-	n = 0;
-	p = (const char *)v->data;
-	for (i = 0; i < v->length; i++) {
-		if ((p[i] > '~') || ((p[i] < ' ') &&
-		    (p[i] != '\n') && (p[i] != '\r')))
-			buf[n] = '.';
-		else
-			buf[n] = p[i];
-		n++;
-		if (n >= 80) {
-			if (BIO_write(bp, buf, n) <= 0)
-				return (0);
-			n = 0;
-		}
-	}
-	if (n > 0)
-		if (BIO_write(bp, buf, n) <= 0)
-			return (0);
-	return (1);
 }
 
 int
