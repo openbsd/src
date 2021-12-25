@@ -28,6 +28,7 @@ CASE II: external symbols
   A) objects (variables)
      That's it, you're done.
 
+
   B) plain C functions (not syscalls)
      1) functions that are *not* called from inside libc
 
@@ -41,6 +42,10 @@ CASE II: external symbols
 	version of the header where you declared the function, add
 	this line:
 		PROTO_DEPRECATED(your_function_name);
+
+	Note: the "DEPRECATED" suffix is about a detail of
+	how the macros work and has nothing to do with whether the
+	function itself is a Good Thing vs deprecated.
 
      2) functions that are called from inside libc
 
@@ -56,42 +61,50 @@ CASE II: external symbols
 	 - otherwise, add:
 		DEF_WEAK(your_function_name);
 
-  C) syscalls that require cancellation or other libpthread wrappers
-     You're done in libc, but go to libpthread and add the wrapper there.
 
-  D) syscalls that require libc wrappers for other reasons
-     First of all, make sure this really is the Right Thing.  Talk
-     with kettenis, deraadt, miod, and guenther.
+  C) syscalls that don't require any wrapping
 
-     1) If the actual syscall doesn't have the same calling convention
-	as the C interface, then maybe it shouldn't be exported at
-	all and you should just have an ASM stub, like SYS___tfork
-	--> __tfork_thread() or SYS_break --> brk() and sbrk().  If
-	it _could_ be called from C, then give the syscall a name
-	different from the C API.  Syscalls that fail this for
-	historical reasons (e.g., getlogin) are generated with
-	PSEUDO in libc/sys/Makefile.inc, so the ASM stub has a
-	leading underbar.  Go read gen/getlogin.c for an example
-	of how to do this.
-
-     2) Otherwise, you're sane and have a syscall like sigaction()
-	which requires a wrapper but whose syscall API is the same
-	as the C API.  Then:
-         - generate the ASM stub with HIDDEN in libc/sys/Makefile.inc
-         - in the proper hidden/*.h file add
-		PROTO_WRAP(your_function_name)
-	 - the wrapper function should be defined in
-		libc/sys/w_your_function_name.c
-	   which should define WRAP(your_function_name) and
-	   follow it with DEF_WRAP(your_function_name).  Look at
-	   libc/sys/w_sigaction.c for an example.
-	 - by default, libc code that calls your_function_name()
-	   will get the real syscall and *not* the wrapper.  libc
-	   calls that needd to go through the wrapper should invoke
-	   WRAP(your_function_name)
-
-  E) syscalls that don't require any wrapping
      In the hidden/* version of the header where you declared the
      function, add this line:
 	PROTO_NORMAL(your_function_name);
+
+     Generate the stub by adding it to the ASM variable in
+     libc/sys/Makefile.inc
+
+
+  D) syscalls that require cancellation or similar wrappers that don't
+     change the function signature
+
+     Generate the stub by adding it to the HIDDEN (*not* ASM!)
+     variable in libc/sys/Makefile.inc
+
+     In the hidden/* version of the header where you declared the
+     function, add this line:
+	PROTO_WRAP(your_function_name);
+
+     The wrapper function should be defined in
+	libc/sys/w_your_function_name.c
+     which should define WRAP(your_function_name) and follow it
+     with DEF_WRAP(your_function_name).  Look at libc/sys/w_sigaction.c
+     for an example.
+
+     By default, libc code that calls your_function_name() will get
+     the real syscall and *not* the wrapper.  libc calls that need
+     to go through the wrapper should invoke WRAP(your_function_name)
+
+
+  E) syscalls that require libc wrappers for other reasons
+     First of all, make sure this really is the Right Thing.  Talk
+     with kettenis, deraadt, millert, and guenther.
+
+     If the actual syscall doesn't have the same calling convention
+     as the C interface, then maybe it shouldn't be exported at all
+     and you should just have an ASM stub, like SYS___tfork -->
+     __tfork_thread() or SYS_break --> brk() and sbrk().  If it
+     _could_ be called from C, then give the syscall a name different
+     from the C API.  Syscalls that fail this for historical reasons
+     (e.g., exit == _exit(2)) are generated with PSEUDO/PSEUDO_NOERR
+     in libc/sys/Makefile.inc, so the ASM stub has a leading underbar.
+     Go read gen/getlogin.c rev 1.13 for an example of how to do
+     this, but don't pick this option, really.
 
