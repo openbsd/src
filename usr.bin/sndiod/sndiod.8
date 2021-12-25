@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.12 2021/12/18 21:41:49 jmc Exp $
+.\"	$OpenBSD: sndiod.8,v 1.13 2021/12/25 15:24:02 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 18 2021 $
+.Dd $Mdocdate: December 25 2021 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -185,8 +185,10 @@ Only the signedness and the precision are mandatory.
 Examples:
 .Va u8 , s16le , s24le3 , s24le4lsb .
 .It Fl F Ar device
-Specify an alternate device to use.
-If it doesn't work, the one given with the previous
+Same as
+.Fl f
+except that if the device is disconnected,
+the one given with the previous
 .Fl f
 or
 .Fl F
@@ -196,11 +198,6 @@ PCI device allows
 .Nm
 to use the USB one preferably when it's connected
 and to fall back to the PCI one when it's disconnected.
-Alternate devices may be switched with the
-.Va server.device
-control of the
-.Xr sndioctl 1
-utility.
 .It Fl f Ar device
 Add this
 .Xr sndio 7
@@ -528,6 +525,20 @@ behave normally, while streams connected to
 wait for the MMC start signal and start synchronously.
 Regardless of which device a stream is connected to,
 its playback volume knob is exposed.
+.Sh HOT PLUGGING
+If devices specified with
+.Fl F
+are unavailable when needed or unplugged at runtime,
+.Nm
+will attempt to seamlessly fall back to the last device specified.
+.Pp
+.Nm
+will not automatically switch to specified device that is plugged at runtime.
+Instead,
+.Xr sndioctl 1
+must be used to change the
+.Va server.device
+control.
 .Sh EXAMPLES
 Start server using default parameters, creating an
 additional sub-device for output to channels 2:3 only (rear speakers
