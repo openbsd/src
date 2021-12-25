@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.26 2021/12/25 15:42:32 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.27 2021/12/25 15:43:13 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -197,7 +197,6 @@ static const ASN1_TEMPLATE IPAddrBlocks_item_tt = {
 	.item = &IPAddressFamily_it,
 };
 
-/* XXX: maybe special? */
 static const ASN1_ITEM IPAddrBlocks_it = {
 	.itype = ASN1_ITYPE_PRIMITIVE,
 	.utype = -1,
