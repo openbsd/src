@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.1 2021/12/25 12:00:22 jsing Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.2 2021/12/25 12:21:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -165,6 +165,53 @@ ASN1_item_dup(const ASN1_ITEM *it, void *x)
 	ret = ASN1_item_d2i(NULL, &p, i, it);
 	free(b);
 	return (ret);
+}
+
+/* Pack an ASN1 object into an ASN1_STRING. */
+ASN1_STRING *
+ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
+{
+	ASN1_STRING *octmp;
+
+	if (!oct || !*oct) {
+		if (!(octmp = ASN1_STRING_new ())) {
+			ASN1error(ERR_R_MALLOC_FAILURE);
+			return NULL;
+		}
+	} else
+		octmp = *oct;
+
+	free(octmp->data);
+	octmp->data = NULL;
+
+	if (!(octmp->length = ASN1_item_i2d(obj, &octmp->data, it))) {
+		ASN1error(ASN1_R_ENCODE_ERROR);
+		goto err;
+	}
+	if (!octmp->data) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	if (oct)
+		*oct = octmp;
+	return octmp;
+err:
+	if (!oct || octmp != *oct)
+		ASN1_STRING_free(octmp);
+	return NULL;
+}
+
+/* Extract an ASN1 object from an ASN1_STRING. */
+void *
+ASN1_item_unpack(const ASN1_STRING *oct, const ASN1_ITEM *it)
+{
+	const unsigned char *p;
+	void *ret;
+
+	p = oct->data;
+	if (!(ret = ASN1_item_d2i(NULL, &p, oct->length, it)))
+		ASN1error(ASN1_R_DECODE_ERROR);
+	return ret;
 }
 
 int
