@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.25 2021/12/24 10:09:44 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.26 2021/12/25 15:42:32 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1366,17 +1366,20 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
  * OpenSSL dispatch
  */
 const X509V3_EXT_METHOD v3_addr = {
-	NID_sbgp_ipAddrBlock,       /* nid */
-	0,                          /* flags */
-	&IPAddrBlocks_it,
-	0, 0, 0, 0,                 /* old functions, ignored */
-	0,                          /* i2s */
-	0,                          /* s2i */
-	0,                          /* i2v */
-	v2i_IPAddrBlocks,           /* v2i */
-	i2r_IPAddrBlocks,           /* i2r */
-	0,                          /* r2i */
-	NULL                        /* extension-specific data */
+	.ext_nid = NID_sbgp_ipAddrBlock,
+	.ext_flags = 0,
+	.it = &IPAddrBlocks_it,
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = v2i_IPAddrBlocks,
+	.i2r = i2r_IPAddrBlocks,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.28 2021/12/24 02:30:15 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.29 2021/12/25 15:42:32 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -879,17 +879,20 @@ v2i_ASIdentifiers(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
  * OpenSSL dispatch.
  */
 const X509V3_EXT_METHOD v3_asid = {
-	NID_sbgp_autonomousSysNum,  /* nid */
-	0,                          /* flags */
-	&ASIdentifiers_it,          /* template */
-	0, 0, 0, 0,                 /* old functions, ignored */
-	0,                          /* i2s */
-	0,                          /* s2i */
-	0,                          /* i2v */
-	v2i_ASIdentifiers,          /* v2i */
-	i2r_ASIdentifiers,          /* i2r */
-	0,                          /* r2i */
-	NULL                        /* extension-specific data */
+	.ext_nid = NID_sbgp_autonomousSysNum,
+	.ext_flags = 0,
+	.it = &ASIdentifiers_it,
+	.ext_new = NULL,
+	.ext_free = NULL,
+	.d2i = NULL,
+	.i2d = NULL,
+	.i2s = NULL,
+	.s2i = NULL,
+	.i2v = NULL,
+	.v2i = v2i_ASIdentifiers,
+	.i2r = i2r_ASIdentifiers,
+	.r2i = NULL,
+	.usr_data = NULL,
 };
 
 /*

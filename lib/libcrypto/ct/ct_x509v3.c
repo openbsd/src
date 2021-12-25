@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_x509v3.c,v 1.5 2021/12/18 16:34:52 tb Exp $ */
+/*	$OpenBSD: ct_x509v3.c,v 1.6 2021/12/25 15:42:32 tb Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
  * (steve@openssl.org) for the OpenSSL project 2014.
@@ -131,28 +131,56 @@ ocsp_ext_d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp, long len)
 /* Handlers for X509v3/OCSP Certificate Transparency extensions */
 const X509V3_EXT_METHOD v3_ct_scts[3] = {
 	/* X509v3 extension in certificates that contains SCTs */
-	{ NID_ct_precert_scts, 0, NULL,
-	  NULL, (X509V3_EXT_FREE)SCT_LIST_free,
-	  (X509V3_EXT_D2I)x509_ext_d2i_SCT_LIST, (X509V3_EXT_I2D)i2d_SCT_LIST,
-	  NULL, NULL,
-	  NULL, NULL,
-	  (X509V3_EXT_I2R)i2r_SCT_LIST, NULL,
-	  NULL },
+	[0] = {
+		.ext_nid = NID_ct_precert_scts,
+		.ext_flags = 0,
+		.it = NULL,
+		.ext_new = NULL,
+		.ext_free = (X509V3_EXT_FREE)SCT_LIST_free,
+		.d2i = (X509V3_EXT_D2I)x509_ext_d2i_SCT_LIST,
+		.i2d = (X509V3_EXT_I2D)i2d_SCT_LIST,
+		.i2s = NULL,
+		.s2i = NULL,
+		.i2v = NULL,
+		.v2i = NULL,
+		.i2r = (X509V3_EXT_I2R)i2r_SCT_LIST,
+		.r2i = NULL,
+		.usr_data = NULL,
+	},
 
 	/* X509v3 extension to mark a certificate as a pre-certificate */
-	{ NID_ct_precert_poison, 0, &ASN1_NULL_it,
-	  NULL, NULL, NULL, NULL,
-	  i2s_poison, s2i_poison,
-	  NULL, NULL,
-	  NULL, NULL,
-	  NULL },
+	[1] = {
+		.ext_nid = NID_ct_precert_poison,
+		.ext_flags = 0,
+		.it = &ASN1_NULL_it,
+		.ext_new = NULL,
+		.ext_free = NULL,
+		.d2i = NULL,
+		.i2d = NULL,
+		.i2s = i2s_poison,
+		.s2i = s2i_poison,
+		.i2v = NULL,
+		.v2i = NULL,
+		.i2r = NULL,
+		.r2i = NULL,
+		.usr_data = NULL,
+	},
 
 	/* OCSP extension that contains SCTs */
-	{ NID_ct_cert_scts, 0, NULL,
-	  0, (X509V3_EXT_FREE)SCT_LIST_free,
-	  (X509V3_EXT_D2I)ocsp_ext_d2i_SCT_LIST, (X509V3_EXT_I2D)i2d_SCT_LIST,
-	  NULL, NULL,
-	  NULL, NULL,
-	  (X509V3_EXT_I2R)i2r_SCT_LIST, NULL,
-	  NULL },
+	[2] = {
+		.ext_nid = NID_ct_cert_scts,
+		.ext_flags = 0,
+		.it = NULL,
+		.ext_new = NULL,
+		.ext_free = (X509V3_EXT_FREE)SCT_LIST_free,
+		.d2i = (X509V3_EXT_D2I)ocsp_ext_d2i_SCT_LIST,
+		.i2d = (X509V3_EXT_I2D)i2d_SCT_LIST,
+		.i2s = NULL,
+		.s2i = NULL,
+		.i2v = NULL,
+		.v2i = NULL,
+		.i2r = (X509V3_EXT_I2R)i2r_SCT_LIST,
+		.r2i = NULL,
+		.usr_data = NULL,
+	},
 };
