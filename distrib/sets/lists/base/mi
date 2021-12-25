@@ -2632,7 +2632,6 @@
 ./usr/sbin/eigrpctl
 ./usr/sbin/eigrpd
 ./usr/sbin/ftp-proxy
-./usr/sbin/fw_install
 ./usr/sbin/fw_update
 ./usr/sbin/group
 ./usr/sbin/groupadd
