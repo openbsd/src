@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.2 2021/12/25 12:21:36 jsing Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.3 2021/12/25 13:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -195,7 +195,7 @@ ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 	if (oct)
 		*oct = octmp;
 	return octmp;
-err:
+ err:
 	if (!oct || octmp != *oct)
 		ASN1_STRING_free(octmp);
 	return NULL;
@@ -314,7 +314,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	signature->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
 	signature->flags |= ASN1_STRING_FLAG_BITS_LEFT;
 
-err:
+ err:
 	EVP_MD_CTX_cleanup(ctx);
 	freezero((char *)buf_in, inl);
 	freezero((char *)buf_out, outll);
@@ -411,7 +411,7 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 	/* memset(&ctx,0,sizeof(ctx)); */
 	ret = 1;
 
-err:
+ err:
 	EVP_MD_CTX_cleanup(&ctx);
 	return (ret);
 }
@@ -555,7 +555,7 @@ asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
 	*pb = b;
 	return off;
 
-err:
+ err:
 	if (b != NULL)
 		BUF_MEM_free(b);
 	return -1;
@@ -576,7 +576,7 @@ ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x)
 	p = (const unsigned char *)b->data;
 	ret = ASN1_item_d2i(x, &p, len, it);
 
-err:
+ err:
 	if (b != NULL)
 		BUF_MEM_free(b);
 	return (ret);

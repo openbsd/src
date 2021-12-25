@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509a.c,v 1.17 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x_x509a.c,v 1.18 2021/12/25 13:17:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -228,7 +228,7 @@ X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj)
 	if (rc != 0)
 		return rc;
 
-err:
+ err:
 	ASN1_OBJECT_free(objtmp);
 	return 0;
 }
@@ -250,7 +250,7 @@ X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj)
 	if (rc != 0)
 		return rc;
 
-err:
+ err:
 	ASN1_OBJECT_free(objtmp);
 	return 0;
 }

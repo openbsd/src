@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_par.c,v 1.30 2021/12/14 17:35:21 jsing Exp $ */
+/* $OpenBSD: asn1_par.c,v 1.31 2021/12/25 13:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,7 +97,7 @@ asn1_print_info(BIO *bp, int tag, int xclass, int constructed,
 	if (BIO_printf(bp, "%-18s", p) <= 0)
 		goto err;
 	return (1);
-err:
+ err:
 	return (0);
 }
 
@@ -371,7 +371,7 @@ asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offset,
 	}
 	ret = 1;
 
-end:
+ end:
 	if (o != NULL)
 		ASN1_OBJECT_free(o);
 	ASN1_OCTET_STRING_free(os);

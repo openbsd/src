@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_new.c,v 1.19 2021/12/15 17:53:36 jsing Exp $ */
+/* $OpenBSD: tasn_new.c,v 1.20 2021/12/25 13:17:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -173,11 +173,11 @@ asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int combine)
 	}
 	return 1;
 
-memerr:
+ memerr:
 	ASN1error(ERR_R_MALLOC_FAILURE);
 	return 0;
 
-auxerr:
+ auxerr:
 	ASN1error(ASN1_R_AUX_ERROR);
 	ASN1_item_ex_free(pval, it);
 	return 0;
@@ -248,7 +248,7 @@ ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 	}
 	/* Otherwise pass it back to the item routine */
 	ret = asn1_item_ex_combine_new(pval, it, tt->flags & ASN1_TFLG_COMBINE);
-done:
+ done:
 	return ret;
 }
 

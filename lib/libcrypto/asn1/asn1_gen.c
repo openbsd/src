@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.17 2018/04/25 11:48:21 tb Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.18 2021/12/25 13:17:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -258,7 +258,7 @@ ASN1_generate_v3(const char *str, X509V3_CTX *cnf)
 	/* Obtain new ASN1_TYPE structure */
 	ret = d2i_ASN1_TYPE(NULL, &cp, len);
 
-err:
+ err:
 	free(orig_der);
 	free(new_der);
 
@@ -478,7 +478,7 @@ asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 
 	der = NULL;
 
-bad:
+ bad:
 	free(der);
 	if (sk)
 		sk_ASN1_TYPE_pop_free(sk, ASN1_TYPE_free);
@@ -771,9 +771,9 @@ asn1_str2type(const char *str, int format, int utype)
 	atmp->type = utype;
 	return atmp;
 
-bad_str:
+ bad_str:
 	ERR_asprintf_error_data("string=%s", str);
-bad_form:
+ bad_form:
 	ASN1_TYPE_free(atmp);
 	return NULL;
 }

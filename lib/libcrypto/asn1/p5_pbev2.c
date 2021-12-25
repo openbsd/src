@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbev2.c,v 1.26 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: p5_pbev2.c,v 1.27 2021/12/25 13:17:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -274,10 +274,10 @@ PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
 
 	return ret;
 
-merr:
+ merr:
 	ASN1error(ERR_R_MALLOC_FAILURE);
 
-err:
+ err:
 	PBE2PARAM_free(pbe2);
 	/* Note 'scheme' is freed as part of pbe2 */
 	X509_ALGOR_free(kalg);
@@ -366,7 +366,7 @@ PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen, int prf_nid,
 	PBKDF2PARAM_free(kdf);
 	return keyfunc;
 
-merr:
+ merr:
 	ASN1error(ERR_R_MALLOC_FAILURE);
 	PBKDF2PARAM_free(kdf);
 	X509_ALGOR_free(keyfunc);

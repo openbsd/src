@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.37 2021/12/25 08:52:44 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.38 2021/12/25 13:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -242,7 +242,7 @@ BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai)
 	}
 	return (ret);
 
-err:
+ err:
 	if (ret != ai)
 		ASN1_INTEGER_free(ret);
 	return (NULL);
@@ -299,7 +299,7 @@ i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
 	}
 	return (n);
 
-err:
+ err:
 	return (-1);
 }
 
@@ -385,9 +385,9 @@ a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 	bs->data = s;
 	return (1);
 
-err_sl:
+ err_sl:
 	ASN1error(ASN1_R_SHORT_LINE);
-err:
+ err:
 	free(s);
 	return (ret);
 }
@@ -579,7 +579,7 @@ c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp, long len)
 	*pp = pend;
 	return (ret);
 
-err:
+ err:
 	ASN1error(i);
 	if (a == NULL || *a != ret)
 		ASN1_INTEGER_free(ret);
@@ -666,7 +666,7 @@ d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp, long length)
 	*pp = p;
 	return (ret);
 
-err:
+ err:
 	ASN1error(i);
 	if (a == NULL || *a != ret)
 		ASN1_INTEGER_free(ret);

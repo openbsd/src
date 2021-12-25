@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509.c,v 1.29 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x_x509.c,v 1.30 2021/12/25 13:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -339,7 +339,7 @@ d2i_X509_AUX(X509 **a, const unsigned char **pp, long length)
 	}
 	return ret;
 
-err:
+ err:
 	X509_free(ret);
 	return NULL;
 }

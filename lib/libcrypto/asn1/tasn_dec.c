@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.46 2021/12/14 17:35:21 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.47 2021/12/25 13:17:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -444,9 +444,9 @@ asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 		return 0;
 	}
 
-auxerr:
+ auxerr:
 	ASN1error(ASN1_R_AUX_ERROR);
-err:
+ err:
 	if (combine == 0)
 		ASN1_item_ex_free(pval, it);
 	if (errtt)
@@ -533,7 +533,7 @@ asn1_template_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long inlen,
 	*in = p;
 	return 1;
 
-err:
+ err:
 	ASN1_template_free(val, tt);
 	return 0;
 }
@@ -650,7 +650,7 @@ asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
 	*in = p;
 	return 1;
 
-err:
+ err:
 	ASN1_template_free(val, tt);
 	return 0;
 }
@@ -924,7 +924,7 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 
 	ret = 1;
 
-err:
+ err:
 	if (!ret) {
 		ASN1_TYPE_free(typ);
 		if (opval)

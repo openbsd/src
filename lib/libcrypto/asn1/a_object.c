@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.35 2021/12/25 08:52:44 jsing Exp $ */
+/* $OpenBSD: a_object.c,v 1.36 2021/12/25 13:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -261,7 +261,7 @@ a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 	BN_free(bl);
 	return (len);
 
-err:
+ err:
 	if (tmp != ftmp)
 		free(tmp);
 	BN_free(bl);
@@ -326,7 +326,7 @@ d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp, long length)
 		*pp = p;
 	return ret;
 
-err:
+ err:
 	ASN1error(i);
 	return (NULL);
 }
@@ -401,7 +401,7 @@ c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp, long len)
 	*pp = p;
 	return (ret);
 
-err:
+ err:
 	if (a == NULL || ret != *a)
 		ASN1_OBJECT_free(ret);
 	return (NULL);

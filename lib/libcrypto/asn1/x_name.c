@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.36 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x_name.c,v 1.37 2021/12/25 13:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -257,7 +257,7 @@ x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
 	*val = (ASN1_VALUE *)ret;
 	return 1;
 
-memerr:
+ memerr:
 	ASN1error(ERR_R_MALLOC_FAILURE);
 	if (ret) {
 		if (ret->entries)
@@ -337,7 +337,7 @@ x509_name_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
 	*in = p;
 	return ret;
 
-err:
+ err:
 	if (nm.x != NULL)
 		X509_NAME_free(nm.x);
 	ASN1error(ERR_R_NESTED_ASN1_ERROR);
@@ -422,7 +422,7 @@ x509_name_encode(X509_NAME *a)
 	a->modified = 0;
 	return len;
 
-memerr:
+ memerr:
 	sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s,
 	    local_sk_X509_NAME_ENTRY_free);
 	ASN1error(ERR_R_MALLOC_FAILURE);
@@ -512,7 +512,7 @@ x509_name_canon(X509_NAME *a)
 	i2d_name_canon(intname, &p);
 	ret = 1;
 
-err:
+ err:
 	if (tmpentry)
 		X509_NAME_ENTRY_free(tmpentry);
 	if (intname)

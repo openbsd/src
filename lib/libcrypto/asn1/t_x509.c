@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.36 2021/12/25 12:11:57 jsing Exp $ */
+/* $OpenBSD: t_x509.c,v 1.37 2021/12/25 13:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -244,7 +244,7 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 	}
 	ret = 1;
 
-err:
+ err:
 	free(m);
 	return (ret);
 }
@@ -295,7 +295,7 @@ X509_ocspid_print(BIO *bp, X509 *x)
 
 	return (1);
 
-err:
+ err:
 	free(der);
 	return (0);
 }
@@ -416,7 +416,7 @@ ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
 	else
 		return (1);
 
-err:
+ err:
 	BIO_write(bp, "Bad time value", 14);
 	return (0);
 }
@@ -459,7 +459,7 @@ ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
 	else
 		return (1);
 
-err:
+ err:
 	BIO_write(bp, "Bad time value", 14);
 	return (0);
 }
@@ -505,7 +505,7 @@ X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
 
 	ret = 1;
 	if (0) {
-err:
+ err:
 		X509error(ERR_R_BUF_LIB);
 	}
 	free(b);

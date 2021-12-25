@@ -1,4 +1,4 @@
-/* $OpenBSD: a_enum.c,v 1.22 2021/12/25 08:52:44 jsing Exp $ */
+/* $OpenBSD: a_enum.c,v 1.23 2021/12/25 13:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -195,7 +195,7 @@ BN_to_ASN1_ENUMERATED(const BIGNUM *bn, ASN1_ENUMERATED *ai)
 	}
 	return (ret);
 
-err:
+ err:
 	if (ret != ai)
 		ASN1_ENUMERATED_free(ret);
 	return (NULL);
@@ -245,7 +245,7 @@ i2a_ASN1_ENUMERATED(BIO *bp, const ASN1_ENUMERATED *a)
 	}
 	return (n);
 
-err:
+ err:
 	return (-1);
 }
 
@@ -333,9 +333,9 @@ a2i_ASN1_ENUMERATED(BIO *bp, ASN1_ENUMERATED *bs, char *buf, int size)
 	bs->data = s;
 	return (1);
 
-err_sl:
+ err_sl:
 	ASN1error(ASN1_R_SHORT_LINE);
-err:
+ err:
 	free(s);
 	return (ret);
 }

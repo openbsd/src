@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_old.c,v 1.1 2021/12/25 12:00:22 jsing Exp $ */
+/* $OpenBSD: asn1_old.c,v 1.2 2021/12/25 13:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -123,7 +123,7 @@ ASN1_d2i_bio(void *(*xnew)(void), d2i_of_void *d2i, BIO *in, void **x)
 	p = (unsigned char *)b->data;
 	ret = d2i(x, &p, len);
 
-err:
+ err:
 	if (b != NULL)
 		BUF_MEM_free(b);
 	return (ret);

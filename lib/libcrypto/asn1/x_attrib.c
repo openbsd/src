@@ -1,4 +1,4 @@
-/* $OpenBSD: x_attrib.c,v 1.15 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x_attrib.c,v 1.16 2021/12/25 13:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -194,7 +194,7 @@ X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
 	ASN1_TYPE_set(val, atrtype, value);
 	return (ret);
 
-err:
+ err:
 	if (ret != NULL)
 		X509_ATTRIBUTE_free(ret);
 	if (val != NULL)

@@ -1,4 +1,4 @@
-/* $OpenBSD: n_pkey.c,v 1.34 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: n_pkey.c,v 1.35 2021/12/25 13:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -316,7 +316,7 @@ i2d_RSA_NET(const RSA *a, unsigned char **pp,
 		goto err;
 
 	ret = i2d_NETSCAPE_ENCRYPTED_PKEY(enckey, pp);
-err:
+ err:
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	NETSCAPE_ENCRYPTED_PKEY_free(enckey);
 	NETSCAPE_PKEY_free(pkey);
@@ -365,7 +365,7 @@ d2i_RSA_NET(RSA **a, const unsigned char **pp, long length,
 
 	*pp = p;
 
-err:
+ err:
 	NETSCAPE_ENCRYPTED_PKEY_free(enckey);
 	return ret;
 
@@ -424,7 +424,7 @@ d2i_RSA_NET_2(RSA **a, ASN1_OCTET_STRING *os,
 		goto err;
 	}
 
-err:
+ err:
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	NETSCAPE_PKEY_free(pkey);
 	return (ret);

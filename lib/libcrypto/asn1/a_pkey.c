@@ -1,4 +1,4 @@
-/* $OpenBSD: a_pkey.c,v 1.2 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: a_pkey.c,v 1.3 2021/12/25 13:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,7 +118,7 @@ d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp, long length)
 		(*a) = ret;
 	return (ret);
 
-err:
+ err:
 	if (a == NULL || *a != ret)
 		EVP_PKEY_free(ret);
 	return (NULL);

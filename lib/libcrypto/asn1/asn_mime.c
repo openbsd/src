@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_mime.c,v 1.28 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: asn_mime.c,v 1.29 2021/12/25 13:17:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -268,7 +268,7 @@ asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
 
 	ret = 1;
 
-err:
+ err:
 	return ret;
 }
 
@@ -779,7 +779,7 @@ STACK_OF(MIME_HEADER) *mime_parse_hdr(BIO *bio)
 
 	return headers;
 
-merr:
+ merr:
 	if (mhdr != NULL)
 		mime_hdr_free(mhdr);
 	sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
@@ -867,7 +867,7 @@ mime_hdr_new(char *name, char *value)
 		goto err;
 	}
 	return mhdr;
-err:
+ err:
 	free(tmpname);
 	free(tmpval);
 	return NULL;
@@ -902,7 +902,7 @@ mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 		goto err;
 	}
 	return 1;
-err:
+ err:
 	free(tmpname);
 	free(tmpval);
 	return 0;

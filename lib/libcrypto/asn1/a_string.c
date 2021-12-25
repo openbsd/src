@@ -1,4 +1,4 @@
-/* $OpenBSD: a_string.c,v 1.3 2021/12/25 12:11:57 jsing Exp $ */
+/* $OpenBSD: a_string.c,v 1.4 2021/12/25 13:17:48 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -298,7 +298,7 @@ i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, int type)
 	}
 	return (n);
 
-err:
+ err:
 	return (-1);
 }
 
@@ -384,9 +384,9 @@ a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
 	bs->data = s;
 	return (1);
 
-err_sl:
+ err_sl:
 	ASN1error(ASN1_R_SHORT_LINE);
-err:
+ err:
 	free(s);
 	return (ret);
 }
