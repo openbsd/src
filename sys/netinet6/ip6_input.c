@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.237 2021/06/03 04:47:54 dlg Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.238 2021/12/25 13:35:17 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -404,12 +404,9 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 			}
 
 			if (ours) {
-				if (af == AF_UNSPEC) {
-					KERNEL_LOCK();
+				if (af == AF_UNSPEC)
 					nxt = ip_deliver(mp, offp, nxt,
 					    AF_INET6);
-					KERNEL_UNLOCK();
-				}
 				goto out;
 			}
 			goto bad;
@@ -508,11 +505,8 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		goto out;
 
 	if (ours) {
-		if (af == AF_UNSPEC) {
-			KERNEL_LOCK();
+		if (af == AF_UNSPEC)
 			nxt = ip_deliver(mp, offp, nxt, AF_INET6);
-			KERNEL_UNLOCK();
-		}
 		goto out;
 	}
 
