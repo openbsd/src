@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.26 2021/12/26 15:31:24 tb Exp $ */
+/* $OpenBSD: speed.c,v 1.27 2021/12/26 15:34:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1045,9 +1045,18 @@ speed_main(int argc, char **argv)
 			print_message(names[D_HMAC], c[D_HMAC][j], lengths[j]);
 			Time_F(START);
 			for (count = 0, run = 1; COND(c[D_HMAC][j]); count++) {
-				HMAC_Init_ex(hctx, NULL, 0, NULL, NULL);
-				HMAC_Update(hctx, buf, lengths[j]);
-				HMAC_Final(hctx, &(hmac[0]), NULL);
+				if (!HMAC_Init_ex(hctx, NULL, 0, NULL, NULL)) {
+					HMAC_CTX_free(hctx);
+					goto end;
+				}
+				if (!HMAC_Update(hctx, buf, lengths[j])) {
+					HMAC_CTX_free(hctx);
+					goto end;
+				}
+				if (!HMAC_Final(hctx, &(hmac[0]), NULL)) {
+					HMAC_CTX_free(hctx);
+					goto end;
+				}
 			}
 			d = Time_F(STOP);
 			print_result(D_HMAC, j, count, d);
