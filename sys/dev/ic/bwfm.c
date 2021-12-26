@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.92 2021/12/22 19:37:33 tobhe Exp $ */
+/* $OpenBSD: bwfm.c,v 1.93 2021/12/26 20:50:17 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1407,6 +1407,19 @@ bwfm_chip_sr_capable(struct bwfm_softc *sc)
 		reg = sc->sc_buscore_ops->bc_read(sc, core->co_base +
 		    BWFM_CHIP_REG_SR_CONTROL1);
 		return reg != 0;
+	case CY_CC_4373_CHIP_ID:
+		core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_CHIPCOMMON);
+		reg = sc->sc_buscore_ops->bc_read(sc, core->co_base +
+		    BWFM_CHIP_REG_SR_CONTROL0);
+		return (reg & BWFM_CHIP_REG_SR_CONTROL0_ENABLE) != 0;
+	case BRCM_CC_4359_CHIP_ID:
+	case CY_CC_43752_CHIP_ID:
+	case CY_CC_43012_CHIP_ID:
+		core = bwfm_chip_get_pmu(sc);
+		reg = sc->sc_buscore_ops->bc_read(sc, core->co_base +
+		    BWFM_CHIP_REG_RETENTION_CTL);
+		return (reg & (BWFM_CHIP_REG_RETENTION_CTL_MACPHY_DIS |
+			       BWFM_CHIP_REG_RETENTION_CTL_LOGIC_DIS)) == 0;
 	case BRCM_CC_4378_CHIP_ID:
 		return 0;
 	default:
@@ -1553,23 +1566,34 @@ bwfm_chip_tcm_rambase(struct bwfm_softc *sc)
 	case BRCM_CC_4371_CHIP_ID:
 		sc->sc_chip.ch_rambase = 0x180000;
 		break;
+	case BRCM_CC_43465_CHIP_ID:
+	case BRCM_CC_43525_CHIP_ID:
+	case BRCM_CC_4365_CHIP_ID:
+	case BRCM_CC_4366_CHIP_ID:
+	case BRCM_CC_43664_CHIP_ID:
+	case BRCM_CC_43666_CHIP_ID:
+		sc->sc_chip.ch_rambase = 0x200000;
+		break;
 	case BRCM_CC_4359_CHIP_ID:
 		if (sc->sc_chip.ch_chiprev < 9)
 			sc->sc_chip.ch_rambase = 0x180000;
 		else
 			sc->sc_chip.ch_rambase = 0x160000;
 		break;
-	case BRCM_CC_43465_CHIP_ID:
-	case BRCM_CC_43525_CHIP_ID:
-	case BRCM_CC_4365_CHIP_ID:
-	case BRCM_CC_4366_CHIP_ID:
-		sc->sc_chip.ch_rambase = 0x200000;
-		break;
+	case BRCM_CC_4355_CHIP_ID:
+	case BRCM_CC_4364_CHIP_ID:
 	case CY_CC_4373_CHIP_ID:
 		sc->sc_chip.ch_rambase = 0x160000;
 		break;
+	case BRCM_CC_4377_CHIP_ID:
+	case CY_CC_43752_CHIP_ID:
+		sc->sc_chip.ch_rambase = 0x170000;
+		break;
 	case BRCM_CC_4378_CHIP_ID:
 		sc->sc_chip.ch_rambase = 0x352000;
+		break;
+	case BRCM_CC_4387_CHIP_ID:
+		sc->sc_chip.ch_rambase = 0x740000;
 		break;
 	default:
 		printf("%s: unknown chip: %d\n", DEVNAME(sc),

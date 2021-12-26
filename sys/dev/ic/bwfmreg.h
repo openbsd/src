@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.21 2021/02/26 12:33:59 patrick Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.22 2021/12/26 20:50:17 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -34,6 +34,7 @@
 #define BWFM_CHIP_REG_EROMPTR			0x000000FC
 #define BWFM_CHIP_REG_SR_CAPABILITY		0x00000500
 #define BWFM_CHIP_REG_SR_CONTROL0		0x00000504
+#define  BWFM_CHIP_REG_SR_CONTROL0_ENABLE		(1 << 0)
 #define BWFM_CHIP_REG_SR_CONTROL1		0x00000508
 #define BWFM_CHIP_REG_PMUCONTROL		0x00000600
 #define  BWFM_CHIP_REG_PMUCONTROL_RES_MASK		0x00006000
