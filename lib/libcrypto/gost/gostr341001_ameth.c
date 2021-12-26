@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_ameth.c,v 1.18 2021/12/12 21:30:14 tb Exp $ */
+/* $OpenBSD: gostr341001_ameth.c,v 1.19 2021/12/26 15:38:49 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -365,7 +365,8 @@ pub_print_gost01(BIO *out, const EVP_PKEY *pkey, int indent, ASN1_PCTX *pctx)
 	BIO_printf(out, "X:");
 	BN_print(out, X);
 	BIO_printf(out, "\n");
-	BIO_indent(out, indent + 3, 128);
+	if (BIO_indent(out, indent + 3, 128) == 0)
+		goto err;
 	BIO_printf(out, "Y:");
 	BN_print(out, Y);
 	BIO_printf(out, "\n");
