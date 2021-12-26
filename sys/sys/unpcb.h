@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpcb.h,v 1.21 2021/12/07 01:19:47 mvs Exp $	*/
+/*	$OpenBSD: unpcb.h,v 1.22 2021/12/26 23:41:41 mvs Exp $	*/
 /*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
 
 /*
@@ -74,6 +74,7 @@ struct	unpcb {
 	SLIST_ENTRY(unpcb) unp_nextref;	/* [U] link in unp_refs list */
 	struct	mbuf *unp_addr;		/* [U] bound address of socket */
 	long	unp_msgcount;		/* [G] references from socket rcv buf */
+	long	unp_gcrefs;		/* [G] references from gc */
 	int	unp_flags;		/* [U] this unpcb contains peer eids */
 	int	unp_gcflags;		/* [G] garbge collector flags */
 	struct	sockpeercred unp_connid;/* [U] id of peer process */
@@ -92,9 +93,7 @@ struct	unpcb {
 /*
  * flag bits in unp_gcflags
  */
-#define UNP_GCMARK	0x01		/* mark during unp_gc() */
-#define UNP_GCDEFER	0x02		/* ref'd, but not marked in this pass */
-#define UNP_GCDEAD	0x04		/* unref'd in this pass */
+#define UNP_GCDEAD	0x01		/* unp could be dead */
 
 #define	sotounpcb(so)	((struct unpcb *)((so)->so_pcb))
 
