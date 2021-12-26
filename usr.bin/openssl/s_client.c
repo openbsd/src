@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.56 2021/10/25 11:47:39 jca Exp $ */
+/* $OpenBSD: s_client.c,v 1.57 2021/12/26 14:46:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -219,6 +219,7 @@ static struct {
 	int msg;
 	int nbio;
 	int nbio_test;
+	int no_servername;
 	char *npn_in;
 	unsigned int off;
 	char *passarg;
@@ -634,6 +635,12 @@ static const struct option s_client_options[] = {
 		.value = SSL_OP_LEGACY_SERVER_CONNECT,
 	},
 	{
+		.name = "no_servername",
+		.desc = "Do not send a Server Name Indication (SNI) extension",
+		.type = OPTION_FLAG,
+		.opt.value = &s_client_config.no_servername,
+	},
+	{
 		.name = "no_ssl2",
 		.type = OPTION_VALUE_OR,
 		.opt.value = &s_client_config.off,
@@ -679,6 +686,11 @@ static const struct option s_client_options[] = {
 		.type = OPTION_VALUE_OR,
 		.opt.value = &s_client_config.off,
 		.value = SSL_OP_NO_TLSv1_3,
+	},
+	{
+		.name = "noservername",
+		.type = OPTION_FLAG,
+		.opt.value = &s_client_config.no_servername,
 	},
 	{
 		.name = "pass",
@@ -895,6 +907,7 @@ s_client_main(int argc, char **argv)
 	int cbuf_len, cbuf_off;
 	int sbuf_len, sbuf_off;
 	int full_log = 1;
+	const char *servername;
 	char *pass = NULL;
 	X509 *cert = NULL;
 	EVP_PKEY *key = NULL;
@@ -1066,12 +1079,6 @@ s_client_main(int argc, char **argv)
 	if (!SSL_CTX_set_default_verify_paths(ctx))
 		ERR_print_errors(bio_err);
 
-	if (s_client_config.servername != NULL) {
-		tlsextcbp.biodebug = bio_err;
-		SSL_CTX_set_tlsext_servername_callback(ctx, ssl_servername_cb);
-		SSL_CTX_set_tlsext_servername_arg(ctx, &tlsextcbp);
-	}
-
 	con = SSL_new(ctx);
 	if (s_client_config.sess_in) {
 		SSL_SESSION *sess;
@@ -1093,15 +1100,32 @@ s_client_main(int argc, char **argv)
 		SSL_set_session(con, sess);
 		SSL_SESSION_free(sess);
 	}
-	if (s_client_config.servername != NULL) {
-		if (!SSL_set_tlsext_host_name(con, s_client_config.servername)) {
+
+	/* Attempt to opportunistically use the host name for SNI. */
+	servername = s_client_config.servername;
+	if (servername == NULL)
+		servername = s_client_config.host;
+
+	if (!s_client_config.no_servername && servername != NULL &&
+	    !SSL_set_tlsext_host_name(con, servername)) {
+		long ssl_err = ERR_peek_error();
+
+		if (s_client_config.servername != NULL ||
+		    ERR_GET_LIB(ssl_err) != ERR_LIB_SSL ||
+		    ERR_GET_REASON(ssl_err) != SSL_R_SSL3_EXT_INVALID_SERVERNAME) {
 			BIO_printf(bio_err,
 			    "Unable to set TLS servername extension.\n");
 			ERR_print_errors(bio_err);
 			goto end;
 		}
+		servername = NULL;
+		ERR_clear_error();
 	}
-/*	SSL_set_cipher_list(con,"RC4-MD5"); */
+	if (!s_client_config.no_servername && servername != NULL) {
+		tlsextcbp.biodebug = bio_err;
+		SSL_CTX_set_tlsext_servername_callback(ctx, ssl_servername_cb);
+		SSL_CTX_set_tlsext_servername_arg(ctx, &tlsextcbp);
+	}
 
  re_start:
 
