@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.589 2021/12/21 00:23:15 jmatthew Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.590 2021/12/26 01:00:32 sashan Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 21 2021 $
+.Dd $Mdocdate: December 26 2021 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -1383,9 +1383,6 @@ Packets passing in or out on such interfaces are passed as if pf was
 disabled, i.e. pf does not process them in any way.
 This can be useful on loopback and other virtual interfaces, when
 packet filtering is not desired and can have unexpected effects.
-.Ar ifspec
-is only evaluated when the ruleset is loaded; interfaces created
-later will not be skipped.
 PF filters traffic on all interfaces by default.
 .It Ic set Cm state-defaults Ar state-option , ...
 The

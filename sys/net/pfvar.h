@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.504 2021/11/16 20:51:31 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.505 2021/12/26 01:00:32 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1171,6 +1171,7 @@ struct pfi_kif {
 	int				 pfik_rules;
 	int				 pfik_routes;
 	int				 pfik_srcnodes;
+	int				 pfik_flagrefs;
 	TAILQ_HEAD(, pfi_dynaddr)	 pfik_dynaddrs;
 };
 
@@ -1179,7 +1180,8 @@ enum pfi_kif_refs {
 	PFI_KIF_REF_STATE,
 	PFI_KIF_REF_RULE,
 	PFI_KIF_REF_ROUTE,
-	PFI_KIF_REF_SRCNODE
+	PFI_KIF_REF_SRCNODE,
+	PFI_KIF_REF_FLAG
 };
 
 #define PFI_IFLAG_SKIP		0x0100	/* skip filtering on interface */
@@ -1867,8 +1869,8 @@ void		 pfi_attach_ifnet(struct ifnet *);
 void		 pfi_detach_ifnet(struct ifnet *);
 void		 pfi_attach_ifgroup(struct ifg_group *);
 void		 pfi_detach_ifgroup(struct ifg_group *);
-void		 pfi_group_change(const char *);
-void		 pfi_group_addmember(const char *, struct ifnet *);
+void		 pfi_group_addmember(const char *);
+void		 pfi_group_delmember(const char *);
 int		 pfi_match_addr(struct pfi_dynaddr *, struct pf_addr *,
 		    sa_family_t);
 int		 pfi_dynaddr_setup(struct pf_addr_wrap *, sa_family_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.102 2021/12/06 07:41:33 sashan Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.103 2021/12/26 01:00:32 sashan Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -57,6 +57,10 @@
 #include <netinet/ip6.h>
 #endif /* INET6 */
 
+#define isupper(c)	((c) >= 'A' && (c) <= 'Z')
+#define islower(c)	((c) >= 'a' && (c) <= 'z')
+#define isalpha(c)	(isupper(c)||islower(c))
+
 struct pfi_kif		 *pfi_all = NULL;
 struct pool		  pfi_addr_pl;
 struct pfi_ifhead	  pfi_ifs;
@@ -75,6 +79,7 @@ void		 pfi_address_add(struct sockaddr *, sa_family_t, u_int8_t);
 int		 pfi_if_compare(struct pfi_kif *, struct pfi_kif *);
 int		 pfi_skip_if(const char *, struct pfi_kif *);
 int		 pfi_unmask(void *);
+void		 pfi_group_change(const char *);
 
 RB_PROTOTYPE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
 RB_GENERATE(pfi_ifhead, pfi_kif, pfik_tree, pfi_if_compare);
@@ -108,7 +113,7 @@ pfi_kif_free(struct pfi_kif *kif)
 		return;
 
 	if (kif->pfik_rules || kif->pfik_states || kif->pfik_routes ||
-	    kif->pfik_srcnodes)
+	     kif->pfik_srcnodes || kif->pfik_flagrefs)
 		panic("kif is still alive");
 
 	free(kif, PFI_MTYPE, sizeof(*kif));
@@ -186,6 +191,9 @@ pfi_kif_ref(struct pfi_kif *kif, enum pfi_kif_refs what)
 	case PFI_KIF_REF_SRCNODE:
 		kif->pfik_srcnodes++;
 		break;
+	case PFI_KIF_REF_FLAG:
+		kif->pfik_flagrefs++;
+		break;
 	default:
 		panic("pfi_kif_ref with unknown type");
 	}
@@ -203,7 +211,8 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 	case PFI_KIF_REF_RULE:
 		if (kif->pfik_rules <= 0) {
 			DPFPRINTF(LOG_ERR,
-			    "pfi_kif_unref: rules refcount <= 0");
+			    "pfi_kif_unref (%s): rules refcount <= 0",
+			    kif->pfik_name);
 			return;
 		}
 		kif->pfik_rules--;
@@ -211,7 +220,8 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 	case PFI_KIF_REF_STATE:
 		if (kif->pfik_states <= 0) {
 			DPFPRINTF(LOG_ERR,
-			    "pfi_kif_unref: state refcount <= 0");
+			    "pfi_kif_unref (%s): state refcount <= 0",
+			    kif->pfik_name);
 			return;
 		}
 		kif->pfik_states--;
@@ -219,7 +229,8 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 	case PFI_KIF_REF_ROUTE:
 		if (kif->pfik_routes <= 0) {
 			DPFPRINTF(LOG_ERR,
-			    "pfi_kif_unref: route refcount <= 0");
+			    "pfi_kif_unref (%s): route refcount <= 0",
+			    kif->pfik_name);
 			return;
 		}
 		kif->pfik_routes--;
@@ -227,20 +238,30 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 	case PFI_KIF_REF_SRCNODE:
 		if (kif->pfik_srcnodes <= 0) {
 			DPFPRINTF(LOG_ERR,
-			    "pfi_kif_unref: src-node refcount <= 0");
+			    "pfi_kif_unref (%s): src-node refcount <= 0",
+			    kif->pfik_name);
 			return;
 		}
 		kif->pfik_srcnodes--;
 		break;
+	case PFI_KIF_REF_FLAG:
+		if (kif->pfik_flagrefs <= 0) {
+			DPFPRINTF(LOG_ERR,
+			    "pfi_kif_unref (%s): flags refcount <= 0",
+			    kif->pfik_name);
+			return;
+		}
+		kif->pfik_flagrefs--;
+		break;
 	default:
-		panic("pfi_kif_unref with unknown type");
+		panic("pfi_kif_unref (%s) with unknown type", kif->pfik_name);
 	}
 
 	if (kif->pfik_ifp != NULL || kif->pfik_group != NULL || kif == pfi_all)
 		return;
 
 	if (kif->pfik_rules || kif->pfik_states || kif->pfik_routes ||
-	    kif->pfik_srcnodes)
+	    kif->pfik_srcnodes || kif->pfik_flagrefs)
 		return;
 
 	RB_REMOVE(pfi_ifhead, &pfi_ifs, kif);
@@ -353,16 +374,17 @@ pfi_group_change(const char *group)
 }
 
 void
-pfi_group_addmember(const char *group, struct ifnet *ifp)
+pfi_group_delmember(const char *group)
 {
-	struct pfi_kif		*gkif, *ikif;
+	pfi_group_change(group);
+	pfi_xcommit();
+}
 
-	if ((gkif = pfi_kif_get(group, NULL)) == NULL ||
-	    (ikif = pfi_kif_get(ifp->if_xname, NULL)) == NULL)
-		panic("%s: pfi_kif_get failed", __func__);
-	ikif->pfik_flags |= gkif->pfik_flags;
-
+void
+pfi_group_addmember(const char *group)
+{
 	pfi_group_change(group);	
+	pfi_xcommit();
 }
 
 int
@@ -785,35 +807,103 @@ int
 pfi_set_flags(const char *name, int flags)
 {
 	struct pfi_kif	*p;
+	size_t	n;
 
-	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
-		if (pfi_skip_if(name, p))
-			continue;
-		p->pfik_flags_new = p->pfik_flags | flags;
+	if (name != NULL && name[0] != '\0') {
+		p = pfi_kif_find(name);
+		if (p == NULL) {
+			n = strlen(name);
+			if (n < 1 || n >= IFNAMSIZ)
+				return (EINVAL);
+
+			if (!isalpha(name[0]))
+				return (EINVAL);
+
+			p = pfi_kif_get(name, NULL);
+			if (p != NULL) {
+				p->pfik_flags_new = p->pfik_flags | flags;
+				/*
+				 * We use pfik_flagrefs counter as an
+				 * indication whether the kif has been created
+				 * on behalf of 'pfi_set_flags()' or not.
+				 */
+				KASSERT(p->pfik_flagrefs == 0);
+				if (ISSET(p->pfik_flags_new, PFI_IFLAG_SKIP))
+					pfi_kif_ref(p, PFI_KIF_REF_FLAG);
+			} else
+				panic("%s pfi_kif_get() returned NULL\n",
+				    __func__);
+		} else
+			p->pfik_flags_new = p->pfik_flags | flags;
+	} else {
+		RB_FOREACH(p, pfi_ifhead, &pfi_ifs)
+			p->pfik_flags_new = p->pfik_flags | flags;
 	}
+
 	return (0);
 }
 
 int
 pfi_clear_flags(const char *name, int flags)
 {
-	struct pfi_kif	*p;
+	struct pfi_kif	*p, *w;
 
-	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
-		if (pfi_skip_if(name, p))
-			continue;
-		p->pfik_flags_new = p->pfik_flags & ~flags;
-	}
+	if (name != NULL && name[0] != '\0') {
+		p = pfi_kif_find(name);
+		if (p != NULL) {
+			p->pfik_flags_new = p->pfik_flags & ~flags;
+
+			KASSERT((p->pfik_flagrefs == 0) ||
+			    (p->pfik_flagrefs == 1));
+
+			if (!ISSET(p->pfik_flags_new, PFI_IFLAG_SKIP) &&
+			    (p->pfik_flagrefs == 1))
+				pfi_kif_unref(p, PFI_KIF_REF_FLAG);
+		} else
+			return (ESRCH);
+
+	} else
+		RB_FOREACH_SAFE(p, pfi_ifhead, &pfi_ifs, w) {
+			p->pfik_flags_new = p->pfik_flags & ~flags;
+
+			KASSERT((p->pfik_flagrefs == 0) ||
+			    (p->pfik_flagrefs == 1));
+
+			if (!ISSET(p->pfik_flags_new, PFI_IFLAG_SKIP) &&
+			    (p->pfik_flagrefs == 1))
+				pfi_kif_unref(p, PFI_KIF_REF_FLAG);
+		}
+
 	return (0);
 }
 
 void
 pfi_xcommit(void)
 {
-	struct pfi_kif	*p;
+	struct pfi_kif	*p, *gkif;
+	struct ifg_list	*g;
+	struct ifnet	*ifp;
+	size_t n;
 
-	RB_FOREACH(p, pfi_ifhead, &pfi_ifs)
+	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
 		p->pfik_flags = p->pfik_flags_new;
+		n = strlen(p->pfik_name);
+		ifp = p->pfik_ifp;
+		/*
+		 * if kif is backed by existing interface, then we must use
+		 * skip flags found in groups. We use pfik_flags_new, otherwise
+		 * we would need to do two RB_FOREACH() passes: the first to
+		 * commit group changes the second to commit flag changes for
+		 * interfaces.
+		 */
+		if (ifp != NULL)
+			TAILQ_FOREACH(g, &ifp->if_groups, ifgl_next) {
+				gkif =
+				    (struct pfi_kif *)g->ifgl_group->ifg_pf_kif;
+				KASSERT(gkif != NULL);
+				p->pfik_flags |= gkif->pfik_flags_new;
+			}
+	}
 }
 
 /* from pf_print_state.c */

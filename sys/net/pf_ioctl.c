@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.367 2021/11/16 20:51:30 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.368 2021/12/26 01:00:32 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2892,6 +2892,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCSETIFFLAG: {
 		struct pfioc_iface *io = (struct pfioc_iface *)addr;
 
+		if (io == NULL)
+			return (EINVAL);
+
 		NET_LOCK();
 		PF_LOCK();
 		error = pfi_set_flags(io->pfiio_name, io->pfiio_flags);
@@ -2902,6 +2905,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 	case DIOCCLRIFFLAG: {
 		struct pfioc_iface *io = (struct pfioc_iface *)addr;
+
+		if (io == NULL)
+			return (EINVAL);
 
 		NET_LOCK();
 		PF_LOCK();
