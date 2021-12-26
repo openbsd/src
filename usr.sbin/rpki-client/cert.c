@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.48 2021/12/26 12:30:11 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.49 2021/12/26 12:32:28 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -64,8 +64,8 @@ cert_init_oid(void)
 
 /*
  * Append an IP address structure to our list of results.
- * This will also constrain us to having at most one inheritence
- * statement per AFI and also not have overlapping rages (as prohibited
+ * This will also constrain us to having at most one inheritance
+ * statement per AFI and also not have overlapping ranges (as prohibited
  * in section 2.2.3.6).
  * It does not make sure that ranges can't coalesce, that is, that any
  * two ranges abut each other.

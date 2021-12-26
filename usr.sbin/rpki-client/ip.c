@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.20 2021/11/10 09:15:29 claudio Exp $ */
+/*	$OpenBSD: ip.c,v 1.21 2021/12/26 12:32:28 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -129,7 +129,7 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 				has_v6 = 1;
 		}
 
-	/* Disallow multiple inheritence per type. */
+	/* Disallow multiple inheritance per type. */
 
 	if ((inherit_v4 && ip->afi == AFI_IPV4) ||
 	    (inherit_v6 && ip->afi == AFI_IPV6) ||
@@ -138,7 +138,7 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 	    (has_v6 && ip->afi == AFI_IPV6 &&
 	     ip->type == CERT_IP_INHERIT)) {
 		warnx("%s: RFC 3779 section 2.2.3.5: "
-		    "cannot have multiple inheritence or inheritence and "
+		    "cannot have multiple inheritance or inheritance and "
 		    "addresses of the same class", fn);
 		return 0;
 	}

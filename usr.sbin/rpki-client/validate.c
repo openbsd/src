@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.22 2021/11/04 11:32:55 claudio Exp $ */
+/*	$OpenBSD: validate.c,v 1.23 2021/12/26 12:32:28 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -58,7 +58,7 @@ valid_as(struct auth *a, uint32_t min, uint32_t max)
 
 /*
  * Walk up the chain of certificates (really just the last one, but in
- * the case of inheritence, the ones before) making sure that our IP
+ * the case of inheritance, the ones before) making sure that our IP
  * prefix is covered in the first non-inheriting specification.
  * Returns 1 if covered or 0 if not.
  */
