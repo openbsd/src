@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.24 2021/12/12 20:35:40 tb Exp $ */
+/* $OpenBSD: speed.c,v 1.25 2021/12/26 15:28:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1425,7 +1425,7 @@ speed_main(int argc, char **argv)
 				if ((ctx = EVP_CIPHER_CTX_new()) == NULL) {
 					BIO_printf(bio_err, "Failed to "
 					    "allocate cipher context.\n");
-					return 0;
+					goto end;
 				}
 				if (decrypt)
 					EVP_DecryptInit_ex(ctx, evp_cipher, NULL, key16, iv);
