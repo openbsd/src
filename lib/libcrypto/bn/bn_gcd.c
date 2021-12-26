@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.15 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.16 2021/12/26 15:16:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -576,6 +576,9 @@ BN_mod_inverse_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	bn_check_top(a);
 	bn_check_top(n);
 
+	BN_init(&local_A);
+	BN_init(&local_B);
+
 	BN_CTX_start(ctx);
 	if ((A = BN_CTX_get(ctx)) == NULL)
 		goto err;
@@ -608,10 +611,12 @@ BN_mod_inverse_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	A->neg = 0;
 
 	if (B->neg || (BN_ucmp(B, A) >= 0)) {
-		/* Turn BN_FLG_CONSTTIME flag on, so that when BN_div is invoked,
-	 	 * BN_div_no_branch will be called eventually.
-	 	 */
+		/*
+		 * Turn BN_FLG_CONSTTIME flag on, so that when BN_div is invoked,
+		 * BN_div_no_branch will be called eventually.
+		 */
 		pB = &local_B;
+		/* BN_init() done at the top of the function. */
 		BN_with_flags(pB, B, BN_FLG_CONSTTIME);
 		if (!BN_nnmod(B, pB, A, ctx))
 			goto err;
@@ -633,10 +638,12 @@ BN_mod_inverse_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 		 *      sign*Y*a  ==  A   (mod |n|)
 		 */
 
-		/* Turn BN_FLG_CONSTTIME flag on, so that when BN_div is invoked,
-	 	 * BN_div_no_branch will be called eventually.
-	 	 */
+		/*
+		 * Turn BN_FLG_CONSTTIME flag on, so that when BN_div is invoked,
+		 * BN_div_no_branch will be called eventually.
+		 */
 		pA = &local_A;
+		/* BN_init() done at the top of the function. */
 		BN_with_flags(pA, A, BN_FLG_CONSTTIME);
 
 		/* (D, M) := (A/B, A%B) ... */
@@ -740,6 +747,9 @@ BN_gcd_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 		goto err;
 	R = in;
 
+	BN_init(&local_A);
+	BN_init(&local_B);
+
 	bn_check_top(a);
 	bn_check_top(n);
 
@@ -768,10 +778,12 @@ BN_gcd_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	A->neg = 0;
 
 	if (B->neg || (BN_ucmp(B, A) >= 0)) {
-		/* Turn BN_FLG_CONSTTIME flag on, so that when BN_div is invoked,
-	 	 * BN_div_no_branch will be called eventually.
-	 	 */
+		/*
+		 * Turn BN_FLG_CONSTTIME flag on, so that when BN_div is invoked,
+		 * BN_div_no_branch will be called eventually.
+		 */
 		pB = &local_B;
+		/* BN_init() done at the top of the function. */
 		BN_with_flags(pB, B, BN_FLG_CONSTTIME);
 		if (!BN_nnmod(B, pB, A, ctx))
 			goto err;
@@ -793,10 +805,12 @@ BN_gcd_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 		 *      sign*Y*a  ==  A   (mod |n|)
 		 */
 
-		/* Turn BN_FLG_CONSTTIME flag on, so that when BN_div is invoked,
-	 	 * BN_div_no_branch will be called eventually.
-	 	 */
+		/*
+		 * Turn BN_FLG_CONSTTIME flag on, so that when BN_div is invoked,
+		 * BN_div_no_branch will be called eventually.
+		 */
 		pA = &local_A;
+		/* BN_init() done at the top of the function. */
 		BN_with_flags(pA, A, BN_FLG_CONSTTIME);
 
 		/* (D, M) := (A/B, A%B) ... */
