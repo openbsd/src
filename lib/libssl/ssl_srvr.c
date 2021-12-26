@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.128 2021/12/09 17:53:29 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.129 2021/12/26 15:10:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2494,12 +2494,12 @@ ssl3_send_newsession_ticket(SSL *s)
 	 * New Session Ticket - RFC 5077, section 3.3.
 	 */
 
+	memset(&cbb, 0, sizeof(cbb));
+
 	if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
 		goto err;
 	if ((hctx = HMAC_CTX_new()) == NULL)
 		goto err;
-
-	memset(&cbb, 0, sizeof(cbb));
 
 	if (S3I(s)->hs.state == SSL3_ST_SW_SESSION_TICKET_A) {
 		if (!ssl3_handshake_msg_start(s, &cbb, &session_ticket,
