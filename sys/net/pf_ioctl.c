@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.368 2021/12/26 01:00:32 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.369 2021/12/26 14:04:29 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1646,6 +1646,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				    ruleset->rules.active.ptr,
 				    oldrule, newrule, entries);
 			ruleset->rules.active.rcount++;
+			newrule->ruleset = ruleset;
 		}
 
 		nr = 0;
