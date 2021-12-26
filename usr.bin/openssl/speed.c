@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.25 2021/12/26 15:28:37 tb Exp $ */
+/* $OpenBSD: speed.c,v 1.26 2021/12/26 15:31:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1035,7 +1035,7 @@ speed_main(int argc, char **argv)
 
 		if ((hctx = HMAC_CTX_new()) == NULL) {
 			BIO_printf(bio_err, "Failed to allocate HMAC context.\n");
-			return 0;
+			goto end;
 		}
 
 		HMAC_Init_ex(hctx, (unsigned char *) "This is a key...",
