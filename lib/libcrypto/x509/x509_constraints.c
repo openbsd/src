@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.18 2021/10/26 09:09:53 beck Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.19 2021/12/26 15:44:29 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -390,7 +390,7 @@ x509_constraints_parse_mailbox(uint8_t *candidate, size_t len,
 		}
 		if (c == '@') {
 			if (wi == 0)
-				goto bad;;
+				goto bad;
 			if (candidate_local != NULL)
 				goto bad;
 			candidate_local = strdup(working);
