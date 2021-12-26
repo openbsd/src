@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.507 2021/12/20 14:54:37 hastings Exp $
+#	$OpenBSD: GENERIC,v 1.508 2021/12/26 13:55:36 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -65,10 +65,10 @@ amdgpio*	at acpi?
 aplgpio*	at acpi?
 bytgpio*	at acpi?
 chvgpio*	at acpi?
-com0		at acpi?
-com1		at acpi?
-com2		at acpi?
-com3		at acpi?
+com0		at acpi? addr 0x3f8
+com1		at acpi? addr 0x2f8
+com2		at acpi? addr 0x3e8
+com3		at acpi? addr 0x2e8
 com*		at acpi?
 glkgpio*	at acpi?
 pchgpio*	at acpi?

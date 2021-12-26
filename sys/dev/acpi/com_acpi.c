@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_acpi.c,v 1.5 2021/12/21 06:10:29 anton Exp $	*/
+/*	$OpenBSD: com_acpi.c,v 1.6 2021/12/26 13:55:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -64,6 +64,9 @@ com_acpi_match(struct device *parent, void *match, void *aux)
 	struct cfdata *cf = match;
 
 	if (aaa->aaa_naddr < 1 || aaa->aaa_nirq < 1)
+		return 0;
+	if (cf->acpidevcf_addr != aaa->aaa_addr[0] &&
+	    cf->acpidevcf_addr != ACPIDEVCF_ADDR_UNK)
 		return 0;
 	return acpi_matchhids(aaa, com_hids, cf->cf_driver->cd_name);
 }
