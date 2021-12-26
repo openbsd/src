@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.47 2021/11/05 10:50:41 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.48 2021/12/26 12:30:11 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -588,6 +588,12 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
 	int			 dsz, rc = 0, i, ptag;
 	long			 plen;
 
+	if (!X509_EXTENSION_get_critical(ext)) {
+		cryptowarnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
+		    "extension not critical", p->fn);
+		goto out;
+	}
+
 	if ((dsz = i2d_X509_EXTENSION(ext, &sv)) < 0) {
 		cryptowarnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
 		    "failed extension parse", p->fn);
@@ -890,6 +896,12 @@ sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 	ASN1_SEQUENCE_ANY	*seq = NULL, *sseq = NULL;
 	const ASN1_TYPE		*t = NULL;
 	int			 i;
+
+	if (!X509_EXTENSION_get_critical(ext)) {
+		cryptowarnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
+		    "extension not critical", p->fn);
+		goto out;
+	}
 
 	if ((dsz = i2d_X509_EXTENSION(ext, &sv)) < 0) {
 		cryptowarnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
