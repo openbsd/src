@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.59 2021/12/27 10:56:55 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.60 2021/12/27 12:03:59 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -968,7 +968,7 @@ bwfm_pci_process_otp_tuple(struct bwfm_pci_softc *sc, uint8_t type, uint8_t size
 	struct bwfm_softc *bwfm = (void *)sc;
 	char chiprev[8] = "", module[8] = "", modrev[8] = "", vendor[8] = "", chip[8] = "";
 	char product[16] = "unknown";
-	int node, len;
+	int len;
 
 	switch (type) {
 	case 0x15: /* system vendor OTP */
@@ -1022,9 +1022,9 @@ next:
 		snprintf(chip, sizeof(chip),
 		    bwfm->sc_chip.ch_chip > 40000 ? "%05d" : "%04x",
 		    bwfm->sc_chip.ch_chip);
-		node = OF_finddevice("/chosen");
-		if (node != -1)
-			OF_getprop(node, "module-wlan0", product, sizeof(product));
+		if (sc->sc_sc.sc_node)
+			OF_getprop(sc->sc_sc.sc_node, "apple,module-instance",
+			    product, sizeof(product));
 		printf("%s: firmware C-%s%s%s/P-%s_M-%s_V-%s__m-%s\n",
 		    DEVNAME(sc), chip,
 		    *chiprev ? "__s-" : "", *chiprev ? chiprev : "",
