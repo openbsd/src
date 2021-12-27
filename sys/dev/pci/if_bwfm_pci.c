@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.60 2021/12/27 12:03:59 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.61 2021/12/27 13:54:39 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -399,6 +399,16 @@ bwfm_pci_attach(struct device *parent, struct device *self, void *aux)
 
 #if defined(__HAVE_FDT)
 	sc->sc_sc.sc_node = PCITAG_NODE(pa->pa_tag);
+	if (sc->sc_sc.sc_node) {
+		if (OF_getproplen(sc->sc_sc.sc_node, "brcm,cal-blob") > 0) {
+			sc->sc_sc.sc_calsize = OF_getproplen(sc->sc_sc.sc_node,
+			    "brcm,cal-blob");
+			sc->sc_sc.sc_cal = malloc(sc->sc_sc.sc_calsize,
+			    M_DEVBUF, M_WAITOK);
+			OF_getprop(sc->sc_sc.sc_node, "brcm,cal-blob",
+			    sc->sc_sc.sc_cal, sc->sc_sc.sc_calsize);
+		}
+	}
 #endif
 
 	sc->sc_sc.sc_bus_ops = &bwfm_pci_bus_ops;
