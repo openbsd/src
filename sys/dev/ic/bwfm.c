@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.93 2021/12/26 20:50:17 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.94 2021/12/27 10:59:20 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1526,7 +1526,7 @@ bwfm_chip_sysmem_ramsize(struct bwfm_softc *sc, struct bwfm_core *core)
 void
 bwfm_chip_tcm_ramsize(struct bwfm_softc *sc, struct bwfm_core *core)
 {
-	uint32_t cap, nab, nbb, totb, bxinfo, ramsize = 0;
+	uint32_t cap, nab, nbb, totb, bxinfo, blksize, ramsize = 0;
 	int i;
 
 	cap = sc->sc_buscore_ops->bc_read(sc, core->co_base + BWFM_ARMCR4_CAP);
@@ -1539,8 +1539,12 @@ bwfm_chip_tcm_ramsize(struct bwfm_softc *sc, struct bwfm_core *core)
 		    core->co_base + BWFM_ARMCR4_BANKIDX, i);
 		bxinfo = sc->sc_buscore_ops->bc_read(sc,
 		    core->co_base + BWFM_ARMCR4_BANKINFO);
+		if (bxinfo & BWFM_ARMCR4_BANKINFO_BLK_1K_MASK)
+			blksize = 1024;
+		else
+			blksize = 8192;
 		ramsize += ((bxinfo & BWFM_ARMCR4_BANKINFO_BSZ_MASK) + 1) *
-		    BWFM_ARMCR4_BANKINFO_BSZ_MULT;
+		    blksize;
 	}
 
 	sc->sc_chip.ch_ramsize = ramsize;
