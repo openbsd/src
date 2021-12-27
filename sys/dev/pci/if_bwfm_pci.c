@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.63 2021/12/27 17:32:14 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.64 2021/12/27 17:56:03 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -186,6 +186,7 @@ struct bwfm_pci_softc {
 	int			 sc_tx_pkts_full;
 
 	uint8_t			 sc_mbdata_done;
+	uint8_t			 sc_pcireg64;
 };
 
 struct bwfm_pci_dmamem {
@@ -1379,9 +1380,7 @@ void
 bwfm_pci_ring_bell(struct bwfm_pci_softc *sc,
     struct bwfm_pci_msgring *ring)
 {
-	struct bwfm_softc *bwfm = (void *)sc;
-
-	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+	if (sc->sc_pcireg64)
 		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
 		    BWFM_PCI_64_PCIE2REG_H2D_MAILBOX_0, 1);
 	else
@@ -1835,6 +1834,8 @@ bwfm_pci_buscore_reset(struct bwfm_softc *bwfm)
 			    BWFM_PCI_PCIE2REG_CONFIGDATA, reg);
 		}
 	}
+	if (core->co_rev >= 64)
+		sc->sc_pcireg64 = 1;
 
 	reg = bwfm_pci_intr_status(sc);
 	if (reg != 0xffffffff)
@@ -2268,7 +2269,6 @@ int
 bwfm_pci_intr(void *v)
 {
 	struct bwfm_pci_softc *sc = (void *)v;
-	struct bwfm_softc *bwfm = (void *)sc;
 	struct ifnet *ifp = &sc->sc_sc.sc_ic.ic_if;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	uint32_t status, mask;
@@ -2278,7 +2278,7 @@ bwfm_pci_intr(void *v)
 
 	status = bwfm_pci_intr_status(sc);
 	/* FIXME: interrupt status seems to be zero? */
-	if (status == 0 && bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+	if (status == 0 && sc->sc_pcireg64)
 		status |= BWFM_PCI_64_PCIE2REG_MAILBOXMASK_INT_D2H_DB;
 	if (status == 0)
 		return 0;
@@ -2286,13 +2286,13 @@ bwfm_pci_intr(void *v)
 	bwfm_pci_intr_disable(sc);
 	bwfm_pci_intr_ack(sc, status);
 
-	if (bwfm->sc_chip.ch_chip != BRCM_CC_4378_CHIP_ID &&
+	if (!sc->sc_pcireg64 &&
 	    (status & (BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_FN0_0 |
 	    BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_FN0_1)))
 		bwfm_pci_handle_mb_data(sc);
 
 	mask = BWFM_PCI_PCIE2REG_MAILBOXMASK_INT_D2H_DB;
-	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+	if (sc->sc_pcireg64)
 		mask = BWFM_PCI_64_PCIE2REG_MAILBOXMASK_INT_D2H_DB;
 
 	if (status & mask) {
@@ -2315,9 +2315,7 @@ bwfm_pci_intr(void *v)
 void
 bwfm_pci_intr_enable(struct bwfm_pci_softc *sc)
 {
-	struct bwfm_softc *bwfm = (void *)sc;
-
-	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+	if (sc->sc_pcireg64)
 		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
 		    BWFM_PCI_64_PCIE2REG_MAILBOXMASK,
 		    BWFM_PCI_64_PCIE2REG_MAILBOXMASK_INT_D2H_DB);
@@ -2332,9 +2330,7 @@ bwfm_pci_intr_enable(struct bwfm_pci_softc *sc)
 void
 bwfm_pci_intr_disable(struct bwfm_pci_softc *sc)
 {
-	struct bwfm_softc *bwfm = (void *)sc;
-
-	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+	if (sc->sc_pcireg64)
 		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
 		    BWFM_PCI_64_PCIE2REG_MAILBOXMASK, 0);
 	else
@@ -2345,9 +2341,7 @@ bwfm_pci_intr_disable(struct bwfm_pci_softc *sc)
 uint32_t
 bwfm_pci_intr_status(struct bwfm_pci_softc *sc)
 {
-	struct bwfm_softc *bwfm = (void *)sc;
-
-	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+	if (sc->sc_pcireg64)
 		return bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
 		    BWFM_PCI_64_PCIE2REG_MAILBOXINT);
 	else
@@ -2358,9 +2352,7 @@ bwfm_pci_intr_status(struct bwfm_pci_softc *sc)
 void
 bwfm_pci_intr_ack(struct bwfm_pci_softc *sc, uint32_t status)
 {
-	struct bwfm_softc *bwfm = (void *)sc;
-
-	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+	if (sc->sc_pcireg64)
 		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
 		    BWFM_PCI_64_PCIE2REG_MAILBOXINT, status);
 	else
@@ -2371,9 +2363,7 @@ bwfm_pci_intr_ack(struct bwfm_pci_softc *sc, uint32_t status)
 uint32_t
 bwfm_pci_intmask(struct bwfm_pci_softc *sc)
 {
-	struct bwfm_softc *bwfm = (void *)sc;
-
-	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+	if (sc->sc_pcireg64)
 		return bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
 		    BWFM_PCI_64_PCIE2REG_INTMASK);
 	else
@@ -2384,12 +2374,10 @@ bwfm_pci_intmask(struct bwfm_pci_softc *sc)
 void
 bwfm_pci_hostready(struct bwfm_pci_softc *sc)
 {
-	struct bwfm_softc *bwfm = (void *)sc;
-
 	if ((sc->sc_shared_flags & BWFM_SHARED_INFO_HOSTRDY_DB1) == 0)
 		return;
 
-	if (bwfm->sc_chip.ch_chip == BRCM_CC_4378_CHIP_ID)
+	if (sc->sc_pcireg64)
 		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
 		    BWFM_PCI_64_PCIE2REG_H2D_MAILBOX_1, 1);
 	else
