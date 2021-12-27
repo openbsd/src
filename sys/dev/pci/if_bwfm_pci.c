@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.62 2021/12/27 17:12:34 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.63 2021/12/27 17:32:14 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -460,16 +460,24 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 	bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
 	    BWFM_PCI_PCIE2REG_CONFIGDATA, reg);
 
-	switch (bwfm->sc_chip.ch_chip)
-	{
+	switch (bwfm->sc_chip.ch_chip) {
 	case BRCM_CC_4350_CHIP_ID:
-		if (bwfm->sc_chip.ch_chiprev > 7)
-			chip = "4350";
-		else
+		if (bwfm->sc_chip.ch_chiprev <= 7)
 			chip = "4350c2";
+		else
+			chip = "4350";
+		break;
+	case BRCM_CC_4355_CHIP_ID:
+		chip = "4355c1";
 		break;
 	case BRCM_CC_4356_CHIP_ID:
 		chip = "4356";
+		break;
+	case BRCM_CC_4364_CHIP_ID:
+		if (bwfm->sc_chip.ch_chiprev <= 3)
+			chip = "4364b2";
+		else
+			chip = "4364b3";
 		break;
 	case BRCM_CC_43602_CHIP_ID:
 		chip = "43602";
@@ -477,8 +485,14 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 	case BRCM_CC_4371_CHIP_ID:
 		chip = "4371";
 		break;
+	case BRCM_CC_4377_CHIP_ID:
+		chip = "4377b3";
+		break;
 	case BRCM_CC_4378_CHIP_ID:
 		chip = "4378";
+		break;
+	case BRCM_CC_4387_CHIP_ID:
+		chip = "4387c2";
 		break;
 	default:
 		printf("%s: unknown firmware for chip %s\n",
