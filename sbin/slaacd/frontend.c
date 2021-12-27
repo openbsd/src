@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.60 2021/11/28 12:51:52 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.61 2021/12/27 15:18:51 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -68,7 +68,7 @@ struct icmp6_ev {
 	int			 refcnt;
 };
 
-struct iface		{
+struct iface {
 	LIST_ENTRY(iface)	 entries;
 	struct icmp6_ev		*icmp6ev;
 	struct ether_addr	 hw_address;
