@@ -1,4 +1,4 @@
-/*	$OpenBSD: select_iocond.c,v 1.2 2021/12/08 13:22:53 visa Exp $	*/
+/*	$OpenBSD: select_iocond.c,v 1.3 2021/12/27 16:38:06 visa Exp $	*/
 
 /*
  * Copyright (c) 2021 Visa Hankala
@@ -411,14 +411,14 @@ proc_child(int fd, int bfd)
 #endif /* __OpenBSD__ */
 
 	case FTYPE_SOCKET_TCP:
-		ret = send(fd, &b, 2, 0);
-		assert(ret == 2);
+		ret = send(fd, &b, 1, 0);
+		assert(ret == 1);
 
 		ret = send(fd, &b, 1, MSG_OOB);
 		assert(ret == 1);
 
-		ret = send(fd, &b, 3, 0);
-		assert(ret == 3);
+		ret = send(fd, &b, 1, 0);
+		assert(ret == 1);
 
 		proc_barrier(bfd);
 
@@ -670,7 +670,7 @@ proc_parent(int fd, int bfd)
 			err(1, "parent: ioctl(SIOCATMARK)");
 		assert(atmark == 0);
 		ret = recv(fd, buf, sizeof(buf), 0);
-		assert(ret == 2);
+		assert(ret == 1);
 
 		fdset_init(&rfd, &wfd, &efd, fd);
 		ret = select(fd + 1, &rfd, &wfd, &efd, &tv);
@@ -700,7 +700,7 @@ proc_parent(int fd, int bfd)
 			err(1, "parent: ioctl(SIOCATMARK)");
 		assert(atmark == 0);
 		ret = recv(fd, buf, sizeof(buf), 0);
-		assert(ret == 3);
+		assert(ret == 1);
 
 		fdset_init(&rfd, &wfd, &efd, fd);
 		ret = select(fd + 1, &rfd, &wfd, &efd, &tv);
