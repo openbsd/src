@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.95 2021/12/27 13:54:39 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.96 2021/12/27 14:28:13 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1289,6 +1289,7 @@ bwfm_chip_cr4_set_passive(struct bwfm_softc *sc)
 {
 	struct bwfm_core *core;
 	uint32_t val;
+	int i = 0;
 
 	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CR4);
 	val = sc->sc_buscore_ops->bc_read(sc,
@@ -1298,10 +1299,11 @@ bwfm_chip_cr4_set_passive(struct bwfm_softc *sc)
 	    BWFM_AGENT_IOCTL_ARMCR4_CPUHALT,
 	    BWFM_AGENT_IOCTL_ARMCR4_CPUHALT);
 
-	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_80211);
-	sc->sc_chip.ch_core_reset(sc, core, BWFM_AGENT_D11_IOCTL_PHYRESET |
-	    BWFM_AGENT_D11_IOCTL_PHYCLOCKEN, BWFM_AGENT_D11_IOCTL_PHYCLOCKEN,
-	    BWFM_AGENT_D11_IOCTL_PHYCLOCKEN);
+	while ((core = bwfm_chip_get_core_idx(sc, BWFM_AGENT_CORE_80211, i++)))
+		sc->sc_chip.ch_core_disable(sc, core,
+		    BWFM_AGENT_D11_IOCTL_PHYRESET |
+		    BWFM_AGENT_D11_IOCTL_PHYCLOCKEN,
+		    BWFM_AGENT_D11_IOCTL_PHYCLOCKEN);
 }
 
 int
