@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.61 2021/12/27 13:54:39 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.62 2021/12/27 17:12:34 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -942,32 +942,82 @@ bwfm_pci_read_otp(struct bwfm_pci_softc *sc)
 {
 	struct bwfm_softc *bwfm = (void *)sc;
 	struct bwfm_core *core;
-	uint8_t otp[BWFM_OTP_SIZE];
+	uint32_t coreid, base, words;
+	uint32_t page, offset, sromctl;
+	uint8_t *otp;
 	int i;
 
-	if (bwfm->sc_chip.ch_chip != BRCM_CC_4378_CHIP_ID)
+	switch (bwfm->sc_chip.ch_chip) {
+	case BRCM_CC_4355_CHIP_ID:
+		coreid = BWFM_AGENT_CORE_CHIPCOMMON;
+		base = 0x8c0;
+		words = 0xb2;
+		break;
+	case BRCM_CC_4364_CHIP_ID:
+		coreid = BWFM_AGENT_CORE_CHIPCOMMON;
+		base = 0x8c0;
+		words = 0x1a0;
+		break;
+	case BRCM_CC_4377_CHIP_ID:
+	case BRCM_CC_4378_CHIP_ID:
+		coreid = BWFM_AGENT_CORE_GCI;
+		base = 0x1120;
+		words = 0x170;
+		break;
+	case BRCM_CC_4387_CHIP_ID:
+		coreid = BWFM_AGENT_CORE_GCI;
+		base = 0x113c;
+		words = 0x170;
+		break;
+	default:
 		return 0;
+	}
 
-	core = bwfm_chip_get_core(bwfm, BWFM_AGENT_CORE_GCI);
+	core = bwfm_chip_get_core(bwfm, coreid);
 	if (core == NULL)
 		return 1;
 
-	for (i = 0; i < (sizeof(otp) / sizeof(uint32_t)); i++)
-		((uint32_t *)otp)[i] = bwfm_pci_buscore_read(bwfm,
-		    core->co_base + BWFM_OTP_4378_BASE + i * sizeof(uint32_t));
+	/* Map OTP to shadow area */
+	if (coreid == BWFM_AGENT_CORE_CHIPCOMMON) {
+		bwfm_pci_select_core(sc, coreid);
+		sromctl = bus_space_read_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_CHIP_REG_SROMCONTROL);
 
-	for (i = 0; i < BWFM_OTP_SIZE - 1; ) {
-		if (otp[i + 0] == 0) {
-			i++;
-			continue;
-		}
-		if (i + otp[i + 1] > BWFM_OTP_SIZE)
+		if (!(sromctl & BWFM_CHIP_REG_SROMCONTROL_OTP_PRESENT))
+			return 0;
+
+		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_CHIP_REG_SROMCONTROL, sromctl |
+		    BWFM_CHIP_REG_SROMCONTROL_OTPSEL);
+	}
+
+	/* Map bus window to SROM/OTP shadow area */
+	page = (core->co_base + base) & ~(BWFM_PCI_BAR0_REG_SIZE - 1);
+	offset = (core->co_base + base) & (BWFM_PCI_BAR0_REG_SIZE - 1);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, BWFM_PCI_BAR0_WINDOW, page);
+
+	otp = mallocarray(words, sizeof(uint16_t), M_TEMP, M_WAITOK);
+	for (i = 0; i < words; i++)
+		((uint16_t *)otp)[i] = bus_space_read_2(sc->sc_reg_iot,
+		    sc->sc_reg_ioh, offset + i * sizeof(uint16_t));
+
+	/* Unmap OTP */
+	if (coreid == BWFM_AGENT_CORE_CHIPCOMMON) {
+		bwfm_pci_select_core(sc, coreid);
+		bus_space_write_4(sc->sc_reg_iot, sc->sc_reg_ioh,
+		    BWFM_CHIP_REG_SROMCONTROL, sromctl);
+	}
+
+	for (i = 0; i < (words * sizeof(uint16_t)) - 1; i += otp[i + 1]) {
+		if (otp[i + 0] == 0)
+			break;
+		if (i + otp[i + 1] > words * sizeof(uint16_t))
 			break;
 		bwfm_pci_process_otp_tuple(sc, otp[i + 0], otp[i + 1],
 		    &otp[i + 2]);
-		i += otp[i + 1];
 	}
 
+	free(otp, M_TEMP, words * sizeof(uint16_t));
 	return 0;
 }
 

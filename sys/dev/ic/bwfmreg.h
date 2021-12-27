@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.23 2021/12/27 10:59:20 patrick Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.24 2021/12/27 17:12:34 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -32,6 +32,9 @@
 #define  BWFM_CHIP_REG_CAPABILITIES_EXT_AOB_PRESENT	0x00000040
 #define BWFM_CHIP_REG_WATCHDOG			0x00000080
 #define BWFM_CHIP_REG_EROMPTR			0x000000FC
+#define BWFM_CHIP_REG_SROMCONTROL		0x00000190
+#define  BWFM_CHIP_REG_SROMCONTROL_OTPSEL		(1 << 4)
+#define  BWFM_CHIP_REG_SROMCONTROL_OTP_PRESENT		(1 << 5)
 #define BWFM_CHIP_REG_SR_CAPABILITY		0x00000500
 #define BWFM_CHIP_REG_SR_CONTROL0		0x00000504
 #define  BWFM_CHIP_REG_SR_CONTROL0_ENABLE		(1 << 0)
@@ -90,10 +93,6 @@
 #define  BWFM_ARMCR4_BANKINFO_BSZ_MASK			0x7f
 #define  BWFM_ARMCR4_BANKINFO_BLK_1K_MASK		0x200
 #define BWFM_ARMCR4_BANKPDA			0x004C
-
-/* GCI (OTP) registers */
-#define BWFM_OTP_SIZE				64
-#define BWFM_OTP_4378_BASE			0x1120
 
 /* SOCRAM registers */
 #define BWFM_SOCRAM_COREINFO			0x0000
