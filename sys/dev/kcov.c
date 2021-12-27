@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.41 2021/12/21 06:08:57 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.42 2021/12/27 15:38:25 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -319,7 +319,7 @@ kcovclose(dev_t dev, int flag, int mode, struct proc *p)
 	kd = kd_lookup(minor(dev));
 	if (kd == NULL) {
 		mtx_leave(&kcov_mtx);
-		return (EINVAL);
+		return (ENXIO);
 	}
 
 	if (kd->kd_state == KCOV_STATE_TRACE && kd->kd_kr == NULL) {
