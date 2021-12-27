@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.58 2021/12/20 19:24:32 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.59 2021/12/27 10:56:55 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -622,7 +622,7 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 	    &ring_mem_ptr))
 		goto cleanup;
 	/* TX rxpost ring: Send clean data mbufs for RX */
-	if (bwfm_pci_setup_ring(sc, &sc->sc_rxpost_submit, 512, 32,
+	if (bwfm_pci_setup_ring(sc, &sc->sc_rxpost_submit, 1024, 32,
 	    h2d_w_idx_ptr, h2d_r_idx_ptr, 1, idx_offset,
 	    &ring_mem_ptr))
 		goto cleanup;
@@ -636,7 +636,7 @@ bwfm_pci_preinit(struct bwfm_softc *bwfm)
 	    d2h_w_idx_ptr, d2h_r_idx_ptr, 1, idx_offset,
 	    &ring_mem_ptr))
 		goto cleanup;
-	if (bwfm_pci_setup_ring(sc, &sc->sc_rx_complete, 512,
+	if (bwfm_pci_setup_ring(sc, &sc->sc_rx_complete, 1024,
 	    sc->sc_shared_version >= 7 ? 40 : 32,
 	    d2h_w_idx_ptr, d2h_r_idx_ptr, 2, idx_offset,
 	    &ring_mem_ptr))
