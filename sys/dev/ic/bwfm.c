@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.96 2021/12/27 14:28:13 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.97 2021/12/27 14:31:15 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2993,7 +2993,7 @@ bwfm_process_blob(struct bwfm_softc *sc, char *var, u_char **blob,
 		data->flag = htole16(BWFM_DLOAD_FLAG_HANDLER_VER_1);
 		if (off == 0)
 			data->flag |= htole16(BWFM_DLOAD_FLAG_BEGIN);
-		if (remain < BWFM_DLOAD_MAX_LEN)
+		if (remain <= BWFM_DLOAD_MAX_LEN)
 			data->flag |= htole16(BWFM_DLOAD_FLAG_END);
 		data->type = htole16(BWFM_DLOAD_TYPE_CLM);
 		data->len = htole32(len);
