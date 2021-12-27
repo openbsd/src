@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.52 2021/12/04 16:02:44 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.53 2021/12/27 15:12:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,6 +91,63 @@ static int bn_limit_bits_high = 0;
 static int bn_limit_num_high = 8;   /* (1<<bn_limit_bits_high) */
 static int bn_limit_bits_mont = 0;
 static int bn_limit_num_mont = 8;   /* (1<<bn_limit_bits_mont) */
+
+BIGNUM *
+BN_new(void)
+{
+	BIGNUM *ret;
+
+	if ((ret = malloc(sizeof(BIGNUM))) == NULL) {
+		BNerror(ERR_R_MALLOC_FAILURE);
+		return (NULL);
+	}
+	ret->flags = BN_FLG_MALLOCED;
+	ret->top = 0;
+	ret->neg = 0;
+	ret->dmax = 0;
+	ret->d = NULL;
+	bn_check_top(ret);
+	return (ret);
+}
+
+void
+BN_init(BIGNUM *a)
+{
+	memset(a, 0, sizeof(BIGNUM));
+	bn_check_top(a);
+}
+
+void
+BN_clear(BIGNUM *a)
+{
+	bn_check_top(a);
+	if (a->d != NULL)
+		explicit_bzero(a->d, a->dmax * sizeof(a->d[0]));
+	a->top = 0;
+	a->neg = 0;
+}
+
+void
+BN_clear_free(BIGNUM *a)
+{
+	int i;
+
+	if (a == NULL)
+		return;
+	bn_check_top(a);
+	if (a->d != NULL && !(BN_get_flags(a, BN_FLG_STATIC_DATA)))
+		freezero(a->d, a->dmax * sizeof(a->d[0]));
+	i = BN_get_flags(a, BN_FLG_MALLOCED);
+	explicit_bzero(a, sizeof(BIGNUM));
+	if (i)
+		free(a);
+}
+
+void
+BN_free(BIGNUM *a)
+{
+	BN_clear_free(a);
+}
 
 void
 BN_set_params(int mult, int high, int low, int mont)
@@ -204,53 +261,6 @@ BN_num_bits(const BIGNUM *a)
 	if (BN_is_zero(a))
 		return 0;
 	return ((i * BN_BITS2) + BN_num_bits_word(a->d[i]));
-}
-
-void
-BN_clear_free(BIGNUM *a)
-{
-	int i;
-
-	if (a == NULL)
-		return;
-	bn_check_top(a);
-	if (a->d != NULL && !(BN_get_flags(a, BN_FLG_STATIC_DATA)))
-		freezero(a->d, a->dmax * sizeof(a->d[0]));
-	i = BN_get_flags(a, BN_FLG_MALLOCED);
-	explicit_bzero(a, sizeof(BIGNUM));
-	if (i)
-		free(a);
-}
-
-void
-BN_free(BIGNUM *a)
-{
-	BN_clear_free(a);
-}
-
-void
-BN_init(BIGNUM *a)
-{
-	memset(a, 0, sizeof(BIGNUM));
-	bn_check_top(a);
-}
-
-BIGNUM *
-BN_new(void)
-{
-	BIGNUM *ret;
-
-	if ((ret = malloc(sizeof(BIGNUM))) == NULL) {
-		BNerror(ERR_R_MALLOC_FAILURE);
-		return (NULL);
-	}
-	ret->flags = BN_FLG_MALLOCED;
-	ret->top = 0;
-	ret->neg = 0;
-	ret->dmax = 0;
-	ret->d = NULL;
-	bn_check_top(ret);
-	return (ret);
 }
 
 /* This is used both by bn_expand2() and bn_dup_expand() */
@@ -516,16 +526,6 @@ BN_swap(BIGNUM *a, BIGNUM *b)
 	    (flags_old_a & BN_FLG_STATIC_DATA);
 	bn_check_top(a);
 	bn_check_top(b);
-}
-
-void
-BN_clear(BIGNUM *a)
-{
-	bn_check_top(a);
-	if (a->d != NULL)
-		explicit_bzero(a->d, a->dmax * sizeof(a->d[0]));
-	a->top = 0;
-	a->neg = 0;
 }
 
 BN_ULONG
