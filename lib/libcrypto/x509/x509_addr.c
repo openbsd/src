@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.40 2021/12/28 19:59:33 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.41 2021/12/28 20:07:17 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1041,6 +1041,8 @@ X509v3_addr_get_range(IPAddressOrRange *aor, const unsigned afi,
 	return afi_length;
 }
 
+#define MINIMUM(a, b) (((a) < (b)) ? (a) : (b))
+
 /*
  * Sort comparison function for a sequence of IPAddressFamily.
  *
@@ -1057,9 +1059,14 @@ IPAddressFamily_cmp(const IPAddressFamily *const *a_,
 {
 	const ASN1_OCTET_STRING *a = (*a_)->addressFamily;
 	const ASN1_OCTET_STRING *b = (*b_)->addressFamily;
-	int len = ((a->length <= b->length) ? a->length : b->length);
-	int cmp = memcmp(a->data, b->data, len);
-	return cmp ? cmp : a->length - b->length;
+	int len, cmp;
+
+	len = MINIMUM(a->length, b->length);
+
+	if ((cmp = memcmp(a->data, b->data, len)) != 0)
+		return cmp;
+
+	return a->length - b->length;
 }
 
 /*
