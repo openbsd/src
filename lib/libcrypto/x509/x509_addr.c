@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.34 2021/12/28 16:26:53 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.35 2021/12/28 16:37:37 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -77,6 +77,8 @@
 #include "x509_lcl.h"
 
 #ifndef OPENSSL_NO_RFC3779
+
+static int length_from_afi(const unsigned afi);
 
 /*
  * OpenSSL ASN.1 template translation of RFC 3779 2.2.3.
@@ -309,6 +311,75 @@ IPAddressFamily_free(IPAddressFamily *a)
 }
 
 /*
+ * Convenience accessors for IPAddressFamily.
+ */
+
+static int
+IPAddressFamily_type(IPAddressFamily *f)
+{
+	/* XXX - can f->ipAddressChoice == NULL actually happen? */
+	if (f == NULL || f->ipAddressChoice == NULL)
+		return -1;
+
+	switch (f->ipAddressChoice->type) {
+	case IPAddressChoice_inherit:
+	case IPAddressChoice_addressesOrRanges:
+		return f->ipAddressChoice->type;
+	default:
+		return -1;
+	}
+}
+
+static IPAddressOrRanges *
+IPAddressFamily_addressesOrRanges(IPAddressFamily *f)
+{
+	if (IPAddressFamily_type(f) == IPAddressChoice_addressesOrRanges)
+		return f->ipAddressChoice->u.addressesOrRanges;
+
+	return NULL;
+}
+
+static ASN1_NULL *
+IPAddressFamily_inheritance(IPAddressFamily *f)
+{
+	if (IPAddressFamily_type(f) == IPAddressChoice_inherit)
+		return f->ipAddressChoice->u.inherit;
+
+	return NULL;
+}
+
+static int
+IPAddressFamily_set_inheritance(IPAddressFamily *f)
+{
+	if (IPAddressFamily_addressesOrRanges(f) != NULL)
+		return 0;
+
+	if (IPAddressFamily_inheritance(f) != NULL)
+		return 1;
+
+	if ((f->ipAddressChoice->u.inherit = ASN1_NULL_new()) == NULL)
+		return 0;
+	f->ipAddressChoice->type = IPAddressChoice_inherit;
+
+	return 1;
+}
+
+static int
+IPAddressFamily_afi_length(const IPAddressFamily *f, int *out_length)
+{
+	unsigned int afi;
+
+	*out_length = 0;
+
+	if ((afi = X509v3_addr_get_afi(f)) == 0)
+		return 0;
+
+	*out_length = length_from_afi(afi);
+
+	return 1;
+}
+
+/*
  * How much buffer space do we need for a raw address?
  */
 #define ADDR_RAW_BUF_LEN        16
@@ -532,14 +603,14 @@ i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method, void *ext, BIO *out,
 				break;
 			}
 		}
-		switch (f->ipAddressChoice->type) {
+		switch (IPAddressFamily_type(f)) {
 		case IPAddressChoice_inherit:
 			BIO_puts(out, ": inherit\n");
 			break;
 		case IPAddressChoice_addressesOrRanges:
 			BIO_puts(out, ":\n");
 			if (!i2r_IPAddressOrRanges(out, indent + 2,
-			    f->ipAddressChoice->u.addressesOrRanges, afi))
+			    IPAddressFamily_addressesOrRanges(f), afi))
 				return 0;
 			break;
 		}
@@ -832,20 +903,12 @@ int
 X509v3_addr_add_inherit(IPAddrBlocks *addr, const unsigned afi,
     const unsigned *safi)
 {
-	IPAddressFamily *f = make_IPAddressFamily(addr, afi, safi);
-	if (f == NULL ||
-	    f->ipAddressChoice == NULL ||
-	    (f->ipAddressChoice->type == IPAddressChoice_addressesOrRanges &&
-	     f->ipAddressChoice->u.addressesOrRanges != NULL))
+	IPAddressFamily *f;
+
+	if ((f = make_IPAddressFamily(addr, afi, safi)) == NULL)
 		return 0;
-	if (f->ipAddressChoice->type == IPAddressChoice_inherit &&
-	    f->ipAddressChoice->u.inherit != NULL)
-		return 1;
-	if (f->ipAddressChoice->u.inherit == NULL &&
-	    (f->ipAddressChoice->u.inherit = ASN1_NULL_new()) == NULL)
-		return 0;
-	f->ipAddressChoice->type = IPAddressChoice_inherit;
-	return 1;
+
+	return IPAddressFamily_set_inheritance(f);
 }
 
 /*
@@ -855,20 +918,21 @@ static IPAddressOrRanges *
 make_prefix_or_range(IPAddrBlocks *addr, const unsigned afi,
     const unsigned *safi)
 {
-	IPAddressFamily *f = make_IPAddressFamily(addr, afi, safi);
+	IPAddressFamily *f;
 	IPAddressOrRanges *aors = NULL;
 
-	if (f == NULL ||
-	    f->ipAddressChoice == NULL ||
-	    (f->ipAddressChoice->type == IPAddressChoice_inherit &&
-	     f->ipAddressChoice->u.inherit != NULL))
+	if ((f = make_IPAddressFamily(addr, afi, safi)) == NULL)
 		return NULL;
-	if (f->ipAddressChoice->type == IPAddressChoice_addressesOrRanges)
-		aors = f->ipAddressChoice->u.addressesOrRanges;
-	if (aors != NULL)
+
+	if (IPAddressFamily_inheritance(f) != NULL)
+		return NULL;
+
+	if ((aors = IPAddressFamily_addressesOrRanges(f)) != NULL)
 		return aors;
+
 	if ((aors = sk_IPAddressOrRange_new_null()) == NULL)
 		return NULL;
+
 	switch (afi) {
 	case IANA_AFI_IPV4:
 		sk_IPAddressOrRange_set_cmp_func(aors, v4IPAddressOrRange_cmp);
@@ -877,8 +941,10 @@ make_prefix_or_range(IPAddrBlocks *addr, const unsigned afi,
 		sk_IPAddressOrRange_set_cmp_func(aors, v6IPAddressOrRange_cmp);
 		break;
 	}
+
 	f->ipAddressChoice->type = IPAddressChoice_addressesOrRanges;
 	f->ipAddressChoice->u.addressesOrRanges = aors;
+
 	return aors;
 }
 
@@ -1011,7 +1077,10 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 	 */
 	for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
 		IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
-		int length = length_from_afi(X509v3_addr_get_afi(f));
+		int length;
+
+		if (!IPAddressFamily_afi_length(f, &length))
+			return 0;
 
 		/*
 		 * Inheritance is canonical.  Anything other than inheritance
