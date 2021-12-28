@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.36 2021/12/28 16:40:13 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.37 2021/12/28 17:25:46 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1500,7 +1500,7 @@ X509v3_addr_inherits(IPAddrBlocks *addr)
 	for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
 		IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
 
-		if (f->ipAddressChoice->type == IPAddressChoice_inherit)
+		if (IPAddressFamily_inheritance(f) != NULL)
 			return 1;
 	}
 
