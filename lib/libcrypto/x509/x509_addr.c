@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.45 2021/12/28 21:00:27 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.46 2021/12/28 21:06:01 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -447,7 +447,7 @@ addr_expand(unsigned char *addr, const ASN1_BIT_STRING *bs, const int length,
 		return 0;
 
 	if (fill != 0)
-		fill = 0xFF;
+		fill = 0xff;
 
 	if (bs->length > 0) {
 		/* XXX - shouldn't this check ASN1_STRING_FLAG_BITS_LEFT? */
@@ -538,7 +538,7 @@ i2r_IPAddressOrRanges(BIO *out, const int indent,
 			    aor->u.addressRange->min))
 				return 0;
 			BIO_puts(out, "-");
-			if (!i2r_address(out, afi, 0xFF,
+			if (!i2r_address(out, afi, 0xff,
 			    aor->u.addressRange->max))
 				return 0;
 			BIO_puts(out, "\n");
@@ -706,7 +706,7 @@ range_should_be_prefix(const unsigned char *min, const unsigned char *max,
 		return -1;
 	for (i = 0; i < length && min[i] == max[i]; i++)
 		continue;
-	for (j = length - 1; j >= 0 && min[j] == 0x00 && max[j] == 0xFF; j--)
+	for (j = length - 1; j >= 0 && min[j] == 0x00 && max[j] == 0xff; j--)
 		continue;
 	if (i < j)
 		return -1;
@@ -723,16 +723,16 @@ range_should_be_prefix(const unsigned char *min, const unsigned char *max,
 	case 0x07:
 		j = 5;
 		break;
-	case 0x0F:
+	case 0x0f:
 		j = 4;
 		break;
-	case 0x1F:
+	case 0x1f:
 		j = 3;
 		break;
-	case 0x3F:
+	case 0x3f:
 		j = 2;
 		break;
-	case 0x7F:
+	case 0x7f:
 		j = 1;
 		break;
 	default:
@@ -765,7 +765,7 @@ make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
 	aor->u.addressPrefix->flags &= ~7;
 	aor->u.addressPrefix->flags |= ASN1_STRING_FLAG_BITS_LEFT;
 	if (bitlen > 0) {
-		aor->u.addressPrefix->data[bytelen - 1] &= ~(0xFF >> bitlen);
+		aor->u.addressPrefix->data[bytelen - 1] &= ~(0xff >> bitlen);
 		aor->u.addressPrefix->flags |= 8 - bitlen;
 	}
 
@@ -813,12 +813,12 @@ make_addressRange(IPAddressOrRange **result, unsigned char *min,
 	if (i > 0) {
 		unsigned char b = min[i - 1];
 		int j = 1;
-		while ((b & (0xFFU >> j)) != 0)
+		while ((b & (0xffU >> j)) != 0)
 			++j;
 		aor->u.addressRange->min->flags |= 8 - j;
 	}
 
-	for (i = length; i > 0 && max[i - 1] == 0xFF; --i)
+	for (i = length; i > 0 && max[i - 1] == 0xff; --i)
 		continue;
 	if (!ASN1_BIT_STRING_set(aor->u.addressRange->max, max, i))
 		goto err;
@@ -827,7 +827,7 @@ make_addressRange(IPAddressOrRange **result, unsigned char *min,
 	if (i > 0) {
 		unsigned char b = max[i - 1];
 		int j = 1;
-		while ((b & (0xFFU >> j)) != (0xFFU >> j))
+		while ((b & (0xffU >> j)) != (0xffU >> j))
 			++j;
 		aor->u.addressRange->max->flags |= 8 - j;
 	}
@@ -1014,11 +1014,11 @@ extract_min_max(IPAddressOrRange *aor, unsigned char *min, unsigned char *max,
 	switch (aor->type) {
 	case IPAddressOrRange_addressPrefix:
 		return (addr_expand(min, aor->u.addressPrefix, length, 0x00) &&
-		    addr_expand(max, aor->u.addressPrefix, length, 0xFF));
+		    addr_expand(max, aor->u.addressPrefix, length, 0xff));
 	case IPAddressOrRange_addressRange:
 		return (addr_expand(min, aor->u.addressRange->min, length,
 		    0x00) &&
-		    addr_expand(max, aor->u.addressRange->max, length, 0xFF));
+		    addr_expand(max, aor->u.addressRange->max, length, 0xff));
 	}
 	return 0;
 }
@@ -1372,7 +1372,7 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 			}
 			/* Range and overflow check. */
 			if ((errno == ERANGE && parsed_safi == ULONG_MAX) ||
-			    parsed_safi > 0xFF) {
+			    parsed_safi > 0xff) {
 				X509V3error(X509V3_R_INVALID_SAFI);
 				X509V3_conf_err(val);
 				goto err;
