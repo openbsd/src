@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.31 2021/12/28 16:05:23 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.32 2021/12/28 16:10:47 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -764,25 +764,32 @@ static IPAddressFamily *
 make_IPAddressFamily(IPAddrBlocks *addr, const unsigned afi,
     const unsigned *safi)
 {
-	IPAddressFamily *f;
-	unsigned char key[3];
-	int keylen;
+	IPAddressFamily *f = NULL;
+	CBB cbb;
+	CBS cbs;
+	uint8_t *key = NULL;
+	size_t keylen;
 	int i;
 
-	key[0] = (afi >> 8) & 0xFF;
-	key[1] = afi & 0xFF;
+	if (!CBB_init(&cbb, 0))
+		goto err;
+
+	if (!CBB_add_u16(&cbb, afi))
+		goto err;
 	if (safi != NULL) {
-		key[2] = *safi & 0xFF;
-		keylen = 3;
-	} else {
-		keylen = 2;
+		if (!CBB_add_u8(&cbb, *safi))
+			goto err;
 	}
+
+	if (!CBB_finish(&cbb, &key, &keylen))
+		goto err;
 
 	for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
 		f = sk_IPAddressFamily_value(addr, i);
-		if (f->addressFamily->length == keylen &&
-		    !memcmp(f->addressFamily->data, key, keylen))
-			return f;
+
+		CBS_init(&cbs, f->addressFamily->data, f->addressFamily->length);
+		if (CBS_mem_equal(&cbs, key, keylen))
+			goto done;
 	}
 
 	if ((f = IPAddressFamily_new()) == NULL)
@@ -792,10 +799,16 @@ make_IPAddressFamily(IPAddrBlocks *addr, const unsigned afi,
 	if (!sk_IPAddressFamily_push(addr, f))
 		goto err;
 
+ done:
+	free(key);
+
 	return f;
 
  err:
+	CBB_cleanup(&cbb);
+	free(key);
 	IPAddressFamily_free(f);
+
 	return NULL;
 }
 
