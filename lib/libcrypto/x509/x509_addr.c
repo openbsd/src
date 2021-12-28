@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.42 2021/12/28 20:44:56 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.43 2021/12/28 20:50:37 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1077,8 +1077,10 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 {
 	unsigned char a_min[ADDR_RAW_BUF_LEN], a_max[ADDR_RAW_BUF_LEN];
 	unsigned char b_min[ADDR_RAW_BUF_LEN], b_max[ADDR_RAW_BUF_LEN];
+	IPAddressFamily *f;
 	IPAddressOrRanges *aors;
-	int i, j, k;
+	IPAddressOrRange *aor, *aor_a, *aor_b;
+	int i, j, k, length;
 
 	/*
 	 * Empty extension is canonical.
@@ -1107,41 +1109,37 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 	 * Top level's ok, now check each address family.
 	 */
 	for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
-		IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
-		int length;
+		f = sk_IPAddressFamily_value(addr, i);
 
 		if (!IPAddressFamily_afi_length(f, &length))
 			return 0;
 
 		/*
-		 * Inheritance is canonical.  Anything other than inheritance
-		 * or a SEQUENCE OF IPAddressOrRange is an ASN.1 error or
-		 * something.
+		 * If this family has an inheritance element, it is canonical.
 		 */
-		if (f == NULL || f->ipAddressChoice == NULL)
-			return 0;
-		switch (f->ipAddressChoice->type) {
-		case IPAddressChoice_inherit:
+		if (IPAddressFamily_inheritance(f) != NULL)
 			continue;
-		case IPAddressChoice_addressesOrRanges:
-			break;
-		default:
-			return 0;
-		}
 
 		/*
-		 * It's an IPAddressOrRanges sequence, check it.
+		 * If this family has neither an inheritance element nor an
+		 * addressesOrRanges, we don't know what this is.
 		 */
-		aors = f->ipAddressChoice->u.addressesOrRanges;
+		if ((aors = IPAddressFamily_addressesOrRanges(f)) == NULL)
+			return 0;
+
 		if (sk_IPAddressOrRange_num(aors) == 0)
 			return 0;
-		for (j = 0; j < sk_IPAddressOrRange_num(aors) - 1; j++) {
-			IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
-			IPAddressOrRange *b = sk_IPAddressOrRange_value(aors,
-			    j + 1);
 
-			if (!extract_min_max(a, a_min, a_max, length) ||
-			    !extract_min_max(b, b_min, b_max, length))
+		for (j = 0; j < sk_IPAddressOrRange_num(aors) - 1; j++) {
+			aor_a = sk_IPAddressOrRange_value(aors, j);
+			aor_b = sk_IPAddressOrRange_value(aors, j + 1);
+
+			/*
+			 * XXX - check that both are either a prefix or a range.
+			 */
+
+			if (!extract_min_max(aor_a, a_min, a_max, length) ||
+			    !extract_min_max(aor_b, b_min, b_max, length))
 				return 0;
 
 			/*
@@ -1154,8 +1152,8 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 				return 0;
 
 			/*
-			 * Punt if adjacent or overlapping.  Check for adjacency by
-			 * subtracting one from b_min first.
+			 * Punt if adjacent or overlapping.  Check for adjacency
+			 * by subtracting one from b_min first.
 			 */
 			for (k = length - 1; k >= 0 && b_min[k]-- == 0x00; k--)
 				continue;
@@ -1165,27 +1163,25 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 			/*
 			 * Check for range that should be expressed as a prefix.
 			 */
-			if (a->type == IPAddressOrRange_addressRange &&
-			    range_should_be_prefix(a_min, a_max, length) >= 0)
+			if (aor_a->type == IPAddressOrRange_addressPrefix)
+				continue;
+
+			if (range_should_be_prefix(a_min, a_max, length) >= 0)
 				return 0;
 		}
 
 		/*
-		 * Check range to see if it's inverted or should be a
+		 * Check final range to see if it's inverted or should be a
 		 * prefix.
 		 */
-		j = sk_IPAddressOrRange_num(aors) - 1;
-		{
-			IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
-			if (a != NULL &&
-			    a->type == IPAddressOrRange_addressRange) {
-				if (!extract_min_max(a, a_min, a_max, length))
-					return 0;
-				if (memcmp(a_min, a_max, length) > 0 ||
-				    range_should_be_prefix(a_min, a_max,
-				    length) >= 0)
-					return 0;
-			}
+		aor = sk_IPAddressOrRange_value(aors, j);
+		if (aor->type == IPAddressOrRange_addressRange) {
+			if (!extract_min_max(aor, a_min, a_max, length))
+				return 0;
+			if (memcmp(a_min, a_max, length) > 0)
+				return 0;
+			if (range_should_be_prefix(a_min, a_max, length) >= 0)
+				return 0;
 		}
 	}
 
