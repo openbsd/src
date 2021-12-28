@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.35 2021/12/28 16:37:37 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.36 2021/12/28 16:40:13 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -613,6 +613,7 @@ i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method, void *ext, BIO *out,
 			    IPAddressFamily_addressesOrRanges(f), afi))
 				return 0;
 			break;
+		/* XXX - how should we handle -1 here? */
 		}
 	}
 	return 1;
