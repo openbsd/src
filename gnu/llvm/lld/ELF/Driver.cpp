@@ -599,7 +599,7 @@ static void setUnresolvedSymbolPolicy(opt::InputArgList &args) {
                                      : UnresolvedPolicy::Warn;
   // -shared implies -unresolved-symbols=ignore-all because missing
   // symbols are likely to be resolved at runtime.
-  bool diagRegular = !config->shared, diagShlib = false;
+  bool diagRegular = !config->shared, diagShlib = !config->shared;
 
   for (const opt::Arg *arg : args) {
     switch (arg->getOption().getID()) {
