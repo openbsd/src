@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/04/28 22:56:22 drahn Exp $
+# $OpenBSD: Makefile,v 1.6 2021/12/28 15:45:17 patrick Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,7 @@ NOPIC=
 NOPROFILE=
 
 CFLAGS+=	-fPIC -std=gnu99 -fvisibility=hidden -fno-stack-protector
+CPPFLAGS+=	-I${.CURDIR}/../../llvm/compiler-rt/lib/builtins
 CPPFLAGS+=	-DVISIBILITY_HIDDEN
 
 .if ${MACHINE_ARCH} == "amd64"
@@ -210,6 +211,24 @@ SRCS+=	comparetf2.c \
 	multc3.c \
 	trunctfdf2.c \
 	trunctfsf2.c
+
+# Prepare multiple versions of the LSE-helper
+CPPFLAGS+=-DHAS_ASM_LSE
+.for pat in cas swp ldadd ldclr ldeor ldset
+.  for size in 1 2 4 8 16
+.    for model in 1 2 3 4
+.      if "${pat}" == "cas" || "${size}" != "16"
+outline_atomic_${pat}${size}_${model}.S: Makefile ${.CURDIR}/../../llvm/compiler-rt/lib/builtins/${RTARCH}/lse.S
+	@echo "#define L_${pat}\n#define SIZE ${size}\n#define MODEL ${model}\n" > $@.tmp
+	@cat ${.CURDIR}/../../llvm/compiler-rt/lib/builtins/${RTARCH}/lse.S >> $@.tmp
+	@mv $@.tmp $@
+
+SRCS+=	outline_atomic_${pat}${size}_${model}.S
+.      endif
+.    endfor
+.  endfor
+.endfor
+
 .endif
 
 .if ${RTARCH} == "arm"
