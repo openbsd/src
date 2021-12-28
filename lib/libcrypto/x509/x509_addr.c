@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.44 2021/12/28 20:58:05 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.45 2021/12/28 21:00:27 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1274,24 +1274,26 @@ IPAddressOrRanges_canonize(IPAddressOrRanges *aors, const unsigned afi)
 int
 X509v3_addr_canonize(IPAddrBlocks *addr)
 {
+	IPAddressFamily *f;
+	IPAddressOrRanges *aors;
 	unsigned int afi;
 	int i;
 
 	for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
-		IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
+		f = sk_IPAddressFamily_value(addr, i);
 
 		/* Check AFI/SAFI here - IPAddressFamily_cmp() can't error. */
 		if ((afi = X509v3_addr_get_afi(f)) == 0)
 			return 0;
 
-		if (f->ipAddressChoice->type ==
-		    IPAddressChoice_addressesOrRanges &&
-		    !IPAddressOrRanges_canonize(f->ipAddressChoice->u.addressesOrRanges,
-		    X509v3_addr_get_afi(f)))
+		if ((aors = IPAddressFamily_addressesOrRanges(f)) == NULL)
+			continue;
+
+		if (!IPAddressOrRanges_canonize(aors, afi))
 			return 0;
 	}
 
-	(void)sk_IPAddressFamily_set_cmp_func(addr, IPAddressFamily_cmp);
+	sk_IPAddressFamily_set_cmp_func(addr, IPAddressFamily_cmp);
 	sk_IPAddressFamily_sort(addr);
 
 	return X509v3_addr_is_canonical(addr);
