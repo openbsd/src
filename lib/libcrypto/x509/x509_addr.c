@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.33 2021/12/28 16:21:59 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.34 2021/12/28 16:26:53 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -362,31 +362,42 @@ X509v3_addr_get_afi(const IPAddressFamily *f)
 }
 
 /*
- * Expand the bitstring form of an address into a raw byte array.
- * At the moment this is coded for simplicity, not speed.
+ * Expand the bitstring form (RFC 3779, section 2.1.2) of an address into
+ * a raw byte array.  At the moment this is coded for simplicity, not speed.
+ *
+ * Unused bits in the last octet of |bs| and all bits in subsequent bytes
+ * of |addr| are set to 0 or 1 depending on whether |fill| is 0 or not.
  */
 static int
 addr_expand(unsigned char *addr, const ASN1_BIT_STRING *bs, const int length,
-    const unsigned char fill)
+    uint8_t fill)
 {
 	if (bs->length < 0 || bs->length > length)
 		return 0;
+
+	if (fill != 0)
+		fill = 0xFF;
+
 	if (bs->length > 0) {
+		/* XXX - shouldn't this check ASN1_STRING_FLAG_BITS_LEFT? */
+		uint8_t unused_bits = bs->flags & 7;
+		uint8_t mask = (1 << unused_bits) - 1;
+
 		memcpy(addr, bs->data, bs->length);
-		if ((bs->flags & 7) != 0) {
-			unsigned char mask = 0xFF >> (8 - (bs->flags & 7));
-			if (fill == 0)
-				addr[bs->length - 1] &= ~mask;
-			else
-				addr[bs->length - 1] |= mask;
-		}
+
+		if (fill == 0)
+			addr[bs->length - 1] &= ~mask;
+		else
+			addr[bs->length - 1] |= mask;
 	}
+
 	memset(addr + bs->length, fill, length - bs->length);
+
 	return 1;
 }
 
 /*
- * Extract the prefix length from a bitstring.
+ * Extract the prefix length from a bitstring: 8 * length - unused bits.
  */
 #define addr_prefixlen(bs) ((int) ((bs)->length * 8 - ((bs)->flags & 7)))
 
