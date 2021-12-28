@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.41 2021/12/28 20:07:17 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.42 2021/12/28 20:44:56 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1092,6 +1092,13 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 	for (i = 0; i < sk_IPAddressFamily_num(addr) - 1; i++) {
 		const IPAddressFamily *a = sk_IPAddressFamily_value(addr, i);
 		const IPAddressFamily *b = sk_IPAddressFamily_value(addr, i + 1);
+
+		/* Check that both have valid AFIs before comparing them. */
+		if (X509v3_addr_get_afi(a) == 0)
+			return 0;
+		if (X509v3_addr_get_afi(b) == 0)
+			return 0;
+
 		if (IPAddressFamily_cmp(&a, &b) >= 0)
 			return 0;
 	}
