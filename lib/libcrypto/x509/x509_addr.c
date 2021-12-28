@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.29 2021/12/28 15:49:11 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.30 2021/12/28 15:59:13 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -352,6 +352,10 @@ X509v3_addr_get_afi(const IPAddressFamily *f)
 	CBS_init(&cbs, f->addressFamily->data, f->addressFamily->length);
 
 	if (!CBS_get_u16(&cbs, &afi))
+		return 0;
+
+	/* One byte for the optional SAFI, everything else is garbage. */
+	if (CBS_len(&cbs) > 1)
 		return 0;
 
 	return afi;
