@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.22 2021/12/28 23:10:30 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.23 2021/12/28 23:10:58 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1296,6 +1296,11 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 
 	if (span) {
 		port_list = &sc->sc_spans;
+
+		if (isvport) {
+			error = EPROTONOSUPPORT;
+			goto free;
+		}
 
 		p->p_brport.eb_input = veb_span_input;
 		p->p_bif_flags = IFBIF_SPAN;
