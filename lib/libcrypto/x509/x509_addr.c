@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.30 2021/12/28 15:59:13 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.31 2021/12/28 16:05:23 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -786,12 +786,6 @@ make_IPAddressFamily(IPAddrBlocks *addr, const unsigned afi,
 	}
 
 	if ((f = IPAddressFamily_new()) == NULL)
-		goto err;
-	if (f->ipAddressChoice == NULL &&
-	    (f->ipAddressChoice = IPAddressChoice_new()) == NULL)
-		goto err;
-	if (f->addressFamily == NULL &&
-	    (f->addressFamily = ASN1_OCTET_STRING_new()) == NULL)
 		goto err;
 	if (!ASN1_OCTET_STRING_set(f->addressFamily, key, keylen))
 		goto err;
