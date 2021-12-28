@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.23 2021/12/28 23:10:58 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.24 2021/12/28 23:13:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -163,7 +163,6 @@ struct veb_softc {
 	if (ISSET((_sc)->sc_if.if_flags, IFF_DEBUG)) \
 		printf(fmt); \
 } while (0)
-
 
 static int	veb_clone_create(struct if_clone *, int);
 static int	veb_clone_destroy(struct ifnet *);
