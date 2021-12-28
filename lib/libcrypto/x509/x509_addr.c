@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.46 2021/12/28 21:06:01 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.47 2021/12/28 21:23:40 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -857,7 +857,7 @@ make_IPAddressFamily(IPAddrBlocks *addr, const unsigned afi,
 	if (!CBB_init(&cbb, 0))
 		goto err;
 
-	/* XXX - should afi <= 65535 and *safi < 255 be checked here? */
+	/* XXX - should afi <= 65535 and *safi <= 255 be checked here? */
 
 	if (!CBB_add_u16(&cbb, afi))
 		goto err;
