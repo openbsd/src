@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.28 2021/12/25 23:35:25 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.29 2021/12/28 15:49:11 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -73,6 +73,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "bytestring.h"
 #include "x509_lcl.h"
 
 #ifndef OPENSSL_NO_RFC3779
@@ -330,16 +331,30 @@ length_from_afi(const unsigned afi)
 
 /*
  * Extract the AFI from an IPAddressFamily.
+ *
+ * This is public API. It uses the reserved AFI 0 as an in-band error
+ * while it doesn't care about the reserved AFI 65535...
  */
 unsigned int
 X509v3_addr_get_afi(const IPAddressFamily *f)
 {
-	if (f == NULL ||
-	    f->addressFamily == NULL ||
-	    f->addressFamily->data == NULL ||
-	    f->addressFamily->length < 2)
+	CBS cbs;
+	uint16_t afi;
+
+	/*
+	 * XXX are these NULL checks really sensible? If f is non-NULL, it
+	 * should have both addressFamily and ipAddressChoice...
+	 */
+	if (f == NULL || f->addressFamily == NULL ||
+	    f->addressFamily->data == NULL)
 		return 0;
-	return (f->addressFamily->data[0] << 8) | f->addressFamily->data[1];
+
+	CBS_init(&cbs, f->addressFamily->data, f->addressFamily->length);
+
+	if (!CBS_get_u16(&cbs, &afi))
+		return 0;
+
+	return afi;
 }
 
 /*
