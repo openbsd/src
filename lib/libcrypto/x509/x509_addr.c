@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.38 2021/12/28 17:45:41 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.39 2021/12/28 19:56:45 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -956,14 +956,23 @@ int
 X509v3_addr_add_prefix(IPAddrBlocks *addr, const unsigned afi,
     const unsigned *safi, unsigned char *a, const int prefixlen)
 {
-	IPAddressOrRanges *aors = make_prefix_or_range(addr, afi, safi);
+	IPAddressOrRanges *aors;
 	IPAddressOrRange *aor;
-	if (aors == NULL || !make_addressPrefix(&aor, a, prefixlen))
+
+	/* XXX - check prefixlen */
+
+	if ((aors = make_prefix_or_range(addr, afi, safi)) == NULL)
 		return 0;
-	if (sk_IPAddressOrRange_push(aors, aor))
-		return 1;
-	IPAddressOrRange_free(aor);
-	return 0;
+
+	if (!make_addressPrefix(&aor, a, prefixlen))
+		return 0;
+
+	if (sk_IPAddressOrRange_push(aors, aor) <= 0) {
+		IPAddressOrRange_free(aor);
+		return 0;
+	}
+
+	return 1;
 }
 
 /*
