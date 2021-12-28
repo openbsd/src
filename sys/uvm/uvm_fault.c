@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.123 2021/12/17 14:18:15 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.124 2021/12/28 13:16:28 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -636,10 +636,8 @@ uvm_fault(vm_map_t orig_map, vaddr_t vaddr, vm_fault_t fault_type,
 					error = EACCES;
 			} else {
 				/* case 2: fault on backing obj or zero fill */
-				KERNEL_LOCK();
 				error = uvm_fault_lower(&ufi, &flt, pages,
 				    fault_type);
-				KERNEL_UNLOCK();
 			}
 		}
 	}
