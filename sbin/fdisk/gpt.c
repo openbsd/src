@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.53 2021/09/13 15:07:51 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.54 2021/12/28 23:44:02 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -305,24 +305,22 @@ GPT_print(const char *units, const int verbosity)
 
 #ifdef	DEBUG
 	char			*p;
-	uint64_t		 gh_sig;
 
-	gh_sig = letoh64(gh.gh_sig);
-	p = (unsigned char *)&gh_sig;
+	p = (char *)&gh.gh_sig;
 
 	printf("gh_sig         : ");
-	for (i = 0; i < sizeof(gh_sig); i++)
+	for (i = 0; i < sizeof(gh.gh_sig); i++)
 		printf("%c", isprint((unsigned char)p[i]) ? p[i] : '?');
 	printf(" (");
-	for (i = 0; i < sizeof(gh_sig); i++) {
+	for (i = 0; i < sizeof(gh.gh_sig); i++) {
 		printf("%02x", p[i]);
-		if ((i + 1) < sizeof(uint64_t))
+		if ((i + 1) < sizeof(gh.gh_sig))
 			printf(":");
 	}
 	printf(")\n");
 	printf("gh_rev         : %u\n", letoh32(gh.gh_rev));
 	printf("gh_size        : %u (%zd)\n", letoh32(gh.gh_size), sizeof(gh));
-	printf("gh_csum        : %u\n", letoh32(gh.gh_csum));
+	printf("gh_csum        : 0x%x\n", letoh32(gh.gh_csum));
 	printf("gh_rsvd        : %u\n", letoh32(gh.gh_rsvd));
 	printf("gh_lba_self    : %llu\n", letoh64(gh.gh_lba_self));
 	printf("gh_lba_alt     : %llu\n", letoh64(gh.gh_lba_alt));
@@ -335,7 +333,7 @@ GPT_print(const char *units, const int verbosity)
 	printf("gh_gh_part_lba : %llu\n", letoh64(gh.gh_part_lba));
 	printf("gh_gh_part_num : %u (%zu)\n", letoh32(gh.gh_part_num), nitems(gp));
 	printf("gh_gh_part_size: %u (%zu)\n", letoh32(gh.gh_part_size), sizeof(gp[0]));
-	printf("gh_gh_part_csum: %u\n", letoh32(gh.gh_part_csum));
+	printf("gh_gh_part_csum: 0x%x\n", letoh32(gh.gh_part_csum));
 	printf("\n");
 #endif	/* DEBUG */
 
