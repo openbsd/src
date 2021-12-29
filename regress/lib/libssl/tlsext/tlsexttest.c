@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.53 2021/11/02 14:39:09 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.54 2021/12/29 22:49:23 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2069,7 +2069,7 @@ test_tlsext_sessionticket_client(void)
 	/* Test disabling tickets. */
 	if ((SSL_set_options(ssl, SSL_OP_NO_TICKET) & SSL_OP_NO_TICKET) == 0) {
 		FAIL("Cannot disable tickets in the TLS connection\n");
-		return 0;
+		goto err;
 	}
 	if (tlsext_sessionticket_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should not need SessionTicket if it was disabled\n");
@@ -3670,7 +3670,7 @@ test_tlsext_is_valid_hostname(const struct tls_sni_test *tst)
 	int failure = 0;
 	int is_ip;
 	CBS cbs;
-	
+
 	CBS_init(&cbs, tst->hostname, strlen(tst->hostname));
 	if (tlsext_sni_is_valid_hostname(&cbs, &is_ip) != tst->valid) {
 		if (tst->valid) {
