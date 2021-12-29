@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.15 2020/10/03 07:35:07 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.16 2021/12/29 07:16:30 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -21,6 +21,8 @@
 #include <sys/ioctl.h>
 #include <sys/kcov.h>
 #include <sys/mman.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/wait.h>
 
 #include <err.h>
@@ -42,6 +44,7 @@ static int test_close(struct context *);
 static int test_coverage(struct context *);
 static int test_dying(struct context *);
 static int test_exec(struct context *);
+static int test_fdsend(struct context *);
 static int test_fork(struct context *);
 static int test_open(struct context *);
 static int test_remote(struct context *);
@@ -71,6 +74,7 @@ main(int argc, char *argv[])
 		{ "coverage",		test_coverage,		1 },
 		{ "dying",		test_dying,		1 },
 		{ "exec",		test_exec,		1 },
+		{ "fdsend",		test_fdsend,		-1 },
 		{ "fork",		test_fork,		1 },
 		{ "open",		test_open,		0 },
 		{ "remote",		test_remote,		1 },
@@ -364,6 +368,40 @@ test_exec(struct context *ctx)
 	kcov_enable(ctx->c_fd, ctx->c_mode);
 	kcov_disable(ctx->c_fd);
 
+	return 0;
+}
+
+/*
+ * File descriptor send/receive is not allowed since remote coverage is tied to
+ * the current process.
+ */
+static int
+test_fdsend(struct context *ctx)
+{
+	struct msghdr msg;
+	union {
+		struct cmsghdr hdr;
+		unsigned char buf[CMSG_SPACE(sizeof(int))];
+	} cmsgbuf;
+	struct cmsghdr *cmsg;
+	int pair[2];
+
+	if (socketpair(AF_UNIX, SOCK_DGRAM, 0, pair) == -1)
+		err(1, "socketpair");
+
+	memset(&msg, 0, sizeof(msg));
+	msg.msg_control = &cmsgbuf.buf;
+	msg.msg_controllen = sizeof(cmsgbuf.buf);
+	cmsg = CMSG_FIRSTHDR(&msg);
+	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+	cmsg->cmsg_level = SOL_SOCKET;
+	cmsg->cmsg_type = SCM_RIGHTS;
+	*(int *)CMSG_DATA(cmsg) = ctx->c_fd;
+	if (sendmsg(pair[1], &msg, 0) != -1)
+		errx(1, "sendmsg: expected error");
+
+	close(pair[0]);
+	close(pair[1]);
 	return 0;
 }
 
