@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdhtest.c,v 1.11 2021/04/20 17:21:27 tb Exp $	*/
+/*	$OpenBSD: ecdhtest.c,v 1.12 2021/12/29 22:58:40 tb Exp $	*/
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -130,34 +130,17 @@ test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
 	if (!EC_KEY_generate_key(a))
 		goto err;
 
-	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) ==
-	    NID_X9_62_prime_field) {
-		if (!EC_POINT_get_affine_coordinates(group,
-		    EC_KEY_get0_public_key(a), x_a, y_a, ctx)) goto err;
-	}
-#ifndef OPENSSL_NO_EC2M
-	else {
-		if (!EC_POINT_get_affine_coordinates(group,
-		    EC_KEY_get0_public_key(a), x_a, y_a, ctx)) goto err;
-	}
-#endif
+	if (!EC_POINT_get_affine_coordinates(group,
+	    EC_KEY_get0_public_key(a), x_a, y_a, ctx)) goto err;
+
 	BIO_printf(out, " .");
 	(void)BIO_flush(out);
 
 	if (!EC_KEY_generate_key(b))
 		goto err;
 
-	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) ==
-	    NID_X9_62_prime_field) {
-		if (!EC_POINT_get_affine_coordinates(group,
-		    EC_KEY_get0_public_key(b), x_b, y_b, ctx)) goto err;
-	}
-#ifndef OPENSSL_NO_EC2M
-	else {
-		if (!EC_POINT_get_affine_coordinates(group,
-		    EC_KEY_get0_public_key(b), x_b, y_b, ctx)) goto err;
-	}
-#endif
+	if (!EC_POINT_get_affine_coordinates(group,
+	    EC_KEY_get0_public_key(b), x_b, y_b, ctx)) goto err;
 
 	BIO_printf(out, ".");
 	(void)BIO_flush(out);
