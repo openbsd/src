@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.160 2021/12/26 23:41:41 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.161 2021/12/29 07:15:13 anton Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -55,6 +55,11 @@
 #include <sys/mutex.h>
 #include <sys/sysctl.h>
 #include <sys/lock.h>
+
+#include "kcov.h"
+#if NKCOV > 0
+#include <sys/kcov.h>
+#endif
 
 /*
  * Locks used to protect global data and struct members:
@@ -1085,6 +1090,13 @@ morespace:
 			error = EINVAL;
 			goto fail;
 		}
+#if NKCOV > 0
+		/* kcov descriptors cannot be copied */
+		if (fp->f_type == DTYPE_VNODE && kcov_vnode(fp->f_data)) {
+			error = EINVAL;
+			goto fail;
+		}
+#endif
 		rp->fp = fp;
 		rp->flags = fdp->fd_ofileflags[fd] & UF_PLEDGED;
 		rp--;

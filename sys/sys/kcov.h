@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.h,v 1.7 2020/09/26 11:59:59 anton Exp $	*/
+/*	$OpenBSD: kcov.h,v 1.8 2021/12/29 07:15:13 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -42,6 +42,7 @@ struct kio_remote_attach {
 struct proc;
 
 void kcov_exit(struct proc *);
+int kcov_vnode(struct vnode *);
 void kcov_remote_register(int, void *);
 void kcov_remote_unregister(int, void *);
 void kcov_remote_enter(int, void *);

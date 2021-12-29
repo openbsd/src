@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.43 2021/12/28 17:50:10 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.44 2021/12/29 07:15:13 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -25,6 +25,11 @@
 #include <sys/pool.h>
 #include <sys/stdint.h>
 #include <sys/queue.h>
+
+/* kcov_vnode() */
+#include <sys/conf.h>
+#include <sys/vnode.h>
+#include <sys/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -447,6 +452,16 @@ kcov_exit(struct proc *p)
 	}
 
 	mtx_leave(&kcov_mtx);
+}
+
+/*
+ * Returns non-zero if the given vnode refers to a kcov device.
+ */
+int
+kcov_vnode(struct vnode *vp)
+{
+	return (vp->v_type == VCHR &&
+	    cdevsw[major(vp->v_rdev)].d_open == kcovopen);
 }
 
 struct kcov_dev *
