@@ -1,4 +1,4 @@
-/*	$OpenBSD: bntest.c,v 1.23 2021/11/25 11:07:17 tb Exp $	*/
+/*	$OpenBSD: bntest.c,v 1.24 2021/12/29 23:00:32 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2281,8 +2281,6 @@ test_sqrt(BIO *bp, BN_CTX *ctx)
 	if ((p = BN_new()) == NULL)
 		goto err;
 	if ((r = BN_new()) == NULL)
-		goto err;
-	if (a == NULL || p == NULL || r == NULL)
 		goto err;
 
 	if ((cb = BN_GENCB_new()) == NULL)
