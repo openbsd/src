@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.54 2021/12/28 23:44:02 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.55 2021/12/29 00:04:45 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -165,9 +165,9 @@ get_header(const uint64_t sector)
 	gh.gh_csum = 0;
 	new_gh_csum = crc32((unsigned char *)&gh, letoh32(gh.gh_size));
 	gh.gh_csum = orig_gh_csum;
-	if (letoh32(orig_gh_csum) != new_gh_csum) {
+	if (new_gh_csum != letoh32(gh.gh_csum)) {
 		DPRINTF("gpt header checksum: expected 0x%x, got 0x%x\n",
-		    orig_gh_csum, new_gh_csum);
+		    new_gh_csum, letoh32(gh.gh_csum));
 		return -1;
 	}
 
@@ -244,8 +244,8 @@ get_partition_table(void)
 
 	checksum = crc32((unsigned char *)&gp, gpbytes);
 	if (checksum != letoh32(gh.gh_part_csum)) {
-		DPRINTF("gpt partition table checksum: expected %x, got %x\n",
-		    checksum, letoh32(gh.gh_part_csum));
+		DPRINTF("gpt partition table checksum: expected 0x%x, "
+		    "got 0x%x\n", checksum, letoh32(gh.gh_part_csum));
 		return -1;
 	}
 
