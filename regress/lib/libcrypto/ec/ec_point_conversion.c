@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_point_conversion.c,v 1.5 2021/05/03 14:51:47 tb Exp $ */
+/*	$OpenBSD: ec_point_conversion.c,v 1.6 2021/12/29 22:48:09 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -227,7 +227,7 @@ test_random_points(void)
 	EC_get_builtin_curves(all_curves, ncurves);
 
 	for (curve_id = 0; curve_id < ncurves; curve_id++)
-		test_random_points_on_curve(&all_curves[curve_id]);
+		failed |= test_random_points_on_curve(&all_curves[curve_id]);
 
 	fprintf(stderr, "%s: %s\n", __func__, failed ? "FAILED" : "SUCCESS");
 
