@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.380 2021/11/14 03:02:06 kn Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.381 2021/12/29 21:41:28 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: November 14 2021 $
+.Dd $Mdocdate: December 29 2021 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -2070,7 +2070,7 @@ Disable the filtering of IPv4 and IPv6 packets with
 This is the default.
 .It Cm protected Ar child-iface ids
 Put
-.Ar interface
+.Ar child-iface
 in protected domains.
 .Ar ids
 is a comma delimited list of domain IDs, between 1 and 31, to put the
