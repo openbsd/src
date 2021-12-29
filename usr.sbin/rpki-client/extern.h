@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.99 2021/12/22 09:35:14 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.100 2021/12/29 11:37:57 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -336,13 +336,12 @@ enum publish_type {
  * and parsed.
  */
 struct entity {
-	enum rtype	 type;		/* type of entity (not RTYPE_EOF) */
+	TAILQ_ENTRY(entity) entries;
 	char		*file;		/* local path to file */
-	int		 has_data;	/* whether data blob is specified */
 	unsigned char	*data;		/* optional data blob */
 	size_t		 datasz; 	/* length of optional data blob */
 	int		 talid;		/* tal identifier */
-	TAILQ_ENTRY(entity) entries;
+	enum rtype	 type;		/* type of entity (not RTYPE_EOF) */
 };
 TAILQ_HEAD(entityq, entity);
 

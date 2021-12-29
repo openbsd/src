@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.28 2021/11/04 18:26:48 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.29 2021/12/29 11:37:57 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -195,7 +195,7 @@ proc_parser_cert(const struct entity *entp, const unsigned char *der,
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls;
 
-	assert(!entp->has_data);
+	assert(entp->data == NULL);
 
 	/* Extract certificate data and X509. */
 
@@ -274,7 +274,7 @@ proc_parser_root_cert(const struct entity *entp, const unsigned char *der,
 	struct cert		*cert;
 	X509			*x509;
 
-	assert(entp->has_data);
+	assert(entp->data != NULL);
 
 	/* Extract certificate data and X509. */
 
@@ -525,7 +525,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			tal_free(tal);
 			break;
 		case RTYPE_CER:
-			if (entp->has_data)
+			if (entp->data != NULL)
 				cert = proc_parser_root_cert(entp, f, flen);
 			else
 				cert = proc_parser_cert(entp, f, flen);

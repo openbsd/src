@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.169 2021/12/22 09:35:14 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.170 2021/12/29 11:37:57 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -120,9 +120,7 @@ entity_read_req(struct ibuf *b, struct entity *ent)
 	io_read_buf(b, &ent->type, sizeof(ent->type));
 	io_read_buf(b, &ent->talid, sizeof(ent->talid));
 	io_read_str(b, &ent->file);
-	io_read_buf(b, &ent->has_data, sizeof(ent->has_data));
-	if (ent->has_data)
-		io_read_buf_alloc(b, (void **)&ent->data, &ent->datasz);
+	io_read_buf_alloc(b, (void **)&ent->data, &ent->datasz);
 }
 
 /*
@@ -144,9 +142,7 @@ entity_write_req(const struct entity *ent)
 	io_simple_buffer(b, &ent->type, sizeof(ent->type));
 	io_simple_buffer(b, &ent->talid, sizeof(ent->talid));
 	io_str_buffer(b, ent->file);
-	io_simple_buffer(b, &ent->has_data, sizeof(int));
-	if (ent->has_data)
-		io_buf_buffer(b, ent->data, ent->datasz);
+	io_buf_buffer(b, ent->data, ent->datasz);
 	io_close_buffer(&procq, b);
 }
 
@@ -194,11 +190,8 @@ entityq_add(char *file, enum rtype type, struct repo *rp,
 	p->type = type;
 	p->talid = talid;
 	p->file = file;
-	p->has_data = data != NULL;
-	if (p->has_data) {
-		p->data = data;
-		p->datasz = datasz;
-	}
+	p->data = data;
+	p->datasz = (data != NULL) ? datasz : 0;
 
 	entity_queue++;
 
