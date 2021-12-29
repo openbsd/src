@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.c,v 1.102 2021/12/15 12:53:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.c,v 1.103 2021/12/29 20:22:06 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.c,v 1.39 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -869,7 +869,7 @@ boolean_t
 uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 {
 	struct uvm_aobj *aobj = (struct uvm_aobj *) uobj;
-	struct vm_page *pp;
+	struct vm_page *pg;
 	voff_t curoff;
 
 	KASSERT(UVM_OBJ_IS_AOBJ(uobj));
@@ -899,18 +899,18 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	curoff = start;
 	for (;;) {
 		if (curoff < stop) {
-			pp = uvm_pagelookup(uobj, curoff);
+			pg = uvm_pagelookup(uobj, curoff);
 			curoff += PAGE_SIZE;
-			if (pp == NULL)
+			if (pg == NULL)
 				continue;
 		} else {
 			break;
 		}
 
 		/* Make sure page is unbusy, else wait for it. */
-		if (pp->pg_flags & PG_BUSY) {
-			atomic_setbits_int(&pp->pg_flags, PG_WANTED);
-			rwsleep_nsec(pp, uobj->vmobjlock, PVM, "uaoflsh",
+		if (pg->pg_flags & PG_BUSY) {
+			atomic_setbits_int(&pg->pg_flags, PG_WANTED);
+			rwsleep_nsec(pg, uobj->vmobjlock, PVM, "uaoflsh",
 			    INFSLP);
 			curoff -= PAGE_SIZE;
 			continue;
@@ -929,12 +929,12 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			/* FALLTHROUGH */
 		case PGO_DEACTIVATE:
  deactivate_it:
-			if (pp->wire_count != 0)
+			if (pg->wire_count != 0)
 				continue;
 
 			uvm_lock_pageq();
-			pmap_page_protect(pp, PROT_NONE);
-			uvm_pagedeactivate(pp);
+			pmap_page_protect(pg, PROT_NONE);
+			uvm_pagedeactivate(pg);
 			uvm_unlock_pageq();
 
 			continue;
@@ -947,22 +947,22 @@ uao_flush(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 				goto deactivate_it;
 
 			/* XXX skip the page if it's wired */
-			if (pp->wire_count != 0)
+			if (pg->wire_count != 0)
 				continue;
 
 			/*
 			 * free the swap slot and the page.
 			 */
-			pmap_page_protect(pp, PROT_NONE);
+			pmap_page_protect(pg, PROT_NONE);
 
 			/*
 			 * freeing swapslot here is not strictly necessary.
 			 * however, leaving it here doesn't save much
 			 * because we need to update swap accounting anyway.
 			 */
-			uao_dropswap(uobj, pp->offset >> PAGE_SHIFT);
+			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
 			uvm_lock_pageq();
-			uvm_pagefree(pp);
+			uvm_pagefree(pg);
 			uvm_unlock_pageq();
 
 			continue;
