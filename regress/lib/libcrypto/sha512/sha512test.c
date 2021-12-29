@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha512test.c,v 1.6 2021/11/18 21:37:57 tb Exp $	*/
+/*	$OpenBSD: sha512test.c,v 1.7 2021/12/29 23:02:00 tb Exp $	*/
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  * ====================================================================
@@ -81,10 +81,11 @@ unsigned char app_d3[SHA384_DIGEST_LENGTH] = {
 };
 
 int
-main(int argc, char **argv) {
+main(int argc, char **argv)
+{
 	unsigned char md[SHA512_DIGEST_LENGTH];
 	int		i;
-	EVP_MD_CTX	*evp;
+	EVP_MD_CTX	*evp = NULL;
 
 #ifdef OPENSSL_IA32_SSE2
 	/* Alternative to this is to call OpenSSL_add_all_algorithms...
@@ -99,11 +100,12 @@ main(int argc, char **argv) {
 
 	fprintf(stdout, "Testing SHA-512 ");
 
-	EVP_Digest("abc", 3, md, NULL, EVP_sha512(), NULL);
+	if (!EVP_Digest("abc", 3, md, NULL, EVP_sha512(), NULL))
+		goto err;
 	if (memcmp(md, app_c1, sizeof(app_c1))) {
 		fflush(stdout);
 		fprintf(stderr, "\nTEST 1 of 3 failed.\n");
-		return 1;
+		goto err;
 	}
 	fprintf(stdout, ".");
 	fflush(stdout);
@@ -117,7 +119,7 @@ main(int argc, char **argv) {
 	if (memcmp(md, app_c2, sizeof(app_c2))) {
 		fflush(stdout);
 		fprintf(stderr, "\nTEST 2 of 3 failed.\n");
-		return 1;
+		goto err;
 	}
 	fprintf(stdout, ".");
 	fflush(stdout);
@@ -125,11 +127,16 @@ main(int argc, char **argv) {
 	if ((evp = EVP_MD_CTX_new()) == NULL) {
 		fflush(stdout);
 		fprintf(stderr, "\nEVP_MD_CTX_new() failed.\n");
-		return 1;
+		goto err;
 	}
-	EVP_DigestInit_ex(evp, EVP_sha512(), NULL);
-	for (i = 0; i < 1000000; i += 288)
-		EVP_DigestUpdate(evp,
+	if (!EVP_DigestInit_ex(evp, EVP_sha512(), NULL)) {
+		fflush(stdout);
+		fprintf(stderr, "\nEVP_DigestInit_ex failed.\n");
+		goto err;
+	}
+
+	for (i = 0; i < 1000000; i += 288) {
+		if (!EVP_DigestUpdate(evp,
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
@@ -139,14 +146,27 @@ main(int argc, char **argv) {
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
-		    (1000000 - i) < 288 ? 1000000 - i : 288);
-	EVP_DigestFinal_ex(evp, md, NULL);
-	EVP_MD_CTX_reset(evp);
+		    (1000000 - i) < 288 ? 1000000 - i : 288)) {
+			fflush(stdout);
+			fprintf(stderr, "\nEVP_DigestUpdate failed.\n");
+			goto err;
+		}
+	}
+	if (!EVP_DigestFinal_ex(evp, md, NULL)) {
+		fflush(stdout);
+		fprintf(stderr, "\nEVP_DigestFinal failed.\n");
+		goto err;
+	}
+	if (!EVP_MD_CTX_reset(evp)) {
+		fflush(stdout);
+		fprintf(stderr, "\nEVP_MD_CTX_reset failed.\n");
+		goto err;
+	}
 
 	if (memcmp(md, app_c3, sizeof(app_c3))) {
 		fflush(stdout);
 		fprintf(stderr, "\nTEST 3 of 3 failed.\n");
-		return 1;
+		goto err;
 	}
 	fprintf(stdout, ".");
 	fflush(stdout);
@@ -160,7 +180,7 @@ main(int argc, char **argv) {
 	if (memcmp(md, app_d1, sizeof(app_d1))) {
 		fflush(stdout);
 		fprintf(stderr, "\nTEST 1 of 3 failed.\n");
-		return 1;
+		goto err;
 	}
 	fprintf(stdout, ".");
 	fflush(stdout);
@@ -174,24 +194,38 @@ main(int argc, char **argv) {
 	if (memcmp(md, app_d2, sizeof(app_d2))) {
 		fflush(stdout);
 		fprintf(stderr, "\nTEST 2 of 3 failed.\n");
-		return 1;
+		goto err;
 	}
 	fprintf(stdout, ".");
 	fflush(stdout);
 
-	EVP_DigestInit_ex(evp, EVP_sha384(), NULL);
-	for (i = 0; i < 1000000; i += 64)
-		EVP_DigestUpdate(evp,
+	if (!EVP_DigestInit_ex(evp, EVP_sha384(), NULL)) {
+		fflush(stdout);
+		fprintf(stderr, "\nEVP_DigestInit_ex failed.\n");
+		goto err;
+	}
+	for (i = 0; i < 1000000; i += 64) {
+		if (!EVP_DigestUpdate(evp,
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa"
 		    "aaaaaaaa""aaaaaaaa""aaaaaaaa""aaaaaaaa",
-		    (1000000 - i) < 64 ? 1000000 - i : 64);
-	EVP_DigestFinal_ex(evp, md, NULL);
+		    (1000000 - i) < 64 ? 1000000 - i : 64)) {
+			fflush(stdout);
+			fprintf(stderr, "\nEVP_DigestUpdate failed.\n");
+			goto err;
+		}
+	}
+	if (!EVP_DigestFinal_ex(evp, md, NULL)) {
+		fflush(stdout);
+		fprintf(stderr, "\nEVP_DigestFinal_ex failed.\n");
+		goto err;
+	}
 	EVP_MD_CTX_free(evp);
+	evp = NULL;
 
 	if (memcmp(md, app_d3, sizeof(app_d3))) {
 		fflush(stdout);
 		fprintf(stderr, "\nTEST 3 of 3 failed.\n");
-		return 1;
+		goto err;
 	}
 	fprintf(stdout, ".");
 	fflush(stdout);
@@ -200,5 +234,9 @@ main(int argc, char **argv) {
 	fflush(stdout);
 
 	return 0;
+
+ err:
+	EVP_MD_CTX_free(evp);
+	return 1;
 }
 #endif
