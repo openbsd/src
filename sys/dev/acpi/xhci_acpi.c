@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_acpi.c,v 1.4 2021/12/21 20:53:46 kettenis Exp $	*/
+/*	$OpenBSD: xhci_acpi.c,v 1.5 2021/12/29 17:52:22 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -113,9 +113,7 @@ xhci_acpi_attach(struct device *parent, struct device *self, void *aux)
 	return;
 
 disestablish_ret:
-#ifdef notyet
 	acpi_intr_disestablish(sc->sc_ih);
-#endif
 unmap:
 	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 	return;
