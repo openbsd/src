@@ -1,4 +1,4 @@
-/* $OpenBSD: unsopassgc.c,v 1.3 2021/12/15 22:29:55 mvs Exp $ */
+/* $OpenBSD: unsopassgc.c,v 1.4 2021/12/29 00:04:35 mvs Exp $ */
 
 /*
  * Copyright (c) 2021 Vitaliy Makkoveev <mvs@openbsd.org>
@@ -184,6 +184,20 @@ thr_recv(void *arg)
 }
 
 static void *
+thr_dispose(void *arg)
+{
+	uint8_t buf[sizeof(union msg_control)];
+	int *s = ((struct thr_pass_arg *)arg)->s;
+
+	while (1) {
+		if (read(s[1], buf, sizeof(buf)) < 0)
+			therr(1, "read");
+	}
+
+	return NULL;
+}
+
+static void *
 thr_gc(void *arg)
 {
 	union msg_control msg_control;
@@ -278,6 +292,10 @@ main(int argc, char *argv[])
 			therrc(1, error, "pthread_create");
 		error = pthread_create(&thr, NULL,
 		    thr_recv, &thr_pass_args[i]);
+		if (error)
+			therrc(1, error, "pthread_create");
+		error = pthread_create(&thr, NULL,
+		    thr_dispose, &thr_pass_args[i]);
 		if (error)
 			therrc(1, error, "pthread_create");
 	}
