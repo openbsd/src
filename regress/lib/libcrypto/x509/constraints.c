@@ -331,9 +331,11 @@ test_invalid_domain_constraints(void)
 }
 
 static int
-test_invalid_uri(void) {
+test_invalid_uri(void)
+{
 	int j, failure=0;
-	char *hostpart;
+	char *hostpart = NULL;
+
 	for (j = 0; invaliduri[j] != NULL; j++) {
 		if (x509_constraints_uri_host(invaliduri[j],
 			strlen(invaliduri[j]), &hostpart) != 0) {
@@ -342,7 +344,10 @@ test_invalid_uri(void) {
 			failure = 1;
 			goto done;
 		}
+		free(hostpart);
+		hostpart = NULL;
 	}
+
  done:
 	return failure;
 }
