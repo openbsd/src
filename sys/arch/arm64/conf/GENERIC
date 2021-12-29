@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.219 2021/12/24 00:01:39 patrick Exp $
+# $OpenBSD: GENERIC,v 1.220 2021/12/29 18:40:48 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -54,7 +54,9 @@ com*		at acpi?
 dwgpio*		at acpi?
 dwiic*		at acpi?
 iic*		at dwiic?
+ehci*		at acpi?
 ipmi*		at acpi?
+ohci*		at acpi?
 pluart*		at acpi?
 sdhc*		at acpi?
 xhci*		at acpi?
