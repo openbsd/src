@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1test.c,v 1.5 2021/12/29 22:53:04 tb Exp $	*/
+/*	$OpenBSD: sha1test.c,v 1.6 2021/12/29 22:54:41 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -95,7 +95,11 @@ main(int argc, char *argv[])
 	R = ret;
 	i = 1;
 	while (*P != NULL) {
-		EVP_Digest(*P, strlen((char *)*P), md, NULL, EVP_sha1(), NULL);
+		if (!EVP_Digest(*P, strlen((char *)*P), md, NULL, EVP_sha1(),
+		    NULL)) {
+			printf("EVP_Digest failed\n");
+			goto err;
+		}
 		p = pt(md);
 		if (strcmp(p, (char *)*R) != 0) {
 			printf("error calculating SHA1 on '%s'\n", *P);
@@ -109,10 +113,20 @@ main(int argc, char *argv[])
 	}
 
 	memset(buf, 'a', 1000);
-	EVP_DigestInit_ex(c, EVP_sha1(), NULL);
-	for (i = 0; i < 1000; i++)
-		EVP_DigestUpdate(c, buf, 1000);
-	EVP_DigestFinal_ex(c, md, NULL);
+	if (!EVP_DigestInit_ex(c, EVP_sha1(), NULL)) {
+		printf("EVP_DigestInit_ex failed\n");
+		goto err;
+	}
+	for (i = 0; i < 1000; i++) {
+		if (!EVP_DigestUpdate(c, buf, 1000)) {
+			printf("EVP_DigestUpdate failed\n");
+			goto err;
+		}
+	}
+	if (!EVP_DigestFinal_ex(c, md, NULL)) {
+		printf("EVP_DigestFinal_ex failed\n");
+		goto err;
+	}
 	p = pt(md);
 
 	r = bigret;
@@ -125,6 +139,10 @@ main(int argc, char *argv[])
 
 	EVP_MD_CTX_free(c);
 	exit(err);
+
+ err:
+	EVP_MD_CTX_free(c);
+	exit(1);
 }
 
 static char *
