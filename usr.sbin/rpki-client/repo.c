@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.17 2021/12/22 09:35:14 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.18 2021/12/29 11:35:23 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -88,7 +88,7 @@ struct tarepo {
 };
 SLIST_HEAD(, tarepo)	tarepos = SLIST_HEAD_INITIALIZER(tarepos);
 
-struct	repo {
+struct repo {
 	SLIST_ENTRY(repo)	 entry;
 	char			*repouri;
 	char			*notifyuri;
@@ -104,6 +104,8 @@ SLIST_HEAD(, repo)	repos = SLIST_HEAD_INITIALIZER(repos);
 
 /* counter for unique repo id */
 unsigned int		repoid;
+
+static struct rsyncrepo	*rsync_get(const char *, int);
 
 /*
  * Database of all file path accessed during a run.
@@ -271,6 +273,49 @@ repo_mkpath(char *file)
 }
 
 /*
+ * Return the state of a repository.
+ */
+static enum repo_state
+repo_state(struct repo *rp)
+{
+	if (rp->ta)
+		return rp->ta->state;
+	if (rp->rsync)
+		return rp->rsync->state;
+	if (rp->rrdp)
+		return rp->rrdp->state;
+	errx(1, "%s: bad repo", rp->repouri);
+}
+
+/*
+ * Function called once a repository is done with the sync. Either
+ * successfully or after failure.
+ */
+static void
+repo_done(const void *vp, int ok)
+{
+	struct repo *rp;
+
+	SLIST_FOREACH(rp, &repos, entry) {
+		if (vp == rp->ta)
+			entityq_flush(&rp->queue, rp);
+		if (vp == rp->rsync)
+			entityq_flush(&rp->queue, rp);
+		if (vp == rp->rrdp) {
+			if (!ok) {
+				/* try to fall back to rsync */
+				rp->rrdp = NULL;
+				rp->rsync = rsync_get(rp->repouri, 0);
+				/* need to check if it was already loaded */
+				if (repo_state(rp) != REPO_LOADING)
+					entityq_flush(&rp->queue, rp);
+			} else
+				entityq_flush(&rp->queue, rp);
+		}
+	}
+}
+
+/*
  * Build TA file name based on the repo info.
  * If temp is set add Xs for mkostemp.
  */
@@ -344,14 +389,10 @@ ta_fetch(struct tarepo *tr)
 	}
 
 	if (tr->uriidx >= tr->urisz) {
-		struct repo *rp;
-
 		tr->state = REPO_FAILED;
 		logx("ta/%s: fallback to cache", tr->descr);
 
-		SLIST_FOREACH(rp, &repos, entry)
-			if (rp->ta == tr)
-				entityq_flush(&rp->queue, rp);
+		repo_done(tr, 0);
 		return;
 	}
 
@@ -406,9 +447,9 @@ ta_get(struct tal *tal)
 	tal->uri = NULL;
 
 	if (noop) {
-		tr->state = REPO_DONE;
+		tr->state = REPO_FAILED;
 		logx("ta/%s: using cache", tr->descr);
-		/* there is nothing in the queue so no need to flush */
+		repo_done(tr, 0);
 	} else {
 		/* try to create base directory */
 		if (mkpath(tr->basedir) == -1)
@@ -471,9 +512,9 @@ rsync_get(const char *uri, int nofetch)
 	rr->basedir = repo_dir(repo, "rsync", 0);
 
 	if (noop || nofetch) {
-		rr->state = REPO_DONE;
+		rr->state = REPO_FAILED;
 		logx("%s: using cache", rr->basedir);
-		/* there is nothing in the queue so no need to flush */
+		repo_done(rr, 0);
 	} else {
 		/* create base directory */
 		if (mkpath(rr->basedir) == -1) {
@@ -541,9 +582,9 @@ rrdp_get(const char *uri, int nofetch)
 	RB_INIT(&rr->deleted);
 
 	if (noop || nofetch) {
-		rr->state = REPO_DONE;
+		rr->state = REPO_FAILED;
 		logx("%s: using cache", rr->notifyuri);
-		/* there is nothing in the queue so no need to flush */
+		repo_done(rr, 0);
 	} else {
 		/* create base directory */
 		if (mkpath(rr->basedir) == -1) {
@@ -626,21 +667,6 @@ repo_alloc(int talid)
 
 	stats.repos++;
 	return rp;
-}
-
-/*
- * Return the state of a repository.
- */
-static enum repo_state
-repo_state(struct repo *rp)
-{
-	if (rp->ta)
-		return rp->ta->state;
-	if (rp->rrdp)
-		return rp->rrdp->state;
-	if (rp->rsync)
-		return rp->rsync->state;
-	errx(1, "%s: bad repo", rp->repouri);
 }
 
 /*
@@ -933,7 +959,6 @@ rsync_finish(unsigned int id, int ok)
 {
 	struct rsyncrepo *rr;
 	struct tarepo *tr;
-	struct repo *rp;
 
 	tr = ta_find(id);
 	if (tr != NULL) {
@@ -944,17 +969,13 @@ rsync_finish(unsigned int id, int ok)
 			logx("ta/%s: loaded from network", tr->descr);
 			stats.rsync_repos++;
 			tr->state = REPO_DONE;
+			repo_done(tr, 1);
 		} else {
 			logx("ta/%s: load from network failed", tr->descr);
 			stats.rsync_fails++;
 			tr->uriidx++;
 			ta_fetch(tr);
-			return;
 		}
-		SLIST_FOREACH(rp, &repos, entry)
-			if (rp->ta == tr)
-				entityq_flush(&rp->queue, rp);
-
 		return;
 	}
 
@@ -976,9 +997,7 @@ rsync_finish(unsigned int id, int ok)
 		rr->state = REPO_FAILED;
 	}
 
-	SLIST_FOREACH(rp, &repos, entry)
-		if (rp->rsync == rr)
-			entityq_flush(&rp->queue, rp);
+	repo_done(rr, ok);
 }
 
 /*
@@ -988,7 +1007,6 @@ void
 rrdp_finish(unsigned int id, int ok)
 {
 	struct rrdprepo *rr;
-	struct repo *rp;
 
 	rr = rrdp_find(id);
 	if (rr == NULL)
@@ -1001,31 +1019,14 @@ rrdp_finish(unsigned int id, int ok)
 		logx("%s: loaded from network", rr->notifyuri);
 		rr->state = REPO_DONE;
 		stats.rrdp_repos++;
-		SLIST_FOREACH(rp, &repos, entry)
-			if (rp->rrdp == rr)
-				entityq_flush(&rp->queue, rp);
-	} else if (!ok) {
+		repo_done(rr, ok);
+	} else {
 		rrdp_clean_temp(rr);
 		stats.rrdp_fails++;
 		rr->state = REPO_FAILED;
 		logx("%s: load from network failed, fallback to rsync",
 		    rr->notifyuri);
-		SLIST_FOREACH(rp, &repos, entry)
-			if (rp->rrdp == rr) {
-				rp->rrdp = NULL;
-				rp->rsync = rsync_get(rp->repouri, 0);
-				/* need to check if it was already loaded */
-				if (repo_state(rp) != REPO_LOADING)
-					entityq_flush(&rp->queue, rp);
-			}
-	} else {
-		rrdp_clean_temp(rr);
-		stats.rrdp_fails++;
-		rr->state = REPO_FAILED;
-		logx("%s: load from network failed", rr->notifyuri);
-		SLIST_FOREACH(rp, &repos, entry)
-			if (rp->rrdp == rr)
-				entityq_flush(&rp->queue, rp);
+		repo_done(rr, 0);
 	}
 }
 
@@ -1038,7 +1039,6 @@ void
 http_finish(unsigned int id, enum http_result res, const char *last_mod)
 {
 	struct tarepo *tr;
-	struct repo *rp;
 
 	tr = ta_find(id);
 	if (tr == NULL) {
@@ -1063,6 +1063,7 @@ http_finish(unsigned int id, enum http_result res, const char *last_mod)
 		logx("ta/%s: loaded from network", tr->descr);
 		tr->state = REPO_DONE;
 		stats.http_repos++;
+		repo_done(tr, 1);
 	} else {
 		if (unlink(tr->temp) == -1 && errno != ENOENT)
 			warn("unlink %s", tr->temp);
@@ -1070,12 +1071,7 @@ http_finish(unsigned int id, enum http_result res, const char *last_mod)
 		tr->uriidx++;
 		logx("ta/%s: load from network failed", tr->descr);
 		ta_fetch(tr);
-		return;
 	}
-
-	SLIST_FOREACH(rp, &repos, entry)
-		if (rp->ta == tr)
-			entityq_flush(&rp->queue, rp);
 }
 
 
@@ -1107,7 +1103,7 @@ ta_lookup(int id, struct tal *tal)
  * Look up a repository, queueing it for discovery if not found.
  */
 struct repo *
-repo_lookup(int id, const char *uri, const char *notify)
+repo_lookup(int talid, const char *uri, const char *notify)
 {
 	struct repo	*rp;
 	char		*repouri;
@@ -1132,15 +1128,15 @@ repo_lookup(int id, const char *uri, const char *notify)
 		return rp;
 	}
 
-	rp = repo_alloc(id);
+	rp = repo_alloc(talid);
 	rp->repouri = repouri;
 	if (notify != NULL)
 		if ((rp->notifyuri = strdup(notify)) == NULL)
 			err(1, NULL);
 
-	if (++talrepocnt[id] >= MAX_REPO_PER_TAL) {
-		if (talrepocnt[id] == MAX_REPO_PER_TAL)
-			warnx("too many repositories under %s", tals[id]);
+	if (++talrepocnt[talid] >= MAX_REPO_PER_TAL) {
+		if (talrepocnt[talid] == MAX_REPO_PER_TAL)
+			warnx("too many repositories under %s", tals[talid]);
 		nofetch = 1;
 	}
 
