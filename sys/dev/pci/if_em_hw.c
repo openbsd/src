@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.111 2021/12/14 10:48:10 patrick Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.112 2021/12/29 18:48:45 patrick Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -2342,6 +2342,20 @@ em_copper_link_preconfig(struct em_hw *hw)
 	    hw->mac_type == em_82541 || hw->mac_type == em_82547 ||
 	    hw->mac_type == em_82541_rev_2 || hw->mac_type == em_82547_rev_2)
 		hw->phy_reset_disable = FALSE;
+	if ((hw->mac_type == em_82575 || hw->mac_type == em_82580 ||
+	    hw->mac_type == em_82576 ||
+	    hw->mac_type == em_i210 || hw->mac_type == em_i350) &&
+	    hw->sgmii_active) {
+		/* allow time for SFP cage time to power up phy */
+		msec_delay(300);
+
+		/*
+		 * SFP documentation requires the following to configure the SFP module
+		 * to work on SGMII.  No further documentation is given.
+		 */
+		em_write_phy_reg(hw, 0x1B, 0x8084);
+		em_phy_hw_reset(hw);
+	}
 
 	return E1000_SUCCESS;
 }
