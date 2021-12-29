@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.54 2021/12/29 22:49:23 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.55 2021/12/29 22:50:30 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2079,7 +2079,7 @@ test_tlsext_sessionticket_client(void)
 	/* Test re-enabling tickets. */
 	if ((SSL_clear_options(ssl, SSL_OP_NO_TICKET) & SSL_OP_NO_TICKET) != 0) {
 		FAIL("Cannot re-enable tickets in the TLS connection\n");
-		return 0;
+		goto err;
 	}
 	if (!tlsext_sessionticket_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
 		FAIL("client should need SessionTicket if it was disabled\n");
