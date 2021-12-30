@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.112 2021/12/30 00:49:41 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.113 2021/12/30 14:25:39 anton Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1006,13 +1006,14 @@ pppacattach(int n)
 int
 pppacopen(dev_t dev, int flags, int mode, struct proc *p)
 {
-	struct pppac_softc *sc;
+	struct pppac_softc *sc, *tmp;
 	struct ifnet *ifp;
 	struct pipex_session *session;
 
 	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
-	LIST_FOREACH(sc, &pppac_devs, sc_entry) {
-		if (sc->sc_dev == dev) {
+	sc->sc_dev = dev;
+	LIST_FOREACH(tmp, &pppac_devs, sc_entry) {
+		if (tmp->sc_dev == dev) {
 			free(sc, M_DEVBUF, sizeof(*sc));
 			return (EBUSY);
 		}
@@ -1024,8 +1025,6 @@ pppacopen(dev_t dev, int flags, int mode, struct proc *p)
 	session->is_multicast = 1;
 	session->ownersc = sc;
 	sc->sc_multicast_session = session;
-
-	sc->sc_dev = dev;
 
 	mtx_init(&sc->sc_rsel_mtx, IPL_SOFTNET);
 	mtx_init(&sc->sc_wsel_mtx, IPL_SOFTNET);
