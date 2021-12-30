@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtw.c,v 1.2 2021/12/24 06:53:18 hastings Exp $	*/
+/*	$OpenBSD: if_mtw.c,v 1.3 2021/12/30 15:09:49 kevlo Exp $	*/
 /*
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2013-2014 Kevin Lo
@@ -82,6 +82,7 @@ static const struct usb_devno mtw_devs[] = {
 	USB_ID(RALINK,		MT7601_3),
 	USB_ID(RALINK,		MT7601_4),
 	USB_ID(RALINK,		MT7601_5),
+	USB_ID(XIAOMI,		MT7601U),
 };
 
 int		mtw_match(struct device *, void *, void *);
