@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.41 2021/04/20 21:11:56 dv Exp $	*/
+/*	$OpenBSD: proc.c,v 1.42 2021/12/30 20:38:43 dv Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -417,6 +417,11 @@ proc_open(struct privsep *ps, int src, int dst)
 		for (j = 0; j < ps->ps_instances[dst]; j++) {
 			/* Don't create sockets for ourself. */
 			if (src == dst && i == j)
+				continue;
+
+			/* No need for CA to CA or RELAY to RELAY sockets. */
+			if ((src == PROC_CA && dst == PROC_CA) ||
+			    (src == PROC_RELAY && dst == PROC_RELAY))
 				continue;
 
 			pa = &ps->ps_pipes[src][i];
