@@ -810,17 +810,13 @@ radeondrm_attachhook(struct device *self)
 
 #ifdef __sparc64__
 	fbwscons_setcolormap(&rdev->sf, radeondrm_setcolor);
+	ri = &rdev->sf.sf_ro;
 #else
 	radeondrm_setpal(rdev, ri);
-#endif
-
-#ifndef __sparc64__
 	ri->ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY;
 	rasops_init(ri, 160, 160);
 
 	ri->ri_hw = rdev;
-#else
-	ri = &rdev->sf.sf_ro;
 #endif
 
 	radeondrm_stdscreen.capabilities = ri->ri_caps;
