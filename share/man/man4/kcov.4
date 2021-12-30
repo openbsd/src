@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kcov.4,v 1.9 2020/12/08 20:17:10 anton Exp $
+.\"	$OpenBSD: kcov.4,v 1.10 2021/12/30 06:55:37 anton Exp $
 .\"
 .\" Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 8 2020 $
+.Dd $Mdocdate: December 30 2021 $
 .Dt KCOV 4
 .Os
 .Sh NAME
@@ -28,7 +28,7 @@
 The
 .Nm
 driver implements collection of code coverage inside the kernel.
-It can be enabled on a per thread basis from userland,
+It can be enabled on a per thread basis from user space,
 allowing the kernel program counter to be collected during syscalls triggered by
 the same thread.
 The collected coverage can be accessed by mapping the device
