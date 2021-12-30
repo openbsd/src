@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.66 2021/11/29 05:17:35 deraadt Exp $	*/
+/*	$OpenBSD: vm.c,v 1.67 2021/12/30 08:12:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -336,7 +336,7 @@ start_vm(struct vmd_vm *vm, int fd)
 			fatalx("failed to open kernel - exiting");
 
 		/* Load kernel image */
-		ret = loadfile_elf(fp, vcp, &vrs);
+		ret = loadfile_elf(fp, vcp, &vrs, vmc->vmc_bootdevice);
 
 		/*
 		 * Try BIOS as a fallback (only if it was provided as an image

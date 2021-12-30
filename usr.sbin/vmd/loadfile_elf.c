@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.39 2021/05/04 10:48:51 dv Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.40 2021/12/30 08:12:23 claudio Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ static void setsegment(struct mem_segment_descriptor *, uint32_t,
 static int elf32_exec(gzFile, Elf32_Ehdr *, u_long *, int);
 static int elf64_exec(gzFile, Elf64_Ehdr *, u_long *, int);
 static size_t create_bios_memmap(struct vm_create_params *, bios_memmap_t *);
-static uint32_t push_bootargs(bios_memmap_t *, size_t);
+static uint32_t push_bootargs(bios_memmap_t *, size_t, bios_bootmac_t *);
 static size_t push_stack(uint32_t, uint32_t);
 static void push_gdt(void);
 static void push_pt_32(void);
@@ -264,13 +264,14 @@ push_pt_64(void)
  */
 int
 loadfile_elf(gzFile fp, struct vm_create_params *vcp,
-    struct vcpu_reg_state *vrs)
+    struct vcpu_reg_state *vrs, unsigned int bootdevice)
 {
 	int r, is_i386 = 0;
 	uint32_t bootargsz;
 	size_t n, stacksize;
 	u_long marks[MARK_MAX];
 	bios_memmap_t memmap[VMM_MAX_MEM_RANGES + 1];
+	bios_bootmac_t bm, *bootmac = NULL;
 
 	if ((r = gzread(fp, &hdr, sizeof(hdr))) != sizeof(hdr))
 		return 1;
@@ -301,8 +302,12 @@ loadfile_elf(gzFile fp, struct vm_create_params *vcp,
 	else
 		push_pt_64();
 
+	if (bootdevice == VMBOOTDEV_NET) {
+		bootmac = &bm;
+		memcpy(bootmac, vcp->vcp_macs[0], ETHER_ADDR_LEN);
+	}
 	n = create_bios_memmap(vcp, memmap);
-	bootargsz = push_bootargs(memmap, n);
+	bootargsz = push_bootargs(memmap, n, bootmac);
 	stacksize = push_stack(bootargsz, marks[MARK_END]);
 
 	vrs->vrs_gprs[VCPU_REGS_RIP] = (uint64_t)marks[MARK_ENTRY];
@@ -382,9 +387,9 @@ create_bios_memmap(struct vm_create_params *vcp, bios_memmap_t *memmap)
  *  The size of the bootargs
  */
 static uint32_t
-push_bootargs(bios_memmap_t *memmap, size_t n)
+push_bootargs(bios_memmap_t *memmap, size_t n, bios_bootmac_t *bootmac)
 {
-	uint32_t memmap_sz, consdev_sz, i;
+	uint32_t memmap_sz, consdev_sz, bootmac_sz, i;
 	bios_consdev_t consdev;
 	uint32_t ba[1024];
 
@@ -407,6 +412,15 @@ push_bootargs(bios_memmap_t *memmap, size_t n)
 	ba[i + 2] = consdev_sz;
 	memcpy(&ba[i + 3], &consdev, sizeof(bios_consdev_t));
 	i += consdev_sz / sizeof(int);
+
+	if (bootmac) {
+		bootmac_sz = 3 * sizeof(int) + (sizeof(bios_bootmac_t) + 3) & ~3;
+		ba[i] = 0x7;   /* bootmac */
+		ba[i + 1] = bootmac_sz;
+		ba[i + 2] = bootmac_sz;
+		memcpy(&ba[i + 3], bootmac, sizeof(bios_bootmac_t));
+		i += bootmac_sz / sizeof(int);
+	} 
 
 	ba[i++] = 0xFFFFFFFF; /* BOOTARG_END */
 
