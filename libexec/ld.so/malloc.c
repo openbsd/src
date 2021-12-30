@@ -1,4 +1,4 @@
-/*      $OpenBSD: malloc.c,v 1.32 2021/04/19 06:43:15 otto Exp $       */
+/*      $OpenBSD: malloc.c,v 1.33 2021/12/30 08:39:19 guenther Exp $       */
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -33,12 +33,7 @@
 #include  "archdep.h"
 #include  "resolve.h"
 
-#if defined(__mips64__)
-#define MALLOC_PAGESHIFT	(14U)
-#else
-#define MALLOC_PAGESHIFT	(PAGE_SHIFT)
-#endif
-
+#define MALLOC_PAGESHIFT	_MAX_PAGE_SHIFT
 #define MALLOC_MINSHIFT		4
 #define MALLOC_MAXSHIFT		(MALLOC_PAGESHIFT - 1)
 #define MALLOC_PAGESIZE		(1UL << MALLOC_PAGESHIFT)
