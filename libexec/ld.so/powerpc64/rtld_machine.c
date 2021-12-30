@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.5 2020/07/18 16:41:43 kettenis Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.6 2021/12/30 04:48:13 guenther Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -282,9 +282,6 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 		/* Relocate processor-specific tags. */
 		object->Dyn.info[DT_PROC(DT_PPC64_GLINK)] += object->obj_base;
-
-		if (object->Dyn.info[DT_PLTREL] != DT_RELA)
-			_dl_die(" bad relocation type PLTREL not RELA");
 
 		plt = (Elf_Addr *)
 		   (Elf_RelA *)(object->Dyn.info[DT_PLTGOT]);
