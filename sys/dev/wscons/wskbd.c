@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.109 2021/10/22 04:59:31 anton Exp $ */
+/* $OpenBSD: wskbd.c,v 1.110 2021/12/30 06:55:11 anton Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -233,6 +233,8 @@ int	wskbd_mux_close(struct wsevsrc *);
 int	wskbd_do_open(struct wskbd_softc *, struct wseventvar *);
 int	wskbd_do_ioctl(struct device *, u_long, caddr_t, int, struct proc *);
 
+void	wskbd_set_keymap(struct wskbd_softc *, struct wscons_keymap *, int);
+
 int	(*wskbd_get_backlight)(struct wskbd_backlight *);
 int	(*wskbd_set_backlight)(struct wskbd_backlight *);
 
@@ -414,9 +416,14 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 	for (;;) {
-		if (wskbd_load_keymap(&sc->id->t_keymap, layout, &sc->sc_map,
-		    &sc->sc_maplen) == 0)
+		struct wscons_keymap *map;
+		int maplen;
+
+		if (wskbd_load_keymap(&sc->id->t_keymap, layout, &map,
+		    &maplen) == 0) {
+			wskbd_set_keymap(sc, map, maplen);
 			break;
+		}
 #if NWSMUX > 0
 		if (layout == sc->id->t_keymap.layout)
 			panic("cannot load keymap");
@@ -1131,9 +1138,11 @@ getkeyrepeat:
 
 		error = copyin(umdp->map, buf, len);
 		if (error == 0) {
-			wskbd_init_keymap(umdp->maplen,
-					  &sc->sc_map, &sc->sc_maplen);
-			memcpy(sc->sc_map, buf, len);
+			struct wscons_keymap *map;
+
+			map = wskbd_init_keymap(umdp->maplen);
+			memcpy(map, buf, len);
+			wskbd_set_keymap(sc, map, umdp->maplen);
 			/* drop the variant bits handled by the map */
 			enc = KB_USER | (KB_VARIANT(sc->id->t_keymap.layout) &
 			    KB_HANDLEDBYWSKBD);
@@ -1169,10 +1178,14 @@ getkeyrepeat:
 		} else if (sc->id->t_keymap.layout & KB_NOENCODING) {
 			return (0);
 		} else {
+			struct wscons_keymap *map;
+			int maplen;
+
 			error = wskbd_load_keymap(&sc->id->t_keymap, enc,
-			    &sc->sc_map, &sc->sc_maplen);
+			    &map, &maplen);
 			if (error)
 				return (error);
+			wskbd_set_keymap(sc, map, maplen);
 		}
 		wskbd_update_layout(sc->id, enc);
 #if NWSMUX > 0
@@ -1857,4 +1870,12 @@ wskbd_debugger(struct wskbd_softc *sc)
 			db_enter();
 	}
 #endif
+}
+
+void
+wskbd_set_keymap(struct wskbd_softc *sc, struct wscons_keymap *map, int maplen)
+{
+	free(sc->sc_map, M_DEVBUF, sc->sc_maplen * sizeof(*sc->sc_map));
+	sc->sc_map = map;
+	sc->sc_maplen = maplen;
 }

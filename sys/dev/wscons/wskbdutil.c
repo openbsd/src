@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdutil.c,v 1.18 2019/01/31 18:01:14 millert Exp $	*/
+/*	$OpenBSD: wskbdutil.c,v 1.19 2021/12/30 06:55:11 anton Exp $	*/
 /*	$NetBSD: wskbdutil.c,v 1.7 1999/12/21 11:59:13 drochner Exp $	*/
 
 /*-
@@ -375,27 +375,21 @@ wskbd_get_mapentry(const struct wskbd_mapdata *mapdata, int kc,
 	}
 }
 
-void
-wskbd_init_keymap(int newlen, struct wscons_keymap **map, int *maplen)
+struct wscons_keymap *
+wskbd_init_keymap(int maplen)
 {
+	struct wscons_keymap *map;
 	int i;
 
-	if (newlen != *maplen) {
-		if (*maplen > 0)
-			free(*map, M_DEVBUF,
-			    *maplen * sizeof(struct wscons_keymap));
-		*maplen = newlen;
-		*map = mallocarray(newlen, sizeof(struct wscons_keymap),
-		    M_DEVBUF, M_WAITOK);
+	map = mallocarray(maplen, sizeof(*map), M_DEVBUF, M_WAITOK);
+	for (i = 0; i < maplen; i++) {
+		map[i].command = KS_voidSymbol;
+		map[i].group1[0] = KS_voidSymbol;
+		map[i].group1[1] = KS_voidSymbol;
+		map[i].group2[0] = KS_voidSymbol;
+		map[i].group2[1] = KS_voidSymbol;
 	}
-
-	for (i = 0; i < *maplen; i++) {
-		(*map)[i].command = KS_voidSymbol;
-		(*map)[i].group1[0] = KS_voidSymbol;
-		(*map)[i].group1[1] = KS_voidSymbol;
-		(*map)[i].group2[0] = KS_voidSymbol;
-		(*map)[i].group2[1] = KS_voidSymbol;
-	}
+	return map;
 }
 
 int
@@ -437,7 +431,8 @@ wskbd_load_keymap(const struct wskbd_mapdata *mapdata, kbd_t layout,
 		}
 	}
 
-	wskbd_init_keymap(i + 1, map, maplen);
+	*map = wskbd_init_keymap(i + 1);
+	*maplen = i + 1;
 
 	for (s = stack_ptr - 1; s >= 0; s--) {
 		mp = stack[s];
