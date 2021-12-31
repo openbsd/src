@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.59 2019/11/02 10:14:57 kettenis Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.60 2021/12/31 11:24:24 jsg Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -512,7 +512,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_VPD_OPFLAG		0x80000000
 
 /*
- * Message Signaled Interrups; access via capability pointer.
+ * Message Signaled Interrupts; access via capability pointer.
  */
 #define PCI_MSI_MC		0x00
 #define PCI_MSI_MC_C64		0x00800000
@@ -633,7 +633,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PCIE_ECAP_LAST	0x0
 
 /*
- * Extended Message Signaled Interrups; access via capability pointer.
+ * Extended Message Signaled Interrupts; access via capability pointer.
  */
 #define PCI_MSIX_MC_MSIXE	0x80000000
 #define PCI_MSIX_MC_FM		0x40000000
