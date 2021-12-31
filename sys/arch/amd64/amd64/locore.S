@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.126 2021/09/04 22:15:33 bluhm Exp $	*/
+/*	$OpenBSD: locore.S,v 1.127 2021/12/31 10:40:30 jsg Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -1046,7 +1046,7 @@ END(intr_fast_exit)
  *	void fpusavereset(sfp)
  *		save current state and reset FPU to initial/kernel state
  *	int xsetbv_user(reg, mask)
- *		load specifed %xcr# register, returns 0/1 if okay/it trapped
+ *		load specified %xcr# register, returns 0/1 if okay/it trapped
  */
 
 ENTRY(xrstor_user)
