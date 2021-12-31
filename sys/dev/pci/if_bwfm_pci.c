@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.64 2021/12/27 17:56:03 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.65 2021/12/31 09:24:18 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -782,7 +782,9 @@ bwfm_pci_load_microcode(struct bwfm_pci_softc *sc, const u_char *ucode, size_t s
 {
 	struct bwfm_softc *bwfm = (void *)sc;
 	struct bwfm_core *core;
-	uint32_t shared, written;
+	struct bwfm_pci_random_seed_footer footer;
+	uint32_t addr, shared, written;
+	uint8_t *rndbuf;
 	int i;
 
 	if (bwfm->sc_chip.ch_chip == BRCM_CC_43602_CHIP_ID) {
@@ -806,10 +808,26 @@ bwfm_pci_load_microcode(struct bwfm_pci_softc *sc, const u_char *ucode, size_t s
 	    bwfm->sc_chip.ch_rambase + bwfm->sc_chip.ch_ramsize - 4, 0);
 
 	if (nvram) {
+		addr = bwfm->sc_chip.ch_rambase + bwfm->sc_chip.ch_ramsize -
+		    nvlen;
 		for (i = 0; i < nvlen; i++)
 			bus_space_write_1(sc->sc_tcm_iot, sc->sc_tcm_ioh,
-			    bwfm->sc_chip.ch_rambase + bwfm->sc_chip.ch_ramsize
-			    - nvlen  + i, nvram[i]);
+			    addr + i, nvram[i]);
+
+		footer.length = htole32(BWFM_RANDOM_SEED_MAGIC);
+		footer.magic = htole32(BWFM_RANDOM_SEED_LENGTH);
+		addr -= sizeof(footer);
+		for (i = 0; i < sizeof(footer); i++)
+			bus_space_write_1(sc->sc_tcm_iot, sc->sc_tcm_ioh,
+			    addr + i, ((uint8_t *)&footer)[i]);
+
+		rndbuf = malloc(BWFM_RANDOM_SEED_LENGTH, M_TEMP, M_WAITOK);
+		arc4random_buf(rndbuf, BWFM_RANDOM_SEED_LENGTH);
+		addr -= BWFM_RANDOM_SEED_LENGTH;
+		for (i = 0; i < BWFM_RANDOM_SEED_LENGTH; i++)
+			bus_space_write_1(sc->sc_tcm_iot, sc->sc_tcm_ioh,
+			    addr + i, rndbuf[i]);
+		free(rndbuf, M_TEMP, BWFM_RANDOM_SEED_LENGTH);
 	}
 
 	written = bus_space_read_4(sc->sc_tcm_iot, sc->sc_tcm_ioh,

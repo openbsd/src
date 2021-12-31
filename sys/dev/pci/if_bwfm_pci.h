@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.h,v 1.7 2021/08/31 23:05:11 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.h,v 1.8 2021/12/31 09:24:18 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -146,6 +146,14 @@
 #define BWFM_CONSOLE_BUFADDR			0x08
 #define BWFM_CONSOLE_BUFSIZE			0x0c
 #define BWFM_CONSOLE_WRITEIDX			0x10
+
+#define BWFM_RANDOM_SEED_MAGIC			0xfeedc0de
+#define BWFM_RANDOM_SEED_LENGTH			0x100
+
+struct bwfm_pci_random_seed_footer {
+	uint32_t		length;
+	uint32_t		magic;
+};
 
 struct bwfm_pci_ringinfo {
 	uint32_t		ringmem;
