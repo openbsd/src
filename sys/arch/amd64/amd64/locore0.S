@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.19 2020/02/19 16:55:04 kettenis Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.20 2021/12/31 10:44:05 jsg Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -232,7 +232,7 @@ bi_size_ok:
 	testl	$SEFF0EDX_ARCH_CAP, %edx
 	jz	.Lcpu_check_finished
 
-	/* IA32_ARCH_CAPABILITIES MSR avaialble, use it to check CPU security */
+	/* IA32_ARCH_CAPABILITIES MSR available, use it to check CPU security */
 	movl	$MSR_ARCH_CAPABILITIES, %ecx
 	rdmsr
 	testl	$ARCH_CAPABILITIES_RDCL_NO, %eax
