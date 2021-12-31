@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.82 2021/10/26 14:13:57 patrick Exp $ */
+/* $OpenBSD: pmap.c,v 1.83 2021/12/31 11:21:45 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -152,6 +152,10 @@ pmap_unlock(struct pmap *pmap)
 	if (pmap != pmap_kernel())
 		mtx_leave(&pmap->pm_mtx);
 }
+
+#define PMAP_ASSERT_LOCKED(pmap) 			\
+	if ((pmap) != pmap_kernel()) 			\
+		MUTEX_ASSERT_LOCKED(&(pmap)->pm_mtx);
 
 /* virtual to physical helpers */
 static inline int
@@ -381,6 +385,8 @@ pmap_vp_remove(pmap_t pm, vaddr_t va)
 	struct pmapvp3 *vp3;
 	struct pte_desc *pted;
 
+	PMAP_ASSERT_LOCKED(pm);
+	
 	if (pm->have_4_level_pt) {
 		vp1 = pm->pm_vp.l0->vp[VP_IDX0(va)];
 		if (vp1 == NULL) {
@@ -426,6 +432,8 @@ pmap_vp_enter(pmap_t pm, vaddr_t va, struct pte_desc *pted, int flags)
 	struct pmapvp2 *vp2;
 	struct pmapvp3 *vp3;
 
+	PMAP_ASSERT_LOCKED(pm);
+	
 	if (pm->have_4_level_pt) {
 		vp1 = pm->pm_vp.l0->vp[VP_IDX0(va)];
 		if (vp1 == NULL) {
@@ -1520,20 +1528,19 @@ pmap_deactivate(struct proc *p)
  * Get the physical page address for the given pmap/virtual address.
  */
 int
-pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
+pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 {
 	struct pte_desc *pted;
 
+	pmap_lock(pm);
 	pted = pmap_vp_lookup(pm, va, NULL);
-
-	if (pted == NULL)
+	if (!pted || !PTED_VALID(pted)) {
+		pmap_unlock(pm);
 		return 0;
-
-	if (pted->pted_pte == 0)
-		return 0;
-
-	if (pa != NULL)
-		*pa = (pted->pted_pte & PTE_RPGN) | (va & PAGE_MASK);
+	}
+	if (pap != NULL)
+		*pap = (pted->pted_pte & PTE_RPGN) | (va & PAGE_MASK);
+	pmap_unlock(pm);
 
 	return 1;
 }
@@ -2010,11 +2017,13 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 {
 	struct pte_desc *pted;
 
+	pmap_lock(pm);
 	pted = pmap_vp_lookup(pm, va, NULL);
 	if ((pted != NULL) && (pted->pted_va & PTED_VA_WIRED_M)) {
 		pm->pm_stats.wired_count--;
 		pted->pted_va &= ~PTED_VA_WIRED_M;
 	}
+	pmap_unlock(pm);
 }
 
 void
