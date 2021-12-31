@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.162 2021/11/22 10:17:14 mglocker Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.163 2021/12/31 23:19:50 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -164,7 +164,7 @@
 
 /*
  * Samples-per-frame are fractions. UAC v2.0 requires the denominator to
- * be multiple of 2^16, as used in the sync pipe. On the othe hand, to
+ * be multiple of 2^16, as used in the sync pipe. On the other hand, to
  * represent sample-per-frame of all rates we support, we need the
  * denominator to be such that (rate / 1000) can be represented exactly,
  * 80 works. So we use the least common multiplier of both.
@@ -178,7 +178,7 @@
 #define UAUDIO_NAME_REC		"record"
 
 /*
- * read/write pointers for secure sequencial access of binary data,
+ * read/write pointers for secure sequential access of binary data,
  * ex. usb descriptors, tables and alike. Bytes are read using the
  * read pointer up to the write pointer.
  */
@@ -628,7 +628,7 @@ uaudio_tname(struct uaudio_softc *sc, unsigned int type, int isout)
 	if (hi == 1)
 		return isout ? UAUDIO_NAME_REC : UAUDIO_NAME_PLAY;
 
-	/* if theres only one input (output) use "input" ("output") */
+	/* if there is only one input (output) use "input" ("output") */
 	if (isout) {
 		if (sc->nout == 1)
 			return "output";
@@ -789,7 +789,7 @@ uaudio_ranges_add(struct uaudio_ranges *r, int min, int max, int res)
 
 	for (pe = &r->el; (e = *pe) != NULL; pe = &e->next) {
 		if (min <= e->max && max >= e->min) {
-			DPRINTF("%s: overlaping ranges\n", __func__);
+			DPRINTF("%s: overlapping ranges\n", __func__);
 			return;
 		}
 		if (min < e->max)
@@ -1115,7 +1115,7 @@ uaudio_feature_addent(struct uaudio_softc *sc,
 		{"gain", UAUDIO_MIX_NUM, UAUDIO_REQSEL_GAIN},
 		{"gainpad", UAUDIO_MIX_SW, UAUDIO_REQSEL_GAINPAD},
 		{"phase", UAUDIO_MIX_SW, UAUDIO_REQSEL_PHASEINV},
-		{NULL, -1, -1},			/* undeflow */
+		{NULL, -1, -1},			/* underflow */
 		{NULL, -1, -1}			/* overflow */
 	};
 	struct uaudio_mixent *m, *i, **pi;
@@ -1415,7 +1415,7 @@ uaudio_process_unit(struct uaudio_softc *sc,
 		break;
 	case UAUDIO_AC_SELECTOR:
 		/*
-		 * Selectors are extreamly rare, so not supported yet.
+		 * Selectors are extremely rare, so not supported yet.
 		 */
 		if (!uaudio_process_srcs(sc, u, units, &p))
 			return 0;
@@ -1591,7 +1591,7 @@ uaudio_setname_srcs(struct uaudio_softc *sc, struct uaudio_unit *u, char *name)
 /*
  * Set the name of the given unit by using both its source and
  * destination units. This is naming scheme is only useful to units
- * that would have ambigous names if only sources or only destination
+ * that would have ambiguous names if only sources or only destination
  * were used.
  */
 void
@@ -2081,7 +2081,7 @@ uaudio_process_ac(struct uaudio_softc *sc, struct uaudio_blob *p, int ifnum)
 	unsigned int type, subtype, id;
 	char *name, val;
 
-	DPRINTF("%s: ifnum = %d, %zd bytes to processs\n", __func__,
+	DPRINTF("%s: ifnum = %d, %zd bytes to process\n", __func__,
 	    ifnum, p->wptr - p->rptr);
 
 	sc->ctl_ifnum = ifnum;
@@ -2291,7 +2291,7 @@ uaudio_process_ac(struct uaudio_softc *sc, struct uaudio_blob *p, int ifnum)
 }
 
 /*
- * Parse endpoint descriptor with the following fromat:
+ * Parse endpoint descriptor with the following format:
  *
  * For playback there's a output data endpoint, of the
  * following types:
@@ -2370,7 +2370,7 @@ uaudio_process_as_ep(struct uaudio_softc *sc,
 	/*
 	 * For each AS interface setting, there's a single data
 	 * endpoint and an optional feedback endpoint. The
-	 * synchonization type is non-zero and must be set in the data
+	 * synchronization type is non-zero and must be set in the data
 	 * endpoints.
 	 *
 	 * However, the isoc sync type field of the attribute can't be
@@ -2447,7 +2447,7 @@ uaudio_process_as_general(struct uaudio_softc *sc,
 /*
  * Parse AS format descriptor: we support only "Type 1" formats, aka
  * PCM. Other formats are not really audio, they are data-only
- * interfaces that we don't wan't to support: ethernet is much better
+ * interfaces that we don't want to support: ethernet is much better
  * for raw data transfers.
  *
  * XXX: handle ieee 754 32-bit floating point formats.
@@ -2928,7 +2928,7 @@ uaudio_stream_open(struct uaudio_softc *sc, int dir,
 	 * block boundary, which is propagated to upper layers. In the
 	 * worst case, we schedule only frames of spf_max samples, but
 	 * the device returns only frames of spf_min samples; in this
-	 * case the amount actually transfered is at least:
+	 * case the amount actually transferred is at least:
 	 *
 	 *		min_blksz = blksz / spf_max * spf_min
 	 *
@@ -3282,7 +3282,7 @@ uaudio_pdata_xfer(struct uaudio_softc *sc)
 
 	/*
 	 * We accept short transfers because in case of babble/stale frames
-	 * the tranfer will be short
+	 * the transfer will be short
 	 */
 	usbd_setup_isoc_xfer(xfer->usb_xfer, s->data_pipe, sc,
 	    xfer->sizes, xfer->nframes,
@@ -4021,7 +4021,7 @@ uaudio_set_params(void *self, int setmode, int usemode,
 	}
 
 	/*
-	 * Recalculate rate index, because the choosen parameters
+	 * Recalculate rate index, because the chosen parameters
 	 * may not support the requested one
 	 */
 	rateindex = uaudio_rates_indexof(uaudio_getrates(sc, p), rate);
