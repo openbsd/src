@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uaq.c,v 1.1 2021/09/04 12:11:45 jmatthew Exp $	*/
+/*	$OpenBSD: if_uaq.c,v 1.2 2021/12/31 08:15:47 jmatthew Exp $	*/
 /*-
  * Copyright (c) 2021 Jonathan Matthew <jonathan@d14n.org>
  * All rights reserved.
@@ -658,12 +658,15 @@ uaq_iff(struct uaq_softc *sc)
 
 	sc->sc_rxctl &= ~(UAQ_SFR_RX_CTL_PRO | UAQ_SFR_RX_CTL_AMALL |
 	    UAQ_SFR_RX_CTL_AM);
-	if (ifp->if_flags & IFF_PROMISC || sc->sc_ac.ac_multirangecnt > 0) {
+	ifp->if_flags &= ~IFF_ALLMULTI;
+
+	if (ifp->if_flags & IFF_PROMISC) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		sc->sc_rxctl |= UAQ_SFR_RX_CTL_PRO;
-	} else if (ifp->if_flags & IFF_ALLMULTI ||
-	    sc->sc_ac.ac_multirangecnt > 0) {
+	} else if (sc->sc_ac.ac_multirangecnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		sc->sc_rxctl |= UAQ_SFR_RX_CTL_AMALL;
-	} else if (sc->sc_ac.ac_multicnt > 0) {
+	} else {
 		sc->sc_rxctl |= UAQ_SFR_RX_CTL_AM;
 
 		bzero(filter, sizeof(filter));
@@ -779,6 +782,8 @@ uaq_init(void *xsc)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+
+	uaq_iff(sc);
 
 	uaq_ifmedia_upd(ifp);
 
