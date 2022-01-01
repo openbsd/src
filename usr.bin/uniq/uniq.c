@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.30 2021/12/24 17:59:28 cheloha Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.31 2022/01/01 02:20:38 cheloha Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -48,8 +48,7 @@
 int cflag, dflag, iflag, uflag;
 int numchars, numfields, repeats;
 
-FILE	*file(char *, char *);
-void	 show(FILE *, char *);
+void	 show(const char *);
 char	*skip(char *);
 void	 obsolete(char *[]);
 __dead void	usage(void);
@@ -58,7 +57,6 @@ int
 main(int argc, char *argv[])
 {
 	char *p, *prevline, *t, *thisline, *tmp;
-	FILE *ifp = NULL, *ofp = NULL;
 	size_t prevsize, thissize, tmpsize;
 	ssize_t len;
 	int ch;
@@ -112,21 +110,15 @@ main(int argc, char *argv[])
 	if (!dflag && !uflag)
 		dflag = uflag = 1;
 
-	switch (argc) {
-	case 0:
-		ifp = stdin;
-		ofp = stdout;
-		break;
-	case 1:
-		ifp = file(argv[0], "r");
-		ofp = stdout;
-		break;
-	case 2:
-		ifp = file(argv[0], "r");
-		ofp = file(argv[1], "w");
-		break;
-	default:
+	if (argc > 2)
 		usage();
+	if (argc >= 1 && strcmp(argv[0], "-") != 0) {
+		if (freopen(argv[0], "r", stdin) == NULL)
+			err(1, "%s", argv[0]);
+	}
+	if (argc == 2 && strcmp(argv[1], "-") != 0) {
+		if (freopen(argv[1], "w", stdout) == NULL)
+			err(1, "%s", argv[1]);
 	}
 
 	if (pledge("stdio", NULL) == -1)
@@ -134,9 +126,9 @@ main(int argc, char *argv[])
 
 	prevsize = 0;
 	prevline = NULL;
-	if ((len = getline(&prevline, &prevsize, ifp)) == -1) {
+	if ((len = getline(&prevline, &prevsize, stdin)) == -1) {
 		free(prevline);
-		if (ferror(ifp))
+		if (ferror(stdin))
 			err(1, "getline");
 		exit(0);
 	}
@@ -149,7 +141,7 @@ main(int argc, char *argv[])
 	
 	thissize = 0;
 	thisline = NULL;
-	while ((len = getline(&thisline, &thissize, ifp)) != -1) {
+	while ((len = getline(&thisline, &thissize, stdin)) != -1) {
 		if (thisline[len - 1] == '\n')
 			thisline[len - 1] = '\0';
 
@@ -161,7 +153,7 @@ main(int argc, char *argv[])
 
 		/* If different, print; set previous to new value. */
 		if ((iflag ? strcasecmp : strcmp)(p, t)) {
-			show(ofp, prevline);
+			show(prevline);
 			tmp = prevline;
 			prevline = thisline;
 			thisline = tmp;
@@ -176,10 +168,10 @@ main(int argc, char *argv[])
 			++repeats;
 	}
 	free(thisline);
-	if (ferror(ifp))
+	if (ferror(stdin))
 		err(1, "getline");
 
-	show(ofp, prevline);
+	show(prevline);
 	free(prevline);
 
 	exit(0);
@@ -191,13 +183,13 @@ main(int argc, char *argv[])
  *	of the line.
  */
 void
-show(FILE *ofp, char *str)
+show(const char *str)
 {
 	if ((dflag && repeats) || (uflag && !repeats)) {
 		if (cflag)
-			fprintf(ofp, "%4d %s\n", repeats + 1, str);
+			printf("%4d %s\n", repeats + 1, str);
 		else
-			fprintf(ofp, "%s\n", str);
+			printf("%s\n", str);
 	}
 }
 
@@ -231,18 +223,6 @@ skip(char *str)
 			len = 1;
 
 	return (str);
-}
-
-FILE *
-file(char *name, char *mode)
-{
-	FILE *fp;
-
-	if (strcmp(name, "-") == 0)
-		return(*mode == 'r' ? stdin : stdout);
-	if ((fp = fopen(name, mode)) == NULL)
-		err(1, "%s", name);
-	return (fp);
 }
 
 void
