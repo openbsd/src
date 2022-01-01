@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.65 2021/12/31 09:24:18 patrick Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.66 2022/01/01 18:52:26 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -814,8 +814,8 @@ bwfm_pci_load_microcode(struct bwfm_pci_softc *sc, const u_char *ucode, size_t s
 			bus_space_write_1(sc->sc_tcm_iot, sc->sc_tcm_ioh,
 			    addr + i, nvram[i]);
 
-		footer.length = htole32(BWFM_RANDOM_SEED_MAGIC);
-		footer.magic = htole32(BWFM_RANDOM_SEED_LENGTH);
+		footer.length = htole32(BWFM_RANDOM_SEED_LENGTH);
+		footer.magic = htole32(BWFM_RANDOM_SEED_MAGIC);
 		addr -= sizeof(footer);
 		for (i = 0; i < sizeof(footer); i++)
 			bus_space_write_1(sc->sc_tcm_iot, sc->sc_tcm_ioh,
