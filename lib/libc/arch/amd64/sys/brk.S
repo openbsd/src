@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.11 2021/10/25 14:19:51 kettenis Exp $	*/
+/*	$OpenBSD: brk.S,v 1.12 2022/01/01 23:47:14 guenther Exp $	*/
 /*	$NetBSD: brk.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ __minbrk:
 	END(__minbrk)
 	.type	__minbrk,@object
 
-ENTRY(brk)
+ENTRY_NB(brk)
 	cmpq	%rdi,__minbrk(%rip)
 	jb	1f
 	movq	__minbrk(%rip),%rdi

@@ -1,6 +1,6 @@
 #include "DEFS.h"
 
-ENTRY(bcmp)
+ENTRY_NB(bcmp)
 	RETGUARD_SETUP(bcmp, r11)
 	xorl	%eax,%eax		/* clear return value */
 	cld				/* set compare direction forward */

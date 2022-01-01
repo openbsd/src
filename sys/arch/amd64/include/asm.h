@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.20 2021/09/04 22:15:33 bluhm Exp $	*/
+/*	$OpenBSD: asm.h,v 1.21 2022/01/01 23:47:14 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -65,11 +65,15 @@
 #endif
 #define _ALIGN_TRAPS	.align	16, 0xcc
 
-#define	_GENTRY(x)	.globl x; .type x,@function; x:
-#define _ENTRY(x) \
-	.text; _ALIGN_TRAPS; _GENTRY(x)
-#define _NENTRY(x) \
-	.text; _ALIGN_TEXT; _GENTRY(x)
+#define	_FENTRY(x)	.type x,@function; x:
+
+/* NB == No Binding: use .globl or .weak as necessary */
+#define	NENTRY_NB(x)	\
+	.text; _ALIGN_TEXT; _FENTRY(x)
+#define _ENTRY_NB(x) \
+	.text; _ALIGN_TRAPS; _FENTRY(x)
+#define _ENTRY(x)	.globl x; _ENTRY_NB(x)
+#define _NENTRY(x)	.globl x; NENTRY_NB(x)
 
 #ifdef _KERNEL
 #define	KUTEXT	.section .kutext, "ax", @progbits
@@ -81,14 +85,14 @@
 
 #define	IDTVEC(name) \
 	KUTEXT; _ALIGN_TRAPS; IDTVEC_NOALIGN(name)
-#define	IDTVEC_NOALIGN(name)	_GENTRY(X ## name)
-#define	GENTRY(x)		_GENTRY(x)
+#define	GENTRY(x)		.globl x; _FENTRY(x)
+#define	IDTVEC_NOALIGN(name)	GENTRY(X ## name)
 #define	KIDTVEC(name) \
 	.text; _ALIGN_TRAPS; IDTVEC_NOALIGN(name)
 #define	KIDTVEC_FALLTHROUGH(name) \
 	_ALIGN_TEXT; IDTVEC_NOALIGN(name)
 #define KUENTRY(x) \
-	KUTEXT; _ALIGN_TRAPS; _GENTRY(x)
+	KUTEXT; _ALIGN_TRAPS; GENTRY(x)
 
 /* Return stack refill, to prevent speculation attacks on natural returns */
 #define	RET_STACK_REFILL_WITH_RCX	\
@@ -165,6 +169,7 @@
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
 #define	NENTRY(y)	_NENTRY(_C_LABEL(y))
 #define	ASENTRY(y)	_NENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
+#define	ENTRY_NB(y)	_ENTRY_NB(y); _PROF_PROLOGUE
 #define	END(y)		.size y, . - y
 
 #define	STRONG_ALIAS(alias,sym)						\

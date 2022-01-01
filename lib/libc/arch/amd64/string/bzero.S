@@ -6,7 +6,7 @@
 
 #include "DEFS.h"
 
-ENTRY(bzero)
+ENTRY_NB(bzero)
 	RETGUARD_SETUP(bzero, r11)
 	movq	%rsi,%rdx
 

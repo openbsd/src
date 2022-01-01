@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.13 2017/06/29 17:36:16 deraadt Exp $	*/
+/*	$OpenBSD: asm.h,v 1.14 2022/01/01 23:47:14 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.15 2000/08/02 22:24:39 eeh Exp $ */
 
 /*
@@ -78,8 +78,9 @@
 #define FTYPE(x)		.type x,@function
 #define OTYPE(x)		.type x,@object
 
-#define	_ENTRY(name) \
-	.align 4; .globl name; .proc 1; FTYPE(name); name:
+#define	_ENTRY_NB(name) \
+	.align 4; .proc 1; FTYPE(name); name:
+#define	_ENTRY(name)	.globl name; _ENTRY_NB(name)
 
 #if defined(PROF) || defined(GPROF)
 #define _PROF_PROLOGUE \
@@ -92,6 +93,7 @@
 
 #define ENTRY(name)		_ENTRY(_C_LABEL(name)); _PROF_PROLOGUE
 #define NENTRY(name)		_ENTRY(_C_LABEL(name))
+#define ENTRY_NB(name)		_ENTRY_NB(name); _PROF_PROLOGUE
 #define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name)); _PROF_PROLOGUE
 #define	FUNC(name)		ASENTRY(name)
 #define	END(y)			.size y, . - y

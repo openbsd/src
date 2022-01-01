@@ -40,11 +40,11 @@
 	 *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800
 	 */
 
-ENTRY(bcopy)
+ENTRY_NB(bcopy)
 	xchgq	%rdi,%rsi
 	/* fall into memmove */
 
-NENTRY(memmove)
+NENTRY_NB(memmove)
 	RETGUARD_SETUP(memmove, r10)
 	movq	%rdi,%r11	/* save dest */
 	movq	%rdx,%rcx
@@ -55,7 +55,7 @@ NENTRY(memmove)
 #ifdef memcpy_in_asm
 	jmp	2f		/* nope */
 
-ENTRY(memcpy)
+ENTRY_NB(memcpy)
 	RETGUARD_SETUP(memmove, r10)
 	movq	%rdi,%r11	/* save dest */
 	movq	%rdx,%rcx

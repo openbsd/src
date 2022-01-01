@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.29 2016/05/07 19:05:21 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.30 2022/01/01 23:47:14 guenther Exp $
 #
 # This file contains make rules used to build libc
 #
@@ -23,7 +23,7 @@ CFLAGS+=-DYP -I${LIBCSRCDIR}/yp
 .endif
 
 LLIBS=
-AINC=   -I${LIBCSRCDIR}/arch/${MACHINE_CPU}
+AINC=   -I${LIBCSRCDIR}/arch/${MACHINE_CPU} -I${LIBCSRCDIR}/arch
 .if defined(DESTDIR)
 AINC+=  -nostdinc -idirafter ${DESTDIR}/usr/include
 .endif
