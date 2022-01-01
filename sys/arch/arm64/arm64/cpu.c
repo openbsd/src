@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.59 2021/11/26 14:45:13 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.60 2022/01/01 18:54:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -638,16 +638,11 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 
 #ifdef MULTIPROCESSOR
 	if (ci->ci_flags & CPUF_AP) {
-		uint64_t midr = READ_SPECIALREG(midr_el1);
 		char buf[32];
 		uint64_t spinup_data = 0;
 		int spinup_method = 0;
 		int timeout = 10000;
 		int len;
-
-		/* XXX SMP on Apple CPUs is busted. */
-		if (CPU_IMPL(midr) == CPU_IMPL_APPLE)
-			ci->ci_smt_id = 1;
 
 		len = OF_getprop(ci->ci_node, "enable-method",
 		    buf, sizeof(buf));
