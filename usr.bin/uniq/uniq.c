@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.31 2022/01/01 02:20:38 cheloha Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.32 2022/01/01 17:44:18 cheloha Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -45,8 +45,9 @@
 #include <wchar.h>
 #include <wctype.h>
 
+long long numchars, numfields;
+unsigned long long repeats;
 int cflag, dflag, iflag, uflag;
-int numchars, numfields, repeats;
 
 void	 show(const char *);
 char	*skip(char *);
@@ -78,8 +79,7 @@ main(int argc, char *argv[])
 			dflag = 1;
 			break;
 		case 'f':
-			numfields = (int)strtonum(optarg, 0, INT_MAX,
-			    &errstr);
+			numfields = strtonum(optarg, 0, LLONG_MAX, &errstr);
 			if (errstr)
 				errx(1, "field skip value is %s: %s",
 				    errstr, optarg);
@@ -88,8 +88,7 @@ main(int argc, char *argv[])
 			iflag = 1;
 			break;
 		case 's':
-			numchars = (int)strtonum(optarg, 0, INT_MAX,
-			    &errstr);
+			numchars = strtonum(optarg, 0, LLONG_MAX, &errstr);
 			if (errstr)
 				errx(1,
 				    "character skip value is %s: %s",
@@ -187,7 +186,7 @@ show(const char *str)
 {
 	if ((dflag && repeats) || (uflag && !repeats)) {
 		if (cflag)
-			printf("%4d %s\n", repeats + 1, str);
+			printf("%4llu %s\n", repeats + 1, str);
 		else
 			printf("%s\n", str);
 	}
@@ -196,8 +195,8 @@ show(const char *str)
 char *
 skip(char *str)
 {
+	long long nchars, nfields;
 	wchar_t wc;
-	int nchars, nfields;
 	int len;
 	int field_started;
 
