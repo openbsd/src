@@ -1,4 +1,4 @@
-.\" $OpenBSD: bpe.4,v 1.4 2020/10/04 12:44:49 kn Exp $
+.\" $OpenBSD: bpe.4,v 1.5 2022/01/01 08:01:27 jsg Exp $
 .\"
 .\" Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 4 2020 $
+.Dd $Mdocdate: January 1 2022 $
 .Dt BPE 4
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@ A PBB packet consists of another Ethernet frame containing Ethernet
 addresses for BEBs and the PBB Ethernet protocol type (0x88e7), a
 32-bit Backbone Service Instance Tag (I-TAG), followed by the
 encapsulated Ethernet frame.
-The I-TAG contains a 24-bit Backbone Service Instance Identifiier
+The I-TAG contains a 24-bit Backbone Service Instance Identifier
 (I-SID) to differentiate different PBBNs on the same backbone network
 .Pp
 IEEE 802.1Q describes customer VLANs being encapsulated by PBB,
