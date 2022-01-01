@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.32 2022/01/01 17:44:18 cheloha Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.33 2022/01/01 18:20:52 cheloha Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -35,12 +35,12 @@
 
 #include <ctype.h>
 #include <err.h>
-#include <errno.h>
 #include <limits.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <wchar.h>
 #include <wctype.h>
@@ -57,6 +57,7 @@ __dead void	usage(void);
 int
 main(int argc, char *argv[])
 {
+	const char *errstr;
 	char *p, *prevline, *t, *thisline, *tmp;
 	size_t prevsize, thissize, tmpsize;
 	ssize_t len;
@@ -69,8 +70,6 @@ main(int argc, char *argv[])
 
 	obsolete(argv);
 	while ((ch = getopt(argc, argv, "cdf:is:u")) != -1) {
-		const char *errstr;
-
 		switch (ch) {
 		case 'c':
 			cflag = 1;
@@ -81,8 +80,7 @@ main(int argc, char *argv[])
 		case 'f':
 			numfields = strtonum(optarg, 0, LLONG_MAX, &errstr);
 			if (errstr)
-				errx(1, "field skip value is %s: %s",
-				    errstr, optarg);
+				errx(1, "fields is %s: %s", errstr, optarg);
 			break;
 		case 'i':
 			iflag = 1;
@@ -90,9 +88,7 @@ main(int argc, char *argv[])
 		case 's':
 			numchars = strtonum(optarg, 0, LLONG_MAX, &errstr);
 			if (errstr)
-				errx(1,
-				    "character skip value is %s: %s",
-				    errstr, optarg);
+				errx(1, "chars is %s: %s", errstr, optarg);
 			break;
 		case 'u':
 			uflag = 1;
@@ -101,7 +97,6 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
-
 	argc -= optind;
 	argv += optind;
 
@@ -129,7 +124,7 @@ main(int argc, char *argv[])
 		free(prevline);
 		if (ferror(stdin))
 			err(1, "getline");
-		exit(0);
+		return 0;
 	}
 	if (prevline[len - 1] == '\n')
 		prevline[len - 1] = '\0';
@@ -173,7 +168,7 @@ main(int argc, char *argv[])
 	show(prevline);
 	free(prevline);
 
-	exit(0);
+	return 0;
 }
 
 /*
@@ -256,10 +251,8 @@ obsolete(char *argv[])
 __dead void
 usage(void)
 {
-	extern char *__progname;
-
-	(void)fprintf(stderr,
+	fprintf(stderr,
 	    "usage: %s [-ci] [-d | -u] [-f fields] [-s chars] [input_file [output_file]]\n",
-	    __progname);
+	    getprogname());
 	exit(1);
 }
