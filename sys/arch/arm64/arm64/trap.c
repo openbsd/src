@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.38 2021/05/16 15:10:19 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.39 2022/01/01 18:52:36 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -43,12 +43,12 @@
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
 
+#include <machine/cpu.h>
+#include <machine/fpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
-#include <machine/cpu.h>
 #include <machine/vmparam.h>
 
-#include <machine/vfp.h>
 
 #ifdef KDB
 #include <machine/db_machdep.h>
@@ -223,7 +223,7 @@ do_el1h_sync(struct trapframe *frame)
 	switch(exception) {
 	case EXCP_FP_SIMD:
 	case EXCP_TRAP_FP:
-		panic("VFP exception in the kernel");
+		panic("FP exception in the kernel");
 	case EXCP_DATA_ABORT:
 		kdata_abort(frame, esr, far, 0);
 		break;
@@ -273,46 +273,38 @@ do_el0_sync(struct trapframe *frame)
 
 	switch (exception) {
 	case EXCP_UNKNOWN:
-		vfp_save();
 		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_elr;
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
 		break;
 	case EXCP_FP_SIMD:
 	case EXCP_TRAP_FP:
-		vfp_fault(frame->tf_elr, 0, frame, exception);
+		fpu_load(p);
 		break;
 	case EXCP_SVC:
-		vfp_save();
 		svc_handler(frame);
 		break;
 	case EXCP_INSN_ABORT_L:
-		vfp_save();
 		udata_abort(frame, esr, far, 1);
 		break;
 	case EXCP_PC_ALIGN:
-		vfp_save();
 		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_elr;
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
 		break;
 	case EXCP_SP_ALIGN:
-		vfp_save();
 		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_sp;
 		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
 		break;
 	case EXCP_DATA_ABORT_L:
-		vfp_save();
 		udata_abort(frame, esr, far, 0);
 		break;
 	case EXCP_BRK:
-		vfp_save();
 		sv.sival_ptr = (void *)frame->tf_elr;
 		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
 		break;
 	case EXCP_SOFTSTP_EL0:
-		vfp_save();
 		sv.sival_ptr = (void *)frame->tf_elr;
 		trapsignal(p, SIGTRAP, 0, TRAP_TRACE, sv);
 		break;

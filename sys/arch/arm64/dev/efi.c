@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi.c,v 1.11 2021/10/24 17:52:28 mpi Exp $	*/
+/*	$OpenBSD: efi.c,v 1.12 2022/01/01 18:52:37 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -25,7 +25,7 @@
 #include <machine/cpufunc.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
-#include <machine/vfp.h>
+#include <machine/fpu.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
@@ -232,7 +232,7 @@ efi_enter(struct efi_softc *sc)
 	__asm volatile("isb");
 	cpu_setttb(pm->pm_asid, pm->pm_pt0pa);
 
-	vfp_kernel_enter();
+	fpu_kernel_enter();
 }
 
 void
@@ -240,7 +240,7 @@ efi_leave(struct efi_softc *sc)
 {
 	struct pmap *pm = curcpu()->ci_curpm;
 
-	vfp_kernel_exit();
+	fpu_kernel_exit();
 
 	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
 	__asm volatile("isb");

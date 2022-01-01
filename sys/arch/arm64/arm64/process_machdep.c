@@ -1,4 +1,4 @@
-/* $OpenBSD: process_machdep.c,v 1.5 2018/08/03 18:36:01 kettenis Exp $ */
+/* $OpenBSD: process_machdep.c,v 1.6 2022/01/01 18:52:36 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -45,6 +45,7 @@
 #include <sys/systm.h>
 #include <sys/user.h>
 
+#include <machine/fpu.h>
 #include <machine/pcb.h>
 #include <machine/reg.h>
 
@@ -68,6 +69,9 @@ process_read_regs(struct proc *p, struct reg *regs)
 int
 process_read_fpregs(struct proc *p, struct fpreg *regs)
 {
+	if (p->p_addr->u_pcb.pcb_flags & PCB_FPU)
+		fpu_save(p);
+
 	if (p->p_addr->u_pcb.pcb_flags & PCB_FPU)
 		memcpy(regs, &p->p_addr->u_pcb.pcb_fpstate, sizeof(*regs));
 	else
@@ -95,9 +99,13 @@ process_write_regs(struct proc *p, struct reg *regs)
 int
 process_write_fpregs(struct proc *p,  struct fpreg *regs)
 {
-	p->p_addr->u_pcb.pcb_flags |= PCB_FPU;
 	memcpy(&p->p_addr->u_pcb.pcb_fpstate, regs,
 	    sizeof(p->p_addr->u_pcb.pcb_fpstate));
+	p->p_addr->u_pcb.pcb_flags |= PCB_FPU;
+
+	/* drop FPU state */
+	fpu_drop();
+
 	return(0);
 }
 

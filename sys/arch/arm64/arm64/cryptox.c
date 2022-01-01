@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptox.c,v 1.5 2021/10/24 10:26:22 patrick Exp $	*/
+/*	$OpenBSD: cryptox.c,v 1.6 2022/01/01 18:52:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2003 Jason Wright
  * Copyright (c) 2003, 2004 Theo de Raadt
@@ -34,7 +34,7 @@
 #include <crypto/xform.h>
 #include <crypto/cryptosoft.h>
 
-#include <machine/vfp.h>
+#include <machine/fpu.h>
 
 struct cryptox_aes_key {
 	uint32_t rd_key[4 *(AES_MAXROUNDS + 1)];
@@ -163,10 +163,10 @@ cryptox_newsession(u_int32_t *sidp, struct cryptoini *cri)
 		switch (c->cri_alg) {
 		case CRYPTO_AES_CBC:
 			ses->ses_klen = c->cri_klen / 8;
-			vfp_kernel_enter();
+			fpu_kernel_enter();
 			aes_v8_set_encrypt_key(c->cri_key, c->cri_klen, &ses->ses_ekey);
 			aes_v8_set_decrypt_key(c->cri_key, c->cri_klen, &ses->ses_dkey);
-			vfp_kernel_exit();
+			fpu_kernel_exit();
 			break;
 
 		case CRYPTO_MD5_HMAC:
@@ -410,7 +410,7 @@ cryptox_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		    crd->crd_len, buf);
 
 	/* Apply cipher */
-	vfp_kernel_enter();
+	fpu_kernel_enter();
 	switch (crd->crd_alg) {
 	case CRYPTO_AES_CBC:
 		if (crd->crd_flags & CRD_F_ENCRYPT)
@@ -419,7 +419,7 @@ cryptox_encdec(struct cryptop *crp, struct cryptodesc *crd,
 			aes_v8_cbc_encrypt(buf, buf, crd->crd_len, &ses->ses_dkey, iv, 0);
 		break;
 	}
-	vfp_kernel_exit();
+	fpu_kernel_exit();
 
 	cryptox_ops++;
 

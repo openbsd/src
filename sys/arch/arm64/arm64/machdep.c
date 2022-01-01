@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.66 2021/12/06 09:49:46 jsg Exp $ */
+/* $OpenBSD: machdep.c,v 1.67 2022/01/01 18:52:36 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -43,7 +43,7 @@
 #include <machine/kcore.h>
 #include <machine/bootconfig.h>
 #include <machine/bus.h>
-#include <machine/vfp.h>
+#include <machine/fpu.h>
 #include <arm64/arm64/arm64var.h>
 
 #include <machine/db_machdep.h>
@@ -294,6 +294,23 @@ cpu_startup(void)
 	}
 }
 
+void    cpu_switchto_asm(struct proc *, struct proc *);
+
+void
+cpu_switchto(struct proc *old, struct proc *new)
+{
+	if (old) {
+		struct pcb *pcb = &old->p_addr->u_pcb;
+
+		if (pcb->pcb_flags & PCB_FPU)
+			fpu_save(old);
+
+		fpu_drop();
+	}
+
+	cpu_switchto_asm(old, new);
+}
+
 /*
  * machine dependent system variables.
  */
@@ -395,14 +412,13 @@ void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
     register_t *retval)
 {
-	struct trapframe *tf;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct trapframe *tf = pcb->pcb_tf;
 
 	/* If we were using the FPU, forget about it. */
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		vfp_discard(p);
-	p->p_addr->u_pcb.pcb_flags &= ~PCB_FPU;
-
-	tf = p->p_addr->u_pcb.pcb_tf;
+	memset(&pcb->pcb_fpstate, 0, sizeof(pcb->pcb_fpstate));
+	pcb->pcb_flags &= ~PCB_FPU;
+	fpu_drop();
 
 	memset (tf,0, sizeof(*tf));
 	tf->tf_sp = stack;

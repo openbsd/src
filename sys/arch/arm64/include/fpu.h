@@ -1,6 +1,6 @@
-/* $OpenBSD: pcb.h,v 1.5 2022/01/01 18:52:37 kettenis Exp $ */
+/*	$OpenBSD: fpu.h,v 1.1 2022/01/01 18:52:37 kettenis Exp $	*/
 /*
- * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
+ * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,31 +14,15 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifndef	_MACHINE_PCB_H_
-#define	_MACHINE_PCB_H_
 
-#include <machine/frame.h>
+#ifndef _MACHINE_FPU_H
+#define _MACHINE_FPU_H
 
-#include <machine/pte.h>
-#include <machine/reg.h>
+void fpu_save(struct proc *);
+void fpu_load(struct proc *);
+void fpu_drop(void);
 
-struct trapframe;
+void fpu_kernel_enter(void);
+void fpu_kernel_exit(void);
 
-/*
- * Warning certain fields must be within 256 bytes of the beginning
- * of this structure.
- */
-struct pcb {
-	u_int		pcb_flags;
-#define	PCB_FPU		0x00000001	/* Process had FPU initialized */
-#define	PCB_SINGLESTEP	0x00000002	/* Single step process */
-	struct		trapframe *pcb_tf;
-
-	register_t	pcb_sp;		// stack pointer of switchframe
-
-	caddr_t		pcb_onfault;	// On fault handler
-	struct fpreg	pcb_fpstate;	// Floating Point state */
-
-	void		*pcb_tcb;
-};
-#endif	/* _MACHINE_PCB_H_ */
+#endif /* !_MACHINE_FPU_H */

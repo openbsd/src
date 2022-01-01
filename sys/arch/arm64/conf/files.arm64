@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.50 2021/12/24 00:01:39 patrick Exp $
+# $OpenBSD: files.arm64,v 1.51 2022/01/01 18:52:37 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -25,9 +25,9 @@ file	arch/arm64/arm64/syscall.c
 file	arch/arm64/arm64/sys_machdep.c
 
 file	arch/arm64/arm64/cpu.c
+file	arch/arm64/arm64/fpu.c
 file	arch/arm64/arm64/intr.c
 file	arch/arm64/arm64/softintr.c
-file	arch/arm64/arm64/vfp.c
 file	arch/arm64/arm64/exception.S
 file	arch/arm64/arm64/trampoline.S
 file	arch/arm64/arm64/trap.c

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuswitch.S,v 1.4 2018/09/07 01:32:01 mortimer Exp $ */
+/* $OpenBSD: cpuswitch.S,v 1.5 2022/01/01 18:52:36 kettenis Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -27,7 +27,7 @@
  *      x4	- may contain user thread pointer (TCB)
  *	x5	- may contain PCB pointer (new or old)
  */
-ENTRY(cpu_switchto)
+ENTRY(cpu_switchto_asm)
         // check if old context needs to be saved
 	cmp x0, #0
 	beq	1f
@@ -46,18 +46,6 @@ ENTRY(cpu_switchto)
 	ldr	x5, [x2, #(CI_CURPCB)]
 	str 	x3, [x5, #(PCB_SP) ]		// save to old pcb
 
-
-	mov	x19, x1				//save new ctx across vfp
-	// old process has been saved
-	// save old fpu?
-	ldr	w7, [x5, #(PCB_FLAGS)]
-	mov	w3, #(PCB_FPU)
-	and	w7, w7, w3
-	cbz	w7, 1f
-
-	bl	vfp_save
-
-	mov	x1, x19
 1:
 	RETGUARD_SYMBOL(cpu_switchto)
 	RETGUARD_LOAD_RANDOM(cpu_switchto, x20)

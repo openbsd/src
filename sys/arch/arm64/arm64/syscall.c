@@ -1,4 +1,4 @@
-/* $OpenBSD: syscall.c,v 1.9 2021/12/09 00:26:11 guenther Exp $ */
+/* $OpenBSD: syscall.c,v 1.10 2022/01/01 18:52:36 kettenis Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -28,8 +28,6 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/vfp.h>
-
 #define MAXARGS 8
 
 void
@@ -42,9 +40,6 @@ svc_handler(trapframe_t *frame)
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
 
 	uvmexp.syscalls++;
-
-	/* Before enabling interrupts, save FPU state */
-	vfp_save();
 
 	/* Re-enable interrupts if they were enabled previously */
 	if (__predict_true((frame->tf_spsr & I_bit) == 0))

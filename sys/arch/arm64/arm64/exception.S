@@ -1,4 +1,4 @@
-/* $OpenBSD: exception.S,v 1.12 2021/02/17 12:11:44 kettenis Exp $ */
+/* $OpenBSD: exception.S,v 1.13 2022/01/01 18:52:36 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -209,7 +209,6 @@ handle_el0_sync:
 	mov	x0, sp
 	bl	do_el0_sync
 	do_ast
-	bl	_C_LABEL(vfp_enable)
 	allow_ss
 	restore_registers 0
 	return
@@ -219,11 +218,9 @@ handle_el0_sync:
 handle_el0_irq:
 	save_registers 0
 	disable_ss
-	bl	_C_LABEL(vfp_save)
 	mov	x0, sp
 	bl	arm_cpu_irq
 	do_ast
-	bl	_C_LABEL(vfp_enable)
 	allow_ss
 	restore_registers 0
 	return
@@ -233,11 +230,9 @@ handle_el0_irq:
 handle_el0_fiq:
 	save_registers 0
 	disable_ss
-	bl	_C_LABEL(vfp_save)
 	mov	x0, sp
 	bl	arm_cpu_fiq
 	do_ast
-	bl	_C_LABEL(vfp_enable)
 	allow_ss
 	restore_registers 0
 	return

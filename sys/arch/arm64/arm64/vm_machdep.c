@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.8 2021/05/16 06:20:29 jsg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.9 2022/01/01 18:52:36 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -56,8 +56,8 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
+#include <machine/fpu.h>
 #include <machine/reg.h>
-#include <machine/vfp.h>
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -70,14 +70,16 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
     void (*func)(void *), void *arg)
 {
 	struct pcb *pcb = &p2->p_addr->u_pcb;
+	struct pcb *pcb1 = &p1->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
 
-	// Does any flushing need to be done if process was running?
+	/* Save FPU state to PCB if necessary. */
+	if (pcb1->pcb_flags & PCB_FPU)
+		fpu_save(p1);
 
 	/* Copy the pcb. */
 	*pcb = p1->p_addr->u_pcb;
-	pcb->pcb_fpcpu = NULL;
 
 	tf = (struct trapframe *)((u_long)p2->p_addr
 	    + USPACE
@@ -109,10 +111,6 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 void
 cpu_exit(struct proc *p)
 {
-	/* If we were using the FPU, forget about it. */
-	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
-		vfp_discard(p);
-
 	pmap_deactivate(p);
 	sched_exit(p);
 }
