@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.48 2015/11/10 23:48:18 jmc Exp $
+.\"	$OpenBSD: rpc.3,v 1.49 2022/01/01 02:44:22 jsg Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .\"   NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\"   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 10 2015 $
+.Dd $Mdocdate: January 1 2022 $
 .Dt CALLRPC 3
 .Os
 .Sh NAME
@@ -650,7 +650,7 @@ or
 .Dv IPPROTO_TCP .
 A return value of zero means that the mapping does not exist
 or that
-the RPC system failured to contact the remote
+the RPC system failed to contact the remote
 .Xr portmap 8
 service.
 In the latter case, the global variable
