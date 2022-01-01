@@ -1,4 +1,4 @@
-.\"	$OpenBSD: roff.7,v 1.96 2020/10/28 21:07:01 schwarze Exp $
+.\"	$OpenBSD: roff.7,v 1.97 2022/01/01 03:59:22 jsg Exp $
 .\"
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 .\" Copyright (c) 2010-2019 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 28 2020 $
+.Dd $Mdocdate: January 1 2022 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -180,7 +180,7 @@ Italic font.
 Return to the previous font.
 If a macro caused a font change since the last
 .Ic \ef
-eascape sequence or
+escape sequence or
 .Ic \&ft
 request, this returns to the font before the last font change in
 the macro rather than to the font before the last manual font change.
