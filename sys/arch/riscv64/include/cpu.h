@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.10 2021/07/24 18:15:13 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.11 2022/01/01 14:18:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019 Mike Larkin <mlarkin@openbsd.org>
@@ -264,7 +264,6 @@ void	delay (unsigned);
 
 void fpu_save(struct proc *, struct trapframe *);
 void fpu_load(struct proc *);
-void fpu_discard(struct proc *p);
 
 extern int cpu_errata_sifive_cip_1200;
 
