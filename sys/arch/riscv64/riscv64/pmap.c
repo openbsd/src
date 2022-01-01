@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.20 2021/09/14 16:21:21 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.21 2022/01/01 11:45:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -1421,23 +1421,22 @@ pmap_deactivate(struct proc *p)
 /*
  * Get the physical page address for the given pmap/virtual address.
  */
-boolean_t
-pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pa)
+int
+pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 {
 	struct pte_desc *pted;
 
+	pmap_lock(pm);
 	pted = pmap_vp_lookup(pm, va, NULL);
+	if (!pted || !PTED_VALID(pted)) {
+		pmap_unlock(pm);
+		return 0;
+	}
+	if (pap != NULL)
+		*pap = (pted->pted_pte & PTE_RPGN) | (va & PAGE_MASK);
+	pmap_unlock(pm);
 
-	if (pted == NULL)
-		return FALSE;
-
-	if (pted->pted_pte == 0)
-		return FALSE;
-
-	if (pa != NULL)
-		*pa = (pted->pted_pte & PTE_RPGN) | (va & PAGE_MASK);
-
-	return TRUE;
+	return 1;
 }
 
 void
@@ -1835,11 +1834,13 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 {
 	struct pte_desc *pted;
 
+	pmap_lock(pm);
 	pted = pmap_vp_lookup(pm, va, NULL);
 	if ((pted != NULL) && (pted->pted_va & PTED_VA_WIRED_M)) {
 		pm->pm_stats.wired_count--;
 		pted->pted_va &= ~PTED_VA_WIRED_M;
 	}
+	pmap_unlock(pm);
 }
 
 void
