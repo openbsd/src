@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.18 2022/01/01 18:52:37 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.19 2022/01/02 02:26:50 jsg Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -168,7 +168,7 @@
 #define	 EXCP_PC_ALIGN		0x22	/* PC alignment fault */
 #define	 EXCP_DATA_ABORT_L	0x24	/* Data abort, from lower EL */
 #define	 EXCP_DATA_ABORT	0x25	/* Data abort, from same EL */ 
-#define	 EXCP_SP_ALIGN		0x26	/* SP slignment fault */
+#define	 EXCP_SP_ALIGN		0x26	/* SP alignment fault */
 #define	 EXCP_TRAP_FP		0x2c	/* Trapped FP exception */
 #define	 EXCP_SERROR		0x2f	/* SError interrupt */
 #define	 EXCP_SOFTSTP_EL0	0x32	/* Software Step, from lower EL */
