@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofwreal.S,v 1.7 2020/11/28 19:49:30 gkoehler Exp $	*/
+/*	$OpenBSD: ofwreal.S,v 1.8 2022/01/02 23:31:10 jsg Exp $	*/
 /*	$NetBSD: ofwreal.S,v 1.1 1996/09/30 16:34:51 ws Exp $	*/
 
 /*
@@ -340,7 +340,7 @@ _ENTRY(_C_LABEL(fwentry))
 
 	stw	%r3,12(%r1)		/* save return value */
 
-	lis	%r3,fwsave@ha		/* save mmu values of firmare */
+	lis	%r3,fwsave@ha		/* save mmu values of firmware */
 	addi	%r3,%r3,fwsave@l	/* (might not be necessary, but... */
 	lis	%r4,fwbatsave@ha
 	addi	%r4,%r4,fwbatsave@l
