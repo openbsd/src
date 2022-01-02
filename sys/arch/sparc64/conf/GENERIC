@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.321 2022/01/02 05:37:19 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.322 2022/01/02 23:14:27 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -103,7 +103,7 @@ ath*	at pci?			# Atheros AR5k (802.11a/b/g)
 ath*	at cardbus?		# Atheros AR5k (802.11a/b/g)
 athn*	at pci?			# Atheros AR9k (802.11a/g/n)
 athn*	at cardbus?		# Atheros AR9k (802.11a/g/n)
-#pgt*	at pci?			# Prism54 (only full-mac varients)
+#pgt*	at pci?			# Prism54 Full-MAC
 #acx*	at pci?			# TI ACX100/ACX111 (802.11b/g)
 #acx*	at cardbus?		# TI ACX100/ACX111 (802.11b/g)
 ral*	at pci?			# Ralink RT2500/RT2501/RT2600

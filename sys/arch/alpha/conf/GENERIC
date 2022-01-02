@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.270 2021/10/21 18:36:41 bluhm Exp $
+#	$OpenBSD: GENERIC,v 1.271 2022/01/02 23:14:26 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -253,7 +253,7 @@ acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)
 an*	at pci?				# Aironet IEEE 802.11DS
 ath*	at pci?				# Atheros AR5k (802.11)
 atw*	at pci?				# ADMtek ADM8211 (802.11)
-pgt*	at pci?				# Prism54 (only full-mac varients)
+pgt*	at pci?				# Prism54 Full-MAC
 ral*	at pci?				# Ralink RT2500/RT2501/RT2600
 #rtw*	at pci?				# Realtek 8180
 wi*	at pci?				# WaveLAN IEEE 802.11DS
