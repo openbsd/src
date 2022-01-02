@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.35 2021/10/24 17:52:28 mpi Exp $ */
+/* $OpenBSD: agintc.c,v 1.36 2022/01/02 20:00:21 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -935,7 +935,7 @@ agintc_run_handler(struct intrhand *ih, void *frame, int s)
 		KERNEL_LOCK();
 #endif
 
-	if (ih->ih_arg != 0)
+	if (ih->ih_arg)
 		arg = ih->ih_arg;
 	else
 		arg = frame;
