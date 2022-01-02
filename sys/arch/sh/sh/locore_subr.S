@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_subr.S,v 1.12 2016/05/23 20:11:49 deraadt Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.13 2022/01/02 06:16:08 jsg Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*
@@ -510,7 +510,7 @@ _C_LABEL(esigcode):
 
 	.globl	sigfill
 sigfill:
-	sleep		/* priviledged -> illegal? */
+	sleep		/* privileged -> illegal? */
 esigfill:
 
 	.data
