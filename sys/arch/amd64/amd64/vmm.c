@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.299 2021/12/09 19:33:53 guenther Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.300 2022/01/02 05:00:28 jsg Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1457,7 +1457,7 @@ vm_create_check_mem_ranges(struct vm_create_params *vcp)
 			return (0);
 
 		/*
-		 * Make sure that guest physcal memory ranges do not overlap
+		 * Make sure that guest physical memory ranges do not overlap
 		 * and that they are ascending.
 		 */
 		if (i > 0 && pvmr->vmr_gpa + pvmr->vmr_size > vmr->vmr_gpa)
@@ -4088,11 +4088,11 @@ vcpu_vmx_compute_ctrl(uint64_t ctrlval, uint16_t ctrl, uint32_t want1,
  * after allocating a sufficiently large buffer.
  *
  * Parameters:
- *  vip: information structure identifying the VM to queery
+ *  vip: information structure identifying the VM to query
  *
  * Return values:
  *  0: the operation succeeded
- *  ENOMEM: memory allocation error during processng
+ *  ENOMEM: memory allocation error during processing
  *  EFAULT: error copying data to user process
  */
 int
@@ -4706,7 +4706,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 			return (EINVAL);
 		}
 
-		/* Interruptbility state 0x3 covers NMIs and STI */
+		/* Interruptibility state 0x3 covers NMIs and STI */
 		if (!(int_st & 0x3) && vcpu->vc_irqready) {
 			eii = (irq & 0xFF);
 			eii |= (1ULL << 31);	/* Valid */
@@ -5306,7 +5306,7 @@ vmx_handle_exit(struct vcpu *vcpu)
 			return (EINVAL);
 		}
 
-		/* Interruptibilty state 0x3 covers NMIs and STI */
+		/* Interruptibility state 0x3 covers NMIs and STI */
 		istate &= ~0x3;
 
 		if (vmwrite(VMCS_GUEST_INTERRUPTIBILITY_ST,
@@ -6659,7 +6659,7 @@ svm_handle_msr(struct vcpu *vcpu)
 			*rdx = (vcpu->vc_shadow_pat >> 32);
 			break;
 		case MSR_DE_CFG:
-			/* LFENCE seralizing bit is set by host */
+			/* LFENCE serializing bit is set by host */
 			*rax = DE_CFG_SERIALIZE_LFENCE;
 			*rdx = 0;
 			break;
