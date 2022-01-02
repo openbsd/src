@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.6 2019/10/25 21:13:50 kettenis Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.7 2022/01/02 23:29:12 jsg Exp $	*/
 /*	$NetBSD: lubbock_start.S,v 1.1 2003/06/18 10:51:15 bsh Exp $ */
 
 /*
@@ -39,7 +39,7 @@
 
 /*
  * Kernel start routine for OMAP
- * this code is excuted at the very first after the kernel is loaded
+ * this code is executed at the very first after the kernel is loaded
  * by U-Boot.
  *
  * This code makes a number of assumptions.
