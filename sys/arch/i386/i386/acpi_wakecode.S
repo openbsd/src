@@ -157,7 +157,7 @@ _ACPI_TRMP_OFFSET(.Lacpi_s3_vector_real)
 	 * Force CPU into protected mode
 	 * by making an intersegment jump (to ourselves, just a few lines
 	 * down from here. We rely on the kernel to fixup the jump
-	 * target addres previously.
+	 * target address previously.
 	 *
 	 */
 	ljmpl	$0x8, $.Lacpi_protected_mode_trampoline

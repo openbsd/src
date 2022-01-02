@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.120 2021/07/23 00:29:14 jmatthew Exp $	*/
+/*	$OpenBSD: pci.c,v 1.121 2022/01/02 03:41:08 jsg Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -1353,7 +1353,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		splx(s);
 
 		/*
-		 * Section 6.2.5.2 `Expansion ROM Base Addres Register',
+		 * Section 6.2.5.2 `Expansion ROM Base Address Register',
 		 *
 		 * tells us that only the upper 21 bits are writable.
 		 * This means that the size of a ROM must be a

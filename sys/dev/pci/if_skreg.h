@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.61 2017/04/08 03:36:50 jmatthew Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.62 2022/01/02 03:41:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1821,7 +1821,7 @@ struct msk_status_desc {
 /* SMI Data Register (SMIDR) */
 #define YUKON_SMIDR		0x0084
 
-/* PHY Addres Register (PAR) */
+/* PHY Address Register (PAR) */
 #define YUKON_PAR		0x0088
 
 #define YU_PAR_MIB_CLR		0x0020	/* MIB Counters Clear Mode */

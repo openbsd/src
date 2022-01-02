@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.13 2021/07/02 10:42:22 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.14 2022/01/02 03:41:08 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2015-2018 Ruslan Bukin <br@bsdpad.com>
@@ -208,7 +208,7 @@ va:
 	sd	t0, RISCV_BOOTPARAMS_DTBP_VIRT(sp)
 	sd	a1, RISCV_BOOTPARAMS_DTBP_PHYS(sp)
 
-	/* Set esym to virtual addres of symbol table end */
+	/* Set esym to virtual address of symbol table end */
 	lla	t0, esym
 	sub	t1, a0, s9
 	li	t2, KERNBASE
