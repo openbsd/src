@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.183 2021/08/20 05:23:18 anton Exp $
+#	$OpenBSD: GENERIC,v 1.184 2022/01/02 05:37:19 jsg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -334,7 +334,7 @@ wd*	at pciide? flags 0x0000
 atapiscsi* at pciide?
 
 # These entries find devices on all SCSI busses and assign
-# unit numers dynamically.
+# unit numbers dynamically.
 scsibus* at scsi?
 sd*	at scsibus?
 st*	at scsibus?
