@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.55 2021/12/29 00:04:45 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.56 2022/01/02 17:26:14 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -116,7 +116,7 @@ get_header(const uint64_t sector)
 	char			*secbuf;
 	uint64_t		 partlastlba, partslen, lba_end;
 	int			 partspersec;
-	uint32_t		 orig_gh_csum, new_gh_csum;
+	uint32_t		 gh_csum;
 
 	secbuf = DISK_readsectors(sector, 1);
 	if (secbuf == NULL)
@@ -161,14 +161,15 @@ get_header(const uint64_t sector)
 		return -1;
 	}
 
-	orig_gh_csum = gh.gh_csum;
+	gh_csum = gh.gh_csum;
 	gh.gh_csum = 0;
-	new_gh_csum = crc32((unsigned char *)&gh, letoh32(gh.gh_size));
-	gh.gh_csum = orig_gh_csum;
-	if (new_gh_csum != letoh32(gh.gh_csum)) {
+	gh.gh_csum = htole32(crc32((unsigned char *)&gh, letoh32(gh.gh_size)));
+	if (gh_csum != gh.gh_csum) {
 		DPRINTF("gpt header checksum: expected 0x%x, got 0x%x\n",
-		    new_gh_csum, letoh32(gh.gh_csum));
-		return -1;
+		    letoh32(gh.gh_csum), letoh32(gh_csum));
+		/* Accept wrong-endian checksum. */
+		if (swap32(gh_csum) != gh.gh_csum)
+			return -1;
 	}
 
 	/* XXX Assume part_num * part_size is multiple of secsize. */
@@ -220,7 +221,7 @@ get_partition_table(void)
 {
 	char			*secbuf;
 	uint64_t		 gpbytes, gpsectors;
-	uint32_t		 checksum, partspersec;
+	uint32_t		 gh_part_csum, partspersec;
 
 	DPRINTF("gpt partition table being read from LBA %llu\n",
 	    letoh64(gh.gh_part_lba));
@@ -242,11 +243,15 @@ get_partition_table(void)
 	memcpy(&gp, secbuf, gpbytes);
 	free(secbuf);
 
-	checksum = crc32((unsigned char *)&gp, gpbytes);
-	if (checksum != letoh32(gh.gh_part_csum)) {
+	gh_part_csum = gh.gh_part_csum;
+	gh.gh_part_csum = htole32(crc32((unsigned char *)&gp, gpbytes));
+	if (gh_part_csum != gh.gh_part_csum) {
 		DPRINTF("gpt partition table checksum: expected 0x%x, "
-		    "got 0x%x\n", checksum, letoh32(gh.gh_part_csum));
-		return -1;
+		    "got 0x%x\n", letoh32(gh.gh_part_csum),
+		    letoh32(gh_part_csum));
+		/* Accept wrong-endian checksum. */
+		if (swap32(gh_part_csum) != gh.gh_part_csum)
+			return -1;
 	}
 
 	return 0;
@@ -455,8 +460,9 @@ add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 		goto done;
 
 	uuid_enc_le(&gp[pn].gp_guid, &uuid);
-	gh.gh_part_csum = crc32((unsigned char *)&gp, sizeof(gp));
-	gh.gh_csum = crc32((unsigned char *)&gh, sizeof(gh));
+	gh.gh_part_csum = htole32(crc32((unsigned char *)&gp, sizeof(gp)));
+	gh.gh_csum = 0;
+	gh.gh_csum = htole32(crc32((unsigned char *)&gh, sizeof(gh)));
 
 	return 0;
 
@@ -620,9 +626,9 @@ GPT_write(void)
 	gh.gh_lba_self = htole64(prigh);
 	gh.gh_lba_alt = htole64(altgh);
 	gh.gh_part_lba = htole64(prigp);
-	gh.gh_part_csum = crc32((unsigned char *)&gp, gpbytes);
+	gh.gh_part_csum = htole32(crc32((unsigned char *)&gp, gpbytes));
 	gh.gh_csum = 0;
-	gh.gh_csum = crc32((unsigned char *)&gh, letoh32(gh.gh_size));
+	gh.gh_csum = htole32(crc32((unsigned char *)&gh, letoh32(gh.gh_size)));
 
 	secbuf = DISK_readsectors(prigh, 1);
 	if (secbuf == NULL)
@@ -638,7 +644,7 @@ GPT_write(void)
 	gh.gh_lba_alt = htole64(prigh);
 	gh.gh_part_lba = htole64(altgp);
 	gh.gh_csum = 0;
-	gh.gh_csum = crc32((unsigned char *)&gh, letoh32(gh.gh_size));
+	gh.gh_csum = htole32(crc32((unsigned char *)&gh, letoh32(gh.gh_size)));
 
 	secbuf = DISK_readsectors(altgh, 1);
 	if (secbuf == NULL)

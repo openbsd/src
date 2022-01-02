@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_disk.c,v 1.247 2021/12/22 22:20:13 bluhm Exp $	*/
+/*	$OpenBSD: subr_disk.c,v 1.248 2022/01/02 17:26:14 krw Exp $	*/
 /*	$NetBSD: subr_disk.c,v 1.17 1996/03/16 23:17:08 christos Exp $	*/
 
 /*
@@ -623,7 +623,7 @@ gpt_chk_hdr(struct gpt_header *gh, struct disklabel *lp)
 {
 	uint64_t ghpartlba;
 	uint64_t ghlbaend, ghlbastart;
-	uint32_t orig_gh_csum;
+	uint32_t gh_csum;
 	uint32_t ghsize, ghpartsize, ghpartspersec;
 
 	if (letoh64(gh->gh_sig) != GPTSIGNATURE)
@@ -642,11 +642,11 @@ gpt_chk_hdr(struct gpt_header *gh, struct disklabel *lp)
 	if (ghsize < GPTMINHDRSIZE || ghsize > sizeof(struct gpt_header))
 		return (EINVAL);
 
-	orig_gh_csum = gh->gh_csum;
+	gh_csum = gh->gh_csum;
 	gh->gh_csum = 0;
-	gh->gh_csum = crc32(0, (unsigned char *)gh, ghsize);
+	gh->gh_csum = htole32(crc32(0, (unsigned char *)gh, ghsize));
 
-	if (orig_gh_csum != gh->gh_csum)
+	if (gh_csum != gh->gh_csum)
 		return (EINVAL);
 
 	if (ghlbastart >= DL_GETDSIZE(lp) ||
@@ -676,11 +676,12 @@ gpt_chk_hdr(struct gpt_header *gh, struct disklabel *lp)
 int
 gpt_chk_parts(struct gpt_header *gh, struct gpt_partition *gp)
 {
-	u_int32_t checksum;
-	checksum = crc32(0, (unsigned char *)gp,
-	    letoh32(gh->gh_part_num) * letoh32(gh->gh_part_size));
+	u_int32_t gh_part_csum;
 
-	if (checksum != gh->gh_part_csum)
+	gh_part_csum = htole32(crc32(0, (unsigned char *)gp,
+	    letoh32(gh->gh_part_num) * letoh32(gh->gh_part_size)));
+
+	if (gh_part_csum != gh->gh_part_csum)
 		return (EINVAL);
 
 	return 0;
