@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiacpi.c,v 1.13 2022/01/02 01:59:42 jsg Exp $	*/
+/*	$OpenBSD: efiacpi.c,v 1.14 2022/01/02 02:13:33 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -186,7 +186,7 @@ struct acpi_fadt {
 	/*
 	 * Following values only exist when rev > 1
 	 * If the extended addresses exists, they
-	 * must be used in preferense to the non-
+	 * must be used in preference to the non-
 	 * extended values above
 	 */
 	struct acpi_gas	reset_reg;

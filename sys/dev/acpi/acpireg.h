@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.56 2021/10/23 16:39:03 dv Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.57 2022/01/02 02:13:33 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -178,7 +178,7 @@ struct acpi_fadt {
 	/*
 	 * Following values only exist when rev > 1
 	 * If the extended addresses exists, they
-	 * must be used in preferense to the non-
+	 * must be used in preference to the non-
 	 * extended values above
 	 */
 	struct acpi_gas	reset_reg;
