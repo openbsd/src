@@ -1,4 +1,4 @@
-/*	$OpenBSD: run_i386.S,v 1.1 2015/09/02 01:52:26 yasuoka Exp $	*/
+/*	$OpenBSD: run_i386.S,v 1.2 2022/01/02 05:49:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -37,7 +37,7 @@ start:
 	 * %rdi == loaded start address, %rsi == kernel start address
 	 */
 
-	/* re-arrange the parameters for the x86 calling convension */
+	/* re-arrange the parameters for the x86 calling convention */
 	mov	%edx, (run_i386_end - start - 0x20)(%rdi)
 	mov	%ecx, (run_i386_end - start - 0x1c)(%rdi)
 	mov	%r8d, (run_i386_end - start - 0x18)(%rdi)
