@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.4 2021/05/16 15:10:19 deraadt Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.5 2022/01/02 20:10:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -193,6 +193,39 @@ aplintc_cpuinit(void)
 }
 
 void
+aplintc_run_handler(struct intrhand *ih, void *frame, int s)
+{
+	void *arg;
+	int handled;
+
+#ifdef MULTIPROCESSOR
+	int need_lock;
+
+	if (ih->ih_flags & IPL_MPSAFE)
+		need_lock = 0;
+	else
+		need_lock = s < IPL_SCHED;
+
+	if (need_lock)
+		KERNEL_LOCK();
+#endif
+
+	if (ih->ih_arg)
+		arg = ih->ih_arg;
+	else
+		arg = frame;
+
+	handled = ih->ih_func(arg);
+	if (handled)
+		ih->ih_count.ec_count++;
+
+#ifdef MULTIPROCESSOR
+	if (need_lock)
+		KERNEL_UNLOCK();
+#endif
+}
+
+void
 aplintc_irq_handler(void *frame)
 {
 	struct aplintc_softc *sc = aplintc_sc;
@@ -200,7 +233,6 @@ aplintc_irq_handler(void *frame)
 	struct intrhand *ih;
 	uint32_t event;
 	uint32_t irq, type;
-	int handled;
 	int s;
 
 	event = HREAD4(sc, AIC_EVENT);
@@ -233,10 +265,8 @@ aplintc_irq_handler(void *frame)
 	} else {
 		s = aplintc_splraise(ih->ih_ipl);
 		intr_enable();
-		handled = ih->ih_func(ih->ih_arg);
+		aplintc_run_handler(ih, frame, s);
 		intr_disable();
-		if (handled)
-			ih->ih_count.ec_count++;
 		aplintc_splx(s);
 
 		HWRITE4(sc, AIC_MASK_CLR(irq), AIC_MASK_BIT(irq));
