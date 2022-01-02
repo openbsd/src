@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiacpi.c,v 1.12 2021/06/06 23:56:55 krw Exp $	*/
+/*	$OpenBSD: efiacpi.c,v 1.13 2022/01/02 01:59:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -227,7 +227,7 @@ struct acpi_gtdt {
 	uint32_t	nonsec_el2_flags;
 	uint64_t	cnt_read_base;
 	uint32_t	platform_timer_count;
-	uint32_t	plaform_timer_offset;
+	uint32_t	platform_timer_offset;
 } __packed;
 
 struct acpi_madt {
