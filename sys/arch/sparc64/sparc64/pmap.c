@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.103 2017/12/04 22:06:21 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.104 2022/01/02 23:39:48 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -94,7 +94,7 @@ void pmap_copy_phys(paddr_t src, paddr_t dst);
  * writeable we set the TLB_REAL_W bit for the trap handler.
  *
  * Whenever we take a TLB miss trap, the trap handler will set the TLB_ACCESS
- * bit in the approprate TTE in the page table.  Whenever we take a protection
+ * bit in the appropriate TTE in the page table.  Whenever we take a protection
  * fault, if the TLB_REAL_W bit is set then we flip both the TLB_W and TLB_MOD
  * bits to enable writing and mark the page as modified.
  *
