@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.373 2021/12/01 12:51:09 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.374 2022/01/02 22:36:04 jsg Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3444,7 +3444,7 @@ syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
  *
  *	-1	We were unable to create the new connection, and are
  *		aborting it.  An ACK,RST is being sent to the peer
- *		(unless we got screwey sequence numbners; see below),
+ *		(unless we got screwy sequence numbers; see below),
  *		because the 3-way handshake has been completed.  Caller
  *		should not free the mbuf, since we may be using it.  If
  *		we are not, we will free it.

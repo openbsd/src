@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.96 2021/12/23 12:21:48 bluhm Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.97 2022/01/02 22:36:04 jsg Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -276,7 +276,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 	/*
 	 * If this is just an IP-IP TDB and we're told there's already an
-	 * encapsulation header or ipip_output() has encapsulted it, move on.
+	 * encapsulation header or ipip_output() has encapsulated it, move on.
 	 */
 	if (tdb->tdb_xform->xf_type == XF_IP4)
 		return ipsp_process_done(m, tdb);

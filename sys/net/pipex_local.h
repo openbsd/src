@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.43 2021/07/27 09:29:09 mvs Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.44 2022/01/02 22:36:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -70,7 +70,7 @@ struct pipex_mppe {
 		reserved:14;
 	int16_t	keylenbits;			/* [I] key length */
 	int16_t keylen;				/* [I] */
-	uint16_t coher_cnt;			/* [m] cohency counter */
+	uint16_t coher_cnt;			/* [m] coherency counter */
 	struct  rc4_ctx rc4ctx;			/* [m] */
 	u_char master_key[PIPEX_MPPE_KEYLEN];	/* [m] master key of MPPE */
 	u_char session_key[PIPEX_MPPE_KEYLEN];	/* [m] session key of MPPE */
@@ -153,7 +153,7 @@ struct pipex_l2tp_session {
 
 struct cpumem;
 
-/* pppac ip-extension sessoin table */
+/* pppac ip-extension session table */
 struct pipex_session {
 	struct radix_node	ps4_rn[2];
 					/* [N] tree glue, and other values */

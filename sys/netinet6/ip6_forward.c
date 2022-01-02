@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.104 2021/12/03 17:18:34 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.105 2022/01/02 22:36:04 jsg Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -277,7 +277,7 @@ reroute:
 
 	/*
 	 * Fake scoped addresses. Note that even link-local source or
-	 * destinaion can appear, if the originating node just sends the
+	 * destination can appear, if the originating node just sends the
 	 * packet to us (without address resolution for the destination).
 	 * Since both icmp6_error and icmp6_redirect_output fill the embedded
 	 * link identifiers, we can do this stuff after making a copy for

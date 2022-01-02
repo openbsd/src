@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.7 2021/06/23 06:53:52 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.8 2022/01/02 22:36:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -176,7 +176,7 @@ struct pf_pdesc {
 	u_int32_t	 off;		/* protocol header offset */
 	u_int32_t	 hdrlen;	/* protocol header length */
 	u_int32_t	 p_len;		/* length of protocol payload */
-	u_int32_t	 extoff;	/* extentsion header offset */
+	u_int32_t	 extoff;	/* extension header offset */
 	u_int32_t	 fragoff;	/* fragment header offset */
 	u_int32_t	 jumbolen;	/* length from v6 jumbo header */
 	u_int32_t	 badopts;	/* v4 options or v6 routing headers */

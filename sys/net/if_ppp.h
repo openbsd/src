@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.h,v 1.9 2017/10/24 09:36:13 jsg Exp $	*/
+/*	$OpenBSD: if_ppp.h,v 1.10 2022/01/02 22:36:03 jsg Exp $	*/
 /*	$NetBSD: if_ppp.h,v 1.11 1996/03/15 02:28:05 paulus Exp $	*/
 
 /*
@@ -93,7 +93,7 @@
  */
 
 struct npioctl {
-    int		protocol;	/* PPP procotol, e.g. PPP_IP */
+    int		protocol;	/* PPP protocol, e.g. PPP_IP */
     enum NPmode	mode;
 };
 

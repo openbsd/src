@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.h,v 1.30 2021/01/04 12:21:38 mvs Exp $	*/
+/*	$OpenBSD: pipex.h,v 1.31 2022/01/02 22:36:04 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -51,7 +51,7 @@ struct pipex_mppe_req {
 	int16_t	stateless;			/* mppe key mode.
 						   1 for stateless */
 	int16_t	keylenbits;			/* mppe key length(in bits)*/
-	u_char	master_key[PIPEX_MPPE_KEYLEN];	/* mppe mastter key */
+	u_char	master_key[PIPEX_MPPE_KEYLEN];	/* mppe master key */
 };
 
 /* pipex statistics */

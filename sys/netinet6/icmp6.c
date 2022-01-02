@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.236 2021/07/26 20:44:44 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.237 2022/01/02 22:36:04 jsg Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -914,7 +914,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 		icmp6dst.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.ph_ifidx,
 		    &icmp6dst.sin6_addr);
 		if (in6_embedscope(&icmp6dst.sin6_addr, &icmp6dst, NULL)) {
-			/* should be impossbile */
+			/* should be impossible */
 			nd6log((LOG_DEBUG,
 			    "icmp6_notify_error: in6_embedscope failed\n"));
 			goto freeit;
@@ -931,7 +931,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 		icmp6src.sin6_scope_id = in6_addr2scopeid(m->m_pkthdr.ph_ifidx,
 		    &icmp6src.sin6_addr);
 		if (in6_embedscope(&icmp6src.sin6_addr, &icmp6src, NULL)) {
-			/* should be impossbile */
+			/* should be impossible */
 			nd6log((LOG_DEBUG,
 			    "icmp6_notify_error: in6_embedscope failed\n"));
 			goto freeit;

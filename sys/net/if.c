@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.645 2021/12/26 01:00:32 sashan Exp $	*/
+/*	$OpenBSD: if.c,v 1.646 2022/01/02 22:36:03 jsg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -258,7 +258,7 @@ ifinit(void)
 
 	/*
 	 * most machines boot with 4 or 5 interfaces, so size the initial map
-	 * to accomodate this
+	 * to accommodate this
 	 */
 	if_idxmap_init(8);
 
@@ -744,7 +744,7 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 
 #if NBPFILTER > 0
 	/*
-	 * Only send packets to bpf if they are destinated to local
+	 * Only send packets to bpf if they are destined to local
 	 * addresses.
 	 *
 	 * if_input_local() is also called for SIMPLEX interfaces to

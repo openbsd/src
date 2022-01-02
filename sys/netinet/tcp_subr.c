@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.182 2021/11/11 18:08:18 bluhm Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.183 2022/01/02 22:36:04 jsg Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -667,7 +667,7 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			/*
 			 * Depending on the value of "valid" and routing table
 			 * size (mtudisc_{hi,lo}wat), we will:
-			 * - recalcurate the new MTU and create the
+			 * - recalculate the new MTU and create the
 			 *   corresponding routing entry, or
 			 * - ignore the MTU change notification.
 			 */

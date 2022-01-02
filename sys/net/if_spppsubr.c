@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.190 2021/11/17 18:00:24 bket Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.191 2022/01/02 22:36:03 jsg Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -4015,7 +4015,7 @@ sppp_pap_scr(struct sppp *sp)
 /*
  * Send a PAP or CHAP proto packet.
  *
- * Varadic function, each of the elements for the ellipsis is of type
+ * Variadic function, each of the elements for the ellipsis is of type
  * ``size_t mlen, const u_char *msg''.  Processing will stop iff
  * mlen == 0.
  */

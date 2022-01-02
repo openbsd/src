@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6protosw.h,v 1.14 2021/03/10 10:21:49 jsg Exp $	*/
+/*	$OpenBSD: ip6protosw.h,v 1.15 2022/01/02 22:36:05 jsg Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ struct in6_addr;
  * argument type for the last arg of pr_ctlinput().
  * should be consulted only with AF_INET6 family.
  *
- * IPv6 ICMP IPv6 [exthdrs] finalhdr paylaod
+ * IPv6 ICMP IPv6 [exthdrs] finalhdr payload
  * ^    ^    ^              ^
  * |    |    ip6c_ip6       ip6c_off
  * |    ip6c_icmp6

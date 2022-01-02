@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.68 2020/12/20 21:15:47 bluhm Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.69 2022/01/02 22:36:04 jsg Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -529,7 +529,7 @@ tcp_timer_reaper(void *arg)
 	/*
 	 * This timer is necessary to delay the pool_put() after all timers
 	 * have finished, even if they were sleeping to grab the net lock.
-	 * Putting the pool_put() in a timer is sufficinet as all timers run
+	 * Putting the pool_put() in a timer is sufficient as all timers run
 	 * from the same timeout thread.  Note that neither softnet thread nor
 	 * user process may access the tcpcb after arming the reaper timer.
 	 * Freeing may run in parallel as it does not grab the net lock.

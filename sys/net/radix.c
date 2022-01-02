@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.60 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: radix.c,v 1.61 2022/01/02 22:36:04 jsg Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -709,7 +709,7 @@ rn_link_dupedkey(struct radix_node *tt, struct radix_node *x, int before)
  * - leaf nodes with possible rn_dupedkey list
  * - internal nodes with maybe their own mklist
  * If the mask of the route is bigger than the current branch bit then
- * a rn_mklist entrie needs to be made.
+ * a rn_mklist entry needs to be made.
  */
 void
 rn_fixup_nodes(struct radix_node *tt)

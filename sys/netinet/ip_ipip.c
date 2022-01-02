@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.97 2021/10/23 22:19:37 bluhm Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.98 2022/01/02 22:36:04 jsg Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -356,7 +356,7 @@ ipip_output(struct mbuf **mp, struct tdb *tdb)
 		    tdb->tdb_src.sin.sin_addr.s_addr == INADDR_ANY ||
 		    tdb->tdb_dst.sin.sin_addr.s_addr == INADDR_ANY) {
 
-			DPRINTF("unspecified tunnel endpoind address "
+			DPRINTF("unspecified tunnel endpoint address "
 			    "in SA %s/%08x",
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi));
@@ -445,7 +445,7 @@ ipip_output(struct mbuf **mp, struct tdb *tdb)
 		    tdb->tdb_src.sa.sa_family != AF_INET6 ||
 		    IN6_IS_ADDR_UNSPECIFIED(&tdb->tdb_src.sin6.sin6_addr)) {
 
-			DPRINTF("unspecified tunnel endpoind address "
+			DPRINTF("unspecified tunnel endpoint address "
 			    "in SA %s/%08x",
 			    ipsp_address(&tdb->tdb_dst, buf, sizeof(buf)),
 			    ntohl(tdb->tdb_spi));

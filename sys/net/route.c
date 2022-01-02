@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.399 2021/05/25 22:45:09 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.400 2022/01/02 22:36:04 jsg Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1843,7 +1843,7 @@ db_print_ifa(struct ifaddr *ifa)
 }
 
 /*
- * Function to pass to rtalble_walk().
+ * Function to pass to rtable_walk().
  * Return non-zero error to abort walk.
  */
 int

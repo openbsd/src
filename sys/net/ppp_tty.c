@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.53 2019/11/27 17:59:13 beck Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.54 2022/01/02 22:36:04 jsg Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -286,7 +286,7 @@ pppread(struct tty *tp, struct uio *uio, int flag)
     if (sc == NULL)
 	return 0;
     /*
-     * Loop waiting for input, checking that nothing disasterous
+     * Loop waiting for input, checking that nothing disastrous
      * happens in the meantime.
      */
     s = spltty();

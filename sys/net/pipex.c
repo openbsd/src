@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.135 2021/07/27 09:29:09 mvs Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.136 2022/01/02 22:36:04 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -199,7 +199,7 @@ pipex_init_session(struct pipex_session **rsession,
 	struct ifnet *over_ifp = NULL;
 #endif
 
-	/* Checks requeted parameters.  */
+	/* Checks requested parameters.  */
 	switch (req->pr_protocol) {
 #ifdef PIPEX_PPPOE
 	case PIPEX_PROTO_PPPOE:
@@ -1033,7 +1033,7 @@ pipex_common_input(struct pipex_session *session, struct mbuf *m0, int hlen,
 	}
 
 	/* ok,  The packet is for PIPEX */
-	m_adj(m0, hlen);/* cut off the tunnle protocol header */
+	m_adj(m0, hlen);/* cut off the tunnel protocol header */
 
 	/* ensure the mbuf length equals the PPP frame length */
 	if (m0->m_pkthdr.len < plen)

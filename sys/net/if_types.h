@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_types.h,v 1.23 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: if_types.h,v 1.24 2022/01/02 22:36:04 jsg Exp $	*/
 /*	$NetBSD: if_types.h,v 1.17 2000/10/26 06:51:31 onoe Exp $	*/
 
 /*
@@ -205,7 +205,7 @@
 #define	IFT_USB			   0xa0	/* USB Interface */
 #define	IFT_IEEE8023ADLAG	   0xa1	/* IEEE 802.3ad Link Aggregate*/
 #define	IFT_BGPPOLICYACCOUNTING	   0xa2	/* BGP Policy Accounting */
-#define	IFT_FRF16MFRBUNDLE	   0xa3	/* FRF.16 Multilik Frame Relay*/
+#define	IFT_FRF16MFRBUNDLE	   0xa3	/* FRF.16 Multilink Frame Relay*/
 #define	IFT_H323GATEKEEPER	   0xa4	/* H323 Gatekeeper */
 #define	IFT_H323PROXY		   0xa5	/* H323 Voice and Video Proxy */
 #define	IFT_MPLS		   0xa6	/* MPLS */

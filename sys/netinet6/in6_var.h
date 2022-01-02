@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_var.h,v 1.73 2020/07/03 17:42:50 florian Exp $	*/
+/*	$OpenBSD: in6_var.h,v 1.74 2022/01/02 22:36:04 jsg Exp $	*/
 /*	$KAME: in6_var.h,v 1.55 2001/02/16 12:49:45 itojun Exp $	*/
 
 /*
@@ -133,7 +133,7 @@ struct in6_ifstat {
 	u_int64_t ifs6_out_forward;	/* # of datagrams forwarded */
 					/* NOTE: increment on outgoing if */
 	u_int64_t ifs6_out_request;	/* # of outgoing datagrams from ULP */
-					/* NOTE: does not include forwrads */
+					/* NOTE: does not include forwards */
 	u_int64_t ifs6_out_discard;	/* # of discarded datagrams */
 	u_int64_t ifs6_out_fragok;	/* # of datagrams fragmented */
 	u_int64_t ifs6_out_fragfail;	/* # of datagrams failed on fragment */
