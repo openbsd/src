@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.65 2021/09/11 18:08:32 kettenis Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.66 2022/01/02 05:30:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1983,7 +1983,7 @@ pmap_enter_special_pae(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 	if ((pd = (pd_entry_t *)pmap->pm_pdir_intel) == 0)
 		panic("%s: PD not initialized for pmap @ %p", __func__, pmap);
 
-	/* npa = phsyaddr of PT page */
+	/* npa = physaddr of PT page */
 	npa = pd[l2idx] & PMAP_PA_MASK;
 
 	/* Valide PDE for the 2MB region containing va? */
