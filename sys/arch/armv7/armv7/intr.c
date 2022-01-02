@@ -1,4 +1,4 @@
-/* $OpenBSD: intr.c,v 1.19 2021/03/11 11:16:56 jsg Exp $ */
+/* $OpenBSD: intr.c,v 1.20 2022/01/02 01:01:04 jsg Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -177,7 +177,7 @@ out:
  * register a dummy interrupt controller that simply stashes away all
  * relevant details of the interrupt handler being established.
  * Later, when the real interrupt controller registers itself, we
- * establush those interrupt handlers based on that information.
+ * establish those interrupt handlers based on that information.
  */
 
 #define MAX_INTERRUPT_CELLS	4
