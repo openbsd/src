@@ -1,4 +1,4 @@
-/*	$OpenBSD: fault.c,v 1.45 2021/03/25 04:12:00 jsg Exp $	*/
+/*	$OpenBSD: fault.c,v 1.46 2022/01/02 05:59:53 jsg Exp $	*/
 /*	$NetBSD: fault.c,v 1.46 2004/01/21 15:39:21 skrll Exp $	*/
 
 /*
@@ -293,7 +293,7 @@ data_abort_handler(trapframe_t *tf)
 			/*
 			 * Force exit via userret()
 			 * This is necessary as the FPE is an extension to
-			 * userland that actually runs in a priveledged mode
+			 * userland that actually runs in a privileged mode
 			 * but uses USR mode permissions for its accesses.
 			 */
 			user = 1;
