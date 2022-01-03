@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnpdebug.c,v 1.3 2002/12/15 13:17:04 henning Exp $	*/
+/*	$OpenBSD: isapnpdebug.c,v 1.4 2022/01/03 09:48:41 jsg Exp $	*/
 /*	$NetBSD: isapnpdebug.c,v 1.4 1997/08/03 08:12:23 mikel Exp $	*/
 
 /*
@@ -46,9 +46,7 @@
  *	Print a memory tag
  */
 void
-isapnp_print_mem(str, mem)
-	const char *str;
-	const struct isapnp_region *mem;
+isapnp_print_mem(const char *str, const struct isapnp_region *mem)
 {
 	printf("%sMemory: %s,%sshadowable,decode-%s,%scacheable,%s", str,
 	    (mem->flags & ISAPNP_MEMATTR_ROM) ? "ROM," : "RAM,",
@@ -83,9 +81,7 @@ isapnp_print_mem(str, mem)
  *	Print an io tag
  */
 void
-isapnp_print_io(str, io)
-	const char *str;
-	const struct isapnp_region *io;
+isapnp_print_io(const char *str, const struct isapnp_region *io)
 {
 	printf("%d %sIO Ports: %d address bits, alignment %d ",
 	    io->length, str, (io->flags & ISAPNP_IOFLAGS_16) ? 16 : 10,
@@ -99,9 +95,7 @@ isapnp_print_io(str, io)
  *	Print an irq tag
  */
 void
-isapnp_print_irq(str, irq)
-	const char *str;
-	const struct isapnp_pin *irq;
+isapnp_print_irq(const char *str, const struct isapnp_pin *irq)
 {
 	int i;
 
@@ -125,9 +119,7 @@ isapnp_print_irq(str, irq)
  *	Print a drq tag
  */
 void
-isapnp_print_drq(str, drq)
-	const char *str;
-	const struct isapnp_pin *drq;
+isapnp_print_drq(const char *str, const struct isapnp_pin *drq)
 {
 	int i;
 	u_char flags = drq->flags;
@@ -182,9 +174,7 @@ isapnp_print_drq(str, drq)
  *	Print a start dependencies tag
  */
 void
-isapnp_print_dep_start(str, pref)
-	const char *str;
-	const u_char pref;
+isapnp_print_dep_start(const char *str, const u_char pref)
 {
 
 	printf("%sconfig: ", str);
@@ -216,8 +206,7 @@ isapnp_print_dep_start(str, pref)
 }
 
 void
-isapnp_print_attach(pa)
-	const struct isa_attach_args *pa;
+isapnp_print_attach(const struct isa_attach_args *pa)
 {
 	int i;
 
@@ -246,9 +235,7 @@ isapnp_print_attach(pa)
  *	Get the current configuration of the card
  */
 void
-isapnp_get_config(sc, pa)
-	struct isapnp_softc *sc;
-	struct isa_attach_args *pa;
+isapnp_get_config(struct isapnp_softc *sc, struct isa_attach_args *pa)
 {
 	int i;
 	u_char v0, v1, v2, v3;
@@ -368,8 +355,7 @@ isapnp_get_config(sc, pa)
  *	Print the current configuration of the card
  */
 void
-isapnp_print_config(pa)
-	const struct isa_attach_args *pa;
+isapnp_print_config(const struct isa_attach_args *pa)
 {
 	int i;
 	const struct isapnp_region *r;
