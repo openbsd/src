@@ -1,7 +1,7 @@
 #!/bin/ksh
-#  $OpenBSD: check_sym,v 1.10 2019/10/05 01:01:23 guenther Exp $
+#  $OpenBSD: check_sym,v 1.11 2022/01/03 03:40:48 guenther Exp $
 #
-# Copyright (c) 2016,2019 Philip Guenther <guenther@openbsd.org>
+# Copyright (c) 2016,2019,2022 Philip Guenther <guenther@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -20,7 +20,7 @@
 #	versions of a shared library
 #
 #  SYNOPSIS
-#	check_sym [-ch] [old [new]]
+#	check_sym [-chkv] [old [new]]
 #
 #  DESCRIPTION
 #	Library developers need to be aware when they have changed the
@@ -42,12 +42,15 @@
 #	*current* directory, or the highest version of that library in
 #	/usr/lib if it wasn't present in the current directory.
 #
-#	check_sym uses fixed names in /tmp for its intermediate files,
-#	as they contain useful details for those trying to understand
-#	what changed.  If any of them cannot be created by the user,
-#	the command will fail.  The files can be cleaned up using
-#	the -c option.
+#	By default, check_sym places all its intermediate files in a
+#	temporary directory and removed it on exit.  They contain useful
+#	details for understanding what changed, so if the -k option is used
+#	they will instead be placed in /tmp/ and left behind.  If any of
+#	them cannot be created by the user, the command will fail.  The
+#	files left behind by the -k option can be cleaned up by invoking
+#	check_syms with the -c option.
 #
+#	The -v option enables verbose output.
 #
 #	The *basic* rules of thumb for library versions are: if you
 #	 * stop exporting a symbol, or
@@ -103,7 +106,7 @@ pick_highest()
 
 usage()
 {
-	usage="usage: check_sym [-chv] [old [new]]"
+	usage="usage: check_sym [-chkv] [old [new]]"
 	if [[ $# -gt 0 ]]
 	then
 		echo "check_sym: $@
@@ -114,15 +117,18 @@ $usage" >&2
 	exit 0
 }
 
-file_list=/tmp/{D{,S,W,O},J,S,U,d,j,r,s}{1,2}
+unset odir
+file_list={D{,S,W,O},J,S,U,d,j,r,s}{1,2}
 
+keep_temp=false
 verbose=false
-while getopts :chv opt "$@"
+while getopts :chkv opt "$@"
 do
 	case $opt in
-	h)	usage;;
-	c)	rm -f $file_list
+	c)	rm -f /tmp/$file_list
 		exit 0;;
+	h)	usage;;
+	k)	keep_temp=true;;
 	v)	verbose=true;;
 	\?)	usage "unknown option -- $OPTARG";;
 	esac
@@ -184,12 +190,19 @@ filt_symtab() {
 	sed 's/\[<other>: [0-9a-f]*\]//'
 }
 
-# precreate all the files we'll use, but with noclobber set to avoid
-# symlink attacks
+if $keep_temp
+then
+	# precreate all the files we'll use, but with noclobber set to avoid
+	# symlink attacks
+	odir=/tmp
+	files=
+	trap 'ret=$?; rm -f $files; exit $ret' 1 2 15 ERR
+else
+	trap 'ret=$?; rm -rf "$odir"; exit $ret' 0 1 2 15 ERR
+	odir=$(mktemp -dt check_sym.XXXXXXXXXX)
+fi
 set -C
-files=
-trap 'rm -f $files' 1 2 15 ERR
-for i in $file_list
+for i in $odir/$file_list
 do
 	rm -f $i
 	3>$i
@@ -197,11 +210,11 @@ do
 done
 set +C
 
-readelf -rW $old > /tmp/r1
-readelf -rW $new > /tmp/r2
+readelf -rW $old > $odir/r1
+readelf -rW $new > $odir/r2
 
-readelf -sW $old | filt_symtab > /tmp/s1
-readelf -sW $new | filt_symtab > /tmp/s2
+readelf -sW $old | filt_symtab > $odir/s1
+readelf -sW $new | filt_symtab > $odir/s2
 
 
 case $(readelf -h $new | grep '^ *Machine:') in
@@ -216,37 +229,41 @@ then
 	gotsym2=$(readelf -d $new | awk '$2 ~ /MIPS_GOTSYM/{print $3}')
 fi
 
+# Now that we're done accessing $old and $new (which could be
+# relative paths), chdir into our work directory, whatever it is
+cd $odir
+
 jump_slots() { 
 	case $cpu in
-	hppa)	awk '/IPLT/ && $5 != ""{print $5}' /tmp/r$1
+	hppa)	awk '/IPLT/ && $5 != ""{print $5}' r$1
 		;;
 	mips64)	# the $((gotsym$1)) converts hex to decimal
 		awk -v g=$((gotsym$1)) \
 			'/^Symbol table ..symtab/{exit}
 			$6 == "PROTECTED" { next }
-			$1+0 >= g && $4 == "FUNC" {print $8}' /tmp/s$1
+			$1+0 >= g && $4 == "FUNC" {print $8}' s$1
 		;;
-	*)	awk '/JU*MP_SL/ && $5 != ""{print $5}' /tmp/r$1
+	*)	awk '/JU*MP_SL/ && $5 != ""{print $5}' r$1
 		;;
-	esac | sort -o /tmp/j$1
+	esac | sort -o j$1
 }
 
 dynamic_sym() {
 	awk -v s=$1 '/^Symbol table ..symtab/{exit}
 		! /^ *[1-9]/   {next}
-		$7 == "UND"    {print $8 | ("sort -o /tmp/U" s); next }
-		$5 == "GLOBAL" {print $8 | ("sort -o /tmp/DS" s) }
-		$5 == "WEAK"   {print $8 | ("sort -o /tmp/DW" s) }
-		$5 != "LOCAL"  {print $8 | ("sort -o /tmp/D" s) }
+		$7 == "UND"    {print $8 | ("sort -o U" s); next }
+		$5 == "GLOBAL" {print $8 | ("sort -o DS" s) }
+		$5 == "WEAK"   {print $8 | ("sort -o DW" s) }
+		$5 != "LOCAL"  {print $8 | ("sort -o D" s) }
 		$5 != "LOCAL" && $4 == "OBJECT" {
-				print $8, $3 | ("sort -o /tmp/DO" s) }
-		{print $4, $5, $6, $8}' /tmp/s$1 | sort -o /tmp/d$1
+				print $8, $3 | ("sort -o DO" s) }
+		{print $4, $5, $6, $8}' s$1 | sort -o d$1
 }
 
 static_sym() { 
 	awk '/^Symbol table ..symtab/{s=1}
 	     /LOCAL/{next}
-	     s&&/^ *[1-9]/{print $4, $5, $6, $8}' /tmp/s$1 | sort -o /tmp/S$1
+	     s&&/^ *[1-9]/{print $4, $5, $6, $8}' s$1 | sort -o S$1
 }
 
 data_sym_changes() {
@@ -270,35 +287,35 @@ do
 	jump_slots $i
 	dynamic_sym $i
 	static_sym $i
-	comm -23 /tmp/j$i /tmp/U$i >/tmp/J$i
+	comm -23 j$i U$i >J$i
 done
 
 echo "$old --> $new"
-if cmp -s /tmp/d[12] && cmp -s /tmp/DO[12]
+if cmp -s d[12] && cmp -s DO[12]
 then
 	printf "No dynamic export changes\n"
 else
 	printf "Dynamic export changes:\n"
-	output_if_not_empty "added:" comm -13 /tmp/D[12]
-	output_if_not_empty "removed:" comm -23 /tmp/D[12]
-	output_if_not_empty "weakened:" comm -12 /tmp/DS1 /tmp/DW2
-	output_if_not_empty "strengthened:" comm -12 /tmp/DW1 /tmp/DS2
+	output_if_not_empty "added:" comm -13 D[12]
+	output_if_not_empty "removed:" comm -23 D[12]
+	output_if_not_empty "weakened:" comm -12 DS1 DW2
+	output_if_not_empty "strengthened:" comm -12 DW1 DS2
 	output_if_not_empty "data object sizes changes:" \
-					data_sym_changes /tmp/DO[12]
+					data_sym_changes DO[12]
 fi
-if ! cmp -s /tmp/U[12]
+if ! cmp -s U[12]
 then
 	printf "External reference changes:\n"
-	output_if_not_empty "added:" comm -13 /tmp/U[12]
-	output_if_not_empty "removed:" comm -23 /tmp/U[12]
+	output_if_not_empty "added:" comm -13 U[12]
+	output_if_not_empty "removed:" comm -23 U[12]
 fi
 
 if $verbose; then
 	printf "\nReloc counts:\nbefore:\n" 
-	grep ^R /tmp/r1
+	grep ^R r1
 	printf "\nafter:\n"
-	grep ^R /tmp/r2
+	grep ^R r2
 fi
 
-output_if_not_empty "PLT added:" comm -13 /tmp/J1 /tmp/J2
-output_if_not_empty "PLT removed:" comm -23 /tmp/J1 /tmp/J2
+output_if_not_empty "PLT added:" comm -13 J1 J2
+output_if_not_empty "PLT removed:" comm -23 J1 J2
