@@ -1,4 +1,4 @@
-/* $OpenBSD: intc.c,v 1.11 2021/10/24 17:52:27 mpi Exp $ */
+/* $OpenBSD: intc.c,v 1.12 2022/01/03 03:06:50 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -337,7 +337,7 @@ intc_irq_handler(void *frame)
 	pri = intc_handler[irq].iq_irq;
 	s = intc_splraise(pri);
 	TAILQ_FOREACH(ih, &intc_handler[irq].iq_list, ih_list) {
-		if (ih->ih_arg != 0)
+		if (ih->ih_arg)
 			arg = ih->ih_arg;
 		else
 			arg = frame;

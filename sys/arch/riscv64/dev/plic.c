@@ -1,4 +1,4 @@
-/*	$OpenBSD: plic.c,v 1.7 2021/05/19 17:39:49 kettenis Exp $	*/
+/*	$OpenBSD: plic.c,v 1.8 2022/01/03 03:06:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2020, Mars Li <mengshi.li.mars@gmail.com>
@@ -381,7 +381,7 @@ plic_irq_dispatch(uint32_t irq,	void *frame)
 			KERNEL_LOCK();
 #endif
 
-		if (ih->ih_arg != 0)
+		if (ih->ih_arg)
 			arg = ih->ih_arg;
 		else
 			arg = frame;

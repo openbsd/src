@@ -1,4 +1,4 @@
-/* $OpenBSD: ampintc.c,v 1.29 2021/03/25 04:12:00 jsg Exp $ */
+/* $OpenBSD: ampintc.c,v 1.30 2022/01/03 03:06:49 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -668,7 +668,7 @@ ampintc_irq_handler(void *frame)
 			KERNEL_LOCK();
 #endif
 
-		if (ih->ih_arg != 0)
+		if (ih->ih_arg)
 			arg = ih->ih_arg;
 		else
 			arg = frame;

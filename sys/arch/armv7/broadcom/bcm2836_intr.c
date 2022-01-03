@@ -1,4 +1,4 @@
-/* $OpenBSD: bcm2836_intr.c,v 1.7 2021/10/24 17:52:27 mpi Exp $ */
+/* $OpenBSD: bcm2836_intr.c,v 1.8 2022/01/03 03:06:49 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -455,7 +455,7 @@ bcm_intc_call_handler(int irq, void *frame)
 	pri = sc->sc_bcm_intc_handler[irq].is_irq;
 	s = bcm_intc_splraise(pri);
 	TAILQ_FOREACH(ih, &sc->sc_bcm_intc_handler[irq].is_list, ih_list) {
-		if (ih->ih_arg != 0)
+		if (ih->ih_arg)
 			arg = ih->ih_arg;
 		else
 			arg = frame;
