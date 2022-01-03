@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.26 2021/09/02 10:49:26 mlarkin Exp $
+#	$OpenBSD: RAMDISK,v 1.27 2022/01/03 15:50:16 visa Exp $
 
 machine		riscv64
 maxusers	4
@@ -35,7 +35,7 @@ intc0		at cpu0
 # NS16550 compatible serial ports
 com*		at fdt?
 
-# SiFive SOCs
+# SiFive SoCs
 sfclock*	at fdt? early 1 # PRCI
 sfcc*		at fdt? early 1	# L2 Cache Controller
 sfuart*		at fdt?
