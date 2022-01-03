@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.193 2021/09/03 16:45:44 jasper Exp $	*/
+/*	$OpenBSD: locore.s,v 1.194 2022/01/03 00:44:30 jsg Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1060,7 +1060,7 @@ IDTVEC(nmi)
 
 	/*
 	 * we can now proceed and save everything on the stack as
-	 * if no task switch had happend.
+	 * if no task switch had happened.
 	 */
 	jmp alltraps
 IDTVEC(bpt)
@@ -1156,7 +1156,7 @@ IDTVEC(prot)
 	/*
 	 * we have an iretframe on kernel stack, above it the
 	 * remainder of the original iretframe iret faulted on.
-	 * for INTRENTRY(prot) it looks like the fault happend
+	 * for INTRENTRY(prot) it looks like the fault happened
 	 * on the kernel stack
 	 */
 97:	INTRENTRY(prot)
