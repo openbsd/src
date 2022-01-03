@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.74 2021/07/22 15:32:51 kn Exp $	*/
+/*	$OpenBSD: engine.c,v 1.75 2022/01/03 16:42:17 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1749,14 +1749,13 @@ void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 
 	update_iface_ra_dfr(iface, ra);
 
-	if (ra->router_lifetime != 0)
-		LIST_FOREACH(prefix, &ra->prefixes, entries) {
-			if (!prefix->autonomous || prefix->vltime == 0 ||
-			    prefix->pltime > prefix->vltime ||
-			    IN6_IS_ADDR_LINKLOCAL(&prefix->prefix))
-				continue;
-			update_iface_ra_prefix(iface, ra, prefix);
-		}
+	LIST_FOREACH(prefix, &ra->prefixes, entries) {
+		if (!prefix->autonomous || prefix->vltime == 0 ||
+		    prefix->pltime > prefix->vltime ||
+		    IN6_IS_ADDR_LINKLOCAL(&prefix->prefix))
+			continue;
+		update_iface_ra_prefix(iface, ra, prefix);
+	}
 
 	update_iface_ra_rdns(iface, ra);
 }
