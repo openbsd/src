@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.51 2022/01/04 20:04:38 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.52 2022/01/04 20:17:07 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -802,18 +802,32 @@ range_should_be_prefix(const unsigned char *min, const unsigned char *max,
  */
 static int
 make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
-    const int prefixlen)
+    unsigned int afi, int prefixlen)
 {
-	int bytelen = (prefixlen + 7) / 8, bitlen = prefixlen % 8;
-	IPAddressOrRange *aor = IPAddressOrRange_new();
+	IPAddressOrRange *aor;
+	int afi_length, bytelen, bitlen, max_length;
 
-	if (aor == NULL)
+	if (prefixlen < 0)
+		return 0;
+
+	max_length = 16;
+	if ((afi_length = length_from_afi(afi)) > 0)
+		max_length = afi_length;
+	if (prefixlen > 8 * max_length)
+		return 0;
+
+	bytelen = (prefixlen + 7) / 8;
+	bitlen = prefixlen % 8;
+
+	if ((aor = IPAddressOrRange_new()) == NULL)
 		return 0;
 	aor->type = IPAddressOrRange_addressPrefix;
 	if ((aor->u.addressPrefix = ASN1_BIT_STRING_new()) == NULL)
 		goto err;
+
 	if (!ASN1_BIT_STRING_set(aor->u.addressPrefix, addr, bytelen))
 		goto err;
+
 	aor->u.addressPrefix->flags &= ~7;
 	aor->u.addressPrefix->flags |= ASN1_STRING_FLAG_BITS_LEFT;
 	if (bitlen > 0) {
@@ -836,13 +850,13 @@ make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
  */
 static int
 make_addressRange(IPAddressOrRange **result, unsigned char *min,
-    unsigned char *max, const int length)
+    unsigned char *max, unsigned int afi, int length)
 {
 	IPAddressOrRange *aor;
 	int i, prefixlen;
 
 	if ((prefixlen = range_should_be_prefix(min, max, length)) >= 0)
-		return make_addressPrefix(result, min, prefixlen);
+		return make_addressPrefix(result, min, afi, prefixlen);
 
 	if ((aor = IPAddressOrRange_new()) == NULL)
 		return 0;
@@ -1005,12 +1019,10 @@ X509v3_addr_add_prefix(IPAddrBlocks *addr, const unsigned afi,
 	IPAddressOrRanges *aors;
 	IPAddressOrRange *aor;
 
-	/* XXX - check prefixlen */
-
 	if ((aors = make_prefix_or_range(addr, afi, safi)) == NULL)
 		return 0;
 
-	if (!make_addressPrefix(&aor, a, prefixlen))
+	if (!make_addressPrefix(&aor, a, afi, prefixlen))
 		return 0;
 
 	if (sk_IPAddressOrRange_push(aors, aor) <= 0) {
@@ -1037,7 +1049,7 @@ X509v3_addr_add_range(IPAddrBlocks *addr, const unsigned afi,
 
 	length = length_from_afi(afi);
 
-	if (!make_addressRange(&aor, min, max, length))
+	if (!make_addressRange(&aor, min, max, afi, length))
 		return 0;
 
 	if (sk_IPAddressOrRange_push(aors, aor) <= 0) {
@@ -1284,7 +1296,8 @@ IPAddressOrRanges_canonize(IPAddressOrRanges *aors, const unsigned afi)
 			continue;
 		if (memcmp(a_max, b_min, length) == 0) {
 			IPAddressOrRange *merged;
-			if (!make_addressRange(&merged, a_min, b_max, length))
+			if (!make_addressRange(&merged, a_min, b_max, afi,
+			    length))
 				return 0;
 			(void)sk_IPAddressOrRange_set(aors, i, merged);
 			(void)sk_IPAddressOrRange_delete(aors, i + 1);
