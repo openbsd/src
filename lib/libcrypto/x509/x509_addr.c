@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.47 2021/12/28 21:23:40 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.48 2022/01/04 19:49:14 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -77,8 +77,6 @@
 #include "x509_lcl.h"
 
 #ifndef OPENSSL_NO_RFC3779
-
-static int length_from_afi(const unsigned afi);
 
 /*
  * OpenSSL ASN.1 template translation of RFC 3779 2.2.3.
@@ -364,21 +362,6 @@ IPAddressFamily_set_inheritance(IPAddressFamily *f)
 	return 1;
 }
 
-static int
-IPAddressFamily_afi_length(const IPAddressFamily *f, int *out_length)
-{
-	unsigned int afi;
-
-	*out_length = 0;
-
-	if ((afi = X509v3_addr_get_afi(f)) == 0)
-		return 0;
-
-	*out_length = length_from_afi(afi);
-
-	return 1;
-}
-
 /*
  * How much buffer space do we need for a raw address?
  */
@@ -401,6 +384,75 @@ length_from_afi(const unsigned afi)
 }
 
 /*
+ * Get AFI and optional SAFI from an IPAddressFamily. All three out arguments
+ * are optional; if |out_safi| is non-NULL, |safi_is_set| must be non-NULL.
+ */
+static int
+IPAddressFamily_afi_safi(const IPAddressFamily *f, uint16_t *out_afi,
+    uint8_t *out_safi, int *safi_is_set)
+{
+	CBS cbs;
+	uint16_t afi;
+	uint8_t safi = 0;
+	int got_safi = 0;
+
+	CBS_init(&cbs, f->addressFamily->data, f->addressFamily->length);
+
+	if (!CBS_get_u16(&cbs, &afi))
+		return 0;
+
+	/* Fetch the optional SAFI. */
+	if (CBS_len(&cbs) != 0) {
+		if (!CBS_get_u8(&cbs, &safi))
+			return 0;
+		got_safi = 1;
+	}
+
+	/* If there's anything left, it's garbage. */
+	if (CBS_len(&cbs) != 0)
+		return 0;
+
+	/* XXX - error on reserved AFI/SAFI? */
+
+	if (out_afi != NULL)
+		*out_afi = afi;
+
+	if (out_safi != NULL) {
+		*out_safi = safi;
+		*safi_is_set = got_safi;
+	}
+
+	return 1;
+}
+
+static int
+IPAddressFamily_afi(const IPAddressFamily *f, uint16_t *out_afi)
+{
+	return IPAddressFamily_afi_safi(f, out_afi, NULL, NULL);
+}
+
+static int
+IPAddressFamily_afi_is_valid(const IPAddressFamily *f)
+{
+	return IPAddressFamily_afi_safi(f, NULL, NULL, NULL);
+}
+
+static int
+IPAddressFamily_afi_length(const IPAddressFamily *f, int *out_length)
+{
+	uint16_t afi;
+
+	*out_length = 0;
+
+	if (!IPAddressFamily_afi(f, &afi))
+		return 0;
+
+	*out_length = length_from_afi(afi);
+
+	return 1;
+}
+
+/*
  * Extract the AFI from an IPAddressFamily.
  *
  * This is public API. It uses the reserved AFI 0 as an in-band error
@@ -409,7 +461,6 @@ length_from_afi(const unsigned afi)
 unsigned int
 X509v3_addr_get_afi(const IPAddressFamily *f)
 {
-	CBS cbs;
 	uint16_t afi;
 
 	/*
@@ -420,13 +471,7 @@ X509v3_addr_get_afi(const IPAddressFamily *f)
 	    f->addressFamily->data == NULL)
 		return 0;
 
-	CBS_init(&cbs, f->addressFamily->data, f->addressFamily->length);
-
-	if (!CBS_get_u16(&cbs, &afi))
-		return 0;
-
-	/* One byte for the optional SAFI, everything else is garbage. */
-	if (CBS_len(&cbs) > 1)
+	if (!IPAddressFamily_afi(f, &afi))
 		return 0;
 
 	return afi;
@@ -556,10 +601,17 @@ i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method, void *ext, BIO *out,
     int indent)
 {
 	const IPAddrBlocks *addr = ext;
-	int i;
+	IPAddressFamily *f;
+	uint16_t afi;
+	uint8_t safi;
+	int i, safi_is_set;
+
 	for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
-		IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
-		const unsigned int afi = X509v3_addr_get_afi(f);
+		f = sk_IPAddressFamily_value(addr, i);
+
+		if (!IPAddressFamily_afi_safi(f, &afi, &safi, &safi_is_set))
+			goto print_addresses;
+
 		switch (afi) {
 		case IANA_AFI_IPV4:
 			BIO_printf(out, "%*sIPv4", indent, "");
@@ -571,8 +623,8 @@ i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method, void *ext, BIO *out,
 			BIO_printf(out, "%*sUnknown AFI %u", indent, "", afi);
 			break;
 		}
-		if (f->addressFamily->length > 2) {
-			switch (f->addressFamily->data[2]) {
+		if (safi_is_set) {
+			switch (safi) {
 			case 1:
 				BIO_puts(out, " (Unicast)");
 				break;
@@ -598,11 +650,12 @@ i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method, void *ext, BIO *out,
 				BIO_puts(out, " (MPLS-labeled VPN)");
 				break;
 			default:
-				BIO_printf(out, " (Unknown SAFI %u)",
-				    (unsigned)f->addressFamily->data[2]);
+				BIO_printf(out, " (Unknown SAFI %u)", safi);
 				break;
 			}
 		}
+
+ print_addresses:
 		switch (IPAddressFamily_type(f)) {
 		case IPAddressChoice_inherit:
 			BIO_puts(out, ": inherit\n");
@@ -1096,9 +1149,9 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 		const IPAddressFamily *b = sk_IPAddressFamily_value(addr, i + 1);
 
 		/* Check that both have valid AFIs before comparing them. */
-		if (X509v3_addr_get_afi(a) == 0)
+		if (!IPAddressFamily_afi_is_valid(a))
 			return 0;
-		if (X509v3_addr_get_afi(b) == 0)
+		if (!IPAddressFamily_afi_is_valid(b))
 			return 0;
 
 		if (IPAddressFamily_cmp(&a, &b) >= 0)
@@ -1276,14 +1329,14 @@ X509v3_addr_canonize(IPAddrBlocks *addr)
 {
 	IPAddressFamily *f;
 	IPAddressOrRanges *aors;
-	unsigned int afi;
+	uint16_t afi;
 	int i;
 
 	for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
 		f = sk_IPAddressFamily_value(addr, i);
 
 		/* Check AFI/SAFI here - IPAddressFamily_cmp() can't error. */
-		if ((afi = X509v3_addr_get_afi(f)) == 0)
+		if (!IPAddressFamily_afi(f, &afi))
 			return 0;
 
 		if ((aors = IPAddressFamily_addressesOrRanges(f)) == NULL)
