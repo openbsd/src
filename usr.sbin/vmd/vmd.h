@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.107 2021/11/29 05:17:35 deraadt Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.108 2022/01/04 15:22:53 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -101,7 +101,6 @@ enum imsg_type {
 	IMSG_VMDOP_SEND_VM_REQUEST,
 	IMSG_VMDOP_SEND_VM_RESPONSE,
 	IMSG_VMDOP_RECEIVE_VM_REQUEST,
-	IMSG_VMDOP_RECEIVE_VM_RESPONSE,
 	IMSG_VMDOP_RECEIVE_VM_END,
 	IMSG_VMDOP_WAIT_VM_REQUEST,
 	IMSG_VMDOP_TERMINATE_VM_REQUEST,
