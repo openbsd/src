@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.123 2021/12/09 17:50:48 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.124 2022/01/04 11:14:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1335,38 +1335,40 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	SESS_CERT *sc;
 	long alg_a;
 	int nid;
-	int al;
 
 	alg_a = S3I(s)->hs.cipher->algorithm_auth;
 	sc = s->session->sess_cert;
 
+	if (!CBS_get_u8(cbs, &curve_type))
+		goto decode_err;
+	if (!CBS_get_u16(cbs, &curve_id))
+		goto decode_err;
+
 	/* Only named curves are supported. */
-	if (!CBS_get_u8(cbs, &curve_type) ||
-	    curve_type != NAMED_CURVE_TYPE ||
-	    !CBS_get_u16(cbs, &curve_id)) {
-		al = SSL_AD_DECODE_ERROR;
-		SSLerror(s, SSL_R_LENGTH_TOO_SHORT);
-		goto fatal_err;
+	if (curve_type != NAMED_CURVE_TYPE) {
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+		SSLerror(s, SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
+		goto err;
 	}
+
+	if (!CBS_get_u8_length_prefixed(cbs, &public))
+		goto decode_err;
 
 	/*
 	 * Check that the curve is one of our preferences - if it is not,
 	 * the server has sent us an invalid curve.
 	 */
 	if (tls1_check_curve(s, curve_id) != 1) {
-		al = SSL_AD_DECODE_ERROR;
 		SSLerror(s, SSL_R_WRONG_CURVE);
-		goto fatal_err;
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
+		goto err;
 	}
 
 	if ((nid = tls1_ec_curve_id2nid(curve_id)) == 0) {
-		al = SSL_AD_INTERNAL_ERROR;
 		SSLerror(s, SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
-		goto fatal_err;
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
+		goto err;
 	}
-
-	if (!CBS_get_u8_length_prefixed(cbs, &public))
-		goto decode_err;
 
 	if (nid == NID_X25519) {
 		if (ssl3_get_server_kex_ecdhe_ecx(s, sc, nid, &public) != 1)
@@ -1392,12 +1394,8 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	return (1);
 
  decode_err:
-	al = SSL_AD_DECODE_ERROR;
+	ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
-
- fatal_err:
-	ssl3_send_alert(s, SSL3_AL_FATAL, al);
-
  err:
 	return (-1);
 }
