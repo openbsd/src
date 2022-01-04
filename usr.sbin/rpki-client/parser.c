@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.30 2022/01/04 13:39:01 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.31 2022/01/04 15:37:23 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -55,9 +55,6 @@ verify_cb(int ok, X509_STORE_CTX *store_ctx)
 	ASN1_OBJECT			*obj;
 	char				*file;
 	int				 depth, error, i, nid;
-	int				 saw_ipAddrBlock = 0;
-	int				 saw_autonomousSysNum = 0;
-	int				 saw_unknown = 0;
 
 	error = X509_STORE_CTX_get_error(store_ctx);
 	depth = X509_STORE_CTX_get_error_depth(store_ctx);
@@ -94,25 +91,16 @@ verify_cb(int ok, X509_STORE_CTX *store_ctx)
 		nid = OBJ_obj2nid(obj);
 		switch (nid) {
 		case NID_sbgp_ipAddrBlock:
-			saw_ipAddrBlock = 1;
-			break;
 		case NID_sbgp_autonomousSysNum:
-			saw_autonomousSysNum = 1;
-			break;
+			continue;
 		default:
 			warnx("%s: depth %d: unknown extension: nid %d",
 			    file, depth, nid);
-			saw_unknown = 1;
-			break;
+			return 0;
 		}
 	}
 
-	if (verbose > 1)
-		warnx("%s: depth %d, ipAddrBlock %d, autonomousSysNum %d",
-		    file, depth, saw_ipAddrBlock, saw_autonomousSysNum);
-
-	/* Fail if we saw an unknown extension. */
-	return !saw_unknown;
+	return 1;
 }
 
 /*
