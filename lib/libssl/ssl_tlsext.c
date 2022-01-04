@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.102 2022/01/04 10:34:16 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.103 2022/01/04 11:01:58 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1455,13 +1455,17 @@ tlsext_keyshare_client_needs(SSL *s, uint16_t msg_type)
 int
 tlsext_keyshare_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 {
-	CBB client_shares;
+	CBB client_shares, key_exchange;
 
 	if (!CBB_add_u16_length_prefixed(cbb, &client_shares))
 		return 0;
 
-	if (!tls13_key_share_public(S3I(s)->hs.tls13.key_share,
-	    &client_shares))
+	if (!CBB_add_u16(&client_shares,
+	    tls13_key_share_group(S3I(s)->hs.tls13.key_share)))
+		return 0;
+	if (!CBB_add_u16_length_prefixed(&client_shares, &key_exchange))
+		return 0;
+	if (!tls13_key_share_public(S3I(s)->hs.tls13.key_share, &key_exchange))
 		return 0;
 
 	if (!CBB_flush(cbb))
@@ -1531,6 +1535,8 @@ tlsext_keyshare_server_needs(SSL *s, uint16_t msg_type)
 int
 tlsext_keyshare_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 {
+	CBB key_exchange;
+
 	/* In the case of a HRR, we only send the server selected group. */
 	if (S3I(s)->hs.tls13.hrr) {
 		if (S3I(s)->hs.tls13.server_group == 0)
@@ -1541,7 +1547,14 @@ tlsext_keyshare_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 	if (S3I(s)->hs.tls13.key_share == NULL)
 		return 0;
 
-	if (!tls13_key_share_public(S3I(s)->hs.tls13.key_share, cbb))
+	if (!CBB_add_u16(cbb, tls13_key_share_group(S3I(s)->hs.tls13.key_share)))
+		return 0;
+	if (!CBB_add_u16_length_prefixed(cbb, &key_exchange))
+		return 0;
+	if (!tls13_key_share_public(S3I(s)->hs.tls13.key_share, &key_exchange))
+		return 0;
+
+	if (!CBB_flush(cbb))
 		return 0;
 
 	return 1;

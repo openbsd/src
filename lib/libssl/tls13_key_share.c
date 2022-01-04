@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_share.c,v 1.6 2020/04/18 14:07:56 jsing Exp $ */
+/* $OpenBSD: tls13_key_share.c,v 1.7 2022/01/04 11:01:58 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -187,28 +187,10 @@ tls13_key_share_public_x25519(struct tls13_key_share *ks, CBB *cbb)
 int
 tls13_key_share_public(struct tls13_key_share *ks, CBB *cbb)
 {
-	CBB key_exchange;
+	if (ks->nid == NID_X25519)
+		return tls13_key_share_public_x25519(ks, cbb);
 
-	if (!CBB_add_u16(cbb, ks->group_id))
-		goto err;
-	if (!CBB_add_u16_length_prefixed(cbb, &key_exchange))
-		goto err;
-
-	if (ks->nid == NID_X25519) {
-		if (!tls13_key_share_public_x25519(ks, &key_exchange))
-			goto err;
-	} else {
-		if (!tls13_key_share_public_ecdhe_ecp(ks, &key_exchange))
-			goto err;
-	}
-
-	if (!CBB_flush(cbb))
-		goto err;
-
-	return 1;
-
- err:
-	return 0;
+	return tls13_key_share_public_ecdhe_ecp(ks, cbb);
 }
 
 static int
