@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.55 2022/01/04 20:30:30 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.56 2022/01/04 20:33:02 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1763,12 +1763,8 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	 */
 	for (i++; i < sk_X509_num(chain); i++) {
 		x = sk_X509_value(chain, i);
-		parent = x->rfc3779_addr;
 
-		if (!X509v3_addr_is_canonical(parent))
-			validation_err(X509_V_ERR_INVALID_EXTENSION);
-
-		if (parent == NULL) {
+		if ((parent = x->rfc3779_addr) == NULL) {
 			for (j = 0; j < sk_IPAddressFamily_num(child); j++) {
 				fc = sk_IPAddressFamily_value(child, j);
 
@@ -1779,6 +1775,9 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 			}
 			continue;
 		}
+
+		if (!X509v3_addr_is_canonical(parent))
+			validation_err(X509_V_ERR_INVALID_EXTENSION);
 
 		sk_IPAddressFamily_set_cmp_func(parent, IPAddressFamily_cmp);
 
