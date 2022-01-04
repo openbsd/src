@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplmbox.c,v 1.1 2021/12/18 13:33:52 kettenis Exp $	*/
+/*	$OpenBSD: aplmbox.c,v 1.2 2022/01/04 20:55:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -80,7 +80,8 @@ aplmbox_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,asc-mailbox");
+	return (OF_is_compatible(faa->fa_node, "apple,asc-mailbox") ||
+	    OF_is_compatible(faa->fa_node, "apple,asc-mailbox-v4"));
 }
 
 void
