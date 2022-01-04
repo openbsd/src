@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.403 2021/12/16 08:03:17 anton Exp $ */
+/* $OpenBSD: acpi.c,v 1.404 2022/01/04 13:40:58 patrick Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2993,7 +2993,8 @@ acpi_getprop(struct aml_node *node, const char *prop, void *buf, int buflen)
 		int len;
 
 		if (res->type != AML_OBJTYPE_PACKAGE || res->length != 2 ||
-		    res->v_package[0]->type != AML_OBJTYPE_STRING)
+		    res->v_package[0]->type != AML_OBJTYPE_STRING ||
+		    strcmp(res->v_package[0]->v_string, prop) != 0)
 			continue;
 
 		val = res->v_package[1];
@@ -3046,18 +3047,15 @@ acpi_getpropint(struct aml_node *node, const char *prop, uint32_t defval)
 		struct aml_value *val;
 
 		if (res->type != AML_OBJTYPE_PACKAGE || res->length != 2 ||
-		    res->v_package[0]->type != AML_OBJTYPE_STRING)
+		    res->v_package[0]->type != AML_OBJTYPE_STRING ||
+		    strcmp(res->v_package[0]->v_string, prop) != 0)
 			continue;
 
 		val = res->v_package[1];
 		if (val->type == AML_OBJTYPE_OBJREF)
 			val = val->v_objref.ref;
 
-		if (val->type != AML_OBJTYPE_INTEGER)
-			continue;
-
-		if (strcmp(res->v_package[0]->v_string, prop) == 0 &&
-		    val->type == AML_OBJTYPE_INTEGER)
+		if (val->type == AML_OBJTYPE_INTEGER)
 			return val->v_integer;
 	}
 
