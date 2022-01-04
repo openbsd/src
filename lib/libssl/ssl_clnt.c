@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.125 2022/01/04 11:17:11 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.126 2022/01/04 12:53:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1258,7 +1258,7 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 
 	sc->peer_dh_tmp = dh;
 
-	return (1);
+	return 1;
 
  decode_err:
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
@@ -1267,14 +1267,14 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
  err:
 	DH_free(dh);
 
-	return (-1);
+	return 0;
 }
 
 static int
 ssl3_get_server_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, int nid, CBS *public)
 {
 	EC_KEY *ecdh = NULL;
-	int ret = -1;
+	int ret = 0;
 
 	/* Extract the server's ephemeral ECDH public key. */
 	if ((ecdh = EC_KEY_new()) == NULL) {
@@ -1320,10 +1320,10 @@ ssl3_get_server_kex_ecdhe_ecx(SSL *s, SESS_CERT *sc, int nid, CBS *public)
 		goto err;
 	}
 
-	return (1);
+	return 1;
 
  err:
-	return (-1);
+	return 0;
 }
 
 static int
@@ -1371,10 +1371,10 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	}
 
 	if (nid == NID_X25519) {
-		if (ssl3_get_server_kex_ecdhe_ecx(s, sc, nid, &public) != 1)
+		if (!ssl3_get_server_kex_ecdhe_ecx(s, sc, nid, &public))
 			goto err;
 	} else {
-		if (ssl3_get_server_kex_ecdhe_ecp(s, sc, nid, &public) != 1)
+		if (!ssl3_get_server_kex_ecdhe_ecp(s, sc, nid, &public))
 			goto err;
 	}
 
@@ -1391,13 +1391,13 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 		/* XXX - Anonymous ECDH, so no certificate or pkey. */
 		*pkey = NULL;
 
-	return (1);
+	return 1;
 
  decode_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
  err:
-	return (-1);
+	return 0;
 }
 
 int
@@ -1465,10 +1465,10 @@ ssl3_get_server_key_exchange(SSL *s)
 	param_len = CBS_len(&cbs);
 
 	if (alg_k & SSL_kDHE) {
-		if (ssl3_get_server_kex_dhe(s, &pkey, &cbs) != 1)
+		if (!ssl3_get_server_kex_dhe(s, &pkey, &cbs))
 			goto err;
 	} else if (alg_k & SSL_kECDHE) {
-		if (ssl3_get_server_kex_ecdhe(s, &pkey, &cbs) != 1)
+		if (!ssl3_get_server_kex_ecdhe(s, &pkey, &cbs))
 			goto err;
 	} else if (alg_k != 0) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
@@ -1904,7 +1904,7 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	uint16_t max_legacy_version;
 	EVP_PKEY *pkey = NULL;
 	RSA *rsa;
-	int ret = -1;
+	int ret = 0;
 	int enc_len;
 	CBB epms;
 
@@ -1960,7 +1960,7 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	EVP_PKEY_free(pkey);
 	free(enc_pms);
 
-	return (ret);
+	return ret;
 }
 
 static int
@@ -1970,7 +1970,7 @@ ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	DH *dh_srvr;
 	uint8_t *key = NULL;
 	size_t key_len = 0;
-	int ret = -1;
+	int ret = 0;
 
 	/* Ensure that we have an ephemeral key from the server for DHE. */
 	if ((dh_srvr = sess_cert->peer_dh_tmp) == NULL) {
@@ -1999,7 +1999,7 @@ ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	DH_free(dh_clnt);
 	freezero(key, key_len);
 
-	return (ret);
+	return ret;
 }
 
 static int
@@ -2008,7 +2008,7 @@ ssl3_send_client_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, CBB *cbb)
 	EC_KEY *ecdh = NULL;
 	uint8_t *key = NULL;
 	size_t key_len = 0;
-	int ret = -1;
+	int ret = 0;
 	CBB ecpoint;
 
 	if ((ecdh = EC_KEY_new()) == NULL) {
@@ -2039,14 +2039,14 @@ ssl3_send_client_kex_ecdhe_ecp(SSL *s, SESS_CERT *sc, CBB *cbb)
 	freezero(key, key_len);
 	EC_KEY_free(ecdh);
 
-	return (ret);
+	return ret;
 }
 
 static int
 ssl3_send_client_kex_ecdhe_ecx(SSL *s, SESS_CERT *sc, CBB *cbb)
 {
 	uint8_t *public_key = NULL, *private_key = NULL, *shared_key = NULL;
-	int ret = -1;
+	int ret = 0;
 	CBB ecpoint;
 
 	/* Generate X25519 key pair and derive shared key. */
@@ -2078,7 +2078,7 @@ ssl3_send_client_kex_ecdhe_ecx(SSL *s, SESS_CERT *sc, CBB *cbb)
 	freezero(private_key, X25519_KEY_LENGTH);
 	freezero(shared_key, X25519_KEY_LENGTH);
 
-	return (ret);
+	return ret;
 }
 
 static int
@@ -2096,10 +2096,10 @@ ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sc, CBB *cbb)
 		goto err;
 	}
 
-	return (1);
+	return 1;
 
  err:
-	return (-1);
+	return 0;
 }
 
 static int
@@ -2237,13 +2237,13 @@ ssl3_send_client_key_exchange(SSL *s)
 			goto err;
 
 		if (alg_k & SSL_kRSA) {
-			if (ssl3_send_client_kex_rsa(s, sess_cert, &kex) != 1)
+			if (!ssl3_send_client_kex_rsa(s, sess_cert, &kex))
 				goto err;
 		} else if (alg_k & SSL_kDHE) {
-			if (ssl3_send_client_kex_dhe(s, sess_cert, &kex) != 1)
+			if (!ssl3_send_client_kex_dhe(s, sess_cert, &kex))
 				goto err;
 		} else if (alg_k & SSL_kECDHE) {
-			if (ssl3_send_client_kex_ecdhe(s, sess_cert, &kex) != 1)
+			if (!ssl3_send_client_kex_ecdhe(s, sess_cert, &kex))
 				goto err;
 		} else if (alg_k & SSL_kGOST) {
 			if (ssl3_send_client_kex_gost(s, sess_cert, &kex) != 1)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.129 2021/12/26 15:10:59 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.130 2022/01/04 12:53:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1361,7 +1361,7 @@ ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
  err:
 	DH_free(dh);
 
-	return -1;
+	return 0;
 }
 
 static int
@@ -1417,12 +1417,12 @@ ssl3_send_server_kex_ecdhe_ecp(SSL *s, int nid, CBB *cbb)
 	if (!CBB_flush(cbb))
 		goto err;
 
-	return (1);
+	return 1;
 
  fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-	return (-1);
+	return 0;
 }
 
 static int
@@ -1431,7 +1431,7 @@ ssl3_send_server_kex_ecdhe_ecx(SSL *s, int nid, CBB *cbb)
 	uint8_t *public_key = NULL, *private_key = NULL;
 	uint16_t curve_id;
 	CBB ecpoint;
-	int ret = -1;
+	int ret = 0;
 
 	/* Generate an X25519 key pair. */
 	if (S3I(s)->tmp.x25519 != NULL) {
@@ -1469,7 +1469,7 @@ ssl3_send_server_kex_ecdhe_ecx(SSL *s, int nid, CBB *cbb)
 	free(public_key);
 	freezero(private_key, X25519_KEY_LENGTH);
 
-	return (ret);
+	return ret;
 }
 
 static int
@@ -1518,10 +1518,10 @@ ssl3_send_server_key_exchange(SSL *s)
 
 		type = S3I(s)->hs.cipher->algorithm_mkey;
 		if (type & SSL_kDHE) {
-			if (ssl3_send_server_kex_dhe(s, &cbb_params) != 1)
+			if (!ssl3_send_server_kex_dhe(s, &cbb_params))
 				goto err;
 		} else if (type & SSL_kECDHE) {
-			if (ssl3_send_server_kex_ecdhe(s, &cbb_params) != 1)
+			if (!ssl3_send_server_kex_ecdhe(s, &cbb_params))
 				goto err;
 		} else {
 			al = SSL_AD_HANDSHAKE_FAILURE;
@@ -1775,7 +1775,7 @@ ssl3_get_client_kex_rsa(SSL *s, CBS *cbs)
 
 	freezero(pms, pms_len);
 
-	return (1);
+	return 1;
 
  decode_err:
 	al = SSL_AD_DECODE_ERROR;
@@ -1785,7 +1785,7 @@ ssl3_get_client_kex_rsa(SSL *s, CBS *cbs)
  err:
 	freezero(pms, pms_len);
 
-	return (-1);
+	return 0;
 }
 
 static int
@@ -1796,7 +1796,7 @@ ssl3_get_client_kex_dhe(SSL *s, CBS *cbs)
 	int invalid_key;
 	uint8_t *key = NULL;
 	size_t key_len = 0;
-	int ret = -1;
+	int ret = 0;
 
 	if ((dh_srvr = S3I(s)->tmp.dh) == NULL) {
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
@@ -1844,7 +1844,7 @@ ssl3_get_client_kex_ecdhe_ecp(SSL *s, CBS *cbs)
 	EC_KEY *ecdh_peer = NULL;
 	EC_KEY *ecdh;
 	CBS public;
-	int ret = -1;
+	int ret = 0;
 
 	/*
 	 * Use the ephemeral values we saved when generating the
@@ -1887,7 +1887,7 @@ ssl3_get_client_kex_ecdhe_ecp(SSL *s, CBS *cbs)
 	freezero(key, key_len);
 	EC_KEY_free(ecdh_peer);
 
-	return (ret);
+	return ret;
 }
 
 static int
@@ -1895,7 +1895,7 @@ ssl3_get_client_kex_ecdhe_ecx(SSL *s, CBS *cbs)
 {
 	uint8_t *shared_key = NULL;
 	CBS ecpoint;
-	int ret = -1;
+	int ret = 0;
 
 	if (!CBS_get_u8_length_prefixed(cbs, &ecpoint))
 		goto err;
@@ -1920,7 +1920,7 @@ ssl3_get_client_kex_ecdhe_ecx(SSL *s, CBS *cbs)
  err:
 	freezero(shared_key, X25519_KEY_LENGTH);
 
-	return (ret);
+	return ret;
 }
 
 static int
@@ -2023,13 +2023,13 @@ ssl3_get_client_key_exchange(SSL *s)
 	alg_k = S3I(s)->hs.cipher->algorithm_mkey;
 
 	if (alg_k & SSL_kRSA) {
-		if (ssl3_get_client_kex_rsa(s, &cbs) != 1)
+		if (!ssl3_get_client_kex_rsa(s, &cbs))
 			goto err;
 	} else if (alg_k & SSL_kDHE) {
-		if (ssl3_get_client_kex_dhe(s, &cbs) != 1)
+		if (!ssl3_get_client_kex_dhe(s, &cbs))
 			goto err;
 	} else if (alg_k & SSL_kECDHE) {
-		if (ssl3_get_client_kex_ecdhe(s, &cbs) != 1)
+		if (!ssl3_get_client_kex_ecdhe(s, &cbs))
 			goto err;
 	} else if (alg_k & SSL_kGOST) {
 		if (ssl3_get_client_kex_gost(s, &cbs) != 1)
