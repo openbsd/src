@@ -180,7 +180,6 @@
 ./usr/include/dev/ic/ac97.h
 ./usr/include/dev/ic/acxreg.h
 ./usr/include/dev/ic/acxvar.h
-./usr/include/dev/ic/ad1843reg.h
 ./usr/include/dev/ic/ad1848reg.h
 ./usr/include/dev/ic/adv.h
 ./usr/include/dev/ic/advlib.h
@@ -188,8 +187,6 @@
 ./usr/include/dev/ic/adwlib.h
 ./usr/include/dev/ic/ahcireg.h
 ./usr/include/dev/ic/ahcivar.h
-./usr/include/dev/ic/aic6250reg.h
-./usr/include/dev/ic/aic6250var.h
 ./usr/include/dev/ic/aic6360reg.h
 ./usr/include/dev/ic/aic6360var.h
 ./usr/include/dev/ic/aic6915.h
@@ -267,9 +264,6 @@
 ./usr/include/dev/ic/dl10019var.h
 ./usr/include/dev/ic/dp8390reg.h
 ./usr/include/dev/ic/dp8390var.h
-./usr/include/dev/ic/dp8573areg.h
-./usr/include/dev/ic/ds1286reg.h
-./usr/include/dev/ic/ds1687reg.h
 ./usr/include/dev/ic/dwhdmi.h
 ./usr/include/dev/ic/dwiicreg.h
 ./usr/include/dev/ic/dwiicvar.h
@@ -375,7 +369,6 @@
 ./usr/include/dev/ic/rtwvar.h
 ./usr/include/dev/ic/s3_617.h
 ./usr/include/dev/ic/sa2400reg.h
-./usr/include/dev/ic/seeq8003reg.h
 ./usr/include/dev/ic/si4136reg.h
 ./usr/include/dev/ic/silireg.h
 ./usr/include/dev/ic/silivar.h
