@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.121 2022/01/02 03:41:08 jsg Exp $	*/
+/*	$OpenBSD: pci.c,v 1.122 2022/01/04 16:15:28 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -1220,6 +1220,7 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct pcisel *sel = (struct pcisel *)data;
 	struct pci_io *io;
+	struct pci_dev *pd;
 	struct pci_rom *rom;
 	int i, error;
 	pcitag_t tag;
@@ -1265,6 +1266,13 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	pc = pci->sc_pc;
 	tag = pci_make_tag(pc, sel->pc_bus, sel->pc_dev, sel->pc_func);
 
+	LIST_FOREACH(pd, &pci->sc_devs, pd_next) {
+		if (tag == pd->pd_tag)
+			break;
+	}
+	if (pd == LIST_END(&pci->sc_devs))
+		return ENXIO;
+
 	switch (cmd) {
 	case PCIOCREAD:
 		io = (struct pci_io *)data;
@@ -1307,28 +1315,17 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		break;
 
 	case PCIOCREADMASK:
-	{
 		io = (struct pci_io *)data;
-		struct pci_dev *pd;
-		int dev, func, i;
 
 		if (io->pi_width != 4 || io->pi_reg & 0x3 ||
 		    io->pi_reg < PCI_MAPREG_START ||
 		    io->pi_reg >= PCI_MAPREG_END)
 			return (EINVAL);
 
-		error = ENODEV;
-		LIST_FOREACH(pd, &pci->sc_devs, pd_next) {
-			pci_decompose_tag(pc, pd->pd_tag, NULL, &dev, &func);
-			if (dev == sel->pc_dev && func == sel->pc_func) {
-				i = (io->pi_reg - PCI_MAPREG_START) / 4;
-				io->pi_data = pd->pd_mask[i];
-				error = 0;
-				break;
-			}
-		}
+		i = (io->pi_reg - PCI_MAPREG_START) / 4;
+		io->pi_data = pd->pd_mask[i];
+		error = 0;
 		break;
-	}
 
 	case PCIOCGETROMLEN:
 	case PCIOCGETROM:
