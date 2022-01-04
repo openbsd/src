@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.57 2022/01/04 20:40:43 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.58 2022/01/04 20:52:34 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -567,29 +567,37 @@ static int
 i2r_IPAddressOrRanges(BIO *out, const int indent,
     const IPAddressOrRanges *aors, const unsigned afi)
 {
+	const IPAddressOrRange *aor;
+	const ASN1_BIT_STRING *prefix;
+	const IPAddressRange *range;
 	int i;
+
 	for (i = 0; i < sk_IPAddressOrRange_num(aors); i++) {
-		const IPAddressOrRange *aor = sk_IPAddressOrRange_value(aors, i);
+		aor = sk_IPAddressOrRange_value(aors, i);
+
 		BIO_printf(out, "%*s", indent, "");
+
 		switch (aor->type) {
 		case IPAddressOrRange_addressPrefix:
-			if (!i2r_address(out, afi, 0x00, aor->u.addressPrefix))
+			prefix = aor->u.addressPrefix;
+
+			if (!i2r_address(out, afi, 0x00, prefix))
 				return 0;
-			BIO_printf(out, "/%d\n",
-			    addr_prefix_len(aor->u.addressPrefix));
+			BIO_printf(out, "/%d\n", addr_prefix_len(prefix));
 			continue;
 		case IPAddressOrRange_addressRange:
-			if (!i2r_address(out, afi, 0x00,
-			    aor->u.addressRange->min))
+			range = aor->u.addressRange;
+
+			if (!i2r_address(out, afi, 0x00, range->min))
 				return 0;
 			BIO_puts(out, "-");
-			if (!i2r_address(out, afi, 0xff,
-			    aor->u.addressRange->max))
+			if (!i2r_address(out, afi, 0xff, range->max))
 				return 0;
 			BIO_puts(out, "\n");
 			continue;
 		}
 	}
+
 	return 1;
 }
 
