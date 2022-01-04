@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.101 2021/11/01 16:37:17 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.102 2022/01/04 10:34:16 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1558,8 +1558,10 @@ tlsext_keyshare_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		goto err;
 
 	if (CBS_len(cbs) == 0) {
-		/* HRR does not include an actual key share. */
-		/* XXX - we should know that we are in a HRR... */
+		/* HRR does not include an actual key share, only the group. */
+		if (msg_type != SSL_TLSEXT_MSG_HRR)
+			return 0;
+
 		S3I(s)->hs.tls13.server_group = group;
 		return 1;
 	}
