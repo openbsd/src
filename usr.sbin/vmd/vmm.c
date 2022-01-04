@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.102 2021/11/29 05:17:35 deraadt Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.103 2022/01/04 15:25:05 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -102,7 +102,7 @@ int
 vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct privsep		*ps = p->p_ps;
-	int			 res = 0, cmd = 0, verbose, ret;
+	int			 res = 0, cmd = 0, verbose;
 	struct vmd_vm		*vm = NULL;
 	struct vm_terminate_params vtp;
 	struct vmop_id		 vid;
@@ -278,8 +278,12 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_RECEIVE_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vmc);
 		memcpy(&vmc, imsg->data, sizeof(vmc));
-		ret = vm_register(ps, &vmc, &vm,
-		    imsg->hdr.peerid, vmc.vmc_owner.uid);
+		if (vm_register(ps, &vmc, &vm,
+		    imsg->hdr.peerid, vmc.vmc_owner.uid) != 0) {
+			res = errno;
+			cmd = IMSG_VMDOP_START_VM_RESPONSE;
+			break;
+		}
 		vm->vm_tty = imsg->fd;
 		vm->vm_state |= VM_STATE_RECEIVED;
 		vm->vm_state |= VM_STATE_PAUSED;
@@ -328,6 +332,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		}
 		if (id == 0)
 			id = imsg->hdr.peerid;
+		/* FALLTHROUGH */
 	case IMSG_VMDOP_PAUSE_VM_RESPONSE:
 	case IMSG_VMDOP_UNPAUSE_VM_RESPONSE:
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
