@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpleased.conf.5,v 1.8 2021/09/21 17:23:24 florian Exp $
+.\"	$OpenBSD: dhcpleased.conf.5,v 1.9 2022/01/04 06:20:37 florian Exp $
 .\"
 .\" Copyright (c) 2018, 2021 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 21 2021 $
+.Dd $Mdocdate: January 4 2022 $
 .Dt DHCPLEASED.CONF 5
 .Os
 .Sh NAME
@@ -98,6 +98,13 @@ with hardware type 0 would be configured as:
 .Bd -literal -offset indent
 send client id "\e0foobar"
 .Ed
+.It Ic send host name Ar host-name
+Send the DHCP client host name option with a value of
+.Ar host-name .
+The default is to send the name of the host.
+.It Ic send no host name
+Do not send a DHCP host name option.
+The default is to send a DHCP host name option with the name of the host.
 .It Ic send vendor class id Ar vendor-class-id
 Send the DHCP vendor class identifier option with a value of
 .Ar vendor-class-id .

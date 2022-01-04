@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.12 2021/12/09 16:20:12 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.13 2022/01/04 06:20:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -203,6 +203,7 @@ enum imsg_type {
 	IMSG_RECONF_IFACE,
 	IMSG_RECONF_VC_ID,
 	IMSG_RECONF_C_ID,
+	IMSG_RECONF_H_NAME,
 	IMSG_RECONF_END,
 #endif	/* SMALL */
 	IMSG_SEND_DISCOVER,
@@ -253,6 +254,7 @@ struct iface_conf {
 	int				 vc_id_len;
 	uint8_t				*c_id;
 	int				 c_id_len;
+	char				*h_name;
 	int				 ignore;
 	struct in_addr			 ignore_servers[MAX_SERVERS];
 	int				 ignore_servers_len;

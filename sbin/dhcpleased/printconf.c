@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.3 2021/09/20 11:46:22 florian Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.4 2022/01/04 06:20:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -106,6 +106,14 @@ print_config(struct dhcpleased_conf *conf)
 	SIMPLEQ_FOREACH(iface, &conf->iface_list, entry) {
 		printf("interface %s {\n", iface->name);
 		print_dhcp_options("\t", iface->c_id, iface->c_id_len);
+		if (iface->h_name != NULL) {
+			if (iface->h_name[0] == '\0')
+				printf("\tsend no host name\n");
+			else {
+				printf("\tsend host name \"%s\"\n",
+				    iface->h_name);
+			}
+		}
 		print_dhcp_options("\t", iface->vc_id, iface->vc_id_len);
 		if (iface->ignore & IGN_DNS)
 			printf("\tignore dns\n");

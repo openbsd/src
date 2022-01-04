@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.34 2021/12/18 10:34:19 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.35 2022/01/04 06:20:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -480,6 +480,7 @@ engine_dispatch_main(int fd, short event, void *bula)
 			iface_conf->vc_id_len = 0;
 			iface_conf->c_id = NULL;
 			iface_conf->c_id_len = 0;
+			iface_conf->h_name = NULL;
 			SIMPLEQ_INSERT_TAIL(&nconf->iface_list,
 			    iface_conf, entry);
 			break;
@@ -510,6 +511,18 @@ engine_dispatch_main(int fd, short event, void *bula)
 			memcpy(iface_conf->c_id, imsg.data,
 			    IMSG_DATA_SIZE(imsg));
 			iface_conf->c_id_len = IMSG_DATA_SIZE(imsg);
+			break;
+		case IMSG_RECONF_H_NAME:
+			if (iface_conf == NULL)
+				fatal("IMSG_RECONF_H_NAME without "
+				    "IMSG_RECONF_IFACE");
+			if (((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] !=
+			    '\0')
+				fatalx("Invalid hostname");
+			if (IMSG_DATA_SIZE(imsg) > 256)
+				fatalx("Invalid hostname");
+			if ((iface_conf->h_name = strdup(imsg.data)) == NULL)
+				fatal(NULL);
 			break;
 		case IMSG_RECONF_END: {
 			struct dhcpleased_iface	*iface;

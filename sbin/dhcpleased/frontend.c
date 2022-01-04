@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.27 2021/12/13 11:03:23 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.28 2022/01/04 06:20:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -361,6 +361,7 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			iface_conf->vc_id_len = 0;
 			iface_conf->c_id = NULL;
 			iface_conf->c_id_len = 0;
+			iface_conf->h_name = NULL;
 			SIMPLEQ_INSERT_TAIL(&nconf->iface_list,
 			    iface_conf, entry);
 			break;
@@ -391,6 +392,18 @@ frontend_dispatch_main(int fd, short event, void *bula)
 			memcpy(iface_conf->c_id, imsg.data,
 			    IMSG_DATA_SIZE(imsg));
 			iface_conf->c_id_len = IMSG_DATA_SIZE(imsg);
+			break;
+		case IMSG_RECONF_H_NAME:
+			if (iface_conf == NULL)
+				fatal("IMSG_RECONF_H_NAME without "
+				    "IMSG_RECONF_IFACE");
+			if (((char *)imsg.data)[IMSG_DATA_SIZE(imsg) - 1] !=
+			    '\0')
+				fatalx("Invalid hostname");
+			if (IMSG_DATA_SIZE(imsg) > 256)
+				fatalx("Invalid hostname");
+			if ((iface_conf->h_name = strdup(imsg.data)) == NULL)
+				fatal(NULL);
 			break;
 		case IMSG_RECONF_END: {
 			int	 i;
@@ -904,7 +917,7 @@ build_packet(uint8_t message_type, char *if_name, uint32_t xid,
 	static uint8_t	 dhcp_cookie[] = DHCP_COOKIE;
 	static uint8_t	 dhcp_message_type[] = {DHO_DHCP_MESSAGE_TYPE, 1,
 		DHCPDISCOVER};
-	static uint8_t	 dhcp_hostname[255] = {DHO_HOST_NAME, 0 /*, ... */};
+	static uint8_t	 dhcp_hostname[255 + 2] = {DHO_HOST_NAME, 0 /*, ... */};
 	static uint8_t	 dhcp_client_id[] = {DHO_DHCP_CLIENT_IDENTIFIER, 7,
 		HTYPE_ETHER, 0, 0, 0, 0, 0, 0};
 	static uint8_t	 dhcp_req_list[] = {DHO_DHCP_PARAMETER_REQUEST_LIST,
@@ -944,12 +957,27 @@ build_packet(uint8_t message_type, char *if_name, uint32_t xid,
 	p += sizeof(dhcp_cookie);
 	memcpy(p, dhcp_message_type, sizeof(dhcp_message_type));
 	p += sizeof(dhcp_message_type);
-	if (gethostname(dhcp_hostname + 2, sizeof(dhcp_hostname) - 2) == 0) {
-		if ((c = strchr(dhcp_hostname + 2, '.')) != NULL)
-			*c = '\0';
-		dhcp_hostname[1] = strlen(dhcp_hostname + 2);
-		memcpy(p, dhcp_hostname, dhcp_hostname[1] + 2);
-		p += dhcp_hostname[1] + 2;
+
+#ifndef SMALL
+	if (iface_conf != NULL && iface_conf->h_name != NULL) {
+		if (iface_conf->h_name[0] != '\0') {
+			dhcp_hostname[1] = strlen(iface_conf->h_name);
+			memcpy(dhcp_hostname + 2, iface_conf->h_name,
+			    strlen(iface_conf->h_name));
+			memcpy(p, dhcp_hostname, dhcp_hostname[1] + 2);
+			p += dhcp_hostname[1] + 2;
+		}
+	} else
+#endif /* SMALL */
+	{
+		if (gethostname(dhcp_hostname + 2,
+		    sizeof(dhcp_hostname) - 2) == 0) {
+			if ((c = strchr(dhcp_hostname + 2, '.')) != NULL)
+				*c = '\0';
+			dhcp_hostname[1] = strlen(dhcp_hostname + 2);
+			memcpy(p, dhcp_hostname, dhcp_hostname[1] + 2);
+			p += dhcp_hostname[1] + 2;
+		}
 	}
 
 #ifndef SMALL
@@ -1236,6 +1264,10 @@ iface_conf_cmp(struct iface_conf *a, struct iface_conf *b)
 	if (a->c_id_len != b->c_id_len)
 		return 1;
 	if (memcmp(a->c_id, b->c_id, a->c_id_len) != 0)
+		return 1;
+	if (a->h_name == NULL ||  b->h_name == NULL)
+		return 1;
+	if (strcmp(a->h_name, b->h_name) != 0)
 		return 1;
 	if (a->ignore != b->ignore)
 		return 1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.22 2021/12/13 11:02:26 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.23 2022/01/04 06:20:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -732,6 +732,9 @@ main_imsg_send_config(struct dhcpleased_conf *xconf)
 		    iface_conf->c_id, iface_conf->c_id_len);
 		main_imsg_compose_engine(IMSG_RECONF_C_ID, -1,
 		    iface_conf->c_id, iface_conf->c_id_len);
+		if (iface_conf->h_name != NULL)
+			main_imsg_compose_frontend(IMSG_RECONF_H_NAME, -1,
+			    iface_conf->h_name, strlen(iface_conf->h_name) + 1);
 	}
 
 	/* Config is now complete. */
@@ -1224,6 +1227,7 @@ merge_config(struct dhcpleased_conf *conf, struct dhcpleased_conf *xconf)
 		SIMPLEQ_REMOVE_HEAD(&conf->iface_list, entry);
 		free(iface_conf->vc_id);
 		free(iface_conf->c_id);
+		free(iface_conf->h_name);
 		free(iface_conf);
 	}
 

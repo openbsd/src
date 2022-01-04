@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.5 2021/10/15 15:01:27 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.6 2022/01/04 06:20:37 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -108,7 +108,8 @@ typedef struct {
 
 %}
 
-%token	DHCP_IFACE ERROR SEND VENDOR CLASS ID CLIENT IGNORE DNS ROUTES
+%token	DHCP_IFACE ERROR SEND VENDOR CLASS ID CLIENT IGNORE DNS ROUTES HOST NAME
+%token	NO
 
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
@@ -274,6 +275,30 @@ ifaceoptsl	: SEND VENDOR CLASS ID STRING {
 			iface_conf->c_id[0] = DHO_DHCP_CLIENT_IDENTIFIER;
 			iface_conf->c_id[1] = iface_conf->c_id_len - 2;
 		}
+		| SEND HOST NAME STRING {
+			if (iface_conf->h_name != NULL) {
+				free($4);
+				yyerror("host name already set");
+				YYERROR;
+			}
+			if (strlen($4) > 255) {
+				free($4);
+				yyerror("host name too long");
+				YYERROR;
+			}
+			iface_conf->h_name = $4;
+		}
+		| SEND NO HOST NAME {
+			if (iface_conf->h_name != NULL) {
+				yyerror("host name already set");
+				YYERROR;
+			}
+
+			if ((iface_conf->h_name = strdup("")) == NULL) {
+				yyerror("malloc");
+				YYERROR;
+			}
+		}
 		| IGNORE ROUTES {
 			iface_conf->ignore |= IGN_ROUTES;
 		}
@@ -337,9 +362,12 @@ lookup(char *s)
 		{"class",		CLASS},
 		{"client",		CLIENT},
 		{"dns",			DNS},
+		{"host",		HOST},
 		{"id",			ID},
 		{"ignore",		IGNORE},
 		{"interface",		DHCP_IFACE},
+		{"name",		NAME},
+		{"no",			NO},
 		{"routes",		ROUTES},
 		{"send",		SEND},
 		{"vendor",		VENDOR},
