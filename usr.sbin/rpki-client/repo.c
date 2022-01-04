@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.18 2021/12/29 11:35:23 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.19 2022/01/04 18:16:09 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -447,7 +447,7 @@ ta_get(struct tal *tal)
 	tal->uri = NULL;
 
 	if (noop) {
-		tr->state = REPO_FAILED;
+		tr->state = REPO_DONE;
 		logx("ta/%s: using cache", tr->descr);
 		repo_done(tr, 0);
 	} else {
@@ -512,7 +512,7 @@ rsync_get(const char *uri, int nofetch)
 	rr->basedir = repo_dir(repo, "rsync", 0);
 
 	if (noop || nofetch) {
-		rr->state = REPO_FAILED;
+		rr->state = REPO_DONE;
 		logx("%s: using cache", rr->basedir);
 		repo_done(rr, 0);
 	} else {
@@ -582,7 +582,7 @@ rrdp_get(const char *uri, int nofetch)
 	RB_INIT(&rr->deleted);
 
 	if (noop || nofetch) {
-		rr->state = REPO_FAILED;
+		rr->state = REPO_DONE;
 		logx("%s: using cache", rr->notifyuri);
 		repo_done(rr, 0);
 	} else {
