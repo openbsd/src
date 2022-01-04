@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.56 2022/01/04 20:33:02 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.57 2022/01/04 20:40:43 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -515,7 +515,7 @@ addr_expand(unsigned char *addr, const ASN1_BIT_STRING *bs, const int length,
 /*
  * Extract the prefix length from a bitstring: 8 * length - unused bits.
  */
-#define addr_prefixlen(bs) ((int) ((bs)->length * 8 - ((bs)->flags & 7)))
+#define addr_prefix_len(bs) ((int) ((bs)->length * 8 - ((bs)->flags & 7)))
 
 /*
  * i2r handler for one address bitstring.
@@ -576,7 +576,7 @@ i2r_IPAddressOrRanges(BIO *out, const int indent,
 			if (!i2r_address(out, afi, 0x00, aor->u.addressPrefix))
 				return 0;
 			BIO_printf(out, "/%d\n",
-			    addr_prefixlen(aor->u.addressPrefix));
+			    addr_prefix_len(aor->u.addressPrefix));
 			continue;
 		case IPAddressOrRange_addressRange:
 			if (!i2r_address(out, afi, 0x00,
@@ -687,19 +687,19 @@ IPAddressOrRange_cmp(const IPAddressOrRange *a, const IPAddressOrRange *b,
     const int length)
 {
 	unsigned char addr_a[ADDR_RAW_BUF_LEN], addr_b[ADDR_RAW_BUF_LEN];
-	int prefixlen_a = 0, prefixlen_b = 0;
+	int prefix_len_a = 0, prefix_len_b = 0;
 	int r;
 
 	switch (a->type) {
 	case IPAddressOrRange_addressPrefix:
 		if (!addr_expand(addr_a, a->u.addressPrefix, length, 0x00))
 			return -1;
-		prefixlen_a = addr_prefixlen(a->u.addressPrefix);
+		prefix_len_a = addr_prefix_len(a->u.addressPrefix);
 		break;
 	case IPAddressOrRange_addressRange:
 		if (!addr_expand(addr_a, a->u.addressRange->min, length, 0x00))
 			return -1;
-		prefixlen_a = length * 8;
+		prefix_len_a = length * 8;
 		break;
 	}
 
@@ -707,19 +707,19 @@ IPAddressOrRange_cmp(const IPAddressOrRange *a, const IPAddressOrRange *b,
 	case IPAddressOrRange_addressPrefix:
 		if (!addr_expand(addr_b, b->u.addressPrefix, length, 0x00))
 			return -1;
-		prefixlen_b = addr_prefixlen(b->u.addressPrefix);
+		prefix_len_b = addr_prefix_len(b->u.addressPrefix);
 		break;
 	case IPAddressOrRange_addressRange:
 		if (!addr_expand(addr_b, b->u.addressRange->min, length, 0x00))
 			return -1;
-		prefixlen_b = length * 8;
+		prefix_len_b = length * 8;
 		break;
 	}
 
 	if ((r = memcmp(addr_a, addr_b, length)) != 0)
 		return r;
 	else
-		return prefixlen_a - prefixlen_b;
+		return prefix_len_a - prefix_len_b;
 }
 
 /*
@@ -802,22 +802,22 @@ range_should_be_prefix(const unsigned char *min, const unsigned char *max,
  */
 static int
 make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
-    unsigned int afi, int prefixlen)
+    unsigned int afi, int prefix_len)
 {
 	IPAddressOrRange *aor;
-	int afi_length, bytelen, bitlen, max_length;
+	int afi_len, byte_len, bit_len, max_len;
 
-	if (prefixlen < 0)
+	if (prefix_len < 0)
 		return 0;
 
-	max_length = 16;
-	if ((afi_length = length_from_afi(afi)) > 0)
-		max_length = afi_length;
-	if (prefixlen > 8 * max_length)
+	max_len = 16;
+	if ((afi_len = length_from_afi(afi)) > 0)
+		max_len = afi_len;
+	if (prefix_len > 8 * max_len)
 		return 0;
 
-	bytelen = (prefixlen + 7) / 8;
-	bitlen = prefixlen % 8;
+	byte_len = (prefix_len + 7) / 8;
+	bit_len = prefix_len % 8;
 
 	if ((aor = IPAddressOrRange_new()) == NULL)
 		return 0;
@@ -825,14 +825,14 @@ make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
 	if ((aor->u.addressPrefix = ASN1_BIT_STRING_new()) == NULL)
 		goto err;
 
-	if (!ASN1_BIT_STRING_set(aor->u.addressPrefix, addr, bytelen))
+	if (!ASN1_BIT_STRING_set(aor->u.addressPrefix, addr, byte_len))
 		goto err;
 
 	aor->u.addressPrefix->flags &= ~7;
 	aor->u.addressPrefix->flags |= ASN1_STRING_FLAG_BITS_LEFT;
-	if (bitlen > 0) {
-		aor->u.addressPrefix->data[bytelen - 1] &= ~(0xff >> bitlen);
-		aor->u.addressPrefix->flags |= 8 - bitlen;
+	if (bit_len > 0) {
+		aor->u.addressPrefix->data[byte_len - 1] &= ~(0xff >> bit_len);
+		aor->u.addressPrefix->flags |= 8 - bit_len;
 	}
 
 	*result = aor;
@@ -853,10 +853,10 @@ make_addressRange(IPAddressOrRange **result, unsigned char *min,
     unsigned char *max, unsigned int afi, int length)
 {
 	IPAddressOrRange *aor;
-	int i, prefixlen;
+	int i, prefix_len;
 
-	if ((prefixlen = range_should_be_prefix(min, max, length)) >= 0)
-		return make_addressPrefix(result, min, afi, prefixlen);
+	if ((prefix_len = range_should_be_prefix(min, max, length)) >= 0)
+		return make_addressPrefix(result, min, afi, prefix_len);
 
 	if ((aor = IPAddressOrRange_new()) == NULL)
 		return 0;
@@ -1014,7 +1014,7 @@ make_prefix_or_range(IPAddrBlocks *addr, const unsigned afi,
  */
 int
 X509v3_addr_add_prefix(IPAddrBlocks *addr, const unsigned afi,
-    const unsigned *safi, unsigned char *a, const int prefixlen)
+    const unsigned *safi, unsigned char *a, const int prefix_len)
 {
 	IPAddressOrRanges *aors;
 	IPAddressOrRange *aor;
@@ -1022,7 +1022,7 @@ X509v3_addr_add_prefix(IPAddrBlocks *addr, const unsigned afi,
 	if ((aors = make_prefix_or_range(addr, afi, safi)) == NULL)
 		return 0;
 
-	if (!make_addressPrefix(&aor, a, afi, prefixlen))
+	if (!make_addressPrefix(&aor, a, afi, prefix_len))
 		return 0;
 
 	if (sk_IPAddressOrRange_push(aors, aor) <= 0) {
@@ -1105,18 +1105,18 @@ int
 X509v3_addr_get_range(IPAddressOrRange *aor, const unsigned afi,
     unsigned char *min, unsigned char *max, const int length)
 {
-	int afi_length;
+	int afi_len;
 
-	if ((afi_length = length_from_afi(afi)) == 0)
+	if ((afi_len = length_from_afi(afi)) == 0)
 		return 0;
 
-	if (length < afi_length)
+	if (length < afi_len)
 		return 0;
 
-	if (!extract_min_max(aor, min, max, afi_length))
+	if (!extract_min_max(aor, min, max, afi_len))
 		return 0;
 
-	return afi_length;
+	return afi_len;
 }
 
 #define MINIMUM(a, b) (((a) < (b)) ? (a) : (b))
@@ -1402,7 +1402,7 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 		unsigned afi, *safi = NULL, safi_;
 		const char *addr_chars = NULL;
 		const char *errstr;
-		int prefixlen, i1, i2, delim, length;
+		int prefix_len, i1, i2, delim, length;
 
 		if (!name_cmp(val->name, "IPv4")) {
 			afi = IANA_AFI_IPV4;
@@ -1514,14 +1514,14 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 			/* length contains the size of the address in bytes. */
 			if (length != 4 && length != 16)
 				goto err;
-			prefixlen = strtonum(s + i2, 0, 8 * length, &errstr);
+			prefix_len = strtonum(s + i2, 0, 8 * length, &errstr);
 			if (errstr != NULL) {
 				X509V3error(X509V3_R_EXTENSION_VALUE_ERROR);
 				X509V3_conf_err(val);
 				goto err;
 			}
 			if (!X509v3_addr_add_prefix(addr, afi, safi, min,
-			    prefixlen)) {
+			    prefix_len)) {
 				X509V3error(ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
