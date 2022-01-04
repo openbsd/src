@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.76 2021/07/23 00:29:14 jmatthew Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.77 2022/01/04 20:43:44 deraadt Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -60,6 +60,11 @@ typedef u_int32_t pcireg_t;		/* configuration space register XXX */
 #define PCI_PWR_D1	1
 #define PCI_PWR_D2	2
 #define PCI_PWR_D3	3
+
+struct pci_matchid {
+	pci_vendor_id_t		pm_vid;
+	pci_product_id_t	pm_pid;
+};
 
 #ifdef _KERNEL
 
@@ -250,11 +255,6 @@ void	pci_resume_msix(pci_chipset_tag_t, pcitag_t, bus_space_tag_t,
 int	pci_intr_msix_count(struct pci_attach_args *);
 
 uint16_t pci_requester_id(pci_chipset_tag_t, pcitag_t);
-
-struct pci_matchid {
-	pci_vendor_id_t		pm_vid;
-	pci_product_id_t	pm_pid;
-};
 
 int pci_matchbyid(struct pci_attach_args *, const struct pci_matchid *, int);
 int pci_get_powerstate(pci_chipset_tag_t, pcitag_t);
