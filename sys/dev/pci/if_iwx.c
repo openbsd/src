@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.128 2021/12/03 14:32:08 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.129 2022/01/04 15:53:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2931,7 +2931,7 @@ iwx_rx_bar_frame_release(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 		return;
 
 	rxba = &sc->sc_rxba_data[baid];
-	if (rxba == NULL || rxba->baid == IWX_RX_REORDER_DATA_INVALID_BAID)
+	if (rxba->baid == IWX_RX_REORDER_DATA_INVALID_BAID)
 		return;
 
 	tid = le32toh(release->sta_tid) & IWX_BAR_FRAME_RELEASE_TID_MASK;
@@ -4251,7 +4251,8 @@ iwx_rx_reorder(struct iwx_softc *sc, struct mbuf *m, int chanidx,
 		return 0;
 
 	rxba = &sc->sc_rxba_data[baid];
-	if (rxba == NULL || tid != rxba->tid || rxba->sta_id != IWX_STATION_ID)
+	if (rxba->baid == IWX_RX_REORDER_DATA_INVALID_BAID ||
+	    tid != rxba->tid || rxba->sta_id != IWX_STATION_ID)
 		return 0;
 
 	if (rxba->timeout != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.385 2021/12/20 15:08:10 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.386 2022/01/04 15:53:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5115,7 +5115,8 @@ iwm_rx_reorder(struct iwm_softc *sc, struct mbuf *m, int chanidx,
 		return 0;
 
 	rxba = &sc->sc_rxba_data[baid];
-	if (rxba == NULL || tid != rxba->tid || rxba->sta_id != IWM_STATION_ID)
+	if (rxba->baid == IWM_RX_REORDER_DATA_INVALID_BAID ||
+	    tid != rxba->tid || rxba->sta_id != IWM_STATION_ID)
 		return 0;
 
 	if (rxba->timeout != 0)
