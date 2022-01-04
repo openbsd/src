@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.54 2022/01/04 20:23:05 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.55 2022/01/04 20:30:30 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1060,6 +1060,23 @@ X509v3_addr_add_range(IPAddrBlocks *addr, const unsigned afi,
 	return 1;
 }
 
+static int
+extract_min_max_bitstr(IPAddressOrRange *aor, ASN1_BIT_STRING **out_min,
+    ASN1_BIT_STRING **out_max)
+{
+	switch (aor->type) {
+	case IPAddressOrRange_addressPrefix:
+		*out_min = *out_max = aor->u.addressPrefix;
+		return 1;
+	case IPAddressOrRange_addressRange:
+		*out_min = aor->u.addressRange->min;
+		*out_max = aor->u.addressRange->max;
+		return 1;
+	default:
+		return 0;
+	}
+}
+
 /*
  * Extract min and max values from an IPAddressOrRange.
  */
@@ -1067,18 +1084,18 @@ static int
 extract_min_max(IPAddressOrRange *aor, unsigned char *min, unsigned char *max,
     int length)
 {
+	ASN1_BIT_STRING *min_bitstr, *max_bitstr;
+
 	if (aor == NULL || min == NULL || max == NULL)
 		return 0;
-	switch (aor->type) {
-	case IPAddressOrRange_addressPrefix:
-		return (addr_expand(min, aor->u.addressPrefix, length, 0x00) &&
-		    addr_expand(max, aor->u.addressPrefix, length, 0xff));
-	case IPAddressOrRange_addressRange:
-		return (addr_expand(min, aor->u.addressRange->min, length,
-		    0x00) &&
-		    addr_expand(max, aor->u.addressRange->max, length, 0xff));
-	}
-	return 0;
+
+	if (!extract_min_max_bitstr(aor, &min_bitstr, &max_bitstr))
+		return 0;
+
+	if (!addr_expand(min, min_bitstr, length, 0))
+		return 0;
+
+	return addr_expand(max, max_bitstr, length, 1);
 }
 
 /*
