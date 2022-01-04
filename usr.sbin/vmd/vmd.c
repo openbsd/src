@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.128 2021/12/13 18:28:40 deraadt Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.129 2022/01/04 15:18:44 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1421,7 +1421,6 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 	struct vm_create_params	*vcpp;
 	struct vmd_vm		*vm = NULL;
 	unsigned int		 i, j;
-	uint32_t		 id;
 
 	/* return without error if the parent is NULL (nothing to inherit) */
 	if ((vmc->vmc_flags & VMOP_CREATE_INSTANCE) == 0 ||
@@ -1442,7 +1441,6 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 		return (ENAMETOOLONG);
 	}
 
-	id = vcp->vcp_id;
 	name = vcp->vcp_name;
 
 	if ((vm = vm_getbyname(vcp->vcp_name)) != NULL ||

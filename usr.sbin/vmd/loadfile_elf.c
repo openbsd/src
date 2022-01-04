@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.40 2021/12/30 08:12:23 claudio Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.41 2022/01/04 15:18:44 claudio Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -499,7 +499,7 @@ mread(gzFile fp, paddr_t addr, size_t sz)
 	const char *errstr = NULL;
 	int errnum = 0;
 	size_t ct;
-	size_t i, rd, osz;
+	size_t i, osz;
 	char buf[PAGE_SIZE];
 
 	/*
@@ -507,7 +507,6 @@ mread(gzFile fp, paddr_t addr, size_t sz)
 	 * write_mem
 	 */
 	ct = 0;
-	rd = 0;
 	osz = sz;
 	if ((addr & PAGE_MASK) != 0) {
 		memset(buf, 0, sizeof(buf));
@@ -524,7 +523,6 @@ mread(gzFile fp, paddr_t addr, size_t sz)
 			    errnum, errstr);
 			return (0);
 		}
-		rd += ct;
 
 		if (write_mem(addr, buf, ct))
 			return (0);
@@ -552,7 +550,6 @@ mread(gzFile fp, paddr_t addr, size_t sz)
 			    errnum, errstr);
 			return (0);
 		}
-		rd += ct;
 
 		if (write_mem(addr, buf, ct))
 			return (0);
@@ -678,7 +675,6 @@ elf64_exec(gzFile fp, Elf64_Ehdr *elf, u_long *marks, int flags)
 	Elf64_Off off;
 	int i;
 	size_t sz;
-	int first;
 	int havesyms;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
 	paddr_t offset = marks[MARK_START], shpp, elfp;
@@ -696,7 +692,7 @@ elf64_exec(gzFile fp, Elf64_Ehdr *elf, u_long *marks, int flags)
 		return 1;
 	}
 
-	for (first = 1, i = 0; i < elf->e_phnum; i++) {
+	for (i = 0; i < elf->e_phnum; i++) {
 		if (phdr[i].p_type == PT_OPENBSD_RANDOMIZE) {
 			int m;
 
@@ -741,8 +737,6 @@ elf64_exec(gzFile fp, Elf64_Ehdr *elf, u_long *marks, int flags)
 				free(phdr);
 				return 1;
 			}
-
-			first = 0;
 		}
 
 		if ((IS_TEXT(phdr[i]) && (flags & (LOAD_TEXT | COUNT_TEXT))) ||
@@ -816,7 +810,7 @@ elf64_exec(gzFile fp, Elf64_Ehdr *elf, u_long *marks, int flags)
 			if (shp[i].sh_type == SHT_SYMTAB)
 				havesyms = 1;
 
-		for (first = 1, i = 0; i < elf->e_shnum; i++) {
+		for (i = 0; i < elf->e_shnum; i++) {
 			if (shp[i].sh_type == SHT_SYMTAB ||
 			    shp[i].sh_type == SHT_STRTAB ||
 			    !strcmp(shstr + shp[i].sh_name, ".debug_line") ||
@@ -841,7 +835,6 @@ elf64_exec(gzFile fp, Elf64_Ehdr *elf, u_long *marks, int flags)
 				shp[i].sh_flags |= SHF_ALLOC;
 				off += roundup(shp[i].sh_size,
 				    sizeof(Elf64_Addr));
-				first = 0;
 			}
 		}
 		if (flags & LOAD_SYM) {
@@ -900,7 +893,6 @@ elf32_exec(gzFile fp, Elf32_Ehdr *elf, u_long *marks, int flags)
 	Elf32_Off off;
 	int i;
 	size_t sz;
-	int first;
 	int havesyms;
 	paddr_t minp = ~0, maxp = 0, pos = 0;
 	paddr_t offset = marks[MARK_START], shpp, elfp;
@@ -918,7 +910,7 @@ elf32_exec(gzFile fp, Elf32_Ehdr *elf, u_long *marks, int flags)
 		return 1;
 	}
 
-	for (first = 1, i = 0; i < elf->e_phnum; i++) {
+	for (i = 0; i < elf->e_phnum; i++) {
 		if (phdr[i].p_type == PT_OPENBSD_RANDOMIZE) {
 			int m;
 
@@ -963,8 +955,6 @@ elf32_exec(gzFile fp, Elf32_Ehdr *elf, u_long *marks, int flags)
 				free(phdr);
 				return 1;
 			}
-
-			first = 0;
 		}
 
 		if ((IS_TEXT(phdr[i]) && (flags & (LOAD_TEXT | COUNT_TEXT))) ||
@@ -1038,7 +1028,7 @@ elf32_exec(gzFile fp, Elf32_Ehdr *elf, u_long *marks, int flags)
 			if (shp[i].sh_type == SHT_SYMTAB)
 				havesyms = 1;
 
-		for (first = 1, i = 0; i < elf->e_shnum; i++) {
+		for (i = 0; i < elf->e_shnum; i++) {
 			if (shp[i].sh_type == SHT_SYMTAB ||
 			    shp[i].sh_type == SHT_STRTAB ||
 			    !strcmp(shstr + shp[i].sh_name, ".debug_line")) {
@@ -1062,7 +1052,6 @@ elf32_exec(gzFile fp, Elf32_Ehdr *elf, u_long *marks, int flags)
 				shp[i].sh_flags |= SHF_ALLOC;
 				off += roundup(shp[i].sh_size,
 				    sizeof(Elf32_Addr));
-				first = 0;
 			}
 		}
 		if (flags & LOAD_SYM) {
