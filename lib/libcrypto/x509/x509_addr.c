@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.48 2022/01/04 19:49:14 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.49 2022/01/04 19:56:53 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1688,9 +1688,13 @@ static int
 addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
     IPAddrBlocks *ext)
 {
-	IPAddrBlocks *child = NULL;
-	int i, j, ret = 1;
+	IPAddrBlocks *child = NULL, *parent = NULL;
+	IPAddressFamily *fc, *fp;
+	IPAddressOrRanges *aorc, *aorp;
 	X509 *x;
+	int i, j, k;
+	unsigned int length;
+	int ret = 1;
 
 	/* We need a non-empty chain to test against. */
 	if (sk_X509_num(chain) <= 0)
@@ -1733,59 +1737,95 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	 */
 	for (i++; i < sk_X509_num(chain); i++) {
 		x = sk_X509_value(chain, i);
-		if (!X509v3_addr_is_canonical(x->rfc3779_addr))
+		parent = x->rfc3779_addr;
+
+		if (!X509v3_addr_is_canonical(parent))
 			validation_err(X509_V_ERR_INVALID_EXTENSION);
-		if (x->rfc3779_addr == NULL) {
+
+		if (parent == NULL) {
 			for (j = 0; j < sk_IPAddressFamily_num(child); j++) {
-				IPAddressFamily *fc = sk_IPAddressFamily_value(child,
-				    j);
-				if (fc->ipAddressChoice->type !=
-				    IPAddressChoice_inherit) {
+				fc = sk_IPAddressFamily_value(child, j);
+
+				if (IPAddressFamily_inheritance(fc) == NULL) {
 					validation_err(X509_V_ERR_UNNESTED_RESOURCE);
 					break;
 				}
 			}
 			continue;
 		}
-		(void)sk_IPAddressFamily_set_cmp_func(x->rfc3779_addr,
-		    IPAddressFamily_cmp);
+
+		sk_IPAddressFamily_set_cmp_func(parent, IPAddressFamily_cmp);
+
+		/*
+		 * Check that the child's resources are covered by the parent.
+		 * Each covered resource is replaced with the parent's resource
+		 * covering it, so the next iteration will check that the
+		 * parent's resources are covered by the grandparent.
+		 */
 		for (j = 0; j < sk_IPAddressFamily_num(child); j++) {
-			IPAddressFamily *fc = sk_IPAddressFamily_value(child, j);
-			int k = sk_IPAddressFamily_find(x->rfc3779_addr, fc);
-			IPAddressFamily *fp =
-			    sk_IPAddressFamily_value(x->rfc3779_addr, k);
+			fc = sk_IPAddressFamily_value(child, j);
+
+			k = sk_IPAddressFamily_find(parent, fc);
+			fp = sk_IPAddressFamily_value(parent, k);
+
 			if (fp == NULL) {
-				if (fc->ipAddressChoice->type ==
-				    IPAddressChoice_addressesOrRanges) {
-					validation_err(X509_V_ERR_UNNESTED_RESOURCE);
-					break;
-				}
+				/*
+				 * If we have no match in the parent and the
+				 * child inherits, that's fine.
+				 */
+				if (IPAddressFamily_inheritance(fc) != NULL)
+					continue;
+
+				/* Otherwise the child isn't covered. */
+				validation_err(X509_V_ERR_UNNESTED_RESOURCE);
+				break;
+			}
+
+			/* Parent inherits, nothing to do. */
+			if (IPAddressFamily_inheritance(fp) != NULL)
+				continue;
+
+			/* Child inherits. Use parent's address family. */
+			if (IPAddressFamily_inheritance(fc) != NULL) {
+				sk_IPAddressFamily_set(child, j, fp);
 				continue;
 			}
-			if (fp->ipAddressChoice->type ==
-			    IPAddressChoice_addressesOrRanges) {
-				if (fc->ipAddressChoice->type ==
-				    IPAddressChoice_inherit ||
-				    addr_contains(fp->ipAddressChoice->u.addressesOrRanges,
-				    fc->ipAddressChoice->u.addressesOrRanges,
-				    length_from_afi(X509v3_addr_get_afi(fc))))
-					sk_IPAddressFamily_set(child, j, fp);
-				else
-					validation_err(X509_V_ERR_UNNESTED_RESOURCE);
+
+			aorc = IPAddressFamily_addressesOrRanges(fc);
+			aorp = IPAddressFamily_addressesOrRanges(fp);
+
+			/*
+			 * Child and parent are canonical and neither inherits.
+			 * If either addressesOrRanges is NULL, something's
+			 * very wrong.
+			 */
+			if (aorc == NULL || aorp == NULL)
+				goto err;
+
+			if (!IPAddressFamily_afi_length(fc, &length))
+				goto err;
+
+			/* Now check containment and replace or error. */
+			if (addr_contains(aorp, aorc, length)) {
+				sk_IPAddressFamily_set(child, j, fp);
+				continue;
 			}
+
+			validation_err(X509_V_ERR_UNNESTED_RESOURCE);
 		}
 	}
 
 	/*
 	 * Trust anchor can't inherit.
 	 */
-	if (x->rfc3779_addr != NULL) {
-		for (j = 0; j < sk_IPAddressFamily_num(x->rfc3779_addr); j++) {
-			IPAddressFamily *fp =
-			    sk_IPAddressFamily_value(x->rfc3779_addr, j);
-			if (fp->ipAddressChoice->type ==
-			    IPAddressChoice_inherit &&
-			    sk_IPAddressFamily_find(child, fp) >= 0)
+	if ((parent = x->rfc3779_addr) != NULL) {
+		for (j = 0; j < sk_IPAddressFamily_num(parent); j++) {
+			fp = sk_IPAddressFamily_value(parent, j);
+
+			if (IPAddressFamily_inheritance(fp) == NULL)
+				continue;
+
+			if (sk_IPAddressFamily_find(child, fp) >= 0)
 				validation_err(X509_V_ERR_UNNESTED_RESOURCE);
 		}
 	}
@@ -1795,6 +1835,8 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	return ret;
 
  err:
+	sk_IPAddressFamily_free(child);
+
 	if (ctx != NULL)
 		ctx->error = X509_V_ERR_UNSPECIFIED;
 
