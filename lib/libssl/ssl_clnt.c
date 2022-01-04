@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.124 2022/01/04 11:14:54 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.125 2022/01/04 11:17:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1358,7 +1358,7 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	 * Check that the curve is one of our preferences - if it is not,
 	 * the server has sent us an invalid curve.
 	 */
-	if (tls1_check_curve(s, curve_id) != 1) {
+	if (!tls1_check_curve(s, curve_id)) {
 		SSLerror(s, SSL_R_WRONG_CURVE);
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
 		goto err;
