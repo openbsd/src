@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.50 2022/01/04 20:02:22 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.51 2022/01/04 20:04:38 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -848,12 +848,6 @@ make_addressRange(IPAddressOrRange **result, unsigned char *min,
 		return 0;
 	aor->type = IPAddressOrRange_addressRange;
 	if ((aor->u.addressRange = IPAddressRange_new()) == NULL)
-		goto err;
-	if (aor->u.addressRange->min == NULL &&
-	    (aor->u.addressRange->min = ASN1_BIT_STRING_new()) == NULL)
-		goto err;
-	if (aor->u.addressRange->max == NULL &&
-	    (aor->u.addressRange->max = ASN1_BIT_STRING_new()) == NULL)
 		goto err;
 
 	for (i = length; i > 0 && min[i - 1] == 0x00; --i)
