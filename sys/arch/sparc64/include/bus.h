@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.34 2020/06/23 01:21:29 jmatthew Exp $	*/
+/*	$OpenBSD: bus.h,v 1.35 2022/01/04 20:41:44 deraadt Exp $	*/
 /*	$NetBSD: bus.h,v 1.31 2001/09/21 15:30:41 wiz Exp $	*/
 
 /*-
@@ -67,6 +67,8 @@
 #define _MACHINE_BUS_H_
 
 #include <sys/atomic.h>
+
+#ifdef _KERNEL
 
 /*
  * Debug hooks
@@ -647,6 +649,8 @@ struct sparc_bus_dmamap {
 
 	bus_dma_segment_t dm_segs[1];	/* segments; variable length */
 };
+
+#endif /* _KERNEL */
 
 #endif /* _MACHINE_BUS_H_ */
 

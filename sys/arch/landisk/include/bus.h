@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.9 2017/05/08 00:27:45 dlg Exp $	*/
+/*	$OpenBSD: bus.h,v 1.10 2022/01/04 20:41:44 deraadt Exp $	*/
 /*	$NetBSD: bus.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -64,6 +64,8 @@
 
 #ifndef _MACHINE_BUS_H_
 #define	_MACHINE_BUS_H_
+
+#ifdef _KERNEL
 
 #include <sys/types.h>
 
@@ -589,5 +591,7 @@ void	_bus_dmamem_unmap(bus_dma_tag_t tag, caddr_t kva, size_t size);
 paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);
 #endif	/* _LANDISK_BUS_DMA_PRIVATE */
+
+#endif /* _KERNEL */
 
 #endif	/* _MACHINE_BUS_H_ */
