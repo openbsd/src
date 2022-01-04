@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.386 2022/01/04 15:53:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.387 2022/01/04 15:55:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -10586,8 +10586,7 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data, struct mbuf_list *ml)
 			break;
 
 		len = sizeof(pkt->len_n_flags) + iwm_rx_packet_len(pkt);
-		if (len < sizeof(pkt->hdr) ||
-		    len > (IWM_RBUF_SIZE - offset - minsz))
+		if (len < minsz || len > (IWM_RBUF_SIZE - offset))
 			break;
 
 		if (code == IWM_REPLY_RX_MPDU_CMD && ++nmpdu == 1) {
