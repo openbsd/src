@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.201 2021/12/23 12:21:48 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.202 2022/01/04 06:32:39 yasuoka Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -1023,7 +1023,7 @@ ipsec_forward_check(struct mbuf *m, int hlen, int af)
 	} else
 		tdb = NULL;
 	error = ipsp_spd_lookup(m, af, hlen, IPSP_DIRECTION_IN,
-	    tdb, NULL, NULL, 0);
+	    tdb, NULL, NULL, NULL);
 	tdb_unref(tdb);
 
 	return error;
@@ -1096,7 +1096,7 @@ ipsec_local_check(struct mbuf *m, int hlen, int proto, int af)
 	} else
 		tdb = NULL;
 	error = ipsp_spd_lookup(m, af, hlen, IPSP_DIRECTION_IN,
-	    tdb, NULL, NULL, 0);
+	    tdb, NULL, NULL, NULL);
 	tdb_unref(tdb);
 
 	return error;

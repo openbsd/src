@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.379 2021/12/23 12:21:48 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.380 2022/01/04 06:32:39 yasuoka Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -541,11 +541,15 @@ ip_output_ipsec_lookup(struct mbuf *m, int hlen, struct inpcb *inp,
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct tdb *tdb;
+	struct ipsec_ids *ids = NULL;
 	int error;
 
 	/* Do we have any pending SAs to apply ? */
+	if (ipsecflowinfo)
+		ids = ipsp_ids_lookup(ipsecflowinfo);
 	error = ipsp_spd_lookup(m, AF_INET, hlen, IPSP_DIRECTION_OUT,
-	    NULL, inp, &tdb, ipsecflowinfo);
+	    NULL, inp, &tdb, ids);
+	ipsp_ids_free(ids);
 	if (error || tdb == NULL) {
 		*tdbout = NULL;
 		return error;

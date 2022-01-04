@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.24 2021/12/28 23:13:20 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.25 2022/01/04 06:32:39 yasuoka Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -749,7 +749,7 @@ veb_ipsec_proto_out(struct mbuf *m, sa_family_t af, int iphlen)
 #endif
 
 	tdb = ipsp_spd_lookup(m, af, iphlen, &error, IPSP_DIRECTION_OUT,
-	    NULL, NULL, 0);
+	    NULL, NULL, NULL);
 	if (tdb == NULL)
 		return (m);
 

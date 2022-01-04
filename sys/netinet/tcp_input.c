@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.374 2022/01/02 22:36:04 jsg Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.375 2022/01/04 06:32:39 yasuoka Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -579,7 +579,7 @@ findpcb:
 			    &tdbi->dst, tdbi->proto);
 		}
 		error = ipsp_spd_lookup(m, af, iphlen, IPSP_DIRECTION_IN,
-		    tdb, inp, NULL, 0);
+		    tdb, inp, NULL, NULL);
 		tdb_unref(tdb);
 		if (error) {
 			tcpstat_inc(tcps_rcvnosec);

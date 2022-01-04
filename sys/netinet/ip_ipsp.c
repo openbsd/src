@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.267 2021/12/20 15:59:09 mvs Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.268 2022/01/04 06:32:39 yasuoka Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -47,6 +47,8 @@
 #include <sys/kernel.h>
 #include <sys/timeout.h>
 #include <sys/pool.h>
+#include <sys/atomic.h>
+#include <sys/mutex.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -84,6 +86,13 @@ void tdb_hashstats(void);
 	do { } while (0)
 #endif
 
+/*
+ * Locks used to protect global data and struct members:
+ *	F	ipsec_flows_mtx
+ */
+
+struct mutex ipsec_flows_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
+
 int		tdb_rehash(void);
 void		tdb_timeout(void *);
 void		tdb_firstuse(void *);
@@ -98,16 +107,16 @@ int ipsec_ids_idle = 100;		/* keep free ids for 100s */
 struct pool tdb_pool;
 
 /* Protected by the NET_LOCK(). */
-u_int32_t ipsec_ids_next_flow = 1;	/* may not be zero */
-struct ipsec_ids_tree ipsec_ids_tree;
-struct ipsec_ids_flows ipsec_ids_flows;
+u_int32_t ipsec_ids_next_flow = 1;		/* [F] may not be zero */
+struct ipsec_ids_tree ipsec_ids_tree;		/* [F] */
+struct ipsec_ids_flows ipsec_ids_flows;		/* [F] */
 struct ipsec_policy_head ipsec_policy_head =
     TAILQ_HEAD_INITIALIZER(ipsec_policy_head);
 
 void ipsp_ids_gc(void *);
 
 LIST_HEAD(, ipsec_ids) ipsp_ids_gc_list =
-    LIST_HEAD_INITIALIZER(ipsp_ids_gc_list);
+    LIST_HEAD_INITIALIZER(ipsp_ids_gc_list);	/* [F] */
 struct timeout ipsp_ids_gc_timeout =
     TIMEOUT_INITIALIZER_FLAGS(ipsp_ids_gc, NULL, TIMEOUT_PROC);
 
@@ -1191,21 +1200,25 @@ ipsp_ids_insert(struct ipsec_ids *ids)
 	struct ipsec_ids *found;
 	u_int32_t start_flow;
 
-	NET_ASSERT_LOCKED();
+	mtx_enter(&ipsec_flows_mtx);
 
 	found = RBT_INSERT(ipsec_ids_tree, &ipsec_ids_tree, ids);
 	if (found) {
 		/* if refcount was zero, then timeout is running */
-		if (found->id_refcount++ == 0) {
+		if (atomic_inc_int_nv(&found->id_refcount) == 1) {
 			LIST_REMOVE(found, id_gc_list);
 
 			if (LIST_EMPTY(&ipsp_ids_gc_list))
 				timeout_del(&ipsp_ids_gc_timeout);
 		}
+		mtx_leave (&ipsec_flows_mtx);
 		DPRINTF("ids %p count %d", found, found->id_refcount);
 		return found;
 	}
+
+	ids->id_refcount = 1;
 	ids->id_flow = start_flow = ipsec_ids_next_flow;
+
 	if (++ipsec_ids_next_flow == 0)
 		ipsec_ids_next_flow = 1;
 	while (RBT_INSERT(ipsec_ids_flows, &ipsec_ids_flows, ids) != NULL) {
@@ -1214,12 +1227,13 @@ ipsp_ids_insert(struct ipsec_ids *ids)
 			ipsec_ids_next_flow = 1;
 		if (ipsec_ids_next_flow == start_flow) {
 			RBT_REMOVE(ipsec_ids_tree, &ipsec_ids_tree, ids);
+			mtx_leave(&ipsec_flows_mtx);
 			DPRINTF("ipsec_ids_next_flow exhausted %u",
-			    ipsec_ids_next_flow);
+			    start_flow);
 			return NULL;
 		}
 	}
-	ids->id_refcount = 1;
+	mtx_leave(&ipsec_flows_mtx);
 	DPRINTF("new ids %p flow %u", ids, ids->id_flow);
 	return ids;
 }
@@ -1228,11 +1242,16 @@ struct ipsec_ids *
 ipsp_ids_lookup(u_int32_t ipsecflowinfo)
 {
 	struct ipsec_ids	key;
-
-	NET_ASSERT_LOCKED();
+	struct ipsec_ids	*ids;
 
 	key.id_flow = ipsecflowinfo;
-	return RBT_FIND(ipsec_ids_flows, &ipsec_ids_flows, &key);
+
+	mtx_enter(&ipsec_flows_mtx);
+	ids = RBT_FIND(ipsec_ids_flows, &ipsec_ids_flows, &key);
+	atomic_inc_int(&ids->id_refcount);
+	mtx_leave(&ipsec_flows_mtx);
+
+	return ids;
 }
 
 /* free ids only from delayed timeout */
@@ -1241,7 +1260,7 @@ ipsp_ids_gc(void *arg)
 {
 	struct ipsec_ids *ids, *tids;
 
-	NET_LOCK();
+	mtx_enter(&ipsec_flows_mtx);
 
 	LIST_FOREACH_SAFE(ids, &ipsp_ids_gc_list, id_gc_list, tids) {
 		KASSERT(ids->id_refcount == 0);
@@ -1261,14 +1280,15 @@ ipsp_ids_gc(void *arg)
 	if (!LIST_EMPTY(&ipsp_ids_gc_list))
 		timeout_add_sec(&ipsp_ids_gc_timeout, 1);
 
-	NET_UNLOCK();
+	mtx_leave(&ipsec_flows_mtx);
 }
 
 /* decrements refcount, actual free happens in gc */
 void
 ipsp_ids_free(struct ipsec_ids *ids)
 {
-	NET_ASSERT_LOCKED();
+	if (ids == NULL)
+		return;
 
 	/*
 	 * If the refcount becomes zero, then a timeout is started. This
@@ -1277,8 +1297,10 @@ ipsp_ids_free(struct ipsec_ids *ids)
 	DPRINTF("ids %p count %d", ids, ids->id_refcount);
 	KASSERT(ids->id_refcount > 0);
 
-	if (--ids->id_refcount > 0)
+	if (atomic_dec_int_nv(&ids->id_refcount) > 0)
 		return;
+
+	mtx_enter(&ipsec_flows_mtx);
 
 	/*
 	 * Add second for the case ipsp_ids_gc() is already running and
@@ -1289,6 +1311,8 @@ ipsp_ids_free(struct ipsec_ids *ids)
 	if (LIST_EMPTY(&ipsp_ids_gc_list))
 		timeout_add_sec(&ipsp_ids_gc_timeout, 1);
 	LIST_INSERT_HEAD(&ipsp_ids_gc_list, ids, id_gc_list);
+
+	mtx_leave(&ipsec_flows_mtx);
 }
 
 static int

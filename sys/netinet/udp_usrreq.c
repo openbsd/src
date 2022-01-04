@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.267 2021/12/02 12:39:15 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.268 2022/01/04 06:32:40 yasuoka Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -512,7 +512,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		} else
 			tdb = NULL;
 		error = ipsp_spd_lookup(m, af, iphlen, IPSP_DIRECTION_IN,
-		    tdb, inp, NULL, 0);
+		    tdb, inp, NULL, NULL);
 		if (error) {
 			udpstat_inc(udps_nosec);
 			tdb_unref(tdb);

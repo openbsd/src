@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.110 2021/12/16 15:38:03 bluhm Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.111 2022/01/04 06:32:39 yasuoka Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -153,7 +153,7 @@ spd_table_walk(unsigned int rtableid,
 int
 ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
     struct tdb *tdbp, struct inpcb *inp, struct tdb **tdbout,
-    u_int32_t ipsecflowinfo)
+    struct ipsec_ids *ipsecflowinfo_ids)
 {
 	struct radix_node_head *rnh;
 	struct radix_node *rn;
@@ -397,9 +397,6 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 			}
 		}
 
-		if (ipsecflowinfo)
-			ids = ipsp_ids_lookup(ipsecflowinfo);
-
 		/* Check that the cached TDB (if present), is appropriate. */
 		mtx_enter(&ipo_tdb_mtx);
 		if (ipo->ipo_tdb != NULL) {
@@ -411,7 +408,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 				goto nomatchout;
 
 			if (!ipsp_aux_match(ipo->ipo_tdb,
-			    ids ? ids : ipo->ipo_ids,
+			    ipsecflowinfo_ids? ipsecflowinfo_ids: ipo->ipo_ids,
 			    &ipo->ipo_addr, &ipo->ipo_mask))
 				goto nomatchout;
 
@@ -450,8 +447,10 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 			/* Find an appropriate SA from the existing ones. */
 			tdbp_new = gettdbbydst(rdomain,
 			    dignore ? &sdst : &ipo->ipo_dst,
-			    ipo->ipo_sproto, ids ? ids: ipo->ipo_ids,
+			    ipo->ipo_sproto,
+			    ipsecflowinfo_ids? ipsecflowinfo_ids: ipo->ipo_ids,
 			    &ipo->ipo_addr, &ipo->ipo_mask);
+			ids = NULL;
 			mtx_enter(&ipo_tdb_mtx);
 			if ((tdbp_new != NULL) &&
 			    (tdbp_new->tdb_flags & TDBF_DELETED)) {

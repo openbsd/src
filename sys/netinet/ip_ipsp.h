@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.233 2021/12/20 15:59:10 mvs Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.234 2022/01/04 06:32:39 yasuoka Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -39,6 +39,14 @@
 
 #ifndef _NETINET_IPSP_H_
 #define _NETINET_IPSP_H_
+
+/*
+ * Locks used to protect struct members in this file:
+ *	I	Immutable after creation
+ *	F	ipsec_flows_mtx
+ *	a	atomic
+ *	p	ipo_tdb_mtx		link policy to TDB global mutex
+ */
 
 /* IPSP global definitions. */
 
@@ -223,14 +231,14 @@ struct ipsec_id {
 };
 
 struct ipsec_ids {
-	LIST_ENTRY(ipsec_ids)	id_gc_list;
-	RBT_ENTRY(ipsec_ids)	id_node_id;
-	RBT_ENTRY(ipsec_ids)	id_node_flow;
-	struct ipsec_id		*id_local;
-	struct ipsec_id		*id_remote;
-	u_int32_t		id_flow;
-	int			id_refcount;
-	u_int			id_gc_ttl;
+	LIST_ENTRY(ipsec_ids)	id_gc_list;	/* [F] */
+	RBT_ENTRY(ipsec_ids)	id_node_id;	/* [F] */
+	RBT_ENTRY(ipsec_ids)	id_node_flow;	/* [F] */
+	struct ipsec_id		*id_local;	/* [I] */
+	struct ipsec_id		*id_remote;	/* [I] */
+	u_int32_t		id_flow;	/* [I] */
+	u_int			id_refcount;	/* [a] */
+	u_int			id_gc_ttl;	/* [F] */
 };
 RBT_HEAD(ipsec_ids_flows, ipsec_ids);
 RBT_HEAD(ipsec_ids_tree, ipsec_ids);
@@ -246,10 +254,6 @@ struct ipsec_acquire {
 	TAILQ_ENTRY(ipsec_acquire)	ipa_next;
 };
 
-/*
- * Locks used to protect struct members in this file:
- *	p	ipo_tdb_mtx		link policy to TDB global mutex
- */
 struct ipsec_policy {
 	struct radix_node	ipo_nodes[2];	/* radix tree glue */
 	struct sockaddr_encap	ipo_addr;
@@ -662,7 +666,7 @@ int	checkreplaywindow(struct tdb *, u_int64_t, u_int32_t, u_int32_t *, int);
 int	ipsp_process_packet(struct mbuf *, struct tdb *, int, int);
 int	ipsp_process_done(struct mbuf *, struct tdb *);
 int	ipsp_spd_lookup(struct mbuf *, int, int, int, struct tdb *,
-	    struct inpcb *, struct tdb **, u_int32_t);
+	    struct inpcb *, struct tdb **, struct ipsec_ids *);
 int	ipsp_is_unspecified(union sockaddr_union);
 int	ipsp_aux_match(struct tdb *, struct ipsec_ids *,
 	    struct sockaddr_encap *, struct sockaddr_encap *);
