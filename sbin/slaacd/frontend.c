@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.61 2021/12/27 15:18:51 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.62 2022/01/04 06:17:46 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -75,6 +75,7 @@ struct iface {
 	uint32_t		 if_index;
 	int			 rdomain;
 	int			 send_solicitation;
+	int			 ll_tentative;
 };
 
 __dead void	 frontend_shutdown(void);
@@ -499,6 +500,7 @@ update_iface(uint32_t if_index, char* if_name)
 	struct imsg_ifinfo	 imsg_ifinfo;
 	struct sockaddr_dl	*sdl;
 	struct sockaddr_in6	*sin6;
+	struct in6_ifreq	 ifr6;
 	int			 flags, xflags, ifrdomain;
 
 	if ((flags = get_flags(if_name)) == -1 || (xflags =
@@ -525,6 +527,7 @@ update_iface(uint32_t if_index, char* if_name)
 		iface->if_index = if_index;
 		iface->rdomain = ifrdomain;
 		iface->icmp6ev = get_icmp6ev_by_rdomain(ifrdomain);
+		iface->ll_tentative = 1;
 
 		LIST_INSERT_HEAD(&interfaces, iface, entries);
 	}
@@ -571,9 +574,33 @@ update_iface(uint32_t if_index, char* if_name)
 				    sin6->sin6_addr.s6_addr[3] = 0;
 			}
 #endif
-			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
 				memcpy(&imsg_ifinfo.ll_address, sin6,
 				    sizeof(imsg_ifinfo.ll_address));
+
+				if (!iface->ll_tentative)
+					break;
+
+				memset(&ifr6, 0, sizeof(ifr6));
+				strlcpy(ifr6.ifr_name, if_name,
+				    sizeof(ifr6.ifr_name));
+				memcpy(&ifr6.ifr_addr, sin6,
+				    sizeof(ifr6.ifr_addr));
+
+				if (ioctl(ioctlsock, SIOCGIFAFLAG_IN6,
+				    (caddr_t)&ifr6) == -1) {
+					log_warn("SIOCGIFAFLAG_IN6");
+					break;
+				}
+
+				if (!(ifr6.ifr_ifru.ifru_flags6 &
+				    IN6_IFF_TENTATIVE)) {
+					iface->ll_tentative = 0;
+					if (iface->send_solicitation)
+						send_solicitation(
+						    iface->if_index);
+				}
+			}
 			break;
 		default:
 			break;
@@ -877,8 +904,10 @@ handle_route_message(struct rt_msghdr *rtm, struct sockaddr **rti_info)
 		    == AF_INET6) {
 			sin6 = (struct sockaddr_in6 *) rti_info[RTAX_IFA];
 
-			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr))
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+				update_iface(if_index, if_name);
 				break;
+			}
 
 			memset(&ifr6, 0, sizeof(ifr6));
 			strlcpy(ifr6.ifr_name, if_name, sizeof(ifr6.ifr_name));
@@ -1080,7 +1109,12 @@ send_solicitation(uint32_t if_index)
 	if (!event_initialized(&iface->icmp6ev->ev)) {
 		iface->send_solicitation = 1;
 		return;
+	} else if (iface->ll_tentative) {
+		iface->send_solicitation = 1;
+		return;
 	}
+
+	iface->send_solicitation = 0;
 
 	dst.sin6_scope_id = if_index;
 
@@ -1204,9 +1238,7 @@ set_icmp6sock(int icmp6sock, int rdomain)
 
 	LIST_FOREACH (iface, &interfaces, entries) {
 		if (event_initialized(&iface->icmp6ev->ev) &&
-		    iface->send_solicitation) {
-			iface->send_solicitation = 0;
+		    iface->send_solicitation)
 			send_solicitation(iface->if_index);
-		}
 	}
 }
