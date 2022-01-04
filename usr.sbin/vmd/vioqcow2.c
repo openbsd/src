@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.16 2021/06/16 16:55:02 dv Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.17 2022/01/04 15:21:40 claudio Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -497,12 +497,10 @@ mkcluster(struct qcdisk *disk, struct qcdisk *base, off_t off, off_t src_phys)
 {
 	off_t l2sz, l1off, l2tab, l2off, cluster, clusteroff, orig;
 	uint64_t buf;
-	int fd;
 
 	pthread_rwlock_wrlock(&disk->lock);
 
 	cluster = -1;
-	fd = disk->fd;
 	/* L1 entries always exist */
 	l2sz = disk->clustersz / 8;
 	l1off = off / (disk->clustersz * l2sz);
