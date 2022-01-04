@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.53 2022/01/04 20:21:04 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.54 2022/01/04 20:23:05 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1090,17 +1090,10 @@ X509v3_addr_get_range(IPAddressOrRange *aor, const unsigned afi,
 {
 	int afi_length;
 
-	if (aor == NULL || min == NULL || max == NULL)
-		return 0;
-
 	if ((afi_length = length_from_afi(afi)) == 0)
 		return 0;
 
 	if (length < afi_length)
-		return 0;
-
-	if (aor->type != IPAddressOrRange_addressPrefix &&
-	    aor->type != IPAddressOrRange_addressRange)
 		return 0;
 
 	if (!extract_min_max(aor, min, max, afi_length))
