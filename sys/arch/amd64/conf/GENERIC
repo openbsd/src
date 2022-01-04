@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.509 2022/01/02 23:14:26 jsg Exp $
+#	$OpenBSD: GENERIC,v 1.510 2022/01/04 05:50:43 gnezdo Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -670,11 +670,7 @@ audio*	at emu?
 
 bktr0	at pci?
 
-# FM-Radio devices
-#gtp*	at pci?			# Gemtek/Guillemot Radio PCI Radio Card
-
 # FM-Radio support
-#radio*	at gtp?
 radio*	at bktr?
 
 #wdt0	at pci?			# Ind Computer Source PCI-WDT50x driver
