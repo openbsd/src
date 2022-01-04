@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.29 2021/12/29 11:37:57 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.30 2022/01/04 13:39:01 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -34,6 +34,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 #include "extern.h"
 
@@ -44,6 +45,75 @@ static void		 build_crls(const struct crl *, STACK_OF(X509_CRL) **);
 static X509_STORE_CTX	*ctx;
 static struct auth_tree  auths = RB_INITIALIZER(&auths);
 static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
+
+static int
+verify_cb(int ok, X509_STORE_CTX *store_ctx)
+{
+	X509				*cert;
+	const STACK_OF(X509_EXTENSION)	*exts;
+	X509_EXTENSION			*ext;
+	ASN1_OBJECT			*obj;
+	char				*file;
+	int				 depth, error, i, nid;
+	int				 saw_ipAddrBlock = 0;
+	int				 saw_autonomousSysNum = 0;
+	int				 saw_unknown = 0;
+
+	error = X509_STORE_CTX_get_error(store_ctx);
+	depth = X509_STORE_CTX_get_error_depth(store_ctx);
+
+	if (error != X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION)
+		return ok;
+
+	if ((file = X509_STORE_CTX_get_app_data(store_ctx)) == NULL)
+		cryptoerrx("X509_STORE_CTX_get_app_data");
+
+	if ((cert = X509_STORE_CTX_get_current_cert(store_ctx)) == NULL) {
+		warnx("%s: got no current cert", file);
+		return 0;
+	}
+	if ((exts = X509_get0_extensions(cert)) == NULL) {
+		warnx("%s: got no cert extensions", file);
+		return 0;
+	}
+
+	for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
+		ext = sk_X509_EXTENSION_value(exts, i);
+
+		/* skip over non-critical and known extensions */
+		if (!X509_EXTENSION_get_critical(ext))
+			continue;
+		if (X509_supported_extension(ext))
+			continue;
+
+		if ((obj = X509_EXTENSION_get_object(ext)) == NULL) {
+			warnx("%s: got no extension object", file);
+			return 0;
+		}
+
+		nid = OBJ_obj2nid(obj);
+		switch (nid) {
+		case NID_sbgp_ipAddrBlock:
+			saw_ipAddrBlock = 1;
+			break;
+		case NID_sbgp_autonomousSysNum:
+			saw_autonomousSysNum = 1;
+			break;
+		default:
+			warnx("%s: depth %d: unknown extension: nid %d",
+			    file, depth, nid);
+			saw_unknown = 1;
+			break;
+		}
+	}
+
+	if (verbose > 1)
+		warnx("%s: depth %d, ipAddrBlock %d, autonomousSysNum %d",
+		    file, depth, saw_ipAddrBlock, saw_autonomousSysNum);
+
+	/* Fail if we saw an unknown extension. */
+	return !saw_unknown;
+}
 
 /*
  * Parse and validate a ROA.
@@ -72,8 +142,10 @@ proc_parser_roa(struct entity *entp, const unsigned char *der, size_t len)
 	assert(x509 != NULL);
 	if (!X509_STORE_CTX_init(ctx, NULL, x509, NULL))
 		cryptoerrx("X509_STORE_CTX_init");
-	X509_STORE_CTX_set_flags(ctx,
-	    X509_V_FLAG_IGNORE_CRITICAL | X509_V_FLAG_CRL_CHECK);
+	X509_STORE_CTX_set_verify_cb(ctx, verify_cb);
+	if (!X509_STORE_CTX_set_app_data(ctx, entp->file))
+		cryptoerrx("X509_STORE_CTX_set_app_data");
+	X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_CRL_CHECK);
 	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
 	X509_STORE_CTX_set0_trusted_stack(ctx, chain);
 	X509_STORE_CTX_set0_crls(ctx, crls);
@@ -150,8 +222,10 @@ proc_parser_mft(struct entity *entp, const unsigned char *der, size_t len)
 	if (!X509_STORE_CTX_init(ctx, NULL, x509, NULL))
 		cryptoerrx("X509_STORE_CTX_init");
 
-	/* CRL checked disabled here because CRL is referenced from mft */
-	X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_IGNORE_CRITICAL);
+	/* CRL checks disabled here because CRL is referenced from mft */
+	X509_STORE_CTX_set_verify_cb(ctx, verify_cb);
+	if (!X509_STORE_CTX_set_app_data(ctx, entp->file))
+		cryptoerrx("X509_STORE_CTX_set_app_data");
 	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
 	X509_STORE_CTX_set0_trusted_stack(ctx, chain);
 
@@ -211,8 +285,10 @@ proc_parser_cert(const struct entity *entp, const unsigned char *der,
 	if (!X509_STORE_CTX_init(ctx, NULL, x509, NULL))
 		cryptoerrx("X509_STORE_CTX_init");
 
-	X509_STORE_CTX_set_flags(ctx,
-	    X509_V_FLAG_IGNORE_CRITICAL | X509_V_FLAG_CRL_CHECK);
+	X509_STORE_CTX_set_verify_cb(ctx, verify_cb);
+	if (!X509_STORE_CTX_set_app_data(ctx, entp->file))
+		cryptoerrx("X509_STORE_CTX_set_app_data");
+	X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_CRL_CHECK);
 	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
 	X509_STORE_CTX_set0_trusted_stack(ctx, chain);
 	X509_STORE_CTX_set0_crls(ctx, crls);
@@ -412,8 +488,10 @@ proc_parser_gbr(struct entity *entp, const unsigned char *der, size_t len)
 	assert(x509 != NULL);
 	if (!X509_STORE_CTX_init(ctx, NULL, x509, NULL))
 		cryptoerrx("X509_STORE_CTX_init");
-	X509_STORE_CTX_set_flags(ctx,
-	    X509_V_FLAG_IGNORE_CRITICAL | X509_V_FLAG_CRL_CHECK);
+	X509_STORE_CTX_set_verify_cb(ctx, verify_cb);
+	if (!X509_STORE_CTX_set_app_data(ctx, entp->file))
+		cryptoerrx("X509_STORE_CTX_set_app_data");
+	X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_CRL_CHECK);
 	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
 	X509_STORE_CTX_set0_trusted_stack(ctx, chain);
 	X509_STORE_CTX_set0_crls(ctx, crls);
