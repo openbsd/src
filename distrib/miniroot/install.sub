@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1186 2021/12/07 04:13:22 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1187 2022/01/05 16:35:35 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2836,6 +2836,8 @@ finish_up() {
 	)
 	echo " done."
 
+	[ -x /mnt/usr/sbin/fw_update ] && DESTDIR=/mnt /mnt/usr/sbin/fw_update
+
 	# We may run some programs in chroot, and some of them might be
 	# dynamic.  That is highly discouraged, but let us play it safe.
 	rm -f /mnt/var/run/ld.so.hints
@@ -2894,7 +2896,7 @@ finish_up() {
 		quote export "http_proxy=$http_proxy" >>/mnt/etc/rc.firsttime
 
 	# Ensure that fw_update is run on reboot.
-	echo "/usr/sbin/fw_update -v" >>/mnt/etc/rc.firsttime
+	echo "/usr/sbin/fw_update" >>/mnt/etc/rc.firsttime
 
 	# Run syspatch -c on reboot if the arch is supported and if it is a
 	# release system (not -stable or -current). List uninstalled syspatches

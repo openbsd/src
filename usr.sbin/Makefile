@@ -1,15 +1,15 @@
-#	$OpenBSD: Makefile,v 1.213 2021/11/11 09:52:24 claudio Exp $
+#	$OpenBSD: Makefile,v 1.214 2022/01/05 16:35:33 deraadt Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	ac accton acme-client acpidump adduser amd apm apmd arp \
 	authpf bgpctl bgpd btrace chroot config cron crunchgen dev_mkdb \
 	dhcpd dhcpleasectl dhcrelay dhcrelay6 dvmrpctl dvmrpd edquota eeprom \
-	eigrpd eigrpctl fdformat ftp-proxy gpioctl hostapd hostctl hotplugd \
-	httpd identd ifstated ikectl inetd installboot iostat iscsictl iscsid \
-	kgmon kvm_mkdb ldapd ldapctl ldomctl ldomd ldpd ldpctl lpr makefs \
-	mailwrapper map-mbone memconfig mksuncd mkuboot mopd mrinfo \
-	mrouted mtrace mtree ndp netgroup_mkdb \
+	eigrpd eigrpctl fdformat ftp-proxy fw_update gpioctl hostapd hostctl \
+	hotplugd httpd identd ifstated ikectl inetd installboot iostat \
+	iscsictl iscsid kgmon kvm_mkdb ldapd ldapctl ldomctl ldomd \
+	ldpd ldpctl lpr makefs mailwrapper map-mbone memconfig mksuncd \
+	mkuboot mopd mrinfo mrouted mtrace mtree ndp netgroup_mkdb \
 	npppctl npppd nsd ntpd ocspcheck ospfctl ospfd ospf6d ospf6ctl \
 	pcidump pkg_add portmap pppd procmap pstat pwd_mkdb \
 	quot quotaon ractl rad radiusctl radiusd rarpd rbootd \
