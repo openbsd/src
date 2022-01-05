@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.61 2022/01/05 07:37:01 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.62 2022/01/05 07:47:15 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -755,6 +755,8 @@ v6IPAddressOrRange_cmp(const IPAddressOrRange *const *a,
 /*
  * Calculate whether a range collapses to a prefix.
  * See last paragraph of RFC 3779 2.2.3.7.
+ *
+ * It's the caller's responsibility to ensure that min <= max.
  */
 static int
 range_should_be_prefix(const unsigned char *min, const unsigned char *max,
@@ -763,8 +765,6 @@ range_should_be_prefix(const unsigned char *min, const unsigned char *max,
 	unsigned char mask;
 	int i, j;
 
-	if (memcmp(min, max, length) <= 0)
-		return -1;
 	for (i = 0; i < length && min[i] == max[i]; i++)
 		continue;
 	for (j = length - 1; j >= 0 && min[j] == 0x00 && max[j] == 0xff; j--)
@@ -862,6 +862,9 @@ make_addressRange(IPAddressOrRange **result, unsigned char *min,
 {
 	IPAddressOrRange *aor;
 	int i, prefix_len;
+
+	if (memcmp(min, max, length) > 0)
+		return 0;
 
 	if ((prefix_len = range_should_be_prefix(min, max, length)) >= 0)
 		return make_addressPrefix(result, min, afi, prefix_len);
