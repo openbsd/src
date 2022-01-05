@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.70 2022/01/05 17:49:39 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.71 2022/01/05 17:51:30 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1699,7 +1699,7 @@ addr_contains(IPAddressOrRanges *parent, IPAddressOrRanges *child, int length)
 int
 X509v3_addr_subset(IPAddrBlocks *child, IPAddrBlocks *parent)
 {
-	IPAddressFamily *fc, *fp;
+	IPAddressFamily *child_af, *parent_af;
 	IPAddressOrRanges *aorc, *aorp;
 	int i, length;
 
@@ -1712,16 +1712,18 @@ X509v3_addr_subset(IPAddrBlocks *child, IPAddrBlocks *parent)
 		return 0;
 
 	for (i = 0; i < sk_IPAddressFamily_num(child); i++) {
-		fc = sk_IPAddressFamily_value(child, i);
+		child_af = sk_IPAddressFamily_value(child, i);
 
-		if ((fp = IPAddressFamily_find_in_parent(parent, fc)) == NULL)
+
+		parent_af = IPAddressFamily_find_in_parent(parent, child_af);
+		if (parent_af == NULL)
 			return 0;
 
-		if (!IPAddressFamily_afi_length(fp, &length))
+		if (!IPAddressFamily_afi_length(parent_af, &length))
 			return 0;
 
-		aorc = IPAddressFamily_addressesOrRanges(fc);
-		aorp = IPAddressFamily_addressesOrRanges(fp);
+		aorc = IPAddressFamily_addressesOrRanges(child_af);
+		aorp = IPAddressFamily_addressesOrRanges(parent_af);
 
 		if (!addr_contains(aorp, aorc, length))
 			return 0;
@@ -1755,7 +1757,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
     IPAddrBlocks *ext)
 {
 	IPAddrBlocks *child = NULL, *parent = NULL;
-	IPAddressFamily *fc, *fp;
+	IPAddressFamily *child_af, *parent_af;
 	IPAddressOrRanges *aorc, *aorp;
 	X509 *cert = NULL;
 	int depth = -1;
@@ -1809,9 +1811,10 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 
 		if ((parent = cert->rfc3779_addr) == NULL) {
 			for (i = 0; i < sk_IPAddressFamily_num(child); i++) {
-				fc = sk_IPAddressFamily_value(child, i);
+				child_af = sk_IPAddressFamily_value(child, i);
 
-				if (IPAddressFamily_inheritance(fc) != NULL)
+				if (IPAddressFamily_inheritance(child_af) !=
+				    NULL)
 					continue;
 
 				if ((ret = verify_error(ctx, cert,
@@ -1835,15 +1838,17 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 		 * parent's resources are covered by the grandparent.
 		 */
 		for (i = 0; i < sk_IPAddressFamily_num(child); i++) {
-			fc = sk_IPAddressFamily_value(child, i);
+			child_af = sk_IPAddressFamily_value(child, i);
 
-			fp = IPAddressFamily_find_in_parent(parent, fc);
-			if (fp == NULL) {
+			parent_af = IPAddressFamily_find_in_parent(parent,
+			    child_af);
+			if (parent_af == NULL) {
 				/*
 				 * If we have no match in the parent and the
 				 * child inherits, that's fine.
 				 */
-				if (IPAddressFamily_inheritance(fc) != NULL)
+				if (IPAddressFamily_inheritance(child_af) !=
+				    NULL)
 					continue;
 
 				/* Otherwise the child isn't covered. */
@@ -1854,17 +1859,17 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 			}
 
 			/* Parent inherits, nothing to do. */
-			if (IPAddressFamily_inheritance(fp) != NULL)
+			if (IPAddressFamily_inheritance(parent_af) != NULL)
 				continue;
 
 			/* Child inherits. Use parent's address family. */
-			if (IPAddressFamily_inheritance(fc) != NULL) {
-				sk_IPAddressFamily_set(child, i, fp);
+			if (IPAddressFamily_inheritance(child_af) != NULL) {
+				sk_IPAddressFamily_set(child, i, parent_af);
 				continue;
 			}
 
-			aorc = IPAddressFamily_addressesOrRanges(fc);
-			aorp = IPAddressFamily_addressesOrRanges(fp);
+			aorc = IPAddressFamily_addressesOrRanges(child_af);
+			aorp = IPAddressFamily_addressesOrRanges(parent_af);
 
 			/*
 			 * Child and parent are canonical and neither inherits.
@@ -1874,12 +1879,12 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 			if (aorc == NULL || aorp == NULL)
 				goto err;
 
-			if (!IPAddressFamily_afi_length(fc, &length))
+			if (!IPAddressFamily_afi_length(child_af, &length))
 				goto err;
 
 			/* Now check containment and replace or error. */
 			if (addr_contains(aorp, aorc, length)) {
-				sk_IPAddressFamily_set(child, i, fp);
+				sk_IPAddressFamily_set(child, i, parent_af);
 				continue;
 			}
 
@@ -1894,12 +1899,12 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	 */
 	if ((parent = cert->rfc3779_addr) != NULL) {
 		for (i = 0; i < sk_IPAddressFamily_num(parent); i++) {
-			fp = sk_IPAddressFamily_value(parent, i);
+			parent_af = sk_IPAddressFamily_value(parent, i);
 
-			if (IPAddressFamily_inheritance(fp) == NULL)
+			if (IPAddressFamily_inheritance(parent_af) == NULL)
 				continue;
 
-			if (sk_IPAddressFamily_find(child, fp) < 0)
+			if (sk_IPAddressFamily_find(child, parent_af) < 0)
 				continue;
 
 			if ((ret = verify_error(ctx, cert,
