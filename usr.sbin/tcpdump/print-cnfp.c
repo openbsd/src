@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-cnfp.c,v 1.10 2018/07/06 05:47:22 dlg Exp $	*/
+/*	$OpenBSD: print-cnfp.c,v 1.11 2022/01/05 05:41:25 dlg Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -73,7 +73,6 @@ cnfp_print(const u_char *cp, u_int len)
 	const struct nfhdr *nh;
 	const struct nfrec *nr;
 	int nrecs, ver, proto;
-	time_t t;
 
 	nh = (struct nfhdr *)cp;
 
@@ -82,7 +81,6 @@ cnfp_print(const u_char *cp, u_int len)
 
 	nrecs = ntohl(nh->ver_cnt) & 0xffff;
 	ver = (ntohl(nh->ver_cnt) & 0xffff0000) >> 16;
-	t = ntohl(nh->utc_sec);
 /*	(p = ctime(&t))[24] = '\0'; */
 
 	printf("NetFlow v%x, %u.%03u uptime, %u.%09u, ", ver,
