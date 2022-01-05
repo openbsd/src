@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-icmp6.c,v 1.23 2020/01/24 22:46:36 procter Exp $	*/
+/*	$OpenBSD: print-icmp6.c,v 1.24 2022/01/05 05:33:14 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -126,12 +126,10 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 {
 	const struct icmp6_hdr *dp;
 	const struct ip6_hdr *ip;
-	const char *str;
 	const struct ip6_hdr *oip;
 	const struct udphdr *ouh;
 	int hlen, dport;
 	const u_char *ep;
-	char buf[256];
 	int icmp6len;
 
 #if 0
@@ -141,7 +139,6 @@ icmp6_print(const u_char *bp, u_int length, const u_char *bp2)
 	dp = (struct icmp6_hdr *)bp;
 	ip = (struct ip6_hdr *)bp2;
 	oip = (struct ip6_hdr *)(dp + 1);
-	str = buf;
 	/* 'ep' points to the end of avaible data. */
 	ep = snapend;
 	if (ip->ip6_plen)
@@ -522,7 +519,6 @@ icmp6_opt_print(const u_char *bp, int resid)
 	const struct nd_opt_hdr *op;
 	const struct nd_opt_hdr *opl;	/* why there's no struct? */
 	const struct nd_opt_prefix_info *opp;
-	const struct icmp6_opts_redirect *opr;
 	const struct nd_opt_mtu *opm;
 	const struct nd_opt_rdnss *oprd;
 	const struct nd_opt_route_info *opri;
@@ -548,7 +544,6 @@ icmp6_opt_print(const u_char *bp, int resid)
 #if 0
 	ip = (struct ip6_hdr *)bp2;
 	oip = &dp->icmp6_ip6;
-	str = buf;
 #endif
 	/* 'ep' points to the end of avaible data. */
 	ep = snapend;
@@ -626,7 +621,6 @@ icmp6_opt_print(const u_char *bp, int resid)
 				resid - (op->nd_opt_len << 3));
 		break;
 	case ND_OPT_REDIRECTED_HEADER:
-		opr = (struct icmp6_opts_redirect *)op;
 		printf("(redirect)");
 		/* xxx */
 		icmp6_opt_print((const u_char *)op + (op->nd_opt_len << 3),
