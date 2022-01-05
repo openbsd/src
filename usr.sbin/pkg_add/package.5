@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.28 2019/12/04 11:01:37 espie Exp $
+.\"	$OpenBSD: package.5,v 1.29 2022/01/05 17:39:25 jmc Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: December 4 2019 $
+.Dd $Mdocdate: January 5 2022 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -173,7 +173,7 @@ Some options are automatically inserted by the package tools:
 .Bl -tag -width indent
 .It Ar firmware
 Set by
-.Xr fw_update 1
+.Xr fw_update 8
 to trigger firmware-specific handling.
 In particular, firmware is hidden from normal updates.
 .It Ar manual-installation
