@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.72 2022/01/05 17:52:28 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.73 2022/01/05 17:53:42 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1840,9 +1840,8 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 		for (i = 0; i < sk_IPAddressFamily_num(child); i++) {
 			child_af = sk_IPAddressFamily_value(child, i);
 
-			parent_af = IPAddressFamily_find_in_parent(parent,
-			    child_af);
-			if (parent_af == NULL) {
+			if ((parent_af = IPAddressFamily_find_in_parent(parent,
+			    child_af)) == NULL) {
 				/*
 				 * If we have no match in the parent and the
 				 * child inherits, that's fine.
@@ -1869,7 +1868,8 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 			}
 
 			child_aor = IPAddressFamily_addressesOrRanges(child_af);
-			parent_aor = IPAddressFamily_addressesOrRanges(parent_af);
+			parent_aor =
+			    IPAddressFamily_addressesOrRanges(parent_af);
 
 			/*
 			 * Child and parent are canonical and neither inherits.
