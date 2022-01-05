@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.63 2022/01/05 17:27:40 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.64 2022/01/05 17:36:32 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1719,22 +1719,18 @@ X509v3_addr_subset(IPAddrBlocks *child, IPAddrBlocks *parent)
 	return 1;
 }
 
-/*
- * Validation error handling via callback.
- */
-#define validation_err(_err_)           \
-  do {                                  \
-    if (ctx != NULL) {                  \
-      ctx->error = _err_;               \
-      ctx->error_depth = i;             \
-      ctx->current_cert = x;            \
-      ret = ctx->verify_cb(0, ctx);     \
-    } else {                            \
-      ret = 0;                          \
-    }                                   \
-    if (!ret)                           \
-      goto done;                        \
-  } while (0)
+static int
+verify_error(X509_STORE_CTX *ctx, X509 *cert, int error, int depth)
+{
+	if (ctx == NULL)
+		return 0;
+
+	ctx->current_cert = cert;
+	ctx->error = error;
+	ctx->error_depth = depth;
+
+	return ctx->verify_cb(0, ctx);
+}
 
 /*
  * Core code for RFC 3779 2.3 path validation.
@@ -1780,8 +1776,13 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 		if ((ext = x->rfc3779_addr) == NULL)
 			goto done;
 	}
-	if (!X509v3_addr_is_canonical(ext))
-		validation_err(X509_V_ERR_INVALID_EXTENSION);
+
+	if (!X509v3_addr_is_canonical(ext)) {
+		if ((ret = verify_error(ctx, x,
+		    X509_V_ERR_INVALID_EXTENSION, i)) == 0)
+			goto done;
+	}
+
 	(void)sk_IPAddressFamily_set_cmp_func(ext, IPAddressFamily_cmp);
 	if ((child = sk_IPAddressFamily_dup(ext)) == NULL) {
 		X509V3error(ERR_R_MALLOC_FAILURE);
@@ -1802,16 +1803,22 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 			for (j = 0; j < sk_IPAddressFamily_num(child); j++) {
 				fc = sk_IPAddressFamily_value(child, j);
 
-				if (IPAddressFamily_inheritance(fc) == NULL) {
-					validation_err(X509_V_ERR_UNNESTED_RESOURCE);
-					break;
-				}
+				if (IPAddressFamily_inheritance(fc) != NULL)
+					continue;
+
+				if ((ret = verify_error(ctx, x,
+				    X509_V_ERR_UNNESTED_RESOURCE, i)) == 0)
+					goto done;
+				break;
 			}
 			continue;
 		}
 
-		if (!X509v3_addr_is_canonical(parent))
-			validation_err(X509_V_ERR_INVALID_EXTENSION);
+		if (!X509v3_addr_is_canonical(parent)) {
+			if ((ret = verify_error(ctx, x,
+			    X509_V_ERR_INVALID_EXTENSION, i)) == 0)
+				goto done;
+		}
 
 		sk_IPAddressFamily_set_cmp_func(parent, IPAddressFamily_cmp);
 
@@ -1836,7 +1843,9 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 					continue;
 
 				/* Otherwise the child isn't covered. */
-				validation_err(X509_V_ERR_UNNESTED_RESOURCE);
+				if ((ret = verify_error(ctx, x,
+				    X509_V_ERR_UNNESTED_RESOURCE, i)) == 0)
+					goto done;
 				break;
 			}
 
@@ -1870,7 +1879,9 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 				continue;
 			}
 
-			validation_err(X509_V_ERR_UNNESTED_RESOURCE);
+			if ((ret = verify_error(ctx, x,
+			    X509_V_ERR_UNNESTED_RESOURCE, i)) == 0)
+				goto done;
 		}
 	}
 
@@ -1884,8 +1895,12 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 			if (IPAddressFamily_inheritance(fp) == NULL)
 				continue;
 
-			if (sk_IPAddressFamily_find(child, fp) >= 0)
-				validation_err(X509_V_ERR_UNNESTED_RESOURCE);
+			if (sk_IPAddressFamily_find(child, fp) < 0)
+				continue;
+
+			if ((ret = verify_error(ctx, x,
+			    X509_V_ERR_UNNESTED_RESOURCE, i)) == 0)
+				goto done;
 		}
 	}
 
@@ -1901,8 +1916,6 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 
 	return 0;
 }
-
-#undef validation_err
 
 /*
  * RFC 3779 2.3 path validation -- called from X509_verify_cert().
