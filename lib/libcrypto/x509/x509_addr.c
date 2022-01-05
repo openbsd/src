@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.68 2022/01/05 17:44:30 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.69 2022/01/05 17:46:44 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -478,6 +478,19 @@ IPAddressFamily_cmp(const IPAddressFamily *const *a_,
 		return cmp;
 
 	return a->length - b->length;
+}
+
+static IPAddressFamily *
+IPAddressFamily_find_in_parent(IPAddrBlocks *parent, IPAddressFamily *child_af)
+{
+	int index;
+
+	sk_IPAddressFamily_set_cmp_func(parent, IPAddressFamily_cmp);
+
+	if ((index = sk_IPAddressFamily_find(parent, child_af)) < 0)
+		return NULL;
+
+	return sk_IPAddressFamily_value(parent, index);
 }
 
 /*
@@ -1687,7 +1700,7 @@ X509v3_addr_subset(IPAddrBlocks *child, IPAddrBlocks *parent)
 {
 	IPAddressFamily *fc, *fp;
 	IPAddressOrRanges *aorc, *aorp;
-	int i, j, length;
+	int i, length;
 
 	if (child == NULL || child == parent)
 		return 1;
@@ -1697,14 +1710,10 @@ X509v3_addr_subset(IPAddrBlocks *child, IPAddrBlocks *parent)
 	if (X509v3_addr_inherits(child) || X509v3_addr_inherits(parent))
 		return 0;
 
-	sk_IPAddressFamily_set_cmp_func(parent, IPAddressFamily_cmp);
-
 	for (i = 0; i < sk_IPAddressFamily_num(child); i++) {
 		fc = sk_IPAddressFamily_value(child, i);
 
-		j = sk_IPAddressFamily_find(parent, fc);
-		fp = sk_IPAddressFamily_value(parent, j);
-		if (fp == NULL)
+		if ((fp = IPAddressFamily_find_in_parent(parent, fc)) == NULL)
 			return 0;
 
 		if (!IPAddressFamily_afi_length(fp, &length))
@@ -1749,7 +1758,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	IPAddressOrRanges *aorc, *aorp;
 	X509 *cert = NULL;
 	int depth = -1;
-	int i, k;
+	int i;
 	unsigned int length;
 	int ret = 1;
 
@@ -1818,8 +1827,6 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 				goto done;
 		}
 
-		sk_IPAddressFamily_set_cmp_func(parent, IPAddressFamily_cmp);
-
 		/*
 		 * Check that the child's resources are covered by the parent.
 		 * Each covered resource is replaced with the parent's resource
@@ -1829,9 +1836,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 		for (i = 0; i < sk_IPAddressFamily_num(child); i++) {
 			fc = sk_IPAddressFamily_value(child, i);
 
-			k = sk_IPAddressFamily_find(parent, fc);
-			fp = sk_IPAddressFamily_value(parent, k);
-
+			fp = IPAddressFamily_find_in_parent(parent, fc);
 			if (fp == NULL) {
 				/*
 				 * If we have no match in the parent and the
