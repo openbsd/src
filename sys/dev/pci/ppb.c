@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.68 2019/04/23 19:37:35 patrick Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.69 2022/01/05 18:54:20 kettenis Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -41,6 +41,11 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
+
+#ifdef __HAVE_FDT
+#include <machine/fdt.h>
+#include <dev/ofw/openfirm.h>
+#endif
 
 #ifndef PCI_IO_START
 #define PCI_IO_START	0
@@ -167,7 +172,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	 * When the bus number isn't configured, try to allocate one
 	 * ourselves.
 	 */
-	if (busdata  == 0 && pa->pa_busex)
+	if (busdata == 0 && pa->pa_busex)
 		ppb_alloc_busrange(sc, pa, &busdata);
 
 	/*
@@ -528,12 +533,31 @@ ppb_alloc_busrange(struct ppb_softc *sc, struct pci_attach_args *pa,
     pcireg_t *busdata)
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
-	u_long busnum, busrange;
+	u_long busnum, busrange = 0;
 
-	for (busrange = 16; busrange > 0; busrange >>= 1) {
-		if (extent_alloc(pa->pa_busex, busrange, 1, 0, 0, 
-		    EX_NOWAIT, &busnum))
-			continue;
+#ifdef __HAVE_FDT
+	int node = PCITAG_NODE(pa->pa_tag);
+	uint32_t bus_range[2];
+
+	if (node && OF_getpropintarray(node, "bus-range", bus_range,
+	    sizeof(bus_range)) == sizeof(bus_range)) {
+		if (extent_alloc_region(pa->pa_busex, bus_range[0],
+		    bus_range[1] - bus_range[0] + 1, EX_NOWAIT) == 0) {
+			busnum = bus_range[0];
+			busrange = bus_range[1] - bus_range[0] + 1;
+		}
+	}
+#endif
+
+	if (busrange == 0) {
+		for (busrange = 16; busrange > 0; busrange >>= 1) {
+			if (extent_alloc(pa->pa_busex, busrange, 1, 0, 0, 
+			    EX_NOWAIT, &busnum) == 0)
+				break;
+		}
+	}
+
+	if (busrange > 0) {
 		sc->sc_parent_busex = pa->pa_busex;
 		sc->sc_busnum = busnum;
 		sc->sc_busrange = busrange;
@@ -541,7 +565,6 @@ ppb_alloc_busrange(struct ppb_softc *sc, struct pci_attach_args *pa,
 		*busdata |= (busnum << 8);
 		*busdata |= ((busnum + busrange - 1) << 16);
 		pci_conf_write(pc, pa->pa_tag, PPB_REG_BUSINFO, *busdata);
-		return;
 	}
 }
 
