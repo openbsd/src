@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.31 2021/11/29 20:13:25 tb Exp $ */
+/* $OpenBSD: dsa.h,v 1.32 2022/01/05 20:33:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -267,6 +267,13 @@ void DSA_get0_pqg(const DSA *d, const BIGNUM **p, const BIGNUM **q,
 int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g);
 void DSA_get0_key(const DSA *d, const BIGNUM **pub_key, const BIGNUM **priv_key);
 int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key);
+#if defined(LIBRESSL_OPAQUE_DSA) || defined(LIBRESSL_CRYPTO_INTERNAL)
+const BIGNUM *DSA_get0_p(const DSA *d);
+const BIGNUM *DSA_get0_q(const DSA *d);
+const BIGNUM *DSA_get0_g(const DSA *d);
+const BIGNUM *DSA_get0_pub_key(const DSA *d);
+const BIGNUM *DSA_get0_priv_key(const DSA *d);
+#endif
 void DSA_clear_flags(DSA *d, int flags);
 int DSA_test_flags(const DSA *d, int flags);
 void DSA_set_flags(DSA *d, int flags);

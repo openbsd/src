@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.29 2018/04/14 07:09:21 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.30 2022/01/05 20:33:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -359,6 +359,36 @@ DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
 	}
 
 	return 1;
+}
+
+const BIGNUM *
+DSA_get0_p(const DSA *d)
+{
+	return d->p;
+}
+
+const BIGNUM *
+DSA_get0_q(const DSA *d)
+{
+	return d->q;
+}
+
+const BIGNUM *
+DSA_get0_g(const DSA *d)
+{
+	return d->g;
+}
+
+const BIGNUM *
+DSA_get0_pub_key(const DSA *d)
+{
+	return d->pub_key;
+}
+
+const BIGNUM *
+DSA_get0_priv_key(const DSA *d)
+{
+	return d->priv_key;
 }
 
 void
