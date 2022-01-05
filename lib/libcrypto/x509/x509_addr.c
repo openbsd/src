@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.62 2022/01/05 07:47:15 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.63 2022/01/05 17:27:40 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1286,7 +1286,12 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 static int
 IPAddressOrRanges_canonize(IPAddressOrRanges *aors, const unsigned afi)
 {
-	int i, j, length = length_from_afi(afi);
+	IPAddressOrRange *a, *b, *merged;
+	unsigned char a_min[ADDR_RAW_BUF_LEN], a_max[ADDR_RAW_BUF_LEN];
+	unsigned char b_min[ADDR_RAW_BUF_LEN], b_max[ADDR_RAW_BUF_LEN];
+	int i, j, length;
+
+	length = length_from_afi(afi);
 
 	/*
 	 * Sort the IPAddressOrRanges sequence.
@@ -1297,10 +1302,8 @@ IPAddressOrRanges_canonize(IPAddressOrRanges *aors, const unsigned afi)
 	 * Clean up representation issues, punt on duplicates or overlaps.
 	 */
 	for (i = 0; i < sk_IPAddressOrRange_num(aors) - 1; i++) {
-		IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, i);
-		IPAddressOrRange *b = sk_IPAddressOrRange_value(aors, i + 1);
-		unsigned char a_min[ADDR_RAW_BUF_LEN], a_max[ADDR_RAW_BUF_LEN];
-		unsigned char b_min[ADDR_RAW_BUF_LEN], b_max[ADDR_RAW_BUF_LEN];
+		a = sk_IPAddressOrRange_value(aors, i);
+		b = sk_IPAddressOrRange_value(aors, i + 1);
 
 		if (!extract_min_max(a, a_min, a_max, length) ||
 		    !extract_min_max(b, b_min, b_max, length))
@@ -1325,18 +1328,17 @@ IPAddressOrRanges_canonize(IPAddressOrRanges *aors, const unsigned afi)
 		 */
 		for (j = length - 1; j >= 0 && b_min[j]-- == 0x00; j--)
 			continue;
-		if (memcmp(a_max, b_min, length) == 0) {
-			IPAddressOrRange *merged;
-			if (!make_addressRange(&merged, a_min, b_max, afi,
-			    length))
-				return 0;
-			(void)sk_IPAddressOrRange_set(aors, i, merged);
-			(void)sk_IPAddressOrRange_delete(aors, i + 1);
-			IPAddressOrRange_free(a);
-			IPAddressOrRange_free(b);
-			--i;
+
+		if (memcmp(a_max, b_min, length) != 0)
 			continue;
-		}
+
+		if (!make_addressRange(&merged, a_min, b_max, afi, length))
+			return 0;
+		sk_IPAddressOrRange_set(aors, i, merged);
+		sk_IPAddressOrRange_delete(aors, i + 1);
+		IPAddressOrRange_free(a);
+		IPAddressOrRange_free(b);
+		i--;
 	}
 
 	/*
