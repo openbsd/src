@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.95 2021/10/23 13:12:14 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.96 2022/01/05 17:10:02 jsing Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -157,24 +157,6 @@ int tls13_derive_application_secrets(struct tls13_secrets *secrets,
     const struct tls13_secret *context);
 int tls13_update_client_traffic_secret(struct tls13_secrets *secrets);
 int tls13_update_server_traffic_secret(struct tls13_secrets *secrets);
-
-/*
- * Key shares.
- */
-struct tls13_key_share;
-
-struct tls13_key_share *tls13_key_share_new(uint16_t group_id);
-struct tls13_key_share *tls13_key_share_new_nid(int nid);
-void tls13_key_share_free(struct tls13_key_share *ks);
-
-uint16_t tls13_key_share_group(struct tls13_key_share *ks);
-int tls13_key_share_peer_pkey(struct tls13_key_share *ks, EVP_PKEY *pkey);
-int tls13_key_share_generate(struct tls13_key_share *ks);
-int tls13_key_share_public(struct tls13_key_share *ks, CBB *cbb);
-int tls13_key_share_peer_public(struct tls13_key_share *ks, uint16_t group,
-    CBS *cbs);
-int tls13_key_share_derive(struct tls13_key_share *ks, uint8_t **shared_key,
-    size_t *shared_key_len);
 
 /*
  * Record Layer.

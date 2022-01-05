@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.88 2021/10/25 10:01:46 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.89 2022/01/05 17:10:02 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -51,9 +51,9 @@ tls13_client_init(struct tls13_ctx *ctx)
 	tls1_get_group_list(s, 0, &groups, &groups_len);
 	if (groups_len < 1)
 		return 0;
-	if ((ctx->hs->tls13.key_share = tls13_key_share_new(groups[0])) == NULL)
+	if ((ctx->hs->key_share = tls_key_share_new(groups[0])) == NULL)
 		return 0;
-	if (!tls13_key_share_generate(ctx->hs->tls13.key_share))
+	if (!tls_key_share_generate(ctx->hs->key_share))
 		return 0;
 
 	arc4random_buf(s->s3->client_random, SSL3_RANDOM_SIZE);
@@ -343,7 +343,7 @@ tls13_client_engage_record_protection(struct tls13_ctx *ctx)
 
 	/* Derive the shared key and engage record protection. */
 
-	if (!tls13_key_share_derive(ctx->hs->tls13.key_share, &shared_key,
+	if (!tls_key_share_derive(ctx->hs->key_share, &shared_key,
 	    &shared_key_len))
 		goto err;
 
@@ -442,15 +442,15 @@ tls13_client_hello_retry_send(struct tls13_ctx *ctx, CBB *cbb)
 	 */
 	if (!tls1_check_curve(ctx->ssl, ctx->hs->tls13.server_group))
 		return 0; /* XXX alert */
-	if (ctx->hs->tls13.server_group == tls13_key_share_group(ctx->hs->tls13.key_share))
+	if (ctx->hs->tls13.server_group == tls_key_share_group(ctx->hs->key_share))
 		return 0; /* XXX alert */
 
 	/* Switch to new key share. */
-	tls13_key_share_free(ctx->hs->tls13.key_share);
-	if ((ctx->hs->tls13.key_share =
-	    tls13_key_share_new(ctx->hs->tls13.server_group)) == NULL)
+	tls_key_share_free(ctx->hs->key_share);
+	if ((ctx->hs->key_share =
+	    tls_key_share_new(ctx->hs->tls13.server_group)) == NULL)
 		return 0;
-	if (!tls13_key_share_generate(ctx->hs->tls13.key_share))
+	if (!tls_key_share_generate(ctx->hs->key_share))
 		return 0;
 
 	if (!tls13_client_hello_build(ctx, cbb))

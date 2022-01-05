@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_share.c,v 1.7 2022/01/04 11:01:58 jsing Exp $ */
+/* $OpenBSD: tls_key_share.c,v 1.1 2022/01/05 17:10:03 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -18,12 +18,13 @@
 #include <stdlib.h>
 
 #include <openssl/curve25519.h>
+#include <openssl/ec.h>
 
 #include "bytestring.h"
 #include "ssl_locl.h"
-#include "tls13_internal.h"
+#include "tls_internal.h"
 
-struct tls13_key_share {
+struct tls_key_share {
 	int nid;
 	uint16_t group_id;
 
@@ -35,16 +36,16 @@ struct tls13_key_share {
 	uint8_t *x25519_peer_public;
 };
 
-struct tls13_key_share *
-tls13_key_share_new(uint16_t group_id)
+struct tls_key_share *
+tls_key_share_new(uint16_t group_id)
 {
-	struct tls13_key_share *ks;
+	struct tls_key_share *ks;
 	int nid;
 
 	if ((nid = tls1_ec_curve_id2nid(group_id)) == 0)
 		return NULL;
 
-	if ((ks = calloc(1, sizeof(struct tls13_key_share))) == NULL)
+	if ((ks = calloc(1, sizeof(struct tls_key_share))) == NULL)
 		return NULL;
 
 	ks->group_id = group_id;
@@ -53,19 +54,19 @@ tls13_key_share_new(uint16_t group_id)
 	return ks;
 }
 
-struct tls13_key_share *
-tls13_key_share_new_nid(int nid)
+struct tls_key_share *
+tls_key_share_new_nid(int nid)
 {
 	uint16_t group_id;
 
 	if ((group_id = tls1_ec_nid2curve_id(nid)) == 0)
 		return NULL;
 
-	return tls13_key_share_new(group_id);
+	return tls_key_share_new(group_id);
 }
 
 void
-tls13_key_share_free(struct tls13_key_share *ks)
+tls_key_share_free(struct tls_key_share *ks)
 {
 	if (ks == NULL)
 		return;
@@ -81,13 +82,13 @@ tls13_key_share_free(struct tls13_key_share *ks)
 }
 
 uint16_t
-tls13_key_share_group(struct tls13_key_share *ks)
+tls_key_share_group(struct tls_key_share *ks)
 {
 	return ks->group_id;
 }
 
 int
-tls13_key_share_peer_pkey(struct tls13_key_share *ks, EVP_PKEY *pkey)
+tls_key_share_peer_pkey(struct tls_key_share *ks, EVP_PKEY *pkey)
 {
 	if (ks->nid == NID_X25519 && ks->x25519_peer_public != NULL) {
 		if (!ssl_kex_dummy_ecdhe_x25519(pkey))
@@ -103,7 +104,7 @@ tls13_key_share_peer_pkey(struct tls13_key_share *ks, EVP_PKEY *pkey)
 }
 
 static int
-tls13_key_share_generate_ecdhe_ecp(struct tls13_key_share *ks)
+tls_key_share_generate_ecdhe_ecp(struct tls_key_share *ks)
 {
 	EC_KEY *ecdhe = NULL;
 	int ret = 0;
@@ -128,7 +129,7 @@ tls13_key_share_generate_ecdhe_ecp(struct tls13_key_share *ks)
 }
 
 static int
-tls13_key_share_generate_x25519(struct tls13_key_share *ks)
+tls_key_share_generate_x25519(struct tls_key_share *ks)
 {
 	uint8_t *public = NULL, *private = NULL;
 	int ret = 0;
@@ -158,16 +159,16 @@ tls13_key_share_generate_x25519(struct tls13_key_share *ks)
 }
 
 int
-tls13_key_share_generate(struct tls13_key_share *ks)
+tls_key_share_generate(struct tls_key_share *ks)
 {
 	if (ks->nid == NID_X25519)
-		return tls13_key_share_generate_x25519(ks);
+		return tls_key_share_generate_x25519(ks);
 
-	return tls13_key_share_generate_ecdhe_ecp(ks);
+	return tls_key_share_generate_ecdhe_ecp(ks);
 }
 
 static int
-tls13_key_share_public_ecdhe_ecp(struct tls13_key_share *ks, CBB *cbb)
+tls_key_share_public_ecdhe_ecp(struct tls_key_share *ks, CBB *cbb)
 {
 	if (ks->ecdhe == NULL)
 		return 0;
@@ -176,7 +177,7 @@ tls13_key_share_public_ecdhe_ecp(struct tls13_key_share *ks, CBB *cbb)
 }
 
 static int
-tls13_key_share_public_x25519(struct tls13_key_share *ks, CBB *cbb)
+tls_key_share_public_x25519(struct tls_key_share *ks, CBB *cbb)
 {
 	if (ks->x25519_public == NULL)
 		return 0;
@@ -185,16 +186,16 @@ tls13_key_share_public_x25519(struct tls13_key_share *ks, CBB *cbb)
 }
 
 int
-tls13_key_share_public(struct tls13_key_share *ks, CBB *cbb)
+tls_key_share_public(struct tls_key_share *ks, CBB *cbb)
 {
 	if (ks->nid == NID_X25519)
-		return tls13_key_share_public_x25519(ks, cbb);
+		return tls_key_share_public_x25519(ks, cbb);
 
-	return tls13_key_share_public_ecdhe_ecp(ks, cbb);
+	return tls_key_share_public_ecdhe_ecp(ks, cbb);
 }
 
 static int
-tls13_key_share_peer_public_ecdhe_ecp(struct tls13_key_share *ks, CBS *cbs)
+tls_key_share_peer_public_ecdhe_ecp(struct tls_key_share *ks, CBS *cbs)
 {
 	EC_KEY *ecdhe = NULL;
 	int ret = 0;
@@ -219,7 +220,7 @@ tls13_key_share_peer_public_ecdhe_ecp(struct tls13_key_share *ks, CBS *cbs)
 }
 
 static int
-tls13_key_share_peer_public_x25519(struct tls13_key_share *ks, CBS *cbs)
+tls_key_share_peer_public_x25519(struct tls_key_share *ks, CBS *cbs)
 {
 	size_t out_len;
 
@@ -233,17 +234,17 @@ tls13_key_share_peer_public_x25519(struct tls13_key_share *ks, CBS *cbs)
 }
 
 int
-tls13_key_share_peer_public(struct tls13_key_share *ks, uint16_t group,
+tls_key_share_peer_public(struct tls_key_share *ks, uint16_t group,
     CBS *cbs)
 {
 	if (ks->group_id != group)
 		return 0;
 
 	if (ks->nid == NID_X25519) {
-		if (!tls13_key_share_peer_public_x25519(ks, cbs))
+		if (!tls_key_share_peer_public_x25519(ks, cbs))
 			return 0;
 	} else {
-		if (!tls13_key_share_peer_public_ecdhe_ecp(ks, cbs))
+		if (!tls_key_share_peer_public_ecdhe_ecp(ks, cbs))
 			return 0;
 	}
 
@@ -251,7 +252,7 @@ tls13_key_share_peer_public(struct tls13_key_share *ks, uint16_t group,
 }
 
 static int
-tls13_key_share_derive_ecdhe_ecp(struct tls13_key_share *ks,
+tls_key_share_derive_ecdhe_ecp(struct tls_key_share *ks,
     uint8_t **shared_key, size_t *shared_key_len)
 {
 	if (ks->ecdhe == NULL || ks->ecdhe_peer == NULL)
@@ -262,7 +263,7 @@ tls13_key_share_derive_ecdhe_ecp(struct tls13_key_share *ks,
 }
 
 static int
-tls13_key_share_derive_x25519(struct tls13_key_share *ks,
+tls_key_share_derive_x25519(struct tls_key_share *ks,
     uint8_t **shared_key, size_t *shared_key_len)
 {
 	uint8_t *sk = NULL;
@@ -289,7 +290,7 @@ tls13_key_share_derive_x25519(struct tls13_key_share *ks,
 }
 
 int
-tls13_key_share_derive(struct tls13_key_share *ks, uint8_t **shared_key,
+tls_key_share_derive(struct tls_key_share *ks, uint8_t **shared_key,
     size_t *shared_key_len)
 {
 	if (*shared_key != NULL)
@@ -298,9 +299,9 @@ tls13_key_share_derive(struct tls13_key_share *ks, uint8_t **shared_key,
 	*shared_key_len = 0;
 
 	if (ks->nid == NID_X25519)
-		return tls13_key_share_derive_x25519(ks, shared_key,
+		return tls_key_share_derive_x25519(ks, shared_key,
 		    shared_key_len);
 
-	return tls13_key_share_derive_ecdhe_ecp(ks, shared_key,
+	return tls_key_share_derive_ecdhe_ecp(ks, shared_key,
 	    shared_key_len);
 }

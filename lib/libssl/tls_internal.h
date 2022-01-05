@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.1 2021/10/23 13:12:14 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.2 2022/01/05 17:10:03 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -17,6 +17,8 @@
 
 #ifndef HEADER_TLS_INTERNAL_H
 #define HEADER_TLS_INTERNAL_H
+
+#include <openssl/evp.h>
 
 #include "bytestring.h"
 
@@ -50,6 +52,24 @@ ssize_t tls_buffer_extend(struct tls_buffer *buf, size_t len,
     tls_read_cb read_cb, void *cb_arg);
 void tls_buffer_cbs(struct tls_buffer *buf, CBS *cbs);
 int tls_buffer_finish(struct tls_buffer *buf, uint8_t **out, size_t *out_len);
+
+/*
+ * Key shares.
+ */
+struct tls_key_share;
+
+struct tls_key_share *tls_key_share_new(uint16_t group_id);
+struct tls_key_share *tls_key_share_new_nid(int nid);
+void tls_key_share_free(struct tls_key_share *ks);
+
+uint16_t tls_key_share_group(struct tls_key_share *ks);
+int tls_key_share_peer_pkey(struct tls_key_share *ks, EVP_PKEY *pkey);
+int tls_key_share_generate(struct tls_key_share *ks);
+int tls_key_share_public(struct tls_key_share *ks, CBB *cbb);
+int tls_key_share_peer_public(struct tls_key_share *ks, uint16_t group,
+    CBS *cbs);
+int tls_key_share_derive(struct tls_key_share *ks, uint8_t **shared_key,
+    size_t *shared_key_len);
 
 __END_HIDDEN_DECLS
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.372 2021/12/04 14:03:22 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.373 2022/01/05 17:10:02 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -539,7 +539,6 @@ typedef struct ssl_handshake_tls13_st {
 	uint16_t server_version;
 
 	uint16_t server_group;
-	struct tls13_key_share *key_share;
 	struct tls13_secrets *secrets;
 
 	uint8_t *cookie;
@@ -604,6 +603,9 @@ typedef struct ssl_handshake_st {
 	/* sigalgs offered in this handshake in wire form */
 	uint8_t *sigalgs;
 	size_t sigalgs_len;
+
+	/* Key share for ephemeral key exchange. */
+	struct tls_key_share *key_share;
 
 	/*
 	 * Copies of the verify data sent in our finished message and the
