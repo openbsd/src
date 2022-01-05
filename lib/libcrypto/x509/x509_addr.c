@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.74 2022/01/05 17:55:33 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.75 2022/01/05 18:01:27 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1358,17 +1358,12 @@ IPAddressOrRanges_canonize(IPAddressOrRanges *aors, const unsigned afi)
 	/*
 	 * Check for inverted final range.
 	 */
-	j = sk_IPAddressOrRange_num(aors) - 1;
-	{
-		IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
-		if (a != NULL && a->type == IPAddressOrRange_addressRange) {
-			unsigned char a_min[ADDR_RAW_BUF_LEN],
-			a_max[ADDR_RAW_BUF_LEN];
-			if (!extract_min_max(a, a_min, a_max, length))
-				return 0;
-			if (memcmp(a_min, a_max, length) > 0)
-				return 0;
-		}
+	a = sk_IPAddressOrRange_value(aors, i);
+	if (a != NULL && a->type == IPAddressOrRange_addressRange) {
+		if (!extract_min_max(a, a_min, a_max, length))
+			return 0;
+		if (memcmp(a_min, a_max, length) > 0)
+			return 0;
 	}
 
 	return 1;
