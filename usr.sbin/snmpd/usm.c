@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.22 2022/01/05 11:00:49 tb Exp $	*/
+/*	$OpenBSD: usm.c,v 1.23 2022/01/05 16:41:42 tb Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -720,7 +720,10 @@ usm_passwd2key(const EVP_MD *md, char *passwd, int *maxlen)
 
 	if ((ctx = EVP_MD_CTX_new()) == NULL)
 		return NULL;
-	EVP_DigestInit(ctx, md);
+	if (!EVP_DigestInit(ctx, md)) {
+		EVP_MD_CTX_free(ctx);
+		return NULL;
+	}
 	pw = (u_char *)passwd;
 	for (count = 0; count < 1048576; count += 64) {
 		c = pwbuf;
@@ -729,9 +732,15 @@ usm_passwd2key(const EVP_MD *md, char *passwd, int *maxlen)
 				pw = (u_char *)passwd;
 			*c++ = *pw++;
 		}
-		EVP_DigestUpdate(ctx, pwbuf, 64);
+		if (!EVP_DigestUpdate(ctx, pwbuf, 64)) {
+			EVP_MD_CTX_free(ctx);
+			return NULL;
+		}
 	}
-	EVP_DigestFinal(ctx, keybuf, &dlen);
+	if (!EVP_DigestFinal(ctx, keybuf, &dlen)) {
+		EVP_MD_CTX_free(ctx);
+		return NULL;
+	}
 	EVP_MD_CTX_reset(ctx);
 
 	/* Localize the key */
@@ -743,9 +752,13 @@ usm_passwd2key(const EVP_MD *md, char *passwd, int *maxlen)
 	    snmpd_env->sc_engineid_len);
 	memcpy(pwbuf + dlen + snmpd_env->sc_engineid_len, keybuf, dlen);
 
-	EVP_DigestInit(ctx, md);
-	EVP_DigestUpdate(ctx, pwbuf, 2 * dlen + snmpd_env->sc_engineid_len);
-	EVP_DigestFinal(ctx, keybuf, &dlen);
+	if (!EVP_DigestInit(ctx, md) ||
+	    !EVP_DigestUpdate(ctx, pwbuf,
+	    2 * dlen + snmpd_env->sc_engineid_len) ||
+	    !EVP_DigestFinal(ctx, keybuf, &dlen)) {
+		EVP_MD_CTX_free(ctx);
+		return NULL;
+	}
 	EVP_MD_CTX_free(ctx);
 
 	if (*maxlen > 0 && dlen > (unsigned)*maxlen)
