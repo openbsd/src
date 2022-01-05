@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethertypes.h,v 1.15 2022/01/05 05:18:24 dlg Exp $	*/
+/*	$OpenBSD: ethertypes.h,v 1.16 2022/01/05 05:19:22 dlg Exp $	*/
 /*	$NetBSD: ethertypes.h,v 1.13 2002/02/10 01:28:32 thorpej Exp $	*/
 
 /*
@@ -96,6 +96,7 @@
 #define	ETHERTYPE_VALID		0x1600	/* VALID system protocol */
 #define	ETHERTYPE_DOGFIGHT	0x1989	/* Artificial Horizons ("Aviator" dogfight simulator [on Sun]) */
 #define	ETHERTYPE_RCL		0x1995	/* Datapoint Corporation (RCL lan protocol) */
+#define	ETHERTYPE_NHRP		0x2001	/* NBMA Next Hop Resolution Protocol (RFC2332) */
 
 					/* The following 3C0x types
 					   are unregistered: */
@@ -304,6 +305,7 @@
 #define	ETHERTYPE_LLDP		0x88CC	/* Link Layer Discovery Protocol */
 #define	ETHERTYPE_MACSEC	0x88e5	/* 802.1AE MACsec */
 #define	ETHERTYPE_PBB		0x88e7	/* 802.1Q Provider Backbone Bridging */
+#define	ETHERTYPE_NSH		0x984F	/* Network Service Header (RFC8300) */
 #define	ETHERTYPE_LOOPBACK	0x9000	/* Loopback */
 #define	ETHERTYPE_LBACK		ETHERTYPE_LOOPBACK	/* DEC MOP loopback */
 #define	ETHERTYPE_XNSSM		0x9001	/* 3Com (Formerly Bridge Communications), XNS Systems Management */
