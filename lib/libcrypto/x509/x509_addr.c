@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.60 2022/01/05 07:29:47 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.61 2022/01/05 07:37:01 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1678,24 +1678,37 @@ addr_contains(IPAddressOrRanges *parent, IPAddressOrRanges *child, int length)
  * Test whether a is a subset of b.
  */
 int
-X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
+X509v3_addr_subset(IPAddrBlocks *child, IPAddrBlocks *parent)
 {
-	int i;
-	if (a == NULL || a == b)
+	IPAddressFamily *fc, *fp;
+	IPAddressOrRanges *aorc, *aorp;
+	int i, j, length;
+
+	if (child == NULL || child == parent)
 		return 1;
-	if (b == NULL || X509v3_addr_inherits(a) || X509v3_addr_inherits(b))
+	if (parent == NULL)
 		return 0;
-	(void)sk_IPAddressFamily_set_cmp_func(b, IPAddressFamily_cmp);
-	for (i = 0; i < sk_IPAddressFamily_num(a); i++) {
-		IPAddressFamily *fa = sk_IPAddressFamily_value(a, i);
-		int j = sk_IPAddressFamily_find(b, fa);
-		IPAddressFamily *fb;
-		fb = sk_IPAddressFamily_value(b, j);
-		if (fb == NULL)
+
+	if (X509v3_addr_inherits(child) || X509v3_addr_inherits(parent))
+		return 0;
+
+	sk_IPAddressFamily_set_cmp_func(parent, IPAddressFamily_cmp);
+
+	for (i = 0; i < sk_IPAddressFamily_num(child); i++) {
+		fc = sk_IPAddressFamily_value(child, i);
+
+		j = sk_IPAddressFamily_find(parent, fc);
+		fp = sk_IPAddressFamily_value(parent, j);
+		if (fp == NULL)
 			return 0;
-		if (!addr_contains(fb->ipAddressChoice->u.addressesOrRanges,
-		    fa->ipAddressChoice->u.addressesOrRanges,
-		    length_from_afi(X509v3_addr_get_afi(fb))))
+
+		if (!IPAddressFamily_afi_length(fp, &length))
+			return 0;
+
+		aorc = IPAddressFamily_addressesOrRanges(fc);
+		aorp = IPAddressFamily_addressesOrRanges(fp);
+
+		if (!addr_contains(aorp, aorc, length))
 			return 0;
 	}
 	return 1;
