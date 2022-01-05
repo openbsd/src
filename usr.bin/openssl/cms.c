@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.20 2022/01/05 10:29:08 inoguchi Exp $ */
+/* $OpenBSD: cms.c,v 1.21 2022/01/05 10:33:36 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -273,7 +273,7 @@ cms_opt_keyopt(char *arg)
 	    cms_config.key_param->idx != keyidx) {
 		struct cms_key_param *nparam;
 
-		if ((nparam = malloc(sizeof(struct cms_key_param))) == NULL)
+		if ((nparam = calloc(1, sizeof(struct cms_key_param))) == NULL)
 			return (1);
 
 		nparam->idx = keyidx;
