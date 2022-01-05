@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.130 2022/01/04 15:55:28 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.131 2022/01/05 16:33:42 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2916,7 +2916,7 @@ iwx_rx_bar_frame_release(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
-	struct iwx_bar_frame_release *release = (void *)data;
+	struct iwx_bar_frame_release *release = (void *)pkt->data;
 	struct iwx_reorder_buffer *buf;
 	struct iwx_rxba_data *rxba;
 	unsigned int baid, nssn, sta_id, tid;
