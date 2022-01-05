@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-l2tp.c,v 1.10 2018/07/06 05:47:22 dlg Exp $	*/
+/*	$OpenBSD: print-l2tp.c,v 1.11 2022/01/05 05:46:18 dlg Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -618,7 +618,6 @@ l2tp_print(const u_char *dat, u_int length)
 	u_int cnt = 0;			/* total octets consumed */
 	u_short pad, val;
 	int flag_t, flag_l, flag_s, flag_o, flag_p;
-	u_short l2tp_len;
 
 	flag_t = flag_l = flag_s = flag_o = flag_p = FALSE;
 
@@ -670,11 +669,8 @@ l2tp_print(const u_char *dat, u_int length)
 	if (flag_l) {
 		TCHECK2(*dat, sizeof(val));
 		memcpy(&val, dat, sizeof(val));
-		l2tp_len = ntohs(val);
 		dat += 2;
 		cnt += 2;
-	} else {
-		l2tp_len = 0;
 	}
 
 	TCHECK2(*dat, sizeof(val));

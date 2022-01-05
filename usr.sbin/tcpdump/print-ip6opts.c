@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ip6opts.c,v 1.7 2020/01/24 22:46:37 procter Exp $	*/
+/*	$OpenBSD: print-ip6opts.c,v 1.8 2022/01/05 05:46:18 dlg Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -107,11 +107,8 @@ int
 hbhopt_print(const u_char *bp)
 {
     const struct ip6_hbh *dp = (struct ip6_hbh *)bp;
-    const u_char *ep;
     int hbhlen = 0;
 
-    /* 'ep' points to the end of avaible data. */
-    ep = snapend;
     TCHECK(dp->ip6h_len);
     hbhlen = (int)((dp->ip6h_len + 1) << 3);
     TCHECK2(*dp, hbhlen);
@@ -130,11 +127,8 @@ int
 dstopt_print(const u_char *bp)
 {
     const struct ip6_dest *dp = (struct ip6_dest *)bp;
-    const u_char *ep;
     int dstoptlen = 0;
 
-    /* 'ep' points to the end of avaible data. */
-    ep = snapend;
     TCHECK(dp->ip6d_len);
     dstoptlen = (int)((dp->ip6d_len + 1) << 3);
     TCHECK2(*dp, dstoptlen);

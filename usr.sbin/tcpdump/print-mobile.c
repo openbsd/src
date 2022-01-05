@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-mobile.c,v 1.6 2020/01/24 22:46:37 procter Exp $ */
+/*	$OpenBSD: print-mobile.c,v 1.7 2022/01/05 05:46:18 dlg Exp $ */
 /*	$NetBSD: print-mobile.c,v 1.3 1999/07/26 06:11:57 itojun Exp $ */
 
 /*
@@ -63,7 +63,6 @@ static u_int16_t mob_in_cksum(u_short *p, int len);
 void
 mobile_print(const u_char *bp, u_int length)
 {
-	const u_char *cp = bp +8 ;
 	const struct mobile_ip *mob;
 	u_short proto,crc;
 	u_char osp =0;			/* old source address present */
@@ -79,7 +78,6 @@ mobile_print(const u_char *bp, u_int length)
 	crc =  EXTRACT_16BITS(&mob->hcheck);
 	if (proto & OSRC_PRES) {
 		osp=1;
-		cp +=4 ;
 	}
 	
 	if (osp)  {
