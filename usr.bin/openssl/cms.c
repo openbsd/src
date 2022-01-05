@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.19 2022/01/05 10:01:39 inoguchi Exp $ */
+/* $OpenBSD: cms.c,v 1.20 2022/01/05 10:29:08 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -219,30 +219,32 @@ cms_opt_econtent_type(char *arg)
 static int
 cms_opt_inkey(char *arg)
 {
-	if (cms_config.keyfile != NULL) {
-		if (cms_config.signerfile == NULL) {
-			BIO_puts(bio_err, "Illegal -inkey without -signer\n");
-			return (1);
-		}
-
-		if (cms_config.sksigners == NULL)
-			cms_config.sksigners = sk_OPENSSL_STRING_new_null();
-		if (cms_config.sksigners == NULL)
-			return (1);
-		if (!sk_OPENSSL_STRING_push(cms_config.sksigners,
-		    cms_config.signerfile))
-			return (1);
-
-		cms_config.signerfile = NULL;
-
-		if (cms_config.skkeys == NULL)
-			cms_config.skkeys = sk_OPENSSL_STRING_new_null();
-		if (cms_config.skkeys == NULL)
-			return (1);
-		if (!sk_OPENSSL_STRING_push(cms_config.skkeys,
-		    cms_config.keyfile))
-			return (1);
+	if (cms_config.keyfile == NULL) {
+		cms_config.keyfile = arg;
+		return (0);
 	}
+	
+	if (cms_config.signerfile == NULL) {
+		BIO_puts(bio_err, "Illegal -inkey without -signer\n");
+		return (1);
+	}
+
+	if (cms_config.sksigners == NULL)
+		cms_config.sksigners = sk_OPENSSL_STRING_new_null();
+	if (cms_config.sksigners == NULL)
+		return (1);
+	if (!sk_OPENSSL_STRING_push(cms_config.sksigners, cms_config.signerfile))
+		return (1);
+
+	cms_config.signerfile = NULL;
+
+	if (cms_config.skkeys == NULL)
+		cms_config.skkeys = sk_OPENSSL_STRING_new_null();
+	if (cms_config.skkeys == NULL)
+		return (1);
+	if (!sk_OPENSSL_STRING_push(cms_config.skkeys, cms_config.keyfile))
+		return (1);
+
 	cms_config.keyfile = arg;
 	return (0);
 }
@@ -399,28 +401,30 @@ cms_opt_secretkeyid(char *arg)
 static int
 cms_opt_signer(char *arg)
 {
-	if (cms_config.signerfile != NULL) {
-		if (cms_config.sksigners == NULL)
-			cms_config.sksigners = sk_OPENSSL_STRING_new_null();
-		if (cms_config.sksigners == NULL)
-			return (1);
-		if (!sk_OPENSSL_STRING_push(cms_config.sksigners,
-		    cms_config.signerfile))
-			return (1);
-
-		if (cms_config.keyfile == NULL)
-			cms_config.keyfile = cms_config.signerfile;
-
-		if (cms_config.skkeys == NULL)
-			cms_config.skkeys = sk_OPENSSL_STRING_new_null();
-		if (cms_config.skkeys == NULL)
-			return (1);
-		if (!sk_OPENSSL_STRING_push(cms_config.skkeys,
-		    cms_config.keyfile))
-			return (1);
-
-		cms_config.keyfile = NULL;
+	if (cms_config.signerfile == NULL) {
+		cms_config.signerfile = arg;
+		return (0);
 	}
+
+	if (cms_config.sksigners == NULL)
+		cms_config.sksigners = sk_OPENSSL_STRING_new_null();
+	if (cms_config.sksigners == NULL)
+		return (1);
+	if (!sk_OPENSSL_STRING_push(cms_config.sksigners, cms_config.signerfile))
+		return (1);
+
+	if (cms_config.keyfile == NULL)
+		cms_config.keyfile = cms_config.signerfile;
+
+	if (cms_config.skkeys == NULL)
+		cms_config.skkeys = sk_OPENSSL_STRING_new_null();
+	if (cms_config.skkeys == NULL)
+		return (1);
+	if (!sk_OPENSSL_STRING_push(cms_config.skkeys, cms_config.keyfile))
+		return (1);
+
+	cms_config.keyfile = NULL;
+
 	cms_config.signerfile = arg;
 	return (0);
 }
