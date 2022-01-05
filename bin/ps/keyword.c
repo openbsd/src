@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.48 2021/08/28 20:54:54 chrisz Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.49 2022/01/05 04:10:36 guenther Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -99,7 +99,6 @@ VAR var[] = {
 	{"cputime", "", "time"},
 	{"cwd", "CWD", NULL, LJUST, curwd, CWDLEN},
 	{"dsiz", "DSIZ", NULL, 0, dsize, 4},
-	{"emul", "EMUL", NULL, LJUST, emulname, KI_EMULNAMELEN - 1},
 	{"etime", "ELAPSED", NULL, USER, elapsed, 12},
 	{"f", "F", NULL, 0, pvar, 7, 0, POFF(p_flag), INT32, "x"},
 	{"flags", "", "f"},
