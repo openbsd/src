@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.122 2022/01/04 16:15:28 kettenis Exp $	*/
+/*	$OpenBSD: pci.c,v 1.123 2022/01/05 16:46:11 deraadt Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -1264,14 +1264,19 @@ pciioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return EINVAL;
 
 	pc = pci->sc_pc;
-	tag = pci_make_tag(pc, sel->pc_bus, sel->pc_dev, sel->pc_func);
-
 	LIST_FOREACH(pd, &pci->sc_devs, pd_next) {
-		if (tag == pd->pd_tag)
+		int bus, dev, func;
+
+		pci_decompose_tag(pc, pd->pd_tag, &bus, &dev, &func);
+
+		if (bus == sel->pc_bus && dev == sel->pc_dev &&
+		    func == sel->pc_func)
 			break;
 	}
 	if (pd == LIST_END(&pci->sc_devs))
 		return ENXIO;
+
+	tag = pci_make_tag(pc, sel->pc_bus, sel->pc_dev, sel->pc_func);
 
 	switch (cmd) {
 	case PCIOCREAD:
