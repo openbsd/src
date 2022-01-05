@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ether.c,v 1.40 2022/01/05 05:47:53 dlg Exp $	*/
+/*	$OpenBSD: print-ether.c,v 1.41 2022/01/05 05:53:03 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -36,6 +36,7 @@
 #include <netinet/tcp.h>
 
 #include <stdio.h>
+#include <stddef.h>
 #include <pcap.h>
 
 
@@ -49,6 +50,7 @@ const u_char *snapend;
 
 void ether_macctl(const u_char *, u_int);
 void ether_pbb_print(const u_char *, u_int, u_int);
+void ether_eapol_print(const u_char *, u_int, u_int);
 
 void
 ether_print(const u_char *bp, u_int length)
@@ -291,6 +293,10 @@ recurse:
 		nsh_print(p, length);
 		return (1);
 
+	case ETHERTYPE_EAPOL:
+		ether_eapol_print(p, length, caplen);
+		return (1);
+
 	case ETHERTYPE_PBB:
 		ether_pbb_print(p, length, caplen);
 		return (1);
@@ -357,4 +363,87 @@ ether_macctl(const u_char *p, u_int length)
 
 trunc:
 	printf("[|MACCTL]");
+}
+
+/*
+ * 802.1X EAPOL PDU
+ */
+
+struct eapol_header {
+	uint8_t			version;
+	uint8_t			type;
+#define EAPOL_T_EAP			0x00
+#define EAPOL_T_START			0x01
+#define EAPOL_T_LOGOFF			0x02
+#define EAPOL_T_KEY			0x03
+#define EAPOL_T_ENCAP_ASF_ALERT		0x04
+#define EAPOL_T_MKA			0x05
+#define EAPOL_T_ANNOUNCEMENT_GENERIC	0x06
+#define EAPOL_T_ANNOUNCEMENT_SPECIFIC	0x07
+#define EAPOL_T_ANNOUNCEMENT_REQ	0x08
+	uint16_t		length;
+};
+
+void
+ether_eapol_print(const u_char *bp, u_int length, u_int caplen)
+{
+	struct eapol_header h;
+
+	printf("EAPOL");
+
+	if (caplen < sizeof(h))
+		goto trunc;
+
+	h.version = *(bp + offsetof(struct eapol_header, version));
+	h.type = *(bp + offsetof(struct eapol_header, type));
+	h.length = EXTRACT_16BITS(bp + offsetof(struct eapol_header, length));
+
+	bp += sizeof(h);
+	length -= sizeof(h);
+	caplen -= sizeof(h);
+
+	if (vflag)
+		printf(" (v%u, len %u)", h.version, h.length);
+
+	if (length > h.length)
+		length = h.length;
+	else if (length < h.length) {
+		printf(" truncated-eapol - %u bytes missing!",
+		    h.length - length);
+	}
+
+	switch (h.type) {
+	case EAPOL_T_EAP:
+		printf(" EAP");
+		break;
+	case EAPOL_T_START:
+		printf(" Start");
+		break;
+	case EAPOL_T_LOGOFF:
+		printf(" Logoff");
+		break;
+	case EAPOL_T_KEY:
+		printf(" Key");
+		break;
+	case EAPOL_T_MKA:
+		printf(" MKA");
+		break;
+	case EAPOL_T_ANNOUNCEMENT_GENERIC:
+		printf(" Announcement (Generic)");
+		break;
+	case EAPOL_T_ANNOUNCEMENT_SPECIFIC:
+		printf(" Announcement (Specific)");
+		break;
+	case EAPOL_T_ANNOUNCEMENT_REQ:
+		printf(" Announcement Req");
+		break;
+	default:
+		printf(" unknown (%u)", h.type);
+		break;
+	}
+
+	return;
+
+trunc:
+	printf(" [|eapol] ");
 }
