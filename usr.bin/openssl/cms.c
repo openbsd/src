@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.21 2022/01/05 10:33:36 inoguchi Exp $ */
+/* $OpenBSD: cms.c,v 1.22 2022/01/05 11:38:19 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -1177,25 +1177,25 @@ cms_main(int argc, char **argv)
 	args = argv + argsused;
 	ret = 1;
 
-	if (((cms_config.rr_allorfirst != -1) || cms_config.rr_from) && !cms_config.rr_to) {
+	if (((cms_config.rr_allorfirst != -1) || cms_config.rr_from != NULL) && cms_config.rr_to == NULL) {
 		BIO_puts(bio_err, "No Signed Receipts Recipients\n");
 		goto argerr;
 	}
-	if (!(cms_config.operation & SMIME_SIGNERS) && (cms_config.rr_to || cms_config.rr_from)) {
+	if (!(cms_config.operation & SMIME_SIGNERS) && (cms_config.rr_to != NULL || cms_config.rr_from != NULL)) {
 		BIO_puts(bio_err, "Signed receipts only allowed with -sign\n");
 		goto argerr;
 	}
-	if (!(cms_config.operation & SMIME_SIGNERS) && (cms_config.skkeys || cms_config.sksigners)) {
+	if (!(cms_config.operation & SMIME_SIGNERS) && (cms_config.skkeys != NULL || cms_config.sksigners != NULL)) {
 		BIO_puts(bio_err, "Multiple signers or keys not allowed\n");
 		goto argerr;
 	}
 	if (cms_config.operation & SMIME_SIGNERS) {
-		if (cms_config.keyfile && !cms_config.signerfile) {
+		if (cms_config.keyfile != NULL && cms_config.signerfile == NULL) {
 			BIO_puts(bio_err, "Illegal -inkey without -signer\n");
 			goto argerr;
 		}
 		/* Check to see if any final signer needs to be appended */
-		if (cms_config.signerfile) {
+		if (cms_config.signerfile != NULL) {
 			if (cms_config.sksigners == NULL &&
 			    (cms_config.sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
 				goto end;
@@ -1204,12 +1204,12 @@ cms_main(int argc, char **argv)
 			if (cms_config.skkeys == NULL &&
 			    (cms_config.skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
 				goto end;
-			if (!cms_config.keyfile)
+			if (cms_config.keyfile == NULL)
 				cms_config.keyfile = cms_config.signerfile;
 			if (!sk_OPENSSL_STRING_push(cms_config.skkeys, cms_config.keyfile))
 				goto end;
 		}
-		if (!cms_config.sksigners) {
+		if (cms_config.sksigners == NULL) {
 			BIO_printf(bio_err,
 			    "No signer certificate specified\n");
 			badarg = 1;
@@ -1217,13 +1217,13 @@ cms_main(int argc, char **argv)
 		cms_config.signerfile = NULL;
 		cms_config.keyfile = NULL;
 	} else if (cms_config.operation == SMIME_DECRYPT) {
-		if (!cms_config.recipfile && !cms_config.keyfile && !cms_config.secret_key && !cms_config.pwri_pass) {
+		if (cms_config.recipfile == NULL && cms_config.keyfile == NULL && cms_config.secret_key == NULL && cms_config.pwri_pass == NULL) {
 			BIO_printf(bio_err,
 			    "No recipient certificate or key specified\n");
 			badarg = 1;
 		}
 	} else if (cms_config.operation == SMIME_ENCRYPT) {
-		if (!*args && !cms_config.secret_key && !cms_config.pwri_pass && !cms_config.encerts) {
+		if (*args == NULL && cms_config.secret_key == NULL && cms_config.pwri_pass == NULL && cms_config.encerts == NULL) {
 			BIO_printf(bio_err,
 			    "No recipient(s) certificate(s) specified\n");
 			badarg = 1;
@@ -1263,7 +1263,7 @@ cms_main(int argc, char **argv)
 	}
 
 	if (cms_config.operation == SMIME_ENCRYPT) {
-		if (!cms_config.cipher) {
+		if (cms_config.cipher == NULL) {
 #ifndef OPENSSL_NO_DES
 			cms_config.cipher = EVP_des_ede3_cbc();
 #else
@@ -1271,16 +1271,16 @@ cms_main(int argc, char **argv)
 			goto end;
 #endif
 		}
-		if (cms_config.secret_key && !cms_config.secret_keyid) {
+		if (cms_config.secret_key != NULL && cms_config.secret_keyid == NULL) {
 			BIO_printf(bio_err, "No secret key id\n");
 			goto end;
 		}
-		if (*args && cms_config.encerts == NULL)
+		if (*args != NULL && cms_config.encerts == NULL)
 			if ((cms_config.encerts = sk_X509_new_null()) == NULL)
 				goto end;
 		while (*args) {
-			if (!(cms_config.cert = load_cert(bio_err, *args, FORMAT_PEM,
-			    NULL, "recipient certificate file")))
+			if ((cms_config.cert = load_cert(bio_err, *args, FORMAT_PEM,
+			    NULL, "recipient certificate file")) == NULL)
 				goto end;
 			if (!sk_X509_push(cms_config.encerts, cms_config.cert))
 				goto end;
@@ -1288,45 +1288,45 @@ cms_main(int argc, char **argv)
 			args++;
 		}
 	}
-	if (cms_config.certfile) {
-		if (!(other = load_certs(bio_err, cms_config.certfile, FORMAT_PEM, NULL,
-		    "certificate file"))) {
+	if (cms_config.certfile != NULL) {
+		if ((other = load_certs(bio_err, cms_config.certfile, FORMAT_PEM, NULL,
+		    "certificate file")) == NULL) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
-	if (cms_config.recipfile && (cms_config.operation == SMIME_DECRYPT)) {
-		if (!(recip = load_cert(bio_err, cms_config.recipfile, FORMAT_PEM, NULL,
-		    "recipient certificate file"))) {
+	if (cms_config.recipfile != NULL && (cms_config.operation == SMIME_DECRYPT)) {
+		if ((recip = load_cert(bio_err, cms_config.recipfile, FORMAT_PEM, NULL,
+		    "recipient certificate file")) == NULL) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
 	if (cms_config.operation == SMIME_SIGN_RECEIPT) {
-		if (!(signer = load_cert(bio_err, cms_config.signerfile, FORMAT_PEM, NULL,
-		    "receipt signer certificate file"))) {
+		if ((signer = load_cert(bio_err, cms_config.signerfile, FORMAT_PEM, NULL,
+		    "receipt signer certificate file")) == NULL) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
 	if (cms_config.operation == SMIME_DECRYPT) {
-		if (!cms_config.keyfile)
+		if (cms_config.keyfile == NULL)
 			cms_config.keyfile = cms_config.recipfile;
 	} else if ((cms_config.operation == SMIME_SIGN) ||
 	    (cms_config.operation == SMIME_SIGN_RECEIPT)) {
-		if (!cms_config.keyfile)
+		if (cms_config.keyfile == NULL)
 			cms_config.keyfile = cms_config.signerfile;
 	} else
 		cms_config.keyfile = NULL;
 
-	if (cms_config.keyfile) {
+	if (cms_config.keyfile != NULL) {
 		key = load_key(bio_err, cms_config.keyfile, cms_config.keyform, 0, passin,
 		    "signing key file");
-		if (!key)
+		if (key == NULL)
 			goto end;
 	}
-	if (cms_config.infile) {
-		if (!(in = BIO_new_file(cms_config.infile, inmode))) {
+	if (cms_config.infile != NULL) {
+		if ((in = BIO_new_file(cms_config.infile, inmode)) == NULL) {
 			BIO_printf(bio_err,
 			    "Can't open input file %s\n", cms_config.infile);
 			goto end;
@@ -1346,19 +1346,19 @@ cms_main(int argc, char **argv)
 			goto end;
 		}
 
-		if (!cms) {
+		if (cms == NULL) {
 			BIO_printf(bio_err, "Error reading S/MIME message\n");
 			goto end;
 		}
-		if (cms_config.contfile) {
+		if (cms_config.contfile != NULL) {
 			BIO_free(indata);
-			if (!(indata = BIO_new_file(cms_config.contfile, "rb"))) {
+			if ((indata = BIO_new_file(cms_config.contfile, "rb")) == NULL) {
 				BIO_printf(bio_err,
 				    "Can't read content file %s\n", cms_config.contfile);
 				goto end;
 			}
 		}
-		if (cms_config.certsoutfile) {
+		if (cms_config.certsoutfile != NULL) {
 			STACK_OF(X509) *allcerts;
 			if ((allcerts = CMS_get1_certs(cms)) == NULL)
 				goto end;
@@ -1372,9 +1372,9 @@ cms_main(int argc, char **argv)
 			sk_X509_pop_free(allcerts, X509_free);
 		}
 	}
-	if (cms_config.rctfile) {
+	if (cms_config.rctfile != NULL) {
 		char *rctmode = (cms_config.rctformat == FORMAT_ASN1) ? "rb" : "r";
-		if (!(rctin = BIO_new_file(cms_config.rctfile, rctmode))) {
+		if ((rctin = BIO_new_file(cms_config.rctfile, rctmode)) == NULL) {
 			BIO_printf(bio_err,
 			    "Can't open receipt file %s\n", cms_config.rctfile);
 			goto end;
@@ -1390,13 +1390,13 @@ cms_main(int argc, char **argv)
 			goto end;
 		}
 
-		if (!rcms) {
+		if (rcms == NULL) {
 			BIO_printf(bio_err, "Error reading receipt\n");
 			goto end;
 		}
 	}
-	if (cms_config.outfile) {
-		if (!(out = BIO_new_file(cms_config.outfile, outmode))) {
+	if (cms_config.outfile != NULL) {
+		if ((out = BIO_new_file(cms_config.outfile, outmode)) == NULL) {
 			BIO_printf(bio_err,
 			    "Can't open output file %s\n", cms_config.outfile);
 			goto end;
@@ -1407,10 +1407,10 @@ cms_main(int argc, char **argv)
 
 	if ((cms_config.operation == SMIME_VERIFY) ||
 	    (cms_config.operation == SMIME_VERIFY_RECEIPT)) {
-		if (!(store = setup_verify(bio_err, cms_config.CAfile, cms_config.CApath)))
+		if ((store = setup_verify(bio_err, cms_config.CAfile, cms_config.CApath)) == NULL)
 			goto end;
 		X509_STORE_set_verify_cb(store, cms_cb);
-		if (cms_config.vpm)
+		if (cms_config.vpm != NULL)
 			X509_STORE_set1_param(store, cms_config.vpm);
 	}
 	ret = 3;
@@ -1450,21 +1450,21 @@ cms_main(int argc, char **argv)
 			}
 		}
 
-		if (cms_config.secret_key) {
-			if (!CMS_add0_recipient_key(cms, NID_undef, cms_config.secret_key,
+		if (cms_config.secret_key != NULL) {
+			if (CMS_add0_recipient_key(cms, NID_undef, cms_config.secret_key,
 			    cms_config.secret_keylen, cms_config.secret_keyid, cms_config.secret_keyidlen,
-			    NULL, NULL, NULL))
+			    NULL, NULL, NULL) == NULL)
 				goto end;
 			/* NULL these because call absorbs them */
 			cms_config.secret_key = NULL;
 			cms_config.secret_keyid = NULL;
 		}
-		if (cms_config.pwri_pass) {
+		if (cms_config.pwri_pass != NULL) {
 			pwri_tmp = strdup(cms_config.pwri_pass);
-			if (!pwri_tmp)
+			if (pwri_tmp == NULL)
 				goto end;
-			if (!CMS_add0_recipient_password(cms, -1, NID_undef,
-			    NID_undef, pwri_tmp, -1, NULL))
+			if (CMS_add0_recipient_password(cms, -1, NID_undef,
+			    NID_undef, pwri_tmp, -1, NULL) == NULL)
 				goto end;
 			pwri_tmp = NULL;
 		}
@@ -1481,11 +1481,11 @@ cms_main(int argc, char **argv)
 		STACK_OF(CMS_SignerInfo) *sis;
 		CMS_SignerInfo *si;
 		sis = CMS_get0_SignerInfos(cms);
-		if (!sis)
+		if (sis == NULL)
 			goto end;
 		si = sk_CMS_SignerInfo_value(sis, 0);
 		srcms = CMS_sign_receipt(si, signer, key, other, cms_config.flags);
-		if (!srcms)
+		if (srcms == NULL)
 			goto end;
 		CMS_ContentInfo_free(cms);
 		cms = srcms;
@@ -1503,16 +1503,16 @@ cms_main(int argc, char **argv)
 			}
 			cms_config.flags |= CMS_PARTIAL;
 			cms = CMS_sign(NULL, NULL, other, in, cms_config.flags);
-			if (!cms)
+			if (cms == NULL)
 				goto end;
-			if (cms_config.econtent_type)
+			if (cms_config.econtent_type != NULL)
 				if (!CMS_set1_eContentType(cms, cms_config.econtent_type))
 					goto end;
 
-			if (cms_config.rr_to) {
+			if (cms_config.rr_to != NULL) {
 				rr = make_receipt_request(cms_config.rr_to, cms_config.rr_allorfirst,
 				    cms_config.rr_from);
-				if (!rr) {
+				if (rr == NULL) {
 					BIO_puts(bio_err,
 					    "Signed Receipt Request Creation Error\n");
 					goto end;
@@ -1529,13 +1529,13 @@ cms_main(int argc, char **argv)
 
 			signer = load_cert(bio_err, cms_config.signerfile, FORMAT_PEM,
 			    NULL, "signer certificate");
-			if (!signer)
+			if (signer == NULL)
 				goto end;
 			key = load_key(bio_err, cms_config.keyfile, cms_config.keyform, 0, passin,
 			    "signing key file");
-			if (!key)
+			if (key == NULL)
 				goto end;
-			for (kparam = cms_config.key_first; kparam; kparam = kparam->next) {
+			for (kparam = cms_config.key_first; kparam != NULL; kparam = kparam->next) {
 				if (kparam->idx == i) {
 					tflags |= CMS_KEY_PARAM;
 					break;
@@ -1551,7 +1551,7 @@ cms_main(int argc, char **argv)
 				if (!cms_set_pkey_param(pctx, kparam->param))
 					goto end;
 			}
-			if (rr && !CMS_add1_ReceiptRequest(si, rr))
+			if (rr != NULL && !CMS_add1_ReceiptRequest(si, rr))
 				goto end;
 			X509_free(signer);
 			signer = NULL;
@@ -1564,7 +1564,7 @@ cms_main(int argc, char **argv)
 				goto end;
 		}
 	}
-	if (!cms) {
+	if (cms == NULL) {
 		BIO_printf(bio_err, "Error creating CMS structure\n");
 		goto end;
 	}
@@ -1573,7 +1573,7 @@ cms_main(int argc, char **argv)
 		if (cms_config.flags & CMS_DEBUG_DECRYPT)
 			CMS_decrypt(cms, NULL, NULL, NULL, NULL, cms_config.flags);
 
-		if (cms_config.secret_key) {
+		if (cms_config.secret_key != NULL) {
 			if (!CMS_decrypt_set1_key(cms, cms_config.secret_key,
 			    cms_config.secret_keylen, cms_config.secret_keyid, cms_config.secret_keyidlen)) {
 				BIO_puts(bio_err,
@@ -1581,14 +1581,14 @@ cms_main(int argc, char **argv)
 				goto end;
 			}
 		}
-		if (key) {
+		if (key != NULL) {
 			if (!CMS_decrypt_set1_pkey(cms, key, recip)) {
 				BIO_puts(bio_err,
 				    "Error decrypting CMS using private key\n");
 				goto end;
 			}
 		}
-		if (cms_config.pwri_pass) {
+		if (cms_config.pwri_pass != NULL) {
 			if (!CMS_decrypt_set1_password(cms, cms_config.pwri_pass, -1)) {
 				BIO_puts(bio_err,
 				    "Error decrypting CMS using password\n");
@@ -1625,7 +1625,7 @@ cms_main(int argc, char **argv)
 				ret = verify_err + 32;
 			goto end;
 		}
-		if (cms_config.signerfile) {
+		if (cms_config.signerfile != NULL) {
 			STACK_OF(X509) *signers;
 			if ((signers = CMS_get0_signers(cms)) == NULL)
 				goto end;
@@ -1654,11 +1654,11 @@ cms_main(int argc, char **argv)
 			    !CMS_ContentInfo_print_ctx(out, cms, 0, NULL))
 				goto end;
 		} else if (cms_config.outformat == FORMAT_SMIME) {
-			if (cms_config.to)
+			if (cms_config.to != NULL)
 				BIO_printf(out, "To: %s\n", cms_config.to);
-			if (cms_config.from)
+			if (cms_config.from != NULL)
 				BIO_printf(out, "From: %s\n", cms_config.from);
-			if (cms_config.subject)
+			if (cms_config.subject != NULL)
 				BIO_printf(out, "Subject: %s\n", cms_config.subject);
 			if (cms_config.operation == SMIME_RESIGN)
 				ret = SMIME_write_CMS(out, cms, indata, cms_config.flags);
@@ -1724,10 +1724,10 @@ save_certs(char *signerfile, STACK_OF(X509) *signers)
 	int i;
 	BIO *tmp;
 
-	if (!signerfile)
+	if (signerfile == NULL)
 		return 1;
 	tmp = BIO_new_file(signerfile, "w");
-	if (!tmp)
+	if (tmp == NULL)
 		return 0;
 	for (i = 0; i < sk_X509_num(signers); i++)
 		PEM_write_bio_X509(tmp, sk_X509_value(signers, i));
@@ -1806,7 +1806,7 @@ receipt_request_print(BIO *out, CMS_ContentInfo *cms)
 			id = (char *) ASN1_STRING_data(scid);
 			BIO_dump_indent(out, id, idlen, 4);
 			BIO_puts(out, "  Receipts From");
-			if (rlist) {
+			if (rlist != NULL) {
 				BIO_puts(out, " List:\n");
 				gnames_stack_print(out, rlist);
 			} else if (allorfirst == 1)
@@ -1818,7 +1818,7 @@ receipt_request_print(BIO *out, CMS_ContentInfo *cms)
 			BIO_puts(out, "  Receipts To:\n");
 			gnames_stack_print(out, rto);
 		}
-		if (rr)
+		if (rr != NULL)
 			CMS_ReceiptRequest_free(rr);
 	}
 }
@@ -1830,15 +1830,16 @@ make_names_stack(STACK_OF(OPENSSL_STRING) *ns)
 	STACK_OF(GENERAL_NAMES) *ret;
 	GENERAL_NAMES *gens = NULL;
 	GENERAL_NAME *gen = NULL;
+
 	if ((ret = sk_GENERAL_NAMES_new_null()) == NULL)
 		goto err;
 	for (i = 0; i < sk_OPENSSL_STRING_num(ns); i++) {
 		char *str = sk_OPENSSL_STRING_value(ns, i);
 		gen = a2i_GENERAL_NAME(NULL, NULL, NULL, GEN_EMAIL, str, 0);
-		if (!gen)
+		if (gen == NULL)
 			goto err;
 		gens = GENERAL_NAMES_new();
-		if (!gens)
+		if (gens == NULL)
 			goto err;
 		if (!sk_GENERAL_NAME_push(gens, gen))
 			goto err;
@@ -1867,11 +1868,11 @@ make_receipt_request(STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
 	CMS_ReceiptRequest *rr;
 
 	rct_to = make_names_stack(rr_to);
-	if (!rct_to)
+	if (rct_to == NULL)
 		goto err;
-	if (rr_from) {
+	if (rr_from != NULL) {
 		rct_from = make_names_stack(rr_from);
-		if (!rct_from)
+		if (rct_from == NULL)
 			goto err;
 	} else
 		rct_from = NULL;
