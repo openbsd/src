@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.65 2022/01/05 17:38:14 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.66 2022/01/05 17:41:41 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1749,7 +1749,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	IPAddressOrRanges *aorc, *aorp;
 	X509 *x = NULL;
 	int depth = -1;
-	int j, k;
+	int i, k;
 	unsigned int length;
 	int ret = 1;
 
@@ -1798,8 +1798,8 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 		x = sk_X509_value(chain, depth);
 
 		if ((parent = x->rfc3779_addr) == NULL) {
-			for (j = 0; j < sk_IPAddressFamily_num(child); j++) {
-				fc = sk_IPAddressFamily_value(child, j);
+			for (i = 0; i < sk_IPAddressFamily_num(child); i++) {
+				fc = sk_IPAddressFamily_value(child, i);
 
 				if (IPAddressFamily_inheritance(fc) != NULL)
 					continue;
@@ -1826,8 +1826,8 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 		 * covering it, so the next iteration will check that the
 		 * parent's resources are covered by the grandparent.
 		 */
-		for (j = 0; j < sk_IPAddressFamily_num(child); j++) {
-			fc = sk_IPAddressFamily_value(child, j);
+		for (i = 0; i < sk_IPAddressFamily_num(child); i++) {
+			fc = sk_IPAddressFamily_value(child, i);
 
 			k = sk_IPAddressFamily_find(parent, fc);
 			fp = sk_IPAddressFamily_value(parent, k);
@@ -1853,7 +1853,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 
 			/* Child inherits. Use parent's address family. */
 			if (IPAddressFamily_inheritance(fc) != NULL) {
-				sk_IPAddressFamily_set(child, j, fp);
+				sk_IPAddressFamily_set(child, i, fp);
 				continue;
 			}
 
@@ -1873,7 +1873,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 
 			/* Now check containment and replace or error. */
 			if (addr_contains(aorp, aorc, length)) {
-				sk_IPAddressFamily_set(child, j, fp);
+				sk_IPAddressFamily_set(child, i, fp);
 				continue;
 			}
 
@@ -1887,8 +1887,8 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	 * Trust anchor can't inherit.
 	 */
 	if ((parent = x->rfc3779_addr) != NULL) {
-		for (j = 0; j < sk_IPAddressFamily_num(parent); j++) {
-			fp = sk_IPAddressFamily_value(parent, j);
+		for (i = 0; i < sk_IPAddressFamily_num(parent); i++) {
+			fp = sk_IPAddressFamily_value(parent, i);
 
 			if (IPAddressFamily_inheritance(fp) == NULL)
 				continue;
