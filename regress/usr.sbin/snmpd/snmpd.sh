@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.15 2021/09/07 10:09:28 martijn Exp $
+# $OpenBSD: snmpd.sh,v 1.16 2022/01/05 13:27:04 martijn Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
@@ -345,13 +345,13 @@ fi
 snmp_command="snmp get -Oqv -v2c -c non-default-rw localhost \
     usmUserSecurityName.1.0"
 echo ======= $snmp_command
-reyk="$(eval LC_ALL=en_US.UTF-8 $snmp_command)"
+reyk="$(eval LC_CTYPE=en_US.UTF-8 $snmp_command)"
 if [ "$reyk" != "Reyk Fl${oe}ter" ]
 then
 	echo "Printing of UTF-8 string in UTF-8 locale failed"
 	FAILED=1
 fi
-reyk="$(eval LC_ALL=C $snmp_command)"
+reyk="$(eval LC_CTYPE=C $snmp_command)"
 if [ "$reyk" != "Reyk Fl.ter" ]
 then
 	echo "Printing of UTF-8 string in C locale failed"
@@ -361,13 +361,13 @@ fi
 snmp_command="snmp get -Oqv -v2c -c non-default-rw localhost \
     usmUserSecurityName.2.0"
 echo ======= $snmp_command
-broken="$(eval LC_ALL=en_US.UTF-8 $snmp_command)"
+broken="$(eval LC_CTYPE=en_US.UTF-8 $snmp_command)"
 if [ "$broken" != "br${replacement}ken" ]
 then
 	echo "Printing of UTF-8 replacement character failed"
 	FAILED=1
 fi
-broken="$(LC_ALL=C eval $snmp_command)"
+broken="$(LC_CTYPE=C eval $snmp_command)"
 if [ "$broken" != "br?ken" ]
 then
 	echo "Printing of question mark in C locale failed"
