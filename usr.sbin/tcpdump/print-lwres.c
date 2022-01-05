@@ -394,12 +394,10 @@ lwres_print(const u_char *bp, u_int length)
 		 */
 		lwres_gabnrequest_t *gabn;
 		lwres_gnbarequest_t *gnba;
-		lwres_grbnrequest_t *grbn;
 		u_int32_t l;
 
 		gabn = NULL;
 		gnba = NULL;
-		grbn = NULL;
 
 		switch (ntohl(np->opcode)) {
 		case LWRES_OPCODE_NOOP:
