@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.21 2021/08/01 11:30:56 martijn Exp $	*/
+/*	$OpenBSD: usm.c,v 1.22 2022/01/05 11:00:49 tb Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -650,7 +650,7 @@ usm_crypt(struct snmp_message *msg, u_char *inbuf, int inlen, u_char *outbuf,
 	int do_encrypt)
 {
 	const EVP_CIPHER	*cipher;
-	EVP_CIPHER_CTX		 ctx;
+	EVP_CIPHER_CTX		*ctx;
 	u_char			*privkey;
 	int			 i;
 	u_char			 iv[EVP_MAX_IV_LENGTH];
@@ -683,19 +683,24 @@ usm_crypt(struct snmp_message *msg, u_char *inbuf, int inlen, u_char *outbuf,
 		return -1;
 	}
 
-	if (!EVP_CipherInit(&ctx, cipher, privkey, iv, do_encrypt))
+	if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
 		return -1;
 
-	if (!do_encrypt)
-		EVP_CIPHER_CTX_set_padding(&ctx, 0);
+	if (!EVP_CipherInit(ctx, cipher, privkey, iv, do_encrypt)) {
+		EVP_CIPHER_CTX_free(ctx);
+		return -1;
+	}
 
-	if (EVP_CipherUpdate(&ctx, outbuf, &len, inbuf, inlen) &&
-	    EVP_CipherFinal_ex(&ctx, outbuf + len, &len2))
+	if (!do_encrypt)
+		EVP_CIPHER_CTX_set_padding(ctx, 0);
+
+	if (EVP_CipherUpdate(ctx, outbuf, &len, inbuf, inlen) &&
+	    EVP_CipherFinal_ex(ctx, outbuf + len, &len2))
 		rv = len + len2;
 	else
 		rv = -1;
 
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_free(ctx);
 	return rv;
 }
 
@@ -705,7 +710,7 @@ usm_crypt(struct snmp_message *msg, u_char *inbuf, int inlen, u_char *outbuf,
 char *
 usm_passwd2key(const EVP_MD *md, char *passwd, int *maxlen)
 {
-	EVP_MD_CTX	 ctx;
+	EVP_MD_CTX	*ctx;
 	int		 i, count;
 	u_char		*pw, *c;
 	u_char		 pwbuf[2 * EVP_MAX_MD_SIZE + SNMPD_MAXENGINEIDLEN];
@@ -713,7 +718,9 @@ usm_passwd2key(const EVP_MD *md, char *passwd, int *maxlen)
 	unsigned	 dlen;
 	char		*key;
 
-	EVP_DigestInit(&ctx, md);
+	if ((ctx = EVP_MD_CTX_new()) == NULL)
+		return NULL;
+	EVP_DigestInit(ctx, md);
 	pw = (u_char *)passwd;
 	for (count = 0; count < 1048576; count += 64) {
 		c = pwbuf;
@@ -722,10 +729,10 @@ usm_passwd2key(const EVP_MD *md, char *passwd, int *maxlen)
 				pw = (u_char *)passwd;
 			*c++ = *pw++;
 		}
-		EVP_DigestUpdate(&ctx, pwbuf, 64);
+		EVP_DigestUpdate(ctx, pwbuf, 64);
 	}
-	EVP_DigestFinal(&ctx, keybuf, &dlen);
-	EVP_MD_CTX_cleanup(&ctx);
+	EVP_DigestFinal(ctx, keybuf, &dlen);
+	EVP_MD_CTX_reset(ctx);
 
 	/* Localize the key */
 #ifdef DEBUG
@@ -736,10 +743,10 @@ usm_passwd2key(const EVP_MD *md, char *passwd, int *maxlen)
 	    snmpd_env->sc_engineid_len);
 	memcpy(pwbuf + dlen + snmpd_env->sc_engineid_len, keybuf, dlen);
 
-	EVP_DigestInit(&ctx, md);
-	EVP_DigestUpdate(&ctx, pwbuf, 2 * dlen + snmpd_env->sc_engineid_len);
-	EVP_DigestFinal(&ctx, keybuf, &dlen);
-	EVP_MD_CTX_cleanup(&ctx);
+	EVP_DigestInit(ctx, md);
+	EVP_DigestUpdate(ctx, pwbuf, 2 * dlen + snmpd_env->sc_engineid_len);
+	EVP_DigestFinal(ctx, keybuf, &dlen);
+	EVP_MD_CTX_free(ctx);
 
 	if (*maxlen > 0 && dlen > (unsigned)*maxlen)
 		dlen = (unsigned)*maxlen;
