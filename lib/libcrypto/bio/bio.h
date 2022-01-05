@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.49 2022/01/05 20:22:26 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.50 2022/01/05 20:48:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -637,6 +637,9 @@ void	BIO_set_next(BIO *b, BIO *next);
 #endif
 BIO *	BIO_get_retry_BIO(BIO *bio, int *reason);
 int	BIO_get_retry_reason(BIO *bio);
+#if defined(LIBRESSL_OPAQUE_BIO) || defined(LIBRESSL_CRYPTO_INTERNAL)
+void	BIO_set_retry_reason(BIO *bio, int reason);
+#endif
 BIO *	BIO_dup_chain(BIO *in);
 
 int BIO_nread0(BIO *bio, char **buf);
