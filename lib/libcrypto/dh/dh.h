@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.h,v 1.27 2022/01/05 20:30:16 tb Exp $ */
+/* $OpenBSD: dh.h,v 1.28 2022/01/05 20:36:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -209,6 +209,9 @@ const BIGNUM *DH_get0_pub_key(const DH *dh);
 void DH_clear_flags(DH *dh, int flags);
 int DH_test_flags(const DH *dh, int flags);
 void DH_set_flags(DH *dh, int flags);
+#if defined(LIBRESSL_OPAQUE_DH) || defined(LIBRESSL_CRYPTO_INTERNAL)
+long DH_get_length(const DH *dh);
+#endif
 int DH_set_length(DH *dh, long length);
 
 /* Deprecated version */

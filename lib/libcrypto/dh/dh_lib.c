@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.34 2022/01/05 20:30:16 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.35 2022/01/05 20:36:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -353,6 +353,12 @@ void
 DH_set_flags(DH *dh, int flags)
 {
 	dh->flags |= flags;
+}
+
+long
+DH_get_length(const DH *dh)
+{
+	return dh->length;
 }
 
 int
