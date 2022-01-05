@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_pae_output.c,v 1.32 2020/07/10 13:22:22 patrick Exp $	*/
+/*	$OpenBSD: ieee80211_pae_output.c,v 1.33 2022/01/05 05:18:25 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2007,2008 Damien Bergamini <damien.bergamini@free.fr>
@@ -73,7 +73,7 @@ ieee80211_send_eapol_key(struct ieee80211com *ic, struct mbuf *m,
 		return ENOMEM;
 	/* no need to m_pullup here (ok by construction) */
 	eh = mtod(m, struct ether_header *);
-	eh->ether_type = htons(ETHERTYPE_PAE);
+	eh->ether_type = htons(ETHERTYPE_EAPOL);
 	IEEE80211_ADDR_COPY(eh->ether_shost, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(eh->ether_dhost, ni->ni_macaddr);
 

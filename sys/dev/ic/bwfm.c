@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.97 2021/12/27 14:31:15 patrick Exp $ */
+/* $OpenBSD: bwfm.c,v 1.98 2022/01/05 05:18:24 dlg Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2273,7 +2273,7 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m, struct mbuf_list *ml)
 
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 	    m->m_len >= sizeof(e->ehdr) &&
-	    ntohs(e->ehdr.ether_type) == ETHERTYPE_PAE) {
+	    ntohs(e->ehdr.ether_type) == ETHERTYPE_EAPOL) {
 		ifp->if_ipackets++;
 #if NBPFILTER > 0
 		if (ifp->if_bpf)

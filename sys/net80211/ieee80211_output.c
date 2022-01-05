@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.135 2021/09/08 11:40:30 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.136 2022/01/05 05:18:25 dlg Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -584,7 +584,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 	    !ni->ni_port_valid &&
-	    eh.ether_type != htons(ETHERTYPE_PAE)) {
+	    eh.ether_type != htons(ETHERTYPE_EAPOL)) {
 		DPRINTF(("port not valid: %s\n",
 		    ether_sprintf(eh.ether_dhost)));
 		ic->ic_stats.is_tx_noauth++;
@@ -600,7 +600,7 @@ ieee80211_encap(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node **pni)
 	if ((ic->ic_flags & IEEE80211_F_QOS) &&
 	    (ni->ni_flags & IEEE80211_NODE_QOS) &&
 	    /* do not QoS-encapsulate EAPOL frames */
-	    eh.ether_type != htons(ETHERTYPE_PAE)) {
+	    eh.ether_type != htons(ETHERTYPE_EAPOL)) {
 		struct ieee80211_tx_ba *ba;
 		tid = ieee80211_classify(ic, m);
 		ba = &ni->ni_tx_ba[tid];

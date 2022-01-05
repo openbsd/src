@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.240 2021/12/03 12:40:15 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.241 2022/01/05 05:18:25 dlg Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1053,7 +1053,7 @@ ieee80211_enqueue_data(struct ieee80211com *ic, struct mbuf *m,
 	eh = mtod(m, struct ether_header *);
 
 	if ((ic->ic_flags & IEEE80211_F_RSNON) && !ni->ni_port_valid &&
-	    eh->ether_type != htons(ETHERTYPE_PAE)) {
+	    eh->ether_type != htons(ETHERTYPE_EAPOL)) {
 		DPRINTF(("port not valid: %s\n",
 		    ether_sprintf(eh->ether_dhost)));
 		ic->ic_stats.is_rx_unauth++;
@@ -1070,7 +1070,7 @@ ieee80211_enqueue_data(struct ieee80211com *ic, struct mbuf *m,
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 	    !(ic->ic_userflags & IEEE80211_F_NOBRIDGE) &&
-	    eh->ether_type != htons(ETHERTYPE_PAE)) {
+	    eh->ether_type != htons(ETHERTYPE_EAPOL)) {
 		struct ieee80211_node *ni1;
 
 		if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
@@ -1095,7 +1095,7 @@ ieee80211_enqueue_data(struct ieee80211com *ic, struct mbuf *m,
 #endif
 	if (m != NULL) {
 		if ((ic->ic_flags & IEEE80211_F_RSNON) &&
-		    eh->ether_type == htons(ETHERTYPE_PAE)) {
+		    eh->ether_type == htons(ETHERTYPE_EAPOL)) {
 			ifp->if_ipackets++;
 #if NBPFILTER > 0
 			/*
