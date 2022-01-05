@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.22 2022/01/05 11:38:19 inoguchi Exp $ */
+/* $OpenBSD: cms.c,v 1.23 2022/01/05 12:51:49 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -1332,7 +1332,8 @@ cms_main(int argc, char **argv)
 			goto end;
 		}
 	} else
-		in = BIO_new_fp(stdin, BIO_NOCLOSE);
+		if ((in = BIO_new_fp(stdin, BIO_NOCLOSE)) == NULL)
+			goto end;
 
 	if (cms_config.operation & SMIME_IP) {
 		if (cms_config.informat == FORMAT_SMIME)
@@ -1402,7 +1403,8 @@ cms_main(int argc, char **argv)
 			goto end;
 		}
 	} else {
-		out = BIO_new_fp(stdout, BIO_NOCLOSE);
+		if ((out = BIO_new_fp(stdout, BIO_NOCLOSE)) == NULL)
+			goto end;
 	}
 
 	if ((cms_config.operation == SMIME_VERIFY) ||
@@ -1410,8 +1412,10 @@ cms_main(int argc, char **argv)
 		if ((store = setup_verify(bio_err, cms_config.CAfile, cms_config.CApath)) == NULL)
 			goto end;
 		X509_STORE_set_verify_cb(store, cms_cb);
-		if (cms_config.vpm != NULL)
-			X509_STORE_set1_param(store, cms_config.vpm);
+		if (cms_config.vpm != NULL) {
+			if (!X509_STORE_set1_param(store, cms_config.vpm))
+				goto end;
+		}
 	}
 	ret = 3;
 
@@ -1431,8 +1435,11 @@ cms_main(int argc, char **argv)
 			CMS_RecipientInfo *ri;
 			struct cms_key_param *kparam;
 			int tflags = cms_config.flags;
-			X509 *x = sk_X509_value(cms_config.encerts, i);
-			for (kparam = cms_config.key_first; kparam; kparam = kparam->next) {
+			X509 *x;
+		       
+			if ((x = sk_X509_value(cms_config.encerts, i)) == NULL)
+				goto end;
+			for (kparam = cms_config.key_first; kparam != NULL; kparam = kparam->next) {
 				if (kparam->idx == i) {
 					tflags |= CMS_KEY_PARAM;
 					break;
@@ -1484,6 +1491,8 @@ cms_main(int argc, char **argv)
 		if (sis == NULL)
 			goto end;
 		si = sk_CMS_SignerInfo_value(sis, 0);
+		if (si == NULL)
+			goto end;
 		srcms = CMS_sign_receipt(si, signer, key, other, cms_config.flags);
 		if (srcms == NULL)
 			goto end;
@@ -1788,7 +1797,8 @@ receipt_request_print(BIO *out, CMS_ContentInfo *cms)
 	if ((sis = CMS_get0_SignerInfos(cms)) == NULL)
 		return;
 	for (i = 0; i < sk_CMS_SignerInfo_num(sis); i++) {
-		si = sk_CMS_SignerInfo_value(sis, i);
+		if ((si = sk_CMS_SignerInfo_value(sis, i)) == NULL)
+			return;
 		rv = CMS_get1_ReceiptRequest(si, &rr);
 		BIO_printf(bio_err, "Signer %d:\n", i + 1);
 		if (rv == 0)
