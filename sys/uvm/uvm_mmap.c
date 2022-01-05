@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.167 2021/12/23 18:50:32 guenther Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.168 2022/01/05 17:53:44 guenther Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1124,7 +1124,7 @@ sys_kbind(struct proc *p, void *v, register_t *retval)
 	vaddr_t baseva, last_baseva, endva, pageoffset, kva;
 	size_t psize, s;
 	u_long pc;
-	int count, i;
+	int count, i, extra;
 	int error;
 
 	/*
@@ -1175,7 +1175,6 @@ sys_kbind(struct proc *p, void *v, register_t *retval)
 		    paramp[count].kb_size > KBIND_DATA_MAX ||
 		    baseva >= VM_MAXUSER_ADDRESS ||
 		    endva >= VM_MAXUSER_ADDRESS ||
-		    trunc_page(baseva) != trunc_page(endva) ||
 		    s < paramp[count].kb_size)
 			return EINVAL;
 
@@ -1191,9 +1190,17 @@ sys_kbind(struct proc *p, void *v, register_t *retval)
 	TAILQ_INIT(&dead_entries);
 	for (i = 0; i < count; i++) {
 		baseva = (vaddr_t)paramp[i].kb_addr;
+		s = paramp[i].kb_size;
 		pageoffset = baseva & PAGE_MASK;
 		baseva = trunc_page(baseva);
 
+		/* hppa at least runs PLT entries over page edge */
+		extra = (pageoffset + s) & PAGE_MASK;
+		if (extra > pageoffset)
+			extra = 0;
+		else
+			s -= extra;
+redo:
 		/* make sure sure the desired page is mapped into kernel_map */
 		if (baseva != last_baseva) {
 			if (kva != 0) {
@@ -1210,10 +1217,17 @@ sys_kbind(struct proc *p, void *v, register_t *retval)
 		}
 
 		/* do the update */
-		if ((error = kcopy(data, (char *)kva + pageoffset,
-		    paramp[i].kb_size)))
+		if ((error = kcopy(data, (char *)kva + pageoffset, s)))
 			break;
-		data += paramp[i].kb_size;
+		data += s;
+
+		if (extra > 0) {
+			baseva += PAGE_SIZE;
+			s = extra;
+			pageoffset = 0;
+			extra = 0;
+			goto redo;
+		}
 	}
 
 	if (kva != 0) {
