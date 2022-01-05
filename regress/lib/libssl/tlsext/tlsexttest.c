@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.55 2021/12/29 22:50:30 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.56 2022/01/05 17:10:59 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3172,10 +3172,10 @@ test_tlsext_keyshare_client(void)
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		errx(1, "failed to create SSL");
 
-	if ((S3I(ssl)->hs.tls13.key_share =
-	    tls13_key_share_new_nid(NID_X25519)) == NULL)
+	if ((S3I(ssl)->hs.key_share =
+	    tls_key_share_new_nid(NID_X25519)) == NULL)
 		errx(1, "failed to create key share");
-	if (!tls13_key_share_generate(S3I(ssl)->hs.tls13.key_share))
+	if (!tls_key_share_generate(S3I(ssl)->hs.key_share))
 		errx(1, "failed to generate key share");
 
 	S3I(ssl)->hs.our_max_tls_version = TLS1_2_VERSION;
@@ -3290,20 +3290,20 @@ test_tlsext_keyshare_server(void)
 		goto done;
 	}
 
-	if ((S3I(ssl)->hs.tls13.key_share =
-		tls13_key_share_new_nid(NID_X25519)) == NULL) {
+	if ((S3I(ssl)->hs.key_share =
+		tls_key_share_new_nid(NID_X25519)) == NULL) {
 		FAIL("failed to create key share");
 		goto done;
 	}
 
-	if (!tls13_key_share_generate(S3I(ssl)->hs.tls13.key_share)) {
+	if (!tls_key_share_generate(S3I(ssl)->hs.key_share)) {
 		FAIL("failed to generate key share");
 		goto done;
 	}
 
 	CBS_init(&cbs, bogokey, sizeof(bogokey));
 
-	if (!tls13_key_share_peer_public(S3I(ssl)->hs.tls13.key_share,
+	if (!tls_key_share_peer_public(S3I(ssl)->hs.key_share,
 	    0x001d, &cbs)) {
 		FAIL("failed to load peer public key\n");
 		goto done;
@@ -3325,12 +3325,12 @@ test_tlsext_keyshare_server(void)
 		goto done;
 	}
 
-	if ((S3I(ssl)->hs.tls13.key_share =
-	    tls13_key_share_new_nid(NID_X25519)) == NULL) {
+	if ((S3I(ssl)->hs.key_share =
+	    tls_key_share_new_nid(NID_X25519)) == NULL) {
 		FAIL("failed to create key share");
 		goto done;
 	}
-	if (!tls13_key_share_generate(S3I(ssl)->hs.tls13.key_share)) {
+	if (!tls_key_share_generate(S3I(ssl)->hs.key_share)) {
 		FAIL("failed to generate key share");
 		goto done;
 	}
