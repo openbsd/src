@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.387 2022/01/04 15:55:28 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.388 2022/01/05 17:06:20 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -404,8 +404,7 @@ void	iwm_rx_tx_cmd(struct iwm_softc *, struct iwm_rx_packet *,
 void	iwm_clear_oactive(struct iwm_softc *, struct iwm_tx_ring *);
 void	iwm_ampdu_rate_control(struct iwm_softc *, struct ieee80211_node *,
 	    struct iwm_tx_ring *, int, uint16_t, uint16_t);
-void	iwm_rx_compressed_ba(struct iwm_softc *, struct iwm_rx_packet *,
-	    struct iwm_rx_data *);
+void	iwm_rx_compressed_ba(struct iwm_softc *, struct iwm_rx_packet *);
 void	iwm_rx_bmiss(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_rx_data *);
 int	iwm_binding_cmd(struct iwm_softc *, struct iwm_node *, uint32_t);
@@ -5765,8 +5764,7 @@ iwm_ampdu_rate_control(struct iwm_softc *sc, struct ieee80211_node *ni,
 }
 
 void
-iwm_rx_compressed_ba(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
-    struct iwm_rx_data *data)
+iwm_rx_compressed_ba(struct iwm_softc *sc, struct iwm_rx_packet *pkt)
 {
 	struct iwm_ba_notif *ban = (void *)pkt->data;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -10650,7 +10648,7 @@ iwm_rx_pkt(struct iwm_softc *sc, struct iwm_rx_data *data, struct mbuf_list *ml)
 			break;
 
 		case IWM_BA_NOTIF:
-			iwm_rx_compressed_ba(sc, pkt, data);
+			iwm_rx_compressed_ba(sc, pkt);
 			break;
 
 		case IWM_MISSED_BEACONS_NOTIFICATION:

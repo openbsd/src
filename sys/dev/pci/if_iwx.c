@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.131 2022/01/05 16:33:42 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.132 2022/01/05 17:06:20 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -322,7 +322,7 @@ int	iwx_ampdu_tx_start(struct ieee80211com *, struct ieee80211_node *,
 	    uint8_t);
 void	iwx_rx_ba_session_expired(void *);
 void	iwx_rx_bar_frame_release(struct iwx_softc *, struct iwx_rx_packet *,
-	    struct iwx_rx_data *, struct mbuf_list *);
+	    struct mbuf_list *);
 void	iwx_reorder_timer_expired(void *);
 void	iwx_sta_rx_agg(struct iwx_softc *, struct ieee80211_node *, uint8_t,
 	    uint16_t, uint16_t, int, int);
@@ -2912,7 +2912,7 @@ iwx_rx_ba_session_expired(void *arg)
 
 void
 iwx_rx_bar_frame_release(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
-    struct iwx_rx_data *data, struct mbuf_list *ml)
+    struct mbuf_list *ml)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = ic->ic_bss;
@@ -4662,8 +4662,7 @@ iwx_clear_oactive(struct iwx_softc *sc, struct iwx_tx_ring *ring)
 }
 
 void
-iwx_rx_compressed_ba(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
-    struct iwx_rx_data *data)
+iwx_rx_compressed_ba(struct iwx_softc *sc, struct iwx_rx_packet *pkt)
 {
 	struct iwx_compressed_ba_notif *ba_res = (void *)pkt->data;
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -8663,7 +8662,7 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 		}
 
 		case IWX_BAR_FRAME_RELEASE:
-			iwx_rx_bar_frame_release(sc, pkt, data, ml);
+			iwx_rx_bar_frame_release(sc, pkt, ml);
 			break;
 
 		case IWX_TX_CMD:
@@ -8671,7 +8670,7 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			break;
 
 		case IWX_BA_NOTIF:
-			iwx_rx_compressed_ba(sc, pkt, data);
+			iwx_rx_compressed_ba(sc, pkt);
 			break;
 
 		case IWX_MISSED_BEACONS_NOTIFICATION:
