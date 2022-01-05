@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.71 2022/01/05 17:51:30 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.72 2022/01/05 17:52:28 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1656,7 +1656,7 @@ X509v3_addr_inherits(IPAddrBlocks *addr)
 static int
 addr_contains(IPAddressOrRanges *parent, IPAddressOrRanges *child, int length)
 {
-	IPAddressOrRange *aorc, *aorp;
+	IPAddressOrRange *child_aor, *parent_aor;
 	unsigned char p_min[ADDR_RAW_BUF_LEN], p_max[ADDR_RAW_BUF_LEN];
 	unsigned char c_min[ADDR_RAW_BUF_LEN], c_max[ADDR_RAW_BUF_LEN];
 	int p, c;
@@ -1668,18 +1668,18 @@ addr_contains(IPAddressOrRanges *parent, IPAddressOrRanges *child, int length)
 
 	p = 0;
 	for (c = 0; c < sk_IPAddressOrRange_num(child); c++) {
-		aorc = sk_IPAddressOrRange_value(child, c);
+		child_aor = sk_IPAddressOrRange_value(child, c);
 
-		if (!extract_min_max(aorc, c_min, c_max, length))
+		if (!extract_min_max(child_aor, c_min, c_max, length))
 			return 0;
 
 		for (;; p++) {
 			if (p >= sk_IPAddressOrRange_num(parent))
 				return 0;
 
-			aorp = sk_IPAddressOrRange_value(parent, p);
+			parent_aor = sk_IPAddressOrRange_value(parent, p);
 
-			if (!extract_min_max(aorp, p_min, p_max, length))
+			if (!extract_min_max(parent_aor, p_min, p_max, length))
 				return 0;
 
 			if (memcmp(p_max, c_max, length) < 0)
@@ -1700,7 +1700,7 @@ int
 X509v3_addr_subset(IPAddrBlocks *child, IPAddrBlocks *parent)
 {
 	IPAddressFamily *child_af, *parent_af;
-	IPAddressOrRanges *aorc, *aorp;
+	IPAddressOrRanges *child_aor, *parent_aor;
 	int i, length;
 
 	if (child == NULL || child == parent)
@@ -1722,10 +1722,10 @@ X509v3_addr_subset(IPAddrBlocks *child, IPAddrBlocks *parent)
 		if (!IPAddressFamily_afi_length(parent_af, &length))
 			return 0;
 
-		aorc = IPAddressFamily_addressesOrRanges(child_af);
-		aorp = IPAddressFamily_addressesOrRanges(parent_af);
+		child_aor = IPAddressFamily_addressesOrRanges(child_af);
+		parent_aor = IPAddressFamily_addressesOrRanges(parent_af);
 
-		if (!addr_contains(aorp, aorc, length))
+		if (!addr_contains(parent_aor, child_aor, length))
 			return 0;
 	}
 	return 1;
@@ -1758,7 +1758,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 {
 	IPAddrBlocks *child = NULL, *parent = NULL;
 	IPAddressFamily *child_af, *parent_af;
-	IPAddressOrRanges *aorc, *aorp;
+	IPAddressOrRanges *child_aor, *parent_aor;
 	X509 *cert = NULL;
 	int depth = -1;
 	int i;
@@ -1868,22 +1868,22 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 				continue;
 			}
 
-			aorc = IPAddressFamily_addressesOrRanges(child_af);
-			aorp = IPAddressFamily_addressesOrRanges(parent_af);
+			child_aor = IPAddressFamily_addressesOrRanges(child_af);
+			parent_aor = IPAddressFamily_addressesOrRanges(parent_af);
 
 			/*
 			 * Child and parent are canonical and neither inherits.
 			 * If either addressesOrRanges is NULL, something's
 			 * very wrong.
 			 */
-			if (aorc == NULL || aorp == NULL)
+			if (child_aor == NULL || parent_aor == NULL)
 				goto err;
 
 			if (!IPAddressFamily_afi_length(child_af, &length))
 				goto err;
 
 			/* Now check containment and replace or error. */
-			if (addr_contains(aorp, aorc, length)) {
+			if (addr_contains(parent_aor, child_aor, length)) {
 				sk_IPAddressFamily_set(child, i, parent_af);
 				continue;
 			}
