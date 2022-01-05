@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.51 2019/11/04 12:30:56 jsing Exp $ */
+/* $OpenBSD: rsa.h,v 1.52 2022/01/05 20:44:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -470,6 +470,17 @@ void RSA_get0_crt_params(const RSA *r, const BIGNUM **dmp1, const BIGNUM **dmq1,
 int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp);
 void RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q);
 int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q);
+#if defined(LIBRESSL_OPAQUE_RSA) || defined(LIBRESSL_CRYPTO_INTERNAL)
+const BIGNUM *RSA_get0_n(const RSA *r);
+const BIGNUM *RSA_get0_e(const RSA *r);
+const BIGNUM *RSA_get0_d(const RSA *r);
+const BIGNUM *RSA_get0_p(const RSA *r);
+const BIGNUM *RSA_get0_q(const RSA *r);
+const BIGNUM *RSA_get0_dmp1(const RSA *r);
+const BIGNUM *RSA_get0_dmq1(const RSA *r);
+const BIGNUM *RSA_get0_iqmp(const RSA *r);
+const RSA_PSS_PARAMS *RSA_get0_pss_params(const RSA *r);
+#endif
 void RSA_clear_flags(RSA *r, int flags);
 int RSA_test_flags(const RSA *r, int flags);
 void RSA_set_flags(RSA *r, int flags);

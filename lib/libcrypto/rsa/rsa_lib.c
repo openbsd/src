@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.40 2020/01/17 10:40:03 inoguchi Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.41 2022/01/05 20:44:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -334,6 +334,60 @@ RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
 	}
 
 	return 1;
+}
+
+const BIGNUM *
+RSA_get0_n(const RSA *r)
+{
+	return r->n;
+}
+
+const BIGNUM *
+RSA_get0_e(const RSA *r)
+{
+	return r->e;
+}
+
+const BIGNUM *
+RSA_get0_d(const RSA *r)
+{
+	return r->d;
+}
+
+const BIGNUM *
+RSA_get0_p(const RSA *r)
+{
+	return r->p;
+}
+
+const BIGNUM *
+RSA_get0_q(const RSA *r)
+{
+	return r->q;
+}
+
+const BIGNUM *
+RSA_get0_dmp1(const RSA *r)
+{
+	return r->dmp1;
+}
+
+const BIGNUM *
+RSA_get0_dmq1(const RSA *r)
+{
+	return r->dmq1;
+}
+
+const BIGNUM *
+RSA_get0_iqmp(const RSA *r)
+{
+	return r->iqmp;
+}
+
+const RSA_PSS_PARAMS *
+RSA_get0_pss_params(const RSA *r)
+{
+	return r->pss;
 }
 
 void
