@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sunrpc.c,v 1.21 2021/12/01 18:28:46 deraadt Exp $	*/
+/*	$OpenBSD: print-sunrpc.c,v 1.22 2022/01/05 05:29:54 dlg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -63,11 +63,9 @@ void
 sunrpcrequest_print(const u_char *bp, u_int length, const u_char *bp2)
 {
 	const struct rpc_msg *rp;
-	const struct ip *ip;
 	u_int32_t x;
 
 	rp = (struct rpc_msg *)bp;
-	ip = (struct ip *)bp2;
 
 	printf("xid 0x%x %d", (u_int32_t)ntohl(rp->rm_xid), length);
 	printf(" %s", tok2str(proc2str, " proc #%u",
