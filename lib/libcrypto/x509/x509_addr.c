@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.59 2022/01/05 07:28:41 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.60 2022/01/05 07:29:47 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1631,10 +1631,13 @@ X509v3_addr_inherits(IPAddrBlocks *addr)
 
 /*
  * Figure out whether parent contains child.
+ *
+ * This only works correctly if both parent and child are in canonical form.
  */
 static int
 addr_contains(IPAddressOrRanges *parent, IPAddressOrRanges *child, int length)
 {
+	IPAddressOrRange *aorc, *aorp;
 	unsigned char p_min[ADDR_RAW_BUF_LEN], p_max[ADDR_RAW_BUF_LEN];
 	unsigned char c_min[ADDR_RAW_BUF_LEN], c_max[ADDR_RAW_BUF_LEN];
 	int p, c;
@@ -1646,15 +1649,20 @@ addr_contains(IPAddressOrRanges *parent, IPAddressOrRanges *child, int length)
 
 	p = 0;
 	for (c = 0; c < sk_IPAddressOrRange_num(child); c++) {
-		if (!extract_min_max(sk_IPAddressOrRange_value(child, c),
-		    c_min, c_max, length))
+		aorc = sk_IPAddressOrRange_value(child, c);
+
+		if (!extract_min_max(aorc, c_min, c_max, length))
 			return 0;
+
 		for (;; p++) {
 			if (p >= sk_IPAddressOrRange_num(parent))
 				return 0;
-			if (!extract_min_max(sk_IPAddressOrRange_value(parent,
-			    p), p_min, p_max, length))
+
+			aorp = sk_IPAddressOrRange_value(parent, p);
+
+			if (!extract_min_max(aorp, p_min, p_max, length))
 				return 0;
+
 			if (memcmp(p_max, c_max, length) < 0)
 				continue;
 			if (memcmp(p_min, c_min, length) > 0)
