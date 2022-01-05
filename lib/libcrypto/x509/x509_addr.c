@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.66 2022/01/05 17:41:41 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.67 2022/01/05 17:43:04 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1747,7 +1747,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	IPAddrBlocks *child = NULL, *parent = NULL;
 	IPAddressFamily *fc, *fp;
 	IPAddressOrRanges *aorc, *aorp;
-	X509 *x = NULL;
+	X509 *cert = NULL;
 	int depth = -1;
 	int i, k;
 	unsigned int length;
@@ -1770,13 +1770,13 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	 */
 	if (ext == NULL) {
 		depth = 0;
-		x = sk_X509_value(chain, depth);
-		if ((ext = x->rfc3779_addr) == NULL)
+		cert = sk_X509_value(chain, depth);
+		if ((ext = cert->rfc3779_addr) == NULL)
 			goto done;
 	}
 
 	if (!X509v3_addr_is_canonical(ext)) {
-		if ((ret = verify_error(ctx, x,
+		if ((ret = verify_error(ctx, cert,
 		    X509_V_ERR_INVALID_EXTENSION, depth)) == 0)
 			goto done;
 	}
@@ -1795,16 +1795,16 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	 * doesn't list.
 	 */
 	for (depth++; depth < sk_X509_num(chain); depth++) {
-		x = sk_X509_value(chain, depth);
+		cert = sk_X509_value(chain, depth);
 
-		if ((parent = x->rfc3779_addr) == NULL) {
+		if ((parent = cert->rfc3779_addr) == NULL) {
 			for (i = 0; i < sk_IPAddressFamily_num(child); i++) {
 				fc = sk_IPAddressFamily_value(child, i);
 
 				if (IPAddressFamily_inheritance(fc) != NULL)
 					continue;
 
-				if ((ret = verify_error(ctx, x,
+				if ((ret = verify_error(ctx, cert,
 				    X509_V_ERR_UNNESTED_RESOURCE, depth)) == 0)
 					goto done;
 				break;
@@ -1813,7 +1813,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 		}
 
 		if (!X509v3_addr_is_canonical(parent)) {
-			if ((ret = verify_error(ctx, x,
+			if ((ret = verify_error(ctx, cert,
 			    X509_V_ERR_INVALID_EXTENSION, depth)) == 0)
 				goto done;
 		}
@@ -1841,7 +1841,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 					continue;
 
 				/* Otherwise the child isn't covered. */
-				if ((ret = verify_error(ctx, x,
+				if ((ret = verify_error(ctx, cert,
 				    X509_V_ERR_UNNESTED_RESOURCE, depth)) == 0)
 					goto done;
 				break;
@@ -1877,7 +1877,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 				continue;
 			}
 
-			if ((ret = verify_error(ctx, x,
+			if ((ret = verify_error(ctx, cert,
 			    X509_V_ERR_UNNESTED_RESOURCE, depth)) == 0)
 				goto done;
 		}
@@ -1886,7 +1886,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	/*
 	 * Trust anchor can't inherit.
 	 */
-	if ((parent = x->rfc3779_addr) != NULL) {
+	if ((parent = cert->rfc3779_addr) != NULL) {
 		for (i = 0; i < sk_IPAddressFamily_num(parent); i++) {
 			fp = sk_IPAddressFamily_value(parent, i);
 
@@ -1896,7 +1896,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 			if (sk_IPAddressFamily_find(child, fp) < 0)
 				continue;
 
-			if ((ret = verify_error(ctx, x,
+			if ((ret = verify_error(ctx, cert,
 			    X509_V_ERR_UNNESTED_RESOURCE, depth)) == 0)
 				goto done;
 		}
