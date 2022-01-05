@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.54 2020/09/11 17:56:41 naddy Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.55 2022/01/05 20:57:27 millert Exp $	*/
 /*	$NetBSD: stdio.h,v 1.18 1996/04/25 18:29:21 jtc Exp $	*/
 
 /*-
@@ -368,7 +368,7 @@ __BEGIN_DECLS
 FILE	*funopen(const void *,
 		int (*)(void *, char *, int),
 		int (*)(void *, const char *, int),
-		fpos_t (*)(void *, fpos_t, int),
+		off_t (*)(void *, off_t, int),
 		int (*)(void *));
 __END_DECLS
 #define	fropen(cookie, fn) funopen(cookie, fn, 0, 0, 0)
