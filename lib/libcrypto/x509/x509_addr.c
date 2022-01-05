@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.58 2022/01/04 20:52:34 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.59 2022/01/05 07:28:41 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1648,7 +1648,7 @@ addr_contains(IPAddressOrRanges *parent, IPAddressOrRanges *child, int length)
 	for (c = 0; c < sk_IPAddressOrRange_num(child); c++) {
 		if (!extract_min_max(sk_IPAddressOrRange_value(child, c),
 		    c_min, c_max, length))
-			return -1;
+			return 0;
 		for (;; p++) {
 			if (p >= sk_IPAddressOrRange_num(parent))
 				return 0;
