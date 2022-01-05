@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.6 2022/01/05 10:59:21 tb Exp $	*/
+/*	$OpenBSD: usm.c,v 1.7 2022/01/05 16:41:07 tb Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -632,7 +632,11 @@ usm_passwd2mkey(const EVP_MD *md, const char *passwd)
 
 	if ((ctx = EVP_MD_CTX_new()) == NULL)
 		return NULL;
-	EVP_DigestInit_ex(ctx, md, NULL);
+	if (!EVP_DigestInit_ex(ctx, md, NULL)) {
+		EVP_MD_CTX_free(ctx);
+		return NULL;
+	}
+
 	pw = (const u_char *)passwd;
 	for (count = 0; count < 1048576; count += 64) {
 		c = keybuf;
@@ -641,9 +645,15 @@ usm_passwd2mkey(const EVP_MD *md, const char *passwd)
 				pw = (const u_char *)passwd;
 			*c++ = *pw++;
 		}
-		EVP_DigestUpdate(ctx, keybuf, 64);
+		if (!EVP_DigestUpdate(ctx, keybuf, 64)) {
+			EVP_MD_CTX_free(ctx);
+			return NULL;
+		}
 	}
-	EVP_DigestFinal_ex(ctx, keybuf, &dlen);
+	if (!EVP_DigestFinal_ex(ctx, keybuf, &dlen)) {
+		EVP_MD_CTX_free(ctx);
+		return NULL;
+	}
 	EVP_MD_CTX_free(ctx);
 
 	if ((key = malloc(dlen)) == NULL)
@@ -662,13 +672,16 @@ usm_mkey2lkey(struct usm_sec *usm, const EVP_MD *md, const char *mkey)
 
 	if ((ctx = EVP_MD_CTX_new()) == NULL)
 		return NULL;
-	EVP_DigestInit_ex(ctx, md, NULL);
 
-	EVP_DigestUpdate(ctx, mkey, EVP_MD_size(md));
-	EVP_DigestUpdate(ctx, usm->engineid, usm->engineidlen);
-	EVP_DigestUpdate(ctx, mkey, EVP_MD_size(md));
+	if (!EVP_DigestInit_ex(ctx, md, NULL) ||
+	    !EVP_DigestUpdate(ctx, mkey, EVP_MD_size(md)) ||
+	    !EVP_DigestUpdate(ctx, usm->engineid, usm->engineidlen) ||
+	    !EVP_DigestUpdate(ctx, mkey, EVP_MD_size(md)) ||
+	    !EVP_DigestFinal_ex(ctx, buf, &lklen)) {
+		EVP_MD_CTX_free(ctx);
+		return NULL;
+	}
 
-	EVP_DigestFinal_ex(ctx, buf, &lklen);
 	EVP_MD_CTX_free(ctx);
 
 	if ((lkey = malloc(lklen)) == NULL)
