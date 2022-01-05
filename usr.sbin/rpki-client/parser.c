@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.32 2022/01/04 18:41:32 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.33 2022/01/05 11:07:35 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -246,8 +246,7 @@ proc_parser_mft(char *file, const unsigned char *der, size_t len)
  * parse failure.
  */
 static struct cert *
-proc_parser_cert(char *file, const unsigned char *der,
-    size_t len)
+proc_parser_cert(char *file, const unsigned char *der, size_t len)
 {
 	struct cert		*cert;
 	X509			*x509;
@@ -325,8 +324,8 @@ proc_parser_cert(char *file, const unsigned char *der,
  * parse failure.
  */
 static struct cert *
-proc_parser_root_cert(const struct entity *entp, const unsigned char *der,
-    size_t len)
+proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
+    unsigned char *pkey, size_t pkeysz, int talid)
 {
 	char			subject[256];
 	ASN1_TIME		*notBefore, *notAfter;
@@ -334,52 +333,49 @@ proc_parser_root_cert(const struct entity *entp, const unsigned char *der,
 	struct cert		*cert;
 	X509			*x509;
 
-	assert(entp->data != NULL);
-
 	/* Extract certificate data and X509. */
 
-	cert = ta_parse(&x509, entp->file, der, len, entp->data, entp->datasz);
+	cert = ta_parse(&x509, file, der, len, pkey, pkeysz);
 	if (cert == NULL)
 		return NULL;
 
 	if ((name = X509_get_subject_name(x509)) == NULL) {
-		warnx("%s Unable to get certificate subject", entp->file);
+		warnx("%s Unable to get certificate subject", file);
 		goto badcert;
 	}
 	if (X509_NAME_oneline(name, subject, sizeof(subject)) == NULL) {
-		warnx("%s: Unable to parse certificate subject name",
-		    entp->file);
+		warnx("%s: Unable to parse certificate subject name", file);
 		goto badcert;
 	}
 	if ((notBefore = X509_get_notBefore(x509)) == NULL) {
 		warnx("%s: certificate has invalid notBefore, subject='%s'",
-		    entp->file, subject);
+		    file, subject);
 		goto badcert;
 	}
 	if ((notAfter = X509_get_notAfter(x509)) == NULL) {
 		warnx("%s: certificate has invalid notAfter, subject='%s'",
-		    entp->file, subject);
+		    file, subject);
 		goto badcert;
 	}
 	if (X509_cmp_current_time(notBefore) != -1) {
-		warnx("%s: certificate not yet valid, subject='%s'", entp->file,
+		warnx("%s: certificate not yet valid, subject='%s'", file,
 		    subject);
 		goto badcert;
 	}
 	if (X509_cmp_current_time(notAfter) != 1)  {
-		warnx("%s: certificate has expired, subject='%s'", entp->file,
+		warnx("%s: certificate has expired, subject='%s'", file,
 		    subject);
 		goto badcert;
 	}
-	if (!valid_ta(entp->file, &auths, cert)) {
+	if (!valid_ta(file, &auths, cert)) {
 		warnx("%s: certificate not a valid ta, subject='%s'",
-		    entp->file, subject);
+		    file, subject);
 		goto badcert;
 	}
 
 	X509_free(x509);
 
-	cert->talid = entp->talid;
+	cert->talid = talid;
 
 	/*
 	 * Add valid roots to the RPKI auth tree.
@@ -589,7 +585,9 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			break;
 		case RTYPE_CER:
 			if (entp->data != NULL)
-				cert = proc_parser_root_cert(entp, f, flen);
+				cert = proc_parser_root_cert(entp->file,
+				    f, flen, entp->data, entp->datasz,
+				    entp->talid);
 			else
 				cert = proc_parser_cert(entp->file, f, flen);
 			c = (cert != NULL);
