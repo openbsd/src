@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.53 2021/11/19 07:49:27 schwarze Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.54 2022/01/05 20:18:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -821,8 +821,25 @@ X509_STORE_get0_param(X509_STORE *ctx)
 }
 
 void
-X509_STORE_set_verify_cb(X509_STORE *ctx,
-    int (*verify_cb)(int, X509_STORE_CTX *))
+X509_STORE_set_verify(X509_STORE *store, X509_STORE_CTX_verify_fn verify)
 {
-	ctx->verify_cb = verify_cb;
+	store->verify = verify;
+}
+
+X509_STORE_CTX_verify_fn
+X509_STORE_get_verify(X509_STORE *store)
+{
+	return store->verify;
+}
+
+void
+X509_STORE_set_verify_cb(X509_STORE *store, X509_STORE_CTX_verify_cb verify_cb)
+{
+	store->verify_cb = verify_cb;
+}
+
+X509_STORE_CTX_verify_cb
+X509_STORE_get_verify_cb(X509_STORE *store)
+{
+	return store->verify_cb;
 }
