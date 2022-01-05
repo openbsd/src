@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.h,v 1.8 2019/01/19 01:17:41 tb Exp $ */
+/* $OpenBSD: ecdsa.h,v 1.9 2022/01/05 20:39:04 tb Exp $ */
 /**
  * \file   crypto/ecdsa/ecdsa.h Include file for the OpenSSL ECDSA functions
  * \author Written by Nils Larsch for the OpenSSL project
@@ -139,6 +139,11 @@ ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
  *  \param  ps   pointer to BIGNUM pointer for s (may be NULL)
  */
 void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
+
+#if defined(LIBRESSL_OPAQUE_ECDSA) || defined(LIBRESSL_CRYPTO_INTERNAL)
+const BIGNUM *ECDSA_SIG_get0_r(const ECDSA_SIG *sig);
+const BIGNUM *ECDSA_SIG_get0_s(const ECDSA_SIG *sig);
+#endif
 
 /** Setter for r and s fields of ECDSA_SIG
  *  \param  sig  pointer to ECDSA_SIG pointer
