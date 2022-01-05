@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.136 2020/12/12 11:48:53 jan Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.137 2022/01/05 03:53:26 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -135,7 +135,7 @@ int msk_intr(void *);
 void msk_intr_yukon(struct sk_if_softc *);
 static inline int msk_rxvalid(struct sk_softc *, u_int32_t, u_int32_t);
 void msk_rxeof(struct sk_if_softc *, struct mbuf_list *, uint16_t, uint32_t);
-void msk_txeof(struct sk_if_softc *);
+void msk_txeof(struct sk_if_softc *, unsigned int);
 static unsigned int msk_encap(struct sk_if_softc *, struct mbuf *, uint32_t);
 void msk_start(struct ifnet *);
 int msk_ioctl(struct ifnet *, u_long, caddr_t);
@@ -1557,11 +1557,6 @@ msk_watchdog(struct ifnet *ifp)
 {
 	struct sk_if_softc *sc_if = ifp->if_softc;
 
-	/*
-	 * Reclaim first as there is a possibility of losing Tx completion
-	 * interrupts.
-	 */
-	msk_txeof(sc_if);
 	if (sc_if->sk_cdata.sk_tx_prod != sc_if->sk_cdata.sk_tx_cons) {
 		printf("%s: watchdog timeout\n", sc_if->sk_dev.dv_xname);
 
@@ -1639,26 +1634,19 @@ msk_rxeof(struct sk_if_softc *sc_if, struct mbuf_list *ml,
 }
 
 void
-msk_txeof(struct sk_if_softc *sc_if)
+msk_txeof(struct sk_if_softc *sc_if, unsigned int prod)
 {
 	struct ifnet		*ifp = &sc_if->arpcom.ac_if;
 	struct sk_softc		*sc = sc_if->sk_softc;
-	uint32_t		prod, cons;
+	uint32_t		cons;
 	struct mbuf		*m;
 	bus_dmamap_t		map;
-	bus_size_t		reg;
-
-	if (sc_if->sk_port == SK_PORT_A)
-		reg = SK_STAT_BMU_TXA1_RIDX;
-	else
-		reg = SK_STAT_BMU_TXA2_RIDX;
 
 	/*
 	 * Go through our tx ring and free mbufs for those
 	 * frames that have been sent.
 	 */
 	cons = sc_if->sk_cdata.sk_tx_cons;
-	prod = sk_win_read_2(sc, reg);
 
 	if (cons == prod)
 		return;
@@ -1770,7 +1758,7 @@ msk_intr(void *xsc)
 				};
 	struct ifnet		*ifp0 = NULL, *ifp1 = NULL;
 	int			claimed = 0;
-	u_int32_t		status;
+	u_int32_t		status, sk_status;
 	struct msk_status_desc	*cur_st;
 
 	status = CSR_READ_4(sc, SK_Y2_ISSR2);
@@ -1812,10 +1800,19 @@ msk_intr(void *xsc)
 			    lemtoh32(&cur_st->sk_status));
 			break;
 		case SK_Y2_STOPC_TXSTAT:
+			sk_status = lemtoh32(&cur_st->sk_status);
 			if (sc_if0)
-				msk_txeof(sc_if0);
-			if (sc_if1)
-				msk_txeof(sc_if1);
+				msk_txeof(sc_if0, sk_status & 0xfff);
+			if (sc_if1) {
+				/*
+				 * this would be easier as a 64bit
+				 * load of the whole status descriptor,
+				 * a shift, and a mask.
+				 */
+				unsigned int prod = (sk_status >> 24) & 0xff;
+				prod |= (lemtoh16(&cur_st->sk_len) & 0xf) << 8;
+				msk_txeof(sc_if1, prod);
+			}
 			break;
 		default:
 			printf("opcode=0x%x\n", cur_st->sk_opcode);
@@ -2065,8 +2062,13 @@ msk_init(void *xsc_if)
 
 	SK_IF_WRITE_2(sc_if, 0, SK_RXQ1_Y2_PREF_PUTIDX,
 	    sc_if->sk_cdata.sk_rx_prod);
-	SK_IF_WRITE_2(sc_if, 1, SK_TXQA1_Y2_PREF_PUTIDX,
-	    sc_if->sk_cdata.sk_tx_prod);
+
+	/*
+	 * tell the chip the tx ring is empty for now. the first
+	 * msk_start will end up posting the ADDR64 tx descriptor
+	 * that resets the high address.
+	 */
+	SK_IF_WRITE_2(sc_if, 1, SK_TXQA1_Y2_PREF_PUTIDX, 0);
 
 	/* Configure interrupt handling */
 	if (sc_if->sk_port == SK_PORT_A)
