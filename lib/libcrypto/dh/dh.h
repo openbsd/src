@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.h,v 1.26 2021/11/29 19:34:51 tb Exp $ */
+/* $OpenBSD: dh.h,v 1.27 2022/01/05 20:30:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -199,6 +199,13 @@ void DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q,
 int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
 void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key);
 int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key);
+#if defined(LIBRESSL_OPAQUE_DH) || defined(LIBRESSL_CRYPTO_INTERNAL)
+const BIGNUM *DH_get0_p(const DH *dh);
+const BIGNUM *DH_get0_q(const DH *dh);
+const BIGNUM *DH_get0_g(const DH *dh);
+const BIGNUM *DH_get0_priv_key(const DH *dh);
+const BIGNUM *DH_get0_pub_key(const DH *dh);
+#endif
 void DH_clear_flags(DH *dh, int flags);
 int DH_test_flags(const DH *dh, int flags);
 void DH_set_flags(DH *dh, int flags);
