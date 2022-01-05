@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-frag6.c,v 1.10 2020/01/24 22:46:36 procter Exp $	*/
+/*	$OpenBSD: print-frag6.c,v 1.11 2022/01/05 05:35:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -48,17 +48,9 @@ frag6_print(const u_char *bp, const u_char *bp2)
 {
 	const struct ip6_frag *dp;
 	const struct ip6_hdr *ip6;
-	const u_char *ep;
-
-#if 0
-#define TCHECK(var) if ((u_char *)&(var) >= ep - sizeof(var)) goto trunc
-#endif
 
 	dp = (struct ip6_frag *)bp;
 	ip6 = (struct ip6_hdr *)bp2;
-
-	/* 'ep' points to the end of avaible data. */
-	ep = snapend;
 
 	TCHECK(dp->ip6f_ident);
 
@@ -80,5 +72,4 @@ frag6_print(const u_char *bp, const u_char *bp2)
 trunc:
 	printf("[|frag]");
 	return 65535;
-#undef TCHECK
 }
