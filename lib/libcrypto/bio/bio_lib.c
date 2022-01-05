@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.31 2021/12/09 15:28:58 schwarze Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.32 2022/01/05 20:22:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -586,6 +586,12 @@ BIO_next(BIO *b)
 	if (!b)
 		return NULL;
 	return b->next_bio;
+}
+
+void
+BIO_set_next(BIO *b, BIO *next)
+{
+	b->next_bio = next;
 }
 
 void
