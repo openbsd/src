@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.64 2022/01/05 17:36:32 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.65 2022/01/05 17:38:14 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1747,8 +1747,9 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	IPAddrBlocks *child = NULL, *parent = NULL;
 	IPAddressFamily *fc, *fp;
 	IPAddressOrRanges *aorc, *aorp;
-	X509 *x;
-	int i, j, k;
+	X509 *x = NULL;
+	int depth = -1;
+	int j, k;
 	unsigned int length;
 	int ret = 1;
 
@@ -1767,19 +1768,16 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	 * we're done.  Otherwise, check canonical form and set up for walking
 	 * up the chain.
 	 */
-	if (ext != NULL) {
-		i = -1;
-		x = NULL;
-	} else {
-		i = 0;
-		x = sk_X509_value(chain, i);
+	if (ext == NULL) {
+		depth = 0;
+		x = sk_X509_value(chain, depth);
 		if ((ext = x->rfc3779_addr) == NULL)
 			goto done;
 	}
 
 	if (!X509v3_addr_is_canonical(ext)) {
 		if ((ret = verify_error(ctx, x,
-		    X509_V_ERR_INVALID_EXTENSION, i)) == 0)
+		    X509_V_ERR_INVALID_EXTENSION, depth)) == 0)
 			goto done;
 	}
 
@@ -1796,8 +1794,8 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	 * Now walk up the chain. No cert may list resources that its parent
 	 * doesn't list.
 	 */
-	for (i++; i < sk_X509_num(chain); i++) {
-		x = sk_X509_value(chain, i);
+	for (depth++; depth < sk_X509_num(chain); depth++) {
+		x = sk_X509_value(chain, depth);
 
 		if ((parent = x->rfc3779_addr) == NULL) {
 			for (j = 0; j < sk_IPAddressFamily_num(child); j++) {
@@ -1807,7 +1805,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 					continue;
 
 				if ((ret = verify_error(ctx, x,
-				    X509_V_ERR_UNNESTED_RESOURCE, i)) == 0)
+				    X509_V_ERR_UNNESTED_RESOURCE, depth)) == 0)
 					goto done;
 				break;
 			}
@@ -1816,7 +1814,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 
 		if (!X509v3_addr_is_canonical(parent)) {
 			if ((ret = verify_error(ctx, x,
-			    X509_V_ERR_INVALID_EXTENSION, i)) == 0)
+			    X509_V_ERR_INVALID_EXTENSION, depth)) == 0)
 				goto done;
 		}
 
@@ -1844,7 +1842,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 
 				/* Otherwise the child isn't covered. */
 				if ((ret = verify_error(ctx, x,
-				    X509_V_ERR_UNNESTED_RESOURCE, i)) == 0)
+				    X509_V_ERR_UNNESTED_RESOURCE, depth)) == 0)
 					goto done;
 				break;
 			}
@@ -1880,7 +1878,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 			}
 
 			if ((ret = verify_error(ctx, x,
-			    X509_V_ERR_UNNESTED_RESOURCE, i)) == 0)
+			    X509_V_ERR_UNNESTED_RESOURCE, depth)) == 0)
 				goto done;
 		}
 	}
@@ -1899,7 +1897,7 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 				continue;
 
 			if ((ret = verify_error(ctx, x,
-			    X509_V_ERR_UNNESTED_RESOURCE, i)) == 0)
+			    X509_V_ERR_UNNESTED_RESOURCE, depth)) == 0)
 				goto done;
 		}
 	}
