@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.5 2019/10/24 12:39:26 tb Exp $	*/
+/*	$OpenBSD: usm.c,v 1.6 2022/01/05 10:59:21 tb Exp $	*/
 
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -252,7 +252,7 @@ static char *
 usm_crypt(const EVP_CIPHER *cipher, int do_enc, char *key,
     struct usm_cookie *cookie, char *serialpdu, size_t pdulen, size_t *outlen)
 {
-	EVP_CIPHER_CTX ctx;
+	EVP_CIPHER_CTX *ctx;
 	size_t i;
 	char iv[EVP_MAX_IV_LENGTH];
 	char *salt = (char *)&(cookie->salt);
@@ -279,28 +279,34 @@ usm_crypt(const EVP_CIPHER *cipher, int do_enc, char *key,
 		return NULL;
 	}
 
-	bzero(&ctx, sizeof(ctx));
-	if (!EVP_CipherInit(&ctx, cipher, key, iv, do_enc))
+	if ((ctx = EVP_CIPHER_CTX_new()) == NULL)
 		return NULL;
 
-	EVP_CIPHER_CTX_set_padding(&ctx, do_enc);
+	if (!EVP_CipherInit(ctx, cipher, key, iv, do_enc)) {
+		EVP_CIPHER_CTX_free(ctx);
+		return NULL;
+	}
+
+	EVP_CIPHER_CTX_set_padding(ctx, do_enc);
 
 	bs = EVP_CIPHER_block_size(cipher);
 	/* Maximum output size */
 	*outlen = pdulen + (bs - (pdulen % bs));
 
-	if ((outtext = malloc(*outlen)) == NULL)
+	if ((outtext = malloc(*outlen)) == NULL) {
+		EVP_CIPHER_CTX_free(ctx);
 		return NULL;
+	}
 
-	if (EVP_CipherUpdate(&ctx, outtext, &len, serialpdu, pdulen) &&
-	    EVP_CipherFinal_ex(&ctx, outtext + len, &len2))
+	if (EVP_CipherUpdate(ctx, outtext, &len, serialpdu, pdulen) &&
+	    EVP_CipherFinal_ex(ctx, outtext + len, &len2))
 		*outlen = len + len2;
 	else {
 		free(outtext);
 		outtext = NULL;
 	}
 
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX_free(ctx);
 
 	return outtext;
 }
@@ -616,7 +622,7 @@ usm_setbootstime(struct snmp_sec *sec, uint32_t boots, uint32_t time)
 static char *
 usm_passwd2mkey(const EVP_MD *md, const char *passwd)
 {
-	EVP_MD_CTX ctx;
+	EVP_MD_CTX *ctx;
 	int i, count;
 	const u_char *pw;
 	u_char *c;
@@ -624,8 +630,9 @@ usm_passwd2mkey(const EVP_MD *md, const char *passwd)
 	unsigned dlen;
 	char *key;
 
-	bzero(&ctx, sizeof(ctx));
-	EVP_DigestInit_ex(&ctx, md, NULL);
+	if ((ctx = EVP_MD_CTX_new()) == NULL)
+		return NULL;
+	EVP_DigestInit_ex(ctx, md, NULL);
 	pw = (const u_char *)passwd;
 	for (count = 0; count < 1048576; count += 64) {
 		c = keybuf;
@@ -634,10 +641,10 @@ usm_passwd2mkey(const EVP_MD *md, const char *passwd)
 				pw = (const u_char *)passwd;
 			*c++ = *pw++;
 		}
-		EVP_DigestUpdate(&ctx, keybuf, 64);
+		EVP_DigestUpdate(ctx, keybuf, 64);
 	}
-	EVP_DigestFinal_ex(&ctx, keybuf, &dlen);
-	EVP_MD_CTX_cleanup(&ctx);
+	EVP_DigestFinal_ex(ctx, keybuf, &dlen);
+	EVP_MD_CTX_free(ctx);
 
 	if ((key = malloc(dlen)) == NULL)
 		return NULL;
@@ -648,20 +655,21 @@ usm_passwd2mkey(const EVP_MD *md, const char *passwd)
 static char *
 usm_mkey2lkey(struct usm_sec *usm, const EVP_MD *md, const char *mkey)
 {
-	EVP_MD_CTX ctx;
+	EVP_MD_CTX *ctx;
 	u_char buf[EVP_MAX_MD_SIZE];
 	u_char *lkey;
 	unsigned lklen;
 
-	bzero(&ctx, sizeof(ctx));
-	EVP_DigestInit_ex(&ctx, md, NULL);
+	if ((ctx = EVP_MD_CTX_new()) == NULL)
+		return NULL;
+	EVP_DigestInit_ex(ctx, md, NULL);
 
-	EVP_DigestUpdate(&ctx, mkey, EVP_MD_size(md));
-	EVP_DigestUpdate(&ctx, usm->engineid, usm->engineidlen);
-	EVP_DigestUpdate(&ctx, mkey, EVP_MD_size(md));
+	EVP_DigestUpdate(ctx, mkey, EVP_MD_size(md));
+	EVP_DigestUpdate(ctx, usm->engineid, usm->engineidlen);
+	EVP_DigestUpdate(ctx, mkey, EVP_MD_size(md));
 
-	EVP_DigestFinal_ex(&ctx, buf, &lklen);
-	EVP_MD_CTX_cleanup(&ctx);
+	EVP_DigestFinal_ex(ctx, buf, &lklen);
+	EVP_MD_CTX_free(ctx);
 
 	if ((lkey = malloc(lklen)) == NULL)
 		return NULL;
