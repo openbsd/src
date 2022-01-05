@@ -1,7 +1,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-/*	$OpenBSD: config.h,v 1.20 2014/10/18 07:50:06 espie Exp $	*/
+/*	$OpenBSD: config.h,v 1.21 2022/01/05 02:00:55 jsg Exp $	*/
 /*	$NetBSD: config.h,v 1.7 1996/11/06 17:59:03 christos Exp $	*/
 
 /*
@@ -44,15 +44,10 @@
 
 /*
  * DEFMAXJOBS
- * DEFMAXLOCAL
- *	These control the default concurrency. On no occasion will more
- *	than DEFMAXJOBS targets be created at once (locally or remotely)
- *	DEFMAXLOCAL is the highest number of targets which will be
- *	created on the local machine at once. Note that if you set this
- *	to 0, nothing will ever happen...
+ *	This controls the default concurrency. On no occasion will more
+ *	than DEFMAXJOBS targets be created at once.
  */
 #define DEFMAXJOBS	4
-#define DEFMAXLOCAL	1
 
 /*
  * SYSVINCLUDE
@@ -71,12 +66,6 @@
  *				# of ${VAR}
  */
 #define SUNSHCMD
-
-#if !defined(__svr4__) && !defined(__SVR4) && !defined(__ELF__)
-# ifndef RANLIBMAG
-#  define RANLIBMAG "__.SYMDEF"
-# endif
-#endif
 
 #ifdef HAS_EXTENDED_GETCWD
 #define dogetcwd()	getcwd(NULL, 0)
