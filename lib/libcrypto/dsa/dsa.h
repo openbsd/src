@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.32 2022/01/05 20:33:49 tb Exp $ */
+/* $OpenBSD: dsa.h,v 1.33 2022/01/05 20:52:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -202,6 +202,9 @@ void	DSA_free(DSA *r);
 /* "up" the DSA object's reference count */
 int	DSA_up_ref(DSA *r);
 int	DSA_size(const DSA *);
+#if defined(LIBRESSL_OPAQUE_DSA) || defined(LIBRESSL_CRYPTO_INTERNAL)
+int	DSA_bits(const DSA *d);
+#endif
 	/* next 4 return -1 on error */
 int	DSA_sign_setup( DSA *dsa,BN_CTX *ctx_in,BIGNUM **kinvp,BIGNUM **rp);
 int	DSA_sign(int type,const unsigned char *dgst,int dlen,

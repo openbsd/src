@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.30 2022/01/05 20:33:49 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.31 2022/01/05 20:52:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -413,4 +413,10 @@ ENGINE *
 DSA_get0_engine(DSA *d)
 {
 	return d->engine;
+}
+
+int
+DSA_bits(const DSA *dsa)
+{
+	return BN_num_bits(dsa->p);
 }
