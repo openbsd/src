@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc3779.c,v 1.2 2021/12/24 03:11:56 tb Exp $ */
+/*	$OpenBSD: rfc3779.c,v 1.3 2022/01/05 07:50:40 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -465,7 +465,6 @@ struct build_addr_block_test_data {
 	struct ip_addr_block	 addrs[16];
 	char			 der[128];
 	size_t			 der_len;
-	int			 memcmp_fails;
 	int			 is_canonical;
 	int			 inherits;
 	unsigned int		 afis[4];
@@ -754,7 +753,6 @@ struct build_addr_block_test_data build_addr_block_tests[] = {
 			0x30, 0x04, 0x03, 0x02, 0x00, 0x7f,
 		},
 		.der_len = 14,
-		.memcmp_fails = 1,
 		.is_canonical = 1,
 		.inherits = 0,
 		.afis = {
@@ -898,9 +896,7 @@ build_addr_block_test(struct build_addr_block_test_data *test)
 	if (memcmp_failed) {
 		report_hexdump(__func__, test->description, "memcmp DER failed",
 		    test->der, test->der_len, out, out_len);
-		if (!test->memcmp_fails)
-			goto err;
-		fprintf(stderr, "ignoring expected failure\n");
+		goto err;
 	}
 
 	if (X509v3_addr_inherits(addrs) != test->inherits) {
