@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.73 2022/01/05 17:53:42 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.74 2022/01/05 17:55:33 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1657,8 +1657,8 @@ static int
 addr_contains(IPAddressOrRanges *parent, IPAddressOrRanges *child, int length)
 {
 	IPAddressOrRange *child_aor, *parent_aor;
-	unsigned char p_min[ADDR_RAW_BUF_LEN], p_max[ADDR_RAW_BUF_LEN];
-	unsigned char c_min[ADDR_RAW_BUF_LEN], c_max[ADDR_RAW_BUF_LEN];
+	uint8_t parent_min[ADDR_RAW_BUF_LEN], parent_max[ADDR_RAW_BUF_LEN];
+	uint8_t child_min[ADDR_RAW_BUF_LEN], child_max[ADDR_RAW_BUF_LEN];
 	int p, c;
 
 	if (child == NULL || parent == child)
@@ -1670,7 +1670,7 @@ addr_contains(IPAddressOrRanges *parent, IPAddressOrRanges *child, int length)
 	for (c = 0; c < sk_IPAddressOrRange_num(child); c++) {
 		child_aor = sk_IPAddressOrRange_value(child, c);
 
-		if (!extract_min_max(child_aor, c_min, c_max, length))
+		if (!extract_min_max(child_aor, child_min, child_max, length))
 			return 0;
 
 		for (;; p++) {
@@ -1679,12 +1679,13 @@ addr_contains(IPAddressOrRanges *parent, IPAddressOrRanges *child, int length)
 
 			parent_aor = sk_IPAddressOrRange_value(parent, p);
 
-			if (!extract_min_max(parent_aor, p_min, p_max, length))
+			if (!extract_min_max(parent_aor, parent_min, parent_max,
+			    length))
 				return 0;
 
-			if (memcmp(p_max, c_max, length) < 0)
+			if (memcmp(parent_max, child_max, length) < 0)
 				continue;
-			if (memcmp(p_min, c_min, length) > 0)
+			if (memcmp(parent_min, child_min, length) > 0)
 				return 0;
 			break;
 		}
