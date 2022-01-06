@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.2 2021/12/15 18:02:39 jsing Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.3 2022/01/06 14:32:55 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -411,6 +411,19 @@ CBB_add_u32(CBB *cbb, size_t value)
 		return 0;
 
 	return cbb_add_u(cbb, (uint32_t)value, 4);
+}
+
+int
+CBB_add_u64(CBB *cbb, uint64_t value)
+{
+	uint32_t a, b;
+
+	a = value >> 32;
+	b = value & 0xffffffff;
+
+	if (!CBB_add_u32(cbb, a))
+		return 0;
+	return CBB_add_u32(cbb, b);
 }
 
 int
