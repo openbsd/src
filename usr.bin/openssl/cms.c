@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.25 2022/01/06 11:37:29 inoguchi Exp $ */
+/* $OpenBSD: cms.c,v 1.26 2022/01/06 11:46:05 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -1927,7 +1927,7 @@ static CMS_ReceiptRequest *
 make_receipt_request(STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
     STACK_OF(OPENSSL_STRING) *rr_from)
 {
-	STACK_OF(GENERAL_NAMES) *rct_to, *rct_from;
+	STACK_OF(GENERAL_NAMES) *rct_to = NULL, *rct_from = NULL;
 	CMS_ReceiptRequest *rr;
 
 	rct_to = make_names_stack(rr_to);
@@ -1948,6 +1948,8 @@ make_receipt_request(STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
 	return rr;
 
  err:
+	sk_GENERAL_NAMES_pop_free(rct_to, GENERAL_NAMES_free);
+	sk_GENERAL_NAMES_pop_free(rct_from, GENERAL_NAMES_free);
 	return NULL;
 }
 
