@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.65 2021/12/15 17:57:45 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.66 2022/01/06 18:18:13 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -25,7 +25,7 @@ static ssize_t tls13_record_layer_write_record(struct tls13_record_layer *rl,
     uint8_t content_type, const uint8_t *content, size_t content_len);
 
 struct tls13_record_protection {
-	EVP_AEAD_CTX aead_ctx;
+	EVP_AEAD_CTX *aead_ctx;
 	struct tls13_secret iv;
 	struct tls13_secret nonce;
 	uint8_t seq_num[TLS13_RECORD_SEQ_NUM_LEN];
@@ -40,12 +40,15 @@ tls13_record_protection_new(void)
 void
 tls13_record_protection_clear(struct tls13_record_protection *rp)
 {
-	EVP_AEAD_CTX_cleanup(&rp->aead_ctx);
+	if (rp->aead_ctx != NULL) {
+		EVP_AEAD_CTX_cleanup(rp->aead_ctx);
+		freezero(rp->aead_ctx, sizeof(*rp->aead_ctx));
+	}
 
 	tls13_secret_cleanup(&rp->iv);
 	tls13_secret_cleanup(&rp->nonce);
 
-	memset(rp->seq_num, 0, sizeof(rp->seq_num));
+	memset(rp, 0, sizeof(*rp));
 }
 
 void
@@ -458,6 +461,9 @@ tls13_record_layer_set_traffic_key(const EVP_AEAD *aead, const EVP_MD *hash,
 
 	tls13_record_protection_clear(rp);
 
+	if ((rp->aead_ctx = calloc(1, sizeof(*rp->aead_ctx))) == NULL)
+		return 0;
+
 	if (!tls13_secret_init(&rp->iv, EVP_AEAD_nonce_length(aead)))
 		goto err;
 	if (!tls13_secret_init(&rp->nonce, EVP_AEAD_nonce_length(aead)))
@@ -470,7 +476,7 @@ tls13_record_layer_set_traffic_key(const EVP_AEAD *aead, const EVP_MD *hash,
 	if (!tls13_hkdf_expand_label(&key, hash, traffic_key, "key", &context))
 		goto err;
 
-	if (!EVP_AEAD_CTX_init(&rp->aead_ctx, aead, key.data, key.len,
+	if (!EVP_AEAD_CTX_init(rp->aead_ctx, aead, key.data, key.len,
 	    EVP_AEAD_DEFAULT_TAG_LENGTH, NULL))
 		goto err;
 
@@ -550,7 +556,7 @@ tls13_record_layer_open_record_protected(struct tls13_record_layer *rl)
 	    rl->read->seq_num))
 		goto err;
 
-	if (!EVP_AEAD_CTX_open(&rl->read->aead_ctx,
+	if (!EVP_AEAD_CTX_open(rl->read->aead_ctx,
 	    content, &out_len, content_len,
 	    rl->read->nonce.data, rl->read->nonce.len,
 	    CBS_data(&enc_record), CBS_len(&enc_record),
@@ -728,7 +734,7 @@ tls13_record_layer_seal_record_protected(struct tls13_record_layer *rl,
 	 * this would avoid a copy since the inner would be passed as two
 	 * separate pieces.
 	 */
-	if (!EVP_AEAD_CTX_seal(&rl->write->aead_ctx,
+	if (!EVP_AEAD_CTX_seal(rl->write->aead_ctx,
 	    enc_record, &out_len, enc_record_len,
 	    rl->write->nonce.data, rl->write->nonce.len,
 	    inner, inner_len, header, header_len))
