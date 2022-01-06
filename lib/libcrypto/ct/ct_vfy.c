@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_vfy.c,v 1.5 2021/12/18 16:34:52 tb Exp $ */
+/*	$OpenBSD: ct_vfy.c,v 1.6 2022/01/06 14:34:40 jsing Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
  * (steve@openssl.org) for the OpenSSL project 2014.
@@ -79,70 +79,72 @@ typedef enum sct_signature_type_t {
 static int
 sct_ctx_update(EVP_MD_CTX *ctx, const SCT_CTX *sctx, const SCT *sct)
 {
-	unsigned char tmpbuf[12];
-	unsigned char *p, *der;
-	size_t derlen;
+	CBB cbb, entry, extensions;
+	uint8_t *data = NULL;
+	size_t data_len;
+	int ret = 0;
 
-	/*+
-	 * digitally-signed struct {
-	 *   (1 byte) Version sct_version;
-	 *   (1 byte) SignatureType signature_type = certificate_timestamp;
-	 *   (8 bytes) uint64 timestamp;
-	 *   (2 bytes) LogEntryType entry_type;
-	 *   (? bytes) select(entry_type) {
-	 *     case x509_entry: ASN.1Cert;
-	 *     case precert_entry: PreCert;
-	 *   } signed_entry;
-	 *   (2 bytes + sct->ext_len) CtExtensions extensions;
-	 * }
-	 */
+	memset(&cbb, 0, sizeof(cbb));
+
 	if (sct->entry_type == CT_LOG_ENTRY_TYPE_NOT_SET)
-		return 0;
+		goto err;
 	if (sct->entry_type == CT_LOG_ENTRY_TYPE_PRECERT && sctx->ihash == NULL)
-		return 0;
+		goto err;
 
-	p = tmpbuf;
-	*p++ = sct->version;
-	*p++ = SIGNATURE_TYPE_CERT_TIMESTAMP;
-	l2n8(sct->timestamp, p);
-	s2n(sct->entry_type, p);
+	if (!CBB_init(&cbb, 0))
+		goto err;
 
-	if (!EVP_DigestUpdate(ctx, tmpbuf, p - tmpbuf))
-		return 0;
+	/*
+	 * Build the digitally-signed struct per RFC 6962 section 3.2.
+	 */
+	if (!CBB_add_u8(&cbb, sct->version))
+		goto err;
+	if (!CBB_add_u8(&cbb, SIGNATURE_TYPE_CERT_TIMESTAMP))
+		goto err;
+	if (!CBB_add_u64(&cbb, sct->timestamp))
+		goto err;
+	if (!CBB_add_u16(&cbb, sct->entry_type))
+		goto err;
 
-	if (sct->entry_type == CT_LOG_ENTRY_TYPE_X509) {
-		der = sctx->certder;
-		derlen = sctx->certderlen;
-	} else {
-		if (!EVP_DigestUpdate(ctx, sctx->ihash, sctx->ihashlen))
-			return 0;
-		der = sctx->preder;
-		derlen = sctx->prederlen;
+	if (sct->entry_type == CT_LOG_ENTRY_TYPE_PRECERT) {
+		if (!CBB_add_bytes(&cbb, sctx->ihash, sctx->ihashlen))
+			goto err;
 	}
 
-	/* If no encoding available, fatal error */
-	if (der == NULL)
-		return 0;
+	if (!CBB_add_u24_length_prefixed(&cbb, &entry))
+		goto err;
+	if (sct->entry_type == CT_LOG_ENTRY_TYPE_PRECERT) {
+		if (sctx->preder == NULL)
+			goto err;
+		if (!CBB_add_bytes(&entry, sctx->preder, sctx->prederlen))
+			goto err;
+	} else {
+		if (sctx->certder == NULL)
+			goto err;
+		if (!CBB_add_bytes(&entry, sctx->certder, sctx->certderlen))
+			goto err;
+	}
 
-	/* Include length first */
-	p = tmpbuf;
-	l2n3(derlen, p);
+	if (!CBB_add_u16_length_prefixed(&cbb, &extensions))
+		goto err;
+	if (sct->ext_len > 0) {
+		if (!CBB_add_bytes(&extensions, sct->ext, sct->ext_len))
+			goto err;
+	}
 
-	if (!EVP_DigestUpdate(ctx, tmpbuf, 3))
-		return 0;
-	if (!EVP_DigestUpdate(ctx, der, derlen))
-		return 0;
+	if (!CBB_finish(&cbb, &data, &data_len))
+		goto err;
 
-	/* Add any extensions */
-	p = tmpbuf;
-	s2n(sct->ext_len, p);
-	if (!EVP_DigestUpdate(ctx, tmpbuf, 2))
-		return 0;
+	if (!EVP_DigestUpdate(ctx, data, data_len))
+		goto err;
 
-	if (sct->ext_len && !EVP_DigestUpdate(ctx, sct->ext, sct->ext_len))
-		return 0;
+	ret = 1;
 
-	return 1;
+ err:
+	CBB_cleanup(&cbb);
+	free(data);
+
+	return ret;
 }
 
 int
@@ -172,8 +174,7 @@ SCT_CTX_verify(const SCT_CTX *sctx, const SCT *sct)
 		return 0;
 	}
 
-	ctx = EVP_MD_CTX_new();
-	if (ctx == NULL)
+	if ((ctx = EVP_MD_CTX_new()) == NULL)
 		goto end;
 
 	if (!EVP_DigestVerifyInit(ctx, NULL, EVP_sha256(), NULL, sctx->pkey))
@@ -183,12 +184,12 @@ SCT_CTX_verify(const SCT_CTX *sctx, const SCT *sct)
 		goto end;
 
 	/* Verify signature */
-	ret = EVP_DigestVerifyFinal(ctx, sct->sig, sct->sig_len);
 	/* If ret < 0 some other error: fall through without setting error */
-	if (ret == 0)
+	if ((ret = EVP_DigestVerifyFinal(ctx, sct->sig, sct->sig_len)) == 0)
 		CTerror(CT_R_SCT_INVALID_SIGNATURE);
 
  end:
 	EVP_MD_CTX_free(ctx);
+
 	return ret;
 }
