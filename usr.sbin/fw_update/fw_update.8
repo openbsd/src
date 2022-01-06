@@ -1,4 +1,4 @@
-.\" $OpenBSD: fw_update.8,v 1.1 2022/01/05 16:28:19 afresh1 Exp $
+.\" $OpenBSD: fw_update.8,v 1.2 2022/01/06 19:27:01 afresh1 Exp $
 .\"
 .\" Copyright (c) 2011 Alexander Hall <alexander@beard.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 5 2022 $
+.Dd $Mdocdate: January 6 2022 $
 .Dt FW_UPDATE 8
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd install non-free firmware packages
 .Sh SYNOPSIS
 .Nm
-.Op Fl adDnv
+.Op Fl adFnv
 .Op Fl p Ar path
 .Op Ar driver | file ...
 .Sh DESCRIPTION
@@ -62,7 +62,7 @@ a driver.
 If used in conjunction with
 .Fl a ,
 delete firmware for all drivers.
-.It Fl D
+.It Fl F
 Download drivers only.
 By default downloads to the current directory.
 Secifying a URL with

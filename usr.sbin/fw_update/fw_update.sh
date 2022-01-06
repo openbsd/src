@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.24 2022/01/05 16:32:46 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.25 2022/01/06 19:27:01 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -275,13 +275,13 @@ usage() {
 }
 
 ALL=false
-OPT_D=
-while getopts :adDnp:v name
+OPT_F=
+while getopts :adFnp:v name
 do
        case "$name" in
        a) ALL=true ;;
        d) DELETE=true ;;
-       D) OPT_D=true ;;
+       F) OPT_F=true ;;
        n) DRYRUN=true ;;
        p) LOCALSRC="$OPTARG" ;;
        v) VERBOSE=true ;;
@@ -310,7 +310,7 @@ if [ "$LOCALSRC" ]; then
 fi
 
 # "Download only" means local dir and don't install
-if [ "$OPT_D" ]; then
+if [ "$OPT_F" ]; then
 	INSTALL=false
 	LOCALSRC="${LOCALSRC:-.}"
 elif [ "$LOCALSRC" ]; then
@@ -325,7 +325,7 @@ fi
 set -sA devices -- "$@"
 
 if "$DELETE"; then
-	[ "$OPT_D" ] && usage 22
+	[ "$OPT_F" ] && usage 22
 
 	set -A installed
 	if [ "${devices[*]:-}" ]; then
