@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestringtest.c,v 1.15 2021/12/15 17:37:42 jsing Exp $	*/
+/*	$OpenBSD: bytestringtest.c,v 1.16 2022/01/06 14:31:03 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -315,7 +315,10 @@ test_get_optional_asn1_bool(void)
 static int
 test_cbb_basic(void)
 {
-	static const uint8_t kExpected[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+	static const uint8_t kExpected[] = {
+	    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+	    13, 14, 15, 16, 17, 18, 19, 20,
+	};
 	uint8_t *buf = NULL;
 	size_t buf_len;
 	int ret = 0;
@@ -331,6 +334,7 @@ test_cbb_basic(void)
 	CHECK_GOTO(CBB_add_u24(&cbb, 0x40506));
 	CHECK_GOTO(CBB_add_u32(&cbb, 0x708090a));
 	CHECK_GOTO(CBB_add_bytes(&cbb, (const uint8_t*) "\x0b\x0c", 2));
+	CHECK_GOTO(CBB_add_u64(&cbb, 0xd0e0f1011121314));
 	CHECK_GOTO(CBB_finish(&cbb, &buf, &buf_len));
 
 	ret = (buf_len == sizeof(kExpected)
