@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.2 2021/12/23 18:12:58 tb Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.3 2022/01/06 15:21:33 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -39,6 +39,10 @@ asn1_compare_bytes(const char *label, const unsigned char *d1, int len1,
 	if (len1 != len2) {
 		fprintf(stderr, "FAIL: %s - byte lengths differ "
 		    "(%i != %i)\n", label, len1, len2);
+		fprintf(stderr, "Got:\n");
+		hexdump(d1, len1);
+		fprintf(stderr, "Want:\n");
+		hexdump(d2, len2);
 		return 0;
 	}
 	if (memcmp(d1, d2, len1) != 0) {
@@ -50,6 +54,111 @@ asn1_compare_bytes(const char *label, const unsigned char *d1, int len1,
 		return 0;
 	}
 	return 1;
+}
+
+const uint8_t asn1_bit_string_primitive[] = {
+	0x03, 0x07,
+	0x04, 0x0a, 0x3b, 0x5f, 0x29, 0x1c, 0xd0,
+};
+
+static int
+asn1_bit_string_test(void)
+{
+	uint8_t bs[] = {0x0a, 0x3b, 0x5f, 0x29, 0x1c, 0xd0};
+	ASN1_BIT_STRING *abs;
+	uint8_t *p = NULL, *pp;
+	const uint8_t *q;
+	int bit, i, len;
+	int failed = 1;
+
+	if ((abs = ASN1_BIT_STRING_new()) == NULL) {
+		fprintf(stderr, "FAIL: ASN1_BIT_STRING_new() == NULL\n");
+		goto failed;
+	}
+	if (!ASN1_BIT_STRING_set(abs, bs, sizeof(bs))) {
+		fprintf(stderr, "FAIL: failed to set bit string\n");
+		goto failed;
+	}
+
+	if ((len = i2d_ASN1_BIT_STRING(abs, NULL)) < 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING with NULL\n");
+		goto failed;
+	}
+	if ((p = malloc(len)) == NULL)
+		errx(1, "malloc");
+	memset(p, 0xbd, len);
+	pp = p;
+	if ((i2d_ASN1_BIT_STRING(abs, &pp)) != len) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		goto failed;
+	}
+
+	if (!asn1_compare_bytes("BIT_STRING", p, len, asn1_bit_string_primitive,
+	    sizeof(asn1_bit_string_primitive)))
+		goto failed;
+
+	/* Test primitive decoding. */
+	q = p;
+	if (d2i_ASN1_BIT_STRING(&abs, &q, len) == NULL) {
+		fprintf(stderr, "FAIL: d2i_ASN1_BIT_STRING primitive\n");
+		goto failed;
+	}
+	if (!asn1_compare_bytes("BIT_STRING primitive data", abs->data, abs->length,
+	    bs, sizeof(bs)))
+		goto failed;
+
+	/* Test ASN1_BIT_STRING_get_bit(). */
+	for (i = 0; i < ((int)sizeof(bs) * 8); i++) {
+		bit = (bs[i / 8] >> (7 - i % 8)) & 1;
+
+		if (ASN1_BIT_STRING_get_bit(abs, i) != bit) {
+			fprintf(stderr, "FAIL: ASN1_BIT_STRING_get_bit(_, %d) "
+			    "= %d, want %d\n", i,
+			    ASN1_BIT_STRING_get_bit(abs, i), bit);
+			goto failed;
+		}
+	}
+
+	/* Test ASN1_BIT_STRING_set_bit(). */
+	for (i = 0; i < ((int)sizeof(bs) * 8); i++) {
+		if (!ASN1_BIT_STRING_set_bit(abs, i, 1)) {
+			fprintf(stderr, "FAIL: ASN1_BIT_STRING_set_bit 1\n");
+			goto failed;
+		}
+	}
+	for (i = ((int)sizeof(bs) * 8) - 1; i >= 0; i--) {
+		bit = (bs[i / 8] >> (7 - i % 8)) & 1;
+		if (bit == 1)
+			continue;
+		if (!ASN1_BIT_STRING_set_bit(abs, i, 0)) {
+			fprintf(stderr, "FAIL: ASN1_BIT_STRING_set_bit\n");
+			goto failed;
+		}
+	}
+
+	if ((i2d_ASN1_BIT_STRING(abs, NULL)) != len) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		goto failed;
+	}
+
+	memset(p, 0xbd, len);
+	pp = p;
+	if ((i2d_ASN1_BIT_STRING(abs, &pp)) != len) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
+		goto failed;
+	}
+
+	if (!asn1_compare_bytes("BIT_STRING set", p, len, asn1_bit_string_primitive,
+	    sizeof(asn1_bit_string_primitive)))
+		goto failed;
+
+	failed = 0;
+
+ failed:
+	ASN1_BIT_STRING_free(abs);
+	free(p);
+
+	return failed;
 }
 
 const uint8_t asn1_boolean_false[] = {
@@ -71,8 +180,9 @@ asn1_boolean_test(void)
 		fprintf(stderr, "FAIL: i2d_ASN1_BOOLEAN false with NULL\n");
 		goto failed;
 	}
-	if ((p = calloc(1, len)) == NULL)
+	if ((p = malloc(len)) == NULL)
 		errx(1, "calloc");
+	memset(p, 0xbd, len);
 	pp = p;
 	if ((i2d_ASN1_BOOLEAN(0, &pp)) != len) {
 		fprintf(stderr, "FAIL: i2d_ASN1_BOOLEAN false\n");
@@ -127,6 +237,7 @@ main(int argc, char **argv)
 {
 	int failed = 0;
 
+	failed |= asn1_bit_string_test();
 	failed |= asn1_boolean_test();
 
 	return (failed);
