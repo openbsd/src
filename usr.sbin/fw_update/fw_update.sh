@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.25 2022/01/06 19:27:01 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.26 2022/01/06 20:15:54 deraadt Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -270,7 +270,7 @@ delete_firmware() {
 }
 
 usage() {
-	echo "usage:  ${0##*/} [-d | -D] [-av] [-p path] [driver | file ...]"
+	echo "usage: ${0##*/} [-d | -F] [-av] [-p path] [driver | file ...]"
 	exit 2
 }
 
