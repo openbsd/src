@@ -1,4 +1,4 @@
-/* $OpenBSD: resize.c,v 1.48 2021/12/06 10:08:42 nicm Exp $ */
+/* $OpenBSD: resize.c,v 1.49 2022/01/06 08:20:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -178,7 +178,7 @@ clients_calculate_size(int type, int current, struct client *c,
 			cw = NULL;
 
 		/* Work out this client's size. */
-		if (cw != NULL) {
+		if (cw != NULL && cw->sx != 0 && cw->sy != 0) {
 			cx = cw->sx;
 			cy = cw->sy;
 		} else {
