@@ -1,4 +1,4 @@
-/*	$OpenBSD: bytestring.h,v 1.22 2021/12/15 17:36:49 jsing Exp $	*/
+/*	$OpenBSD: bytestring.h,v 1.23 2022/01/06 14:30:30 jsing Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -507,6 +507,12 @@ int CBB_add_u24(CBB *cbb, size_t value);
  * returns one on success and zero otherwise.
  */
 int CBB_add_u32(CBB *cbb, size_t value);
+
+/*
+ * CBB_add_u64 appends a 64-bit, big-endian number from |value| to |cbb|. It
+ * returns one on success and zero otherwise.
+ */
+int CBB_add_u64(CBB *cbb, uint64_t value);
 
 /*
  * CBB_add_asn1_uint64 writes an ASN.1 INTEGER into |cbb| using |CBB_add_asn1|
