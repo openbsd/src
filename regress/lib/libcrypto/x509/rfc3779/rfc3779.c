@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc3779.c,v 1.4 2022/01/06 09:46:05 tb Exp $ */
+/*	$OpenBSD: rfc3779.c,v 1.5 2022/01/06 14:55:52 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -471,6 +471,11 @@ struct build_addr_block_test_data {
 	int			 afi_len;
 };
 
+/*
+ * This struct isn't const since the address arguments of
+ * X509v3_addr_add_{prefix,range}() aren't const and it's
+ * not worth working around this.
+ */
 struct build_addr_block_test_data build_addr_block_tests[] = {
 	{
 		.description = "RFC 3779, Appendix B, example 1",
