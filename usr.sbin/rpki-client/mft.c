@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.42 2021/10/28 13:51:42 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.43 2022/01/06 16:06:30 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -161,20 +161,8 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	if (fn == NULL)
 		err(1, NULL);
 
-	/*
-	 * Make sure we're just a pathname and either an ROA or CER.
-	 * I don't think that the RFC specifically mentions this, but
-	 * it's in practical use and would really screw things up
-	 * (arbitrary filenames) otherwise.
-	 */
-
-	if (strchr(fn, '/') != NULL) {
-		warnx("%s: path components disallowed in filename: %s",
-		    p->fn, fn);
-		goto out;
-	} else if (strlen(fn) <= 4) {
-		warnx("%s: filename must be large enough for suffix part: %s",
-		    p->fn, fn);
+	if (!valid_filename(fn)) {
+		warnx("%s: invalid filename: %s", p->fn, fn);
 		goto out;
 	}
 
@@ -257,7 +245,7 @@ mft_parse_flist(struct parse *p, const ASN1_OCTET_STRING *os)
 
 /*
  * Handle the eContent of the manifest object, RFC 6486 sec. 4.2.
- * Returns <0 on failure, 0 on stale, >0 on success.
+ * Returns 0 on failure and 1 on success.
  */
 static int
 mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
@@ -267,7 +255,7 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	const ASN1_GENERALIZEDTIME *from, *until;
 	long			 mft_version;
 	BIGNUM			*mft_seqnum = NULL;
-	int			 i = 0, rc = -1;
+	int			 i = 0, rc = 0;
 
 	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
 		cryptowarnx("%s: RFC 6486 section 4.2: Manifest: "
@@ -366,22 +354,26 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	}
 	until = t->value.generalizedtime;
 
-	rc = check_validity(from, until, p->fn);
-	if (rc != 1)
+	switch (check_validity(from, until, p->fn)) {
+	case 0:
+		p->res->stale = 1;
+		/* FALLTHROUGH */
+	case 1:
+		break;
+	case -1:
 		goto out;
-
-	/* The mft is valid. Reset rc so later 'goto out' return failure. */
-	rc = -1;
+	}
 
 	/* File list algorithm. */
 
 	t = sk_ASN1_TYPE_value(seq, i++);
 	if (t->type != V_ASN1_OBJECT) {
 		warnx("%s: RFC 6486 section 4.2.1: fileHashAlg: "
-		    "want ASN.1 object time, have %s (NID %d)",
+		    "want ASN.1 object, have %s (NID %d)",
 		    p->fn, ASN1_tag2str(t->type), t->type);
 		goto out;
-	} else if (OBJ_obj2nid(t->value.object) != NID_sha256) {
+	}
+	if (OBJ_obj2nid(t->value.object) != NID_sha256) {
 		warnx("%s: RFC 6486 section 4.2.1: fileHashAlg: "
 		    "want SHA256 object, have %s (NID %d)", p->fn,
 		    ASN1_tag2str(OBJ_obj2nid(t->value.object)),
@@ -397,7 +389,9 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		    "want ASN.1 sequence, have %s (NID %d)",
 		    p->fn, ASN1_tag2str(t->type), t->type);
 		goto out;
-	} else if (!mft_parse_flist(p, t->value.octet_string))
+	}
+
+	if (!mft_parse_flist(p, t->value.octet_string))
 		goto out;
 
 	rc = 1;
@@ -418,8 +412,8 @@ struct mft *
 mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 {
 	struct parse	 p;
-	int		 c, rc = 0;
-	size_t		 i, cmsz;
+	int		 rc = 0;
+	size_t		 cmsz;
 	unsigned char	*cms;
 
 	memset(&p, 0, sizeof(struct parse));
@@ -451,27 +445,7 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
-	/*
-	 * If we're stale, then remove all of the files that the MFT
-	 * references as well as marking it as stale.
-	 */
-
-	if ((c = mft_parse_econtent(cms, cmsz, &p)) == 0) {
-		/*
-		 * FIXME: it should suffice to just mark this as stale
-		 * and have the logic around mft_read() simply ignore
-		 * the contents of stale entries, just like it does for
-		 * invalid ROAs or certificates.
-		 */
-
-		p.res->stale = 1;
-		if (p.res->files != NULL)
-			for (i = 0; i < p.res->filesz; i++)
-				free(p.res->files[i].file);
-		free(p.res->files);
-		p.res->filesz = 0;
-		p.res->files = NULL;
-	} else if (c == -1)
+	if (mft_parse_econtent(cms, cmsz, &p) == 0)
 		goto out;
 
 	rc = 1;

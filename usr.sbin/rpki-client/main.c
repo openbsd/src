@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.171 2022/01/04 18:41:32 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.172 2022/01/06 16:06:30 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -518,9 +518,10 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 			break;
 		}
 		mft = mft_read(b);
-		if (mft->stale)
+		if (!mft->stale)
+			queue_add_from_mft_set(mft);
+		else
 			st->mfts_stale++;
-		queue_add_from_mft_set(mft);
 		mft_free(mft);
 		break;
 	case RTYPE_CRL:
