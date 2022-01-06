@@ -1,4 +1,4 @@
-/* $OpenBSD: cttest.c,v 1.2 2021/12/20 16:52:26 jsing Exp $ */
+/* $OpenBSD: cttest.c,v 1.3 2022/01/06 04:42:00 jsing Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -24,7 +24,9 @@
 
 #include "ct/ct.h"
 
-const char *test_cert_file;
+char *test_ctlog_conf_file;
+char *test_cert_file;
+char *test_issuer_file;
 
 const int debug = 0;
 
@@ -391,21 +393,93 @@ ct_sct_base64_test(void)
 	return failed;
 }
 
+static int
+ct_sct_verify_test(void)
+{
+	STACK_OF(SCT) *scts = NULL;
+	CT_POLICY_EVAL_CTX *ct_policy = NULL;
+	CTLOG_STORE *ctlog_store = NULL;
+	X509 *cert = NULL, *issuer = NULL;
+	const uint8_t *p;
+	SCT *sct;
+	int failed = 1;
+
+	cert_from_file(test_cert_file, &cert);
+	cert_from_file(test_issuer_file, &issuer);
+
+	if ((ctlog_store = CTLOG_STORE_new()) == NULL)
+		goto failure;
+	if (!CTLOG_STORE_load_file(ctlog_store, test_ctlog_conf_file))
+		goto failure;
+
+	if ((ct_policy = CT_POLICY_EVAL_CTX_new()) == NULL)
+		goto failure;
+
+	CT_POLICY_EVAL_CTX_set_shared_CTLOG_STORE(ct_policy, ctlog_store);
+	CT_POLICY_EVAL_CTX_set_time(ct_policy, 1641393117000);
+
+	if (!CT_POLICY_EVAL_CTX_set1_cert(ct_policy, cert))
+		goto failure;
+	if (!CT_POLICY_EVAL_CTX_set1_issuer(ct_policy, issuer))
+		goto failure;
+
+	p = scts_asn1;
+	if ((scts = d2i_SCT_LIST(NULL, &p, sizeof(scts_asn1))) == NULL) {
+		fprintf(stderr, "FAIL: failed to decode SCTS from ASN.1\n");
+		ERR_print_errors_fp(stderr);
+		goto failure;
+	}
+	sct = sk_SCT_value(scts, 0);
+
+	if (!SCT_set_log_entry_type(sct, CT_LOG_ENTRY_TYPE_PRECERT))
+		goto failure;
+	if (!SCT_validate(sct, ct_policy)) {
+		fprintf(stderr, "FAIL: SCT_validate failed\n");
+		ERR_print_errors_fp(stderr);
+		goto failure;
+	}
+
+	failed = 0;
+
+ failure:
+	CT_POLICY_EVAL_CTX_free(ct_policy);
+	CTLOG_STORE_free(ctlog_store);
+	X509_free(cert);
+	X509_free(issuer);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
+	const char *ctpath;
 	int failed = 0;
 
         if (argc != 2) {
-		fprintf(stderr, "usage: %s certfile\n", argv[0]);
+		fprintf(stderr, "usage: %s ctpath\n", argv[0]);
 		exit(1);
 	}
+	ctpath = argv[1];
 
-	test_cert_file = argv[1];
+	if (asprintf(&test_cert_file, "%s/%s", ctpath,
+	    "libressl.org.crt") == -1)
+		errx(1, "asprintf test_cert_file");
+	if (asprintf(&test_issuer_file, "%s/%s", ctpath,
+	    "letsencrypt-r3.crt") == -1)
+		errx(1, "asprintf test_issuer_file");
+	if (asprintf(&test_ctlog_conf_file, "%s/%s", ctpath,
+	    "ctlog.conf") == -1)
+		errx(1, "asprintf test_ctlog_conf_file");
 
 	failed |= ct_cert_test();
 	failed |= ct_sct_test();
 	failed |= ct_sct_base64_test();
+	failed |= ct_sct_verify_test();
+
+	free(test_cert_file);
+	free(test_issuer_file);
+	free(test_ctlog_conf_file);
 
 	return (failed);
 }
