@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.75 2022/01/05 18:01:27 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.76 2022/01/06 14:08:15 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1690,7 +1690,7 @@ addr_contains(IPAddressOrRanges *parent, IPAddressOrRanges *child, int length)
 }
 
 /*
- * Test whether a is a subset of b.
+ * Test whether |child| is a subset of |parent|.
  */
 int
 X509v3_addr_subset(IPAddrBlocks *child, IPAddrBlocks *parent)
@@ -1709,7 +1709,6 @@ X509v3_addr_subset(IPAddrBlocks *child, IPAddrBlocks *parent)
 
 	for (i = 0; i < sk_IPAddressFamily_num(child); i++) {
 		child_af = sk_IPAddressFamily_value(child, i);
-
 
 		parent_af = IPAddressFamily_find_in_parent(parent, child_af);
 		if (parent_af == NULL)
@@ -1952,4 +1951,4 @@ X509v3_addr_validate_resource_set(STACK_OF(X509) *chain, IPAddrBlocks *ext,
 	return addr_validate_path_internal(NULL, chain, ext);
 }
 
-#endif                          /* OPENSSL_NO_RFC3779 */
+#endif /* OPENSSL_NO_RFC3779 */
