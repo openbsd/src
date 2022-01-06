@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_key_share.c,v 1.1 2022/01/05 17:10:03 jsing Exp $ */
+/* $OpenBSD: tls_key_share.c,v 1.2 2022/01/06 18:23:56 jsing Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -28,6 +28,9 @@ struct tls_key_share {
 	int nid;
 	uint16_t group_id;
 
+	DH *dhe;
+	DH *dhe_peer;
+
 	EC_KEY *ecdhe;
 	EC_KEY *ecdhe_peer;
 
@@ -36,14 +39,10 @@ struct tls_key_share {
 	uint8_t *x25519_peer_public;
 };
 
-struct tls_key_share *
-tls_key_share_new(uint16_t group_id)
+static struct tls_key_share *
+tls_key_share_new_internal(int nid, uint16_t group_id)
 {
 	struct tls_key_share *ks;
-	int nid;
-
-	if ((nid = tls1_ec_curve_id2nid(group_id)) == 0)
-		return NULL;
 
 	if ((ks = calloc(1, sizeof(struct tls_key_share))) == NULL)
 		return NULL;
@@ -55,14 +54,27 @@ tls_key_share_new(uint16_t group_id)
 }
 
 struct tls_key_share *
-tls_key_share_new_nid(int nid)
+tls_key_share_new(uint16_t group_id)
 {
-	uint16_t group_id;
+	int nid;
 
-	if ((group_id = tls1_ec_nid2curve_id(nid)) == 0)
+	if ((nid = tls1_ec_curve_id2nid(group_id)) == 0)
 		return NULL;
 
-	return tls_key_share_new(group_id);
+	return tls_key_share_new_internal(nid, group_id);
+}
+
+struct tls_key_share *
+tls_key_share_new_nid(int nid)
+{
+	uint16_t group_id = 0;
+
+	if (nid != NID_dhKeyAgreement) {
+		if ((group_id = tls1_ec_nid2curve_id(nid)) == 0)
+			return NULL;
+	}
+
+	return tls_key_share_new_internal(nid, group_id);
 }
 
 void
@@ -70,6 +82,9 @@ tls_key_share_free(struct tls_key_share *ks)
 {
 	if (ks == NULL)
 		return;
+
+	DH_free(ks->dhe);
+	DH_free(ks->dhe_peer);
 
 	EC_KEY_free(ks->ecdhe);
 	EC_KEY_free(ks->ecdhe_peer);
@@ -88,19 +103,33 @@ tls_key_share_group(struct tls_key_share *ks)
 }
 
 int
+tls_key_share_nid(struct tls_key_share *ks)
+{
+	return ks->nid;
+}
+
+int
 tls_key_share_peer_pkey(struct tls_key_share *ks, EVP_PKEY *pkey)
 {
-	if (ks->nid == NID_X25519 && ks->x25519_peer_public != NULL) {
-		if (!ssl_kex_dummy_ecdhe_x25519(pkey))
-			return 0;
-	} else if (ks->ecdhe_peer != NULL) {
-		if (!EVP_PKEY_set1_EC_KEY(pkey, ks->ecdhe_peer))
-			return 0;
-	} else {
-		return 0;
-	}
+	if (ks->nid == NID_dhKeyAgreement && ks->dhe_peer != NULL)
+		return EVP_PKEY_set1_DH(pkey, ks->dhe_peer);
 
-	return 1;
+	if (ks->nid == NID_X25519 && ks->x25519_peer_public != NULL)
+		return ssl_kex_dummy_ecdhe_x25519(pkey);
+
+	if (ks->ecdhe_peer != NULL)
+		return EVP_PKEY_set1_EC_KEY(pkey, ks->ecdhe_peer);
+
+	return 0;
+}
+
+static int
+tls_key_share_generate_dhe(struct tls_key_share *ks)
+{
+	if (ks->dhe == NULL)
+		return 0;
+
+	return ssl_kex_generate_dhe(ks->dhe, ks->dhe);
 }
 
 static int
@@ -161,10 +190,22 @@ tls_key_share_generate_x25519(struct tls_key_share *ks)
 int
 tls_key_share_generate(struct tls_key_share *ks)
 {
+	if (ks->nid == NID_dhKeyAgreement)
+		return tls_key_share_generate_dhe(ks);
+
 	if (ks->nid == NID_X25519)
 		return tls_key_share_generate_x25519(ks);
 
 	return tls_key_share_generate_ecdhe_ecp(ks);
+}
+
+static int
+tls_key_share_public_dhe(struct tls_key_share *ks, CBB *cbb)
+{
+	if (ks->dhe == NULL)
+		return 0;
+
+	return ssl_kex_public_dhe(ks->dhe, cbb);
 }
 
 static int
@@ -188,10 +229,50 @@ tls_key_share_public_x25519(struct tls_key_share *ks, CBB *cbb)
 int
 tls_key_share_public(struct tls_key_share *ks, CBB *cbb)
 {
+	if (ks->nid == NID_dhKeyAgreement)
+		return tls_key_share_public_dhe(ks, cbb);
+
 	if (ks->nid == NID_X25519)
 		return tls_key_share_public_x25519(ks, cbb);
 
 	return tls_key_share_public_ecdhe_ecp(ks, cbb);
+}
+
+static int
+tls_key_share_peer_params_dhe(struct tls_key_share *ks, CBS *cbs,
+    int *invalid_params)
+{
+	if (ks->dhe != NULL || ks->dhe_peer != NULL)
+		return 0;
+
+	if ((ks->dhe_peer = DH_new()) == NULL)
+		return 0;
+	if (!ssl_kex_peer_params_dhe(ks->dhe_peer, cbs, invalid_params))
+		return 0;
+	if ((ks->dhe = DHparams_dup(ks->dhe_peer)) == NULL)
+		return 0;
+
+	return 1;
+}
+
+int
+tls_key_share_peer_params(struct tls_key_share *ks, CBS *cbs,
+    int *invalid_params)
+{
+	if (ks->nid != NID_dhKeyAgreement)
+		return 0;
+
+	return tls_key_share_peer_params_dhe(ks, cbs, invalid_params);
+}
+
+static int
+tls_key_share_peer_public_dhe(struct tls_key_share *ks, CBS *cbs,
+    int *invalid_key)
+{
+	if (ks->dhe_peer == NULL)
+		return 0;
+
+	return ssl_kex_peer_public_dhe(ks->dhe_peer, cbs, invalid_key);
 }
 
 static int
@@ -234,21 +315,29 @@ tls_key_share_peer_public_x25519(struct tls_key_share *ks, CBS *cbs)
 }
 
 int
-tls_key_share_peer_public(struct tls_key_share *ks, uint16_t group,
-    CBS *cbs)
+tls_key_share_peer_public(struct tls_key_share *ks, CBS *cbs, int *invalid_key)
 {
-	if (ks->group_id != group)
+	if (invalid_key != NULL)
+		*invalid_key = 0;
+
+	if (ks->nid == NID_dhKeyAgreement)
+		return tls_key_share_peer_public_dhe(ks, cbs, invalid_key);
+
+	if (ks->nid == NID_X25519)
+		return tls_key_share_peer_public_x25519(ks, cbs);
+
+	return tls_key_share_peer_public_ecdhe_ecp(ks, cbs);
+}
+
+static int
+tls_key_share_derive_dhe(struct tls_key_share *ks,
+    uint8_t **shared_key, size_t *shared_key_len)
+{
+	if (ks->dhe == NULL || ks->dhe_peer == NULL)
 		return 0;
 
-	if (ks->nid == NID_X25519) {
-		if (!tls_key_share_peer_public_x25519(ks, cbs))
-			return 0;
-	} else {
-		if (!tls_key_share_peer_public_ecdhe_ecp(ks, cbs))
-			return 0;
-	}
-
-	return 1;
+	return ssl_kex_derive_dhe(ks->dhe, ks->dhe_peer, shared_key,
+	    shared_key_len);
 }
 
 static int
@@ -297,6 +386,10 @@ tls_key_share_derive(struct tls_key_share *ks, uint8_t **shared_key,
 		return 0;
 
 	*shared_key_len = 0;
+
+	if (ks->nid == NID_dhKeyAgreement)
+		return tls_key_share_derive_dhe(ks, shared_key,
+		    shared_key_len);
 
 	if (ks->nid == NID_X25519)
 		return tls_key_share_derive_x25519(ks, shared_key,

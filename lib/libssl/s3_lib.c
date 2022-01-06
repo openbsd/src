@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.220 2022/01/05 17:10:02 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.221 2022/01/06 18:23:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1665,35 +1665,17 @@ long
 _SSL_get_peer_tmp_key(SSL *s, EVP_PKEY **key)
 {
 	EVP_PKEY *pkey = NULL;
-	SESS_CERT *sc;
 	int ret = 0;
 
 	*key = NULL;
 
-	if (s->session == NULL || s->session->sess_cert == NULL)
-		return 0;
-
-	sc = s->session->sess_cert;
+	if (S3I(s)->hs.key_share == NULL)
+		goto err;
 
 	if ((pkey = EVP_PKEY_new()) == NULL)
-		return 0;
-
-	if (sc->peer_dh_tmp != NULL) {
-		if (!EVP_PKEY_set1_DH(pkey, sc->peer_dh_tmp))
-			goto err;
-	} else if (sc->peer_ecdh_tmp) {
-		if (!EVP_PKEY_set1_EC_KEY(pkey, sc->peer_ecdh_tmp))
-			goto err;
-	} else if (sc->peer_x25519_tmp != NULL) {
-		if (!ssl_kex_dummy_ecdhe_x25519(pkey))
-			goto err;
-	} else if (S3I(s)->hs.key_share != NULL) {
-		if (!tls_key_share_peer_pkey(S3I(s)->hs.key_share,
-		    pkey))
-			goto err;
-	} else {
 		goto err;
-	}
+	if (!tls_key_share_peer_pkey(S3I(s)->hs.key_share, pkey))
+		goto err;
 
 	*key = pkey;
 	pkey = NULL;

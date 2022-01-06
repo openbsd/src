@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.88 2021/11/29 18:36:27 tb Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.89 2022/01/06 18:23:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -394,10 +394,6 @@ ssl_sess_cert_free(SESS_CERT *sc)
 	sk_X509_pop_free(sc->cert_chain, X509_free);
 	for (i = 0; i < SSL_PKEY_NUM; i++)
 		X509_free(sc->peer_pkeys[i].x509);
-
-	DH_free(sc->peer_dh_tmp);
-	EC_KEY_free(sc->peer_ecdh_tmp);
-	free(sc->peer_x25519_tmp);
 
 	free(sc);
 }

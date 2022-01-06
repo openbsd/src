@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.2 2022/01/05 17:10:03 jsing Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.3 2022/01/06 18:23:56 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -63,11 +63,14 @@ struct tls_key_share *tls_key_share_new_nid(int nid);
 void tls_key_share_free(struct tls_key_share *ks);
 
 uint16_t tls_key_share_group(struct tls_key_share *ks);
+int tls_key_share_nid(struct tls_key_share *ks);
 int tls_key_share_peer_pkey(struct tls_key_share *ks, EVP_PKEY *pkey);
 int tls_key_share_generate(struct tls_key_share *ks);
 int tls_key_share_public(struct tls_key_share *ks, CBB *cbb);
-int tls_key_share_peer_public(struct tls_key_share *ks, uint16_t group,
-    CBS *cbs);
+int tls_key_share_peer_params(struct tls_key_share *ks, CBS *cbs,
+    int *invalid_params);
+int tls_key_share_peer_public(struct tls_key_share *ks, CBS *cbs,
+    int *invalid_key);
 int tls_key_share_derive(struct tls_key_share *ks, uint8_t **shared_key,
     size_t *shared_key_len);
 

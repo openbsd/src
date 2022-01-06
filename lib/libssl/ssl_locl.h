@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.373 2022/01/05 17:10:02 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.374 2022/01/06 18:23:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1241,11 +1241,6 @@ typedef struct sess_cert_st {
 	CERT_PKEY peer_pkeys[SSL_PKEY_NUM];
 	/* Obviously we don't have the private keys of these,
 	 * so maybe we shouldn't even use the CERT_PKEY type here. */
-
-	int peer_nid;
-	DH *peer_dh_tmp;
-	EC_KEY *peer_ecdh_tmp;
-	uint8_t *peer_x25519_tmp;
 
 	int references; /* actually always 1 at the moment */
 } SESS_CERT;

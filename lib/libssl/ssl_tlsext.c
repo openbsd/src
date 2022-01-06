@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.104 2022/01/05 17:10:02 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.105 2022/01/06 18:23:56 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1510,11 +1510,10 @@ tlsext_keyshare_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 			continue;
 
 		/* Decode and store the selected key share. */
-		S3I(s)->hs.key_share = tls_key_share_new(group);
-		if (S3I(s)->hs.key_share == NULL)
+		if ((S3I(s)->hs.key_share = tls_key_share_new(group)) == NULL)
 			goto err;
 		if (!tls_key_share_peer_public(S3I(s)->hs.key_share,
-		    group, &key_exchange))
+		    &key_exchange, NULL))
 			goto err;
 	}
 
@@ -1568,7 +1567,7 @@ tlsext_keyshare_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 
 	/* Unpack server share. */
 	if (!CBS_get_u16(cbs, &group))
-		goto err;
+		return 0;
 
 	if (CBS_len(cbs) == 0) {
 		/* HRR does not include an actual key share, only the group. */
@@ -1584,16 +1583,13 @@ tlsext_keyshare_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 
 	if (S3I(s)->hs.key_share == NULL)
 		return 0;
-
+	if (tls_key_share_group(S3I(s)->hs.key_share) != group)
+		return 0;
 	if (!tls_key_share_peer_public(S3I(s)->hs.key_share,
-	    group, &key_exchange))
-		goto err;
+	    &key_exchange, NULL))
+		return 0;
 
 	return 1;
-
- err:
-	*alert = SSL_AD_DECODE_ERROR;
-	return 0;
 }
 
 /*
