@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.26 2022/01/06 11:46:05 inoguchi Exp $ */
+/* $OpenBSD: cms.c,v 1.27 2022/01/06 12:54:51 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -209,6 +209,8 @@ cms_opt_cipher(int argc, char **argv, int *argsused)
 static int
 cms_opt_econtent_type(char *arg)
 {
+	ASN1_OBJECT_free(cms_config.econtent_type);
+
 	if ((cms_config.econtent_type = OBJ_txt2obj(arg, 0)) == NULL) {
 		BIO_printf(bio_err, "Invalid OID %s\n", arg);
 		return (1);
@@ -377,6 +379,8 @@ cms_opt_secretkey(char *arg)
 {
 	long ltmp;
 
+	free(cms_config.secret_key);
+
 	if ((cms_config.secret_key = string_to_hex(arg, &ltmp)) == NULL) {
 		BIO_printf(bio_err, "Invalid key %s\n", arg);
 		return (1);
@@ -389,6 +393,8 @@ static int
 cms_opt_secretkeyid(char *arg)
 {
 	long ltmp;
+
+	free(cms_config.secret_keyid);
 
 	if ((cms_config.secret_keyid = string_to_hex(arg, &ltmp)) == NULL) {
 		BIO_printf(bio_err, "Invalid id %s\n", arg);
