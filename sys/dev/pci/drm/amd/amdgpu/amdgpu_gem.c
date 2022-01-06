@@ -77,16 +77,17 @@ int amdgpu_gem_object_create(struct amdgpu_device *adev, unsigned long size,
 	return 0;
 }
 
+int drm_file_cmp(struct drm_file *, struct drm_file *);
+SPLAY_PROTOTYPE(drm_file_tree, drm_file, link, drm_file_cmp);
+
 void amdgpu_gem_force_release(struct amdgpu_device *adev)
 {
-	STUB();
-#ifdef notyet
 	struct drm_device *ddev = adev_to_drm(adev);
 	struct drm_file *file;
 
 	mutex_lock(&ddev->filelist_mutex);
 
-	list_for_each_entry(file, &ddev->filelist, lhead) {
+	SPLAY_FOREACH(file, drm_file_tree, &ddev->files) {
 		struct drm_gem_object *gobj;
 		int handle;
 
@@ -101,7 +102,6 @@ void amdgpu_gem_force_release(struct amdgpu_device *adev)
 	}
 
 	mutex_unlock(&ddev->filelist_mutex);
-#endif
 }
 
 /*
