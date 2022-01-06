@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2021/10/28 11:01:19 tb Exp $
+#	$OpenBSD: Makefile,v 1.7 2022/01/06 13:36:56 tb Exp $
 
 OPENSSL_RUBY_TESTS =	/usr/local/share/openssl-ruby-tests
 RUBY_BINREV =		30
@@ -56,7 +56,7 @@ retest:
 	rm -f ${_TEST_COOKIE}
 	${_MAKE} test
 
-.for _t in test_client_ca test_post_connection_check_wildcard_san
+.for _t in test_client_ca
 REGRESS_TARGETS += ${_t}
 REGRESS_EXPECTED_FAILURES += ${_t}
 ${_t}: ${_BUILD_COOKIE}
