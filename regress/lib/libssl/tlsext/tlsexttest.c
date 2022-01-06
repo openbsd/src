@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.56 2022/01/05 17:10:59 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.57 2022/01/06 18:27:31 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3303,8 +3303,7 @@ test_tlsext_keyshare_server(void)
 
 	CBS_init(&cbs, bogokey, sizeof(bogokey));
 
-	if (!tls_key_share_peer_public(S3I(ssl)->hs.key_share,
-	    0x001d, &cbs)) {
+	if (!tls_key_share_peer_public(S3I(ssl)->hs.key_share, &cbs, NULL)) {
 		FAIL("failed to load peer public key\n");
 		goto done;
 	}
