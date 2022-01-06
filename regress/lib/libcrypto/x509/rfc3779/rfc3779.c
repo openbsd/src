@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc3779.c,v 1.3 2022/01/05 07:50:40 tb Exp $ */
+/*	$OpenBSD: rfc3779.c,v 1.4 2022/01/06 09:46:05 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -1724,7 +1724,7 @@ const struct ASIdentifiers_subset_test ASIdentifiers_subset_data[] = {
 };
 
 const size_t N_ASIDENTIFIERS_SUBSET_TESTS =
-    sizeof(ASIdentifiers_build_data) / sizeof(ASIdentifiers_build_data[0]);
+    sizeof(ASIdentifiers_subset_data) / sizeof(ASIdentifiers_subset_data[0]);
 
 static int
 asid_subset_test(const struct ASIdentifiers_subset_test *test)
