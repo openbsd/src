@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1982 2021/12/20 15:04:58 stsp Exp $
+$OpenBSD: pcidevs,v 1.1983 2022/01/06 06:19:11 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1212,7 +1212,7 @@ product ATI PPB_2		0x1479	PCIE
 product ATI PICASSO		0x15d8	Picasso
 product ATI RAVEN_VEGA		0x15dd	Radeon Vega
 product ATI RAVEN_VEGA_HDA	0x15de	Radeon Vega HD Audio
-product ATI RENOIR_2		0x15e7	Renoir
+product ATI BARCELO		0x15e7	Barcelo
 product ATI RENOIR		0x1636	Renoir
 product ATI RENOIR_HDA		0x1637	Renoir HD Audio
 product ATI CEZANNE		0x1638	Cezanne
