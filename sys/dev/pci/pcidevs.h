@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1982 2021/12/20 15:04:58 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.1983 2022/01/06 06:19:11 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1217,7 +1217,7 @@
 #define	PCI_PRODUCT_ATI_PICASSO	0x15d8		/* Picasso */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA	0x15dd		/* Radeon Vega */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA_HDA	0x15de		/* Radeon Vega HD Audio */
-#define	PCI_PRODUCT_ATI_RENOIR_2	0x15e7		/* Renoir */
+#define	PCI_PRODUCT_ATI_BARCELO	0x15e7		/* Barcelo */
 #define	PCI_PRODUCT_ATI_RENOIR	0x1636		/* Renoir */
 #define	PCI_PRODUCT_ATI_RENOIR_HDA	0x1637		/* Renoir HD Audio */
 #define	PCI_PRODUCT_ATI_CEZANNE	0x1638		/* Cezanne */
