@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_asn.c,v 1.9 2016/11/04 18:35:30 jsing Exp $ */
+/* $OpenBSD: ocsp_asn.c,v 1.10 2022/01/07 09:45:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -58,6 +58,8 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/ocsp.h>
+
+#include "ocsp_local.h"
 
 static const ASN1_TEMPLATE OCSP_SIGNATURE_seq_tt[] = {
 	{

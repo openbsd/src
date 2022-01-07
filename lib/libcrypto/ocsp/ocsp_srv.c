@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_srv.c,v 1.11 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: ocsp_srv.c,v 1.12 2022/01/07 09:45:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -64,6 +64,8 @@
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
+#include "ocsp_local.h"
 
 /* Utility functions related to sending OCSP responses and extracting
  * relevant information from the request.

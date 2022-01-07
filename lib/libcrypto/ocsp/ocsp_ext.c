@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ext.c,v 1.19 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: ocsp_ext.c,v 1.20 2022/01/07 09:45:52 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -70,6 +70,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "ocsp_local.h"
 #include "x509_lcl.h"
 
 /* Standard wrapper functions for extensions */

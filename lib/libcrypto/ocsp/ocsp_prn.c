@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_prn.c,v 1.8 2015/07/16 02:16:19 miod Exp $ */
+/* $OpenBSD: ocsp_prn.c,v 1.9 2022/01/07 09:45:52 tb Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -65,6 +65,8 @@
 #include <openssl/err.h>
 #include <openssl/ocsp.h>
 #include <openssl/pem.h>
+
+#include "ocsp_local.h"
 
 static int
 ocsp_certid_print(BIO *bp, OCSP_CERTID* a, int indent)
