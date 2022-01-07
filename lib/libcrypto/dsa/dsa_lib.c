@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.31 2022/01/05 20:52:14 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.32 2022/01/07 09:27:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,6 +73,8 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+
+#include "dh_local.h"
 
 static const DSA_METHOD *default_DSA_method = NULL;
 

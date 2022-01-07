@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.35 2022/01/05 20:36:29 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.36 2022/01/07 09:27:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,6 +68,8 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+
+#include "dh_local.h"
 
 static const DH_METHOD *default_DH_method = NULL;
 

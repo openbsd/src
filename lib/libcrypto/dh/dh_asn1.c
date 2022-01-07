@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_asn1.c,v 1.10 2016/12/30 15:26:49 jsing Exp $ */
+/* $OpenBSD: dh_asn1.c,v 1.11 2022/01/07 09:27:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -62,6 +62,8 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 #include <openssl/objects.h>
+
+#include "dh_local.h"
 
 /* Override the default free and new methods */
 static int
