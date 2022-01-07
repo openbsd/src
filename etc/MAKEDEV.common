@@ -1,4 +1,4 @@
-vers(a, {-$OpenBSD: MAKEDEV.common,v 1.114 2021/11/11 09:47:32 claudio Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.common,v 1.115 2022/01/07 01:13:15 jsg Exp $-})dnl
 dnl
 dnl Copyright (c) 2001-2006 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -354,10 +354,6 @@ _mkdev(dri, dri, {-RMlist[${#RMlist[*]}]=";mkdir -p dri;rm -f"
 		n=Add($n, 1)
 	done
 	MKlist[${#MKlist[*]}]=";chmod 555 dri"-})dnl
-__devitem(drm, drm*, {-Direct Rendering Manager-})dnl
-_mkdev(drm, drm*, {-M drm$U c major_drm_c $U 600
-	r=Add($U, 128)
-	M drmR$r c major_drm_c $r 600-})dnl
 __devtitle(prn, Printers)dnl
 __devitem(lpt, lpt*, IEEE 1284 centronics printer)dnl
 _mkdev(lpt, lpt*|lpa*,
