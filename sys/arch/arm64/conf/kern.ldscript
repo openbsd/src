@@ -1,4 +1,4 @@
-/*     $OpenBSD: kern.ldscript,v 1.10 2021/06/27 21:39:55 kettenis Exp $         */
+/*     $OpenBSD: kern.ldscript,v 1.11 2022/01/07 13:56:54 kevlo Exp $         */
 /*     $NetBSD: ldscript.evbarm,v 1.2 2003/03/05 23:54:22 thorpej Exp $        */
 
 OUTPUT_ARCH(aarch64)
@@ -24,7 +24,6 @@ SECTIONS
 	{
 		*(.text .text.*)
 		*(.stub)
-		*(.glue_7t) *(.glue_7)
 	} :text =0
 	PROVIDE (_etext = .);
 	PROVIDE (etext = .);
