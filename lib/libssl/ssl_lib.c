@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.280 2021/12/04 14:03:22 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.281 2022/01/07 16:45:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2198,7 +2198,8 @@ ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	mask_a = SSL_aNULL | SSL_aTLS1_3;
 	mask_k = SSL_kECDHE | SSL_kTLS1_3;
 
-	if (c->dh_tmp != NULL || c->dh_tmp_cb != NULL || c->dh_tmp_auto != 0)
+	if (c->dhe_params != NULL || c->dhe_params_cb != NULL ||
+	    c->dhe_params_auto != 0)
 		mask_k |= SSL_kDHE;
 
 	cpk = &(c->pkeys[SSL_PKEY_ECC]);
@@ -2324,7 +2325,7 @@ ssl_dhe_params_auto_key_bits(SSL *s)
 	CERT_PKEY *cpk;
 	int key_bits;
 
-	if (s->cert->dh_tmp_auto == 2) {
+	if (s->cert->dhe_params_auto == 2) {
 		key_bits = 1024;
 	} else if (S3I(s)->hs.cipher->algorithm_auth & SSL_aNULL) {
 		key_bits = 1024;

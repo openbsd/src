@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.90 2022/01/07 15:56:33 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.91 2022/01/07 16:45:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -195,15 +195,15 @@ ssl_cert_dup(CERT *cert)
 	ret->mask_k = cert->mask_k;
 	ret->mask_a = cert->mask_a;
 
-	if (cert->dh_tmp != NULL) {
-		ret->dh_tmp = DHparams_dup(cert->dh_tmp);
-		if (ret->dh_tmp == NULL) {
+	if (cert->dhe_params != NULL) {
+		ret->dhe_params = DHparams_dup(cert->dhe_params);
+		if (ret->dhe_params == NULL) {
 			SSLerrorx(ERR_R_DH_LIB);
 			goto err;
 		}
 	}
-	ret->dh_tmp_cb = cert->dh_tmp_cb;
-	ret->dh_tmp_auto = cert->dh_tmp_auto;
+	ret->dhe_params_cb = cert->dhe_params_cb;
+	ret->dhe_params_auto = cert->dhe_params_auto;
 
 	for (i = 0; i < SSL_PKEY_NUM; i++) {
 		if (cert->pkeys[i].x509 != NULL) {
@@ -256,7 +256,7 @@ ssl_cert_dup(CERT *cert)
 	return (ret);
 
  err:
-	DH_free(ret->dh_tmp);
+	DH_free(ret->dhe_params);
 
 	for (i = 0; i < SSL_PKEY_NUM; i++) {
 		X509_free(ret->pkeys[i].x509);
@@ -280,7 +280,7 @@ ssl_cert_free(CERT *c)
 	if (i > 0)
 		return;
 
-	DH_free(c->dh_tmp);
+	DH_free(c->dhe_params);
 
 	for (i = 0; i < SSL_PKEY_NUM; i++) {
 		X509_free(c->pkeys[i].x509);

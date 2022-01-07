@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.131 2022/01/07 15:46:30 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.132 2022/01/07 16:45:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1315,7 +1315,7 @@ ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
 	if ((S3I(s)->hs.key_share = tls_key_share_new_nid(nid)) == NULL)
 		goto err;
 
-	if (s->cert->dh_tmp_auto != 0) {
+	if (s->cert->dhe_params_auto != 0) {
 		size_t key_bits;
 
 		if ((key_bits = ssl_dhe_params_auto_key_bits(s)) == 0) {
@@ -1327,10 +1327,10 @@ ssl3_send_server_kex_dhe(SSL *s, CBB *cbb)
 		tls_key_share_set_key_bits(S3I(s)->hs.key_share,
 		    key_bits);
 	} else {
-		DH *dh_params = s->cert->dh_tmp;
+		DH *dh_params = s->cert->dhe_params;
 
-		if (dh_params == NULL && s->cert->dh_tmp_cb != NULL)
-			dh_params = s->cert->dh_tmp_cb(s, 0,
+		if (dh_params == NULL && s->cert->dhe_params_cb != NULL)
+			dh_params = s->cert->dhe_params_cb(s, 0,
 			    SSL_C_PKEYLENGTH(S3I(s)->hs.cipher));
 
 		if (dh_params == NULL) {

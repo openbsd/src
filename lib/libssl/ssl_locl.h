@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.375 2022/01/07 15:46:30 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.376 2022/01/07 16:45:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1212,9 +1212,9 @@ typedef struct cert_st {
 	unsigned long mask_k;
 	unsigned long mask_a;
 
-	DH *dh_tmp;
-	DH *(*dh_tmp_cb)(SSL *ssl, int is_export, int keysize);
-	int dh_tmp_auto;
+	DH *dhe_params;
+	DH *(*dhe_params_cb)(SSL *ssl, int is_export, int keysize);
+	int dhe_params_auto;
 
 	CERT_PKEY pkeys[SSL_PKEY_NUM];
 

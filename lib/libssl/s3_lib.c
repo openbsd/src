@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.222 2022/01/07 15:46:30 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.223 2022/01/07 16:45:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1708,20 +1708,20 @@ _SSL_total_renegotiations(SSL *s)
 static int
 _SSL_set_tmp_dh(SSL *s, DH *dh)
 {
-	DH *dh_tmp;
+	DH *dhe_params;
 
 	if (dh == NULL) {
 		SSLerror(s, ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
 
-	if ((dh_tmp = DHparams_dup(dh)) == NULL) {
+	if ((dhe_params = DHparams_dup(dh)) == NULL) {
 		SSLerror(s, ERR_R_DH_LIB);
 		return 0;
 	}
 
-	DH_free(s->cert->dh_tmp);
-	s->cert->dh_tmp = dh_tmp;
+	DH_free(s->cert->dhe_params);
+	s->cert->dhe_params = dhe_params;
 
 	return 1;
 }
@@ -1729,7 +1729,7 @@ _SSL_set_tmp_dh(SSL *s, DH *dh)
 static int
 _SSL_set_dh_auto(SSL *s, int state)
 {
-	s->cert->dh_tmp_auto = state;
+	s->cert->dhe_params_auto = state;
 	return 1;
 }
 
@@ -2122,7 +2122,7 @@ ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 		return 0;
 
 	case SSL_CTRL_SET_TMP_DH_CB:
-		s->cert->dh_tmp_cb = (DH *(*)(SSL *, int, int))fp;
+		s->cert->dhe_params_cb = (DH *(*)(SSL *, int, int))fp;
 		return 1;
 
 	case SSL_CTRL_SET_TMP_ECDH_CB:
@@ -2140,15 +2140,20 @@ ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 static int
 _SSL_CTX_set_tmp_dh(SSL_CTX *ctx, DH *dh)
 {
-	DH *dh_tmp;
+	DH *dhe_params;
 
-	if ((dh_tmp = DHparams_dup(dh)) == NULL) {
+	if (dh == NULL) {
+		SSLerrorx(ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+	}
+
+	if ((dhe_params = DHparams_dup(dh)) == NULL) {
 		SSLerrorx(ERR_R_DH_LIB);
 		return 0;
 	}
 
-	DH_free(ctx->internal->cert->dh_tmp);
-	ctx->internal->cert->dh_tmp = dh_tmp;
+	DH_free(ctx->internal->cert->dhe_params);
+	ctx->internal->cert->dhe_params = dhe_params;
 
 	return 1;
 }
@@ -2156,7 +2161,7 @@ _SSL_CTX_set_tmp_dh(SSL_CTX *ctx, DH *dh)
 static int
 _SSL_CTX_set_dh_auto(SSL_CTX *ctx, int state)
 {
-	ctx->internal->cert->dh_tmp_auto = state;
+	ctx->internal->cert->dhe_params_auto = state;
 	return 1;
 }
 
@@ -2443,7 +2448,7 @@ ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 		return 0;
 
 	case SSL_CTRL_SET_TMP_DH_CB:
-		ctx->internal->cert->dh_tmp_cb =
+		ctx->internal->cert->dhe_params_cb =
 		    (DH *(*)(SSL *, int, int))fp;
 		return 1;
 
