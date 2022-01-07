@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.42 2018/06/21 07:33:30 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.43 2022/01/07 02:47:06 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -138,7 +138,7 @@ int	hibernate_block_io(union hibernate_info *, daddr_t, size_t, vaddr_t, int);
 int	hibernate_write_signature(union hibernate_info *);
 int	hibernate_write_chunktable(union hibernate_info *);
 int	hibernate_write_chunks(union hibernate_info *);
-int	hibernate_clear_signature(void);
+int	hibernate_clear_signature(union hibernate_info *);
 int	hibernate_compare_signature(union hibernate_info *,
 	    union hibernate_info *);
 void	hibernate_resume(void);

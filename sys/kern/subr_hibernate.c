@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.131 2022/01/07 02:26:53 guenther Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.132 2022/01/07 02:47:07 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -918,23 +918,18 @@ hibernate_write_chunktable(union hibernate_info *hib)
  * guaranteed to not match any valid hib.
  */
 int
-hibernate_clear_signature(void)
+hibernate_clear_signature(union hibernate_info *hib)
 {
 	union hibernate_info blank_hiber_info;
-	union hibernate_info hib;
 
 	/* Zero out a blank hiber_info */
 	memset(&blank_hiber_info, 0, sizeof(union hibernate_info));
 
-	/* Get the signature block location */
-	if (get_hibernate_info(&hib, 0))
-		return (1);
-
 	/* Write (zeroed) hibernate info to disk */
 	DPRINTF("clearing hibernate signature block location: %lld\n",
-		hib.sig_offset);
-	if (hibernate_block_io(&hib,
-	    hib.sig_offset,
+		hib->sig_offset);
+	if (hibernate_block_io(hib,
+	    hib->sig_offset,
 	    DEV_BSIZE, (vaddr_t)&blank_hiber_info, 1))
 		printf("Warning: could not clear hibernate signature\n");
 
@@ -1160,7 +1155,7 @@ hibernate_resume(void)
 	 * We (possibly) found a hibernate signature. Clear signature first,
 	 * to prevent accidental resume or endless resume cycles later.
 	 */
-	if (hibernate_clear_signature()) {
+	if (hibernate_clear_signature(&hib)) {
 		DPRINTF("error clearing hibernate signature block\n");
 		splx(s);
 		return;
