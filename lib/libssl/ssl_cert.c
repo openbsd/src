@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.89 2022/01/06 18:23:56 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.90 2022/01/07 15:56:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -200,22 +200,6 @@ ssl_cert_dup(CERT *cert)
 		if (ret->dh_tmp == NULL) {
 			SSLerrorx(ERR_R_DH_LIB);
 			goto err;
-		}
-		if (cert->dh_tmp->priv_key) {
-			BIGNUM *b = BN_dup(cert->dh_tmp->priv_key);
-			if (!b) {
-				SSLerrorx(ERR_R_BN_LIB);
-				goto err;
-			}
-			ret->dh_tmp->priv_key = b;
-		}
-		if (cert->dh_tmp->pub_key) {
-			BIGNUM *b = BN_dup(cert->dh_tmp->pub_key);
-			if (!b) {
-				SSLerrorx(ERR_R_BN_LIB);
-				goto err;
-			}
-			ret->dh_tmp->pub_key = b;
 		}
 	}
 	ret->dh_tmp_cb = cert->dh_tmp_cb;
