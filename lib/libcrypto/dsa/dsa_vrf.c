@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_vrf.c,v 1.16 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dsa_vrf.c,v 1.17 2022/01/07 09:35:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,6 +59,8 @@
 /* Original version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
 
 #include <openssl/dsa.h>
+
+#include "dsa_locl.h"
 
 int
 DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)

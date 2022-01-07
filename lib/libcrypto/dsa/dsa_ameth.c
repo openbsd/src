@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.29 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.30 2022/01/07 09:35:36 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -69,6 +69,7 @@
 
 #include "asn1_locl.h"
 #include "bn_lcl.h"
+#include "dsa_locl.h"
 #include "evp_locl.h"
 
 static int
