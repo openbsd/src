@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001.c,v 1.8 2021/04/20 17:16:38 tb Exp $ */
+/* $OpenBSD: gostr341001.c,v 1.9 2022/01/07 09:40:03 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -59,6 +59,7 @@
 #include <openssl/gost.h>
 
 #include "bn_lcl.h"
+#include "ecs_locl.h"
 #include "gost_locl.h"
 
 /* Convert little-endian byte array into bignum */
