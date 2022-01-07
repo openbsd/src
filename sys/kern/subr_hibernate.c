@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.130 2022/01/04 18:13:31 guenther Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.131 2022/01/07 02:26:53 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -34,6 +34,9 @@
 #include <uvm/uvm_swap.h>
 
 #include <machine/hibernate.h>
+
+/* Make sure the signature can fit in one block */
+CTASSERT(sizeof(union hibernate_info) <= DEV_BSIZE);
 
 /*
  * Hibernate piglet layout information
@@ -568,6 +571,7 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 {
 	struct disklabel dl;
 	char err_string[128], *dl_ret;
+	int part;
 
 #ifndef NO_PROPOLICE
 	/* Save propolice guard */
@@ -591,19 +595,17 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 	}
 
 	/* Make sure we have a swap partition. */
-	if (dl.d_partitions[1].p_fstype != FS_SWAP ||
-	    DL_GETPSIZE(&dl.d_partitions[1]) == 0)
-		return (1);
-
-	/* Make sure the signature can fit in one block */
-	if (sizeof(union hibernate_info) > DEV_BSIZE)
+	part = DISKPART(hib->dev);
+	if (dl.d_npartitions <= part ||
+	    dl.d_partitions[part].p_fstype != FS_SWAP ||
+	    DL_GETPSIZE(&dl.d_partitions[part]) == 0)
 		return (1);
 
 	/* Magic number */
 	hib->magic = HIBERNATE_MAGIC;
 
 	/* Calculate signature block location */
-	hib->sig_offset = DL_GETPSIZE(&dl.d_partitions[1]) -
+	hib->sig_offset = DL_GETPSIZE(&dl.d_partitions[part]) -
 	    sizeof(union hibernate_info)/DEV_BSIZE;
 
 	/* Stash kernel version information */
@@ -626,8 +628,8 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 		 * a matching HIB_DONE call performed after the write is
 		 * completed.
 		 */
-		if (hib->io_func(hib->dev, DL_GETPOFFSET(&dl.d_partitions[1]),
-		    (vaddr_t)NULL, DL_GETPSIZE(&dl.d_partitions[1]),
+		if (hib->io_func(hib->dev, DL_GETPOFFSET(&dl.d_partitions[part]),
+		    (vaddr_t)NULL, DL_GETPSIZE(&dl.d_partitions[part]),
 		    HIB_INIT, hib->io_page))
 			goto fail;
 
