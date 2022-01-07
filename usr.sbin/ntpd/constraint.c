@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraint.c,v 1.52 2021/07/16 13:59:10 kn Exp $	*/
+/*	$OpenBSD: constraint.c,v 1.53 2022/01/07 17:14:42 otto Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1019,7 +1019,7 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
 		    &httpsdate->tls_tm) == NULL) {
 			log_warnx("unsupported date format");
 			free(line);
-			return (-1);
+			goto fail;
 		}
 
 		free(line);
@@ -1027,6 +1027,8 @@ httpsdate_request(struct httpsdate *httpsdate, struct timeval *when)
  next:
 		free(line);
 	}
+	if (httpsdate->tls_tm.tm_year == 0)
+		goto fail;
 
 	/*
 	 * Now manually check the validity of the certificate presented in the
