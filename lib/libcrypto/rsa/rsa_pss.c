@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pss.c,v 1.14 2021/12/12 21:30:14 tb Exp $ */
+/* $OpenBSD: rsa_pss.c,v 1.15 2022/01/07 09:55:32 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -67,6 +67,7 @@
 #include <openssl/sha.h>
 
 #include "evp_locl.h"
+#include "rsa_locl.h"
 
 static const unsigned char zeroes[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 

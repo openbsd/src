@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_crpt.c,v 1.19 2018/02/18 12:52:13 tb Exp $ */
+/* $OpenBSD: rsa_crpt.c,v 1.20 2022/01/07 09:55:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,6 +67,7 @@
 #include <openssl/rsa.h>
 
 #include "bn_lcl.h"
+#include "rsa_locl.h"
 
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
