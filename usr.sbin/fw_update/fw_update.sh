@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.26 2022/01/06 20:15:54 deraadt Exp $
+#	$OpenBSD: fw_update.sh,v 1.27 2022/01/07 02:25:40 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -278,22 +278,22 @@ ALL=false
 OPT_F=
 while getopts :adFnp:v name
 do
-       case "$name" in
-       a) ALL=true ;;
-       d) DELETE=true ;;
-       F) OPT_F=true ;;
-       n) DRYRUN=true ;;
-       p) LOCALSRC="$OPTARG" ;;
-       v) VERBOSE=true ;;
-       :)
-	   echo "${0##*/}: option requires an argument -- -$OPTARG" >&2
-	   usage 2
-	   ;;
-       ?)
-	   echo "${0##*/}: unknown option -- -$OPTARG" >&2
-	   usage 2
-	   ;;
-       esac
+	case "$name" in
+	a) ALL=true ;;
+	d) DELETE=true ;;
+	F) OPT_F=true ;;
+	n) DRYRUN=true ;;
+	p) LOCALSRC="$OPTARG" ;;
+	v) VERBOSE=true ;;
+	:)
+	    echo "${0##*/}: option requires an argument -- -$OPTARG" >&2
+	    usage 2
+	    ;;
+	?)
+	    echo "${0##*/}: unknown option -- -$OPTARG" >&2
+	    usage 2
+	    ;;
+	esac
 done
 shift $((OPTIND - 1))
 
@@ -369,8 +369,8 @@ if "$DELETE"; then
 fi
 
 if [ ! "$LOCALSRC" ]; then
-    LOCALSRC="$( tmpdir "${DESTDIR}/tmp/${0##*/}" )"
-    REMOVE_LOCALSRC=true
+	LOCALSRC="$( tmpdir "${DESTDIR}/tmp/${0##*/}" )"
+	REMOVE_LOCALSRC=true
 fi
 
 CFILE="$LOCALSRC/$CFILE"
