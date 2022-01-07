@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_sign.c,v 1.33 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: rsa_sign.c,v 1.34 2022/01/07 11:13:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,6 +65,7 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 
+#include "asn1_locl.h"
 #include "rsa_locl.h"
 #include "x509_lcl.h"
 

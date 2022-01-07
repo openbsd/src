@@ -1,4 +1,4 @@
-/* $OpenBSD: asn_moid.c,v 1.13 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: asn_moid.c,v 1.14 2022/01/07 11:13:54 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -64,6 +64,8 @@
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
+
+#include "asn1_locl.h"
 
 /* Simple ASN1 OID module: add all objects in a given section */
 

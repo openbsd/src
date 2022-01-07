@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.43 2021/09/01 09:42:28 beck Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.44 2022/01/07 11:13:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,6 +68,8 @@
 #include <openssl/err.h>
 #include <openssl/lhash.h>
 #include <openssl/objects.h>
+
+#include "asn1_locl.h"
 
 /* obj_dat.h is generated from objects.h by obj_dat.pl */
 #include "obj_dat.h"

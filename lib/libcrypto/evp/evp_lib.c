@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_lib.c,v 1.21 2021/12/24 12:55:04 tb Exp $ */
+/* $OpenBSD: evp_lib.c,v 1.22 2022/01/07 11:13:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,6 +63,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
+#include "asn1_locl.h"
 #include "evp_locl.h"
 
 int
