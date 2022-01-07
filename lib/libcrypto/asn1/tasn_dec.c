@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.47 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.48 2022/01/07 12:24:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -66,6 +66,7 @@
 #include <openssl/err.h>
 #include <openssl/objects.h>
 
+#include "asn1_locl.h"
 #include "bytestring.h"
 
 /* Constructed types with a recursive definition (such as can be found in PKCS7)

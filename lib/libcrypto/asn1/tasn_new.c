@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_new.c,v 1.20 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: tasn_new.c,v 1.21 2022/01/07 12:24:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -63,6 +63,8 @@
 #include <openssl/err.h>
 #include <openssl/asn1t.h>
 #include <string.h>
+
+#include "asn1_locl.h"
 
 static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
     int combine);
