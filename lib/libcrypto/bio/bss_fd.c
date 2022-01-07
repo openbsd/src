@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_fd.c,v 1.19 2018/05/01 13:29:09 tb Exp $ */
+/* $OpenBSD: bss_fd.c,v 1.20 2022/01/07 09:02:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,6 +64,8 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/bio.h>
+
+#include "bio_local.h"
 
 static int fd_write(BIO *h, const char *buf, int num);
 static int fd_read(BIO *h, char *buf, int size);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_buff.c,v 1.25 2018/05/01 13:29:09 tb Exp $ */
+/* $OpenBSD: bf_buff.c,v 1.26 2022/01/07 09:02:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,8 @@
 
 #include <openssl/bio.h>
 #include <openssl/err.h>
+
+#include "bio_local.h"
 
 static int buffer_write(BIO *h, const char *buf, int num);
 static int buffer_read(BIO *h, char *buf, int size);

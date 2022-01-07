@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_asn1.c,v 1.15 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: bio_asn1.c,v 1.16 2022/01/07 09:02:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -66,6 +66,8 @@
 
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
+
+#include "bio_local.h"
 
 /* Must be large enough for biggest tag+length */
 #define DEFAULT_ASN1_BUF_SIZE 20

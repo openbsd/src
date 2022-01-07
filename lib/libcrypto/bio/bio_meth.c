@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_meth.c,v 1.6 2018/06/02 04:41:12 tb Exp $	*/
+/*	$OpenBSD: bio_meth.c,v 1.7 2022/01/07 09:02:17 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -18,6 +18,8 @@
 #include <stdlib.h>
 
 #include <openssl/bio.h>
+
+#include "bio_local.h"
 
 BIO_METHOD *
 BIO_meth_new(int type, const char *name)

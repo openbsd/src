@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_log.c,v 1.22 2018/05/01 13:29:10 tb Exp $ */
+/* $OpenBSD: bss_log.c,v 1.23 2022/01/07 09:02:17 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -69,6 +69,8 @@
 
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+
+#include "bio_local.h"
 
 #ifndef NO_SYSLOG
 

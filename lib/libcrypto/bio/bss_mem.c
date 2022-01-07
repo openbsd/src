@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_mem.c,v 1.17 2018/05/12 18:51:59 tb Exp $ */
+/* $OpenBSD: bss_mem.c,v 1.18 2022/01/07 09:02:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,6 +63,8 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/buffer.h>
+
+#include "bio_local.h"
 
 static int mem_write(BIO *h, const char *buf, int num);
 static int mem_read(BIO *h, char *buf, int size);

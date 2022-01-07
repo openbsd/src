@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_cb.c,v 1.17 2021/03/25 09:26:17 tb Exp $ */
+/* $OpenBSD: bio_cb.c,v 1.18 2022/01/07 09:02:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,6 +62,8 @@
 
 #include <openssl/err.h>
 #include <openssl/bio.h>
+
+#include "bio_local.h"
 
 long
 BIO_debug_callback(BIO *bio, int cmd, const char *argp, int argi, long argl,

@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_bio.c,v 1.24 2018/05/01 13:29:09 tb Exp $ */
+/* $OpenBSD: bss_bio.c,v 1.25 2022/01/07 09:02:17 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
@@ -83,6 +83,8 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
+
+#include "bio_local.h"
 
 static int bio_new(BIO *bio);
 static int bio_free(BIO *bio);

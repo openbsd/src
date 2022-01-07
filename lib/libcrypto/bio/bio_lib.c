@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.33 2022/01/05 20:48:44 tb Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.34 2022/01/07 09:02:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,6 +63,8 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/stack.h>
+
+#include "bio_local.h"
 
 int
 BIO_get_new_index(void)

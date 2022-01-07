@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.63 2021/12/25 12:21:36 jsing Exp $
+# $OpenBSD: Makefile,v 1.64 2022/01/07 09:02:17 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -29,6 +29,7 @@ CFLAGS+= -DOPENSSL_NO_HW_PADLOCK # XXX enable this?
 
 CFLAGS+= -I${LCRYPTO_SRC}
 CFLAGS+= -I${LCRYPTO_SRC}/asn1
+CFLAGS+= -I${LCRYPTO_SRC}/bio
 CFLAGS+= -I${LCRYPTO_SRC}/bn
 CFLAGS+= -I${LCRYPTO_SRC}/bytestring
 CFLAGS+= -I${LCRYPTO_SRC}/ec

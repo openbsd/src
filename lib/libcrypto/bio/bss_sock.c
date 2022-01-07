@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_sock.c,v 1.24 2018/05/01 13:29:10 tb Exp $ */
+/* $OpenBSD: bss_sock.c,v 1.25 2022/01/07 09:02:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,6 +64,8 @@
 #include <unistd.h>
 
 #include <openssl/bio.h>
+
+#include "bio_local.h"
 
 static int sock_write(BIO *h, const char *buf, int num);
 static int sock_read(BIO *h, char *buf, int size);
