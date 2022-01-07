@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.646 2022/01/02 22:36:03 jsg Exp $	*/
+/*	$OpenBSD: if.c,v 1.647 2022/01/07 16:39:18 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2030,7 +2030,6 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		    (!ISSET(oif_xflags, IFXF_AUTOCONF6TEMP) &&
 		    ISSET(ifp->if_xflags, IFXF_AUTOCONF6TEMP)))) {
 			ifr->ifr_flags = ifp->if_flags | IFF_UP;
-			cmd = SIOCSIFFLAGS;
 			goto forceup;
 		}
 
@@ -2045,9 +2044,11 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 forceup:
 		ifp->if_flags = (ifp->if_flags & IFF_CANTCHANGE) |
 			(ifr->ifr_flags & ~IFF_CANTCHANGE);
-		error = (*ifp->if_ioctl)(ifp, cmd, data);
+		error = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, data);
 		if (error != 0) {
 			ifp->if_flags = oif_flags;
+			if (cmd == SIOCSIFXFLAGS)
+				ifp->if_xflags = oif_xflags;
 		} else if (ISSET(oif_flags ^ ifp->if_flags, IFF_UP)) {
 			s = splnet();
 			if (ISSET(ifp->if_flags, IFF_UP))
