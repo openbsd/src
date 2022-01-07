@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.221 2022/01/06 18:23:56 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.222 2022/01/07 15:46:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1565,10 +1565,6 @@ ssl3_free(SSL *s)
 	ssl3_release_write_buffer(s);
 	freezero(S3I(s)->hs.sigalgs, S3I(s)->hs.sigalgs_len);
 
-	DH_free(S3I(s)->tmp.dh);
-	EC_KEY_free(S3I(s)->tmp.ecdh);
-	freezero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
-
 	tls_key_share_free(S3I(s)->hs.key_share);
 
 	tls13_secrets_destroy(S3I(s)->hs.tls13.secrets);
@@ -1600,14 +1596,6 @@ ssl3_clear(SSL *s)
 	sk_X509_NAME_pop_free(S3I(s)->hs.tls12.ca_names, X509_NAME_free);
 	sk_X509_pop_free(s->internal->verified_chain, X509_free);
 	s->internal->verified_chain = NULL;
-
-	DH_free(S3I(s)->tmp.dh);
-	S3I(s)->tmp.dh = NULL;
-	EC_KEY_free(S3I(s)->tmp.ecdh);
-	S3I(s)->tmp.ecdh = NULL;
-	S3I(s)->tmp.ecdh_nid = NID_undef;
-	freezero(S3I(s)->tmp.x25519, X25519_KEY_LENGTH);
-	S3I(s)->tmp.x25519 = NULL;
 
 	freezero(S3I(s)->hs.sigalgs, S3I(s)->hs.sigalgs_len);
 	S3I(s)->hs.sigalgs = NULL;

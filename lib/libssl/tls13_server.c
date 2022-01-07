@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.90 2022/01/05 17:10:02 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.91 2022/01/07 15:46:30 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -360,8 +360,8 @@ tls13_server_engage_record_protection(struct tls13_ctx *ctx)
 	SSL *s = ctx->ssl;
 	int ret = 0;
 
-	if (!tls_key_share_derive(ctx->hs->key_share,
-	    &shared_key, &shared_key_len))
+	if (!tls_key_share_derive(ctx->hs->key_share, &shared_key,
+	    &shared_key_len))
 		goto err;
 
 	s->session->cipher = ctx->hs->cipher;

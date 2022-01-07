@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.374 2022/01/06 18:23:56 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.375 2022/01/07 15:46:30 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1167,15 +1167,6 @@ typedef struct ssl3_state_internal_st {
 	int in_read_app_data;
 
 	SSL_HANDSHAKE hs;
-
-	struct	{
-		DH *dh;
-
-		EC_KEY *ecdh; /* holds short lived ECDH key */
-		int ecdh_nid;
-
-		uint8_t *x25519;
-	} tmp;
 
 	/* Connection binding to prevent renegotiation attacks */
 	unsigned char previous_client_finished[EVP_MAX_MD_SIZE];

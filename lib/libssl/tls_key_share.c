@@ -1,6 +1,6 @@
-/* $OpenBSD: tls_key_share.c,v 1.2 2022/01/06 18:23:56 jsing Exp $ */
+/* $OpenBSD: tls_key_share.c,v 1.3 2022/01/07 15:46:30 jsing Exp $ */
 /*
- * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,7 +18,9 @@
 #include <stdlib.h>
 
 #include <openssl/curve25519.h>
+#include <openssl/dh.h>
 #include <openssl/ec.h>
+#include <openssl/evp.h>
 
 #include "bytestring.h"
 #include "ssl_locl.h"
@@ -27,6 +29,7 @@
 struct tls_key_share {
 	int nid;
 	uint16_t group_id;
+	size_t key_bits;
 
 	DH *dhe;
 	DH *dhe_peer;
@@ -108,6 +111,28 @@ tls_key_share_nid(struct tls_key_share *ks)
 	return ks->nid;
 }
 
+void
+tls_key_share_set_key_bits(struct tls_key_share *ks, size_t key_bits)
+{
+	ks->key_bits = key_bits;
+}
+
+int
+tls_key_share_set_dh_params(struct tls_key_share *ks, DH *dh_params)
+{
+	if (ks->nid != NID_dhKeyAgreement)
+		return 0;
+	if (ks->dhe != NULL || ks->dhe_peer != NULL)
+		return 0;
+
+	if ((ks->dhe = DHparams_dup(dh_params)) == NULL)
+		return 0;
+	if ((ks->dhe_peer = DHparams_dup(dh_params)) == NULL)
+		return 0;
+
+	return 1;
+}
+
 int
 tls_key_share_peer_pkey(struct tls_key_share *ks, EVP_PKEY *pkey)
 {
@@ -126,10 +151,28 @@ tls_key_share_peer_pkey(struct tls_key_share *ks, EVP_PKEY *pkey)
 static int
 tls_key_share_generate_dhe(struct tls_key_share *ks)
 {
-	if (ks->dhe == NULL)
+	/*
+	 * If auto params are not being used then we must already have DH
+	 * parameters set.
+	 */
+	if (ks->key_bits == 0) {
+		if (ks->dhe == NULL)
+			return 0;
+
+		return ssl_kex_generate_dhe(ks->dhe, ks->dhe);
+	}
+
+	if (ks->dhe != NULL || ks->dhe_peer != NULL)
 		return 0;
 
-	return ssl_kex_generate_dhe(ks->dhe, ks->dhe);
+	if ((ks->dhe = DH_new()) == NULL)
+		return 0;
+	if (!ssl_kex_generate_dhe_params_auto(ks->dhe, ks->key_bits))
+		return 0;
+	if ((ks->dhe_peer = DHparams_dup(ks->dhe)) == NULL)
+		return 0;
+
+	return 1;
 }
 
 static int
@@ -197,6 +240,24 @@ tls_key_share_generate(struct tls_key_share *ks)
 		return tls_key_share_generate_x25519(ks);
 
 	return tls_key_share_generate_ecdhe_ecp(ks);
+}
+
+static int
+tls_key_share_params_dhe(struct tls_key_share *ks, CBB *cbb)
+{
+	if (ks->dhe == NULL)
+		return 0;
+
+	return ssl_kex_params_dhe(ks->dhe, cbb);
+}
+
+int
+tls_key_share_params(struct tls_key_share *ks, CBB *cbb)
+{
+	if (ks->nid == NID_dhKeyAgreement)
+		return tls_key_share_params_dhe(ks, cbb);
+
+	return 0;
 }
 
 static int
