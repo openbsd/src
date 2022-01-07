@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap_ms.c,v 1.1 2015/07/21 04:06:04 yasuoka Exp $	*/
+/*	$OpenBSD: chap_ms.c,v 1.2 2022/01/07 07:34:34 tb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -134,19 +134,21 @@ mschap_challenge_response(u_int8_t *challenge, u_int8_t *pwhash,
 void
 mschap_ntpassword_hash(u_int8_t *in, int inlen, u_int8_t *hash)
 {
-	EVP_MD_CTX	 ctx;
+	EVP_MD_CTX	*ctx;
 	u_int		 mdlen;
 
-	EVP_DigestInit(&ctx, EVP_md4());
-	EVP_DigestUpdate(&ctx, in, inlen);
-	EVP_DigestFinal(&ctx, hash, &mdlen);
+	ctx = EVP_MD_CTX_new();
+	EVP_DigestInit_ex(ctx, EVP_md4(), NULL);
+	EVP_DigestUpdate(ctx, in, inlen);
+	EVP_DigestFinal_ex(ctx, hash, &mdlen);
+	EVP_MD_CTX_free(ctx);
 }
 
 void
 mschap_challenge_hash(u_int8_t *peer_challenge, u_int8_t *auth_challenge,
     u_int8_t *username, int usernamelen, u_int8_t *challenge)
 {
-	EVP_MD_CTX	 ctx;
+	EVP_MD_CTX	*ctx;
 	u_int8_t	 md[SHA_DIGEST_LENGTH];
 	u_int		 mdlen;
 	u_int8_t	*name;
@@ -156,11 +158,13 @@ mschap_challenge_hash(u_int8_t *peer_challenge, u_int8_t *auth_challenge,
 	else
 		name++;
 
-	EVP_DigestInit(&ctx, EVP_sha1());
-	EVP_DigestUpdate(&ctx, peer_challenge, MSCHAPV2_CHALLENGE_SZ);
-	EVP_DigestUpdate(&ctx, auth_challenge, MSCHAPV2_CHALLENGE_SZ);
-	EVP_DigestUpdate(&ctx, name, strlen(name));
-	EVP_DigestFinal(&ctx, md, &mdlen);
+	ctx = EVP_MD_CTX_new();
+	EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+	EVP_DigestUpdate(ctx, peer_challenge, MSCHAPV2_CHALLENGE_SZ);
+	EVP_DigestUpdate(ctx, auth_challenge, MSCHAPV2_CHALLENGE_SZ);
+	EVP_DigestUpdate(ctx, name, strlen(name));
+	EVP_DigestFinal_ex(ctx, md, &mdlen);
+	EVP_MD_CTX_free(ctx);
 
 	memcpy(challenge, md, MSCHAP_CHALLENGE_SZ);
 }
@@ -185,7 +189,7 @@ mschap_auth_response(u_int8_t *password, int passwordlen,
     u_int8_t *ntresponse, u_int8_t *auth_challenge, u_int8_t *peer_challenge,
     u_int8_t *username, int usernamelen, u_int8_t *auth_response)
 {
-	EVP_MD_CTX	 ctx;
+	EVP_MD_CTX	*ctx;
 	u_int8_t	 password_hash[MSCHAP_HASH_SZ];
 	u_int8_t	 password_hash2[MSCHAP_HASH_SZ];
 	u_int8_t	 challenge[MSCHAP_CHALLENGE_SZ];
@@ -210,20 +214,22 @@ mschap_auth_response(u_int8_t *password, int passwordlen,
 	mschap_ntpassword_hash(password, passwordlen, password_hash);
 	mschap_ntpassword_hash(password_hash, MSCHAP_HASH_SZ, password_hash2);
 
-	EVP_DigestInit(&ctx, EVP_sha1());
-	EVP_DigestUpdate(&ctx, password_hash2, sizeof(password_hash2));
-	EVP_DigestUpdate(&ctx, ntresponse, 24);
-	EVP_DigestUpdate(&ctx, magic1, 39);
-	EVP_DigestFinal(&ctx, md, &mdlen);
+	ctx = EVP_MD_CTX_new();
+	EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+	EVP_DigestUpdate(ctx, password_hash2, sizeof(password_hash2));
+	EVP_DigestUpdate(ctx, ntresponse, 24);
+	EVP_DigestUpdate(ctx, magic1, 39);
+	EVP_DigestFinal_ex(ctx, md, &mdlen);
 
 	mschap_challenge_hash(peer_challenge, auth_challenge,
 	    username, usernamelen, challenge);
 
-	EVP_DigestInit(&ctx, EVP_sha1());
-	EVP_DigestUpdate(&ctx, md, sizeof(md));
-	EVP_DigestUpdate(&ctx, challenge, sizeof(challenge));
-	EVP_DigestUpdate(&ctx, magic2, 41);
-	EVP_DigestFinal(&ctx, md, &mdlen);
+	EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+	EVP_DigestUpdate(ctx, md, sizeof(md));
+	EVP_DigestUpdate(ctx, challenge, sizeof(challenge));
+	EVP_DigestUpdate(ctx, magic2, 41);
+	EVP_DigestFinal_ex(ctx, md, &mdlen);
+	EVP_MD_CTX_free(ctx);
 
 	/*
 	 * Encode the value of 'Digest' as "S=" followed by
@@ -247,18 +253,20 @@ mschap_masterkey(u_int8_t *password_hash2, u_int8_t *ntresponse,
 {
 	u_int8_t	 md[SHA_DIGEST_LENGTH];
 	u_int		 mdlen;
-	EVP_MD_CTX	 ctx;
+	EVP_MD_CTX	*ctx;
 	static u_int8_t	 magic1[27] = {
 		0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20, 0x74,
 		0x68, 0x65, 0x20, 0x4d, 0x50, 0x50, 0x45, 0x20, 0x4d,
 		0x61, 0x73, 0x74, 0x65, 0x72, 0x20, 0x4b, 0x65, 0x79
 	};
 
-	EVP_DigestInit(&ctx, EVP_sha1());
-	EVP_DigestUpdate(&ctx, password_hash2, MSCHAP_HASH_SZ);
-	EVP_DigestUpdate(&ctx, ntresponse, 24);
-	EVP_DigestUpdate(&ctx, magic1, 27);
-	EVP_DigestFinal(&ctx, md, &mdlen);
+	ctx = EVP_MD_CTX_new();
+	EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+	EVP_DigestUpdate(ctx, password_hash2, MSCHAP_HASH_SZ);
+	EVP_DigestUpdate(ctx, ntresponse, 24);
+	EVP_DigestUpdate(ctx, magic1, 27);
+	EVP_DigestFinal_ex(ctx, md, &mdlen);
+	EVP_MD_CTX_free(ctx);
 
 	memcpy(masterkey, md, 16);
 }
@@ -267,7 +275,7 @@ void
 mschap_asymetric_startkey(u_int8_t *masterkey, u_int8_t *sessionkey,
     int sessionkeylen, int issend, int isserver)
 {
-	EVP_MD_CTX	 ctx;
+	EVP_MD_CTX	*ctx;
 	u_int8_t	 md[SHA_DIGEST_LENGTH];
 	u_int		 mdlen;
 	u_int8_t	*s;
@@ -299,12 +307,14 @@ mschap_asymetric_startkey(u_int8_t *masterkey, u_int8_t *sessionkey,
 	else
 		s = isserver ? magic2 : magic3;
 
-	EVP_DigestInit(&ctx, EVP_sha1());
-	EVP_DigestUpdate(&ctx, masterkey, 16);
-	EVP_DigestUpdate(&ctx, sha1_pad1, 40);
-	EVP_DigestUpdate(&ctx, s, 84);
-	EVP_DigestUpdate(&ctx, sha1_pad2, 40);
-	EVP_DigestFinal(&ctx, md, &mdlen);
+	ctx = EVP_MD_CTX_new();
+	EVP_DigestInit_ex(ctx, EVP_sha1(), NULL);
+	EVP_DigestUpdate(ctx, masterkey, 16);
+	EVP_DigestUpdate(ctx, sha1_pad1, 40);
+	EVP_DigestUpdate(ctx, s, 84);
+	EVP_DigestUpdate(ctx, sha1_pad2, 40);
+	EVP_DigestFinal_ex(ctx, md, &mdlen);
+	EVP_MD_CTX_free(ctx);
 
 	memcpy(sessionkey, md, sessionkeylen);
 }
@@ -336,24 +346,26 @@ void
 mschap_radiuskey(u_int8_t *plain, const u_int8_t *crypted,
     const u_int8_t *authenticator, const u_int8_t *secret)
 {
-	EVP_MD_CTX	 ctx;
+	EVP_MD_CTX	*ctx;
 	u_int8_t	 b[MD5_DIGEST_LENGTH], p[32];
 	u_int		 i, mdlen;
 
-	EVP_DigestInit(&ctx, EVP_md5());
-	EVP_DigestUpdate(&ctx, secret, strlen(secret));
-	EVP_DigestUpdate(&ctx, authenticator, 16);
-	EVP_DigestUpdate(&ctx, crypted, 2);
-	EVP_DigestFinal(&ctx, b, &mdlen);
+	ctx = EVP_MD_CTX_new();
+	EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
+	EVP_DigestUpdate(ctx, secret, strlen(secret));
+	EVP_DigestUpdate(ctx, authenticator, 16);
+	EVP_DigestUpdate(ctx, crypted, 2);
+	EVP_DigestFinal_ex(ctx, b, &mdlen);
 
 	for (i = 0; i < mdlen; i++) {
 		p[i] = b[i] ^ crypted[i+2];
 	}
 
-	EVP_DigestInit(&ctx, EVP_md5());
-	EVP_DigestUpdate(&ctx, secret, strlen(secret));
-	EVP_DigestUpdate(&ctx, crypted + 2, mdlen);
-	EVP_DigestFinal(&ctx, b, &mdlen);
+	EVP_DigestInit_ex(ctx, EVP_md5(), NULL);
+	EVP_DigestUpdate(ctx, secret, strlen(secret));
+	EVP_DigestUpdate(ctx, crypted + 2, mdlen);
+	EVP_DigestFinal_ex(ctx, b, &mdlen);
+	EVP_MD_CTX_free(ctx);
 
 	for (i = 0; i < mdlen; i++) {
 		p[i+16] = b[i] ^ crypted[i+18];
