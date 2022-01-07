@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_aead.c,v 1.6 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: evp_aead.c,v 1.7 2022/01/07 21:58:17 tb Exp $ */
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -66,6 +66,22 @@ EVP_AEAD_CTX_cleanup(EVP_AEAD_CTX *ctx)
 		return;
 	ctx->aead->cleanup(ctx);
 	ctx->aead = NULL;
+}
+
+EVP_AEAD_CTX *
+EVP_AEAD_CTX_new(void)
+{
+	return calloc(1, sizeof(EVP_AEAD_CTX));
+}
+
+void
+EVP_AEAD_CTX_free(EVP_AEAD_CTX *ctx)
+{
+	if (ctx == NULL)
+		return;
+
+	EVP_AEAD_CTX_cleanup(ctx);
+	free(ctx);
 }
 
 /* check_alias returns 0 if out points within the buffer determined by in
