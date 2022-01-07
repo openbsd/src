@@ -1,7 +1,9 @@
-#	$OpenBSD: Makefile,v 1.8 2020/05/25 15:53:14 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.9 2022/01/07 10:48:59 visa Exp $
 
 NOMAN=
 #MAN=		boot.8
+
+RDBOOT=		${.CURDIR}/../rdboot/obj/rdboot
 
 .if ${MACHINE} == "octeon"
 all: bsd rdboot
@@ -11,8 +13,8 @@ bsd:
 	    ${MAKE} config && ${MAKE} clean && ${MAKE}
 	cp -p ${.CURDIR}/../../compile/BOOT/obj/bsd bsd
 
-rdboot:
-	cp -p ${.CURDIR}/../rdboot/obj/rdboot rdboot
+rdboot: ${RDBOOT}
+	cp -p ${RDBOOT} rdboot
 	strip rdboot
 
 mr.fs: rdboot
