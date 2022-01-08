@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.377 2022/01/08 12:43:44 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.378 2022/01/08 12:54:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -347,12 +347,6 @@ __BEGIN_HIDDEN_DECLS
  * SSL_aRSA <- RSA_ENC | RSA_SIGN
  * SSL_aDSS <- DSA_SIGN
  */
-
-/*
-#define CERT_INVALID		0
-#define CERT_PUBLIC_KEY		1
-#define CERT_PRIVATE_KEY	2
-*/
 
 /* From ECC-TLS draft, used in encoding the curve type in
  * ECParameters
