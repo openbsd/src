@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.dep.mk,v 1.24 2017/10/17 19:31:56 naddy Exp $
+#	$OpenBSD: bsd.dep.mk,v 1.25 2022/01/08 17:05:30 patrick Exp $
 #	$NetBSD: bsd.dep.mk,v 1.12 1995/09/27 01:15:09 christos Exp $
 
 .if !target(depend)
@@ -44,7 +44,7 @@ ${i:R:S/$/.o/} ${i:R:S/$/.po/} ${i:R:S/$/.so/} ${i:R:S/$/.do/}: $i
 # loop may not trigger
 .  for f in ${SRCS:M*.y}	
 ${f:.y=.c} ${f:.y=.h}: $f
-	${YACC.y} -o ${f:.y=.c} ${.IMPSRC}
+	${YACC.y} -o ${f:.y=.c} ${.ALLSRC:M*.y}
 .  endfor
 CLEANFILES += ${SRCS:M*.y:.y=.h}
 .endif
