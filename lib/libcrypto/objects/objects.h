@@ -1,4 +1,4 @@
-/* $OpenBSD: objects.h,v 1.12 2017/01/21 04:53:22 jsing Exp $ */
+/* $OpenBSD: objects.h,v 1.13 2022/01/08 15:34:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1102,7 +1102,7 @@ const void *	OBJ_bsearch_ex_(const void *key, const void *base, int num,
 int		OBJ_new_nid(int num);
 int		OBJ_add_object(const ASN1_OBJECT *obj);
 int		OBJ_create(const char *oid, const char *sn, const char *ln);
-void		OBJ_cleanup(void );
+void		OBJ_cleanup(void);
 int		OBJ_create_objects(BIO *in);
 
 int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid);
