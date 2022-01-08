@@ -1,4 +1,4 @@
-#	$OpenBSD: BOOT,v 1.10 2021/02/06 09:31:47 visa Exp $
+#	$OpenBSD: BOOT,v 1.11 2022/01/08 05:40:19 visa Exp $
 
 machine		octeon mips64
 maxusers	4
@@ -11,9 +11,6 @@ option		NO_RANDOMIZE
 
 option		RAMDISK_HOOKS
 option		MINIROOTSIZE=2048
-
-option		PCIVERBOSE
-option		USBVERBOSE
 
 option		FFS
 option		FFS2

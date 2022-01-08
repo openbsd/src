@@ -1,4 +1,4 @@
-# $OpenBSD: BOOT,v 1.8 2020/09/05 13:55:45 kettenis Exp $
+# $OpenBSD: BOOT,v 1.9 2022/01/08 05:40:19 visa Exp $
 
 machine		powerpc64
 maxusers	4
@@ -11,9 +11,6 @@ option		BOOT_CONFIG
 
 option		RAMDISK_HOOKS
 option		MINIROOTSIZE=16384
-
-option		PCIVERBOSE
-option		USBVERBOSE
 
 option		FFS
 option		FFS2
