@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplns.c,v 1.8 2022/01/04 20:55:48 kettenis Exp $ */
+/*	$OpenBSD: aplns.c,v 1.9 2022/01/08 15:23:42 kettenis Exp $ */
 /*
  * Copyright (c) 2014, 2021 David Gwynne <dlg@openbsd.org>
  *
@@ -98,7 +98,8 @@ aplns_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return (OF_is_compatible(faa->fa_node, "apple,nvme-m1"));
+	return (OF_is_compatible(faa->fa_node, "apple,nvme-m1") ||
+	    OF_is_compatible(faa->fa_node, "apple,nvme-ans2"));
 }
 
 void
