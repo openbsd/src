@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.35 2017/12/12 15:33:34 deraadt Exp $	*/
+/*	$OpenBSD: sod.c,v 1.36 2022/01/08 06:49:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -33,18 +33,14 @@
 
 #include <sys/types.h>
 #include <sys/mman.h>
-#include <machine/exec.h>
+#include <sys/stat.h>
+
 #include <limits.h>
-#include <stdio.h>
 #include <fcntl.h>
-#include <nlist.h>
-#include <link.h>
+#include <link.h>		/* for _PATH_LD_HINTS */
 #include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
 
 #include "syscall.h"
-#include "archdep.h"
 #include "path.h"
 #include "util.h"
 #include "sod.h"

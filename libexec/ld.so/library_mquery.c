@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.65 2021/03/16 18:03:06 kurt Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.66 2022/01/08 06:49:41 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -30,10 +30,12 @@
 #define _DYN_LOADER
 
 #include <sys/types.h>
-#include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "syscall.h"
+#include "util.h"
 #include "archdep.h"
 #include "resolve.h"
 #include "sod.h"

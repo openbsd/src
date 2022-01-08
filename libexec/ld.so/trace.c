@@ -1,4 +1,4 @@
-/*	$OpenBSD: trace.c,v 1.4 2017/01/24 07:48:37 guenther Exp $	*/
+/*	$OpenBSD: trace.c,v 1.5 2022/01/08 06:49:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 2013 Miodrag Vallat.
@@ -19,8 +19,8 @@
 #include <sys/types.h>
 
 #include "syscall.h"
-#include "resolve.h"
 #include "util.h"
+#include "resolve.h"
 
 /*
  * Library call tracing routines.

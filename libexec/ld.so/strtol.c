@@ -1,4 +1,4 @@
-/* $OpenBSD: strtol.c,v 1.3 2017/08/16 18:52:01 millert Exp $ */
+/* $OpenBSD: strtol.c,v 1.4 2022/01/08 06:49:41 guenther Exp $ */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <limits.h>
+
 #include "util.h"
 
 /*

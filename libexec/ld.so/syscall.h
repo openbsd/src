@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.1 2021/12/23 18:50:32 guenther Exp $ */
+/*	$OpenBSD: syscall.h,v 1.2 2022/01/08 06:49:41 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -29,9 +29,6 @@
 #ifndef __DL_SYSCALL_H__
 #define __DL_SYSCALL_H__
 
-#include <sys/syscall.h>
-#include <sys/stat.h>
-
 #ifndef _dl_MAX_ERRNO
 #define _dl_MAX_ERRNO 512L
 #endif
@@ -39,6 +36,7 @@
     ((long)__res < 0 && (long)__res >= -_dl_MAX_ERRNO)
 
 struct __kbind;
+struct stat;
 
 int	_dl_close(int);
 __dead

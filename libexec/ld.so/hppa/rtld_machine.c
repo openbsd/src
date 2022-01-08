@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.42 2019/12/07 22:57:47 guenther Exp $	*/
+/*	$OpenBSD: rtld_machine.c,v 1.43 2022/01/08 06:49:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -32,19 +32,15 @@
 #define _DYN_LOADER
 
 #include <sys/types.h>
-#include <sys/mman.h>
-#include <sys/tree.h>
+#include <sys/exec_elf.h>
 #include <sys/syscall.h>
+#include <sys/tree.h>
 #include <sys/unistd.h>
 
+#include <machine/reloc.h>
 #include <machine/vmparam.h>	/* SYSCALLGATE */
 
-#include <nlist.h>
-#include <link.h>
-#include <string.h>
-
-#include "syscall.h"
-#include "archdep.h"
+#include "util.h"
 #define	_dl_bind XXX_dl_bind
 #include "resolve.h"
 #undef	_dl_bind

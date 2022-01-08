@@ -1,4 +1,4 @@
-/* $OpenBSD: ld.h,v 1.7 2006/05/13 05:59:28 deraadt Exp $ */
+/* $OpenBSD: ld.h,v 1.8 2022/01/08 06:49:42 guenther Exp $ */
 /*
  * Header file to make code compatible with ELF version
  * ldconfig was taken from the a.out ld.
@@ -20,5 +20,3 @@ void	add_search_path(char *path);
 void	remove_search_dir(char *name);
 int	getdewey(int dewey[], char *cp);
 int	cmpndewey(int d1[], int n1, int d2[], int n2);
-
-#define PAGSIZ	__LDPGSZ

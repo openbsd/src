@@ -1,4 +1,4 @@
-/*      $OpenBSD: malloc.c,v 1.33 2021/12/30 08:39:19 guenther Exp $       */
+/*      $OpenBSD: malloc.c,v 1.34 2022/01/08 06:49:41 guenther Exp $       */
 /*
  * Copyright (c) 2008, 2010, 2011 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -23,15 +23,14 @@
  * can buy me a beer in return. Poul-Henning Kamp
  */
 
-#include <sys/param.h>	/* PAGE_SHIFT ALIGN */
+#include <sys/param.h>	/* ALIGN */
 #include <sys/queue.h>
 #include <sys/mman.h>
-#include <sys/uio.h>
 #include <stdint.h>
-#include <unistd.h>
 
-#include  "archdep.h"
-#include  "resolve.h"
+#include "syscall.h"
+#include "util.h"
+#include "resolve.h"		/* for lock_cb */
 
 #define MALLOC_PAGESHIFT	_MAX_PAGE_SHIFT
 #define MALLOC_MINSHIFT		4

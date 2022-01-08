@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.48 2020/10/15 04:12:43 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.49 2022/01/08 06:49:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -28,7 +28,9 @@
 
 #include <sys/types.h>
 #include <syslog.h>
-#include "archdep.h"
+
+#include "syscall.h"
+#include "util.h"
 #include "resolve.h"
 #define KEYSTREAM_ONLY
 #include "chacha_private.h"

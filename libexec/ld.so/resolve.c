@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.96 2021/11/12 22:28:13 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.97 2022/01/08 06:49:41 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -31,10 +31,9 @@
 #include <sys/types.h>
 
 #include <limits.h>
-#include <nlist.h>
 #include <link.h>
-#include "syscall.h"
-#include "archdep.h"
+
+#include "util.h"
 #include "path.h"
 #include "resolve.h"
 

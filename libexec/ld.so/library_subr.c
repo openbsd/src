@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.50 2019/10/04 17:42:16 guenther Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.51 2022/01/08 06:49:41 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -34,7 +34,7 @@
 #include <limits.h>
 #include <dirent.h>
 
-#include "archdep.h"
+#include "util.h"
 #include "resolve.h"
 #include "dir.h"
 #include "sod.h"

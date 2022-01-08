@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.33 2019/12/07 22:57:48 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.34 2022/01/08 06:49:42 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Dale Rahn
@@ -30,15 +30,13 @@
 #define LDSO_ARCH_IS_RELA_
 
 #include <sys/types.h>
-#include <sys/mman.h>
+#include <sys/exec_elf.h>
 #include <sys/syscall.h>
 #include <sys/unistd.h>
 
-#include <nlist.h>
-#include <link.h>
+#include <machine/reloc.h>
 
-#include "syscall.h"
-#include "archdep.h"
+#include "util.h"
 #include "resolve.h"
 
 int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;

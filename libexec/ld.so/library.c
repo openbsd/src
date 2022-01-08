@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.85 2019/12/09 22:15:15 deraadt Exp $ */
+/*	$OpenBSD: library.c,v 1.86 2022/01/08 06:49:41 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -30,10 +30,12 @@
 #define _DYN_LOADER
 
 #include <sys/types.h>
-#include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "syscall.h"
+#include "util.h"
 #include "archdep.h"
 #include "resolve.h"
 #include "sod.h"

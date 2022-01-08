@@ -23,13 +23,9 @@
 
 #include <sys/types.h>
 
-#include <elf.h>
-#include <tib.h>
-
-#include "archdep.h"
-#include "resolve.h"
-#include "util.h"
 #include "syscall.h"
+#include "util.h"
+#include "resolve.h"
 
 /* If we need the syscall, use our local syscall definition */
 #define	__set_tcb(tcb)	_dl___set_tcb(tcb)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reallocarray.c,v 1.2 2017/01/24 07:48:37 guenther Exp $	*/
+/*	$OpenBSD: reallocarray.c,v 1.3 2022/01/08 06:49:41 guenther Exp $	*/
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
  *
@@ -17,9 +17,8 @@
 
 #include <sys/types.h>
 #include <stdint.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include "archdep.h"
+
+#include "util.h"
 
 /*
  * This is sqrt(SIZE_MAX+1), as s1*s2 <= SIZE_MAX

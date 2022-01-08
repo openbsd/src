@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.194 2021/12/23 18:50:32 guenther Exp $ */
+/*	$OpenBSD: loader.c,v 1.195 2022/01/08 06:49:41 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -31,9 +31,9 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/exec.h>
-#include <sys/sysctl.h>
-#include <machine/vmparam.h>
-#include <nlist.h>
+#ifdef __i386__
+# include <machine/vmparam.h>
+#endif
 #include <string.h>
 #include <link.h>
 #include <limits.h>			/* NAME_MAX */
@@ -41,11 +41,10 @@
 #include <tib.h>
 
 #include "syscall.h"
-#include "archdep.h"
-#include "path.h"
+#include "util.h"
 #include "resolve.h"
+#include "path.h"
 #include "sod.h"
-#include "stdlib.h"
 
 /*
  * Local decls.
