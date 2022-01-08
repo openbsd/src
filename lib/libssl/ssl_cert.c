@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.92 2022/01/08 12:43:44 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.93 2022/01/08 12:59:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -345,41 +345,6 @@ ssl_cert_add1_chain_cert(SSL_CERT *c, X509 *cert)
 	X509_up_ref(cert);
 
 	return 1;
-}
-
-SESS_CERT *
-ssl_sess_cert_new(void)
-{
-	SESS_CERT *ret;
-
-	ret = calloc(1, sizeof *ret);
-	if (ret == NULL) {
-		SSLerrorx(ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	ret->peer_key = &(ret->peer_pkeys[SSL_PKEY_RSA]);
-	ret->references = 1;
-
-	return ret;
-}
-
-void
-ssl_sess_cert_free(SESS_CERT *sc)
-{
-	int i;
-
-	if (sc == NULL)
-		return;
-
-	i = CRYPTO_add(&sc->references, -1, CRYPTO_LOCK_SSL_SESS_CERT);
-	if (i > 0)
-		return;
-
-	sk_X509_pop_free(sc->cert_chain, X509_free);
-	for (i = 0; i < SSL_PKEY_NUM; i++)
-		X509_free(sc->peer_pkeys[i].x509);
-
-	free(sc);
 }
 
 int

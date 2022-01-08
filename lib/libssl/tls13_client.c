@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.90 2022/01/08 12:43:44 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.91 2022/01/08 12:59:59 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -628,21 +628,19 @@ tls13_server_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 	if ((cert_idx = ssl_cert_type(cert, pkey)) < 0)
 		goto err;
 
-	ssl_sess_cert_free(s->session->sess_cert);
-	if ((s->session->sess_cert = ssl_sess_cert_new()) == NULL)
-		goto err;
-
-	s->session->sess_cert->cert_chain = certs;
+	sk_X509_pop_free(s->session->cert_chain, X509_free);
+	s->session->cert_chain = certs;
 	certs = NULL;
 
 	X509_up_ref(cert);
-	s->session->sess_cert->peer_pkeys[cert_idx].x509 = cert;
-	s->session->sess_cert->peer_key = &(s->session->sess_cert->peer_pkeys[cert_idx]);
-
-	X509_free(s->session->peer);
+	X509_free(s->session->peer_pkeys[cert_idx].x509);
+	s->session->peer_pkeys[cert_idx].x509 = cert;
+	s->session->peer_key = &s->session->peer_pkeys[cert_idx];
 
 	X509_up_ref(cert);
+	X509_free(s->session->peer);
 	s->session->peer = cert;
+
 	s->session->verify_result = s->verify_result;
 
 	if (ctx->ocsp_status_recv_cb != NULL &&

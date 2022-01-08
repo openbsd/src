@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.92 2022/01/08 12:43:45 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.93 2022/01/08 12:59:59 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -921,21 +921,19 @@ tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 	if ((cert_idx = ssl_cert_type(cert, pkey)) < 0)
 		goto err;
 
-	ssl_sess_cert_free(s->session->sess_cert);
-	if ((s->session->sess_cert = ssl_sess_cert_new()) == NULL)
-		goto err;
-
-	s->session->sess_cert->cert_chain = certs;
+	sk_X509_pop_free(s->session->cert_chain, X509_free);
+	s->session->cert_chain = certs;
 	certs = NULL;
 
 	X509_up_ref(cert);
-	s->session->sess_cert->peer_pkeys[cert_idx].x509 = cert;
-	s->session->sess_cert->peer_key = &(s->session->sess_cert->peer_pkeys[cert_idx]);
-
-	X509_free(s->session->peer);
+	X509_free(s->session->peer_pkeys[cert_idx].x509);
+	s->session->peer_pkeys[cert_idx].x509 = cert;
+	s->session->peer_key = &s->session->peer_pkeys[cert_idx];
 
 	X509_up_ref(cert);
+	X509_free(s->session->peer);
 	s->session->peer = cert;
+
 	s->session->verify_result = s->verify_result;
 
 	ctx->handshake_stage.hs_type |= WITH_CCV;

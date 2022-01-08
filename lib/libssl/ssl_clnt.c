@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.127 2022/01/06 18:23:56 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.128 2022/01/08 12:59:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1076,7 +1076,6 @@ ssl3_get_server_certificate(SSL *s)
 	X509 *x = NULL;
 	const unsigned char *q;
 	STACK_OF(X509) *sk = NULL;
-	SESS_CERT *sc;
 	EVP_PKEY *pkey = NULL;
 
 	if ((ret = ssl3_get_message(s, SSL3_ST_CR_CERT_A,
@@ -1154,20 +1153,11 @@ ssl3_get_server_certificate(SSL *s)
 	}
 	ERR_clear_error(); /* but we keep s->verify_result */
 
-	sc = ssl_sess_cert_new();
-	if (sc == NULL)
-		goto err;
-	ssl_sess_cert_free(s->session->sess_cert);
-	s->session->sess_cert = sc;
-
-	sc->cert_chain = sk;
 	/*
 	 * Inconsistency alert: cert_chain does include the peer's
 	 * certificate, which we don't include in s3_srvr.c
 	 */
 	x = sk_X509_value(sk, 0);
-	sk = NULL;
-	/* VRS 19990621: possible memory leak; sk=null ==> !sk_pop_free() @end*/
 
 	pkey = X509_get_pubkey(x);
 
@@ -1185,20 +1175,21 @@ ssl3_get_server_certificate(SSL *s)
 		SSLerror(s, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
 		goto fatal_err;
 	}
+	s->session->peer_cert_type = i;
 
-	sc->peer_cert_type = i;
+	sk_X509_pop_free(s->session->cert_chain, X509_free);
+	s->session->cert_chain = sk;
+	sk = NULL;
+
 	X509_up_ref(x);
-	/*
-	 * Why would the following ever happen?
-	 * We just created sc a couple of lines ago.
-	 */
-	X509_free(sc->peer_pkeys[i].x509);
-	sc->peer_pkeys[i].x509 = x;
-	sc->peer_key = &(sc->peer_pkeys[i]);
+	X509_free(s->session->peer_pkeys[i].x509);
+	s->session->peer_pkeys[i].x509 = x;
+	s->session->peer_key = &s->session->peer_pkeys[i];
 
+	X509_up_ref(x);
 	X509_free(s->session->peer);
-	X509_up_ref(x);
 	s->session->peer = x;
+
 	s->session->verify_result = s->verify_result;
 
 	x = NULL;
@@ -1225,11 +1216,9 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 {
 	int nid = NID_dhKeyAgreement;
 	int invalid_params, invalid_key;
-	SESS_CERT *sc;
 	long alg_a;
 
 	alg_a = S3I(s)->hs.cipher->algorithm_auth;
-	sc = s->session->sess_cert;
 
 	tls_key_share_free(S3I(s)->hs.key_share);
 	if ((S3I(s)->hs.key_share = tls_key_share_new_nid(nid)) == NULL)
@@ -1254,7 +1243,7 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	}
 
 	if (alg_a & SSL_aRSA)
-		*pkey = X509_get_pubkey(sc->peer_pkeys[SSL_PKEY_RSA].x509);
+		*pkey = X509_get_pubkey(s->session->peer_pkeys[SSL_PKEY_RSA].x509);
 	else
 		/* XXX - Anonymous DH, so no certificate or pkey. */
 		*pkey = NULL;
@@ -1275,11 +1264,9 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	CBS public;
 	uint8_t curve_type;
 	uint16_t curve_id;
-	SESS_CERT *sc;
 	long alg_a;
 
 	alg_a = S3I(s)->hs.cipher->algorithm_auth;
-	sc = s->session->sess_cert;
 
 	if (!CBS_get_u8(cbs, &curve_type))
 		goto decode_err;
@@ -1319,9 +1306,9 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	 * and ECDSA.
 	 */
 	if (alg_a & SSL_aRSA)
-		*pkey = X509_get_pubkey(sc->peer_pkeys[SSL_PKEY_RSA].x509);
+		*pkey = X509_get_pubkey(s->session->peer_pkeys[SSL_PKEY_RSA].x509);
 	else if (alg_a & SSL_aECDSA)
-		*pkey = X509_get_pubkey(sc->peer_pkeys[SSL_PKEY_ECC].x509);
+		*pkey = X509_get_pubkey(s->session->peer_pkeys[SSL_PKEY_ECC].x509);
 	else
 		/* XXX - Anonymous ECDH, so no certificate or pkey. */
 		*pkey = NULL;
@@ -1379,12 +1366,6 @@ ssl3_get_server_key_exchange(SSL *s)
 		S3I(s)->hs.tls12.reuse_message = 1;
 		EVP_MD_CTX_free(md_ctx);
 		return (1);
-	}
-
-	if (s->session->sess_cert == NULL) {
-		s->session->sess_cert = ssl_sess_cert_new();
-		if (s->session->sess_cert == NULL)
-			goto err;
 	}
 
 	param = CBS_data(&cbs);
@@ -1823,7 +1804,7 @@ ssl3_get_server_done(SSL *s)
 }
 
 static int
-ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
+ssl3_send_client_kex_rsa(SSL *s, CBB *cbb)
 {
 	unsigned char pms[SSL_MAX_MASTER_KEY_LENGTH];
 	unsigned char *enc_pms = NULL;
@@ -1838,7 +1819,7 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	 * RSA-Encrypted Premaster Secret Message - RFC 5246 section 7.4.7.1.
 	 */
 
-	pkey = X509_get_pubkey(sess_cert->peer_pkeys[SSL_PKEY_RSA].x509);
+	pkey = X509_get_pubkey(s->session->peer_pkeys[SSL_PKEY_RSA].x509);
 	if (pkey == NULL || (rsa = EVP_PKEY_get0_RSA(pkey)) == NULL) {
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
 		goto err;
@@ -1890,7 +1871,7 @@ ssl3_send_client_kex_rsa(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 }
 
 static int
-ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
+ssl3_send_client_kex_dhe(SSL *s, CBB *cbb)
 {
 	uint8_t *key = NULL;
 	size_t key_len = 0;
@@ -1922,7 +1903,7 @@ ssl3_send_client_kex_dhe(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 }
 
 static int
-ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sc, CBB *cbb)
+ssl3_send_client_kex_ecdhe(SSL *s, CBB *cbb)
 {
 	uint8_t *key = NULL;
 	size_t key_len = 0;
@@ -1961,7 +1942,7 @@ ssl3_send_client_kex_ecdhe(SSL *s, SESS_CERT *sc, CBB *cbb)
 }
 
 static int
-ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
+ssl3_send_client_kex_gost(SSL *s, CBB *cbb)
 {
 	unsigned char premaster_secret[32], shared_ukm[32], tmp[256];
 	EVP_PKEY *pub_key = NULL;
@@ -1975,7 +1956,7 @@ ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 	CBB gostblob;
 
 	/* Get server sertificate PKEY and create ctx from it */
-	peer_cert = sess_cert->peer_pkeys[SSL_PKEY_GOST01].x509;
+	peer_cert = s->session->peer_pkeys[SSL_PKEY_GOST01].x509;
 	if (peer_cert == NULL) {
 		SSLerror(s, SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
 		goto err;
@@ -2074,7 +2055,6 @@ ssl3_send_client_kex_gost(SSL *s, SESS_CERT *sess_cert, CBB *cbb)
 int
 ssl3_send_client_key_exchange(SSL *s)
 {
-	SESS_CERT *sess_cert;
 	unsigned long alg_k;
 	CBB cbb, kex;
 
@@ -2083,28 +2063,21 @@ ssl3_send_client_key_exchange(SSL *s)
 	if (S3I(s)->hs.state == SSL3_ST_CW_KEY_EXCH_A) {
 		alg_k = S3I(s)->hs.cipher->algorithm_mkey;
 
-		if ((sess_cert = s->session->sess_cert) == NULL) {
-			ssl3_send_alert(s, SSL3_AL_FATAL,
-			    SSL_AD_UNEXPECTED_MESSAGE);
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
-			goto err;
-		}
-
 		if (!ssl3_handshake_msg_start(s, &cbb, &kex,
 		    SSL3_MT_CLIENT_KEY_EXCHANGE))
 			goto err;
 
 		if (alg_k & SSL_kRSA) {
-			if (!ssl3_send_client_kex_rsa(s, sess_cert, &kex))
+			if (!ssl3_send_client_kex_rsa(s, &kex))
 				goto err;
 		} else if (alg_k & SSL_kDHE) {
-			if (!ssl3_send_client_kex_dhe(s, sess_cert, &kex))
+			if (!ssl3_send_client_kex_dhe(s, &kex))
 				goto err;
 		} else if (alg_k & SSL_kECDHE) {
-			if (!ssl3_send_client_kex_ecdhe(s, sess_cert, &kex))
+			if (!ssl3_send_client_kex_ecdhe(s, &kex))
 				goto err;
 		} else if (alg_k & SSL_kGOST) {
-			if (ssl3_send_client_kex_gost(s, sess_cert, &kex) != 1)
+			if (ssl3_send_client_kex_gost(s, &kex) != 1)
 				goto err;
 		} else {
 			ssl3_send_alert(s, SSL3_AL_FATAL,
@@ -2481,11 +2454,10 @@ ssl3_send_client_certificate(SSL *s)
 int
 ssl3_check_cert_and_algorithm(SSL *s)
 {
-	int		 i, idx;
-	long		 alg_k, alg_a;
-	EVP_PKEY	*pkey = NULL;
-	SESS_CERT	*sc;
+	long alg_k, alg_a;
+	EVP_PKEY *pkey = NULL;
 	int nid = NID_undef;
+	int i, idx;
 
 	alg_k = S3I(s)->hs.cipher->algorithm_mkey;
 	alg_a = S3I(s)->hs.cipher->algorithm_auth;
@@ -2494,21 +2466,15 @@ ssl3_check_cert_and_algorithm(SSL *s)
 	if (alg_a & SSL_aNULL)
 		return (1);
 
-	sc = s->session->sess_cert;
-	if (sc == NULL) {
-		SSLerror(s, ERR_R_INTERNAL_ERROR);
-		goto err;
-	}
-
 	if (S3I(s)->hs.key_share != NULL)
 		nid = tls_key_share_nid(S3I(s)->hs.key_share);
 
 	/* This is the passed certificate. */
 
-	idx = sc->peer_cert_type;
+	idx = s->session->peer_cert_type;
 	if (idx == SSL_PKEY_ECC) {
 		if (ssl_check_srvr_ecc_cert_and_alg(
-		    sc->peer_pkeys[idx].x509, s) == 0) {
+		    s->session->peer_pkeys[idx].x509, s) == 0) {
 			/* check failed */
 			SSLerror(s, SSL_R_BAD_ECC_CERT);
 			goto fatal_err;
@@ -2516,8 +2482,8 @@ ssl3_check_cert_and_algorithm(SSL *s)
 			return (1);
 		}
 	}
-	pkey = X509_get_pubkey(sc->peer_pkeys[idx].x509);
-	i = X509_certificate_type(sc->peer_pkeys[idx].x509, pkey);
+	pkey = X509_get_pubkey(s->session->peer_pkeys[idx].x509);
+	i = X509_certificate_type(s->session->peer_pkeys[idx].x509, pkey);
 	EVP_PKEY_free(pkey);
 
 	/* Check that we have a certificate if we require one. */
@@ -2536,9 +2502,10 @@ ssl3_check_cert_and_algorithm(SSL *s)
 	}
 
 	return (1);
+
  fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
- err:
+
 	return (0);
 }
 

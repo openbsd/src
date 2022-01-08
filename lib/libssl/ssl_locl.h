@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.378 2022/01/08 12:54:32 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.379 2022/01/08 12:59:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -511,8 +511,15 @@ struct ssl_session_st {
 	 * not_resumable_session_cb to disable session caching and tickets. */
 	int not_resumable;
 
-	/* The cert is the certificate used to establish this connection */
-	struct sess_cert_st /* SESS_CERT */ *sess_cert;
+	STACK_OF(X509) *cert_chain; /* as received from peer */
+
+	/* The 'peer_...' members are used only by clients. */
+	int peer_cert_type;
+
+	/* Obviously we don't have the private keys of these,
+	 * so maybe we shouldn't even use the SSL_CERT_PKEY type here. */
+	SSL_CERT_PKEY *peer_key; /* points to an element of peer_pkeys (never NULL!) */
+	SSL_CERT_PKEY peer_pkeys[SSL_PKEY_NUM];
 
 	size_t tlsext_ecpointformatlist_length;
 	uint8_t *tlsext_ecpointformatlist; /* peer's list */
@@ -1216,20 +1223,6 @@ typedef struct ssl3_state_st {
 	struct ssl3_state_internal_st *internal;
 } SSL3_STATE;
 
-typedef struct sess_cert_st {
-	STACK_OF(X509) *cert_chain; /* as received from peer */
-
-	/* The 'peer_...' members are used only by clients. */
-	int peer_cert_type;
-
-	SSL_CERT_PKEY *peer_key; /* points to an element of peer_pkeys (never NULL!) */
-	SSL_CERT_PKEY peer_pkeys[SSL_PKEY_NUM];
-	/* Obviously we don't have the private keys of these,
-	 * so maybe we shouldn't even use the SSL_CERT_PKEY type here. */
-
-	int references; /* actually always 1 at the moment */
-} SESS_CERT;
-
 /*#define SSL_DEBUG	*/
 /*#define RSA_DEBUG	*/
 
@@ -1295,8 +1288,6 @@ int ssl_cert_set1_chain(SSL_CERT *c, STACK_OF(X509) *chain);
 int ssl_cert_add0_chain_cert(SSL_CERT *c, X509 *cert);
 int ssl_cert_add1_chain_cert(SSL_CERT *c, X509 *cert);
 
-SESS_CERT *ssl_sess_cert_new(void);
-void ssl_sess_cert_free(SESS_CERT *sc);
 int ssl_get_new_session(SSL *s, int session);
 int ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block,
     int *alert);
