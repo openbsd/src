@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.27 2022/01/07 02:25:40 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.28 2022/01/08 22:32:00 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -117,14 +117,34 @@ fetch() {
 		echo "Cannot fetch $_src$_error" >&2
 		return 1
 	fi
+
+	return 0
+}
+
+fetch_cfile() {
+	if "$DOWNLOAD"; then
+		set +o noclobber # we want to get the latest CFILE
+		fetch "$CFILE" || return 1
+		set -o noclobber
+		! signify -qVep "$FWPUB_KEY" -x "$CFILE" -m "$CFILE" &&
+		    echo "Signature check of SHA256.sig failed" >&2 && return 1
+	elif [ ! -e "$CFILE" ]; then
+		echo "${0##*/}: $CFILE: No such file or directory" >&2
+		return 2
+	fi
+
+	return 0
 }
 
 verify() {
+	[ -e "$CFILE" ] || fetch_cfile || return 1
 	# On the installer we don't get sha256 -C, so fake it.
 	if ! fgrep -qx "SHA256 (${1##*/}) = $( /bin/sha256 -qb "$1" )" "$CFILE"; then
 		echo "Checksum test for ${1##*/} failed." >&2
 		return 1
 	fi
+
+	return 0
 }
 
 firmware_in_dmesg() {
@@ -149,6 +169,7 @@ firmware_in_dmesg() {
 
 firmware_filename() {
 	local _f
+	[ -e "$CFILE" ] || fetch_cfile || return 1
 	_f="$( sed -n "s/.*(\($1-firmware-.*\.tgz\)).*/\1/p" "$CFILE" | sed '$!d' )"
 	! [ "$_f" ] && echo "Unable to find firmware for $1" >&2 && return 1
 	echo "$_f"
@@ -313,6 +334,17 @@ fi
 if [ "$OPT_F" ]; then
 	INSTALL=false
 	LOCALSRC="${LOCALSRC:-.}"
+
+	# Always check for latest CFILE and so latest firmware
+	if [ -e "$LOCALSRC/$CFILE" ]; then
+		mv "$LOCALSRC/$CFILE" "$LOCALSRC/$CFILE-OLD"
+		if fetch_cfile; then
+			rm -f "$LOCALSRC/$CFILE-OLD"
+		else
+			mv "$LOCALSRC/$CFILE-OLD" "$LOCALSRC/$CFILE"
+			echo "Using existing $CFILE" >&2
+		fi
+	fi
 elif [ "$LOCALSRC" ]; then
 	DOWNLOAD=false
 fi
@@ -386,24 +418,13 @@ fi
 
 [ "${devices[*]:-}" ] || exit
 
-if "$DOWNLOAD"; then
-	set +o noclobber # we want to get the latest CFILE
-	fetch "$CFILE"
-	set -o noclobber
-	! signify -qVep "$FWPUB_KEY" -x "$CFILE" -m "$CFILE" &&
-	    echo "Signature check of SHA256.sig failed" >&2 && exit 1
-elif [ ! -e "$CFILE" ]; then
-	# TODO: We shouldn't need a CFILE if all arguments are files.
-	echo "${0##*/}: $CFILE: No such file or directory" >&2
-	exit 2
-fi
-
 added=''
 updated=''
 kept=''
 for f in "${devices[@]}"; do
 	d="$( firmware_devicename "$f" )"
 
+	verify_existing="$DOWNLOAD"
 	if [ "$f" = "$d" ]; then
 		f=$( firmware_filename "$d" || true )
 		[ "$f" ] || continue
@@ -411,6 +432,10 @@ for f in "${devices[@]}"; do
 	elif ! "$INSTALL" && ! grep -Fq "($f)" "$CFILE" ; then
 		echo "Cannot download local file $f" >&2
 		exit 2
+	else
+		# If someone specified a filename on the command-line
+		# we don't want to verify it.
+		verify_existing=false
 	fi
 
 	set -A installed -- $( installed_firmware '' "$d-firmware-" '*' )
@@ -427,9 +452,14 @@ for f in "${devices[@]}"; do
 
 	if [ -e "$f" ]; then
 		if "$DOWNLOAD"; then
-			"$VERBOSE" && ! "$INSTALL" &&
-			    echo "Keep/Verify ${f##*/}"
-			"$DRYRUN"  || verify "$f" || continue
+			if "$verify_existing" && ! "$DRYRUN"; then
+				"$VERBOSE" && ! "$INSTALL" &&
+				    echo "Keep/Verify ${f##*/}"
+				verify "$f" || continue
+			else
+				"$VERBOSE" && ! "$INSTALL" &&
+				    echo "Keep ${f##*/}"
+			fi
 			"$INSTALL" || kept="$kept,$d"
 		# else assume it was verified when downloaded
 		fi
