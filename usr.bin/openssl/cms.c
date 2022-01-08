@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.27 2022/01/06 12:54:51 inoguchi Exp $ */
+/* $OpenBSD: cms.c,v 1.28 2022/01/08 06:05:39 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -509,7 +509,7 @@ static const struct option cms_options[] = {
 	},
 	{
 		.name = "des3",
-		.desc = "Encrypt with triple DES",
+		.desc = "Encrypt with triple DES (default)",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = cms_opt_cipher,
 	},
@@ -517,7 +517,7 @@ static const struct option cms_options[] = {
 #ifndef OPENSSL_NO_RC2
 	{
 		.name = "rc2-40",
-		.desc = "Encrypt with RC2-40 (default)",
+		.desc = "Encrypt with RC2-40",
 		.type = OPTION_ARGV_FUNC,
 		.opt.argvfunc = cms_opt_cipher,
 	},
