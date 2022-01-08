@@ -96,16 +96,16 @@ expand_linebuf(void)
 
 	/* Just realloc to expand the buffer, if we can. */
 	char *new_buf = recallocarray(linebuf, size_linebuf, new_size, 1);
-	char *new_attr = recallocarray(attr, size_linebuf, new_size, 1);
-	if (new_buf == NULL || new_attr == NULL) {
-		free(new_attr);
-		free(new_buf);
-		return (1);
+	if (new_buf != NULL) {
+		char *new_attr = recallocarray(attr, size_linebuf, new_size, 1);
+		linebuf = new_buf;
+		if (new_attr != NULL) {
+			attr = new_attr;
+			size_linebuf = new_size;
+			return (0);
+		}
 	}
-	linebuf = new_buf;
-	attr = new_attr;
-	size_linebuf = new_size;
-	return (0);
+	return (1);
 }
 
 /*
