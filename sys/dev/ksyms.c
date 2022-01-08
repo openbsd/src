@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.33 2020/07/18 20:21:01 kettenis Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.34 2022/01/08 22:54:49 guenther Exp $	*/
 /*
  * Copyright (c) 1998 Todd C. Miller <millert@openbsd.org>
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
@@ -48,10 +48,6 @@ static size_t ksym_head_size;
 static size_t ksym_syms_size;
 
 void	ksymsattach(int);
-
-/*
- * We assume __LDPGSZ is a multiple of PAGE_SIZE (it is)
- */
 
 void
 ksymsattach(int num)
