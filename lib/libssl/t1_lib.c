@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.184 2021/11/26 16:41:42 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.185 2022/01/08 12:43:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -569,7 +569,7 @@ tls1_check_ec_key(SSL *s, const uint16_t *curve_id, const uint8_t *comp_id)
 int
 tls1_check_ec_server_key(SSL *s)
 {
-	CERT_PKEY *cpk = s->cert->pkeys + SSL_PKEY_ECC;
+	SSL_CERT_PKEY *cpk = s->cert->pkeys + SSL_PKEY_ECC;
 	uint16_t curve_id;
 	uint8_t comp_id;
 	EC_KEY *eckey;
@@ -635,7 +635,7 @@ ssl_check_clienthello_tlsext_late(SSL *s)
 	if ((s->tlsext_status_type != -1) &&
 	    s->ctx && s->ctx->internal->tlsext_status_cb) {
 		int r;
-		CERT_PKEY *certpkey;
+		SSL_CERT_PKEY *certpkey;
 		certpkey = ssl_get_server_send_pkey(s);
 		/* If no certificate can't return certificate status */
 		if (certpkey == NULL) {

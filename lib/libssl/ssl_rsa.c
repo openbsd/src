@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.37 2021/11/29 18:36:27 tb Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.38 2022/01/08 12:43:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,11 +66,11 @@
 
 #include "ssl_locl.h"
 
-static int ssl_set_cert(CERT *c, X509 *x509);
-static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);
-static int use_certificate_chain_bio(BIO *in, CERT *cert,
+static int ssl_set_cert(SSL_CERT *c, X509 *x509);
+static int ssl_set_pkey(SSL_CERT *c, EVP_PKEY *pkey);
+static int use_certificate_chain_bio(BIO *in, SSL_CERT *cert,
     pem_password_cb *passwd_cb, void *passwd_arg);
-static int use_certificate_chain_file(const char *file, CERT *cert,
+static int use_certificate_chain_file(const char *file, SSL_CERT *cert,
     pem_password_cb *passwd_cb, void *passwd_arg);
 
 int
@@ -167,7 +167,7 @@ SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 }
 
 static int
-ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
+ssl_set_pkey(SSL_CERT *c, EVP_PKEY *pkey)
 {
 	int i;
 
@@ -343,7 +343,7 @@ SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
 }
 
 static int
-ssl_set_cert(CERT *c, X509 *x)
+ssl_set_cert(SSL_CERT *c, X509 *x)
 {
 	EVP_PKEY *pkey;
 	int i;
@@ -610,7 +610,7 @@ SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx, const unsigned char *d,
  * sent to the peer in the Certificate message.
  */
 static int
-use_certificate_chain_bio(BIO *in, CERT *cert, pem_password_cb *passwd_cb,
+use_certificate_chain_bio(BIO *in, SSL_CERT *cert, pem_password_cb *passwd_cb,
     void *passwd_arg)
 {
 	X509 *ca, *x = NULL;
@@ -653,7 +653,7 @@ use_certificate_chain_bio(BIO *in, CERT *cert, pem_password_cb *passwd_cb,
 }
 
 int
-use_certificate_chain_file(const char *file, CERT *cert,
+use_certificate_chain_file(const char *file, SSL_CERT *cert,
     pem_password_cb *passwd_cb, void *passwd_arg)
 {
 	BIO *in;

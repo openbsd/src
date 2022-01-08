@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.91 2022/01/07 16:45:06 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.92 2022/01/08 12:43:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -158,12 +158,12 @@ SSL_get_ex_data_X509_STORE_CTX_idx(void)
 	return ssl_x509_store_ctx_idx;
 }
 
-CERT *
+SSL_CERT *
 ssl_cert_new(void)
 {
-	CERT *ret;
+	SSL_CERT *ret;
 
-	ret = calloc(1, sizeof(CERT));
+	ret = calloc(1, sizeof(SSL_CERT));
 	if (ret == NULL) {
 		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return (NULL);
@@ -173,13 +173,13 @@ ssl_cert_new(void)
 	return (ret);
 }
 
-CERT *
-ssl_cert_dup(CERT *cert)
+SSL_CERT *
+ssl_cert_dup(SSL_CERT *cert)
 {
-	CERT *ret;
+	SSL_CERT *ret;
 	int i;
 
-	ret = calloc(1, sizeof(CERT));
+	ret = calloc(1, sizeof(SSL_CERT));
 	if (ret == NULL) {
 		SSLerrorx(ERR_R_MALLOC_FAILURE);
 		return (NULL);
@@ -269,7 +269,7 @@ ssl_cert_dup(CERT *cert)
 
 
 void
-ssl_cert_free(CERT *c)
+ssl_cert_free(SSL_CERT *c)
 {
 	int i;
 
@@ -292,7 +292,7 @@ ssl_cert_free(CERT *c)
 }
 
 int
-ssl_cert_set0_chain(CERT *c, STACK_OF(X509) *chain)
+ssl_cert_set0_chain(SSL_CERT *c, STACK_OF(X509) *chain)
 {
 	if (c->key == NULL)
 		return 0;
@@ -304,7 +304,7 @@ ssl_cert_set0_chain(CERT *c, STACK_OF(X509) *chain)
 }
 
 int
-ssl_cert_set1_chain(CERT *c, STACK_OF(X509) *chain)
+ssl_cert_set1_chain(SSL_CERT *c, STACK_OF(X509) *chain)
 {
 	STACK_OF(X509) *new_chain = NULL;
 
@@ -321,7 +321,7 @@ ssl_cert_set1_chain(CERT *c, STACK_OF(X509) *chain)
 }
 
 int
-ssl_cert_add0_chain_cert(CERT *c, X509 *cert)
+ssl_cert_add0_chain_cert(SSL_CERT *c, X509 *cert)
 {
 	if (c->key == NULL)
 		return 0;
@@ -337,7 +337,7 @@ ssl_cert_add0_chain_cert(CERT *c, X509 *cert)
 }
 
 int
-ssl_cert_add1_chain_cert(CERT *c, X509 *cert)
+ssl_cert_add1_chain_cert(SSL_CERT *c, X509 *cert)
 {
 	if (!ssl_cert_add0_chain_cert(c, cert))
 		return 0;

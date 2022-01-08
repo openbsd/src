@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.132 2022/01/07 16:45:06 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.133 2022/01/08 12:43:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2277,7 +2277,7 @@ int
 ssl3_send_server_certificate(SSL *s)
 {
 	CBB cbb, server_cert;
-	CERT_PKEY *cpk;
+	SSL_CERT_PKEY *cpk;
 
 	/*
 	 * Server Certificate - RFC 5246, section 7.4.2.

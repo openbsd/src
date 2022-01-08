@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.91 2022/01/07 15:46:30 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.92 2022/01/08 12:43:45 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -545,7 +545,7 @@ tls13_server_certificate_request_send(struct tls13_ctx *ctx, CBB *cbb)
 }
 
 static int
-tls13_server_check_certificate(struct tls13_ctx *ctx, CERT_PKEY *cpk,
+tls13_server_check_certificate(struct tls13_ctx *ctx, SSL_CERT_PKEY *cpk,
     int *ok, const struct ssl_sigalg **out_sigalg)
 {
 	const struct ssl_sigalg *sigalg;
@@ -575,12 +575,12 @@ tls13_server_check_certificate(struct tls13_ctx *ctx, CERT_PKEY *cpk,
 }
 
 static int
-tls13_server_select_certificate(struct tls13_ctx *ctx, CERT_PKEY **out_cpk,
+tls13_server_select_certificate(struct tls13_ctx *ctx, SSL_CERT_PKEY **out_cpk,
     const struct ssl_sigalg **out_sigalg)
 {
 	SSL *s = ctx->ssl;
 	const struct ssl_sigalg *sigalg;
-	CERT_PKEY *cpk;
+	SSL_CERT_PKEY *cpk;
 	int cert_ok;
 
 	*out_cpk = NULL;
@@ -616,7 +616,7 @@ tls13_server_certificate_send(struct tls13_ctx *ctx, CBB *cbb)
 	const struct ssl_sigalg *sigalg;
 	X509_STORE_CTX *xsc = NULL;
 	STACK_OF(X509) *chain;
-	CERT_PKEY *cpk;
+	SSL_CERT_PKEY *cpk;
 	X509 *cert;
 	int i, ret = 0;
 
@@ -697,7 +697,7 @@ tls13_server_certificate_verify_send(struct tls13_ctx *ctx, CBB *cbb)
 	EVP_MD_CTX *mdctx = NULL;
 	EVP_PKEY_CTX *pctx;
 	EVP_PKEY *pkey;
-	const CERT_PKEY *cpk;
+	const SSL_CERT_PKEY *cpk;
 	CBB sig_cbb;
 	int ret = 0;
 

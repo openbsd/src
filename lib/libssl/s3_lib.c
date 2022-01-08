@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.223 2022/01/07 16:45:06 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.224 2022/01/08 12:43:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2486,7 +2486,7 @@ ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	SSL_CIPHER *c, *ret = NULL;
 	int can_use_ecc;
 	int i, ii, ok;
-	CERT *cert;
+	SSL_CERT *cert;
 
 	/* Let's see which ciphers we can support */
 	cert = s->cert;

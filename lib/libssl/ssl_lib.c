@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.281 2022/01/07 16:45:06 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.282 2022/01/08 12:43:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -912,7 +912,7 @@ SSL_get0_verified_chain(const SSL *s)
 int
 SSL_copy_session_id(SSL *t, const SSL *f)
 {
-	CERT	*tmp;
+	SSL_CERT *tmp;
 
 	/* Do we need to do SSL locking? */
 	if (!SSL_set_session(t, SSL_get_session(f)))
@@ -2187,10 +2187,10 @@ SSL_CTX_set_verify_depth(SSL_CTX *ctx, int depth)
 }
 
 void
-ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
+ssl_set_cert_masks(SSL_CERT *c, const SSL_CIPHER *cipher)
 {
 	unsigned long mask_a, mask_k;
-	CERT_PKEY *cpk;
+	SSL_CERT_PKEY *cpk;
 
 	if (c == NULL)
 		return;
@@ -2259,12 +2259,12 @@ ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 	return (1);
 }
 
-CERT_PKEY *
+SSL_CERT_PKEY *
 ssl_get_server_send_pkey(const SSL *s)
 {
-	unsigned long	 alg_a;
-	CERT		*c;
-	int		 i;
+	unsigned long alg_a;
+	SSL_CERT *c;
+	int i;
 
 	c = s->cert;
 	ssl_set_cert_masks(c, S3I(s)->hs.cipher);
@@ -2291,9 +2291,9 @@ ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher, const EVP_MD **pmd,
 {
 	const struct ssl_sigalg *sigalg = NULL;
 	EVP_PKEY *pkey = NULL;
-	unsigned long	 alg_a;
-	CERT		*c;
-	int		 idx = -1;
+	unsigned long alg_a;
+	SSL_CERT *c;
+	int idx = -1;
 
 	alg_a = cipher->algorithm_auth;
 	c = s->cert;
@@ -2322,7 +2322,7 @@ ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *cipher, const EVP_MD **pmd,
 size_t
 ssl_dhe_params_auto_key_bits(SSL *s)
 {
-	CERT_PKEY *cpk;
+	SSL_CERT_PKEY *cpk;
 	int key_bits;
 
 	if (s->cert->dhe_params_auto == 2) {
@@ -2974,7 +2974,7 @@ SSL_get_SSL_CTX(const SSL *ssl)
 SSL_CTX *
 SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 {
-	CERT *new_cert;
+	SSL_CERT *new_cert;
 
 	if (ctx == NULL)
 		ctx = ssl->initial_ctx;
