@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.134 2022/01/08 12:59:59 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.135 2022/01/09 15:28:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -539,15 +539,11 @@ ssl3_accept(SSL *s)
 			}
 
 			alg_k = S3I(s)->hs.cipher->algorithm_mkey;
-			if (ret == 2) {
+			if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY) {
 				/*
-				 * For the ECDH ciphersuites when
-				 * the client sends its ECDH pub key in
-				 * a certificate, the CertificateVerify
-				 * message is not sent.
-				 * Also for GOST ciphersuites when
-				 * the client uses its key from the certificate
-				 * for key exchange.
+				 * A GOST client may use the key from its
+				 * certificate for key exchange, in which case
+				 * the CertificateVerify message is not sent.
 				 */
 				S3I(s)->hs.state = SSL3_ST_SR_FINISHED_A;
 				s->internal->init_num = 0;
@@ -1780,7 +1776,6 @@ ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
 	size_t outlen = 32;
 	CBS gostblob;
 	int al;
-	int ret = 0;
 
 	/* Get our certificate private key*/
 	alg_a = S3I(s)->hs.cipher->algorithm_auth;
@@ -1820,18 +1815,15 @@ ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
 		goto err;
 
 	/* Check if pubkey from client certificate was used */
-	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1,
-	    EVP_PKEY_CTRL_PEER_KEY, 2, NULL) > 0)
-		ret = 2;
-	else
-		ret = 1;
+	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY,
+	    2, NULL) > 0)
+		s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
+
  gerr:
 	EVP_PKEY_free(client_pub_pkey);
 	EVP_PKEY_CTX_free(pkey_ctx);
-	if (ret)
-		return (ret);
-	else
-		goto err;
+
+	return 1;
 
  decode_err:
 	al = SSL_AD_DECODE_ERROR;
