@@ -1,4 +1,4 @@
-/*	$OpenBSD	*/
+/*	$OpenBSD: malloc_general.c,v 1.7 2022/01/09 07:18:50 otto Exp $	*/
 /*
  * Copyright (c) 2017 Otto Moerbeek <otto@drijf.net>
  *
@@ -20,14 +20,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* $define VERBOSE */
+/* #define VERBOSE */
 
 #define N 1000
 
 size_t
 size(void)
 {
-	int p = arc4random_uniform(13) + 3;
+	int p = arc4random_uniform(17) + 3;
 	return arc4random_uniform(1 << p);
 }
 
