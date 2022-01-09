@@ -1,9 +1,11 @@
-/* $OpenBSD: c_rle.c,v 1.8 2014/11/03 16:58:28 tedu Exp $ */
+/* $OpenBSD: c_rle.c,v 1.9 2022/01/09 23:50:10 tb Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/objects.h>
 #include <openssl/comp.h>
+
+#include "comp_local.h"
 
 static int rle_compress_block(COMP_CTX *ctx, unsigned char *out,
     unsigned int olen, unsigned char *in, unsigned int ilen);
