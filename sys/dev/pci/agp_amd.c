@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_amd.c,v 1.21 2015/09/09 19:47:11 deraadt Exp $	*/
+/*	$OpenBSD: agp_amd.c,v 1.22 2022/01/09 05:42:45 jsg Exp $	*/
 /*	$NetBSD: agp_amd.c,v 1.6 2001/10/06 02:48:50 thorpej Exp $	*/
 
 /*-
@@ -202,7 +202,7 @@ agp_amd_attach(struct device *parent, struct device *self, void *aux)
 			break;
 
 		/*
-		 * almost certainly error allocating contigious dma memory
+		 * almost certainly error allocating contiguous dma memory
 		 * so reduce aperture so that the gatt size reduces.
 		 */
 		asc->asc_apsize /= 2;

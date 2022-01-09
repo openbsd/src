@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_ieee.h,v 1.30 2014/08/24 18:01:27 zhuk Exp $	*/
+/*	$OpenBSD: if_wi_ieee.h,v 1.31 2022/01/09 05:42:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -440,7 +440,7 @@ struct wi_rx_frame {
 	u_int8_t	wi_addr4[6];
 	u_int16_t	wi_dat_len;
 	/*
-	 * another wierdity with the drivers. they append a 802.3 header which
+	 * another oddity with the drivers. they append a 802.3 header which
 	 * is somewhat redundant, since all the same data is provided in the
 	 * 802.11 header.
 	 */

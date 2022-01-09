@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxesdhc.c,v 1.17 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: imxesdhc.c,v 1.18 2022/01/09 05:42:37 jsg Exp $	*/
 /*
  * Copyright (c) 2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -707,7 +707,7 @@ imxesdhc_bus_clock(sdmmc_chipset_handle_t sch, int freq, int timing)
 
 	cur_freq = sc->clkbase / (pre_div * 2) / (div + 1);
 
-	/* disable force CLK ouput active */
+	/* disable force CLK output active */
 	HCLR4(sc, SDHC_VEND_SPEC, SDHC_VEND_SPEC_FRC_SDCLK_ON);
 
 	/* wait while clock is unstable */
@@ -1115,7 +1115,7 @@ imxesdhc_soft_reset(struct imxesdhc_softc *sc, int mask)
 
 	DPRINTF(1,("%s: software reset reg=%#x\n", HDEVNAME(sc), mask));
 
-	/* disable force CLK ouput active */
+	/* disable force CLK output active */
 	HCLR4(sc, SDHC_VEND_SPEC, SDHC_VEND_SPEC_FRC_SDCLK_ON);
 
 	/* reset */

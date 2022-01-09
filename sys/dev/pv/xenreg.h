@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenreg.h,v 1.10 2016/09/14 17:48:28 mikeb Exp $	*/
+/*	$OpenBSD: xenreg.h,v 1.11 2022/01/09 05:42:58 jsg Exp $	*/
 
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -211,7 +211,7 @@ struct shared_info {
 	 * of event that are delivered by this mechanism:
 	 *  1. Bi-directional inter- and intra-domain connections.  Domains
 	 *     must arrange out-of-band to set up a connection (usually by
-	 *     allocating an unbound 'listener' port and avertising that via
+	 *     allocating an unbound 'listener' port and advertising that via
 	 *     a storage service such as xenstore).
 	 *  2. Physical interrupts. A domain with suitable hardware-access
 	 *     privileges can bind an event-channel port to a physical

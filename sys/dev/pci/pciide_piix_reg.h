@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_piix_reg.h,v 1.12 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: pciide_piix_reg.h,v 1.13 2022/01/09 05:42:58 jsg Exp $	*/
 /*	$NetBSD: pciide_piix_reg.h,v 1.5 2001/01/05 15:29:40 bouyer Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
 #define PIIX_CONFIG_UDMA100(channel, drive) (0x1000 << ((channel) * 2 + (drive)))
 
 /*
- * these tables define the differents values to upload to the
+ * these tables define the different values to upload to the
  * ISP and RTC registers for the various PIO and DMA mode
  * (from the PIIX4 doc).
  */

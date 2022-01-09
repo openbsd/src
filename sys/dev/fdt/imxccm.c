@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.27 2021/10/24 17:52:26 mpi Exp $ */
+/* $OpenBSD: imxccm.c,v 1.28 2022/01/09 05:42:37 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -1430,13 +1430,13 @@ imxccm_enable(void *cookie, uint32_t *cells, int on)
 			    CCM_ANALOG_PLL_USB2_ENABLE);
 			return;
 		case IMX6_CLK_USBPHY1:
-			/* PLL outputs should alwas be on. */
+			/* PLL outputs should always be on. */
 			regmap_write_4(sc->sc_anatop, CCM_ANALOG_PLL_USB1_SET,
 			    CCM_ANALOG_PLL_USB1_EN_USB_CLKS);
 			imxccm_enable_parent(sc, IMX6_CLK_PLL3_USB_OTG, on);
 			return;
 		case IMX6_CLK_USBPHY2:
-			/* PLL outputs should alwas be on. */
+			/* PLL outputs should always be on. */
 			regmap_write_4(sc->sc_anatop, CCM_ANALOG_PLL_USB2_SET,
 			    CCM_ANALOG_PLL_USB2_EN_USB_CLKS);
 			imxccm_enable_parent(sc, IMX6_CLK_PLL7_USB_HOST, on);

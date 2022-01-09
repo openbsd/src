@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.24 2021/12/27 17:12:34 patrick Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.25 2022/01/09 05:42:38 jsg Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -497,7 +497,7 @@ struct bwfm_sta_info {
 			uint16_t pad_1;
 			struct bwfm_sta_rateset_v7 rateset_adv;
 			uint16_t wpauth;	/* authentication type */
-			uint8_t algo;		/* crypto alogorithm */
+			uint8_t algo;		/* crypto algorithm */
 			uint8_t pad_2;
 			uint32_t tx_rspec;/* Rate of last successful tx frame */
 			uint32_t rx_rspec;/* Rate of last successful rx frame */

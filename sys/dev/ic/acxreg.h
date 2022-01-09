@@ -1,4 +1,4 @@
-/*	$OpenBSD: acxreg.h,v 1.12 2008/06/01 10:08:35 brad Exp $ */
+/*	$OpenBSD: acxreg.h,v 1.13 2022/01/09 05:42:38 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -107,7 +107,7 @@
 #define ACX_CMD_REG_SIZE		4	/* 4 bytes */
 
 /*
- * Size of infomation register whose location is obtained
+ * Size of information register whose location is obtained
  * from ACXREG_INFO_REG_OFFSET IO register
  */
 #define ACX_INFO_REG_SIZE		4	/* 4 bytes */

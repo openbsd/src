@@ -1,4 +1,4 @@
-/*	$OpenBSD: sbdsp.c,v 1.39 2021/03/07 06:17:04 jsg Exp $	*/
+/*	$OpenBSD: sbdsp.c,v 1.40 2022/01/09 05:42:44 jsg Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -911,7 +911,7 @@ sbdsp_pause(struct sbdsp_softc *sc)
 }
 
 /*
- * Turn on the speaker.  The SBK documention says this operation
+ * Turn on the speaker.  The SBK documentation says this operation
  * can take up to 1/10 of a second.  Higher level layers should
  * probably let the task sleep for this amount of time after
  * calling here.  Otherwise, things might not work (because

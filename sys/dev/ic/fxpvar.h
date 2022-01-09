@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.37 2013/12/06 21:03:03 deraadt Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.38 2022/01/09 05:42:38 jsg Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -71,9 +71,9 @@
 
 /* 
  * Bit-mask describing minimum size frame that will be bundled.
- * This is only effetive if the Intel microcode is loaded.
+ * This is only effective if the Intel microcode is loaded.
  * This is not present in all microcode revisions. Disabled by default,
- * to reduce recieving immediately interrupts from all frames with size less
+ * to reduce receiving immediately interrupts from all frames with size less
  * than 128 bytes.
  */
 #ifndef FXP_MIN_SIZE_MASK

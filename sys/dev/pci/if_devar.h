@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.39 2018/11/25 19:52:08 jmc Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.40 2022/01/09 05:42:50 jsg Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -506,7 +506,7 @@ struct _tulip_softc_t {
 
     tulip_media_info_t *tulip_mediums[TULIP_MEDIA_MAX];	/* indexes into mediainfo */
     tulip_media_t tulip_media;			/* current media type */
-    u_int32_t tulip_abilities;	/* remote system's abiltities (as defined in IEEE 802.3u) */
+    u_int32_t tulip_abilities;	/* remote system's abilities (as defined in IEEE 802.3u) */
 
     u_int8_t tulip_revinfo;			/* revision of chip */
     u_int8_t tulip_phyaddr;			/* 0..31 -- address of current phy */

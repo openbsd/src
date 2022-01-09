@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunms.c,v 1.2 2016/06/05 20:02:36 bru Exp $	*/
+/*	$OpenBSD: sunms.c,v 1.3 2022/01/09 05:43:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2009, Miodrag Vallat
@@ -176,7 +176,7 @@ sunms_input(struct sunms_softc *sc, int c)
 		 * and bit 3 is set if it is a short (3 byte) packet.
 		 * On the Tadpole SPARCbook, mice connected to the external
 		 * connector will also have bit 6 set to allow it to be
-		 * differenciated from the onboard pointer.
+		 * differentiated from the onboard pointer.
 		 */
 		sc->sc_pktlen = ISSET(c, 0x08) ? 3 : 5;
 		sc->sc_mb = 0;

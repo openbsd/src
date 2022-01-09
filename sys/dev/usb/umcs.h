@@ -1,4 +1,4 @@
-/* $OpenBSD: umcs.h,v 1.3 2015/12/24 16:54:37 mmcc Exp $ */
+/* $OpenBSD: umcs.h,v 1.4 2022/01/09 05:43:01 jsg Exp $ */
 /* $NetBSD: umcs.h,v 1.1 2014/03/16 09:34:45 martin Exp $ */
 
 /*-
@@ -34,14 +34,14 @@
 
 #define	UMCS_READ_LENGTH	1	/* bytes */
 
-/* Read/Wrtire registers vendor commands */
+/* Read/Write registers vendor commands */
 #define	UMCS_READ		0x0d
 #define	UMCS_WRITE		0x0e
 
 #define	UMCS_CONFIG_NO		0
 #define	UMCS_IFACE_NO		0
 
-/* Read/Wrtie EEPROM values */
+/* Read/Write EEPROM values */
 #define	UMCS_EEPROM_RW_WVALUE	0x0900
 
 /*
@@ -106,7 +106,7 @@
 #define	UMCS_ZERO_PERIOD4	0x3d	/* Period btw frames for Port 4, R/W */
 #define	UMCS_ZERO_ENABLE	0x3e	/* Enable zero-out frames, R/W */
 
-/* Low 8 bits and high 1 bit of threshhold values for Bulk-Out ports 1-4 */
+/* Low 8 bits and high 1 bit of threshold values for Bulk-Out ports 1-4 */
 #define	UMCS_THR_VAL_LOW1	0x3f
 #define	UMCS_THR_VAL_HIGH1	0x40
 #define	UMCS_THR_VAL_LOW2	0x41
@@ -119,14 +119,14 @@
 				    
 /* Bits for SPx registers */
 #define	UMCS_SPx_LOOP_PIPES	0x01	/* Loop Out FIFO to In FIFO */
-#define	UMCS_SPx_SKIP_ERR_DATA	0x02	/* Drop data recevied with errors */
+#define	UMCS_SPx_SKIP_ERR_DATA	0x02	/* Drop data received with errors */
 #define	UMCS_SPx_RESET_OUT_FIFO	0x04	/* Reset Bulk-Out FIFO */
 #define	UMCS_SPx_RESET_IN_FIFO	0x08	/* Reset Bulk-In FIFO */
 #define	UMCS_SPx_CLK_MASK	0x70	/* Mask to extract Baud CLK source */
 #define	UMCS_SPx_CLK_X1		0x00	/* Max speed = 115200 bps, default */
 #define	UMCS_SPx_CLK_X2		0x10	/* Max speed = 230400 bps */
 #define	UMCS_SPx_CLK_X35	0x20	/* Max speed = 403200 bps */
-#define	UMCS_SPx_CLK_X4		0x30	/* Nax speed = 460800 bps */
+#define	UMCS_SPx_CLK_X4		0x30	/* Max speed = 460800 bps */
 #define	UMCS_SPx_CLK_X7		0x40	/* Max speed = 806400 bps */
 #define	UMCS_SPx_CLK_X8		0x50	/* Max speed = 921600 bps */
 #define	UMCS_SPx_CLK_24MHZ	0x60	/* Max speed = 1.5Mbps */
@@ -169,7 +169,7 @@
 #define	UMCS_GPIO_GPIO_1	0x02	/* GPIO_1 data */
 
 /*
- * Constants for PLL dividers.  Ouptut frequency of PLL is:
+ * Constants for PLL dividers.  Output frequency of PLL is:
  *   Fout = (N/M) * Fin.
  * Default PLL input frequency Fin is 12Mhz (on-chip).
  */
@@ -208,7 +208,7 @@
 #define	UMCS_CLK_SELECT3_SHIFT	0	/* Shift for port 3 in CLK_SELECT23 */
 #define	UMCS_CLK_SELECT4_MASK	0x38	/* Bits for port 4 in CLK_SELECT23 */
 #define	UMCS_CLK_SELECT4_SHIFT	3	/* Shift for port 4 in CLK_SELECT23 */
-#define	UMCS_CLK_SELECT_STD	0x00	/* STANDARD rate devired from 96Mhz */
+#define	UMCS_CLK_SELECT_STD	0x00	/* STANDARD rate derived from 96Mhz */
 #define	UMCS_CLK_SELECT_30MHZ	0x01	/* 30Mhz */
 #define	UMCS_CLK_SELECT_96MHZ	0x02	/* 96Mhz direct */
 #define	UMCS_CLK_SELECT_120MHZ	0x03	/* 120Mhz */
@@ -249,7 +249,7 @@
 #define	UMCS_RX_SAMPLINGx_DEF	7	/* Default for any RX Sampling */
 #define	UMCS_RX_SAMPLINGx_MAX	15	/* Min for any RX Sampling */
 
-/* Number of Bulk-in requests befor sending zero-sized reply */
+/* Number of Bulk-in requests before sending zero-sized reply */
 #define	UMCS_ZERO_PERIODx_DEF	20
 
 
@@ -282,18 +282,18 @@
 
 
 /* Bits of DCR0 registers, documented in datasheet */
-#define	UMCS_DCR0_PWRSAVE	0x01	/* Transiver off when USB Suspend */
+#define	UMCS_DCR0_PWRSAVE	0x01	/* Transceiver off when USB Suspended */
 #define	UMCS_DCR0_RESERVED1	0x02	/* Unused */
 #define	UMCS_DCR0_GPIO_MASK	0x0c	/* GPIO Mode bits */
 #define	UMCS_DCR0_GPIO_IN	0x00	/* GPIO Mode - Input (0b00) */
 #define	UMCS_DCR0_GPIO_OUT	0x08	/* GPIO Mode - Input (0b10) */ 
-#define	UMCS_DCR0_RTS_ACTHI	0x10	/* RTS Active is Hight, (default low) */
+#define	UMCS_DCR0_RTS_ACTHI	0x10	/* RTS Active is High, (default low) */
 #define	UMCS_DCR0_RTS_AUTO	0x20	/* Control by state TX buffer or MCR */
 #define	UMCS_DCR0_IRDA		0x40	/* IrDA mode */
 #define	UMCS_DCR0_RESERVED2	0x80	/* Unused */
 
 /* Bits of DCR1 registers, documented in datasheet, work only for port 1. */
-#define	UMCS_DCR1_GPIO_CURRENT_MASK	0x03	/* Mask to get GPIO valule */
+#define	UMCS_DCR1_GPIO_CURRENT_MASK	0x03	/* Mask to get GPIO value */
 #define	UMCS_DCR1_GPIO_CURRENT_6MA	0x00	/* GPIO output current 6mA */
 #define	UMCS_DCR1_GPIO_CURRENT_8MA	0x01	/* GPIO output current 8mA */
 #define	UMCS_DCR1_GPIO_CURRENT_10MA	0x02	/* GPIO output current 10mA */
@@ -329,7 +329,7 @@
 #define	UMCS_REG_RHR		0x00	/* Receiver Holding Register R */
 #define	UMCS_REG_IER		0x01	/* Interrupt enable register - R/W */
 #define	UMCS_REG_FCR		0x02	/* FIFO Control register - W */
-#define	UMCS_REG_ISR		0x02	/* Interrupt Status Registter R */
+#define	UMCS_REG_ISR		0x02	/* Interrupt Status Register R */
 #define	UMCS_REG_LCR		0x03	/* Line control register R/W */
 #define	UMCS_REG_MCR		0x04	/* Modem control register R/W */
 #define	UMCS_REG_LSR		0x05	/* Line status register R */
@@ -340,9 +340,9 @@
 #define	UMCS_REG_DLM		0x01	/* High bits of BAUD divider */
 
 /* IER bits */
-#define	UMCS_IER_RXREADY	0x01	/* RX Ready interrumpt mask */
-#define	UMCS_IER_TXREADY	0x02	/* TX Ready interrumpt mask */
-#define	UMCS_IER_RXSTAT		0x04	/* RX Status interrumpt mask */
+#define	UMCS_IER_RXREADY	0x01	/* RX Ready interrupt mask */
+#define	UMCS_IER_TXREADY	0x02	/* TX Ready interrupt mask */
+#define	UMCS_IER_RXSTAT		0x04	/* RX Status interrupt mask */
 #define	UMCS_IER_MODEM		0x08	/* Modem status change interrupt mask */
 #define	UMCS_IER_SLEEP		0x10	/* SLEEP enable */
 
@@ -359,9 +359,9 @@
 /* ISR bits */
 #define	UMCS_ISR_NOPENDING	0x01	/* No interrupt pending */
 #define	UMCS_ISR_INTMASK	0x3f	/* Mask to select interrupt source */
-#define	UMCS_ISR_RXERR		0x06	/* Recevir error */
-#define	UMCS_ISR_RXHASDATA	0x04	/* Recevier has data */
-#define	UMCS_ISR_RXTIMEOUT	0x0c	/* Recevier timeout */
+#define	UMCS_ISR_RXERR		0x06	/* Receiver error */
+#define	UMCS_ISR_RXHASDATA	0x04	/* Receiver has data */
+#define	UMCS_ISR_RXTIMEOUT	0x0c	/* Receiver timeout */
 #define	UMCS_ISR_TXEMPTY	0x02	/* Transmitter empty */
 #define	UMCS_ISR_MSCHANGE	0x00	/* Modem status change */
 

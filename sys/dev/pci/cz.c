@@ -1,4 +1,4 @@
-/*	$OpenBSD: cz.c,v 1.25 2021/01/01 10:21:26 jan Exp $ */
+/*	$OpenBSD: cz.c,v 1.26 2022/01/09 05:42:45 jsg Exp $ */
 /*	$NetBSD: cz.c,v 1.15 2001/01/20 19:10:36 thorpej Exp $	*/
 
 /*-
@@ -690,7 +690,7 @@ cz_intr(void *arg)
 		channel = CZ_FWCTL_READ(cz, BRDCTL_FWCMD_CHANNEL);
 		param = CZ_FWCTL_READ(cz, BRDCTL_FWCMD_PARAM);
 
-		/* now clear this interrupt, posslibly enabling another */
+		/* now clear this interrupt, possibly enabling another */
 		CZ_PLX_WRITE(cz, PLX_LOCAL_PCI_DOORBELL, command);
 
 		if (cz->cz_ports == NULL) {

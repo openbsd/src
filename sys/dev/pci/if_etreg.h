@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etreg.h,v 1.5 2013/11/26 20:33:17 deraadt Exp $	*/
+/*	$OpenBSD: if_etreg.h,v 1.6 2022/01/09 05:42:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -74,7 +74,7 @@
 #define ET_PCIV_ACK_LATENCY_256		416
 
 #define ET_PCIR_REPLAY_TIMER		0xc2
-#define ET_REPLAY_TIMER_RX_L0S_ADJ	250	/* XXX infered from default */
+#define ET_REPLAY_TIMER_RX_L0S_ADJ	250	/* XXX inferred from default */
 #define ET_PCIV_REPLAY_TIMER_128	(711 + ET_REPLAY_TIMER_RX_L0S_ADJ)
 #define ET_PCIV_REPLAY_TIMER_256	(1248 + ET_REPLAY_TIMER_RX_L0S_ADJ)
 

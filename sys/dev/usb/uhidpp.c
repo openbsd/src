@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.23 2021/12/23 12:14:15 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.24 2022/01/09 05:43:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -559,7 +559,7 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 
 	MUTEX_ASSERT_LOCKED(&sc->sc_mtx);
 
-	/* A connected device will continously send connect events. */
+	/* A connected device will continuously send connect events. */
 	if (dev->d_connected)
 		return;
 

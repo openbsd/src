@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9287.c,v 1.29 2021/04/15 18:25:43 stsp Exp $	*/
+/*	$OpenBSD: ar9287.c,v 1.30 2022/01/09 05:42:38 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -492,7 +492,7 @@ ar9287_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	}
 
 	memset(power, 0, sizeof(power));
-	/* Shuffle target powers accross transmit rates. */
+	/* Shuffle target powers across transmit rates. */
 	power[ATHN_POWER_OFDM6   ] =
 	power[ATHN_POWER_OFDM9   ] =
 	power[ATHN_POWER_OFDM12  ] =

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.c,v 1.128 2021/09/05 16:16:13 mglocker Exp $	*/
+/*	$OpenBSD: usb.c,v 1.129 2022/01/09 05:43:02 jsg Exp $	*/
 /*	$NetBSD: usb.c,v 1.77 2003/01/01 00:10:26 thorpej Exp $	*/
 
 /*
@@ -807,7 +807,7 @@ usb_explore(void *v)
 	if (sc->sc_bus->flags & USB_BUS_CONFIG_PENDING) {
 		/*
 		 * If this is a low/full speed hub and there is a high
-		 * speed hub that hasn't explored yet, reshedule this
+		 * speed hub that hasn't explored yet, reschedule this
 		 * task, allowing the high speed explore task to run.
 		 */
 		if (sc->sc_bus->usbrev < USBREV_2_0 && explore_pending > 0) {

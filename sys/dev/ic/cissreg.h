@@ -1,4 +1,4 @@
-/*	$OpenBSD: cissreg.h,v 1.11 2010/06/03 01:02:13 dlg Exp $	*/
+/*	$OpenBSD: cissreg.h,v 1.12 2022/01/09 05:42:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005,2006 Michael Shalayeff
@@ -209,7 +209,7 @@ struct ciss_ldstat {
 	u_int8_t	memfail;	/* cache mem failure */
 	u_int8_t	expfail;	/* expansion failure */
 	u_int8_t	rebldfail;	/* rebuild failure */
-#define	CISS_LD_RBLD_READ	0x01	/* read faild */
+#define	CISS_LD_RBLD_READ	0x01	/* read failed */
 #define	CISS_LD_RBLD_WRITE	0x02	/* write fail */
 	u_int8_t	bigfailed[16];	/* bigmap vers of same of the above */
 	u_int8_t	bigremapcnt[256];

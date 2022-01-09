@@ -1,4 +1,4 @@
-/*	$OpenBSD: essreg.h,v 1.3 2001/01/29 06:27:59 mickey Exp $	*/
+/*	$OpenBSD: essreg.h,v 1.4 2022/01/09 05:42:42 jsg Exp $	*/
 /*	$NetBSD: essreg.h,v 1.12 1999/06/18 20:25:23 augustss Exp $	*/
 /*
  * Copyright 1997
@@ -34,7 +34,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.3 $ (SHARK) $Date: 2001/01/29 06:27:59 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.4 $ (SHARK) $Date: 2022/01/09 05:42:42 $
 **
 **++
 **
@@ -70,7 +70,7 @@
  * input or DMA completion.  They seem to have neglected the fact
  * that it would be nice to have a MIDI transmission complete interrupt.
  * Worse, the DMA engine is half-duplex.  This means you need to do
- * (timed) programmed I/O to be able to record and play simulataneously.
+ * (timed) programmed I/O to be able to record and play simultaneously.
  */
 #define ESS_ACMD_DAC8WRITE	0x10	/* direct-mode 8-bit DAC write */
 #define ESS_ACMD_DAC16WRITE	0x11	/* direct-mode 16-bit DAC write */

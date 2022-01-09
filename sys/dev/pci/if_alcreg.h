@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alcreg.h,v 1.7 2020/01/24 03:29:55 tedu Exp $	*/
+/*	$OpenBSD: if_alcreg.h,v 1.8 2022/01/09 05:42:46 jsg Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1146,7 +1146,7 @@ struct smb {
 	uint32_t updated;
 };
 
-/* CMB(Coalesing message block) */
+/* CMB (Coalescing Message Block) */
 struct cmb {
 	uint32_t cons;
 };

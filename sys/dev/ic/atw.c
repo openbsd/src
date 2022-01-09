@@ -1,4 +1,4 @@
-/*	$OpenBSD: atw.c,v 1.98 2020/07/10 13:22:19 patrick Exp $	*/
+/*	$OpenBSD: atw.c,v 1.99 2022/01/09 05:42:38 jsg Exp $	*/
 /*	$NetBSD: atw.c,v 1.69 2004/07/23 07:07:55 dyoung Exp $	*/
 
 /*-
@@ -3785,7 +3785,7 @@ atw_start(struct ifnet *ifp)
 
 		/*
 		 * Load the DMA map.  Copy and try (once) again if the packet
-		 * didn't fit in the alloted number of segments.
+		 * didn't fit in the allotted number of segments.
 		 */
 		for (first = 1;
 		     (error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,

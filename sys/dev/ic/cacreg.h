@@ -1,4 +1,4 @@
-/*	$OpenBSD: cacreg.h,v 1.6 2008/10/29 21:17:15 brad Exp $	*/
+/*	$OpenBSD: cacreg.h,v 1.7 2022/01/09 05:42:38 jsg Exp $	*/
 /*	$NetBSD: cacreg.h,v 1.5 2001/01/10 16:48:04 ad Exp $	*/
 
 /*-
@@ -207,7 +207,7 @@ struct cac_drive_status {
 	u_int8_t	memfail;	/* cache mem failure */
 	u_int8_t	expfail;	/* expansion failure */
 	u_int8_t	rebldfail;	/* rebuild failure */
-#define	CAC_LD_RBLD_READ	0x01	/* read faild */
+#define	CAC_LD_RBLD_READ	0x01	/* read failed */
 #define	CAC_LD_RBLD_WRITE	0x02	/* write fail */
 	u_int8_t	bigfailed[16];	/* bigmap vers of same of the above */
 	u_int8_t	bigremapcnt[256];

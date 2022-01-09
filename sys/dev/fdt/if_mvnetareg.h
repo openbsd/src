@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvnetareg.h,v 1.2 2020/11/29 13:00:23 kettenis Exp $	*/
+/*	$OpenBSD: if_mvnetareg.h,v 1.3 2022/01/09 05:42:37 jsg Exp $	*/
 /*	$NetBSD: mvnetareg.h,v 1.8 2013/12/23 02:23:25 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2013 KIYOHARA Takashi
@@ -560,7 +560,7 @@
 #define MVNETA_PTXS_TBC(x)		(((x) >> 16) & 0x3fff)
 
 /* Port TX queues Status Update (MVNETA_PTXSU) */
-					/* Number Of Written Descriptoes */
+					/* Number Of Written Descriptors */
 #define MVNETA_PTXSU_NOWD(x)		(((x) & 0xff) << 0)
 					/* Number Of Released Buffers */
 #define MVNETA_PTXSU_NORB(x)		(((x) & 0xff) << 16)
@@ -761,7 +761,7 @@
 /*
  * DMA descriptors
  *    Despite the documentation saying these descriptors only need to be
- *    aligned to 16-byte bondaries, 32-byte alignment seems to be required
+ *    aligned to 16-byte boundaries, 32-byte alignment seems to be required
  *    by the hardware.  We'll just pad them out to that to make it easier.
  */
 struct mvneta_tx_desc {

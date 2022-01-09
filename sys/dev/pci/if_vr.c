@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.157 2020/12/12 11:48:53 jan Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.158 2022/01/09 05:42:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1241,7 +1241,7 @@ vr_encap(struct vr_softc *sc, struct vr_chain **cp, struct mbuf *m)
 	/*
 	 * We only want TX completion interrupts on every Nth packet.
 	 * We need to set VR_TXNEXT_INTDISABLE on every descriptor except
-	 * for the last discriptor of every Nth packet, where we set
+	 * for the last descriptor of every Nth packet, where we set
 	 * VR_TXCTL_FINT.  The former is in the specs for only some chips.
 	 * present: VT6102 VT6105M VT8235M
 	 * not present: VT86C100 6105LOM

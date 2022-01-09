@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5211.c,v 1.50 2018/01/31 11:27:03 stsp Exp $	*/
+/*	$OpenBSD: ar5211.c,v 1.51 2022/01/09 05:42:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1330,7 +1330,7 @@ void
 ar5k_ar5211_set_mcast_filter(struct ath_hal *hal, u_int32_t filter0,
     u_int32_t filter1)
 {
-	/* Set the multicat filter */
+	/* Set the multicast filter */
 	AR5K_REG_WRITE(AR5K_AR5211_MCAST_FIL0, filter0);
 	AR5K_REG_WRITE(AR5K_AR5211_MCAST_FIL1, filter1);
 }
@@ -2273,7 +2273,7 @@ ar5k_ar5211_wait_for_beacon(struct ath_hal *hal, bus_addr_t phys_addr)
 	HAL_BOOL ret;
 
 	/*
-	 * Wait for beaconn queue to be done
+	 * Wait for beacon queue to be done
 	 */
 	ret = ar5k_register_timeout(hal,
 	    AR5K_AR5211_QCU_STS(HAL_TX_QUEUE_ID_BEACON),
@@ -2416,7 +2416,7 @@ ar5k_ar5211_get_capabilities(struct ath_hal *hal)
 		b = 1;
 
 	/*
-	 * XXX The AR5211 tranceiver supports frequencies from 4920 to 6100GHz
+	 * XXX The AR5211 transceiver supports frequencies from 4920 to 6100GHz
 	 * XXX and from 2312 to 2732GHz. There are problems with the current
 	 * XXX ieee80211 implementation because the IEEE channel mapping
 	 * XXX does not support negative channel numbers (2312MHz is channel

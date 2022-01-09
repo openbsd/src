@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar9003.c,v 1.53 2021/04/15 18:25:43 stsp Exp $	*/
+/*	$OpenBSD: ar9003.c,v 1.54 2022/01/09 05:42:38 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2827,7 +2827,7 @@ ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
 		y5 = (y5 * tmp) / order5x;
 		y5 = y5 / order5xrem;
 
-		/* Third oder. */
+		/* Third order. */
 		y3 = (alpha * tmp) / order3x;
 		y3 = (y3 * tmp) / order3x;
 		y3 = (y3 * tmp) / order3x;
@@ -2893,7 +2893,7 @@ ar9003_compute_predistortion(struct athn_softc *sc, const uint32_t *lo,
 		y5 = (y5 * tmp) / order5x;
 		y5 = y5 / order5xrem;
 
-		/* Third oder. */
+		/* Third order. */
 		if (beta > 0)	/* XXX alpha? */
 			y3 = (alpha * tmp - order3x) / order3x;
 		else

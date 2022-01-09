@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.112 2021/12/29 18:48:45 patrick Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.113 2022/01/09 05:42:50 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -736,7 +736,7 @@ STATIC int32_t em_set_sfp_media_type_82575(struct em_hw *hw)
 	struct sfp_e1000_flags eth_flags;
 	int32_t ret_val = E1000_ERR_CONFIG;
 	uint32_t ctrl_ext = 0;
-	uint8_t tranceiver_type = 0;
+	uint8_t transceiver_type = 0;
 	int32_t timeout = 3;
 
 	/* Turn I2C interface ON and power on sfp cage */
@@ -750,7 +750,7 @@ STATIC int32_t em_set_sfp_media_type_82575(struct em_hw *hw)
 	while (timeout) {
 		ret_val = em_read_sfp_data_byte(hw,
 			E1000_I2CCMD_SFP_DATA_ADDR(E1000_SFF_IDENTIFIER_OFFSET),
-			&tranceiver_type);
+			&transceiver_type);
 		if (ret_val == E1000_SUCCESS)
 			break;
 		msec_delay(100);
@@ -766,8 +766,8 @@ STATIC int32_t em_set_sfp_media_type_82575(struct em_hw *hw)
 		goto out;
 
 	/* Check if there is some SFP module plugged and powered */
-	if ((tranceiver_type == E1000_SFF_IDENTIFIER_SFP) ||
-	    (tranceiver_type == E1000_SFF_IDENTIFIER_SFF)) {
+	if ((transceiver_type == E1000_SFF_IDENTIFIER_SFP) ||
+	    (transceiver_type == E1000_SFF_IDENTIFIER_SFF)) {
 		if (eth_flags.e1000_base_lx || eth_flags.e1000_base_sx) {
 			hw->media_type = em_media_type_internal_serdes;
 		} else if (eth_flags.e100_base_fx || eth_flags.e100_base_lx) {
@@ -1598,7 +1598,7 @@ em_init_hw(struct em_softc *sc)
 
 		em_disable_ulp_lpt_lp(hw, TRUE);
 		/*
-		 * Reset the PHY before any acccess to it.  Doing so,
+		 * Reset the PHY before any access to it.  Doing so,
 		 * ensures that the PHY is in a known good state before
 		 * we read/write PHY registers.  The generic reset is
 		 * sufficient here, because we haven't determined
@@ -1673,7 +1673,7 @@ em_init_hw(struct em_softc *sc)
 		E1000_WRITE_REG_ARRAY(hw, MTA, i, 0);
 		/*
 		 * use write flush to prevent Memory Write Block (MWB) from
-		 * occuring when accessing our register space
+		 * occurring when accessing our register space
 		 */
 		E1000_WRITE_FLUSH(hw);
 	}
@@ -2236,7 +2236,7 @@ em_setup_fiber_serdes_link(struct em_hw *hw)
 	/*
 	 * Since auto-negotiation is enabled, take the link out of reset (the
 	 * link will be in reset, because we previously reset the chip). This
-	 * will restart auto-negotiation.  If auto-neogtiation is successful
+	 * will restart auto-negotiation.  If auto-negotiation is successful
 	 * then the link-up status bit will be set and the flow control
 	 * enable bits (RFCE and TFCE) will be set according to their
 	 * negotiated value.
@@ -2788,7 +2788,7 @@ em_copper_link_mgp_setup(struct em_hw *hw)
 		/*
 	    	 * Set PHY page 0, register 29 to 0x0003
 	         * The next two writes are supposed to lower BER for gig
-	         * conection
+	         * connection
 		 */
 		ret_val = em_write_phy_reg(hw, BM_REG_BIAS1, 0x0003);
 		if (ret_val)
@@ -3985,7 +3985,7 @@ em_force_mac_fc(struct em_hw *hw)
  * Forces MAC flow control settings if link was forced. When in MII/GMII mode
  * and autonegotiation is enabled, the MAC flow control settings will be set
  * based on the flow control negotiated by the PHY. In TBI mode, the TFCE
- * and RFCE bits will be automaticaly set to the negotiated flow control mode.
+ * and RFCE bits will be automatically set to the negotiated flow control mode.
  *****************************************************************************/
 STATIC int32_t
 em_config_fc_after_link_up(struct em_hw *hw)
@@ -5562,7 +5562,7 @@ int32_t em_write_phy_reg_i2c(struct em_hw *hw, uint32_t offset, uint16_t data)
 
 	DEBUGFUNC("em_write_phy_reg_i2c");
 
-	/* Prevent overwritting SFP I2C EEPROM which is at A0 address.*/
+	/* Prevent overwriting SFP I2C EEPROM which is at A0 address.*/
 	if ((hw->phy_addr == 0) || (hw->phy_addr > 7)) {
 		DEBUGOUT1("PHY I2C Address %d is out of range.\n",
 			  hw->phy_addr);
@@ -5821,7 +5821,7 @@ out:
  *
  * hw - Struct containing variables accessed by shared code
  *
- * Sets bit 15 of the MII Control regiser
+ * Sets bit 15 of the MII Control register
  *****************************************************************************/
 int32_t
 em_phy_reset(struct em_hw *hw)
@@ -6854,7 +6854,7 @@ em_read_eeprom(struct em_hw *hw, uint16_t offset, uint16_t words,
 		if (em_acquire_eeprom(hw) != E1000_SUCCESS)
 			return -E1000_ERR_EEPROM;
 	}
-	/* Eerd register EEPROM access requires no eeprom aquire/release */
+	/* Eerd register EEPROM access requires no eeprom acquire/release */
 	if (eeprom->use_eerd == TRUE)
 		return em_read_eeprom_eerd(hw, offset, words, data);
 
@@ -6868,7 +6868,7 @@ em_read_eeprom(struct em_hw *hw, uint16_t offset, uint16_t words,
 
 	/*
 	 * Set up the SPI or Microwire EEPROM for bit-bang reading.  We have
-	 * acquired the EEPROM at this point, so any returns should relase it
+	 * acquired the EEPROM at this point, so any returns should release it
 	 */
 	if (eeprom->type == em_eeprom_spi) {
 		uint16_t word_in;
@@ -7781,7 +7781,7 @@ out:
  * hw - Struct containing variables accessed by shared code
  *
  * Places the MAC address in receive address register 0 and clears the rest
- * of the receive addresss registers. Clears the multicast table. Assumes
+ * of the receive address registers. Clears the multicast table. Assumes
  * the receiver is in reset when the routine is called.
  *****************************************************************************/
 STATIC void
@@ -8671,11 +8671,11 @@ em_get_cable_length(struct em_hw *hw, uint16_t *min_length,
 }
 
 /******************************************************************************
- * Check if Downshift occured
+ * Check if Downshift occurred
  *
  * hw - Struct containing variables accessed by shared code
- * downshift - output parameter : 0 - No Downshift ocured.
- *                                1 - Downshift ocured.
+ * downshift - output parameter : 0 - No Downshift occurred.
+ *                                1 - Downshift occurred.
  *
  * returns: - E1000_ERR_XXX
  *            E1000_SUCCESS
@@ -9309,7 +9309,7 @@ em_host_if_read_cookie(struct em_hw *hw, uint8_t *buffer)
 }
 
 /*****************************************************************************
- * This function checks whether the HOST IF is enabled for command operaton
+ * This function checks whether the HOST IF is enabled for command operation
  * and also checks whether the previous command is completed.
  * It busy waits in case of previous command is not completed.
  *
@@ -11181,7 +11181,7 @@ em_set_pciex_completion_timeout(struct em_hw *hw)
 	DEBUGOUT("PCIe completion timeout not set by system BIOS.");
 
 	/*
-	 * If capababilities version is type 1 we can write the
+	 * If capabilities version is type 1 we can write the
 	 * timeout of 10ms to 200ms through the GCR register
 	 */
 

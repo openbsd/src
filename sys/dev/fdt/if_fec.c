@@ -1,4 +1,4 @@
-/* $OpenBSD: if_fec.c,v 1.13 2021/11/05 15:18:24 patrick Exp $ */
+/* $OpenBSD: if_fec.c,v 1.14 2022/01/09 05:42:37 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013,2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -685,7 +685,7 @@ fec_init(struct fec_softc *sc)
 	HWRITE4(sc, ENET_RACC, ENET_RACC_SHIFT16);
 	HWRITE4(sc, ENET_FTRL, ENET_MAX_BUF_SIZE);
 
-	/* RX FIFO treshold and pause */
+	/* RX FIFO threshold and pause */
 	HWRITE4(sc, ENET_RSEM, 0x84);
 	HWRITE4(sc, ENET_RSFL, 16);
 	HWRITE4(sc, ENET_RAEM, 8);

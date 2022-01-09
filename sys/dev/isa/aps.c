@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.26 2017/03/02 10:38:10 natano Exp $	*/
+/*	$OpenBSD: aps.c,v 1.27 2022/01/09 05:42:42 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
@@ -48,7 +48,7 @@
 
 /*
  * EC interface on Thinkpad Laptops, from Linux HDAPS driver notes.
- * From Renesans H8S/2140B Group Hardware Manual
+ * From Renesas H8S/2140B Group Hardware Manual
  * http://documentation.renesas.com/eng/products/mpumcu/rej09b0300_2140bhm.pdf
  *
  * EC uses LPC Channel 3 registers TWR0..15

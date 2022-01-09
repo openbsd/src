@@ -69,7 +69,7 @@ static const char *_edid_modes[] =  {
 	"640x480x67",
 	"640x480x60",
 	"720x400x85",	/* should this really be "720x400x88" ? */
-	"720x400x70",	/* hmm... videmode.c doesn't have this one */
+	"720x400x70",	/* hmm... videomode.c doesn't have this one */
 };
 
 #ifdef	EDIDVERBOSE

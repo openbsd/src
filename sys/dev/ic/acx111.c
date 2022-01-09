@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx111.c,v 1.23 2015/11/24 13:45:06 mpi Exp $ */
+/*	$OpenBSD: acx111.c,v 1.24 2022/01/09 05:42:38 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -367,7 +367,7 @@ acx111_init_memory(struct acx_softc *sc)
 
 	/*
 	 * There is no need to setup firmware RX descriptor ring,
-	 * it is automaticly setup by hardware.
+	 * it is automatically setup by hardware.
 	 */
 
 	return (0);

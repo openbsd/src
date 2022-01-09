@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.88 2020/07/20 07:45:44 stsp Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.89 2022/01/09 05:42:38 jsg Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -787,7 +787,7 @@ rt2560_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		}
 #endif
 
-		/* turn assocation led on */
+		/* turn association led on */
 		rt2560_update_led(sc, 1, 0);
 
 		if (ic->ic_opmode == IEEE80211_M_STA) {
@@ -1085,7 +1085,7 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 	struct mbuf *mnew, *m;
 	int hw, error;
 
-	/* retrieve last decriptor index processed by cipher engine */
+	/* retrieve last descriptor index processed by cipher engine */
 	hw = (RAL_READ(sc, RT2560_SECCSR0) - sc->rxq.physaddr) /
 	    RT2560_RX_DESC_SIZE;
 

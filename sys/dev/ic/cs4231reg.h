@@ -1,4 +1,4 @@
-/* $OpenBSD: cs4231reg.h,v 1.7 2010/06/30 11:21:35 jakemsr Exp $ */
+/* $OpenBSD: cs4231reg.h,v 1.8 2022/01/09 05:42:38 jsg Exp $ */
 /* $NetBSD: cs4231reg.h,v 1.4 1996/02/16 08:12:33 mycroft Exp $ */
 
 /*-
@@ -88,7 +88,7 @@
 #define CS_IRQ_STATUS		0x18
 #define		CS_IRQ_PU		0x01	/* Playback Underrun */
 #define		CS_IRQ_PO		0x02	/* Playback Overrun */
-#define		CS_IRQ_CO		0x04	/* Capture Overrrun */
+#define		CS_IRQ_CO		0x04	/* Capture Overrun */
 #define		CS_IRQ_CU		0x08	/* Capture Underrun */
 #define		CS_IRQ_PI		0x10	/* Playback Interrupt */
 #define		CS_IRQ_CI		0x20	/* Capture Interrupt */

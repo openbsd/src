@@ -1,4 +1,4 @@
-/* $OpenBSD: gusreg.h,v 1.6 2008/06/26 05:42:16 ray Exp $ */
+/* $OpenBSD: gusreg.h,v 1.7 2022/01/09 05:42:42 jsg Exp $ */
 /* $NetBSD: gusreg.h,v 1.6 1997/10/09 07:57:22 jtc Exp $ */
 
 /*-
@@ -185,12 +185,12 @@
 #define GUSMASK_BOTH_RQ		0x40		/* Combine both RQ lines */
 
 /*
- * GUS bitmaks for DMA control
+ * GUS bitmasks for DMA control
  */
 
 #define GUSMASK_DMA_ENABLE	0x01		/* Enable DMA transfer */
 #define GUSMASK_DMA_READ	0x02		/* 1=read, 0=write */
-#define GUSMASK_DMA_WRITE	0x00		/* for consistancy */
+#define GUSMASK_DMA_WRITE	0x00		/* for consistency */
 #define GUSMASK_DMA_WIDTH	0x04		/* Data transfer width */
 #define GUSMASK_DMA_R0		0x00		/* Various DMA speeds */
 #define GUSMASK_DMA_R1		0x08

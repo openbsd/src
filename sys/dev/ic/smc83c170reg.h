@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170reg.h,v 1.2 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: smc83c170reg.h,v 1.3 2022/01/09 05:42:42 jsg Exp $	*/
 /*	$NetBSD: smc83c170reg.h,v 1.9 2003/11/08 16:08:13 tsutsui Exp $	*/
 
 /*-
@@ -321,7 +321,7 @@ struct epic_fraglist {
  *	LAN2	[3-0]		n8
  *
  * The LAN address is automatically recalled from the EEPROM after a
- * hard reseet.
+ * hard reset.
  */
 
 #define	EPIC_IDCHK		0x4c /* BOARD ID/CHECKSUM */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.74 2020/07/10 13:26:38 patrick Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.75 2022/01/09 05:42:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -112,7 +112,7 @@
  * When a frame is received, the chip will DMA it into the memory regions
  * specified by the fragment descriptors and then trigger an RX 'end of
  * frame interrupt' when done. The driver may choose to use only one
- * fragment per list; this may result is slighltly less efficient use
+ * fragment per list; this may result in slightly less efficient use
  * of memory in exchange for improving performance.
  *
  * To transmit frames, the driver again sets up lists and fragment

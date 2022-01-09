@@ -546,7 +546,7 @@ hvs_intr(void *xsc)
 		}
 
 #ifdef HVS_DEBUG_IO
-		DPRINTF("%s: rid %llu opertaion %u flags %#x status %#x\n",
+		DPRINTF("%s: rid %llu operation %u flags %#x status %#x\n",
 		    sc->sc_dev.dv_xname, rid, cmd.cmd_op, cmd.cmd_flags,
 		    cmd.cmd_status);
 #endif

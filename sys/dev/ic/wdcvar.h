@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.56 2017/07/12 13:40:59 mikeb Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.57 2022/01/09 05:42:42 jsg Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -160,14 +160,14 @@ struct wdc_softc { /* Per controller state */
 #define WDC_CAPABILITY_NO_EXTRA_RESETS 0x0100 /* only reset once */
 #define WDC_CAPABILITY_PREATA 0x0200	/* ctrl can be a pre-ata one */
 #define WDC_CAPABILITY_IRQACK 0x0400	/* callback to ack interrupt */
-#define WDC_CAPABILITY_SINGLE_DRIVE 0x800 /* Don't proble second drive */
+#define WDC_CAPABILITY_SINGLE_DRIVE 0x800 /* Don't probe second drive */
 #define WDC_CAPABILITY_NO_ATAPI_DMA 0x1000 /* Don't do DMA with ATAPI */
 #define WDC_CAPABILITY_SATA   0x2000	/* SATA controller */
 	u_int8_t      PIO_cap; /* highest PIO mode supported */
 	u_int8_t      DMA_cap; /* highest DMA mode supported */
 	u_int8_t      UDMA_cap; /* highest UDMA mode supported */
 	int nchannels;	/* Number of channels on this controller */
-	struct channel_softc **channels;  /* channels-specific datas (array) */
+	struct channel_softc **channels;  /* channel-specific data (array) */
 	u_int16_t quirks;		/* per-device oddities */
 #define WDC_QUIRK_NOSHORTDMA	0x0001	/* can't do short DMA transfers */
 #define WDC_QUIRK_NOATA		0x0002	/* skip attaching ATA disks */
@@ -226,7 +226,7 @@ struct wdc_xfer {
 #define C_PRIVATEXFER	0x0400 /* privately managed xfer */
 #define C_SCSIXFER	0x0800 /* SCSI managed xfer */
 
-	/* Informations about our location */
+	/* Information about our location */
 	struct channel_softc *chp;
 	u_int8_t drive;
 

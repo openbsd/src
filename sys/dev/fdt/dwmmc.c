@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.25 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.26 2022/01/09 05:42:37 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -960,7 +960,7 @@ dwmmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		dwmmc_dma_setup(sc, cmd);
 		HWRITE4(sc, SDMMC_PLDMND, 1);
 
-		/* Ennable DMA if we did PIO before. */
+		/* Enable DMA if we did PIO before. */
 		if (!sc->sc_dmamode)
 			dwmmc_dma_mode(sc);
 

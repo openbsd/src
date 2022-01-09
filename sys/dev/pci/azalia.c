@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.266 2021/10/30 03:24:59 jsg Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.267 2022/01/09 05:42:45 jsg Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -1742,7 +1742,7 @@ azalia_codec_init(codec_t *this)
 	/* make sure built-in mic is connected to an adc */
 	if (this->mic != -1 && this->mic_adc == -1) {
 		if (azalia_codec_select_micadc(this)) {
-			DPRINTF(("%s: cound not select mic adc\n", __func__));
+			DPRINTF(("%s: could not select mic adc\n", __func__));
 		}
 	}
 
@@ -2218,7 +2218,7 @@ azalia_codec_select_spkrdac(codec_t *this)
 		if (i < w->nconnections) {
 			conn = i;
 		} else {
-			/* Couldn't get a unique DAC.  Try to get a diferent
+			/* Couldn't get a unique DAC.  Try to get a different
 			 * DAC than the first pin's DAC.
 			 */
 			if (this->spkr_dac == this->opins[0].conv) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: tgareg.h,v 1.4 2001/03/18 04:37:21 nate Exp $ */
+/* $OpenBSD: tgareg.h,v 1.5 2022/01/09 05:42:58 jsg Exp $ */
 /* $NetBSD: tgareg.h,v 1.3 2000/03/04 10:28:00 elric Exp $ */
 
 /*
@@ -112,7 +112,7 @@ typedef u_int32_t tga_reg_t;
 #define	TGA_REG_GGVR	0x02d		/* Green Value */
 #define	TGA_REG_GBVR	0x02e		/* Blue Value */
 #define	TGA_REG_GSWR	0x02f		/* Span Width */
-#define	TGA_REG_EPSR	0x030		/* Pallete and DAC Setup */
+#define	TGA_REG_EPSR	0x030		/* Palette and DAC Setup */
 
 /*	reserved	0x031 - 0x3f */
 
@@ -157,7 +157,7 @@ typedef u_int32_t tga_reg_t;
 
 /*	reserved	0x07b */
 
-#define	TGA_REG_EPDR	0x07c		/* Pallete and DAC Data */
+#define	TGA_REG_EPDR	0x07c		/* Palette and DAC Data */
 
 /*	reserved	0x07d */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.60 2021/12/13 20:59:23 chrisz Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.61 2022/01/09 05:42:37 jsg Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -479,7 +479,7 @@ rkclock_set_frequency(struct rkclock_softc *sc, uint32_t idx, uint32_t freq)
 
 	/*
 	 * Start out with the current parent.  This prevents
-	 * unecessary switching to a different parent.
+	 * unnecessary switching to a different parent.
 	 */
 	best_freq = rkclock_freq(sc, clk, mux, freq);
 	best_mux = mux;

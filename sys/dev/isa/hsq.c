@@ -1,4 +1,4 @@
-/*	$OpenBSD: hsq.c,v 1.5 2008/11/22 10:33:33 deraadt Exp $	*/
+/*	$OpenBSD: hsq.c,v 1.6 2022/01/09 05:42:42 jsg Exp $	*/
 
 /*-
  * Copyright (c) 1999 Denis A. Doroshenko. All rights reserved.
@@ -58,14 +58,14 @@
  * 1/0. Let us call this register UER -- UARTs Enable Register.
  * When a byte is read it is mask of bits for UARTs, that have some
  * event(s), which are analyzed using that UART's IIR. Let us call
- * this register UIR -- UARTs Interrrupt Register.
+ * this register UIR -- UARTs Interrupt Register.
  *
- * Note: four higher bits of the UIR are alway 1 for 4-channel mux,
+ * Note: four higher bits of the UIR are always 1 for 4-channel mux,
  * I have no idea what could that mean, it would be better to have
  * them zeroed.
  *
  * Shitty feature: UER's value upon power up is absolutely random,
- * so that UARTs can work and can not and you don't uderstand what's up...
+ * so that UARTs can work and can not and you don't understand what's up...
  * Thus, we have to set its value to 0x0f to get all four UARTs 
  * interrupting, just after we've attached the mux...
  *

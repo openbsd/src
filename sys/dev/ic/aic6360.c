@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6360.c,v 1.38 2020/09/22 19:32:52 krw Exp $	*/
+/*	$OpenBSD: aic6360.c,v 1.39 2022/01/09 05:42:38 jsg Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 #ifdef DDB
@@ -1589,7 +1589,7 @@ aicintr(void *arg)
 
 	/*
 	 * Clear INTEN.  We enable it again before returning.  This makes the
-	 * interrupt esssentially level-triggered.
+	 * interrupt essentially level-triggered.
 	 */
 	bus_space_write_1(iot, ioh, DMACNTRL0, 0);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.74 2021/03/07 06:21:38 jsg Exp $	*/
+/*	$OpenBSD: cac.c,v 1.75 2022/01/09 05:42:38 jsg Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -379,7 +379,7 @@ cac_cmd(struct cac_softc *sc, int command, void *data, int datasize,
 	ccb->ccb_xs = xs;
 
 	if (!xs || xs->flags & SCSI_POLL) {
-		/* Synchronous commands musn't wait. */
+		/* Synchronous commands mustn't wait. */
 		mtx_enter(&sc->sc_ccb_mtx);
 		if ((*sc->sc_cl->cl_fifo_full)(sc)) {
 			mtx_leave(&sc->sc_ccb_mtx);

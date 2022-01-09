@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.28 2021/11/05 11:38:29 mpi Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.29 2022/01/09 05:42:58 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -369,7 +369,7 @@ vioscsi_vq_done(struct virtqueue *vq)
  * resources necessary to start an I/O on the device.
  *
  * Since the size of the I/O is unknown at this time the
- * resouces allocated (a.k.a. reserved) must be sufficient
+ * resources allocated (a.k.a. reserved) must be sufficient
  * to allow the maximum possible I/O size.
  *
  * When the I/O is actually attempted via vioscsi_scsi_cmd()

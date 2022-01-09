@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.45 2018/09/14 08:37:34 miko Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.46 2022/01/09 05:42:45 jsg Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -412,7 +412,7 @@ cmpci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_reg_misc = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 	    CMPCI_REG_MISC) & ~CMPCI_REG_SPDIF48K;
 
-	/* extra capabilitites check */
+	/* extra capabilities check */
 	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CMPCI_REG_INTR_CTRL) &
 	    CMPCI_REG_CHIP_MASK2;
 	if (d) {
@@ -474,7 +474,7 @@ cmpci_attach(struct device *parent, struct device *self, void *aux)
 			v = 1;
 			break;
 
-		/* volume with inital value 0 */
+		/* volume with initial value 0 */
 		case CMPCI_CD_VOL:
 		case CMPCI_LINE_IN_VOL:
 		case CMPCI_AUX_IN_VOL:

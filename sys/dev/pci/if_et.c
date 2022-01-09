@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.40 2021/12/23 01:39:44 jsg Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.41 2022/01/09 05:42:50 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -1590,7 +1590,7 @@ et_init_txmac(struct et_softc *sc)
 	/* No flow control yet */
 	CSR_WRITE_4(sc, ET_TXMAC_FLOWCTRL, 0);
 
-	/* Enable TX MAC but leave FC(?) diabled */
+	/* Enable TX MAC but leave FC(?) disabled */
 	CSR_WRITE_4(sc, ET_TXMAC_CTRL,
 		    ET_TXMAC_CTRL_ENABLE | ET_TXMAC_CTRL_FC_DISABLE);
 }

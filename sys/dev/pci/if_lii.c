@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.44 2017/01/22 10:17:38 dlg Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.45 2022/01/09 05:42:54 jsg Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -645,7 +645,7 @@ lii_init(struct ifnet *ifp)
 	LII_WRITE_2(sc, LII_RXD_NUM_ENTRIES, AT_RXD_NUM);
 
 	/*
-	 * Inter Paket Gap Time = 0x60 (IPGT)
+	 * Inter Packet Gap Time = 0x60 (IPGT)
 	 * Minimum inter-frame gap for RX = 0x50 (MIFG)
 	 * 64-bit Carrier-Sense window = 0x40 (IPGR1)
 	 * 96-bit IPG window = 0x60 (IPGR2)
@@ -929,7 +929,7 @@ lii_rxintr(struct lii_softc *sc)
 			}
 		}
 
-		/* Copy the packet withhout the FCS */
+		/* Copy the packet without the FCS */
 		m->m_pkthdr.len = m->m_len = size;
 		memcpy(mtod(m, void *), &rxp->rxp_data[0], size);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoak_subr.c,v 1.9 2018/05/01 18:14:46 landry Exp $   */
+/*	$OpenBSD: uoak_subr.c,v 1.10 2022/01/09 05:43:01 jsg Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* TORADEX OAK seriese sensors: common functions */ 
+/* TORADEX OAK series sensors: common functions */ 
 /* http://developer.toradex.com/files/toradex-dev/uploads/media/Oak/Oak_ProgrammingGuide.pdf */
 
 #include <sys/param.h>
@@ -40,7 +40,7 @@
  *  basic procedure to issue command to the OAK device.
  *  1) check the device is ready to accept command.
  *     if a report of a FEATURE_REPORT request is not start 0xff,
- *     wait for a while, and retry till the reponse start with 0xff.
+ *     wait for a while, and retry till the response start with 0xff.
  *  2) issue command.  (set or get)
  *  3) if the command will response, wait for a while, and issue
  *     FEATURE_REPORT. leading 0xff indicate the response is valid.
@@ -245,7 +245,7 @@ uoak_get_setting(struct uoak_softc *sc, enum uoak_target target)
 	(void)uoak_get_sample_rate(sc, target);
 	(void)uoak_get_report_rate(sc, target);
 
-	/* get device spcecific information */
+	/* get device specific information */
 	if (sc->sc_methods->dev_setting != NULL)
 		sc->sc_methods->dev_setting(sc->sc_parent, target);
 }
@@ -276,7 +276,7 @@ uoak_print_setting(struct uoak_softc *sc, enum uoak_target target)
 		break;
 	}
 
-	/* print device spcecific information */
+	/* print device specific information */
 	if (sc->sc_methods->dev_print != NULL)
 		sc->sc_methods->dev_print(sc->sc_parent, target);
 	printf("\n");

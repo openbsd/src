@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smsc.c,v 1.37 2020/07/31 10:49:32 mglocker Exp $	*/
+/*	$OpenBSD: if_smsc.c,v 1.38 2022/01/09 05:43:00 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
 /*-
  * Copyright (c) 2012
@@ -44,11 +44,11 @@
  * The chip supports both tx and rx offloading of UDP & TCP checksums, this
  * feature can be dynamically enabled/disabled.  
  *
- * RX checksuming is performed across bytes after the IPv4 header to the end of
+ * RX checksumming is performed across bytes after the IPv4 header to the end of
  * the Ethernet frame, this means if the frame is padded with non-zero values
  * the H/W checksum will be incorrect, however the rx code compensates for this.
  *
- * TX checksuming is more complicated, the device requires a special header to
+ * TX checksumming is more complicated, the device requires a special header to
  * be prefixed onto the start of the frame which indicates the start and end
  * positions of the UDP or TCP frame.  This requires the driver to manually
  * go through the packet data and decode the headers prior to sending.
@@ -834,7 +834,7 @@ smsc_chip_init(struct smsc_softc *sc)
 	}
 
 	/*
-	 * The following setings are used for 'turbo mode', a.k.a multiple
+	 * The following settings are used for 'turbo mode', a.k.a multiple
 	 * frames per Rx transaction (again info taken form Linux driver).
 	 */
 #ifdef SMSC_TURBO

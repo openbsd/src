@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.14 2021/10/24 17:52:27 mpi Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.15 2022/01/09 05:42:37 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -43,7 +43,7 @@ struct simplefb_format {
 };
 
 /*
- * Supported pixel formats.  Layout ommitted when it matches the
+ * Supported pixel formats.  Layout omitted when it matches the
  * rasops defaults.
  */
 struct simplefb_format simplefb_formats[] = {

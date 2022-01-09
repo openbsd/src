@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.120 2020/09/22 19:32:53 krw Exp $ */
+/*	$OpenBSD: arc.c,v 1.121 2022/01/09 05:42:45 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -2221,7 +2221,7 @@ arc_bio_disk(struct arc_softc *sc, struct bioc_disk *bd)
 	bd->bd_lun = diskinfo->scsi_attr.lun;
 #endif
 	/*
-	 * the firwmare doesnt seem to fill scsi_attr in, so fake it with
+	 * the firmware doesnt seem to fill scsi_attr in, so fake it with
 	 * the diskid.
 	 */
 	bd->bd_channel = 0;
@@ -2691,7 +2691,7 @@ arc_refresh_sensors(void *arg)
 			break;
 
 		case BIOC_SVINVALID:
-			/* FALLTRHOUGH */
+			/* FALLTHROUGH */
 		default:
 			sc->sc_sensors[i].value = 0; /* unknown */
 			sc->sc_sensors[i].status = SENSOR_S_UNKNOWN;

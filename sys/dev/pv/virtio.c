@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.20 2021/05/16 15:10:20 deraadt Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.21 2022/01/09 05:42:58 jsg Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ virtio_log_features(uint64_t host, uint64_t neg,
  *	virtio_reset(sc);	     // this will stop the device activity
  *	<dequeue finished requests>; // virtio_dequeue() still can be called
  *	<revoke pending requests in the vqs if any>;
- *	virtio_reinit_start(sc);     // dequeue prohibitted
+ *	virtio_reinit_start(sc);     // dequeue prohibited
  *	<some other initialization>;
  *	virtio_reinit_end(sc);	     // device activated; enqueue allowed
  * Once attached, features are assumed to not change again.
@@ -489,7 +489,7 @@ vq_free_entry(struct virtqueue *vq, struct vq_entry *qe)
  *	virtio_enqueue_reserve(sc, vq, slot, max_segs);	// reserve all slots
  *						that may ever be needed
  *
- *	<when enqueing a request>
+ *	<when enqueuing a request>
  *	// Don't call virtio_enqueue_prep()
  *	bus_dmamap_load(dmat, dmamap_payload[slot], data, count, ..);
  *	bus_dmamap_sync(dmat, dmamap_cmd[slot],... BUS_DMASYNC_PREWRITE);
@@ -816,7 +816,7 @@ virtio_dequeue_commit(struct virtqueue *vq, int slot)
 /*
  * Increase the event index in order to delay interrupts.
  * Returns 0 on success; returns 1 if the used ring has already advanced
- * too far, and the caller must process the queue again (otherewise, no
+ * too far, and the caller must process the queue again (otherwise, no
  * more interrupts will happen).
  */
 int
@@ -879,7 +879,7 @@ virtio_stop_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 		 * No way to disable the interrupt completely with
 		 * RingEventIdx. Instead advance used_event by half
 		 * the possible value. This won't happen soon and
-		 * is far enough in the past to not trigger a spurios
+		 * is far enough in the past to not trigger a spurious
 		 * interrupt.
 		 */
 		VQ_USED_EVENT(vq) = vq->vq_used_idx + 0x8000;

@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.420 2021/12/12 09:14:58 visa Exp $ */
+/* $OpenBSD: softraid.c,v 1.421 2022/01/09 05:42:37 jsg Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -4679,7 +4679,7 @@ sr_rebuild(struct sr_discipline *sd)
 	}
 	if (restart) {
 		/*
-		 * XXX there is a hole here; there is a posibility that we
+		 * XXX there is a hole here; there is a possibility that we
 		 * had a restart however the chunk that was supposed to
 		 * be rebuilt is no longer valid; we can reach this situation
 		 * when a rebuild is in progress and the box crashes and

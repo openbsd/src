@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.10 2021/10/27 09:09:55 jasper Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.11 2022/01/09 05:42:37 jsg Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -204,7 +204,7 @@ void		 dt_pcb_ring_consume(struct dt_pcb *, struct dt_evt *);
  *	I	immutable after creation
  *	K	kernel lock
  *	D	dt_lock
- *	D,S	dt_lock for writting and SMR for reading
+ *	D,S	dt_lock for writing and SMR for reading
  *	M	dtp mutex
  */
 struct dt_probe {
@@ -221,7 +221,7 @@ struct dt_probe {
 	int			 dtp_sysnum;	/* [I] related # of syscall */
 	const char		*dtp_argtype[5];/* [I] type of arguments */
 	int			 dtp_nargs;	/* [I] # of arguments */
-	vaddr_t			 dtp_addr;	/* [I] address of breakpint */
+	vaddr_t			 dtp_addr;	/* [I] address of breakpoint */
 };
 
 

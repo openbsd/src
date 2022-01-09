@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.25 2021/03/07 06:17:03 jsg Exp $	*/
+/*	$OpenBSD: ess.c,v 1.26 2022/01/09 05:42:42 jsg Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -716,7 +716,7 @@ ess_identify(struct ess_softc *sc)
 			 *    register 0x69 independently of mixer register
 			 *    0x68. This determines which chip we have:
 			 *
-			 *    - can modify idependently indicates ES888
+			 *    - can modify independently indicates ES888
 			 *    - register 0x69 is an alias of 0x68 indicates ES1888
 			 */
 			reg1 = ess_read_mix_reg(sc, 0x68);
@@ -2309,7 +2309,7 @@ ess_srtotc(u_int rate)
 
 
 /*
- * Calculate the filter constant for the reuqested sampling rate.
+ * Calculate the filter constant for the requested sampling rate.
  */
 u_int
 ess_srtofc(u_int rate)

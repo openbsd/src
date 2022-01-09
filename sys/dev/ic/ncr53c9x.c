@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.78 2021/03/07 06:21:38 jsg Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.79 2022/01/09 05:42:38 jsg Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -231,7 +231,7 @@ ncr53c9x_attach(struct ncr53c9x_softc *sc)
 	 * The recommended timeout is 250ms. This register is loaded
 	 * with a value calculated as follows, from the docs:
 	 *
-	 *		(timout period) x (CLK frequency)
+	 *		(timeout period) x (CLK frequency)
 	 *	reg = -------------------------------------
 	 *		 8192 x (Clock Conversion Factor)
 	 *

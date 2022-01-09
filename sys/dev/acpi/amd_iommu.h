@@ -136,7 +136,7 @@
  *  80:95   Guest CR3 bits 15:30 (GCR3TRP)
  *  96      IOTLB Enable (I)
  *  97      Suppress multiple I/O page faults (I)
- *  98      Supress all I/O page faults (SA)
+ *  98      Suppress all I/O page faults (SA)
  *  99:100  Port I/O Control (IoCTL)
  *  101     Cache IOTLB Hint
  *  102     Snoop Disable (SD)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udl.c,v 1.96 2021/11/22 10:17:14 mglocker Exp $ */
+/*	$OpenBSD: udl.c,v 1.97 2022/01/09 05:43:00 jsg Exp $ */
 
 /*
  * Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
@@ -1299,7 +1299,7 @@ udl_select_chip(struct udl_softc *sc)
 		/*
 		 * WS Tech DVI is DL120 or DL160. All deviced uses the
 		 * same revision (0.04) so iSerialNumber must be used
-		 * to determin which chip it is.
+		 * to determine which chip it is.
 		 */
 
 		bzero(serialnum, sizeof serialnum);
@@ -1337,7 +1337,7 @@ udl_select_chip(struct udl_softc *sc)
 		/*
 		 * SUNWEIT DVI is DL160, DL125, DL165 or DL195. Major revision
 		 * can be used to differ between DL1x0 and DL1x5. Minor to
-		 * differ between DL1x5. iSerialNumber seems not to be uniqe.
+		 * differ between DL1x5. iSerialNumber seems not to be unique.
 		 */
 
 		sc->sc_chip = DL160;

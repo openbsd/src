@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.101 2019/09/12 12:55:07 stsp Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.102 2022/01/09 05:42:39 jsg Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -835,7 +835,7 @@ rtw_txdesc_blk_init_all(struct rtw_txdesc_blk *tdb)
 	 * descriptor in a single beacon interval, since that will
 	 * enable multiple-BSS support.  Since the NIC does not
 	 * clear the OWN bit, there is no natural place for it to
-	 * stop processing BEACON desciptors.  Maybe it will *not*
+	 * stop processing BEACON descriptors.  Maybe it will *not*
 	 * stop processing them!  I do not want to chance the NIC
 	 * looping around and around a saturated beacon ring, so
 	 * I will leave one descriptor unOWNed at all times.
@@ -2825,7 +2825,7 @@ rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
 
 	/*
 	 * Load the DMA map.  Copy and try (once) again if the packet
-	 * didn't fit in the alloted number of segments.
+	 * didn't fit in the allotted number of segments.
 	 */
 	for (first = 1;
 	     ((rc = bus_dmamap_load_mbuf(dmat, dmam, m0,

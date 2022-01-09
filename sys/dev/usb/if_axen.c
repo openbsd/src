@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_axen.c,v 1.30 2020/07/31 10:49:32 mglocker Exp $	*/
+/*	$OpenBSD: if_axen.c,v 1.31 2022/01/09 05:43:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013 Yojiro UO <yuo@openbsd.org>
@@ -517,7 +517,7 @@ axen_ax88179_init(struct axen_softc *sc)
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_PAUSE_HIGH_WATERMARK, &val);
 
 	/* Set RX/TX configuration. */
-	/* Offloadng enable */
+	/* Offloading enable */
 #ifdef AXEN_TOE
 	val = AXEN_RXCOE_IPv4 | AXEN_RXCOE_TCPv4 | AXEN_RXCOE_UDPv4 |
 	      AXEN_RXCOE_TCPv6 | AXEN_RXCOE_UDPv6;
@@ -917,7 +917,7 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	/* 
 	 * buffer map
 	 * [packet #0]...[packet #n][pkt hdr#0]..[pkt hdr#n][recv_hdr]
-	 * each packet has 0xeeee as psuedo header..
+	 * each packet has 0xeeee as pseudo header..
 	 */
 	hdr_p = (u_int32_t *)(buf + total_len - sizeof(u_int32_t));
 	rx_hdr = letoh32(*hdr_p);
@@ -987,7 +987,7 @@ axen_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		m->m_pkthdr.len = m->m_len = pkt_len - 6;
 
 #ifdef AXEN_TOE
-		/* cheksum err */
+		/* checksum err */
 		if ((pkt_hdr & AXEN_RXHDR_L3CSUM_ERR) || 
 		    (pkt_hdr & AXEN_RXHDR_L4CSUM_ERR)) {
 			printf("%s: checksum err (pkt#%d)\n",

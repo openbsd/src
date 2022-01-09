@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.38 2021/03/05 12:40:13 jsg Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.39 2022/01/09 05:42:45 jsg Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -1227,7 +1227,7 @@ cs4281_read_codec(void *addr, u_int8_t ac97_addr, u_int16_t *ac97_data)
 
 	DPRINTFN(5,("read_codec: add=0x%02x ", ac97_addr));
 	/*
-	 * Make sure that there is not data sitting around from a preivous
+	 * Make sure that there is not data sitting around from a previous
 	 * uncompleted access.
 	 */
 	BA0READ4(sc, CS4281_ACSDA);

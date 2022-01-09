@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.163 2021/11/22 10:17:14 mglocker Exp $ */
+/*	$OpenBSD: ohci.c,v 1.164 2022/01/09 05:43:00 jsg Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -2029,7 +2029,7 @@ ohci_setaddr(struct usbd_device *dev, int addr)
 }
 
 /*
- * Close a reqular pipe.
+ * Close a regular pipe.
  * Assumes that there are no pending transactions.
  */
 void

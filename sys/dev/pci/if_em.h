@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.h,v 1.26 2004/09/01 23:22:41 pdeuskar Exp $ */
-/* $OpenBSD: if_em.h,v 1.79 2021/12/14 10:48:10 patrick Exp $ */
+/* $OpenBSD: if_em.h,v 1.80 2022/01/09 05:42:50 jsg Exp $ */
 
 #ifndef _EM_H_DEFINED_
 #define _EM_H_DEFINED_
@@ -184,7 +184,7 @@ typedef int	boolean_t;
 #define EM_TX_TIMEOUT			5	/* set to 5 seconds */
 
 /*
- * Thise parameter controls the minimum number of available transmit
+ * This parameter controls the minimum number of available transmit
  * descriptors needed before we attempt transmission of a packet.
  */
 #define EM_TX_OP_THRESHOLD		(sc->num_tx_desc / 32)

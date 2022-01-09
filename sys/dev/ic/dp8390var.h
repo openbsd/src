@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390var.h,v 1.12 2010/08/29 18:01:21 deraadt Exp $	*/
+/*	$OpenBSD: dp8390var.h,v 1.13 2022/01/09 05:42:38 jsg Exp $	*/
 /*	$NetBSD: dp8390var.h,v 1.8 1998/08/12 07:19:09 scottr Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ struct dp8390_softc {
 #define DP8390_ATTACHED			0x0040	/* attach has succeeded */
 
 /*
- * ASIX AX88796 doesn't have remote DMA conmplete bit in ISR, so don't
+ * ASIX AX88796 doesn't have remote DMA complete bit in ISR, so don't
  * check ISR.RDC
  */
 #define DP8390_NO_REMOTE_DMA_COMPLETE	0x0080

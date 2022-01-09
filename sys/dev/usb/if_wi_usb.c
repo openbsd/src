@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_usb.c,v 1.75 2021/11/22 10:17:14 mglocker Exp $ */
+/*	$OpenBSD: if_wi_usb.c,v 1.76 2022/01/09 05:43:00 jsg Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn. All rights reserved.
@@ -1828,7 +1828,7 @@ wi_usb_tx_lock_try(struct wi_usb_softc *sc)
 
 	if (sc->wi_lock != 0) {
 		splx(s);
-		return 0; /* failed to aquire lock */
+		return 0; /* failed to acquire lock */
 	}
 
 	sc->wi_lock = 1;

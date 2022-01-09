@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.85 2021/12/14 10:48:10 patrick Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.86 2022/01/09 05:42:50 jsg Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -48,7 +48,7 @@ struct em_hw;
 struct em_hw_stats;
 
 /* Enumerated types specific to the e1000 hardware */
-/* Media Access Controlers */
+/* Media Access Controllers */
 typedef enum {
     em_undefined = 0,
     em_82542_rev2_0,
@@ -810,12 +810,12 @@ union em_rx_desc_packet_split {
     } wb; /* writeback */
 };
 
-/* Receive Decriptor bit definitions */
+/* Receive Descriptor bit definitions */
 #define E1000_RXD_STAT_DD       0x01    /* Descriptor Done */
 #define E1000_RXD_STAT_EOP      0x02    /* End of Packet */
 #define E1000_RXD_STAT_IXSM     0x04    /* Ignore checksum */
 #define E1000_RXD_STAT_VP       0x08    /* IEEE VLAN Packet */
-#define E1000_RXD_STAT_UDPCS    0x10    /* UDP xsum caculated */
+#define E1000_RXD_STAT_UDPCS    0x10    /* UDP xsum calculated */
 #define E1000_RXD_STAT_TCPCS    0x20    /* TCP xsum calculated */
 #define E1000_RXD_STAT_IPCS     0x40    /* IP xsum calculated */
 #define E1000_RXD_STAT_PIF      0x80    /* passed in-exact filter */
@@ -1261,7 +1261,7 @@ struct em_ffvt_entry {
 
 #define E1000_KUMCTRLSTA 0x00034 /* MAC-PHY interface - RW */
 #define E1000_MDPHYA     0x0003C  /* PHY address - RW */
-#define E1000_MANC2H     0x05860  /* Managment Control To Host - RW */
+#define E1000_MANC2H     0x05860  /* Management Control To Host - RW */
 #define E1000_SW_FW_SYNC 0x05B5C /* Software-Firmware Synchronization - RW */
 
 #define E1000_GCR       0x05B00 /* PCI-Ex Control */
@@ -1611,7 +1611,7 @@ struct em_hw {
 #define E1000_STATUS_SERDES0_DIS  0x10000000 /* SERDES disabled on port 0 */
 #define E1000_STATUS_SERDES1_DIS  0x20000000 /* SERDES disabled on port 1 */
 
-/* Constants used to intrepret the masked PCI-X bus speed. */
+/* Constants used to interpret the masked PCI-X bus speed. */
 #define E1000_STATUS_PCIX_SPEED_66  0x00000000 /* PCI-X bus speed  50-66 MHz */
 #define E1000_STATUS_PCIX_SPEED_100 0x00004000 /* PCI-X bus speed  66-100 MHz */
 #define E1000_STATUS_PCIX_SPEED_133 0x00008000 /* PCI-X bus speed 100-133 MHz */
@@ -1843,7 +1843,7 @@ struct em_hw {
 #define E1000_ICR_ALL_PARITY    0x03F00000 /* all parity error bits */
 #define E1000_ICR_DSW           0x00000020 /* FW changed the status of DISSW bit in the FWSM */
 #define E1000_ICR_PHYINT        0x00001000 /* LAN connected device generates an interrupt */
-#define E1000_ICR_EPRST         0x00100000 /* ME handware reset occurs */
+#define E1000_ICR_EPRST         0x00100000 /* ME hardware reset occurs */
 #define E1000_ICR_DRSTA         0x40000000 /* Device Reset Asserted */
 
 /* Interrupt Cause Set */
@@ -2737,7 +2737,7 @@ struct em_host_command_info {
 /* PHY 1000 MII Register/Bit Definitions */
 /* PHY Registers defined by IEEE */
 #define PHY_CTRL         0x00 /* Control Register */
-#define PHY_STATUS       0x01 /* Status Regiser */
+#define PHY_STATUS       0x01 /* Status Register */
 #define PHY_ID1          0x02 /* Phy Id Reg (word 1) */
 #define PHY_ID2          0x03 /* Phy Id Reg (word 2) */
 #define PHY_AUTONEG_ADV  0x04 /* Autoneg Advertisement */
@@ -3351,7 +3351,7 @@ struct em_host_command_info {
 #define GG82563_KMCR_PASS_FALSE_CARRIER             0x0800
 
 /* Power Management Control Register (Page 193, Register 20) */
-#define GG82563_PMCR_ENABLE_ELECTRICAL_IDLE         0x0001 /* 1=Enalbe SERDES Electrical Idle */
+#define GG82563_PMCR_ENABLE_ELECTRICAL_IDLE         0x0001 /* 1=Enable SERDES Electrical Idle */
 #define GG82563_PMCR_DISABLE_PORT                   0x0002 /* 1=Disable Port */
 #define GG82563_PMCR_DISABLE_SERDES                 0x0004 /* 1=Disable SERDES */
 #define GG82563_PMCR_REVERSE_AUTO_NEG               0x0008 /* 1=Enable Reverse Auto-Negotiation */
@@ -3466,7 +3466,7 @@ struct em_host_command_info {
 #define IFE_PHY_EXTENDED_STATUS_CONTROL   0x10  /* 100BaseTx Extended Status, Control and Address */
 #define IFE_PHY_SPECIAL_CONTROL           0x11  /* 100BaseTx PHY special control register */
 #define IFE_PHY_RCV_FALSE_CARRIER         0x13  /* 100BaseTx Receive False Carrier Counter */
-#define IFE_PHY_RCV_DISCONNECT            0x14  /* 100BaseTx Receive Disconnet Counter */
+#define IFE_PHY_RCV_DISCONNECT            0x14  /* 100BaseTx Receive Disconnect Counter */
 #define IFE_PHY_RCV_ERROT_FRAME           0x15  /* 100BaseTx Receive Error Frame Counter */
 #define IFE_PHY_RCV_SYMBOL_ERR            0x16  /* Receive Symbol Error Counter */
 #define IFE_PHY_PREM_EOF_ERR              0x17  /* 100BaseTx Receive Premature End Of Frame Error Counter */
@@ -3477,7 +3477,7 @@ struct em_host_command_info {
 #define IFE_PHY_MDIX_CONTROL              0x1C  /* MDI/MDI-X Control register */
 #define IFE_PHY_HWI_CONTROL               0x1D  /* Hardware Integrity Control (HWI) */
 
-#define IFE_PESC_REDUCED_POWER_DOWN_DISABLE  0x2000  /* Defaut 1 = Disable auto reduced power down */
+#define IFE_PESC_REDUCED_POWER_DOWN_DISABLE  0x2000  /* Default 1 = Disable auto reduced power down */
 #define IFE_PESC_100BTX_POWER_DOWN           0x0400  /* Indicates the power state of 100BASE-TX */
 #define IFE_PESC_10BTX_POWER_DOWN            0x0200  /* Indicates the power state of 10BASE-T */
 #define IFE_PESC_POLARITY_REVERSED           0x0100  /* Indicates 10BASE-T polarity */
@@ -3486,7 +3486,7 @@ struct em_host_command_info {
 #define IFE_PESC_DUPLEX                      0x0001  /* Auto-negotiation duplex result 1=Full, 0=Half */
 #define IFE_PESC_POLARITY_REVERSED_SHIFT     8
 
-#define IFE_PSC_DISABLE_DYNAMIC_POWER_DOWN   0x0100  /* 1 = Dyanmic Power Down disabled */
+#define IFE_PSC_DISABLE_DYNAMIC_POWER_DOWN   0x0100  /* 1 = Dynamic Power Down disabled */
 #define IFE_PSC_FORCE_POLARITY               0x0020  /* 1=Reversed Polarity, 0=Normal */
 #define IFE_PSC_AUTO_POLARITY_DISABLE        0x0010  /* 1=Auto Polarity Disabled, 0=Enabled */
 #define IFE_PSC_JABBER_FUNC_DISABLE          0x0001  /* 1=Jabber Disabled, 0=Normal Jabber Operation */
@@ -3496,7 +3496,7 @@ struct em_host_command_info {
 #define IFE_PMC_AUTO_MDIX                    0x0080  /* 1=enable MDI/MDI-X feature, default 0=disabled */
 #define IFE_PMC_FORCE_MDIX                   0x0040  /* 1=force MDIX-X, 0=force MDI */
 #define IFE_PMC_MDIX_STATUS                  0x0020  /* 1=MDI-X, 0=MDI */
-#define IFE_PMC_AUTO_MDIX_COMPLETE           0x0010  /* Resolution algorthm is completed */
+#define IFE_PMC_AUTO_MDIX_COMPLETE           0x0010  /* Resolution algorithm is completed */
 #define IFE_PMC_MDIX_MODE_SHIFT              6
 #define IFE_PHC_MDIX_RESET_ALL_MASK          0x0000  /* Disable auto MDI-X */
 

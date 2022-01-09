@@ -1,4 +1,4 @@
-/*	$OpenBSD: mii.c,v 1.23 2015/12/29 18:35:39 mmcc Exp $	*/
+/*	$OpenBSD: mii.c,v 1.24 2022/01/09 05:42:44 jsg Exp $	*/
 /*	$NetBSD: mii.c,v 1.19 2000/02/02 17:09:44 thorpej Exp $	*/
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 /*
- * MII bus layer, glues MII-capable network interface drivers to sharable
+ * MII bus layer, glues MII-capable network interface drivers to shareable
  * PHY drivers.  This exports an interface compatible with BSD/OS 3.0's,
  * plus some NetBSD extensions.
  */

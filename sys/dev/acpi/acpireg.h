@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.57 2022/01/02 02:13:33 jsg Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.58 2022/01/09 05:42:37 jsg Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -23,7 +23,7 @@
 struct acpi_rsdp1 {
 	uint8_t		signature[8];
 #define	RSDP_SIG	"RSD PTR "
-#define	rsdp_signaturee	rsdp1.signature
+#define	rsdp_signature	rsdp1.signature
 	uint8_t		checksum;	/* make sum == 0 */
 #define	rsdp_checksum	rsdp1.checksum
 	uint8_t		oemid[6];
@@ -122,7 +122,7 @@ struct acpi_fadt {
 	uint8_t		s4bios_req;	/* value for S4 */
 	uint8_t		pstate_cnt;	/* value for performance (hdr_revision > 2) */
 	uint32_t	pm1a_evt_blk;	/* power management 1a */
-	uint32_t	pm1b_evt_blk;	/* power mangement 1b */
+	uint32_t	pm1b_evt_blk;	/* power management 1b */
 	uint32_t	pm1a_cnt_blk;	/* pm control 1a */
 	uint32_t	pm1b_cnt_blk;	/* pm control 1b */
 	uint32_t	pm2_cnt_blk;	/* pm control 2 */

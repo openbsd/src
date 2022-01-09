@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxtreg.h,v 1.3 2019/04/24 10:09:49 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxtreg.h,v 1.4 2022/01/09 05:42:47 jsg Exp $	*/
 /*-
  *   BSD LICENSE
  *
@@ -912,7 +912,7 @@ struct rx_pkt_cmpl {
 	/*
 	 * This is the length of the data for the packet stored in the buffer(s)
 	 * identified by the opaque value. This includes the packet BD and any
-	 * associated buffer BDs. This does not include the the length of any
+	 * associated buffer BDs. This does not include the length of any
 	 * data places in aggregation BDs.
 	 */
 	uint32_t opaque;
@@ -1009,7 +1009,7 @@ struct rx_pkt_cmpl_hi {
 	/* This value indicates what format the metadata field is. */
 	#define RX_PKT_CMPL_FLAGS2_META_FORMAT_MASK		UINT32_C(0xf0)
 	#define RX_PKT_CMPL_FLAGS2_META_FORMAT_SFT		4
-	/* No metadata informtaion. Value is zero. */
+	/* No metadata information. Value is zero. */
 	#define RX_PKT_CMPL_FLAGS2_META_FORMAT_NONE		(UINT32_C(0x0) << 4)
 	/*
 	 * The metadata field contains the VLAN tag and TPID value. -
@@ -1371,7 +1371,7 @@ struct rx_tpa_start_cmpl_hi {
 	/* This value indicates what format the metadata field is. */
 	#define RX_TPA_START_CMPL_FLAGS2_META_FORMAT_MASK	UINT32_C(0xf0)
 	#define RX_TPA_START_CMPL_FLAGS2_META_FORMAT_SFT	4
-	/* No metadata informtaion. Value is zero. */
+	/* No metadata information. Value is zero. */
 	#define RX_TPA_START_CMPL_FLAGS2_META_FORMAT_NONE	(UINT32_C(0x0) << 4)
 	/*
 	 * The metadata field contains the VLAN tag and TPID value. -
@@ -2926,7 +2926,7 @@ struct hwrm_async_event_cmpl_hwrm_error {
  * Note: This door bell format is used by the driver when it wants to push a
  * packet into the chip for super-fast transmission. This pushes a partial BD
  * and the packet data into the chip. If the chip has room, it will transmit the
- * packet. If the chip dosn't have room, it will read the BD and packet data
+ * packet. If the chip doesn't have room, it will read the BD and packet data
  * from host memory as a normal packet.
  */
 /* TX Door Bell Format (4 bytes) */
@@ -3735,7 +3735,7 @@ struct sq_send_raweth_qp1 {
 	/*
 	 * If set to 1, the controller will not append an Ethernet CRC to the
 	 * end of the frame. This bit must be valid on the first BD of a packet.
-	 * Packet must be 64B or longer when this flag is set. It is not usefull
+	 * Packet must be 64B or longer when this flag is set. It is not useful
 	 * to use this bit with any form of TX offload such as CSO or LSO. The
 	 * intent is that the packet from the host already has a valid Ethernet
 	 * CRC on the packet.
@@ -5185,7 +5185,7 @@ struct nq_dbq_event {
 	uint8_t event;
 	/* This value define what type of action the driver should take. */
 	/*
-	 * The driver should start writing dummy values to the the
+	 * The driver should start writing dummy values to the
 	 * doorbell in an attempt to consume all the PCIE posted write
 	 * resources and prevent doorbell overflow.
 	 */
@@ -6804,7 +6804,7 @@ struct hwrm_func_qcfg_output {
 /* hwrm_func_vlan_qcfg */
 /*
  * Description: This command should be called by PF driver to get the current
- * C-TAG, S-TAG and correcponsing PCP and TPID values configured for the
+ * C-TAG, S-TAG and corresponding PCP and TPID values configured for the
  * function.
  */
 /* Input (24 bytes) */
@@ -7080,7 +7080,7 @@ struct hwrm_func_cfg_input {
 	uint16_t fid;
 	/*
 	 * Function ID of the function that is being configured. If set to
-	 * 0xFF... (All Fs), then the the configuration is for the requesting
+	 * 0xFF... (All Fs), then the configuration is for the requesting
 	 * function.
 	 */
 	uint8_t unused_0;
@@ -7138,7 +7138,7 @@ struct hwrm_func_cfg_input {
 	 * This bit requests that the firmware test to see if all the assets
 	 * requested in this command (i.e. number of TX rings) are available.
 	 * The firmware will return an error if the requested assets are not
-	 * available. The firwmare will NOT reserve the assets if they are
+	 * available. The firmware will NOT reserve the assets if they are
 	 * available.
 	 */
 	#define HWRM_FUNC_CFG_INPUT_FLAGS_TX_ASSETS_TEST	UINT32_C(0x2000)
@@ -8393,7 +8393,7 @@ struct hwrm_port_phy_cfg_input {
 	 */
 	#define HWRM_PORT_PHY_CFG_INPUT_FLAGS_EEE_TX_LPI_DISABLE   UINT32_C(0x80)
 	/*
-	 * When set to 1, then the HWRM shall enable FEC autonegotitation on
+	 * When set to 1, then the HWRM shall enable FEC autonegotiation on
 	 * this port if supported. When set to 0, then this flag shall be
 	 * ignored. If FEC autonegotiation is not supported, then the HWRM shall
 	 * ignore this flag.
@@ -8851,7 +8851,7 @@ struct hwrm_port_phy_qcfg_output {
 	uint16_t support_speeds;
 	/*
 	 * The supported speeds for the port. This is a bit mask. For each speed
-	 * that is supported, the corrresponding bit will be set to '1'.
+	 * that is supported, the corresponding bit will be set to '1'.
 	 */
 	/* 100Mb link speed (Half-duplex) */
 	#define HWRM_PORT_PHY_QCFG_OUTPUT_SUPPORT_SPEEDS_100MBHD   UINT32_C(0x1)
@@ -9530,7 +9530,7 @@ struct hwrm_port_mac_cfg_input {
 	 */
 	#define HWRM_PORT_MAC_CFG_INPUT_FLAGS_OOB_WOL_ENABLE	UINT32_C(0x100)
 	/*
-	 * When this bit is '1', the the Out-Of-Box WoL is requested to be
+	 * When this bit is '1', the Out-Of-Box WoL is requested to be
 	 * disabled on this port.
 	 */
 	#define HWRM_PORT_MAC_CFG_INPUT_FLAGS_OOB_WOL_DISABLE	UINT32_C(0x200)
@@ -9651,7 +9651,7 @@ struct hwrm_port_mac_cfg_input {
 	 * side of this port. This field shall be ignored if the
 	 * ptp_tx_ts_capture_enable flag is not set in this command. Otherwise,
 	 * if bit 'i' is set, then the HWRM is being requested to configure the
-	 * transmit sied of the port to capture the time stamp of every
+	 * transmit side of the port to capture the time stamp of every
 	 * transmitted PTP message with messageType field value set to i.
 	 */
 	uint8_t cos_field_cfg;
@@ -9874,7 +9874,7 @@ struct hwrm_port_mac_qcfg_output {
 	 * comparing priorities of mappings, higher value indicates higher
 	 * priority. For example, a value of 0-3 is returned where 0 is being
 	 * the lowest priority and 3 is being the highest priority. # If the
-	 * correspoding CoS mapping is not enabled, then this field should be
+	 * corresponding CoS mapping is not enabled, then this field should be
 	 * ignored. # This value indicates the normalized priority value
 	 * retained in the HWRM.
 	 */
@@ -9908,7 +9908,7 @@ struct hwrm_port_mac_qcfg_output {
 	 * When comparing priorities of mappings, higher value indicates higher
 	 * priority. For example, a value of 0-3 is returned where 0 is being
 	 * the lowest priority and 3 is being the highest priority. # If the
-	 * correspoding CoS mapping is not enabled, then this field should be
+	 * corresponding CoS mapping is not enabled, then this field should be
 	 * ignored. # This value indicates the normalized priority value
 	 * retained in the HWRM.
 	 */
@@ -9919,7 +9919,7 @@ struct hwrm_port_mac_qcfg_output {
 	 * comparing priorities of mappings, higher value indicates higher
 	 * priority. For example, a value of 0-3 is returned where 0 is being
 	 * the lowest priority and 3 is being the highest priority. # If the
-	 * correspoding CoS mapping is not enabled, then this field should be
+	 * corresponding CoS mapping is not enabled, then this field should be
 	 * ignored. # This value indicates the normalized priority value
 	 * retained in the HWRM.
 	 */
@@ -17173,7 +17173,7 @@ struct hwrm_cfa_l2_filter_alloc_input {
 	#define HWRM_CFA_L2_FILTER_ALLOC_INPUT_TUNNEL_TYPE_IPIP   UINT32_C(0x4)
 	/* Generic Network Virtualization Encapsulation (Geneve) */
 	#define HWRM_CFA_L2_FILTER_ALLOC_INPUT_TUNNEL_TYPE_GENEVE UINT32_C(0x5)
-	/* Multi-Protocol Lable Switching (MPLS) */
+	/* Multi-Protocol Label Switching (MPLS) */
 	#define HWRM_CFA_L2_FILTER_ALLOC_INPUT_TUNNEL_TYPE_MPLS   UINT32_C(0x6)
 	/* Stateless Transport Tunnel (STT) */
 	#define HWRM_CFA_L2_FILTER_ALLOC_INPUT_TUNNEL_TYPE_STT	UINT32_C(0x7)
@@ -17890,7 +17890,7 @@ struct hwrm_cfa_tunnel_filter_alloc_input {
 	#define HWRM_CFA_TUNNEL_FILTER_ALLOC_INPUT_TUNNEL_TYPE_IPIP UINT32_C(0x4)
 	/* Generic Network Virtualization Encapsulation (Geneve) */
 	#define HWRM_CFA_TUNNEL_FILTER_ALLOC_INPUT_TUNNEL_TYPE_GENEVE UINT32_C(0x5)
-	/* Multi-Protocol Lable Switching (MPLS) */
+	/* Multi-Protocol Label Switching (MPLS) */
 	#define HWRM_CFA_TUNNEL_FILTER_ALLOC_INPUT_TUNNEL_TYPE_MPLS UINT32_C(0x6)
 	/* Stateless Transport Tunnel (STT) */
 	#define HWRM_CFA_TUNNEL_FILTER_ALLOC_INPUT_TUNNEL_TYPE_STT UINT32_C(0x7)
@@ -18068,7 +18068,7 @@ struct hwrm_cfa_encap_record_alloc_input {
 	#define HWRM_CFA_ENCAP_RECORD_ALLOC_INPUT_ENCAP_TYPE_IPIP UINT32_C(0x4)
 	/* Generic Network Virtualization Encapsulation (Geneve) */
 	#define HWRM_CFA_ENCAP_RECORD_ALLOC_INPUT_ENCAP_TYPE_GENEVE UINT32_C(0x5)
-	/* Multi-Protocol Lable Switching (MPLS) */
+	/* Multi-Protocol Label Switching (MPLS) */
 	#define HWRM_CFA_ENCAP_RECORD_ALLOC_INPUT_ENCAP_TYPE_MPLS UINT32_C(0x6)
 	/* VLAN */
 	#define HWRM_CFA_ENCAP_RECORD_ALLOC_INPUT_ENCAP_TYPE_VLAN UINT32_C(0x7)
@@ -18333,7 +18333,7 @@ struct hwrm_cfa_ntuple_filter_alloc_input {
 	#define HWRM_CFA_NTUPLE_FILTER_ALLOC_INPUT_TUNNEL_TYPE_IPIP UINT32_C(0x4)
 	/* Generic Network Virtualization Encapsulation (Geneve) */
 	#define HWRM_CFA_NTUPLE_FILTER_ALLOC_INPUT_TUNNEL_TYPE_GENEVE UINT32_C(0x5)
-	/* Multi-Protocol Lable Switching (MPLS) */
+	/* Multi-Protocol Label Switching (MPLS) */
 	#define HWRM_CFA_NTUPLE_FILTER_ALLOC_INPUT_TUNNEL_TYPE_MPLS UINT32_C(0x6)
 	/* Stateless Transport Tunnel (STT) */
 	#define HWRM_CFA_NTUPLE_FILTER_ALLOC_INPUT_TUNNEL_TYPE_STT UINT32_C(0x7)
@@ -18763,7 +18763,7 @@ struct hwrm_cfa_em_flow_alloc_input {
 	#define HWRM_CFA_EM_FLOW_ALLOC_INPUT_TUNNEL_TYPE_IPIP	UINT32_C(0x4)
 	/* Generic Network Virtualization Encapsulation (Geneve) */
 	#define HWRM_CFA_EM_FLOW_ALLOC_INPUT_TUNNEL_TYPE_GENEVE   UINT32_C(0x5)
-	/* Multi-Protocol Lable Switching (MPLS) */
+	/* Multi-Protocol Label Switching (MPLS) */
 	#define HWRM_CFA_EM_FLOW_ALLOC_INPUT_TUNNEL_TYPE_MPLS	UINT32_C(0x6)
 	/* Stateless Transport Tunnel (STT) */
 	#define HWRM_CFA_EM_FLOW_ALLOC_INPUT_TUNNEL_TYPE_STT	UINT32_C(0x7)
@@ -19844,7 +19844,7 @@ struct hwrm_cfa_decap_filter_alloc_input {
 	#define HWRM_CFA_DECAP_FILTER_ALLOC_INPUT_TUNNEL_TYPE_IPIP UINT32_C(0x4)
 	/* Generic Network Virtualization Encapsulation (Geneve) */
 	#define HWRM_CFA_DECAP_FILTER_ALLOC_INPUT_TUNNEL_TYPE_GENEVE UINT32_C(0x5)
-	/* Multi-Protocol Lable Switching (MPLS) */
+	/* Multi-Protocol Label Switching (MPLS) */
 	#define HWRM_CFA_DECAP_FILTER_ALLOC_INPUT_TUNNEL_TYPE_MPLS UINT32_C(0x6)
 	/* Stateless Transport Tunnel (STT) */
 	#define HWRM_CFA_DECAP_FILTER_ALLOC_INPUT_TUNNEL_TYPE_STT UINT32_C(0x7)
@@ -22665,7 +22665,7 @@ struct hwrm_temp_monitor_query_output {
  * the HWRM client is a function driver, then the HWRM shall not allow the HWRM
  * client to set up WoL filters on the port that the function is not associated
  * with. # If the HWRM client is one of the trusted embedded services (e.g.
- * management service), the the HWRM shall allow the HWRM client to set up WoL
+ * management service), the HWRM shall allow the HWRM client to set up WoL
  * filters on any port of the device.
  */
 /* Input (64 bytes) */
@@ -22720,7 +22720,7 @@ struct hwrm_wol_filter_alloc_input {
 	/* Port ID of port on which WoL filter is configured. */
 	uint8_t wol_type;
 	/* This value represents a Wake-on-LAN type. */
-	/* Magic Paket */
+	/* Magic Packet */
 	#define HWRM_WOL_FILTER_ALLOC_INPUT_WOL_TYPE_MAGICPKT	UINT32_C(0x0)
 	/* Bitmap */
 	#define HWRM_WOL_FILTER_ALLOC_INPUT_WOL_TYPE_BMP	UINT32_C(0x1)
@@ -22891,7 +22891,7 @@ struct hwrm_wol_filter_free_output {
  * drivers. # If the HWRM client is a function driver, then the HWRM shall not
  * allow the HWRM client to query WoL filters on the port that the function is
  * not associated with. # If the HWRM client is one of the trusted embedded
- * service (e.g. management service), the the HWRM shall allow the HWRM client
+ * service (e.g. management service), the HWRM shall allow the HWRM client
  * to query WoL filters on any port of the device.
  */
 /* Input (56 bytes) */
@@ -23001,7 +23001,7 @@ struct hwrm_wol_filter_qcfg_output {
 	 * This value identifies the type of WoL filter returned in this
 	 * response.
 	 */
-	/* Magic Paket */
+	/* Magic Packet */
 	#define HWRM_WOL_FILTER_QCFG_OUTPUT_WOL_TYPE_MAGICPKT	UINT32_C(0x0)
 	/* Bitmap */
 	#define HWRM_WOL_FILTER_QCFG_OUTPUT_WOL_TYPE_BMP	UINT32_C(0x1)
@@ -23113,7 +23113,7 @@ struct hwrm_wol_reason_qcfg_output {
 	 * response. When the wol_type is set to invalid, then there is no WoL
 	 * event that happened during last system wake-up.
 	 */
-	/* Magic Paket */
+	/* Magic Packet */
 	#define HWRM_WOL_REASON_QCFG_OUTPUT_WOL_REASON_MAGICPKT   UINT32_C(0x0)
 	/* Bitmap */
 	#define HWRM_WOL_REASON_QCFG_OUTPUT_WOL_REASON_BMP	UINT32_C(0x1)
@@ -23685,7 +23685,7 @@ struct hwrm_nvm_write_input {
 	 * allocated item length, which may be greater than the requested item
 	 * length. The purpose for allocating more than the required number of
 	 * bytes for an item's data is to pre-allocate extra storage (padding)
-	 * to accomodate the potential future growth of an item (e.g. upgraded
+	 * to accommodate the potential future growth of an item (e.g. upgraded
 	 * firmware with a size increase, log growth, expanded configuration
 	 * data).
 	 */
@@ -24317,7 +24317,7 @@ struct hwrm_nvm_install_update_input {
 	 */
 	#define HWRM_NVM_INSTALL_UPDATE_INPUT_FLAGS_ERASE_UNUSED_SPACE UINT32_C(0x1)
 	/*
-	 * If set to 1, then unspecifed images, images not in the package file,
+	 * If set to 1, then unspecified images, images not in the package file,
 	 * will be safely deleted. When combined with erase_unused_space then
 	 * unspecified images will be securely erased.
 	 */
@@ -27873,7 +27873,7 @@ struct creq_deallocate_key_resp {
 	uint16_t reserved16;
 	uint32_t bound_window_info;
 	/*
-	 * This is advisory data to facilitate eventual descruction of lingering
+	 * This is advisory data to facilitate eventual destruction of lingering
 	 * memory regions in Windows. For memory window, it contains non-zero
 	 * HWID of a region this window was bound to (without the 8-bit key
 	 * portion). The host may check if the region is lingering in destroyed
@@ -28979,7 +28979,7 @@ struct hwrm_selftest_qlist_output {
 	uint8_t unused_0;
 	uint16_t test_timeout;
 	/*
-	 * This field represents the the maximum timeout for all the tests to
+	 * This field represents the maximum timeout for all the tests to
 	 * complete in milliseconds.
 	 */
 	uint8_t unused_1;
@@ -29096,7 +29096,7 @@ struct hwrm_selftest_exec_output {
 	 */
 	uint8_t requested_tests;
 	/* The following tests were requested to be run. */
-	/* A reqeust was made to run the NVM test. */
+	/* A request was made to run the NVM test. */
 	#define HWRM_SELFTEST_EXEC_OUTPUT_REQUESTED_TESTS_NVM_TEST UINT32_C(0x1)
 	/* A request was made to run the link test. */
 	#define HWRM_SELFTEST_EXEC_OUTPUT_REQUESTED_TESTS_LINK_TEST UINT32_C(0x2)
@@ -29206,9 +29206,9 @@ struct hwrm_selftest_irq_output {
 
 /* hwrm_selftest_retreive_serdes_data */
 /*
- * Description: This function is called by a driver to retreieve the data
+ * Description: This function is called by a driver to retrieve the data
  * collected when running the previous PCIe or Ethernet serdes test. The driver
- * can use multiple calls to this command to retreive the entire stored buffer
+ * can use multiple calls to this command to retrieve the entire stored buffer
  * in the event it cannot do so with a single call.
  */
 /* Input (32 bytes) */
@@ -29292,7 +29292,7 @@ struct hwrm_selftest_retreive_serdes_data_output {
 	 * Amount of data DMA'd to host by this call. The driver can use this
 	 * field along with the total_data_len field above to determine the
 	 * value to write to the resp_data_offset field in the next call if more
-	 * than one call to these commands is required to retreive all the
+	 * than one call to these commands is required to retrieve all the
 	 * stored data.
 	 */
 	uint32_t unused_0;
@@ -29735,7 +29735,7 @@ struct tx_port_stats {
 	/* Total Number of 1024-1518 Bytes frames transmitted */
 	uint64_t tx_good_vlan_frames;
 	/*
-	 * Total Number of each good VLAN (exludes FCS errors) frame transmitted
+	 * Total Number of each good VLAN (excludes FCS errors) frame transmitted
 	 * which is 1519 to 1522 bytes in length inclusive (excluding framing
 	 * bits but including FCS bytes).
 	 */
@@ -29846,7 +29846,7 @@ struct rx_port_stats {
 	/* Total Number of 1024-1518 Bytes frames received */
 	uint64_t rx_good_vlan_frames;
 	/*
-	 * Total Number of each good VLAN (exludes FCS errors) frame received
+	 * Total Number of each good VLAN (excludes FCS errors) frame received
 	 * which is 1519 to 1522 bytes in length inclusive (excluding framing
 	 * bits but including FCS bytes).
 	 */
@@ -30293,7 +30293,7 @@ struct hwrm_struct_data_lldp {
 	/* Enable both Tx and Rx */
 	#define HWRM_STRUCT_DATA_LLDP_ADMIN_STATE_ENABLE	UINT32_C(0x3)
 	uint8_t port_description_state;
-	/* Port desciption TLV transmit state (enable(1)/disable(0)). */
+	/* Port description TLV transmit state (enable(1)/disable(0)). */
 	/* Disable */
 	#define HWRM_STRUCT_DATA_LLDP_PORT_DESCRIPTION_STATE_DISABLE UINT32_C(0x0)
 	/* Enable */
@@ -30305,7 +30305,7 @@ struct hwrm_struct_data_lldp {
 	/* Enable */
 	#define HWRM_STRUCT_DATA_LLDP_SYSTEM_NAME_STATE_ENABLE	UINT32_C(0x1)
 	uint8_t system_desc_state;
-	/* System desciption TLV transmit state (enable(1)/disable(0)). */
+	/* System description TLV transmit state (enable(1)/disable(0)). */
 	/* Disable */
 	#define HWRM_STRUCT_DATA_LLDP_SYSTEM_DESC_STATE_DISABLE   UINT32_C(0x0)
 	/* Enable */

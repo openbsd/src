@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.150 2020/10/15 13:22:13 krw Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.151 2022/01/09 05:42:37 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -405,7 +405,7 @@ atascsi_probe(struct scsi_link *link)
 	}
 
 	/*
-	 * FREEZE LOCK the device so malicous users can't lock it on us.
+	 * FREEZE LOCK the device so malicious users can't lock it on us.
 	 * As there is no harm in issuing this to devices that don't
 	 * support the security feature set we just send it, and don't bother
 	 * checking if the device sends a command abort to tell us it doesn't
@@ -1580,8 +1580,8 @@ atascsi_disk_start_stop_done(struct ata_xfer *xa)
 	}
 
 	/*
-	 * The FLUSH CACHE command completed succesfully; now issue
-	 * the STANDBY IMMEDATE command.
+	 * The FLUSH CACHE command completed successfully; now issue
+	 * the STANDBY IMMEDIATE command.
 	 */
 	ap = atascsi_lookup_port(link);
 	xa->datalen = 0;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.35 2019/05/13 21:29:28 mpi Exp $ */
+/*      $OpenBSD: sv.c,v 1.36 2022/01/09 05:42:58 jsg Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -618,14 +618,14 @@ sv_set_params(void *addr, int setmode, int usemode,
 	{
 	  /* The ADC reference frequency (f_out) is 512 * the sample rate */
 
-	  /* f_out is dervied from the 24.576MHZ crystal by three values:
+	  /* f_out is derived from the 24.576MHZ crystal by three values:
 	     M & N & R. The equation is as follows:
 
 	     f_out = (m + 2) * f_ref / ((n + 2) * (2 ^ a))
 
 	     with the constraint that:
 
-	     80 MhZ < (m + 2) / (n + 2) * f_ref <= 150MHz
+	     80 MHz < (m + 2) / (n + 2) * f_ref <= 150MHz
 	     and n, m >= 1
 	  */
 

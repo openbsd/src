@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.55 2020/03/27 15:24:59 krw Exp $	*/
+/*	$OpenBSD: yds.c,v 1.56 2022/01/09 05:42:58 jsg Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -388,7 +388,7 @@ yds_download_mcode(struct yds_softc *sc)
 	YWRITEREGION4(sc, YDS_CTRL_INSTRAM, p, size);
 
 	yds_enable_dsp(sc);
-	delay(10*1000);		/* neccesary on my 724F (??) */
+	delay(10*1000);		/* necessary on my 724F (??) */
 
 	free(buf, M_DEVBUF, buflen);
 	return 0;
@@ -858,7 +858,7 @@ yds_write_codec(void *sc_, u_int8_t reg, u_int16_t data)
 }
 
 /*
- * XXX: Must handle the secondary differntly!!
+ * XXX: Must handle the secondary differently!!
  */
 void
 yds_reset_codec(void *sc_)

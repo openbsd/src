@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.54 2020/06/17 00:03:13 mortimer Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.55 2022/01/09 05:42:45 jsg Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
 #include <dev/pci/emuxkireg.h>
 #include <dev/pci/emuxkivar.h>
 
-/* autconf goo */
+/* autoconf goo */
 int  emuxki_match(struct device *, void *, void *);
 void emuxki_attach(struct device *, struct device *, void *);
 int  emuxki_detach(struct device *, int);

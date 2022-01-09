@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.42 2020/05/29 04:42:25 deraadt Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.43 2022/01/09 05:42:58 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -9,7 +9,7 @@
  *
  * bktr_core : This deals with the Bt848/849/878/879 PCI Frame Grabber,
  *               Handles all the open, close, ioctl and read userland calls.
- *               Sets the Bt848 registers and generates RISC pograms.
+ *               Sets the Bt848 registers and generates RISC programs.
  *               Controls the i2c bus and GPIO interface.
  *               Contains the interface to the kernel.
  *               (eg probe/attach and open/close/ioctl)
@@ -1126,7 +1126,7 @@ video_ioctl( bktr_ptr_t bktr, int unit, ioctl_cmd_t cmd, caddr_t arg, struct pro
 	    }
 	    bktr->max_clip_node = i;
 
-	    /* make sure that the list contains a valid clip secquence */
+	    /* make sure that the list contains a valid clip sequence */
 	    /* the clip rectangles should be sorted by x then by y as the
                second order sort key */
 
@@ -2135,7 +2135,7 @@ bktr_common_ioctl( bktr_ptr_t bktr, ioctl_cmd_t cmd, caddr_t arg )
 		/*   Tuner is MUX0, RCA is MUX1, S-Video is MUX2 */
 		/* On the Hauppauge bt878 boards, */
 		/*   Tuner is MUX0, RCA is MUX3 */
-		/* Unfortunatly Meteor driver codes DEV_RCA as DEV_0, so we */
+		/* Unfortunately Meteor driver codes DEV_RCA as DEV_0, so we */
 		/* stick with this system in our Meteor Emulation */
 
 		switch(*(unsigned int *)arg & METEOR_DEV_MASK) {
@@ -2882,7 +2882,7 @@ yuvpack_prog( bktr_ptr_t bktr, char i_flag,
 
 	buffer = target_buffer;
 
-	/* contruct sync : for video packet format */
+	/* construct sync : for video packet format */
 	/* sync, mode indicator packed data */
 	*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM1);
 	*dma_prog++ = htole32(0);  /* NULL WORD */
@@ -3000,7 +3000,7 @@ yuv422_prog(bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace)
 
 	t1 = buffer;
 
-	/* contruct sync : for video packet format */
+	/* construct sync : for video packet format */
 	/*     sync, mode indicator packed data*/
 	*dma_prog++ = htole32(OP_SYNC | BKTR_RESYNC | BKTR_FM3);
 	*dma_prog++ = htole32(0);  /* NULL WORD */

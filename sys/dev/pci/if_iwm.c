@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.388 2022/01/05 17:06:20 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.389 2022/01/09 05:42:50 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -4257,7 +4257,7 @@ iwm_start_fw(struct iwm_softc *sc, enum iwm_ucode_type ucode_type)
 	IWM_WRITE(sc, IWM_CSR_UCODE_DRV_GP1_CLR,
 	    IWM_CSR_UCODE_DRV_GP1_BIT_CMD_BLOCKED);
 
-	/* clear (again), then enable firwmare load interrupt */
+	/* clear (again), then enable firmware load interrupt */
 	IWM_WRITE(sc, IWM_CSR_INT, ~0);
 	iwm_enable_fwload_interrupt(sc);
 
@@ -9205,7 +9205,7 @@ iwm_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct iwm_softc *sc = ifp->if_softc;
 
 	/*
-	 * Prevent attemps to transition towards the same state, unless
+	 * Prevent attempts to transition towards the same state, unless
 	 * we are scanning in which case a SCAN -> SCAN transition
 	 * triggers another scan iteration. And AUTH -> AUTH is needed
 	 * to support band-steering.

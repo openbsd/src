@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphyreg.h,v 1.18 2020/04/14 21:00:27 kettenis Exp $	*/
+/*	$OpenBSD: brgphyreg.h,v 1.19 2022/01/09 05:42:44 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -240,7 +240,7 @@
 
 #define BRGPHY_5708S_BMCR_2500			0x20
 
-/* Autoneg Next Page Transmit 1 Regiser */
+/* Autoneg Next Page Transmit 1 Register */
 #define BRGPHY_5708S_ANEG_NXT_PG_XMIT1		0x0B
 #define BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G	0x0001
 

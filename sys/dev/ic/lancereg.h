@@ -1,4 +1,4 @@
-/*	$OpenBSD: lancereg.h,v 1.2 2008/06/26 05:42:15 ray Exp $	*/
+/*	$OpenBSD: lancereg.h,v 1.3 2022/01/09 05:42:38 jsg Exp $	*/
 /*	$NetBSD: lancereg.h,v 1.11 2003/11/02 11:07:45 wiz Exp $	*/
 
 /*-
@@ -302,7 +302,7 @@
 #define	LE_C4_APAD_XMT	0x0800		/* auto pad transmit */
 #define	LE_C4_ASTRP_RCV	0x0400		/* auto strip receive */
 #define	LE_C4_MFCO	0x0200		/* missed frame counter overflow */
-#define	LE_C4_MFCOM	0x0100		/* missed frame coutner overflow mask */
+#define	LE_C4_MFCOM	0x0100		/* missed frame counter overflow mask */
 #define	LE_C4_UINTCMD	0x0080		/* user interrupt command */
 #define	LE_C4_UINT	0x0040		/* user interrupt */
 #define	LE_C4_RCVCCO	0x0020		/* receive collision counter overflow */
@@ -566,7 +566,7 @@
 #define	LE_MODE_PROM	0x8000		/* promiscuous mode */
 /*			0x7f80		   reserved, must be zero */
 /* 0x4000 - 0x0080 are not available on LANCE 7990 */
-#define	LE_MODE_DRCVBC	0x4000		/* disable receive brodcast */
+#define	LE_MODE_DRCVBC	0x4000		/* disable receive broadcast */
 #define	LE_MODE_DRCVPA	0x2000		/* disable physical address detection */
 #define	LE_MODE_DLNKTST	0x1000		/* disable link status */
 #define	LE_MODE_DAPC	0x0800		/* disable automatic polarity correction */

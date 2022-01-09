@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.27 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.28 2022/01/09 05:42:38 jsg Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -159,7 +159,7 @@ ne2000_attach(struct ne2000_softc *nsc, u_int8_t *myea)
 		dsc->sc_reg_map[i] = i;
 
 	/*
-	 * NIC memory doens't start at zero on an NE board.
+	 * NIC memory doesn't start at zero on an NE board.
 	 * The start address is tied to the bus width.
 	 * (It happens to be computed the same way as mem size.)
 	 */

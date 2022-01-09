@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.h,v 1.4 2009/08/10 20:29:54 deraadt Exp $	*/
+/*	$OpenBSD: aic6915.h,v 1.5 2022/01/09 05:42:38 jsg Exp $	*/
 /*	$NetBSD: aic6915reg.h,v 1.4 2005/12/11 12:21:25 christos Exp $	*/
 
 /*-
@@ -227,7 +227,7 @@ struct sf_tcd {
 
 /*
  * To make matters worse, the manual lies about the indices in the
- * completion queue entires.  It claims they are in 8-byte units,
+ * completion queue entries.  It claims they are in 8-byte units,
  * but they're actually *BYTES*, which means we need to divide by
  * 128 to get the actual index.
  */
@@ -724,7 +724,7 @@ struct sf_control_data {
 	struct sf_txdesc0 scd_txdescs[SF_NTXDESC];
 
 	/*
-	 * The transmit completion queue entires.
+	 * The transmit completion queue entries.
 	 */
 	struct sf_tcd scd_txcomp[SF_NTCD];
 

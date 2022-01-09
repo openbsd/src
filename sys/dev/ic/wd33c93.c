@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93.c,v 1.19 2020/09/22 19:32:53 krw Exp $	*/
+/*	$OpenBSD: wd33c93.c,v 1.20 2022/01/09 05:42:42 jsg Exp $	*/
 /*	$NetBSD: wd33c93.c,v 1.24 2010/11/13 13:52:02 uebayasi Exp $	*/
 
 /*
@@ -486,7 +486,7 @@ wd33c93_dma_stop(struct wd33c93_softc *sc)
 	do {
 		GET_SBIC_asr(sc, asr);	/* XXX */
 		if (asr & SBIC_ASR_DBR) {
-			printf("%s: %s: asr %02x canceled!\n",
+			printf("%s: %s: asr %02x cancelled!\n",
 			    sc->sc_dev.dv_xname, __func__, asr);
 			break;
 		}
@@ -1080,7 +1080,7 @@ wd33c93_selectbus(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 	 * We only really need to do anything when the target goes to MSG out
 	 * If the device ignored ATN, it's probably old and brain-dead,
 	 * but we'll try to support it anyhow.
-	 * If it doesn't support message out, it definately doesn't
+	 * If it doesn't support message out, it definitely doesn't
 	 * support synchronous transfers, so no point in even asking...
 	 */
 	if (csr == (SBIC_CSR_MIS_2 | MESG_OUT_PHASE)) {
@@ -1949,7 +1949,7 @@ wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb *acb, u_char csr,
 		 */
 		if (acb->xs->flags & SCSI_POLL ||
 		    sc->sc_flags & SBICF_NODMA) {
-			/* Perfrom transfer using PIO */
+			/* Perform transfer using PIO */
 			ssize_t resid;
 
 			SBIC_DEBUG(DMA, ("PIO xfer: %d(%p:%zx)\n", sc->target,

@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.40 2020/05/25 09:55:48 jsg Exp $ */
+/* $OpenBSD: tga.c,v 1.41 2022/01/09 05:42:58 jsg Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -1368,7 +1368,7 @@ tga_putchar(c, row, col, uc, attr)
 		*rp = 0xffffffff;
 	}
 
-	/* Set grapics mode back to normal. */
+	/* Set graphics mode back to normal. */
 	TGAWREG(dc, TGA_REG_GMOR, 0);
 	TGAWREG(dc, TGA_REG_GPXR_P, 0xffffffff);
 
@@ -1426,7 +1426,7 @@ tga_eraserows(c, row, num, attr)
 		rp = (int32_t *)((caddr_t)rp + ri->ri_stride);
 	}
 
-	/* Set grapics mode back to normal. */
+	/* Set graphics mode back to normal. */
 	TGAWREG(dc, TGA_REG_GMOR, 0);
 	
 	return 0;
@@ -1483,7 +1483,7 @@ tga_erasecols (c, row, col, num, attr)
 		rp = (int32_t *)((caddr_t)rp + ri->ri_stride);
 	}
 
-	/* Set grapics mode back to normal. */
+	/* Set graphics mode back to normal. */
 	TGAWREG(dc, TGA_REG_GMOR, 0);
 
 	return 0;
@@ -1533,7 +1533,7 @@ tga_bt463_rd(v, btreg)
 
 	/* 
 	 * Strobe CE# (high->low->high) since status and data are latched on 
-	 * the falling and rising edges (repsectively) of this active-low signal.
+	 * the falling and rising edges (respectively) of this active-low signal.
 	 */
 	
 	TGAREGWB(dc, TGA_REG_EPSR, 1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvtwo.c,v 1.15 2013/10/20 20:07:31 miod Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.16 2022/01/09 05:42:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003, 2006, 2008, Miodrag Vallat.
@@ -302,7 +302,7 @@ tvtwo_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	/*
 	 * Note that, although the emulation (text) mode is running in a
-	 * 8-bit plane, we advertize the frame buffer as 32-bit.
+	 * 8-bit plane, we advertise the frame buffer as 32-bit.
 	 */
 	switch (cmd) {
 	case WSDISPLAYIO_GTYPE:

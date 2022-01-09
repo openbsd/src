@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_ali.c,v 1.15 2014/05/27 12:40:00 kettenis Exp $	*/
+/*	$OpenBSD: agp_ali.c,v 1.16 2022/01/09 05:42:45 jsg Exp $	*/
 /*	$NetBSD: agp_ali.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 
@@ -120,7 +120,7 @@ agp_ali_attach(struct device *parent, struct device *self, void *aux)
 		if (gatt != NULL)
 			break;
 		/*
-		 * almost certainly error allocating contigious dma memory
+		 * almost certainly error allocating contiguous dma memory
 		 * so reduce aperture so that the gatt size reduces.
 		 */
 		asc->asc_apsize /= 2;

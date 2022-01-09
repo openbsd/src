@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx100.c,v 1.27 2017/09/22 13:44:00 kevlo Exp $ */
+/*	$OpenBSD: acx100.c,v 1.28 2022/01/09 05:42:38 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -157,7 +157,7 @@ struct acx100_conf_mem {
 	uint32_t	h_rxring_paddr;	/* host rx desc start phyaddr */
 
 	/*
-	 * Memory blocks are controled by hardware
+	 * Memory blocks are controlled by hardware
 	 * once after they are initialized
 	 */
 	uint32_t	rx_memblk_addr;	/* start addr of rx mem blocks */

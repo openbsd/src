@@ -1,4 +1,4 @@
-/*	$OpenBSD: atphy.c,v 1.11 2016/07/09 15:59:22 kettenis Exp $	*/
+/*	$OpenBSD: atphy.c,v 1.12 2022/01/09 05:42:44 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -194,8 +194,8 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			 * Due to an unknown reason powering down PHY resulted
 			 * in unexpected results such as inaccessibility of
 			 * hardware of freshly rebooted system. Disable
-			 * powering down PHY until I got more information for
-			 * Attansic/Atheros PHY hardwares.
+			 * powering down PHY until I get more information for
+			 * Attansic/Atheros PHY hardware.
 			 */
 			PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_ISO);
 			goto done;

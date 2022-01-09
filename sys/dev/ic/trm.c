@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm.c,v 1.43 2020/09/22 19:32:52 krw Exp $
+/*	$OpenBSD: trm.c,v 1.44 2022/01/09 05:42:42 jsg Exp $
  * ------------------------------------------------------------
  *   O.S       : OpenBSD
  *   File Name : trm.c
@@ -2773,7 +2773,7 @@ trm_initAdapter(struct trm_softc *sc)
 	bval = sc->sc_AdaptSCSIID;
 	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_HOSTID, bval);
 	/*
-	 * set ansynchronous transfer
+	 * set asynchronous transfer
 	 */
 	bus_space_write_1(iot, ioh, TRM_S1040_SCSI_OFFSET, 0);
 	/*

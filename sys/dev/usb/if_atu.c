@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.132 2020/07/31 10:49:32 mglocker Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.133 2022/01/09 05:43:00 jsg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1280,7 +1280,7 @@ atu_attach(struct device *parent, struct device *self, void *aux)
 	 * Check in the interface descriptor if we're in DFU mode
 	 * If we're in DFU mode, we upload the external firmware
 	 * If we're not, the PC must have rebooted without power-cycling
-	 * the device.. I've tried this out, a reboot only requeres the
+	 * the device. I've tried this out, a reboot only requires the
 	 * external firmware to be reloaded :)
 	 *
 	 * Hmm. The at76c505a doesn't report a DFU descriptor when it's
@@ -1647,7 +1647,7 @@ atu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			/*
 			 * My experience with USBD_IOERROR is that trying to
 			 * restart the transfer will always fail and we'll
-			 * keep on looping restarting transfers untill someone
+			 * keep on looping restarting transfers until someone
 			 * pulls the plug of the device.
 			 * So we don't restart the transfer, but just let it
 			 * die... If someone knows of a situation where we can

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2reg.h,v 1.4 2013/11/26 20:33:16 deraadt Exp $	*/
+/*	$OpenBSD: tcic2reg.h,v 1.5 2022/01/09 05:42:42 jsg Exp $	*/
 /*	$NetBSD: tcic2reg.h,v 1.1 1999/03/23 20:04:14 bad Exp $	*/
 
 /*-
@@ -762,7 +762,7 @@
 #define	TCIC_MCTL_WSCNT_MASK	0x0f		/* wait state counter */
 
 /* Bits in the ICTL window registers */
-#define	TCIC_ICTL_ENA		(1 << 15)	/* enable this windo */
+#define	TCIC_ICTL_ENA		(1 << 15)	/* enable this window */
 #define	TCIC_ICTL_SS_SHIFT	12
 #define	TCIC_ICTL_SS_MASK	(7 << TCIC_ICTL_SS_SHIFT) /* which socket does this window map to */
 #define	TCIC_ICTL_AUTOSZ	0		/* auto size 8/16 bit acc. */

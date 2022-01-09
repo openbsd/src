@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtw.c,v 1.70 2021/02/25 02:48:20 dlg Exp $	*/
+/*	$OpenBSD: if_urtw.c,v 1.71 2022/01/09 05:43:00 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Martynas Venckus <martynas@openbsd.org>
@@ -664,7 +664,7 @@ urtw_attach(struct device *parent, struct device *self, void *aux)
 	error = urtw_get_txpwr(sc);
 	if (error != 0)
 		goto fail;
-	error = urtw_led_init(sc);		/* XXX incompleted */
+	error = urtw_led_init(sc);		/* XXX incomplete */
 	if (error != 0)
 		goto fail;
 

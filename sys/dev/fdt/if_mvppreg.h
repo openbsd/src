@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvppreg.h,v 1.16 2021/06/03 21:42:23 patrick Exp $	*/
+/*	$OpenBSD: if_mvppreg.h,v 1.17 2022/01/09 05:42:37 jsg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -653,7 +653,7 @@
 /* Maximum number of RXQs used by single port */
 #define MVPP2_MAX_RXQ			8
 
-/* Dfault number of RXQs in use */
+/* Default number of RXQs in use */
 #define MVPP2_DEFAULT_RXQ		4
 
 /* Total number of RXQs available to all ports */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.154 2021/11/22 10:17:14 mglocker Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.155 2022/01/09 05:43:00 jsg Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -1405,7 +1405,7 @@ uhci_run(struct uhci_softc *sc, int run)
  *  uhci_alloc_sqh allocates QHs
  * These two routines do their own free list management,
  * partly for speed, partly because allocating DMAable memory
- * has page size granularaity so much memory would be wasted if
+ * has page size granularity so much memory would be wasted if
  * only one TD/QH (32 bytes) was placed in each allocated chunk.
  */
 

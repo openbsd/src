@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_natsemi_reg.h,v 1.7 2007/06/24 12:41:19 kettenis Exp $	*/
+/*	$OpenBSD: pciide_natsemi_reg.h,v 1.8 2022/01/09 05:42:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -119,7 +119,7 @@ const static u_int32_t scx200_pio33[2][5] = {
     /* Format 1 */
     { 0x9172d132, 0x21717121, 0x00803020, 0x20102010, 0x00100010 }};
 const static u_int32_t scx200_pio66[2][5] = {
-    /* Fromat 0 */
+    /* Format 0 */
     { 0x0000f8e4, 0x000153f3, 0x000213f1, 0x00034231, 0x00041131 },
     /* Format 1 */
     { 0xf8e4f8e4, 0x53f3f353, 0x13f18141, 0x42314231, 0x11311131 }};

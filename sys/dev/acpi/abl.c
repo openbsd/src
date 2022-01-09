@@ -1,4 +1,4 @@
-/*	$OpenBSD: abl.c,v 1.3 2020/10/25 08:31:40 mglocker Exp $ */
+/*	$OpenBSD: abl.c,v 1.4 2022/01/09 05:42:37 jsg Exp $ */
 
 /*
  * Copyright (c) 2020 Marcus Glocker <mglocker@openbsd.org>
@@ -123,7 +123,7 @@ abl_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * We need to check on what type of PCI controler we're running on to
+	 * We need to check on what type of PCI controller we're running on to
 	 * access the right I/O space.
 	 */
 	pc = pci_lookup_segment(0);

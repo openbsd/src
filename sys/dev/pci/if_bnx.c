@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.130 2020/12/12 11:48:52 jan Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.131 2022/01/09 05:42:46 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -199,12 +199,12 @@ static struct flash_spec flash_table[] =
 	{0x19000002, 0x5b808201, 0x000500db, 0x03840253, 0xaf020406,
 	 NONBUFFERED_FLAGS, ST_MICRO_FLASH_PAGE_BITS, ST_MICRO_FLASH_PAGE_SIZE,
 	 ST_MICRO_FLASH_BYTE_ADDR_MASK, ST_MICRO_FLASH_BASE_TOTAL_SIZE*2,
-	 "Entry 0101: ST M45PE10 (128kB non-bufferred)"},
+	 "Entry 0101: ST M45PE10 (128kB non-buffered)"},
 	/* Entry 0110: ST M45PE20 (non-buffered flash)*/
 	{0x15000001, 0x57808201, 0x000500db, 0x03840253, 0xaf020406,
 	 NONBUFFERED_FLAGS, ST_MICRO_FLASH_PAGE_BITS, ST_MICRO_FLASH_PAGE_SIZE,
 	 ST_MICRO_FLASH_BYTE_ADDR_MASK, ST_MICRO_FLASH_BASE_TOTAL_SIZE*4,
-	 "Entry 0110: ST M45PE20 (256kB non-bufferred)"},
+	 "Entry 0110: ST M45PE20 (256kB non-buffered)"},
 	/* Saifun SA25F005 (non-buffered flash) */
 	/* strap, cfg1, & write1 need updates */
 	{0x1d000003, 0x5f808201, 0x00050081, 0x03840253, 0xaf020406,
@@ -669,7 +669,7 @@ bnx_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Configure byte swap and enable indirect register access.
 	 * Rely on CPU to do target byte swapping on big endian systems.
-	 * Access to registers outside of PCI configurtion space are not
+	 * Access to registers outside of PCI configuration space are not
 	 * valid until this is done.
 	 */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BNX_PCICFG_MISC_CONFIG,
@@ -1278,7 +1278,7 @@ bnx_miibus_statchg(struct device *dev)
 		/* FALLTHROUGH */
 	case IFM_1000_T:
 	case IFM_1000_SX:
-		DBPRINT(sc, BNX_INFO, "Enablinb GMII interface.\n");
+		DBPRINT(sc, BNX_INFO, "Enabling GMII interface.\n");
 		val |= BNX_EMAC_MODE_PORT_GMII;
 		break;
 	default:
@@ -1316,7 +1316,7 @@ bnx_miibus_statchg(struct device *dev)
 		BNX_CLRBIT(sc, BNX_EMAC_TX_MODE, BNX_EMAC_TX_MODE_FLOW_EN);
 	}
 
-	/* Only make changes if the recive mode has actually changed. */
+	/* Only make changes if the receive mode has actually changed. */
 	if (rx_mode != sc->rx_mode) {
 		DBPRINT(sc, BNX_VERBOSE, "Enabling new receive mode: 0x%08X\n",
 		    rx_mode);
@@ -1392,7 +1392,7 @@ bnx_release_nvram_lock(struct bnx_softc *sc)
 	}
 
 	if (j >= NVRAM_TIMEOUT_COUNT) {
-		DBPRINT(sc, BNX_WARN, "Timeout reeasing NVRAM lock!\n");
+		DBPRINT(sc, BNX_WARN, "Timeout releasing NVRAM lock!\n");
 		return (EBUSY);
 	}
 
@@ -2288,7 +2288,7 @@ bnx_init_media(struct bnx_softc *sc)
 /****************************************************************************/
 /* Free any DMA memory owned by the driver.                                 */
 /*                                                                          */
-/* Scans through each data structre that requires DMA memory and frees      */
+/* Scans through each data structure that requires DMA memory and frees     */
 /* the memory if allocated.                                                 */
 /*                                                                          */
 /* Returns:                                                                 */
@@ -4733,13 +4733,13 @@ bnx_mgmt_init_exit:
  	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __FUNCTION__);
 }
 
-/****************************************************************************/
-/* Encapsultes an mbuf cluster into the tx_bd chain structure and makes the */
-/* memory visible to the controller.                                        */
-/*                                                                          */
-/* Returns:                                                                 */
-/*   0 for success, positive value for failure.                             */
-/****************************************************************************/
+/*****************************************************************************/
+/* Encapsulates an mbuf cluster into the tx_bd chain structure and makes the */
+/* memory visible to the controller.                                         */
+/*                                                                           */
+/* Returns:                                                                  */
+/*   0 for success, positive value for failure.                              */
+/*****************************************************************************/
 int
 bnx_tx_encap(struct bnx_softc *sc, struct mbuf *m, int *used)
 {
@@ -5188,7 +5188,7 @@ bnx_iff(struct bnx_softc *sc)
 
 	/*
 	 * ASF/IPMI/UMP firmware requires that VLAN tag stripping
-	 * be enbled.
+	 * be enabled.
 	 */
 	if (!(ifp->if_capabilities & IFCAP_VLAN_HWTAGGING) &&
 	    (!(sc->bnx_flags & BNX_MFW_ENABLE_FLAG)))
@@ -5235,7 +5235,7 @@ bnx_iff(struct bnx_softc *sc)
 		sort_mode |= BNX_RPM_SORT_USER0_MC_HSH_EN;
 	}
 
-	/* Only make changes if the recive mode has actually changed. */
+	/* Only make changes if the receive mode has actually changed. */
 	if (rx_mode != sc->rx_mode) {
 		DBPRINT(sc, BNX_VERBOSE, "Enabling new receive mode: 0x%08X\n", 
 		    rx_mode);
@@ -5244,7 +5244,7 @@ bnx_iff(struct bnx_softc *sc)
 		REG_WR(sc, BNX_EMAC_RX_MODE, rx_mode);
 	}
 
-	/* Disable and clear the exisitng sort before enabling a new sort. */
+	/* Disable and clear the existing sort before enabling a new sort. */
 	REG_WR(sc, BNX_RPM_SORT_USER0, 0x0);
 	REG_WR(sc, BNX_RPM_SORT_USER0, sort_mode);
 	REG_WR(sc, BNX_RPM_SORT_USER0, sort_mode | BNX_RPM_SORT_USER0_ENA);
@@ -6073,7 +6073,7 @@ bnx_dump_driver_state(struct bnx_softc *sc)
 	    "address\n", sc->stats_block);
 
 	BNX_PRINTF(sc, "%p - (sc->tx_bd_chain) tx_bd chain virtual "
-	    "adddress\n", sc->tx_bd_chain);
+	    "address\n", sc->tx_bd_chain);
 
 	BNX_PRINTF(sc, "%p - (sc->rx_bd_chain) rx_bd chain virtual address\n",
 	    sc->rx_bd_chain);

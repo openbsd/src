@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc91cxx.c,v 1.50 2021/03/07 06:21:38 jsg Exp $	*/
+/*	$OpenBSD: smc91cxx.c,v 1.51 2022/01/09 05:42:42 jsg Exp $	*/
 /*	$NetBSD: smc91cxx.c,v 1.11 1998/08/08 23:51:41 mycroft Exp $	*/
 
 /*-
@@ -67,7 +67,7 @@
 /*
  * Core driver for the SMC 91Cxx family of Ethernet chips.
  *
- * Memory allocation interrupt logic is drived from an SMC 91C90 driver
+ * Memory allocation interrupt logic is derived from an SMC 91C90 driver
  * written for NetBSD/amiga by Michael Hitch.
  */
 
@@ -586,7 +586,7 @@ smc91cxx_start(struct ifnet *ifp)
 	if (packetno & ARR_FAILED || timo == 0) {
 		/*
 		 * No transmit memory is available.  Record the number
-		 * of requestd pages and enable the allocation completion
+		 * of requested pages and enable the allocation completion
 		 * interrupt.  Set up the watchdog timer in case we miss
 		 * the interrupt.  Mark the interface as active so that
 		 * no one else attempts to transmit while we're allocating

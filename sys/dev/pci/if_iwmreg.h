@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmreg.h,v 1.66 2021/12/20 15:08:10 stsp Exp $	*/
+/*	$OpenBSD: if_iwmreg.h,v 1.67 2022/01/09 05:42:50 jsg Exp $	*/
 
 /******************************************************************************
  *
@@ -805,7 +805,7 @@ enum msix_ivar_for_cause {
  *	scan request.
  * @IWM_UCODE_TLV_API_TKIP_MIC_KEYS: This ucode supports version 2 of
  *	ADD_MODIFY_STA_KEY_API_S_VER_2.
- * @IWM_UCODE_TLV_API_STA_TYPE: This ucode supports station type assignement.
+ * @IWM_UCODE_TLV_API_STA_TYPE: This ucode supports station type assignment.
  * @IWM_UCODE_TLV_API_EXT_SCAN_PRIORITY: scan APIs use 8-level priority
  *	instead of 3.
  * @IWM_UCODE_TLV_API_NEW_RX_STATS: should new RX STATISTICS API be used
@@ -2593,7 +2593,7 @@ struct iwm_soc_configuration_cmd {
  * struct iwm_error_resp - FW error indication
  * ( IWM_REPLY_ERROR = 0x2 )
  * @error_type: one of IWM_FW_ERR_*
- * @cmd_id: the command ID for which the error occured
+ * @cmd_id: the command ID for which the error occurred
  * @bad_cmd_seq_num: sequence number of the erroneous command
  * @error_service: which service created the error, applicable only if
  *	error_type = 2, otherwise 0
@@ -2830,7 +2830,7 @@ struct iwm_fw_cmd_version {
  * @IWM_TE_V2_NOTIF_INTERNAL_FRAG_END: internal FW use.
  * @IWM_TE_V2_DEP_OTHER: depends on another time event
  * @IWM_TE_V2_DEP_TSF: depends on a specific time
- * @IWM_TE_V2_EVENT_SOCIOPATHIC: can't co-exist with other events of tha same MAC
+ * @IWM_TE_V2_EVENT_SOCIOPATHIC: can't co-exist with other events of the same MAC
  * @IWM_TE_V2_ABSENCE: are we present or absent during the Time Event.
  */
 #define IWM_TE_V2_DEFAULT_POLICY		0x0
@@ -2980,7 +2980,7 @@ struct iwm_binding_cmd {
  * struct iwm_time_quota_data - configuration of time quota per binding
  * @id_and_color: ID and color of the relevant Binding
  * @quota: absolute time quota in TU. The scheduler will try to divide the
- *	remainig quota (after Time Events) according to this quota.
+ *	remaining quota (after Time Events) according to this quota.
  * @max_duration: max uninterrupted context duration in TU
  */
 struct iwm_time_quota_data_v1 {
@@ -3006,7 +3006,7 @@ struct iwm_time_quota_cmd_v1 {
  * struct iwm_time_quota_data - configuration of time quota per binding
  * @id_and_color: ID and color of the relevant Binding.
  * @quota: absolute time quota in TU. The scheduler will try to divide the
- *	remainig quota (after Time Events) according to this quota.
+ *	remaining quota (after Time Events) according to this quota.
  * @max_duration: max uninterrupted context duration in TU
  * @low_latency: low latency status IWM_QUOTA_LOW_LATENCY_*
  */
@@ -3020,7 +3020,7 @@ struct iwm_time_quota_data {
 /**
  * struct iwm_time_quota_cmd - configuration of time quota between bindings
  * ( TIME_QUOTA_CMD = 0x2c )
- * Note: on non-CDB the fourth one is the auxilary mac and is essentially zero.
+ * Note: on non-CDB the fourth one is the auxiliary mac and is essentially zero.
  * On CDB the fourth one is a regular binding.
  *
  * @quotas: allocations per binding
@@ -3137,7 +3137,7 @@ struct iwm_fw_channel_info {
  * XXX Intel forgot to bump the PHY_CONTEXT command API when they increased
  * the size of fw_channel_info from v1 to v2.
  * To keep things simple we define two versions of this struct, and both
- * are labled as CMD_API_VER_1. (The Linux iwlwifi driver performs dark
+ * are labeled as CMD_API_VER_1. (The Linux iwlwifi driver performs dark
  * magic with pointers to struct members instead.)
  */
 /* This version must be used if IWM_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS is set: */
@@ -3759,7 +3759,7 @@ struct iwm_notif_statistics { /* IWM_STATISTICS_NTFY_API_S_VER_8 */
 /**
  * Smart Fifo configuration command.
  * @state: smart fifo state, types listed in enum %iwm_sf_state.
- * @watermark: Minimum allowed availabe free space in RXF for transient state.
+ * @watermark: Minimum allowed available free space in RXF for transient state.
  * @long_delay_timeouts: aging and idle timer values for each scenario
  * in long delay state.
  * @full_on_timeouts: timer values for each scenario in full on state.
@@ -3957,7 +3957,7 @@ struct iwm_mac_data_p2p_dev {
 /**
  * MAC context filter flags
  * @IWM_MAC_FILTER_IN_PROMISC: accept all data frames
- * @IWM_MAC_FILTER_IN_CONTROL_AND_MGMT: pass all mangement and
+ * @IWM_MAC_FILTER_IN_CONTROL_AND_MGMT: pass all management and
  *	control frames to the host
  * @IWM_MAC_FILTER_ACCEPT_GRP: accept multicast frames
  * @IWM_MAC_FILTER_DIS_DECRYPT: don't decrypt unicast frames
@@ -4194,7 +4194,7 @@ struct iwm_device_power_cmd {
 /**
  * struct iwm_mac_power_cmd - New power command containing uAPSD support
  * IWM_MAC_PM_POWER_TABLE = 0xA9 (command, has simple generic response)
- * @id_and_color:	MAC contex identifier
+ * @id_and_color:	MAC context identifier
  * @flags:		Power table command flags from POWER_FLAGS_*
  * @keep_alive_seconds:	Keep alive period in seconds. Default - 25 sec.
  *			Minimum allowed:- 3 * DTIM. Keep alive period must be
@@ -4280,7 +4280,7 @@ struct iwm_uapsd_misbehaving_ap_notif {
 /**
  * struct iwm_beacon_filter_cmd
  * IWM_REPLY_BEACON_FILTERING_CMD = 0xd2 (command)
- * @id_and_color: MAC contex identifier
+ * @id_and_color: MAC context identifier
  * @bf_energy_delta: Used for RSSI filtering, if in 'normal' state. Send beacon
  *      to driver if delta in Energy values calculated for this and last
  *      passed beacon is greater than this threshold. Zero value means that
@@ -4297,7 +4297,7 @@ struct iwm_uapsd_misbehaving_ap_notif {
  *      Roaming Energy Delta Threshold, otherwise use normal Energy Delta
  *      Threshold. Typical energy threshold is -72dBm.
  * @bf_temp_threshold: This threshold determines the type of temperature
- *	filtering (Slow or Fast) that is selected (Units are in Celsuis):
+ *	filtering (Slow or Fast) that is selected (Units are in Celsius):
  *      If the current temperature is above this threshold - Fast filter
  *	will be used, If the current temperature is below this threshold -
  *	Slow filter will be used.
@@ -4305,12 +4305,12 @@ struct iwm_uapsd_misbehaving_ap_notif {
  *      calculated for this and the last passed beacon is greater than this
  *      threshold. Zero value means that the temperature change is ignored for
  *      beacon filtering; beacons will not be  forced to be sent to driver
- *      regardless of whether its temerature has been changed.
+ *      regardless of whether its temperature has been changed.
  * @bf_temp_slow_filter: Send Beacon to driver if delta in temperature values
  *      calculated for this and the last passed beacon is greater than this
  *      threshold. Zero value means that the temperature change is ignored for
  *      beacon filtering; beacons will not be forced to be sent to driver
- *      regardless of whether its temerature has been changed.
+ *      regardless of whether its temperature has been changed.
  * @bf_enable_beacon_filter: 1, beacon filtering is enabled; 0, disabled.
  * @bf_escape_timer: Send beacons to driver if no beacons were passed
  *      for a specific period of time. Units: Beacons.
@@ -4671,7 +4671,7 @@ enum {
 #define IWM_LQ_FLAG_RTS_BW_SIG_DYNAMIC      (2 << IWM_LQ_FLAG_RTS_BW_SIG_POS)
 
 /* Bit 6: (0) No dynamic BW selection (1) Allow dynamic BW selection
- * Dyanmic BW selection allows Tx with narrower BW then requested in rates
+ * Dynamic BW selection allows Tx with narrower BW than requested in rates
  */
 #define IWM_LQ_FLAG_DYNAMIC_BW_POS          6
 #define IWM_LQ_FLAG_DYNAMIC_BW_MSK          (1 << IWM_LQ_FLAG_DYNAMIC_BW_POS)
@@ -4910,7 +4910,7 @@ struct iwm_lq_cmd {
  * Range of len: 14-2342 bytes.
  *
  * After the struct fields the MAC header is placed, plus any padding,
- * and then the actial payload.
+ * and then the actual payload.
  */
 struct iwm_tx_cmd {
 	uint16_t len;
@@ -5165,7 +5165,7 @@ struct iwm_ba_notif {
 /*
  * struct iwm_mac_beacon_cmd - beacon template command
  * @tx: the tx commands associated with the beacon frame
- * @template_id: currently equal to the mac context id of the coresponding
+ * @template_id: currently equal to the mac context id of the corresponding
  *  mac.
  * @tim_idx: the offset of the tim IE in the beacon
  * @tim_size: the length of the tim IE
@@ -5240,7 +5240,7 @@ static inline uint32_t iwm_get_scd_ssn(struct iwm_tx_resp *tx_resp)
  * @token:
  * @sta_id: station id
  * @tid:
- * @scd_queue: scheduler queue to confiug
+ * @scd_queue: scheduler queue to config
  * @enable: 1 queue enable, 0 queue disable
  * @aggregate: 1 aggregated queue, 0 otherwise
  * @tx_fifo: %enum iwm_tx_fifo
@@ -5550,8 +5550,8 @@ struct iwm_scan_offload_blacklist {
 /**
  * iwm_scan_offload_profile - IWM_SCAN_OFFLOAD_PROFILE_S
  * @ssid_index:		index to ssid list in fixed part
- * @unicast_cipher:	encryption olgorithm to match - bitmap
- * @aut_alg:		authentication olgorithm to match - bitmap
+ * @unicast_cipher:	encryption algorithm to match - bitmap
+ * @aut_alg:		authentication algorithm to match - bitmap
  * @network_type:	enum iwm_scan_offload_network_type
  * @band_selection:	enum iwm_scan_offload_band_selection
  * @client_bitmap:	clients waiting for match - enum scan_framework_client
@@ -5568,7 +5568,7 @@ struct iwm_scan_offload_profile {
 
 /**
  * iwm_scan_offload_profile_cfg - IWM_SCAN_OFFLOAD_PROFILES_CFG_API_S_VER_1
- * @blaclist:		AP list to filter off from scan results
+ * @blacklist:		AP list to filter off from scan results
  * @profiles:		profiles to search for match
  * @blacklist_len:	length of blacklist
  * @num_profiles:	num of profiles in the list
@@ -5705,7 +5705,7 @@ struct iwm_scan_config {
  * iwm_umac_scan_flags
  *@IWM_UMAC_SCAN_FLAG_PREEMPTIVE: scan process triggered by this scan request
  *	can be preempted by other scan requests with higher priority.
- *	The low priority scan will be resumed when the higher proirity scan is
+ *	The low priority scan will be resumed when the higher priority scan is
  *	completed.
  *@IWM_UMAC_SCAN_FLAG_START_NOTIF: notification will be sent to the driver
  *	when scan starts.
@@ -5727,7 +5727,7 @@ struct iwm_scan_config {
 #define IWM_UMAC_SCAN_GEN_FLAGS_RRM_ENABLED	(1 << 8)
 #define IWM_UMAC_SCAN_GEN_FLAGS_MATCH		(1 << 9)
 #define IWM_UMAC_SCAN_GEN_FLAGS_EXTENDED_DWELL	(1 << 10)
-/* Extended dwell is obselete when adaptive dwell is used, making this
+/* Extended dwell is obsolete when adaptive dwell is used, making this
  * bit reusable. Hence, probe request defer is used only when adaptive
  * dwell is supported. */
 #define IWM_UMAC_SCAN_GEN_FLAGS_PROB_REQ_DEFER_SUPP	(1 << 10)
@@ -6121,7 +6121,7 @@ struct iwm_umac_scan_iter_complete_notif {
  * @IWM_STA_KEY_FLG_EXT: extended cipher algorithm (depends on the FW support)
  * @IWM_STA_KEY_FLG_CMAC: CMAC encryption algorithm
  * @IWM_STA_KEY_FLG_ENC_UNKNOWN: unknown encryption algorithm
- * @IWM_STA_KEY_FLG_EN_MSK: mask for encryption algorithmi value
+ * @IWM_STA_KEY_FLG_EN_MSK: mask for encryption algorithm value
  * @IWM_STA_KEY_FLG_WEP_KEY_MAP: wep is either a group key (0 - legacy WEP) or from
  *	station info array (1 - n 1X mode)
  * @IWM_STA_KEY_FLG_KEYID_MSK: the index of the key
@@ -6324,7 +6324,7 @@ struct iwm_add_sta_cmd_v7 {
  *	mac-addr.
  * @beamform_flags: beam forming controls
  * @tfd_queue_msk: tfd queues used by this station.
- *	Obselete for new TX API (9 and above).
+ *	Obsolete for new TX API (9 and above).
  * @rx_ba_window: aggregation window size
  * @sp_length: the size of the SP in actual number of frames
  * @uapsd_acs:  4 LS bits are trigger enabled ACs, 4 MS bits are the deliver
@@ -6371,7 +6371,7 @@ struct iwm_add_sta_cmd {
  *	and probe responses.
  * @IWM_STA_MULTICAST: multicast traffic,
  * @IWM_STA_TDLS_LINK: TDLS link station
- * @IWM_STA_AUX_ACTIVITY: auxilary station (scan, ROC and so on).
+ * @IWM_STA_AUX_ACTIVITY: auxiliary station (scan, ROC and so on).
  */
 #define IWM_STA_LINK		0
 #define IWM_STA_GENERAL_PURPOSE	1

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.132 2022/01/05 17:06:20 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.133 2022/01/09 05:42:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1785,7 +1785,7 @@ iwx_alloc_tx_ring(struct iwx_softc *sc, struct iwx_tx_ring *ring, int qid)
 	 * than we currently need.
 	 *
 	 * In DQA mode we use 1 command queue + 1 default queue for
-	 * managment, control, and non-QoS data frames.
+	 * management, control, and non-QoS data frames.
 	 * The command is queue sc->txq[0], our default queue is sc->txq[1].
 	 *
 	 * Tx aggregation requires additional queues, one queue per TID for
@@ -3555,7 +3555,7 @@ iwx_start_fw(struct iwx_softc *sc)
 	IWX_WRITE(sc, IWX_CSR_UCODE_DRV_GP1_CLR,
 	    IWX_CSR_UCODE_DRV_GP1_BIT_CMD_BLOCKED);
 
-	/* clear (again), then enable firwmare load interrupt */
+	/* clear (again), then enable firmware load interrupt */
 	IWX_WRITE(sc, IWX_CSR_INT, ~0);
 
 	err = iwx_nic_init(sc);
@@ -7551,7 +7551,7 @@ iwx_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	struct iwx_softc *sc = ifp->if_softc;
 
 	/*
-	 * Prevent attemps to transition towards the same state, unless
+	 * Prevent attempts to transition towards the same state, unless
 	 * we are scanning in which case a SCAN -> SCAN transition
 	 * triggers another scan iteration. And AUTH -> AUTH is needed
 	 * to support band-steering.

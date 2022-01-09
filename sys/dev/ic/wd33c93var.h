@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd33c93var.h,v 1.3 2020/07/25 13:50:49 krw Exp $	*/
+/*	$OpenBSD: wd33c93var.h,v 1.4 2022/01/09 05:42:42 jsg Exp $	*/
 /*	$NetBSD: wd33c93var.h,v 1.10 2009/05/12 14:25:18 cegger Exp $	*/
 
 /*
@@ -107,7 +107,7 @@ struct wd33c93_tinfo {
 #define T_NOSYNC	0x10		/* Force ASYNC mode */
 #define T_NODISC	0x20		/* Don't allow disconnect */
 #define T_TAG		0x40		/* Turn on TAG QUEUEs */
-#define T_WANTSYNC	0x80		/* Negotiatious should aim for sync */
+#define T_WANTSYNC	0x80		/* Negotiations should aim for sync */
 	u_char	period;			/* Period suggestion */
 	u_char	offset;			/* Offset suggestion */
 	struct wd33c93_linfo *lun[SBIC_NLUN]; /* LUN list for this target */
@@ -133,7 +133,7 @@ struct wd33c93_softc {
 	/* Data about the current nexus (updated for every cmd switch) */
 	void *	sc_daddr;		/* Current data pointer */
 	ssize_t	sc_dleft;		/* Data left to transfer */
-	ssize_t	sc_tcnt;		/* number of bytes transfered */
+	ssize_t	sc_tcnt;		/* number of bytes transferred */
 
 	/* Lists of command blocks */
 	TAILQ_HEAD(acb_list, wd33c93_acb) ready_list;

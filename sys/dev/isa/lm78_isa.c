@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78_isa.c,v 1.10 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: lm78_isa.c,v 1.11 2022/01/09 05:42:44 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -201,7 +201,7 @@ lm_isa_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Bus-independant attachment */
+	/* Bus-independent attachment */
 	sc->sc_lmsc.lm_writereg = lm_isa_writereg;
 	sc->sc_lmsc.lm_readreg = lm_isa_readreg;
 

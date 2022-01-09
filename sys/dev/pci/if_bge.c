@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.396 2021/06/18 06:53:42 jsg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.397 2022/01/09 05:42:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -573,7 +573,7 @@ bge_ape_read_fw_ver(struct bge_softc *sc)
 
 	sc->bge_mfw_flags |= BGE_MFW_ON_APE;
 
-	/* Fetch the APE firwmare type and version. */
+	/* Fetch the APE firmware type and version. */
 	apedata = APE_READ_4(sc, BGE_APE_FW_VERSION);
 	features = APE_READ_4(sc, BGE_APE_FW_FEATURES);
 	if ((features & BGE_APE_FW_FEATURE_NCSI) != 0) {
@@ -1105,7 +1105,7 @@ bge_miibus_statchg(struct device *dev)
 }
 
 /*
- * Intialize a standard receive ring descriptor.
+ * Initialize a standard receive ring descriptor.
  */
 int
 bge_newbuf(struct bge_softc *sc, int i)
@@ -2045,7 +2045,7 @@ bge_blockinit(struct bge_softc *sc)
 	 * The BD ring replenish thresholds control how often the
 	 * hardware fetches new BD's from the producer rings in host
 	 * memory.  Setting the value too low on a busy system can
-	 * starve the hardware and recue the throughpout.
+	 * starve the hardware and recue the throughput.
 	 *
 	 * Set the BD ring replenish thresholds. The recommended
 	 * values are 1/8th the number of descriptors allocated to
@@ -2103,7 +2103,7 @@ bge_blockinit(struct bge_softc *sc)
 
 	/*
 	 * Disable all receive return rings by setting the
-	 * 'ring diabled' bit in the flags field of all the receive
+	 * 'ring disabled' bit in the flags field of all the receive
 	 * return ring control blocks, located in NIC memory.
 	 */
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5717 ||
@@ -2173,7 +2173,7 @@ bge_blockinit(struct bge_softc *sc)
 	 */
 	CSR_WRITE_4(sc, BGE_RXLP_CFG, 0x181);
 
-	/* Inialize RX list placement stats mask. */
+	/* Initialize RX list placement stats mask. */
 	CSR_WRITE_4(sc, BGE_RXLP_STATS_ENABLE_MASK, 0x007BFFFF);
 	CSR_WRITE_4(sc, BGE_RXLP_STATS_CTL, 0x1);
 
@@ -2348,7 +2348,7 @@ bge_blockinit(struct bge_softc *sc)
 		/*
 		 * Enable fix for read DMA FIFO overruns.
 		 * The fix is to limit the number of RX BDs
-		 * the hardware would fetch at a fime.
+		 * the hardware would fetch at a time.
 		 */
 		CSR_WRITE_4(sc, rdmareg, dmactl |
 		    BGE_RDMA_RSRVCTRL_FIFO_OFLW_FIX);
@@ -2579,7 +2579,7 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	pm_ctl &= ~(PCI_PWR_D0|PCI_PWR_D1|PCI_PWR_D2|PCI_PWR_D3);
 	pm_ctl |= (1 << 8) | PCI_PWR_D0 ; /* D0 state */
 	pci_conf_write(pc, pa->pa_tag, BGE_PCI_PWRMGMT_CMD, pm_ctl);
-	DELAY(1000);	/* 27 usec is allegedly sufficent */
+	DELAY(1000);	/* 27 usec is allegedly sufficient */
 
 	/*
 	 * Save ASIC rev.

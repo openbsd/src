@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wereg.h,v 1.3 2006/03/04 19:33:21 miod Exp $	*/
+/*	$OpenBSD: if_wereg.h,v 1.4 2022/01/09 05:42:44 jsg Exp $	*/
 /*	$NetBSD: if_wereg.h,v 1.1 1997/11/03 21:22:50 thorpej Exp $	*/
 
 /*
@@ -15,7 +15,7 @@
  * Compile-time config flags
  */
 /*
- * This sets the default for enabling/disablng the transceiver.
+ * This sets the default for enabling/disabling the transceiver.
  */
 #define WE_FLAGS_DISABLE_TRANSCEIVER	0x0001
 

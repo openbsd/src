@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.43 2021/03/07 06:21:38 jsg Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.44 2022/01/09 05:42:42 jsg Exp $ */
 /*	$NetBSD: siop_common.c,v 1.37 2005/02/27 00:27:02 perry Exp $	*/
 
 /*
@@ -420,7 +420,7 @@ siop_ppr_neg(struct siop_common_cmd *siop_cmd)
 		offset = tables->msg_in[5];
 		options = tables->msg_in[7];
 		if (options != MSG_EXT_PPR_PROT_DT) {
-			/* should't happen */
+			/* shouldn't happen */
 			printf("%s: ppr negotiation for target %d: "
 			    "no DT option\n", sc->sc_dev.dv_xname, target);
 			siop_target->status = TARST_ASYNC;
@@ -826,7 +826,7 @@ siop_update_resid(struct siop_common_cmd *siop_cmd, int offset)
 		    siop_ctoh32(sc, siop_cmd->siop_tables->data[i].count);
 	/*
 	 * if CMDFL_RESID is set, the last table (pointed by offset) is a
-	 * partial transfers. If not, offset points to the entry folloing
+	 * partial transfers. If not, offset points to the entry following
 	 * the last full transfer.
 	 */
 	if (siop_cmd->flags & CMDFL_RESID) {
@@ -867,7 +867,7 @@ siop_iwr(struct siop_common_cmd *siop_cmd)
 		} else {
 			/*
 			 * now we really had a short xfer, by one byte.
-			 * handle it just as if we had a phase mistmatch
+			 * handle it just as if we had a phase mismatch
 			 * (there is a resid of one for this table).
 			 * Update scratcha1 to reflect the fact that
 			 * this xfer isn't complete.

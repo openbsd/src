@@ -1,4 +1,4 @@
-/*	$OpenBSD: lxtphy.c,v 1.21 2021/03/05 09:37:20 jsg Exp $	*/
+/*	$OpenBSD: lxtphy.c,v 1.22 2022/01/09 05:42:44 jsg Exp $	*/
 /*	$NetBSD: lxtphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -228,7 +228,7 @@ lxtphy_status(struct mii_softc *sc)
 	/*
 	 * Get link status from the CSR; we need to read the CSR
 	 * for media type anyhow, and the link status in the CSR
-	 * doens't latch, so fewer register reads are required.
+	 * doesn't latch, so fewer register reads are required.
 	 */
 	csr = PHY_READ(sc, MII_LXTPHY_CSR);
 	if (csr & CSR_LINK)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_pci.c,v 1.54 2019/12/31 10:05:32 mpi Exp $	*/
+/*	$OpenBSD: if_wi_pci.c,v 1.55 2022/01/09 05:42:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Todd C. Miller <millert@openbsd.org>
@@ -201,7 +201,7 @@ wi_pci_wakeup(struct wi_softc *sc)
  * doesn't really help much since we don't know how it is programmed.
  * Details for this attachment were gleaned from a version of the
  * Linux orinoco driver modified by Tobias Hoffmann based on
- * what he discoverd from the Windows driver.
+ * what he discovered from the Windows driver.
  */
 int
 wi_pci_acex_attach(struct pci_attach_args *pa, struct wi_softc *sc)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.53 2015/11/25 03:56:32 dlg Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.54 2022/01/09 05:42:38 jsg Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -642,7 +642,7 @@ struct dc_mii_frame {
 /*
  * The first two general purpose pins control speed selection and
  * 100Mbps loopback on the 82c168 chip. The control bits should always
- * be set (to make the data pins outputs) and the speed selction and
+ * be set (to make the data pins outputs) and the speed selection and
  * loopback bits set accordingly when changing media. Physically, this
  * will set the state of a relay mounted on the card.
  */

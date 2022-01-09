@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlphyreg.h,v 1.3 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: tlphyreg.h,v 1.4 2022/01/09 05:42:44 jsg Exp $	*/
 /*	$NetBSD: tlphyreg.h,v 1.1 1998/08/10 23:59:58 thorpej Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 #define	MII_TLPHY_ID	0x10	/* ThunderLAN PHY ID */
 #define	ID_10BASETAUI	0x0001	/* 10baseT/AUI PHY */
 
-#define	MII_TLPHY_CTRL	0x11	/* Control regiseter */
+#define	MII_TLPHY_CTRL	0x11	/* Control register */
 #define	CTRL_ILINK	0x8000	/* Ignore link */
 #define	CTRL_SWPOL	0x4000	/* swap polarity */
 #define	CTRL_AUISEL	0x2000	/* Select AUI */

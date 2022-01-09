@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.253 2021/11/12 11:41:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.254 2022/01/09 05:42:52 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -5899,7 +5899,7 @@ iwn_ampdu_rx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
 
 /*
  * This function is called by upper layer on teardown of an HT-immediate
- * Block Ack agreement (eg. uppon receipt of a DELBA frame).
+ * Block Ack agreement (e.g., upon receipt of a DELBA frame).
  */
 void
 iwn_ampdu_rx_stop(struct ieee80211com *ic, struct ieee80211_node *ni,

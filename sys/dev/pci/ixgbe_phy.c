@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_phy.c,v 1.22 2020/03/02 01:59:01 jmatthew Exp $	*/
+/*	$OpenBSD: ixgbe_phy.c,v 1.23 2022/01/09 05:42:56 jsg Exp $	*/
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -1960,7 +1960,7 @@ int32_t ixgbe_get_sfp_init_sequence_offsets(struct ixgbe_hw *hw,
 	}
 
 	/*
-	 * the 82598EB SFP+ card offically supports only direct attached cables
+	 * the 82598EB SFP+ card officially supports only direct attached cables
 	 * but works fine with optical SFP+ modules as well. Even though the
 	 * EEPROM has no matching ID for them. So just accept the module.
 	 */

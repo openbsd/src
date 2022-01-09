@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoakv.c,v 1.15 2021/11/15 15:36:24 anton Exp $   */
+/*	$OpenBSD: uoakv.c,v 1.16 2022/01/09 05:43:02 jsg Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* TORADEX OAK seriese sensors: 8channel +/-10V ADC driver */
+/* TORADEX OAK series sensors: 8channel +/-10V ADC driver */
 /* http://developer.toradex.com/files/toradex-dev/uploads/media/Oak/Oak_ProgrammingGuide.pdf */
 
 #include <sys/param.h>
@@ -326,8 +326,8 @@ uoakv_dev_print(void *parent, enum uoak_target target)
 	struct uoakv_softc *sc = (struct uoakv_softc *)parent;
 	int i;
 
-	printf(", %s",
-	    (sc->sc_inputmode[target] ? "Psuedo-Diffential" : "Single-Ended"));
+	printf(", %s", (sc->sc_inputmode[target] ?
+	    "Pseudo-Differential" : "Single-Ended"));
 
 	printf(", ADC channel offsets:\n");
 	printf("%s: ", sc->sc_hdev.sc_dev.dv_xname);

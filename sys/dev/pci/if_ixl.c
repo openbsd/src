@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.77 2021/11/27 16:25:40 deraadt Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.78 2022/01/09 05:42:54 jsg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3937,7 +3937,7 @@ ixl_get_phy_types(struct ixl_softc *sc, uint64_t *phy_types_ptr)
 		phy_types = 0;
 		goto done;
 	default:
-		printf("%s: GET PHY ABILITIIES error %u\n", DEVNAME(sc), rv);
+		printf("%s: GET PHY ABILITIES error %u\n", DEVNAME(sc), rv);
 		goto err;
 	}
 

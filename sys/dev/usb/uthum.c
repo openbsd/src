@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthum.c,v 1.37 2021/11/15 15:36:24 anton Exp $   */
+/*	$OpenBSD: uthum.c,v 1.38 2022/01/09 05:43:02 jsg Exp $   */
 
 /*
  * Copyright (c) 2009, 2010 Yojiro UO <yuo@nui.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Driver for HID base TEMPer seriese Temperature(/Humidity) sensors */
+/* Driver for HID based TEMPer series Temperature(/Humidity) sensors */
 
 #include <sys/param.h>
 #include <sys/systm.h>

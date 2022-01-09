@@ -1,4 +1,4 @@
-/*	$OpenBSD: uoakrh.c,v 1.17 2021/11/15 15:36:24 anton Exp $   */
+/*	$OpenBSD: uoakrh.c,v 1.18 2022/01/09 05:43:01 jsg Exp $   */
 
 /*
  * Copyright (c) 2012 Yojiro UO <yuo@nui.org>
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* TORADEX OAK seriese sensors: Temperature/Humidity sensor driver */
+/* TORADEX OAK series sensors: Temperature/Humidity sensor driver */
 /* http://developer.toradex.com/files/toradex-dev/uploads/media/Oak/Oak_ProgrammingGuide.pdf */
 
 #include <sys/param.h>

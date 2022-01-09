@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_x550.c,v 1.7 2020/03/02 01:59:01 jmatthew Exp $	*/
+/*	$OpenBSD: ixgbe_x550.c,v 1.8 2022/01/09 05:42:56 jsg Exp $	*/
 
 /******************************************************************************
 
@@ -1031,7 +1031,7 @@ int32_t ixgbe_init_eeprom_params_X550(struct ixgbe_hw *hw)
 }
 
 /**
- * ixgbe_set_source_address_pruning_X550 - Enable/Disbale source address pruning
+ * ixgbe_set_source_address_pruning_X550 - Enable/Disable source address pruning
  * @hw: pointer to hardware structure
  * @enable: enable or disable source address pruning
  * @pool: Rx pool to set source address pruning for
@@ -2531,7 +2531,7 @@ int32_t ixgbe_setup_sfi_x550a(struct ixgbe_hw *hw, ixgbe_link_speed *speed)
  *  @speed: new link speed
  *  @autoneg_wait_to_complete: unused
  *
- *  Configure the the integrated PHY for SFP support.
+ *  Configure the integrated PHY for SFP support.
  **/
 int32_t ixgbe_setup_mac_link_sfp_x550a(struct ixgbe_hw *hw,
 				       ixgbe_link_speed speed,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.26 2020/07/24 12:43:31 krw Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.27 2022/01/09 05:42:45 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -598,7 +598,7 @@ ahd_pci_test_register_access(struct ahd_softc *ahd)
 	 * Next create a situation where write combining
 	 * or read prefetching could be initiated by the
 	 * CPU or host bridge.  Our device does not support
-	 * either, so look for data corruption and/or flaged
+	 * either, so look for data corruption and/or flagged
 	 * PCI errors.  First pause without causing another
 	 * chip reset.
 	 */

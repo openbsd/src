@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.51 2020/07/10 13:22:20 patrick Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.52 2022/01/09 05:42:39 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1182,7 +1182,7 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		/* Enable TSF synchronization. */
 		rtwn_tsf_sync_enable(sc);
 
-		/* Intialize rate adaptation. */
+		/* Initialize rate adaptation. */
 		rtwn_ra_init(sc);
 
 		/* Turn link LED on. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: utpms.c,v 1.12 2021/11/22 11:29:18 anton Exp $	*/
+/*	$OpenBSD: utpms.c,v 1.13 2022/01/09 05:43:02 jsg Exp $	*/
 
 /*
  * Copyright (c) 2005, Johan Wallén
@@ -510,7 +510,7 @@ reorder_sample(struct utpms_softc *sc, unsigned char *to, unsigned char *from)
 			to[i + 16] = from[5 * i + 42];
 #if 0
 			/*
-			 * XXX This seems to introduce random ventical jumps,
+			 * XXX This seems to introduce random vertical jumps,
 			 * so we ignore these sensors until we figure out
 			 * their meaning.
 			 */

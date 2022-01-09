@@ -1,4 +1,4 @@
-/*	$OpenBSD: lxtphyreg.h,v 1.2 2008/06/26 05:42:16 ray Exp $	*/
+/*	$OpenBSD: lxtphyreg.h,v 1.3 2022/01/09 05:42:44 jsg Exp $	*/
 /*	$NetBSD: lxtphyreg.h,v 1.1 1998/10/24 00:33:17 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 	/* All bits user-defined */
 
 #define	MII_LXTPHY_IER		0x11	/* Interrupt Enable Register */
-#define	IER_MIIDRVLVL		0x0008	/* Rediced MII driver levels */
+#define	IER_MIIDRVLVL		0x0008	/* Reduced MII driver levels */
 #define	IER_LNK_CRITERIA	0x0004	/* Enhanced Link Loss Criteria */
 #define	IER_INTEN		0x0002	/* Interrupt Enable */
 #define	IER_TINT		0x0001	/* Force Interrupt */

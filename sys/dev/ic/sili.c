@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.59 2019/05/21 09:19:25 stsp Exp $ */
+/*	$OpenBSD: sili.c,v 1.60 2022/01/09 05:42:42 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -510,7 +510,7 @@ sili_port_intr(struct sili_port *sp, int timeout_slot)
 		    "active %08x\n", PORTNAME(sp), err_port,
 		    sactive ? "NCQ " : "", err_code, err_slot, sp->sp_active);
 
-		/* Clear the failed commmand in saved PSS so cmd_done runs. */
+		/* Clear the failed command in saved PSS so cmd_done runs. */
 		pss_saved &= ~(1 << err_slot);
 		/* Track errored commands until we finish recovery */
 		sp->sp_err_cmds |= (1 << err_slot);
@@ -527,7 +527,7 @@ fatal:
 		DPRINTF(SILI_D_VERBOSE, "%s: timing out slot %d, active %08x\n",
 		    PORTNAME(sp), timeout_slot, sp->sp_active);
 
-		/* Clear the failed commmand in saved PSS so cmd_done runs. */
+		/* Clear the failed command in saved PSS so cmd_done runs. */
 		pss_saved &= ~(1 << timeout_slot);
 
 		ccb = &sp->sp_ccbs[timeout_slot];

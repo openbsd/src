@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.129 2021/03/28 18:02:32 stsp Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.130 2022/01/09 05:42:50 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1773,7 +1773,7 @@ ipw_auth_and_assoc(void *arg1)
 			frm = ieee80211_add_wpa(frm, ic, ni);
 		assoc.optie_len = htole32(frm - assoc.optie);
 	}
-	DPRINTF(("Preparing assocation request (optional IE length=%d)\n",
+	DPRINTF(("Preparing association request (optional IE length=%d)\n",
 	    letoh32(assoc.optie_len)));
 	error = ipw_cmd(sc, IPW_CMD_SET_ASSOC_REQ, &assoc, sizeof assoc);
 	if (error != 0)

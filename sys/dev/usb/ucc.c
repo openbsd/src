@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.28 2021/11/17 06:21:23 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.29 2022/01/09 05:43:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -386,7 +386,7 @@ static const struct ucc_keysym ucc_keysyms[] = {
 	N(0x019F,	"AL Control Panel",				0,		0)
 	N(0x01A0,	"AL Command Line Processor/Run",		0,		0)
 	N(0x01A1,	"AL Process/Task Manager",			0,		0)
-	N(0x01A2,	"AL Select Tast/Application",			0,		0)
+	N(0x01A2,	"AL Select Task/Application",			0,		0)
 	N(0x01A3,	"AL Next Task/Application",			0,		0)
 	N(0x01A4,	"AL Previous Task/Application",			0,		0)
 	N(0x01A5,	"AL Preemptive Halt Task/Application",		0,		0)

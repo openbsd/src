@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: ixgb_ee.c,v 1.7 2015/11/24 17:11:40 mpi Exp $ */
+/* $OpenBSD: ixgb_ee.c,v 1.8 2022/01/09 05:42:56 jsg Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,7 +311,7 @@ ixgb_wait_eeprom_command(struct ixgb_hw *hw)
 	 * execute the command in question. */
 	ixgb_standby_eeprom(hw);
 
-	/* Now read DO repeatedly until is high (equal to '1').  The EEEPROM
+	/* Now read DO repeatedly until is high (equal to '1').  The EEPROM
 	 * will signal that the command has been completed by raising the DO
 	 * signal. If DO does not go high in 10 milliseconds, then error out. */
 	for(i = 0; i < 200; i++) {
@@ -382,7 +382,7 @@ ixgb_update_eeprom_checksum(struct ixgb_hw *hw)
  *
  * hw - Struct containing variables accessed by shared code
  * reg - offset within the EEPROM to be written to
- * data - 16 bit word to be writen to the EEPROM
+ * data - 16 bit word to be written to the EEPROM
  *
  * If ixgb_update_eeprom_checksum is not called after this function, the
  * EEPROM will most likely contain an invalid checksum.

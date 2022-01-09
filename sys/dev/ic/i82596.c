@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.54 2020/07/10 13:22:19 patrick Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.55 2022/01/09 05:42:38 jsg Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -94,7 +94,7 @@
  * sun-4/200's, and VME based suns.  The byte order is all wrong for a
  * SUN, making life difficult.  Programming this chip is mostly the same,
  * but certain details differ from system to system.  This driver is
- * written so that different "ie" interfaces can be controled by the same
+ * written so that different "ie" interfaces can be controlled by the same
  * driver.
  */
 
@@ -1445,7 +1445,7 @@ ie_run_tdr(sc, cmd)
  * i82596_setup_bufs: set up the buffers
  *
  * We have a block of KVA at sc->buf_area which is of size sc->buf_area_sz.
- * this is to be used for the buffers.  The chip indexs its control data
+ * this is to be used for the buffers.  The chip indexes its control data
  * structures with 16 bit offsets, and it indexes actual buffers with
  * 24 bit addresses.   So we should allocate control buffers first so that
  * we don't overflow the 16 bit offset field.   The number of transmit

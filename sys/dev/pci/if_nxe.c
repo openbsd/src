@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nxe.c,v 1.77 2020/07/10 13:26:38 patrick Exp $ */
+/*	$OpenBSD: if_nxe.c,v 1.78 2022/01/09 05:42:54 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -172,7 +172,7 @@ int nxedebug = 0;
  * PCI Express Registers
  *
  * Despite being in the CRB window space, they can be accessed via both
- * windows. This means they are accessable "globally" without going relative
+ * windows. This means they are accessible "globally" without going relative
  * to the start of the CRB window space.
  */
 
@@ -402,7 +402,7 @@ static const u_int32_t nxe_regmap[][4] = {
 /*
  * flash memory layout
  *
- * These are offsets of memory accessable via the ROM Registers above
+ * These are offsets of memory accessible via the ROM Registers above
  */
 #define NXE_FLASH_CRBINIT	0x00000000 /* crb init section */
 #define NXE_FLASH_BRDCFG	0x00004000 /* board config */

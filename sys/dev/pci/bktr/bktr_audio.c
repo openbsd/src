@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_audio.c,v 1.13 2019/12/16 04:50:48 cheloha Exp $	*/
+/*	$OpenBSD: bktr_audio.c,v 1.14 2022/01/09 05:42:58 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp $ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -104,7 +104,7 @@ set_audio( bktr_ptr_t bktr, int cmd )
 	else
 #endif /* AUDIOMUX_DISCOVER */
 
-	/* check for existance of audio MUXes */
+	/* check for existence of audio MUXes */
 	if ( !bktr->card.audiomuxs[ 4 ] )
 		return( -1 );
 
@@ -515,7 +515,7 @@ void msp_autodetect( bktr_ptr_t bktr ) {
         msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0008,0x0020);/* Loudspeaker set stereo*/
         /*
           set spatial effect strength to 50% enlargement
-          set spatial effect mode b, stereo basewidth enlargment only
+          set spatial effect mode b, stereo basewidth enlargement only
         */
         msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0005,0x3f28);
       } else if (stereo > 0x8000) {    /* bilingual mode */
@@ -527,7 +527,7 @@ void msp_autodetect( bktr_ptr_t bktr ) {
         msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0008,0x0030);/* Loudspeaker */
         /*
           set spatial effect strength to 50% enlargement
-          set spatial effect mode a, stereo basewidth enlargment
+          set spatial effect mode a, stereo basewidth enlargement
           and pseudo stereo effect with automatic high-pass filter
         */
         msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0005,0x3f08);

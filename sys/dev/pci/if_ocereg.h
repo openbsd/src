@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ocereg.h,v 1.7 2012/11/26 19:03:59 mikeb Exp $	*/
+/*	$OpenBSD: if_ocereg.h,v 1.8 2022/01/09 05:42:54 jsg Exp $	*/
 
 /*-
  * Copyright (C) 2012 Emulex
@@ -1078,7 +1078,7 @@ struct mbx_lancer_common_write_object {
 } __packed;
 
 /**
- * @brief MBX Common Quiery Firmaware Config
+ * @brief MBX Common Query Firmware Config
  * This command retrieves firmware configuration parameters and adapter
  * resources available to the driver originating the request. The firmware
  * configuration defines supported protocols by the installed adapter firmware.
@@ -1134,7 +1134,7 @@ enum CQFW_CONFIG_NUMBER {
 };
 
 /**
- * @brief Function Capabilites
+ * @brief Function Capabilities
  * This field contains the flags indicating the capabilities of
  * the SLI Host’s PCI function.
  */
@@ -1373,7 +1373,7 @@ struct mbx_lowlevel_set_loopback_mode {
 } __packed;
 
 enum LOWLEVEL_SUBSYS_OPCODES {
-/* Opcodes used for lowlevel functions common to many subystems.
+/* Opcodes used for lowlevel functions common to many subsystems.
  * Some of these opcodes are used for diagnostic functions only.
  * These opcodes use the SUBSYS_LOWLEVEL subsystem code.
  */
@@ -1383,7 +1383,7 @@ enum LOWLEVEL_SUBSYS_OPCODES {
 };
 
 enum LLDP_SUBSYS_OPCODES {
-/* Opcodes used for LLDP susbsytem for configuring the LLDP state machines. */
+/* Opcodes used for LLDP subsystem for configuring the LLDP state machines. */
 	OPCODE_LLDP_GET_CFG = 1,
 	OPCODE_LLDP_SET_CFG = 2,
 	OPCODE_LLDP_GET_STATS = 3

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacvar.h,v 1.15 2020/07/22 13:16:04 krw Exp $	*/
+/*	$OpenBSD: aacvar.h,v 1.16 2022/01/09 05:42:37 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -243,7 +243,7 @@ struct aac_container
 };
 
 /*
- * A command contol block, one for each corresponding command index of the
+ * A command control block, one for each corresponding command index of the
  * controller.
  */
 struct aac_command
@@ -361,7 +361,7 @@ struct aac_softc
 
 	struct aac_qstat	aac_qstat[AACQ_COUNT];	/* queue statistics */
 
-	/* connected containters */
+	/* connected containers */
 	TAILQ_HEAD(,aac_container)	aac_container_tqh;
 	aac_lock_t		aac_container_lock;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_smscreg.h,v 1.5 2015/06/18 09:28:54 mpi Exp $	*/
+/*	$OpenBSD: if_smscreg.h,v 1.6 2022/01/09 05:43:00 jsg Exp $	*/
 /*-
  * Copyright (c) 2012
  *	Ben Gray <bgray@freebsd.org>.
@@ -55,7 +55,7 @@
  *      TX_CTRL_0 <12>     Last segment of frame indicator
  *      TX_CTRL_0 <10:0>   Buffer size (?)
  *
- *      TX_CTRL_1 <14>     Perform H/W checksuming on IP packets 
+ *      TX_CTRL_1 <14>     Perform H/W checksumming on IP packets 
  *      TX_CTRL_1 <13>     Disable automatic ethernet CRC generation
  *      TX_CTRL_1 <12>     Disable padding (?)
  *      TX_CTRL_1 <10:0>   Packet byte length

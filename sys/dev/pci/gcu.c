@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcu.c,v 1.4 2015/03/19 00:18:11 deraadt Exp $	*/
+/*	$OpenBSD: gcu.c,v 1.5 2022/01/09 05:42:45 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -17,7 +17,7 @@
  */
 
 /*                                                         
- * Driver for a GCU device that apears on embeded intel systems, like 80579
+ * Driver for a GCU device that appears on embedded intel systems, like 80579
  */                                                                     
 
 #include <sys/param.h>

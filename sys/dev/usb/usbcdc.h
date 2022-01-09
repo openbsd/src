@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbcdc.h,v 1.9 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: usbcdc.h,v 1.10 2022/01/09 05:43:02 jsg Exp $ */
 /*	$NetBSD: usbcdc.h,v 1.8 2001/02/16 20:15:57 kenh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbcdc.h,v 1.7 1999/11/17 22:33:48 n_hibma Exp $	*/
 
@@ -165,7 +165,7 @@ struct usb_cdc_connection_speed {
 #define UCDC_CONNECTION_SPEED_LENGTH 8
 
 /*
- * Bits set in the SERIAL STATE notifcation (first byte of data)
+ * Bits set in the SERIAL STATE notification (first byte of data)
  */
 
 #define UCDC_N_SERIAL_OVERRUN		0x40

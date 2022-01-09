@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxreg.h,v 1.49 2015/12/05 16:23:37 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxreg.h,v 1.50 2022/01/09 05:42:47 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -346,7 +346,7 @@ struct flash_spec {
 
 /****************************************************************************/
 /* Shared Memory layout                                                     */
-/* The BNX bootcode will initialize this data area with port configurtion   */
+/* The BNX bootcode will initialize this data area with port configuration  */
 /* information which can be accessed by the driver.                         */
 /****************************************************************************/
 
@@ -4643,7 +4643,7 @@ struct l2_fhdr {
 #define MB_RX_CID_ADDR	MB_GET_CID_ADDR(RX_CID)
 
 /****************************************************************************/
-/* BNX Processor Firmwware Load Definitions                                 */
+/* BNX Processor Firmware Load Definitions                                  */
 /****************************************************************************/
 
 struct cpu_reg {

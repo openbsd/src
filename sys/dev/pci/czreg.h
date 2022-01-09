@@ -1,4 +1,4 @@
-/*	$OpenBSD: czreg.h,v 1.2 2003/11/16 20:30:06 avsm Exp $	*/
+/*	$OpenBSD: czreg.h,v 1.3 2022/01/09 05:42:45 jsg Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -75,7 +75,7 @@
  */
 
 /*
- * PLX Local Address Base values for the board RAM and FPGA regsiters.
+ * PLX Local Address Base values for the board RAM and FPGA registers.
  *
  * These values are specific to the Cyclades-Z.
  */
@@ -387,9 +387,9 @@ struct zfirm_block {
 #define	C_CM_TINACT		0x51	/* sets inactivity detection */
 #define	C_CM_IRQ_ENBL		0x52	/* enables generation of interrupts */
 #define	C_CM_IRQ_DSBL		0x53	/* disables generation of interrupts */
-#define	C_CM_ACK_ENBL		0x54	/* enables acknolowdged interrupt
+#define	C_CM_ACK_ENBL		0x54	/* enables acknowledged interrupt
 					   mode */
-#define	C_CM_ACK_DSBL		0x55	/* disables acknolowdged intr mode */
+#define	C_CM_ACK_DSBL		0x55	/* disables acknowledged intr mode */
 #define	C_CM_FLUSH_RX		0x56	/* flushes Rx buffer */
 #define	C_CM_FLUSH_TX		0x57	/* flushes Tx buffer */
 #define	C_CM_Q_ENABLE		0x58	/* enables queue access from the

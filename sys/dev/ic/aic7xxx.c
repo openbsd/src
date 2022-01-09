@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.96 2021/05/01 16:11:15 visa Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.97 2022/01/09 05:42:38 jsg Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.96 2021/05/01 16:11:15 visa Exp $
+ * $Id: aic7xxx.c,v 1.97 2022/01/09 05:42:38 jsg Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -86,7 +86,7 @@ struct ahc_hard_error_entry {
 #if !defined(SMALL_KERNEL)
 static struct ahc_hard_error_entry ahc_hard_errors[] = {
 	{ ILLHADDR,	"Illegal Host Access" },
-	{ ILLSADDR,	"Illegal Sequencer Address referrenced" },
+	{ ILLSADDR,	"Illegal Sequencer Address referenced" },
 	{ ILLOPCODE,	"Illegal Opcode in sequencer program" },
 	{ SQPARERR,	"Sequencer Parity Error" },
 	{ DPARERR,	"Data-path Parity Error" },
@@ -112,7 +112,7 @@ static struct ahc_phase_table_entry ahc_phase_table[] =
 };
 
 /*
- * In most cases we only wish to itterate over real phases, so
+ * In most cases we only wish to iterate over real phases, so
  * exclude the last element from the count.
  */
 static const u_int num_phases = NUM_ELEMENTS(ahc_phase_table) - 1;
@@ -1407,7 +1407,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 			if (lastphase != P_BUSFREE) {
 				/*
 				 * Renegotiate with this device at the
-				 * next oportunity just in case this busfree
+				 * next opportunity just in case this busfree
 				 * is due to a negotiation mismatch with the
 				 * device.
 				 */
@@ -3598,7 +3598,7 @@ ahc_handle_msg_reject(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
 }
 
 /*
- * Process an ingnore wide residue message.
+ * Process an ignore wide residue message.
  */
 static void
 ahc_handle_ign_wide_residue(struct ahc_softc *ahc, struct ahc_devinfo *devinfo)
@@ -4006,7 +4006,7 @@ ahc_shutdown(void *arg)
 /*
  * Reset the controller and record some information about it
  * that is only available just after a reset.  If "reinit" is
- * non-zero, this reset occured after initial configuration
+ * non-zero, this reset occurred after initial configuration
  * and the caller requests that the chip be fully reinitialized
  * to a runable state.  Chip interrupts are *not* enabled after
  * a reinitialization.  The caller must enable interrupts via
@@ -4160,7 +4160,7 @@ ahc_build_free_scb_list(struct ahc_softc *ahc)
 		/*
 		 * Touch all SCB bytes to avoid parity errors
 		 * should one of our debugging routines read
-		 * an otherwise uninitiatlized byte.
+		 * an otherwise uninitialized byte.
 		 */
 		for (j = 0; j < scbsize; j++)
 			ahc_outb(ahc, SCB_BASE+j, 0xFF);
@@ -5767,7 +5767,7 @@ ahc_reset_channel(struct ahc_softc *ahc, char channel, int initiate_reset)
 	 *	 we have run out of ATIO resources to drain that
 	 *	 queue, we may not get them all out here.  Further,
 	 *	 the blocked transactions for the reset channel
-	 *	 should just be killed off, irrespecitve of whether
+	 *	 should just be killed off, irrespective of whether
 	 *	 we are blocked on ATIO resources.  Write a routine
 	 *	 to compact the tqinfifo appropriately.
 	 */
@@ -6226,7 +6226,7 @@ ahc_check_patch(struct ahc_softc *ahc, const struct patch **start_patch,
 			cur_patch += cur_patch->skip_patch;
 		} else {
 			/* Accepted this patch.  Advance to the next
-			 * one and wait for our intruction pointer to
+			 * one and wait for our instruction pointer to
 			 * hit this point.
 			 */
 			cur_patch++;

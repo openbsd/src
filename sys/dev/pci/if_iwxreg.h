@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.33 2021/11/25 14:51:26 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.34 2022/01/09 05:42:52 jsg Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -59,7 +59,7 @@
  */
 
 
-/* maximmum number of DRAM map entries supported by FW */
+/* maximum number of DRAM map entries supported by FW */
 #define IWX_MAX_DRAM_ENTRY	64
 #define IWX_CSR_CTXT_INFO_BA	0x40
 
@@ -485,7 +485,7 @@ struct iwx_context_info {
  *
  * Bits 3:0:
  * Define the maximum number of pending read requests.
- * Maximum configration value allowed is 0xC
+ * Maximum configuration value allowed is 0xC
  * Bits 9:8:
  * Define the maximum transfer size. (64 / 128 / 256)
  * Bit 10:
@@ -644,7 +644,7 @@ struct iwx_context_info {
 /* end of 9000 rx series registers */
 
 /*
- * This register is writen by driver and is read by uCode during boot flow.
+ * This register is written by driver and is read by uCode during boot flow.
  * Note this address is cleared after MAC reset.
  */
 #define IWX_UREG_UCODE_LOAD_STATUS	(0xa05c40)
@@ -893,7 +893,7 @@ enum msix_ivar_for_cause {
  *	scan request.
  * @IWX_UCODE_TLV_API_TKIP_MIC_KEYS: This ucode supports version 2 of
  *	ADD_MODIFY_STA_KEY_API_S_VER_2.
- * @IWX_UCODE_TLV_API_STA_TYPE: This ucode supports station type assignement.
+ * @IWX_UCODE_TLV_API_STA_TYPE: This ucode supports station type assignment.
  * @IWX_UCODE_TLV_API_EXT_SCAN_PRIORITY: scan APIs use 8-level priority
  *	instead of 3.
  * @IWX_UCODE_TLV_API_NEW_RX_STATS: should new RX STATISTICS API be used
@@ -2046,7 +2046,7 @@ struct iwx_init_extended_cfg_cmd {
  * struct iwx_error_resp - FW error indication
  * ( IWX_REPLY_ERROR = 0x2 )
  * @error_type: one of IWX_FW_ERR_*
- * @cmd_id: the command ID for which the error occured
+ * @cmd_id: the command ID for which the error occurred
  * @bad_cmd_seq_num: sequence number of the erroneous command
  * @error_service: which service created the error, applicable only if
  *	error_type = 2, otherwise 0
@@ -2461,7 +2461,7 @@ struct iwx_fw_dbg_trigger_time_event {
  * tx_bar: tid bitmap to configure on what tid the trigger should occur
  *	when a BAR is send (for an Rx BlocAck session).
  * frame_timeout: tid bitmap to configure on what tid the trigger should occur
- *	when a frame times out in the reodering buffer.
+ *	when a frame times out in the reordering buffer.
  */
 struct iwx_fw_dbg_trigger_ba {
 	uint16_t rx_ba_start;
@@ -2687,7 +2687,7 @@ struct iwx_fw_cmd_version {
  * @IWX_TE_V2_NOTIF_INTERNAL_FRAG_END: internal FW use.
  * @IWX_TE_V2_DEP_OTHER: depends on another time event
  * @IWX_TE_V2_DEP_TSF: depends on a specific time
- * @IWX_TE_V2_EVENT_SOCIOPATHIC: can't co-exist with other events of tha same MAC
+ * @IWX_TE_V2_EVENT_SOCIOPATHIC: can't co-exist with other events of the same MAC
  * @IWX_TE_V2_ABSENCE: are we present or absent during the Time Event.
  */
 #define IWX_TE_V2_DEFAULT_POLICY		0x0
@@ -2899,7 +2899,7 @@ struct iwx_binding_cmd {
  * struct iwx_time_quota_data - configuration of time quota per binding
  * @id_and_color: ID and color of the relevant Binding
  * @quota: absolute time quota in TU. The scheduler will try to divide the
- *	remainig quota (after Time Events) according to this quota.
+ *	remaining quota (after Time Events) according to this quota.
  * @max_duration: max uninterrupted context duration in TU
  */
 struct iwx_time_quota_data {
@@ -3059,7 +3059,7 @@ struct iwx_phy_context_cmd {
  * XXX Intel forgot to bump the PHY_CONTEXT command API when they increased
  * the size of fw_channel_info from v1 to v2.
  * To keep things simple we define two versions of this struct, and both
- * are labled as CMD_API_VER_1. (The Linux iwlwifi driver performs dark
+ * are labeled as CMD_API_VER_1. (The Linux iwlwifi driver performs dark
  * magic with pointers to struct members instead.)
  */
 /* This version must be used if IWX_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS is set: */
@@ -3775,7 +3775,7 @@ struct iwx_statistics_cmd {
 /**
  * Smart Fifo configuration command.
  * @state: smart fifo state, types listed in enum %iwx_sf_state.
- * @watermark: Minimum allowed availabe free space in RXF for transient state.
+ * @watermark: Minimum allowed available free space in RXF for transient state.
  * @long_delay_timeouts: aging and idle timer values for each scenario
  * in long delay state.
  * @full_on_timeouts: timer values for each scenario in full on state.
@@ -3965,7 +3965,7 @@ struct iwx_mac_data_p2p_dev {
 /**
  * MAC context filter flags
  * @IWX_MAC_FILTER_IN_PROMISC: accept all data frames
- * @IWX_MAC_FILTER_IN_CONTROL_AND_MGMT: pass all mangement and
+ * @IWX_MAC_FILTER_IN_CONTROL_AND_MGMT: pass all management and
  *	control frames to the host
  * @IWX_MAC_FILTER_ACCEPT_GRP: accept multicast frames
  * @IWX_MAC_FILTER_DIS_DECRYPT: don't decrypt unicast frames
@@ -4183,7 +4183,7 @@ struct iwx_device_power_cmd {
 /**
  * struct iwx_mac_power_cmd - New power command containing uAPSD support
  * IWX_MAC_PM_POWER_TABLE = 0xA9 (command, has simple generic response)
- * @id_and_color:	MAC contex identifier
+ * @id_and_color:	MAC context identifier
  * @flags:		Power table command flags from POWER_FLAGS_*
  * @keep_alive_seconds:	Keep alive period in seconds. Default - 25 sec.
  *			Minimum allowed:- 3 * DTIM. Keep alive period must be
@@ -4269,7 +4269,7 @@ struct iwx_uapsd_misbehaving_ap_notif {
 /**
  * struct iwx_beacon_filter_cmd
  * IWX_REPLY_BEACON_FILTERING_CMD = 0xd2 (command)
- * @id_and_color: MAC contex identifier
+ * @id_and_color: MAC context identifier
  * @bf_energy_delta: Used for RSSI filtering, if in 'normal' state. Send beacon
  *      to driver if delta in Energy values calculated for this and last
  *      passed beacon is greater than this threshold. Zero value means that
@@ -4286,7 +4286,7 @@ struct iwx_uapsd_misbehaving_ap_notif {
  *      Roaming Energy Delta Threshold, otherwise use normal Energy Delta
  *      Threshold. Typical energy threshold is -72dBm.
  * @bf_temp_threshold: This threshold determines the type of temperature
- *	filtering (Slow or Fast) that is selected (Units are in Celsuis):
+ *	filtering (Slow or Fast) that is selected (Units are in Celsius):
  *      If the current temperature is above this threshold - Fast filter
  *	will be used, If the current temperature is below this threshold -
  *	Slow filter will be used.
@@ -4294,12 +4294,12 @@ struct iwx_uapsd_misbehaving_ap_notif {
  *      calculated for this and the last passed beacon is greater than this
  *      threshold. Zero value means that the temperature change is ignored for
  *      beacon filtering; beacons will not be  forced to be sent to driver
- *      regardless of whether its temerature has been changed.
+ *      regardless of whether its temperature has been changed.
  * @bf_temp_slow_filter: Send Beacon to driver if delta in temperature values
  *      calculated for this and the last passed beacon is greater than this
  *      threshold. Zero value means that the temperature change is ignored for
  *      beacon filtering; beacons will not be forced to be sent to driver
- *      regardless of whether its temerature has been changed.
+ *      regardless of whether its temperature has been changed.
  * @bf_enable_beacon_filter: 1, beacon filtering is enabled; 0, disabled.
  * @bf_escape_timer: Send beacons to driver if no beacons were passed
  *      for a specific period of time. Units: Beacons.
@@ -4666,7 +4666,7 @@ enum {
 #define IWX_LQ_FLAG_RTS_BW_SIG_DYNAMIC      (2 << IWX_LQ_FLAG_RTS_BW_SIG_POS)
 
 /* Bit 6: (0) No dynamic BW selection (1) Allow dynamic BW selection
- * Dyanmic BW selection allows Tx with narrower BW then requested in rates
+ * Dynamic BW selection allows Tx with narrower BW then requested in rates
  */
 #define IWX_LQ_FLAG_DYNAMIC_BW_POS          6
 #define IWX_LQ_FLAG_DYNAMIC_BW_MSK          (1 << IWX_LQ_FLAG_DYNAMIC_BW_POS)
@@ -5466,7 +5466,7 @@ static inline uint32_t iwx_get_scd_ssn(struct iwx_tx_resp *tx_resp)
  * @token:
  * @sta_id: station id
  * @tid:
- * @scd_queue: scheduler queue to confiug
+ * @scd_queue: scheduler queue to config
  * @enable: 1 queue enable, 0 queue disable
  * @aggregate: 1 aggregated queue, 0 otherwise
  * @tx_fifo: %enum iwx_tx_fifo
@@ -5714,8 +5714,8 @@ struct iwx_scan_offload_blacklist {
 /**
  * iwx_scan_offload_profile - IWX_SCAN_OFFLOAD_PROFILE_S
  * @ssid_index:		index to ssid list in fixed part
- * @unicast_cipher:	encryption olgorithm to match - bitmap
- * @aut_alg:		authentication olgorithm to match - bitmap
+ * @unicast_cipher:	encryption algorithm to match - bitmap
+ * @aut_alg:		authentication algorithm to match - bitmap
  * @network_type:	enum iwx_scan_offload_network_type
  * @band_selection:	enum iwx_scan_offload_band_selection
  * @client_bitmap:	clients waiting for match - enum scan_framework_client
@@ -5732,7 +5732,7 @@ struct iwx_scan_offload_profile {
 
 /**
  * iwx_scan_offload_profile_cfg - IWX_SCAN_OFFLOAD_PROFILES_CFG_API_S_VER_1
- * @blaclist:		AP list to filter off from scan results
+ * @blacklist:		AP list to filter off from scan results
  * @profiles:		profiles to search for match
  * @blacklist_len:	length of blacklist
  * @num_profiles:	num of profiles in the list
@@ -5824,7 +5824,7 @@ struct iwx_scan_dwell {
 /**
  * struct iwl_scan_config
  * @enable_cam_mode: whether to enable CAM mode.
- * @enable_promiscouos_mode: whether to enable promiscouos mode
+ * @enable_promiscuous_mode: whether to enable promiscuous mode
  * @bcast_sta_id: the index of the station in the fw. Deprecated starting with
  *     API version 5.
  * @reserved: reserved
@@ -5833,7 +5833,7 @@ struct iwx_scan_dwell {
  */
 struct iwx_scan_config {
 	uint8_t enable_cam_mode;
-	uint8_t enable_promiscouos_mode;
+	uint8_t enable_promiscuous_mode;
 	uint8_t bcast_sta_id;
 	uint8_t reserved;
 	uint32_t tx_chains;
@@ -5876,7 +5876,7 @@ struct iwx_scan_config_v2 {
  * iwx_umac_scan_flags
  *@IWX_UMAC_SCAN_FLAG_PREEMPTIVE: scan process triggered by this scan request
  *	can be preempted by other scan requests with higher priority.
- *	The low priority scan will be resumed when the higher proirity scan is
+ *	The low priority scan will be resumed when the higher priority scan is
  *	completed.
  *@IWX_UMAC_SCAN_FLAG_START_NOTIF: notification will be sent to the driver
  *	when scan starts.
@@ -5898,7 +5898,7 @@ struct iwx_scan_config_v2 {
 #define IWX_UMAC_SCAN_GEN_FLAGS_RRM_ENABLED	(1 << 8)
 #define IWX_UMAC_SCAN_GEN_FLAGS_MATCH		(1 << 9)
 #define IWX_UMAC_SCAN_GEN_FLAGS_EXTENDED_DWELL	(1 << 10)
-/* Extended dwell is obselete when adaptive dwell is used, making this
+/* Extended dwell is obsolete when adaptive dwell is used, making this
  * bit reusable. Hence, probe request defer is used only when adaptive
  * dwell is supported. */
 #define IWX_UMAC_SCAN_GEN_FLAGS_PROB_REQ_DEFER_SUPP	(1 << 10)
@@ -6460,7 +6460,7 @@ struct iwx_umac_scan_iter_complete_notif {
  * @IWX_STA_KEY_FLG_EXT: extended cipher algorithm (depends on the FW support)
  * @IWX_STA_KEY_FLG_CMAC: CMAC encryption algorithm
  * @IWX_STA_KEY_FLG_ENC_UNKNOWN: unknown encryption algorithm
- * @IWX_STA_KEY_FLG_EN_MSK: mask for encryption algorithmi value
+ * @IWX_STA_KEY_FLG_EN_MSK: mask for encryption algorithm value
  * @IWX_STA_KEY_FLG_WEP_KEY_MAP: wep is either a group key (0 - legacy WEP) or from
  *	station info array (1 - n 1X mode)
  * @IWX_STA_KEY_FLG_KEYID_MSK: the index of the key
@@ -6604,7 +6604,7 @@ struct iwx_keyinfo {
  *	mac-addr.
  * @beamform_flags: beam forming controls
  * @tfd_queue_msk: tfd queues used by this station.
- *	Obselete for new TX API (9 and above).
+ *	Obsolete for new TX API (9 and above).
  * @rx_ba_window: aggregation window size
  * @sp_length: the size of the SP in actual number of frames
  * @uapsd_acs:  4 LS bits are trigger enabled ACs, 4 MS bits are the deliver
@@ -6651,7 +6651,7 @@ struct iwx_add_sta_cmd {
  *	and probe responses.
  * @IWX_STA_MULTICAST: multicast traffic,
  * @IWX_STA_TDLS_LINK: TDLS link station
- * @IWX_STA_AUX_ACTIVITY: auxilary station (scan, ROC and so on).
+ * @IWX_STA_AUX_ACTIVITY: auxiliary station (scan, ROC and so on).
  */
 #define IWX_STA_LINK		0
 #define IWX_STA_GENERAL_PURPOSE	1

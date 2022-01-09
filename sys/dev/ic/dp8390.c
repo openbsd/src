@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390.c,v 1.62 2020/07/10 13:22:19 patrick Exp $	*/
+/*	$OpenBSD: dp8390.c,v 1.63 2022/01/09 05:42:38 jsg Exp $	*/
 /*	$NetBSD: dp8390.c,v 1.13 1998/07/05 06:49:11 jonathan Exp $	*/
 
 /*
@@ -1112,7 +1112,7 @@ dp8390_detach(struct dp8390_softc *sc, int flags)
 	if (sc->sc_media_fini != NULL)
 		(*sc->sc_media_fini)(sc);
 
-	/* Delete all reamining media. */
+	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 
 	ether_ifdetach(ifp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacerreg.h,v 1.1 2008/08/28 10:21:23 mikeb Exp $	*/
+/*	$OpenBSD: auacerreg.h,v 1.2 2022/01/09 05:42:45 jsg Exp $	*/
 /*	$NetBSD: auacer.h,v 1.1 2004/10/10 16:37:07 augustss Exp $	*/
 
 /*-
@@ -140,7 +140,7 @@
 /*
  * according to the dev/audiovar.h AU_RING_SIZE is 2^16, what fits
  * in our limits perfectly, i.e. setting it to higher value
- * in your kernel config would improve perfomance, still 2^21 is the max
+ * in your kernel config would improve performance, still 2^21 is the max
  */
 #define	ALI_DMALIST_MAX	32
 #define	ALI_DMASEG_MAX	(65536*2)	/* 64k samples, 2x16 bit samples */

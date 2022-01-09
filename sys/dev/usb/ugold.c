@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.20 2021/11/15 15:36:24 anton Exp $   */
+/*	$OpenBSD: ugold.c,v 1.21 2022/01/09 05:43:00 jsg Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <uaa@openbsd.org>
@@ -19,7 +19,7 @@
  */
 
 /*
- * Driver for Microdia's HID base TEMPer and TEMPerHUM temperature and
+ * Driver for Microdia's HID based TEMPer and TEMPerHUM temperature and
  * humidity sensors
  */
 

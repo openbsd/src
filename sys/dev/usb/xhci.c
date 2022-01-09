@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.123 2021/11/22 10:17:14 mglocker Exp $ */
+/* $OpenBSD: xhci.c,v 1.124 2022/01/09 05:43:02 jsg Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -1206,7 +1206,7 @@ xhci_pipe_open(struct usbd_pipe *pipe)
 		/*
 		 * Get a slot and init the device's contexts.
 		 *
-		 * Since the control enpoint, represented as the default
+		 * Since the control endpoint, represented as the default
 		 * pipe, is always opened first we are dealing with a
 		 * new device.  Put a new slot in the ENABLED state.
 		 *
@@ -1443,7 +1443,7 @@ xhci_context_setup(struct xhci_softc *sc, struct usbd_pipe *pipe)
 	    DEQPTR(xp->ring) | xp->ring.toggle
 	);
 
-	/* Unmask the new endoint */
+	/* Unmask the new endpoint */
 	sdev->input_ctx->drop_flags = 0;
 	sdev->input_ctx->add_flags = htole32(XHCI_INCTX_MASK_DCI(xp->dci));
 

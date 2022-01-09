@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmtphyreg.h,v 1.3 2005/02/04 23:23:56 brad Exp $	*/
+/*	$OpenBSD: bmtphyreg.h,v 1.4 2022/01/09 05:42:44 jsg Exp $	*/
 /*	$NetBSD: bmtphyreg.h,v 1.1 2001/06/02 21:42:10 thorpej Exp $	*/
 
 /*-
@@ -112,7 +112,7 @@
 #define	INTR_LINK_CHANGE	0x0002	/* link change */
 #define	INTR_INTR_STATUS	0x0001	/* interrupt status */
 
-#define	MII_BMTPHY_AUX2		0x1b	/* auliliary mode 2 */
+#define	MII_BMTPHY_AUX2		0x1b	/* auxiliary mode 2 */
 #define	AUX2_BLOCK_RXDV		0x0200	/* block RXDV mode enabled */
 #define	AUX2_ANPDQ		0x0100	/* auto-neg parallel detection Q mode */
 

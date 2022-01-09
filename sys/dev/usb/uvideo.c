@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvideo.c,v 1.214 2021/11/22 10:17:14 mglocker Exp $ */
+/*	$OpenBSD: uvideo.c,v 1.215 2022/01/09 05:43:02 jsg Exp $ */
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -3147,7 +3147,7 @@ uvideo_s_fmt(void *v, struct v4l2_format *fmt)
 	/*
 	 * Do negotiation.
 	 */
-	/* save a copy of current fromat group in case of negotiation fails */
+	/* save a copy of current format group in case of negotiation fails */
 	fmtgrp_save = sc->sc_fmtgrp_cur;
 	frame_save = sc->sc_fmtgrp_cur->frame_cur;
 	/* set new format group */

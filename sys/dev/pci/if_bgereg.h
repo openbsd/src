@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.134 2021/08/31 08:06:56 jasper Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.135 2022/01/09 05:42:46 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -798,7 +798,7 @@
 /* SERDES configuration register */
 #define	BGE_SERDESCFG_RXR		0x00000007 /* phase interpolator */
 #define	BGE_SERDESCFG_RXG		0x00000018 /* rx gain setting */
-#define	BGE_SERDESCFG_RXEDGESEL		0x00000040 /* rising/falling egde */
+#define	BGE_SERDESCFG_RXEDGESEL		0x00000040 /* rising/falling edge */
 #define	BGE_SERDESCFG_TX_BIAS		0x00000380 /* TXDAC bias setting */
 #define	BGE_SERDESCFG_IBMAX		0x00000400 /* bias current +25% */
 #define	BGE_SERDESCFG_IBMIN		0x00000800 /* bias current -25% */
@@ -2917,7 +2917,7 @@ struct bge_softc {
 	u_int16_t		bge_std;	/* current std ring head */
 	int			bge_rx_std_len;
 	struct if_rxring	bge_jumbo_ring;
-	u_int16_t		bge_jumbo;	/* current jumo ring head */
+	u_int16_t		bge_jumbo;	/* current jumbo ring head */
 	u_int32_t		bge_stat_ticks;
 	u_int32_t		bge_rx_coal_ticks;
 	u_int32_t		bge_tx_coal_ticks;

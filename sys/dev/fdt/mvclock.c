@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvclock.c,v 1.9 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: mvclock.c,v 1.10 2022/01/09 05:42:37 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -191,7 +191,7 @@ cp110_get_frequency(void *cookie, uint32_t *cells)
 		}
 	}
 
-	/* Gatable clocks */
+	/* Gateable clocks */
 	if (mod == 1) {
 		switch (idx) {
 		case CP110_GATE_PPV2:
@@ -222,7 +222,7 @@ cp110_enable(void *cookie, uint32_t *cells, int on)
 	uint32_t mod = cells[0];
 	uint32_t idx = cells[1];
 
-	/* Gatable clocks */
+	/* Gateable clocks */
 	if (mod == 1 && idx < 32) {
 		struct regmap *rm;
 		uint32_t reg;

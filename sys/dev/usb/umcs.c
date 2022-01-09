@@ -1,4 +1,4 @@
-/* $OpenBSD: umcs.c,v 1.8 2020/07/31 10:49:33 mglocker Exp $ */
+/* $OpenBSD: umcs.c,v 1.9 2022/01/09 05:43:01 jsg Exp $ */
 /* $NetBSD: umcs.c,v 1.8 2014/08/23 21:37:56 martin Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
@@ -36,7 +36,7 @@
  * Datasheets are available at MosChip www site at http://www.moschip.com.
  * The datasheets don't contain full programming information for the chip.
  *
- * It is nornal to have only two enabled ports in devices, based on quad-port
+ * It is normal to have only two enabled ports in devices, based on quad-port
  * mos7840.
  */
 
@@ -223,7 +223,7 @@ umcs_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef UMCS_DEBUG
 	if (!umcs_get_reg(sc, UMCS_MODE, &data)) {
-		printf("%s: On-die confguration: RST: active %s, "
+		printf("%s: On-die configuration: RST: active %s, "
 		    "HRD: %s, PLL: %s, POR: %s, Ports: %s, EEPROM write %s, "
 		    "IrDA is %savailable\n", DEVNAME(sc),
 		    (data & UMCS_MODE_RESET) ? "low" : "high",
@@ -410,7 +410,7 @@ umcs_set_baudrate(struct umcs_softc *sc, uint8_t portno, uint32_t rate)
 	DPRINTF("%s: portno %d set speed: %d (%02x/%d)\n", DEVNAME(sc), portno,
 	    rate, clk, div);
 
-	/* Set clock source for standard BAUD frequences */
+	/* Set clock source for standard BAUD frequencies */
 	if (umcs_get_reg(sc, spreg, &data))
 		return (EIO);
 	data &= UMCS_SPx_CLK_MASK;
@@ -436,7 +436,7 @@ umcs_set_baudrate(struct umcs_softc *sc, uint8_t portno, uint32_t rate)
 	return (0);
 }
 
-/* Maximum speeds for standard frequences, when PLL is not used */
+/* Maximum speeds for standard frequencies, when PLL is not used */
 static const uint32_t umcs_baudrate_divisors[] = {
     0, 115200, 230400, 403200, 460800, 806400, 921600, 1572864, 3145728,
 };

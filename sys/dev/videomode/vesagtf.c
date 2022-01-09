@@ -38,7 +38,7 @@
  * Note that I have heavily modified the program for use in the EDID
  * kernel code for NetBSD, including removing the use of floating
  * point operations and making significant adjustments to minimize
- * error propogation while operating with integer only math.
+ * error propagation while operating with integer only math.
  *
  * This has required the use of 64-bit integers in a few places, but
  * the upshot is that for a calculation of 1920x1200x85 (as an
@@ -338,7 +338,7 @@ vesagtf_mode_params(unsigned h_pixels, unsigned v_lines, unsigned freq,
      *
      * Finally we multiply by another 1000, to get value in picosec.
      * Why picosec?  To minimize rounding errors.  Gotta love integer
-     * math and error propogation.
+     * math and error propagation.
      */
 
     h_period_est = DIVIDE(((DIVIDE(2000000000000ULL, v_field_rqd)) -
@@ -397,7 +397,7 @@ vesagtf_mode_params(unsigned h_pixels, unsigned v_lines, unsigned freq,
      *  [V FIELD RATE EST] = 1000000000 / [H PERIOD EST] / [TOTAL V LINES]
      *
      *  This is all scaled to get the result in uHz.  Again, we're trying to
-     *  minimize error propogation.
+     *  minimize error propagation.
      */
     v_field_est = DIVIDE(DIVIDE(1000000000000000ULL, h_period_est),
 	total_v_lines);
@@ -490,7 +490,7 @@ vesagtf_mode_params(unsigned h_pixels, unsigned v_lines, unsigned freq,
      *
      *  The ending result is that our ideal_duty_cycle is 256000x larger
      *  than the duty cycle used by VESA.  But again, this reduces error
-     *  propogation.
+     *  propagation.
      */
 
     ideal_duty_cycle =

@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.96 2020/07/10 13:22:21 patrick Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.97 2022/01/09 05:42:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -824,7 +824,7 @@ cmalo_detach(void *arg)
 	/* free firmware */
 	cmalo_fw_free(sc);
 
-	/* detach inferface */
+	/* detach interface */
 	ieee80211_ifdetach(ifp);
 	if_detach(ifp);
 }
@@ -1239,7 +1239,7 @@ cmalo_cmd_get_hwspec(struct malo_softc *sc)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1347,7 +1347,7 @@ cmalo_cmd_set_scan(struct malo_softc *sc)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1463,7 +1463,7 @@ cmalo_cmd_set_auth(struct malo_softc *sc)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1522,7 +1522,7 @@ cmalo_cmd_set_wep(struct malo_softc *sc, uint16_t index,
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1575,7 +1575,7 @@ cmalo_cmd_set_snmp(struct malo_softc *sc, uint16_t oid)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1608,7 +1608,7 @@ cmalo_cmd_set_radio(struct malo_softc *sc, uint16_t control)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1637,7 +1637,7 @@ cmalo_cmd_set_channel(struct malo_softc *sc, uint16_t channel)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1667,7 +1667,7 @@ cmalo_cmd_set_txpower(struct malo_softc *sc, int16_t txpower)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1703,7 +1703,7 @@ cmalo_cmd_set_antenna(struct malo_softc *sc, uint16_t action)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1735,7 +1735,7 @@ cmalo_cmd_set_macctrl(struct malo_softc *sc)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1764,7 +1764,7 @@ cmalo_cmd_set_macaddr(struct malo_softc *sc, uint8_t *macaddr)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1837,7 +1837,7 @@ cmalo_cmd_set_assoc(struct malo_softc *sc)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1900,7 +1900,7 @@ cmalo_cmd_set_80211d(struct malo_softc *sc)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1933,7 +1933,7 @@ cmalo_cmd_set_bgscan_config(struct malo_softc *sc)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1961,7 +1961,7 @@ cmalo_cmd_set_bgscan_query(struct malo_softc *sc)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -1996,7 +1996,7 @@ cmalo_cmd_set_rate(struct malo_softc *sc, int rate)
 	if (cmalo_cmd_request(sc, psize, 0) != 0)
 		return (EIO);
 
-	/* process command repsonse */
+	/* process command response */
 	cmalo_cmd_response(sc);
 
 	return (0);
@@ -2060,10 +2060,10 @@ cmalo_cmd_response(struct malo_softc *sc)
 	cmalo_hexdump(sc->sc_cmd, psize);
 
 	/*
-	 * We convert the header values into the machines correct endianess,
+	 * We convert the header values into the machines correct endianness,
 	 * so we don't have to letoh16() all over the code.  The body is
 	 * kept in the cards order, little endian.  We need to take care
-	 * about the body endianess in the corresponding response routines.
+	 * about the body endianness in the corresponding response routines.
 	 */
 	hdr->cmd = letoh16(hdr->cmd);
 	hdr->size = letoh16(hdr->size);

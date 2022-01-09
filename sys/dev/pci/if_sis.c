@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.139 2020/12/12 11:48:53 jan Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.140 2022/01/09 05:42:54 jsg Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -52,7 +52,7 @@
  * 128-bit multicast hash table. The SiS 900 has a built-in MII-based
  * transceiver while the 7016 requires an external transceiver chip.
  * Both chips offer the standard bit-bang MII interface as well as
- * an enchanced PHY interface which simplifies accessing MII registers.
+ * an enhanced PHY interface which simplifies accessing MII registers.
  *
  * The only downside to this chipset is that RX descriptors must be
  * longword aligned.

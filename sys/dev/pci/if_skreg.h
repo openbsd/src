@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.62 2022/01/02 03:41:08 jsg Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.63 2022/01/09 05:42:54 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -430,7 +430,7 @@
  * fiber-based cards or BCOM for 1000baseT cards with a Broadcom
  * PHY.
  */
-#define SK_PHYTYPE_XMAC		0       /* integeated XMAC II PHY */
+#define SK_PHYTYPE_XMAC		0       /* integrated XMAC II PHY */
 #define SK_PHYTYPE_BCOM		1       /* Broadcom BCM5400 */
 #define SK_PHYTYPE_LONE		2       /* Level One LXT1000 */
 #define SK_PHYTYPE_NAT		3       /* National DP83891 */
@@ -2143,12 +2143,12 @@ struct msk_status_desc {
 #define XM_PHY_BMSR		0x0001	/* status */
 #define XM_PHY_VENID		0x0002	/* vendor id */
 #define XM_PHY_DEVID		0x0003	/* device id */
-#define XM_PHY_ANAR		0x0004	/* autoneg advertisenemt */
+#define XM_PHY_ANAR		0x0004	/* autoneg advertisement */
 #define XM_PHY_LPAR		0x0005	/* link partner ability */
 #define XM_PHY_ANEXP		0x0006	/* autoneg expansion */
 #define XM_PHY_NEXTP		0x0007	/* nextpage */
 #define XM_PHY_LPNEXTP		0x0008	/* link partner's nextpage */
-#define XM_PHY_EXTSTS		0x000F	/* extented status */
+#define XM_PHY_EXTSTS		0x000F	/* extended status */
 #define XM_PHY_RESAB		0x0010	/* resolved ability */
 
 #define XM_BMCR_DUPLEX		0x0100

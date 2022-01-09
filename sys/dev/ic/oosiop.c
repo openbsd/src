@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop.c,v 1.34 2020/09/22 19:32:52 krw Exp $	*/
+/*	$OpenBSD: oosiop.c,v 1.35 2022/01/09 05:42:38 jsg Exp $	*/
 /*	$NetBSD: oosiop.c,v 1.4 2003/10/29 17:45:55 tsutsui Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ void	oosiop_cb_free(void *, void *);
 #define	DATAIN_TRAP	0xdead0001
 #define	DATAOUT_TRAP	0xdead0002
 
-/* Possible TP and SCF conbination */
+/* Possible TP and SCF combination */
 static const struct {
 	u_int8_t	tp;
 	u_int8_t	scf;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlusbphy.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: amlusbphy.c,v 1.3 2022/01/09 05:42:37 jsg Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -208,7 +208,7 @@ amlusbphy_enable(void *cookie, uint32_t *cells)
 	HWRITE4(sc, PHY_R3, (0 << PHY_R3_SQUELCH_REF_SHIFT) |
 	    (1 << PHY_R3_HDISC_REF_SHIFT) | (3 << PHY_R3_DISC_THRESH_SHIFT));
 
-	/* Analogg settings. */
+	/* Analog settings. */
 	HWRITE4(sc, PHY_R14, 0);
 	HWRITE4(sc, PHY_R13, PHY_R13_UPDATE_PMA_SIGNALS |
 	    (7 << PHY_R13_MIN_COUNT_FOR_SYNC_DET_SHIFT));

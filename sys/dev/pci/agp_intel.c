@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_intel.c,v 1.23 2014/05/27 12:40:00 kettenis Exp $	*/
+/*	$OpenBSD: agp_intel.c,v 1.24 2022/01/09 05:42:45 jsg Exp $	*/
 /*	$NetBSD: agp_intel.c,v 1.3 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -188,7 +188,7 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 			break;
 
 		/*
-		 * almost certainly error allocating contigious dma memory
+		 * almost certainly error allocating contiguous dma memory
 		 * so reduce aperture so that the gatt size reduces.
 		 */
 		isc->isc_apsize /= 2;

@@ -1,4 +1,4 @@
-/* $OpenBSD: xhcireg.h,v 1.17 2019/10/15 03:31:35 visa Exp $ */
+/* $OpenBSD: xhcireg.h,v 1.18 2022/01/09 05:43:02 jsg Exp $ */
 
 /*-
  * Copyright (c) 2014 Martin Pieuchot. All rights reserved.
@@ -91,10 +91,10 @@
 #define  XHCI_HCC_LHRC(x)	(((x) >> 5) & 0x1) /* Light HC reset */
 #define  XHCI_HCC_LTC(x)	(((x) >> 6) & 0x1) /* Latency tolerance msg */
 #define  XHCI_HCC_NSS(x)	(((x) >> 7) & 0x1) /* No secondary sid */
-#define  XHCI_HCC_PAE(x)	(((x) >> 8) & 0x1) /* Pase All Event Data */
+#define  XHCI_HCC_PAE(x)	(((x) >> 8) & 0x1) /* Parse All Event Data */
 #define  XHCI_HCC_SPC(x)	(((x) >> 9) & 0x1) /* Short packet */
 #define  XHCI_HCC_SEC(x)	(((x) >> 10) & 0x1) /* Stopped EDTLA */
-#define  XHCI_HCC_CFC(x)	(((x) >> 11) & 0x1) /* Configuous Frame ID */
+#define  XHCI_HCC_CFC(x)	(((x) >> 11) & 0x1) /* Contiguous Frame ID */
 #define  XHCI_HCC_MAX_PSA_SZ(x)	(((x) >> 12) & 0xf) /* Max pri. stream arr. */
 #define  XHCI_HCC_XECP(x)	(((x) >> 16) & 0xffff) /* Ext. capabilities */
 
@@ -185,7 +185,7 @@
 #define XHCI_PM3_U2TO(x)	(((x) & 0xff) << 8)	/* RW - U2 timeout */
 #define XHCI_PM3_FLA		0x00010000 /* RW - Force Link PM Accept */
 #define XHCI_PM2_L1S(x)		(((x) >> 0) & 0x7)	/* RO - L1 status */
-#define XHCI_PM2_RWE		0x00000008 /* RW - remote wakup enable */
+#define XHCI_PM2_RWE		0x00000008 /* RW - remote wakeup enable */
 #define XHCI_PM2_HIRD(x)	(((x) & 0xf) << 4)  /* RW - resume duration */
 #define XHCI_PM2_L1SLOT(x)	(((x) & 0xff) << 8) /* RW - L1 device slot */
 #define XHCI_PM2_HLE		0x00010000	/* RW - hardware LPM enable */
@@ -397,9 +397,9 @@ struct xhci_trb {
 #define XHCI_CMD_SET_TR_DEQ	(16 << 10)
 #define XHCI_CMD_RESET_DEV	(17 << 10)
 #define XHCI_CMD_FEVENT		(18 << 10)
-#define XHCI_CMD_NEG_BW		(19 << 10)	/* Negociate bandwith */
+#define XHCI_CMD_NEG_BW		(19 << 10)	/* Negotiate bandwidth */
 #define XHCI_CMD_SET_LT  	(20 << 10)	/* Set latency tolerance */
-#define XHCI_CMD_GET_BW		(21 << 10)	/* Get port bandwith */
+#define XHCI_CMD_GET_BW		(21 << 10)	/* Get port bandwidth */
 #define XHCI_CMD_FHEADER	(22 << 10)
 #define XHCI_CMD_NOOP		(23 << 10)	/* To test the command ring */
 
@@ -426,7 +426,7 @@ struct xhci_trb {
 #define XHCI_CODE_NO_SLOTS	 9	/* MaxSlots limit reached */
 #define XHCI_CODE_STREAM_TYPE	10	/* Stream Context Type value detected */
 #define XHCI_CODE_SLOT_NOT_ON	11	/* Related device slot is disabled */
-#define XHCI_CODE_ENDP_NOT_ON	12	/* Related enpoint is disabled */
+#define XHCI_CODE_ENDP_NOT_ON	12	/* Related endpoint is disabled */
 #define XHCI_CODE_SHORT_XFER	13	/* Short packet */
 #define XHCI_CODE_RING_UNDERRUN	14	/* Empty ring when transmitting isoc */
 #define XHCI_CODE_RING_OVERRUN	15	/* Empty ring when receiving isoc */

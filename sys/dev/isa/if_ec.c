@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ec.c,v 1.17 2017/07/26 05:25:21 deraadt Exp $	*/
+/*	$OpenBSD: if_ec.c,v 1.18 2022/01/09 05:42:44 jsg Exp $	*/
 /*	$NetBSD: if_ec.c,v 1.9 1998/07/05 06:49:12 jonathan Exp $	*/
 
 /*-
@@ -297,7 +297,7 @@ ec_attach(struct device *parent, struct device *self, void *aux)
 	/* Now we can use the NIC_{GET,PUT}() macros. */
 
 	/*
-	 * Reset NIC and ASIC.  Enable on-board transeiver throughout
+	 * Reset NIC and ASIC.  Enable on-board transceiver throughout
 	 * reset sequence since it will lock up if the cable isn't
 	 * connected if we don't.
 	 */
@@ -331,7 +331,7 @@ ec_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * Unmap PROM - select NIC registers.  The proper setting of the
-	 * transciever is set in later in ec_init_card() via dp8390_init().
+	 * transceiver is set in later in ec_init_card() via dp8390_init().
 	 */
 	bus_space_write_1(asict, asich, ELINK2_CR, ELINK2_CR_XSEL);
 
@@ -464,7 +464,7 @@ ec_attach(struct device *parent, struct device *self, void *aux)
 	    ELINK2_GACFR_RSEL | ELINK2_GACFR_MBS0);
 
 	/*
-	 * Intialize "Vector Pointer" registers.  These gawd-awful things
+	 * Initialize "Vector Pointer" registers.  These gawd-awful things
 	 * are compared to 20 bits of the address on the ISA, and if they
 	 * match, the shared memory is disabled.  We se them to 0xffff0...
 	 * allegedly the reset vector.

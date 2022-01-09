@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5416.c,v 1.22 2021/04/15 18:25:43 stsp Exp $	*/
+/*	$OpenBSD: ar5416.c,v 1.23 2022/01/09 05:42:38 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -613,7 +613,7 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	cckinc = (sc->flags & ATHN_FLAG_OLPC) ? -2 : 0;
 
 	memset(power, 0, sizeof(power));
-	/* Shuffle target powers accross transmit rates. */
+	/* Shuffle target powers across transmit rates. */
 	power[ATHN_POWER_OFDM6 ] =
 	power[ATHN_POWER_OFDM9 ] =
 	power[ATHN_POWER_OFDM12] =
@@ -666,7 +666,7 @@ ar5416_set_txpower(struct athn_softc *sc, struct ieee80211_channel *c,
 	ar5008_write_txpower(sc, power);
 
 	/*
-	 * Write transmit power substraction for dynamic chain changing
+	 * Write transmit power subtraction for dynamic chain changing
 	 * and per-packet transmit power.
 	 */
 	AR_WRITE(sc, AR_PHY_POWER_TX_SUB,

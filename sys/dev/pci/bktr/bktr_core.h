@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.h,v 1.3 2004/06/29 12:24:57 mickey Exp $	*/
+/*	$OpenBSD: bktr_core.h,v 1.4 2022/01/09 05:42:58 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.h,v 1.4 2000/06/26 09:41:32 roger Exp $ */
 
 /*
@@ -9,7 +9,7 @@
  *
  * bktr_core : This deals with the Bt848/849/878/879 PCI Frame Grabber,
  *               Handles all the open, close, ioctl and read userland calls.
- *               Sets the Bt848 registers and generates RISC pograms.
+ *               Sets the Bt848 registers and generates RISC programs.
  *               Controls the i2c bus and GPIO interface.
  *               Contains the interface to the kernel.
  *               (eg probe/attach and open/close/ioctl)

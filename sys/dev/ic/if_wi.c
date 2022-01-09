@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.175 2021/02/25 02:48:20 dlg Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.176 2022/01/09 05:42:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2027,7 +2027,7 @@ wi_scan_timeout(void *arg)
 		 * wait for some more time if the scan is still in progress.
 		 *
 		 * XXX This doesn't work with wi@usb because it isn't safe
-		 * to call wi_read_record_usb() while beeing in the timeout
+		 * to call wi_read_record_usb() while being in the timeout
 		 * handler.
 		 */
 		wreq.wi_len = WI_MAX_DATALEN;

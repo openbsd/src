@@ -41,7 +41,7 @@
 #define HVN_NVS_RNDIS_MTYPE_CTRL	1
 
 /*
- * NVS message transacion status codes.
+ * NVS message transaction status codes.
  */
 #define HVN_NVS_STATUS_OK		1
 #define HVN_NVS_STATUS_FAILED		2
@@ -93,7 +93,7 @@ struct hvn_nvs_init_resp {
 	uint32_t	nvs_status;	/* HVN_NVS_STATUS_ */
 } __packed;
 
-/* No reponse */
+/* No response */
 struct hvn_nvs_ndis_conf {
 	uint32_t	nvs_type;	/* HVN_NVS_TYPE_NDIS_CONF */
 	uint32_t	nvs_mtu;

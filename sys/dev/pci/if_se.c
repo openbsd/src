@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_se.c,v 1.22 2020/12/12 11:48:53 jan Exp $	*/
+/*	$OpenBSD: if_se.c,v 1.23 2022/01/09 05:42:54 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Christopher Zimmermann <madroach@zakweb.de>
@@ -417,7 +417,7 @@ se_miibus_statchg(struct device *self)
 #endif
 		return;
 	}
-	/* Reprogram MAC to resolved speed/duplex/flow-control paramters. */
+	/* Reprogram MAC to resolved speed/duplex/flow-control parameters. */
 	ctl = CSR_READ_4(sc, StationControl);
 	ctl &= ~(0x0f000000 | SC_FDX | SC_SPEED_MASK);
 	if (speed == SC_SPEED_1000)

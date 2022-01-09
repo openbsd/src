@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.156 2021/12/04 07:01:59 anton Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.157 2022/01/09 05:43:02 jsg Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -393,7 +393,7 @@ usbd_reset_port(struct usbd_device *dev, int port)
 			return (0);
 	} while ((UGETW(ps.wPortChange) & UPS_C_PORT_RESET) == 0 && --n > 0);
 
-	/* Clear port reset even if a timeout occured. */
+	/* Clear port reset even if a timeout occurred. */
 	if (usbd_clear_port_feature(dev, port, UHF_C_PORT_RESET)) {
 		DPRINTF(("%s: clear port feature failed\n", __func__));
 		return (EIO);
@@ -1094,7 +1094,7 @@ usbd_new_device(struct device *parent, struct usbd_bus *bus, int depth,
 	/* Try to get device descriptor */
 	/* 
 	 * some device will need small size query at first (XXX: out of spec)
-	 * we will get full size descriptor later, just determin the maximum
+	 * we will get full size descriptor later, just determine the maximum
 	 * packet size of the control pipe at this moment.
 	 */
 	for (i = 0; i < 3; i++) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.92 2022/01/07 09:08:15 jsg Exp $	*/
+/*	$OpenBSD: aac.c,v 1.93 2022/01/09 05:42:37 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -2547,7 +2547,7 @@ aac_print_aif(struct aac_softc *sc, struct aac_aif_command *aif)
 			       aif->data.EN.data.ECLE.eventType);
 			break;
 		case AifEnDiskSetEvent:
-			/* A disk set event occured. */
+			/* A disk set event occurred. */
 			printf("(DiskSetEvent) event %d "
 			       "diskset %lld creator %lld\n",
 			       aif->data.EN.data.EDS.eventType,

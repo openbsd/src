@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwelve.c,v 1.9 2018/10/22 17:31:25 krw Exp $	*/
+/*	$OpenBSD: cgtwelve.c,v 1.10 2022/01/09 05:42:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Miodrag Vallat.  All rights reserved.
@@ -267,7 +267,7 @@ cgtwelve_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	/*
 	 * Note that, although the emulation (text) mode is running in the
-	 * overlay plane, we advertize the frame buffer as the full-blown
+	 * overlay plane, we advertise the frame buffer as the full-blown
 	 * 32-bit beast it is.
 	 */
 	switch (cmd) {

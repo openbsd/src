@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848.c,v 1.45 2016/09/14 06:12:19 ratchov Exp $	*/
+/*	$OpenBSD: ad1848.c,v 1.46 2022/01/09 05:42:42 jsg Exp $	*/
 /*	$NetBSD: ad1848.c,v 1.45 1998/01/30 02:02:38 augustss Exp $	*/
 
 /*
@@ -596,7 +596,7 @@ struct ad1848_mixerinfo {
 /*
  *  This function doesn't set the mute flags but does use them.
  *  The mute flags reflect the mutes that have been applied by the user.
- *  However, the driver occasionally wants to mute devices (e.g. when chaing
+ *  However, the driver occasionally wants to mute devices (e.g. when changing
  *  sampling rate). These operations should not affect the mute flags.
  */
 void 

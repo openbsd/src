@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jme.c,v 1.54 2020/07/10 13:26:38 patrick Exp $	*/
+/*	$OpenBSD: if_jme.c,v 1.55 2022/01/09 05:42:54 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -991,7 +991,7 @@ jme_dma_free(struct jme_softc *sc)
  * off. If the renegotiation fail WOL may not work. Running
  * at 1Gbps draws more power than 375mA at 3.3V which is
  * specified in PCI specification and that would result in
- * complete shutdowning power to ethernet controller.
+ * a complete shutdown of power to the ethernet controller.
  *
  * TODO
  *  Save current negotiated media speed/duplex/flow-control

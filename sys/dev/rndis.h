@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndis.h,v 1.2 2016/09/20 10:34:41 mikeb Exp $ */
+/*	$OpenBSD: rndis.h,v 1.3 2022/01/09 05:42:37 jsg Exp $ */
 
 /*
  * Copyright (c) 2010 Jonathan Armani <armani@openbsd.org>
@@ -284,7 +284,7 @@ struct rndis_diag_info {
 	uint32_t	rm_erroffset;
 };
 
-/* Keepalive messsage.  May be sent by device. */
+/* Keepalive message.  May be sent by device. */
 #define REMOTE_NDIS_KEEPALIVE_MSG	0x00000008
 #define REMOTE_NDIS_KEEPALIVE_CMPLT	0x80000008
 

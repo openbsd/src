@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.148 2021/12/20 14:54:37 hastings Exp $
+#	$OpenBSD: files.usb,v 1.149 2022/01/09 05:43:00 jsg Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -117,7 +117,7 @@ device	ubcmtp: wsmousedev
 attach	ubcmtp at uhub
 file	dev/usb/ubcmtp.c		ubcmtp
 
-# Cypress microcontroller based serial adpaters
+# Cypress microcontroller based serial adapters
 device	ucycom: hid, ucombus
 attach	ucycom at uhidbus
 file	dev/usb/ucycom.c		ucycom
@@ -157,7 +157,7 @@ device	utrh: hid
 attach	utrh at uhidbus
 file	dev/usb/utrh.c			utrh
 
-# Fujitsu Compnent Smart Power Strip FX-5204PS
+# Fujitsu Component Smart Power Strip FX-5204PS
 device	usps
 attach	usps at uhub
 file	dev/usb/usps.c			usps

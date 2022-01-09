@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.126 2021/11/22 10:17:14 mglocker Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.127 2022/01/09 05:43:00 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -746,7 +746,7 @@ zyd_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 }
 
 /*
- * Issue a read command for the specificed register (of size regsize)
+ * Issue a read command for the specified register (of size regsize)
  * and await a reply of olen bytes in sc->odata.
  */
 int

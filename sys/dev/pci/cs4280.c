@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.53 2020/01/24 03:29:55 tedu Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.54 2022/01/09 05:42:45 jsg Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -291,7 +291,7 @@ cs4280_read_codec(void *sc_, u_int8_t add, u_int16_t *data)
 	
 	DPRINTFN(5,("read_codec: add=0x%02x ", add));
 	/* 
-	 * Make sure that there is not data sitting around from a preivous
+	 * Make sure that there is not data sitting around from a previous
 	 * uncompleted access.
 	 */
 	BA0READ4(sc, CS4280_ACSDA);
@@ -616,7 +616,7 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 
 	config_mountroot(self, cs4280_attachhook);
 
-	/* AC 97 attachement */
+	/* AC 97 attachment */
 	sc->host_if.arg = sc;
 	sc->host_if.attach = cs4280_attach_codec;
 	sc->host_if.read   = cs4280_read_codec;
@@ -797,7 +797,7 @@ cs4280_intr(void *p)
 }
 
 
-/* Download Proceessor Code and Data image */
+/* Download Processor Code and Data image */
 
 int
 cs4280_download(struct cs4280_softc *sc, const u_int32_t *src, u_int32_t offset,
@@ -972,7 +972,7 @@ cs4280_reset(void *sc_)
 	delay(100);
 	/* Clear RSTSP bit in SPCR */
 	BA1WRITE4(sc, CS4280_SPCR, 0);
-	/* enable DMA reqest */
+	/* enable DMA request */
 	BA1WRITE4(sc, CS4280_SPCR, SPCR_DRQEN);
 }
 

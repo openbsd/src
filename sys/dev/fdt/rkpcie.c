@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpcie.c,v 1.15 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: rkpcie.c,v 1.16 2022/01/09 05:42:37 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -467,7 +467,7 @@ rkpcie_atr_init(struct rkpcie_softc *sc)
 		}
 	}
 
-	/* Passthrought inbound translations unmodified. */
+	/* Passthrough inbound translations unmodified. */
 	HWRITE4(sc, PCIE_ATR_IB_ADDR0(2), 32 - 1);
 	HWRITE4(sc, PCIE_ATR_IB_ADDR1(2), 0);
 

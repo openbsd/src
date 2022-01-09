@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.21 2020/05/25 09:55:49 jsg Exp $	*/
+/*	$OpenBSD: zx.c,v 1.22 2022/01/09 05:42:59 jsg Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -318,7 +318,7 @@ zx_ioctl(void *dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 
 	/*
 	 * Note that, although the emulation (text) mode is running in
-	 * a 8-bit plane, we advertize the frame buffer as the full-blown
+	 * an 8-bit plane, we advertise the frame buffer as the full-blown
 	 * 32-bit beast it is.
 	 */
 	switch (cmd) {

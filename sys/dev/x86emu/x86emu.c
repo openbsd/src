@@ -1,4 +1,4 @@
-/*	$OpenBSD: x86emu.c,v 1.11 2019/04/01 06:03:57 naddy Exp $	*/
+/*	$OpenBSD: x86emu.c,v 1.12 2022/01/09 05:43:02 jsg Exp $	*/
 /*	$NetBSD: x86emu.c,v 1.7 2009/02/03 19:26:29 joerg Exp $	*/
 
 /*
@@ -386,7 +386,7 @@ fetch_long_imm(struct x86emu *emu)
  * addresses relative to SS (ie: on the stack). So, at the minimum, all
  * decodings of addressing modes would have to set/clear a bit describing
  * whether the access is relative to DS or SS.  That is the function of the
- * cpu-state-varible emu->x86.mode. There are several potential states:
+ * cpu-state-variable emu->x86.mode. There are several potential states:
  * 
  * 	repe prefix seen  (handled elsewhere)
  * 	repne prefix seen  (ditto)
@@ -6640,7 +6640,7 @@ neg_byte(struct x86emu *emu, uint8_t s)
 	CONDITIONAL_SET_FLAG(res & 0x80, F_SF);
 	CONDITIONAL_SET_FLAG(PARITY(res), F_PF);
 	/* calculate the borrow chain --- modified such that d=0.
-	 * substitutiing d=0 into     bc= res&(~d|s)|(~d&s); (the one used for
+	 * substituting d=0 into     bc= res&(~d|s)|(~d&s); (the one used for
 	 * sub) and simplifying, since ~d=0xff..., ~d|s == 0xffff..., and
 	 * res&0xfff... == res.  Similarly ~d&s == s.  So the simplified
 	 * result is: */
@@ -6667,7 +6667,7 @@ neg_word(struct x86emu *emu, uint16_t s)
 	CONDITIONAL_SET_FLAG(PARITY(res & 0xff), F_PF);
 
 	/* calculate the borrow chain --- modified such that d=0.
-	 * substitutiing d=0 into     bc= res&(~d|s)|(~d&s); (the one used for
+	 * substituting d=0 into     bc= res&(~d|s)|(~d&s); (the one used for
 	 * sub) and simplifying, since ~d=0xff..., ~d|s == 0xffff..., and
 	 * res&0xfff... == res.  Similarly ~d&s == s.  So the simplified
 	 * result is: */
@@ -6694,7 +6694,7 @@ neg_long(struct x86emu *emu, uint32_t s)
 	CONDITIONAL_SET_FLAG(PARITY(res & 0xff), F_PF);
 
 	/* calculate the borrow chain --- modified such that d=0.
-	 * substitutiing d=0 into     bc= res&(~d|s)|(~d&s); (the one used for
+	 * substituting d=0 into     bc= res&(~d|s)|(~d&s); (the one used for
 	 * sub) and simplifying, since ~d=0xff..., ~d|s == 0xffff..., and
 	 * res&0xfff... == res.  Similarly ~d&s == s.  So the simplified
 	 * result is: */

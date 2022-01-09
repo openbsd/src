@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.67 2021/08/09 18:13:09 jan Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.68 2022/01/09 05:42:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -255,7 +255,7 @@ vmxnet3_attach(struct device *parent, struct device *self, void *aux)
 
 	ver = READ_BAR1(sc, VMXNET3_BAR1_UVRS);
 	if ((ver & 0x1) == 0) {
-		printf(": incompatiable UPT version 0x%x\n", ver);
+		printf(": incompatible UPT version 0x%x\n", ver);
 		return;
 	}
 	WRITE_BAR1(sc, VMXNET3_BAR1_UVRS, 1);

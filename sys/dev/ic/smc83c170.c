@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170.c,v 1.29 2020/07/10 13:26:37 patrick Exp $	*/
+/*	$OpenBSD: smc83c170.c,v 1.30 2022/01/09 05:42:42 jsg Exp $	*/
 /*	$NetBSD: smc83c170.c,v 1.59 2005/02/27 00:27:02 perry Exp $	*/
 
 /*-
@@ -367,7 +367,7 @@ epic_start(struct ifnet *ifp)
 
 		/*
 		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the alloted number of frags, or we were
+		 * didn't fit in the allotted number of frags, or we were
 		 * short on resources.  In this case, we'll copy and try
 		 * again.
 		 */
@@ -1366,7 +1366,7 @@ epic_statchg(struct device *self)
 		txcon &= ~(TXCON_LOOPBACK_D1|TXCON_LOOPBACK_D2);
 	bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_TXCON, txcon);
 
-	/* On some cards we need manualy set fullduplex led */
+	/* On some cards we need manually set fullduplex led */
 	if (sc->sc_hwflags & EPIC_DUPLEXLED_ON_694) {
 		miicfg = bus_space_read_4(sc->sc_st, sc->sc_sh, EPIC_MIICFG);
 		if (IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX)

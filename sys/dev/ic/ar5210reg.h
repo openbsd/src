@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5210reg.h,v 1.13 2007/03/12 01:04:52 reyk Exp $	*/
+/*	$OpenBSD: ar5210reg.h,v 1.14 2022/01/09 05:42:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -25,7 +25,7 @@
 #define _AR5K_AR5210_REG_H
 
 /*
- * First tansmit queue descriptor pointer register ("data queue")
+ * First transmit queue descriptor pointer register ("data queue")
  */
 #define AR5K_AR5210_TXDP0	0x0000
 

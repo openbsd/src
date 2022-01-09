@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.119 2021/05/18 14:23:03 kevlo Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.120 2022/01/09 05:43:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -757,7 +757,7 @@ umsm_umass_changemode(struct umsm_softc *sc)
 			target_ep = ed->bEndpointAddress;
 	}
 
-	/* open command endppoint */
+	/* open command endpoint */
 	err = usbd_open_pipe(sc->sc_iface, target_ep,
 		USBD_EXCLUSIVE_USE, &cmdpipe);
 	if (err) {

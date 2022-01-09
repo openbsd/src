@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.217 2021/11/22 11:46:11 mglocker Exp $ */
+/*	$OpenBSD: ehci.c,v 1.218 2022/01/09 05:43:00 jsg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -1714,7 +1714,7 @@ usb_device_descriptor_t ehci_devd = {
 	UDPROTO_HSHUBSTT,	/* protocol */
 	64,			/* max packet */
 	{0},{0},{0x00,0x01},	/* device id */
-	1,2,0,			/* string indicies */
+	1,2,0,			/* string indices */
 	1			/* # of configurations */
 };
 
@@ -2573,7 +2573,7 @@ ehci_free_itd(struct ehci_softc *sc, struct ehci_soft_itd *itd)
 }
 
 /*
- * Close a reqular pipe.
+ * Close a regular pipe.
  * Assumes that there are no pending transactions.
  */
 void
@@ -3179,7 +3179,7 @@ ehci_device_intr_abort(struct usbd_xfer *xfer)
 
 	/*
 	 * XXX - abort_xfer uses ehci_sync_hc, which syncs via the advance
-	 *       async doorbell. That's dependant on the async list, wheras
+	 *       async doorbell. That's dependant on the async list, whereas
 	 *       intr xfers are periodic, should not use this?
 	 */
 	ehci_abort_xfer(xfer, USBD_CANCELLED);

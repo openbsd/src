@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.45 2020/01/11 21:30:00 cheloha Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.46 2022/01/09 05:42:58 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -53,7 +53,7 @@
  *
  * The XenStore is ASCII string based, and has a structure and semantics
  * similar to a filesystem.  There are files and directories that are
- * able to contain files or other directories.  The depth of the hierachy
+ * able to contain files or other directories.  The depth of the hierarchy
  * is only limited by the XenStore's maximum path length.
  *
  * The communication channel between the XenStore service and other

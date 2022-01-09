@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.102 2020/12/12 11:48:53 jan Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.103 2022/01/09 05:42:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -74,7 +74,7 @@
 #define  VIC_CMD_MCASTFIL	0x0002	/* Multicast address filter */
 #define   VIC_CMD_MCASTFIL_LENGTH	2
 #define  VIC_CMD_IFF		0x0004	/* Interface flags */
-#define   VIC_CMD_IFF_PROMISC	0x0001		/* Promiscous enabled */
+#define   VIC_CMD_IFF_PROMISC	0x0001		/* Promiscuous enabled */
 #define   VIC_CMD_IFF_BROADCAST	0x0002		/* Broadcast enabled */
 #define   VIC_CMD_IFF_MULTICAST	0x0004		/* Multicast enabled */
 #define  VIC_CMD_INTR_DISABLE	0x0020	/* Disable interrupts */
@@ -423,7 +423,7 @@ vic_attach(struct device *parent, struct device *self, void *aux)
 		if ((r & VIC_MORPH_MASK) == VIC_MORPH_VMXNET)
 			break;
 		if ((r & VIC_MORPH_MASK) != VIC_MORPH_LANCE) {
-			printf(": unexpect morph value (0x%08x)\n", r);
+			printf(": unexpected morph value (0x%08x)\n", r);
 			goto unmap;
 		}
 

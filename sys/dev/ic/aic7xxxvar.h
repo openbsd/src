@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxxvar.h,v 1.36 2020/07/29 16:57:22 krw Exp $	*/
+/*	$OpenBSD: aic7xxxvar.h,v 1.37 2022/01/09 05:42:38 jsg Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.36 2020/07/29 16:57:22 krw Exp $
+ * $Id: aic7xxxvar.h,v 1.37 2022/01/09 05:42:38 jsg Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.50 2003/12/17 00:02:09 gibbs Exp $
  */
@@ -645,7 +645,7 @@ struct scb_data {
 /************************ Target Mode Definitions *****************************/
 
 /*
- * Connection desciptor for select-in requests in target mode.
+ * Connection descriptor for select-in requests in target mode.
  */
 struct target_cmd {
 	uint8_t scsiid;		/* Our ID and the initiator's ID */

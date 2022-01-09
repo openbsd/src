@@ -1,4 +1,4 @@
-/*      $OpenBSD: lemacreg.h,v 1.2 2003/10/21 18:58:49 jmc Exp $ */
+/*      $OpenBSD: lemacreg.h,v 1.3 2022/01/09 05:42:38 jsg Exp $ */
 /*      $NetBSD: lemacreg.h,v 1.2 2001/06/13 10:46:03 wiz Exp $ */
 
 /*
@@ -122,7 +122,7 @@
 #define LEMAC_TX_ISA		0x01	/* Insert Source Address (no) */
 #define LEMAC_TX_IFC		0x02	/* Insert Frame Check (yes) */
 #define LEMAC_TX_PAD		0x04	/* Zero PAD to minimum length (yes) */
-#define LEMAC_TX_LAB		0x08	/* Less Agressive Backoff (no) */
+#define LEMAC_TX_LAB		0x08	/* Less Aggressive Backoff (no) */
 #define LEMAC_TX_QMD		0x10	/* Q-Mode (yes) */
 #define LEMAC_TX_STP		0x20	/* Stop on Error (no) */
 #define LEMAC_TX_SQE		0x40	/* SQE Enable (yes) */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.h,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
+/*	$OpenBSD: if_igc.h,v 1.2 2022/01/09 05:42:50 jsg Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -44,7 +44,7 @@
  *   Increasing this value allows the driver to queue more transmits. Each
  *   descriptor is 16 bytes.
  *   Since TDLEN should be multiple of 128bytes, the number of transmit
- *   desscriptors should meet the following condition.
+ *   descriptors should meet the following condition.
  *      (num_tx_desc * sizeof(struct igc_tx_desc)) % 128 == 0
  */
 #define IGC_MIN_TXD		128
@@ -62,7 +62,7 @@
  *   Each descriptor is 16 bytes.  A receive buffer is also allocated for each
  *   descriptor. The maximum MTU size is 16110.
  *   Since TDLEN should be multiple of 128bytes, the number of transmit
- *   desscriptors should meet the following condition.
+ *   descriptors should meet the following condition.
  *      (num_tx_desc * sizeof(struct igc_tx_desc)) % 128 == 0
  */
 #define IGC_MIN_RXD		128
@@ -131,7 +131,7 @@
 #define IGC_RADV_VAL		64
 
 /*
- * This parameter controls whether or not autonegotation is enabled.
+ * This parameter controls whether or not autonegotiation is enabled.
  *              0 - Disable autonegotiation
  *              1 - Enable  autonegotiation
  */
@@ -144,7 +144,7 @@
 #define AUTO_ALL_MODES		0
 
 /*
- * Micellaneous constants
+ * Miscellaneous constants
  */
 #define MAX_NUM_MULTICAST_ADDRESSES	128
 #define IGC_FC_PAUSE_TIME		0x0680

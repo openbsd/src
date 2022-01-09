@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.34 2021/03/07 06:21:38 jsg Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.35 2022/01/09 05:42:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -652,7 +652,7 @@ mtd_init(struct ifnet *ifp)
 	mtd_setmulti(sc);
 
 	if (mtd_list_rx_init(sc)) {
-		printf("%s: can't allocate memeory for rx buffers\n",
+		printf("%s: can't allocate memory for rx buffers\n",
 		    sc->sc_dev.dv_xname);
 		splx(s);
 		return;

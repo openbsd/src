@@ -1,4 +1,4 @@
-/*	$OpenBSD: ti.c,v 1.28 2020/12/12 11:48:52 jan Exp $	*/
+/*	$OpenBSD: ti.c,v 1.29 2022/01/09 05:42:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -53,7 +53,7 @@
  *
  * The Tigon 2 contains 2 R4000 CPUs and requires a newer firmware
  * revision, which supports new features such as extended commands,
- * extended jumbo receive ring desciptors and a mini receive ring.
+ * extended jumbo receive ring descriptors and a mini receive ring.
  *
  * Alteon Networks is to be commended for releasing such a vast amount
  * of development material for the Tigon NIC without requiring an NDA

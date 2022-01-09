@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_tables.h,v 1.5 2009/03/06 07:28:10 grange Exp $	*/
+/*	$OpenBSD: aac_tables.h,v 1.6 2022/01/09 05:42:37 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -69,7 +69,7 @@ const struct aac_code_lookup aac_command_status_table[] = {
 	{ "bad type",				10007 },
 	{ "jukebox",				10008 },
 	{ "not mounted",			10009 },
-	{ "in maintenace mode",			10010 },
+	{ "in maintenance mode",		10010 },
 	{ "stale ACL",				10011 },
 	{ NULL, 				0 },
 	{ "unknown command status",		0 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_sis.c,v 1.18 2014/05/27 12:40:00 kettenis Exp $	*/
+/*	$OpenBSD: agp_sis.c,v 1.19 2022/01/09 05:42:45 jsg Exp $	*/
 /*	$NetBSD: agp_sis.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -121,7 +121,7 @@ agp_sis_attach(struct device *parent, struct device *self, void *aux)
 			break;
 
 		/*
-		 * Probably failed to alloc congigious memory. Try reducing the
+		 * Probably failed to alloc contiguous memory. Try reducing the
 		 * aperture so that the gatt size reduces.
 		 */
 		ssc->ssc_apsize /= 2;

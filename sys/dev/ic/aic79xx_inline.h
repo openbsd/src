@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_inline.h,v 1.4 2004/08/23 20:16:01 marco Exp $	*/
+/*	$OpenBSD: aic79xx_inline.h,v 1.5 2022/01/09 05:42:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -118,7 +118,7 @@ void	ahd_sync_sense(struct ahd_softc *, struct scb *, int);
 uint32_t
 			ahd_targetcmd_offset(struct ahd_softc *, u_int);
 
-/*********************** Miscelaneous Support Functions ***********************/
+/*********************** Miscellaneous Support Functions **********************/
 void	ahd_complete_scb(struct ahd_softc *, struct scb *);
 void	ahd_update_residual(struct ahd_softc *, struct scb *);
 struct ahd_initiator_tinfo *

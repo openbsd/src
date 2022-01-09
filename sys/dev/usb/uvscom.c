@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.39 2020/07/31 10:49:33 mglocker Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.40 2022/01/09 05:43:02 jsg Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -676,7 +676,7 @@ uvscom_open(void *addr, int portno)
 
 		err = uvscom_readstat(sc);
 		if (err) {
-			DPRINTF(("%s: uvscom_open: readstat faild\n",
+			DPRINTF(("%s: uvscom_open: readstat failed\n",
 				 sc->sc_dev.dv_xname));
 			return (EIO);
 		}

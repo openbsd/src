@@ -1,4 +1,4 @@
-/*	$OpenBSD: pucdata.c,v 1.115 2021/10/30 03:27:35 jsg Exp $	*/
+/*	$OpenBSD: pucdata.c,v 1.116 2022/01/09 05:42:58 jsg Exp $	*/
 /*	$NetBSD: pucdata.c,v 1.6 1999/07/03 05:55:23 cgd Exp $	*/
 
 /*
@@ -930,7 +930,7 @@ const struct puc_device_description puc_devs[] = {
 	/*
 	 * VScom PCI 100H, little sister of 800H, 1 com.
 	 * also com part of VScom 110H
-	 * The one I have defaults to a fequency of 14.7456 MHz which is
+	 * The one I have defaults to a frequency of 14.7456 MHz which is
 	 * jumper J1 set to 2-3.
 	 */
 	{   /* "VScom PCI-100H", */
@@ -944,7 +944,7 @@ const struct puc_device_description puc_devs[] = {
 	/*
 	 * VScom PCI 200H, little sister of 800H, 2 com.
 	 * also com part of VScom 210H
-	 * The one I have defaults to a fequency of 14.7456 MHz which is
+	 * The one I have defaults to a frequency of 14.7456 MHz which is
 	 * jumper J1 set to 2-3.
 	 */
 
@@ -962,7 +962,7 @@ const struct puc_device_description puc_devs[] = {
 	 * that offers 4 com port on PCI device 0 (both 400H and 800H)
 	 * and 4 on PCI device 1 (800H only). PCI device 0 has
 	 * device ID 3 and PCI device 1 device ID 4. Uses a 14.7456 MHz crystal
-	 * instead of the standart 1.8432MHz.
+	 * instead of the standard 1.8432MHz.
 	 * There's a version with a jumper for selecting the crystal frequency,
 	 * defaults to 8x as used here. The jumperless version uses 8x, too.
 	 */
@@ -1016,7 +1016,7 @@ const struct puc_device_description puc_devs[] = {
 	/*
 	 * VScom PCI 100L
 	 * one com
-	 * The one I have defaults to a fequency of 14.7456 MHz which is
+	 * The one I have defaults to a frequency of 14.7456 MHz which is
 	 * jumper J1 set to 2-3.
 	 */
 	{   /* "VScom PCI-100L", */

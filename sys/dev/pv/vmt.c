@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.24 2021/11/05 11:38:29 mpi Exp $ */
+/*	$OpenBSD: vmt.c,v 1.25 2022/01/09 05:42:58 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -536,7 +536,7 @@ vmt_kvop(void *arg, int op, char *key, char *value, size_t valuelen)
 	/* skip response that was tested in vm_rpci_response_successful() */
 	ptr = sc->sc_rpc_buf + 2;
 
-	/* might truncat, copy anyway but return error */
+	/* might truncate, copy anyway but return error */
 	if (strlcpy(value, ptr, valuelen) >= valuelen)
 		error = ENOMEM;
 

@@ -59,7 +59,7 @@
 
 #define	PIC_ICW3	0x01	/* Initialization Command Word 3 (w) */
 #define	ICW3_CASCADE(x)	(1U << (x))	/* cascaded mode enable */
-#define	ICW3_SIC(x)	((x) << 0)	/* slave identifcation code */
+#define	ICW3_SIC(x)	((x) << 0)	/* slave identification code */
 
 #define	PIC_ICW4	0x01	/* Initialization Command Word 4 (w) */
 #define	ICW4_8086	(1U << 0)	/* 8086 mode */

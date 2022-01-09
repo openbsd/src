@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vgereg.h,v 1.2 2007/11/26 09:28:33 martynas Exp $	*/
+/*	$OpenBSD: if_vgereg.h,v 1.3 2022/01/09 05:42:56 jsg Exp $	*/
 /*	$FreeBSD: if_vgereg.h,v 1.1 2004/09/10 20:57:45 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -444,7 +444,7 @@
 #define VGE_MIICMD_MOUT		0x08	/* data out pin enable */
 #define VGE_MIICMD_MDP		0x10	/* enable direct programming mode */
 #define VGE_MIICMD_WCMD		0x20	/* embedded mode write */
-#define VGE_MIICMD_RCMD		0x40	/* embadded mode read */
+#define VGE_MIICMD_RCMD		0x40	/* embedded mode read */
 #define VGE_MIICMD_MAUTO	0x80	/* enable autopolling */
 
 /* MII address register */

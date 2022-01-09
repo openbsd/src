@@ -1,4 +1,4 @@
-/*	$OpenBSD: smc83c170var.h,v 1.4 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: smc83c170var.h,v 1.5 2022/01/09 05:42:42 jsg Exp $	*/
 /*	$NetBSD: smc83c170var.h,v 1.9 2005/02/04 02:10:37 perry Exp $	*/
 
 /*-
@@ -83,7 +83,7 @@ struct epic_control_data {
 #define	EPIC_CDFLOFF(x)	EPIC_CDOFF(ecd_txfrags[(x)])
 
 /*
- * Software state for transmit and receive desciptors.
+ * Software state for transmit and receive descriptors.
  */
 struct epic_descsoft {
 	struct mbuf *ds_mbuf;		/* head of mbuf chain */

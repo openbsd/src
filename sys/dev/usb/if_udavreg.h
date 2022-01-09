@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_udavreg.h,v 1.15 2015/06/19 20:39:34 uaa Exp $ */
+/*	$OpenBSD: if_udavreg.h,v 1.16 2022/01/09 05:43:00 jsg Exp $ */
 /*	$NetBSD: if_udavreg.h,v 1.2 2003/09/04 15:17:39 tsutsui Exp $	*/
 /*	$nabe: if_udavreg.h,v 1.2 2003/08/21 16:26:40 nabe Exp $	*/
 /*
@@ -53,8 +53,8 @@
 #define	 UDAV_NCR_WAKEEN	(1<<6) /* Wakeup Event Enable */
 #define	 UDAV_NCR_FCOL		(1<<4) /* Force Collision Mode */
 #define	 UDAV_NCR_FDX		(1<<3) /* Full-Duplex Mode (RO on Int. PHY) */
-#define	 UDAV_NCR_LBK1		(1<<2) /* Lookback Mode */
-#define	 UDAV_NCR_LBK0		(1<<1) /* Lookback Mode */
+#define	 UDAV_NCR_LBK1		(1<<2) /* Loopback Mode */
+#define	 UDAV_NCR_LBK0		(1<<1) /* Loopback Mode */
 #define	 UDAV_NCR_RST		(1<<0) /* Software reset */
 
 #define	UDAV_NSR		0x01 /* Network Status Register */

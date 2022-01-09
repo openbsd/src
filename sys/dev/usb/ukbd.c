@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbd.c,v 1.85 2021/11/22 11:29:17 anton Exp $	*/
+/*	$OpenBSD: ukbd.c,v 1.86 2022/01/09 05:43:00 jsg Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -495,7 +495,7 @@ ukbd_cnattach(void)
 	/*
 	 * XXX USB requires too many parts of the kernel to be running
 	 * XXX in order to work, so we can't do much for the console
-	 * XXX keyboard until autconfiguration has run its course.
+	 * XXX keyboard until autoconfiguration has run its course.
 	 */
 	hidkbd_is_console = 1;
 

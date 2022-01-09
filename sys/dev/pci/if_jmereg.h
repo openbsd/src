@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_jmereg.h,v 1.4 2008/12/01 09:12:59 jsg Exp $	*/
+/*	$OpenBSD: if_jmereg.h,v 1.5 2022/01/09 05:42:54 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -65,7 +65,7 @@
 /* PCIe link error/status. */
 #define	JME_PCI_LES		0xD8
 
-/* propeietary register 0. */
+/* proprietary register 0. */
 #define	JME_PCI_PE0		0xE0
 #define	PE0_SPI_EXIST		0x00200000
 #define	PE0_PME_D0		0x00100000
@@ -114,7 +114,7 @@
  * Misc registers         128 bytes     BAR2 + 0x80 ~       BAR0 + 0x800 ~
  *                                       BAR2 + 0x7F         BAR0 + 0x87F
  * -----------------------------------------------------------------------
- * To simplify register access fuctions and to get better performance
+ * To simplify register access functions and to get better performance
  * this driver doesn't support IO space access. It could be implemented
  * as a function which selects appropriate BARs to access requested
  * register.
@@ -755,7 +755,7 @@
 #define	TIMER_CNT_SHIFT		0
 #define	TIMER_UNIT		1024	/* 1024us */
 
-/* Aggresive power mode control. */
+/* Aggressive power mode control. */
 #define	JME_APMC		0x087C
 #define	APMC_PCIE_SDOWN_STAT	0x80000000
 #define	APMC_PCIE_SDOWN_ENB	0x40000000
@@ -766,7 +766,7 @@
 #define	APMC_DIS_CLKPM		0x00000002
 #define	APMC_DIS_CLKTX		0x00000001
 
-/* Packet completion coalesing status of Rx queue 0, 1, 2 and 3. */
+/* Packet completion coalescing status of Rx queue 0, 1, 2 and 3. */
 #define	JME_PCCSRX_BASE		0x0880
 #define	JME_PCCSRX_END		0x088F
 #define	PCCSRX_REG(x)		(JME_PCCSRX_BASE + ((x) * 4))
@@ -775,7 +775,7 @@
 #define	PCCSRX_PKT_CNT_MASK	0x0000FF00
 #define	PCCSRX_PKT_CNT_SHIFT	8
 
-/* Packet completion coalesing status of Tx queue. */
+/* Packet completion coalescing status of Tx queue. */
 #define	JME_PCCSTX		0x0890
 #define	PCCSTX_TO_MASK		0xFFFF0000
 #define	PCCSTX_TO_SHIFT		16

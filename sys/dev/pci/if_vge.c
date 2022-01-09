@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.74 2020/07/10 13:26:38 patrick Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.75 2022/01/09 05:42:56 jsg Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -1591,7 +1591,7 @@ vge_init(struct ifnet *ifp)
 
 	/*
 	 * Configure one-shot timer for microsecond
-	 * resulution and load it for 500 usecs.
+	 * resolution and load it for 500 usecs.
 	 */
 	CSR_SETBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_TIMER0_RES);
 	CSR_WRITE_2(sc, VGE_SSTIMER, 400);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.137 2017/03/08 12:02:41 mpi Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.138 2022/01/09 05:42:50 jsg Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@
  */
 
 #define PCI_CFID	0x00	/* Configuration ID */
-#define PCI_CFCS	0x04	/* Configurtion Command/Status */
+#define PCI_CFCS	0x04	/* Configuration Command/Status */
 #define PCI_CFRV	0x08	/* Configuration Revision */
 #define PCI_CFLT	0x0c	/* Configuration Latency Timer */
 #define PCI_CBIO	0x10	/* Configuration Base IO Address */
@@ -425,7 +425,7 @@ tulip_linkup(tulip_softc_t * const sc, tulip_media_t media)
      * We could set probe_timeout to 0 but setting to 3000 puts this
      * in one central place and the only matters is tulip_link is
      * followed by a tulip_timeout.  Therefore setting it should not
-     * result in aberrant behavour.
+     * result in aberrant behaviour.
      */
     sc->tulip_probe_timeout = 3000;
     sc->tulip_probe_state = TULIP_PROBE_INACTIVE;
@@ -3016,7 +3016,7 @@ tulip_reset(tulip_softc_t * const sc)
 
     /*
      * Brilliant.  Simply brilliant.  When switching modes/speeds
-     * on a 2114*, you need to set the appriopriate MII/PCS/SCL/PS
+     * on a 2114*, you need to set the appropriate MII/PCS/SCL/PS
      * bits in CSR6 and then do a software reset to get the 21140
      * to properly reset its internal pathways to the right places.
      *   Grrrr.
@@ -3100,7 +3100,7 @@ tulip_reset(tulip_softc_t * const sc)
     }
 
     /*
-     * If tulip_reset is being called recurisvely, exit quickly knowing
+     * If tulip_reset is being called recursively, exit quickly knowing
      * that when the outer tulip_reset returns all the right stuff will
      * have happened.
      */
@@ -3460,7 +3460,7 @@ tulip_tx_intr(tulip_softc_t * const sc)
 		 * Mark that we finished it.  If there's not
 		 * another pending, startup the TULIP receiver.
 		 * Make sure we ack the RXSTOPPED so we won't get
-		 * an abormal interrupt indication.
+		 * an abnormal interrupt indication.
 		 */
 		TULIP_TXMAP_POSTSYNC(sc, sc->tulip_setupmap);
 		sc->tulip_flags &= ~(TULIP_DOINGSETUP|TULIP_HASHONLY);
@@ -4070,7 +4070,7 @@ tulip_txput_setup(tulip_softc_t * const sc)
     TULIP_TXDESC_PRESYNC(sc, ri->ri_nextout, sizeof(u_int32_t));
     nextout->d_status = TULIP_DSTS_OWNER;
     /*
-     * Flush the ownwership of the current descriptor
+     * Flush the ownership of the current descriptor
      */
     TULIP_TXDESC_PRESYNC(sc, nextout, sizeof(u_int32_t));
     TULIP_CSR_WRITE(sc, csr_txpoll, 1);

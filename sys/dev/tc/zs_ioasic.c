@@ -1,4 +1,4 @@
-/* $OpenBSD: zs_ioasic.c,v 1.2 2017/12/30 20:46:59 guenther Exp $ */
+/* $OpenBSD: zs_ioasic.c,v 1.3 2022/01/09 05:43:00 jsg Exp $ */
 /* $NetBSD: zs_ioasic.c,v 1.40 2009/05/12 13:21:22 cegger Exp $ */
 
 /*-
@@ -111,7 +111,7 @@ int zs_major = 15;
 #endif
 
 /*
- * ZS chips are feeded a 7.372 MHz clock.
+ * ZS chips are fed a 7.372 MHz clock.
  */
 #define	PCLK	(9600 * 768)	/* PCLK pin input clock rate */
 
@@ -474,7 +474,7 @@ zs_set_modes(struct zs_chanstate *cs, int cflag)
 	/*
 	 * Output hardware flow control on the chip is horrendous:
 	 * if carrier detect drops, the receiver is disabled, and if
-	 * CTS drops, the transmitter is stoped IN MID CHARACTER!
+	 * CTS drops, the transmitter is stopped MID CHARACTER!
 	 * Therefore, NEVER set the HFC bit, and instead use the
 	 * status interrupt to detect CTS changes.
 	 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.70 2020/07/10 13:26:38 patrick Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.71 2022/01/09 05:42:56 jsg Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -504,7 +504,7 @@ stge_start(struct ifnet *ifp)
 
 		/*
 		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the alloted number of segments, or we
+		 * didn't fit in the allotted number of segments, or we
 		 * were short on resources.  For the too-many-segments
 		 * case, we simply report an error and drop the packet,
 		 * since we can't sanely copy a jumbo packet to a single
@@ -1194,7 +1194,7 @@ stge_init(struct ifnet *ifp)
 	CSR_WRITE_1(sc, STGE_RxDMABurstThresh, 0x30);
 	CSR_WRITE_1(sc, STGE_RxDMAUrgentThresh, 0x30);
 
-	/* Rx early threhold, from Linux */
+	/* Rx early threshold, from Linux */
 	CSR_WRITE_2(sc, STGE_RxEarlyThresh, 0x7ff);
 
 	/* Tx DMA thresholds, from Linux */

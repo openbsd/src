@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.102 2021/07/23 00:29:14 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.103 2022/01/09 05:42:54 jsg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -311,7 +311,7 @@ struct mcx_cmdq_mailbox {
 #define MCX_CMDQ_MAILBOX_SIZE	roundup(sizeof(struct mcx_cmdq_mailbox), \
 				    MCX_CMDQ_MAILBOX_ALIGN)
 /*
- * command mailbox structres
+ * command mailbox structures
  */
 
 struct mcx_cmd_enable_hca_in {

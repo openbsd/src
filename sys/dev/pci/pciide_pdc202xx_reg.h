@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.15 2010/07/23 07:47:13 jsg Exp $	*/
+/*	$OpenBSD: pciide_pdc202xx_reg.h,v 1.16 2022/01/09 05:42:58 jsg Exp $	*/
 /*	$NetBSD: pciide_pdc202xx_reg.h,v 1.5 2001/07/05 08:38:27 toshii Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 
 /*
  * Registers definitions for PROMISE PDC20246/PDC20262 PCI IDE controller.
- * Unfortunably the HW docs are not publically available. I've been able
+ * Unfortunately the HW docs are not publicly available. I've been able
  * to get a partial one for the PDC20246, and a better one for the PDC20262
  * from Promise.
  */
@@ -102,7 +102,7 @@
 
 /*
  * The timings provided here cmoes from the PDC20262 docs. I hope they are
- * rigth for the PDC20246 too ...
+ * right for the PDC20246 too ...
  */
 
 static int8_t pdc2xx_pa[] = {0x9, 0x5, 0x3, 0x2, 0x1};

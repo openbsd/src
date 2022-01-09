@@ -1,4 +1,4 @@
-/*     $OpenBSD: ar5210.c,v 1.47 2016/01/12 09:28:09 stsp Exp $        */
+/*     $OpenBSD: ar5210.c,v 1.48 2022/01/09 05:42:38 jsg Exp $        */
 
 /*
  * Copyright (c) 2004, 2005, 2006, 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1223,7 +1223,7 @@ void
 ar5k_ar5210_set_mcast_filter(struct ath_hal *hal, u_int32_t filter0,
     u_int32_t filter1)
 {
-	/* Set the multicat filter */
+	/* Set the multicast filter */
 	AR5K_REG_WRITE(AR5K_AR5210_MCAST_FIL0, filter0);
 	AR5K_REG_WRITE(AR5K_AR5210_MCAST_FIL1, filter1);
 }
@@ -1270,7 +1270,7 @@ void
 ar5k_ar5210_set_rx_filter(struct ath_hal *hal, u_int32_t filter)
 {
 	/*
-	 * The AR5210 uses promiscous mode to detect radar activity
+	 * The AR5210 uses promiscuous mode to detect radar activity
 	 */
 	if (filter & HAL_RX_FILTER_PHYRADAR) {
 		filter &= ~HAL_RX_FILTER_PHYRADAR;
@@ -2165,7 +2165,7 @@ ar5k_ar5210_wait_for_beacon(struct ath_hal *hal, bus_addr_t phys_addr)
 	int i;
 
 	/*
-	 * Wait for beaconn queue to be done
+	 * Wait for beacon queue to be done
 	 */
 	for (i = (AR5K_TUNE_BEACON_INTERVAL / 2); i > 0 &&
 		 (AR5K_REG_READ(AR5K_AR5210_BSR) &

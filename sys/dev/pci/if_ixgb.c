@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.72 2020/07/10 13:26:38 patrick Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.73 2022/01/09 05:42:52 jsg Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1808,7 +1808,7 @@ ixgb_rxeof(struct ixgb_softc *sc, int count)
 		i = (sc->num_rx_desc - 1);
 
 	/*
-	 * 82597EX: Workaround for redundent write back in receive descriptor ring (causes
+	 * 82597EX: Workaround for redundant write back in receive descriptor ring (causes
  	 * memory corruption). Avoid using and re-submitting the most recently received RX
 	 * descriptor back to hardware.
 	 *

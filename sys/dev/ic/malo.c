@@ -1,4 +1,4 @@
-/*	$OpenBSD: malo.c,v 1.121 2020/07/10 13:26:37 patrick Exp $ */
+/*	$OpenBSD: malo.c,v 1.122 2022/01/09 05:42:38 jsg Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -1764,7 +1764,7 @@ malo_load_bootimg(struct malo_softc *sc)
 	/*
 	 * we loaded the firmware into card memory now tell the CPU
 	 * to fetch the code and execute it. The memory mapped via the
-	 * first bar is internaly mapped to 0xc0000000.
+	 * first bar is internally mapped to 0xc0000000.
 	 */
 	malo_send_cmd(sc, 0xc000bef8);
 

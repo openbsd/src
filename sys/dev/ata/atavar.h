@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.21 2015/08/17 15:36:29 krw Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.22 2022/01/09 05:42:37 jsg Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ struct ata_drive_datas {
 	struct ataparams id;
 };
 
-/* ATA/ATAPI common attachement datas */
+/* ATA/ATAPI common attachment data */
 struct ata_atapi_attach {
     u_int8_t aa_type; /* Type of device */
 #define T_ATA 0
@@ -97,7 +97,7 @@ struct ata_atapi_attach {
     u_int8_t aa_channel; /* controller's channel */
     u_int8_t aa_openings; /* Number of simultaneous commands possible */
     struct ata_drive_datas *aa_drv_data;
-    void *aa_bus_private; /* infos specifics to this bus */
+    void *aa_bus_private; /* info specific to this bus */
 };
 
 /* User config flags that force (or disable) the use of a mode */

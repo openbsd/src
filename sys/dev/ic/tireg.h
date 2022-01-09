@@ -1,4 +1,4 @@
-/*	$OpenBSD: tireg.h,v 1.5 2017/08/18 09:22:14 jsg Exp $	*/
+/*	$OpenBSD: tireg.h,v 1.6 2022/01/09 05:42:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -105,7 +105,7 @@
 #define TI_FIRMWARE_FIX			0xd
 
 /*
- * Miscelaneous Local Control register.
+ * Miscellaneous Local Control registers.
  */
 #define TI_MLC_EE_WRITE_ENB		0x00000010
 #define TI_MLC_SRAM_BANK_SIZE		0x00000300 /* Tigon 2 only */
@@ -556,7 +556,7 @@ struct ti_stats {
 	volatile u_int32_t nicInterrupts;			/* 82 */
 	volatile u_int32_t nicAvoidedInterrupts;		/* 83 */
 	/*
-	 * BD Coalessing Thresholds
+	 * BD Coalescing Thresholds
 	 */
 	volatile u_int32_t nicEventThresholdHit;		/* 84 */
 	volatile u_int32_t nicSendThresholdHit;			/* 85 */
@@ -778,7 +778,7 @@ struct ti_tx_desc {
  * The first thing in the packet is a 14-byte Ethernet header.
  * This means that the packet is misaligned.  To compensate,
  * we actually offset the data 2 bytes into the cluster.  This
- * alignes the packet after the Ethernet header at a 32-bit
+ * aligns the packet after the Ethernet header at a 32-bit
  * boundary.
  */
 
@@ -1057,7 +1057,7 @@ struct ti_ring_data {
 /*
  * Number of DMA segments in a TxCB. Note that this is carefully
  * chosen to make the total struct size an even power of two. It's
- * critical that no TxCB be split across a page boundry since
+ * critical that no TxCB be split across a page boundary since
  * no attempt is made to allocate physically contiguous memory.
  * 
  */
@@ -1135,7 +1135,7 @@ struct ti_softc {
 	u_int16_t		ti_cmd_saved_prodidx;
 	u_int16_t		ti_std;		/* current std ring head */
 	u_int16_t		ti_mini;	/* current mini ring head */
-	u_int16_t		ti_jumbo;	/* current jumo ring head */
+	u_int16_t		ti_jumbo;	/* current jumbo ring head */
 	SLIST_HEAD(__ti_mchead, ti_mc_entry)	ti_mc_listhead;
 	SLIST_HEAD(__ti_txmaphead, ti_txmap_entry)	ti_tx_map_listhead;
 	u_int32_t		ti_stat_ticks;

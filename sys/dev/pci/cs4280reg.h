@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280reg.h,v 1.1 2000/06/30 03:28:08 art Exp $	*/
+/*	$OpenBSD: cs4280reg.h,v 1.2 2022/01/09 05:42:45 jsg Exp $	*/
 /*	$NetBSD: cs4280reg.h,v 1.3 2000/05/15 01:35:29 thorpej Exp $	*/
 
 /*
@@ -226,7 +226,7 @@
 #define  CCI_MASK         0xffff0000
 #define CS4280_CD         0x02e0	/* Capture Delay */
 #define  CD_MASK          0xfffc000
-#define CS4280_CPI        0x02f4	/* Capture Phase Incremnt */
+#define CS4280_CPI        0x02f4	/* Capture Phase Increment */
 #define CS4280_CGL        0x0134	/* Capture Group Length */
 #define  CGL_MASK         0x0000ffff
 #define CS4280_CNT        0x0340	/* Capture Number of Triplets */

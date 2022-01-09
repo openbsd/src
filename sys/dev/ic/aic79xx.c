@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.66 2020/07/24 12:43:31 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.67 2022/01/09 05:42:38 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -123,7 +123,7 @@ static struct ahd_phase_table_entry ahd_phase_table[] =
 };
 
 /*
- * In most cases we only wish to itterate over real phases, so
+ * In most cases we only wish to iterate over real phases, so
  * exclude the last element from the count.
  */
 static const u_int num_phases = NUM_ELEMENTS(ahd_phase_table) - 1;
@@ -707,7 +707,7 @@ ahd_run_data_fifo(struct ahd_softc *ahd, struct scb *scb)
 		ahd_outb(ahd, SG_STATE, 0);
 
 		/*
-		 * Flush the data FIFO.  Strickly only
+		 * Flush the data FIFO.  Strictly only
 		 * necessary for Rev A parts.
 		 */
 		ahd_outb(ahd, DFCNTRL, ahd_inb(ahd, DFCNTRL) | FIFOFLUSH);
@@ -1929,7 +1929,7 @@ ahd_handle_transmission_error(struct ahd_softc *ahd)
 		 * If we raise ATN and the target completes the entire
 		 * stream (P0 asserted during the last packet), the
 		 * hardware will ack all data and return to the ISTART
-		 * state.  When the target reponds to our ATN condition,
+		 * state.  When the target responds to our ATN condition,
 		 * LQIPHASE_LQ will be asserted.  We should respond to
 		 * this with an LQIRETRY to prepare for any future
 		 * packets.  NONPACKREQ will not be asserted again
@@ -2672,7 +2672,7 @@ ahd_clear_critical_section(struct ahd_softc *ahd)
 		ahd_outb(ahd, SEQCTL0, ahd_inb(ahd, SEQCTL0) & ~STEP);
 		ahd_outb(ahd, SIMODE1, simode1);
 		/*
-		 * SCSIINT seems to glitch occassionally when
+		 * SCSIINT seems to glitch occasionally when
 		 * the interrupt masks are restored.  Clear SCSIINT
 		 * one more time so that only persistent errors
 		 * are seen as a real interrupt.
@@ -3001,7 +3001,7 @@ ahd_validate_width(struct ahd_softc *ahd, struct ahd_initiator_tinfo *tinfo,
 
 /*
  * Update the bitmask of targets for which the controller should
- * negotiate with at the next convenient oportunity.  This currently
+ * negotiate with at the next convenient opportunity.  This currently
  * means the next time we send the initial identify messages for
  * a new transaction.
  */
@@ -3357,7 +3357,7 @@ ahd_update_neg_table(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 
 	/*
 	 * During packetized transfers, the target will
-	 * give us the oportunity to send command packets
+	 * give us the opportunity to send command packets
 	 * without us asserting attention.
 	 */
 	if ((tinfo->ppr_options & MSG_EXT_PPR_IU_REQ) == 0)
@@ -3428,7 +3428,7 @@ ahd_update_pending_scbs(struct ahd_softc *ahd)
 	 * has already been setup.  The negotiation changes may
 	 * effect whether we select-out with ATN.  It is only
 	 * safe to clear ENSELO when the bus is not free and no
-	 * selection is in progres or completed.
+	 * selection is in progress or completed.
 	 */
 	saved_modes = ahd_save_modes(ahd);
 	ahd_set_modes(ahd, AHD_MODE_SCSI, AHD_MODE_SCSI);
@@ -3551,7 +3551,7 @@ ahd_scb_devinfo(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 /*
  * When an initiator transaction with the MK_MESSAGE flag either reconnects
  * or enters the initial message out phase, we are interrupted.  Fill our
- * outgoing message buffer with the appropriate message and beging handing
+ * outgoing message buffer with the appropriate message and begin handing
  * the message phase(s) manually.
  */
 void
@@ -3791,7 +3791,7 @@ ahd_construct_sdtr(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 }
 
 /*
- * Build a wide negotiateion message in our message
+ * Build a wide negotiation message in our message
  * buffer based on the input parameters.
  */
 void
@@ -4818,7 +4818,7 @@ ahd_handle_msg_reject(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 
 		/*
 		 * Requeue all tagged commands for this target
-		 * currently in our posession so they can be
+		 * currently in our possession so they can be
 		 * converted to untagged commands.
 		 */
 		ahd_search_qinfifo(ahd, SCB_GET_TARGET(ahd, scb),
@@ -4852,7 +4852,7 @@ ahd_handle_msg_reject(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 }
 
 /*
- * Process an ingnore wide residue message.
+ * Process an ignore wide residue message.
  */
 void
 ahd_handle_ign_wide_residue(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
@@ -5441,7 +5441,7 @@ ahd_shutdown(void *arg)
 /*
  * Reset the controller and record some information about it
  * that is only available just after a reset.  If "reinit" is
- * non-zero, this reset occured after initial configuration
+ * non-zero, this reset occurred after initial configuration
  * and the caller requests that the chip be fully reinitialized
  * to a runable state.  Chip interrupts are *not* enabled after
  * a reinitialization.  The caller must enable interrupts via
@@ -5477,7 +5477,7 @@ ahd_reset(struct ahd_softc *ahd, int reinit)
 		 * does not disable its parity logic prior to
 		 * the start of the reset.  This may cause a
 		 * parity error to be detected and thus a
-		 * spurious SERR or PERR assertion.  Disble
+		 * spurious SERR or PERR assertion.  Disable
 		 * PERR and SERR responses during the CHIPRST.
 		 */
 		mod_cmd = cmd & ~(PCI_COMMAND_PARITY_ENABLE|PCI_COMMAND_SERR_ENABLE);
@@ -6889,7 +6889,7 @@ ahd_resume(struct ahd_softc *ahd)
  * table entry for TCL.  Return the offset into
  * the SCB that contains the entry for TCL.
  * saved_scbid is dereferenced and set to the
- * scbid that should be restored once manipualtion
+ * scbid that should be restored once manipulation
  * of the TCL entry is complete.
  */
 u_int ahd_index_busy_tcl(struct ahd_softc *, u_int *, u_int);
@@ -7641,7 +7641,7 @@ ahd_reset_channel(struct ahd_softc *ahd, char channel, int initiate_reset)
 	 */
 	next_fifo = fifo = ahd_inb(ahd, DFFSTAT) & CURRFIFO;
 	if (next_fifo > CURRFIFO_1)
-		/* If disconneced, arbitrarily start with FIFO1. */
+		/* If disconnected, arbitrarily start with FIFO1. */
 		next_fifo = fifo = 0;
 	do {
 		next_fifo ^= CURRFIFO_1;
@@ -7930,7 +7930,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 					printf("Invalid Command IU Field\n");
 					break;
 				case SIU_PFC_TMF_NOT_SUPPORTED:
-					printf("TMF not supportd\n");
+					printf("TMF not supported\n");
 					break;
 				case SIU_PFC_TMF_FAILED:
 					printf("TMF failed\n");
@@ -8019,7 +8019,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 		 * We can't allow the target to disconnect.
 		 * This will be an untagged transaction and
 		 * having the target disconnect will make this
-		 * transaction indestinguishable from outstanding
+		 * transaction indistinguishable from outstanding
 		 * tagged transactions.
 		 */
 		hscb->control = 0;
@@ -8058,7 +8058,7 @@ ahd_handle_scsi_status(struct ahd_softc *ahd, struct scb *scb)
 		break;
 	}
 	case SCSI_STATUS_OK:
-		printf("%s: Interrupted for staus of 0???\n",
+		printf("%s: Interrupted for status of 0???\n",
 		       ahd_name(ahd));
 		/* FALLTHROUGH */
 	default:
@@ -8464,7 +8464,7 @@ ahd_check_patch(struct ahd_softc *ahd, const struct patch **start_patch,
 			cur_patch += cur_patch->skip_patch;
 		} else {
 			/* Accepted this patch.  Advance to the next
-			 * one and wait for our intruction pointer to
+			 * one and wait for our instruction pointer to
 			 * hit this point.
 			 */
 			cur_patch++;
@@ -9046,7 +9046,7 @@ ahd_read_seeprom(struct ahd_softc *ahd, uint16_t *buf,
 }
 
 /*
- * Write count 16bit words from buf, into SEEPROM attache to the
+ * Write count 16bit words from buf, into SEEPROM attached to the
  * controller starting at 16bit word address start_addr, using the
  * controller's SEEPROM writing state machine.
  */
@@ -9069,7 +9069,7 @@ ahd_write_seeprom(struct ahd_softc *ahd, uint16_t *buf,
 		return (error);
 
 	/*
-	 * Write the data.  If we don't get throught the loop at
+	 * Write the data.  If we don't get through the loop at
 	 * least once, the arguments were invalid.
 	 */
 	retval = EINVAL;
@@ -9173,7 +9173,7 @@ ahd_acquire_seeprom(struct ahd_softc *ahd)
 	 * We should be able to determine the SEEPROM type
 	 * from the flexport logic, but unfortunately not
 	 * all implementations have this logic and there is
-	 * no programatic method for determining if the logic
+	 * no programmatic method for determining if the logic
 	 * is present.
 	 */
 	return (1);

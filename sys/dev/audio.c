@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.193 2021/05/16 15:12:37 deraadt Exp $	*/
+/*	$OpenBSD: audio.c,v 1.194 2022/01/09 05:42:36 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1166,7 +1166,7 @@ audio_ioc_setpar(struct audio_softc *sc, struct audio_swpar *p)
 		return 0;
 
 	/*
-	 * negociate parameters with the hardware
+	 * negotiate parameters with the hardware
 	 */
 	error = audio_setpar(sc);
 	if (error)

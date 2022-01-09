@@ -1,4 +1,4 @@
-/*	$OpenBSD: agpvar.h,v 1.33 2015/12/19 16:07:20 kettenis Exp $	*/
+/*	$OpenBSD: agpvar.h,v 1.34 2022/01/09 05:42:45 jsg Exp $	*/
 /*	$NetBSD: agpvar.h,v 1.4 2001/10/01 21:54:48 fvdl Exp $	*/
 
 /*-
@@ -185,7 +185,7 @@ int	 agp_acquire(void *);
 int	 agp_release(void *);
 
 /*
- * Enable the agp hardware with the relavent mode. The mode bits are
+ * Enable the agp hardware with the relevant mode. The mode bits are
  * defined in <dev/pci/agpreg.h>
  */
 int	 agp_enable(void *, u_int32_t);
