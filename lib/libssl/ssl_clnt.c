@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.130 2022/01/09 15:29:42 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.131 2022/01/09 15:34:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1931,9 +1931,9 @@ ssl3_send_client_kex_gost(SSL *s, CBB *cbb)
 	size_t msglen;
 	unsigned int md_len;
 	EVP_MD_CTX *ukm_hash;
-	int ret = -1;
 	int nid;
 	CBB gostblob;
+	int ret = 0;
 
 	/* Get server sertificate PKEY and create ctx from it */
 	peer_cert = s->session->peer_pkeys[SSL_PKEY_GOST01].x509;
@@ -2027,7 +2027,7 @@ ssl3_send_client_kex_gost(SSL *s, CBB *cbb)
 	explicit_bzero(premaster_secret, sizeof(premaster_secret));
 	EVP_PKEY_free(pub_key);
 
-	return (ret);
+	return ret;
 }
 
 int
@@ -2055,7 +2055,7 @@ ssl3_send_client_key_exchange(SSL *s)
 			if (!ssl3_send_client_kex_ecdhe(s, &kex))
 				goto err;
 		} else if (alg_k & SSL_kGOST) {
-			if (ssl3_send_client_kex_gost(s, &kex) != 1)
+			if (!ssl3_send_client_kex_gost(s, &kex))
 				goto err;
 		} else {
 			ssl3_send_alert(s, SSL3_AL_FATAL,

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.135 2022/01/09 15:28:47 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.136 2022/01/09 15:34:21 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1830,7 +1830,7 @@ ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-	return (-1);
+	return 0;
 }
 
 int
@@ -1862,7 +1862,7 @@ ssl3_get_client_key_exchange(SSL *s)
 		if (!ssl3_get_client_kex_ecdhe(s, &cbs))
 			goto err;
 	} else if (alg_k & SSL_kGOST) {
-		if (ssl3_get_client_kex_gost(s, &cbs) != 1)
+		if (!ssl3_get_client_kex_gost(s, &cbs))
 			goto err;
 	} else {
 		al = SSL_AD_HANDSHAKE_FAILURE;
