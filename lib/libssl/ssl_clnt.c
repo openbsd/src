@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.129 2022/01/09 13:17:33 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.130 2022/01/09 15:29:42 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2014,10 +2014,8 @@ ssl3_send_client_kex_gost(SSL *s, CBB *cbb)
 
 	/* Check if pubkey from client certificate was used. */
 	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2,
-	    NULL) > 0) {
-		/* Set flag "skip certificate verify". */
+	    NULL) > 0)
 		s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
-	}
 	EVP_PKEY_CTX_free(pkey_ctx);
 
 	if (!tls12_derive_master_secret(s, premaster_secret, 32))
