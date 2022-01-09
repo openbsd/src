@@ -1,4 +1,4 @@
-#	$OpenBSD: files.marvell,v 1.9 2018/07/09 09:58:40 patrick Exp $
+#	$OpenBSD: files.marvell,v 1.10 2022/01/09 13:27:47 visa Exp $
 
 device mvacc
 attach mvacc at fdt
@@ -32,6 +32,6 @@ device mvpcie: pcibus
 attach mvpcie at fdt
 file	arch/armv7/marvell/mvpcie.c			mvpcie
 
-device mvpxa: sdmmcbus
+device mvpxa: sdmmcbus, sdhc
 attach mvpxa at fdt
 file	arch/armv7/marvell/mvpxa.c			mvpxa
