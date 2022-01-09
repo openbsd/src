@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.101 2020/05/26 17:44:23 tb Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.102 2022/01/09 16:39:06 robert Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -276,17 +276,11 @@ realinstall:
 .if !defined(NOLIBSTATIC)
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 lib${LIB}.a \
 	    ${DESTDIR}${LIBDIR}/lib${LIB}.a
-.if (${INSTALL_COPY} != "-p")
-	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}.a
-.endif
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}.a
 .endif
 .if !defined(NOPROFILE)
 	${INSTALL} ${INSTALL_COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
 	    lib${LIB}_p.a ${DESTDIR}${LIBDIR}
-.if (${INSTALL_COPY} != "-p")
-	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
-.endif
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .endif
 .if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
