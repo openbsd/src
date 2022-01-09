@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.133 2022/01/09 15:53:52 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.134 2022/01/09 15:55:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2456,8 +2456,8 @@ ssl3_check_cert_and_algorithm(SSL *s)
 
 	idx = s->session->peer_cert_type;
 	if (idx == SSL_PKEY_ECC) {
-		if (ssl_check_srvr_ecc_cert_and_alg(s,
-		    s->session->peer_pkeys[idx].x509) == 0) {
+		if (!ssl_check_srvr_ecc_cert_and_alg(s,
+		    s->session->peer_pkeys[idx].x509)) {
 			/* check failed */
 			SSLerror(s, SSL_R_BAD_ECC_CERT);
 			goto fatal_err;
