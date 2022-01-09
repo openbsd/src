@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.5 2021/11/22 14:00:52 jsg Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.6 2022/01/09 23:28:19 patrick Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -1193,16 +1193,13 @@ igc_ioctl(struct ifnet * ifp, u_long cmd, caddr_t data)
 int
 igc_rxrinfo(struct igc_softc *sc, struct if_rxrinfo *ifri)
 {
-	struct if_rxring_info *ifr, ifr1;
+	struct if_rxring_info *ifr;
 	struct rx_ring *rxr;
 	int error, i, n = 0;
 
-	if (sc->sc_nqueues > 1) {
-		if ((ifr = mallocarray(sc->sc_nqueues, sizeof(*ifr), M_DEVBUF,
-		    M_WAITOK | M_ZERO)) == NULL)
-			return ENOMEM;
-	} else
-		ifr = &ifr1;
+	if ((ifr = mallocarray(sc->sc_nqueues, sizeof(*ifr), M_DEVBUF,
+	    M_WAITOK | M_ZERO)) == NULL)
+		return ENOMEM;
 
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		rxr = &sc->rx_rings[i];
@@ -1213,8 +1210,7 @@ igc_rxrinfo(struct igc_softc *sc, struct if_rxrinfo *ifri)
 	}
 
 	error = if_rxr_info_ioctl(ifri, sc->sc_nqueues, ifr);
-	if (sc->sc_nqueues > 1)
-		free(ifr, M_DEVBUF, sc->sc_nqueues * sizeof(*ifr));
+	free(ifr, M_DEVBUF, sc->sc_nqueues * sizeof(*ifr));
 
 	return error;
 }
