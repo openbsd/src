@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.707 2022/01/04 11:31:42 jsg Exp $
+#	$OpenBSD: files,v 1.708 2022/01/09 13:26:08 visa Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -470,6 +470,7 @@ device	ccp
 file	dev/ic/ccp.c			ccp
 
 # SDHC SD/MMC controller
+define	sdhc
 device	sdhc: sdmmcbus
 file	dev/sdmmc/sdhc.c		sdhc
 
