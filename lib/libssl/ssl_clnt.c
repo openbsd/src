@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.128 2022/01/08 12:59:58 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.129 2022/01/09 13:17:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1212,13 +1212,10 @@ ssl3_get_server_certificate(SSL *s)
 }
 
 static int
-ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
+ssl3_get_server_kex_dhe(SSL *s, CBS *cbs)
 {
-	int nid = NID_dhKeyAgreement;
 	int invalid_params, invalid_key;
-	long alg_a;
-
-	alg_a = S3I(s)->hs.cipher->algorithm_auth;
+	int nid = NID_dhKeyAgreement;
 
 	tls_key_share_free(S3I(s)->hs.key_share);
 	if ((S3I(s)->hs.key_share = tls_key_share_new_nid(nid)) == NULL)
@@ -1242,12 +1239,6 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 		goto err;
 	}
 
-	if (alg_a & SSL_aRSA)
-		*pkey = X509_get_pubkey(s->session->peer_pkeys[SSL_PKEY_RSA].x509);
-	else
-		/* XXX - Anonymous DH, so no certificate or pkey. */
-		*pkey = NULL;
-
 	return 1;
 
  decode_err:
@@ -1259,14 +1250,11 @@ ssl3_get_server_kex_dhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 }
 
 static int
-ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
+ssl3_get_server_kex_ecdhe(SSL *s, CBS *cbs)
 {
-	CBS public;
 	uint8_t curve_type;
 	uint16_t curve_id;
-	long alg_a;
-
-	alg_a = S3I(s)->hs.cipher->algorithm_auth;
+	CBS public;
 
 	if (!CBS_get_u8(cbs, &curve_type))
 		goto decode_err;
@@ -1300,19 +1288,6 @@ ssl3_get_server_kex_ecdhe(SSL *s, EVP_PKEY **pkey, CBS *cbs)
 	if (!tls_key_share_peer_public(S3I(s)->hs.key_share, &public, NULL))
 		goto err;
 
-	/*
-	 * The ECC/TLS specification does not mention the use of DSA to sign
-	 * ECParameters in the server key exchange message. We do support RSA
-	 * and ECDSA.
-	 */
-	if (alg_a & SSL_aRSA)
-		*pkey = X509_get_pubkey(s->session->peer_pkeys[SSL_PKEY_RSA].x509);
-	else if (alg_a & SSL_aECDSA)
-		*pkey = X509_get_pubkey(s->session->peer_pkeys[SSL_PKEY_ECC].x509);
-	else
-		/* XXX - Anonymous ECDH, so no certificate or pkey. */
-		*pkey = NULL;
-
 	return 1;
 
  decode_err:
@@ -1326,7 +1301,6 @@ int
 ssl3_get_server_key_exchange(SSL *s)
 {
 	CBS cbs, signature;
-	EVP_PKEY *pkey = NULL;
 	EVP_MD_CTX *md_ctx;
 	const unsigned char *param;
 	size_t param_len;
@@ -1372,10 +1346,10 @@ ssl3_get_server_key_exchange(SSL *s)
 	param_len = CBS_len(&cbs);
 
 	if (alg_k & SSL_kDHE) {
-		if (!ssl3_get_server_kex_dhe(s, &pkey, &cbs))
+		if (!ssl3_get_server_kex_dhe(s, &cbs))
 			goto err;
 	} else if (alg_k & SSL_kECDHE) {
-		if (!ssl3_get_server_kex_ecdhe(s, &pkey, &cbs))
+		if (!ssl3_get_server_kex_ecdhe(s, &cbs))
 			goto err;
 	} else if (alg_k != 0) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
@@ -1386,10 +1360,24 @@ ssl3_get_server_key_exchange(SSL *s)
 	param_len -= CBS_len(&cbs);
 
 	/* if it was signed, check the signature */
-	if (pkey != NULL) {
+	if ((alg_a & SSL_aNULL) == 0) {
 		uint16_t sigalg_value = SIGALG_NONE;
 		const struct ssl_sigalg *sigalg;
 		EVP_PKEY_CTX *pctx;
+		EVP_PKEY *pkey = NULL;
+
+		if ((alg_a & SSL_aRSA) != 0) {
+			pkey = X509_get0_pubkey(
+			    s->session->peer_pkeys[SSL_PKEY_RSA].x509);
+		} else if ((alg_a & SSL_aECDSA) != 0) {
+			pkey = X509_get0_pubkey(
+			    s->session->peer_pkeys[SSL_PKEY_ECC].x509);
+		}
+		if (pkey == NULL) {
+			al = SSL_AD_ILLEGAL_PARAMETER;
+			SSLerror(s, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+			goto err;
+		}
 
 		if (SSL_USE_SIGALGS(s)) {
 			if (!CBS_get_u16(&cbs, &sigalg_value))
@@ -1432,12 +1420,6 @@ ssl3_get_server_key_exchange(SSL *s)
 			SSLerror(s, SSL_R_BAD_SIGNATURE);
 			goto fatal_err;
 		}
-	} else {
-		/* aNULL does not need public keys. */
-		if (!(alg_a & SSL_aNULL)) {
-			SSLerror(s, ERR_R_INTERNAL_ERROR);
-			goto err;
-		}
 	}
 
 	if (CBS_len(&cbs) != 0) {
@@ -1446,7 +1428,6 @@ ssl3_get_server_key_exchange(SSL *s)
 		goto fatal_err;
 	}
 
-	EVP_PKEY_free(pkey);
 	EVP_MD_CTX_free(md_ctx);
 
 	return (1);
@@ -1459,7 +1440,6 @@ ssl3_get_server_key_exchange(SSL *s)
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 
  err:
-	EVP_PKEY_free(pkey);
 	EVP_MD_CTX_free(md_ctx);
 
 	return (-1);
