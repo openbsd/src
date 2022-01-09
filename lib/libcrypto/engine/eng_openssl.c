@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_openssl.c,v 1.14 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: eng_openssl.c,v 1.15 2022/01/09 23:55:31 tb Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -351,18 +351,17 @@ test_sha1_final(EVP_MD_CTX *ctx, unsigned char *md)
 }
 
 static const EVP_MD test_sha_md = {
-	NID_sha1,
-	NID_sha1WithRSAEncryption,
-	SHA_DIGEST_LENGTH,
-	0,
-	test_sha1_init,
-	test_sha1_update,
-	test_sha1_final,
-	NULL,
-	NULL,
-	EVP_PKEY_RSA_method,
-	SHA_CBLOCK,
-	sizeof(EVP_MD *) + sizeof(SHA_CTX),
+	.type = NID_sha1,
+	.pkey_type = NID_sha1WithRSAEncryption,
+	.md_size = SHA_DIGEST_LENGTH,
+	.flags = 0,
+	.init = test_sha1_init,
+	.update = test_sha1_update,
+	.final = test_sha1_final,
+	.copy = NULL,
+	.cleanup = NULL,
+	.block_size = SHA_CBLOCK,
+	.ctx_size = sizeof(EVP_MD *) + sizeof(SHA_CTX),
 };
 
 static int
