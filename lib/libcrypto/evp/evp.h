@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.91 2022/01/07 21:58:17 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.92 2022/01/09 15:15:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -497,6 +497,10 @@ unsigned long EVP_MD_flags(const EVP_MD *md);
 
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
 void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
+#if defined(LIBRESSL_CRYPTO_INTERANL) || defined(LIBRESSL_NEXT_API)
+EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx);
+void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
+#endif
 #define EVP_MD_CTX_size(e)		EVP_MD_size(EVP_MD_CTX_md(e))
 #define EVP_MD_CTX_block_size(e)	EVP_MD_block_size(EVP_MD_CTX_md(e))
 #define EVP_MD_CTX_type(e)		EVP_MD_type(EVP_MD_CTX_md(e))

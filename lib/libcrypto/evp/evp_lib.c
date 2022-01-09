@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_lib.c,v 1.22 2022/01/07 11:13:54 tb Exp $ */
+/* $OpenBSD: evp_lib.c,v 1.23 2022/01/09 15:15:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -383,6 +383,35 @@ void *
 EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx)
 {
 	return ctx->md_data;
+}
+
+EVP_PKEY_CTX *
+EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)
+{
+	return ctx->pctx;
+}
+
+void
+EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
+{
+	if (EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX)) {
+		EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+	} else {
+		EVP_PKEY_CTX_free(ctx->pctx);
+	}
+
+	ctx->pctx = pctx;
+
+	if (pctx != NULL) {
+		/*
+		 * For unclear reasons it was decided that the caller keeps
+		 * ownership of pctx. So a flag was invented to make sure we
+		 * don't free it in EVP_MD_CTX_cleanup(). We also need to
+		 * unset it in EVP_MD_CTX_copy_ex(). Fortunately, the flag
+		 * isn't public...
+		 */
+		EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+	}
 }
 
 void

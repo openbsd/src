@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_locl.h,v 1.17 2021/12/12 21:21:58 tb Exp $ */
+/* $OpenBSD: evp_locl.h,v 1.18 2022/01/09 15:15:25 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -60,6 +60,12 @@
 #define HEADER_EVP_LOCL_H
 
 __BEGIN_HIDDEN_DECLS
+
+/*
+ * Don't free md_ctx->pctx in EVP_MD_CTX_cleanup().  Needed for ownership
+ * handling in EVP_MD_CTX_set_pkey_ctx().
+ */
+#define EVP_MD_CTX_FLAG_KEEP_PKEY_CTX   0x0400
 
 /* Macros to code block cipher wrappers */
 

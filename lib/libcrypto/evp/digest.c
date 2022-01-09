@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.32 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: digest.c,v 1.33 2022/01/09 15:15:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -282,6 +282,12 @@ EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 	EVP_MD_CTX_cleanup(out);
 	memcpy(out, in, sizeof *out);
 
+	/*
+	 * Because of the EVP_PKEY_CTX_dup() below, EVP_MD_CTX_cleanup() needs
+	 * to free out->pctx in all cases (even if this flag is set on in).
+	 */
+	EVP_MD_CTX_clear_flags(out, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+
 	if (in->md_data && out->digest->ctx_size) {
 		if (tmp_buf) {
 			out->md_data = tmp_buf;
@@ -383,7 +389,12 @@ EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 	if (ctx->digest && ctx->digest->ctx_size && ctx->md_data &&
 	    !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE))
 		freezero(ctx->md_data, ctx->digest->ctx_size);
-	EVP_PKEY_CTX_free(ctx->pctx);
+	/*
+	 * If EVP_MD_CTX_FLAG_KEEP_PKEY_CTX is set, EVP_MD_CTX_set_pkey() was
+	 * called and its strange API contract implies we don't own ctx->pctx.
+	 */
+	if (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX))
+		EVP_PKEY_CTX_free(ctx->pctx);
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE_finish(ctx->engine);
 #endif
