@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.283 2022/01/08 12:59:58 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.284 2022/01/09 15:53:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2235,10 +2235,10 @@ ssl_using_ecc_cipher(SSL *s)
 }
 
 int
-ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
+ssl_check_srvr_ecc_cert_and_alg(SSL *s, X509 *x)
 {
-	const SSL_CIPHER	*cs = S3I(s)->hs.cipher;
-	unsigned long		 alg_a;
+	const SSL_CIPHER *cs = S3I(s)->hs.cipher;
+	unsigned long alg_a;
 
 	alg_a = cs->algorithm_auth;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.379 2022/01/08 12:59:59 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.380 2022/01/09 15:53:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1479,7 +1479,7 @@ int tls12_derive_master_secret(SSL *s, uint8_t *premaster_secret,
     size_t premaster_secret_len);
 
 int ssl_using_ecc_cipher(SSL *s);
-int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
+int ssl_check_srvr_ecc_cert_and_alg(SSL *s, X509 *x);
 
 void tls1_get_formatlist(SSL *s, int client_formats, const uint8_t **pformats,
     size_t *pformatslen);
