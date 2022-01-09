@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.136 2022/01/09 15:34:21 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.137 2022/01/09 15:40:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1769,23 +1769,21 @@ ssl3_get_client_kex_ecdhe(SSL *s, CBS *cbs)
 static int
 ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
 {
-	EVP_PKEY_CTX *pkey_ctx;
-	EVP_PKEY *client_pub_pkey = NULL, *pk = NULL;
 	unsigned char premaster_secret[32];
-	unsigned long alg_a;
-	size_t outlen = 32;
+	EVP_PKEY_CTX *pkey_ctx = NULL;
+	EVP_PKEY *client_pubkey;
+	EVP_PKEY *pkey = NULL;
+	size_t outlen;
 	CBS gostblob;
-	int al;
 
 	/* Get our certificate private key*/
-	alg_a = S3I(s)->hs.cipher->algorithm_auth;
-	if (alg_a & SSL_aGOST01)
-		pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
+	if ((S3I(s)->hs.cipher->algorithm_auth & SSL_aGOST01) != 0)
+		pkey = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
 
-	if ((pkey_ctx = EVP_PKEY_CTX_new(pk, NULL)) == NULL)
+	if ((pkey_ctx = EVP_PKEY_CTX_new(pkey, NULL)) == NULL)
 		goto err;
 	if (EVP_PKEY_decrypt_init(pkey_ctx) <= 0)
-		goto gerr;
+		goto err;
 
 	/*
 	 * If client certificate is present and is of the same type,
@@ -1794,9 +1792,8 @@ ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
 	 * it is completely valid to use a client certificate for
 	 * authorization only.
 	 */
-	if ((client_pub_pkey = X509_get_pubkey(s->session->peer)) != NULL) {
-		if (EVP_PKEY_derive_set_peer(pkey_ctx,
-		    client_pub_pkey) <= 0)
+	if ((client_pubkey = X509_get0_pubkey(s->session->peer)) != NULL) {
+		if (EVP_PKEY_derive_set_peer(pkey_ctx, client_pubkey) <= 0)
 			ERR_clear_error();
 	}
 
@@ -1805,13 +1802,15 @@ ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
 		goto decode_err;
 	if (CBS_len(cbs) != 0)
 		goto decode_err;
+	outlen = sizeof(premaster_secret);
 	if (EVP_PKEY_decrypt(pkey_ctx, premaster_secret, &outlen,
 	    CBS_data(&gostblob), CBS_len(&gostblob)) <= 0) {
 		SSLerror(s, SSL_R_DECRYPTION_FAILED);
-		goto gerr;
+		goto err;
 	}
 
-	if (!tls12_derive_master_secret(s, premaster_secret, 32))
+	if (!tls12_derive_master_secret(s, premaster_secret,
+	    sizeof(premaster_secret)))
 		goto err;
 
 	/* Check if pubkey from client certificate was used */
@@ -1819,17 +1818,18 @@ ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
 	    2, NULL) > 0)
 		s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
 
- gerr:
-	EVP_PKEY_free(client_pub_pkey);
+	explicit_bzero(premaster_secret, sizeof(premaster_secret));
 	EVP_PKEY_CTX_free(pkey_ctx);
 
 	return 1;
 
  decode_err:
-	al = SSL_AD_DECODE_ERROR;
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
-	ssl3_send_alert(s, SSL3_AL_FATAL, al);
+	ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
  err:
+	explicit_bzero(premaster_secret, sizeof(premaster_secret));
+	EVP_PKEY_CTX_free(pkey_ctx);
+
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.131 2022/01/09 15:34:21 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.132 2022/01/09 15:40:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1925,40 +1925,44 @@ static int
 ssl3_send_client_kex_gost(SSL *s, CBB *cbb)
 {
 	unsigned char premaster_secret[32], shared_ukm[32], tmp[256];
-	EVP_PKEY *pub_key = NULL;
-	EVP_PKEY_CTX *pkey_ctx;
+	EVP_PKEY_CTX *pkey_ctx = NULL;
+	EVP_MD_CTX *ukm_hash = NULL;
+	EVP_PKEY *pub_key;
 	X509 *peer_cert;
 	size_t msglen;
 	unsigned int md_len;
-	EVP_MD_CTX *ukm_hash;
-	int nid;
 	CBB gostblob;
+	int nid;
 	int ret = 0;
 
 	/* Get server sertificate PKEY and create ctx from it */
 	peer_cert = s->session->peer_pkeys[SSL_PKEY_GOST01].x509;
-	if (peer_cert == NULL) {
+	if ((pub_key = X509_get0_pubkey(peer_cert)) == NULL) {
 		SSLerror(s, SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
 		goto err;
 	}
-
-	pub_key = X509_get_pubkey(peer_cert);
-	pkey_ctx = EVP_PKEY_CTX_new(pub_key, NULL);
+	if ((pkey_ctx = EVP_PKEY_CTX_new(pub_key, NULL)) == NULL) {
+		SSLerror(s, ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 
 	/*
 	 * If we have send a certificate, and certificate key parameters match
 	 * those of server certificate, use certificate key for key exchange.
 	 * Otherwise, generate ephemeral key pair.
 	 */
-	EVP_PKEY_encrypt_init(pkey_ctx);
+	if (EVP_PKEY_encrypt_init(pkey_ctx) <= 0)
+		goto err;
 
 	/* Generate session key. */
-	arc4random_buf(premaster_secret, 32);
+	arc4random_buf(premaster_secret, sizeof(premaster_secret));
 
 	/*
 	 * If we have client certificate, use its secret as peer key.
+	 * XXX - this presumably lacks PFS.
 	 */
-	if (S3I(s)->hs.tls12.cert_request && s->cert->key->privatekey) {
+	if (S3I(s)->hs.tls12.cert_request != 0 &&
+	    s->cert->key->privatekey != NULL) {
 		if (EVP_PKEY_derive_set_peer(pkey_ctx,
 		    s->cert->key->privatekey) <=0) {
 			/*
@@ -1972,8 +1976,7 @@ ssl3_send_client_kex_gost(SSL *s, CBB *cbb)
 	/*
 	 * Compute shared IV and store it in algorithm-specific context data.
 	 */
-	ukm_hash = EVP_MD_CTX_new();
-	if (ukm_hash == NULL) {
+	if ((ukm_hash = EVP_MD_CTX_new()) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
@@ -1985,10 +1988,12 @@ ssl3_send_client_kex_gost(SSL *s, CBB *cbb)
 		nid = NID_id_tc26_gost3411_2012_256;
 	if (!EVP_DigestInit(ukm_hash, EVP_get_digestbynid(nid)))
 		goto err;
-	EVP_DigestUpdate(ukm_hash, s->s3->client_random, SSL3_RANDOM_SIZE);
-	EVP_DigestUpdate(ukm_hash, s->s3->server_random, SSL3_RANDOM_SIZE);
-	EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len);
-	EVP_MD_CTX_free(ukm_hash);
+	if (!EVP_DigestUpdate(ukm_hash, s->s3->client_random, SSL3_RANDOM_SIZE))
+		goto err;
+	if (!EVP_DigestUpdate(ukm_hash, s->s3->server_random, SSL3_RANDOM_SIZE))
+		goto err;
+	if (!EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len))
+		goto err;
 	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, EVP_PKEY_OP_ENCRYPT,
 	    EVP_PKEY_CTRL_SET_IV, 8, shared_ukm) < 0) {
 		SSLerror(s, SSL_R_LIBRARY_BUG);
@@ -2000,7 +2005,7 @@ ssl3_send_client_kex_gost(SSL *s, CBB *cbb)
 	 */
 	msglen = 255;
 	if (EVP_PKEY_encrypt(pkey_ctx, tmp, &msglen, premaster_secret,
-	    32) < 0) {
+	    sizeof(premaster_secret)) < 0) {
 		SSLerror(s, SSL_R_LIBRARY_BUG);
 		goto err;
 	}
@@ -2016,7 +2021,6 @@ ssl3_send_client_kex_gost(SSL *s, CBB *cbb)
 	if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2,
 	    NULL) > 0)
 		s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
-	EVP_PKEY_CTX_free(pkey_ctx);
 
 	if (!tls12_derive_master_secret(s, premaster_secret, 32))
 		goto err;
@@ -2025,7 +2029,8 @@ ssl3_send_client_kex_gost(SSL *s, CBB *cbb)
 
  err:
 	explicit_bzero(premaster_secret, sizeof(premaster_secret));
-	EVP_PKEY_free(pub_key);
+	EVP_PKEY_CTX_free(pkey_ctx);
+	EVP_MD_CTX_free(ukm_hash);
 
 	return ret;
 }
