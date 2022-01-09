@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_unveil.c,v 1.51 2021/09/09 13:02:36 claudio Exp $	*/
+/*	$OpenBSD: kern_unveil.c,v 1.52 2022/01/09 10:28:07 claudio Exp $	*/
 
 /*
  * Copyright (c) 2017-2019 Bob Beck <beck@openbsd.org>
@@ -345,7 +345,7 @@ unveil_parsepermissions(const char *permissions, u_char *perms)
 	size_t i = 0;
 	char c;
 
-	*perms = 0;
+	*perms = UNVEIL_USERSET;
 	while ((c = permissions[i++]) != '\0') {
 		switch (c) {
 		case 'r':
@@ -708,11 +708,13 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 	if (ni->ni_vp != NULL && ni->ni_vp->v_type == VDIR) {
 		/* We are matching a directory terminal component */
 		uv = unveil_lookup(ni->ni_vp, pr, NULL);
-		if (uv == NULL) {
+		if (uv == NULL || (uv->uv_flags & UNVEIL_USERSET) == 0) {
 #ifdef DEBUG_UNVEIL
 			printf("unveil: %s(%d) no match for vnode %p\n",
 			    pr->ps_comm, pr->ps_pid, ni->ni_vp);
 #endif
+			if (uv != NULL)
+				ni->ni_unveil_match = uv;
 			goto done;
 		}
 		if (!unveil_flagmatch(ni, uv->uv_flags)) {
@@ -722,7 +724,7 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 			    pr->ps_comm, pr->ps_pid, ni->ni_vp);
 #endif
 			pr->ps_acflag |= AUNVEIL;
-			if (uv->uv_flags & UNVEIL_USERSET)
+			if (uv->uv_flags & UNVEIL_MASK)
 				return EACCES;
 			else
 				return ENOENT;
@@ -764,12 +766,15 @@ unveil_check_final(struct proc *p, struct nameidata *ni)
 #endif
 			/*
 			 * If dir has user set restrictions fail with
-			 * EACCES. Otherwise, use any covering match
-			 * that we found above this dir.
+			 * EACCES or ENOENT. Otherwise, use any covering
+			 * match that we found above this dir.
 			 */
 			if (uv->uv_flags & UNVEIL_USERSET) {
 				pr->ps_acflag |= AUNVEIL;
-				return EACCES;
+				if (uv->uv_flags & UNVEIL_MASK)
+					return EACCES;
+				else
+					return ENOENT;
 			}
 			/* start backtrack from this node */
 			ni->ni_unveil_match = uv;
@@ -820,7 +825,10 @@ done:
 			    pr->ps_comm, pr->ps_pid, uv->uv_vp);
 #endif
 			pr->ps_acflag |= AUNVEIL;
-			return EACCES;
+			if (uv->uv_flags & UNVEIL_MASK)
+				return EACCES;
+			else
+				return ENOENT;
 		}
 #ifdef DEBUG_UNVEIL
 		printf("unveil: %s(%d) check cover for vnode %p, uv_cover %zd\n",
