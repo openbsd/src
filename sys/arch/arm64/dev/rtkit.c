@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtkit.c,v 1.2 2022/01/02 02:31:08 jsg Exp $	*/
+/*	$OpenBSD: rtkit.c,v 1.3 2022/01/10 09:07:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,6 +28,7 @@
 #include <dev/ofw/fdt.h>
 
 #include <arm64/dev/aplmbox.h>
+#include <arm64/dev/rtkit.h>
 
 #define RTKIT_EP_MGMT			0
 #define RTKIT_EP_CRASHLOG		1
@@ -75,6 +76,8 @@ struct rtkit_state {
 	struct mbox_channel	*mc;
 	int			pwrstate;
 	uint64_t		epmap;
+	void			(*callback[32])(void *, uint64_t);
+	void			*arg[32];
 };
 
 int
@@ -104,15 +107,12 @@ rtkit_send(struct mbox_channel *mc, uint32_t endpoint,
 }
 
 int
-rtkit_start_ep(struct rtkit_state *state, uint64_t ep)
+rtkit_start(struct rtkit_state *state, uint32_t endpoint)
 {
 	struct mbox_channel *mc = state->mc;
 	uint64_t reply;
 
-	if ((state->epmap & (1ULL << ep)) == 0)
-		return EINVAL;
-
-	reply = (ep << RTKIT_MGMT_STARTEP_EP_SHIFT);
+	reply = ((uint64_t)endpoint << RTKIT_MGMT_STARTEP_EP_SHIFT);
 	reply |= RTKIT_MGMT_STARTEP_START;
 	return rtkit_send(mc, RTKIT_EP_MGMT, RTKIT_MGMT_STARTEP, reply);
 }
@@ -123,8 +123,8 @@ rtkit_handle_mgmt(struct rtkit_state *state, struct aplmbox_msg *msg)
 	struct mbox_channel *mc = state->mc;
 	uint64_t minver, maxver, ver;
 	uint64_t base, bitmap, reply;
+	uint32_t endpoint;
 	int error;
-	uint8_t ep;
 
 	switch (RTKIT_MGMT_TYPE(msg->data0)) {
 	case RTKIT_MGMT_HELLO:
@@ -166,15 +166,15 @@ rtkit_handle_mgmt(struct rtkit_state *state, struct aplmbox_msg *msg)
 		if (error)
 			return error;
 		if (msg->data0 & RTKIT_MGMT_EPMAP_LAST) {
-			for (ep = 1; ep < 32; ep++) {
-				if ((state->epmap & (1ULL << ep)) == 0)
+			for (endpoint = 1; endpoint < 32; endpoint++) {
+				if ((state->epmap & (1ULL << endpoint)) == 0)
 					continue;
 
-				switch (ep) {
+				switch (endpoint) {
 				case RTKIT_EP_CRASHLOG:
 				case RTKIT_EP_DEBUG:
 				case RTKIT_EP_IOREPORT:
-					error = rtkit_start_ep(state, ep);
+					error = rtkit_start(state, endpoint);
 					if (error)
 						return error;
 					break;
@@ -247,47 +247,112 @@ rtkit_handle_ioreport(struct rtkit_state *state, struct aplmbox_msg *msg)
 }
 
 int
-rtkit_init(struct mbox_channel *mc)
+rtkit_poll(struct rtkit_state *state)
 {
-	struct rtkit_state state;
+	struct mbox_channel *mc = state->mc;
 	struct aplmbox_msg msg;
+	void (*callback)(void *, uint64_t);
+	void *arg;
+	uint32_t endpoint;
 	int error;
 
-	memset(&state, 0, sizeof(state));
-	state.mc = mc;
+	error = rtkit_recv(mc, &msg);
+	if (error)
+		return error;
+
+	endpoint = msg.data1;
+	switch (endpoint) {
+	case RTKIT_EP_MGMT:
+		error = rtkit_handle_mgmt(state, &msg);
+		if (error)
+			return error;
+		break;
+	case RTKIT_EP_CRASHLOG:
+		error = rtkit_handle_crashlog(state, &msg);
+		if (error)
+			return error;
+		break;
+	case RTKIT_EP_IOREPORT:
+		error = rtkit_handle_ioreport(state, &msg);
+		if (error)
+			return error;
+		break;
+	default:
+		if (endpoint >= 32 && endpoint < 64 && 
+		    state->callback[endpoint - 32]) {
+			callback = state->callback[endpoint - 32];
+			arg = state->arg[endpoint - 32];
+			callback(arg, msg.data0);
+			break;
+		}
+
+		printf("unhandled endpoint %d\n", msg.data1);
+		return EIO;
+	}
+
+	return 0;
+}
+
+void
+rtkit_rx_callback(void *cookie)
+{
+	rtkit_poll(cookie);
+}
+
+struct rtkit_state *
+rtkit_init(int node, const char *name)
+{
+	struct rtkit_state *state;
+	struct mbox_client client;
+
+	state = malloc(sizeof(*state), M_DEVBUF, M_WAITOK | M_ZERO);
+	client.mc_rx_callback = rtkit_rx_callback;
+	client.mc_rx_arg = state;
+	state->mc = mbox_channel(node, name, &client);
+	if (state->mc == NULL) {
+		free(state, M_DEVBUF, sizeof(*state));
+		return NULL;
+	}
+
+	return state;
+}
+
+int
+rtkit_boot(struct rtkit_state *state)
+{
+	struct mbox_channel *mc = state->mc;
+	int error;
 
 	/* Wake up! */
-	error = rtkit_send(state.mc, RTKIT_EP_MGMT, RTKIT_MGMT_IOP_PWR_STATE,
+	error = rtkit_send(mc, RTKIT_EP_MGMT, RTKIT_MGMT_IOP_PWR_STATE,
 	    RTKIT_MGMT_PWR_STATE_ON);
 	if (error)
 		return error;
 
-	while (state.pwrstate != RTKIT_MGMT_PWR_STATE_ON) {
-		error = rtkit_recv(state.mc, &msg);
-		if (error)
-			return error;
-
-		switch (msg.data1) {
-		case RTKIT_EP_MGMT:
-			error = rtkit_handle_mgmt(&state, &msg);
-			if (error)
-				return error;
-			break;
-		case RTKIT_EP_CRASHLOG:
-			error = rtkit_handle_crashlog(&state, &msg);
-			if (error)
-				return error;
-			break;
-		case RTKIT_EP_IOREPORT:
-			error = rtkit_handle_ioreport(&state, &msg);
-			if (error)
-				return error;
-			break;
-		default:
-			printf("unhandled endpoint %d\n", msg.data1);
-			return EIO;
-		}
-	}
+	while (state->pwrstate != RTKIT_MGMT_PWR_STATE_ON)
+		rtkit_poll(state);
 
 	return 0;
+}
+
+int
+rtkit_start_endpoint(struct rtkit_state *state, uint32_t endpoint,
+    void (*callback)(void *, uint64_t), void *arg)
+{
+	if (endpoint < 32 || endpoint >= 64)
+		return EINVAL;
+
+	if ((state->epmap & (1ULL << endpoint)) == 0)
+		return EINVAL;
+
+	state->callback[endpoint - 32] = callback;
+	state->arg[endpoint - 32] = arg;
+	return rtkit_start(state, endpoint);
+}
+
+int
+rtkit_send_endpoint(struct rtkit_state *state, uint32_t endpoint,
+    uint64_t data)
+{
+	return rtkit_send(state->mc, endpoint, 0, data);
 }
