@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyparam.c,v 1.12 2019/07/14 03:30:46 guenther Exp $ */
+/* $OpenBSD: pkeyparam.c,v 1.13 2022/01/10 12:17:49 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -66,6 +66,7 @@
 #include <openssl/pem.h>
 
 struct {
+	int check;
 	char *infile;
 	int noout;
 	char *outfile;
@@ -73,6 +74,12 @@ struct {
 } pkeyparam_config;
 
 static const struct option pkeyparam_options[] = {
+	{
+		.name = "check",
+		.desc = "Check validity of key parameters",
+		.type = OPTION_FLAG,
+		.opt.flag = &pkeyparam_config.check,
+	},
 	{
 		.name = "in",
 		.argname = "file",
@@ -106,7 +113,7 @@ static void
 pkeyparam_usage()
 {
 	fprintf(stderr,
-	    "usage: pkeyparam [-in file] [-noout] [-out file] "
+	    "usage: pkeyparam [-check] [-in file] [-noout] [-out file] "
 	    "[-text]\n");
 	options_usage(pkeyparam_options);
 }
@@ -157,6 +164,14 @@ pkeyparam_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
+
+#if notyet
+	if (pkeyparam_config.check) {
+		if (!pkey_check(out, pkey, EVP_PKEY_param_check, "Parameters"))
+			goto end;
+	}
+#endif
+
 	if (!pkeyparam_config.noout)
 		PEM_write_bio_Parameters(out, pkey);
 

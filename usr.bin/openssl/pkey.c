@@ -1,4 +1,4 @@
-/* $OpenBSD: pkey.c,v 1.15 2019/07/14 03:30:46 guenther Exp $ */
+/* $OpenBSD: pkey.c,v 1.16 2022/01/10 12:17:49 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -66,6 +66,7 @@
 #include <openssl/pem.h>
 
 static struct {
+	int check;
 	const EVP_CIPHER *cipher;
 	char *infile;
 	int informat;
@@ -74,6 +75,7 @@ static struct {
 	int outformat;
 	char *passargin;
 	char *passargout;
+	int pubcheck;
 	int pubin;
 	int pubout;
 	int pubtext;
@@ -98,6 +100,12 @@ pkey_opt_cipher(int argc, char **argv, int *argsused)
 }
 
 static const struct option pkey_options[] = {
+	{
+		.name = "check",
+		.desc = "Check validity of key",
+		.type = OPTION_FLAG,
+		.opt.flag = &pkey_config.check,
+	},
 	{
 		.name = "in",
 		.argname = "file",
@@ -147,6 +155,12 @@ static const struct option pkey_options[] = {
 		.opt.arg = &pkey_config.passargout,
 	},
 	{
+		.name = "pubcheck",
+		.desc = "Check validity of public key",
+		.type = OPTION_FLAG,
+		.opt.flag = &pkey_config.pubcheck,
+	},
+	{
 		.name = "pubin",
 		.desc = "Expect a public key (default private key)",
 		.type = OPTION_VALUE,
@@ -186,11 +200,11 @@ pkey_usage()
 	int n = 0;
 
 	fprintf(stderr,
-	    "usage: pkey [-ciphername] [-in file] [-inform fmt] [-noout] "
-	    "[-out file]\n"
-	    "    [-outform fmt] [-passin src] [-passout src] [-pubin] "
-	    "[-pubout] [-text]\n"
-	    "    [-text_pub]\n\n");
+	    "usage: pkey [-check] [-ciphername] [-in file] [-inform fmt] "
+	    "[-noout] [-out file]\n"
+	    "    [-outform fmt] [-passin src] [-passout src] [-pubcheck] "
+	    "[-pubin] [-pubout]\n"
+	    "    [-text] [-text_pub]\n\n");
 	options_usage(pkey_options);
 	fprintf(stderr, "\n");
 
@@ -251,6 +265,16 @@ pkey_main(int argc, char **argv)
 		    pkey_config.informat, 1, passin, "key");
 	if (!pkey)
 		goto end;
+
+#if notyet
+	if (pkey_config.check) {
+		if (!pkey_check(out, pkey, EVP_PKEY_check, "Key pair"))
+			goto end;
+	} else if (pkey_config.pubcheck) {
+		if (!pkey_check(out, pkey, EVP_PKEY_public_check, "Public key"))
+			goto end;
+	}
+#endif
 
 	if (!pkey_config.noout) {
 		if (pkey_config.outformat == FORMAT_PEM) {

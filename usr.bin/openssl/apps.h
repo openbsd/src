@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.30 2021/11/26 16:23:27 tb Exp $ */
+/* $OpenBSD: apps.h,v 1.31 2022/01/10 12:17:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -326,4 +326,6 @@ int options_parse(int argc, char **argv, const struct option *opts,
 
 void show_cipher(const OBJ_NAME *name, void *arg);
 
+int pkey_check(BIO *out, EVP_PKEY *pkey, int (check_fn)(EVP_PKEY_CTX *),
+    const char *desc);
 #endif
