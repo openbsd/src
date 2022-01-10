@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.82 2021/02/25 02:48:21 dlg Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.83 2022/01/10 14:07:59 jan Exp $	*/
 
 /*
  * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
@@ -950,7 +950,7 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		error = ip6_output(m, 0, NULL, IPV6_MINMTU, 0, NULL);
+		error = ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, NULL);
 		break;
 #endif /* INET6 */
 	default:
