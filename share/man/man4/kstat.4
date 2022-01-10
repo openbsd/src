@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kstat.4,v 1.6 2022/01/10 13:04:52 dlg Exp $
+.\"	$OpenBSD: kstat.4,v 1.7 2022/01/10 13:09:29 dlg Exp $
 .\"
 .\" Copyright (c) 2022 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -180,7 +180,7 @@ The system uptime at which the kstat data payload was last updated.
 A kstat provider may update data when requested, or report when
 data was last updated by some other process.
 .Va ks_updated
-can by used by a program to idenfiy if data has been updated, and
+can by used by a program to identify if data has been updated, or
 for calculating rates of changes of values between updates.
 .It Va ks_type
 The type or structure of the data payload.
