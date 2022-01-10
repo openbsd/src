@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.138 2022/01/09 05:42:54 jsg Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.139 2022/01/10 04:11:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -119,6 +119,53 @@
 
 #include <dev/pci/if_skreg.h>
 #include <dev/pci/if_mskvar.h>
+
+#define MSK_STATUS_OWN_SHIFT		63
+#define MSK_STATUS_OWN_MASK		0x1
+#define MSK_STATUS_OPCODE_SHIFT		56
+#define MSK_STATUS_OPCODE_MASK		0x7f
+
+#define MSK_STATUS_OWN(_d) \
+    (((_d) >> MSK_STATUS_OWN_SHIFT) & MSK_STATUS_OWN_MASK)
+#define MSK_STATUS_OPCODE(_d) \
+    (((_d) >> MSK_STATUS_OPCODE_SHIFT) & MSK_STATUS_OPCODE_MASK)
+
+#define MSK_STATUS_OPCODE_RXSTAT	0x60
+#define MSK_STATUS_OPCODE_RXTIMESTAMP	0x61
+#define MSK_STATUS_OPCODE_RXVLAN	0x62
+#define MSK_STATUS_OPCODE_RXCKSUM	0x64
+#define MSK_STATUS_OPCODE_RXCKSUMVLAN	\
+    (MSK_STATUS_OPCODE_RXVLAN | MSK_STATUS_OPCODE_RXCKSUM)
+#define MSK_STATUS_OPCODE_RXTIMEVLAN	\
+    (MSK_STATUS_OPCODE_RXVLAN | MSK_STATUS_OPCODE_RXTIMESTAMP)
+#define MSK_STATUS_OPCODE_RSS_HASH	0x65
+#define MSK_STATUS_OPCODE_TXIDX		0x68
+#define MSK_STATUS_OPCODE_MACSEC	0x6c
+#define MSK_STATUS_OPCODE_PUTIDX	0x70
+
+#define MSK_STATUS_RXSTAT_PORT_SHIFT	48
+#define MSK_STATUS_RXSTAT_PORT_MASK	0x1
+#define MSK_STATUS_RXSTAT_LEN_SHIFT	32
+#define MSK_STATUS_RXSTAT_LEN_MASK	0xffff
+#define MSK_STATUS_RXSTAT_STATUS_SHIFT	0
+#define MSK_STATUS_RXSTAT_STATUS_MASK	0xffffffff
+
+#define MSK_STATUS_RXSTAT_PORT(_d) \
+    (((_d) >> MSK_STATUS_RXSTAT_PORT_SHIFT) & MSK_STATUS_RXSTAT_PORT_MASK)
+#define MSK_STATUS_RXSTAT_LEN(_d) \
+    (((_d) >> MSK_STATUS_RXSTAT_LEN_SHIFT) & MSK_STATUS_RXSTAT_LEN_MASK)
+#define MSK_STATUS_RXSTAT_STATUS(_d) \
+    (((_d) >> MSK_STATUS_RXSTAT_STATUS_SHIFT) & MSK_STATUS_RXSTAT_STATUS_MASK)
+
+#define MSK_STATUS_TXIDX_PORTA_SHIFT	0
+#define MSK_STATUS_TXIDX_PORTA_MASK	0xfff
+#define MSK_STATUS_TXIDX_PORTB_SHIFT	24
+#define MSK_STATUS_TXIDX_PORTB_MASK	0xfff
+
+#define MSK_STATUS_TXIDX_PORTA(_d) \
+    (((_d) >> MSK_STATUS_TXIDX_PORTA_SHIFT) & MSK_STATUS_TXIDX_PORTA_MASK)
+#define MSK_STATUS_TXIDX_PORTB(_d) \
+    (((_d) >> MSK_STATUS_TXIDX_PORTB_SHIFT) & MSK_STATUS_TXIDX_PORTB_MASK)
 
 int mskc_probe(struct device *, void *, void *);
 void mskc_attach(struct device *, struct device *self, void *aux);
@@ -624,6 +671,7 @@ mskc_reset(struct sk_softc *sc)
 {
 	u_int32_t imtimer_ticks, reg1;
 	int reg;
+	unsigned int i;
 
 	DPRINTFN(2, ("mskc_reset\n"));
 
@@ -758,8 +806,8 @@ mskc_reset(struct sk_softc *sc)
 	}
 
 	/* Reset status ring. */
-	bzero(sc->sk_status_ring,
-	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
+	for (i = 0; i < MSK_STATUS_RING_CNT; i++)
+		sc->sk_status_ring[i] = htole64(0);
 	sc->sk_status_idx = 0;
 
 	sk_win_write_4(sc, SK_STAT_BMU_CSR, SK_STAT_BMU_RESET);
@@ -1138,8 +1186,8 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sk_pc = pc;
 
 	if (bus_dmamem_alloc(sc->sc_dmatag,
-	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc),
-	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc),
+	    MSK_STATUS_RING_CNT * sizeof(uint64_t),
+	    MSK_STATUS_RING_CNT * sizeof(uint64_t),
 	    0, &sc->sk_status_seg, 1, &sc->sk_status_nseg,
 	    BUS_DMA_NOWAIT | BUS_DMA_ZERO)) {
 		printf(": can't alloc status buffers\n");
@@ -1148,27 +1196,27 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_dmamem_map(sc->sc_dmatag,
 	    &sc->sk_status_seg, sc->sk_status_nseg,
-	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc),
+	    MSK_STATUS_RING_CNT * sizeof(uint64_t),
 	    &kva, BUS_DMA_NOWAIT)) {
-		printf(": can't map dma buffers (%lu bytes)\n",
-		    (ulong)(MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc)));
+		printf(": can't map dma buffers (%zu bytes)\n",
+		    MSK_STATUS_RING_CNT * sizeof(uint64_t));
 		goto fail_3;
 	}
 	if (bus_dmamap_create(sc->sc_dmatag,
-	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc), 1,
-	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc), 0,
+	    MSK_STATUS_RING_CNT * sizeof(uint64_t), 1,
+	    MSK_STATUS_RING_CNT * sizeof(uint64_t), 0,
 	    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 	    &sc->sk_status_map)) {
 		printf(": can't create dma map\n");
 		goto fail_4;
 	}
 	if (bus_dmamap_load(sc->sc_dmatag, sc->sk_status_map, kva,
-	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc),
+	    MSK_STATUS_RING_CNT * sizeof(uint64_t),
 	    NULL, BUS_DMA_NOWAIT)) {
 		printf(": can't load dma map\n");
 		goto fail_5;
 	}
-	sc->sk_status_ring = (struct msk_status_desc *)kva;
+	sc->sk_status_ring = (uint64_t *)kva;
 
 	/* Reset the adapter. */
 	mskc_reset(sc);
@@ -1364,7 +1412,7 @@ mskc_attach(struct device *parent, struct device *self, void *aux)
 
 fail_4:
 	bus_dmamem_unmap(sc->sc_dmatag, (caddr_t)sc->sk_status_ring,
-	    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
+	    MSK_STATUS_RING_CNT * sizeof(uint64_t));
 fail_3:
 	bus_dmamem_free(sc->sc_dmatag,
 	    &sc->sk_status_seg, sc->sk_status_nseg);
@@ -1395,7 +1443,7 @@ mskc_detach(struct device *self, int flags)
 	if (sc->sk_status_nseg > 0) {
 		bus_dmamap_destroy(sc->sc_dmatag, sc->sk_status_map);
 		bus_dmamem_unmap(sc->sc_dmatag, (caddr_t)sc->sk_status_ring,
-		    MSK_STATUS_RING_CNT * sizeof(struct msk_status_desc));
+		    MSK_STATUS_RING_CNT * sizeof(uint64_t));
 		bus_dmamem_free(sc->sc_dmatag,
 		    &sc->sk_status_seg, sc->sk_status_nseg);
 	}
@@ -1749,7 +1797,6 @@ int
 msk_intr(void *xsc)
 {
 	struct sk_softc		*sc = xsc;
-	struct sk_if_softc	*sc_if;
 	struct sk_if_softc	*sc_if0 = sc->sk_if[SK_PORT_A];
 	struct sk_if_softc	*sc_if1 = sc->sk_if[SK_PORT_B];
 	struct mbuf_list	ml[2] = {
@@ -1758,8 +1805,9 @@ msk_intr(void *xsc)
 				};
 	struct ifnet		*ifp0 = NULL, *ifp1 = NULL;
 	int			claimed = 0;
-	u_int32_t		status, sk_status;
-	struct msk_status_desc	*cur_st;
+	u_int32_t		status;
+	uint64_t		*ring = sc->sk_status_ring;
+	uint64_t		desc;
 
 	status = CSR_READ_4(sc, SK_Y2_ISSR2);
 	if (status == 0xffffffff)
@@ -1788,42 +1836,40 @@ msk_intr(void *xsc)
 
 	MSK_CDSTSYNC(sc, sc->sk_status_idx,
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-	cur_st = &sc->sk_status_ring[sc->sk_status_idx];
 
-	while (cur_st->sk_opcode & SK_Y2_STOPC_OWN) {
-		cur_st->sk_opcode &= ~SK_Y2_STOPC_OWN;
-		switch (cur_st->sk_opcode) {
-		case SK_Y2_STOPC_RXSTAT:
-			sc_if = sc->sk_if[cur_st->sk_link & 0x01];
-			msk_rxeof(sc_if, &ml[cur_st->sk_link & 0x01],
-			    lemtoh16(&cur_st->sk_len),
-			    lemtoh32(&cur_st->sk_status));
+	while (MSK_STATUS_OWN(desc = lemtoh64(&ring[sc->sk_status_idx]))) {
+		unsigned int opcode, port;
+
+		ring[sc->sk_status_idx] = htole64(0); /* clear ownership */
+
+		opcode = MSK_STATUS_OPCODE(desc);
+		switch (opcode) {
+		case MSK_STATUS_OPCODE_RXSTAT:
+			port = MSK_STATUS_RXSTAT_PORT(desc);
+			msk_rxeof(sc->sk_if[port], &ml[port],
+			    MSK_STATUS_RXSTAT_LEN(desc),
+			    MSK_STATUS_RXSTAT_STATUS(desc));
 			break;
 		case SK_Y2_STOPC_TXSTAT:
-			sk_status = lemtoh32(&cur_st->sk_status);
-			if (sc_if0)
-				msk_txeof(sc_if0, sk_status & 0xfff);
+			if (sc_if0) {
+				msk_txeof(sc_if0,
+				    MSK_STATUS_TXIDX_PORTA(desc));
+			}
 			if (sc_if1) {
-				/*
-				 * this would be easier as a 64bit
-				 * load of the whole status descriptor,
-				 * a shift, and a mask.
-				 */
-				unsigned int prod = (sk_status >> 24) & 0xff;
-				prod |= (lemtoh16(&cur_st->sk_len) & 0xf) << 8;
-				msk_txeof(sc_if1, prod);
+				msk_txeof(sc_if1,
+				    MSK_STATUS_TXIDX_PORTB(desc));
 			}
 			break;
 		default:
-			printf("opcode=0x%x\n", cur_st->sk_opcode);
+			printf("opcode=0x%x\n", opcode);
 			break;
 		}
-		SK_INC(sc->sk_status_idx, MSK_STATUS_RING_CNT);
 
-		MSK_CDSTSYNC(sc, sc->sk_status_idx,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
-		cur_st = &sc->sk_status_ring[sc->sk_status_idx];
+		SK_INC(sc->sk_status_idx, MSK_STATUS_RING_CNT);
 	}
+
+	MSK_CDSTSYNC(sc, sc->sk_status_idx,
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 	if (status & SK_Y2_IMR_BMU) {
 		CSR_WRITE_4(sc, SK_STAT_BMU_CSR, SK_STAT_BMU_IRQ_CLEAR);

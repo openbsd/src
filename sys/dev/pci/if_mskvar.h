@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mskvar.h,v 1.14 2018/01/06 03:11:04 dlg Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.15 2022/01/10 04:11:13 dlg Exp $	*/
 /*	$NetBSD: if_skvar.h,v 1.6 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
@@ -26,7 +26,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*	$OpenBSD: if_mskvar.h,v 1.14 2018/01/06 03:11:04 dlg Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.15 2022/01/10 04:11:13 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -117,7 +117,7 @@ struct msk_ring_data {
 #define MSK_CDOFF(x)	offsetof(struct msk_ring_data, x)
 #define MSK_CDTXOFF(x)	MSK_CDOFF(sk_tx_ring[(x)])
 #define MSK_CDRXOFF(x)	MSK_CDOFF(sk_rx_ring[(x)])
-#define MSK_CDSTOFF(x)	((x) * sizeof(struct msk_status_desc))
+#define MSK_CDSTOFF(x)	((x) * sizeof(uint64_t))
 
 #define MSK_CDTXSYNC(sc, x, n, ops)					\
 do {									\
@@ -150,7 +150,7 @@ do {									\
 #define MSK_CDSTSYNC(sc, x, ops)					\
 do {									\
 	bus_dmamap_sync((sc)->sc_dmatag, (sc)->sk_status_map,		\
-	    MSK_CDSTOFF((x)), sizeof(struct msk_status_desc), (ops));	\
+	    MSK_CDSTOFF((x)), sizeof(uint64_t), (ops));	\
 } while (/*CONSTCOND*/0)
 
 #define SK_INC(x, y)	(x) = (x + 1) % y
@@ -175,7 +175,7 @@ struct sk_softc {
 	u_int32_t		sk_intrmask;
 	bus_dma_tag_t		sc_dmatag;
 	struct sk_if_softc	*sk_if[2];
-	struct msk_status_desc	*sk_status_ring;
+	uint64_t		*sk_status_ring;
 	bus_dmamap_t		sk_status_map;
 	bus_dma_segment_t	sk_status_seg;
 	int			sk_status_nseg;
