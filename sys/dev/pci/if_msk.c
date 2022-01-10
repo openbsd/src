@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.139 2022/01/10 04:11:13 dlg Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.140 2022/01/10 04:47:53 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -87,6 +87,7 @@
  */
  
 #include "bpfilter.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +109,10 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#if NKSTAT > 0
+#include <sys/kstat.h>
 #endif
 
 #include <dev/mii/mii.h>
@@ -216,6 +221,82 @@ void msk_dump_bytes(const char *, int);
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
+#endif
+
+#if NKSTAT > 0
+struct msk_mib {
+	const char		*name;
+	uint32_t		 reg;
+	enum kstat_kv_type	 type;
+	enum kstat_kv_unit	 unit;
+};
+
+#define C32	KSTAT_KV_T_COUNTER32
+#define C64	KSTAT_KV_T_COUNTER64
+
+#define PKTS	KSTAT_KV_U_PACKETS
+#define BYTES	KSTAT_KV_U_BYTES
+#define NONE	KSTAT_KV_U_NONE
+
+static const struct msk_mib msk_mib[] = {
+	{ "InUnicasts",		0x100,	C32,	PKTS },
+	{ "InBroadcasts",	0x108,	C32,	PKTS },
+	{ "InPause",		0x110,	C32,	PKTS },
+	{ "InMulticasts",	0x118,	C32,	PKTS },
+	{ "InFCSErr",		0x120,	C32,	PKTS },
+	{ "InGoodOctets",	0x130,	C64,	BYTES },
+	{ "InBadOctets",	0x140,	C64,	BYTES },
+	{ "Undersize",		0x150,	C32,	PKTS },
+	{ "Fragments",		0x158,	C32,	PKTS },
+	{ "In64Octets",		0x160,	C32,	PKTS },
+	{ "In127Octets",	0x168,	C32,	PKTS },
+	{ "In255Octets",	0x170,	C32,	PKTS },
+	{ "In511Octets",	0x178,	C32,	PKTS },
+	{ "In1023Octets",	0x180,	C32,	PKTS },
+	{ "In1518Octets",	0x188,	C32,	PKTS },
+	{ "InMaxOctets",	0x190,	C32,	PKTS },
+	{ "OverSize",		0x198,	C32,	PKTS },
+	{ "Jabber",		0x1a8,	C32,	PKTS },
+	{ "Overflow",		0x1b0,	C32,	PKTS },
+
+	{ "OutUnicasts",	0x1c0,	C32,	PKTS },
+	{ "OutBroadcasts",	0x1c8,	C32,	PKTS },
+	{ "OutPause",		0x1d0,	C32,	PKTS },
+	{ "OutMulticasts", 	0x1d8,	C32,	PKTS },
+	{ "OutOctets",		0x1e0,	C64,	BYTES },
+	{ "Out64Octets",	0x1f0,	C32,	PKTS },
+	{ "Out127Octets",	0x1f8,	C32,	PKTS },
+	{ "Out255Octets",	0x200,	C32,	PKTS },
+	{ "Out511Octets",	0x208,	C32,	PKTS },
+	{ "Out1023Octets",	0x210,	C32,	PKTS },
+	{ "Out1518Octets",	0x218,	C32,	PKTS },
+	{ "OutMaxOctets",	0x220,	C32,	PKTS },
+	{ "Collisions",		0x230,	C32,	NONE },
+	{ "Late",		0x238,	C32,	NONE },
+	{ "Excessive",		0x240,	C32,	PKTS },
+	{ "Multiple",		0x248,	C32,	PKTS },
+	{ "Single",		0x250,	C32,	PKTS },
+	{ "Underflow",		0x258,	C32,	PKTS },
+};
+
+#undef C32
+#undef C64
+
+#undef PKTS
+#undef BYTES
+#undef NONE
+
+struct msk_kstat {
+	struct rwlock		 lock;
+	struct kstat		*ks;
+};
+
+static uint32_t		msk_mib_read32(struct sk_if_softc *, uint32_t);
+static uint64_t		msk_mib_read64(struct sk_if_softc *, uint32_t);
+
+void			msk_kstat_attach(struct sk_if_softc *);
+void			msk_kstat_detach(struct sk_if_softc *);
+int			msk_kstat_read(struct kstat *ks);
 #endif
 
 /* supported device vendors */
@@ -1030,6 +1111,10 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
+#if NKSTAT > 0
+	msk_kstat_attach(sc_if);
+#endif
+
 	DPRINTFN(2, ("msk_attach: end\n"));
 	return;
 
@@ -1061,6 +1146,10 @@ msk_detach(struct device *self, int flags)
 		return (0);
 
 	msk_stop(sc_if, 1);
+
+#if NKSTAT > 0
+	msk_kstat_detach(sc_if);
+#endif
 
 	/* Detach any PHYs we might have. */
 	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) != NULL)
@@ -1992,7 +2081,7 @@ msk_init_yukon(struct sk_if_softc *sc_if)
 	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_CTRL_TEST, SK_RFCTL_OPERATION_ON |
 	    SK_RFCTL_FIFO_FLUSH_ON);
 
-	/* Increase flush threshold to 64 bytes */
+	/* Increase flush threshould to 64 bytes */
 	SK_IF_WRITE_2(sc_if, 0, SK_RXMF1_FLUSH_THRESHOLD,
 	    SK_RFCTL_FIFO_THRESHOLD + 1);
 
@@ -2230,6 +2319,132 @@ struct cfattach msk_ca = {
 struct cfdriver msk_cd = {
 	NULL, "msk", DV_IFNET
 };
+
+#if NKSTAT > 0
+static uint32_t
+msk_mib_read32(struct sk_if_softc *sc_if, uint32_t r)
+{
+	uint16_t hi, lo, xx;
+
+	hi = SK_YU_READ_2(sc_if, r + 4);
+	for (;;) {
+		/* XXX barriers? */
+		lo = SK_YU_READ_2(sc_if, r);
+		xx = SK_YU_READ_2(sc_if, r + 4);
+
+		if (hi == xx)
+			break;
+
+		hi = xx;
+	}
+
+	return (((uint32_t)hi << 16) | (uint32_t) lo);
+}
+
+static uint64_t
+msk_mib_read64(struct sk_if_softc *sc_if, uint32_t r)
+{
+	uint32_t hi, lo, xx;
+
+	hi = msk_mib_read32(sc_if, r + 8);
+	for (;;) {
+		lo = msk_mib_read32(sc_if, r);
+		xx = msk_mib_read32(sc_if, r + 8);
+
+		if (hi == xx)
+			break;
+
+		hi = xx;
+	}
+
+	return (((uint64_t)hi << 32) | (uint64_t)lo);
+}
+
+void
+msk_kstat_attach(struct sk_if_softc *sc_if)
+{
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+	struct msk_kstat *mks;
+	size_t i;
+
+	ks = kstat_create(sc_if->sk_dev.dv_xname, 0, "msk-mib", 0,
+	    KSTAT_T_KV, 0);
+	if (ks == NULL) {
+		/* oh well */
+		return;
+	}
+
+	mks = malloc(sizeof(*mks), M_DEVBUF, M_WAITOK);
+	rw_init(&mks->lock, "mskstat");
+	mks->ks = ks;
+
+	kvs = mallocarray(nitems(msk_mib), sizeof(*kvs),
+	    M_DEVBUF, M_WAITOK|M_ZERO);
+	for (i = 0; i < nitems(msk_mib); i++) {
+		const struct msk_mib *m = &msk_mib[i];
+		kstat_kv_unit_init(&kvs[i], m->name, m->type, m->unit);
+	}
+
+	ks->ks_softc = sc_if;
+	ks->ks_data = kvs;
+	ks->ks_datalen = nitems(msk_mib) * sizeof(*kvs);
+	ks->ks_read = msk_kstat_read;
+	kstat_set_wlock(ks, &mks->lock);
+
+	kstat_install(ks);
+
+	sc_if->sk_kstat = mks;
+}
+
+void
+msk_kstat_detach(struct sk_if_softc *sc_if)
+{
+	struct msk_kstat *mks = sc_if->sk_kstat;
+	struct kstat_kv *kvs;
+	size_t kvslen;
+
+	if (mks == NULL)
+		return;
+
+	sc_if->sk_kstat = NULL;
+
+	kvs = mks->ks->ks_data;
+	kvslen = mks->ks->ks_datalen;
+
+	kstat_destroy(mks->ks);
+	free(kvs, M_DEVBUF, kvslen);
+	free(mks, M_DEVBUF, sizeof(*mks));
+}
+
+int
+msk_kstat_read(struct kstat *ks)
+{
+	struct sk_if_softc *sc_if = ks->ks_softc;
+	struct kstat_kv *kvs = ks->ks_data;
+	size_t i;
+
+	nanouptime(&ks->ks_updated);
+
+	for (i = 0; i < nitems(msk_mib); i++) {
+		const struct msk_mib *m = &msk_mib[i];
+
+		switch (m->type) {
+		case KSTAT_KV_T_COUNTER32:
+			kstat_kv_u32(&kvs[i]) = msk_mib_read32(sc_if, m->reg);
+			break;
+		case KSTAT_KV_T_COUNTER64:
+			kstat_kv_u64(&kvs[i]) = msk_mib_read64(sc_if, m->reg);
+			break;
+		default:
+			panic("unexpected msk_mib type");
+			/* NOTREACHED */
+		}
+	}
+
+	return (0);
+}
+#endif /* NKSTAT */
 
 #ifdef MSK_DEBUG
 void

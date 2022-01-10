@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mskvar.h,v 1.15 2022/01/10 04:11:13 dlg Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.16 2022/01/10 04:47:53 dlg Exp $	*/
 /*	$NetBSD: if_skvar.h,v 1.6 2005/05/30 04:35:22 christos Exp $	*/
 
 /*-
@@ -26,7 +26,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-/*	$OpenBSD: if_mskvar.h,v 1.15 2022/01/10 04:11:13 dlg Exp $	*/
+/*	$OpenBSD: if_mskvar.h,v 1.16 2022/01/10 04:47:53 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -157,6 +157,7 @@ do {									\
 
 /* Forward decl. */
 struct sk_if_softc;
+struct msk_kstat;
 
 /* Softc for the Yukon-II controller. */
 struct sk_softc {
@@ -206,6 +207,8 @@ struct sk_if_softc {
 	struct sk_softc		*sk_softc;	/* parent controller */
 	int			sk_tx_bmu;	/* TX BMU register */
 	SIMPLEQ_HEAD(__sk_txmaphead, sk_txmap_entry)	sk_txmap_head;
+
+	struct msk_kstat	*sk_kstat;
 };
 
 struct skc_attach_args {
