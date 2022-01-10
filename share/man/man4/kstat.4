@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kstat.4,v 1.4 2022/01/10 10:20:31 dlg Exp $
+.\"	$OpenBSD: kstat.4,v 1.5 2022/01/10 10:54:54 dlg Exp $
 .\"
 .\" Copyright (c) 2022 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -86,6 +86,24 @@ This check can be disabled by setting the
 .Dv KSTATIOC_F_IGNVER
 flag in
 .Va ks_rflags .
+.Pp
+A kstat is identified by a 64bit number, or the combination of a
+provider name, unit number, name, and unit number.
+Upon the successful request of a kstat, the
+.Nm
+driver will update the
+.Vt kstat_req
+structure with current information.
+.\" list the struct members taht get updated and what they mean?
+.Pp
+Unless
+.Va ks_data
+is
+.Dv NULL ,
+the kstat subsystem will request an update of the statistics data
+and copy up to
+.Va ks_datalen
+bytes of it to the specified memory.
 .Pp
 The kstat
 .Xr ioctl 2
