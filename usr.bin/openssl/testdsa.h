@@ -1,4 +1,4 @@
-/* $OpenBSD: testdsa.h,v 1.3 2022/01/10 15:04:06 tb Exp $ */
+/* $OpenBSD: testdsa.h,v 1.4 2022/01/10 15:14:27 tb Exp $ */
 
 DSA *get_dsa512(void);
 DSA *get_dsa1024(void);
@@ -221,20 +221,28 @@ get_dsa(const unsigned char *priv, size_t priv_size,
 
 	if ((dsa = DSA_new()) == NULL)
 		return (NULL);
+
 	priv_key = BN_bin2bn(priv, priv_size, NULL);
 	pub_key = BN_bin2bn(pub, pub_size, NULL);
 	if (priv_key == NULL || pub_key == NULL)
 		goto err;
+
 	if (!DSA_set0_key(dsa, pub_key, priv_key))
 		goto err;
+	pub_key = NULL;
+	priv_key = NULL;
 
 	p = BN_bin2bn(p, p_size, NULL);
 	q = BN_bin2bn(q, q_size, NULL);
 	g = BN_bin2bn(g, g_size, NULL);
 	if (p == NULL || q == NULL || g == NULL)
 		goto err;
+
 	if (!DSA_set0_pqg(dsa, p, q, g))
 		goto err;
+	p = NULL;
+	q = NULL;
+	g = NULL;
 
 	return dsa;
 
