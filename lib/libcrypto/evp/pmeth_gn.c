@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_gn.c,v 1.8 2021/12/04 16:08:32 tb Exp $ */
+/* $OpenBSD: pmeth_gn.c,v 1.9 2022/01/10 11:52:43 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -64,6 +64,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 
+#include "asn1_locl.h"
 #include "bn_lcl.h"
 #include "evp_locl.h"
 
@@ -221,4 +222,25 @@ EVP_PKEY_new_mac_key(int type, ENGINE *e, const unsigned char *key, int keylen)
 merr:
 	EVP_PKEY_CTX_free(mac_ctx);
 	return mac_key;
+}
+
+int
+EVP_PKEY_check(EVP_PKEY_CTX *ctx)
+{
+	EVP_PKEY *pkey;
+
+	if ((pkey = ctx->pkey) == NULL) {
+		EVPerror(EVP_R_NO_KEY_SET);
+		return 0;
+	}
+
+	if (ctx->pmeth->check != NULL)
+		return ctx->pmeth->check(pkey);
+
+	if (pkey->ameth == NULL || pkey->ameth->pkey_check == NULL) {
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		return -2;
+	}
+
+	return pkey->ameth->pkey_check(pkey);
 }

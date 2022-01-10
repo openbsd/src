@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.92 2022/01/09 15:15:25 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.93 2022/01/10 11:52:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1087,6 +1087,11 @@ void EVP_PKEY_asn1_set_free(EVP_PKEY_ASN1_METHOD *ameth,
 void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
     int (*pkey_ctrl)(EVP_PKEY *pkey, int op, long arg1, void *arg2));
 
+#if defined(LIBRESSL_CRYPTO_INTERNAL) || defined(LIBRESSL_NEXT_API)
+void EVP_PKEY_asn1_set_check(EVP_PKEY_ASN1_METHOD *ameth,
+    int (*pkey_check)(const EVP_PKEY *pk));
+#endif
+
 #define EVP_PKEY_OP_UNDEFINED		0
 #define EVP_PKEY_OP_PARAMGEN		(1<<1)
 #define EVP_PKEY_OP_KEYGEN		(1<<2)
@@ -1213,6 +1218,9 @@ int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
 int EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
+#if defined(LIBRESSL_CRYPTO_INTERNAL) || defined(LIBRESSL_NEXT_API)
+int EVP_PKEY_check(EVP_PKEY_CTX *ctx);
+#endif
 
 void EVP_PKEY_CTX_set_cb(EVP_PKEY_CTX *ctx, EVP_PKEY_gen_cb *cb);
 EVP_PKEY_gen_cb *EVP_PKEY_CTX_get_cb(EVP_PKEY_CTX *ctx);
@@ -1278,6 +1286,11 @@ void EVP_PKEY_meth_set_derive(EVP_PKEY_METHOD *pmeth,
 void EVP_PKEY_meth_set_ctrl(EVP_PKEY_METHOD *pmeth,
     int (*ctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2),
     int (*ctrl_str)(EVP_PKEY_CTX *ctx, const char *type, const char *value));
+
+#if defined(LIBRESSL_CRYPTO_INTERNAL) || defined(LIBRESSL_NEXT_API)
+void EVP_PKEY_meth_set_check(EVP_PKEY_METHOD *pmeth,
+    int (*check)(EVP_PKEY *pkey));
+#endif
 
 /* Authenticated Encryption with Additional Data.
  *

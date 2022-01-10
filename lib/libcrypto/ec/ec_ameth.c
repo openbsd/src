@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.29 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.30 2022/01/10 11:52:43 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -67,6 +67,7 @@
 #include <openssl/x509.h>
 
 #include "asn1_locl.h"
+#include "ec_lcl.h"
 #include "evp_locl.h"
 
 #ifndef OPENSSL_NO_CMS
@@ -620,6 +621,19 @@ ec_pkey_ctrl(EVP_PKEY * pkey, int op, long arg1, void *arg2)
 
 }
 
+static int
+ec_pkey_check(const EVP_PKEY *pkey)
+{
+	EC_KEY *eckey = pkey->pkey.ec;
+
+	if (eckey->priv_key == NULL) {
+		ECerror(EC_R_MISSING_PRIVATE_KEY);
+		return 0;
+	}
+
+	return EC_KEY_check_key(eckey);
+}
+
 #ifndef OPENSSL_NO_CMS
 
 static int
@@ -981,5 +995,7 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
 	.pkey_free = int_ec_free,
 	.pkey_ctrl = ec_pkey_ctrl,
 	.old_priv_decode = old_ec_priv_decode,
-	.old_priv_encode = old_ec_priv_encode
+	.old_priv_encode = old_ec_priv_encode,
+
+	.pkey_check = ec_pkey_check,
 };
