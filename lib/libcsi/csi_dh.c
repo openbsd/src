@@ -1,4 +1,4 @@
-/* $OpenBSD: csi_dh.c,v 1.2 2018/06/02 17:43:14 jsing Exp $ */
+/* $OpenBSD: csi_dh.c,v 1.3 2022/01/10 23:03:07 tb Exp $ */
 /*
  * Copyright (c) 2000, 2001, 2015 Markus Friedl <markus@openbsd.org>
  * Copyright (c) 2006, 2016 Damien Miller <djm@openbsd.org>
@@ -141,24 +141,29 @@ csi_dh_shared_free(struct csi_dh_shared *cdhs)
 int
 csi_dh_set_params(struct csi_dh *cdh, struct csi_dh_params *params)
 {
+	BIGNUM *p = NULL, *g = NULL;
+
 	if (csi_dh_init(cdh) == -1)
 		goto err;
 
-	if (csi_integer_to_bn(&cdh->err, "p", &params->p,
-	    &cdh->dh->p) == -1)
+	if (csi_integer_to_bn(&cdh->err, "p", &params->p, &p) == -1)
 		goto err;
-	if (csi_integer_to_bn(&cdh->err, "g", &params->g,
-	    &cdh->dh->g) == -1)
+	if (csi_integer_to_bn(&cdh->err, "g", &params->g, &g) == -1)
+		goto err;
+	if (!DH_set0_pqg(cdh->dh, p, NULL, g))
 		goto err;
 
 	return 0;
 
  err:
+	BN_free(p);
+	BN_free(g);
+
 	return -1;
 }
 
 int
-csi_dh_public_is_valid(struct csi_dh *cdh, BIGNUM *pubkey)
+csi_dh_public_is_valid(struct csi_dh *cdh, const BIGNUM *pubkey)
 {
 	BIGNUM *tmp = NULL;
         int bits_set = 0;
@@ -182,7 +187,7 @@ csi_dh_public_is_valid(struct csi_dh *cdh, BIGNUM *pubkey)
 		goto bad;
 	}
 
-	if (!BN_sub(tmp, cdh->dh->p, BN_value_one()) ||
+	if (!BN_sub(tmp, DH_get0_p(cdh->dh), BN_value_one()) ||
 	    BN_cmp(pubkey, tmp) != -1) {
 		csi_err_setx(&cdh->err, CSI_ERR_INVAL,
 		    "invalid DH public key value (>= p-1)");
@@ -199,7 +204,7 @@ csi_dh_public_is_valid(struct csi_dh *cdh, BIGNUM *pubkey)
 	if (bits_set < 4) {
 		csi_err_setx(&cdh->err, CSI_ERR_INVAL,
 		    "invalid DH public key value (%d/%d bits)",
-		    bits_set, BN_num_bits(cdh->dh->p));
+		    bits_set, BN_num_bits(DH_get0_p(cdh->dh)));
 		goto bad;
 	}
 
@@ -243,9 +248,9 @@ csi_dh_params(struct csi_dh *cdh)
 
 	if ((cdhp = calloc(1, sizeof(*cdhp))) == NULL)
 		goto errmem;
-	if (csi_bn_to_integer(&cdh->err, cdh->dh->p, &cdhp->p) != 0)
+	if (csi_bn_to_integer(&cdh->err, DH_get0_p(cdh->dh), &cdhp->p) != 0)
 		goto err;
-	if (csi_bn_to_integer(&cdh->err, cdh->dh->g, &cdhp->g) != 0)
+	if (csi_bn_to_integer(&cdh->err, DH_get0_g(cdh->dh), &cdhp->g) != 0)
 		goto err;
 
 	return cdhp;
@@ -265,7 +270,8 @@ csi_dh_public_key(struct csi_dh *cdh)
 
 	if ((cdhp = calloc(1, sizeof(*cdhp))) == NULL)
 		goto errmem;
-	if (csi_bn_to_integer(&cdh->err, cdh->dh->pub_key, &cdhp->key) != 0)
+	if (csi_bn_to_integer(&cdh->err, DH_get0_pub_key(cdh->dh),
+	    &cdhp->key) != 0)
 		goto err;
 
 	return cdhp;
@@ -324,7 +330,7 @@ csi_dh_generate_keys(struct csi_dh *cdh, size_t length,
 		 */
 		length *= 2;
 
-		if ((pbits = BN_num_bits(cdh->dh->p)) <= 0) {
+		if ((pbits = BN_num_bits(DH_get0_p(cdh->dh))) <= 0) {
 			csi_err_setx(&cdh->err, CSI_ERR_CRYPTO,
 			    "invalid p bignum");
 			goto err;
@@ -335,7 +341,8 @@ csi_dh_generate_keys(struct csi_dh *cdh, size_t length,
 			goto err;
 		}
 
-		cdh->dh->length = MINIMUM((int)length, pbits - 1);
+		if (!DH_set_length(cdh->dh, MINIMUM((int)length, pbits - 1)))
+			goto err;
 	}
 
 	if (!DH_generate_key(cdh->dh)) {
@@ -343,7 +350,7 @@ csi_dh_generate_keys(struct csi_dh *cdh, size_t length,
 		goto err;
 	}
 
-	if (!csi_dh_public_is_valid(cdh, cdh->dh->pub_key))
+	if (!csi_dh_public_is_valid(cdh, DH_get0_pub_key(cdh->dh)))
 		goto err;
 
 	if (public != NULL) {

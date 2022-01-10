@@ -1,4 +1,4 @@
-/* $OpenBSD: csi_util.c,v 1.1 2018/06/02 17:40:33 jsing Exp $ */
+/* $OpenBSD: csi_util.c,v 1.2 2022/01/10 23:03:07 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -44,7 +44,8 @@ csi_integer_to_bn(struct csi_err *err, const char *field,
 }
 
 int
-csi_bn_to_integer(struct csi_err *err, BIGNUM *bn, struct csi_integer *integer)
+csi_bn_to_integer(struct csi_err *err, const BIGNUM *bn,
+    struct csi_integer *integer)
 {
 	uint8_t *b = NULL;
 	int len = 0;
