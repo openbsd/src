@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_mem.c,v 1.36 2021/03/27 14:36:28 kn Exp $	*/
+/*	$OpenBSD: sdmmc_mem.c,v 1.37 2022/01/10 18:23:39 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -466,7 +466,7 @@ sdmmc_mem_send_scr(struct sdmmc_softc *sc, uint32_t *scr)
 
 	ptr = malloc(datalen, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ptr == NULL)
-		goto out;
+		return ENOMEM;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.c_data = ptr;
@@ -480,9 +480,7 @@ sdmmc_mem_send_scr(struct sdmmc_softc *sc, uint32_t *scr)
 	if (error == 0)
 		memcpy(scr, ptr, datalen);
 
-out:
-	if (ptr != NULL)
-		free(ptr, M_DEVBUF, datalen);
+	free(ptr, M_DEVBUF, datalen);
 
 	return error;
 }
@@ -528,10 +526,8 @@ sdmmc_mem_send_cxd_data(struct sdmmc_softc *sc, int opcode, void *data,
 	int error = 0;
 
 	ptr = malloc(datalen, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (ptr == NULL) {
-		error = ENOMEM;
-		goto out;
-	}
+	if (ptr == NULL)
+		return ENOMEM;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.c_data = ptr;
@@ -549,9 +545,7 @@ sdmmc_mem_send_cxd_data(struct sdmmc_softc *sc, int opcode, void *data,
 	if (error == 0)
 		memcpy(data, ptr, datalen);
 
-out:
-	if (ptr != NULL)
-		free(ptr, M_DEVBUF, datalen);
+	free(ptr, M_DEVBUF, datalen);
 
 	return error;
 }
@@ -608,7 +602,7 @@ sdmmc_mem_sd_switch(struct sdmmc_function *sf, int mode, int group,
 
 	ptr = malloc(statlen, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ptr == NULL)
-		goto out;
+		return ENOMEM;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.c_data = ptr;
@@ -620,15 +614,12 @@ sdmmc_mem_sd_switch(struct sdmmc_function *sf, int mode, int group,
 	cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1;
 
 	error = sdmmc_mmc_command(sc, &cmd);
-	if (error == 0)
+	if (error == 0) {
 		memcpy(status, ptr, statlen);
-
-out:
-	if (ptr != NULL)
-		free(ptr, M_DEVBUF, statlen);
-
-	if (error == 0)
 		sdmmc_be512_to_bitfield512(status);
+	}
+
+	free(ptr, M_DEVBUF, statlen);
 
 	return error;
 }
