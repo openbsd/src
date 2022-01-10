@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.33 2022/01/09 15:15:25 tb Exp $ */
+/* $OpenBSD: digest.c,v 1.34 2022/01/10 10:51:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -281,6 +281,8 @@ EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 		tmp_buf = NULL;
 	EVP_MD_CTX_cleanup(out);
 	memcpy(out, in, sizeof *out);
+	out->md_data = NULL;
+	out->pctx = NULL;
 
 	/*
 	 * Because of the EVP_PKEY_CTX_dup() below, EVP_MD_CTX_cleanup() needs
