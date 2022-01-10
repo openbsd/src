@@ -1,4 +1,4 @@
-/* $OpenBSD: testdsa.h,v 1.4 2022/01/10 15:14:27 tb Exp $ */
+/* $OpenBSD: testdsa.h,v 1.5 2022/01/10 19:22:26 tb Exp $ */
 
 DSA *get_dsa512(void);
 DSA *get_dsa1024(void);
@@ -211,9 +211,9 @@ get_dsa2048(void)
 DSA *
 get_dsa(const unsigned char *priv, size_t priv_size,
     const unsigned char *pub, size_t pub_size,
-    const unsigned char *p, size_t p_size,
-    const unsigned char *q, size_t q_size,
-    const unsigned char *g, size_t g_size)
+    const unsigned char *p_char, size_t p_size,
+    const unsigned char *q_char, size_t q_size,
+    const unsigned char *g_char, size_t g_size)
 {
 	DSA *dsa;
 	BIGNUM *priv_key = NULL, *pub_key = NULL;
@@ -232,9 +232,9 @@ get_dsa(const unsigned char *priv, size_t priv_size,
 	pub_key = NULL;
 	priv_key = NULL;
 
-	p = BN_bin2bn(p, p_size, NULL);
-	q = BN_bin2bn(q, q_size, NULL);
-	g = BN_bin2bn(g, g_size, NULL);
+	p = BN_bin2bn(p_char, p_size, NULL);
+	q = BN_bin2bn(q_char, q_size, NULL);
+	g = BN_bin2bn(g_char, g_size, NULL);
 	if (p == NULL || q == NULL || g == NULL)
 		goto err;
 
