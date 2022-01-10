@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.9 2019/06/06 01:06:58 schwarze Exp $
+.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.10 2022/01/10 22:44:22 tb Exp $
 .\"
 .\" Copyright (c) 2014, Google Inc.
 .\" Parts of the text were written by Adam Langley and David Benjamin.
@@ -16,10 +16,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: January 10 2022 $
 .Dt EVP_AEAD_CTX_INIT 3
 .Os
 .Sh NAME
+.Nm EVP_AEAD_CTX_new ,
+.Nm EVP_AEAD_CTX_free ,
 .Nm EVP_AEAD_CTX_init ,
 .Nm EVP_AEAD_CTX_cleanup ,
 .Nm EVP_AEAD_CTX_open ,
@@ -35,6 +37,12 @@
 .Nd authenticated encryption with additional data
 .Sh SYNOPSIS
 .In openssl/evp.h
+.Ft EVP_AEAD_CTX *
+.Fn EVP_AEAD_CTX_new void
+.Ft void
+.Fo EVP_AEAD_CTX_free
+.Fa "EVP_AEAD_CTX *ctx"
+.Fc
 .Ft int
 .Fo EVP_AEAD_CTX_init
 .Fa "EVP_AEAD_CTX *ctx"
@@ -114,6 +122,19 @@ messages.
 Each message has a unique, per-message nonce and, optionally, additional
 data which is authenticated but not included in the output.
 .Pp
+.Fn EVP_AEAD_CTX_new
+allocates a new context for use with
+.Fn EVP_AEAD_CTX_init .
+It can be cleaned up for reuse with
+.Fn EVP_AEAD_CTX_cleanup
+and must be freed with
+.Fn EVP_AEAD_CTX_free .
+.Pp
+.Fn EVP_AEAD_CTX_free
+cleans up
+.Fa ctx
+and frees the space allocated to it.
+.Pp
 .Fn EVP_AEAD_CTX_init
 initializes the context
 .Fa ctx
@@ -131,6 +152,11 @@ A tag length of zero indicates the default tag length should be used.
 .Fn EVP_AEAD_CTX_cleanup
 frees any data allocated for the context
 .Fa ctx .
+After
+.Fn EVP_AEAD_CTX_cleanup ,
+.Fa ctx
+is in the same state as after
+.Fn EVP_AEAD_CTX_new .
 .Pp
 .Fn EVP_AEAD_CTX_open
 authenticates the input
@@ -237,6 +263,12 @@ This is because the code then becomes transparent to the AEAD cipher
 used and much more flexible.
 It is also safer to use as it prevents common mistakes with the native APIs.
 .Sh RETURN VALUES
+.Fn EVP_AEAD_CTX_new
+returns the new
+.Vt EVP_AEAD_CTX
+object or
+.Dv NULL
+on failure.
 .Fn EVP_AEAD_CTX_init ,
 .Fn EVP_AEAD_CTX_open ,
 and
@@ -263,16 +295,17 @@ Encrypt a string using ChaCha20-Poly1305:
 const EVP_AEAD *aead = EVP_aead_chacha20_poly1305();
 static const unsigned char nonce[32] = {0};
 size_t buf_len, nonce_len;
-EVP_AEAD_CTX ctx;
+EVP_AEAD_CTX *ctx;
 
-EVP_AEAD_CTX_init(&ctx, aead, key32, EVP_AEAD_key_length(aead),
+ctx = EVP_AEAD_CTX_new();
+EVP_AEAD_CTX_init(ctx, aead, key32, EVP_AEAD_key_length(aead),
     EVP_AEAD_DEFAULT_TAG_LENGTH, NULL);
 nonce_len = EVP_AEAD_nonce_length(aead);
 
-EVP_AEAD_CTX_seal(&ctx, out, &out_len, BUFSIZE, nonce,
+EVP_AEAD_CTX_seal(ctx, out, &out_len, BUFSIZE, nonce,
     nonce_len, in, in_len, NULL, 0);
 
-EVP_AEAD_CTX_cleanup(&ctx);
+EVP_AEAD_CTX_free(ctx);
 .Ed
 .Sh SEE ALSO
 .Xr evp 3 ,
@@ -305,3 +338,9 @@ AEAD is based on the implementation by
 .An Adam Langley
 for Chromium/BoringSSL and first appeared in
 .Ox 5.6 .
+.Pp
+.Fn EVP_AEAD_CTX_new
+and
+.Fn EVP_AEAD_CTX_free
+first appeared in
+.Ox 7.1 .
