@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_locl.h,v 1.19 2022/01/10 11:52:43 tb Exp $ */
+/* $OpenBSD: evp_locl.h,v 1.20 2022/01/10 12:10:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -349,6 +349,8 @@ struct evp_pkey_method_st {
 	int (*ctrl_str)(EVP_PKEY_CTX *ctx, const char *type, const char *value);
 
 	int (*check)(EVP_PKEY *pkey);
+	int (*public_check)(EVP_PKEY *pkey);
+	int (*param_check)(EVP_PKEY *pkey);
 } /* EVP_PKEY_METHOD */;
 
 void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);

@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.16 2022/01/10 11:52:43 tb Exp $ */
+/* $OpenBSD: asn1_locl.h,v 1.17 2022/01/10 12:10:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -125,6 +125,8 @@ struct evp_pkey_asn1_method_st {
 	    X509_ALGOR *alg1, X509_ALGOR *alg2, ASN1_BIT_STRING *sig);
 
 	int (*pkey_check)(const EVP_PKEY *pk);
+	int (*pkey_public_check)(const EVP_PKEY *pk);
+	int (*pkey_param_check)(const EVP_PKEY *pk);
 } /* EVP_PKEY_ASN1_METHOD */;
 
 /* Method to handle CRL access.

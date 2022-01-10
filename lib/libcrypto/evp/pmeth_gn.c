@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_gn.c,v 1.9 2022/01/10 11:52:43 tb Exp $ */
+/* $OpenBSD: pmeth_gn.c,v 1.10 2022/01/10 12:10:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -243,4 +243,46 @@ EVP_PKEY_check(EVP_PKEY_CTX *ctx)
 	}
 
 	return pkey->ameth->pkey_check(pkey);
+}
+
+int
+EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
+{
+	EVP_PKEY *pkey;
+
+	if ((pkey = ctx->pkey) == NULL) {
+		EVPerror(EVP_R_NO_KEY_SET);
+		return 0;
+	}
+
+	if (ctx->pmeth->public_check != NULL)
+		return ctx->pmeth->public_check(pkey);
+
+	if (pkey->ameth == NULL || pkey->ameth->pkey_public_check == NULL) {
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		return -2;
+	}
+
+	return pkey->ameth->pkey_public_check(pkey);
+}
+
+int
+EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
+{
+	EVP_PKEY *pkey;
+
+	if ((pkey = ctx->pkey) == NULL) {
+		EVPerror(EVP_R_NO_KEY_SET);
+		return 0;
+	}
+
+	if (ctx->pmeth->param_check != NULL)
+		return ctx->pmeth->param_check(pkey);
+
+	if (pkey->ameth == NULL || pkey->ameth->pkey_param_check == NULL) {
+		EVPerror(EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		return -2;
+	}
+
+	return pkey->ameth->pkey_param_check(pkey);
 }

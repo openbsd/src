@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.21 2022/01/10 00:09:06 tb Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.22 2022/01/10 12:10:26 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -466,6 +466,32 @@ DHparams_print(BIO *bp, const DH *x)
 	return do_dh_print(bp, x, 4, NULL, 0);
 }
 
+static int
+dh_pkey_public_check(const EVP_PKEY *pkey)
+{
+	DH *dh = pkey->pkey.dh;
+
+	if (dh->pub_key == NULL) {
+		DHerror(DH_R_MISSING_PUBKEY);
+		return 0;
+	}
+
+	return DH_check_pub_key_ex(dh, dh->pub_key);
+}
+
+static int
+dh_pkey_param_check(const EVP_PKEY *pkey)
+{
+	DH *dh = pkey->pkey.dh;
+
+	/*
+	 * It would have made more sense to support EVP_PKEY_check() for DH
+	 * keys and call DH_check_ex() there and keeping this as a wrapper
+	 * for DH_param_check_ex(). We follow OpenSSL's choice.
+	 */
+	return DH_check_ex(dh);
+}
+
 const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
 	.pkey_id = EVP_PKEY_DH,
 	.pkey_base_id = EVP_PKEY_DH,
@@ -493,4 +519,8 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
 	.param_print = dh_param_print,
 
 	.pkey_free = int_dh_free,
+
+	.pkey_check = NULL,
+	.pkey_public_check = dh_pkey_public_check,
+	.pkey_param_check = dh_pkey_param_check,
 };
