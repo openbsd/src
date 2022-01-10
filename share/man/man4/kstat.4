@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kstat.4,v 1.5 2022/01/10 10:54:54 dlg Exp $
+.\"	$OpenBSD: kstat.4,v 1.6 2022/01/10 13:04:52 dlg Exp $
 .\"
 .\" Copyright (c) 2022 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -89,12 +89,6 @@ flag in
 .Pp
 A kstat is identified by a 64bit number, or the combination of a
 provider name, unit number, name, and unit number.
-Upon the successful request of a kstat, the
-.Nm
-driver will update the
-.Vt kstat_req
-structure with current information.
-.\" list the struct members taht get updated and what they mean?
 .Pp
 Unless
 .Va ks_data
@@ -145,6 +139,61 @@ Request the kstat or next kstat from the set of kstats ordered by
 .Va ks_provider ,
 and
 .Va ks_instance .
+.El
+.Pp
+Upon the successful request of a kstat, the
+.Nm
+driver will update the
+.Vt kstat_req
+structure with current information about that kstat.
+Updated fields include:
+.Bl -tag -width Ds
+.It Va ks_version
+The current version of the kstat subsystem.
+.It Va ks_id
+The 64bit unique identifier for the requested kstat.
+A kstat can be requested using this identifier and the
+.Dv KSTATIOC_FIND_ID
+.Xr ioctl 2
+call.
+.It Va ks_provider , Va ks_instance , Va ks_name , Va ks_unit
+The fully specified identifier of the kstat.
+A kstat can be requested using these identifiers with the
+.Dv KSTATIOC_FIND_NAME
+and
+.Dv KSTATIOC_FIND_PROVIDER
+.Xr ioctl 2
+calls.
+Groups of kstats with the same identifier or name can be enumerated
+or requested with the
+.Dv KSTATIOC_NFIND_NAME
+and
+.Dv KSTATIOC_NFIND_PROVIDER
+.Xr ioctl 2
+calls without having to fetch the entire set of kstats and filtering
+them.
+.It Va ks_created
+The system uptime when the kstat was created and added to the kstat
+subsystem.
+.It Va ks_updated
+The system uptime at which the kstat data payload was last updated.
+A kstat provider may update data when requested, or report when
+data was last updated by some other process.
+.Va ks_updated
+can by used by a program to idenfiy if data has been updated, and
+for calculating rates of changes of values between updates.
+.It Va ks_type
+The type or structure of the data payload.
+Currently supported types are documented in
+.Xr kstat_create 9 .
+.\" .It Va ks_state
+.\" The state of the kstat. create or installed iirc
+.It Va ks_datalen
+The amount of data the kstat provides in bytes.
+When requesting kstat data, the program specifies the amount of
+space available at
+.Va ks_data
+by setting this variable.
 .El
 .Sh FILES
 .Bl -tag -width Pa -compact
