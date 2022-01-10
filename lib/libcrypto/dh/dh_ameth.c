@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.20 2022/01/07 09:27:13 tb Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.21 2022/01/10 00:09:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -95,7 +95,7 @@ dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 		goto err;
 	}
 
-	pstr = pval;	
+	pstr = pval;
 	pm = pstr->data;
 	pmlen = pstr->length;
 
@@ -180,7 +180,7 @@ err:
  * that the AlgorithmIdentifier contains the paramaters, the private key
  * is explcitly included and the pubkey must be recalculated.
  */
-	
+
 static int
 dh_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
@@ -204,7 +204,7 @@ dh_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 	if (!(privkey=d2i_ASN1_INTEGER(NULL, &p, pklen)))
 		goto decerr;
 
-	pstr = pval;	
+	pstr = pval;
 	pm = pstr->data;
 	pmlen = pstr->length;
 	if (!(dh = d2i_DHparams(NULL, &pm, pmlen)))
