@@ -1,4 +1,4 @@
-/*	$OpenBSD: octboot.c,v 1.4 2020/09/02 16:07:33 deraadt Exp $	*/
+/*	$OpenBSD: octboot.c,v 1.5 2022/01/10 16:21:19 visa Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -94,10 +94,13 @@ octboot_kexec(struct octboot_kexec_args *kargs, struct proc *p)
 	Elf_Phdr *ph = NULL;
 	Elf_Shdr *sh = NULL;
 	paddr_t ekern = 0, elfp, maxp = 0, off, pa, shp;
-	size_t len, phsize, shsize, shstrsize, size;
+	size_t phsize = 0, shsize = 0, shstrsize = 0;
+	size_t len, size;
 	char *argbuf = NULL, *argptr;
 	char *shstr = NULL;
 	int argc = 0, error, havesyms = 0, i, nalloc = 0;
+
+	memset(&eh, 0, sizeof(eh));
 
 	/*
 	 * Load kernel arguments into a temporary buffer.
