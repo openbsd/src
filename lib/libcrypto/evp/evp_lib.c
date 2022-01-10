@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_lib.c,v 1.23 2022/01/09 15:15:25 tb Exp $ */
+/* $OpenBSD: evp_lib.c,v 1.24 2022/01/10 13:42:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -369,6 +369,114 @@ unsigned long
 EVP_MD_flags(const EVP_MD *md)
 {
 	return md->flags;
+}
+
+EVP_MD *
+EVP_MD_meth_new(int md_type, int pkey_type)
+{
+	EVP_MD *md;
+
+	if ((md = calloc(1, sizeof(*md))) == NULL)
+		return NULL;
+
+	md->type = md_type;
+	md->pkey_type = pkey_type;
+
+	return md;
+}
+
+EVP_MD *
+EVP_MD_meth_dup(const EVP_MD *md)
+{
+	EVP_MD *to;
+
+	if ((to = EVP_MD_meth_new(md->type, md->pkey_type)) == NULL)
+		return NULL;
+
+	memcpy(to, md, sizeof(*to));
+
+	return to;
+}
+
+void
+EVP_MD_meth_free(EVP_MD *md)
+{
+	freezero(md, sizeof(*md));
+}
+
+int
+EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize)
+{
+	md->block_size = blocksize;
+	return 1;
+}
+
+int
+EVP_MD_meth_set_result_size(EVP_MD *md, int result_size)
+{
+	md->md_size = result_size;
+	return 1;
+}
+
+int
+EVP_MD_meth_set_app_datasize(EVP_MD *md, int datasize)
+{
+	md->ctx_size = datasize;
+	return 1;
+}
+
+int
+EVP_MD_meth_set_flags(EVP_MD *md, unsigned long flags)
+{
+	md->flags = flags;
+	return 1;
+}
+
+int
+EVP_MD_meth_set_init(EVP_MD *md, int (*init)(EVP_MD_CTX *ctx))
+{
+	md->init = init;
+	return 1;
+}
+
+int
+EVP_MD_meth_set_update(EVP_MD *md,
+    int (*update)(EVP_MD_CTX *ctx, const void *data, size_t count))
+{
+	md->update = update;
+	return 1;
+}
+
+int
+EVP_MD_meth_set_final(EVP_MD *md,
+    int (*final)(EVP_MD_CTX *ctx, unsigned char *md))
+{
+	md->final = final;
+	return 1;
+}
+
+int
+EVP_MD_meth_set_copy(EVP_MD *md,
+    int (*copy)(EVP_MD_CTX *to, const EVP_MD_CTX *from))
+{
+	md->copy = copy;
+	return 1;
+}
+
+int
+EVP_MD_meth_set_cleanup(EVP_MD *md,
+    int (*cleanup)(EVP_MD_CTX *ctx))
+{
+	md->cleanup = cleanup;
+	return 1;
+}
+
+int
+EVP_MD_meth_set_ctrl(EVP_MD *md,
+    int (*ctrl)(EVP_MD_CTX *ctx, int cmd, int p1, void *p2))
+{
+	md->md_ctrl = ctrl;
+	return 1;
 }
 
 const EVP_MD *

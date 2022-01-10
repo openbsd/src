@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.94 2022/01/10 12:10:26 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.95 2022/01/10 13:42:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -494,6 +494,26 @@ int EVP_MD_pkey_type(const EVP_MD *md);
 int EVP_MD_size(const EVP_MD *md);
 int EVP_MD_block_size(const EVP_MD *md);
 unsigned long EVP_MD_flags(const EVP_MD *md);
+
+#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_CRYPTO_INTERNAL)
+EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type);
+void EVP_MD_meth_free(EVP_MD *md);
+EVP_MD *EVP_MD_meth_dup(const EVP_MD *md);
+int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize);
+int EVP_MD_meth_set_result_size(EVP_MD *md, int resultsize);
+int EVP_MD_meth_set_app_datasize(EVP_MD *md, int datasize);
+int EVP_MD_meth_set_flags(EVP_MD *md, unsigned long flags);
+int EVP_MD_meth_set_init(EVP_MD *md, int (*init)(EVP_MD_CTX *ctx));
+int EVP_MD_meth_set_update(EVP_MD *md,
+    int (*update)(EVP_MD_CTX *ctx, const void *data, size_t count));
+int EVP_MD_meth_set_final(EVP_MD *md,
+    int (*final)(EVP_MD_CTX *ctx, unsigned char *md));
+int EVP_MD_meth_set_copy(EVP_MD *md,
+    int (*copy)(EVP_MD_CTX *to, const EVP_MD_CTX *from));
+int EVP_MD_meth_set_cleanup(EVP_MD *md, int (*cleanup)(EVP_MD_CTX *ctx));
+int EVP_MD_meth_set_ctrl(EVP_MD *md,
+    int (*ctrl)(EVP_MD_CTX *ctx, int cmd, int p1, void *p2));
+#endif
 
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
 void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
