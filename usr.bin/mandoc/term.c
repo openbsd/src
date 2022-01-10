@@ -1,6 +1,6 @@
-/* $OpenBSD: term.c,v 1.144 2021/10/04 18:56:24 schwarze Exp $ */
+/* $OpenBSD: term.c,v 1.145 2022/01/10 17:59:45 schwarze Exp $ */
 /*
- * Copyright (c) 2010-2021 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -634,12 +634,14 @@ term_word(struct termp *p, const char *word)
 			if (a2roffsu(seq, &su, SCALE_EM) == NULL)
 				continue;
 			uc += term_hen(p, &su);
-			if (uc > 0)
-				while (uc-- > 0)
+			if (uc > 0) {
+				while (uc > 0) {
 					bufferc(p, ASCII_NBRSP);
-			else if (p->col > (size_t)(-uc))
+					uc -= term_len(p, 1);
+				}
+			} else if (p->col > (size_t)(-uc)) {
 				p->col += uc;
-			else {
+			} else {
 				uc += p->col;
 				p->col = 0;
 				if (p->tcol->offset > (size_t)(-uc)) {
