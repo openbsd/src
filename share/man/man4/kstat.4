@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kstat.4,v 1.3 2022/01/10 07:51:23 dlg Exp $
+.\"	$OpenBSD: kstat.4,v 1.4 2022/01/10 10:20:31 dlg Exp $
 .\"
 .\" Copyright (c) 2022 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -68,9 +68,15 @@ struct kstat_req {
 .Pp
 The kstat subsystem increments a version number when a kstat is added to or
 removed from the subsystem so changes to the set of kstats can be detected.
-Programs requesting a kstat must pass the current version in
-.Va ks_version .
-If the version differs an error will be returned with
+The current version can be requested with a
+.Dv KSTATIOC_VERSION
+.Xr ioctl 2
+call.
+Programs requesting a kstat with the other
+.Xr ioctl 2
+calls pass the current version in
+.Va ks_version ,
+and if the version differs an error will be returned with
 .Xr errno 2
 set to
 .Dv EINVAL
