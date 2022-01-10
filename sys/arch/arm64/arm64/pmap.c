@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.83 2021/12/31 11:21:45 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.84 2022/01/10 09:20:27 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -639,9 +639,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	if (flags & (PROT_READ|PROT_WRITE|PROT_EXEC|PMAP_WIRED)) {
 		pmap_pte_insert(pted);
+		ttlb_flush(pm, va & ~PAGE_MASK);
 	}
-
-	ttlb_flush(pm, va & ~PAGE_MASK);
 
 	if (pg != NULL && (flags & PROT_EXEC)) {
 		need_sync = ((pg->pg_flags & PG_PMAP_EXE) == 0);
@@ -700,7 +699,6 @@ pmap_remove_pted(pmap_t pm, struct pte_desc *pted)
 	}
 
 	pmap_pte_remove(pted, pm != pmap_kernel());
-
 	ttlb_flush(pm, pted->pted_va & ~PAGE_MASK);
 
 	if (pted->pted_va & PTED_VA_EXEC_M) {
@@ -753,7 +751,6 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 
 	/* Insert into table */
 	pmap_pte_insert(pted);
-
 	ttlb_flush(pm, va & ~PAGE_MASK);
 
 	pg = PHYS_TO_VM_PAGE(pted->pted_pte & PTE_RPGN);
@@ -795,13 +792,7 @@ pmap_kremove_pg(vaddr_t va)
 
 	pm->pm_stats.resident_count--;
 
-	/*
-	 * Table needs to be locked here as well as pmap, and pv list.
-	 * so that we know the mapping information is either valid,
-	 * or that the mapping is not present in the hash table.
-	 */
 	pmap_pte_remove(pted, 0);
-
 	ttlb_flush(pm, pted->pted_va & ~PAGE_MASK);
 
 	if (pted->pted_va & PTED_VA_EXEC_M)
@@ -1564,10 +1555,7 @@ pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot)
 		pted->pted_pte &= ~PROT_EXEC;
 	}
 	pmap_pte_update(pted, pl3);
-
 	ttlb_flush(pm, pted->pted_va & ~PAGE_MASK);
-
-	return;
 }
 
 /*
@@ -1890,8 +1878,6 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype)
 
 	/* We actually made a change, so flush it and sync. */
 	pmap_pte_update(pted, pl3);
-
-	/* Flush tlb. */
 	ttlb_flush(pm, va & ~PAGE_MASK);
 
 	/*
