@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.88 2021/11/10 13:57:42 schwarze Exp $ */
+/* $OpenBSD: x509.h,v 1.89 2022/01/10 14:13:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -147,8 +147,6 @@ DECLARE_STACK_OF(X509_NAME_ENTRY)
 
 DECLARE_STACK_OF(X509_NAME)
 
-#define X509_EX_V_NETSCAPE_HACK		0x8000
-#define X509_EX_V_INIT			0x0001
 typedef struct X509_extension_st X509_EXTENSION;
 
 typedef STACK_OF(X509_EXTENSION) X509_EXTENSIONS;
@@ -381,9 +379,6 @@ typedef struct PBKDF2PARAM_st {
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-#define X509_EXT_PACK_UNKNOWN	1
-#define X509_EXT_PACK_STRING	2
 
 #define		X509_extract_key(x)	X509_get_pubkey(x) /*****/
 #define		X509_REQ_extract_key(a)	X509_REQ_get_pubkey(a)
