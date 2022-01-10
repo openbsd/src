@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1983 2022/01/06 06:19:11 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1984 2022/01/10 23:40:37 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5515,6 +5515,55 @@
 #define	PCI_PRODUCT_INTEL_RKL_GT_4	0x4c8c		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_RKL_GT_5	0x4c90		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_RKL_GT_6	0x4c9a		/* UHD Graphics */
+#define	PCI_PRODUCT_INTEL_JSL_ESPI	0x4d87		/* Jasper Lake eSPI */
+#define	PCI_PRODUCT_INTEL_JSL_P2SB	0x4da0		/* Jasper Lake P2SB */
+#define	PCI_PRODUCT_INTEL_JSL_PMC	0x4da1		/* Jasper Lake PMC */
+#define	PCI_PRODUCT_INTEL_JSL_SMB	0x4da3		/* Jasper Lake SMBus */
+#define	PCI_PRODUCT_INTEL_JSL_SPI	0x4da4		/* Jasper Lake SPI */
+#define	PCI_PRODUCT_INTEL_JSL_ITH	0x4da6		/* Jasper Lake ITH */
+#define	PCI_PRODUCT_INTEL_JSL_UART_0	0x4da8		/* Jasper Lake UART */
+#define	PCI_PRODUCT_INTEL_JSL_UART_1	0x4da9		/* Jasper Lake UART */
+#define	PCI_PRODUCT_INTEL_JSL_LPSS_SPI_0	0x4daa		/* Jasper Lake SPI */
+#define	PCI_PRODUCT_INTEL_JSL_LPSS_SPI_1	0x4dab		/* Jasper Lake SPI */
+#define	PCI_PRODUCT_INTEL_JSL_PCIE_1	0x4db8		/* Jasper Lake PCIE */
+#define	PCI_PRODUCT_INTEL_JSL_PCIE_2	0x4db9		/* Jasper Lake PCIE */
+#define	PCI_PRODUCT_INTEL_JSL_PCIE_3	0x4dba		/* Jasper Lake PCIE */
+#define	PCI_PRODUCT_INTEL_JSL_PCIE_4	0x4dbb		/* Jasper Lake PCIE */
+#define	PCI_PRODUCT_INTEL_JSL_PCIE_5	0x4dbc		/* Jasper Lake PCIE */
+#define	PCI_PRODUCT_INTEL_JSL_PCIE_6	0x4dbd		/* Jasper Lake PCIE */
+#define	PCI_PRODUCT_INTEL_JSL_PCIE_7	0x4dbe		/* Jasper Lake PCIE */
+#define	PCI_PRODUCT_INTEL_JSL_PCIE_8	0x4dbf		/* Jasper Lake PCIE */
+#define	PCI_PRODUCT_INTEL_JSL_EMMC	0x4dc4		/* Jasper Lake eMMC */
+#define	PCI_PRODUCT_INTEL_JSL_I2C_4	0x4dc5		/* Jasper Lake I2C */
+#define	PCI_PRODUCT_INTEL_JSL_I2C_5	0x4dc6		/* Jasper Lake I2C */
+#define	PCI_PRODUCT_INTEL_JSL_LPSS_UART_2	0x4dc7		/* Jasper Lake UART */
+#define	PCI_PRODUCT_INTEL_JSL_HDA	0x4dc8		/* Jasper Lake HD Audio */
+#define	PCI_PRODUCT_INTEL_JSL_AHCI_1	0x4dd2		/* Jasper Lake AHCI */
+#define	PCI_PRODUCT_INTEL_JSL_AHCI_2	0x4dd3		/* Jasper Lake AHCI */
+#define	PCI_PRODUCT_INTEL_JSL_RAID_1	0x4dd6		/* Jasper Lake RAID */
+#define	PCI_PRODUCT_INTEL_JSL_RAID_2	0x4dd7		/* Jasper Lake RAID */
+#define	PCI_PRODUCT_INTEL_JSL_HECI_1	0x4de0		/* Jasper Lake HECI */
+#define	PCI_PRODUCT_INTEL_JSL_HECI_2	0x4de1		/* Jasper Lake HECI */
+#define	PCI_PRODUCT_INTEL_JSL_HECI_3	0x4de4		/* Jasper Lake HECI */
+#define	PCI_PRODUCT_INTEL_JSL_I2C_0	0x4de8		/* Jasper Lake I2C */
+#define	PCI_PRODUCT_INTEL_JSL_I2C_1	0x4de9		/* Jasper Lake I2C */
+#define	PCI_PRODUCT_INTEL_JSL_I2C_2	0x4dea		/* Jasper Lake I2C */
+#define	PCI_PRODUCT_INTEL_JSL_I2C_3	0x4deb		/* Jasper Lake I2C */
+#define	PCI_PRODUCT_INTEL_JSL_XHCI	0x4ded		/* Jasper Lake xHCI */
+#define	PCI_PRODUCT_INTEL_JSL_XDCI	0x4dee		/* Jasper Lake xDCI */
+#define	PCI_PRODUCT_INTEL_JSL_SRAM	0x4def		/* Jasper Lake Shared SRAM */
+#define	PCI_PRODUCT_INTEL_JSL_SDXC	0x4df8		/* Jasper Lake SDXC */
+#define	PCI_PRODUCT_INTEL_JSL_LPSS_SPI_2	0x4dfb		/* Jasper Lake SPI */
+#define	PCI_PRODUCT_INTEL_JSL_DPTF	0x4e03		/* Jasper Lake DPTF */
+#define	PCI_PRODUCT_INTEL_JSL_GNA	0x4e11		/* Jasper Lake GNA */
+#define	PCI_PRODUCT_INTEL_JSL_HB_1	0x4e12		/* Jasper Lake Host */
+#define	PCI_PRODUCT_INTEL_JSL_HB_2	0x4e14		/* Jasper Lake Host */
+#define	PCI_PRODUCT_INTEL_JSL_IPU	0x4e19		/* Jasper Lake IPU */
+#define	PCI_PRODUCT_INTEL_JSL_HB_3	0x4e22		/* Jasper Lake Host */
+#define	PCI_PRODUCT_INTEL_JSL_HB_4	0x4e24		/* Jasper Lake Host */
+#define	PCI_PRODUCT_INTEL_JSL_HB_5	0x4e26		/* Jasper Lake Host */
+#define	PCI_PRODUCT_INTEL_JSL_HB_6	0x4e28		/* Jasper Lake Host */
+#define	PCI_PRODUCT_INTEL_JSL_TH	0x4e29		/* Jasper Lake TH */
 #define	PCI_PRODUCT_INTEL_JSL_GT_1	0x4e51		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_JSL_GT_2	0x4e55		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_JSL_GT_3	0x4e57		/* UHD Graphics */
