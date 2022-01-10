@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.134 2021/11/26 16:23:27 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.135 2022/01/10 12:19:26 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: November 26 2021 $
+.Dd $Mdocdate: January 10 2022 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3332,6 +3332,7 @@ is equivalent to
 .Bl -hang -width "openssl pkey"
 .It Nm openssl pkey
 .Bk -words
+.Op Fl check
 .Op Ar cipher
 .Op Fl in Ar file
 .Op Fl inform Cm der | pem
@@ -3340,6 +3341,7 @@ is equivalent to
 .Op Fl outform Cm der | pem
 .Op Fl passin Ar arg
 .Op Fl passout Ar arg
+.Op Fl pubcheck
 .Op Fl pubin
 .Op Fl pubout
 .Op Fl text
@@ -3355,6 +3357,8 @@ and their components printed out.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl check
+Check the validity of a key pair.
 .It Ar cipher
 Encrypt the private key with the specified cipher.
 Any algorithm name accepted by
@@ -3380,6 +3384,9 @@ The output format.
 The key password source.
 .It Fl passout Ar arg
 The output file password source.
+.It Fl pubcheck
+Check the validity of a public key
+or the public component of a key pair.
 .It Fl pubin
 Read in a public key, not a private key.
 .It Fl pubout
@@ -3394,6 +3401,7 @@ even if a private key is being processed.
 .Tg pkeyparam
 .Sh PKEYPARAM
 .Cm openssl pkeyparam
+.Op Fl check
 .Op Fl in Ar file
 .Op Fl noout
 .Op Fl out Ar file
@@ -3406,6 +3414,8 @@ The key type is determined by the PEM headers.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl check
+check the correctness of parameters.
 .It Fl in Ar file
 The input file to read from,
 or standard input if not specified.
