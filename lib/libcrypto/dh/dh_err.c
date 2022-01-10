@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_err.c,v 1.16 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: dh_err.c,v 1.17 2022/01/10 12:00:52 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -90,6 +90,17 @@ static ERR_STRING_DATA DH_str_reasons[]=
 {ERR_REASON(DH_R_NO_PARAMETERS_SET)      ,"no parameters set"},
 {ERR_REASON(DH_R_NO_PRIVATE_VALUE)       ,"no private value"},
 {ERR_REASON(DH_R_PARAMETER_ENCODING_ERROR),"parameter encoding error"},
+{ERR_REASON(DH_R_CHECK_INVALID_J_VALUE)   ,"check invalid j value"},
+{ERR_REASON(DH_R_CHECK_INVALID_Q_VALUE)   ,"check invalid q value"},
+{ERR_REASON(DH_R_CHECK_PUBKEY_INVALID)    ,"check pubkey invalid"},
+{ERR_REASON(DH_R_CHECK_PUBKEY_TOO_LARGE)  ,"check pubkey too large"},
+{ERR_REASON(DH_R_CHECK_PUBKEY_TOO_SMALL)  ,"check pubkey too small"},
+{ERR_REASON(DH_R_CHECK_P_NOT_PRIME)       ,"check p not prime"},
+{ERR_REASON(DH_R_CHECK_P_NOT_SAFE_PRIME)  ,"check p not safe prime"},
+{ERR_REASON(DH_R_CHECK_Q_NOT_PRIME)       ,"check q not prime"},
+{ERR_REASON(DH_R_MISSING_PUBKEY)          ,"missing pubkey"},
+{ERR_REASON(DH_R_NOT_SUITABLE_GENERATOR)  ,"not suitable generator"},
+{ERR_REASON(DH_R_UNABLE_TO_CHECK_GENERATOR),"unable to check generator"},
 {0,NULL}
 	};
 

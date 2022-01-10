@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_local.h,v 1.1 2022/01/07 09:27:13 tb Exp $ */
+/* $OpenBSD: dh_local.h,v 1.2 2022/01/10 12:00:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,6 +60,15 @@
 #define HEADER_DH_LOCAL_H
 
 __BEGIN_HIDDEN_DECLS
+
+/*
+ * Public API in OpenSSL that we only want to use internally.
+ */
+
+int DH_check_params_ex(const DH *dh);
+int DH_check_params(const DH *dh, int *flags);
+int DH_check_ex(const DH *dh);
+int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key);
 
 __END_HIDDEN_DECLS
 

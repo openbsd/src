@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.h,v 1.29 2022/01/07 09:21:21 tb Exp $ */
+/* $OpenBSD: dh.h,v 1.30 2022/01/10 12:00:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -288,6 +288,17 @@ void ERR_load_DH_strings(void);
 #define DH_R_NO_PARAMETERS_SET				 107
 #define DH_R_NO_PRIVATE_VALUE				 100
 #define DH_R_PARAMETER_ENCODING_ERROR			 105
+#define DH_R_CHECK_INVALID_J_VALUE			 115
+#define DH_R_CHECK_INVALID_Q_VALUE			 116
+#define DH_R_CHECK_PUBKEY_INVALID			 122
+#define DH_R_CHECK_PUBKEY_TOO_LARGE			 123
+#define DH_R_CHECK_PUBKEY_TOO_SMALL			 124
+#define DH_R_CHECK_P_NOT_PRIME				 117
+#define DH_R_CHECK_P_NOT_SAFE_PRIME			 118
+#define DH_R_CHECK_Q_NOT_PRIME				 119
+#define DH_R_MISSING_PUBKEY				 125
+#define DH_R_NOT_SUITABLE_GENERATOR			 120
+#define DH_R_UNABLE_TO_CHECK_GENERATOR			 121
 
 #ifdef  __cplusplus
 }

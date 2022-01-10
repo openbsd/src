@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.23 2022/01/07 09:27:13 tb Exp $ */
+/* $OpenBSD: dh_check.c,v 1.24 2022/01/10 12:00:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,11 +60,33 @@
 
 #include <openssl/bn.h>
 #include <openssl/dh.h>
+#include <openssl/err.h>
 
 #include "bn_lcl.h"
 #include "dh_local.h"
 
 #define DH_NUMBER_ITERATIONS_FOR_PRIME 64
+
+/*
+ * Check that p is odd and 1 < g < p - 1. The _ex version removes the need of
+ * inspecting flags and pushes errors on the stack instead.
+ */
+
+int
+DH_check_params_ex(const DH *dh)
+{
+	int flags = 0;
+
+	if (!DH_check_params(dh, &flags))
+		return 0;
+
+	if ((flags & DH_CHECK_P_NOT_PRIME) != 0)
+		DHerror(DH_R_CHECK_P_NOT_PRIME);
+	if ((flags & DH_NOT_SUITABLE_GENERATOR) != 0)
+		DHerror(DH_R_NOT_SUITABLE_GENERATOR);
+
+	return flags == 0;
+}
 
 int
 DH_check_params(const DH *dh, int *flags)
@@ -102,7 +124,34 @@ DH_check_params(const DH *dh, int *flags)
 
 /*
  * Check that p is a safe prime and that g is a suitable generator.
+ * The _ex version puts errors on the stack instead of returning flags.
  */
+
+int
+DH_check_ex(const DH *dh)
+{
+	int flags = 0;
+
+	if (!DH_check(dh, &flags))
+		return 0;
+
+	if ((flags & DH_NOT_SUITABLE_GENERATOR) != 0)
+		DHerror(DH_R_NOT_SUITABLE_GENERATOR);
+	if ((flags & DH_CHECK_Q_NOT_PRIME) != 0)
+		DHerror(DH_R_CHECK_Q_NOT_PRIME);
+	if ((flags & DH_CHECK_INVALID_Q_VALUE) != 0)
+		DHerror(DH_R_CHECK_INVALID_Q_VALUE);
+	if ((flags & DH_CHECK_INVALID_J_VALUE) != 0)
+		DHerror(DH_R_CHECK_INVALID_J_VALUE);
+	if ((flags & DH_UNABLE_TO_CHECK_GENERATOR) != 0)
+		DHerror(DH_R_UNABLE_TO_CHECK_GENERATOR);
+	if ((flags & DH_CHECK_P_NOT_PRIME) != 0)
+		DHerror(DH_R_CHECK_P_NOT_PRIME);
+	if ((flags & DH_CHECK_P_NOT_SAFE_PRIME) != 0)
+		DHerror(DH_R_CHECK_P_NOT_SAFE_PRIME);
+
+	return flags == 0;
+}
 
 int
 DH_check(const DH *dh, int *flags)
@@ -177,6 +226,24 @@ DH_check(const DH *dh, int *flags)
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	return ok;
+}
+
+int
+DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
+{
+	int flags = 0;
+
+	if (!DH_check_pub_key(dh, pub_key, &flags))
+		return 0;
+
+	if ((flags & DH_CHECK_PUBKEY_TOO_SMALL) != 0)
+		DHerror(DH_R_CHECK_PUBKEY_TOO_SMALL);
+	if ((flags & DH_CHECK_PUBKEY_TOO_LARGE) != 0)
+		DHerror(DH_R_CHECK_PUBKEY_TOO_LARGE);
+	if ((flags & DH_CHECK_PUBKEY_INVALID) != 0)
+		DHerror(DH_R_CHECK_PUBKEY_INVALID);
+
+	return flags == 0;
 }
 
 int
