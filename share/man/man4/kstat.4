@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kstat.4,v 1.2 2022/01/10 07:01:50 dlg Exp $
+.\"	$OpenBSD: kstat.4,v 1.3 2022/01/10 07:51:23 dlg Exp $
 .\"
 .\" Copyright (c) 2022 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -25,18 +25,102 @@
 .Sh DESCRIPTION
 The
 .Pa /dev/kstat
-device exposes kernel statistics to userland.
+device exposes kernel statistics (kstats) to userland.
 .Sh IOCTLS
-See
+The kstat
+.Xr ioctl 2
+calls are provided in
 .In sys/kstat.h .
+.Pp
+With the exception of
+.Dv KSTATIOC_VERSION ,
+the kstat
+.Xr ioctl 2
+calls use the
+.Vt kstat_req
+structure to request or enumerate kernel
+statistic data from the kernel:
+.Bd -literal
+struct kstat_req {
+	unsigned int		 ks_rflags;
+#define KSTATIOC_F_IGNVER		(1 << 0)
+	/* the current version of the kstat subsystem */
+	unsigned int		 ks_version;
+
+	uint64_t		 ks_id;
+
+	char			 ks_provider[KSTAT_STRLEN];
+	unsigned int		 ks_instance;
+	char			 ks_name[KSTAT_STRLEN];
+	unsigned int		 ks_unit;
+
+	struct timespec		 ks_created;
+	struct timespec		 ks_updated;
+	struct timespec		 ks_interval;
+	unsigned int		 ks_type;
+	unsigned int		 ks_state;
+
+	void			*ks_data;
+	size_t			 ks_datalen;
+	unsigned int		 ks_dataver;
+};
+.Ed
+.Pp
+The kstat subsystem increments a version number when a kstat is added to or
+removed from the subsystem so changes to the set of kstats can be detected.
+Programs requesting a kstat must pass the current version in
+.Va ks_version .
+If the version differs an error will be returned with
+.Xr errno 2
+set to
+.Dv EINVAL
+to indicate that the program should resynchronise with the kernel
+subsystem.
+This check can be disabled by setting the
+.Dv KSTATIOC_F_IGNVER
+flag in
+.Va ks_rflags .
+.Pp
+The kstat
+.Xr ioctl 2
+calls are as follows:
 .Bl -tag -width Ds
 .It Dv KSTATIOC_VERSION Fa "unsigned int"
+Get the current version of the set of kernel statistics.
 .It Dv KSTATIOC_FIND_ID Fa "struct kstat_req"
+Request the kstat identified by
+.Va ks_id .
 .It Dv KSTATIOC_NFIND_ID Fa "struct kstat_req"
+Request a kstat with an identifier greater than or equal to
+.Va ks_id .
 .It Dv KSTATIOC_FIND_PROVIDER Fa "struct kstat_req"
+Request the kstat identified by
+.Va ks_provider ,
+.Va ks_instance ,
+.Va ks_name ,
+and
+.Va ks_unit .
 .It Dv KSTATIOC_NFIND_PROVIDER Fa "struct kstat_req"
+Request the kstat or next kstat from the set of kstats ordered by
+.Va ks_provider ,
+.Va ks_instance ,
+.Va ks_name ,
+and
+.Va ks_unit .
 .It Dv KSTATIOC_FIND_NAME Fa "struct kstat_req"
+Request the kstat identified by
+.Va ks_name ,
+.Va ks_unit ,
+.Va ks_provider ,
+and
+.Va ks_instance .
 .It Dv KSTATIOC_NFIND_NAME Fa "struct kstat_req"
+Request the kstat or next kstat from the set of kstats ordered by
+.Va ks_name ,
+.Va ks_unit ,
+.Va ks_provider ,
+and
+.Va ks_instance .
 .El
 .Sh FILES
 .Bl -tag -width Pa -compact
