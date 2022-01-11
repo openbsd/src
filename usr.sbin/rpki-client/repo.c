@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.19 2022/01/04 18:16:09 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.20 2022/01/11 13:06:07 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -64,7 +64,7 @@ struct rrdprepo {
 	unsigned int		 id;
 	enum repo_state		 state;
 };
-SLIST_HEAD(, rrdprepo)	rrdprepos = SLIST_HEAD_INITIALIZER(rrdprepos);
+static SLIST_HEAD(, rrdprepo)	rrdprepos = SLIST_HEAD_INITIALIZER(rrdprepos);
 
 struct rsyncrepo {
 	SLIST_ENTRY(rsyncrepo)	 entry;
@@ -73,7 +73,7 @@ struct rsyncrepo {
 	unsigned int		 id;
 	enum repo_state		 state;
 };
-SLIST_HEAD(, rsyncrepo)	rsyncrepos = SLIST_HEAD_INITIALIZER(rsyncrepos);
+static SLIST_HEAD(, rsyncrepo)	rsyncrepos = SLIST_HEAD_INITIALIZER(rsyncrepos);
 
 struct tarepo {
 	SLIST_ENTRY(tarepo)	 entry;
@@ -86,7 +86,7 @@ struct tarepo {
 	unsigned int		 id;
 	enum repo_state		 state;
 };
-SLIST_HEAD(, tarepo)	tarepos = SLIST_HEAD_INITIALIZER(tarepos);
+static SLIST_HEAD(, tarepo)	tarepos = SLIST_HEAD_INITIALIZER(tarepos);
 
 struct repo {
 	SLIST_ENTRY(repo)	 entry;
@@ -100,7 +100,7 @@ struct repo {
 	int			 talid;
 	unsigned int		 id;		/* identifier */
 };
-SLIST_HEAD(, repo)	repos = SLIST_HEAD_INITIALIZER(repos);
+static SLIST_HEAD(, repo)	repos = SLIST_HEAD_INITIALIZER(repos);
 
 /* counter for unique repo id */
 unsigned int		repoid;
@@ -152,9 +152,8 @@ filepath_add(struct filepath_tree *tree, char *file)
 static struct filepath *
 filepath_find(struct filepath_tree *tree, char *file)
 {
-	struct filepath needle;
+	struct filepath needle = { .file = file };
 
-	needle.file = file;
 	return RB_FIND(filepath_tree, tree, &needle);
 }
 
@@ -1146,39 +1145,66 @@ repo_lookup(int talid, const char *uri, const char *notify)
 	if (rp->rrdp == NULL)
 		rp->rsync = rsync_get(uri, nofetch);
 
+	if (repo_state(rp) != REPO_LOADING)
+		entityq_flush(&rp->queue, rp);
+
 	return rp;
 }
 
 /*
- * Build local file name base on the URI and the repo info.
+ * Find repository by identifier.
+ */
+struct repo *
+repo_byid(unsigned int id)
+{
+	struct repo	*rp;
+
+	SLIST_FOREACH(rp, &repos, entry) {
+		if (rp->id == id)
+			return rp;
+	}
+	return NULL;
+}
+
+/*
+ * Return the repository base directory.
+ * Returned string must be freed by caller.
  */
 char *
-repo_filename(const struct repo *rp, const char *uri)
+repo_basedir(const struct repo *rp)
 {
-	char *nfile;
-	char *dir, *repouri;
+	char *path;
 
-	if (uri == NULL && rp->ta)
-		return ta_filename(rp->ta, 0);
+	if (rp->ta) {
+		if ((path = strdup(rp->ta->basedir)) == NULL)
+			err(1, NULL);
+	} else if (rp->rsync) {
+		if ((path = strdup(rp->rsync->basedir)) == NULL)
+			err(1, NULL);
+	} else if (rp->rrdp) {
+		path = rrdp_filename(rp->rrdp, rp->repouri, 0);
+	} else
+		errx(1, "%s: bad repo", rp->repouri);
 
-	assert(uri != NULL);
-	if (rp->rrdp)
-		return rrdp_filename(rp->rrdp, uri, 0);
+	return path;
+}
 
-	/* must be rsync */
-	dir = rp->rsync->basedir;
-	repouri = rp->rsync->repouri;
+/*
+ * Return the repository identifier.
+ */
+unsigned int
+repo_id(const struct repo *rp)
+{
+	return rp->id;
+}
 
-	if (strstr(uri, repouri) != uri) {
-		warnx("%s: URI %s outside of repository", repouri, uri);
-		return NULL;
-	}
-
-	uri += strlen(repouri) + 1;	/* skip base and '/' */
-
-	if (asprintf(&nfile, "%s/%s", dir, uri) == -1)
-		err(1, NULL);
-	return nfile;
+/*
+ * Return the repository URI.
+ */
+const char *
+repo_uri(const struct repo *rp)
+{
+	return rp->repouri;
 }
 
 int
@@ -1220,10 +1246,10 @@ repo_fail(struct repo *rp)
 
 	if (rp->ta)
 		http_finish(rp->ta->id, HTTP_FAILED, NULL);
-	else if (rp->rrdp)
-		rrdp_finish(rp->rrdp->id, 0);
 	else if (rp->rsync)
 		rsync_finish(rp->rsync->id, 0);
+	else if (rp->rrdp)
+		rrdp_finish(rp->rrdp->id, 0);
 	else
 		errx(1, "%s: bad repo", rp->repouri);
 }

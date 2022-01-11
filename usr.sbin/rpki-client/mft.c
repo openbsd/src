@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.43 2022/01/06 16:06:30 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.44 2022/01/11 13:06:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -433,8 +433,6 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 
 	if ((p.res = calloc(1, sizeof(struct mft))) == NULL)
 		err(1, NULL);
-	if ((p.res->file = strdup(fn)) == NULL)
-		err(1, NULL);
 
 	p.res->aia = x509_get_aia(*x509, fn);
 	p.res->aki = x509_get_aki(*x509, 0, fn);
@@ -517,7 +515,7 @@ mft_free(struct mft *p)
 	free(p->aia);
 	free(p->aki);
 	free(p->ski);
-	free(p->file);
+	free(p->path);
 	free(p->files);
 	free(p->seqnum);
 	free(p);
@@ -532,18 +530,19 @@ mft_buffer(struct ibuf *b, const struct mft *p)
 {
 	size_t		 i;
 
-	io_simple_buffer(b, &p->stale, sizeof(int));
-	io_str_buffer(b, p->file);
-	io_simple_buffer(b, &p->filesz, sizeof(size_t));
-
-	for (i = 0; i < p->filesz; i++) {
-		io_str_buffer(b, p->files[i].file);
-		io_simple_buffer(b, p->files[i].hash, SHA256_DIGEST_LENGTH);
-	}
+	io_simple_buffer(b, &p->stale, sizeof(p->stale));
+	io_simple_buffer(b, &p->repoid, sizeof(p->repoid));
+	io_str_buffer(b, p->path);
 
 	io_str_buffer(b, p->aia);
 	io_str_buffer(b, p->aki);
 	io_str_buffer(b, p->ski);
+
+	io_simple_buffer(b, &p->filesz, sizeof(size_t));
+	for (i = 0; i < p->filesz; i++) {
+		io_str_buffer(b, p->files[i].file);
+		io_simple_buffer(b, p->files[i].hash, SHA256_DIGEST_LENGTH);
+	}
 }
 
 /*
@@ -559,11 +558,16 @@ mft_read(struct ibuf *b)
 	if ((p = calloc(1, sizeof(struct mft))) == NULL)
 		err(1, NULL);
 
-	io_read_buf(b, &p->stale, sizeof(int));
-	io_read_str(b, &p->file);
-	io_read_buf(b, &p->filesz, sizeof(size_t));
+	io_read_buf(b, &p->stale, sizeof(p->stale));
+	io_read_buf(b, &p->repoid, sizeof(p->repoid));
+	io_read_str(b, &p->path);
 
-	assert(p->file);
+	io_read_str(b, &p->aia);
+	io_read_str(b, &p->aki);
+	io_read_str(b, &p->ski);
+	assert(p->aia && p->aki && p->ski);
+
+	io_read_buf(b, &p->filesz, sizeof(size_t));
 	if ((p->files = calloc(p->filesz, sizeof(struct mftfile))) == NULL)
 		err(1, NULL);
 
@@ -571,11 +575,6 @@ mft_read(struct ibuf *b)
 		io_read_str(b, &p->files[i].file);
 		io_read_buf(b, p->files[i].hash, SHA256_DIGEST_LENGTH);
 	}
-
-	io_read_str(b, &p->aia);
-	io_read_str(b, &p->aki);
-	io_read_str(b, &p->ski);
-	assert(p->aia && p->aki && p->ski);
 
 	return p;
 }

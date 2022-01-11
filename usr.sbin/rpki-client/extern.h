@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.100 2021/12/29 11:37:57 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.101 2022/01/11 13:06:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -162,14 +162,15 @@ struct mftfile {
  * manifest file.
  */
 struct mft {
-	char		*file; /* full path of MFT file */
+	char		*path; /* relative path to directory of the MFT */
 	struct mftfile	*files; /* file and hash */
 	size_t		 filesz; /* number of filenames */
-	int		 stale; /* if a stale manifest */
 	char		*seqnum; /* manifestNumber */
 	char		*aia; /* AIA */
 	char		*aki; /* AKI */
 	char		*ski; /* SKI */
+	unsigned int	 repoid;
+	int		 stale; /* if a stale manifest */
 };
 
 /*
@@ -292,6 +293,7 @@ enum rtype {
 	RTYPE_CER,
 	RTYPE_CRL,
 	RTYPE_GBR,
+	RTYPE_REPO,
 };
 
 enum http_result {
@@ -337,9 +339,11 @@ enum publish_type {
  */
 struct entity {
 	TAILQ_ENTRY(entity) entries;
-	char		*file;		/* local path to file */
+	char		*path;		/* path relative to repository */
+	char		*file;		/* filename */
 	unsigned char	*data;		/* optional data blob */
 	size_t		 datasz; 	/* length of optional data blob */
+	unsigned int	 repoid;	/* repository identifier */
 	int		 talid;		/* tal identifier */
 	enum rtype	 type;		/* type of entity (not RTYPE_EOF) */
 };
@@ -500,9 +504,12 @@ int		 filepath_add(struct filepath_tree *, char *);
 void		 rrdp_save_state(unsigned int, struct rrdp_session *);
 int		 rrdp_handle_file(unsigned int, enum publish_type, char *,
 		    char *, size_t, char *, size_t);
-char		*repo_filename(const struct repo *, const char *);
+char		*repo_basedir(const struct repo *);
+unsigned int	 repo_id(const struct repo *);
+const char	*repo_uri(const struct repo *);
 struct repo	*ta_lookup(int, struct tal *);
 struct repo	*repo_lookup(int, const char *, const char *);
+struct repo	*repo_byid(unsigned int);
 int		 repo_queued(struct repo *, struct entity *);
 void		 repo_cleanup(struct filepath_tree *);
 void		 repo_free(void);

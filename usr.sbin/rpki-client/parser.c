@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.33 2022/01/05 11:07:35 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.34 2022/01/11 13:06:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -45,6 +45,45 @@ static void		 build_crls(const struct crl *, STACK_OF(X509_CRL) **);
 static X509_STORE_CTX	*ctx;
 static struct auth_tree  auths = RB_INITIALIZER(&auths);
 static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
+
+struct parse_repo {
+	RB_ENTRY(parse_repo)	 entry;
+	char			*path;
+	unsigned int		 id;
+};
+
+static RB_HEAD(repo_tree, parse_repo)	repos = RB_INITIALIZER(&repos);
+
+static inline int
+repocmp(struct parse_repo *a, struct parse_repo *b)
+{
+	return a->id - b->id;
+}
+
+RB_GENERATE_STATIC(repo_tree, parse_repo, entry, repocmp);
+
+static struct parse_repo *
+repo_get(unsigned int id)
+{
+	struct parse_repo needle = { .id = id };
+
+	return RB_FIND(repo_tree, &repos, &needle);
+}
+
+static void
+repo_add(unsigned int id, char *path)
+{
+	struct parse_repo *rp;
+
+	if ((rp = malloc(sizeof(*rp))) == NULL)
+		err(1, NULL);
+	rp->id = id;
+	if ((rp->path = strdup(path)) == NULL)
+		err(1, NULL);
+
+	if (RB_INSERT(repo_tree, &repos, rp) != NULL)
+		errx(1, "repository already added: id %d, %s", id, path);
+}
 
 static int
 verify_cb(int ok, X509_STORE_CTX *store_ctx)
@@ -192,7 +231,8 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
  * Return the mft on success or NULL on failure.
  */
 static struct mft *
-proc_parser_mft(char *file, const unsigned char *der, size_t len)
+proc_parser_mft(char *file, const unsigned char *der, size_t len,
+    const char *path, unsigned int repoid)
 {
 	struct mft		*mft;
 	X509			*x509;
@@ -235,6 +275,10 @@ proc_parser_mft(char *file, const unsigned char *der, size_t len)
 		return NULL;
 	}
 
+	if (path != NULL)
+		if ((mft->path = strdup(path)) == NULL)
+			err(1, NULL);
+	mft->repoid = repoid;
 	return mft;
 }
 
@@ -544,6 +588,37 @@ build_crls(const struct crl *crl, STACK_OF(X509_CRL) **crls)
 		err(1, "sk_X509_CRL_push");
 }
 
+static char *
+parse_filepath(struct entity *entp)
+{
+	struct parse_repo	*rp;
+	char			*file;
+
+	/* build file path based on repoid, entity path and filename */
+	rp = repo_get(entp->repoid);
+	if (rp == NULL) {
+		if (entp->path == NULL) {
+			if ((file = strdup(entp->file)) == NULL)
+					err(1, NULL);
+		} else {
+			if (asprintf(&file, "%s/%s", entp->path,
+			    entp->file) == -1)
+				err(1, NULL);
+		}
+	} else {
+		if (entp->path == NULL) {
+			if (asprintf(&file, "%s/%s", rp->path,
+			    entp->file) == -1)
+				err(1, NULL);
+		} else {
+			if (asprintf(&file, "%s/%s/%s", rp->path,
+			    entp->path, entp->file) == -1)
+				err(1, NULL);
+		}
+	}
+	return file;
+}
+
 static void
 parse_entity(struct entityq *q, struct msgbuf *msgq)
 {
@@ -555,23 +630,31 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 	struct ibuf	*b;
 	unsigned char	*f;
 	size_t		 flen;
+	char		*file;
 	int		 c;
 
 	while ((entp = TAILQ_FIRST(q)) != NULL) {
 		TAILQ_REMOVE(q, entp, entries);
 
-		b = io_new_buffer();
+		/* handle RTYPE_REPO first */
+		if (entp->type == RTYPE_REPO) {
+			repo_add(entp->repoid, entp->path);
+			entity_free(entp);
+			continue;
+		}
 
 		f = NULL;
+		file = parse_filepath(entp);
 		if (entp->type != RTYPE_TAL) {
-			f = load_file(entp->file, &flen);
+			f = load_file(file, &flen);
 			if (f == NULL)
-				warn("%s", entp->file);
+				warn("%s", file);
 		}
 
 		/* pass back at least type and filename */
+		b = io_new_buffer();
 		io_simple_buffer(b, &entp->type, sizeof(entp->type));
-		io_str_buffer(b, entp->file);
+		io_str_buffer(b, file);
 
 		switch (entp->type) {
 		case RTYPE_TAL:
@@ -585,11 +668,11 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			break;
 		case RTYPE_CER:
 			if (entp->data != NULL)
-				cert = proc_parser_root_cert(entp->file,
+				cert = proc_parser_root_cert(file,
 				    f, flen, entp->data, entp->datasz,
 				    entp->talid);
 			else
-				cert = proc_parser_cert(entp->file, f, flen);
+				cert = proc_parser_cert(file, f, flen);
 			c = (cert != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (cert != NULL)
@@ -601,10 +684,11 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			 */
 			break;
 		case RTYPE_CRL:
-			proc_parser_crl(entp->file, f, flen);
+			proc_parser_crl(file, f, flen);
 			break;
 		case RTYPE_MFT:
-			mft = proc_parser_mft(entp->file, f, flen);
+			mft = proc_parser_mft(file, f, flen,
+			    entp->path, entp->repoid);
 			c = (mft != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (mft != NULL)
@@ -612,7 +696,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			mft_free(mft);
 			break;
 		case RTYPE_ROA:
-			roa = proc_parser_roa(entp->file, f, flen);
+			roa = proc_parser_roa(file, f, flen);
 			c = (roa != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (roa != NULL)
@@ -620,13 +704,14 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			roa_free(roa);
 			break;
 		case RTYPE_GBR:
-			proc_parser_gbr(entp->file, f, flen);
+			proc_parser_gbr(file, f, flen);
 			break;
 		default:
-			abort();
+			errx(1, "unhandled entity type %d", entp->type);
 		}
 
 		free(f);
+		free(file);
 		io_close_buffer(msgq, b);
 		entity_free(entp);
 	}
