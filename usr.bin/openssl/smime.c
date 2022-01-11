@@ -1,4 +1,4 @@
-/* $OpenBSD: smime.c,v 1.10 2018/02/07 05:47:55 jsing Exp $ */
+/* $OpenBSD: smime.c,v 1.11 2022/01/11 14:23:05 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -82,18 +82,635 @@ static int smime_cb(int ok, X509_STORE_CTX * ctx);
 #define SMIME_PK7OUT	(5 | SMIME_IP | SMIME_OP)
 #define SMIME_RESIGN	(6 | SMIME_IP | SMIME_OP | SMIME_SIGNERS)
 
+static struct {
+	char *CAfile;
+	char *CApath;
+	char *certfile;
+	const EVP_CIPHER *cipher;
+	char *contfile;
+	int flags;
+	char *from;
+	int indef;
+	char *infile;
+	int informat;
+	char *keyfile;
+	int keyform;
+	int operation;
+	char *outfile;
+	int outformat;
+	char *passargin;
+	char *recipfile;
+	const EVP_MD *sign_md;
+	char *signerfile;
+	STACK_OF(OPENSSL_STRING) *skkeys;
+	STACK_OF(OPENSSL_STRING) *sksigners;
+	char *subject;
+	char *to;
+	X509_VERIFY_PARAM *vpm;
+} smime_config;
+
+static const EVP_CIPHER *
+get_cipher_by_name(char *name)
+{
+	if (name == NULL || strcmp(name, "") == 0)
+		return (NULL);
+#ifndef OPENSSL_NO_AES
+	else if (strcmp(name, "aes128") == 0)
+		return EVP_aes_128_cbc();
+	else if (strcmp(name, "aes192") == 0)
+		return EVP_aes_192_cbc();
+	else if (strcmp(name, "aes256") == 0)
+		return EVP_aes_256_cbc();
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	else if (strcmp(name, "camellia128") == 0)
+		return EVP_camellia_128_cbc();
+	else if (strcmp(name, "camellia192") == 0)
+		return EVP_camellia_192_cbc();
+	else if (strcmp(name, "camellia256") == 0)
+		return EVP_camellia_256_cbc();
+#endif
+#ifndef OPENSSL_NO_DES
+	else if (strcmp(name, "des") == 0)
+		return EVP_des_cbc();
+	else if (strcmp(name, "des3") == 0)
+		return EVP_des_ede3_cbc();
+#endif
+#ifndef OPENSSL_NO_RC2
+	else if (!strcmp(name, "rc2-40"))
+		return EVP_rc2_40_cbc();
+	else if (!strcmp(name, "rc2-64"))
+		return EVP_rc2_64_cbc();
+	else if (!strcmp(name, "rc2-128"))
+		return EVP_rc2_cbc();
+#endif
+}
+
+static int
+smime_opt_cipher(int argc, char **argv, int *argsused)
+{
+	char *name = argv[0];
+
+	if (*name++ != '-')
+		return (1);
+
+	if ((smime_config.cipher = get_cipher_by_name(name)) == NULL)
+		if ((smime_config.cipher = EVP_get_cipherbyname(name)) == NULL)
+			return (1);
+
+	*argsused = 1;
+	return (0);
+}
+
+static int
+smime_opt_inkey(char *arg)
+{
+	if (smime_config.keyfile == NULL) {
+		smime_config.keyfile = arg;
+		return (0);
+	}
+
+	if (smime_config.signerfile == NULL) {
+		BIO_puts(bio_err, "Illegal -inkey without -signer\n");
+		return (1);
+	}
+
+	if (smime_config.sksigners == NULL) {
+		if ((smime_config.sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+			return (1);
+	}
+	if (!sk_OPENSSL_STRING_push(smime_config.sksigners,
+	    smime_config.signerfile))
+		return (1);
+
+	smime_config.signerfile = NULL;
+
+	if (smime_config.skkeys == NULL) {
+		if ((smime_config.skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+			return (1);
+	}
+	if (!sk_OPENSSL_STRING_push(smime_config.skkeys, smime_config.keyfile))
+		return (1);
+
+	smime_config.keyfile = arg;
+	return (0);
+}
+
+static int
+smime_opt_md(char *arg)
+{
+	if ((smime_config.sign_md = EVP_get_digestbyname(arg)) == NULL) {
+		BIO_printf(bio_err, "Unknown digest %s\n", arg);
+		return (1);
+	}
+	return (0);
+}
+
+static int
+smime_opt_signer(char *arg)
+{
+	if (smime_config.signerfile == NULL) {
+		smime_config.signerfile = arg;
+		return (0);
+	}
+
+	if (smime_config.sksigners == NULL) {
+		if ((smime_config.sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+			return (1);
+	}
+	if (!sk_OPENSSL_STRING_push(smime_config.sksigners,
+	    smime_config.signerfile))
+		return (1);
+
+	if (smime_config.keyfile == NULL)
+		smime_config.keyfile = smime_config.signerfile;
+
+	if (smime_config.skkeys == NULL) {
+		if ((smime_config.skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+			return (1);
+	}
+	if (!sk_OPENSSL_STRING_push(smime_config.skkeys, smime_config.keyfile))
+		return (1);
+
+	smime_config.keyfile = NULL;
+
+	smime_config.signerfile = arg;
+	return (0);
+}
+
+static int
+smime_opt_verify_param(int argc, char **argv, int *argsused)
+{
+	int oargc = argc;
+	int badarg = 0;
+
+	if (!args_verify(&argv, &argc, &badarg, bio_err, &smime_config.vpm))
+		return (1);
+	if (badarg)
+		return (1);
+
+	*argsused = oargc - argc;
+
+	return (0);
+}
+
+static const struct option smime_options[] = {
+#ifndef OPENSSL_NO_AES
+	{
+		.name = "aes128",
+		.desc = "Encrypt PEM output with CBC AES",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_cipher,
+	},
+	{
+		.name = "aes192",
+		.desc = "Encrypt PEM output with CBC AES",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_cipher,
+	},
+	{
+		.name = "aes256",
+		.desc = "Encrypt PEM output with CBC AES",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_cipher,
+	},
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{
+		.name = "camellia128",
+		.desc = "Encrypt PEM output with CBC Camellia",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_cipher,
+	},
+	{
+		.name = "camellia192",
+		.desc = "Encrypt PEM output with CBC Camellia",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_cipher,
+	},
+	{
+		.name = "camellia256",
+		.desc = "Encrypt PEM output with CBC Camellia",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_cipher,
+	},
+#endif
+#ifndef OPENSSL_NO_DES
+	{
+		.name = "des",
+		.desc = "Encrypt with DES",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_cipher,
+	},
+	{
+		.name = "des3",
+		.desc = "Encrypt with triple DES",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_cipher,
+	},
+#endif
+#ifndef OPENSSL_NO_RC2
+	{
+		.name = "rc2-40",
+		.desc = "Encrypt with RC2-40 (default)",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_cipher,
+	},
+	{
+		.name = "rc2-64",
+		.desc = "Encrypt with RC2-64",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_cipher,
+	},
+	{
+		.name = "rc2-128",
+		.desc = "Encrypt with RC2-128",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_cipher,
+	},
+#endif
+	{
+		.name = "CAfile",
+		.argname = "file",
+		.desc = "Certificate Authority file",
+		.type = OPTION_ARG,
+		.opt.arg = &smime_config.CAfile,
+	},
+	{
+		.name = "CApath",
+		.argname = "path",
+		.desc = "Certificate Authority path",
+		.type = OPTION_ARG,
+		.opt.arg = &smime_config.CApath,
+	},
+	{
+		.name = "binary",
+		.desc = "Do not translate message to text",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &smime_config.flags,
+		.value = PKCS7_BINARY,
+	},
+	{
+		.name = "certfile",
+		.argname = "file",
+		.desc = "Other certificates file",
+		.type = OPTION_ARG,
+		.opt.arg = &smime_config.certfile,
+	},
+	{
+		.name = "content",
+		.argname = "file",
+		.desc = "Supply or override content for detached signature",
+		.type = OPTION_ARG,
+		.opt.arg = &smime_config.contfile,
+	},
+	{
+		.name = "crlfeol",
+		.desc = "Use CRLF as EOL termination instead of CR only",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &smime_config.flags,
+		.value = PKCS7_CRLFEOL,
+	},
+	{
+		.name = "decrypt",
+		.desc = "Decrypt encrypted message",
+		.type = OPTION_VALUE,
+		.opt.value = &smime_config.operation,
+		.value = SMIME_DECRYPT,
+	},
+	{
+		.name = "encrypt",
+		.desc = "Encrypt message",
+		.type = OPTION_VALUE,
+		.opt.value = &smime_config.operation,
+		.value = SMIME_ENCRYPT,
+	},
+	{
+		.name = "from",
+		.argname = "addr",
+		.desc = "From address",
+		.type = OPTION_ARG,
+		.opt.arg = &smime_config.from,
+	},
+	{
+		.name = "in",
+		.argname = "file",
+		.desc = "Input file",
+		.type = OPTION_ARG,
+		.opt.arg = &smime_config.infile,
+	},
+	{
+		.name = "indef",
+		.desc = "Same as -stream",
+		.type = OPTION_VALUE,
+		.opt.value = &smime_config.indef,
+		.value = 1,
+	},
+	{
+		.name = "inform",
+		.argname = "fmt",
+		.desc = "Input format (DER, PEM or SMIME (default))",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &smime_config.informat,
+	},
+	{
+		.name = "inkey",
+		.argname = "file",
+		.desc = "Input key file",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = smime_opt_inkey,
+	},
+	{
+		.name = "keyform",
+		.argname = "fmt",
+		.desc = "Input key format (DER or PEM (default))",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &smime_config.keyform,
+	},
+	{
+		.name = "md",
+		.argname = "digest",
+		.desc = "Digest to use when signing or resigning",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = smime_opt_md,
+	},
+	{
+		.name = "noattr",
+		.desc = "Do not include any signed attributes",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &smime_config.flags,
+		.value = PKCS7_NOATTR,
+	},
+	{
+		.name = "nocerts",
+		.desc = "Do not include signer's certificate when signing",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &smime_config.flags,
+		.value = PKCS7_NOCERTS,
+	},
+	{
+		.name = "nochain",
+		.desc = "Do not chain verification of signer's certificates",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &smime_config.flags,
+		.value = PKCS7_NOCHAIN,
+	},
+	{
+		.name = "nodetach",
+		.desc = "Use opaque signing",
+		.type = OPTION_VALUE_AND,
+		.opt.value = &smime_config.flags,
+		.value = ~PKCS7_DETACHED,
+	},
+	{
+		.name = "noindef",
+		.desc = "Disable streaming I/O",
+		.type = OPTION_VALUE,
+		.opt.value = &smime_config.indef,
+		.value = 0,
+	},
+	{
+		.name = "nointern",
+		.desc = "Do not search certificates in message for signer",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &smime_config.flags,
+		.value = PKCS7_NOINTERN,
+	},
+	{
+		.name = "nooldmime",
+		.desc = "Output old S/MIME content type",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &smime_config.flags,
+		.value = PKCS7_NOOLDMIMETYPE,
+	},
+	{
+		.name = "nosigs",
+		.desc = "Do not verify message signature",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &smime_config.flags,
+		.value = PKCS7_NOSIGS,
+	},
+	{
+		.name = "nosmimecap",
+		.desc = "Omit the SMIMECapabilities attribute",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &smime_config.flags,
+		.value = PKCS7_NOSMIMECAP,
+	},
+	{
+		.name = "noverify",
+		.desc = "Do not verify signer's certificate",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &smime_config.flags,
+		.value = PKCS7_NOVERIFY,
+	},
+	{
+		.name = "out",
+		.argname = "file",
+		.desc = "Output file",
+		.type = OPTION_ARG,
+		.opt.arg = &smime_config.outfile,
+	},
+	{
+		.name = "outform",
+		.argname = "fmt",
+		.desc = "Output format (DER, PEM or SMIME (default))",
+		.type = OPTION_ARG_FORMAT,
+		.opt.value = &smime_config.outformat,
+	},
+	{
+		.name = "passin",
+		.argname = "src",
+		.desc = "Private key password source",
+		.type = OPTION_ARG,
+		.opt.arg = &smime_config.passargin,
+	},
+	{
+		.name = "pk7out",
+		.desc = "Output PKCS#7 structure",
+		.type = OPTION_VALUE,
+		.opt.value = &smime_config.operation,
+		.value = SMIME_PK7OUT,
+	},
+	{
+		.name = "recip",
+		.argname = "file",
+		.desc = "Recipient certificate file for decryption",
+		.type = OPTION_ARG,
+		.opt.arg = &smime_config.recipfile,
+	},
+	{
+		.name = "resign",
+		.desc = "Resign a signed message",
+		.type = OPTION_VALUE,
+		.opt.value = &smime_config.operation,
+		.value = SMIME_RESIGN,
+	},
+	{
+		.name = "sign",
+		.desc = "Sign message",
+		.type = OPTION_VALUE,
+		.opt.value = &smime_config.operation,
+		.value = SMIME_SIGN,
+	},
+	{
+		.name = "signer",
+		.argname = "file",
+		.desc = "Signer certificate file",
+		.type = OPTION_ARG_FUNC,
+		.opt.argfunc = smime_opt_signer,
+	},
+	{
+		.name = "stream",
+		.desc = "Enable streaming I/O",
+		.type = OPTION_VALUE,
+		.opt.value = &smime_config.indef,
+		.value = 1,
+	},
+	{
+		.name = "subject",
+		.argname = "s",
+		.desc = "Subject",
+		.type = OPTION_ARG,
+		.opt.arg = &smime_config.subject,
+	},
+	{
+		.name = "text",
+		.desc = "Include or delete text MIME headers",
+		.type = OPTION_VALUE_OR,
+		.opt.value = &smime_config.flags,
+		.value = PKCS7_TEXT,
+	},
+	{
+		.name = "to",
+		.argname = "addr",
+		.desc = "To address",
+		.type = OPTION_ARG,
+		.opt.arg = &smime_config.to,
+	},
+	{
+		.name = "verify",
+		.desc = "Verify signed message",
+		.type = OPTION_VALUE,
+		.opt.value = &smime_config.operation,
+		.value = SMIME_VERIFY,
+	},
+	{
+		.name = "check_ss_sig",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_verify_param,
+	},
+	{
+		.name = "crl_check",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_verify_param,
+	},
+	{
+		.name = "crl_check_all",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_verify_param,
+	},
+	{
+		.name = "extended_crl",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_verify_param,
+	},
+	{
+		.name = "ignore_critical",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_verify_param,
+	},
+	{
+		.name = "issuer_checks",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_verify_param,
+	},
+	{
+		.name = "policy_check",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_verify_param,
+	},
+	{
+		.name = "x509_strict",
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_verify_param,
+	},
+	{
+		.name = NULL,
+		.type = OPTION_ARGV_FUNC,
+		.opt.argvfunc = smime_opt_cipher,
+	},
+	{ NULL },
+};
+
+static const struct option verify_shared_options[] = {
+	{
+		.name = "check_ss_sig",
+		.desc = "Check the root CA self-signed certificate signature",
+	},
+	{
+		.name = "crl_check",
+		.desc = "Enable CRL checking for the leaf certificate",
+	},
+	{
+		.name = "crl_check_all",
+		.desc = "Enable CRL checking for the entire certificate chain",
+	},
+	{
+		.name = "extended_crl",
+		.desc = "Enable extended CRL support",
+	},
+	{
+		.name = "ignore_critical",
+		.desc = "Disable critical extension checking",
+	},
+	{
+		.name = "issuer_checks",
+		.desc = "Enable debugging of certificate issuer checks",
+	},
+	{
+		.name = "policy_check",
+		.desc = "Enable certificate policy checking",
+	},
+	{
+		.name = "x509_strict",
+		.desc = "Use strict X.509 rules (disables workarounds)",
+	},
+	{ NULL },
+};
+
+static void
+smime_usage(void)
+{
+	fprintf(stderr, "usage: smime "
+	    "[-aes128 | -aes192 | -aes256 | -des |\n"
+	    "    -des3 | -rc2-40 | -rc2-64 | -rc2-128] [-binary]\n"
+	    "    [-CAfile file] [-CApath directory] [-certfile file]\n"
+	    "    [-content file]\n"
+	    "    [-decrypt] [-encrypt]\n"
+	    "    [-from addr] [-in file] [-indef]\n"
+	    "    [-inform der | pem | smime] [-inkey file]\n"
+	    "    [-keyform der | pem] [-md digest] [-noattr] [-nocerts]\n"
+	    "    [-nochain] [-nodetach] [-noindef] [-nointern] [-nosigs]\n"
+	    "    [-nosmimecap] [-noverify] [-out file]\n"
+	    "    [-outform der | pem | smime] [-passin arg] [-pk7out]\n"
+	    "    [-recip file] [-resign] [-sign]\n"
+	    "    [-signer file] [-stream] [-subject s] [-text] [-to addr]\n"
+	    "    [-verify] [cert.pem ...]\n\n");
+
+	options_usage(smime_options);
+
+	fprintf(stderr, "\nVerification options:\n\n");
+	options_usage(verify_shared_options);
+}
+
 int
 smime_main(int argc, char **argv)
 {
-	int operation = 0;
 	int ret = 0;
 	char **args;
+	int argsused = 0;
 	const char *inmode = "r", *outmode = "w";
-	char *infile = NULL, *outfile = NULL;
-	char *signerfile = NULL, *recipfile = NULL;
-	STACK_OF(OPENSSL_STRING) * sksigners = NULL, *skkeys = NULL;
-	char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
-	const EVP_CIPHER *cipher = NULL;
 	PKCS7 *p7 = NULL;
 	X509_STORE *store = NULL;
 	X509 *cert = NULL, *recip = NULL, *signer = NULL;
@@ -101,16 +718,7 @@ smime_main(int argc, char **argv)
 	STACK_OF(X509) * encerts = NULL, *other = NULL;
 	BIO *in = NULL, *out = NULL, *indata = NULL;
 	int badarg = 0;
-	int flags = PKCS7_DETACHED;
-	char *to = NULL, *from = NULL, *subject = NULL;
-	char *CAfile = NULL, *CApath = NULL;
-	char *passargin = NULL, *passin = NULL;
-	int indef = 0;
-	const EVP_MD *sign_md = NULL;
-	int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
-	int keyform = FORMAT_PEM;
-
-	X509_VERIFY_PARAM *vpm = NULL;
+	char *passin = NULL;
 
 	if (single_execution) {
 		if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
@@ -119,313 +727,91 @@ smime_main(int argc, char **argv)
 		}
 	}
 
-	args = argv + 1;
+	memset(&smime_config, 0, sizeof(smime_config));
+	smime_config.flags = PKCS7_DETACHED;
+	smime_config.informat = FORMAT_SMIME;
+	smime_config.outformat = FORMAT_SMIME;
+	smime_config.keyform = FORMAT_PEM;
+	if (options_parse(argc, argv, smime_options, NULL, &argsused) != 0) {
+		goto argerr;
+	}
+	args = argv + argsused;
 	ret = 1;
 
-	while (!badarg && *args && *args[0] == '-') {
-		if (!strcmp(*args, "-encrypt"))
-			operation = SMIME_ENCRYPT;
-		else if (!strcmp(*args, "-decrypt"))
-			operation = SMIME_DECRYPT;
-		else if (!strcmp(*args, "-sign"))
-			operation = SMIME_SIGN;
-		else if (!strcmp(*args, "-resign"))
-			operation = SMIME_RESIGN;
-		else if (!strcmp(*args, "-verify"))
-			operation = SMIME_VERIFY;
-		else if (!strcmp(*args, "-pk7out"))
-			operation = SMIME_PK7OUT;
-#ifndef OPENSSL_NO_DES
-		else if (!strcmp(*args, "-des3"))
-			cipher = EVP_des_ede3_cbc();
-		else if (!strcmp(*args, "-des"))
-			cipher = EVP_des_cbc();
-#endif
-#ifndef OPENSSL_NO_RC2
-		else if (!strcmp(*args, "-rc2-40"))
-			cipher = EVP_rc2_40_cbc();
-		else if (!strcmp(*args, "-rc2-128"))
-			cipher = EVP_rc2_cbc();
-		else if (!strcmp(*args, "-rc2-64"))
-			cipher = EVP_rc2_64_cbc();
-#endif
-#ifndef OPENSSL_NO_AES
-		else if (!strcmp(*args, "-aes128"))
-			cipher = EVP_aes_128_cbc();
-		else if (!strcmp(*args, "-aes192"))
-			cipher = EVP_aes_192_cbc();
-		else if (!strcmp(*args, "-aes256"))
-			cipher = EVP_aes_256_cbc();
-#endif
-#ifndef OPENSSL_NO_CAMELLIA
-		else if (!strcmp(*args, "-camellia128"))
-			cipher = EVP_camellia_128_cbc();
-		else if (!strcmp(*args, "-camellia192"))
-			cipher = EVP_camellia_192_cbc();
-		else if (!strcmp(*args, "-camellia256"))
-			cipher = EVP_camellia_256_cbc();
-#endif
-		else if (!strcmp(*args, "-text"))
-			flags |= PKCS7_TEXT;
-		else if (!strcmp(*args, "-nointern"))
-			flags |= PKCS7_NOINTERN;
-		else if (!strcmp(*args, "-noverify"))
-			flags |= PKCS7_NOVERIFY;
-		else if (!strcmp(*args, "-nochain"))
-			flags |= PKCS7_NOCHAIN;
-		else if (!strcmp(*args, "-nocerts"))
-			flags |= PKCS7_NOCERTS;
-		else if (!strcmp(*args, "-noattr"))
-			flags |= PKCS7_NOATTR;
-		else if (!strcmp(*args, "-nodetach"))
-			flags &= ~PKCS7_DETACHED;
-		else if (!strcmp(*args, "-nosmimecap"))
-			flags |= PKCS7_NOSMIMECAP;
-		else if (!strcmp(*args, "-binary"))
-			flags |= PKCS7_BINARY;
-		else if (!strcmp(*args, "-nosigs"))
-			flags |= PKCS7_NOSIGS;
-		else if (!strcmp(*args, "-stream"))
-			indef = 1;
-		else if (!strcmp(*args, "-indef"))
-			indef = 1;
-		else if (!strcmp(*args, "-noindef"))
-			indef = 0;
-		else if (!strcmp(*args, "-nooldmime"))
-			flags |= PKCS7_NOOLDMIMETYPE;
-		else if (!strcmp(*args, "-crlfeol"))
-			flags |= PKCS7_CRLFEOL;
-		else if (!strcmp(*args, "-passin")) {
-			if (!args[1])
-				goto argerr;
-			passargin = *++args;
-		} else if (!strcmp(*args, "-to")) {
-			if (!args[1])
-				goto argerr;
-			to = *++args;
-		} else if (!strcmp(*args, "-from")) {
-			if (!args[1])
-				goto argerr;
-			from = *++args;
-		} else if (!strcmp(*args, "-subject")) {
-			if (!args[1])
-				goto argerr;
-			subject = *++args;
-		} else if (!strcmp(*args, "-signer")) {
-			if (!args[1])
-				goto argerr;
-			/* If previous -signer argument add signer to list */
-
-			if (signerfile) {
-				if (!sksigners)
-					sksigners = sk_OPENSSL_STRING_new_null();
-				sk_OPENSSL_STRING_push(sksigners, signerfile);
-				if (!keyfile)
-					keyfile = signerfile;
-				if (!skkeys)
-					skkeys = sk_OPENSSL_STRING_new_null();
-				sk_OPENSSL_STRING_push(skkeys, keyfile);
-				keyfile = NULL;
-			}
-			signerfile = *++args;
-		} else if (!strcmp(*args, "-recip")) {
-			if (!args[1])
-				goto argerr;
-			recipfile = *++args;
-		} else if (!strcmp(*args, "-md")) {
-			if (!args[1])
-				goto argerr;
-			sign_md = EVP_get_digestbyname(*++args);
-			if (sign_md == NULL) {
-				BIO_printf(bio_err, "Unknown digest %s\n",
-				    *args);
-				goto argerr;
-			}
-		} else if (!strcmp(*args, "-inkey")) {
-			if (!args[1])
-				goto argerr;
-			/* If previous -inkey arument add signer to list */
-			if (keyfile) {
-				if (!signerfile) {
-					BIO_puts(bio_err, "Illegal -inkey without -signer\n");
-					goto argerr;
-				}
-				if (!sksigners)
-					sksigners = sk_OPENSSL_STRING_new_null();
-				sk_OPENSSL_STRING_push(sksigners, signerfile);
-				signerfile = NULL;
-				if (!skkeys)
-					skkeys = sk_OPENSSL_STRING_new_null();
-				sk_OPENSSL_STRING_push(skkeys, keyfile);
-			}
-			keyfile = *++args;
-		} else if (!strcmp(*args, "-keyform")) {
-			if (!args[1])
-				goto argerr;
-			keyform = str2fmt(*++args);
-		} else if (!strcmp(*args, "-certfile")) {
-			if (!args[1])
-				goto argerr;
-			certfile = *++args;
-		} else if (!strcmp(*args, "-CAfile")) {
-			if (!args[1])
-				goto argerr;
-			CAfile = *++args;
-		} else if (!strcmp(*args, "-CApath")) {
-			if (!args[1])
-				goto argerr;
-			CApath = *++args;
-		} else if (!strcmp(*args, "-in")) {
-			if (!args[1])
-				goto argerr;
-			infile = *++args;
-		} else if (!strcmp(*args, "-inform")) {
-			if (!args[1])
-				goto argerr;
-			informat = str2fmt(*++args);
-		} else if (!strcmp(*args, "-outform")) {
-			if (!args[1])
-				goto argerr;
-			outformat = str2fmt(*++args);
-		} else if (!strcmp(*args, "-out")) {
-			if (!args[1])
-				goto argerr;
-			outfile = *++args;
-		} else if (!strcmp(*args, "-content")) {
-			if (!args[1])
-				goto argerr;
-			contfile = *++args;
-		} else if (args_verify(&args, NULL, &badarg, bio_err, &vpm))
-			continue;
-		else if ((cipher = EVP_get_cipherbyname(*args + 1)) == NULL)
-			badarg = 1;
-		args++;
-	}
-
-	if (!(operation & SMIME_SIGNERS) && (skkeys || sksigners)) {
+	if (!(smime_config.operation & SMIME_SIGNERS) && (smime_config.skkeys || smime_config.sksigners)) {
 		BIO_puts(bio_err, "Multiple signers or keys not allowed\n");
 		goto argerr;
 	}
-	if (operation & SMIME_SIGNERS) {
+	if (smime_config.operation & SMIME_SIGNERS) {
 		/* Check to see if any final signer needs to be appended */
-		if (keyfile && !signerfile) {
+		if (smime_config.keyfile && !smime_config.signerfile) {
 			BIO_puts(bio_err, "Illegal -inkey without -signer\n");
 			goto argerr;
 		}
-		if (signerfile) {
-			if (!sksigners)
-				sksigners = sk_OPENSSL_STRING_new_null();
-			sk_OPENSSL_STRING_push(sksigners, signerfile);
-			if (!skkeys)
-				skkeys = sk_OPENSSL_STRING_new_null();
-			if (!keyfile)
-				keyfile = signerfile;
-			sk_OPENSSL_STRING_push(skkeys, keyfile);
+		if (smime_config.signerfile) {
+			if (!smime_config.sksigners)
+				smime_config.sksigners = sk_OPENSSL_STRING_new_null();
+			sk_OPENSSL_STRING_push(smime_config.sksigners, smime_config.signerfile);
+			if (!smime_config.skkeys)
+				smime_config.skkeys = sk_OPENSSL_STRING_new_null();
+			if (!smime_config.keyfile)
+				smime_config.keyfile = smime_config.signerfile;
+			sk_OPENSSL_STRING_push(smime_config.skkeys, smime_config.keyfile);
 		}
-		if (!sksigners) {
+		if (!smime_config.sksigners) {
 			BIO_printf(bio_err, "No signer certificate specified\n");
 			badarg = 1;
 		}
-		signerfile = NULL;
-		keyfile = NULL;
-	} else if (operation == SMIME_DECRYPT) {
-		if (!recipfile && !keyfile) {
+		smime_config.signerfile = NULL;
+		smime_config.keyfile = NULL;
+	} else if (smime_config.operation == SMIME_DECRYPT) {
+		if (!smime_config.recipfile && !smime_config.keyfile) {
 			BIO_printf(bio_err, "No recipient certificate or key specified\n");
 			badarg = 1;
 		}
-	} else if (operation == SMIME_ENCRYPT) {
+	} else if (smime_config.operation == SMIME_ENCRYPT) {
 		if (!*args) {
 			BIO_printf(bio_err, "No recipient(s) certificate(s) specified\n");
 			badarg = 1;
 		}
-	} else if (!operation)
+	} else if (!smime_config.operation)
 		badarg = 1;
 
 	if (badarg) {
  argerr:
-		BIO_printf(bio_err, "Usage smime [options] cert.pem ...\n");
-		BIO_printf(bio_err, "where options are\n");
-		BIO_printf(bio_err, "-encrypt       encrypt message\n");
-		BIO_printf(bio_err, "-decrypt       decrypt encrypted message\n");
-		BIO_printf(bio_err, "-sign          sign message\n");
-		BIO_printf(bio_err, "-verify        verify signed message\n");
-		BIO_printf(bio_err, "-pk7out        output PKCS#7 structure\n");
-#ifndef OPENSSL_NO_DES
-		BIO_printf(bio_err, "-des3          encrypt with triple DES\n");
-		BIO_printf(bio_err, "-des           encrypt with DES\n");
-#endif
-#ifndef OPENSSL_NO_RC2
-		BIO_printf(bio_err, "-rc2-40        encrypt with RC2-40 (default)\n");
-		BIO_printf(bio_err, "-rc2-64        encrypt with RC2-64\n");
-		BIO_printf(bio_err, "-rc2-128       encrypt with RC2-128\n");
-#endif
-#ifndef OPENSSL_NO_AES
-		BIO_printf(bio_err, "-aes128, -aes192, -aes256\n");
-		BIO_printf(bio_err, "               encrypt PEM output with cbc aes\n");
-#endif
-#ifndef OPENSSL_NO_CAMELLIA
-		BIO_printf(bio_err, "-camellia128, -camellia192, -camellia256\n");
-		BIO_printf(bio_err, "               encrypt PEM output with cbc camellia\n");
-#endif
-		BIO_printf(bio_err, "-nointern      don't search certificates in message for signer\n");
-		BIO_printf(bio_err, "-nosigs        don't verify message signature\n");
-		BIO_printf(bio_err, "-noverify      don't verify signers certificate\n");
-		BIO_printf(bio_err, "-nocerts       don't include signers certificate when signing\n");
-		BIO_printf(bio_err, "-nodetach      use opaque signing\n");
-		BIO_printf(bio_err, "-noattr        don't include any signed attributes\n");
-		BIO_printf(bio_err, "-binary        don't translate message to text\n");
-		BIO_printf(bio_err, "-certfile file other certificates file\n");
-		BIO_printf(bio_err, "-signer file   signer certificate file\n");
-		BIO_printf(bio_err, "-recip  file   recipient certificate file for decryption\n");
-		BIO_printf(bio_err, "-in file       input file\n");
-		BIO_printf(bio_err, "-inform arg    input format SMIME (default), PEM or DER\n");
-		BIO_printf(bio_err, "-inkey file    input private key (if not signer or recipient)\n");
-		BIO_printf(bio_err, "-keyform arg   input private key format (PEM)\n");
-		BIO_printf(bio_err, "-out file      output file\n");
-		BIO_printf(bio_err, "-outform arg   output format SMIME (default), PEM or DER\n");
-		BIO_printf(bio_err, "-content file  supply or override content for detached signature\n");
-		BIO_printf(bio_err, "-to addr       to address\n");
-		BIO_printf(bio_err, "-from ad       from address\n");
-		BIO_printf(bio_err, "-subject s     subject\n");
-		BIO_printf(bio_err, "-text          include or delete text MIME headers\n");
-		BIO_printf(bio_err, "-CApath dir    trusted certificates directory\n");
-		BIO_printf(bio_err, "-CAfile file   trusted certificates file\n");
-		BIO_printf(bio_err, "-crl_check     check revocation status of signer's certificate using CRLs\n");
-		BIO_printf(bio_err, "-crl_check_all check revocation status of signer's certificate chain using CRLs\n");
-		BIO_printf(bio_err, "-passin arg    input file pass phrase source\n");
-		BIO_printf(bio_err, "cert.pem       recipient certificate(s) for encryption\n");
+		smime_usage();
 		goto end;
 	}
 
-	if (!app_passwd(bio_err, passargin, NULL, &passin, NULL)) {
+	if (!app_passwd(bio_err, smime_config.passargin, NULL, &passin, NULL)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
 	}
 	ret = 2;
 
-	if (!(operation & SMIME_SIGNERS))
-		flags &= ~PKCS7_DETACHED;
+	if (!(smime_config.operation & SMIME_SIGNERS))
+		smime_config.flags &= ~PKCS7_DETACHED;
 
-	if (operation & SMIME_OP) {
-		if (outformat == FORMAT_ASN1)
+	if (smime_config.operation & SMIME_OP) {
+		if (smime_config.outformat == FORMAT_ASN1)
 			outmode = "wb";
 	} else {
-		if (flags & PKCS7_BINARY)
+		if (smime_config.flags & PKCS7_BINARY)
 			outmode = "wb";
 	}
 
-	if (operation & SMIME_IP) {
-		if (informat == FORMAT_ASN1)
+	if (smime_config.operation & SMIME_IP) {
+		if (smime_config.informat == FORMAT_ASN1)
 			inmode = "rb";
 	} else {
-		if (flags & PKCS7_BINARY)
+		if (smime_config.flags & PKCS7_BINARY)
 			inmode = "rb";
 	}
 
-	if (operation == SMIME_ENCRYPT) {
-		if (!cipher) {
+	if (smime_config.operation == SMIME_ENCRYPT) {
+		if (!smime_config.cipher) {
 #ifndef OPENSSL_NO_RC2
-			cipher = EVP_rc2_40_cbc();
+			smime_config.cipher = EVP_rc2_40_cbc();
 #else
 			BIO_printf(bio_err, "No cipher selected\n");
 			goto end;
@@ -442,50 +828,50 @@ smime_main(int argc, char **argv)
 			args++;
 		}
 	}
-	if (certfile) {
-		if (!(other = load_certs(bio_err, certfile, FORMAT_PEM, NULL,
+	if (smime_config.certfile) {
+		if (!(other = load_certs(bio_err, smime_config.certfile, FORMAT_PEM, NULL,
 		    "certificate file"))) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
-	if (recipfile && (operation == SMIME_DECRYPT)) {
-		if (!(recip = load_cert(bio_err, recipfile, FORMAT_PEM, NULL,
+	if (smime_config.recipfile && (smime_config.operation == SMIME_DECRYPT)) {
+		if (!(recip = load_cert(bio_err, smime_config.recipfile, FORMAT_PEM, NULL,
 		    "recipient certificate file"))) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
-	if (operation == SMIME_DECRYPT) {
-		if (!keyfile)
-			keyfile = recipfile;
-	} else if (operation == SMIME_SIGN) {
-		if (!keyfile)
-			keyfile = signerfile;
+	if (smime_config.operation == SMIME_DECRYPT) {
+		if (!smime_config.keyfile)
+			smime_config.keyfile = smime_config.recipfile;
+	} else if (smime_config.operation == SMIME_SIGN) {
+		if (!smime_config.keyfile)
+			smime_config.keyfile = smime_config.signerfile;
 	} else
-		keyfile = NULL;
+		smime_config.keyfile = NULL;
 
-	if (keyfile) {
-		key = load_key(bio_err, keyfile, keyform, 0, passin,
+	if (smime_config.keyfile) {
+		key = load_key(bio_err, smime_config.keyfile, smime_config.keyform, 0, passin,
 		    "signing key file");
 		if (!key)
 			goto end;
 	}
-	if (infile) {
-		if (!(in = BIO_new_file(infile, inmode))) {
+	if (smime_config.infile) {
+		if (!(in = BIO_new_file(smime_config.infile, inmode))) {
 			BIO_printf(bio_err,
-			    "Can't open input file %s\n", infile);
+			    "Can't open input file %s\n", smime_config.infile);
 			goto end;
 		}
 	} else
 		in = BIO_new_fp(stdin, BIO_NOCLOSE);
 
-	if (operation & SMIME_IP) {
-		if (informat == FORMAT_SMIME)
+	if (smime_config.operation & SMIME_IP) {
+		if (smime_config.informat == FORMAT_SMIME)
 			p7 = SMIME_read_PKCS7(in, &indata);
-		else if (informat == FORMAT_PEM)
+		else if (smime_config.informat == FORMAT_PEM)
 			p7 = PEM_read_bio_PKCS7(in, NULL, NULL, NULL);
-		else if (informat == FORMAT_ASN1)
+		else if (smime_config.informat == FORMAT_ASN1)
 			p7 = d2i_PKCS7_bio(in, NULL);
 		else {
 			BIO_printf(bio_err, "Bad input format for PKCS#7 file\n");
@@ -496,68 +882,68 @@ smime_main(int argc, char **argv)
 			BIO_printf(bio_err, "Error reading S/MIME message\n");
 			goto end;
 		}
-		if (contfile) {
+		if (smime_config.contfile) {
 			BIO_free(indata);
-			if (!(indata = BIO_new_file(contfile, "rb"))) {
-				BIO_printf(bio_err, "Can't read content file %s\n", contfile);
+			if (!(indata = BIO_new_file(smime_config.contfile, "rb"))) {
+				BIO_printf(bio_err, "Can't read content file %s\n", smime_config.contfile);
 				goto end;
 			}
 		}
 	}
-	if (outfile) {
-		if (!(out = BIO_new_file(outfile, outmode))) {
+	if (smime_config.outfile) {
+		if (!(out = BIO_new_file(smime_config.outfile, outmode))) {
 			BIO_printf(bio_err,
-			    "Can't open output file %s\n", outfile);
+			    "Can't open output file %s\n", smime_config.outfile);
 			goto end;
 		}
 	} else {
 		out = BIO_new_fp(stdout, BIO_NOCLOSE);
 	}
 
-	if (operation == SMIME_VERIFY) {
-		if (!(store = setup_verify(bio_err, CAfile, CApath)))
+	if (smime_config.operation == SMIME_VERIFY) {
+		if (!(store = setup_verify(bio_err, smime_config.CAfile, smime_config.CApath)))
 			goto end;
 		X509_STORE_set_verify_cb(store, smime_cb);
-		if (vpm)
-			X509_STORE_set1_param(store, vpm);
+		if (smime_config.vpm)
+			X509_STORE_set1_param(store, smime_config.vpm);
 	}
 	ret = 3;
 
-	if (operation == SMIME_ENCRYPT) {
-		if (indef)
-			flags |= PKCS7_STREAM;
-		p7 = PKCS7_encrypt(encerts, in, cipher, flags);
-	} else if (operation & SMIME_SIGNERS) {
+	if (smime_config.operation == SMIME_ENCRYPT) {
+		if (smime_config.indef)
+			smime_config.flags |= PKCS7_STREAM;
+		p7 = PKCS7_encrypt(encerts, in, smime_config.cipher, smime_config.flags);
+	} else if (smime_config.operation & SMIME_SIGNERS) {
 		int i;
 		/*
 		 * If detached data content we only enable streaming if
 		 * S/MIME output format.
 		 */
-		if (operation == SMIME_SIGN) {
-			if (flags & PKCS7_DETACHED) {
-				if (outformat == FORMAT_SMIME)
-					flags |= PKCS7_STREAM;
-			} else if (indef)
-				flags |= PKCS7_STREAM;
-			flags |= PKCS7_PARTIAL;
-			p7 = PKCS7_sign(NULL, NULL, other, in, flags);
+		if (smime_config.operation == SMIME_SIGN) {
+			if (smime_config.flags & PKCS7_DETACHED) {
+				if (smime_config.outformat == FORMAT_SMIME)
+					smime_config.flags |= PKCS7_STREAM;
+			} else if (smime_config.indef)
+				smime_config.flags |= PKCS7_STREAM;
+			smime_config.flags |= PKCS7_PARTIAL;
+			p7 = PKCS7_sign(NULL, NULL, other, in, smime_config.flags);
 			if (!p7)
 				goto end;
 		} else
-			flags |= PKCS7_REUSE_DIGEST;
-		for (i = 0; i < sk_OPENSSL_STRING_num(sksigners); i++) {
-			signerfile = sk_OPENSSL_STRING_value(sksigners, i);
-			keyfile = sk_OPENSSL_STRING_value(skkeys, i);
-			signer = load_cert(bio_err, signerfile, FORMAT_PEM, NULL,
+			smime_config.flags |= PKCS7_REUSE_DIGEST;
+		for (i = 0; i < sk_OPENSSL_STRING_num(smime_config.sksigners); i++) {
+			smime_config.signerfile = sk_OPENSSL_STRING_value(smime_config.sksigners, i);
+			smime_config.keyfile = sk_OPENSSL_STRING_value(smime_config.skkeys, i);
+			signer = load_cert(bio_err, smime_config.signerfile, FORMAT_PEM, NULL,
 			    "signer certificate");
 			if (!signer)
 				goto end;
-			key = load_key(bio_err, keyfile, keyform, 0, passin,
+			key = load_key(bio_err, smime_config.keyfile, smime_config.keyform, 0, passin,
 			    "signing key file");
 			if (!key)
 				goto end;
 			if (!PKCS7_sign_add_signer(p7, signer, key,
-				sign_md, flags))
+				smime_config.sign_md, smime_config.flags))
 				goto end;
 			X509_free(signer);
 			signer = NULL;
@@ -565,8 +951,8 @@ smime_main(int argc, char **argv)
 			key = NULL;
 		}
 		/* If not streaming or resigning finalize structure */
-		if ((operation == SMIME_SIGN) && !(flags & PKCS7_STREAM)) {
-			if (!PKCS7_final(p7, in, flags))
+		if ((smime_config.operation == SMIME_SIGN) && !(smime_config.flags & PKCS7_STREAM)) {
+			if (!PKCS7_final(p7, in, smime_config.flags))
 				goto end;
 		}
 	}
@@ -575,45 +961,45 @@ smime_main(int argc, char **argv)
 		goto end;
 	}
 	ret = 4;
-	if (operation == SMIME_DECRYPT) {
-		if (!PKCS7_decrypt(p7, key, recip, out, flags)) {
+	if (smime_config.operation == SMIME_DECRYPT) {
+		if (!PKCS7_decrypt(p7, key, recip, out, smime_config.flags)) {
 			BIO_printf(bio_err, "Error decrypting PKCS#7 structure\n");
 			goto end;
 		}
-	} else if (operation == SMIME_VERIFY) {
+	} else if (smime_config.operation == SMIME_VERIFY) {
 		STACK_OF(X509) * signers;
-		if (PKCS7_verify(p7, other, store, indata, out, flags))
+		if (PKCS7_verify(p7, other, store, indata, out, smime_config.flags))
 			BIO_printf(bio_err, "Verification successful\n");
 		else {
 			BIO_printf(bio_err, "Verification failure\n");
 			goto end;
 		}
-		signers = PKCS7_get0_signers(p7, other, flags);
-		if (!save_certs(signerfile, signers)) {
+		signers = PKCS7_get0_signers(p7, other, smime_config.flags);
+		if (!save_certs(smime_config.signerfile, signers)) {
 			BIO_printf(bio_err, "Error writing signers to %s\n",
-			    signerfile);
+			    smime_config.signerfile);
 			ret = 5;
 			goto end;
 		}
 		sk_X509_free(signers);
-	} else if (operation == SMIME_PK7OUT)
+	} else if (smime_config.operation == SMIME_PK7OUT)
 		PEM_write_bio_PKCS7(out, p7);
 	else {
-		if (to)
-			BIO_printf(out, "To: %s\n", to);
-		if (from)
-			BIO_printf(out, "From: %s\n", from);
-		if (subject)
-			BIO_printf(out, "Subject: %s\n", subject);
-		if (outformat == FORMAT_SMIME) {
-			if (operation == SMIME_RESIGN)
-				SMIME_write_PKCS7(out, p7, indata, flags);
+		if (smime_config.to)
+			BIO_printf(out, "To: %s\n", smime_config.to);
+		if (smime_config.from)
+			BIO_printf(out, "From: %s\n", smime_config.from);
+		if (smime_config.subject)
+			BIO_printf(out, "Subject: %s\n", smime_config.subject);
+		if (smime_config.outformat == FORMAT_SMIME) {
+			if (smime_config.operation == SMIME_RESIGN)
+				SMIME_write_PKCS7(out, p7, indata, smime_config.flags);
 			else
-				SMIME_write_PKCS7(out, p7, in, flags);
-		} else if (outformat == FORMAT_PEM)
-			PEM_write_bio_PKCS7_stream(out, p7, in, flags);
-		else if (outformat == FORMAT_ASN1)
-			i2d_PKCS7_bio_stream(out, p7, in, flags);
+				SMIME_write_PKCS7(out, p7, in, smime_config.flags);
+		} else if (smime_config.outformat == FORMAT_PEM)
+			PEM_write_bio_PKCS7_stream(out, p7, in, smime_config.flags);
+		else if (smime_config.outformat == FORMAT_ASN1)
+			i2d_PKCS7_bio_stream(out, p7, in, smime_config.flags);
 		else {
 			BIO_printf(bio_err, "Bad output format for PKCS#7 file\n");
 			goto end;
@@ -625,9 +1011,9 @@ smime_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 	sk_X509_pop_free(encerts, X509_free);
 	sk_X509_pop_free(other, X509_free);
-	X509_VERIFY_PARAM_free(vpm);
-	sk_OPENSSL_STRING_free(sksigners);
-	sk_OPENSSL_STRING_free(skkeys);
+	X509_VERIFY_PARAM_free(smime_config.vpm);
+	sk_OPENSSL_STRING_free(smime_config.sksigners);
+	sk_OPENSSL_STRING_free(smime_config.skkeys);
 	X509_STORE_free(store);
 	X509_free(cert);
 	X509_free(recip);
@@ -677,3 +1063,4 @@ smime_cb(int ok, X509_STORE_CTX * ctx)
 	return ok;
 
 }
+
