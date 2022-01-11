@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.138 2022/01/11 18:28:41 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.139 2022/01/11 18:39:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -453,7 +453,7 @@ ssl3_accept(SSL *s)
 			 *   s3_clnt.c accepts this for SSL 3).
 			 */
 			if (!(s->verify_mode & SSL_VERIFY_PEER) ||
-			    ((s->session->peer != NULL) &&
+			    ((s->session->peer_cert != NULL) &&
 			     (s->verify_mode & SSL_VERIFY_CLIENT_ONCE)) ||
 			    ((S3I(s)->hs.cipher->algorithm_auth &
 			     SSL_aNULL) && !(s->verify_mode &
@@ -550,7 +550,7 @@ ssl3_accept(SSL *s)
 			} else if (SSL_USE_SIGALGS(s) || (alg_k & SSL_kGOST)) {
 				S3I(s)->hs.state = SSL3_ST_SR_CERT_VRFY_A;
 				s->internal->init_num = 0;
-				if (!s->session->peer)
+				if (!s->session->peer_cert)
 					break;
 				/*
 				 * Freeze the transcript for use during client
@@ -1807,7 +1807,7 @@ ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
 	 * it is completely valid to use a client certificate for
 	 * authorization only.
 	 */
-	if ((client_pubkey = X509_get0_pubkey(s->session->peer)) != NULL) {
+	if ((client_pubkey = X509_get0_pubkey(s->session->peer_cert)) != NULL) {
 		if (EVP_PKEY_derive_set_peer(pkey_ctx, client_pubkey) <= 0)
 			ERR_clear_error();
 	}
@@ -1906,7 +1906,7 @@ ssl3_get_cert_verify(SSL *s)
 	const struct ssl_sigalg *sigalg = NULL;
 	uint16_t sigalg_value = SIGALG_NONE;
 	EVP_PKEY *pkey = NULL;
-	X509 *peer = NULL;
+	X509 *peer_cert = NULL;
 	EVP_MD_CTX *mctx = NULL;
 	int al, verify;
 	const unsigned char *hdata;
@@ -1928,15 +1928,15 @@ ssl3_get_cert_verify(SSL *s)
 
 	CBS_init(&cbs, s->internal->init_msg, s->internal->init_num);
 
-	if (s->session->peer != NULL) {
-		peer = s->session->peer;
-		pkey = X509_get_pubkey(peer);
-		type = X509_certificate_type(peer, pkey);
+	if (s->session->peer_cert != NULL) {
+		peer_cert = s->session->peer_cert;
+		pkey = X509_get_pubkey(peer_cert);
+		type = X509_certificate_type(peer_cert, pkey);
 	}
 
 	if (S3I(s)->hs.tls12.message_type != SSL3_MT_CERTIFICATE_VERIFY) {
 		S3I(s)->hs.tls12.reuse_message = 1;
-		if (peer != NULL) {
+		if (peer_cert != NULL) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_MISSING_VERIFY_MESSAGE);
 			goto fatal_err;
@@ -1945,7 +1945,7 @@ ssl3_get_cert_verify(SSL *s)
 		goto end;
 	}
 
-	if (peer == NULL) {
+	if (peer_cert == NULL) {
 		SSLerror(s, SSL_R_NO_CLIENT_CERT_RECEIVED);
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		goto fatal_err;
@@ -2240,8 +2240,8 @@ ssl3_get_client_certificate(SSL *s)
 		}
 	}
 
-	X509_free(s->session->peer);
-	s->session->peer = sk_X509_shift(sk);
+	X509_free(s->session->peer_cert);
+	s->session->peer_cert = sk_X509_shift(sk);
 
 	/*
 	 * Inconsistency alert: cert_chain does *not* include the

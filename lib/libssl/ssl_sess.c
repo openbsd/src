@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.107 2022/01/08 12:59:59 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.108 2022/01/11 18:39:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -766,7 +766,7 @@ SSL_SESSION_free(SSL_SESSION *ss)
 	for (i = 0; i < SSL_PKEY_NUM; i++)
 		X509_free(ss->peer_pkeys[i].x509);
 
-	X509_free(ss->peer);
+	X509_free(ss->peer_cert);
 
 	sk_SSL_CIPHER_free(ss->ciphers);
 
@@ -881,7 +881,7 @@ SSL_SESSION_get0_cipher(const SSL_SESSION *s)
 X509 *
 SSL_SESSION_get0_peer(SSL_SESSION *s)
 {
-	return s->peer;
+	return s->peer_cert;
 }
 
 int

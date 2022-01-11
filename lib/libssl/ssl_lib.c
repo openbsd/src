@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.284 2022/01/09 15:53:52 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.285 2022/01/11 18:39:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -870,7 +870,7 @@ SSL_get_peer_certificate(const SSL *s)
 	if ((s == NULL) || (s->session == NULL))
 		r = NULL;
 	else
-		r = s->session->peer;
+		r = s->session->peer_cert;
 
 	if (r == NULL)
 		return (r);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.381 2022/01/11 18:28:41 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.382 2022/01/11 18:39:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -476,7 +476,7 @@ struct ssl_session_st {
 	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 
 	/* This is the cert for the other end. */
-	X509 *peer;
+	X509 *peer_cert;
 
 	/* when app_verify_callback accepts a session where the peer's certificate
 	 * is not ok, we must remember the error for session reuse: */

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.135 2022/01/11 18:28:41 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.136 2022/01/11 18:39:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1187,8 +1187,8 @@ ssl3_get_server_certificate(SSL *s)
 	s->session->peer_key = &s->session->peer_pkeys[i];
 
 	X509_up_ref(x);
-	X509_free(s->session->peer);
-	s->session->peer = x;
+	X509_free(s->session->peer_cert);
+	s->session->peer_cert = x;
 
 	s->session->verify_result = s->verify_result;
 
