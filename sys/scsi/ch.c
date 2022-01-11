@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.70 2021/10/24 16:57:30 mpi Exp $	*/
+/*	$OpenBSD: ch.c,v 1.71 2022/01/11 23:10:11 jsg Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -788,8 +788,8 @@ ch_get_quirks(struct ch_softc *sc, struct scsi_inquiry_data *inqbuf)
 }
 
 /*
- * Look at the returned sense and act on the error and detirmine
- * The unix error number to pass back... (0 = report no error)
+ * Look at the returned sense and act on the error to determine
+ * the unix error number to pass back... (0 = report no error)
  *                            (-1 = continue processing)
  */
 int

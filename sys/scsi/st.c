@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.187 2021/10/24 16:57:30 mpi Exp $	*/
+/*	$OpenBSD: st.c,v 1.188 2022/01/11 23:10:11 jsg Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -394,7 +394,7 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 	    SCSI_IGNORE_ILLEGAL_REQUEST);
 
 	/*
-	 * Terminate any exising mount session if there is no media.
+	 * Terminate any existing mount session if there is no media.
 	 */
 	if (!ISSET(link->flags, SDEV_MEDIA_LOADED))
 		st_unmount(st, NOEJECT, DOREWIND);
@@ -1834,8 +1834,8 @@ st_rewind(struct st_softc *st, u_int immediate, int flags)
 }
 
 /*
- * Look at the returned sense and act on the error and detirmine
- * The unix error number to pass back... (0 = report no error)
+ * Look at the returned sense and act on the error to determine
+ * the unix error number to pass back... (0 = report no error)
  *                            (-1 = continue processing)
  */
 int

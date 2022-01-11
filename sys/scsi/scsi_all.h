@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.64 2020/09/08 12:36:42 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.65 2022/01/11 23:10:11 jsg Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -223,7 +223,7 @@ struct scsi_report_luns {
 #define T_OSD		0x11	/* Object-based Storage device (OSD) */
 #define T_ADC		0x12	/* Automation/Drive Interface (ADC-2) */
 /* 0x13 - 0x1d RESERVED */
-#define T_WELL_KNOWN_LU	0x1e	/* Well known logial unut */
+#define T_WELL_KNOWN_LU	0x1e	/* Well known logical unit */
 #define T_NODEVICE	0x1F	/* Unknown or no device type */
 
 #define T_REMOV		1
@@ -272,7 +272,7 @@ struct scsi_inquiry_data {
 #define SPC2_SID_BQueue		0x80	/* obsolete */
 	u_int8_t flags;
 #define	SID_VS			0x01	/* ??? */
-#define	SID_CmdQue		0x02	/* Task manageent mode supported */
+#define	SID_CmdQue		0x02	/* Task management mode supported */
 #define	SID_Linked		0x08	/* obsolete */
 #define	SID_Sync		0x10	/* obsolete */
 #define	SID_WBus16		0x20	/* obsolete */

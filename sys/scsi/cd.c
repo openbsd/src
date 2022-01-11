@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.264 2021/10/24 16:57:30 mpi Exp $	*/
+/*	$OpenBSD: cd.c,v 1.265 2022/01/11 23:10:11 jsg Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -527,7 +527,7 @@ cd_cmd_rw12(struct scsi_generic *generic, int read, u_int64_t secno,
 /*
  * cdstart looks to see if there is a buf waiting for the device
  * and that the device is not already busy. If both are true,
- * It deques the buf and creates a scsi command to perform the
+ * It dequeues the buf and creates a scsi command to perform the
  * transfer in the buf. The transfer request will call scsi_done
  * on completion, which will in turn call this routine again
  * so that the next queued transfer is performed.
