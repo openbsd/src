@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirsb.c,v 1.4 2021/10/24 17:52:27 mpi Exp $	*/
+/*	$OpenBSD: sxirsb.c,v 1.5 2022/01/11 10:23:17 uaa Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -45,7 +45,7 @@
 #define RSB_DATA			0x001c
 #define RSB_DMCR			0x0028
 #define  RSB_DMCR_DEVICE_MODE_START	(1U << 31)
-#define  RSB_DMCR_DEVICE_MODE_DATA	0x7e3e00
+#define  RSB_DMCR_DEVICE_MODE_DATA	0x7c3e00
 #define RSB_CMD				0x002c
 #define RSB_DAR				0x0030
 
