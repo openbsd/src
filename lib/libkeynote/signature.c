@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.27 2021/11/24 04:32:52 tb Exp $ */
+/* $OpenBSD: signature.c,v 1.28 2022/01/11 12:14:07 tb Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -1176,7 +1176,6 @@ kn_encode_key(struct keynote_deckey *dc, int iencoding,
 	    return NULL;
 	}
 
-	dsa->write_params = 1;
 	if (keytype == KEYNOTE_PUBLIC_KEY)
 	  i2d_DSAPublicKey(dsa, (unsigned char **) &foo);
 	else
