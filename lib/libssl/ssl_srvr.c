@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.139 2022/01/11 18:39:28 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.140 2022/01/11 19:03:15 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1905,7 +1905,7 @@ ssl3_get_cert_verify(SSL *s)
 	CBS cbs, signature;
 	const struct ssl_sigalg *sigalg = NULL;
 	uint16_t sigalg_value = SIGALG_NONE;
-	EVP_PKEY *pkey = NULL;
+	EVP_PKEY *pkey;
 	X509 *peer_cert = NULL;
 	EVP_MD_CTX *mctx = NULL;
 	int al, verify;
@@ -1928,11 +1928,9 @@ ssl3_get_cert_verify(SSL *s)
 
 	CBS_init(&cbs, s->internal->init_msg, s->internal->init_num);
 
-	if (s->session->peer_cert != NULL) {
-		peer_cert = s->session->peer_cert;
-		pkey = X509_get_pubkey(peer_cert);
-		type = X509_certificate_type(peer_cert, pkey);
-	}
+	peer_cert = s->session->peer_cert;
+	pkey = X509_get0_pubkey(peer_cert);
+	type = X509_certificate_type(peer_cert, pkey);
 
 	if (S3I(s)->hs.tls12.message_type != SSL3_MT_CERTIFICATE_VERIFY) {
 		S3I(s)->hs.tls12.reuse_message = 1;
@@ -2131,7 +2129,7 @@ ssl3_get_cert_verify(SSL *s)
 	tls1_transcript_free(s);
  err:
 	EVP_MD_CTX_free(mctx);
-	EVP_PKEY_free(pkey);
+
 	return (ret);
 }
 

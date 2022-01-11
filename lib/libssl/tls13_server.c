@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.94 2022/01/11 18:39:28 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.95 2022/01/11 19:03:15 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -857,7 +857,7 @@ tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 	X509 *cert = NULL;
 	EVP_PKEY *pkey;
 	const uint8_t *p;
-	int cert_idx;
+	int cert_type;
 	int ret = 0;
 
 	if (!CBS_get_u8_length_prefixed(cbs, &cert_request_context))
@@ -918,23 +918,19 @@ tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	if (EVP_PKEY_missing_parameters(pkey))
 		goto err;
-	if ((cert_idx = ssl_cert_type(cert, pkey)) < 0)
+	if ((cert_type = ssl_cert_type(cert, pkey)) < 0)
 		goto err;
-
-	sk_X509_pop_free(s->session->cert_chain, X509_free);
-	s->session->cert_chain = certs;
-	certs = NULL;
-
-	X509_up_ref(cert);
-	X509_free(s->session->peer_pkeys[cert_idx].x509);
-	s->session->peer_pkeys[cert_idx].x509 = cert;
-	s->session->peer_key = &s->session->peer_pkeys[cert_idx];
 
 	X509_up_ref(cert);
 	X509_free(s->session->peer_cert);
 	s->session->peer_cert = cert;
+	s->session->peer_cert_type = cert_type;
 
 	s->session->verify_result = s->verify_result;
+
+	sk_X509_pop_free(s->session->cert_chain, X509_free);
+	s->session->cert_chain = certs;
+	certs = NULL;
 
 	ctx->handshake_stage.hs_type |= WITH_CCV;
 	ret = 1;
