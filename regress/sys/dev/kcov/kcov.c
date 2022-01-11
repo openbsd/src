@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.16 2021/12/29 07:16:30 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.17 2022/01/11 06:01:15 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 	} tests[] = {
 		{ "close",		test_close,		0 },
 		{ "coverage",		test_coverage,		1 },
-		{ "dying",		test_dying,		1 },
+		{ "dying",		test_dying,		-1 },
 		{ "exec",		test_exec,		1 },
 		{ "fdsend",		test_fdsend,		-1 },
 		{ "fork",		test_fork,		1 },
