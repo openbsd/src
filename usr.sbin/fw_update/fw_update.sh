@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.28 2022/01/08 22:32:00 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.29 2022/01/11 03:25:52 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -55,8 +55,7 @@ trap cleanup EXIT
 tmpdir() {
 	local _i=1 _dir
 
-	# If we're not in the installer,
-	# we have mktemp and a more hostile environment.
+	# The installer lacks mktemp(1), do it by hand
 	if [ -x /usr/bin/mktemp ]; then
 		_dir=$( mktemp -d "${1}-XXXXXXXXX" )
 	else
@@ -71,8 +70,7 @@ tmpdir() {
 fetch() {
 	local _src="${FWURL}/${1##*/}" _dst=$1 _user=_file _exit _error=''
 
-	# If we're not in the installer,
-	# we have su(1) and doas(1) is unlikely to be configured.
+	# The installer uses a limited doas(1) as a tiny su(1)
 	set -o monitor # make sure ftp gets its own process group
 	(
 	flags=-VM
@@ -138,7 +136,7 @@ fetch_cfile() {
 
 verify() {
 	[ -e "$CFILE" ] || fetch_cfile || return 1
-	# On the installer we don't get sha256 -C, so fake it.
+	# The installer sha256 lacks -C, do it by hand
 	if ! fgrep -qx "SHA256 (${1##*/}) = $( /bin/sha256 -qb "$1" )" "$CFILE"; then
 		echo "Checksum test for ${1##*/} failed." >&2
 		return 1
@@ -150,8 +148,7 @@ verify() {
 firmware_in_dmesg() {
 	local _d _m _line _dmesgtail _last='' _nl=$( echo )
 
-	# When we're not in the installer, the dmesg.boot can
-	# contain multiple boots, so only look in the last one
+	# The dmesg can contain multiple boots, only look in the last one
 	_dmesgtail="$( echo ; sed -n 'H;/^OpenBSD/h;${g;p;}' /var/run/dmesg.boot )"
 
 	grep -v '^[[:space:]]*#' "$FWPATTERNS" |
@@ -234,7 +231,6 @@ add_firmware () {
 		return 1
 	fi
 
-	# TODO: Should we mark these so real fw_update can -Drepair?
 	ed -s "${FWPKGTMP}/+CONTENTS" <<EOL
 /^@comment pkgpath/ -1a
 @option manual-installation
@@ -275,12 +271,11 @@ delete_firmware() {
 		esac
 	done < "${_pkgdir}/${_pkg}/+CONTENTS"
 
-	# We specifically rm -f here because not removing files/dirs
-	# is probably not worth failing over.
+	# Use rm -f, not removing files/dirs is probably not worth failing over
 	for _r in "${_remove[@]}" ; do
 		if [ -d "$_r" ]; then
-			# Try hard not to actually remove recursively
-			# without rmdir on the install media.
+			# The installer lacks rmdir,
+			# but we only want to remove empty directories.
 			set +o noglob
 			[ "$_r/*" = "$( echo "$_r"/* )" ] && rm -rf "$_r"
 			set -o noglob
@@ -433,8 +428,7 @@ for f in "${devices[@]}"; do
 		echo "Cannot download local file $f" >&2
 		exit 2
 	else
-		# If someone specified a filename on the command-line
-		# we don't want to verify it.
+		# Don't verify files specified on the command-line
 		verify_existing=false
 	fi
 
