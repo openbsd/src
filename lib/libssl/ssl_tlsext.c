@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.105 2022/01/06 18:23:56 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.106 2022/01/11 18:22:16 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1481,13 +1481,13 @@ tlsext_keyshare_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	uint16_t group;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &client_shares))
-		goto err;
+		return 0;
 
 	while (CBS_len(&client_shares) > 0) {
 
 		/* Unpack client share. */
 		if (!CBS_get_u16(&client_shares, &group))
-			goto err;
+			return 0;
 		if (!CBS_get_u16_length_prefixed(&client_shares, &key_exchange))
 			return 0;
 
@@ -1511,17 +1511,13 @@ tlsext_keyshare_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 
 		/* Decode and store the selected key share. */
 		if ((S3I(s)->hs.key_share = tls_key_share_new(group)) == NULL)
-			goto err;
+			return 0;
 		if (!tls_key_share_peer_public(S3I(s)->hs.key_share,
 		    &key_exchange, NULL))
-			goto err;
+			return 0;
 	}
 
 	return 1;
-
- err:
-	*alert = SSL_AD_DECODE_ERROR;
-	return 0;
 }
 
 int
