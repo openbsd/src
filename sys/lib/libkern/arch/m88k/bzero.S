@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.2 2013/01/05 11:20:56 miod Exp $	*/
+/*	$OpenBSD: bzero.S,v 1.3 2022/01/11 09:21:35 jsg Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1992 Carnegie Mellon University
@@ -99,7 +99,7 @@ ASLOCAL(top_of_main_loop)
 	 * Since we're doing the max, we know exactly where we're
 	 * jumping (the first one in the list!), so we can jump
 	 * right there.  However, we've still got to adjust
-	 * the length, so we'll jump to where we ajust the length
+	 * the length, so we'll jump to where we adjust the length
 	 * which just happens to fall through to the first store zero
 	 * in the list.
 	 *

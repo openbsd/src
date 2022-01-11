@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcount.c,v 1.15 2015/01/16 16:48:51 deraadt Exp $ */
+/*	$OpenBSD: mcount.c,v 1.16 2022/01/11 09:21:34 jsg Exp $ */
 /*-
  * Copyright (c) 1983, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -55,7 +55,7 @@ _MCOUNT_DECL(u_long frompc, u_long selfpc)
 
 	/*
 	 * Do not profile execution if memory for the current CPU
-	 * desciptor and profiling buffers has not yet been allocated
+	 * descriptor and profiling buffers has not yet been allocated
 	 * or if the CPU we are running on has not yet set its trap
 	 * handler.
 	 */

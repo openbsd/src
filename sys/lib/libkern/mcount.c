@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcount.c,v 1.13 2013/03/12 09:37:16 mpi Exp $	*/
+/*	$OpenBSD: mcount.c,v 1.14 2022/01/11 09:21:34 jsg Exp $	*/
 /*	$NetBSD: mcount.c,v 1.3.6.1 1996/06/12 04:23:01 cgd Exp $	*/
 
 /*-
@@ -57,7 +57,7 @@ _MCOUNT_DECL(u_long frompc, u_long selfpc)
 
 	/*
 	 * Do not profile execution if memory for the current CPU
-	 * desciptor and profiling buffers has not yet been allocated
+	 * descriptor and profiling buffers has not yet been allocated
 	 * or if the CPU we are running on has not yet set its trap
 	 * handler.
 	 */

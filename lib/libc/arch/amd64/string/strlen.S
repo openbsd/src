@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlen.S,v 1.8 2018/07/03 23:14:05 mortimer Exp $	*/
+/*	$OpenBSD: strlen.S,v 1.9 2022/01/11 09:21:34 jsg Exp $	*/
 /*	$NetBSD: strlen.S,v 1.6 2014/03/22 19:16:34 jakllsch Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
 /*
  * There are many well known branch-free sequences which are used
  * for determining whether a zero-byte is contained within a word.
- * These sequences are generally much more efficent than loading
+ * These sequences are generally much more efficient than loading
  * and comparing each byte individually.
  *
  * The expression [1,2]:
@@ -98,7 +98,7 @@
  * the rate of false positives is low.
  *
  * This is likely, because the false positive can only occur
- * if the most siginificant bit of a byte within the word is set.
+ * if the most significant bit of a byte within the word is set.
  * The expression will never fail for typical 7-bit ASCII strings.
  *
  * This typically takes 2 instructions not including those needed
