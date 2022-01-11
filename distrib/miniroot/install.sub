@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1188 2022/01/11 00:48:45 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1189 2022/01/11 00:58:32 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2738,6 +2738,12 @@ install_sets() {
 
 		# Preserve the selected install source selection.
 		[[ -n $INSTALL_METHOD ]] && _d=$INSTALL_METHOD
+
+		if [ -x /mnt/usr/sbin/fw_update -a \
+		    "$(echo /mnt2/*firmware*tgz)" != "/mnt2/*firmware*tgz" ]; then
+			DESTDIR=/mnt /mnt/usr/sbin/fw_update /mnt2/*firmware*tgz
+			enable_ifs	# try again with firmwares
+		fi
 
 		# Set default to 'done' to leave the while-loop.
 		sane_install quiet || $AI && _d=done
