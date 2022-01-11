@@ -1,4 +1,4 @@
-$OpenBSD: README,v 1.3 2016/12/17 16:12:15 krw Exp $
+$OpenBSD: README,v 1.4 2022/01/11 05:34:32 jsg Exp $
 $NetBSD: README,v 1.7 2015/01/12 19:50:47 christos Exp $
 
 makefs - build a file system image from a directory tree
@@ -21,7 +21,7 @@ the following file system types can be built:
 	ffs	BSD fast file system
 	msdos	MS-DOS `FAT' file system (FAT12, FAT16, FAT32)
 
-Various file system independent parameters and contraints can be
+Various file system independent parameters and constraints can be
 specified, such as:
 
 	- minimum file system size (in KB)
@@ -92,7 +92,7 @@ Each fs-specific module should have the following external interfaces:
 prepare_options and cleanup_options are optional and can be NULL.
 
 NOTE: All file system specific options are referenced via the fs_specific
-pointer from the fsinfo_t strucutre. It is up to the filesystem to allocate
+pointer from the fsinfo_t structure. It is up to the filesystem to allocate
 and free any data needed for this via the prepare and cleanup callbacks.
 
 Each fs-specific module will need to add its routines to the dispatch array

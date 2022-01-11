@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660.c,v 1.22 2021/07/12 15:09:21 beck Exp $	*/
+/*	$OpenBSD: cd9660.c,v 1.23 2022/01/11 05:34:32 jsg Exp $	*/
 /*	$NetBSD: cd9660.c,v 1.53 2016/11/25 23:02:44 christos Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ static int  cd9660_add_generic_bootimage(iso9660_disk *, const char *);
 
 
 /*
- * Allocate and initalize a cd9660node
+ * Allocate and initialize a cd9660node
  * @returns struct cd9660node * Pointer to new node, or NULL on error
  */
 static cd9660node *
@@ -872,7 +872,7 @@ cd9660_sorted_child_insert(cd9660node *parent, cd9660node *cn_new)
 
 /*
  * Called After cd9660_sorted_child_insert
- * handles file collisions by suffixing each filname with ~n
+ * handles file collisions by suffixing each filename with ~n
  * where n represents the files respective place in the ordering
  */
 static int

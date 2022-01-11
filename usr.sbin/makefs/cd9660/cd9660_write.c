@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_write.c,v 1.8 2017/04/06 19:09:45 natano Exp $	*/
+/*	$OpenBSD: cd9660_write.c,v 1.9 2022/01/11 05:34:33 jsg Exp $	*/
 /*	$NetBSD: cd9660_write.c,v 1.17 2013/10/19 17:16:37 christos Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ cd9660_write_image(iso9660_disk *diskStructure, const char* image)
 
 	/*
 	 * Write the path tables: there are actually four, but right
-	 * now we are only concearned with two.
+	 * now we are only concerned with two.
 	 */
 	status = cd9660_write_path_tables(diskStructure, fd);
 	if (status == 0) {
@@ -265,7 +265,7 @@ cd9660_write_file(iso9660_disk *diskStructure, FILE *fd, cd9660node *writenode)
 		 * Here is a new revelation that ECMA didnt explain
 		 * (at least not well).
 		 * ALL . and .. records store the name "\0" and "\1"
-		 * resepctively. So, for each directory, we have to
+		 * respectively. So, for each directory, we have to
 		 * make a new node.
 		 *
 		 * This is where it gets kinda messy, since we have to
