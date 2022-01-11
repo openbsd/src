@@ -1,4 +1,4 @@
-/*	$OpenBSD: readdir.c,v 1.9 2014/11/19 20:28:56 miod Exp $	*/
+/*	$OpenBSD: readdir.c,v 1.10 2022/01/11 06:35:03 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -65,14 +65,17 @@ opendir(const char *name)
 int
 readdir(int fd, char *dest)
 {
-	struct open_file *f = &files[fd];
+	struct open_file *f;
 
-	if (fd < 0 || fd >= SOPEN_MAX ||
-	    !((f = &files[fd])->f_flags & F_READ)) {
+	if (fd < 0 || fd >= SOPEN_MAX) {
 		errno = EBADF;
 		return (-1);
 	}
-
+	f = &files[fd];
+	if (!(f->f_flags & F_READ)) {
+		errno = EBADF;
+		return (-1);
+	}
 	if (f->f_flags & F_RAW) {
 		errno = EOPNOTSUPP;
 		return (-1);
