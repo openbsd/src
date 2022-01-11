@@ -1,4 +1,4 @@
-/*	$OpenBSD: asn1test.c,v 1.9 2021/10/23 08:13:52 jsing Exp $	*/
+/*	$OpenBSD: asn1test.c,v 1.10 2022/01/11 19:08:08 jsing Exp $	*/
 /*
  * Copyright (c) 2014, 2016 Joel Sing <jsing@openbsd.org>
  *
@@ -330,10 +330,10 @@ session_cmp(SSL_SESSION *s1, SSL_SESSION *s2)
 	}
 
 	/* Ensure that a certificate is or is not present in both. */
-	if ((s1->peer != NULL || s2->peer != NULL) &&
-	    (s1->peer == NULL || s2->peer == NULL ||
-	     X509_cmp(s1->peer, s2->peer) != 0)) {
-		fprintf(stderr, "peer differs\n");
+	if ((s1->peer_cert != NULL || s2->peer_cert != NULL) &&
+	    (s1->peer_cert == NULL || s2->peer_cert == NULL ||
+	     X509_cmp(s1->peer_cert, s2->peer_cert) != 0)) {
+		fprintf(stderr, "peer_cert differs\n");
 		return (1);
 	}
 
@@ -377,7 +377,7 @@ do_ssl_asn1_test(int test_no, struct ssl_asn1_test *sat)
 	int i, len, rv = 1;
 
 	if (sat->peer_cert)
-		sat->session.peer = peer_cert;
+		sat->session.peer_cert = peer_cert;
 
 	len = i2d_SSL_SESSION(&sat->session, NULL);
 	if (len != sat->asn1_len) {
