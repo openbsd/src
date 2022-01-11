@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.48 2022/01/09 05:43:00 jsg Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.49 2022/01/11 10:34:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -1013,8 +1013,6 @@ umb_start(struct ifnet *ifp)
 		offs += sizeof (struct ncm_pointer32);
 		maxoverhead = sizeof (struct ncm_pointer32_dgram);
 		break;
-	default:
-		KASSERT(0);
 	}
 
 	/*
