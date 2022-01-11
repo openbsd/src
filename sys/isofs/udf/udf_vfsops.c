@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.69 2020/06/23 16:31:06 krw Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.70 2022/01/11 03:13:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -35,7 +35,7 @@
 /*
  * Ok, here's how it goes.  The UDF specs are pretty clear on how each data
  * structure is made up, but not very clear on how they relate to each other.
- * Here is the skinny... This demostrates a filesystem with one file in the
+ * Here is the skinny... This demonstrates a filesystem with one file in the
  * root directory.  Subdirectories are treated just as normal files, but they
  * have File Id Descriptors of their children as their file data.  As for the
  * Anchor Volume Descriptor Pointer, it can exist in two of the following three

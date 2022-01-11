@@ -1,4 +1,4 @@
-/*	$OpenBSD: fs.h,v 1.43 2020/06/20 07:49:04 otto Exp $	*/
+/*	$OpenBSD: fs.h,v 1.44 2022/01/11 03:13:59 jsg Exp $	*/
 /*	$NetBSD: fs.h,v 1.6 1995/04/12 21:21:02 mycroft Exp $	*/
 
 /*
@@ -73,7 +73,7 @@
  * Addresses stored in inodes are capable of addressing fragments
  * of `blocks'. File system blocks of at most size MAXBSIZE can 
  * be optionally broken into 2, 4, or 8 pieces, each of which is
- * addressible; these pieces may be DEV_BSIZE, or some multiple of
+ * addressable; these pieces may be DEV_BSIZE, or some multiple of
  * a DEV_BSIZE unit.
  *
  * Large files consist of exclusively large data blocks.  To avoid

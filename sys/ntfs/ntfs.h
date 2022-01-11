@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs.h,v 1.18 2020/01/20 23:21:56 claudio Exp $	*/
+/*	$OpenBSD: ntfs.h,v 1.19 2022/01/11 03:13:59 jsg Exp $	*/
 /*	$NetBSD: ntfs.h,v 1.5 2003/04/24 07:50:19 christos Exp $	*/
 
 /*-
@@ -237,7 +237,7 @@ struct bootfile {
 	cn_t            bf_mftcn;	/* $MFT cluster number */
 	cn_t            bf_mftmirrcn;	/* $MFTMirr cn */
 	u_int8_t        bf_mftrecsz;	/* MFT record size (clust) */
-					/* 0xF6 inducates 1/4 */
+					/* 0xF6 indicates 1/4 */
 	u_int32_t       bf_ibsz;	/* index buffer size */
 	u_int32_t       bf_volsn;	/* volume ser. num. */
 } __packed;

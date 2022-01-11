@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntfs_subr.c,v 1.51 2020/02/27 09:10:31 mpi Exp $	*/
+/*	$OpenBSD: ntfs_subr.c,v 1.52 2022/01/11 03:13:59 jsg Exp $	*/
 /*	$NetBSD: ntfs_subr.c,v 1.4 2003/04/10 21:37:32 jdolecek Exp $	*/
 
 /*-
@@ -1290,7 +1290,7 @@ ntfs_nttimetounix(u_int64_t nt)
 {
 	struct timespec t;
 
-	/* WindowNT times are in 100 ns and from 1601 Jan 1 */
+	/* Windows NT times are in 100 ns and from 1601 Jan 1 */
 	t.tv_nsec = (nt % (1000 * 1000 * 10)) * 100;
 	t.tv_sec = nt / (1000 * 1000 * 10) -
 		369LL * 365LL * 24LL * 60LL * 60LL -

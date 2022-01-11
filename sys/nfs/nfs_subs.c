@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.144 2020/06/24 22:03:44 cheloha Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.145 2022/01/11 03:13:59 jsg Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -559,7 +559,7 @@ nfsm_rpchead(struct nfsreq *req, struct ucred *cr, int auth_type)
 	/*
 	 * RPCAUTH_UNIX fits in an hdr mbuf, in the future other
 	 * authorization methods need to figure out their own sizes
-	 * and allocate and chain mbuf's accorindgly.
+	 * and allocate and chain mbufs accordingly.
 	 */
 	mb = req->r_mreq;
 

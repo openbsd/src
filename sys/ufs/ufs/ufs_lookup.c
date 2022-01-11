@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_lookup.c,v 1.58 2020/10/09 08:20:46 mpi Exp $	*/
+/*	$OpenBSD: ufs_lookup.c,v 1.59 2022/01/11 03:13:59 jsg Exp $	*/
 /*	$NetBSD: ufs_lookup.c,v 1.7 1996/02/09 22:36:06 christos Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ ufs_lookup(void *v)
 	wantparent = flags & (LOCKPARENT|WANTPARENT);
 
 	/*
-	 * Check accessiblity of directory.
+	 * Check accessibility of directory.
 	 */
 	if ((DIP(dp, mode) & IFMT) != IFDIR)
 		return (ENOTDIR);

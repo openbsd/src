@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.45 2021/03/11 13:31:35 jsg Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.46 2022/01/11 03:13:59 jsg Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ ext2fs_lookup(void *v)
 	wantparent = flags & (LOCKPARENT|WANTPARENT);
 
 	/*
-	 * Check accessiblity of directory.
+	 * Check accessibility of directory.
 	 */
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
 		return (error);

@@ -1,4 +1,4 @@
-/* $OpenBSD: dirhash.h,v 1.7 2021/03/11 13:31:36 jsg Exp $	*/
+/* $OpenBSD: dirhash.h,v 1.8 2022/01/11 03:13:59 jsg Exp $	*/
 /*
  * Copyright (c) 2001 Ian Dowse.  All rights reserved.
  *
@@ -64,7 +64,7 @@
  * placed at the most-recently-used end of the list. This helps a lot
  * in the worst-case case scenario where every directory access is
  * to a directory that is not hashed (i.e. the working set of hash
- * candidates is much larger than the configured memry limit). In this
+ * candidates is much larger than the configured memory limit). In this
  * case it limits the number of hash builds to 1/DH_SCOREINIT of the
  * number of accesses.
  */

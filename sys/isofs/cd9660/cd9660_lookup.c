@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.29 2021/03/05 07:10:06 jsg Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.30 2022/01/11 03:13:58 jsg Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -133,7 +133,7 @@ cd9660_lookup(void *v)
 	lockparent = flags & LOCKPARENT;
 	
 	/*
-	 * Check accessiblity of directory.
+	 * Check accessibility of directory.
 	 */
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
 		return (error);

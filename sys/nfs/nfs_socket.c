@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.137 2021/01/02 02:41:42 cheloha Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.138 2022/01/11 03:13:59 jsg Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -1114,7 +1114,7 @@ nfs_rephead(int siz, struct nfsrv_descript *nd, struct nfssvc_sock *slp,
 
 /*
  * nfs timer routine
- * Scan the nfsreq list and retranmit any requests that have timed out.
+ * Scan the nfsreq list and retransmit any requests that have timed out.
  */
 void
 nfs_timer(void *arg)

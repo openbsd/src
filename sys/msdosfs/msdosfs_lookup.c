@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.32 2018/05/02 02:24:56 visa Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.33 2022/01/11 03:13:59 jsg Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -130,7 +130,7 @@ msdosfs_lookup(void *v)
 #endif
 
 	/*
-	 * Check accessiblity of directory.
+	 * Check accessibility of directory.
 	 */
 	if ((dp->de_Attributes & ATTR_DIRECTORY) == 0)
 		return (ENOTDIR);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecma167-udf.h,v 1.9 2011/07/07 14:25:15 sobrado Exp $	*/
+/*	$OpenBSD: ecma167-udf.h,v 1.10 2022/01/11 03:13:59 jsg Exp $	*/
 /* $NetBSD: ecma167-udf.h,v 1.10 2008/06/24 15:30:33 reinoud Exp $ */
 
 /*-
@@ -89,7 +89,7 @@ enum {
 	TAGID_EXTATTR_HDR =	262,
 	TAGID_UNALL_SP_ENTRY =	263,
 	TAGID_SPACE_BITMAP = 	264,
-	TAGID_PART_INTEGRETY = 	265,
+	TAGID_PART_INTEGRITY = 	265,
 	TAGID_EXTFENTRY =	266,
 	TAGID_MAX =		266
 };
@@ -106,7 +106,7 @@ enum {
 	UDF_ACCESSTYPE_PSEUDO_OVERWITE = 0,	/* pseudo overwritable, e.g. BD-R's LOW */
 	UDF_ACCESSTYPE_READ_ONLY       = 1,	/* really only readable			*/
 	UDF_ACCESSTYPE_WRITE_ONCE      = 2,	/* write once and you're done		*/
-	UDF_ACCESSTYPE_REWRITEABLE     = 3,	/* may need extra work to rewrite	*/
+	UDF_ACCESSTYPE_REWRITABLE      = 3,	/* may need extra work to rewrite	*/
 	UDF_ACCESSTYPE_OVERWRITABLE    = 4	/* no limits on rewriting; e.g. harddisc*/
 };
 
@@ -260,7 +260,7 @@ struct icb_tag {
 
 #define UDF_ICB_TAG_FLAGS_DIRORDERED	(1<< 3)
 #define UDF_ICB_TAG_FLAGS_NONRELOC	(1<< 4)
-#define UDF_ICB_TAG_FLAGS_CONTIGUES	(1<< 9)
+#define UDF_ICB_TAG_FLAGS_CONTIGUOUS	(1<< 9)
 #define UDF_ICB_TAG_FLAGS_MULTIPLEVERS	(1<<12)
 
 #define	UDF_ICB_TAG_FLAGS_SETUID	(1<< 6)
@@ -525,7 +525,7 @@ struct space_entry_desc {
 struct part_hdr_desc {
 	struct short_ad		unalloc_space_table;
 	struct short_ad		unalloc_space_bitmap;
-	struct short_ad		part_integrety_table;	/* has to be ZERO for UDF */
+	struct short_ad		part_integrity_table;	/* has to be ZERO for UDF */
 	struct short_ad		freed_space_table;
 	struct short_ad		freed_space_bitmap;
 	uint8_t			reserved[88];
