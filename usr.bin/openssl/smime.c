@@ -1,4 +1,4 @@
-/* $OpenBSD: smime.c,v 1.13 2022/01/11 15:02:34 inoguchi Exp $ */
+/* $OpenBSD: smime.c,v 1.14 2022/01/11 15:05:58 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -144,6 +144,8 @@ get_cipher_by_name(char *name)
 	else if (!strcmp(name, "rc2-128"))
 		return EVP_rc2_cbc();
 #endif
+	else
+		return NULL;
 }
 
 static int
