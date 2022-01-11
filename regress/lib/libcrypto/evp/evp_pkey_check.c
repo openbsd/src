@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_pkey_check.c,v 1.1 2022/01/11 19:20:36 tb Exp $ */
+/*	$OpenBSD: evp_pkey_check.c,v 1.2 2022/01/11 19:27:35 tb Exp $ */
 /*
  * Copyright (c) 2021-2022 Theo Buehler <tb@openbsd.org>
  *
@@ -88,7 +88,7 @@ evp_pkey_check_rsa(void)
 	}
 
 	/* Public key checking for RSA is not supported. */
-	if ((ret = EVP_PKEY_public_check(pkey_ctx)) != -2) {
+	if (EVP_PKEY_public_check(pkey_ctx) != -2) {
 		fprintf(stderr,
 		    "%s: EVP_PKEY_public_check() supported for RSA?\n",
 		    __func__);
@@ -97,7 +97,7 @@ evp_pkey_check_rsa(void)
 	ERR_clear_error();
 
 	/* Parameter checking for RSA is not supported. */
-	if ((ret = EVP_PKEY_param_check(pkey_ctx)) != -2) {
+	if (EVP_PKEY_param_check(pkey_ctx) != -2) {
 		fprintf(stderr,
 		    "%s: EVP_PKEY_param_check() supported for RSA?\n",
 		    __func__);
@@ -281,7 +281,7 @@ evp_pkey_check_ec(void)
 	ERR_clear_error();
 
 	/* EVP_PKEY_public_check checks the private key (sigh), so we fail. */
-	if ((ret = EVP_PKEY_public_check(pkey_ctx)) == 1) {
+	if (EVP_PKEY_public_check(pkey_ctx) == 1) {
 		fprintf(stderr,
 		    "%s: EVP_PKEY_public_check succeeded unexpectedly\n",
 		    __func__);
