@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-server.c,v 1.136 2022/01/08 07:33:54 djm Exp $ */
+/* $OpenBSD: sftp-server.c,v 1.137 2022/01/11 02:56:19 dtucker Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -554,7 +554,7 @@ send_status_errmsg(u_int32_t id, u_int32_t status, const char *errmsg)
 static void
 send_status(u_int32_t id, u_int32_t status)
 {
-	return send_status_errmsg(id, status, NULL);
+	send_status_errmsg(id, status, NULL);
 }
 
 static void
