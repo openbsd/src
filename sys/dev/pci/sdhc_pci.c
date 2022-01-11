@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.21 2019/11/20 16:34:58 patrick Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.22 2022/01/11 21:41:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -131,7 +131,8 @@ sdhc_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_100SERIES_LP_EMMC ||
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_APOLLOLAKE_EMMC ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_GLK_EMMC))
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_GLK_EMMC ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_JSL_EMMC))
 		sc->sc.sc_flags |= SDHC_F_NOPWR0;
 
 	/* Some RICOH controllers need to be bumped into the right mode. */
