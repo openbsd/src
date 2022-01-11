@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.44 2021/12/29 07:15:13 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.45 2022/01/11 06:00:41 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -319,6 +319,7 @@ kcovclose(dev_t dev, int flag, int mode, struct proc *p)
 		return (ENXIO);
 	}
 
+	TAILQ_REMOVE(&kd_list, kd, kd_entry);
 	if (kd->kd_state == KCOV_STATE_TRACE && kd->kd_kr == NULL) {
 		/*
 		 * Another thread is currently using the kcov descriptor,
@@ -547,8 +548,6 @@ kd_free(struct kcov_dev *kd)
 	struct kcov_remote *kr;
 
 	MUTEX_ASSERT_LOCKED(&kcov_mtx);
-
-	TAILQ_REMOVE(&kd_list, kd, kd_entry);
 
 	kr = kd->kd_kr;
 	if (kr != NULL)
