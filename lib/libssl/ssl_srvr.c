@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.137 2022/01/09 15:40:13 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.138 2022/01/11 18:28:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1701,21 +1701,26 @@ ssl3_get_client_kex_dhe(SSL *s, CBS *cbs)
 {
 	uint8_t *key = NULL;
 	size_t key_len = 0;
-	int invalid_key;
+	int decode_error, invalid_key;
 	int ret = 0;
 
 	if (S3I(s)->hs.key_share == NULL) {
-		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
 		SSLerror(s, SSL_R_MISSING_TMP_DH_KEY);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
 		goto err;
 	}
 
 	if (!tls_key_share_peer_public(S3I(s)->hs.key_share, cbs,
-	    &invalid_key))
+	    &decode_error, &invalid_key)) {
+		if (decode_error) {
+			SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
+			ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+		}
 		goto err;
+	}
 	if (invalid_key) {
-		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
 		SSLerror(s, SSL_R_BAD_DH_PUB_KEY_LENGTH);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
 		goto err;
 	}
 
@@ -1738,6 +1743,7 @@ ssl3_get_client_kex_ecdhe(SSL *s, CBS *cbs)
 {
 	uint8_t *key = NULL;
 	size_t key_len = 0;
+	int decode_error;
 	CBS public;
 	int ret = 0;
 
@@ -1747,10 +1753,19 @@ ssl3_get_client_kex_ecdhe(SSL *s, CBS *cbs)
 		goto err;
 	}
 
-	if (!CBS_get_u8_length_prefixed(cbs, &public))
+	if (!CBS_get_u8_length_prefixed(cbs, &public)) {
+		SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
 		goto err;
-	if (!tls_key_share_peer_public(S3I(s)->hs.key_share, &public, NULL))
+	}
+	if (!tls_key_share_peer_public(S3I(s)->hs.key_share, &public,
+	    &decode_error, NULL)) {
+		if (decode_error) {
+			SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
+			ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+		}
 		goto err;
+	}
 
 	if (!tls_key_share_derive(S3I(s)->hs.key_share, &key, &key_len))
 		goto err;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.107 2022/01/11 18:24:03 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.108 2022/01/11 18:28:41 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1478,6 +1478,7 @@ int
 tlsext_keyshare_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
 	CBS client_shares, key_exchange;
+	int decode_error;
 	uint16_t group;
 
 	if (!CBS_get_u16_length_prefixed(cbs, &client_shares))
@@ -1515,8 +1516,11 @@ tlsext_keyshare_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 			return 0;
 		}
 		if (!tls_key_share_peer_public(S3I(s)->hs.key_share,
-		    &key_exchange, NULL))
+		    &key_exchange, &decode_error, NULL)) {
+			if (!decode_error)
+				*alert = SSL_AD_INTERNAL_ERROR;
 			return 0;
+		}
 	}
 
 	return 1;
@@ -1561,6 +1565,7 @@ int
 tlsext_keyshare_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
 	CBS key_exchange;
+	int decode_error;
 	uint16_t group;
 
 	/* Unpack server share. */
@@ -1588,8 +1593,11 @@ tlsext_keyshare_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 		return 0;
 	}
 	if (!tls_key_share_peer_public(S3I(s)->hs.key_share,
-	    &key_exchange, NULL))
+	    &key_exchange, &decode_error, NULL)) {
+		if (!decode_error)
+			*alert = SSL_AD_INTERNAL_ERROR;
 		return 0;
+	}
 
 	return 1;
 }

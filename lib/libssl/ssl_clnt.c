@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.134 2022/01/09 15:55:37 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.135 2022/01/11 18:28:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1214,7 +1214,7 @@ ssl3_get_server_certificate(SSL *s)
 static int
 ssl3_get_server_kex_dhe(SSL *s, CBS *cbs)
 {
-	int invalid_params, invalid_key;
+	int decode_error, invalid_params, invalid_key;
 	int nid = NID_dhKeyAgreement;
 
 	tls_key_share_free(S3I(s)->hs.key_share);
@@ -1222,28 +1222,34 @@ ssl3_get_server_kex_dhe(SSL *s, CBS *cbs)
 		goto err;
 
 	if (!tls_key_share_peer_params(S3I(s)->hs.key_share, cbs,
-	    &invalid_params))
-		goto decode_err;
+	    &decode_error, &invalid_params)) {
+		if (decode_error) {
+			SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
+			ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+		}
+		goto err;
+	}
 	if (!tls_key_share_peer_public(S3I(s)->hs.key_share, cbs,
-	    &invalid_key))
-		goto decode_err;
+	    &decode_error, &invalid_key)) {
+		if (decode_error) {
+			SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
+			ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+		}
+		goto err;
+	}
 
 	if (invalid_params) {
-		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
 		SSLerror(s, SSL_R_BAD_DH_P_LENGTH);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
 		goto err;
 	}
 	if (invalid_key) {
-		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
 		SSLerror(s, SSL_R_BAD_DH_PUB_KEY_LENGTH);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
 		goto err;
 	}
 
 	return 1;
-
- decode_err:
-	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
-	ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
 
  err:
 	return 0;
@@ -1254,6 +1260,7 @@ ssl3_get_server_kex_ecdhe(SSL *s, CBS *cbs)
 {
 	uint8_t curve_type;
 	uint16_t curve_id;
+	int decode_error;
 	CBS public;
 
 	if (!CBS_get_u8(cbs, &curve_type))
@@ -1285,14 +1292,18 @@ ssl3_get_server_kex_ecdhe(SSL *s, CBS *cbs)
 	if ((S3I(s)->hs.key_share = tls_key_share_new(curve_id)) == NULL)
 		goto err;
 
-	if (!tls_key_share_peer_public(S3I(s)->hs.key_share, &public, NULL))
+	if (!tls_key_share_peer_public(S3I(s)->hs.key_share, &public,
+	    &decode_error, NULL)) {
+		if (decode_error)
+			goto decode_err;
 		goto err;
+	}
 
 	return 1;
 
  decode_err:
-	ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
 	SSLerror(s, SSL_R_BAD_PACKET_LENGTH);
+	ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
  err:
 	return 0;
 }

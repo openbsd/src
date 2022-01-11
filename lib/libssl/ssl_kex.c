@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_kex.c,v 1.8 2021/12/04 14:03:22 jsing Exp $ */
+/* $OpenBSD: ssl_kex.c,v 1.9 2022/01/11 18:28:41 jsing Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -156,18 +156,24 @@ ssl_kex_public_dhe(DH *dh, CBB *cbb)
 }
 
 int
-ssl_kex_peer_params_dhe(DH *dh, CBS *cbs, int *invalid_params)
+ssl_kex_peer_params_dhe(DH *dh, CBS *cbs, int *decode_error,
+    int *invalid_params)
 {
 	BIGNUM *p = NULL, *g = NULL;
 	CBS dh_p, dh_g;
 	int ret = 0;
 
+	*decode_error = 0;
 	*invalid_params = 0;
 
-	if (!CBS_get_u16_length_prefixed(cbs, &dh_p))
+	if (!CBS_get_u16_length_prefixed(cbs, &dh_p)) {
+		*decode_error = 1;
 		goto err;
-	if (!CBS_get_u16_length_prefixed(cbs, &dh_g))
+	}
+	if (!CBS_get_u16_length_prefixed(cbs, &dh_g)) {
+		*decode_error = 1;
 		goto err;
+	}
 
 	if ((p = BN_bin2bn(CBS_data(&dh_p), CBS_len(&dh_p), NULL)) == NULL)
 		goto err;
@@ -194,17 +200,21 @@ ssl_kex_peer_params_dhe(DH *dh, CBS *cbs, int *invalid_params)
 }
 
 int
-ssl_kex_peer_public_dhe(DH *dh, CBS *cbs, int *invalid_key)
+ssl_kex_peer_public_dhe(DH *dh, CBS *cbs, int *decode_error,
+    int *invalid_key)
 {
 	BIGNUM *pub_key = NULL;
 	int check_flags;
 	CBS dh_y;
 	int ret = 0;
 
+	*decode_error = 0;
 	*invalid_key = 0;
 
-	if (!CBS_get_u16_length_prefixed(cbs, &dh_y))
+	if (!CBS_get_u16_length_prefixed(cbs, &dh_y)) {
+		*decode_error = 1;
 		goto err;
+	}
 
 	if ((pub_key = BN_bin2bn(CBS_data(&dh_y), CBS_len(&dh_y),
 	    NULL)) == NULL)

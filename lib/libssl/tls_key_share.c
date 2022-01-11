@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_key_share.c,v 1.3 2022/01/07 15:46:30 jsing Exp $ */
+/* $OpenBSD: tls_key_share.c,v 1.4 2022/01/11 18:28:41 jsing Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -301,14 +301,15 @@ tls_key_share_public(struct tls_key_share *ks, CBB *cbb)
 
 static int
 tls_key_share_peer_params_dhe(struct tls_key_share *ks, CBS *cbs,
-    int *invalid_params)
+    int *decode_error, int *invalid_params)
 {
 	if (ks->dhe != NULL || ks->dhe_peer != NULL)
 		return 0;
 
 	if ((ks->dhe_peer = DH_new()) == NULL)
 		return 0;
-	if (!ssl_kex_peer_params_dhe(ks->dhe_peer, cbs, invalid_params))
+	if (!ssl_kex_peer_params_dhe(ks->dhe_peer, cbs, decode_error,
+	    invalid_params))
 		return 0;
 	if ((ks->dhe = DHparams_dup(ks->dhe_peer)) == NULL)
 		return 0;
@@ -318,22 +319,24 @@ tls_key_share_peer_params_dhe(struct tls_key_share *ks, CBS *cbs,
 
 int
 tls_key_share_peer_params(struct tls_key_share *ks, CBS *cbs,
-    int *invalid_params)
+    int *decode_error, int *invalid_params)
 {
 	if (ks->nid != NID_dhKeyAgreement)
 		return 0;
 
-	return tls_key_share_peer_params_dhe(ks, cbs, invalid_params);
+	return tls_key_share_peer_params_dhe(ks, cbs, decode_error,
+	     invalid_params);
 }
 
 static int
 tls_key_share_peer_public_dhe(struct tls_key_share *ks, CBS *cbs,
-    int *invalid_key)
+    int *decode_error, int *invalid_key)
 {
 	if (ks->dhe_peer == NULL)
 		return 0;
 
-	return ssl_kex_peer_public_dhe(ks->dhe_peer, cbs, invalid_key);
+	return ssl_kex_peer_public_dhe(ks->dhe_peer, cbs, decode_error,
+	    invalid_key);
 }
 
 static int
@@ -362,30 +365,39 @@ tls_key_share_peer_public_ecdhe_ecp(struct tls_key_share *ks, CBS *cbs)
 }
 
 static int
-tls_key_share_peer_public_x25519(struct tls_key_share *ks, CBS *cbs)
+tls_key_share_peer_public_x25519(struct tls_key_share *ks, CBS *cbs,
+    int *decode_error)
 {
 	size_t out_len;
+
+	*decode_error = 0;
 
 	if (ks->x25519_peer_public != NULL)
 		return 0;
 
-	if (CBS_len(cbs) != X25519_KEY_LENGTH)
+	if (CBS_len(cbs) != X25519_KEY_LENGTH) {
+		*decode_error = 1;
 		return 0;
+	}
 
 	return CBS_stow(cbs, &ks->x25519_peer_public, &out_len);
 }
 
 int
-tls_key_share_peer_public(struct tls_key_share *ks, CBS *cbs, int *invalid_key)
+tls_key_share_peer_public(struct tls_key_share *ks, CBS *cbs, int *decode_error,
+    int *invalid_key)
 {
+	*decode_error = 0;
+
 	if (invalid_key != NULL)
 		*invalid_key = 0;
 
 	if (ks->nid == NID_dhKeyAgreement)
-		return tls_key_share_peer_public_dhe(ks, cbs, invalid_key);
+		return tls_key_share_peer_public_dhe(ks, cbs, decode_error,
+		    invalid_key);
 
 	if (ks->nid == NID_X25519)
-		return tls_key_share_peer_public_x25519(ks, cbs);
+		return tls_key_share_peer_public_x25519(ks, cbs, decode_error);
 
 	return tls_key_share_peer_public_ecdhe_ecp(ks, cbs);
 }
