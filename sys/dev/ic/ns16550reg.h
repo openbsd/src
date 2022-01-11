@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns16550reg.h,v 1.5 2003/06/02 23:28:02 millert Exp $	*/
+/*	$OpenBSD: ns16550reg.h,v 1.6 2022/01/11 11:51:14 uaa Exp $	*/
 /*	$NetBSD: ns16550reg.h,v 1.4 1994/10/27 04:18:43 cgd Exp $	*/
 
 /*-
@@ -50,3 +50,9 @@
 #define	com_lsr		5	/* line status register (R/W) */
 #define	com_msr		6	/* modem status register (R/W) */
 #define com_scratch	7	/* scratch register (R/W) */
+
+/*
+ * Synopsys DesignWare APB UART additional registers
+ */
+#define	com_usr		31	/* UART status register (R) */
+#define	com_cpr		61	/* component parameter register (R) */

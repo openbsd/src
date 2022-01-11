@@ -1,4 +1,4 @@
-/*	$OpenBSD: comreg.h,v 1.20 2020/08/14 18:14:11 jcs Exp $	*/
+/*	$OpenBSD: comreg.h,v 1.21 2022/01/11 11:51:14 uaa Exp $	*/
 /*	$NetBSD: comreg.h,v 1.8 1996/02/05 23:01:50 scottr Exp $	*/
 
 /*
@@ -179,6 +179,9 @@
 #define ISR_XMODE	0x04	/* 1.6us transmit pulse width */
 #define ISR_TXPL	0x08	/* negative transmit data polarity */
 #define ISR_RXPL	0x10	/* negative receive data polarity */
+
+/* component parameter register (Synopsys DesignWare APB UART) */
+#define	CPR_FIFO_MODE(x)	(((x) >> 16) & 0xff)
 
 #define	COM_NPORTS	8
 

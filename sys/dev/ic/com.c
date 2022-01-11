@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.174 2021/05/06 20:35:21 kettenis Exp $	*/
+/*	$OpenBSD: com.c,v 1.175 2022/01/11 11:51:14 uaa Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1300,7 +1300,8 @@ void
 com_attach_subr(struct com_softc *sc)
 {
 	int probe = 0;
-	u_int8_t lcr;
+	u_int8_t lcr, fifo;
+	u_int32_t cpr;
 
 	sc->sc_ier = 0;
 	/* disable interrupts */
@@ -1480,6 +1481,27 @@ com_attach_subr(struct com_softc *sc)
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		sc->sc_fifolen = 256;
 		break;
+	case COM_UART_DW_APB:
+		printf(": dw16550");
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		cpr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, com_cpr << 2);
+		sc->sc_fifolen = CPR_FIFO_MODE(cpr) * 16;
+		if (sc->sc_fifolen) {
+			printf(", %d byte fifo\n", sc->sc_fifolen);
+		} else {
+			printf("\n");
+			/*
+			 * The DW-APB configuration on the Allwinner H6 SoC
+			 * does not provide the CPR register and will be
+			 * detected as having no FIFO.  But it does have a
+			 * 256-byte FIFO and with the FIFO disabled the
+			 * LSR_RXRDY bit remains set even if the input
+			 * buffer is empty.  As a workaround, treat as a
+			 * 1-byte FIFO.
+			 */
+			sc->sc_fifolen = 1;
+		}
+		break;
 	default:
 		panic("comattach: bad fifo type");
 	}
@@ -1496,10 +1518,13 @@ com_attach_subr(struct com_softc *sc)
 	}
 
 	/* clear and disable fifo */
-	com_write_reg(sc, com_fifo, FIFO_RCV_RST | FIFO_XMT_RST);
+	/* DW-APB UART cannot turn off FIFO here (ddb will not work) */
+	fifo = (sc->sc_uarttype == COM_UART_DW_APB) ?
+		(FIFO_ENABLE | FIFO_TRIGGER_1) : 0;
+	com_write_reg(sc, com_fifo, fifo | FIFO_RCV_RST | FIFO_XMT_RST);
 	if (ISSET(com_read_reg(sc, com_lsr), LSR_RXRDY))
 		(void)com_read_reg(sc, com_data);
-	com_write_reg(sc, com_fifo, 0);
+	com_write_reg(sc, com_fifo, fifo);
 
 	sc->sc_mcr = 0;
 	com_write_reg(sc, com_mcr, sc->sc_mcr);
