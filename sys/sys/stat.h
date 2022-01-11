@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.h,v 1.28 2015/04/04 18:06:08 jca Exp $	*/
+/*	$OpenBSD: stat.h,v 1.29 2022/01/11 23:59:55 jsg Exp $	*/
 /*	$NetBSD: stat.h,v 1.20 1996/05/16 22:17:49 cgd Exp $	*/
 
 /*-
@@ -141,7 +141,7 @@ struct stat {
 #endif
 
 #if __POSIX_VISIBLE >= 200809
-/* manadated to be present, but permitted to always return zero */
+/* mandated to be present, but permitted to always return zero */
 #define	S_TYPEISMQ(m)	0
 #define	S_TYPEISSEM(m)	0
 #define	S_TYPEISSHM(m)	0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: namei.h,v 1.49 2022/01/09 10:28:07 claudio Exp $	*/
+/*	$OpenBSD: namei.h,v 1.50 2022/01/11 23:59:55 jsg Exp $	*/
 /*	$NetBSD: namei.h,v 1.11 1996/02/09 18:25:20 christos Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ struct nameidata {
 
 	/*
 	 * Lookup parameters: this structure describes the subset of
-	 * information from the nameidat satructure that is passed
+	 * information from the nameidata structure that is passed
 	 * through the VOP interface.
 	 */
 	struct componentname {
@@ -137,7 +137,7 @@ struct nameidata {
 #define	NOCROSSMOUNT	0x000100      /* do not cross mount points */
 #define	RDONLY		0x000200      /* lookup with read-only semantics */
 #define	HASBUF		0x000400      /* has allocated pathname buffer */
-#define	SAVENAME	0x000800      /* save pathanme buffer */
+#define	SAVENAME	0x000800      /* save pathname buffer */
 #define	SAVESTART	0x001000      /* save starting directory */
 #define ISDOTDOT	0x002000      /* current component name is .. */
 #define MAKEENTRY	0x004000      /* entry is to be added to name cache */

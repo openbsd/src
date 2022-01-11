@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.220 2021/12/07 22:17:03 guenther Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.221 2022/01/11 23:59:55 jsg Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -979,7 +979,7 @@ struct kinfo_file {
  * variable. The loader prevents multiple use by issuing errors
  * if a variable is initialized in more than one place. They are
  * aggregated into an array in debug_sysctl(), so that it can
- * conveniently locate them when querried. If more debugging
+ * conveniently locate them when queried. If more debugging
  * variables are added, they must also be declared here and also
  * entered into the array.
  */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpcb.h,v 1.22 2021/12/26 23:41:41 mvs Exp $	*/
+/*	$OpenBSD: unpcb.h,v 1.23 2022/01/11 23:59:55 jsg Exp $	*/
 /*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
 
 /*
@@ -76,7 +76,7 @@ struct	unpcb {
 	long	unp_msgcount;		/* [G] references from socket rcv buf */
 	long	unp_gcrefs;		/* [G] references from gc */
 	int	unp_flags;		/* [U] this unpcb contains peer eids */
-	int	unp_gcflags;		/* [G] garbge collector flags */
+	int	unp_gcflags;		/* [G] garbage collector flags */
 	struct	sockpeercred unp_connid;/* [U] id of peer process */
 	struct	timespec unp_ctime;	/* [I] holds creation time */
 	LIST_ENTRY(unpcb) unp_link;	/* [G] link in per-AF list of sockets */
