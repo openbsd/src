@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.45 2022/01/11 06:00:41 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.46 2022/01/11 06:23:05 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -64,6 +64,8 @@ struct kcov_dev {
 	size_t		 kd_nmemb;	/* [I] */
 	size_t		 kd_size;	/* [I] */
 
+	int		 kd_pid;	/* XXX */
+
 	struct kcov_remote *kd_kr;	/* [M] */
 
 	TAILQ_ENTRY(kcov_dev)	kd_entry;	/* [M] */
@@ -82,6 +84,8 @@ struct kcov_remote {
 	int kr_subsystem;	/* [I] */
 	int kr_nsections;	/* [M] # threads in remote section */
 	int kr_state;		/* [M] */
+
+	int kr_pid;		/* XXX */
 
 	TAILQ_ENTRY(kcov_remote) kr_entry;	/* [M] */
 };
@@ -297,6 +301,7 @@ kcovopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	kd = malloc(sizeof(*kd), M_SUBPROC, M_WAITOK | M_ZERO);
 	kd->kd_unit = minor(dev);
+	kd->kd_pid = curproc->p_p->ps_pid;
 	mtx_enter(&kcov_mtx);
 	KASSERT(kd_lookup(kd->kd_unit) == NULL);
 	TAILQ_INSERT_TAIL(&kd_list, kd, kd_entry);
@@ -394,6 +399,40 @@ kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case KIOREMOTEATTACH:
 		error = kcov_remote_attach(kd,
 		    (struct kio_remote_attach *)data);
+		/* XXX */
+		if (error == EBUSY) {
+			struct kio_remote_attach *arg = (struct kio_remote_attach *)data;
+			struct kcov_remote *kr;
+
+			mtx_leave(&kcov_mtx);
+			printf("%s[%d,%p]: subsystem %d, id %d\n",
+			    curproc->p_p->ps_comm, curproc->p_p->ps_pid, curproc->p_p,
+			    arg->subsystem, arg->id);
+			TAILQ_FOREACH(kr, &kr_list, kr_entry) {
+				struct kcov_dev *kd = kr->kr_kd;
+				struct process *pr;
+
+				printf("kr: subsystem %d, id %p, nsections %d, state %d, kd %p, pid %d",
+				    kr->kr_subsystem, kr->kr_id, kr->kr_nsections, kr->kr_state, kd, kr->kr_pid);
+				pr = prfind(kr->kr_pid);
+				if (pr != NULL)
+					printf(", comm %s\n", pr->ps_comm);
+				else
+					printf("\n");
+
+				if (kd != NULL) {
+					printf("  kd: state %d, mode %d, pid %d",
+					    kd->kd_state, kd->kd_mode, kd->kd_pid);
+
+					pr = prfind(kr->kr_pid);
+					if (pr != NULL)
+						printf(", comm %s\n", pr->ps_comm);
+					else
+						printf("\n");
+				}
+			}
+			return (error);
+		}
 		break;
 	default:
 		error = ENOTTY;
@@ -798,6 +837,7 @@ kcov_remote_attach(struct kcov_dev *kd, struct kio_remote_attach *arg)
 
 	kr->kr_state = KCOV_STATE_READY;
 	kr->kr_kd = kd;
+	kr->kr_pid = curproc->p_p->ps_pid;
 	kd->kd_kr = kr;
 	return (0);
 }
