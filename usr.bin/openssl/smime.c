@@ -1,4 +1,4 @@
-/* $OpenBSD: smime.c,v 1.14 2022/01/11 15:05:58 inoguchi Exp $ */
+/* $OpenBSD: smime.c,v 1.15 2022/01/11 15:45:00 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -751,14 +751,20 @@ smime_main(int argc, char **argv)
 			goto argerr;
 		}
 		if (smime_config.signerfile != NULL) {
-			if (smime_config.sksigners == NULL)
-				smime_config.sksigners = sk_OPENSSL_STRING_new_null();
-			sk_OPENSSL_STRING_push(smime_config.sksigners, smime_config.signerfile);
-			if (smime_config.skkeys == NULL)
-				smime_config.skkeys = sk_OPENSSL_STRING_new_null();
+			if (smime_config.sksigners == NULL) {
+				if ((smime_config.sksigners = sk_OPENSSL_STRING_new_null()) == NULL)
+					goto end;
+			}
+			if (!sk_OPENSSL_STRING_push(smime_config.sksigners, smime_config.signerfile))
+				goto end;
+			if (smime_config.skkeys == NULL) {
+				if ((smime_config.skkeys = sk_OPENSSL_STRING_new_null()) == NULL)
+					goto end;
+			}
 			if (smime_config.keyfile == NULL)
 				smime_config.keyfile = smime_config.signerfile;
-			sk_OPENSSL_STRING_push(smime_config.skkeys, smime_config.keyfile);
+			if (!sk_OPENSSL_STRING_push(smime_config.skkeys, smime_config.keyfile))
+				goto end;
 		}
 		if (smime_config.sksigners == NULL) {
 			BIO_printf(bio_err, "No signer certificate specified\n");
@@ -776,8 +782,9 @@ smime_main(int argc, char **argv)
 			BIO_printf(bio_err, "No recipient(s) certificate(s) specified\n");
 			badarg = 1;
 		}
-	} else if (!smime_config.operation)
+	} else if (!smime_config.operation) {
 		badarg = 1;
+	}
 
 	if (badarg) {
  argerr:
@@ -819,13 +826,15 @@ smime_main(int argc, char **argv)
 			goto end;
 #endif
 		}
-		encerts = sk_X509_new_null();
+		if ((encerts = sk_X509_new_null()) == NULL)
+			goto end;
 		while (*args != NULL) {
 			if ((cert = load_cert(bio_err, *args, FORMAT_PEM,
 			    NULL, "recipient certificate file")) == NULL) {
 				goto end;
 			}
-			sk_X509_push(encerts, cert);
+			if (!sk_X509_push(encerts, cert))
+				goto end;
 			cert = NULL;
 			args++;
 		}
@@ -850,8 +859,9 @@ smime_main(int argc, char **argv)
 	} else if (smime_config.operation == SMIME_SIGN) {
 		if (smime_config.keyfile == NULL)
 			smime_config.keyfile = smime_config.signerfile;
-	} else
+	} else {
 		smime_config.keyfile = NULL;
+	}
 
 	if (smime_config.keyfile != NULL) {
 		key = load_key(bio_err, smime_config.keyfile, smime_config.keyform, 0, passin,
@@ -865,8 +875,10 @@ smime_main(int argc, char **argv)
 			    "Can't open input file %s\n", smime_config.infile);
 			goto end;
 		}
-	} else
-		in = BIO_new_fp(stdin, BIO_NOCLOSE);
+	} else {
+		if ((in = BIO_new_fp(stdin, BIO_NOCLOSE)) == NULL)
+			goto end;
+	}
 
 	if (smime_config.operation & SMIME_IP) {
 		if (smime_config.informat == FORMAT_SMIME)
@@ -899,15 +911,18 @@ smime_main(int argc, char **argv)
 			goto end;
 		}
 	} else {
-		out = BIO_new_fp(stdout, BIO_NOCLOSE);
+		if ((out = BIO_new_fp(stdout, BIO_NOCLOSE)) == NULL)
+			goto end;
 	}
 
 	if (smime_config.operation == SMIME_VERIFY) {
 		if ((store = setup_verify(bio_err, smime_config.CAfile, smime_config.CApath)) == NULL)
 			goto end;
 		X509_STORE_set_verify_cb(store, smime_cb);
-		if (smime_config.vpm != NULL)
-			X509_STORE_set1_param(store, smime_config.vpm);
+		if (smime_config.vpm != NULL) {
+			if (!X509_STORE_set1_param(store, smime_config.vpm))
+				goto end;
+		}
 	}
 	ret = 3;
 
@@ -925,14 +940,16 @@ smime_main(int argc, char **argv)
 			if (smime_config.flags & PKCS7_DETACHED) {
 				if (smime_config.outformat == FORMAT_SMIME)
 					smime_config.flags |= PKCS7_STREAM;
-			} else if (smime_config.indef)
+			} else if (smime_config.indef) {
 				smime_config.flags |= PKCS7_STREAM;
+			}
 			smime_config.flags |= PKCS7_PARTIAL;
 			p7 = PKCS7_sign(NULL, NULL, other, in, smime_config.flags);
 			if (p7 == NULL)
 				goto end;
-		} else
+		} else {
 			smime_config.flags |= PKCS7_REUSE_DIGEST;
+		}
 		for (i = 0; i < sk_OPENSSL_STRING_num(smime_config.sksigners); i++) {
 			smime_config.signerfile = sk_OPENSSL_STRING_value(smime_config.sksigners, i);
 			smime_config.keyfile = sk_OPENSSL_STRING_value(smime_config.skkeys, i);
@@ -970,13 +987,14 @@ smime_main(int argc, char **argv)
 		}
 	} else if (smime_config.operation == SMIME_VERIFY) {
 		STACK_OF(X509) *signers;
-		if (PKCS7_verify(p7, other, store, indata, out, smime_config.flags))
+		if (PKCS7_verify(p7, other, store, indata, out, smime_config.flags)) {
 			BIO_printf(bio_err, "Verification successful\n");
-		else {
+		} else {
 			BIO_printf(bio_err, "Verification failure\n");
 			goto end;
 		}
-		signers = PKCS7_get0_signers(p7, other, smime_config.flags);
+		if ((signers = PKCS7_get0_signers(p7, other, smime_config.flags)) == NULL)
+			goto end;
 		if (!save_certs(smime_config.signerfile, signers)) {
 			BIO_printf(bio_err, "Error writing signers to %s\n",
 			    smime_config.signerfile);
@@ -984,9 +1002,9 @@ smime_main(int argc, char **argv)
 			goto end;
 		}
 		sk_X509_free(signers);
-	} else if (smime_config.operation == SMIME_PK7OUT)
+	} else if (smime_config.operation == SMIME_PK7OUT) {
 		PEM_write_bio_PKCS7(out, p7);
-	else {
+	} else {
 		if (smime_config.to != NULL)
 			BIO_printf(out, "To: %s\n", smime_config.to);
 		if (smime_config.from != NULL)
@@ -994,20 +1012,27 @@ smime_main(int argc, char **argv)
 		if (smime_config.subject != NULL)
 			BIO_printf(out, "Subject: %s\n", smime_config.subject);
 		if (smime_config.outformat == FORMAT_SMIME) {
-			if (smime_config.operation == SMIME_RESIGN)
-				SMIME_write_PKCS7(out, p7, indata, smime_config.flags);
-			else
-				SMIME_write_PKCS7(out, p7, in, smime_config.flags);
-		} else if (smime_config.outformat == FORMAT_PEM)
-			PEM_write_bio_PKCS7_stream(out, p7, in, smime_config.flags);
-		else if (smime_config.outformat == FORMAT_ASN1)
-			i2d_PKCS7_bio_stream(out, p7, in, smime_config.flags);
-		else {
+			if (smime_config.operation == SMIME_RESIGN) {
+				if (!SMIME_write_PKCS7(out, p7, indata, smime_config.flags))
+					goto end;
+			} else {
+				if (!SMIME_write_PKCS7(out, p7, in, smime_config.flags))
+					goto end;
+			}
+		} else if (smime_config.outformat == FORMAT_PEM) {
+			if (!PEM_write_bio_PKCS7_stream(out, p7, in, smime_config.flags))
+				goto end;
+		} else if (smime_config.outformat == FORMAT_ASN1) {
+			if (!i2d_PKCS7_bio_stream(out, p7, in, smime_config.flags))
+				goto end;
+		} else {
 			BIO_printf(bio_err, "Bad output format for PKCS#7 file\n");
 			goto end;
 		}
 	}
+
 	ret = 0;
+
  end:
 	if (ret)
 		ERR_print_errors(bio_err);
