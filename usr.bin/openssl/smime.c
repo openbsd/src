@@ -1,4 +1,4 @@
-/* $OpenBSD: smime.c,v 1.11 2022/01/11 14:23:05 inoguchi Exp $ */
+/* $OpenBSD: smime.c,v 1.12 2022/01/11 14:35:14 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -69,8 +69,8 @@
 #include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
 
-static int save_certs(char *signerfile, STACK_OF(X509) * signers);
-static int smime_cb(int ok, X509_STORE_CTX * ctx);
+static int save_certs(char *signerfile, STACK_OF(X509) *signers);
+static int smime_cb(int ok, X509_STORE_CTX *ctx);
 
 #define SMIME_OP	0x10
 #define SMIME_IP	0x20
@@ -715,7 +715,7 @@ smime_main(int argc, char **argv)
 	X509_STORE *store = NULL;
 	X509 *cert = NULL, *recip = NULL, *signer = NULL;
 	EVP_PKEY *key = NULL;
-	STACK_OF(X509) * encerts = NULL, *other = NULL;
+	STACK_OF(X509) *encerts = NULL, *other = NULL;
 	BIO *in = NULL, *out = NULL, *indata = NULL;
 	int badarg = 0;
 	char *passin = NULL;
@@ -967,7 +967,7 @@ smime_main(int argc, char **argv)
 			goto end;
 		}
 	} else if (smime_config.operation == SMIME_VERIFY) {
-		STACK_OF(X509) * signers;
+		STACK_OF(X509) *signers;
 		if (PKCS7_verify(p7, other, store, indata, out, smime_config.flags))
 			BIO_printf(bio_err, "Verification successful\n");
 		else {
@@ -1029,10 +1029,11 @@ smime_main(int argc, char **argv)
 }
 
 static int
-save_certs(char *signerfile, STACK_OF(X509) * signers)
+save_certs(char *signerfile, STACK_OF(X509) *signers)
 {
 	int i;
 	BIO *tmp;
+
 	if (!signerfile)
 		return 1;
 	tmp = BIO_new_file(signerfile, "w");
@@ -1041,14 +1042,13 @@ save_certs(char *signerfile, STACK_OF(X509) * signers)
 	for (i = 0; i < sk_X509_num(signers); i++)
 		PEM_write_bio_X509(tmp, sk_X509_value(signers, i));
 	BIO_free(tmp);
+
 	return 1;
 }
 
-
 /* Minimal callback just to output policy info (if any) */
-
 static int
-smime_cb(int ok, X509_STORE_CTX * ctx)
+smime_cb(int ok, X509_STORE_CTX *ctx)
 {
 	int error;
 
@@ -1061,6 +1061,4 @@ smime_cb(int ok, X509_STORE_CTX * ctx)
 	policies_print(NULL, ctx);
 
 	return ok;
-
 }
-
