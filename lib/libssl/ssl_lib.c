@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.285 2022/01/11 18:39:28 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.286 2022/01/11 18:43:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -865,19 +865,17 @@ SSL_pending(const SSL *s)
 X509 *
 SSL_get_peer_certificate(const SSL *s)
 {
-	X509	*r;
+	X509 *cert;
 
-	if ((s == NULL) || (s->session == NULL))
-		r = NULL;
-	else
-		r = s->session->peer_cert;
+	if (s == NULL || s->session == NULL)
+		return NULL;
 
-	if (r == NULL)
-		return (r);
+	if ((cert = s->session->peer_cert) == NULL)
+		return NULL;
 
-	X509_up_ref(r);
+	X509_up_ref(cert);
 
-	return (r);
+	return cert;
 }
 
 STACK_OF(X509) *
