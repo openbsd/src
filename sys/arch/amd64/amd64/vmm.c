@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.300 2022/01/02 05:00:28 jsg Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.301 2022/01/11 20:34:22 tobhe Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3925,6 +3925,8 @@ vcpu_vmx_compute_ctrl(uint64_t ctrlval, uint16_t ctrl, uint32_t want1,
 	uint32_t want0, uint32_t *out)
 {
 	int i, set, clear;
+
+	*out = 0;
 
 	/*
 	 * The Intel SDM gives three formulae for determining which bits to
