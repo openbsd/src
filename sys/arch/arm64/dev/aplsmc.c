@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.3 2022/01/12 11:42:17 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.4 2022/01/12 13:08:06 robert Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <sys/device.h>
 #include <sys/sensors.h>
 
+#include <machine/apmvar.h>
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
@@ -29,6 +30,8 @@
 
 #include <arm64/dev/aplmbox.h>
 #include <arm64/dev/rtkit.h>
+
+#include "apm.h"
 
 #define SMC_EP			32
 
@@ -62,8 +65,9 @@ struct aplsmc_sensor {
 };
 
 #define APLSMC_BE		(1 << 0)
+#define APLSMC_HIDDEN		(1 << 1)
 
-#define APLSMC_MAX_SENSORS	16
+#define APLSMC_MAX_SENSORS	19
 
 struct aplsmc_softc {
 	struct device		sc_dev;
@@ -81,15 +85,20 @@ struct aplsmc_softc {
 	struct ksensor		sc_sensors[APLSMC_MAX_SENSORS];
 	int			sc_nsensors;
 	struct ksensordev	sc_sensordev;
-};
+} *aplsmc_sc;
 
 struct aplsmc_sensor aplsmc_sensors[] = {
+	{ "ACDI", "ui16", SENSOR_INDICATOR, 1, "power supply" },
 	{ "B0RM", "ui16", SENSOR_AMPHOUR, 1000, "remaining battery capacity",
 	  APLSMC_BE },
 	{ "B0FC", "ui16", SENSOR_AMPHOUR, 1000, "last full battery capacity" },
 	{ "B0DC", "ui16", SENSOR_AMPHOUR, 1000, "battery design capacity" },
 	{ "B0AV", "ui16", SENSOR_VOLTS_DC, 1000, "battery" },
 	{ "B0CT", "ui16", SENSOR_INTEGER, 1, "battery discharge cycles" },
+	{ "B0TF", "ui16", SENSOR_INTEGER, 1, "battery time-to-full",
+	  APLSMC_HIDDEN },
+	{ "B0TE", "ui16", SENSOR_INTEGER, 1, "battery time-to-empty",
+	  APLSMC_HIDDEN },
 	{ "F0Ac", "flt ", SENSOR_FANRPM, 1, "" },
 	{ "ID0R", "flt ", SENSOR_AMPS, 1000000, "input" },
 	{ "PDTR", "flt ", SENSOR_WATTS, 1000000, "input" },
@@ -112,6 +121,61 @@ const struct cfattach aplsmc_ca = {
 struct cfdriver aplsmc_cd = {
 	NULL, "aplsmc", DV_DULL
 };
+
+#if NAPM > 0
+int
+aplsmc_apminfo(struct apm_power_info *info)
+{
+	struct aplsmc_sensor *sensor;
+	struct ksensor *ksensor;
+	struct aplsmc_softc *sc = aplsmc_sc; 
+	int remaining = -1, capacity = -1, i;
+
+	info->battery_state = APM_BATT_UNKNOWN;
+	info->ac_state = APM_AC_UNKNOWN;
+	info->battery_life = 0;
+	info->minutes_left = -1;
+
+	for (i = 0; i < sc->sc_nsensors; i++) {
+		sensor = sc->sc_smcsensors[i];
+		ksensor = &sc->sc_sensors[i];
+
+		if (ksensor->flags & SENSOR_FUNKNOWN)
+			continue;
+
+		if (strcmp(sensor->key, "ACDI") == 0) {
+			info->ac_state = ksensor->value ?
+				APM_AC_ON : APM_AC_OFF;
+		} else if (strcmp(sensor->key, "B0RM") == 0)
+			remaining = ksensor->value;
+		else if (strcmp(sensor->key, "B0FC") == 0)
+			capacity = ksensor->value;
+		else if ((strcmp(sensor->key, "B0TE") == 0) &&
+			 (ksensor->value != 0xffff))
+			info->minutes_left = ksensor->value;
+		else if ((strcmp(sensor->key, "B0TF") == 0) &&
+			 (ksensor->value != 0xffff)) {
+			info->battery_state = APM_BATT_CHARGING;
+			info->minutes_left = ksensor->value;
+		}
+	}
+
+	/* calculate remaining battery if we have sane values */
+	if (remaining > -1 && capacity > 0) {
+		info->battery_life = ((remaining * 100) / capacity);
+		if (info->battery_state != APM_BATT_CHARGING) {
+			if (info->battery_life > 50)
+				info->battery_state = APM_BATT_HIGH;
+			else if (info->battery_life > 25)
+				info->battery_state = APM_BATT_LOW;
+			else
+				info->battery_state = APM_BATT_CRITICAL;
+		}
+	}
+
+	return 0;
+}
+#endif   
 
 void	aplsmc_callback(void *, uint64_t);
 int	aplsmc_send_cmd(struct aplsmc_softc *, uint16_t, uint32_t, uint16_t);
@@ -207,8 +271,10 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 		strlcpy(sc->sc_sensors[sc->sc_nsensors].desc,
 		    aplsmc_sensors[i].desc, sizeof(sc->sc_sensors[0].desc));
 		sc->sc_sensors[sc->sc_nsensors].type = aplsmc_sensors[i].type;
-		sensor_attach(&sc->sc_sensordev,
-		    &sc->sc_sensors[sc->sc_nsensors]);
+		if (!(aplsmc_sensors[i].flags & APLSMC_HIDDEN)) {
+			sensor_attach(&sc->sc_sensordev,
+			    &sc->sc_sensors[sc->sc_nsensors]);
+		}
 		sc->sc_nsensors++;
 	}
 
@@ -218,6 +284,12 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensordev.xname));
 	sensordev_install(&sc->sc_sensordev);
 	sensor_task_register(sc, aplsmc_refresh_sensors, 5);
+
+	aplsmc_sc = sc;
+
+#if NAPM > 0
+	apm_setinfohook(aplsmc_apminfo);
+#endif
 }
 
 void
