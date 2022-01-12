@@ -1,4 +1,4 @@
-# $OpenBSD: symbols.awk,v 1.5 2021/12/14 20:37:24 tb Exp $
+# $OpenBSD: symbols.awk,v 1.6 2022/01/12 09:04:40 tb Exp $
 
 # Copyright (c) 2018,2020 Theo Buehler <tb@openbsd.org>
 #
@@ -51,6 +51,11 @@ BEGIN {
 # internal function used in libtls
 /^ASN1_time_tm_clamp_notafter$/ {
 	printf("extern int ASN1_time_tm_clamp_notafter(struct tm *);\n")
+}
+
+/^OBJ_bsearch_$/ {
+	printf("const void *OBJ_bsearch_(const void *key, const void *base, int num,\n")
+	printf("    int size, int (*cmp)(const void *, const void *));\n")
 }
 
 # These are machdep (at least cpuid_setup and ia32cap_P are internal on amd64).
