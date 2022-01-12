@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.115 2021/12/26 13:55:36 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.116 2022/01/12 11:18:30 patrick Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -386,7 +386,7 @@ int	acpi_parsehid(struct aml_node *, void *, char *, char *, size_t);
 int64_t	acpi_getsta(struct acpi_softc *sc, struct aml_node *);
 
 int	acpi_getprop(struct aml_node *, const char *, void *, int);
-uint32_t acpi_getpropint(struct aml_node *, const char *, uint32_t);
+uint64_t acpi_getpropint(struct aml_node *, const char *, uint64_t);
 
 int	acpi_record_event(struct acpi_softc *, u_int);
 
