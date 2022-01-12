@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdsatest.c,v 1.7 2021/11/18 15:12:59 tb Exp $	*/
+/*	$OpenBSD: ecdsatest.c,v 1.8 2022/01/12 09:02:34 tb Exp $	*/
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -103,7 +103,7 @@ x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
 		goto x962_int_err;
 	/* get the message digest */
-	EVP_DigestInit(md_ctx, EVP_ecdsa());
+	EVP_DigestInit(md_ctx, EVP_sha1());
 	EVP_DigestUpdate(md_ctx, (const void*)message, 3);
 	EVP_DigestFinal(md_ctx, digest, &dgst_len);
 
@@ -127,7 +127,8 @@ x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 	if (!BN_dec2bn(&r, r_in) ||
 	    !BN_dec2bn(&s, s_in))
 		goto x962_int_err;
-	if (BN_cmp(signature->r ,r) || BN_cmp(signature->s, s))
+	if (BN_cmp(ECDSA_SIG_get0_r(signature), r) ||
+	    BN_cmp(ECDSA_SIG_get0_s(signature), s))
 		goto x962_int_err;
 	BIO_printf(out, ".");
 	(void)BIO_flush(out);
@@ -162,6 +163,7 @@ test_builtin(BIO *out)
 	EC_KEY		*eckey = NULL, *wrong_eckey = NULL;
 	EC_GROUP	*group;
 	ECDSA_SIG	*ecdsa_sig = NULL;
+	BIGNUM		*r = NULL, *s = NULL;
 	unsigned char	digest[20], wrong_digest[20];
 	unsigned char	*signature = NULL;
 	const unsigned char	*sig_ptr;
@@ -301,8 +303,8 @@ test_builtin(BIO *out)
 		}
 
 		/* Store the two BIGNUMs in raw_buf. */
-		r_len = BN_num_bytes(ecdsa_sig->r);
-		s_len = BN_num_bytes(ecdsa_sig->s);
+		r_len = BN_num_bytes(ECDSA_SIG_get0_r(ecdsa_sig));
+		s_len = BN_num_bytes(ECDSA_SIG_get0_s(ecdsa_sig));
 		bn_len = (degree + 7) / 8;
 		if ((r_len > bn_len) || (s_len > bn_len)) {
 			BIO_printf(out, " failed\n");
@@ -311,17 +313,21 @@ test_builtin(BIO *out)
 		buf_len = 2 * bn_len;
 		if ((raw_buf = calloc(1, buf_len)) == NULL)
 			goto builtin_err;
-		BN_bn2bin(ecdsa_sig->r, raw_buf + bn_len - r_len);
-		BN_bn2bin(ecdsa_sig->s, raw_buf + buf_len - s_len);
+		BN_bn2bin(ECDSA_SIG_get0_r(ecdsa_sig), raw_buf + bn_len - r_len);
+		BN_bn2bin(ECDSA_SIG_get0_s(ecdsa_sig), raw_buf + buf_len - s_len);
 
 		/* Modify a single byte in the buffer. */
 		offset = raw_buf[10] % buf_len;
 		dirt   = raw_buf[11] ? raw_buf[11] : 1;
 		raw_buf[offset] ^= dirt;
 		/* Now read the BIGNUMs back in from raw_buf. */
-		if ((BN_bin2bn(raw_buf, bn_len, ecdsa_sig->r) == NULL) ||
-		    (BN_bin2bn(raw_buf + bn_len, bn_len, ecdsa_sig->s) == NULL))
+		if ((r = BN_bin2bn(raw_buf, bn_len, NULL)) == NULL ||
+		    (s = BN_bin2bn(raw_buf + bn_len, bn_len, NULL)) == NULL)
 			goto builtin_err;
+		if (!ECDSA_SIG_set0(ecdsa_sig, r, s))
+			goto builtin_err;
+		r = NULL;
+		s = NULL;
 
 		sig_ptr2 = signature;
 		sig_len = i2d_ECDSA_SIG(ecdsa_sig, &sig_ptr2);
@@ -332,9 +338,13 @@ test_builtin(BIO *out)
 		}
 		/* Sanity check: undo the modification and verify signature. */
 		raw_buf[offset] ^= dirt;
-		if ((BN_bin2bn(raw_buf, bn_len, ecdsa_sig->r) == NULL) ||
-		    (BN_bin2bn(raw_buf + bn_len, bn_len, ecdsa_sig->s) == NULL))
+		if ((r = BN_bin2bn(raw_buf, bn_len, NULL)) == NULL ||
+		    (s = BN_bin2bn(raw_buf + bn_len, bn_len, NULL)) == NULL)
 			goto builtin_err;
+		if (!ECDSA_SIG_set0(ecdsa_sig, r, s))
+			goto builtin_err;
+		r = NULL;
+		s = NULL;
 
 		sig_ptr2 = signature;
 		sig_len = i2d_ECDSA_SIG(ecdsa_sig, &sig_ptr2);
@@ -364,6 +374,8 @@ test_builtin(BIO *out)
 
 	ret = 1;
  builtin_err:
+	BN_free(r);
+	BN_free(s);
 	EC_KEY_free(eckey);
 	EC_KEY_free(wrong_eckey);
 	ECDSA_SIG_free(ecdsa_sig);
