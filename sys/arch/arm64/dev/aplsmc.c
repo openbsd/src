@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.4 2022/01/12 13:08:06 robert Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.5 2022/01/12 15:05:38 robert Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -361,6 +361,7 @@ aplsmc_read_key(struct aplsmc_softc *sc, uint32_t key, void *data, size_t len)
 void
 aplsmc_refresh_sensors(void *arg)
 {
+	extern int hw_power;
 	struct aplsmc_softc *sc = arg;
 	struct aplsmc_sensor *sensor;
 	int64_t value;
@@ -417,5 +418,8 @@ aplsmc_refresh_sensors(void *arg)
 			sc->sc_sensors[i].flags &= ~SENSOR_FUNKNOWN;
 			sc->sc_sensors[i].value = value;
 		}
+
+		if (strcmp(sensor->key, "ACDI") == 0)
+			hw_power = (value > 0);
 	}
 }
