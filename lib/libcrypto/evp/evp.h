@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.95 2022/01/10 13:42:28 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.96 2022/01/12 08:52:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -517,7 +517,7 @@ int EVP_MD_meth_set_ctrl(EVP_MD *md,
 
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
 void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
-#if defined(LIBRESSL_CRYPTO_INTERANL) || defined(LIBRESSL_NEXT_API)
+#if defined(LIBRESSL_CRYPTO_INTERNAL) || defined(LIBRESSL_NEXT_API)
 EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx);
 void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
 #endif
@@ -1378,7 +1378,7 @@ typedef struct evp_aead_ctx_st {
  * should be used. */
 #define EVP_AEAD_DEFAULT_TAG_LENGTH 0
 
-#if defined(LIBRESSL_CRYPTO_INTERANL) || defined(LIBRESSL_NEXT_API)
+#if defined(LIBRESSL_CRYPTO_INTERNAL) || defined(LIBRESSL_NEXT_API)
 /* EVP_AEAD_CTX_new allocates a new context for use with EVP_AEAD_CTX_init.
  * It can be cleaned up for reuse with EVP_AEAD_CTX_cleanup and must be freed
  * with EVP_AEAD_CTX_free. */
