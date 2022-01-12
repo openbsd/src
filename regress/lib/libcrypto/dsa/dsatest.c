@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsatest.c,v 1.6 2021/11/18 15:11:17 tb Exp $	*/
+/*	$OpenBSD: dsatest.c,v 1.7 2022/01/12 08:59:56 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -163,21 +163,21 @@ main(int argc, char **argv)
 		goto end;
 	}
 
-	i = BN_bn2bin(dsa->q, buf);
+	i = BN_bn2bin(DSA_get0_q(dsa), buf);
 	j = sizeof(out_q);
 	if ((i != j) || (memcmp(buf, out_q, i) != 0)) {
 		BIO_printf(bio_err, "q value is wrong\n");
 		goto end;
 	}
 
-	i = BN_bn2bin(dsa->p, buf);
+	i = BN_bn2bin(DSA_get0_p(dsa), buf);
 	j = sizeof(out_p);
 	if ((i != j) || (memcmp(buf, out_p, i) != 0)) {
 		BIO_printf(bio_err, "p value is wrong\n");
 		goto end;
 	}
 
-	i = BN_bn2bin(dsa->g, buf);
+	i = BN_bn2bin(DSA_get0_g(dsa), buf);
 	j = sizeof(out_g);
 	if ((i != j) || (memcmp(buf, out_g, i) != 0)) {
 		BIO_printf(bio_err, "g value is wrong\n");

@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.3 2014/07/08 15:53:52 jsing Exp $
+#	$OpenBSD: Makefile,v 1.4 2022/01/12 08:59:56 tb Exp $
 
 PROG=	dsatest
-LDADD=	-lcrypto
+LDADD=	${CRYPTO_INT}	# XXX link dynamically after bump
 DPADD=	${LIBCRYPTO}
 WARNINGS=	Yes
-CFLAGS+=	-DLIBRESSL_INTERNAL -Werror
+CFLAGS+=	-DLIBRESSL_INTERNAL -DLIBRESSL_CRYPTO_INTERNAL -Werror
 
 REGRESS_TARGETS=regress-dsatest
 
