@@ -1,4 +1,4 @@
-/* $OpenBSD: timeout.c,v 1.19 2021/09/04 11:49:11 schwarze Exp $ */
+/* $OpenBSD: timeout.c,v 1.20 2022/01/12 22:51:44 tb Exp $ */
 
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -64,8 +64,8 @@ usage(void)
 static double
 parse_duration(const char *duration)
 {
-	double 	 ret;
-	char 	*suffix;
+	double	 ret;
+	char	*suffix;
 
 	ret = strtod(duration, &suffix);
 	if (ret == 0 && suffix == duration)
@@ -164,17 +164,17 @@ int
 main(int argc, char **argv)
 {
 	int		ch;
-	unsigned long 	i;
-	int 		foreground = 0, preserve = 0;
-	int 		pstat, status;
-	int 		killsig = SIGTERM;
-	pid_t 		pgid = 0, pid, cpid = 0;
-	double 		first_kill;
-	double 		second_kill = 0;
-	bool 		timedout = false;
-	bool 		do_second_kill = false;
-	struct 		sigaction signals;
-	int 		signums[] = {-1, SIGTERM, SIGINT, SIGHUP, SIGCHLD,
+	unsigned long	i;
+	int		foreground = 0, preserve = 0;
+	int		pstat, status;
+	int		killsig = SIGTERM;
+	pid_t		pgid = 0, pid, cpid = 0;
+	double		first_kill;
+	double		second_kill = 0;
+	bool		timedout = false;
+	bool		do_second_kill = false;
+	struct		sigaction signals;
+	int		signums[] = {-1, SIGTERM, SIGINT, SIGHUP, SIGCHLD,
 			    SIGALRM, SIGQUIT};
 
 	const struct option longopts[] = {
