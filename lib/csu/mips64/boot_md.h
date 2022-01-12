@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot_md.h,v 1.1 2021/11/14 00:45:38 guenther Exp $ */
+/*	$OpenBSD: boot_md.h,v 1.2 2022/01/12 21:41:06 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -34,9 +34,13 @@
 
 #define	_DYN_LOADER
 
-#include <sys/types.h>
-#include <sys/mman.h>
 #include <sys/exec_elf.h>
+#include <sys/mman.h>
+
+#include <machine/reloc.h>
+
+__dead
+void _dl_exit(int);
 
 #include "archdep.h"
 
@@ -46,8 +50,6 @@
  */
 #define REDIRECT_SYSCALL(x)	typeof(x) x asm("_libc_"#x) __dso_hidden
 REDIRECT_SYSCALL(mprotect);
-
-#ifdef RCRT0
 
 #define	DT_PROC(n)	((n) - DT_LOPROC)
 
@@ -181,5 +183,3 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 		}
 	}
 }
-
-#endif /* RCRT0 */
