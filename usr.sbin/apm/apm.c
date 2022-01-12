@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.38 2021/04/06 20:30:32 kn Exp $	*/
+/*	$OpenBSD: apm.c,v 1.39 2022/01/12 13:09:29 robert Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -163,7 +163,7 @@ main(int argc, char *argv[])
 	size_t cpuspeed_sz = sizeof(cpuspeed);
 
 	if (sysctl(cpuspeed_mib, 2, &cpuspeed, &cpuspeed_sz, NULL, 0) == -1)
-		err(1, "sysctl hw.cpuspeed");
+		cpuspeed = 0;
 
 	while ((ch = getopt(argc, argv, "ACHLlmbvaPSzZf:")) != -1) {
 		switch (ch) {
