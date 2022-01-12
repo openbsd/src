@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.2 2022/01/12 01:19:24 jsg Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.3 2022/01/12 11:42:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -340,7 +340,7 @@ aplsmc_refresh_sensors(void *arg)
 			value += 273150000;
 
 		if (error) {
-			sc->sc_sensors[0].flags |= SENSOR_FUNKNOWN;
+			sc->sc_sensors[i].flags |= SENSOR_FUNKNOWN;
 		} else {
 			sc->sc_sensors[i].flags &= ~SENSOR_FUNKNOWN;
 			sc->sc_sensors[i].value = value;
