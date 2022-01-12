@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.46 2022/01/11 06:23:05 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.47 2022/01/12 19:55:12 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -412,8 +412,8 @@ kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 				struct kcov_dev *kd = kr->kr_kd;
 				struct process *pr;
 
-				printf("kr: subsystem %d, id %p, nsections %d, state %d, kd %p, pid %d",
-				    kr->kr_subsystem, kr->kr_id, kr->kr_nsections, kr->kr_state, kd, kr->kr_pid);
+				printf("kr: %p: subsystem %d, id %p, nsections %d, state %d, kd %p, pid %d",
+				    kr, kr->kr_subsystem, kr->kr_id, kr->kr_nsections, kr->kr_state, kd, kr->kr_pid);
 				pr = prfind(kr->kr_pid);
 				if (pr != NULL)
 					printf(", comm %s\n", pr->ps_comm);
@@ -421,8 +421,8 @@ kcovioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 					printf("\n");
 
 				if (kd != NULL) {
-					printf("  kd: state %d, mode %d, pid %d",
-					    kd->kd_state, kd->kd_mode, kd->kd_pid);
+					printf("  kd: unit %d, state %d, mode %d, kr %p pid %d",
+					    kd->kd_unit, kd->kd_state, kd->kd_mode, kd->kd_kr, kd->kd_pid);
 
 					pr = prfind(kr->kr_pid);
 					if (pr != NULL)
