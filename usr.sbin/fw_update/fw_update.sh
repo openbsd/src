@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.29 2022/01/11 03:25:52 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.30 2022/01/12 02:21:15 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -95,7 +95,7 @@ fetch() {
 				SECONDS=0
 				sleep 1
 			else
-				kill -INT -"$FTPPID"
+				kill -INT -"$FTPPID" 2>/dev/null
 				_error=" (timed out)"
 			fi
 		else
@@ -201,14 +201,14 @@ detect_firmware() {
 	set -sA _devices -- $(
 	    firmware_in_dmesg
 	    for _d in $( installed_firmware '*' '-firmware-' '*' ); do
-		echo "$( firmware_devicename "$_d" )"
+		firmware_devicename "$_d"
 	    done
 	)
 
 	[ "${_devices[*]:-}" ] || return 0
 	for _d in "${_devices[@]}"; do
-		[[ $_last = $_d ]] && continue
-		echo $_d
+		[ "$_last" = "$_d" ] && continue
+		echo "$_d"
 		_last="$_d"
 	done
 }
@@ -286,7 +286,7 @@ delete_firmware() {
 }
 
 usage() {
-	echo "usage: ${0##*/} [-d | -F] [-av] [-p path] [driver | file ...]"
+	echo "usage: ${0##*/} [-adFnv] [-p path] [driver | file ...]"
 	exit 2
 }
 
@@ -352,11 +352,11 @@ fi
 set -sA devices -- "$@"
 
 if "$DELETE"; then
-	[ "$OPT_F" ] && usage 22
+	[ "$OPT_F" ] && echo "Cannot use -F and -d" >&2 && usage 22
 
 	set -A installed
 	if [ "${devices[*]:-}" ]; then
-		"$ALL" && usage 22
+		"$ALL" && echo "Cannot use -a and devices/files" >&2 && usage 22
 
 		set -A installed -- $(
 		    for d in "${devices[@]}"; do
@@ -389,7 +389,7 @@ if "$DELETE"; then
 		done
 	fi
 
-	deleted="${deleted:+${deleted#,}}"
+	deleted="${deleted#,}"
 	echo "${0:##*/}: deleted ${deleted:-none}";
 
 	exit
@@ -403,7 +403,7 @@ fi
 CFILE="$LOCALSRC/$CFILE"
 
 if [ "${devices[*]:-}" ]; then
-	"$ALL" && usage 22
+	"$ALL" && echo "Cannot use -a and devices/files" >&2 && usage 22
 else
 	"$VERBOSE" && echo -n "Detecting firmware ..."
 	set -sA devices -- $( detect_firmware )
