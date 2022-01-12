@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1x509.c,v 1.1 2021/11/30 07:34:29 jsing Exp $ */
+/* $OpenBSD: asn1x509.c,v 1.2 2022/01/12 08:45:09 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -193,7 +193,8 @@ dsa_pubkey_test(void)
 		goto done;
 	}
 
-	if (BN_cmp(pkey_a->pkey.dsa->pub_key, pkey_b->pkey.dsa->pub_key) != 0) {
+	if (BN_cmp(DSA_get0_pub_key(EVP_PKEY_get0_DSA(pkey_a)),
+	    DSA_get0_pub_key(EVP_PKEY_get0_DSA(pkey_b))) != 0) {
 		fprintf(stderr, "FAIL: DSA public keys mismatch\n");
 		goto done;
 	}
@@ -219,7 +220,7 @@ dsa_pubkey_test(void)
 		goto done;
 	}
 
-	if (BN_cmp(dsa_a->pub_key, dsa_b->pub_key) != 0) {
+	if (BN_cmp(DSA_get0_pub_key(dsa_a), DSA_get0_pub_key(dsa_b)) != 0) {
 		fprintf(stderr, "FAIL: DSA public keys mismatch\n");
 		goto done;
 	}
@@ -230,7 +231,7 @@ dsa_pubkey_test(void)
 		goto done;
 	}
 
-	if (BN_cmp(dsa_a->pub_key, dsa_b->pub_key) != 0) {
+	if (BN_cmp(DSA_get0_pub_key(dsa_a), DSA_get0_pub_key(dsa_b)) != 0) {
 		fprintf(stderr, "FAIL: DSA public keys mismatch\n");
 		goto done;
 	}
@@ -258,7 +259,7 @@ dsa_pubkey_test(void)
 		goto done;
 	}
 
-	if (BN_cmp(dsa_a->pub_key, dsa_b->pub_key) != 0) {
+	if (BN_cmp(DSA_get0_pub_key(dsa_a), DSA_get0_pub_key(dsa_b)) != 0) {
 		fprintf(stderr, "FAIL: DSA public keys mismatch\n");
 		goto done;
 	}
@@ -317,14 +318,14 @@ ec_pubkey_test(void)
 		goto done;
 	}
 
-	if (EC_GROUP_cmp(EC_KEY_get0_group(pkey_a->pkey.ec),
-	    EC_KEY_get0_group(pkey_b->pkey.ec), NULL) != 0) {
+	if (EC_GROUP_cmp(EC_KEY_get0_group(EVP_PKEY_get0_EC_KEY(pkey_a)),
+	    EC_KEY_get0_group(EVP_PKEY_get0_EC_KEY(pkey_b)), NULL) != 0) {
 		fprintf(stderr, "FAIL: EC_KEY groups keys mismatch\n");
 		goto done;
 	}
-        if (EC_POINT_cmp(EC_KEY_get0_group(pkey_a->pkey.ec),
-	    EC_KEY_get0_public_key(pkey_a->pkey.ec),
-	    EC_KEY_get0_public_key(pkey_b->pkey.ec), NULL) != 0) {
+        if (EC_POINT_cmp(EC_KEY_get0_group(EVP_PKEY_get0_EC_KEY(pkey_a)),
+	    EC_KEY_get0_public_key(EVP_PKEY_get0_EC_KEY(pkey_a)),
+	    EC_KEY_get0_public_key(EVP_PKEY_get0_EC_KEY(pkey_b)), NULL) != 0) {
 		fprintf(stderr, "FAIL: EC_KEY public keys mismatch\n");
 		goto done;
 	}
@@ -466,8 +467,10 @@ rsa_pubkey_test(void)
 		goto done;
 	}
 
-	if (BN_cmp(pkey_a->pkey.rsa->n, pkey_b->pkey.rsa->n) != 0 ||
-	    BN_cmp(pkey_a->pkey.rsa->e, pkey_b->pkey.rsa->e) != 0) {
+	if (BN_cmp(RSA_get0_n(EVP_PKEY_get0_RSA(pkey_a)),
+	    RSA_get0_n(EVP_PKEY_get0_RSA(pkey_b))) != 0 ||
+	    BN_cmp(RSA_get0_e(EVP_PKEY_get0_RSA(pkey_a)),
+	    RSA_get0_e(EVP_PKEY_get0_RSA(pkey_b))) != 0) {
 		fprintf(stderr, "FAIL: RSA public keys mismatch\n");
 		goto done;
 	}
@@ -493,8 +496,8 @@ rsa_pubkey_test(void)
 		goto done;
 	}
 
-	if (BN_cmp(rsa_a->n, rsa_b->n) != 0 ||
-	    BN_cmp(rsa_a->e, rsa_b->e) != 0) {
+	if (BN_cmp(RSA_get0_n(rsa_a), RSA_get0_n(rsa_b)) != 0 ||
+	    BN_cmp(RSA_get0_e(rsa_a), RSA_get0_e(rsa_b)) != 0) {
 		fprintf(stderr, "FAIL: RSA public keys mismatch\n");
 		goto done;
 	}
@@ -505,8 +508,8 @@ rsa_pubkey_test(void)
 		goto done;
 	}
 
-	if (BN_cmp(rsa_a->n, rsa_b->n) != 0 ||
-	    BN_cmp(rsa_a->e, rsa_b->e) != 0) {
+	if (BN_cmp(RSA_get0_n(rsa_a), RSA_get0_n(rsa_b)) != 0 ||
+	    BN_cmp(RSA_get0_e(rsa_a), RSA_get0_e(rsa_b)) != 0) {
 		fprintf(stderr, "FAIL: RSA public keys mismatch\n");
 		goto done;
 	}
@@ -534,8 +537,8 @@ rsa_pubkey_test(void)
 		goto done;
 	}
 
-	if (BN_cmp(rsa_a->n, rsa_b->n) != 0 ||
-	    BN_cmp(rsa_a->e, rsa_b->e) != 0) {
+	if (BN_cmp(RSA_get0_n(rsa_a), RSA_get0_n(rsa_b)) != 0 ||
+	    BN_cmp(RSA_get0_e(rsa_a), RSA_get0_e(rsa_b)) != 0) {
 		fprintf(stderr, "FAIL: RSA public keys mismatch\n");
 		goto done;
 	}

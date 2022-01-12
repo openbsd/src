@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2022/01/12 07:55:25 tb Exp $
+#	$OpenBSD: Makefile,v 1.14 2022/01/12 08:45:09 tb Exp $
 
 PROGS = \
 	asn1api \
@@ -14,11 +14,13 @@ PROGS = \
 DPADD+=		${LIBCRYPTO} ${LIBSSL}
 WARNINGS=	Yes
 LDFLAGS+=	-lcrypto
-CFLAGS+=	-DLIBRESSL_INTERNAL -Wall -Wundef -Werror
+CFLAGS+=	-DLIBRESSL_INTERNAL -DLIBRESSL_CRYPTO_INTERNAL
+CFLAGS+=	-Wall -Wundef -Werror
 CFLAGS+=	-I${.CURDIR}/../../../../lib/libcrypto/asn1
 CFLAGS+=	-I${.CURDIR}/../../../../lib/libcrypto/bytestring
 
 LDADD_asn1basic = ${CRYPTO_INT}
+LDADD_asn1x509 = ${CRYPTO_INT} # XXX Remove after bump
 
 .for p in ${PROGS}
 REGRESS_TARGETS +=	run-$p
