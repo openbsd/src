@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.1 2022/01/10 09:07:28 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.2 2022/01/12 01:19:24 jsg Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -198,7 +198,7 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 			continue;
 
 		if (sc->sc_nsensors >= APLSMC_MAX_SENSORS) {
-			printf("%s: maxumum number of sensors exceeded\n",
+			printf("%s: maximum number of sensors exceeded\n",
 			    sc->sc_dev.dv_xname);
 			break;
 		}
