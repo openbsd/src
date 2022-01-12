@@ -1,4 +1,4 @@
-/*	$OpenBSD: fargs.c,v 1.22 2021/11/03 14:42:12 deraadt Exp $ */
+/*	$OpenBSD: fargs.c,v 1.23 2022/01/12 22:52:40 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -71,7 +71,7 @@ fargs_cmdline(struct sess *sess, const struct fargs *f, size_t *skip)
 
 			while ((arg = strsep(&ap, " \t")) != NULL) {
 				if (arg[0] == '\0') {
-					ap++;	/* skip seperators */
+					ap++;	/* skip separators */
 					continue;
 				}
 
