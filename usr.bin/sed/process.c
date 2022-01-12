@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.34 2018/11/14 10:59:33 martijn Exp $	*/
+/*	$OpenBSD: process.c,v 1.35 2022/01/12 15:13:36 martijn Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -60,7 +60,7 @@ static SPACE HS, PS, SS;
 
 static inline int	 applies(struct s_command *);
 static void		 flush_appends(void);
-static void		 lputs(char *);
+static void		 lputs(char *, size_t);
 static inline int	 regexec_e(regex_t *, const char *, int, int, size_t,
 			     size_t);
 static void		 regsub(SPACE *, char *, char *);
@@ -158,7 +158,7 @@ redirect:
 				(void)fprintf(outfile, "%s", cp->t);
 				break;
 			case 'l':
-				lputs(ps);
+				lputs(ps, psl);
 				break;
 			case 'n':
 				if (!nflag && !pd)
@@ -478,14 +478,14 @@ flush_appends(void)
 }
 
 static void
-lputs(char *s)
+lputs(char *s, size_t len)
 {
 	int count;
 	extern int termwidth;
 	const char *escapes;
 	char *p;
 
-	for (count = 0; *s; ++s) {
+	for (count = 0; len > 0; len--, s++) {
 		if (count >= termwidth) {
 			(void)fprintf(outfile, "\\\n");
 			count = 0;
@@ -501,7 +501,7 @@ lputs(char *s)
 		} else {
 			escapes = "\\\a\b\f\r\t\v";
 			(void)fputc('\\', outfile);
-			if ((p = strchr(escapes, *s))) {
+			if ((p = strchr(escapes, *s)) && *s != '\0') {
 				(void)fputc("\\abfrtv"[p - escapes], outfile);
 				count += 2;
 			} else {
