@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeadtest.c,v 1.12 2019/01/22 00:59:21 dlg Exp $	*/
+/*	$OpenBSD: aeadtest.c,v 1.13 2022/01/12 08:54:23 tb Exp $	*/
 /* ====================================================================
  * Copyright (c) 2011-2013 The OpenSSL Project.  All rights reserved.
  *
@@ -159,64 +159,75 @@ static int
 run_test_case(const EVP_AEAD* aead, unsigned char bufs[NUM_TYPES][BUF_MAX],
     const unsigned int lengths[NUM_TYPES], unsigned int line_no)
 {
-	EVP_AEAD_CTX ctx;
+	EVP_AEAD_CTX *ctx;
 	unsigned char out[BUF_MAX + EVP_AEAD_MAX_TAG_LENGTH], out2[BUF_MAX];
 	size_t out_len, out_len2;
+	int ret = 0;
 
-	if (!EVP_AEAD_CTX_init(&ctx, aead, bufs[KEY], lengths[KEY],
-	    lengths[TAG], NULL)) {
-		fprintf(stderr, "Failed to init AEAD on line %u\n", line_no);
-		return 0;
+	if ((ctx = EVP_AEAD_CTX_new()) == NULL) {
+		fprintf(stderr, "Failed to allocate AEAD context on line %u\n",
+		    line_no);
+		goto err;
 	}
 
-	if (!EVP_AEAD_CTX_seal(&ctx, out, &out_len, sizeof(out), bufs[NONCE],
+	if (!EVP_AEAD_CTX_init(ctx, aead, bufs[KEY], lengths[KEY],
+	    lengths[TAG], NULL)) {
+		fprintf(stderr, "Failed to init AEAD on line %u\n", line_no);
+		goto err;
+	}
+
+	if (!EVP_AEAD_CTX_seal(ctx, out, &out_len, sizeof(out), bufs[NONCE],
 	    lengths[NONCE], bufs[IN], lengths[IN], bufs[AD], lengths[AD])) {
 		fprintf(stderr, "Failed to run AEAD on line %u\n", line_no);
-		return 0;
+		goto err;
 	}
 
 	if (out_len != lengths[CT] + lengths[TAG]) {
 		fprintf(stderr, "Bad output length on line %u: %zu vs %u\n",
 		    line_no, out_len, (unsigned)(lengths[CT] + lengths[TAG]));
-		return 0;
+		goto err;
 	}
 
 	if (memcmp(out, bufs[CT], lengths[CT]) != 0) {
 		fprintf(stderr, "Bad output on line %u\n", line_no);
-		return 0;
+		goto err;
 	}
 
 	if (memcmp(out + lengths[CT], bufs[TAG], lengths[TAG]) != 0) {
 		fprintf(stderr, "Bad tag on line %u\n", line_no);
-		return 0;
+		goto err;
 	}
 
-	if (!EVP_AEAD_CTX_open(&ctx, out2, &out_len2, lengths[IN], bufs[NONCE],
+	if (!EVP_AEAD_CTX_open(ctx, out2, &out_len2, lengths[IN], bufs[NONCE],
 	    lengths[NONCE], out, out_len, bufs[AD], lengths[AD])) {
 		fprintf(stderr, "Failed to decrypt on line %u\n", line_no);
-		return 0;
+		goto err;
 	}
 
 	if (out_len2 != lengths[IN]) {
 		fprintf(stderr, "Bad decrypt on line %u: %zu\n",
 		    line_no, out_len2);
-		return 0;
+		goto err;
 	}
 
 	if (memcmp(out2, bufs[IN], out_len2) != 0) {
 		fprintf(stderr, "Plaintext mismatch on line %u\n", line_no);
-		return 0;
+		goto err;
 	}
 
 	out[0] ^= 0x80;
-	if (EVP_AEAD_CTX_open(&ctx, out2, &out_len2, lengths[IN], bufs[NONCE],
+	if (EVP_AEAD_CTX_open(ctx, out2, &out_len2, lengths[IN], bufs[NONCE],
 	    lengths[NONCE], out, out_len, bufs[AD], lengths[AD])) {
 		fprintf(stderr, "Decrypted bad data on line %u\n", line_no);
-		return 0;
+		goto err;
 	}
 
-	EVP_AEAD_CTX_cleanup(&ctx);
-	return 1;
+	ret = 1;
+
+ err:
+	EVP_AEAD_CTX_free(ctx);
+
+	return ret;
 }
 
 int
