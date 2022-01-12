@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.90 2021/12/03 12:41:36 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.91 2022/01/12 08:29:27 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -524,10 +524,6 @@ struct ieee80211_node *ieee80211_find_rxnode(struct ieee80211com *,
 		const struct ieee80211_frame *);
 struct ieee80211_node *ieee80211_find_txnode(struct ieee80211com *,
 		const u_int8_t *);
-struct ieee80211_node *
-		ieee80211_find_node_for_beacon(struct ieee80211com *,
-		const u_int8_t *, const struct ieee80211_channel *,
-		const char *, u_int8_t);
 void ieee80211_release_node(struct ieee80211com *,
 		struct ieee80211_node *);
 void ieee80211_node_cleanup(struct ieee80211com *, struct ieee80211_node *);
