@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2017/07/06 14:17:11 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2022/01/12 15:32:15 martijn Exp $
 #	$NetBSD: Makefile,v 1.1 2005/04/04 16:48:45 peter Exp $
 
 SED?=	/usr/bin/sed
@@ -6,7 +6,7 @@ SED?=	/usr/bin/sed
 REGRESS_TARGETS= sedtest substitute hanoi math sierpinski negation \
 	inplace inplace2 inplace3 commandl1 commandl2 commandc1 commandD1
 
-commandl1 commandl2 commandc1 commandD1:
+commandc1:
 	# New tests, currently failing, need fixes in sed.
 	@echo DISABLED
 
