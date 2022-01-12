@@ -1,7 +1,7 @@
-/* $OpenBSD: tree.c,v 1.58 2021/09/07 10:58:44 schwarze Exp $ */
+/* $OpenBSD: tree.c,v 1.59 2022/01/12 04:53:57 schwarze Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013-2015, 2017-2021 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -507,12 +507,16 @@ print_span(const struct tbl_span *sp, int indent)
 					putchar('x');
 			}
 			switch (dp->pos) {
-			case TBL_DATA_HORIZ:
 			case TBL_DATA_NHORIZ:
-				putchar('-');
+				putchar('\\');
+				/* FALLTHROUGH */
+			case TBL_DATA_HORIZ:
+				putchar('_');
 				break;
-			case TBL_DATA_DHORIZ:
 			case TBL_DATA_NDHORIZ:
+				putchar('\\');
+				/* FALLTHROUGH */
+			case TBL_DATA_DHORIZ:
 				putchar('=');
 				break;
 			default:
