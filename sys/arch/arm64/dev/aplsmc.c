@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.5 2022/01/12 15:05:38 robert Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.6 2022/01/13 08:59:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -32,6 +32,8 @@
 #include <arm64/dev/rtkit.h>
 
 #include "apm.h"
+
+extern void (*cpuresetfn)(void);
 
 #define SMC_EP			32
 
@@ -85,7 +87,9 @@ struct aplsmc_softc {
 	struct ksensor		sc_sensors[APLSMC_MAX_SENSORS];
 	int			sc_nsensors;
 	struct ksensordev	sc_sensordev;
-} *aplsmc_sc;
+};
+
+struct aplsmc_softc *aplsmc_sc;
 
 struct aplsmc_sensor aplsmc_sensors[] = {
 	{ "ACDI", "ui16", SENSOR_INDICATOR, 1, "power supply" },
@@ -182,6 +186,7 @@ int	aplsmc_send_cmd(struct aplsmc_softc *, uint16_t, uint32_t, uint16_t);
 int	aplsmc_wait_cmd(struct aplsmc_softc *sc);
 int	aplsmc_read_key(struct aplsmc_softc *, uint32_t, void *, size_t);
 void	aplsmc_refresh_sensors(void *);
+void	aplsmc_reset(void);
 
 int
 aplsmc_match(struct device *parent, void *match, void *aux)
@@ -286,6 +291,7 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 	sensor_task_register(sc, aplsmc_refresh_sensors, 5);
 
 	aplsmc_sc = sc;
+	cpuresetfn = aplsmc_reset;
 
 #if NAPM > 0
 	apm_setinfohook(aplsmc_apminfo);
@@ -422,4 +428,19 @@ aplsmc_refresh_sensors(void *arg)
 		if (strcmp(sensor->key, "ACDI") == 0)
 			hw_power = (value > 0);
 	}
+}
+
+void
+aplsmc_reset(void)
+{
+	struct aplsmc_softc *sc = aplsmc_sc;
+	uint32_t key = SMC_KEY("MBSE");
+	uint32_t data = SMC_KEY("off1");
+
+	bus_space_write_region_1(sc->sc_iot, sc->sc_sram_ioh, 0,
+	    (uint8_t *)&data, sizeof(data));
+	bus_space_barrier(sc->sc_iot, sc->sc_sram_ioh, 0, sizeof(data),
+	    BUS_SPACE_BARRIER_WRITE);
+	aplsmc_send_cmd(sc, SMC_WRITE_KEY, key, sizeof(data));
+	aplsmc_wait_cmd(sc);
 }

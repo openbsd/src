@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpmu.c,v 1.2 2021/05/27 08:10:12 kettenis Exp $	*/
+/*	$OpenBSD: aplpmu.c,v 1.3 2022/01/13 08:59:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -27,6 +27,9 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 
+extern void (*cpuresetfn)(void);
+extern void (*powerdownfn)(void);
+
 /*
  * This driver is based on preliminary device tree bindings and will
  * almost certainly need changes once the official bindings land in
@@ -45,6 +48,9 @@
 #define SERA_TIME_OFFSET	0xd100
 #define SERA_TIME_LEN		6
 
+#define SERA_POWERDOWN		0x9f0f
+#define SERA_POWERDOWN_MAGIC	0x08
+
 struct aplpmu_softc {
 	struct device		sc_dev;
 	spmi_tag_t		sc_tag;
@@ -53,6 +59,8 @@ struct aplpmu_softc {
 	struct todr_chip_handle sc_todr;
 	uint64_t		sc_offset;
 };
+
+struct aplpmu_softc *aplpmu_sc;
 
 int	aplpmu_match(struct device *, void *, void *);
 void	aplpmu_attach(struct device *, struct device *, void *);
@@ -67,6 +75,7 @@ struct cfdriver aplpmu_cd = {
 
 int	aplpmu_gettime(struct todr_chip_handle *, struct timeval *);
 int	aplpmu_settime(struct todr_chip_handle *, struct timeval *);
+void	aplpmu_powerdown(void);
 
 int
 aplpmu_match(struct device *parent, void *match, void *aux)
@@ -101,6 +110,9 @@ aplpmu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_todr.todr_gettime = aplpmu_gettime;
 	sc->sc_todr.todr_settime = aplpmu_settime;
 	todr_attach(&sc->sc_todr);
+
+	aplpmu_sc = sc;
+	powerdownfn = aplpmu_powerdown;
 }
 
 int
@@ -142,4 +154,16 @@ aplpmu_settime(struct todr_chip_handle *handle, struct timeval *tv)
 	htolem64(data, sc->sc_offset);
 	return spmi_cmd_write(sc->sc_tag, sc->sc_sid, SPMI_CMD_EXT_WRITEL,
 	    SERA_TIME_OFFSET, &data, SERA_TIME_LEN);
+}
+
+void
+aplpmu_powerdown(void)
+{
+	struct aplpmu_softc *sc = aplpmu_sc;
+	uint8_t data = SERA_POWERDOWN_MAGIC;
+
+	spmi_cmd_write(sc->sc_tag, sc->sc_sid, SPMI_CMD_EXT_WRITEL,
+	    SERA_POWERDOWN, &data, sizeof(data));
+
+	cpuresetfn();
 }
