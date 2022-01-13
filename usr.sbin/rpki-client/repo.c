@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.22 2022/01/13 13:18:41 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.23 2022/01/13 13:46:03 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -841,8 +841,9 @@ rrdp_handle_file(unsigned int id, enum publish_type pt, char *uri,
 			if ((fn = rrdp_filename(rr, uri, 1)) == NULL)
 				return 0;
 		}
-		if (!valid_filehash(fn, hash, hlen)) {
-			warnx("%s: bad message digest", fn);
+		fd = open(fn, O_RDONLY);
+		if (!valid_filehash(fd, hash, hlen)) {
+			warnx("%s: bad file digest for %s", rr->notifyuri, fn);
 			free(fn);
 			return 0;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.44 2022/01/11 13:06:07 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.45 2022/01/13 13:46:03 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -20,7 +20,6 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <stdint.h>
-#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -456,44 +455,6 @@ out:
 	}
 	free(cms);
 	return p.res;
-}
-
-/*
- * Check all files and their hashes in a MFT structure.
- * Return zero on failure, non-zero on success.
- */
-int
-mft_check(const char *fn, struct mft *p)
-{
-	size_t	i;
-	int	rc = 1;
-	char	*cp, *h, *path = NULL;
-
-	/* Check hash of file now, but first build path for it */
-	cp = strrchr(fn, '/');
-	assert(cp != NULL);
-	assert(cp - fn < INT_MAX);
-
-	for (i = 0; i < p->filesz; i++) {
-		const struct mftfile *m = &p->files[i];
-		if (!valid_filename(m->file)) {
-			if (base64_encode(m->hash, sizeof(m->hash), &h) == -1)
-				errx(1, "base64_encode failed in %s", __func__);
-			warnx("%s: unsupported filename for %s", fn, h);
-			free(h);
-			continue;
-		}
-		if (asprintf(&path, "%.*s/%s", (int)(cp - fn), fn,
-		    m->file) == -1)
-			err(1, NULL);
-		if (!valid_filehash(path, m->hash, sizeof(m->hash))) {
-			warnx("%s: bad message digest for %s", fn, m->file);
-			rc = 0;
-		}
-		free(path);
-	}
-
-	return rc;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.23 2021/12/26 12:32:28 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.24 2022/01/13 13:46:03 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -269,29 +269,29 @@ valid_filename(const char *fn)
 
 /*
  * Validate a file by verifying the SHA256 hash of that file.
- * Returns 1 if valid, 0 otherwise.
+ * The file to check is passed as a file descriptor.
+ * Returns 1 if hash matched, 0 otherwise. Closes fd when done.
  */
 int
-valid_filehash(const char *fn, const char *hash, size_t hlen)
+valid_filehash(int fd, const char *hash, size_t hlen)
 {
 	SHA256_CTX ctx;
 	char	filehash[SHA256_DIGEST_LENGTH];
 	char	buffer[8192];
 	ssize_t	nr;
-	int	fd;
 
 	if (hlen != sizeof(filehash))
 		errx(1, "bad hash size");
 
-	if ((fd = open(fn, O_RDONLY)) == -1)
+	if (fd == -1)
 		return 0;
 
 	SHA256_Init(&ctx);
 	while ((nr = read(fd, buffer, sizeof(buffer))) > 0)
 		SHA256_Update(&ctx, buffer, nr);
 	close(fd);
-
 	SHA256_Final(filehash, &ctx);
+
 	if (memcmp(hash, filehash, sizeof(filehash)) != 0)
 		return 0;
 

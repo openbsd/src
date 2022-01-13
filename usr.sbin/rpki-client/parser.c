@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.34 2022/01/11 13:06:07 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.35 2022/01/13 13:46:03 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -22,6 +22,7 @@
 
 #include <assert.h>
 #include <err.h>
+#include <fcntl.h>
 #include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -218,6 +219,45 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
 	X509_free(x509);
 
 	return roa;
+}
+
+/*
+ * Check all files and their hashes in a MFT structure.
+ * Return zero on failure, non-zero on success.
+ */
+int
+mft_check(const char *fn, struct mft *p)
+{
+	size_t	i;
+	int	fd, rc = 1;
+	char	*cp, *h, *path = NULL;
+
+	/* Check hash of file now, but first build path for it */
+	cp = strrchr(fn, '/');
+	assert(cp != NULL);
+	assert(cp - fn < INT_MAX);
+
+	for (i = 0; i < p->filesz; i++) {
+		const struct mftfile *m = &p->files[i];
+		if (!valid_filename(m->file)) {
+			if (base64_encode(m->hash, sizeof(m->hash), &h) == -1)
+				errx(1, "base64_encode failed in %s", __func__);
+			warnx("%s: unsupported filename for %s", fn, h);
+			free(h);
+			continue;
+		}
+		if (asprintf(&path, "%.*s/%s", (int)(cp - fn), fn,
+		    m->file) == -1)
+			err(1, NULL);
+		fd = open(path, O_RDONLY);
+		if (!valid_filehash(fd, m->hash, sizeof(m->hash))) {
+			warnx("%s: bad message digest for %s", fn, m->file);
+			rc = 0;
+		}
+		free(path);
+	}
+
+	return rc;
 }
 
 /*
