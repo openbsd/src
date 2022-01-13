@@ -1242,8 +1242,12 @@ static int ranlib_main(int argc, char **argv) {
         } else if (arg.front() == 'v') {
           cl::PrintVersionMessage();
           return 0;
+        } else if (arg.front() == 't') {
+          // GNU ranlib also supports a -t flag, but does nothing
+          // because it just returns true without touching the
+          // timestamp, so simulate the same behaviour.
+          return 0;
         } else {
-          // TODO: GNU ranlib also supports a -t flag
           fail("Invalid option: '-" + arg + "'");
         }
         arg = arg.drop_front(1);
