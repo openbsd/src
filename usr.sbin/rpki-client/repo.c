@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.20 2022/01/11 13:06:07 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.21 2022/01/13 11:47:44 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1094,6 +1094,9 @@ ta_lookup(int id, struct tal *tal)
 		err(1, NULL);
 
 	rp->ta = ta_get(tal);
+
+	if (repo_state(rp) != REPO_LOADING)
+		entityq_flush(&rp->queue, rp);
 
 	return rp;
 }
