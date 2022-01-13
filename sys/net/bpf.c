@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.208 2022/01/13 14:12:02 visa Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.209 2022/01/13 14:15:27 visa Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -109,6 +109,8 @@ int	bpf_setdlt(struct bpf_d *, u_int);
 
 void	filt_bpfrdetach(struct knote *);
 int	filt_bpfread(struct knote *, long);
+int	filt_bpfreadmodify(struct kevent *, struct knote *);
+int	filt_bpfreadprocess(struct knote *, struct kevent *);
 
 int	bpf_sysctl_locked(int *, u_int, void *, size_t *, void *, size_t);
 
@@ -377,6 +379,7 @@ bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 	task_set(&bd->bd_wake_task, bpf_wakeup_cb, bd);
 	smr_init(&bd->bd_smr);
 	sigio_init(&bd->bd_sigio);
+	klist_init_mutex(&bd->bd_sel.si_note, &bd->bd_mtx);
 
 	bd->bd_rtout = 0;	/* no timeout by default */
 
@@ -589,7 +592,9 @@ bpf_wakeup_cb(void *xd)
 	if (d->bd_async && d->bd_sig)
 		pgsigio(&d->bd_sigio, d->bd_sig, 0);
 
+	mtx_enter(&d->bd_mtx);
 	selwakeup(&d->bd_sel);
+	mtx_leave(&d->bd_mtx);
 	bpf_put(d);
 }
 
@@ -1162,10 +1167,12 @@ bpfpoll(dev_t dev, int events, struct proc *p)
 }
 
 const struct filterops bpfread_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_bpfrdetach,
 	.f_event	= filt_bpfread,
+	.f_modify	= filt_bpfreadmodify,
+	.f_process	= filt_bpfreadprocess,
 };
 
 int
@@ -1191,7 +1198,7 @@ bpfkqfilter(dev_t dev, struct knote *kn)
 
 	bpf_get(d);
 	kn->kn_hook = d;
-	klist_insert_locked(klist, kn);
+	klist_insert(klist, kn);
 
 	return (0);
 }
@@ -1201,10 +1208,20 @@ filt_bpfrdetach(struct knote *kn)
 {
 	struct bpf_d *d = kn->kn_hook;
 
-	KERNEL_ASSERT_LOCKED();
-
-	klist_remove_locked(&d->bd_sel.si_note, kn);
+	klist_remove(&d->bd_sel.si_note, kn);
 	bpf_put(d);
+}
+
+int
+filt_bpfread_common(struct knote *kn, struct bpf_d *d)
+{
+	MUTEX_ASSERT_LOCKED(&d->bd_mtx);
+
+	kn->kn_data = d->bd_hlen;
+	if (d->bd_immediate)
+		kn->kn_data += d->bd_slen;
+
+	return (kn->kn_data > 0);
 }
 
 int
@@ -1212,15 +1229,39 @@ filt_bpfread(struct knote *kn, long hint)
 {
 	struct bpf_d *d = kn->kn_hook;
 
-	KERNEL_ASSERT_LOCKED();
+	return (filt_bpfread_common(kn, d));
+}
+
+int
+filt_bpfreadmodify(struct kevent *kev, struct knote *kn)
+{
+	struct bpf_d *d = kn->kn_hook;
+	int active;
 
 	mtx_enter(&d->bd_mtx);
-	kn->kn_data = d->bd_hlen;
-	if (d->bd_immediate)
-		kn->kn_data += d->bd_slen;
+	knote_modify(kev, kn);
+	active = filt_bpfread_common(kn, d);
 	mtx_leave(&d->bd_mtx);
 
-	return (kn->kn_data > 0);
+	return (active);
+}
+
+int
+filt_bpfreadprocess(struct knote *kn, struct kevent *kev)
+{
+	struct bpf_d *d = kn->kn_hook;
+	int active;
+
+	mtx_enter(&d->bd_mtx);
+	if (kev != NULL && (kn->kn_flags & EV_ONESHOT))
+		active = 1;
+	else
+		active = filt_bpfread_common(kn, d);
+	if (active)
+		knote_submit(kn, kev);
+	mtx_leave(&d->bd_mtx);
+
+	return (active);
 }
 
 /*
@@ -1590,6 +1631,7 @@ bpf_d_smr(void *smr)
 	if (bd->bd_wfilter != NULL)
 		bpf_prog_smr(bd->bd_wfilter);
 
+	klist_free(&bd->bd_sel.si_note);
 	free(bd, M_DEVBUF, sizeof(*bd));
 }
 
