@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.123 2021/11/26 12:14:33 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.124 2022/01/13 12:21:22 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: November 26 2021 $
+.Dd $Mdocdate: January 13 2022 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -127,6 +127,8 @@ Some specific
 .Ar names
 have extra meaning, see
 .Xr bsd.port.mk 5
+and
+.Xr package 5
 for details:
 .Pp
 .Bl -tag -width FULLPKGPATH -compact
@@ -153,6 +155,12 @@ see
 If defined, appended to the description.
 .It Cm MAINTAINER
 If defined, appended to the description.
+.It Cm NO_TS_IN_PLIST
+If set, disable the
+.Cm @ts
+annotations in the generated package, rely on the normal
+.Xr tar 1
+timestamps instead.
 .It Cm USE_GROFF
 Set to 1 to have groff format manpages behind the scenes during
 package creation.

@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.173 2021/11/09 12:22:09 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.174 2022/01/13 12:21:22 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -133,6 +133,7 @@ sub handle_options
 	}
 	$state->{wrkobjdir} = $state->defines('WRKOBJDIR');
 	$state->{fullpkgpath} = $state->{subst}->value('FULLPKGPATH') // '';
+	$state->{no_ts_in_plist} = $state->defines('NO_TS_IN_PLIST');
 }
 
 sub parse_userdb
@@ -312,7 +313,9 @@ sub compute_checksum
 			$result->add_digest($self->compute_digest($fname))
 			    unless $state->{bad};
 			$result->add_size($size);
-			$result->add_timestamp($mtime);
+			unless ($state->{no_ts_in_plist}) {
+				$result->add_timestamp($mtime);
+			}
 		}
 	} elsif (-d _) {
 		$state->error("#1 should be a file and not a directory", $fname);
