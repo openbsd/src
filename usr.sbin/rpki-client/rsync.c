@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.31 2021/12/22 09:35:14 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.32 2022/01/13 11:50:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -99,6 +99,31 @@ rsync_base_uri(const char *uri)
 	return base_uri;
 }
 
+/*
+ * The directory passed as --compare-dest needs to be relative to
+ * the destination directory. This function takes care of that.
+ */
+static char *
+rsync_fixup_dest(char *destdir, char *compdir)
+{
+	const char *dotdot = "../../../../../../";	/* should be enough */
+	int dirs = 1;
+	char *fn;
+	char c;
+
+	while ((c = *destdir++) != '\0')
+		if (c == '/')
+			dirs++;
+
+	if (dirs > 6)
+		/* too deep for us */
+		return NULL;
+
+	if ((asprintf(&fn, "%.*s%s", dirs * 3, dotdot, compdir)) == -1)
+		err(1, NULL);
+	return fn;
+}
+
 static void
 proc_child(int signal)
 {
@@ -181,7 +206,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		err(1, NULL);
 
 	for (;;) {
-		char *uri = NULL, *dst = NULL;
+		char *uri, *dst, *compdst;
 		unsigned int id;
 		pid_t pid;
 		int st;
@@ -209,7 +234,8 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 				for (i = 0; i < idsz; i++)
 					if (ids[i].pid == pid)
 						break;
-				assert(i < idsz);
+				if (i >= idsz)
+					errx(1, "waitpid: %d unexpected", pid);
 
 				if (!WIFEXITED(st)) {
 					warnx("rsync %s terminated abnormally",
@@ -261,6 +287,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		/* Read host and module. */
 		io_read_buf(b, &id, sizeof(id));
 		io_read_str(b, &dst);
+		io_read_str(b, &compdst);
 		io_read_str(b, &uri);
 
 		ibuf_free(b);
@@ -275,6 +302,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 
 		if (pid == 0) {
 			char *args[32];
+			char *reldst;
 
 			if (pledge("stdio exec", NULL) == -1)
 				err(1, "pledge");
@@ -294,6 +322,11 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 			if (bind_addr != NULL) {
 				args[i++] = "--address";
 				args[i++] = (char *)bind_addr;
+			}
+			if (compdst != NULL &&
+			    (reldst = rsync_fixup_dest(dst, compdst)) != NULL) {
+				args[i++] = "--compare-dest";
+				args[i++] = reldst;
 			}
 			args[i++] = uri;
 			args[i++] = dst;
@@ -323,6 +356,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		/* Clean up temporary values. */
 
 		free(dst);
+		free(compdst);
 	}
 
 	/* No need for these to be hanging around. */

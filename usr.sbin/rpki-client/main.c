@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.173 2022/01/11 13:06:07 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.174 2022/01/13 11:50:29 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -261,6 +261,7 @@ rsync_fetch(unsigned int id, const char *uri, const char *local)
 	b = io_new_buffer();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, local);
+	io_str_buffer(b, NULL);
 	io_str_buffer(b, uri);
 	io_close_buffer(&rsyncq, b);
 }
