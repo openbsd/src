@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.101 2022/01/11 13:06:07 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.102 2022/01/13 13:18:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -309,10 +309,11 @@ enum rrdp_msg {
 	RRDP_START,
 	RRDP_SESSION,
 	RRDP_FILE,
+	RRDP_CLEAR,
 	RRDP_END,
 	RRDP_HTTP_REQ,
 	RRDP_HTTP_INI,
-	RRDP_HTTP_FIN
+	RRDP_HTTP_FIN,
 };
 
 /*
@@ -501,6 +502,7 @@ void		 proc_rrdp(int);
 
 /* Repository handling */
 int		 filepath_add(struct filepath_tree *, char *);
+void		 rrdp_clear(unsigned int);
 void		 rrdp_save_state(unsigned int, struct rrdp_session *);
 int		 rrdp_handle_file(unsigned int, enum publish_type, char *,
 		    char *, size_t, char *, size_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.21 2022/01/13 11:47:44 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.22 2022/01/13 13:18:41 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -106,6 +106,7 @@ static SLIST_HEAD(, repo)	repos = SLIST_HEAD_INITIALIZER(repos);
 unsigned int		repoid;
 
 static struct rsyncrepo	*rsync_get(const char *, int);
+static void		 remove_contents(char *);
 
 /*
  * Database of all file path accessed during a run.
@@ -788,6 +789,23 @@ fail:
 }
 
 /*
+ * Remove RRDP repo and start over.
+ */
+void
+rrdp_clear(unsigned int id)
+{
+	struct rrdprepo *rr;
+
+	rr = rrdp_find(id);
+	if (rr == NULL)
+		errx(1, "non-existant rrdp repo %u", id);
+
+	/* remove rrdp repository contents */
+	remove_contents(rr->basedir);
+	remove_contents(rr->temp);
+}
+
+/*
  * Write a file into the temporary RRDP dir but only after checking
  * its hash (if required). The function also makes sure that the file
  * tracking is properly adjusted.
@@ -932,24 +950,6 @@ fail:
 	return 0;
 }
 
-static void
-rrdp_clean_temp(struct rrdprepo *rr)
-{
-	struct filepath *fp, *nfp;
-	char *fn;
-
-	filepath_free(&rr->deleted);
-
-	RB_FOREACH_SAFE(fp, filepath_tree, &rr->added, nfp) {
-		if ((fn = rrdp_filename(rr, fp->file, 1)) != NULL) {
-			if (unlink(fn) == -1)
-				warn("unlink %s", fn);
-			free(fn);
-		}
-		filepath_put(&rr->added, fp);
-	}
-}
-
 /*
  * RSYNC sync finished, either with or without success.
  */
@@ -981,10 +981,10 @@ rsync_finish(unsigned int id, int ok)
 	rr = rsync_find(id);
 	if (rr == NULL)
 		errx(1, "unknown rsync repo %u", id);
-
 	/* repository changed state already, ignore request */
 	if (rr->state != REPO_LOADING)
 		return;
+
 	if (ok) {
 		logx("%s: loaded from network", rr->basedir);
 		stats.rsync_repos++;
@@ -1016,15 +1016,15 @@ rrdp_finish(unsigned int id, int ok)
 
 	if (ok && rrdp_merge_repo(rr)) {
 		logx("%s: loaded from network", rr->notifyuri);
-		rr->state = REPO_DONE;
 		stats.rrdp_repos++;
+		rr->state = REPO_DONE;
 		repo_done(rr, ok);
 	} else {
-		rrdp_clean_temp(rr);
-		stats.rrdp_fails++;
-		rr->state = REPO_FAILED;
 		logx("%s: load from network failed, fallback to rsync",
 		    rr->notifyuri);
+		stats.rrdp_fails++;
+		rr->state = REPO_FAILED;
+		remove_contents(rr->temp);
 		repo_done(rr, 0);
 	}
 }
@@ -1417,4 +1417,49 @@ repo_free(void)
 	ta_free();
 	rrdp_free();
 	rsync_free();
+}
+
+static void
+remove_contents(char *base)
+{
+	char *argv[2] = { base, NULL };
+	FTS *fts;
+	FTSENT *e;
+
+	if ((fts = fts_open(argv, FTS_PHYSICAL | FTS_NOSTAT, NULL)) == NULL)
+		err(1, "fts_open");
+	errno = 0;
+	while ((e = fts_read(fts)) != NULL) {
+		switch (e->fts_info) {
+		case FTS_NSOK:
+		case FTS_SL:
+		case FTS_SLNONE:
+			if (unlink(e->fts_accpath) == -1)
+				warn("unlink %s", e->fts_path);
+			break;
+		case FTS_D:
+			break;
+		case FTS_DP:
+			/* keep root directory */
+			if (e->fts_level == FTS_ROOTLEVEL)
+				break;
+			if (rmdir(e->fts_accpath) == -1)
+				warn("rmdir %s", e->fts_path);
+			break;
+		case FTS_NS:
+		case FTS_ERR:
+			warnx("fts_read %s: %s", e->fts_path,
+			    strerror(e->fts_errno));
+			break;
+		default:
+			warnx("unhandled[%x] %s", e->fts_info,
+			    e->fts_path);
+			break;
+		}
+		errno = 0;
+	}
+	if (errno)
+		err(1, "fts_read");
+	if (fts_close(fts) == -1)
+		err(1, "fts_close");
 }

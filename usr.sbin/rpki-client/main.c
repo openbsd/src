@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.174 2022/01/13 11:50:29 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.175 2022/01/13 13:18:41 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -631,6 +631,9 @@ rrdp_process(struct ibuf *b)
 
 		free(uri);
 		free(data);
+		break;
+	case RRDP_CLEAR:
+		rrdp_clear(id);
 		break;
 	default:
 		errx(1, "unexpected rrdp response");

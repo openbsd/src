@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.19 2021/12/22 09:35:14 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.20 2022/01/13 13:18:41 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -142,6 +142,21 @@ rrdp_state_send(struct rrdp *s)
 }
 
 /*
+ * Inform parent to clear the RRDP repository before start of snapshot.
+ */
+static void
+rrdp_clear_repo(struct rrdp *s)
+{
+	enum rrdp_msg type = RRDP_CLEAR;
+	struct ibuf *b;
+
+	b = io_new_buffer();
+	io_simple_buffer(b, &type, sizeof(type));
+	io_simple_buffer(b, &s->id, sizeof(s->id));
+	io_close_buffer(&msgq, b);
+}
+
+/*
  * Send a blob of data to the main process to store it in the repository.
  */
 void
@@ -246,6 +261,7 @@ rrdp_failed(struct rrdp *s)
 		/* fallback to a snapshot as per RFC8182 */
 		free_delta_xml(s->dxml);
 		s->dxml = NULL;
+		rrdp_clear_repo(s);
 		s->sxml = new_snapshot_xml(s->parser, &s->current, s);
 		s->task = SNAPSHOT;
 		s->state = RRDP_STATE_REQ;
@@ -315,6 +331,7 @@ rrdp_finished(struct rrdp *s)
 				break;
 			case SNAPSHOT:
 				logx("%s: downloading snapshot", s->local);
+				rrdp_clear_repo(s);
 				s->sxml = new_snapshot_xml(p, &s->current, s);
 				s->state = RRDP_STATE_REQ;
 				break;
