@@ -32,7 +32,7 @@ our %args = (
 	options => ["-Z"],
 	loggrep => {
 	    get_testgrep() => 1,
-	    qr/logline: .* msg .* foobar/ => 3,
+	    qr/logmsg: .* msg .* foobar/ => 3,
 	},
     },
     server => {

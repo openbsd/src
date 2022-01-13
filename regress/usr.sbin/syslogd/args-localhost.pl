@@ -20,7 +20,7 @@ our %args = (
 	loghost => '@localhost:$connectport',
 	options => ["-u"],
 	loggrep => {
-	    qr/ from localhost, msg /.get_testgrep() => 1,
+	    qr/ from localhost, prog syslogd, msg /.get_testgrep() => 1,
 	},
     },
     server => {
