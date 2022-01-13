@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.29 2022/01/05 17:39:25 jmc Exp $
+.\"	$OpenBSD: package.5,v 1.30 2022/01/13 11:23:47 espie Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: January 5 2022 $
+.Dd $Mdocdate: January 13 2022 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -100,6 +100,18 @@ tarballs are stored
 each archive entry will match an entry in the packing-list (and all file-like
 entries will be matched), but the order will be adjusted so that most recently
 changed files come first, in order to allow faster updates.
+.Pp
+Starting with
+.Ox 5.7 ,
+by default, timestamps are stored directly in the packing-list as
+.Cm @ts
+annotations.
+The files in the archive will have a null timestamp.
+.Pp
+The combination of the LRU archive order, null timestamps and compression
+in fixed chunks starting from the end, means a substantial amount of data
+doesn't change from snapshot to snapshot, thus reducing the pressure on
+mirroring bandwidth.
 .Sh PACKING LIST ANNOTATIONS
 User annotations are described in
 .Xr pkg_create 1 .
@@ -212,13 +224,11 @@ by
 .Xr pkg_add 1 .
 .Pp
 .It Cm @ts Ar timestamp
-Added after a file entry to record the actual file timestamp.
-The package tools read and process that annotation correctly.
-Starting with
-.Ox 5.7 ,
-.Xr pkg_create 1
-will migrate timestamps from the tarball meta-info to the packing-list
-to better create unchanging archive chunks.
+Added after a file entry to record the actual file timestamp, instead
+of storing it as tarball meta-info.
+The package tools read and process that annotation correctly, whereas
+.Xr tar 1
+will only see files dated from the epoch.
 .Pp
 .It Cm @version Ar number
 Record a global (system) version number for the package.
