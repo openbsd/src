@@ -1,4 +1,4 @@
-/*	$OpenBSD: rev.c,v 1.13 2016/04/10 17:06:52 martijn Exp $	*/
+/*	$OpenBSD: rev.c,v 1.14 2022/01/13 05:10:46 schwarze Exp $	*/
 /*	$NetBSD: rev.c,v 1.5 1995/09/28 08:49:40 tls Exp $	*/
 
 /*-
@@ -46,13 +46,14 @@ void usage(void);
 int
 main(int argc, char *argv[])
 {
-	char *filename, *p = NULL, *t, *u;
+	char *filename, *p = NULL, *t, *te, *u;
 	FILE *fp;
 	ssize_t len;
 	size_t ps = 0;
-	int ch, rval;
+	int ch, multibyte, rval;
 
 	setlocale(LC_CTYPE, "");
+	multibyte = MB_CUR_MAX > 1;
 
 	if (pledge("stdio rpath", NULL) == -1)
 		err(1, "pledge");
@@ -83,14 +84,16 @@ main(int argc, char *argv[])
 			if (p[len - 1] == '\n')
 				--len;
 			for (t = p + len - 1; t >= p; --t) {
-				if (isu8cont(*t))
-					continue;
-				u = t;
-				do {
-					putchar(*u);
-				} while (isu8cont(*(++u)));
+				te = t;
+				if (multibyte)
+					while (t > p && isu8cont(*t))
+						--t;
+				for (u = t; u <= te; ++u)
+					if (putchar(*u) == EOF)
+						err(1, "stdout");
 			}
-			putchar('\n');
+			if (putchar('\n') == EOF)
+				err(1, "stdout");
 		}
 		if (ferror(fp)) {
 			warn("%s", filename);
@@ -104,7 +107,7 @@ main(int argc, char *argv[])
 int
 isu8cont(unsigned char c)
 {
-	return MB_CUR_MAX > 1 && (c & (0x80 | 0x40)) == 0x80;
+	return (c & (0x80 | 0x40)) == 0x80;
 }
 
 void
