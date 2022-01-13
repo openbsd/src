@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.23 2022/01/13 13:46:03 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.24 2022/01/13 14:57:02 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -336,47 +336,6 @@ ta_filename(const struct tarepo *tr, int temp)
 	return nfile;
 }
 
-/*
- * Build local file name base on the URI and the rrdprepo info.
- */
-static char *
-rrdp_filename(const struct rrdprepo *rr, const char *uri, int temp)
-{
-	char *nfile;
-	char *dir = rr->basedir;
-
-	if (temp)
-		dir = rr->temp;
-
-	if (!valid_uri(uri, strlen(uri), "rsync://")) {
-		warnx("%s: bad URI %s", rr->basedir, uri);
-		return NULL;
-	}
-
-	uri += strlen("rsync://");	/* skip proto */
-	if (asprintf(&nfile, "%s/%s", dir, uri) == -1)
-		err(1, NULL);
-	return nfile;
-}
-
-/*
- * Build RRDP state file name based on the repo info.
- * If temp is set add Xs for mkostemp.
- */
-static char *
-rrdp_state_filename(const struct rrdprepo *rr, int temp)
-{
-	char *nfile;
-
-	if (asprintf(&nfile, "%s/.state%s", rr->basedir,
-	    temp ? ".XXXXXXXX": "") == -1)
-		err(1, NULL);
-
-	return nfile;
-}
-
-
-
 static void
 ta_fetch(struct tarepo *tr)
 {
@@ -556,51 +515,43 @@ rsync_free(void)
 
 static int rrdprepo_fetch(struct rrdprepo *);
 
-static struct rrdprepo *
-rrdp_get(const char *uri, int nofetch)
+/*
+ * Build local file name base on the URI and the rrdprepo info.
+ */
+static char *
+rrdp_filename(const struct rrdprepo *rr, const char *uri, int temp)
 {
-	struct rrdprepo *rr;
+	char *nfile;
+	char *dir = rr->basedir;
 
-	SLIST_FOREACH(rr, &rrdprepos, entry)
-		if (strcmp(rr->notifyuri, uri) == 0) {
-			if (rr->state == REPO_FAILED)
-				return NULL;
-			return rr;
-		}
+	if (temp)
+		dir = rr->temp;
 
-	if ((rr = calloc(1, sizeof(*rr))) == NULL)
-		err(1, NULL);
-
-	rr->id = ++repoid;
-	SLIST_INSERT_HEAD(&rrdprepos, rr, entry);
-
-	if ((rr->notifyuri = strdup(uri)) == NULL)
-		err(1, NULL);
-	rr->basedir = repo_dir(uri, "rrdp", 1);
-
-	RB_INIT(&rr->added);
-	RB_INIT(&rr->deleted);
-
-	if (noop || nofetch) {
-		rr->state = REPO_DONE;
-		logx("%s: using cache", rr->notifyuri);
-		repo_done(rr, 0);
-	} else {
-		/* create base directory */
-		if (mkpath(rr->basedir) == -1) {
-			warn("mkpath %s", rr->basedir);
-			rrdp_finish(rr->id, 0);
-			return rr;
-		}
-		if (rrdprepo_fetch(rr) == -1) {
-			rrdp_finish(rr->id, 0);
-			return rr;
-		}
-
-		logx("%s: pulling from %s", rr->notifyuri, "network");
+	if (!valid_uri(uri, strlen(uri), "rsync://")) {
+		warnx("%s: bad URI %s", rr->basedir, uri);
+		return NULL;
 	}
 
-	return rr;
+	uri += strlen("rsync://");	/* skip proto */
+	if (asprintf(&nfile, "%s/%s", dir, uri) == -1)
+		err(1, NULL);
+	return nfile;
+}
+
+/*
+ * Build RRDP state file name based on the repo info.
+ * If temp is set add Xs for mkostemp.
+ */
+static char *
+rrdp_state_filename(const struct rrdprepo *rr, int temp)
+{
+	char *nfile;
+
+	if (asprintf(&nfile, "%s/.state%s", rr->basedir,
+	    temp ? ".XXXXXXXX": "") == -1)
+		err(1, NULL);
+
+	return nfile;
 }
 
 static struct rrdprepo *
@@ -786,6 +737,53 @@ fail:
 	unlink(temp);
 	free(temp);
 	free(file);
+}
+
+static struct rrdprepo *
+rrdp_get(const char *uri, int nofetch)
+{
+	struct rrdprepo *rr;
+
+	SLIST_FOREACH(rr, &rrdprepos, entry)
+		if (strcmp(rr->notifyuri, uri) == 0) {
+			if (rr->state == REPO_FAILED)
+				return NULL;
+			return rr;
+		}
+
+	if ((rr = calloc(1, sizeof(*rr))) == NULL)
+		err(1, NULL);
+
+	rr->id = ++repoid;
+	SLIST_INSERT_HEAD(&rrdprepos, rr, entry);
+
+	if ((rr->notifyuri = strdup(uri)) == NULL)
+		err(1, NULL);
+	rr->basedir = repo_dir(uri, "rrdp", 1);
+
+	RB_INIT(&rr->added);
+	RB_INIT(&rr->deleted);
+
+	if (noop || nofetch) {
+		rr->state = REPO_DONE;
+		logx("%s: using cache", rr->notifyuri);
+		repo_done(rr, 0);
+	} else {
+		/* create base directory */
+		if (mkpath(rr->basedir) == -1) {
+			warn("mkpath %s", rr->basedir);
+			rrdp_finish(rr->id, 0);
+			return rr;
+		}
+		if (rrdprepo_fetch(rr) == -1) {
+			rrdp_finish(rr->id, 0);
+			return rr;
+		}
+
+		logx("%s: pulling from %s", rr->notifyuri, "network");
+	}
+
+	return rr;
 }
 
 /*
