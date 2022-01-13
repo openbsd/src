@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.207 2021/11/10 04:45:15 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.208 2022/01/13 14:12:02 visa Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1177,6 +1177,8 @@ bpfkqfilter(dev_t dev, struct knote *kn)
 	KERNEL_ASSERT_LOCKED();
 
 	d = bpfilter_lookup(minor(dev));
+	if (d == NULL)
+		return (ENXIO);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
