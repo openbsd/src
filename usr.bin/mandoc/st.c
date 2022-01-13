@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.13 2018/12/14 01:17:46 schwarze Exp $ */
+/* $OpenBSD: st.c,v 1.14 2022/01/13 08:39:24 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -65,7 +65,6 @@ LINE("-xpg4",		"X/Open Portability Guide Issue\\~4 (\\(lqXPG4\\(rq)")
 LINE("-xpg4.2",		"X/Open Portability Guide Issue\\~4, Version\\~2 (\\(lqXPG4.2\\(rq)")
 LINE("-xbd5",		"X/Open Base Definitions Issue\\~5 (\\(lqXBD5\\(rq)")
 LINE("-xcu5",		"X/Open Commands and Utilities Issue\\~5 (\\(lqXCU5\\(rq)")
-LINE("-xsh4.2",		"X/Open System Interfaces and Headers Issue\\~4, Version\\~2 (\\(lqXSH4.2\\(rq)")
 LINE("-xsh5",		"X/Open System Interfaces and Headers Issue\\~5 (\\(lqXSH5\\(rq)")
 LINE("-xns5",		"X/Open Networking Services Issue\\~5 (\\(lqXNS5\\(rq)")
 LINE("-xns5.2",		"X/Open Networking Services Issue\\~5.2 (\\(lqXNS5.2\\(rq)")
