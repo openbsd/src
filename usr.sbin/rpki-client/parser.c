@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.35 2022/01/13 13:46:03 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.36 2022/01/13 14:58:21 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -310,15 +310,17 @@ proc_parser_mft(char *file, const unsigned char *der, size_t len,
 	sk_X509_free(chain);
 	X509_free(x509);
 
-	if (!mft_check(file, mft)) {
-		mft_free(mft);
-		return NULL;
-	}
-
+	mft->repoid = repoid;
 	if (path != NULL)
 		if ((mft->path = strdup(path)) == NULL)
 			err(1, NULL);
-	mft->repoid = repoid;
+
+	if (!mft->stale)
+		if (!mft_check(file, mft)) {
+			mft_free(mft);
+			return NULL;
+		}
+
 	return mft;
 }
 
