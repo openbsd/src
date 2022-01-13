@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.272 2021/11/10 21:59:47 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.273 2022/01/13 10:34:07 martijn Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -119,6 +119,7 @@
 #include "log.h"
 #include "syslogd.h"
 #include "evbuffer_tls.h"
+#include "parsemsg.h"
 
 char *ConfFile = _PATH_LOGCONF;
 const char ctty[] = _PATH_CONSOLE;
@@ -127,12 +128,11 @@ const char ctty[] = _PATH_CONSOLE;
 
 
 /*
- * Flags to logline().
+ * Flags to logmsg().
  */
 
 #define IGN_CONS	0x001	/* don't print on console */
 #define SYNC_FILE	0x002	/* do fsync on file after printing */
-#define ADDDATE		0x004	/* add a date to the message */
 #define MARK		0x008	/* this message is a mark */
 
 /*
@@ -338,11 +338,11 @@ void	fprintlog(struct filed *, int, char *);
 void	dropped_warn(int *, const char *);
 void	init(void);
 void	logevent(int, const char *);
-void	logline(int, int, char *, char *);
+void	logmsg(struct msg *, int, char *);
 struct filed *find_dup(struct filed *);
-size_t	parsepriority(const char *, int *);
 void	printline(char *, char *);
 void	printsys(char *);
+void	current_time(char *);
 void	usage(void);
 void	wallmsg(struct filed *, struct iovec *);
 int	loghost_parse(char *, char **, char **, char **);
@@ -1556,57 +1556,17 @@ usage(void)
 }
 
 /*
- * Parse a priority code of the form "<123>" into pri, and return the
- * length of the priority code including the surrounding angle brackets.
- */
-size_t
-parsepriority(const char *msg, int *pri)
-{
-	size_t nlen;
-	char buf[11];
-	const char *errstr;
-	int maybepri;
-
-	if (*msg++ == '<') {
-		nlen = strspn(msg, "1234567890");
-		if (nlen > 0 && nlen < sizeof(buf) && msg[nlen] == '>') {
-			strlcpy(buf, msg, nlen + 1);
-			maybepri = strtonum(buf, 0, INT_MAX, &errstr);
-			if (errstr == NULL) {
-				*pri = maybepri;
-				return nlen + 2;
-			}
-		}
-	}
-
-	return 0;
-}
-
-/*
  * Take a raw input line, decode the message, and print the message
  * on the appropriate log files.
  */
 void
-printline(char *hname, char *msg)
+printline(char *hname, char *msgstr)
 {
 	int pri;
+	struct msg msg;
 	char *p, *q, line[LOG_MAXLINE + 4 + 1];  /* message, encoding, NUL */
 
-	/* test for special codes */
-	pri = DEFUPRI;
-	p = msg;
-	p += parsepriority(p, &pri);
-	if (pri &~ (LOG_FACMASK|LOG_PRIMASK))
-		pri = DEFUPRI;
-
-	/*
-	 * Don't allow users to log kernel messages.
-	 * NOTE: since LOG_KERN == 0 this will also match
-	 * messages with no facility specified.
-	 */
-	if (LOG_FAC(pri) == LOG_KERN)
-		pri = LOG_USER | LOG_PRI(pri);
-
+	p = msgstr;
 	for (q = line; *p && q < &line[LOG_MAXLINE]; p++) {
 		if (*p == '\n')
 			*q++ = ' ';
@@ -1615,210 +1575,148 @@ printline(char *hname, char *msg)
 	}
 	line[LOG_MAXLINE] = *q = '\0';
 
-	logline(pri, 0, hname, line);
+	parsemsg(line, &msg);
+	if (msg.m_pri == -1)
+		msg.m_pri = DEFUPRI;
+	/*
+	 * Don't allow users to log kernel messages.
+	 * NOTE: since LOG_KERN == 0 this will also match
+	 * messages with no facility specified.
+	 */
+	if (LOG_FAC(msg.m_pri) == LOG_KERN)
+		msg.m_pri = LOG_USER | LOG_PRI(pri);
+
+	if (msg.m_timestamp[0] == '\0')
+		current_time(msg.m_timestamp);
+
+	logmsg(&msg, 0, hname);
 }
 
 /*
  * Take a raw input line from /dev/klog, split and format similar to syslog().
  */
 void
-printsys(char *msg)
+printsys(char *msgstr)
 {
-	int c, pri, flags;
-	char *lp, *p, *q, line[LOG_MAXLINE + 1];
+	struct msg msg;
+	int c, flags;
+	char *lp, *p, *q;
 	size_t prilen;
 	int l;
 
-	l = snprintf(line, sizeof(line), "%s: ", _PATH_UNIX);
-	if (l < 0 || l >= sizeof(line)) {
-		line[0] = '\0';
+	current_time(msg.m_timestamp);
+	strlcpy(msg.m_prog, _PATH_UNIX, sizeof(msg.m_prog));
+	l = snprintf(msg.m_msg, sizeof(msg.m_msg), "%s: ", _PATH_UNIX);
+	if (l < 0 || l >= sizeof(msg.m_msg)) {
+		msg.m_msg[0] = '\0';
 		l = 0;
 	}
-	lp = line + l;
-	for (p = msg; *p != '\0'; ) {
-		flags = SYNC_FILE | ADDDATE;	/* fsync file after write */
-		pri = DEFSPRI;
-		prilen = parsepriority(p, &pri);
+	lp = msg.m_msg + l;
+	for (p = msgstr; *p != '\0'; ) {
+		flags = SYNC_FILE;	/* fsync file after write */
+		msg.m_pri = DEFSPRI;
+		prilen = parsemsg_priority(p, &msg.m_pri);
 		p += prilen;
 		if (prilen == 0) {
 			/* kernel printf's come out on console */
 			flags |= IGN_CONS;
 		}
-		if (pri &~ (LOG_FACMASK|LOG_PRIMASK))
-			pri = DEFSPRI;
+		if (msg.m_pri &~ (LOG_FACMASK|LOG_PRIMASK))
+			msg.m_pri = DEFSPRI;
 
 		q = lp;
-		while (*p && (c = *p++) != '\n' && q < &line[sizeof(line) - 4])
+		while (*p && (c = *p++) != '\n' &&
+		    q < &msg.m_msg[sizeof(msg.m_msg) - 4])
 			q = vis(q, c, 0, 0);
 
-		logline(pri, flags, LocalHostName, line);
+		logmsg(&msg, flags, LocalHostName);
 	}
 }
 
 void
-vlogmsg(int pri, const char *proc, const char *fmt, va_list ap)
+vlogmsg(int pri, const char *prog, const char *fmt, va_list ap)
 {
-	char	msg[ERRBUFSIZE];
+	struct msg msg;
 	int	l;
 
-	l = snprintf(msg, sizeof(msg), "%s[%d]: ", proc, getpid());
-	if (l < 0 || l >= sizeof(msg))
+	msg.m_pri = pri;
+	current_time(msg.m_timestamp);
+	strlcpy(msg.m_prog, prog, sizeof(msg.m_prog));
+	l = snprintf(msg.m_msg, sizeof(msg.m_msg), "%s[%d]: ", prog, getpid());
+	if (l < 0 || l >= sizeof(msg.m_msg))
 		l = 0;
-	l = vsnprintf(msg + l, sizeof(msg) - l, fmt, ap);
+	l = vsnprintf(msg.m_msg + l, sizeof(msg.m_msg) - l, fmt, ap);
 	if (l < 0)
-		strlcpy(msg, fmt, sizeof(msg));
+		strlcpy(msg.m_msg, fmt, sizeof(msg.m_msg));
 
 	if (!Started) {
-		fprintf(stderr, "%s\n", msg);
+		fprintf(stderr, "%s\n", msg.m_msg);
 		init_dropped++;
 		return;
 	}
-	logline(pri, ADDDATE, LocalHostName, msg);
+	logmsg(&msg, 0, LocalHostName);
 }
 
 struct timeval	now;
+
+void
+current_time(char *timestamp)
+{
+	(void)gettimeofday(&now, NULL);
+
+	if (ZuluTime) {
+		struct tm *tm;
+		size_t l;
+
+		tm = gmtime(&now.tv_sec);
+		l = strftime(timestamp, 33, "%FT%T", tm);
+		/*
+		 * Use only millisecond precision as some time has
+		 * passed since syslog(3) was called.
+		 */
+		snprintf(timestamp + l, 33 - l, ".%03ldZ", now.tv_usec / 1000);
+	} else
+		strlcpy(timestamp, ctime(&now.tv_sec) + 4, 16);
+}
 
 /*
  * Log a message to the appropriate log files, users, etc. based on
  * the priority.
  */
 void
-logline(int pri, int flags, char *from, char *msg)
+logmsg(struct msg *msg, int flags, char *from)
 {
 	struct filed *f;
-	int fac, msglen, prilev, i;
-	char timestamp[33];
-	char prog[NAME_MAX+1];
-
-	log_debug("logline: pri 0%o, flags 0x%x, from %s, msg %s",
-	    pri, flags, from, msg);
-
-	/*
-	 * Check to see if msg looks non-standard.
-	 */
-	timestamp[0] = '\0';
-	msglen = strlen(msg);
-	if ((flags & ADDDATE) == 0) {
-		if (msglen >= 16 && msg[3] == ' ' && msg[6] == ' ' &&
-		    msg[9] == ':' && msg[12] == ':' && msg[15] == ' ') {
-			/* BSD syslog TIMESTAMP, RFC 3164 */
-			strlcpy(timestamp, msg, 16);
-			msg += 16;
-			msglen -= 16;
-			if (ZuluTime)
-				flags |= ADDDATE;
-		} else if (msglen >= 20 &&
-		    isdigit(msg[0]) && isdigit(msg[1]) && isdigit(msg[2]) &&
-		    isdigit(msg[3]) && msg[4] == '-' &&
-		    isdigit(msg[5]) && isdigit(msg[6]) && msg[7] == '-' &&
-		    isdigit(msg[8]) && isdigit(msg[9]) && msg[10] == 'T' &&
-		    isdigit(msg[11]) && isdigit(msg[12]) && msg[13] == ':' &&
-		    isdigit(msg[14]) && isdigit(msg[15]) && msg[16] == ':' &&
-		    isdigit(msg[17]) && isdigit(msg[18]) && (msg[19] == '.' ||
-		    msg[19] == 'Z' || msg[19] == '+' || msg[19] == '-')) {
-			/* FULL-DATE "T" FULL-TIME, RFC 5424 */
-			strlcpy(timestamp, msg, sizeof(timestamp));
-			msg += 19;
-			msglen -= 19;
-			i = 0;
-			if (msglen >= 3 && msg[0] == '.' && isdigit(msg[1])) {
-				/* TIME-SECFRAC */
-				msg += 2;
-				msglen -= 2;
-				i += 2;
-				while(i < 7 && msglen >= 1 && isdigit(msg[0])) {
-					msg++;
-					msglen--;
-					i++;
-				}
-			}
-			if (msglen >= 2 && msg[0] == 'Z' && msg[1] == ' ') {
-				/* "Z" */
-				timestamp[20+i] = '\0';
-				msg += 2;
-				msglen -= 2;
-			} else if (msglen >= 7 &&
-			    (msg[0] == '+' || msg[0] == '-') &&
-			    isdigit(msg[1]) && isdigit(msg[2]) &&
-			    msg[3] == ':' &&
-			    isdigit(msg[4]) && isdigit(msg[5]) &&
-			    msg[6] == ' ') {
-				/* TIME-NUMOFFSET */
-				timestamp[25+i] = '\0';
-				msg += 7;
-				msglen -= 7;
-			} else {
-				/* invalid time format, roll back */
-				timestamp[0] = '\0';
-				msg -= 19 + i;
-				msglen += 19 + i;
-				flags |= ADDDATE;
-			}
-		} else if (msglen >= 2 && msg[0] == '-' && msg[1] == ' ') {
-			/* NILVALUE, RFC 5424 */
-			msg += 2;
-			msglen -= 2;
-			flags |= ADDDATE;
-		} else
-			flags |= ADDDATE;
-	}
+	int fac, msglen, prilev;
 
 	(void)gettimeofday(&now, NULL);
-	if (flags & ADDDATE) {
-		if (ZuluTime) {
-			struct tm *tm;
-			size_t l;
-
-			tm = gmtime(&now.tv_sec);
-			l = strftime(timestamp, sizeof(timestamp), "%FT%T", tm);
-			/*
-			 * Use only millisecond precision as some time has
-			 * passed since syslog(3) was called.
-			 */
-			snprintf(timestamp + l, sizeof(timestamp) - l,
-			    ".%03ldZ", now.tv_usec / 1000);
-		} else
-			strlcpy(timestamp, ctime(&now.tv_sec) + 4, 16);
-	}
+	log_debug("logmsg: pri 0%o, flags 0x%x, from %s, prog %s, msg %s",
+	    msg->m_pri, flags, from, msg->m_prog, msg->m_msg);
 
 	/* extract facility and priority level */
 	if (flags & MARK)
 		fac = LOG_NFACILITIES;
-	else {
-		fac = LOG_FAC(pri);
-		if (fac >= LOG_NFACILITIES || fac < 0)
-			fac = LOG_USER;
-	}
-	prilev = LOG_PRI(pri);
-
-	/* extract program name */
-	while (isspace((unsigned char)*msg)) {
-		msg++;
-		msglen--;
-	}
-	for (i = 0; i < NAME_MAX; i++) {
-		if (!isalnum((unsigned char)msg[i]) &&
-		    msg[i] != '-' && msg[i] != '.' && msg[i] != '_')
-			break;
-		prog[i] = msg[i];
-	}
-	prog[i] = 0;
+	else
+		fac = LOG_FAC(msg->m_pri);
+	prilev = LOG_PRI(msg->m_pri);
 
 	/* log the message to the particular outputs */
 	if (!Initialized) {
 		f = &consfile;
 		if (f->f_type == F_CONSOLE) {
-			strlcpy(f->f_lasttime, timestamp,
+			strlcpy(f->f_lasttime, msg->m_timestamp,
 			    sizeof(f->f_lasttime));
 			strlcpy(f->f_prevhost, from,
 			    sizeof(f->f_prevhost));
-			fprintlog(f, flags, msg);
+			fprintlog(f, flags, msg->m_msg);
 			/* May be set to F_UNUSED, try again next time. */
 			f->f_type = F_CONSOLE;
 		}
 		init_dropped++;
 		return;
 	}
+	/* log the message to the particular outputs */
+	msglen = strlen(msg->m_msg);
 	SIMPLEQ_FOREACH(f, &Files, f_next) {
 		/* skip messages that are incorrect priority */
 		if (f->f_pmask[fac] < prilev ||
@@ -1826,7 +1724,7 @@ logline(int pri, int flags, char *from, char *msg)
 			continue;
 
 		/* skip messages with the incorrect program or hostname */
-		if (f->f_program && fnmatch(f->f_program, prog, 0) != 0)
+		if (f->f_program && fnmatch(f->f_program, msg->m_prog, 0) != 0)
 			continue;
 		if (f->f_hostname && fnmatch(f->f_hostname, from, 0) != 0)
 			continue;
@@ -1846,9 +1744,9 @@ logline(int pri, int flags, char *from, char *msg)
 		    (f->f_type != F_PIPE && f->f_type != F_FORWUDP &&
 		    f->f_type != F_FORWTCP && f->f_type != F_FORWTLS))) &&
 		    (flags & MARK) == 0 && msglen == f->f_prevlen &&
-		    !strcmp(msg, f->f_prevline) &&
+		    !strcmp(msg->m_msg, f->f_prevline) &&
 		    !strcmp(from, f->f_prevhost)) {
-			strlcpy(f->f_lasttime, timestamp,
+			strlcpy(f->f_lasttime, msg->m_timestamp,
 			    sizeof(f->f_lasttime));
 			f->f_prevcount++;
 			log_debug("msg repeated %d times, %ld sec of %d",
@@ -1869,20 +1767,20 @@ logline(int pri, int flags, char *from, char *msg)
 			if (f->f_prevcount)
 				fprintlog(f, 0, (char *)NULL);
 			f->f_repeatcount = 0;
-			f->f_prevpri = pri;
-			strlcpy(f->f_lasttime, timestamp,
+			f->f_prevpri = msg->m_pri;
+			strlcpy(f->f_lasttime, msg->m_timestamp,
 			    sizeof(f->f_lasttime));
 			strlcpy(f->f_prevhost, from,
 			    sizeof(f->f_prevhost));
 			if (msglen < MAXSVLINE) {
 				f->f_prevlen = msglen;
-				strlcpy(f->f_prevline, msg,
+				strlcpy(f->f_prevline, msg->m_msg,
 				    sizeof(f->f_prevline));
 				fprintlog(f, flags, (char *)NULL);
 			} else {
 				f->f_prevline[0] = 0;
 				f->f_prevlen = 0;
-				fprintlog(f, flags, msg);
+				fprintlog(f, flags, msg->m_msg);
 			}
 		}
 
@@ -3037,12 +2935,16 @@ decode(const char *name, const CODE *codetab)
 void
 markit(void)
 {
+	struct msg msg;
 	struct filed *f;
 
-	(void)gettimeofday(&now, NULL);
+	msg.m_pri = LOG_INFO;
+	current_time(msg.m_timestamp);
+	msg.m_prog[0] = '\0';
+	strlcpy(msg.m_msg, "-- MARK --", sizeof(msg.m_msg));
 	MarkSeq += TIMERINTVL;
 	if (MarkSeq >= MarkInterval) {
-		logline(LOG_INFO, ADDDATE|MARK, LocalHostName, "-- MARK --");
+		logmsg(&msg, MARK, LocalHostName);
 		MarkSeq = 0;
 	}
 

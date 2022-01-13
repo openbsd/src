@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.h,v 1.35 2021/09/10 15:18:36 bluhm Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.36 2022/01/13 10:34:07 martijn Exp $ */
 
 /*
  * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
@@ -22,6 +22,8 @@
 #include <sys/uio.h>
 
 #include <stdarg.h>
+
+extern int	ZuluTime;
 
 /* Privilege separation */
 void  priv_init(int, int, int, char **);
