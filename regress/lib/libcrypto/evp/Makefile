@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2022/01/12 09:11:48 tb Exp $
+#	$OpenBSD: Makefile,v 1.6 2022/01/14 09:38:50 tb Exp $
 
 PROGS=	evptest evp_pkey_check
 LDADD=	-lcrypto
@@ -8,8 +8,6 @@ CFLAGS+=	-DLIBRESSL_INTERNAL -DLIBRESSL_CRYPTO_INTERNAL -Werror
 
 REGRESS_TARGETS+=	regress-evptest
 REGRESS_TARGETS+=	regress-evp_pkey_check
-
-LDADD_evp_pkey_check= ${CRYPTO_INT}  # XXX remove after bump
 
 regress-evptest:	evptest
 	./evptest ${.CURDIR}/evptests.txt
