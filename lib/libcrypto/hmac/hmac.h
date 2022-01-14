@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.h,v 1.15 2022/01/14 08:04:14 tb Exp $ */
+/* $OpenBSD: hmac.h,v 1.16 2022/01/14 08:06:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -76,11 +76,7 @@ extern "C" {
 
 HMAC_CTX *HMAC_CTX_new(void);
 void HMAC_CTX_free(HMAC_CTX *ctx);
-void HMAC_CTX_init(HMAC_CTX *ctx);
 int HMAC_CTX_reset(HMAC_CTX *ctx);
-void HMAC_CTX_cleanup(HMAC_CTX *ctx);
-
-#define HMAC_cleanup(ctx) HMAC_CTX_cleanup(ctx) /* deprecated */
 
 int HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
     const EVP_MD *md); /* deprecated */

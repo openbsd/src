@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac_local.h,v 1.2 2022/01/14 08:04:14 tb Exp $ */
+/* $OpenBSD: hmac_local.h,v 1.3 2022/01/14 08:06:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -74,6 +74,9 @@ struct hmac_ctx_st {
 	unsigned int key_length;
 	unsigned char key[HMAC_MAX_MD_CBLOCK];
 } /* HMAC_CTX */;
+
+void HMAC_CTX_init(HMAC_CTX *ctx);
+void HMAC_CTX_cleanup(HMAC_CTX *ctx);
 
 __END_HIDDEN_DECLS
 
