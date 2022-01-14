@@ -1,4 +1,4 @@
-/*	$Id: acctproc.c,v 1.22 2021/11/18 17:26:43 tb Exp $ */
+/*	$Id: acctproc.c,v 1.23 2022/01/14 09:20:18 tb Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -79,9 +79,9 @@ op_thumb_rsa(EVP_PKEY *pkey)
 
 	if ((r = EVP_PKEY_get0_RSA(pkey)) == NULL)
 		warnx("EVP_PKEY_get0_RSA");
-	else if ((mod = bn2string(r->n)) == NULL)
+	else if ((mod = bn2string(RSA_get0_n(r))) == NULL)
 		warnx("bn2string");
-	else if ((exp = bn2string(r->e)) == NULL)
+	else if ((exp = bn2string(RSA_get0_e(r))) == NULL)
 		warnx("bn2string");
 	else if ((json = json_fmt_thumb_rsa(exp, mod)) == NULL)
 		warnx("json_fmt_thumb_rsa");
@@ -207,9 +207,9 @@ op_sign_rsa(char **prot, EVP_PKEY *pkey, const char *nonce, const char *url)
 
 	if ((r = EVP_PKEY_get0_RSA(pkey)) == NULL)
 		warnx("EVP_PKEY_get0_RSA");
-	else if ((mod = bn2string(r->n)) == NULL)
+	else if ((mod = bn2string(RSA_get0_n(r))) == NULL)
 		warnx("bn2string");
-	else if ((exp = bn2string(r->e)) == NULL)
+	else if ((exp = bn2string(RSA_get0_e(r))) == NULL)
 		warnx("bn2string");
 	else if ((*prot = json_fmt_protected_rsa(exp, mod, nonce, url)) == NULL)
 		warnx("json_fmt_protected_rsa");
