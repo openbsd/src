@@ -1,4 +1,4 @@
-/* $OpenBSD: m_streebog.c,v 1.3 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: m_streebog.c,v 1.4 2022/01/14 08:38:06 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -99,7 +99,7 @@ static const EVP_MD streebog256_md = {
 	.type = NID_id_tc26_gost3411_2012_256,
 	.pkey_type = NID_undef,
 	.md_size = STREEBOG256_LENGTH,
-	.flags = EVP_MD_FLAG_PKEY_METHOD_SIGNATURE,
+	.flags = 0,
 	.init = streebog_init256,
 	.update = streebog_update256,
 	.final = streebog_final256,
@@ -111,7 +111,7 @@ static const EVP_MD streebog512_md = {
 	.type = NID_id_tc26_gost3411_2012_512,
 	.pkey_type = NID_undef,
 	.md_size = STREEBOG512_LENGTH,
-	.flags = EVP_MD_FLAG_PKEY_METHOD_SIGNATURE,
+	.flags = 0,
 	.init = streebog_init512,
 	.update = streebog_update512,
 	.final = streebog_final512,

@@ -1,4 +1,4 @@
-/* $OpenBSD: m_null.c,v 1.10 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: m_null.c,v 1.11 2022/01/14 08:38:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,11 +92,6 @@ static const EVP_MD null_md = {
 	.final = final,
 	.copy = NULL,
 	.cleanup = NULL,
-	.sign = NULL,
-	.verify = NULL,
-	.required_pkey_type = {
-		0, 0, 0, 0,
-	},
 	.block_size = 0,
 	.ctx_size = sizeof(EVP_MD *),
 };

@@ -1,4 +1,4 @@
-/* $OpenBSD: m_gostr341194.c,v 1.3 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: m_gostr341194.c,v 1.4 2022/01/14 08:38:05 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -84,7 +84,7 @@ static const EVP_MD gostr341194_md = {
 	.type = NID_id_GostR3411_94,
 	.pkey_type = NID_undef,
 	.md_size = GOSTR341194_LENGTH,
-	.flags = EVP_MD_FLAG_PKEY_METHOD_SIGNATURE,
+	.flags = 0,
 	.init = gostr341194_init,
 	.update = gostr341194_update,
 	.final = gostr341194_final,

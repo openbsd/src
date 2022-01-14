@@ -1,4 +1,4 @@
-/*	$OpenBSD: m_sm3.c,v 1.2 2021/12/12 21:30:13 tb Exp $	*/
+/*	$OpenBSD: m_sm3.c,v 1.3 2022/01/14 08:38:06 tb Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -49,19 +49,12 @@ static const EVP_MD sm3_md = {
 	.type = NID_sm3,
 	.pkey_type = NID_sm3WithRSAEncryption,
 	.md_size = SM3_DIGEST_LENGTH,
-	.flags = EVP_MD_FLAG_PKEY_METHOD_SIGNATURE|EVP_MD_FLAG_DIGALGID_ABSENT,
+	.flags = EVP_MD_FLAG_DIGALGID_ABSENT,
 	.init = sm3_init,
 	.update = sm3_update,
 	.final = sm3_final,
 	.copy = NULL,
 	.cleanup = NULL,
-#ifndef OPENSSL_NO_RSA
-	.sign = (evp_sign_method *)RSA_sign,
-	.verify = (evp_verify_method *)RSA_verify,
-	.required_pkey_type = {
-		EVP_PKEY_RSA, EVP_PKEY_RSA2, 0, 0,
-	},
-#endif
 	.block_size = SM3_CBLOCK,
 	.ctx_size = sizeof(EVP_MD *) + sizeof(SM3_CTX),
 };

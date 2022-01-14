@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.98 2022/01/14 08:04:14 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.99 2022/01/14 08:38:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -128,15 +128,6 @@ extern "C" {
 #define EVP_MD_FLAG_ONESHOT	0x0001 /* digest can only handle a single
 					* block */
 
-#define EVP_MD_FLAG_PKEY_DIGEST	0x0002 /* digest is a "clone" digest used
-					* which is a copy of an existing
-					* one for a specific public key type.
-					* EVP_dss1() etc */
-
-/* Digest uses EVP_PKEY_METHOD for signing instead of MD specific signing */
-
-#define EVP_MD_FLAG_PKEY_METHOD_SIGNATURE	0x0004
-
 /* DigestAlgorithmIdentifier flags... */
 
 #define EVP_MD_FLAG_DIGALGID_MASK		0x0018
@@ -165,38 +156,6 @@ extern "C" {
 /* Minimum Algorithm specific ctrl value */
 
 #define	EVP_MD_CTRL_ALG_CTRL			0x1000
-
-#define EVP_PKEY_NULL_method	NULL,NULL,{0,0,0,0}
-
-#ifndef OPENSSL_NO_DSA
-#define EVP_PKEY_DSA_method	(evp_sign_method *)DSA_sign, \
-				(evp_verify_method *)DSA_verify, \
-				{EVP_PKEY_DSA,EVP_PKEY_DSA2,EVP_PKEY_DSA3, \
-					EVP_PKEY_DSA4,0}
-#else
-#define EVP_PKEY_DSA_method	EVP_PKEY_NULL_method
-#endif
-
-#ifndef OPENSSL_NO_ECDSA
-#define EVP_PKEY_ECDSA_method   (evp_sign_method *)ECDSA_sign, \
-				(evp_verify_method *)ECDSA_verify, \
-                                 {EVP_PKEY_EC,0,0,0}
-#else
-#define EVP_PKEY_ECDSA_method   EVP_PKEY_NULL_method
-#endif
-
-#ifndef OPENSSL_NO_RSA
-#define EVP_PKEY_RSA_method	(evp_sign_method *)RSA_sign, \
-				(evp_verify_method *)RSA_verify, \
-				{EVP_PKEY_RSA,EVP_PKEY_RSA2,0,0}
-#define EVP_PKEY_RSA_ASN1_OCTET_STRING_method \
-				(evp_sign_method *)RSA_sign_ASN1_OCTET_STRING, \
-				(evp_verify_method *)RSA_verify_ASN1_OCTET_STRING, \
-				{EVP_PKEY_RSA,EVP_PKEY_RSA2,0,0}
-#else
-#define EVP_PKEY_RSA_method	EVP_PKEY_NULL_method
-#define EVP_PKEY_RSA_ASN1_OCTET_STRING_method EVP_PKEY_NULL_method
-#endif
 
 #endif /* !EVP_MD */
 
@@ -598,9 +557,6 @@ const EVP_MD *EVP_md5_sha1(void);
 #endif
 #ifndef OPENSSL_NO_SHA
 const EVP_MD *EVP_sha1(void);
-const EVP_MD *EVP_dss(void);
-const EVP_MD *EVP_dss1(void);
-const EVP_MD *EVP_ecdsa(void);
 #endif
 #ifndef OPENSSL_NO_SHA256
 const EVP_MD *EVP_sha224(void);

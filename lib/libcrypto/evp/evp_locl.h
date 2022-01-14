@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_locl.h,v 1.21 2022/01/14 08:04:14 tb Exp $ */
+/* $OpenBSD: evp_locl.h,v 1.22 2022/01/14 08:38:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -116,9 +116,6 @@ struct env_md_st {
 	int (*copy)(EVP_MD_CTX *to, const EVP_MD_CTX *from);
 	int (*cleanup)(EVP_MD_CTX *ctx);
 
-	evp_sign_method *sign;
-	evp_verify_method *verify;
-	int required_pkey_type[5]; /*EVP_PKEY_xxx */
 	int block_size;
 	int ctx_size; /* how big does the ctx->md_data need to be */
 	/* control function */

@@ -1,4 +1,4 @@
-/* $OpenBSD: c_all.c,v 1.26 2019/03/17 18:07:41 tb Exp $ */
+/* $OpenBSD: c_all.c,v 1.27 2022/01/14 08:38:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -263,24 +263,10 @@ OpenSSL_add_all_digests_internal(void)
 	EVP_add_digest_alias(SN_md5, "ssl3-md5");
 #endif
 
-#if !defined(OPENSSL_NO_SHA)
-#ifndef OPENSSL_NO_DSA
-	EVP_add_digest(EVP_dss());
-#endif
-#endif
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
 	EVP_add_digest(EVP_sha1());
 	EVP_add_digest_alias(SN_sha1, "ssl3-sha1");
 	EVP_add_digest_alias(SN_sha1WithRSAEncryption, SN_sha1WithRSA);
-#ifndef OPENSSL_NO_DSA
-	EVP_add_digest(EVP_dss1());
-	EVP_add_digest_alias(SN_dsaWithSHA1, SN_dsaWithSHA1_2);
-	EVP_add_digest_alias(SN_dsaWithSHA1, "DSS1");
-	EVP_add_digest_alias(SN_dsaWithSHA1, "dss1");
-#endif
-#ifndef OPENSSL_NO_ECDSA
-	EVP_add_digest(EVP_ecdsa());
-#endif
 #endif
 
 #ifndef OPENSSL_NO_GOST

@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.3 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.4 2022/01/14 08:38:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -265,15 +265,12 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 		rv = 2;
 
 	if (rv == 2) {
-		if (type->flags & EVP_MD_FLAG_PKEY_METHOD_SIGNATURE) {
-			if (!pkey->ameth ||
-			    !OBJ_find_sigid_by_algs(&signid,
-				EVP_MD_nid(type), pkey->ameth->pkey_id)) {
-				ASN1error(ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
-				return 0;
-			}
-		} else
-			signid = type->pkey_type;
+		if (!pkey->ameth ||
+		    !OBJ_find_sigid_by_algs(&signid, EVP_MD_nid(type),
+		    pkey->ameth->pkey_id)) {
+			ASN1error(ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+			return 0;
+		}
 
 		if (pkey->ameth->pkey_flags & ASN1_PKEY_SIGPARAM_NULL)
 			paramtype = V_ASN1_NULL;

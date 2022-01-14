@@ -1,4 +1,4 @@
-/* $OpenBSD: p_sign.c,v 1.15 2021/12/12 21:30:13 tb Exp $ */
+/* $OpenBSD: p_sign.c,v 1.16 2022/01/14 08:38:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,9 +71,10 @@ EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 {
 	unsigned char m[EVP_MAX_MD_SIZE];
 	unsigned int m_len;
-	int i = 0, ok = 0, v;
 	EVP_MD_CTX tmp_ctx;
 	EVP_PKEY_CTX *pkctx = NULL;
+	size_t sltmp;
+	int ret = 0;
 
 	*siglen = 0;
 	EVP_MD_CTX_init(&tmp_ctx);
@@ -83,43 +84,21 @@ EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 		goto err;
 	EVP_MD_CTX_cleanup(&tmp_ctx);
 
-	if (ctx->digest->flags & EVP_MD_FLAG_PKEY_METHOD_SIGNATURE) {
-		size_t sltmp = (size_t)EVP_PKEY_size(pkey);
-		i = 0;
-		pkctx = EVP_PKEY_CTX_new(pkey, NULL);
-		if (!pkctx)
-			goto err;
-		if (EVP_PKEY_sign_init(pkctx) <= 0)
-			goto err;
-		if (EVP_PKEY_CTX_set_signature_md(pkctx, ctx->digest) <= 0)
-			goto err;
-		if (EVP_PKEY_sign(pkctx, sigret, &sltmp, m, m_len) <= 0)
-			goto err;
-		*siglen = sltmp;
-		i = 1;
-err:
-		EVP_PKEY_CTX_free(pkctx);
-		return i;
-	}
+	sltmp = (size_t)EVP_PKEY_size(pkey);
 
-	for (i = 0; i < 4; i++) {
-		v = ctx->digest->required_pkey_type[i];
-		if (v == 0)
-			break;
-		if (pkey->type == v) {
-			ok = 1;
-			break;
-		}
-	}
-	if (!ok) {
-		EVPerror(EVP_R_WRONG_PUBLIC_KEY_TYPE);
-		return (0);
-	}
+	if ((pkctx = EVP_PKEY_CTX_new(pkey, NULL)) == NULL)
+		goto err;
+	if (EVP_PKEY_sign_init(pkctx) <= 0)
+		goto err;
+	if (EVP_PKEY_CTX_set_signature_md(pkctx, ctx->digest) <= 0)
+		goto err;
+	if (EVP_PKEY_sign(pkctx, sigret, &sltmp, m, m_len) <= 0)
+		goto err;
+	*siglen = sltmp;
 
-	if (ctx->digest->sign == NULL) {
-		EVPerror(EVP_R_NO_SIGN_FUNCTION_CONFIGURED);
-		return (0);
-	}
-	return(ctx->digest->sign(ctx->digest->type, m, m_len, sigret, siglen,
-	    pkey->pkey.ptr));
+	ret = 1;
+
+ err:
+	EVP_PKEY_CTX_free(pkctx);
+	return ret;
 }
