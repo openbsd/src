@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lu.c,v 1.54 2022/01/05 20:18:19 tb Exp $ */
+/* $OpenBSD: x509_lu.c,v 1.55 2022/01/14 07:53:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -230,7 +230,15 @@ X509_OBJECT_free(X509_OBJECT *a)
 	if (a == NULL)
 		return;
 
-	X509_OBJECT_free_contents(a);
+	switch (a->type) {
+	case X509_LU_X509:
+		X509_free(a->data.x509);
+		break;
+	case X509_LU_CRL:
+		X509_CRL_free(a->data.crl);
+		break;
+	}
+
 	free(a);
 }
 
@@ -438,21 +446,6 @@ X509_LOOKUP_TYPE
 X509_OBJECT_get_type(const X509_OBJECT *a)
 {
 	return a->type;
-}
-
-void
-X509_OBJECT_free_contents(X509_OBJECT *a)
-{
-	switch (a->type) {
-	case X509_LU_X509:
-		X509_free(a->data.x509);
-		break;
-	case X509_LU_CRL:
-		X509_CRL_free(a->data.crl);
-		break;
-	}
-	memset(a, 0, sizeof(*a));
-	a->type = X509_LU_NONE;
 }
 
 static int
