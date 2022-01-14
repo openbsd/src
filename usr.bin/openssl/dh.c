@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.12 2019/07/14 03:30:45 guenther Exp $ */
+/* $OpenBSD: dh.c,v 1.13 2022/01/14 09:21:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -234,14 +234,14 @@ dh_main(int argc, char **argv)
 		unsigned char *data;
 		int len, l, bits;
 
-		len = BN_num_bytes(dh->p);
-		bits = BN_num_bits(dh->p);
+		len = BN_num_bytes(DH_get0_p(dh));
+		bits = BN_num_bits(DH_get0_p(dh));
 		data = malloc(len);
 		if (data == NULL) {
 			perror("malloc");
 			goto end;
 		}
-		l = BN_bn2bin(dh->p, data);
+		l = BN_bn2bin(DH_get0_p(dh), data);
 		printf("static unsigned char dh%d_p[] = {", bits);
 		for (i = 0; i < l; i++) {
 			if ((i % 12) == 0)
@@ -250,7 +250,7 @@ dh_main(int argc, char **argv)
 		}
 		printf("\n\t};\n");
 
-		l = BN_bn2bin(dh->g, data);
+		l = BN_bn2bin(DH_get0_g(dh), data);
 		printf("static unsigned char dh%d_g[] = {", bits);
 		for (i = 0; i < l; i++) {
 			if ((i % 12) == 0)
@@ -260,14 +260,16 @@ dh_main(int argc, char **argv)
 		printf("\n\t};\n\n");
 
 		printf("DH *get_dh%d()\n\t{\n", bits);
-		printf("\tDH *dh;\n\n");
+		printf("\tDH *dh;\n");
+		printf("\tBIGNUM *p = NULL, *g = NULL;\n\n");
 		printf("\tif ((dh = DH_new()) == NULL) return(NULL);\n");
-		printf("\tdh->p = BN_bin2bn(dh%d_p, sizeof(dh%d_p), NULL);\n",
+		printf("\tp = BN_bin2bn(dh%d_p, sizeof(dh%d_p), NULL);\n",
 		    bits, bits);
-		printf("\tdh->g = BN_bin2bn(dh%d_g, sizeof(dh%d_g), NULL);\n",
+		printf("\tg = BN_bin2bn(dh%d_g, sizeof(dh%d_g), NULL);\n",
 		    bits, bits);
-		printf("\tif ((dh->p == NULL) || (dh->g == NULL))\n");
-		printf("\t\treturn(NULL);\n");
+		printf("\tif (p == NULL || g == NULL)\n");
+		printf("\t\t{ BN_free(p); BN_free(q); DH_free(dh); return(NULL); }\n");
+		printf("\tDH_set0_pqg(dh, p, NULL, g);\n");
 		printf("\treturn(dh);\n\t}\n");
 		free(data);
 	}
