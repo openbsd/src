@@ -1,4 +1,4 @@
-/* $OpenBSD: auxil.c,v 1.11 2015/12/14 03:35:40 mmcc Exp $ */
+/* $OpenBSD: auxil.c,v 1.12 2022/01/14 09:08:03 tb Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -53,22 +53,22 @@ keynote_keyhash(void *key, int alg)
     {
 	case KEYNOTE_ALGORITHM_DSA:
 	    dsa = (DSA *) key;
-	    res += BN_mod_word(dsa->p, HASHTABLESIZE);
-	    res += BN_mod_word(dsa->q, HASHTABLESIZE);
-	    res += BN_mod_word(dsa->g, HASHTABLESIZE);
-	    res += BN_mod_word(dsa->pub_key, HASHTABLESIZE);
+	    res += BN_mod_word(DSA_get0_p(dsa), HASHTABLESIZE);
+	    res += BN_mod_word(DSA_get0_q(dsa), HASHTABLESIZE);
+	    res += BN_mod_word(DSA_get0_g(dsa), HASHTABLESIZE);
+	    res += BN_mod_word(DSA_get0_pub_key(dsa), HASHTABLESIZE);
 	    return res % HASHTABLESIZE;
 
         case KEYNOTE_ALGORITHM_RSA:
 	    rsa = (RSA *) key;
-            res += BN_mod_word(rsa->n, HASHTABLESIZE);
-            res += BN_mod_word(rsa->e, HASHTABLESIZE);
+            res += BN_mod_word(RSA_get0_n(rsa), HASHTABLESIZE);
+            res += BN_mod_word(RSA_get0_e(rsa), HASHTABLESIZE);
 	    return res % HASHTABLESIZE;
 
 	case KEYNOTE_ALGORITHM_X509: /* RSA-specific */
 	    rsa = (RSA *) key;
-            res += BN_mod_word(rsa->n, HASHTABLESIZE);
-            res += BN_mod_word(rsa->e, HASHTABLESIZE);
+            res += BN_mod_word(RSA_get0_n(rsa), HASHTABLESIZE);
+            res += BN_mod_word(RSA_get0_e(rsa), HASHTABLESIZE);
 	    return res % HASHTABLESIZE;
 
 	case KEYNOTE_ALGORITHM_BINARY:

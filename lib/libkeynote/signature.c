@@ -1,4 +1,4 @@
-/* $OpenBSD: signature.c,v 1.28 2022/01/11 12:14:07 tb Exp $ */
+/* $OpenBSD: signature.c,v 1.29 2022/01/14 09:08:03 tb Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -588,10 +588,10 @@ kn_keycompare(void *key1, void *key2, int algorithm)
 	case KEYNOTE_ALGORITHM_DSA:
 	    p1 = (DSA *) key1;
 	    p2 = (DSA *) key2;
-	    if (!BN_cmp(p1->p, p2->p) &&
-		!BN_cmp(p1->q, p2->q) &&
-		!BN_cmp(p1->g, p2->g) &&
-		!BN_cmp(p1->pub_key, p2->pub_key))
+	    if (!BN_cmp(DSA_get0_p(p1), DSA_get0_p(p2)) &&
+		!BN_cmp(DSA_get0_q(p1), DSA_get0_q(p2)) &&
+		!BN_cmp(DSA_get0_g(p1), DSA_get0_g(p2)) &&
+		!BN_cmp(DSA_get0_pub_key(p1), DSA_get0_pub_key(p2)))
 	      return RESULT_TRUE;
 	    else
 	      return RESULT_FALSE;
@@ -599,8 +599,8 @@ kn_keycompare(void *key1, void *key2, int algorithm)
 	case KEYNOTE_ALGORITHM_X509:
             p3 = (RSA *) key1;
             p4 = (RSA *) key2;
-            if (!BN_cmp(p3->n, p4->n) &&
-                !BN_cmp(p3->e, p4->e))
+            if (!BN_cmp(RSA_get0_n(p3), RSA_get0_n(p4)) &&
+                !BN_cmp(RSA_get0_e(p3), RSA_get0_e(p4)))
               return RESULT_TRUE;
             else
 	      return RESULT_FALSE;
@@ -608,8 +608,8 @@ kn_keycompare(void *key1, void *key2, int algorithm)
 	case KEYNOTE_ALGORITHM_RSA:
             p3 = (RSA *) key1;
             p4 = (RSA *) key2;
-            if (!BN_cmp(p3->n, p4->n) &&
-                !BN_cmp(p3->e, p4->e))
+            if (!BN_cmp(RSA_get0_n(p3), RSA_get0_n(p4)) &&
+                !BN_cmp(RSA_get0_e(p3), RSA_get0_e(p4)))
               return RESULT_TRUE;
             else
 	      return RESULT_FALSE;
