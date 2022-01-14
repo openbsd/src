@@ -1,4 +1,4 @@
-/* $OpenBSD: safestack.h,v 1.20 2021/12/19 14:33:53 jsing Exp $ */
+/* $OpenBSD: safestack.h,v 1.21 2022/01/14 08:59:30 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -663,7 +663,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define sk_CRYPTO_dynlock_sort(st) SKM_sk_sort(CRYPTO_dynlock, (st))
 #define sk_CRYPTO_dynlock_is_sorted(st) SKM_sk_is_sorted(CRYPTO_dynlock, (st))
 
-#ifdef LIBRESSL_CRYPTO_INTERNAL
 #define sk_CTLOG_new(cmp) SKM_sk_new(CTLOG, (cmp))
 #define sk_CTLOG_new_null() SKM_sk_new_null(CTLOG)
 #define sk_CTLOG_free(st) SKM_sk_free(CTLOG, (st))
@@ -685,7 +684,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define sk_CTLOG_pop(st) SKM_sk_pop(CTLOG, (st))
 #define sk_CTLOG_sort(st) SKM_sk_sort(CTLOG, (st))
 #define sk_CTLOG_is_sorted(st) SKM_sk_is_sorted(CTLOG, (st))
-#endif
 
 #define sk_DIST_POINT_new(cmp) SKM_sk_new(DIST_POINT, (cmp))
 #define sk_DIST_POINT_new_null() SKM_sk_new_null(DIST_POINT)
@@ -1303,7 +1301,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define sk_POLICY_MAPPING_sort(st) SKM_sk_sort(POLICY_MAPPING, (st))
 #define sk_POLICY_MAPPING_is_sorted(st) SKM_sk_is_sorted(POLICY_MAPPING, (st))
 
-#ifdef LIBRESSL_CRYPTO_INTERNAL
 #define sk_SCT_new(cmp) SKM_sk_new(SCT, (cmp))
 #define sk_SCT_new_null() SKM_sk_new_null(SCT)
 #define sk_SCT_free(st) SKM_sk_free(SCT, (st))
@@ -1325,7 +1322,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define sk_SCT_pop(st) SKM_sk_pop(SCT, (st))
 #define sk_SCT_sort(st) SKM_sk_sort(SCT, (st))
 #define sk_SCT_is_sorted(st) SKM_sk_is_sorted(SCT, (st))
-#endif
 
 #define sk_SRTP_PROTECTION_PROFILE_new(cmp) SKM_sk_new(SRTP_PROTECTION_PROFILE, (cmp))
 #define sk_SRTP_PROTECTION_PROFILE_new_null() SKM_sk_new_null(SRTP_PROTECTION_PROFILE)

@@ -1,4 +1,4 @@
-/* $OpenBSD: ossl_typ.h,v 1.20 2022/01/14 08:34:39 tb Exp $ */
+/* $OpenBSD: ossl_typ.h,v 1.21 2022/01/14 08:59:30 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -187,12 +187,10 @@ typedef struct ocsp_req_ctx_st OCSP_REQ_CTX;
 typedef struct ocsp_response_st OCSP_RESPONSE;
 typedef struct ocsp_responder_id_st OCSP_RESPID;
 
-#ifdef LIBRESSL_CRYPTO_INTERNAL
 typedef struct sct_st SCT;
 typedef struct sct_ctx_st SCT_CTX;
 typedef struct ctlog_st CTLOG;
 typedef struct ctlog_store_st CTLOG_STORE;
 typedef struct ct_policy_eval_ctx_st CT_POLICY_EVAL_CTX;
-#endif
 
 #endif /* def HEADER_OPENSSL_TYPES_H */

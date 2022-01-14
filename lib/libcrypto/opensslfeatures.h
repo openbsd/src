@@ -40,9 +40,7 @@
 #define OPENSSL_NO_COMP /* XXX */
 /* #define OPENSSL_NO_CRYPTO_MDEBUG */
 /* #define OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE */
-#ifndef LIBRESSL_CRYPTO_INTERNAL
-#define OPENSSL_NO_CT  /* XXX until we expose it */
-#endif
+/* #define OPENSSL_NO_CT */
 /* #define OPENSSL_NO_DECC_INIT */
 /* #define OPENSSL_NO_DES */
 /* #define OPENSSL_NO_DEVCRYPTOENG */
