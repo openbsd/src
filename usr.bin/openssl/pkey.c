@@ -1,4 +1,4 @@
-/* $OpenBSD: pkey.c,v 1.16 2022/01/10 12:17:49 tb Exp $ */
+/* $OpenBSD: pkey.c,v 1.17 2022/01/14 10:17:30 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -266,7 +266,6 @@ pkey_main(int argc, char **argv)
 	if (!pkey)
 		goto end;
 
-#if notyet
 	if (pkey_config.check) {
 		if (!pkey_check(out, pkey, EVP_PKEY_check, "Key pair"))
 			goto end;
@@ -274,7 +273,6 @@ pkey_main(int argc, char **argv)
 		if (!pkey_check(out, pkey, EVP_PKEY_public_check, "Public key"))
 			goto end;
 	}
-#endif
 
 	if (!pkey_config.noout) {
 		if (pkey_config.outformat == FORMAT_PEM) {

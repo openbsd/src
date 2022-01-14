@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyparam.c,v 1.13 2022/01/10 12:17:49 tb Exp $ */
+/* $OpenBSD: pkeyparam.c,v 1.14 2022/01/14 10:17:30 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -165,12 +165,10 @@ pkeyparam_main(int argc, char **argv)
 		goto end;
 	}
 
-#if notyet
 	if (pkeyparam_config.check) {
 		if (!pkey_check(out, pkey, EVP_PKEY_param_check, "Parameters"))
 			goto end;
 	}
-#endif
 
 	if (!pkeyparam_config.noout)
 		PEM_write_bio_Parameters(out, pkey);
