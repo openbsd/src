@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.60 2022/01/14 08:09:18 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.61 2022/01/14 08:12:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -484,11 +484,6 @@ ASN1_SEQUENCE_ANY *d2i_ASN1_SET_ANY(ASN1_SEQUENCE_ANY **a, const unsigned char *
 int i2d_ASN1_SET_ANY(const ASN1_SEQUENCE_ANY *a, unsigned char **out);
 extern const ASN1_ITEM ASN1_SET_ANY_it;
 
-typedef struct NETSCAPE_X509_st {
-	ASN1_OCTET_STRING *header;
-	X509 *cert;
-} NETSCAPE_X509;
-
 /* This is used to contain a list of bit names */
 typedef struct BIT_STRING_BITNAME_st {
 	int bitnum;
@@ -849,14 +844,6 @@ int ASN1_parse_dump(BIO *bp, const unsigned char *pp, long len, int indent, int 
 
 unsigned long ASN1_tag2bit(int tag);
 const char *ASN1_tag2str(int tag);
-
-/* Used to load and write netscape format cert */
-
-NETSCAPE_X509 *NETSCAPE_X509_new(void);
-void NETSCAPE_X509_free(NETSCAPE_X509 *a);
-NETSCAPE_X509 *d2i_NETSCAPE_X509(NETSCAPE_X509 **a, const unsigned char **in, long len);
-int i2d_NETSCAPE_X509(NETSCAPE_X509 *a, unsigned char **out);
-extern const ASN1_ITEM NETSCAPE_X509_it;
 
 int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s);
 

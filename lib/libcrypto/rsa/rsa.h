@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.53 2022/01/14 07:49:49 tb Exp $ */
+/* $OpenBSD: rsa.h,v 1.54 2022/01/14 08:12:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -378,18 +378,6 @@ int RSA_print_fp(FILE *fp, const RSA *r, int offset);
 
 #ifndef OPENSSL_NO_BIO
 int RSA_print(BIO *bp, const RSA *r, int offset);
-#endif
-
-#ifndef OPENSSL_NO_RC4
-int i2d_RSA_NET(const RSA *a, unsigned char **pp,
-    int (*cb)(char *buf, int len, const char *prompt, int verify), int sgckey);
-RSA *d2i_RSA_NET(RSA **a, const unsigned char **pp, long length,
-    int (*cb)(char *buf, int len, const char *prompt, int verify), int sgckey);
-
-int i2d_Netscape_RSA(const RSA *a, unsigned char **pp,
-    int (*cb)(char *buf, int len, const char *prompt, int verify));
-RSA *d2i_Netscape_RSA(RSA **a, const unsigned char **pp, long length,
-    int (*cb)(char *buf, int len, const char *prompt, int verify));
 #endif
 
 /* The following 2 functions sign and verify a X509_SIG ASN1 object
