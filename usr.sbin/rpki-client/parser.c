@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.36 2022/01/13 14:58:21 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.37 2022/01/14 15:00:23 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -50,6 +50,7 @@ static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
 struct parse_repo {
 	RB_ENTRY(parse_repo)	 entry;
 	char			*path;
+	char			*validpath;
 	unsigned int		 id;
 };
 
@@ -72,20 +73,75 @@ repo_get(unsigned int id)
 }
 
 static void
-repo_add(unsigned int id, char *path)
+repo_add(unsigned int id, char *path, char *validpath)
 {
 	struct parse_repo *rp;
 
-	if ((rp = malloc(sizeof(*rp))) == NULL)
+	if ((rp = calloc(1, sizeof(*rp))) == NULL)
 		err(1, NULL);
 	rp->id = id;
-	if ((rp->path = strdup(path)) == NULL)
-		err(1, NULL);
+	if (path != NULL)
+		if ((rp->path = strdup(path)) == NULL)
+			err(1, NULL);
+	if (validpath != NULL)
+		if ((rp->validpath = strdup(validpath)) == NULL)
+			err(1, NULL);
 
 	if (RB_INSERT(repo_tree, &repos, rp) != NULL)
 		errx(1, "repository already added: id %d, %s", id, path);
 }
 
+/*
+ * Build access path to file based on repoid, path and file values.
+ * If wantalt == 1 the function can return NULL, if wantalt == 0 it
+ * can not fail.
+ */
+static char *
+parse_filepath(unsigned int repoid, const char *path, const char *file,
+    int wantalt)
+{
+	struct parse_repo	*rp;
+	char			*fn, *repopath;
+
+	/* build file path based on repoid, entity path and filename */
+	rp = repo_get(repoid);
+	if (rp == NULL) {
+		/* no repo so no alternative path. */
+		if (wantalt)
+			return NULL;
+
+		if (path == NULL) {
+			if ((fn = strdup(file)) == NULL)
+				err(1, NULL);
+		} else {
+			if (asprintf(&fn, "%s/%s", path, file) == -1)
+				err(1, NULL);
+		}
+	} else {
+		if (wantalt || rp->path == NULL)
+			repopath = rp->validpath;
+		else
+			repopath = rp->path;
+
+		if (repopath == NULL)
+			return NULL;
+
+		if (path == NULL) {
+			if (asprintf(&fn, "%s/%s", repopath, file) == -1)
+				err(1, NULL);
+		} else {
+			if (asprintf(&fn, "%s/%s/%s", repopath, path,
+			    file) == -1)
+				err(1, NULL);
+		}
+	}
+	return fn;
+}
+
+/*
+ * Callback for X509_verify_cert() to handle critical extensions in old
+ * LibreSSL libraries or OpenSSL libs without RFC3779 support.
+ */
 static int
 verify_cb(int ok, X509_STORE_CTX *store_ctx)
 {
@@ -229,13 +285,8 @@ int
 mft_check(const char *fn, struct mft *p)
 {
 	size_t	i;
-	int	fd, rc = 1;
-	char	*cp, *h, *path = NULL;
-
-	/* Check hash of file now, but first build path for it */
-	cp = strrchr(fn, '/');
-	assert(cp != NULL);
-	assert(cp - fn < INT_MAX);
+	int	fd, try, rc = 1;
+	char	*h, *path;
 
 	for (i = 0; i < p->filesz; i++) {
 		const struct mftfile *m = &p->files[i];
@@ -246,15 +297,24 @@ mft_check(const char *fn, struct mft *p)
 			free(h);
 			continue;
 		}
-		if (asprintf(&path, "%.*s/%s", (int)(cp - fn), fn,
-		    m->file) == -1)
-			err(1, NULL);
-		fd = open(path, O_RDONLY);
+
+		fd = -1;
+		try = 0;
+		path = NULL;
+		do {
+			free(path);
+			if ((path = parse_filepath(p->repoid, p->path, m->file,
+			    try++)) == NULL)
+				break;
+			fd = open(path, O_RDONLY);
+		} while (fd == -1 && try < 2);
+
+		free(path);
+
 		if (!valid_filehash(fd, m->hash, sizeof(m->hash))) {
 			warnx("%s: bad message digest for %s", fn, m->file);
 			rc = 0;
 		}
-		free(path);
 	}
 
 	return rc;
@@ -631,33 +691,40 @@ build_crls(const struct crl *crl, STACK_OF(X509_CRL) **crls)
 }
 
 static char *
-parse_filepath(struct entity *entp)
+parse_load_file(struct entity *entp, unsigned char **f, size_t *flen)
 {
-	struct parse_repo	*rp;
-	char			*file;
+	char *file, *nfile;
 
-	/* build file path based on repoid, entity path and filename */
-	rp = repo_get(entp->repoid);
-	if (rp == NULL) {
-		if (entp->path == NULL) {
-			if ((file = strdup(entp->file)) == NULL)
-					err(1, NULL);
-		} else {
-			if (asprintf(&file, "%s/%s", entp->path,
-			    entp->file) == -1)
-				err(1, NULL);
-		}
-	} else {
-		if (entp->path == NULL) {
-			if (asprintf(&file, "%s/%s", rp->path,
-			    entp->file) == -1)
-				err(1, NULL);
-		} else {
-			if (asprintf(&file, "%s/%s/%s", rp->path,
-			    entp->path, entp->file) == -1)
-				err(1, NULL);
-		}
+	file = parse_filepath(entp->repoid, entp->path, entp->file, 0);
+
+	/* TAL files include the data already */
+	if (entp->type == RTYPE_TAL) {
+		*f = NULL;
+		*flen = 0;
+		return file;
 	}
+
+	*f = load_file(file, flen);
+	if (*f != NULL)
+		return file;
+
+	if (errno != ENOENT)
+		goto fail;
+
+	/* try alternate file location */
+	nfile = parse_filepath(entp->repoid, entp->path, entp->file, 1);
+	if (nfile == NULL)
+		goto fail;
+
+	free(file);
+	file = nfile;
+
+	*f = load_file(file, flen);
+	if (*f != NULL)
+		return file;
+
+fail:
+	warn("parse file %s", file);
 	return file;
 }
 
@@ -680,20 +747,14 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 
 		/* handle RTYPE_REPO first */
 		if (entp->type == RTYPE_REPO) {
-			repo_add(entp->repoid, entp->path);
+			repo_add(entp->repoid, entp->path, entp->file);
 			entity_free(entp);
 			continue;
 		}
 
-		f = NULL;
-		file = parse_filepath(entp);
-		if (entp->type != RTYPE_TAL) {
-			f = load_file(file, &flen);
-			if (f == NULL)
-				warn("%s", file);
-		}
+		file = parse_load_file(entp, &f, &flen);
 
-		/* pass back at least type and filename */
+		/* pass back at least type, repoid and filename */
 		b = io_new_buffer();
 		io_simple_buffer(b, &entp->type, sizeof(entp->type));
 		io_str_buffer(b, file);

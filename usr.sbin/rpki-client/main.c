@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.175 2022/01/13 13:18:41 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.176 2022/01/14 15:00:23 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -151,20 +151,22 @@ entity_write_repo(struct repo *rp)
 	struct ibuf *b;
 	enum rtype type = RTYPE_REPO;
 	unsigned int repoid;
-	char *path;
+	char *path, *altpath;
 	int talid = 0;
 
 	repoid = repo_id(rp);
-	path = repo_basedir(rp);
+	path = repo_basedir(rp, 0);
+	altpath = repo_basedir(rp, 1);
 	b = io_new_buffer();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &repoid, sizeof(repoid));
 	io_simple_buffer(b, &talid, sizeof(talid));
 	io_str_buffer(b, path);
-	io_str_buffer(b, NULL);
+	io_str_buffer(b, altpath);
 	io_buf_buffer(b, NULL, 0);
 	io_close_buffer(&procq, b);
 	free(path);
+	free(altpath);
 }
 
 /*
@@ -254,14 +256,15 @@ rrdp_fetch(unsigned int id, const char *uri, const char *local,
  * Request a repository sync via rsync URI to directory local.
  */
 void
-rsync_fetch(unsigned int id, const char *uri, const char *local)
+rsync_fetch(unsigned int id, const char *uri, const char *local,
+    const char *base)
 {
 	struct ibuf	*b;
 
 	b = io_new_buffer();
 	io_simple_buffer(b, &id, sizeof(id));
 	io_str_buffer(b, local);
-	io_str_buffer(b, NULL);
+	io_str_buffer(b, base);
 	io_str_buffer(b, uri);
 	io_close_buffer(&rsyncq, b);
 }
@@ -1246,8 +1249,8 @@ main(int argc, char *argv[])
 	logx("Certificate revocation lists: %zu", stats.crls);
 	logx("Ghostbuster records: %zu", stats.gbrs);
 	logx("Repositories: %zu", stats.repos);
-	logx("Cleanup: removed %zu files, %zu directories",
-	    stats.del_files, stats.del_dirs);
+	logx("Cleanup: removed %zu files, %zu directories, %zu superfluous",
+	    stats.del_files, stats.del_dirs, stats.extra_files);
 	logx("VRP Entries: %zu (%zu unique)", stats.vrps, stats.uniqs);
 
 	/* Memory cleanup. */

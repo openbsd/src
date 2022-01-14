@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.103 2022/01/13 13:46:03 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.104 2022/01/14 15:00:23 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -341,7 +341,7 @@ enum publish_type {
 struct entity {
 	TAILQ_ENTRY(entity) entries;
 	char		*path;		/* path relative to repository */
-	char		*file;		/* filename */
+	char		*file;		/* filename or valid repo path */
 	unsigned char	*data;		/* optional data blob */
 	size_t		 datasz; 	/* length of optional data blob */
 	unsigned int	 repoid;	/* repository identifier */
@@ -380,6 +380,7 @@ struct stats {
 	size_t	 vrps; /* total number of vrps */
 	size_t	 uniqs; /* number of unique vrps */
 	size_t	 del_files; /* number of files removed in cleanup */
+	size_t	 extra_files; /* number of superfluous files */
 	size_t	 del_dirs; /* number of directories removed in cleanup */
 	size_t	 brks; /* number of BGPsec Router Key (BRK) certificates */
 	struct timeval	elapsed_time;
@@ -506,7 +507,7 @@ void		 rrdp_clear(unsigned int);
 void		 rrdp_save_state(unsigned int, struct rrdp_session *);
 int		 rrdp_handle_file(unsigned int, enum publish_type, char *,
 		    char *, size_t, char *, size_t);
-char		*repo_basedir(const struct repo *);
+char		*repo_basedir(const struct repo *, int);
 unsigned int	 repo_id(const struct repo *);
 const char	*repo_uri(const struct repo *);
 struct repo	*ta_lookup(int, struct tal *);
@@ -520,7 +521,8 @@ void		 rsync_finish(unsigned int, int);
 void		 http_finish(unsigned int, enum http_result, const char *);
 void		 rrdp_finish(unsigned int, int);
 
-void		 rsync_fetch(unsigned int, const char *, const char *);
+void		 rsync_fetch(unsigned int, const char *, const char *,
+		    const char *);
 void		 http_fetch(unsigned int, const char *, const char *, int);
 void		 rrdp_fetch(unsigned int, const char *, const char *,
 		    struct rrdp_session *);
