@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.18 2021/11/20 18:10:48 tb Exp $ */
+/* $OpenBSD: genrsa.c,v 1.19 2022/01/14 09:25:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -278,7 +278,6 @@ genrsa_main(int argc, char **argv)
 	BIO *out = NULL;
 	BIGNUM *bn = NULL;
 	RSA *rsa = NULL;
-	const BIGNUM *rsa_e = NULL;
 	char *rsa_e_hex = NULL, *rsa_e_dec = NULL;
 
 	if (single_execution) {
@@ -342,10 +341,9 @@ genrsa_main(int argc, char **argv)
 	    !RSA_generate_key_ex(rsa, num, bn, cb))
 		goto err;
 
-	RSA_get0_key(rsa, NULL, &rsa_e, NULL);
-	if ((rsa_e_hex = BN_bn2hex(rsa_e)) == NULL)
+	if ((rsa_e_hex = BN_bn2hex(RSA_get0_e(rsa))) == NULL)
 		goto err;
-	if ((rsa_e_dec = BN_bn2dec(rsa_e)) == NULL)
+	if ((rsa_e_dec = BN_bn2dec(RSA_get0_e(rsa))) == NULL)
 		goto err;
 
 	BIO_printf(bio_err, "e is %s (0x%s)\n", rsa_e_hex, rsa_e_dec);
