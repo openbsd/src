@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_record_layer.c,v 1.66 2022/01/06 18:18:13 jsing Exp $ */
+/* $OpenBSD: tls13_record_layer.c,v 1.67 2022/01/14 09:12:15 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -40,10 +40,7 @@ tls13_record_protection_new(void)
 void
 tls13_record_protection_clear(struct tls13_record_protection *rp)
 {
-	if (rp->aead_ctx != NULL) {
-		EVP_AEAD_CTX_cleanup(rp->aead_ctx);
-		freezero(rp->aead_ctx, sizeof(*rp->aead_ctx));
-	}
+	EVP_AEAD_CTX_free(rp->aead_ctx);
 
 	tls13_secret_cleanup(&rp->iv);
 	tls13_secret_cleanup(&rp->nonce);
@@ -461,7 +458,7 @@ tls13_record_layer_set_traffic_key(const EVP_AEAD *aead, const EVP_MD *hash,
 
 	tls13_record_protection_clear(rp);
 
-	if ((rp->aead_ctx = calloc(1, sizeof(*rp->aead_ctx))) == NULL)
+	if ((rp->aead_ctx = EVP_AEAD_CTX_new()) == NULL)
 		return 0;
 
 	if (!tls13_secret_init(&rp->iv, EVP_AEAD_nonce_length(aead)))

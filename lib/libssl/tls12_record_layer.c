@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.35 2021/10/23 15:02:27 jsing Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.36 2022/01/14 09:12:15 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -61,10 +61,7 @@ tls12_record_protection_new(void)
 static void
 tls12_record_protection_clear(struct tls12_record_protection *rp)
 {
-	if (rp->aead_ctx != NULL) {
-		EVP_AEAD_CTX_cleanup(rp->aead_ctx);
-		freezero(rp->aead_ctx, sizeof(*rp->aead_ctx));
-	}
+	EVP_AEAD_CTX_free(rp->aead_ctx);
 
 	freezero(rp->aead_nonce, rp->aead_nonce_len);
 	freezero(rp->aead_fixed_nonce, rp->aead_fixed_nonce_len);
@@ -422,7 +419,7 @@ tls12_record_layer_ccs_aead(struct tls12_record_layer *rl,
 	if (!tls12_record_protection_unused(rp))
 		return 0;
 
-	if ((rp->aead_ctx = calloc(1, sizeof(*rp->aead_ctx))) == NULL)
+	if ((rp->aead_ctx = EVP_AEAD_CTX_new()) == NULL)
 		return 0;
 
 	/* AES GCM cipher suites use variable nonce in record. */
