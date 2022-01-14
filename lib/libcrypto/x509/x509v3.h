@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.12 2021/12/24 13:58:15 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.13 2022/01/14 08:50:25 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -772,7 +772,6 @@ int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value, int crit
 
 char *hex_to_string(const unsigned char *buffer, long len);
 unsigned char *string_to_hex(const char *str, long *len);
-int name_cmp(const char *name, const char *cmp);
 
 void X509V3_EXT_val_prn(BIO *out, STACK_OF(CONF_VALUE) *val, int indent,
 								 int ml);

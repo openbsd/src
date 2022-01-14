@@ -377,6 +377,8 @@ struct x509_store_ctx_st {
 
 int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int quiet);
 
+int name_cmp(const char *name, const char *cmp);
+
 __END_HIDDEN_DECLS
 
 #endif /* !HEADER_X509_LCL_H */
