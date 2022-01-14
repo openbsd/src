@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_kex.c,v 1.9 2022/01/11 18:28:41 jsing Exp $ */
+/* $OpenBSD: ssl_kex.c,v 1.10 2022/01/14 09:11:22 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -34,9 +34,9 @@ ssl_kex_generate_dhe(DH *dh, DH *dh_params)
 	BIGNUM *p = NULL, *g = NULL;
 	int ret = 0;
 
-	if ((p = BN_dup(dh_params->p)) == NULL)
+	if ((p = BN_dup(DH_get0_p(dh_params))) == NULL)
 		goto err;
-	if ((g = BN_dup(dh_params->g)) == NULL)
+	if ((g = BN_dup(DH_get0_g(dh_params))) == NULL)
 		goto err;
 
 	if (!DH_set0_pqg(dh, p, NULL, g))
@@ -107,23 +107,23 @@ ssl_kex_params_dhe(DH *dh, CBB *cbb)
 	CBB dh_p, dh_g;
 	uint8_t *data;
 
-	if ((dh_p_len = BN_num_bytes(dh->p)) <= 0)
+	if ((dh_p_len = BN_num_bytes(DH_get0_p(dh))) <= 0)
 		return 0;
-	if ((dh_g_len = BN_num_bytes(dh->g)) <= 0)
+	if ((dh_g_len = BN_num_bytes(DH_get0_g(dh))) <= 0)
 		return 0;
 
 	if (!CBB_add_u16_length_prefixed(cbb, &dh_p))
 		return 0;
 	if (!CBB_add_space(&dh_p, &data, dh_p_len))
 		return 0;
-	if (BN_bn2bin(dh->p, data) != dh_p_len)
+	if (BN_bn2bin(DH_get0_p(dh), data) != dh_p_len)
 		return 0;
 
 	if (!CBB_add_u16_length_prefixed(cbb, &dh_g))
 		return 0;
 	if (!CBB_add_space(&dh_g, &data, dh_g_len))
 		return 0;
-	if (BN_bn2bin(dh->g, data) != dh_g_len)
+	if (BN_bn2bin(DH_get0_g(dh), data) != dh_g_len)
 		return 0;
 
 	if (!CBB_flush(cbb))
@@ -139,14 +139,14 @@ ssl_kex_public_dhe(DH *dh, CBB *cbb)
 	int dh_y_len;
 	CBB dh_y;
 
-	if ((dh_y_len = BN_num_bytes(dh->pub_key)) <= 0)
+	if ((dh_y_len = BN_num_bytes(DH_get0_pub_key(dh))) <= 0)
 		return 0;
 
 	if (!CBB_add_u16_length_prefixed(cbb, &dh_y))
 		return 0;
 	if (!CBB_add_space(&dh_y, &data, dh_y_len))
 		return 0;
-	if (BN_bn2bin(dh->pub_key, data) != dh_y_len)
+	if (BN_bn2bin(DH_get0_pub_key(dh), data) != dh_y_len)
 		return 0;
 
 	if (!CBB_flush(cbb))
@@ -224,7 +224,7 @@ ssl_kex_peer_public_dhe(DH *dh, CBS *cbs, int *decode_error,
 		goto err;
 	pub_key = NULL;
 
-	if (!DH_check_pub_key(dh, dh->pub_key, &check_flags))
+	if (!DH_check_pub_key(dh, DH_get0_pub_key(dh), &check_flags))
 		goto err;
 	if (check_flags != 0)
 		*invalid_key = 1;
@@ -250,7 +250,7 @@ ssl_kex_derive_dhe(DH *dh, DH *dh_peer,
 	if ((key = calloc(1, key_len)) == NULL)
 		goto err;
 
-	if ((key_len = DH_compute_key(key, dh_peer->pub_key, dh)) <= 0)
+	if ((key_len = DH_compute_key(key, DH_get0_pub_key(dh_peer), dh)) <= 0)
 		goto err;
 
 	*shared_key = key;
