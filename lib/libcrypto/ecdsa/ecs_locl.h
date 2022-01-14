@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_locl.h,v 1.6 2019/01/19 01:07:00 tb Exp $ */
+/* $OpenBSD: ecs_locl.h,v 1.7 2022/01/14 08:31:03 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -72,6 +72,11 @@ typedef struct ecdsa_data_st {
 	const ECDSA_METHOD *meth;
 	CRYPTO_EX_DATA ex_data;
 } ECDSA_DATA;
+
+struct ECDSA_SIG_st {
+	BIGNUM *r;
+	BIGNUM *s;
+};
 
 /** ecdsa_check
  * checks whether ECKEY->meth_data is a pointer to a ECDSA_DATA structure

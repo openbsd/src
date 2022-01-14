@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.h,v 1.10 2022/01/14 07:49:49 tb Exp $ */
+/* $OpenBSD: ecdsa.h,v 1.11 2022/01/14 08:31:03 tb Exp $ */
 /**
  * \file   crypto/ecdsa/ecdsa.h Include file for the OpenSSL ECDSA functions
  * \author Written by Nils Larsch for the OpenSSL project
@@ -85,10 +85,6 @@ struct ecdsa_method {
 	    BIGNUM **r);
 	int (*ecdsa_do_verify)(const unsigned char *dgst, int dgst_len,
 	    const ECDSA_SIG *sig, EC_KEY *eckey);
-#if 0
-	int (*init)(EC_KEY *eckey);
-	int (*finish)(EC_KEY *eckey);
-#endif
 	int flags;
 	char *app_data;
 };
@@ -100,11 +96,6 @@ struct ecdsa_method {
  */
 
 #define ECDSA_FLAG_FIPS_METHOD  0x1
-
-struct ECDSA_SIG_st {
-	BIGNUM *r;
-	BIGNUM *s;
-};
 
 /** Allocates and initialize a ECDSA_SIG structure
  *  \return pointer to a ECDSA_SIG structure or NULL if an error occurred
