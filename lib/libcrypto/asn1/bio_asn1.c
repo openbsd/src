@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_asn1.c,v 1.16 2022/01/07 09:02:17 tb Exp $ */
+/* $OpenBSD: bio_asn1.c,v 1.17 2022/01/14 08:40:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -118,7 +118,7 @@ static int asn1_bio_gets(BIO *h, char *str, int size);
 static long asn1_bio_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int asn1_bio_new(BIO *h);
 static int asn1_bio_free(BIO *data);
-static long asn1_bio_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+static long asn1_bio_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 
 static int asn1_bio_flush_ex(BIO *b, BIO_ASN1_BUF_CTX *ctx,
     asn1_ps_func *cleanup, asn1_bio_state_t next);
@@ -346,7 +346,7 @@ asn1_bio_gets(BIO *b, char *str, int size)
 }
 
 static long
-asn1_bio_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+asn1_bio_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
 	if (b->next_bio == NULL)
 		return (0);

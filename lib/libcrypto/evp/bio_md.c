@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_md.c,v 1.17 2022/01/07 09:02:18 tb Exp $ */
+/* $OpenBSD: bio_md.c,v 1.18 2022/01/14 08:40:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,7 +75,7 @@ static int md_gets(BIO *h, char *str, int size);
 static long md_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int md_new(BIO *h);
 static int md_free(BIO *data);
-static long md_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+static long md_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 
 static const BIO_METHOD methods_md = {
 	.type = BIO_TYPE_MD,
@@ -241,7 +241,7 @@ md_ctrl(BIO *b, int cmd, long num, void *ptr)
 }
 
 static long
-md_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+md_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
 	long ret = 1;
 

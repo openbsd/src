@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_null.c,v 1.13 2022/01/07 09:02:17 tb Exp $ */
+/* $OpenBSD: bf_null.c,v 1.14 2022/01/14 08:40:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,7 +73,7 @@ static int nullf_gets(BIO *h, char *str, int size);
 static long nullf_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int nullf_new(BIO *h);
 static int nullf_free(BIO *data);
-static long nullf_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+static long nullf_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 
 static const BIO_METHOD methods_nullf = {
 	.type = BIO_TYPE_NULL_FILTER,
@@ -167,7 +167,7 @@ nullf_ctrl(BIO *b, int cmd, long num, void *ptr)
 }
 
 static long
-nullf_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+nullf_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
 	long ret = 1;
 

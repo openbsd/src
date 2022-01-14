@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_local.h,v 1.2 2022/01/14 08:18:55 tb Exp $ */
+/* $OpenBSD: bio_local.h,v 1.3 2022/01/14 08:40:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,13 +71,13 @@ struct bio_method_st {
 	long (*ctrl)(BIO *, int, long, void *);
 	int (*create)(BIO *);
 	int (*destroy)(BIO *);
-	long (*callback_ctrl)(BIO *, int, bio_info_cb *);
+	long (*callback_ctrl)(BIO *, int, BIO_info_cb *);
 } /* BIO_METHOD */;
 
 struct bio_st {
 	const BIO_METHOD *method;
-	/* bio, mode, argp, argi, argl, ret */
-	long (*callback)(struct bio_st *, int, const char *, int, long, long);
+	BIO_callback_fn callback;
+	BIO_callback_fn_ex callback_ex;
 	char *cb_arg; /* first argument for the callback */
 
 	int init;

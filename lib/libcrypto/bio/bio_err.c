@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_err.c,v 1.17 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bio_err.c,v 1.18 2022/01/14 08:40:57 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -92,6 +92,7 @@ static ERR_STRING_DATA BIO_str_reasons[] = {
 	{ERR_REASON(BIO_R_INVALID_PORT_NUMBER)   , "invalid port number"},
 	{ERR_REASON(BIO_R_IN_USE)                , "in use"},
 	{ERR_REASON(BIO_R_KEEPALIVE)             , "keepalive"},
+	{ERR_REASON(BIO_R_LENGTH_TOO_LONG)       , "too long"},
 	{ERR_REASON(BIO_R_NBIO_CONNECT_ERROR)    , "nbio connect error"},
 	{ERR_REASON(BIO_R_NO_ACCEPT_PORT_SPECIFIED), "no accept port specified"},
 	{ERR_REASON(BIO_R_NO_HOSTNAME_SPECIFIED) , "no hostname specified"},

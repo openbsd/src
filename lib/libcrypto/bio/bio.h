@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.53 2022/01/14 08:18:55 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.54 2022/01/14 08:40:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -250,21 +250,30 @@ void BIO_clear_flags(BIO *b, int flags);
 #define BIO_CB_GETS	0x05
 #define BIO_CB_CTRL	0x06
 
-/* The callback is called before and after the underling operation,
- * The BIO_CB_RETURN flag indicates if it is after the call */
+/*
+ * The callback is called before and after the underling operation,
+ * the BIO_CB_RETURN flag indicates if it is after the call.
+ */
 #define BIO_CB_RETURN	0x80
 #define BIO_CB_return(a) ((a)|BIO_CB_RETURN))
 #define BIO_cb_pre(a)	(!((a)&BIO_CB_RETURN))
 #define BIO_cb_post(a)	((a)&BIO_CB_RETURN)
 
-long (*BIO_get_callback(const BIO *b))(struct bio_st *, int, const char *,
-    int, long, long);
-void BIO_set_callback(BIO *b,
-    long (*callback)(struct bio_st *, int, const char *, int, long, long));
+typedef long (*BIO_callback_fn)(BIO *b, int oper, const char *argp, int argi,
+    long argl, long ret);
+typedef long (*BIO_callback_fn_ex)(BIO *b, int oper, const char *argp,
+    size_t len, int argi, long argl, int ret, size_t *processed);
+
+BIO_callback_fn BIO_get_callback(const BIO *b);
+void BIO_set_callback(BIO *b, BIO_callback_fn callback);
+
+BIO_callback_fn_ex BIO_get_callback_ex(const BIO *b);
+void BIO_set_callback_ex(BIO *b, BIO_callback_fn_ex callback);
+
 char *BIO_get_callback_arg(const BIO *b);
 void BIO_set_callback_arg(BIO *b, char *arg);
 
-const char * BIO_method_name(const BIO *b);
+const char *BIO_method_name(const BIO *b);
 int BIO_method_type(const BIO *b);
 
 typedef void bio_info_cb(struct bio_st *, int, const char *, int, long, long);
@@ -563,8 +572,7 @@ int	BIO_write(BIO *b, const void *data, int len)
 int	BIO_puts(BIO *bp, const char *buf);
 int	BIO_indent(BIO *b, int indent, int max);
 long	BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
-long	BIO_callback_ctrl(BIO *b, int cmd,
-	    void (*fp)(struct bio_st *, int, const char *, int, long, long));
+long	BIO_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp);
 char *	BIO_ptr_ctrl(BIO *bp, int cmd, long larg);
 long	BIO_int_ctrl(BIO *bp, int cmd, long larg, int iarg);
 BIO *	BIO_push(BIO *b, BIO *append);
@@ -732,6 +740,7 @@ void ERR_load_BIO_strings(void);
 #define BIO_R_INVALID_PORT_NUMBER			 129
 #define BIO_R_IN_USE					 123
 #define BIO_R_KEEPALIVE					 109
+#define BIO_R_LENGTH_TOO_LONG				 130
 #define BIO_R_NBIO_CONNECT_ERROR			 110
 #define BIO_R_NO_ACCEPT_PORT_SPECIFIED			 111
 #define BIO_R_NO_HOSTNAME_SPECIFIED			 112

@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_lbuf.c,v 1.14 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bf_lbuf.c,v 1.15 2022/01/14 08:40:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,7 +69,7 @@ static int linebuffer_gets(BIO *h, char *str, int size);
 static long linebuffer_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int linebuffer_new(BIO *h);
 static int linebuffer_free(BIO *data);
-static long linebuffer_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+static long linebuffer_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 
 /* A 10k maximum should be enough for most purposes */
 #define DEFAULT_LINEBUFFER_SIZE	1024*10
@@ -348,7 +348,7 @@ malloc_error:
 }
 
 static long
-linebuffer_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+linebuffer_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
 	long ret = 1;
 

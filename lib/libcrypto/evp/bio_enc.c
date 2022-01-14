@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_enc.c,v 1.25 2022/01/07 09:02:18 tb Exp $ */
+/* $OpenBSD: bio_enc.c,v 1.26 2022/01/14 08:40:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,7 +73,7 @@ static int enc_read(BIO *h, char *buf, int size);
 static long enc_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int enc_new(BIO *h);
 static int enc_free(BIO *data);
-static long enc_callback_ctrl(BIO *h, int cmd, bio_info_cb *fps);
+static long enc_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fps);
 #define ENC_BLOCK_SIZE	(1024*4)
 #define BUF_OFFSET	(EVP_MAX_BLOCK_LENGTH*2)
 
@@ -373,7 +373,7 @@ again:
 }
 
 static long
-enc_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+enc_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
 	long ret = 1;
 

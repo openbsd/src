@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_buff.c,v 1.26 2022/01/07 09:02:17 tb Exp $ */
+/* $OpenBSD: bf_buff.c,v 1.27 2022/01/14 08:40:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,7 +72,7 @@ static int buffer_gets(BIO *h, char *str, int size);
 static long buffer_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int buffer_new(BIO *h);
 static int buffer_free(BIO *data);
-static long buffer_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+static long buffer_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 #define DEFAULT_BUFFER_SIZE	4096
 
 static const BIO_METHOD methods_buffer = {
@@ -452,7 +452,7 @@ malloc_error:
 }
 
 static long
-buffer_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+buffer_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
 	long ret = 1;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: c_zlib.c,v 1.21 2022/01/09 23:50:10 tb Exp $ */
+/* $OpenBSD: c_zlib.c,v 1.22 2022/01/14 08:40:57 tb Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -234,7 +234,7 @@ static int bio_zlib_free(BIO *bi);
 static int bio_zlib_read(BIO *b, char *out, int outl);
 static int bio_zlib_write(BIO *b, const char *in, int inl);
 static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr);
-static long bio_zlib_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp);
+static long bio_zlib_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp);
 
 static BIO_METHOD bio_meth_zlib = {
 	.type = BIO_TYPE_COMP,
@@ -555,7 +555,7 @@ bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 
 static long
-bio_zlib_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+bio_zlib_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
 	if (!b->next_bio)
 		return 0;
