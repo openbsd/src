@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.286 2022/01/11 18:43:00 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.287 2022/01/14 09:10:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -596,8 +596,8 @@ SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio)
 	/* If the output buffering BIO is still in place, remove it */
 	if (s->bbio != NULL) {
 		if (s->wbio == s->bbio) {
-			s->wbio = s->wbio->next_bio;
-			s->bbio->next_bio = NULL;
+			s->wbio = BIO_next(s->wbio);
+			BIO_set_next(s->bbio, NULL);
 		}
 	}
 
