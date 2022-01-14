@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_local.h,v 1.2 2022/01/10 12:00:52 tb Exp $ */
+/* $OpenBSD: dh_local.h,v 1.3 2022/01/14 08:25:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -60,6 +60,48 @@
 #define HEADER_DH_LOCAL_H
 
 __BEGIN_HIDDEN_DECLS
+
+struct dh_method {
+	const char *name;
+	/* Methods here */
+	int (*generate_key)(DH *dh);
+	int (*compute_key)(unsigned char *key,const BIGNUM *pub_key,DH *dh);
+	int (*bn_mod_exp)(const DH *dh, BIGNUM *r, const BIGNUM *a,
+	    const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+	int (*init)(DH *dh);
+	int (*finish)(DH *dh);
+	int flags;
+	char *app_data;
+	/* If this is non-NULL, it will be used to generate parameters */
+	int (*generate_params)(DH *dh, int prime_len, int generator,
+	    BN_GENCB *cb);
+};
+
+struct dh_st {
+	/* This first argument is used to pick up errors when
+	 * a DH is passed instead of a EVP_PKEY */
+	int pad;
+	int version;
+	BIGNUM *p;
+	BIGNUM *g;
+	long length; /* optional */
+	BIGNUM *pub_key;	/* g^x */
+	BIGNUM *priv_key;	/* x */
+
+	int flags;
+	BN_MONT_CTX *method_mont_p;
+	/* Place holders if we want to do X9.42 DH */
+	BIGNUM *q;
+	BIGNUM *j;
+	unsigned char *seed;
+	int seedlen;
+	BIGNUM *counter;
+
+	int references;
+	CRYPTO_EX_DATA ex_data;
+	const DH_METHOD *meth;
+	ENGINE *engine;
+};
 
 /*
  * Public API in OpenSSL that we only want to use internally.

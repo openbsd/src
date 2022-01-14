@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.h,v 1.31 2022/01/14 07:49:49 tb Exp $ */
+/* $OpenBSD: dh.h,v 1.32 2022/01/14 08:25:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,55 +97,6 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-/* Already defined in ossl_typ.h */
-/* typedef struct dh_st DH; */
-/* typedef struct dh_method DH_METHOD; */
-
-struct dh_method
-	{
-	const char *name;
-	/* Methods here */
-	int (*generate_key)(DH *dh);
-	int (*compute_key)(unsigned char *key,const BIGNUM *pub_key,DH *dh);
-	int (*bn_mod_exp)(const DH *dh, BIGNUM *r, const BIGNUM *a,
-				const BIGNUM *p, const BIGNUM *m, BN_CTX *ctx,
-				BN_MONT_CTX *m_ctx); /* Can be null */
-
-	int (*init)(DH *dh);
-	int (*finish)(DH *dh);
-	int flags;
-	char *app_data;
-	/* If this is non-NULL, it will be used to generate parameters */
-	int (*generate_params)(DH *dh, int prime_len, int generator, BN_GENCB *cb);
-	};
-
-struct dh_st
-	{
-	/* This first argument is used to pick up errors when
-	 * a DH is passed instead of a EVP_PKEY */
-	int pad;
-	int version;
-	BIGNUM *p;
-	BIGNUM *g;
-	long length; /* optional */
-	BIGNUM *pub_key;	/* g^x */
-	BIGNUM *priv_key;	/* x */
-
-	int flags;
-	BN_MONT_CTX *method_mont_p;
-	/* Place holders if we want to do X9.42 DH */
-	BIGNUM *q;
-	BIGNUM *j;
-	unsigned char *seed;
-	int seedlen;
-	BIGNUM *counter;
-
-	int references;
-	CRYPTO_EX_DATA ex_data;
-	const DH_METHOD *meth;
-	ENGINE *engine;
-	};
 
 #define DH_GENERATOR_2		2
 /* #define DH_GENERATOR_3	3 */
