@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.33 2022/01/05 20:52:14 tb Exp $ */
+/* $OpenBSD: dsa.h,v 1.34 2022/01/14 07:49:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -202,9 +202,7 @@ void	DSA_free(DSA *r);
 /* "up" the DSA object's reference count */
 int	DSA_up_ref(DSA *r);
 int	DSA_size(const DSA *);
-#if defined(LIBRESSL_OPAQUE_DSA) || defined(LIBRESSL_CRYPTO_INTERNAL)
 int	DSA_bits(const DSA *d);
-#endif
 	/* next 4 return -1 on error */
 int	DSA_sign_setup( DSA *dsa,BN_CTX *ctx_in,BIGNUM **kinvp,BIGNUM **rp);
 int	DSA_sign(int type,const unsigned char *dgst,int dlen,
@@ -270,13 +268,11 @@ void DSA_get0_pqg(const DSA *d, const BIGNUM **p, const BIGNUM **q,
 int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g);
 void DSA_get0_key(const DSA *d, const BIGNUM **pub_key, const BIGNUM **priv_key);
 int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key);
-#if defined(LIBRESSL_OPAQUE_DSA) || defined(LIBRESSL_CRYPTO_INTERNAL)
 const BIGNUM *DSA_get0_p(const DSA *d);
 const BIGNUM *DSA_get0_q(const DSA *d);
 const BIGNUM *DSA_get0_g(const DSA *d);
 const BIGNUM *DSA_get0_pub_key(const DSA *d);
 const BIGNUM *DSA_get0_priv_key(const DSA *d);
-#endif
 void DSA_clear_flags(DSA *d, int flags);
 int DSA_test_flags(const DSA *d, int flags);
 void DSA_set_flags(DSA *d, int flags);

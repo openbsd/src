@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.96 2022/01/12 08:52:25 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.97 2022/01/14 07:49:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -495,7 +495,6 @@ int EVP_MD_size(const EVP_MD *md);
 int EVP_MD_block_size(const EVP_MD *md);
 unsigned long EVP_MD_flags(const EVP_MD *md);
 
-#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_CRYPTO_INTERNAL)
 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type);
 void EVP_MD_meth_free(EVP_MD *md);
 EVP_MD *EVP_MD_meth_dup(const EVP_MD *md);
@@ -513,14 +512,11 @@ int EVP_MD_meth_set_copy(EVP_MD *md,
 int EVP_MD_meth_set_cleanup(EVP_MD *md, int (*cleanup)(EVP_MD_CTX *ctx));
 int EVP_MD_meth_set_ctrl(EVP_MD *md,
     int (*ctrl)(EVP_MD_CTX *ctx, int cmd, int p1, void *p2));
-#endif
 
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
 void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || defined(LIBRESSL_NEXT_API)
 EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx);
 void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
-#endif
 #define EVP_MD_CTX_size(e)		EVP_MD_size(EVP_MD_CTX_md(e))
 #define EVP_MD_CTX_block_size(e)	EVP_MD_block_size(EVP_MD_CTX_md(e))
 #define EVP_MD_CTX_type(e)		EVP_MD_type(EVP_MD_CTX_md(e))
@@ -546,11 +542,9 @@ int EVP_CIPHER_CTX_set_iv(EVP_CIPHER_CTX *ctx,
 int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in);
 void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
 void EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data);
-#if defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_CRYPTO_INTERNAL)
 void *EVP_CIPHER_CTX_get_cipher_data(const EVP_CIPHER_CTX *ctx);
 void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data);
 unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx);
-#endif
 #define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
 unsigned long EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx);
 #define EVP_CIPHER_CTX_mode(e)		(EVP_CIPHER_CTX_flags(e) & EVP_CIPH_MODE)
@@ -1107,14 +1101,12 @@ void EVP_PKEY_asn1_set_free(EVP_PKEY_ASN1_METHOD *ameth,
 void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
     int (*pkey_ctrl)(EVP_PKEY *pkey, int op, long arg1, void *arg2));
 
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || defined(LIBRESSL_NEXT_API)
 void EVP_PKEY_asn1_set_check(EVP_PKEY_ASN1_METHOD *ameth,
     int (*pkey_check)(const EVP_PKEY *pk));
 void EVP_PKEY_asn1_set_public_check(EVP_PKEY_ASN1_METHOD *ameth,
     int (*pkey_public_check)(const EVP_PKEY *pk));
 void EVP_PKEY_asn1_set_param_check(EVP_PKEY_ASN1_METHOD *ameth,
     int (*pkey_check)(const EVP_PKEY *pk));
-#endif
 
 #define EVP_PKEY_OP_UNDEFINED		0
 #define EVP_PKEY_OP_PARAMGEN		(1<<1)
@@ -1242,11 +1234,9 @@ int EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
 int EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey);
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || defined(LIBRESSL_NEXT_API)
 int EVP_PKEY_check(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx);
-#endif
 
 void EVP_PKEY_CTX_set_cb(EVP_PKEY_CTX *ctx, EVP_PKEY_gen_cb *cb);
 EVP_PKEY_gen_cb *EVP_PKEY_CTX_get_cb(EVP_PKEY_CTX *ctx);
@@ -1313,14 +1303,12 @@ void EVP_PKEY_meth_set_ctrl(EVP_PKEY_METHOD *pmeth,
     int (*ctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2),
     int (*ctrl_str)(EVP_PKEY_CTX *ctx, const char *type, const char *value));
 
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || defined(LIBRESSL_NEXT_API)
 void EVP_PKEY_meth_set_check(EVP_PKEY_METHOD *pmeth,
     int (*check)(EVP_PKEY *pkey));
 void EVP_PKEY_meth_set_public_check(EVP_PKEY_METHOD *pmeth,
     int (*public_check)(EVP_PKEY *pkey));
 void EVP_PKEY_meth_set_param_check(EVP_PKEY_METHOD *pmeth,
     int (*param_check)(EVP_PKEY *pkey));
-#endif
 
 /* Authenticated Encryption with Additional Data.
  *
@@ -1378,7 +1366,6 @@ typedef struct evp_aead_ctx_st {
  * should be used. */
 #define EVP_AEAD_DEFAULT_TAG_LENGTH 0
 
-#if defined(LIBRESSL_CRYPTO_INTERNAL) || defined(LIBRESSL_NEXT_API)
 /* EVP_AEAD_CTX_new allocates a new context for use with EVP_AEAD_CTX_init.
  * It can be cleaned up for reuse with EVP_AEAD_CTX_cleanup and must be freed
  * with EVP_AEAD_CTX_free. */
@@ -1386,7 +1373,6 @@ EVP_AEAD_CTX *EVP_AEAD_CTX_new(void);
 
 /* EVP_AEAD_CTX_free releases all memory owned by the context. */
 void EVP_AEAD_CTX_free(EVP_AEAD_CTX *ctx);
-#endif
 
 /* EVP_AEAD_CTX_init initializes the context for the given AEAD algorithm.
  * The implementation argument may be NULL to choose the default implementation.
