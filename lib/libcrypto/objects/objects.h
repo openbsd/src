@@ -1,4 +1,4 @@
-/* $OpenBSD: objects.h,v 1.16 2022/01/14 08:52:05 tb Exp $ */
+/* $OpenBSD: objects.h,v 1.17 2022/01/14 08:56:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1010,94 +1010,14 @@ int		OBJ_txt2nid(const char *s);
 int		OBJ_ln2nid(const char *s);
 int		OBJ_sn2nid(const char *s);
 int		OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b);
+
+#if defined(LIBRESSL_INTERNAL)
 const void *	OBJ_bsearch_(const void *key, const void *base, int num,
 		    int size, int (*cmp)(const void *, const void *));
 const void *	OBJ_bsearch_ex_(const void *key, const void *base, int num,
 		    int size, int (*cmp)(const void *, const void *),
 		    int flags);
-
-#ifndef LIBRESSL_INTERNAL
-
-#define _DECLARE_OBJ_BSEARCH_CMP_FN(scope, type1, type2, nm)	\
-  static int nm##_cmp_BSEARCH_CMP_FN(const void *, const void *); \
-  static int nm##_cmp(type1 const *, type2 const *); \
-  scope type2 * OBJ_bsearch_##nm(type1 *key, type2 const *base, int num)
-
-#define DECLARE_OBJ_BSEARCH_CMP_FN(type1, type2, cmp)	\
-  _DECLARE_OBJ_BSEARCH_CMP_FN(static, type1, type2, cmp)
-#define DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(type1, type2, nm)	\
-  type2 * OBJ_bsearch_##nm(type1 *key, type2 const *base, int num)
-
-/*
- * Unsolved problem: if a type is actually a pointer type, like
- * nid_triple is, then its impossible to get a const where you need
- * it. Consider:
- *
- * typedef int nid_triple[3];
- * const void *a_;
- * const nid_triple const *a = a_;
- *
- * The assignement discards a const because what you really want is:
- *
- * const int const * const *a = a_;
- *
- * But if you do that, you lose the fact that a is an array of 3 ints,
- * which breaks comparison functions.
- *
- * Thus we end up having to cast, sadly, or unpack the
- * declarations. Or, as I finally did in this case, delcare nid_triple
- * to be a struct, which it should have been in the first place.
- *
- * Ben, August 2008.
- *
- * Also, strictly speaking not all types need be const, but handling
- * the non-constness means a lot of complication, and in practice
- * comparison routines do always not touch their arguments.
- */
-
-#define IMPLEMENT_OBJ_BSEARCH_CMP_FN(type1, type2, nm)	\
-  static int nm##_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)	\
-      { \
-      type1 const *a = a_; \
-      type2 const *b = b_; \
-      return nm##_cmp(a,b); \
-      } \
-  static type2 *OBJ_bsearch_##nm(type1 *key, type2 const *base, int num) \
-      { \
-      return (type2 *)OBJ_bsearch_(key, base, num, sizeof(type2), \
-					nm##_cmp_BSEARCH_CMP_FN); \
-      } \
-      extern void dummy_prototype(void)
-
-#define IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(type1, type2, nm)	\
-  static int nm##_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)	\
-      { \
-      type1 const *a = a_; \
-      type2 const *b = b_; \
-      return nm##_cmp(a,b); \
-      } \
-  type2 *OBJ_bsearch_##nm(type1 *key, type2 const *base, int num) \
-      { \
-      return (type2 *)OBJ_bsearch_(key, base, num, sizeof(type2), \
-					nm##_cmp_BSEARCH_CMP_FN); \
-      } \
-      extern void dummy_prototype(void)
-
-#define OBJ_bsearch(type1,key,type2,base,num,cmp)			       \
-  ((type2 *)OBJ_bsearch_(CHECKED_PTR_OF(type1,key),CHECKED_PTR_OF(type2,base), \
-			 num,sizeof(type2),				\
-			 ((void)CHECKED_PTR_OF(type1,cmp##_type_1),	\
-			  (void)CHECKED_PTR_OF(type2,cmp##_type_2),	\
-			  cmp##_BSEARCH_CMP_FN)))
-
-#define OBJ_bsearch_ex(type1,key,type2,base,num,cmp,flags)			\
-  ((type2 *)OBJ_bsearch_ex_(CHECKED_PTR_OF(type1,key),CHECKED_PTR_OF(type2,base), \
-			 num,sizeof(type2),				\
-			 ((void)CHECKED_PTR_OF(type1,cmp##_type_1),	\
-			  (void)type_2=CHECKED_PTR_OF(type2,cmp##_type_2), \
-			  cmp##_BSEARCH_CMP_FN)),flags)
-
-#endif /* !LIBRESSL_INTERNAL */
+#endif
 
 int		OBJ_new_nid(int num);
 int		OBJ_add_object(const ASN1_OBJECT *obj);
