@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.1 2020/07/05 20:01:35 kettenis Exp $
+dnl	$OpenBSD: hardware,v 1.2 2022/01/14 00:14:39 jsg Exp $
 OpenBSD/MACHINE OSREV should work on all non-virtualized POWER9
 machines with OPAL firmware.  This includes the Talos II and Blackbird
-systems available from Raptor Computng Systems
+systems available from Raptor Computing Systems.
