@@ -1,4 +1,4 @@
-/* $OpenBSD: ossl_typ.h,v 1.18 2022/01/14 08:18:55 tb Exp $ */
+/* $OpenBSD: ossl_typ.h,v 1.19 2022/01/14 08:21:12 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -94,6 +94,9 @@ typedef struct bn_gencb_st BN_GENCB;
 
 typedef struct bio_st BIO;
 typedef struct buf_mem_st BUF_MEM;
+
+typedef struct comp_ctx_st COMP_CTX;
+typedef struct comp_method_st COMP_METHOD;
 
 typedef struct evp_cipher_st EVP_CIPHER;
 typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;

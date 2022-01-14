@@ -1,4 +1,4 @@
-/* $OpenBSD: comp.h,v 1.8 2014/11/03 16:58:28 tedu Exp $ */
+/* $OpenBSD: comp.h,v 1.9 2022/01/14 08:21:12 tb Exp $ */
 
 #ifndef HEADER_COMP_H
 #define HEADER_COMP_H
@@ -8,33 +8,6 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-typedef struct comp_ctx_st COMP_CTX;
-
-typedef struct comp_method_st {
-	int type;		/* NID for compression library */
-	const char *name;	/* A text string to identify the library */
-	int (*init)(COMP_CTX *ctx);
-	void (*finish)(COMP_CTX *ctx);
-	int (*compress)(COMP_CTX *ctx, unsigned char *out, unsigned int olen,
-	    unsigned char *in, unsigned int ilen);
-	int (*expand)(COMP_CTX *ctx, unsigned char *out, unsigned int olen,
-	    unsigned char *in, unsigned int ilen);
-	/* The following two do NOTHING, but are kept for backward compatibility */
-	long (*ctrl)(void);
-	long (*callback_ctrl)(void);
-} COMP_METHOD;
-
-struct comp_ctx_st {
-	COMP_METHOD *meth;
-	unsigned long compress_in;
-	unsigned long compress_out;
-	unsigned long expand_in;
-	unsigned long expand_out;
-
-	CRYPTO_EX_DATA	ex_data;
-};
-
 
 COMP_CTX *COMP_CTX_new(COMP_METHOD *meth);
 void COMP_CTX_free(COMP_CTX *ctx);
