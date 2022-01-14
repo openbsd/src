@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lcl.h,v 1.30 2018/11/05 23:52:47 tb Exp $ */
+/* $OpenBSD: bn_lcl.h,v 1.31 2022/01/14 08:01:47 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,6 +117,50 @@
 #include <openssl/bn.h>
 
 __BEGIN_HIDDEN_DECLS
+
+struct bignum_st {
+	BN_ULONG *d;	/* Pointer to an array of 'BN_BITS2' bit chunks. */
+	int top;	/* Index of last used d +1. */
+	/* The next are internal book keeping for bn_expand. */
+	int dmax;	/* Size of the d array. */
+	int neg;	/* one if the number is negative */
+	int flags;
+};
+
+/* Used for montgomery multiplication */
+struct bn_mont_ctx_st {
+	int ri;        /* number of bits in R */
+	BIGNUM RR;     /* used to convert to montgomery form */
+	BIGNUM N;      /* The modulus */
+	BIGNUM Ni;     /* R*(1/R mod N) - N*Ni = 1
+	                * (Ni is only stored for bignum algorithm) */
+	BN_ULONG n0[2];/* least significant word(s) of Ni;
+	                  (type changed with 0.9.9, was "BN_ULONG n0;" before) */
+	int flags;
+};
+
+/* Used for reciprocal division/mod functions
+ * It cannot be shared between threads
+ */
+struct bn_recp_ctx_st {
+	BIGNUM N;	/* the divisor */
+	BIGNUM Nr;	/* the reciprocal */
+	int num_bits;
+	int shift;
+	int flags;
+};
+
+/* Used for slow "generation" functions. */
+struct bn_gencb_st {
+	unsigned int ver;	/* To handle binary (in)compatibility */
+	void *arg;		/* callback-specific data */
+	union {
+		/* if(ver==1) - handles old style callbacks */
+		void (*cb_1)(int, int, void *);
+		/* if(ver==2) - new callback style */
+		int (*cb_2)(int, int, BN_GENCB *);
+	} cb;
+};
 
 /*
  * BN_window_bits_for_exponent_size -- macro for sliding window mod_exp functions
