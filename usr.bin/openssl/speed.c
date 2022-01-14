@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.27 2021/12/26 15:34:26 tb Exp $ */
+/* $OpenBSD: speed.c,v 1.28 2022/01/14 09:27:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1256,9 +1256,15 @@ speed_main(int argc, char **argv)
 		const EVP_AEAD *aead = EVP_aead_aes_128_gcm();
 		static const unsigned char nonce[32] = {0};
 		size_t buf_len, nonce_len;
-		EVP_AEAD_CTX ctx;
+		EVP_AEAD_CTX *ctx;
 
-		EVP_AEAD_CTX_init(&ctx, aead, key32, EVP_AEAD_key_length(aead),
+		if ((ctx = EVP_AEAD_CTX_new()) == NULL) {
+			BIO_printf(bio_err,
+			    "Failed to allocate aead context.\n");
+			goto end;
+		}
+
+		EVP_AEAD_CTX_init(ctx, aead, key32, EVP_AEAD_key_length(aead),
 		    EVP_AEAD_DEFAULT_TAG_LENGTH, NULL);
 		nonce_len = EVP_AEAD_nonce_length(aead);
 
@@ -1266,21 +1272,27 @@ speed_main(int argc, char **argv)
 			print_message(names[D_AES_128_GCM],c[D_AES_128_GCM][j],lengths[j]);
 			Time_F(START);
 			for (count = 0, run = 1; COND(c[D_AES_128_GCM][j]); count++)
-				EVP_AEAD_CTX_seal(&ctx, buf, &buf_len, BUFSIZE, nonce,
+				EVP_AEAD_CTX_seal(ctx, buf, &buf_len, BUFSIZE, nonce,
 				    nonce_len, buf, lengths[j], NULL, 0);
 			d=Time_F(STOP);
 			print_result(D_AES_128_GCM,j,count,d);
 		}
-		EVP_AEAD_CTX_cleanup(&ctx);
+		EVP_AEAD_CTX_free(ctx);
 	}
 
 	if (doit[D_AES_256_GCM]) {
 		const EVP_AEAD *aead = EVP_aead_aes_256_gcm();
 		static const unsigned char nonce[32] = {0};
 		size_t buf_len, nonce_len;
-		EVP_AEAD_CTX ctx;
+		EVP_AEAD_CTX *ctx;
 
-		EVP_AEAD_CTX_init(&ctx, aead, key32, EVP_AEAD_key_length(aead),
+		if ((ctx = EVP_AEAD_CTX_new()) == NULL) {
+			BIO_printf(bio_err,
+			    "Failed to allocate aead context.\n");
+			goto end;
+		}
+
+		EVP_AEAD_CTX_init(ctx, aead, key32, EVP_AEAD_key_length(aead),
 		EVP_AEAD_DEFAULT_TAG_LENGTH, NULL);
 		nonce_len = EVP_AEAD_nonce_length(aead);
 
@@ -1288,12 +1300,12 @@ speed_main(int argc, char **argv)
 			print_message(names[D_AES_256_GCM],c[D_AES_256_GCM][j],lengths[j]);
 			Time_F(START);
 			for (count = 0, run = 1; COND(c[D_AES_256_GCM][j]); count++)
-				EVP_AEAD_CTX_seal(&ctx, buf, &buf_len, BUFSIZE, nonce,
+				EVP_AEAD_CTX_seal(ctx, buf, &buf_len, BUFSIZE, nonce,
 				    nonce_len, buf, lengths[j], NULL, 0);
 			d=Time_F(STOP);
 			print_result(D_AES_256_GCM, j, count, d);
 		}
-		EVP_AEAD_CTX_cleanup(&ctx);
+		EVP_AEAD_CTX_free(ctx);
 	}
 #endif
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
@@ -1301,9 +1313,15 @@ speed_main(int argc, char **argv)
 		const EVP_AEAD *aead = EVP_aead_chacha20_poly1305();
 		static const unsigned char nonce[32] = {0};
 		size_t buf_len, nonce_len;
-		EVP_AEAD_CTX ctx;
+		EVP_AEAD_CTX *ctx;
 
-		EVP_AEAD_CTX_init(&ctx, aead, key32, EVP_AEAD_key_length(aead),
+		if ((ctx = EVP_AEAD_CTX_new()) == NULL) {
+			BIO_printf(bio_err,
+			    "Failed to allocate aead context.\n");
+			goto end;
+		}
+
+		EVP_AEAD_CTX_init(ctx, aead, key32, EVP_AEAD_key_length(aead),
 		    EVP_AEAD_DEFAULT_TAG_LENGTH, NULL);
 		nonce_len = EVP_AEAD_nonce_length(aead);
 
@@ -1312,12 +1330,12 @@ speed_main(int argc, char **argv)
 			    c[D_CHACHA20_POLY1305][j], lengths[j]);
 			Time_F(START);
 			for (count = 0, run = 1; COND(c[D_CHACHA20_POLY1305][j]); count++)
-				EVP_AEAD_CTX_seal(&ctx, buf, &buf_len, BUFSIZE, nonce,
+				EVP_AEAD_CTX_seal(ctx, buf, &buf_len, BUFSIZE, nonce,
 				    nonce_len, buf, lengths[j], NULL, 0);
 			d=Time_F(STOP);
 			print_result(D_CHACHA20_POLY1305, j, count, d);
 		}
-		EVP_AEAD_CTX_cleanup(&ctx);
+		EVP_AEAD_CTX_free(ctx);
 	}
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
