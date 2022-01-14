@@ -1,4 +1,4 @@
-/* $OpenBSD: pem.h,v 1.22 2022/01/14 07:49:49 tb Exp $ */
+/* $OpenBSD: pem.h,v 1.23 2022/01/14 07:52:24 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -136,14 +136,6 @@ extern "C" {
 #define PEM_STRING_ECPRIVATEKEY	"EC PRIVATE KEY"
 #define PEM_STRING_PARAMETERS	"PARAMETERS"
 #define PEM_STRING_CMS		"CMS"
-
-  /* Note that this structure is initialised by PEM_SealInit and cleaned up
-     by PEM_SealFinal (at least for now) */
-typedef struct PEM_Encode_Seal_st {
-	EVP_ENCODE_CTX encode;
-	EVP_MD_CTX md;
-	EVP_CIPHER_CTX cipher;
-} PEM_ENCODE_SEAL_CTX;
 
 /* enc_type is one off */
 #define PEM_TYPE_ENCRYPTED      10
@@ -411,14 +403,6 @@ int	PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
 	    int klen, pem_password_cb *callback, void *u);
 STACK_OF(X509_INFO) *	PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
 	    pem_password_cb *cb, void *u);
-
-int	PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type,
-	    EVP_MD *md_type, unsigned char **ek, int *ekl,
-	    unsigned char *iv, EVP_PKEY **pubk, int npubk);
-void	PEM_SealUpdate(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *out, int *outl,
-	    unsigned char *in, int inl);
-int	PEM_SealFinal(PEM_ENCODE_SEAL_CTX *ctx, unsigned char *sig, int *sigl,
-	    unsigned char *out, int *outl, EVP_PKEY *priv);
 
 int    PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type);
 int    PEM_SignUpdate(EVP_MD_CTX *ctx, unsigned char *d, unsigned int cnt);
