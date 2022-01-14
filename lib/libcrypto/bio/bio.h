@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.52 2022/01/14 07:59:32 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.53 2022/01/14 08:18:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -205,8 +205,6 @@ extern "C" {
  */
 #define BIO_FLAGS_MEM_RDONLY	0x200
 
-typedef struct bio_st BIO;
-
 void BIO_set_flags(BIO *b, int flags);
 int  BIO_test_flags(const BIO *b, int flags);
 void BIO_clear_flags(BIO *b, int flags);
@@ -272,64 +270,9 @@ int BIO_method_type(const BIO *b);
 typedef void bio_info_cb(struct bio_st *, int, const char *, int, long, long);
 typedef int BIO_info_cb(BIO *, int, int);
 
-typedef struct bio_method_st {
-	int type;
-	const char *name;
-	int (*bwrite)(BIO *, const char *, int);
-	int (*bread)(BIO *, char *, int);
-	int (*bputs)(BIO *, const char *);
-	int (*bgets)(BIO *, char *, int);
-	long (*ctrl)(BIO *, int, long, void *);
-	int (*create)(BIO *);
-	int (*destroy)(BIO *);
-	long (*callback_ctrl)(BIO *, int, bio_info_cb *);
-} BIO_METHOD;
-
-struct bio_st {
-	const BIO_METHOD *method;
-	/* bio, mode, argp, argi, argl, ret */
-	long (*callback)(struct bio_st *, int, const char *, int, long, long);
-	char *cb_arg; /* first argument for the callback */
-
-	int init;
-	int shutdown;
-	int flags;	/* extra storage */
-	int retry_reason;
-	int num;
-	void *ptr;
-	struct bio_st *next_bio;	/* used by filter BIOs */
-	struct bio_st *prev_bio;	/* used by filter BIOs */
-	int references;
-	unsigned long num_read;
-	unsigned long num_write;
-
-	CRYPTO_EX_DATA ex_data;
-};
+typedef struct bio_method_st BIO_METHOD;
 
 DECLARE_STACK_OF(BIO)
-
-typedef struct bio_f_buffer_ctx_struct {
-	/* Buffers are setup like this:
-	 *
-	 * <---------------------- size ----------------------->
-	 * +---------------------------------------------------+
-	 * | consumed | remaining          | free space        |
-	 * +---------------------------------------------------+
-	 * <-- off --><------- len ------->
-	 */
-
-	/* BIO *bio; */ /* this is now in the BIO struct */
-	int ibuf_size;	/* how big is the input buffer */
-	int obuf_size;	/* how big is the output buffer */
-
-	char *ibuf;	/* the char array */
-	int ibuf_len;	/* how many bytes are in it */
-	int ibuf_off;	/* write/read offset */
-
-	char *obuf;	/* the char array */
-	int obuf_len;	/* how many bytes are in it */
-	int obuf_off;	/* write/read offset */
-} BIO_F_BUFFER_CTX;
 
 /* Prefix and suffix callback in ASN1 BIO */
 typedef int asn1_ps_func(BIO *b, unsigned char **pbuf, int *plen, void *parg);
