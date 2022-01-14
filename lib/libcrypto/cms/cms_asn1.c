@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_asn1.c,v 1.18 2019/08/11 10:43:57 jsing Exp $ */
+/* $OpenBSD: cms_asn1.c,v 1.19 2022/01/14 08:16:13 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -1323,7 +1323,6 @@ static const ASN1_ADB_TABLE CMS_ContentInfo_adbtbl[] = {
 static const ASN1_ADB CMS_ContentInfo_adb = {
 	.flags = 0,
 	.offset = offsetof(CMS_ContentInfo, contentType),
-	.app_items = 0,
 	.tbl = CMS_ContentInfo_adbtbl,
 	.tblcount = sizeof(CMS_ContentInfo_adbtbl) / sizeof(ASN1_ADB_TABLE),
 	.default_tt = &cms_default_tt,

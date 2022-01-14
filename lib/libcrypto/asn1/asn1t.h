@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.17 2022/01/14 08:14:48 tb Exp $ */
+/* $OpenBSD: asn1t.h,v 1.18 2022/01/14 08:16:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -487,7 +487,6 @@ typedef struct ASN1_ADB_st ASN1_ADB;
 struct ASN1_ADB_st {
 	unsigned long flags;	/* Various flags */
 	unsigned long offset;	/* Offset of selector field */
-	STACK_OF(ASN1_ADB_TABLE) **app_items; /* Application defined items */
 	const ASN1_ADB_TABLE *tbl;	/* Table of possible types */
 	long tblcount;		/* Number of entries in tbl */
 	const ASN1_TEMPLATE *default_tt;  /* Type to use if no match */

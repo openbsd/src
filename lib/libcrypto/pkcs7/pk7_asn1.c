@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_asn1.c,v 1.12 2015/07/25 15:33:06 jsing Exp $ */
+/* $OpenBSD: pk7_asn1.c,v 1.13 2022/01/14 08:16:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -146,7 +146,6 @@ static const ASN1_ADB_TABLE PKCS7_adbtbl[] = {
 static const ASN1_ADB PKCS7_adb = {
 	.flags = 0,
 	.offset = offsetof(PKCS7, type),
-	.app_items = 0,
 	.tbl = PKCS7_adbtbl,
 	.tblcount = sizeof(PKCS7_adbtbl) / sizeof(ASN1_ADB_TABLE),
 	.default_tt = &p7default_tt,

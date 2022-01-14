@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.34 2021/08/31 20:14:40 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.35 2022/01/14 08:16:13 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -295,7 +295,6 @@ static const ASN1_ADB_TABLE X9_62_CHARACTERISTIC_TWO_adbtbl[] = {
 static const ASN1_ADB X9_62_CHARACTERISTIC_TWO_adb = {
 	.flags = 0,
 	.offset = offsetof(X9_62_CHARACTERISTIC_TWO, type),
-	.app_items = 0,
 	.tbl = X9_62_CHARACTERISTIC_TWO_adbtbl,
 	.tblcount = sizeof(X9_62_CHARACTERISTIC_TWO_adbtbl) / sizeof(ASN1_ADB_TABLE),
 	.default_tt = &char_two_def_tt,
@@ -387,7 +386,6 @@ static const ASN1_ADB_TABLE X9_62_FIELDID_adbtbl[] = {
 static const ASN1_ADB X9_62_FIELDID_adb = {
 	.flags = 0,
 	.offset = offsetof(X9_62_FIELDID, fieldType),
-	.app_items = 0,
 	.tbl = X9_62_FIELDID_adbtbl,
 	.tblcount = sizeof(X9_62_FIELDID_adbtbl) / sizeof(ASN1_ADB_TABLE),
 	.default_tt = &fieldID_def_tt,

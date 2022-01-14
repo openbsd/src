@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_asn.c,v 1.9 2015/07/25 17:08:40 jsing Exp $ */
+/* $OpenBSD: p12_asn.c,v 1.10 2022/01/14 08:16:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -230,7 +230,6 @@ static const ASN1_ADB_TABLE PKCS12_BAGS_adbtbl[] = {
 static const ASN1_ADB PKCS12_BAGS_adb = {
 	.flags = 0,
 	.offset = offsetof(PKCS12_BAGS, type),
-	.app_items = 0,
 	.tbl = PKCS12_BAGS_adbtbl,
 	.tblcount = sizeof(PKCS12_BAGS_adbtbl) / sizeof(ASN1_ADB_TABLE),
 	.default_tt = &bag_default_tt,
@@ -369,7 +368,6 @@ static const ASN1_ADB_TABLE PKCS12_SAFEBAG_adbtbl[] = {
 static const ASN1_ADB PKCS12_SAFEBAG_adb = {
 	.flags = 0,
 	.offset = offsetof(PKCS12_SAFEBAG, type),
-	.app_items = 0,
 	.tbl = PKCS12_SAFEBAG_adbtbl,
 	.tblcount = sizeof(PKCS12_SAFEBAG_adbtbl) / sizeof(ASN1_ADB_TABLE),
 	.default_tt = &safebag_default_tt,
