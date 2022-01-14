@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.33 2022/01/07 09:35:36 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.34 2022/01/14 08:29:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -154,7 +154,6 @@ DSA_new_method(ENGINE *engine)
 
 	ret->pad = 0;
 	ret->version = 0;
-	ret->write_params = 1;
 	ret->p = NULL;
 	ret->q = NULL;
 	ret->g = NULL;
@@ -177,7 +176,7 @@ DSA_new_method(ENGINE *engine)
 		free(ret);
 		ret = NULL;
 	}
-	
+
 	return ret;
 }
 

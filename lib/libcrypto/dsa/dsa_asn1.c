@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.23 2022/01/07 09:35:36 tb Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.24 2022/01/14 08:29:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -329,14 +329,15 @@ i2d_DSAparams_fp(FILE *fp, DSA *a)
 	return ASN1_item_i2d_fp(&DSAparams_it, fp, a);
 }
 
-/*
- * DSA public key is a bit trickier... its effectively a CHOICE type
- * decided by a field called write_params which can either write out
- * just the public key as an INTEGER or the parameters and public key
- * in a SEQUENCE
- */
-
-static const ASN1_TEMPLATE dsa_pub_internal_seq_tt[] = {
+static const ASN1_AUX DSAPublicKey_aux = {
+	.app_data = NULL,
+	.flags = 0,
+	.ref_offset = 0,
+	.ref_lock = 0,
+	.asn1_cb = dsa_cb,
+	.enc_offset = 0,
+};
+static const ASN1_TEMPLATE DSAPublicKey_seq_tt[] = {
 	{
 		.flags = 0,
 		.tag = 0,
@@ -367,51 +368,15 @@ static const ASN1_TEMPLATE dsa_pub_internal_seq_tt[] = {
 	},
 };
 
-const ASN1_ITEM dsa_pub_internal_it = {
+const ASN1_ITEM DSAPublicKey_it = {
 	.itype = ASN1_ITYPE_SEQUENCE,
 	.utype = V_ASN1_SEQUENCE,
-	.templates = dsa_pub_internal_seq_tt,
-	.tcount = sizeof(dsa_pub_internal_seq_tt) / sizeof(ASN1_TEMPLATE),
-	.funcs = NULL,
-	.size = sizeof(DSA),
-	.sname = "DSA",
-};
-
-static const ASN1_AUX DSAPublicKey_aux = {
-	.app_data = NULL,
-	.flags = 0,
-	.ref_offset = 0,
-	.ref_lock = 0,
-	.asn1_cb = dsa_cb,
-	.enc_offset = 0,
-};
-static const ASN1_TEMPLATE DSAPublicKey_ch_tt[] = {
-	{
-		.flags = 0,
-		.tag = 0,
-		.offset = offsetof(DSA, pub_key),
-		.field_name = "pub_key",
-		.item = &BIGNUM_it,
-	},
-	{
-		.flags = 0 | ASN1_TFLG_COMBINE,
-		.tag = 0,
-		.offset = 0,
-		.field_name = NULL,
-		.item = &dsa_pub_internal_it,
-	},
-};
-
-const ASN1_ITEM DSAPublicKey_it = {
-	.itype = ASN1_ITYPE_CHOICE,
-	.utype = offsetof(DSA, write_params),
-	.templates = DSAPublicKey_ch_tt,
-	.tcount = sizeof(DSAPublicKey_ch_tt) / sizeof(ASN1_TEMPLATE),
+	.templates = DSAPublicKey_seq_tt,
+	.tcount = sizeof(DSAPublicKey_seq_tt) / sizeof(ASN1_TEMPLATE),
 	.funcs = &DSAPublicKey_aux,
 	.size = sizeof(DSA),
 	.sname = "DSA",
 };
-
 
 DSA *
 d2i_DSAPublicKey(DSA **a, const unsigned char **in, long len)

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_locl.h,v 1.4 2022/01/14 08:27:23 tb Exp $ */
+/* $OpenBSD: dsa_locl.h,v 1.5 2022/01/14 08:29:06 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
  *
@@ -90,7 +90,6 @@ struct dsa_st {
 	 * a DSA is passed instead of of a EVP_PKEY */
 	int pad;
 	long version;
-	int write_params;
 	BIGNUM *p;
 	BIGNUM *q;	/* == 20 */
 	BIGNUM *g;

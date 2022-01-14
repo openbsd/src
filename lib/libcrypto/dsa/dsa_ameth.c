@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.30 2022/01/07 09:35:36 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.31 2022/01/14 08:29:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -133,6 +133,7 @@ static int
 dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
 	DSA *dsa;
+	ASN1_INTEGER *pubint = NULL;
 	void *pval = NULL;
 	int ptype;
 	unsigned char *penc = NULL;
@@ -158,9 +159,14 @@ dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	} else
 		ptype = V_ASN1_UNDEF;
 
-	dsa->write_params = 0;
 
-	penclen = i2d_DSAPublicKey(dsa, &penc);
+	if ((pubint = BN_to_ASN1_INTEGER(dsa->pub_key, NULL)) == NULL) {
+		DSAerror(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	penclen = i2d_ASN1_INTEGER(pubint, &penc);
+	ASN1_INTEGER_free(pubint);
 
 	if (penclen <= 0) {
 		DSAerror(ERR_R_MALLOC_FAILURE);
