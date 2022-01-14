@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.124 2021/11/21 11:55:00 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.125 2022/01/14 09:35:18 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
@@ -908,19 +908,23 @@ func runAesAeadTest(algorithm string, ctx *C.EVP_CIPHER_CTX, aead *C.EVP_AEAD, w
 
 	openAead, sealAead := true, true
 	if aead != nil {
-		var ctx C.EVP_AEAD_CTX
-		if C.EVP_AEAD_CTX_init(&ctx, aead, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(keyLen), C.size_t(tagLen), nil) != 1 {
+		ctx := C.EVP_AEAD_CTX_new()
+		if ctx == nil {
+			log.Fatal("EVP_AEAD_CTX_new() failed")
+		}
+		defer C.EVP_AEAD_CTX_free(ctx)
+
+		if C.EVP_AEAD_CTX_init(ctx, aead, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(keyLen), C.size_t(tagLen), nil) != 1 {
 			log.Fatal("Failed to initialize AEAD context")
 		}
-		defer C.EVP_AEAD_CTX_cleanup(&ctx)
 
 		// Make sure we don't accidentally prepend or compare against a 0.
 		if ctLen == 0 {
 			ct = nil
 		}
 
-		openAead = checkAeadOpen(&ctx, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
-		sealAead = checkAeadSeal(&ctx, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
+		openAead = checkAeadOpen(ctx, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
+		sealAead = checkAeadSeal(ctx, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
 	}
 
 	return openEvp && sealEvp && openAead && sealAead
@@ -1227,14 +1231,17 @@ func runChaCha20Poly1305Test(algorithm string, wt *wycheproofTestAead) bool {
 		msg = append(tag, 0)
 	}
 
-	var ctx C.EVP_AEAD_CTX
-	if C.EVP_AEAD_CTX_init(&ctx, aead, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(keyLen), C.size_t(tagLen), nil) != 1 {
+	ctx := C.EVP_AEAD_CTX_new()
+	if ctx == nil {
+		log.Fatal("EVP_AEAD_CTX_new() failed")
+	}
+	defer C.EVP_AEAD_CTX_free(ctx)
+	if C.EVP_AEAD_CTX_init(ctx, aead, (*C.uchar)(unsafe.Pointer(&key[0])), C.size_t(keyLen), C.size_t(tagLen), nil) != 1 {
 		log.Fatal("Failed to initialize AEAD context")
 	}
-	defer C.EVP_AEAD_CTX_cleanup(&ctx)
 
-	openSuccess := checkAeadOpen(&ctx, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
-	sealSuccess := checkAeadSeal(&ctx, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
+	openSuccess := checkAeadOpen(ctx, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
+	sealSuccess := checkAeadSeal(ctx, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
 
 	return openSuccess && sealSuccess
 }
