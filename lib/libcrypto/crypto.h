@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.53 2021/12/11 07:38:03 anton Exp $ */
+/* $OpenBSD: crypto.h,v 1.54 2022/01/14 08:23:25 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -142,15 +142,6 @@ extern "C" {
 #define SSLEAY_BUILT_ON		3
 #define SSLEAY_PLATFORM		4
 #define SSLEAY_DIR		5
-
-/* A generic structure to pass assorted data in a expandable way */
-typedef struct openssl_item_st {
-	int code;
-	void *value;		/* Not used for flag attributes */
-	size_t value_size;	/* Max size of value for output, length for input */
-	size_t *value_length;	/* Returned length of value for output */
-} OPENSSL_ITEM;
-
 
 /* When changing the CRYPTO_LOCK_* list, be sure to maintain the text lock
  * names in cryptlib.c
