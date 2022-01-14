@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.17 2022/01/14 06:53:14 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.18 2022/01/14 15:00:16 kettenis Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -139,6 +139,12 @@ atomic64_xchg(volatile int64_t *v, int64_t n)
 	return __sync_lock_test_and_set(v, n);
 }
 
+static inline int64_t
+atomic64_cmpxchg(volatile int64_t *v, int64_t o, int64_t n)
+{
+	return __sync_val_compare_and_swap(v, o, n);
+}
+
 #define atomic64_add(n, p)	__sync_fetch_and_add_8(p, n)
 #define atomic64_sub(n, p)	__sync_fetch_and_sub_8(p, n)
 #define atomic64_inc(p)		__sync_fetch_and_add_8(p, 1)
@@ -221,12 +227,6 @@ atomic64_sub(int i, atomic64_t *v)
 	mtx_leave(&atomic64_mtx);
 }
 #endif
-
-static inline int64_t
-atomic64_cmpxchg(atomic64_t *p, int64_t o, int64_t n)
-{
-	return atomic_cmpxchg(p, o, n);
-}
 
 #ifdef __LP64__
 typedef int64_t atomic_long_t;
