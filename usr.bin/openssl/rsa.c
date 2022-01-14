@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.c,v 1.15 2021/11/26 16:23:27 tb Exp $ */
+/* $OpenBSD: rsa.c,v 1.16 2022/01/14 09:26:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -328,7 +328,7 @@ rsa_main(int argc, char **argv)
 		}
 	if (rsa_config.modulus) {
 		BIO_printf(out, "Modulus=");
-		BN_print(out, rsa->n);
+		BN_print(out, RSA_get0_n(rsa));
 		BIO_printf(out, "\n");
 	}
 	if (rsa_config.check) {
