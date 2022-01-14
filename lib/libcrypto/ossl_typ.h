@@ -1,4 +1,4 @@
-/* $OpenBSD: ossl_typ.h,v 1.16 2021/12/12 21:35:46 tb Exp $ */
+/* $OpenBSD: ossl_typ.h,v 1.17 2022/01/14 08:09:18 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -76,6 +76,8 @@ typedef struct asn1_string_st ASN1_UTF8STRING;
 typedef struct asn1_string_st ASN1_STRING;
 typedef int ASN1_BOOLEAN;
 typedef int ASN1_NULL;
+
+typedef struct asn1_object_st ASN1_OBJECT;
 
 typedef struct ASN1_ITEM_st ASN1_ITEM;
 typedef struct asn1_pctx_st ASN1_PCTX;

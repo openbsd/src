@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.59 2022/01/14 07:57:17 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.60 2022/01/14 08:09:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -161,20 +161,6 @@ DECLARE_STACK_OF(X509_ALGOR)
 
 #define DECLARE_ASN1_SET_OF(type) /* filled in by mkstack.pl */
 #define IMPLEMENT_ASN1_SET_OF(type) /* nothing, no longer needed */
-
-/* These are used internally in the ASN1_OBJECT to keep track of
- * whether the names and data need to be free()ed */
-#define ASN1_OBJECT_FLAG_DYNAMIC	 0x01	/* internal use */
-#define ASN1_OBJECT_FLAG_CRITICAL	 0x02	/* critical x509v3 object id */
-#define ASN1_OBJECT_FLAG_DYNAMIC_STRINGS 0x04	/* internal use */
-#define ASN1_OBJECT_FLAG_DYNAMIC_DATA 	 0x08	/* internal use */
-typedef struct asn1_object_st {
-	const char *sn, *ln;
-	int nid;
-	int length;
-	const unsigned char *data;	/* data remains const after init */
-	int flags;	/* Should we free this one */
-} ASN1_OBJECT;
 
 #define ASN1_STRING_FLAG_BITS_LEFT 0x08 /* Set if 0x07 has bits left value */
 /* This indicates that the ASN1_STRING is not a real value but just a place

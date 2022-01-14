@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.17 2022/01/10 12:10:26 tb Exp $ */
+/* $OpenBSD: asn1_locl.h,v 1.18 2022/01/14 08:09:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -64,6 +64,20 @@ __BEGIN_HIDDEN_DECLS
 
 ASN1_TYPE *ASN1_TYPE_pack_sequence(const ASN1_ITEM *it, void *s, ASN1_TYPE **t);
 void *ASN1_TYPE_unpack_sequence(const ASN1_ITEM *it, const ASN1_TYPE *t);
+
+/* These are used internally in the ASN1_OBJECT to keep track of
+ * whether the names and data need to be free()ed */
+#define ASN1_OBJECT_FLAG_DYNAMIC	 0x01	/* internal use */
+#define ASN1_OBJECT_FLAG_CRITICAL	 0x02	/* critical x509v3 object id */
+#define ASN1_OBJECT_FLAG_DYNAMIC_STRINGS 0x04	/* internal use */
+#define ASN1_OBJECT_FLAG_DYNAMIC_DATA	 0x08	/* internal use */
+struct asn1_object_st {
+	const char *sn, *ln;
+	int nid;
+	int length;
+	const unsigned char *data;	/* data remains const after init */
+	int flags;	/* Should we free this one */
+} /* ASN1_OBJECT */;
 
 /* ASN1 print context structure */
 
