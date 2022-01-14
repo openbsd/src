@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.24 2021/11/30 18:12:44 tb Exp $	*/
+/*	$OpenBSD: dh.c,v 1.25 2022/01/14 09:19:19 tb Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -373,7 +373,7 @@ modp_create_exchange(struct group *group, u_int8_t *buf)
 
 	if (!DH_generate_key(dh))
 		return (-1);
-	ret = BN_bn2bin(dh->pub_key, buf);
+	ret = BN_bn2bin(DH_get0_pub_key(dh), buf);
 	if (!ret)
 		return (-1);
 
