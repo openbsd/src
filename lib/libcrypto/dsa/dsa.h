@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.34 2022/01/14 07:49:49 tb Exp $ */
+/* $OpenBSD: dsa.h,v 1.35 2022/01/14 08:27:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -109,69 +109,7 @@
 extern "C" {
 #endif
 
-/* Already defined in ossl_typ.h */
-/* typedef struct dsa_st DSA; */
-/* typedef struct dsa_method DSA_METHOD; */
-
-typedef struct DSA_SIG_st
-	{
-	BIGNUM *r;
-	BIGNUM *s;
-	} DSA_SIG;
-
-struct dsa_method
-	{
-	const char *name;
-	DSA_SIG * (*dsa_do_sign)(const unsigned char *dgst, int dlen, DSA *dsa);
-	int (*dsa_sign_setup)(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
-								BIGNUM **rp);
-	int (*dsa_do_verify)(const unsigned char *dgst, int dgst_len,
-			     DSA_SIG *sig, DSA *dsa);
-	int (*dsa_mod_exp)(DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
-			BIGNUM *a2, BIGNUM *p2, BIGNUM *m, BN_CTX *ctx,
-			BN_MONT_CTX *in_mont);
-	int (*bn_mod_exp)(DSA *dsa, BIGNUM *r, BIGNUM *a, const BIGNUM *p,
-				const BIGNUM *m, BN_CTX *ctx,
-				BN_MONT_CTX *m_ctx); /* Can be null */
-	int (*init)(DSA *dsa);
-	int (*finish)(DSA *dsa);
-	int flags;
-	char *app_data;
-	/* If this is non-NULL, it is used to generate DSA parameters */
-	int (*dsa_paramgen)(DSA *dsa, int bits,
-			const unsigned char *seed, int seed_len,
-			int *counter_ret, unsigned long *h_ret,
-			BN_GENCB *cb);
-	/* If this is non-NULL, it is used to generate DSA keys */
-	int (*dsa_keygen)(DSA *dsa);
-	};
-
-struct dsa_st
-	{
-	/* This first variable is used to pick up errors where
-	 * a DSA is passed instead of of a EVP_PKEY */
-	int pad;
-	long version;
-	int write_params;
-	BIGNUM *p;
-	BIGNUM *q;	/* == 20 */
-	BIGNUM *g;
-
-	BIGNUM *pub_key;  /* y public key */
-	BIGNUM *priv_key; /* x private key */
-
-	BIGNUM *kinv;	/* Signing pre-calc */
-	BIGNUM *r;	/* Signing pre-calc */
-
-	int flags;
-	/* Normally used to cache montgomery values */
-	BN_MONT_CTX *method_mont_p;
-	int references;
-	CRYPTO_EX_DATA ex_data;
-	const DSA_METHOD *meth;
-	/* functional reference if 'meth' is ENGINE-provided */
-	ENGINE *engine;
-	};
+typedef struct DSA_SIG_st DSA_SIG;
 
 DSA *d2i_DSAparams_bio(BIO *bp, DSA **a);
 int i2d_DSAparams_bio(BIO *bp, DSA *a);
