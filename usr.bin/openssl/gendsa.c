@@ -1,4 +1,4 @@
-/* $OpenBSD: gendsa.c,v 1.14 2019/07/24 14:23:25 inoguchi Exp $ */
+/* $OpenBSD: gendsa.c,v 1.15 2022/01/14 09:25:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -278,7 +278,7 @@ gendsa_main(int argc, char **argv)
 	}
 
 	BIO_printf(bio_err, "Generating DSA key, %d bits\n",
-	    BN_num_bits(dsa->p));
+	    BN_num_bits(DSA_get0_p(dsa)));
 	if (!DSA_generate_key(dsa))
 		goto end;
 
