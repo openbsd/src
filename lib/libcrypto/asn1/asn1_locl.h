@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.19 2022/01/14 08:43:06 tb Exp $ */
+/* $OpenBSD: asn1_locl.h,v 1.20 2022/01/14 08:53:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -176,6 +176,9 @@ void asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it);
 void asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
 int asn1_enc_restore(int *len, unsigned char **out, ASN1_VALUE **pval, const ASN1_ITEM *it);
 int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen, const ASN1_ITEM *it);
+
+int i2d_ASN1_BOOLEAN(int a, unsigned char **pp);
+int d2i_ASN1_BOOLEAN(int *a, const unsigned char **pp, long length);
 
 /*
  * Unicode codepoint constants

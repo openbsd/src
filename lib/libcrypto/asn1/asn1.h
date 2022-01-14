@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.61 2022/01/14 08:12:31 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.62 2022/01/14 08:53:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -593,9 +593,6 @@ int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
 int ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl);
 int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
     BIT_STRING_BITNAME *tbl);
-
-int i2d_ASN1_BOOLEAN(int a, unsigned char **pp);
-int d2i_ASN1_BOOLEAN(int *a, const unsigned char **pp, long length);
 
 ASN1_INTEGER *ASN1_INTEGER_new(void);
 void ASN1_INTEGER_free(ASN1_INTEGER *a);
