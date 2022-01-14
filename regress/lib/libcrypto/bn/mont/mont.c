@@ -1,4 +1,4 @@
-/*	$OpenBSD: mont.c,v 1.5 2021/11/26 16:52:07 tb Exp $	*/
+/*	$OpenBSD: mont.c,v 1.6 2022/01/14 09:32:27 tb Exp $	*/
 
 /*
  * Copyright (c) 2014 Miodrag Vallat.
@@ -36,7 +36,6 @@ main(int argc, char *argv[])
 {
 	DH *dh = NULL;
 	BIGNUM *priv_key = NULL;
-	const BIGNUM *pub_key;
 	unsigned char *key = NULL;
 	unsigned char r[32 + 16 * 8];
 	size_t privsz;
@@ -65,8 +64,7 @@ main(int argc, char *argv[])
 		key = malloc(DH_size(dh));
 		if (key == NULL)
 			err(1, "malloc");
-		DH_get0_key(dh, &pub_key, NULL);
-		if (DH_compute_key(key, pub_key, dh) == -1)
+		if (DH_compute_key(key, DH_get0_pub_key(dh), dh) == -1)
 			goto err;
 
 		free(key);
