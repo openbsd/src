@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.16 2021/11/30 18:32:55 tb Exp $ */
+/* $OpenBSD: asn1t.h,v 1.17 2022/01/14 08:14:48 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -472,9 +472,7 @@ struct ASN1_TEMPLATE_st {
 	unsigned long flags;		/* Various flags */
 	long tag;			/* tag, not used if no tagging */
 	unsigned long offset;		/* Offset of this field in structure */
-#ifndef NO_ASN1_FIELD_NAMES
 	const char *field_name;		/* Field name */
-#endif
 	ASN1_ITEM_EXP *item;		/* Relevant ASN1_ITEM or ASN1_ADB */
 };
 
@@ -600,9 +598,7 @@ struct ASN1_ITEM_st {
 	long tcount;			/* Number of templates if SEQUENCE or CHOICE */
 	const void *funcs;		/* functions that handle this type */
 	long size;			/* Structure size (usually)*/
-#ifndef NO_ASN1_FIELD_NAMES
 	const char *sname;		/* Structure name */
-#endif
 };
 
 /* These are values for the itype field and
