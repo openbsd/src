@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kstat.4,v 1.7 2022/01/10 13:09:29 dlg Exp $
+.\"	$OpenBSD: kstat.4,v 1.8 2022/01/14 04:25:57 dlg Exp $
 .\"
 .\" Copyright (c) 2022 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 10 2022 $
+.Dd $Mdocdate: January 14 2022 $
 .Dt KSTAT 4
 .Os
 .Sh NAME
@@ -88,7 +88,7 @@ flag in
 .Va ks_rflags .
 .Pp
 A kstat is identified by a 64bit number, or the combination of a
-provider name, unit number, name, and unit number.
+provider name, instance number, name, and unit number.
 .Pp
 Unless
 .Va ks_data
