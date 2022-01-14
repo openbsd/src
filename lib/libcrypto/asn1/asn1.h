@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.58 2022/01/14 07:55:29 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.59 2022/01/14 07:57:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -787,8 +787,6 @@ int ASN1_PRINTABLE_type(const unsigned char *s, int max);
 /* SPECIALS */
 int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
     int *pclass, long omax);
-int ASN1_check_infinite_end(unsigned char **p, long len);
-int ASN1_const_check_infinite_end(const unsigned char **p, long len);
 void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
     int xclass);
 int ASN1_put_eoc(unsigned char **pp);

@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_old_lib.c,v 1.2 2021/12/25 07:04:03 jsing Exp $ */
+/* $OpenBSD: asn1_old_lib.c,v 1.3 2022/01/14 07:57:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,32 +66,6 @@
 #include "asn1_locl.h"
 
 static void asn1_put_length(unsigned char **pp, int length);
-
-static int
-_asn1_check_infinite_end(const unsigned char **p, long len)
-{
-	/* If there is 0 or 1 byte left, the length check should pick
-	 * things up */
-	if (len <= 0)
-		return (1);
-	else if ((len >= 2) && ((*p)[0] == 0) && ((*p)[1] == 0)) {
-		(*p) += 2;
-		return (1);
-	}
-	return (0);
-}
-
-int
-ASN1_check_infinite_end(unsigned char **p, long len)
-{
-	return _asn1_check_infinite_end((const unsigned char **)p, len);
-}
-
-int
-ASN1_const_check_infinite_end(const unsigned char **p, long len)
-{
-	return _asn1_check_infinite_end(p, len);
-}
 
 int
 ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
