@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.97 2022/01/14 07:49:49 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.98 2022/01/14 08:04:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,72 +119,12 @@
 extern "C" {
 #endif
 
-/* Move to evp_locl.h */
-/* Type needs to be a bit field
- * Sub-type needs to be for variations on the method, as in, can it do
- * arbitrary encryption.... */
-struct evp_pkey_st {
-	int type;
-	int save_type;
-	int references;
-	const EVP_PKEY_ASN1_METHOD *ameth;
-	ENGINE *engine;
-	union	{
-		char *ptr;
-#ifndef OPENSSL_NO_RSA
-		struct rsa_st *rsa;	/* RSA */
-#endif
-#ifndef OPENSSL_NO_DSA
-		struct dsa_st *dsa;	/* DSA */
-#endif
-#ifndef OPENSSL_NO_DH
-		struct dh_st *dh;	/* DH */
-#endif
-#ifndef OPENSSL_NO_EC
-		struct ec_key_st *ec;	/* ECC */
-#endif
-#ifndef OPENSSL_NO_GOST
-		struct gost_key_st *gost; /* GOST */
-#endif
-	} pkey;
-	int save_parameters;
-	STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
-} /* EVP_PKEY */;
-
 #define EVP_PKEY_MO_SIGN	0x0001
 #define EVP_PKEY_MO_VERIFY	0x0002
 #define EVP_PKEY_MO_ENCRYPT	0x0004
 #define EVP_PKEY_MO_DECRYPT	0x0008
 
-typedef int evp_sign_method(int type, const unsigned char *m,
-    unsigned int m_length, unsigned char *sigret, unsigned int *siglen,
-    void *key);
-typedef int evp_verify_method(int type, const unsigned char *m,
-    unsigned int m_length, const unsigned char *sigbuf, unsigned int siglen,
-    void *key);
-
 #ifndef EVP_MD
-/* Move to evp_locl.h */
-struct env_md_st {
-	int type;
-	int pkey_type;
-	int md_size;
-	unsigned long flags;
-	int (*init)(EVP_MD_CTX *ctx);
-	int (*update)(EVP_MD_CTX *ctx, const void *data, size_t count);
-	int (*final)(EVP_MD_CTX *ctx, unsigned char *md);
-	int (*copy)(EVP_MD_CTX *to, const EVP_MD_CTX *from);
-	int (*cleanup)(EVP_MD_CTX *ctx);
-
-	evp_sign_method *sign;
-	evp_verify_method *verify;
-	int required_pkey_type[5]; /*EVP_PKEY_xxx */
-	int block_size;
-	int ctx_size; /* how big does the ctx->md_data need to be */
-	/* control function */
-	int (*md_ctrl)(EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
-} /* EVP_MD */;
-
 #define EVP_MD_FLAG_ONESHOT	0x0001 /* digest can only handle a single
 					* block */
 
@@ -260,18 +200,6 @@ struct env_md_st {
 
 #endif /* !EVP_MD */
 
-/* Move to evp_locl.h. */
-struct env_md_ctx_st {
-	const EVP_MD *digest;
-	ENGINE *engine; /* functional reference if 'digest' is ENGINE-provided */
-	unsigned long flags;
-	void *md_data;
-	/* Public key context for sign/verify */
-	EVP_PKEY_CTX *pctx;
-	/* Update function: usually copied from EVP_MD */
-	int (*update)(EVP_MD_CTX *ctx, const void *data, size_t count);
-} /* EVP_MD_CTX */;
-
 /* values for EVP_MD_CTX flags */
 
 #define EVP_MD_CTX_FLAG_ONESHOT		0x0001 /* digest update will be called
@@ -297,25 +225,6 @@ struct env_md_ctx_st {
 #define EVP_MD_CTX_FLAG_PAD_PSS		0x20	/* PSS mode */
 
 #define EVP_MD_CTX_FLAG_NO_INIT		0x0100 /* Don't initialize md_data */
-
-/* Move to evp_locl.h */
-struct evp_cipher_st {
-	int nid;
-	int block_size;
-	int key_len;		/* Default value for variable length ciphers */
-	int iv_len;
-	unsigned long flags;	/* Various flags */
-	int (*init)(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-	    const unsigned char *iv, int enc);	/* init key */
-	int (*do_cipher)(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	    const unsigned char *in, size_t inl);/* encrypt/decrypt data */
-	int (*cleanup)(EVP_CIPHER_CTX *); /* cleanup ctx */
-	int ctx_size;		/* how big ctx->cipher_data needs to be */
-	int (*set_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Populate a ASN1_TYPE with parameters */
-	int (*get_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Get parameters from a ASN1_TYPE */
-	int (*ctrl)(EVP_CIPHER_CTX *, int type, int arg, void *ptr); /* Miscellaneous operations */
-	void *app_data;		/* Application data */
-} /* EVP_CIPHER */;
 
 /* Values for cipher flags */
 
@@ -416,41 +325,6 @@ typedef struct evp_cipher_info_st {
 	const EVP_CIPHER *cipher;
 	unsigned char iv[EVP_MAX_IV_LENGTH];
 } EVP_CIPHER_INFO;
-
-/* Move to evp_locl.h */
-struct evp_cipher_ctx_st {
-	const EVP_CIPHER *cipher;
-	ENGINE *engine;	/* functional reference if 'cipher' is ENGINE-provided */
-	int encrypt;		/* encrypt or decrypt */
-	int buf_len;		/* number we have left */
-
-	unsigned char  oiv[EVP_MAX_IV_LENGTH];	/* original iv */
-	unsigned char  iv[EVP_MAX_IV_LENGTH];	/* working iv */
-	unsigned char buf[EVP_MAX_BLOCK_LENGTH];/* saved partial block */
-	int num;				/* used by cfb/ofb/ctr mode */
-
-	void *app_data;		/* application stuff */
-	int key_len;		/* May change for variable length cipher */
-	unsigned long flags;	/* Various flags */
-	void *cipher_data; /* per EVP data */
-	int final_used;
-	int block_mask;
-	unsigned char final[EVP_MAX_BLOCK_LENGTH];/* possible final block */
-} /* EVP_CIPHER_CTX */;
-
-/* Move to evp_locl.h */
-struct evp_Encode_Ctx_st {
-
-	int num;	/* number saved in a partial encode/decode */
-	int length;	/* The length is either the output line length
-			 * (in input bytes) or the shortest input line
-			 * length that is ok.  Once decoding begins,
-			 * the length is adjusted up each time a longer
-			 * line is decoded */
-	unsigned char enc_data[80];	/* data to encode */
-	int line_num;	/* number read on current line */
-	int expect_nl;
-} /* EVP_ENCODE_CTX */;
 
 /* Password based encryption function */
 typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
@@ -1317,7 +1191,6 @@ void EVP_PKEY_meth_set_param_check(EVP_PKEY_METHOD *pmeth,
  * message has a unique, per-message nonce and, optionally, additional data
  * which is authenticated but not included in the output. */
 
-struct evp_aead_st;
 typedef struct evp_aead_st EVP_AEAD;
 
 #ifndef OPENSSL_NO_AES
@@ -1351,11 +1224,7 @@ size_t EVP_AEAD_max_tag_len(const EVP_AEAD *aead);
 
 /* An EVP_AEAD_CTX represents an AEAD algorithm configured with a specific key
  * and message-independent IV. */
-typedef struct evp_aead_ctx_st {
-	const EVP_AEAD *aead;
-	/* aead_state is an opaque pointer to the AEAD specific state. */
-	void *aead_state;
-} EVP_AEAD_CTX;
+typedef struct evp_aead_ctx_st EVP_AEAD_CTX;
 
 /* EVP_AEAD_MAX_TAG_LENGTH is the maximum tag length used by any AEAD
  * defined in this header. */

@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.h,v 1.14 2021/12/12 21:35:47 tb Exp $ */
+/* $OpenBSD: hmac.h,v 1.15 2022/01/14 08:04:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,16 +71,6 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
-
-/* Move to hmac_local.h */
-struct hmac_ctx_st {
-	const EVP_MD *md;
-	EVP_MD_CTX md_ctx;
-	EVP_MD_CTX i_ctx;
-	EVP_MD_CTX o_ctx;
-	unsigned int key_length;
-	unsigned char key[HMAC_MAX_MD_CBLOCK];
-} /* HMAC_CTX */;
 
 #define HMAC_size(e)	(EVP_MD_size(HMAC_CTX_get_md((e))))
 

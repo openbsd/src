@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac_local.h,v 1.1 2021/12/12 21:27:38 tb Exp $ */
+/* $OpenBSD: hmac_local.h,v 1.2 2022/01/14 08:04:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,6 +65,15 @@
 #include "evp_locl.h"
 
 __BEGIN_HIDDEN_DECLS
+
+struct hmac_ctx_st {
+	const EVP_MD *md;
+	EVP_MD_CTX md_ctx;
+	EVP_MD_CTX i_ctx;
+	EVP_MD_CTX o_ctx;
+	unsigned int key_length;
+	unsigned char key[HMAC_MAX_MD_CBLOCK];
+} /* HMAC_CTX */;
 
 __END_HIDDEN_DECLS
 
