@@ -68,7 +68,6 @@ int radeon_vce_init(struct radeon_device *rdev)
 	case CHIP_TAHITI:
 	case CHIP_PITCAIRN:
 	case CHIP_VERDE:
-	case CHIP_OLAND:
 	case CHIP_ARUBA:
 		fw_name = FIRMWARE_TAHITI;
 		break;
@@ -108,13 +107,6 @@ int radeon_vce_init(struct radeon_device *rdev)
 	if (sscanf(c, "%2hhd.%2hhd.%2hhd]", &start, &mid, &end) != 3)
 		return -EINVAL;
 #else
-#if 0
-	int x;
-	printf("\n%s A\n", __func__);
-	for (x = 0; x < 16; x++) {
-		printf("%02x ", c[x]);
-	}
-#endif
 	if (c[2] != '.') {
 		printf("%s %s bad start value\n", rdev->self.dv_xname, __func__);
 		return -EINVAL;
@@ -152,13 +144,6 @@ int radeon_vce_init(struct radeon_device *rdev)
 	if (sscanf(c, "%2u]", &rdev->vce.fb_version) != 1)
 		return -EINVAL;
 #else
-#if 0
-	printf("\n%s B\n", __func__);
-	for (x = 0; x < 16; x++) {
-		printf("%02x ", c[x]);
-	}
-	printf("\n");
-#endif
 	if (c[2] != ']') {
 		printf("%s %s bad fb_version value\n", rdev->self.dv_xname, __func__);
 		return -EINVAL;

@@ -23,6 +23,12 @@ __seqcount_init(seqcount_t *s, const char *name,
 	s->sequence = 0;
 }
 
+static inline void
+seqcount_init(seqcount_t *s)
+{
+	__seqcount_init(s, NULL, NULL);
+}
+
 static inline unsigned int
 __read_seqcount_begin(const seqcount_t *s)
 {
@@ -144,8 +150,15 @@ read_seqretry(seqlock_t *sl, unsigned int pos)
 }
 
 typedef struct {
-	unsigned int seq;
+	seqcount_t seq;
 	struct ww_mutex lock;
 } seqcount_ww_mutex_t;
+
+typedef struct {
+	seqcount_t seq;
+	struct rwlock lock;
+} seqcount_mutex_t;
+
+#define seqcount_mutex_init(s, l)	seqcount_init(&(s)->seq)
 
 #endif

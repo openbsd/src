@@ -211,8 +211,8 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 	struct drm_gem_object *gobj = NULL;
 	struct amdgpu_bo *abo = NULL;
 	int ret;
-	unsigned long tmp;
 
+	memset(&mode_cmd, 0, sizeof(mode_cmd));
 	mode_cmd.width = sizes->surface_width;
 	mode_cmd.height = sizes->surface_height;
 
@@ -237,8 +237,8 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 		goto out;
 	}
 
-	ret = amdgpu_display_framebuffer_init(adev_to_drm(adev), &rfbdev->rfb,
-					      &mode_cmd, gobj);
+	ret = amdgpu_display_gem_fb_init(adev_to_drm(adev), &rfbdev->rfb,
+					 &mode_cmd, gobj);
 	if (ret) {
 		DRM_ERROR("failed to initialize framebuffer %d\n", ret);
 		goto out;
@@ -250,10 +250,8 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 	rfbdev->helper.fb = fb;
 
 	info->fbops = &amdgpufb_ops;
-
-	tmp = amdgpu_bo_gpu_offset(abo) - adev->gmc.vram_start;
 #ifdef __linux__
-	info->fix.smem_start = adev->gmc.aper_base + tmp;
+	info->fix.smem_start = amdgpu_gmc_vram_cpu_pa(adev, abo);
 	info->fix.smem_len = amdgpu_bo_size(abo);
 	info->screen_base = amdgpu_bo_kptr(abo);
 	info->screen_size = amdgpu_bo_size(abo);
@@ -307,13 +305,10 @@ static int amdgpufb_create(struct drm_fb_helper *helper,
 		break;
 	}
 
-	vga_switcheroo_client_fb_set(adev_to_drm(adev)->pdev, info);
+	vga_switcheroo_client_fb_set(adev->pdev, info);
 	return 0;
 
 out:
-	if (abo) {
-
-	}
 	if (fb && ret) {
 		drm_gem_object_put(gobj);
 		drm_framebuffer_unregister_private(fb);
@@ -384,7 +379,7 @@ int amdgpu_fbdev_init(struct amdgpu_device *adev)
 	task_set(&adev->burner_task, amdgpu_burner_cb, adev);
 
 	/* disable all the possible outputs/crtcs before entering KMS mode */
-	if (!amdgpu_device_has_dc_support(adev))
+	if (!amdgpu_device_has_dc_support(adev) && !amdgpu_virtual_display)
 		drm_helper_disable_unused_functions(adev_to_drm(adev));
 
 	drm_fb_helper_initial_config(&rfbdev->helper, bpp_sel);

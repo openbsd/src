@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.11 2021/07/07 02:38:21 jsg Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.12 2022/01/14 06:52:58 jsg Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,20 +35,10 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
-#include <dev/ofw/ofw_clock.h>
-#include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_misc.h>
-#include <dev/ofw/fdt.h>
 
-#include <uvm/uvm_extern.h>
-#include <uvm/uvm_object.h>
-#include <uvm/uvm_device.h>
-
-#include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_drv.h>
-#include <drm/drm_vblank.h>
-#include <drm/drm_crtc_helper.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_gem.h>
 
@@ -71,16 +61,12 @@ vmem_t	*rkdrm_alloc_cma_pool(struct drm_device *, size_t);
 int	rkdrm_load(struct drm_device *, unsigned long);
 int	rkdrm_unload(struct drm_device *);
 
-int	rkdrm_gem_fault(struct drm_gem_object *, struct uvm_faultinfo *,
-	    off_t, vaddr_t, vm_page_t *, int, int, vm_prot_t, int);
-
 struct drm_driver rkdrm_driver = {
 	.driver_features = DRIVER_ATOMIC | DRIVER_MODESET | DRIVER_GEM,
 
 	.dumb_create = drm_gem_cma_dumb_create,
 	.dumb_map_offset = drm_gem_dumb_map_offset,
 
-	.gem_free_object_unlocked = drm_gem_cma_free_object,
 	.gem_fault = drm_gem_cma_fault,
 
 	.name = DRIVER_NAME,
@@ -89,6 +75,10 @@ struct drm_driver rkdrm_driver = {
 	.major = DRIVER_MAJOR,
 	.minor = DRIVER_MINOR,
 	.patchlevel = DRIVER_PATCHLEVEL,
+};
+
+const struct drm_gem_object_funcs rkdrm_gem_object_funcs = {
+	.free = drm_gem_cma_free_object,
 };
 
 struct cfattach	rkdrm_ca = {
@@ -173,6 +163,7 @@ rkdrm_fb_create(struct drm_device *ddev, struct drm_file *file,
 	fb = malloc(sizeof(*fb), M_DRM, M_ZERO | M_WAITOK);
 	drm_helper_mode_fill_fb_struct(ddev, &fb->base, cmd);
 	fb->base.format = drm_format_info(DRM_FORMAT_ARGB8888);
+	fb->base.obj[0] = gem_obj;
 	fb->obj = to_drm_gem_cma_obj(gem_obj);
 
 	error = drm_framebuffer_init(ddev, &fb->base, &rkdrm_framebuffer_funcs);
@@ -526,6 +517,7 @@ rkdrm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_size *
 
 	drm_helper_mode_fill_fb_struct(ddev, fb, &mode_cmd);
 	fb->format = drm_format_info(DRM_FORMAT_ARGB8888);
+	fb->obj[0] = &sfb->obj->base;
 	error = drm_framebuffer_init(ddev, fb, &rkdrm_framebuffer_funcs);
 	if (error != 0) {
 		DRM_ERROR("failed to initialize framebuffer\n");

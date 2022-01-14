@@ -49,6 +49,7 @@
 #include <linux/slab.h>
 #include <linux/srcu.h>
 
+#include <drm/drm_cache.h>
 #include <drm/drm_client.h>
 #include <drm/drm_color_mgmt.h>
 #include <drm/drm_drv.h>
@@ -58,8 +59,6 @@
 #include <drm/drm_print.h>
 
 #include <drm/drm_gem.h>
-#include <drm/drm_agpsupport.h>
-#include <drm/drm_irq.h>
 
 #include "drm_crtc_internal.h"
 #include "drm_internal.h"
@@ -79,7 +78,7 @@ static struct idr drm_minors_idr;
  * prefer to embed struct drm_device into their own device
  * structure and call drm_dev_init() themselves.
  */
-static bool drm_core_init_complete = false;
+static bool drm_core_init_complete;
 
 static struct dentry *drm_debugfs_root;
 
@@ -101,7 +100,7 @@ struct drm_softc {
 
 struct drm_attach_args {
 	struct drm_device		*drm;
-	struct drm_driver		*driver;
+	const struct drm_driver		*driver;
 	char				*busid;
 	bus_dma_tag_t			 dmat;
 	bus_space_tag_t			 bst;
@@ -329,7 +328,7 @@ void drm_minor_release(struct drm_minor *minor)
  * Finally when everything is up and running and ready for userspace the device
  * instance can be published using drm_dev_register().
  *
- * There is also deprecated support for initalizing device instances using
+ * There is also deprecated support for initializing device instances using
  * bus-specific helpers and the &drm_driver.load callback. But due to
  * backwards-compatibility needs the device instance have to be published too
  * early, which requires unpretty global locking to make safe and is therefore
@@ -365,7 +364,7 @@ void drm_minor_release(struct drm_minor *minor)
  *		struct clk *pclk;
  *	};
  *
- *	static struct drm_driver driver_drm_driver = {
+ *	static const struct drm_driver driver_drm_driver = {
  *		[...]
  *	};
  *
@@ -459,7 +458,7 @@ void drm_minor_release(struct drm_minor *minor)
  * shortcoming however, drm_dev_unplug() marks the drm_device as unplugged before
  * drm_atomic_helper_shutdown() is called. This means that if the disable code
  * paths are protected, they will not run on regular driver module unload,
- * possibily leaving the hardware enabled.
+ * possibly leaving the hardware enabled.
  */
 
 /**
@@ -556,6 +555,9 @@ void drm_dev_unplug(struct drm_device *dev)
 	synchronize_srcu(&drm_unplug_srcu);
 
 	drm_dev_unregister(dev);
+
+	/* Clear all CPU mappings pointing to this device */
+	unmap_mapping_range(dev->anon_inode->i_mapping, 0, 0, 1);
 #endif
 }
 EXPORT_SYMBOL(drm_dev_unplug);
@@ -667,7 +669,7 @@ static void drm_dev_init_release(struct drm_device *dev, void *res)
 }
 
 static int drm_dev_init(struct drm_device *dev,
-			struct drm_driver *driver,
+			const struct drm_driver *driver,
 			struct device *parent)
 {
 	int ret;
@@ -766,7 +768,7 @@ static void devm_drm_dev_init_release(void *data)
 
 static int devm_drm_dev_init(struct device *parent,
 			     struct drm_device *dev,
-			     struct drm_driver *driver)
+			     const struct drm_driver *driver)
 {
 	STUB();
 	return -ENOSYS;
@@ -777,15 +779,13 @@ static int devm_drm_dev_init(struct device *parent,
 	if (ret)
 		return ret;
 
-	ret = devm_add_action(parent, devm_drm_dev_init_release, dev);
-	if (ret)
-		devm_drm_dev_init_release(dev);
-
-	return ret;
+	return devm_add_action_or_reset(parent,
+					devm_drm_dev_init_release, dev);
 #endif
 }
 
-void *__devm_drm_dev_alloc(struct device *parent, struct drm_driver *driver,
+void *__devm_drm_dev_alloc(struct device *parent,
+			   const struct drm_driver *driver,
 			   size_t size, size_t offset)
 {
 	void *container;
@@ -820,7 +820,7 @@ EXPORT_SYMBOL(__devm_drm_dev_alloc);
  * RETURNS:
  * Pointer to new DRM device, or ERR_PTR on failure.
  */
-struct drm_device *drm_dev_alloc(struct drm_driver *driver,
+struct drm_device *drm_dev_alloc(const struct drm_driver *driver,
 				 struct device *parent)
 {
 	struct drm_device *dev;
@@ -965,7 +965,7 @@ static void remove_compat_control_link(struct drm_device *dev)
  */
 int drm_dev_register(struct drm_device *dev, unsigned long flags)
 {
-	struct drm_driver *driver = dev->driver;
+	const struct drm_driver *driver = dev->driver;
 	int ret;
 
 	if (!driver->load)
@@ -998,8 +998,6 @@ int drm_dev_register(struct drm_device *dev, unsigned long flags)
 
 	if (drm_core_check_feature(dev, DRIVER_MODESET))
 		drm_modeset_register_all(dev);
-
-	ret = 0;
 
 	DRM_INFO("Initialized %s %d.%d.%d %s for %s on minor %d\n",
 		 driver->name, driver->major, driver->minor,
@@ -1049,11 +1047,7 @@ void drm_dev_unregister(struct drm_device *dev)
 	if (dev->driver->unload)
 		dev->driver->unload(dev);
 
-#if IS_ENABLED(CONFIG_AGP)
-	if (dev->agp)
-		drm_agp_takedown(dev);
-#endif
-
+	drm_legacy_pci_agp_destroy(dev);
 	drm_legacy_rmmaps(dev);
 
 	remove_compat_control_link(dev);
@@ -1159,6 +1153,7 @@ static int __init drm_core_init(void)
 
 	drm_connector_ida_init();
 	idr_init(&drm_minors_idr);
+	drm_memcpy_init_early();
 
 #ifdef __linux__
 	ret = drm_sysfs_init();
@@ -1208,7 +1203,7 @@ drm_attach_platform(struct drm_driver *driver, bus_space_tag_t iot,
 }
 
 struct drm_device *
-drm_attach_pci(struct drm_driver *driver, struct pci_attach_args *pa,
+drm_attach_pci(const struct drm_driver *driver, struct pci_attach_args *pa,
     int is_agp, int primary, struct device *dev, struct drm_device *drm)
 {
 	struct drm_attach_args arg;
@@ -1341,6 +1336,9 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 		dev->pdev->subsystem_vendor = PCI_VENDOR(subsys);
 		dev->pdev->subsystem_device = PCI_PRODUCT(subsys);
 		dev->pdev->revision = PCI_REVISION(pa->pa_class);
+		dev->pdev->class = (PCI_CLASS(pa->pa_class) << 16) |
+		    (PCI_SUBCLASS(pa->pa_class) << 8) |
+		    PCI_INTERFACE(pa->pa_class);
 
 		dev->pdev->devfn = PCI_DEVFN(pa->pa_device, pa->pa_function);
 		dev->pdev->bus = &dev->pdev->_bus;
@@ -1393,6 +1391,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 	if (ret)
 		goto error;
 
+#ifdef CONFIG_DRM_LEGACY
 	if (drm_core_check_feature(dev, DRIVER_USE_AGP)) {
 #if IS_ENABLED(CONFIG_AGP)
 		if (da->is_agp)
@@ -1404,6 +1403,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 				dev->agp->mtrr = 1;
 		}
 	}
+#endif
 
 	if (dev->driver->gem_size > 0) {
 		KASSERT(dev->driver->gem_size >= sizeof(struct drm_gem_object));
@@ -1449,6 +1449,7 @@ drm_detach(struct device *self, int flags)
 			pool_destroy(&dev->objpl);
 	}
 
+#ifdef CONFIG_DRM_LEGACY
 	if (dev->agp && dev->agp->mtrr) {
 		int retcode;
 
@@ -1458,6 +1459,7 @@ drm_detach(struct device *self, int flags)
 	}
 
 	free(dev->agp, M_DRM, 0);
+#endif
 	if (dev->pdev && dev->pdev->bus)
 		free(dev->pdev->bus->self, M_DRM, sizeof(struct pci_dev));
 

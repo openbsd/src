@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.arm64,v 1.41 2021/12/17 14:59:22 patrick Exp $
+#	$OpenBSD: Makefile.arm64,v 1.42 2022/01/14 06:53:16 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -35,6 +35,7 @@ INCLUDES=	-nostdinc -I$S -I${.OBJDIR} -I$S/arch \
 		-I$S/dev/pci/drm/amd/pm/swsmu \
 		-I$S/dev/pci/drm/amd/pm/swsmu/smu11 \
 		-I$S/dev/pci/drm/amd/pm/swsmu/smu12 \
+		-I$S/dev/pci/drm/amd/pm/swsmu/smu13 \
 		-I$S/dev/pci/drm/amd/pm/powerplay \
 		-I$S/dev/pci/drm/amd/pm/powerplay/hwmgr \
 		-I$S/dev/pci/drm/amd/pm/powerplay/smumgr \

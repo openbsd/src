@@ -59,6 +59,7 @@ MODULE_FIRMWARE("amdgpu/tonga_mc.bin");
 MODULE_FIRMWARE("amdgpu/polaris11_mc.bin");
 MODULE_FIRMWARE("amdgpu/polaris10_mc.bin");
 MODULE_FIRMWARE("amdgpu/polaris12_mc.bin");
+MODULE_FIRMWARE("amdgpu/polaris12_32_mc.bin");
 MODULE_FIRMWARE("amdgpu/polaris11_k_mc.bin");
 MODULE_FIRMWARE("amdgpu/polaris10_k_mc.bin");
 MODULE_FIRMWARE("amdgpu/polaris12_k_mc.bin");
@@ -230,39 +231,29 @@ static int gmc_v8_0_init_microcode(struct amdgpu_device *adev)
 		chip_name = "tonga";
 		break;
 	case CHIP_POLARIS11:
-		if (((adev->pdev->device == 0x67ef) &&
-		     ((adev->pdev->revision == 0xe0) ||
-		      (adev->pdev->revision == 0xe5))) ||
-		    ((adev->pdev->device == 0x67ff) &&
-		     ((adev->pdev->revision == 0xcf) ||
-		      (adev->pdev->revision == 0xef) ||
-		      (adev->pdev->revision == 0xff))))
-			chip_name = "polaris11_k";
-		else if ((adev->pdev->device == 0x67ef) &&
-			 (adev->pdev->revision == 0xe2))
+		if (ASICID_IS_P21(adev->pdev->device, adev->pdev->revision) ||
+		    ASICID_IS_P31(adev->pdev->device, adev->pdev->revision))
 			chip_name = "polaris11_k";
 		else
 			chip_name = "polaris11";
 		break;
 	case CHIP_POLARIS10:
-		if ((adev->pdev->device == 0x67df) &&
-		    ((adev->pdev->revision == 0xe1) ||
-		     (adev->pdev->revision == 0xf7)))
+		if (ASICID_IS_P30(adev->pdev->device, adev->pdev->revision))
 			chip_name = "polaris10_k";
 		else
 			chip_name = "polaris10";
 		break;
 	case CHIP_POLARIS12:
-		if (((adev->pdev->device == 0x6987) &&
-		     ((adev->pdev->revision == 0xc0) ||
-		      (adev->pdev->revision == 0xc3))) ||
-		    ((adev->pdev->device == 0x6981) &&
-		     ((adev->pdev->revision == 0x00) ||
-		      (adev->pdev->revision == 0x01) ||
-		      (adev->pdev->revision == 0x10))))
+		if (ASICID_IS_P23(adev->pdev->device, adev->pdev->revision)) {
 			chip_name = "polaris12_k";
-		else
-			chip_name = "polaris12";
+		} else {
+			WREG32(mmMC_SEQ_IO_DEBUG_INDEX, ixMC_IO_DEBUG_UP_159);
+			/* Polaris12 32bit ASIC needs a special MC firmware */
+			if (RREG32(mmMC_SEQ_IO_DEBUG_DATA) == 0x05b4dc40)
+				chip_name = "polaris12_32";
+			else
+				chip_name = "polaris12";
+		}
 		break;
 	case CHIP_FIJI:
 	case CHIP_CARRIZO:
@@ -615,6 +606,7 @@ static int gmc_v8_0_mc_init(struct amdgpu_device *adev)
 		adev->gmc.gart_size = (u64)amdgpu_gart_size << 20;
 	}
 
+	adev->gmc.gart_size += adev->pm.smu_prv_buffer_size;
 	gmc_v8_0_vram_gtt_location(adev, &adev->gmc);
 
 	return 0;
@@ -625,6 +617,8 @@ static int gmc_v8_0_mc_init(struct amdgpu_device *adev)
  *
  * @adev: amdgpu_device pointer
  * @pasid: pasid to be flush
+ * @flush_type: type of flush
+ * @all_hub: flush all hubs
  *
  * Flush the TLB for the requested pasid.
  */
@@ -665,6 +659,8 @@ static int gmc_v8_0_flush_gpu_tlb_pasid(struct amdgpu_device *adev,
  *
  * @adev: amdgpu_device pointer
  * @vmid: vm instance to flush
+ * @vmhub: which hub to flush
+ * @flush_type: type of flush
  *
  * Flush the TLB for the requested page table (VI).
  */
@@ -915,7 +911,7 @@ static int gmc_v8_0_gart_enable(struct amdgpu_device *adev)
 	/* set vm size, must be a multiple of 4 */
 	WREG32(mmVM_CONTEXT1_PAGE_TABLE_START_ADDR, 0);
 	WREG32(mmVM_CONTEXT1_PAGE_TABLE_END_ADDR, adev->vm_manager.max_pfn - 1);
-	for (i = 1; i < 16; i++) {
+	for (i = 1; i < AMDGPU_NUM_VMID; i++) {
 		if (i < 8)
 			WREG32(mmVM_CONTEXT0_PAGE_TABLE_BASE_ADDR + i,
 			       table_addr >> 12);
@@ -1006,6 +1002,7 @@ static void gmc_v8_0_gart_disable(struct amdgpu_device *adev)
  * @status: VM_CONTEXT1_PROTECTION_FAULT_STATUS register value
  * @addr: VM_CONTEXT1_PROTECTION_FAULT_ADDR register value
  * @mc_client: VM_CONTEXT1_PROTECTION_FAULT_MCCLIENT register value
+ * @pasid: debug logging only - no functional use
  *
  * Print human readable fault information (VI).
  */
@@ -1072,8 +1069,6 @@ static int gmc_v8_0_early_init(void *handle)
 static int gmc_v8_0_late_init(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-
-	amdgpu_bo_late_init(adev);
 
 	if (amdgpu_vm_fault_stop != AMDGPU_VM_FAULT_STOP_ALWAYS)
 		return amdgpu_irq_get(adev, &adev->gmc.vm_fault, 0);
@@ -1206,7 +1201,6 @@ static int gmc_v8_0_sw_fini(void *handle)
 	kfree(adev->gmc.vm_fault_info);
 	amdgpu_gart_table_vram_free(adev);
 	amdgpu_bo_fini(adev);
-	amdgpu_gart_fini(adev);
 	release_firmware(adev->gmc.fw);
 	adev->gmc.fw = NULL;
 

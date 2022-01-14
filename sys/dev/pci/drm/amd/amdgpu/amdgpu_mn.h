@@ -30,6 +30,15 @@
 #include <linux/workqueue.h>
 #include <linux/interval_tree.h>
 
+#ifdef notyet
+int amdgpu_hmm_range_get_pages(struct mmu_interval_notifier *notifier,
+			       struct mm_struct *mm, struct vm_page **pages,
+			       uint64_t start, uint64_t npages,
+			       struct hmm_range **phmm_range, bool readonly,
+			       bool mmap_locked, void *owner);
+int amdgpu_hmm_range_get_pages_done(struct hmm_range *hmm_range);
+#endif
+
 #if defined(CONFIG_HMM_MIRROR)
 int amdgpu_mn_register(struct amdgpu_bo *bo, unsigned long addr);
 void amdgpu_mn_unregister(struct amdgpu_bo *bo);

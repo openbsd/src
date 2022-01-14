@@ -73,7 +73,7 @@
  * Thus the chain of references always flows in one direction, avoiding loops:
  * importing GEM object -> dma-buf -> exported GEM bo. A further complication
  * are the lookup caches for import and export. These are required to guarantee
- * that any given object will always have only one uniqe userspace handle. This
+ * that any given object will always have only one unique userspace handle. This
  * is required to allow userspace to detect duplicated imports, since some GEM
  * drivers do fail command submissions if a given buffer object is listed more
  * than once. These import and export caches in &drm_prime_file_private only
@@ -388,8 +388,6 @@ static struct dma_buf *export_and_register_object(struct drm_device *dev,
 
 	if (obj->funcs && obj->funcs->export)
 		dmabuf = obj->funcs->export(obj, flags);
-	else if (dev->driver->gem_prime_export)
-		dmabuf = dev->driver->gem_prime_export(obj, flags);
 	else
 		dmabuf = drm_gem_prime_export(obj, flags);
 	if (IS_ERR(dmabuf)) {
@@ -421,7 +419,7 @@ static struct dma_buf *export_and_register_object(struct drm_device *dev,
  * This is the PRIME export function which must be used mandatorily by GEM
  * drivers to ensure correct lifetime management of the underlying GEM object.
  * The actual exporting from GEM object to a dma-buf is done through the
- * &drm_driver.gem_prime_export driver callback.
+ * &drm_gem_object_funcs.export callback.
  */
 int drm_gem_prime_handle_to_fd(struct drm_device *dev,
 			       struct drm_file *file_priv, uint32_t handle,
@@ -555,7 +553,7 @@ int drm_prime_handle_to_fd_ioctl(struct drm_device *dev, void *data,
  *
  * FIXME: The underlying helper functions are named rather inconsistently.
  *
- * Exporting buffers
+ * Importing buffers
  * ~~~~~~~~~~~~~~~~~
  *
  * Importing dma-bufs using drm_gem_prime_import() relies on
@@ -628,10 +626,12 @@ struct sg_table *drm_gem_map_dma_buf(struct dma_buf_attachment *attach,
 	if (WARN_ON(dir == DMA_NONE))
 		return ERR_PTR(-EINVAL);
 
-	if (obj->funcs)
-		sgt = obj->funcs->get_sg_table(obj);
-	else
-		sgt = obj->dev->driver->gem_prime_get_sg_table(obj);
+	if (WARN_ON(!obj->funcs->get_sg_table))
+		return ERR_PTR(-ENOSYS);
+
+	sgt = obj->funcs->get_sg_table(obj);
+	if (IS_ERR(sgt))
+		return sgt;
 
 	ret = dma_map_sgtable(attach->dev, sgt, dir,
 			      DMA_ATTR_SKIP_CPU_SYNC);
@@ -671,43 +671,39 @@ EXPORT_SYMBOL(drm_gem_unmap_dma_buf);
 /**
  * drm_gem_dmabuf_vmap - dma_buf vmap implementation for GEM
  * @dma_buf: buffer to be mapped
+ * @map: the virtual address of the buffer
  *
  * Sets up a kernel virtual mapping. This can be used as the &dma_buf_ops.vmap
  * callback. Calls into &drm_gem_object_funcs.vmap for device specific handling.
+ * The kernel virtual address is returned in map.
  *
- * Returns the kernel virtual address or NULL on failure.
+ * Returns 0 on success or a negative errno code otherwise.
  */
-void *drm_gem_dmabuf_vmap(struct dma_buf *dma_buf)
+int drm_gem_dmabuf_vmap(struct dma_buf *dma_buf, struct dma_buf_map *map)
 {
 	struct drm_gem_object *obj = dma_buf->priv;
-	void *vaddr;
 
-	vaddr = drm_gem_vmap(obj);
-	if (IS_ERR(vaddr))
-		vaddr = NULL;
-
-	return vaddr;
+	return drm_gem_vmap(obj, map);
 }
 EXPORT_SYMBOL(drm_gem_dmabuf_vmap);
 
 /**
  * drm_gem_dmabuf_vunmap - dma_buf vunmap implementation for GEM
  * @dma_buf: buffer to be unmapped
- * @vaddr: the virtual address of the buffer
+ * @map: the virtual address of the buffer
  *
  * Releases a kernel virtual mapping. This can be used as the
  * &dma_buf_ops.vunmap callback. Calls into &drm_gem_object_funcs.vunmap for device specific handling.
  */
-void drm_gem_dmabuf_vunmap(struct dma_buf *dma_buf, void *vaddr)
+void drm_gem_dmabuf_vunmap(struct dma_buf *dma_buf, struct dma_buf_map *map)
 {
 	struct drm_gem_object *obj = dma_buf->priv;
 
-	drm_gem_vunmap(obj, vaddr);
+	drm_gem_vunmap(obj, map);
 }
 EXPORT_SYMBOL(drm_gem_dmabuf_vunmap);
 
-#ifdef notyet
-
+#ifdef __linux__
 /**
  * drm_gem_prime_mmap - PRIME mmap function for GEM drivers
  * @obj: GEM object
@@ -730,11 +726,15 @@ int drm_gem_prime_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma)
 	vma->vm_pgoff += drm_vma_node_start(&obj->vma_node);
 
 	if (obj->funcs && obj->funcs->mmap) {
-		ret = obj->funcs->mmap(obj, vma);
-		if (ret)
-			return ret;
-		vma->vm_private_data = obj;
+		vma->vm_ops = obj->funcs->vm_ops;
+
 		drm_gem_object_get(obj);
+		ret = obj->funcs->mmap(obj, vma);
+		if (ret) {
+			drm_gem_object_put(obj);
+			return ret;
+		}
+		vma->vm_private_data = obj;
 		return 0;
 	}
 
@@ -763,6 +763,17 @@ out:
 	return ret;
 }
 EXPORT_SYMBOL(drm_gem_prime_mmap);
+#else
+struct uvm_object *
+drm_gem_prime_mmap(struct file *filp, vm_prot_t accessprot, voff_t off,
+    vsize_t size)
+{
+	STUB();
+	return NULL;
+}
+#endif
+
+#ifdef notyet
 
 /**
  * drm_gem_dmabuf_mmap - dma_buf mmap implementation for GEM
@@ -827,8 +838,8 @@ struct sg_table *drm_prime_pages_to_sg(struct drm_device *dev,
 	return NULL;
 #ifdef notyet
 	struct sg_table *sg;
-	struct scatterlist *sge;
 	size_t max_segment = 0;
+	int err;
 
 	sg = kmalloc(sizeof(struct sg_table), GFP_KERNEL);
 	if (!sg)
@@ -836,15 +847,14 @@ struct sg_table *drm_prime_pages_to_sg(struct drm_device *dev,
 
 	if (dev)
 		max_segment = dma_max_mapping_size(dev->dev);
-	if (max_segment == 0 || max_segment > SCATTERLIST_MAX_SEGMENT)
-		max_segment = SCATTERLIST_MAX_SEGMENT;
-	sge = __sg_alloc_table_from_pages(sg, pages, nr_pages, 0,
-					  nr_pages << PAGE_SHIFT,
-					  max_segment,
-					  NULL, 0, GFP_KERNEL);
-	if (IS_ERR(sge)) {
+	if (max_segment == 0)
+		max_segment = UINT_MAX;
+	err = sg_alloc_table_from_pages_segment(sg, pages, nr_pages, 0,
+						nr_pages << PAGE_SHIFT,
+						max_segment, GFP_KERNEL);
+	if (err) {
 		kfree(sg);
-		sg = ERR_CAST(sge);
+		sg = ERR_PTR(err);
 	}
 	return sg;
 #endif
@@ -1016,48 +1026,66 @@ struct drm_gem_object *drm_gem_prime_import(struct drm_device *dev,
 EXPORT_SYMBOL(drm_gem_prime_import);
 
 /**
- * drm_prime_sg_to_page_addr_arrays - convert an sg table into a page array
+ * drm_prime_sg_to_page_array - convert an sg table into a page array
  * @sgt: scatter-gather table to convert
- * @pages: optional array of page pointers to store the page array in
- * @addrs: optional array to store the dma bus address of each page
+ * @pages: array of page pointers to store the pages in
+ * @max_entries: size of the passed-in array
+ *
+ * Exports an sg table into an array of pages.
+ *
+ * This function is deprecated and strongly discouraged to be used.
+ * The page array is only useful for page faults and those can corrupt fields
+ * in the struct page if they are not handled by the exporting driver.
+ */
+int __deprecated drm_prime_sg_to_page_array(struct sg_table *sgt,
+					    struct vm_page **pages,
+					    int max_entries)
+{
+	STUB();
+	return -ENOSYS;
+#ifdef notyet
+	struct sg_page_iter page_iter;
+	struct vm_page **p = pages;
+
+	for_each_sgtable_page(sgt, &page_iter, 0) {
+		if (WARN_ON(p - pages >= max_entries))
+			return -1;
+		*p++ = sg_page_iter_page(&page_iter);
+	}
+	return 0;
+#endif
+}
+EXPORT_SYMBOL(drm_prime_sg_to_page_array);
+
+/**
+ * drm_prime_sg_to_dma_addr_array - convert an sg table into a dma addr array
+ * @sgt: scatter-gather table to convert
+ * @addrs: array to store the dma bus address of each page
  * @max_entries: size of both the passed-in arrays
  *
- * Exports an sg table into an array of pages and addresses. This is currently
- * required by the TTM driver in order to do correct fault handling.
+ * Exports an sg table into an array of addresses.
  *
- * Drivers can use this in their &drm_driver.gem_prime_import_sg_table
+ * Drivers should use this in their &drm_driver.gem_prime_import_sg_table
  * implementation.
  */
-int drm_prime_sg_to_page_addr_arrays(struct sg_table *sgt, struct vm_page **pages,
-				     dma_addr_t *addrs, int max_entries)
+int drm_prime_sg_to_dma_addr_array(struct sg_table *sgt, dma_addr_t *addrs,
+				   int max_entries)
 {
 	STUB();
 	return -ENOSYS;
 #ifdef notyet
 	struct sg_dma_page_iter dma_iter;
-	struct sg_page_iter page_iter;
-	struct vm_page **p = pages;
 	dma_addr_t *a = addrs;
 
-	if (pages) {
-		for_each_sgtable_page(sgt, &page_iter, 0) {
-			if (WARN_ON(p - pages >= max_entries))
-				return -1;
-			*p++ = sg_page_iter_page(&page_iter);
-		}
+	for_each_sgtable_dma_page(sgt, &dma_iter, 0) {
+		if (WARN_ON(a - addrs >= max_entries))
+			return -1;
+		*a++ = sg_page_iter_dma_address(&dma_iter);
 	}
-	if (addrs) {
-		for_each_sgtable_dma_page(sgt, &dma_iter, 0) {
-			if (WARN_ON(a - addrs >= max_entries))
-				return -1;
-			*a++ = sg_page_iter_dma_address(&dma_iter);
-		}
-	}
-
 	return 0;
 #endif
 }
-EXPORT_SYMBOL(drm_prime_sg_to_page_addr_arrays);
+EXPORT_SYMBOL(drm_prime_sg_to_dma_addr_array);
 
 /**
  * drm_prime_gem_destroy - helper to clean up a PRIME-imported GEM object

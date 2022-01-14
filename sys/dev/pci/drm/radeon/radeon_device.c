@@ -36,12 +36,12 @@
 
 #include <drm/drm_cache.h>
 #include <drm/drm_crtc_helper.h>
-#include <drm/drm_debugfs.h>
 #include <drm/drm_device.h>
 #include <drm/drm_file.h>
 #include <drm/drm_probe_helper.h>
 #include <drm/radeon_drm.h>
 
+#include "radeon_device.h"
 #include "radeon_reg.h"
 #include "radeon.h"
 #include "atom.h"
@@ -417,7 +417,7 @@ void radeon_doorbell_free(struct radeon_device *rdev, u32 doorbell)
 
 /*
  * radeon_wb_*()
- * Writeback is the the method by which the the GPU updates special pages
+ * Writeback is the method by which the GPU updates special pages
  * in memory with the status of certain GPU events (fences, ring pointers,
  * etc.).
  */
@@ -555,21 +555,21 @@ int radeon_wb_init(struct radeon_device *rdev)
  * Note: GTT start, end, size should be initialized before calling this
  * function on AGP platform.
  *
- * Note: We don't explicitly enforce VRAM start to be aligned on VRAM size,
+ * Note 1: We don't explicitly enforce VRAM start to be aligned on VRAM size,
  * this shouldn't be a problem as we are using the PCI aperture as a reference.
  * Otherwise this would be needed for rv280, all r3xx, and all r4xx, but
  * not IGP.
  *
- * Note: we use mc_vram_size as on some board we need to program the mc to
+ * Note 2: we use mc_vram_size as on some board we need to program the mc to
  * cover the whole aperture even if VRAM size is inferior to aperture size
  * Novell bug 204882 + along with lots of ubuntu ones
  *
- * Note: when limiting vram it's safe to overwritte real_vram_size because
+ * Note 3: when limiting vram it's safe to overwritte real_vram_size because
  * we are not in case where real_vram_size is inferior to mc_vram_size (ie
  * note afected by bogus hw of Novell bug 204882 + along with lots of ubuntu
  * ones)
  *
- * Note: IGP TOM addr should be the same as the aperture addr, we don't
+ * Note 4: IGP TOM addr should be the same as the aperture addr, we don't
  * explicitly check for that thought.
  *
  * FIXME: when reducing VRAM size align new size on power of 2.
@@ -638,7 +638,7 @@ void radeon_gtt_location(struct radeon_device *rdev, struct radeon_mc *mc)
  * GPU helpers function.
  */
 
-/**
+/*
  * radeon_device_is_virtual - check if we are running is a virtual environment
  *
  * Check if the asic has been passed through to a VM (all asics).
@@ -1076,18 +1076,19 @@ void radeon_combios_fini(struct radeon_device *rdev)
 /**
  * radeon_vga_set_decode - enable/disable vga decode
  *
- * @cookie: radeon_device pointer
+ * @pdev: PCI device
  * @state: enable/disable vga decode
  *
  * Enable/disable vga decode (all asics).
  * Returns VGA resource flags.
  */
-static unsigned int radeon_vga_set_decode(void *cookie, bool state)
+static unsigned int radeon_vga_set_decode(struct pci_dev *pdev, bool state)
 {
 	STUB();
 	return -ENOSYS;
 #ifdef notyet
-	struct radeon_device *rdev = cookie;
+	struct drm_device *dev = pci_get_drvdata(pdev);
+	struct radeon_device *rdev = dev->dev_private;
 	radeon_vga_set_state(rdev, state);
 	if (state)
 		return VGA_RSRC_LEGACY_IO | VGA_RSRC_LEGACY_MEM |
@@ -1111,9 +1112,10 @@ static bool radeon_check_pot_argument(int arg)
 }
 
 /**
- * Determine a sensible default GART size according to ASIC family.
+ * radeon_gart_size_auto - Determine a sensible default GART size
+ *                         according to ASIC family.
  *
- * @family ASIC family name
+ * @family: ASIC family name
  */
 static int radeon_gart_size_auto(enum radeon_family family)
 {
@@ -1291,7 +1293,7 @@ static const struct vga_switcheroo_client_ops radeon_switcheroo_ops = {
  * radeon_device_init - initialize the driver
  *
  * @rdev: radeon_device pointer
- * @pdev: drm dev pointer
+ * @ddev: drm dev pointer
  * @pdev: pci dev pointer
  * @flags: driver flags
  *
@@ -1452,7 +1454,7 @@ int radeon_device_init(struct radeon_device *rdev,
 	/* if we have > 1 VGA cards, then disable the radeon VGA resources */
 	/* this will fail for cards that aren't VGA class devices, just
 	 * ignore it */
-	vga_client_register(rdev->pdev, rdev, NULL, radeon_vga_set_decode);
+	vga_client_register(rdev->pdev, radeon_vga_set_decode);
 
 	if (rdev->flags & RADEON_IS_PX)
 		runtime = true;
@@ -1468,15 +1470,8 @@ int radeon_device_init(struct radeon_device *rdev,
 	if (r)
 		goto failed;
 
-	r = radeon_gem_debugfs_init(rdev);
-	if (r) {
-		DRM_ERROR("registering gem debugfs failed (%d).\n", r);
-	}
-
-	r = radeon_mst_debugfs_init(rdev);
-	if (r) {
-		DRM_ERROR("registering mst debugfs failed (%d).\n", r);
-	}
+	radeon_gem_debugfs_init(rdev);
+	radeon_mst_debugfs_init(rdev);
 
 	if (rdev->flags & RADEON_IS_AGP && !rdev->accel_working) {
 		/* Acceleration not working on AGP card try again
@@ -1557,7 +1552,7 @@ void radeon_device_fini(struct radeon_device *rdev)
 		vga_switcheroo_unregister_client(rdev->pdev);
 	if (rdev->flags & RADEON_IS_PX)
 		vga_switcheroo_fini_domain_pm_ops(rdev->dev);
-	vga_client_register(rdev->pdev, NULL, NULL, NULL);
+	vga_client_unregister(rdev->pdev);
 #ifdef __linux__
 	if (rdev->rio_mem)
 		pci_iounmap(rdev->pdev, rdev->rio_mem);
@@ -1581,11 +1576,8 @@ void radeon_device_fini(struct radeon_device *rdev)
 /*
  * Suspend & resume.
  */
-/**
+/*
  * radeon_suspend_kms - initiate device suspend
- *
- * @pdev: drm dev pointer
- * @state: suspend state
  *
  * Puts the hw in the suspend state (all asics).
  * Returns 0 for success or an error on failure.
@@ -1595,6 +1587,7 @@ int radeon_suspend_kms(struct drm_device *dev, bool suspend,
 		       bool fbcon, bool freeze)
 {
 	struct radeon_device *rdev;
+	struct pci_dev *pdev;
 	struct drm_crtc *crtc;
 	struct drm_connector *connector;
 	int i, r;
@@ -1604,6 +1597,12 @@ int radeon_suspend_kms(struct drm_device *dev, bool suspend,
 	}
 
 	rdev = dev->dev_private;
+#ifdef __linux__
+	pdev = to_pci_dev(dev->dev);
+#else
+	pdev = dev->pdev;
+#endif
+
 	if (rdev->shutdown)
 		return 0;
 
@@ -1673,14 +1672,14 @@ int radeon_suspend_kms(struct drm_device *dev, bool suspend,
 
 	radeon_agp_suspend(rdev);
 
-	pci_save_state(dev->pdev);
+	pci_save_state(pdev);
 	if (freeze && rdev->family >= CHIP_CEDAR && !(rdev->flags & RADEON_IS_IGP)) {
 		rdev->asic->asic_reset(rdev, true);
-		pci_restore_state(dev->pdev);
+		pci_restore_state(pdev);
 	} else if (suspend) {
 		/* Shut down the device */
-		pci_disable_device(dev->pdev);
-		pci_set_power_state(dev->pdev, PCI_D3hot);
+		pci_disable_device(pdev);
+		pci_set_power_state(pdev, PCI_D3hot);
 	}
 
 	if (fbcon) {
@@ -1691,10 +1690,8 @@ int radeon_suspend_kms(struct drm_device *dev, bool suspend,
 	return 0;
 }
 
-/**
+/*
  * radeon_resume_kms - initiate device resume
- *
- * @pdev: drm dev pointer
  *
  * Bring the hw back to operating state (all asics).
  * Returns 0 for success or an error on failure.
@@ -1704,6 +1701,11 @@ int radeon_resume_kms(struct drm_device *dev, bool resume, bool fbcon)
 {
 	struct drm_connector *connector;
 	struct radeon_device *rdev = dev->dev_private;
+#ifdef __linux__
+	struct pci_dev *pdev = to_pci_dev(dev->dev);
+#else
+	struct pci_dev *pdev = dev->pdev;
+#endif
 	struct drm_crtc *crtc;
 	int r;
 
@@ -1716,9 +1718,9 @@ int radeon_resume_kms(struct drm_device *dev, bool resume, bool fbcon)
 		console_lock();
 	}
 	if (resume) {
-		pci_set_power_state(dev->pdev, PCI_D0);
-		pci_restore_state(dev->pdev);
-		if (pci_enable_device(dev->pdev)) {
+		pci_set_power_state(pdev, PCI_D0);
+		pci_restore_state(pdev);
+		if (pci_enable_device(pdev)) {
 			if (fbcon)
 				console_unlock();
 			return -1;
@@ -1921,39 +1923,4 @@ int radeon_gpu_reset(struct radeon_device *rdev)
 
 	up_read(&rdev->exclusive_lock);
 	return r;
-}
-
-
-/*
- * Debugfs
- */
-int radeon_debugfs_add_files(struct radeon_device *rdev,
-			     struct drm_info_list *files,
-			     unsigned nfiles)
-{
-	unsigned i;
-
-	for (i = 0; i < rdev->debugfs_count; i++) {
-		if (rdev->debugfs[i].files == files) {
-			/* Already registered */
-			return 0;
-		}
-	}
-
-	i = rdev->debugfs_count + 1;
-	if (i > RADEON_DEBUGFS_MAX_COMPONENTS) {
-		DRM_ERROR("Reached maximum number of debugfs components.\n");
-		DRM_ERROR("Report so we increase "
-			  "RADEON_DEBUGFS_MAX_COMPONENTS.\n");
-		return -EINVAL;
-	}
-	rdev->debugfs[rdev->debugfs_count].files = files;
-	rdev->debugfs[rdev->debugfs_count].num_files = nfiles;
-	rdev->debugfs_count = i;
-#if defined(CONFIG_DEBUG_FS)
-	drm_debugfs_create_files(files, nfiles,
-				 rdev->ddev->primary->debugfs_root,
-				 rdev->ddev->primary);
-#endif
-	return 0;
 }

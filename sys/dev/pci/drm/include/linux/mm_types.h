@@ -9,4 +9,9 @@
 
 #include <uvm/uvm_extern.h>
 
+#define VM_FAULT_NOPAGE		1
+#define VM_FAULT_SIGBUS		2
+#define VM_FAULT_RETRY		3
+#define VM_FAULT_OOM		4
+
 #endif

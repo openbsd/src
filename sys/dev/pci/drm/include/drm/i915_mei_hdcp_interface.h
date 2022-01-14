@@ -14,6 +14,7 @@ enum hdcp_wired_protocol {
 struct hdcp_port_data {
 	struct hdcp2_streamid_type *streams;
 	uint32_t seq_num_m;
+	uint16_t k;
 };
 
 struct i915_hdcp_component_ops {

@@ -16,7 +16,7 @@ struct dma_fence_array {
 	unsigned int num_fences;
 	struct dma_fence **fences;
 	struct mutex lock;
-	struct irq_work work;
+	struct timeout to;
 	int num_pending;
 };
 

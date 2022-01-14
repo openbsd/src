@@ -1,6 +1,5 @@
+// SPDX-License-Identifier: MIT
 /*
- * SPDX-License-Identifier: MIT
- *
  * Copyright © 2019 Intel Corporation
  */
 
@@ -17,6 +16,29 @@
 #include "intel_ring.h"
 #include "shmem_utils.h"
 
+static void dbg_poison_ce(struct intel_context *ce)
+{
+	if (!IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM))
+		return;
+
+	if (ce->state) {
+		struct drm_i915_gem_object *obj = ce->state->obj;
+		int type = i915_coherent_map_type(ce->engine->i915, obj, true);
+		void *map;
+
+		if (!i915_gem_object_trylock(obj))
+			return;
+
+		map = i915_gem_object_pin_map(obj, type);
+		if (!IS_ERR(map)) {
+			memset(map, CONTEXT_REDZONE, obj->base.size);
+			i915_gem_object_flush_map(obj);
+			i915_gem_object_unpin_map(obj);
+		}
+		i915_gem_object_unlock(obj);
+	}
+}
+
 static int __engine_unpark(struct intel_wakeref *wf)
 {
 	struct intel_engine_cs *engine =
@@ -32,33 +54,35 @@ static int __engine_unpark(struct intel_wakeref *wf)
 	if (ce) {
 		GEM_BUG_ON(test_bit(CONTEXT_VALID_BIT, &ce->flags));
 
+		/* Flush all pending HW writes before we touch the context */
+		while (unlikely(intel_context_inflight(ce)))
+			intel_engine_flush_submission(engine);
+
 		/* First poison the image to verify we never fully trust it */
-		if (IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM) && ce->state) {
-			struct drm_i915_gem_object *obj = ce->state->obj;
-			int type = i915_coherent_map_type(engine->i915);
-			void *map;
+		dbg_poison_ce(ce);
 
-			map = i915_gem_object_pin_map(obj, type);
-			if (!IS_ERR(map)) {
-				memset(map, CONTEXT_REDZONE, obj->base.size);
-				i915_gem_object_flush_map(obj);
-				i915_gem_object_unpin_map(obj);
-			}
-		}
-
+		/* Scrub the context image after our loss of control */
 		ce->ops->reset(ce);
+
+		CE_TRACE(ce, "reset { seqno:%x, *hwsp:%x, ring:%x }\n",
+			 ce->timeline->seqno,
+			 READ_ONCE(*ce->timeline->hwsp_seqno),
+			 ce->ring->emit);
+		GEM_BUG_ON(ce->timeline->seqno !=
+			   READ_ONCE(*ce->timeline->hwsp_seqno));
 	}
 
 	if (engine->unpark)
 		engine->unpark(engine);
 
+	intel_breadcrumbs_unpark(engine->breadcrumbs);
 	intel_engine_unpark_heartbeat(engine);
 	return 0;
 }
 
 #if IS_ENABLED(CONFIG_LOCKDEP)
 
-static inline unsigned long __timeline_mark_lock(struct intel_context *ce)
+static unsigned long __timeline_mark_lock(struct intel_context *ce)
 {
 	unsigned long flags;
 
@@ -68,8 +92,8 @@ static inline unsigned long __timeline_mark_lock(struct intel_context *ce)
 	return flags;
 }
 
-static inline void __timeline_mark_unlock(struct intel_context *ce,
-					  unsigned long flags)
+static void __timeline_mark_unlock(struct intel_context *ce,
+				   unsigned long flags)
 {
 	mutex_release(&ce->timeline->mutex.dep_map, _THIS_IP_);
 	local_irq_restore(flags);
@@ -77,13 +101,13 @@ static inline void __timeline_mark_unlock(struct intel_context *ce,
 
 #else
 
-static inline unsigned long __timeline_mark_lock(struct intel_context *ce)
+static unsigned long __timeline_mark_lock(struct intel_context *ce)
 {
 	return 0;
 }
 
-static inline void __timeline_mark_unlock(struct intel_context *ce,
-					  unsigned long flags)
+static void __timeline_mark_unlock(struct intel_context *ce,
+				   unsigned long flags)
 {
 }
 
@@ -123,7 +147,7 @@ __queue_and_release_pm(struct i915_request *rq,
 		list_add_tail(&tl->link, &timelines->active_list);
 
 	/* Hand the request over to HW and so engine_retire() */
-	__i915_request_queue(rq, NULL);
+	__i915_request_queue_bh(rq);
 
 	/* Let new submissions commence (and maybe retire this timeline) */
 	__intel_wakeref_defer_park(&engine->wakeref);
@@ -251,12 +275,10 @@ static int __engine_park(struct intel_wakeref *wf)
 	intel_breadcrumbs_park(engine->breadcrumbs);
 
 	/* Must be reset upon idling, or we may miss the busy wakeup. */
-	GEM_BUG_ON(engine->execlists.queue_priority_hint != INT_MIN);
+	GEM_BUG_ON(engine->sched_engine->queue_priority_hint != INT_MIN);
 
 	if (engine->park)
 		engine->park(engine);
-
-	engine->execlists.no_priolist = false;
 
 	/* While gt calls i915_vma_parked(), we have to break the lock cycle */
 	intel_gt_pm_put_async(engine->gt);

@@ -27,11 +27,15 @@
 
 #define SMU11_DRIVER_IF_VERSION_INV 0xFFFFFFFF
 #define SMU11_DRIVER_IF_VERSION_ARCT 0x17
-#define SMU11_DRIVER_IF_VERSION_NV10 0x36
-#define SMU11_DRIVER_IF_VERSION_NV12 0x36
-#define SMU11_DRIVER_IF_VERSION_NV14 0x36
-#define SMU11_DRIVER_IF_VERSION_Sienna_Cichlid 0x39
-#define SMU11_DRIVER_IF_VERSION_Navy_Flounder 0x5
+#define SMU11_DRIVER_IF_VERSION_NV10 0x37
+#define SMU11_DRIVER_IF_VERSION_NV12 0x38
+#define SMU11_DRIVER_IF_VERSION_NV14 0x38
+#define SMU11_DRIVER_IF_VERSION_Sienna_Cichlid 0x40
+#define SMU11_DRIVER_IF_VERSION_Navy_Flounder 0xE
+#define SMU11_DRIVER_IF_VERSION_VANGOGH 0x03
+#define SMU11_DRIVER_IF_VERSION_Dimgrey_Cavefish 0xF
+#define SMU11_DRIVER_IF_VERSION_Beige_Goby 0xD
+#define SMU11_DRIVER_IF_VERSION_Cyan_Skillfish 0x8
 
 /* MP Apertures */
 #define MP0_Public			0x03800000
@@ -56,7 +60,14 @@
 #define CTF_OFFSET_HOTSPOT		5
 #define CTF_OFFSET_MEM			5
 
-static const struct smu_temperature_range smu11_thermal_policy[] =
+#define LINK_WIDTH_MAX			6
+#define LINK_SPEED_MAX			3
+
+static const __maybe_unused uint16_t link_width[] = {0, 1, 2, 4, 8, 12, 16};
+static const __maybe_unused uint16_t link_speed[] = {25, 50, 80, 160};
+
+static const
+struct smu_temperature_range __maybe_unused smu11_thermal_policy[] =
 {
 	{-273150,  99000, 99000, -273150, 99000, 99000, -273150, 99000, 99000},
 	{ 120000, 120000, 120000, 120000, 120000, 120000, 120000, 120000, 120000},
@@ -124,6 +135,16 @@ struct smu_11_0_power_context {
 	uint32_t	power_source;
 	uint8_t		in_power_limit_boost_mode;
 	enum smu_11_0_power_state power_state;
+};
+
+struct smu_11_5_power_context {
+	uint32_t	power_source;
+	uint8_t		in_power_limit_boost_mode;
+	enum smu_11_0_power_state power_state;
+
+	uint32_t	current_fast_ppt_limit;
+	uint32_t	default_fast_ppt_limit;
+	uint32_t	max_fast_ppt_limit;
 };
 
 enum smu_v11_0_baco_seq {
@@ -200,11 +221,14 @@ int
 smu_v11_0_set_fan_control_mode(struct smu_context *smu,
 			       uint32_t mode);
 
-int
-smu_v11_0_set_fan_speed_percent(struct smu_context *smu, uint32_t speed);
+int smu_v11_0_set_fan_speed_pwm(struct smu_context *smu,
+				    uint32_t speed);
 
 int smu_v11_0_set_fan_speed_rpm(struct smu_context *smu,
-				       uint32_t speed);
+				uint32_t speed);
+
+int smu_v11_0_get_fan_speed_pwm(struct smu_context *smu,
+				    uint32_t *speed);
 
 int smu_v11_0_get_fan_speed_rpm(struct smu_context *smu,
 				uint32_t *speed);
@@ -229,6 +253,9 @@ int smu_v11_0_baco_set_state(struct smu_context *smu, enum smu_baco_state state)
 
 int smu_v11_0_baco_enter(struct smu_context *smu);
 int smu_v11_0_baco_exit(struct smu_context *smu);
+
+int smu_v11_0_baco_set_armd3_sequence(struct smu_context *smu,
+				      enum smu_v11_0_baco_seq baco_seq);
 
 int smu_v11_0_mode1_reset(struct smu_context *smu);
 
@@ -269,13 +296,11 @@ int smu_v11_0_get_dpm_level_range(struct smu_context *smu,
 
 int smu_v11_0_get_current_pcie_link_width_level(struct smu_context *smu);
 
-int smu_v11_0_get_current_pcie_link_width(struct smu_context *smu);
+uint16_t smu_v11_0_get_current_pcie_link_width(struct smu_context *smu);
 
 int smu_v11_0_get_current_pcie_link_speed_level(struct smu_context *smu);
 
-int smu_v11_0_get_current_pcie_link_speed(struct smu_context *smu);
-
-void smu_v11_0_init_gpu_metrics_v1_0(struct gpu_metrics_v1_0 *gpu_metrics);
+uint16_t smu_v11_0_get_current_pcie_link_speed(struct smu_context *smu);
 
 int smu_v11_0_gfx_ulv_control(struct smu_context *smu,
 			      bool enablement);
@@ -284,6 +309,10 @@ int smu_v11_0_deep_sleep_control(struct smu_context *smu,
 				 bool enablement);
 
 void smu_v11_0_interrupt_work(struct smu_context *smu);
+
+int smu_v11_0_set_light_sbr(struct smu_context *smu, bool enable);
+
+int smu_v11_0_restore_user_od_settings(struct smu_context *smu);
 
 #endif
 #endif

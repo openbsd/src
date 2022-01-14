@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.7 2021/07/07 02:38:36 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.8 2022/01/14 06:53:14 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -58,6 +58,7 @@ struct pci_dev {
 	uint16_t	subsystem_vendor;
 	uint16_t	subsystem_device;
 	uint8_t		revision;
+	uint32_t	class;		/* class:subclass:interface */
 
 	pci_chipset_tag_t pc;
 	pcitag_t	tag;
@@ -323,6 +324,8 @@ enum pci_bus_speed {
 	PCIE_SPEED_5_0GT,
 	PCIE_SPEED_8_0GT,
 	PCIE_SPEED_16_0GT,
+	PCIE_SPEED_32_0GT,
+	PCIE_SPEED_64_0GT,
 	PCI_SPEED_UNKNOWN
 };
 
@@ -390,42 +393,11 @@ pci_set_power_state(struct pci_dev *dev, int state)
 	return 0;
 }
 
-static inline struct pci_dev *
-pci_get_class(pcireg_t class, struct pci_dev *pdev)
-{
-	return NULL;
-}
-
 #define PCI_CLASS_DISPLAY_VGA \
-    (PCI_CLASS_DISPLAY | PCI_SUBCLASS_DISPLAY_VGA)
+    ((PCI_CLASS_DISPLAY << 8) | PCI_SUBCLASS_DISPLAY_VGA)
 #define PCI_CLASS_DISPLAY_OTHER \
-    (PCI_CLASS_DISPLAY | PCI_SUBCLASS_DISPLAY_MISC)
+    ((PCI_CLASS_DISPLAY << 8) | PCI_SUBCLASS_DISPLAY_MISC)
 
-#if defined(__amd64__) || defined(__arm64__) || \
-    defined(__i386__) || defined(__riscv64__)
-
-#define PCI_DMA_BIDIRECTIONAL	0
-
-static inline dma_addr_t
-pci_map_page(struct pci_dev *pdev, struct vm_page *page, unsigned long offset, size_t size, int direction)
-{
-	return VM_PAGE_TO_PHYS(page);
-}
-
-static inline void
-pci_unmap_page(struct pci_dev *pdev, dma_addr_t dma_address, size_t size, int direction)
-{
-}
-
-static inline int
-pci_dma_mapping_error(struct pci_dev *pdev, dma_addr_t dma_addr)
-{
-	return 0;
-}
-
-#define pci_set_dma_mask(x, y)			0
-#define pci_set_consistent_dma_mask(x, y)	0
-
-#endif
+#define pci_unregister_driver(x)
 
 #endif /* _LINUX_PCI_H_ */

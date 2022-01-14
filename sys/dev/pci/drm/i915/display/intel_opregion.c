@@ -814,7 +814,7 @@ static int intel_load_vbt_firmware(struct drm_i915_private *dev_priv)
 		return -ENOENT;
 
 #ifdef __linux__
-	ret = request_firmware(&fw, name, &dev_priv->drm.pdev->dev);
+	ret = request_firmware(&fw, name, dev_priv->drm.dev);
 #else
 	ret = request_firmware(&fw, name, NULL);
 #endif
@@ -1042,12 +1042,8 @@ intel_opregion_get_panel_type(struct drm_i915_private *dev_priv)
 	int ret;
 
 	ret = swsci(dev_priv, SWSCI_GBDA_PANEL_DETAILS, 0x0, &panel_details);
-	if (ret) {
-		drm_dbg_kms(&dev_priv->drm,
-			    "Failed to get panel details from OpRegion (%d)\n",
-			    ret);
+	if (ret)
 		return ret;
-	}
 
 	ret = (panel_details >> 8) & 0xff;
 	if (ret > 0x10) {
@@ -1120,6 +1116,9 @@ void intel_opregion_resume(struct drm_i915_private *i915)
 		opregion->asle->tche = ASLE_TCHE_BLC_EN;
 		opregion->asle->ardy = ASLE_ARDY_READY;
 	}
+
+	/* Some platforms abuse the _DSM to enable MUX */
+	intel_dsm_get_bios_data_funcs_supported(i915);
 
 	intel_opregion_notify_adapter(i915, PCI_D0);
 }

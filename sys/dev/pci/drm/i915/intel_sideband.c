@@ -406,8 +406,8 @@ static int __sandybridge_pcode_rw(struct drm_i915_private *i915,
 	lockdep_assert_held(&i915->sb_lock);
 
 	/*
-	 * GEN6_PCODE_* are outside of the forcewake domain, we can
-	 * use te fw I915_READ variants to reduce the amount of work
+	 * GEN6_PCODE_* are outside of the forcewake domain, we can use
+	 * intel_uncore_read/write_fw variants to reduce the amount of work
 	 * required when reading/writing.
 	 */
 
@@ -432,7 +432,7 @@ static int __sandybridge_pcode_rw(struct drm_i915_private *i915,
 	if (is_read && val1)
 		*val1 = intel_uncore_read_fw(uncore, GEN6_PCODE_DATA1);
 
-	if (INTEL_GEN(i915) > 6)
+	if (GRAPHICS_VER(i915) > 6)
 		return gen7_check_mailbox_status(mbox);
 	else
 		return gen6_check_mailbox_status(mbox);
@@ -556,4 +556,24 @@ out:
 	mutex_unlock(&i915->sb_lock);
 	return ret ? ret : status;
 #undef COND
+}
+
+int intel_pcode_init(struct drm_i915_private *i915)
+{
+	int ret = 0;
+
+	if (!IS_DGFX(i915))
+		return ret;
+
+	ret = skl_pcode_request(i915, DG1_PCODE_STATUS,
+				DG1_UNCORE_GET_INIT_STATUS,
+				DG1_UNCORE_INIT_STATUS_COMPLETE,
+				DG1_UNCORE_INIT_STATUS_COMPLETE, 180000);
+
+	drm_dbg(&i915->drm, "PCODE init status %d\n", ret);
+
+	if (ret)
+		drm_err(&i915->drm, "Pcode did not report uncore initialization completion!\n");
+
+	return ret;
 }

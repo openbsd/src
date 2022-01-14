@@ -32,6 +32,12 @@
 struct dpp {
 	const struct dpp_funcs *funcs;
 	struct dc_context *ctx;
+	/**
+	 * @inst:
+	 *
+	 * inst stands for "instance," and it is an id number that references a
+	 * specific DPP.
+	 */
 	int inst;
 	struct dpp_caps *caps;
 	struct pwl_params regamma_params;
@@ -47,7 +53,7 @@ struct dpp_input_csc_matrix {
 	uint16_t regval[12];
 };
 
-static const struct dpp_input_csc_matrix dpp_input_csc_matrix[] = {
+static const struct dpp_input_csc_matrix __maybe_unused dpp_input_csc_matrix[] = {
 	{COLOR_SPACE_SRGB,
 		{0x2000, 0, 0, 0, 0, 0x2000, 0, 0, 0, 0, 0x2000, 0} },
 	{COLOR_SPACE_SRGB_LIMITED,
@@ -121,13 +127,11 @@ struct CM_bias_params {
 };
 
 struct dpp_funcs {
-#if defined(CONFIG_DRM_AMD_DC_DCN3_0)
 	bool (*dpp_program_gamcor_lut)(
 		struct dpp *dpp_base, const struct pwl_params *params);
 
 	void (*dpp_set_pre_degam)(struct dpp *dpp_base,
 			enum dc_transfer_func_predefined tr);
-#endif
 
 	void (*dpp_program_cm_dealpha)(struct dpp *dpp_base,
 		uint32_t enable, uint32_t additive_blending);

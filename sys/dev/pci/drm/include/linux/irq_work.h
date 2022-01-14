@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_work.h,v 1.5 2021/08/11 16:14:00 sthen Exp $	*/
+/*	$OpenBSD: irq_work.h,v 1.6 2022/01/14 06:53:14 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -20,15 +20,11 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/task.h>
-
-struct workqueue_struct;
-
-extern struct workqueue_struct *system_wq;
+#include <sys/timeout.h>
+#include <machine/cpu.h>	/* for CPU_BUSY_CYCLE() */
 
 struct irq_work {
-	struct task task;
-	struct taskq *tq;
+	struct timeout to;
 };
 
 typedef void (*irq_work_func_t)(struct irq_work *);
@@ -36,20 +32,19 @@ typedef void (*irq_work_func_t)(struct irq_work *);
 static inline void
 init_irq_work(struct irq_work *work, irq_work_func_t func)
 {
-	work->tq = (struct taskq *)system_wq;
-	task_set(&work->task, (void (*)(void *))func, work);
+	timeout_set(&work->to, (void (*)(void *))func, work);
 }
 
 static inline bool
 irq_work_queue(struct irq_work *work)
 {
-	return task_add(work->tq, &work->task);
+	return timeout_add(&work->to, 1);
 }
 
 static inline void
 irq_work_sync(struct irq_work *work)
 {
-	taskq_barrier(work->tq);
+	timeout_del_barrier(&work->to);
 }
 
 #endif

@@ -6,4 +6,9 @@
 struct debugfs_regset32 {
 };
 
+#define debugfs_create_atomic_t(a, b, c, d)
+#define debugfs_remove(a)
+#define debugfs_create_dir(a, b)		ERR_PTR(-ENOSYS)
+#define debugfs_create_file(a, b, c, d, e)	ERR_PTR(-ENOSYS)
+
 #endif

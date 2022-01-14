@@ -1,72 +1,30 @@
 // SPDX-License-Identifier: MIT
 /*
- * Copyright © 2019 Intel Corporation
+ * Copyright © 2021 Intel Corporation
  */
 
 #include <linux/kmemleak.h>
-#include <linux/slab.h>
 
 #include "i915_buddy.h"
 
 #include "i915_gem.h"
-#include "i915_globals.h"
 #include "i915_utils.h"
 
-static struct i915_global_block {
-	struct i915_global base;
-#ifdef __linux__
-	struct kmem_cache *slab_blocks;
-#else
-	struct pool slab_blocks;
-#endif
-} global;
+static struct pool slab_blocks;
 
-static void i915_global_buddy_shrink(void)
-{
-#ifdef notyet
-	kmem_cache_shrink(global.slab_blocks);
-#endif
-}
-
-static void i915_global_buddy_exit(void)
-{
-#ifdef __linux__
-	kmem_cache_destroy(global.slab_blocks);
-#else
-	pool_destroy(&global.slab_blocks);
-#endif
-}
-
-static struct i915_global_block global = { {
-	.shrink = i915_global_buddy_shrink,
-	.exit = i915_global_buddy_exit,
-} };
-
-int __init i915_global_buddy_init(void)
-{
-#ifdef __linux__
-	global.slab_blocks = KMEM_CACHE(i915_buddy_block, SLAB_HWCACHE_ALIGN);
-	if (!global.slab_blocks)
-		return -ENOMEM;
-#else
-	pool_init(&global.slab_blocks, sizeof(struct i915_buddy_block),
-	    CACHELINESIZE, IPL_NONE, 0, "i915bb", NULL);
-#endif
-
-	i915_global_register(&global.base);
-	return 0;
-}
-
-static struct i915_buddy_block *i915_block_alloc(struct i915_buddy_block *parent,
+static struct i915_buddy_block *i915_block_alloc(struct i915_buddy_mm *mm,
+						 struct i915_buddy_block *parent,
 						 unsigned int order,
 						 u64 offset)
 {
 	struct i915_buddy_block *block;
 
+	GEM_BUG_ON(order > I915_BUDDY_MAX_ORDER);
+
 #ifdef __linux__
-	block = kmem_cache_zalloc(global.slab_blocks, GFP_KERNEL);
+	block = kmem_cache_zalloc(slab_blocks, GFP_KERNEL);
 #else
-	block = pool_get(&global.slab_blocks, PR_WAITOK | PR_ZERO);
+	block = pool_get(&slab_blocks, PR_WAITOK | PR_ZERO);
 #endif
 	if (!block)
 		return NULL;
@@ -75,15 +33,17 @@ static struct i915_buddy_block *i915_block_alloc(struct i915_buddy_block *parent
 	block->header |= order;
 	block->parent = parent;
 
+	GEM_BUG_ON(block->header & I915_BUDDY_HEADER_UNUSED);
 	return block;
 }
 
-static void i915_block_free(struct i915_buddy_block *block)
+static void i915_block_free(struct i915_buddy_mm *mm,
+			    struct i915_buddy_block *block)
 {
 #ifdef __linux__
-	kmem_cache_free(global.slab_blocks, block);
+	kmem_cache_free(slab_blocks, block);
 #else
-	pool_put(&global.slab_blocks, block);
+	pool_put(&slab_blocks, block);
 #endif
 }
 
@@ -167,7 +127,7 @@ int i915_buddy_init(struct i915_buddy_mm *mm, u64 size, u64 chunk_size)
 		root_size = rounddown_pow_of_two(size);
 		order = ilog2(root_size) - ilog2(chunk_size);
 
-		root = i915_block_alloc(NULL, order, offset);
+		root = i915_block_alloc(mm, NULL, order, offset);
 		if (!root)
 			goto out_free_roots;
 
@@ -187,7 +147,7 @@ int i915_buddy_init(struct i915_buddy_mm *mm, u64 size, u64 chunk_size)
 
 out_free_roots:
 	while (i--)
-		i915_block_free(mm->roots[i]);
+		i915_block_free(mm, mm->roots[i]);
 	kfree(mm->roots);
 out_free_list:
 	kfree(mm->free_list);
@@ -200,7 +160,7 @@ void i915_buddy_fini(struct i915_buddy_mm *mm)
 
 	for (i = 0; i < mm->n_roots; ++i) {
 		GEM_WARN_ON(!i915_buddy_block_is_free(mm->roots[i]));
-		i915_block_free(mm->roots[i]);
+		i915_block_free(mm, mm->roots[i]);
 	}
 
 	kfree(mm->roots);
@@ -216,14 +176,14 @@ static int split_block(struct i915_buddy_mm *mm,
 	GEM_BUG_ON(!i915_buddy_block_is_free(block));
 	GEM_BUG_ON(!i915_buddy_block_order(block));
 
-	block->left = i915_block_alloc(block, block_order, offset);
+	block->left = i915_block_alloc(mm, block, block_order, offset);
 	if (!block->left)
 		return -ENOMEM;
 
-	block->right = i915_block_alloc(block, block_order,
+	block->right = i915_block_alloc(mm, block, block_order,
 					offset + (mm->chunk_size << block_order));
 	if (!block->right) {
-		i915_block_free(block->left);
+		i915_block_free(mm, block->left);
 		return -ENOMEM;
 	}
 
@@ -265,8 +225,8 @@ static void __i915_buddy_free(struct i915_buddy_mm *mm,
 
 		list_del(&buddy->link);
 
-		i915_block_free(block);
-		i915_block_free(buddy);
+		i915_block_free(mm, block);
+		i915_block_free(mm, buddy);
 
 		block = parent;
 	}
@@ -453,3 +413,26 @@ err_free:
 #if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
 #include "selftests/i915_buddy.c"
 #endif
+
+void i915_buddy_module_exit(void)
+{
+#ifdef __linux__
+	kmem_cache_destroy(slab_blocks);
+#else
+	pool_destroy(&slab_blocks);
+#endif
+}
+
+int __init i915_buddy_module_init(void)
+{
+#ifdef __linux__
+	slab_blocks = KMEM_CACHE(i915_buddy_block, 0);
+	if (!slab_blocks)
+		return -ENOMEM;
+#else
+	pool_init(&slab_blocks, sizeof(struct i915_buddy_block),
+	    CACHELINESIZE, IPL_NONE, 0, "i915bb", NULL);
+#endif
+
+	return 0;
+}

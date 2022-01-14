@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktime.h,v 1.5 2020/07/29 09:52:21 jsg Exp $	*/
+/*	$OpenBSD: ktime.h,v 1.6 2022/01/14 06:53:14 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -23,6 +23,7 @@
 #include <linux/jiffies.h>
 
 typedef int64_t ktime_t;
+#define KTIME_MAX INT64_MAX
 
 static inline ktime_t
 ktime_get(void)
@@ -96,6 +97,12 @@ ktime_add_us(ktime_t k, uint64_t us)
 }
 
 static inline ktime_t
+ktime_add_ms(ktime_t k, uint64_t ms)
+{
+	return k + (ms * NSEC_PER_MSEC);
+}
+
+static inline ktime_t
 ktime_add_ns(ktime_t k, int64_t ns)
 {
 	return k + ns;
@@ -120,6 +127,12 @@ ktime_ms_delta(ktime_t a, ktime_t b)
 }
 
 static inline bool
+ktime_before(ktime_t a, ktime_t b)
+{
+	return a < b;
+}
+
+static inline bool
 ktime_after(ktime_t a, ktime_t b)
 {
 	return a > b;
@@ -129,6 +142,21 @@ static inline ktime_t
 ns_to_ktime(uint64_t ns)
 {
 	return ns;
+}
+
+static inline int64_t
+ktime_divns(ktime_t a, int64_t ns)
+{
+	return a / ns;
+}
+
+static inline ktime_t
+ktime_set(time_t s, long ns)
+{
+	struct timespec ts;
+	ts.tv_sec = s;
+	ts.tv_nsec = ns;
+	return TIMESPEC_TO_NSEC(&ts);
 }
 
 #include <linux/timekeeping.h>

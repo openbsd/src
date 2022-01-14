@@ -1,4 +1,4 @@
-/*	$OpenBSD: workqueue.h,v 1.6 2021/08/14 03:12:51 jsg Exp $	*/
+/*	$OpenBSD: workqueue.h,v 1.7 2022/01/14 06:53:14 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -135,6 +135,13 @@ INIT_DELAYED_WORK_ONSTACK(struct delayed_work *dwork, work_func_t func)
 {
 	INIT_WORK(&dwork->work, func);
 	timeout_set(&dwork->to, __delayed_work_tick, &dwork->work);
+}
+
+#define __DELAYED_WORK_INITIALIZER(dw, fn, flags) {			\
+	.to = TIMEOUT_INITIALIZER(__delayed_work_tick, &(dw)),		\
+	.tq = NULL,							\
+	.work.tq = NULL,						\
+	.work.task = TASK_INITIALIZER((void (*)(void *))(fn), &(dw).work)	\
 }
 
 static inline bool

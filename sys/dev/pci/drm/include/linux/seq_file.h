@@ -6,7 +6,8 @@
 #include <linux/bug.h>
 #include <linux/string.h>
 
-struct seq_file;
+struct seq_file {
+};
 
 static inline void
 seq_printf(struct seq_file *m, const char *fmt, ...) {};

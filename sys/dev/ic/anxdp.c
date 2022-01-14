@@ -1,4 +1,4 @@
-/* $OpenBSD: anxdp.c,v 1.5 2021/07/07 02:38:21 jsg Exp $ */
+/* $OpenBSD: anxdp.c,v 1.6 2022/01/14 06:52:58 jsg Exp $ */
 /* $NetBSD: anx_dp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -474,7 +474,7 @@ again:
 		printf("%s: cr fail\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	drm_dp_link_train_clock_recovery_delay(sc->sc_dpcd);
+	drm_dp_link_train_clock_recovery_delay(&sc->sc_dpaux, sc->sc_dpcd);
 	if (DP_LINK_STATUS_SIZE !=
 	    drm_dp_dpcd_read_link_status(&sc->sc_dpaux, link_status)) {
 		return;
@@ -519,7 +519,7 @@ again:
 		printf("%s: eq fail\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	drm_dp_link_train_channel_eq_delay(sc->sc_dpcd);
+	drm_dp_link_train_channel_eq_delay(&sc->sc_dpaux, sc->sc_dpcd);
 	if (DP_LINK_STATUS_SIZE !=
 	    drm_dp_dpcd_read_link_status(&sc->sc_dpaux, link_status)) {
 		return;

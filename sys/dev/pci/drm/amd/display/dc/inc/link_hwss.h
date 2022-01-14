@@ -26,20 +26,6 @@
 #ifndef __DC_LINK_HWSS_H__
 #define __DC_LINK_HWSS_H__
 
-#include "inc/core_status.h"
-
-enum dc_status core_link_read_dpcd(
-	struct dc_link *link,
-	uint32_t address,
-	uint8_t *data,
-	uint32_t size);
-
-enum dc_status core_link_write_dpcd(
-	struct dc_link *link,
-	uint32_t address,
-	const uint8_t *data,
-	uint32_t size);
-
 struct gpio *get_hpd_gpio(struct dc_bios *dcb,
 		struct graphics_object_id link_id,
 		struct gpio_service *gpio_service);
@@ -51,6 +37,7 @@ void dp_enable_link_phy(
 	const struct dc_link_settings *link_settings);
 
 void dp_receiver_power_ctrl(struct dc_link *link, bool on);
+void edp_add_delay_for_T9(struct dc_link *link);
 bool edp_receiver_ready_T9(struct dc_link *link);
 bool edp_receiver_ready_T7(struct dc_link *link);
 

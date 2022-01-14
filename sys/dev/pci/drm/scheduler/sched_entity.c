@@ -73,6 +73,9 @@ int drm_sched_entity_init(struct drm_sched_entity *entity,
 
 	init_completion(&entity->entity_idle);
 
+	/* We start in an idle state. */
+	complete(&entity->entity_idle);
+
 	mtx_init(&entity->rq_lock, IPL_NONE);
 	spsc_queue_init(&entity->job_queue);
 
@@ -206,7 +209,7 @@ long drm_sched_entity_flush(struct drm_sched_entity *entity, long timeout)
 EXPORT_SYMBOL(drm_sched_entity_flush);
 
 /**
- * drm_sched_entity_kill_jobs - helper for drm_sched_entity_kill_jobs
+ * drm_sched_entity_kill_jobs_cb - helper for drm_sched_entity_kill_jobs
  *
  * @f: signaled fence
  * @cb: our callback structure
@@ -269,7 +272,7 @@ static void drm_sched_entity_kill_jobs(struct drm_sched_entity *entity)
 }
 
 /**
- * drm_sched_entity_cleanup - Destroy a context entity
+ * drm_sched_entity_fini - Destroy a context entity
  *
  * @entity: scheduler entity
  *
@@ -314,7 +317,7 @@ void drm_sched_entity_fini(struct drm_sched_entity *entity)
 EXPORT_SYMBOL(drm_sched_entity_fini);
 
 /**
- * drm_sched_entity_fini - Destroy a context entity
+ * drm_sched_entity_destroy - Destroy a context entity
  *
  * @entity: scheduler entity
  *
@@ -327,7 +330,7 @@ void drm_sched_entity_destroy(struct drm_sched_entity *entity)
 }
 EXPORT_SYMBOL(drm_sched_entity_destroy);
 
-/**
+/*
  * drm_sched_entity_clear_dep - callback to clear the entities dependency
  */
 static void drm_sched_entity_clear_dep(struct dma_fence *f,
@@ -340,7 +343,7 @@ static void drm_sched_entity_clear_dep(struct dma_fence *f,
 	dma_fence_put(f);
 }
 
-/**
+/*
  * drm_sched_entity_clear_dep - callback to clear the entities dependency and
  * wake up scheduler
  */
@@ -472,7 +475,7 @@ void drm_sched_entity_select_rq(struct drm_sched_entity *entity)
 	struct drm_gpu_scheduler *sched;
 	struct drm_sched_rq *rq;
 
-	if (spsc_queue_count(&entity->job_queue) || entity->num_sched_list <= 1)
+	if (spsc_queue_count(&entity->job_queue) || !entity->sched_list)
 		return;
 
 	fence = READ_ONCE(entity->last_scheduled);
@@ -486,8 +489,10 @@ void drm_sched_entity_select_rq(struct drm_sched_entity *entity)
 		drm_sched_rq_remove_entity(entity->rq, entity);
 		entity->rq = rq;
 	}
-
 	spin_unlock(&entity->rq_lock);
+
+	if (entity->num_sched_list == 1)
+		entity->sched_list = NULL;
 }
 
 /**
@@ -508,7 +513,7 @@ void drm_sched_entity_push_job(struct drm_sched_job *sched_job,
 	bool first;
 
 	trace_drm_sched_job(sched_job, entity);
-	atomic_inc(&entity->rq->sched->score);
+	atomic_inc(entity->rq->sched->score);
 #ifdef __linux__
 	WRITE_ONCE(entity->last_user, current->group_leader);
 #else

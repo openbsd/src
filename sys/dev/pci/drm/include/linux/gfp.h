@@ -19,6 +19,7 @@
 #define __GFP_KSWAPD_RECLAIM	0
 #define __GFP_HIGHMEM		0
 #define __GFP_RECLAIMABLE	0
+#define __GFP_NOMEMALLOC	0
 
 #define GFP_ATOMIC		M_NOWAIT
 #define GFP_NOWAIT		M_NOWAIT

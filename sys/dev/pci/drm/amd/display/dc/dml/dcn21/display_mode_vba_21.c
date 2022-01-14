@@ -148,7 +148,7 @@ static double CalculateDCCConfiguration(
 		bool                 DCCProgrammingAssumesScanDirectionUnknown,
 		unsigned int         ViewportWidth,
 		unsigned int         ViewportHeight,
-		double               DETBufferSize,
+		unsigned int         DETBufferSize,
 		unsigned int         RequestHeight256Byte,
 		unsigned int         SwathHeight,
 		enum dm_swizzle_mode TilingFormat,
@@ -289,7 +289,7 @@ static void CalculateWatermarksAndDRAMSpeedChangeSupport(
 		unsigned int MaxLineBufferLines,
 		unsigned int LineBufferSize,
 		unsigned int DPPOutputBufferPixels,
-		double DETBufferSizeInKByte,
+		unsigned int DETBufferSizeInKByte,
 		unsigned int WritebackInterfaceLumaBufferSize,
 		unsigned int WritebackInterfaceChromaBufferSize,
 		double DCFCLK,
@@ -354,11 +354,11 @@ static void CalculateDCFCLKDeepSleep(
 		double DPPCLK[],
 		double *DCFCLKDeepSleep);
 static void CalculateDETBufferSize(
-		double DETBufferSizeInKByte,
+		unsigned int DETBufferSizeInKByte,
 		unsigned int SwathHeightY,
 		unsigned int SwathHeightC,
-		double *DETBufferSizeY,
-		double *DETBufferSizeC);
+		unsigned int *DETBufferSizeY,
+		unsigned int *DETBufferSizeC);
 static void CalculateUrgentBurstFactor(
 		unsigned int DETBufferSizeInKByte,
 		unsigned int SwathHeightY,
@@ -841,6 +841,9 @@ static bool CalculatePrefetchSchedule(
 	else
 		*DestinationLinesForPrefetch = dst_y_prefetch_equ;
 
+	// Limit to prevent overflow in DST_Y_PREFETCH register
+	*DestinationLinesForPrefetch = dml_min(*DestinationLinesForPrefetch, 63.75);
+
 	dml_print("DML: VStartup: %d\n", VStartup);
 	dml_print("DML: TCalc: %f\n", TCalc);
 	dml_print("DML: TWait: %f\n", TWait);
@@ -1074,7 +1077,7 @@ static double CalculateDCCConfiguration(
 		bool DCCProgrammingAssumesScanDirectionUnknown,
 		unsigned int ViewportWidth,
 		unsigned int ViewportHeight,
-		double DETBufferSize,
+		unsigned int DETBufferSize,
 		unsigned int RequestHeight256Byte,
 		unsigned int SwathHeight,
 		enum dm_swizzle_mode TilingFormat,
@@ -2246,7 +2249,7 @@ static void DISPCLKDPPCLKDCFCLKDeepSleepPrefetchParametersWatermarksAndPerforman
 			}
 
 			CalculateUrgentBurstFactor(
-					mode_lib->vba.DETBufferSizeInKByte,
+					mode_lib->vba.DETBufferSizeInKByte[0],
 					mode_lib->vba.SwathHeightY[k],
 					mode_lib->vba.SwathHeightC[k],
 					locals->SwathWidthY[k],
@@ -2267,7 +2270,7 @@ static void DISPCLKDPPCLKDCFCLKDeepSleepPrefetchParametersWatermarksAndPerforman
 					&locals->UrgentBurstFactorLumaPre[k],
 					&locals->UrgentBurstFactorChroma[k],
 					&locals->UrgentBurstFactorChromaPre[k],
-					&locals->NotEnoughUrgentLatencyHiding,
+					&locals->NotEnoughUrgentLatencyHiding[0][0],
 					&locals->NotEnoughUrgentLatencyHidingPre);
 
 			if (mode_lib->vba.UseUrgentBurstBandwidth == false) {
@@ -2300,7 +2303,8 @@ static void DISPCLKDPPCLKDCFCLKDeepSleepPrefetchParametersWatermarksAndPerforman
 		}
 		mode_lib->vba.FractionOfUrgentBandwidth = MaxTotalRDBandwidthNoUrgentBurst / mode_lib->vba.ReturnBW;
 
-		if (MaxTotalRDBandwidth <= mode_lib->vba.ReturnBW && locals->NotEnoughUrgentLatencyHiding == 0 && locals->NotEnoughUrgentLatencyHidingPre == 0 && !VRatioPrefetchMoreThan4
+		if (MaxTotalRDBandwidth <= mode_lib->vba.ReturnBW && locals->NotEnoughUrgentLatencyHiding[0][0] == 0 &&
+				locals->NotEnoughUrgentLatencyHidingPre == 0 && !VRatioPrefetchMoreThan4
 				&& !DestinationLineTimesForPrefetchLessThan2)
 			mode_lib->vba.PrefetchModeSupported = true;
 		else {
@@ -2415,7 +2419,7 @@ static void DISPCLKDPPCLKDCFCLKDeepSleepPrefetchParametersWatermarksAndPerforman
 				mode_lib->vba.MaxLineBufferLines,
 				mode_lib->vba.LineBufferSize,
 				mode_lib->vba.DPPOutputBufferPixels,
-				mode_lib->vba.DETBufferSizeInKByte,
+				mode_lib->vba.DETBufferSizeInKByte[0],
 				mode_lib->vba.WritebackInterfaceLumaBufferSize,
 				mode_lib->vba.WritebackInterfaceChromaBufferSize,
 				mode_lib->vba.DCFCLK,
@@ -2588,7 +2592,7 @@ static void DISPCLKDPPCLKDCFCLKDeepSleepPrefetchParametersWatermarksAndPerforman
 			false, // We should always know the direction DCCProgrammingAssumesScanDirectionUnknown,
 			mode_lib->vba.ViewportWidth[k],
 			mode_lib->vba.ViewportHeight[k],
-			mode_lib->vba.DETBufferSizeInKByte * 1024,
+			mode_lib->vba.DETBufferSizeInKByte[0] * 1024,
 			locals->BlockHeight256BytesY[k],
 			mode_lib->vba.SwathHeightY[k],
 			mode_lib->vba.SurfaceTiling[k],
@@ -2689,13 +2693,13 @@ static void DISPCLKDPPCLKDCFCLKDeepSleepPrefetchParametersWatermarksAndPerforman
 	// Stutter Efficiency
 	for (k = 0; k < mode_lib->vba.NumberOfActivePlanes; ++k) {
 		CalculateDETBufferSize(
-			mode_lib->vba.DETBufferSizeInKByte,
+			mode_lib->vba.DETBufferSizeInKByte[0],
 			mode_lib->vba.SwathHeightY[k],
 			mode_lib->vba.SwathHeightC[k],
 			&locals->DETBufferSizeY[k],
 			&locals->DETBufferSizeC[k]);
 
-		locals->LinesInDETY[k] = locals->DETBufferSizeY[k]
+		locals->LinesInDETY[k] = (double)locals->DETBufferSizeY[k]
 				/ locals->BytePerPixelDETY[k] / locals->SwathWidthY[k];
 		locals->LinesInDETYRoundedDownToSwath[k] = dml_floor(
 				locals->LinesInDETY[k],
@@ -2984,7 +2988,7 @@ static void DisplayPipeConfiguration(struct display_mode_lib *mode_lib)
 			RoundedUpMaxSwathSizeBytesC = 0.0;
 
 		if (RoundedUpMaxSwathSizeBytesY + RoundedUpMaxSwathSizeBytesC
-				<= mode_lib->vba.DETBufferSizeInKByte * 1024.0 / 2.0) {
+				<= mode_lib->vba.DETBufferSizeInKByte[0] * 1024.0 / 2.0) {
 			mode_lib->vba.SwathHeightY[k] = MaximumSwathHeightY;
 			mode_lib->vba.SwathHeightC[k] = MaximumSwathHeightC;
 		} else {
@@ -2993,7 +2997,7 @@ static void DisplayPipeConfiguration(struct display_mode_lib *mode_lib)
 		}
 
 		CalculateDETBufferSize(
-				mode_lib->vba.DETBufferSizeInKByte,
+				mode_lib->vba.DETBufferSizeInKByte[0],
 				mode_lib->vba.SwathHeightY[k],
 				mode_lib->vba.SwathHeightC[k],
 				&mode_lib->vba.DETBufferSizeY[k],
@@ -3888,7 +3892,7 @@ void dml21_ModeSupportAndSystemConfigurationFull(struct display_mode_lib *mode_l
 		mode_lib->vba.MaximumSwathWidthInDETBuffer =
 				dml_min(
 						mode_lib->vba.MaximumSwathWidthSupport,
-						mode_lib->vba.DETBufferSizeInKByte * 1024.0 / 2.0
+						mode_lib->vba.DETBufferSizeInKByte[0] * 1024.0 / 2.0
 								/ (locals->BytePerPixelInDETY[k]
 										* locals->MinSwathHeightY[k]
 										+ locals->BytePerPixelInDETC[k]
@@ -4257,10 +4261,11 @@ void dml21_ModeSupportAndSystemConfigurationFull(struct display_mode_lib *mode_l
 	for (i = 0; i <= mode_lib->vba.soc.num_states; i++) {
 		locals->DIOSupport[i] = true;
 		for (k = 0; k <= mode_lib->vba.NumberOfActivePlanes - 1; k++) {
-			if (locals->OutputBppPerState[i][k] == BPP_INVALID
-					|| (mode_lib->vba.OutputFormat[k] == dm_420
+			if (!mode_lib->vba.skip_dio_check[k]
+					&& (locals->OutputBppPerState[i][k] == BPP_INVALID
+						|| (mode_lib->vba.OutputFormat[k] == dm_420
 							&& mode_lib->vba.Interlace[k] == true
-							&& mode_lib->vba.ProgressiveToInterlaceUnitInOPP == true)) {
+							&& mode_lib->vba.ProgressiveToInterlaceUnitInOPP == true))) {
 				locals->DIOSupport[i] = false;
 			}
 		}
@@ -4436,7 +4441,7 @@ void dml21_ModeSupportAndSystemConfigurationFull(struct display_mode_lib *mode_l
 					mode_lib->vba.RoundedUpMaxSwathSizeBytesC = 0.0;
 				}
 				if (mode_lib->vba.RoundedUpMaxSwathSizeBytesY + mode_lib->vba.RoundedUpMaxSwathSizeBytesC
-						<= mode_lib->vba.DETBufferSizeInKByte * 1024.0 / 2.0) {
+						<= mode_lib->vba.DETBufferSizeInKByte[0] * 1024.0 / 2.0) {
 					locals->SwathHeightYThisState[k] = locals->MaxSwathHeightY[k];
 					locals->SwathHeightCThisState[k] = locals->MaxSwathHeightC[k];
 				} else {
@@ -4800,7 +4805,7 @@ void dml21_ModeSupportAndSystemConfigurationFull(struct display_mode_lib *mode_l
 					}
 
 					CalculateUrgentBurstFactor(
-							mode_lib->vba.DETBufferSizeInKByte,
+							mode_lib->vba.DETBufferSizeInKByte[0],
 							locals->SwathHeightYThisState[k],
 							locals->SwathHeightCThisState[k],
 							locals->SwathWidthYThisState[k],
@@ -4820,7 +4825,7 @@ void dml21_ModeSupportAndSystemConfigurationFull(struct display_mode_lib *mode_l
 							&locals->UrgentBurstFactorLumaPre[k],
 							&locals->UrgentBurstFactorChroma[k],
 							&locals->UrgentBurstFactorChromaPre[k],
-							&locals->NotEnoughUrgentLatencyHiding,
+							&locals->NotEnoughUrgentLatencyHiding[0][0],
 							&locals->NotEnoughUrgentLatencyHidingPre);
 
 					if (mode_lib->vba.UseUrgentBurstBandwidth == false) {
@@ -4847,13 +4852,13 @@ void dml21_ModeSupportAndSystemConfigurationFull(struct display_mode_lib *mode_l
 				}
 				locals->BandwidthWithoutPrefetchSupported[i][0] = true;
 				if (mode_lib->vba.MaximumReadBandwidthWithoutPrefetch > locals->ReturnBWPerState[i][0]
-						|| locals->NotEnoughUrgentLatencyHiding == 1) {
+						|| locals->NotEnoughUrgentLatencyHiding[0][0] == 1) {
 					locals->BandwidthWithoutPrefetchSupported[i][0] = false;
 				}
 
 				locals->PrefetchSupported[i][j] = true;
 				if (mode_lib->vba.MaximumReadBandwidthWithPrefetch > locals->ReturnBWPerState[i][0]
-						|| locals->NotEnoughUrgentLatencyHiding == 1
+						|| locals->NotEnoughUrgentLatencyHiding[0][0] == 1
 						|| locals->NotEnoughUrgentLatencyHidingPre == 1) {
 					locals->PrefetchSupported[i][j] = false;
 				}
@@ -4974,7 +4979,7 @@ void dml21_ModeSupportAndSystemConfigurationFull(struct display_mode_lib *mode_l
 					mode_lib->vba.MaxLineBufferLines,
 					mode_lib->vba.LineBufferSize,
 					mode_lib->vba.DPPOutputBufferPixels,
-					mode_lib->vba.DETBufferSizeInKByte,
+					mode_lib->vba.DETBufferSizeInKByte[0],
 					mode_lib->vba.WritebackInterfaceLumaBufferSize,
 					mode_lib->vba.WritebackInterfaceChromaBufferSize,
 					mode_lib->vba.DCFCLKPerState[i],
@@ -5121,48 +5126,48 @@ void dml21_ModeSupportAndSystemConfigurationFull(struct display_mode_lib *mode_l
 		for (j = 0; j < 2; j++) {
 			enum dm_validation_status status = DML_VALIDATION_OK;
 
-			if (mode_lib->vba.ScaleRatioAndTapsSupport != true) {
+			if (!mode_lib->vba.ScaleRatioAndTapsSupport) {
 				status = DML_FAIL_SCALE_RATIO_TAP;
-			} else if (mode_lib->vba.SourceFormatPixelAndScanSupport != true) {
+			} else if (!mode_lib->vba.SourceFormatPixelAndScanSupport) {
 				status = DML_FAIL_SOURCE_PIXEL_FORMAT;
-			} else if (locals->ViewportSizeSupport[i][0] != true) {
+			} else if (!locals->ViewportSizeSupport[i][0]) {
 				status = DML_FAIL_VIEWPORT_SIZE;
-			} else if (locals->DIOSupport[i] != true) {
+			} else if (!locals->DIOSupport[i]) {
 				status = DML_FAIL_DIO_SUPPORT;
-			} else if (locals->NotEnoughDSCUnits[i] != false) {
+			} else if (locals->NotEnoughDSCUnits[i]) {
 				status = DML_FAIL_NOT_ENOUGH_DSC;
-			} else if (locals->DSCCLKRequiredMoreThanSupported[i] != false) {
+			} else if (locals->DSCCLKRequiredMoreThanSupported[i]) {
 				status = DML_FAIL_DSC_CLK_REQUIRED;
-			} else if (locals->ROBSupport[i][0] != true) {
+			} else if (!locals->ROBSupport[i][0]) {
 				status = DML_FAIL_REORDERING_BUFFER;
-			} else if (locals->DISPCLK_DPPCLK_Support[i][j] != true) {
+			} else if (!locals->DISPCLK_DPPCLK_Support[i][j]) {
 				status = DML_FAIL_DISPCLK_DPPCLK;
-			} else if (locals->TotalAvailablePipesSupport[i][j] != true) {
+			} else if (!locals->TotalAvailablePipesSupport[i][j]) {
 				status = DML_FAIL_TOTAL_AVAILABLE_PIPES;
-			} else if (mode_lib->vba.NumberOfOTGSupport != true) {
+			} else if (!mode_lib->vba.NumberOfOTGSupport) {
 				status = DML_FAIL_NUM_OTG;
-			} else if (mode_lib->vba.WritebackModeSupport != true) {
+			} else if (!mode_lib->vba.WritebackModeSupport) {
 				status = DML_FAIL_WRITEBACK_MODE;
-			} else if (mode_lib->vba.WritebackLatencySupport != true) {
+			} else if (!mode_lib->vba.WritebackLatencySupport) {
 				status = DML_FAIL_WRITEBACK_LATENCY;
-			} else if (mode_lib->vba.WritebackScaleRatioAndTapsSupport != true) {
+			} else if (!mode_lib->vba.WritebackScaleRatioAndTapsSupport) {
 				status = DML_FAIL_WRITEBACK_SCALE_RATIO_TAP;
-			} else if (mode_lib->vba.CursorSupport != true) {
+			} else if (!mode_lib->vba.CursorSupport) {
 				status = DML_FAIL_CURSOR_SUPPORT;
-			} else if (mode_lib->vba.PitchSupport != true) {
+			} else if (!mode_lib->vba.PitchSupport) {
 				status = DML_FAIL_PITCH_SUPPORT;
-			} else if (locals->TotalVerticalActiveBandwidthSupport[i][0] != true) {
+			} else if (!locals->TotalVerticalActiveBandwidthSupport[i][0]) {
 				status = DML_FAIL_TOTAL_V_ACTIVE_BW;
-			} else if (locals->PTEBufferSizeNotExceeded[i][j] != true) {
+			} else if (!locals->PTEBufferSizeNotExceeded[i][j]) {
 				status = DML_FAIL_PTE_BUFFER_SIZE;
-			} else if (mode_lib->vba.NonsupportedDSCInputBPC != false) {
+			} else if (mode_lib->vba.NonsupportedDSCInputBPC) {
 				status = DML_FAIL_DSC_INPUT_BPC;
-			} else if ((mode_lib->vba.HostVMEnable != false
-					&& locals->ImmediateFlipSupportedForState[i][j] != true)) {
+			} else if ((mode_lib->vba.HostVMEnable
+					&& !locals->ImmediateFlipSupportedForState[i][j])) {
 				status = DML_FAIL_HOST_VM_IMMEDIATE_FLIP;
-			} else if (locals->PrefetchSupported[i][j] != true) {
+			} else if (!locals->PrefetchSupported[i][j]) {
 				status = DML_FAIL_PREFETCH_SUPPORT;
-			} else if (locals->VRatioInPrefetchSupported[i][j] != true) {
+			} else if (!locals->VRatioInPrefetchSupported[i][j]) {
 				status = DML_FAIL_V_RATIO_PREFETCH;
 			}
 
@@ -5229,7 +5234,7 @@ static void CalculateWatermarksAndDRAMSpeedChangeSupport(
 		unsigned int MaxLineBufferLines,
 		unsigned int LineBufferSize,
 		unsigned int DPPOutputBufferPixels,
-		double DETBufferSizeInKByte,
+		unsigned int DETBufferSizeInKByte,
 		unsigned int WritebackInterfaceLumaBufferSize,
 		unsigned int WritebackInterfaceChromaBufferSize,
 		double DCFCLK,
@@ -5284,8 +5289,8 @@ static void CalculateWatermarksAndDRAMSpeedChangeSupport(
 	double EffectiveLBLatencyHidingC;
 	double DPPOutputBufferLinesY;
 	double DPPOutputBufferLinesC;
-	double DETBufferSizeY;
-	double DETBufferSizeC;
+	unsigned int DETBufferSizeY;
+	unsigned int DETBufferSizeC;
 	double LinesInDETY[DC__NUM_DPP__MAX];
 	double LinesInDETC;
 	unsigned int LinesInDETYRoundedDownToSwath[DC__NUM_DPP__MAX];
@@ -5381,12 +5386,12 @@ static void CalculateWatermarksAndDRAMSpeedChangeSupport(
 				&DETBufferSizeY,
 				&DETBufferSizeC);
 
-		LinesInDETY[k] = DETBufferSizeY / BytePerPixelDETY[k] / SwathWidthY[k];
+		LinesInDETY[k] = (double)DETBufferSizeY / BytePerPixelDETY[k] / SwathWidthY[k];
 		LinesInDETYRoundedDownToSwath[k] = dml_floor(LinesInDETY[k], SwathHeightY[k]);
 		FullDETBufferingTimeY[k] = LinesInDETYRoundedDownToSwath[k]
 				* (HTotal[k] / PixelClock[k]) / VRatio[k];
 		if (BytePerPixelDETC[k] > 0) {
-			LinesInDETC = DETBufferSizeC / BytePerPixelDETC[k] / (SwathWidthY[k] / 2.0);
+			LinesInDETC = (double)DETBufferSizeC / BytePerPixelDETC[k] / (SwathWidthY[k] / 2.0);
 			LinesInDETCRoundedDownToSwath = dml_floor(LinesInDETC, SwathHeightC[k]);
 			FullDETBufferingTimeC = LinesInDETCRoundedDownToSwath
 					* (HTotal[k] / PixelClock[k]) / (VRatio[k] / 2);
@@ -5477,7 +5482,7 @@ static void CalculateWatermarksAndDRAMSpeedChangeSupport(
 		}
 	}
 
-	if (mode_lib->vba.MinActiveDRAMClockChangeMargin > 0) {
+	if (mode_lib->vba.MinActiveDRAMClockChangeMargin > 0 && PrefetchMode == 0) {
 		*DRAMClockChangeSupport = dm_dram_clock_change_vactive;
 	} else if (((mode_lib->vba.SynchronizedVBlank == true
 			|| mode_lib->vba.TotalNumberOfActiveOTG == 1
@@ -5573,11 +5578,11 @@ static void CalculateDCFCLKDeepSleep(
 }
 
 static void CalculateDETBufferSize(
-		double DETBufferSizeInKByte,
+		unsigned int DETBufferSizeInKByte,
 		unsigned int SwathHeightY,
 		unsigned int SwathHeightC,
-		double *DETBufferSizeY,
-		double *DETBufferSizeC)
+		unsigned int *DETBufferSizeY,
+		unsigned int *DETBufferSizeC)
 {
 	if (SwathHeightC == 0) {
 		*DETBufferSizeY = DETBufferSizeInKByte * 1024;
@@ -5624,8 +5629,8 @@ static void CalculateUrgentBurstFactor(
 	double DETBufferSizeInTimeLumaPre;
 	double DETBufferSizeInTimeChroma;
 	double DETBufferSizeInTimeChromaPre;
-	double DETBufferSizeY;
-	double DETBufferSizeC;
+	unsigned int DETBufferSizeY;
+	unsigned int DETBufferSizeC;
 
 	*NotEnoughUrgentLatencyHiding = 0;
 	*NotEnoughUrgentLatencyHidingPre = 0;
@@ -5662,7 +5667,7 @@ static void CalculateUrgentBurstFactor(
 			&DETBufferSizeY,
 			&DETBufferSizeC);
 
-	LinesInDETLuma = DETBufferSizeY / BytePerPixelInDETY / SwathWidthY;
+	LinesInDETLuma = (double)DETBufferSizeY / BytePerPixelInDETY / SwathWidthY;
 	DETBufferSizeInTimeLuma = dml_floor(LinesInDETLuma, SwathHeightY) * LineTime / VRatio;
 	if (DETBufferSizeInTimeLuma - UrgentLatency <= 0) {
 		*NotEnoughUrgentLatencyHiding = 1;
@@ -5686,7 +5691,7 @@ static void CalculateUrgentBurstFactor(
 	}
 
 	if (BytePerPixelInDETC > 0) {
-		LinesInDETChroma = DETBufferSizeC / BytePerPixelInDETC / (SwathWidthY / 2);
+		LinesInDETChroma = (double)DETBufferSizeC / BytePerPixelInDETC / (SwathWidthY / 2);
 		DETBufferSizeInTimeChroma = dml_floor(LinesInDETChroma, SwathHeightC) * LineTime
 				/ (VRatio / 2);
 		if (DETBufferSizeInTimeChroma - UrgentLatency <= 0) {

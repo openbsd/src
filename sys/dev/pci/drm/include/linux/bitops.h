@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitops.h,v 1.3 2020/06/08 04:48:14 jsg Exp $	*/
+/*	$OpenBSD: bitops.h,v 1.4 2022/01/14 06:53:14 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -20,6 +20,8 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <lib/libkern/libkern.h>
+
 #include <asm/bitsperlong.h>
 #include <linux/atomic.h>
 
@@ -80,6 +82,16 @@ hweight64(uint64_t x)
 	return x;
 }
 
+static inline unsigned long
+hweight_long(unsigned long x)
+{
+#ifdef __LP64__
+	return hweight64(x);
+#else
+	return hweight32(x);
+#endif
+}
+
 static inline int64_t
 sign_extend64(uint64_t value, int index)
 {
@@ -97,6 +109,12 @@ fls64(long long mask)
 	for (bit = 1; mask != 1; bit++)
 		mask = (unsigned long long)mask >> 1;
 	return (bit);
+}
+
+static inline int
+__fls(long mask)
+{
+	return (flsl(mask) - 1);
 }
 
 static inline uint32_t

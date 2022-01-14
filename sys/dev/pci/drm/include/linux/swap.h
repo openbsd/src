@@ -15,6 +15,18 @@
  */
 #include <linux/sched/clock.h>
 
+/*
+ * normally module.h would be indirectly included via
+ * linux/swap.h
+ * linux/memcontrol.h
+ * linux/cgroup.h
+ * linux/cgroup-defs.h
+ * linux/bpf-cgroup.h
+ * linux/bpf.h
+ * linux/module.h
+ */
+#include <linux/module.h>
+
 #include <uvm/uvm_extern.h>
 
 static inline long

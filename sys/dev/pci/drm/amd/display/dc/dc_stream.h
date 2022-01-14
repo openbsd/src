@@ -45,6 +45,7 @@ struct dc_stream_status {
 	int audio_inst;
 	struct timing_sync_info timing_sync_info;
 	struct dc_plane_state *plane_states[MAX_SURFACE_NUM];
+	bool is_abm_supported;
 };
 
 // TODO: References to this needs to be removed..
@@ -87,13 +88,11 @@ struct dc_writeback_info {
 	int dwb_pipe_inst;
 	struct dc_dwb_params dwb_params;
 	struct mcif_buf_params mcif_buf_params;
-#if defined(CONFIG_DRM_AMD_DC_DCN3_0)
 	struct mcif_warmup_params mcif_warmup_params;
 	/* the plane that is the input to TOP_MUX for MPCC that is the DWB source */
 	struct dc_plane_state *writeback_source_plane;
 	/* source MPCC instance.  for use by internally by dc */
 	int mpcc_inst;
-#endif
 };
 
 struct dc_writeback_update {
@@ -131,12 +130,24 @@ union stream_update_flags {
 	uint32_t raw;
 };
 
+struct test_pattern {
+	enum dp_test_pattern type;
+	enum dp_test_pattern_color_space color_space;
+	struct link_training_settings const *p_link_settings;
+	unsigned char const *p_custom_pattern;
+	unsigned int cust_pattern_size;
+};
+
 struct dc_stream_state {
 	// sink is deprecated, new code should not reference
 	// this pointer
 	struct dc_sink *sink;
 
 	struct dc_link *link;
+	/* For dynamic link encoder assignment, update the link encoder assigned to
+	 * a stream via the volatile dc_state rather than the static dc_link.
+	 */
+	struct link_encoder *link_enc;
 	struct dc_panel_patch sink_patches;
 	union display_content_support content_support;
 	struct dc_crtc_timing timing;
@@ -168,6 +179,9 @@ struct dc_stream_state {
 
 	bool use_vsc_sdp_for_colorimetry;
 	bool ignore_msa_timing_param;
+
+	bool freesync_on_desktop;
+
 	bool converter_disable_audio;
 	uint8_t qs_bit;
 	uint8_t qy_bit;
@@ -207,10 +221,8 @@ struct dc_stream_state {
 	/* writeback */
 	unsigned int num_wb_info;
 	struct dc_writeback_info writeback_info[MAX_DWB_PIPES];
-#if defined(CONFIG_DRM_AMD_DC_DCN3_0)
 	const struct dc_transfer_func *func_shaper;
 	const struct dc_3dlut *lut3d_func;
-#endif
 	/* Computed state bits */
 	bool mode_changed : 1;
 
@@ -229,8 +241,12 @@ struct dc_stream_state {
 	bool apply_seamless_boot_optimization;
 
 	uint32_t stream_id;
-	bool is_dsc_enabled;
+
+	struct test_pattern test_pattern;
 	union stream_update_flags update_flags;
+
+	bool has_non_synchronizable_pclk;
+	bool vblank_synchronized;
 };
 
 #define ABM_LEVEL_IMMEDIATE_DISABLE 255
@@ -262,10 +278,10 @@ struct dc_stream_update {
 
 	struct dc_writeback_update *wb_update;
 	struct dc_dsc_config *dsc_config;
-#if defined(CONFIG_DRM_AMD_DC_DCN3_0)
 	struct dc_transfer_func *func_shaper;
 	struct dc_3dlut *lut3d_func;
-#endif
+
+	struct test_pattern *pending_test_pattern;
 };
 
 bool dc_is_stream_unchanged(
@@ -392,7 +408,7 @@ enum dc_status dc_validate_stream(struct dc *dc, struct dc_stream_state *stream)
  * Enable stereo when commit_streams is not required,
  * for example, frame alternate.
  */
-bool dc_enable_stereo(
+void dc_enable_stereo(
 	struct dc *dc,
 	struct dc_state *context,
 	struct dc_stream_state *streams[],
@@ -449,14 +465,26 @@ bool dc_stream_adjust_vmin_vmax(struct dc *dc,
 				struct dc_stream_state *stream,
 				struct dc_crtc_timing_adjust *adjust);
 
+bool dc_stream_get_last_used_drr_vtotal(struct dc *dc,
+		struct dc_stream_state *stream,
+		uint32_t *refresh_rate);
+
 bool dc_stream_get_crtc_position(struct dc *dc,
 				 struct dc_stream_state **stream,
 				 int num_streams,
 				 unsigned int *v_pos,
 				 unsigned int *nom_v_pos);
 
+#if defined(CONFIG_DRM_AMD_SECURE_DISPLAY)
+bool dc_stream_forward_dmcu_crc_window(struct dc *dc, struct dc_stream_state *stream,
+			     struct crc_params *crc_window);
+bool dc_stream_stop_dmcu_crc_win_update(struct dc *dc,
+				 struct dc_stream_state *stream);
+#endif
+
 bool dc_stream_configure_crc(struct dc *dc,
 			     struct dc_stream_state *stream,
+			     struct crc_params *crc_window,
 			     bool enable,
 			     bool continuous);
 

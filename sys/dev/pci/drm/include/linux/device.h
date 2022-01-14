@@ -28,6 +28,8 @@ struct device_attribute {
 
 #define DEVICE_ATTR(_name, _mode, _show, _store) \
 	struct device_attribute dev_attr_##_name
+#define DEVICE_ATTR_RO(_name) \
+	struct device_attribute dev_attr_##_name
 
 #define device_create_file(a, b)	0
 #define device_remove_file(a, b)
@@ -64,7 +66,13 @@ struct device_attribute {
 #define dev_notice_ratelimited(dev, fmt, arg...)			\
 	printf("drm:pid%d:%s *NOTICE* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
+#define dev_err_ratelimited(dev, fmt, arg...)				\
+	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_p->ps_pid,	\
+	    __func__ , ## arg)
 
+#define dev_warn_once(dev, fmt, arg...)				\
+	printf("drm:pid%d:%s *WARNING* " fmt, curproc->p_p->ps_pid,	\
+	    __func__ , ## arg)
 #define dev_err_once(dev, fmt, arg...)				\
 	printf("drm:pid%d:%s *ERROR* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
@@ -77,12 +85,17 @@ struct device_attribute {
 #define dev_dbg(dev, fmt, arg...)				\
 	printf("drm:pid%d:%s *DEBUG* " fmt, curproc->p_p->ps_pid,	\
 	    __func__ , ## arg)
+#define dev_dbg_ratelimited(dev, fmt, arg...)			\
+	printf("drm:pid%d:%s *DEBUG* " fmt, curproc->p_p->ps_pid,	\
+	    __func__ , ## arg)
 #else
 #define dev_info(dev, fmt, arg...) 				\
 	    do { } while(0)
 #define dev_info_once(dev, fmt, arg...) 			\
 	    do { } while(0)
 #define dev_dbg(dev, fmt, arg...) 				\
+	    do { } while(0)
+#define dev_dbg_ratelimited(dev, fmt, arg...) 			\
 	    do { } while(0)
 #endif
 

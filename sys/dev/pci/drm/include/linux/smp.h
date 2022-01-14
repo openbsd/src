@@ -3,6 +3,8 @@
 #ifndef _LINUX_SMP_H
 #define _LINUX_SMP_H
 
+#include <linux/cpumask.h>
+
 /* sparc64 cpu.h needs time.h and siginfo.h (indirect via param.h) */
 #include <sys/param.h>
 #include <machine/cpu.h>

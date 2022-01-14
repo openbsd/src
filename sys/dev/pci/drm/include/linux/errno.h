@@ -13,5 +13,8 @@
 #define ECHRNG		EINVAL
 #define EHWPOISON	EIO
 #define ENOPKG		ENOENT
+#define EMULTIHOP	EIPSEC
+#define EBADSLT		EINVAL
+#define ENOKEY		ENOENT
 
 #endif

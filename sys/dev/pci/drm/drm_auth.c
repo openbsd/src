@@ -52,7 +52,7 @@
  *
  * In addition only one &drm_master can be the current master for a &drm_device.
  * It can be switched through the DROP_MASTER and SET_MASTER IOCTL, or
- * implicitly through closing/openeing the primary device node. See also
+ * implicitly through closing/opening the primary device node. See also
  * drm_is_current_master().
  *
  * Clients can authenticate against the current master (if it matches their own)
@@ -60,6 +60,40 @@
  * this allows controlled access to the device for an entire group of mutually
  * trusted clients.
  */
+
+static bool drm_is_current_master_locked(struct drm_file *fpriv)
+{
+	lockdep_assert_once(lockdep_is_held(&fpriv->master_lookup_lock) ||
+			    lockdep_is_held(&fpriv->minor->dev->master_mutex));
+
+#ifdef notyet
+	return fpriv->is_master && drm_lease_owner(fpriv->master) == fpriv->minor->dev->master;
+#else
+	return (fpriv->is_master ==1);
+#endif
+}
+
+/**
+ * drm_is_current_master - checks whether @priv is the current master
+ * @fpriv: DRM file private
+ *
+ * Checks whether @fpriv is current master on its device. This decides whether a
+ * client is allowed to run DRM_MASTER IOCTLs.
+ *
+ * Most of the modern IOCTL which require DRM_MASTER are for kernel modesetting
+ * - the current master is assumed to own the non-shareable display hardware.
+ */
+bool drm_is_current_master(struct drm_file *fpriv)
+{
+	bool ret;
+
+	spin_lock(&fpriv->master_lookup_lock);
+	ret = drm_is_current_master_locked(fpriv);
+	spin_unlock(&fpriv->master_lookup_lock);
+
+	return ret;
+}
+EXPORT_SYMBOL(drm_is_current_master);
 
 int drm_getmagic(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
@@ -227,7 +261,7 @@ int drm_setmaster_ioctl(struct drm_device *dev, void *data,
 	if (ret)
 		goto out_unlock;
 
-	if (drm_is_current_master(file_priv))
+	if (drm_is_current_master_locked(file_priv))
 		goto out_unlock;
 
 	if (dev->master) {
@@ -276,7 +310,7 @@ int drm_dropmaster_ioctl(struct drm_device *dev, void *data,
 	if (ret)
 		goto out_unlock;
 
-	if (!drm_is_current_master(file_priv)) {
+	if (!drm_is_current_master_locked(file_priv)) {
 		ret = -EINVAL;
 		goto out_unlock;
 	}
@@ -304,7 +338,8 @@ int drm_master_open(struct drm_file *file_priv)
 	int ret = 0;
 
 	/* if there is no current master make this fd it, but do not create
-	 * any master object for render clients */
+	 * any master object for render clients
+	 */
 	mutex_lock(&dev->master_mutex);
 	if (!dev->master) {
 		ret = drm_new_set_master(dev, file_priv);
@@ -328,7 +363,7 @@ void drm_master_release(struct drm_file *file_priv)
 	if (file_priv->magic)
 		idr_remove(&file_priv->master->magic_map, file_priv->magic);
 
-	if (!drm_is_current_master(file_priv))
+	if (!drm_is_current_master_locked(file_priv))
 		goto out;
 
 	drm_legacy_lock_master_cleanup(dev, master);
@@ -348,26 +383,6 @@ out:
 		drm_master_put(&file_priv->master);
 	mutex_unlock(&dev->master_mutex);
 }
-
-/**
- * drm_is_current_master - checks whether @priv is the current master
- * @fpriv: DRM file private
- *
- * Checks whether @fpriv is current master on its device. This decides whether a
- * client is allowed to run DRM_MASTER IOCTLs.
- *
- * Most of the modern IOCTL which require DRM_MASTER are for kernel modesetting
- * - the current master is assumed to own the non-shareable display hardware.
- */
-bool drm_is_current_master(struct drm_file *fpriv)
-{
-#ifdef notyet
-	return fpriv->is_master && drm_lease_owner(fpriv->master) == fpriv->minor->dev->master;
-#else
-	return (fpriv->is_master == 1);
-#endif
-}
-EXPORT_SYMBOL(drm_is_current_master);
 
 /**
  * drm_master_get - reference a master pointer

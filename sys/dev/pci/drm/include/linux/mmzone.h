@@ -5,4 +5,6 @@
 
 #include <linux/mm_types.h>
 
+#define MAX_ORDER	11
+
 #endif

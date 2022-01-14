@@ -7,6 +7,7 @@
 #include <sys/rwlock.h>
 #include <linux/list.h>
 #include <linux/spinlock_types.h>
+#include <linux/lockdep.h>
 
 #define DEFINE_MUTEX(x)		struct rwlock x = RWLOCK_INITIALIZER(#x)
 

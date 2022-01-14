@@ -1176,16 +1176,11 @@ enum drm_mode_status
 drm_mode_validate_ycbcr420(const struct drm_display_mode *mode,
 			   struct drm_connector *connector)
 {
-	u8 vic = drm_match_cea_mode(mode);
-	enum drm_mode_status status = MODE_OK;
-	struct drm_hdmi_info *hdmi = &connector->display_info.hdmi;
+	if (!connector->ycbcr_420_allowed &&
+	    drm_mode_is_420_only(&connector->display_info, mode))
+		return MODE_NO_420;
 
-	if (test_bit(vic, hdmi->y420_vdb_modes)) {
-		if (!connector->ycbcr_420_allowed)
-			status = MODE_NO_420;
-	}
-
-	return status;
+	return MODE_OK;
 }
 EXPORT_SYMBOL(drm_mode_validate_ycbcr420);
 
@@ -1549,7 +1544,7 @@ static int drm_mode_parse_cmdline_int(const char *delim, unsigned int *int_ret)
 
 	/*
 	 * delim must point to the '=', otherwise it is a syntax error and
-	 * if delim points to the terminating zero, then delim + 1 wil point
+	 * if delim points to the terminating zero, then delim + 1 will point
 	 * past the end of the string.
 	 */
 	if (*delim != '=')
@@ -1873,6 +1868,9 @@ drm_mode_create_from_cmdline_mode(struct drm_device *dev,
 {
 	struct drm_display_mode *mode;
 
+	if (cmd->xres == 0 || cmd->yres == 0)
+		return NULL;
+
 	if (cmd->cvt)
 		mode = drm_cvt_mode(dev,
 				    cmd->xres, cmd->yres,
@@ -1898,7 +1896,7 @@ drm_mode_create_from_cmdline_mode(struct drm_device *dev,
 EXPORT_SYMBOL(drm_mode_create_from_cmdline_mode);
 
 /**
- * drm_crtc_convert_to_umode - convert a drm_display_mode into a modeinfo
+ * drm_mode_convert_to_umode - convert a drm_display_mode into a modeinfo
  * @out: drm_mode_modeinfo struct to return to the user
  * @in: drm_display_mode to use
  *
@@ -1950,7 +1948,7 @@ void drm_mode_convert_to_umode(struct drm_mode_modeinfo *out,
 }
 
 /**
- * drm_crtc_convert_umode - convert a modeinfo into a drm_display_mode
+ * drm_mode_convert_umode - convert a modeinfo into a drm_display_mode
  * @dev: drm device
  * @out: drm_display_mode to return to the user
  * @in: drm_mode_modeinfo to use
@@ -1982,7 +1980,7 @@ int drm_mode_convert_umode(struct drm_device *dev,
 	out->flags = in->flags;
 	/*
 	 * Old xf86-video-vmware (possibly others too) used to
-	 * leave 'type' unititialized. Just ignore any bits we
+	 * leave 'type' uninitialized. Just ignore any bits we
 	 * don't like. It's a just hint after all, and more
 	 * useful for the kernel->userspace direction anyway.
 	 */

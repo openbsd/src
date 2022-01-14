@@ -1,4 +1,4 @@
-/* $OpenBSD: atomic.h,v 1.16 2021/06/25 13:41:09 jsg Exp $ */
+/* $OpenBSD: atomic.h,v 1.17 2022/01/14 06:53:14 jsg Exp $ */
 /**
  * \file drm_atomic.h
  * Atomic operations used in the DRM which may or may not be provided by the OS.
@@ -51,12 +51,14 @@
 #define atomic_or(n, p)		atomic_setbits_int(p, n)
 #define atomic_add_return(n, p) __sync_add_and_fetch(p, n)
 #define atomic_sub_return(n, p) __sync_sub_and_fetch(p, n)
+#define atomic_sub_and_test(n, p)	(atomic_sub_return(n, p) == 0)
 #define atomic_inc_return(v)	atomic_add_return(1, (v))
 #define atomic_dec_return(v)	atomic_sub_return(1, (v))
 #define atomic_dec_and_test(v)	(atomic_dec_return(v) == 0)
 #define atomic_inc_and_test(v)	(atomic_inc_return(v) == 0)
 #define atomic_cmpxchg(p, o, n)	__sync_val_compare_and_swap(p, o, n)
 #define cmpxchg(p, o, n)	__sync_val_compare_and_swap(p, o, n)
+#define cmpxchg64(p, o, n)	__sync_val_compare_and_swap(p, o, n)
 #define atomic_set_release(p, v)	atomic_set((p), (v))
 #define atomic_andnot(bits, p)		atomic_clearbits_int(p,bits)
 #define atomic_fetch_inc(p)		__sync_fetch_and_add(p, 1)
@@ -220,16 +222,26 @@ atomic64_sub(int i, atomic64_t *v)
 }
 #endif
 
+static inline int64_t
+atomic64_cmpxchg(atomic64_t *p, int64_t o, int64_t n)
+{
+	return atomic_cmpxchg(p, o, n);
+}
+
 #ifdef __LP64__
 typedef int64_t atomic_long_t;
 #define atomic_long_set(p, v)		atomic64_set(p, v)
 #define atomic_long_xchg(v, n)		atomic64_xchg(v, n)
 #define atomic_long_cmpxchg(p, o, n)	atomic_cmpxchg(p, o, n)
+#define atomic_long_add(i, v)		atomic64_add(i, v)
+#define atomic_long_sub(i, v)		atomic64_sub(i, v)
 #else
 typedef int32_t atomic_long_t;
 #define atomic_long_set(p, v)		atomic_set(p, v)
 #define atomic_long_xchg(v, n)		atomic_xchg(v, n)
 #define atomic_long_cmpxchg(p, o, n)	atomic_cmpxchg(p, o, n)
+#define atomic_long_add(i, v)		atomic_add(i, v)
+#define atomic_long_sub(i, v)		atomic_sub(i, v)
 #endif
 
 static inline atomic_t
@@ -410,6 +422,10 @@ find_next_bit(volatile void *p, int max, int b)
 #elif defined(__aarch64__)
 #define rmb()	__membar("dsb ld")
 #define wmb()	__membar("dsb st")
+#define mb()	__membar("dsb sy")
+#elif defined(__arm__)
+#define rmb()	__membar("dsb sy")
+#define wmb()	__membar("dsb sy")
 #define mb()	__membar("dsb sy")
 #elif defined(__mips64__)
 #define rmb()	mips_sync() 

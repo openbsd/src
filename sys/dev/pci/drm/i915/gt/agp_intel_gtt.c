@@ -16,7 +16,7 @@
 
 #include "../i915_drv.h"
 
-#include <drm/drm_agpsupport.h>
+#include <drm/drm_legacy.h> /* for agp */
 
 /* MCH IFP BARs */
 #define I915_IFPADDR	0x60
@@ -122,7 +122,7 @@ intel_gtt_chipset_setup(struct drm_device *dev)
 	struct inteldrm_softc *dev_priv = dev->dev_private;
 	struct pci_attach_args bpa;
 
-	if (INTEL_GEN(dev_priv) >= 6)
+	if (GRAPHICS_VER(dev_priv) >= 6)
 		return;
 
 	if (pci_find_device(&bpa, inteldrm_gmch_match) == 0) {
@@ -132,9 +132,9 @@ intel_gtt_chipset_setup(struct drm_device *dev)
 	}
 
 	/* Set up the IFP for chipset flushing */
-	if (INTEL_GEN(dev_priv) >= 4 || IS_G33(dev_priv)) {
+	if (GRAPHICS_VER(dev_priv) >= 4 || IS_G33(dev_priv)) {
 		i965_alloc_ifp(dev_priv, &bpa);
-	} else if (INTEL_GEN(dev_priv) == 3) {
+	} else if (GRAPHICS_VER(dev_priv) == 3) {
 		i915_alloc_ifp(dev_priv, &bpa);
 	} else {
 		int nsegs;
@@ -192,7 +192,7 @@ intel_gtt_chipset_flush(void)
 	 * Write to this flush page flushes the chipset write cache.
 	 * The write will return when it is done.
 	 */
-	if (INTEL_GEN(dev_priv) >= 3) {
+	if (GRAPHICS_VER(dev_priv) >= 3) {
 	    if (dev_priv->ifp.i9xx.bsh != 0)
 		bus_space_write_4(dev_priv->ifp.i9xx.bst,
 		    dev_priv->ifp.i9xx.bsh, 0, 1);
@@ -203,9 +203,10 @@ intel_gtt_chipset_flush(void)
 
 		wbinvd_on_all_cpus();
 
-		I915_WRITE(hic, (I915_READ(hic) | (1<<31)));
+		intel_uncore_write(&dev_priv->uncore, hic,
+		    (intel_uncore_read(&dev_priv->uncore, hic) | (1<<31)));
 		for (i = 1000; i; i--) {
-			if (!(I915_READ(hic) & (1<<31)))
+			if (!(intel_uncore_read(&dev_priv->uncore, hic) & (1<<31)))
 				break;
 			delay(100);
 		}

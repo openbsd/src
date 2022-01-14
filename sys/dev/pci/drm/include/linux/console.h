@@ -6,5 +6,6 @@
 #define console_lock()
 #define console_trylock()	1
 #define console_unlock()
+#define vgacon_text_force()	false
 
 #endif

@@ -39,6 +39,7 @@
 
 #include <drm/drm_vma_manager.h>
 
+struct dma_buf_map;
 struct drm_gem_object;
 
 /**
@@ -138,7 +139,7 @@ struct drm_gem_object_funcs {
 	 *
 	 * This callback is optional.
 	 */
-	void *(*vmap)(struct drm_gem_object *obj);
+	int (*vmap)(struct drm_gem_object *obj, struct dma_buf_map *map);
 
 	/**
 	 * @vunmap:
@@ -148,7 +149,7 @@ struct drm_gem_object_funcs {
 	 *
 	 * This callback is optional.
 	 */
-	void (*vunmap)(struct drm_gem_object *obj, void *vaddr);
+	void (*vunmap)(struct drm_gem_object *obj, struct dma_buf_map *map);
 
 	/**
 	 * @mmap:
@@ -163,6 +164,8 @@ struct drm_gem_object_funcs {
 	 */
 #ifdef __linux__
 	int (*mmap)(struct drm_gem_object *obj, struct vm_area_struct *vma);
+#else
+	int (*mmap)(struct drm_gem_object *, vm_prot_t, voff_t, vsize_t);
 #endif
 
 	/**
@@ -172,7 +175,11 @@ struct drm_gem_object_funcs {
 	 *
 	 * This is optional but necessary for mmap support.
 	 */
+#ifdef __linux__
 	const struct vm_operations_struct *vm_ops;
+#else
+	const struct uvm_pagerops *vm_ops;
+#endif
 };
 
 /**
@@ -282,7 +289,7 @@ struct drm_gem_object {
 	 * attachment point for the device. This is invariant over the lifetime
 	 * of a gem object.
 	 *
-	 * The &drm_driver.gem_free_object_unlocked callback is responsible for
+	 * The &drm_gem_object_funcs.free callback is responsible for
 	 * cleaning up the dma_buf attachment and references acquired at import
 	 * time.
 	 *
@@ -364,6 +371,8 @@ void drm_gem_vm_close(struct vm_area_struct *vma);
 int drm_gem_mmap_obj(struct drm_gem_object *obj, unsigned long obj_size,
 		     struct vm_area_struct *vma);
 int drm_gem_mmap(struct file *filp, struct vm_area_struct *vma);
+#else
+struct uvm_object *drm_gem_mmap(struct file *, vm_prot_t, voff_t, vsize_t);
 #endif
 
 /**
@@ -398,8 +407,6 @@ drm_gem_object_put(struct drm_gem_object *obj)
 		__drm_gem_object_put(obj);
 }
 
-void drm_gem_object_put_locked(struct drm_gem_object *obj);
-
 int drm_gem_handle_create(struct drm_file *file_priv,
 			  struct drm_gem_object *obj,
 			  u32 *handlep);
@@ -432,8 +439,8 @@ int drm_gem_fence_array_add_implicit(struct xarray *fence_array,
 #endif
 int drm_gem_dumb_map_offset(struct drm_file *file, struct drm_device *dev,
 			    u32 handle, u64 *offset);
-int drm_gem_dumb_destroy(struct drm_file *file,
-			 struct drm_device *dev,
-			 uint32_t handle);
+
+void drm_ref(struct uvm_object *);
+void drm_unref(struct uvm_object *);
 
 #endif /* __DRM_GEM_H__ */

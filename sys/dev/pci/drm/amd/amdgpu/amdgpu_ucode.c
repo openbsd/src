@@ -68,23 +68,32 @@ void amdgpu_ucode_print_smc_hdr(const struct common_firmware_header *hdr)
 {
 	uint16_t version_major = le16_to_cpu(hdr->header_version_major);
 	uint16_t version_minor = le16_to_cpu(hdr->header_version_minor);
+	const struct smc_firmware_header_v1_0 *v1_0_hdr;
+	const struct smc_firmware_header_v2_0 *v2_0_hdr;
+	const struct smc_firmware_header_v2_1 *v2_1_hdr;
 
 	DRM_DEBUG("SMC\n");
 	amdgpu_ucode_print_common_hdr(hdr);
 
 	if (version_major == 1) {
-		const struct smc_firmware_header_v1_0 *smc_hdr =
-			container_of(hdr, struct smc_firmware_header_v1_0, header);
-
-		DRM_DEBUG("ucode_start_addr: %u\n", le32_to_cpu(smc_hdr->ucode_start_addr));
+		v1_0_hdr = container_of(hdr, struct smc_firmware_header_v1_0, header);
+		DRM_DEBUG("ucode_start_addr: %u\n", le32_to_cpu(v1_0_hdr->ucode_start_addr));
 	} else if (version_major == 2) {
-		const struct smc_firmware_header_v1_0 *v1_hdr =
-			container_of(hdr, struct smc_firmware_header_v1_0, header);
-		const struct smc_firmware_header_v2_0 *v2_hdr =
-			container_of(v1_hdr, struct smc_firmware_header_v2_0, v1_0);
+		switch (version_minor) {
+		case 0:
+			v2_0_hdr = container_of(hdr, struct smc_firmware_header_v2_0, v1_0.header);
+			DRM_DEBUG("ppt_offset_bytes: %u\n", le32_to_cpu(v2_0_hdr->ppt_offset_bytes));
+			DRM_DEBUG("ppt_size_bytes: %u\n", le32_to_cpu(v2_0_hdr->ppt_size_bytes));
+			break;
+		case 1:
+			v2_1_hdr = container_of(hdr, struct smc_firmware_header_v2_1, v1_0.header);
+			DRM_DEBUG("pptable_count: %u\n", le32_to_cpu(v2_1_hdr->pptable_count));
+			DRM_DEBUG("pptable_entry_offset: %u\n", le32_to_cpu(v2_1_hdr->pptable_entry_offset));
+			break;
+		default:
+			break;
+		}
 
-		DRM_DEBUG("ppt_offset_bytes: %u\n", le32_to_cpu(v2_hdr->ppt_offset_bytes));
-		DRM_DEBUG("ppt_size_bytes: %u\n", le32_to_cpu(v2_hdr->ppt_size_bytes));
 	} else {
 		DRM_ERROR("Unknown SMC ucode version: %u.%u\n", version_major, version_minor);
 	}
@@ -248,36 +257,36 @@ void amdgpu_ucode_print_psp_hdr(const struct common_firmware_header *hdr)
 			container_of(hdr, struct psp_firmware_header_v1_0, header);
 
 		DRM_DEBUG("ucode_feature_version: %u\n",
-			  le32_to_cpu(psp_hdr->ucode_feature_version));
+			  le32_to_cpu(psp_hdr->sos.fw_version));
 		DRM_DEBUG("sos_offset_bytes: %u\n",
-			  le32_to_cpu(psp_hdr->sos_offset_bytes));
+			  le32_to_cpu(psp_hdr->sos.offset_bytes));
 		DRM_DEBUG("sos_size_bytes: %u\n",
-			  le32_to_cpu(psp_hdr->sos_size_bytes));
+			  le32_to_cpu(psp_hdr->sos.size_bytes));
 		if (version_minor == 1) {
 			const struct psp_firmware_header_v1_1 *psp_hdr_v1_1 =
 				container_of(psp_hdr, struct psp_firmware_header_v1_1, v1_0);
 			DRM_DEBUG("toc_header_version: %u\n",
-				  le32_to_cpu(psp_hdr_v1_1->toc_header_version));
+				  le32_to_cpu(psp_hdr_v1_1->toc.fw_version));
 			DRM_DEBUG("toc_offset_bytes: %u\n",
-				  le32_to_cpu(psp_hdr_v1_1->toc_offset_bytes));
+				  le32_to_cpu(psp_hdr_v1_1->toc.offset_bytes));
 			DRM_DEBUG("toc_size_bytes: %u\n",
-				  le32_to_cpu(psp_hdr_v1_1->toc_size_bytes));
+				  le32_to_cpu(psp_hdr_v1_1->toc.size_bytes));
 			DRM_DEBUG("kdb_header_version: %u\n",
-				  le32_to_cpu(psp_hdr_v1_1->kdb_header_version));
+				  le32_to_cpu(psp_hdr_v1_1->kdb.fw_version));
 			DRM_DEBUG("kdb_offset_bytes: %u\n",
-				  le32_to_cpu(psp_hdr_v1_1->kdb_offset_bytes));
+				  le32_to_cpu(psp_hdr_v1_1->kdb.offset_bytes));
 			DRM_DEBUG("kdb_size_bytes: %u\n",
-				  le32_to_cpu(psp_hdr_v1_1->kdb_size_bytes));
+				  le32_to_cpu(psp_hdr_v1_1->kdb.size_bytes));
 		}
 		if (version_minor == 2) {
 			const struct psp_firmware_header_v1_2 *psp_hdr_v1_2 =
 				container_of(psp_hdr, struct psp_firmware_header_v1_2, v1_0);
 			DRM_DEBUG("kdb_header_version: %u\n",
-				  le32_to_cpu(psp_hdr_v1_2->kdb_header_version));
+				  le32_to_cpu(psp_hdr_v1_2->kdb.fw_version));
 			DRM_DEBUG("kdb_offset_bytes: %u\n",
-				  le32_to_cpu(psp_hdr_v1_2->kdb_offset_bytes));
+				  le32_to_cpu(psp_hdr_v1_2->kdb.offset_bytes));
 			DRM_DEBUG("kdb_size_bytes: %u\n",
-				  le32_to_cpu(psp_hdr_v1_2->kdb_size_bytes));
+				  le32_to_cpu(psp_hdr_v1_2->kdb.size_bytes));
 		}
 		if (version_minor == 3) {
 			const struct psp_firmware_header_v1_1 *psp_hdr_v1_1 =
@@ -285,23 +294,23 @@ void amdgpu_ucode_print_psp_hdr(const struct common_firmware_header *hdr)
 			const struct psp_firmware_header_v1_3 *psp_hdr_v1_3 =
 				container_of(psp_hdr_v1_1, struct psp_firmware_header_v1_3, v1_1);
 			DRM_DEBUG("toc_header_version: %u\n",
-				  le32_to_cpu(psp_hdr_v1_3->v1_1.toc_header_version));
+				  le32_to_cpu(psp_hdr_v1_3->v1_1.toc.fw_version));
 			DRM_DEBUG("toc_offset_bytes: %u\n",
-				  le32_to_cpu(psp_hdr_v1_3->v1_1.toc_offset_bytes));
+				  le32_to_cpu(psp_hdr_v1_3->v1_1.toc.offset_bytes));
 			DRM_DEBUG("toc_size_bytes: %u\n",
-				  le32_to_cpu(psp_hdr_v1_3->v1_1.toc_size_bytes));
+				  le32_to_cpu(psp_hdr_v1_3->v1_1.toc.size_bytes));
 			DRM_DEBUG("kdb_header_version: %u\n",
-				  le32_to_cpu(psp_hdr_v1_3->v1_1.kdb_header_version));
+				  le32_to_cpu(psp_hdr_v1_3->v1_1.kdb.fw_version));
 			DRM_DEBUG("kdb_offset_bytes: %u\n",
-				  le32_to_cpu(psp_hdr_v1_3->v1_1.kdb_offset_bytes));
+				  le32_to_cpu(psp_hdr_v1_3->v1_1.kdb.offset_bytes));
 			DRM_DEBUG("kdb_size_bytes: %u\n",
-				  le32_to_cpu(psp_hdr_v1_3->v1_1.kdb_size_bytes));
+				  le32_to_cpu(psp_hdr_v1_3->v1_1.kdb.size_bytes));
 			DRM_DEBUG("spl_header_version: %u\n",
-				  le32_to_cpu(psp_hdr_v1_3->spl_header_version));
+				  le32_to_cpu(psp_hdr_v1_3->spl.fw_version));
 			DRM_DEBUG("spl_offset_bytes: %u\n",
-				  le32_to_cpu(psp_hdr_v1_3->spl_offset_bytes));
+				  le32_to_cpu(psp_hdr_v1_3->spl.offset_bytes));
 			DRM_DEBUG("spl_size_bytes: %u\n",
-				  le32_to_cpu(psp_hdr_v1_3->spl_size_bytes));
+				  le32_to_cpu(psp_hdr_v1_3->spl.size_bytes));
 		}
 	} else {
 		DRM_ERROR("Unknown PSP ucode version: %u.%u\n",
@@ -391,7 +400,18 @@ amdgpu_ucode_get_load_type(struct amdgpu_device *adev, int load_type)
 	case CHIP_NAVI12:
 	case CHIP_SIENNA_CICHLID:
 	case CHIP_NAVY_FLOUNDER:
+	case CHIP_VANGOGH:
+	case CHIP_DIMGREY_CAVEFISH:
+	case CHIP_ALDEBARAN:
+	case CHIP_BEIGE_GOBY:
+	case CHIP_YELLOW_CARP:
 		if (!load_type)
+			return AMDGPU_FW_LOAD_DIRECT;
+		else
+			return AMDGPU_FW_LOAD_PSP;
+	case CHIP_CYAN_SKILLFISH:
+		if (!(load_type &&
+		      adev->apu_flags & AMD_APU_IS_CYAN_SKILLFISH2))
 			return AMDGPU_FW_LOAD_DIRECT;
 		else
 			return AMDGPU_FW_LOAD_PSP;
@@ -400,6 +420,84 @@ amdgpu_ucode_get_load_type(struct amdgpu_device *adev, int load_type)
 	}
 
 	return AMDGPU_FW_LOAD_DIRECT;
+}
+
+const char *amdgpu_ucode_name(enum AMDGPU_UCODE_ID ucode_id)
+{
+	switch (ucode_id) {
+	case AMDGPU_UCODE_ID_SDMA0:
+		return "SDMA0";
+	case AMDGPU_UCODE_ID_SDMA1:
+		return "SDMA1";
+	case AMDGPU_UCODE_ID_SDMA2:
+		return "SDMA2";
+	case AMDGPU_UCODE_ID_SDMA3:
+		return "SDMA3";
+	case AMDGPU_UCODE_ID_SDMA4:
+		return "SDMA4";
+	case AMDGPU_UCODE_ID_SDMA5:
+		return "SDMA5";
+	case AMDGPU_UCODE_ID_SDMA6:
+		return "SDMA6";
+	case AMDGPU_UCODE_ID_SDMA7:
+		return "SDMA7";
+	case AMDGPU_UCODE_ID_CP_CE:
+		return "CP_CE";
+	case AMDGPU_UCODE_ID_CP_PFP:
+		return "CP_PFP";
+	case AMDGPU_UCODE_ID_CP_ME:
+		return "CP_ME";
+	case AMDGPU_UCODE_ID_CP_MEC1:
+		return "CP_MEC1";
+	case AMDGPU_UCODE_ID_CP_MEC1_JT:
+		return "CP_MEC1_JT";
+	case AMDGPU_UCODE_ID_CP_MEC2:
+		return "CP_MEC2";
+	case AMDGPU_UCODE_ID_CP_MEC2_JT:
+		return "CP_MEC2_JT";
+	case AMDGPU_UCODE_ID_CP_MES:
+		return "CP_MES";
+	case AMDGPU_UCODE_ID_CP_MES_DATA:
+		return "CP_MES_DATA";
+	case AMDGPU_UCODE_ID_RLC_RESTORE_LIST_CNTL:
+		return "RLC_RESTORE_LIST_CNTL";
+	case AMDGPU_UCODE_ID_RLC_RESTORE_LIST_GPM_MEM:
+		return "RLC_RESTORE_LIST_GPM_MEM";
+	case AMDGPU_UCODE_ID_RLC_RESTORE_LIST_SRM_MEM:
+		return "RLC_RESTORE_LIST_SRM_MEM";
+	case AMDGPU_UCODE_ID_RLC_IRAM:
+		return "RLC_IRAM";
+	case AMDGPU_UCODE_ID_RLC_DRAM:
+		return "RLC_DRAM";
+	case AMDGPU_UCODE_ID_RLC_G:
+		return "RLC_G";
+	case AMDGPU_UCODE_ID_STORAGE:
+		return "STORAGE";
+	case AMDGPU_UCODE_ID_SMC:
+		return "SMC";
+	case AMDGPU_UCODE_ID_UVD:
+		return "UVD";
+	case AMDGPU_UCODE_ID_UVD1:
+		return "UVD1";
+	case AMDGPU_UCODE_ID_VCE:
+		return "VCE";
+	case AMDGPU_UCODE_ID_VCN:
+		return "VCN";
+	case AMDGPU_UCODE_ID_VCN1:
+		return "VCN1";
+	case AMDGPU_UCODE_ID_DMCU_ERAM:
+		return "DMCU_ERAM";
+	case AMDGPU_UCODE_ID_DMCU_INTV:
+		return "DMCU_INTV";
+	case AMDGPU_UCODE_ID_VCN0_RAM:
+		return "VCN0_RAM";
+	case AMDGPU_UCODE_ID_VCN1_RAM:
+		return "VCN1_RAM";
+	case AMDGPU_UCODE_ID_DMCUB:
+		return "DMCUB";
+	default:
+		return "UNKNOWN UCODE";
+	}
 }
 
 #ifdef __linux__
@@ -428,10 +526,10 @@ FW_VERSION_ATTR(rlc_srlg_fw_version, 0444, gfx.rlc_srlg_fw_version);
 FW_VERSION_ATTR(rlc_srls_fw_version, 0444, gfx.rlc_srls_fw_version);
 FW_VERSION_ATTR(mec_fw_version, 0444, gfx.mec_fw_version);
 FW_VERSION_ATTR(mec2_fw_version, 0444, gfx.mec2_fw_version);
-FW_VERSION_ATTR(sos_fw_version, 0444, psp.sos_fw_version);
-FW_VERSION_ATTR(asd_fw_version, 0444, psp.asd_fw_version);
-FW_VERSION_ATTR(ta_ras_fw_version, 0444, psp.ta_ras_ucode_version);
-FW_VERSION_ATTR(ta_xgmi_fw_version, 0444, psp.ta_xgmi_ucode_version);
+FW_VERSION_ATTR(sos_fw_version, 0444, psp.sos.fw_version);
+FW_VERSION_ATTR(asd_fw_version, 0444, psp.asd.fw_version);
+FW_VERSION_ATTR(ta_ras_fw_version, 0444, psp.ras.feature_version);
+FW_VERSION_ATTR(ta_xgmi_fw_version, 0444, psp.xgmi.feature_version);
 FW_VERSION_ATTR(smc_fw_version, 0444, pm.fw_version);
 FW_VERSION_ATTR(sdma_fw_version, 0444, sdma.instance[0].fw_version);
 FW_VERSION_ATTR(sdma2_fw_version, 0444, sdma.instance[1].fw_version);
@@ -590,8 +688,8 @@ static int amdgpu_ucode_patch_jt(struct amdgpu_firmware_info *ucode,
 {
 	const struct gfx_firmware_header_v1_0 *header = NULL;
 	const struct common_firmware_header *comm_hdr = NULL;
-	uint8_t* src_addr = NULL;
-	uint8_t* dst_addr = NULL;
+	uint8_t *src_addr = NULL;
+	uint8_t *dst_addr = NULL;
 
 	if (NULL == ucode->fw)
 		return 0;

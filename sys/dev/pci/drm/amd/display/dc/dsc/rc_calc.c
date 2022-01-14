@@ -51,7 +51,7 @@ static void get_qp_set(qp_set qps, enum colour_mode cm, enum bits_per_comp bpc,
 	const struct qp_entry *table = 0L;
 
 	// alias enum
-	enum { min = MM_MIN, max = MM_MAX };
+	enum { min = DAL_MM_MIN, max = DAL_MM_MAX };
 	switch (sel) {
 		TABLE_CASE(444,  8, max);
 		TABLE_CASE(444,  8, min);
@@ -233,8 +233,8 @@ static void _do_calc_rc_params(struct rc_params *rc, enum colour_mode cm,
 	rc->flatness_max_qp     = ((bpc == BPC_8) ? (12) : ((bpc == BPC_10) ? (16) : (20))) - ((minor_version == 1 && cm == CM_444) ? 1 : 0);
 	rc->flatness_det_thresh = 2 << (bpc - 8);
 
-	get_qp_set(rc->qp_min, cm, bpc, MM_MIN, bpp);
-	get_qp_set(rc->qp_max, cm, bpc, MM_MAX, bpp);
+	get_qp_set(rc->qp_min, cm, bpc, DAL_MM_MIN, bpp);
+	get_qp_set(rc->qp_max, cm, bpc, DAL_MM_MAX, bpp);
 	if (cm == CM_444 && minor_version == 1) {
 		for (i = 0; i < QP_SET_SIZE; ++i) {
 			rc->qp_min[i] = rc->qp_min[i] > 0 ? rc->qp_min[i] - 1 : 0;
@@ -282,26 +282,6 @@ static u32 _do_bytes_per_pixel_calc(int slice_width, u16 drm_bpp,
 	bytes_per_pixel = (u32)dsc_ceil(d_bytes_per_pixel * 0x10000000);
 
 	return bytes_per_pixel;
-}
-
-static u32 _do_calc_dsc_bpp_x16(u32 stream_bandwidth_kbps, u32 pix_clk_100hz,
-				u32 bpp_increment_div)
-{
-	u32 dsc_target_bpp_x16;
-	float f_dsc_target_bpp;
-	float f_stream_bandwidth_100bps;
-	// bpp_increment_div is actually precision
-	u32 precision = bpp_increment_div;
-
-	f_stream_bandwidth_100bps = stream_bandwidth_kbps * 10.0f;
-	f_dsc_target_bpp = f_stream_bandwidth_100bps / pix_clk_100hz;
-
-	// Round down to the nearest precision stop to bring it into DSC spec
-	// range
-	dsc_target_bpp_x16 = (u32)(f_dsc_target_bpp * precision);
-	dsc_target_bpp_x16 = (dsc_target_bpp_x16 * 16) / precision;
-
-	return dsc_target_bpp_x16;
 }
 
 /**
@@ -366,27 +346,4 @@ u32 calc_dsc_bytes_per_pixel(const struct drm_dsc_config *pps)
 				       is_navite_422_or_420);
 	DC_FP_END();
 	return ret;
-}
-
-/**
- * calc_dsc_bpp_x16 - retrieve the dsc bits per pixel
- * @stream_bandwidth_kbps:
- * @pix_clk_100hz:
- * @bpp_increment_div:
- *
- * Calculate the total of bits per pixel for DSC configuration.
- *
- * @note This calculation requires float point operation, most of it executes
- * under kernel_fpu_{begin,end}.
- */
-u32 calc_dsc_bpp_x16(u32 stream_bandwidth_kbps, u32 pix_clk_100hz,
-		     u32 bpp_increment_div)
-{
-	u32 dsc_bpp;
-
-	DC_FP_START();
-	dsc_bpp =  _do_calc_dsc_bpp_x16(stream_bandwidth_kbps, pix_clk_100hz,
-					bpp_increment_div);
-	DC_FP_END();
-	return dsc_bpp;
 }

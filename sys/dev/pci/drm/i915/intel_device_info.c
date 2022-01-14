@@ -59,12 +59,16 @@ static const char * const platform_names[] = {
 	PLATFORM_NAME(GEMINILAKE),
 	PLATFORM_NAME(COFFEELAKE),
 	PLATFORM_NAME(COMETLAKE),
-	PLATFORM_NAME(CANNONLAKE),
 	PLATFORM_NAME(ICELAKE),
 	PLATFORM_NAME(ELKHARTLAKE),
+	PLATFORM_NAME(JASPERLAKE),
 	PLATFORM_NAME(TIGERLAKE),
 	PLATFORM_NAME(ROCKETLAKE),
 	PLATFORM_NAME(DG1),
+	PLATFORM_NAME(ALDERLAKE_S),
+	PLATFORM_NAME(ALDERLAKE_P),
+	PLATFORM_NAME(XEHPSDV),
+	PLATFORM_NAME(DG2),
 };
 #undef PLATFORM_NAME
 
@@ -93,7 +97,17 @@ static const char *iommu_name(void)
 void intel_device_info_print_static(const struct intel_device_info *info,
 				    struct drm_printer *p)
 {
-	drm_printf(p, "gen: %d\n", info->gen);
+	if (info->graphics_rel)
+		drm_printf(p, "graphics version: %u.%02u\n", info->graphics_ver, info->graphics_rel);
+	else
+		drm_printf(p, "graphics version: %u\n", info->graphics_ver);
+
+	if (info->media_rel)
+		drm_printf(p, "media version: %u.%02u\n", info->media_ver, info->media_rel);
+	else
+		drm_printf(p, "media version: %u\n", info->media_ver);
+
+	drm_printf(p, "display version: %u\n", info->display.ver);
 	drm_printf(p, "gt: %d\n", info->gt);
 	drm_printf(p, "iommu: %s\n", iommu_name());
 	drm_printf(p, "memory-regions: %x\n", info->memory_regions);
@@ -103,7 +117,7 @@ void intel_device_info_print_static(const struct intel_device_info *info,
 	drm_printf(p, "ppgtt-type: %d\n", info->ppgtt_type);
 	drm_printf(p, "dma_mask_size: %u\n", info->dma_mask_size);
 
-#define PRINT_FLAG(name) drm_printf(p, "%s: %s\n", #name, yesno(info->name));
+#define PRINT_FLAG(name) drm_printf(p, "%s: %s\n", #name, yesno(info->name))
 	DEV_INFO_FOR_EACH_FLAG(PRINT_FLAG);
 #undef PRINT_FLAG
 
@@ -116,150 +130,6 @@ void intel_device_info_print_runtime(const struct intel_runtime_info *info,
 				     struct drm_printer *p)
 {
 	drm_printf(p, "rawclk rate: %u kHz\n", info->rawclk_freq);
-	drm_printf(p, "CS timestamp frequency: %u Hz\n",
-		   info->cs_timestamp_frequency_hz);
-}
-
-static u32 read_reference_ts_freq(struct drm_i915_private *dev_priv)
-{
-	u32 ts_override = intel_uncore_read(&dev_priv->uncore,
-					    GEN9_TIMESTAMP_OVERRIDE);
-	u32 base_freq, frac_freq;
-
-	base_freq = ((ts_override & GEN9_TIMESTAMP_OVERRIDE_US_COUNTER_DIVIDER_MASK) >>
-		     GEN9_TIMESTAMP_OVERRIDE_US_COUNTER_DIVIDER_SHIFT) + 1;
-	base_freq *= 1000000;
-
-	frac_freq = ((ts_override &
-		      GEN9_TIMESTAMP_OVERRIDE_US_COUNTER_DENOMINATOR_MASK) >>
-		     GEN9_TIMESTAMP_OVERRIDE_US_COUNTER_DENOMINATOR_SHIFT);
-	frac_freq = 1000000 / (frac_freq + 1);
-
-	return base_freq + frac_freq;
-}
-
-static u32 gen10_get_crystal_clock_freq(struct drm_i915_private *dev_priv,
-					u32 rpm_config_reg)
-{
-	u32 f19_2_mhz = 19200000;
-	u32 f24_mhz = 24000000;
-	u32 crystal_clock = (rpm_config_reg &
-			     GEN9_RPM_CONFIG0_CRYSTAL_CLOCK_FREQ_MASK) >>
-			    GEN9_RPM_CONFIG0_CRYSTAL_CLOCK_FREQ_SHIFT;
-
-	switch (crystal_clock) {
-	case GEN9_RPM_CONFIG0_CRYSTAL_CLOCK_FREQ_19_2_MHZ:
-		return f19_2_mhz;
-	case GEN9_RPM_CONFIG0_CRYSTAL_CLOCK_FREQ_24_MHZ:
-		return f24_mhz;
-	default:
-		MISSING_CASE(crystal_clock);
-		return 0;
-	}
-}
-
-static u32 gen11_get_crystal_clock_freq(struct drm_i915_private *dev_priv,
-					u32 rpm_config_reg)
-{
-	u32 f19_2_mhz = 19200000;
-	u32 f24_mhz = 24000000;
-	u32 f25_mhz = 25000000;
-	u32 f38_4_mhz = 38400000;
-	u32 crystal_clock = (rpm_config_reg &
-			     GEN11_RPM_CONFIG0_CRYSTAL_CLOCK_FREQ_MASK) >>
-			    GEN11_RPM_CONFIG0_CRYSTAL_CLOCK_FREQ_SHIFT;
-
-	switch (crystal_clock) {
-	case GEN11_RPM_CONFIG0_CRYSTAL_CLOCK_FREQ_24_MHZ:
-		return f24_mhz;
-	case GEN11_RPM_CONFIG0_CRYSTAL_CLOCK_FREQ_19_2_MHZ:
-		return f19_2_mhz;
-	case GEN11_RPM_CONFIG0_CRYSTAL_CLOCK_FREQ_38_4_MHZ:
-		return f38_4_mhz;
-	case GEN11_RPM_CONFIG0_CRYSTAL_CLOCK_FREQ_25_MHZ:
-		return f25_mhz;
-	default:
-		MISSING_CASE(crystal_clock);
-		return 0;
-	}
-}
-
-static u32 read_timestamp_frequency(struct drm_i915_private *dev_priv)
-{
-	struct intel_uncore *uncore = &dev_priv->uncore;
-	u32 f12_5_mhz = 12500000;
-	u32 f19_2_mhz = 19200000;
-	u32 f24_mhz = 24000000;
-
-	if (INTEL_GEN(dev_priv) <= 4) {
-		/* PRMs say:
-		 *
-		 *     "The value in this register increments once every 16
-		 *      hclks." (through the “Clocking Configuration”
-		 *      (“CLKCFG”) MCHBAR register)
-		 */
-		return RUNTIME_INFO(dev_priv)->rawclk_freq * 1000 / 16;
-	} else if (INTEL_GEN(dev_priv) <= 8) {
-		/* PRMs say:
-		 *
-		 *     "The PCU TSC counts 10ns increments; this timestamp
-		 *      reflects bits 38:3 of the TSC (i.e. 80ns granularity,
-		 *      rolling over every 1.5 hours).
-		 */
-		return f12_5_mhz;
-	} else if (INTEL_GEN(dev_priv) <= 9) {
-		u32 ctc_reg = intel_uncore_read(uncore, CTC_MODE);
-		u32 freq = 0;
-
-		if ((ctc_reg & CTC_SOURCE_PARAMETER_MASK) == CTC_SOURCE_DIVIDE_LOGIC) {
-			freq = read_reference_ts_freq(dev_priv);
-		} else {
-			freq = IS_GEN9_LP(dev_priv) ? f19_2_mhz : f24_mhz;
-
-			/* Now figure out how the command stream's timestamp
-			 * register increments from this frequency (it might
-			 * increment only every few clock cycle).
-			 */
-			freq >>= 3 - ((ctc_reg & CTC_SHIFT_PARAMETER_MASK) >>
-				      CTC_SHIFT_PARAMETER_SHIFT);
-		}
-
-		return freq;
-	} else if (INTEL_GEN(dev_priv) <= 12) {
-		u32 ctc_reg = intel_uncore_read(uncore, CTC_MODE);
-		u32 freq = 0;
-
-		/* First figure out the reference frequency. There are 2 ways
-		 * we can compute the frequency, either through the
-		 * TIMESTAMP_OVERRIDE register or through RPM_CONFIG. CTC_MODE
-		 * tells us which one we should use.
-		 */
-		if ((ctc_reg & CTC_SOURCE_PARAMETER_MASK) == CTC_SOURCE_DIVIDE_LOGIC) {
-			freq = read_reference_ts_freq(dev_priv);
-		} else {
-			u32 rpm_config_reg = intel_uncore_read(uncore, RPM_CONFIG0);
-
-			if (INTEL_GEN(dev_priv) <= 10)
-				freq = gen10_get_crystal_clock_freq(dev_priv,
-								rpm_config_reg);
-			else
-				freq = gen11_get_crystal_clock_freq(dev_priv,
-								rpm_config_reg);
-
-			/* Now figure out how the command stream's timestamp
-			 * register increments from this frequency (it might
-			 * increment only every few clock cycle).
-			 */
-			freq >>= 3 - ((rpm_config_reg &
-				       GEN10_RPM_CONFIG0_CTC_SHIFT_PARAMETER_MASK) >>
-				      GEN10_RPM_CONFIG0_CTC_SHIFT_PARAMETER_SHIFT);
-		}
-
-		return freq;
-	}
-
-	MISSING_CASE("Unknown gen, unable to read command streamer timestamp frequency\n");
-	return 0;
 }
 
 #undef INTEL_VGA_DEVICE
@@ -304,7 +174,6 @@ static const u16 subplatform_ulx_ids[] = {
 };
 
 static const u16 subplatform_portf_ids[] = {
-	INTEL_CNL_PORT_F_IDS(0),
 	INTEL_ICL_PORT_F_IDS(0),
 };
 
@@ -357,6 +226,7 @@ void intel_device_info_subplatform_init(struct drm_i915_private *i915)
 		id = pci_conf_read(pc, tag, PCI_ID_REG);
 		root_device = PCI_PRODUCT(id);
 
+
 		drm_WARN_ON(&i915->drm, mask);
 		drm_WARN_ON(&i915->drm, (root_device & TGL_ROOT_DEVICE_MASK) !=
 			    TGL_ROOT_DEVICE_ID);
@@ -371,7 +241,7 @@ void intel_device_info_subplatform_init(struct drm_i915_private *i915)
 		}
 	}
 
-	GEM_BUG_ON(mask & ~INTEL_SUBPLATFORM_BITS);
+	GEM_BUG_ON(mask & ~INTEL_SUBPLATFORM_MASK);
 
 	RUNTIME_INFO(i915)->platform_mask[pi] |= mask;
 }
@@ -398,10 +268,14 @@ void intel_device_info_runtime_init(struct drm_i915_private *dev_priv)
 	struct intel_runtime_info *runtime = RUNTIME_INFO(dev_priv);
 	enum pipe pipe;
 
-	if (INTEL_GEN(dev_priv) >= 10) {
+	/* Wa_14011765242: adl-s A0,A1 */
+	if (IS_ADLS_DISPLAY_STEP(dev_priv, STEP_A0, STEP_A2))
+		for_each_pipe(dev_priv, pipe)
+			runtime->num_scalers[pipe] = 0;
+	else if (DISPLAY_VER(dev_priv) >= 11) {
 		for_each_pipe(dev_priv, pipe)
 			runtime->num_scalers[pipe] = 2;
-	} else if (IS_GEN(dev_priv, 9)) {
+	} else if (DISPLAY_VER(dev_priv) >= 9) {
 		runtime->num_scalers[PIPE_A] = 2;
 		runtime->num_scalers[PIPE_B] = 2;
 		runtime->num_scalers[PIPE_C] = 1;
@@ -409,13 +283,13 @@ void intel_device_info_runtime_init(struct drm_i915_private *dev_priv)
 
 	BUILD_BUG_ON(BITS_PER_TYPE(intel_engine_mask_t) < I915_NUM_ENGINES);
 
-	if (IS_ROCKETLAKE(dev_priv))
+	if (DISPLAY_VER(dev_priv) >= 13 || HAS_D12_PLANE_MINIMIZATION(dev_priv))
 		for_each_pipe(dev_priv, pipe)
 			runtime->num_sprites[pipe] = 4;
-	else if (INTEL_GEN(dev_priv) >= 11)
+	else if (DISPLAY_VER(dev_priv) >= 11)
 		for_each_pipe(dev_priv, pipe)
 			runtime->num_sprites[pipe] = 6;
-	else if (IS_GEN(dev_priv, 10) || IS_GEMINILAKE(dev_priv))
+	else if (DISPLAY_VER(dev_priv) == 10)
 		for_each_pipe(dev_priv, pipe)
 			runtime->num_sprites[pipe] = 3;
 	else if (IS_BROXTON(dev_priv)) {
@@ -434,12 +308,12 @@ void intel_device_info_runtime_init(struct drm_i915_private *dev_priv)
 	} else if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv)) {
 		for_each_pipe(dev_priv, pipe)
 			runtime->num_sprites[pipe] = 2;
-	} else if (INTEL_GEN(dev_priv) >= 5 || IS_G4X(dev_priv)) {
+	} else if (DISPLAY_VER(dev_priv) >= 5 || IS_G4X(dev_priv)) {
 		for_each_pipe(dev_priv, pipe)
 			runtime->num_sprites[pipe] = 1;
 	}
 
-	if (HAS_DISPLAY(dev_priv) && IS_GEN_RANGE(dev_priv, 7, 8) &&
+	if (HAS_DISPLAY(dev_priv) && IS_GRAPHICS_VER(dev_priv, 7, 8) &&
 	    HAS_PCH_SPLIT(dev_priv)) {
 		u32 fuse_strap = intel_de_read(dev_priv, FUSE_STRAP);
 		u32 sfuse_strap = intel_de_read(dev_priv, SFUSE_STRAP);
@@ -466,7 +340,7 @@ void intel_device_info_runtime_init(struct drm_i915_private *dev_priv)
 			info->pipe_mask &= ~BIT(PIPE_C);
 			info->cpu_transcoder_mask &= ~BIT(TRANSCODER_C);
 		}
-	} else if (HAS_DISPLAY(dev_priv) && INTEL_GEN(dev_priv) >= 9) {
+	} else if (HAS_DISPLAY(dev_priv) && DISPLAY_VER(dev_priv) >= 9) {
 		u32 dfsm = intel_de_read(dev_priv, SKL_DFSM);
 
 		if (dfsm & SKL_DFSM_PIPE_A_DISABLE) {
@@ -481,7 +355,8 @@ void intel_device_info_runtime_init(struct drm_i915_private *dev_priv)
 			info->pipe_mask &= ~BIT(PIPE_C);
 			info->cpu_transcoder_mask &= ~BIT(TRANSCODER_C);
 		}
-		if (INTEL_GEN(dev_priv) >= 12 &&
+
+		if (DISPLAY_VER(dev_priv) >= 12 &&
 		    (dfsm & TGL_DFSM_PIPE_D_DISABLE)) {
 			info->pipe_mask &= ~BIT(PIPE_D);
 			info->cpu_transcoder_mask &= ~BIT(TRANSCODER_D);
@@ -493,15 +368,15 @@ void intel_device_info_runtime_init(struct drm_i915_private *dev_priv)
 		if (dfsm & SKL_DFSM_DISPLAY_PM_DISABLE)
 			info->display.has_fbc = 0;
 
-		if (INTEL_GEN(dev_priv) >= 11 && (dfsm & ICL_DFSM_DMC_DISABLE))
-			info->display.has_csr = 0;
+		if (DISPLAY_VER(dev_priv) >= 11 && (dfsm & ICL_DFSM_DMC_DISABLE))
+			info->display.has_dmc = 0;
 
-		if (INTEL_GEN(dev_priv) >= 10 &&
-		    (dfsm & CNL_DFSM_DISPLAY_DSC_DISABLE))
+		if (DISPLAY_VER(dev_priv) >= 10 &&
+		    (dfsm & GLK_DFSM_DISPLAY_DSC_DISABLE))
 			info->display.has_dsc = 0;
 	}
 
-	if (IS_GEN(dev_priv, 6) && intel_vtd_active()) {
+	if (GRAPHICS_VER(dev_priv) == 6 && intel_vtd_active()) {
 		drm_info(&dev_priv->drm,
 			 "Disabling ppGTT for VT-d support\n");
 		info->ppgtt_type = INTEL_PPGTT_NONE;
@@ -509,19 +384,6 @@ void intel_device_info_runtime_init(struct drm_i915_private *dev_priv)
 
 	runtime->rawclk_freq = intel_read_rawclk(dev_priv);
 	drm_dbg(&dev_priv->drm, "rawclk rate: %d kHz\n", runtime->rawclk_freq);
-
-	/* Initialize command stream timestamp frequency */
-	runtime->cs_timestamp_frequency_hz =
-		read_timestamp_frequency(dev_priv);
-	if (runtime->cs_timestamp_frequency_hz) {
-		runtime->cs_timestamp_period_ns =
-			i915_cs_timestamp_ticks_to_ns(dev_priv, 1);
-		drm_dbg(&dev_priv->drm,
-			"CS timestamp wraparound in %lldms\n",
-			div_u64(mul_u32_u32(runtime->cs_timestamp_period_ns,
-					    S32_MAX),
-				USEC_PER_SEC));
-	}
 
 	if (!HAS_DISPLAY(dev_priv)) {
 		dev_priv->drm.driver_features &= ~(DRIVER_MODESET |

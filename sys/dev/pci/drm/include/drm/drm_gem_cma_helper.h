@@ -13,6 +13,10 @@ struct drm_gem_cma_object *drm_gem_cma_create(struct drm_device *,
 int drm_gem_cma_fault(struct drm_gem_object *, struct uvm_faultinfo *,
     off_t, vaddr_t, vm_page_t *, int, int, vm_prot_t, int);
 
+struct sg_table *drm_gem_cma_get_sg_table(struct drm_gem_object *);
+
+int drm_gem_cma_vmap(struct drm_gem_object *, struct dma_buf_map *);
+
 struct drm_gem_cma_object {
 	struct drm_gem_object	base;
 	bus_dma_tag_t		dmat;

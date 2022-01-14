@@ -1,8 +1,8 @@
-# $NetBSD: files.drm,v 1.2 2007/03/28 11:29:37 jmcneill Exp $
-# $OpenBSD: files.drm,v 1.52 2021/07/07 02:38:22 jsg Exp $
+# $OpenBSD: files.drm,v 1.53 2022/01/14 06:52:59 jsg Exp $
 
 file	dev/pci/drm/dma-resv.c			drm
 file	dev/pci/drm/drm_agpsupport.c		drm & agp
+file	dev/pci/drm/drm_aperture.c		drm
 file	dev/pci/drm/drm_atomic.c		drm
 file	dev/pci/drm/drm_atomic_helper.c		drm
 file	dev/pci/drm/drm_atomic_state_helper.c	drm
@@ -22,6 +22,7 @@ file	dev/pci/drm/drm_crtc_helper.c		drm
 file	dev/pci/drm/drm_damage_helper.c		drm
 #file	dev/pci/drm/drm_debugfs.c		drm
 #file	dev/pci/drm/drm_debugfs_crc.c		drm
+file	dev/pci/drm/drm_displayid.c		drm
 #file	dev/pci/drm/drm_dma.c			drm
 #file	dev/pci/drm/drm_dp_aux_dev.c		drm
 file	dev/pci/drm/drm_dp_dual_mode_helper.c	drm
@@ -39,6 +40,8 @@ file	dev/pci/drm/drm_format_helper.c		drm
 file	dev/pci/drm/drm_fourcc.c		drm
 file	dev/pci/drm/drm_framebuffer.c		drm
 file	dev/pci/drm/drm_gem.c			drm
+file	dev/pci/drm/drm_gem_atomic_helper.c	drm
+#file	dev/pci/drm/drm_gem_cma_helper.c	drm
 file	dev/pci/drm/drm_gem_framebuffer_helper.c	drm
 file	dev/pci/drm/drm_hashtab.c		drm
 file	dev/pci/drm/drm_hdcp.c			drm
@@ -83,17 +86,18 @@ file	dev/pci/drm/linux_list_sort.c		drm
 file	dev/pci/drm/linux_radix.c		drm
 
 define	ttm
+file	dev/pci/drm/drm_gem_ttm_helper.c	ttm
 file	dev/pci/drm/ttm/ttm_agp_backend.c	ttm & agp
 file	dev/pci/drm/ttm/ttm_bo.c		ttm
 file	dev/pci/drm/ttm/ttm_bo_util.c		ttm
 file	dev/pci/drm/ttm/ttm_bo_vm.c		ttm
+file	dev/pci/drm/ttm/ttm_device.c		ttm
 file	dev/pci/drm/ttm/ttm_execbuf_util.c	ttm
-file	dev/pci/drm/ttm/ttm_memory.c		ttm
-#file	dev/pci/drm/ttm/ttm_module.c		ttm
-file	dev/pci/drm/ttm/ttm_page_alloc.c	ttm
-#file	dev/pci/drm/ttm/ttm_page_alloc_dma.c	ttm
+file	dev/pci/drm/ttm/ttm_module.c		ttm
+file	dev/pci/drm/ttm/ttm_pool.c		ttm
 file	dev/pci/drm/ttm/ttm_range_manager.c	ttm
 file	dev/pci/drm/ttm/ttm_resource.c		ttm
+file	dev/pci/drm/ttm/ttm_sys_manager.c	ttm
 file	dev/pci/drm/ttm/ttm_tt.c		ttm
 
 define	drm_sched
@@ -109,6 +113,9 @@ file	dev/pci/drm/i915/display/dvo_ivch.c		inteldrm
 file	dev/pci/drm/i915/display/dvo_ns2501.c		inteldrm
 file	dev/pci/drm/i915/display/dvo_sil164.c		inteldrm
 file	dev/pci/drm/i915/display/dvo_tfp410.c		inteldrm
+file	dev/pci/drm/i915/display/g4x_dp.c		inteldrm
+file	dev/pci/drm/i915/display/g4x_hdmi.c		inteldrm
+file	dev/pci/drm/i915/display/i9xx_plane.c		inteldrm
 file	dev/pci/drm/i915/display/icl_dsi.c		inteldrm
 file	dev/pci/drm/i915/display/intel_atomic.c		inteldrm
 file	dev/pci/drm/i915/display/intel_atomic_plane.c	inteldrm
@@ -120,25 +127,32 @@ file	dev/pci/drm/i915/display/intel_color.c		inteldrm
 file	dev/pci/drm/i915/display/intel_combo_phy.c	inteldrm
 file	dev/pci/drm/i915/display/intel_connector.c	inteldrm
 file	dev/pci/drm/i915/display/intel_crt.c		inteldrm
-file	dev/pci/drm/i915/display/intel_csr.c		inteldrm
+file	dev/pci/drm/i915/display/intel_crtc.c		inteldrm
+file	dev/pci/drm/i915/display/intel_cursor.c		inteldrm
 file	dev/pci/drm/i915/display/intel_ddi.c		inteldrm
+file	dev/pci/drm/i915/display/intel_ddi_buf_trans.c	inteldrm
 file	dev/pci/drm/i915/display/intel_display.c	inteldrm
 #file	dev/pci/drm/i915/display/intel_display_debugfs.c	inteldrm
 file	dev/pci/drm/i915/display/intel_display_power.c	inteldrm
+file	dev/pci/drm/i915/display/intel_dmc.c		inteldrm
 file	dev/pci/drm/i915/display/intel_dp.c		inteldrm
+file	dev/pci/drm/i915/display/intel_dp_aux.c		inteldrm
 file	dev/pci/drm/i915/display/intel_dp_aux_backlight.c	inteldrm
 file	dev/pci/drm/i915/display/intel_dp_hdcp.c	inteldrm
 file	dev/pci/drm/i915/display/intel_dp_link_training.c	inteldrm
 file	dev/pci/drm/i915/display/intel_dp_mst.c		inteldrm
 file	dev/pci/drm/i915/display/intel_dpio_phy.c	inteldrm
+file	dev/pci/drm/i915/display/intel_dpll.c		inteldrm
 file	dev/pci/drm/i915/display/intel_dpll_mgr.c	inteldrm
 file	dev/pci/drm/i915/display/intel_dsb.c		inteldrm
 file	dev/pci/drm/i915/display/intel_dsi.c		inteldrm
 file	dev/pci/drm/i915/display/intel_dsi_dcs_backlight.c	inteldrm
 file	dev/pci/drm/i915/display/intel_dsi_vbt.c	inteldrm
 file	dev/pci/drm/i915/display/intel_dvo.c		inteldrm
+file	dev/pci/drm/i915/display/intel_fb.c		inteldrm
 file	dev/pci/drm/i915/display/intel_fbc.c		inteldrm
 file	dev/pci/drm/i915/display/intel_fbdev.c		inteldrm
+file	dev/pci/drm/i915/display/intel_fdi.c		inteldrm
 file	dev/pci/drm/i915/display/intel_fifo_underrun.c	inteldrm
 file	dev/pci/drm/i915/display/intel_frontbuffer.c	inteldrm
 file	dev/pci/drm/i915/display/intel_global_state.c	inteldrm
@@ -153,29 +167,34 @@ file	dev/pci/drm/i915/display/intel_opregion.c	inteldrm
 file	dev/pci/drm/i915/display/intel_overlay.c	inteldrm
 file	dev/pci/drm/i915/display/intel_panel.c		inteldrm
 #file	dev/pci/drm/i915/display/intel_pipe_crc.c	inteldrm
+file	dev/pci/drm/i915/display/intel_pps.c		inteldrm
 file	dev/pci/drm/i915/display/intel_psr.c		inteldrm
+file	dev/pci/drm/i915/display/intel_qp_tables.c	inteldrm
 file	dev/pci/drm/i915/display/intel_quirks.c		inteldrm
 file	dev/pci/drm/i915/display/intel_sdvo.c		inteldrm
+file	dev/pci/drm/i915/display/intel_snps_phy.c	inteldrm
 file	dev/pci/drm/i915/display/intel_sprite.c		inteldrm
 file	dev/pci/drm/i915/display/intel_tc.c		inteldrm
 file	dev/pci/drm/i915/display/intel_tv.c		inteldrm
 file	dev/pci/drm/i915/display/intel_vdsc.c		inteldrm
 file	dev/pci/drm/i915/display/intel_vga.c		inteldrm
+file	dev/pci/drm/i915/display/intel_vrr.c		inteldrm
+file	dev/pci/drm/i915/display/skl_scaler.c		inteldrm
+file	dev/pci/drm/i915/display/skl_universal_plane.c	inteldrm
 file	dev/pci/drm/i915/display/vlv_dsi.c		inteldrm
 file	dev/pci/drm/i915/display/vlv_dsi_pll.c		inteldrm
+file	dev/pci/drm/i915/dma_resv_utils.c		inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_busy.c		inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_clflush.c		inteldrm
-file	dev/pci/drm/i915/gem/i915_gem_client_blt.c	inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_context.c		inteldrm
+file	dev/pci/drm/i915/gem/i915_gem_create.c		inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_dmabuf.c		inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_domain.c		inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_execbuffer.c	inteldrm
-file	dev/pci/drm/i915/gem/i915_gem_fence.c		inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_internal.c	inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_lmem.c		inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_mman.c		inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_object.c		inteldrm
-file	dev/pci/drm/i915/gem/i915_gem_object_blt.c	inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_pages.c		inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_phys.c		inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_pm.c		inteldrm
@@ -185,6 +204,7 @@ file	dev/pci/drm/i915/gem/i915_gem_shrinker.c	inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_stolen.c		inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_throttle.c	inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_tiling.c		inteldrm
+file	dev/pci/drm/i915/gem/i915_gem_ttm.c		inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_userptr.c		inteldrm
 file	dev/pci/drm/i915/gem/i915_gem_wait.c		inteldrm
 file	dev/pci/drm/i915/gem/i915_gemfs.c		inteldrm
@@ -195,13 +215,13 @@ file	dev/pci/drm/i915/gem/i915_gemfs.c		inteldrm
 #file	dev/pci/drm/i915/gem/selftests/i915_gem_context.c	inteldrm
 #file	dev/pci/drm/i915/gem/selftests/i915_gem_dmabuf.c	inteldrm
 #file	dev/pci/drm/i915/gem/selftests/i915_gem_execbuffer.c	inteldrm
-#file	dev/pci/drm/i915/gem/selftests/i915_gem_mman.c		inteldrm
+#file	dev/pci/drm/i915/gem/selftests/i915_gem_migrate.c	inteldrm
+#file	dev/pci/drm/i915/gem/selftests/i915_gem_mman.c	inteldrm
 #file	dev/pci/drm/i915/gem/selftests/i915_gem_object.c	inteldrm
-#file	dev/pci/drm/i915/gem/selftests/i915_gem_object_blt.c	inteldrm
-#file	dev/pci/drm/i915/gem/selftests/i915_gem_phys.c		inteldrm
-#file	dev/pci/drm/i915/gem/selftests/igt_gem_utils.c		inteldrm
-#file	dev/pci/drm/i915/gem/selftests/mock_context.c		inteldrm
-#file	dev/pci/drm/i915/gem/selftests/mock_dmabuf.c		inteldrm
+#file	dev/pci/drm/i915/gem/selftests/i915_gem_phys.c	inteldrm
+#file	dev/pci/drm/i915/gem/selftests/igt_gem_utils.c	inteldrm
+#file	dev/pci/drm/i915/gem/selftests/mock_context.c	inteldrm
+#file	dev/pci/drm/i915/gem/selftests/mock_dmabuf.c	inteldrm
 file	dev/pci/drm/i915/gt/agp_intel_gtt.c		inteldrm
 file	dev/pci/drm/i915/gt/debugfs_engines.c		inteldrm
 file	dev/pci/drm/i915/gt/debugfs_gt.c		inteldrm
@@ -212,18 +232,19 @@ file	dev/pci/drm/i915/gt/gen6_ppgtt.c		inteldrm
 file	dev/pci/drm/i915/gt/gen6_renderstate.c		inteldrm
 file	dev/pci/drm/i915/gt/gen7_renderclear.c		inteldrm
 file	dev/pci/drm/i915/gt/gen7_renderstate.c		inteldrm
+file	dev/pci/drm/i915/gt/gen8_engine_cs.c		inteldrm
 file	dev/pci/drm/i915/gt/gen8_ppgtt.c		inteldrm
 file	dev/pci/drm/i915/gt/gen8_renderstate.c		inteldrm
 file	dev/pci/drm/i915/gt/gen9_renderstate.c		inteldrm
 #file	dev/pci/drm/i915/gt/hsw_clear_kernel.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_breadcrumbs.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_context.c		inteldrm
-file	dev/pci/drm/i915/gt/intel_context_param.c	inteldrm
 file	dev/pci/drm/i915/gt/intel_context_sseu.c	inteldrm
 file	dev/pci/drm/i915/gt/intel_engine_cs.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_engine_heartbeat.c	inteldrm
 file	dev/pci/drm/i915/gt/intel_engine_pm.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_engine_user.c		inteldrm
+file	dev/pci/drm/i915/gt/intel_execlists_submission.c	inteldrm
 file	dev/pci/drm/i915/gt/intel_ggtt.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_ggtt_fencing.c	inteldrm
 file	dev/pci/drm/i915/gt/intel_gt.c			inteldrm
@@ -236,9 +257,11 @@ file	dev/pci/drm/i915/gt/intel_gt_requests.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_gtt.c			inteldrm
 file	dev/pci/drm/i915/gt/intel_llc.c			inteldrm
 file	dev/pci/drm/i915/gt/intel_lrc.c			inteldrm
+file	dev/pci/drm/i915/gt/intel_migrate.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_mocs.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_ppgtt.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_rc6.c			inteldrm
+file	dev/pci/drm/i915/gt/intel_region_lmem.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_renderstate.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_reset.c		inteldrm
 file	dev/pci/drm/i915/gt/intel_ring.c		inteldrm
@@ -251,15 +274,18 @@ file	dev/pci/drm/i915/gt/intel_workarounds.c		inteldrm
 #file	dev/pci/drm/i915/gt/ivb_clear_kernel.c		inteldrm
 #file	dev/pci/drm/i915/gt/mock_engine.c		inteldrm
 #file	dev/pci/drm/i915/gt/selftest_engine_heartbeat.c	inteldrm
+#file	dev/pci/drm/i915/gt/selftest_execlists.c	inteldrm
 #file	dev/pci/drm/i915/gt/selftest_gt_pm.c		inteldrm
 #file	dev/pci/drm/i915/gt/selftest_hangcheck.c	inteldrm
 #file	dev/pci/drm/i915/gt/selftest_llc.c		inteldrm
 #file	dev/pci/drm/i915/gt/selftest_lrc.c		inteldrm
+#file	dev/pci/drm/i915/gt/selftest_migrate.c		inteldrm
 #file	dev/pci/drm/i915/gt/selftest_mocs.c		inteldrm
 #file	dev/pci/drm/i915/gt/selftest_rc6.c		inteldrm
 #file	dev/pci/drm/i915/gt/selftest_reset.c		inteldrm
 #file	dev/pci/drm/i915/gt/selftest_ring_submission.c	inteldrm
 #file	dev/pci/drm/i915/gt/selftest_rps.c		inteldrm
+#file	dev/pci/drm/i915/gt/selftest_slpc.c		inteldrm
 #file	dev/pci/drm/i915/gt/selftest_timeline.c		inteldrm
 #file	dev/pci/drm/i915/gt/selftest_workarounds.c	inteldrm
 #file	dev/pci/drm/i915/gt/selftests/mock_timeline.c	inteldrm
@@ -273,6 +299,8 @@ file	dev/pci/drm/i915/gt/uc/intel_guc_debugfs.c	inteldrm
 file	dev/pci/drm/i915/gt/uc/intel_guc_fw.c		inteldrm
 file	dev/pci/drm/i915/gt/uc/intel_guc_log.c		inteldrm
 file	dev/pci/drm/i915/gt/uc/intel_guc_log_debugfs.c	inteldrm
+file	dev/pci/drm/i915/gt/uc/intel_guc_rc.c		inteldrm
+file	dev/pci/drm/i915/gt/uc/intel_guc_slpc.c		inteldrm
 file	dev/pci/drm/i915/gt/uc/intel_guc_submission.c	inteldrm
 file	dev/pci/drm/i915/gt/uc/intel_huc.c		inteldrm
 file	dev/pci/drm/i915/gt/uc/intel_huc_debugfs.c	inteldrm
@@ -313,14 +341,15 @@ file	dev/pci/drm/i915/i915_drv.c			inteldrm
 file	dev/pci/drm/i915/i915_gem.c			inteldrm
 file	dev/pci/drm/i915/i915_gem_evict.c		inteldrm
 file	dev/pci/drm/i915/i915_gem_gtt.c			inteldrm
+file	dev/pci/drm/i915/i915_gem_ww.c			inteldrm
 file	dev/pci/drm/i915/i915_getparam.c		inteldrm
-file	dev/pci/drm/i915/i915_globals.c			inteldrm
 file	dev/pci/drm/i915/i915_gpu_error.c		inteldrm
 #file	dev/pci/drm/i915/i915_ioc32.c			inteldrm
 file	dev/pci/drm/i915/i915_irq.c			inteldrm
 file	dev/pci/drm/i915/i915_memcpy.c			inteldrm
 file	dev/pci/drm/i915/i915_mitigations.c		inteldrm
 file	dev/pci/drm/i915/i915_mm.c			inteldrm
+file	dev/pci/drm/i915/i915_module.c			inteldrm
 file	dev/pci/drm/i915/i915_params.c			inteldrm
 file	dev/pci/drm/i915/i915_pci.c			inteldrm
 file	dev/pci/drm/i915/i915_perf.c			inteldrm
@@ -335,6 +364,7 @@ file	dev/pci/drm/i915/i915_sw_fence_work.c		inteldrm
 file	dev/pci/drm/i915/i915_switcheroo.c		inteldrm
 file	dev/pci/drm/i915/i915_syncmap.c			inteldrm
 file	dev/pci/drm/i915/i915_sysfs.c			inteldrm
+file	dev/pci/drm/i915/i915_ttm_buddy_manager.c	inteldrm
 file	dev/pci/drm/i915/i915_user_extensions.c		inteldrm
 file	dev/pci/drm/i915/i915_utils.c			inteldrm
 file	dev/pci/drm/i915/i915_vgpu.c			inteldrm
@@ -345,9 +375,10 @@ file	dev/pci/drm/i915/intel_dram.c			inteldrm
 file	dev/pci/drm/i915/intel_memory_region.c		inteldrm
 file	dev/pci/drm/i915/intel_pch.c			inteldrm
 file	dev/pci/drm/i915/intel_pm.c			inteldrm
-file	dev/pci/drm/i915/intel_region_lmem.c		inteldrm
+file	dev/pci/drm/i915/intel_region_ttm.c		inteldrm
 file	dev/pci/drm/i915/intel_runtime_pm.c		inteldrm
 file	dev/pci/drm/i915/intel_sideband.c		inteldrm
+file	dev/pci/drm/i915/intel_step.c			inteldrm
 file	dev/pci/drm/i915/intel_stolen.c			inteldrm
 file	dev/pci/drm/i915/intel_uncore.c			inteldrm
 file	dev/pci/drm/i915/intel_wakeref.c		inteldrm
@@ -371,6 +402,7 @@ file	dev/pci/drm/i915/intel_wopcm.c			inteldrm
 #file	dev/pci/drm/i915/selftests/igt_reset.c		inteldrm
 #file	dev/pci/drm/i915/selftests/igt_spinner.c	inteldrm
 #file	dev/pci/drm/i915/selftests/intel_memory_region.c	inteldrm
+#file	dev/pci/drm/i915/selftests/intel_scheduler_helpers.c	inteldrm
 #file	dev/pci/drm/i915/selftests/intel_uncore.c	inteldrm
 #file	dev/pci/drm/i915/selftests/lib_sw_fence.c	inteldrm
 #file	dev/pci/drm/i915/selftests/librapl.c		inteldrm
@@ -500,13 +532,13 @@ file	dev/pci/drm/amd/amdgpu/gfx_v6_0.c		amdgpu_si
 file	dev/pci/drm/amd/amdgpu/gmc_v6_0.c		amdgpu_si
 file	dev/pci/drm/amd/amdgpu/amdgpu_si.c		amdgpu_si
 file	dev/pci/drm/amd/amdgpu/amdgpu_si_dma.c		amdgpu_si
-file	dev/pci/drm/amd/amdgpu/amdgpu_si_dpm.c		amdgpu_si
 file	dev/pci/drm/amd/amdgpu/si_ih.c			amdgpu_si
-file	dev/pci/drm/amd/amdgpu/amdgpu_si_smc.c		amdgpu_si
 file	dev/pci/drm/amd/amdgpu/amdgpu_uvd_v3_1.c	amdgpu_si
+file	dev/pci/drm/amd/pm/powerplay/amdgpu_si_dpm.c	amdgpu_si
+file	dev/pci/drm/amd/pm/powerplay/amdgpu_si_smc.c	amdgpu_si
 
 # CONFIG_DRM_AMD_DC_SI
-define amd_dc_si
+define	amd_dc_si
 file	dev/pci/drm/amd/display/dc/bios/dce60/command_table_helper_dce60.c	amd_dc_si
 file	dev/pci/drm/amd/display/dc/clk_mgr/dce60/dce60_clk_mgr.c	amd_dc_si
 file	dev/pci/drm/amd/display/dc/dce60/dce60_hw_sequencer.c		amd_dc_si
@@ -523,18 +555,21 @@ file	dev/pci/drm/amd/amdgpu/cik_ih.c			amdgpu_cik
 file	dev/pci/drm/amd/amdgpu/amdgpu_cik_sdma.c	amdgpu_cik
 file	dev/pci/drm/amd/amdgpu/dce_v8_0.c		amdgpu_cik
 file	dev/pci/drm/amd/amdgpu/gfx_v7_0.c		amdgpu_cik
-file	dev/pci/drm/amd/pm/powerplay/amdgpu_kv_dpm.c	amdgpu_cik
-file	dev/pci/drm/amd/pm/powerplay/amdgpu_kv_smc.c	amdgpu_cik
 file	dev/pci/drm/amd/amdgpu/amdgpu_uvd_v4_2.c	amdgpu_cik
 file	dev/pci/drm/amd/amdgpu/amdgpu_vce_v2_0.c	amdgpu_cik
+file	dev/pci/drm/amd/pm/powerplay/amdgpu_kv_dpm.c	amdgpu_cik
+file	dev/pci/drm/amd/pm/powerplay/amdgpu_kv_smc.c	amdgpu_cik
 
 device	amdgpu: drmbase, ttm, wsemuldisplaydev, rasops8, rasops32, firmload, i2cbus, i2c_bitbang, drm_sched
 attach	amdgpu at pci
 #file	dev/pci/drm/amd/acp/acp_hw.c			amdgpu
+file	dev/pci/drm/amd/amdgpu/aldebaran.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/aldebaran_reg_init.c	amdgpu
 #file	dev/pci/drm/amd/amdgpu/amdgpu_acp.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_acpi.c		amdgpu & acpi
 file	dev/pci/drm/amd/amdgpu/amdgpu_afmt.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_amdkfd.c		amdgpu
+#file	dev/pci/drm/amd/amdgpu/amdgpu_amdkfd_aldebaran.c	amdgpu
 #file	dev/pci/drm/amd/amdgpu/amdgpu_amdkfd_arcturus.c	amdgpu
 #file	dev/pci/drm/amd/amdgpu/amdgpu_amdkfd_fence.c	amdgpu
 #file	dev/pci/drm/amd/amdgpu/amdgpu_amdkfd_gfx_v10.c	amdgpu
@@ -543,7 +578,12 @@ file	dev/pci/drm/amd/amdgpu/amdgpu_amdkfd.c		amdgpu
 #file	dev/pci/drm/amd/amdgpu/amdgpu_amdkfd_gfx_v8.c	amdgpu
 #file	dev/pci/drm/amd/amdgpu/amdgpu_amdkfd_gfx_v9.c	amdgpu
 #file	dev/pci/drm/amd/amdgpu/amdgpu_amdkfd_gpuvm.c	amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_atom.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_atombios.c	amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_atombios_crtc.c	amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_atombios_dp.c	amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_atombios_encoders.c	amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_atombios_i2c.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_atomfirmware.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_benchmark.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_bios.c		amdgpu
@@ -559,15 +599,19 @@ file	dev/pci/drm/amd/amdgpu/amdgpu_discovery.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_display.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_dma_buf.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_drv.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_eeprom.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_encoders.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_fb.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_fdinfo.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_fence.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_fru_eeprom.c	amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_fw_attestation.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_gart.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_gem.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_gfx.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_gmc.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_gtt_mgr.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_hdp.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_i2c.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_ib.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_ids.c		amdgpu
@@ -577,21 +621,25 @@ file	dev/pci/drm/amd/amdgpu/amdgpu_irq.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_job.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_jpeg.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_kms.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_mca.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_mmhub.c		amdgpu
 #file	dev/pci/drm/amd/amdgpu/amdgpu_mn.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_nbio.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_object.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_pll.c		amdgpu
 #file	dev/pci/drm/amd/amdgpu/amdgpu_pmu.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_preempt_mgr.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_psp.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_rap.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_ras.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_ras_eeprom.c	amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_reset.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_ring.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_rlc.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_sa.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_sched.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_sdma.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_securedisplay.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_sync.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_test.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_trace_points.c	amdgpu
@@ -602,6 +650,7 @@ file	dev/pci/drm/amd/amdgpu/amdgpu_uvd.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_vce.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_vcn.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_vf_error.c	amdgpu
+file	dev/pci/drm/amd/amdgpu/amdgpu_vkms.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_virt.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_vm.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/amdgpu_vm_cpu.c		amdgpu
@@ -612,22 +661,20 @@ file	dev/pci/drm/amd/amdgpu/arct_reg_init.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/athub_v1_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/athub_v2_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/athub_v2_1.c		amdgpu
-file	dev/pci/drm/amd/amdgpu/amdgpu_atom.c		amdgpu
-file	dev/pci/drm/amd/amdgpu/amdgpu_atombios_crtc.c	amdgpu
-file	dev/pci/drm/amd/amdgpu/amdgpu_atombios_dp.c	amdgpu
-file	dev/pci/drm/amd/amdgpu/amdgpu_atombios_encoders.c	amdgpu
-file	dev/pci/drm/amd/amdgpu/amdgpu_atombios_i2c.c	amdgpu
+file	dev/pci/drm/amd/amdgpu/beige_goby_reg_init.c	amdgpu
+file	dev/pci/drm/amd/amdgpu/cyan_skillfish_reg_init.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/cz_ih.c			amdgpu
 file	dev/pci/drm/amd/amdgpu/dce_v10_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/dce_v11_0.c		amdgpu
-file	dev/pci/drm/amd/amdgpu/dce_virtual.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/df_v1_7.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/df_v3_6.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/dimgrey_cavefish_reg_init.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/emu_soc.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/gfx_v10_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/gfx_v8_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/gfx_v9_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/gfx_v9_4.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/gfx_v9_4_2.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/gfxhub_v1_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/gfxhub_v1_1.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/gfxhub_v2_0.c		amdgpu
@@ -636,14 +683,19 @@ file	dev/pci/drm/amd/amdgpu/gmc_v10_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/gmc_v7_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/gmc_v8_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/gmc_v9_0.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/hdp_v4_0.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/hdp_v5_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/iceland_ih.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/jpeg_v1_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/jpeg_v2_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/jpeg_v2_5.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/jpeg_v3_0.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/mca_v3_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/mes_v10_1.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/mmhub_v1_0.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/mmhub_v1_7.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/mmhub_v2_0.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/mmhub_v2_3.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/mmhub_v9_4.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/mxgpu_ai.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/mxgpu_nv.c		amdgpu
@@ -655,27 +707,37 @@ file	dev/pci/drm/amd/amdgpu/navi14_reg_init.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/nbio_v2_3.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/nbio_v6_1.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/nbio_v7_0.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/nbio_v7_2.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/nbio_v7_4.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/nv.c			amdgpu
 file	dev/pci/drm/amd/amdgpu/psp_v10_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/psp_v11_0.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/psp_v11_0_8.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/psp_v12_0.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/psp_v13_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/psp_v3_1.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/sdma_v2_4.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/sdma_v3_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/sdma_v4_0.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/sdma_v4_4.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/sdma_v5_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/sdma_v5_2.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/sienna_cichlid_reg_init.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/smu_v11_0_i2c.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/smuio_v11_0.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/smuio_v11_0_6.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/smuio_v13_0.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/smuio_v9_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/soc15.c			amdgpu
 file	dev/pci/drm/amd/amdgpu/tonga_ih.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/umc_v6_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/umc_v6_1.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/umc_v6_7.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/umc_v8_7.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/uvd_v5_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/uvd_v6_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/uvd_v7_0.c		amdgpu
+file	dev/pci/drm/amd/amdgpu/vangogh_reg_init.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/vce_v3_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/vce_v4_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/vcn_v1_0.c		amdgpu
@@ -684,8 +746,10 @@ file	dev/pci/drm/amd/amdgpu/vcn_v2_5.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/vcn_v3_0.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/vega10_ih.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/vega10_reg_init.c	amdgpu
+file	dev/pci/drm/amd/amdgpu/vega20_ih.c		amdgpu
 file	dev/pci/drm/amd/amdgpu/vega20_reg_init.c	amdgpu
 file	dev/pci/drm/amd/amdgpu/vi.c			amdgpu
+file	dev/pci/drm/amd/amdgpu/yellow_carp_reg_init.c	amdgpu
 #file	dev/pci/drm/amd/amdkfd/cik_event_interrupt.c	amdgpu
 #file	dev/pci/drm/amd/amdkfd/kfd_chardev.c		amdgpu
 #file	dev/pci/drm/amd/amdkfd/kfd_crat.c		amdgpu
@@ -705,6 +769,7 @@ file	dev/pci/drm/amd/amdgpu/vi.c			amdgpu
 #file	dev/pci/drm/amd/amdkfd/kfd_interrupt.c		amdgpu
 #file	dev/pci/drm/amd/amdkfd/kfd_iommu.c		amdgpu
 #file	dev/pci/drm/amd/amdkfd/kfd_kernel_queue.c	amdgpu
+#file	dev/pci/drm/amd/amdkfd/kfd_migrate.c		amdgpu
 #file	dev/pci/drm/amd/amdkfd/kfd_module.c		amdgpu
 #file	dev/pci/drm/amd/amdkfd/kfd_mqd_manager.c	amdgpu
 #file	dev/pci/drm/amd/amdkfd/kfd_mqd_manager_cik.c	amdgpu
@@ -719,6 +784,7 @@ file	dev/pci/drm/amd/amdgpu/vi.c			amdgpu
 #file	dev/pci/drm/amd/amdkfd/kfd_process_queue_manager.c	amdgpu
 #file	dev/pci/drm/amd/amdkfd/kfd_queue.c		amdgpu
 #file	dev/pci/drm/amd/amdkfd/kfd_smi_events.c		amdgpu
+#file	dev/pci/drm/amd/amdkfd/kfd_svm.c		amdgpu
 #file	dev/pci/drm/amd/amdkfd/kfd_topology.c		amdgpu
 file	dev/pci/drm/amd/display/amdgpu_dm/amdgpu_dm.c	amdgpu
 file	dev/pci/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c	amdgpu
@@ -729,20 +795,22 @@ file	dev/pci/drm/amd/display/amdgpu_dm/amdgpu_dm_helpers.c	amdgpu
 file	dev/pci/drm/amd/display/amdgpu_dm/amdgpu_dm_irq.c	amdgpu
 file	dev/pci/drm/amd/display/amdgpu_dm/amdgpu_dm_mst_types.c	amdgpu
 file	dev/pci/drm/amd/display/amdgpu_dm/amdgpu_dm_pp_smu.c	amdgpu
+file	dev/pci/drm/amd/display/amdgpu_dm/amdgpu_dm_psr.c	amdgpu
 file	dev/pci/drm/amd/display/amdgpu_dm/amdgpu_dm_services.c	amdgpu
+file	dev/pci/drm/amd/display/amdgpu_dm/dc_fpu.c		amdgpu
+file	dev/pci/drm/amd/display/dc/basics/amdgpu_vector.c	amdgpu
 file	dev/pci/drm/amd/display/dc/basics/conversion.c	amdgpu
 file	dev/pci/drm/amd/display/dc/basics/dc_common.c	amdgpu
 file	dev/pci/drm/amd/display/dc/basics/fixpt31_32.c	amdgpu
-file	dev/pci/drm/amd/display/dc/basics/amdgpu_vector.c	amdgpu
 file	dev/pci/drm/amd/display/dc/bios/bios_parser.c	amdgpu
 file	dev/pci/drm/amd/display/dc/bios/bios_parser2.c	amdgpu
 file	dev/pci/drm/amd/display/dc/bios/bios_parser_common.c	amdgpu
 file	dev/pci/drm/amd/display/dc/bios/bios_parser_helper.c	amdgpu
-file	dev/pci/drm/amd/display/dc/bios/bios_parser_interface.c	amdgpu
+file	dev/pci/drm/amd/display/dc/bios/bios_parser_interface.c		amdgpu
 file	dev/pci/drm/amd/display/dc/bios/command_table.c		amdgpu
 file	dev/pci/drm/amd/display/dc/bios/command_table2.c	amdgpu
 file	dev/pci/drm/amd/display/dc/bios/command_table_helper.c	amdgpu
-file	dev/pci/drm/amd/display/dc/bios/command_table_helper2.c	amdgpu
+file	dev/pci/drm/amd/display/dc/bios/command_table_helper2.c		amdgpu
 file	dev/pci/drm/amd/display/dc/bios/dce110/command_table_helper_dce110.c	amdgpu
 file	dev/pci/drm/amd/display/dc/bios/dce112/command_table_helper2_dce112.c	amdgpu
 file	dev/pci/drm/amd/display/dc/bios/dce112/command_table_helper_dce112.c	amdgpu
@@ -754,7 +822,7 @@ file	dev/pci/drm/amd/display/dc/calcs/dcn_calc_auto.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/calcs/dcn_calc_math.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/calcs/dcn_calcs.c		amdgpu & bios
 file	dev/pci/drm/amd/display/dc/clk_mgr/clk_mgr.c		amdgpu
-file	dev/pci/drm/amd/display/dc/clk_mgr/dce100/dce_clk_mgr.c	amdgpu
+file	dev/pci/drm/amd/display/dc/clk_mgr/dce100/dce_clk_mgr.c		amdgpu
 file	dev/pci/drm/amd/display/dc/clk_mgr/dce110/dce110_clk_mgr.c	amdgpu
 file	dev/pci/drm/amd/display/dc/clk_mgr/dce112/dce112_clk_mgr.c	amdgpu
 file	dev/pci/drm/amd/display/dc/clk_mgr/dce120/dce120_clk_mgr.c	amdgpu
@@ -767,19 +835,27 @@ file	dev/pci/drm/amd/display/dc/clk_mgr/dcn21/rn_clk_mgr.c		amdgpu & bios
 file	dev/pci/drm/amd/display/dc/clk_mgr/dcn21/rn_clk_mgr_vbios_smu.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/clk_mgr/dcn30/dcn30_clk_mgr.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/clk_mgr/dcn30/dcn30_clk_mgr_smu_msg.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/clk_mgr/dcn301/dcn301_smu.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/clk_mgr/dcn301/vg_clk_mgr.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/clk_mgr/dcn31/dcn31_clk_mgr.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/clk_mgr/dcn31/dcn31_smu.c		amdgpu & bios
 file	dev/pci/drm/amd/display/dc/core/amdgpu_dc.c		amdgpu
 file	dev/pci/drm/amd/display/dc/core/dc_debug.c		amdgpu
 file	dev/pci/drm/amd/display/dc/core/dc_hw_sequencer.c	amdgpu
 file	dev/pci/drm/amd/display/dc/core/dc_link.c		amdgpu
 file	dev/pci/drm/amd/display/dc/core/dc_link_ddc.c		amdgpu
 file	dev/pci/drm/amd/display/dc/core/dc_link_dp.c		amdgpu
+file	dev/pci/drm/amd/display/dc/core/dc_link_dpcd.c		amdgpu
+file	dev/pci/drm/amd/display/dc/core/dc_link_enc_cfg.c	amdgpu
 file	dev/pci/drm/amd/display/dc/core/dc_link_hwss.c		amdgpu
 file	dev/pci/drm/amd/display/dc/core/dc_resource.c		amdgpu
 file	dev/pci/drm/amd/display/dc/core/dc_sink.c		amdgpu
+file	dev/pci/drm/amd/display/dc/core/dc_stat.c		amdgpu
 file	dev/pci/drm/amd/display/dc/core/dc_stream.c		amdgpu
 file	dev/pci/drm/amd/display/dc/core/dc_surface.c		amdgpu
 file	dev/pci/drm/amd/display/dc/core/dc_vm_helper.c		amdgpu
 file	dev/pci/drm/amd/display/dc/dc_dmub_srv.c		amdgpu
+file	dev/pci/drm/amd/display/dc/dc_edid_parser.c		amdgpu
 file	dev/pci/drm/amd/display/dc/dc_helper.c			amdgpu
 file	dev/pci/drm/amd/display/dc/dce/dce_abm.c		amdgpu
 file	dev/pci/drm/amd/display/dc/dce/dce_audio.c		amdgpu
@@ -802,6 +878,7 @@ file	dev/pci/drm/amd/display/dc/dce/dce_stream_encoder.c	amdgpu
 file	dev/pci/drm/amd/display/dc/dce/dce_transform.c		amdgpu
 file	dev/pci/drm/amd/display/dc/dce/dmub_abm.c		amdgpu
 file	dev/pci/drm/amd/display/dc/dce/dmub_hw_lock_mgr.c	amdgpu
+file	dev/pci/drm/amd/display/dc/dce/dmub_outbox.c		amdgpu
 file	dev/pci/drm/amd/display/dc/dce/dmub_psr.c		amdgpu
 file	dev/pci/drm/amd/display/dc/dce100/dce100_hw_sequencer.c	amdgpu
 file	dev/pci/drm/amd/display/dc/dce100/dce100_resource.c	amdgpu
@@ -859,6 +936,7 @@ file	dev/pci/drm/amd/display/dc/dcn20/dcn20_optc.c		amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dcn20/dcn20_resource.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dcn20/dcn20_stream_encoder.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dcn20/dcn20_vmid.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn21/dcn21_dccg.c		amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dcn21/dcn21_hubbub.c		amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dcn21/dcn21_hubp.c		amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dcn21/dcn21_hwseq.c		amdgpu & bios
@@ -883,21 +961,46 @@ file	dev/pci/drm/amd/display/dc/dcn30/dcn30_mpc.c		amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dcn30/dcn30_optc.c		amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dcn30/dcn30_resource.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dcn30/dcn30_vpg.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn301/dcn301_dccg.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn301/dcn301_dio_link_encoder.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn301/dcn301_hubbub.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn301/dcn301_hwseq.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn301/dcn301_init.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn301/dcn301_panel_cntl.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn301/dcn301_resource.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn302/dcn302_hwseq.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn302/dcn302_init.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn302/dcn302_resource.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn303/dcn303_hwseq.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn303/dcn303_init.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn303/dcn303_resource.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn31/dcn31_dccg.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn31/dcn31_dio_link_encoder.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn31/dcn31_hubbub.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn31/dcn31_hubp.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn31/dcn31_hwseq.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn31/dcn31_init.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn31/dcn31_optc.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn31/dcn31_panel_cntl.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dcn31/dcn31_resource.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dml/dcn20/display_mode_vba_20.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dml/dcn20/display_mode_vba_20v2.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dml/dcn20/display_rq_dlg_calc_20.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dml/dcn20/display_rq_dlg_calc_20v2.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dml/dcn21/display_mode_vba_21.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dml/dcn21/display_rq_dlg_calc_21.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dml/dcn2x/dcn2x.c			amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dml/dcn30/display_mode_vba_30.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dml/dcn30/display_rq_dlg_calc_30.c	amdgpu & bios
-file	dev/pci/drm/amd/display/dc/dml/display_mode_lib.c	amdgpu & bios
-file	dev/pci/drm/amd/display/dc/dml/display_mode_vba.c	amdgpu & bios
-file	dev/pci/drm/amd/display/dc/dml/display_rq_dlg_helpers.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dml/dcn31/display_mode_vba_31.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dml/dcn31/display_rq_dlg_calc_31.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dml/display_mode_lib.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dml/display_mode_vba.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dml/display_rq_dlg_helpers.c		amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dml/dml1_display_rq_dlg_calc.c	amdgpu & bios
-file	dev/pci/drm/amd/display/dc/dsc/dc_dsc.c			amdgpu & bios
-file	dev/pci/drm/amd/display/dc/dsc/rc_calc.c		amdgpu & bios
-file	dev/pci/drm/amd/display/dc/dsc/rc_calc_dpi.c		amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dsc/dc_dsc.c				amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dsc/rc_calc.c			amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dsc/rc_calc_dpi.c			amdgpu & bios
 file	dev/pci/drm/amd/display/dc/gpio/dce110/hw_factory_dce110.c	amdgpu
 file	dev/pci/drm/amd/display/dc/gpio/dce110/hw_translate_dce110.c	amdgpu
 file	dev/pci/drm/amd/display/dc/gpio/dce120/hw_factory_dce120.c	amdgpu
@@ -922,7 +1025,7 @@ file	dev/pci/drm/amd/display/dc/gpio/hw_generic.c		amdgpu
 file	dev/pci/drm/amd/display/dc/gpio/hw_gpio.c		amdgpu
 file	dev/pci/drm/amd/display/dc/gpio/hw_hpd.c		amdgpu
 file	dev/pci/drm/amd/display/dc/gpio/hw_translate.c		amdgpu
-file	dev/pci/drm/amd/display/dc/hdcp/hdcp_msg.c			amdgpu
+file	dev/pci/drm/amd/display/dc/hdcp/hdcp_msg.c		amdgpu
 file	dev/pci/drm/amd/display/dc/irq/dce110/irq_service_dce110.c	amdgpu
 file	dev/pci/drm/amd/display/dc/irq/dce120/irq_service_dce120.c	amdgpu
 file	dev/pci/drm/amd/display/dc/irq/dce80/irq_service_dce80.c	amdgpu
@@ -930,14 +1033,22 @@ file	dev/pci/drm/amd/display/dc/irq/dcn10/irq_service_dcn10.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/irq/dcn20/irq_service_dcn20.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/irq/dcn21/irq_service_dcn21.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/irq/dcn30/irq_service_dcn30.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/irq/dcn302/irq_service_dcn302.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/irq/dcn303/irq_service_dcn303.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/irq/dcn31/irq_service_dcn31.c	amdgpu & bios
 file	dev/pci/drm/amd/display/dc/irq/irq_service.c			amdgpu
 file	dev/pci/drm/amd/display/dc/virtual/virtual_link_encoder.c	amdgpu
 file	dev/pci/drm/amd/display/dc/virtual/virtual_stream_encoder.c	amdgpu
 file	dev/pci/drm/amd/display/dmub/src/dmub_dcn20.c		amdgpu
 file	dev/pci/drm/amd/display/dmub/src/dmub_dcn21.c		amdgpu
 file	dev/pci/drm/amd/display/dmub/src/dmub_dcn30.c		amdgpu
+file	dev/pci/drm/amd/display/dmub/src/dmub_dcn301.c		amdgpu
+file	dev/pci/drm/amd/display/dmub/src/dmub_dcn302.c		amdgpu
+file	dev/pci/drm/amd/display/dmub/src/dmub_dcn303.c		amdgpu
+file	dev/pci/drm/amd/display/dmub/src/dmub_dcn31.c		amdgpu
 file	dev/pci/drm/amd/display/dmub/src/dmub_reg.c		amdgpu
 file	dev/pci/drm/amd/display/dmub/src/dmub_srv.c		amdgpu
+file	dev/pci/drm/amd/display/dmub/src/dmub_srv_stat.c	amdgpu
 file	dev/pci/drm/amd/display/modules/color/color_gamma.c	amdgpu
 file	dev/pci/drm/amd/display/modules/color/color_table.c	amdgpu
 file	dev/pci/drm/amd/display/modules/freesync/freesync.c	amdgpu
@@ -1008,9 +1119,14 @@ file	dev/pci/drm/amd/pm/powerplay/smumgr/vega20_smumgr.c	amdgpu
 file	dev/pci/drm/amd/pm/powerplay/smumgr/vegam_smumgr.c	amdgpu
 file	dev/pci/drm/amd/pm/swsmu/amdgpu_smu.c			amdgpu
 file	dev/pci/drm/amd/pm/swsmu/smu11/arcturus_ppt.c		amdgpu
+file	dev/pci/drm/amd/pm/swsmu/smu11/cyan_skillfish_ppt.c	amdgpu
 file	dev/pci/drm/amd/pm/swsmu/smu11/navi10_ppt.c		amdgpu
 file	dev/pci/drm/amd/pm/swsmu/smu11/sienna_cichlid_ppt.c	amdgpu
 file	dev/pci/drm/amd/pm/swsmu/smu11/smu_v11_0.c		amdgpu
+file	dev/pci/drm/amd/pm/swsmu/smu11/vangogh_ppt.c		amdgpu
 file	dev/pci/drm/amd/pm/swsmu/smu12/renoir_ppt.c		amdgpu
 file	dev/pci/drm/amd/pm/swsmu/smu12/smu_v12_0.c		amdgpu
+file	dev/pci/drm/amd/pm/swsmu/smu13/aldebaran_ppt.c		amdgpu
+file	dev/pci/drm/amd/pm/swsmu/smu13/smu_v13_0.c		amdgpu
+file	dev/pci/drm/amd/pm/swsmu/smu13/yellow_carp_ppt.c	amdgpu
 file	dev/pci/drm/amd/pm/swsmu/smu_cmn.c			amdgpu

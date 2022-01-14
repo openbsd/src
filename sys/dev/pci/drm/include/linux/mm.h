@@ -10,6 +10,7 @@
 #include <sys/atomic.h>
 #include <machine/cpu.h>
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_glue.h>
 #include <linux/fs.h>
 #include <linux/shrinker.h>
 #include <linux/overflow.h>
@@ -46,6 +47,18 @@ kvmalloc_array(size_t n, size_t size, int flags)
 	return malloc(n * size, M_DRM, flags);
 }
 
+static inline struct vm_page *
+vmalloc_to_page(const void *va)
+{
+	return uvm_atopg((vaddr_t)va);
+}
+
+static inline struct vm_page *
+virt_to_page(const void *va)
+{
+	return uvm_atopg((vaddr_t)va);
+}
+
 static inline void *
 kvcalloc(size_t n, size_t size, int flags)
 {
@@ -69,8 +82,6 @@ si_mem_available(void)
 {
 	return uvmexp.free;
 }
-
-#define MAX_ORDER	11
 
 static inline unsigned int
 get_order(size_t size)

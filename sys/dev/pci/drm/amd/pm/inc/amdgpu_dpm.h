@@ -280,11 +280,11 @@ enum amdgpu_pcie_gen {
 #define amdgpu_dpm_get_fan_control_mode(adev) \
 		((adev)->powerplay.pp_funcs->get_fan_control_mode((adev)->powerplay.pp_handle))
 
-#define amdgpu_dpm_set_fan_speed_percent(adev, s) \
-		((adev)->powerplay.pp_funcs->set_fan_speed_percent((adev)->powerplay.pp_handle, (s)))
+#define amdgpu_dpm_set_fan_speed_pwm(adev, s) \
+		((adev)->powerplay.pp_funcs->set_fan_speed_pwm((adev)->powerplay.pp_handle, (s)))
 
-#define amdgpu_dpm_get_fan_speed_percent(adev, s) \
-		((adev)->powerplay.pp_funcs->get_fan_speed_percent((adev)->powerplay.pp_handle, (s)))
+#define amdgpu_dpm_get_fan_speed_pwm(adev, s) \
+		((adev)->powerplay.pp_funcs->get_fan_speed_pwm((adev)->powerplay.pp_handle, (s)))
 
 #define amdgpu_dpm_get_fan_speed_rpm(adev, s) \
 		((adev)->powerplay.pp_funcs->get_fan_speed_rpm)((adev)->powerplay.pp_handle, (s))
@@ -417,6 +417,12 @@ struct amdgpu_dpm {
 	enum amd_dpm_forced_level forced_level;
 };
 
+enum ip_power_state {
+	POWER_STATE_UNKNOWN,
+	POWER_STATE_ON,
+	POWER_STATE_OFF,
+};
+
 struct amdgpu_pm {
 	struct rwlock		mutex;
 	u32                     current_sclk;
@@ -450,7 +456,10 @@ struct amdgpu_pm {
 
 	/* Used for I2C access to various EEPROMs on relevant ASICs */
 	struct i2c_adapter smu_i2c;
+	struct rwlock		smu_i2c_mutex;
 	struct list_head	pm_attr_list;
+
+	atomic_t		pwr_state[AMD_IP_BLOCK_TYPE_NUM];
 };
 
 #define R600_SSTU_DFLT                               0

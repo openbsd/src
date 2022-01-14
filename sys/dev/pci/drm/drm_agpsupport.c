@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_agpsupport.c,v 1.28 2020/06/08 04:47:58 jsg Exp $ */
+/* $OpenBSD: drm_agpsupport.c,v 1.29 2022/01/14 06:52:58 jsg Exp $ */
 /*-
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
@@ -39,7 +39,6 @@
 
 #include <asm/agp.h>
 
-#include <drm/drm_agpsupport.h>
 #include <drm/drm_device.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_file.h>
@@ -50,7 +49,7 @@
 #if IS_ENABLED(CONFIG_AGP)
 
 int
-drm_agp_info(struct drm_device * dev, struct drm_agp_info *info)
+drm_legacy_agp_info(struct drm_device * dev, struct drm_agp_info *info)
 {
 	struct agp_info	*kern;
 
@@ -73,7 +72,7 @@ drm_agp_info(struct drm_device * dev, struct drm_agp_info *info)
 }
 
 int
-drm_agp_acquire(struct drm_device *dev)
+drm_legacy_agp_acquire(struct drm_device *dev)
 {
 	int	retcode;
 
@@ -90,7 +89,7 @@ drm_agp_acquire(struct drm_device *dev)
 }
 
 int
-drm_agp_release(struct drm_device * dev)
+drm_legacy_agp_release(struct drm_device * dev)
 {
 	if (dev->agp == NULL || !dev->agp->acquired)
 		return (EINVAL);
@@ -101,7 +100,7 @@ drm_agp_release(struct drm_device * dev)
 }
 
 int
-drm_agp_enable(struct drm_device *dev, drm_agp_mode_t mode)
+drm_legacy_agp_enable(struct drm_device *dev, drm_agp_mode_t mode)
 {
 	int	retcode = 0;
 
@@ -115,17 +114,17 @@ drm_agp_enable(struct drm_device *dev, drm_agp_mode_t mode)
 }
 
 void
-drm_agp_takedown(struct drm_device *dev)
+drm_legacy_agp_takedown(struct drm_device *dev)
 {
 	if (dev->agp == NULL)
 		return;
 
-	drm_agp_release(dev);
+	drm_legacy_agp_release(dev);
 	dev->agp->enabled  = 0;
 }
 
 struct drm_agp_head *
-drm_agp_init(void)
+drm_legacy_agp_init(struct drm_device *dev)
 {
 	struct agp_softc	*agpdev;
 	struct drm_agp_head	*head = NULL;

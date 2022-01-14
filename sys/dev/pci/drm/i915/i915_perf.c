@@ -198,8 +198,11 @@
 #include "gem/i915_gem_context.h"
 #include "gt/intel_engine_pm.h"
 #include "gt/intel_engine_user.h"
+#include "gt/intel_execlists_submission.h"
+#include "gt/intel_gpu_commands.h"
 #include "gt/intel_gt.h"
-#include "gt/intel_lrc_reg.h"
+#include "gt/intel_gt_clock_utils.h"
+#include "gt/intel_lrc.h"
 #include "gt/intel_ring.h"
 
 #include "i915_drv.h"
@@ -299,7 +302,7 @@ static u32 i915_oa_max_sample_rate = 100000;
  * code assumes all reports have a power-of-two size and ~(size - 1) can
  * be used as a mask to align the OA tail pointer.
  */
-static const struct i915_oa_format hsw_oa_formats[I915_OA_FORMAT_MAX] = {
+static const struct i915_oa_format oa_formats[I915_OA_FORMAT_MAX] = {
 	[I915_OA_FORMAT_A13]	    = { 0, 64 },
 	[I915_OA_FORMAT_A29]	    = { 1, 128 },
 	[I915_OA_FORMAT_A13_B8_C8]  = { 2, 128 },
@@ -308,16 +311,8 @@ static const struct i915_oa_format hsw_oa_formats[I915_OA_FORMAT_MAX] = {
 	[I915_OA_FORMAT_A45_B8_C8]  = { 5, 256 },
 	[I915_OA_FORMAT_B4_C8_A16]  = { 6, 128 },
 	[I915_OA_FORMAT_C4_B8]	    = { 7, 64 },
-};
-
-static const struct i915_oa_format gen8_plus_oa_formats[I915_OA_FORMAT_MAX] = {
 	[I915_OA_FORMAT_A12]		    = { 0, 64 },
 	[I915_OA_FORMAT_A12_B8_C8]	    = { 2, 128 },
-	[I915_OA_FORMAT_A32u40_A4u32_B8_C8] = { 5, 256 },
-	[I915_OA_FORMAT_C4_B8]		    = { 7, 64 },
-};
-
-static const struct i915_oa_format gen12_oa_formats[I915_OA_FORMAT_MAX] = {
 	[I915_OA_FORMAT_A32u40_A4u32_B8_C8] = { 5, 256 },
 };
 
@@ -630,7 +625,8 @@ static int append_oa_sample(struct i915_perf_stream *stream,
 }
 
 /**
- * Copies all buffered OA reports into userspace read() buffer.
+ * gen8_append_oa_reports - Copies all buffered OA reports into
+ *			    userspace read() buffer.
  * @stream: An i915-perf stream opened for OA metrics
  * @buf: destination buffer given by userspace
  * @count: the number of bytes userspace wants to read
@@ -731,14 +727,9 @@ static int gen8_append_oa_reports(struct i915_perf_stream *stream,
 		 * it to userspace...
 		 */
 		reason = ((report32[0] >> OAREPORT_REASON_SHIFT) &
-			  (IS_GEN(stream->perf->i915, 12) ?
+			  (GRAPHICS_VER(stream->perf->i915) == 12 ?
 			   OAREPORT_REASON_MASK_EXTENDED :
 			   OAREPORT_REASON_MASK));
-		if (reason == 0) {
-			if (__ratelimit(&stream->perf->spurious_report_rs))
-				DRM_NOTE("Skipping spurious, invalid OA report\n");
-			continue;
-		}
 
 		ctx_id = report32[2] & stream->specific_ctx_id_mask;
 
@@ -751,7 +742,7 @@ static int gen8_append_oa_reports(struct i915_perf_stream *stream,
 		 * understand that the ID has been squashed by the kernel.
 		 */
 		if (!(report32[0] & stream->perf->gen8_valid_ctx_bit) &&
-		    INTEL_GEN(stream->perf->i915) <= 11)
+		    GRAPHICS_VER(stream->perf->i915) <= 11)
 			ctx_id = report32[2] = INVALID_CTX_ID;
 
 		/*
@@ -818,7 +809,7 @@ static int gen8_append_oa_reports(struct i915_perf_stream *stream,
 	if (start_offset != *offset) {
 		i915_reg_t oaheadptr;
 
-		oaheadptr = IS_GEN(stream->perf->i915, 12) ?
+		oaheadptr = GRAPHICS_VER(stream->perf->i915) == 12 ?
 			    GEN12_OAG_OAHEADPTR : GEN8_OAHEADPTR;
 
 		spin_lock_irqsave(&stream->oa_buffer.ptr_lock, flags);
@@ -871,7 +862,7 @@ static int gen8_oa_read(struct i915_perf_stream *stream,
 	if (drm_WARN_ON(&uncore->i915->drm, !stream->oa_buffer.vaddr))
 		return -EIO;
 
-	oastatus_reg = IS_GEN(stream->perf->i915, 12) ?
+	oastatus_reg = GRAPHICS_VER(stream->perf->i915) == 12 ?
 		       GEN12_OAG_OASTATUS : GEN8_OASTATUS;
 
 	oastatus = intel_uncore_read(uncore, oastatus_reg);
@@ -918,7 +909,7 @@ static int gen8_oa_read(struct i915_perf_stream *stream,
 		intel_uncore_rmw(uncore, oastatus_reg,
 				 GEN8_OASTATUS_COUNTER_OVERFLOW |
 				 GEN8_OASTATUS_REPORT_LOST,
-				 IS_GEN_RANGE(uncore->i915, 8, 10) ?
+				 IS_GRAPHICS_VER(uncore->i915, 8, 11) ?
 				 (GEN8_OASTATUS_HEAD_POINTER_WRAP |
 				  GEN8_OASTATUS_TAIL_POINTER_WRAP) : 0);
 	}
@@ -927,7 +918,8 @@ static int gen8_oa_read(struct i915_perf_stream *stream,
 }
 
 /**
- * Copies all buffered OA reports into userspace read() buffer.
+ * gen7_append_oa_reports - Copies all buffered OA reports into
+ *			    userspace read() buffer.
  * @stream: An i915-perf stream opened for OA metrics
  * @buf: destination buffer given by userspace
  * @count: the number of bytes userspace wants to read
@@ -1261,7 +1253,7 @@ static int oa_get_render_ctx_id(struct i915_perf_stream *stream)
 	if (IS_ERR(ce))
 		return PTR_ERR(ce);
 
-	switch (INTEL_GEN(ce->engine->i915)) {
+	switch (GRAPHICS_VER(ce->engine->i915)) {
 	case 7: {
 		/*
 		 * On Haswell we don't do any post processing of the reports
@@ -1274,12 +1266,7 @@ static int oa_get_render_ctx_id(struct i915_perf_stream *stream)
 
 	case 8:
 	case 9:
-	case 10:
-		if (intel_engine_in_execlists_submission_mode(ce->engine)) {
-			stream->specific_ctx_id_mask =
-				(1U << GEN8_CTX_ID_WIDTH) - 1;
-			stream->specific_ctx_id = stream->specific_ctx_id_mask;
-		} else {
+		if (intel_engine_uses_guc(ce->engine)) {
 			/*
 			 * When using GuC, the context descriptor we write in
 			 * i915 is read by GuC and rewritten before it's
@@ -1298,24 +1285,37 @@ static int oa_get_render_ctx_id(struct i915_perf_stream *stream)
 			 */
 			stream->specific_ctx_id_mask =
 				(1U << (GEN8_CTX_ID_WIDTH - 1)) - 1;
+		} else {
+			stream->specific_ctx_id_mask =
+				(1U << GEN8_CTX_ID_WIDTH) - 1;
+			stream->specific_ctx_id = stream->specific_ctx_id_mask;
 		}
 		break;
 
 	case 11:
-	case 12: {
-		stream->specific_ctx_id_mask =
-			((1U << GEN11_SW_CTX_ID_WIDTH) - 1) << (GEN11_SW_CTX_ID_SHIFT - 32);
-		/*
-		 * Pick an unused context id
-		 * 0 - BITS_PER_LONG are used by other contexts
-		 * GEN12_MAX_CONTEXT_HW_ID (0x7ff) is used by idle context
-		 */
-		stream->specific_ctx_id = (GEN12_MAX_CONTEXT_HW_ID - 1) << (GEN11_SW_CTX_ID_SHIFT - 32);
+	case 12:
+		if (GRAPHICS_VER_FULL(ce->engine->i915) >= IP_VER(12, 50)) {
+			stream->specific_ctx_id_mask =
+				((1U << XEHP_SW_CTX_ID_WIDTH) - 1) <<
+				(XEHP_SW_CTX_ID_SHIFT - 32);
+			stream->specific_ctx_id =
+				(XEHP_MAX_CONTEXT_HW_ID - 1) <<
+				(XEHP_SW_CTX_ID_SHIFT - 32);
+		} else {
+			stream->specific_ctx_id_mask =
+				((1U << GEN11_SW_CTX_ID_WIDTH) - 1) << (GEN11_SW_CTX_ID_SHIFT - 32);
+			/*
+			 * Pick an unused context id
+			 * 0 - BITS_PER_LONG are used by other contexts
+			 * GEN12_MAX_CONTEXT_HW_ID (0x7ff) is used by idle context
+			 */
+			stream->specific_ctx_id =
+				(GEN12_MAX_CONTEXT_HW_ID - 1) << (GEN11_SW_CTX_ID_SHIFT - 32);
+		}
 		break;
-	}
 
 	default:
-		MISSING_CASE(INTEL_GEN(ce->engine->i915));
+		MISSING_CASE(GRAPHICS_VER(ce->engine->i915));
 	}
 
 	ce->tag = stream->specific_ctx_id;
@@ -1594,7 +1594,7 @@ static int alloc_oa_buffer(struct i915_perf_stream *stream)
 	stream->oa_buffer.vma = vma;
 
 	stream->oa_buffer.vaddr =
-		i915_gem_object_pin_map(bo, I915_MAP_WB);
+		i915_gem_object_pin_map_unlocked(bo, I915_MAP_WB);
 	if (IS_ERR(stream->oa_buffer.vaddr)) {
 		ret = PTR_ERR(stream->oa_buffer.vaddr);
 		goto err_unpin;
@@ -1623,7 +1623,7 @@ static u32 *save_restore_register(struct i915_perf_stream *stream, u32 *cs,
 
 	cmd = save ? MI_STORE_REGISTER_MEM : MI_LOAD_REGISTER_MEM;
 	cmd |= MI_SRM_LRM_GLOBAL_GTT;
-	if (INTEL_GEN(stream->perf->i915) >= 8)
+	if (GRAPHICS_VER(stream->perf->i915) >= 8)
 		cmd++;
 
 	for (d = 0; d < dword_count; d++) {
@@ -1643,10 +1643,12 @@ static int alloc_noa_wait(struct i915_perf_stream *stream)
 	struct drm_i915_gem_object *bo;
 	struct i915_vma *vma;
 	const u64 delay_ticks = 0xffffffffffffffff -
-		i915_cs_timestamp_ns_to_ticks(i915, atomic64_read(&stream->perf->noa_programming_delay));
+		intel_gt_ns_to_clock_interval(stream->perf->i915->ggtt.vm.gt,
+					      atomic64_read(&stream->perf->noa_programming_delay));
 	const u32 base = stream->engine->mmio_base;
 #define CS_GPR(x) GEN8_RING_CS_GPR(base, x)
 	u32 *batch, *ts0, *cs, *jump;
+	struct i915_gem_ww_ctx ww;
 	int ret, i;
 	enum {
 		START_TS,
@@ -1664,15 +1666,21 @@ static int alloc_noa_wait(struct i915_perf_stream *stream)
 		return PTR_ERR(bo);
 	}
 
+	i915_gem_ww_ctx_init(&ww, true);
+retry:
+	ret = i915_gem_object_lock(bo, &ww);
+	if (ret)
+		goto out_ww;
+
 	/*
 	 * We pin in GGTT because we jump into this buffer now because
 	 * multiple OA config BOs will have a jump to this address and it
 	 * needs to be fixed during the lifetime of the i915/perf stream.
 	 */
-	vma = i915_gem_object_ggtt_pin(bo, NULL, 0, 0, PIN_HIGH);
+	vma = i915_gem_object_ggtt_pin_ww(bo, &ww, NULL, 0, 0, PIN_HIGH);
 	if (IS_ERR(vma)) {
 		ret = PTR_ERR(vma);
-		goto err_unref;
+		goto out_ww;
 	}
 
 	batch = cs = i915_gem_object_pin_map(bo, I915_MAP_WB);
@@ -1744,7 +1752,7 @@ static int alloc_noa_wait(struct i915_perf_stream *stream)
 	*cs++ = i915_mmio_reg_offset(MI_PREDICATE_RESULT_1);
 
 	/* Restart from the beginning if we had timestamps roll over. */
-	*cs++ = (INTEL_GEN(i915) < 8 ?
+	*cs++ = (GRAPHICS_VER(i915) < 8 ?
 		 MI_BATCH_BUFFER_START :
 		 MI_BATCH_BUFFER_START_GEN8) |
 		MI_BATCH_PREDICATE;
@@ -1781,7 +1789,7 @@ static int alloc_noa_wait(struct i915_perf_stream *stream)
 	*cs++ = i915_mmio_reg_offset(MI_PREDICATE_RESULT_1);
 
 	/* Predicate the jump.  */
-	*cs++ = (INTEL_GEN(i915) < 8 ?
+	*cs++ = (GRAPHICS_VER(i915) < 8 ?
 		 MI_BATCH_BUFFER_START :
 		 MI_BATCH_BUFFER_START_GEN8) |
 		MI_BATCH_PREDICATE;
@@ -1806,12 +1814,19 @@ static int alloc_noa_wait(struct i915_perf_stream *stream)
 	__i915_gem_object_release_map(bo);
 
 	stream->noa_wait = vma;
-	return 0;
+	goto out_ww;
 
 err_unpin:
 	i915_vma_unpin_and_release(&vma, 0);
-err_unref:
-	i915_gem_object_put(bo);
+out_ww:
+	if (ret == -EDEADLK) {
+		ret = i915_gem_ww_ctx_backoff(&ww);
+		if (!ret)
+			goto retry;
+	}
+	i915_gem_ww_ctx_fini(&ww);
+	if (ret)
+		i915_gem_object_put(bo);
 	return ret;
 }
 
@@ -1854,6 +1869,7 @@ alloc_oa_config_buffer(struct i915_perf_stream *stream,
 {
 	struct drm_i915_gem_object *obj;
 	struct i915_oa_config_bo *oa_bo;
+	struct i915_gem_ww_ctx ww;
 	size_t config_length = 0;
 	u32 *cs;
 	int err;
@@ -1874,10 +1890,16 @@ alloc_oa_config_buffer(struct i915_perf_stream *stream,
 		goto err_free;
 	}
 
+	i915_gem_ww_ctx_init(&ww, true);
+retry:
+	err = i915_gem_object_lock(obj, &ww);
+	if (err)
+		goto out_ww;
+
 	cs = i915_gem_object_pin_map(obj, I915_MAP_WB);
 	if (IS_ERR(cs)) {
 		err = PTR_ERR(cs);
-		goto err_oa_bo;
+		goto out_ww;
 	}
 
 	cs = write_cs_mi_lri(cs,
@@ -1891,7 +1913,7 @@ alloc_oa_config_buffer(struct i915_perf_stream *stream,
 			     oa_config->flex_regs_len);
 
 	/* Jump into the active wait. */
-	*cs++ = (INTEL_GEN(stream->perf->i915) < 8 ?
+	*cs++ = (GRAPHICS_VER(stream->perf->i915) < 8 ?
 		 MI_BATCH_BUFFER_START :
 		 MI_BATCH_BUFFER_START_GEN8);
 	*cs++ = i915_ggtt_offset(stream->noa_wait);
@@ -1905,19 +1927,28 @@ alloc_oa_config_buffer(struct i915_perf_stream *stream,
 				       NULL);
 	if (IS_ERR(oa_bo->vma)) {
 		err = PTR_ERR(oa_bo->vma);
-		goto err_oa_bo;
+		goto out_ww;
 	}
 
 	oa_bo->oa_config = i915_oa_config_get(oa_config);
 	llist_add(&oa_bo->node, &stream->oa_config_bos);
 
-	return oa_bo;
+out_ww:
+	if (err == -EDEADLK) {
+		err = i915_gem_ww_ctx_backoff(&ww);
+		if (!err)
+			goto retry;
+	}
+	i915_gem_ww_ctx_fini(&ww);
 
-err_oa_bo:
-	i915_gem_object_put(obj);
+	if (err)
+		i915_gem_object_put(obj);
 err_free:
-	kfree(oa_bo);
-	return ERR_PTR(err);
+	if (err) {
+		kfree(oa_bo);
+		return ERR_PTR(err);
+	}
+	return oa_bo;
 }
 
 static struct i915_vma *
@@ -2482,7 +2513,7 @@ gen8_enable_metric_set(struct i915_perf_stream *stream,
 	 * be read back from automatically triggered reports, as part of the
 	 * RPT_ID field.
 	 */
-	if (IS_GEN_RANGE(stream->perf->i915, 9, 11)) {
+	if (IS_GRAPHICS_VER(stream->perf->i915, 9, 11)) {
 		intel_uncore_write(uncore, GEN8_OA_DEBUG,
 				   _MASKED_BIT_ENABLE(GEN9_OA_DEBUG_DISABLE_CLK_RATIO_REPORTS |
 						      GEN9_OA_DEBUG_INCLUDE_CLK_RATIO));
@@ -2570,7 +2601,7 @@ static void gen8_disable_metric_set(struct i915_perf_stream *stream)
 	intel_uncore_rmw(uncore, GDT_CHICKEN_BITS, GT_NOA_ENABLE, 0);
 }
 
-static void gen10_disable_metric_set(struct i915_perf_stream *stream)
+static void gen11_disable_metric_set(struct i915_perf_stream *stream)
 {
 	struct intel_uncore *uncore = stream->uncore;
 
@@ -2795,7 +2826,7 @@ get_default_sseu_config(struct intel_sseu *out_sseu,
 
 	*out_sseu = intel_sseu_from_device_info(devinfo_sseu);
 
-	if (IS_GEN(engine->i915, 11)) {
+	if (GRAPHICS_VER(engine->i915) == 11) {
 		/*
 		 * We only need subslice count so it doesn't matter which ones
 		 * we select - just turn off low bits in the amount of half of
@@ -2865,7 +2896,7 @@ static int i915_oa_stream_init(struct i915_perf_stream *stream,
 	}
 
 	if (!(props->sample_flags & SAMPLE_OA_REPORT) &&
-	    (INTEL_GEN(perf->i915) < 12 || !stream->ctx)) {
+	    (GRAPHICS_VER(perf->i915) < 12 || !stream->ctx)) {
 		DRM_DEBUG("Only OA report sampling supported\n");
 		return -EINVAL;
 	}
@@ -3008,7 +3039,7 @@ void i915_oa_init_reg_state(const struct intel_context *ce,
 
 	/* perf.exclusive_stream serialised by lrc_configure_all_contexts() */
 	stream = READ_ONCE(engine->i915->perf.exclusive_stream);
-	if (stream && INTEL_GEN(stream->perf->i915) < 12)
+	if (stream && GRAPHICS_VER(stream->perf->i915) < 12)
 		gen8_update_reg_state_unlocked(ce, stream);
 }
 
@@ -3266,7 +3297,7 @@ static long i915_perf_config_locked(struct i915_perf_stream *stream,
 }
 
 /**
- * i915_perf_ioctl - support ioctl() usage with i915 perf stream FDs
+ * i915_perf_ioctl_locked - support ioctl() usage with i915 perf stream FDs
  * @stream: An i915 perf stream
  * @cmd: the ioctl request
  * @arg: the ioctl data
@@ -3438,10 +3469,10 @@ i915_perf_open_ioctl_locked(struct i915_perf *perf,
 		struct drm_i915_file_private *file_priv = file->driver_priv;
 
 		specific_ctx = i915_gem_context_lookup(file_priv, ctx_handle);
-		if (!specific_ctx) {
+		if (IS_ERR(specific_ctx)) {
 			DRM_DEBUG("Failed to look up context with ID %u for opening perf stream\n",
 				  ctx_handle);
-			ret = -ENOENT;
+			ret = PTR_ERR(specific_ctx);
 			goto err;
 		}
 	}
@@ -3467,7 +3498,7 @@ i915_perf_open_ioctl_locked(struct i915_perf *perf,
 	 */
 	if (IS_HASWELL(perf->i915) && specific_ctx)
 		privileged_op = false;
-	else if (IS_GEN(perf->i915, 12) && specific_ctx &&
+	else if (GRAPHICS_VER(perf->i915) == 12 && specific_ctx &&
 		 (props->sample_flags & SAMPLE_OA_REPORT) == 0)
 		privileged_op = false;
 
@@ -3559,7 +3590,20 @@ err:
 
 static u64 oa_exponent_to_ns(struct i915_perf *perf, int exponent)
 {
-	return i915_cs_timestamp_ticks_to_ns(perf->i915, 2ULL << exponent);
+	return intel_gt_clock_interval_to_ns(perf->i915->ggtt.vm.gt,
+					     2ULL << exponent);
+}
+
+static __always_inline bool
+oa_format_valid(struct i915_perf *perf, enum drm_i915_oa_format format)
+{
+	return test_bit(format, perf->format_mask);
+}
+
+static __always_inline void
+oa_format_add(struct i915_perf *perf, enum drm_i915_oa_format format)
+{
+	__set_bit(format, perf->format_mask);
 }
 
 /**
@@ -3653,7 +3697,7 @@ static int read_properties_unlocked(struct i915_perf *perf,
 					  value);
 				return -EINVAL;
 			}
-			if (!perf->oa_formats[value].size) {
+			if (!oa_format_valid(perf, value)) {
 				DRM_DEBUG("Unsupported OA report format %llu\n",
 					  value);
 				return -EINVAL;
@@ -3901,7 +3945,7 @@ static bool gen8_is_valid_mux_addr(struct i915_perf *perf, u32 addr)
 	       REG_IN_RANGE(addr, RPM_CONFIG0, NOA_CONFIG(8));
 }
 
-static bool gen10_is_valid_mux_addr(struct i915_perf *perf, u32 addr)
+static bool gen11_is_valid_mux_addr(struct i915_perf *perf, u32 addr)
 {
 	return gen8_is_valid_mux_addr(perf, addr) ||
 	       REG_EQUAL(addr, GEN10_NOA_WRITE_HIGH) ||
@@ -4144,7 +4188,7 @@ int i915_perf_add_config_ioctl(struct drm_device *dev, void *data,
 	}
 	oa_config->b_counter_regs = regs;
 
-	if (INTEL_GEN(perf->i915) < 8) {
+	if (GRAPHICS_VER(perf->i915) < 8) {
 		if (args->n_flex_regs != 0) {
 			err = -EINVAL;
 			goto reg_err;
@@ -4313,6 +4357,50 @@ static struct ctl_table dev_root[] = {
 };
 #endif
 
+static void oa_init_supported_formats(struct i915_perf *perf)
+{
+	struct drm_i915_private *i915 = perf->i915;
+	enum intel_platform platform = INTEL_INFO(i915)->platform;
+
+	switch (platform) {
+	case INTEL_HASWELL:
+		oa_format_add(perf, I915_OA_FORMAT_A13);
+		oa_format_add(perf, I915_OA_FORMAT_A13);
+		oa_format_add(perf, I915_OA_FORMAT_A29);
+		oa_format_add(perf, I915_OA_FORMAT_A13_B8_C8);
+		oa_format_add(perf, I915_OA_FORMAT_B4_C8);
+		oa_format_add(perf, I915_OA_FORMAT_A45_B8_C8);
+		oa_format_add(perf, I915_OA_FORMAT_B4_C8_A16);
+		oa_format_add(perf, I915_OA_FORMAT_C4_B8);
+		break;
+
+	case INTEL_BROADWELL:
+	case INTEL_CHERRYVIEW:
+	case INTEL_SKYLAKE:
+	case INTEL_BROXTON:
+	case INTEL_KABYLAKE:
+	case INTEL_GEMINILAKE:
+	case INTEL_COFFEELAKE:
+	case INTEL_COMETLAKE:
+	case INTEL_ICELAKE:
+	case INTEL_ELKHARTLAKE:
+	case INTEL_JASPERLAKE:
+	case INTEL_TIGERLAKE:
+	case INTEL_ROCKETLAKE:
+	case INTEL_DG1:
+	case INTEL_ALDERLAKE_S:
+	case INTEL_ALDERLAKE_P:
+		oa_format_add(perf, I915_OA_FORMAT_A12);
+		oa_format_add(perf, I915_OA_FORMAT_A12_B8_C8);
+		oa_format_add(perf, I915_OA_FORMAT_A32u40_A4u32_B8_C8);
+		oa_format_add(perf, I915_OA_FORMAT_C4_B8);
+		break;
+
+	default:
+		MISSING_CASE(platform);
+	}
+}
+
 /**
  * i915_perf_init - initialize i915-perf state on module bind
  * @i915: i915 device instance
@@ -4328,6 +4416,7 @@ void i915_perf_init(struct drm_i915_private *i915)
 
 	/* XXX const struct i915_perf_ops! */
 
+	perf->oa_formats = oa_formats;
 	if (IS_HASWELL(i915)) {
 		perf->ops.is_valid_b_counter_reg = gen7_is_valid_b_counter_addr;
 		perf->ops.is_valid_mux_reg = hsw_is_valid_mux_addr;
@@ -4338,8 +4427,6 @@ void i915_perf_init(struct drm_i915_private *i915)
 		perf->ops.oa_disable = gen7_oa_disable;
 		perf->ops.read = gen7_oa_read;
 		perf->ops.oa_hw_tail_read = gen7_oa_hw_tail_read;
-
-		perf->oa_formats = hsw_oa_formats;
 	} else if (HAS_LOGICAL_RING_CONTEXTS(i915)) {
 		/* Note: that although we could theoretically also support the
 		 * legacy ringbuffer mode on BDW (and earlier iterations of
@@ -4349,9 +4436,7 @@ void i915_perf_init(struct drm_i915_private *i915)
 		 */
 		perf->ops.read = gen8_oa_read;
 
-		if (IS_GEN_RANGE(i915, 8, 9)) {
-			perf->oa_formats = gen8_plus_oa_formats;
-
+		if (IS_GRAPHICS_VER(i915, 8, 9)) {
 			perf->ops.is_valid_b_counter_reg =
 				gen7_is_valid_b_counter_addr;
 			perf->ops.is_valid_mux_reg =
@@ -4370,7 +4455,7 @@ void i915_perf_init(struct drm_i915_private *i915)
 			perf->ops.disable_metric_set = gen8_disable_metric_set;
 			perf->ops.oa_hw_tail_read = gen8_oa_hw_tail_read;
 
-			if (IS_GEN(i915, 8)) {
+			if (GRAPHICS_VER(i915) == 8) {
 				perf->ctx_oactxctrl_offset = 0x120;
 				perf->ctx_flexeu0_offset = 0x2ce;
 
@@ -4381,33 +4466,25 @@ void i915_perf_init(struct drm_i915_private *i915)
 
 				perf->gen8_valid_ctx_bit = BIT(16);
 			}
-		} else if (IS_GEN_RANGE(i915, 10, 11)) {
-			perf->oa_formats = gen8_plus_oa_formats;
-
+		} else if (GRAPHICS_VER(i915) == 11) {
 			perf->ops.is_valid_b_counter_reg =
 				gen7_is_valid_b_counter_addr;
 			perf->ops.is_valid_mux_reg =
-				gen10_is_valid_mux_addr;
+				gen11_is_valid_mux_addr;
 			perf->ops.is_valid_flex_reg =
 				gen8_is_valid_flex_addr;
 
 			perf->ops.oa_enable = gen8_oa_enable;
 			perf->ops.oa_disable = gen8_oa_disable;
 			perf->ops.enable_metric_set = gen8_enable_metric_set;
-			perf->ops.disable_metric_set = gen10_disable_metric_set;
+			perf->ops.disable_metric_set = gen11_disable_metric_set;
 			perf->ops.oa_hw_tail_read = gen8_oa_hw_tail_read;
 
-			if (IS_GEN(i915, 10)) {
-				perf->ctx_oactxctrl_offset = 0x128;
-				perf->ctx_flexeu0_offset = 0x3de;
-			} else {
-				perf->ctx_oactxctrl_offset = 0x124;
-				perf->ctx_flexeu0_offset = 0x78e;
-			}
-			perf->gen8_valid_ctx_bit = BIT(16);
-		} else if (IS_GEN(i915, 12)) {
-			perf->oa_formats = gen12_oa_formats;
+			perf->ctx_oactxctrl_offset = 0x124;
+			perf->ctx_flexeu0_offset = 0x78e;
 
+			perf->gen8_valid_ctx_bit = BIT(16);
+		} else if (GRAPHICS_VER(i915) == 12) {
 			perf->ops.is_valid_b_counter_reg =
 				gen12_is_valid_b_counter_addr;
 			perf->ops.is_valid_mux_reg =
@@ -4429,11 +4506,11 @@ void i915_perf_init(struct drm_i915_private *i915)
 	if (perf->ops.enable_metric_set) {
 		rw_init(&perf->lock, "perflk");
 
-		oa_sample_rate_hard_limit =
-			RUNTIME_INFO(i915)->cs_timestamp_frequency_hz / 2;
+		/* Choose a representative limit */
+		oa_sample_rate_hard_limit = i915->gt.clock_frequency / 2;
 
 		rw_init(&perf->metrics_lock, "metricslk");
-		idr_init(&perf->metrics_idr);
+		idr_init_base(&perf->metrics_idr, 1);
 
 		/* We set up some ratelimit state to potentially throttle any
 		 * _NOTES about spurious, invalid OA reports which we don't
@@ -4464,6 +4541,8 @@ void i915_perf_init(struct drm_i915_private *i915)
 			     500 * 1000 /* 500us */);
 
 		perf->i915 = i915;
+
+		oa_init_supported_formats(perf);
 	}
 }
 
@@ -4473,11 +4552,12 @@ static int destroy_config(int id, void *p, void *data)
 	return 0;
 }
 
-void i915_perf_sysctl_register(void)
+int i915_perf_sysctl_register(void)
 {
 #ifdef notyet
 	sysctl_header = register_sysctl_table(dev_root);
 #endif
+	return 0;
 }
 
 void i915_perf_sysctl_unregister(void)

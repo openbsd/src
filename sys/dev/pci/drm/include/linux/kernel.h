@@ -25,6 +25,10 @@
 	const __typeof( ((type *)0)->member ) *__mptr = (ptr);	\
 	(type *)( (char *)__mptr - offsetof(type,member) );})
 
+#define offsetofend(s, e) (offsetof(s, e) + sizeof((((s *)0)->e)))
+
+#define typeof_member(s, e)	typeof(((s *)0)->e)
+
 #define S8_MAX		INT8_MAX
 #define S16_MAX		INT16_MAX
 #define S32_MAX		INT32_MAX
@@ -67,7 +71,7 @@
 #define roundup2(x, y) (((x) + ((y) - 1)) & (~((__typeof(x))(y) - 1)))
 #define round_up(x, y) ((((x) + ((y) - 1)) / (y)) * (y))
 #define round_down(x, y) (((x) / (y)) * (y)) /* y is power of two */
-#define rounddown(x, y) (((x) / (y)) * (y)) /* arbitary y */
+#define rounddown(x, y) (((x) / (y)) * (y)) /* arbitrary y */
 #define DIV_ROUND_UP(x, y)	(((x) + ((y) - 1)) / (y))
 #define DIV_ROUND_UP_ULL(x, y)	DIV_ROUND_UP(x, y)
 #define DIV_ROUND_DOWN(x, y)	((x) / (y))

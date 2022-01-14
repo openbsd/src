@@ -29,7 +29,7 @@ int i915_gem_gtt_prepare_pages(struct drm_i915_gem_object *obj,
 {
 #ifdef __linux__
 	do {
-		if (dma_map_sg_attrs(&obj->base.dev->pdev->dev,
+		if (dma_map_sg_attrs(obj->base.dev->dev,
 				     pages->sgl, pages->nents,
 				     PCI_DMA_BIDIRECTIONAL,
 				     DMA_ATTR_SKIP_CPU_SYNC |
@@ -45,7 +45,7 @@ int i915_gem_gtt_prepare_pages(struct drm_i915_gem_object *obj,
 		 * the DMA remapper, i915_gem_shrink will return 0.
 		 */
 		GEM_BUG_ON(obj->mm.pages == pages);
-	} while (i915_gem_shrink(to_i915(obj->base.dev),
+	} while (i915_gem_shrink(NULL, to_i915(obj->base.dev),
 				 obj->base.size >> PAGE_SHIFT, NULL,
 				 I915_SHRINK_BOUND |
 				 I915_SHRINK_UNBOUND));
@@ -59,25 +59,17 @@ int i915_gem_gtt_prepare_pages(struct drm_i915_gem_object *obj,
 void i915_gem_gtt_finish_pages(struct drm_i915_gem_object *obj,
 			       struct sg_table *pages)
 {
-	struct drm_i915_private *dev_priv = to_i915(obj->base.dev);
-#ifdef notyet
-	struct device *kdev = &dev_priv->drm.pdev->dev;
-#endif
-	struct i915_ggtt *ggtt = &dev_priv->ggtt;
+	struct drm_i915_private *i915 = to_i915(obj->base.dev);
+	struct i915_ggtt *ggtt = &i915->ggtt;
 
-	if (unlikely(ggtt->do_idle_maps)) {
-		/* XXX This does not prevent more requests being submitted! */
-		if (intel_gt_retire_requests_timeout(ggtt->vm.gt,
-						     -MAX_SCHEDULE_TIMEOUT)) {
-			drm_err(&dev_priv->drm,
-				"Failed to wait for idle; VT'd may hang.\n");
-			/* Wait a bit, in hopes it avoids the hang */
-			udelay(10);
-		}
-	}
+	/* XXX This does not prevent more requests being submitted! */
+	if (unlikely(ggtt->do_idle_maps))
+		/* Wait a bit, in the hope it avoids the hang */
+		usleep_range(100, 250);
 
 #ifdef notyet
-	dma_unmap_sg(kdev, pages->sgl, pages->nents, PCI_DMA_BIDIRECTIONAL);
+	dma_unmap_sg(i915->drm.dev, pages->sgl, pages->nents,
+		     PCI_DMA_BIDIRECTIONAL);
 #endif
 }
 

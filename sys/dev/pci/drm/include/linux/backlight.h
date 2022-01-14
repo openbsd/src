@@ -37,8 +37,12 @@ struct backlight_device {
 #define BACKLIGHT_UPDATE_HOTKEY	0
 
 struct backlight_device *backlight_device_register(const char *, void *,
-     void *, const struct backlight_ops *, struct backlight_properties *);
+    void *, const struct backlight_ops *, struct backlight_properties *);
 void backlight_device_unregister(struct backlight_device *);
+
+struct backlight_device *devm_backlight_device_register(void *, const char *,
+    void *, void *, const struct backlight_ops *,
+    const struct backlight_properties *);
 
 static inline void
 backlight_update_status(struct backlight_device *bd)

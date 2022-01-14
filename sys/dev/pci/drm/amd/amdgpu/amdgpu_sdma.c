@@ -105,7 +105,6 @@ int amdgpu_sdma_ras_late_init(struct amdgpu_device *adev,
 		adev->sdma.ras_if->block = AMDGPU_RAS_BLOCK__SDMA;
 		adev->sdma.ras_if->type = AMDGPU_RAS_ERROR__MULTI_UNCORRECTABLE;
 		adev->sdma.ras_if->sub_block_index = 0;
-		strlcpy(adev->sdma.ras_if->name, "sdma", sizeof(adev->sdma.ras_if->name));
 	}
 	fs_info.head = ih_info->head = *adev->sdma.ras_if;
 
@@ -126,7 +125,7 @@ int amdgpu_sdma_ras_late_init(struct amdgpu_device *adev,
 		goto free;
 	}
 
-        return 0;
+	return 0;
 
 late_fini:
 	amdgpu_ras_late_fini(adev, adev->sdma.ras_if, ih_info);

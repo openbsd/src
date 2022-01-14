@@ -1,31 +1,14 @@
+// SPDX-License-Identifier: MIT
 /*
- * Copyright (c) 2015 Intel Corporation
- *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions: *
- * The above copyright notice and this permission notice (including the next
- * paragraph) shall be included in all copies or substantial portions of the
- * Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * Copyright © 2015 Intel Corporation
  */
 
 #include "i915_drv.h"
 
 #include "intel_engine.h"
 #include "intel_gt.h"
+#include "intel_lrc_reg.h"
 #include "intel_mocs.h"
-#include "intel_lrc.h"
 #include "intel_ring.h"
 
 /* structures required */
@@ -108,7 +91,7 @@ struct drm_i915_mocs_table {
  * they will be initialized to PTE. Gen >= 12 onwards don't have a setting for
  * PTE and will be initialized to an invalid value.
  *
- * The last two entries are reserved by the hardware. For ICL+ they
+ * The last few entries are reserved by the hardware. For ICL+ they
  * should be initialized according to bspec and never used, for older
  * platforms they should never be written to.
  *
@@ -123,7 +106,7 @@ struct drm_i915_mocs_table {
 		   LE_1_UC | LE_TC_2_LLC_ELLC, \
 		   L3_1_UC), \
 	MOCS_ENTRY(I915_MOCS_PTE, \
-		   LE_0_PAGETABLE | LE_TC_2_LLC_ELLC | LE_LRUM(3), \
+		   LE_0_PAGETABLE | LE_TC_0_PAGETABLE | LE_LRUM(3), \
 		   L3_3_WB)
 
 static const struct drm_i915_mocs_entry skl_mocs_table[] = {
@@ -292,10 +275,43 @@ static const struct drm_i915_mocs_entry icl_mocs_table[] = {
 		   L3_1_UC),
 	/* Base - L3 + LeCC:PAT (Deprecated) */
 	MOCS_ENTRY(I915_MOCS_PTE,
-		   LE_0_PAGETABLE | LE_TC_1_LLC,
+		   LE_0_PAGETABLE | LE_TC_0_PAGETABLE,
 		   L3_3_WB),
 
 	GEN11_MOCS_ENTRIES
+};
+
+static const struct drm_i915_mocs_entry dg1_mocs_table[] = {
+	/* Error */
+	MOCS_ENTRY(0, 0, L3_0_DIRECT),
+
+	/* UC */
+	MOCS_ENTRY(1, 0, L3_1_UC),
+
+	/* Reserved */
+	MOCS_ENTRY(2, 0, L3_0_DIRECT),
+	MOCS_ENTRY(3, 0, L3_0_DIRECT),
+	MOCS_ENTRY(4, 0, L3_0_DIRECT),
+
+	/* WB - L3 */
+	MOCS_ENTRY(5, 0, L3_3_WB),
+	/* WB - L3 50% */
+	MOCS_ENTRY(6, 0, L3_ESC(1) | L3_SCC(1) | L3_3_WB),
+	/* WB - L3 25% */
+	MOCS_ENTRY(7, 0, L3_ESC(1) | L3_SCC(3) | L3_3_WB),
+	/* WB - L3 12.5% */
+	MOCS_ENTRY(8, 0, L3_ESC(1) | L3_SCC(7) | L3_3_WB),
+
+	/* HDC:L1 + L3 */
+	MOCS_ENTRY(48, 0, L3_3_WB),
+	/* HDC:L1 */
+	MOCS_ENTRY(49, 0, L3_1_UC),
+
+	/* HW Reserved */
+	MOCS_ENTRY(60, 0, L3_1_UC),
+	MOCS_ENTRY(61, 0, L3_1_UC),
+	MOCS_ENTRY(62, 0, L3_1_UC),
+	MOCS_ENTRY(63, 0, L3_1_UC),
 };
 
 enum {
@@ -324,15 +340,19 @@ static unsigned int get_mocs_settings(const struct drm_i915_private *i915,
 {
 	unsigned int flags;
 
-	if (INTEL_GEN(i915) >= 12) {
+	if (IS_DG1(i915)) {
+		table->size = ARRAY_SIZE(dg1_mocs_table);
+		table->table = dg1_mocs_table;
+		table->n_entries = GEN9_NUM_MOCS_ENTRIES;
+	} else if (GRAPHICS_VER(i915) >= 12) {
 		table->size  = ARRAY_SIZE(tgl_mocs_table);
 		table->table = tgl_mocs_table;
 		table->n_entries = GEN9_NUM_MOCS_ENTRIES;
-	} else if (IS_GEN(i915, 11)) {
+	} else if (GRAPHICS_VER(i915) == 11) {
 		table->size  = ARRAY_SIZE(icl_mocs_table);
 		table->table = icl_mocs_table;
 		table->n_entries = GEN9_NUM_MOCS_ENTRIES;
-	} else if (IS_GEN9_BC(i915) || IS_CANNONLAKE(i915)) {
+	} else if (IS_GEN9_BC(i915)) {
 		table->size  = ARRAY_SIZE(skl_mocs_table);
 		table->n_entries = GEN9_NUM_MOCS_ENTRIES;
 		table->table = skl_mocs_table;
@@ -341,7 +361,7 @@ static unsigned int get_mocs_settings(const struct drm_i915_private *i915,
 		table->n_entries = GEN9_NUM_MOCS_ENTRIES;
 		table->table = broxton_mocs_table;
 	} else {
-		drm_WARN_ONCE(&i915->drm, INTEL_GEN(i915) >= 9,
+		drm_WARN_ONCE(&i915->drm, GRAPHICS_VER(i915) >= 9,
 			      "Platform that should have a MOCS table does not.\n");
 		return 0;
 	}
@@ -350,7 +370,7 @@ static unsigned int get_mocs_settings(const struct drm_i915_private *i915,
 		return 0;
 
 	/* WaDisableSkipCaching:skl,bxt,kbl,glk */
-	if (IS_GEN(i915, 9)) {
+	if (GRAPHICS_VER(i915) == 9) {
 		int i;
 
 		for (i = 0; i < table->size; i++)
@@ -435,7 +455,7 @@ static u16 get_entry_l3cc(const struct drm_i915_mocs_table *table,
 	return table->table[I915_MOCS_PTE].l3cc_value;
 }
 
-static inline u32 l3cc_combine(u16 low, u16 high)
+static u32 l3cc_combine(u16 low, u16 high)
 {
 	return low | (u32)high << 16;
 }

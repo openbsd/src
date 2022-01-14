@@ -12,6 +12,7 @@
 #endif
 
 #include <linux/irqdomain.h>
+#include <linux/module.h>
 
 typedef size_t acpi_size;
 typedef int acpi_status;

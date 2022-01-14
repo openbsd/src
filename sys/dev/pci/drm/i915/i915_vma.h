@@ -52,6 +52,9 @@ static inline bool i915_vma_is_active(const struct i915_vma *vma)
 	return !i915_active_is_idle(&vma->active);
 }
 
+/* do not reserve memory to prevent deadlocks */
+#define __EXEC_OBJECT_NO_RESERVE BIT(31)
+
 int __must_check __i915_vma_move_to_active(struct i915_vma *vma,
 					   struct i915_request *rq);
 int __must_check i915_vma_move_to_active(struct i915_vma *vma,
@@ -67,6 +70,11 @@ int __must_check i915_vma_move_to_active(struct i915_vma *vma,
 static inline bool i915_vma_is_ggtt(const struct i915_vma *vma)
 {
 	return test_bit(I915_VMA_GGTT_BIT, __i915_vma_flags(vma));
+}
+
+static inline bool i915_vma_is_dpt(const struct i915_vma *vma)
+{
+	return i915_is_dpt(vma->vm);
 }
 
 static inline bool i915_vma_has_ggtt_write(const struct i915_vma *vma)
@@ -147,11 +155,6 @@ static inline void i915_vma_put(struct i915_vma *vma)
 	i915_gem_object_put(vma->obj);
 }
 
-static __always_inline ptrdiff_t ptrdiff(const void *a, const void *b)
-{
-	return a - b;
-}
-
 static inline long
 i915_vma_compare(struct i915_vma *vma,
 		 struct i915_address_space *vm,
@@ -159,7 +162,7 @@ i915_vma_compare(struct i915_vma *vma,
 {
 	ptrdiff_t cmp;
 
-	GEM_BUG_ON(view && !i915_is_ggtt(vm));
+	GEM_BUG_ON(view && !i915_is_ggtt_or_dpt(vm));
 
 	cmp = ptrdiff(vma->vm, vm);
 	if (cmp)
@@ -247,7 +250,22 @@ i915_vma_pin_ww(struct i915_vma *vma, struct i915_gem_ww_ctx *ww,
 static inline int __must_check
 i915_vma_pin(struct i915_vma *vma, u64 size, u64 alignment, u64 flags)
 {
-	return i915_vma_pin_ww(vma, NULL, size, alignment, flags);
+	struct i915_gem_ww_ctx ww;
+	int err;
+
+	i915_gem_ww_ctx_init(&ww, true);
+retry:
+	err = i915_gem_object_lock(vma->obj, &ww);
+	if (!err)
+		err = i915_vma_pin_ww(vma, &ww, size, alignment, flags);
+	if (err == -EDEADLK) {
+		err = i915_gem_ww_ctx_backoff(&ww);
+		if (!err)
+			goto retry;
+	}
+	i915_gem_ww_ctx_fini(&ww);
+
+	return err;
 }
 
 int i915_ggtt_pin(struct i915_vma *vma, struct i915_gem_ww_ctx *ww,
@@ -367,6 +385,21 @@ i915_vma_unpin_fence(struct i915_vma *vma)
 
 void i915_vma_parked(struct intel_gt *gt);
 
+static inline bool i915_vma_is_scanout(const struct i915_vma *vma)
+{
+	return test_bit(I915_VMA_SCANOUT_BIT, __i915_vma_flags(vma));
+}
+
+static inline void i915_vma_mark_scanout(struct i915_vma *vma)
+{
+	set_bit(I915_VMA_SCANOUT_BIT, __i915_vma_flags(vma));
+}
+
+static inline void i915_vma_clear_scanout(struct i915_vma *vma)
+{
+	clear_bit(I915_VMA_SCANOUT_BIT, __i915_vma_flags(vma));
+}
+
 #define for_each_until(cond) if (cond) break; else
 
 /**
@@ -396,5 +429,8 @@ static inline int i915_vma_sync(struct i915_vma *vma)
 	/* Wait for the asynchronous bindings and pending GPU reads */
 	return i915_active_wait(&vma->active);
 }
+
+void i915_vma_module_exit(void);
+int i915_vma_module_init(void);
 
 #endif

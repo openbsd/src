@@ -15,7 +15,8 @@ struct hrtimer {
 
 #define HRTIMER_MODE_REL	1
 
-#define hrtimer_cancel(x)	timeout_del(x)
-#define hrtimer_active(x)	timeout_pending(x)
+#define hrtimer_cancel(x)		timeout_del_barrier(x)
+#define hrtimer_try_to_cancel(x)	timeout_del(x)	/* XXX ret -1 if running */
+#define hrtimer_active(x)		timeout_pending(x)
 
 #endif

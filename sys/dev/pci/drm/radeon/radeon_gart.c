@@ -29,6 +29,8 @@
 #include <linux/pci.h>
 #include <linux/vmalloc.h>
 
+#include <uvm/uvm_glue.h>
+
 #include <drm/radeon_drm.h>
 #ifdef CONFIG_X86
 #include <asm/set_memory.h>
@@ -345,7 +347,8 @@ int radeon_gart_bind(struct radeon_device *rdev, unsigned offset,
 	p = t / (PAGE_SIZE / RADEON_GPU_PAGE_SIZE);
 
 	for (i = 0; i < pages; i++, p++) {
-		rdev->gart.pages[p] = pagelist[i];
+		rdev->gart.pages[p] = pagelist ? pagelist[i] :
+			uvm_atopg(rdev->dummy_page.addr);
 		page_base = dma_addr[i];
 		for (j = 0; j < (PAGE_SIZE / RADEON_GPU_PAGE_SIZE); j++, t++) {
 			page_entry = radeon_gart_get_page_entry(page_base, flags);

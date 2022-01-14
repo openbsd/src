@@ -31,10 +31,14 @@
 #include "intel_atomic.h"
 #include "intel_combo_phy.h"
 #include "intel_connector.h"
+#include "intel_crtc.h"
 #include "intel_ddi.h"
+#include "intel_de.h"
 #include "intel_dsi.h"
 #include "intel_panel.h"
 #include "intel_vdsc.h"
+#include "skl_scaler.h"
+#include "skl_universal_plane.h"
 
 static int header_credits_available(struct drm_i915_private *dev_priv,
 				    enum transcoder dsi_trans)
@@ -205,6 +209,32 @@ static int dsi_send_pkt_payld(struct intel_dsi_host *host,
 	return 0;
 }
 
+void icl_dsi_frame_update(struct intel_crtc_state *crtc_state)
+{
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	u32 tmp, mode_flags;
+	enum port port;
+
+	mode_flags = crtc_state->mode_flags;
+
+	/*
+	 * case 1 also covers dual link
+	 * In case of dual link, frame update should be set on
+	 * DSI_0
+	 */
+	if (mode_flags & I915_MODE_FLAG_DSI_USE_TE0)
+		port = PORT_A;
+	else if (mode_flags & I915_MODE_FLAG_DSI_USE_TE1)
+		port = PORT_B;
+	else
+		return;
+
+	tmp = intel_de_read(dev_priv, DSI_CMD_FRMCTL(port));
+	tmp |= DSI_FRAME_UPDATE_REQUEST;
+	intel_de_write(dev_priv, DSI_CMD_FRMCTL(port), tmp);
+}
+
 static void dsi_program_swing_and_deemphasis(struct intel_encoder *encoder)
 {
 	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
@@ -333,10 +363,19 @@ static void gen11_dsi_program_esc_clk_div(struct intel_encoder *encoder,
 	struct intel_dsi *intel_dsi = enc_to_intel_dsi(encoder);
 	enum port port;
 	int afe_clk_khz;
-	u32 esc_clk_div_m;
+	int theo_word_clk, act_word_clk;
+	u32 esc_clk_div_m, esc_clk_div_m_phy;
 
 	afe_clk_khz = afe_clk(encoder, crtc_state);
-	esc_clk_div_m = DIV_ROUND_UP(afe_clk_khz, DSI_MAX_ESC_CLK);
+
+	if (IS_ALDERLAKE_S(dev_priv) || IS_ALDERLAKE_P(dev_priv)) {
+		theo_word_clk = DIV_ROUND_UP(afe_clk_khz, 8 * DSI_MAX_ESC_CLK);
+		act_word_clk = max(3, theo_word_clk + (theo_word_clk + 1) % 2);
+		esc_clk_div_m = act_word_clk * 8;
+		esc_clk_div_m_phy = (act_word_clk - 1) / 2;
+	} else {
+		esc_clk_div_m = DIV_ROUND_UP(afe_clk_khz, DSI_MAX_ESC_CLK);
+	}
 
 	for_each_dsi_port(port, intel_dsi->ports) {
 		intel_de_write(dev_priv, ICL_DSI_ESC_CLK_DIV(port),
@@ -348,6 +387,14 @@ static void gen11_dsi_program_esc_clk_div(struct intel_encoder *encoder,
 		intel_de_write(dev_priv, ICL_DPHY_ESC_CLK_DIV(port),
 			       esc_clk_div_m & ICL_ESC_CLK_DIV_MASK);
 		intel_de_posting_read(dev_priv, ICL_DPHY_ESC_CLK_DIV(port));
+	}
+
+	if (IS_ALDERLAKE_S(dev_priv) || IS_ALDERLAKE_P(dev_priv)) {
+		for_each_dsi_port(port, intel_dsi->ports) {
+			intel_de_write(dev_priv, ADL_MIPIO_DW(port, 8),
+				       esc_clk_div_m_phy & TX_ESC_CLK_DIV_PHY);
+			intel_de_posting_read(dev_priv, ADL_MIPIO_DW(port, 8));
+		}
 	}
 }
 
@@ -429,7 +476,7 @@ static void gen11_dsi_config_phy_lanes_sequence(struct intel_encoder *encoder)
 		intel_de_write(dev_priv, ICL_PORT_TX_DW2_GRP(phy), tmp);
 
 		/* For EHL, TGL, set latency optimization for PCS_DW1 lanes */
-		if (IS_ELKHARTLAKE(dev_priv) || (INTEL_GEN(dev_priv) >= 12)) {
+		if (IS_JSL_EHL(dev_priv) || (DISPLAY_VER(dev_priv) >= 12)) {
 			tmp = intel_de_read(dev_priv,
 					    ICL_PORT_PCS_DW1_AUX(phy));
 			tmp &= ~LATENCY_OPTIM_MASK;
@@ -564,7 +611,7 @@ gen11_dsi_setup_dphy_timings(struct intel_encoder *encoder,
 	 * a value '0' inside TA_PARAM_REGISTERS otherwise
 	 * leave all fields at HW default values.
 	 */
-	if (IS_GEN(dev_priv, 11)) {
+	if (DISPLAY_VER(dev_priv) == 11) {
 		if (afe_clk(encoder, crtc_state) <= 800000) {
 			for_each_dsi_port(port, intel_dsi->ports) {
 				tmp = intel_de_read(dev_priv,
@@ -586,7 +633,7 @@ gen11_dsi_setup_dphy_timings(struct intel_encoder *encoder,
 		}
 	}
 
-	if (IS_ELKHARTLAKE(dev_priv)) {
+	if (IS_JSL_EHL(dev_priv)) {
 		for_each_dsi_phy(phy, intel_dsi->phys) {
 			tmp = intel_de_read(dev_priv, ICL_DPHY_CHKN(phy));
 			tmp |= ICL_DPHY_CHKN_AFE_OVER_PPI_STRAP;
@@ -627,6 +674,24 @@ static void gen11_dsi_ungate_clocks(struct intel_encoder *encoder)
 	mutex_unlock(&dev_priv->dpll.lock);
 }
 
+static bool gen11_dsi_is_clock_enabled(struct intel_encoder *encoder)
+{
+	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
+	struct intel_dsi *intel_dsi = enc_to_intel_dsi(encoder);
+	bool clock_enabled = false;
+	enum phy phy;
+	u32 tmp;
+
+	tmp = intel_de_read(dev_priv, ICL_DPCLKA_CFGCR0);
+
+	for_each_dsi_phy(phy, intel_dsi->phys) {
+		if (!(tmp & ICL_DPCLKA_CFGCR0_DDI_CLK_OFF(phy)))
+			clock_enabled = true;
+	}
+
+	return clock_enabled;
+}
+
 static void gen11_dsi_map_pll(struct intel_encoder *encoder,
 			      const struct intel_crtc_state *crtc_state)
 {
@@ -646,10 +711,7 @@ static void gen11_dsi_map_pll(struct intel_encoder *encoder,
 	intel_de_write(dev_priv, ICL_DPCLKA_CFGCR0, val);
 
 	for_each_dsi_phy(phy, intel_dsi->phys) {
-		if (INTEL_GEN(dev_priv) >= 12)
-			val |= ICL_DPCLKA_CFGCR0_DDI_CLK_OFF(phy);
-		else
-			val &= ~ICL_DPCLKA_CFGCR0_DDI_CLK_OFF(phy);
+		val &= ~ICL_DPCLKA_CFGCR0_DDI_CLK_OFF(phy);
 	}
 	intel_de_write(dev_priv, ICL_DPCLKA_CFGCR0, val);
 
@@ -664,8 +726,8 @@ gen11_dsi_configure_transcoder(struct intel_encoder *encoder,
 {
 	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
 	struct intel_dsi *intel_dsi = enc_to_intel_dsi(encoder);
-	struct intel_crtc *intel_crtc = to_intel_crtc(pipe_config->uapi.crtc);
-	enum pipe pipe = intel_crtc->pipe;
+	struct intel_crtc *crtc = to_intel_crtc(pipe_config->uapi.crtc);
+	enum pipe pipe = crtc->pipe;
 	u32 tmp;
 	enum port port;
 	enum transcoder dsi_trans;
@@ -728,7 +790,7 @@ gen11_dsi_configure_transcoder(struct intel_encoder *encoder,
 			}
 		}
 
-		if (INTEL_GEN(dev_priv) >= 12) {
+		if (DISPLAY_VER(dev_priv) >= 12) {
 			if (is_vid_mode(intel_dsi))
 				tmp |= BLANKING_PACKET_ENABLE;
 		}
@@ -974,7 +1036,7 @@ gen11_dsi_set_transcoder_timings(struct intel_encoder *encoder,
 	}
 
 	/* program TRANS_VBLANK register, should be same as vtotal programmed */
-	if (INTEL_GEN(dev_priv) >= 12) {
+	if (DISPLAY_VER(dev_priv) >= 12) {
 		for_each_dsi_port(port, intel_dsi->ports) {
 			dsi_trans = dsi_port_to_transcoder(port);
 			intel_de_write(dev_priv, VBLANK(dsi_trans),
@@ -1085,8 +1147,6 @@ static void
 gen11_dsi_enable_port_and_phy(struct intel_encoder *encoder,
 			      const struct intel_crtc_state *crtc_state)
 {
-	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
-
 	/* step 4a: power up all lanes of the DDI used by DSI */
 	gen11_dsi_power_up_lanes(encoder);
 
@@ -1112,8 +1172,7 @@ gen11_dsi_enable_port_and_phy(struct intel_encoder *encoder,
 	gen11_dsi_configure_transcoder(encoder, crtc_state);
 
 	/* Step 4l: Gate DDI clocks */
-	if (IS_GEN(dev_priv, 11))
-		gen11_dsi_gate_clocks(encoder);
+	gen11_dsi_gate_clocks(encoder);
 }
 
 static void gen11_dsi_powerup_panel(struct intel_encoder *encoder)
@@ -1188,14 +1247,35 @@ static void gen11_dsi_pre_enable(struct intel_atomic_state *state,
 	gen11_dsi_set_transcoder_timings(encoder, pipe_config);
 }
 
+/*
+ * Wa_1409054076:icl,jsl,ehl
+ * When pipe A is disabled and MIPI DSI is enabled on pipe B,
+ * the AMT KVMR feature will incorrectly see pipe A as enabled.
+ * Set 0x42080 bit 23=1 before enabling DSI on pipe B and leave
+ * it set while DSI is enabled on pipe B
+ */
+static void icl_apply_kvmr_pipe_a_wa(struct intel_encoder *encoder,
+				     enum pipe pipe, bool enable)
+{
+	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
+
+	if (DISPLAY_VER(dev_priv) == 11 && pipe == PIPE_B)
+		intel_de_rmw(dev_priv, CHICKEN_PAR1_1,
+			     IGNORE_KVMR_PIPE_A,
+			     enable ? IGNORE_KVMR_PIPE_A : 0);
+}
 static void gen11_dsi_enable(struct intel_atomic_state *state,
 			     struct intel_encoder *encoder,
 			     const struct intel_crtc_state *crtc_state,
 			     const struct drm_connector_state *conn_state)
 {
 	struct intel_dsi *intel_dsi = enc_to_intel_dsi(encoder);
+	struct intel_crtc *crtc = to_intel_crtc(conn_state->crtc);
 
 	drm_WARN_ON(state->base.dev, crtc_state->has_pch_encoder);
+
+	/* Wa_1409054076:icl,jsl,ehl */
+	icl_apply_kvmr_pipe_a_wa(encoder, crtc->pipe, true);
 
 	/* step6d: enable dsi transcoder */
 	gen11_dsi_enable_transcoder(encoder);
@@ -1350,6 +1430,7 @@ static void gen11_dsi_disable(struct intel_atomic_state *state,
 			      const struct drm_connector_state *old_conn_state)
 {
 	struct intel_dsi *intel_dsi = enc_to_intel_dsi(encoder);
+	struct intel_crtc *crtc = to_intel_crtc(old_conn_state->crtc);
 
 	/* step1: turn off backlight */
 	intel_dsi_vbt_exec_sequence(intel_dsi, MIPI_SEQ_BACKLIGHT_OFF);
@@ -1357,6 +1438,9 @@ static void gen11_dsi_disable(struct intel_atomic_state *state,
 
 	/* step2d,e: disable transcoder and wait */
 	gen11_dsi_disable_transcoder(encoder);
+
+	/* Wa_1409054076:icl,jsl,ehl */
+	icl_apply_kvmr_pipe_a_wa(encoder, crtc->pipe, false);
 
 	/* step2f,g: powerdown panel */
 	gen11_dsi_powerdown_panel(encoder);
@@ -1447,18 +1531,25 @@ static bool gen11_dsi_is_periodic_cmd_mode(struct intel_dsi *intel_dsi)
 	return (val & DSI_PERIODIC_FRAME_UPDATE_ENABLE);
 }
 
+static void gen11_dsi_get_cmd_mode_config(struct intel_dsi *intel_dsi,
+					  struct intel_crtc_state *pipe_config)
+{
+	if (intel_dsi->ports == (BIT(PORT_B) | BIT(PORT_A)))
+		pipe_config->mode_flags |= I915_MODE_FLAG_DSI_USE_TE1 |
+					    I915_MODE_FLAG_DSI_USE_TE0;
+	else if (intel_dsi->ports == BIT(PORT_B))
+		pipe_config->mode_flags |= I915_MODE_FLAG_DSI_USE_TE1;
+	else
+		pipe_config->mode_flags |= I915_MODE_FLAG_DSI_USE_TE0;
+}
+
 static void gen11_dsi_get_config(struct intel_encoder *encoder,
 				 struct intel_crtc_state *pipe_config)
 {
-	struct drm_i915_private *i915 = to_i915(encoder->base.dev);
 	struct intel_crtc *crtc = to_intel_crtc(pipe_config->uapi.crtc);
 	struct intel_dsi *intel_dsi = enc_to_intel_dsi(encoder);
 
-	intel_dsc_get_config(encoder, pipe_config);
-
-	/* FIXME: adapt icl_ddi_clock_get() for DSI and use that? */
-	pipe_config->port_clock = intel_dpll_get_freq(i915,
-						      pipe_config->shared_dpll);
+	intel_ddi_get_clock(encoder, pipe_config, icl_ddi_combo_get_pll(encoder));
 
 	pipe_config->hw.adjusted_mode.crtc_clock = intel_dsi->pclk;
 	if (intel_dsi->dual_link)
@@ -1468,8 +1559,34 @@ static void gen11_dsi_get_config(struct intel_encoder *encoder,
 	pipe_config->output_types |= BIT(INTEL_OUTPUT_DSI);
 	pipe_config->pipe_bpp = bdw_get_pipemisc_bpp(crtc);
 
+	/* Get the details on which TE should be enabled */
+	if (is_cmd_mode(intel_dsi))
+		gen11_dsi_get_cmd_mode_config(intel_dsi, pipe_config);
+
 	if (gen11_dsi_is_periodic_cmd_mode(intel_dsi))
 		pipe_config->mode_flags |= I915_MODE_FLAG_DSI_PERIODIC_CMD_MODE;
+}
+
+static void gen11_dsi_sync_state(struct intel_encoder *encoder,
+				 const struct intel_crtc_state *crtc_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
+	struct intel_crtc *intel_crtc;
+	enum pipe pipe;
+
+	if (!crtc_state)
+		return;
+
+	intel_crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	pipe = intel_crtc->pipe;
+
+	/* wa verify 1409054076:icl,jsl,ehl */
+	if (DISPLAY_VER(dev_priv) == 11 && pipe == PIPE_B &&
+	    !(intel_de_read(dev_priv, CHICKEN_PAR1_1) & IGNORE_KVMR_PIPE_A))
+		drm_dbg_kms(&dev_priv->drm,
+			    "[ENCODER:%d:%s] BIOS left IGNORE_KVMR_PIPE_A cleared with pipe B enabled\n",
+			    encoder->base.base.id,
+			    encoder->base.name);
 }
 
 static int gen11_dsi_dsc_compute_config(struct intel_encoder *encoder,
@@ -1477,7 +1594,7 @@ static int gen11_dsi_dsc_compute_config(struct intel_encoder *encoder,
 {
 	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
 	struct drm_dsc_config *vdsc_cfg = &crtc_state->dsc.config;
-	int dsc_max_bpc = INTEL_GEN(dev_priv) >= 12 ? 12 : 10;
+	int dsc_max_bpc = DISPLAY_VER(dev_priv) >= 12 ? 12 : 10;
 	bool use_dsc;
 	int ret;
 
@@ -1493,6 +1610,9 @@ static int gen11_dsi_dsc_compute_config(struct intel_encoder *encoder,
 		crtc_state->dsc.dsc_split = true;
 
 	vdsc_cfg->convert_rgb = true;
+
+	/* FIXME: initialize from VBT */
+	vdsc_cfg->rc_model_size = DSC_RC_MODEL_SIZE_CONST;
 
 	ret = intel_dsc_compute_params(encoder, crtc_state);
 	if (ret)
@@ -1562,18 +1682,8 @@ static int gen11_dsi_compute_config(struct intel_encoder *encoder,
 	 * receive TE from the slave if
 	 * dual link is enabled
 	 */
-	if (is_cmd_mode(intel_dsi)) {
-		if (intel_dsi->ports == (BIT(PORT_B) | BIT(PORT_A)))
-			pipe_config->mode_flags |=
-						I915_MODE_FLAG_DSI_USE_TE1 |
-						I915_MODE_FLAG_DSI_USE_TE0;
-		else if (intel_dsi->ports == BIT(PORT_B))
-			pipe_config->mode_flags |=
-						I915_MODE_FLAG_DSI_USE_TE1;
-		else
-			pipe_config->mode_flags |=
-						I915_MODE_FLAG_DSI_USE_TE0;
-	}
+	if (is_cmd_mode(intel_dsi))
+		gen11_dsi_get_cmd_mode_config(intel_dsi, pipe_config);
 
 	return 0;
 }
@@ -1630,6 +1740,19 @@ static bool gen11_dsi_get_hw_state(struct intel_encoder *encoder,
 out:
 	intel_display_power_put(dev_priv, encoder->power_domain, wakeref);
 	return ret;
+}
+
+static bool gen11_dsi_initial_fastset_check(struct intel_encoder *encoder,
+					    struct intel_crtc_state *crtc_state)
+{
+	if (crtc_state->dsc.compression_enable) {
+		drm_dbg_kms(encoder->base.dev, "Forcing full modeset due to DSC being enabled\n");
+		crtc_state->uapi.mode_changed = true;
+
+		return false;
+	}
+
+	return true;
 }
 
 static void gen11_dsi_encoder_destroy(struct drm_encoder *encoder)
@@ -1884,14 +2007,18 @@ void icl_dsi_init(struct drm_i915_private *dev_priv)
 	encoder->post_disable = gen11_dsi_post_disable;
 	encoder->port = port;
 	encoder->get_config = gen11_dsi_get_config;
+	encoder->sync_state = gen11_dsi_sync_state;
 	encoder->update_pipe = intel_panel_update_backlight;
 	encoder->compute_config = gen11_dsi_compute_config;
 	encoder->get_hw_state = gen11_dsi_get_hw_state;
+	encoder->initial_fastset_check = gen11_dsi_initial_fastset_check;
 	encoder->type = INTEL_OUTPUT_DSI;
 	encoder->cloneable = 0;
 	encoder->pipe_mask = ~0;
 	encoder->power_domain = POWER_DOMAIN_PORT_DSI;
 	encoder->get_power_domains = gen11_dsi_get_power_domains;
+	encoder->disable_clock = gen11_dsi_gate_clocks;
+	encoder->is_clock_enabled = gen11_dsi_is_clock_enabled;
 
 	/* register DSI connector with DRM subsystem */
 	drm_connector_init(dev, connector, &gen11_dsi_connector_funcs,

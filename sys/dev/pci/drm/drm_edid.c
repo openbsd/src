@@ -32,6 +32,7 @@
 #include <linux/i2c.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/pci.h>
 #include <linux/slab.h>
 #include <linux/vga_switcheroo.h>
 
@@ -1584,8 +1585,6 @@ module_param_named(edid_fixup, edid_fixup, int, 0400);
 MODULE_PARM_DESC(edid_fixup,
 		 "Minimum number of valid EDID header bytes (0-8, default 6)");
 
-static int validate_displayid(u8 *displayid, int length, int idx);
-
 static int drm_edid_block_checksum(const u8 *raw_edid)
 {
 	int i;
@@ -1853,7 +1852,7 @@ static void connector_bad_edid(struct drm_connector *connector,
 	if (connector->bad_edid_counter++ && !drm_debug_enabled(DRM_UT_KMS))
 		return;
 
-	drm_warn(connector->dev, "%s: EDID is invalid:\n", connector->name);
+	drm_dbg_kms(connector->dev, "%s: EDID is invalid:\n", connector->name);
 	for (i = 0; i < num_blocks; i++) {
 		u8 *block = edid + i * EDID_LENGTH;
 		char prefix[20];
@@ -1865,7 +1864,7 @@ static void connector_bad_edid(struct drm_connector *connector,
 		else
 			snprintf(prefix, sizeof(prefix), "\t[%02x] GOOD ", i);
 
-		print_hex_dump(KERN_WARNING,
+		print_hex_dump(KERN_DEBUG,
 			       prefix, DUMP_PREFIX_NONE, 16, 1,
 			       block, EDID_LENGTH, false);
 	}
@@ -1929,7 +1928,7 @@ EXPORT_SYMBOL(drm_add_override_edid_modes);
  * level, drivers must make all reasonable efforts to expose it as an I2C
  * adapter and use drm_get_edid() instead of abusing this function.
  *
- * The EDID may be overridden using debugfs override_edid or firmare EDID
+ * The EDID may be overridden using debugfs override_edid or firmware EDID
  * (drm_load_edid_firmware() and drm.edid_firmware parameter), in this priority
  * order. Having either of them bypasses actual EDID reads.
  *
@@ -2092,14 +2091,22 @@ EXPORT_SYMBOL(drm_get_edid);
 struct edid *drm_get_edid_switcheroo(struct drm_connector *connector,
 				     struct i2c_adapter *adapter)
 {
-	struct pci_dev *pdev = connector->dev->pdev;
+	STUB();
+	return NULL;
+#ifdef notyet
+	struct drm_device *dev = connector->dev;
+	struct pci_dev *pdev = to_pci_dev(dev->dev);
 	struct edid *edid;
+
+	if (drm_WARN_ON_ONCE(dev, !dev_is_pci(dev->dev)))
+		return NULL;
 
 	vga_switcheroo_lock_ddc(pdev);
 	edid = drm_get_edid(connector, adapter);
 	vga_switcheroo_unlock_ddc(pdev);
 
 	return edid;
+#endif
 }
 EXPORT_SYMBOL(drm_get_edid_switcheroo);
 
@@ -3253,10 +3260,10 @@ add_detailed_modes(struct drm_connector *connector, struct edid *edid,
 /*
  * Search EDID for CEA extension block.
  */
-static u8 *drm_find_edid_extension(const struct edid *edid,
-				   int ext_id, int *ext_index)
+const u8 *drm_find_edid_extension(const struct edid *edid,
+				  int ext_id, int *ext_index)
 {
-	u8 *edid_ext = NULL;
+	const u8 *edid_ext = NULL;
 	int i;
 
 	/* No EDID or EDID extensions */
@@ -3265,7 +3272,7 @@ static u8 *drm_find_edid_extension(const struct edid *edid,
 
 	/* Find CEA extension */
 	for (i = *ext_index; i < edid->extensions; i++) {
-		edid_ext = (u8 *)edid + EDID_LENGTH * (i + 1);
+		edid_ext = (const u8 *)edid + EDID_LENGTH * (i + 1);
 		if (edid_ext[0] == ext_id)
 			break;
 	}
@@ -3278,63 +3285,30 @@ static u8 *drm_find_edid_extension(const struct edid *edid,
 	return edid_ext;
 }
 
-
-static u8 *drm_find_displayid_extension(const struct edid *edid,
-					int *length, int *idx,
-					int *ext_index)
+static const u8 *drm_find_cea_extension(const struct edid *edid)
 {
-	u8 *displayid = drm_find_edid_extension(edid, DISPLAYID_EXT, ext_index);
-	struct displayid_hdr *base;
-	int ret;
-
-	if (!displayid)
-		return NULL;
-
-	/* EDID extensions block checksum isn't for us */
-	*length = EDID_LENGTH - 1;
-	*idx = 1;
-
-	ret = validate_displayid(displayid, *length, *idx);
-	if (ret)
-		return NULL;
-
-	base = (struct displayid_hdr *)&displayid[*idx];
-	*length = *idx + sizeof(*base) + base->bytes;
-
-	return displayid;
-}
-
-static u8 *drm_find_cea_extension(const struct edid *edid)
-{
-	int length, idx;
-	struct displayid_block *block;
-	u8 *cea;
-	u8 *displayid;
-	int ext_index;
+	const struct displayid_block *block;
+	struct displayid_iter iter;
+	const u8 *cea;
+	int ext_index = 0;
 
 	/* Look for a top level CEA extension block */
 	/* FIXME: make callers iterate through multiple CEA ext blocks? */
-	ext_index = 0;
 	cea = drm_find_edid_extension(edid, CEA_EXT, &ext_index);
 	if (cea)
 		return cea;
 
 	/* CEA blocks can also be found embedded in a DisplayID block */
-	ext_index = 0;
-	for (;;) {
-		displayid = drm_find_displayid_extension(edid, &length, &idx,
-							 &ext_index);
-		if (!displayid)
-			return NULL;
-
-		idx += sizeof(struct displayid_hdr);
-		for_each_displayid_db(displayid, block, idx, length) {
-			if (block->tag == DATA_BLOCK_CTA)
-				return (u8 *)block;
+	displayid_iter_edid_begin(edid, &iter);
+	displayid_iter_for_each(block, &iter) {
+		if (block->tag == DATA_BLOCK_CTA) {
+			cea = (const u8 *)block;
+			break;
 		}
 	}
+	displayid_iter_end(&iter);
 
-	return NULL;
+	return cea;
 }
 
 static __always_inline const struct drm_display_mode *cea_mode_for_vic(u8 vic)
@@ -4517,8 +4491,8 @@ static void clear_eld(struct drm_connector *connector)
 static void drm_edid_to_eld(struct drm_connector *connector, struct edid *edid)
 {
 	uint8_t *eld = connector->eld;
-	u8 *cea;
-	u8 *db;
+	const u8 *cea;
+	const u8 *db;
 	int total_sad_count = 0;
 	int mnl;
 	int dbl;
@@ -4614,7 +4588,7 @@ int drm_edid_to_sad(struct edid *edid, struct cea_sad **sads)
 {
 	int count = 0;
 	int i, start, end, dbl;
-	u8 *cea;
+	const u8 *cea;
 
 	cea = drm_find_cea_extension(edid);
 	if (!cea) {
@@ -4633,7 +4607,7 @@ int drm_edid_to_sad(struct edid *edid, struct cea_sad **sads)
 	}
 
 	for_each_cea_db(cea, i, start, end) {
-		u8 *db = &cea[i];
+		const u8 *db = &cea[i];
 
 		if (cea_db_tag(db) == AUDIO_BLOCK) {
 			int j;
@@ -4645,7 +4619,7 @@ int drm_edid_to_sad(struct edid *edid, struct cea_sad **sads)
 			if (!*sads)
 				return -ENOMEM;
 			for (j = 0; j < count; j++) {
-				u8 *sad = &db[1 + j * 3];
+				const u8 *sad = &db[1 + j * 3];
 
 				(*sads)[j].format = (sad[0] & 0x78) >> 3;
 				(*sads)[j].channels = sad[0] & 0x7;
@@ -4769,7 +4743,7 @@ EXPORT_SYMBOL(drm_av_sync_delay);
  */
 bool drm_detect_hdmi_monitor(struct edid *edid)
 {
-	u8 *edid_ext;
+	const u8 *edid_ext;
 	int i;
 	int start_offset, end_offset;
 
@@ -4807,7 +4781,7 @@ EXPORT_SYMBOL(drm_detect_hdmi_monitor);
  */
 bool drm_detect_monitor_audio(struct edid *edid)
 {
-	u8 *edid_ext;
+	const u8 *edid_ext;
 	int i, j;
 	bool has_audio = false;
 	int start_offset, end_offset;
@@ -4870,6 +4844,41 @@ static void drm_parse_vcdb(struct drm_connector *connector, const u8 *db)
 		info->rgb_quant_range_selectable = true;
 }
 
+static
+void drm_get_max_frl_rate(int max_frl_rate, u8 *max_lanes, u8 *max_rate_per_lane)
+{
+	switch (max_frl_rate) {
+	case 1:
+		*max_lanes = 3;
+		*max_rate_per_lane = 3;
+		break;
+	case 2:
+		*max_lanes = 3;
+		*max_rate_per_lane = 6;
+		break;
+	case 3:
+		*max_lanes = 4;
+		*max_rate_per_lane = 6;
+		break;
+	case 4:
+		*max_lanes = 4;
+		*max_rate_per_lane = 8;
+		break;
+	case 5:
+		*max_lanes = 4;
+		*max_rate_per_lane = 10;
+		break;
+	case 6:
+		*max_lanes = 4;
+		*max_rate_per_lane = 12;
+		break;
+	case 0:
+	default:
+		*max_lanes = 0;
+		*max_rate_per_lane = 0;
+	}
+}
+
 static void drm_parse_ycbcr420_deep_color_info(struct drm_connector *connector,
 					       const u8 *db)
 {
@@ -4920,6 +4929,74 @@ static void drm_parse_hdmi_forum_vsdb(struct drm_connector *connector,
 			/* Few sinks support scrambling for clocks < 340M */
 			if ((hf_vsdb[6] & 0x8))
 				scdc->scrambling.low_rates = true;
+		}
+	}
+
+	if (hf_vsdb[7]) {
+		u8 max_frl_rate;
+		u8 dsc_max_frl_rate;
+		u8 dsc_max_slices;
+		struct drm_hdmi_dsc_cap *hdmi_dsc = &hdmi->dsc_cap;
+
+		DRM_DEBUG_KMS("hdmi_21 sink detected. parsing edid\n");
+		max_frl_rate = (hf_vsdb[7] & DRM_EDID_MAX_FRL_RATE_MASK) >> 4;
+		drm_get_max_frl_rate(max_frl_rate, &hdmi->max_lanes,
+				     &hdmi->max_frl_rate_per_lane);
+		hdmi_dsc->v_1p2 = hf_vsdb[11] & DRM_EDID_DSC_1P2;
+
+		if (hdmi_dsc->v_1p2) {
+			hdmi_dsc->native_420 = hf_vsdb[11] & DRM_EDID_DSC_NATIVE_420;
+			hdmi_dsc->all_bpp = hf_vsdb[11] & DRM_EDID_DSC_ALL_BPP;
+
+			if (hf_vsdb[11] & DRM_EDID_DSC_16BPC)
+				hdmi_dsc->bpc_supported = 16;
+			else if (hf_vsdb[11] & DRM_EDID_DSC_12BPC)
+				hdmi_dsc->bpc_supported = 12;
+			else if (hf_vsdb[11] & DRM_EDID_DSC_10BPC)
+				hdmi_dsc->bpc_supported = 10;
+			else
+				hdmi_dsc->bpc_supported = 0;
+
+			dsc_max_frl_rate = (hf_vsdb[12] & DRM_EDID_DSC_MAX_FRL_RATE_MASK) >> 4;
+			drm_get_max_frl_rate(dsc_max_frl_rate, &hdmi_dsc->max_lanes,
+					     &hdmi_dsc->max_frl_rate_per_lane);
+			hdmi_dsc->total_chunk_kbytes = hf_vsdb[13] & DRM_EDID_DSC_TOTAL_CHUNK_KBYTES;
+
+			dsc_max_slices = hf_vsdb[12] & DRM_EDID_DSC_MAX_SLICES;
+			switch (dsc_max_slices) {
+			case 1:
+				hdmi_dsc->max_slices = 1;
+				hdmi_dsc->clk_per_slice = 340;
+				break;
+			case 2:
+				hdmi_dsc->max_slices = 2;
+				hdmi_dsc->clk_per_slice = 340;
+				break;
+			case 3:
+				hdmi_dsc->max_slices = 4;
+				hdmi_dsc->clk_per_slice = 340;
+				break;
+			case 4:
+				hdmi_dsc->max_slices = 8;
+				hdmi_dsc->clk_per_slice = 340;
+				break;
+			case 5:
+				hdmi_dsc->max_slices = 8;
+				hdmi_dsc->clk_per_slice = 400;
+				break;
+			case 6:
+				hdmi_dsc->max_slices = 12;
+				hdmi_dsc->clk_per_slice = 400;
+				break;
+			case 7:
+				hdmi_dsc->max_slices = 16;
+				hdmi_dsc->clk_per_slice = 400;
+				break;
+			case 0:
+			default:
+				hdmi_dsc->max_slices = 0;
+				hdmi_dsc->clk_per_slice = 0;
+			}
 		}
 	}
 
@@ -5198,32 +5275,6 @@ u32 drm_add_display_info(struct drm_connector *connector, const struct edid *edi
 	return quirks;
 }
 
-static int validate_displayid(u8 *displayid, int length, int idx)
-{
-	int i, dispid_length;
-	u8 csum = 0;
-	struct displayid_hdr *base;
-
-	base = (struct displayid_hdr *)&displayid[idx];
-
-	DRM_DEBUG_KMS("base revision 0x%x, length %d, %d %d\n",
-		      base->rev, base->bytes, base->prod_id, base->ext_count);
-
-	/* +1 for DispID checksum */
-	dispid_length = sizeof(*base) + base->bytes + 1;
-	if (dispid_length > length - idx)
-		return -EINVAL;
-
-	for (i = 0; i < dispid_length; i++)
-		csum += displayid[idx + i];
-	if (csum) {
-		DRM_NOTE("DisplayID checksum invalid, remainder is %d\n", csum);
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
 static struct drm_display_mode *drm_mode_displayid_detailed(struct drm_device *dev,
 							    struct displayid_detailed_timings_1 *timings)
 {
@@ -5270,7 +5321,7 @@ static struct drm_display_mode *drm_mode_displayid_detailed(struct drm_device *d
 }
 
 static int add_displayid_detailed_1_modes(struct drm_connector *connector,
-					  struct displayid_block *block)
+					  const struct displayid_block *block)
 {
 	struct displayid_detailed_timing_block *det = (struct displayid_detailed_timing_block *)block;
 	int i;
@@ -5298,27 +5349,16 @@ static int add_displayid_detailed_1_modes(struct drm_connector *connector,
 static int add_displayid_detailed_modes(struct drm_connector *connector,
 					struct edid *edid)
 {
-	u8 *displayid;
-	int length, idx;
-	struct displayid_block *block;
+	const struct displayid_block *block;
+	struct displayid_iter iter;
 	int num_modes = 0;
-	int ext_index = 0;
 
-	for (;;) {
-		displayid = drm_find_displayid_extension(edid, &length, &idx,
-							 &ext_index);
-		if (!displayid)
-			break;
-
-		idx += sizeof(struct displayid_hdr);
-		for_each_displayid_db(displayid, block, idx, length) {
-			switch (block->tag) {
-			case DATA_BLOCK_TYPE_1_DETAILED_TIMING:
-				num_modes += add_displayid_detailed_1_modes(connector, block);
-				break;
-			}
-		}
+	displayid_iter_edid_begin(edid, &iter);
+	displayid_iter_for_each(block, &iter) {
+		if (block->tag == DATA_BLOCK_TYPE_1_DETAILED_TIMING)
+			num_modes += add_displayid_detailed_1_modes(connector, block);
 	}
+	displayid_iter_end(&iter);
 
 	return num_modes;
 }
@@ -5889,7 +5929,7 @@ drm_hdmi_vendor_infoframe_from_display_mode(struct hdmi_vendor_infoframe *frame,
 	 * (ie.vic==0 and s3d_struct==0) we will still send it if we
 	 * know that the sink can handle it. This is based on a
 	 * suggestion in HDMI 2.0 Appendix F. Apparently some sinks
-	 * have trouble realizing that they shuld switch from 3D to 2D
+	 * have trouble realizing that they should switch from 3D to 2D
 	 * mode if the source simply stops sending the infoframe when
 	 * it wants to switch from 3D to 2D.
 	 */
@@ -5952,43 +5992,20 @@ static void drm_parse_tiled_block(struct drm_connector *connector,
 	}
 }
 
-static void drm_displayid_parse_tiled(struct drm_connector *connector,
-				      const u8 *displayid, int length, int idx)
-{
-	const struct displayid_block *block;
-
-	idx += sizeof(struct displayid_hdr);
-	for_each_displayid_db(displayid, block, idx, length) {
-		DRM_DEBUG_KMS("block id 0x%x, rev %d, len %d\n",
-			      block->tag, block->rev, block->num_bytes);
-
-		switch (block->tag) {
-		case DATA_BLOCK_TILED_DISPLAY:
-			drm_parse_tiled_block(connector, block);
-			break;
-		default:
-			DRM_DEBUG_KMS("found DisplayID tag 0x%x, unhandled\n", block->tag);
-			break;
-		}
-	}
-}
-
 void drm_update_tile_info(struct drm_connector *connector,
 			  const struct edid *edid)
 {
-	const void *displayid = NULL;
-	int ext_index = 0;
-	int length, idx;
+	const struct displayid_block *block;
+	struct displayid_iter iter;
 
 	connector->has_tile = false;
-	for (;;) {
-		displayid = drm_find_displayid_extension(edid, &length, &idx,
-							 &ext_index);
-		if (!displayid)
-			break;
 
-		drm_displayid_parse_tiled(connector, displayid, length, idx);
+	displayid_iter_edid_begin(edid, &iter);
+	displayid_iter_for_each(block, &iter) {
+		if (block->tag == DATA_BLOCK_TILED_DISPLAY)
+			drm_parse_tiled_block(connector, block);
 	}
+	displayid_iter_end(&iter);
 
 	if (!connector->has_tile && connector->tile_group) {
 		drm_mode_put_tile_group(connector->dev, connector->tile_group);

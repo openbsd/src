@@ -161,23 +161,23 @@ intel_init_stolen_res(struct inteldrm_softc *dev_priv)
 		stolen_base  = i865_stolen_base(dev_priv);
 #endif
 
-	if (INTEL_GEN(dev_priv) >= 3 && INTEL_GEN(dev_priv) < 11)
+	if (GRAPHICS_VER(dev_priv) >= 3 && GRAPHICS_VER(dev_priv) < 11)
 		stolen_base  = gen3_stolen_base(dev_priv);
-	else if (INTEL_GEN(dev_priv) == 11)
+	else if (GRAPHICS_VER(dev_priv) == 11)
 		stolen_base = gen11_stolen_base(dev_priv);
 
 	if (IS_I830(dev_priv) || IS_I845G(dev_priv))
 		stolen_size = i830_stolen_size(dev_priv);
 	else if (IS_I85X(dev_priv) || IS_I865G(dev_priv) ||
-	    (INTEL_GEN(dev_priv) >= 3 && INTEL_GEN(dev_priv) <= 5))
+	    (GRAPHICS_VER(dev_priv) >= 3 && GRAPHICS_VER(dev_priv) <= 5))
 		stolen_size = gen3_stolen_size(dev_priv);
 	else if (IS_CHERRYVIEW(dev_priv))
 		stolen_size = chv_stolen_size(dev_priv);
-	else if (INTEL_GEN(dev_priv) >= 6 && INTEL_GEN(dev_priv) < 8)
+	else if (GRAPHICS_VER(dev_priv) >= 6 && GRAPHICS_VER(dev_priv) < 8)
 		stolen_size = gen6_stolen_size(dev_priv);
-	else if (INTEL_GEN(dev_priv) == 8)
+	else if (GRAPHICS_VER(dev_priv) == 8)
 		stolen_size = gen8_stolen_size(dev_priv);
-	else if (INTEL_GEN(dev_priv) >= 9 && INTEL_GEN(dev_priv) < 12)
+	else if (GRAPHICS_VER(dev_priv) >= 9 && GRAPHICS_VER(dev_priv) < 12)
 		stolen_size = gen9_stolen_size(dev_priv);
 
 	if (stolen_base == 0 || stolen_size == 0)

@@ -11,6 +11,10 @@ struct dma_fence_chain {
 	struct dma_fence *prev;
 	uint64_t prev_seqno;
 	struct mutex lock;
+	union {
+		struct timeout to;
+		struct dma_fence_cb cb;
+	};
 };
 
 int dma_fence_chain_find_seqno(struct dma_fence **, uint64_t);
@@ -22,16 +26,28 @@ extern const struct dma_fence_ops dma_fence_chain_ops;
 static inline struct dma_fence_chain *
 to_dma_fence_chain(struct dma_fence *fence)
 {
-	if (fence && fence->ops != &dma_fence_chain_ops)
+	if ((fence == NULL) || (fence->ops != &dma_fence_chain_ops))
 		return NULL;
 
 	return container_of(fence, struct dma_fence_chain, base);
 }
 
-struct dma_fence *dma_fence_chain_next(struct dma_fence *);
+struct dma_fence *dma_fence_chain_walk(struct dma_fence *);
 
-/* XXX walk chain */
 #define dma_fence_chain_for_each(f, h) \
-	for (f = dma_fence_get(h); f != NULL; f = dma_fence_chain_next(f))
+	for (f = dma_fence_get(h); f != NULL; f = dma_fence_chain_walk(f))
+
+static inline struct dma_fence_chain *
+dma_fence_chain_alloc(void)
+{
+	return malloc(sizeof(struct dma_fence_chain), M_DRM,
+	    M_WAITOK | M_CANFAIL);
+}
+
+static inline void
+dma_fence_chain_free(struct dma_fence_chain *dfc)
+{
+	free(dfc, M_DRM, sizeof(struct dma_fence_chain));
+}
 
 #endif

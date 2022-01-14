@@ -43,7 +43,7 @@ int __init drm_sched_fence_slab_init(void)
 		return -ENOMEM;
 #else
 	pool_init(&sched_fence_slab, sizeof(struct drm_sched_fence),
-	    CACHELINESIZE, IPL_NONE, 0, "drm_sched_fence", NULL);
+	    CACHELINESIZE, IPL_TTY, 0, "drm_sched_fence", NULL);
 #endif
 
 	return 0;

@@ -31,6 +31,7 @@
 #define AMDGPU_PL_GDS		(TTM_PL_PRIV + 0)
 #define AMDGPU_PL_GWS		(TTM_PL_PRIV + 1)
 #define AMDGPU_PL_OA		(TTM_PL_PRIV + 2)
+#define AMDGPU_PL_PREEMPT	(TTM_PL_PRIV + 3)
 
 #define AMDGPU_GTT_MAX_TRANSFER_SIZE	512
 #define AMDGPU_GTT_NUM_TRANSFER_WINDOWS	2
@@ -41,6 +42,8 @@ struct amdgpu_vram_mgr {
 	struct ttm_resource_manager manager;
 	struct drm_mm mm;
 	spinlock_t lock;
+	struct list_head reservations_pending;
+	struct list_head reserved_pages;
 	atomic64_t usage;
 	atomic64_t vis_usage;
 };
@@ -49,19 +52,19 @@ struct amdgpu_gtt_mgr {
 	struct ttm_resource_manager manager;
 	struct drm_mm mm;
 	spinlock_t lock;
-	atomic64_t available;
+	atomic64_t used;
+};
+
+struct amdgpu_preempt_mgr {
+	struct ttm_resource_manager manager;
+	atomic64_t used;
 };
 
 struct amdgpu_mman {
-	struct ttm_bo_device		bdev;
-	bool				mem_global_referenced;
+	struct ttm_device		bdev;
 	bool				initialized;
 	void __iomem			*aper_base_kaddr;
 	bus_space_handle_t		aper_bsh;
-
-#if defined(CONFIG_DEBUG_FS)
-	struct dentry			*debugfs_entries[8];
-#endif
 
 	/* buffer handling */
 	const struct amdgpu_buffer_funcs	*buffer_funcs;
@@ -74,12 +77,17 @@ struct amdgpu_mman {
 
 	struct amdgpu_vram_mgr vram_mgr;
 	struct amdgpu_gtt_mgr gtt_mgr;
+	struct amdgpu_preempt_mgr preempt_mgr;
 
 	uint64_t		stolen_vga_size;
 	struct amdgpu_bo	*stolen_vga_memory;
 	uint64_t		stolen_extended_size;
 	struct amdgpu_bo	*stolen_extended_memory;
 	bool			keep_stolen_vga_memory;
+
+	struct amdgpu_bo	*stolen_reserved_memory;
+	uint64_t		stolen_reserved_offset;
+	uint64_t		stolen_reserved_size;
 
 	/* discovery */
 	uint8_t				*discovery_bin;
@@ -101,6 +109,8 @@ struct amdgpu_copy_mem {
 
 int amdgpu_gtt_mgr_init(struct amdgpu_device *adev, uint64_t gtt_size);
 void amdgpu_gtt_mgr_fini(struct amdgpu_device *adev);
+int amdgpu_preempt_mgr_init(struct amdgpu_device *adev);
+void amdgpu_preempt_mgr_fini(struct amdgpu_device *adev);
 int amdgpu_vram_mgr_init(struct amdgpu_device *adev);
 void amdgpu_vram_mgr_fini(struct amdgpu_device *adev);
 
@@ -108,21 +118,26 @@ bool amdgpu_gtt_mgr_has_gart_addr(struct ttm_resource *mem);
 uint64_t amdgpu_gtt_mgr_usage(struct ttm_resource_manager *man);
 int amdgpu_gtt_mgr_recover(struct ttm_resource_manager *man);
 
+uint64_t amdgpu_preempt_mgr_usage(struct ttm_resource_manager *man);
+
 u64 amdgpu_vram_mgr_bo_visible_size(struct amdgpu_bo *bo);
 int amdgpu_vram_mgr_alloc_sgt(struct amdgpu_device *adev,
 			      struct ttm_resource *mem,
+			      u64 offset, u64 size,
 			      struct device *dev,
 			      enum dma_data_direction dir,
 			      struct sg_table **sgt);
-void amdgpu_vram_mgr_free_sgt(struct amdgpu_device *adev,
-			      struct device *dev,
+void amdgpu_vram_mgr_free_sgt(struct device *dev,
 			      enum dma_data_direction dir,
 			      struct sg_table *sgt);
 uint64_t amdgpu_vram_mgr_usage(struct ttm_resource_manager *man);
 uint64_t amdgpu_vram_mgr_vis_usage(struct ttm_resource_manager *man);
+int amdgpu_vram_mgr_reserve_range(struct ttm_resource_manager *man,
+				  uint64_t start, uint64_t size);
+int amdgpu_vram_mgr_query_page_status(struct ttm_resource_manager *man,
+				      uint64_t start);
 
 int amdgpu_ttm_init(struct amdgpu_device *adev);
-void amdgpu_ttm_late_init(struct amdgpu_device *adev);
 void amdgpu_ttm_fini(struct amdgpu_device *adev);
 void amdgpu_ttm_set_buffer_funcs_status(struct amdgpu_device *adev,
 					bool enable);
@@ -143,17 +158,12 @@ int amdgpu_fill_buffer(struct amdgpu_bo *bo,
 			struct dma_resv *resv,
 			struct dma_fence **fence);
 
-#ifdef __linux__
-int amdgpu_mmap(struct file *filp, struct vm_area_struct *vma);
-#else
-struct uvm_object *amdgpu_mmap(struct file *, vm_prot_t, voff_t, vsize_t);
-#endif
 int amdgpu_ttm_alloc_gart(struct ttm_buffer_object *bo);
 int amdgpu_ttm_recover_gart(struct ttm_buffer_object *tbo);
 uint64_t amdgpu_ttm_domain_start(struct amdgpu_device *adev, uint32_t type);
 
 #if IS_ENABLED(CONFIG_DRM_AMDGPU_USERPTR)
-int amdgpu_ttm_tt_get_user_pages(struct amdgpu_bo *bo, struct vm_page **pages);
+int amdgpu_ttm_tt_get_user_pages(struct amdgpu_bo *bo, struct page **pages);
 bool amdgpu_ttm_tt_get_user_pages_done(struct ttm_tt *ttm);
 #else
 static inline int amdgpu_ttm_tt_get_user_pages(struct amdgpu_bo *bo,
@@ -182,6 +192,6 @@ uint64_t amdgpu_ttm_tt_pde_flags(struct ttm_tt *ttm, struct ttm_resource *mem);
 uint64_t amdgpu_ttm_tt_pte_flags(struct amdgpu_device *adev, struct ttm_tt *ttm,
 				 struct ttm_resource *mem);
 
-int amdgpu_ttm_debugfs_init(struct amdgpu_device *adev);
+void amdgpu_ttm_debugfs_init(struct amdgpu_device *adev);
 
 #endif

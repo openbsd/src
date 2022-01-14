@@ -57,8 +57,10 @@ struct dma_fence *dma_fence_get_rcu(struct dma_fence *);
 struct dma_fence *dma_fence_get_rcu_safe(struct dma_fence **);
 void dma_fence_release(struct kref *);
 void dma_fence_put(struct dma_fence *);
-int dma_fence_signal_locked(struct dma_fence *);
 int dma_fence_signal(struct dma_fence *);
+int dma_fence_signal_locked(struct dma_fence *);
+int dma_fence_signal_timestamp(struct dma_fence *, ktime_t);
+int dma_fence_signal_timestamp_locked(struct dma_fence *, ktime_t);
 bool dma_fence_is_signaled(struct dma_fence *);
 bool dma_fence_is_signaled_locked(struct dma_fence *);
 long dma_fence_default_wait(struct dma_fence *, bool, long);
@@ -74,6 +76,7 @@ int dma_fence_add_callback(struct dma_fence *, struct dma_fence_cb *,
 bool dma_fence_remove_callback(struct dma_fence *, struct dma_fence_cb *);
 
 struct dma_fence *dma_fence_get_stub(void);
+struct dma_fence *dma_fence_allocate_private_stub(void);
 
 static inline void
 dma_fence_free(struct dma_fence *fence)

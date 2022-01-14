@@ -198,11 +198,27 @@ static enum dscl_mode_sel dpp1_dscl_get_dscl_mode(
 	return DSCL_MODE_SCALING_420_YCBCR_ENABLE;
 }
 
+static void dpp1_power_on_dscl(
+	struct dpp *dpp_base,
+	bool power_on)
+{
+	struct dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
+
+	if (dpp->tf_regs->DSCL_MEM_PWR_CTRL) {
+		REG_UPDATE(DSCL_MEM_PWR_CTRL, LUT_MEM_PWR_FORCE, power_on ? 0 : 3);
+		if (power_on)
+			REG_WAIT(DSCL_MEM_PWR_STATUS, LUT_MEM_PWR_STATE, 0, 1, 5);
+	}
+}
+
+
 static void dpp1_dscl_set_lb(
 	struct dcn10_dpp *dpp,
 	const struct line_buffer_params *lb_params,
 	enum lb_memory_config mem_size_config)
 {
+	uint32_t max_partitions = 63; /* Currently hardcoded on all ASICs before DCN 3.2 */
+
 	/* LB */
 	if (dpp->base.caps->dscl_data_proc_format == DSCL_DATA_PRCESSING_FIXED_FORMAT) {
 		/* DSCL caps: pixel data processed in fixed format */
@@ -225,9 +241,12 @@ static void dpp1_dscl_set_lb(
 			LB_DATA_FORMAT__ALPHA_EN, lb_params->alpha_en); /* Alpha enable */
 	}
 
+	if (dpp->base.caps->max_lb_partitions == 31)
+		max_partitions = 31;
+
 	REG_SET_2(LB_MEMORY_CTRL, 0,
 		MEMORY_CONFIG, mem_size_config,
-		LB_MAX_PARTITIONS, 63);
+		LB_MAX_PARTITIONS, max_partitions);
 }
 
 static const uint16_t *dpp1_dscl_get_filter_coeffs_64p(int taps, struct fixed31_32 ratio)
@@ -617,8 +636,10 @@ static void dpp1_dscl_set_manual_ratio_init(
 		SCL_V_INIT_INT, init_int);
 
 	if (REG(SCL_VERT_FILTER_INIT_BOT)) {
-		init_frac = dc_fixpt_u0d19(data->inits.v_bot) << 5;
-		init_int = dc_fixpt_floor(data->inits.v_bot);
+		struct fixed31_32 bot = dc_fixpt_add(data->inits.v, data->ratios.vert);
+
+		init_frac = dc_fixpt_u0d19(bot) << 5;
+		init_int = dc_fixpt_floor(bot);
 		REG_SET_2(SCL_VERT_FILTER_INIT_BOT, 0,
 			SCL_V_INIT_FRAC_BOT, init_frac,
 			SCL_V_INIT_INT_BOT, init_int);
@@ -631,41 +652,60 @@ static void dpp1_dscl_set_manual_ratio_init(
 		SCL_V_INIT_INT_C, init_int);
 
 	if (REG(SCL_VERT_FILTER_INIT_BOT_C)) {
-		init_frac = dc_fixpt_u0d19(data->inits.v_c_bot) << 5;
-		init_int = dc_fixpt_floor(data->inits.v_c_bot);
+		struct fixed31_32 bot = dc_fixpt_add(data->inits.v_c, data->ratios.vert_c);
+
+		init_frac = dc_fixpt_u0d19(bot) << 5;
+		init_int = dc_fixpt_floor(bot);
 		REG_SET_2(SCL_VERT_FILTER_INIT_BOT_C, 0,
 			SCL_V_INIT_FRAC_BOT_C, init_frac,
 			SCL_V_INIT_INT_BOT_C, init_int);
 	}
 }
 
-
-
-static void dpp1_dscl_set_recout(
-			struct dcn10_dpp *dpp, const struct rect *recout)
+/**
+ * dpp1_dscl_set_recout - Set the first pixel of RECOUT in the OTG active area
+ *
+ * @dpp: DPP data struct
+ * @recount: Rectangle information
+ *
+ * This function sets the MPC RECOUT_START and RECOUT_SIZE registers based on
+ * the values specified in the recount parameter.
+ *
+ * Note: This function only have effect if AutoCal is disabled.
+ */
+static void dpp1_dscl_set_recout(struct dcn10_dpp *dpp,
+				 const struct rect *recout)
 {
 	int visual_confirm_on = 0;
 	if (dpp->base.ctx->dc->debug.visual_confirm != VISUAL_CONFIRM_DISABLE)
 		visual_confirm_on = 1;
 
 	REG_SET_2(RECOUT_START, 0,
-		/* First pixel of RECOUT */
-			 RECOUT_START_X, recout->x,
-		/* First line of RECOUT */
-			 RECOUT_START_Y, recout->y);
+		  /* First pixel of RECOUT in the active OTG area */
+		  RECOUT_START_X, recout->x,
+		  /* First line of RECOUT in the active OTG area */
+		  RECOUT_START_Y, recout->y);
 
 	REG_SET_2(RECOUT_SIZE, 0,
-		/* Number of RECOUT horizontal pixels */
-			 RECOUT_WIDTH, recout->width,
-		/* Number of RECOUT vertical lines */
-			 RECOUT_HEIGHT, recout->height
-			 - visual_confirm_on * 4 * (dpp->base.inst + 1));
+		  /* Number of RECOUT horizontal pixels */
+		  RECOUT_WIDTH, recout->width,
+		  /* Number of RECOUT vertical lines */
+		  RECOUT_HEIGHT, recout->height
+			 - visual_confirm_on * 2 * (dpp->base.inst + 1));
 }
 
-/* Main function to program scaler and line buffer in manual scaling mode */
-void dpp1_dscl_set_scaler_manual_scale(
-	struct dpp *dpp_base,
-	const struct scaler_data *scl_data)
+/**
+ * dpp1_dscl_set_scaler_manual_scale - Manually program scaler and line buffer
+ *
+ * @dpp_base: High level DPP struct
+ * @scl_data: scalaer_data info
+ *
+ * This is the primary function to program scaler and line buffer in manual
+ * scaling mode. To execute the required operations for manual scale, we need
+ * to disable AutoCal first.
+ */
+void dpp1_dscl_set_scaler_manual_scale(struct dpp *dpp_base,
+				       const struct scaler_data *scl_data)
 {
 	enum lb_memory_config lb_config;
 	struct dcn10_dpp *dpp = TO_DCN10_DPP(dpp_base);
@@ -680,6 +720,11 @@ void dpp1_dscl_set_scaler_manual_scale(
 	PERF_TRACE();
 
 	dpp->scl_data = *scl_data;
+
+	if (dpp_base->ctx->dc->debug.enable_mem_low_power.bits.dscl) {
+		if (dscl_mode != DSCL_MODE_DSCL_BYPASS)
+			dpp1_power_on_dscl(dpp_base, true);
+	}
 
 	/* Autocal off */
 	REG_SET_3(DSCL_AUTOCAL, 0,
@@ -700,8 +745,11 @@ void dpp1_dscl_set_scaler_manual_scale(
 	/* SCL mode */
 	REG_UPDATE(SCL_MODE, DSCL_MODE, dscl_mode);
 
-	if (dscl_mode == DSCL_MODE_DSCL_BYPASS)
+	if (dscl_mode == DSCL_MODE_DSCL_BYPASS) {
+		if (dpp_base->ctx->dc->debug.enable_mem_low_power.bits.dscl)
+			dpp1_power_on_dscl(dpp_base, false);
 		return;
+	}
 
 	/* LB */
 	lb_config =  dpp1_dscl_find_lb_memory_config(dpp, scl_data);

@@ -34,4 +34,10 @@ int navi10_reg_base_init(struct amdgpu_device *adev);
 int navi14_reg_base_init(struct amdgpu_device *adev);
 int navi12_reg_base_init(struct amdgpu_device *adev);
 int sienna_cichlid_reg_base_init(struct amdgpu_device *adev);
+void vangogh_reg_base_init(struct amdgpu_device *adev);
+int dimgrey_cavefish_reg_base_init(struct amdgpu_device *adev);
+int beige_goby_reg_base_init(struct amdgpu_device *adev);
+int yellow_carp_reg_base_init(struct amdgpu_device *adev);
+int cyan_skillfish_reg_base_init(struct amdgpu_device *adev);
+
 #endif

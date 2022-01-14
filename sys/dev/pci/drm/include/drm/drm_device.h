@@ -33,7 +33,7 @@ struct pci_controller;
 
 
 /**
- * enum drm_switch_power - power state of drm device
+ * enum switch_power_state - power state of drm device
  */
 
 enum switch_power_state {
@@ -57,14 +57,7 @@ enum switch_power_state {
  * may contain multiple heads.
  */
 struct drm_device {
-	struct device	*dev;
-
-	/**
-	 * @legacy_dev_list:
-	 *
-	 * List of devices per driver for stealth attach cleanup
-	 */
-	struct list_head legacy_dev_list;
+	struct device *dev;
 
 	/** @if_version: Highest interface version set */
 	int if_version;
@@ -93,13 +86,14 @@ struct drm_device {
 	} managed;
 
 	/** @driver: DRM driver managing the device */
-	struct drm_driver *driver;
+	const struct drm_driver *driver;
 
 	bus_dma_tag_t		dmat;
 	bus_space_tag_t		bst;
 
 	struct klist note;
 	struct pci_dev  _pdev;
+	struct pci_dev *pdev;
 
 	struct mutex	quiesce_mtx;
 	int		quiesce;
@@ -223,20 +217,6 @@ struct drm_device {
 	struct list_head clientlist;
 
 	/**
-	 * @irq_enabled:
-	 *
-	 * Indicates that interrupt handling is enabled, specifically vblank
-	 * handling. Drivers which don't use drm_irq_install() need to set this
-	 * to true manually.
-	 */
-	bool irq_enabled;
-
-	/**
-	 * @irq: Used by the drm_irq_install() and drm_irq_unistall() helpers.
-	 */
-	int irq;
-
-	/**
 	 * @vblank_disable_immediate:
 	 *
 	 * If true, vblank interrupt will be disabled immediately when the
@@ -307,16 +287,6 @@ struct drm_device {
 	 */
 	spinlock_t event_lock;
 
-	/** @agp: AGP data */
-	struct drm_agp_head *agp;
-
-	/** @pdev: PCI device structure */
-	struct pci_dev *pdev;
-
-#ifdef __alpha__
-	/** @hose: PCI hose, only used on ALPHA platforms. */
-	struct pci_controller *hose;
-#endif
 	/** @num_crtcs: Number of CRTCs on this device */
 	unsigned int num_crtcs;
 
@@ -358,6 +328,17 @@ struct drm_device {
 	/* Everything below here is for legacy driver, never use! */
 	/* private: */
 #if IS_ENABLED(CONFIG_DRM_LEGACY)
+	/* List of devices per driver for stealth attach cleanup */
+	struct list_head legacy_dev_list;
+
+#ifdef __alpha__
+	/** @hose: PCI hose, only used on ALPHA platforms. */
+	struct pci_controller *hose;
+#endif
+
+	/* AGP data */
+	struct drm_agp_head *agp;
+
 	/* Context handle management - linked list of context handles */
 	struct list_head ctxlist;
 
@@ -404,6 +385,12 @@ struct drm_device {
 
 	/* Scatter gather memory */
 	struct drm_sg_mem *sg;
+
+	/* IRQs */
+	bool irq_enabled;
+	int irq;
+#else
+	struct drm_agp_head *agp;
 #endif
 };
 

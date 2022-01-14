@@ -25,8 +25,9 @@
 #define __MXGPU_AI_H__
 
 #define AI_MAILBOX_POLL_ACK_TIMEDOUT	500
-#define AI_MAILBOX_POLL_MSG_TIMEDOUT	12000
+#define AI_MAILBOX_POLL_MSG_TIMEDOUT	6000
 #define AI_MAILBOX_POLL_FLR_TIMEDOUT	5000
+#define AI_MAILBOX_POLL_MSG_REP_MAX	11
 
 enum idh_request {
 	IDH_REQ_GPU_INIT_ACCESS = 1,
@@ -36,6 +37,7 @@ enum idh_request {
 	IDH_REQ_GPU_RESET_ACCESS,
 
 	IDH_LOG_VF_ERROR       = 200,
+	IDH_READY_TO_RESET 	= 201,
 };
 
 enum idh_event {

@@ -128,7 +128,7 @@ ww_mutex_trylock(struct ww_mutex *lock) {
  * It is assumed that the called will not hold any (ww_mutex) resources when
  * calling the slow path as this could lead to deadlocks.
  *
- * When `intr` is `true`, the ssleep will be interruptable.
+ * When `intr` is `true`, the ssleep will be interruptible.
  */
 static inline int
 __ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ctx, bool slow, bool intr) {
@@ -165,7 +165,7 @@ __ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ctx, bool slow, bo
 			 * - We are in the slow-path (first lock to obtain).
                          *
 			 * - No context was specified. We assume a single
-			 *   resouce, so there is no danger of a deadlock.
+			 *   resource, so there is no danger of a deadlock.
                          *
 			 * - An `older` process (`ctx`) tries to acquire a
 			 *   lock already held by a `younger` process.

@@ -1,4 +1,4 @@
-/* $OpenBSD: drm_gem_cma_helper.c,v 1.5 2021/07/07 02:38:21 jsg Exp $ */
+/* $OpenBSD: drm_gem_cma_helper.c,v 1.6 2022/01/14 06:52:59 jsg Exp $ */
 /* $NetBSD: drm_gem_cma_helper.c,v 1.9 2019/11/05 23:29:28 jmcneill Exp $ */
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,19 @@
  */
 
 #include <sys/param.h>
+#include <linux/dma-buf-map.h>
 
 #include <drm/drm_device.h>
 #include <drm/drm_gem_cma_helper.h>
 
 #include <uvm/uvm.h>
+
+static const struct drm_gem_object_funcs drm_gem_cma_default_funcs = {
+	.free = drm_gem_cma_free_object,
+	.get_sg_table = drm_gem_cma_get_sg_table,
+	.vmap = drm_gem_cma_vmap,
+//	.mmap = drm_gem_cma_mmap,
+};
 
 static struct drm_gem_cma_object *
 drm_gem_cma_create_internal(struct drm_device *ddev, size_t size,
@@ -43,6 +51,7 @@ drm_gem_cma_create_internal(struct drm_device *ddev, size_t size,
 	obj = malloc(sizeof(*obj), M_DRM, M_WAITOK | M_ZERO);
 	obj->dmat = ddev->dmat;
 	obj->dmasize = size;
+	obj->base.funcs = &drm_gem_cma_default_funcs;
 
 	if (sgt) {
 #ifdef notyet
@@ -211,7 +220,7 @@ drm_gem_cma_fault(struct drm_gem_object *gem_obj, struct uvm_faultinfo *ufi,
 }
 
 struct sg_table *
-drm_gem_cma_prime_get_sg_table(struct drm_gem_object *gem_obj)
+drm_gem_cma_get_sg_table(struct drm_gem_object *gem_obj)
 {
 	struct drm_gem_cma_object *obj = to_drm_gem_cma_obj(gem_obj);
 
@@ -238,19 +247,12 @@ drm_gem_cma_prime_import_sg_table(struct drm_device *ddev,
 #endif
 }
 
-void *
-drm_gem_cma_prime_vmap(struct drm_gem_object *gem_obj)
+int
+drm_gem_cma_vmap(struct drm_gem_object *gem_obj, struct dma_buf_map *map)
 {
 	struct drm_gem_cma_object *obj = to_drm_gem_cma_obj(gem_obj);
 
-	return obj->vaddr;
-}
+	dma_buf_map_set_vaddr(map, obj->vaddr);
 
-void
-drm_gem_cma_prime_vunmap(struct drm_gem_object *gem_obj, void *vaddr)
-{
-	struct drm_gem_cma_object *obj =
-	    to_drm_gem_cma_obj(gem_obj);
-
-	KASSERT(vaddr == obj->vaddr);
+	return 0;
 }

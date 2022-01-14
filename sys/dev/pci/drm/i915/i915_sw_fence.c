@@ -18,9 +18,14 @@
 #define I915_SW_FENCE_BUG_ON(expr) BUILD_BUG_ON_INVALID(expr)
 #endif
 
-#define I915_SW_FENCE_FLAG_ALLOC BIT(3) /* after WQ_FLAG_* for safety */
-
 static DEFINE_SPINLOCK(i915_sw_fence_lock);
+
+#define WQ_FLAG_BITS \
+	BITS_PER_TYPE(typeof_member(struct wait_queue_entry, flags))
+
+/* after WQ_FLAG_* for safety */
+#define I915_SW_FENCE_FLAG_FENCE BIT(WQ_FLAG_BITS - 1)
+#define I915_SW_FENCE_FLAG_ALLOC BIT(WQ_FLAG_BITS - 2)
 
 enum {
 	DEBUG_FENCE_IDLE = 0,
@@ -154,10 +159,10 @@ static void __i915_sw_fence_wake_up_all(struct i915_sw_fence *fence,
 	spin_lock_irqsave_nested(&x->lock, flags, 1 + !!continuation);
 	if (continuation) {
 		list_for_each_entry_safe(pos, next, &x->head, entry) {
-			if (pos->func == autoremove_wake_function)
-				pos->func(pos, TASK_NORMAL, 0, continuation);
-			else
+			if (pos->flags & I915_SW_FENCE_FLAG_FENCE)
 				list_move_tail(&pos->entry, continuation);
+			else
+				pos->func(pos, TASK_NORMAL, 0, continuation);
 		}
 	} else {
 		DRM_LIST_HEAD(extra);
@@ -166,9 +171,9 @@ static void __i915_sw_fence_wake_up_all(struct i915_sw_fence *fence,
 			list_for_each_entry_safe(pos, next, &x->head, entry) {
 				int wake_flags;
 
-				wake_flags = fence->error;
-				if (pos->func == autoremove_wake_function)
-					wake_flags = 0;
+				wake_flags = 0;
+				if (pos->flags & I915_SW_FENCE_FLAG_FENCE)
+					wake_flags = fence->error;
 
 				pos->func(pos, TASK_NORMAL, wake_flags, &extra);
 			}
@@ -332,8 +337,8 @@ static int __i915_sw_fence_await_sw_fence(struct i915_sw_fence *fence,
 					  struct i915_sw_fence *signaler,
 					  wait_queue_entry_t *wq, gfp_t gfp)
 {
+	unsigned int pending;
 	unsigned long flags;
-	int pending;
 
 	debug_fence_assert(fence);
 	might_sleep_if(gfpflags_allow_blocking(gfp));
@@ -349,7 +354,7 @@ static int __i915_sw_fence_await_sw_fence(struct i915_sw_fence *fence,
 	if (unlikely(i915_sw_fence_check_if_after(fence, signaler)))
 		return -EINVAL;
 
-	pending = 0;
+	pending = I915_SW_FENCE_FLAG_FENCE;
 	if (!wq) {
 		wq = kmalloc(sizeof(*wq), gfp);
 		if (!wq) {
@@ -582,7 +587,7 @@ int i915_sw_fence_await_reservation(struct i915_sw_fence *fence,
 		struct dma_fence **shared;
 		unsigned int count, i;
 
-		ret = dma_resv_get_fences_rcu(resv, &excl, &count, &shared);
+		ret = dma_resv_get_fences(resv, &excl, &count, &shared);
 		if (ret)
 			return ret;
 
@@ -606,7 +611,7 @@ int i915_sw_fence_await_reservation(struct i915_sw_fence *fence,
 			dma_fence_put(shared[i]);
 		kfree(shared);
 	} else {
-		excl = dma_resv_get_excl_rcu(resv);
+		excl = dma_resv_get_excl_unlocked(resv);
 	}
 
 	if (ret >= 0 && excl && excl->ops != exclude) {

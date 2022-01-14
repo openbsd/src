@@ -62,13 +62,12 @@ MODULE_FIRMWARE("amdgpu/navi14_smc.bin");
 MODULE_FIRMWARE("amdgpu/navi12_smc.bin");
 MODULE_FIRMWARE("amdgpu/sienna_cichlid_smc.bin");
 MODULE_FIRMWARE("amdgpu/navy_flounder_smc.bin");
+MODULE_FIRMWARE("amdgpu/dimgrey_cavefish_smc.bin");
+MODULE_FIRMWARE("amdgpu/beige_goby_smc.bin");
 
 #define SMU11_VOLTAGE_SCALE 4
 
 #define SMU11_MODE1_RESET_WAIT_TIME_IN_MS 500  //500ms
-
-#define LINK_WIDTH_MAX				6
-#define LINK_SPEED_MAX				3
 
 #define smnPCIE_LC_LINK_WIDTH_CNTL		0x11140288
 #define PCIE_LC_LINK_WIDTH_CNTL__LC_LINK_WIDTH_RD_MASK 0x00000070L
@@ -77,18 +76,23 @@ MODULE_FIRMWARE("amdgpu/navy_flounder_smc.bin");
 #define PCIE_LC_SPEED_CNTL__LC_CURRENT_DATA_RATE_MASK 0xC000
 #define PCIE_LC_SPEED_CNTL__LC_CURRENT_DATA_RATE__SHIFT 0xE
 
-static int link_width[] = {0, 1, 2, 4, 8, 12, 16};
-static int link_speed[] = {25, 50, 80, 160};
+#define mmTHM_BACO_CNTL_ARCT			0xA7
+#define mmTHM_BACO_CNTL_ARCT_BASE_IDX		0
 
 int smu_v11_0_init_microcode(struct smu_context *smu)
 {
 	struct amdgpu_device *adev = smu->adev;
 	const char *chip_name;
-	char fw_name[30];
+	char fw_name[SMU_FW_NAME_LEN];
 	int err = 0;
 	const struct smc_firmware_header_v1_0 *hdr;
 	const struct common_firmware_header *header;
 	struct amdgpu_firmware_info *ucode = NULL;
+
+	if (amdgpu_sriov_vf(adev) &&
+			((adev->asic_type == CHIP_NAVI12) ||
+			 (adev->asic_type == CHIP_SIENNA_CICHLID)))
+		return 0;
 
 	switch (adev->asic_type) {
 	case CHIP_ARCTURUS:
@@ -108,6 +112,12 @@ int smu_v11_0_init_microcode(struct smu_context *smu)
 		break;
 	case CHIP_NAVY_FLOUNDER:
 		chip_name = "navy_flounder";
+		break;
+	case CHIP_DIMGREY_CAVEFISH:
+		chip_name = "dimgrey_cavefish";
+		break;
+	case CHIP_BEIGE_GOBY:
+		chip_name = "beige_goby";
 		break;
 	default:
 		dev_err(adev->dev, "Unsupported ASIC type %d\n", adev->asic_type);
@@ -212,6 +222,7 @@ int smu_v11_0_check_fw_status(struct smu_context *smu)
 
 int smu_v11_0_check_fw_version(struct smu_context *smu)
 {
+	struct amdgpu_device *adev = smu->adev;
 	uint32_t if_version = 0xff, smu_version = 0xff;
 	uint16_t smu_major;
 	uint8_t smu_minor, smu_debug;
@@ -224,6 +235,8 @@ int smu_v11_0_check_fw_version(struct smu_context *smu)
 	smu_major = (smu_version >> 16) & 0xffff;
 	smu_minor = (smu_version >> 8) & 0xff;
 	smu_debug = (smu_version >> 0) & 0xff;
+	if (smu->is_apu)
+		adev->pm.fw_version = smu_version;
 
 	switch (smu->adev->asic_type) {
 	case CHIP_ARCTURUS:
@@ -243,6 +256,18 @@ int smu_v11_0_check_fw_version(struct smu_context *smu)
 		break;
 	case CHIP_NAVY_FLOUNDER:
 		smu->smc_driver_if_version = SMU11_DRIVER_IF_VERSION_Navy_Flounder;
+		break;
+	case CHIP_VANGOGH:
+		smu->smc_driver_if_version = SMU11_DRIVER_IF_VERSION_VANGOGH;
+		break;
+	case CHIP_DIMGREY_CAVEFISH:
+		smu->smc_driver_if_version = SMU11_DRIVER_IF_VERSION_Dimgrey_Cavefish;
+		break;
+	case CHIP_BEIGE_GOBY:
+		smu->smc_driver_if_version = SMU11_DRIVER_IF_VERSION_Beige_Goby;
+		break;
+	case CHIP_CYAN_SKILLFISH:
+		smu->smc_driver_if_version = SMU11_DRIVER_IF_VERSION_Cyan_Skillfish;
 		break;
 	default:
 		dev_err(smu->adev->dev, "smu unsupported asic type:%d.\n", smu->adev->asic_type);
@@ -326,8 +351,7 @@ int smu_v11_0_setup_pptable(struct smu_context *smu)
 		hdr = (const struct smc_firmware_header_v1_0 *) adev->pm.fw->data;
 		version_major = le16_to_cpu(hdr->header.header_version_major);
 		version_minor = le16_to_cpu(hdr->header.header_version_minor);
-		if ((version_major == 2 && smu->smu_table.boot_values.pp_table_id > 0) ||
-			adev->asic_type == CHIP_NAVY_FLOUNDER) {
+		if (version_major == 2 && smu->smu_table.boot_values.pp_table_id > 0) {
 			dev_info(adev->dev, "use driver provided pptable %d\n", smu->smu_table.boot_values.pp_table_id);
 			switch (version_minor) {
 			case 0:
@@ -401,10 +425,20 @@ int smu_v11_0_init_smc_tables(struct smu_context *smu)
 			ret = -ENOMEM;
 			goto err3_out;
 		}
+
+		smu_table->user_overdrive_table =
+			kzalloc(tables[SMU_TABLE_OVERDRIVE].size, GFP_KERNEL);
+		if (!smu_table->user_overdrive_table) {
+			ret = -ENOMEM;
+			goto err4_out;
+		}
+
 	}
 
 	return 0;
 
+err4_out:
+	kfree(smu_table->boot_overdrive_table);
 err3_out:
 	kfree(smu_table->overdrive_table);
 err2_out:
@@ -421,15 +455,19 @@ int smu_v11_0_fini_smc_tables(struct smu_context *smu)
 	struct smu_dpm_context *smu_dpm = &smu->smu_dpm;
 
 	kfree(smu_table->gpu_metrics_table);
+	kfree(smu_table->user_overdrive_table);
 	kfree(smu_table->boot_overdrive_table);
 	kfree(smu_table->overdrive_table);
 	kfree(smu_table->max_sustainable_clocks);
 	kfree(smu_table->driver_pptable);
+	kfree(smu_table->clocks_table);
 	smu_table->gpu_metrics_table = NULL;
+	smu_table->user_overdrive_table = NULL;
 	smu_table->boot_overdrive_table = NULL;
 	smu_table->overdrive_table = NULL;
 	smu_table->max_sustainable_clocks = NULL;
 	smu_table->driver_pptable = NULL;
+	smu_table->clocks_table = NULL;
 	kfree(smu_table->hardcode_pptable);
 	smu_table->hardcode_pptable = NULL;
 
@@ -455,12 +493,14 @@ int smu_v11_0_fini_smc_tables(struct smu_context *smu)
 int smu_v11_0_init_power(struct smu_context *smu)
 {
 	struct smu_power_context *smu_power = &smu->smu_power;
+	size_t size = smu->adev->asic_type == CHIP_VANGOGH ?
+			sizeof(struct smu_11_5_power_context) :
+			sizeof(struct smu_11_0_power_context);
 
-	smu_power->power_context = kzalloc(sizeof(struct smu_11_0_dpm_context),
-					   GFP_KERNEL);
+	smu_power->power_context = kzalloc(size, GFP_KERNEL);
 	if (!smu_power->power_context)
 		return -ENOMEM;
-	smu_power->power_context_size = sizeof(struct smu_11_0_dpm_context);
+	smu_power->power_context_size = size;
 
 	return 0;
 }
@@ -540,8 +580,10 @@ int smu_v11_0_get_vbios_bootup_values(struct smu_context *smu)
 		smu->smu_table.boot_values.vdd_gfx = v_3_1->bootup_vddgfx_mv;
 		smu->smu_table.boot_values.cooling_id = v_3_1->coolingsolution_id;
 		smu->smu_table.boot_values.pp_table_id = 0;
+		smu->smu_table.boot_values.firmware_caps = v_3_1->firmware_capability;
 		break;
 	case 3:
+	case 4:
 	default:
 		v_3_3 = (struct atom_firmware_info_v3_3 *)header;
 		smu->smu_table.boot_values.revision = v_3_3->firmware_revision;
@@ -555,6 +597,7 @@ int smu_v11_0_get_vbios_bootup_values(struct smu_context *smu)
 		smu->smu_table.boot_values.vdd_gfx = v_3_3->bootup_vddgfx_mv;
 		smu->smu_table.boot_values.cooling_id = v_3_3->coolingsolution_id;
 		smu->smu_table.boot_values.pp_table_id = v_3_3->pplib_pptable_id;
+		smu->smu_table.boot_values.firmware_caps = v_3_3->firmware_capability;
 	}
 
 	smu->smu_table.boot_values.format_revision = header->format_revision;
@@ -591,6 +634,11 @@ int smu_v11_0_get_vbios_bootup_values(struct smu_context *smu)
 						 (uint8_t)SMU11_SYSPLL1_0_FCLK_ID,
 						 (uint8_t)SMU11_SYSPLL1_2_ID,
 						 &smu->smu_table.boot_values.fclk);
+
+	smu_v11_0_atom_get_smu_clockinfo(smu->adev,
+					 (uint8_t)SMU11_SYSPLL3_1_LCLK_ID,
+					 (uint8_t)SMU11_SYSPLL3_1_ID,
+					 &smu->smu_table.boot_values.lclk);
 
 	return 0;
 }
@@ -699,8 +747,11 @@ int smu_v11_0_init_display_count(struct smu_context *smu, uint32_t count)
 {
 	struct amdgpu_device *adev = smu->adev;
 
-	/* Navy_Flounder do not support to change display num currently */
-	if (adev->asic_type == CHIP_NAVY_FLOUNDER)
+	/* Navy_Flounder/Dimgrey_Cavefish do not support to change
+	 * display num currently
+	 */
+	if (adev->asic_type >= CHIP_NAVY_FLOUNDER &&
+	    adev->asic_type <= CHIP_BEIGE_GOBY)
 		return 0;
 
 	return smu_cmn_send_smc_msg_with_param(smu,
@@ -716,8 +767,10 @@ int smu_v11_0_set_allowed_mask(struct smu_context *smu)
 	int ret = 0;
 	uint32_t feature_mask[2];
 
-	if (bitmap_empty(feature->allowed, SMU_FEATURE_MAX) || feature->feature_num < 64)
+	if (bitmap_empty(feature->allowed, SMU_FEATURE_MAX) || feature->feature_num < 64) {
+		ret = -EINVAL;
 		goto failed;
+	}
 
 	bitmap_copy((unsigned long *)feature_mask, feature->allowed, 64);
 
@@ -907,9 +960,13 @@ int smu_v11_0_get_current_power_limit(struct smu_context *smu,
 	if (power_src < 0)
 		return -EINVAL;
 
+	/*
+	 * BIT 24-31: ControllerId (only PPT0 is supported for now)
+	 * BIT 16-23: PowerSource
+	 */
 	ret = smu_cmn_send_smc_msg_with_param(smu,
 					  SMU_MSG_GetPptLimit,
-					  power_src << 16,
+					  (0 << 24) | (power_src << 16),
 					  power_limit);
 	if (ret)
 		dev_err(smu->adev->dev, "[%s] get PPT limit failed!", __func__);
@@ -919,6 +976,7 @@ int smu_v11_0_get_current_power_limit(struct smu_context *smu,
 
 int smu_v11_0_set_power_limit(struct smu_context *smu, uint32_t n)
 {
+	int power_src;
 	int ret = 0;
 
 	if (!smu_cmn_feature_is_enabled(smu, SMU_FEATURE_PPT_BIT)) {
@@ -926,6 +984,22 @@ int smu_v11_0_set_power_limit(struct smu_context *smu, uint32_t n)
 		return -EOPNOTSUPP;
 	}
 
+	power_src = smu_cmn_to_asic_specific_index(smu,
+					CMN2ASIC_MAPPING_PWR,
+					smu->adev->pm.ac_power ?
+					SMU_POWER_SOURCE_AC :
+					SMU_POWER_SOURCE_DC);
+	if (power_src < 0)
+		return -EINVAL;
+
+	/*
+	 * BIT 24-31: ControllerId (only PPT0 is supported for now)
+	 * BIT 16-23: PowerSource
+	 * BIT 0-15: PowerLimit
+	 */
+	n &= 0xFFFF;
+	n |= 0 << 24;
+	n |= (power_src) << 16;
 	ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_SetPptLimit, n, NULL);
 	if (ret) {
 		dev_err(smu->adev->dev, "[%s] Set power limit Failed!\n", __func__);
@@ -1068,6 +1142,9 @@ int smu_v11_0_gfx_off_control(struct smu_context *smu, bool enable)
 	case CHIP_NAVI12:
 	case CHIP_SIENNA_CICHLID:
 	case CHIP_NAVY_FLOUNDER:
+	case CHIP_DIMGREY_CAVEFISH:
+	case CHIP_BEIGE_GOBY:
+	case CHIP_VANGOGH:
 		if (!(adev->pm.pp_feature & PP_GFXOFF_MASK))
 			return 0;
 		if (enable)
@@ -1085,10 +1162,10 @@ int smu_v11_0_gfx_off_control(struct smu_context *smu, bool enable)
 uint32_t
 smu_v11_0_get_fan_control_mode(struct smu_context *smu)
 {
-	if (!smu_cmn_feature_is_enabled(smu, SMU_FEATURE_FAN_CONTROL_BIT))
-		return AMD_FAN_CTRL_MANUAL;
-	else
+	if (smu_cmn_feature_is_enabled(smu, SMU_FEATURE_FAN_CONTROL_BIT))
 		return AMD_FAN_CTRL_AUTO;
+	else
+		return smu->user_dpm_profile.fan_mode;
 }
 
 static int
@@ -1123,17 +1200,13 @@ smu_v11_0_set_fan_static_mode(struct smu_context *smu, uint32_t mode)
 }
 
 int
-smu_v11_0_set_fan_speed_percent(struct smu_context *smu, uint32_t speed)
+smu_v11_0_set_fan_speed_pwm(struct smu_context *smu, uint32_t speed)
 {
 	struct amdgpu_device *adev = smu->adev;
 	uint32_t duty100, duty;
 	uint64_t tmp64;
 
-	if (speed > 100)
-		speed = 100;
-
-	if (smu_v11_0_auto_fan_control(smu, 0))
-		return -EINVAL;
+	speed = MIN(speed, 255);
 
 	duty100 = REG_GET_FIELD(RREG32_SOC15(THM, 0, mmCG_FDO_CTRL1),
 				CG_FDO_CTRL1, FMAX_DUTY100);
@@ -1141,7 +1214,7 @@ smu_v11_0_set_fan_speed_percent(struct smu_context *smu, uint32_t speed)
 		return -EINVAL;
 
 	tmp64 = (uint64_t)speed * duty100;
-	do_div(tmp64, 100);
+	do_div(tmp64, 255);
 	duty = (uint32_t)tmp64;
 
 	WREG32_SOC15(THM, 0, mmCG_FDO_CTRL0,
@@ -1149,6 +1222,99 @@ smu_v11_0_set_fan_speed_percent(struct smu_context *smu, uint32_t speed)
 				   CG_FDO_CTRL0, FDO_STATIC_DUTY, duty));
 
 	return smu_v11_0_set_fan_static_mode(smu, FDO_PWM_MODE_STATIC);
+}
+
+int smu_v11_0_set_fan_speed_rpm(struct smu_context *smu,
+				uint32_t speed)
+{
+	struct amdgpu_device *adev = smu->adev;
+	/*
+	 * crystal_clock_freq used for fan speed rpm calculation is
+	 * always 25Mhz. So, hardcode it as 2500(in 10K unit).
+	 */
+	uint32_t crystal_clock_freq = 2500;
+	uint32_t tach_period;
+
+	/*
+	 * To prevent from possible overheat, some ASICs may have requirement
+	 * for minimum fan speed:
+	 * - For some NV10 SKU, the fan speed cannot be set lower than
+	 *   700 RPM.
+	 * - For some Sienna Cichlid SKU, the fan speed cannot be set
+	 *   lower than 500 RPM.
+	 */
+	tach_period = 60 * crystal_clock_freq * 10000 / (8 * speed);
+	WREG32_SOC15(THM, 0, mmCG_TACH_CTRL,
+		     REG_SET_FIELD(RREG32_SOC15(THM, 0, mmCG_TACH_CTRL),
+				   CG_TACH_CTRL, TARGET_PERIOD,
+				   tach_period));
+
+	return smu_v11_0_set_fan_static_mode(smu, FDO_PWM_MODE_STATIC_RPM);
+}
+
+int smu_v11_0_get_fan_speed_pwm(struct smu_context *smu,
+				uint32_t *speed)
+{
+	struct amdgpu_device *adev = smu->adev;
+	uint32_t duty100, duty;
+	uint64_t tmp64;
+
+	/*
+	 * For pre Sienna Cichlid ASICs, the 0 RPM may be not correctly
+	 * detected via register retrieving. To workaround this, we will
+	 * report the fan speed as 0 PWM if user just requested such.
+	 */
+	if ((smu->user_dpm_profile.flags & SMU_CUSTOM_FAN_SPEED_PWM)
+	     && !smu->user_dpm_profile.fan_speed_pwm) {
+		*speed = 0;
+		return 0;
+	}
+
+	duty100 = REG_GET_FIELD(RREG32_SOC15(THM, 0, mmCG_FDO_CTRL1),
+				CG_FDO_CTRL1, FMAX_DUTY100);
+	duty = REG_GET_FIELD(RREG32_SOC15(THM, 0, mmCG_THERMAL_STATUS),
+				CG_THERMAL_STATUS, FDO_PWM_DUTY);
+	if (!duty100)
+		return -EINVAL;
+
+	tmp64 = (uint64_t)duty * 255;
+	do_div(tmp64, duty100);
+	*speed = MIN((uint32_t)tmp64, 255);
+
+	return 0;
+}
+
+int smu_v11_0_get_fan_speed_rpm(struct smu_context *smu,
+				uint32_t *speed)
+{
+	struct amdgpu_device *adev = smu->adev;
+	uint32_t crystal_clock_freq = 2500;
+	uint32_t tach_status;
+	uint64_t tmp64;
+
+	/*
+	 * For pre Sienna Cichlid ASICs, the 0 RPM may be not correctly
+	 * detected via register retrieving. To workaround this, we will
+	 * report the fan speed as 0 RPM if user just requested such.
+	 */
+	if ((smu->user_dpm_profile.flags & SMU_CUSTOM_FAN_SPEED_RPM)
+	     && !smu->user_dpm_profile.fan_speed_rpm) {
+		*speed = 0;
+		return 0;
+	}
+
+	tmp64 = (uint64_t)crystal_clock_freq * 60 * 10000;
+
+	tach_status = RREG32_SOC15(THM, 0, mmCG_TACH_STATUS);
+	if (tach_status) {
+		do_div(tmp64, tach_status);
+		*speed = (uint32_t)tmp64;
+	} else {
+		dev_warn_once(adev->dev, "Got zero output on CG_TACH_STATUS reading!\n");
+		*speed = 0;
+	}
+
+	return 0;
 }
 
 int
@@ -1159,7 +1325,9 @@ smu_v11_0_set_fan_control_mode(struct smu_context *smu,
 
 	switch (mode) {
 	case AMD_FAN_CTRL_NONE:
-		ret = smu_v11_0_set_fan_speed_percent(smu, 100);
+		ret = smu_v11_0_auto_fan_control(smu, 0);
+		if (!ret)
+			ret = smu_v11_0_set_fan_speed_pwm(smu, 255);
 		break;
 	case AMD_FAN_CTRL_MANUAL:
 		ret = smu_v11_0_auto_fan_control(smu, 0);
@@ -1177,58 +1345,6 @@ smu_v11_0_set_fan_control_mode(struct smu_context *smu,
 	}
 
 	return ret;
-}
-
-int smu_v11_0_set_fan_speed_rpm(struct smu_context *smu,
-				       uint32_t speed)
-{
-	struct amdgpu_device *adev = smu->adev;
-	int ret;
-	uint32_t tach_period, crystal_clock_freq;
-
-	if (!speed)
-		return -EINVAL;
-
-	ret = smu_v11_0_auto_fan_control(smu, 0);
-	if (ret)
-		return ret;
-
-	/*
-	 * crystal_clock_freq div by 4 is required since the fan control
-	 * module refers to 25MHz
-	 */
-
-	crystal_clock_freq = amdgpu_asic_get_xclk(adev) / 4;
-	tach_period = 60 * crystal_clock_freq * 10000 / (8 * speed);
-	WREG32_SOC15(THM, 0, mmCG_TACH_CTRL,
-		     REG_SET_FIELD(RREG32_SOC15(THM, 0, mmCG_TACH_CTRL),
-				   CG_TACH_CTRL, TARGET_PERIOD,
-				   tach_period));
-
-	ret = smu_v11_0_set_fan_static_mode(smu, FDO_PWM_MODE_STATIC_RPM);
-
-	return ret;
-}
-
-int smu_v11_0_get_fan_speed_rpm(struct smu_context *smu,
-				uint32_t *speed)
-{
-	struct amdgpu_device *adev = smu->adev;
-	uint32_t tach_period, crystal_clock_freq;
-	uint64_t tmp64;
-
-	tach_period = REG_GET_FIELD(RREG32_SOC15(THM, 0, mmCG_TACH_CTRL),
-				    CG_TACH_CTRL, TARGET_PERIOD);
-	if (!tach_period)
-		return -EINVAL;
-
-	crystal_clock_freq = amdgpu_asic_get_xclk(adev);
-
-	tmp64 = (uint64_t)crystal_clock_freq * 60 * 10000;
-	do_div(tmp64, (tach_period * 8));
-	*speed = (uint32_t)tmp64;
-
-	return 0;
 }
 
 int smu_v11_0_set_xgmi_pstate(struct smu_context *smu,
@@ -1464,7 +1580,8 @@ int smu_v11_0_set_azalia_d3_pme(struct smu_context *smu)
 	return smu_cmn_send_smc_msg(smu, SMU_MSG_BacoAudioD3PME, NULL);
 }
 
-static int smu_v11_0_baco_set_armd3_sequence(struct smu_context *smu, enum smu_v11_0_baco_seq baco_seq)
+int smu_v11_0_baco_set_armd3_sequence(struct smu_context *smu,
+				      enum smu_v11_0_baco_seq baco_seq)
 {
 	return smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_ArmD3, baco_seq, NULL);
 }
@@ -1473,7 +1590,7 @@ bool smu_v11_0_baco_is_support(struct smu_context *smu)
 {
 	struct smu_baco_context *smu_baco = &smu->smu_baco;
 
-	if (!smu_baco->platform_support)
+	if (amdgpu_sriov_vf(smu->adev) || !smu_baco->platform_support)
 		return false;
 
 	/* Arcturus does not support this bit mask */
@@ -1496,6 +1613,9 @@ enum smu_baco_state smu_v11_0_baco_get_state(struct smu_context *smu)
 	return baco_state;
 }
 
+#define D3HOT_BACO_SEQUENCE 0
+#define D3HOT_BAMACO_SEQUENCE 2
+
 int smu_v11_0_baco_set_state(struct smu_context *smu, enum smu_baco_state state)
 {
 	struct smu_baco_context *smu_baco = &smu->smu_baco;
@@ -1510,15 +1630,42 @@ int smu_v11_0_baco_set_state(struct smu_context *smu, enum smu_baco_state state)
 	mutex_lock(&smu_baco->mutex);
 
 	if (state == SMU_BACO_STATE_ENTER) {
-		if (!ras || !ras->supported) {
-			data = RREG32_SOC15(THM, 0, mmTHM_BACO_CNTL);
-			data |= 0x80000000;
-			WREG32_SOC15(THM, 0, mmTHM_BACO_CNTL, data);
+		switch (adev->asic_type) {
+		case CHIP_SIENNA_CICHLID:
+		case CHIP_NAVY_FLOUNDER:
+		case CHIP_DIMGREY_CAVEFISH:
+		case CHIP_BEIGE_GOBY:
+			if (amdgpu_runtime_pm == 2)
+				ret = smu_cmn_send_smc_msg_with_param(smu,
+								      SMU_MSG_EnterBaco,
+								      D3HOT_BAMACO_SEQUENCE,
+								      NULL);
+			else
+				ret = smu_cmn_send_smc_msg_with_param(smu,
+								      SMU_MSG_EnterBaco,
+								      D3HOT_BACO_SEQUENCE,
+								      NULL);
+			break;
+		default:
+			if (!ras || !adev->ras_enabled ||
+			    adev->gmc.xgmi.pending_reset) {
+				if (adev->asic_type == CHIP_ARCTURUS) {
+					data = RREG32_SOC15(THM, 0, mmTHM_BACO_CNTL_ARCT);
+					data |= 0x80000000;
+					WREG32_SOC15(THM, 0, mmTHM_BACO_CNTL_ARCT, data);
+				} else {
+					data = RREG32_SOC15(THM, 0, mmTHM_BACO_CNTL);
+					data |= 0x80000000;
+					WREG32_SOC15(THM, 0, mmTHM_BACO_CNTL, data);
+				}
 
-			ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_EnterBaco, 0, NULL);
-		} else {
-			ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_EnterBaco, 1, NULL);
+				ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_EnterBaco, 0, NULL);
+			} else {
+				ret = smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_EnterBaco, 1, NULL);
+			}
+			break;
 		}
+
 	} else {
 		ret = smu_cmn_send_smc_msg(smu, SMU_MSG_ExitBaco, NULL);
 		if (ret)
@@ -1539,15 +1686,7 @@ out:
 
 int smu_v11_0_baco_enter(struct smu_context *smu)
 {
-	struct amdgpu_device *adev = smu->adev;
 	int ret = 0;
-
-	/* Arcturus does not need this audio workaround */
-	if (adev->asic_type != CHIP_ARCTURUS) {
-		ret = smu_v11_0_baco_set_armd3_sequence(smu, BACO_SEQ_BACO);
-		if (ret)
-			return ret;
-	}
 
 	ret = smu_v11_0_baco_set_state(smu, SMU_BACO_STATE_ENTER);
 	if (ret)
@@ -1573,6 +1712,16 @@ int smu_v11_0_mode1_reset(struct smu_context *smu)
 
 	return ret;
 }
+
+int smu_v11_0_set_light_sbr(struct smu_context *smu, bool enable)
+{
+	int ret = 0;
+
+	ret =  smu_cmn_send_smc_msg_with_param(smu, SMU_MSG_LightSBR, enable ? 1 : 0, NULL);
+
+	return ret;
+}
+
 
 int smu_v11_0_get_dpm_ultimate_freq(struct smu_context *smu, enum smu_clk_type clk_type,
 						 uint32_t *min, uint32_t *max)
@@ -1968,7 +2117,7 @@ int smu_v11_0_get_current_pcie_link_width_level(struct smu_context *smu)
 		>> PCIE_LC_LINK_WIDTH_CNTL__LC_LINK_WIDTH_RD__SHIFT;
 }
 
-int smu_v11_0_get_current_pcie_link_width(struct smu_context *smu)
+uint16_t smu_v11_0_get_current_pcie_link_width(struct smu_context *smu)
 {
 	uint32_t width_level;
 
@@ -1988,7 +2137,7 @@ int smu_v11_0_get_current_pcie_link_speed_level(struct smu_context *smu)
 		>> PCIE_LC_SPEED_CNTL__LC_CURRENT_DATA_RATE__SHIFT;
 }
 
-int smu_v11_0_get_current_pcie_link_speed(struct smu_context *smu)
+uint16_t smu_v11_0_get_current_pcie_link_speed(struct smu_context *smu)
 {
 	uint32_t speed_level;
 
@@ -1997,18 +2146,6 @@ int smu_v11_0_get_current_pcie_link_speed(struct smu_context *smu)
 		speed_level = 0;
 
 	return link_speed[speed_level];
-}
-
-void smu_v11_0_init_gpu_metrics_v1_0(struct gpu_metrics_v1_0 *gpu_metrics)
-{
-	memset(gpu_metrics, 0xFF, sizeof(struct gpu_metrics_v1_0));
-
-	gpu_metrics->common_header.structure_size =
-				sizeof(struct gpu_metrics_v1_0);
-	gpu_metrics->common_header.format_revision = 1;
-	gpu_metrics->common_header.content_revision = 0;
-
-	gpu_metrics->system_clock_counter = ktime_get_boottime_ns();
 }
 
 int smu_v11_0_gfx_ulv_control(struct smu_context *smu,
@@ -2036,6 +2173,22 @@ int smu_v11_0_deep_sleep_control(struct smu_context *smu,
 		}
 	}
 
+	if (smu_cmn_feature_is_supported(smu, SMU_FEATURE_DS_UCLK_BIT)) {
+		ret = smu_cmn_feature_set_enabled(smu, SMU_FEATURE_DS_UCLK_BIT, enablement);
+		if (ret) {
+			dev_err(adev->dev, "Failed to %s UCLK DS!\n", enablement ? "enable" : "disable");
+			return ret;
+		}
+	}
+
+	if (smu_cmn_feature_is_supported(smu, SMU_FEATURE_DS_FCLK_BIT)) {
+		ret = smu_cmn_feature_set_enabled(smu, SMU_FEATURE_DS_FCLK_BIT, enablement);
+		if (ret) {
+			dev_err(adev->dev, "Failed to %s FCLK DS!\n", enablement ? "enable" : "disable");
+			return ret;
+		}
+	}
+
 	if (smu_cmn_feature_is_supported(smu, SMU_FEATURE_DS_SOCCLK_BIT)) {
 		ret = smu_cmn_feature_set_enabled(smu, SMU_FEATURE_DS_SOCCLK_BIT, enablement);
 		if (ret) {
@@ -2051,6 +2204,19 @@ int smu_v11_0_deep_sleep_control(struct smu_context *smu,
 			return ret;
 		}
 	}
+
+	return ret;
+}
+
+int smu_v11_0_restore_user_od_settings(struct smu_context *smu)
+{
+	struct smu_table_context *table_context = &smu->smu_table;
+	void *user_od_table = table_context->user_overdrive_table;
+	int ret = 0;
+
+	ret = smu_cmn_update_table(smu, SMU_TABLE_OVERDRIVE, 0, (void *)user_od_table, true);
+	if (ret)
+		dev_err(smu->adev->dev, "Failed to import overdrive table!\n");
 
 	return ret;
 }

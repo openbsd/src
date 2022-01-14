@@ -30,37 +30,18 @@
 #include <drm/radeon_drm.h>
 
 #include "radeon.h"
+#include "radeon_prime.h"
 
-#ifdef notyet
 
 struct sg_table *radeon_gem_prime_get_sg_table(struct drm_gem_object *obj)
 {
 	struct radeon_bo *bo = gem_to_radeon_bo(obj);
-	int npages = bo->tbo.num_pages;
 
-	return drm_prime_pages_to_sg(obj->dev, bo->tbo.ttm->pages, npages);
+	return drm_prime_pages_to_sg(obj->dev, bo->tbo.ttm->pages,
+				     bo->tbo.ttm->num_pages);
 }
 
-void *radeon_gem_prime_vmap(struct drm_gem_object *obj)
-{
-	struct radeon_bo *bo = gem_to_radeon_bo(obj);
-	int ret;
-
-	ret = ttm_bo_kmap(&bo->tbo, 0, bo->tbo.num_pages,
-			  &bo->dma_buf_vmap);
-	if (ret)
-		return ERR_PTR(ret);
-
-	return bo->dma_buf_vmap.virtual;
-}
-
-void radeon_gem_prime_vunmap(struct drm_gem_object *obj, void *vaddr)
-{
-	struct radeon_bo *bo = gem_to_radeon_bo(obj);
-
-	ttm_bo_kunmap(&bo->dma_buf_vmap);
-}
-
+#ifdef notyet
 struct drm_gem_object *radeon_gem_prime_import_sg_table(struct drm_device *dev,
 							struct dma_buf_attachment *attach,
 							struct sg_table *sg)
@@ -77,6 +58,8 @@ struct drm_gem_object *radeon_gem_prime_import_sg_table(struct drm_device *dev,
 	if (ret)
 		return ERR_PTR(ret);
 
+	bo->tbo.base.funcs = &radeon_gem_object_funcs;
+
 	mutex_lock(&rdev->gem.mutex);
 	list_add_tail(&bo->list, &rdev->gem.objects);
 	mutex_unlock(&rdev->gem.mutex);
@@ -84,6 +67,7 @@ struct drm_gem_object *radeon_gem_prime_import_sg_table(struct drm_device *dev,
 	bo->prime_shared_count = 1;
 	return &bo->tbo.base;
 }
+#endif
 
 int radeon_gem_prime_pin(struct drm_gem_object *obj)
 {
@@ -127,8 +111,6 @@ void radeon_gem_prime_unpin(struct drm_gem_object *obj)
 		bo->prime_shared_count--;
 	radeon_bo_unreserve(bo);
 }
-
-#endif
 
 struct dma_buf *radeon_gem_prime_export(struct drm_gem_object *gobj,
 					int flags)

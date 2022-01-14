@@ -13,7 +13,6 @@
 
 #include "i915_drv.h"
 #include "i915_active.h"
-#include "i915_globals.h"
 
 /*
  * Active refs memory management
@@ -22,14 +21,7 @@
  * they idle (when we know the active requests are inactive) and allocate the
  * nodes from a local slab cache to hopefully reduce the fragmentation.
  */
-static struct i915_global_active {
-	struct i915_global base;
-#ifdef __linux__
-	struct kmem_cache *slab_cache;
-#else
-	struct pool slab_cache;
-#endif
-} global;
+static struct pool slab_cache;
 
 struct active_node {
 	struct rb_node node;
@@ -163,8 +155,7 @@ __active_retire(struct i915_active *ref)
 		GEM_BUG_ON(ref->tree.rb_node != &ref->cache->node);
 
 		/* Make the cached node available for reuse with any timeline */
-		if (IS_ENABLED(CONFIG_64BIT))
-			ref->cache->timeline = 0; /* needs cmpxchg(u64) */
+		ref->cache->timeline = 0; /* needs cmpxchg(u64) */
 	}
 
 	spin_unlock_irqrestore(&ref->tree_lock, flags);
@@ -180,9 +171,9 @@ __active_retire(struct i915_active *ref)
 	rbtree_postorder_for_each_entry_safe(it, n, &root, node) {
 		GEM_BUG_ON(i915_active_fence_isset(&it->base));
 #ifdef __linux__
-		kmem_cache_free(global.slab_cache, it);
+		kmem_cache_free(slab_cache, it);
 #else
-		pool_put(&global.slab_cache, it);
+		pool_put(&slab_cache, it);
 #endif
 	}
 }
@@ -264,7 +255,6 @@ static struct active_node *__active_lookup(struct i915_active *ref, u64 idx)
 		if (cached == idx)
 			return it;
 
-#ifdef CONFIG_64BIT /* for cmpxchg(u64) */
 		/*
 		 * An unclaimed cache [.timeline=0] can only be claimed once.
 		 *
@@ -275,9 +265,8 @@ static struct active_node *__active_lookup(struct i915_active *ref, u64 idx)
 		 * only the winner of that race will cmpxchg return the old
 		 * value of 0).
 		 */
-		if (!cached && !cmpxchg(&it->timeline, 0, idx))
+		if (!cached && !cmpxchg64(&it->timeline, 0, idx))
 			return it;
-#endif
 	}
 
 	BUILD_BUG_ON(offsetof(typeof(*it), node));
@@ -304,21 +293,12 @@ static struct active_node *__active_lookup(struct i915_active *ref, u64 idx)
 static struct i915_active_fence *
 active_instance(struct i915_active *ref, u64 idx)
 {
-	struct active_node *node, *prealloc;
+	struct active_node *node;
 	struct rb_node **p, *parent;
 
 	node = __active_lookup(ref, idx);
 	if (likely(node))
 		return &node->base;
-
-	/* Preallocate a replacement, just in case */
-#ifdef __linux__
-	prealloc = kmem_cache_alloc(global.slab_cache, GFP_KERNEL);
-#else
-	prealloc = pool_get(&global.slab_cache, PR_WAITOK);
-#endif
-	if (!prealloc)
-		return NULL;
 
 	spin_lock_irq(&ref->tree_lock);
 	GEM_BUG_ON(i915_active_is_idle(ref));
@@ -329,14 +309,8 @@ active_instance(struct i915_active *ref, u64 idx)
 		parent = *p;
 
 		node = rb_entry(parent, struct active_node, node);
-		if (node->timeline == idx) {
-#ifdef __linux__
-			kmem_cache_free(global.slab_cache, prealloc);
-#else
-			pool_put(&global.slab_cache, prealloc);
-#endif
+		if (node->timeline == idx)
 			goto out;
-		}
 
 		if (node->timeline < idx)
 			p = &parent->rb_right;
@@ -344,7 +318,18 @@ active_instance(struct i915_active *ref, u64 idx)
 			p = &parent->rb_left;
 	}
 
-	node = prealloc;
+	/*
+	 * XXX: We should preallocate this before i915_active_ref() is ever
+	 *  called, but we cannot call into fs_reclaim() anyway, so use GFP_ATOMIC.
+	 */
+#ifdef __linux__
+	node = kmem_cache_alloc(slab_cache, GFP_ATOMIC);
+#else
+	node = pool_get(&slab_cache, PR_NOWAIT);
+#endif
+	if (!node)
+		goto out;
+
 	__i915_active_fence_init(&node->base, NULL, node_retire);
 	node->ref = ref;
 	node->timeline = idx;
@@ -362,18 +347,15 @@ out:
 void __i915_active_init(struct i915_active *ref,
 			int (*active)(struct i915_active *ref),
 			void (*retire)(struct i915_active *ref),
+			unsigned long flags,
 			struct lock_class_key *mkey,
 			struct lock_class_key *wkey)
 {
-	unsigned long bits;
-
 	debug_active_init(ref);
 
-	ref->flags = 0;
+	ref->flags = flags;
 	ref->active = active;
-	ref->retire = ptr_unpack_bits(retire, &bits, 2);
-	if (bits & I915_ACTIVE_MAY_SLEEP)
-		ref->flags |= I915_ACTIVE_RETIRE_SLEEPS;
+	ref->retire = retire;
 
 	mtx_init(&ref->tree_lock, IPL_TTY);
 	ref->tree = RB_ROOT;
@@ -815,9 +797,9 @@ void i915_active_fini(struct i915_active *ref)
 
 	if (ref->cache)
 #ifdef __linux__
-		kmem_cache_free(global.slab_cache, ref->cache);
+		kmem_cache_free(slab_cache, ref->cache);
 #else
-		pool_put(&global.slab_cache, ref->cache);
+		pool_put(&slab_cache, ref->cache);
 #endif
 }
 
@@ -939,9 +921,9 @@ int i915_active_acquire_preallocate_barrier(struct i915_active *ref,
 		rcu_read_unlock();
 		if (!node) {
 #ifdef __linux__
-			node = kmem_cache_alloc(global.slab_cache, GFP_KERNEL);
+			node = kmem_cache_alloc(slab_cache, GFP_KERNEL);
 #else
-			node = pool_get(&global.slab_cache, PR_WAITOK);
+			node = pool_get(&slab_cache, PR_WAITOK);
 #endif
 			if (!node)
 				goto unwind;
@@ -991,9 +973,9 @@ unwind:
 		intel_engine_pm_put(barrier_to_engine(node));
 
 #ifdef __linux__
-		kmem_cache_free(global.slab_cache, node);
+		kmem_cache_free(slab_cache, node);
 #else
-		pool_put(&global.slab_cache, node);
+		pool_put(&slab_cache, node);
 #endif
 	}
 	return -ENOMEM;
@@ -1191,8 +1173,7 @@ static int auto_active(struct i915_active *ref)
 	return 0;
 }
 
-__i915_active_call static void
-auto_retire(struct i915_active *ref)
+static void auto_retire(struct i915_active *ref)
 {
 	i915_active_put(ref);
 }
@@ -1206,7 +1187,7 @@ struct i915_active *i915_active_create(void)
 		return NULL;
 
 	kref_init(&aa->ref);
-	i915_active_init(&aa->base, auto_active, auto_retire);
+	i915_active_init(&aa->base, auto_active, auto_retire, 0);
 
 	return &aa->base;
 }
@@ -1215,38 +1196,25 @@ struct i915_active *i915_active_create(void)
 #include "selftests/i915_active.c"
 #endif
 
-static void i915_global_active_shrink(void)
-{
-#ifdef notyet
-	kmem_cache_shrink(global.slab_cache);
-#endif
-}
-
-static void i915_global_active_exit(void)
+void i915_active_module_exit(void)
 {
 #ifdef __linux__
-	kmem_cache_destroy(global.slab_cache);
+	kmem_cache_destroy(slab_cache);
 #else
-	pool_destroy(&global.slab_cache);
+	pool_destroy(&slab_cache);
 #endif
 }
 
-static struct i915_global_active global = { {
-	.shrink = i915_global_active_shrink,
-	.exit = i915_global_active_exit,
-} };
-
-int __init i915_global_active_init(void)
+int __init i915_active_module_init(void)
 {
 #ifdef __linux__
-	global.slab_cache = KMEM_CACHE(active_node, SLAB_HWCACHE_ALIGN);
-	if (!global.slab_cache)
+	slab_cache = KMEM_CACHE(active_node, SLAB_HWCACHE_ALIGN);
+	if (!slab_cache)
 		return -ENOMEM;
 #else
-	pool_init(&global.slab_cache, sizeof(struct active_node),
+	pool_init(&slab_cache, sizeof(struct active_node),
 	    CACHELINESIZE, IPL_TTY, 0, "drmsc", NULL);
 #endif
 
-	i915_global_register(&global.base);
 	return 0;
 }

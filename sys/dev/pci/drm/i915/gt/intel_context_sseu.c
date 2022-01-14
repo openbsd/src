@@ -9,7 +9,6 @@
 #include "intel_engine_pm.h"
 #include "intel_gpu_commands.h"
 #include "intel_lrc.h"
-#include "intel_lrc_reg.h"
 #include "intel_ring.h"
 #include "intel_sseu.h"
 
@@ -77,7 +76,7 @@ intel_context_reconfigure_sseu(struct intel_context *ce,
 {
 	int ret;
 
-	GEM_BUG_ON(INTEL_GEN(ce->engine->i915) < 8);
+	GEM_BUG_ON(GRAPHICS_VER(ce->engine->i915) < 8);
 
 	ret = intel_context_lock_pinned(ce);
 	if (ret)

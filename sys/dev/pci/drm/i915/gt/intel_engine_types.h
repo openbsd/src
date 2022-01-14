@@ -1,6 +1,5 @@
+/* SPDX-License-Identifier: MIT */
 /*
- * SPDX-License-Identifier: MIT
- *
  * Copyright © 2019 Intel Corporation
  */
 
@@ -22,32 +21,20 @@
 #include "i915_pmu.h"
 #include "i915_priolist_types.h"
 #include "i915_selftest.h"
-#include "intel_breadcrumbs_types.h"
 #include "intel_sseu.h"
 #include "intel_timeline_types.h"
 #include "intel_uncore.h"
 #include "intel_wakeref.h"
 #include "intel_workarounds_types.h"
 
-/* Legacy HW Engine ID */
-
-#define RCS0_HW		0
-#define VCS0_HW		1
-#define BCS0_HW		2
-#define VECS0_HW	3
-#define VCS1_HW		4
-#define VCS2_HW		6
-#define VCS3_HW		7
-#define VECS1_HW	12
-
-/* Gen11+ HW Engine class + instance */
+/* HW Engine class + instance */
 #define RENDER_CLASS		0
 #define VIDEO_DECODE_CLASS	1
 #define VIDEO_ENHANCEMENT_CLASS	2
 #define COPY_ENGINE_CLASS	3
 #define OTHER_CLASS		4
 #define MAX_ENGINE_CLASS	4
-#define MAX_ENGINE_INSTANCE	3
+#define MAX_ENGINE_INSTANCE	7
 
 #define I915_MAX_SLICES	3
 #define I915_MAX_SUBSLICES 8
@@ -60,14 +47,17 @@ struct drm_i915_reg_table;
 struct i915_gem_context;
 struct i915_request;
 struct i915_sched_attr;
+struct i915_sched_engine;
 struct intel_gt;
 struct intel_ring;
 struct intel_uncore;
+struct intel_breadcrumbs;
 
-typedef u8 intel_engine_mask_t;
+typedef u32 intel_engine_mask_t;
 #define ALL_ENGINES ((intel_engine_mask_t)~0ul)
 
 struct intel_hw_status_page {
+	struct list_head timelines;
 	struct i915_vma *vma;
 	u32 *addr;
 };
@@ -100,8 +90,8 @@ struct i915_ctx_workarounds {
 	struct i915_vma *vma;
 };
 
-#define I915_MAX_VCS	4
-#define I915_MAX_VECS	2
+#define I915_MAX_VCS	8
+#define I915_MAX_VECS	4
 
 /*
  * Engine IDs definitions.
@@ -114,9 +104,15 @@ enum intel_engine_id {
 	VCS1,
 	VCS2,
 	VCS3,
+	VCS4,
+	VCS5,
+	VCS6,
+	VCS7,
 #define _VCS(n) (VCS0 + (n))
 	VECS0,
 	VECS1,
+	VECS2,
+	VECS3,
 #define _VECS(n) (VECS0 + (n))
 	I915_NUM_ENGINES
 #define INVALID_ENGINE ((enum intel_engine_id)-1)
@@ -138,11 +134,6 @@ struct st_preempt_hang {
  */
 struct intel_engine_execlists {
 	/**
-	 * @tasklet: softirq tasklet for bottom handler
-	 */
-	struct tasklet_struct tasklet;
-
-	/**
 	 * @timer: kick the current context if its timeslice expires
 	 */
 	struct timeout timer;
@@ -151,11 +142,6 @@ struct intel_engine_execlists {
 	 * @preempt: reset the current context if it fails to give way
 	 */
 	struct timeout preempt;
-
-	/**
-	 * @default_priolist: priority list for I915_PRIORITY_NORMAL
-	 */
-	struct i915_priolist default_priolist;
 
 	/**
 	 * @ccid: identifier for contexts submitted to this engine
@@ -183,17 +169,13 @@ struct intel_engine_execlists {
 	 * Reserve the upper 16b for tracking internal errors.
 	 */
 	u32 error_interrupt;
-#define ERROR_CSB BIT(31)
+#define ERROR_CSB	BIT(31)
+#define ERROR_PREEMPT	BIT(30)
 
 	/**
 	 * @reset_ccid: Active CCID [EXECLISTS_STATUS_HI] at the time of reset
 	 */
 	u32 reset_ccid;
-
-	/**
-	 * @no_priolist: priority lists disabled
-	 */
-	bool no_priolist;
 
 	/**
 	 * @submit_reg: gen-specific execlist submission register
@@ -237,33 +219,10 @@ struct intel_engine_execlists {
 	unsigned int port_mask;
 
 	/**
-	 * @switch_priority_hint: Second context priority.
-	 *
-	 * We submit multiple contexts to the HW simultaneously and would
-	 * like to occasionally switch between them to emulate timeslicing.
-	 * To know when timeslicing is suitable, we track the priority of
-	 * the context submitted second.
+	 * @virtual: Queue of requets on a virtual engine, sorted by priority.
+	 * Each RB entry is a struct i915_priolist containing a list of requests
+	 * of the same priority.
 	 */
-	int switch_priority_hint;
-
-	/**
-	 * @queue_priority_hint: Highest pending priority.
-	 *
-	 * When we add requests into the queue, or adjust the priority of
-	 * executing requests, we compute the maximum priority of those
-	 * pending requests. We can then use this value to determine if
-	 * we need to preempt the executing requests to service the queue.
-	 * However, since the we may have recorded the priority of an inflight
-	 * request we wanted to preempt but since completed, at the time of
-	 * dequeuing the priority hint may no longer may match the highest
-	 * available request priority.
-	 */
-	int queue_priority_hint;
-
-	/**
-	 * @queue: queue of requests, in priority lists
-	 */
-	struct rb_root_cached queue;
 	struct rb_root_cached virtual;
 
 	/**
@@ -304,7 +263,6 @@ struct intel_engine_cs {
 	enum intel_engine_id id;
 	enum intel_engine_id legacy_idx;
 
-	unsigned int hw_id;
 	unsigned int guc_id;
 
 	intel_engine_mask_t mask;
@@ -327,7 +285,7 @@ struct intel_engine_cs {
 	 * as possible.
 	 */
 	enum forcewake_domains fw_domain;
-	atomic_t fw_active;
+	unsigned int fw_active;
 
 	unsigned long context_tag;
 
@@ -335,14 +293,12 @@ struct intel_engine_cs {
 
 	struct intel_sseu sseu;
 
-	struct {
-		spinlock_t lock;
-		struct list_head requests;
-		struct list_head hold; /* ready requests, but on hold */
-	} active;
+	struct i915_sched_engine *sched_engine;
 
 	/* keep a request in reserve for a [pm] barrier under oom */
 	struct i915_request *request_pool;
+
+	struct intel_context *hung_ce;
 
 	struct llist_head barrier_tasks;
 
@@ -415,6 +371,7 @@ struct intel_engine_cs {
 	u32		irq_enable_mask; /* bitmask to enable ring interrupt */
 	void		(*irq_enable)(struct intel_engine_cs *engine);
 	void		(*irq_disable)(struct intel_engine_cs *engine);
+	void		(*irq_handler)(struct intel_engine_cs *engine, u16 iir);
 
 	void		(*sanitize)(struct intel_engine_cs *engine);
 	int		(*resume)(struct intel_engine_cs *engine);
@@ -430,6 +387,8 @@ struct intel_engine_cs {
 
 	void		(*park)(struct intel_engine_cs *engine);
 	void		(*unpark)(struct intel_engine_cs *engine);
+
+	void		(*bump_serial)(struct intel_engine_cs *engine);
 
 	void		(*set_default_submission)(struct intel_engine_cs *engine);
 
@@ -459,22 +418,13 @@ struct intel_engine_cs {
 	 */
 	void		(*submit_request)(struct i915_request *rq);
 
-	/*
-	 * Called on signaling of a SUBMIT_FENCE, passing along the signaling
-	 * request down to the bonded pairs.
-	 */
-	void            (*bond_execute)(struct i915_request *rq,
-					struct dma_fence *signal);
-
-	/*
-	 * Call when the priority on a request has changed and it and its
-	 * dependencies may need rescheduling. Note the request itself may
-	 * not be ready to run!
-	 */
-	void		(*schedule)(struct i915_request *request,
-				    const struct i915_sched_attr *attr);
-
 	void		(*release)(struct intel_engine_cs *engine);
+
+	/*
+	 * Add / remove request from engine active tracking
+	 */
+	void		(*add_active_request)(struct i915_request *rq);
+	void		(*remove_active_request)(struct i915_request *rq);
 
 	struct intel_engine_execlists execlists;
 
@@ -496,10 +446,10 @@ struct intel_engine_cs {
 #define I915_ENGINE_HAS_PREEMPTION   BIT(2)
 #define I915_ENGINE_HAS_SEMAPHORES   BIT(3)
 #define I915_ENGINE_HAS_TIMESLICES   BIT(4)
-#define I915_ENGINE_NEEDS_BREADCRUMB_TASKLET BIT(5)
-#define I915_ENGINE_IS_VIRTUAL       BIT(6)
-#define I915_ENGINE_HAS_RELATIVE_MMIO BIT(7)
-#define I915_ENGINE_REQUIRES_CMD_PARSER BIT(8)
+#define I915_ENGINE_IS_VIRTUAL       BIT(5)
+#define I915_ENGINE_HAS_RELATIVE_MMIO BIT(6)
+#define I915_ENGINE_REQUIRES_CMD_PARSER BIT(7)
+#define I915_ENGINE_WANT_FORCED_PREEMPTION BIT(8)
 	unsigned int flags;
 
 	/*
@@ -530,12 +480,12 @@ struct intel_engine_cs {
 		/**
 		 * @active: Number of contexts currently scheduled in.
 		 */
-		atomic_t active;
+		unsigned int active;
 
 		/**
 		 * @lock: Lock protecting the below fields.
 		 */
-		seqlock_t lock;
+		seqcount_t lock;
 
 		/**
 		 * @total: Total time this engine was busy.
@@ -565,6 +515,8 @@ struct intel_engine_cs {
 		unsigned long stop_timeout_ms;
 		unsigned long timeslice_duration_ms;
 	} props, defaults;
+
+	I915_SELFTEST_DECLARE(struct fault_attr reset_timeout);
 };
 
 static inline bool
@@ -607,12 +559,6 @@ intel_engine_has_timeslices(const struct intel_engine_cs *engine)
 }
 
 static inline bool
-intel_engine_needs_breadcrumb_tasklet(const struct intel_engine_cs *engine)
-{
-	return engine->flags & I915_ENGINE_NEEDS_BREADCRUMB_TASKLET;
-}
-
-static inline bool
 intel_engine_is_virtual(const struct intel_engine_cs *engine)
 {
 	return engine->flags & I915_ENGINE_IS_VIRTUAL;
@@ -625,10 +571,10 @@ intel_engine_has_relative_mmio(const struct intel_engine_cs * const engine)
 }
 
 #define instdone_has_slice(dev_priv___, sseu___, slice___) \
-	((IS_GEN(dev_priv___, 7) ? 1 : ((sseu___)->slice_mask)) & BIT(slice___))
+	((GRAPHICS_VER(dev_priv___) == 7 ? 1 : ((sseu___)->slice_mask)) & BIT(slice___))
 
 #define instdone_has_subslice(dev_priv__, sseu__, slice__, subslice__) \
-	(IS_GEN(dev_priv__, 7) ? (1 & BIT(subslice__)) : \
+	(GRAPHICS_VER(dev_priv__) == 7 ? (1 & BIT(subslice__)) : \
 	 intel_sseu_has_subslice(sseu__, 0, subslice__))
 
 #define for_each_instdone_slice_subslice(dev_priv_, sseu_, slice_, subslice_) \

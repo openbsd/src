@@ -124,6 +124,7 @@ struct intel_dsi {
 	u16 panel_on_delay;
 	u16 panel_off_delay;
 	u16 panel_pwr_cycle_delay;
+	ktime_t panel_power_off_time;
 };
 
 struct intel_dsi_host {
@@ -167,6 +168,7 @@ static inline u16 intel_dsi_encoder_ports(struct intel_encoder *encoder)
 
 /* icl_dsi.c */
 void icl_dsi_init(struct drm_i915_private *dev_priv);
+void icl_dsi_frame_update(struct intel_crtc_state *crtc_state);
 
 /* intel_dsi.c */
 int intel_dsi_bitrate(const struct intel_dsi *intel_dsi);

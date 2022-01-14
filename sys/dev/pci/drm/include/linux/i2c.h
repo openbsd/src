@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.h,v 1.3 2021/07/07 02:38:36 jsg Exp $	*/
+/*	$OpenBSD: i2c.h,v 1.4 2022/01/14 06:53:14 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -34,7 +34,19 @@ struct i2c_algorithm;
 #define I2C_FUNC_SMBUS_BLOCK_PROC_CALL	0
 #define I2C_FUNC_10BIT_ADDR		0
 
+#define I2C_AQ_COMB			0
+#define I2C_AQ_COMB_SAME_ADDR		0
+#define I2C_AQ_NO_ZERO_LEN		0
+
 struct i2c_lock_operations;
+
+struct i2c_adapter_quirks {
+	unsigned int flags;
+	uint16_t max_read_len;
+	uint16_t max_write_len;
+	uint16_t max_comb_1st_msg_len;
+	uint16_t max_comb_2nd_msg_len;
+};
 
 struct i2c_adapter {
 	struct i2c_controller ic;
@@ -44,6 +56,7 @@ struct i2c_adapter {
 	void *algo_data;
 	int retries;
 	const struct i2c_lock_operations *lock_ops;
+	const struct i2c_adapter_quirks *quirks;
 
 	void *data;
 };

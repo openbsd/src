@@ -1,6 +1,5 @@
+/* SPDX-License-Identifier: MIT */
 /*
- * SPDX-License-Identifier: MIT
- *
  * Copyright © 2019 Intel Corporation
  */
 
@@ -57,6 +56,8 @@ int intel_gt_resume(struct intel_gt *gt);
 
 void intel_gt_runtime_suspend(struct intel_gt *gt);
 int intel_gt_runtime_resume(struct intel_gt *gt);
+
+ktime_t intel_gt_get_awake_time(const struct intel_gt *gt);
 
 static inline bool is_mock_gt(const struct intel_gt *gt)
 {

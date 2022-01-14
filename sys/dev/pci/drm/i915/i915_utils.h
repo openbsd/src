@@ -207,6 +207,11 @@ __check_struct_size(size_t base, size_t arr, size_t count, size_t *size)
 	__T;								\
 })
 
+static __always_inline ptrdiff_t ptrdiff(const void *a, const void *b)
+{
+	return a - b;
+}
+
 /*
  * container_of_user: Extract the superclass from a pointer to a member.
  *
@@ -424,6 +429,11 @@ static inline const char *onoff(bool v)
 	return v ? "on" : "off";
 }
 
+static inline const char *enabledisable(bool v)
+{
+	return v ? "enable" : "disable";
+}
+
 static inline const char *enableddisabled(bool v)
 {
 	return v ? "enabled" : "disabled";
@@ -444,13 +454,18 @@ static inline void __add_taint_for_CI(unsigned int taint)
 void cancel_timer(struct timeout *t);
 void set_timer_ms(struct timeout *t, unsigned long timeout);
 
-static inline bool timer_expired(const struct timeout *t)
+static inline bool timer_active(const struct timeout *t)
 {
 #ifdef __linux__
-	return READ_ONCE(t->expires) && !timer_pending(t);
+	return READ_ONCE(t->expires);
 #else
-	return READ_ONCE(t->to_time) && !timer_pending(t);
+	return READ_ONCE(t->to_time);
 #endif
+}
+
+static inline bool timer_expired(const struct timeout *t)
+{
+	return timer_active(t) && !timer_pending(t);
 }
 
 /*
