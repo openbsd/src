@@ -1,4 +1,4 @@
-/* $OpenBSD: dgst.c,v 1.18 2019/08/30 12:32:14 inoguchi Exp $ */
+/* $OpenBSD: dgst.c,v 1.19 2022/01/14 09:28:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -301,9 +301,6 @@ list_md_fn(const EVP_MD * m, const char *from, const char *to, void *arg)
 	mname = OBJ_nid2ln(EVP_MD_type(m));
 	/* Skip shortnames */
 	if (strcmp(from, mname))
-		return;
-	/* Skip clones */
-	if (EVP_MD_flags(m) & EVP_MD_FLAG_PKEY_DIGEST)
 		return;
 	if (strchr(mname, ' '))
 		mname = EVP_MD_name(m);
