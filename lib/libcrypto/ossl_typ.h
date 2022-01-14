@@ -1,4 +1,4 @@
-/* $OpenBSD: ossl_typ.h,v 1.19 2022/01/14 08:21:12 tb Exp $ */
+/* $OpenBSD: ossl_typ.h,v 1.20 2022/01/14 08:34:39 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -121,6 +121,7 @@ typedef struct dsa_method DSA_METHOD;
 
 typedef struct rsa_st RSA;
 typedef struct rsa_meth_st RSA_METHOD;
+typedef struct rsa_pss_params_st RSA_PSS_PARAMS;
 
 typedef struct rand_meth_st RAND_METHOD;
 
