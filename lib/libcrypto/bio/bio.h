@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.51 2022/01/14 07:49:49 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.52 2022/01/14 07:59:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -600,9 +600,6 @@ int BIO_get_new_index(void);
 const BIO_METHOD *BIO_s_file(void);
 BIO *BIO_new_file(const char *filename, const char *mode);
 BIO *BIO_new_fp(FILE *stream, int close_flag);
-#ifndef LIBRESSL_INTERNAL
-#define BIO_s_file_internal	BIO_s_file
-#endif
 BIO	*BIO_new(const BIO_METHOD *type);
 int	BIO_set(BIO *a, const BIO_METHOD *type);
 int	BIO_free(BIO *a);
