@@ -1,4 +1,4 @@
-/* $OpenBSD: dhparam.c,v 1.13 2021/11/20 18:10:48 tb Exp $ */
+/* $OpenBSD: dhparam.c,v 1.14 2022/01/14 09:22:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -411,8 +411,8 @@ dhparam_main(int argc, char **argv)
 		unsigned char *data;
 		int len, l, bits;
 
-		len = BN_num_bytes(dh->p);
-		bits = BN_num_bits(dh->p);
+		len = BN_num_bytes(DH_get0_p(dh));
+		bits = BN_num_bits(DH_get0_p(dh));
 		data = malloc(len);
 		if (data == NULL) {
 			perror("malloc");
@@ -423,7 +423,7 @@ dhparam_main(int argc, char **argv)
 		    "#endif\n");
 		printf("DH *get_dh%d()\n\t{\n", bits);
 
-		l = BN_bn2bin(dh->p, data);
+		l = BN_bn2bin(DH_get0_p(dh), data);
 		printf("\tstatic unsigned char dh%d_p[] = {", bits);
 		for (i = 0; i < l; i++) {
 			if ((i % 12) == 0)
@@ -432,7 +432,7 @@ dhparam_main(int argc, char **argv)
 		}
 		printf("\n\t\t};\n");
 
-		l = BN_bn2bin(dh->g, data);
+		l = BN_bn2bin(DH_get0_g(dh), data);
 		printf("\tstatic unsigned char dh%d_g[] = {", bits);
 		for (i = 0; i < l; i++) {
 			if ((i % 12) == 0)
@@ -441,16 +441,18 @@ dhparam_main(int argc, char **argv)
 		}
 		printf("\n\t\t};\n");
 
-		printf("\tDH *dh;\n\n");
+		printf("\tDH *dh;\n");
+		printf("\tBIGNUM *p = NULL, *g = NULL;\n\n");
 		printf("\tif ((dh = DH_new()) == NULL) return(NULL);\n");
-		printf("\tdh->p = BN_bin2bn(dh%d_p, sizeof(dh%d_p), NULL);\n",
+		printf("\tp = BN_bin2bn(dh%d_p, sizeof(dh%d_p), NULL);\n",
 		    bits, bits);
-		printf("\tdh->g = BN_bin2bn(dh%d_g, sizeof(dh%d_g), NULL);\n",
+		printf("\tg = BN_bin2bn(dh%d_g, sizeof(dh%d_g), NULL);\n",
 		    bits, bits);
-		printf("\tif ((dh->p == NULL) || (dh->g == NULL))\n");
-		printf("\t\t{ DH_free(dh); return(NULL); }\n");
-		if (dh->length)
-			printf("\tdh->length = %ld;\n", dh->length);
+		printf("\tif (p == NULL || g == NULL)\n");
+		printf("\t\t{ BN_free(p); BN_free(g); DH_free(dh); return(NULL); }\n");
+		printf("\tDH_set0_pqg(dh, p, NULL, g);\n");
+		if (DH_get_length(dh) > 0)
+			printf("\tDH_set_length(dh, %ld);\n", DH_get_length(dh));
 		printf("\treturn(dh);\n\t}\n");
 		free(data);
 	}
