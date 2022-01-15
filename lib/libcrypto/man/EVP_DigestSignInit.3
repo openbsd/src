@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_DigestSignInit.3,v 1.11 2021/05/20 14:41:47 tb Exp $
+.\"	$OpenBSD: EVP_DigestSignInit.3,v 1.12 2022/01/15 09:08:51 tb Exp $
 .\"	OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 20 2021 $
+.Dd $Mdocdate: January 15 2022 $
 .Dt EVP_DIGESTSIGNINIT 3
 .Os
 .Sh NAME
@@ -188,14 +188,6 @@ The EVP interface to digital signatures should almost always be
 used in preference to the low-level interfaces.
 This is because the code then becomes transparent to the algorithm used
 and much more flexible.
-.Pp
-In previous versions of OpenSSL, there was a link between message digest
-types and public key algorithms.
-This meant that "clone" digests such as
-.Xr EVP_dss1 3
-needed to be used to sign using SHA1 and DSA.
-This is no longer necessary and the use of clone digest is now
-discouraged.
 .Pp
 The call to
 .Fn EVP_DigestSignFinal
