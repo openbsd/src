@@ -1,10 +1,11 @@
-/*	$OpenBSD: freenull.c.head,v 1.3 2019/11/02 15:38:46 jsing Exp $	*/
+/*	$OpenBSD: freenull.c.head,v 1.4 2022/01/15 02:46:12 inoguchi Exp $	*/
 
 #include <openssl/asn1.h>
 #include <openssl/cmac.h>
 #include <openssl/cms.h>
 #include <openssl/comp.h>
 #include <openssl/conf_api.h>
+#include <openssl/ct.h>
 #include <openssl/dso.h>
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
@@ -17,6 +18,7 @@
 #include <openssl/ui.h>
 #include <openssl/txt_db.h>
 #include <openssl/x509.h>
+#include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
 
 #include <err.h>
