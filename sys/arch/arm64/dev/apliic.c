@@ -1,4 +1,4 @@
-/*	$OpenBSD: apliic.c,v 1.1 2021/12/24 00:01:39 patrick Exp $	*/
+/*	$OpenBSD: apliic.c,v 1.2 2022/01/15 11:04:16 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -168,12 +168,11 @@ apliic_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 {
 	struct apliic_softc *sc = cookie;
 	uint32_t reg;
-	int i, j;
+	int i;
 
 	if (!I2C_OP_STOP_P(op))
 		return EINVAL;
 
-	HSET4(sc, I2C_CTL, I2C_CTL_MTR | I2C_CTL_MRR);
 	HWRITE4(sc, I2C_SMSTA, 0xffffffff);
 
 	if (cmdlen > 0) {
@@ -191,11 +190,11 @@ apliic_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 		HWRITE4(sc, I2C_MTXFIFO, I2C_MTXFIFO_START | addr << 1 | 1);
 		HWRITE4(sc, I2C_MTXFIFO, I2C_MTXFIFO_READ | buflen |
 		    I2C_MTXFIFO_STOP);
-		for (i = 1000; i > 0; i--) {
+		for (i = 10; i > 0; i--) {
+			delay(1000);
 			reg = HREAD4(sc, I2C_SMSTA);
 			if (reg & I2C_SMSTA_XEN)
 				break;
-			delay(1000);
 		}
 		if (reg & I2C_SMSTA_MTN)
 			return ENXIO;
@@ -203,12 +202,8 @@ apliic_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 			return ETIMEDOUT;
 		HWRITE4(sc, I2C_SMSTA, I2C_SMSTA_XEN);
 		for (i = 0; i < buflen; i++) {
-			for (j = 10000; j > 0; j--) {
-				reg = HREAD4(sc, I2C_MRXFIFO);
-				if (!(reg & I2C_MRXFIFO_EMPTY))
-					break;
-			}
-			if (j == 0)
+			reg = HREAD4(sc, I2C_MRXFIFO);
+			if (reg & I2C_MRXFIFO_EMPTY)
 				return EIO;
 			((uint8_t *)buf)[i] = reg & I2C_MRXFIFO_DATA_MASK;
 		}
