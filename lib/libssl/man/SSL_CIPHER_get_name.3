@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CIPHER_get_name.3,v 1.12 2021/05/12 15:12:35 tb Exp $
+.\" $OpenBSD: SSL_CIPHER_get_name.3,v 1.13 2022/01/15 23:38:50 jsg Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 12 2021 $
+.Dd $Mdocdate: January 15 2022 $
 .Dt SSL_CIPHER_GET_NAME 3
 .Os
 .Sh NAME
@@ -180,7 +180,7 @@ returns the ID of the given
 which must not be
 .Dv NULL .
 The ID here is an OpenSSL-specific concept, which stores a prefix
-of 0x0300 in the higher two bytes and the IANA-specified chipher
+of 0x0300 in the higher two bytes and the IANA-specified cipher
 suite ID in the lower two bytes.
 For instance, TLS_RSA_WITH_NULL_MD5 has IANA ID "0x00, 0x01", so
 .Fn SSL_CIPHER_get_id

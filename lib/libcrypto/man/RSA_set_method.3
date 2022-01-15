@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_set_method.3,v 1.15 2019/06/08 10:40:51 schwarze Exp $
+.\"	$OpenBSD: RSA_set_method.3,v 1.16 2022/01/15 23:38:50 jsg Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 8 2019 $
+.Dd $Mdocdate: January 15 2022 $
 .Dt RSA_SET_METHOD 3
 .Os
 .Sh NAME
@@ -113,7 +113,7 @@ that can be successfully initialized, it overrides the default.
 .Pp
 .Fn RSA_get_default_method
 returns a pointer to the current default method,
-even if it is actually overridded by an
+even if it is actually overridden by an
 .Vt ENGINE .
 .Pp
 .Fn RSA_set_method

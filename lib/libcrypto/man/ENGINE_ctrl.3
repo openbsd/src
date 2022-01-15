@@ -1,4 +1,4 @@
-.\" $OpenBSD: ENGINE_ctrl.3,v 1.4 2018/04/19 18:43:58 schwarze Exp $
+.\" $OpenBSD: ENGINE_ctrl.3,v 1.5 2022/01/15 23:38:50 jsg Exp $
 .\" content checked up to:
 .\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 19 2018 $
+.Dd $Mdocdate: January 15 2022 $
 .Dt ENGINE_CTRL 3
 .Os
 .Sh NAME
@@ -142,7 +142,7 @@ Copy the description of the user-defined command with the number
 into the buffer
 .Fa p
 and NUL-terminate it.
-It is the reponsability of the caller to make sure that the buffer
+It is the responsibility of the caller to make sure that the buffer
 .Fa p
 is large enough, either by calling
 .Dv ENGINE_CTRL_GET_DESC_LEN_FROM_CMD
@@ -178,7 +178,7 @@ Copy the name of the user-defined command with the number
 into the buffer
 .Fa p
 and NUL-terminate it.
-It is the reponsability of the caller to make sure that the buffer
+It is the responsibility of the caller to make sure that the buffer
 .Fa p
 is large enough, either by calling
 .Dv ENGINE_CTRL_GET_NAME_LEN_FROM_CMD
