@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.9 2021/11/14 22:07:38 guenther Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.10 2022/01/16 02:14:27 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -32,15 +32,11 @@
 #define	RELOC_TAG	DT_RELA
 #define	MACHID		EM_88K		/* ELF e_machine ID value checked */
 
-#include <elf.h>
-#include <machine/reloc.h>
-#include "syscall.h"
-#include "util.h"
-
-
 /* Only used in lib/csu/boot.h */
+#ifdef RCRT0
+
 static inline void
-RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
+RELOC_DYN(const Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 {
 	if (ELF_R_TYPE(r->r_info) == RELOC_BBASED_32) {
 		*p = v + r->r_addend;
@@ -51,4 +47,5 @@ RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 	}
 }
 
+#endif /* RCRT0 */
 #endif /* _M88K_ARCHDEP_H_ */
