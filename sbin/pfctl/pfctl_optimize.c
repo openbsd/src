@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.47 2020/07/21 14:10:51 henning Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.48 2022/01/16 14:28:16 naddy Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -789,7 +789,6 @@ block_feedback(struct pfctl *pf, struct superblock *block)
 {
 	TAILQ_HEAD( , pf_opt_rule) queue;
 	struct pf_opt_rule *por1, *por2;
-	u_int64_t total_count = 0;
 	struct pf_rule a, b;
 
 
@@ -799,8 +798,6 @@ block_feedback(struct pfctl *pf, struct superblock *block)
 	 */
 	TAILQ_FOREACH(por1, &block->sb_profiled_block->sb_rules, por_entry) {
 		comparable_rule(&a, &por1->por_rule, DC);
-		total_count += por1->por_rule.packets[0] +
-		    por1->por_rule.packets[1];
 		TAILQ_FOREACH(por2, &block->sb_rules, por_entry) {
 			if (por2->por_profile_count)
 				continue;
