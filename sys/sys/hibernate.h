@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.43 2022/01/07 02:47:06 guenther Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.44 2022/01/16 22:27:46 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -66,7 +66,7 @@ struct hibernate_memory_range {
  */
 struct hibernate_disk_chunk {
 	paddr_t		base;		/* Base of chunk */
-	paddr_t		end;		/* End of chunk */		
+	paddr_t		end;		/* End of chunk */
 	daddr_t		offset;		/* Abs. disk block locating chunk */
 	size_t		compressed_size; /* Compressed size on disk */
 	short		flags;		/* Flags */
@@ -85,7 +85,7 @@ typedef	int (*hibio_fn)(dev_t, daddr_t, vaddr_t, size_t, int, void *);
  */
 union hibernate_info {
 	struct {
-		u_int32_t			magic;	
+		u_int32_t			magic;
 		size_t				nranges;
 		struct hibernate_memory_range	ranges[VM_PHYSSEG_MAX];
 		size_t				image_size;

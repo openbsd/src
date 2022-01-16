@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.46 2020/09/11 09:27:09 mpi Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.47 2022/01/16 22:27:46 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -198,7 +198,7 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 		if (hiber_info->nranges >= VM_PHYSSEG_MAX)
 			return (1);
 
-		i = hiber_info->nranges;	
+		i = hiber_info->nranges;
 		hiber_info->ranges[i].base = round_page(bmp->addr);
 		hiber_info->ranges[i].end = trunc_page(bmp->addr + bmp->size);
 		hiber_info->image_size += hiber_info->ranges[i].end -
@@ -240,7 +240,7 @@ hibernate_enter_resume_2m_pde(vaddr_t va, paddr_t pa)
 			/* First 512GB and 1GB are already mapped */
 			pde = (pt_entry_t *)(HIBERNATE_PD_LOW +
 				(pl2_pi(va) * sizeof(pt_entry_t)));
-			npde = (pa & PG_LGFRAME) | 
+			npde = (pa & PG_LGFRAME) |
 				PG_RW | PG_V | PG_M | PG_PS | PG_U;
 			*pde = npde;
 		} else {
@@ -255,7 +255,7 @@ hibernate_enter_resume_2m_pde(vaddr_t va, paddr_t pa)
 				(pl2_pi(va) * sizeof(pt_entry_t)));
 			npde = (pa & PG_LGFRAME) |
 				PG_RW | PG_V | PG_M | PG_PS | PG_U;
-			*pde = npde; 
+			*pde = npde;
 		}
 	} else {
 		/* First map the 512GB containing region */
@@ -353,7 +353,7 @@ hibernate_populate_resume_pt(union hibernate_info *hib_info,
 		(pl3_pi(0) * sizeof(pt_entry_t)));
 	npde = (HIBERNATE_PD_LOW) | PG_RW | PG_V;
 	*pde = npde;
-	
+
 	/* PD for first 2MB */
 	pde = (pt_entry_t *)(HIBERNATE_PD_LOW +
 		(pl2_pi(0) * sizeof(pt_entry_t)));
