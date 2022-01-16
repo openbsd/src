@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_opt.c,v 1.26 2018/05/15 11:57:32 helg Exp $ */
+/* $OpenBSD: fuse_opt.c,v 1.27 2022/01/16 20:06:18 naddy Exp $ */
 /*
  * Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
  * Copyright (c) 2013 Stefan Sperling <stsp@openbsd.org>
@@ -190,10 +190,9 @@ parse_opt(const struct fuse_opt *o, const char *opt, void *data,
     fuse_opt_proc_t f, struct fuse_args *arg)
 {
 	const char *val;
-	int keyval, ret, found;
+	int ret, found;
 	size_t sep;
 
-	keyval = 0;
 	found = 0;
 
 	for(; o != NULL && o->templ; o++) {
@@ -205,11 +204,9 @@ parse_opt(const struct fuse_opt *o, const char *opt, void *data,
 		val = opt;
 
 		/* check key=value or -p n */
-		if (o->templ[sep] == '=') {
-			keyval = 1;
+		if (o->templ[sep] == '=')
 			val = &opt[sep + 1];
-		} else if (o->templ[sep] == ' ') {
-			keyval = 1;
+		else if (o->templ[sep] == ' ') {
 			if (sep == strlen(opt)) {
 				/* ask for next arg to be included */
 				return (IFUSE_OPT_NEED_ANOTHER_ARG);
