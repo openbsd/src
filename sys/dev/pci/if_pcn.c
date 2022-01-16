@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.45 2022/01/09 05:42:54 jsg Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.46 2022/01/16 11:34:05 dlg Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -811,10 +811,10 @@ void
 pcn_start(struct ifnet *ifp)
 {
 	struct pcn_softc *sc = ifp->if_softc;
-	struct mbuf *m0, *m;
+	struct mbuf *m0;
 	struct pcn_txsoft *txs;
 	bus_dmamap_t dmamap;
-	int error, nexttx, lasttx = -1, ofree, seg;
+	int nexttx, lasttx = -1, ofree, seg;
 
 	if (!(ifp->if_flags & IFF_RUNNING) || ifq_is_oactive(&ifp->if_snd))
 		return;
@@ -831,80 +831,34 @@ pcn_start(struct ifnet *ifp)
 	 * descriptors.
 	 */
 	for (;;) {
-		/* Grab a packet off the queue. */
-		m0 = ifq_deq_begin(&ifp->if_snd);
-		if (m0 == NULL)
-			break;
-		m = NULL;
-
-		/* Get a work queue entry. */
-		if (sc->sc_txsfree == 0) {
-			ifq_deq_rollback(&ifp->if_snd, m0);
+		if (sc->sc_txsfree == 0 ||
+		    sc->sc_txfree < (PCN_NTXSEGS + 1)) {
+			ifq_set_oactive(&ifp->if_snd);
 			break;
 		}
+
+		/* Grab a packet off the queue. */
+		m0 = ifq_dequeue(&ifp->if_snd);
+		if (m0 == NULL)
+			break;
 
 		txs = &sc->sc_txsoft[sc->sc_txsnext];
 		dmamap = txs->txs_dmamap;
 
-		/*
-		 * Load the DMA map.  If this fails, the packet either
-		 * didn't fit in the allotted number of segments, or we
-		 * were short on resources.  In this case, we'll copy
-		 * and try again.
-		 */
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		    BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
-			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			if (m == NULL) {
-				ifq_deq_rollback(&ifp->if_snd, m0);
-				break;
-			}
-			if (m0->m_pkthdr.len > MHLEN) {
-				MCLGET(m, M_DONTWAIT);
-				if ((m->m_flags & M_EXT) == 0) {
-					ifq_deq_rollback(&ifp->if_snd, m0);
-					m_freem(m);
-					break;
-				}
-			}
-			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
-			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
-			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
-			if (error) {
-				ifq_deq_rollback(&ifp->if_snd, m0);
-				break;
-			}
-		}
-
-		/*
-		 * Ensure we have enough descriptors free to describe
-		 * the packet.  Note, we always reserve one descriptor
-		 * at the end of the ring as a termination point, to
-		 * prevent wrap-around.
-		 */
-		if (dmamap->dm_nsegs > (sc->sc_txfree - 1)) {
-			/*
-			 * Not enough free descriptors to transmit this
-			 * packet.  We haven't committed anything yet,
-			 * so just unload the DMA map, put the packet
-			 * back on the queue, and punt.  Notify the upper
-			 * layer that there are not more slots left.
-			 *
-			 * XXX We could allocate an mbuf and copy, but
-			 * XXX is it worth it?
-			 */
-			ifq_set_oactive(&ifp->if_snd);
-			bus_dmamap_unload(sc->sc_dmat, dmamap);
-			m_freem(m);
-			ifq_deq_rollback(&ifp->if_snd, m0);
+		switch (bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
+		    BUS_DMA_NOWAIT)) {
+		case 0:
 			break;
-		}
+		case EFBIG:
+			if (m_defrag(m0, M_DONTWAIT) == 0 &&
+			    bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
+			    BUS_DMA_NOWAIT) == 0)
+				break;
 
-		ifq_deq_commit(&ifp->if_snd, m0);
-		if (m != NULL) {
+			/* FALLTHROUGH */
+		default:
 			m_freem(m0);
-			m0 = m;
+			continue;
 		}
 
 		/*
@@ -998,11 +952,6 @@ pcn_start(struct ifnet *ifp)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m0, BPF_DIRECTION_OUT);
 #endif /* NBPFILTER > 0 */
-	}
-
-	if (sc->sc_txsfree == 0 || sc->sc_txfree == 0) {
-		/* No more slots left; notify upper layer. */
-		ifq_set_oactive(&ifp->if_snd);
 	}
 
 	if (sc->sc_txfree != ofree) {
@@ -1198,8 +1147,6 @@ pcn_txintr(struct pcn_softc *sc)
 	uint32_t tmd1, tmd2, tmd;
 	int i, j;
 
-	ifq_clr_oactive(&ifp->if_snd);
-
 	/*
 	 * Go through our Tx list and free mbufs for those
 	 * frames which have been transmitted.
@@ -1286,6 +1233,9 @@ pcn_txintr(struct pcn_softc *sc)
 	 */
 	if (sc->sc_txsfree == PCN_TXQUEUELEN)
 		ifp->if_timer = 0;
+
+	if (ifq_is_oactive(&ifp->if_snd))
+		ifq_restart(&ifp->if_snd);
 }
 
 /*
