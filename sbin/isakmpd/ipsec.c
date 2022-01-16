@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.151 2021/10/22 12:30:53 bluhm Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.152 2022/01/16 14:30:11 naddy Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -2090,7 +2090,6 @@ ipsec_decode_id(char *buf, size_t size, u_int8_t *id, size_t id_len,
 {
 	int             id_type;
 	char           *addr = 0, *mask = 0;
-	u_int32_t      *idp;
 
 	if (id) {
 		if (!isakmpform) {
@@ -2102,7 +2101,6 @@ ipsec_decode_id(char *buf, size_t size, u_int8_t *id, size_t id_len,
 			id_len += ISAKMP_GEN_SZ;
 		}
 		id_type = GET_ISAKMP_ID_TYPE(id);
-		idp = (u_int32_t *) (id + ISAKMP_ID_DATA_OFF);
 		switch (id_type) {
 		case IPSEC_ID_IPV4_ADDR:
 			util_ntoa(&addr, AF_INET, id + ISAKMP_ID_DATA_OFF);

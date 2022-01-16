@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.124 2021/11/19 23:15:59 tb Exp $	 */
+/* $OpenBSD: x509.c,v 1.125 2022/01/16 14:30:11 naddy Exp $	 */
 /* $EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	 */
 
 /*
@@ -680,7 +680,7 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 	struct stat	sb;
 	char		fullname[PATH_MAX];
 	char		file[PATH_MAX];
-	int		fd, off, size;
+	int		fd;
 
 	if (strlen(name) >= sizeof fullname - 1) {
 		log_print("x509_read_crls_from_dir: directory name too long");
@@ -695,8 +695,6 @@ x509_read_crls_from_dir(X509_STORE *ctx, char *name)
 		return 0;
 	}
 	strlcpy(fullname, name, sizeof fullname);
-	off = strlen(fullname);
-	size = sizeof fullname - off;
 
 	while ((fd = monitor_readdir(file, sizeof file)) != -1) {
 		LOG_DBG((LOG_CRYPTO, 60, "x509_read_crls_from_dir: reading "

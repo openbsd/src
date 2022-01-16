@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.202 2021/10/22 12:30:54 bluhm Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.203 2022/01/16 14:30:11 naddy Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -2310,8 +2310,6 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	struct sadb_x_policy policy;
 	struct sadb_address *dst = 0, *src = 0;
 	struct sockaddr *dstaddr, *srcaddr = 0;
-	struct sadb_comb *scmb = 0;
-	struct sadb_prop *sprp = 0;
 	struct sadb_ident *srcident = 0, *dstident = 0;
 	char		dstbuf[ADDRESS_MAX], srcbuf[ADDRESS_MAX], *peer = 0;
 	char		confname[120], *conn = 0;
@@ -2354,11 +2352,6 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 	if (ext)
 		src = ext->seg;
 
-	ext = pf_key_v2_find_ext(pmsg, SADB_EXT_PROPOSAL);
-	if (ext) {
-		sprp = ext->seg;
-		scmb = (struct sadb_comb *) (sprp + 1);
-	}
 	ext = pf_key_v2_find_ext(pmsg, SADB_EXT_IDENTITY_SRC);
 	if (ext)
 		srcident = ext->seg;

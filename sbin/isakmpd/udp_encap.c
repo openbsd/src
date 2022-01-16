@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.23 2015/08/20 22:02:21 deraadt Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.24 2022/01/16 14:30:11 naddy Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -227,7 +227,7 @@ udp_encap_create(char *name)
 {
 	struct virtual_transport *v;
 	struct udp_transport	*u;
-	struct transport	*rv, *t;
+	struct transport	*rv;
 	struct sockaddr		*dst, *addr;
 	struct conf_list	*addr_list = 0;
 	struct conf_list_node	*addr_node;
@@ -303,7 +303,6 @@ udp_encap_create(char *name)
 		rv = 0;
 		goto ret;
 	}
-	t = (struct transport *)v;
 	rv = udp_clone(v->encap, dst);
 	if (rv)
 		rv->vtbl = &udp_encap_transport_vtbl;
