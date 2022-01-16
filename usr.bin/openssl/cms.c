@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.28 2022/01/08 06:05:39 inoguchi Exp $ */
+/* $OpenBSD: cms.c,v 1.29 2022/01/16 07:11:49 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -1395,6 +1395,7 @@ cms_main(int argc, char **argv)
 				BIO_printf(bio_err,
 				    "Error writing certs to %s\n",
 				    cms_config.certsoutfile);
+				sk_X509_pop_free(allcerts, X509_free);
 				ret = 5;
 				goto end;
 			}
@@ -1695,6 +1696,7 @@ cms_main(int argc, char **argv)
 				BIO_printf(bio_err,
 				    "Error writing signers to %s\n",
 				    cms_config.signerfile);
+				sk_X509_free(signers);
 				ret = 5;
 				goto end;
 			}
