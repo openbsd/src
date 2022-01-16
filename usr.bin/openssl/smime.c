@@ -1,4 +1,4 @@
-/* $OpenBSD: smime.c,v 1.16 2022/01/11 16:06:48 inoguchi Exp $ */
+/* $OpenBSD: smime.c,v 1.17 2022/01/16 07:12:28 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -1025,6 +1025,7 @@ smime_main(int argc, char **argv)
 		if (!save_certs(smime_config.signerfile, signers)) {
 			BIO_printf(bio_err, "Error writing signers to %s\n",
 			    smime_config.signerfile);
+			sk_X509_free(signers);
 			ret = 5;
 			goto end;
 		}
