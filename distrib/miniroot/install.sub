@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1189 2022/01/11 00:58:32 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1190 2022/01/16 04:43:34 jsg Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1128,7 +1128,7 @@ v6_defroute() {
 	_routers=$(route -n show -inet6 |
 		sed -En 's/^default[[:space:]]+([^[:space:]]+).*/\1 /p')
 
-	# Add more default router canditates by ping6'ing
+	# Add more default router candidates by ping6'ing
 	# the All-Routers multicast address.
 	for _if in $_v6ifs; do
 		_resp=$(ping6 -n -c 2 ff02::2%$_if 2>/dev/null |
@@ -1935,7 +1935,7 @@ install_http() {
 	if [[ -n $INSTALL_MIRROR ]]; then
 		INSTALL_URL=$_http_proto://$INSTALL_MIRROR
 	else
-		# Remove the architecture and snaphots or version part.
+		# Remove the architecture and snapshots or version part.
 		INSTALL_URL=${_url_base%/$ARCH}
 		INSTALL_URL=${INSTALL_URL%@(/$VNAME|/snapshots)}
 	fi
