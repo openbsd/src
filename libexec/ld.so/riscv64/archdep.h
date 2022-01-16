@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.3 2021/11/14 22:07:39 guenther Exp $ */
+/*	$OpenBSD: archdep.h,v 1.4 2022/01/16 02:17:05 guenther Exp $ */
 
 /*
  * Copyright (c) 2021 Dale Rahn <drahn@openbsd.org>
@@ -33,15 +33,11 @@
 #define	RELOC_TAG	DT_RELA
 #define	MACHID		EM_RISCV	/* ELF e_machine ID value checked */
 
-#include <elf.h>
-#include <machine/reloc.h>
-#include "syscall.h"
-#include "util.h"
-
-
 /* Only used in lib/csu/boot.h */
+#ifdef RCRT0
+
 static inline void
-RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
+RELOC_DYN(const Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 {
 	if (ELF_R_TYPE(r->r_info) == R_RISCV_RELATIVE) {
 		*p = v + r->r_addend;
@@ -52,4 +48,5 @@ RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 	}
 }
 
+#endif /* RCRT0 */
 #endif /* _AARCH64_ARCHDEP_H_ */
