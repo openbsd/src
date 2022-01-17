@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.42 2021/10/25 09:38:36 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.43 2022/01/17 10:40:03 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -668,7 +668,8 @@ popup_display(int flags, enum box_lines lines, struct cmdq_item *item, u_int px,
 	pd = xcalloc(1, sizeof *pd);
 	pd->item = item;
 	pd->flags = flags;
-	pd->title = xstrdup(title);
+	if (title != NULL)
+		pd->title = xstrdup(title);
 
 	pd->c = c;
 	pd->c->references++;
