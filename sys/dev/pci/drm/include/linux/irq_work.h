@@ -1,4 +1,4 @@
-/*	$OpenBSD: irq_work.h,v 1.6 2022/01/14 06:53:14 jsg Exp $	*/
+/*	$OpenBSD: irq_work.h,v 1.7 2022/01/17 12:42:30 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -32,7 +32,8 @@ typedef void (*irq_work_func_t)(struct irq_work *);
 static inline void
 init_irq_work(struct irq_work *work, irq_work_func_t func)
 {
-	timeout_set(&work->to, (void (*)(void *))func, work);
+	/* process context as intel gen 9 sleeps in irq work */
+	timeout_set_proc(&work->to, (void (*)(void *))func, work);
 }
 
 static inline bool
