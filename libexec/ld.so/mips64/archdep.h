@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.16 2021/11/14 22:07:39 guenther Exp $ */
+/*	$OpenBSD: archdep.h,v 1.17 2022/01/17 19:45:34 guenther Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -32,13 +32,11 @@
 #define	RELOC_TAG	DT_REL
 #define	MACHID		EM_MIPS		/* ELF e_machine ID value checked */
 
-#include <elf.h>
-#include <machine/reloc.h>
-#include "syscall.h"
-#include "util.h"
-
-
 /* Only used in lib/csu/mips64/boot_md.h */
+#ifdef RCRT0
+
+#include "util.h"		/* for _dl_memset */
+
 #define RELOC_DYN(relp, symp, adrp, val)				\
 do {									\
 	if (ELF_R_TYPE(relp->r_info) == R_MIPS_REL32_64) {		\
@@ -63,7 +61,7 @@ do {									\
 	gotp = __dynld->dt_pltgot;					\
 	n = __dynld->dt_proc[DT_MIPS_LOCAL_GOTNO - DT_LOPROC];		\
 									\
-	for (i = ((gotp[1] & 0x0000000080000000) ? 2 : 1); i < n; i++) {\
+	for (i = 2; i < n; i++) {					\
 		gotp[i] += __loff;					\
 	}								\
 	gotp += n;							\
@@ -89,4 +87,5 @@ do {									\
 	}								\
 } while (0)
 
+#endif /* RCRT0 */
 #endif /* _MIPS_ARCHDEP_H_ */

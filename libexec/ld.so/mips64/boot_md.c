@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot_md.c,v 1.3 2019/11/10 22:21:54 guenther Exp $ */
+/*	$OpenBSD: boot_md.c,v 1.4 2022/01/17 19:45:34 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -36,30 +36,14 @@
 
 #include <sys/exec_elf.h>
 
-#include "syscall.h"
+#include <machine/reloc.h>
+
+#include "util.h"
 #include "archdep.h"
-#include "stdlib.h"
 
 #include "../../lib/csu/os-note-elf.h"
 
-#if RELOC_TAG == DT_RELA
-typedef	Elf_RelA	RELOC_TYPE;
-#elif RELOC_TAG == DT_REL
 typedef	Elf_Rel		RELOC_TYPE;
-#else
-# error "unknown RELOC_TAG"
-#endif
-
-/* The set of dynamic tags that we're interested in for bootstrapping */
-struct boot_dyn {
-	RELOC_TYPE	*dt_reloc;	/* DT_RELA   or DT_REL */
-	Elf_Addr	dt_relocsz;	/* DT_RELASZ or DT_RELSZ */
-	Elf_Addr	*dt_pltgot;
-	const Elf_Sym	*dt_symtab;
-#if DT_PROCNUM > 0
-	u_long		dt_proc[DT_PROCNUM];
-#endif
-};
 
 /*
  * Local decls.
@@ -69,13 +53,18 @@ void _dl_boot_bind(const long, long *, Elf_Dyn *) __boot;
 void
 _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 {
-	struct boot_dyn	dynld;		/* Resolver data for the loader */
-	AuxInfo		*auxstack;
-	long		*stack;
-	int		n, argc;
-	char		**argv, **envp;
-	long		loff;
-	RELOC_TYPE	*rp, *rend;
+	AuxInfo			*auxstack;
+	long			*stack;
+	int			n, argc;
+	char			**argv, **envp;
+	long			loff;
+	unsigned		i;
+	const RELOC_TYPE	*rend;
+	const RELOC_TYPE	*dt_reloc;	/* DT_REL */
+	unsigned		dt_relocsz;	/* DT_RELSZ */
+	const Elf_Sym		*dt_symtab;
+	Elf_Addr		*dt_pltgot;
+	unsigned		dt_local_gotno, dt_gotsym, dt_symtabno;
 
 	/*
 	 * Scan argument and environment vectors. Find dynamic
@@ -108,43 +97,55 @@ _dl_boot_bind(const long sp, long *dl_data, Elf_Dyn *dynp)
 	loff = dl_data[AUX_base];	/* XXX assumes ld.so is linked at 0x0 */
 
 	/*
-	 * We need to do 'selfreloc' in case the code weren't
-	 * loaded at the address it was linked to.
-	 *
-	 * Scan the DYNAMIC section for the loader.
-	 * Cache the data for easier access.
+	 * Scan the DYNAMIC section for the loader for the items we need
 	 */
-	_dl_memset(&dynld, 0, sizeof(dynld));
+	dt_reloc = NULL;
+	dt_local_gotno = dt_gotsym = dt_symtabno = dt_relocsz = 0;
 	while (dynp->d_tag != DT_NULL) {
 		/* first the tags that are pointers to be relocated */
-		if (dynp->d_tag == DT_PLTGOT)
-			dynld.dt_pltgot = (void *)(dynp->d_un.d_ptr + loff);
-		else if (dynp->d_tag == DT_SYMTAB)
-			dynld.dt_symtab = (void *)(dynp->d_un.d_ptr + loff);
-		else if (dynp->d_tag == RELOC_TAG)	/* DT_{RELA,REL} */
-			dynld.dt_reloc = (void *)(dynp->d_un.d_ptr + loff);
+		if (dynp->d_tag == DT_SYMTAB)
+			dt_symtab = (void *)(dynp->d_un.d_ptr + loff);
+		else if (dynp->d_tag == RELOC_TAG)	/* DT_REL */
+			dt_reloc = (void *)(dynp->d_un.d_ptr + loff);
+		else if (dynp->d_tag == DT_PLTGOT)
+			dt_pltgot = (void *)(dynp->d_un.d_ptr + loff);
 
 		/* Now for the tags that are just sizes or counts */
-		else if (dynp->d_tag == RELOC_TAG+1)	/* DT_{RELA,REL}SZ */
-			dynld.dt_relocsz = dynp->d_un.d_val;
-#if DT_PROCNUM > 0
-		else if (dynp->d_tag >= DT_LOPROC &&
-		    dynp->d_tag < DT_LOPROC + DT_PROCNUM)
-			dynld.dt_proc[dynp->d_tag - DT_LOPROC] =
-			    dynp->d_un.d_val;
-#endif /* DT_PROCNUM */
+		else if (dynp->d_tag == RELOC_TAG+1)	/* DT_RELSZ */
+			dt_relocsz = dynp->d_un.d_val;
+		else if (dynp->d_tag == DT_MIPS_LOCAL_GOTNO)
+			dt_local_gotno = dynp->d_un.d_val;
+		else if (dynp->d_tag == DT_MIPS_GOTSYM)
+			dt_gotsym = dynp->d_un.d_val;
+		else if (dynp->d_tag == DT_MIPS_SYMTABNO)
+			dt_symtabno = dynp->d_un.d_val;
 		dynp++;
 	}
 
-	rp = dynld.dt_reloc;
-	rend = (RELOC_TYPE *)((char *)rp + dynld.dt_relocsz);
-	for (; rp < rend; rp++) {
-		if (ELF_R_TYPE(rp->r_info) != R_MIPS_NONE) {
-			Elf_Addr *ra = (Elf_Addr *)(rp->r_offset + loff);
-
+	rend = (RELOC_TYPE *)((char *)dt_reloc + dt_relocsz);
+	for (; dt_reloc < rend; dt_reloc++) {
+		if (ELF64_R_TYPE(dt_reloc->r_info) == R_MIPS_REL32_64) {
+			Elf_Addr *ra;
+			ra = (Elf_Addr *)(dt_reloc->r_offset + loff);
 			*ra += loff;
 		}
 	}
 
-	RELOC_GOT(&dynld, loff);
+	/* Do all local gots */
+	for (i = 2; i < dt_local_gotno; i++)
+		dt_pltgot[i] += loff;
+	dt_pltgot += dt_local_gotno;
+
+	/* Do symbol referencing gots. There should be no global... */
+	i = dt_symtabno - dt_gotsym;
+	dt_symtab += dt_gotsym;
+
+	while (i--) {
+		if (ELF64_ST_TYPE(dt_symtab->st_info) == STT_FUNC)
+			*dt_pltgot += loff;
+		else
+			*dt_pltgot = dt_symtab->st_value + loff;
+		dt_pltgot++;
+		dt_symtab++;
+	}
 }
