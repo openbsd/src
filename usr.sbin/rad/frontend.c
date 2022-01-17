@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.39 2021/01/19 16:54:48 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.40 2022/01/17 18:04:35 naddy Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1222,9 +1222,6 @@ void
 build_leaving_packet(struct ra_iface *ra_iface)
 {
 	struct nd_router_advert		 ra;
-	size_t				 len;
-
-	len = sizeof(ra);
 
 	memset(&ra, 0, sizeof(ra));
 
