@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfcc.c,v 1.2 2021/05/22 17:07:28 drahn Exp $	*/
+/*	$OpenBSD: sfcc.c,v 1.3 2022/01/17 14:17:48 visa Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -50,7 +50,7 @@ struct cfdriver sfcc_cd = {
 	NULL, "sfcc", DV_DULL
 };
 
-void	sfcc_cache_wbinv_range(vaddr_t, vsize_t);
+void	sfcc_cache_wbinv_range(paddr_t, psize_t);
 
 int
 sfcc_match(struct device *parent, void *match, void *aux)
@@ -93,18 +93,19 @@ sfcc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-sfcc_cache_wbinv_range(paddr_t pa, paddr_t len)
+sfcc_cache_wbinv_range(paddr_t pa, psize_t len)
 {
 	struct sfcc_softc *sc = sfcc_sc;
+	paddr_t end, mask;
 
-	len += pa & (sc->sc_line_size - 1);
-	pa &= ~((paddr_t)sc->sc_line_size - 1);
+	mask = sc->sc_line_size - 1;
+	end = (pa + len + mask) & ~mask;
+	pa &= ~mask;
 
 	__asm volatile ("fence iorw,iorw" ::: "memory");
-	while (len > 0) {
+	while (pa != end) {
 		bus_space_write_8(sc->sc_iot, sc->sc_ioh, SFCC_FLUSH64, pa);
 		__asm volatile ("fence iorw,iorw" ::: "memory");
 		pa += sc->sc_line_size;
-		len -= sc->sc_line_size;
 	}
 }
