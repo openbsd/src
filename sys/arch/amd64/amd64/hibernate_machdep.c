@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.47 2022/01/16 22:27:46 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.48 2022/01/17 02:54:28 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -153,7 +153,7 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 
 #if NACPI > 0
 	/* Record ACPI trampoline code page */
-	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
+	if (hiber_info->nranges >= nitems(hiber_info->ranges))
 		return (1);
 	hiber_info->ranges[hiber_info->nranges].base = ACPI_TRAMPOLINE;
 	hiber_info->ranges[hiber_info->nranges].end =
@@ -162,7 +162,7 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 	hiber_info->nranges++;
 
 	/* Record ACPI trampoline data page */
-	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
+	if (hiber_info->nranges >= nitems(hiber_info->ranges))
 		return (1);
 	hiber_info->ranges[hiber_info->nranges].base = ACPI_TRAMP_DATA;
 	hiber_info->ranges[hiber_info->nranges].end =
@@ -172,7 +172,7 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 #endif
 #ifdef MULTIPROCESSOR
 	/* Record MP trampoline code page */
-	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
+	if (hiber_info->nranges >= nitems(hiber_info->ranges))
 		return (1);
 	hiber_info->ranges[hiber_info->nranges].base = MP_TRAMPOLINE;
 	hiber_info->ranges[hiber_info->nranges].end =
@@ -181,7 +181,7 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 	hiber_info->nranges++;
 
 	/* Record MP trampoline data page */
-	if (hiber_info->nranges >= VM_PHYSSEG_MAX)
+	if (hiber_info->nranges >= nitems(hiber_info->ranges))
 		return (1);
 	hiber_info->ranges[hiber_info->nranges].base =
 		MP_TRAMP_DATA;
@@ -195,7 +195,7 @@ get_hibernate_info_md(union hibernate_info *hiber_info)
 		/* Skip non-NVS ranges (already processed) */
 		if (bmp->type != BIOS_MAP_NVS)
 			continue;
-		if (hiber_info->nranges >= VM_PHYSSEG_MAX)
+		if (hiber_info->nranges >= nitems(hiber_info->ranges))
 			return (1);
 
 		i = hiber_info->nranges;

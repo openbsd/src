@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_hibernate.c,v 1.132 2022/01/07 02:47:07 guenther Exp $	*/
+/*	$OpenBSD: subr_hibernate.c,v 1.133 2022/01/17 02:54:28 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -551,17 +551,6 @@ uvm_page_rle(paddr_t addr)
 }
 
 /*
- * Calculate a hopefully unique version # for this kernel, based upon
- * how it was linked.
- */
-u_int32_t
-hibsum(void)
-{
-	return ((long)malloc ^ (long)km_alloc ^ (long)printf ^ (long)strlen);
-}
-
-
-/*
  * Fills out the hibernate_info union pointed to by hib
  * with information about this machine (swap signature block
  * offsets, number of memory ranges, kernel in use, etc)
@@ -572,6 +561,8 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 	struct disklabel dl;
 	char err_string[128], *dl_ret;
 	int part;
+	SHA2_CTX ctx;
+	void *fn;
 
 #ifndef NO_PROPOLICE
 	/* Save propolice guard */
@@ -608,11 +599,17 @@ get_hibernate_info(union hibernate_info *hib, int suspend)
 	hib->sig_offset = DL_GETPSIZE(&dl.d_partitions[part]) -
 	    sizeof(union hibernate_info)/DEV_BSIZE;
 
-	/* Stash kernel version information */
-	memset(&hib->kernel_version, 0, 128);
-	bcopy(version, &hib->kernel_version,
-	    min(strlen(version), sizeof(hib->kernel_version)-1));
-	hib->kernel_sum = hibsum();
+	SHA256Init(&ctx);
+	SHA256Update(&ctx, version, strlen(version));
+	fn = printf;
+	SHA256Update(&ctx, &fn, sizeof(fn));
+	fn = malloc;
+	SHA256Update(&ctx, &fn, sizeof(fn));
+	fn = km_alloc;
+	SHA256Update(&ctx, &fn, sizeof(fn));
+	fn = strlen;
+	SHA256Update(&ctx, &fn, sizeof(fn));
+	SHA256Final((u_int8_t *)&hib->kern_hash, &ctx);
 
 	if (suspend) {
 		/* Grab the previously-allocated piglet addresses */
@@ -954,12 +951,7 @@ hibernate_compare_signature(union hibernate_info *mine,
 		return (1);
 	}
 
-	if (strcmp(mine->kernel_version, disk->kernel_version) != 0) {
-		printf("unhibernate failed: original kernel changed\n");
-		return (1);
-	}
-
-	if (hibsum() != disk->kernel_sum) {
+	if (bcmp(mine->kern_hash, disk->kern_hash, SHA256_DIGEST_LENGTH) != 0) {
 		printf("unhibernate failed: original kernel changed\n");
 		return (1);
 	}

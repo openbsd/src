@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate.h,v 1.44 2022/01/16 22:27:46 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate.h,v 1.45 2022/01/17 02:54:28 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -23,6 +23,9 @@
 #include <sys/tree.h>
 #include <lib/libz/zlib.h>
 #include <machine/vmparam.h>
+#include <crypto/sha2.h>
+
+#define HIB_PHYSSEG_MAX		22
 
 #define HIBERNATE_CHUNK_USED 1
 #define HIBERNATE_CHUNK_CONFLICT 2
@@ -86,20 +89,19 @@ typedef	int (*hibio_fn)(dev_t, daddr_t, vaddr_t, size_t, int, void *);
 union hibernate_info {
 	struct {
 		u_int32_t			magic;
+		dev_t				dev;
 		size_t				nranges;
-		struct hibernate_memory_range	ranges[VM_PHYSSEG_MAX];
+		struct hibernate_memory_range	ranges[HIB_PHYSSEG_MAX];
 		size_t				image_size;
 		size_t				chunk_ctr;
-		dev_t				dev;
 		daddr_t				sig_offset;
 		daddr_t				chunktable_offset;
 		daddr_t				image_offset;
 		paddr_t				piglet_pa;
 		vaddr_t				piglet_va;
-		char				kernel_version[128];
-		u_int32_t			kernel_sum;
 		hibio_fn			io_func;
 		void				*io_page;
+		u_int8_t			kern_hash[SHA256_DIGEST_LENGTH];
 #ifndef NO_PROPOLICE
 		long				guard;
 #endif /* ! NO_PROPOLICE */
