@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.13 2020/10/19 14:53:11 florian Exp $ */
+/* $Id: lex.c,v 1.14 2022/01/17 18:19:51 naddy Exp $ */
 
 /*! \file */
 
@@ -289,7 +289,6 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 	FILE *stream;
 	char *curr, *prev;
 	size_t remaining;
-	unsigned int saved_options;
 	isc_result_t result;
 
 	/*
@@ -324,8 +323,6 @@ isc_lex_gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *tokenp) {
 	}
 
 	isc_buffer_compact(source->pushback);
-
-	saved_options = options;
 
 	curr = lex->data;
 	*curr = '\0';

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sockaddr.c,v 1.15 2020/12/21 11:41:09 florian Exp $ */
+/* $Id: sockaddr.c,v 1.16 2022/01/17 18:19:51 naddy Exp $ */
 
 /*! \file */
 #include <sys/types.h>
@@ -109,7 +109,6 @@ isc_sockaddr_totext(const struct sockaddr_storage *sockaddr, isc_buffer_t *targe
 	char pbuf[sizeof("65000")];
 	unsigned int plen;
 	isc_region_t avail;
-	int error;
 	char tmp[NI_MAXHOST];
 
 	REQUIRE(sockaddr != NULL);
@@ -134,8 +133,9 @@ isc_sockaddr_totext(const struct sockaddr_storage *sockaddr, isc_buffer_t *targe
 	plen = strlen(pbuf);
 	INSIST(plen < sizeof(pbuf));
 
-	error = getnameinfo((struct sockaddr *)sockaddr, sockaddr->ss_len,
-	    tmp, sizeof(tmp), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
+	if (getnameinfo((struct sockaddr *)sockaddr, sockaddr->ss_len,
+	    tmp, sizeof(tmp), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV) != 0)
+		return (ISC_R_FAILURE);
 	if (strlen(tmp) > isc_buffer_availablelength(target))
 		return (ISC_R_NOSPACE);
 	isc_buffer_putmem(target, tmp, strlen(tmp));
