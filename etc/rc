@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.555 2021/11/11 09:38:14 claudio Exp $
+#	$OpenBSD: rc,v 1.556 2022/01/17 04:12:15 jsg Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -185,7 +185,7 @@ reorder_libs() {
 
 	echo -n 'reordering libraries:'
 
-	# Remount the (read-only) filessystems in _ro_list as read-write.
+	# Remount the (read-only) filesystems in _ro_list as read-write.
 	for _mp in $_ro_list; do
 		if ! mount -u -w $_mp; then
 			echo ' failed.'
