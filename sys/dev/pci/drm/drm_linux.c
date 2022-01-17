@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.85 2022/01/14 06:52:59 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.86 2022/01/17 03:54:03 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -2018,10 +2018,30 @@ const struct dma_fence_ops dma_fence_array_ops = {
 int
 dma_fence_chain_find_seqno(struct dma_fence **df, uint64_t seqno)
 {
+	struct dma_fence_chain *chain;
+	struct dma_fence *fence;
+
 	if (seqno == 0)
 		return 0;
-	STUB();
-	return -ENOSYS;
+
+	if ((chain = to_dma_fence_chain(*df)) == NULL)
+		return -EINVAL;
+
+	fence = &chain->base;
+	if (fence->seqno < seqno)
+		return -EINVAL;
+
+	dma_fence_chain_for_each(*df, fence) {
+		if ((*df)->context != fence->context)
+			break;
+
+		chain = to_dma_fence_chain(*df);
+		if (chain->prev_seqno < seqno)
+			break;
+	}
+	dma_fence_put(fence);
+
+	return 0;
 }
 
 void
