@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.23 2021/12/15 12:53:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.24 2022/01/17 13:55:32 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010, 2019 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ uvm_obj_free(struct uvm_object *uobj)
  	/*
 	 * Extract from rb tree in offset order. The phys addresses
 	 * usually increase in that order, which is better for
-	 * uvm_pmr_freepageq.
+	 * uvm_pglistfree().
  	 */
 	RBT_FOREACH(pg, uvm_objtree, &uobj->memt) {
 		/*
@@ -242,6 +242,6 @@ uvm_obj_free(struct uvm_object *uobj)
 		uvm_unlock_pageq();
 		TAILQ_INSERT_TAIL(&pgl, pg, pageq);
  	}
-	uvm_pmr_freepageq(&pgl);
+	uvm_pglistfree(&pgl);
 }
 
