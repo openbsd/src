@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.51 2022/01/18 16:36:49 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.52 2022/01/18 16:52:18 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1168,7 +1168,7 @@ ta_parse(const char *fn, const unsigned char *der, size_t len,
 		pk = d2i_PUBKEY(NULL, &pkey, pkeysz);
 		assert(pk != NULL);
 
-		if ((opk = X509_get_pubkey(p->x509)) == NULL)
+		if ((opk = X509_get0_pubkey(p->x509)) == NULL)
 			cryptowarnx("%s: RFC 6487 (trust anchor): "
 			    "missing pubkey", fn);
 		else if (EVP_PKEY_cmp(pk, opk) != 1)
@@ -1178,7 +1178,6 @@ ta_parse(const char *fn, const unsigned char *der, size_t len,
 			rc = 1;
 
 		EVP_PKEY_free(pk);
-		EVP_PKEY_free(opk);
 	}
 
 	if (rc == 0) {
