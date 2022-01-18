@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.37 2022/01/14 15:00:23 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.38 2022/01/18 13:06:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -839,6 +839,7 @@ proc_parser(int fd)
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
+	x509_init_oid();
 
 	if ((ctx = X509_STORE_CTX_new()) == NULL)
 		cryptoerrx("X509_STORE_CTX_new");

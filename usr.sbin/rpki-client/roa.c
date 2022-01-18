@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.34 2021/12/22 08:44:15 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.35 2022/01/18 13:06:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -36,7 +36,7 @@ struct	parse {
 	struct roa	 *res; /* results */
 };
 
-static ASN1_OBJECT	*roa_oid;
+extern ASN1_OBJECT	*roa_oid;
 
 /*
  * Parse IP address (ROAIPAddress), RFC 6482, section 3.3.
@@ -345,14 +345,6 @@ roa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
-
-	/* OID from section 2, RFC 6482. */
-	if (roa_oid == NULL) {
-		roa_oid = OBJ_txt2obj("1.2.840.113549.1.9.16.1.24", 1);
-		if (roa_oid == NULL)
-			errx(1, "OBJ_txt2obj for %s failed",
-			    "1.2.840.113549.1.9.16.1.24");
-	}
 
 	cms = cms_parse_validate(x509, fn, der, len, roa_oid, &cmsz);
 	if (cms == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.49 2021/12/26 12:32:28 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.50 2022/01/18 13:06:43 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -47,20 +47,9 @@ struct	parse {
 	const char	*fn; /* currently-parsed file */
 };
 
-static ASN1_OBJECT	*carepo_oid;	/* 1.3.6.1.5.5.7.48.5 (caRepository) */
-static ASN1_OBJECT	*mft_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
-static ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
-
-static void
-cert_init_oid(void)
-{
-	if ((carepo_oid = OBJ_txt2obj("1.3.6.1.5.5.7.48.5", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.48.5");
-	if ((mft_oid = OBJ_txt2obj("1.3.6.1.5.5.7.48.10", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.48.10");
-	if ((notify_oid = OBJ_txt2obj("1.3.6.1.5.5.7.48.13", 1)) == NULL)
-		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.48.13");
-}
+extern ASN1_OBJECT	*carepo_oid;	/* 1.3.6.1.5.5.7.48.5 (caRepository) */
+extern ASN1_OBJECT	*manifest_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
+extern ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
 
 /*
  * Append an IP address structure to our list of results.
@@ -270,12 +259,9 @@ sbgp_sia_resource_entry(struct parse *p,
 	if (!ASN1_frame(p->fn, dsz, &d, &plen, &ptag))
 		goto out;
 
-	if (carepo_oid == NULL)
-		cert_init_oid();
-
 	if (OBJ_cmp(oid, carepo_oid) == 0)
 		rc = sbgp_sia_resource_carepo(p, d, plen);
-	else if (OBJ_cmp(oid, mft_oid) == 0)
+	else if (OBJ_cmp(oid, manifest_oid) == 0)
 		rc = sbgp_sia_resource_mft(p, d, plen);
 	else if (OBJ_cmp(oid, notify_oid) == 0)
 		rc = sbgp_sia_resource_notify(p, d, plen);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.29 2021/10/28 09:02:19 beck Exp $ */
+/*	$OpenBSD: x509.c,v 1.30 2022/01/18 13:06:43 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -30,11 +30,34 @@
 
 #include "extern.h"
 
-static ASN1_OBJECT	*bgpsec_oid;	/* id-kp-bgpsec-router */
+ASN1_OBJECT	*carepo_oid;	/* 1.3.6.1.5.5.7.48.5 (caRepository) */
+ASN1_OBJECT	*manifest_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
+ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
+ASN1_OBJECT	*roa_oid;	/* id-ct-routeOriginAuthz CMS content type */
+ASN1_OBJECT	*mft_oid;	/* id-ct-rpkiManifest CMS content type */
+ASN1_OBJECT	*gbr_oid;	/* id-ct-rpkiGhostbusters CMS content type */
+ASN1_OBJECT	*bgpsec_oid;	/* id-kp-bgpsec-router Key Purpose */
 
-static void
-init_oid(void)
+
+void
+x509_init_oid(void)
 {
+
+	if ((carepo_oid = OBJ_txt2obj("1.3.6.1.5.5.7.48.5", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.48.5");
+	if ((manifest_oid = OBJ_txt2obj("1.3.6.1.5.5.7.48.10", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.48.10");
+	if ((notify_oid = OBJ_txt2obj("1.3.6.1.5.5.7.48.13", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.48.13");
+	if ((roa_oid = OBJ_txt2obj("1.2.840.113549.1.9.16.1.24", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed",
+		    "1.2.840.113549.1.9.16.1.24");
+	if ((mft_oid = OBJ_txt2obj("1.2.840.113549.1.9.16.1.26", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed",
+		    "1.2.840.113549.1.9.16.1.26");
+	if ((gbr_oid = OBJ_txt2obj("1.2.840.113549.1.9.16.1.35", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed",
+		    "1.2.840.113549.1.9.16.1.35");
 	if ((bgpsec_oid = OBJ_txt2obj("1.3.6.1.5.5.7.3.30", 1)) == NULL)
 		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.3.30");
 }
@@ -166,9 +189,6 @@ x509_get_purpose(X509 *x, const char *fn)
 		    sk_ASN1_OBJECT_num(eku));
 		goto out;
 	}
-
-	if (bgpsec_oid == NULL)
-		init_oid();
 
 	if (OBJ_cmp(bgpsec_oid, sk_ASN1_OBJECT_value(eku, 0)) == 0) {
 		purpose = CERT_PURPOSE_BGPSEC_ROUTER;

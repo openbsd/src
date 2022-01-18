@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.104 2022/01/14 15:00:23 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.105 2022/01/18 13:06:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -566,6 +566,7 @@ struct ibuf	*io_buf_recvfd(int, struct ibuf **);
 
 /* X509 helpers. */
 
+void		 x509_init_oid(void);
 char		*x509_get_aia(X509 *, const char *);
 char		*x509_get_aki(X509 *, int, const char *);
 char		*x509_get_ski(X509 *, const char *);

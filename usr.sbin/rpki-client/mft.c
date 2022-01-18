@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.45 2022/01/13 13:46:03 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.46 2022/01/18 13:06:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -39,7 +39,7 @@ struct	parse {
 	struct mft	*res; /* result object */
 };
 
-static ASN1_OBJECT    *mft_oid;
+extern ASN1_OBJECT    *mft_oid;
 
 static const char *
 gentime2str(const ASN1_GENERALIZEDTIME *time)
@@ -417,13 +417,6 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
-
-	if (mft_oid == NULL) {
-		mft_oid = OBJ_txt2obj("1.2.840.113549.1.9.16.1.26", 1);
-		if (mft_oid == NULL)
-			errx(1, "OBJ_txt2obj for %s failed",
-			    "1.2.840.113549.1.9.16.1.26");
-	}
 
 	cms = cms_parse_validate(x509, fn, der, len, mft_oid, &cmsz);
 	if (cms == NULL)
