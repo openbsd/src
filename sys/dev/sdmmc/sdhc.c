@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.71 2021/09/11 22:42:12 mglocker Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.72 2022/01/18 11:36:21 patrick Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -238,10 +238,12 @@ sdhc_write_2(struct sdhc_host *hp, bus_size_t offset, uint16_t value)
  */
 int
 sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
-    bus_space_handle_t ioh, bus_size_t iosize, int usedma, u_int32_t caps)
+    bus_space_handle_t ioh, bus_size_t iosize, int usedma, uint64_t capmask,
+    uint64_t capset)
 {
 	struct sdmmcbus_attach_args saa;
 	struct sdhc_host *hp;
+	uint32_t caps;
 	int error = 1;
 	int max_clock;
 
@@ -267,8 +269,9 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	(void)sdhc_host_reset(hp);
 
 	/* Determine host capabilities. */
-	if (caps == 0)
-		caps = HREAD4(hp, SDHC_CAPABILITIES);
+	caps = HREAD4(hp, SDHC_CAPABILITIES);
+	caps &= ~capmask;
+	caps |= capset;
 
 	/* Use DMA if the host system and the controller support it. */
 	if (usedma && ISSET(caps, SDHC_ADMA2_SUPP)) {
@@ -404,6 +407,8 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 
 	if (SDHC_SPEC_VERSION(hp->version) >= SDHC_SPEC_V3) {
 		uint32_t caps2 = HREAD4(hp, SDHC_CAPABILITIES2);
+		caps2 &= ~(capmask >> 32);
+		caps2 |= capset >> 32;
 
 		if (ISSET(caps, SDHC_8BIT_MODE_SUPP))
 			saa.caps |= SMC_CAPS_8BIT_MODE;
@@ -411,9 +416,6 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		if (ISSET(caps2, SDHC_DDR50_SUPP))
 			saa.caps |= SMC_CAPS_MMC_DDR52;
 	}
-
-	if (ISSET(sc->sc_flags, SDHC_F_NODDR50))
-		saa.caps &= ~SMC_CAPS_MMC_DDR52;
 
 	if (ISSET(sc->sc_flags, SDHC_F_NONREMOVABLE))
 		saa.caps |= SMC_CAPS_NONREMOVABLE;

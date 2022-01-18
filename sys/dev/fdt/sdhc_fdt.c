@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.18 2021/10/24 17:52:27 mpi Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.19 2022/01/18 11:36:21 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -140,7 +140,8 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 	struct sdhc_fdt_softc *sc = (struct sdhc_fdt_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	struct regmap *rm = NULL;
-	uint32_t reg, phandle, freq, cap = 0;
+	uint64_t capmask = 0, capset = 0;
+	uint32_t reg, phandle, freq;
 	char pad_type[16] = { 0 };
 
 	if (faa->fa_nreg < 1) {
@@ -230,7 +231,7 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc.sc_flags |= SDHC_F_NOPWR0;
 
 		/* XXX Doesn't work on Rockchip RK3399. */
-		sc->sc.sc_flags |= SDHC_F_NODDR50;
+		capmask |= (uint64_t)SDHC_DDR50_SUPP << 32;
 	}
 
 	if (OF_is_compatible(faa->fa_node, "arasan,sdhci-8.9a")) {
@@ -242,8 +243,9 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc.sc_flags |= SDHC_F_NOPWR0;
 
 	if (OF_is_compatible(faa->fa_node, "brcm,bcm2835-sdhci")) {
-		cap = SDHC_VOLTAGE_SUPP_3_3V | SDHC_HIGH_SPEED_SUPP;
-		cap |= SDHC_MAX_BLK_LEN_1024 << SDHC_MAX_BLK_LEN_SHIFT;
+		capmask = 0xffffffff;
+		capset = SDHC_VOLTAGE_SUPP_3_3V | SDHC_HIGH_SPEED_SUPP;
+		capset |= SDHC_MAX_BLK_LEN_1024 << SDHC_MAX_BLK_LEN_SHIFT;
 
 		freq = clock_get_frequency(faa->fa_node, NULL);
 		sc->sc.sc_clkbase = freq / 1000;
@@ -278,13 +280,11 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 			}
 		}
 
-		cap = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
-		    SDHC_CAPABILITIES);
 		if (OF_getpropint(faa->fa_node, "bus-width", 1) != 8)
-			cap &= ~SDHC_8BIT_MODE_SUPP;
+			capmask |= SDHC_8BIT_MODE_SUPP;
 		if (OF_getproplen(faa->fa_node, "no-1-8-v") == 0) {
-			cap &= ~SDHC_VOLTAGE_SUPP_1_8V;
-			sc->sc.sc_flags |= SDHC_F_NODDR50;
+			capmask |= SDHC_VOLTAGE_SUPP_1_8V;
+			capmask |= (uint64_t)SDHC_DDR50_SUPP << 32;
 		}
 		if (OF_getproplen(faa->fa_node,
 		    "marvell,xenon-phy-slow-mode") == 0)
@@ -318,7 +318,8 @@ sdhc_fdt_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc.sc_bus_clock_post = sdhc_fdt_xenon_bus_clock_post;
 	}
 
-	sdhc_host_found(&sc->sc, sc->sc_iot, sc->sc_ioh, sc->sc_size, 1, cap);
+	sdhc_host_found(&sc->sc, sc->sc_iot, sc->sc_ioh, sc->sc_size, 1,
+	    capmask, capset);
 	return;
 
 unmap:

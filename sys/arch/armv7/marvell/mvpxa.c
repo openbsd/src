@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvpxa.c,v 1.3 2021/10/24 17:52:27 mpi Exp $	*/
+/*	$OpenBSD: mvpxa.c,v 1.4 2022/01/18 11:36:21 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -111,7 +111,7 @@ mvpxa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mvpxa_softc *sc = (struct mvpxa_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	uint32_t caps;
+	uint64_t capmask = 0, capset = 0;
 
 	if (faa->fa_nreg < 3) {
 		printf(": not enough registers\n");
@@ -162,11 +162,11 @@ mvpxa_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc.sc_host = &sc->sc_host;
 	sc->sc.sc_dmat = faa->fa_dmat;
 
-	caps = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SDHC_CAPABILITIES);
 	if (OF_getproplen(faa->fa_node, "no-1-8-v") >= 0)
-		caps &= ~SDHC_VOLTAGE_SUPP_1_8V;
+		capmask |= SDHC_VOLTAGE_SUPP_1_8V;
 
-	sdhc_host_found(&sc->sc, sc->sc_iot, sc->sc_ioh, sc->sc_size, 1, caps);
+	sdhc_host_found(&sc->sc, sc->sc_iot, sc->sc_ioh, sc->sc_size, 1,
+	    capmask, capset);
 	return;
 
 unmap:
