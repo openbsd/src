@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.30 2022/01/18 13:06:43 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.31 2022/01/18 16:09:51 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -217,7 +217,7 @@ x509_get_pubkey(X509 *x, const char *fn)
 
 	pkey = X509_get0_pubkey(x);
 	if (pkey == NULL) {
-		warnx("%s: X509_get_pubkey failed in %s", fn, __func__);
+		warnx("%s: X509_get0_pubkey failed in %s", fn, __func__);
 		goto out;
 	}
 	if (EVP_PKEY_base_id(pkey) != EVP_PKEY_EC) {
