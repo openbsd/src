@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.32 2022/01/05 03:32:44 visa Exp $
+#	$OpenBSD: GENERIC,v 1.33 2022/01/18 07:53:39 visa Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -45,6 +45,8 @@ intc0		at cpu0
 com*		at fdt?
 
 # PolarFire SoCs
+cdsdhc*		at fdt?
+sdmmc*		at cdsdhc?
 mpfclock*	at fdt? early 1
 
 # SiFive SoCs

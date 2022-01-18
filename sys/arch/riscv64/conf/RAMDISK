@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.28 2022/01/05 03:32:44 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.29 2022/01/18 07:53:39 visa Exp $
 
 machine		riscv64
 maxusers	4
@@ -36,6 +36,8 @@ intc0		at cpu0
 com*		at fdt?
 
 # PolarFire SoCs
+cdsdhc*		at fdt?
+sdmmc*		at cdsdhc?
 mpfclock*	at fdt? early 1
 
 # SiFive SoCs
