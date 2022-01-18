@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.42 2022/01/18 16:29:06 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.43 2022/01/18 16:36:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -393,25 +393,22 @@ static struct cert *
 proc_parser_cert(char *file, const unsigned char *der, size_t len)
 {
 	struct cert		*cert;
-	X509			*x509;
 	struct auth		*a;
 	struct crl		*crl;
 
 	/* Extract certificate data and X509. */
 
-	cert = cert_parse(&x509, file, der, len);
+	cert = cert_parse(file, der, len);
 	if (cert == NULL)
 		return NULL;
 
 	a = valid_ski_aki(file, &auths, cert->ski, cert->aki);
 	crl = get_crl(a);
 
-	if (!valid_x509(file, x509, a, crl)) {
+	if (!valid_x509(file, cert->x509, a, crl)) {
 		cert_free(cert);
-		X509_free(x509);
 		return NULL;
 	}
-	X509_free(x509);
 
 	cert->talid = a->cert->talid;
 
@@ -424,12 +421,8 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len)
 	/*
 	 * Add validated CA certs to the RPKI auth tree.
 	 */
-	if (cert->purpose == CERT_PURPOSE_CA) {
-		if (!auth_insert(&auths, cert, a)) {
-			cert_free(cert);
-			return NULL;
-		}
-	}
+	if (cert->purpose == CERT_PURPOSE_CA)
+		auth_insert(&auths, cert, a);
 
 	return cert;
 }
@@ -455,10 +448,11 @@ proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
 
 	/* Extract certificate data and X509. */
 
-	cert = ta_parse(&x509, file, der, len, pkey, pkeysz);
+	cert = ta_parse(file, der, len, pkey, pkeysz);
 	if (cert == NULL)
 		return NULL;
 
+	x509 = cert->x509;
 	if ((name = X509_get_subject_name(x509)) == NULL) {
 		warnx("%s Unable to get certificate subject", file);
 		goto badcert;
@@ -493,22 +487,16 @@ proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
 		goto badcert;
 	}
 
-	X509_free(x509);
-
 	cert->talid = talid;
 
 	/*
 	 * Add valid roots to the RPKI auth tree.
 	 */
-	if (!auth_insert(&auths, cert, NULL)) {
-		cert_free(cert);
-		return NULL;
-	}
+	auth_insert(&auths, cert, NULL);
 
 	return cert;
 
  badcert:
-	X509_free(x509);
 	cert_free(cert);
 	return NULL;
 }

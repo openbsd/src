@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.50 2022/01/18 13:06:43 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.51 2022/01/18 16:36:49 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -978,8 +978,7 @@ out:
  * is also dereferenced.
  */
 static struct cert *
-cert_parse_inner(X509 **xp, const char *fn, const unsigned char *der,
-    size_t len, int ta)
+cert_parse_inner(const char *fn, const unsigned char *der, size_t len, int ta)
 {
 	int		 rc = 0, extsz, c;
 	int		 sia_present = 0;
@@ -988,8 +987,6 @@ cert_parse_inner(X509 **xp, const char *fn, const unsigned char *der,
 	X509_EXTENSION	*ext = NULL;
 	ASN1_OBJECT	*obj;
 	struct parse	 p;
-
-	*xp = NULL;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
@@ -1000,7 +997,7 @@ cert_parse_inner(X509 **xp, const char *fn, const unsigned char *der,
 	if ((p.res = calloc(1, sizeof(struct cert))) == NULL)
 		err(1, NULL);
 
-	if ((x = *xp = d2i_X509(NULL, &der, len)) == NULL) {
+	if ((x = d2i_X509(NULL, &der, len)) == NULL) {
 		cryptowarnx("%s: d2i_X509_bio", p.fn);
 		goto out;
 	}
@@ -1139,9 +1136,6 @@ cert_parse_inner(X509 **xp, const char *fn, const unsigned char *der,
 		goto out;
 	}
 
-	if (X509_up_ref(x) == 0)
-		errx(1, "%s: X509_up_ref failed", __func__);
-
 	p.res->x509 = x;
 
 	rc = 1;
@@ -1149,34 +1143,32 @@ out:
 	if (rc == 0) {
 		cert_free(p.res);
 		X509_free(x);
-		*xp = NULL;
 	}
 	return (rc == 0) ? NULL : p.res;
 }
 
 struct cert *
-cert_parse(X509 **xp, const char *fn, const unsigned char *der, size_t len)
+cert_parse(const char *fn, const unsigned char *der, size_t len)
 {
-	return cert_parse_inner(xp, fn, der, len, 0);
+	return cert_parse_inner(fn, der, len, 0);
 }
 
 struct cert *
-ta_parse(X509 **xp, const char *fn, const unsigned char *der, size_t len,
+ta_parse(const char *fn, const unsigned char *der, size_t len,
     const unsigned char *pkey, size_t pkeysz)
 {
 	EVP_PKEY	*pk = NULL, *opk = NULL;
 	struct cert	*p;
 	int		 rc = 0;
 
-	if ((p = cert_parse_inner(xp, fn, der, len, 1)) == NULL)
+	if ((p = cert_parse_inner(fn, der, len, 1)) == NULL)
 		return NULL;
 
 	if (pkey != NULL) {
-		assert(*xp != NULL);
 		pk = d2i_PUBKEY(NULL, &pkey, pkeysz);
 		assert(pk != NULL);
 
-		if ((opk = X509_get_pubkey(*xp)) == NULL)
+		if ((opk = X509_get_pubkey(p->x509)) == NULL)
 			cryptowarnx("%s: RFC 6487 (trust anchor): "
 			    "missing pubkey", fn);
 		else if (EVP_PKEY_cmp(pk, opk) != 1)
@@ -1192,8 +1184,6 @@ ta_parse(X509 **xp, const char *fn, const unsigned char *der, size_t len,
 	if (rc == 0) {
 		cert_free(p);
 		p = NULL;
-		X509_free(*xp);
-		*xp = NULL;
 	}
 
 	return p;
@@ -1305,7 +1295,7 @@ auth_find(struct auth_tree *auths, const char *aki)
 	return RB_FIND(auth_tree, auths, &a);
 }
 
-int
+void
 auth_insert(struct auth_tree *auths, struct cert *cert, struct auth *parent)
 {
 	struct auth *na;
@@ -1319,8 +1309,6 @@ auth_insert(struct auth_tree *auths, struct cert *cert, struct auth *parent)
 
 	if (RB_INSERT(auth_tree, auths, na) != NULL)
 		err(1, "auth tree corrupted");
-
-	return 1;
 }
 
 static inline int

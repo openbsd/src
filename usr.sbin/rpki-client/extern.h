@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.107 2022/01/18 16:24:55 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.108 2022/01/18 16:36:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -279,7 +279,7 @@ RB_HEAD(auth_tree, auth);
 RB_PROTOTYPE(auth_tree, auth, entry, authcmp);
 
 struct auth	*auth_find(struct auth_tree *, const char *);
-int		 auth_insert(struct auth_tree *, struct cert *, struct auth *);
+void		 auth_insert(struct auth_tree *, struct cert *, struct auth *);
 
 /*
  * Resource types specified by the RPKI profiles.
@@ -407,9 +407,8 @@ struct tal	*tal_read(struct ibuf *);
 
 void		 cert_buffer(struct ibuf *, const struct cert *);
 void		 cert_free(struct cert *);
-struct cert	*cert_parse(X509 **, const char *, const unsigned char *,
-		    size_t);
-struct cert	*ta_parse(X509 **, const char *, const unsigned char *, size_t,
+struct cert	*cert_parse(const char *, const unsigned char *, size_t);
+struct cert	*ta_parse(const char *, const unsigned char *, size_t,
 		    const unsigned char *, size_t);
 struct cert	*cert_read(struct ibuf *);
 void		 cert_insert_brks(struct brk_tree *, struct cert *);
