@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.43 2022/01/18 16:36:49 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.44 2022/01/18 18:19:47 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -204,15 +204,15 @@ verify_cb(int ok, X509_STORE_CTX *store_ctx)
  * Returns 1 for valid certificates, returns 0 if there is a verify error
  */
 static int
-valid_x509(char *file, X509 *x509, struct auth *a, struct crl *crl)
+valid_x509(char *file, X509 *x509, struct auth *a, struct crl *crl,
+    unsigned long flags)
 {
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls = NULL;
 	int			 c;
 
 	build_chain(a, &chain);
-	if (crl != NULL)
-		build_crls(crl, &crls);
+	build_crls(crl, &crls);
 
 	assert(x509 != NULL);
 	if (!X509_STORE_CTX_init(ctx, NULL, x509, NULL))
@@ -221,12 +221,11 @@ valid_x509(char *file, X509 *x509, struct auth *a, struct crl *crl)
 	X509_STORE_CTX_set_verify_cb(ctx, verify_cb);
 	if (!X509_STORE_CTX_set_app_data(ctx, file))
 		cryptoerrx("X509_STORE_CTX_set_app_data");
-	if (crl != NULL)
-		X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_CRL_CHECK);
+	if (flags != 0)
+		X509_STORE_CTX_set_flags(ctx, flags);
 	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
 	X509_STORE_CTX_set0_trusted_stack(ctx, chain);
-	if (crl != NULL)
-		X509_STORE_CTX_set0_crls(ctx, crls);
+	X509_STORE_CTX_set0_crls(ctx, crls);
 
 	if (X509_verify_cert(ctx) <= 0) {
 		c = X509_STORE_CTX_get_error(ctx);
@@ -262,7 +261,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
 	a = valid_ski_aki(file, &auths, roa->ski, roa->aki);
 	crl = get_crl(a);
 
-	if (!valid_x509(file, x509, a, crl)) {
+	if (!valid_x509(file, x509, a, crl, X509_V_FLAG_CRL_CHECK)) {
 		X509_free(x509);
 		roa_free(roa);
 		return NULL;
@@ -361,7 +360,8 @@ proc_parser_mft(char *file, const unsigned char *der, size_t len,
 
 	a = valid_ski_aki(file, &auths, mft->ski, mft->aki);
 
-	if (!valid_x509(file, x509, a, NULL)) {
+	/* CRL checks disabled here because CRL is referenced from mft */
+	if (!valid_x509(file, x509, a, NULL, 0)) {
 		mft_free(mft);
 		X509_free(x509);
 		return NULL;
@@ -405,7 +405,7 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len)
 	a = valid_ski_aki(file, &auths, cert->ski, cert->aki);
 	crl = get_crl(a);
 
-	if (!valid_x509(file, cert->x509, a, crl)) {
+	if (!valid_x509(file, cert->x509, a, crl, X509_V_FLAG_CRL_CHECK)) {
 		cert_free(cert);
 		return NULL;
 	}
@@ -569,7 +569,7 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len)
 	crl = get_crl(a);
 
 	/* return value can be ignored since nothing happens here */
-	valid_x509(file, x509, a, crl);
+	valid_x509(file, x509, a, crl, X509_V_FLAG_CRL_CHECK);
 
 	X509_free(x509);
 	gbr_free(gbr);
