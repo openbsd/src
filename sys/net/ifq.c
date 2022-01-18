@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.44 2021/07/09 01:22:05 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.45 2022/01/18 10:54:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -484,7 +484,7 @@ ifq_deq_sleep(struct ifqueue *ifq, struct mbuf **mp, int nbio, int priority,
 			if (error != 0)
 				break;
 			if (!(*alive)) {
-				error = ENXIO;
+				error = EIO;
 				break;
 			}
 		}
