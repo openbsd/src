@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.13 2022/01/18 16:18:22 claudio Exp $ */
+/*	$OpenBSD: gbr.c,v 1.14 2022/01/18 16:24:55 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -53,7 +53,7 @@ gbr_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
 
-	cms = cms_parse_validate(x509, fn, der, len, gbr_oid, &cmsz, 0);
+	cms = cms_parse_validate(x509, fn, der, len, gbr_oid, &cmsz);
 	if (cms == NULL)
 		return NULL;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.40 2022/01/18 16:18:22 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.41 2022/01/18 16:24:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -50,7 +50,6 @@ static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
 struct parse_repo {
 	RB_ENTRY(parse_repo)	 entry;
 	char			*path;
-	char			*validpath;
 	unsigned int		 id;
 };
 
@@ -73,75 +72,20 @@ repo_get(unsigned int id)
 }
 
 static void
-repo_add(unsigned int id, char *path, char *validpath)
+repo_add(unsigned int id, char *path)
 {
 	struct parse_repo *rp;
 
-	if ((rp = calloc(1, sizeof(*rp))) == NULL)
+	if ((rp = malloc(sizeof(*rp))) == NULL)
 		err(1, NULL);
 	rp->id = id;
-	if (path != NULL)
-		if ((rp->path = strdup(path)) == NULL)
-			err(1, NULL);
-	if (validpath != NULL)
-		if ((rp->validpath = strdup(validpath)) == NULL)
-			err(1, NULL);
+	if ((rp->path = strdup(path)) == NULL)
+		err(1, NULL);
 
 	if (RB_INSERT(repo_tree, &repos, rp) != NULL)
 		errx(1, "repository already added: id %d, %s", id, path);
 }
 
-/*
- * Build access path to file based on repoid, path and file values.
- * If wantalt == 1 the function can return NULL, if wantalt == 0 it
- * can not fail.
- */
-static char *
-parse_filepath(unsigned int repoid, const char *path, const char *file,
-    int wantalt)
-{
-	struct parse_repo	*rp;
-	char			*fn, *repopath;
-
-	/* build file path based on repoid, entity path and filename */
-	rp = repo_get(repoid);
-	if (rp == NULL) {
-		/* no repo so no alternative path. */
-		if (wantalt)
-			return NULL;
-
-		if (path == NULL) {
-			if ((fn = strdup(file)) == NULL)
-				err(1, NULL);
-		} else {
-			if (asprintf(&fn, "%s/%s", path, file) == -1)
-				err(1, NULL);
-		}
-	} else {
-		if (wantalt || rp->path == NULL)
-			repopath = rp->validpath;
-		else
-			repopath = rp->path;
-
-		if (repopath == NULL)
-			return NULL;
-
-		if (path == NULL) {
-			if (asprintf(&fn, "%s/%s", repopath, file) == -1)
-				err(1, NULL);
-		} else {
-			if (asprintf(&fn, "%s/%s/%s", repopath, path,
-			    file) == -1)
-				err(1, NULL);
-		}
-	}
-	return fn;
-}
-
-/*
- * Callback for X509_verify_cert() to handle critical extensions in old
- * LibreSSL libraries or OpenSSL libs without RFC3779 support.
- */
 static int
 verify_cb(int ok, X509_STORE_CTX *store_ctx)
 {
@@ -200,50 +144,6 @@ verify_cb(int ok, X509_STORE_CTX *store_ctx)
 }
 
 /*
- * Validate the X509 certificate.  If crl is NULL don't check CRL.
- * Returns 1 for valid certificates, returns 0 if there is a verify error
- */
-static int
-valid_x509(char *file, X509 *x509, struct auth *a, struct crl *crl)
-{
-	STACK_OF(X509)		*chain;
-	STACK_OF(X509_CRL)	*crls = NULL;
-	int			 c;
-
-	build_chain(a, &chain);
-	if (crl != NULL)
-		build_crls(crl, &crls);
-
-	assert(x509 != NULL);
-	if (!X509_STORE_CTX_init(ctx, NULL, x509, NULL))
-		cryptoerrx("X509_STORE_CTX_init");
-
-	X509_STORE_CTX_set_verify_cb(ctx, verify_cb);
-	if (!X509_STORE_CTX_set_app_data(ctx, file))
-		cryptoerrx("X509_STORE_CTX_set_app_data");
-	if (crl != NULL)
-		X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_CRL_CHECK);
-	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
-	X509_STORE_CTX_set0_trusted_stack(ctx, chain);
-	if (crl != NULL)
-		X509_STORE_CTX_set0_crls(ctx, crls);
-
-	if (X509_verify_cert(ctx) <= 0) {
-		c = X509_STORE_CTX_get_error(ctx);
-		warnx("%s: %s", file, X509_verify_cert_error_string(c));
-		X509_STORE_CTX_cleanup(ctx);
-		sk_X509_free(chain);
-		sk_X509_CRL_free(crls);
-		return 0;
-	}
-
-	X509_STORE_CTX_cleanup(ctx);
-	sk_X509_free(chain);
-	sk_X509_CRL_free(crls);
-	return 1;
-}
-
-/*
  * Parse and validate a ROA.
  * This is standard stuff.
  * Returns the roa on success, NULL on failure.
@@ -252,22 +152,44 @@ static struct roa *
 proc_parser_roa(char *file, const unsigned char *der, size_t len)
 {
 	struct roa		*roa;
-	struct crl		*crl;
-	struct auth		*a;
 	X509			*x509;
+	int			 c;
+	struct auth		*a;
+	STACK_OF(X509)		*chain;
+	STACK_OF(X509_CRL)	*crls;
+	struct crl		*crl;
 
 	if ((roa = roa_parse(&x509, file, der, len)) == NULL)
 		return NULL;
 
 	a = valid_ski_aki(file, &auths, roa->ski, roa->aki);
+	build_chain(a, &chain);
 	crl = get_crl(a);
+	build_crls(crl, &crls);
 
-	if (!valid_x509(file, x509, a, crl)) {
+	assert(x509 != NULL);
+	if (!X509_STORE_CTX_init(ctx, NULL, x509, NULL))
+		cryptoerrx("X509_STORE_CTX_init");
+	X509_STORE_CTX_set_verify_cb(ctx, verify_cb);
+	if (!X509_STORE_CTX_set_app_data(ctx, file))
+		cryptoerrx("X509_STORE_CTX_set_app_data");
+	X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_CRL_CHECK);
+	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
+	X509_STORE_CTX_set0_trusted_stack(ctx, chain);
+	X509_STORE_CTX_set0_crls(ctx, crls);
+
+	if (X509_verify_cert(ctx) <= 0) {
+		c = X509_STORE_CTX_get_error(ctx);
+		X509_STORE_CTX_cleanup(ctx);
+		if (verbose > 0 || c != X509_V_ERR_UNABLE_TO_GET_CRL)
+			warnx("%s: %s", file, X509_verify_cert_error_string(c));
 		X509_free(x509);
 		roa_free(roa);
+		sk_X509_free(chain);
+		sk_X509_CRL_free(crls);
 		return NULL;
 	}
-	X509_free(x509);
+	X509_STORE_CTX_cleanup(ctx);
 
 	/*
 	 * Check CRL to figure out the soonest transitive expiry moment
@@ -292,6 +214,10 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
 	if (valid_roa(file, &auths, roa))
 		roa->valid = 1;
 
+	sk_X509_free(chain);
+	sk_X509_CRL_free(crls);
+	X509_free(x509);
+
 	return roa;
 }
 
@@ -299,12 +225,17 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
  * Check all files and their hashes in a MFT structure.
  * Return zero on failure, non-zero on success.
  */
-static int
+int
 mft_check(const char *fn, struct mft *p)
 {
 	size_t	i;
-	int	fd, try, rc = 1;
-	char	*h, *path;
+	int	fd, rc = 1;
+	char	*cp, *h, *path = NULL;
+
+	/* Check hash of file now, but first build path for it */
+	cp = strrchr(fn, '/');
+	assert(cp != NULL);
+	assert(cp - fn < INT_MAX);
 
 	for (i = 0; i < p->filesz; i++) {
 		const struct mftfile *m = &p->files[i];
@@ -315,24 +246,15 @@ mft_check(const char *fn, struct mft *p)
 			free(h);
 			continue;
 		}
-
-		fd = -1;
-		try = 0;
-		path = NULL;
-		do {
-			free(path);
-			if ((path = parse_filepath(p->repoid, p->path, m->file,
-			    try++)) == NULL)
-				break;
-			fd = open(path, O_RDONLY);
-		} while (fd == -1 && try < 2);
-
-		free(path);
-
+		if (asprintf(&path, "%.*s/%s", (int)(cp - fn), fn,
+		    m->file) == -1)
+			err(1, NULL);
+		fd = open(path, O_RDONLY);
 		if (!valid_filehash(fd, m->hash, sizeof(m->hash))) {
 			warnx("%s: bad message digest for %s", fn, m->file);
 			rc = 0;
 		}
+		free(path);
 	}
 
 	return rc;
@@ -354,31 +276,49 @@ proc_parser_mft(char *file, const unsigned char *der, size_t len,
 {
 	struct mft		*mft;
 	X509			*x509;
+	int			 c;
 	struct auth		*a;
+	STACK_OF(X509)		*chain;
 
 	if ((mft = mft_parse(&x509, file, der, len)) == NULL)
 		return NULL;
 
 	a = valid_ski_aki(file, &auths, mft->ski, mft->aki);
+	build_chain(a, &chain);
 
-	if (!valid_x509(file, x509, a, NULL)) {
+	if (!X509_STORE_CTX_init(ctx, NULL, x509, NULL))
+		cryptoerrx("X509_STORE_CTX_init");
+
+	/* CRL checks disabled here because CRL is referenced from mft */
+	X509_STORE_CTX_set_verify_cb(ctx, verify_cb);
+	if (!X509_STORE_CTX_set_app_data(ctx, file))
+		cryptoerrx("X509_STORE_CTX_set_app_data");
+	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
+	X509_STORE_CTX_set0_trusted_stack(ctx, chain);
+
+	if (X509_verify_cert(ctx) <= 0) {
+		c = X509_STORE_CTX_get_error(ctx);
+		X509_STORE_CTX_cleanup(ctx);
+		warnx("%s: %s", file, X509_verify_cert_error_string(c));
 		mft_free(mft);
 		X509_free(x509);
+		sk_X509_free(chain);
 		return NULL;
 	}
+
+	X509_STORE_CTX_cleanup(ctx);
+	sk_X509_free(chain);
 	X509_free(x509);
 
-	mft->repoid = repoid;
+	if (!mft_check(file, mft)) {
+		mft_free(mft);
+		return NULL;
+	}
+
 	if (path != NULL)
 		if ((mft->path = strdup(path)) == NULL)
 			err(1, NULL);
-
-	if (!mft->stale)
-		if (!mft_check(file, mft)) {
-			mft_free(mft);
-			return NULL;
-		}
-
+	mft->repoid = repoid;
 	return mft;
 }
 
@@ -394,8 +334,10 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len)
 {
 	struct cert		*cert;
 	X509			*x509;
-	struct auth		*a;
-	struct crl		*crl;
+	int			 c;
+	struct auth		*a = NULL;
+	STACK_OF(X509)		*chain;
+	STACK_OF(X509_CRL)	*crls;
 
 	/* Extract certificate data and X509. */
 
@@ -404,13 +346,35 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len)
 		return NULL;
 
 	a = valid_ski_aki(file, &auths, cert->ski, cert->aki);
-	crl = get_crl(a);
+	build_chain(a, &chain);
+	build_crls(get_crl(a), &crls);
 
-	if (!valid_x509(file, x509, a, crl)) {
+	assert(x509 != NULL);
+	if (!X509_STORE_CTX_init(ctx, NULL, x509, NULL))
+		cryptoerrx("X509_STORE_CTX_init");
+
+	X509_STORE_CTX_set_verify_cb(ctx, verify_cb);
+	if (!X509_STORE_CTX_set_app_data(ctx, file))
+		cryptoerrx("X509_STORE_CTX_set_app_data");
+	X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_CRL_CHECK);
+	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
+	X509_STORE_CTX_set0_trusted_stack(ctx, chain);
+	X509_STORE_CTX_set0_crls(ctx, crls);
+
+	if (X509_verify_cert(ctx) <= 0) {
+		c = X509_STORE_CTX_get_error(ctx);
+		warnx("%s: %s", file, X509_verify_cert_error_string(c));
+		X509_STORE_CTX_cleanup(ctx);
 		cert_free(cert);
+		sk_X509_free(chain);
+		sk_X509_CRL_free(crls);
 		X509_free(x509);
 		return NULL;
 	}
+
+	X509_STORE_CTX_cleanup(ctx);
+	sk_X509_free(chain);
+	sk_X509_CRL_free(crls);
 	X509_free(x509);
 
 	cert->talid = a->cert->talid;
@@ -571,18 +535,39 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len)
 {
 	struct gbr		*gbr;
 	X509			*x509;
+	int			 c;
 	struct auth		*a;
-	struct crl		*crl;
+	STACK_OF(X509)		*chain;
+	STACK_OF(X509_CRL)	*crls;
 
 	if ((gbr = gbr_parse(&x509, file, der, len)) == NULL)
 		return;
 
 	a = valid_ski_aki(file, &auths, gbr->ski, gbr->aki);
-	crl = get_crl(a);
 
-	/* return value can be ignored since nothing happens here */
-	valid_x509(file, x509, a, crl);
+	build_chain(a, &chain);
+	build_crls(get_crl(a), &crls);
 
+	assert(x509 != NULL);
+	if (!X509_STORE_CTX_init(ctx, NULL, x509, NULL))
+		cryptoerrx("X509_STORE_CTX_init");
+	X509_STORE_CTX_set_verify_cb(ctx, verify_cb);
+	if (!X509_STORE_CTX_set_app_data(ctx, file))
+		cryptoerrx("X509_STORE_CTX_set_app_data");
+	X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_CRL_CHECK);
+	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
+	X509_STORE_CTX_set0_trusted_stack(ctx, chain);
+	X509_STORE_CTX_set0_crls(ctx, crls);
+
+	if (X509_verify_cert(ctx) <= 0) {
+		c = X509_STORE_CTX_get_error(ctx);
+		if (verbose > 0 || c != X509_V_ERR_UNABLE_TO_GET_CRL)
+			warnx("%s: %s", file, X509_verify_cert_error_string(c));
+	}
+
+	X509_STORE_CTX_cleanup(ctx);
+	sk_X509_free(chain);
+	sk_X509_CRL_free(crls);
 	X509_free(x509);
 	gbr_free(gbr);
 }
@@ -644,40 +629,33 @@ build_crls(const struct crl *crl, STACK_OF(X509_CRL) **crls)
 }
 
 static char *
-parse_load_file(struct entity *entp, unsigned char **f, size_t *flen)
+parse_filepath(struct entity *entp)
 {
-	char *file, *nfile;
+	struct parse_repo	*rp;
+	char			*file;
 
-	file = parse_filepath(entp->repoid, entp->path, entp->file, 0);
-
-	/* TAL files include the data already */
-	if (entp->type == RTYPE_TAL) {
-		*f = NULL;
-		*flen = 0;
-		return file;
+	/* build file path based on repoid, entity path and filename */
+	rp = repo_get(entp->repoid);
+	if (rp == NULL) {
+		if (entp->path == NULL) {
+			if ((file = strdup(entp->file)) == NULL)
+					err(1, NULL);
+		} else {
+			if (asprintf(&file, "%s/%s", entp->path,
+			    entp->file) == -1)
+				err(1, NULL);
+		}
+	} else {
+		if (entp->path == NULL) {
+			if (asprintf(&file, "%s/%s", rp->path,
+			    entp->file) == -1)
+				err(1, NULL);
+		} else {
+			if (asprintf(&file, "%s/%s/%s", rp->path,
+			    entp->path, entp->file) == -1)
+				err(1, NULL);
+		}
 	}
-
-	*f = load_file(file, flen);
-	if (*f != NULL)
-		return file;
-
-	if (errno != ENOENT)
-		goto fail;
-
-	/* try alternate file location */
-	nfile = parse_filepath(entp->repoid, entp->path, entp->file, 1);
-	if (nfile == NULL)
-		goto fail;
-
-	free(file);
-	file = nfile;
-
-	*f = load_file(file, flen);
-	if (*f != NULL)
-		return file;
-
-fail:
-	warn("parse file %s", file);
 	return file;
 }
 
@@ -687,12 +665,12 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 	struct entity	*entp;
 	struct tal	*tal;
 	struct cert	*cert;
-	struct mft	*mft, *mft2;
+	struct mft	*mft;
 	struct roa	*roa;
 	struct ibuf	*b;
 	unsigned char	*f;
 	size_t		 flen;
-	char		*file, *nfile;
+	char		*file;
 	int		 c;
 
 	while ((entp = TAILQ_FIRST(q)) != NULL) {
@@ -700,18 +678,23 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 
 		/* handle RTYPE_REPO first */
 		if (entp->type == RTYPE_REPO) {
-			repo_add(entp->repoid, entp->path, entp->file);
+			repo_add(entp->repoid, entp->path);
 			entity_free(entp);
 			continue;
 		}
 
-		file = parse_load_file(entp, &f, &flen);
+		f = NULL;
+		file = parse_filepath(entp);
+		if (entp->type != RTYPE_TAL) {
+			f = load_file(file, &flen);
+			if (f == NULL)
+				warn("%s", file);
+		}
 
-		/* pass back at least type, repoid and filename */
+		/* pass back at least type and filename */
 		b = io_new_buffer();
 		io_simple_buffer(b, &entp->type, sizeof(entp->type));
-		if (entp->type != RTYPE_MFT)	/* MFT handled specially */
-			io_str_buffer(b, file);
+		io_str_buffer(b, file);
 
 		switch (entp->type) {
 		case RTYPE_TAL:
@@ -746,31 +729,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_MFT:
 			mft = proc_parser_mft(file, f, flen,
 			    entp->path, entp->repoid);
-
-			/* need to check alternate mft and compare serial */
-			nfile = parse_filepath(entp->repoid, entp->path,
-			    entp->file, 1);
-			if (nfile != NULL && strcmp(nfile, file) != 0) {
-				free(f);
-				f = load_file(nfile, &flen);
-				mft2 = proc_parser_mft(nfile, f, flen,
-				    entp->path, entp->repoid);
-				if (mft_compare(mft2, mft)) {
-					/* swap MFT */
-warnx("using old valid MFT %s", nfile);
-					mft_free(mft);
-					mft = mft2;
-					mft2 = NULL;
-					free(file);
-					file = nfile;
-					nfile = NULL;
-				}
-				mft_free(mft2);
-			}
-			free(nfile);
-
 			c = (mft != NULL);
-			io_str_buffer(b, file);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (mft != NULL)
 				mft_buffer(b, mft);
@@ -817,7 +776,6 @@ proc_parser(int fd)
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
-	x509_init_oid();
 
 	if ((ctx = X509_STORE_CTX_new()) == NULL)
 		cryptoerrx("X509_STORE_CTX_new");

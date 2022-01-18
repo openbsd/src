@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.106 2022/01/18 16:18:22 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.107 2022/01/18 16:24:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -418,8 +418,8 @@ void		 mft_buffer(struct ibuf *, const struct mft *);
 void		 mft_free(struct mft *);
 struct mft	*mft_parse(X509 **, const char *, const unsigned char *,
 		    size_t);
+int		 mft_check(const char *, struct mft *);
 struct mft	*mft_read(struct ibuf *);
-int		 mft_compare(const struct mft *, const struct mft *);
 
 void		 roa_buffer(struct ibuf *, const struct roa *);
 void		 roa_free(struct roa *);
@@ -454,7 +454,7 @@ int		 valid_origin(const char *, const char *);
 /* Working with CMS. */
 unsigned char	*cms_parse_validate(X509 **, const char *,
 		    const unsigned char *, size_t,
-		    const ASN1_OBJECT *, size_t *, int);
+		    const ASN1_OBJECT *, size_t *);
 int		 cms_econtent_version(const char *, const unsigned char **,
 		    size_t, long *);
 /* Helper for ASN1 parsing */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.47 2022/01/18 16:18:22 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.48 2022/01/18 16:24:55 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -403,8 +403,9 @@ out:
 /*
  * Parse the objects that have been published in the manifest.
  * This conforms to RFC 6486.
- * On success the MFT content is returned. Stale MFTs only set
- * the stale flag and returned like valid MFTs.
+ * Note that if the MFT is stale, all referenced objects are stripped
+ * from the parsed content.
+ * The MFT content is otherwise returned.
  */
 struct mft *
 mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
@@ -417,7 +418,7 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
 
-	cms = cms_parse_validate(x509, fn, der, len, mft_oid, &cmsz, 0);
+	cms = cms_parse_validate(x509, fn, der, len, mft_oid, &cmsz);
 	if (cms == NULL)
 		return NULL;
 	assert(*x509 != NULL);
@@ -530,40 +531,4 @@ mft_read(struct ibuf *b)
 	}
 
 	return p;
-}
-
-/*
- * Compare two MFT files, returns 1 if first MFT is better and 0 if second
- * should be used.
- */
-int
-mft_compare(const struct mft *a, const struct mft *b)
-{
-	BIGNUM *abn = NULL, *bbn = NULL;
-	int r;
-
-	if (a == NULL)
-		return 0;
-	if (b == NULL)
-		return 1;
-
-warnx("%s: seq a %s, seq b %s", __func__, a->seqnum, b->seqnum);
-	BN_hex2bn(&abn, a->seqnum);
-	BN_hex2bn(&bbn, b->seqnum);
-
-	r = BN_cmp(abn, bbn);
-	BN_free(abn);
-	BN_free(bbn);
-
-	if (r <= 0)
-		return 0;
-
-warnx("%s: prefer b", __func__);
-	/*
-	 * Equal sequence numbers should not happen for different content.
-	 * In this case we prefer the newer MFT. It seems some CA update
-	 * the EE cert and timestamps without issuing a new serial.
-	 * This is bad bad bad bad bad.
-	 */
-	return 1;
 }
