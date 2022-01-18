@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.35 2022/01/18 13:06:43 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.36 2022/01/18 16:18:22 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -346,7 +346,7 @@ roa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
 
-	cms = cms_parse_validate(x509, fn, der, len, roa_oid, &cmsz);
+	cms = cms_parse_validate(x509, fn, der, len, roa_oid, &cmsz, 0);
 	if (cms == NULL)
 		return NULL;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.31 2022/01/18 16:09:51 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.32 2022/01/18 16:18:22 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -37,7 +37,6 @@ ASN1_OBJECT	*roa_oid;	/* id-ct-routeOriginAuthz CMS content type */
 ASN1_OBJECT	*mft_oid;	/* id-ct-rpkiManifest CMS content type */
 ASN1_OBJECT	*gbr_oid;	/* id-ct-rpkiGhostbusters CMS content type */
 ASN1_OBJECT	*bgpsec_oid;	/* id-kp-bgpsec-router Key Purpose */
-
 
 void
 x509_init_oid(void)

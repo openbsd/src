@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.11 2021/10/26 10:52:49 claudio Exp $ */
+/*	$OpenBSD: cms.c,v 1.12 2022/01/18 16:18:22 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -36,7 +36,7 @@
  */
 unsigned char *
 cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
-    size_t derlen, const ASN1_OBJECT *oid, size_t *rsz)
+    size_t derlen, const ASN1_OBJECT *oid, size_t *rsz, int nowarn)
 {
 	const ASN1_OBJECT	*obj;
 	ASN1_OCTET_STRING	**os = NULL;
@@ -53,6 +53,8 @@ cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
 		return NULL;
 
 	if ((cms = d2i_CMS_ContentInfo(NULL, &der, derlen)) == NULL) {
+		if (nowarn)
+			goto out;
 		cryptowarnx("%s: RFC 6488: failed CMS parse", fn);
 		goto out;
 	}
@@ -64,6 +66,8 @@ cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
 
 	if (!CMS_verify(cms, NULL, NULL, NULL, NULL,
 	    CMS_NO_SIGNER_CERT_VERIFY)) {
+		if (nowarn)
+			goto out;
 		cryptowarnx("%s: RFC 6488: CMS not self-signed", fn);
 		goto out;
 	}
@@ -79,6 +83,8 @@ cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
 	if (OBJ_cmp(obj, oid) != 0) {
 		char buf[128], obuf[128];
 
+		if (nowarn)
+			goto out;
 		OBJ_obj2txt(buf, sizeof(buf), obj, 1);
 		OBJ_obj2txt(obuf, sizeof(obuf), oid, 1);
 		warnx("%s: RFC 6488 section 2.1.3.1: eContentType: "
@@ -94,6 +100,8 @@ cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
 
 	certs = CMS_get0_signers(cms);
 	if (certs == NULL || sk_X509_num(certs) != 1) {
+		if (nowarn)
+			goto out;
 		warnx("%s: RFC 6488 section 2.1.4: eContent: "
 		    "want 1 signer, have %d", fn, sk_X509_num(certs));
 		goto out;
@@ -103,6 +111,8 @@ cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
 	/* Verify that we have eContent to disseminate. */
 
 	if ((os = CMS_get0_content(cms)) == NULL || *os == NULL) {
+		if (nowarn)
+			goto out;
 		warnx("%s: RFC 6488 section 2.1.4: "
 		    "eContent: zero-length content", fn);
 		goto out;

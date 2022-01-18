@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.39 2022/01/18 13:46:07 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.40 2022/01/18 16:18:22 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -299,7 +299,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
  * Check all files and their hashes in a MFT structure.
  * Return zero on failure, non-zero on success.
  */
-int
+static int
 mft_check(const char *fn, struct mft *p)
 {
 	size_t	i;
@@ -687,12 +687,12 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 	struct entity	*entp;
 	struct tal	*tal;
 	struct cert	*cert;
-	struct mft	*mft;
+	struct mft	*mft, *mft2;
 	struct roa	*roa;
 	struct ibuf	*b;
 	unsigned char	*f;
 	size_t		 flen;
-	char		*file;
+	char		*file, *nfile;
 	int		 c;
 
 	while ((entp = TAILQ_FIRST(q)) != NULL) {
@@ -710,7 +710,8 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		/* pass back at least type, repoid and filename */
 		b = io_new_buffer();
 		io_simple_buffer(b, &entp->type, sizeof(entp->type));
-		io_str_buffer(b, file);
+		if (entp->type != RTYPE_MFT)	/* MFT handled specially */
+			io_str_buffer(b, file);
 
 		switch (entp->type) {
 		case RTYPE_TAL:
@@ -745,7 +746,31 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_MFT:
 			mft = proc_parser_mft(file, f, flen,
 			    entp->path, entp->repoid);
+
+			/* need to check alternate mft and compare serial */
+			nfile = parse_filepath(entp->repoid, entp->path,
+			    entp->file, 1);
+			if (nfile != NULL && strcmp(nfile, file) != 0) {
+				free(f);
+				f = load_file(nfile, &flen);
+				mft2 = proc_parser_mft(nfile, f, flen,
+				    entp->path, entp->repoid);
+				if (mft_compare(mft2, mft)) {
+					/* swap MFT */
+warnx("using old valid MFT %s", nfile);
+					mft_free(mft);
+					mft = mft2;
+					mft2 = NULL;
+					free(file);
+					file = nfile;
+					nfile = NULL;
+				}
+				mft_free(mft2);
+			}
+			free(nfile);
+
 			c = (mft != NULL);
+			io_str_buffer(b, file);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (mft != NULL)
 				mft_buffer(b, mft);
