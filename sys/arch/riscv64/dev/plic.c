@@ -1,4 +1,4 @@
-/*	$OpenBSD: plic.c,v 1.8 2022/01/03 03:06:50 jsg Exp $	*/
+/*	$OpenBSD: plic.c,v 1.9 2022/01/18 07:44:37 visa Exp $	*/
 
 /*
  * Copyright (c) 2020, Mars Li <mengshi.li.mars@gmail.com>
@@ -162,7 +162,7 @@ plic_attach(struct device *parent, struct device *dev, void *aux)
 	struct fdt_attach_args *faa;
 	uint32_t *cells;
 	uint32_t irq;
-	uint32_t cpu;
+	int cpu;
 	int node;
 	int len;
 	int ncell;
@@ -251,11 +251,8 @@ plic_attach(struct device *parent, struct device *dev, void *aux)
 
 		/* Get the corresponding cpuid. */
 		cpu = plic_get_cpuid(OF_getnodebyphandle(cells[i]));
-		if (cpu < 0) {
-			printf(": invalid hart!\n");
-			free(cells, M_TEMP, len);
-			return;
-		}
+		if (cpu < 0)
+			continue;
 
 		/*
 		 * Set the enable and context register offsets for the CPU.
