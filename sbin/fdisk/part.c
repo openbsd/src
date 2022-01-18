@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.110 2021/10/18 20:27:32 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.111 2022/01/18 19:37:27 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -312,6 +312,11 @@ PRT_make(const struct prt *prt, const uint64_t lba_self, const uint64_t lba_firs
 {
 	uint64_t		off, t;
 	uint32_t		ecyl, scyl;
+
+	if (prt->prt_ns == 0 || prt->prt_id == DOSPTYP_UNUSED) {
+		memset(dp, 0, sizeof(*dp));
+		return;
+	}
 
 	scyl = (prt->prt_scyl > 1023) ? 1023 : prt->prt_scyl;
 	ecyl = (prt->prt_ecyl > 1023) ? 1023 : prt->prt_ecyl;
