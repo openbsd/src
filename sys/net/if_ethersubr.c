@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.276 2021/08/19 10:22:00 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.277 2022/01/18 10:48:33 dlg Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -416,7 +416,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 * Third phase: bridge processing.
 	 *
 	 * Give the packet to a bridge interface, ie, bridge(4),
-	 * switch(4), or tpmr(4), if it is configured. A bridge
+	 * veb(4), or tpmr(4), if it is configured. A bridge
 	 * may take the packet and forward it to another port, or it
 	 * may return it here to ether_input() to support local
 	 * delivery to this port.
