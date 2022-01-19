@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2021/06/20 20:08:19 martijn Exp $
+# $OpenBSD: Makefile,v 1.3 2022/01/19 11:05:36 martijn Exp $
 
 SNMP?=			/usr/bin/snmp
 SNMPD?=			/usr/sbin/snmpd -f ${.OBJDIR}/snmpd.conf
@@ -838,8 +838,8 @@ bulkget_simple:
 REGRESS_TARGETS+=	bulkget_multi
 CLEANFILES+=		bulkget_multi.res bulkget_multi.exp
 bulkget_multi:
-	IDX=1; while [ $$IDX -le 10 ]; do ${SNMPGET} -v2c -cpublic 127.0.0.1 sysORDescr.$$IDX; IDX=$$((IDX+1)); done > $@.exp
-	IDX=1; while [ $$IDX -le 10 ]; do ${SNMPGET} -v2c -cpublic 127.0.0.1 sysORID.$$IDX; IDX=$$((IDX+1)); done >> $@.exp
+	> $@.exp
+	IDX=1; while [ $$IDX -le 10 ]; do ${SNMPGET} -v2c -cpublic 127.0.0.1 sysORDescr.$$IDX sysORID.$$IDX; IDX=$$((IDX+1)); done >> $@.exp
 	${SNMPBULKGET} -v2c -cpublic 127.0.0.1 sysORDescr sysORID > $@.res
 	diff -up $@.exp $@.res
 
@@ -938,7 +938,9 @@ bulkwalk_skip:
 
 ### SNMP SET
 
+# XXX snmpd(8) doesn't support set
 REGRESS_TARGETS+=	set_string
+REGRESS_EXPECTED_FAILURES+= set_string
 CLEANFILES+=		set_string.res set_string.exp
 set_string:
 	${SNMPGET} -v2c -cpublic -Oqv 127.0.0.1 1.3.6.1.4.1.30155.42.3.3.0 | awk '{ printf("%sa\n", $$1) }' > $@.exp
@@ -946,6 +948,7 @@ set_string:
 	diff -up $@.exp $@.res
 
 REGRESS_TARGETS+=	set_integer
+REGRESS_EXPECTED_FAILURES+= set_integer
 CLEANFILES+=		set_integer.res set_integer.exp
 set_integer:
 	${SNMPGET} -v2c -cpublic -Oqv 127.0.0.1 1.3.6.1.4.1.30155.42.3.4.0 | awk '{ print $$1 + 1 }' > $@.exp
@@ -953,6 +956,7 @@ set_integer:
 	diff -up $@.exp $@.res
 
 REGRESS_TARGETS+=	set_string_integer
+REGRESS_EXPECTED_FAILURES+= set_string_integer
 CLEANFILES+=		set_string_integer.res set_string_integer.exp
 set_string_integer:
 	${SNMPGET} -v2c -cpublic -Oqv 127.0.0.1 1.3.6.1.4.1.30155.42.3.3.0 1.3.6.1.4.1.30155.42.3.4.0 | \
