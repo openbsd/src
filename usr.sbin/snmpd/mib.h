@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.40 2018/06/20 09:20:51 reyk Exp $	*/
+/*	$OpenBSD: mib.h,v 1.41 2022/01/19 10:26:37 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -131,6 +131,33 @@
 #define MIB_usmStatsUnknownEngineId	MIB_usmStats, OIDVAL_usmErrEngineId
 #define MIB_usmStatsWrongDigests	MIB_usmStats, OIDVAL_usmErrDigest
 #define MIB_usmStatsDecryptionErrors	MIB_usmStats, OIDVAL_usmErrDecrypt
+
+/* SNMP-TARGET-MIB */
+#define MIB_snmpTargetMIB		MIB_snmpModules, 12
+#define MIB_snmpTargetObjects		MIB_snmpTargetMIB, 1
+#define MIB_snmpTargetSpinLock		MIB_snmpTargetObjects, 1
+#define MIB_snmpTargetAddrTable		MIB_snmpTargetObjects, 2
+#define MIB_snmpTargetAddrEntry		MIB_snmpTargetAddrTable, 1
+#define MIB_snmpTargetAddrName		MIB_snmpTargetAddrEntry, 1
+#define MIB_snmpTargetAddrTDomain	MIB_snmpTargetAddrEntry, 2
+#define MIB_snmpTargetAddrTAddress	MIB_snmpTargetAddrEntry, 3
+#define MIB_snmpTargetAddrTimeout	MIB_snmpTargetAddrEntry, 4
+#define MIB_snmpTargetAddrRetryCount	MIB_snmpTargetAddrEntry, 5
+#define MIB_snmpTargetAddrTagList	MIB_snmpTargetAddrEntry, 6
+#define MIB_snmpTargetAddrParams	MIB_snmpTargetAddrEntry, 7
+#define MIB_snmpTargetAddrStorageType	MIB_snmpTargetAddrEntry, 8
+#define MIB_snmpTargetAddrRowStatus	MIB_snmpTargetAddrEntry, 9
+#define MIB_snmpTargetParamsTable	MIB_snmpTargetObjects, 3
+#define MIB_snmpTargetParamsEntry	MIB_snmpTargetParamsTable, 1
+#define MIB_snmpTargetParamsName	MIB_snmpTargetParamsEntry, 1
+#define MIB_snmpTargetParamsMPModel	MIB_snmpTargetParamsEntry, 2
+#define MIB_snmpTargetParamsSecurityModel	MIB_snmpTargetParamsEntry, 3
+#define MIB_snmpTargetParamsSecurityName	MIB_snmpTargetParamsEntry, 4
+#define MIB_snmpTargetParamsSecurityLevel	MIB_snmpTargetParamsEntry, 5
+#define MIB_snmpTargetParamsStorageType	MIB_snmpTargetParamsEntry, 6
+#define MIB_snmpTargetParamsRowStatus	MIB_snmpTargetParamsEntry, 7
+#define MIB_snmpUnavailableContexts	MIB_snmpTargetObjects, 4
+#define MIB_snmpUnknownContexts		MIB_snmpTargetObjects, 5
 
 /* HOST-RESOURCES-MIB */
 #define MIB_host			MIB_mib_2, 25
