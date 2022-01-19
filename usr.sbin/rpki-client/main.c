@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.177 2022/01/19 09:22:51 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.178 2022/01/19 15:50:31 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -67,6 +67,7 @@ const char	*bird_tablename = "ROAS";
 
 int	verbose;
 int	noop;
+int	filemode;
 int	rrdpon = 1;
 int	repo_timeout;
 
@@ -385,25 +386,23 @@ queue_add_from_mft_set(const struct mft *mft, const char *name, struct repo *rp)
 }
 
 /*
- * Add a local TAL file (RFC 7730) to the queue of files to fetch.
+ * Add a local file to the queue of files to fetch.
  */
 static void
-queue_add_tal(const char *file, int talid)
+queue_add_file(const char *file, enum rtype type, int talid)
 {
 	unsigned char	*buf;
 	char		*nfile;
 	size_t		 len;
 
 	buf = load_file(file, &len);
-	if (buf == NULL) {
-		warn("%s", file);
-		return;
-	}
+	if (buf == NULL)
+		err(1, "%s", file);
 
 	if ((nfile = strdup(file)) == NULL)
 		err(1, NULL);
 	/* Not in a repository, so directly add to queue. */
-	entityq_add(NULL, nfile, RTYPE_TAL, NULL, buf, len, talid);
+	entityq_add(NULL, nfile, type, NULL, buf, len, talid);
 }
 
 /*
@@ -510,11 +509,13 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	io_read_buf(b, &type, sizeof(type));
 	io_read_str(b, &file);
 
+	/* in filemode messages can be ignored, only the accounting matters */
+	if (filemode)
+		goto done;
+
 	if (filepath_add(&fpt, file) == 0) {
 		warnx("%s: File already visited", file);
-		free(file);
-		entity_queue--;
-		return;
+		goto done;
 	}
 
 	switch (type) {
@@ -582,10 +583,13 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	case RTYPE_GBR:
 		st->gbrs++;
 		break;
+	case RTYPE_FILE:
+		break;
 	default:
 		errx(1, "unknown entity type %d", type);
 	}
 
+done:
 	free(file);
 	entity_queue--;
 }
@@ -773,6 +777,7 @@ main(int argc, char *argv[])
 			break;
 		case 'f':
 			file = optarg;
+			filemode = 1;
 			noop = 1;
 			break;
 		case 'j':
@@ -833,20 +838,35 @@ main(int argc, char *argv[])
 		warnx("cache directory required");
 		goto usage;
 	}
-	if (outputdir == NULL) {
+	if (file != NULL) {
+		size_t sz;
+
+		sz = strlen(file);
+		if (strcasecmp(file + sz - 4, ".tal") != 0 &&
+		    strcasecmp(file + sz - 4, ".cer") != 0 &&
+		    strcasecmp(file + sz - 4, ".crl") != 0 &&
+		    strcasecmp(file + sz - 4, ".mft") != 0 &&
+		    strcasecmp(file + sz - 4, ".roa") != 0 &&
+		    strcasecmp(file + sz - 4, ".gbr") != 0)
+			errx(1, "unsupported or invalid file: %s", file);
+
+		outputdir = NULL;
+	} else if (outputdir == NULL) {
 		warnx("output directory required");
 		goto usage;
 	}
 
 	if ((cachefd = open(cachedir, O_RDONLY | O_DIRECTORY)) == -1)
 		err(1, "cache directory %s", cachedir);
-	if ((outdirfd = open(outputdir, O_RDONLY | O_DIRECTORY)) == -1)
-		err(1, "output directory %s", outputdir);
+	if (outputdir != NULL) {
+		if ((outdirfd = open(outputdir, O_RDONLY | O_DIRECTORY)) == -1)
+			err(1, "output directory %s", outputdir);
+		if (outformats == 0)
+			outformats = FORMAT_OPENBGPD;
+	}
 
 	check_fs_size(cachefd, cachedir);
 
-	if (outformats == 0)
-		outformats = FORMAT_OPENBGPD;
 
 	if (talsz == 0)
 		talsz = tal_load_default();
@@ -1049,7 +1069,10 @@ main(int argc, char *argv[])
 	 */
 
 	for (i = 0; i < talsz; i++)
-		queue_add_tal(tals[i], i);
+		queue_add_file(tals[i], RTYPE_TAL, i);
+
+	if (file != NULL)
+		queue_add_file(file, RTYPE_FILE, 0);
 
 	/* change working directory to the cache directory */
 	if (fchdir(cachefd) == -1)
@@ -1211,6 +1234,10 @@ main(int argc, char *argv[])
 	/* processing did not finish because of error */
 	if (entity_queue != 0)
 		errx(1, "not all files processed, giving up");
+
+	/* if processing in filemode the process is done, no cleanup */
+	if (filemode)
+		return rc;
 
 	logx("all files parsed: generating output");
 

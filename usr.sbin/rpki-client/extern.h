@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.108 2022/01/18 16:36:49 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.109 2022/01/19 15:50:31 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -294,6 +294,7 @@ enum rtype {
 	RTYPE_CRL,
 	RTYPE_GBR,
 	RTYPE_REPO,
+	RTYPE_FILE,
 };
 
 enum http_result {
@@ -393,6 +394,7 @@ struct msgbuf;
 
 /* global variables */
 extern int verbose;
+extern int filemode;
 extern const char *tals[];
 extern const char *taldescs[];
 extern unsigned int talrepocnt[];

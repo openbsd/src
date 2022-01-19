@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.44 2022/01/18 18:19:47 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.45 2022/01/19 15:50:31 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -383,24 +383,13 @@ proc_parser_mft(char *file, const unsigned char *der, size_t len,
 }
 
 /*
- * Certificates are from manifests (has a digest and is signed with
- * another certificate) Parse the certificate, make sure its
- * signatures are valid (with CRLs), then validate the RPKI content.
- * This returns a certificate (which must not be freed) or NULL on
- * parse failure.
+ * Validate a certificate, if invalid free the resouces and return NULL.
  */
 static struct cert *
-proc_parser_cert(char *file, const unsigned char *der, size_t len)
+proc_parser_cert_validate(char *file, struct cert *cert)
 {
-	struct cert		*cert;
-	struct auth		*a;
-	struct crl		*crl;
-
-	/* Extract certificate data and X509. */
-
-	cert = cert_parse(file, der, len);
-	if (cert == NULL)
-		return NULL;
+	struct auth	*a;
+	struct crl	*crl;
 
 	a = valid_ski_aki(file, &auths, cert->ski, cert->aki);
 	crl = get_crl(a);
@@ -428,6 +417,28 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len)
 }
 
 /*
+ * Certificates are from manifests (has a digest and is signed with
+ * another certificate) Parse the certificate, make sure its
+ * signatures are valid (with CRLs), then validate the RPKI content.
+ * This returns a certificate (which must not be freed) or NULL on
+ * parse failure.
+ */
+static struct cert *
+proc_parser_cert(char *file, const unsigned char *der, size_t len)
+{
+	struct cert	*cert;
+
+	/* Extract certificate data. */
+
+	cert = cert_parse(file, der, len);
+	if (cert == NULL)
+		return NULL;
+
+	cert = proc_parser_cert_validate(file, cert);
+	return cert;
+}
+
+/*
  * Root certificates come from TALs (has a pkey and is self-signed).
  * Parse the certificate, ensure that it's public key matches the
  * known public key from the TAL, and then validate the RPKI
@@ -446,7 +457,7 @@ proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
 	struct cert		*cert;
 	X509			*x509;
 
-	/* Extract certificate data and X509. */
+	/* Extract certificate data. */
 
 	cert = ta_parse(file, der, len, pkey, pkeysz);
 	if (cert == NULL)
@@ -669,6 +680,9 @@ fail:
 	return file;
 }
 
+/*
+ * Process an entity and responing to parent process.
+ */
 static void
 parse_entity(struct entityq *q, struct msgbuf *msgq)
 {
@@ -762,6 +776,315 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 }
 
 /*
+ * Use the X509 CRL Distribution Points to locate the CRL needed for
+ * verification.
+ */
+static void
+parse_load_crl(const char *uri)
+{
+	char *nfile, *f;
+	size_t flen;
+
+	if (uri == NULL)
+		return;
+	if (strncmp(uri, "rsync://", strlen("rsync://")) != 0) {
+		warnx("bad CRL distribution point URI %s", uri);
+		return;
+	}
+	uri += strlen("rsync://");
+
+	if (asprintf(&nfile, "valid/%s", uri) == -1)
+		err(1, NULL);
+
+	f = load_file(nfile, &flen);
+	if (f == NULL) {
+		warn("parse file %s", nfile);
+		goto done;
+	}
+
+	proc_parser_crl(nfile, f, flen);
+
+done:
+	free(nfile);
+	free(f);
+}
+
+/*
+ * Parse the cert pointed at by the AIA URI while doing that also load
+ * the CRL of this cert. While the CRL is validated the returned cert
+ * is not. The caller needs to make sure it is validated once all
+ * necessary certs were loaded. Returns NULL on failure.
+ */
+static struct cert *
+parse_load_cert(const char *uri)
+{
+	struct cert *cert = NULL;
+	char *nfile, *f;
+	size_t flen;
+
+	if (uri == NULL)
+		return NULL;
+
+	if (strncmp(uri, "rsync://", strlen("rsync://")) != 0) {
+		warnx("bad authority information access URI %s", uri);
+		return NULL;
+	}
+	uri += strlen("rsync://");
+
+	if (asprintf(&nfile, "valid/%s", uri) == -1)
+		err(1, NULL);
+
+	f = load_file(nfile, &flen);
+	if (f == NULL) {
+		warn("parse file %s", nfile);
+		goto done;
+	}
+
+	cert = cert_parse(nfile, f, flen);
+	free(f);
+
+	if (cert == NULL)
+		goto done;
+	if (cert->purpose != CERT_PURPOSE_CA) {
+		warnx("AIA reference to bgpsec cert %s", nfile);
+		goto done;
+	}
+	/* try to load the CRL of this cert */
+	parse_load_crl(cert->crl);
+
+	free(nfile);
+	return cert;
+
+done:
+	cert_free(cert);
+	free(nfile);
+	return NULL;
+}
+
+/*
+ * Build the certificate chain by using the Authority Information Access.
+ * This requires that the TA are already validated and added to the auths
+ * tree. Once the TA is located in the chain the chain is validated in
+ * reverse order.
+ */
+static void
+parse_load_certchain(char *uri)
+{
+	struct cert *stack[MAX_CERT_DEPTH];
+	char *filestack[MAX_CERT_DEPTH];
+	struct cert *cert;
+	int i, failed;
+
+	for (i = 0; i < MAX_CERT_DEPTH; i++) {
+		cert = parse_load_cert(uri);
+		if (cert == NULL) {
+			warnx("failed to build authority chain");
+			return;
+		}
+		stack[i] = cert;
+		filestack[i] = uri;
+		if (auth_find(&auths, cert->aki) != NULL)
+			break;	/* found the TA */
+		uri = cert->aia;
+	}
+
+	if (i >= MAX_CERT_DEPTH) {
+		warnx("authority chain exceeds max depth of %d",
+		    MAX_CERT_DEPTH);
+		for (i = 0; i < MAX_CERT_DEPTH; i++)
+			cert_free(stack[i]);
+		return;
+	}
+
+	/* TA found play back the stack and add all certs */
+	for (failed = 0; i >= 0; i--) {
+		cert = stack[i];
+		uri = filestack[i];
+
+		if (failed)
+			cert_free(cert);
+		else if (proc_parser_cert_validate(uri, cert) == NULL)
+			failed = 1;
+	}
+}
+
+static void
+parse_load_ta(struct tal *tal)
+{
+	const char *file;
+	char *nfile, *f;
+	size_t flen;
+
+	/* does not matter which URI, all end with same filename */
+	file = strrchr(tal->uri[0], '/');
+	assert(file);
+
+	if (asprintf(&nfile, "ta/%s%s", tal->descr, file) == -1)
+		err(1, NULL);
+
+	f = load_file(nfile, &flen);
+	if (f == NULL) {
+		warn("parse file %s", nfile);
+		free(nfile);
+		return;
+	}
+
+	/* if TA is valid it was added as a root which is all we need */
+	proc_parser_root_cert(nfile, f, flen, tal->pkey, tal->pkeysz, tal->id);
+	free(nfile);
+	free(f);
+}
+
+/*
+ * Parse file passed with -f option.
+ */
+static void
+proc_parser_file(char *file, unsigned char *buf, size_t len)
+{
+	X509 *x509 = NULL;
+	struct cert *cert = NULL;
+	struct mft *mft = NULL;
+	struct roa *roa = NULL;
+	struct gbr *gbr = NULL;
+	struct tal *tal = NULL;
+	enum rtype type;
+	char *aia = NULL, *aki = NULL, *ski = NULL;
+	size_t sz;
+	unsigned long verify_flags = X509_V_FLAG_CRL_CHECK;
+
+	sz = strlen(file);
+	if (strcasecmp(file + sz - 4, ".tal") == 0)
+		type = RTYPE_TAL;
+	else if (strcasecmp(file + sz - 4, ".cer") == 0)
+		type = RTYPE_CER;
+	else if (strcasecmp(file + sz - 4, ".crl") == 0)
+		type = RTYPE_CRL;
+	else if (strcasecmp(file + sz - 4, ".mft") == 0)
+		type = RTYPE_MFT;
+	else if (strcasecmp(file + sz - 4, ".roa") == 0)
+		type = RTYPE_ROA;
+	else if (strcasecmp(file + sz - 4, ".gbr") == 0)
+		type = RTYPE_GBR;
+	else
+		errx(1, "%s: unsupported file type", file);
+
+	switch (type) {
+	case RTYPE_CER:
+		cert = cert_parse(file, buf, len);
+		if (cert == NULL)
+			break;
+		cert_print(cert);
+		aia = cert->aia;
+		aki = cert->aki;
+		ski = cert->ski;
+		x509 = cert->x509;
+		if (X509_up_ref(x509) == 0)
+			errx(1, "%s: X509_up_ref failed", __func__);
+		break;
+	case RTYPE_MFT:
+		mft = mft_parse(&x509, file, buf, len);
+		if (mft == NULL)
+			break;
+		mft_print(mft);
+		aia = mft->aia;
+		aki = mft->aki;
+		ski = mft->ski;
+		verify_flags = 0;
+		break;
+	case RTYPE_ROA:
+		roa = roa_parse(&x509, file, buf, len);
+		if (roa == NULL)
+			break;
+		roa_print(roa);
+		aia = roa->aia;
+		aki = roa->aki;
+		ski = roa->ski;
+		break;
+	case RTYPE_GBR:
+		gbr = gbr_parse(&x509, file, buf, len);
+		if (gbr == NULL)
+			break;
+		gbr_print(gbr);
+		aia = gbr->aia;
+		aki = gbr->aki;
+		ski = gbr->ski;
+		break;
+	case RTYPE_TAL:
+		tal = tal_parse(file, buf, len);
+		if (tal == NULL)
+			break;
+		tal_print(tal);
+		break;
+	case RTYPE_CRL: /* XXX no printer yet */
+	default:
+		break;
+	}
+
+	if (aia != NULL) {
+		struct auth *a;
+		struct crl *crl;
+		char *c;
+
+		c = x509_get_crl(x509, file);
+		parse_load_crl(c);
+		free(c);
+		parse_load_certchain(aia);
+		a = valid_ski_aki(file, &auths, ski, aki);
+		crl = get_crl(a);
+
+		if (valid_x509(file, x509, a, crl, verify_flags))
+			printf("Validation: OK\n");
+		else
+			printf("Validation: Failed\n");
+	}
+
+	X509_free(x509);
+	cert_free(cert);
+	mft_free(mft);
+	roa_free(roa);
+	gbr_free(gbr);
+	tal_free(tal);
+}
+
+/*
+ * Process a file request, in general don't send anything back.
+ */
+static void
+parse_file(struct entityq *q, struct msgbuf *msgq)
+{
+	struct entity	*entp;
+	struct ibuf	*b;
+	struct tal	*tal;
+
+	while ((entp = TAILQ_FIRST(q)) != NULL) {
+		TAILQ_REMOVE(q, entp, entries);
+
+		switch (entp->type) {
+		case RTYPE_FILE:
+			proc_parser_file(entp->file, entp->data, entp->datasz);
+			break;
+		case RTYPE_TAL:
+			if ((tal = tal_parse(entp->file, entp->data,
+			    entp->datasz)) == NULL)
+				errx(1, "%s: could not parse tal file",
+				    entp->file);
+			tal->id = entp->talid;
+			parse_load_ta(tal);
+			tal_free(tal);
+			break;
+		default:
+			errx(1, "unhandled entity type %d", entp->type);
+		}
+
+		b = io_new_buffer();
+		io_simple_buffer(b, &entp->type, sizeof(entp->type));
+		io_str_buffer(b, entp->file);
+		io_close_buffer(msgq, b);
+		entity_free(entp);
+	}
+}
+
+/*
  * Process responsible for parsing and validating content.
  * All this process does is wait to be told about a file to parse, then
  * it parses it and makes sure that the data being returned is fully
@@ -828,7 +1151,10 @@ proc_parser(int fd)
 			}
 		}
 
-		parse_entity(&q, &msgq);
+		if (!filemode)
+			parse_entity(&q, &msgq);
+		else
+			parse_file(&q, &msgq);
 	}
 
 	while ((entp = TAILQ_FIRST(&q)) != NULL) {
