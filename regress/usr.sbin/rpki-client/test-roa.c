@@ -1,4 +1,4 @@
-/*	$Id: test-roa.c,v 1.14 2021/10/26 16:59:54 claudio Exp $ */
+/*	$Id: test-roa.c,v 1.15 2022/01/19 08:24:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -45,6 +45,7 @@ main(int argc, char *argv[])
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
+	x509_init_oid();
 
 	while ((c = getopt(argc, argv, "pv")) != -1)
 		switch (c) {

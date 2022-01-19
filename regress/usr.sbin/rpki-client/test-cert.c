@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.16 2022/01/18 16:41:00 claudio Exp $ */
+/*	$Id: test-cert.c,v 1.17 2022/01/19 08:24:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,6 +43,7 @@ main(int argc, char *argv[])
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
+	x509_init_oid();
 
 	while ((c = getopt(argc, argv, "tv")) != -1)
 		switch (c) {
