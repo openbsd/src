@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.101 2022/01/19 10:19:27 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.102 2022/01/19 10:25:04 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -36,6 +36,7 @@
 #include <imsg.h>
 
 #include "log.h"
+#include "smi.h"
 #include "snmp.h"
 
 #ifndef nitems
@@ -698,7 +699,6 @@ int			 pfta_get_first(struct pfr_astats *);
 
 /* smi.c */
 int		 smi_init(void);
-u_long		 smi_getticks(void);
 void		 smi_mibtree(struct oid *);
 struct oid	*smi_find(struct oid *);
 struct oid	*smi_nfind(struct oid *);
@@ -707,7 +707,6 @@ struct oid	*smi_next(struct oid *);
 struct oid	*smi_foreach(struct oid *, u_int);
 void		 smi_oidlen(struct ber_oid *);
 void		 smi_scalar_oidlen(struct ber_oid *);
-char		*smi_oid2string(struct ber_oid *, char *, size_t, size_t);
 int		 smi_string2oid(const char *, struct ber_oid *);
 void		 smi_delete(struct oid *);
 int		 smi_insert(struct oid *);
@@ -715,7 +714,6 @@ int		 smi_oid_cmp(struct oid *, struct oid *);
 int		 smi_key_cmp(struct oid *, struct oid *);
 unsigned int	 smi_application(struct ber_element *);
 void		 smi_debug_elements(struct ber_element *);
-char		*smi_print_element(struct ber_element *);
 
 /* timer.c */
 void		 timer_init(void);
