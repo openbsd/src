@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.178 2022/01/19 15:50:31 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.179 2022/01/19 17:15:08 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1291,7 +1291,7 @@ usage:
 	fprintf(stderr,
 	    "usage: rpki-client [-BcjnoRrVv] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
-	    "                   [-s timeout] [-T table] [-t tal]"
+	    "                   [-f file] [-s timeout] [-T table] [-t tal]"
 	    " [outputdir]\n");
 	return 1;
 }
