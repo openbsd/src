@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.78 2021/10/21 14:33:13 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.79 2022/01/19 10:22:48 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -38,10 +38,10 @@
 #include <pwd.h>
 
 #include "snmpd.h"
+#include "snmpe.h"
 #include "mib.h"
 
 void	 snmpe_init(struct privsep *, struct privsep_proc *, void *);
-const char *snmpe_pdutype2string(enum snmp_pdutype);
 int	 snmpe_parse(struct snmp_message *);
 void	 snmpe_tryparse(int, struct snmp_message *);
 int	 snmpe_parsevarbinds(struct snmp_message *);
@@ -53,7 +53,6 @@ void	 snmpe_writecb(int fd, short, void *);
 void	 snmpe_acceptcb(int fd, short, void *);
 void	 snmpe_prepare_read(struct snmp_message *, int);
 int	 snmpe_encode(struct snmp_message *);
-void	 snmp_msgfree(struct snmp_message *);
 
 struct imsgev	*iev_parent;
 static const struct timeval	snmpe_tcp_timeout = { 10, 0 }; /* 10s */
