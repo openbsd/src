@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.160 2021/12/15 12:53:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.161 2022/01/19 02:08:24 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1061,7 +1061,14 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			continue;
 		}
 
+#if notyet
+		/*
+                 * XXX swap case in uvm_aio_aiodone() is not holding the lock.
+		 *
+		 * This isn't compatible with the PG_RELEASED anon case below.
+		 */
 		KASSERT(uvm_page_owner_locked_p(pg));
+#endif
 		KASSERT(pg->pg_flags & PG_BUSY);
 
 		if (pg->pg_flags & PG_WANTED) {
