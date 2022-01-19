@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.h,v 1.1 2022/01/19 10:22:48 martijn Exp $	*/
+/*	$OpenBSD: snmpe.h,v 1.2 2022/01/19 10:36:35 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -20,5 +20,7 @@
 
 struct snmp_message;
 
+void		 snmpe_send(struct snmp_message *, enum snmp_pdutype, int32_t,
+		    int32_t, uint32_t, struct ber_element *);
 const char	*snmpe_pdutype2string(enum snmp_pdutype);
 void		 snmp_msgfree(struct snmp_message *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.80 2022/01/19 10:28:13 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.81 2022/01/19 10:36:35 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -816,6 +816,20 @@ snmpe_dispatchmsg(struct snmp_message *msg)
 	(void) snmpe_parsevarbinds(msg);
 
 	/* respond directly */
+	msg->sm_pdutype = SNMP_C_RESPONSE;
+	snmpe_response(msg);
+}
+
+void
+snmpe_send(struct snmp_message *msg, enum snmp_pdutype type, int32_t requestid,
+    int32_t error, uint32_t index, struct ber_element *varbindlist)
+{
+	msg->sm_request = requestid;
+	msg->sm_pdutype = type;
+	msg->sm_error = error;
+	msg->sm_errorindex = index;
+	msg->sm_varbindresp = varbindlist;
+
 	msg->sm_pdutype = SNMP_C_RESPONSE;
 	snmpe_response(msg);
 }
