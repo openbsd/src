@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.51 2021/12/03 08:40:07 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.52 2022/01/19 16:33:36 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 3 2021 $
+.Dd $Mdocdate: January 19 2022 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -26,6 +26,7 @@
 .Op Fl b Ar sourceaddr
 .Op Fl d Ar cachedir
 .Op Fl e Ar rsync_prog
+.Op Fl f Ar file
 .Op Fl s Ar timeout
 .Op Fl T Ar table
 .Op Fl t Ar tal
@@ -92,6 +93,16 @@ It must accept the
 and
 .Fl -address
 flags and connect with rsync-protocol locations.
+.It Fl f Ar file
+Validate the
+.Em Signed Object
+in
+.Ar file
+against the RPKI cache stored in
+.Ar cachedir
+and print human-readable information about the object.
+This option implies
+.Fl n .
 .It Fl j
 Create output in the file
 .Pa json
