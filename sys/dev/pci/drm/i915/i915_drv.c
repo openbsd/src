@@ -782,12 +782,11 @@ static void i915_welcome_messages(struct drm_i915_private *dev_priv)
 			 "DRM_I915_DEBUG_RUNTIME_PM enabled\n");
 }
 
+#ifdef __linux__
+
 static struct drm_i915_private *
 i915_driver_create(struct pci_dev *pdev, const struct pci_device_id *ent)
 {
-	STUB();
-	return ERR_PTR(-ENOSYS);
-#ifdef notyet
 	const struct intel_device_info *match_info =
 		(struct intel_device_info *)ent->driver_data;
 	struct intel_device_info *device_info;
@@ -809,10 +808,7 @@ i915_driver_create(struct pci_dev *pdev, const struct pci_device_id *ent)
 	RUNTIME_INFO(i915)->device_id = pdev->device;
 
 	return i915;
-#endif
 }
-
-#ifdef __linux__
 
 /**
  * i915_driver_probe - setup chip and create an initial config
@@ -1549,6 +1545,8 @@ int i915_resume_switcheroo(struct drm_i915_private *i915)
 	return i915_drm_resume(&i915->drm);
 }
 
+#ifdef __linux__
+
 static int i915_pm_prepare(struct device *kdev)
 {
 	struct drm_i915_private *i915 = kdev_to_i915(kdev);
@@ -1686,8 +1684,6 @@ static int i915_pm_restore(struct device *kdev)
 {
 	return i915_pm_resume(kdev);
 }
-
-#ifdef __linux__
 
 static int intel_runtime_suspend(struct device *kdev)
 {

@@ -371,7 +371,9 @@ struct i915_oa_config_bo {
 
 static struct ctl_table_header *sysctl_header;
 
+#ifdef notyet
 static enum hrtimer_restart oa_poll_check_timer_cb(struct hrtimer *hrtimer);
+#endif
 
 void i915_oa_config_release(struct kref *ref)
 {
@@ -399,12 +401,16 @@ i915_perf_get_oa_config(struct i915_perf *perf, int metrics_set)
 	return oa_config;
 }
 
+#ifdef notyet
+
 static void free_oa_config_bo(struct i915_oa_config_bo *oa_bo)
 {
 	i915_oa_config_put(oa_bo->oa_config);
 	i915_vma_put(oa_bo->vma);
 	kfree(oa_bo);
 }
+
+#endif
 
 static u32 gen12_oa_hw_tail_read(struct i915_perf_stream *stream)
 {
@@ -428,6 +434,8 @@ static u32 gen7_oa_hw_tail_read(struct i915_perf_stream *stream)
 
 	return oastatus1 & GEN7_OASTATUS1_TAIL_MASK;
 }
+
+#ifdef notyet
 
 /**
  * oa_buffer_check_unlocked - check for data and update tail ptr state
@@ -455,9 +463,6 @@ static u32 gen7_oa_hw_tail_read(struct i915_perf_stream *stream)
  */
 static bool oa_buffer_check_unlocked(struct i915_perf_stream *stream)
 {
-	STUB();
-	return false;
-#ifdef notyet
 	u32 gtt_offset = i915_ggtt_offset(stream->oa_buffer.vma);
 	int report_size = stream->oa_buffer.format_size;
 	unsigned long flags;
@@ -537,8 +542,9 @@ static bool oa_buffer_check_unlocked(struct i915_perf_stream *stream)
 	spin_unlock_irqrestore(&stream->oa_buffer.ptr_lock, flags);
 
 	return pollin;
-#endif
 }
+
+#endif
 
 /**
  * append_oa_status - Appends a status record to a userspace read() buffer.
@@ -1131,6 +1137,8 @@ static int gen7_oa_read(struct i915_perf_stream *stream,
 	return gen7_append_oa_reports(stream, buf, count, offset);
 }
 
+#ifdef notyet
+
 /**
  * i915_oa_wait_unlocked - handles blocking IO until OA data available
  * @stream: An i915-perf stream opened for OA metrics
@@ -1155,7 +1163,6 @@ static int i915_oa_wait_unlocked(struct i915_perf_stream *stream)
 					oa_buffer_check_unlocked(stream));
 }
 
-#ifdef notyet
 /**
  * i915_oa_poll_wait - call poll_wait() for an OA stream poll()
  * @stream: An i915-perf stream opened for OA metrics
@@ -1172,7 +1179,6 @@ static void i915_oa_poll_wait(struct i915_perf_stream *stream,
 {
 	poll_wait(file, &stream->poll_wq, wait);
 }
-#endif
 
 /**
  * i915_oa_read - just calls through to &i915_oa_ops->read
@@ -1376,8 +1382,6 @@ free_noa_wait(struct i915_perf_stream *stream)
 
 static void i915_oa_stream_destroy(struct i915_perf_stream *stream)
 {
-	STUB();
-#ifdef notyet
 	struct i915_perf *perf = stream->perf;
 
 	BUG_ON(stream != perf->exclusive_stream);
@@ -1406,8 +1410,9 @@ static void i915_oa_stream_destroy(struct i915_perf_stream *stream)
 		DRM_NOTE("%d spurious OA report notices suppressed due to ratelimiting\n",
 			 perf->spurious_report_rs.missed);
 	}
-#endif
 }
+
+#endif
 
 static void gen7_init_oa_buffer(struct i915_perf_stream *stream)
 {
@@ -1563,6 +1568,8 @@ static void gen12_init_oa_buffer(struct i915_perf_stream *stream)
 	memset(stream->oa_buffer.vaddr, 0,
 	       stream->oa_buffer.vma->size);
 }
+
+#ifdef notyet
 
 static int alloc_oa_buffer(struct i915_perf_stream *stream)
 {
@@ -1829,6 +1836,8 @@ out_ww:
 		i915_gem_object_put(bo);
 	return ret;
 }
+
+#endif
 
 static u32 *write_cs_mi_lri(u32 *cs,
 			    const struct i915_oa_reg *reg_data,
@@ -2702,6 +2711,8 @@ static void gen12_oa_enable(struct i915_perf_stream *stream)
 			   GEN12_OAG_OACONTROL_OA_COUNTER_ENABLE);
 }
 
+#ifdef notyet
+
 /**
  * i915_oa_stream_enable - handle `I915_PERF_IOCTL_ENABLE` for OA stream
  * @stream: An i915 perf stream opened for OA metrics
@@ -2713,8 +2724,6 @@ static void gen12_oa_enable(struct i915_perf_stream *stream)
  */
 static void i915_oa_stream_enable(struct i915_perf_stream *stream)
 {
-	STUB();
-#ifdef notyet
 	stream->pollin = false;
 
 	stream->perf->ops.oa_enable(stream);
@@ -2723,8 +2732,9 @@ static void i915_oa_stream_enable(struct i915_perf_stream *stream)
 		hrtimer_start(&stream->poll_check_timer,
 			      ns_to_ktime(stream->poll_oa_period),
 			      HRTIMER_MODE_REL_PINNED);
-#endif
 }
+
+#endif
 
 static void gen7_oa_disable(struct i915_perf_stream *stream)
 {
@@ -2771,6 +2781,8 @@ static void gen12_oa_disable(struct i915_perf_stream *stream)
 			"wait for OA tlb invalidate timed out\n");
 }
 
+#ifdef notyet
+
 /**
  * i915_oa_stream_disable - handle `I915_PERF_IOCTL_DISABLE` for OA stream
  * @stream: An i915 perf stream opened for OA metrics
@@ -2781,16 +2793,12 @@ static void gen12_oa_disable(struct i915_perf_stream *stream)
  */
 static void i915_oa_stream_disable(struct i915_perf_stream *stream)
 {
-	STUB();
-#ifdef notyet
 	stream->perf->ops.oa_disable(stream);
 
 	if (stream->sample_flags & SAMPLE_OA_REPORT)
 		hrtimer_cancel(&stream->poll_check_timer);
-#endif
 }
 
-#ifdef notyet
 static const struct i915_perf_stream_ops i915_oa_stream_ops = {
 	.destroy = i915_oa_stream_destroy,
 	.enable = i915_oa_stream_enable,
@@ -2799,7 +2807,6 @@ static const struct i915_perf_stream_ops i915_oa_stream_ops = {
 	.poll_wait = i915_oa_poll_wait,
 	.read = i915_oa_read,
 };
-#endif
 
 static int i915_perf_stream_enable_sync(struct i915_perf_stream *stream)
 {
@@ -2838,6 +2845,8 @@ get_default_sseu_config(struct intel_sseu *out_sseu,
 	}
 }
 
+#endif
+
 static int
 get_sseu_config(struct intel_sseu *out_sseu,
 		struct intel_engine_cs *engine,
@@ -2849,6 +2858,8 @@ get_sseu_config(struct intel_sseu *out_sseu,
 
 	return i915_gem_user_to_context_sseu(engine->gt, drm_sseu, out_sseu);
 }
+
+#ifdef notyet
 
 /**
  * i915_oa_stream_init - validate combined props for OA stream and init
@@ -2872,9 +2883,6 @@ static int i915_oa_stream_init(struct i915_perf_stream *stream,
 			       struct drm_i915_perf_open_param *param,
 			       struct perf_open_properties *props)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct drm_i915_private *i915 = stream->perf->i915;
 	struct i915_perf *perf = stream->perf;
 	int format_size;
@@ -3026,8 +3034,9 @@ err_noa_wait_alloc:
 		oa_put_render_ctx_id(stream);
 
 	return ret;
-#endif
 }
+
+#endif
 
 void i915_oa_init_reg_state(const struct intel_context *ce,
 			    const struct intel_engine_cs *engine)
@@ -3042,6 +3051,8 @@ void i915_oa_init_reg_state(const struct intel_context *ce,
 	if (stream && GRAPHICS_VER(stream->perf->i915) < 12)
 		gen8_update_reg_state_unlocked(ce, stream);
 }
+
+#ifdef notyet
 
 /**
  * i915_perf_read - handles read() FOP for i915 perf stream FDs
@@ -3066,9 +3077,6 @@ static ssize_t i915_perf_read(struct file *file,
 			      size_t count,
 			      loff_t *ppos)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct i915_perf_stream *stream = file->private_data;
 	struct i915_perf *perf = stream->perf;
 	size_t offset = 0;
@@ -3120,14 +3128,10 @@ static ssize_t i915_perf_read(struct file *file,
 
 	/* Possible values for ret are 0, -EFAULT, -ENOSPC, -EIO, ... */
 	return offset ?: (ret ?: -EAGAIN);
-#endif
 }
 
 static enum hrtimer_restart oa_poll_check_timer_cb(struct hrtimer *hrtimer)
 {
-	STUB();
-	return 0;
-#ifdef notyet
 	struct i915_perf_stream *stream =
 		container_of(hrtimer, typeof(*stream), poll_check_timer);
 
@@ -3140,10 +3144,7 @@ static enum hrtimer_restart oa_poll_check_timer_cb(struct hrtimer *hrtimer)
 			    ns_to_ktime(stream->poll_oa_period));
 
 	return HRTIMER_RESTART;
-#endif
 }
-
-#ifdef notyet
 
 /**
  * i915_perf_poll_locked - poll_wait() with a suitable wait queue for stream
@@ -3205,8 +3206,6 @@ static __poll_t i915_perf_poll(struct file *file, poll_table *wait)
 
 	return ret;
 }
-
-#endif /* notyet */
 
 /**
  * i915_perf_enable_locked - handle `I915_PERF_IOCTL_ENABLE` ioctl
@@ -3341,9 +3340,6 @@ static long i915_perf_ioctl(struct file *file,
 			    unsigned int cmd,
 			    unsigned long arg)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct i915_perf_stream *stream = file->private_data;
 	struct i915_perf *perf = stream->perf;
 	long ret;
@@ -3353,7 +3349,6 @@ static long i915_perf_ioctl(struct file *file,
 	mutex_unlock(&perf->lock);
 
 	return ret;
-#endif
 }
 
 /**
@@ -3379,8 +3374,6 @@ static void i915_perf_destroy_locked(struct i915_perf_stream *stream)
 
 	kfree(stream);
 }
-
-#ifdef notyet
 
 /**
  * i915_perf_release - handles userspace close() of a stream file
@@ -3988,6 +3981,8 @@ static bool gen12_is_valid_mux_addr(struct i915_perf *perf, u32 addr)
 	       REG_IN_RANGE(addr, NOA_CONFIG(0), NOA_CONFIG(8));
 }
 
+#ifdef notyet
+
 static u32 mask_reg_value(u32 reg, u32 val)
 {
 	/* HALF_SLICE_CHICKEN2 is programmed with a the
@@ -4062,22 +4057,15 @@ static ssize_t show_dynamic_id(struct device *dev,
 			       struct device_attribute *attr,
 			       char *buf)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct i915_oa_config *oa_config =
 		container_of(attr, typeof(*oa_config), sysfs_metric_id);
 
 	return sprintf(buf, "%d\n", oa_config->id);
-#endif
 }
 
 static int create_dynamic_oa_sysfs_entry(struct i915_perf *perf,
 					 struct i915_oa_config *oa_config)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	sysfs_attr_init(&oa_config->sysfs_metric_id.attr);
 	oa_config->sysfs_metric_id.attr.name = "id";
 	oa_config->sysfs_metric_id.attr.mode = S_IRUGO;
@@ -4092,8 +4080,9 @@ static int create_dynamic_oa_sysfs_entry(struct i915_perf *perf,
 
 	return sysfs_create_group(perf->metrics_kobj,
 				  &oa_config->sysfs_metric);
-#endif
 }
+
+#endif
 
 /**
  * i915_perf_add_config_ioctl - DRM ioctl() for userspace to add a new OA config
