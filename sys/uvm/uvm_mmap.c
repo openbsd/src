@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.168 2022/01/05 17:53:44 guenther Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.169 2022/01/19 10:43:48 kn Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -183,12 +183,14 @@ uvm_wxcheck(struct proc *p, char *call)
 		return 0;
 
 	if (uvm_wxabort) {
+		KERNEL_LOCK();
 		/* Report W^X failures */
 		if (pr->ps_wxcounter++ == 0)
 			log(LOG_NOTICE, "%s(%d): %s W^X violation\n",
 			    pr->ps_comm, pr->ps_pid, call);
 		/* Send uncatchable SIGABRT for coredump */
 		sigexit(p, SIGABRT);
+		KERNEL_UNLOCK();
 	}
 
 	return ENOTSUP;
