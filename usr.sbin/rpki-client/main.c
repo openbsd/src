@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.176 2022/01/14 15:00:23 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.177 2022/01/19 09:22:51 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -429,8 +429,10 @@ queue_add_from_tal(struct tal *tal)
 
 	/* Look up the repository. */
 	repo = ta_lookup(tal->id, tal);
-	if (repo == NULL)
+	if (repo == NULL) {
+		free(nfile);
 		return;
+	}
 
 	/* steal the pkey from the tal structure */
 	data = tal->pkey;
