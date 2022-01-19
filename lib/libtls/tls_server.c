@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.47 2021/06/14 03:53:59 tb Exp $ */
+/* $OpenBSD: tls_server.c,v 1.48 2022/01/19 11:10:55 inoguchi Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -185,10 +185,16 @@ tls_server_ticket_cb(SSL *ssl, unsigned char *keyname, unsigned char *iv,
 
 		memcpy(keyname, key->key_name, sizeof(key->key_name));
 		arc4random_buf(iv, EVP_MAX_IV_LENGTH);
-		EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
-		    key->aes_key, iv);
-		HMAC_Init_ex(hctx, key->hmac_key, sizeof(key->hmac_key),
-		    EVP_sha256(), NULL);
+		if (!EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
+		    key->aes_key, iv)) {
+			tls_set_errorx(tls_ctx, "failed to init encrypt");
+			return (-1);
+		}
+		if (!HMAC_Init_ex(hctx, key->hmac_key, sizeof(key->hmac_key),
+		    EVP_sha256(), NULL)) {
+			tls_set_errorx(tls_ctx, "failed to init hmac");
+			return (-1);
+		}
 		return (0);
 	} else {
 		/* get key by name */
@@ -196,10 +202,16 @@ tls_server_ticket_cb(SSL *ssl, unsigned char *keyname, unsigned char *iv,
 		if (key == NULL)
 			return (0);
 
-		EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
-		    key->aes_key, iv);
-		HMAC_Init_ex(hctx, key->hmac_key, sizeof(key->hmac_key),
-		    EVP_sha256(), NULL);
+		if (!EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
+		    key->aes_key, iv)) {
+			tls_set_errorx(tls_ctx, "failed to init decrypt");
+			return (-1);
+		}
+		if (!HMAC_Init_ex(hctx, key->hmac_key, sizeof(key->hmac_key),
+		    EVP_sha256(), NULL)) {
+			tls_set_errorx(tls_ctx, "failed to init hmac");
+			return (-1);
+		}
 
 		/* time to renew the ticket? is it the primary key? */
 		if (key != &tls_ctx->config->ticket_keys[0])
