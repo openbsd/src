@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.17 2022/01/07 10:20:11 martijn Exp $
+# $OpenBSD: snmpd.sh,v 1.18 2022/01/19 11:02:38 martijn Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
@@ -151,19 +151,20 @@ fi
 
 # system.sysContact set with default rw community string
 
-puffy="puffy@openbsd.org"
-snmp_command="snmp set -c private -v 1 localhost system.sysContact.0 s $puffy"
-echo ======= $snmp_command
-eval $snmp_command > /dev/null 2>&1
-snmp_command="snmp get -v2c -cpublic localhost 1.3.6.1.2.1.1.4.0"
-echo ======= $snmp_command
-contact="$(eval $snmp_command)"
-contact="${contact##sysContact.0 = STRING: }"
-if [ "$contact" !=  "$puffy" ]
-then
-	echo "Setting with default rw community string failed."
-	FAILED=1
-fi
+# Currently no set support in snmpd
+#puffy="puffy@openbsd.org"
+#snmp_command="snmp set -c private -v 1 localhost system.sysContact.0 s $puffy"
+#echo ======= $snmp_command
+#eval $snmp_command > /dev/null 2>&1
+#snmp_command="snmp get -v2c -cpublic localhost 1.3.6.1.2.1.1.4.0"
+#echo ======= $snmp_command
+#contact="$(eval $snmp_command)"
+#contact="${contact##sysContact.0 = STRING: }"
+#if [ "$contact" !=  "$puffy" ]
+#then
+#	echo "Setting with default rw community string failed."
+#	FAILED=1
+#fi
 
 kill $(pgrep snmpd) >/dev/null 2>&1
 wait
@@ -296,19 +297,20 @@ fi
 
 # system.sysContact set with non-default rw/ro community strings
 
-puffy="puffy@openbsd.org"
-snmp_command="snmp set -c non-default-rw -v 1 localhost system.sysContact.0 \
-   s $puffy"
-echo ======= $snmp_command
-eval $snmp_command > /dev/null 2>&1
-snmp_command="snmp get -Oqv -v2c -cnon-default-ro localhost 1.3.6.1.2.1.1.4.0"
-echo ======= $snmp_command
-contact="$(eval $snmp_command)"
-if [ "$contact" !=  "$puffy" ]
-then
-	echo "Setting with default rw community string failed."
-	FAILED=1
-fi
+# Currently no set support in snmpd
+#puffy="puffy@openbsd.org"
+#snmp_command="snmp set -c non-default-rw -v 1 localhost system.sysContact.0 \
+#   s $puffy"
+#echo ======= $snmp_command
+#eval $snmp_command > /dev/null 2>&1
+#snmp_command="snmp get -Oqv -v2c -cnon-default-ro localhost 1.3.6.1.2.1.1.4.0"
+#echo ======= $snmp_command
+#contact="$(eval $snmp_command)"
+#if [ "$contact" !=  "$puffy" ]
+#then
+#	echo "Setting with default rw community string failed."
+#	FAILED=1
+#fi
 
 # custom oids, with a ro that we should not be able to set
 
@@ -332,15 +334,16 @@ then
 	FAILED=1
 fi
 
-snmp_command="snmp set -c non-default-rw -v 1 localhost \
-   1.3.6.1.4.1.30155.42.1.0 s \"bula\""
-echo ======= $snmp_command
-eval $snmp_command > /dev/null 2>&1
-if [ $? -eq 0  ]
-then
-	echo "Setting of a ro custom oid test unexpectedly succeeded."
-	FAILED=1
-fi
+# Currently no set support in snmpd
+#snmp_command="snmp set -c non-default-rw -v 1 localhost \
+#   1.3.6.1.4.1.30155.42.1.0 s \"bula\""
+#echo ======= $snmp_command
+#eval $snmp_command > /dev/null 2>&1
+#if [ $? -eq 0  ]
+#then
+#	echo "Setting of a ro custom oid test unexpectedly succeeded."
+#	FAILED=1
+#fi
 
 snmp_command="snmp get -Oqv -v2c -c non-default-rw localhost \
     usmUserSecurityName.1.0"
