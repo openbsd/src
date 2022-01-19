@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.79 2022/01/19 10:22:48 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.80 2022/01/19 10:28:13 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -425,6 +425,11 @@ badversion:
 		msg->sm_errstr = "invalid PDU";
 		goto fail;
 	}
+
+	for (a = msg->sm_varbind; a != NULL; a = a->be_next) {
+		if (ober_scanf_elements(a, "{oS$}", NULL) == -1)
+			goto parsefail;
+       }
 
 	msg->sm_request = req;
 	msg->sm_error = errval;
