@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.28 2016/09/02 16:44:33 renato Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.29 2022/01/20 14:11:27 naddy Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -1048,11 +1048,9 @@ rde_last_reply(struct rt_node *rn)
 	struct eigrp		*eigrp = rn->eigrp;
 	struct eigrp_route	*successor;
 	struct rde_nbr		*old_successor;
-	uint32_t		 old_fdistance;
 	struct rinfo		 ri;
 
 	old_successor = rn->successor.nbr;
-	old_fdistance = rn->successor.fdistance;
 
 	switch (rn->state) {
 	case DUAL_STA_ACTIVE0:
