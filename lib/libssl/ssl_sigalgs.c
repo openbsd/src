@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.38 2021/11/26 16:41:42 tb Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.39 2022/01/20 20:35:46 tb Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -322,7 +322,7 @@ ssl_sigalg_select(SSL *s, EVP_PKEY *pkey)
 		uint16_t sigalg_value;
 
 		if (!CBS_get_u16(&cbs, &sigalg_value))
-			return 0;
+			return NULL;
 
 		if ((sigalg = ssl_sigalg_from_value(s, sigalg_value)) == NULL)
 			continue;
