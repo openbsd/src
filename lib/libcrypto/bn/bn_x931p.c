@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_x931p.c,v 1.12 2021/12/04 16:09:59 tb Exp $ */
+/* $OpenBSD: bn_x931p.c,v 1.13 2022/01/20 10:56:22 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -139,13 +139,13 @@ BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2, const BIGNUM *Xp,
 
 	/* First set p to value of Rp */
 
-	if (!BN_mod_inverse_ct(p, p2, p1, ctx))
+	if (BN_mod_inverse_ct(p, p2, p1, ctx) == NULL)
 		goto err;
 
 	if (!BN_mul(p, p, p2, ctx))
 		goto err;
 
-	if (!BN_mod_inverse_ct(t, p1, p2, ctx))
+	if (BN_mod_inverse_ct(t, p1, p2, ctx) == NULL)
 		goto err;
 
 	if (!BN_mul(t, t, p1, ctx))
@@ -237,7 +237,8 @@ BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx)
 		if (!BN_rand(Xq, nbits, 1, 0))
 			goto err;
 		/* Check that |Xp - Xq| > 2^(nbits - 100) */
-		BN_sub(t, Xp, Xq);
+		if (!BN_sub(t, Xp, Xq))
+			goto err;
 		if (BN_num_bits(t) > (nbits - 100))
 			break;
 	}
