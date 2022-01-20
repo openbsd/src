@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc2.c,v 1.12 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: e_rc2.c,v 1.13 2022/01/20 11:22:48 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -201,7 +201,8 @@ rc2_get_asn1_type_and_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 			return -1;
 		EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_SET_RC2_KEY_BITS,
 		    key_bits, NULL);
-		EVP_CIPHER_CTX_set_key_length(c, key_bits / 8);
+		if (!EVP_CIPHER_CTX_set_key_length(c, key_bits / 8))
+			return -1;
 	}
 	return (i);
 }
