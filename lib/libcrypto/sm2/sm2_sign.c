@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm2_sign.c,v 1.1.1.1 2021/08/18 16:04:32 tb Exp $ */
+/*	$OpenBSD: sm2_sign.c,v 1.2 2022/01/20 11:12:14 inoguchi Exp $ */
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -194,7 +194,7 @@ sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
 			goto err;
 		}
 
-		if (!BN_mod_inverse_ct(s, s, order, ctx)) {
+		if (BN_mod_inverse_ct(s, s, order, ctx) == NULL) {
 			SM2error(ERR_R_BN_LIB);
 			goto err;
 		}
