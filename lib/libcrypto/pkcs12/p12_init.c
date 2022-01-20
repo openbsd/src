@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_init.c,v 1.12 2022/01/20 11:15:39 inoguchi Exp $ */
+/* $OpenBSD: p12_init.c,v 1.13 2022/01/20 11:18:49 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -74,7 +74,8 @@ PKCS12_init(int mode)
 	}
 	if (!ASN1_INTEGER_set(pkcs12->version, 3))
 		goto err;
-	pkcs12->authsafes->type = OBJ_nid2obj(mode);
+	if ((pkcs12->authsafes->type = OBJ_nid2obj(mode)) == NULL)
+		goto err;
 	switch (mode) {
 	case NID_pkcs7_data:
 		if (!(pkcs12->authsafes->d.data =
