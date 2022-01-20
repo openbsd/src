@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_enc.c,v 1.20 2019/08/11 11:04:18 jsing Exp $ */
+/* $OpenBSD: cms_enc.c,v 1.21 2022/01/20 10:58:35 inoguchi Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -151,7 +151,7 @@ cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 
 	if (ec->keylen != tkeylen) {
 		/* If necessary set key length */
-		if (EVP_CIPHER_CTX_set_key_length(ctx, ec->keylen) <= 0) {
+		if (!EVP_CIPHER_CTX_set_key_length(ctx, ec->keylen)) {
 			/*
 			 * Only reveal failure if debugging so we don't leak information
 			 * which may be useful in MMA.
