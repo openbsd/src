@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.52 2022/01/18 16:52:18 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.53 2022/01/20 16:36:19 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1157,6 +1157,7 @@ struct cert *
 ta_parse(const char *fn, const unsigned char *der, size_t len,
     const unsigned char *pkey, size_t pkeysz)
 {
+	ASN1_TIME	*notBefore, *notAfter;
 	EVP_PKEY	*pk = NULL, *opk = NULL;
 	struct cert	*p;
 	int		 rc = 0;
@@ -1164,22 +1165,42 @@ ta_parse(const char *fn, const unsigned char *der, size_t len,
 	if ((p = cert_parse_inner(fn, der, len, 1)) == NULL)
 		return NULL;
 
-	if (pkey != NULL) {
-		pk = d2i_PUBKEY(NULL, &pkey, pkeysz);
-		assert(pk != NULL);
-
-		if ((opk = X509_get0_pubkey(p->x509)) == NULL)
-			cryptowarnx("%s: RFC 6487 (trust anchor): "
-			    "missing pubkey", fn);
-		else if (EVP_PKEY_cmp(pk, opk) != 1)
-			cryptowarnx("%s: RFC 6487 (trust anchor): "
-			    "pubkey does not match TAL pubkey", fn);
-		else
-			rc = 1;
-
-		EVP_PKEY_free(pk);
+	/* first check pubkey against the one from the TAL */
+	pk = d2i_PUBKEY(NULL, &pkey, pkeysz);
+	if (pk == NULL) {
+		cryptowarnx("%s: RFC 6487 (trust anchor): bad TAL pubkey", fn);
+		goto badcert;
+	}
+	if ((opk = X509_get0_pubkey(p->x509)) == NULL) {
+		cryptowarnx("%s: RFC 6487 (trust anchor): missing pubkey", fn);
+		goto badcert;
+	} else if (EVP_PKEY_cmp(pk, opk) != 1) {
+		cryptowarnx("%s: RFC 6487 (trust anchor): "
+		    "pubkey does not match TAL pubkey", fn);
+		goto badcert;
 	}
 
+	if ((notBefore = X509_get_notBefore(p->x509)) == NULL) {
+		warnx("%s: certificate has invalid notBefore", fn);
+		goto badcert;
+	}
+	if ((notAfter = X509_get_notAfter(p->x509)) == NULL) {
+		warnx("%s: certificate has invalid notAfter", fn);
+		goto badcert;
+	}
+	if (X509_cmp_current_time(notBefore) != -1) {
+		warnx("%s: certificate not yet valid", fn);
+		goto badcert;
+	}
+	if (X509_cmp_current_time(notAfter) != 1)  {
+		warnx("%s: certificate has expired", fn);
+		goto badcert;
+	}
+
+	rc = 1;
+
+badcert:
+	EVP_PKEY_free(pk);
 	if (rc == 0) {
 		cert_free(p);
 		p = NULL;

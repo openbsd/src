@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.46 2022/01/20 09:24:08 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.47 2022/01/20 16:36:19 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -451,11 +451,7 @@ static struct cert *
 proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
     unsigned char *pkey, size_t pkeysz, int talid)
 {
-	char			subject[256];
-	ASN1_TIME		*notBefore, *notAfter;
-	X509_NAME		*name;
 	struct cert		*cert;
-	X509			*x509;
 
 	/* Extract certificate data. */
 
@@ -463,39 +459,10 @@ proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
 	if (cert == NULL)
 		return NULL;
 
-	x509 = cert->x509;
-	if ((name = X509_get_subject_name(x509)) == NULL) {
-		warnx("%s Unable to get certificate subject", file);
-		goto badcert;
-	}
-	if (X509_NAME_oneline(name, subject, sizeof(subject)) == NULL) {
-		warnx("%s: Unable to parse certificate subject name", file);
-		goto badcert;
-	}
-	if ((notBefore = X509_get_notBefore(x509)) == NULL) {
-		warnx("%s: certificate has invalid notBefore, subject='%s'",
-		    file, subject);
-		goto badcert;
-	}
-	if ((notAfter = X509_get_notAfter(x509)) == NULL) {
-		warnx("%s: certificate has invalid notAfter, subject='%s'",
-		    file, subject);
-		goto badcert;
-	}
-	if (X509_cmp_current_time(notBefore) != -1) {
-		warnx("%s: certificate not yet valid, subject='%s'", file,
-		    subject);
-		goto badcert;
-	}
-	if (X509_cmp_current_time(notAfter) != 1)  {
-		warnx("%s: certificate has expired, subject='%s'", file,
-		    subject);
-		goto badcert;
-	}
 	if (!valid_ta(file, &auths, cert)) {
-		warnx("%s: certificate not a valid ta, subject='%s'",
-		    file, subject);
-		goto badcert;
+		warnx("%s: certificate not a valid ta", file);
+		cert_free(cert);
+		return NULL;
 	}
 
 	cert->talid = talid;
@@ -506,10 +473,6 @@ proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
 	auth_insert(&auths, cert, NULL);
 
 	return cert;
-
- badcert:
-	cert_free(cert);
-	return NULL;
 }
 
 /*
