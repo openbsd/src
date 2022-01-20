@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.234 2021/06/15 05:24:46 dlg Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.235 2022/01/20 11:06:57 bluhm Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -961,7 +961,7 @@ pool_p_alloc(struct pool *pp, int flags, int *slowdown)
 			order = arc4random();
 			o = 0;
 		}
-		if (ISSET(order, 1 << o++))
+		if (ISSET(order, 1U << o++))
 			XSIMPLEQ_INSERT_TAIL(&ph->ph_items, pi, pi_list);
 		else
 			XSIMPLEQ_INSERT_HEAD(&ph->ph_items, pi, pi_list);

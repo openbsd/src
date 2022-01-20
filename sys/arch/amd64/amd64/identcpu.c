@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.121 2021/11/02 23:30:15 mlarkin Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.122 2022/01/20 11:06:57 bluhm Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -854,7 +854,7 @@ cpu_topology(struct cpu_info *ci)
 		ci->ci_pkg_id = apicid >> core_bits;
 
 		/* Get rid of the package bits */
-		core_mask = (1 << core_bits) - 1;
+		core_mask = (1U << core_bits) - 1;
 		thread_id = apicid & core_mask;
 
 		/* Cut logical thread_id into core id, and smt id in a core */
@@ -872,14 +872,14 @@ cpu_topology(struct cpu_info *ci)
 		max_coreid = ((eax >> 26) & 0x3f) + 1;
 		/* SMT */
 		smt_bits = mask_width(max_apicid / max_coreid);
-		smt_mask = (1 << smt_bits) - 1;
+		smt_mask = (1U << smt_bits) - 1;
 		/* Core */
 		core_bits = log2(max_coreid);
-		core_mask = (1 << (core_bits + smt_bits)) - 1;
+		core_mask = (1U << (core_bits + smt_bits)) - 1;
 		core_mask ^= smt_mask;
 		/* Pkg */
 		pkg_bits = core_bits + smt_bits;
-		pkg_mask = -1 << core_bits;
+		pkg_mask = ~0U << core_bits;
 
 		ci->ci_smt_id = apicid & smt_mask;
 		ci->ci_core_id = (apicid & core_mask) >> smt_bits;

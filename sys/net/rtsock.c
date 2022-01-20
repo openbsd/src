@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.323 2021/12/16 09:33:56 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.324 2022/01/20 11:06:57 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -538,7 +538,7 @@ route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 		/* but RTM_DESYNC can't be filtered */
 		if (rtm->rtm_type != RTM_DESYNC) {
 			if (rop->rop_msgfilter != 0 &&
-			    !(rop->rop_msgfilter & (1 << rtm->rtm_type)))
+			    !(rop->rop_msgfilter & (1U << rtm->rtm_type)))
 				goto next;
 			if (ISSET(rop->rop_flagfilter, rtm->rtm_flags))
 				goto next;
@@ -1426,7 +1426,7 @@ rtm_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 	 */
 	bzero(rtinfo->rti_info, sizeof(rtinfo->rti_info));
 	for (i = 0; i < sizeof(rtinfo->rti_addrs) * 8; i++) {
-		if ((rtinfo->rti_addrs & (1 << i)) == 0)
+		if ((rtinfo->rti_addrs & (1U << i)) == 0)
 			continue;
 		if (i >= RTAX_MAX || cp + sizeof(socklen_t) > cplim)
 			return (EINVAL);
@@ -1605,7 +1605,7 @@ rtm_msg1(int type, struct rt_addrinfo *rtinfo)
 	for (i = 0; i < RTAX_MAX; i++) {
 		if (rtinfo == NULL || (sa = rtinfo->rti_info[i]) == NULL)
 			continue;
-		rtinfo->rti_addrs |= (1 << i);
+		rtinfo->rti_addrs |= (1U << i);
 		dlen = ROUNDUP(sa->sa_len);
 		if (m_copyback(m, len, dlen, sa, M_NOWAIT)) {
 			m_freem(m);
@@ -1650,7 +1650,7 @@ again:
 
 		if ((sa = rtinfo->rti_info[i]) == NULL)
 			continue;
-		rtinfo->rti_addrs |= (1 << i);
+		rtinfo->rti_addrs |= (1U << i);
 		dlen = ROUNDUP(sa->sa_len);
 		if (cp) {
 			bcopy(sa, cp, (size_t)dlen);
