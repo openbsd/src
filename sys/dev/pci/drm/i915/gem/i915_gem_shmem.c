@@ -539,7 +539,9 @@ static void shmem_release(struct drm_i915_gem_object *obj)
 	if (i915_gem_object_has_struct_page(obj))
 		i915_gem_object_release_memory_region(obj);
 
+#ifdef __linux__
 	fput(obj->base.filp);
+#endif
 }
 
 const struct drm_i915_gem_object_ops i915_gem_shmem_ops = {

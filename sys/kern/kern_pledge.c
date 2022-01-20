@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.277 2021/12/23 18:50:32 guenther Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.278 2022/01/20 03:43:30 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -771,6 +771,7 @@ pledge_recvfd(struct proc *p, struct file *fp)
 	case DTYPE_SOCKET:
 	case DTYPE_PIPE:
 	case DTYPE_DMABUF:
+	case DTYPE_SYNC:
 		return (0);
 	case DTYPE_VNODE:
 		vp = fp->f_data;
@@ -798,6 +799,7 @@ pledge_sendfd(struct proc *p, struct file *fp)
 	case DTYPE_SOCKET:
 	case DTYPE_PIPE:
 	case DTYPE_DMABUF:
+	case DTYPE_SYNC:
 		return (0);
 	case DTYPE_VNODE:
 		vp = fp->f_data;

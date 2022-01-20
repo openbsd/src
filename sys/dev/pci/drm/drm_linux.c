@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.86 2022/01/17 03:54:03 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.87 2022/01/20 03:43:31 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -50,6 +50,7 @@
 #include <linux/interval_tree.h>
 #include <linux/kthread.h>
 #include <linux/processor.h>
+#include <linux/sync_file.h>
 
 #include <drm/drm_device.h>
 #include <drm/drm_print.h>
@@ -2781,4 +2782,188 @@ interval_tree_insert(struct interval_tree_node *node,
 
 	rb_link_node(&node->rb, parent, iter);
 	rb_insert_color_cached(&node->rb, root, false);
+}
+
+int
+syncfile_read(struct file *fp, struct uio *uio, int fflags)
+{
+	return ENXIO;
+}
+
+int
+syncfile_write(struct file *fp, struct uio *uio, int fflags)
+{
+	return ENXIO;
+}
+
+int
+syncfile_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
+{
+	return ENOTTY;
+}
+
+int
+syncfile_poll(struct file *fp, int events, struct proc *p)
+{
+	return 0;
+}
+
+int
+syncfile_kqfilter(struct file *fp, struct knote *kn)
+{
+	return EINVAL;
+}
+
+int
+syncfile_stat(struct file *fp, struct stat *st, struct proc *p)
+{
+	memset(st, 0, sizeof(*st));
+	st->st_mode = S_IFIFO;	/* XXX */
+	return 0;
+}
+
+int
+syncfile_close(struct file *fp, struct proc *p)
+{
+	struct sync_file *sf = fp->f_data;
+
+	dma_fence_put(sf->fence);
+	fp->f_data = NULL;
+	free(sf, M_DRM, sizeof(struct sync_file));
+	return 0;
+}
+
+int
+syncfile_seek(struct file *fp, off_t *offset, int whence, struct proc *p)
+{
+	off_t newoff;
+
+	if (*offset != 0)
+		return EINVAL;
+
+	switch (whence) {
+	case SEEK_SET:
+		newoff = 0;
+		break;
+	case SEEK_END:
+		newoff = 0;
+		break;
+	default:
+		return EINVAL;
+	}
+	mtx_enter(&fp->f_mtx);
+	fp->f_offset = newoff;
+	mtx_leave(&fp->f_mtx);
+	*offset = newoff;
+	return 0;
+}
+
+const struct fileops syncfileops = {
+	.fo_read	= syncfile_read,
+	.fo_write	= syncfile_write,
+	.fo_ioctl	= syncfile_ioctl,
+	.fo_poll	= syncfile_poll,
+	.fo_kqfilter	= syncfile_kqfilter,
+	.fo_stat	= syncfile_stat,
+	.fo_close	= syncfile_close,
+	.fo_seek	= syncfile_seek,
+};
+
+void
+fd_install(int fd, struct file *fp)
+{
+	struct proc *p = curproc;
+	struct filedesc *fdp = p->p_fd;
+
+	if (fp->f_type != DTYPE_SYNC)
+		return;
+
+	fdplock(fdp);
+	/* all callers use get_unused_fd_flags(O_CLOEXEC) */
+	fdinsert(fdp, fd, UF_EXCLOSE, fp);
+	fdpunlock(fdp);
+}
+
+void
+fput(struct file *fp)
+{
+	if (fp->f_type != DTYPE_SYNC)
+		return;
+	
+	FRELE(fp, curproc);
+}
+
+int
+get_unused_fd_flags(unsigned int flags)
+{
+	struct proc *p = curproc;
+	struct filedesc *fdp = p->p_fd;
+	int error, fd;
+
+	KASSERT((flags & O_CLOEXEC) != 0);
+
+	fdplock(fdp);
+retryalloc:
+	if ((error = fdalloc(p, 0, &fd)) != 0) {
+		if (error == ENOSPC) {
+			fdexpand(p);
+			goto retryalloc;
+		}
+		fdpunlock(fdp);
+		return -1;
+	}
+	fdpunlock(fdp);
+
+	return fd;
+}
+
+void
+put_unused_fd(int fd)
+{
+	struct filedesc *fdp = curproc->p_fd;
+
+	fdplock(fdp);
+	fdremove(fdp, fd);
+	fdpunlock(fdp);
+}
+
+struct dma_fence *
+sync_file_get_fence(int fd)
+{
+	struct proc *p = curproc;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct sync_file *sf;
+	struct dma_fence *f;
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return NULL;
+
+	if (fp->f_type != DTYPE_SYNC) {
+		FRELE(fp, p);
+		return NULL;
+	}
+	sf = fp->f_data;
+	f = dma_fence_get(sf->fence);
+	FRELE(sf->file, p);
+	return f;
+}
+
+struct sync_file *
+sync_file_create(struct dma_fence *fence)
+{
+	struct proc *p = curproc;
+	struct sync_file *sf;
+	struct file *fp;
+
+	fp = fnew(p);
+	if (fp == NULL)
+		return NULL;
+	fp->f_type = DTYPE_SYNC;
+	fp->f_ops = &syncfileops;
+	sf = malloc(sizeof(struct sync_file), M_DRM, M_WAITOK | M_ZERO);
+	sf->file = fp;
+	sf->fence = dma_fence_get(fence);
+	fp->f_data = sf;
+	return sf;
 }

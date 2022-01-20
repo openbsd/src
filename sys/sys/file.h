@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.64 2021/10/25 10:24:54 claudio Exp $	*/
+/*	$OpenBSD: file.h,v 1.65 2022/01/20 03:43:31 jsg Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -45,6 +45,7 @@
 #define	DTYPE_PIPE	3	/* pipe */
 #define	DTYPE_KQUEUE	4	/* event queue */
 #define	DTYPE_DMABUF	5	/* DMA buffer (for DRM) */
+#define	DTYPE_SYNC	6	/* sync file (for DRM) */
 
 #ifdef _KERNEL
 struct proc;
