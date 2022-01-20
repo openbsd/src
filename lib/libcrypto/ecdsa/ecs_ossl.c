@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.22 2021/04/20 17:23:37 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.23 2022/01/20 11:03:48 inoguchi Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -216,7 +216,7 @@ ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		}
 	} while (BN_is_zero(r));
 
-	if (!BN_mod_inverse_ct(k, k, order, ctx)) {
+	if (BN_mod_inverse_ct(k, k, order, ctx) == NULL) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
@@ -487,7 +487,7 @@ ecdsa_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
 	if (!ecdsa_prepare_digest(dgst, dgst_len, order, m))
 		goto err;
 
-	if (!BN_mod_inverse_ct(u2, sig->s, order, ctx)) {	/* w = inv(s) */
+	if (BN_mod_inverse_ct(u2, sig->s, order, ctx) == NULL) { /* w = inv(s) */
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
