@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.45 2022/01/19 15:50:31 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.46 2022/01/20 09:24:08 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -298,8 +298,8 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
  * Check all files and their hashes in a MFT structure.
  * Return zero on failure, non-zero on success.
  */
-int
-mft_check(const char *fn, struct mft *p)
+static int
+proc_parser_mft_check(const char *fn, struct mft *p)
 {
 	size_t	i;
 	int	fd, try, rc = 1;
@@ -374,7 +374,7 @@ proc_parser_mft(char *file, const unsigned char *der, size_t len,
 			err(1, NULL);
 
 	if (!mft->stale)
-		if (!mft_check(file, mft)) {
+		if (!proc_parser_mft_check(file, mft)) {
 			mft_free(mft);
 			return NULL;
 		}
