@@ -1,4 +1,4 @@
-/* $OpenBSD: p12_init.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: p12_init.c,v 1.12 2022/01/20 11:15:39 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -72,7 +72,8 @@ PKCS12_init(int mode)
 		PKCS12error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	ASN1_INTEGER_set(pkcs12->version, 3);
+	if (!ASN1_INTEGER_set(pkcs12->version, 3))
+		goto err;
 	pkcs12->authsafes->type = OBJ_nid2obj(mode);
 	switch (mode) {
 	case NID_pkcs7_data:
