@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.19 2022/01/09 05:42:37 jsg Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.20 2022/01/20 07:49:25 visa Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -55,6 +55,9 @@
  */
 #if defined(__amd64__)
 #define DT_FA_PROFILE	5
+#define DT_FA_STATIC	2
+#elif defined(__octeon__)
+#define DT_FA_PROFILE	6
 #define DT_FA_STATIC	2
 #elif defined(__powerpc64__)
 #define DT_FA_PROFILE	6
