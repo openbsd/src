@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.89 2021/01/19 09:54:08 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.90 2022/01/20 14:03:32 naddy Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1249,8 +1249,10 @@ void
 rde_summary_update(struct rt_node *rte, struct area *area)
 {
 	struct vertex		*v = NULL;
-//XXX	struct lsa		*lsa;
+#if 0 /* XXX */
+	struct lsa		*lsa;
 	u_int16_t		 type = 0;
+#endif
 
 	/* first check if we actually need to announce this route */
 	if (!(rte->d_type == DT_NET || rte->flags & OSPF_RTR_E))
@@ -1271,13 +1273,13 @@ rde_summary_update(struct rt_node *rte, struct area *area)
 	/* TODO inter-area network route stuff */
 	/* TODO intra-area stuff -- condense LSA ??? */
 
+#if 0 /* XXX a lot todo */
 	if (rte->d_type == DT_NET) {
 		type = LSA_TYPE_INTER_A_PREFIX;
 	} else if (rte->d_type == DT_RTR) {
 		type = LSA_TYPE_INTER_A_ROUTER;
 	} else
 
-#if 0 /* XXX a lot todo */
 	/* update lsa but only if it was changed */
 	v = lsa_find(area, type, rte->prefix.s_addr, rde_router_id());
 	lsa = orig_sum_lsa(rte, area, type, rte->invalid);

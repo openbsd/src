@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.51 2021/09/06 13:32:18 deraadt Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.52 2022/01/20 14:03:31 naddy Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -738,7 +738,7 @@ merge_config(struct ospfd_conf *conf, struct ospfd_conf *xconf)
 					if_start(conf, iface);
 				}
 			}
-			if (a->dirty) {
+			if (a->dirty || rchange) {
 				a->dirty = 0;
 				orig_rtr_lsa(LIST_FIRST(&a->iface_list)->area);
 			}
