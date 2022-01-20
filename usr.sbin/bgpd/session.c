@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.424 2021/09/03 07:48:24 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.425 2022/01/20 18:06:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -452,9 +452,11 @@ session_main(int debug, int verbose)
 			timeout = 1;
 		if (timeout < 0)
 			timeout = 0;
-		if (poll(pfd, i, timeout * 1000) == -1)
-			if (errno != EINTR)
-				fatal("poll error");
+		if (poll(pfd, i, timeout * 1000) == -1) {
+			if (errno == EINTR)
+				continue;
+			fatal("poll error");
+		}
 
 		/*
 		 * If we previously saw fd exhaustion, we stop accept()

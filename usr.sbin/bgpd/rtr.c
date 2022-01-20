@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.4 2021/09/01 12:39:52 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.5 2022/01/20 18:06:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -167,9 +167,9 @@ rtr_main(int debug, int verbose)
 		i += rtr_poll_events(pfd + i, pfd_elms - i, &timeout);
 
 		if (poll(pfd, i, timeout * 1000) == -1) {
-			if (errno != EINTR)
-				fatal("poll error");
-			continue;
+			if (errno == EINTR)
+				continue;
+			fatal("poll error");
 		}
 
 		if (handle_pollfd(&pfd[PFD_PIPE_MAIN], ibuf_main) == -1)

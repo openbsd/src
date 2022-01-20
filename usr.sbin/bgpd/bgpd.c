@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.239 2021/07/20 12:07:46 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.240 2022/01/20 18:06:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -345,11 +345,13 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 
 		if (timeout < 0 || timeout > MAX_TIMEOUT)
 			timeout = MAX_TIMEOUT;
-		if (poll(pfd, npfd, timeout * 1000) == -1)
+		if (poll(pfd, npfd, timeout * 1000) == -1) {
 			if (errno != EINTR) {
 				log_warn("poll error");
 				quit = 1;
 			}
+			continue;
+		}
 
 		if (handle_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se) == -1) {
 			log_warnx("main: Lost connection to SE");
