@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.51 2020/04/05 18:19:04 denis Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.52 2022/01/20 14:12:55 naddy Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1179,9 +1179,7 @@ print_ospf_rtr_flags(u_int8_t opts)
 int
 show_rib_detail_msg(struct imsg *imsg)
 {
-	static struct in_addr	 area_id;
 	struct ctl_rt		*rt;
-	struct area		*area;
 	char			*dstnet;
 	static u_int8_t		 lasttype;
 
@@ -1250,8 +1248,6 @@ show_rib_detail_msg(struct imsg *imsg)
 		}
 		break;
 	case IMSG_CTL_AREA:
-		area = imsg->data;
-		area_id = area->id;
 		break;
 	case IMSG_CTL_END:
 		printf("\n");
