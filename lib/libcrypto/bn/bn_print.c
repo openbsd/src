@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_print.c,v 1.32 2021/08/31 11:19:19 tb Exp $ */
+/* $OpenBSD: bn_print.c,v 1.33 2022/01/20 10:53:33 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -310,8 +310,10 @@ BN_dec2bn(BIGNUM **bn, const char *a)
 		l += *a - '0';
 		a++;
 		if (++j == BN_DEC_NUM) {
-			BN_mul_word(ret, BN_DEC_CONV);
-			BN_add_word(ret, l);
+			if (!BN_mul_word(ret, BN_DEC_CONV))
+				goto err;
+			if (!BN_add_word(ret, l))
+				goto err;
 			l = 0;
 			j = 0;
 		}
