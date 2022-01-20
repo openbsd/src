@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.104 2021/06/02 00:39:25 cheloha Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.105 2022/01/20 17:11:30 bluhm Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -570,14 +570,14 @@ snprintf(char *buf, size_t size, const char *fmt, ...)
 	va_list ap;
 	char *p;
 
-	p = buf + size - 1;
-	if (size < 1)
-		p = buf;
+	p = buf;
+	if (size > 0)
+		p += size - 1;
 	va_start(ap, fmt);
 	retval = kprintf(fmt, TOBUFONLY | TOCOUNT, &p, buf, ap);
 	va_end(ap);
 	if (size > 0)
-		*(p) = 0;	/* null terminate */
+		*p = '\0';	/* null terminate */
 	return(retval);
 }
 
