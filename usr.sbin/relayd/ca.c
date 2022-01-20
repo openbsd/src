@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.38 2022/01/11 19:06:23 tb Exp $	*/
+/*	$OpenBSD: ca.c,v 1.39 2022/01/20 17:56:35 benno Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -356,7 +356,9 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 	while (!done) {
 		switch (poll(pfd, 1, RELAY_TLS_PRIV_TIMEOUT)) {
 		case -1:
-			fatal("%s: poll", __func__);
+			if (errno != EINTR)
+				fatal("%s: poll", __func__);
+			continue;
 		case 0:
 			log_warnx("%s: priv%s poll timeout, keyop #%x",
 			    __func__,
