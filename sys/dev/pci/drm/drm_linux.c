@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.87 2022/01/20 03:43:31 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.88 2022/01/20 06:33:03 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -910,7 +910,7 @@ xa_init_flags(struct xarray *xa, gfp_t flags)
 	static int initialized;
 
 	if (!initialized) {
-		pool_init(&xa_pool, sizeof(struct xarray_entry), 0, IPL_TTY, 0,
+		pool_init(&xa_pool, sizeof(struct xarray_entry), 0, IPL_NONE, 0,
 		    "xapl", NULL);
 		initialized = 1;
 	}
