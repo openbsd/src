@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.22 2022/01/10 12:10:26 tb Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.23 2022/01/20 11:00:34 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -353,7 +353,8 @@ do_dh_print(BIO *bp, const DH *x, int indent, ASN1_PCTX *ctx, int ptype)
 		goto err;
 	}
 
-	BIO_indent(bp, indent, 128);
+	if (!BIO_indent(bp, indent, 128))
+		goto err;
 	if (BIO_printf(bp, "%s: (%d bit)\n", ktype, BN_num_bits(x->p)) <= 0)
 		goto err;
 	indent += 4;
@@ -368,7 +369,8 @@ do_dh_print(BIO *bp, const DH *x, int indent, ASN1_PCTX *ctx, int ptype)
 	if (!ASN1_bn_print(bp, "generator:", x->g, m, indent))
 		goto err;
 	if (x->length != 0) {
-		BIO_indent(bp, indent, 128);
+		if (!BIO_indent(bp, indent, 128))
+			goto err;
 		if (BIO_printf(bp, "recommended-private-length: %d bits\n",
 		    (int)x->length) <= 0)
 			goto err;
