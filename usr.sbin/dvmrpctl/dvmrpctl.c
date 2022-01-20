@@ -1,4 +1,4 @@
-/*	$OpenBSD: dvmrpctl.c,v 1.15 2015/12/05 13:11:00 claudio Exp $ */
+/*	$OpenBSD: dvmrpctl.c,v 1.16 2022/01/20 14:10:07 naddy Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -515,11 +515,8 @@ print_dvmrp_options(u_int8_t opts)
 int
 show_nbr_detail_msg(struct imsg *imsg)
 {
-	struct ctl_nbr	*nbr;
-
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_SHOW_NBR:
-		nbr = imsg->data;
 		break;
 	case IMSG_CTL_END:
 		printf("\n");
