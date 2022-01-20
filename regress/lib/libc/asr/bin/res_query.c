@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_query.c,v 1.3 2018/12/15 15:16:12 eric Exp $	*/
+/*	$OpenBSD: res_query.c,v 1.4 2022/01/20 14:18:10 naddy Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -332,7 +332,7 @@ print_dname(const char *_dname, char *buf, size_t max)
 {
 	const unsigned char *dname = _dname;
 	char	*res;
-	size_t	 left, n, count;
+	size_t	 left, count;
 
 	if (_dname[0] == 0) {
 		strlcpy(buf, ".", max);
@@ -341,7 +341,7 @@ print_dname(const char *_dname, char *buf, size_t max)
 
 	res = buf;
 	left = max - 1;
-	for (n = 0; dname[0] && left; n += dname[0]) {
+	while (dname[0] && left) {
 		count = (dname[0] < (left - 1)) ? dname[0] : (left - 1);
 		memmove(buf, dname + 1, count);
 		dname += dname[0] + 1;

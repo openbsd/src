@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpack_dns.c,v 1.2 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: unpack_dns.c,v 1.3 2022/01/20 14:18:10 naddy Exp $	*/
 
 /*
  * Copyright (c) 2011-2014 Eric Faurot <eric@faurot.net>
@@ -195,7 +195,7 @@ print_dname(const char *_dname, char *buf, size_t max)
 {
 	const unsigned char *dname = _dname;
 	char    *res;
-	size_t   left, n, count;
+	size_t   left, count;
 
 	if (_dname[0] == 0) {
 		(void)strlcpy(buf, ".", max);
@@ -204,7 +204,7 @@ print_dname(const char *_dname, char *buf, size_t max)
 
 	res = buf;
 	left = max - 1;
-	for (n = 0; dname[0] && left; n += dname[0]) {
+	while (dname[0] && left) {
 		count = (dname[0] < (left - 1)) ? dname[0] : (left - 1);
 		memmove(buf, dname + 1, count);
 		dname += dname[0] + 1;

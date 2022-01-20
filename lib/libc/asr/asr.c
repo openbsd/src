@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr.c,v 1.67 2021/11/22 20:18:27 jca Exp $	*/
+/*	$OpenBSD: asr.c,v 1.68 2022/01/20 14:18:10 naddy Exp $	*/
 /*
  * Copyright (c) 2010-2012 Eric Faurot <eric@openbsd.org>
  *
@@ -853,7 +853,7 @@ _asr_strdname(const char *_dname, char *buf, size_t max)
 {
 	const unsigned char *dname = _dname;
 	char	*res;
-	size_t	 left, n, count;
+	size_t	 left, count;
 
 	if (_dname[0] == 0) {
 		strlcpy(buf, ".", max);
@@ -862,7 +862,7 @@ _asr_strdname(const char *_dname, char *buf, size_t max)
 
 	res = buf;
 	left = max - 1;
-	for (n = 0; dname[0] && left; n += dname[0]) {
+	while (dname[0] && left) {
 		count = (dname[0] < (left - 1)) ? dname[0] : (left - 1);
 		memmove(buf, dname + 1, count);
 		dname += dname[0] + 1;
