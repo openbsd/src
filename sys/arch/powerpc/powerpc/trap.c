@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.123 2021/12/09 00:26:11 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.124 2022/01/20 14:02:51 tobhe Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -419,10 +419,10 @@ trap(struct trapframe *frame)
 			/* nothing to do */
 			break;
 		default:
+			frame->fixreg[FIRSTARG + 1] = rval[1];
 		bad:
 			frame->fixreg[0] = error;
 			frame->fixreg[FIRSTARG] = error;
-			frame->fixreg[FIRSTARG + 1] = rval[1];
 			frame->cr |= 0x10000000;
 			break;
 		}
