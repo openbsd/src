@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.39 2022/01/20 20:35:46 tb Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.40 2022/01/20 20:37:33 tb Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -259,7 +259,7 @@ ssl_sigalg_for_legacy(SSL *s, EVP_PKEY *pkey)
 #endif
 	}
 	SSLerror(s, SSL_R_UNKNOWN_PKEY_TYPE);
-	return (NULL);
+	return NULL;
 }
 
 static int
@@ -344,11 +344,11 @@ ssl_sigalg_for_peer(SSL *s, EVP_PKEY *pkey, uint16_t sigalg_value)
 
 	if ((sigalg = ssl_sigalg_from_value(s, sigalg_value)) == NULL) {
 		SSLerror(s, SSL_R_UNKNOWN_DIGEST);
-		return (NULL);
+		return NULL;
 	}
 	if (!ssl_sigalg_pkey_ok(s, sigalg, pkey)) {
 		SSLerror(s, SSL_R_WRONG_SIGNATURE_TYPE);
-		return (NULL);
+		return NULL;
 	}
 
 	return sigalg;
