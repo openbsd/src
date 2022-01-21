@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.79 2020/04/16 17:51:56 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.80 2022/01/21 22:53:20 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -368,11 +368,21 @@ cron_sleep(time_t target, sigset_t *mask)
 
 		/* Sleep until we time out, get a poke, or get a signal. */
 		nfds = ppoll(pfd, 1, &timeout, mask);
-		if (nfds == 0)
-			break;		/* timer expired */
-		if (nfds == -1 && errno != EINTR)
-			break;		/* an error occurred */
-		if (nfds > 0) {
+		switch (nfds) {
+		case -1:
+			if (errno != EINTR && errno != EAGAIN)
+				err(EXIT_FAILURE, "ppoll");
+			if (errno == EINTR) {
+				if (got_sigchld) {
+					got_sigchld = 0;
+					sigchld_reaper();
+				}
+			}
+			break;
+		case 0:
+			/* done sleeping */
+			return;
+		default:
 			sunlen = sizeof(s_un);
 			fd = accept4(cronSock, (struct sockaddr *)&s_un,
 			    &sunlen, SOCK_NONBLOCK);
@@ -395,12 +405,6 @@ cron_sleep(time_t target, sigset_t *mask)
 						atrun(at_database,
 						    batch_maxload, t2.tv_sec);
 				}
-			}
-		} else {
-			/* Interrupted by a signal. */
-			if (got_sigchld) {
-				got_sigchld = 0;
-				sigchld_reaper();
 			}
 		}
 
