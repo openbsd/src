@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.38 2021/11/21 23:44:55 jan Exp $
+.\"	$OpenBSD: poll.2,v 1.39 2022/01/21 15:23:36 millert Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\"
-.Dd $Mdocdate: November 21 2021 $
+.Dd $Mdocdate: January 21 2022 $
 .Dt POLL 2
 .Os
 .Sh NAME
@@ -300,6 +300,9 @@ and
 .Fn ppoll
 will fail if:
 .Bl -tag -width Er
+.It Bq Er EAGAIN
+The kernel failed to allocate memory for temporary data structures;
+a later call may succeed.
 .It Bq Er EFAULT
 .Fa fds
 points outside the process's allocated address space.
