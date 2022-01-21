@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.47 2022/01/20 16:36:19 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.48 2022/01/21 14:08:33 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -916,6 +916,8 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	unsigned long verify_flags = X509_V_FLAG_CRL_CHECK;
 
 	sz = strlen(file);
+	if (sz < 5)
+		errx(1, "%s: unsupported file type", file);
 	if (strcasecmp(file + sz - 4, ".tal") == 0)
 		type = RTYPE_TAL;
 	else if (strcasecmp(file + sz - 4, ".cer") == 0)

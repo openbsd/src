@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.179 2022/01/19 17:15:08 job Exp $ */
+/*	$OpenBSD: main.c,v 1.180 2022/01/21 14:08:33 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -842,6 +842,8 @@ main(int argc, char *argv[])
 		size_t sz;
 
 		sz = strlen(file);
+		if (sz < 5)
+			errx(1, "unsupported or invalid file: %s", file);
 		if (strcasecmp(file + sz - 4, ".tal") != 0 &&
 		    strcasecmp(file + sz - 4, ".cer") != 0 &&
 		    strcasecmp(file + sz - 4, ".crl") != 0 &&
