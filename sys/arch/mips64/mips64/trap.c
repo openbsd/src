@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.156 2021/12/09 00:26:11 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.157 2022/01/21 16:39:56 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1207,13 +1207,13 @@ loop:
 	 * Dig out the function from the symbol table.
 	 * Watch out for function tail optimizations.
 	 */
-	sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
+	sym = db_search_symbol(pc, DB_STGY_PROC, &diff);
 	if (sym != NULL && diff == 0) {
 		instr = kdbpeek(pc - 2 * sizeof(int));
 		i.word = instr;
 		if (i.JType.op == OP_JAL) {
 			sym = db_search_symbol(pc - sizeof(int),
-			    DB_STGY_ANY, &diff);
+			    DB_STGY_PROC, &diff);
 			if (sym != NULL && diff != 0)
 				diff += sizeof(int);
 		}
@@ -1407,7 +1407,7 @@ stacktrace_save_at(struct stacktrace *st, unsigned int skip)
 		first = 0;
 
 		/* Determine the start address of the current subroutine. */
-		sym = db_search_symbol(pc, DB_STGY_ANY, &diff);
+		sym = db_search_symbol(pc, DB_STGY_PROC, &diff);
 		if (sym == NULL)
 			break;
 		db_symbol_values(sym, &name, NULL);
