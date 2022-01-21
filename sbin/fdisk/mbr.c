@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.114 2021/12/11 20:09:28 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.115 2022/01/21 17:29:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -148,10 +148,10 @@ MBR_print(const struct mbr *mbr, const char *units)
 
 	printf("Offset: %lld\t", (long long)mbr->mbr_lba_self);
 	printf("Signature: 0x%X\n", (int)mbr->mbr_signature);
-	PRT_print(0, NULL, units);
+	PRT_print_parthdr();
 
 	for (i = 0; i < NDOSPART; i++)
-		PRT_print(i, &mbr->mbr_prt[i], units);
+		PRT_print_part(i, &mbr->mbr_prt[i], units);
 }
 
 int

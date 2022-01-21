@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.147 2021/10/21 13:16:49 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.148 2022/01/21 17:29:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -316,8 +316,8 @@ setpid(const int pn, struct mbr *mbr)
 
 	pp = &mbr->mbr_prt[pn];
 
-	PRT_print(0, NULL, "s");
-	PRT_print(pn, pp, "s");
+	PRT_print_parthdr();
+	PRT_print_part(pn, pp, "s");
 
 	pp->prt_id = ask_pid(pp->prt_id);
 

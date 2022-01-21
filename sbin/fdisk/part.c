@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.111 2022/01/18 19:37:27 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.112 2022/01/21 17:29:24 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -351,28 +351,30 @@ PRT_make(const struct prt *prt, const uint64_t lba_self, const uint64_t lba_firs
 }
 
 void
-PRT_print(const int num, const struct prt *prt, const char *units)
+PRT_print_parthdr(void)
+{
+	printf("            Starting         Ending    "
+	    "     LBA Info:\n");
+	printf(" #: id      C   H   S -      C   H   S "
+	    "[       start:        size ]\n");
+	printf("---------------------------------------"
+	    "----------------------------------------\n");
+}
+
+void
+PRT_print_part(const int num, const struct prt *prt, const char *units)
 {
 	const struct unit_type	*ut;
 	double			 size;
 
-	if (prt == NULL) {
-		printf("            Starting         Ending    "
-		    "     LBA Info:\n");
-		printf(" #: id      C   H   S -      C   H   S "
-		    "[       start:        size ]\n");
-		printf("---------------------------------------"
-		    "----------------------------------------\n");
-	} else {
-		size = units_size(units, prt->prt_ns, &ut);
-		printf("%c%1d: %.2X %6u %3u %3u - %6u %3u %3u "
-		    "[%12llu:%12.0f%s] %s\n",
-		    (prt->prt_flag == DOSACTIVE)?'*':' ',
-		    num, prt->prt_id,
-		    prt->prt_scyl, prt->prt_shead, prt->prt_ssect,
-		    prt->prt_ecyl, prt->prt_ehead, prt->prt_esect,
-		    prt->prt_bs, size, ut->ut_abbr, ascii_id(prt->prt_id));
-	}
+	size = units_size(units, prt->prt_ns, &ut);
+	printf("%c%1d: %.2X %6u %3u %3u - %6u %3u %3u "
+	    "[%12llu:%12.0f%s] %s\n",
+	    (prt->prt_flag == DOSACTIVE)?'*':' ',
+	    num, prt->prt_id,
+	    prt->prt_scyl, prt->prt_shead, prt->prt_ssect,
+	    prt->prt_ecyl, prt->prt_ehead, prt->prt_esect,
+	    prt->prt_bs, size, ut->ut_abbr, ascii_id(prt->prt_id));
 }
 
 void
