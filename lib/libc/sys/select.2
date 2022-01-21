@@ -1,4 +1,4 @@
-.\"	$OpenBSD: select.2,v 1.44 2021/11/16 13:46:16 visa Exp $
+.\"	$OpenBSD: select.2,v 1.45 2022/01/21 16:18:16 deraadt Exp $
 .\"	$NetBSD: select.2,v 1.5 1995/06/27 22:32:28 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)select.2	8.2 (Berkeley) 3/25/94
 .\"
-.Dd $Mdocdate: November 16 2021 $
+.Dd $Mdocdate: January 21 2022 $
 .Dt SELECT 2
 .Os
 .Sh NAME
@@ -223,55 +223,10 @@ Although the provision of
 was intended to allow user programs to be written independent
 of the kernel limit on the number of open files, the dimension
 of a sufficiently large bit field for select remains a problem.
-The default bit size of
-.Ft fd_set
-is based on the symbol
-.Dv FD_SETSIZE
-(currently 1024),
-but that is somewhat smaller than the current kernel limit
-to the number of open files.
-However, in order to accommodate programs which might potentially
-use a larger number of open files with select, it is possible
-to increase this size within a program by providing
-a larger definition of
-.Dv FD_SETSIZE
-before the inclusion of any headers.
-The kernel will cope, and the userland libraries provided with the
-system are also ready for large numbers of file descriptors.
-.Pp
-Alternatively, to be really safe, it is possible to allocate
-.Ft fd_set
-bit-arrays dynamically.
-The idea is to permit a program to work properly even if it is
-.Xr execve 2 Ns 'd
-with 4000 file descriptors pre-allocated.
-The following illustrates the technique which is used by
-userland libraries:
-.Bd -literal -offset indent
-fd_set *fdsr;
-int max = fd;
-
-fdsr = calloc(howmany(max+1, NFDBITS), sizeof(fd_mask));
-if (fdsr == NULL) {
-	...
-	return (-1);
-}
-FD_SET(fd, fdsr);
-n = select(max+1, fdsr, NULL, NULL, &tv);
-\&...
-free(fdsr);
-.Ed
-.Pp
-Alternatively, it is possible to use the
+If descriptor values greater than FD_SETSIZE are possible in
+a program, use
 .Xr poll 2
-interface.
-.Xr poll 2
-is more efficient when the size of
-.Fn select Ns 's
-.Ft fd_set
-bit-arrays are very large, and for fixed numbers of
-file descriptors one need not size and dynamically allocate a
-memory object.
+instead.
 .Pp
 .Fn select
 should probably have been designed to return the time remaining from the
