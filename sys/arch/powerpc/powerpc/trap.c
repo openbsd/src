@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.124 2022/01/20 14:02:51 tobhe Exp $	*/
+/*	$OpenBSD: trap.c,v 1.125 2022/01/21 14:07:06 tobhe Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ void
 enable_vec(struct proc *p)
 {
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct vreg *pcb_vr = pcb->pcb_vr;
+	struct vreg *pcb_vr;
 	struct cpu_info *ci = curcpu();
 	u_int32_t oldmsr, msr;
 
@@ -163,6 +163,7 @@ enable_vec(struct proc *p)
 	 */
 	if (pcb->pcb_vr == NULL)
 		pcb->pcb_vr = pool_get(&ppc_vecpl, PR_WAITOK | PR_ZERO);
+	pcb_vr = pcb->pcb_vr;
 
 	if (curcpu()->ci_vecproc != NULL || pcb->pcb_veccpu != NULL)
 		printf("attempting to restore vector in use vecproc %p"
