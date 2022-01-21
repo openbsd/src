@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.48 2022/01/21 14:08:33 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.49 2022/01/21 18:49:44 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -912,25 +912,9 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	struct tal *tal = NULL;
 	enum rtype type;
 	char *aia = NULL, *aki = NULL, *ski = NULL;
-	size_t sz;
 	unsigned long verify_flags = X509_V_FLAG_CRL_CHECK;
 
-	sz = strlen(file);
-	if (sz < 5)
-		errx(1, "%s: unsupported file type", file);
-	if (strcasecmp(file + sz - 4, ".tal") == 0)
-		type = RTYPE_TAL;
-	else if (strcasecmp(file + sz - 4, ".cer") == 0)
-		type = RTYPE_CER;
-	else if (strcasecmp(file + sz - 4, ".crl") == 0)
-		type = RTYPE_CRL;
-	else if (strcasecmp(file + sz - 4, ".mft") == 0)
-		type = RTYPE_MFT;
-	else if (strcasecmp(file + sz - 4, ".roa") == 0)
-		type = RTYPE_ROA;
-	else if (strcasecmp(file + sz - 4, ".gbr") == 0)
-		type = RTYPE_GBR;
-	else
+	if ((type = rtype_from_file_extension(file)) == RTYPE_INVALID)
 		errx(1, "%s: unsupported file type", file);
 
 	switch (type) {

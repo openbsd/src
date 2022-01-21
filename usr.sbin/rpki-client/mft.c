@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.48 2022/01/18 16:24:55 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.49 2022/01/21 18:49:44 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -130,6 +130,7 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	ASN1_SEQUENCE_ANY	*seq;
 	const ASN1_TYPE		*file, *hash;
 	char			*fn = NULL;
+	enum rtype		 type;
 	const unsigned char	*d = os->data;
 	size_t			 dsz = os->length;
 	int			 rc = 0;
@@ -165,6 +166,8 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 		goto out;
 	}
 
+	type = rtype_from_file_extension(fn);
+
 	/* Now hash value. */
 
 	hash = sk_ASN1_TYPE_value(seq, 1);
@@ -186,6 +189,7 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	fent = &p->res->files[p->res->filesz++];
 
 	fent->file = fn;
+	fent->type = type;
 	fn = NULL;
 	memcpy(fent->hash, hash->value.bit_string->data, SHA256_DIGEST_LENGTH);
 
@@ -495,6 +499,8 @@ mft_buffer(struct ibuf *b, const struct mft *p)
 	io_simple_buffer(b, &p->filesz, sizeof(size_t));
 	for (i = 0; i < p->filesz; i++) {
 		io_str_buffer(b, p->files[i].file);
+		io_simple_buffer(b, &p->files[i].type,
+		    sizeof(p->files[i].type));
 		io_simple_buffer(b, p->files[i].hash, SHA256_DIGEST_LENGTH);
 	}
 }
@@ -527,6 +533,7 @@ mft_read(struct ibuf *b)
 
 	for (i = 0; i < p->filesz; i++) {
 		io_read_str(b, &p->files[i].file);
+		io_read_buf(b, &p->files[i].type, sizeof(p->files[i].type));
 		io_read_buf(b, p->files[i].hash, SHA256_DIGEST_LENGTH);
 	}
 

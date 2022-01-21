@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.110 2022/01/20 09:24:08 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.111 2022/01/21 18:49:44 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -149,10 +149,27 @@ struct tal {
 };
 
 /*
+ * Resource types specified by the RPKI profiles.
+ * There might be others we don't consider.
+ */
+enum rtype {
+	RTYPE_INVALID,
+	RTYPE_TAL,
+	RTYPE_MFT,
+	RTYPE_ROA,
+	RTYPE_CER,
+	RTYPE_CRL,
+	RTYPE_GBR,
+	RTYPE_REPO,
+	RTYPE_FILE,
+};
+
+/*
  * Files specified in an MFT have their bodies hashed with SHA256.
  */
 struct mftfile {
 	char		*file; /* filename (CER/ROA/CRL, no path) */
+	enum rtype	 type; /* file type as determined by extension */
 	unsigned char	 hash[SHA256_DIGEST_LENGTH]; /* sha256 of body */
 };
 
@@ -280,22 +297,6 @@ RB_PROTOTYPE(auth_tree, auth, entry, authcmp);
 
 struct auth	*auth_find(struct auth_tree *, const char *);
 void		 auth_insert(struct auth_tree *, struct cert *, struct auth *);
-
-/*
- * Resource types specified by the RPKI profiles.
- * There might be others we don't consider.
- */
-enum rtype {
-	RTYPE_EOF = 0,
-	RTYPE_TAL,
-	RTYPE_MFT,
-	RTYPE_ROA,
-	RTYPE_CER,
-	RTYPE_CRL,
-	RTYPE_GBR,
-	RTYPE_REPO,
-	RTYPE_FILE,
-};
 
 enum http_result {
 	HTTP_FAILED,	/* anything else */
@@ -450,6 +451,8 @@ int		 valid_filename(const char *);
 int		 valid_filehash(int, const char *, size_t);
 int		 valid_uri(const char *, size_t, const char *);
 int		 valid_origin(const char *, const char *);
+
+enum rtype	 rtype_from_file_extension(const char *);
 
 /* Working with CMS. */
 unsigned char	*cms_parse_validate(X509 **, const char *,

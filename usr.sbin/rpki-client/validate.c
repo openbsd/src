@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.24 2022/01/13 13:46:03 claudio Exp $ */
+/*	$OpenBSD: validate.c,v 1.25 2022/01/21 18:49:44 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -234,6 +234,35 @@ valid_roa(const char *fn, struct auth_tree *auths, struct roa *roa)
 }
 
 /*
+ * Determine rtype corresponding to file extension. Returns RTYPE_INVALID
+ * on error or unkown extension.
+ */
+enum rtype
+rtype_from_file_extension(const char *fn)
+{
+	size_t	 sz;
+
+	sz = strlen(fn);
+	if (sz < 5)
+		return RTYPE_INVALID;
+
+	if (strcasecmp(fn + sz - 4, ".tal") == 0)
+		return RTYPE_TAL;
+	if (strcasecmp(fn + sz - 4, ".cer") == 0)
+		return RTYPE_CER;
+	if (strcasecmp(fn + sz - 4, ".crl") == 0)
+		return RTYPE_CRL;
+	if (strcasecmp(fn + sz - 4, ".mft") == 0)
+		return RTYPE_MFT;
+	if (strcasecmp(fn + sz - 4, ".roa") == 0)
+		return RTYPE_ROA;
+	if (strcasecmp(fn + sz - 4, ".gbr") == 0)
+		return RTYPE_GBR;
+
+	return RTYPE_INVALID;
+}
+
+/*
  * Validate a filename listed on a Manifest.
  * draft-ietf-sidrops-6486bis section 4.2.2
  * Returns 1 if filename is valid, otherwise 0.
@@ -241,12 +270,7 @@ valid_roa(const char *fn, struct auth_tree *auths, struct roa *roa)
 int
 valid_filename(const char *fn)
 {
-	size_t			 sz;
 	const unsigned char	*c;
-
-	sz = strlen(fn);
-	if (sz < 5)
-		return 0;
 
 	for (c = fn; *c != '\0'; ++c)
 		if (!isalnum(*c) && *c != '-' && *c != '_' && *c != '.')
@@ -255,16 +279,15 @@ valid_filename(const char *fn)
 	if (strchr(fn, '.') != strrchr(fn, '.'))
 		return 0;
 
-	if (strcasecmp(fn + sz - 4, ".cer") == 0)
+	switch (rtype_from_file_extension(fn)) {
+	case RTYPE_CER:
+	case RTYPE_CRL:
+	case RTYPE_GBR:
+	case RTYPE_ROA:
 		return 1;
-	if (strcasecmp(fn + sz - 4, ".crl") == 0)
-		return 1;
-	if (strcasecmp(fn + sz - 4, ".gbr") == 0)
-		return 1;
-	if (strcasecmp(fn + sz - 4, ".roa") == 0)
-		return 1;
-
-	return 0;
+	default:
+		return 0;
+	}
 }
 
 /*

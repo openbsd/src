@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.180 2022/01/21 14:08:33 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.181 2022/01/21 18:49:44 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -331,7 +331,7 @@ rrdp_http_done(unsigned int id, enum http_result res, const char *last_mod)
  */
 static void
 queue_add_from_mft(const char *path, const struct mftfile *file,
-    enum rtype type, struct repo *rp)
+    struct repo *rp)
 {
 	char		*nfile, *npath = NULL;
 
@@ -341,7 +341,7 @@ queue_add_from_mft(const char *path, const struct mftfile *file,
 	if ((nfile = strdup(file->file)) == NULL)
 		err(1, NULL);
 
-	entityq_add(npath, nfile, type, rp, NULL, 0, -1);
+	entityq_add(npath, nfile, file->type, rp, NULL, 0, -1);
 }
 
 /*
@@ -355,33 +355,29 @@ queue_add_from_mft(const char *path, const struct mftfile *file,
 static void
 queue_add_from_mft_set(const struct mft *mft, const char *name, struct repo *rp)
 {
-	size_t			 i, sz;
+	size_t			 i;
 	const struct mftfile	*f;
 
 	for (i = 0; i < mft->filesz; i++) {
 		f = &mft->files[i];
-		sz = strlen(f->file);
-		assert(sz > 4);
-		if (strcasecmp(f->file + sz - 4, ".crl") != 0)
+		if (f->type != RTYPE_CRL)
 			continue;
-		queue_add_from_mft(mft->path, f, RTYPE_CRL, rp);
+		queue_add_from_mft(mft->path, f, rp);
 	}
 
 	for (i = 0; i < mft->filesz; i++) {
 		f = &mft->files[i];
-		sz = strlen(f->file);
-		assert(sz > 4);
-		if (strcasecmp(f->file + sz - 4, ".crl") == 0)
+		switch (f->type) {
+		case RTYPE_CER:
+		case RTYPE_ROA:
+		case RTYPE_GBR:
+			queue_add_from_mft(mft->path, f, rp);
+			break;
+		case RTYPE_CRL:
 			continue;
-		else if (strcasecmp(f->file + sz - 4, ".cer") == 0)
-			queue_add_from_mft(mft->path, f, RTYPE_CER, rp);
-		else if (strcasecmp(f->file + sz - 4, ".roa") == 0)
-			queue_add_from_mft(mft->path, f, RTYPE_ROA, rp);
-		else if (strcasecmp(f->file + sz - 4, ".gbr") == 0)
-			queue_add_from_mft(mft->path, f, RTYPE_GBR, rp);
-		else
-			logx("%s: unsupported file type: %s", name,
-			    f->file);
+		default:
+			logx("%s: unsupported file type: %s", name, f->file);
+		}
 	}
 }
 
@@ -839,17 +835,7 @@ main(int argc, char *argv[])
 		goto usage;
 	}
 	if (file != NULL) {
-		size_t sz;
-
-		sz = strlen(file);
-		if (sz < 5)
-			errx(1, "unsupported or invalid file: %s", file);
-		if (strcasecmp(file + sz - 4, ".tal") != 0 &&
-		    strcasecmp(file + sz - 4, ".cer") != 0 &&
-		    strcasecmp(file + sz - 4, ".crl") != 0 &&
-		    strcasecmp(file + sz - 4, ".mft") != 0 &&
-		    strcasecmp(file + sz - 4, ".roa") != 0 &&
-		    strcasecmp(file + sz - 4, ".gbr") != 0)
+		if (rtype_from_file_extension(file) == RTYPE_INVALID)
 			errx(1, "unsupported or invalid file: %s", file);
 
 		outputdir = NULL;
