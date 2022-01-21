@@ -1,4 +1,4 @@
-#  $OpenBSD: Makefile,v 1.122 2021/04/27 00:31:34 drahn Exp $
+#  $OpenBSD: Makefile,v 1.123 2022/01/21 03:12:55 gnezdo Exp $
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
@@ -22,11 +22,10 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
 	    e_sqrtl.S \
 	    invtrig.c \
 	    s_atan.S s_atanf.S s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S \
-	    s_cos.S s_cosf.S s_floor.S s_floorf.S \
+	    s_floor.S s_floorf.S \
 	    s_log1p.S s_log1pf.S s_logb.S s_logbf.S \
 	    s_llrint.S s_llrintf.S s_lrint.S s_lrintf.S s_rint.S s_rintf.S\
-	    s_scalbnf.S s_significand.S s_significandf.S \
-	    s_sin.S s_sinf.S s_tan.S s_tanf.S
+	    s_scalbnf.S s_significand.S s_significandf.S
 .elif (${MACHINE_ARCH} == "amd64")
 .PATH:	${.CURDIR}/arch/amd64
 CPPFLAGS+=-I${.CURDIR}/arch/amd64
@@ -35,11 +34,11 @@ ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
 	    e_sqrtl.S \
 	    invtrig.c \
 	    s_atan.S s_atanf.S s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S \
-	    s_cos.S s_cosf.S s_floor.S s_floorf.S \
+	    s_floor.S s_floorf.S \
 	    s_log1p.S s_log1pf.S s_logb.S s_logbf.S \
 	    s_llrint.S s_llrintf.S s_lrint.S s_lrintf.S \
 	    s_rint.S s_rintf.S s_scalbnf.S s_significand.S \
-	    s_significandf.S s_sin.S s_sinf.S s_tan.S s_tanf.S
+	    s_significandf.S
 .elif (${MACHINE_ARCH} == "hppa")
 .PATH:	${.CURDIR}/arch/hppa
 ARCH_SRCS = e_sqrt.c e_sqrtf.c e_remainder.c e_remainderf.c \
