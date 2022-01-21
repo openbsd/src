@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.88 2022/01/20 06:33:03 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.89 2022/01/21 23:49:36 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -936,11 +936,17 @@ int
 __xa_alloc(struct xarray *xa, u32 *id, void *entry, int limit, gfp_t gfp)
 {
 	struct xarray_entry *xid;
-	int flags = (gfp & GFP_NOWAIT) ? PR_NOWAIT : PR_WAITOK;
 	int start = (xa->xa_flags & XA_FLAGS_ALLOC1) ? 1 : 0;
 	int begin;
 
-	xid = pool_get(&xa_pool, flags);
+	if (gfp & GFP_NOWAIT) {
+		xid = pool_get(&xa_pool, PR_NOWAIT);
+	} else {
+		mtx_leave(&xa->xa_lock);
+		xid = pool_get(&xa_pool, PR_WAITOK);
+		mtx_enter(&xa->xa_lock);
+	}
+
 	if (xid == NULL)
 		return -ENOMEM;
 
@@ -997,7 +1003,6 @@ __xa_store(struct xarray *xa, unsigned long index, void *entry, gfp_t gfp)
 {
 	struct xarray_entry find, *res;
 	void *prev;
-	int flags = (gfp & GFP_NOWAIT) ? PR_NOWAIT : PR_WAITOK;
 
 	if (entry == NULL)
 		return __xa_erase(xa, index);
@@ -1013,7 +1018,13 @@ __xa_store(struct xarray *xa, unsigned long index, void *entry, gfp_t gfp)
 	}
 
 	/* index not found, add new */
-	res = pool_get(&xa_pool, flags);
+	if (gfp & GFP_NOWAIT) {
+		res = pool_get(&xa_pool, PR_NOWAIT);
+	} else {
+		mtx_leave(&xa->xa_lock);
+		res = pool_get(&xa_pool, PR_WAITOK);
+		mtx_enter(&xa->xa_lock);
+	}
 	if (res == NULL)
 		return XA_ERROR(-ENOMEM);
 	res->id = index;
