@@ -1,7 +1,17 @@
-#	$OpenBSD: cipher-speed.sh,v 1.14 2017/04/30 23:34:55 djm Exp $
+#	$OpenBSD: cipher-speed.sh,v 1.15 2022/01/21 02:54:41 dtucker Exp $
 #	Placed in the Public Domain.
 
 tid="cipher speed"
+
+# Enable all supported ciphers and macs.
+ciphers=`${SSH} -Q Ciphers | tr '\n' , | sed 's/,$//'`
+macs=`${SSH} -Q MACs | tr '\n' , | sed 's/,$//'`
+cat >>$OBJ/sshd_proxy <<EOD
+Ciphers $ciphers
+MACs $macs
+EOD
+
+increase_datafile_size 10000 # 10MB
 
 getbytes ()
 {
