@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.242 2022/01/12 08:29:27 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.243 2022/01/21 15:51:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1605,10 +1605,10 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	struct ieee80211_node *ni;
 	const struct ieee80211_frame *wh;
 	const u_int8_t *frm, *efrm;
-	const u_int8_t *tstamp, *ssid, *rates, *xrates, *edcaie, *wmmie;
+	const u_int8_t *tstamp, *ssid, *rates, *xrates, *edcaie, *wmmie, *tim;
 	const u_int8_t *rsnie, *wpaie, *htcaps, *htop;
 	u_int16_t capinfo, bintval;
-	u_int8_t chan, bchan, erp, dtim_count, dtim_period;
+	u_int8_t chan, bchan, erp;
 	int is_new;
 
 	/*
@@ -1646,12 +1646,11 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	bintval = LE_READ_2(frm); frm += 2;
 	capinfo = LE_READ_2(frm); frm += 2;
 
-	ssid = rates = xrates = edcaie = wmmie = rsnie = wpaie = NULL;
+	ssid = rates = xrates = edcaie = wmmie = rsnie = wpaie = tim = NULL;
 	htcaps = htop = NULL;
 	bchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 	chan = bchan;
 	erp = 0;
-	dtim_count = dtim_period = 0;
 	while (frm + 2 <= efrm) {
 		if (frm + 2 + frm[1] > efrm) {
 			ic->ic_stats.is_rx_elem_toosmall++;
@@ -1694,10 +1693,11 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 			htop = frm;
 			break;
 		case IEEE80211_ELEMID_TIM:
-			if (frm[1] > 3) {
-				dtim_count = frm[2];
-				dtim_period = frm[3];
+			if (frm[1] < 4) {
+				ic->ic_stats.is_rx_elem_toosmall++;
+				break;
 			}
+			tim = frm;
 			break;
 		case IEEE80211_ELEMID_VENDOR:
 			if (frm[1] < 4) {
@@ -1780,8 +1780,10 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	if (htop && !ieee80211_setup_htop(ni, htop + 2, htop[1], 1))
 		htop = NULL; /* invalid HTOP */
 
-	ni->ni_dtimcount = dtim_count;
-	ni->ni_dtimperiod = dtim_period;
+	if (tim) {
+		ni->ni_dtimcount = tim[2];
+		ni->ni_dtimperiod = tim[3];
+	}
 
 	/*
 	 * When operating in station mode, check for state updates
@@ -1858,6 +1860,14 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 			ieee80211_set_shortslottime(ic,
 			    ic->ic_curmode == IEEE80211_MODE_11A ||
 			    (capinfo & IEEE80211_CAPINFO_SHORT_SLOTTIME));
+		}
+
+		if (tim && ic->ic_bss->ni_dtimperiod != ni->ni_dtimperiod) {
+			ic->ic_bss->ni_dtimperiod = ni->ni_dtimperiod;
+			ic->ic_bss->ni_dtimcount = ni->ni_dtimcount;
+
+			if (ic->ic_updatedtim != NULL)
+				ic->ic_updatedtim(ic);
 		}
 
 		/* 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.389 2022/01/09 05:42:50 jsg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.390 2022/01/21 15:51:02 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -340,6 +340,7 @@ void	iwm_updateprot(struct ieee80211com *);
 void	iwm_updateslot(struct ieee80211com *);
 void	iwm_updateedca(struct ieee80211com *);
 void	iwm_updatechan(struct ieee80211com *);
+void	iwm_updatedtim(struct ieee80211com *);
 void	iwm_init_reorder_buffer(struct iwm_reorder_buffer *, uint16_t,
 	    uint16_t);
 void	iwm_clear_reorder_buffer(struct iwm_softc *, struct iwm_rxba_data *);
@@ -3374,6 +3375,8 @@ iwm_mac_ctxt_task(void *arg)
 	err = iwm_mac_ctxt_cmd(sc, in, IWM_FW_CTXT_ACTION_MODIFY, 1);
 	if (err)
 		printf("%s: failed to update MAC\n", DEVNAME(sc));
+	
+	iwm_unprotect_session(sc, in);
 
 	refcnt_rele_wake(&sc->task_refs);
 	splx(s);
@@ -3452,6 +3455,16 @@ iwm_updatechan(struct ieee80211com *ic)
 	if (ic->ic_state == IEEE80211_S_RUN &&
 	    !task_pending(&sc->newstate_task))
 		iwm_add_task(sc, systq, &sc->phy_ctxt_task);
+}
+
+void
+iwm_updatedtim(struct ieee80211com *ic)
+{
+	struct iwm_softc *sc = ic->ic_softc;
+
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    !task_pending(&sc->newstate_task))
+		iwm_add_task(sc, systq, &sc->mac_ctxt_task);
 }
 
 int
@@ -7275,12 +7288,7 @@ iwm_lmac_scan_fill_channels(struct iwm_softc *sc,
 		chan->iter_count = htole16(1);
 		chan->iter_interval = 0;
 		chan->flags = htole32(IWM_UNIFIED_SCAN_CHANNEL_PARTIAL);
-		/*
-		 * Firmware may become unresponsive when asked to send
-		 * a directed probe request on a passive channel.
-		 */
-		if (n_ssids != 0 && !bgscan &&
-		    (c->ic_flags & IEEE80211_CHAN_PASSIVE) == 0)
+		if (n_ssids != 0 && !bgscan)
 			chan->flags |= htole32(1 << 1); /* select SSID 0 */
 		chan++;
 		nchan++;
@@ -7307,12 +7315,7 @@ iwm_umac_scan_fill_channels(struct iwm_softc *sc,
 		chan->channel_num = ieee80211_mhz2ieee(c->ic_freq, 0);
 		chan->iter_count = 1;
 		chan->iter_interval = htole16(0);
-		/*
-		 * Firmware may become unresponsive when asked to send
-		 * a directed probe request on a passive channel.
-		 */
-		if (n_ssids != 0 && !bgscan &&
-		    (c->ic_flags & IEEE80211_CHAN_PASSIVE) == 0)
+		if (n_ssids != 0 && !bgscan)
 			chan->flags = htole32(1 << 0); /* select SSID 0 */
 		chan++;
 		nchan++;
@@ -7782,13 +7785,7 @@ iwm_umac_scan(struct iwm_softc *sc, int bgscan)
 			IWM_UMAC_SCAN_GEN_FLAGS2_ALLOW_CHNL_REORDER;
 	}
 
-	/*
-	 * Check if we're doing an active directed scan.
-	 * 9k devices may randomly lock up (no interrupts) after association
-	 * following active scans. Use passive scan only for now on 9k.
-	 */
-	if (sc->sc_device_family != IWM_DEVICE_FAMILY_9000 &&
-	    ic->ic_des_esslen != 0) {
+	if (ic->ic_des_esslen != 0) {
 		if (isset(sc->sc_ucode_api,
 		    IWM_UCODE_TLV_API_SCAN_EXT_CHAN_VER)) {
 			tail->direct_scan[0].id = IEEE80211_ELEMID_SSID;
@@ -11620,6 +11617,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_updateprot = iwm_updateprot;
 	ic->ic_updateslot = iwm_updateslot;
 	ic->ic_updateedca = iwm_updateedca;
+	ic->ic_updatedtim = iwm_updatedtim;
 	ic->ic_ampdu_rx_start = iwm_ampdu_rx_start;
 	ic->ic_ampdu_rx_stop = iwm_ampdu_rx_stop;
 	ic->ic_ampdu_tx_start = iwm_ampdu_tx_start;

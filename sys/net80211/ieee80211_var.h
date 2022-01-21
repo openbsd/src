@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_var.h,v 1.109 2021/12/05 11:33:45 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_var.h,v 1.110 2022/01/21 15:51:03 stsp Exp $	*/
 /*	$NetBSD: ieee80211_var.h,v 1.7 2004/05/06 03:07:10 dyoung Exp $	*/
 
 /*-
@@ -249,6 +249,7 @@ struct ieee80211com {
 				    struct ieee80211_node *, u_int8_t);
 	void			(*ic_updateprot)(struct ieee80211com *);
 	void			(*ic_updatechan)(struct ieee80211com *);
+	void			(*ic_updatedtim)(struct ieee80211com *);
 	int			(*ic_bgscan_start)(struct ieee80211com *);
 	void			(*ic_bgscan_done)(struct ieee80211com *,
 				    struct ieee80211_node_switch_bss_arg *,

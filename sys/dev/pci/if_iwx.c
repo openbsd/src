@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.133 2022/01/09 05:42:52 jsg Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.134 2022/01/21 15:51:02 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -311,6 +311,7 @@ void	iwx_updatechan(struct ieee80211com *);
 void	iwx_updateprot(struct ieee80211com *);
 void	iwx_updateslot(struct ieee80211com *);
 void	iwx_updateedca(struct ieee80211com *);
+void	iwx_updatedtim(struct ieee80211com *);
 void	iwx_init_reorder_buffer(struct iwx_reorder_buffer *, uint16_t,
 	    uint16_t);
 void	iwx_clear_reorder_buffer(struct iwx_softc *, struct iwx_rxba_data *);
@@ -3214,6 +3215,16 @@ iwx_updateedca(struct ieee80211com *ic)
 }
 
 void
+iwx_updatedtim(struct ieee80211com *ic)
+{
+	struct iwx_softc *sc = ic->ic_softc;
+
+	if (ic->ic_state == IEEE80211_S_RUN &&
+	    !task_pending(&sc->newstate_task))
+		iwx_add_task(sc, systq, &sc->mac_ctxt_task);
+}
+
+void
 iwx_sta_tx_agg_start(struct iwx_softc *sc, struct ieee80211_node *ni,
     uint8_t tid)
 {
@@ -5965,15 +5976,8 @@ iwx_umac_scan_fill_channels(struct iwx_softc *sc,
 			chan->v1.iter_count = 1;
 			chan->v1.iter_interval = htole16(0);
 		}
-		/*
-		 * Firmware may become unresponsive when asked to send
-		 * a directed probe request on a passive channel.
-		 */
-#if 0 /* Some people see "device timeout" after active scans. */
-		if (n_ssids != 0 && !bgscan &&
-		    (c->ic_flags & IEEE80211_CHAN_PASSIVE) == 0)
+		if (n_ssids != 0 && !bgscan)
 			chan->flags = htole32(1 << 0); /* select SSID 0 */
-#endif
 		chan++;
 		nchan++;
 	}
@@ -6220,9 +6224,7 @@ iwx_scan_umac_fill_ch_p_v6(struct iwx_softc *sc,
 int
 iwx_umac_scan_v14(struct iwx_softc *sc, int bgscan)
 {
-#if 0 /* Some people see "device timeout" after active scans. */
 	struct ieee80211com *ic = &sc->sc_ic;
-#endif
 	struct iwx_host_cmd hcmd = {
 		.id = iwx_cmd_id(IWX_SCAN_REQ_UMAC, IWX_LONG_GROUP, 0),
 		.len = { 0, },
@@ -6258,7 +6260,6 @@ iwx_umac_scan_v14(struct iwx_softc *sc, int bgscan)
 		return err;
 	}
 
-#if 0 /* Some people see "device timeout" after active scans. */
 	if (ic->ic_des_esslen != 0) {
 		scan_p->probe_params.direct_scan[0].id = IEEE80211_ELEMID_SSID;
 		scan_p->probe_params.direct_scan[0].len = ic->ic_des_esslen;
@@ -6267,7 +6268,6 @@ iwx_umac_scan_v14(struct iwx_softc *sc, int bgscan)
 		bitmap_ssid |= (1 << 0);
 		n_ssid = 1;
 	}
-#endif
 
 	iwx_scan_umac_fill_ch_p_v6(sc, &scan_p->channel_params, bitmap_ssid,
 	    n_ssid, bgscan);
@@ -9557,6 +9557,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_updateprot = iwx_updateprot;
 	ic->ic_updateslot = iwx_updateslot;
 	ic->ic_updateedca = iwx_updateedca;
+	ic->ic_updatedtim = iwx_updatedtim;
 	ic->ic_ampdu_rx_start = iwx_ampdu_rx_start;
 	ic->ic_ampdu_rx_stop = iwx_ampdu_rx_stop;
 	ic->ic_ampdu_tx_start = iwx_ampdu_tx_start;
