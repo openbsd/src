@@ -1,4 +1,4 @@
-/* $OpenBSD: cbc128.c,v 1.4 2015/02/10 09:46:30 miod Exp $ */
+/* $OpenBSD: cbc128.c,v 1.5 2022/01/22 00:45:17 inoguchi Exp $ */
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
@@ -110,7 +110,7 @@ void CRYPTO_cbc128_encrypt(const unsigned char *in, unsigned char *out,
 		in  += 16;
 		out += 16;
 	}
-	memcpy(ivec,iv,16);
+	memmove(ivec,iv,16);
 }
 
 void CRYPTO_cbc128_decrypt(const unsigned char *in, unsigned char *out,
@@ -148,7 +148,7 @@ void CRYPTO_cbc128_decrypt(const unsigned char *in, unsigned char *out,
 				out += 16;
 			}
 		}
-		memcpy(ivec,iv,16);
+		memmove(ivec,iv,16);
 	} else {
 		if (STRICT_ALIGNMENT &&
 		    ((size_t)in|(size_t)out|(size_t)ivec)%sizeof(size_t) != 0) {
