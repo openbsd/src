@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_req.c,v 1.27 2021/12/12 21:30:14 tb Exp $ */
+/* $OpenBSD: x509_req.c,v 1.28 2022/01/22 00:34:48 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -138,7 +138,9 @@ X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
 	EVP_PKEY *xk = NULL;
 	int ok = 0;
 
-	xk = X509_REQ_get_pubkey(x);
+	if ((xk = X509_REQ_get0_pubkey(x)) == NULL)
+		return 0;
+
 	switch (EVP_PKEY_cmp(xk, k)) {
 	case 1:
 		ok = 1;
@@ -166,7 +168,6 @@ X509_REQ_check_private_key(X509_REQ *x, EVP_PKEY *k)
 		X509error(X509_R_UNKNOWN_KEY_TYPE);
 	}
 
-	EVP_PKEY_free(xk);
 	return (ok);
 }
 
