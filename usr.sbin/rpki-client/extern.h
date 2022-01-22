@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.111 2022/01/21 18:49:44 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.112 2022/01/22 09:18:48 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -421,6 +421,8 @@ void		 mft_free(struct mft *);
 struct mft	*mft_parse(X509 **, const char *, const unsigned char *,
 		    size_t);
 struct mft	*mft_read(struct ibuf *);
+enum rtype	 rtype_from_file_extension(const char *);
+enum rtype	 rtype_from_mftfile(const char *);
 
 void		 roa_buffer(struct ibuf *, const struct roa *);
 void		 roa_free(struct roa *);
@@ -447,12 +449,9 @@ int		 valid_ta(const char *, struct auth_tree *,
 int		 valid_cert(const char *, struct auth_tree *,
 		    const struct cert *);
 int		 valid_roa(const char *, struct auth_tree *, struct roa *);
-int		 valid_filename(const char *);
 int		 valid_filehash(int, const char *, size_t);
 int		 valid_uri(const char *, size_t, const char *);
 int		 valid_origin(const char *, const char *);
-
-enum rtype	 rtype_from_file_extension(const char *);
 
 /* Working with CMS. */
 unsigned char	*cms_parse_validate(X509 **, const char *,

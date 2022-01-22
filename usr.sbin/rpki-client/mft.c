@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.49 2022/01/21 18:49:44 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.50 2022/01/22 09:18:48 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <assert.h>
+#include <ctype.h>
 #include <err.h>
 #include <limits.h>
 #include <stdarg.h>
@@ -121,6 +122,66 @@ check_validity(const ASN1_GENERALIZEDTIME *from,
 }
 
 /*
+ * Determine rtype corresponding to file extension. Returns RTYPE_INVALID
+ * on error or unkown extension.
+ */
+enum rtype
+rtype_from_file_extension(const char *fn)
+{
+	size_t	 sz;
+
+	sz = strlen(fn);
+	if (sz < 5)
+		return RTYPE_INVALID;
+
+	if (strcasecmp(fn + sz - 4, ".tal") == 0)
+		return RTYPE_TAL;
+	if (strcasecmp(fn + sz - 4, ".cer") == 0)
+		return RTYPE_CER;
+	if (strcasecmp(fn + sz - 4, ".crl") == 0)
+		return RTYPE_CRL;
+	if (strcasecmp(fn + sz - 4, ".mft") == 0)
+		return RTYPE_MFT;
+	if (strcasecmp(fn + sz - 4, ".roa") == 0)
+		return RTYPE_ROA;
+	if (strcasecmp(fn + sz - 4, ".gbr") == 0)
+		return RTYPE_GBR;
+
+	return RTYPE_INVALID;
+}
+
+/*
+ * Validate that a filename listed on a Manifest only contains characters
+ * permitted in draft-ietf-sidrops-6486bis section 4.2.2 and check that
+ * it's a CER, CRL, GBR or a ROA.
+ * Returns corresponding rtype or RTYPE_INVALID on error.
+ */
+enum rtype
+rtype_from_mftfile(const char *fn)
+{
+	const unsigned char	*c;
+	enum rtype		 type;
+
+	for (c = fn; *c != '\0'; ++c)
+		if (!isalnum(*c) && *c != '-' && *c != '_' && *c != '.')
+			return RTYPE_INVALID;
+
+	if (strchr(fn, '.') != strrchr(fn, '.'))
+		return RTYPE_INVALID;
+
+	type = rtype_from_file_extension(fn);
+	switch (type) {
+	case RTYPE_CER:
+	case RTYPE_CRL:
+	case RTYPE_GBR:
+	case RTYPE_ROA:
+		return type;
+	default:
+		return RTYPE_INVALID;
+	}
+}
+
+/*
  * Parse an individual "FileAndHash", RFC 6486, sec. 4.2.
  * Return zero on failure, non-zero on success.
  */
@@ -161,12 +222,10 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	if (fn == NULL)
 		err(1, NULL);
 
-	if (!valid_filename(fn)) {
+	if ((type = rtype_from_mftfile(fn)) == RTYPE_INVALID) {
 		warnx("%s: invalid filename: %s", p->fn, fn);
 		goto out;
 	}
-
-	type = rtype_from_file_extension(fn);
 
 	/* Now hash value. */
 
