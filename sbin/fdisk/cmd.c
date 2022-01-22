@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.148 2022/01/21 17:29:24 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.149 2022/01/22 15:39:00 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -208,27 +208,29 @@ edit(const int pn, struct mbr *mbr)
 	}
 
 	if (ask_yn("Do you wish to edit in CHS mode?")) {
-		pp->prt_scyl = ask_num("BIOS Starting cylinder", pp->prt_scyl,  0,
-		    disk.dk_cylinders - 1);
-		pp->prt_shead = ask_num("BIOS Starting head",    pp->prt_shead, 0,
-		    disk.dk_heads - 1);
-		pp->prt_ssect = ask_num("BIOS Starting sector",  pp->prt_ssect, 1,
-		    disk.dk_sectors);
+		pp->prt_scyl = ask_num("BIOS Starting cylinder", pp->prt_scyl,
+		    0, disk.dk_cylinders - 1);
+		pp->prt_shead = ask_num("BIOS Starting head",    pp->prt_shead,
+		    0, disk.dk_heads - 1);
+		pp->prt_ssect = ask_num("BIOS Starting sector",  pp->prt_ssect,
+		    1, disk.dk_sectors);
 
 		pp->prt_ecyl = ask_num("BIOS Ending cylinder",   pp->prt_ecyl,
 		    pp->prt_scyl, disk.dk_cylinders - 1);
 		pp->prt_ehead = ask_num("BIOS Ending head",      pp->prt_ehead,
-		    (pp->prt_scyl == pp->prt_ecyl) ? pp->prt_shead : 0, disk.dk_heads - 1);
+		    (pp->prt_scyl == pp->prt_ecyl) ? pp->prt_shead : 0,
+		    disk.dk_heads - 1);
 		pp->prt_esect = ask_num("BIOS Ending sector",    pp->prt_esect,
-		    (pp->prt_scyl == pp->prt_ecyl && pp->prt_shead == pp->prt_ehead) ? pp->prt_ssect
-		    : 1, disk.dk_sectors);
+		    (pp->prt_scyl == pp->prt_ecyl && pp->prt_shead ==
+		    pp->prt_ehead) ? pp->prt_ssect : 1, disk.dk_sectors);
 
 		/* Fix up off/size values */
 		PRT_fix_BN(pp, pn);
 		/* Fix up CHS values for LBA */
 		PRT_fix_CHS(pp);
 	} else {
-		pp->prt_bs = getuint64("Partition offset", pp->prt_bs, 0, disk.dk_size - 1);
+		pp->prt_bs = getuint64("Partition offset", pp->prt_bs, 0,
+		    disk.dk_size - 1);
 		pp->prt_ns = getuint64("Partition size",   pp->prt_ns, 1,
 		    disk.dk_size - pp->prt_bs);
 
