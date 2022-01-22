@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_sct.c,v 1.7 2021/12/18 16:34:52 tb Exp $ */
+/*	$OpenBSD: ct_sct.c,v 1.8 2022/01/22 00:29:59 inoguchi Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com), Stephen Henson (steve@openssl.org)
  * and Adam Eijdenberg (adam.eijdenberg@gmail.com) for the OpenSSL project 2016.
@@ -411,7 +411,8 @@ SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
 			goto end;
 		}
 
-		issuer_pkey = X509_get0_pubkey(ctx->issuer);
+		if ((issuer_pkey = X509_get0_pubkey(ctx->issuer)) == NULL)
+			goto err;
 
 		if (X509_PUBKEY_set(&pub, issuer_pkey) != 1)
 			goto err;
