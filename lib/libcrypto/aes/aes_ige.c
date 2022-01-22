@@ -1,4 +1,4 @@
-/* $OpenBSD: aes_ige.c,v 1.7 2015/02/10 09:46:30 miod Exp $ */
+/* $OpenBSD: aes_ige.c,v 1.8 2022/01/22 00:43:41 inoguchi Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -109,8 +109,8 @@ AES_ige_encrypt(const unsigned char *in, unsigned char *out, size_t length,
 				in += AES_BLOCK_SIZE;
 				out += AES_BLOCK_SIZE;
 			}
-			memcpy(ivec, ivp->data, AES_BLOCK_SIZE);
-			memcpy(ivec + AES_BLOCK_SIZE, iv2p->data, AES_BLOCK_SIZE);
+			memmove(ivec, ivp->data, AES_BLOCK_SIZE);
+			memmove(ivec + AES_BLOCK_SIZE, iv2p->data, AES_BLOCK_SIZE);
 		} else {
 			aes_block_t tmp, tmp2;
 			aes_block_t iv;
@@ -161,8 +161,8 @@ AES_ige_encrypt(const unsigned char *in, unsigned char *out, size_t length,
 				in += AES_BLOCK_SIZE;
 				out += AES_BLOCK_SIZE;
 			}
-			memcpy(ivec, ivp->data, AES_BLOCK_SIZE);
-			memcpy(ivec + AES_BLOCK_SIZE, iv2p->data, AES_BLOCK_SIZE);
+			memmove(ivec, ivp->data, AES_BLOCK_SIZE);
+			memmove(ivec + AES_BLOCK_SIZE, iv2p->data, AES_BLOCK_SIZE);
 		} else {
 			aes_block_t tmp, tmp2;
 			aes_block_t iv;
