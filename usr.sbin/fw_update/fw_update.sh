@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.30 2022/01/12 02:21:15 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.31 2022/01/22 05:03:47 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -35,7 +35,7 @@ FWURL=http://firmware.openbsd.org/firmware/${HTTP_FWDIR}
 FWPUB_KEY=${DESTDIR}/etc/signify/openbsd-${VERSION}-fw.pub
 
 DRYRUN=false
-VERBOSE=false
+integer VERBOSE=0
 DELETE=false
 DOWNLOAD=true
 INSTALL=true
@@ -73,14 +73,17 @@ fetch() {
 	# The installer uses a limited doas(1) as a tiny su(1)
 	set -o monitor # make sure ftp gets its own process group
 	(
-	flags=-VM
-	"$VERBOSE" && flags=-vm
+	_flags=-vm
+	case "$VERBOSE" in
+		0|1) _flags=-VM ;;
+		  2) _flags=-Vm ;;
+	esac
 	if [ -x /usr/bin/su ]; then
 		exec /usr/bin/su -s /bin/ksh "$_user" -c \
-		    "/usr/bin/ftp -N '${0##/}' -D 'Get/Verify' $flags -o- '$_src'" > "$_dst"
+		    "/usr/bin/ftp -N '${0##/}' -D 'Get/Verify' $_flags -o- '$_src'" > "$_dst"
 	else
 		exec /usr/bin/doas -u "$_user" \
-		    /usr/bin/ftp -N "${0##/}" -D 'Get/Verify' $flags -o- "$_src" > "$_dst"
+		    /usr/bin/ftp -N "${0##/}" -D 'Get/Verify' $_flags -o- "$_src" > "$_dst"
 	fi
 	) & FTPPID=$!
 	set +o monitor
@@ -214,11 +217,15 @@ detect_firmware() {
 }
 
 add_firmware () {
-	local _f="${1##*/}" _pkgname
+	local _f="${1##*/}" _m="${2:-Install}" _pkgname
 	FWPKGTMP="$( tmpdir "${DESTDIR}/var/db/pkg/.firmware" )"
-	local flags=-VM
-	"$VERBOSE" && flags=-vm
-	ftp -N "${0##/}" -D "Install" "$flags" -o- "file:${1}" |
+	local _flags=-vm
+	case "$VERBOSE" in
+		0|1) _flags=-VM ;;
+		2|3) _flags=-Vm ;;
+	esac
+
+	ftp -N "${0##/}" -D "$_m" "$_flags" -o- "file:${1}" |
 		tar -s ",^\+,${FWPKGTMP}/+," \
 		    -s ",^firmware,${DESTDIR}/etc/firmware," \
 		    -C / -zxphf - "+*" "firmware/*"
@@ -249,7 +256,7 @@ delete_firmware() {
 	local _cwd _pkg="$1" _pkgdir="${DESTDIR}/var/db/pkg"
 
 	# TODO: Check hash for files before deleting
-	"$VERBOSE" && echo "Uninstalling $_pkg"
+	((VERBOSE > 2)) && echo -n "Uninstall $_pkg ..."
 	_cwd="${_pkgdir}/$_pkg"
 
 	if [ ! -e "$_cwd/+CONTENTS" ] ||
@@ -283,6 +290,10 @@ delete_firmware() {
 			rm -f "$_r"
 		fi
 	done
+
+	((VERBOSE > 2)) && echo " done."
+
+	return 0
 }
 
 usage() {
@@ -300,7 +311,7 @@ do
 	F) OPT_F=true ;;
 	n) DRYRUN=true ;;
 	p) LOCALSRC="$OPTARG" ;;
-	v) VERBOSE=true ;;
+	v) ((++VERBOSE)) ;;
 	:)
 	    echo "${0##*/}: option requires an argument -- -$OPTARG" >&2
 	    usage 2
@@ -354,6 +365,9 @@ set -sA devices -- "$@"
 if "$DELETE"; then
 	[ "$OPT_F" ] && echo "Cannot use -F and -d" >&2 && usage 22
 
+	# Show the "Uninstall" message when just deleting not upgrading
+	((VERBOSE)) && VERBOSE=3
+
 	set -A installed
 	if [ "${devices[*]:-}" ]; then
 		"$ALL" && echo "Cannot use -a and devices/files" >&2 && usage 22
@@ -381,7 +395,7 @@ if "$DELETE"; then
 	if [ "${installed:-}" ]; then
 		for fw in "${installed[@]}"; do
 			if "$DRYRUN"; then
-				echo "Delete $fw"
+				((VERBOSE)) && echo "Delete $fw"
 			else
 				delete_firmware "$fw" || continue
 			fi
@@ -405,9 +419,9 @@ CFILE="$LOCALSRC/$CFILE"
 if [ "${devices[*]:-}" ]; then
 	"$ALL" && echo "Cannot use -a and devices/files" >&2 && usage 22
 else
-	"$VERBOSE" && echo -n "Detecting firmware ..."
+	((VERBOSE > 1)) && echo -n "Detect firmware ..."
 	set -sA devices -- $( detect_firmware )
-	"$VERBOSE" &&
+	((VERBOSE > 1)) &&
 	    { [ "${devices[*]:-}" ] && echo " found." || echo " done." ; }
 fi
 
@@ -437,34 +451,48 @@ for f in "${devices[@]}"; do
 	if "$INSTALL" && [ "${installed[*]:-}" ]; then
 		for i in "${installed[@]}"; do
 			if [ "${f##*/}" = "$i.tgz" ]; then
-				"$VERBOSE" && echo "Keep $i"
+				((VERBOSE > 2)) && echo "Keep $i"
 				kept="$kept,$d"
 				continue 2
 			fi
 		done
 	fi
 
+	pending_status=false
 	if [ -e "$f" ]; then
-		if "$DOWNLOAD"; then
-			if "$verify_existing" && ! "$DRYRUN"; then
-				"$VERBOSE" && ! "$INSTALL" &&
-				    echo "Keep/Verify ${f##*/}"
-				verify "$f" || continue
-			else
-				"$VERBOSE" && ! "$INSTALL" &&
-				    echo "Keep ${f##*/}"
+		if "$verify_existing" && ! "$DRYRUN"; then
+			if ((VERBOSE == 1)); then
+			 	echo -n "Verify ${f##*/} ..."
+				pending_status=true
 			fi
-			"$INSTALL" || kept="$kept,$d"
-		# else assume it was verified when downloaded
+			((VERBOSE > 1)) && ! "$INSTALL" &&
+			    echo "Keep/Verify ${f##*/}"
+			verify "$f" || {
+				"$pending_status" && echo " failed."
+				continue
+			}
+			"$pending_status" && ! "$INSTALL" && echo " done."
+		else
+			((VERBOSE > 1)) && ! "$INSTALL" &&
+			    echo "Keep ${f##*/}"
 		fi
+		"$INSTALL" || kept="$kept,$d"
 	elif "$DOWNLOAD"; then
 		if "$DRYRUN"; then
-			"$VERBOSE" && echo "Get/Verify ${f##*/}"
+			((VERBOSE)) && echo "Get/Verify ${f##*/}"
 		else
-			fetch  "$f" || continue
-			verify "$f" || continue
+			if ((VERBOSE == 1)); then
+				echo -n "Get/Verify ${f##*/} ..."
+				pending_status=true
+			fi
+			fetch  "$f" &&
+			verify "$f" || {
+				"$pending_status" && echo " failed."
+				continue
+			}
+			"$pending_status" && ! "$INSTALL" && echo " done."
 		fi
-		"$INSTALL"  || added="$added,$d"
+		"$INSTALL" || added="$added,$d"
 	elif "$INSTALL"; then
 		echo "Cannot install ${f##*/}, not found" >&2
 		continue
@@ -472,24 +500,32 @@ for f in "${devices[@]}"; do
 
 	"$INSTALL" || continue
 
-	removed=false
+	update="Install"
 	if [ "${installed[*]:-}" ]; then
+		update="Update"
 		for i in "${installed[@]}"; do
 			"$DRYRUN" || delete_firmware "$i"
-			removed=true
 		done
 	fi
 
-	"$DRYRUN" || add_firmware "$f"
+	if "$DRYRUN"; then
+		((VERBOSE)) && echo "$update $f"
+	else
+		if ((VERBOSE == 1)) && ! "$pending_status"; then
+			echo -n "Install ${f##*/} ..."
+			pending_status=true
+		fi
+		add_firmware "$f" "$update"
+	fi
 
 	f="${f##*/}"
 	f="${f%.tgz}"
-	if "$removed"; then
-		"$DRYRUN" && echo "Update $f"
-		updated="$updated,$d"
-	else
-		"$DRYRUN" && echo "Install $f"
+	if [ "$update" = Install ]; then
+		"$pending_status" && echo " installed."
 		added="$added,$d"
+	else
+		"$pending_status" && echo " updated."
+		updated="$updated,$d"
 	fi
 done
 
