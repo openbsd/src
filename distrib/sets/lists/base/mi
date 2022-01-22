@@ -1112,6 +1112,7 @@
 ./usr/libdata/perl5/OpenBSD/AddCreateDelete.pm
 ./usr/libdata/perl5/OpenBSD/AddDelete.pm
 ./usr/libdata/perl5/OpenBSD/ArcCheck.pm
+./usr/libdata/perl5/OpenBSD/BaseState.pm
 ./usr/libdata/perl5/OpenBSD/CollisionReport.pm
 ./usr/libdata/perl5/OpenBSD/Delete.pm
 ./usr/libdata/perl5/OpenBSD/Dependencies
@@ -2872,6 +2873,7 @@
 ./usr/share/man/man3/loongson
 ./usr/share/man/man3/octeon
 ./usr/share/man/man3p
+./usr/share/man/man3p/OpenBSD::BaseState.3p
 ./usr/share/man/man4
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/amd64
