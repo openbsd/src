@@ -1,4 +1,4 @@
-/* $OpenBSD: channels.c,v 1.411 2022/01/06 21:48:38 djm Exp $ */
+/* $OpenBSD: channels.c,v 1.412 2022/01/22 00:45:31 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -1909,16 +1909,43 @@ channel_handle_rfd(struct ssh *ssh, Channel *c)
 	char buf[CHAN_RBUF];
 	ssize_t len;
 	int r;
+	size_t have, avail, maxlen = CHANNEL_MAX_READ;
 
 	if ((c->io_ready & SSH_CHAN_IO_RFD) == 0)
+		return 1; /* Shouldn't happen */
+	if ((avail = sshbuf_avail(c->input)) == 0)
+		return 1; /* Shouldn't happen */
+
+	/*
+	 * For "simple" channels (i.e. not datagram or filtered), we can
+	 * read directly to the channel buffer.
+	 */
+	if (c->input_filter == NULL && !c->datagram) {
+		/* Only OPEN channels have valid rwin */
+		if (c->type == SSH_CHANNEL_OPEN) {
+			if ((have = sshbuf_len(c->input)) >= c->remote_window)
+				return 1; /* shouldn't happen */
+			if (maxlen > c->remote_window - have)
+				maxlen = c->remote_window - have;
+		}
+		if (maxlen > avail)
+			maxlen = avail;
+		if ((r = sshbuf_read(c->rfd, c->input, maxlen, NULL)) != 0) {
+			debug2("channel %d: read failed rfd %d maxlen %zu: %s",
+			    c->self, c->rfd, maxlen, ssh_err(r));
+			goto rfail;
+		}
 		return 1;
+	}
 
 	len = read(c->rfd, buf, sizeof(buf));
 	if (len == -1 && (errno == EINTR || errno == EAGAIN))
 		return 1;
 	if (len <= 0) {
-		debug2("channel %d: read<=0 rfd %d len %zd",
-		    c->self, c->rfd, len);
+		debug2("channel %d: read<=0 rfd %d len %zd: %s",
+		    c->self, c->rfd, len,
+		    len == 0 ? "closed" : strerror(errno));
+ rfail:
 		if (c->type != SSH_CHANNEL_OPEN) {
 			debug2("channel %d: not open", c->self);
 			chan_mark_dead(ssh, c);
@@ -1936,8 +1963,7 @@ channel_handle_rfd(struct ssh *ssh, Channel *c)
 	} else if (c->datagram) {
 		if ((r = sshbuf_put_string(c->input, buf, len)) != 0)
 			fatal_fr(r, "channel %i: put datagram", c->self);
-	} else if ((r = sshbuf_put(c->input, buf, len)) != 0)
-		fatal_fr(r, "channel %i: put data", c->self);
+	}
 	return 1;
 }
 
