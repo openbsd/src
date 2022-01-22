@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.66 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.67 2022/01/22 23:22:11 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/03/21 09:04:44 cgd Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
@@ -852,6 +852,7 @@ exec_command(void)
 			return ERR;
 		GET_COMMAND_SUFFIX();
 		if (sflags) printf("%s\n", shcmd + 1);
+		fflush(NULL); /* flush any buffered I/O */
 		system(shcmd + 1);
 		if (!scripted) printf("!\n");
 		break;
