@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.240 2022/01/20 18:06:20 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.241 2022/01/23 11:59:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -350,7 +350,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 				log_warn("poll error");
 				quit = 1;
 			}
-			continue;
+			goto next_loop;
 		}
 
 		if (handle_pollfd(&pfd[PFD_PIPE_SESSION], ibuf_se) == -1) {
@@ -403,6 +403,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 			if (pfd[i].revents != 0)
 				bgpd_rtr_connect_done(pfd[i].fd, conf);
 
+ next_loop:
 		if (reconfig) {
 			u_int	error;
 
