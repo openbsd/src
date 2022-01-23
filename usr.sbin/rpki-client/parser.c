@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.51 2022/01/23 05:59:35 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.52 2022/01/23 07:21:12 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -494,8 +494,7 @@ proc_parser_crl(char *file, const unsigned char *der, size_t len)
 	if ((x509_crl = crl_parse(file, der, len)) != NULL) {
 		if ((crl = malloc(sizeof(*crl))) == NULL)
 			err(1, NULL);
-		if ((crl->aki = x509_crl_get_aki(x509_crl, file)) ==
-		    NULL) {
+		if ((crl->aki = x509_crl_get_aki(x509_crl, file)) == NULL) {
 			warnx("x509_crl_get_aki failed");
 			goto err;
 		}
@@ -518,7 +517,8 @@ proc_parser_crl(char *file, const unsigned char *der, size_t len)
 			errx(1, "%s: mktime failed", file);
 
 		if (RB_INSERT(crl_tree, &crlt, crl) != NULL) {
-			warnx("%s: duplicate AKI %s", file, crl->aki);
+			if (!filemode)
+				warnx("%s: duplicate AKI %s", file, crl->aki);
 			goto err;
 		}
 	}
@@ -846,10 +846,15 @@ parse_load_certchain(char *uri)
 			warnx("failed to build authority chain");
 			return;
 		}
+		if (auth_find(&auths, cert->ski) != NULL) {
+			assert(i == 0);
+			cert_free(cert);
+			return;	/* cert already added */
+		}
 		stack[i] = cert;
 		filestack[i] = uri;
 		if (auth_find(&auths, cert->aki) != NULL)
-			break;	/* found the TA */
+			break;	/* found chain to TA */
 		uri = cert->aia;
 	}
 
@@ -906,6 +911,7 @@ parse_load_ta(struct tal *tal)
 static void
 proc_parser_file(char *file, unsigned char *buf, size_t len)
 {
+	static int num;
 	X509 *x509 = NULL;
 	struct cert *cert = NULL;
 	struct mft *mft = NULL;
@@ -916,8 +922,11 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	char *aia = NULL, *aki = NULL, *ski = NULL;
 	unsigned long verify_flags = X509_V_FLAG_CRL_CHECK;
 
-	if ((type = rtype_from_file_extension(file)) == RTYPE_INVALID)
-		errx(1, "%s: unsupported file type", file);
+	if (num++ > 0)
+		printf("--\n");
+	printf("File: %s\n", file);
+
+	type = rtype_from_file_extension(file);
 
 	switch (type) {
 	case RTYPE_CER:
@@ -968,6 +977,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		break;
 	case RTYPE_CRL: /* XXX no printer yet */
 	default:
+		printf("%s: unsupported file type\n", file);
 		break;
 	}
 

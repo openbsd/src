@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.181 2022/01/21 18:49:44 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.182 2022/01/23 07:21:12 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -726,7 +726,6 @@ main(int argc, char *argv[])
 	char		*bind_addr = NULL;
 	const char	*cachedir = NULL, *outputdir = NULL;
 	const char	*errs, *name;
-	const char	*file = NULL;
 	struct vrp_tree	 vrps = RB_INITIALIZER(&vrps);
 	struct brk_tree  brks = RB_INITIALIZER(&brks);
 	struct rusage	ru;
@@ -754,7 +753,7 @@ main(int argc, char *argv[])
 	    "proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "b:Bcd:e:f:jnorRs:t:T:vV")) != -1)
+	while ((c = getopt(argc, argv, "b:Bcd:e:fjnorRs:t:T:vV")) != -1)
 		switch (c) {
 		case 'b':
 			bind_addr = optarg;
@@ -772,7 +771,6 @@ main(int argc, char *argv[])
 			rsync_prog = optarg;
 			break;
 		case 'f':
-			file = optarg;
 			filemode = 1;
 			noop = 1;
 			break;
@@ -823,26 +821,29 @@ main(int argc, char *argv[])
 
 	argv += optind;
 	argc -= optind;
-	if (argc == 1)
-		outputdir = argv[0];
-	else if (argc > 1)
-		goto usage;
 
-	signal(SIGPIPE, SIG_IGN);
+	if (!filemode) {
+		if (argc == 1)
+			outputdir = argv[0];
+		else if (argc > 1)
+			goto usage;
+
+		if (outputdir == NULL) {
+			warnx("output directory required");
+			goto usage;
+		}
+	} else {
+		if (argc == 0)
+			goto usage;
+		outputdir = NULL;
+	}
 
 	if (cachedir == NULL) {
 		warnx("cache directory required");
 		goto usage;
 	}
-	if (file != NULL) {
-		if (rtype_from_file_extension(file) == RTYPE_INVALID)
-			errx(1, "unsupported or invalid file: %s", file);
 
-		outputdir = NULL;
-	} else if (outputdir == NULL) {
-		warnx("output directory required");
-		goto usage;
-	}
+	signal(SIGPIPE, SIG_IGN);
 
 	if ((cachefd = open(cachedir, O_RDONLY | O_DIRECTORY)) == -1)
 		err(1, "cache directory %s", cachedir);
@@ -1059,8 +1060,10 @@ main(int argc, char *argv[])
 	for (i = 0; i < talsz; i++)
 		queue_add_file(tals[i], RTYPE_TAL, i);
 
-	if (file != NULL)
-		queue_add_file(file, RTYPE_FILE, 0);
+	if (filemode) {
+		while (*argv != NULL)
+			queue_add_file(*argv++, RTYPE_FILE, 0);
+	}
 
 	/* change working directory to the cache directory */
 	if (fchdir(cachefd) == -1)
@@ -1279,7 +1282,8 @@ usage:
 	fprintf(stderr,
 	    "usage: rpki-client [-BcjnoRrVv] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
-	    "                   [-f file] [-s timeout] [-T table] [-t tal]"
-	    " [outputdir]\n");
+	    "                   [-s timeout] [-T table] [-t tal]"
+	    " [outputdir]\n"
+	    "       rpki-client -f [-Vv] [-d cachedir] [-t tal] file ...\n");
 	return 1;
 }
