@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.183 2022/01/23 12:09:24 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.184 2022/01/23 18:40:55 jmc Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1282,6 +1282,6 @@ usage:
 	    " [-e rsync_prog]\n"
 	    "                   [-s timeout] [-T table] [-t tal]"
 	    " [outputdir]\n"
-	    "       rpki-client -f [-Vv] [-d cachedir] [-t tal] file ...\n");
+	    "       rpki-client [-Vv] [-d cachedir] [-t tal] -f file ...\n");
 	return 1;
 }
