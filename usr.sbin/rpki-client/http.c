@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.51 2021/12/22 09:35:14 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.52 2022/01/23 12:09:24 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1847,8 +1847,11 @@ proc_http(char *bind_addr, int fd)
 				errx(1, "too many connections");
 		}
 
-		if (poll(pfds, i, timeout) == -1)
+		if (poll(pfds, i, timeout) == -1) {
+			if (errno == EINTR)
+				continue;
 			err(1, "poll");
+		}
 
 		if (pfds[0].revents & POLLHUP)
 			break;

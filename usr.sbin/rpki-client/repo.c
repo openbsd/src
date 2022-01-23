@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.25 2022/01/14 15:00:23 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.26 2022/01/23 12:09:24 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1165,27 +1165,6 @@ repo_queued(struct repo *rp, struct entity *p)
 	return 0;
 }
 
-int
-repo_next_timeout(int timeout)
-{
-	struct repo	*rp;
-	time_t		 now;
-
-	now = getmonotime();
-	/* Look up in repository table. (Lookup should actually fail here) */
-	SLIST_FOREACH(rp, &repos, entry) {
-		if (repo_state(rp) == REPO_LOADING) {
-			int diff = rp->alarm - now;
-			if (diff < 0)
-				diff = 0;
-			diff *= 1000;
-			if (timeout == INFTIM || diff < timeout)
-				timeout = diff;
-		}
-	}
-	return timeout;
-}
-
 static void
 repo_fail(struct repo *rp)
 {
@@ -1202,8 +1181,8 @@ repo_fail(struct repo *rp)
 		errx(1, "%s: bad repo", rp->repouri);
 }
 
-void
-repo_check_timeout(void)
+int
+repo_check_timeout(int timeout)
 {
 	struct repo	*rp;
 	time_t		 now;
@@ -1216,9 +1195,15 @@ repo_check_timeout(void)
 				warnx("%s: synchronisation timeout",
 				    rp->repouri);
 				repo_fail(rp);
+			} else {
+				int diff = rp->alarm - now;
+				diff *= 1000;
+				if (timeout == INFTIM || diff < timeout)
+					timeout = diff;
 			}
 		}
 	}
+	return timeout;
 }
 
 static char **

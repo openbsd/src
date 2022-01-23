@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.182 2022/01/23 07:21:12 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.183 2022/01/23 12:09:24 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1078,7 +1078,7 @@ main(int argc, char *argv[])
 				pfd[i].events |= POLLOUT;
 		}
 
-		polltim = repo_next_timeout(INFTIM);
+		polltim = repo_check_timeout(INFTIM);
 
 		if ((c = poll(pfd, NPFD, polltim)) == -1) {
 			if (errno == EINTR)
@@ -1109,8 +1109,6 @@ main(int argc, char *argv[])
 		}
 		if (hangup)
 			break;
-
-		repo_check_timeout();
 
 		/*
 		 * Check the rsync and http process.

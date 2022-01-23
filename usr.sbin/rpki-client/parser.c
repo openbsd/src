@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.52 2022/01/23 07:21:12 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.53 2022/01/23 12:09:24 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1081,8 +1081,11 @@ proc_parser(int fd)
 		if (msgq.queued)
 			pfd.events |= POLLOUT;
 
-		if (poll(&pfd, 1, INFTIM) == -1)
+		if (poll(&pfd, 1, INFTIM) == -1) {
+			if (errno == EINTR)
+				continue;
 			err(1, "poll");
+		}
 		if ((pfd.revents & (POLLERR|POLLNVAL)))
 			errx(1, "poll: bad descriptor");
 
