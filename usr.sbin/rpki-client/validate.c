@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.26 2022/01/22 09:18:48 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.27 2022/01/23 05:59:35 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -143,16 +143,11 @@ valid_ta(const char *fn, struct auth_tree *auths, const struct cert *cert)
  * Returns 1 if valid, 0 otherwise.
  */
 int
-valid_cert(const char *fn, struct auth_tree *auths, const struct cert *cert)
+valid_cert(const char *fn, struct auth *a, const struct cert *cert)
 {
-	struct auth	*a;
 	size_t		 i;
 	uint32_t	 min, max;
 	char		 buf1[64], buf2[64];
-
-	a = valid_ski_aki(fn, auths, cert->ski, cert->aki);
-	if (a == NULL)
-		return 0;
 
 	for (i = 0; i < cert->asz; i++) {
 		if (cert->as[i].type == CERT_AS_INHERIT) {
@@ -207,17 +202,11 @@ valid_cert(const char *fn, struct auth_tree *auths, const struct cert *cert)
  * Returns 1 if valid, 0 otherwise.
  */
 int
-valid_roa(const char *fn, struct auth_tree *auths, struct roa *roa)
+valid_roa(const char *fn, struct auth *a, struct roa *roa)
 {
-	struct auth	*a;
 	size_t	 i;
 	char	 buf[64];
 
-	a = valid_ski_aki(fn, auths, roa->ski, roa->aki);
-	if (a == NULL)
-		return 0;
-
-	roa->talid = a->cert->talid;
 
 	for (i = 0; i < roa->ipsz; i++) {
 		if (valid_ip(a, roa->ips[i].afi, roa->ips[i].min,

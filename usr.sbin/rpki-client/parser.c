@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.50 2022/01/22 09:18:48 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.51 2022/01/23 05:59:35 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -268,6 +268,16 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
 	}
 	X509_free(x509);
 
+	roa->talid = a->cert->talid;
+
+	/*
+	 * If the ROA isn't valid, we accept it anyway and depend upon
+	 * the code around roa_read() to check the "valid" field itself.
+	 */
+
+	if (valid_roa(file, a, roa))
+		roa->valid = 1;
+
 	/*
 	 * Check CRL to figure out the soonest transitive expiry moment
 	 */
@@ -282,14 +292,6 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
 		if (roa->expires > a->cert->expires)
 			roa->expires = a->cert->expires;
 	}
-
-	/*
-	 * If the ROA isn't valid, we accept it anyway and depend upon
-	 * the code around roa_read() to check the "valid" field itself.
-	 */
-
-	if (valid_roa(file, &auths, roa))
-		roa->valid = 1;
 
 	return roa;
 }
@@ -401,8 +403,8 @@ proc_parser_cert_validate(char *file, struct cert *cert)
 
 	cert->talid = a->cert->talid;
 
-	/* Validate the cert to get the parent */
-	if (!valid_cert(file, &auths, cert)) {
+	/* Validate the cert */
+	if (!valid_cert(file, a, cert)) {
 		cert_free(cert);
 		return NULL;
 	}
