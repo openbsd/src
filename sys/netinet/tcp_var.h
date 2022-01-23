@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.136 2021/01/28 14:53:20 visa Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.137 2022/01/23 21:44:31 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -77,33 +77,33 @@ struct tcpcb {
 	u_short	t_maxseg;		/* maximum segment size */
 	char	t_force;		/* 1 if forcing out a byte */
 	u_int	t_flags;
-#define	TF_ACKNOW	0x0001		/* ack peer immediately */
-#define	TF_NODELAY	0x0004		/* don't delay packets to coalesce */
-#define	TF_NOOPT	0x0008		/* don't use tcp options */
-#define	TF_SENTFIN	0x0010		/* have sent FIN */
-#define	TF_REQ_SCALE	0x0020		/* have/will request window scaling */
-#define	TF_RCVD_SCALE	0x0040		/* other side has requested scaling */
-#define	TF_REQ_TSTMP	0x0080		/* have/will request timestamps */
-#define	TF_RCVD_TSTMP	0x0100		/* a timestamp was received in SYN */
-#define	TF_SACK_PERMIT	0x0200		/* other side said I could SACK */
-#define	TF_SIGNATURE	0x0400		/* require TCP MD5 signature */
+#define	TF_ACKNOW	0x0001U		/* ack peer immediately */
+#define	TF_NODELAY	0x0004U		/* don't delay packets to coalesce */
+#define	TF_NOOPT	0x0008U		/* don't use tcp options */
+#define	TF_SENTFIN	0x0010U		/* have sent FIN */
+#define	TF_REQ_SCALE	0x0020U		/* have/will request window scaling */
+#define	TF_RCVD_SCALE	0x0040U		/* other side has requested scaling */
+#define	TF_REQ_TSTMP	0x0080U		/* have/will request timestamps */
+#define	TF_RCVD_TSTMP	0x0100U		/* a timestamp was received in SYN */
+#define	TF_SACK_PERMIT	0x0200U		/* other side said I could SACK */
+#define	TF_SIGNATURE	0x0400U		/* require TCP MD5 signature */
 #ifdef TCP_ECN
-#define TF_ECN_PERMIT	0x00008000	/* other side said I could ECN */
-#define TF_RCVD_CE	0x00010000	/* send ECE in subsequent segs */
-#define TF_SEND_CWR	0x00020000	/* send CWR in next seg */
-#define TF_DISABLE_ECN	0x00040000	/* disable ECN for this connection */
+#define TF_ECN_PERMIT	0x00008000U	/* other side said I could ECN */
+#define TF_RCVD_CE	0x00010000U	/* send ECE in subsequent segs */
+#define TF_SEND_CWR	0x00020000U	/* send CWR in next seg */
+#define TF_DISABLE_ECN	0x00040000U	/* disable ECN for this connection */
 #endif
-#define TF_LASTIDLE	0x00100000	/* no outstanding ACK on last send */
-#define TF_PMTUD_PEND	0x00400000	/* Path MTU Discovery pending */
-#define TF_NEEDOUTPUT	0x00800000	/* call tcp_output after tcp_input */
-#define TF_BLOCKOUTPUT	0x01000000	/* avert tcp_output during tcp_input */
-#define TF_NOPUSH	0x02000000	/* don't push */
-#define TF_TMR_REXMT	0x04000000	/* retransmit timer armed */
-#define TF_TMR_PERSIST	0x08000000	/* retransmit persistence timer armed */
-#define TF_TMR_KEEP	0x10000000	/* keep alive timer armed */
-#define TF_TMR_2MSL	0x20000000	/* 2*msl quiet time timer armed */
-#define TF_TMR_REAPER	0x40000000	/* delayed cleanup timer armed, dead */
-#define TF_TMR_DELACK	0x80000000	/* delayed ack timer armed */
+#define TF_LASTIDLE	0x00100000U	/* no outstanding ACK on last send */
+#define TF_PMTUD_PEND	0x00400000U	/* Path MTU Discovery pending */
+#define TF_NEEDOUTPUT	0x00800000U	/* call tcp_output after tcp_input */
+#define TF_BLOCKOUTPUT	0x01000000U	/* avert tcp_output during tcp_input */
+#define TF_NOPUSH	0x02000000U	/* don't push */
+#define TF_TMR_REXMT	0x04000000U	/* retransmit timer armed */
+#define TF_TMR_PERSIST	0x08000000U	/* retransmit persistence timer armed */
+#define TF_TMR_KEEP	0x10000000U	/* keep alive timer armed */
+#define TF_TMR_2MSL	0x20000000U	/* 2*msl quiet time timer armed */
+#define TF_TMR_REAPER	0x40000000U	/* delayed cleanup timer armed, dead */
+#define TF_TMR_DELACK	0x80000000U	/* delayed ack timer armed */
 #define TF_TIMER	TF_TMR_REXMT	/* used to shift with TCPT values */
 
 	struct	mbuf *t_template;	/* skeletal packet for transmit */
