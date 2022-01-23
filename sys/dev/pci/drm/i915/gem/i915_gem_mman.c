@@ -139,12 +139,13 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	i915_gem_object_put(obj);
 #else
 	addr = 0;
+	uao_reference(obj->base.uao);
 	ret = -uvm_map(&curproc->p_vmspace->vm_map, &addr, size,
 	    obj->base.uao, args->offset, 0, UVM_MAPFLAG(PROT_READ | PROT_WRITE,
 	    PROT_READ | PROT_WRITE, MAP_INHERIT_SHARE, MADV_RANDOM,
 	    (args->flags & I915_MMAP_WC) ? UVM_FLAG_WC : 0));
-	if (ret == 0)
-		uao_reference(obj->base.uao);
+	if (ret != 0)
+		uao_detach(obj->base.uao);
 	i915_gem_object_put(obj);
 	if (ret)
 		return ret;
