@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.53 2022/01/23 12:09:24 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.54 2022/01/24 17:29:37 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -304,21 +304,13 @@ static int
 proc_parser_mft_check(const char *fn, struct mft *p)
 {
 	size_t	i;
-	int	fd, try, rc = 1;
-	char	*h, *path;
+	int	rc = 1;
+	char	*path;
 
 	for (i = 0; i < p->filesz; i++) {
 		const struct mftfile *m = &p->files[i];
-		if (rtype_from_mftfile(m->file) == RTYPE_INVALID) {
-			if (base64_encode(m->hash, sizeof(m->hash), &h) == -1)
-				errx(1, "base64_encode failed in %s", __func__);
-			warnx("%s: unsupported filename for %s", fn, h);
-			free(h);
-			continue;
-		}
+		int fd = -1, try = 0;
 
-		fd = -1;
-		try = 0;
 		path = NULL;
 		do {
 			free(path);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.50 2022/01/22 09:18:48 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.51 2022/01/24 17:29:37 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -152,22 +152,33 @@ rtype_from_file_extension(const char *fn)
 
 /*
  * Validate that a filename listed on a Manifest only contains characters
- * permitted in draft-ietf-sidrops-6486bis section 4.2.2 and check that
- * it's a CER, CRL, GBR or a ROA.
+ * permitted in draft-ietf-sidrops-6486bis section 4.2.2
+ */
+static int
+valid_filename(const char *fn, size_t len)
+{
+	const unsigned char *c;
+	size_t i;
+
+	for (c = fn, i = 0; i < len; i++, c++)
+		if (!isalnum(*c) && *c != '-' && *c != '_' && *c != '.')
+			return 0;
+
+	c = memchr(fn, '.', len);
+	if (c == NULL || c != memrchr(fn, '.', len))
+		return 0;
+
+	return 1;
+}
+
+/*
+ * Check that the file is a CER, CRL, GBR or a ROA.
  * Returns corresponding rtype or RTYPE_INVALID on error.
  */
-enum rtype
+static enum rtype
 rtype_from_mftfile(const char *fn)
 {
-	const unsigned char	*c;
 	enum rtype		 type;
-
-	for (c = fn; *c != '\0'; ++c)
-		if (!isalnum(*c) && *c != '-' && *c != '_' && *c != '.')
-			return RTYPE_INVALID;
-
-	if (strchr(fn, '.') != strrchr(fn, '.'))
-		return RTYPE_INVALID;
 
 	type = rtype_from_file_extension(fn);
 	switch (type) {
@@ -191,7 +202,6 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	ASN1_SEQUENCE_ANY	*seq;
 	const ASN1_TYPE		*file, *hash;
 	char			*fn = NULL;
-	enum rtype		 type;
 	const unsigned char	*d = os->data;
 	size_t			 dsz = os->length;
 	int			 rc = 0;
@@ -217,15 +227,15 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 		    p->fn, ASN1_tag2str(file->type), file->type);
 		goto out;
 	}
+	if (!valid_filename(file->value.ia5string->data,
+	    file->value.ia5string->length)) {
+		warnx("%s: RFC 6486 section 4.2.2: bad filename", p->fn);
+		goto out;
+	}
 	fn = strndup((const char *)file->value.ia5string->data,
 	    file->value.ia5string->length);
 	if (fn == NULL)
 		err(1, NULL);
-
-	if ((type = rtype_from_mftfile(fn)) == RTYPE_INVALID) {
-		warnx("%s: invalid filename: %s", p->fn, fn);
-		goto out;
-	}
 
 	/* Now hash value. */
 
@@ -247,8 +257,8 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	/* Insert the filename and hash value. */
 	fent = &p->res->files[p->res->filesz++];
 
+	fent->type = rtype_from_mftfile(fn);
 	fent->file = fn;
-	fent->type = type;
 	fn = NULL;
 	memcpy(fent->hash, hash->value.bit_string->data, SHA256_DIGEST_LENGTH);
 
