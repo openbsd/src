@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.137 2022/01/11 19:03:15 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.138 2022/01/24 13:51:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1378,7 +1378,7 @@ ssl3_get_server_key_exchange(SSL *s)
 		if (pkey == NULL) {
 			al = SSL_AD_ILLEGAL_PARAMETER;
 			SSLerror(s, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-			goto err;
+			goto fatal_err;
 		}
 
 		if (SSL_USE_SIGALGS(s)) {
