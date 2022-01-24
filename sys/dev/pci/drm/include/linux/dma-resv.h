@@ -46,8 +46,6 @@
 #include <linux/rcupdate.h>
 
 extern struct ww_class reservation_ww_class;
-extern struct lock_class_key reservation_seqcount_class;
-extern const char reservation_seqcount_string[];
 
 /**
  * struct dma_resv_list - a list of shared fences
@@ -80,19 +78,11 @@ struct dma_resv {
 #define dma_resv_held(obj) lockdep_is_held(&(obj)->lock.base)
 #define dma_resv_assert_held(obj) lockdep_assert_held(&(obj)->lock.base)
 
-/**
- * dma_resv_get_list - get the reservation object's
- * shared fence list, with update-side lock held
- * @obj: the reservation object
- *
- * Returns the shared fence list.  Does NOT take references to
- * the fence.  The obj->lock must be held.
- */
-static inline struct dma_resv_list *dma_resv_get_list(struct dma_resv *obj)
-{
-	return rcu_dereference_protected(obj->fence,
-					 dma_resv_held(obj));
-}
+#ifdef CONFIG_DEBUG_MUTEXES
+void dma_resv_reset_shared_max(struct dma_resv *obj);
+#else
+static inline void dma_resv_reset_shared_max(struct dma_resv *obj) {}
+#endif
 
 /**
  * dma_resv_lock - lock the reservation object
@@ -217,14 +207,7 @@ static inline struct ww_acquire_ctx *dma_resv_locking_ctx(struct dma_resv *obj)
  */
 static inline void dma_resv_unlock(struct dma_resv *obj)
 {
-#ifdef CONFIG_DEBUG_MUTEXES
-	/* Test shared fence slot reservation */
-	if (rcu_access_pointer(obj->fence)) {
-		struct dma_resv_list *fence = dma_resv_get_list(obj);
-
-		fence->shared_max = fence->shared_count;
-	}
-#endif
+	dma_resv_reset_shared_max(obj);
 	ww_mutex_unlock(&obj->lock);
 }
 
@@ -243,25 +226,6 @@ static inline struct dma_fence *
 dma_resv_excl_fence(struct dma_resv *obj)
 {
 	return rcu_dereference_check(obj->fence_excl, dma_resv_held(obj));
-}
-
-/**
- * dma_resv_get_excl - get the reservation object's
- * exclusive fence, with update-side lock held
- * @obj: the reservation object
- *
- * Returns the exclusive fence (if any).  Does NOT take a
- * reference. Writers must hold obj->lock, readers may only
- * hold a RCU read side lock.
- *
- * RETURNS
- * The exclusive fence or NULL
- */
-static inline struct dma_fence *
-dma_resv_get_excl(struct dma_resv *obj)
-{
-	return rcu_dereference_protected(obj->fence_excl,
-					 dma_resv_held(obj));
 }
 
 /**
@@ -307,19 +271,12 @@ void dma_resv_init(struct dma_resv *obj);
 void dma_resv_fini(struct dma_resv *obj);
 int dma_resv_reserve_shared(struct dma_resv *obj, unsigned int num_fences);
 void dma_resv_add_shared_fence(struct dma_resv *obj, struct dma_fence *fence);
-
 void dma_resv_add_excl_fence(struct dma_resv *obj, struct dma_fence *fence);
-
-int dma_resv_get_fences(struct dma_resv *obj,
-			    struct dma_fence **pfence_excl,
-			    unsigned *pshared_count,
-			    struct dma_fence ***pshared);
-
+int dma_resv_get_fences(struct dma_resv *obj, struct dma_fence **pfence_excl,
+			unsigned *pshared_count, struct dma_fence ***pshared);
 int dma_resv_copy_fences(struct dma_resv *dst, struct dma_resv *src);
-
 long dma_resv_wait_timeout(struct dma_resv *obj, bool wait_all, bool intr,
-			       unsigned long timeout);
-
+			   unsigned long timeout);
 bool dma_resv_test_signaled(struct dma_resv *obj, bool test_all);
 
 #endif /* _LINUX_RESERVATION_H */
