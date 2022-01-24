@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.31 2022/01/22 05:03:47 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.32 2022/01/24 00:47:05 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -141,7 +141,7 @@ verify() {
 	[ -e "$CFILE" ] || fetch_cfile || return 1
 	# The installer sha256 lacks -C, do it by hand
 	if ! fgrep -qx "SHA256 (${1##*/}) = $( /bin/sha256 -qb "$1" )" "$CFILE"; then
-		echo "Checksum test for ${1##*/} failed." >&2
+		((VERBOSE != 1)) && echo "Checksum test for ${1##*/} failed." >&2
 		return 1
 	fi
 
@@ -433,7 +433,7 @@ kept=''
 for f in "${devices[@]}"; do
 	d="$( firmware_devicename "$f" )"
 
-	verify_existing="$DOWNLOAD"
+	verify_existing=true
 	if [ "$f" = "$d" ]; then
 		f=$( firmware_filename "$d" || true )
 		[ "$f" ] || continue
@@ -459,24 +459,28 @@ for f in "${devices[@]}"; do
 	fi
 
 	pending_status=false
-	if [ -e "$f" ]; then
-		if "$verify_existing" && ! "$DRYRUN"; then
-			if ((VERBOSE == 1)); then
-			 	echo -n "Verify ${f##*/} ..."
-				pending_status=true
-			fi
-			((VERBOSE > 1)) && ! "$INSTALL" &&
-			    echo "Keep/Verify ${f##*/}"
-			verify "$f" || {
-				"$pending_status" && echo " failed."
-				continue
-			}
-			"$pending_status" && ! "$INSTALL" && echo " done."
-		else
-			((VERBOSE > 1)) && ! "$INSTALL" &&
-			    echo "Keep ${f##*/}"
+	if "$verify_existing" && [ -e "$f" ]; then
+		if ((VERBOSE == 1)); then
+		 	echo -n "Verify ${f##*/} ..."
+			pending_status=true
+		elif ((VERBOSE > 1)) && ! "$INSTALL"; then
+		    echo "Keep/Verify ${f##*/}"
 		fi
-		"$INSTALL" || kept="$kept,$d"
+
+		if "$DRYRUN" || verify "$f"; then
+ 			"$INSTALL" || kept="$kept,$d"
+		elif "$DOWNLOAD"; then
+			((VERBOSE == 1)) && echo " failed."
+			((VERBOSE > 1)) && echo "Refetching $f"
+			rm -f $f
+		else
+			"$pending_status" && echo " failed."
+			continue
+ 		fi
+	fi
+
+	if [ -e "$f" ]; then
+		"$pending_status" && ! "$INSTALL" && echo " done."
 	elif "$DOWNLOAD"; then
 		if "$DRYRUN"; then
 			((VERBOSE)) && echo "Get/Verify ${f##*/}"
