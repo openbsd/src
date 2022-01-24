@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.370 2022/01/11 09:00:17 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.371 2022/01/24 22:49:48 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -109,6 +109,7 @@ void			 pf_trans_set_commit(void);
 void			 pf_pool_copyin(struct pf_pool *, struct pf_pool *);
 int			 pf_validate_range(u_int8_t, u_int16_t[2]);
 int			 pf_rule_copyin(struct pf_rule *, struct pf_rule *);
+int			 pf_rule_checkaf(struct pf_rule *);
 u_int16_t		 pf_qname2qid(char *, int);
 void			 pf_qid2qname(u_int16_t, char *);
 void			 pf_qid_unref(u_int16_t);
@@ -1347,22 +1348,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			rule = NULL;
 			break;
 		}
-		switch (rule->af) {
-		case 0:
-			break;
-		case AF_INET:
-			break;
-#ifdef INET6
-		case AF_INET6:
-			break;
-#endif /* INET6 */
-		default:
+		if ((error = pf_rule_checkaf(rule))) {
 			pf_rule_free(rule);
 			rule = NULL;
-			error = EAFNOSUPPORT;
 			goto fail;
 		}
-
 		if (rule->src.addr.type == PF_ADDR_NONE ||
 		    rule->dst.addr.type == PF_ADDR_NONE) {
 			error = EINVAL;
@@ -1601,23 +1591,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				newrule = NULL;
 				break;
 			}
-
-			switch (newrule->af) {
-			case 0:
-				break;
-			case AF_INET:
-				break;
-#ifdef INET6
-			case AF_INET6:
-				break;
-#endif /* INET6 */
-			default:
-				error = EAFNOSUPPORT;
+			if ((error = pf_rule_checkaf(newrule))) {
 				pf_rule_free(newrule);
 				newrule = NULL;
 				goto fail;
 			}
-
 			if (newrule->rt && !newrule->direction) {
 				pf_rule_free(newrule);
 				error = EINVAL;
@@ -3214,6 +3192,34 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to)
 	to->prio = from->prio;
 	to->set_prio[0] = from->set_prio[0];
 	to->set_prio[1] = from->set_prio[1];
+
+	return (0);
+}
+
+int
+pf_rule_checkaf(struct pf_rule *r)
+{
+	switch (r->af) {
+	case 0:
+		if (r->rule_flag & PFRULE_AFTO)
+			return (EPFNOSUPPORT);
+		break;
+	case AF_INET:
+		if ((r->rule_flag & PFRULE_AFTO) && r->naf != AF_INET6)
+			return (EPFNOSUPPORT);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		if ((r->rule_flag & PFRULE_AFTO) && r->naf != AF_INET)
+			return (EPFNOSUPPORT);
+		break;
+#endif /* INET6 */
+	default:
+		return (EPFNOSUPPORT);
+	}
+
+	if ((r->rule_flag & PFRULE_AFTO) == 0 && r->naf != 0)
+		return (EPFNOSUPPORT);
 
 	return (0);
 }
