@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.138 2022/01/24 13:51:48 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.139 2022/01/24 13:53:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1602,8 +1602,6 @@ ssl3_get_new_session_ticket(SSL *s)
 	    SSL3_ST_CR_SESSION_TICKET_B, -1, 16384)) <= 0)
 		return ret;
 
-	ret = 0;
-
 	if (S3I(s)->hs.tls12.message_type == SSL3_MT_FINISHED) {
 		S3I(s)->hs.tls12.reuse_message = 1;
 		return (1);
@@ -1655,8 +1653,9 @@ ssl3_get_new_session_ticket(SSL *s)
 	EVP_Digest(CBS_data(&session_ticket), CBS_len(&session_ticket),
 	    s->session->session_id, &s->session->session_id_length,
 	    EVP_sha256(), NULL);
-	ret = 1;
-	return (ret);
+
+	return (1);
+
  fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
