@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.26 2022/01/23 12:09:24 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.27 2022/01/24 15:50:34 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1295,7 +1295,7 @@ repo_move_valid(struct filepath_tree *tree)
 		}
 
 		if (rename(fp->file, fn) == -1) {
-			warn("rename %s", fn);
+			warn("rename %s", fp->file);
 			free(fn);
 			continue;
 		}
