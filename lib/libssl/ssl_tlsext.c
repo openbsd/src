@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.108 2022/01/11 18:28:41 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.109 2022/01/24 13:49:50 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -713,6 +713,8 @@ tlsext_sni_is_valid_hostname(CBS *cbs, int *is_ip)
 	uint8_t prev, c = 0;
 	int component = 0;
 	CBS hostname;
+
+	*is_ip = 0;
 
 	CBS_dup(cbs, &hostname);
 
