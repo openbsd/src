@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.313 2021/10/25 10:24:54 claudio Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.314 2022/01/25 04:04:40 gnezdo Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -1845,9 +1845,8 @@ fs_posix_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	switch (name[0]) {
 	case FS_POSIX_SETUID:
-		if (newp && securelevel > 0)
-			return (EPERM);
-		return(sysctl_int(oldp, oldlenp, newp, newlen, &suid_clear));
+		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
+		    &suid_clear));
 	default:
 		return (EOPNOTSUPP);
 	}

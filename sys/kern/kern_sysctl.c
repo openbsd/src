@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.398 2021/12/23 10:17:01 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.399 2022/01/25 04:04:40 gnezdo Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -473,14 +473,12 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (0);
 #if NDT > 0
 	case KERN_ALLOWDT:
-		if (securelevel > 0)
-			return (sysctl_rdint(oldp, oldlenp, newp, allowdt));
-		return (sysctl_int(oldp, oldlenp, newp, newlen,  &allowdt));
+		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
+		    &allowdt));
 #endif
 	case KERN_ALLOWKMEM:
-		if (securelevel > 0)
-			return (sysctl_rdint(oldp, oldlenp, newp, allowkmem));
-		return (sysctl_int(oldp, oldlenp, newp, newlen, &allowkmem));
+		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
+		    &allowkmem));
 	case KERN_HOSTNAME:
 		error = sysctl_tstring(oldp, oldlenp, newp, newlen,
 		    hostname, sizeof(hostname));
@@ -757,10 +755,7 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (sysctl_rdquad(oldp, oldlenp, newp,
 		    ptoa((psize_t)physmem - uvmexp.wired)));
 	case HW_ALLOWPOWERDOWN:
-		if (securelevel > 0)
-			return (sysctl_rdint(oldp, oldlenp, newp,
-			    allowpowerdown));
-		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
 		    &allowpowerdown));
 #ifdef __HAVE_CPU_TOPOLOGY
 	case HW_SMT:
@@ -873,6 +868,18 @@ sysctl_rdint(void *oldp, size_t *oldlenp, void *newp, int val)
 	if (oldp)
 		error = copyout((caddr_t)&val, oldp, sizeof(int));
 	return (error);
+}
+
+/*
+ * Selects between sysctl_rdint and sysctl_int according to securelevel.
+ */
+int
+sysctl_securelevel_int(void *oldp, size_t *oldlenp, void *newp, size_t newlen,
+    int *valp)
+{
+	if (securelevel > 0)
+		return (sysctl_rdint(oldp, oldlenp, newp, *valp));
+	return (sysctl_int(oldp, oldlenp, newp, newlen, valp));
 }
 
 /*
@@ -2501,11 +2508,9 @@ sysctl_utc_offset(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	int adjustment_seconds, error, new_offset_minutes, old_offset_minutes;
 
 	old_offset_minutes = utc_offset / 60;	/* seconds -> minutes */
-	if (securelevel > 0)
-		return sysctl_rdint(oldp, oldlenp, newp, old_offset_minutes);
-
 	new_offset_minutes = old_offset_minutes;
-	error = sysctl_int(oldp, oldlenp, newp, newlen, &new_offset_minutes);
+	error = sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
+	     &new_offset_minutes);
 	if (error)
 		return error;
 	if (new_offset_minutes < -24 * 60 || new_offset_minutes > 24 * 60)

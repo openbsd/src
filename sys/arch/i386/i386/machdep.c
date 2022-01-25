@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.646 2021/10/06 15:46:03 claudio Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.647 2022/01/25 04:04:40 gnezdo Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -3617,12 +3617,8 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case CPU_CPUFEATURE:
 		return (sysctl_rdint(oldp, oldlenp, newp, curcpu()->ci_feature_flags));
 	case CPU_KBDRESET:
-		if (securelevel > 0)
-			return (sysctl_rdint(oldp, oldlenp, newp,
-			    kbd_reset));
-		else
-			return (sysctl_int(oldp, oldlenp, newp, newlen,
-			    &kbd_reset));
+		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
+		    &kbd_reset));
 #if NPCKBC > 0 && NUKBD > 0
 	case CPU_FORCEUKBD:
 		{

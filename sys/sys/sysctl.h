@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.221 2022/01/11 23:59:55 jsg Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.222 2022/01/25 04:04:41 gnezdo Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -1017,6 +1017,7 @@ typedef int (sysctlfn)(int *, u_int, void *, size_t *, void *, size_t, struct pr
 int sysctl_int_lower(void *, size_t *, void *, size_t, int *);
 int sysctl_int(void *, size_t *, void *, size_t, int *);
 int sysctl_rdint(void *, size_t *, void *, int);
+int sysctl_securelevel_int(void *, size_t *, void *, size_t, int *);
 int sysctl_int_bounded(void *, size_t *, void *, size_t, int *, int, int);
 int sysctl_bounded_arr(const struct sysctl_bounded_args *, u_int,
     int *, u_int, void *, size_t *, void *, size_t);
