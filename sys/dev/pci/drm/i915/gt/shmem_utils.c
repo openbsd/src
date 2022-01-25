@@ -163,12 +163,13 @@ uao_create_from_object(struct drm_i915_gem_object *obj)
 	struct uvm_object *uao;
 	void *ptr;
 
-	if (obj->ops == &i915_gem_shmem_ops) {
+	if (i915_gem_object_is_shmem(obj)) {
 		uao_reference(obj->base.uao);
 		return obj->base.uao;
 	}
 
-	ptr = i915_gem_object_pin_map(obj, I915_MAP_WB);
+	ptr = i915_gem_object_pin_map_unlocked(obj, i915_gem_object_is_lmem(obj) ?
+						I915_MAP_WC : I915_MAP_WB);
 	if (IS_ERR(ptr))
 		return ERR_CAST(ptr);
 
