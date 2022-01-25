@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.33 2021/12/16 06:32:56 tb Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.34 2022/01/25 14:51:54 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -507,7 +507,7 @@ tls13_legacy_shutdown(SSL *ssl)
 	} else if (!ctx->close_notify_recv) {
 		/*
 		 * If there is no application data pending, attempt to read more
-		 * data in order to receive a close notify. This should trigger
+		 * data in order to receive a close-notify. This should trigger
 		 * a record to be read from the wire, which may be application
 		 * handshake or alert data. Only one attempt is made to match
 		 * previous semantics.
@@ -516,6 +516,8 @@ tls13_legacy_shutdown(SSL *ssl)
 			if ((ret = tls13_read_application_data(ctx->rl, buf,
 			    sizeof(buf))) < 0)
 				return tls13_legacy_return_code(ssl, ret);
+			if (!ctx->close_notify_recv)
+				return -1;
 		}
 	}
 
