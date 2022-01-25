@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.34 2022/01/25 14:51:54 tb Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.35 2022/01/25 15:00:09 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -483,9 +483,9 @@ tls13_legacy_shutdown(SSL *ssl)
 	ssize_t ret;
 
 	/*
-	 * We need to return 0 when we have sent a close-notify but have not
-	 * yet received one. We return 1 only once we have sent and received
-	 * close-notify alerts. All other cases return -1 and set internal
+	 * We need to return 0 at the point that we have completed sending a
+	 * close-notify. We return 1 when we have sent and received close-notify
+	 * alerts. All other cases, including EOF, return -1 and set internal
 	 * state appropriately.
 	 */
 	if (ctx == NULL || ssl->internal->quiet_shutdown) {
@@ -501,8 +501,10 @@ tls13_legacy_shutdown(SSL *ssl)
 			    TLS13_ALERT_CLOSE_NOTIFY)) < 0)
 				return tls13_legacy_return_code(ssl, ret);
 		}
-		if ((ret = tls13_record_layer_send_pending(ctx->rl)) !=
-		    TLS13_IO_SUCCESS)
+		ret = tls13_record_layer_send_pending(ctx->rl);
+		if (ret == TLS13_IO_EOF)
+			return -1;
+		if (ret != TLS13_IO_SUCCESS)
 			return tls13_legacy_return_code(ssl, ret);
 	} else if (!ctx->close_notify_recv) {
 		/*
