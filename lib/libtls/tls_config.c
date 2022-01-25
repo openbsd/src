@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_config.c,v 1.64 2021/10/21 08:33:07 tb Exp $ */
+/* $OpenBSD: tls_config.c,v 1.65 2022/01/25 21:51:24 eric Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -733,6 +733,17 @@ tls_config_set_session_fd(struct tls_config *config, int session_fd)
 	}
 
 	config->session_fd = session_fd;
+
+	return (0);
+}
+
+int
+tls_config_set_sign_cb(struct tls_config *config, tls_sign_cb cb, void *cb_arg)
+{
+	config->use_fake_private_key = 1;
+	config->skip_private_key_check = 1;
+	config->sign_cb = cb;
+	config->sign_cb_arg = cb_arg;
 
 	return (0);
 }

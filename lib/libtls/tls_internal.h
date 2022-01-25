@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.78 2021/01/21 19:09:10 eric Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.79 2022/01/25 21:51:24 eric Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -112,6 +112,8 @@ struct tls_config {
 	int verify_time;
 	int skip_private_key_check;
 	int use_fake_private_key;
+	tls_sign_cb sign_cb;
+	void *sign_cb_arg;
 };
 
 struct tls_conninfo {
@@ -290,6 +292,9 @@ int tls_cert_hash(X509 *_cert, char **_hash);
 int tls_cert_pubkey_hash(X509 *_cert, char **_hash);
 
 int tls_password_cb(char *_buf, int _size, int _rwflag, void *_u);
+
+RSA_METHOD *tls_signer_rsa_method(void);
+ECDSA_METHOD *tls_signer_ecdsa_method(void);
 
 __END_HIDDEN_DECLS
 

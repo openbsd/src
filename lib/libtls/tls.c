@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.92 2021/10/21 14:31:21 tb Exp $ */
+/* $OpenBSD: tls.c,v 1.93 2022/01/25 21:51:24 eric Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -387,6 +387,8 @@ tls_keypair_to_pkey(struct tls *ctx, struct tls_keypair *keypair, EVP_PKEY **pke
 static int
 tls_keypair_setup_pkey(struct tls *ctx, struct tls_keypair *keypair, EVP_PKEY *pkey)
 {
+	RSA_METHOD *rsa_method;
+	ECDSA_METHOD *ecdsa_method;
 	RSA *rsa = NULL;
 	EC_KEY *eckey = NULL;
 	int ret = -1;
@@ -407,11 +409,27 @@ tls_keypair_setup_pkey(struct tls *ctx, struct tls_keypair *keypair, EVP_PKEY *p
 			tls_set_errorx(ctx, "RSA key setup failure");
 			goto err;
 		}
+		if (ctx->config->sign_cb == NULL)
+			break;
+		if ((rsa_method = tls_signer_rsa_method()) == NULL ||
+		    RSA_set_ex_data(rsa, 1, ctx->config) == 0 ||
+		    RSA_set_method(rsa, rsa_method) == 0) {
+			tls_set_errorx(ctx, "failed to setup RSA key");
+			goto err;
+		}
 		break;
 	case EVP_PKEY_EC:
 		if ((eckey = EVP_PKEY_get1_EC_KEY(pkey)) == NULL ||
 		    ECDSA_set_ex_data(eckey, 0, keypair->pubkey_hash) == 0) {
 			tls_set_errorx(ctx, "EC key setup failure");
+			goto err;
+		}
+		if (ctx->config->sign_cb == NULL)
+			break;
+		if ((ecdsa_method = tls_signer_ecdsa_method()) == NULL ||
+		    ECDSA_set_ex_data(eckey, 1, ctx->config) == 0 ||
+		    ECDSA_set_method(eckey, ecdsa_method) == 0) {
+			tls_set_errorx(ctx, "failed to setup EC key");
 			goto err;
 		}
 		break;

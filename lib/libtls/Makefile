@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.36 2020/06/09 16:53:53 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.37 2022/01/25 21:51:24 eric Exp $
 
 .include <bsd.own.mk>
 .ifndef NOMAN
@@ -35,6 +35,7 @@ SRCS=	tls.c \
 	tls_keypair.c \
 	tls_peer.c \
 	tls_server.c \
+	tls_signer.c \
 	tls_util.c \
 	tls_ocsp.c \
 	tls_verify.c
