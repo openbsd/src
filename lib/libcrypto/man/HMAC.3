@@ -1,4 +1,4 @@
-.\" $OpenBSD: HMAC.3,v 1.19 2022/01/15 18:16:02 tb Exp $
+.\" $OpenBSD: HMAC.3,v 1.20 2022/01/25 17:55:39 tb Exp $
 .\" full merge up to: OpenSSL crypto/hmac a528d4f0 Oct 27 13:40:11 2015 -0400
 .\" selective merge up to: OpenSSL man3/HMAC b3696a55 Sep 2 09:35:50 2017 -0400
 .\"
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 15 2022 $
+.Dd $Mdocdate: January 25 2022 $
 .Dt HMAC 3
 .Os
 .Sh NAME
@@ -214,8 +214,6 @@ The
 .Fa ctx
 must have been created with
 .Fn HMAC_CTX_new
-or initialized with
-.Fn HMAC_CTX_init
 before the first use in this function.
 If
 .Fn HMAC_Init_ex
@@ -233,33 +231,9 @@ different digest is not supported.
 .Pp
 .Fn HMAC_Init
 is a deprecated wrapper around
-.Fn HMAC_Init_ex .
-If called with both
-.Fa key
-and
-.Fa md ,
-it calls
-.Fn HMAC_CTX_init
-first, which only makes sense for an empty, uninitialized
-.Fa ctx ,
-but not for one already initialized with
-.Fn HMAC_CTX_new
-or
-.Fn HMAC_CTX_init .
-If
-.Fa key
-or
-.Fa md
-is
-.Dv NULL ,
-it does not call
-.Fn HMAC_CTX_init ;
-so in this case,
-.Fa ctx
-already needs to be initialized with
-.Fn HMAC_CTX_new
-or
-.Fn HMAC_CTX_init .
+.Fn HMAC_Init_ex
+which performs no longer useful extra initialization in
+some circumstances.
 .Pp
 .Fn HMAC_Update
 can be called repeatedly with chunks of the message to be authenticated
