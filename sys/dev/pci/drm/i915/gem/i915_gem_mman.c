@@ -563,6 +563,9 @@ vm_fault_cpu(struct i915_mmap_offset *mmo, struct uvm_faultinfo *ufi,
 		return VM_PAGER_BAD;
 	}
 
+	if (i915_gem_object_lock_interruptible(obj, NULL))
+		return VM_PAGER_ERROR;
+
 	err = i915_gem_object_pin_pages(obj);
 	if (err)
 		goto out;
@@ -602,6 +605,7 @@ vm_fault_cpu(struct i915_mmap_offset *mmo, struct uvm_faultinfo *ufi,
 	i915_gem_object_unpin_pages(obj);
 
 out:
+	i915_gem_object_unlock(obj);
 	uvmfault_unlockall(ufi, NULL, &obj->base.uobj);
 	return i915_error_to_vmf_fault(err);
 }
