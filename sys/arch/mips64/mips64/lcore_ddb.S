@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcore_ddb.S,v 1.14 2017/04/30 16:45:45 mpi Exp $ */
+/*	$OpenBSD: lcore_ddb.S,v 1.15 2022/01/25 07:08:43 visa Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -45,66 +45,70 @@ LEAF(kdbpeekd, 0)
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t0, CI_CURPROCPADDR(t1)
 	li	v0, KT_DDBERR
+	lw	t1, PCB_ONFAULT(t0)
 	and	v1, a0, 7			# unaligned ?
 	bne	v1, zero, 1f
 	 sw	v0, PCB_ONFAULT(t0)
 
 	ld	v0, (a0)
 	jr	ra
-	 sw	zero, PCB_ONFAULT(t0)
+	 sw	t1, PCB_ONFAULT(t0)
 
 1:
 	LDHI	v0, 0(a0)
 	LDLO	v0, 7(a0)
 	jr	ra
-	 sw	zero, PCB_ONFAULT(t0)
+	 sw	t1, PCB_ONFAULT(t0)
 END(kdbpeekd)
 
 LEAF(kdbpeek, 0)
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t0, CI_CURPROCPADDR(t1)
 	li	v0, KT_DDBERR
+	lw	t1, PCB_ONFAULT(t0)
 	and	v1, a0, 3			# unaligned ?
 	bne	v1, zero, 1f
 	 sw	v0, PCB_ONFAULT(t0)
 
 	lwu	v0, (a0)
 	jr	ra
-	 sw	zero, PCB_ONFAULT(t0)
+	 sw	t1, PCB_ONFAULT(t0)
 
 1:
 	LWHI	v0, 0(a0)
 	LWLO	v0, 3(a0)
 	jr	ra
-	 sw	zero, PCB_ONFAULT(t0)
+	 sw	t1, PCB_ONFAULT(t0)
 END(kdbpeek)
 
 LEAF(kdbpeekw, 0)
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t0, CI_CURPROCPADDR(t1)
 	li	v0, KT_DDBERR
+	lw	t1, PCB_ONFAULT(t0)
 	and	v1, a0, 1			# unaligned ?
 	bne	v1, zero, 1f
 	 sw	v0, PCB_ONFAULT(t0)
 
 	lh	v0, (a0)
 	jr	ra
-	 sw	zero, PCB_ONFAULT(t0)
+	 sw	t1, PCB_ONFAULT(t0)
 
 1:
 	li	v0, -1				# error!
 	jr	ra
-	 sw	zero, PCB_ONFAULT(t0)
+	 sw	t1, PCB_ONFAULT(t0)
 END(kdbpeekw)
 
 LEAF(kdbpeekb, 0)
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t0, CI_CURPROCPADDR(t1)
 	li	v0, KT_DDBERR
+	lw	t1, PCB_ONFAULT(t0)
 	sw	v0, PCB_ONFAULT(t0)
 	lb	v0, 0(a0)
 	jr	ra
-	 sw	zero, PCB_ONFAULT(t0)
+	 sw	t1, PCB_ONFAULT(t0)
 END(kdbpeekb)
 
 	.globl	kt_ddberr
@@ -116,65 +120,69 @@ LEAF(kdbpoked, 0)
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t0, CI_CURPROCPADDR(t1)
 	li	v0, KT_DDBERR
+	lw	t1, PCB_ONFAULT(t0)
 	and	v1, a0, 7			# unaligned ?
 	bne	v1, zero, 1f
 	 sw	v0, PCB_ONFAULT(t0)
 
 	sd	a1, (a0)
 	jr	ra
-	 sw	zero, PCB_ONFAULT(t0)
+	 sw	t1, PCB_ONFAULT(t0)
 
 1:
 	SDHI	a1, 0(a0)
 	SDLO	a1, 7(a0)
 	jr	ra
-	 sw	zero, PCB_ONFAULT(t0)
+	 sw	t1, PCB_ONFAULT(t0)
 END(kdbpoked)
 
 LEAF(kdbpoke, 0)
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t0, CI_CURPROCPADDR(t1)
 	li	v0, KT_DDBERR
+	lw	t1, PCB_ONFAULT(t0)
 	and	v1, a0, 3			# unaligned ?
 	bne	v1, zero, 1f
 	 sw	v0, PCB_ONFAULT(t0)
 
 	sw	a1, (a0)
 	jr	ra
-	 sw	zero, PCB_ONFAULT(t0)
+	 sw	t1, PCB_ONFAULT(t0)
 
 1:
 	SWHI	a1, 0(a0)
 	SWLO	a1, 3(a0)
 	jr	ra
-	 sw	zero, PCB_ONFAULT(t0)
+	 sw	t1, PCB_ONFAULT(t0)
 END(kdbpoke)
 
 LEAF(kdbpokew, 0)
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t0, CI_CURPROCPADDR(t1)
 	li	v0, KT_DDBERR
+	lw	t1, PCB_ONFAULT(t0)
 	and	v1, a0, 1			# unaligned ?
 	bne	v1, zero, 1f
 	 sw	v0, PCB_ONFAULT(t0)
 
 	sh	a1, (a0)
 	jr	ra
-	 sw	zero, PCB_ONFAULT(t0)
+	 sw	t1, PCB_ONFAULT(t0)
 
 1:
 	jr	ra
-	 sw	zero, PCB_ONFAULT(t0)
+	 sw	t1, PCB_ONFAULT(t0)
 END(kdbpokew)
 
 LEAF(kdbpokeb, 0)
 	GET_CPU_INFO(t1, t0)
 	PTR_L	t0, CI_CURPROCPADDR(t1)
 	li	v0, KT_DDBERR
+	lw	t1, PCB_ONFAULT(t0)
 	sw	v0, PCB_ONFAULT(t0)
 	sb	a1, 0(a0)
 	jr	ra
-	 sw	zero, PCB_ONFAULT(t0)
+	 sw	t1, PCB_ONFAULT(t0)
 END(kdbpokeb)
 
 LEAF(db_enter, 0)
