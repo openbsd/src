@@ -6,7 +6,7 @@
 #include <linux/slab.h> /* fault-inject.h is not standalone! */
 
 #include <linux/fault-inject.h>
-#include <asm/set_memory.h>
+#include <linux/sched/mm.h>
 
 #include "gem/i915_gem_lmem.h"
 #include "i915_trace.h"
@@ -209,9 +209,7 @@ void i915_address_space_init(struct i915_address_space *vm, int subclass)
 		 * Add the annotation for this, we use trylock in shrinker.
 		 */
 		mutex_acquire(&vm->mutex.dep_map, 0, 0, _THIS_IP_);
-#ifdef notyet
 		might_alloc(GFP_KERNEL);
-#endif
 		mutex_release(&vm->mutex.dep_map, _THIS_IP_);
 	}
 	dma_resv_init(&vm->_resv);
