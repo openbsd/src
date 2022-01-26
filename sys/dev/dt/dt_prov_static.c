@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_static.c,v 1.11 2021/11/24 09:47:49 claudio Exp $ */
+/*	$OpenBSD: dt_prov_static.c,v 1.12 2022/01/26 06:31:31 kn Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -69,11 +69,13 @@ DT_STATIC_PROBE3(vfs, bufcache_rel, "long", "int", "int64_t");
 DT_STATIC_PROBE3(vfs, bufcache_take, "long", "int", "int64_t");
 DT_STATIC_PROBE4(vfs, cleaner, "long", "int", "long", "long");
 
+#ifdef __amd64__
 /*
  * VMM
  */
 DT_STATIC_PROBE2(vmm, guest_enter, "void *", "void *");
 DT_STATIC_PROBE3(vmm, guest_exit, "void *", "void *", "uint64_t");
+#endif /* __amd64__ */
 
 /*
  * SMR
@@ -113,9 +115,11 @@ struct dt_probe *dtps_static[] = {
 	&_DT_STATIC_P(vfs, bufcache_rel),
 	&_DT_STATIC_P(vfs, bufcache_take),
 	&_DT_STATIC_P(vfs, cleaner),
+#ifdef __amd64__
 	/* VMM */
 	&_DT_STATIC_P(vmm, guest_enter),
 	&_DT_STATIC_P(vmm, guest_exit),
+#endif /* __amd64__ */
 	/* SMR */
 	&_DT_STATIC_P(smr, call),
 	&_DT_STATIC_P(smr, called),
