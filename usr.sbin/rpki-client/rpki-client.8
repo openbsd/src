@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.55 2022/01/24 06:54:15 jmc Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.56 2022/01/26 14:42:39 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 24 2022 $
+.Dd $Mdocdate: January 26 2022 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -106,6 +106,9 @@ in
 against the RPKI cache stored in
 .Ar cachedir
 and print human-readable information about the object.
+If
+.Ar file
+is an rsync:// URI the corresponding file from the cache will be used.
 This option implies
 .Fl n .
 .It Fl j

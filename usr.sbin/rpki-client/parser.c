@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.55 2022/01/26 13:57:56 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.56 2022/01/26 14:42:39 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -901,11 +901,21 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	struct gbr *gbr = NULL;
 	struct tal *tal = NULL;
 	enum rtype type;
-	char *aia = NULL, *aki = NULL, *ski = NULL;
+	char *aia = NULL, *aki = NULL;
 	unsigned long verify_flags = X509_V_FLAG_CRL_CHECK;
 
 	if (num++ > 0)
 		printf("--\n");
+
+	if (strncmp(file, "rsync://", strlen("rsync://")) == 0) {
+		file += strlen("rsync://");
+		buf = load_file(file, &len);
+		if (buf == NULL) {
+			warn("parse file %s", file);
+			return;
+		}
+	}
+
 	printf("File: %s\n", file);
 
 	type = rtype_from_file_extension(file);
@@ -918,7 +928,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		cert_print(cert);
 		aia = cert->aia;
 		aki = cert->aki;
-		ski = cert->ski;
 		x509 = cert->x509;
 		if (X509_up_ref(x509) == 0)
 			errx(1, "%s: X509_up_ref failed", __func__);
@@ -930,7 +939,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		mft_print(mft);
 		aia = mft->aia;
 		aki = mft->aki;
-		ski = mft->ski;
 		verify_flags = 0;
 		break;
 	case RTYPE_ROA:
@@ -940,7 +948,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		roa_print(roa);
 		aia = roa->aia;
 		aki = roa->aki;
-		ski = roa->ski;
 		break;
 	case RTYPE_GBR:
 		gbr = gbr_parse(&x509, file, buf, len);
@@ -949,7 +956,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		gbr_print(gbr);
 		aia = gbr->aia;
 		aki = gbr->aki;
-		ski = gbr->ski;
 		break;
 	case RTYPE_TAL:
 		tal = tal_parse(file, buf, len);
@@ -972,7 +978,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		parse_load_crl(c);
 		free(c);
 		parse_load_certchain(aia);
-		a = valid_ski_aki(file, &auths, ski, aki);
+		a = auth_find(&auths, aki);
 		crl = get_crl(a);
 
 		if (valid_x509(file, x509, a, crl, verify_flags))

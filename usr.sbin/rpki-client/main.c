@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.185 2022/01/24 17:29:37 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.186 2022/01/26 14:42:39 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -387,13 +387,15 @@ queue_add_from_mft_set(const struct mft *mft, const char *name, struct repo *rp)
 static void
 queue_add_file(const char *file, enum rtype type, int talid)
 {
-	unsigned char	*buf;
+	unsigned char	*buf = NULL;
 	char		*nfile;
-	size_t		 len;
+	size_t		 len = 0;
 
-	buf = load_file(file, &len);
-	if (buf == NULL)
-		err(1, "%s", file);
+	if (!filemode || strncmp(file, "rsync://", strlen("rsync://")) != 0) {
+		buf = load_file(file, &len);
+		if (buf == NULL)
+			err(1, "%s", file);
+	}
 
 	if ((nfile = strdup(file)) == NULL)
 		err(1, NULL);
