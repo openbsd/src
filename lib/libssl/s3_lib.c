@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.224 2022/01/08 12:43:44 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.225 2022/01/26 11:05:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2618,10 +2618,10 @@ ssl3_shutdown(SSL *s)
 		ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_CLOSE_NOTIFY);
 		/*
 		 * Our shutdown alert has been sent now, and if it still needs
-	 	 * to be written, S3I(s)->alert_dispatch will be true
+		 * to be written, S3I(s)->alert_dispatch will be true
 		 */
 		if (S3I(s)->alert_dispatch)
-			return(-1);	/* return WANT_WRITE */
+			return (-1);	/* return WANT_WRITE */
 	} else if (S3I(s)->alert_dispatch) {
 		/* resend it if not sent */
 		ret = ssl3_dispatch_alert(s);
@@ -2638,7 +2638,7 @@ ssl3_shutdown(SSL *s)
 		/* If we are waiting for a close from our peer, we are closed */
 		s->method->ssl_read_bytes(s, 0, NULL, 0, 0);
 		if (!(s->internal->shutdown & SSL_RECEIVED_SHUTDOWN)) {
-			return(-1);	/* return WANT_READ */
+			return (-1);	/* return WANT_READ */
 		}
 	}
 
