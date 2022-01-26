@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.31 2021/11/19 07:58:34 dlg Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.32 2022/01/26 12:05:33 uaa Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -113,7 +113,6 @@ int	uchcomdebug = 0;
 #define UCHCOM_RESET_VALUE	0x501F	/* line mode? */
 #define UCHCOM_RESET_INDEX	0xD90A	/* baud rate? */
 
-#define UCHCOMIBUFSIZE 256
 #define UCHCOMOBUFSIZE 256
 
 struct uchcom_softc
@@ -141,6 +140,7 @@ struct uchcom_softc
 struct uchcom_endpoints
 {
 	int		ep_bulkin;
+	int		ep_bulkin_size;
 	int		ep_bulkout;
 	int		ep_intr;
 	int		ep_intr_size;
@@ -293,9 +293,9 @@ uchcom_attach(struct device *parent, struct device *self, void *aux)
 	uca.portno = UCOM_UNK_PORTNO;
 	uca.bulkin = endpoints.ep_bulkin;
 	uca.bulkout = endpoints.ep_bulkout;
-	uca.ibufsize = UCHCOMIBUFSIZE;
+	uca.ibufsize = endpoints.ep_bulkin_size;
 	uca.obufsize = UCHCOMOBUFSIZE;
-	uca.ibufsizepad = UCHCOMIBUFSIZE;
+	uca.ibufsizepad = endpoints.ep_bulkin_size;
 	uca.opkthdrlen = 0;
 	uca.device = dev;
 	uca.iface = sc->sc_iface;
@@ -349,7 +349,7 @@ int
 uchcom_find_endpoints(struct uchcom_softc *sc,
     struct uchcom_endpoints *endpoints)
 {
-	int i, bin=-1, bout=-1, intr=-1, isize=0;
+	int i, bin=-1, bout=-1, intr=-1, binsize=0, isize=0;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 
@@ -370,6 +370,7 @@ uchcom_find_endpoints(struct uchcom_softc *sc,
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 			   UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			bin = ed->bEndpointAddress;
+			binsize = UGETW(ed->wMaxPacketSize);
 		} else if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_OUT &&
 			   UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
 			bout = ed->bEndpointAddress;
@@ -402,6 +403,7 @@ uchcom_find_endpoints(struct uchcom_softc *sc,
 	endpoints->ep_intr = intr;
 	endpoints->ep_intr_size = isize;
 	endpoints->ep_bulkin = bin;
+	endpoints->ep_bulkin_size = binsize;
 	endpoints->ep_bulkout = bout;
 
 	return 0;
