@@ -905,6 +905,7 @@ static int ggtt_probe_common(struct i915_ggtt *ggtt, u64 size)
 	bus_size_t len;
 	pcireg_t type;
 	int flags;
+	u32 pte_flags;
 	int ret;
 
 	/* For Modern GENs the PTEs and register space are split in the BAR */
@@ -915,7 +916,7 @@ static int ggtt_probe_common(struct i915_ggtt *ggtt, u64 size)
 		return ret;
 
 	/*
-	 * On BXT+/CNL+ writes larger than 64 bit to the GTT pagetable range
+	 * On BXT+/ICL+ writes larger than 64 bit to the GTT pagetable range
 	 * will be dropped. For WC mappings in general we have 64 byte burst
 	 * writes when the WC buffer is flushed, so we can't use it, but have to
 	 * resort to an uncached mapping. The WC issue is easily caught by the
@@ -938,6 +939,7 @@ static int ggtt_probe_common(struct i915_ggtt *ggtt, u64 size)
 		return -ENOMEM;
 	}
 
+	kref_init(&ggtt->vm.resv_ref);
 	ret = setup_scratch_page(&ggtt->vm);
 	if (ret) {
 		drm_err(&i915->drm, "Scratch setup failed\n");
@@ -946,9 +948,13 @@ static int ggtt_probe_common(struct i915_ggtt *ggtt, u64 size)
 		return ret;
 	}
 
+	pte_flags = 0;
+	if (i915_gem_object_is_lmem(ggtt->vm.scratch[0]))
+		pte_flags |= PTE_LM;
+
 	ggtt->vm.scratch[0]->encode =
 		ggtt->vm.pte_encode(px_dma(ggtt->vm.scratch[0]),
-				    I915_CACHE_NONE, 0);
+				    I915_CACHE_NONE, pte_flags);
 
 	return 0;
 }
