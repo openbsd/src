@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.24 2022/01/09 05:43:00 jsg Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.25 2022/01/26 06:05:59 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -421,7 +421,7 @@ uhidpp_detach(struct device *self, int flags)
 
 	usb_rem_wait_task(sc->sc_udev, &sc->sc_task);
 
-	if (sc->sc_senstsk != NULL)
+	if (uhidpp_has_sensors(sc))
 		sensor_task_unregister(sc->sc_senstsk);
 
 	KASSERT(sc->sc_resp_state == UHIDPP_RESP_NONE);
@@ -615,16 +615,6 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 
 	dev->d_connected = 1;
 
-	/*
-	 * Delay installation of sensors until a device with battery support is
-	 * connected. Allows sensorsd(8) to pick up hotplugged devices.
-	 */
-	if (!uhidpp_has_sensors(sc)) {
-		strlcpy(sc->sc_sensdev.xname, sc->sc_hdev.sc_dev.dv_xname,
-		    sizeof(sc->sc_sensdev.xname));
-		sensordev_install(&sc->sc_sensdev);
-	}
-
 	sens = &dev->d_battery.b_sens[0];
 	strlcpy(sens->desc, "battery level", sizeof(sens->desc));
 	sens->type = SENSOR_PERCENT;
@@ -645,17 +635,20 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 		sensor_attach(&sc->sc_sensdev, sens);
 	}
 
-	if (sc->sc_senstsk == NULL) {
-		/*
-		 * The mutex must be temporarily released while calling
-		 * sensor_task_register() as it might end up sleeping.
-		 */
-		mtx_leave(&sc->sc_mtx);
-		sc->sc_senstsk = sensor_task_register(sc, uhidpp_refresh, 30);
-		mtx_enter(&sc->sc_mtx);
-	}
-
 	uhidpp_device_refresh(sc, dev);
+
+	strlcpy(sc->sc_sensdev.xname, sc->sc_hdev.sc_dev.dv_xname,
+	    sizeof(sc->sc_sensdev.xname));
+	sensordev_install(&sc->sc_sensdev);
+
+	/*
+	 * The mutex must be temporarily released while calling
+	 * sensor_task_register() as it might end up sleeping.
+	 */
+	KASSERT(sc->sc_senstsk == NULL);
+	mtx_leave(&sc->sc_mtx);
+	sc->sc_senstsk = sensor_task_register(sc, uhidpp_refresh, 30);
+	mtx_enter(&sc->sc_mtx);
 }
 
 void
