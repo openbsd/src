@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.27 2022/01/24 15:50:34 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.28 2022/01/26 13:57:56 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -224,8 +224,14 @@ repo_dir(const char *uri, const char *dir, int hash)
 			local = uri;
 	}
 
-	if (asprintf(&out, "%s/%s", dir, local) == -1)
-		err(1, NULL);
+	if (dir == NULL) {
+		if ((out = strdup(local)) == NULL)
+			err(1, NULL);
+	} else {
+		if (asprintf(&out, "%s/%s", dir, local) == -1)
+			err(1, NULL);
+	}
+
 	free(hdir);
 	return out;
 }
@@ -436,7 +442,7 @@ rsync_get(const char *uri, const char *validdir)
 	SLIST_INSERT_HEAD(&rsyncrepos, rr, entry);
 
 	rr->repouri = repo;
-	rr->basedir = repo_dir(repo, "rsync", 0);
+	rr->basedir = repo_dir(repo, ".rsync", 0);
 
 	/* create base directory */
 	if (mkpath(rr->basedir) == -1) {
@@ -484,13 +490,16 @@ rrdp_filename(const struct rrdprepo *rr, const char *uri, int valid)
 	char *nfile;
 	const char *dir = rr->basedir;
 
-	if (valid)
-		dir = "valid";
 	if (!valid_uri(uri, strlen(uri), "rsync://"))
 		errx(1, "%s: bad URI %s", rr->basedir, uri);
 	uri += strlen("rsync://");	/* skip proto */
-	if (asprintf(&nfile, "%s/%s", dir, uri) == -1)
-		err(1, NULL);
+	if (valid) {
+		if ((nfile = strdup(uri)) == NULL)
+			err(1, NULL);
+	} else {
+		if (asprintf(&nfile, "%s/%s", dir, uri) == -1)
+			err(1, NULL);
+	}
 	return nfile;
 }
 
@@ -734,7 +743,7 @@ rrdp_get(const char *uri)
 
 	if ((rr->notifyuri = strdup(uri)) == NULL)
 		err(1, NULL);
-	rr->basedir = repo_dir(uri, "rrdp", 1);
+	rr->basedir = repo_dir(uri, ".rrdp", 1);
 
 	RB_INIT(&rr->deleted);
 
@@ -1058,7 +1067,7 @@ repo_lookup(int talid, const char *uri, const char *notify)
 	}
 
 	rp = repo_alloc(talid);
-	rp->basedir = repo_dir(repouri, "valid", 0);
+	rp->basedir = repo_dir(repouri, NULL, 0);
 	rp->repouri = repouri;
 	if (notify != NULL)
 		if ((rp->notifyuri = strdup(notify)) == NULL)
@@ -1270,42 +1279,40 @@ static void
 repo_move_valid(struct filepath_tree *tree)
 {
 	struct filepath *fp, *nfp;
-	size_t rsyncsz = strlen("rsync/");
-	size_t rrdpsz = strlen("rrdp/");
+	size_t rsyncsz = strlen(".rsync/");
+	size_t rrdpsz = strlen(".rrdp/");
 	char *fn, *base;
 
 	RB_FOREACH_SAFE(fp, filepath_tree, tree, nfp) {
-		if (strncmp(fp->file, "rsync/", rsyncsz) != 0 &&
-		    strncmp(fp->file, "rrdp/", rrdpsz) != 0)
+		if (strncmp(fp->file, ".rsync/", rsyncsz) != 0 &&
+		    strncmp(fp->file, ".rrdp/", rrdpsz) != 0)
 			continue; /* not a temporary file path */
 
-		if (strncmp(fp->file, "rsync/", rsyncsz) == 0) {
-			if (asprintf(&fn, "valid/%s", fp->file + rsyncsz) == -1)
-				err(1, NULL);
+		if (strncmp(fp->file, ".rsync/", rsyncsz) == 0) {
+			fn = fp->file + rsyncsz;
 		} else {
 			base = strchr(fp->file + rrdpsz, '/');
 			assert(base != NULL);
-			if (asprintf(&fn, "valid/%s", base + 1) == -1)
-				err(1, NULL);
+			fn = base + 1;
 		}
 
-		if (repo_mkpath(fn) == -1) {
-			free(fn);
+		if (repo_mkpath(fn) == -1)
 			continue;
-		}
 
 		if (rename(fp->file, fn) == -1) {
 			warn("rename %s", fp->file);
-			free(fn);
 			continue;
 		}
 
 		/* switch filepath node to new path */
 		RB_REMOVE(filepath_tree, tree, fp);
-		free(fp->file);
-		fp->file = fn;
+		base = fp->file;
+		if ((fp->file = strdup(fn)) == NULL)
+			err(1, NULL);
+		free(base);
 		if (RB_INSERT(filepath_tree, tree, fp) != NULL)
-			errx(1, "both possibilities of file present");
+			errx(1, "%s: both possibilities of file present",
+			    fp->file);
 	}
 }
 
@@ -1313,12 +1320,20 @@ repo_move_valid(struct filepath_tree *tree)
 #define	RSYNC_DIR	(void *)0x73796e63
 #define	RRDP_DIR	(void *)0x52524450
 
+static inline char *
+skip_dotslash(char *in)
+{
+	if (memcmp(in, "./", 2) == 0)
+		return in + 2;
+	return in;
+}
+
 void
 repo_cleanup(struct filepath_tree *tree)
 {
 	size_t i, cnt, delsz = 0, dirsz = 0;
 	char **del = NULL, **dir = NULL;
-	char *argv[5] = { "ta", "rsync", "rrdp", "valid", NULL };
+	char *argv[2] = { ".", NULL };
 	FTS *fts;
 	FTSENT *e;
 
@@ -1331,38 +1346,38 @@ repo_cleanup(struct filepath_tree *tree)
 		err(1, "fts_open");
 	errno = 0;
 	while ((e = fts_read(fts)) != NULL) {
+		char *path = skip_dotslash(e->fts_path);
 		switch (e->fts_info) {
 		case FTS_NSOK:
-			/* handle rrdp .state files explicitly */
-			if (e->fts_parent->fts_pointer == RRDP_DIR &&
-			    e->fts_level == 2 &&
-			    strcmp(e->fts_name, ".state") == 0) {
+			if (filepath_exists(tree, path)) {
 				e->fts_parent->fts_number++;
-			} else if (filepath_exists(tree, e->fts_path)) {
+				break;
+			}
+			if (e->fts_parent->fts_pointer == RRDP_DIR) {
 				e->fts_parent->fts_number++;
-			} else if (e->fts_parent->fts_pointer == RRDP_DIR) {
+				/* handle rrdp .state files explicitly */
+				if (e->fts_level == 3 &&
+				    strcmp(e->fts_name, ".state") == 0)
+					break;
 				/* can't delete these extra files */
-				e->fts_parent->fts_number++;
 				stats.extra_files++;
 				if (verbose > 1)
-					logx("superfluous %s", e->fts_path);
-			} else {
-				if (e->fts_parent->fts_pointer == RSYNC_DIR) {
-					/* no need to keep rsync files */
-					stats.extra_files++;
-					if (verbose > 1)
-						logx("superfluous %s",
-						    e->fts_path);
-				}
-				del = add_to_del(del, &delsz,
-				    e->fts_path);
+					logx("superfluous %s", path);
+				break;
 			}
+			if (e->fts_parent->fts_pointer == RSYNC_DIR) {
+				/* no need to keep rsync files */
+				stats.extra_files++;
+				if (verbose > 1)
+					logx("superfluous %s", path);
+			}
+			del = add_to_del(del, &delsz, path);
 			break;
 		case FTS_D:
-			if (e->fts_level == FTS_ROOTLEVEL) {
-				if (strcmp("rsync", e->fts_path) == 0)
+			if (e->fts_level == 1) {
+				if (strcmp(".rsync", e->fts_name) == 0)
 					e->fts_pointer = RSYNC_DIR;
-				else if (strcmp("rrdp", e->fts_path) == 0)
+				else if (strcmp(".rrdp", e->fts_name) == 0)
 					e->fts_pointer = RRDP_DIR;
 				else
 					e->fts_pointer = BASE_DIR;
@@ -1375,35 +1390,40 @@ repo_cleanup(struct filepath_tree *tree)
 			 * only if rrdp is active.
 			 */
 			if (e->fts_pointer == RRDP_DIR && !noop && rrdpon &&
-			    e->fts_level == 1) {
-				if (!rrdp_is_active(e->fts_path))
+			    e->fts_level == 2) {
+				if (!rrdp_is_active(path))
 					e->fts_pointer = NULL;
 			}
 			break;
 		case FTS_DP:
 			if (e->fts_level == FTS_ROOTLEVEL)
 				break;
+			if (e->fts_level == 1)
+				/* do not remove .rsync and .rrdp */
+				if (e->fts_pointer == RRDP_DIR ||
+				    e->fts_pointer == RSYNC_DIR)
+					break;
 			if (e->fts_number == 0)
-				dir = add_to_del(dir, &dirsz, e->fts_path);
+				dir = add_to_del(dir, &dirsz, path);
 
 			e->fts_parent->fts_number += e->fts_number;
 			break;
 		case FTS_SL:
 		case FTS_SLNONE:
-			warnx("symlink %s", e->fts_path);
-			del = add_to_del(del, &delsz, e->fts_path);
+			warnx("symlink %s", path);
+			del = add_to_del(del, &delsz, path);
 			break;
 		case FTS_NS:
 		case FTS_ERR:
 			if (e->fts_errno == ENOENT &&
 			    e->fts_level == FTS_ROOTLEVEL)
 				continue;
-			warnx("fts_read %s: %s", e->fts_path,
+			warnx("fts_read %s: %s", path,
 			    strerror(e->fts_errno));
 			break;
 		default:
-			warnx("unhandled[%x] %s", e->fts_info,
-			    e->fts_path);
+			warnx("fts_read %s: unhandled[%x]", path,
+			    e->fts_info);
 			break;
 		}
 

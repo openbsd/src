@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.54 2022/01/24 17:29:37 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.55 2022/01/26 13:57:56 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -737,9 +737,9 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
  * verification.
  */
 static void
-parse_load_crl(const char *uri)
+parse_load_crl(char *uri)
 {
-	char *nfile, *f;
+	char *f;
 	size_t flen;
 
 	if (uri == NULL)
@@ -750,19 +750,14 @@ parse_load_crl(const char *uri)
 	}
 	uri += strlen("rsync://");
 
-	if (asprintf(&nfile, "valid/%s", uri) == -1)
-		err(1, NULL);
-
-	f = load_file(nfile, &flen);
+	f = load_file(uri, &flen);
 	if (f == NULL) {
-		warn("parse file %s", nfile);
-		goto done;
+		warn("parse file %s", uri);
+		return;
 	}
 
-	proc_parser_crl(nfile, f, flen);
+	proc_parser_crl(uri, f, flen);
 
-done:
-	free(nfile);
 	free(f);
 }
 
@@ -773,10 +768,10 @@ done:
  * necessary certs were loaded. Returns NULL on failure.
  */
 static struct cert *
-parse_load_cert(const char *uri)
+parse_load_cert(char *uri)
 {
 	struct cert *cert = NULL;
-	char *nfile, *f;
+	char *f;
 	size_t flen;
 
 	if (uri == NULL)
@@ -788,33 +783,28 @@ parse_load_cert(const char *uri)
 	}
 	uri += strlen("rsync://");
 
-	if (asprintf(&nfile, "valid/%s", uri) == -1)
-		err(1, NULL);
-
-	f = load_file(nfile, &flen);
+	f = load_file(uri, &flen);
 	if (f == NULL) {
-		warn("parse file %s", nfile);
+		warn("parse file %s", uri);
 		goto done;
 	}
 
-	cert = cert_parse(nfile, f, flen);
+	cert = cert_parse(uri, f, flen);
 	free(f);
 
 	if (cert == NULL)
 		goto done;
 	if (cert->purpose != CERT_PURPOSE_CA) {
-		warnx("AIA reference to bgpsec cert %s", nfile);
+		warnx("AIA reference to bgpsec cert %s", uri);
 		goto done;
 	}
 	/* try to load the CRL of this cert */
 	parse_load_crl(cert->crl);
 
-	free(nfile);
 	return cert;
 
-done:
+ done:
 	cert_free(cert);
-	free(nfile);
 	return NULL;
 }
 
