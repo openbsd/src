@@ -668,6 +668,8 @@ static void drm_dev_init_release(struct drm_device *dev, void *res)
 	drm_legacy_destroy_members(dev);
 }
 
+#ifdef notyet
+
 static int drm_dev_init(struct drm_device *dev,
 			const struct drm_driver *driver,
 			struct device *parent)
@@ -683,45 +685,37 @@ static int drm_dev_init(struct drm_device *dev,
 		return -EINVAL;
 
 	kref_init(&dev->ref);
-#ifdef __linux__
 	dev->dev = get_device(parent);
-#endif
 	dev->driver = driver;
 
 	INIT_LIST_HEAD(&dev->managed.resources);
-	mtx_init(&dev->managed.lock, IPL_TTY);
+	spin_lock_init(&dev->managed.lock);
 
 	/* no per-device feature limits by default */
 	dev->driver_features = ~0u;
 
 	drm_legacy_init_members(dev);
-#ifdef notyet
 	INIT_LIST_HEAD(&dev->filelist);
-#else
-	SPLAY_INIT(&dev->files);
-#endif
 	INIT_LIST_HEAD(&dev->filelist_internal);
 	INIT_LIST_HEAD(&dev->clientlist);
 	INIT_LIST_HEAD(&dev->vblank_event_list);
 
-	mtx_init(&dev->event_lock, IPL_TTY);
-	rw_init(&dev->struct_mutex, "drmdevlk");
-	rw_init(&dev->filelist_mutex, "drmflist");
-	rw_init(&dev->clientlist_mutex, "drmclist");
-	rw_init(&dev->master_mutex, "drmmast");
+	spin_lock_init(&dev->event_lock);
+	mutex_init(&dev->struct_mutex);
+	mutex_init(&dev->filelist_mutex);
+	mutex_init(&dev->clientlist_mutex);
+	mutex_init(&dev->master_mutex);
 
 	ret = drmm_add_action(dev, drm_dev_init_release, NULL);
 	if (ret)
 		return ret;
 
-#ifdef __linux__
 	dev->anon_inode = drm_fs_inode_new();
 	if (IS_ERR(dev->anon_inode)) {
 		ret = PTR_ERR(dev->anon_inode);
 		DRM_ERROR("Cannot allocate anonymous inode: %d\n", ret);
 		goto err;
 	}
-#endif
 
 	if (drm_core_check_feature(dev, DRIVER_RENDER)) {
 		ret = drm_minor_alloc(dev, DRM_MINOR_RENDER);
@@ -759,20 +753,15 @@ err:
 	return ret;
 }
 
-#ifdef notyet
 static void devm_drm_dev_init_release(void *data)
 {
 	drm_dev_put(data);
 }
-#endif
 
 static int devm_drm_dev_init(struct device *parent,
 			     struct drm_device *dev,
 			     const struct drm_driver *driver)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	int ret;
 
 	ret = drm_dev_init(dev, driver, parent);
@@ -781,7 +770,6 @@ static int devm_drm_dev_init(struct device *parent,
 
 	return devm_add_action_or_reset(parent,
 					devm_drm_dev_init_release, dev);
-#endif
 }
 
 void *__devm_drm_dev_alloc(struct device *parent,
@@ -841,6 +829,8 @@ struct drm_device *drm_dev_alloc(const struct drm_driver *driver,
 	return dev;
 }
 EXPORT_SYMBOL(drm_dev_alloc);
+
+#endif
 
 static void drm_dev_release(struct kref *ref)
 {
