@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.c,v 1.26 2020/03/02 01:59:01 jmatthew Exp $	*/
+/*	$OpenBSD: ixgbe.c,v 1.27 2022/01/27 18:28:45 bluhm Exp $	*/
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -2378,7 +2378,7 @@ int32_t ixgbe_fc_enable_generic(struct ixgbe_hw *hw)
 	}
 
 	/* Configure pause time (2 TCs per register) */
-	reg = hw->fc.pause_time * 0x00010001;
+	reg = (uint32_t)hw->fc.pause_time * 0x00010001;
 	for (i = 0; i < (IXGBE_DCB_MAX_TRAFFIC_CLASS / 2); i++)
 		IXGBE_WRITE_REG(hw, IXGBE_FCTTV(i), reg);
 

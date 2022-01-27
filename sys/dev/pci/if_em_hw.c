@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.113 2022/01/09 05:42:50 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.114 2022/01/27 18:28:44 bluhm Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -7622,7 +7622,7 @@ em_read_part_num(struct em_hw *hw, uint32_t *part_num)
 		return -E1000_ERR_EEPROM;
 	}
 	/* Save word 0 in upper half of part_num */
-	*part_num = (uint32_t) (eeprom_data << 16);
+	*part_num = (uint32_t)eeprom_data << 16;
 
 	/* Get word 1 from EEPROM */
 	if (em_read_eeprom(hw, ++offset, 1, &eeprom_data) < 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.180 2021/07/27 01:44:55 kevlo Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.181 2022/01/27 18:28:44 bluhm Exp $	*/
 
 /******************************************************************************
 
@@ -3400,8 +3400,8 @@ ixgbe_set_ivar(struct ix_softc *sc, uint8_t entry, uint8_t vector, int8_t type)
 			entry += (type * 64);
 		index = (entry >> 2) & 0x1F;
 		ivar = IXGBE_READ_REG(hw, IXGBE_IVAR(index));
-		ivar &= ~(0xFF << (8 * (entry & 0x3)));
-		ivar |= (vector << (8 * (entry & 0x3)));
+		ivar &= ~((uint32_t)0xFF << (8 * (entry & 0x3)));
+		ivar |= ((uint32_t)vector << (8 * (entry & 0x3)));
 		IXGBE_WRITE_REG(&sc->hw, IXGBE_IVAR(index), ivar);
 		break;
 
@@ -3413,14 +3413,14 @@ ixgbe_set_ivar(struct ix_softc *sc, uint8_t entry, uint8_t vector, int8_t type)
 		if (type == -1) { /* MISC IVAR */
 			index = (entry & 1) * 8;
 			ivar = IXGBE_READ_REG(hw, IXGBE_IVAR_MISC);
-			ivar &= ~(0xFF << index);
-			ivar |= (vector << index);
+			ivar &= ~((uint32_t)0xFF << index);
+			ivar |= ((uint32_t)vector << index);
 			IXGBE_WRITE_REG(hw, IXGBE_IVAR_MISC, ivar);
 		} else {	/* RX/TX IVARS */
 			index = (16 * (entry & 1)) + (8 * type);
 			ivar = IXGBE_READ_REG(hw, IXGBE_IVAR(entry >> 1));
-			ivar &= ~(0xFF << index);
-			ivar |= (vector << index);
+			ivar &= ~((uint32_t)0xFF << index);
+			ivar |= ((uint32_t)vector << index);
 			IXGBE_WRITE_REG(hw, IXGBE_IVAR(entry >> 1), ivar);
 		}
 
