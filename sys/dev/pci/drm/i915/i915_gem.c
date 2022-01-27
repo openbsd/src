@@ -1208,7 +1208,7 @@ void i915_gem_driver_release(struct drm_i915_private *dev_priv)
 
 static void i915_gem_init__mm(struct drm_i915_private *i915)
 {
-	mtx_init(&i915->mm.obj_lock, IPL_NONE);
+	mtx_init(&i915->mm.obj_lock, IPL_TTY);
 
 	init_llist_head(&i915->mm.free_list);
 
