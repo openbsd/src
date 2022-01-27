@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.149 2022/01/22 15:39:00 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.150 2022/01/27 16:26:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -191,6 +191,7 @@ int
 edit(const int pn, struct mbr *mbr)
 {
 	struct prt		*pp;
+	uint64_t		 track;
 	unsigned char		 oldid;
 
 	pp = &mbr->mbr_prt[pn];
@@ -224,8 +225,13 @@ edit(const int pn, struct mbr *mbr)
 		    (pp->prt_scyl == pp->prt_ecyl && pp->prt_shead ==
 		    pp->prt_ehead) ? pp->prt_ssect : 1, disk.dk_sectors);
 
-		/* Fix up off/size values */
-		PRT_fix_BN(pp, pn);
+		/* The ATA/ATAPI spec says LBA = (C × HPC + H) × SPT + (S − 1) */
+		track = (uint64_t)pp->prt_scyl * disk.dk_heads + pp->prt_shead;
+		pp->prt_bs = track * disk.dk_sectors + (pp->prt_ssect - 1);
+		track = (uint64_t)pp->prt_ecyl * disk.dk_heads + pp->prt_ehead;
+		pp->prt_ns = track * disk.dk_sectors + (pp->prt_esect - 1) -
+		    pp->prt_bs + 1;
+
 		/* Fix up CHS values for LBA */
 		PRT_fix_CHS(pp);
 	} else {

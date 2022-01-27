@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.112 2022/01/21 17:29:24 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.113 2022/01/27 16:26:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -375,38 +375,6 @@ PRT_print_part(const int num, const struct prt *prt, const char *units)
 	    prt->prt_scyl, prt->prt_shead, prt->prt_ssect,
 	    prt->prt_ecyl, prt->prt_ehead, prt->prt_esect,
 	    prt->prt_bs, size, ut->ut_abbr, ascii_id(prt->prt_id));
-}
-
-void
-PRT_fix_BN(struct prt *prt, const int pn)
-{
-	uint32_t		spt, tpc, spc;
-	uint32_t		start = 0;
-	uint32_t		end = 0;
-
-	if (prt->prt_id == DOSPTYP_UNUSED) {
-		memset(prt, 0, sizeof(*prt));
-		return;
-	}
-
-	spt = disk.dk_sectors;
-	tpc = disk.dk_heads;
-	spc = spt * tpc;
-
-	start += prt->prt_scyl * spc;
-	start += prt->prt_shead * spt;
-	start += prt->prt_ssect - 1;
-
-	end += prt->prt_ecyl * spc;
-	end += prt->prt_ehead * spt;
-	end += prt->prt_esect - 1;
-
-	/* XXX - Should handle this... */
-	if (start > end)
-		warnx("Start of partition #%d after end!", pn);
-
-	prt->prt_bs = start;
-	prt->prt_ns = (end - start) + 1;
 }
 
 void
