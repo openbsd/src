@@ -1,4 +1,4 @@
-$OpenBSD: README.md,v 1.5 2021/11/02 15:29:41 millert Exp $
+$OpenBSD: README.md,v 1.6 2022/01/27 16:58:37 millert Exp $
 
 # The One True Awk
 
@@ -37,7 +37,7 @@ in `FIXES`.  If you distribute this code further, please please please
 distribute `FIXES` with it.
 
 If you find errors, please report them
-to bwk@cs.princeton.edu.
+to the current maintainer, ozan.yigit@gmail.com.
 Please _also_ open an issue in the GitHub issue tracker, to make
 it easy to track issues.
 Thanks.
@@ -92,7 +92,7 @@ move this to some place like `/usr/bin/awk`.
 If your system does not have `yacc` or `bison` (the GNU
 equivalent), you need to install one of them first.
 
-NOTE: This version uses ANSI C (C 99), as you should also.  We have
+NOTE: This version uses ISO/IEC C99, as you should also.  We have
 compiled this without any changes using `gcc -Wall` and/or local C
 compilers on a variety of systems, but new systems or compilers
 may raise some new complaint; reports of difficulties are
@@ -111,7 +111,7 @@ More generally, turning on optimization can significantly improve
 
 ## A Note About Releases
 
-We don't do releases. 
+We don't usually do releases. 
 
 ## A Note About Maintenance
 
@@ -122,4 +122,5 @@ is not at the top of our priority list.
 
 #### Last Updated
 
-Sat Jul 25 14:00:07 EDT 2021
+Sun 23 Jan 2022 03:48:01 PM EST
+

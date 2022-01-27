@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.42 2021/11/12 15:16:58 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.43 2022/01/27 16:58:37 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,11 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+December 8, 2021:
+	The error handling in closefile and closeall was mangled. Long
+	standing warnings had been made fatal and some fatal errors went
+	undetected. Thanks to Miguel Pineiro Jr. <mpj@pineiro.cc>.
 
 Nov 03, 2021:
         getline accesses uninitialized data after getrec()
