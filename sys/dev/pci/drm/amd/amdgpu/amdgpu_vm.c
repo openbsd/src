@@ -3419,9 +3419,15 @@ void amdgpu_vm_set_task_info(struct amdgpu_vm *vm)
 	vm->task_info.tgid = current->group_leader->pid;
 	get_task_comm(vm->task_info.process_name, current->group_leader);
 #else
-	vm->task_info.pid = curproc->p_p->ps_pid;
+	/* thread */
+	vm->task_info.pid = curproc->p_tid;
 	strlcpy(vm->task_info.task_name, curproc->p_p->ps_comm,
 	    sizeof(vm->task_info.task_name));
+
+	/* process */
+	vm->task_info.tgid = curproc->p_p->ps_pid;
+	strlcpy(vm->task_info.process_name, curproc->p_p->ps_comm,
+	    sizeof(vm->task_info.process_name));
 #endif
 }
 
