@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_cad.c,v 1.8 2021/07/29 09:19:42 patrick Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.9 2022/01/27 17:34:51 visa Exp $	*/
 
 /*
- * Copyright (c) 2021 Visa Hankala
+ * Copyright (c) 2021-2022 Visa Hankala
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -173,8 +173,22 @@
 #define GEM_RXUDPCCNT			0x01b0
 #define GEM_CFG6			0x0294
 #define  GEM_CFG6_DMA64				(1 << 23)
+#define  GEM_CFG6_PRIQ_MASK(x)			((x) & 0xffff)
+#define GEM_CFG8			0x029c
+#define  GEM_CFG8_NUM_TYPE1_SCR(x)		(((x) >> 24) & 0xff)
+#define  GEM_CFG8_NUM_TYPE2_SCR(x)		(((x) >> 16) & 0xff)
+#define GEM_TXQ1BASE(i)			(0x0440 + (i) * 4)
+#define  GEM_TXQ1BASE_DISABLE			(1 << 0)
+#define GEM_RXQ1BASE(i)			(0x0480 + (i) * 4)
+#define  GEM_RXQ1BASE_DISABLE			(1 << 0)
 #define GEM_TXQBASEHI			0x04c8
 #define GEM_RXQBASEHI			0x04d4
+#define GEM_SCR_TYPE1(i)		(0x0500 + (i) * 4)
+#define GEM_SCR_TYPE2(i)		(0x0540 + (i) * 4)
+#define GEM_RXQ8BASE(i)			(0x05c0 + (i) * 4)
+#define  GEM_RXQ8BASE_DISABLE			(1 << 0)
+
+#define GEM_MAX_PRIQ		16
 
 #define GEM_CLK_TX		"tx_clk"
 
@@ -261,6 +275,9 @@ struct cad_softc {
 	unsigned char		sc_rxdone;
 	unsigned char		sc_dma64;
 	size_t			sc_descsize;
+	uint32_t		sc_qmask;
+	uint8_t			sc_ntype1scr;
+	uint8_t			sc_ntype2scr;
 
 	struct mii_data		sc_mii;
 #define sc_media	sc_mii.mii_media
@@ -357,6 +374,7 @@ cad_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 
 	return (OF_is_compatible(faa->fa_node, "cdns,gem") ||
+	    OF_is_compatible(faa->fa_node, "cdns,macb") ||
 	    OF_is_compatible(faa->fa_node, "sifive,fu540-c000-gem") ||
 	    OF_is_compatible(faa->fa_node, "sifive,fu740-c000-gem"));
 }
@@ -370,6 +388,7 @@ cad_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	uint32_t hi, lo;
 	uint32_t rev, ver;
+	uint32_t val;
 	unsigned int i;
 	int node, phy;
 
@@ -426,10 +445,23 @@ cad_attach(struct device *parent, struct device *self, void *aux)
 	ver = (rev & GEM_MID_VERSION_MASK) >> GEM_MID_VERSION_SHIFT;
 
 	sc->sc_descsize = sizeof(struct cad_desc32);
-	/* Register CFG6 is not present on Zynq-7000 / GEM version 0x2. */
-	if (ver >= 0x7 && (HREAD4(sc, GEM_CFG6) & GEM_CFG6_DMA64)) {
-		sc->sc_descsize = sizeof(struct cad_desc64);
-		sc->sc_dma64 = 1;
+	/* Queue 0 is always present. */
+	sc->sc_qmask = 0x1;
+	/*
+	 * Registers CFG1 and CFG6-10 are not present
+	 * on Zynq-7000 / GEM version 0x2.
+	 */
+	if (ver >= 0x7) {
+		val = HREAD4(sc, GEM_CFG6);
+		if (val & GEM_CFG6_DMA64) {
+			sc->sc_descsize = sizeof(struct cad_desc64);
+			sc->sc_dma64 = 1;
+		}
+		sc->sc_qmask |= GEM_CFG6_PRIQ_MASK(val);
+
+		val = HREAD4(sc, GEM_CFG8);
+		sc->sc_ntype1scr = GEM_CFG8_NUM_TYPE1_SCR(val);
+		sc->sc_ntype2scr = GEM_CFG8_NUM_TYPE2_SCR(val);
 	}
 
 	if (OF_is_compatible(faa->fa_node, "cdns,zynq-gem"))
@@ -563,7 +595,7 @@ cad_reset(struct cad_softc *sc)
 	static const unsigned int mdcclk_divs[] = {
 		8, 16, 32, 48, 64, 96, 128, 224
 	};
-	unsigned int freq;
+	unsigned int freq, i;
 	uint32_t div, netcfg;
 
 	HWRITE4(sc, GEM_NETCTL, 0);
@@ -576,6 +608,22 @@ cad_reset(struct cad_softc *sc)
 	}
 	HWRITE4(sc, GEM_RXQBASE, 0);
 	HWRITE4(sc, GEM_TXQBASE, 0);
+
+	for (i = 1; i < GEM_MAX_PRIQ; i++) {
+		if (sc->sc_qmask & (1U << i)) {
+			if (i < 8)
+				HWRITE4(sc, GEM_RXQ1BASE(i - 1), 0);
+			else
+				HWRITE4(sc, GEM_RXQ8BASE(i - 8), 0);
+			HWRITE4(sc, GEM_TXQ1BASE(i - 1), 0);
+		}
+	}
+
+	/* Disable all screeners so that Rx goes through queue 0. */
+	for (i = 0; i < sc->sc_ntype1scr; i++)
+		HWRITE4(sc, GEM_SCR_TYPE1(i), 0);
+	for (i = 0; i < sc->sc_ntype2scr; i++)
+		HWRITE4(sc, GEM_SCR_TYPE2(i), 0);
 
 	/* MDIO clock rate must not exceed 2.5 MHz. */
 	freq = clock_get_frequency(sc->sc_node, "pclk");
@@ -604,18 +652,31 @@ cad_up(struct cad_softc *sc)
 	struct cad_desc64 *desc64;
 	uint64_t addr;
 	int flags = BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW;
-	unsigned int i;
+	unsigned int i, nrxd, ntxd;
 	uint32_t val;
 
 	if (sc->sc_dma64)
 		flags |= BUS_DMA_64BIT;
+
+	ntxd = CAD_NTXDESC;
+	nrxd = CAD_NRXDESC;
+
+	/*
+	 * Allocate a dummy descriptor for unused priority queues.
+	 * This is necessary with GEM revisions that have no option
+	 * to disable queues.
+	 */
+	if (sc->sc_qmask & ~1U) {
+		ntxd++;
+		nrxd++;
+	}
 
 	/*
 	 * Set up Tx descriptor ring.
 	 */
 
 	sc->sc_txring = cad_dmamem_alloc(sc,
-	    CAD_NTXDESC * sc->sc_descsize, sc->sc_descsize);
+	    ntxd * sc->sc_descsize, sc->sc_descsize);
 	sc->sc_txdesc = sc->sc_txring->cdm_kva;
 
 	desc32 = (struct cad_desc32 *)sc->sc_txdesc;
@@ -643,6 +704,18 @@ cad_up(struct cad_softc *sc)
 		}
 	}
 
+	/* The remaining descriptors are dummies. */
+	for (; i < ntxd; i++) {
+		if (sc->sc_dma64) {
+			desc64[i].d_addrhi = 0;
+			desc64[i].d_addrlo = 0;
+			desc64[i].d_status = GEM_TXD_USED | GEM_TXD_WRAP;
+		} else {
+			desc32[i].d_addr = 0;
+			desc32[i].d_status = GEM_TXD_USED | GEM_TXD_WRAP;
+		}
+	}
+
 	sc->sc_tx_prod = 0;
 	sc->sc_tx_cons = 0;
 
@@ -655,12 +728,21 @@ cad_up(struct cad_softc *sc)
 		HWRITE4(sc, GEM_TXQBASEHI, addr >> 32);
 	HWRITE4(sc, GEM_TXQBASE, addr);
 
+	/* Initialize unused queues. Disable them if possible. */
+	addr += CAD_NTXDESC * sc->sc_descsize;
+	for (i = 1; i < GEM_MAX_PRIQ; i++) {
+		if (sc->sc_qmask & (1U << i)) {
+			HWRITE4(sc, GEM_TXQ1BASE(i - 1),
+			    addr | GEM_TXQ1BASE_DISABLE);
+		}
+	}
+
 	/*
 	 * Set up Rx descriptor ring.
 	 */
 
 	sc->sc_rxring = cad_dmamem_alloc(sc,
-	    CAD_NRXDESC * sc->sc_descsize, sc->sc_descsize);
+	    nrxd * sc->sc_descsize, sc->sc_descsize);
 	sc->sc_rxdesc = sc->sc_rxring->cdm_kva;
 
 	desc32 = (struct cad_desc32 *)sc->sc_rxdesc;
@@ -687,6 +769,18 @@ cad_up(struct cad_softc *sc)
 		}
 	}
 
+	/* The remaining descriptors are dummies. */
+	for (; i < nrxd; i++) {
+		if (sc->sc_dma64) {
+			desc64[i].d_addrhi = 0;
+			desc64[i].d_addrlo =
+			    GEM_RXD_ADDR_USED | GEM_RXD_ADDR_WRAP;
+		} else {
+			desc32[i].d_addr =
+			    GEM_RXD_ADDR_USED | GEM_RXD_ADDR_WRAP;
+		}
+	}
+
 	if_rxr_init(&sc->sc_rx_ring, 2, CAD_NRXDESC);
 
 	sc->sc_rx_prod = 0;
@@ -701,6 +795,20 @@ cad_up(struct cad_softc *sc)
 	if (sc->sc_dma64)
 		HWRITE4(sc, GEM_RXQBASEHI, addr >> 32);
 	HWRITE4(sc, GEM_RXQBASE, addr);
+
+	/* Initialize unused queues. Disable them if possible. */
+	addr += sc->sc_descsize * CAD_NRXDESC;
+	for (i = 1; i < GEM_MAX_PRIQ; i++) {
+		if (sc->sc_qmask & (1U << i)) {
+			if (i < 8) {
+				HWRITE4(sc, GEM_RXQ1BASE(i - 1),
+				    addr | GEM_RXQ1BASE_DISABLE);
+			} else {
+				HWRITE4(sc, GEM_RXQ8BASE(i - 8),
+				    addr | GEM_RXQ8BASE_DISABLE);
+			}
+		}
+	}
 
 	/*
 	 * Set MAC address filters.
@@ -1500,20 +1608,29 @@ struct cad_dmamem *
 cad_dmamem_alloc(struct cad_softc *sc, bus_size_t size, bus_size_t align)
 {
 	struct cad_dmamem *cdm;
+	bus_size_t boundary = 0;
 	int flags = BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW;
 	int nsegs;
 
 	cdm = malloc(sizeof(*cdm), M_DEVBUF, M_WAITOK | M_ZERO);
 	cdm->cdm_size = size;
 
-	if (sc->sc_dma64)
+	if (sc->sc_dma64) {
+		/*
+		 * The segment contains an actual ring and possibly
+		 * a dummy ring for unused priority queues.
+		 * The segment must not cross a 32-bit boundary so that
+		 * the rings have the same base address bits 63:32.
+		 */
+		boundary = 1ULL << 32;
 		flags |= BUS_DMA_64BIT;
+	}
 
-	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
+	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, boundary,
 	    flags, &cdm->cdm_map) != 0)
 		goto cdmfree;
-	if (bus_dmamem_alloc(sc->sc_dmat, size, align, 0, &cdm->cdm_seg, 1,
-	    &nsegs, BUS_DMA_WAITOK) != 0)
+	if (bus_dmamem_alloc(sc->sc_dmat, size, align, boundary,
+	    &cdm->cdm_seg, 1, &nsegs, BUS_DMA_WAITOK) != 0)
 		goto destroy;
 	if (bus_dmamem_map(sc->sc_dmat, &cdm->cdm_seg, nsegs, size,
 	    &cdm->cdm_kva, BUS_DMA_WAITOK | BUS_DMA_COHERENT) != 0)
@@ -1818,6 +1935,12 @@ cad_dump(struct cad_softc *sc)
 			}
 		}
 	}
+	for (i = 1; i < GEM_MAX_PRIQ; i++) {
+		if (sc->sc_qmask & (1U << i)) {
+			printf("tx q%d 0x%08x\n", i,
+			    HREAD4(sc, GEM_TXQ1BASE(i - 1)));
+		}
+	}
 
 	if (sc->sc_dma64) {
 		printf("rx q 0x%08x%08x\n",
@@ -1850,6 +1973,13 @@ cad_dump(struct cad_softc *sc)
 				    sc->sc_rx_prod == i ? "<" : " ",
 				    rxb->bf_m);
 			}
+		}
+	}
+	for (i = 1; i < GEM_MAX_PRIQ; i++) {
+		if (sc->sc_qmask & (1U << i)) {
+			printf("rx q%d 0x%08x\n", i,
+			    HREAD4(sc, (i < 8) ? GEM_RXQ1BASE(i - 1)
+			      : GEM_RXQ8BASE(i - 8)));
 		}
 	}
 }
