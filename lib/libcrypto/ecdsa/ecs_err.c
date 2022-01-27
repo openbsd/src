@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_err.c,v 1.5 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: ecs_err.c,v 1.6 2022/01/27 20:31:21 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -62,8 +62,8 @@
 
 #include <openssl/opensslconf.h>
 
-#include <openssl/err.h>
 #include <openssl/ecdsa.h>
+#include <openssl/err.h>
 
 /* BEGIN ERROR CODES */
 #ifndef OPENSSL_NO_ERR
