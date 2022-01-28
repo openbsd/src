@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.243 2022/01/21 15:51:03 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.244 2022/01/28 07:11:15 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1997,7 +1997,7 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 #ifndef IEEE80211_STA_ONLY
 	if (ic->ic_opmode == IEEE80211_M_IBSS && is_new && isprobe) {
 		/*
-		 * Fake an association so the driver can setup it's
+		 * Fake an association so the driver can setup its
 		 * private state.  The rate set has been setup above;
 		 * there is no handshake as in ap/station operation.
 		 */

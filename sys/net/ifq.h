@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.33 2021/03/10 10:21:48 jsg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.34 2022/01/28 07:11:15 guenther Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -253,7 +253,7 @@ struct ifiqueue {
  *
  * == Attach
  *
- * A driver advertises it's ability to run its start routine without
+ * A driver advertises its ability to run its start routine without
  * the kernel lock by setting the IFXF_MPSAFE flag in ifp->if_xflags
  * before calling if_attach(). Advertising an MPSAFE start routine
  * also implies that the driver understands that a network card can

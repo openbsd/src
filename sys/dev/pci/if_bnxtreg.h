@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxtreg.h,v 1.4 2022/01/09 05:42:47 jsg Exp $	*/
+/*	$OpenBSD: if_bnxtreg.h,v 1.5 2022/01/28 07:11:14 guenther Exp $	*/
 /*-
  *   BSD LICENSE
  *
@@ -157,7 +157,7 @@ struct tx_bd_short {
 	#define TX_BD_SHORT_FLAGS_PACKET_END			UINT32_C(0x40)
 	/*
 	 * If set to 1, the device will not generate a completion for this
-	 * transmit packet unless there is an error in it's processing. If this
+	 * transmit packet unless there is an error in its processing. If this
 	 * bit is set to 0, then the packet will be completed normally. This bit
 	 * must be valid only on the first BD of a packet.
 	 */
@@ -249,7 +249,7 @@ struct tx_bd_long {
 	#define TX_BD_LONG_FLAGS_PACKET_END			UINT32_C(0x40)
 	/*
 	 * If set to 1, the device will not generate a completion for this
-	 * transmit packet unless there is an error in it's processing. If this
+	 * transmit packet unless there is an error in its processing. If this
 	 * bit is set to 0, then the packet will be completed normally. This bit
 	 * must be valid only on the first BD of a packet.
 	 */
@@ -3109,7 +3109,7 @@ struct push32_doorbell {
 	#define PUSH32_DOORBELL_FLAGS_PACKET_END		UINT32_C(0x40)
 	/*
 	 * If set to 1, the device will not generate a completion for this
-	 * transmit packet unless there is an error in it's processing. If this
+	 * transmit packet unless there is an error in its processing. If this
 	 * bit is set to 0, then the packet will be completed normally. This bit
 	 * must be valid only on the first BD of a packet.
 	 */
@@ -5148,7 +5148,7 @@ struct nq_srq_event {
 	uint16_t reserved16;
 	uint32_t srq_handle_low;
 	/*
-	 * This is the SRQ handle value for the queue that has reached it's
+	 * This is the SRQ handle value for the queue that has reached its
 	 * event threshold. This field carries the lower 32b of the value.
 	 */
 	uint32_t v;
@@ -5162,7 +5162,7 @@ struct nq_srq_event {
 	#define NQ_SRQ_EVENT_RESERVED31_SFT			1
 	uint32_t srq_handle_high;
 	/*
-	 * This is the SRQ handle value for the queue that has reached it's
+	 * This is the SRQ handle value for the queue that has reached its
 	 * event threshold. This field carries the upper 32b of the value.
 	 */
 } __attribute__((packed));
@@ -5754,7 +5754,7 @@ struct hwrm_ver_get_output {
  * Description: This command resets a hardware function (PCIe function) and
  * frees any resources used by the function. This command shall be initiated by
  * the driver after an FLR has occurred to prepare the function for re-use. This
- * command may also be initiated by a driver prior to doing it's own
+ * command may also be initiated by a driver prior to doing its own
  * configuration. This command puts the function into the reset state. In the
  * reset state, global and port related features of the chip are not available.
  */

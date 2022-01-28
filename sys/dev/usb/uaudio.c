@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.164 2022/01/09 05:43:00 jsg Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.165 2022/01/28 07:11:14 guenther Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2011,7 +2011,7 @@ uaudio_process_header(struct uaudio_softc *sc, struct uaudio_blob *p)
 
 /*
  * Process AC interrupt endpoint descriptor, this is mainly to skip
- * the descriptor as we use neither of it's properties. Our mixer
+ * the descriptor as we use neither of its properties. Our mixer
  * interface doesn't support unsolicitated state changes, so we've no
  * use of it yet.
  */
@@ -2298,7 +2298,7 @@ uaudio_process_ac(struct uaudio_softc *sc, struct uaudio_blob *p, int ifnum)
  *
  *  type	sync	descr
  *  -------------------------------------------------------
- *  async:	Yes	the device uses it's own clock but
+ *  async:	Yes	the device uses its own clock but
  *			sends feedback on a (input) sync endpoint
  *			for the host to adjust next packet size
  *

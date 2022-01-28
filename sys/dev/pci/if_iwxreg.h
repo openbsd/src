@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.34 2022/01/09 05:42:52 jsg Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.35 2022/01/28 07:11:14 guenther Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -2798,7 +2798,7 @@ struct iwx_time_event_notif {
  *	that event, no other activity will happen in the firmware,
  *	which is why it can't be too long.
  *	The length of this event is hard-coded in the firmware: 300TUs.
- *	* Another event which can be much longer (it's duration is
+ *	* Another event which can be much longer (its duration is
  *	configurable by the driver) which has a slightly lower
  *	priority and that can be fragmented allowing other activities
  *	to run while this event is running.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.200 2021/10/24 00:02:24 jsg Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.201 2022/01/28 07:11:15 guenther Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -584,7 +584,7 @@ loop:
 	}
 	/*
 	 * Look in the orphans list too, to allow the parent to
-	 * collect it's child exit status even if child is being
+	 * collect its child's exit status even if child is being
 	 * debugged.
 	 *
 	 * Debugger detaches from the parent upon successful

@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_i225.c,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
+/*	$OpenBSD: igc_i225.c,v 1.2 2022/01/28 07:11:14 guenther Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -820,7 +820,7 @@ igc_update_flash_i225(struct igc_hw *hw)
 		 * therefore, SW is in charge of shadow RAM dump.
 		 * Check which sector is valid. if sector 0 is valid,
 		 * base address remains 0x0. otherwise, sector 1 is
-		 * valid and it's base address is 0x1000
+		 * valid and its base address is 0x1000
 		 */
 		if (IGC_READ_REG(hw, IGC_EECD) & IGC_EECD_SEC1VAL_I225)
 			base_address = 0x1000;
