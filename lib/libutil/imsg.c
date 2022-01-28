@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.16 2017/12/14 09:27:44 kettenis Exp $	*/
+/*	$OpenBSD: imsg.c,v 1.17 2022/01/28 10:41:44 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -150,7 +150,8 @@ imsg_get(struct imsgbuf *ibuf, struct imsg *imsg)
 	else
 		imsg->fd = -1;
 
-	memcpy(imsg->data, ibuf->r.rptr, datalen);
+	if (datalen != 0)
+		memcpy(imsg->data, ibuf->r.rptr, datalen);
 
 	if (imsg->hdr.len < av) {
 		left = av - imsg->hdr.len;
