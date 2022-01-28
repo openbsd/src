@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.7 2020/09/25 17:10:46 kettenis Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.8 2022/01/28 18:37:40 gkoehler Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -57,9 +57,9 @@ struct db_variable db_regs[] = {
 	{ "r11", (long *)&ddb_regs.fixreg[11],	FCN_NULL },
 	{ "r12", (long *)&ddb_regs.fixreg[12],	FCN_NULL },
 	{ "r13", (long *)&ddb_regs.fixreg[13],	FCN_NULL },
-	{ "r14", (long *)&ddb_regs.fixreg[13],	FCN_NULL },
-	{ "r15", (long *)&ddb_regs.fixreg[13],	FCN_NULL },
-	{ "r16", (long *)&ddb_regs.fixreg[13],	FCN_NULL },
+	{ "r14", (long *)&ddb_regs.fixreg[14],	FCN_NULL },
+	{ "r15", (long *)&ddb_regs.fixreg[15],	FCN_NULL },
+	{ "r16", (long *)&ddb_regs.fixreg[16],	FCN_NULL },
 	{ "r17", (long *)&ddb_regs.fixreg[17],	FCN_NULL },
 	{ "r18", (long *)&ddb_regs.fixreg[18],	FCN_NULL },
 	{ "r19", (long *)&ddb_regs.fixreg[19],	FCN_NULL },
@@ -79,8 +79,10 @@ struct db_variable db_regs[] = {
 	{ "cr",  (long *)&ddb_regs.cr,		FCN_NULL },
 	{ "xer", (long *)&ddb_regs.xer,		FCN_NULL },
 	{ "ctr", (long *)&ddb_regs.ctr,		FCN_NULL },
-	{ "iar", (long *)&ddb_regs.srr0,		FCN_NULL },
-	{ "msr", (long *)&ddb_regs.srr1,		FCN_NULL },
+	{ "iar", (long *)&ddb_regs.srr0,	FCN_NULL },
+	{ "msr", (long *)&ddb_regs.srr1,	FCN_NULL },
+	{ "dar", (long *)&ddb_regs.dar,		FCN_NULL },
+	{ "dsisr", (long *)&ddb_regs.dsisr,	FCN_NULL },
 };
 
 struct db_variable *db_eregs = db_regs + nitems(db_regs);

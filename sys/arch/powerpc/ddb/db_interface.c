@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.7 2021/05/30 15:05:32 visa Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.8 2022/01/28 18:37:40 gkoehler Exp $	*/
 /*      $NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 
 /*
@@ -86,10 +86,7 @@ db_trap_glue(struct trapframe *frame)
 
 		while (db_enter_ddb()) {
 #endif
-			bcopy(frame->fixreg, ddb_regs.fixreg,
-				32 * sizeof(u_int32_t));
-			ddb_regs.srr0 = frame->srr0;
-			ddb_regs.srr1 = frame->srr1;
+			ddb_regs = *frame;
 
 			s = splhigh();
 			db_active++;
@@ -99,8 +96,7 @@ db_trap_glue(struct trapframe *frame)
 			db_active--;
 			splx(s);
 
-			bcopy(ddb_regs.fixreg, frame->fixreg,
-				32 * sizeof(u_int32_t));
+			*frame = ddb_regs;
 #ifdef MULTIPROCESSOR
 			if (!db_switch_cpu)
 				ddb_state = DDB_STATE_EXITING;
@@ -133,6 +129,8 @@ db_enter_ddb(void)
 				ppc_send_ipi(&cpu_info[i], PPC_IPI_DDB);
 			}
 		}
+		/* ipi is slow.  Try not to db_active++ too early. */
+		delay(100);
 		return (1);
 	}
 
