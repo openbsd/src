@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_prot.h,v 1.10 2016/05/30 02:53:29 guenther Exp $	*/
+/*	$OpenBSD: yp_prot.h,v 1.11 2022/01/28 04:59:15 guenther Exp $	*/
 /*	$NetBSD: yp_prot.h,v 1.6 1995/07/14 21:10:58 christos Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
  *			tells ypserv to check if there is a new version of
  *			the map.
  * YPPROC_CLEAR		takes (void), returns (void).
- *			tells ypserv to flush it's file cache, so that
+ *			tells ypserv to flush its file cache, so that
  *			newly transferred files will get read.
  * YPPROC_ALL		takes (struct ypreq_nokey), returns (bool_t and
  *			struct ypresp_key_val).

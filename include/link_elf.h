@@ -1,4 +1,4 @@
-/*	$OpenBSD: link_elf.h,v 1.7 2016/09/20 18:24:55 kettenis Exp $	*/
+/*	$OpenBSD: link_elf.h,v 1.8 2022/01/28 04:59:15 guenther Exp $	*/
 
 /*
  * Public domain.
@@ -15,7 +15,7 @@
 
 /*
  * struct link_map is a part of the protocol between the debugger and
- * ld.so. ld.so may have additional fields in it's version of this
+ * ld.so. ld.so may have additional fields in its version of this
  * structure but those are ld.so private fields.
  */
 struct link_map {
