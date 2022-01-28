@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_srtp.c,v 1.29 2021/06/11 15:28:13 landry Exp $ */
+/* $OpenBSD: d1_srtp.c,v 1.30 2022/01/28 13:11:56 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -204,7 +204,10 @@ ssl_ctx_make_profiles(const char *profiles_string,
 
 		if (!srtp_find_profile_by_name(ptr, &p,
 		    col ? col - ptr : (int)strlen(ptr))) {
-			sk_SRTP_PROTECTION_PROFILE_push(profiles, p);
+			if (!sk_SRTP_PROTECTION_PROFILE_push(profiles, p)) {
+				sk_SRTP_PROTECTION_PROFILE_free(profiles);
+				return 1;
+			}
 		} else {
 			SSLerrorx(SSL_R_SRTP_UNKNOWN_PROTECTION_PROFILE);
 			sk_SRTP_PROTECTION_PROFILE_free(profiles);
