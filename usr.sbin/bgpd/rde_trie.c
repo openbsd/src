@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.12 2020/12/30 07:29:56 claudio Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.13 2022/01/28 10:37:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -119,7 +119,7 @@ inet6findmsb(struct in6_addr *a, struct in6_addr *b)
 static int
 inet4isset(struct in_addr *addr, u_int8_t bit)
 {
-	return addr->s_addr & htonl(1 << (31 - bit));
+	return addr->s_addr & htonl(1U << (31 - bit));
 }
 
 static int
@@ -132,7 +132,7 @@ static void
 inet4setbit(struct in_addr *addr, u_int8_t bit)
 {
 	/* bit 0 sets the MSB and 31 sets the LSB */
-	addr->s_addr |= htonl(1 << (31 - bit));
+	addr->s_addr |= htonl(1U << (31 - bit));
 }
 
 static void
