@@ -1,4 +1,4 @@
-/*	$OpenBSD: help.c,v 1.35 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: help.c,v 1.36 2022/01/28 06:18:41 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -97,7 +97,7 @@ found:
 /*
  * This function creates a table, listing all of the command
  * keys and their current bindings, and stores the table in the
- * *help* pop-up buffer.  This lets Mg produce it's own wall chart.
+ * *help* pop-up buffer.  This lets Mg produce its own wall chart.
  */
 /* ARGSUSED */
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.31 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.32 2022/01/28 06:18:41 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -86,7 +86,7 @@ getcwdir(char *buf, size_t len)
 	return (TRUE);
 }
 
-/* Create the directory and it's parents. */
+/* Create the directory and its parents. */
 /* ARGSUSED */
 int
 makedir(int f, int n)

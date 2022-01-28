@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.16 2015/10/13 08:49:51 guenther Exp $	*/
+/*	$OpenBSD: def.h,v 1.17 2022/01/28 06:18:41 guenther Exp $	*/
 /*	$NetBSD: def.h,v 1.9 1996/12/28 07:11:00 tls Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$OpenBSD: def.h,v 1.16 2015/10/13 08:49:51 guenther Exp $
+ *	$OpenBSD: def.h,v 1.17 2022/01/28 06:18:41 guenther Exp $
  */
 
 /*
@@ -199,7 +199,7 @@ struct name {
 struct var {
 	struct	var *v_link;		/* Forward link to next variable */
 	char	*v_name;		/* The variable's name */
-	char	*v_value;		/* And it's current value */
+	char	*v_value;		/* And its current value */
 };
 
 struct group {

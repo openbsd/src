@@ -1,4 +1,4 @@
-/*	$OpenBSD: showmount.c,v 1.23 2018/04/26 12:42:51 guenther Exp $	*/
+/*	$OpenBSD: showmount.c,v 1.24 2022/01/28 06:18:42 guenther Exp $	*/
 /*	$NetBSD: showmount.c,v 1.7 1996/05/01 18:14:10 cgd Exp $	*/
 
 /*
@@ -83,8 +83,8 @@ int	xdr_mntdump(XDR *, struct mountlist **);
 int	xdr_exports(XDR *, struct exportslist **);
 
 /*
- * This command queries the NFS mount daemon for it's mount list and/or
- * it's exports list and prints them out.
+ * This command queries the NFS mount daemon for its mount list and/or
+ * its exports list and prints them out.
  * See "NFS: Network File System Protocol Specification, RFC1094, Appendix A"
  * and the "Network File System Protocol XXX.."
  * for detailed information on the protocol.

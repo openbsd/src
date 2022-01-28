@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.34 2019/06/28 13:35:03 deraadt Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.35 2022/01/28 06:18:41 guenther Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -344,7 +344,7 @@ makeconn(char *rhost)
 
 	/*
 	 * For future compatibility we check to see if the server
-	 * sent it's version number to us.  If it did, we use it,
+	 * sent its version number to us.  If it did, we use it,
 	 * otherwise, we send our version number to the server and let
 	 * it decide if it can handle our protocol version.
 	 */
@@ -357,7 +357,7 @@ makeconn(char *rhost)
 			return(0);
 	} else {
 		/*
-		 * The server sent it's version number to us
+		 * The server sent its version number to us
 		 */
 		int proto_version = atoi(&respbuff[1]);
 		if (proto_version != VERSION) {

@@ -1,4 +1,4 @@
-/*      $OpenBSD: interpreter.c,v 1.33 2022/01/20 14:07:34 naddy Exp $	*/
+/*      $OpenBSD: interpreter.c,v 1.34 2022/01/28 06:18:41 guenther Exp $	*/
 /*
  * This file is in the public domain.
  *
@@ -8,7 +8,7 @@
 /*
  * This file attempts to add some 'scripting' functionality into mg.
  *
- * The initial goal is to give mg the ability to use it's existing functions
+ * The initial goal is to give mg the ability to use its existing functions
  * and structures in a linked-up way. Hopefully resulting in user definable
  * functions. The syntax is 'scheme' like but currently it is not a scheme
  * interpreter.
