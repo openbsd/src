@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.99 2021/11/12 22:28:13 guenther Exp $ */
+/*	$OpenBSD: resolve.h,v 1.100 2022/01/28 05:01:28 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -80,7 +80,7 @@ void	object_vec_grow(struct object_vector *_vec, int _more);
 /*
  *  Structure describing a loaded object.
  *  The head of this struct must be compatible
- *  with struct link_map in sys/link.h
+ *  with struct link_map in <link_elf.h>
  */
 struct elf_object {
 	Elf_Addr obj_base;		/* object's address '0' base */
