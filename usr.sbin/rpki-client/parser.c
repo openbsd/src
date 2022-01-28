@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.56 2022/01/26 14:42:39 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.57 2022/01/28 06:33:27 guenther Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -434,7 +434,7 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len)
 
 /*
  * Root certificates come from TALs (has a pkey and is self-signed).
- * Parse the certificate, ensure that it's public key matches the
+ * Parse the certificate, ensure that its public key matches the
  * known public key from the TAL, and then validate the RPKI
  * content.
  *

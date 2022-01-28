@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.61 2020/04/16 17:51:56 millert Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.62 2022/01/28 06:33:27 guenther Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -339,8 +339,8 @@ child_process(entry *e, user *u)
 	close(stdin_pipe[WRITE_PIPE]);
 
 	/*
-	 * read output from the grandchild.  it's stderr has been redirected to
-	 * it's stdout, which has been redirected to our pipe.  if there is any
+	 * read output from the grandchild.  Its stderr has been redirected to
+	 * its stdout, which has been redirected to our pipe.  if there is any
 	 * output, we'll be mailing it to the user whose crontab this is...
 	 * when the grandchild exits, we'll get EOF.
 	 */

@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.41 2022/01/04 15:18:44 claudio Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.42 2022/01/28 06:33:27 guenther Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -248,7 +248,7 @@ push_pt_64(void)
 /*
  * loadfile_elf
  *
- * Loads an ELF kernel to it's defined load address in the guest VM.
+ * Loads an ELF kernel to its defined load address in the guest VM.
  * The kernel is loaded to its defined start point as set in the ELF header.
  *
  * Parameters:
