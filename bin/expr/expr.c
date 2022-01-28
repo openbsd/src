@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.27 2018/03/31 14:50:56 tobias Exp $	*/
+/*	$OpenBSD: expr.c,v 1.28 2022/01/28 05:15:05 guenther Exp $	*/
 /*	$NetBSD: expr.c,v 1.3.6.1 1996/06/04 20:41:47 cgd Exp $	*/
 
 /*
@@ -92,7 +92,7 @@ free_value(struct val *vp)
 }
 
 
-/* determine if vp is an integer; if so, return it's value in *r */
+/* determine if vp is an integer; if so, return its value in *r */
 int
 is_integer(struct val *vp, int64_t *r, const char **errstr)
 {

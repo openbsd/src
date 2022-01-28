@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.48 2022/01/05 20:57:27 millert Exp $	*/
+/*	$OpenBSD: csh.c,v 1.49 2022/01/28 05:15:05 guenther Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -921,7 +921,7 @@ phup(int sig)
 	    do
 		/*
 		 * If a process is in the foreground; we try to kill
-		 * it's process group. If we succeed, then the
+		 * its process group. If we succeed, then the
 		 * whole job is gone. Otherwise we keep going...
 		 * But avoid sending HUP to the shell again.
 		 */

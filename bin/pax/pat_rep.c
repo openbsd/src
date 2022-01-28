@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.43 2017/09/16 07:42:34 otto Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.44 2022/01/28 05:15:05 guenther Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ static int resub(regex_t *, regmatch_t *, char *, char *, char *, char *);
 /*
  * rep_add()
  *	parses the -s replacement string; compiles the regular expression
- *	and stores the compiled value and it's replacement string together in
+ *	and stores the compiled value and its replacement string together in
  *	replacement string list. Input to this function is of the form:
  *		/old/new/pg
  *	The first char in the string specifies the delimiter used by this
