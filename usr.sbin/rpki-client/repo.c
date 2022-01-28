@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.28 2022/01/26 13:57:56 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.29 2022/01/28 14:11:27 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1389,7 +1389,7 @@ repo_cleanup(struct filepath_tree *tree)
 			 * clear them if they are not used anymore but
 			 * only if rrdp is active.
 			 */
-			if (e->fts_pointer == RRDP_DIR && !noop && rrdpon &&
+			if (e->fts_pointer == RRDP_DIR && !noop &&
 			    e->fts_level == 2) {
 				if (!rrdp_is_active(path))
 					e->fts_pointer = NULL;
