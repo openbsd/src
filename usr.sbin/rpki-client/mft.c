@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.51 2022/01/24 17:29:37 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.52 2022/01/28 15:30:23 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -42,23 +42,6 @@ struct	parse {
 
 extern ASN1_OBJECT    *mft_oid;
 
-static const char *
-gentime2str(const ASN1_GENERALIZEDTIME *time)
-{
-	static char	buf[64];
-	BIO		*mem;
-
-	if ((mem = BIO_new(BIO_s_mem())) == NULL)
-		cryptoerrx("BIO_new");
-	if (!ASN1_GENERALIZEDTIME_print(mem, time))
-		cryptoerrx("ASN1_GENERALIZEDTIME_print");
-	if (BIO_gets(mem, buf, sizeof(buf)) < 0)
-		cryptoerrx("BIO_gets");
-
-	BIO_free(mem);
-	return buf;
-}
-
 /*
  * Convert an ASN1_GENERALIZEDTIME to a struct tm.
  * Returns 1 on success, 0 on failure.
@@ -79,44 +62,32 @@ generalizedtime_to_tm(const ASN1_GENERALIZEDTIME *gtime, struct tm *tm)
 
 /*
  * Validate and verify the time validity of the mft.
- * Returns 1 if all is good, 0 if mft is stale, any other case -1.
+ * Returns 1 if all is good and for any other case 0.
  */
 static int
-check_validity(const ASN1_GENERALIZEDTIME *from,
-    const ASN1_GENERALIZEDTIME *until, const char *fn)
+mft_parse_time(const ASN1_GENERALIZEDTIME *from,
+    const ASN1_GENERALIZEDTIME *until, struct parse *p)
 {
-	time_t now = time(NULL);
-	struct tm tm_from, tm_until, tm_now;
-
-	if (gmtime_r(&now, &tm_now) == NULL) {
-		warnx("%s: could not get current time", fn);
-		return -1;
-	}
+	struct tm tm_from, tm_until;
 
 	if (!generalizedtime_to_tm(from, &tm_from)) {
-		warnx("%s: embedded from time format invalid", fn);
-		return -1;
+		warnx("%s: embedded from time format invalid", p->fn);
+		return 0;
 	}
 	if (!generalizedtime_to_tm(until, &tm_until)) {
-		warnx("%s: embedded until time format invalid", fn);
-		return -1;
+		warnx("%s: embedded until time format invalid", p->fn);
+		return 0;
 	}
 
 	/* check that until is not before from */
 	if (ASN1_time_tm_cmp(&tm_until, &tm_from) < 0) {
-		warnx("%s: bad update interval", fn);
-		return -1;
-	}
-	/* check that now is not before from */
-	if (ASN1_time_tm_cmp(&tm_from, &tm_now) > 0) {
-		warnx("%s: mft not yet valid %s", fn, gentime2str(from));
-		return -1;
-	}
-	/* check that now is not after until */
-	if (ASN1_time_tm_cmp(&tm_until, &tm_now) < 0) {
-		warnx("%s: mft expired on %s", fn, gentime2str(until));
+		warnx("%s: bad update interval", p->fn);
 		return 0;
 	}
+
+	if ((p->res->valid_from = mktime(&tm_from)) == -1 ||
+	    (p->res->valid_until = mktime(&tm_until)) == -1)
+		errx(1, "%s: mktime failed", p->fn);
 
 	return 1;
 }
@@ -426,15 +397,8 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	}
 	until = t->value.generalizedtime;
 
-	switch (check_validity(from, until, p->fn)) {
-	case 0:
-		p->res->stale = 1;
-		/* FALLTHROUGH */
-	case 1:
-		break;
-	case -1:
+	if (!mft_parse_time(from, until, p))
 		goto out;
-	}
 
 	/* File list algorithm. */
 
@@ -570,6 +534,8 @@ mft_buffer(struct ibuf *b, const struct mft *p)
 		io_str_buffer(b, p->files[i].file);
 		io_simple_buffer(b, &p->files[i].type,
 		    sizeof(p->files[i].type));
+		io_simple_buffer(b, &p->files[i].location,
+		    sizeof(p->files[i].location));
 		io_simple_buffer(b, p->files[i].hash, SHA256_DIGEST_LENGTH);
 	}
 }
@@ -603,8 +569,36 @@ mft_read(struct ibuf *b)
 	for (i = 0; i < p->filesz; i++) {
 		io_read_str(b, &p->files[i].file);
 		io_read_buf(b, &p->files[i].type, sizeof(p->files[i].type));
+		io_read_buf(b, &p->files[i].location,
+		    sizeof(p->files[i].location));
 		io_read_buf(b, p->files[i].hash, SHA256_DIGEST_LENGTH);
 	}
 
 	return p;
+}
+
+/*
+ * Compare two MFT files, returns 1 if first MFT is preferred and 0 if second
+ * MFT should be used.
+ */
+int
+mft_compare(const struct mft *a, const struct mft *b)
+{
+	int r;
+
+	if (b == NULL)
+		return 1;
+	if (a == NULL)
+		return 0;
+
+	r = strlen(a->seqnum) - strlen(b->seqnum);
+	if (r > 0)	/* seqnum in a is longer -> higher */
+		return 1;
+	if (r < 0)	/* seqnum in a is shorter -> smaller */
+		return 0;
+
+	r = strcmp(a->seqnum, b->seqnum);
+	if (r >= 0)	/* a is greater or equal, prefer a */
+		return 1;
+	return 0;
 }

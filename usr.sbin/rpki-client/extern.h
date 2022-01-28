@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.115 2022/01/24 17:29:37 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.116 2022/01/28 15:30:23 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -164,12 +164,19 @@ enum rtype {
 	RTYPE_FILE,
 };
 
+enum location {
+	DIR_UNKNOWN,
+	DIR_TEMP,
+	DIR_VALID,
+};
+
 /*
  * Files specified in an MFT have their bodies hashed with SHA256.
  */
 struct mftfile {
 	char		*file; /* filename (CER/ROA/CRL, no path) */
 	enum rtype	 type; /* file type as determined by extension */
+	enum location	 location;	/* temporary or valid directory */
 	unsigned char	 hash[SHA256_DIGEST_LENGTH]; /* sha256 of body */
 };
 
@@ -181,11 +188,13 @@ struct mftfile {
 struct mft {
 	char		*path; /* relative path to directory of the MFT */
 	struct mftfile	*files; /* file and hash */
-	size_t		 filesz; /* number of filenames */
 	char		*seqnum; /* manifestNumber */
 	char		*aia; /* AIA */
 	char		*aki; /* AKI */
 	char		*ski; /* SKI */
+	time_t		 valid_from;
+	time_t		 valid_until;
+	size_t		 filesz; /* number of filenames */
 	unsigned int	 repoid;
 	int		 stale; /* if a stale manifest */
 };
@@ -349,6 +358,7 @@ struct entity {
 	unsigned int	 repoid;	/* repository identifier */
 	int		 talid;		/* tal identifier */
 	enum rtype	 type;		/* type of entity (not RTYPE_EOF) */
+	enum location	 location;	/* which directroy the file lives in */
 };
 TAILQ_HEAD(entityq, entity);
 
@@ -416,12 +426,13 @@ struct cert	*ta_parse(const char *, const unsigned char *, size_t,
 struct cert	*cert_read(struct ibuf *);
 void		 cert_insert_brks(struct brk_tree *, struct cert *);
 
+enum rtype	 rtype_from_file_extension(const char *);
 void		 mft_buffer(struct ibuf *, const struct mft *);
 void		 mft_free(struct mft *);
 struct mft	*mft_parse(X509 **, const char *, const unsigned char *,
 		    size_t);
 struct mft	*mft_read(struct ibuf *);
-enum rtype	 rtype_from_file_extension(const char *);
+int		 mft_compare(const struct mft *, const struct mft *);
 
 void		 roa_buffer(struct ibuf *, const struct roa *);
 void		 roa_free(struct roa *);

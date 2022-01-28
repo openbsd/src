@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.57 2022/01/28 06:33:27 guenther Exp $ */
+/*	$OpenBSD: parser.c,v 1.58 2022/01/28 15:30:23 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -91,49 +91,48 @@ repo_add(unsigned int id, char *path, char *validpath)
 		errx(1, "repository already added: id %d, %s", id, path);
 }
 
+static char *
+time2str(time_t t)
+{
+	static char buf[64];
+	struct tm tm;
+
+	if (gmtime_r(&t, &tm) == NULL)
+		return "could not convert time";
+
+	strftime(buf, sizeof(buf), "%h %d %T %Y %Z", &tm);
+	return buf;
+}
+
 /*
- * Build access path to file based on repoid, path and file values.
- * If wantalt == 1 the function can return NULL, if wantalt == 0 it
- * can not fail.
+ * Build access path to file based on repoid, path, location and file values.
  */
 static char *
 parse_filepath(unsigned int repoid, const char *path, const char *file,
-    int wantalt)
+    enum location loc)
 {
 	struct parse_repo	*rp;
 	char			*fn, *repopath;
 
 	/* build file path based on repoid, entity path and filename */
 	rp = repo_get(repoid);
-	if (rp == NULL) {
-		/* no repo so no alternative path. */
-		if (wantalt)
-			return NULL;
+	if (rp == NULL)
+		return NULL;
+	
+	if (loc == DIR_VALID)
+		repopath = rp->validpath;
+	else
+		repopath = rp->path;
 
-		if (path == NULL) {
-			if ((fn = strdup(file)) == NULL)
-				err(1, NULL);
-		} else {
-			if (asprintf(&fn, "%s/%s", path, file) == -1)
-				err(1, NULL);
-		}
+	if (repopath == NULL)
+		return NULL;
+
+	if (path == NULL) {
+		if (asprintf(&fn, "%s/%s", repopath, file) == -1)
+			err(1, NULL);
 	} else {
-		if (wantalt || rp->path == NULL)
-			repopath = rp->validpath;
-		else
-			repopath = rp->path;
-
-		if (repopath == NULL)
-			return NULL;
-
-		if (path == NULL) {
-			if (asprintf(&fn, "%s/%s", repopath, file) == -1)
-				err(1, NULL);
-		} else {
-			if (asprintf(&fn, "%s/%s/%s", repopath, path,
-			    file) == -1)
-				err(1, NULL);
-		}
+		if (asprintf(&fn, "%s/%s/%s", repopath, path, file) == -1)
+			err(1, NULL);
 	}
 	return fn;
 }
@@ -205,7 +204,7 @@ verify_cb(int ok, X509_STORE_CTX *store_ctx)
  */
 static int
 valid_x509(char *file, X509 *x509, struct auth *a, struct crl *crl,
-    unsigned long flags)
+    unsigned long flags, int nowarn)
 {
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls = NULL;
@@ -229,7 +228,8 @@ valid_x509(char *file, X509 *x509, struct auth *a, struct crl *crl,
 
 	if (X509_verify_cert(ctx) <= 0) {
 		c = X509_STORE_CTX_get_error(ctx);
-		warnx("%s: %s", file, X509_verify_cert_error_string(c));
+		if (!nowarn || verbose > 1)
+			warnx("%s: %s", file, X509_verify_cert_error_string(c));
 		X509_STORE_CTX_cleanup(ctx);
 		sk_X509_free(chain);
 		sk_X509_CRL_free(crls);
@@ -261,7 +261,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
 	a = valid_ski_aki(file, &auths, roa->ski, roa->aki);
 	crl = get_crl(a);
 
-	if (!valid_x509(file, x509, a, crl, X509_V_FLAG_CRL_CHECK)) {
+	if (!valid_x509(file, x509, a, crl, X509_V_FLAG_CRL_CHECK, 0)) {
 		X509_free(x509);
 		roa_free(roa);
 		return NULL;
@@ -303,28 +303,35 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
 static int
 proc_parser_mft_check(const char *fn, struct mft *p)
 {
-	size_t	i;
-	int	rc = 1;
+	const enum location loc[2] = { DIR_TEMP, DIR_VALID };
+	size_t	 i;
+	int	 rc = 1;
 	char	*path;
 
 	for (i = 0; i < p->filesz; i++) {
-		const struct mftfile *m = &p->files[i];
-		int fd = -1, try = 0;
-
-		path = NULL;
-		do {
-			free(path);
+		struct mftfile *m = &p->files[i];
+		int try, fd = -1, noent = 0, valid = 0;
+		for (try = 0; try < 2 && !valid; try++) {
 			if ((path = parse_filepath(p->repoid, p->path, m->file,
-			    try++)) == NULL)
-				break;
+			    loc[try])) == NULL)
+				continue;
 			fd = open(path, O_RDONLY);
-		} while (fd == -1 && try < 2);
+			if (fd == -1 && errno == ENOENT)
+				noent++;
+			free(path);
 
-		free(path);
+			/* remember which path was checked */
+			m->location = loc[try];
+			valid = valid_filehash(fd, m->hash, sizeof(m->hash));
+		}
 
-		if (!valid_filehash(fd, m->hash, sizeof(m->hash))) {
+		if (!valid) {
+			/* silently skip not-existing unknown files */
+			if (m->type == RTYPE_INVALID && noent == 2)
+				continue;
 			warnx("%s: bad message digest for %s", fn, m->file);
 			rc = 0;
+			continue;
 		}
 	}
 
@@ -332,7 +339,9 @@ proc_parser_mft_check(const char *fn, struct mft *p)
 }
 
 /*
- * Parse and validate a manifest file.
+ * Parse and validate a manifest file. Skip checking the fileandhash
+ * this is done in the post check. After this step we know the mft is
+ * valid and can be compared.
  * Here we *don't* validate against the list of CRLs, because the
  * certificate used to sign the manifest may specify a CRL that the root
  * certificate didn't, and we haven't scanned for it yet.
@@ -342,8 +351,7 @@ proc_parser_mft_check(const char *fn, struct mft *p)
  * Return the mft on success or NULL on failure.
  */
 static struct mft *
-proc_parser_mft(char *file, const unsigned char *der, size_t len,
-    const char *path, unsigned int repoid)
+proc_parser_mft_pre(char *file, const unsigned char *der, size_t len)
 {
 	struct mft		*mft;
 	X509			*x509;
@@ -355,12 +363,44 @@ proc_parser_mft(char *file, const unsigned char *der, size_t len,
 	a = valid_ski_aki(file, &auths, mft->ski, mft->aki);
 
 	/* CRL checks disabled here because CRL is referenced from mft */
-	if (!valid_x509(file, x509, a, NULL, 0)) {
+	if (!valid_x509(file, x509, a, NULL, 0, 1)) {
 		mft_free(mft);
 		X509_free(x509);
 		return NULL;
 	}
 	X509_free(x509);
+
+	return mft;
+}
+
+/*
+ * Do the end of manifest validation.
+ * Return the mft on success or NULL on failure.
+ */
+static struct mft *
+proc_parser_mft_post(char *file, struct mft *mft, const char *path,
+    unsigned int repoid)
+{
+	/* check that now is not before from */
+	time_t now = time(NULL);
+
+	if (mft == NULL) {
+		warnx("%s: no valid mft available", file);
+		return NULL;
+	}
+
+	/* check that now is not before from */
+	if (now < mft->valid_from) {
+		warnx("%s: mft not yet valid %s", file,
+		    time2str(mft->valid_from));
+		mft->stale = 1;
+	}
+	/* check that now is not after until */
+	if (now > mft->valid_until) {
+		warnx("%s: mft expired on %s", file,
+		    time2str(mft->valid_until));
+		mft->stale = 1;
+	}
 
 	mft->repoid = repoid;
 	if (path != NULL)
@@ -388,7 +428,7 @@ proc_parser_cert_validate(char *file, struct cert *cert)
 	a = valid_ski_aki(file, &auths, cert->ski, cert->aki);
 	crl = get_crl(a);
 
-	if (!valid_x509(file, cert->x509, a, crl, X509_V_FLAG_CRL_CHECK)) {
+	if (!valid_x509(file, cert->x509, a, crl, X509_V_FLAG_CRL_CHECK, 0)) {
 		cert_free(cert);
 		return NULL;
 	}
@@ -537,7 +577,7 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len)
 	crl = get_crl(a);
 
 	/* return value can be ignored since nothing happens here */
-	valid_x509(file, x509, a, crl, X509_V_FLAG_CRL_CHECK);
+	valid_x509(file, x509, a, crl, X509_V_FLAG_CRL_CHECK, 0);
 
 	X509_free(x509);
 	gbr_free(gbr);
@@ -599,42 +639,63 @@ build_crls(const struct crl *crl, STACK_OF(X509_CRL) **crls)
 		err(1, "sk_X509_CRL_push");
 }
 
+/*
+ * Load the file specified by the entity information.
+ */
 static char *
 parse_load_file(struct entity *entp, unsigned char **f, size_t *flen)
 {
-	char *file, *nfile;
+	char *file;
 
-	file = parse_filepath(entp->repoid, entp->path, entp->file, 0);
+	file = parse_filepath(entp->repoid, entp->path, entp->file,
+	    entp->location);
+	if (file == NULL)
+		errx(1, "no path to file");
 
-	/* TAL files include the data already */
-	if (entp->type == RTYPE_TAL) {
-		*f = NULL;
-		*flen = 0;
-		return file;
+	*f = load_file(file, flen);
+	if (*f == NULL)
+		warn("parse file %s", file);
+
+	return file;
+}
+
+static char *
+parse_load_mft(struct entity *entp, struct mft **mft)
+{
+	struct mft	*mft1 = NULL, *mft2 = NULL;
+	char		*f, *file1, *file2;
+	size_t		 flen;
+
+	file1 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_VALID);
+	file2 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_TEMP);
+
+	if (file1 != NULL) {
+		f = load_file(file1, &flen);
+		if (f == NULL && errno != ENOENT)
+			warn("parse file %s", file1);
+		mft1 = proc_parser_mft_pre(file1, f, flen);
+		free(f);
 	}
 
-	*f = load_file(file, flen);
-	if (*f != NULL)
-		return file;
+	if (file2 != NULL) {
+		f = load_file(file2, &flen);
+		if (f == NULL && errno != ENOENT)
+			warn("parse file %s", file2);
+		mft2 = proc_parser_mft_pre(file2, f, flen);
+		free(f);
+	}
 
-	if (errno != ENOENT)
-		goto fail;
-
-	/* try alternate file location */
-	nfile = parse_filepath(entp->repoid, entp->path, entp->file, 1);
-	if (nfile == NULL)
-		goto fail;
-
-	free(file);
-	file = nfile;
-
-	*f = load_file(file, flen);
-	if (*f != NULL)
-		return file;
-
-fail:
-	warn("parse file %s", file);
-	return file;
+	if (mft_compare(mft1, mft2) == 1) {
+		mft_free(mft2);
+		free(file2);
+		*mft = mft1;
+		return file1;
+	} else {
+		mft_free(mft1);
+		free(file1);
+		*mft = mft2;
+		return file2;
+	}
 }
 
 /*
@@ -664,15 +725,15 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			continue;
 		}
 
-		file = parse_load_file(entp, &f, &flen);
-
 		/* pass back at least type, repoid and filename */
 		b = io_new_buffer();
 		io_simple_buffer(b, &entp->type, sizeof(entp->type));
-		io_str_buffer(b, file);
 
+		file = NULL;
+		f = NULL;
 		switch (entp->type) {
 		case RTYPE_TAL:
+			io_str_buffer(b, entp->file);
 			if ((tal = tal_parse(entp->file, entp->data,
 			    entp->datasz)) == NULL)
 				errx(1, "%s: could not parse tal file",
@@ -682,6 +743,8 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			tal_free(tal);
 			break;
 		case RTYPE_CER:
+			file = parse_load_file(entp, &f, &flen);
+			io_str_buffer(b, file);
 			if (entp->data != NULL)
 				cert = proc_parser_root_cert(file,
 				    f, flen, entp->data, entp->datasz,
@@ -695,15 +758,21 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			/*
 			 * The parsed certificate data "cert" is now
 			 * managed in the "auths" table, so don't free
-			 * it here (see the loop after "out").
+			 * it here.
 			 */
 			break;
 		case RTYPE_CRL:
+			file = parse_load_file(entp, &f, &flen);
+			io_str_buffer(b, file);
 			proc_parser_crl(file, f, flen);
 			break;
 		case RTYPE_MFT:
-			mft = proc_parser_mft(file, f, flen,
+			file = parse_load_mft(entp, &mft);
+
+			mft = proc_parser_mft_post(file, mft,
 			    entp->path, entp->repoid);
+
+			io_str_buffer(b, file);
 			c = (mft != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (mft != NULL)
@@ -711,6 +780,8 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			mft_free(mft);
 			break;
 		case RTYPE_ROA:
+			file = parse_load_file(entp, &f, &flen);
+			io_str_buffer(b, file);
 			roa = proc_parser_roa(file, f, flen);
 			c = (roa != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
@@ -719,6 +790,8 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			roa_free(roa);
 			break;
 		case RTYPE_GBR:
+			file = parse_load_file(entp, &f, &flen);
+			io_str_buffer(b, file);
 			proc_parser_gbr(file, f, flen);
 			break;
 		default:
@@ -981,7 +1054,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		a = auth_find(&auths, aki);
 		crl = get_crl(a);
 
-		if (valid_x509(file, x509, a, crl, verify_flags))
+		if (valid_x509(file, x509, a, crl, verify_flags, 0))
 			printf("Validation: OK\n");
 		else
 			printf("Validation: Failed\n");
