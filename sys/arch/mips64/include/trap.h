@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.16 2014/04/09 21:10:34 miod Exp $	*/
+/*	$OpenBSD: trap.h,v 1.17 2022/01/28 16:20:09 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,7 +77,6 @@
 #define	KT_COPYERR	1		/* User space copy error */
 #define	KT_KCOPYERR	2		/* Kernel space copy error */
 #define	KT_DDBERR	3		/* DDB access error */
-#define	KT_GUARDERR	4		/* guarded access error */
 
 #ifndef _LOCORE
 

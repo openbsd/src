@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.137 2021/10/07 13:08:17 visa Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.138 2022/01/28 16:20:09 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -425,11 +425,6 @@ void	MipsSaveCurFPState(struct proc *);
 void	MipsSaveCurFPState16(struct proc *);
 void	MipsSwitchFPState(struct proc *, struct trapframe *);
 void	MipsSwitchFPState16(struct proc *, struct trapframe *);
-
-int	guarded_read_1(paddr_t, uint8_t *);
-int	guarded_read_2(paddr_t, uint16_t *);
-int	guarded_read_4(paddr_t, uint32_t *);
-int	guarded_write_4(paddr_t, uint32_t);
 
 void	MipsFPTrap(struct trapframe *);
 register_t MipsEmulateBranch(struct trapframe *, vaddr_t, uint32_t, uint32_t);
