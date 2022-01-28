@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.h,v 1.23 2021/01/28 01:18:44 mortimer Exp $	 */
+/* $OpenBSD: transport.h,v 1.24 2022/01/28 05:24:15 guenther Exp $	 */
 /* $EOM: transport.h,v 1.16 2000/07/17 18:57:59 provos Exp $	 */
 
 /*
@@ -70,7 +70,7 @@ struct transport_vtbl {
 	/* Report status of given transport */
 	void            (*report) (struct transport *);
 
-	/* Let the given transport set it's bit in the fd_set passed in.  */
+	/* Let the given transport set its bit in the fd_set passed in.  */
 	int             (*fd_set) (struct transport *, fd_set *, int);
 
 	/* Is the given transport ready for I/O?  */

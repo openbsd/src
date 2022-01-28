@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_optimize.c,v 1.48 2022/01/16 14:28:16 naddy Exp $ */
+/*	$OpenBSD: pfctl_optimize.c,v 1.49 2022/01/28 05:24:15 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Mike Frantzen <frantzen@openbsd.org>
@@ -80,7 +80,7 @@ TAILQ_HEAD(superblocks, superblock);
  * Description of the PF rule structure.
  */
 enum {
-    BARRIER,	/* the presence of the field puts the rule in it's own block */
+    BARRIER,	/* the presence of the field puts the rule in its own block */
     BREAK,	/* the field may not differ between rules in a superblock */
     NOMERGE,	/* the field may not differ between rules when combined */
     COMBINED,	/* the field may itself be combined with other rules */
@@ -100,7 +100,7 @@ struct pf_rule_field {
 
 
     /*
-     * The presence of these fields in a rule put the rule in it's own
+     * The presence of these fields in a rule put the rule in its own
      * superblock.  Thus it will not be optimized.  It also prevents the
      * rule from being re-ordered at all.
      */

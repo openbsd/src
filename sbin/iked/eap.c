@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.19 2020/11/18 22:24:03 tobhe Exp $	*/
+/*	$OpenBSD: eap.c,v 1.20 2022/01/28 05:24:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -95,7 +95,7 @@ eap_identity_request(struct iked *env, struct iked_sa *sa)
 	if (sa->sa_hdr.sh_initiator)
 		return (-1);
 
-	/* Check if "ca" has done it's job yet */
+	/* Check if "ca" has done its job yet */
 	if (!sa->sa_localauth.id_type)
 		return (0);
 

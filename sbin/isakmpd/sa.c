@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.c,v 1.124 2017/12/05 20:31:45 jca Exp $	 */
+/* $OpenBSD: sa.c,v 1.125 2022/01/28 05:24:15 guenther Exp $	 */
 /* $EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	 */
 
 /*
@@ -1101,7 +1101,7 @@ sa_add_transform(struct sa *sa, struct payload *xf, int initiator,
 	} else {
 		/*
 		 * RFC 2408, section 4.2 states the responder SHOULD use the
-		 * proposal number from the initiator (i.e us), in it's
+		 * proposal number from the initiator (i.e us), in its
 		 * selected proposal to make this lookup easier. Most vendors
 		 * follow this. One noted exception is the CiscoPIX (and
 		 * perhaps other Cisco products).
