@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.93 2022/01/08 12:59:58 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.94 2022/01/28 13:14:48 inoguchi Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -558,8 +558,10 @@ SSL_load_client_CA_file(const char *file)
 		if (sk_X509_NAME_find(sk, xn) >= 0)
 			X509_NAME_free(xn);
 		else {
-			sk_X509_NAME_push(sk, xn);
-			sk_X509_NAME_push(ret, xn);
+			if (!sk_X509_NAME_push(sk, xn))
+				goto err;
+			if (!sk_X509_NAME_push(ret, xn))
+				goto err;
 		}
 	}
 
@@ -619,7 +621,8 @@ SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 		if (sk_X509_NAME_find(stack, xn) >= 0)
 			X509_NAME_free(xn);
 		else
-			sk_X509_NAME_push(stack, xn);
+			if (!sk_X509_NAME_push(stack, xn))
+				goto err;
 	}
 
 	ERR_clear_error();
