@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.33 2022/01/29 22:32:02 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.34 2022/01/29 22:43:50 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -319,7 +319,7 @@ unregister_firmware() {
 
 usage() {
 	echo "usage: ${0##*/} [-adFnv] [-p path] [driver | file ...]"
-	exit 2
+	exit 1
 }
 
 ALL=false
@@ -335,11 +335,11 @@ do
 	v) ((++VERBOSE)) ;;
 	:)
 	    echo "${0##*/}: option requires an argument -- -$OPTARG" >&2
-	    usage 2
+	    usage
 	    ;;
 	?)
 	    echo "${0##*/}: unknown option -- -$OPTARG" >&2
-	    usage 2
+	    usage
 	    ;;
 	esac
 done
@@ -353,7 +353,7 @@ if [ "$LOCALSRC" ]; then
 		LOCALSRC="${LOCALSRC:#file:}"
 		! [ -d "$LOCALSRC" ] &&
 		    echo "The path must be a URL or an existing directory" >&2 &&
-		    exit 2
+		    exit 1
 	fi
 fi
 
@@ -384,14 +384,14 @@ fi
 set -sA devices -- "$@"
 
 if "$DELETE"; then
-	[ "$OPT_F" ] && echo "Cannot use -F and -d" >&2 && usage 22
+	[ "$OPT_F" ] && echo "Cannot use -F and -d" >&2 && usage
 
 	# Show the "Uninstall" message when just deleting not upgrading
 	((VERBOSE)) && VERBOSE=3
 
 	set -A installed
 	if [ "${devices[*]:-}" ]; then
-		"$ALL" && echo "Cannot use -a and devices/files" >&2 && usage 22
+		"$ALL" && echo "Cannot use -a and devices/files" >&2 && usage
 
 		set -A installed -- $(
 		    for d in "${devices[@]}"; do
@@ -438,7 +438,7 @@ fi
 CFILE="$LOCALSRC/$CFILE"
 
 if [ "${devices[*]:-}" ]; then
-	"$ALL" && echo "Cannot use -a and devices/files" >&2 && usage 22
+	"$ALL" && echo "Cannot use -a and devices/files" >&2 && usage
 else
 	((VERBOSE > 1)) && echo -n "Detect firmware ..."
 	set -sA devices -- $( detect_firmware )
@@ -469,7 +469,7 @@ for f in "${devices[@]}"; do
 		f="$LOCALSRC/$f"
 	elif ! "$INSTALL" && ! grep -Fq "($f)" "$CFILE" ; then
 		echo "Cannot download local file $f" >&2
-		exit 2
+		exit 1
 	else
 		# Don't verify files specified on the command-line
 		verify_existing=false
