@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.32 2022/01/24 00:47:05 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.33 2022/01/29 22:32:02 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -170,9 +170,7 @@ firmware_in_dmesg() {
 firmware_filename() {
 	local _f
 	[ -e "$CFILE" ] || fetch_cfile || return 1
-	_f="$( sed -n "s/.*(\($1-firmware-.*\.tgz\)).*/\1/p" "$CFILE" | sed '$!d' )"
-	! [ "$_f" ] && echo "Unable to find firmware for $1" >&2 && return 1
-	echo "$_f"
+	sed -n "s/.*(\($1-firmware-.*\.tgz\)).*/\1/p" "$CFILE" | sed '$!d'
 }
 
 firmware_devicename() {
@@ -252,6 +250,21 @@ EOL
 	unset FWPKGTMP
 }
 
+remove_files() {
+	# Use rm -f, not removing files/dirs is probably not worth failing over
+	for _r in "$@" ; do
+		if [ -d "$_r" ]; then
+			# The installer lacks rmdir,
+			# but we only want to remove empty directories.
+			set +o noglob
+			[ "$_r/*" = "$( echo "$_r"/* )" ] && rm -rf "$_r"
+			set -o noglob
+		else
+			rm -f "$_r"
+		fi
+	done
+}
+
 delete_firmware() {
 	local _cwd _pkg="$1" _pkgdir="${DESTDIR}/var/db/pkg"
 
@@ -278,22 +291,30 @@ delete_firmware() {
 		esac
 	done < "${_pkgdir}/${_pkg}/+CONTENTS"
 
-	# Use rm -f, not removing files/dirs is probably not worth failing over
-	for _r in "${_remove[@]}" ; do
-		if [ -d "$_r" ]; then
-			# The installer lacks rmdir,
-			# but we only want to remove empty directories.
-			set +o noglob
-			[ "$_r/*" = "$( echo "$_r"/* )" ] && rm -rf "$_r"
-			set -o noglob
-		else
-			rm -f "$_r"
-		fi
-	done
+	remove_files "${_remove[@]}"
 
 	((VERBOSE > 2)) && echo " done."
 
 	return 0
+}
+
+unregister_firmware() {
+	local _d="$1" _pkgdir="${DESTDIR}/var/db/pkg"
+
+	set -A installed -- $( installed_firmware '' "$d-firmware-" '*' )
+	if [ "${installed:-}" ]; then
+		for fw in "${installed[@]}"; do
+			((VERBOSE)) && echo "Unregister $fw"
+			"$DRYRUN" && continue
+			remove_files \
+			    "$_pkgdir/$fw/+CONTENTS" \
+			    "$_pkgdir/$fw/+DESC" \
+			    "$_pkgdir/$fw/"
+		done
+		return 0
+	fi
+
+	return 1
 }
 
 usage() {
@@ -430,13 +451,21 @@ fi
 added=''
 updated=''
 kept=''
+unregister=''
 for f in "${devices[@]}"; do
 	d="$( firmware_devicename "$f" )"
 
 	verify_existing=true
 	if [ "$f" = "$d" ]; then
 		f=$( firmware_filename "$d" || true )
-		[ "$f" ] || continue
+		if [ ! "$f" ]; then
+			if "$INSTALL" && unregister_firmware "$d"; then
+				unregister="$unregister,$d"
+			else
+				echo "Unable to find firmware for $d" >&2
+			fi
+			continue
+		fi
 		f="$LOCALSRC/$f"
 	elif ! "$INSTALL" && ! grep -Fq "($f)" "$CFILE" ; then
 		echo "Cannot download local file $f" >&2
@@ -536,8 +565,9 @@ done
 added="${added:#,}"
 updated="${updated:#,}"
 kept="${kept:#,}"
+[ "${unregister:-}" ] && unregister="; unregistered ${unregister:#,}"
 if "$INSTALL"; then
-	echo  "${0##*/}: added ${added:-none}; updated ${updated:-none}; kept ${kept:-none}"
+	echo  "${0##*/}: added ${added:-none}; updated ${updated:-none}; kept ${kept:-none}${unregister}"
 else
-	echo  "${0##*/}: downloaded ${added:-none}; kept ${kept:-none}"
+	echo  "${0##*/}: downloaded ${added:-none}; kept ${kept:-none}${unregister}"
 fi
