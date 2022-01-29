@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.26 2019/03/10 15:11:52 schwarze Exp $	*/
+/*	$OpenBSD: touch.c,v 1.27 2022/01/29 00:06:26 cheloha Exp $	*/
 /*	$NetBSD: touch.c,v 1.11 1995/08/31 22:10:06 jtc Exp $	*/
 
 /*
@@ -137,9 +137,18 @@ main(int argc, char *argv[])
 
 		/* Create the file. */
 		fd = open(*argv, O_WRONLY | O_CREAT, DEFFILEMODE);
-		if (fd == -1 || futimens(fd, ts) || close(fd)) {
+		if (fd == -1) {
 			rval = 1;
 			warn("%s", *argv);
+			continue;
+		}
+		if (futimens(fd, ts) == -1) {
+			warn("%s", *argv);
+			rval = 1;
+		}
+		if (close(fd) == -1) {
+			warn("%s", *argv);
+			rval = 1;
 		}
 	}
 	return rval;
