@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.302 2022/01/19 19:39:42 guenther Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.303 2022/01/29 19:23:02 guenther Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6700,7 +6700,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 	uint64_t insn_length, cr4;
 	uint64_t *rax, *rbx, *rcx, *rdx;
 	struct vmcb *vmcb;
-	uint32_t eax, ebx, ecx, edx;
+	uint32_t leaf, subleaf, eax, ebx, ecx, edx;
 	struct vmx_msr_store *msr_store;
 	int vmm_cpuid_level;
 
@@ -6747,6 +6747,9 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 	rdx = &vcpu->vc_gueststate.vg_rdx;
 	vcpu->vc_gueststate.vg_rip += insn_length;
 
+	leaf = *rax;
+	subleaf = *rcx;
+
 	/*
 	 * "If a value entered for CPUID.EAX is higher than the maximum input
 	 *  value for basic or extended function for that processor then the
@@ -6756,27 +6759,27 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 	 *  of an invalid input EAX value, any dependence on input ECX value
 	 *  in the basic leaf is honored."
 	 *
-	 * This means if rax is between vmm_cpuid_level and 0x40000000 (the start
+	 * This means if leaf is between vmm_cpuid_level and 0x40000000 (the start
 	 * of the hypervisor info leaves), clamp to vmm_cpuid_level, but without
-	 * altering subleaf.  Also, if rax is greater than the extended function
+	 * altering subleaf.  Also, if leaf is greater than the extended function
 	 * info, clamp also to vmm_cpuid_level.
 	 */
-	if ((*rax > vmm_cpuid_level && *rax < 0x40000000) ||
-	    (*rax > curcpu()->ci_pnfeatset)) {
-		DPRINTF("%s: invalid cpuid input leaf 0x%llx, guest rip="
-		    "0x%llx - resetting to 0x%x\n", __func__, *rax,
+	if ((leaf > vmm_cpuid_level && leaf < 0x40000000) ||
+	    (leaf > curcpu()->ci_pnfeatset)) {
+		DPRINTF("%s: invalid cpuid input leaf 0x%x, guest rip="
+		    "0x%llx - resetting to 0x%x\n", __func__, leaf,
 		    vcpu->vc_gueststate.vg_rip - insn_length,
 		    vmm_cpuid_level);
-		*rax = vmm_cpuid_level;
+		leaf = vmm_cpuid_level;
 	}
 
 	/* we fake up values in the range (cpuid_level, vmm_cpuid_level] */
-	if (*rax <= cpuid_level || *rax > 0x80000000)
-		CPUID_LEAF(*rax, *rcx, eax, ebx, ecx, edx);
+	if (leaf <= cpuid_level || leaf > 0x80000000)
+		CPUID_LEAF(leaf, subleaf, eax, ebx, ecx, edx);
 	else
 		eax = ebx = ecx = edx = 0;
 
-	switch (*rax) {
+	switch (leaf) {
 	case 0x00:	/* Max level and vendor ID */
 		*rax = vmm_cpuid_level;
 		*rbx = *((uint32_t *)&cpu_vendor);
@@ -6835,7 +6838,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = 0;
 		break;
 	case 0x07:	/* SEFF */
-		if (*rcx == 0) {
+		if (subleaf == 0) {
 			*rax = 0;	/* Highest subleaf supported */
 			*rbx = curcpu()->ci_feature_sefflags_ebx & VMM_SEFF0EBX_MASK;
 			*rcx = curcpu()->ci_feature_sefflags_ecx & VMM_SEFF0ECX_MASK;
@@ -6843,7 +6846,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		} else {
 			/* Unsupported subleaf */
 			DPRINTF("%s: function 0x07 (SEFF) unsupported subleaf "
-			    "0x%llx not supported\n", __func__, *rcx);
+			    "0x%x not supported\n", __func__, subleaf);
 			*rax = 0;
 			*rbx = 0;
 			*rcx = 0;
@@ -6875,12 +6878,12 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 		*rdx = 0;
 		break;
 	case 0x0d:	/* Processor ext. state information */
-		if (*rcx == 0) {
+		if (subleaf == 0) {
 			*rax = xsave_mask;
 			*rbx = ebx;
 			*rcx = ecx;
 			*rdx = edx;
-		} else if (*rcx == 1) {
+		} else if (subleaf == 1) {
 			*rax = 0;
 			*rbx = 0;
 			*rcx = 0;
