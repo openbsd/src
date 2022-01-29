@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcmp.S,v 1.4 2004/10/08 14:42:09 pefo Exp $	*/
+/*	$OpenBSD: strcmp.S,v 1.5 2022/01/29 05:47:36 visa Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -42,20 +42,20 @@ LEAF(strcmp, 0)
 1:
 	lbu	t0, 0(a0)		# get two bytes and compare them
 	lbu	t1, 0(a1)
-	beq	t0, zero, LessOrEq	# end of first string?
+	beq	t0, zero, .LessOrEq	# end of first string?
 	nop
-	bne	t0, t1, NotEq
+	bne	t0, t1, .LNotEq
 	nop
 	lbu	t0, 1(a0)		# unroll loop
 	lbu	t1, 1(a1)
-	beq	t0, zero, LessOrEq	# end of first string?
+	beq	t0, zero, .LessOrEq	# end of first string?
 	PTR_ADDU a0, a0, 2
 	beq	t0, t1, 1b
 	PTR_ADDU a1, a1, 2
-NotEq:
+.LNotEq:
 	j	ra
 	PTR_SUBU v0, t0, t1
-LessOrEq:
+.LessOrEq:
 	j	ra
 	PTR_SUBU v0, zero, t1
 END(strcmp)

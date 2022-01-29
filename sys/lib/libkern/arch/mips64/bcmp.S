@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcmp.S,v 1.4 2004/10/08 14:42:09 pefo Exp $	*/
+/*	$OpenBSD: bcmp.S,v 1.5 2022/01/29 05:47:36 visa Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -39,11 +39,11 @@
  */
 LEAF(bcmp, 0)
 	.set	noreorder
-	blt	a2, 16, smallcmp	# is it worth any trouble?
+	blt	a2, 16, .Lsmallcmp	# is it worth any trouble?
 	xor	v0, a0, a1		# compare low two bits of addresses
 	and	v0, v0, 3
 	PTR_SUBU a3, zero, a1		# compute # bytes to word align address
-	bne	v0, zero, unalignedcmp	# not possible to align addresses
+	bne	v0, zero, .Lunalignedcmp # not possible to align addresses
 	and	a3, a3, 3
 
 	beq	a3, zero, 1f
@@ -52,7 +52,7 @@ LEAF(bcmp, 0)
 	LWHI	v0, 0(a0)		# read 1, 2, or 3 bytes
 	LWHI	v1, 0(a1)
 	PTR_ADDU a1, a1, a3
-	bne	v0, v1, nomatch
+	bne	v0, v1, .Lnomatch
 	PTR_ADDU a0, a0, a3
 1:
 	and	a3, a2, ~3		# compute number of whole words left
@@ -62,13 +62,13 @@ LEAF(bcmp, 0)
 	lw	v0, 0(a0)		# compare words
 	lw	v1, 0(a1)
 	PTR_ADDU a0, a0, 4
-	bne	v0, v1, nomatch
+	bne	v0, v1, .Lnomatch
 	PTR_ADDU a1, a1, 4
 	bne	a0, a3, 2b
 	nop
-	b	smallcmp		# finish remainder
+	b	.Lsmallcmp		# finish remainder
 	nop
-unalignedcmp:
+.Lunalignedcmp:
 	beq	a3, zero, 2f
 	PTR_SUBU a2, a2, a3		# subtract from remaining count
 	PTR_ADDU a3, a3, a0		# compute ending address
@@ -76,7 +76,7 @@ unalignedcmp:
 	lbu	v0, 0(a0)		# compare bytes until a1 word aligned
 	lbu	v1, 0(a1)
 	PTR_ADDU a0, a0, 1
-	bne	v0, v1, nomatch
+	bne	v0, v1, .Lnomatch
 	PTR_ADDU a1, a1, 1
 	bne	a0, a3, 1b
 	nop
@@ -89,25 +89,25 @@ unalignedcmp:
 	LWLO	v0, 3(a0)
 	lw	v1, 0(a1)
 	PTR_ADDU a0, a0, 4
-	bne	v0, v1, nomatch
+	bne	v0, v1, .Lnomatch
 	PTR_ADDU a1, a1, 4
 	bne	a0, a3, 3b
 	nop
-smallcmp:
-	ble	a2, zero, match
+.Lsmallcmp:
+	ble	a2, zero, .Lmatch
 	PTR_ADDU a3, a2, a0		# compute ending address
 1:
 	lbu	v0, 0(a0)
 	lbu	v1, 0(a1)
 	PTR_ADDU a0, a0, 1
-	bne	v0, v1, nomatch
+	bne	v0, v1, .Lnomatch
 	PTR_ADDU a1, a1, 1
 	bne	a0, a3, 1b
 	nop
-match:
+.Lmatch:
 	j	ra
 	move	v0, zero
-nomatch:
+.Lnomatch:
 	j	ra
 	dli	v0, 1
 END(bcmp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: memmove.S,v 1.5 2016/11/14 15:02:54 visa Exp $	*/
+/*	$OpenBSD: memmove.S,v 1.6 2022/01/29 05:47:36 visa Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@ LEAF(memcpy, 0)
 	PTR_ADDU t0, a0, a2		# t0 = end of s1 region
 	sltu	t1, a1, t0
 	sltu	t2, a0, a1
-	j	forward			# do forward copy
+	j	.Lforward		# do forward copy
 	slt	t2, a2, 12		# check for small copy
 
 ALEAF(memmove)
@@ -63,7 +63,7 @@ ALEAF(bcopy)
 	sltu	t1, a1, t0
 	sltu	t2, a0, a1
 	and	t1, t1, t2		# t1 = true if from < to < (from+len)
-	beq	t1, zero, forward	# non overlapping, do forward copy
+	beq	t1, zero, .Lforward	# non overlapping, do forward copy
 	slt	t2, a2, 12		# check for small copy
 
 	ble	a2, zero, 2f
@@ -77,13 +77,13 @@ ALEAF(bcopy)
 2:
 	j	ra
 	nop
-forward:
+.Lforward:
 #ifdef _STANDALONE
-	bne	t2, zero, smallcpy	# do a small bcopy
+	bne	t2, zero, .Lsmallcpy	# do a small bcopy
 	xor	v1, a0, a1		# compare low two bits of addresses
 	and	v1, v1, 3
 	PTR_SUBU a3, zero, a1		# compute # bytes to word align address
-	beq	v1, zero, aligned	# addresses can be word aligned
+	beq	v1, zero, .Laligned	# addresses can be word aligned
 	and	a3, a3, 3
 
 	beq	a3, zero, 1f
@@ -106,9 +106,9 @@ forward:
 	PTR_ADDU a1, a1, 4
 	bne	a0, a3, 2b
 	nop				# We have to do this mmu-bug.
-	b	smallcpy
+	b	.Lsmallcpy
 	nop
-aligned:
+.Laligned:
 	beq	a3, zero, 1f
 	PTR_SUBU a2, a2, a3		# subtract from remaining count
 	LWHI	v1, 0(a0)		# copy 1, 2, or 3 bytes to align
@@ -127,11 +127,11 @@ aligned:
 	bne	a0, a3, 2b
 	PTR_ADDU a1, a1, 4
 #else
-	bne	t2, zero, smallcpy	# do a small bcopy
+	bne	t2, zero, .Lsmallcpy	# do a small bcopy
 	xor	v1, a0, a1		# compare low three bits of addresses
 	and	v1, v1, 7
 	PTR_SUBU a3, zero, a1		# compute # bytes to dword align address
-	beq	v1, zero, aligned	# addresses can be dword aligned
+	beq	v1, zero, .Laligned	# addresses can be dword aligned
 	and	a3, a3, 7
 
 	beq	a3, zero, 1f
@@ -144,7 +144,7 @@ aligned:
 1:
 	and	v1, a2, 7		# compute number of dwords left
 	PTR_SUBU a3, a2, v1
-	beq	a3, zero, smallcpy
+	beq	a3, zero, .Lsmallcpy
 	move	a2, v1
 	PTR_ADDU a3, a3, a0		# compute ending address
 2:
@@ -155,9 +155,9 @@ aligned:
 	PTR_ADDU a1, a1, 8
 	bne	a0, a3, 2b
 	nop				# We have to do this mmu-bug.
-	b	smallcpy
+	b	.Lsmallcpy
 	nop
-aligned:
+.Laligned:
 	beq	a3, zero, 1f
 	PTR_SUBU a2, a2, a3		# subtract from remaining count
 	LDHI	v1, 0(a0)		# copy 1-7 bytes to align
@@ -167,7 +167,7 @@ aligned:
 1:
 	and	v1, a2, 7		# compute number of whole dwords left
 	PTR_SUBU a3, a2, v1
-	beq	a3, zero, smallcpy
+	beq	a3, zero, .Lsmallcpy
 	move	a2, v1
 	PTR_ADDU a3, a3, a0		# compute ending address
 2:
@@ -177,7 +177,7 @@ aligned:
 	bne	a0, a3, 2b
 	PTR_ADDU a1, a1, 8
 #endif
-smallcpy:
+.Lsmallcpy:
 	ble	a2, zero, 2f
 	PTR_ADDU a3, a2, a0		# compute ending address
 1:

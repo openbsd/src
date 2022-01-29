@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.6 2004/10/08 14:42:09 pefo Exp $	*/
+/*	$OpenBSD: bzero.S,v 1.7 2022/01/29 05:47:36 visa Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@ LEAF(bzero, 0)
 ALEAF(blkclr)
 	.set	noreorder
 #ifdef _STANDALONE
-	blt	a1, 12, smallclr	# small amount to clear?
+	blt	a1, 12, .Lsmallclr	# small amount to clear?
 	PTR_SUBU a3, zero, a0		# compute # bytes to word align address
 	and	a3, a3, 3
 	beq	a3, zero, 1f		# skip if word aligned
@@ -58,7 +58,7 @@ ALEAF(blkclr)
 	bne	a0, a3, 2b		#  unrolling loop does not help
 	sw	zero, -4(a0)		#  since we are limited by memory speed
 #else
-	blt	a1, 24, smallclr	# small amount to clear?
+	blt	a1, 24, .Lsmallclr	# small amount to clear?
 	PTR_SUBU a3, zero, a0		# compute # bytes to word align address
 	and	a3, a3, 7
 	beq	a3, zero, 1f		# skip if word aligned
@@ -75,7 +75,7 @@ ALEAF(blkclr)
 	bne	a0, a3, 2b		#  unrolling loop does not help
 	sd	zero, -8(a0)		#  since we are limited by memory speed
 #endif
-smallclr:
+.Lsmallclr:
 	ble	a1, zero, 2f
 	PTR_ADDU a3, a1, a0		# compute ending address
 1:
