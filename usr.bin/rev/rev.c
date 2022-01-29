@@ -1,4 +1,4 @@
-/*	$OpenBSD: rev.c,v 1.14 2022/01/13 05:10:46 schwarze Exp $	*/
+/*	$OpenBSD: rev.c,v 1.15 2022/01/29 00:11:54 cheloha Exp $	*/
 /*	$NetBSD: rev.c,v 1.5 1995/09/28 08:49:40 tls Exp $	*/
 
 /*-
@@ -40,17 +40,16 @@
 #include <string.h>
 #include <unistd.h>
 
+int multibyte;
+
 int isu8cont(unsigned char);
+int rev_file(const char *);
 void usage(void);
 
 int
 main(int argc, char *argv[])
 {
-	char *filename, *p = NULL, *t, *te, *u;
-	FILE *fp;
-	ssize_t len;
-	size_t ps = 0;
-	int ch, multibyte, rval;
+	int ch, rval;
 
 	setlocale(LC_CTYPE, "");
 	multibyte = MB_CUR_MAX > 1;
@@ -67,40 +66,13 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	fp = stdin;
-	filename = "stdin";
 	rval = 0;
-	do {
-		if (*argv) {
-			if ((fp = fopen(*argv, "r")) == NULL) {
-				warn("%s", *argv);
-				rval = 1;
-				++argv;
-				continue;
-			}
-			filename = *argv++;
-		}
-		while ((len = getline(&p, &ps, fp)) != -1) {
-			if (p[len - 1] == '\n')
-				--len;
-			for (t = p + len - 1; t >= p; --t) {
-				te = t;
-				if (multibyte)
-					while (t > p && isu8cont(*t))
-						--t;
-				for (u = t; u <= te; ++u)
-					if (putchar(*u) == EOF)
-						err(1, "stdout");
-			}
-			if (putchar('\n') == EOF)
-				err(1, "stdout");
-		}
-		if (ferror(fp)) {
-			warn("%s", filename);
-			rval = 1;
-		}
-		(void)fclose(fp);
-	} while(*argv);
+	if (argc == 0) {
+		rval = rev_file(NULL);
+	} else {
+		for (; *argv != NULL; argv++)
+			rval |= rev_file(*argv);
+	}
 	return rval;
 }
 
@@ -108,6 +80,54 @@ int
 isu8cont(unsigned char c)
 {
 	return (c & (0x80 | 0x40)) == 0x80;
+}
+
+int
+rev_file(const char *path)
+{
+	char *p = NULL, *t, *te, *u;
+	const char *filename;
+	FILE *fp;
+	size_t ps = 0;
+	ssize_t len;
+	int rval = 0;
+
+	if (path != NULL) {
+		fp = fopen(path, "r");
+		if (fp == NULL) {
+			warn("%s", path);
+			return 1;
+		}
+		filename = path;
+	} else {
+		fp = stdin;
+		filename = "stdin";
+	}
+
+	while ((len = getline(&p, &ps, fp)) != -1) {
+		if (p[len - 1] == '\n')
+			--len;
+		for (t = p + len - 1; t >= p; --t) {
+			te = t;
+			if (multibyte)
+				while (t > p && isu8cont(*t))
+					--t;
+			for (u = t; u <= te; ++u)
+				if (putchar(*u) == EOF)
+					err(1, "stdout");
+		}
+		if (putchar('\n') == EOF)
+			err(1, "stdout");
+	}
+	free(p);
+	if (ferror(fp)) {
+		warn("%s", filename);
+		rval = 1;
+	}
+
+	(void)fclose(fp);
+
+	return rval;
 }
 
 void
