@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.66 2021/03/26 13:40:05 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.67 2022/01/29 06:25:33 aoyama Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -171,9 +171,9 @@ struct vm_page {
  * physical memory layout structure
  *
  * MD vmparam.h must #define:
- *   VM_PHYSEG_MAX = max number of physical memory segments we support
+ *   VM_PHYSSEG_MAX = max number of physical memory segments we support
  *		   (if this is "1" then we revert to a "contig" case)
- *   VM_PHYSSEG_STRAT: memory sort/search options (for VM_PHYSEG_MAX > 1)
+ *   VM_PHYSSEG_STRAT: memory sort/search options (for VM_PHYSSEG_MAX > 1)
  * 	- VM_PSTRAT_RANDOM:   linear search (random order)
  *	- VM_PSTRAT_BSEARCH:  binary search (sorted by address)
  *	- VM_PSTRAT_BIGFIRST: linear search (sorted by largest segment first)
