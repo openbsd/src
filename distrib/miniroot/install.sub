@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1190 2022/01/16 04:43:34 jsg Exp $
+#	$OpenBSD: install.sub,v 1.1191 2022/01/29 20:17:58 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1792,7 +1792,7 @@ install_http() {
 	if [[ -s $HTTP_LIST ]]; then
 		_prompt="HTTP Server? (hostname, list#, 'done' or '?')"
 	else
-		echo "(Unable to get list from ftp.openbsd.org, but that is OK)"
+		echo "(Unable to get list from openbsd.org, but that is OK)"
 		_prompt="HTTP Server? (hostname or 'done')"
 	fi
 
@@ -2537,13 +2537,14 @@ start_cgiinfo() {
 	((NIFS < 1)) && return
 
 	# Ensure proper name resolution in case there's no dns yet.
-	add_hostent 129.128.5.191 ftp.openbsd.org
+	add_hostent 199.185.178.80 ftplist1.openbsd.org
+	add_hostent 129.128.5.194 ftplist2.openbsd.org
 
 	# Make sure the ftp subshell gets its own process group.
 	set -m
 	(
 		unpriv2 ftp -w 15 -Vao - \
-			"$HTTP_PROTO://ftp.openbsd.org/cgi-bin/ftplist.cgi?dbversion=1" \
+			"$HTTP_PROTO://ftplist1.openbsd.org/cgi-bin/ftplist.cgi?dbversion=1" \
 			2>/dev/null >$CGI_INFO
 
 		# Remember finish time for adjusting the received timestamp.
@@ -3147,7 +3148,7 @@ do_install() {
 		_i=$_i${INSTALL_METHOD:+method=$INSTALL_METHOD}
 		_i=${_i%&}
 		[[ -n $_i ]] && unpriv2 ftp -w 15 -Vao - \
-			"$HTTP_PROTO://ftp.openbsd.org/cgi-bin/ftpinstall.cgi?dbversion=1&$_i" \
+			"$HTTP_PROTO://ftplist1.openbsd.org/cgi-bin/ftpinstall.cgi?dbversion=1&$_i" \
 			 >/dev/null 2>&1 &
 	fi
 
@@ -3177,8 +3178,8 @@ do_install() {
 
 	# Note we may have no hosts file if no interfaces were configured.
 	if [[ -f /tmp/i/hosts ]]; then
-		# Remove the entry for ftp.openbsd.org
-		sed -i '/^129\.128\.5\.191 /d' /tmp/i/hosts
+		# Remove the entry for ftplist*.openbsd.org
+		sed -i '/ ftplist[0-9]\.openbsd\.org$/d' /tmp/i/hosts
 		_dn=$(get_fqdn)
 		while read _addr _hn _aliases; do
 			if [[ -n $_aliases || $_hn != ${_hn%%.*} || -z $_dn ]]; then
