@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.22 2021/10/10 15:57:25 cheloha Exp $	*/
+/*	$OpenBSD: head.c,v 1.23 2022/01/29 00:19:04 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
@@ -37,6 +37,7 @@
 #include <errno.h>
 #include <unistd.h>
 
+int head_file(const char *, long, int);
 static void usage(void);
 
 /*
@@ -49,9 +50,7 @@ int
 main(int argc, char *argv[])
 {
 	const char *errstr;
-	FILE	*fp;
-	long	cnt;
-	int	ch, firsttime;
+	int	ch;
 	long	linecnt = 10;
 	int	status = 0;
 
@@ -81,33 +80,46 @@ main(int argc, char *argv[])
 	}
 	argc -= optind, argv += optind;
 
-	for (firsttime = 1; ; firsttime = 0) {
-		if (!*argv) {
-			if (!firsttime)
-				exit(status);
-			fp = stdin;
-			if (pledge("stdio", NULL) == -1)
-				err(1, "pledge");
-		} else {
-			if ((fp = fopen(*argv, "r")) == NULL) {
-				warn("%s", *argv++);
-				status = 1;
-				continue;
-			}
-			if (argc > 1) {
-				if (!firsttime)
-					putchar('\n');
-				printf("==> %s <==\n", *argv);
-			}
-			++argv;
-		}
-		for (cnt = linecnt; cnt && !feof(fp); --cnt)
-			while ((ch = getc(fp)) != EOF)
-				if (putchar(ch) == '\n')
-					break;
-		fclose(fp);
+	if (argc == 0) {
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+
+		status = head_file(NULL, linecnt, 0);
+	} else {
+		for (; *argv != NULL; argv++)
+			status |= head_file(*argv, linecnt, argc > 1);
 	}
-	/*NOTREACHED*/
+
+	return status;
+}
+
+int
+head_file(const char *path, long count, int need_header)
+{
+	FILE *fp;
+	int ch;
+	static int first = 1;
+
+	if (path != NULL) {
+		fp = fopen(path, "r");
+		if (fp == NULL) {
+			warn("%s", path);
+			return 1;
+		}
+		if (need_header) {
+			printf("%s==> %s <==\n", first ? "" : "\n", path);
+			first = 0;
+		}
+	} else
+		fp = stdin;
+
+	for (; count > 0 && !feof(fp); --count)
+		while ((ch = getc(fp)) != EOF)
+			if (putchar(ch) == '\n')
+				break;
+	fclose(fp);
+
+	return 0;
 }
 
 
