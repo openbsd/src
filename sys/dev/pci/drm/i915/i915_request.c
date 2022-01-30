@@ -501,13 +501,15 @@ __await_execution(struct i915_request *rq,
 		  struct i915_request *signal,
 		  gfp_t gfp)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct execute_cb *cb;
 
 	if (i915_request_is_active(signal))
 		return 0;
+
+	STUB();
+	i915_sw_fence_await(&rq->submit);
+	return -ENOSYS;
+#ifdef notyet
 
 #ifdef __linux__
 	cb = kmem_cache_alloc(slab_execute_cbs, gfp);
