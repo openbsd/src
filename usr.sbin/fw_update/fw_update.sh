@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.34 2022/01/29 22:43:50 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.35 2022/01/30 02:39:19 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -168,7 +168,6 @@ firmware_in_dmesg() {
 }
 
 firmware_filename() {
-	local _f
 	[ -e "$CFILE" ] || fetch_cfile || return 1
 	sed -n "s/.*(\($1-firmware-.*\.tgz\)).*/\1/p" "$CFILE" | sed '$!d'
 }
@@ -180,7 +179,7 @@ firmware_devicename() {
 }
 
 installed_firmware() {
-	local _pre="$1" _match="$2" _post="$3" _firmware
+	local _pre="$1" _match="$2" _post="$3" _firmware _fw
 	set -sA _firmware -- $(
 	    set +o noglob
 	    grep -Fxl '@option firmware' \
@@ -190,9 +189,9 @@ installed_firmware() {
 	)
 
 	[ "${_firmware[*]:-}" ] || return 0
-	for fw in "${_firmware[@]}"; do
-		fw="${fw%/+CONTENTS}"
-		echo "${fw##*/}"
+	for _fw in "${_firmware[@]}"; do
+		_fw="${_fw%/+CONTENTS}"
+		echo "${_fw##*/}"
 	done
 }
 
@@ -251,6 +250,7 @@ EOL
 }
 
 remove_files() {
+	local _r
 	# Use rm -f, not removing files/dirs is probably not worth failing over
 	for _r in "$@" ; do
 		if [ -d "$_r" ]; then
@@ -280,13 +280,13 @@ delete_firmware() {
 
 	set -A _remove -- "${_cwd}/+CONTENTS" "${_cwd}"
 
-	while read -r c g; do
-		case $c in
-		@cwd) _cwd="${DESTDIR}$g"
+	while read -r _c _g; do
+		case $_c in
+		@cwd) _cwd="${DESTDIR}$_g"
 		  ;;
 		@*) continue
 		  ;;
-		*) set -A _remove -- "$_cwd/$c" "${_remove[@]}"
+		*) set -A _remove -- "$_cwd/$_c" "${_remove[@]}"
 		  ;;
 		esac
 	done < "${_pkgdir}/${_pkg}/+CONTENTS"
@@ -299,17 +299,17 @@ delete_firmware() {
 }
 
 unregister_firmware() {
-	local _d="$1" _pkgdir="${DESTDIR}/var/db/pkg"
+	local _d="$1" _pkgdir="${DESTDIR}/var/db/pkg" _fw
 
 	set -A installed -- $( installed_firmware '' "$d-firmware-" '*' )
 	if [ "${installed:-}" ]; then
-		for fw in "${installed[@]}"; do
-			((VERBOSE)) && echo "Unregister $fw"
+		for _fw in "${installed[@]}"; do
+			((VERBOSE)) && echo "Unregister $_fw"
 			"$DRYRUN" && continue
 			remove_files \
-			    "$_pkgdir/$fw/+CONTENTS" \
-			    "$_pkgdir/$fw/+DESC" \
-			    "$_pkgdir/$fw/"
+			    "$_pkgdir/$_fw/+CONTENTS" \
+			    "$_pkgdir/$_fw/+DESC" \
+			    "$_pkgdir/$_fw/"
 		done
 		return 0
 	fi
