@@ -1,6 +1,6 @@
-/* $OpenBSD: signertest.c,v 1.1 2022/01/30 18:38:41 jsing Exp $ */
+/* $OpenBSD: signertest.c,v 1.2 2022/01/30 18:44:45 jsing Exp $ */
 /*
- * Copyright (c) 2018, 2022 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2017, 2018, 2022 Joel Sing <jsing@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,6 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/socket.h>
 #include <sys/stat.h>
 
 #include <err.h>
@@ -32,6 +33,7 @@
 #include <tls.h>
 
 const char *cert_path;
+int sign_cb_count;
 
 static void
 hexdump(const unsigned char *buf, size_t len)
@@ -268,6 +270,190 @@ do_signer_tests(void)
 	return failed;
 }
 
+static int
+do_tls_handshake(char *name, struct tls *ctx)
+{
+	int rv;
+
+	rv = tls_handshake(ctx);
+	if (rv == 0)
+		return (1);
+	if (rv == TLS_WANT_POLLIN || rv == TLS_WANT_POLLOUT)
+		return (0);
+
+	errx(1, "%s handshake failed: %s", name, tls_error(ctx));
+}
+
+static int
+do_client_server_handshake(char *desc, struct tls *client,
+    struct tls *server_cctx)
+{
+	int i, client_done, server_done;
+
+	i = client_done = server_done = 0;
+	do {
+		if (client_done == 0)
+			client_done = do_tls_handshake("client", client);
+		if (server_done == 0)
+			server_done = do_tls_handshake("server", server_cctx);
+	} while (i++ < 100 && (client_done == 0 || server_done == 0));
+
+	if (client_done == 0 || server_done == 0) {
+		printf("FAIL: %s TLS handshake did not complete\n", desc);
+		return (1);
+	}
+
+	return (0);
+}
+
+static int
+test_tls_handshake_socket(struct tls *client, struct tls *server)
+{
+	struct tls *server_cctx;
+	int failure;
+	int sv[2];
+
+	if (socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, PF_UNSPEC,
+	    sv) == -1)
+		err(1, "failed to create socketpair");
+
+	if (tls_accept_socket(server, &server_cctx, sv[0]) == -1)
+		errx(1, "failed to accept: %s", tls_error(server));
+
+	if (tls_connect_socket(client, sv[1], "test") == -1)
+		errx(1, "failed to connect: %s", tls_error(client));
+
+	failure = do_client_server_handshake("socket", client, server_cctx);
+
+	tls_free(server_cctx);
+
+	close(sv[0]);
+	close(sv[1]);
+
+	return (failure);
+}
+
+static int
+test_signer_tls_sign(void *cb_arg, const char *hash, const uint8_t *digest,
+    size_t digest_len, uint8_t *out_signature, size_t *out_signature_len,
+    int padding)
+{
+	struct tls_signer *signer = cb_arg;
+	uint8_t *signature = NULL;
+	size_t signature_len = 0;
+
+	sign_cb_count++;
+
+	if (tls_signer_sign(signer, hash, digest, digest_len, &signature,
+	    &signature_len, padding) == -1)
+		return -1;
+
+	memcpy(out_signature, signature, signature_len);
+	*out_signature_len = signature_len;
+
+	free(signature);
+
+	return 0;
+}
+
+static int
+test_signer_tls(char *certfile, char *keyfile, char *cafile)
+{
+	struct tls_config *client_cfg, *server_cfg;
+	struct tls_signer *signer;
+	struct tls *client, *server;
+	int failure = 0;
+
+	if ((signer = tls_signer_new()) == NULL)
+		errx(1, "failed to create tls signer");
+	if (tls_signer_add_keypair_file(signer, certfile, keyfile))
+		errx(1, "failed to add keypair to signer");
+
+	if ((client = tls_client()) == NULL)
+		errx(1, "failed to create tls client");
+	if ((client_cfg = tls_config_new()) == NULL)
+		errx(1, "failed to create tls client config");
+	tls_config_insecure_noverifyname(client_cfg);
+	if (tls_config_set_ca_file(client_cfg, cafile) == -1)
+		errx(1, "failed to set ca: %s", tls_config_error(client_cfg));
+
+	if ((server = tls_server()) == NULL)
+		errx(1, "failed to create tls server");
+	if ((server_cfg = tls_config_new()) == NULL)
+		errx(1, "failed to create tls server config");
+	if (tls_config_set_sign_cb(server_cfg, test_signer_tls_sign,
+	    signer) == -1)
+		errx(1, "failed to set server signer callback: %s",
+		    tls_config_error(server_cfg));
+	if (tls_config_set_cert_file(server_cfg, certfile) == -1)
+		errx(1, "failed to set server certificate: %s",
+		    tls_config_error(server_cfg));
+
+	if (tls_configure(client, client_cfg) == -1)
+		errx(1, "failed to configure client: %s", tls_error(client));
+	if (tls_configure(server, server_cfg) == -1)
+		errx(1, "failed to configure server: %s", tls_error(server));
+
+	tls_config_free(client_cfg);
+	tls_config_free(server_cfg);
+
+	failure |= test_tls_handshake_socket(client, server);
+
+	tls_signer_free(signer);
+	tls_free(client);
+	tls_free(server);
+
+	return (failure);
+}
+
+static int
+do_signer_tls_tests(void)
+{
+	char *server_ecdsa_cert = NULL, *server_ecdsa_key = NULL;
+	char *server_rsa_cert = NULL, *server_rsa_key = NULL;
+	char *ca_root_ecdsa = NULL, *ca_root_rsa = NULL;
+	int failure = 0;
+
+	if (asprintf(&ca_root_ecdsa, "%s/%s", cert_path,
+	    "ca-root-ecdsa.pem") == -1)
+		err(1, "ca ecdsa root");
+	if (asprintf(&ca_root_rsa, "%s/%s", cert_path,
+	    "ca-root-rsa.pem") == -1)
+		err(1, "ca rsa root");
+	if (asprintf(&server_ecdsa_cert, "%s/%s", cert_path,
+	    "server1-ecdsa-chain.pem") == -1)
+		err(1, "server ecdsa chain");
+	if (asprintf(&server_ecdsa_key, "%s/%s", cert_path,
+	    "server1-ecdsa.pem") == -1)
+		err(1, "server ecdsa key");
+	if (asprintf(&server_rsa_cert, "%s/%s", cert_path,
+	    "server1-rsa-chain.pem") == -1)
+		err(1, "server rsa chain");
+	if (asprintf(&server_rsa_key, "%s/%s", cert_path,
+	    "server1-rsa.pem") == -1)
+		err(1, "server rsa key");
+
+	failure |= test_signer_tls(server_ecdsa_cert, server_ecdsa_key,
+	    ca_root_ecdsa);
+	failure |= test_signer_tls(server_rsa_cert, server_rsa_key,
+	    ca_root_rsa);
+
+	if (sign_cb_count != 2) {
+		fprintf(stderr, "FAIL: sign callback was called %d times, "
+		    "want 2\n", sign_cb_count);
+		failure |= 1;
+	}
+
+	free(ca_root_ecdsa);
+	free(ca_root_rsa);
+	free(server_ecdsa_cert);
+	free(server_ecdsa_key);
+	free(server_rsa_cert);
+	free(server_rsa_key);
+
+	return (failure);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -281,6 +467,7 @@ main(int argc, char **argv)
 	cert_path = argv[1];
 
 	failure |= do_signer_tests();
+	failure |= do_signer_tls_tests();
 
 	return (failure);
 }
