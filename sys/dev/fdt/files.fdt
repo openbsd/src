@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.161 2022/01/18 07:53:39 visa Exp $
+#	$OpenBSD: files.fdt,v 1.162 2022/01/30 21:40:50 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -608,3 +608,7 @@ file	dev/fdt/gpioleds.c		gpioleds
 device	gpiokeys
 attach	gpiokeys at fdt
 file	dev/fdt/gpiokeys.c		gpiokeys
+
+device	tascodec
+attach	tascodec at i2c
+file	dev/fdt/tascodec.c		tascodec
