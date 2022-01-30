@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.1 2022/01/19 10:59:35 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.2 2022/01/30 13:27:39 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -1056,7 +1056,8 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 				appl_varbind_error(origvb, error);
 			origvb->avi_state = APPL_VBSTATE_DONE;
 			origvb->avi_varbind.av_oid = vb->av_oid;
-			if (vb->av_value->be_class == BER_CLASS_CONTEXT &&
+			if (vb->av_value != NULL &&
+			    vb->av_value->be_class == BER_CLASS_CONTEXT &&
 			    vb->av_value->be_type == APPL_EXC_ENDOFMIBVIEW) {
 				nregion = appl_region_next(ureq->aru_ctx,
 				    &(vb->av_oid), origvb->avi_region);
