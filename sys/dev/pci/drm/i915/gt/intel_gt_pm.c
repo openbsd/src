@@ -393,19 +393,22 @@ static ktime_t __intel_gt_get_awake_time(const struct intel_gt *gt)
 
 ktime_t intel_gt_get_awake_time(const struct intel_gt *gt)
 {
-	STUB();
-	return 0;
-#ifdef notyet
 	unsigned int seq;
 	ktime_t total;
 
+#ifdef notyet
 	do {
 		seq = read_seqcount_begin(&gt->stats.lock);
 		total = __intel_gt_get_awake_time(gt);
 	} while (read_seqcount_retry(&gt->stats.lock, seq));
+#else
+	do {
+		seq = read_seqcount_begin((seqcount_t *)&gt->stats.lock);
+		total = __intel_gt_get_awake_time(gt);
+	} while (read_seqcount_retry((seqcount_t *)&gt->stats.lock, seq));
+#endif
 
 	return total;
-#endif
 }
 
 #if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
