@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.11 2019/06/28 13:32:51 deraadt Exp $	*/
+/*	$OpenBSD: pf.c,v 1.12 2022/01/30 13:26:14 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -422,10 +422,10 @@ pfta_get_nextaddr(struct pfr_astats *ras, int *tblidx)
 			goto fail;
 
 		PFRB_FOREACH(as, &ba) {
-			if (found)
-				goto found;
 			if (as->pfras_a.pfra_af != AF_INET)
 				continue;
+			if (found)
+				goto found;
 			if ((memcmp(&as->pfras_a.pfra_ip4addr,
 			    &ras->pfras_a.pfra_ip4addr,
 			    sizeof(as->pfras_a.pfra_ip4addr)) == 0)
