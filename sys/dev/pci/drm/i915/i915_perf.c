@@ -603,9 +603,6 @@ static int append_oa_sample(struct i915_perf_stream *stream,
 			    size_t *offset,
 			    const u8 *report)
 {
-	STUB();
-	return false;
-#ifdef notyet
 	int report_size = stream->oa_buffer.format_size;
 	struct drm_i915_perf_record_header header;
 
@@ -627,7 +624,6 @@ static int append_oa_sample(struct i915_perf_stream *stream,
 	(*offset) += header.size;
 
 	return 0;
-#endif
 }
 
 /**
