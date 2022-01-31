@@ -253,9 +253,28 @@ static void memcpy_fallback(struct dma_buf_map *dst,
 	}
 }
 
-#if defined(CONFIG_X86) && defined(__linux__)
+#ifdef CONFIG_X86
 
+#ifdef __linux__
 static DEFINE_STATIC_KEY_FALSE(has_movntdqa);
+#else
+static int has_movntdqa;
+
+#include <asm/fpu/api.h>
+
+static inline void
+static_branch_enable(int *x)
+{
+	*x = 1;
+}
+
+static inline int
+static_branch_likely(int *x)
+{
+	return (likely(*x == 1));
+}
+
+#endif
 
 static void __memcpy_ntdqa(void *dst, const void *src, unsigned long len)
 {
