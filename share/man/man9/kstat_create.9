@@ -1,4 +1,4 @@
-.\" $OpenBSD: kstat_create.9,v 1.2 2020/08/10 11:33:58 schwarze Exp $
+.\" $OpenBSD: kstat_create.9,v 1.3 2022/01/31 05:29:22 dlg Exp $
 .\"
 .\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 10 2020 $
+.Dd $Mdocdate: January 31 2022 $
 .Dt KSTAT_CREATE 9
 .Os
 .Sh NAME
@@ -44,6 +44,8 @@
 .\" .Fn kstat_set_mutex "struct kstat *ks" "struct mutex *mtx"
 .Ft void
 .Fn kstat_install "struct kstat *ks"
+.Ft void
+.Fn kstat_remove "struct kstat *ks"
 .Ft void
 .Fn kstat_destroy "struct kstat *ks"
 .Sh DESCRIPTION
@@ -88,6 +90,13 @@ After the structure has been initialised,
 notifies the kstat subsystem that
 .Fa ks
 can be used to export information to userland.
+.Pp
+.Fn kstat_remove
+disables the kstat, preventing it from being used to export information
+to userland.
+This allows allocations referenced by the kstat struct to be released
+and configuration torn down before the kstat itself is freed with
+.Fn kstat_destroy .
 .Pp
 .Fn kstat_destroy
 removes
