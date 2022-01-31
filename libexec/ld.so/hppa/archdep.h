@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.17 2021/11/14 22:07:38 guenther Exp $	*/
+/*	$OpenBSD: archdep.h,v 1.18 2022/01/31 05:43:22 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -33,26 +33,28 @@
 #define	RELOC_TAG	DT_RELA
 #define	MACHID		EM_PARISC	/* ELF e_machine ID value checked */
 
-#include <elf.h>
-#include <machine/reloc.h>
-#include "syscall.h"
-#include "util.h"
+#include <sys/exec_elf.h>
 
+Elf_Addr _dl_md_plabel(Elf_Addr, Elf_Addr *);
+
+
+/* Only used in lib/csu/boot.h */
+#ifdef RCRT0
 
 static inline void
-RELOC_JMPREL(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v,
-    Elf_Addr *pltgot)
+RELOC_JMPREL(const Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v,
+    Elf_Addr pltgot)
 {
 	if (ELF_R_TYPE(r->r_info) == RELOC_IPLT) {
 		p[0] = v + s->st_value + r->r_addend;
-		p[1] = (Elf_Addr)pltgot;
+		p[1] = pltgot;
 	} else {
 		_dl_exit(5);
 	}
 }
 
 static inline void
-RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
+RELOC_DYN(const Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 {
 	if (ELF_R_TYPE(r->r_info) == RELOC_DIR32) {
 		if (ELF_R_SYM(r->r_info) != 0)
@@ -66,7 +68,5 @@ RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 	}
 }
 
-void _hppa_dl_dtors(void);
-Elf_Addr _dl_md_plabel(Elf_Addr, Elf_Addr *);
-
+#endif /* RCRT0 */
 #endif /* _HPPA_ARCHDEP_H_ */
