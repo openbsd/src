@@ -1,4 +1,4 @@
-.\" $OpenBSD: kstat_create.9,v 1.3 2022/01/31 05:29:22 dlg Exp $
+.\" $OpenBSD: kstat_create.9,v 1.4 2022/01/31 12:07:12 jmc Exp $
 .\"
 .\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
 .\"
@@ -23,6 +23,7 @@
 .\" .Nm kstat_set_rlock ,
 .\" .Nm kstat_set_mutex ,
 .Nm kstat_install ,
+.Nm kstat_remove ,
 .Nm kstat_destroy
 .Nd kernel statistics provider API
 .Sh SYNOPSIS
@@ -106,6 +107,7 @@ from the list of exported statistics and frees it.
 .Sh CONTEXT
 .Fn kstat_create ,
 .Fn kstat_install ,
+.Fn kstat_remove ,
 .\" .Fn kstat_set_wlock ,
 .\" .Fn kstat_set_rlock ,
 .\" .Fn kstat_set_mutex ,
