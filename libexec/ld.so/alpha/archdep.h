@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.24 2021/11/14 22:07:38 guenther Exp $ */
+/*	$OpenBSD: archdep.h,v 1.25 2022/01/31 05:44:13 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -32,15 +32,11 @@
 #define	RELOC_TAG	DT_RELA
 #define	MACHID		EM_ALPHA_EXP	/* ELF e_machine ID value checked */
 
-#include <elf.h>
-#include <machine/reloc.h>
-#include "syscall.h"
-#include "util.h"
-
-
 /* Only used in lib/csu/boot.h */
+#ifdef RCRT0
+
 static inline void
-RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
+RELOC_DYN(const Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 {
 	if (ELF_R_TYPE(r->r_info) == RELOC_RELATIVE) {
 		*p += v;
@@ -58,4 +54,5 @@ RELOC_DYN(Elf_RelA *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
 	}
 }
 
+#endif /* RCRT0 */
 #endif /* _ALPHA_ARCHDEP_H_ */
