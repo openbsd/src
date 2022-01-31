@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.1 2020/07/06 03:56:51 dlg Exp $ */
+/* $OpenBSD: kstat.c,v 1.2 2022/01/31 05:09:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -623,6 +623,18 @@ kstat_install(struct kstat *ks)
 
 	rw_enter_write(&kstat_lock);
 	ks->ks_state = KSTAT_S_INSTALLED;
+	rw_exit_write(&kstat_lock);
+}
+
+void
+kstat_remove(struct kstat *ks)
+{
+	rw_enter_write(&kstat_lock);
+	KASSERTMSG(ks->ks_state == KSTAT_S_INSTALLED,
+	    "kstat %p %s:%u:%s:%u is not installed", ks,
+	    ks->ks_provider, ks->ks_instance, ks->ks_name, ks->ks_unit);
+	  
+	ks->ks_state = KSTAT_S_CREATED;
 	rw_exit_write(&kstat_lock);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.h,v 1.1 2020/07/06 03:56:51 dlg Exp $ */
+/* $OpenBSD: kstat.h,v 1.2 2022/01/31 05:09:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -169,6 +169,7 @@ void		 kstat_set_cpu(struct kstat *, struct cpu_info *);
 int		 kstat_read_nop(struct kstat *);
 
 void		 kstat_install(struct kstat *);
+void		 kstat_remove(struct kstat *);
 void		 kstat_destroy(struct kstat *);
 
 /*
