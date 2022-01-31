@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.203 2022/01/16 14:30:11 naddy Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.204 2022/01/31 23:51:15 sthen Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -1801,6 +1801,11 @@ pf_key_v2_enable_sa(struct sa *sa, struct sa *isakmp_sa)
 	int		sidtype = 0, didtype = 0;
 	size_t		sidlen = 0, didlen = 0;
 	u_int8_t       *sid = 0, *did = 0;
+
+	if (proto == NULL) {
+		log_print("pf_key_v2_enable_sa: no proto");
+		return EINVAL;
+	}
 
 	sa->transport->vtbl->get_dst(sa->transport, &dst);
 	sa->transport->vtbl->get_src(sa->transport, &src);
