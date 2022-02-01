@@ -1,4 +1,4 @@
-/* $OpenBSD: signertest.c,v 1.3 2022/02/01 17:13:52 jsing Exp $ */
+/* $OpenBSD: signertest.c,v 1.4 2022/02/01 17:19:16 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2018, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -212,7 +212,7 @@ do_signer_tests(void)
 
 	/* Sign with RSA. */
 	if (tls_signer_sign(signer, server_rsa_pubkey_hash, test_digest,
-	    sizeof(test_digest), RSA_PKCS1_PADDING, &signature,
+	    sizeof(test_digest), TLS_PADDING_RSA_PKCS1, &signature,
 	    &signature_len) == -1) {
 		fprintf(stderr, "FAIL: failed to sign with RSA key: %s\n",
 		    tls_signer_error(signer));
@@ -230,7 +230,8 @@ do_signer_tests(void)
 	 * check against a known value, rather we can only verify the signature.
 	 */
 	if (tls_signer_sign(signer, server_ecdsa_pubkey_hash, test_digest,
-	    sizeof(test_digest), 0, &signature, &signature_len) == -1) {
+	    sizeof(test_digest), TLS_PADDING_NONE, &signature,
+	    &signature_len) == -1) {
 		fprintf(stderr, "FAIL: failed to sign with ECDSA key: %s\n",
 		    tls_signer_error(signer));
 		goto failure;
@@ -246,7 +247,8 @@ do_signer_tests(void)
 
 	/* Attempt to sign with an unknown cert pubkey hash. */
 	if (tls_signer_sign(signer, server_unknown_pubkey_hash, test_digest,
-	    sizeof(test_digest), 0, &signature, &signature_len) != -1) {
+	    sizeof(test_digest), TLS_PADDING_NONE, &signature,
+	    &signature_len) != -1) {
 		fprintf(stderr, "FAIL: signing succeeded with unknown key\n");
 		goto failure;
 	}
