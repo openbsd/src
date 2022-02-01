@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.276 2022/01/25 04:04:40 gnezdo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.277 2022/02/01 20:29:53 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -1477,13 +1477,14 @@ init_x86_64(paddr_t first_avail)
 
 		/*
 		 * XXX Some buggy ACPI BIOSes use memory that they
-		 * declare as free.  Typically the affected memory
+		 * declare as free.  Current worst offender is
+		 * Supermicro 5019D-FTN4.  Typically the affected memory
 		 * areas are small blocks between areas reserved for
 		 * ACPI and other BIOS goo.  So skip areas smaller
-		 * than 1 MB above the 16 MB boundary (to avoid
+		 * than 32 MB above the 16 MB boundary (to avoid
 		 * affecting legacy stuff).
 		 */
-		if (s1 > 16*1024*1024 && (e1 - s1) < 1*1024*1024)
+		if (s1 > 16*1024*1024 && (e1 - s1) < 32*1024*1024)
 			continue;
 
 		/* Check and adjust our segment(s) */
