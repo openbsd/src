@@ -2350,6 +2350,7 @@ inteldrm_match(struct device *parent, void *match, void *aux)
 }
 
 int drm_gem_init(struct drm_device *);
+void intel_init_stolen_res(struct inteldrm_softc *);
 
 void
 inteldrm_attach(struct device *parent, struct device *self, void *aux)
@@ -2469,6 +2470,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	dev->pdev->irq = -1;
+	intel_init_stolen_res(dev_priv);
 
 	config_mountroot(self, inteldrm_attachhook);
 }
