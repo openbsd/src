@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.61 2021/03/25 04:12:00 jsg Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.62 2022/02/01 19:57:28 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -1968,6 +1968,8 @@ pmap_grow_map(vaddr_t va, pt_entry_t cache_mode, paddr_t *pap)
 	pt_entry_t *ptep;
 	paddr_t pa;
 
+	KASSERT((va & PAGE_MASK) == 0);
+
 	if (uvm.page_init_done == 0) {
 		if (uvm_page_physget(&pa) == 0)
 			return (1);
@@ -2032,7 +2034,8 @@ pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 			 * The new l2_dtable straddles a page boundary.
 			 * Map in another page to cover it.
 			 */
-			if (pmap_grow_map(nva, pte_l2_s_cache_mode, NULL))
+			if (pmap_grow_map(trunc_page(nva),
+			    pte_l2_s_cache_mode, NULL))
 				return (NULL);
 		}
 
