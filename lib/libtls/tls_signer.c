@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_signer.c,v 1.3 2022/02/01 17:13:10 jsing Exp $ */
+/* $OpenBSD: tls_signer.c,v 1.4 2022/02/01 17:18:38 jsing Exp $ */
 /*
  * Copyright (c) 2021 Eric Faurot <eric@openbsd.org>
  *
@@ -183,11 +183,23 @@ tls_sign_rsa(struct tls_signer *signer, struct tls_signer_key *skey,
     const uint8_t *input, size_t input_len, int padding_type,
     uint8_t **out_signature, size_t *out_signature_len)
 {
-	int rsa_size, signature_len;
+	int rsa_padding, rsa_size, signature_len;
 	char *signature = NULL;
 
 	*out_signature = NULL;
 	*out_signature_len = 0;
+
+	if (padding_type == TLS_PADDING_NONE) {
+		rsa_padding = RSA_NO_PADDING;
+	} else if (padding_type == TLS_PADDING_RSA_PKCS1) {
+		rsa_padding = RSA_PKCS1_PADDING;
+	} else if (padding_type == TLS_PADDING_RSA_X9_31) {
+		rsa_padding = RSA_X931_PADDING;
+	} else {
+		tls_error_setx(&signer->error, "invalid RSA padding type (%d)",
+		    padding_type);
+		return (-1);
+	}
 
 	if (input_len > INT_MAX) {
 		tls_error_setx(&signer->error, "input too large");
@@ -204,7 +216,7 @@ tls_sign_rsa(struct tls_signer *signer, struct tls_signer_key *skey,
 	}
 
 	if ((signature_len = RSA_private_encrypt((int)input_len, input,
-	    signature, skey->rsa, padding_type)) <= 0) {
+	    signature, skey->rsa, rsa_padding)) <= 0) {
 		/* XXX - include further details from libcrypto. */
 		tls_error_setx(&signer->error, "RSA signing failed");
 		free(signature);
@@ -227,6 +239,11 @@ tls_sign_ecdsa(struct tls_signer *signer, struct tls_signer_key *skey,
 
 	*out_signature = NULL;
 	*out_signature_len = 0;
+
+	if (padding_type != TLS_PADDING_NONE) {
+		tls_error_setx(&signer->error, "invalid ECDSA padding");
+		return (-1);
+	}
 
 	if (input_len > INT_MAX) {
 		tls_error_setx(&signer->error, "digest too large");
@@ -296,6 +313,7 @@ tls_rsa_priv_enc(int from_len, const unsigned char *from, unsigned char *to,
 	uint8_t *signature = NULL;
 	size_t signature_len = 0;
 	const char *pubkey_hash;
+	int padding_type;
 
 	/*
 	 * This function is called via RSA_private_encrypt() and has to conform
@@ -309,11 +327,21 @@ tls_rsa_priv_enc(int from_len, const unsigned char *from, unsigned char *to,
 	if (pubkey_hash == NULL || config == NULL)
 		goto err;
 
+	if (rsa_padding == RSA_NO_PADDING) {
+		padding_type = TLS_PADDING_NONE;
+	} else if (rsa_padding == RSA_PKCS1_PADDING) {
+		padding_type = TLS_PADDING_RSA_PKCS1;
+	} else if (rsa_padding == RSA_X931_PADDING) {
+		padding_type = TLS_PADDING_RSA_X9_31;
+	} else {
+		goto err;
+	}
+
 	if (from_len < 0)
 		goto err;
 
 	if (config->sign_cb(config->sign_cb_arg, pubkey_hash, from, from_len,
-	    rsa_padding, &signature, &signature_len) == -1)
+	    padding_type, &signature, &signature_len) == -1)
 		goto err;
 
 	if (signature_len > INT_MAX || (int)signature_len > RSA_size(rsa))
@@ -378,7 +406,7 @@ tls_ecdsa_do_sign(const unsigned char *dgst, int dgst_len, const BIGNUM *inv,
 		goto err;
 
 	if (config->sign_cb(config->sign_cb_arg, pubkey_hash, dgst, dgst_len,
-	    0, &signature, &signature_len) == -1)
+	    TLS_PADDING_NONE, &signature, &signature_len) == -1)
 		goto err;
 
 	p = signature;

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.60 2022/02/01 17:13:10 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.61 2022/02/01 17:18:38 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -71,6 +71,10 @@ extern "C" {
 
 #define TLS_MAX_SESSION_ID_LENGTH		32
 #define TLS_TICKET_KEY_SIZE			48
+
+#define TLS_PADDING_NONE			0
+#define TLS_PADDING_RSA_PKCS1			1
+#define TLS_PADDING_RSA_X9_31			2
 
 struct tls;
 struct tls_config;
