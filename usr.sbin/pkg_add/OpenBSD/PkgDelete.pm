@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.47 2019/06/09 09:36:24 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.48 2022/02/01 16:54:09 dv Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -206,7 +206,7 @@ sub process_parameters
 
 	if (@ARGV == 0) {
 		if (!($state->{automatic} || $state->{exclude})) {
-			$state->fatal("No packages to delete");
+			$state->usage("No packages to delete");
 		}
 	} else {
 		for my $pkgname (@ARGV) {
