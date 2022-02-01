@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.59 2022/01/25 21:51:24 eric Exp $ */
+/* $OpenBSD: tls.h,v 1.60 2022/02/01 17:13:10 jsing Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -79,9 +79,9 @@ typedef ssize_t (*tls_read_cb)(struct tls *_ctx, void *_buf, size_t _buflen,
     void *_cb_arg);
 typedef ssize_t (*tls_write_cb)(struct tls *_ctx, const void *_buf,
     size_t _buflen, void *_cb_arg);
-typedef int (*tls_sign_cb)(void *_cb_arg, const char *_hash,
-    const uint8_t *_dgst, size_t _dgstlen, uint8_t *_psig, size_t *_psiglen,
-    int _padding);
+typedef int (*tls_sign_cb)(void *_cb_arg, const char *_pubkey_hash,
+    const uint8_t *_input, size_t _input_len, int _padding_type,
+    uint8_t **_out_signature, size_t *_out_signature_len);
 
 int tls_init(void);
 
@@ -224,9 +224,9 @@ int tls_signer_add_keypair_file(struct tls_signer *_signer,
     const char *_cert_file, const char *_key_file);
 int tls_signer_add_keypair_mem(struct tls_signer *_signer, const uint8_t *_cert,
     size_t _cert_len, const uint8_t *_key, size_t _key_len);
-int tls_signer_sign(struct tls_signer *_signer, const char *_hash,
-    const uint8_t *_dgst, size_t _dgstlen, uint8_t **_psig, size_t *_psiglen,
-    int _padding);
+int tls_signer_sign(struct tls_signer *_signer, const char *_pubkey_hash,
+    const uint8_t *_input, size_t _input_len, int _padding_type,
+    uint8_t **_out_signature, size_t *_out_signature_len);
 
 #ifdef __cplusplus
 }

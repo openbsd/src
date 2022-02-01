@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_signer.c,v 1.2 2022/01/29 02:03:19 inoguchi Exp $ */
+/* $OpenBSD: tls_signer.c,v 1.3 2022/02/01 17:13:10 jsing Exp $ */
 /*
  * Copyright (c) 2021 Eric Faurot <eric@openbsd.org>
  *
@@ -17,7 +17,9 @@
 
 #include <limits.h>
 
+#include <openssl/ecdsa.h>
 #include <openssl/err.h>
+#include <openssl/rsa.h>
 
 #include "tls.h"
 #include "tls_internal.h"
@@ -178,83 +180,94 @@ tls_signer_add_keypair_file(struct tls_signer *signer, const char *cert_file,
 
 static int
 tls_sign_rsa(struct tls_signer *signer, struct tls_signer_key *skey,
-    const uint8_t *dgst, size_t dgstlen, uint8_t **psig, size_t *psiglen,
-    int padding)
+    const uint8_t *input, size_t input_len, int padding_type,
+    uint8_t **out_signature, size_t *out_signature_len)
 {
+	int rsa_size, signature_len;
+	char *signature = NULL;
 
-	char *buf;
-	int siglen, r;
+	*out_signature = NULL;
+	*out_signature_len = 0;
 
-	*psig = NULL;
-	*psiglen = 0;
-
-	siglen = RSA_size(skey->rsa);
-	if (siglen <= 0) {
-		tls_error_setx(&signer->error, "incorrect RSA_size: %d",
-		    siglen);
+	if (input_len > INT_MAX) {
+		tls_error_setx(&signer->error, "input too large");
+		return (-1);
+	}
+	if ((rsa_size = RSA_size(skey->rsa)) <= 0) {
+		tls_error_setx(&signer->error, "invalid RSA size: %d",
+		    rsa_size);
+		return (-1);
+	}
+	if ((signature = calloc(1, rsa_size)) == NULL) {
+		tls_error_set(&signer->error, "RSA signature");
 		return (-1);
 	}
 
-	if ((buf = malloc(siglen)) == NULL) {
-		tls_error_set(&signer->error, "RSA sign");
+	if ((signature_len = RSA_private_encrypt((int)input_len, input,
+	    signature, skey->rsa, padding_type)) <= 0) {
+		/* XXX - include further details from libcrypto. */
+		tls_error_setx(&signer->error, "RSA signing failed");
+		free(signature);
 		return (-1);
 	}
 
-	r = RSA_private_encrypt((int)dgstlen, dgst, buf, skey->rsa, padding);
-	if (r == -1) {
-		tls_error_setx(&signer->error, "RSA_private_encrypt failed");
-		free(buf);
-		return (-1);
-	}
-
-	*psig = buf;
-	*psiglen = (size_t)r;
+	*out_signature = signature;
+	*out_signature_len = (size_t)signature_len;
 
 	return (0);
 }
 
 static int
 tls_sign_ecdsa(struct tls_signer *signer, struct tls_signer_key *skey,
-    const uint8_t *dgst, size_t dgstlen, uint8_t **psig, size_t *psiglen)
+    const uint8_t *input, size_t input_len, int padding_type,
+    uint8_t **out_signature, size_t *out_signature_len)
 {
-	unsigned char *sig;
-	unsigned int siglen;
+	unsigned char *signature;
+	int signature_len;
 
-	*psig = NULL;
-	*psiglen = 0;
+	*out_signature = NULL;
+	*out_signature_len = 0;
 
-	siglen = ECDSA_size(skey->ecdsa);
-	if (siglen == 0) {
-		tls_error_setx(&signer->error, "incorrect ECDSA_size: %u",
-		    siglen);
+	if (input_len > INT_MAX) {
+		tls_error_setx(&signer->error, "digest too large");
 		return (-1);
 	}
-	if ((sig = malloc(siglen)) == NULL) {
-		tls_error_set(&signer->error, "ECDSA sign");
+	if ((signature_len = ECDSA_size(skey->ecdsa)) <= 0) {
+		tls_error_setx(&signer->error, "invalid ECDSA size: %d",
+		    signature_len);
 		return (-1);
 	}
-
-	if (!ECDSA_sign(0, dgst, dgstlen, sig, &siglen, skey->ecdsa)) {
-		tls_error_setx(&signer->error, "ECDSA_sign failed");
-		free(sig);
+	if ((signature = calloc(1, signature_len)) == NULL) {
+		tls_error_set(&signer->error, "ECDSA signature");
 		return (-1);
 	}
 
-	*psig = sig;
-	*psiglen = siglen;
+	if (!ECDSA_sign(0, input, input_len, signature, &signature_len,
+	    skey->ecdsa)) {
+		/* XXX - include further details from libcrypto. */
+		tls_error_setx(&signer->error, "ECDSA signing failed");
+		free(signature);
+		return (-1);
+	}
+
+	*out_signature = signature;
+	*out_signature_len = signature_len;
 
 	return (0);
 }
 
 int
-tls_signer_sign(struct tls_signer *signer, const char *hash,
-    const uint8_t *dgst, size_t dgstlen, uint8_t **psig, size_t *psiglen,
-    int padding)
+tls_signer_sign(struct tls_signer *signer, const char *pubkey_hash,
+    const uint8_t *input, size_t input_len, int padding_type,
+    uint8_t **out_signature, size_t *out_signature_len)
 {
 	struct tls_signer_key *skey;
 
+	*out_signature = NULL;
+	*out_signature_len = 0;
+
 	for (skey = signer->keys; skey; skey = skey->next)
-		if (!strcmp(hash, skey->hash))
+		if (!strcmp(pubkey_hash, skey->hash))
 			break;
 
 	if (skey == NULL) {
@@ -263,38 +276,58 @@ tls_signer_sign(struct tls_signer *signer, const char *hash,
 	}
 
 	if (skey->rsa != NULL)
-		return tls_sign_rsa(signer, skey, dgst, dgstlen, psig, psiglen,
-		    padding);
+		return tls_sign_rsa(signer, skey, input, input_len,
+		    padding_type, out_signature, out_signature_len);
 
 	if (skey->ecdsa != NULL)
-		return tls_sign_ecdsa(signer, skey, dgst, dgstlen, psig, psiglen);
+		return tls_sign_ecdsa(signer, skey, input, input_len,
+		    padding_type, out_signature, out_signature_len);
 
 	tls_error_setx(&signer->error, "unknown key type");
+
 	return (-1);
 }
 
 static int
-tls_rsa_priv_enc(int srclen, const unsigned char *src, unsigned char *to,
-    RSA *rsa, int padding)
+tls_rsa_priv_enc(int from_len, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int rsa_padding)
 {
 	struct tls_config *config;
-	const char *hash;
-	size_t tolen;
+	uint8_t *signature = NULL;
+	size_t signature_len = 0;
+	const char *pubkey_hash;
 
-	hash = RSA_get_ex_data(rsa, 0);
+	/*
+	 * This function is called via RSA_private_encrypt() and has to conform
+	 * to its calling convention/signature. The caller is required to
+	 * provide a 'to' buffer of at least RSA_size() bytes.
+	 */
+
+	pubkey_hash = RSA_get_ex_data(rsa, 0);
 	config = RSA_get_ex_data(rsa, 1);
 
-	if (hash == NULL || config == NULL)
-		return (-1);
+	if (pubkey_hash == NULL || config == NULL)
+		goto err;
 
-	if (config->sign_cb(config->sign_cb_arg, hash, (const uint8_t *)src,
-	    srclen, (uint8_t *)to, &tolen, padding) == -1)
-		return (-1);
+	if (from_len < 0)
+		goto err;
 
-	if (tolen > INT_MAX)
-		return (-1);
+	if (config->sign_cb(config->sign_cb_arg, pubkey_hash, from, from_len,
+	    rsa_padding, &signature, &signature_len) == -1)
+		goto err;
 
-	return ((int)tolen);
+	if (signature_len > INT_MAX || (int)signature_len > RSA_size(rsa))
+		goto err;
+
+	memcpy(to, signature, signature_len);
+	free(signature);
+
+	return ((int)signature_len);
+
+ err:
+	free(signature);
+
+	return (-1);
 }
 
 RSA_METHOD *
@@ -324,30 +357,42 @@ tls_ecdsa_do_sign(const unsigned char *dgst, int dgst_len, const BIGNUM *inv,
     const BIGNUM *rp, EC_KEY *eckey)
 {
 	struct tls_config *config;
-	ECDSA_SIG *sig = NULL;
-	const unsigned char *tsigbuf;
-	const char *hash;
-	char *sigbuf;
-	size_t siglen;
+	ECDSA_SIG *ecdsa_sig = NULL;
+	uint8_t *signature = NULL;
+	size_t signature_len = 0;
+	const unsigned char *p;
+	const char *pubkey_hash;
 
-	hash = ECDSA_get_ex_data(eckey, 0);
+	/*
+	 * This function is called via ECDSA_do_sign_ex() and has to conform
+	 * to its calling convention/signature.
+	 */
+
+	pubkey_hash = ECDSA_get_ex_data(eckey, 0);
 	config = ECDSA_get_ex_data(eckey, 1);
 
-	if (hash == NULL || config == NULL)
-		return (NULL);
+	if (pubkey_hash == NULL || config == NULL)
+		goto err;
 
-	siglen = ECDSA_size(eckey);
-	if ((sigbuf = malloc(siglen)) == NULL)
-		return (NULL);
+	if (dgst_len < 0)
+		goto err;
 
-	if (config->sign_cb(config->sign_cb_arg, hash, dgst, dgst_len, sigbuf,
-	    &siglen, 0) != -1) {
-		tsigbuf = sigbuf;
-		sig = d2i_ECDSA_SIG(NULL, &tsigbuf, siglen);
-	}
-	free(sigbuf);
+	if (config->sign_cb(config->sign_cb_arg, pubkey_hash, dgst, dgst_len,
+	    0, &signature, &signature_len) == -1)
+		goto err;
 
-	return (sig);
+	p = signature;
+	if ((ecdsa_sig = d2i_ECDSA_SIG(NULL, &p, signature_len)) == NULL)
+		goto err;
+
+	free(signature);
+
+	return (ecdsa_sig);
+
+ err:
+	free(signature);
+
+	return (NULL);
 }
 
 ECDSA_METHOD *
