@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaccess.h,v 1.6 2021/07/07 02:38:36 jsg Exp $	*/
+/*	$OpenBSD: uaccess.h,v 1.7 2022/02/01 04:09:14 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -25,7 +25,7 @@
 #include <linux/sched.h>
 
 static inline unsigned long
-__copy_to_user(void *to, const void *from, unsigned len)
+__copy_to_user(void *to, const void *from, unsigned long len)
 {
 	if (copyout(from, to, len))
 		return len;
@@ -33,13 +33,13 @@ __copy_to_user(void *to, const void *from, unsigned len)
 }
 
 static inline unsigned long
-copy_to_user(void *to, const void *from, unsigned len)
+copy_to_user(void *to, const void *from, unsigned long len)
 {
 	return __copy_to_user(to, from, len);
 }
 
 static inline unsigned long
-__copy_from_user(void *to, const void *from, unsigned len)
+__copy_from_user(void *to, const void *from, unsigned long len)
 {
 	if (copyin(from, to, len))
 		return len;
@@ -47,7 +47,7 @@ __copy_from_user(void *to, const void *from, unsigned len)
 }
 
 static inline unsigned long
-copy_from_user(void *to, const void *from, unsigned len)
+copy_from_user(void *to, const void *from, unsigned long len)
 {
 	return __copy_from_user(to, from, len);
 }
@@ -104,7 +104,7 @@ pagefault_disabled(void)
 }
 
 static inline unsigned long
-__copy_to_user_inatomic(void *to, const void *from, unsigned len)
+__copy_to_user_inatomic(void *to, const void *from, unsigned long len)
 {
 	struct cpu_info *ci = curcpu();
 	int inatomic = ci->ci_inatomic;
@@ -118,7 +118,7 @@ __copy_to_user_inatomic(void *to, const void *from, unsigned len)
 }
 
 static inline unsigned long
-__copy_from_user_inatomic(void *to, const void *from, unsigned len)
+__copy_from_user_inatomic(void *to, const void *from, unsigned long len)
 {
 	struct cpu_info *ci = curcpu();
 	int inatomic = ci->ci_inatomic;
@@ -132,7 +132,7 @@ __copy_from_user_inatomic(void *to, const void *from, unsigned len)
 }
 
 static inline unsigned long
-__copy_from_user_inatomic_nocache(void *to, const void *from, unsigned len)
+__copy_from_user_inatomic_nocache(void *to, const void *from, unsigned long len)
 {
 	return __copy_from_user_inatomic(to, from, len);
 }
