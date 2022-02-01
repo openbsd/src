@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.406 2022/01/26 14:39:07 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.407 2022/02/01 18:09:00 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2092,21 +2092,9 @@ acpi_interrupt(void *arg)
 
 				/* Signal this GPE */
 				gpe = idx + jdx;
-				if (sc->gpe_table[gpe].flags & GPE_DIRECT) {
-					dnprintf(10, "directly handle gpe: %x\n",
-					    gpe);
-					sc->gpe_table[gpe].handler(sc, gpe,
-					    sc->gpe_table[gpe].arg);
-					if (sc->gpe_table[gpe].flags &
-					    GPE_LEVEL)
-						acpi_gpe(sc, gpe,
-						    sc->gpe_table[gpe].arg);
-				} else {
-					sc->gpe_table[gpe].active = 1;
-					dnprintf(10, "queue gpe: %x\n", gpe);
-					acpi_addtask(sc, acpi_gpe_task, NULL,
-					    gpe);
-				}
+				sc->gpe_table[gpe].active = 1;
+				dnprintf(10, "queue gpe: %x\n", gpe);
+				acpi_addtask(sc, acpi_gpe_task, NULL, gpe);
 
 				/*
 				 * Edge interrupts need their STS bits cleared
@@ -2281,7 +2269,7 @@ acpi_set_gpehandler(struct acpi_softc *sc, int gpe, int (*handler)
 		return -EINVAL;
 	if (!(flags & (GPE_LEVEL | GPE_EDGE)))
 		return -EINVAL;
-	if (ptbl->handler != NULL && !(flags & GPE_DIRECT))
+	if (ptbl->handler != NULL)
 		printf("%s: GPE 0x%.2x already enabled\n", DEVNAME(sc), gpe);
 
 	dnprintf(50, "Adding GPE handler 0x%.2x (%s)\n", gpe,
