@@ -163,7 +163,7 @@ intel_init_stolen_res(struct inteldrm_softc *dev_priv)
 
 	if (GRAPHICS_VER(dev_priv) >= 3 && GRAPHICS_VER(dev_priv) < 11)
 		stolen_base  = gen3_stolen_base(dev_priv);
-	else if (GRAPHICS_VER(dev_priv) == 11)
+	else if (GRAPHICS_VER(dev_priv) == 11 || GRAPHICS_VER(dev_priv) == 12)
 		stolen_base = gen11_stolen_base(dev_priv);
 
 	if (IS_I830(dev_priv) || IS_I845G(dev_priv))
@@ -177,7 +177,7 @@ intel_init_stolen_res(struct inteldrm_softc *dev_priv)
 		stolen_size = gen6_stolen_size(dev_priv);
 	else if (GRAPHICS_VER(dev_priv) == 8)
 		stolen_size = gen8_stolen_size(dev_priv);
-	else if (GRAPHICS_VER(dev_priv) >= 9 && GRAPHICS_VER(dev_priv) < 12)
+	else if (GRAPHICS_VER(dev_priv) >= 9 && GRAPHICS_VER(dev_priv) <= 12)
 		stolen_size = gen9_stolen_size(dev_priv);
 
 	if (stolen_base == 0 || stolen_size == 0)
