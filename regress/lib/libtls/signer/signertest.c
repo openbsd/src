@@ -1,4 +1,4 @@
-/* $OpenBSD: signertest.c,v 1.2 2022/01/30 18:44:45 jsing Exp $ */
+/* $OpenBSD: signertest.c,v 1.3 2022/02/01 17:13:52 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2018, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -212,8 +212,8 @@ do_signer_tests(void)
 
 	/* Sign with RSA. */
 	if (tls_signer_sign(signer, server_rsa_pubkey_hash, test_digest,
-	    sizeof(test_digest), &signature, &signature_len,
-	    RSA_PKCS1_PADDING) == -1) {
+	    sizeof(test_digest), RSA_PKCS1_PADDING, &signature,
+	    &signature_len) == -1) {
 		fprintf(stderr, "FAIL: failed to sign with RSA key: %s\n",
 		    tls_signer_error(signer));
 		goto failure;
@@ -230,7 +230,7 @@ do_signer_tests(void)
 	 * check against a known value, rather we can only verify the signature.
 	 */
 	if (tls_signer_sign(signer, server_ecdsa_pubkey_hash, test_digest,
-	    sizeof(test_digest), &signature, &signature_len, 0) == -1) {
+	    sizeof(test_digest), 0, &signature, &signature_len) == -1) {
 		fprintf(stderr, "FAIL: failed to sign with ECDSA key: %s\n",
 		    tls_signer_error(signer));
 		goto failure;
@@ -246,7 +246,7 @@ do_signer_tests(void)
 
 	/* Attempt to sign with an unknown cert pubkey hash. */
 	if (tls_signer_sign(signer, server_unknown_pubkey_hash, test_digest,
-	    sizeof(test_digest), &signature, &signature_len, 0) != -1) {
+	    sizeof(test_digest), 0, &signature, &signature_len) != -1) {
 		fprintf(stderr, "FAIL: signing succeeded with unknown key\n");
 		goto failure;
 	}
@@ -334,26 +334,16 @@ test_tls_handshake_socket(struct tls *client, struct tls *server)
 }
 
 static int
-test_signer_tls_sign(void *cb_arg, const char *hash, const uint8_t *digest,
-    size_t digest_len, uint8_t *out_signature, size_t *out_signature_len,
-    int padding)
+test_signer_tls_sign(void *cb_arg, const char *pubkey_hash,
+    const uint8_t *input, size_t input_len, int padding_type,
+    uint8_t **out_signature, size_t *out_signature_len)
 {
 	struct tls_signer *signer = cb_arg;
-	uint8_t *signature = NULL;
-	size_t signature_len = 0;
 
 	sign_cb_count++;
 
-	if (tls_signer_sign(signer, hash, digest, digest_len, &signature,
-	    &signature_len, padding) == -1)
-		return -1;
-
-	memcpy(out_signature, signature, signature_len);
-	*out_signature_len = signature_len;
-
-	free(signature);
-
-	return 0;
+	return tls_signer_sign(signer, pubkey_hash, input, input_len,
+	    padding_type, out_signature, out_signature_len);
 }
 
 static int
