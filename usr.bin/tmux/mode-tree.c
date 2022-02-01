@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.61 2021/12/06 10:10:52 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.62 2022/02/01 18:12:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -104,7 +104,6 @@ struct mode_tree_menu {
 	struct mode_tree_data		*data;
 	struct client			*c;
 	u_int				 line;
-	void				*itemdata;
 };
 
 static void mode_tree_free_items(struct mode_tree_list *);
@@ -909,17 +908,13 @@ static void
 mode_tree_menu_callback(__unused struct menu *menu, __unused u_int idx,
     key_code key, void *data)
 {
-	struct mode_tree_menu		*mtm = data;
-	struct mode_tree_data		*mtd = mtm->data;
-	struct mode_tree_item		*mti;
+	struct mode_tree_menu	*mtm = data;
+	struct mode_tree_data	*mtd = mtm->data;
 
 	if (mtd->dead || key == KEYC_NONE)
 		goto out;
 
 	if (mtm->line >= mtd->line_size)
-		goto out;
-	mti = mtd->line_list[mtm->line].item;
-	if (mti->itemdata != mtm->itemdata)
 		goto out;
 	mtd->current = mtm->line;
 	mtd->menucb(mtd->modedata, mtm->c, key);
@@ -954,14 +949,13 @@ mode_tree_display_menu(struct mode_tree_data *mtd, struct client *c, u_int x,
 		title = xstrdup("");
 	}
 	menu = menu_create(title);
-	menu_add_items(menu, items, NULL, NULL, NULL);
+	menu_add_items(menu, items, NULL, c, NULL);
 	free(title);
 
 	mtm = xmalloc(sizeof *mtm);
 	mtm->data = mtd;
 	mtm->c = c;
 	mtm->line = line;
-	mtm->itemdata = mti->itemdata;
 	mtd->references++;
 
 	if (x >= (menu->width + 4) / 2)

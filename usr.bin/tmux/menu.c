@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.42 2022/02/01 11:52:08 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.43 2022/02/01 18:12:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -81,8 +81,6 @@ menu_add_item(struct menu *menu, const struct menu_item *item,
 		menu->count--;
 		return;
 	}
-	if (c->tty.sx <= 4)
-		return;
 	max_width = c->tty.sx - 4;
 
 	slen = strlen(s);

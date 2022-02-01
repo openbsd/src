@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.43 2022/01/17 10:40:03 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.44 2022/02/01 18:12:20 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -566,10 +566,10 @@ popup_key_cb(struct client *c, void *data, struct key_event *event)
 menu:
 	pd->menu = menu_create("");
 	if (pd->flags & POPUP_INTERNAL) {
-		menu_add_items(pd->menu, popup_internal_menu_items, NULL, NULL,
+		menu_add_items(pd->menu, popup_internal_menu_items, NULL, c,
 		    NULL);
 	} else
-		menu_add_items(pd->menu, popup_menu_items, NULL, NULL, NULL);
+		menu_add_items(pd->menu, popup_menu_items, NULL, c, NULL);
 	if (m->x >= (pd->menu->width + 4) / 2)
 		x = m->x - (pd->menu->width + 4) / 2;
 	else
