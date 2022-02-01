@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.124 2021/12/28 13:16:28 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.125 2022/02/01 08:38:53 guenther Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1013,6 +1013,18 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 
 		/* deref: can not drop to zero here by defn! */
 		oanon->an_ref--;
+
+#ifndef __HAVE_PMAP_MPSAFE_ENTER_COW
+		/*
+		 * If there are multiple threads, either uvm or the
+		 * pmap has to make sure no threads see the old RO
+		 * mapping once any have seen the new RW mapping.
+		 * uvm does it by inserting the new mapping RO and
+		 * letting it fault again.
+		 */
+		if (P_HASSIBLING(curproc))
+			flt->enter_prot &= ~PROT_WRITE;
+#endif
 
 		/*
 		 * note: anon is _not_ locked, but we have the sole references

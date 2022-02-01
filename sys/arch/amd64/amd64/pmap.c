@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.148 2021/09/14 16:14:50 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.149 2022/02/01 08:38:53 guenther Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -2840,16 +2840,34 @@ enter_now:
 	if (pmap == pmap_kernel())
 		npte |= pg_g_kern;
 
-	PTE_BASE[pl1_i(va)] = npte;		/* zap! */
-
 	/*
-	 * If we changed anything other than modified/used bits,
-	 * flush the TLB.  (is this overkill?)
+	 * If the old entry wasn't valid, we can just update it and
+	 * go.  If it was valid, and this isn't a read->write
+	 * transition, then we can safely just update it and flush
+	 * any old TLB entries.
+	 *
+	 * If it _was_ valid and this _is_ a read->write transition,
+	 * then this could be a CoW resolution and we need to make
+	 * sure no CPU can see the new writable mapping while another
+	 * still has the old mapping in its TLB, so insert a correct
+	 * but unwritable mapping, flush any old TLB entries, then
+	 * make it writable.
 	 */
-	if (pmap_valid_entry(opte)) {
+	if (! pmap_valid_entry(opte)) {
+		PTE_BASE[pl1_i(va)] = npte;
+	} else if ((opte | (npte ^ PG_RW)) & PG_RW) {
+		/* previously writable or not making writable */
+		PTE_BASE[pl1_i(va)] = npte;
 		if (nocache && (opte & PG_N) == 0)
 			wbinvd_on_all_cpus();
 		pmap_tlb_shootpage(pmap, va, shootself);
+	} else {
+		PTE_BASE[pl1_i(va)] = npte ^ PG_RW;
+		if (nocache && (opte & PG_N) == 0) /* XXX impossible? */
+			wbinvd_on_all_cpus();
+		pmap_tlb_shootpage(pmap, va, shootself);
+		pmap_tlb_shootwait();
+		PTE_BASE[pl1_i(va)] = npte;
 	}
 
 	pmap_unmap_ptes(pmap, scr3);

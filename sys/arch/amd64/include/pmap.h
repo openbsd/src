@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.78 2021/06/18 06:17:28 guenther Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.79 2022/02/01 08:38:53 guenther Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -518,6 +518,7 @@ kvtopte(vaddr_t va)
 #define pmap_unmap_direct(va)	PHYS_TO_VM_PAGE(PMAP_DIRECT_UNMAP(va))
 
 #define __HAVE_PMAP_DIRECT
+#define __HAVE_PMAP_MPSAFE_ENTER_COW
 
 #endif /* _KERNEL && !_LOCORE */
 
