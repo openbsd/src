@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1157 2021/12/21 13:07:53 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1158 2022/02/01 14:46:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -841,6 +841,12 @@ enum pane_lines {
 	PANE_LINES_SIMPLE,
 	PANE_LINES_NUMBER
 };
+
+/* Pane border indicator option. */
+#define PANE_BORDER_OFF 0
+#define PANE_BORDER_COLOUR 1
+#define PANE_BORDER_ARROWS 2
+#define PANE_BORDER_BOTH 3
 
 /* Screen redraw context. */
 struct screen_redraw_ctx {
