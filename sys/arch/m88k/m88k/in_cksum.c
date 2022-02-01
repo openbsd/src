@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.4 2014/08/21 14:24:08 mpi Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.5 2022/02/01 15:30:10 miod Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -95,19 +95,22 @@ in4_cksum(struct mbuf *m, uint8_t nxt, int off, int len)
 {
 	u_int16_t *w;
 	u_int sum = 0;
-	struct ipovly ipov;
+	union {
+		struct ipovly ipov;
+		u_int16_t w[10];
+	} u;
 
 	if (nxt != 0) {
 		/* pseudo header */
-		bzero(&ipov, sizeof(ipov));
-		ipov.ih_len = htons(len);
-		ipov.ih_pr = nxt; 
-		ipov.ih_src = mtod(m, struct ip *)->ip_src; 
-		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
-		w = (u_int16_t *)&ipov;
-		/* assumes sizeof(ipov) == 20 */
-		sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3]; sum += w[4];
-		sum += w[5]; sum += w[6]; sum += w[7]; sum += w[8]; sum += w[9];
+		u.ipov.ih_x1[8] = 0;
+		u.ipov.ih_pr = nxt;
+		u.ipov.ih_len = htons(len);
+		u.ipov.ih_src = mtod(m, struct ip *)->ip_src;
+		u.ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
+		w = u.w;
+		/* assumes sizeof(ipov) == 20 and first 8 bytes are zeroes */
+		sum += w[4]; sum += w[5]; sum += w[6];
+		sum += w[7]; sum += w[8]; sum += w[9];
 	}
 
 	/* skip unnecessary part */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.9 2014/08/21 14:24:08 mpi Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.10 2022/02/01 15:30:10 miod Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.4 1996/11/13 21:13:06 cgd Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 	int clen = 0;
 	caddr_t addr;
 	union q_util q_util;
-	union l_util l_util; 
+	union l_util l_util;
 	struct ipovly ipov;
 
 	if (nxt != 0) {
@@ -212,14 +212,14 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 			panic("in4_cksum: bad mbuf chain");
 #endif
 
-		memset(&ipov, 0, sizeof(ipov));
-
-		ipov.ih_len = htons(len);
+		ipov.ih_x1[8] = 0;
 		ipov.ih_pr = nxt;
+		ipov.ih_len = htons(len);
 		ipov.ih_src = mtod(m, struct ip *)->ip_src;
 		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
 
-		sum += in_cksumdata((caddr_t) &ipov, sizeof(ipov));
+		/* first 8 bytes are zeroes */
+		sum += in_cksumdata((caddr_t) &ipov + 8, sizeof(ipov) - 8);
 	}
 
 	/* skip over unnecessary part */
@@ -241,7 +241,7 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 			sum += in_cksumdata(addr, mlen) << 8;
  		else
 			sum += in_cksumdata(addr, mlen);
- 
+
  		clen += mlen;
  		len -= mlen;
 	}

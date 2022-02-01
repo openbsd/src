@@ -1,4 +1,4 @@
-/*	$OpenBSD: in4_cksum.c,v 1.10 2014/09/08 06:24:13 jsg Exp $	*/
+/*	$OpenBSD: in4_cksum.c,v 1.11 2022/02/01 15:30:10 miod Exp $	*/
 /*	$KAME: in4_cksum.c,v 1.10 2001/11/30 10:06:15 itojun Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.13 1996/10/13 02:03:03 christos Exp $	*/
 
@@ -111,15 +111,15 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 			panic("in4_cksum: offset too short");
 		if (m->m_len < sizeof(struct ip))
 			panic("in4_cksum: bad mbuf chain");
-		bzero(&u.ipov, sizeof(u.ipov));
-		u.ipov.ih_len = htons(len);
+		u.ipov.ih_x1[8] = 0;
 		u.ipov.ih_pr = nxt;
+		u.ipov.ih_len = htons(len);
 		u.ipov.ih_src = mtod(m, struct ip *)->ip_src;
 		u.ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
 		w = u.w;
-		/* assumes sizeof(ipov) == 20 */
-		sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3]; sum += w[4];
-		sum += w[5]; sum += w[6]; sum += w[7]; sum += w[8]; sum += w[9];
+		/* assumes sizeof(ipov) == 20 and first 8 bytes are zeroes */
+		sum += w[4]; sum += w[5]; sum += w[6];
+		sum += w[7]; sum += w[8]; sum += w[9];
 	}
 
 	/* skip unnecessary part */

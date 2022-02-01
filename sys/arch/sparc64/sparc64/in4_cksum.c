@@ -1,4 +1,4 @@
-/*	$OpenBSD: in4_cksum.c,v 1.7 2014/08/24 20:06:57 deraadt Exp $	*/
+/*	$OpenBSD: in4_cksum.c,v 1.8 2022/02/01 15:30:10 miod Exp $	*/
 /*	$NetBSD: in4_cksum.c,v 1.5 2003/10/13 14:22:20 agc Exp $ */
 
 /*
@@ -93,7 +93,6 @@ extern int in_cksum_internal(struct mbuf *, int len, int offset, int sum);
 int
 in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 {
-	u_char *w;
 	u_int sum = 0;
 	struct ipovly ipov;
 
@@ -102,28 +101,23 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 	 * allow the compiler to pick which specific machine registers to
 	 * use, instead of hard-coding this in the asm code.
 	 */
-	u_int tmp1, tmp2, tmp3;
+	u_int tmp1, tmp2;
 
 	if (nxt != 0) {
 		/* pseudo header */
-		memset(&ipov, 0, sizeof(ipov));
-		ipov.ih_len = htons(len);
-		ipov.ih_pr = nxt; 
-		ipov.ih_src = mtod(m, struct ip *)->ip_src; 
+		ipov.ih_src = mtod(m, struct ip *)->ip_src;
 		ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
-		w = (u_char *)&ipov;
+		sum = ((u_int)nxt << 16) | htons(len);
 		/* assumes sizeof(ipov) == 20 */
-		__asm volatile(" lduw [%5 + 0], %1; "
-			" lduw [%5 + 4], %2; "
-			" lduw [%5 + 8], %3; add %0, %1, %0; "
-			" lduw [%5 + 12], %1; add %0, %2, %0; "
-			" lduw [%5 + 16], %2; add %0, %3, %0; "
-			" mov -1, %3; add %0, %1, %0; "
-			" srl %3, 0, %3; add %0, %2, %0; "
-			" srlx %0, 32, %2; and %0, %3, %1; "
+		__asm volatile(
+			" lduw [%4 + 12], %1; "
+			" lduw [%4 + 16], %2; "
+			" add %0, %1, %0; "
 			" add %0, %2, %0; "
-			: "=r" (sum), "=&r" (tmp1), "=&r" (tmp2), "=&r" (tmp3)
-			: "0" (sum), "r" (w));
+			" srlx %0, 32, %2; "
+			" add %0, %2, %0; "
+			: "=r" (sum), "=&r" (tmp1), "=&r" (tmp2)
+			: "0" (sum), "r" (&ipov));
 	}
 
 	/* skip unnecessary part */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_cksum.c,v 1.10 2014/07/22 10:35:35 mpi Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.11 2022/02/01 15:30:10 miod Exp $	*/
 /*	$NetBSD: in_cksum.c,v 1.7 2003/07/15 02:54:48 lukem Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 			 * of a word spanning between this mbuf and the
 			 * last mbuf.
 			 *
-			 * s_util.c[0] is already saved when scanning previous 
+			 * s_util.c[0] is already saved when scanning previous
 			 * mbuf.
 			 */
 			s_util.c[1] = *w++;
@@ -254,15 +254,15 @@ in4_cksum(struct mbuf *m, uint8_t nxt, int off, int len)
 
 	if (nxt != 0) {
 		/* pseudo header */
-		memset(&u.ipov, 0, sizeof(u.ipov));
+		u.ipov.ih_x1[8] = 0;
+		u.ipov.ih_pr = nxt;
 		u.ipov.ih_len = htons(len);
-		u.ipov.ih_pr = nxt; 
-		u.ipov.ih_src = mtod(m, struct ip *)->ip_src; 
+		u.ipov.ih_src = mtod(m, struct ip *)->ip_src;
 		u.ipov.ih_dst = mtod(m, struct ip *)->ip_dst;
 		w = u.w;
-		/* assumes sizeof(ipov) == 20 */
-		sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3]; sum += w[4];
-		sum += w[5]; sum += w[6]; sum += w[7]; sum += w[8]; sum += w[9];
+		/* assumes sizeof(ipov) == 20 and first 8 bytes are zeroes */
+		sum += w[4]; sum += w[5]; sum += w[6];
+		sum += w[7]; sum += w[8]; sum += w[9];
 	}
 
 	/* skip unnecessary part */
