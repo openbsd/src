@@ -1,4 +1,4 @@
-/* $OpenBSD: job.c,v 1.66 2021/10/24 21:24:17 deraadt Exp $ */
+/* $OpenBSD: job.c,v 1.67 2022/02/01 12:05:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -89,9 +89,8 @@ job_run(const char *cmd, int argc, char **argv, struct environ *e, struct sessio
 	 * if-shell to decide on default-terminal based on outside TERM.
 	 */
 	env = environ_for_session(s, !cfg_finished);
-	if (e != NULL) {
+	if (e != NULL)
 		environ_copy(e, env);
-	}
 
 	sigfillset(&set);
 	sigprocmask(SIG_BLOCK, &set, &oldset);
