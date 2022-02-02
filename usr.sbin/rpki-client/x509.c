@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.32 2022/01/18 16:18:22 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.33 2022/02/02 12:10:40 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -350,7 +350,7 @@ x509_get_expire(X509 *x, const char *fn, time_t *tt)
 /*
  * Parse the very specific subset of information in the CRL distribution
  * point extension.
- * See RFC 6487, sectoin 4.8.6 for details.
+ * See RFC 6487, section 4.8.6 for details.
  * Returns NULL on failure, the crl URI on success which has to be freed
  * after use.
  */
