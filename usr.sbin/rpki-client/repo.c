@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.29 2022/01/28 14:11:27 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.30 2022/02/02 15:13:00 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -944,6 +944,8 @@ rrdp_finish(unsigned int id, int ok)
 		rr->state = REPO_FAILED;
 		/* clear the RRDP repo since it failed */
 		remove_contents(rr->basedir);
+		/* also clear the list of deleted files */
+		filepath_free(&rr->deleted);
 	}
 
 	repo_done(rr, ok);
