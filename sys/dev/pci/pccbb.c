@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.101 2021/03/05 12:40:13 jsg Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.102 2022/02/02 03:48:48 jsg Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -70,11 +70,9 @@
 #include <dev/ic/i82365var.h>
 #include <dev/pci/pccbbvar.h>
 
-#ifndef __NetBSD_Version__
 struct cfdriver cbb_cd = {
 	NULL, "cbb", DV_DULL
 };
-#endif
 
 #if defined CBB_DEBUG
 #define DPRINTF(x) printf x
