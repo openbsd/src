@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.47 2015/06/03 08:41:43 mpi Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.48 2022/02/02 17:11:36 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -168,7 +168,7 @@ mpcpcibus_find_ranges_32(struct pcibr_softc *sc, u_int32_t *range_store,
 		sc->sc_iobus_space.bus_size = prange[found].size_lo;
 	}
 
-	/* the mem space ranges 
+	/* the mem space ranges
 	 * apple openfirmware always puts full
 	 * addresses in config information,
 	 * it is not necessary to have correct bus
@@ -185,12 +185,12 @@ mpcpcibus_find_ranges_32(struct pcibr_softc *sc, u_int32_t *range_store,
 				prange[i].size_lo);
 #endif
 			if (base != 0) {
-				if ((base + size) == prange[i].phys)   
+				if ((base + size) == prange[i].phys)
 					size += prange[i].size_lo;
 				else {
 					base = prange[i].phys;
 					size = prange[i].size_lo;
-				} 
+				}
 			} else {
 				base = prange[i].phys;
 				size = prange[i].size_lo;
@@ -263,7 +263,7 @@ mpcpcibus_find_ranges_64(struct pcibr_softc *sc, u_int32_t *range_store,
 		sc->sc_iobus_space.bus_size = prange[found].size_lo;
 	}
 
-	/* the mem space ranges 
+	/* the mem space ranges
 	 * apple openfirmware always puts full
 	 * addresses in config information,
 	 * it is not necessary to have correct bus
@@ -307,7 +307,6 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	struct confargs *ca = aux;
 	struct pcibr_config *lcp;
 	struct pcibus_attach_args pba;
-	int of_node = 0;
 	char compat[32];
 	u_int32_t addr_offset;
 	u_int32_t data_offset;
@@ -315,41 +314,39 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	int len;
 	int rangesize;
 	u_int32_t range_store[32];
+	int busrange[2];
 
 	if (ca->ca_node == 0) {
 		printf("invalid node on mpcpcibr config\n");
 		return;
 	}
-	len=OF_getprop(ca->ca_node, "name", compat, sizeof (compat));
+	len = OF_getprop(ca->ca_node, "name", compat, sizeof(compat));
 	compat[len] = '\0';
 	if (len > 0)
 		printf(" %s", compat);
 
-	len=OF_getprop(ca->ca_node, "compatible", compat,
-	    sizeof (compat));
-	if (len <= 0 ) {
-		len=OF_getprop(ca->ca_node, "name", compat,
-			sizeof (compat));
+	len = OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
+	if (len <= 0) {
+		len = OF_getprop(ca->ca_node, "name", compat, sizeof(compat));
 		if (len <= 0) {
 			printf(" compatible and name not found\n");
 			return;
 		}
-		compat[len] = 0; 
-		if (strcmp (compat, "bandit") != 0) {
+		compat[len] = 0;
+		if (strcmp(compat, "bandit") != 0) {
 			printf(" compatible not found and name %s found\n",
 			    compat);
 			return;
 		}
 	}
-	compat[len] = 0; 
+	compat[len] = 0;
 	if ((rangesize = OF_getprop(ca->ca_node, "ranges",
 	    range_store, sizeof (range_store))) <= 0) {
 		if (strcmp(compat, "u3-ht") == 0) {
 			range_store[0] = 0xabb10113; /* appl U3; */
-		} else 
+		} else
 			printf("range lookup failed, node %x\n", ca->ca_node);
 	}
-	/* translate byte(s) into item count*/
 
 	lcp = &sc->pcibr_config;
 
@@ -363,16 +360,16 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
 
 	if (ppc_proc_is_64b)
-		mpcpcibus_find_ranges_64 (sc, range_store, rangesize);
+		mpcpcibus_find_ranges_64(sc, range_store, rangesize);
 	else
-		mpcpcibus_find_ranges_32 (sc, range_store, rangesize);
+		mpcpcibus_find_ranges_32(sc, range_store, rangesize);
 
 	addr_offset = 0;
 	for (i = 0; config_offsets[i].compat != NULL; i++) {
 		struct config_type *co = &config_offsets[i];
 		if (strcmp(co->compat, compat) == 0) {
-			addr_offset = co->addr; 
-			data_offset = co->data; 
+			addr_offset = co->addr;
+			data_offset = co->data;
 			lcp->config_type = co->config_type;
 			break;
 		}
@@ -392,15 +389,13 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	    addr_offset, data_offset);
 #endif
 
-	if ( bus_space_map(&(sc->sc_iobus_space), addr_offset,
-		NBPG, 0, &lcp->ioh_cf8) != 0 )
+	if (bus_space_map(&(sc->sc_iobus_space), addr_offset,
+		NBPG, 0, &lcp->ioh_cf8) != 0)
 		panic("mpcpcibus: unable to map self");
 
-	if ( bus_space_map(&(sc->sc_iobus_space), data_offset,
-		NBPG, 0, &lcp->ioh_cfc) != 0 )
+	if (bus_space_map(&(sc->sc_iobus_space), data_offset,
+		NBPG, 0, &lcp->ioh_cfc) != 0)
 		panic("mpcpcibus: unable to map self");
-
-	of_node = ca->ca_node;
 
 	lcp->lc_pc.pc_conf_v = lcp;
 	lcp->lc_pc.pc_node = ca->ca_node;
@@ -421,7 +416,11 @@ mpcpcibrattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_memex = sc->sc_memex;
 	pba.pba_pc = &lcp->lc_pc;
 	pba.pba_domain = pci_ndomains++;
-	pba.pba_bus = 0;
+	if (OF_getprop(ca->ca_node, "bus-range", &busrange, sizeof(busrange)) <
+	    0)
+		pba.pba_bus = 0;
+	else
+		pba.pba_bus = busrange[0];
 
 	config_found(self, &pba, mpcpcibrprint);
 }
@@ -465,7 +464,7 @@ mpc_gen_config_reg(void *cpv, pcitag_t tag, int offset)
 			if (dev > 15)
 				return 0xffffffff;
 			/*
-			 * config type 1 
+			 * config type 1
 			 */
 			reg = val | offset | 1;
 		}
@@ -493,7 +492,7 @@ mpc_conf_read(void *cpv, pcitag_t tag, int offset)
 
 	if (offset & 3 ||
 	    offset < 0 || offset >= PCI_CONFIG_SPACE_SIZE) {
-#ifdef DEBUG_CONFIG 
+#ifdef DEBUG_CONFIG
 		printf ("pci_conf_read: bad reg %x\n", offset);
 #endif /* DEBUG_CONFIG */
 		return(~0);
