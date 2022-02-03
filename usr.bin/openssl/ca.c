@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.52 2021/11/21 22:34:30 tb Exp $ */
+/* $OpenBSD: ca.c,v 1.53 2022/02/03 17:44:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1633,12 +1633,11 @@ certify(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 		ok = 0;
 		goto err;
 	}
-	if ((pktmp = X509_REQ_get_pubkey(req)) == NULL) {
+	if ((pktmp = X509_REQ_get0_pubkey(req)) == NULL) {
 		BIO_printf(bio_err, "error unpacking public key\n");
 		goto err;
 	}
 	i = X509_REQ_verify(req, pktmp);
-	EVP_PKEY_free(pktmp);
 	if (i < 0) {
 		ok = 0;
 		BIO_printf(bio_err, "Signature verification problems....\n");
@@ -1688,12 +1687,11 @@ certify_cert(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 
 	BIO_printf(bio_err, "Check that the request matches the signature\n");
 
-	if ((pktmp = X509_get_pubkey(req)) == NULL) {
+	if ((pktmp = X509_get0_pubkey(req)) == NULL) {
 		BIO_printf(bio_err, "error unpacking public key\n");
 		goto err;
 	}
 	i = X509_verify(req, pktmp);
-	EVP_PKEY_free(pktmp);
 	if (i < 0) {
 		ok = 0;
 		BIO_printf(bio_err, "Signature verification problems....\n");
@@ -1997,13 +1995,10 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	if (!X509_set_subject_name(ret, subject))
 		goto err;
 
-	pktmp = X509_REQ_get_pubkey(req);
-	if (pktmp == NULL)
+	if ((pktmp = X509_REQ_get0_pubkey(req)) == NULL)
 		goto err;
 
-	i = X509_set_pubkey(ret, pktmp);
-	EVP_PKEY_free(pktmp);
-	if (!i)
+	if (!X509_set_pubkey(ret, pktmp))
 		goto err;
 
 	/* Lets add the extensions, if there are any */
@@ -2226,18 +2221,15 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		}
 	}
 
-	pktmp = X509_get_pubkey(ret);
-	if (pktmp == NULL)
+	if ((pktmp = X509_get0_pubkey(ret)) == NULL)
 		goto err;
 
 	if (EVP_PKEY_missing_parameters(pktmp) &&
 	    !EVP_PKEY_missing_parameters(pkey)) {
 		if (!EVP_PKEY_copy_parameters(pktmp, pkey)) {
-			EVP_PKEY_free(pktmp);
 			goto err;
 		}
 	}
-	EVP_PKEY_free(pktmp);
 
 	if (!do_X509_sign(bio_err, ret, pkey, dgst, sigopts))
 		goto err;

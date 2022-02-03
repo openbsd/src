@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.57 2021/12/26 14:46:06 jsing Exp $ */
+/* $OpenBSD: s_client.c,v 1.58 2022/02/03 17:44:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1772,10 +1772,10 @@ print_stuff(BIO *bio, SSL *s, int full)
 	    SSL_CIPHER_get_name(c));
 	if (peer != NULL) {
 		EVP_PKEY *pktmp;
-		pktmp = X509_get_pubkey(peer);
+
+		pktmp = X509_get0_pubkey(peer);
 		BIO_printf(bio, "Server public key is %d bit\n",
 		    EVP_PKEY_bits(pktmp));
-		EVP_PKEY_free(pktmp);
 	}
 	BIO_printf(bio, "Secure Renegotiation IS%s supported\n",
 	    SSL_get_secure_renegotiation_support(s) ? "" : " NOT");

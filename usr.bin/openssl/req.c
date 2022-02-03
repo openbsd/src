@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.22 2021/12/12 20:42:37 tb Exp $ */
+/* $OpenBSD: req.c,v 1.23 2022/02/03 17:44:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -879,6 +879,7 @@ req_main(int argc, char **argv)
 		}
 		if (req_config.x509) {
 			EVP_PKEY *tmppkey;
+
 			X509V3_CTX ext_ctx;
 			if ((x509ss = X509_new()) == NULL)
 				goto end;
@@ -904,10 +905,10 @@ req_main(int argc, char **argv)
 				goto end;
 			if (!X509_set_subject_name(x509ss, X509_REQ_get_subject_name(req)))
 				goto end;
-			tmppkey = X509_REQ_get_pubkey(req);
-			if (!tmppkey || !X509_set_pubkey(x509ss, tmppkey))
+			if ((tmppkey = X509_REQ_get0_pubkey(req)) == NULL)
 				goto end;
-			EVP_PKEY_free(tmppkey);
+			if (!X509_set_pubkey(x509ss, tmppkey))
+				goto end;
 
 			/* Set up V3 context struct */
 
@@ -984,19 +985,13 @@ req_main(int argc, char **argv)
 		}
 	}
 	if (req_config.verify && !req_config.x509) {
-		int tmp = 0;
+		EVP_PKEY *pubkey = pkey;
 
-		if (pkey == NULL) {
-			pkey = X509_REQ_get_pubkey(req);
-			tmp = 1;
-			if (pkey == NULL)
-				goto end;
-		}
-		i = X509_REQ_verify(req, pkey);
-		if (tmp) {
-			EVP_PKEY_free(pkey);
-			pkey = NULL;
-		}
+		if (pubkey == NULL)
+			pubkey = X509_REQ_get0_pubkey(req);
+		if (pubkey == NULL)
+			goto end;
+		i = X509_REQ_verify(req, pubkey);
 		if (i < 0) {
 			goto end;
 		} else if (i == 0) {
@@ -1024,14 +1019,13 @@ req_main(int argc, char **argv)
 
 	if (req_config.pubkey) {
 		EVP_PKEY *tpubkey;
-		tpubkey = X509_REQ_get_pubkey(req);
-		if (tpubkey == NULL) {
+
+		if ((tpubkey = X509_REQ_get0_pubkey(req)) == NULL) {
 			BIO_printf(bio_err, "Error getting public key\n");
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 		PEM_write_bio_PUBKEY(out, tpubkey);
-		EVP_PKEY_free(tpubkey);
 	}
 	if (req_config.text) {
 		if (req_config.x509)
