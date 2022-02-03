@@ -107,6 +107,10 @@ int i915_get_bridge_dev(struct drm_i915_private *dev_priv)
 {
 	struct drm_device *dev = &dev_priv->drm;
 
+	/* may be already called from attach */
+	if (dev_priv->bridge_dev != NULL)
+		return 0;
+
 	dev_priv->bridge_dev = malloc(sizeof(*dev_priv->bridge_dev),
 				      M_DEVBUF, M_WAITOK);
 	dev_priv->bridge_dev->pc = dev->pdev->pc;
@@ -2470,6 +2474,7 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	dev->pdev->irq = -1;
+	i915_get_bridge_dev(dev_priv);
 	intel_init_stolen_res(dev_priv);
 
 	config_mountroot(self, inteldrm_attachhook);
