@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.121 2021/03/09 15:08:23 bluhm Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.122 2022/02/03 17:18:22 guenther Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
 /* 7 - free */
 /* 8 - free */
 #define	M_IFADDR	9	/* interface address */
-#define	M_SOOPTS	10	/* socket options */
+/* 10 - free */
 #define	M_SYSCTL	11	/* sysctl buffers (persistent storage) */
 #define	M_COUNTERS	12	/* per CPU counters */
 /* 13 - free */
@@ -85,7 +85,7 @@
 #define	M_NFSMNT	23	/* NFS mount structure */
 #define	M_LOG		24	/* Messages in kernel log stash */
 #define	M_VNODE		25	/* Dynamically allocated vnodes */
-#define	M_CACHE		26	/* Dynamically allocated cache entries */
+/* 26 - free */
 #define	M_DQUOT		27	/* UFS quota entries */
 #define	M_UFSMNT	28	/* UFS mount structure */
 #define	M_SHM		29	/* SVID compatible shared memory segments */
@@ -94,14 +94,12 @@
 #define	M_DIRHASH	32	/* UFS dirhash */
 #define M_ACPI		33	/* ACPI */
 #define	M_VMPMAP	34	/* VM pmap */
-/* 35-37 - free */
-#define	M_FILE		38	/* Open file structure */
+/* 35-38 - free */
 #define	M_FILEDESC	39	/* Open file descriptor table */
 #define	M_SIGIO		40	/* Sigio structures */
 #define	M_PROC		41	/* Proc structures */
 #define	M_SUBPROC	42	/* Proc sub-structures */
-#define	M_VCLUSTER	43	/* Cluster for VFS */
-/* 45-46 - free */
+/* 43-45 - free */
 #define	M_MFSNODE	46	/* MFS vnode private part */
 /* 47-48 - free */
 #define	M_NETADDR	49	/* Export host address structure */
@@ -146,9 +144,7 @@
 #define M_CRYPTO_DATA	108	/* Crypto framework data buffers (keys etc.) */
 /* 109 - free */
 #define M_CREDENTIALS	110	/* IPsec-related credentials and ID info */
-/* 111-113 - free */
-#define	M_EMULDATA	114	/* Per-process emulation data */
-/* 115-122 - free */
+/* 111-122 - free */
 
 /* KAME IPv6 */
 #define	M_IP6OPT	123	/* IPv6 options */
@@ -194,7 +190,7 @@
 	NULL, \
 	NULL, \
 	"ifaddr",	/* 9 M_IFADDR */ \
-	"soopts",	/* 10 M_SOOPTS */ \
+	NULL, \
 	"sysctl",	/* 11 M_SYSCTL */ \
 	"counters",	/* 12 M_COUNTERS */ \
 	NULL, \
@@ -210,7 +206,7 @@
 	"NFS mount",	/* 23 M_NFSMNT */ \
 	"log",		/* 24 M_LOG */ \
 	"vnodes",	/* 25 M_VNODE */ \
-	"namecache",	/* 26 M_CACHE */ \
+	NULL, \
 	"UFS quota",	/* 27 M_DQUOT */ \
 	"UFS mount",	/* 28 M_UFSMNT */ \
 	"shm",		/* 29 M_SHM */ \
@@ -222,12 +218,12 @@
 	NULL,	/* 35 */ \
 	NULL,	/* 36 */ \
 	NULL,	/* 37 */ \
-	"file",		/* 38 M_FILE */ \
+	NULL, \
 	"file desc",	/* 39 M_FILEDESC */ \
 	"sigio",	/* 40 M_SIGIO */ \
 	"proc",		/* 41 M_PROC */ \
 	"subproc",	/* 42 M_SUBPROC */ \
-	"VFS cluster",	/* 43 M_VCLUSTER */ \
+	NULL, \
 	NULL, \
 	NULL, \
 	"MFS node",	/* 46 M_MFSNODE */ \
@@ -285,10 +281,7 @@
 	"crypto data",	/* 108 M_CRYPTO_DATA */ \
 	NULL, \
 	"IPsec creds",	/* 110 M_CREDENTIALS */ \
-	NULL, \
-	NULL, \
-	NULL, \
-	"emuldata",	/* 114 M_EMULDATA */ \
+	NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, \
 	"ip6_options",	/* 123 M_IP6OPT */ \

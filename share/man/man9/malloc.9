@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.67 2019/02/07 15:11:38 visa Exp $
+.\"	$OpenBSD: malloc.9,v 1.68 2022/02/03 17:18:22 guenther Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 7 2019 $
+.Dd $Mdocdate: February 3 2022 $
 .Dt MALLOC 9
 .Os
 .Sh NAME
@@ -158,8 +158,6 @@ Protocol control blocks.
 Routing tables.
 .It Dv M_IFADDR
 Interface addresses.
-.It Dv M_SOOPTS
-Socket options.
 .It Dv M_SYSCTL
 Sysctl persistent buffers.
 .It Dv M_COUNTERS
@@ -177,8 +175,6 @@ NFS request headers.
 NFS mount structures.
 .It Dv M_VNODE
 Dynamically allocated vnodes.
-.It Dv M_CACHE
-Dynamically allocated cache entries.
 .It Dv M_DQUOT
 UFS quota entries.
 .It Dv M_UFSMNT
@@ -195,8 +191,6 @@ UFS directory hash structures.
 ACPI structures.
 .It Dv M_VMPMAP
 VM pmap data.
-.It Dv M_FILE
-Open file structures.
 .It Dv M_FILEDESC
 Open file descriptor tables.
 .It Dv M_SIGIO
@@ -205,8 +199,6 @@ Sigio structures.
 Proc structures.
 .It Dv M_SUBPROC
 Proc sub-structures.
-.It Dv M_VCLUSTER
-Cluster for VFS.
 .It Dv M_MFSNODE
 MFS vnode private part.
 .It Dv M_NETADDR
@@ -278,8 +270,6 @@ data buffers.
 .It Dv M_CREDENTIALS
 .Xr ipsec 4
 related credentials.
-.It Dv M_EMULDATA
-Per process emulation data.
 .It Dv M_IP6OPT
 IPv6 options.
 .It Dv M_IP6NDP
