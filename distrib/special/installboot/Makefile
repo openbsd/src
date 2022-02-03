@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2020/07/20 14:55:43 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.15 2022/02/03 10:21:13 visa Exp $
 
 .PATH: ${.CURDIR}/../../../usr.sbin/installboot
 
@@ -16,7 +16,7 @@ SRCS += i386_installboot.c
 SRCS += i386_nlist.c
 SRCS += i386_softraid.c
 .elif ${MACHINE} == "armv7" || ${MACHINE} == "arm64"
-SRCS += armv7_installboot.c
+SRCS += efi_installboot.c
 .elif ${MACHINE} == "hppa"
 CFLAGS += -DBOOTSTRAP
 SRCS += hppa_installboot.c
