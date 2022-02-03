@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.113 2022/01/27 16:26:32 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.114 2022/02/03 13:24:04 visa Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -152,7 +152,7 @@ const struct gpt_type		gpt_types[] = {
 	{ 0x07, 0, "NTFS        ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
 	{ 0x0B, 0, "FAT32       ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
 	{ 0x0C, 0, "FAT32L      ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x0D, 0, "BIOS Boot   ", "21686148-6449-6e6f-744e-656564454649" },
+	{ 0x0D, 1, "BIOS Boot   ", "21686148-6449-6e6f-744e-656564454649" },
 	{ 0x0E, 0, "FAT16L      ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
 	{ 0x11, 0, "OS/2 hidden ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
 	{ 0x14, 0, "OS/2 hidden ", "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
