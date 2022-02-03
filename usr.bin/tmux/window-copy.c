@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.332 2021/12/20 09:02:12 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.333 2022/02/03 07:26:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1270,6 +1270,16 @@ window_copy_cmd_halfpage_up(struct window_copy_cmd_state *cs)
 	for (; np != 0; np--)
 		window_copy_pageup1(wme, 1);
 	return (WINDOW_COPY_CMD_NOTHING);
+}
+
+static enum window_copy_cmd_action
+window_copy_cmd_toggle_position(struct window_copy_cmd_state *cs)
+{
+	struct window_mode_entry	*wme = cs->wme;
+	struct window_copy_mode_data	*data = wme->data;
+
+	data->hide_position = !data->hide_position;
+	return (WINDOW_COPY_CMD_REDRAW);
 }
 
 static enum window_copy_cmd_action
@@ -2816,6 +2826,12 @@ static const struct {
 	  .maxargs = 0,
 	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  .f = window_copy_cmd_stop_selection
+	},
+	{ .command = "toggle-position",
+	  .minargs = 0,
+	  .maxargs = 0,
+	  .clear = WINDOW_COPY_CMD_CLEAR_NEVER,
+	  .f = window_copy_cmd_toggle_position
 	},
 	{ .command = "top-line",
 	  .minargs = 0,

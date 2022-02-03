@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.875 2022/02/01 14:46:41 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.876 2022/02/03 07:26:43 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 1 2022 $
+.Dd $Mdocdate: February 3 2022 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1773,6 +1773,7 @@ The following commands are supported in copy mode:
 .It Li "set-mark" Ta "X" Ta "X"
 .It Li "start-of-line" Ta "0" Ta "C-a"
 .It Li "stop-selection" Ta "" Ta ""
+.It Li "toggle-position" Ta "P" Ta "P"
 .It Li "top-line" Ta "H" Ta "M-R"
 .El
 .Pp

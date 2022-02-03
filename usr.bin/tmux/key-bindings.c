@@ -1,4 +1,4 @@
-/* $OpenBSD: key-bindings.c,v 1.141 2021/08/27 17:25:55 nicm Exp $ */
+/* $OpenBSD: key-bindings.c,v 1.142 2022/02/03 07:26:43 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -492,6 +492,7 @@ key_bindings_init(void)
 		"bind -Tcopy-mode \\; { send -X jump-again }",
 		"bind -Tcopy-mode F { command-prompt -1p'(jump backward)' { send -X jump-backward '%%' } }",
 		"bind -Tcopy-mode N { send -X search-reverse }",
+		"bind -Tcopy-mode P { send -X toggle-position }",
 		"bind -Tcopy-mode R { send -X rectangle-toggle }",
 		"bind -Tcopy-mode T { command-prompt -1p'(jump to backward)' { send -X jump-to-backward '%%' } }",
 		"bind -Tcopy-mode X { send -X set-mark }",
@@ -588,6 +589,7 @@ key_bindings_init(void)
 		"bind -Tcopy-mode-vi L { send -X bottom-line }",
 		"bind -Tcopy-mode-vi M { send -X middle-line }",
 		"bind -Tcopy-mode-vi N { send -X search-reverse }",
+		"bind -Tcopy-mode-vi P { send -X toggle-position }",
 		"bind -Tcopy-mode-vi T { command-prompt -1p'(jump to backward)' { send -X jump-to-backward '%%' } }",
 		"bind -Tcopy-mode-vi V { send -X select-line }",
 		"bind -Tcopy-mode-vi W { send -X next-space }",
