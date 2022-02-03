@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.3 2021/08/02 21:46:39 kettenis Exp $
+#	$OpenBSD: install.md,v 1.4 2022/02/03 10:27:33 visa Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -33,16 +33,13 @@
 #
 
 NCPU=$(sysctl -n hw.ncpufound)
-NEWFSARGS_msdos="-F 16 -L boot"
-MOUNT_ARGS_msdos="-o-l"
 
 md_installboot() {
-	local _disk=/dev/$1
-
-	mount ${MOUNT_ARGS_msdos} ${_disk}i /mnt/mnt
-	mkdir -p /mnt/mnt/efi/boot
-	cp /mnt/usr/mdec/BOOTRISCV64.EFI /mnt/mnt/efi/boot/bootriscv64.efi
-	echo bootriscv64.efi > /mnt/mnt/efi/boot/startup.nsh
+	if ! installboot -r /mnt ${1}; then
+		echo "\nFailed to install bootblocks."
+		echo "You will not be able to boot OpenBSD from ${1}."
+		exit
+	fi
 }
 
 md_prep_fdisk() {
@@ -53,7 +50,6 @@ md_prep_fdisk() {
 	local bootsectorsize="32768"
 	local bootsectorend=$(($bootsectorstart + $bootsectorsize))
 	local bootfstype="msdos"
-	local newfs_args=${NEWFSARGS_msdos}
 
 	while :; do
 		_d=whole
@@ -83,8 +79,7 @@ write
 quit
 __EOT
 			echo "done."
-			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
-			newfs -t ${bootfstype} ${newfs_args} ${_disk}i
+			installboot -p $_disk
 			return ;;
 		[eE]*)
 			# Manually configure the MBR.
