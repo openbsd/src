@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.125 2022/01/14 06:53:16 jsg Exp $
+#	$OpenBSD: Makefile.amd64,v 1.126 2022/02/03 02:39:45 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -223,21 +223,25 @@ dml1_display_rq_dlg_calc.o: $S/dev/pci/drm/amd/display/dc/dml/dml1_display_rq_dl
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 display_rq_dlg_helpers.o: $S/dev/pci/drm/amd/display/dc/dml/display_rq_dlg_helpers.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+display_mode_lib.o: $S/dev/pci/drm/amd/display/dc/dml/display_mode_lib.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 dcn20_resource.o: $S/dev/pci/drm/amd/display/dc/dcn20/dcn20_resource.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 dcn21_resource.o: $S/dev/pci/drm/amd/display/dc/dcn21/dcn21_resource.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 dcn31_resource.o: $S/dev/pci/drm/amd/display/dc/dcn31/dcn31_resource.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
-dc_dsc.o: $S/dev/pci/drm/amd/display/dc/dsc/dc_dsc.c
-	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 rc_calc.o: $S/dev/pci/drm/amd/display/dc/dsc/rc_calc.c
-	${NORMAL_C} ${HARDFLOAT_CFLAGS}
-rc_calc_dpi.o: $S/dev/pci/drm/amd/display/dc/dsc/rc_calc_dpi.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 dcn30_resource.o: $S/dev/pci/drm/amd/display/dc/dcn30/dcn30_resource.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 dcn30_optc.o: $S/dev/pci/drm/amd/display/dc/dcn30/dcn30_optc.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dcn301_resource.o: $S/dev/pci/drm/amd/display/dc/dcn301/dcn301_resource.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dcn302_resource.o: $S/dev/pci/drm/amd/display/dc/dcn302/dcn302_resource.c
+	${NORMAL_C} ${HARDFLOAT_CFLAGS}
+dcn303_resource.o: $S/dev/pci/drm/amd/display/dc/dcn303/dcn303_resource.c
 	${NORMAL_C} ${HARDFLOAT_CFLAGS}
 
 clean:
