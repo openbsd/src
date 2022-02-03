@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.15 2021/04/02 10:19:19 inoguchi Exp $ */
+/* $OpenBSD: s_cb.c,v 1.16 2022/02/03 17:42:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -224,26 +224,6 @@ set_cert_stuff(SSL_CTX * ctx, char *cert_file, char *key_file)
 			ERR_print_errors(bio_err);
 			return (0);
 		}
-		/*
-		In theory this is no longer needed
-		ssl=SSL_new(ctx);
-		x509=SSL_get_certificate(ssl);
-
-		if (x509 != NULL) {
-			EVP_PKEY *pktmp;
-			pktmp = X509_get_pubkey(x509);
-			EVP_PKEY_copy_parameters(pktmp,
-						SSL_get_privatekey(ssl));
-			EVP_PKEY_free(pktmp);
-		}
-		SSL_free(ssl);
-		*/
-
-		/*
-		 * If we are using DSA, we can copy the parameters from the
-		 * private key
-		 */
-
 
 		/*
 		 * Now we know that a key and cert have been set against the
