@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.231 2021/11/15 10:58:13 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.232 2022/02/03 10:07:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -718,7 +718,7 @@ status_prompt_redraw(struct client *c)
 	memcpy(&cursorgc, &gc, sizeof cursorgc);
 	cursorgc.attr ^= GRID_ATTR_REVERSE;
 
-	start = screen_write_strlen("%s", c->prompt_string);
+	start = format_width(c->prompt_string);
 	if (start > c->tty.sx)
 		start = c->tty.sx;
 
@@ -728,7 +728,7 @@ status_prompt_redraw(struct client *c)
 	for (offset = 0; offset < c->tty.sx; offset++)
 		screen_write_putc(&ctx, &gc, ' ');
 	screen_write_cursormove(&ctx, 0, lines - 1, 0);
-	screen_write_nputs(&ctx, start, &gc, "%s", c->prompt_string);
+	format_draw(&ctx, &gc, start, c->prompt_string, NULL, 0);
 	screen_write_cursormove(&ctx, start, lines - 1, 0);
 
 	left = c->tty.sx - start;
