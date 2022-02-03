@@ -1,4 +1,4 @@
-/* $OpenBSD: ungc.c,v 1.3 2022/01/11 08:03:25 mvs Exp $ */
+/* $OpenBSD: ungc.c,v 1.4 2022/02/03 17:22:01 bluhm Exp $ */
 
 /*
  * Copyright (c) 2021 Vitaliy Makkoveev <mvs@openbsd.org>
@@ -30,7 +30,7 @@
 
 union msg_control{
 	struct cmsghdr cmsgh;
-	char control[CMSG_SPACE(sizeof(int)*2)];
+	char control[CMSG_SPACE(sizeof(int) * 2)];
 };
 
 int main(int argc, char *argv[])
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 		iov.iov_base = &iov_buf;
 		iov.iov_len = sizeof(iov_buf);
 		msgh.msg_control = msg_control.control;
-		msgh.msg_controllen = sizeof(msg_control.control);
+		msgh.msg_controllen = CMSG_SPACE(sizeof(int));
 		msgh.msg_iov = &iov;
 		msgh.msg_iovlen = 1;
 		msgh.msg_name = NULL;
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 				goto skip;
 			}
 
-			err(1, "sendmsg");
+			err(1, "sendmsg sp0");
 		}
 
 		*((int *)CMSG_DATA(cmsgh)) = sp[1];
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 				goto skip;
 			}
 
-			err(1, "sendmsg");
+			err(1, "sendmsg sp1");
 		}
 
 		/*
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 		iov.iov_base = &iov_buf;
 		iov.iov_len = sizeof(iov_buf);
 		msgh.msg_control = msg_control.control;
-		msgh.msg_controllen = sizeof(msg_control.control);
+		msgh.msg_controllen = CMSG_SPACE(sizeof(int) * 2);
 		msgh.msg_iov = &iov;
 		msgh.msg_iovlen = 1;
 		msgh.msg_name = NULL;
@@ -121,12 +121,13 @@ int main(int argc, char *argv[])
 		cmsgh->cmsg_len = CMSG_LEN(sizeof(int) * 2);
 		cmsgh->cmsg_level = SOL_SOCKET;
 		cmsgh->cmsg_type = SCM_RIGHTS;
+
 		*((int *)CMSG_DATA(cmsgh) + 0) = sl[0];
 		*((int *)CMSG_DATA(cmsgh) + 1) = sl[1];
 
 		if (sendmsg(sl[0], &msgh, 0) < 0) {
 			if (errno != EMFILE)
-				err(1, "sendmsg");
+				err(1, "sendmsg sl0");
 		}
 
 		/*
@@ -142,7 +143,7 @@ int main(int argc, char *argv[])
 		if (recvmsg(sp[1], &msgh, 0) < 0) {
 			if (errno == EMSGSIZE)
 				goto skip;
-			err(1, "recvmsg");
+			err(1, "recvmsg sp1");
 		}
 
 		if (!(cmsgh = CMSG_FIRSTHDR(&msgh)))
@@ -159,7 +160,7 @@ int main(int argc, char *argv[])
 		if (recvmsg(ts, &msgh, 0) < 0) {
 			if (errno == EMSGSIZE)
 				goto skip;
-			err(1, "recvmsg");
+			err(1, "recvmsg ts");
 		}
 
 		close(ts);
