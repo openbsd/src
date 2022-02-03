@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_installboot.c,v 1.1 2022/02/03 10:21:13 visa Exp $	*/
+/*	$OpenBSD: efi_installboot.c,v 1.2 2022/02/03 10:25:14 visa Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -54,6 +54,19 @@
 #include <uuid.h>
 
 #include "installboot.h"
+
+#if defined(__aarch64__)
+#define BOOTEFI_SRC	"BOOTAA64.EFI"
+#define BOOTEFI_DST	"bootaa64.efi"
+#elif defined(__arm__)
+#define BOOTEFI_SRC	"BOOTARM.EFI"
+#define BOOTEFI_DST	"bootarm.efi"
+#elif defined(__riscv)
+#define BOOTEFI_SRC	"BOOTRISCV64.EFI"
+#define BOOTEFI_DST	"bootriscv64.efi"
+#else
+#error "unhandled architecture"
+#endif
 
 static int	create_filesystem(struct disklabel *, char);
 static void	write_filesystem(struct disklabel *, char);
@@ -252,58 +265,40 @@ write_filesystem(struct disklabel *dl, char part)
 		goto umount;
 	}
 
-#ifdef __aarch64__
-	/*
-	 * Copy BOOTAA64.EFI to /efi/boot/bootaa64.efi.
-	 */
+	/* Copy EFI bootblocks to /efi/boot/. */
 	pathlen = strlen(dst);
-	if (strlcat(dst, "/bootaa64.efi", sizeof(dst)) >= sizeof(dst)) {
+	if (strlcat(dst, "/" BOOTEFI_DST, sizeof(dst)) >= sizeof(dst)) {
 		rslt = -1;
-		warn("unable to build /bootaa64.efi path");
+		warn("unable to build /%s path", BOOTEFI_DST);
 		goto umount;
 	}
-	src = fileprefix(root, "/usr/mdec/BOOTAA64.EFI");
+	src = fileprefix(root, "/usr/mdec/" BOOTEFI_SRC);
 	if (src == NULL) {
 		rslt = -1;
 		goto umount;
 	}
-#elif defined(__arm__)
-	/*
-	 * Copy BOOTARM.EFI to /efi/boot/bootarm.efi.
-	 */
-	pathlen = strlen(dst);
-	if (strlcat(dst, "/bootarm.efi", sizeof(dst)) >= sizeof(dst)) {
-		rslt = -1;
-		warn("unable to build /bootarm.efi path");
-		goto umount;
-	}
-	src = fileprefix(root, "/usr/mdec/BOOTARM.EFI");
-	if (src == NULL) {
-		rslt = -1;
-		goto umount;
-	}
-#elif defined(__riscv)
-	/*
-	 * Copy BOOTRISCV64.EFI to /efi/boot/bootriscv64.efi.
-	 */
-	pathlen = strlen(dst);
-	if (strlcat(dst, "/bootriscv64.efi", sizeof(dst)) >= sizeof(dst)) {
-		rslt = -1;
-		warn("unable to build /bootriscv64.efi path");
-		goto umount;
-	}
-	src = fileprefix(root, "/usr/mdec/BOOTRISCV64.EFI");
-	if (src == NULL) {
-		rslt = -1;
-		goto umount;
-	}
-#endif
 	srclen = strlen(src);
 	if (verbose)
 		fprintf(stderr, "%s %s to %s\n",
 		    (nowrite ? "would copy" : "copying"), src, dst);
 	if (!nowrite) {
 		rslt = filecopy(src, dst);
+		if (rslt == -1)
+			goto umount;
+	}
+
+	/* Write /efi/boot/startup.nsh. */
+	dst[pathlen] = '\0';
+	if (strlcat(dst, "/startup.nsh", sizeof(dst)) >= sizeof(dst)) {
+		rslt = -1;
+		warn("unable to build /startup.nsh path");
+		goto umount;
+	}
+	if (verbose)
+		fprintf(stderr, "%s %s\n",
+		    (nowrite ? "would write" : "writing"), dst);
+	if (!nowrite) {
+		rslt = fileprintf(dst, "%s\n", BOOTEFI_DST);
 		if (rslt == -1)
 			goto umount;
 	}

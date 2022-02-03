@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.15 2022/02/02 13:22:10 visa Exp $	*/
+/*	$OpenBSD: util.c,v 1.16 2022/02/03 10:25:14 visa Exp $	*/
 
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -20,6 +20,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -135,6 +136,46 @@ err:
 	free(s);
 	free(r);
 	return (NULL);
+}
+
+int
+fileprintf(const char *filename, const char *fmt, ...)
+{
+	va_list ap;
+	int fd, ret;
+	int rslt = -1;
+
+	fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC,
+	    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH);
+	if (fd == -1) {
+		warn("open %s", filename);
+		return (-1);
+	}
+	if (fchown(fd, 0, 0) == -1) {
+		if (errno != EINVAL) {
+			warn("chown");
+			goto err;
+		}
+	}
+	if (fchmod(fd, S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH) == -1) {
+		warn("chmod");
+		goto err;
+	}
+
+	va_start(ap, fmt);
+	ret = vdprintf(fd, fmt, ap);
+	va_end(ap);
+
+	if (ret < 0) {
+		warn("vdprintf");
+		goto err;
+	}
+
+	rslt = 0;
+
+err:
+	close(fd);
+	return (rslt);
 }
 
 /*

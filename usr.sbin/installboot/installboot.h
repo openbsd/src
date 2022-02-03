@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.h,v 1.13 2021/07/20 14:51:56 kettenis Exp $	*/
+/*	$OpenBSD: installboot.h,v 1.14 2022/02/03 10:25:14 visa Exp $	*/
 /*
  * Copyright (c) 2012, 2013 Joel Sing <jsing@openbsd.org>
  *
@@ -33,6 +33,8 @@ void	bootstrap(int, char *, char *);
 
 int	filecopy(const char *, const char *);
 char	*fileprefix(const char *, const char *);
+int	fileprintf(const char *, const char *, ...)
+	    __attribute__((format(printf, 2, 3)));
 u_int32_t crc32(const u_char *, const u_int32_t);
 
 void	md_init(void);
