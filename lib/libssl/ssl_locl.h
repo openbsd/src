@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.383 2022/01/11 19:03:15 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.384 2022/02/03 16:33:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1310,7 +1310,7 @@ SSL_CERT_PKEY *ssl_get_server_send_pkey(const SSL *s);
 EVP_PKEY *ssl_get_sign_pkey(SSL *s, const SSL_CIPHER *c, const EVP_MD **pmd,
     const struct ssl_sigalg **sap);
 size_t ssl_dhe_params_auto_key_bits(SSL *s);
-int ssl_cert_type(X509 *x, EVP_PKEY *pkey);
+int ssl_cert_type(EVP_PKEY *pkey);
 void ssl_set_cert_masks(SSL_CERT *c, const SSL_CIPHER *cipher);
 STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 int ssl_has_ecc_ciphers(SSL *s);

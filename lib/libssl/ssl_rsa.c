@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.38 2022/01/08 12:43:44 jsing Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.39 2022/02/03 16:33:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -171,7 +171,7 @@ ssl_set_pkey(SSL_CERT *c, EVP_PKEY *pkey)
 {
 	int i;
 
-	i = ssl_cert_type(NULL, pkey);
+	i = ssl_cert_type(pkey);
 	if (i < 0) {
 		SSLerrorx(SSL_R_UNKNOWN_CERTIFICATE_TYPE);
 		return (0);
@@ -354,7 +354,7 @@ ssl_set_cert(SSL_CERT *c, X509 *x)
 		return (0);
 	}
 
-	i = ssl_cert_type(x, pkey);
+	i = ssl_cert_type(pkey);
 	if (i < 0) {
 		SSLerrorx(SSL_R_UNKNOWN_CERTIFICATE_TYPE);
 		EVP_PKEY_free(pkey);

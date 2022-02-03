@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.95 2022/01/11 19:03:15 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.96 2022/02/03 16:33:12 jsing Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -918,7 +918,7 @@ tls13_client_certificate_recv(struct tls13_ctx *ctx, CBS *cbs)
 		goto err;
 	if (EVP_PKEY_missing_parameters(pkey))
 		goto err;
-	if ((cert_type = ssl_cert_type(cert, pkey)) < 0)
+	if ((cert_type = ssl_cert_type(pkey)) < 0)
 		goto err;
 
 	X509_up_ref(cert);

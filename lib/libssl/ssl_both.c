@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.40 2022/01/08 12:43:44 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.41 2022/02/03 16:33:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -522,32 +522,22 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max)
 }
 
 int
-ssl_cert_type(X509 *x, EVP_PKEY *pkey)
+ssl_cert_type(EVP_PKEY *pkey)
 {
-	EVP_PKEY *pk;
-	int ret = -1, i;
-
 	if (pkey == NULL)
-		pk = X509_get_pubkey(x);
-	else
-		pk = pkey;
-	if (pk == NULL)
-		goto err;
+		return -1;
 
-	i = EVP_PKEY_id(pk);
-	if (i == EVP_PKEY_RSA) {
-		ret = SSL_PKEY_RSA;
-	} else if (i == EVP_PKEY_EC) {
-		ret = SSL_PKEY_ECC;
-	} else if (i == NID_id_GostR3410_2001 ||
-	    i == NID_id_GostR3410_2001_cc) {
-		ret = SSL_PKEY_GOST01;
+	switch (EVP_PKEY_id(pkey)) {
+	case EVP_PKEY_EC:
+		return SSL_PKEY_ECC;
+	case NID_id_GostR3410_2001:
+	case NID_id_GostR3410_2001_cc:
+		return SSL_PKEY_GOST01;
+	case EVP_PKEY_RSA:
+		return SSL_PKEY_RSA;
 	}
 
- err:
-	if (!pkey)
-		EVP_PKEY_free(pk);
-	return (ret);
+	return -1;
 }
 
 int
