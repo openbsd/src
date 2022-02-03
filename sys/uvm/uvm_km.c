@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.147 2021/12/15 12:53:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.148 2022/02/03 17:06:09 kn Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -544,7 +544,7 @@ uvm_km_valloc(struct vm_map *map, vsize_t size)
 vaddr_t
 uvm_km_valloc_try(struct vm_map *map, vsize_t size)
 {
-	return uvm_km_valloc_align(map, size, 0, UVM_FLAG_TRYLOCK);
+	return uvm_km_valloc_align(map, size, 0, UVM_KMF_TRYLOCK);
 }
 
 vaddr_t
