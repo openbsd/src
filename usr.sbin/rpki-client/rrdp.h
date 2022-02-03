@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.h,v 1.7 2021/11/24 15:24:16 claudio Exp $ */
+/*	$OpenBSD: rrdp.h,v 1.8 2022/02/03 18:19:32 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -18,6 +18,7 @@
 #ifndef _RRDPH_
 #define _RRDPH_
 
+#define RRDP_XMLNS	"http://www.ripe.net/rpki/rrdp"
 #define MAX_VERSION 1
 
 #define log_debuginfo(format, ...) logx(format, ##__VA_ARGS__)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_snapshot.c,v 1.5 2021/11/09 11:01:04 claudio Exp $ */
+/*	$OpenBSD: rrdp_snapshot.c,v 1.6 2022/02/03 18:19:32 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -58,7 +58,8 @@ start_snapshot_elem(struct snapshot_xml *sxml, const char **attr)
 		    "parse failed - entered snapshot elem unexpectedely");
 	for (i = 0; attr[i]; i += 2) {
 		const char *errstr;
-		if (strcmp("xmlns", attr[i]) == 0) {
+		if (strcmp("xmlns", attr[i]) == 0 &&
+		    strcmp(RRDP_XMLNS, attr[i + 1]) == 0) {
 			has_xmlns = 1;
 			continue;
 		}

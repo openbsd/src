@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_delta.c,v 1.6 2021/11/09 11:01:04 claudio Exp $ */
+/*	$OpenBSD: rrdp_delta.c,v 1.7 2022/02/03 18:19:32 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -66,7 +66,8 @@ start_delta_elem(struct delta_xml *dxml, const char **attr)
 		    "parse failed - entered delta elem unexpectedely");
 	for (i = 0; attr[i]; i += 2) {
 		const char *errstr;
-		if (strcmp("xmlns", attr[i]) == 0) {
+		if (strcmp("xmlns", attr[i]) == 0 &&
+		    strcmp(RRDP_XMLNS, attr[i + 1]) == 0) {
 			has_xmlns = 1;
 			continue;
 		}
