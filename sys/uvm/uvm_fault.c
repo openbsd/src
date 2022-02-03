@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.125 2022/02/01 08:38:53 guenther Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.126 2022/02/03 19:57:11 guenther Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1022,8 +1022,10 @@ uvm_fault_upper(struct uvm_faultinfo *ufi, struct uvm_faultctx *flt,
 		 * uvm does it by inserting the new mapping RO and
 		 * letting it fault again.
 		 */
-		if (P_HASSIBLING(curproc))
+		if (P_HASSIBLING(curproc)) {
 			flt->enter_prot &= ~PROT_WRITE;
+			flt->access_type &= ~PROT_WRITE;
+		}
 #endif
 
 		/*
