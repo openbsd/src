@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.16 2022/02/03 17:42:54 tb Exp $ */
+/* $OpenBSD: s_cb.c,v 1.17 2022/02/03 18:35:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -203,11 +203,6 @@ int
 set_cert_stuff(SSL_CTX * ctx, char *cert_file, char *key_file)
 {
 	if (cert_file != NULL) {
-		/*
-		SSL *ssl;
-		X509 *x509;
-		*/
-
 		if (SSL_CTX_use_certificate_file(ctx, cert_file,
 		    SSL_FILETYPE_PEM) <= 0) {
 			BIO_printf(bio_err,
