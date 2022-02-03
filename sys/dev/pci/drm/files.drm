@@ -1,4 +1,4 @@
-# $OpenBSD: files.drm,v 1.53 2022/01/14 06:52:59 jsg Exp $
+# $OpenBSD: files.drm,v 1.54 2022/02/03 04:45:01 jsg Exp $
 
 file	dev/pci/drm/dma-resv.c			drm
 file	dev/pci/drm/drm_agpsupport.c		drm & agp
@@ -105,7 +105,7 @@ file	dev/pci/drm/scheduler/sched_entity.c	drm_sched
 file	dev/pci/drm/scheduler/sched_fence.c	drm_sched
 file	dev/pci/drm/scheduler/sched_main.c	drm_sched
 
-device	inteldrm: agpint, drmbase, wsemuldisplaydev, rasops32, rasops_rotation, firmload, i2cbus, i2c_bitbang
+device	inteldrm: agpint, drmbase, ttm, wsemuldisplaydev, rasops32, rasops_rotation, firmload, i2cbus, i2c_bitbang
 attach	inteldrm at pci
 file	dev/pci/drm/i915/display/dvo_ch7017.c		inteldrm
 file	dev/pci/drm/i915/display/dvo_ch7xxx.c		inteldrm
