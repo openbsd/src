@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.17 2022/02/03 18:35:24 tb Exp $ */
+/* $OpenBSD: s_cb.c,v 1.18 2022/02/03 18:40:34 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -202,35 +202,33 @@ verify_callback(int ok, X509_STORE_CTX * ctx)
 int
 set_cert_stuff(SSL_CTX * ctx, char *cert_file, char *key_file)
 {
-	if (cert_file != NULL) {
-		if (SSL_CTX_use_certificate_file(ctx, cert_file,
-		    SSL_FILETYPE_PEM) <= 0) {
-			BIO_printf(bio_err,
-			    "unable to get certificate from '%s'\n", cert_file);
-			ERR_print_errors(bio_err);
-			return (0);
-		}
-		if (key_file == NULL)
-			key_file = cert_file;
-		if (SSL_CTX_use_PrivateKey_file(ctx, key_file,
-		    SSL_FILETYPE_PEM) <= 0) {
-			BIO_printf(bio_err,
-			    "unable to get private key from '%s'\n", key_file);
-			ERR_print_errors(bio_err);
-			return (0);
-		}
+	if (cert_file == NULL)
+		return 1;
 
-		/*
-		 * Now we know that a key and cert have been set against the
-		 * SSL context
-		 */
-		if (!SSL_CTX_check_private_key(ctx)) {
-			BIO_printf(bio_err,
-			    "Private key does not match the certificate public key\n");
-			return (0);
-		}
+	if (key_file == NULL)
+		key_file = cert_file;
+
+	if (SSL_CTX_use_certificate_file(ctx, cert_file, SSL_FILETYPE_PEM) <= 0) {
+		BIO_printf(bio_err,
+		    "unable to get certificate from '%s'\n", cert_file);
+		ERR_print_errors(bio_err);
+		return 0;
 	}
-	return (1);
+	if (SSL_CTX_use_PrivateKey_file(ctx, key_file, SSL_FILETYPE_PEM) <= 0) {
+		BIO_printf(bio_err, "unable to get private key from '%s'\n",
+		    key_file);
+		ERR_print_errors(bio_err);
+		return 0;
+	}
+
+	/* Now we know that a key and cert have been set against the context. */
+	if (!SSL_CTX_check_private_key(ctx)) {
+		BIO_printf(bio_err,
+		    "Private key does not match the certificate public key\n");
+		return 0;
+	}
+
+	return 1;
 }
 
 int
