@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.59 2022/02/04 16:21:11 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.60 2022/02/04 16:29:43 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -44,7 +44,7 @@ static struct crl	*get_crl(const struct auth *);
 static void		 build_crls(const struct crl *, STACK_OF(X509_CRL) **);
 
 static X509_STORE_CTX	*ctx;
-static struct auth_tree  auths = RB_INITIALIZER(&auths);
+static struct auth_tree	 auths = RB_INITIALIZER(&auths);
 static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
 
 extern ASN1_OBJECT	*certpol_oid;
@@ -120,7 +120,7 @@ parse_filepath(unsigned int repoid, const char *path, const char *file,
 	rp = repo_get(repoid);
 	if (rp == NULL)
 		return NULL;
-	
+
 	if (loc == DIR_VALID)
 		repopath = rp->validpath;
 	else
