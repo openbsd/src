@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.76 2022/01/06 14:08:15 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.77 2022/02/04 16:34:15 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1897,9 +1897,6 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 			parent_af = sk_IPAddressFamily_value(parent, i);
 
 			if (IPAddressFamily_inheritance(parent_af) == NULL)
-				continue;
-
-			if (sk_IPAddressFamily_find(child, parent_af) < 0)
 				continue;
 
 			if ((ret = verify_error(ctx, cert,
