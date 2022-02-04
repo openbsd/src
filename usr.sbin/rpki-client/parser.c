@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.58 2022/01/28 15:30:23 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.59 2022/02/04 16:21:11 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -46,6 +46,8 @@ static void		 build_crls(const struct crl *, STACK_OF(X509_CRL) **);
 static X509_STORE_CTX	*ctx;
 static struct auth_tree  auths = RB_INITIALIZER(&auths);
 static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
+
+extern ASN1_OBJECT	*certpol_oid;
 
 struct parse_repo {
 	RB_ENTRY(parse_repo)	 entry;
@@ -206,6 +208,8 @@ static int
 valid_x509(char *file, X509 *x509, struct auth *a, struct crl *crl,
     unsigned long flags, int nowarn)
 {
+	X509_VERIFY_PARAM	*params;
+	ASN1_OBJECT		*cp_oid;
 	STACK_OF(X509)		*chain;
 	STACK_OF(X509_CRL)	*crls = NULL;
 	int			 c;
@@ -217,11 +221,19 @@ valid_x509(char *file, X509 *x509, struct auth *a, struct crl *crl,
 	if (!X509_STORE_CTX_init(ctx, NULL, x509, NULL))
 		cryptoerrx("X509_STORE_CTX_init");
 
+	if ((params = X509_STORE_CTX_get0_param(ctx)) == NULL)
+		cryptoerrx("X509_STORE_CTX_get0_param");
+	if ((cp_oid = OBJ_dup(certpol_oid)) == NULL)
+		cryptoerrx("OBJ_dup");
+	if (!X509_VERIFY_PARAM_add0_policy(params, cp_oid))
+		cryptoerrx("X509_VERIFY_PARAM_add0_policy");
+
 	X509_STORE_CTX_set_verify_cb(ctx, verify_cb);
 	if (!X509_STORE_CTX_set_app_data(ctx, file))
 		cryptoerrx("X509_STORE_CTX_set_app_data");
-	if (flags != 0)
-		X509_STORE_CTX_set_flags(ctx, flags);
+	flags |= X509_V_FLAG_EXPLICIT_POLICY;
+	flags |= X509_V_FLAG_INHIBIT_MAP;
+	X509_STORE_CTX_set_flags(ctx, flags);
 	X509_STORE_CTX_set_depth(ctx, MAX_CERT_DEPTH);
 	X509_STORE_CTX_set0_trusted_stack(ctx, chain);
 	X509_STORE_CTX_set0_crls(ctx, crls);
