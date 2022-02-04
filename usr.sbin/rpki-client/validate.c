@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.28 2022/01/23 09:19:13 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.29 2022/02/04 13:50:32 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -197,8 +197,7 @@ valid_cert(const char *fn, struct auth *a, const struct cert *cert)
 }
 
 /*
- * Validate our ROA: check that the SKI is unique, the AKI exists, and
- * the IP prefix is also contained.
+ * Validate our ROA: check that the prefixes (ipAddrBlocks) are contained.
  * Returns 1 if valid, 0 otherwise.
  */
 int
