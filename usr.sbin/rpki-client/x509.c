@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.33 2022/02/02 12:10:40 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.34 2022/02/04 16:08:53 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -30,6 +30,7 @@
 
 #include "extern.h"
 
+ASN1_OBJECT	*certpol_oid;	/* id-cp-ipAddr-asNumber cert policy */
 ASN1_OBJECT	*carepo_oid;	/* 1.3.6.1.5.5.7.48.5 (caRepository) */
 ASN1_OBJECT	*manifest_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
 ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
@@ -42,6 +43,8 @@ void
 x509_init_oid(void)
 {
 
+	if ((certpol_oid = OBJ_txt2obj("1.3.6.1.5.5.7.14.2", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.14.2");
 	if ((carepo_oid = OBJ_txt2obj("1.3.6.1.5.5.7.48.5", 1)) == NULL)
 		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.48.5");
 	if ((manifest_oid = OBJ_txt2obj("1.3.6.1.5.5.7.48.10", 1)) == NULL)
