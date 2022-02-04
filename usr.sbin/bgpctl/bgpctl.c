@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.273 2021/08/09 08:24:36 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.274 2022/02/04 12:01:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -78,7 +78,7 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct sockaddr_un	 sun;
+	struct sockaddr_un	 sa_un;
 	int			 fd, n, done, ch, verbose = 0;
 	struct imsg		 imsg;
 	struct network_config	 net;
@@ -160,12 +160,12 @@ main(int argc, char *argv[])
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "control_init: socket");
 
-	bzero(&sun, sizeof(sun));
-	sun.sun_family = AF_UNIX;
-	if (strlcpy(sun.sun_path, sockname, sizeof(sun.sun_path)) >=
-	    sizeof(sun.sun_path))
+	bzero(&sa_un, sizeof(sa_un));
+	sa_un.sun_family = AF_UNIX;
+	if (strlcpy(sa_un.sun_path, sockname, sizeof(sa_un.sun_path)) >=
+	    sizeof(sa_un.sun_path))
 		errx(1, "socket name too long");
-	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1)
+	if (connect(fd, (struct sockaddr *)&sa_un, sizeof(sa_un)) == -1)
 		err(1, "connect: %s", sockname);
 
 	if (pledge("stdio", NULL) == -1)
