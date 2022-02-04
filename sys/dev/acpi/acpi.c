@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.408 2022/02/02 04:05:16 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.409 2022/02/04 08:06:48 robert Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3580,6 +3580,9 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			remaining += min(bat->aba_softc->sc_bst.bst_capacity,
 			    bat->aba_softc->sc_bix.bix_last_capacity);
 
+			if (bat->aba_softc->sc_bst.bst_state & BST_CHARGE)
+				pi->battery_state = APM_BATT_CHARGING;
+
 			if (bat->aba_softc->sc_bst.bst_rate == BST_UNKNOWN)
 				continue;
 			else if (bat->aba_softc->sc_bst.bst_rate > 1)
@@ -3615,13 +3618,19 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			break;
 		}
 
-		if (pi->ac_state == APM_AC_ON || rate == 0)
+		if (rate == 0)
 			pi->minutes_left = (unsigned int)-1;
+		else if (pi->battery_state == APM_BATT_CHARGING)
+			pi->minutes_left = 60 * (capacity - remaining) / rate;
 		else
 			pi->minutes_left = 60 * minutes / rate;
 
-		/* running on battery */
 		pi->battery_life = remaining * 100 / capacity;
+
+		if (pi->battery_state == APM_BATT_CHARGING)
+			break;
+
+		/* running on battery */
 		if (pi->battery_life > 50)
 			pi->battery_state = APM_BATT_HIGH;
 		else if (pi->battery_life > 25)
