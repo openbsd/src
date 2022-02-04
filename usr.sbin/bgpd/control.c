@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.105 2021/04/27 15:34:18 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.106 2022/02/04 12:01:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,19 +42,19 @@ ssize_t		 imsg_read_nofd(struct imsgbuf *);
 int
 control_check(char *path)
 {
-	struct sockaddr_un	 sun;
+	struct sockaddr_un	 sa_un;
 	int			 fd;
 
-	bzero(&sun, sizeof(sun));
-	sun.sun_family = AF_UNIX;
-	strlcpy(sun.sun_path, path, sizeof(sun.sun_path));
+	bzero(&sa_un, sizeof(sa_un));
+	sa_un.sun_family = AF_UNIX;
+	strlcpy(sa_un.sun_path, path, sizeof(sa_un.sun_path));
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM | SOCK_CLOEXEC, 0)) == -1) {
 		log_warn("%s: socket", __func__);
 		return (-1);
 	}
 
-	if (connect(fd, (struct sockaddr *)&sun, sizeof(sun)) == 0) {
+	if (connect(fd, (struct sockaddr *)&sa_un, sizeof(sa_un)) == 0) {
 		log_warnx("control socket %s already in use", path);
 		close(fd);
 		return (-1);
@@ -68,7 +68,7 @@ control_check(char *path)
 int
 control_init(int restricted, char *path)
 {
-	struct sockaddr_un	 sun;
+	struct sockaddr_un	 sa_un;
 	int			 fd;
 	mode_t			 old_umask, mode;
 
@@ -78,10 +78,10 @@ control_init(int restricted, char *path)
 		return (-1);
 	}
 
-	bzero(&sun, sizeof(sun));
-	sun.sun_family = AF_UNIX;
-	if (strlcpy(sun.sun_path, path, sizeof(sun.sun_path)) >=
-	    sizeof(sun.sun_path)) {
+	bzero(&sa_un, sizeof(sa_un));
+	sa_un.sun_family = AF_UNIX;
+	if (strlcpy(sa_un.sun_path, path, sizeof(sa_un.sun_path)) >=
+	    sizeof(sa_un.sun_path)) {
 		log_warn("control_init: socket name too long");
 		close(fd);
 		return (-1);
@@ -102,7 +102,7 @@ control_init(int restricted, char *path)
 		mode = S_IRUSR|S_IWUSR|S_IRGRP|S_IWGRP;
 	}
 
-	if (bind(fd, (struct sockaddr *)&sun, sizeof(sun)) == -1) {
+	if (bind(fd, (struct sockaddr *)&sa_un, sizeof(sa_un)) == -1) {
 		log_warn("control_init: bind: %s", path);
 		close(fd);
 		umask(old_umask);
@@ -159,12 +159,12 @@ control_accept(int listenfd, int restricted)
 {
 	int			 connfd;
 	socklen_t		 len;
-	struct sockaddr_un	 sun;
+	struct sockaddr_un	 sa_un;
 	struct ctl_conn		*ctl_conn;
 
-	len = sizeof(sun);
+	len = sizeof(sa_un);
 	if ((connfd = accept4(listenfd,
-	    (struct sockaddr *)&sun, &len,
+	    (struct sockaddr *)&sa_un, &len,
 	    SOCK_NONBLOCK | SOCK_CLOEXEC)) == -1) {
 		if (errno == ENFILE || errno == EMFILE) {
 			pauseaccept = getmonotime();
