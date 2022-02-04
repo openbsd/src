@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.53 2022/01/20 16:36:19 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.54 2022/02/04 16:28:20 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -29,6 +29,7 @@
 
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 #include "extern.h"
 
@@ -47,6 +48,7 @@ struct	parse {
 	const char	*fn; /* currently-parsed file */
 };
 
+extern ASN1_OBJECT	*certpol_oid;	/* id-cp-ipAddr-asNumber cert policy */
 extern ASN1_OBJECT	*carepo_oid;	/* 1.3.6.1.5.5.7.48.5 (caRepository) */
 extern ASN1_OBJECT	*manifest_oid;	/* 1.3.6.1.5.5.7.48.10 (rpkiManifest) */
 extern ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
@@ -969,6 +971,80 @@ out:
 	return rc;
 }
 
+static int
+certificate_policies(struct parse *p, X509_EXTENSION *ext)
+{
+	STACK_OF(POLICYINFO)		*policies = NULL;
+	POLICYINFO			*policy;
+	STACK_OF(POLICYQUALINFO)	*qualifiers;
+	POLICYQUALINFO			*qualifier;
+	int				 nid;
+	int				 rc = 0;
+
+	if (!X509_EXTENSION_get_critical(ext)) {
+		cryptowarnx("%s: RFC 6487 section 4.8.9: certificatePolicies: "
+		    "extension not critical", p->fn);
+		goto out;
+	}
+
+	if ((policies = X509V3_EXT_d2i(ext)) == NULL) {
+		cryptowarnx("%s: RFC 6487 section 4.8.9: certificatePolicies: "
+		    "failed extension parse", p->fn);
+		goto out;
+	}
+
+	if (sk_POLICYINFO_num(policies) != 1) {
+		warnx("%s: RFC 6487 section 4.8.9: certificatePolicies: "
+		    "want 1 policy, got %d", p->fn,
+		    sk_POLICYINFO_num(policies));
+		goto out;
+	}
+
+	policy = sk_POLICYINFO_value(policies, 0);
+	assert(policy != NULL && policy->policyid != NULL);
+
+	if (OBJ_cmp(policy->policyid, certpol_oid) != 0) {
+		char pbuf[128], cbuf[128];
+
+		OBJ_obj2txt(pbuf, sizeof(pbuf), policy->policyid, 1);
+		OBJ_obj2txt(cbuf, sizeof(cbuf), certpol_oid, 1);
+		warnx("%s: RFC 7318 section 2: certificatePolicies: "
+		    "unexpected OID: %s, want %s", p->fn, pbuf, cbuf);
+		goto out;
+	}
+
+	/* Policy qualifiers are optional. If they're absent, we're done. */
+	if ((qualifiers = policy->qualifiers) == NULL) {
+		rc = 1;
+		goto out;
+	}
+
+	if (sk_POLICYQUALINFO_num(qualifiers) != 1) {
+		warnx("%s: RFC 7318 section 2: certificatePolicies: "
+		    "want 1 policy qualifier, got %d", p->fn,
+		    sk_POLICYQUALINFO_num(qualifiers));
+		goto out;
+	}
+
+	qualifier = sk_POLICYQUALINFO_value(qualifiers, 0);
+	assert(qualifier != NULL && qualifier->pqualid != NULL);
+
+	if ((nid = OBJ_obj2nid(qualifier->pqualid)) != NID_id_qt_cps) {
+		warnx("%s: RFC 7318 section 2: certificatePolicies: "
+		    "want CPS, got %d (%s)", p->fn, nid, OBJ_nid2sn(nid));
+		goto out;
+	}
+
+	if (verbose > 1)
+		warnx("%s: CPS %.*s", p->fn, qualifier->d.cpsuri->length,
+		    qualifier->d.cpsuri->data);
+
+	rc = 1;
+ out:
+	sk_POLICYINFO_pop_free(policies, POLICYINFO_free);
+	return rc;
+}
+
 /*
  * Parse and partially validate an RPKI X509 certificate (either a trust
  * anchor or a certificate) as defined in RFC 6487.
@@ -1024,6 +1100,9 @@ cert_parse_inner(const char *fn, const unsigned char *der, size_t len, int ta)
 		case NID_sinfo_access:
 			sia_present = 1;
 			c = sbgp_sia(&p, ext);
+			break;
+		case NID_certificate_policies:
+			c = certificate_policies(&p, ext);
 			break;
 		case NID_crl_distribution_points:
 			/* ignored here, handled later */
