@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.57 2022/02/04 14:07:56 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.58 2022/02/04 23:32:17 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -102,8 +102,8 @@ protective_mbr(const struct mbr *mbr)
 		return -1;
 
 	for (i = 0; i < NDOSPART; i++) {
-		PRT_make(&mbr->mbr_prt[i], mbr->mbr_lba_self, mbr->mbr_lba_firstembr,
-		    &dos_partition);
+		PRT_make(&mbr->mbr_prt[i], mbr->mbr_lba_self,
+		    mbr->mbr_lba_firstembr, &dos_partition);
 		memcpy(&dp[i], &dos_partition, sizeof(dp[i]));
 	}
 
@@ -336,8 +336,10 @@ GPT_print(const char *units, const int verbosity)
 	printf("gh_gh_guid     : %s\n", (status == uuid_s_ok) ? p : "<invalid>");
 	free(p);
 	printf("gh_gh_part_lba : %llu\n", letoh64(gh.gh_part_lba));
-	printf("gh_gh_part_num : %u (%zu)\n", letoh32(gh.gh_part_num), nitems(gp));
-	printf("gh_gh_part_size: %u (%zu)\n", letoh32(gh.gh_part_size), sizeof(gp[0]));
+	printf("gh_gh_part_num : %u (%zu)\n", letoh32(gh.gh_part_num),
+	    nitems(gp));
+	printf("gh_gh_part_size: %u (%zu)\n", letoh32(gh.gh_part_size),
+	    sizeof(gp[0]));
 	printf("gh_gh_part_csum: 0x%x\n", letoh32(gh.gh_part_csum));
 	printf("\n");
 #endif	/* DEBUG */

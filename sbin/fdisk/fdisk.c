@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.141 2021/12/11 20:09:28 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.142 2022/02/04 23:32:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -56,8 +56,8 @@ usage(void)
 
 	fprintf(stderr, "usage: %s "
 	    "[-evy] [-A | -g | -i | -u] [-b blocks[@offset[:type]]]\n"
-	    "\t[-l blocks | -c cylinders -h heads -s sectors] [-f mbrfile] disk\n",
-	    __progname);
+	    "\t[-l blocks | -c cylinders -h heads -s sectors] [-f mbrfile] "
+	    "disk\n", __progname);
 	exit(1);
 }
 
@@ -108,7 +108,8 @@ main(int argc, char *argv[])
 			init = INIT_MBR;
 			break;
 		case 'l':
-			disk.dk_size = strtonum(optarg, BLOCKALIGNMENT, UINT32_MAX, &errstr);
+			disk.dk_size = strtonum(optarg, BLOCKALIGNMENT,
+			    UINT32_MAX, &errstr);
 			if (errstr)
 				errx(1, "Block argument %s [%u..%u].", errstr,
 				    BLOCKALIGNMENT, UINT32_MAX);

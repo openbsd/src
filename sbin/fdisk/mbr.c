@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.117 2022/02/04 18:21:33 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.118 2022/02/04 23:32:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -129,8 +129,8 @@ mbr_to_dos_mbr(const struct mbr *mbr, struct dos_mbr *dos_mbr)
 	dos_mbr->dmbr_sign = htole16(DOSMBR_SIGNATURE);
 
 	for (i = 0; i < NDOSPART; i++) {
-		PRT_make(&mbr->mbr_prt[i], mbr->mbr_lba_self, mbr->mbr_lba_firstembr,
-		    &dos_partition);
+		PRT_make(&mbr->mbr_prt[i], mbr->mbr_lba_self,
+		    mbr->mbr_lba_firstembr, &dos_partition);
 		memcpy(&dos_mbr->dmbr_parts[i], &dos_partition,
 		    sizeof(dos_mbr->dmbr_parts[i]));
 	}

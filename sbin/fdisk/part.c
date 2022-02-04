@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.115 2022/02/04 14:07:56 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.116 2022/02/04 23:32:17 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -219,7 +219,8 @@ PRT_print_mbrtypes(void)
 		printf("%02X %s   %02X %s   %02X %s",
 		    mbr_types[i].mt_type, mbr_types[i].mt_sname,
 		    mbr_types[i+idrows].mt_type, mbr_types[i+idrows].mt_sname,
-		    mbr_types[i+idrows*2].mt_type, mbr_types[i+idrows*2].mt_sname);
+		    mbr_types[i+idrows*2].mt_type,
+		    mbr_types[i+idrows*2].mt_sname);
 		if ((i+idrows*3) < nitems(mbr_types)) {
 			printf("   %02X %s\n",
 			    mbr_types[i+idrows*3].mt_type,
@@ -241,7 +242,8 @@ PRT_print_gpttypes(void)
 		printf("%02X %s   %02X %s   %02X %s",
 		    gpt_types[i].gt_type, gpt_types[i].gt_sname,
 		    gpt_types[i+idrows].gt_type, gpt_types[i+idrows].gt_sname,
-		    gpt_types[i+idrows*2].gt_type, gpt_types[i+idrows*2].gt_sname);
+		    gpt_types[i+idrows*2].gt_type,
+		    gpt_types[i+idrows*2].gt_sname);
 		if ((i+idrows*3) < nitems(gpt_types)) {
 			printf("   %02X %s\n",
 			    gpt_types[i+idrows*3].gt_type,
@@ -289,8 +291,8 @@ PRT_parse(const struct dos_partition *dp, const uint64_t lba_self,
 }
 
 void
-PRT_make(const struct prt *prt, const uint64_t lba_self, const uint64_t lba_firstembr,
-    struct dos_partition *dp)
+PRT_make(const struct prt *prt, const uint64_t lba_self,
+    const uint64_t lba_firstembr, struct dos_partition *dp)
 {
 	struct chs		start, end;
 	uint64_t		off, t;
