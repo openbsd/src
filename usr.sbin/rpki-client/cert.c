@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.54 2022/02/04 16:28:20 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.55 2022/02/04 16:50:01 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -971,6 +971,10 @@ out:
 	return rc;
 }
 
+/*
+ * Parse the certificate policies extension and check that it follows RFC 7318.
+ * Returns zero on failure, non-zero on success.
+ */
 static int
 certificate_policies(struct parse *p, X509_EXTENSION *ext)
 {
