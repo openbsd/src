@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.16 2021/12/01 09:03:19 claudio Exp $
+# $OpenBSD: Makefile.inc,v 1.17 2022/02/04 13:05:47 claudio Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -67,7 +67,7 @@ run-regress-test-rrdp: test-rrdp
 	cmp ${.CURDIR}/../rrdp/rrdp-r2.out rrdp-r2.out
 	
 	./test-rrdp -S 9b3f7e31-4979-ef8c-d818-73e4dadc3e6b -N 13755 \
-	-H 27571e365a4c87b51a03731415ce2118cc268d686db3209ae752f01ba2d74bc5 \
+	-H 7bbab52b9ea9caab08da761d20f74711e139a334777fa4141f0503885d6592d5 \
 	-d < ${.CURDIR}/../rrdp/delta.xml 2>&1 | tee rrdp-r3.out
 	cmp ${.CURDIR}/../rrdp/rrdp-r3.out rrdp-r3.out
 
