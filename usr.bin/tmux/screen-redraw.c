@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.93 2022/02/01 14:46:41 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.94 2022/02/04 11:57:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -727,8 +727,10 @@ screen_redraw_draw_borders_cell(struct screen_redraw_ctx *ctx, u_int i, u_int j)
 		    border == SCREEN_REDRAW_BORDER_RIGHT) ||
 		    (cell_type == CELL_RIGHTJOIN &&
 		    border == SCREEN_REDRAW_BORDER_LEFT)))) &&
-		    screen_redraw_check_is(x, y, pane_status, active))
+		    screen_redraw_check_is(x, y, pane_status, active)) {
+			gc.attr |= GRID_ATTR_CHARSET;
 			utf8_set(&gc.data, BORDER_MARKERS[border]);
+		}
 	}
 
 	tty_cell(tty, &gc, &grid_default_cell, NULL);
