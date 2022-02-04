@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.151 2022/02/04 14:07:56 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.152 2022/02/04 18:21:33 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -423,7 +423,7 @@ Xwrite(char *args, struct mbr *mbr)
 			return CMD_CONT;
 		}
 	} else {
-		printf("Writing MBR at offset %lld.\n", (long long)mbr->mbr_lba_self);
+		printf("Writing MBR at offset %llu.\n", mbr->mbr_lba_self);
 		if (MBR_write(mbr) == -1) {
 			warn("error writing MBR");
 			return CMD_CONT;
