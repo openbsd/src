@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.23 2021/12/14 11:01:58 kettenis Exp $
+#	$OpenBSD: install.md,v 1.24 2022/02/04 16:08:39 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,10 +49,7 @@ md_installboot() {
 		exit
 	fi
 
-	# Mount MSDOS partition to do some final tweaks
-	mount ${MOUNT_ARGS_msdos} ${_disk}i /mnt/mnt
-	echo bootaa64.efi > /mnt/mnt/efi/boot/startup.nsh
-
+	# Apply some final tweaks on selected platforms
 	_mdec=/usr/mdec/$_plat
 
 	case $_plat in
@@ -61,6 +58,7 @@ md_installboot() {
 		    bs=1024 seek=8 >/dev/null 2>&1
 		;;
 	rpi)
+		mount ${MOUNT_ARGS_msdos} ${_disk}i /mnt/mnt
 		cp $_mdec/{bootcode.bin,start*.elf,fixup*.dat,*.dtb} /mnt/mnt/
 		cp $_mdec/u-boot.bin /mnt/mnt/
 		mkdir -p /mnt/mnt/overlays
@@ -73,6 +71,7 @@ md_installboot() {
 				kernel=u-boot.bin
 			__EOT
 		fi
+		umount /mnt/mnt
 		;;
 	esac
 }
