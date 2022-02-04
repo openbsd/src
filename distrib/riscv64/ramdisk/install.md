@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.4 2022/02/03 10:27:33 visa Exp $
+#	$OpenBSD: install.md,v 1.5 2022/02/04 18:12:47 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@ md_prep_fdisk() {
 	local bootparttype="C"
 	local bootsectorstart="32768"
 	local bootsectorsize="32768"
-	local bootsectorend=$(($bootsectorstart + $bootsectorsize))
 	local bootfstype="msdos"
 
 	while :; do
@@ -62,22 +61,7 @@ md_prep_fdisk() {
 		case $resp in
 		[wW]*)
 			echo -n "Creating a ${bootfstype} partition and an OpenBSD partition for rest of $_disk..."
-			fdisk -e ${_disk} <<__EOT >/dev/null
-reinit
-e 0
-${bootparttype}
-n
-${bootsectorstart}
-${bootsectorsize}
-f 0
-e 3
-A6
-n
-${bootsectorend}
-
-write
-quit
-__EOT
+			fdisk -iy -b "${bootsectorsize}@${bootsectorstart}:${bootparttype}" ${_disk} >/dev/null
 			echo "done."
 			installboot -p $_disk
 			return ;;
