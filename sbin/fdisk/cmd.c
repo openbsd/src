@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.150 2022/01/27 16:26:32 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.151 2022/02/04 14:07:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -190,6 +190,7 @@ parsepn(const char *pnstr)
 int
 edit(const int pn, struct mbr *mbr)
 {
+	struct chs		 start, end;
 	struct prt		*pp;
 	uint64_t		 track;
 	unsigned char		 oldid;
@@ -209,39 +210,34 @@ edit(const int pn, struct mbr *mbr)
 	}
 
 	if (ask_yn("Do you wish to edit in CHS mode?")) {
-		pp->prt_scyl = ask_num("BIOS Starting cylinder", pp->prt_scyl,
+		PRT_lba_to_chs(pp, &start, &end);
+		start.chs_cyl = ask_num("BIOS Starting cylinder", start.chs_cyl,
 		    0, disk.dk_cylinders - 1);
-		pp->prt_shead = ask_num("BIOS Starting head",    pp->prt_shead,
+		start.chs_head = ask_num("BIOS Starting head", start.chs_head,
 		    0, disk.dk_heads - 1);
-		pp->prt_ssect = ask_num("BIOS Starting sector",  pp->prt_ssect,
+		start.chs_sect = ask_num("BIOS Starting sector", start.chs_sect,
 		    1, disk.dk_sectors);
 
-		pp->prt_ecyl = ask_num("BIOS Ending cylinder",   pp->prt_ecyl,
-		    pp->prt_scyl, disk.dk_cylinders - 1);
-		pp->prt_ehead = ask_num("BIOS Ending head",      pp->prt_ehead,
-		    (pp->prt_scyl == pp->prt_ecyl) ? pp->prt_shead : 0,
+		end.chs_cyl = ask_num("BIOS Ending cylinder", end.chs_cyl,
+		    start.chs_cyl, disk.dk_cylinders - 1);
+		end.chs_head = ask_num("BIOS Ending head", end.chs_head,
+		    (start.chs_cyl == end.chs_cyl) ? start.chs_head : 0,
 		    disk.dk_heads - 1);
-		pp->prt_esect = ask_num("BIOS Ending sector",    pp->prt_esect,
-		    (pp->prt_scyl == pp->prt_ecyl && pp->prt_shead ==
-		    pp->prt_ehead) ? pp->prt_ssect : 1, disk.dk_sectors);
+		end.chs_sect = ask_num("BIOS Ending sector", end.chs_sect,
+		    (start.chs_cyl == end.chs_cyl && start.chs_head ==
+		    end.chs_head) ? start.chs_sect : 1, disk.dk_sectors);
 
 		/* The ATA/ATAPI spec says LBA = (C × HPC + H) × SPT + (S − 1) */
-		track = (uint64_t)pp->prt_scyl * disk.dk_heads + pp->prt_shead;
-		pp->prt_bs = track * disk.dk_sectors + (pp->prt_ssect - 1);
-		track = (uint64_t)pp->prt_ecyl * disk.dk_heads + pp->prt_ehead;
-		pp->prt_ns = track * disk.dk_sectors + (pp->prt_esect - 1) -
+		track = start.chs_cyl * disk.dk_heads + start.chs_head;
+		pp->prt_bs = track * disk.dk_sectors + (start.chs_sect - 1);
+		track = end.chs_cyl * disk.dk_heads + end.chs_head;
+		pp->prt_ns = track * disk.dk_sectors + (end.chs_sect - 1) -
 		    pp->prt_bs + 1;
-
-		/* Fix up CHS values for LBA */
-		PRT_fix_CHS(pp);
 	} else {
 		pp->prt_bs = getuint64("Partition offset", pp->prt_bs, 0,
 		    disk.dk_size - 1);
 		pp->prt_ns = getuint64("Partition size",   pp->prt_ns, 1,
 		    disk.dk_size - pp->prt_bs);
-
-		/* Fix up CHS values */
-		PRT_fix_CHS(pp);
 	}
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.h,v 1.33 2022/01/27 16:26:32 krw Exp $	*/
+/*	$OpenBSD: part.h,v 1.34 2022/02/04 14:07:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -16,11 +16,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+struct chs {
+	uint64_t	chs_cyl;
+	uint32_t	chs_head;
+	uint32_t	chs_sect;
+};
+
 struct prt {
 	uint64_t	prt_bs;
 	uint64_t	prt_ns;
-	uint32_t	prt_shead, prt_scyl, prt_ssect;
-	uint32_t	prt_ehead, prt_ecyl, prt_esect;
 	unsigned char	prt_flag;
 	unsigned char	prt_id;
 };
@@ -37,6 +41,4 @@ char		*PRT_uuid_to_typename(const struct uuid *);
 int		 PRT_uuid_to_type(const struct uuid *);
 struct uuid	*PRT_type_to_uuid(const int);
 int		 PRT_protected_guid(const struct uuid *);
-
-/* This does bs/ns -> CHS */
-void PRT_fix_CHS(struct prt *);
+int		 PRT_lba_to_chs(const struct prt*, struct chs *, struct chs*);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.115 2022/01/21 17:29:24 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.116 2022/02/04 14:07:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -91,10 +91,7 @@ MBR_init(struct mbr *mbr)
 		obsdprt.prt_id = DOSPTYP_OPENBSD;
 		if (bootprt.prt_flag != DOSACTIVE)
 			obsdprt.prt_flag = DOSACTIVE;
-		PRT_fix_CHS(&obsdprt);
 	}
-
-	PRT_fix_CHS(&bootprt);
 
 	memset(mbr, 0, sizeof(*mbr));
 	memcpy(mbr->mbr_code, default_dmbr.dmbr_boot, sizeof(mbr->mbr_code));

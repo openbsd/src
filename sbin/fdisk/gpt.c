@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.56 2022/01/02 17:26:14 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.57 2022/02/04 14:07:56 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -491,7 +491,6 @@ init_gh(void)
 	gmbr.mbr_prt[0].prt_id = DOSPTYP_EFI;
 	gmbr.mbr_prt[0].prt_bs = 1;
 	gmbr.mbr_prt[0].prt_ns = UINT32_MAX;
-	PRT_fix_CHS(&gmbr.mbr_prt[0]);
 	gmbr.mbr_signature = DOSMBR_SIGNATURE;
 
 	needed = sizeof(gp) / secsize + 2;

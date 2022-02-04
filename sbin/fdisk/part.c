@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.114 2022/02/03 13:24:04 visa Exp $	*/
+/*	$OpenBSD: part.c,v 1.115 2022/02/04 14:07:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -30,7 +30,6 @@
 #include "disk.h"
 #include "misc.h"
 
-int			 check_chs(const struct prt *);
 const char		*ascii_id(const int);
 
 struct mbr_type {
@@ -287,52 +286,32 @@ PRT_parse(const struct dos_partition *dp, const uint64_t lba_self,
 	prt->prt_ns = letoh32(t);
 	if (prt->prt_id == DOSPTYP_EFI && prt->prt_ns == UINT32_MAX)
 		prt->prt_ns = DL_GETDSIZE(&dl) - prt->prt_bs;
-
-	PRT_fix_CHS(prt);
-}
-
-int
-check_chs(const struct prt *prt)
-{
-	if ( (prt->prt_shead > 255) ||
-		(prt->prt_ssect >63) ||
-		(prt->prt_scyl > 1023) ||
-		(prt->prt_ehead >255) ||
-		(prt->prt_esect >63) ||
-		(prt->prt_ecyl > 1023) )
-	{
-		return -1;
-	}
-	return 0;
 }
 
 void
 PRT_make(const struct prt *prt, const uint64_t lba_self, const uint64_t lba_firstembr,
     struct dos_partition *dp)
 {
+	struct chs		start, end;
 	uint64_t		off, t;
-	uint32_t		ecyl, scyl;
 
 	if (prt->prt_ns == 0 || prt->prt_id == DOSPTYP_UNUSED) {
 		memset(dp, 0, sizeof(*dp));
 		return;
 	}
 
-	scyl = (prt->prt_scyl > 1023) ? 1023 : prt->prt_scyl;
-	ecyl = (prt->prt_ecyl > 1023) ? 1023 : prt->prt_ecyl;
-
 	if ((prt->prt_id == DOSPTYP_EXTEND) || (prt->prt_id == DOSPTYP_EXTENDL))
 		off = lba_firstembr;
 	else
 		off = lba_self;
 
-	if (check_chs(prt) == 0) {
-		dp->dp_shd = prt->prt_shead & 0xFF;
-		dp->dp_ssect = (prt->prt_ssect & 0x3F) | ((scyl & 0x300) >> 2);
-		dp->dp_scyl = scyl & 0xFF;
-		dp->dp_ehd = prt->prt_ehead & 0xFF;
-		dp->dp_esect = (prt->prt_esect & 0x3F) | ((ecyl & 0x300) >> 2);
-		dp->dp_ecyl = ecyl & 0xFF;
+	if (PRT_lba_to_chs(prt, &start, &end) == 0) {
+		dp->dp_shd = start.chs_head & 0xFF;
+		dp->dp_ssect = (start.chs_sect & 0x3F) | ((start.chs_cyl & 0x300) >> 2);
+		dp->dp_scyl = start.chs_cyl & 0xFF;
+		dp->dp_ehd = end.chs_head & 0xFF;
+		dp->dp_esect = (end.chs_sect & 0x3F) | ((end.chs_cyl & 0x300) >> 2);
+		dp->dp_ecyl = end.chs_cyl & 0xFF;
 	} else {
 		memset(dp, 0xFF, sizeof(*dp));
 	}
@@ -365,57 +344,54 @@ void
 PRT_print_part(const int num, const struct prt *prt, const char *units)
 {
 	const struct unit_type	*ut;
+	struct chs		 start, end;
 	double			 size;
 
 	size = units_size(units, prt->prt_ns, &ut);
-	printf("%c%1d: %.2X %6u %3u %3u - %6u %3u %3u "
+	PRT_lba_to_chs(prt, &start, &end);
+
+	printf("%c%1d: %.2X %6llu %3u %3u - %6llu %3u %3u "
 	    "[%12llu:%12.0f%s] %s\n",
 	    (prt->prt_flag == DOSACTIVE)?'*':' ',
 	    num, prt->prt_id,
-	    prt->prt_scyl, prt->prt_shead, prt->prt_ssect,
-	    prt->prt_ecyl, prt->prt_ehead, prt->prt_esect,
+	    start.chs_cyl, start.chs_head, start.chs_sect,
+	    end.chs_cyl, end.chs_head, end.chs_sect,
 	    prt->prt_bs, size, ut->ut_abbr, ascii_id(prt->prt_id));
 }
 
-void
-PRT_fix_CHS(struct prt *prt)
+int
+PRT_lba_to_chs(const struct prt *prt, struct chs *start, struct chs *end)
 {
-	uint32_t		spt, tpc, spc;
-	uint32_t		start, end, size;
-	uint32_t		cyl, head, sect;
+	uint64_t		lba;
 
-	if (prt->prt_id == DOSPTYP_UNUSED || prt->prt_ns == 0) {
-		memset(prt, 0, sizeof(*prt));
-		return;
+	if (prt->prt_ns == 0 || prt->prt_id == DOSPTYP_UNUSED) {
+		memset(start, 0, sizeof(*start));
+		memset(end, 0, sizeof(*end));
+		return -1;
 	}
 
-	spt = disk.dk_sectors;
-	tpc = disk.dk_heads;
-	spc = spt * tpc;
+	/*
+	 * C = LBA ÷ (HPC × SPT)
+	 * H = (LBA ÷ SPT) mod HPC
+	 * S = (LBA mod SPT) + 1
+	 */
 
-	start = prt->prt_bs;
-	size = prt->prt_ns;
-	end = (start + size) - 1;
+	lba = prt->prt_bs;
+	start->chs_cyl = lba / (disk.dk_sectors * disk.dk_heads);
+	start->chs_head = (lba / disk.dk_sectors) % disk.dk_heads;
+	start->chs_sect = (lba % disk.dk_sectors) + 1;
 
-	cyl = (start / spc);
-	start -= (cyl * spc);
-	head = (start / spt);
-	start -= (head * spt);
-	sect = (start + 1);
+	lba = prt->prt_bs + prt->prt_ns - 1;
+	end->chs_cyl = lba / (disk.dk_sectors * disk.dk_heads);
+	end->chs_head = (lba / disk.dk_sectors) % disk.dk_heads;
+	end->chs_sect = (lba % disk.dk_sectors) + 1;
 
-	prt->prt_scyl = cyl;
-	prt->prt_shead = head;
-	prt->prt_ssect = sect;
+	if (start->chs_head > 255 || end->chs_head > 255 ||
+	    start->chs_sect > 63  || end->chs_sect > 63 ||
+	    start->chs_cyl > 1023 || end->chs_cyl > 1023)
+		return -1;
 
-	cyl = (end / spc);
-	end -= (cyl * spc);
-	head = (end / spt);
-	end -= (head * spt);
-	sect = (end + 1);
-
-	prt->prt_ecyl = cyl;
-	prt->prt_ehead = head;
-	prt->prt_esect = sect;
+	return 0;
 }
 
 char *
