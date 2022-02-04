@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.55 2022/02/04 16:50:01 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.56 2022/02/04 16:50:49 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -62,7 +62,7 @@ extern ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
  * two ranges abut each other.
  * This is warned against in section 2.2.3.6, but doesn't change the
  * semantics of the system.
- * Return zero on failure (IP overlap) non-zero on success.
+ * Returns zero on failure (IP overlap) non-zero on success.
  */
 static int
 append_ip(struct parse *p, const struct cert_ip *ip)
@@ -104,7 +104,7 @@ append_as(struct parse *p, const struct cert_as *as)
 
 /*
  * Construct a RFC 3779 2.2.3.8 range by its bit string.
- * Return zero on failure, non-zero on success.
+ * Returns zero on failure, non-zero on success.
  */
 static int
 sbgp_addr(struct parse *p,
@@ -681,7 +681,7 @@ out:
 
 /*
  * Parse RFC 3779 2.2.3.9 range of addresses.
- * Return zero on failure, non-zero on success.
+ * Returns zero on failure, non-zero on success.
  */
 static int
 sbgp_addr_range(struct parse *p, struct cert_ip *ip,
