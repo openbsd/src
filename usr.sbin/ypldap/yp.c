@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.19 2017/12/07 05:21:57 zhuk Exp $ */
+/*	$OpenBSD: yp.c,v 1.20 2022/02/05 22:59:58 naddy Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -268,12 +268,14 @@ yp_dispatch(struct svc_req *req, SVCXPRT *trans)
 int
 yp_check(struct svc_req *req)
 {
+#ifdef notyet
 	struct sockaddr_in	*caller;
 
 	caller = svc_getcaller(req->rq_xprt);
 	/*
 	 * We might want to know who we allow here.
 	 */
+#endif
 	return (0);
 }
 
