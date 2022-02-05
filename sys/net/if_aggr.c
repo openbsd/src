@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aggr.c,v 1.38 2021/02/28 03:59:25 dlg Exp $ */
+/*	$OpenBSD: if_aggr.c,v 1.39 2022/02/05 03:56:16 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 The University of Queensland
@@ -1373,7 +1373,7 @@ aggr_p_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 	struct aggr_port *p = ac0->ac_trunkport;
 
 	/* restrict transmission to bpf only */
-	if ((m_tag_find(m, PACKET_TAG_DLT, NULL) == NULL)) {
+	if (m_tag_find(m, PACKET_TAG_DLT, NULL) == NULL) {
 		m_freem(m);
 		return (EBUSY);
 	}
