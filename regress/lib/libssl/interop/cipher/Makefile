@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.7 2020/12/17 00:51:11 bluhm Exp $
+# $OpenBSD: Makefile,v 1.8 2022/02/05 18:21:09 tb Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.0.2, or openssl 1.1.  Create lists of supported ciphers
@@ -133,11 +133,11 @@ check-cipher-${cipher}-client-${clib}-server-${slib}: \
     client-cipher-${cipher}-client-${clib}-server-${slib}.out \
     server-cipher-${cipher}-client-${clib}-server-${slib}.out
 .if "${clib}" != "openssl" && "${slib}" != "openssl" && \
-    "${cipher:C/AEAD-(AES.*-GCM|CHACHA.*-POLY.*)-SHA.*/TLS1_3/}" != TLS1_3
+    "${cipher:C/TLS_(AES.*_GCM|CHACHA.*_POLY.*)_SHA.*/TLS1_3/}" != TLS1_3
 	# client and server 1.3 capable, not TLS 1.3 cipher
 . if "${clib}" == "libressl"
 	# libressl client may prefer chacha-poly if aes-ni is not supported
-	egrep -q ' Cipher *: AEAD-(AES256-GCM-SHA384|CHACHA20-POLY1305-SHA256)$$' ${@:S/^check/client/}.out
+	egrep -q ' Cipher *: TLS_(AES_256_GCM_SHA384|CHACHA20_POLY1305_SHA256)$$' ${@:S/^check/client/}.out
 . else
 	# openssl 1.1 generic client cipher
 	grep -q ' Cipher *: TLS_AES_256_GCM_SHA384$$' ${@:S/^check/client/}.out
@@ -147,16 +147,11 @@ check-cipher-${cipher}-client-${clib}-server-${slib}: \
 .  if "${slib}" == "openssl11"
 	egrep -q ' Cipher *: TLS_(AES_256_GCM_SHA384|CHACHA20_POLY1305_SHA256)$$' ${@:S/^check/server/}.out
 .  else
-	egrep -q ' Cipher *: AEAD-(AES256-GCM-SHA384|CHACHA20-POLY1305-SHA256)$$' ${@:S/^check/server/}.out
+	egrep -q ' Cipher *: TLS_(AES_256_GCM_SHA384|CHACHA20_POLY1305_SHA256)$$' ${@:S/^check/server/}.out
 .  endif
 . else
-.  if "${slib}" == "openssl11"
-	# openssl 1.1 generic server cipher
+	# generic server cipher
 	grep -q ' Cipher *: TLS_AES_256_GCM_SHA384$$' ${@:S/^check/server/}.out
-.  else
-	# libressl generic server cipher
-	grep -q ' Cipher *: AEAD-AES256-GCM-SHA384$$' ${@:S/^check/server/}.out
-.  endif
 . endif
 .else
 	grep -q ' Cipher *: ${cipher}$$' ${@:S/^check/client/}.out
