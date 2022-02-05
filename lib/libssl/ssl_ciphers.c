@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_ciphers.c,v 1.12 2022/02/05 14:54:10 jsing Exp $ */
+/*	$OpenBSD: ssl_ciphers.c,v 1.13 2022/02/05 18:18:18 tb Exp $ */
 /*
  * Copyright (c) 2015-2017 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015-2018, 2020 Joel Sing <jsing@openbsd.org>
@@ -168,28 +168,28 @@ struct ssl_tls13_ciphersuite {
 
 static const struct ssl_tls13_ciphersuite ssl_tls13_ciphersuites[] = {
 	{
-		.name = TLS1_3_TXT_AES_128_GCM_SHA256,
-		.alias = "TLS_AES_128_GCM_SHA256",
+		.name = TLS1_3_RFC_AES_128_GCM_SHA256,
+		.alias = TLS1_3_TXT_AES_128_GCM_SHA256,
 		.cid = TLS1_3_CK_AES_128_GCM_SHA256,
 	},
 	{
-		.name = TLS1_3_TXT_AES_256_GCM_SHA384,
-		.alias = "TLS_AES_256_GCM_SHA384",
+		.name = TLS1_3_RFC_AES_256_GCM_SHA384,
+		.alias = TLS1_3_TXT_AES_256_GCM_SHA384,
 		.cid = TLS1_3_CK_AES_256_GCM_SHA384,
 	},
 	{
-		.name = TLS1_3_TXT_CHACHA20_POLY1305_SHA256,
-		.alias = "TLS_CHACHA20_POLY1305_SHA256",
+		.name = TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
+		.alias = TLS1_3_TXT_CHACHA20_POLY1305_SHA256,
 		.cid = TLS1_3_CK_CHACHA20_POLY1305_SHA256,
 	},
 	{
-		.name = TLS1_3_TXT_AES_128_CCM_SHA256,
-		.alias = "TLS_AES_128_CCM_SHA256",
+		.name = TLS1_3_RFC_AES_128_CCM_SHA256,
+		.alias = TLS1_3_TXT_AES_128_CCM_SHA256,
 		.cid = TLS1_3_CK_AES_128_CCM_SHA256,
 	},
 	{
-		.name = TLS1_3_TXT_AES_128_CCM_8_SHA256,
-		.alias = "TLS_AES_128_CCM_8_SHA256",
+		.name = TLS1_3_RFC_AES_128_CCM_8_SHA256,
+		.alias = TLS1_3_TXT_AES_128_CCM_8_SHA256,
 		.cid = TLS1_3_CK_AES_128_CCM_8_SHA256,
 	},
 	{

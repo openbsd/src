@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.226 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.227 2022/02/05 18:18:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -882,7 +882,7 @@ const SSL_CIPHER ssl3_ciphers[] = {
 	/* Cipher 1301 */
 	{
 		.valid = 1,
-		.name = TLS1_3_TXT_AES_128_GCM_SHA256,
+		.name = TLS1_3_RFC_AES_128_GCM_SHA256,
 		.id = TLS1_3_CK_AES_128_GCM_SHA256,
 		.algorithm_mkey = SSL_kTLS1_3,
 		.algorithm_auth = SSL_aTLS1_3,
@@ -898,7 +898,7 @@ const SSL_CIPHER ssl3_ciphers[] = {
 	/* Cipher 1302 */
 	{
 		.valid = 1,
-		.name = TLS1_3_TXT_AES_256_GCM_SHA384,
+		.name = TLS1_3_RFC_AES_256_GCM_SHA384,
 		.id = TLS1_3_CK_AES_256_GCM_SHA384,
 		.algorithm_mkey = SSL_kTLS1_3,
 		.algorithm_auth = SSL_aTLS1_3,
@@ -914,7 +914,7 @@ const SSL_CIPHER ssl3_ciphers[] = {
 	/* Cipher 1303 */
 	{
 		.valid = 1,
-		.name = TLS1_3_TXT_CHACHA20_POLY1305_SHA256,
+		.name = TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
 		.id = TLS1_3_CK_CHACHA20_POLY1305_SHA256,
 		.algorithm_mkey = SSL_kTLS1_3,
 		.algorithm_auth = SSL_aTLS1_3,
