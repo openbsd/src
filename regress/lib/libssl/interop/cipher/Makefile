@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2022/02/05 18:21:09 tb Exp $
+# $OpenBSD: Makefile,v 1.9 2022/02/05 18:34:06 tb Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.0.2, or openssl 1.1.  Create lists of supported ciphers
@@ -52,6 +52,10 @@ client-${clib}-server-${slib}.ciphers: \
 	uniq -d <$@.tmp >$@
 	# we are only interested in ciphers supported by libressl
 	sort $@ client-libressl.ciphers >$@.tmp
+. if "${clib}" == "openssl11" || "${slib}" == "openssl11"
+	# OpenSSL 1.1's SSL_CTX_set_cipher_list doesn't accept TLSv1.3 ciphers
+	sed -i '/^TLS_/d' $@.tmp
+. endif
 	uniq -d <$@.tmp >$@
 	rm $@.tmp
 .endfor
