@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidpp.c,v 1.25 2022/01/26 06:05:59 anton Exp $	*/
+/*	$OpenBSD: uhidpp.c,v 1.26 2022/02/05 07:31:40 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -636,6 +636,13 @@ uhidpp_device_connect(struct uhidpp_softc *sc, struct uhidpp_device *dev)
 	}
 
 	uhidpp_device_refresh(sc, dev);
+
+	/*
+	 * There could be many devices connected to the same receiver, therefore
+	 * only install the sensors once.
+	 */
+	if (uhidpp_has_sensors(sc))
+		return;
 
 	strlcpy(sc->sc_sensdev.xname, sc->sc_hdev.sc_dev.dv_xname,
 	    sizeof(sc->sc_sensdev.xname));
