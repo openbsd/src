@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.21 2019/05/09 20:19:23 tedu Exp $	*/
+/*	$OpenBSD: extern.h,v 1.22 2022/02/05 23:00:20 gnezdo Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
@@ -39,9 +39,9 @@
 #define OUTSIDE		(position > 68 && position < 246 && position != 218)
 #define rnd(x)		arc4random_uniform(x)
 #define max(a,b)	((a) < (b) ? (b) : (a))
-#define TestBit(array, index)	(array[index/BITS] & (1 << (index % BITS)))
-#define SetBit(array, index)	(array[index/BITS] |= (1 << (index % BITS)))
-#define ClearBit(array, index)	(array[index/BITS] &= ~(1 << (index % BITS)))
+#define TestBit(array, index)	(array[index/BITS] & (1U << (index % BITS)))
+#define SetBit(array, index)	(array[index/BITS] |= (1U << (index % BITS)))
+#define ClearBit(array, index)	(array[index/BITS] &= ~(1U << (index % BITS)))
 /*
  * These macros yield words to use with objects (followed but not preceded
  * by spaces, or with no spaces if the expansion is the empty string).
