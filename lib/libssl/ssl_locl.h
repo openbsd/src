@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.384 2022/02/03 16:33:12 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.385 2022/02/05 14:54:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1132,7 +1132,12 @@ typedef struct ssl3_buffer_internal_st {
 	int left;		/* how many bytes left */
 } SSL3_BUFFER_INTERNAL;
 
-typedef struct ssl3_state_internal_st {
+typedef struct ssl3_state_st {
+	long flags;
+
+	unsigned char server_random[SSL3_RANDOM_SIZE];
+	unsigned char client_random[SSL3_RANDOM_SIZE];
+
 	SSL3_BUFFER_INTERNAL rbuf;	/* read IO goes into here */
 	SSL3_BUFFER_INTERNAL wbuf;	/* write IO goes into here */
 
@@ -1204,20 +1209,7 @@ typedef struct ssl3_state_internal_st {
 	 */
 	unsigned char *alpn_selected;
 	size_t alpn_selected_len;
-} SSL3_STATE_INTERNAL;
-#define S3I(s) (s->s3->internal)
-
-typedef struct ssl3_state_st {
-	long flags;
-
-	unsigned char server_random[SSL3_RANDOM_SIZE];
-	unsigned char client_random[SSL3_RANDOM_SIZE];
-
-	struct ssl3_state_internal_st *internal;
 } SSL3_STATE;
-
-/*#define SSL_DEBUG	*/
-/*#define RSA_DEBUG	*/
 
 /*
  * Flag values for enc_flags.

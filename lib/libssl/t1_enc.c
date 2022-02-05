@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_enc.c,v 1.153 2021/12/09 17:54:41 tb Exp $ */
+/* $OpenBSD: t1_enc.c,v 1.154 2022/02/05 14:54:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -149,8 +149,8 @@
 void
 tls1_cleanup_key_block(SSL *s)
 {
-	tls12_key_block_free(S3I(s)->hs.tls12.key_block);
-	S3I(s)->hs.tls12.key_block = NULL;
+	tls12_key_block_free(s->s3->hs.tls12.key_block);
+	s->s3->hs.tls12.key_block = NULL;
 }
 
 /*
@@ -303,10 +303,10 @@ tls1_change_cipher_state(SSL *s, int is_write)
 
 	/* Use client write keys on client write and server read. */
 	if ((!s->server && is_write) || (s->server && !is_write)) {
-		tls12_key_block_client_write(S3I(s)->hs.tls12.key_block,
+		tls12_key_block_client_write(s->s3->hs.tls12.key_block,
 		    &mac_key, &key, &iv);
 	} else {
-		tls12_key_block_server_write(S3I(s)->hs.tls12.key_block,
+		tls12_key_block_server_write(s->s3->hs.tls12.key_block,
 		    &mac_key, &key, &iv);
 	}
 
@@ -354,7 +354,7 @@ tls1_setup_key_block(SSL *s)
 	 * XXX - callers should be changed so that they only call this
 	 * function once.
 	 */
-	if (S3I(s)->hs.tls12.key_block != NULL)
+	if (s->s3->hs.tls12.key_block != NULL)
 		return (1);
 
 	if (s->session->cipher &&
@@ -384,7 +384,7 @@ tls1_setup_key_block(SSL *s)
 	if (!tls12_key_block_generate(key_block, s, aead, cipher, mac_hash))
 		goto err;
 
-	S3I(s)->hs.tls12.key_block = key_block;
+	s->s3->hs.tls12.key_block = key_block;
 	key_block = NULL;
 
 	if (!(s->internal->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS) &&
@@ -393,15 +393,15 @@ tls1_setup_key_block(SSL *s)
 		 * Enable vulnerability countermeasure for CBC ciphers with
 		 * known-IV problem (http://www.openssl.org/~bodo/tls-cbc.txt)
 		 */
-		S3I(s)->need_empty_fragments = 1;
+		s->s3->need_empty_fragments = 1;
 
 		if (s->session->cipher != NULL) {
 			if (s->session->cipher->algorithm_enc == SSL_eNULL)
-				S3I(s)->need_empty_fragments = 0;
+				s->s3->need_empty_fragments = 0;
 
 #ifndef OPENSSL_NO_RC4
 			if (s->session->cipher->algorithm_enc == SSL_RC4)
-				S3I(s)->need_empty_fragments = 0;
+				s->s3->need_empty_fragments = 0;
 #endif
 		}
 	}

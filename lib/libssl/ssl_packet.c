@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_packet.c,v 1.12 2021/07/01 17:53:39 jsing Exp $ */
+/* $OpenBSD: ssl_packet.c,v 1.13 2022/02/05 14:54:10 jsing Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -209,10 +209,10 @@ ssl_convert_sslv2_client_hello(SSL *s)
 	if (!CBB_finish(&cbb, &data, &data_len))
 		goto err;
 
-	if (data_len > S3I(s)->rbuf.len)
+	if (data_len > s->s3->rbuf.len)
 		goto err;
 
-	s->internal->packet = S3I(s)->rbuf.buf;
+	s->internal->packet = s->s3->rbuf.buf;
 	s->internal->packet_length = data_len;
 	memcpy(s->internal->packet, data, data_len);
 	ret = 1;

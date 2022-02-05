@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.94 2022/01/28 13:14:48 inoguchi Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.95 2022/02/05 14:54:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -462,7 +462,7 @@ SSL_get_client_CA_list(const SSL *s)
 	if (!s->server) {
 		/* We are in the client. */
 		if ((s->version >> 8) == SSL3_VERSION_MAJOR)
-			return (S3I(s)->hs.tls12.ca_names);
+			return (s->s3->hs.tls12.ca_names);
 		else
 			return (NULL);
 	} else {

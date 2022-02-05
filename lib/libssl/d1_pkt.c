@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.116 2021/11/09 18:40:21 bcook Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.117 2022/02/05 14:54:10 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -191,12 +191,12 @@ static int dtls1_process_record(SSL *s);
 static int
 dtls1_copy_record(SSL *s, DTLS1_RECORD_DATA_INTERNAL *rdata)
 {
-	ssl3_release_buffer(&S3I(s)->rbuf);
+	ssl3_release_buffer(&s->s3->rbuf);
 
 	s->internal->packet = rdata->packet;
 	s->internal->packet_length = rdata->packet_length;
-	memcpy(&(S3I(s)->rbuf), &(rdata->rbuf), sizeof(SSL3_BUFFER_INTERNAL));
-	memcpy(&(S3I(s)->rrec), &(rdata->rrec), sizeof(SSL3_RECORD_INTERNAL));
+	memcpy(&(s->s3->rbuf), &(rdata->rbuf), sizeof(SSL3_BUFFER_INTERNAL));
+	memcpy(&(s->s3->rrec), &(rdata->rrec), sizeof(SSL3_RECORD_INTERNAL));
 
 	return (1);
 }
@@ -218,15 +218,15 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 
 	rdata->packet = s->internal->packet;
 	rdata->packet_length = s->internal->packet_length;
-	memcpy(&(rdata->rbuf), &(S3I(s)->rbuf), sizeof(SSL3_BUFFER_INTERNAL));
-	memcpy(&(rdata->rrec), &(S3I(s)->rrec), sizeof(SSL3_RECORD_INTERNAL));
+	memcpy(&(rdata->rbuf), &(s->s3->rbuf), sizeof(SSL3_BUFFER_INTERNAL));
+	memcpy(&(rdata->rrec), &(s->s3->rrec), sizeof(SSL3_RECORD_INTERNAL));
 
 	item->data = rdata;
 
 	s->internal->packet = NULL;
 	s->internal->packet_length = 0;
-	memset(&(S3I(s)->rbuf), 0, sizeof(SSL3_BUFFER_INTERNAL));
-	memset(&(S3I(s)->rrec), 0, sizeof(SSL3_RECORD_INTERNAL));
+	memset(&(s->s3->rbuf), 0, sizeof(SSL3_BUFFER_INTERNAL));
+	memset(&(s->s3->rrec), 0, sizeof(SSL3_RECORD_INTERNAL));
 
 	if (!ssl3_setup_buffers(s))
 		goto err;
@@ -293,7 +293,7 @@ dtls1_process_buffered_record(SSL *s)
 static int
 dtls1_process_record(SSL *s)
 {
-	SSL3_RECORD_INTERNAL *rr = &(S3I(s)->rrec);
+	SSL3_RECORD_INTERNAL *rr = &(s->s3->rrec);
 	uint8_t alert_desc;
 	uint8_t *out;
 	size_t out_len;
@@ -349,7 +349,7 @@ dtls1_process_record(SSL *s)
 int
 dtls1_get_record(SSL *s)
 {
-	SSL3_RECORD_INTERNAL *rr = &(S3I(s)->rrec);
+	SSL3_RECORD_INTERNAL *rr = &(s->s3->rrec);
 	unsigned char *p = NULL;
 	DTLS1_BITMAP *bitmap;
 	unsigned int is_next_epoch;
@@ -517,7 +517,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	unsigned int n;
 	SSL3_RECORD_INTERNAL *rr;
 
-	if (S3I(s)->rbuf.buf == NULL) /* Not initialized yet */
+	if (s->s3->rbuf.buf == NULL) /* Not initialized yet */
 		if (!ssl3_setup_buffers(s))
 			return (-1);
 
@@ -554,17 +554,17 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 	s->internal->rwstate = SSL_NOTHING;
 
-	/* S3I(s)->rrec.type	    - is the type of record
-	 * S3I(s)->rrec.data,    - data
-	 * S3I(s)->rrec.off,     - offset into 'data' for next read
-	 * S3I(s)->rrec.length,  - number of bytes. */
-	rr = &(S3I(s)->rrec);
+	/* s->s3->rrec.type	    - is the type of record
+	 * s->s3->rrec.data,    - data
+	 * s->s3->rrec.off,     - offset into 'data' for next read
+	 * s->s3->rrec.length,  - number of bytes. */
+	rr = &(s->s3->rrec);
 
 	/* We are not handshaking and have no data yet,
 	 * so process data buffered during the last handshake
 	 * in advance, if any.
 	 */
-	if (S3I(s)->hs.state == SSL_ST_OK && rr->length == 0)
+	if (s->s3->hs.state == SSL_ST_OK && rr->length == 0)
 		dtls1_retrieve_buffered_record(s, &(s->d1->buffered_app_data));
 
 	/* Check for timeout */
@@ -591,7 +591,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 	/* we now have a packet which can be read and processed */
 
-	if (S3I(s)->change_cipher_spec /* set when we receive ChangeCipherSpec,
+	if (s->s3->change_cipher_spec /* set when we receive ChangeCipherSpec,
 	                               * reset by ssl3_get_finished */
 	    && (rr->type != SSL3_RT_HANDSHAKE)) {
 		/* We now have application data between CCS and Finished.
@@ -667,7 +667,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 			 * Application data while renegotiating is allowed.
 			 * Try reading again.
 			 */
-			S3I(s)->in_read_app_data = 2;
+			s->s3->in_read_app_data = 2;
 			ssl_force_want_read(s);
 			return -1;
 		} else {
@@ -708,7 +708,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 		if (SSL_is_init_finished(s) &&
 		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
-		    !S3I(s)->renegotiate) {
+		    !s->s3->renegotiate) {
 			s->d1->handshake_read_seq++;
 			s->internal->new_session = 1;
 			ssl3_renegotiate(s);
@@ -722,7 +722,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 				}
 
 				if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-					if (S3I(s)->rbuf.left == 0) {
+					if (s->s3->rbuf.left == 0) {
 						ssl_force_want_read(s);
 						return (-1);
 					}
@@ -746,14 +746,14 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		    (alert_level << 8) | alert_descr);
 
 		if (alert_level == SSL3_AL_WARNING) {
-			S3I(s)->warn_alert = alert_descr;
+			s->s3->warn_alert = alert_descr;
 			if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
 				s->internal->shutdown |= SSL_RECEIVED_SHUTDOWN;
 				return (0);
 			}
 		} else if (alert_level == SSL3_AL_FATAL) {
 			s->internal->rwstate = SSL_NOTHING;
-			S3I(s)->fatal_alert = alert_descr;
+			s->s3->fatal_alert = alert_descr;
 			SSLerror(s, SSL_AD_REASON_OFFSET + alert_descr);
 			ERR_asprintf_error_data("SSL alert number %d",
 			    alert_descr);
@@ -799,7 +799,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 		s->d1->change_cipher_spec_ok = 0;
 
-		S3I(s)->change_cipher_spec = 1;
+		s->s3->change_cipher_spec = 1;
 		if (!ssl3_do_change_cipher_spec(s))
 			goto err;
 
@@ -835,9 +835,9 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 			goto start;
 		}
 
-		if (((S3I(s)->hs.state&SSL_ST_MASK) == SSL_ST_OK) &&
+		if (((s->s3->hs.state&SSL_ST_MASK) == SSL_ST_OK) &&
 		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
-			S3I(s)->hs.state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
+			s->s3->hs.state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
 			s->internal->renegotiate = 1;
 			s->internal->new_session = 1;
 		}
@@ -850,7 +850,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		}
 
 		if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-			if (S3I(s)->rbuf.left == 0) {
+			if (s->s3->rbuf.left == 0) {
 				ssl_force_want_read(s);
 				return (-1);
 			}
@@ -881,15 +881,15 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		 * at this point (session renegotiation not yet started),
 		 * we will indulge it.
 		 */
-		if (S3I(s)->in_read_app_data &&
-		    (S3I(s)->total_renegotiations != 0) &&
-		    (((S3I(s)->hs.state & SSL_ST_CONNECT) &&
-		    (S3I(s)->hs.state >= SSL3_ST_CW_CLNT_HELLO_A) &&
-		    (S3I(s)->hs.state <= SSL3_ST_CR_SRVR_HELLO_A)) || (
-		    (S3I(s)->hs.state & SSL_ST_ACCEPT) &&
-		    (S3I(s)->hs.state <= SSL3_ST_SW_HELLO_REQ_A) &&
-		    (S3I(s)->hs.state >= SSL3_ST_SR_CLNT_HELLO_A)))) {
-			S3I(s)->in_read_app_data = 2;
+		if (s->s3->in_read_app_data &&
+		    (s->s3->total_renegotiations != 0) &&
+		    (((s->s3->hs.state & SSL_ST_CONNECT) &&
+		    (s->s3->hs.state >= SSL3_ST_CW_CLNT_HELLO_A) &&
+		    (s->s3->hs.state <= SSL3_ST_CR_SRVR_HELLO_A)) || (
+		    (s->s3->hs.state & SSL_ST_ACCEPT) &&
+		    (s->s3->hs.state <= SSL3_ST_SW_HELLO_REQ_A) &&
+		    (s->s3->hs.state >= SSL3_ST_SR_CLNT_HELLO_A)))) {
+			s->s3->in_read_app_data = 2;
 			return (-1);
 		} else {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
@@ -947,7 +947,7 @@ dtls1_write_bytes(SSL *s, int type, const void *buf, int len)
 int
 do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 {
-	SSL3_BUFFER_INTERNAL *wb = &(S3I(s)->wbuf);
+	SSL3_BUFFER_INTERNAL *wb = &(s->s3->wbuf);
 	size_t out_len;
 	CBB cbb;
 	int ret;
@@ -964,7 +964,7 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	}
 
 	/* If we have an alert to send, let's send it */
-	if (S3I(s)->alert_dispatch) {
+	if (s->s3->alert_dispatch) {
 		if ((ret = ssl3_dispatch_alert(s)) <= 0)
 			return (ret);
 		/* If it went, fall through and send more stuff. */
@@ -992,10 +992,10 @@ do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	 * Memorize arguments so that ssl3_write_pending can detect
 	 * bad write retries later.
 	 */
-	S3I(s)->wpend_tot = len;
-	S3I(s)->wpend_buf = buf;
-	S3I(s)->wpend_type = type;
-	S3I(s)->wpend_ret = len;
+	s->s3->wpend_tot = len;
+	s->s3->wpend_buf = buf;
+	s->s3->wpend_type = type;
+	s->s3->wpend_ret = len;
 
 	/* We now just need to write the buffer. */
 	return ssl3_write_pending(s, type, buf, len);

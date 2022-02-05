@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.41 2022/02/03 16:33:12 jsing Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.42 2022/02/05 14:54:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -168,33 +168,33 @@ ssl3_send_finished(SSL *s, int state_a, int state_b)
 
 	memset(&cbb, 0, sizeof(cbb));
 
-	if (S3I(s)->hs.state == state_a) {
+	if (s->s3->hs.state == state_a) {
 		if (!tls12_derive_finished(s))
 			goto err;
 
 		/* Copy finished so we can use it for renegotiation checks. */
 		if (!s->server) {
-			memcpy(S3I(s)->previous_client_finished,
-			    S3I(s)->hs.finished, S3I(s)->hs.finished_len);
-			S3I(s)->previous_client_finished_len =
-			    S3I(s)->hs.finished_len;
+			memcpy(s->s3->previous_client_finished,
+			    s->s3->hs.finished, s->s3->hs.finished_len);
+			s->s3->previous_client_finished_len =
+			    s->s3->hs.finished_len;
 		} else {
-			memcpy(S3I(s)->previous_server_finished,
-			    S3I(s)->hs.finished, S3I(s)->hs.finished_len);
-			S3I(s)->previous_server_finished_len =
-			    S3I(s)->hs.finished_len;
+			memcpy(s->s3->previous_server_finished,
+			    s->s3->hs.finished, s->s3->hs.finished_len);
+			s->s3->previous_server_finished_len =
+			    s->s3->hs.finished_len;
 		}
 
 		if (!ssl3_handshake_msg_start(s, &cbb, &finished,
 		    SSL3_MT_FINISHED))
                         goto err;
-		if (!CBB_add_bytes(&finished, S3I(s)->hs.finished,
-		    S3I(s)->hs.finished_len))
+		if (!CBB_add_bytes(&finished, s->s3->hs.finished,
+		    s->s3->hs.finished_len))
 			goto err;
 		if (!ssl3_handshake_msg_finish(s, &cbb))
 			goto err;
 
-		S3I(s)->hs.state = state_b;
+		s->s3->hs.state = state_b;
 	}
 
 	return (ssl3_handshake_write(s));
@@ -216,12 +216,12 @@ ssl3_get_finished(SSL *s, int a, int b)
 		return ret;
 
 	/* If this occurs, we have missed a message */
-	if (!S3I(s)->change_cipher_spec) {
+	if (!s->s3->change_cipher_spec) {
 		al = SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerror(s, SSL_R_GOT_A_FIN_BEFORE_A_CCS);
 		goto fatal_err;
 	}
-	S3I(s)->change_cipher_spec = 0;
+	s->s3->change_cipher_spec = 0;
 
 	md_len = TLS1_FINISH_MAC_LENGTH;
 
@@ -233,14 +233,14 @@ ssl3_get_finished(SSL *s, int a, int b)
 
 	CBS_init(&cbs, s->internal->init_msg, s->internal->init_num);
 
-	if (S3I(s)->hs.peer_finished_len != md_len ||
+	if (s->s3->hs.peer_finished_len != md_len ||
 	    CBS_len(&cbs) != md_len) {
 		al = SSL_AD_DECODE_ERROR;
 		SSLerror(s, SSL_R_BAD_DIGEST_LENGTH);
 		goto fatal_err;
 	}
 
-	if (!CBS_mem_equal(&cbs, S3I(s)->hs.peer_finished, CBS_len(&cbs))) {
+	if (!CBS_mem_equal(&cbs, s->s3->hs.peer_finished, CBS_len(&cbs))) {
 		al = SSL_AD_DECRYPT_ERROR;
 		SSLerror(s, SSL_R_DIGEST_CHECK_FAILED);
 		goto fatal_err;
@@ -249,13 +249,13 @@ ssl3_get_finished(SSL *s, int a, int b)
 	/* Copy finished so we can use it for renegotiation checks. */
 	OPENSSL_assert(md_len <= EVP_MAX_MD_SIZE);
 	if (s->server) {
-		memcpy(S3I(s)->previous_client_finished,
-		    S3I(s)->hs.peer_finished, md_len);
-		S3I(s)->previous_client_finished_len = md_len;
+		memcpy(s->s3->previous_client_finished,
+		    s->s3->hs.peer_finished, md_len);
+		s->s3->previous_client_finished_len = md_len;
 	} else {
-		memcpy(S3I(s)->previous_server_finished,
-		    S3I(s)->hs.peer_finished, md_len);
-		S3I(s)->previous_server_finished_len = md_len;
+		memcpy(s->s3->previous_server_finished,
+		    s->s3->hs.peer_finished, md_len);
+		s->s3->previous_server_finished_len = md_len;
 	}
 
 	return (1);
@@ -272,7 +272,7 @@ ssl3_send_change_cipher_spec(SSL *s, int a, int b)
 
 	memset(&cbb, 0, sizeof(cbb));
 
-	if (S3I(s)->hs.state == a) {
+	if (s->s3->hs.state == a) {
 		if (!CBB_init_fixed(&cbb, s->internal->init_buf->data,
 		    s->internal->init_buf->length))
 			goto err;
@@ -295,7 +295,7 @@ ssl3_send_change_cipher_spec(SSL *s, int a, int b)
 			dtls1_buffer_message(s, 1);
 		}
 
-		S3I(s)->hs.state = b;
+		s->s3->hs.state = b;
 	}
 
 	/* SSL3_ST_CW_CHANGE_B */
@@ -408,22 +408,22 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max)
 	if (SSL_is_dtls(s))
 		return dtls1_get_message(s, st1, stn, mt, max);
 
-	if (S3I(s)->hs.tls12.reuse_message) {
-		S3I(s)->hs.tls12.reuse_message = 0;
-		if ((mt >= 0) && (S3I(s)->hs.tls12.message_type != mt)) {
+	if (s->s3->hs.tls12.reuse_message) {
+		s->s3->hs.tls12.reuse_message = 0;
+		if ((mt >= 0) && (s->s3->hs.tls12.message_type != mt)) {
 			al = SSL_AD_UNEXPECTED_MESSAGE;
 			SSLerror(s, SSL_R_UNEXPECTED_MESSAGE);
 			goto fatal_err;
 		}
 		s->internal->init_msg = s->internal->init_buf->data +
 		    SSL3_HM_HEADER_LENGTH;
-		s->internal->init_num = (int)S3I(s)->hs.tls12.message_size;
+		s->internal->init_num = (int)s->s3->hs.tls12.message_size;
 		return 1;
 	}
 
 	p = (unsigned char *)s->internal->init_buf->data;
 
-	if (S3I(s)->hs.state == st1) {
+	if (s->s3->hs.state == st1) {
 		int skip_message;
 
 		do {
@@ -469,7 +469,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max)
 			SSLerror(s, ERR_R_BUF_LIB);
 			goto err;
 		}
-		S3I(s)->hs.tls12.message_type = u8;
+		s->s3->hs.tls12.message_type = u8;
 
 		if (l > (unsigned long)max) {
 			al = SSL_AD_ILLEGAL_PARAMETER;
@@ -481,8 +481,8 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max)
 			SSLerror(s, ERR_R_BUF_LIB);
 			goto err;
 		}
-		S3I(s)->hs.tls12.message_size = l;
-		S3I(s)->hs.state = stn;
+		s->s3->hs.tls12.message_size = l;
+		s->s3->hs.state = stn;
 
 		s->internal->init_msg = s->internal->init_buf->data +
 		    SSL3_HM_HEADER_LENGTH;
@@ -491,7 +491,7 @@ ssl3_get_message(SSL *s, int st1, int stn, int mt, long max)
 
 	/* next state (stn) */
 	p = s->internal->init_msg;
-	n = S3I(s)->hs.tls12.message_size - s->internal->init_num;
+	n = s->s3->hs.tls12.message_size - s->internal->init_num;
 	while (n > 0) {
 		i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE,
 		    &p[s->internal->init_num], n, 0);
@@ -644,16 +644,16 @@ ssl3_setup_read_buffer(SSL *s)
 
 	align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 
-	if (S3I(s)->rbuf.buf == NULL) {
+	if (s->s3->rbuf.buf == NULL) {
 		len = SSL3_RT_MAX_PLAIN_LENGTH +
 		    SSL3_RT_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
 		if ((p = calloc(1, len)) == NULL)
 			goto err;
-		S3I(s)->rbuf.buf = p;
-		S3I(s)->rbuf.len = len;
+		s->s3->rbuf.buf = p;
+		s->s3->rbuf.len = len;
 	}
 
-	s->internal->packet = S3I(s)->rbuf.buf;
+	s->internal->packet = s->s3->rbuf.buf;
 	return 1;
 
  err:
@@ -674,7 +674,7 @@ ssl3_setup_write_buffer(SSL *s)
 
 	align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 
-	if (S3I(s)->wbuf.buf == NULL) {
+	if (s->s3->wbuf.buf == NULL) {
 		len = s->max_send_fragment +
 		    SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
 		if (!(s->internal->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
@@ -683,8 +683,8 @@ ssl3_setup_write_buffer(SSL *s)
 
 		if ((p = calloc(1, len)) == NULL)
 			goto err;
-		S3I(s)->wbuf.buf = p;
-		S3I(s)->wbuf.len = len;
+		s->s3->wbuf.buf = p;
+		s->s3->wbuf.len = len;
 	}
 
 	return 1;
@@ -715,11 +715,11 @@ ssl3_release_buffer(SSL3_BUFFER_INTERNAL *b)
 void
 ssl3_release_read_buffer(SSL *s)
 {
-	ssl3_release_buffer(&S3I(s)->rbuf);
+	ssl3_release_buffer(&s->s3->rbuf);
 }
 
 void
 ssl3_release_write_buffer(SSL *s)
 {
-	ssl3_release_buffer(&S3I(s)->wbuf);
+	ssl3_release_buffer(&s->s3->wbuf);
 }

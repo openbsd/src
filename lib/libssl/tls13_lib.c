@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_lib.c,v 1.62 2021/09/16 19:25:30 jsing Exp $ */
+/*	$OpenBSD: tls13_lib.c,v 1.63 2022/02/05 14:54:10 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
@@ -111,7 +111,7 @@ tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 	if (alert_desc == TLS13_ALERT_CLOSE_NOTIFY) {
 		ctx->close_notify_recv = 1;
 		ctx->ssl->internal->shutdown |= SSL_RECEIVED_SHUTDOWN;
-		S3I(ctx->ssl)->warn_alert = alert_desc;
+		ctx->ssl->s3->warn_alert = alert_desc;
 		return;
 	}
 
@@ -124,7 +124,7 @@ tls13_alert_received_cb(uint8_t alert_desc, void *arg)
 	}
 
 	/* All other alerts are treated as fatal in TLSv1.3. */
-	S3I(ctx->ssl)->fatal_alert = alert_desc;
+	ctx->ssl->s3->fatal_alert = alert_desc;
 
 	SSLerror(ctx->ssl, SSL_AD_REASON_OFFSET + alert_desc);
 	ERR_asprintf_error_data("SSL alert number %d", alert_desc);

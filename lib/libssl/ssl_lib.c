@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.287 2022/01/14 09:10:11 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.288 2022/02/05 14:54:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -732,10 +732,10 @@ SSL_get_finished(const SSL *s, void *buf, size_t count)
 {
 	size_t	ret;
 
-	ret = S3I(s)->hs.finished_len;
+	ret = s->s3->hs.finished_len;
 	if (count > ret)
 		count = ret;
-	memcpy(buf, S3I(s)->hs.finished, count);
+	memcpy(buf, s->s3->hs.finished, count);
 	return (ret);
 }
 
@@ -745,10 +745,10 @@ SSL_get_peer_finished(const SSL *s, void *buf, size_t count)
 {
 	size_t	ret;
 
-	ret = S3I(s)->hs.peer_finished_len;
+	ret = s->s3->hs.peer_finished_len;
 	if (count > ret)
 		count = ret;
-	memcpy(buf, S3I(s)->hs.peer_finished, count);
+	memcpy(buf, s->s3->hs.peer_finished, count);
 	return (ret);
 }
 
@@ -1294,7 +1294,7 @@ SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
 		return (1);
 	case SSL_CTRL_GET_RI_SUPPORT:
 		if (s->s3)
-			return (S3I(s)->send_connection_binding);
+			return (s->s3->send_connection_binding);
 		else return (0);
 	default:
 		if (SSL_is_dtls(s))
@@ -1837,8 +1837,8 @@ void
 SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
     unsigned int *len)
 {
-	*data = ssl->s3->internal->alpn_selected;
-	*len = ssl->s3->internal->alpn_selected_len;
+	*data = ssl->s3->alpn_selected;
+	*len = ssl->s3->alpn_selected_len;
 }
 
 void
@@ -2224,8 +2224,8 @@ ssl_using_ecc_cipher(SSL *s)
 {
 	unsigned long alg_a, alg_k;
 
-	alg_a = S3I(s)->hs.cipher->algorithm_auth;
-	alg_k = S3I(s)->hs.cipher->algorithm_mkey;
+	alg_a = s->s3->hs.cipher->algorithm_auth;
+	alg_k = s->s3->hs.cipher->algorithm_mkey;
 
 	return s->session->tlsext_ecpointformatlist != NULL &&
 	    s->session->tlsext_ecpointformatlist_length > 0 &&
@@ -2235,7 +2235,7 @@ ssl_using_ecc_cipher(SSL *s)
 int
 ssl_check_srvr_ecc_cert_and_alg(SSL *s, X509 *x)
 {
-	const SSL_CIPHER *cs = S3I(s)->hs.cipher;
+	const SSL_CIPHER *cs = s->s3->hs.cipher;
 	unsigned long alg_a;
 
 	alg_a = cs->algorithm_auth;
@@ -2259,9 +2259,9 @@ ssl_get_server_send_pkey(const SSL *s)
 	int i;
 
 	c = s->cert;
-	ssl_set_cert_masks(c, S3I(s)->hs.cipher);
+	ssl_set_cert_masks(c, s->s3->hs.cipher);
 
-	alg_a = S3I(s)->hs.cipher->algorithm_auth;
+	alg_a = s->s3->hs.cipher->algorithm_auth;
 
 	if (alg_a & SSL_aECDSA) {
 		i = SSL_PKEY_ECC;
@@ -2319,9 +2319,9 @@ ssl_dhe_params_auto_key_bits(SSL *s)
 
 	if (s->cert->dhe_params_auto == 2) {
 		key_bits = 1024;
-	} else if (S3I(s)->hs.cipher->algorithm_auth & SSL_aNULL) {
+	} else if (s->s3->hs.cipher->algorithm_auth & SSL_aNULL) {
 		key_bits = 1024;
-		if (S3I(s)->hs.cipher->strength_bits == 256)
+		if (s->s3->hs.cipher->strength_bits == 256)
 			key_bits = 3072;
 	} else {
 		if ((cpk = ssl_get_server_send_pkey(s)) == NULL)
@@ -2352,7 +2352,7 @@ ssl_should_update_external_cache(SSL *s, int mode)
 		return 1;
 
 	/* If it's TLS 1.3, do it to match OpenSSL */
-	if (S3I(s)->hs.negotiated_tls_version >= TLS1_3_VERSION)
+	if (s->s3->hs.negotiated_tls_version >= TLS1_3_VERSION)
 		return 1;
 
 	return 0;
@@ -2377,7 +2377,7 @@ ssl_should_update_internal_cache(SSL *s, int mode)
 		return 0;
 
 	/* If we are lesser than TLS 1.3, Cache it. */
-	if (S3I(s)->hs.negotiated_tls_version < TLS1_3_VERSION)
+	if (s->s3->hs.negotiated_tls_version < TLS1_3_VERSION)
 		return 1;
 
 	/* Below this we consider TLS 1.3 or later */
@@ -2556,7 +2556,7 @@ SSL_get_error(const SSL *s, int i)
 
 	if (i == 0) {
 		if ((s->internal->shutdown & SSL_RECEIVED_SHUTDOWN) &&
-		    (S3I(s)->warn_alert == SSL_AD_CLOSE_NOTIFY))
+		    (s->s3->warn_alert == SSL_AD_CLOSE_NOTIFY))
 			return (SSL_ERROR_ZERO_RETURN);
 	}
 	return (SSL_ERROR_SYSCALL);
@@ -2589,7 +2589,7 @@ SSL_set_accept_state(SSL *s)
 {
 	s->server = 1;
 	s->internal->shutdown = 0;
-	S3I(s)->hs.state = SSL_ST_ACCEPT|SSL_ST_BEFORE;
+	s->s3->hs.state = SSL_ST_ACCEPT|SSL_ST_BEFORE;
 	s->internal->handshake_func = s->method->ssl_accept;
 	ssl_clear_cipher_state(s);
 }
@@ -2599,7 +2599,7 @@ SSL_set_connect_state(SSL *s)
 {
 	s->server = 0;
 	s->internal->shutdown = 0;
-	S3I(s)->hs.state = SSL_ST_CONNECT|SSL_ST_BEFORE;
+	s->s3->hs.state = SSL_ST_CONNECT|SSL_ST_BEFORE;
 	s->internal->handshake_func = s->method->ssl_connect;
 	ssl_clear_cipher_state(s);
 }
@@ -2731,7 +2731,7 @@ SSL_dup(SSL *s)
 	ret->internal->quiet_shutdown = s->internal->quiet_shutdown;
 	ret->internal->shutdown = s->internal->shutdown;
 	/* SSL_dup does not really work at any state, though */
-	S3I(ret)->hs.state = S3I(s)->hs.state;
+	ret->s3->hs.state = s->s3->hs.state;
 	ret->internal->rstate = s->internal->rstate;
 
 	/*
@@ -3018,13 +3018,13 @@ void (*SSL_get_info_callback(const SSL *ssl))(const SSL *ssl, int type, int val)
 int
 SSL_state(const SSL *ssl)
 {
-	return (S3I(ssl)->hs.state);
+	return (ssl->s3->hs.state);
 }
 
 void
 SSL_set_state(SSL *ssl, int state)
 {
-	S3I(ssl)->hs.state = state;
+	ssl->s3->hs.state = state;
 }
 
 void

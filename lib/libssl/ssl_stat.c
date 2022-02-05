@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_stat.c,v 1.17 2021/06/13 15:51:10 jsing Exp $ */
+/* $OpenBSD: ssl_stat.c,v 1.18 2022/02/05 14:54:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,7 +91,7 @@ SSL_state_string_long(const SSL *s)
 {
 	const char *str;
 
-	switch (S3I(s)->hs.state) {
+	switch (s->s3->hs.state) {
 	case SSL_ST_BEFORE:
 		str = "before SSL initialization";
 		break;
@@ -347,7 +347,7 @@ SSL_state_string(const SSL *s)
 {
 	const char *str;
 
-	switch (S3I(s)->hs.state) {
+	switch (s->s3->hs.state) {
 	case SSL_ST_BEFORE:
 		str = "PINIT ";
 		break;

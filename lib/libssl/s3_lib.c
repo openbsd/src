@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.225 2022/01/26 11:05:41 tb Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.226 2022/02/05 14:54:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1444,8 +1444,8 @@ ssl3_pending(const SSL *s)
 	if (s->internal->rstate == SSL_ST_READ_BODY)
 		return 0;
 
-	return (S3I(s)->rrec.type == SSL3_RT_APPLICATION_DATA) ?
-	    S3I(s)->rrec.length : 0;
+	return (s->s3->rrec.type == SSL3_RT_APPLICATION_DATA) ?
+	    s->s3->rrec.length : 0;
 }
 
 int
@@ -1544,10 +1544,6 @@ ssl3_new(SSL *s)
 {
 	if ((s->s3 = calloc(1, sizeof(*s->s3))) == NULL)
 		return (0);
-	if ((S3I(s) = calloc(1, sizeof(*S3I(s)))) == NULL) {
-		free(s->s3);
-		return (0);
-	}
 
 	s->method->ssl_clear(s);
 
@@ -1563,23 +1559,22 @@ ssl3_free(SSL *s)
 	tls1_cleanup_key_block(s);
 	ssl3_release_read_buffer(s);
 	ssl3_release_write_buffer(s);
-	freezero(S3I(s)->hs.sigalgs, S3I(s)->hs.sigalgs_len);
+	freezero(s->s3->hs.sigalgs, s->s3->hs.sigalgs_len);
 
-	tls_key_share_free(S3I(s)->hs.key_share);
+	tls_key_share_free(s->s3->hs.key_share);
 
-	tls13_secrets_destroy(S3I(s)->hs.tls13.secrets);
-	freezero(S3I(s)->hs.tls13.cookie, S3I(s)->hs.tls13.cookie_len);
-	tls13_clienthello_hash_clear(&S3I(s)->hs.tls13);
+	tls13_secrets_destroy(s->s3->hs.tls13.secrets);
+	freezero(s->s3->hs.tls13.cookie, s->s3->hs.tls13.cookie_len);
+	tls13_clienthello_hash_clear(&s->s3->hs.tls13);
 
-	sk_X509_NAME_pop_free(S3I(s)->hs.tls12.ca_names, X509_NAME_free);
+	sk_X509_NAME_pop_free(s->s3->hs.tls12.ca_names, X509_NAME_free);
 	sk_X509_pop_free(s->internal->verified_chain, X509_free);
 
 	tls1_transcript_free(s);
 	tls1_transcript_hash_free(s);
 
-	free(S3I(s)->alpn_selected);
+	free(s->s3->alpn_selected);
 
-	freezero(S3I(s), sizeof(*S3I(s)));
 	freezero(s->s3, sizeof(*s->s3));
 
 	s->s3 = NULL;
@@ -1588,65 +1583,61 @@ ssl3_free(SSL *s)
 void
 ssl3_clear(SSL *s)
 {
-	struct ssl3_state_internal_st *internal;
 	unsigned char	*rp, *wp;
 	size_t		 rlen, wlen;
 
 	tls1_cleanup_key_block(s);
-	sk_X509_NAME_pop_free(S3I(s)->hs.tls12.ca_names, X509_NAME_free);
+	sk_X509_NAME_pop_free(s->s3->hs.tls12.ca_names, X509_NAME_free);
 	sk_X509_pop_free(s->internal->verified_chain, X509_free);
 	s->internal->verified_chain = NULL;
 
-	freezero(S3I(s)->hs.sigalgs, S3I(s)->hs.sigalgs_len);
-	S3I(s)->hs.sigalgs = NULL;
-	S3I(s)->hs.sigalgs_len = 0;
+	freezero(s->s3->hs.sigalgs, s->s3->hs.sigalgs_len);
+	s->s3->hs.sigalgs = NULL;
+	s->s3->hs.sigalgs_len = 0;
 
-	tls_key_share_free(S3I(s)->hs.key_share);
-	S3I(s)->hs.key_share = NULL;
+	tls_key_share_free(s->s3->hs.key_share);
+	s->s3->hs.key_share = NULL;
 
-	tls13_secrets_destroy(S3I(s)->hs.tls13.secrets);
-	S3I(s)->hs.tls13.secrets = NULL;
-	freezero(S3I(s)->hs.tls13.cookie, S3I(s)->hs.tls13.cookie_len);
-	S3I(s)->hs.tls13.cookie = NULL;
-	S3I(s)->hs.tls13.cookie_len = 0;
-	tls13_clienthello_hash_clear(&S3I(s)->hs.tls13);
+	tls13_secrets_destroy(s->s3->hs.tls13.secrets);
+	s->s3->hs.tls13.secrets = NULL;
+	freezero(s->s3->hs.tls13.cookie, s->s3->hs.tls13.cookie_len);
+	s->s3->hs.tls13.cookie = NULL;
+	s->s3->hs.tls13.cookie_len = 0;
+	tls13_clienthello_hash_clear(&s->s3->hs.tls13);
 
-	S3I(s)->hs.extensions_seen = 0;
+	s->s3->hs.extensions_seen = 0;
 
-	rp = S3I(s)->rbuf.buf;
-	wp = S3I(s)->wbuf.buf;
-	rlen = S3I(s)->rbuf.len;
-	wlen = S3I(s)->wbuf.len;
+	rp = s->s3->rbuf.buf;
+	wp = s->s3->wbuf.buf;
+	rlen = s->s3->rbuf.len;
+	wlen = s->s3->wbuf.len;
 
 	tls1_transcript_free(s);
 	tls1_transcript_hash_free(s);
 
-	free(S3I(s)->alpn_selected);
-	S3I(s)->alpn_selected = NULL;
-	S3I(s)->alpn_selected_len = 0;
+	free(s->s3->alpn_selected);
+	s->s3->alpn_selected = NULL;
+	s->s3->alpn_selected_len = 0;
 
-	memset(S3I(s), 0, sizeof(*S3I(s)));
-	internal = S3I(s);
 	memset(s->s3, 0, sizeof(*s->s3));
-	S3I(s) = internal;
 
-	S3I(s)->rbuf.buf = rp;
-	S3I(s)->wbuf.buf = wp;
-	S3I(s)->rbuf.len = rlen;
-	S3I(s)->wbuf.len = wlen;
+	s->s3->rbuf.buf = rp;
+	s->s3->wbuf.buf = wp;
+	s->s3->rbuf.len = rlen;
+	s->s3->wbuf.len = wlen;
 
 	ssl_free_wbio_buffer(s);
 
 	/* Not needed... */
-	S3I(s)->renegotiate = 0;
-	S3I(s)->total_renegotiations = 0;
-	S3I(s)->num_renegotiations = 0;
-	S3I(s)->in_read_app_data = 0;
+	s->s3->renegotiate = 0;
+	s->s3->total_renegotiations = 0;
+	s->s3->num_renegotiations = 0;
+	s->s3->in_read_app_data = 0;
 
 	s->internal->packet_length = 0;
 	s->version = TLS1_VERSION;
 
-	S3I(s)->hs.state = SSL_ST_BEFORE|((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
+	s->s3->hs.state = SSL_ST_BEFORE|((s->server) ? SSL_ST_ACCEPT : SSL_ST_CONNECT);
 }
 
 long
@@ -1657,12 +1648,12 @@ _SSL_get_peer_tmp_key(SSL *s, EVP_PKEY **key)
 
 	*key = NULL;
 
-	if (S3I(s)->hs.key_share == NULL)
+	if (s->s3->hs.key_share == NULL)
 		goto err;
 
 	if ((pkey = EVP_PKEY_new()) == NULL)
 		goto err;
-	if (!tls_key_share_peer_pkey(S3I(s)->hs.key_share, pkey))
+	if (!tls_key_share_peer_pkey(s->s3->hs.key_share, pkey))
 		goto err;
 
 	*key = pkey;
@@ -1685,7 +1676,7 @@ _SSL_session_reused(SSL *s)
 static int
 _SSL_num_renegotiations(SSL *s)
 {
-	return S3I(s)->num_renegotiations;
+	return s->s3->num_renegotiations;
 }
 
 static int
@@ -1693,8 +1684,8 @@ _SSL_clear_num_renegotiations(SSL *s)
 {
 	int renegs;
 
-	renegs = S3I(s)->num_renegotiations;
-	S3I(s)->num_renegotiations = 0;
+	renegs = s->s3->num_renegotiations;
+	s->s3->num_renegotiations = 0;
 
 	return renegs;
 }
@@ -1702,7 +1693,7 @@ _SSL_clear_num_renegotiations(SSL *s)
 static int
 _SSL_total_renegotiations(SSL *s)
 {
-	return S3I(s)->total_renegotiations;
+	return s->s3->total_renegotiations;
 }
 
 static int
@@ -1920,7 +1911,7 @@ _SSL_get_signature_nid(SSL *s, int *nid)
 {
 	const struct ssl_sigalg *sigalg;
 
-	if ((sigalg = S3I(s)->hs.our_sigalg) == NULL)
+	if ((sigalg = s->s3->hs.our_sigalg) == NULL)
 		return 0;
 
 	*nid = EVP_MD_type(sigalg->md());
@@ -1933,7 +1924,7 @@ _SSL_get_peer_signature_nid(SSL *s, int *nid)
 {
 	const struct ssl_sigalg *sigalg;
 
-	if ((sigalg = S3I(s)->hs.peer_sigalg) == NULL)
+	if ((sigalg = s->s3->hs.peer_sigalg) == NULL)
 		return 0;
 
 	*nid = EVP_MD_type(sigalg->md());
@@ -1946,7 +1937,7 @@ SSL_get_signature_type_nid(const SSL *s, int *nid)
 {
 	const struct ssl_sigalg *sigalg;
 
-	if ((sigalg = S3I(s)->hs.our_sigalg) == NULL)
+	if ((sigalg = s->s3->hs.our_sigalg) == NULL)
 		return 0;
 
 	*nid = sigalg->key_type;
@@ -1962,7 +1953,7 @@ SSL_get_peer_signature_type_nid(const SSL *s, int *nid)
 {
 	const struct ssl_sigalg *sigalg;
 
-	if ((sigalg = S3I(s)->hs.peer_sigalg) == NULL)
+	if ((sigalg = s->s3->hs.peer_sigalg) == NULL)
 		return 0;
 
 	*nid = sigalg->key_type;
@@ -2564,7 +2555,7 @@ ssl3_get_req_cert_types(SSL *s, CBB *cbb)
 {
 	unsigned long alg_k;
 
-	alg_k = S3I(s)->hs.cipher->algorithm_mkey;
+	alg_k = s->s3->hs.cipher->algorithm_mkey;
 
 #ifndef OPENSSL_NO_GOST
 	if ((alg_k & SSL_kGOST) != 0) {
@@ -2608,7 +2599,7 @@ ssl3_shutdown(SSL *s)
 	 * Don't do anything much if we have not done the handshake or
 	 * we don't want to send messages :-)
 	 */
-	if ((s->internal->quiet_shutdown) || (S3I(s)->hs.state == SSL_ST_BEFORE)) {
+	if ((s->internal->quiet_shutdown) || (s->s3->hs.state == SSL_ST_BEFORE)) {
 		s->internal->shutdown = (SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
 		return (1);
 	}
@@ -2618,11 +2609,11 @@ ssl3_shutdown(SSL *s)
 		ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_CLOSE_NOTIFY);
 		/*
 		 * Our shutdown alert has been sent now, and if it still needs
-		 * to be written, S3I(s)->alert_dispatch will be true
+		 * to be written, s->s3->alert_dispatch will be true
 		 */
-		if (S3I(s)->alert_dispatch)
+		if (s->s3->alert_dispatch)
 			return (-1);	/* return WANT_WRITE */
-	} else if (S3I(s)->alert_dispatch) {
+	} else if (s->s3->alert_dispatch) {
 		/* resend it if not sent */
 		ret = ssl3_dispatch_alert(s);
 		if (ret == -1) {
@@ -2643,7 +2634,7 @@ ssl3_shutdown(SSL *s)
 	}
 
 	if ((s->internal->shutdown == (SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN)) &&
-	    !S3I(s)->alert_dispatch)
+	    !s->s3->alert_dispatch)
 		return (1);
 	else
 		return (0);
@@ -2654,7 +2645,7 @@ ssl3_write(SSL *s, const void *buf, int len)
 {
 	errno = 0;
 
-	if (S3I(s)->renegotiate)
+	if (s->s3->renegotiate)
 		ssl3_renegotiate_check(s);
 
 	return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA,
@@ -2667,13 +2658,13 @@ ssl3_read_internal(SSL *s, void *buf, int len, int peek)
 	int	ret;
 
 	errno = 0;
-	if (S3I(s)->renegotiate)
+	if (s->s3->renegotiate)
 		ssl3_renegotiate_check(s);
-	S3I(s)->in_read_app_data = 1;
+	s->s3->in_read_app_data = 1;
 
 	ret = s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len,
 	    peek);
-	if ((ret == -1) && (S3I(s)->in_read_app_data == 2)) {
+	if ((ret == -1) && (s->s3->in_read_app_data == 2)) {
 		/*
 		 * ssl3_read_bytes decided to call s->internal->handshake_func,
 		 * which called ssl3_read_bytes to read handshake data.
@@ -2686,7 +2677,7 @@ ssl3_read_internal(SSL *s, void *buf, int len, int peek)
 		    buf, len, peek);
 		s->internal->in_handshake--;
 	} else
-		S3I(s)->in_read_app_data = 0;
+		s->s3->in_read_app_data = 0;
 
 	return (ret);
 }
@@ -2712,7 +2703,7 @@ ssl3_renegotiate(SSL *s)
 	if (s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)
 		return (0);
 
-	S3I(s)->renegotiate = 1;
+	s->s3->renegotiate = 1;
 	return (1);
 }
 
@@ -2721,8 +2712,8 @@ ssl3_renegotiate_check(SSL *s)
 {
 	int	ret = 0;
 
-	if (S3I(s)->renegotiate) {
-		if ((S3I(s)->rbuf.left == 0) && (S3I(s)->wbuf.left == 0) &&
+	if (s->s3->renegotiate) {
+		if ((s->s3->rbuf.left == 0) && (s->s3->wbuf.left == 0) &&
 		    !SSL_in_init(s)) {
 			/*
 			 * If we are the server, and we have sent
@@ -2730,10 +2721,10 @@ ssl3_renegotiate_check(SSL *s)
 			 * to SSL_ST_ACCEPT.
 			 */
 			/* SSL_ST_ACCEPT */
-			S3I(s)->hs.state = SSL_ST_RENEGOTIATE;
-			S3I(s)->renegotiate = 0;
-			S3I(s)->num_renegotiations++;
-			S3I(s)->total_renegotiations++;
+			s->s3->hs.state = SSL_ST_RENEGOTIATE;
+			s->s3->renegotiate = 0;
+			s->s3->num_renegotiations++;
+			s->s3->total_renegotiations++;
 			ret = 1;
 		}
 	}

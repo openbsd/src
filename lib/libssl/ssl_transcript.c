@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_transcript.c,v 1.5 2021/05/16 14:10:43 jsing Exp $ */
+/* $OpenBSD: ssl_transcript.c,v 1.6 2022/02/05 14:54:10 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -33,11 +33,11 @@ tls1_transcript_hash_init(SSL *s)
 		goto err;
 	}
 
-	if ((S3I(s)->handshake_hash = EVP_MD_CTX_new()) == NULL) {
+	if ((s->s3->handshake_hash = EVP_MD_CTX_new()) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	if (!EVP_DigestInit_ex(S3I(s)->handshake_hash, md, NULL)) {
+	if (!EVP_DigestInit_ex(s->s3->handshake_hash, md, NULL)) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
@@ -62,10 +62,10 @@ tls1_transcript_hash_init(SSL *s)
 int
 tls1_transcript_hash_update(SSL *s, const unsigned char *buf, size_t len)
 {
-	if (S3I(s)->handshake_hash == NULL)
+	if (s->s3->handshake_hash == NULL)
 		return 1;
 
-	return EVP_DigestUpdate(S3I(s)->handshake_hash, buf, len);
+	return EVP_DigestUpdate(s->s3->handshake_hash, buf, len);
 }
 
 int
@@ -76,17 +76,17 @@ tls1_transcript_hash_value(SSL *s, const unsigned char *out, size_t len,
 	unsigned int mdlen;
 	int ret = 0;
 
-	if (S3I(s)->handshake_hash == NULL)
+	if (s->s3->handshake_hash == NULL)
 		goto err;
 
-	if (EVP_MD_CTX_size(S3I(s)->handshake_hash) > len)
+	if (EVP_MD_CTX_size(s->s3->handshake_hash) > len)
 		goto err;
 
 	if ((mdctx = EVP_MD_CTX_new()) == NULL) {
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	if (!EVP_MD_CTX_copy_ex(mdctx, S3I(s)->handshake_hash)) {
+	if (!EVP_MD_CTX_copy_ex(mdctx, s->s3->handshake_hash)) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
@@ -108,17 +108,17 @@ tls1_transcript_hash_value(SSL *s, const unsigned char *out, size_t len,
 void
 tls1_transcript_hash_free(SSL *s)
 {
-	EVP_MD_CTX_free(S3I(s)->handshake_hash);
-	S3I(s)->handshake_hash = NULL;
+	EVP_MD_CTX_free(s->s3->handshake_hash);
+	s->s3->handshake_hash = NULL;
 }
 
 int
 tls1_transcript_init(SSL *s)
 {
-	if (S3I(s)->handshake_transcript != NULL)
+	if (s->s3->handshake_transcript != NULL)
 		return 0;
 
-	if ((S3I(s)->handshake_transcript = BUF_MEM_new()) == NULL)
+	if ((s->s3->handshake_transcript = BUF_MEM_new()) == NULL)
 		return 0;
 
 	tls1_transcript_reset(s);
@@ -129,8 +129,8 @@ tls1_transcript_init(SSL *s)
 void
 tls1_transcript_free(SSL *s)
 {
-	BUF_MEM_free(S3I(s)->handshake_transcript);
-	S3I(s)->handshake_transcript = NULL;
+	BUF_MEM_free(s->s3->handshake_transcript);
+	s->s3->handshake_transcript = NULL;
 }
 
 void
@@ -143,7 +143,7 @@ tls1_transcript_reset(SSL *s)
 	 * or if it failed (and returned zero)... our implementation never
 	 * fails with a length of zero, so we trust all is okay...
 	 */
-	(void)BUF_MEM_grow_clean(S3I(s)->handshake_transcript, 0);
+	(void)BUF_MEM_grow_clean(s->s3->handshake_transcript, 0);
 
 	tls1_transcript_unfreeze(s);
 }
@@ -153,22 +153,22 @@ tls1_transcript_append(SSL *s, const unsigned char *buf, size_t len)
 {
 	size_t olen, nlen;
 
-	if (S3I(s)->handshake_transcript == NULL)
+	if (s->s3->handshake_transcript == NULL)
 		return 1;
 
 	if (s->s3->flags & TLS1_FLAGS_FREEZE_TRANSCRIPT)
 		return 1;
 
-	olen = S3I(s)->handshake_transcript->length;
+	olen = s->s3->handshake_transcript->length;
 	nlen = olen + len;
 
 	if (nlen < olen)
 		return 0;
 
-	if (BUF_MEM_grow(S3I(s)->handshake_transcript, nlen) == 0)
+	if (BUF_MEM_grow(s->s3->handshake_transcript, nlen) == 0)
 		return 0;
 
-	memcpy(S3I(s)->handshake_transcript->data + olen, buf, len);
+	memcpy(s->s3->handshake_transcript->data + olen, buf, len);
 
 	return 1;
 }
@@ -176,11 +176,11 @@ tls1_transcript_append(SSL *s, const unsigned char *buf, size_t len)
 int
 tls1_transcript_data(SSL *s, const unsigned char **data, size_t *len)
 {
-	if (S3I(s)->handshake_transcript == NULL)
+	if (s->s3->handshake_transcript == NULL)
 		return 0;
 
-	*data = S3I(s)->handshake_transcript->data;
-	*len = S3I(s)->handshake_transcript->length;
+	*data = s->s3->handshake_transcript->data;
+	*len = s->s3->handshake_transcript->length;
 
 	return 1;
 }

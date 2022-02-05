@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.39 2021/09/10 09:25:29 tb Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.40 2022/02/05 14:54:10 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -666,5 +666,5 @@ void
 SSL_error_internal(const SSL *s, int r, char *f, int l)
 {
 	ERR_PUT_error(ERR_LIB_SSL,
-	    (SSL_state_func_code(S3I(s)->hs.state)), r, f, l);
+	    (SSL_state_func_code(s->s3->hs.state)), r, f, l);
 }
