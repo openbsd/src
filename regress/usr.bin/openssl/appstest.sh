@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.53 2021/10/25 07:17:14 tb Exp $
+# $OpenBSD: appstest.sh,v 1.54 2022/02/05 18:36:08 tb Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1538,14 +1538,10 @@ function test_sc_all_cipher {
 	ciphers=$user1_dir/ciphers_${sc}_${ver}
 
 	if [ $ver = "tls1_3" ] ; then
-		if [ $c_id = "0" ] ; then
-			echo "AEAD-AES256-GCM-SHA384" > $ciphers
-			echo "AEAD-CHACHA20-POLY1305-SHA256" >> $ciphers
-			echo "AEAD-AES128-GCM-SHA256" >> $ciphers
-		else
-			echo "TLS_AES_256_GCM_SHA384" > $ciphers
-			echo "TLS_CHACHA20_POLY1305_SHA256" >> $ciphers
-			echo "TLS_AES_128_GCM_SHA256" >> $ciphers
+		echo "TLS_AES_256_GCM_SHA384" > $ciphers
+		echo "TLS_CHACHA20_POLY1305_SHA256" >> $ciphers
+		echo "TLS_AES_128_GCM_SHA256" >> $ciphers
+		if [ $c_id != "0" ] ; then
 			copt=ciphersuites
 		fi
 	else
