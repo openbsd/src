@@ -33,3 +33,4 @@ logb(double x)
 		return (double) (ix-1023); 
 }
 DEF_STD(logb);
+LDBL_MAYBE_UNUSED_CLONE(logb);
