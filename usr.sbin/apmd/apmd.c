@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.106 2021/07/12 15:09:20 beck Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.107 2022/02/06 09:07:42 robert Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -165,26 +165,17 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 		    bstate.battery_state != last.battery_state ||
 		    (bstate.minutes_left && bstate.minutes_left < 15) ||
 		    abs(bstate.battery_life - last.battery_life) >= 10) {
-#ifdef __powerpc__
-			/*
-			 * When the battery is charging, the estimated life
-			 * time is in fact the estimated remaining charge time
-			 * on Apple machines, so lie in the stats.
-			 * We still want an useful message if the battery or
-			 * ac status changes, however.
-			 */
-			if (bstate.minutes_left != 0 &&
-			    bstate.battery_state != APM_BATT_CHARGING)
-#else
 			if ((int)bstate.minutes_left > 0)
-#endif
 				logmsg(priority, "battery status: %s. "
 				    "external power status: %s. "
-				    "estimated battery life %d%% (%u minutes)",
+				    "estimated battery life %d%% "
+				    "(%u minutes %s time estimate)",
 				    battstate(bstate.battery_state),
 				    ac_state(bstate.ac_state),
 				    bstate.battery_life,
-				    bstate.minutes_left);
+				    bstate.minutes_left,
+				    (bstate.battery_state == APM_BATT_CHARGING)
+					? "recharge" : "life");
 			else
 				logmsg(priority, "battery status: %s. "
 				    "external power status: %s. "

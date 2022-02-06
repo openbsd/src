@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.39 2022/01/12 13:09:29 robert Exp $	*/
+/*	$OpenBSD: apm.c,v 1.40 2022/02/06 09:07:42 robert Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -354,7 +354,6 @@ balony:
 			printf("\n");
 
 		if (domin && !dobstate && !dopct) {
-#ifdef __powerpc__
 			if (reply.batterystate.battery_state ==
 			    APM_BATT_CHARGING)
 				printf("Remaining battery recharge "
@@ -365,7 +364,6 @@ balony:
 				printf("Battery life estimate: "
 				    "not available\n");
 			else
-#endif
 			{
 				printf("Battery life estimate: ");
 				if (reply.batterystate.minutes_left ==
@@ -376,7 +374,6 @@ balony:
 					    reply.batterystate.minutes_left);
 			}
 		} else if (domin) {
-#ifdef __powerpc__
 			if (reply.batterystate.battery_state ==
 			    APM_BATT_CHARGING)
 				printf(", %d minutes recharge time estimate\n",
@@ -385,7 +382,6 @@ balony:
 			    reply.batterystate.battery_life > 10)
 				printf(", unknown life estimate\n");
 			else
-#endif
 			{
 				if (reply.batterystate.minutes_left ==
 				    (u_int)-1)
