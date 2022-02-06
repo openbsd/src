@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.222 2021/03/06 09:20:49 jsg Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.223 2022/02/06 17:24:58 rob Exp $	*/
 
 /*
  * Copyright (c) 2011,2020 Theo de Raadt.
@@ -238,7 +238,7 @@ add_entropy_words(const u_int32_t *buf, u_int n)
 }
 
 /*
- * Pulls entropy out of the queue and merges it into the poll with the
+ * Pulls entropy out of the queue and merges it into the pool with the
  * CRC.  This takes a mix of fresh entries from the producer end of the
  * queue and entries from the consumer end of the queue which are
  * likely to have collected more damage.
