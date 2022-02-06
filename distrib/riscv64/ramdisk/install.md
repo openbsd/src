@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 2022/02/04 18:12:47 krw Exp $
+#	$OpenBSD: install.md,v 1.6 2022/02/06 11:29:18 visa Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,8 +43,9 @@ md_installboot() {
 }
 
 md_prep_fdisk() {
-	local _disk=$1 _d
+	local _disk=$1 _d _type=MBR
 
+	local bootpart=
 	local bootparttype="C"
 	local bootsectorstart="32768"
 	local bootsectorsize="32768"
@@ -52,22 +53,57 @@ md_prep_fdisk() {
 
 	while :; do
 		_d=whole
-		if disk_has $_disk mbr; then
+		if disk_has $_disk gpt; then
+			[[ $_disk == $ROOTDISK ]] && bootpart="-b ${bootsectorsize}"
+			_type=GPT
+			fdisk $_disk
+		elif disk_has $_disk mbr; then
 			fdisk $_disk
 		else
 			echo "MBR has invalid signature; not showing it."
 		fi
-		ask "Use (W)hole disk or (E)dit the MBR?" "$_d"
+		ask "Use (W)hole disk or (E)dit the ${_type}?" "$_d"
 		case $resp in
 		[wW]*)
 			echo -n "Creating a ${bootfstype} partition and an OpenBSD partition for rest of $_disk..."
-			fdisk -iy -b "${bootsectorsize}@${bootsectorstart}:${bootparttype}" ${_disk} >/dev/null
+			if disk_has $_disk gpt biosboot; then
+				# Preserve BIOS boot partition as it might
+				# contain a PolarFire SoC HSS payload.
+				fdisk -Ay ${bootpart} ${_disk} >/dev/null
+			elif disk_has $_disk gpt; then
+				fdisk -gy ${bootpart} ${_disk} >/dev/null
+			else
+				fdisk -iy -b "${bootsectorsize}@${bootsectorstart}:${bootparttype}" ${_disk} >/dev/null
+			fi
 			echo "done."
 			installboot -p $_disk
 			return ;;
 		[eE]*)
-			# Manually configure the MBR.
-			cat <<__EOT
+			if disk_has $_disk gpt; then
+				# Manually configure the GPT.
+				cat <<__EOT
+
+You will now create two GPT partitions. The first must have an id
+of 'EF' and be large enough to contain the OpenBSD boot programs,
+at least 32768 blocks. The second must have an id of 'A6' and will
+contain your OpenBSD data. Neither may overlap other partitions.
+Inside the fdisk command, the 'manual' command describes the fdisk
+commands in detail.
+
+$(fdisk $_disk)
+__EOT
+				fdisk -e $_disk
+
+				if ! disk_has $_disk gpt openbsd; then
+					echo -n "No OpenBSD partition in GPT,"
+				elif ! disk_has $_disk gpt efisys; then
+					echo -n "No EFI Sys partition in GPT,"
+				else
+					return
+				fi
+			else
+				# Manually configure the MBR.
+				cat <<__EOT
 
 You will now create one MBR partition to contain your OpenBSD data
 and one MBR partition on which the OpenBSD boot program is located.
@@ -80,9 +116,11 @@ partition on the disk.
 
 $(fdisk ${_disk})
 __EOT
-			fdisk -e ${_disk}
-			disk_has $_disk mbr openbsd && return
-			echo No OpenBSD partition in MBR, try again. ;;
+				fdisk -e ${_disk}
+				disk_has $_disk mbr openbsd && return
+				echo -n "No OpenBSD partition in MBR,"
+			fi
+			echo "try again." ;;
 		esac
 	done
 }

@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1191 2022/01/29 20:17:58 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1192 2022/02/06 11:29:18 visa Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -382,6 +382,7 @@ disk_has() {
 	local _p_gpt_apfs='^[ *]...: APFS '
 	local _p_gpt_apfsisc='^[ *]...: APFS ISC '
 	local _p_gpt_apfsrecovery='^[ *]...: APFS Recovry '
+	local _p_gpt_biosboot='^[ *]...: BIOS Boot '
 	local _p_gpt_efisys='^[ *]...: EFI Sys '
 	local _p_hfs='^Partition map '
 	local _p_hfs_openbsd=' OpenBSD OpenBSD '
