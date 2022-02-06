@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_legacy.c,v 1.36 2022/02/05 14:54:10 jsing Exp $ */
+/*	$OpenBSD: tls13_legacy.c,v 1.37 2022/02/06 16:08:14 jsing Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -229,6 +229,8 @@ tls13_legacy_read_bytes(SSL *ssl, int type, unsigned char *buf, int len, int pee
 	if (ctx == NULL || !ctx->handshake_completed) {
 		if ((ret = ssl->internal->handshake_func(ssl)) <= 0)
 			return ret;
+		if (len == 0)
+			return 0;
 		return tls13_legacy_return_code(ssl, TLS13_IO_WANT_POLLIN);
 	}
 
@@ -263,6 +265,8 @@ tls13_legacy_write_bytes(SSL *ssl, int type, const void *vbuf, int len)
 	if (ctx == NULL || !ctx->handshake_completed) {
 		if ((ret = ssl->internal->handshake_func(ssl)) <= 0)
 			return ret;
+		if (len == 0)
+			return 0;
 		return tls13_legacy_return_code(ssl, TLS13_IO_WANT_POLLOUT);
 	}
 
