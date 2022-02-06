@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_prf.c,v 1.5 2021/03/24 19:02:35 jsing Exp $ */
+/* $OpenBSD: tls_prf.c,v 1.6 2022/02/06 09:19:46 anton Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -197,7 +197,7 @@ do_tls_prf_test(int test_no, struct tls_prf_test *tpt)
 		goto failure;
 	}
 
-	S3I(ssl)->hs.cipher = cipher;
+	ssl->s3->hs.cipher = cipher;
 
 	for (len = 1; len <= TLS_PRF_OUT_LEN; len++) {
 		memset(out, 'A', TLS_PRF_OUT_LEN);
