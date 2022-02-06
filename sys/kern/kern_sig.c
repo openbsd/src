@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.292 2022/01/02 21:01:20 tb Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.293 2022/02/06 09:57:59 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1194,21 +1194,16 @@ int
 cursig(struct proc *p)
 {
 	struct process *pr = p->p_p;
-	int sigpending, signum, mask, prop;
+	int signum, mask, prop;
 	int dolock = (p->p_flag & P_SINTR) == 0;
 	int s;
 
 	KERNEL_ASSERT_LOCKED();
 
-	sigpending = (p->p_siglist | pr->ps_siglist);
-	if (sigpending == 0)
-		return 0;
-
-	if (!ISSET(pr->ps_flags, PS_TRACED) && SIGPENDING(p) == 0)
-		return 0;
-
 	for (;;) {
-		mask = SIGPENDING(p);
+		mask = (p->p_siglist | pr->ps_siglist);
+		if (!ISSET(pr->ps_flags, PS_TRACED))
+			mask &= ~p->p_sigmask;
 		if (pr->ps_flags & PS_PPWAIT)
 			mask &= ~STOPSIGMASK;
 		if (mask == 0)	 	/* no signal to send */
@@ -1919,7 +1914,7 @@ userret(struct proc *p)
 		KERNEL_UNLOCK();
 	}
 
-	if (SIGPENDING(p) != 0) {
+	if (SIGPENDING(p) != 0 || ISSET(p->p_p->ps_flags, PS_TRACED)) {
 		KERNEL_LOCK();
 		while ((signum = cursig(p)) != 0)
 			postsig(p, signum);
