@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.25 2022/02/06 00:29:02 jsg Exp $
+.\"	$OpenBSD: dpb.1,v 1.26 2022/02/06 13:56:14 op Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -446,7 +446,7 @@ Only makes sense for
 or
 .Ar localhost .
 .It jobs=n
-Number of jobs to run on that host, defaults to hw.ncpu.
+Number of jobs to run on that host, defaults to hw.ncpuonline.
 .It junk=n
 Junk unused packages each n steps.
 See
@@ -601,7 +601,7 @@ Note that the
 property is still active for ports in error, in the belief that trivial fixes
 can be made that will allow the port build to finish.
 .It Fl j Ar n
-Number of jobs to run on a single host (defaults to hw.ncpu).
+Number of jobs to run on a single host (defaults to hw.ncpuonline).
 .It Fl L Ar logdir
 Choose a log directory.
 .Po
