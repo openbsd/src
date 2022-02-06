@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getentropy.2,v 1.9 2019/09/28 14:55:12 deraadt Exp $
+.\"	$OpenBSD: getentropy.2,v 1.10 2022/02/06 00:29:02 jsg Exp $
 .\"
 .\" Copyright (c) 2014 Theo de Raadt
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 28 2019 $
+.Dd $Mdocdate: February 6 2022 $
 .Dt GETENTROPY 2
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@ as input for process-context pseudorandom generators like
 The maximum buffer size permitted is 256 bytes.
 .Pp
 .Fn getentropy
-is not intended for regular code; please use the
+is not intended for regular code; use the
 .Xr arc4random 3
 family of functions instead.
 .Pp

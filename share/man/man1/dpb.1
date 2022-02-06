@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.24 2021/05/03 07:48:16 espie Exp $
+.\"	$OpenBSD: dpb.1,v 1.25 2022/02/06 00:29:02 jsg Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 3 2021 $
+.Dd $Mdocdate: February 6 2022 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -1408,7 +1408,7 @@ affinity mismatch, but job will start on the wrong host anyways, as the queue
 contains no other buildable path.
 .El
 .Pp
-Please note that the engine is no longer run after each package build event
+The engine is no longer run after each package build event
 because of performance considerations, so the
 .Sq Q
 and

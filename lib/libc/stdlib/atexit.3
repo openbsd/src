@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: atexit.3,v 1.12 2019/06/27 16:30:39 schwarze Exp $
+.\"	$OpenBSD: atexit.3,v 1.13 2022/02/06 00:29:02 jsg Exp $
 .\"
-.Dd $Mdocdate: June 27 2019 $
+.Dd $Mdocdate: February 6 2022 $
 .Dt ATEXIT 3
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ that matters, not the source of the function that was registered.
 is very difficult to use correctly without creating
 .Xr exit 3 Ns -time
 races.
-Unless absolutely necessary, please avoid using it.
+Unless absolutely necessary, avoid using it.
 .Sh RETURN VALUES
 The
 .Nm

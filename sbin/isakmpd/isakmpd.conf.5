@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.136 2021/11/03 05:59:25 yasuoka Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.137 2022/02/06 00:29:02 jsg Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -28,7 +28,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: November 3 2021 $
+.Dd $Mdocdate: February 6 2022 $
 .Dt ISAKMPD.CONF 5
 .Os
 .Sh NAME
@@ -1372,7 +1372,7 @@ LIFE_DURATION=		1000,768:1536
 .Xr isakmpd 8
 .Sh CAVEATS
 Using aggressive mode is discouraged due to various design problems.
-If your peer only supports aggressive mode, please consider replacing that
+If your peer only supports aggressive mode, consider replacing that
 peer with a sane ISAKMP/IKE implementation.
 For details see
 .Lk http://www.usenix.org/publications/login/1999-12/features/harmful.html .

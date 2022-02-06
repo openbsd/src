@@ -1,4 +1,4 @@
-.\" $OpenBSD: pcibios.4,v 1.23 2008/07/01 04:14:57 ray Exp $
+.\" $OpenBSD: pcibios.4,v 1.24 2022/02/06 00:29:02 jsg Exp $
 .\" $NetBSD: pcibios.4,v 1.7 2000/08/03 13:32:39 soda Exp $
 .\"
 .\" Copyright (c) 2000 Michael Shalayeff, All rights reserved.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 1 2008 $
+.Dd $Mdocdate: February 6 2022 $
 .Dt PCIBIOS 4 i386
 .Os
 .Sh NAME
@@ -90,7 +90,7 @@ And many BIOS implementations don't assign a bus number for CardBuses.
 .Pp
 A typical symptom of this is the following boot message:
 .D1 Sy cardbus0 at cardslot0: bus 0 device 0...
-Please note that this cardbus0 has a bus number
+This cardbus0 has a bus number
 .Sq 0 ,
 but normally the bus number 0 is used by the machine's
 primary PCI bus.

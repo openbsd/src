@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.91 2021/11/13 20:56:51 tobhe Exp $
+.\" $OpenBSD: iked.conf.5,v 1.92 2022/02/06 00:29:02 jsg Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 13 2021 $
+.Dd $Mdocdate: February 6 2022 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -197,8 +197,7 @@ Enable OCSP and set the fallback URL of the OCSP responder.
 This fallback will be used if the trusted CA from
 .Pa /etc/iked/ca/
 does not have an OCSP-URL extension.
-Please note that the matching responder certificates
-have to be placed in
+The matching responder certificates have to be placed in
 .Pa /etc/iked/ocsp/responder.crt .
 .Pp
 The optional
@@ -231,7 +230,7 @@ and the
 and
 .Ar password
 arguments.
-Note that the password has to be specified in plain text which is
+The password has to be specified in plain text which is
 required to support different challenge-based EAP methods like
 EAP-MD5 or EAP-MSCHAPv2.
 .El
@@ -255,7 +254,7 @@ the connection, the default action is to ignore the connection attempt or
 to use the
 .Ar default
 policy, if set.
-Please also see the
+See the
 .Sx EXAMPLES
 section for a detailed example of the policy evaluation.
 .Pp
@@ -360,7 +359,7 @@ which can be either
 .Ar inet
 or
 .Ar inet6 .
-Note that this only matters for IKEv2 endpoints and does not
+This only matters for IKEv2 endpoints and does not
 restrict the traffic selectors to negotiate flows with different
 address families, e.g. IPv6 flows negotiated by IPv4 endpoints.
 .Pp
@@ -626,7 +625,7 @@ and
 .Ql G
 for kilo-, mega- and gigabytes accordingly.
 .Pp
-Please note that rekeying must happen at least several times a day as
+Rekeying must happen at least several times a day as
 IPsec security heavily depends on frequent key renewals.
 .Pp
 .It Op Ar ikeauth
@@ -1028,7 +1027,7 @@ The currently supported group types are either
 MODP (exponentiation groups modulo a prime),
 ECP (elliptic curve groups modulo a prime),
 or Curve25519.
-Please note that MODP groups of less than 2048 bits are considered
+MODP groups of less than 2048 bits are considered
 as weak or insecure (see RFC 8247 section 2.4) and only provided for
 backwards compatibility.
 .Sh FILES
