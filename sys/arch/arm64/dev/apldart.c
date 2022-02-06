@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.8 2021/11/11 18:43:05 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.9 2022/02/06 19:10:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -47,6 +47,8 @@
 #define DART_ERROR		0x0040
 #define DART_ERROR_ADDR_LO	0x0050
 #define DART_ERROR_ADDR_HI	0x0054
+#define DART_CONFIG		0x0060
+#define  DART_CONFIG_LOCK		(1 << 15)
 #define DART_TCR(sid)		(0x0100 + 4 *(sid))
 #define  DART_TCR_TRANSLATE_ENABLE	(1 << 7)
 #define  DART_TCR_BYPASS_DART		(1 << 8)
@@ -194,7 +196,7 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	paddr_t pa;
 	volatile uint64_t *l1;
 	int ntte, nl1, nl2;
-	uint32_t params2;
+	uint32_t config, params2;
 	int sid, idx;
 
 	if (faa->fa_nreg < 1) {
@@ -211,16 +213,30 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = faa->fa_dmat;
 
-	printf("\n");
+	/* Skip locked DARTs for now. */
+	config = HREAD4(sc, DART_CONFIG);
+	if (config & DART_CONFIG_LOCK) {
+		printf(": locked\n");
+		return;
+	}
 
+	/*
+	 * Use bypass mode if supported.  This avoids an issue with
+	 * the USB3 controllers which need mappings entered into two
+	 * IOMMUs, which is somewhat difficult to implement with our
+	 * current kernel interfaces.
+	 */
 	params2 = HREAD4(sc, DART_PARAMS2);
 	if (params2 & DART_PARAMS2_BYPASS_SUPPORT) {
 		for (sid = 0; sid < DART_NUM_STREAMS; sid++) {
 			HWRITE4(sc, DART_TCR(sid),
 			    DART_TCR_BYPASS_DART | DART_TCR_BYPASS_DAPF);
 		}
+		printf(": bypass\n");
 		return;
 	}
+
+	printf("\n");
 
 	/*
 	 * Skip the first page to help catching bugs where a device is
