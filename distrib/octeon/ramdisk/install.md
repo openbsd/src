@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.22 2020/06/27 15:35:29 deraadt Exp $
+#	$OpenBSD: install.md,v 1.23 2022/02/06 15:52:23 krw Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -60,22 +60,7 @@ md_prep_fdisk() {
 		case $resp in
 		[wW]*)
 			echo -n "Creating a FAT partition and an OpenBSD partition for rest of $_disk..."
-			fdisk -e ${_disk} <<__EOT >/dev/null
-reinit
-e 0
-C
-n
-64
-65536
-f 0
-e 3
-A6
-n
-65600
-
-write
-quit
-__EOT
+			fdisk -iy -b "65536@64:C" ${_disk} >/dev/null
 			echo "done."
 			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
 			newfs -t msdos ${_disk}i

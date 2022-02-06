@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2021/11/13 18:18:59 kn Exp $
+#	$OpenBSD: Makefile,v 1.21 2022/02/06 15:52:23 krw Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		24576
@@ -15,12 +15,15 @@ UTILS=		${.CURDIR}/../../miniroot
 MRDISKTYPE=	rdroot
 MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
+MSDOSSTART=	64
+MSDOSSIZE!=	expr ${FSSIZE} - ${MSDOSSTART}
+
 all: ${FS}
 
 ${FS}: bsd.rd
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
-	echo 'u\ne 0\nC\nn\n64\n*\nf 0\nw\nq\n' | fdisk -e `cat vnd`
+	fdisk -iy -b "${MSDOSSIZE}@${MSDOSSTART}:c" `cat vnd` >/dev/null
 	echo 'w\ny\nq\n' | disklabel -E `cat vnd` > /dev/null
 	newfs -t msdos /dev/r`cat vnd`i
 	mount ${MOUNT_ARGS_msdos} /dev/`cat vnd`i ${MOUNT_POINT}
