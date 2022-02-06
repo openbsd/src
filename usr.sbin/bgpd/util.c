@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.61 2021/02/16 08:29:16 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.62 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -32,7 +32,7 @@
 #include "rde.h"
 #include "log.h"
 
-const char	*aspath_delim(u_int8_t, int);
+const char	*aspath_delim(uint8_t, int);
 
 const char *
 log_addr(const struct bgpd_addr *addr)
@@ -68,7 +68,7 @@ log_in6addr(const struct in6_addr *addr)
 	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
 	if (IN6_IS_ADDR_LINKLOCAL(&sa_in6.sin6_addr) ||
 	    IN6_IS_ADDR_MC_LINKLOCAL(&sa_in6.sin6_addr)) {
-		u_int16_t tmp16;
+		uint16_t tmp16;
 		memcpy(&tmp16, &sa_in6.sin6_addr.s6_addr[2], sizeof(tmp16));
 		sa_in6.sin6_scope_id = ntohs(tmp16);
 		sa_in6.sin6_addr.s6_addr[2] = 0;
@@ -92,7 +92,7 @@ log_sockaddr(struct sockaddr *sa, socklen_t len)
 }
 
 const char *
-log_as(u_int32_t as)
+log_as(uint32_t as)
 {
 	static char	buf[11];	/* "4294967294\0" */
 
@@ -103,12 +103,12 @@ log_as(u_int32_t as)
 }
 
 const char *
-log_rd(u_int64_t rd)
+log_rd(uint64_t rd)
 {
 	static char	buf[32];
 	struct in_addr	addr;
-	u_int32_t	u32;
-	u_int16_t	u16;
+	uint32_t	u32;
+	uint16_t	u16;
 
 	rd = be64toh(rd);
 	switch (rd >> 48) {
@@ -139,7 +139,7 @@ const struct ext_comm_pairs iana_ext_comms[] = IANA_EXT_COMMUNITIES;
 /* NOTE: this function does not check if the type/subtype combo is
  * actually valid. */
 const char *
-log_ext_subtype(short type, u_int8_t subtype)
+log_ext_subtype(short type, uint8_t subtype)
 {
 	static char etype[6];
 	const struct ext_comm_pairs *cp;
@@ -194,7 +194,7 @@ log_rtr_error(enum rtr_error err)
 }
 
 const char *
-aspath_delim(u_int8_t seg_type, int closing)
+aspath_delim(uint8_t seg_type, int closing)
 {
 	static char db[8];
 
@@ -226,7 +226,7 @@ aspath_delim(u_int8_t seg_type, int closing)
 }
 
 int
-aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
+aspath_snprint(char *buf, size_t size, void *data, uint16_t len)
 {
 #define UPDATE()				\
 	do {					\
@@ -241,17 +241,17 @@ aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
 			size = 0;		\
 		}				\
 	} while (0)
-	u_int8_t	*seg;
+	uint8_t		*seg;
 	int		 r, total_size;
-	u_int16_t	 seg_size;
-	u_int8_t	 i, seg_type, seg_len;
+	uint16_t	 seg_size;
+	uint8_t		 i, seg_type, seg_len;
 
 	total_size = 0;
 	seg = data;
 	for (; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+		seg_size = 2 + sizeof(uint32_t) * seg_len;
 
 		r = snprintf(buf, size, "%s%s",
 		    total_size != 0 ? " " : "",
@@ -279,7 +279,7 @@ aspath_snprint(char *buf, size_t size, void *data, u_int16_t len)
 }
 
 int
-aspath_asprint(char **ret, void *data, u_int16_t len)
+aspath_asprint(char **ret, void *data, uint16_t len)
 {
 	size_t	slen;
 	int	plen;
@@ -300,20 +300,20 @@ aspath_asprint(char **ret, void *data, u_int16_t len)
 }
 
 size_t
-aspath_strlen(void *data, u_int16_t len)
+aspath_strlen(void *data, uint16_t len)
 {
-	u_int8_t	*seg;
+	uint8_t		*seg;
 	int		 total_size;
-	u_int32_t	 as;
-	u_int16_t	 seg_size;
-	u_int8_t	 i, seg_type, seg_len;
+	uint32_t	 as;
+	uint16_t	 seg_size;
+	uint8_t		 i, seg_type, seg_len;
 
 	total_size = 0;
 	seg = data;
 	for (; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+		seg_size = 2 + sizeof(uint32_t) * seg_len;
 
 		if (seg_type == AS_SET)
 			if (total_size != 0)
@@ -345,14 +345,14 @@ aspath_strlen(void *data, u_int16_t len)
  * Direct access is not possible because of non-aligned reads.
  * ATTENTION: no bounds checks are done.
  */
-u_int32_t
+uint32_t
 aspath_extract(const void *seg, int pos)
 {
 	const u_char	*ptr = seg;
-	u_int32_t	 as;
+	uint32_t	 as;
 
-	ptr += 2 + sizeof(u_int32_t) * pos;
-	memcpy(&as, ptr, sizeof(u_int32_t));
+	ptr += 2 + sizeof(uint32_t) * pos;
+	memcpy(&as, ptr, sizeof(uint32_t));
 	return (ntohl(as));
 }
 
@@ -360,11 +360,11 @@ aspath_extract(const void *seg, int pos)
  * Verify that the aspath is correctly encoded.
  */
 int
-aspath_verify(void *data, u_int16_t len, int as4byte, int noset)
+aspath_verify(void *data, uint16_t len, int as4byte, int noset)
 {
-	u_int8_t	*seg = data;
-	u_int16_t	 seg_size, as_size = 2;
-	u_int8_t	 seg_len, seg_type;
+	uint8_t		*seg = data;
+	uint16_t	 seg_size, as_size = 2;
+	uint8_t		 seg_len, seg_type;
 	int		 error = 0;
 
 	if (len & 1)
@@ -375,7 +375,7 @@ aspath_verify(void *data, u_int16_t len, int as4byte, int noset)
 		as_size = 4;
 
 	for (; len > 0; len -= seg_size, seg += seg_size) {
-		const u_int8_t	*ptr;
+		const uint8_t	*ptr;
 		int		 pos;
 
 		if (len < 2)	/* header length check */
@@ -412,7 +412,7 @@ aspath_verify(void *data, u_int16_t len, int as4byte, int noset)
 		/* RFC 7607 - AS 0 is considered malformed */
 		ptr = seg + 2;
 		for (pos = 0; pos < seg_len; pos++) {
-			u_int32_t as;
+			uint32_t as;
 
 			memcpy(&as, ptr, as_size);
 			if (as == 0)
@@ -427,19 +427,19 @@ aspath_verify(void *data, u_int16_t len, int as4byte, int noset)
  * convert a 2 byte aspath to a 4 byte one.
  */
 u_char *
-aspath_inflate(void *data, u_int16_t len, u_int16_t *newlen)
+aspath_inflate(void *data, uint16_t len, uint16_t *newlen)
 {
-	u_int8_t	*seg, *nseg, *ndata;
-	u_int16_t	 seg_size, olen, nlen;
-	u_int8_t	 seg_len;
+	uint8_t		*seg, *nseg, *ndata;
+	uint16_t	 seg_size, olen, nlen;
+	uint8_t		 seg_len;
 
 	/* first calculate the length of the aspath */
 	seg = data;
 	nlen = 0;
 	for (olen = len; olen > 0; olen -= seg_size, seg += seg_size) {
 		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int16_t) * seg_len;
-		nlen += 2 + sizeof(u_int32_t) * seg_len;
+		seg_size = 2 + sizeof(uint16_t) * seg_len;
+		nlen += 2 + sizeof(uint32_t) * seg_len;
 
 		if (seg_size > olen) {
 			errno = ERANGE;
@@ -469,14 +469,14 @@ aspath_inflate(void *data, u_int16_t len, u_int16_t *newlen)
 
 /* NLRI functions to extract prefixes from the NLRI blobs */
 static int
-extract_prefix(u_char *p, u_int16_t len, void *va,
-    u_int8_t pfxlen, u_int8_t max)
+extract_prefix(u_char *p, uint16_t len, void *va,
+    uint8_t pfxlen, uint8_t max)
 {
-	static u_char addrmask[] = {
+	static u_char	 addrmask[] = {
 	    0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
 	u_char		*a = va;
 	int		 i;
-	u_int16_t	 plen = 0;
+	uint16_t	 plen = 0;
 
 	for (i = 0; pfxlen && i < max; i++) {
 		if (len <= plen)
@@ -495,11 +495,11 @@ extract_prefix(u_char *p, u_int16_t len, void *va,
 }
 
 int
-nlri_get_prefix(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
-    u_int8_t *prefixlen)
+nlri_get_prefix(u_char *p, uint16_t len, struct bgpd_addr *prefix,
+    uint8_t *prefixlen)
 {
-	u_int8_t	 pfxlen;
-	int		 plen;
+	int	 plen;
+	uint8_t	 pfxlen;
 
 	if (len < 1)
 		return (-1);
@@ -521,11 +521,11 @@ nlri_get_prefix(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 }
 
 int
-nlri_get_prefix6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
-    u_int8_t *prefixlen)
+nlri_get_prefix6(u_char *p, uint16_t len, struct bgpd_addr *prefix,
+    uint8_t *prefixlen)
 {
-	int		plen;
-	u_int8_t	pfxlen;
+	int	plen;
+	uint8_t	pfxlen;
 
 	if (len < 1)
 		return (-1);
@@ -547,12 +547,12 @@ nlri_get_prefix6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 }
 
 int
-nlri_get_vpn4(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
-    u_int8_t *prefixlen, int withdraw)
+nlri_get_vpn4(u_char *p, uint16_t len, struct bgpd_addr *prefix,
+    uint8_t *prefixlen, int withdraw)
 {
 	int		 rv, done = 0;
-	u_int8_t	 pfxlen;
-	u_int16_t	 plen;
+	uint16_t	 plen;
+	uint8_t		 pfxlen;
 
 	if (len < 1)
 		return (-1);
@@ -588,13 +588,13 @@ nlri_get_vpn4(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 	} while (!done);
 
 	/* RD */
-	if (len - plen < (int)sizeof(u_int64_t) ||
-	    pfxlen < sizeof(u_int64_t) * 8)
+	if (len - plen < (int)sizeof(uint64_t) ||
+	    pfxlen < sizeof(uint64_t) * 8)
 		return (-1);
-	memcpy(&prefix->rd, p, sizeof(u_int64_t));
-	pfxlen -= sizeof(u_int64_t) * 8;
-	p += sizeof(u_int64_t);
-	plen += sizeof(u_int64_t);
+	memcpy(&prefix->rd, p, sizeof(uint64_t));
+	pfxlen -= sizeof(uint64_t) * 8;
+	p += sizeof(uint64_t);
+	plen += sizeof(uint64_t);
 
 	/* prefix */
 	prefix->aid = AID_VPN_IPv4;
@@ -610,12 +610,12 @@ nlri_get_vpn4(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 }
 
 int
-nlri_get_vpn6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
-    u_int8_t *prefixlen, int withdraw)
+nlri_get_vpn6(u_char *p, uint16_t len, struct bgpd_addr *prefix,
+    uint8_t *prefixlen, int withdraw)
 {
 	int		rv, done = 0;
-	u_int8_t	pfxlen;
-	u_int16_t	plen;
+	uint16_t	plen;
+	uint8_t		pfxlen;
 
 	if (len < 1)
 		return (-1);
@@ -652,14 +652,14 @@ nlri_get_vpn6(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 	} while (!done);
 
 	/* RD */
-	if (len - plen < (int)sizeof(u_int64_t) ||
-	    pfxlen < sizeof(u_int64_t) * 8)
+	if (len - plen < (int)sizeof(uint64_t) ||
+	    pfxlen < sizeof(uint64_t) * 8)
 		return (-1);
 
-	memcpy(&prefix->rd, p, sizeof(u_int64_t));
-	pfxlen -= sizeof(u_int64_t) * 8;
-	p += sizeof(u_int64_t);
-	plen += sizeof(u_int64_t);
+	memcpy(&prefix->rd, p, sizeof(uint64_t));
+	pfxlen -= sizeof(uint64_t) * 8;
+	p += sizeof(uint64_t);
+	plen += sizeof(uint64_t);
 
 	/* prefix */
 	prefix->aid = AID_VPN_IPv6;
@@ -687,7 +687,7 @@ prefix_compare(const struct bgpd_addr *a, const struct bgpd_addr *b,
 {
 	in_addr_t	mask, aa, ba;
 	int		i;
-	u_int8_t	m;
+	uint8_t		m;
 
 	if (a->aid != b->aid)
 		return (a->aid - b->aid);
@@ -751,7 +751,7 @@ prefix_compare(const struct bgpd_addr *a, const struct bgpd_addr *b,
 }
 
 in_addr_t
-prefixlen2mask(u_int8_t prefixlen)
+prefixlen2mask(uint8_t prefixlen)
 {
 	if (prefixlen == 0)
 		return (0);
@@ -789,7 +789,7 @@ inet6applymask(struct in6_addr *dest, const struct in6_addr *src, int prefixlen)
 const struct aid aid_vals[AID_MAX] = AID_VALS;
 
 const char *
-aid2str(u_int8_t aid)
+aid2str(uint8_t aid)
 {
 	if (aid < AID_MAX)
 		return (aid_vals[aid].name);
@@ -797,7 +797,7 @@ aid2str(u_int8_t aid)
 }
 
 int
-aid2afi(u_int8_t aid, u_int16_t *afi, u_int8_t *safi)
+aid2afi(uint8_t aid, uint16_t *afi, uint8_t *safi)
 {
 	if (aid < AID_MAX) {
 		*afi = aid_vals[aid].afi;
@@ -808,9 +808,9 @@ aid2afi(u_int8_t aid, u_int16_t *afi, u_int8_t *safi)
 }
 
 int
-afi2aid(u_int16_t afi, u_int8_t safi, u_int8_t *aid)
+afi2aid(uint16_t afi, uint8_t safi, uint8_t *aid)
 {
-	u_int8_t i;
+	uint8_t i;
 
 	for (i = 0; i < AID_MAX; i++)
 		if (aid_vals[i].afi == afi && aid_vals[i].safi == safi) {
@@ -822,7 +822,7 @@ afi2aid(u_int16_t afi, u_int8_t safi, u_int8_t *aid)
 }
 
 sa_family_t
-aid2af(u_int8_t aid)
+aid2af(uint8_t aid)
 {
 	if (aid < AID_MAX)
 		return (aid_vals[aid].af);
@@ -830,9 +830,9 @@ aid2af(u_int8_t aid)
 }
 
 int
-af2aid(sa_family_t af, u_int8_t safi, u_int8_t *aid)
+af2aid(sa_family_t af, uint8_t safi, uint8_t *aid)
 {
-	u_int8_t i;
+	uint8_t i;
 
 	if (safi == 0) /* default to unicast subclass */
 		safi = SAFI_UNICAST;
@@ -851,7 +851,7 @@ af2aid(sa_family_t af, u_int8_t safi, u_int8_t *aid)
  * the included label stack is ignored and needs to be handled by the caller.
  */
 struct sockaddr *
-addr2sa(const struct bgpd_addr *addr, u_int16_t port, socklen_t *len)
+addr2sa(const struct bgpd_addr *addr, uint16_t port, socklen_t *len)
 {
 	static struct sockaddr_storage	 ss;
 	struct sockaddr_in		*sa_in = (struct sockaddr_in *)&ss;
@@ -884,7 +884,7 @@ addr2sa(const struct bgpd_addr *addr, u_int16_t port, socklen_t *len)
 }
 
 void
-sa2addr(struct sockaddr *sa, struct bgpd_addr *addr, u_int16_t *port)
+sa2addr(struct sockaddr *sa, struct bgpd_addr *addr, uint16_t *port)
 {
 	struct sockaddr_in		*sa_in = (struct sockaddr_in *)sa;
 	struct sockaddr_in6		*sa_in6 = (struct sockaddr_in6 *)sa;

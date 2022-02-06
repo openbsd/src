@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftable.c,v 1.15 2019/10/04 11:40:42 claudio Exp $ */
+/*	$OpenBSD: pftable.c,v 1.16 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller <djm@openbsd.org>
@@ -172,7 +172,7 @@ pftable_clear_all(void)
 
 static int
 pftable_add_work(const char *table, struct bgpd_addr *addr,
-    u_int8_t len, int del)
+    uint8_t len, int del)
 {
 	struct pf_table *pft;
 	struct pfr_addr *pfa, *tmp;

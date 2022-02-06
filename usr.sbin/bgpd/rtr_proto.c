@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.4 2021/08/02 16:42:13 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.5 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -189,7 +189,7 @@ log_rtr_type(enum rtr_pdu_type type)
 };
 
 static struct ibuf *
-rtr_newmsg(enum rtr_pdu_type type, uint32_t len, u_int16_t session_id)
+rtr_newmsg(enum rtr_pdu_type type, uint32_t len, uint16_t session_id)
 {
 	struct ibuf *buf;
 	struct rtr_header rh;

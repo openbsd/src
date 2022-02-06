@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.418 2021/09/01 12:39:52 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.419 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -30,6 +30,7 @@
 
 #include <poll.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 #include <imsg.h>
 
@@ -150,9 +151,9 @@ enum reconf_action {
 #define	SAFI_MPLSVPN	128
 
 struct aid {
-	u_int16_t	 afi;
+	uint16_t	 afi;
 	sa_family_t	 af;
-	u_int8_t	 safi;
+	uint8_t		 safi;
 	char		*name;
 };
 
@@ -192,11 +193,11 @@ struct bgpd_addr {
 		struct in6_addr		v6;
 		/* maximum size for a prefix is 256 bits */
 	} ba;		    /* 128-bit address */
-	u_int64_t	rd;		/* route distinguisher for VPN addrs */
-	u_int32_t	scope_id;	/* iface scope id for v6 */
-	u_int8_t	aid;
-	u_int8_t	labellen;	/* size of the labelstack */
-	u_int8_t	labelstack[18];	/* max that makes sense */
+	uint64_t	rd;		/* route distinguisher for VPN addrs */
+	uint32_t	scope_id;	/* iface scope id for v6 */
+	uint8_t		aid;
+	uint8_t		labellen;	/* size of the labelstack */
+	uint8_t		labelstack[18];	/* max that makes sense */
 #define	v4	ba.v4
 #define	v6	ba.v6
 };
@@ -210,7 +211,7 @@ struct listen_addr {
 	int				fd;
 	enum reconf_action		reconf;
 	socklen_t			sa_len;
-	u_int8_t			flags;
+	uint8_t				flags;
 };
 
 TAILQ_HEAD(listen_addrs, listen_addr);
@@ -295,14 +296,14 @@ struct bgpd_config {
 	int					 flags;
 	int					 log;
 	u_int					 default_tableid;
-	u_int32_t				 bgpid;
-	u_int32_t				 clusterid;
-	u_int32_t				 as;
-	u_int16_t				 short_as;
-	u_int16_t				 holdtime;
-	u_int16_t				 min_holdtime;
-	u_int16_t				 connectretry;
-	u_int8_t				 fib_priority;
+	uint32_t				 bgpid;
+	uint32_t				 clusterid;
+	uint32_t				 as;
+	uint16_t				 short_as;
+	uint16_t				 holdtime;
+	uint16_t				 min_holdtime;
+	uint16_t				 connectretry;
+	uint8_t					 fib_priority;
 };
 
 extern int cmd_opts;
@@ -334,18 +335,18 @@ struct peer_auth {
 	char			auth_key_out[IPSEC_AUTH_KEY_LEN];
 	char			enc_key_in[IPSEC_ENC_KEY_LEN];
 	char			enc_key_out[IPSEC_ENC_KEY_LEN];
-	u_int32_t		spi_in;
-	u_int32_t		spi_out;
+	uint32_t		spi_in;
+	uint32_t		spi_out;
 	enum auth_method	method;
-	u_int8_t		md5key_len;
-	u_int8_t		auth_alg_in;
-	u_int8_t		auth_alg_out;
-	u_int8_t		auth_keylen_in;
-	u_int8_t		auth_keylen_out;
-	u_int8_t		enc_alg_in;
-	u_int8_t		enc_alg_out;
-	u_int8_t		enc_keylen_in;
-	u_int8_t		enc_keylen_out;
+	uint8_t			md5key_len;
+	uint8_t			auth_alg_in;
+	uint8_t			auth_alg_out;
+	uint8_t			auth_keylen_in;
+	uint8_t			auth_keylen_out;
+	uint8_t			enc_alg_in;
+	uint8_t			enc_alg_out;
+	uint8_t			enc_keylen_in;
+	uint8_t			enc_keylen_out;
 };
 
 struct capabilities {
@@ -387,30 +388,30 @@ struct peer_config {
 	char			 rib[PEER_DESCR_LEN];
 	char			 if_depend[IFNAMSIZ];
 	char			 demote_group[IFNAMSIZ];
-	u_int32_t		 id;
-	u_int32_t		 groupid;
-	u_int32_t		 remote_as;
-	u_int32_t		 local_as;
-	u_int32_t		 max_prefix;
-	u_int32_t		 max_out_prefix;
+	uint32_t		 id;
+	uint32_t		 groupid;
+	uint32_t		 remote_as;
+	uint32_t		 local_as;
+	uint32_t		 max_prefix;
+	uint32_t		 max_out_prefix;
 	enum export_type	 export_type;
 	enum enforce_as		 enforce_as;
 	enum enforce_as		 enforce_local_as;
-	u_int16_t		 max_prefix_restart;
-	u_int16_t		 max_out_prefix_restart;
-	u_int16_t		 holdtime;
-	u_int16_t		 min_holdtime;
-	u_int16_t		 local_short_as;
-	u_int8_t		 template;
-	u_int8_t		 remote_masklen;
-	u_int8_t		 ebgp;		/* 0 = ibgp else ebgp */
-	u_int8_t		 distance;	/* 1 = direct, >1 = multihop */
-	u_int8_t		 passive;
-	u_int8_t		 down;
-	u_int8_t		 announce_capa;
-	u_int8_t		 reflector_client;
-	u_int8_t		 ttlsec;	/* TTL security hack */
-	u_int8_t		 flags;
+	uint16_t		 max_prefix_restart;
+	uint16_t		 max_out_prefix_restart;
+	uint16_t		 holdtime;
+	uint16_t		 min_holdtime;
+	uint16_t		 local_short_as;
+	uint8_t			 template;
+	uint8_t			 remote_masklen;
+	uint8_t			 ebgp;		/* 0 = ibgp else ebgp */
+	uint8_t			 distance;	/* 1 = direct, >1 = multihop */
+	uint8_t			 passive;
+	uint8_t			 down;
+	uint8_t			 announce_capa;
+	uint8_t			 reflector_client;
+	uint8_t			 ttlsec;	/* TTL security hack */
+	uint8_t			 flags;
 };
 
 #define	PEER_ID_NONE		0
@@ -438,12 +439,12 @@ struct network_config {
 	struct bgpd_addr	 prefix;
 	struct filter_set_head	 attrset;
 	char			 psname[SET_NAME_LEN];
-	u_int64_t		 rd;
-	u_int16_t		 rtlabel;
+	uint64_t		 rd;
+	uint16_t		 rtlabel;
 	enum network_type	 type;
-	u_int8_t		 prefixlen;
-	u_int8_t		 priority;
-	u_int8_t		 old;	/* used for reloading */
+	uint8_t			 prefixlen;
+	uint8_t			 priority;
+	uint8_t			 old;	/* used for reloading */
 };
 
 struct network {
@@ -469,7 +470,7 @@ struct rtr_config {
 	char				descr[PEER_DESCR_LEN];
 	struct bgpd_addr		remote_addr;
 	struct bgpd_addr		local_addr;
-	u_int32_t			id;
+	uint32_t			id;
 	in_addr_t			remote_port;
 };
 
@@ -663,62 +664,62 @@ struct ktable {
 	u_int			 nhtableid; /* rdomain id for nexthop lookup */
 	int			 nhrefcnt;  /* refcnt for nexthop table */
 	enum reconf_action	 state;
-	u_int8_t		 fib_conf;  /* configured FIB sync flag */
-	u_int8_t		 fib_sync;  /* is FIB synced with kernel? */
+	uint8_t			 fib_conf;  /* configured FIB sync flag */
+	uint8_t			 fib_sync;  /* is FIB synced with kernel? */
 };
 
 struct kroute_full {
 	struct bgpd_addr	prefix;
 	struct bgpd_addr	nexthop;
 	char			label[RTLABEL_LEN];
-	u_int16_t		labelid;
-	u_int16_t		flags;
+	uint16_t		labelid;
+	uint16_t		flags;
 	u_short			ifindex;
-	u_int8_t		prefixlen;
-	u_int8_t		priority;
+	uint8_t			prefixlen;
+	uint8_t			priority;
 };
 
 struct kroute {
 	struct in_addr	prefix;
 	struct in_addr	nexthop;
-	u_int32_t	mplslabel;
-	u_int16_t	flags;
-	u_int16_t	labelid;
+	uint32_t	mplslabel;
+	uint16_t	flags;
+	uint16_t	labelid;
 	u_short		ifindex;
-	u_int8_t	prefixlen;
-	u_int8_t	priority;
+	uint8_t		prefixlen;
+	uint8_t		priority;
 };
 
 struct kroute6 {
 	struct in6_addr	prefix;
 	struct in6_addr	nexthop;
-	u_int32_t	mplslabel;
-	u_int16_t	flags;
-	u_int16_t	labelid;
+	uint32_t	mplslabel;
+	uint16_t	flags;
+	uint16_t	labelid;
 	u_short		ifindex;
-	u_int8_t	prefixlen;
-	u_int8_t	priority;
+	uint8_t		prefixlen;
+	uint8_t		priority;
 };
 
 struct kroute_nexthop {
 	struct bgpd_addr	nexthop;
 	struct bgpd_addr	gateway;
 	struct bgpd_addr	net;
-	u_int8_t		valid;
-	u_int8_t		connected;
-	u_int8_t		netlen;
+	uint8_t			valid;
+	uint8_t			connected;
+	uint8_t			netlen;
 };
 
 struct kif {
 	char			 ifname[IFNAMSIZ];
-	u_int64_t		 baudrate;
+	uint64_t		 baudrate;
 	u_int			 rdomain;
 	int			 flags;
 	u_short			 ifindex;
-	u_int8_t		 if_type;
-	u_int8_t		 link_state;
-	u_int8_t		 nh_reachable;	/* for nexthop verification */
-	u_int8_t		 depend_state;	/* for session depend on */
+	uint8_t			 if_type;
+	uint8_t			 link_state;
+	uint8_t			 nh_reachable;	/* for nexthop verification */
+	uint8_t			 depend_state;	/* for session depend on */
 };
 
 struct session_up {
@@ -726,13 +727,13 @@ struct session_up {
 	struct bgpd_addr	local_v6_addr;
 	struct bgpd_addr	remote_addr;
 	struct capabilities	capa;
-	u_int32_t		remote_bgpid;
-	u_int16_t		short_as;
+	uint32_t		remote_bgpid;
+	uint16_t		short_as;
 };
 
 struct route_refresh {
-	u_int8_t		aid;
-	u_int8_t		subtype;
+	uint8_t			aid;
+	uint8_t			subtype;
 };
 #define ROUTE_REFRESH_REQUEST	0
 #define ROUTE_REFRESH_BEGIN_RR	1
@@ -741,17 +742,17 @@ struct route_refresh {
 struct pftable_msg {
 	struct bgpd_addr	addr;
 	char			pftable[PFTABLE_LEN];
-	u_int8_t		len;
+	uint8_t			len;
 };
 
 struct ctl_show_interface {
 	char			 ifname[IFNAMSIZ];
 	char			 linkstate[32];
 	char			 media[32];
-	u_int64_t		 baudrate;
+	uint64_t		 baudrate;
 	u_int			 rdomain;
-	u_int8_t		 nh_reachable;
-	u_int8_t		 is_up;
+	uint8_t			 nh_reachable;
+	uint8_t			 is_up;
 };
 
 struct ctl_show_nexthop {
@@ -761,8 +762,8 @@ struct ctl_show_nexthop {
 		struct kroute		kr4;
 		struct kroute6		kr6;
 	} kr;
-	u_int8_t			valid;
-	u_int8_t			krvalid;
+	uint8_t				valid;
+	uint8_t				krvalid;
 };
 
 struct ctl_show_set {
@@ -802,15 +803,15 @@ struct ctl_show_rib {
 	struct bgpd_addr	remote_addr;
 	char			descr[PEER_DESCR_LEN];
 	time_t			age;
-	u_int32_t		remote_id;
-	u_int32_t		path_id;
-	u_int32_t		local_pref;
-	u_int32_t		med;
-	u_int32_t		weight;
-	u_int32_t		flags;
-	u_int8_t		prefixlen;
-	u_int8_t		origin;
-	u_int8_t		validation_state;
+	uint32_t		remote_id;
+	uint32_t		path_id;
+	uint32_t		local_pref;
+	uint32_t		med;
+	uint32_t		weight;
+	uint32_t		flags;
+	uint8_t			prefixlen;
+	uint8_t			origin;
+	uint8_t			validation_state;
 	/* plus an aspath */
 };
 
@@ -836,11 +837,11 @@ enum aslen_spec {
 struct filter_as {
 	char		 name[SET_NAME_LEN];
 	struct as_set	*aset;
-	u_int32_t	 as_min;
-	u_int32_t	 as_max;
+	uint32_t	 as_min;
+	uint32_t	 as_max;
 	enum as_spec	 type;
-	u_int8_t	 flags;
-	u_int8_t	 op;
+	uint8_t		 flags;
+	uint8_t		 op;
 };
 
 struct filter_aslen {
@@ -865,8 +866,8 @@ struct filter_originset {
 };
 
 struct filter_ovs {
-	u_int8_t		 validity;
-	u_int8_t		 is_set;
+	uint8_t			 validity;
+	uint8_t			 is_set;
 };
 
 /*
@@ -877,13 +878,13 @@ struct filter_ovs {
  * for e.g. COMMUNITY_ANY and the low byte is the community type.
  * If flags is 0 the community struct is unused. If the upper 24bit of
  * flags is 0 a fast compare can be used.
- * The code uses a type cast to u_int8_t to access the type.
+ * The code uses a type cast to uint8_t to access the type.
  */
 struct community {
-	u_int32_t	flags;
-	u_int32_t	data1;
-	u_int32_t	data2;
-	u_int32_t	data3;
+	uint32_t	flags;
+	uint32_t	data1;
+	uint32_t	data2;
+	uint32_t	data3;
 };
 
 struct ctl_show_rib_request {
@@ -892,13 +893,13 @@ struct ctl_show_rib_request {
 	struct bgpd_addr	prefix;
 	struct filter_as	as;
 	struct community	community;
-	u_int32_t		flags;
-	u_int32_t		path_id;
+	uint32_t		flags;
+	uint32_t		path_id;
 	pid_t			pid;
 	enum imsg_type		type;
-	u_int8_t		validation_state;
-	u_int8_t		prefixlen;
-	u_int8_t		aid;
+	uint8_t			validation_state;
+	uint8_t			prefixlen;
+	uint8_t			aid;
 };
 
 enum filter_actions {
@@ -932,12 +933,12 @@ enum comp_ops {
 };
 
 struct filter_peers {
-	u_int32_t	peerid;
-	u_int32_t	groupid;
-	u_int32_t	remote_as;
-	u_int16_t	ribid;
-	u_int8_t	ebgp;
-	u_int8_t	ibgp;
+	uint32_t	peerid;
+	uint32_t	groupid;
+	uint32_t	remote_as;
+	uint16_t	ribid;
+	uint8_t		ebgp;
+	uint8_t		ibgp;
 };
 
 /* special community type, keep in sync with the attribute type */
@@ -988,7 +989,7 @@ struct filter_peers {
 
 struct ext_comm_pairs {
 	short		type;
-	u_int8_t	subtype;
+	uint8_t		subtype;
 	const char	*subname;
 };
 
@@ -1029,15 +1030,15 @@ extern const struct ext_comm_pairs iana_ext_comms[];
 
 struct filter_prefix {
 	struct bgpd_addr	addr;
-	u_int8_t		op;
-	u_int8_t		len;
-	u_int8_t		len_min;
-	u_int8_t		len_max;
+	uint8_t			op;
+	uint8_t			len;
+	uint8_t			len_min;
+	uint8_t			len_max;
 };
 
 struct filter_nexthop {
 	struct bgpd_addr	addr;
-	u_int8_t		flags;
+	uint8_t			flags;
 #define FILTER_NEXTHOP_ADDR	1
 #define FILTER_NEXTHOP_NEIGHBOR	2
 };
@@ -1067,7 +1068,7 @@ struct filter_rule {
 	struct filter_rule		*skip[RDE_FILTER_SKIP_COUNT];
 	enum filter_actions		action;
 	enum directions			dir;
-	u_int8_t			quick;
+	uint8_t				quick;
 };
 
 enum action_types {
@@ -1099,23 +1100,23 @@ struct nexthop;
 struct filter_set {
 	TAILQ_ENTRY(filter_set)		entry;
 	union {
-		u_int8_t			 prepend;
-		u_int16_t			 id;
-		u_int32_t			 metric;
+		uint8_t				 prepend;
+		uint16_t			 id;
+		uint32_t			 metric;
 		int32_t				 relative;
 		struct bgpd_addr		 nexthop;
 		struct nexthop			*nh_ref;
 		struct community		 community;
 		char				 pftable[PFTABLE_LEN];
 		char				 rtlabel[RTLABEL_LEN];
-		u_int8_t			 origin;
-	} action;
+		uint8_t				 origin;
+	}				action;
 	enum action_types		type;
 };
 
 struct roa_set {
-	u_int32_t	as;	/* must be first */
-	u_int32_t	maxlen;	/* change type for better struct layout */
+	uint32_t	as;	/* must be first */
+	uint32_t	maxlen;	/* change type for better struct layout */
 };
 
 struct prefixset_item {
@@ -1146,7 +1147,7 @@ struct l3vpn {
 	struct filter_set_head		import;
 	struct filter_set_head		export;
 	struct network_head		net_l;
-	u_int64_t			rd;
+	uint64_t			rd;
 	u_int				rtableid;
 	u_int				label;
 	int				flags;
@@ -1156,8 +1157,8 @@ struct rde_rib {
 	SIMPLEQ_ENTRY(rde_rib)	entry;
 	char			name[PEER_DESCR_LEN];
 	u_int			rtableid;
-	u_int16_t		id;
-	u_int16_t		flags;
+	uint16_t		id;
+	uint16_t		flags;
 };
 SIMPLEQ_HEAD(rib_names, rde_rib);
 extern struct rib_names ribnames;
@@ -1232,11 +1233,11 @@ struct mrt {
 	char			rib[PEER_DESCR_LEN];
 	struct msgbuf		wbuf;
 	LIST_ENTRY(mrt)		entry;
-	u_int32_t		peer_id;
-	u_int32_t		group_id;
+	uint32_t		peer_id;
+	uint32_t		group_id;
 	enum mrt_type		type;
 	enum mrt_state		state;
-	u_int16_t		seqnum;
+	uint16_t		seqnum;
 };
 
 struct mrt_config {
@@ -1250,7 +1251,7 @@ struct mrt_config {
 /* prototypes */
 /* bgpd.c */
 void		 send_nexthop_update(struct kroute_nexthop *);
-void		 send_imsg_session(int, pid_t, void *, u_int16_t);
+void		 send_imsg_session(int, pid_t, void *, uint16_t);
 int		 send_network(int, struct network_config *,
 		     struct filter_set_head *);
 int		 bgpd_filternexthop(struct kroute *, struct kroute6 *);
@@ -1271,8 +1272,8 @@ void		free_prefixtree(struct prefixset_tree *);
 void		free_roatree(struct roa_tree *);
 void		free_rtrs(struct rtr_config_head *);
 void		filterlist_free(struct filter_head *);
-int		host(const char *, struct bgpd_addr *, u_int8_t *);
-u_int32_t	get_bgpid(void);
+int		host(const char *, struct bgpd_addr *, uint8_t *);
+uint32_t	get_bgpid(void);
 void		expand_networks(struct bgpd_config *);
 RB_PROTOTYPE(prefixset_tree, prefixset_item, entry, prefixset_cmp);
 int		roa_cmp(struct roa *, struct roa *);
@@ -1280,29 +1281,29 @@ RB_PROTOTYPE(roa_tree, roa, entry, roa_cmp);
 
 /* kroute.c */
 int		 kr_init(int *);
-int		 ktable_update(u_int, char *, int, u_int8_t);
+int		 ktable_update(u_int, char *, int, uint8_t);
 void		 ktable_preload(void);
-void		 ktable_postload(u_int8_t);
+void		 ktable_postload(uint8_t);
 int		 ktable_exists(u_int, u_int *);
-int		 kr_change(u_int, struct kroute_full *,  u_int8_t);
-int		 kr_delete(u_int, struct kroute_full *, u_int8_t);
+int		 kr_change(u_int, struct kroute_full *,  uint8_t);
+int		 kr_delete(u_int, struct kroute_full *, uint8_t);
 int		 kr_flush(u_int);
-void		 kr_shutdown(u_int8_t, u_int);
-void		 kr_fib_couple(u_int, u_int8_t);
-void		 kr_fib_couple_all(u_int8_t);
-void		 kr_fib_decouple(u_int, u_int8_t);
-void		 kr_fib_decouple_all(u_int8_t);
-void		 kr_fib_update_prio_all(u_int8_t);
+void		 kr_shutdown(uint8_t, u_int);
+void		 kr_fib_couple(u_int, uint8_t);
+void		 kr_fib_couple_all(uint8_t);
+void		 kr_fib_decouple(u_int, uint8_t);
+void		 kr_fib_decouple_all(uint8_t);
+void		 kr_fib_update_prio_all(uint8_t);
 int		 kr_dispatch_msg(u_int rdomain);
-int		 kr_nexthop_add(u_int32_t, struct bgpd_addr *,
+int		 kr_nexthop_add(uint32_t, struct bgpd_addr *,
 		    struct bgpd_config *);
-void		 kr_nexthop_delete(u_int32_t, struct bgpd_addr *,
+void		 kr_nexthop_delete(uint32_t, struct bgpd_addr *,
 		    struct bgpd_config *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *);
-void		 kr_net_reload(u_int, u_int64_t, struct network_head *);
+void		 kr_net_reload(u_int, uint64_t, struct network_head *);
 int		 kr_reload(void);
-struct in6_addr	*prefixlen2mask6(u_int8_t prefixlen);
+struct in6_addr	*prefixlen2mask6(uint8_t prefixlen);
 int		 get_mpe_config(const char *, u_int *, u_int *);
 
 /* log.c */
@@ -1325,18 +1326,18 @@ struct mrt	*mrt_get(struct mrt_head *, struct mrt *);
 void		 mrt_mergeconfig(struct mrt_head *, struct mrt_head *);
 
 /* name2id.c */
-u_int16_t	 rib_name2id(const char *);
-const char	*rib_id2name(u_int16_t);
-void		 rib_unref(u_int16_t);
-void		 rib_ref(u_int16_t);
-u_int16_t	 rtlabel_name2id(const char *);
-const char	*rtlabel_id2name(u_int16_t);
-void		 rtlabel_unref(u_int16_t);
-u_int16_t	 rtlabel_ref(u_int16_t);
-u_int16_t	 pftable_name2id(const char *);
-const char	*pftable_id2name(u_int16_t);
-void		 pftable_unref(u_int16_t);
-u_int16_t	 pftable_ref(u_int16_t);
+uint16_t	 rib_name2id(const char *);
+const char	*rib_id2name(uint16_t);
+void		 rib_unref(uint16_t);
+void		 rib_ref(uint16_t);
+uint16_t	 rtlabel_name2id(const char *);
+const char	*rtlabel_id2name(uint16_t);
+void		 rtlabel_unref(uint16_t);
+uint16_t	 rtlabel_ref(uint16_t);
+uint16_t	 pftable_name2id(const char *);
+const char	*pftable_id2name(uint16_t);
+void		 pftable_unref(uint16_t);
+uint16_t	 pftable_ref(uint16_t);
 
 /* parse.y */
 int		 	cmdline_symset(char *);
@@ -1365,26 +1366,26 @@ struct as_set	*as_sets_new(struct as_set_head *, const char *, size_t,
 		    size_t);
 void		 as_sets_free(struct as_set_head *);
 void		 as_sets_mark_dirty(struct as_set_head *, struct as_set_head *);
-int		 as_set_match(const struct as_set *, u_int32_t);
+int		 as_set_match(const struct as_set *, uint32_t);
 
 struct set_table	*set_new(size_t, size_t);
 void			 set_free(struct set_table *);
 int			 set_add(struct set_table *, void *, size_t);
 void			*set_get(struct set_table *, size_t *);
 void			 set_prep(struct set_table *);
-void			*set_match(const struct set_table *, u_int32_t);
+void			*set_match(const struct set_table *, uint32_t);
 int			 set_equal(const struct set_table *,
 			    const struct set_table *);
 size_t			 set_nmemb(const struct set_table *);
 
 /* rde_trie.c */
-int	trie_add(struct trie_head *, struct bgpd_addr *, u_int8_t, u_int8_t,
-	    u_int8_t);
+int	trie_add(struct trie_head *, struct bgpd_addr *, uint8_t, uint8_t,
+	    uint8_t);
 int	trie_roa_add(struct trie_head *, struct roa *);
 void	trie_free(struct trie_head *);
-int	trie_match(struct trie_head *, struct bgpd_addr *, u_int8_t, int);
-int	trie_roa_check(struct trie_head *, struct bgpd_addr *, u_int8_t,
-	    u_int32_t);
+int	trie_match(struct trie_head *, struct bgpd_addr *, uint8_t, int);
+int	trie_roa_check(struct trie_head *, struct bgpd_addr *, uint8_t,
+	    uint32_t);
 void	trie_dump(struct trie_head *);
 int	trie_equal(struct trie_head *, struct trie_head *);
 
@@ -1395,42 +1396,42 @@ time_t			 getmonotime(void);
 const char	*log_addr(const struct bgpd_addr *);
 const char	*log_in6addr(const struct in6_addr *);
 const char	*log_sockaddr(struct sockaddr *, socklen_t);
-const char	*log_as(u_int32_t);
-const char	*log_rd(u_int64_t);
-const char	*log_ext_subtype(short, u_int8_t);
+const char	*log_as(uint32_t);
+const char	*log_rd(uint64_t);
+const char	*log_ext_subtype(short, uint8_t);
 const char	*log_reason(const char *);
 const char	*log_rtr_error(enum rtr_error);
-int		 aspath_snprint(char *, size_t, void *, u_int16_t);
-int		 aspath_asprint(char **, void *, u_int16_t);
-size_t		 aspath_strlen(void *, u_int16_t);
-u_int32_t	 aspath_extract(const void *, int);
-int		 aspath_verify(void *, u_int16_t, int, int);
+int		 aspath_snprint(char *, size_t, void *, uint16_t);
+int		 aspath_asprint(char **, void *, uint16_t);
+size_t		 aspath_strlen(void *, uint16_t);
+uint32_t	 aspath_extract(const void *, int);
+int		 aspath_verify(void *, uint16_t, int, int);
 #define		 AS_ERR_LEN	-1
 #define		 AS_ERR_TYPE	-2
 #define		 AS_ERR_BAD	-3
 #define		 AS_ERR_SOFT	-4
-u_char		*aspath_inflate(void *, u_int16_t, u_int16_t *);
-int		 nlri_get_prefix(u_char *, u_int16_t, struct bgpd_addr *,
-		     u_int8_t *);
-int		 nlri_get_prefix6(u_char *, u_int16_t, struct bgpd_addr *,
-		     u_int8_t *);
-int		 nlri_get_vpn4(u_char *, u_int16_t, struct bgpd_addr *,
-		     u_int8_t *, int);
-int		 nlri_get_vpn6(u_char *, u_int16_t, struct bgpd_addr *,
-		     u_int8_t *, int);
+u_char		*aspath_inflate(void *, uint16_t, uint16_t *);
+int		 nlri_get_prefix(u_char *, uint16_t, struct bgpd_addr *,
+		     uint8_t *);
+int		 nlri_get_prefix6(u_char *, uint16_t, struct bgpd_addr *,
+		     uint8_t *);
+int		 nlri_get_vpn4(u_char *, uint16_t, struct bgpd_addr *,
+		     uint8_t *, int);
+int		 nlri_get_vpn6(u_char *, uint16_t, struct bgpd_addr *,
+		     uint8_t *, int);
 int		 prefix_compare(const struct bgpd_addr *,
 		    const struct bgpd_addr *, int);
-in_addr_t	 prefixlen2mask(u_int8_t);
+in_addr_t	 prefixlen2mask(uint8_t);
 void		 inet4applymask(struct in_addr *, const struct in_addr *, int);
 void		 inet6applymask(struct in6_addr *, const struct in6_addr *,
 		    int);
-const char	*aid2str(u_int8_t);
-int		 aid2afi(u_int8_t, u_int16_t *, u_int8_t *);
-int		 afi2aid(u_int16_t, u_int8_t, u_int8_t *);
-sa_family_t	 aid2af(u_int8_t);
-int		 af2aid(sa_family_t, u_int8_t, u_int8_t *);
-struct sockaddr	*addr2sa(const struct bgpd_addr *, u_int16_t, socklen_t *);
-void		 sa2addr(struct sockaddr *, struct bgpd_addr *, u_int16_t *);
+const char	*aid2str(uint8_t);
+int		 aid2afi(uint8_t, uint16_t *, uint8_t *);
+int		 afi2aid(uint16_t, uint8_t, uint8_t *);
+sa_family_t	 aid2af(uint8_t);
+int		 af2aid(sa_family_t, uint8_t, uint8_t *);
+struct sockaddr	*addr2sa(const struct bgpd_addr *, uint16_t, socklen_t *);
+void		 sa2addr(struct sockaddr *, struct bgpd_addr *, uint16_t *);
 const char *	 get_baudrate(unsigned long long, char *);
 
 static const char * const log_procnames[] = {

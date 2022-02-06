@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.86 2021/08/09 08:15:34 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.87 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -114,7 +114,7 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 	struct rde_aspath	*asp1, *asp2;
 	struct rde_peer		*peer1, *peer2;
 	struct attr		*a;
-	u_int32_t		 p1id, p2id;
+	uint32_t		 p1id, p2id;
 	int			 p1cnt, p2cnt, i;
 
 	/*
@@ -253,9 +253,9 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 	/* 11. compare CLUSTER_LIST length, shorter is better */
 	p1cnt = p2cnt = 0;
 	if ((a = attr_optget(asp1, ATTR_CLUSTER_LIST)) != NULL)
-		p1cnt = a->len / sizeof(u_int32_t);
+		p1cnt = a->len / sizeof(uint32_t);
 	if ((a = attr_optget(asp2, ATTR_CLUSTER_LIST)) != NULL)
-		p2cnt = a->len / sizeof(u_int32_t);
+		p2cnt = a->len / sizeof(uint32_t);
 	if ((p2cnt - p1cnt) != 0)
 		return (p2cnt - p1cnt);
 

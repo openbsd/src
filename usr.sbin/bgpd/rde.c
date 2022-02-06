@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.533 2022/01/20 18:06:20 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.534 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -50,15 +50,15 @@ void		 rde_dispatch_imsg_parent(struct imsgbuf *);
 void		 rde_dispatch_imsg_rtr(struct imsgbuf *);
 void		 rde_dispatch_imsg_peer(struct rde_peer *, void *);
 void		 rde_update_dispatch(struct rde_peer *, struct imsg *);
-int		 rde_update_update(struct rde_peer *, u_int32_t,
-                     struct filterstate *, struct bgpd_addr *, u_int8_t);
-void		 rde_update_withdraw(struct rde_peer *, u_int32_t,
-		     struct bgpd_addr *, u_int8_t);
-int		 rde_attr_parse(u_char *, u_int16_t, struct rde_peer *,
+int		 rde_update_update(struct rde_peer *, uint32_t,
+                     struct filterstate *, struct bgpd_addr *, uint8_t);
+void		 rde_update_withdraw(struct rde_peer *, uint32_t,
+		     struct bgpd_addr *, uint8_t);
+int		 rde_attr_parse(u_char *, uint16_t, struct rde_peer *,
 		     struct filterstate *, struct mpattr *);
-int		 rde_attr_add(struct filterstate *, u_char *, u_int16_t);
-u_int8_t	 rde_attr_missing(struct rde_aspath *, int, u_int16_t);
-int		 rde_get_mp_nexthop(u_char *, u_int16_t, u_int8_t,
+int		 rde_attr_add(struct filterstate *, u_char *, uint16_t);
+uint8_t		 rde_attr_missing(struct rde_aspath *, int, uint16_t);
+int		 rde_get_mp_nexthop(u_char *, uint16_t, uint8_t,
 		     struct filterstate *);
 void		 rde_as4byte_fixup(struct rde_peer *, struct rde_aspath *);
 void		 rde_reflector(struct rde_peer *, struct rde_aspath *);
@@ -72,26 +72,26 @@ void		 rde_dump_mrt_new(struct mrt *, pid_t, int);
 int		 rde_l3vpn_import(struct rde_community *, struct l3vpn *);
 static void	 rde_commit_pftable(void);
 void		 rde_reload_done(void);
-static void	 rde_softreconfig_in_done(void *, u_int8_t);
-static void	 rde_softreconfig_out_done(void *, u_int8_t);
+static void	 rde_softreconfig_in_done(void *, uint8_t);
+static void	 rde_softreconfig_out_done(void *, uint8_t);
 static void	 rde_softreconfig_done(void);
 static void	 rde_softreconfig_out(struct rib_entry *, void *);
 static void	 rde_softreconfig_in(struct rib_entry *, void *);
 static void	 rde_softreconfig_sync_reeval(struct rib_entry *, void *);
 static void	 rde_softreconfig_sync_fib(struct rib_entry *, void *);
-static void	 rde_softreconfig_sync_done(void *, u_int8_t);
+static void	 rde_softreconfig_sync_done(void *, uint8_t);
 static void	 rde_roa_reload(void);
 int		 rde_update_queue_pending(void);
 void		 rde_update_queue_runner(void);
-void		 rde_update6_queue_runner(u_int8_t);
+void		 rde_update6_queue_runner(uint8_t);
 struct rde_prefixset *rde_find_prefixset(char *, struct rde_prefixset_head *);
 void		 rde_mark_prefixsets_dirty(struct rde_prefixset_head *,
 		     struct rde_prefixset_head *);
-u_int8_t	 rde_roa_validity(struct rde_prefixset *,
-		     struct bgpd_addr *, u_int8_t, u_int32_t);
+uint8_t		 rde_roa_validity(struct rde_prefixset *,
+		     struct bgpd_addr *, uint8_t, uint32_t);
 
-static void	 rde_peer_recv_eor(struct rde_peer *, u_int8_t);
-static void	 rde_peer_send_eor(struct rde_peer *, u_int8_t);
+static void	 rde_peer_recv_eor(struct rde_peer *, uint8_t);
+static void	 rde_peer_send_eor(struct rde_peer *, uint8_t);
 
 void		 network_add(struct network_config *, struct filterstate *);
 void		 network_delete(struct network_config *);
@@ -99,7 +99,7 @@ static void	 network_dump_upcall(struct rib_entry *, void *);
 static void	 network_flush_upcall(struct rib_entry *, void *);
 
 void		 rde_shutdown(void);
-int		 ovs_match(struct prefix *, u_int32_t);
+int		 ovs_match(struct prefix *, uint32_t);
 
 static struct imsgbuf		*ibuf_se;
 static struct imsgbuf		*ibuf_se_ctl;
@@ -120,8 +120,8 @@ extern struct rde_peer		*peerself;
 struct rde_dump_ctx {
 	LIST_ENTRY(rde_dump_ctx)	entry;
 	struct ctl_show_rib_request	req;
-	u_int32_t			peerid;
-	u_int8_t			throttled;
+	uint32_t			peerid;
+	uint8_t				throttled;
 };
 
 LIST_HEAD(, rde_dump_ctx) rde_dump_h = LIST_HEAD_INITIALIZER(rde_dump_h);
@@ -145,10 +145,10 @@ rde_sighdlr(int sig)
 	}
 }
 
-u_int32_t	peerhashsize = 1024;
-u_int32_t	pathhashsize = 128 * 1024;
-u_int32_t	attrhashsize = 16 * 1024;
-u_int32_t	nexthophashsize = 1024;
+uint32_t	peerhashsize = 1024;
+uint32_t	pathhashsize = 128 * 1024;
+uint32_t	attrhashsize = 16 * 1024;
+uint32_t	nexthophashsize = 1024;
 
 void
 rde_main(int debug, int verbose)
@@ -159,7 +159,7 @@ rde_main(int debug, int verbose)
 	void			*newp;
 	u_int			 pfd_elms = 0, i, j;
 	int			 timeout;
-	u_int8_t		 aid;
+	uint8_t			 aid;
 
 	log_init(debug, LOG_DAEMON);
 	log_setverbose(verbose);
@@ -368,11 +368,11 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	struct filter_set	*s;
 	struct as_set		*aset;
 	struct rde_prefixset	*pset;
-	u_int8_t		*asdata;
+	uint8_t			*asdata;
 	ssize_t			 n;
 	size_t			 aslen;
 	int			 verbose;
-	u_int16_t		 len;
+	uint16_t		 len;
 
 	while (ibuf) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
@@ -702,7 +702,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	char			*name;
 	size_t			 nmemb;
 	int			 n, fd, rv;
-	u_int16_t		 rid;
+	uint16_t		 rid;
 
 	while (ibuf) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
@@ -927,11 +927,11 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (as_sets_lookup(&nconf->as_sets, name) != NULL)
 				fatalx("duplicate as-set %s", name);
 			last_as_set = as_sets_new(&nconf->as_sets, name, nmemb,
-			    sizeof(u_int32_t));
+			    sizeof(uint32_t));
 			break;
 		case IMSG_RECONF_AS_SET_ITEMS:
 			nmemb = imsg.hdr.len - IMSG_HEADER_SIZE;
-			nmemb /= sizeof(u_int32_t);
+			nmemb /= sizeof(uint32_t);
 			if (set_add(last_as_set->set, imsg.data, nmemb) != 0)
 				fatal(NULL);
 			break;
@@ -1071,7 +1071,7 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 	struct route_refresh rr;
 	struct session_up sup;
 	struct imsg imsg;
-	u_int8_t aid;
+	uint8_t aid;
 
 	if (!peer_imsg_pop(peer, &imsg))
 		return;
@@ -1178,12 +1178,12 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 	struct mpattr		 mpa;
 	u_char			*p, *mpp = NULL;
 	int			 pos = 0;
-	u_int16_t		 afi, len, mplen;
-	u_int16_t		 withdrawn_len;
-	u_int16_t		 attrpath_len;
-	u_int16_t		 nlri_len;
-	u_int8_t		 aid, prefixlen, safi, subtype;
-	u_int32_t		 fas, pathid;
+	uint16_t		 afi, len, mplen;
+	uint16_t		 withdrawn_len;
+	uint16_t		 attrpath_len;
+	uint16_t		 nlri_len;
+	uint8_t			 aid, prefixlen, safi, subtype;
+	uint32_t		 fas, pathid;
 
 	p = imsg->data;
 
@@ -1244,7 +1244,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 		if ((subtype = rde_attr_missing(&state.aspath, peer->conf.ebgp,
 		    nlri_len))) {
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_MISSNG_WK_ATTR,
-			    &subtype, sizeof(u_int8_t));
+			    &subtype, sizeof(uint8_t));
 			goto done;
 		}
 
@@ -1573,13 +1573,13 @@ done:
 }
 
 int
-rde_update_update(struct rde_peer *peer, u_int32_t path_id,
-    struct filterstate *in, struct bgpd_addr *prefix, u_int8_t prefixlen)
+rde_update_update(struct rde_peer *peer, uint32_t path_id,
+    struct filterstate *in, struct bgpd_addr *prefix, uint8_t prefixlen)
 {
 	struct filterstate	 state;
 	enum filter_actions	 action;
-	u_int8_t		 vstate;
-	u_int16_t		 i;
+	uint8_t			 vstate;
+	uint16_t		 i;
 	const char		*wmsg = "filtered, withdraw";
 
 	peer->prefix_rcvd_update++;
@@ -1631,10 +1631,10 @@ rde_update_update(struct rde_peer *peer, u_int32_t path_id,
 }
 
 void
-rde_update_withdraw(struct rde_peer *peer, u_int32_t path_id,
-    struct bgpd_addr *prefix, u_int8_t prefixlen)
+rde_update_withdraw(struct rde_peer *peer, uint32_t path_id,
+    struct bgpd_addr *prefix, uint8_t prefixlen)
 {
-	u_int16_t i;
+	uint16_t i;
 
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		struct rib *rib = rib_byid(i);
@@ -1669,19 +1669,19 @@ rde_update_withdraw(struct rde_peer *peer, u_int32_t path_id,
 	(((s) & ~(ATTR_DEFMASK | (m))) == (t))
 
 int
-rde_attr_parse(u_char *p, u_int16_t len, struct rde_peer *peer,
+rde_attr_parse(u_char *p, uint16_t len, struct rde_peer *peer,
     struct filterstate *state, struct mpattr *mpa)
 {
 	struct bgpd_addr nexthop;
 	struct rde_aspath *a = &state->aspath;
 	u_char		*op = p, *npath;
-	u_int32_t	 tmp32, zero = 0;
+	uint32_t	 tmp32, zero = 0;
 	int		 error;
-	u_int16_t	 attr_len, nlen;
-	u_int16_t	 plen = 0;
-	u_int8_t	 flags;
-	u_int8_t	 type;
-	u_int8_t	 tmp8;
+	uint16_t	 attr_len, nlen;
+	uint16_t	 plen = 0;
+	uint8_t		 flags;
+	uint8_t		 type;
+	uint8_t		 tmp8;
 
 	if (len < 3) {
 bad_len:
@@ -1857,7 +1857,7 @@ bad_flags:
 			t[0] = t[1] = 0;
 			UPD_READ(&t[2], p, plen, 2);
 			UPD_READ(&t[4], p, plen, 4);
-			if (memcmp(t, &zero, sizeof(u_int32_t)) == 0) {
+			if (memcmp(t, &zero, sizeof(uint32_t)) == 0) {
 				/* As per RFC7606 use "attribute discard". */
 				log_peer_warnx(&peer->conf, "bad AGGREGATOR, "
 				    "AS 0 not allowed, attribute discarded");
@@ -1869,7 +1869,7 @@ bad_flags:
 			break;
 		}
 		/* 4-byte ready server take the default route */
-		if (memcmp(p, &zero, sizeof(u_int32_t)) == 0) {
+		if (memcmp(p, &zero, sizeof(uint32_t)) == 0) {
 			/* As per RFC7606 use "attribute discard" here. */
 			char *pfmt = log_fmt_peer(&peer->conf);
 			log_debug("%s: bad AGGREGATOR, "
@@ -1983,7 +1983,7 @@ bad_flags:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
-		if (memcmp(p, &zero, sizeof(u_int32_t)) == 0) {
+		if (memcmp(p, &zero, sizeof(uint32_t)) == 0) {
 			/* As per RFC6793 use "attribute discard" here. */
 			log_peer_warnx(&peer->conf, "bad AS4_AGGREGATOR, "
 			    "AS 0 not allowed, attribute discarded");
@@ -2028,13 +2028,13 @@ bad_list:
 }
 
 int
-rde_attr_add(struct filterstate *state, u_char *p, u_int16_t len)
+rde_attr_add(struct filterstate *state, u_char *p, uint16_t len)
 {
-	u_int16_t	 attr_len;
-	u_int16_t	 plen = 0;
-	u_int8_t	 flags;
-	u_int8_t	 type;
-	u_int8_t	 tmp8;
+	uint16_t	 attr_len;
+	uint16_t	 plen = 0;
+	uint8_t		 flags;
+	uint8_t		 type;
+	uint8_t		 tmp8;
 
 	if (len < 3)
 		return (-1);
@@ -2074,8 +2074,8 @@ rde_attr_add(struct filterstate *state, u_char *p, u_int16_t len)
 #undef UPD_READ
 #undef CHECK_FLAGS
 
-u_int8_t
-rde_attr_missing(struct rde_aspath *a, int ebgp, u_int16_t nlrilen)
+uint8_t
+rde_attr_missing(struct rde_aspath *a, int ebgp, uint16_t nlrilen)
 {
 	/* ATTR_MP_UNREACH_NLRI may be sent alone */
 	if (nlrilen == 0 && a->flags & F_ATTR_MP_UNREACH &&
@@ -2096,11 +2096,11 @@ rde_attr_missing(struct rde_aspath *a, int ebgp, u_int16_t nlrilen)
 }
 
 int
-rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int8_t aid,
+rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
     struct filterstate *state)
 {
 	struct bgpd_addr	nexthop;
-	u_int8_t		totlen, nhlen;
+	uint8_t			totlen, nhlen;
 
 	if (len == 0)
 		return (-1);
@@ -2136,7 +2136,7 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int8_t aid,
 			    nhlen);
 			return (-1);
 		}
-		memcpy(&nexthop.v6, data + sizeof(u_int64_t),
+		memcpy(&nexthop.v6, data + sizeof(uint64_t),
 		    sizeof(nexthop.v6));
 		nexthop.aid = AID_INET6;
 		break;
@@ -2159,7 +2159,7 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int8_t aid,
 			return (-1);
 		}
 		nexthop.aid = AID_INET;
-		memcpy(&nexthop.v4, data + sizeof(u_int64_t),
+		memcpy(&nexthop.v4, data + sizeof(uint64_t),
 		    sizeof(nexthop.v4));
 		break;
 	default:
@@ -2178,8 +2178,8 @@ rde_get_mp_nexthop(u_char *data, u_int16_t len, u_int8_t aid,
 }
 
 void
-rde_update_err(struct rde_peer *peer, u_int8_t error, u_int8_t suberr,
-    void *data, u_int16_t size)
+rde_update_err(struct rde_peer *peer, uint8_t error, uint8_t suberr,
+    void *data, uint16_t size)
 {
 	struct ibuf	*wbuf;
 
@@ -2195,9 +2195,9 @@ rde_update_err(struct rde_peer *peer, u_int8_t error, u_int8_t suberr,
 }
 
 void
-rde_update_log(const char *message, u_int16_t rid,
+rde_update_log(const char *message, uint16_t rid,
     const struct rde_peer *peer, const struct bgpd_addr *next,
-    const struct bgpd_addr *prefix, u_int8_t prefixlen)
+    const struct bgpd_addr *prefix, uint8_t prefixlen)
 {
 	char		*l = NULL;
 	char		*n = NULL;
@@ -2232,7 +2232,7 @@ void
 rde_as4byte_fixup(struct rde_peer *peer, struct rde_aspath *a)
 {
 	struct attr	*nasp, *naggr, *oaggr;
-	u_int32_t	 as;
+	uint32_t	 as;
 
 	/*
 	 * if either ATTR_AS4_AGGREGATOR or ATTR_AS4_PATH is present
@@ -2297,9 +2297,9 @@ void
 rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 {
 	struct attr	*a;
-	u_int8_t	*p;
-	u_int16_t	 len;
-	u_int32_t	 id;
+	uint8_t		*p;
+	uint16_t	 len;
+	uint32_t	 id;
 
 	/* do not consider updates with parse errors */
 	if (asp->flags & F_ATTR_PARSE_ERR)
@@ -2318,7 +2318,7 @@ rde_reflector(struct rde_peer *peer, struct rde_aspath *asp)
 		else
 			id = htonl(peer->remote_bgpid);
 		if (attr_optadd(asp, ATTR_OPTIONAL, ATTR_ORIGINATOR_ID,
-		    &id, sizeof(u_int32_t)) == -1)
+		    &id, sizeof(uint32_t)) == -1)
 			fatalx("attr_optadd failed but impossible");
 	}
 
@@ -2369,7 +2369,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	void			*bp;
 	time_t			 staletime;
 	size_t			 aslen;
-	u_int8_t		 l;
+	uint8_t			 l;
 
 	nexthop = prefix_nexthop(p);
 	peer = prefix_peer(p);
@@ -2611,7 +2611,7 @@ rde_dump_throttled(void *arg)
 }
 
 static void
-rde_dump_done(void *arg, u_int8_t aid)
+rde_dump_done(void *arg, uint8_t aid)
 {
 	struct rde_dump_ctx	*ctx = arg;
 	struct rde_peer		*peer;
@@ -2663,8 +2663,8 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 	struct rib_entry	*re;
 	struct prefix		*p;
 	u_int			 error;
-	u_int8_t		 hostplen;
-	u_int16_t		 rid;
+	uint8_t			 hostplen;
+	uint16_t		 rid;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
  nomem:
@@ -2836,7 +2836,7 @@ rde_mrt_throttled(void *arg)
 }
 
 static void
-rde_mrt_done(void *ptr, u_int8_t aid)
+rde_mrt_done(void *ptr, uint8_t aid)
 {
 	mrt_done(ptr);
 }
@@ -2845,7 +2845,7 @@ void
 rde_dump_mrt_new(struct mrt *mrt, pid_t pid, int fd)
 {
 	struct rde_mrt_ctx *ctx;
-	u_int16_t rid;
+	uint16_t rid;
 
 	if ((ctx = calloc(1, sizeof(*ctx))) == NULL) {
 		log_warn("rde_dump_mrt_new");
@@ -2979,7 +2979,7 @@ rde_evaluate_all(void)
 }
 
 static int
-rde_skip_peer(struct rde_peer *peer, u_int16_t rib_id, u_int8_t aid)
+rde_skip_peer(struct rde_peer *peer, uint16_t rib_id, uint8_t aid)
 {
 	/* skip ourself */
 	if (peer == peerself)
@@ -3005,7 +3005,7 @@ rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old,
     int eval_all)
 {
 	struct rde_peer	*peer;
-	u_int8_t	 aid;
+	uint8_t		 aid;
 
 	/*
 	 * If old is != NULL we know it was active and should be removed.
@@ -3049,7 +3049,7 @@ int
 rde_update_queue_pending(void)
 {
 	struct rde_peer *peer;
-	u_int8_t aid;
+	uint8_t aid;
 
 	if (ibuf_se && ibuf_se->w.queued >= SESS_MSG_HIGH_MARK)
 		return 0;
@@ -3075,7 +3075,7 @@ rde_update_queue_runner(void)
 {
 	struct rde_peer		*peer;
 	int			 r, sent, max = RDE_RUNNER_ROUNDS, eor;
-	u_int16_t		 len, wpos;
+	uint16_t		 len, wpos;
 
 	len = sizeof(queue_buf) - MSGSIZE_HEADER;
 	do {
@@ -3129,11 +3129,11 @@ rde_update_queue_runner(void)
 }
 
 void
-rde_update6_queue_runner(u_int8_t aid)
+rde_update6_queue_runner(uint8_t aid)
 {
 	struct rde_peer		*peer;
 	int			 r, sent, max = RDE_RUNNER_ROUNDS / 2;
-	u_int16_t		 len;
+	uint16_t		 len;
 
 	/* first withdraws ... */
 	do {
@@ -3202,7 +3202,7 @@ struct rde_pftable_node {
 	RB_ENTRY(rde_pftable_node)	 entry;
 	struct pt_entry			*prefix;
 	int				 refcnt;
-	u_int16_t			 id;
+	uint16_t			 id;
 };
 RB_HEAD(rde_pftable_tree, rde_pftable_node);
 
@@ -3222,7 +3222,7 @@ struct rde_pftable_tree pftable_tree = RB_INITIALIZER(&pftable_tree);
 int need_commit;
 
 static void
-rde_pftable_send(u_int16_t id, struct pt_entry *pt, int del)
+rde_pftable_send(uint16_t id, struct pt_entry *pt, int del)
 {
 	struct pftable_msg pfm;
 
@@ -3247,7 +3247,7 @@ rde_pftable_send(u_int16_t id, struct pt_entry *pt, int del)
 }
 
 void
-rde_pftable_add(u_int16_t id, struct prefix *p)
+rde_pftable_add(uint16_t id, struct prefix *p)
 {
 	struct rde_pftable_node *pfn, node;
 
@@ -3271,7 +3271,7 @@ rde_pftable_add(u_int16_t id, struct prefix *p)
 }
 
 void
-rde_pftable_del(u_int16_t id, struct prefix *p)
+rde_pftable_del(uint16_t id, struct prefix *p)
 {
 	struct rde_pftable_node *pfn, node;
 
@@ -3340,7 +3340,7 @@ rde_reload_done(void)
 	struct rde_prefixset_head prefixsets_old;
 	struct rde_prefixset_head originsets_old;
 	struct as_set_head	 as_sets_old;
-	u_int16_t		 rid;
+	uint16_t		 rid;
 	int			 reload = 0;
 
 	softreconfig = 0;
@@ -3511,10 +3511,10 @@ rde_reload_done(void)
 }
 
 static void
-rde_softreconfig_in_done(void *arg, u_int8_t dummy)
+rde_softreconfig_in_done(void *arg, uint8_t dummy)
 {
 	struct rde_peer	*peer;
-	u_int16_t	 i;
+	uint16_t	 i;
 
 	softreconfig--;
 	/* one guy done but other dumps are still running */
@@ -3551,7 +3551,7 @@ rde_softreconfig_in_done(void *arg, u_int8_t dummy)
 	}
 
 	LIST_FOREACH(peer, &peerlist, peer_l) {
-		u_int8_t aid;
+		uint8_t aid;
 
 		if (peer->reconf_out) {
 			if (peer->export_type == EXPORT_NONE) {
@@ -3598,7 +3598,7 @@ rde_softreconfig_in_done(void *arg, u_int8_t dummy)
 }
 
 static void
-rde_softreconfig_out_done(void *arg, u_int8_t aid)
+rde_softreconfig_out_done(void *arg, uint8_t aid)
 {
 	struct rib	*rib = arg;
 
@@ -3613,7 +3613,7 @@ rde_softreconfig_out_done(void *arg, u_int8_t aid)
 static void
 rde_softreconfig_done(void)
 {
-	u_int16_t	i;
+	uint16_t	i;
 
 	for (i = 0; i < rib_size; i++) {
 		struct rib *rib = rib_byid(i);
@@ -3638,7 +3638,7 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 	struct rde_aspath	*asp;
 	enum filter_actions	 action;
 	struct bgpd_addr	 prefix;
-	u_int16_t		 i;
+	uint16_t		 i;
 
 	pt = re->prefix;
 	pt_getaddr(pt, &prefix);
@@ -3684,7 +3684,7 @@ rde_softreconfig_out(struct rib_entry *re, void *bula)
 {
 	struct prefix		*p = re->active;
 	struct rde_peer		*peer;
-	u_int8_t		 aid = re->prefix->aid;
+	uint8_t			 aid = re->prefix->aid;
 
 	if (p == NULL)
 		/* no valid path for prefix */
@@ -3747,7 +3747,7 @@ rde_softreconfig_sync_fib(struct rib_entry *re, void *bula)
 }
 
 static void
-rde_softreconfig_sync_done(void *arg, u_int8_t aid)
+rde_softreconfig_sync_done(void *arg, uint8_t aid)
 {
 	struct rib *rib = arg;
 
@@ -3778,8 +3778,8 @@ rde_roa_softreload(struct rib_entry *re, void *bula)
 	struct rde_aspath	*asp;
 	enum filter_actions	 action;
 	struct bgpd_addr	 prefix;
-	u_int8_t		 vstate;
-	u_int16_t		 i;
+	uint8_t			 vstate;
+	uint16_t		 i;
 
 	pt = re->prefix;
 	pt_getaddr(pt, &prefix);
@@ -3825,7 +3825,7 @@ rde_roa_softreload(struct rib_entry *re, void *bula)
 }
 
 static void
-rde_roa_softreload_done(void *arg, u_int8_t aid)
+rde_roa_softreload_done(void *arg, uint8_t aid)
 {
 	/* the roa update is done */
 	log_info("ROA softreload done");
@@ -3860,7 +3860,7 @@ rde_roa_reload(void)
 /*
  * generic helper function
  */
-u_int32_t
+uint32_t
 rde_local_as(void)
 {
 	return (conf->as);
@@ -3874,7 +3874,7 @@ rde_decisionflags(void)
 
 /* End-of-RIB marker, RFC 4724 */
 static void
-rde_peer_recv_eor(struct rde_peer *peer, u_int8_t aid)
+rde_peer_recv_eor(struct rde_peer *peer, uint8_t aid)
 {
 	peer->prefix_rcvd_eor++;
 	peer->recv_eor |= 1 << aid;
@@ -3896,10 +3896,10 @@ rde_peer_recv_eor(struct rde_peer *peer, u_int8_t aid)
 }
 
 static void
-rde_peer_send_eor(struct rde_peer *peer, u_int8_t aid)
+rde_peer_send_eor(struct rde_peer *peer, uint8_t aid)
 {
-	u_int16_t	afi;
-	u_int8_t	safi;
+	uint16_t	afi;
+	uint8_t		safi;
 
 	peer->prefix_sent_eor++;
 	peer->sent_eor |= 1 << aid;
@@ -3912,7 +3912,7 @@ rde_peer_send_eor(struct rde_peer *peer, u_int8_t aid)
 		    0, -1, &null, 4) == -1)
 			fatal("imsg_compose error while sending EoR");
 	} else {
-		u_int16_t	i;
+		uint16_t	i;
 		u_char		buf[10];
 
 		if (aid2afi(aid, &afi, &safi) == -1)
@@ -3940,7 +3940,7 @@ rde_peer_send_eor(struct rde_peer *peer, u_int8_t aid)
 }
 
 void
-rde_peer_send_rrefresh(struct rde_peer *peer, u_int8_t aid, u_int8_t subtype)
+rde_peer_send_rrefresh(struct rde_peer *peer, uint8_t aid, uint8_t subtype)
 {
 	struct route_refresh rr;
 
@@ -3976,8 +3976,8 @@ network_add(struct network_config *nc, struct filterstate *state)
 	struct filter_set_head	*vpnset = NULL;
 	struct in_addr		 prefix4;
 	struct in6_addr		 prefix6;
-	u_int8_t		 vstate;
-	u_int16_t		 i;
+	uint8_t			 vstate;
+	uint16_t		 i;
 
 	if (nc->rd != 0) {
 		SIMPLEQ_FOREACH(vpn, &conf->l3vpns, entry) {
@@ -4061,7 +4061,7 @@ network_delete(struct network_config *nc)
 	struct l3vpn	*vpn;
 	struct in_addr	 prefix4;
 	struct in6_addr	 prefix6;
-	u_int32_t	 i;
+	uint32_t	 i;
 
 	if (nc->rd) {
 		SIMPLEQ_FOREACH(vpn, &conf->l3vpns, entry) {
@@ -4158,8 +4158,8 @@ network_flush_upcall(struct rib_entry *re, void *ptr)
 {
 	struct bgpd_addr addr;
 	struct prefix *p;
-	u_int32_t i;
-	u_int8_t prefixlen;
+	uint32_t i;
+	uint8_t prefixlen;
 
 	p = prefix_bypeer(re, peerself, 0);
 	if (p == NULL)
@@ -4246,9 +4246,9 @@ rde_mark_prefixsets_dirty(struct rde_prefixset_head *psold,
 	}
 }
 
-u_int8_t
+uint8_t
 rde_roa_validity(struct rde_prefixset *ps, struct bgpd_addr *prefix,
-    u_int8_t plen, u_int32_t as)
+    uint8_t plen, uint32_t as)
 {
 	int r;
 
@@ -4257,7 +4257,7 @@ rde_roa_validity(struct rde_prefixset *ps, struct bgpd_addr *prefix,
 }
 
 int
-ovs_match(struct prefix *p, u_int32_t flag)
+ovs_match(struct prefix *p, uint32_t flag)
 {
 	if (flag & (F_CTL_OVS_VALID|F_CTL_OVS_INVALID|F_CTL_OVS_NOTFOUND)) {
 		switch (prefix_vstate(p)) {

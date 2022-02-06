@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.h,v 1.36 2021/07/27 07:32:08 claudio Exp $ */
+/*	$OpenBSD: mrt.h,v 1.37 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -42,10 +42,10 @@
 #define MRT_ET_HEADER_SIZE	16
 
 struct mrt_hdr {
-	u_int32_t	timestamp;
-	u_int16_t	type;
-	u_int16_t	subtype;
-	u_int32_t	length;
+	uint32_t	timestamp;
+	uint16_t	type;
+	uint16_t	subtype;
+	uint32_t	length;
 } __packed;
 
 enum MRT_MSG_TYPES {

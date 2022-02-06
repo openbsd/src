@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.99 2021/02/16 08:29:16 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.100 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -31,7 +31,7 @@
 #include "session.h"
 #include "log.h"
 
-int		host_ip(const char *, struct bgpd_addr *, u_int8_t *);
+int		host_ip(const char *, struct bgpd_addr *, uint8_t *);
 void		free_networks(struct network_head *);
 
 struct bgpd_config *
@@ -356,11 +356,11 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 	free_config(conf);
 }
 
-u_int32_t
+uint32_t
 get_bgpid(void)
 {
 	struct ifaddrs		*ifap, *ifa;
-	u_int32_t		 ip = 0, cur, localnet;
+	uint32_t		 ip = 0, cur, localnet;
 
 	localnet = htonl(INADDR_LOOPBACK & IN_CLASSA_NET);
 
@@ -383,7 +383,7 @@ get_bgpid(void)
 }
 
 int
-host(const char *s, struct bgpd_addr *h, u_int8_t *len)
+host(const char *s, struct bgpd_addr *h, uint8_t *len)
 {
 	int			 mask = 128;
 	char			*p, *ps;
@@ -417,7 +417,7 @@ host(const char *s, struct bgpd_addr *h, u_int8_t *len)
 }
 
 int
-host_ip(const char *s, struct bgpd_addr *h, u_int8_t *len)
+host_ip(const char *s, struct bgpd_addr *h, uint8_t *len)
 {
 	struct addrinfo		 hints, *res;
 	int			 bits;

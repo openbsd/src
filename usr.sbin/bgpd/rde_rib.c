@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.224 2021/08/09 08:15:35 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.225 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -36,7 +36,7 @@
  * Therefore one thing needs to be absolutely avoided, long table walks.
  * This is achieved by heavily linking the different parts together.
  */
-u_int16_t rib_size;
+uint16_t rib_size;
 struct rib **ribs;
 
 struct rib_entry *rib_add(struct rib *, struct bgpd_addr *, int);
@@ -44,7 +44,7 @@ static inline int rib_compare(const struct rib_entry *,
 			const struct rib_entry *);
 void rib_remove(struct rib_entry *);
 int rib_empty(struct rib_entry *);
-static void rib_dump_abort(u_int16_t);
+static void rib_dump_abort(uint16_t);
 
 RB_PROTOTYPE(rib_tree, rib_entry, rib_e, rib_compare);
 RB_GENERATE(rib_tree, rib_entry, rib_e, rib_compare);
@@ -53,14 +53,14 @@ struct rib_context {
 	LIST_ENTRY(rib_context)		 entry;
 	struct rib_entry		*ctx_re;
 	struct prefix			*ctx_p;
-	u_int32_t			 ctx_id;
+	uint32_t			 ctx_id;
 	void		(*ctx_rib_call)(struct rib_entry *, void *);
 	void		(*ctx_prefix_call)(struct prefix *, void *);
-	void		(*ctx_done)(void *, u_int8_t);
+	void		(*ctx_done)(void *, uint8_t);
 	int		(*ctx_throttle)(void *);
 	void				*ctx_arg;
 	unsigned int			 ctx_count;
-	u_int8_t			 ctx_aid;
+	uint8_t				 ctx_aid;
 };
 LIST_HEAD(, rib_context) rib_dumps = LIST_HEAD_INITIALIZER(rib_dumps);
 
@@ -134,10 +134,10 @@ rib_compare(const struct rib_entry *a, const struct rib_entry *b)
 
 /* RIB specific functions */
 struct rib *
-rib_new(char *name, u_int rtableid, u_int16_t flags)
+rib_new(char *name, u_int rtableid, uint16_t flags)
 {
 	struct rib *new;
-	u_int16_t id;
+	uint16_t id;
 
 	for (id = 0; id < rib_size; id++) {
 		if (ribs[id] == NULL)
@@ -201,17 +201,17 @@ rib_update(struct rib *rib)
 }
 
 struct rib *
-rib_byid(u_int16_t id)
+rib_byid(uint16_t id)
 {
 	if (id == RIB_NOTFOUND || id >= rib_size || ribs[id] == NULL)
 		return NULL;
 	return ribs[id];
 }
 
-u_int16_t
+uint16_t
 rib_find(char *name)
 {
-	u_int16_t id;
+	uint16_t id;
 
 	/* no name returns the first Loc-RIB */
 	if (name == NULL || *name == '\0')
@@ -269,7 +269,7 @@ void
 rib_shutdown(void)
 {
 	struct rib *rib;
-	u_int16_t id;
+	uint16_t id;
 
 	for (id = 0; id < rib_size; id++) {
 		rib = rib_byid(id);
@@ -481,7 +481,7 @@ rib_dump_runner(void)
 }
 
 static void
-rib_dump_abort(u_int16_t id)
+rib_dump_abort(uint16_t id)
 {
 	struct rib_context *ctx, *next;
 
@@ -519,8 +519,8 @@ rib_dump_terminate(void *arg)
 }
 
 int
-rib_dump_new(u_int16_t id, u_int8_t aid, unsigned int count, void *arg,
-    void (*upcall)(struct rib_entry *, void *), void (*done)(void *, u_int8_t),
+rib_dump_new(uint16_t id, uint8_t aid, unsigned int count, void *arg,
+    void (*upcall)(struct rib_entry *, void *), void (*done)(void *, uint8_t),
     int (*throttle)(void *))
 {
 	struct rib_context *ctx;
@@ -547,13 +547,13 @@ rib_dump_new(u_int16_t id, u_int8_t aid, unsigned int count, void *arg,
 /* path specific functions */
 
 static struct rde_aspath *path_lookup(struct rde_aspath *);
-static u_int64_t path_hash(struct rde_aspath *);
+static uint64_t path_hash(struct rde_aspath *);
 static void path_link(struct rde_aspath *);
 static void path_unlink(struct rde_aspath *);
 
 struct path_table {
 	struct aspath_head	*path_hashtbl;
-	u_int64_t		 path_hashmask;
+	uint64_t		 path_hashmask;
 } pathtable;
 
 SIPHASH_KEY pathtablekey;
@@ -585,9 +585,9 @@ path_unref(struct rde_aspath *asp)
 }
 
 void
-path_init(u_int32_t hashsize)
+path_init(uint32_t hashsize)
 {
-	u_int32_t	hs, i;
+	uint32_t	hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
 		;
@@ -605,7 +605,7 @@ path_init(u_int32_t hashsize)
 void
 path_shutdown(void)
 {
-	u_int32_t	i;
+	uint32_t	i;
 
 	for (i = 0; i <= pathtable.path_hashmask; i++)
 		if (!LIST_EMPTY(&pathtable.path_hashtbl[i]))
@@ -618,7 +618,7 @@ void
 path_hash_stats(struct rde_hashstats *hs)
 {
 	struct rde_aspath	*a;
-	u_int32_t		i;
+	uint32_t		i;
 	int64_t			n;
 
 	memset(hs, 0, sizeof(*hs));
@@ -688,11 +688,11 @@ path_compare(struct rde_aspath *a, struct rde_aspath *b)
 	return (attr_compare(a, b));
 }
 
-static u_int64_t
+static uint64_t
 path_hash(struct rde_aspath *asp)
 {
 	SIPHASH_CTX	ctx;
-	u_int64_t	hash;
+	uint64_t	hash;
 
 	SipHash24_Init(&ctx, &pathtablekey);
 	SipHash24_Update(&ctx, &asp->aspath_hashstart,
@@ -712,7 +712,7 @@ path_lookup(struct rde_aspath *aspath)
 {
 	struct aspath_head	*head;
 	struct rde_aspath	*asp;
-	u_int64_t		 hash;
+	uint64_t		 hash;
 
 	hash = path_hash(aspath);
 	head = PATH_HASH(hash);
@@ -842,17 +842,17 @@ path_put(struct rde_aspath *asp)
 /* prefix specific functions */
 
 static int	prefix_add(struct bgpd_addr *, int, struct rib *,
-		    struct rde_peer *, u_int32_t, struct rde_aspath *,
+		    struct rde_peer *, uint32_t, struct rde_aspath *,
 		    struct rde_community *, struct nexthop *,
-		    u_int8_t, u_int8_t);
+		    uint8_t, uint8_t);
 static int	prefix_move(struct prefix *, struct rde_peer *,
 		    struct rde_aspath *, struct rde_community *,
-		    struct nexthop *, u_int8_t, u_int8_t);
+		    struct nexthop *, uint8_t, uint8_t);
 
 static void	prefix_link(struct prefix *, struct rib_entry *,
-		     struct rde_peer *, u_int32_t, struct rde_aspath *,
+		     struct rde_peer *, uint32_t, struct rde_aspath *,
 		     struct rde_community *, struct nexthop *,
-		     u_int8_t, u_int8_t);
+		     uint8_t, uint8_t);
 static void	prefix_unlink(struct prefix *);
 
 static struct prefix	*prefix_alloc(void);
@@ -894,7 +894,7 @@ RB_GENERATE_STATIC(prefix_index, prefix, entry.tree.index, prefix_index_cmp)
  * search for specified prefix of a peer. Returns NULL if not found.
  */
 struct prefix *
-prefix_get(struct rib *rib, struct rde_peer *peer, u_int32_t path_id,
+prefix_get(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
     struct bgpd_addr *prefix, int prefixlen)
 {
 	struct rib_entry	*re;
@@ -956,9 +956,9 @@ prefix_match(struct rde_peer *peer, struct bgpd_addr *addr)
  * Return 1 if prefix was newly added, 0 if it was just changed.
  */
 int
-prefix_update(struct rib *rib, struct rde_peer *peer, u_int32_t path_id,
+prefix_update(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
     struct filterstate *state, struct bgpd_addr *prefix, int prefixlen,
-    u_int8_t vstate)
+    uint8_t vstate)
 {
 	struct rde_aspath	*asp, *nasp = &state->aspath;
 	struct rde_community	*comm, *ncomm = &state->communities;
@@ -1009,9 +1009,9 @@ prefix_update(struct rib *rib, struct rde_peer *peer, u_int32_t path_id,
  */
 static int
 prefix_add(struct bgpd_addr *prefix, int prefixlen, struct rib *rib,
-    struct rde_peer *peer, u_int32_t path_id, struct rde_aspath *asp,
-    struct rde_community *comm, struct nexthop *nexthop, u_int8_t nhflags,
-    u_int8_t vstate)
+    struct rde_peer *peer, uint32_t path_id, struct rde_aspath *asp,
+    struct rde_community *comm, struct nexthop *nexthop, uint8_t nhflags,
+    uint8_t vstate)
 {
 	struct prefix		*p;
 	struct rib_entry	*re;
@@ -1031,7 +1031,7 @@ prefix_add(struct bgpd_addr *prefix, int prefixlen, struct rib *rib,
 static int
 prefix_move(struct prefix *p, struct rde_peer *peer,
     struct rde_aspath *asp, struct rde_community *comm,
-    struct nexthop *nexthop, u_int8_t nhflags, u_int8_t vstate)
+    struct nexthop *nexthop, uint8_t nhflags, uint8_t vstate)
 {
 	struct prefix		*np;
 
@@ -1091,7 +1091,7 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
  * or pt_entry -- become empty remove them too.
  */
 int
-prefix_withdraw(struct rib *rib, struct rde_peer *peer, u_int32_t path_id,
+prefix_withdraw(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
     struct bgpd_addr *prefix, int prefixlen)
 {
 	struct prefix		*p;
@@ -1117,7 +1117,7 @@ prefix_withdraw(struct rib *rib, struct rde_peer *peer, u_int32_t path_id,
  * Insert an End-of-RIB marker into the update queue.
  */
 void
-prefix_add_eor(struct rde_peer *peer, u_int8_t aid)
+prefix_add_eor(struct rde_peer *peer, uint8_t aid)
 {
 	struct prefix *p;
 
@@ -1135,7 +1135,7 @@ prefix_add_eor(struct rde_peer *peer, u_int8_t aid)
  */
 int
 prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
-    struct bgpd_addr *prefix, int prefixlen, u_int8_t vstate)
+    struct bgpd_addr *prefix, int prefixlen, uint8_t vstate)
 {
 	struct prefix_tree *prefix_head = NULL;
 	struct rde_aspath *asp;
@@ -1382,9 +1382,9 @@ done:
 }
 
 int
-prefix_dump_new(struct rde_peer *peer, u_int8_t aid, unsigned int count,
+prefix_dump_new(struct rde_peer *peer, uint8_t aid, unsigned int count,
     void *arg, void (*upcall)(struct prefix *, void *),
-    void (*done)(void *, u_int8_t), int (*throttle)(void *))
+    void (*done)(void *, uint8_t), int (*throttle)(void *))
 {
 	struct rib_context *ctx;
 
@@ -1409,7 +1409,7 @@ prefix_dump_new(struct rde_peer *peer, u_int8_t aid, unsigned int count,
 
 /* dump a prefix into specified buffer */
 int
-prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen,
+prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, uint8_t plen,
     int withdraw)
 {
 	int	totlen, psize;
@@ -1461,7 +1461,7 @@ prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, u_int8_t plen,
 }
 
 int
-prefix_writebuf(struct ibuf *buf, struct bgpd_addr *prefix, u_int8_t plen)
+prefix_writebuf(struct ibuf *buf, struct bgpd_addr *prefix, uint8_t plen)
 {
 	int	 totlen;
 	void	*bptr;
@@ -1492,7 +1492,7 @@ prefix_writebuf(struct ibuf *buf, struct bgpd_addr *prefix, u_int8_t plen)
  * belonging to the peer peer. Returns NULL if no match found.
  */
 struct prefix *
-prefix_bypeer(struct rib_entry *re, struct rde_peer *peer, u_int32_t path_id)
+prefix_bypeer(struct rib_entry *re, struct rde_peer *peer, uint32_t path_id)
 {
 	struct prefix	*p;
 
@@ -1549,8 +1549,8 @@ prefix_destroy(struct prefix *p)
  */
 static void
 prefix_link(struct prefix *p, struct rib_entry *re, struct rde_peer *peer,
-    u_int32_t path_id, struct rde_aspath *asp, struct rde_community *comm,
-    struct nexthop *nexthop, u_int8_t nhflags, u_int8_t vstate)
+    uint32_t path_id, struct rde_aspath *asp, struct rde_community *comm,
+    struct nexthop *nexthop, uint8_t nhflags, uint8_t vstate)
 {
 	if (p->flags & PREFIX_FLAG_ADJOUT)
 		fatalx("%s: prefix with PREFIX_FLAG_ADJOUT hit", __func__);
@@ -1642,7 +1642,7 @@ struct nexthop		*nexthop_lookup(struct bgpd_addr *);
  */
 struct nexthop_table {
 	LIST_HEAD(nexthop_head, nexthop)	*nexthop_hashtbl;
-	u_int32_t				 nexthop_hashmask;
+	uint32_t				 nexthop_hashmask;
 } nexthoptable;
 
 SIPHASH_KEY nexthoptablekey;
@@ -1650,9 +1650,9 @@ SIPHASH_KEY nexthoptablekey;
 TAILQ_HEAD(nexthop_queue, nexthop)	nexthop_runners;
 
 void
-nexthop_init(u_int32_t hashsize)
+nexthop_init(uint32_t hashsize)
 {
-	u_int32_t	 hs, i;
+	uint32_t	 hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
 		;
@@ -1671,7 +1671,7 @@ nexthop_init(u_int32_t hashsize)
 void
 nexthop_shutdown(void)
 {
-	u_int32_t		 i;
+	uint32_t		 i;
 	struct nexthop		*nh, *nnh;
 
 	for (i = 0; i <= nexthoptable.nexthop_hashmask; i++) {
@@ -1703,7 +1703,7 @@ nexthop_runner(void)
 {
 	struct nexthop *nh;
 	struct prefix *p;
-	u_int32_t j;
+	uint32_t j;
 
 	nh = TAILQ_FIRST(&nexthop_runners);
 	if (nh == NULL)
@@ -1781,8 +1781,8 @@ nexthop_update(struct kroute_nexthop *msg)
 }
 
 void
-nexthop_modify(struct nexthop *setnh, enum action_types type, u_int8_t aid,
-    struct nexthop **nexthop, u_int8_t *flags)
+nexthop_modify(struct nexthop *setnh, enum action_types type, uint8_t aid,
+    struct nexthop **nexthop, uint8_t *flags)
 {
 	switch (type) {
 	case ACTION_SET_NEXTHOP_REJECT:
@@ -1953,7 +1953,7 @@ nexthop_lookup(struct bgpd_addr *nexthop)
 struct nexthop_head *
 nexthop_hash(struct bgpd_addr *nexthop)
 {
-	u_int32_t	 h = 0;
+	uint32_t	 h = 0;
 
 	switch (nexthop->aid) {
 	case AID_INET:

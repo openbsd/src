@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.125 2021/06/24 10:04:05 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.126 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -31,11 +31,11 @@
 #include "log.h"
 
 int
-attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
-    void *data, u_int16_t data_len)
+attr_write(void *p, uint16_t p_len, uint8_t flags, uint8_t type,
+    void *data, uint16_t data_len)
 {
 	u_char		*b = p;
-	u_int16_t	 tmp, tot_len = 2; /* attribute header (without len) */
+	uint16_t	 tmp, tot_len = 2; /* attribute header (without len) */
 
 	flags &= ~ATTR_DEFMASK;
 	if (data_len > 255) {
@@ -67,8 +67,8 @@ attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
 }
 
 int
-attr_writebuf(struct ibuf *buf, u_int8_t flags, u_int8_t type, void *data,
-    u_int16_t data_len)
+attr_writebuf(struct ibuf *buf, uint8_t flags, uint8_t type, void *data,
+    uint16_t data_len)
 {
 	u_char	hdr[4];
 
@@ -93,13 +93,13 @@ attr_writebuf(struct ibuf *buf, u_int8_t flags, u_int8_t type, void *data,
 
 /* optional attribute specific functions */
 int		 attr_diff(struct attr *, struct attr *);
-struct attr	*attr_alloc(u_int8_t, u_int8_t, const void *, u_int16_t);
-struct attr	*attr_lookup(u_int8_t, u_int8_t, const void *, u_int16_t);
+struct attr	*attr_alloc(uint8_t, uint8_t, const void *, uint16_t);
+struct attr	*attr_lookup(uint8_t, uint8_t, const void *, uint16_t);
 void		 attr_put(struct attr *);
 
 struct attr_table {
 	struct attr_list	*hashtbl;
-	u_int64_t		 hashmask;
+	uint64_t		 hashmask;
 } attrtable;
 
 SIPHASH_KEY attrtablekey;
@@ -108,9 +108,9 @@ SIPHASH_KEY attrtablekey;
 	&attrtable.hashtbl[(x) & attrtable.hashmask]
 
 void
-attr_init(u_int32_t hashsize)
+attr_init(uint32_t hashsize)
 {
-	u_int32_t	hs, i;
+	uint32_t	hs, i;
 
 	arc4random_buf(&attrtablekey, sizeof(attrtablekey));
 	for (hs = 1; hs < hashsize; hs <<= 1)
@@ -128,7 +128,7 @@ attr_init(u_int32_t hashsize)
 void
 attr_shutdown(void)
 {
-	u_int64_t	i;
+	uint64_t	i;
 
 	for (i = 0; i <= attrtable.hashmask; i++)
 		if (!LIST_EMPTY(&attrtable.hashtbl[i]))
@@ -141,7 +141,7 @@ void
 attr_hash_stats(struct rde_hashstats *hs)
 {
 	struct attr		*a;
-	u_int64_t		i;
+	uint64_t		i;
 	int64_t			n;
 
 	memset(hs, 0, sizeof(*hs));
@@ -163,10 +163,10 @@ attr_hash_stats(struct rde_hashstats *hs)
 }
 
 int
-attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
-    void *data, u_int16_t len)
+attr_optadd(struct rde_aspath *asp, uint8_t flags, uint8_t type,
+    void *data, uint16_t len)
 {
-	u_int8_t	 l;
+	uint8_t		 l;
 	struct attr	*a, *t;
 	void		*p;
 
@@ -218,9 +218,9 @@ attr_optadd(struct rde_aspath *asp, u_int8_t flags, u_int8_t type,
 }
 
 struct attr *
-attr_optget(const struct rde_aspath *asp, u_int8_t type)
+attr_optget(const struct rde_aspath *asp, uint8_t type)
 {
-	u_int8_t	 l;
+	uint8_t l;
 
 	for (l = 0; l < asp->others_len; l++) {
 		if (asp->others[l] == NULL)
@@ -236,7 +236,7 @@ attr_optget(const struct rde_aspath *asp, u_int8_t type)
 void
 attr_copy(struct rde_aspath *t, const struct rde_aspath *s)
 {
-	u_int8_t	l;
+	uint8_t l;
 
 	if (t->others != NULL)
 		attr_freeall(t);
@@ -292,7 +292,7 @@ attr_diff(struct attr *oa, struct attr *ob)
 int
 attr_compare(struct rde_aspath *a, struct rde_aspath *b)
 {
-	u_int8_t	l, min;
+	uint8_t l, min;
 
 	min = a->others_len < b->others_len ? a->others_len : b->others_len;
 	for (l = 0; l < min; l++)
@@ -312,11 +312,11 @@ attr_compare(struct rde_aspath *a, struct rde_aspath *b)
 	return (0);
 }
 
-u_int64_t
+uint64_t
 attr_hash(struct rde_aspath *a)
 {
-	u_int64_t	hash = 0;
-	u_int8_t	l;
+	uint64_t hash = 0;
+	uint8_t l;
 
 	for (l = 0; l < a->others_len; l++)
 		if (a->others[l] != NULL)
@@ -327,7 +327,7 @@ attr_hash(struct rde_aspath *a)
 void
 attr_free(struct rde_aspath *asp, struct attr *attr)
 {
-	u_int8_t	l;
+	uint8_t l;
 
 	for (l = 0; l < asp->others_len; l++)
 		if (asp->others[l] == attr) {
@@ -344,7 +344,7 @@ attr_free(struct rde_aspath *asp, struct attr *attr)
 void
 attr_freeall(struct rde_aspath *asp)
 {
-	u_int8_t	l;
+	uint8_t l;
 
 	for (l = 0; l < asp->others_len; l++)
 		attr_put(asp->others[l]);
@@ -355,7 +355,7 @@ attr_freeall(struct rde_aspath *asp)
 }
 
 struct attr *
-attr_alloc(u_int8_t flags, u_int8_t type, const void *data, u_int16_t len)
+attr_alloc(uint8_t flags, uint8_t type, const void *data, uint16_t len)
 {
 	struct attr	*a;
 	SIPHASH_CTX	ctx;
@@ -391,12 +391,12 @@ attr_alloc(u_int8_t flags, u_int8_t type, const void *data, u_int16_t len)
 }
 
 struct attr *
-attr_lookup(u_int8_t flags, u_int8_t type, const void *data, u_int16_t len)
+attr_lookup(uint8_t flags, uint8_t type, const void *data, uint16_t len)
 {
 	struct attr_list	*head;
 	struct attr		*a;
-	u_int64_t		 hash;
-	SIPHASH_CTX		ctx;
+	uint64_t		 hash;
+	SIPHASH_CTX		 ctx;
 
 	flags &= ~ATTR_DEFMASK;	/* normalize mask */
 
@@ -441,16 +441,16 @@ attr_put(struct attr *a)
 
 /* aspath specific functions */
 
-static u_int16_t aspath_count(const void *, u_int16_t);
-static u_int32_t aspath_extract_origin(const void *, u_int16_t);
-static u_int16_t aspath_countlength(struct aspath *, u_int16_t, int);
-static void	 aspath_countcopy(struct aspath *, u_int16_t, u_int8_t *,
-		     u_int16_t, int);
-struct aspath	*aspath_lookup(const void *, u_int16_t);
+static uint16_t aspath_count(const void *, uint16_t);
+static uint32_t aspath_extract_origin(const void *, uint16_t);
+static uint16_t aspath_countlength(struct aspath *, uint16_t, int);
+static void	 aspath_countcopy(struct aspath *, uint16_t, uint8_t *,
+		     uint16_t, int);
+struct aspath	*aspath_lookup(const void *, uint16_t);
 
 struct aspath_table {
 	struct aspath_list	*hashtbl;
-	u_int32_t		 hashmask;
+	uint32_t		 hashmask;
 } astable;
 
 SIPHASH_KEY astablekey;
@@ -459,9 +459,9 @@ SIPHASH_KEY astablekey;
 	&astable.hashtbl[(x) & astable.hashmask]
 
 void
-aspath_init(u_int32_t hashsize)
+aspath_init(uint32_t hashsize)
 {
-	u_int32_t	hs, i;
+	uint32_t	hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
 		;
@@ -479,7 +479,7 @@ aspath_init(u_int32_t hashsize)
 void
 aspath_shutdown(void)
 {
-	u_int32_t	i;
+	uint32_t	i;
 
 	for (i = 0; i <= astable.hashmask; i++)
 		if (!LIST_EMPTY(&astable.hashtbl[i]))
@@ -492,7 +492,7 @@ void
 aspath_hash_stats(struct rde_hashstats *hs)
 {
 	struct aspath		*a;
-	u_int32_t		i;
+	uint32_t		i;
 	int64_t			n;
 
 	memset(hs, 0, sizeof(*hs));
@@ -514,7 +514,7 @@ aspath_hash_stats(struct rde_hashstats *hs)
 }
 
 struct aspath *
-aspath_get(void *data, u_int16_t len)
+aspath_get(void *data, uint16_t len)
 {
 	struct aspath_list	*head;
 	struct aspath		*aspath;
@@ -570,13 +570,13 @@ aspath_put(struct aspath *aspath)
  * convert a 4 byte aspath to a 2 byte one.
  */
 u_char *
-aspath_deflate(u_char *data, u_int16_t *len, int *flagnew)
+aspath_deflate(u_char *data, uint16_t *len, int *flagnew)
 {
-	u_int8_t	*seg, *nseg, *ndata;
-	u_int32_t	 as;
+	uint8_t	*seg, *nseg, *ndata;
+	uint32_t	 as;
 	int		 i;
-	u_int16_t	 seg_size, olen, nlen;
-	u_int8_t	 seg_len;
+	uint16_t	 seg_size, olen, nlen;
+	uint8_t		 seg_len;
 
 	/* first calculate the length of the aspath */
 	nlen = 0;
@@ -584,8 +584,8 @@ aspath_deflate(u_char *data, u_int16_t *len, int *flagnew)
 	olen = *len;
 	for (; olen > 0; olen -= seg_size, seg += seg_size) {
 		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
-		nlen += 2 + sizeof(u_int16_t) * seg_len;
+		seg_size = 2 + sizeof(uint32_t) * seg_len;
+		nlen += 2 + sizeof(uint16_t) * seg_len;
 
 		if (seg_size > olen)
 			fatalx("%s: would overflow", __func__);
@@ -600,7 +600,7 @@ aspath_deflate(u_char *data, u_int16_t *len, int *flagnew)
 	for (nseg = ndata; seg < data + olen; seg += seg_size) {
 		*nseg++ = seg[0];
 		*nseg++ = seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+		seg_size = 2 + sizeof(uint32_t) * seg_len;
 
 		for (i = 0; i < seg_len; i++) {
 			as = aspath_extract(seg, i);
@@ -620,8 +620,8 @@ aspath_deflate(u_char *data, u_int16_t *len, int *flagnew)
 void
 aspath_merge(struct rde_aspath *a, struct attr *attr)
 {
-	u_int8_t	*np;
-	u_int16_t	 ascnt, diff, nlen, difflen;
+	uint8_t		*np;
+	uint16_t	 ascnt, diff, nlen, difflen;
 	int		 hroom = 0;
 
 	ascnt = aspath_count(attr->data, attr->len);
@@ -662,13 +662,13 @@ aspath_dump(struct aspath *aspath)
 	return (aspath->data);
 }
 
-u_int16_t
+uint16_t
 aspath_length(struct aspath *aspath)
 {
 	return (aspath->len);
 }
 
-u_int32_t
+uint32_t
 aspath_neighbor(struct aspath *aspath)
 {
 	/*
@@ -682,25 +682,25 @@ aspath_neighbor(struct aspath *aspath)
 	return (aspath_extract(aspath->data, 0));
 }
 
-u_int32_t
+uint32_t
 aspath_origin(struct aspath *aspath)
 {
 	return aspath->source_as;
 }
 
-static u_int16_t
-aspath_count(const void *data, u_int16_t len)
+static uint16_t
+aspath_count(const void *data, uint16_t len)
 {
-	const u_int8_t	*seg;
-	u_int16_t	 cnt, seg_size;
-	u_int8_t	 seg_type, seg_len;
+	const uint8_t	*seg;
+	uint16_t	 cnt, seg_size;
+	uint8_t		 seg_type, seg_len;
 
 	cnt = 0;
 	seg = data;
 	for (; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+		seg_size = 2 + sizeof(uint32_t) * seg_len;
 
 		if (seg_type == AS_SET)
 			cnt += 1;
@@ -722,13 +722,13 @@ aspath_count(const void *data, u_int16_t len)
  * o  the distinguished value "NONE" if the final segment of the
  *    AS_PATH attribute is of any other type.
  */
-static u_int32_t
-aspath_extract_origin(const void *data, u_int16_t len)
+static uint32_t
+aspath_extract_origin(const void *data, uint16_t len)
 {
-	const u_int8_t	*seg;
-	u_int32_t	 as = AS_NONE;
-	u_int16_t	 seg_size;
-	u_int8_t	 seg_len;
+	const uint8_t	*seg;
+	uint32_t	 as = AS_NONE;
+	uint16_t	 seg_size;
+	uint8_t		 seg_len;
 
 	/* AS_PATH is empty */
 	if (len == 0)
@@ -737,7 +737,7 @@ aspath_extract_origin(const void *data, u_int16_t len)
 	seg = data;
 	for (; len > 0; len -= seg_size, seg += seg_size) {
 		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+		seg_size = 2 + sizeof(uint32_t) * seg_len;
 
 		if (len == seg_size && seg[0] == AS_SEQUENCE) {
 			as = aspath_extract(seg, seg_len - 1);
@@ -748,12 +748,12 @@ aspath_extract_origin(const void *data, u_int16_t len)
 	return (as);
 }
 
-static u_int16_t
-aspath_countlength(struct aspath *aspath, u_int16_t cnt, int headcnt)
+static uint16_t
+aspath_countlength(struct aspath *aspath, uint16_t cnt, int headcnt)
 {
-	const u_int8_t	*seg;
-	u_int16_t	 seg_size, len, clen;
-	u_int8_t	 seg_type = 0, seg_len = 0;
+	const uint8_t	*seg;
+	uint16_t	 seg_size, len, clen;
+	uint8_t		 seg_type = 0, seg_len = 0;
 
 	seg = aspath->data;
 	clen = 0;
@@ -761,13 +761,13 @@ aspath_countlength(struct aspath *aspath, u_int16_t cnt, int headcnt)
 	    len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+		seg_size = 2 + sizeof(uint32_t) * seg_len;
 
 		if (seg_type == AS_SET)
 			cnt -= 1;
 		else if (seg_len > cnt) {
 			seg_len = cnt;
-			clen += 2 + sizeof(u_int32_t) * cnt;
+			clen += 2 + sizeof(uint32_t) * cnt;
 			break;
 		} else
 			cnt -= seg_len;
@@ -785,12 +785,12 @@ aspath_countlength(struct aspath *aspath, u_int16_t cnt, int headcnt)
 }
 
 static void
-aspath_countcopy(struct aspath *aspath, u_int16_t cnt, u_int8_t *buf,
-    u_int16_t size, int headcnt)
+aspath_countcopy(struct aspath *aspath, uint16_t cnt, uint8_t *buf,
+    uint16_t size, int headcnt)
 {
-	const u_int8_t	*seg;
-	u_int16_t	 seg_size, len;
-	u_int8_t	 seg_type, seg_len;
+	const uint8_t	*seg;
+	uint16_t	 seg_size, len;
+	uint8_t		 seg_type, seg_len;
 
 	if (headcnt > 0)
 		/*
@@ -803,13 +803,13 @@ aspath_countcopy(struct aspath *aspath, u_int16_t cnt, u_int8_t *buf,
 	    len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+		seg_size = 2 + sizeof(uint32_t) * seg_len;
 
 		if (seg_type == AS_SET)
 			cnt -= 1;
 		else if (seg_len > cnt) {
 			seg_len = cnt + headcnt;
-			seg_size = 2 + sizeof(u_int32_t) * cnt;
+			seg_size = 2 + sizeof(uint32_t) * cnt;
 			cnt = 0;
 		} else {
 			cnt -= seg_len;
@@ -828,16 +828,16 @@ aspath_countcopy(struct aspath *aspath, u_int16_t cnt, u_int8_t *buf,
 }
 
 int
-aspath_loopfree(struct aspath *aspath, u_int32_t myAS)
+aspath_loopfree(struct aspath *aspath, uint32_t myAS)
 {
-	u_int8_t	*seg;
-	u_int16_t	 len, seg_size;
-	u_int8_t	 i, seg_len;
+	uint8_t		*seg;
+	uint16_t	 len, seg_size;
+	uint8_t		 i, seg_len;
 
 	seg = aspath->data;
 	for (len = aspath->len; len > 0; len -= seg_size, seg += seg_size) {
 		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+		seg_size = 2 + sizeof(uint32_t) * seg_len;
 
 		for (i = 0; i < seg_len; i++) {
 			if (myAS == aspath_extract(seg, i))
@@ -868,11 +868,11 @@ aspath_compare(struct aspath *a1, struct aspath *a2)
 }
 
 struct aspath *
-aspath_lookup(const void *data, u_int16_t len)
+aspath_lookup(const void *data, uint16_t len)
 {
 	struct aspath_list	*head;
 	struct aspath		*aspath;
-	u_int32_t		 hash;
+	uint32_t		 hash;
 
 	hash = SipHash24(&astablekey, data, len);
 	head = ASPATH_HASH(hash);
@@ -886,9 +886,9 @@ aspath_lookup(const void *data, u_int16_t len)
 
 
 static int
-as_compare(struct filter_as *f, u_int32_t as, u_int32_t neighas)
+as_compare(struct filter_as *f, uint32_t as, uint32_t neighas)
 {
-	u_int32_t match;
+	uint32_t match;
 
 	if (f->flags & AS_FLAG_AS_SET_NAME)	/* should not happen */
 		return (0);
@@ -924,13 +924,13 @@ as_compare(struct filter_as *f, u_int32_t as, u_int32_t neighas)
 
 /* we need to be able to search more than one as */
 int
-aspath_match(struct aspath *aspath, struct filter_as *f, u_int32_t neighas)
+aspath_match(struct aspath *aspath, struct filter_as *f, uint32_t neighas)
 {
-	const u_int8_t	*seg;
+	const uint8_t	*seg;
 	int		 final;
-	u_int16_t	 len, seg_size;
-	u_int8_t	 i, seg_len;
-	u_int32_t	 as = AS_NONE;
+	uint16_t	 len, seg_size;
+	uint8_t		 i, seg_len;
+	uint32_t	 as = AS_NONE;
 
 	if (f->type == AS_EMPTY) {
 		if (aspath_length(aspath) == 0)
@@ -952,7 +952,7 @@ aspath_match(struct aspath *aspath, struct filter_as *f, u_int32_t neighas)
 	len = aspath->len;
 	for (; len >= 6; len -= seg_size, seg += seg_size) {
 		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+		seg_size = 2 + sizeof(uint32_t) * seg_len;
 
 		final = (len == seg_size);
 
@@ -996,11 +996,11 @@ aspath_match(struct aspath *aspath, struct filter_as *f, u_int32_t neighas)
  * Returns a new prepended aspath. Old needs to be freed by caller.
  */
 u_char *
-aspath_prepend(struct aspath *asp, u_int32_t as, int quantum, u_int16_t *len)
+aspath_prepend(struct aspath *asp, uint32_t as, int quantum, uint16_t *len)
 {
 	u_char		*p;
 	int		 l, overflow = 0, shift = 0, size, wpos = 0;
-	u_int8_t	 type;
+	uint8_t		 type;
 
 	/* lunatic prepends are blocked in the parser and limited */
 
@@ -1028,13 +1028,13 @@ aspath_prepend(struct aspath *asp, u_int32_t as, int quantum, u_int16_t *len)
 		return (p);
 	} else if (type == AS_SET || size + quantum > 255) {
 		/* need to attach a new AS_SEQUENCE */
-		l = 2 + quantum * sizeof(u_int32_t) + asp->len;
+		l = 2 + quantum * sizeof(uint32_t) + asp->len;
 		if (type == AS_SET)
 			overflow = quantum;
 		else
 			overflow = size + quantum - 255;
 	} else
-		l = quantum * sizeof(u_int32_t) + asp->len;
+		l = quantum * sizeof(uint32_t) + asp->len;
 
 	quantum -= overflow;
 
@@ -1049,8 +1049,8 @@ aspath_prepend(struct aspath *asp, u_int32_t as, int quantum, u_int16_t *len)
 		p[wpos++] = overflow;
 
 		for (; overflow > 0; overflow--) {
-			memcpy(p + wpos, &as, sizeof(u_int32_t));
-			wpos += sizeof(u_int32_t);
+			memcpy(p + wpos, &as, sizeof(uint32_t));
+			wpos += sizeof(uint32_t);
 		}
 	}
 	if (quantum > 0) {
@@ -1059,8 +1059,8 @@ aspath_prepend(struct aspath *asp, u_int32_t as, int quantum, u_int16_t *len)
 		p[wpos++] = quantum + size;
 
 		for (; quantum > 0; quantum--) {
-			memcpy(p + wpos, &as, sizeof(u_int32_t));
-			wpos += sizeof(u_int32_t);
+			memcpy(p + wpos, &as, sizeof(uint32_t));
+			wpos += sizeof(uint32_t);
 		}
 	}
 	memcpy(p + wpos, asp->data + shift, asp->len - shift);
@@ -1073,13 +1073,13 @@ aspath_prepend(struct aspath *asp, u_int32_t as, int quantum, u_int16_t *len)
  * Returns a new aspath where neighbor_as is replaced by local_as.
  */
 u_char *
-aspath_override(struct aspath *asp, u_int32_t neighbor_as, u_int32_t local_as,
-     u_int16_t *len)
+aspath_override(struct aspath *asp, uint32_t neighbor_as, uint32_t local_as,
+     uint16_t *len)
 {
 	u_char		*p, *seg, *nseg;
-	u_int32_t	 as;
-	u_int16_t	 l, seg_size;
-	u_int8_t	 i, seg_len, seg_type;
+	uint32_t	 as;
+	uint16_t	 l, seg_size;
+	uint8_t		 i, seg_len, seg_type;
 
 	p = malloc(asp->len);
 	if (p == NULL)
@@ -1090,7 +1090,7 @@ aspath_override(struct aspath *asp, u_int32_t neighbor_as, u_int32_t local_as,
 	for (l = asp->len; l > 0; l -= seg_size, seg += seg_size) {
 		*nseg++ = seg_type = seg[0];
 		*nseg++ = seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+		seg_size = 2 + sizeof(uint32_t) * seg_len;
 
 		for (i = 0; i < seg_len; i++) {
 			as = aspath_extract(seg, i);
@@ -1112,11 +1112,11 @@ aspath_override(struct aspath *asp, u_int32_t neighbor_as, u_int32_t local_as,
 int
 aspath_lenmatch(struct aspath *a, enum aslen_spec type, u_int aslen)
 {
-	u_int8_t	*seg;
-	u_int32_t	 as, lastas = 0;
+	uint8_t		*seg;
+	uint32_t	 as, lastas = 0;
 	u_int		 count = 0;
-	u_int16_t	 len, seg_size;
-	u_int8_t	 i, seg_len, seg_type;
+	uint16_t	 len, seg_size;
+	uint8_t		 i, seg_len, seg_type;
 
 	if (type == ASLEN_MAX) {
 		if (aslen < aspath_count(a->data, a->len))
@@ -1130,7 +1130,7 @@ aspath_lenmatch(struct aspath *a, enum aslen_spec type, u_int aslen)
 	for (len = a->len; len > 0; len -= seg_size, seg += seg_size) {
 		seg_type = seg[0];
 		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+		seg_size = 2 + sizeof(uint32_t) * seg_len;
 
 		for (i = 0; i < seg_len; i++) {
 			as = aspath_extract(seg, i);

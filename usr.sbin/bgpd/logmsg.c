@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.5 2021/05/27 08:27:48 claudio Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.6 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -133,8 +133,8 @@ log_statechange(struct peer *peer, enum session_state nstate,
 }
 
 void
-log_notification(const struct peer *peer, u_int8_t errcode, u_int8_t subcode,
-    u_char *data, u_int16_t datalen, const char *dir)
+log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
+    u_char *data, uint16_t datalen, const char *dir)
 {
 	char		*p;
 	const char	*suberrname = NULL;

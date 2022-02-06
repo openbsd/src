@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.12 2021/08/09 08:15:35 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.13 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -28,7 +28,7 @@
 
 struct peer_table {
 	struct rde_peer_head	*peer_hashtbl;
-	u_int32_t		 peer_hashmask;
+	uint32_t		 peer_hashmask;
 } peertable;
 
 #define PEER_HASH(x)		\
@@ -54,7 +54,7 @@ peer_has_as4byte(struct rde_peer *peer)
 }
 
 int
-peer_has_add_path(struct rde_peer *peer, u_int8_t aid, int mode)
+peer_has_add_path(struct rde_peer *peer, uint8_t aid, int mode)
 {
 	if (aid > AID_MAX)
 		return 0;
@@ -68,10 +68,10 @@ peer_accept_no_as_set(struct rde_peer *peer)
 }
 
 void
-peer_init(u_int32_t hashsize)
+peer_init(uint32_t hashsize)
 {
 	struct peer_config pc;
-	u_int32_t	 hs, i;
+	uint32_t	 hs, i;
 
 	for (hs = 1; hs < hashsize; hs <<= 1)
 		;
@@ -99,7 +99,7 @@ peer_init(u_int32_t hashsize)
 void
 peer_shutdown(void)
 {
-	u_int32_t	i;
+	uint32_t	i;
 
 	for (i = 0; i <= peertable.peer_hashmask; i++)
 		if (!LIST_EMPTY(&peertable.peer_hashtbl[i]))
@@ -124,7 +124,7 @@ peer_foreach(void (*callback)(struct rde_peer *, void *), void *arg)
  * Lookup a peer by peer_id, return NULL if not found.
  */
 struct rde_peer *
-peer_get(u_int32_t id)
+peer_get(uint32_t id)
 {
 	struct rde_peer_head	*head;
 	struct rde_peer		*peer;
@@ -144,11 +144,11 @@ peer_get(u_int32_t id)
  * Returns NULL if no more peers match.
  */
 struct rde_peer *
-peer_match(struct ctl_neighbor *n, u_int32_t peerid)
+peer_match(struct ctl_neighbor *n, uint32_t peerid)
 {
 	struct rde_peer_head	*head;
 	struct rde_peer		*peer;
-	u_int32_t		i = 0;
+	uint32_t		i = 0;
 
 	if (peerid != 0)
 		i = peerid & peertable.peer_hashmask;
@@ -173,7 +173,7 @@ peer_match(struct ctl_neighbor *n, u_int32_t peerid)
 }
 
 struct rde_peer *
-peer_add(u_int32_t id, struct peer_config *p_conf)
+peer_add(uint32_t id, struct peer_config *p_conf)
 {
 	struct rde_peer_head	*head;
 	struct rde_peer		*peer;
@@ -243,8 +243,8 @@ peer_flush_upcall(struct rib_entry *re, void *arg)
 	struct bgpd_addr addr;
 	struct prefix *p, *np, *rp;
 	time_t staletime = ((struct peer_flush *)arg)->staletime;
-	u_int32_t i;
-	u_int8_t prefixlen;
+	uint32_t i;
+	uint8_t prefixlen;
 
 	pt_getaddr(re->prefix, &addr);
 	prefixlen = re->prefix->prefixlen;
@@ -294,7 +294,7 @@ rde_up_adjout_force_upcall(struct prefix *p, void *ptr)
 }
 
 static void
-rde_up_adjout_force_done(void *ptr, u_int8_t aid)
+rde_up_adjout_force_done(void *ptr, uint8_t aid)
 {
 	struct rde_peer		*peer = ptr;
 
@@ -326,7 +326,7 @@ rde_up_dump_upcall(struct rib_entry *re, void *ptr)
 }
 
 static void
-rde_up_dump_done(void *ptr, u_int8_t aid)
+rde_up_dump_done(void *ptr, uint8_t aid)
 {
 	struct rde_peer		*peer = ptr;
 
@@ -342,7 +342,7 @@ rde_up_dump_done(void *ptr, u_int8_t aid)
 int
 peer_up(struct rde_peer *peer, struct session_up *sup)
 {
-	u_int8_t	 i;
+	uint8_t	 i;
 
 	if (peer->state == PEER_ERR) {
 		/*
@@ -417,7 +417,7 @@ peer_down(struct rde_peer *peer, void *bula)
  * be flushed.
  */
 void
-peer_flush(struct rde_peer *peer, u_int8_t aid, time_t staletime)
+peer_flush(struct rde_peer *peer, uint8_t aid, time_t staletime)
 {
 	struct peer_flush pf = { peer, staletime };
 
@@ -428,7 +428,7 @@ peer_flush(struct rde_peer *peer, u_int8_t aid, time_t staletime)
 
 	/* every route is gone so reset staletime */
 	if (aid == AID_UNSPEC) {
-		u_int8_t i;
+		uint8_t i;
 		for (i = 0; i < AID_MAX; i++)
 			peer->staletime[i] = 0;
 	} else {
@@ -442,7 +442,7 @@ peer_flush(struct rde_peer *peer, u_int8_t aid, time_t staletime)
  * is set to the current timestamp for identifying stale routes in Adj-RIB-In.
  */
 void
-peer_stale(struct rde_peer *peer, u_int8_t aid)
+peer_stale(struct rde_peer *peer, uint8_t aid)
 {
 	time_t now;
 
@@ -469,7 +469,7 @@ peer_stale(struct rde_peer *peer, u_int8_t aid)
  * and all routes are put on the update queue so they will be sent out.
  */
 void
-peer_dump(struct rde_peer *peer, u_int8_t aid)
+peer_dump(struct rde_peer *peer, uint8_t aid)
 {
 	if (peer->capa.enhanced_rr && (peer->sent_eor & (1 << aid)))
 		rde_peer_send_rrefresh(peer, aid, ROUTE_REFRESH_BEGIN_RR);
@@ -496,7 +496,7 @@ peer_dump(struct rde_peer *peer, u_int8_t aid)
  * which calls peer_flush() to remove all stale routes.
  */
 void
-peer_begin_rrefresh(struct rde_peer *peer, u_int8_t aid)
+peer_begin_rrefresh(struct rde_peer *peer, uint8_t aid)
 {
 	time_t now;
 

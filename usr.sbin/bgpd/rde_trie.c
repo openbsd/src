@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.13 2022/01/28 10:37:23 claudio Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.14 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -60,8 +60,8 @@ struct tentry_v4 {
 	struct set_table	*set;	/* for roa source-as set */
 	struct in_addr		 addr;
 	struct in_addr		 plenmask;
-	u_int8_t		 plen;
-	u_int8_t		 node;
+	uint8_t			 plen;
+	uint8_t			 node;
 };
 
 struct tentry_v6 {
@@ -69,8 +69,8 @@ struct tentry_v6 {
 	struct set_table	*set;	/* for roa source-as set */
 	struct in6_addr		 addr;
 	struct in6_addr		 plenmask;
-	u_int8_t		 plen;
-	u_int8_t		 node;
+	uint8_t			 plen;
+	uint8_t			 node;
 };
 
 /*
@@ -81,7 +81,7 @@ static int
 inet4findmsb(struct in_addr *a, struct in_addr *b)
 {
 	int r = 0;
-	u_int32_t v;
+	uint32_t v;
 
 	v = ntohl(a->s_addr ^ b->s_addr);
 	if (v > 0xffff) { r += 16; v >>= 16; }
@@ -101,7 +101,7 @@ static int
 inet6findmsb(struct in6_addr *a, struct in6_addr *b)
 {
 	int r = 0;
-	u_int8_t i, x;
+	uint8_t i, x;
 
 	for (i = 0; i < sizeof(*a) && a->s6_addr[i] == b->s6_addr[i]; i++)
 		;
@@ -117,32 +117,32 @@ inet6findmsb(struct in6_addr *a, struct in6_addr *b)
 }
 
 static int
-inet4isset(struct in_addr *addr, u_int8_t bit)
+inet4isset(struct in_addr *addr, uint8_t bit)
 {
 	return addr->s_addr & htonl(1U << (31 - bit));
 }
 
 static int
-inet6isset(struct in6_addr *addr, u_int8_t bit)
+inet6isset(struct in6_addr *addr, uint8_t bit)
 {
 	return addr->s6_addr[bit / 8] & (0x80 >> (bit % 8));
 }
 
 static void
-inet4setbit(struct in_addr *addr, u_int8_t bit)
+inet4setbit(struct in_addr *addr, uint8_t bit)
 {
 	/* bit 0 sets the MSB and 31 sets the LSB */
 	addr->s_addr |= htonl(1U << (31 - bit));
 }
 
 static void
-inet6setbit(struct in6_addr *addr, u_int8_t bit)
+inet6setbit(struct in6_addr *addr, uint8_t bit)
 {
 	addr->s6_addr[bit / 8] |= (0x80 >> (bit % 8));
 }
 
 static struct tentry_v4 *
-trie_add_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen)
+trie_add_v4(struct trie_head *th, struct in_addr *prefix, uint8_t plen)
 {
 	struct tentry_v4 *n, *new, *b, **prev;
 	struct in_addr p;
@@ -154,7 +154,7 @@ trie_add_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen)
 	n = *prev;
 	while (n) {
 		struct in_addr mp;
-		u_int8_t minlen;
+		uint8_t minlen;
 
 		minlen = n->plen > plen ? plen : n->plen;
 		inet4applymask(&mp, &p, minlen);
@@ -225,7 +225,7 @@ trie_add_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen)
 }
 
 static struct tentry_v6 *
-trie_add_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen)
+trie_add_v6(struct trie_head *th, struct in6_addr *prefix, uint8_t plen)
 {
 	struct tentry_v6 *n, *new, *b, **prev;
 	struct in6_addr p;
@@ -237,7 +237,7 @@ trie_add_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen)
 	n = *prev;
 	while (n) {
 		struct in6_addr mp;
-		u_int8_t minlen;
+		uint8_t minlen;
 
 		minlen = n->plen > plen ? plen : n->plen;
 		inet6applymask(&mp, &p, minlen);
@@ -314,12 +314,12 @@ trie_add_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen)
  * between min and max will match.
  */
 int
-trie_add(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
-    u_int8_t min, u_int8_t max)
+trie_add(struct trie_head *th, struct bgpd_addr *prefix, uint8_t plen,
+    uint8_t min, uint8_t max)
 {
 	struct tentry_v4 *n4;
 	struct tentry_v6 *n6;
-	u_int8_t i;
+	uint8_t i;
 
 	/* precondition plen <= min <= max */
 	if (plen > min || min > max)
@@ -471,7 +471,7 @@ trie_free(struct trie_head *th)
 }
 
 static int
-trie_match_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
+trie_match_v4(struct trie_head *th, struct in_addr *prefix, uint8_t plen,
     int orlonger)
 {
 	struct tentry_v4 *n;
@@ -512,7 +512,7 @@ trie_match_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
 }
 
 static int
-trie_match_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
+trie_match_v6(struct trie_head *th, struct in6_addr *prefix, uint8_t plen,
     int orlonger)
 {
 	struct tentry_v6 *n;
@@ -553,7 +553,7 @@ trie_match_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
 
 /* find first matching element in the trie for prefix "prefix/plen" */
 int
-trie_match(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
+trie_match(struct trie_head *th, struct bgpd_addr *prefix, uint8_t plen,
     int orlonger)
 {
 	switch (prefix->aid) {
@@ -568,8 +568,8 @@ trie_match(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
 }
 
 static int
-trie_roa_check_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
-    u_int32_t as)
+trie_roa_check_v4(struct trie_head *th, struct in_addr *prefix, uint8_t plen,
+    uint32_t as)
 {
 	struct tentry_v4 *n;
 	struct roa_set *rs;
@@ -616,8 +616,8 @@ trie_roa_check_v4(struct trie_head *th, struct in_addr *prefix, u_int8_t plen,
 }
 
 static int
-trie_roa_check_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
-    u_int32_t as)
+trie_roa_check_v6(struct trie_head *th, struct in6_addr *prefix, uint8_t plen,
+    uint32_t as)
 {
 	struct tentry_v6 *n;
 	struct roa_set *rs;
@@ -670,8 +670,8 @@ trie_roa_check_v6(struct trie_head *th, struct in6_addr *prefix, u_int8_t plen,
  * the prefix is covered by the ROA.
  */
 int
-trie_roa_check(struct trie_head *th, struct bgpd_addr *prefix, u_int8_t plen,
-    u_int32_t as)
+trie_roa_check(struct trie_head *th, struct bgpd_addr *prefix, uint8_t plen,
+    uint32_t as)
 {
 	/* valid, invalid, unknown */
 	switch (prefix->aid) {

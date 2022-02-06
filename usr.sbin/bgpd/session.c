@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.425 2022/01/20 18:06:20 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.426 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -66,38 +66,38 @@ void	session_accept(int);
 int	session_connect(struct peer *);
 void	session_tcp_established(struct peer *);
 void	session_capa_ann_none(struct peer *);
-int	session_capa_add(struct ibuf *, u_int8_t, u_int8_t);
-int	session_capa_add_mp(struct ibuf *, u_int8_t);
-int	session_capa_add_afi(struct peer *, struct ibuf *, u_int8_t, u_int8_t);
-struct bgp_msg	*session_newmsg(enum msg_type, u_int16_t);
+int	session_capa_add(struct ibuf *, uint8_t, uint8_t);
+int	session_capa_add_mp(struct ibuf *, uint8_t);
+int	session_capa_add_afi(struct peer *, struct ibuf *, uint8_t, uint8_t);
+struct bgp_msg	*session_newmsg(enum msg_type, uint16_t);
 int	session_sendmsg(struct bgp_msg *, struct peer *);
 void	session_open(struct peer *);
 void	session_keepalive(struct peer *);
-void	session_update(u_int32_t, void *, size_t);
-void	session_notification(struct peer *, u_int8_t, u_int8_t, void *,
+void	session_update(uint32_t, void *, size_t);
+void	session_notification(struct peer *, uint8_t, uint8_t, void *,
 	    ssize_t);
-void	session_rrefresh(struct peer *, u_int8_t, u_int8_t);
+void	session_rrefresh(struct peer *, uint8_t, uint8_t);
 int	session_graceful_restart(struct peer *);
 int	session_graceful_stop(struct peer *);
 int	session_dispatch_msg(struct pollfd *, struct peer *);
 void	session_process_msg(struct peer *);
-int	parse_header(struct peer *, u_char *, u_int16_t *, u_int8_t *);
+int	parse_header(struct peer *, u_char *, uint16_t *, uint8_t *);
 int	parse_open(struct peer *);
 int	parse_update(struct peer *);
 int	parse_rrefresh(struct peer *);
 int	parse_notification(struct peer *);
-int	parse_capabilities(struct peer *, u_char *, u_int16_t, u_int32_t *);
+int	parse_capabilities(struct peer *, u_char *, uint16_t, uint32_t *);
 int	capa_neg_calc(struct peer *);
 void	session_dispatch_imsg(struct imsgbuf *, int, u_int *);
 void	session_up(struct peer *);
 void	session_down(struct peer *);
-int	imsg_rde(int, u_int32_t, void *, u_int16_t);
+int	imsg_rde(int, uint32_t, void *, uint16_t);
 void	session_demote(struct peer *, int);
 void	merge_peers(struct bgpd_config *, struct bgpd_config *);
 
 int		 la_cmp(struct listen_addr *, struct listen_addr *);
 void		 session_template_clone(struct peer *, struct sockaddr *,
-		    u_int32_t, u_int32_t);
+		    uint32_t, uint32_t);
 int		 session_match_mask(struct peer *, struct bgpd_addr *);
 
 static struct bgpd_config	*conf, *nconf;
@@ -1304,7 +1304,7 @@ session_capa_ann_none(struct peer *peer)
 }
 
 int
-session_capa_add(struct ibuf *opb, u_int8_t capa_code, u_int8_t capa_len)
+session_capa_add(struct ibuf *opb, uint8_t capa_code, uint8_t capa_len)
 {
 	int errs = 0;
 
@@ -1314,10 +1314,10 @@ session_capa_add(struct ibuf *opb, u_int8_t capa_code, u_int8_t capa_len)
 }
 
 int
-session_capa_add_mp(struct ibuf *buf, u_int8_t aid)
+session_capa_add_mp(struct ibuf *buf, uint8_t aid)
 {
-	u_int8_t		 safi, pad = 0;
-	u_int16_t		 afi;
+	uint8_t			 safi, pad = 0;
+	uint16_t		 afi;
 	int			 errs = 0;
 
 	if (aid2afi(aid, &afi, &safi) == -1)
@@ -1331,12 +1331,12 @@ session_capa_add_mp(struct ibuf *buf, u_int8_t aid)
 }
 
 int
-session_capa_add_afi(struct peer *p, struct ibuf *b, u_int8_t aid,
-    u_int8_t flags)
+session_capa_add_afi(struct peer *p, struct ibuf *b, uint8_t aid,
+    uint8_t flags)
 {
 	u_int		errs = 0;
-	u_int16_t	afi;
-	u_int8_t	safi;
+	uint16_t	afi;
+	uint8_t		safi;
 
 	if (aid2afi(aid, &afi, &safi)) {
 		log_warn("session_capa_add_afi: bad AID");
@@ -1352,7 +1352,7 @@ session_capa_add_afi(struct peer *p, struct ibuf *b, u_int8_t aid,
 }
 
 struct bgp_msg *
-session_newmsg(enum msg_type msgtype, u_int16_t len)
+session_newmsg(enum msg_type msgtype, uint16_t len)
 {
 	struct bgp_msg		*msg;
 	struct msg_header	 hdr;
@@ -1416,8 +1416,8 @@ session_open(struct peer *p)
 	struct bgp_msg		*buf;
 	struct ibuf		*opb;
 	struct msg_open		 msg;
-	u_int16_t		 len, optparamlen = 0;
-	u_int8_t		 i, op_type;
+	uint16_t		 len, optparamlen = 0;
+	uint8_t			 i, op_type;
 	int			 errs = 0, extlen = 0;
 	int			 mpcapa = 0;
 
@@ -1442,7 +1442,7 @@ session_open(struct peer *p)
 	/* graceful restart and End-of-RIB marker, RFC 4724 */
 	if (p->capa.ann.grestart.restart) {
 		int		rst = 0;
-		u_int16_t	hdr = 0;
+		uint16_t	hdr = 0;
 
 		for (i = 0; i < AID_MAX; i++) {
 			if (p->capa.neg.grestart.flags[i] & CAPA_GR_RESTARTING)
@@ -1460,7 +1460,7 @@ session_open(struct peer *p)
 
 	/* 4-bytes AS numbers, RFC6793 */
 	if (p->capa.ann.as4byte) {	/* 4 bytes data */
-		u_int32_t	nas;
+		uint32_t	nas;
 
 		nas = htonl(p->conf.local_as);
 		errs += session_capa_add(opb, CAPA_AS4BYTE, sizeof(nas));
@@ -1469,7 +1469,7 @@ session_open(struct peer *p)
 
 	/* advertisement of multiple paths, RFC7911 */
 	if (p->capa.ann.add_path[0]) {	/* variable */
-		u_int8_t	aplen;
+		uint8_t	aplen;
 
 		if (mpcapa)
 			aplen = 4 * mpcapa;
@@ -1529,7 +1529,7 @@ session_open(struct peer *p)
 
 	if (extlen) {
 		/* write RFC9072 extra header */
-		u_int16_t op_extlen = htons(optparamlen - 3);
+		uint16_t op_extlen = htons(optparamlen - 3);
 		op_type = OPT_PARAM_EXT_LEN;
 		errs += ibuf_add(buf->buf, &op_type, 1);
 		errs += ibuf_add(buf->buf, &op_extlen, 2);
@@ -1542,10 +1542,10 @@ session_open(struct peer *p)
 		optparamlen = ibuf_size(opb);
 		if (extlen) {
 			/* RFC9072: 2-byte extended length */
-			u_int16_t op_extlen = htons(optparamlen);
+			uint16_t op_extlen = htons(optparamlen);
 			errs += ibuf_add(buf->buf, &op_extlen, 2);
 		} else {
-			u_int8_t op_len = optparamlen;
+			uint8_t op_len = optparamlen;
 			errs += ibuf_add(buf->buf, &op_len, 1);
 		}
 		errs += ibuf_add(buf->buf, opb->buf, ibuf_size(opb));
@@ -1584,7 +1584,7 @@ session_keepalive(struct peer *p)
 }
 
 void
-session_update(u_int32_t peerid, void *data, size_t datalen)
+session_update(uint32_t peerid, void *data, size_t datalen)
 {
 	struct peer		*p;
 	struct bgp_msg		*buf;
@@ -1619,7 +1619,7 @@ session_update(u_int32_t peerid, void *data, size_t datalen)
 }
 
 void
-session_notification(struct peer *p, u_int8_t errcode, u_int8_t subcode,
+session_notification(struct peer *p, uint8_t errcode, uint8_t subcode,
     void *data, ssize_t datalen)
 {
 	struct bgp_msg		*buf;
@@ -1669,7 +1669,7 @@ session_notification(struct peer *p, u_int8_t errcode, u_int8_t subcode,
 int
 session_neighbor_rrefresh(struct peer *p)
 {
-	u_int8_t	i;
+	uint8_t	i;
 
 	if (!(p->capa.neg.refresh || p->capa.neg.enhanced_rr))
 		return (-1);
@@ -1683,12 +1683,12 @@ session_neighbor_rrefresh(struct peer *p)
 }
 
 void
-session_rrefresh(struct peer *p, u_int8_t aid, u_int8_t subtype)
+session_rrefresh(struct peer *p, uint8_t aid, uint8_t subtype)
 {
 	struct bgp_msg		*buf;
 	int			 errs = 0;
-	u_int16_t		 afi;
-	u_int8_t		 safi;
+	uint16_t		 afi;
+	uint8_t			 safi;
 
 	switch (subtype) {
 	case ROUTE_REFRESH_REQUEST:
@@ -1739,7 +1739,7 @@ session_rrefresh(struct peer *p, u_int8_t aid, u_int8_t subtype)
 int
 session_graceful_restart(struct peer *p)
 {
-	u_int8_t	i;
+	uint8_t	i;
 
 	timer_set(&p->timers, Timer_RestartTimeout,
 	    p->capa.neg.grestart.timeout);
@@ -1768,7 +1768,7 @@ session_graceful_restart(struct peer *p)
 int
 session_graceful_stop(struct peer *p)
 {
-	u_int8_t	i;
+	uint8_t	i;
 
 	for (i = 0; i < AID_MAX; i++) {
 		/*
@@ -1887,8 +1887,8 @@ session_process_msg(struct peer *p)
 	struct mrt	*mrt;
 	ssize_t		rpos, av, left;
 	int		processed = 0;
-	u_int16_t	msglen;
-	u_int8_t	msgtype;
+	uint16_t	msglen;
+	uint8_t		msgtype;
 
 	rpos = 0;
 	av = p->rbuf->wpos;
@@ -1966,11 +1966,11 @@ session_process_msg(struct peer *p)
 }
 
 int
-parse_header(struct peer *peer, u_char *data, u_int16_t *len, u_int8_t *type)
+parse_header(struct peer *peer, u_char *data, uint16_t *len, uint8_t *type)
 {
 	u_char			*p;
-	u_int16_t		 olen;
-	static const u_int8_t	 marker[MSGSIZE_HEADER_MARKER] = { 0xff, 0xff,
+	uint16_t		 olen;
+	static const uint8_t	 marker[MSGSIZE_HEADER_MARKER] = { 0xff, 0xff,
 				    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 				    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
@@ -2065,12 +2065,12 @@ int
 parse_open(struct peer *peer)
 {
 	u_char		*p, *op_val;
-	u_int8_t	 version, rversion;
-	u_int16_t	 short_as, msglen;
-	u_int16_t	 holdtime, oholdtime, myholdtime;
-	u_int32_t	 as, bgpid;
-	u_int16_t	 optparamlen, extlen, plen, op_len;
-	u_int8_t	 op_type;
+	uint8_t		 version, rversion;
+	uint16_t	 short_as, msglen;
+	uint16_t	 holdtime, oholdtime, myholdtime;
+	uint32_t	 as, bgpid;
+	uint16_t	 optparamlen, extlen, plen, op_len;
+	uint8_t		 op_type;
 
 	p = peer->rbuf->rptr;
 	p += MSGSIZE_HEADER_MARKER;
@@ -2273,7 +2273,7 @@ int
 parse_update(struct peer *peer)
 {
 	u_char		*p;
-	u_int16_t	 datalen;
+	uint16_t	 datalen;
 
 	/*
 	 * we pass the message verbatim to the rde.
@@ -2299,8 +2299,8 @@ int
 parse_rrefresh(struct peer *peer)
 {
 	struct route_refresh rr;
-	u_int16_t afi, datalen;
-	u_int8_t aid, safi, subtype;
+	uint16_t afi, datalen;
+	uint8_t aid, safi, subtype;
 	u_char *p;
 
 	p = peer->rbuf->rptr;
@@ -2399,13 +2399,13 @@ int
 parse_notification(struct peer *peer)
 {
 	u_char		*p;
-	u_int16_t	 datalen;
-	u_int8_t	 errcode;
-	u_int8_t	 subcode;
-	u_int8_t	 capa_code;
-	u_int8_t	 capa_len;
+	uint16_t	 datalen;
+	uint8_t		 errcode;
+	uint8_t		 subcode;
+	uint8_t		 capa_code;
+	uint8_t		 capa_len;
 	size_t		 reason_len;
-	u_int8_t	 i;
+	uint8_t		 i;
 
 	/* just log */
 	p = peer->rbuf->rptr;
@@ -2543,19 +2543,19 @@ parse_notification(struct peer *peer)
 }
 
 int
-parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
+parse_capabilities(struct peer *peer, u_char *d, uint16_t dlen, uint32_t *as)
 {
 	u_char		*capa_val;
-	u_int32_t	 remote_as;
-	u_int16_t	 len;
-	u_int16_t	 afi;
-	u_int16_t	 gr_header;
-	u_int8_t	 safi;
-	u_int8_t	 aid;
-	u_int8_t	 flags;
-	u_int8_t	 capa_code;
-	u_int8_t	 capa_len;
-	u_int8_t	 i;
+	uint32_t	 remote_as;
+	uint16_t	 len;
+	uint16_t	 afi;
+	uint16_t	 gr_header;
+	uint8_t		 safi;
+	uint8_t		 aid;
+	uint8_t		 flags;
+	uint8_t		 capa_code;
+	uint8_t		 capa_len;
+	uint8_t		 i;
 
 	len = dlen;
 	while (len > 0) {
@@ -2724,7 +2724,7 @@ parse_capabilities(struct peer *peer, u_char *d, u_int16_t dlen, u_int32_t *as)
 int
 capa_neg_calc(struct peer *p)
 {
-	u_int8_t	i, hasmp = 0;
+	uint8_t	i, hasmp = 0;
 
 	/* a capability is accepted only if both sides announced it */
 
@@ -2826,8 +2826,8 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 	struct kif		*kif;
 	u_char			*data;
 	int			 n, fd, depend_ok, restricted;
-	u_int16_t		 t;
-	u_int8_t		 aid, errcode, subcode;
+	uint16_t		 t;
+	uint8_t			 aid, errcode, subcode;
 
 	while (ibuf) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
@@ -3273,7 +3273,7 @@ getpeerbyip(struct bgpd_config *c, struct sockaddr *ip)
 {
 	struct bgpd_addr addr;
 	struct peer	*p, *newpeer, *loose = NULL;
-	u_int32_t	 id;
+	uint32_t	 id;
 
 	sa2addr(ip, &addr, NULL);
 
@@ -3318,7 +3318,7 @@ getpeerbyip(struct bgpd_config *c, struct sockaddr *ip)
 }
 
 struct peer *
-getpeerbyid(struct bgpd_config *c, u_int32_t peerid)
+getpeerbyid(struct bgpd_config *c, uint32_t peerid)
 {
 	static struct peer lookup;
 
@@ -3345,8 +3345,8 @@ peer_matched(struct peer *p, struct ctl_neighbor *n)
 }
 
 void
-session_template_clone(struct peer *p, struct sockaddr *ip, u_int32_t id,
-    u_int32_t as)
+session_template_clone(struct peer *p, struct sockaddr *ip, uint32_t id,
+    uint32_t as)
 {
 	struct bgpd_addr	remote_addr;
 
@@ -3445,14 +3445,14 @@ session_up(struct peer *p)
 }
 
 int
-imsg_ctl_parent(int type, u_int32_t peerid, pid_t pid, void *data,
-    u_int16_t datalen)
+imsg_ctl_parent(int type, uint32_t peerid, pid_t pid, void *data,
+    uint16_t datalen)
 {
 	return (imsg_compose(ibuf_main, type, peerid, pid, -1, data, datalen));
 }
 
 int
-imsg_ctl_rde(int type, pid_t pid, void *data, u_int16_t datalen)
+imsg_ctl_rde(int type, pid_t pid, void *data, uint16_t datalen)
 {
 	if (ibuf_rde_ctl == NULL) {
 		log_warnx("Can't send message %u to RDE, ctl pipe closed",
@@ -3467,7 +3467,7 @@ imsg_ctl_rde(int type, pid_t pid, void *data, u_int16_t datalen)
 }
 
 int
-imsg_rde(int type, uint32_t peerid, void *data, u_int16_t datalen)
+imsg_rde(int type, uint32_t peerid, void *data, uint16_t datalen)
 {
 	if (ibuf_rde == NULL) {
 		log_warnx("Can't send message %u to RDE, pipe closed", type);
@@ -3493,7 +3493,7 @@ session_demote(struct peer *p, int level)
 }
 
 void
-session_stop(struct peer *peer, u_int8_t subcode)
+session_stop(struct peer *peer, uint8_t subcode)
 {
 	char data[REASON_LEN];
 	size_t datalen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.126 2020/12/30 07:29:56 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.127 2022/02/06 09:51:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -33,13 +33,13 @@ int	filterset_equal(struct filter_set_head *, struct filter_set_head *);
 
 void
 rde_apply_set(struct filter_set_head *sh, struct rde_peer *peer,
-    struct rde_peer *from, struct filterstate *state, u_int8_t aid)
+    struct rde_peer *from, struct filterstate *state, uint8_t aid)
 {
 	struct filter_set	*set;
 	u_char			*np;
-	u_int32_t		 prep_as;
-	u_int16_t		 nl;
-	u_int8_t		 prepend;
+	uint32_t		 prep_as;
+	uint16_t		 nl;
+	uint8_t			 prepend;
 
 	TAILQ_FOREACH(set, sh, entry) {
 		switch (set->type) {
@@ -180,7 +180,7 @@ rde_apply_set(struct filter_set_head *sh, struct rde_peer *peer,
 /* return 1 when prefix matches filter_prefix, 0 if not */
 static int
 rde_prefix_match(struct filter_prefix *fp, struct bgpd_addr *prefix,
-    u_int8_t plen)
+    uint8_t plen)
 {
 	if (fp->addr.aid != prefix->aid)
 		/* don't use IPv4 rules for IPv6 and vice versa */
@@ -212,7 +212,7 @@ rde_prefix_match(struct filter_prefix *fp, struct bgpd_addr *prefix,
 static int
 rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
     struct rde_peer *from, struct filterstate *state,
-    struct bgpd_addr *prefix, u_int8_t plen, u_int8_t vstate)
+    struct bgpd_addr *prefix, uint8_t plen, uint8_t vstate)
 {
 	struct rde_aspath *asp = &state->aspath;
 	int i;
@@ -411,7 +411,7 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 
 void
 rde_filterstate_prep(struct filterstate *state, struct rde_aspath *asp,
-    struct rde_community *communities, struct nexthop *nh, u_int8_t nhflags)
+    struct rde_community *communities, struct nexthop *nh, uint8_t nhflags)
 {
 	memset(state, 0, sizeof(*state));
 
@@ -767,8 +767,8 @@ rde_filter_calc_skip_steps(struct filter_head *rules)
 
 enum filter_actions
 rde_filter(struct filter_head *rules, struct rde_peer *peer,
-    struct rde_peer *from, struct bgpd_addr *prefix, u_int8_t plen,
-    u_int8_t vstate, struct filterstate *state)
+    struct rde_peer *from, struct bgpd_addr *prefix, uint8_t plen,
+    uint8_t vstate, struct filterstate *state)
 {
 	struct filter_rule	*f;
 	enum filter_actions	 action = ACTION_DENY; /* default deny */
