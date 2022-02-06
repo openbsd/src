@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrtparser.h,v 1.4 2021/07/27 07:42:37 claudio Exp $ */
+/*	$OpenBSD: mrtparser.h,v 1.5 2022/02/06 09:52:32 claudio Exp $ */
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
  *
@@ -20,15 +20,15 @@
 /* data structures for the MSG_TABLE_DUMP_V2 format */
 struct mrt_peer_entry {
 	struct bgpd_addr	addr;
-	u_int32_t		bgp_id;
-	u_int32_t		asnum;
+	uint32_t		bgp_id;
+	uint32_t		asnum;
 };
 
 struct mrt_peer {
 	char			*view;
 	struct mrt_peer_entry	*peers;
-	u_int32_t		 bgp_id;
-	u_int16_t		 npeers;
+	uint32_t		 bgp_id;
+	uint16_t		 npeers;
 };
 
 struct mrt_attr {
@@ -41,22 +41,22 @@ struct mrt_rib_entry {
 	struct mrt_attr	*attrs;
 	struct bgpd_addr nexthop;
 	time_t		 originated;
-	u_int32_t	 local_pref;
-	u_int32_t	 med;
-	u_int32_t	 path_id;
-	u_int16_t	 peer_idx;
-	u_int16_t	 aspath_len;
-	u_int16_t	 nattrs;
-	u_int8_t	 origin;
+	uint32_t	 local_pref;
+	uint32_t	 med;
+	uint32_t	 path_id;
+	uint16_t	 peer_idx;
+	uint16_t	 aspath_len;
+	uint16_t	 nattrs;
+	uint8_t		 origin;
 };
 
 struct mrt_rib {
 	struct mrt_rib_entry	*entries;
 	struct bgpd_addr	 prefix;
-	u_int32_t		 seqnum;
-	u_int16_t		 nentries;
-	u_int8_t		 prefixlen;
-	u_int8_t	 	 add_path;
+	uint32_t		 seqnum;
+	uint16_t		 nentries;
+	uint8_t			 prefixlen;
+	uint8_t		 	 add_path;
 };
 
 /* data structures for the BGP4MP MESSAGE and STATE types */
@@ -64,20 +64,20 @@ struct mrt_bgp_state {
 	struct timespec		time;
 	struct bgpd_addr	src;
 	struct bgpd_addr	dst;
-	u_int32_t		src_as;
-	u_int32_t		dst_as;
-	u_int16_t		old_state;
-	u_int16_t		new_state;
+	uint32_t		src_as;
+	uint32_t		dst_as;
+	uint16_t		old_state;
+	uint16_t		new_state;
 };
 
 struct mrt_bgp_msg {
 	struct timespec	 time;
 	struct bgpd_addr src;
 	struct bgpd_addr dst;
-	u_int32_t	 src_as;
-	u_int32_t	 dst_as;
-	u_int16_t	 msg_len;
-	u_int8_t	 add_path;
+	uint32_t	 src_as;
+	uint32_t	 dst_as;
+	uint16_t	 msg_len;
+	uint8_t		 add_path;
 	void		*msg;
 };
 

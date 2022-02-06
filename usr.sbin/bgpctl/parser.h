@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.h,v 1.41 2021/08/09 08:24:36 claudio Exp $ */
+/*	$OpenBSD: parser.h,v 1.42 2022/02/06 09:52:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -68,19 +68,19 @@ struct parse_result {
 	char			 rib[PEER_DESCR_LEN];
 	char			 reason[REASON_LEN];
 	const char		*ext_comm_subtype;
-	u_int64_t		 rd;
+	uint64_t		 rd;
 	int			 flags;
 	int			 is_group;
 	u_int			 rtableid;
-	u_int32_t		 pathid;
+	uint32_t		 pathid;
 	enum actions		 action;
-	u_int8_t		 validation_state;
-	u_int8_t		 prefixlen;
-	u_int8_t		 aid;
+	uint8_t			 validation_state;
+	uint8_t			 prefixlen;
+	uint8_t			 aid;
 	int			 mrtfd;
 };
 
 __dead void		 usage(void);
 struct parse_result	*parse(int, char *[]);
 int			 parse_prefix(const char *, size_t, struct bgpd_addr *,
-			     u_int8_t *);
+			     uint8_t *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.19 2021/07/30 09:45:52 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.20 2022/02/06 09:52:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -134,8 +134,8 @@ show_summary(struct peer *p)
 static void
 show_neighbor_capa_mp(struct capabilities *capa)
 {
-	int		comma;
-	u_int8_t	i;
+	int	comma;
+	uint8_t	i;
 
 	printf("    Multiprotocol extensions: ");
 	for (i = 0, comma = 0; i < AID_MAX; i++)
@@ -151,7 +151,7 @@ show_neighbor_capa_add_path(struct capabilities *capa)
 {
 	const char	*mode;
 	int		comma;
-	u_int8_t	i;
+	uint8_t		i;
 
 	printf("    Add-path: ");
 	for (i = 0, comma = 0; i < AID_MAX; i++) {
@@ -177,8 +177,8 @@ show_neighbor_capa_add_path(struct capabilities *capa)
 static void
 show_neighbor_capa_restart(struct capabilities *capa)
 {
-	int		comma;
-	u_int8_t	i;
+	int	comma;
+	uint8_t	i;
 
 	printf("    Graceful Restart");
 	if (capa->grestart.timeout)
@@ -242,11 +242,11 @@ show_neighbor_msgstats(struct peer *p)
 static void
 show_neighbor_full(struct peer *p, struct parse_result *res)
 {
-	const char		*errstr;
-	struct in_addr		 ina;
-	char			*s;
-	int			 hascapamp, hascapaap;
-	u_int8_t		 i;
+	const char	*errstr;
+	struct in_addr	 ina;
+	char		*s;
+	int		 hascapamp, hascapaap;
+	uint8_t		 i;
 
 	if ((p->conf.remote_addr.aid == AID_INET &&
 	    p->conf.remote_masklen != 32) ||
@@ -455,7 +455,7 @@ show_timer(struct ctl_timer *t)
 static void
 show_fib(struct kroute_full *kf)
 {
-	char			*p;
+	char	*p;
 
 	if (asprintf(&p, "%s/%u", log_addr(&kf->prefix), kf->prefixlen) == -1)
 		err(1, NULL);
@@ -480,9 +480,9 @@ show_fib_table(struct ktable *kt)
 static void
 show_nexthop(struct ctl_show_nexthop *nh)
 {
-	struct kroute		*k;
-	struct kroute6		*k6;
-	char			*s;
+	struct kroute	*k;
+	struct kroute6	*k6;
+	char		*s;
 
 	printf("%s %-15s ", nh->valid ? "*" : " ", log_addr(&nh->addr));
 	if (!nh->krvalid) {
@@ -548,8 +548,8 @@ show_communities(u_char *data, size_t len, struct parse_result *res)
 {
 	struct community c;
 	size_t	i;
-	u_int64_t ext;
-	u_int8_t type = 0;
+	uint64_t ext;
+	uint8_t type = 0;
 
 	if (len % sizeof(c))
 		return;
@@ -574,19 +574,19 @@ show_communities(u_char *data, size_t len, struct parse_result *res)
 			    fmt_large_community(c.data1, c.data2, c.data3));
 			break;
 		case COMMUNITY_TYPE_EXT:
-			ext = (u_int64_t)c.data3 << 48;
+			ext = (uint64_t)c.data3 << 48;
 			switch (c.data3 >> 8) {
 			case EXT_COMMUNITY_TRANS_TWO_AS:
 			case EXT_COMMUNITY_TRANS_OPAQUE:
 			case EXT_COMMUNITY_TRANS_EVPN:
 			case EXT_COMMUNITY_NON_TRANS_OPAQUE:
-				ext |= ((u_int64_t)c.data1 & 0xffff) << 32;
-				ext |= (u_int64_t)c.data2;
+				ext |= ((uint64_t)c.data1 & 0xffff) << 32;
+				ext |= (uint64_t)c.data2;
 				break;
 			case EXT_COMMUNITY_TRANS_FOUR_AS:
 			case EXT_COMMUNITY_TRANS_IPV4:
-				ext |= (u_int64_t)c.data1 << 16;
-				ext |= (u_int64_t)c.data2 & 0xffff;
+				ext |= (uint64_t)c.data1 << 16;
+				ext |= (uint64_t)c.data2 & 0xffff;
 				break;
 			}
 			ext = htobe64(ext);
@@ -600,10 +600,10 @@ show_communities(u_char *data, size_t len, struct parse_result *res)
 }
 
 static void
-show_community(u_char *data, u_int16_t len)
+show_community(u_char *data, uint16_t len)
 {
-	u_int16_t	a, v;
-	u_int16_t	i;
+	uint16_t	a, v;
+	uint16_t	i;
 
 	if (len & 0x3) {
 		printf("bad length");
@@ -623,10 +623,10 @@ show_community(u_char *data, u_int16_t len)
 }
 
 static void
-show_large_community(u_char *data, u_int16_t len)
+show_large_community(u_char *data, uint16_t len)
 {
-	u_int32_t	a, l1, l2;
-	u_int16_t	i;
+	uint32_t	a, l1, l2;
+	uint16_t	i;
 
 	if (len % 12) {
 		printf("bad length");
@@ -648,9 +648,9 @@ show_large_community(u_char *data, u_int16_t len)
 }
 
 static void
-show_ext_community(u_char *data, u_int16_t len)
+show_ext_community(u_char *data, uint16_t len)
 {
-	u_int16_t	i;
+	uint16_t	i;
 
 	if (len & 0x7) {
 		printf("bad length");
@@ -672,9 +672,9 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 	struct in_addr	 id;
 	struct bgpd_addr prefix;
 	char		*aspath;
-	u_int32_t	 as, pathid;
-	u_int16_t	 alen, ioff, short_as, afi;
-	u_int8_t	 flags, type, safi, aid, prefixlen;
+	uint32_t	 as, pathid;
+	uint16_t	 alen, ioff, short_as, afi;
+	uint8_t		 flags, type, safi, aid, prefixlen;
 	int		 i, pos, e2, e4;
 
 	if (len < 3) {
@@ -691,7 +691,7 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 			warnx("Too short BGP attrbute");
 			return;
 		}
-		memcpy(&alen, data+2, sizeof(u_int16_t));
+		memcpy(&alen, data+2, sizeof(uint16_t));
 		alen = ntohs(alen);
 		data += 4;
 		len -= 4;
@@ -748,7 +748,7 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 	case ATTR_MED:
 	case ATTR_LOCALPREF:
 		if (alen == 4) {
-			u_int32_t val;
+			uint32_t val;
 			memcpy(&val, data, sizeof(val));
 			val = ntohl(val);
 			printf("%u", val);
@@ -810,7 +810,7 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 
 		if (type == ATTR_MP_REACH_NLRI) {
 			struct bgpd_addr nexthop;
-			u_int8_t nhlen;
+			uint8_t nhlen;
 			if (len == 0)
 				goto bad_len;
 			nhlen = *data++;
@@ -829,14 +829,14 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 				if (nhlen != 12)
 					goto bad_len;
 				nexthop.aid = AID_INET;
-				memcpy(&nexthop.v4, data + sizeof(u_int64_t),
+				memcpy(&nexthop.v4, data + sizeof(uint64_t),
 				    sizeof(nexthop.v4));
 				break;
 			case AID_VPN_IPv6:
 				if (nhlen != 24)
 					goto bad_len;
 				nexthop.aid = AID_INET6;
-				memcpy(&nexthop.v6, data + sizeof(u_int64_t),
+				memcpy(&nexthop.v6, data + sizeof(uint64_t),
 				    sizeof(nexthop.v6));
 				break;
 			default:

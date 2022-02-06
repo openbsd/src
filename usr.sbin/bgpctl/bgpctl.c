@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.274 2022/02/04 12:01:33 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.275 2022/02/06 09:52:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -54,9 +54,9 @@ void		 show_mrt_dump(struct mrt_rib *, struct mrt_peer *, void *);
 void		 network_mrt_dump(struct mrt_rib *, struct mrt_peer *, void *);
 void		 show_mrt_state(struct mrt_bgp_state *, void *);
 void		 show_mrt_msg(struct mrt_bgp_msg *, void *);
-const char	*msg_type(u_int8_t);
+const char	*msg_type(uint8_t);
 void		 network_bulk(struct parse_result *);
-int		 match_aspath(void *, u_int16_t, struct filter_as *);
+int		 match_aspath(void *, uint16_t, struct filter_as *);
 
 struct imsgbuf	*ibuf;
 struct mrt_parser show_mrt = { show_mrt_dump, show_mrt_state, show_mrt_msg };
@@ -624,7 +624,7 @@ fmt_monotime(time_t t)
 }
 
 const char *
-fmt_fib_flags(u_int16_t flags)
+fmt_fib_flags(uint16_t flags)
 {
 	static char buf[8];
 
@@ -665,7 +665,7 @@ fmt_fib_flags(u_int16_t flags)
 }
 
 const char *
-fmt_origin(u_int8_t origin, int sum)
+fmt_origin(uint8_t origin, int sum)
 {
 	switch (origin) {
 	case ORIGIN_IGP:
@@ -680,7 +680,7 @@ fmt_origin(u_int8_t origin, int sum)
 }
 
 const char *
-fmt_flags(u_int8_t flags, int sum)
+fmt_flags(uint8_t flags, int sum)
 {
 	static char buf[80];
 	char	 flagstr[5];
@@ -723,7 +723,7 @@ fmt_flags(u_int8_t flags, int sum)
 }
 
 const char *
-fmt_ovs(u_int8_t validation_state, int sum)
+fmt_ovs(uint8_t validation_state, int sum)
 {
 	switch (validation_state) {
 	case ROA_INVALID:
@@ -747,7 +747,7 @@ fmt_mem(long long num)
 }
 
 const char *
-fmt_errstr(u_int8_t errcode, u_int8_t subcode)
+fmt_errstr(uint8_t errcode, uint8_t subcode)
 {
 	static char	 errbuf[256];
 	const char	*errstr = NULL;
@@ -814,7 +814,7 @@ fmt_errstr(u_int8_t errcode, u_int8_t subcode)
 }
 
 const char *
-fmt_attr(u_int8_t type, int flags)
+fmt_attr(uint8_t type, int flags)
 {
 #define CHECK_FLAGS(s, t, m)	\
 	if (((s) & ~(ATTR_DEFMASK | (m))) != (t)) pflags = 1
@@ -909,7 +909,7 @@ fmt_attr(u_int8_t type, int flags)
 }
 
 const char *
-fmt_community(u_int16_t a, u_int16_t v)
+fmt_community(uint16_t a, uint16_t v)
 {
 	static char buf[12];
 
@@ -936,7 +936,7 @@ fmt_community(u_int16_t a, u_int16_t v)
 }
 
 const char *
-fmt_large_community(u_int32_t d1, u_int32_t d2, u_int32_t d3)
+fmt_large_community(uint32_t d1, uint32_t d2, uint32_t d3)
 {
 	static char buf[33];
 
@@ -945,14 +945,14 @@ fmt_large_community(u_int32_t d1, u_int32_t d2, u_int32_t d3)
 }
 
 const char *
-fmt_ext_community(u_int8_t *data)
+fmt_ext_community(uint8_t *data)
 {
 	static char	buf[32];
-	u_int64_t	ext;
+	uint64_t	ext;
 	struct in_addr	ip;
-	u_int32_t	as4, u32;
-	u_int16_t	as2, u16;
-	u_int8_t	type, subtype;
+	uint32_t	as4, u32;
+	uint16_t	as2, u16;
+	uint8_t		type, subtype;
 
 	type = data[0];
 	subtype = data[1];
@@ -1057,7 +1057,7 @@ network_bulk(struct parse_result *res)
 	char *line = NULL;
 	size_t linesize = 0;
 	ssize_t linelen;
-	u_int8_t len;
+	uint8_t len;
 	FILE *f;
 
 	if ((f = fdopen(STDIN_FILENO, "r")) == NULL)
@@ -1108,7 +1108,7 @@ show_mrt_dump_neighbors(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 {
 	struct mrt_peer_entry *p;
 	struct in_addr ina;
-	u_int16_t i;
+	uint16_t i;
 
 	ina.s_addr = htonl(mp->bgp_id);
 	printf("view: %s BGP ID: %s Number of peers: %u\n\n",
@@ -1132,7 +1132,7 @@ show_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 	struct ctl_show_rib_request	*req = arg;
 	struct mrt_rib_entry		*mre;
 	time_t				 now;
-	u_int16_t			 i, j;
+	uint16_t			 i, j;
 
 	memset(&res, 0, sizeof(res));
 	res.flags = req->flags;
@@ -1214,7 +1214,7 @@ network_mrt_dump(struct mrt_rib *mr, struct mrt_peer *mp, void *arg)
 	struct mrt_rib_entry		*mre;
 	struct ibuf			*msg;
 	time_t				 now;
-	u_int16_t			 i, j;
+	uint16_t			 i, j;
 
 	/* can't announce more than one path so ignore add-path */
 	if (mr->add_path)
@@ -1315,10 +1315,10 @@ show_mrt_state(struct mrt_bgp_state *ms, void *arg)
 }
 
 static void
-print_afi(u_char *p, u_int8_t len)
+print_afi(u_char *p, uint8_t len)
 {
-	u_int16_t afi;
-	u_int8_t safi, aid;
+	uint16_t afi;
+	uint8_t safi, aid;
 
 	if (len != 4) {
 		printf("bad length");
@@ -1340,7 +1340,7 @@ print_afi(u_char *p, u_int8_t len)
 }
 
 static void
-print_capability(u_int8_t capa_code, u_char *p, u_int8_t len)
+print_capability(uint8_t capa_code, u_char *p, uint8_t len)
 {
 	switch (capa_code) {
 	case CAPA_MP:
@@ -1357,7 +1357,7 @@ print_capability(u_int8_t capa_code, u_char *p, u_int8_t len)
 	case CAPA_AS4BYTE:
 		printf("4-byte AS num capability: ");
 		if (len == 4) {
-			u_int32_t as;
+			uint32_t as;
 			memcpy(&as, p, sizeof(as));
 			as = ntohl(as);
 			printf("AS %u", as);
@@ -1378,7 +1378,7 @@ print_capability(u_int8_t capa_code, u_char *p, u_int8_t len)
 }
 
 static void
-print_notification(u_int8_t errcode, u_int8_t subcode)
+print_notification(uint8_t errcode, uint8_t subcode)
 {
 	const char *suberrname = NULL;
 	int uk = 0;
@@ -1435,10 +1435,10 @@ print_notification(u_int8_t errcode, u_int8_t subcode)
 }
 
 static int
-show_mrt_capabilities(u_char *p, u_int16_t len)
+show_mrt_capabilities(u_char *p, uint16_t len)
 {
-	u_int16_t totlen = len;
-	u_int8_t capa_code, capa_len;
+	uint16_t totlen = len;
+	uint8_t capa_code, capa_len;
 
 	while (len > 2) {
 		memcpy(&capa_code, p, sizeof(capa_code));
@@ -1465,10 +1465,10 @@ show_mrt_capabilities(u_char *p, u_int16_t len)
 }
 
 static void
-show_mrt_open(u_char *p, u_int16_t len)
+show_mrt_open(u_char *p, uint16_t len)
 {
-	u_int8_t version, optparamlen;
-	u_int16_t short_as, holdtime;
+	uint16_t short_as, holdtime;
+	uint8_t version, optparamlen;
 	struct in_addr bgpid;
 
 	/* length check up to optparamlen already happened */
@@ -1498,7 +1498,7 @@ show_mrt_open(u_char *p, u_int16_t len)
 		return;
 	}
 	while (len > 2) {
-		u_int8_t op_type, op_len;
+		uint8_t op_type, op_len;
 		int r;
 
 		memcpy(&op_type, p, sizeof(op_type));
@@ -1532,10 +1532,10 @@ show_mrt_open(u_char *p, u_int16_t len)
 }
 
 static void
-show_mrt_notification(u_char *p, u_int16_t len)
+show_mrt_notification(u_char *p, uint16_t len)
 {
-	u_int16_t i;
-	u_int8_t errcode, subcode;
+	uint16_t i;
+	uint8_t errcode, subcode;
 	size_t reason_len;
 	char reason[REASON_LEN];
 
@@ -1595,13 +1595,13 @@ show_mrt_notification(u_char *p, u_int16_t len)
 
 /* XXX this function does not handle JSON output */
 static void
-show_mrt_update(u_char *p, u_int16_t len, int reqflags, int addpath)
+show_mrt_update(u_char *p, uint16_t len, int reqflags, int addpath)
 {
 	struct bgpd_addr prefix;
 	int pos;
-	u_int32_t pathid;
-	u_int16_t wlen, alen;
-	u_int8_t prefixlen;
+	uint32_t pathid;
+	uint16_t wlen, alen;
+	uint8_t prefixlen;
 
 	if (len < sizeof(wlen)) {
 		printf("bad length");
@@ -1660,8 +1660,8 @@ show_mrt_update(u_char *p, u_int16_t len, int reqflags, int addpath)
 	printf("\n");
 	/* alen attributes here */
 	while (alen > 3) {
-		u_int8_t flags;
-		u_int16_t attrlen;
+		uint8_t flags;
+		uint16_t attrlen;
 
 		flags = p[0];
 		/* type = p[1]; */
@@ -1714,12 +1714,12 @@ show_mrt_update(u_char *p, u_int16_t len, int reqflags, int addpath)
 void
 show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 {
-	static const u_int8_t marker[MSGSIZE_HEADER_MARKER] = {
+	static const uint8_t marker[MSGSIZE_HEADER_MARKER] = {
 	    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 	u_char *p;
-	u_int16_t len;
-	u_int8_t type;
+	uint16_t len;
+	uint8_t type;
 	struct ctl_show_rib_request *req = arg;
 
 	printf("%s %s[%u] -> ", fmt_time(&mm->time),
@@ -1802,7 +1802,7 @@ show_mrt_msg(struct mrt_bgp_msg *mm, void *arg)
 }
 
 const char *
-msg_type(u_int8_t type)
+msg_type(uint8_t type)
 {
 	if (type >= sizeof(msgtypenames)/sizeof(msgtypenames[0]))
 		return "BAD";
@@ -1810,13 +1810,13 @@ msg_type(u_int8_t type)
 }
 
 int
-match_aspath(void *data, u_int16_t len, struct filter_as *f)
+match_aspath(void *data, uint16_t len, struct filter_as *f)
 {
-	u_int8_t	*seg;
+	uint8_t		*seg;
 	int		 final;
-	u_int16_t	 seg_size;
-	u_int8_t	 i, seg_len;
-	u_int32_t	 as = 0;
+	uint16_t	 seg_size;
+	uint8_t		 i, seg_len;
+	uint32_t	 as = 0;
 
 	if (f->type == AS_EMPTY) {
 		if (len == 0)
@@ -1838,7 +1838,7 @@ match_aspath(void *data, u_int16_t len, struct filter_as *f)
 
 	for (; len >= 6; len -= seg_size, seg += seg_size) {
 		seg_len = seg[1];
-		seg_size = 2 + sizeof(u_int32_t) * seg_len;
+		seg_size = 2 + sizeof(uint32_t) * seg_len;
 
 		final = (len == seg_size);
 

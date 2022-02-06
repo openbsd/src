@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.107 2021/08/09 08:24:36 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.108 2022/02/06 09:52:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -494,7 +494,7 @@ const struct token	*match_token(int *argc, char **argv[],
 void			 show_valid_args(const struct token []);
 
 int	parse_addr(const char *, struct bgpd_addr *);
-int	parse_asnum(const char *, size_t, u_int32_t *);
+int	parse_asnum(const char *, size_t, uint32_t *);
 int	parse_number(const char *, struct parse_result *, enum token_type);
 void	parsecommunity(struct community *c, int type, char *s);
 void	parseextcommunity(struct community *c, const char *t, char *s);
@@ -610,7 +610,8 @@ match_token(int *argc, char **argv[], const struct token table[])
 			}
 			break;
 		case PREFIX:
-			if (parse_prefix(word, wordlen, &res.addr, &res.prefixlen)) {
+			if (parse_prefix(word, wordlen, &res.addr,
+			    &res.prefixlen)) {
 				match++;
 				t = &table[i];
 			}
@@ -718,7 +719,7 @@ match_token(int *argc, char **argv[], const struct token table[])
 			if (word != NULL && wordlen > 0) {
 				char *p = strdup(word);
 				struct community ext;
-				u_int64_t rd;
+				uint64_t rd;
 
 				if (p == NULL)
 					err(1, NULL);
@@ -728,19 +729,19 @@ match_token(int *argc, char **argv[], const struct token table[])
 				switch (ext.data3 >> 8) {
 				case EXT_COMMUNITY_TRANS_TWO_AS:
 					rd = (0ULL << 48);
-					rd |= ((u_int64_t)ext.data1 & 0xffff)
+					rd |= ((uint64_t)ext.data1 & 0xffff)
 					    << 32;
-					rd |= (u_int64_t)ext.data2;
+					rd |= (uint64_t)ext.data2;
 				break;
 				case EXT_COMMUNITY_TRANS_IPV4:
 					rd = (1ULL << 48);
-					rd |= (u_int64_t)ext.data1 << 16;
-					rd |= (u_int64_t)ext.data2 & 0xffff;
+					rd |= (uint64_t)ext.data1 << 16;
+					rd |= (uint64_t)ext.data2 & 0xffff;
 					break;
 				case EXT_COMMUNITY_TRANS_FOUR_AS:
 					rd = (2ULL << 48);
-					rd |= (u_int64_t)ext.data1 << 16;
-					rd |= (u_int64_t)ext.data2 & 0xffff;
+					rd |= (uint64_t)ext.data1 << 16;
+					rd |= (uint64_t)ext.data2 & 0xffff;
 					break;
 				default:
 					errx(1, "bad encoding of rd");
@@ -929,7 +930,8 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 }
 
 int
-parse_prefix(const char *word, size_t wordlen, struct bgpd_addr *addr, u_int8_t *prefixlen)
+parse_prefix(const char *word, size_t wordlen, struct bgpd_addr *addr,
+    uint8_t *prefixlen)
 {
 	char		*p, *ps;
 	const char	*errstr;
@@ -982,11 +984,11 @@ parse_prefix(const char *word, size_t wordlen, struct bgpd_addr *addr, u_int8_t 
 }
 
 int
-parse_asnum(const char *word, size_t wordlen, u_int32_t *asnum)
+parse_asnum(const char *word, size_t wordlen, uint32_t *asnum)
 {
 	const char	*errstr;
 	char		*dot, *parseword;
-	u_int32_t	 uval, uvalh = 0;
+	uint32_t	 uval, uvalh = 0;
 
 	if (word == NULL)
 		return (0);
@@ -1081,7 +1083,7 @@ parse_number(const char *word, struct parse_result *r, enum token_type type)
 }
 
 static void
-getcommunity(char *s, int large, u_int32_t *val, u_int32_t *flag)
+getcommunity(char *s, int large, uint32_t *val, uint32_t *flag)
 {
 	long long	 max = USHRT_MAX;
 	const char	*errstr;
@@ -1106,8 +1108,8 @@ getcommunity(char *s, int large, u_int32_t *val, u_int32_t *flag)
 }
 
 static void
-setcommunity(struct community *c, u_int32_t as, u_int32_t data,
-    u_int32_t asflag, u_int32_t dataflag)
+setcommunity(struct community *c, uint32_t as, uint32_t data,
+    uint32_t asflag, uint32_t dataflag)
 {
 	c->flags = COMMUNITY_TYPE_BASIC;
 	c->flags |= asflag << 8;
@@ -1121,7 +1123,7 @@ static void
 parselargecommunity(struct community *c, char *s)
 {
 	char *p, *q;
-	u_int32_t dflag1, dflag2, dflag3;
+	uint32_t dflag1, dflag2, dflag3;
 
 	if ((p = strchr(s, ':')) == NULL)
 		errx(1, "Bad community syntax");
@@ -1145,7 +1147,7 @@ void
 parsecommunity(struct community *c, int type, char *s)
 {
 	char *p;
-	u_int32_t as, data, asflag, dataflag;
+	uint32_t as, data, asflag, dataflag;
 
 	if (type == COMMUNITY_TYPE_LARGE) {
 		parselargecommunity(c, s);
@@ -1209,12 +1211,12 @@ parsesubtype(const char *name, int *type, int *subtype)
 }
 
 static int
-parseextvalue(int type, char *s, u_int32_t *v, u_int32_t *flag)
+parseextvalue(int type, char *s, uint32_t *v, uint32_t *flag)
 {
 	const char	*errstr;
 	char		*p;
 	struct in_addr	 ip;
-	u_int32_t	 uvalh, uval;
+	uint32_t	 uvalh, uval;
 
 	if (type != -1) {
 		/* nothing */
@@ -1282,8 +1284,8 @@ parseextcommunity(struct community *c, const char *t, char *s)
 {
 	const struct ext_comm_pairs *cp;
 	char		*p, *ep;
-	u_int64_t	 ullval;
-	u_int32_t	 uval, uval2, dflag1 = 0, dflag2 = 0;
+	uint64_t	 ullval;
+	uint32_t	 uval, uval2, dflag1 = 0, dflag2 = 0;
 	int		 type = 0, subtype = 0;
 
 	if (strcmp(t, "*") == 0 && strcmp(s, "*") == 0) {
