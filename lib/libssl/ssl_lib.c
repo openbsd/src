@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.288 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.289 2022/02/06 16:11:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2487,15 +2487,17 @@ SSL_set_ssl_method(SSL *s, const SSL_METHOD *method)
 int
 SSL_get_error(const SSL *s, int i)
 {
-	int		 reason;
-	unsigned long	 l;
-	BIO		*bio;
+	unsigned long l;
+	int reason;
+	BIO *bio;
 
 	if (i > 0)
 		return (SSL_ERROR_NONE);
 
-	/* Make things return SSL_ERROR_SYSCALL when doing SSL_do_handshake
-	 * etc, where we do encode the error */
+	/*
+	 * Make things return SSL_ERROR_SYSCALL when doing SSL_do_handshake
+	 * etc, where we do encode the error.
+	 */
 	if ((l = ERR_peek_error()) != 0) {
 		if (ERR_GET_LIB(l) == ERR_LIB_SYS)
 			return (SSL_ERROR_SYSCALL);
@@ -2503,7 +2505,7 @@ SSL_get_error(const SSL *s, int i)
 			return (SSL_ERROR_SSL);
 	}
 
-	if ((i < 0) && SSL_want_read(s)) {
+	if (SSL_want_read(s)) {
 		bio = SSL_get_rbio(s);
 		if (BIO_should_read(bio)) {
 			return (SSL_ERROR_WANT_READ);
@@ -2530,7 +2532,7 @@ SSL_get_error(const SSL *s, int i)
 		}
 	}
 
-	if ((i < 0) && SSL_want_write(s)) {
+	if (SSL_want_write(s)) {
 		bio = SSL_get_wbio(s);
 		if (BIO_should_write(bio)) {
 			return (SSL_ERROR_WANT_WRITE);
@@ -2550,15 +2552,14 @@ SSL_get_error(const SSL *s, int i)
 				return (SSL_ERROR_SYSCALL);
 		}
 	}
-	if ((i < 0) && SSL_want_x509_lookup(s)) {
-		return (SSL_ERROR_WANT_X509_LOOKUP);
-	}
 
-	if (i == 0) {
-		if ((s->internal->shutdown & SSL_RECEIVED_SHUTDOWN) &&
-		    (s->s3->warn_alert == SSL_AD_CLOSE_NOTIFY))
-			return (SSL_ERROR_ZERO_RETURN);
-	}
+	if (SSL_want_x509_lookup(s))
+		return (SSL_ERROR_WANT_X509_LOOKUP);
+
+	if ((s->internal->shutdown & SSL_RECEIVED_SHUTDOWN) &&
+	    (s->s3->warn_alert == SSL_AD_CLOSE_NOTIFY))
+		return (SSL_ERROR_ZERO_RETURN);
+
 	return (SSL_ERROR_SYSCALL);
 }
 
