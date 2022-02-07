@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.175 2021/03/15 15:49:22 deraadt Exp $ */
+/*	$OpenBSD: pmap.c,v 1.176 2022/02/07 23:20:09 gkoehler Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -2277,10 +2277,12 @@ pte_spill_v(pmap_t pm, u_int32_t va, u_int32_t dsisr, int exec_fault)
 	/* Attempted to write a read-only page. */
 	if (dsisr & DSISR_STORE) {
 		if (ppc_proc_is_64b) {
-			if (pted->p.pted_pte64.pte_lo & PTE_RO_64)
+			if ((pted->p.pted_pte64.pte_lo & PTE_PP_64) ==
+			    PTE_RO_64)
 				goto out;
 		} else {
-			if (pted->p.pted_pte32.pte_lo & PTE_RO_32)
+			if ((pted->p.pted_pte32.pte_lo & PTE_PP_32) ==
+			    PTE_RO_32)
 				goto out;
 		}
 	}
