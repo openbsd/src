@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.222 2022/01/25 04:04:41 gnezdo Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.223 2022/02/07 22:57:47 rob Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -382,6 +382,7 @@ struct kinfo_proc {
 #define	EPROC_SLEADER	0x02	/* session leader */
 #define	EPROC_UNVEIL	0x04	/* has unveil settings */
 #define	EPROC_LKUNVEIL	0x08	/* unveil is locked */
+#define	EPROC_CHROOT	0x10	/* chrooted */
 	int32_t	p_exitsig;		/* unused, always zero. */
 	int32_t	p_flag;			/* INT: P_* flags. */
 
@@ -654,6 +655,8 @@ do {									\
 	strlcpy((kp)->p_login, (sess)->s_login,				\
 	    MIN(sizeof((kp)->p_login), sizeof((sess)->s_login)));	\
 									\
+	if ((pr)->ps_fd->fd_rdir != NULL)				\
+		(kp)->p_eflag |= EPROC_CHROOT;				\
 	if ((sess)->s_ttyvp)						\
 		(kp)->p_eflag |= EPROC_CTTY;				\
 	if ((pr)->ps_uvpaths)						\
