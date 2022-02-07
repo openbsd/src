@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.35 2019/05/26 15:47:49 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.36 2022/02/07 09:38:33 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -17,12 +17,15 @@
 
 # Supplementary code to handle archives in the package context.
 # Ustar allows about anything, but we want to forbid a lot of things.
-# this code is used during creation and extraction
-# specifically, during create time:
+# this code is used during creation and extraction, "bridging" the gap
+# between tar balls OpenBSD::Ustar::Object and 
+# packing list OpenBSD::PackingElement
+
+# specifically, during create time, we call prepare_long:
 # - prevent a lot of weird objects from entering the archives
 # - make sure all relevant users/modes are recorded in the PLIST item
 
-# during extraction:
+# during extraction: we call validate_meta:
 # - make sure complex objects have all their relevant properties recorded
 # - disallow extraction of non-files/links.
 # - guard against files much longer than they should be.
@@ -111,8 +114,9 @@ sub strip_modes
 		}
 		$result |= S_IROTH | S_IRGRP;
 	}
-	# if we're going to set the group or owner, sguid bits won't
-	# survive the extraction
+	# XXX newer tarballs never have suid/sgid, but some 7.0 packages
+	# still have them... We'll strip them here unconditionally instead
+	# of in XXX /1 and XXX /2
 	if (defined $item->{group} || defined $item->{owner}) {
 		$result &= ~(S_ISUID|S_ISGID);
 	}
@@ -145,6 +149,8 @@ sub verify_modes
 			$result = 0;
 		}
 	}
+	# XXX /1
+	$o->{mode} &= ~(S_ISUID|S_ISGID);
 	if ($o->{mode} != $o->strip_modes($o)) {
 		$o->errsay("Error: weird mode for #1: #2", $item->fullname,
 		    $o->printable_mode);
@@ -215,7 +221,8 @@ sub prepare_long
 		$self->fatal("No group name for #1 (gid #2)",
 		    $item->name, $entry->{gid});
 	}
-	$entry->{mode} = $entry->strip_modes($item);
+	# XXX /2
+	$entry->{mode} = $entry->strip_modes($item) & ~(S_ISUID|S_ISGID);
 	if (defined $item->{ts}) {
 		delete $entry->{mtime};
 	}
