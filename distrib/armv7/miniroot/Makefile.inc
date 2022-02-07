@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.28 2021/10/12 16:39:22 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.29 2022/02/07 20:24:30 krw Exp $
 
 FS=		miniroot-${BOARD}-${OSrev}.img
 FSSIZE=		71424	# ffs+msdos, actually
@@ -9,7 +9,6 @@ MKUBOOT?=	mkuboot
 DISKTYPE=	miniroot
 MSDOSSTART=	32768
 MSDOSSIZE=	8192
-FFSSTART!=	expr ${MSDOSSTART} + ${MSDOSSIZE}
 
 PDTB=		/usr/local/share/dtb/arm
 PUBOOT=		/usr/local/share/u-boot
@@ -19,8 +18,7 @@ all: ${FS}
 ${FS}: bsd.rd
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v -t ${DISKTYPE} ${FS} > vnd
-	echo 'u\ne 0\nC\nn\n${MSDOSSTART}\n${MSDOSSIZE}\ne 3\nA6\nn\n${FFSSTART}\n*\nf 0\nw\nq\n' \
-	    | fdisk -e `cat vnd` >/dev/null
+	fdisk -iy -b "${MSDOSSIZE}@${MSDOSSTART}:c" `cat vnd` >/dev/null
 	echo 'a a\n\n\n\nw\nq\n' | disklabel -E `cat vnd` >/dev/null
 	newfs -O 1 -t msdos -L boot /dev/r`cat vnd`i
 	mount -o-l /dev/`cat vnd`i ${MOUNT_POINT}
