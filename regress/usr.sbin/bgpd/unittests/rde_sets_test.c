@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_sets_test.c,v 1.7 2019/12/17 11:57:16 claudio Exp $ */
+/*	$OpenBSD: rde_sets_test.c,v 1.8 2022/02/07 09:31:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -26,15 +26,15 @@
 
 struct rde_memstats rdemem;
 
-u_int32_t va[] = { 19, 14, 32, 76, 125 };
-u_int32_t vaa[] = { 125, 14, 76, 32, 19 };
-u_int32_t vb[] = { 256, 1024, 512, 4096, 2048, 512 };
-u_int32_t vc[] = { 42 };
+uint32_t va[] = { 19, 14, 32, 76, 125 };
+uint32_t vaa[] = { 125, 14, 76, 32, 19 };
+uint32_t vb[] = { 256, 1024, 512, 4096, 2048, 512 };
+uint32_t vc[] = { 42 };
 
 struct as_set_head as_sets;
 
 static struct as_set *
-build_set(const char *name, u_int32_t *mem, size_t nmemb, size_t initial)
+build_set(const char *name, uint32_t *mem, size_t nmemb, size_t initial)
 {
 	struct as_set *a;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie_test.c,v 1.12 2020/12/29 15:35:57 claudio Exp $ */
+/*	$OpenBSD: rde_trie_test.c,v 1.13 2022/02/07 09:31:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -37,7 +37,7 @@ int roa;
 int orlonger;
 
 int
-host_ip(const char *s, struct bgpd_addr *h, u_int8_t *len)
+host_ip(const char *s, struct bgpd_addr *h, uint8_t *len)
 {
 	struct addrinfo	hints, *res;
 	int		bits;
@@ -61,7 +61,7 @@ host_ip(const char *s, struct bgpd_addr *h, u_int8_t *len)
 }
 
 int
-host(const char *s, struct bgpd_addr *h, u_int8_t *len)
+host(const char *s, struct bgpd_addr *h, uint8_t *len)
 {
 	int		 mask = 128;
 	char		*p, *ps;
@@ -117,11 +117,11 @@ parse_file(FILE *in, struct trie_head *th)
 	const char *errstr;
 	char *line, *s;
 	struct bgpd_addr prefix;
-	u_int8_t plen;
+	uint8_t plen;
 
 	while ((line = fparseln(in, NULL, NULL, NULL, FPARSELN_UNESCALL))) {
 		int state = 0;
-		u_int8_t min = 255, max = 255, maskmax = 0;
+		uint8_t min = 255, max = 255, maskmax = 0;
 
 		while ((s = strsep(&line, " \t\n"))) {
 			if (*s == '\0')
@@ -174,12 +174,12 @@ parse_roa_file(FILE *in, struct trie_head *th)
 	struct set_table *set = NULL;
 	struct roa roa;
 	struct bgpd_addr prefix;
-	u_int8_t plen;
+	uint8_t plen;
 
 	while ((line = fparseln(in, NULL, NULL, NULL, FPARSELN_UNESCALL))) {
 		int state = 0;
-		u_int32_t as;
-		u_int8_t max = 0;
+		uint32_t as;
+		uint8_t max = 0;
 
 		while ((s = strsep(&line, " \t\n"))) {
 			if (*s == '\0')
@@ -236,7 +236,7 @@ test_file(FILE *in, struct trie_head *th)
 {
 	char *line;
 	struct bgpd_addr prefix;
-	u_int8_t plen;
+	uint8_t plen;
 
 	while ((line = fparseln(in, NULL, NULL, NULL, FPARSELN_UNESCALL))) {
 		if (!host(line, &prefix, &plen))
@@ -257,8 +257,8 @@ test_roa_file(FILE *in, struct trie_head *th)
 	const char *errstr;
 	char *line, *s;
 	struct bgpd_addr prefix;
-	u_int8_t plen;
-	u_int32_t as;
+	uint8_t plen;
+	uint32_t as;
 	int r;
 
 	while ((line = fparseln(in, NULL, NULL, NULL, FPARSELN_UNESCALL))) {

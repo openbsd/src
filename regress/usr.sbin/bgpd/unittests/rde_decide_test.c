@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide_test.c,v 1.6 2021/08/31 10:54:40 claudio Exp $ */
+/*	$OpenBSD: rde_decide_test.c,v 1.7 2022/02/07 09:31:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -71,11 +71,11 @@ union a {
 	struct aspath	a;
 	struct {
 		LIST_ENTRY(aspath) entry;
-		u_int32_t source_as;
+		uint32_t source_as;
 		int refcnt;
 		uint16_t len;
 		uint16_t ascnt;
-		uint8_t	d[6];
+		uint8_t d[6];
 	} x;
 } asdata[] = {
 	{ .x = { .len = 6, .ascnt = 2, .d = { 2, 1, 0, 0, 0, 1 } } },
@@ -338,7 +338,7 @@ rde_decisionflags(void)
 /*
  * Helper functions need to link and run the tests.
  */
-u_int32_t
+uint32_t
 rde_local_as(void)
 {
 	return 65000;
@@ -351,13 +351,13 @@ rde_evaluate_all(void)
 }
 
 int
-as_set_match(const struct as_set *aset, u_int32_t asnum)
+as_set_match(const struct as_set *aset, uint32_t asnum)
 {
 	errx(1, __func__);
 }
 
 struct rib *
-rib_byid(u_int16_t id)
+rib_byid(uint16_t id)
 {
 	return &dummy_rib;
 }

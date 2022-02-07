@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community_test.c,v 1.2 2019/07/04 10:20:59 claudio Exp $ */
+/*	$OpenBSD: rde_community_test.c,v 1.3 2022/02/07 09:31:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -196,11 +196,11 @@ log_warnx(const char *emsg, ...)
 }
 
 int
-attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
-    void *data, u_int16_t data_len)
+attr_write(void *p, uint16_t p_len, uint8_t flags, uint8_t type,
+    void *data, uint16_t data_len)
 {
 	u_char		*b = p;
-	u_int16_t	 tmp, tot_len = 2; /* attribute header (without len) */
+	uint16_t	 tmp, tot_len = 2; /* attribute header (without len) */
 
 	flags &= ~ATTR_DEFMASK;
 	if (data_len > 255) {
@@ -232,8 +232,8 @@ attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
 }
 
 int
-attr_writebuf(struct ibuf *buf, u_int8_t flags, u_int8_t type, void *data,
-    u_int16_t data_len)
+attr_writebuf(struct ibuf *buf, uint8_t flags, uint8_t type, void *data,
+    uint16_t data_len)
 {
 	return (-1);
 }
