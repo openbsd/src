@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2022/01/21 03:13:22 gnezdo Exp $
+#	$OpenBSD: Makefile,v 1.10 2022/02/07 16:28:45 mbuhl Exp $
 
 # Copyright (c) 2021 Moritz Buhl <mbuhl@openbsd.org>
 #
@@ -90,7 +90,6 @@ FAILING+=	run-fenv_test-{7,8}
 FAILING+=	run-invtrig_test-7
 FAILING+=	run-logarithm_test-3
 FAILING+=	run-lrint_test-1
-FAILING+=	run-trig_test-2
 . elif ${MACHINE} == sparc64
 FAILING+=	run-ctrig_test-5
 FAILING+=	run-exponential_test-1 
