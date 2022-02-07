@@ -1,4 +1,4 @@
-/*	$OpenBSD: head.c,v 1.23 2022/01/29 00:19:04 cheloha Exp $	*/
+/*	$OpenBSD: head.c,v 1.24 2022/02/07 17:19:57 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
@@ -96,30 +96,43 @@ main(int argc, char *argv[])
 int
 head_file(const char *path, long count, int need_header)
 {
+	const char *name;
 	FILE *fp;
-	int ch;
+	int ch, status = 0;
 	static int first = 1;
 
 	if (path != NULL) {
-		fp = fopen(path, "r");
+		name = path;
+		fp = fopen(name, "r");
 		if (fp == NULL) {
-			warn("%s", path);
+			warn("%s", name);
 			return 1;
 		}
 		if (need_header) {
-			printf("%s==> %s <==\n", first ? "" : "\n", path);
+			printf("%s==> %s <==\n", first ? "" : "\n", name);
+			if (ferror(stdout))
+				err(1, "stdout");
 			first = 0;
 		}
-	} else
+	} else {
+		name = "stdin";
 		fp = stdin;
+	}
 
-	for (; count > 0 && !feof(fp); --count)
-		while ((ch = getc(fp)) != EOF)
-			if (putchar(ch) == '\n')
-				break;
+	while ((ch = getc(fp)) != EOF) {
+		if (putchar(ch) == EOF)
+			err(1, "stdout");
+		if (ch == '\n' && --count == 0)
+			break;
+	}
+	if (ferror(fp)) {
+		warn("%s", name);
+		status = 1;
+	}
+
 	fclose(fp);
 
-	return 0;
+	return status;
 }
 
 
