@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.324 2022/02/07 13:17:27 rob Exp $	*/
+/*	$OpenBSD: proc.h,v 1.325 2022/02/07 19:28:14 rob Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -274,7 +274,7 @@ struct process {
 #define	PS_ZOMBIE	0x00040000	/* Dead and ready to be waited for */
 #define	PS_NOBROADCASTKILL 0x00080000	/* Process excluded from kill -1. */
 #define	PS_PLEDGE	0x00100000	/* Has called pledge(2) */
-#define	PS_WXNEEDED	0x00200000	/* Process is allowed to violate W^X */
+#define	PS_WXNEEDED	0x00200000	/* Process allowed to violate W^X */
 #define	PS_EXECPLEDGE	0x00400000	/* Has exec pledges */
 #define	PS_ORPHAN	0x00800000	/* Process is on an orphan list */
 

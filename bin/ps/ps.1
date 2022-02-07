@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ps.1,v 1.120 2022/02/07 13:17:27 rob Exp $
+.\"	$OpenBSD: ps.1,v 1.121 2022/02/07 19:28:14 rob Exp $
 .\"	$NetBSD: ps.1,v 1.16 1996/03/21 01:36:28 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1991, 1993, 1994
@@ -345,9 +345,9 @@ PS_EMBRYO          0x20000 New process, not yet fledged
 PS_ZOMBIE          0x40000 Dead and ready to be waited for
 PS_NOBROADCASTKILL 0x80000 Process excluded from kill -1
 PS_PLEDGE         0x100000 process has called pledge(2)
-PS_WXNEEDED	0x00200000	/* Process is allowed to violate W^X */
-PS_EXECPLEDGE	0x00400000	/* Has exec pledges */
-PS_ORPHAN	0x00800000	/* Process is on an orphan list */
+PS_WXNEEDED	0x00200000 process allowed to violate W^X
+PS_EXECPLEDGE	0x00400000 has exec pledges
+PS_ORPHAN	0x00800000 process is on an orphan list
 .Ed
 .It Cm re
 Core residency time (in seconds; 127 = infinity).
