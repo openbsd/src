@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.228 2021/12/09 00:26:10 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.229 2022/02/07 19:30:48 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -403,15 +403,15 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	dp = (char *)(((long)dp + _STACKALIGNBYTES) & ~_STACKALIGNBYTES);
 
-	sgap = STACKGAPLEN;
-
 	/*
 	 * If we have enabled random stackgap, the stack itself has already
 	 * been moved from a random location, but is still aligned to a page
 	 * boundary.  Provide the lower bits of random placement now.
 	 */
-	if (stackgap_random != 0) {
-		sgap += arc4random() & PAGE_MASK;
+	if (stackgap_random == 0) {
+		sgap = 0;
+	} else {
+		sgap = arc4random() & PAGE_MASK;
 		sgap = (sgap + _STACKALIGNBYTES) & ~_STACKALIGNBYTES;
 	}
 
