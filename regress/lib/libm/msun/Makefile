@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2022/02/07 16:28:45 mbuhl Exp $
+#	$OpenBSD: Makefile,v 1.11 2022/02/07 16:42:59 mbuhl Exp $
 
 # Copyright (c) 2021 Moritz Buhl <mbuhl@openbsd.org>
 #
@@ -68,6 +68,13 @@ FAILING+=	run-logarithm_test-5
 FAILING+=	run-lrint_test-1
 FAILING+=	run-next_test-{1,2,4}
 FAILING+=	run-rem_test-{1,2}
+FAILING+=	run-trig_test-1
+. elif ${MACHINE} == armv7
+FAILING+=	run-cexp_test-7
+FAILING+=	run-ctrig_test-{1,5}
+FAILING+=	run-exponential_test-1 
+FAILING+=	run-invtrig_test-7
+FAILING+=	run-lrint_test-1
 FAILING+=	run-trig_test-1
 . elif ${MACHINE} == i386
 FAILING+=	run-cexp_test-{1,7}
