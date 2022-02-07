@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.29 2020/12/09 15:45:58 deraadt Exp $
+#	$OpenBSD: install.md,v 1.30 2022/02/07 15:21:38 krw Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,7 +46,7 @@ md_installboot() {
 }
 
 md_prep_fdisk() {
-	local _disk=$1 _q _d _s _o
+	local _disk=$1 _q _d _o
 
 	while :; do
 		_d=whole
@@ -64,37 +64,21 @@ md_prep_fdisk() {
 		[wW]*)
 			case $(sysctl -n hw.product) in
 			Gdium)
-				_s=32
+				echo -n "Creating a 32MB ext2 partition and an OpenBSD partition for rest of $_disk..."
+				fdisk -iy -b "65536@1:83" $_disk >/dev/null
 				_o="-O 1 -b 4096"
 				;;
 			EBT700)
-				_s=1
+				echo -n "Creating a 1MB ext2 partition and an OpenBSD partition for rest of $_disk..."
+				fdisk -iy -b "2048@1:83" $_disk >/dev/null
 				_o="-O 1"
 				;;
 			*)
-				_s=1
+				echo -n "Creating a 1MB ext2 partition and an OpenBSD partition for rest of $_disk..."
+				fdisk -iy -b "2048@1:83" $_disk >/dev/null
 				_o=""
 				;;
 			esac
-			echo -n "Creating a ${_s}MB ext2 partition and an OpenBSD partition for rest of $_disk..."
-			fdisk -e $_disk <<__EOT >/dev/null
-re
-e 0
-83
-
-1
-$((_s * 2048))
-e 3
-0
-e 3
-A6
-
-$((_s * 2048 + 1))
-*
-update
-write
-quit
-__EOT
 			echo "done."
 			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
 			newfs -qt ext2fs $_o ${_disk}i

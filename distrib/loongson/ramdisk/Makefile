@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.31 2021/07/26 12:47:46 kn Exp $
+#	$OpenBSD: Makefile,v 1.32 2022/02/07 15:21:38 krw Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		18432
@@ -14,13 +14,16 @@ UTILS=		${.CURDIR}/../../miniroot
 MRDISKTYPE=	rdroot
 MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
+MSDOSSTART=	63
+MSDOSSIZE!=	expr ${FSSIZE} - ${MSDOSSTART}
+
 all: ${FS} ${CDROM}
 
 # PMON cannot load a gzipped kernel
 ${FS}: bsd.strip
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
-	echo 'u\ne 0\n83\n\n63\n*\nw\nq\n' | fdisk -e `cat vnd` > /dev/null
+	fdisk -iy -b "${MSDOSSIZE}@${MSDOSSTART}:83" `cat vnd` > /dev/null
 	echo 'w\ny\nq\n' | disklabel -E `cat vnd` > /dev/null
 	newfs_ext2fs /dev/r`cat vnd`i
 	mount /dev/`cat vnd`i ${MOUNT_POINT}
