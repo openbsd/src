@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.78 2022/01/09 05:42:54 jsg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.79 2022/02/08 11:55:19 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -82,6 +82,10 @@
 #endif
 
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip6.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
 #include <netinet/if_ether.h>
 
 #include <dev/pci/pcireg.h>
@@ -1942,9 +1946,10 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 #if 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 |
-	    IFCAP_CSUM_UDPv4;
 #endif
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4 |
+	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
+	    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 
 	ifmedia_init(&sc->sc_media, 0, ixl_media_change, ixl_media_status);
 
@@ -2771,6 +2776,88 @@ ixl_load_mbuf(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf *m)
 	    BUS_DMA_STREAMING | BUS_DMA_NOWAIT));
 }
 
+static uint64_t
+ixl_tx_setup_offload(struct mbuf *m0)
+{
+	struct mbuf *m;
+	int hoff;
+	uint64_t hlen;
+	uint8_t ipproto;
+	uint64_t offload = 0;
+
+	if (!ISSET(m0->m_pkthdr.csum_flags,
+	    M_IPV4_CSUM_OUT|M_TCP_CSUM_OUT|M_UDP_CSUM_OUT))
+		return (0);
+
+	switch (ntohs(mtod(m0, struct ether_header *)->ether_type)) {
+	case ETHERTYPE_IP: {
+		struct ip *ip;
+
+		m = m_getptr(m0, ETHER_HDR_LEN, &hoff);
+		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ip));
+		ip = (struct ip *)(mtod(m, caddr_t) + hoff);
+
+		offload |= ISSET(m0->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT) ?
+		    IXL_TX_DESC_CMD_IIPT_IPV4_CSUM :
+		    IXL_TX_DESC_CMD_IIPT_IPV4;
+ 
+		hlen = ip->ip_hl << 2;
+		ipproto = ip->ip_p;
+		break;
+	}
+
+#ifdef INET6
+	case ETHERTYPE_IPV6: {
+		struct ip6_hdr *ip6;
+
+		m = m_getptr(m0, ETHER_HDR_LEN, &hoff);
+		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ip6));
+		ip6 = (struct ip6_hdr *)(mtod(m, caddr_t) + hoff);
+ 
+		offload |= IXL_TX_DESC_CMD_IIPT_IPV6;
+
+		hlen = sizeof(*ip6);
+		ipproto = ip6->ip6_nxt;
+		break;
+	}
+#endif
+	default:
+		panic("CSUM_OUT set for non-IP packet");
+		/* NOTREACHED */
+	}
+
+	offload |= (ETHER_HDR_LEN >> 1) << IXL_TX_DESC_MACLEN_SHIFT;
+	offload |= (hlen >> 2) << IXL_TX_DESC_IPLEN_SHIFT;
+
+	switch (ipproto) {
+	case IPPROTO_TCP: {
+		struct tcphdr *th;
+
+		if (!ISSET(m0->m_pkthdr.csum_flags, M_TCP_CSUM_OUT))
+			break;
+
+		m = m_getptr(m, hoff + hlen, &hoff);
+		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*th));
+		th = (struct tcphdr *)(mtod(m, caddr_t) + hoff);
+ 
+		offload |= IXL_TX_DESC_CMD_L4T_EOFT_TCP;
+		offload |= (uint64_t)th->th_off << IXL_TX_DESC_L4LEN_SHIFT;
+		break;
+	}
+
+	case IPPROTO_UDP:
+		if (!ISSET(m0->m_pkthdr.csum_flags, M_UDP_CSUM_OUT))
+			break;
+ 
+		offload |= IXL_TX_DESC_CMD_L4T_EOFT_UDP;
+		offload |= (sizeof(struct udphdr) >> 2) <<
+		    IXL_TX_DESC_L4LEN_SHIFT;
+		break;
+	}
+
+	return (offload);
+}
+
 static void
 ixl_start(struct ifqueue *ifq)
 {
@@ -2785,6 +2872,7 @@ ixl_start(struct ifqueue *ifq)
 	unsigned int prod, free, last, i;
 	unsigned int mask;
 	int post = 0;
+	uint64_t offload;
 #if NBPFILTER > 0
 	caddr_t if_bpf;
 #endif
@@ -2816,6 +2904,8 @@ ixl_start(struct ifqueue *ifq)
 		if (m == NULL)
 			break;
 
+		offload = ixl_tx_setup_offload(m);
+
 		txm = &txr->txr_maps[prod];
 		map = txm->txm_map;
 
@@ -2834,6 +2924,7 @@ ixl_start(struct ifqueue *ifq)
 			cmd = (uint64_t)map->dm_segs[i].ds_len <<
 			    IXL_TX_DESC_BSIZE_SHIFT;
 			cmd |= IXL_TX_DESC_DTYPE_DATA | IXL_TX_DESC_CMD_ICRC;
+			cmd |= offload;
 
 			htolem64(&txd->addr, map->dm_segs[i].ds_addr);
 			htolem64(&txd->cmd, cmd);
