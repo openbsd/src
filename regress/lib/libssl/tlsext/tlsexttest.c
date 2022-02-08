@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.59 2022/02/05 14:54:40 jsing Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.60 2022/02/08 19:00:36 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2249,7 +2249,7 @@ test_tlsext_sessionticket_server(void)
 	SSL_CTX *ssl_ctx = NULL;
 	SSL *ssl = NULL;
 	int failure;
-	uint8_t *data;
+	uint8_t *data = NULL;
 	size_t dlen;
 	CBB cbb;
 
@@ -2318,6 +2318,7 @@ test_tlsext_sessionticket_server(void)
 	CBB_cleanup(&cbb);
 	SSL_CTX_free(ssl_ctx);
 	SSL_free(ssl);
+	free(data);
 
 	return (failure);
 }
@@ -2800,6 +2801,8 @@ test_tlsext_clienthello_build(void)
 		goto err;
 	}
 
+	free(data);
+	data = NULL;
 	CBB_cleanup(&cbb);
 	CBB_init(&cbb, 0);
 
@@ -2917,6 +2920,8 @@ test_tlsext_serverhello_build(void)
 	}
 
 	CBB_cleanup(&cbb);
+	free(data);
+	data = NULL;
 	CBB_init(&cbb, 0);
 
 	/* Turn a few things on so we get extensions... */
@@ -3325,6 +3330,8 @@ test_tlsext_keyshare_server(void)
 		    "want length %zu\n", dlen, sizeof(tlsext_keyshare_server));
 		goto done;
 	}
+
+	tls_key_share_free(ssl->s3->hs.key_share);
 
 	if ((ssl->s3->hs.key_share =
 	    tls_key_share_new_nid(NID_X25519)) == NULL) {
