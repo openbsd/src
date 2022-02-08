@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.16 2021/10/24 17:52:28 mpi Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.17 2022/02/08 17:25:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -191,7 +191,7 @@ acpi_intr_disestablish(void *cookie)
 }
 
 void
-acpi_sleep_clocks(struct acpi_softc *sc, int state)
+sleep_clocks(void *)
 {
 }
 

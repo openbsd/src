@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.708 2022/01/09 13:26:08 visa Exp $
+#	$OpenBSD: files,v 1.709 2022/02/08 17:25:11 deraadt Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -724,6 +724,7 @@ file kern/subr_autoconf.c
 file kern/subr_disk.c
 file kern/subr_evcount.c
 file kern/subr_extent.c
+file kern/subr_suspend.c		suspend
 file kern/subr_hibernate.c		hibernate
 file kern/subr_kubsan.c			kubsan
 file kern/subr_log.c

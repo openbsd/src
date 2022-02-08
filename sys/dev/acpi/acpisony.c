@@ -1,4 +1,4 @@
-/* $OpenBSD: acpisony.c,v 1.8 2020/04/06 00:01:08 pirofti Exp $ */
+/* $OpenBSD: acpisony.c,v 1.9 2022/02/08 17:25:12 deraadt Exp $ */
 /*
  * Copyright (c) 2010 Paul Irofti <paul@irofti.net>
  *
@@ -198,7 +198,7 @@ acpisony_notify(struct aml_node *node, int notify, void *arg)
 #ifndef SMALL_KERNEL
 		if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ))
 			acpi_addtask(sc->sc_acpi, acpi_sleep_task,
-			    sc->sc_acpi, ACPI_SLEEP_SUSPEND);
+			    sc->sc_acpi, SLEEP_SUSPEND);
 #endif
 		break;
 	case SONY_NOTIFY_SUSPEND_RELEASED:

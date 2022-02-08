@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.510 2022/01/04 05:50:43 gnezdo Exp $
+#	$OpenBSD: GENERIC,v 1.511 2022/02/08 17:25:11 deraadt Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -19,7 +19,8 @@ option		APERTURE	# in-kernel aperture driver for XFree86
 option		MTRR		# CPU memory range attributes control
 
 option		NTFS		# NTFS support
-option		HIBERNATE	# Hibernate support
+option		SUSPEND
+option		HIBERNATE
 
 config		bsd	swap generic
 

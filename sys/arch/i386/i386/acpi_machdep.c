@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.76 2021/03/15 22:44:57 patrick Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.77 2022/02/08 17:25:11 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -42,10 +42,14 @@
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidev.h>
+#include <dev/acpi/dsdt.h>
 #include <dev/isa/isareg.h>
 #include <dev/pci/pcivar.h>
 
+#include <machine/apmvar.h>
+
 #include "apm.h"
+#include "wsdisplay.h"
 #include "isa.h"
 #include "ioapic.h"
 #include "lapic.h"
@@ -59,6 +63,8 @@
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #endif
+
+#include <dev/wscons/wsdisplayvar.h>
 
 #if NAPM > 0
 int haveacpibutusingapm;
@@ -329,7 +335,7 @@ int	save_lapic_tpr;
 #endif
 
 void
-acpi_sleep_clocks(struct acpi_softc *sc, int state)
+sleep_clocks(void *v)
 {
 	rtcstop();
 
@@ -457,7 +463,7 @@ acpi_resume_cpu(struct acpi_softc *sc, int state)
 
 #ifdef MULTIPROCESSOR
 void
-acpi_sleep_mp(void)
+sleep_mp(void)
 {
 	int i;
 
@@ -480,7 +486,7 @@ acpi_sleep_mp(void)
 }
 
 void
-acpi_resume_mp(void)
+resume_mp(void)
 {
 	struct cpu_info *ci;
 	struct proc *p;
@@ -518,6 +524,54 @@ acpi_resume_mp(void)
 	sched_start_secondary_cpus();
 }
 #endif /* MULTIPROCESSOR */
+
+void
+display_suspend(void *v)
+{
+#if NWSDISPLAY > 0
+	struct acpi_softc *sc = v;
+
+	/*
+	 * Temporarily release the lock to prevent the X server from
+	 * blocking on setting the display brightness.
+	 */
+	rw_exit_write(&sc->sc_lck);
+	wsdisplay_suspend();
+	rw_enter_write(&sc->sc_lck);
+#endif /* NWSDISPLAY > 0 */
+}
+
+void
+display_resume(void *v)
+{
+#if NWSDISPLAY > 0
+	struct acpi_softc *sc = v;
+
+	rw_exit_write(&sc->sc_lck);
+	wsdisplay_resume();
+	rw_enter_write(&sc->sc_lck);
+#endif /* NWSDISPLAY > 0 */
+}
+
+void
+suspend_finish(void *v)
+{
+	struct acpi_softc *sc = v;
+	extern int lid_action;
+
+	acpi_record_event(sc, APM_NORMAL_RESUME);
+	acpi_indicator(sc, ACPI_SST_WORKING);
+
+	/* If we woke up but all the lids are closed, go back to sleep */
+	if (acpibtn_numopenlids() == 0 && lid_action != 0)
+		acpi_addtask(sc, acpi_sleep_task, sc, sc->sc_state);
+}
+
+void
+disable_lid_wakeups(void *v)
+{
+	acpibtn_disable_psw();		/* disable _LID for wakeup */
+}
 
 #endif /* ! SMALL_KERNEL */
 

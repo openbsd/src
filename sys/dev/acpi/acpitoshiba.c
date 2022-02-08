@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitoshiba.c,v 1.13 2020/03/16 08:51:48 jasper Exp $ */
+/* $OpenBSD: acpitoshiba.c,v 1.14 2022/02/08 17:25:12 deraadt Exp $ */
 /*-
  * Copyright (c) 2003 Hiroyuki Aizu <aizu@navi.org>
  * All rights reserved.
@@ -397,7 +397,7 @@ toshiba_hotkey(struct aml_node *node, int notify, void *arg)
 #ifndef SMALL_KERNEL
 		if (acpi_record_event(sc->sc_acpi, APM_USER_SUSPEND_REQ)) {
 			acpi_addtask(sc->sc_acpi, acpi_sleep_task,
-			    sc->sc_acpi, ACPI_SLEEP_SUSPEND);
+			    sc->sc_acpi, SLEEP_SUSPEND);
 			ret = HCI_SUCCESS;
 		}
 #endif
@@ -406,7 +406,7 @@ toshiba_hotkey(struct aml_node *node, int notify, void *arg)
 #if defined(HIBERNATE) && !defined(SMALL_KERNEL)
 		if (acpi_record_event(sc->sc_acpi, APM_USER_HIBERNATE_REQ)) {
 			acpi_addtask(sc->sc_acpi, acpi_sleep_task,
-			    sc->sc_acpi, ACPI_SLEEP_HIBERNATE);
+			    sc->sc_acpi, SLEEP_HIBERNATE);
 			ret = HCI_SUCCESS;
 		}
 #endif
