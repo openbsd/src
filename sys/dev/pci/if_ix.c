@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.181 2022/01/27 18:28:44 bluhm Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.182 2022/02/08 03:38:00 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -156,7 +156,8 @@ int	ixgbe_encap(struct tx_ring *, struct mbuf *);
 int	ixgbe_dma_malloc(struct ix_softc *, bus_size_t,
 		    struct ixgbe_dma_alloc *, int);
 void	ixgbe_dma_free(struct ix_softc *, struct ixgbe_dma_alloc *);
-int	ixgbe_tx_ctx_setup(struct tx_ring *, struct mbuf *, uint32_t *,
+static int
+	ixgbe_tx_ctx_setup(struct tx_ring *, struct mbuf *, uint32_t *,
 	    uint32_t *);
 int	ixgbe_tso_setup(struct tx_ring *, struct mbuf *, uint32_t *,
 	    uint32_t *);
@@ -1391,11 +1392,6 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 	cmd_type_len = (IXGBE_ADVTXD_DTYP_DATA |
 	    IXGBE_ADVTXD_DCMD_IFCS | IXGBE_ADVTXD_DCMD_DEXT);
 
-#if NVLAN > 0
-	if (m_head->m_flags & M_VLANTAG)
-		cmd_type_len |= IXGBE_ADVTXD_DCMD_VLE;
-#endif
-
 	/*
 	 * Important to capture the first descriptor
 	 * used because it will contain the index of
@@ -1404,6 +1400,14 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 	first = txr->next_avail_desc;
 	txbuf = &txr->tx_buffers[first];
 	map = txbuf->map;
+
+	/*
+	 * Set the appropriate offload context
+	 * this will becomes the first descriptor.
+	 */
+	ntxc = ixgbe_tx_ctx_setup(txr, m_head, &cmd_type_len, &olinfo_status);
+	if (ntxc == -1)
+		goto xmit_fail;
 
 	/*
 	 * Map the packet for DMA.
@@ -1421,14 +1425,6 @@ ixgbe_encap(struct tx_ring *txr, struct mbuf *m_head)
 	default:
 		return (0);
 	}
-
-	/*
-	 * Set the appropriate offload context
-	 * this will becomes the first descriptor.
-	 */
-	ntxc = ixgbe_tx_ctx_setup(txr, m_head, &cmd_type_len, &olinfo_status);
-	if (ntxc == -1)
-		goto xmit_fail;
 
 	i = txr->next_avail_desc + ntxc;
 	if (i >= sc->num_tx_desc)
@@ -1880,6 +1876,7 @@ ixgbe_setup_interface(struct ix_softc *sc)
 #endif
 
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 
 	/*
 	 * Specify the media types supported by this sc and register
@@ -2426,138 +2423,106 @@ ixgbe_free_transmit_buffers(struct tx_ring *txr)
  *
  **********************************************************************/
 
-int
+static inline void
+ixgbe_csum_offload(struct mbuf *mp,
+    uint32_t *vlan_macip_lens, uint32_t *type_tucmd_mlhl)
+{
+	struct ether_header *eh = mtod(mp, struct ether_header *);
+	struct mbuf *m;
+	int hoff;
+	uint32_t iphlen;
+	uint8_t ipproto;
+
+	*vlan_macip_lens |= (sizeof(*eh) << IXGBE_ADVTXD_MACLEN_SHIFT);
+
+	switch (ntohs(eh->ether_type)) {
+	case ETHERTYPE_IP: {
+		struct ip *ip;
+
+		m = m_getptr(mp, sizeof(*eh), &hoff);
+		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ip));
+		ip = (struct ip *)(mtod(m, caddr_t) + hoff);
+
+		iphlen = ip->ip_hl << 2;
+		ipproto = ip->ip_p;
+
+		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV4;
+		break;
+	}
+
+#ifdef INET6
+	case ETHERTYPE_IPV6: {
+		struct ip6_hdr *ip6;
+
+		m = m_getptr(mp, sizeof(*eh), &hoff);
+		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ip6));
+		ip6 = (struct ip6_hdr *)(mtod(m, caddr_t) + hoff);
+
+		iphlen = sizeof(*ip6);
+		ipproto = ip6->ip6_nxt;
+
+		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV6;
+		break;
+	}
+#endif
+
+	default:
+		panic("CSUM_OUT set for non-IP packet");
+		/* NOTREACHED */
+	}
+
+	*vlan_macip_lens |= iphlen;
+
+	switch (ipproto) {
+	case IPPROTO_TCP:
+		KASSERT(ISSET(mp->m_pkthdr.csum_flags, M_TCP_CSUM_OUT));
+		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
+		break;
+	case IPPROTO_UDP:
+		KASSERT(ISSET(mp->m_pkthdr.csum_flags, M_UDP_CSUM_OUT));
+		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
+		break;
+	default:
+		panic("CSUM_OUT set for wrong protocol");
+		/* NOTREACHED */
+	}
+}
+
+static int
 ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
     uint32_t *cmd_type_len, uint32_t *olinfo_status)
 {
 	struct ixgbe_adv_tx_context_desc *TXD;
 	struct ixgbe_tx_buf *tx_buffer;
-#if NVLAN > 0
-	struct ether_vlan_header *eh;
-#else
-	struct ether_header *eh;
-#endif
-	struct ip *ip;
-#ifdef notyet
-	struct ip6_hdr *ip6;
-#endif
-	struct mbuf *m;
-	int	ipoff;
 	uint32_t vlan_macip_lens = 0, type_tucmd_mlhl = 0;
-	int 	ehdrlen, ip_hlen = 0;
-	uint16_t etype;
-	uint8_t	ipproto = 0;
-	int	offload = TRUE;
 	int	ctxd = txr->next_avail_desc;
-#if NVLAN > 0
-	uint16_t vtag = 0;
-#endif
-
-#if notyet
-	/* First check if TSO is to be used */
-	if (mp->m_pkthdr.csum_flags & CSUM_TSO)
-		return (ixgbe_tso_setup(txr, mp, cmd_type_len, olinfo_status));
-#endif
-
-	if ((mp->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT | M_UDP_CSUM_OUT)) == 0)
-		offload = FALSE;
+	int	offload = 0;
 
 	/* Indicate the whole packet as payload when not doing TSO */
 	*olinfo_status |= mp->m_pkthdr.len << IXGBE_ADVTXD_PAYLEN_SHIFT;
 
-	/* Now ready a context descriptor */
-	TXD = (struct ixgbe_adv_tx_context_desc *) &txr->tx_base[ctxd];
+#if NVLAN > 0
+	if (ISSET(mp->m_flags, M_VLANTAG)) {
+		uint32_t vtag = mp->m_pkthdr.ether_vtag;
+		vlan_macip_lens |= (vtag << IXGBE_ADVTXD_VLAN_SHIFT);
+		*cmd_type_len |= IXGBE_ADVTXD_DCMD_VLE;
+		offload |= 1;
+	}
+#endif
+
+	if (ISSET(mp->m_pkthdr.csum_flags, M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) {
+		ixgbe_csum_offload(mp, &vlan_macip_lens, &type_tucmd_mlhl);
+		*olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
+		offload |= 1;
+	}
+
+	if (!offload)
+		return (0);
+
+	TXD = (struct ixgbe_adv_tx_context_desc *)&txr->tx_base[ctxd];
 	tx_buffer = &txr->tx_buffers[ctxd];
 
-	/*
-	 * In advanced descriptors the vlan tag must
-	 * be placed into the descriptor itself. Hence
-	 * we need to make one even if not doing offloads.
-	 */
-#if NVLAN > 0
-	if (mp->m_flags & M_VLANTAG) {
-		vtag = mp->m_pkthdr.ether_vtag;
-		vlan_macip_lens |= (vtag << IXGBE_ADVTXD_VLAN_SHIFT);
-	} else
-#endif
-	if (offload == FALSE)
-		return (0);	/* No need for CTX */
-
-	/*
-	 * Determine where frame payload starts.
-	 * Jump over vlan headers if already present,
-	 * helpful for QinQ too.
-	 */
-	if (mp->m_len < sizeof(struct ether_header))
-		return (-1);
-#if NVLAN > 0
-	eh = mtod(mp, struct ether_vlan_header *);
-	if (eh->evl_encap_proto == htons(ETHERTYPE_VLAN)) {
-		if (mp->m_len < sizeof(struct ether_vlan_header))
-			return (-1);
-		etype = ntohs(eh->evl_proto);
-		ehdrlen = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
-	} else {
-		etype = ntohs(eh->evl_encap_proto);
-		ehdrlen = ETHER_HDR_LEN;
-	}
-#else
-	eh = mtod(mp, struct ether_header *);
-	etype = ntohs(eh->ether_type);
-	ehdrlen = ETHER_HDR_LEN;
-#endif
-
-	/* Set the ether header length */
-	vlan_macip_lens |= ehdrlen << IXGBE_ADVTXD_MACLEN_SHIFT;
-
-	switch (etype) {
-	case ETHERTYPE_IP:
-		if (mp->m_pkthdr.len < ehdrlen + sizeof(*ip))
-			return (-1);
-		m = m_getptr(mp, ehdrlen, &ipoff);
-		KASSERT(m != NULL && m->m_len - ipoff >= sizeof(*ip));
-		ip = (struct ip *)(m->m_data + ipoff);
-		ip_hlen = ip->ip_hl << 2;
-		ipproto = ip->ip_p;
-		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV4;
-		break;
-#ifdef notyet
-	case ETHERTYPE_IPV6:
-		if (mp->m_pkthdr.len < ehdrlen + sizeof(*ip6))
-			return (-1);
-		m = m_getptr(mp, ehdrlen, &ipoff);
-		KASSERT(m != NULL && m->m_len - ipoff >= sizeof(*ip6));
-		ip6 = (struct ip6 *)(m->m_data + ipoff);
-		ip_hlen = sizeof(*ip6);
-		/* XXX-BZ this will go badly in case of ext hdrs. */
-		ipproto = ip6->ip6_nxt;
-		type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV6;
-		break;
-#endif
-	default:
-		offload = FALSE;
-		break;
-	}
-
-	vlan_macip_lens |= ip_hlen;
 	type_tucmd_mlhl |= IXGBE_ADVTXD_DCMD_DEXT | IXGBE_ADVTXD_DTYP_CTXT;
-
-	switch (ipproto) {
-	case IPPROTO_TCP:
-		if (mp->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
-			type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
-		break;
-	case IPPROTO_UDP:
-		if (mp->m_pkthdr.csum_flags & M_UDP_CSUM_OUT)
-			type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
-		break;
-	default:
-		offload = FALSE;
-		break;
-	}
-
-	if (offload) /* For the TX descriptor setup */
-		*olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
 
 	/* Now copy bits into descriptor */
 	TXD->vlan_macip_lens = htole32(vlan_macip_lens);

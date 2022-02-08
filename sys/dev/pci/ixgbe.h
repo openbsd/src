@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe.h,v 1.32 2020/07/18 07:18:22 dlg Exp $	*/
+/*	$OpenBSD: ixgbe.h,v 1.33 2022/02/08 03:38:00 dlg Exp $	*/
 
 /******************************************************************************
 
@@ -65,6 +65,7 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
+#include <netinet/ip6.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
