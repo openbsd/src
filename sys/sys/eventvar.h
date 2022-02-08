@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventvar.h,v 1.12 2021/06/10 15:10:56 visa Exp $	*/
+/*	$OpenBSD: eventvar.h,v 1.13 2022/02/08 08:56:41 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -52,6 +52,8 @@ struct kqueue {
 	struct		filedesc *kq_fdp;	/* [I] fd table of this kq */
 
 	LIST_ENTRY(kqueue) kq_next;
+
+	u_int		kq_nknotes;		/* [q] # of registered knotes */
 
 	int		kq_knlistsize;		/* [q] size of kq_knlist */
 	struct		knlist *kq_knlist;	/* [q] list of

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.178 2021/12/25 11:04:58 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.179 2022/02/08 08:56:41 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -221,6 +221,7 @@ KQRELE(struct kqueue *kq)
 	}
 
 	KASSERT(TAILQ_EMPTY(&kq->kq_head));
+	KASSERT(kq->kq_nknotes == 0);
 
 	free(kq->kq_knlist, M_KEVENT, kq->kq_knlistsize *
 	    sizeof(struct knlist));
@@ -451,7 +452,7 @@ filt_proc(struct knote *kn, long hint)
 		kev.fflags = kn->kn_sfflags;
 		kev.data = kn->kn_id;			/* parent */
 		kev.udata = kn->kn_udata;		/* preserve udata */
-		error = kqueue_register(kq, &kev, NULL);
+		error = kqueue_register(kq, &kev, 0, NULL);
 		if (error)
 			kn->kn_fflags |= NOTE_TRACKERR;
 	}
@@ -814,11 +815,29 @@ void
 kqpoll_done(unsigned int num)
 {
 	struct proc *p = curproc;
+	struct kqueue *kq = p->p_kq;
 
 	KASSERT(p->p_kq != NULL);
 	KASSERT(p->p_kq_serial + num >= p->p_kq_serial);
 
 	p->p_kq_serial += num;
+
+	/*
+	 * Because of kn_pollid key, a thread can in principle allocate
+	 * up to O(maxfiles^2) knotes by calling poll(2) repeatedly
+	 * with suitably varying pollfd arrays.
+	 * Prevent such a large allocation by clearing knotes eagerly
+	 * if there are too many of them.
+	 *
+	 * A small multiple of kq_knlistsize should give enough margin
+	 * that eager clearing is infrequent, or does not happen at all,
+	 * with normal programs.
+	 * A single pollfd entry can use up to three knotes.
+	 * Typically there is no significant overlap of fd and events
+	 * between different entries in the pollfd array.
+	 */
+	if (kq->kq_nknotes > 4 * kq->kq_knlistsize)
+		kqueue_purge(p, kq);
 }
 
 void
@@ -944,7 +963,7 @@ sys_kevent(struct proc *p, void *v, register_t *retval)
 		for (i = 0; i < n; i++) {
 			kevp = &kev[i];
 			kevp->flags &= ~EV_SYSFLAGS;
-			error = kqueue_register(kq, kevp, p);
+			error = kqueue_register(kq, kevp, 0, p);
 			if (error || (kevp->flags & EV_RECEIPT)) {
 				if (SCARG(uap, nevents) != 0) {
 					kevp->flags = EV_ERROR;
@@ -1040,7 +1059,8 @@ bad:
 #endif
 
 int
-kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
+kqueue_register(struct kqueue *kq, struct kevent *kev, unsigned int pollid,
+    struct proc *p)
 {
 	struct filedesc *fdp = kq->kq_fdp;
 	const struct filterops *fops = NULL;
@@ -1048,6 +1068,8 @@ kqueue_register(struct kqueue *kq, struct kevent *kev, struct proc *p)
 	struct knote *kn = NULL, *newkn = NULL;
 	struct knlist *list = NULL;
 	int active, error = 0;
+
+	KASSERT(pollid == 0 || (p != NULL && p->p_kq == kq));
 
 	if (kev->filter < 0) {
 		if (kev->filter + EVFILT_SYSCOUNT < 0)
@@ -1096,7 +1118,8 @@ again:
 	if (list != NULL) {
 		SLIST_FOREACH(kn, list, kn_link) {
 			if (kev->filter == kn->kn_filter &&
-			    kev->ident == kn->kn_id) {
+			    kev->ident == kn->kn_id &&
+			    pollid == kn->kn_pollid) {
 				if (!knote_acquire(kn, NULL, 0)) {
 					/* knote_acquire() has released
 					 * kq_lock. */
@@ -1141,6 +1164,7 @@ again:
 			kev->fflags = 0;
 			kev->data = 0;
 			kn->kn_kevent = *kev;
+			kn->kn_pollid = pollid;
 
 			knote_attach(kn);
 			mtx_leave(&kq->kq_lock);
@@ -1905,6 +1929,7 @@ knote_attach(struct knote *kn)
 		list = &kq->kq_knhash[KN_HASH(kn->kn_id, kq->kq_knhashmask)];
 	}
 	SLIST_INSERT_HEAD(list, kn, kn_link);
+	kq->kq_nknotes++;
 }
 
 void
@@ -1916,6 +1941,7 @@ knote_detach(struct knote *kn)
 	MUTEX_ASSERT_LOCKED(&kq->kq_lock);
 	KASSERT(kn->kn_status & KN_PROCESSING);
 
+	kq->kq_nknotes--;
 	if (kn->kn_fop->f_flags & FILTEROP_ISFD)
 		list = &kq->kq_knlist[kn->kn_id];
 	else

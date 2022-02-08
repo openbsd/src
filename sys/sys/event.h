@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.61 2021/12/11 09:28:26 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.62 2022/02/08 08:56:41 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -246,6 +246,8 @@ struct knote {
 	} kn_ptr;
 	const struct		filterops *kn_fop;
 	void			*kn_hook;	/* [o] */
+	unsigned int		kn_pollid;	/* [I] */
+
 #define KN_ACTIVE	0x0001			/* event has been triggered */
 #define KN_QUEUED	0x0002			/* event is on queue */
 #define KN_DISABLED	0x0004			/* event is disabled */
@@ -296,8 +298,8 @@ extern void	knote_modify(const struct kevent *, struct knote *);
 extern void	knote_submit(struct knote *, struct kevent *);
 extern void	kqueue_init(void);
 extern void	kqueue_init_percpu(void);
-extern int	kqueue_register(struct kqueue *kq,
-		    struct kevent *kev, struct proc *p);
+extern int	kqueue_register(struct kqueue *kq, struct kevent *kev,
+		    unsigned int pollid, struct proc *p);
 extern int	kqueue_scan(struct kqueue_scan_state *, int, struct kevent *,
 		    struct timespec *, struct proc *, int *);
 extern void	kqueue_scan_setup(struct kqueue_scan_state *, struct kqueue *);
