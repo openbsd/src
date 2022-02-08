@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.61 2022/02/08 11:51:51 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.62 2022/02/08 12:35:14 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1033,7 +1033,8 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		c = x509_get_crl(x509, file);
 		parse_load_crl(c);
 		free(c);
-		parse_load_certchain(aia);
+		if (auth_find(&auths, aki) == NULL)
+			parse_load_certchain(aia);
 		a = auth_find(&auths, aki);
 		crl = get_crl(a);
 
