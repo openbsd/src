@@ -1,4 +1,4 @@
-.\" $OpenBSD: mandoc.1,v 1.180 2022/02/06 00:29:03 jsg Exp $
+.\" $OpenBSD: mandoc.1,v 1.181 2022/02/08 18:23:11 schwarze Exp $
 .\"
 .\" Copyright (c) 2012, 2014-2021 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 6 2022 $
+.Dd $Mdocdate: February 8 2022 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -735,7 +735,7 @@ output mode implies
 .Sh EXAMPLES
 To page manuals to the terminal:
 .Pp
-.Dl $ mandoc -l mandoc.1 man.1 apropos.1 makewhatis.8
+.Dl $ mandoc -a mandoc.1 man.1 apropos.1 makewhatis.8
 .Pp
 To produce HTML manuals with
 .Pa /usr/share/misc/mandoc.css
