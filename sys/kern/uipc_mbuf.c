@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.280 2022/01/18 12:38:21 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.281 2022/02/08 11:28:19 dlg Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -945,9 +945,9 @@ m_pullup(struct mbuf *m0, int len)
 				goto freem0;
 		}
 
-		adj = mtod(m, unsigned long) & ALIGNBYTES;
+		adj = mtod(m, unsigned long) & (sizeof(long) - 1);
 	} else
-		adj = mtod(m0, unsigned long) & ALIGNBYTES;
+		adj = mtod(m0, unsigned long) & (sizeof(long) - 1);
 
 	tail = head + M_SIZE(m0);
 	head += adj;
