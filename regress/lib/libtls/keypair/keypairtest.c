@@ -1,4 +1,4 @@
-/* $OpenBSD: keypairtest.c,v 1.5 2021/12/04 09:04:36 tb Exp $ */
+/* $OpenBSD: keypairtest.c,v 1.6 2022/02/08 18:05:57 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  *
@@ -89,7 +89,6 @@ do_keypair_tests(void)
 	X509 *x509_cert = NULL;
 	struct tls_keypair *kp;
 	struct tls_error err;
-	char *hash = NULL;
 	int failed = 1;
 
 	load_file(cert_file, &cert, &cert_len);
@@ -126,7 +125,7 @@ do_keypair_tests(void)
 		goto done;
 	if (strcmp(kp->pubkey_hash, PUBKEY_HASH) != 0) {
 		fprintf(stderr, "FAIL: got pubkey hash '%s', want '%s'",
-		    hash, PUBKEY_HASH);
+		    kp->pubkey_hash, PUBKEY_HASH);
 		goto done;
 	}
 
@@ -161,7 +160,7 @@ do_keypair_tests(void)
 		goto done;
 	if (strcmp(kp->pubkey_hash, PUBKEY_HASH) != 0) {
 		fprintf(stderr, "FAIL: got pubkey hash '%s', want '%s'",
-		    hash, PUBKEY_HASH);
+		    kp->pubkey_hash, PUBKEY_HASH);
 		goto done;
 	}
 
@@ -179,13 +178,11 @@ do_keypair_tests(void)
 		goto done;
 	}
 
-	tls_keypair_free(kp);
-
 	failed = 0;
 
  done:
+	tls_keypair_free(kp);
 	X509_free(x509_cert);
-	free(hash);
 	free((uint8_t *)cert);
 	free((uint8_t *)key);
 	free((uint8_t *)ocsp_staple);
