@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.93 2022/01/25 21:51:24 eric Exp $ */
+/* $OpenBSD: tls.c,v 1.94 2022/02/08 19:13:50 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -647,7 +647,6 @@ tls_configure_ssl_verify(struct tls *ctx, SSL_CTX *ssl_ctx, int verify)
 				tls_set_error(ctx, "failed to add crl");
 				goto err;
 			}
-			xi->crl = NULL;
 		}
 		X509_STORE_set_flags(store,
 		    X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
