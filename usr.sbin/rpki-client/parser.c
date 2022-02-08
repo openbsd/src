@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.60 2022/02/04 16:29:43 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.61 2022/02/08 11:51:51 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -530,45 +530,16 @@ proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
 static void
 proc_parser_crl(char *file, const unsigned char *der, size_t len)
 {
-	X509_CRL		*x509_crl;
-	struct crl		*crl;
-	const ASN1_TIME		*at;
-	struct tm		 expires_tm;
+	struct crl	*crl;
 
-	if ((x509_crl = crl_parse(file, der, len)) != NULL) {
-		if ((crl = malloc(sizeof(*crl))) == NULL)
-			err(1, NULL);
-		if ((crl->aki = x509_crl_get_aki(x509_crl, file)) == NULL) {
-			warnx("x509_crl_get_aki failed");
-			goto err;
-		}
+	if ((crl = crl_parse(file, der, len)) == NULL)
+		return;
 
-		crl->x509_crl = x509_crl;
-
-		/* extract expire time for later use */
-		at = X509_CRL_get0_nextUpdate(x509_crl);
-		if (at == NULL) {
-			warnx("%s: X509_CRL_get0_nextUpdate failed", file);
-			goto err;
-		}
-		memset(&expires_tm, 0, sizeof(expires_tm));
-		if (ASN1_time_parse(at->data, at->length, &expires_tm,
-		    0) == -1) {
-			warnx("%s: ASN1_time_parse failed", file);
-			goto err;
-		}
-		if ((crl->expires = mktime(&expires_tm)) == -1)
-			errx(1, "%s: mktime failed", file);
-
-		if (RB_INSERT(crl_tree, &crlt, crl) != NULL) {
-			if (!filemode)
-				warnx("%s: duplicate AKI %s", file, crl->aki);
-			goto err;
-		}
+	if (RB_INSERT(crl_tree, &crlt, crl) != NULL) {
+		if (!filemode)
+			warnx("%s: duplicate AKI %s", file, crl->aki);
+		crl_free(crl);
 	}
-	return;
- err:
-	free_crl(crl);
 }
 
 /*

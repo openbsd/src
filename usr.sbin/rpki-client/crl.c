@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.11 2021/10/26 10:52:49 claudio Exp $ */
+/*	$OpenBSD: crl.c,v 1.12 2022/02/08 11:51:51 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -28,28 +28,52 @@
 
 #include "extern.h"
 
-X509_CRL *
+struct crl *
 crl_parse(const char *fn, const unsigned char *der, size_t len)
 {
+	struct crl	*crl;
+	const ASN1_TIME	*at;
+	struct tm	 expires_tm;
 	int		 rc = 0;
-	X509_CRL	*x = NULL;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
 		return NULL;
 
-	if ((x = d2i_X509_CRL(NULL, &der, len)) == NULL) {
+	if ((crl = calloc(1, sizeof(*crl))) == NULL)
+		err(1, NULL);
+
+	if ((crl->x509_crl = d2i_X509_CRL(NULL, &der, len)) == NULL) {
 		cryptowarnx("%s: d2i_X509_CRL", fn);
 		goto out;
 	}
 
-	rc = 1;
-out:
-	if (rc == 0) {
-		X509_CRL_free(x);
-		x = NULL;
+	if ((crl->aki = x509_crl_get_aki(crl->x509_crl, fn)) == NULL) {
+		warnx("x509_crl_get_aki failed");
+		goto out;
 	}
-	return x;
+
+	/* extract expire time for later use */
+	at = X509_CRL_get0_nextUpdate(crl->x509_crl);
+	if (at == NULL) {
+		warnx("%s: X509_CRL_get0_nextUpdate failed", fn);
+		goto out;
+	}
+	memset(&expires_tm, 0, sizeof(expires_tm));
+	if (ASN1_time_parse(at->data, at->length, &expires_tm, 0) == -1) {
+		warnx("%s: ASN1_time_parse failed", fn);
+		goto out;
+	}
+	if ((crl->expires = mktime(&expires_tm)) == -1)
+		errx(1, "%s: mktime failed", fn);
+
+	rc = 1;
+ out:
+	if (rc == 0) {
+		crl_free(crl);
+		crl = NULL;
+	}
+	return crl;
 }
 
 static inline int
@@ -61,8 +85,10 @@ crlcmp(struct crl *a, struct crl *b)
 RB_GENERATE(crl_tree, crl, entry, crlcmp);
 
 void
-free_crl(struct crl *crl)
+crl_free(struct crl *crl)
 {
+	if (crl == NULL)
+		return;
 	free(crl->aki);
 	X509_CRL_free(crl->x509_crl);
 	free(crl);

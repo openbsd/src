@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.116 2022/01/28 15:30:23 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.117 2022/02/08 11:51:51 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -447,8 +447,8 @@ struct gbr	*gbr_parse(X509 **, const char *, const unsigned char *,
 		    size_t);
 
 /* crl.c */
-X509_CRL	*crl_parse(const char *, const unsigned char *, size_t);
-void		 free_crl(struct crl *);
+struct crl	*crl_parse(const char *, const unsigned char *, size_t);
+void		 crl_free(struct crl *);
 
 /* Validation of our objects. */
 
