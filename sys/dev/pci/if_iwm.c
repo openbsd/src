@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.390 2022/01/21 15:51:02 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.391 2022/02/08 14:24:36 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -11719,8 +11719,6 @@ iwm_wakeup(struct iwm_softc *sc)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 	int err;
 
-	refcnt_init(&sc->task_refs);
-
 	err = iwm_start_hw(sc);
 	if (err)
 		return err;
@@ -11729,6 +11727,7 @@ iwm_wakeup(struct iwm_softc *sc)
 	if (err)
 		return err;
 
+	refcnt_init(&sc->task_refs);
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_flags |= IFF_RUNNING;
 
