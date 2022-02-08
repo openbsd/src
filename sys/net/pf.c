@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1123 2022/01/02 22:36:04 jsg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1124 2022/02/08 18:08:33 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1298,8 +1298,9 @@ pf_purge(void *xnloops)
 	 * 	pf_purge_expired_states() uses pf_state_lock to maintain
 	 * 	consistency.
 	 */
-	pf_purge_expired_states(1 + (pf_status.states
-	    / pf_default_rule.timeout[PFTM_INTERVAL]));
+	if (pf_default_rule.timeout[PFTM_INTERVAL] > 0)
+		pf_purge_expired_states(1 + (pf_status.states
+		    / pf_default_rule.timeout[PFTM_INTERVAL]));
 
 	NET_LOCK();
 
