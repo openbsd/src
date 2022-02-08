@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvkpcie.c,v 1.11 2021/10/04 19:04:12 kettenis Exp $	*/
+/*	$OpenBSD: mvkpcie.c,v 1.12 2022/02/08 09:41:04 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -924,7 +924,7 @@ mvkpcie_intc_intr_establish(void *cookie, int *cell, int level,
 	if (ci != NULL && !CPU_IS_PRIMARY(ci))
 		return NULL;
 
-	if (irq < 0 || irq > nitems(sc->sc_intx_handlers))
+	if (irq < 0 || irq >= nitems(sc->sc_intx_handlers))
 		return NULL;
 
 	/* Don't allow shared interrupts for now. */
