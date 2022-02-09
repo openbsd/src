@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.80 2022/02/09 03:22:50 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.81 2022/02/09 11:12:21 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -843,7 +843,8 @@ struct ixl_rx_rd_desc_32 {
 } __packed __aligned(16);
 
 struct ixl_rx_wb_desc_16 {
-	uint32_t		_reserved1;
+	uint16_t		_reserved1;
+	uint16_t		l2tag1;
 	uint32_t		filter_status;
 	uint64_t		qword1;
 #define IXL_RX_DESC_DD			(1 << 0)
@@ -1063,7 +1064,11 @@ struct ixl_hmc_rxq {
 #define IXL_HMC_RXQ_DSIZE_32		1
 	uint8_t			 crcstrip;
 	uint8_t			 fc_ena;
-	uint8_t			 l2sel;
+	uint8_t			 l2tsel;
+#define IXL_HMC_RXQ_L2TSEL_2ND_TAG_TO_L2TAG1 \
+					0
+#define IXL_HMC_RXQ_L2TSEL_1ST_TAG_TO_L2TAG1 \
+					1
 	uint8_t			 hsplit_0;
 	uint8_t			 hsplit_1;
 	uint8_t			 showiv;
@@ -1087,7 +1092,7 @@ static const struct ixl_hmc_pack ixl_hmc_pack_rxq[] = {
 	{ offsetof(struct ixl_hmc_rxq, dsize),		1,	116 },
 	{ offsetof(struct ixl_hmc_rxq, crcstrip),	1,	117 },
 	{ offsetof(struct ixl_hmc_rxq, fc_ena),		1,	118 },
-	{ offsetof(struct ixl_hmc_rxq, l2sel),		1,	119 },
+	{ offsetof(struct ixl_hmc_rxq, l2tsel),		1,	119 },
 	{ offsetof(struct ixl_hmc_rxq, hsplit_0),	4,	120 },
 	{ offsetof(struct ixl_hmc_rxq, hsplit_1),	2,	124 },
 	{ offsetof(struct ixl_hmc_rxq, showiv),		1,	127 },
@@ -3175,7 +3180,7 @@ ixl_rxr_config(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 	rxq.dtype = IXL_HMC_RXQ_DTYPE_NOSPLIT;
 	rxq.dsize = IXL_HMC_RXQ_DSIZE_16;
 	rxq.crcstrip = 1;
-	rxq.l2sel = 0;
+	rxq.l2tsel = IXL_HMC_RXQ_L2TSEL_1ST_TAG_TO_L2TAG1;
 	rxq.showiv = 0;
 	rxq.rxmax = htole16(IXL_HARDMTU);
 	rxq.tphrdesc_ena = 0;
@@ -3284,6 +3289,12 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 					m->m_pkthdr.ph_flowid =
 					    lemtoh32(&rxd->filter_status);
 					m->m_pkthdr.csum_flags |= M_FLOWID;
+				}
+
+				if (ISSET(word, IXL_RX_DESC_L2TAG1P)) {
+					m->m_pkthdr.ether_vtag =
+					    lemtoh16(&rxd->l2tag1);
+					SET(m->m_flags, M_VLANTAG);
 				}
 
 				ml_enqueue(&ml, m);
@@ -4377,8 +4388,8 @@ ixl_set_vsi(struct ixl_softc *sc)
 
 	CLR(data->port_vlan_flags,
 	    htole16(IXL_AQ_VSI_PVLAN_MODE_MASK | IXL_AQ_VSI_PVLAN_EMOD_MASK));
-	SET(data->port_vlan_flags,
-	    htole16(IXL_AQ_VSI_PVLAN_MODE_ALL | IXL_AQ_VSI_PVLAN_EMOD_NOTHING));
+	SET(data->port_vlan_flags, htole16(IXL_AQ_VSI_PVLAN_MODE_ALL |
+	    IXL_AQ_VSI_PVLAN_EMOD_STR_BOTH));
 
 	/* grumble, vsi info isn't "known" at compile time */
 
