@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.8 2021/10/24 17:52:28 mpi Exp $	*/
+/*	$OpenBSD: apm.c,v 1.9 2022/02/09 23:54:55 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -41,7 +41,6 @@
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
-#include <sys/buf.h>
 #include <sys/event.h>
 #include <sys/reboot.h>
 #include <sys/hibernate.h>
@@ -109,7 +108,7 @@ int (*get_apminfo)(struct apm_power_info *) = apm_getdefaultinfo;
 #define SCFLAG_PCTPRINT	0x0004000
 #define SCFLAG_PRINT	(SCFLAG_NOPRINT|SCFLAG_PCTPRINT)
 
-#define	SCFLAG_OREAD 	(1 << 0)
+#define	SCFLAG_OREAD	(1 << 0)
 #define	SCFLAG_OWRITE	(1 << 1)
 #define	SCFLAG_OPEN	(SCFLAG_OREAD|SCFLAG_OWRITE)
 
@@ -210,18 +209,28 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 		/* some ioctl names from linux */
 	case APM_IOC_STANDBY:
-	case APM_IOC_STANDBY_REQ:
 	case APM_IOC_SUSPEND:
-	case APM_IOC_SUSPEND_REQ:
+		if ((flag & FWRITE) == 0) {
+			error = EBADF;
+			break;
+		}
+		sleep_state(NULL, SLEEP_SUSPEND);
+		break;
 #ifdef HIBERNATE
 	case APM_IOC_HIBERNATE:
-#endif
-	case APM_IOC_DEV_CTL:
-		if ((flag & FWRITE) == 0)
+		if ((error = suser(p)) != 0)
+			break;
+		if ((flag & FWRITE) == 0) {
 			error = EBADF;
-		else
-			error = EOPNOTSUPP; /* XXX */
+			break;
+		}
+		if (get_hibernate_io_function(swdevt[0].sw_dev) == NULL) {
+			error = EOPNOTSUPP;
+			break;
+		}
+		sleep_state(NULL, SLEEP_HIBERNATE);
 		break;
+#endif
 	case APM_IOC_PRN_CTL:
 		if ((flag & FWRITE) == 0)
 			error = EBADF;
@@ -247,7 +256,7 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		break;
 	case APM_IOC_GETPOWER:
-	        power = (struct apm_power_info *)data;
+		power = (struct apm_power_info *)data;
 		error = (*get_apminfo)(power);
 		break;
 	default:
@@ -337,3 +346,116 @@ apm_record_event(u_int event, const char *src, const char *msg)
 
 	return (0);
 }
+
+#ifdef SUSPEND
+
+void
+sleep_clocks(void *v)
+{
+}
+
+int
+sleep_cpu(void *v, int state)
+{
+	return 0;
+}
+
+void
+resume_cpu(void *sc, int state)
+{
+}
+
+#ifdef MULTIPROCESSOR
+
+void
+sleep_mp(void)
+{
+}
+
+void
+resume_mp(void)
+{
+}
+
+#endif /* MULTIPROCESSOR */
+
+int
+sleep_showstate(void *v, int sleepmode)
+{
+	return 0;
+}
+
+int
+sleep_setstate(void *v)
+{
+	return 0;
+}
+
+void
+gosleep(void *v)
+{
+	// XXX
+}
+
+int
+sleep_resume(void *v)
+{
+	return 0;
+}
+
+void
+display_suspend(void *v)
+{
+#if 0
+#if NWSDISPLAY > 0
+	struct acpi_softc *sc = v;
+
+	/*
+	 * Temporarily release the lock to prevent the X server from
+	 * blocking on setting the display brightness.
+	 */
+	rw_exit_write(&sc->sc_lck);		/* XXX replace this interlock */
+	wsdisplay_suspend();
+	rw_enter_write(&sc->sc_lck);
+#endif /* NWSDISPLAY > 0 */
+#endif
+}
+
+void
+display_resume(void *v)
+{
+#if 0
+#if NWSDISPLAY > 0
+	struct acpi_softc *sc = v;
+
+	rw_exit_write(&sc->sc_lck);		/* XXX replace this interlock */
+	wsdisplay_resume();
+	rw_enter_write(&sc->sc_lck);
+#endif /* NWSDISPLAY > 0 */
+#endif
+}
+
+void
+suspend_finish(void *v)
+{
+#if 0
+	extern int lid_action;
+
+	acpi_record_event(sc, APM_NORMAL_RESUME);
+	acpi_indicator(sc, ACPI_SST_WORKING);
+
+	/* XXX won't work, there is no acpi thread on arm64 */
+
+	/* If we woke up but all the lids are closed, go back to sleep */
+	if (acpibtn_numopenlids() == 0 && lid_action != 0)
+		acpi_addtask(sc, acpi_sleep_task, sc, sc->sc_state);
+#endif
+}
+
+void
+disable_lid_wakeups(void *v)
+{
+}
+
+#endif /* SUSPEND */
+
