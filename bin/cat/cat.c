@@ -1,4 +1,4 @@
-/*	$OpenBSD: cat.c,v 1.32 2021/10/24 21:24:21 deraadt Exp $	*/
+/*	$OpenBSD: cat.c,v 1.33 2022/02/09 01:56:28 cheloha Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
 /*
@@ -50,9 +50,8 @@
 int bflag, eflag, nflag, sflag, tflag, vflag;
 int rval;
 
-void cook_args(char *argv[]);
+void cat_file(const char *);
 void cook_buf(FILE *, const char *);
-void raw_args(char *argv[]);
 void raw_cat(int, const char *);
 
 int
@@ -92,40 +91,51 @@ main(int argc, char *argv[])
 			return 1;
 		}
 	}
+	argc -= optind;
 	argv += optind;
 
-	if (bflag || eflag || nflag || sflag || tflag || vflag)
-		cook_args(argv);
-	else
-		raw_args(argv);
+	if (argc == 0) {
+		cat_file(NULL);
+	} else {
+		for (; *argv != NULL; argv++)
+			cat_file(*argv);
+	}
 	if (fclose(stdout))
 		err(1, "stdout");
 	return rval;
 }
 
 void
-cook_args(char **argv)
+cat_file(const char *path)
 {
 	FILE *fp;
+	int fd;
 
-	if (*argv == NULL) {
-		cook_buf(stdin, "stdin");
-		return;
-	}
-
-	for (; *argv != NULL; argv++) {
-		if (!strcmp(*argv, "-")) {
+	if (bflag || eflag || nflag || sflag || tflag || vflag) {
+		if (path == NULL || strcmp(path, "-") == 0) {
 			cook_buf(stdin, "stdin");
 			clearerr(stdin);
-			continue;
+		} else {
+			if ((fp = fopen(path, "r")) == NULL) {
+				warn("%s", path);
+				rval = 1;
+				return;
+			}
+			cook_buf(fp, path);
+			fclose(fp);
 		}
-		if ((fp = fopen(*argv, "r")) == NULL) {
-			warn("%s", *argv);
-			rval = 1;
-			continue;
+	} else {
+		if (path == NULL || strcmp(path, "-") == 0) {
+			raw_cat(STDIN_FILENO, "stdin");
+		} else {
+			if ((fd = open(path, O_RDONLY)) == -1) {
+				warn("%s", path);
+				rval = 1;
+				return;
+			}
+			raw_cat(fd, path);
+			close(fd);
 		}
-		cook_buf(fp, *argv);
-		fclose(fp);
 	}
 }
 
@@ -191,31 +201,6 @@ cook_buf(FILE *fp, const char *filename)
 	}
 	if (ferror(stdout))
 		err(1, "stdout");
-}
-
-void
-raw_args(char **argv)
-{
-	int fd;
-
-	if (*argv == NULL) {
-		raw_cat(fileno(stdin), "stdin");
-		return;
-	}
-
-	for (; *argv != NULL; argv++) {
-		if (!strcmp(*argv, "-")) {
-			raw_cat(fileno(stdin), "stdin");
-			continue;
-		}
-		if ((fd = open(*argv, O_RDONLY)) == -1) {
-			warn("%s", *argv);
-			rval = 1;
-			continue;
-		}
-		raw_cat(fd, *argv);
-		close(fd);
-	}
 }
 
 void
