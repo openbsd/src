@@ -1,4 +1,4 @@
-/*	$OpenBSD: cat.c,v 1.33 2022/02/09 01:56:28 cheloha Exp $	*/
+/*	$OpenBSD: cat.c,v 1.34 2022/02/09 01:58:57 cheloha Exp $	*/
 /*	$NetBSD: cat.c,v 1.11 1995/09/07 06:12:54 jtc Exp $	*/
 
 /*
@@ -95,6 +95,9 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (argc == 0) {
+		if (pledge("stdio", NULL) == -1)
+			err(1, "pledge");
+
 		cat_file(NULL);
 	} else {
 		for (; *argv != NULL; argv++)
