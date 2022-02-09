@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.68 2020/06/10 22:26:40 jca Exp $ */
+/* $OpenBSD: acpibat.c,v 1.69 2022/02/09 16:10:05 dv Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -47,6 +47,7 @@ struct cfdriver acpibat_cd = {
 
 const char *acpibat_hids[] = {
 	ACPI_DEV_CMB,
+	"MSHW0146",
 	NULL
 };
 
