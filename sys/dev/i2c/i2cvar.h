@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2cvar.h,v 1.17 2019/07/22 14:37:06 jcs Exp $	*/
+/*	$OpenBSD: i2cvar.h,v 1.18 2022/02/09 07:58:24 visa Exp $	*/
 /*	$NetBSD: i2cvar.h,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -111,6 +111,7 @@ struct i2c_attach_args {
 	i2c_addr_t	ia_addr;	/* address of device */
 	int		ia_size;	/* size (for EEPROMs) */
 	char		*ia_name;	/* chip name */
+	size_t		ia_namelen;	/* length of name concatenation */
 	void		*ia_cookie;	/* pass extra info from bus to dev */
 	void		*ia_intr;	/* interrupt info */
 	int		ia_poll;	/* to force polling */
@@ -164,5 +165,6 @@ int	iic_smbus_receive_byte(i2c_tag_t, i2c_addr_t, uint8_t *, int);
 	(*(ic)->ic_intr_string)((ic)->ic_cookie, (ih))
 
 void	iic_ignore_addr(u_int8_t addr);
+int	iic_is_compatible(const struct i2c_attach_args *, const char *);
 
 #endif /* _DEV_I2C_I2CVAR_H_ */

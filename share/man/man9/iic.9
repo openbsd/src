@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.9,v 1.9 2015/11/23 17:53:57 jmc Exp $
+.\"	$OpenBSD: iic.9,v 1.10 2022/02/09 07:58:24 visa Exp $
 .\"
 .\" Copyright (c) 2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 23 2015 $
+.Dd $Mdocdate: February 9 2022 $
 .Dt IIC_ACQUIRE_BUS 9
 .Os
 .Sh NAME
@@ -42,7 +42,8 @@
 .Nm iic_exec ,
 .Nm iic_smbus_write_byte ,
 .Nm iic_smbus_read_byte ,
-.Nm iic_smbus_receive_byte
+.Nm iic_smbus_receive_byte ,
+.Nm iic_is_compatible
 .Nd Inter IC (I2C) bus
 .Sh SYNOPSIS
 .In dev/i2c/i2cvar.h
@@ -89,6 +90,11 @@
 .Fa "i2c_addr_t addr"
 .Fa "uint8_t *datap"
 .Fa "int flags"
+.Fc
+.Ft int
+.Fo iic_is_compatible
+.Fa "const struct i2c_attach_args *ia"
+.Fa "const char *name"
 .Fc
 .Sh DESCRIPTION
 I2C is a two-wire bus developed by Philips used for connecting
@@ -137,8 +143,11 @@ struct i2c_attach_args {
 	i2c_addr_t ia_addr;	/* address of device */
 	int ia_size;		/* size (for EEPROMs) */
 	char *ia_name;		/* chip name */
+	size_t ia_namelen	/* length of name concatenation */
 	void *ia_cookie;	/* pass extra info from
 				   bus to dev */
+	void *ia_intr		/* interrupt info */
+	int ia_poll;		/* to force polling */
 };
 .Ed
 .El
@@ -231,6 +240,9 @@ I2C_OP_READ_WITH_STOP with
 of 0 and
 .Fa len
 of 1.
+.It Fn iic_is_compatible "ia" "name"
+Test if the device is compatible with
+.Fa name .
 .El
 .Sh CONTROLLER INTERFACE
 The I2C controller driver must fill in the function pointers of

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c.c,v 1.17 2021/10/26 16:29:49 deraadt Exp $	*/
+/*	$OpenBSD: i2c.c,v 1.18 2022/02/09 07:58:24 visa Exp $	*/
 /*	$NetBSD: i2c.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -142,4 +142,27 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 		(iba->iba_bus_scan)(self, aux, iba->iba_bus_scan_arg);
 	else
 		iic_scan(self, aux);
+}
+
+int
+iic_is_compatible(const struct i2c_attach_args *ia, const char *name)
+{
+	const char *end, *entry;
+
+	if (ia->ia_namelen > 0) {
+		/* ia_name points to a concatenation of strings. */
+		entry = ia->ia_name;
+		end = entry + ia->ia_namelen;
+		while (entry < end) {
+			if (strcmp(entry, name) == 0)
+				return (1);
+			entry += strlen(entry) + 1;
+		}
+	} else {
+		/* ia_name points to a string. */
+		if (strcmp(ia->ia_name, name) == 0)
+			return (1);
+	}
+
+	return (0);
 }
