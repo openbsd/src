@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcap.c,v 1.8 2019/01/25 00:19:26 millert Exp $	*/
+/*	$OpenBSD: getcap.c,v 1.9 2022/02/09 15:53:35 millert Exp $	*/
 
 /*
  * Copyright (c) 2005 Todd C. Miller <millert@openbsd.org>
@@ -77,7 +77,7 @@ main(int argc, char *argv[])
 			if (pathvec != NULL)
 				errx(1, "only one -f option may be specified");
 			for (n = 1, cp = optarg; (cp = strchr(cp, ':')); n++)
-				continue;
+				cp++;
 			pathvec = calloc(n + 1, sizeof(char *));
 			for (n = 0; (pathvec[n] = strsep(&optarg, ":"));) {
 				if (*pathvec[n] != '\0')
