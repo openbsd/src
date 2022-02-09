@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.79 2022/02/08 11:55:19 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.80 2022/02/09 03:22:50 dlg Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -826,6 +826,8 @@ struct ixl_tx_desc {
 #define IXL_TX_DESC_BSIZE_MAX		0x3fffULL
 #define IXL_TX_DESC_BSIZE_MASK		\
 	(IXL_TX_DESC_BSIZE_MAX << IXL_TX_DESC_BSIZE_SHIFT)
+
+#define IXL_TX_DESC_L2TAG1_SHIFT	48
 } __packed __aligned(16);
 
 struct ixl_rx_rd_desc_16 {
@@ -1943,10 +1945,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 	ifq_set_maxlen(&ifp->if_snd, sc->sc_tx_ring_ndescs);
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
-#if 0
-	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
-#endif
+	ifp->if_capabilities = IFCAP_VLAN_HWTAGGING;
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4 |
 	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
 	    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
@@ -2785,9 +2784,15 @@ ixl_tx_setup_offload(struct mbuf *m0)
 	uint8_t ipproto;
 	uint64_t offload = 0;
 
+	if (ISSET(m0->m_flags, M_VLANTAG)) {
+		uint64_t vtag = m0->m_pkthdr.ether_vtag;
+		offload |= IXL_TX_DESC_CMD_IL2TAG1;
+		offload |= vtag << IXL_TX_DESC_L2TAG1_SHIFT;
+	}
+
 	if (!ISSET(m0->m_pkthdr.csum_flags,
 	    M_IPV4_CSUM_OUT|M_TCP_CSUM_OUT|M_UDP_CSUM_OUT))
-		return (0);
+		return (offload);
 
 	switch (ntohs(mtod(m0, struct ether_header *)->ether_type)) {
 	case ETHERTYPE_IP: {
