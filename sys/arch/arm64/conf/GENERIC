@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.223 2022/02/09 23:54:55 deraadt Exp $
+# $OpenBSD: GENERIC,v 1.224 2022/02/09 23:55:33 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -25,7 +25,6 @@ maxusers	80
 option		PCIVERBOSE
 option		USER_PCICONF	# user-space PCI configuration
 option		USBVERBOSE
-option		SUSPEND
 
 makeoptions	KERNEL_BASE_PHYS="0x00200000"
 makeoptions	KERNEL_BASE_VIRT="0xffffff8000200000"
