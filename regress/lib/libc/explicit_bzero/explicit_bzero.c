@@ -1,4 +1,4 @@
-/*	$OpenBSD: explicit_bzero.c,v 1.7 2021/03/27 11:17:58 bcook Exp $	*/
+/*	$OpenBSD: explicit_bzero.c,v 1.8 2022/02/09 07:48:15 tb Exp $	*/
 /*
  * Copyright (c) 2014 Google Inc.
  *
@@ -139,7 +139,7 @@ count_secrets(const char *buf)
 }
 
 static char *
-test_without_bzero()
+test_without_bzero(void)
 {
 	char buf[SECRETBYTES];
 	assert_on_stack();
@@ -150,7 +150,7 @@ test_without_bzero()
 }
 
 static char *
-test_with_bzero()
+test_with_bzero(void)
 {
 	char buf[SECRETBYTES];
 	assert_on_stack();
@@ -161,14 +161,14 @@ test_with_bzero()
 	return (res);
 }
 
-static void 
+static void
 do_test_without_bzero(int signo)
 {
 	char *buf = test_without_bzero();
 	ASSERT_GE(count_secrets(buf), 1);
 }
 
-static void 
+static void
 do_test_with_bzero(int signo)
 {
 	char *buf = test_with_bzero();
@@ -176,7 +176,7 @@ do_test_with_bzero(int signo)
 }
 
 int
-main()
+main(void)
 {
 	setup_stack();
 
