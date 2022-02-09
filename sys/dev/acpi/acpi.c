@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.410 2022/02/08 17:25:12 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.411 2022/02/09 23:54:34 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3516,86 +3516,6 @@ acpikqfilter(dev_t dev, struct knote *kn)
 	splx(s);
 
 	return (0);
-}
-
-int
-sleep_showstate(void *v, int sleepmode)
-{
-	struct acpi_softc *sc = v;
-
-	switch (sleepmode) {
-	case SLEEP_SUSPEND:
-		sc->sc_state = ACPI_STATE_S3;
-		break;
-	case SLEEP_HIBERNATE:
-		sc->sc_state = ACPI_STATE_S4;
-		break;
-	default:
-		return (EOPNOTSUPP);
-	}
-
-	if (sc->sc_sleeptype[sc->sc_state].slp_typa == -1 ||
-	    sc->sc_sleeptype[sc->sc_state].slp_typb == -1) {
-		printf("%s: state S%d unavailable\n",
-		    sc->sc_dev.dv_xname, sc->sc_state);
-		return (EOPNOTSUPP);
-	}
-
-	/* 1st suspend AML step: _TTS(tostate) */
-	if (aml_node_setval(sc, sc->sc_tts, sc->sc_state) != 0)
-		return (EINVAL);
-	acpi_indicator(sc, ACPI_SST_WAKING);    /* blink */
-	return 0;
-}
-
-int
-sleep_setstate(void *v)
-{
-	struct acpi_softc *sc = v;
-
-	/* 2nd suspend AML step: _PTS(tostate) */
-	if (aml_node_setval(sc, sc->sc_pts, sc->sc_state) != 0)
-		return (EINVAL);
-	acpi_indicator(sc, ACPI_SST_WAKING);    /* blink */
-	return 0;
-}
-
-void
-gosleep(void *v)
-{
-	struct acpi_softc *sc = v;
-
-	acpibtn_enable_psw();   /* enable _LID for wakeup */
-	acpi_indicator(v, ACPI_SST_SLEEPING);
-
-	/* 3rd suspend AML step: _GTS(tostate) */
-	aml_node_setval(sc, sc->sc_gts, sc->sc_state);
-
-	/* Clear fixed event status */
-	acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0, ACPI_PM1_ALL_STS);
-
-	/* Enable wake GPEs */
-	acpi_disable_allgpes(sc);
-	acpi_enable_wakegpes(sc, sc->sc_state);
-
-	/* Sleep */
-	acpi_sleep_cpu(sc, sc->sc_state);
-	sc->sc_state = ACPI_STATE_S0;
-	/* Resume */
-
-	acpi_resume_cpu(sc, sc->sc_state);
-}
-
-int
-sleep_resume(void *v)
-{
-	struct acpi_softc *sc = v;
-
-	/* 3rd resume AML step: _TTS(runstate) */
-	if (aml_node_setval(sc, sc->sc_tts, sc->sc_state) != 0)
-		return (EINVAL);
-	acpi_indicator(sc, ACPI_SST_WAKING);    /* blink */
-	return 0;
 }
 
 #else /* SMALL_KERNEL */

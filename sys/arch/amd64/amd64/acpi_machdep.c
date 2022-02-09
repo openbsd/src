@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.95 2022/02/08 17:25:10 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.96 2022/02/09 23:54:32 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -571,54 +571,6 @@ resume_mp(void)
 	sched_start_secondary_cpus();
 }
 #endif /* MULTIPROCESSOR */
-
-void
-display_suspend(void *v)
-{
-#if NWSDISPLAY > 0
-	struct acpi_softc *sc = v;
-
-	/*
-	 * Temporarily release the lock to prevent the X server from
-	 * blocking on setting the display brightness.
-	 */
-	rw_exit_write(&sc->sc_lck);
-	wsdisplay_suspend();
-	rw_enter_write(&sc->sc_lck);
-#endif /* NWSDISPLAY > 0 */
-}
-
-void
-display_resume(void *v)
-{
-#if NWSDISPLAY > 0
-	struct acpi_softc *sc = v;
-
-	rw_exit_write(&sc->sc_lck);
-	wsdisplay_resume();
-	rw_enter_write(&sc->sc_lck);
-#endif /* NWSDISPLAY > 0 */
-}
-
-void
-suspend_finish(void *v)
-{
-	struct acpi_softc *sc = v;
-	extern int lid_action;
-
-	acpi_record_event(sc, APM_NORMAL_RESUME);
-	acpi_indicator(sc, ACPI_SST_WORKING);
-
-	/* If we woke up but all the lids are closed, go back to sleep */
-	if (acpibtn_numopenlids() == 0 && lid_action != 0)
-		acpi_addtask(sc, acpi_sleep_task, sc, sc->sc_state);
-}
-
-void
-disable_lid_wakeups(void *v)
-{
-	acpibtn_disable_psw();		/* disable _LID for wakeup */
-}
 
 #endif /* ! SMALL_KERNEL */
 
