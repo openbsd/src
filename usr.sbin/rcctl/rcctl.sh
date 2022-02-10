@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: rcctl.sh,v 1.111 2021/10/23 08:19:27 sthen Exp $
+# $OpenBSD: rcctl.sh,v 1.112 2022/02/10 16:57:33 robert Exp $
 #
 # Copyright (c) 2014, 2015-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -274,8 +274,8 @@ svc_get()
 		if ! svc_is_meta ${_svc}; then
 			# these are expensive, make sure they are explicitly requested
 			if [ -z "${_var}" -o "${_var}" = "class" ]; then
-				getcap -f /etc/login.conf ${_svc} 1>/dev/null 2>&1 && \
-					daemon_class=${_svc}
+				getcap -f /etc/login.conf.d/${_svc}:/etc/login.conf \
+					${_svc} 1>/dev/null 2>&1 && daemon_class=${_svc} 
 				[ -z "${daemon_class}" ] && \
 					daemon_class="$(svc_getdef ${_svc} class)"
 			fi
