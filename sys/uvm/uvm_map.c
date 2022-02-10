@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.283 2022/02/10 10:14:02 kn Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.284 2022/02/10 10:15:35 kn Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -805,6 +805,8 @@ uvm_map_sel_limits(vaddr_t *min, vaddr_t *max, vsize_t sz, int guardpg,
  * Fills in *start_ptr and *end_ptr to be the first and last entry describing
  * the space.
  * If called with prefilled *start_ptr and *end_ptr, they are to be correct.
+ *
+ * map must be at least read-locked.
  */
 int
 uvm_map_isavail(struct vm_map *map, struct uvm_addr_state *uaddr,
@@ -814,6 +816,8 @@ uvm_map_isavail(struct vm_map *map, struct uvm_addr_state *uaddr,
 	struct uvm_addr_state *free;
 	struct uvm_map_addr *atree;
 	struct vm_map_entry *i, *i_end;
+
+	vm_map_assert_anylock(map);
 
 	if (addr + sz < addr)
 		return 0;
@@ -892,6 +896,8 @@ uvm_map_isavail(struct vm_map *map, struct uvm_addr_state *uaddr,
 /*
  * Invoke each address selector until an address is found.
  * Will not invoke uaddr_exe.
+ *
+ * => caller must at least have read-locked map
  */
 int
 uvm_map_findspace(struct vm_map *map, struct vm_map_entry**first,
@@ -900,6 +906,8 @@ uvm_map_findspace(struct vm_map *map, struct vm_map_entry**first,
 {
 	struct uvm_addr_state *uaddr;
 	int i;
+
+	vm_map_assert_anylock(map);
 
 	/*
 	 * Allocation for sz bytes at any address,
@@ -1160,7 +1168,7 @@ unlock:
  * uvm_map: establish a valid mapping in map
  *
  * => *addr and sz must be a multiple of PAGE_SIZE.
- * => map must be unlocked.
+ * => map must be unlocked (we will lock it)
  * => <uobj,uoffset> value meanings (4 cases):
  *	[1] <NULL,uoffset>		== uoffset is a hint for PMAP_PREFER
  *	[2] <NULL,UVM_UNKNOWN_OFFSET>	== don't PMAP_PREFER
@@ -1821,6 +1829,8 @@ boolean_t
 uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
     struct vm_map_entry **entry)
 {
+	vm_map_assert_anylock(map);
+
 	*entry = uvm_map_entrybyaddr(&map->addr, address);
 	return *entry != NULL && !UVM_ET_ISHOLE(*entry) &&
 	    (*entry)->start <= address && (*entry)->end > address;
@@ -2206,6 +2216,8 @@ uvm_unmap_kill_entry(struct vm_map *map, struct vm_map_entry *entry)
  * If remove_holes, then remove ET_HOLE entries as well.
  * If markfree, entry will be properly marked free, otherwise, no replacement
  * entry will be put in the tree (corrupting the tree).
+ *
+ * => map must be locked by caller
  */
 void
 uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
@@ -2213,6 +2225,8 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
     boolean_t markfree)
 {
 	struct vm_map_entry *prev_hint, *next, *entry;
+
+	vm_map_assert_wrlock(map);
 
 	start = MAX(start, map->min_offset);
 	end = MIN(end, map->max_offset);
@@ -2303,6 +2317,8 @@ uvm_map_pageable_pgon(struct vm_map *map, struct vm_map_entry *first,
     struct vm_map_entry *end, vaddr_t start_addr, vaddr_t end_addr)
 {
 	struct vm_map_entry *iter;
+
+	vm_map_assert_wrlock(map);
 
 	for (iter = first; iter != end;
 	    iter = RBT_NEXT(uvm_map_addr, iter)) {
@@ -2457,9 +2473,9 @@ uvm_map_pageable_wire(struct vm_map *map, struct vm_map_entry *first,
 /*
  * uvm_map_pageable: set pageability of a range in a map.
  *
- * Flags:
- * UVM_LK_ENTER: map is already locked by caller
- * UVM_LK_EXIT:  don't unlock map on exit
+ * => map must never be read-locked
+ * => if lockflags has UVM_LK_ENTER set, map is already write-locked
+ * => if lockflags has UVM_LK_EXIT  set, don't unlock map on exit
  *
  * The full range must be in use (entries may not have fspace != 0).
  * UVM_ET_HOLE counts as unmapped.
@@ -2586,8 +2602,8 @@ out:
  * uvm_map_pageable_all: special case of uvm_map_pageable - affects
  * all mapped regions.
  *
- * Map must not be locked.
- * If no flags are specified, all ragions are unwired.
+ * => map must not be locked.
+ * => if no flags are specified, all ragions are unwired.
  */
 int
 uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
@@ -2977,11 +2993,16 @@ uvm_tree_sanity(struct vm_map *map, char *file, int line)
 	UVM_ASSERT(map, addr == vm_map_max(map), file, line);
 }
 
+/*
+ * map must be at least read-locked.
+ */
 void
 uvm_tree_size_chk(struct vm_map *map, char *file, int line)
 {
 	struct vm_map_entry *iter;
 	vsize_t size;
+
+	vm_map_assert_anylock(map);
 
 	size = 0;
 	RBT_FOREACH(iter, uvm_map_addr, &map->addr) {
@@ -4269,13 +4290,15 @@ uvm_map_submap(struct vm_map *map, vaddr_t start, vaddr_t end,
  * uvm_map_checkprot: check protection in map
  *
  * => must allow specific protection in a fully allocated region.
- * => map mut be read or write locked by caller.
+ * => map must be read or write locked by caller.
  */
 boolean_t
 uvm_map_checkprot(struct vm_map *map, vaddr_t start, vaddr_t end,
     vm_prot_t protection)
 {
 	struct vm_map_entry *entry;
+
+	vm_map_assert_anylock(map);
 
 	if (start < map->min_offset || end > map->max_offset || start > end)
 		return FALSE;
@@ -4803,11 +4826,17 @@ flush_object:
 
 /*
  * UVM_MAP_CLIP_END implementation
+ *
+ * => caller should use UVM_MAP_CLIP_END macro rather than calling
+ *    this directly
+ * => map must be locked by caller
  */
 void
 uvm_map_clip_end(struct vm_map *map, struct vm_map_entry *entry, vaddr_t addr)
 {
 	struct vm_map_entry *tmp;
+
+	vm_map_assert_wrlock(map);
 
 	KASSERT(entry->start < addr && VMMAP_FREE_END(entry) > addr);
 	tmp = uvm_mapent_alloc(map, 0);
@@ -4824,12 +4853,18 @@ uvm_map_clip_end(struct vm_map *map, struct vm_map_entry *entry, vaddr_t addr)
  * Since uvm_map_splitentry turns the original entry into the lowest
  * entry (address wise) we do a swap between the new entry and the original
  * entry, prior to calling uvm_map_splitentry.
+ *
+ * => caller should use UVM_MAP_CLIP_START macro rather than calling
+ *    this directly
+ * => map must be locked by caller
  */
 void
 uvm_map_clip_start(struct vm_map *map, struct vm_map_entry *entry, vaddr_t addr)
 {
 	struct vm_map_entry *tmp;
 	struct uvm_addr_state *free;
+
+	vm_map_assert_wrlock(map);
 
 	/* Unlink original. */
 	free = uvm_map_uaddr_e(map, entry);
@@ -5558,6 +5593,46 @@ vm_map_unbusy_ln(struct vm_map *map, char *file, int line)
 	mtx_leave(&map->flags_lock);
 	if (oflags & VM_MAP_WANTLOCK)
 		wakeup(&map->flags);
+}
+
+void
+vm_map_assert_anylock_ln(struct vm_map *map, char *file, int line)
+{
+	LPRINTF(("map assert read or write locked: %p (at %s %d)\n", map, file, line));
+	if ((map->flags & VM_MAP_INTRSAFE) == 0)
+		rw_assert_anylock(&map->lock);
+	else
+		MUTEX_ASSERT_LOCKED(&map->mtx);
+}
+
+void
+vm_map_assert_rdlock_ln(struct vm_map *map, char *file, int line)
+{
+	LPRINTF(("map assert read locked: %p (at %s %d)\n", map, file, line));
+	if ((map->flags & VM_MAP_INTRSAFE) == 0)
+		rw_assert_rdlock(&map->lock);
+	else
+		MUTEX_ASSERT_LOCKED(&map->mtx);
+}
+
+void
+vm_map_assert_wrlock_ln(struct vm_map *map, char *file, int line)
+{
+	LPRINTF(("map assert write locked: %p (at %s %d)\n", map, file, line));
+	if ((map->flags & VM_MAP_INTRSAFE) == 0)
+		rw_assert_wrlock(&map->lock);
+	else
+		MUTEX_ASSERT_LOCKED(&map->mtx);
+}
+
+void
+vm_map_assert_unlocked_ln(struct vm_map *map, char *file, int line)
+{
+	LPRINTF(("map assert unlocked: %p (at %s %d)\n", map, file, line));
+	if ((map->flags & VM_MAP_INTRSAFE) == 0)
+		rw_assert_unlocked(&map->lock);
+	else
+		MUTEX_ASSERT_UNLOCKED(&map->mtx);
 }
 
 #ifndef SMALL_KERNEL
