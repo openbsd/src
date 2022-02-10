@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.9 2022/02/09 23:54:55 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.10 2022/02/10 06:52:13 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -207,7 +207,7 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return ENXIO;
 
 	switch (cmd) {
-		/* some ioctl names from linux */
+#ifdef SUSPEND
 	case APM_IOC_STANDBY:
 	case APM_IOC_SUSPEND:
 		if ((flag & FWRITE) == 0) {
@@ -230,6 +230,7 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 		sleep_state(NULL, SLEEP_HIBERNATE);
 		break;
+#endif
 #endif
 	case APM_IOC_PRN_CTL:
 		if ((flag & FWRITE) == 0)
