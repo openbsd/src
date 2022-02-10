@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.67 2022/01/04 13:43:14 jmc Exp $
+.\" $OpenBSD: login.conf.5,v 1.68 2022/02/10 13:06:07 robert Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: January 4 2022 $
+.Dd $Mdocdate: February 10 2022 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -60,6 +60,12 @@ in
 is used for any user without a valid login class in
 .Pa /etc/master.passwd .
 .Pp
+In case the
+.Pa /etc/login.conf.d/${ Ns Va class Ns }
+file exists, it will take precedence over the same login class
+defined in
+.Pa /etc/login.conf .
+.Pp
 Sites with very large
 .Pa /etc/login.conf
 files may wish to create a database version of the file,
@@ -79,7 +85,9 @@ Note that
 .Xr cap_mkdb 1
 must be run after each edit of
 .Pa /etc/login.conf
-to keep the database version in sync with the plain file.
+or the
+.Pa /etc/login.conf.d/${class}
+file to keep the database version in sync with the plain file.
 .Sh CAPABILITIES
 Refer to
 .Xr cgetent 3
@@ -916,6 +924,9 @@ option to login, respectively.
 .Bl -tag -width "/etc/login.conf"
 .It Pa /etc/login.conf
 Login class capability database.
+.It Pa /etc/login.conf.d/${ Ns Va class Ns }
+Login class capability database for the specified
+login class.
 .El
 .Sh SEE ALSO
 .Xr cap_mkdb 1 ,

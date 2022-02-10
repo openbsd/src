@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.40 2021/10/24 14:40:30 deraadt Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.41 2022/02/10 13:06:07 robert Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <millert@openbsd.org>
@@ -80,9 +80,10 @@ static	int gsetrl(login_cap_t *, int, char *, int);
 login_cap_t *
 login_getclass(char *class)
 {
-	char *classfiles[2] = {_PATH_LOGIN_CONF, NULL};
+	char *classfiles[] = { NULL, NULL, NULL };
+	char classpath[PATH_MAX];
 	login_cap_t *lc;
-	int res;
+	int res, i = 0;
 
 	if ((lc = calloc(1, sizeof(login_cap_t))) == NULL) {
 		syslog(LOG_ERR, "%s:%d malloc: %m", __FILE__, __LINE__);
@@ -91,6 +92,15 @@ login_getclass(char *class)
 
 	if (class == NULL || class[0] == '\0')
 		class = LOGIN_DEFCLASS;
+	else {
+		res = snprintf(classpath, PATH_MAX, "%s/%s",
+			_PATH_LOGIN_CONF_D, class);
+		if (res >= 0 && res < PATH_MAX)
+			classfiles[i++] = classpath;
+	}
+
+	classfiles[i++] = _PATH_LOGIN_CONF;
+	classfiles[i] = NULL;
 
     	if ((lc->lc_class = strdup(class)) == NULL) {
 		syslog(LOG_ERR, "%s:%d strdup: %m", __FILE__, __LINE__);
@@ -106,7 +116,7 @@ login_getclass(char *class)
 				lc->lc_class);
 			break;
 		case -1:
-			if ((res = open(classfiles[0], O_RDONLY)) >= 0)
+			if ((res = open(_PATH_LOGIN_CONF, O_RDONLY)) >= 0)
 				close(res);
 			if (strcmp(lc->lc_class, LOGIN_DEFCLASS) == 0 &&
 			    res < 0)

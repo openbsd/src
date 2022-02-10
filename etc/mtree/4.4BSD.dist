@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.319 2021/10/23 19:40:29 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.320 2022/02/10 13:06:07 robert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -77,6 +77,8 @@ etc
     ldap
         certs			mode=0700
         ..
+    ..
+    login.conf.d		mode=0755
     ..
     acme			mode=0700
     ..
