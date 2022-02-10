@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.8 2020/08/31 15:28:41 deraadt Exp $
+#	$OpenBSD: install.md,v 1.9 2022/02/10 15:12:57 krw Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,7 +49,6 @@ md_prep_fdisk() {
 	local bootparttype="C"
 	local bootsectorstart="32768"
 	local bootsectorsize="32768"
-	local bootsectorend=$(($bootsectorstart + $bootsectorsize))
 	local bootfstype="msdos"
 	local newfs_args=${NEWFSARGS_msdos}
 
@@ -64,22 +63,7 @@ md_prep_fdisk() {
 		case $resp in
 		[wW]*)
 			echo -n "Creating a ${bootfstype} partition and an OpenBSD partition for rest of $_disk..."
-			fdisk -e ${_disk} <<__EOT >/dev/null
-reinit
-e 0
-${bootparttype}
-n
-${bootsectorstart}
-${bootsectorsize}
-f 0
-e 3
-A6
-n
-${bootsectorend}
-
-write
-quit
-__EOT
+			fdisk -iy -b "${bootsectorsize}@${bootsectorstart}:${bootparttype}" ${_disk} >/dev/null
 			echo "done."
 			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
 			newfs -t ${bootfstype} ${newfs_args} ${_disk}i
