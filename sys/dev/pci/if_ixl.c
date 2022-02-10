@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.81 2022/02/09 11:12:21 dlg Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.82 2022/02/10 16:22:00 bluhm Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1399,6 +1399,7 @@ static int	ixl_rxeof(struct ixl_softc *, struct ixl_rx_ring *);
 static void	ixl_rxfill(struct ixl_softc *, struct ixl_rx_ring *);
 static void	ixl_rxrefill(void *);
 static int	ixl_rxrinfo(struct ixl_softc *, struct if_rxrinfo *);
+static void	ixl_rx_checksum(struct mbuf *, uint64_t);
 
 #if NKSTAT > 0
 static void	ixl_kstat_attach(struct ixl_softc *);
@@ -3297,6 +3298,7 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 					SET(m->m_flags, M_VLANTAG);
 				}
 
+				ixl_rx_checksum(m, word);
 				ml_enqueue(&ml, m);
 			} else {
 				ifp->if_ierrors++; /* XXX */
@@ -3427,6 +3429,23 @@ ixl_rxrinfo(struct ixl_softc *sc, struct if_rxrinfo *ifri)
 	free(ifr, M_TEMP, ixl_nqueues(sc) * sizeof(*ifr));
 
 	return (rv);
+}
+
+static void
+ixl_rx_checksum(struct mbuf *m, uint64_t word)
+{
+	if (!ISSET(word, IXL_RX_DESC_L3L4P))
+		return;
+
+	if (ISSET(word, IXL_RX_DESC_IPE))
+		return;
+
+	m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+
+	if (ISSET(word, IXL_RX_DESC_L4E))
+		return;
+
+	m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK | M_UDP_CSUM_IN_OK;
 }
 
 static int
