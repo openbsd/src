@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.240 2021/06/14 17:58:15 eric Exp $	*/
+/*	$OpenBSD: mta.c,v 1.241 2022/02/10 14:59:35 millert Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -522,13 +522,13 @@ mta_setup_dispatcher(struct dispatcher *dispatcher)
 	    == -1)
 		fatal("tls_config_set_ca_file");
 
-	if (remote->tls_noverify) {
+	if (remote->tls_verify) {
+		tls_config_verify(config);
+	} else {
 		tls_config_insecure_noverifycert(config);
 		tls_config_insecure_noverifyname(config);
 		tls_config_insecure_noverifytime(config);
 	}
-	else
-		tls_config_verify(config);
 
 	remote->tls_config = config;
 }
@@ -1827,10 +1827,6 @@ mta_relay(struct envelope *e, struct relayhost *relayh)
 	key.authlabel = relayh->authlabel;
 	if (!key.authlabel[0])
 		key.authlabel = NULL;
-
-	if ((key.tls == RELAY_TLS_STARTTLS || key.tls == RELAY_TLS_SMTPS) &&
-	    dispatcher->u.remote.tls_noverify == 0)
-		key.flags |= RELAY_TLS_VERIFY;
 
 	if ((r = SPLAY_FIND(mta_relay_tree, &relays, &key)) == NULL) {
 		r = xcalloc(1, sizeof *r);

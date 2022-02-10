@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.144 2021/07/28 19:39:50 benno Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.145 2022/02/10 14:59:35 millert Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1223,7 +1223,7 @@ mta_io(struct io *io, int evt, void *arg)
 		log_info("%016"PRIx64" mta tls ciphers=%s",
 		    s->id, tls_to_text(io_tls(s->io)));
 		s->flags |= MTA_TLS;
-		if (!s->relay->dispatcher->u.remote.tls_noverify)
+		if (s->relay->dispatcher->u.remote.tls_verify)
 			s->flags |= MTA_TLS_VERIFIED;
 
 		mta_tls_started(s);
