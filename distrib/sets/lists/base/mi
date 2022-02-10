@@ -196,6 +196,7 @@
 ./etc/ldap/core.schema
 ./etc/ldap/inetorgperson.schema
 ./etc/ldap/nis.schema
+./etc/login.conf.d
 ./etc/magic
 ./etc/mail
 ./etc/moduli
