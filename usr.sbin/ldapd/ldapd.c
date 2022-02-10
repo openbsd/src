@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldapd.c,v 1.31 2021/12/15 11:36:40 jmatthew Exp $ */
+/*	$OpenBSD: ldapd.c,v 1.32 2022/02/10 13:06:46 robert Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -241,6 +241,8 @@ main(int argc, char *argv[])
 		err(1, "unveil %s", _PATH_LOGIN_CONF);
 	if (unveil(_PATH_LOGIN_CONF ".db", "r") == -1)
 		err(1, "unveil %s.db", _PATH_LOGIN_CONF);
+	if (unveil(_PATH_LOGIN_CONF_D, "r") == -1)
+		err(1, "unveil %s", _PATH_LOGIN_CONF_D);
 	if (unveil(_PATH_AUTHPROGDIR, "x") == -1)
 		err(1, "unveil %s", _PATH_AUTHPROGDIR);
 	if (unveil(datadir, "rwc") == -1)

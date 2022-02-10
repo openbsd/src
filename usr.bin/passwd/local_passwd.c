@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.62 2021/10/24 21:24:17 deraadt Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.63 2022/02/10 13:06:46 robert Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,6 +80,8 @@ local_passwd(char *uname, int authenticated)
 		err(1, "unveil %s", _PATH_LOGIN_CONF);
 	if (unveil(_PATH_LOGIN_CONF ".db", "r") == -1)
 		err(1, "unveil %s.db", _PATH_LOGIN_CONF);
+	if (unveil(_PATH_LOGIN_CONF_D, "r") == -1)
+		err(1, "unveil %s", _PATH_LOGIN_CONF_D);
 	if (unveil(_PATH_BSHELL, "x") == -1)
 		err(1, "unveil %s", _PATH_BSHELL);
 	if (unveil(_PATH_SHELLS, "r") == -1)
