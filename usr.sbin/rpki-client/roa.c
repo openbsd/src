@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.37 2022/01/18 16:29:06 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.38 2022/02/10 15:33:47 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -340,8 +340,6 @@ roa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	unsigned char	*cms;
 	int		 rc = 0;
 	const ASN1_TIME	*at;
-	struct tm	 expires_tm;
-	time_t		 expires;
 
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
@@ -367,15 +365,10 @@ roa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		warnx("%s: X509_get0_notAfter failed", fn);
 		goto out;
 	}
-	memset(&expires_tm, 0, sizeof(expires_tm));
-	if (ASN1_time_parse(at->data, at->length, &expires_tm, 0) == -1) {
+	if (x509_get_time(at, &p.res->expires) == -1) {
 		warnx("%s: ASN1_time_parse failed", fn);
 		goto out;
 	}
-	if ((expires = mktime(&expires_tm)) == -1)
-		errx(1, "mktime failed");
-
-	p.res->expires = expires;
 
 	if (!roa_parse_econtent(cms, cmsz, &p))
 		goto out;

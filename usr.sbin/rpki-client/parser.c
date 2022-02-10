@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.63 2022/02/08 14:53:03 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.64 2022/02/10 15:33:47 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -92,19 +92,6 @@ repo_add(unsigned int id, char *path, char *validpath)
 
 	if (RB_INSERT(repo_tree, &repos, rp) != NULL)
 		errx(1, "repository already added: id %d, %s", id, path);
-}
-
-static char *
-time2str(time_t t)
-{
-	static char buf[64];
-	struct tm tm;
-
-	if (gmtime_r(&t, &tm) == NULL)
-		return "could not convert time";
-
-	strftime(buf, sizeof(buf), "%h %d %T %Y %Z", &tm);
-	return buf;
 }
 
 /*
@@ -1009,6 +996,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	static int num;
 	X509 *x509 = NULL;
 	struct cert *cert = NULL;
+	struct crl *crl = NULL;
 	struct mft *mft = NULL;
 	struct roa *roa = NULL;
 	struct gbr *gbr = NULL;
@@ -1044,6 +1032,12 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		if (X509_up_ref(x509) == 0)
 			errx(1, "%s: X509_up_ref failed", __func__);
 		break;
+	case RTYPE_CRL:
+		crl = crl_parse(file, buf, len);
+		if (crl == NULL)
+			break;
+		crl_print(crl);
+		break;
 	case RTYPE_MFT:
 		mft = mft_parse(&x509, file, buf, len);
 		if (mft == NULL)
@@ -1074,7 +1068,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			break;
 		tal_print(tal);
 		break;
-	case RTYPE_CRL: /* XXX no printer yet */
 	default:
 		printf("%s: unsupported file type\n", file);
 		break;
@@ -1082,18 +1075,18 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 
 	if (aia != NULL) {
 		struct auth *a;
-		struct crl *crl;
-		char *c;
+		struct crl *c;
+		char *crl_uri;
 
-		c = x509_get_crl(x509, file);
-		parse_load_crl(c);
-		free(c);
+		crl_uri = x509_get_crl(x509, file);
+		parse_load_crl(crl_uri);
+		free(crl_uri);
 		if (auth_find(&auths, aki) == NULL)
 			parse_load_certchain(aia);
 		a = auth_find(&auths, aki);
-		crl = get_crl(a);
+		c = get_crl(a);
 
-		if (valid_x509(file, x509, a, crl, 0))
+		if (valid_x509(file, x509, a, c, 0))
 			printf("Validation: OK\n");
 		else
 			printf("Validation: Failed\n");
@@ -1101,6 +1094,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 
 	X509_free(x509);
 	cert_free(cert);
+	crl_free(crl);
 	mft_free(mft);
 	roa_free(roa);
 	gbr_free(gbr);

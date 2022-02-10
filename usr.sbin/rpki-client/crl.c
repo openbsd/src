@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.13 2022/02/08 14:53:03 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.14 2022/02/10 15:33:47 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,7 +33,6 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 {
 	struct crl	*crl;
 	const ASN1_TIME	*at;
-	struct tm	 issued_tm, expires_tm;
 	int		 rc = 0;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
@@ -58,27 +57,20 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 		warnx("%s: X509_CRL_get0_lastUpdate failed", fn);
 		goto out;
 	}
-	memset(&issued_tm, 0, sizeof(issued_tm));
-	if (ASN1_time_parse(at->data, at->length, &issued_tm, 0) == -1) {
+	if (x509_get_time(at, &crl->issued) == -1) {
 		warnx("%s: ASN1_time_parse failed", fn);
 		goto out;
 	}
-	if ((crl->issued = mktime(&issued_tm)) == -1)
-		errx(1, "%s: mktime failed", fn);
 
-	/* extract expire time for later use */
 	at = X509_CRL_get0_nextUpdate(crl->x509_crl);
 	if (at == NULL) {
 		warnx("%s: X509_CRL_get0_nextUpdate failed", fn);
 		goto out;
 	}
-	memset(&expires_tm, 0, sizeof(expires_tm));
-	if (ASN1_time_parse(at->data, at->length, &expires_tm, 0) == -1) {
+	if (x509_get_time(at, &crl->expires) == -1) {
 		warnx("%s: ASN1_time_parse failed", fn);
 		goto out;
 	}
-	if ((crl->expires = mktime(&expires_tm)) == -1)
-		errx(1, "%s: mktime failed", fn);
 
 	rc = 1;
  out:

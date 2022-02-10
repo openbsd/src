@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.34 2022/02/04 16:08:53 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.35 2022/02/10 15:33:47 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -329,23 +329,16 @@ int
 x509_get_expire(X509 *x, const char *fn, time_t *tt)
 {
 	const ASN1_TIME	*at;
-	struct tm	 expires_tm;
-	time_t		 expires;
 
 	at = X509_get0_notAfter(x);
 	if (at == NULL) {
 		warnx("%s: X509_get0_notafter failed", fn);
 		return 0;
 	}
-	memset(&expires_tm, 0, sizeof(expires_tm));
-	if (ASN1_time_parse(at->data, at->length, &expires_tm, 0) == -1) {
+	if (x509_get_time(at, tt) == -1) {
 		warnx("%s: ASN1_time_parse failed", fn);
 		return 0;
 	}
-	if ((expires = mktime(&expires_tm)) == -1)
-		errx(1, "%s: mktime failed", fn);
-
-	*tt = expires;
 	return 1;
 
 }
@@ -482,4 +475,22 @@ x509_crl_get_aki(X509_CRL *crl, const char *fn)
 out:
 	AUTHORITY_KEYID_free(akid);
 	return res;
+}
+
+/*
+ * Convert passed ASN1_TIME to time_t *t.
+ * Returns 1 on success and 0 on failure.
+ */
+int
+x509_get_time(const ASN1_TIME *at, time_t *t)
+{
+	struct tm	 tm;
+
+	*t = 0;
+	memset(&tm, 0, sizeof(tm));
+	if (ASN1_time_parse(at->data, at->length, &tm, 0) == -1)
+		return 0;
+	if ((*t = mktime(&tm)) == -1)
+		errx(1, "mktime failed");
+	return 1;
 }
