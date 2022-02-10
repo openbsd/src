@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.25 2021/10/24 21:24:16 deraadt Exp $	*/
+/*	$OpenBSD: look.c,v 1.26 2022/02/10 14:55:43 cheloha Exp $	*/
 /*	$NetBSD: look.c,v 1.7 1995/08/31 22:41:02 jtc Exp $	*/
 
 /*-
@@ -77,6 +77,9 @@ main(int argc, char *argv[])
 	int ch, fd, termchar;
 	char *back, *file, *front, *string, *p;
 
+	if (pledge("stdio rpath", NULL) == -1)
+		err(2, "pledge");
+
 	file = _PATH_WORDS;
 	termchar = '\0';
 	while ((ch = getopt(argc, argv, "dft:")) != -1)
@@ -110,11 +113,6 @@ main(int argc, char *argv[])
 		usage();
 	}
 
-	if (unveil(file, "r") == -1)
-		err(2, "unveil %s", file);
-	if (pledge("stdio rpath", NULL) == -1)
-		err(2, "pledge");
-
 	if (termchar != '\0' && (p = strchr(string, termchar)) != NULL)
 		*++p = '\0';
 
@@ -122,6 +120,10 @@ main(int argc, char *argv[])
 		err(2, "%s", file);
 	if (sb.st_size > SIZE_MAX)
 		errc(2, EFBIG, "%s", file);
+
+	if (pledge("stdio", NULL) == -1)
+		err(2, "pledge");
+
 	if ((front = mmap(NULL,
 	    (size_t)sb.st_size, PROT_READ, MAP_PRIVATE, fd, (off_t)0)) == MAP_FAILED)
 		err(2, "%s", file);
