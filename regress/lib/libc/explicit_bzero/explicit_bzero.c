@@ -1,4 +1,4 @@
-/*	$OpenBSD: explicit_bzero.c,v 1.8 2022/02/09 07:48:15 tb Exp $	*/
+/*	$OpenBSD: explicit_bzero.c,v 1.9 2022/02/10 08:39:32 tb Exp $	*/
 /*
  * Copyright (c) 2014 Google Inc.
  *
@@ -25,6 +25,17 @@
 #define ASSERT_EQ(a, b) assert((a) == (b))
 #define ASSERT_NE(a, b) assert((a) != (b))
 #define ASSERT_GE(a, b) assert((a) >= (b))
+
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer)
+#define __SANITIZE_ADDRESS__
+#endif
+#endif
+#ifdef __SANITIZE_ADDRESS__
+#define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
+#else
+#define ATTRIBUTE_NO_SANITIZE_ADDRESS
+#endif
 
 /* 128 bits of random data. */
 static const char secret[16] = {
@@ -138,7 +149,7 @@ count_secrets(const char *buf)
 	return (res);
 }
 
-static char *
+ATTRIBUTE_NO_SANITIZE_ADDRESS static char *
 test_without_bzero(void)
 {
 	char buf[SECRETBYTES];
@@ -149,7 +160,7 @@ test_without_bzero(void)
 	return (res);
 }
 
-static char *
+ATTRIBUTE_NO_SANITIZE_ADDRESS static char *
 test_with_bzero(void)
 {
 	char buf[SECRETBYTES];
