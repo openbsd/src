@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.1 2022/02/08 17:25:12 deraadt Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.2 2022/02/10 16:41:53 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -21,6 +21,7 @@
 #include <sys/buf.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
+#include <sys/reboot.h>
 #include <sys/proc.h>
 #include <sys/sensors.h>
 #include <sys/sysctl.h>
@@ -108,6 +109,17 @@ sleep_state(void *v, int sleepmode)
 
 	if (sleep_setstate(v))
 		goto fail_pts;
+
+	if (sleepmode == SLEEP_SUSPEND) {
+		/*
+		 * XXX
+		 * Flag to disk drivers that they should "power down" the disk
+		 * when we get to DVACT_POWERDOWN.
+		 */
+		boothowto |= RB_POWERDOWN;
+		config_suspend_all(DVACT_POWERDOWN);
+		boothowto &= ~RB_POWERDOWN;
+	}
 
 	gosleep(v);
 
