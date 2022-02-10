@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.411 2022/02/09 23:54:34 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.412 2022/02/10 07:39:20 visa Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -1015,16 +1015,6 @@ acpi_attach_common(struct acpi_softc *sc, paddr_t base)
 #if NACPIPWRRES > 0
 	SIMPLEQ_INIT(&sc->sc_pwrresdevs);
 #endif /* NACPIPWRRES > 0 */
-
-
-#ifndef SMALL_KERNEL
-	sc->sc_note = malloc(sizeof(struct klist), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_note == NULL) {
-		printf(": can't allocate memory\n");
-		acpi_unmap(&handle);
-		return;
-	}
-#endif /* SMALL_KERNEL */
 
 	if (acpi_loadtables(sc, rsdp)) {
 		printf(": can't load tables\n");
@@ -3467,7 +3457,7 @@ acpi_record_event(struct acpi_softc *sc, u_int type)
 		return (1);
 
 	acpi_evindex++;
-	KNOTE(sc->sc_note, APM_EVENT_COMPOSE(type, acpi_evindex));
+	KNOTE(&sc->sc_note, APM_EVENT_COMPOSE(type, acpi_evindex));
 	return (0);
 }
 
@@ -3478,7 +3468,7 @@ acpi_filtdetach(struct knote *kn)
 	int s;
 
 	s = splbio();
-	klist_remove_locked(sc->sc_note, kn);
+	klist_remove_locked(&sc->sc_note, kn);
 	splx(s);
 }
 
@@ -3512,7 +3502,7 @@ acpikqfilter(dev_t dev, struct knote *kn)
 	kn->kn_hook = sc;
 
 	s = splbio();
-	klist_insert_locked(sc->sc_note, kn);
+	klist_insert_locked(&sc->sc_note, kn);
 	splx(s);
 
 	return (0);

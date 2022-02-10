@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.118 2022/02/08 17:25:12 deraadt Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.119 2022/02/10 07:39:20 visa Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -23,6 +23,7 @@
 
 #ifndef _ACPI_WAKECODE
 
+#include <sys/event.h>
 #include <sys/timeout.h>
 #include <sys/rwlock.h>
 
@@ -45,7 +46,6 @@ extern int acpi_debug;
 extern int acpi_hasprocfvs;
 extern int acpi_haspci;
 
-struct klist;
 struct acpiec_softc;
 struct acpipwrres_softc;
 
@@ -239,7 +239,7 @@ struct acpi_softc {
 	 */
 	struct acpi_facs	*sc_facs;	/* Shared with firmware! */
 
-	struct klist		*sc_note;
+	struct klist		sc_note;
 	struct acpi_reg_map	sc_pmregs[ACPIREG_MAXREG];
 	bus_space_handle_t	sc_ioh_pm1a_evt;
 
