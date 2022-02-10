@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.52 2022/01/28 15:30:23 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.53 2022/02/10 17:33:28 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -297,7 +297,6 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	const ASN1_TYPE		*t;
 	const ASN1_GENERALIZEDTIME *from, *until;
 	long			 mft_version;
-	BIGNUM			*mft_seqnum = NULL;
 	int			 i = 0, rc = 0;
 
 	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
@@ -345,29 +344,9 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	mft_seqnum = ASN1_INTEGER_to_BN(t->value.integer, NULL);
-	if (mft_seqnum == NULL) {
-		warnx("%s: ASN1_INTEGER_to_BN error", p->fn);
+	p->res->seqnum = x509_convert_seqnum(p->fn, t->value.integer);
+	if (p->res->seqnum == NULL)
 		goto out;
-	}
-
-	if (BN_is_negative(mft_seqnum)) {
-		warnx("%s: RFC 6486 section 4.2.1: manifestNumber: "
-		    "want positive integer, have negative.", p->fn);
-		goto out;
-	}
-
-	if (BN_num_bytes(mft_seqnum) > 20) {
-		warnx("%s: RFC 6486 section 4.2.1: manifestNumber: "
-		    "want 20 or less than octets, have more.", p->fn);
-		goto out;
-	}
-
-	p->res->seqnum = BN_bn2hex(mft_seqnum);
-	if (p->res->seqnum == NULL) {
-		warnx("%s: BN_bn2hex error", p->fn);
-		goto out;
-	}
 
 	/*
 	 * Timestamps: this and next update time.
@@ -433,7 +412,6 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	rc = 1;
 out:
 	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
-	BN_free(mft_seqnum);
 	return rc;
 }
 

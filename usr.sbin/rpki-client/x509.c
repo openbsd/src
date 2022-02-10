@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.35 2022/02/10 15:33:47 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.36 2022/02/10 17:33:28 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -493,4 +493,44 @@ x509_get_time(const ASN1_TIME *at, time_t *t)
 	if ((*t = mktime(&tm)) == -1)
 		errx(1, "mktime failed");
 	return 1;
+}
+
+/*
+ * Convert an ASN1_INTEGER into a hexstring.
+ * Returned string needs to be freed by the caller.
+ */
+char *
+x509_convert_seqnum(const char *fn, const ASN1_INTEGER *i)
+{
+	BIGNUM	*seqnum = NULL;
+	char	*s = NULL;
+
+	if (i == NULL)
+		goto out;
+
+	seqnum = ASN1_INTEGER_to_BN(i, NULL);
+	if (seqnum == NULL) {
+		warnx("%s: ASN1_INTEGER_to_BN error", fn);
+		goto out;
+	}
+
+	if (BN_is_negative(seqnum)) {
+		warnx("%s: %s: want positive integer, have negative.",
+		    __func__, fn);
+		goto out;
+	}
+
+	if (BN_num_bytes(seqnum) > 20) {
+		warnx("%s: %s: want 20 octets or fewer, have more.",
+		    __func__, fn);
+		goto out;
+	}
+
+	s = BN_bn2hex(seqnum);
+	if (s == NULL)
+		warnx("%s: BN_bn2hex error", fn);
+
+ out:
+	BN_free(seqnum);
+	return s;
 }
