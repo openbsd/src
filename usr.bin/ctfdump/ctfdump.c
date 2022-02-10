@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctfdump.c,v 1.24 2019/09/03 10:32:15 mpi Exp $ */
+/*	$OpenBSD: ctfdump.c,v 1.25 2022/02/10 23:40:09 bluhm Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -273,39 +273,40 @@ elf_dump(uint8_t flags)
 int
 isctf(const char *p, size_t filesize)
 {
-	struct ctf_header	*cth = (struct ctf_header *)p;
-	off_t 			 dlen;
+	struct ctf_header	 cth;
+	off_t			 dlen;
 
 	if (filesize < sizeof(struct ctf_header)) {
 		warnx("file too small to be CTF");
 		return 0;
 	}
 
-	if (cth->cth_magic != CTF_MAGIC || cth->cth_version != CTF_VERSION)
+	memcpy(&cth, p, sizeof(struct ctf_header));
+	if (cth.cth_magic != CTF_MAGIC || cth.cth_version != CTF_VERSION)
 		return 0;
 
-	dlen = (off_t)cth->cth_stroff + cth->cth_strlen;
-	if (dlen > (off_t)filesize && !(cth->cth_flags & CTF_F_COMPRESS)) {
+	dlen = (off_t)cth.cth_stroff + cth.cth_strlen;
+	if (dlen > (off_t)filesize && !(cth.cth_flags & CTF_F_COMPRESS)) {
 		warnx("bogus file size");
 		return 0;
 	}
 
-	if ((cth->cth_lbloff & 3) || (cth->cth_objtoff & 1) ||
-	    (cth->cth_funcoff & 1) || (cth->cth_typeoff & 3)) {
+	if ((cth.cth_lbloff & 3) || (cth.cth_objtoff & 1) ||
+	    (cth.cth_funcoff & 1) || (cth.cth_typeoff & 3)) {
 		warnx("wrongly aligned offset");
 		return 0;
 	}
 
-	if ((cth->cth_lbloff >= dlen) || (cth->cth_objtoff >= dlen) ||
-	    (cth->cth_funcoff >= dlen) || (cth->cth_typeoff >= dlen)) {
+	if ((cth.cth_lbloff >= dlen) || (cth.cth_objtoff >= dlen) ||
+	    (cth.cth_funcoff >= dlen) || (cth.cth_typeoff >= dlen)) {
 		warnx("truncated file");
 		return 0;
 	}
 
-	if ((cth->cth_lbloff > cth->cth_objtoff) ||
-	    (cth->cth_objtoff > cth->cth_funcoff) ||
-	    (cth->cth_funcoff > cth->cth_typeoff) ||
-	    (cth->cth_typeoff > cth->cth_stroff)) {
+	if ((cth.cth_lbloff > cth.cth_objtoff) ||
+	    (cth.cth_objtoff > cth.cth_funcoff) ||
+	    (cth.cth_funcoff > cth.cth_typeoff) ||
+	    (cth.cth_typeoff > cth.cth_stroff)) {
 		warnx("corrupted file");
 		return 0;
 	}
@@ -316,45 +317,46 @@ isctf(const char *p, size_t filesize)
 int
 ctf_dump(const char *p, size_t size, uint8_t flags)
 {
-	struct ctf_header	*cth = (struct ctf_header *)p;
-	off_t 			 dlen;
+	struct ctf_header	 cth;
+	off_t			 dlen;
 	char			*data;
 
-	dlen = (off_t)cth->cth_stroff + cth->cth_strlen;
-	if (cth->cth_flags & CTF_F_COMPRESS) {
-		data = decompress(p + sizeof(*cth), size - sizeof(*cth), dlen);
+	memcpy(&cth, p, sizeof(struct ctf_header));
+	dlen = (off_t)cth.cth_stroff + cth.cth_strlen;
+	if (cth.cth_flags & CTF_F_COMPRESS) {
+		data = decompress(p + sizeof(cth), size - sizeof(cth), dlen);
 		if (data == NULL)
 			return 1;
 	} else {
-		data = (char *)p + sizeof(*cth);
+		data = (char *)p + sizeof(cth);
 	}
 
 	if (flags & DUMP_HEADER) {
-		printf("  cth_magic    = 0x%04x\n", cth->cth_magic);
-		printf("  cth_version  = %u\n", cth->cth_version);
-		printf("  cth_flags    = 0x%02x\n", cth->cth_flags);
+		printf("  cth_magic    = 0x%04x\n", cth.cth_magic);
+		printf("  cth_version  = %u\n", cth.cth_version);
+		printf("  cth_flags    = 0x%02x\n", cth.cth_flags);
 		printf("  cth_parlabel = %s\n",
-		    ctf_off2name(cth, data, dlen, cth->cth_parlabel));
+		    ctf_off2name(&cth, data, dlen, cth.cth_parlabel));
 		printf("  cth_parname  = %s\n",
-		    ctf_off2name(cth, data, dlen, cth->cth_parname));
-		printf("  cth_lbloff   = %u\n", cth->cth_lbloff);
-		printf("  cth_objtoff  = %u\n", cth->cth_objtoff);
-		printf("  cth_funcoff  = %u\n", cth->cth_funcoff);
-		printf("  cth_typeoff  = %u\n", cth->cth_typeoff);
-		printf("  cth_stroff   = %u\n", cth->cth_stroff);
-		printf("  cth_strlen   = %u\n", cth->cth_strlen);
+		    ctf_off2name(&cth, data, dlen, cth.cth_parname));
+		printf("  cth_lbloff   = %u\n", cth.cth_lbloff);
+		printf("  cth_objtoff  = %u\n", cth.cth_objtoff);
+		printf("  cth_funcoff  = %u\n", cth.cth_funcoff);
+		printf("  cth_typeoff  = %u\n", cth.cth_typeoff);
+		printf("  cth_stroff   = %u\n", cth.cth_stroff);
+		printf("  cth_strlen   = %u\n", cth.cth_strlen);
 		printf("\n");
 	}
 
 	if (flags & DUMP_LABEL) {
-		uint32_t		 lbloff = cth->cth_lbloff;
+		uint32_t		 lbloff = cth.cth_lbloff;
 		struct ctf_lblent	*ctl;
 
-		while (lbloff < cth->cth_objtoff) {
+		while (lbloff < cth.cth_objtoff) {
 			ctl = (struct ctf_lblent *)(data + lbloff);
 
 			printf("  %5u %s\n", ctl->ctl_typeidx,
-			    ctf_off2name(cth, data, dlen, ctl->ctl_label));
+			    ctf_off2name(&cth, data, dlen, ctl->ctl_label));
 
 			lbloff += sizeof(*ctl);
 		}
@@ -362,13 +364,13 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 	}
 
 	if (flags & DUMP_OBJECT) {
-		uint32_t		 objtoff = cth->cth_objtoff;
+		uint32_t		 objtoff = cth.cth_objtoff;
 		size_t			 idx = 0, i = 0;
 		uint16_t		*dsp;
 		const char		*s;
 		int			 l;
 
-		while (objtoff < cth->cth_funcoff) {
+		while (objtoff < cth.cth_funcoff) {
 			dsp = (uint16_t *)(data + objtoff);
 
 			l = printf("  [%zu] %u", i++, *dsp);
@@ -389,8 +391,8 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 		const char		*s;
 		int			 l;
 
-		fstart = (uint16_t *)(data + cth->cth_funcoff);
-		fend = (uint16_t *)(data + cth->cth_typeoff);
+		fstart = (uint16_t *)(data + cth.cth_funcoff);
+		fend = (uint16_t *)(data + cth.cth_typeoff);
 
 		fsp = fstart;
 		while (fsp < fend) {
@@ -415,11 +417,11 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 	}
 
 	if (flags & DUMP_TYPE) {
-		uint32_t		 idx = 1, offset = cth->cth_typeoff;
-		uint32_t		 stroff = cth->cth_stroff;
+		uint32_t		 idx = 1, offset = cth.cth_typeoff;
+		uint32_t		 stroff = cth.cth_stroff;
 
 		while (offset < stroff) {
-			ctf_dump_type(cth, data, dlen, stroff, &offset, idx++);
+			ctf_dump_type(&cth, data, dlen, stroff, &offset, idx++);
 		}
 		printf("\n");
 	}
@@ -428,8 +430,8 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 		uint32_t		 offset = 0;
 		const char		*str;
 
-		while (offset < cth->cth_strlen) {
-			str = ctf_off2name(cth, data, dlen, offset);
+		while (offset < cth.cth_strlen) {
+			str = ctf_off2name(&cth, data, dlen, offset);
 
 			printf("  [%u] ", offset);
 			if (strcmp(str, "(anon)"))
@@ -442,7 +444,7 @@ ctf_dump(const char *p, size_t size, uint8_t flags)
 		printf("\n");
 	}
 
-	if (cth->cth_flags & CTF_F_COMPRESS)
+	if (cth.cth_flags & CTF_F_COMPRESS)
 		free(data);
 
 	return 0;
