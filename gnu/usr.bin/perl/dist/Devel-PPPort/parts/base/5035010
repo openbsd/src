@@ -1,0 +1,4 @@
+5.035010
+utf16_to_utf8                  # U (Perl_utf16_to_utf8)
+utf16_to_utf8_reversed         # U (Perl_utf16_to_utf8_reversed)
+UTF8_IS_REPLACEMENT            # U

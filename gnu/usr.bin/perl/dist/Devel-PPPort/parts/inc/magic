@@ -34,7 +34,7 @@ __UNDEFINED__  sv_setsv_nomg      sv_setsv
 __UNDEFINED__  sv_pvn_nomg        sv_pvn
 
 #ifdef SVf_IVisUV
-#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#if defined(PERL_USE_GCC_BRACE_GROUPS)
 __UNDEFINED__ SvIV_nomg(sv) (!SvGMAGICAL((sv)) ? SvIV((sv)) : ({ SV *_sviv = sv_mortalcopy_flags((sv), SV_NOSTEAL); IV _iv = SvIV(_sviv); SvFLAGS((sv)) = (SvFLAGS((sv)) & ~SVf_IVisUV) | (SvFLAGS(_sviv) & SVf_IVisUV); _iv; }))
 __UNDEFINED__ SvUV_nomg(sv) (!SvGMAGICAL((sv)) ? SvUV((sv)) : ({ SV *_svuv = sv_mortalcopy_flags((sv), SV_NOSTEAL); UV _uv = SvUV(_svuv); SvFLAGS((sv)) = (SvFLAGS((sv)) & ~SVf_IVisUV) | (SvFLAGS(_svuv) & SVf_IVisUV); _uv; }))
 #else
@@ -643,8 +643,8 @@ is($h{sv}, 'Perl');
 
 # v1 is treated as a bareword in older perls...
 my $ver = do { local $SIG{'__WARN__'} = sub {}; eval qq[v1.2.0] };
-ok("$]" < 5.009 || $@ eq '');
-ok("$]" < 5.009 || Devel::PPPort::SvVSTRING_mg($ver));
+ok(ivers($]) < ivers("5.009") || $@ eq '');
+ok(ivers($]) < ivers("5.009") || Devel::PPPort::SvVSTRING_mg($ver));
 ok(!Devel::PPPort::SvVSTRING_mg(4711));
 
 my $foo = 'bar';
@@ -686,7 +686,7 @@ $fetch = $negative;
 is tied($negative)->{fetch}, 1;
 is tied($negative)->{store}, 0;
 is Devel::PPPort::magic_SvIV_nomg($negative), -1;
-if (ivers($]) >= ivers(5.6)) {
+if (ivers($]) >= ivers("5.6")) {
     ok !Devel::PPPort::SVf_IVisUV($negative);
 } else {
     skip 'SVf_IVisUV is unsupported', 1;
@@ -694,7 +694,7 @@ if (ivers($]) >= ivers(5.6)) {
 is tied($negative)->{fetch}, 1;
 is tied($negative)->{store}, 0;
 Devel::PPPort::magic_SvUV_nomg($negative);
-if (ivers($]) >= ivers(5.6)) {
+if (ivers($]) >= ivers("5.6")) {
     ok !Devel::PPPort::SVf_IVisUV($negative);
 } else {
     skip 'SVf_IVisUV is unsupported', 1;
@@ -708,7 +708,7 @@ $fetch = $big;
 is tied($big)->{fetch}, 1;
 is tied($big)->{store}, 0;
 Devel::PPPort::magic_SvIV_nomg($big);
-if (ivers($]) >= ivers(5.6)) {
+if (ivers($]) >= ivers("5.6")) {
     ok Devel::PPPort::SVf_IVisUV($big);
 } else {
     skip 'SVf_IVisUV is unsupported', 1;
@@ -716,7 +716,7 @@ if (ivers($]) >= ivers(5.6)) {
 is tied($big)->{fetch}, 1;
 is tied($big)->{store}, 0;
 is Devel::PPPort::magic_SvUV_nomg($big), Devel::PPPort::above_IV_MAX();
-if (ivers($]) >= ivers(5.6)) {
+if (ivers($]) >= ivers("5.6")) {
     ok Devel::PPPort::SVf_IVisUV($big);
 } else {
     skip 'SVf_IVisUV is unsupported', 1;

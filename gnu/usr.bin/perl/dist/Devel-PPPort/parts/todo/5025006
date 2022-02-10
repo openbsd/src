@@ -11,6 +11,15 @@ is_utf8_fixed_width_buf_loclen_flags # U
 is_utf8_string_flags           # U
 is_utf8_string_loc_flags       # U
 is_utf8_string_loclen_flags    # U
-SvPVCLEAR                      # U
+SvPVCLEAR                      # E
 sv_setpv_bufsize               # U
+UTF8_GOT_CONTINUATION          # E
+UTF8_GOT_EMPTY                 # E
+UTF8_GOT_LONG                  # E
+UTF8_GOT_NONCHAR               # E
+UTF8_GOT_NON_CONTINUATION      # E
+UTF8_GOT_OVERFLOW              # E
+UTF8_GOT_SHORT                 # E
+UTF8_GOT_SUPER                 # E
+UTF8_GOT_SURROGATE             # E
 utf8n_to_uvchr_error           # U

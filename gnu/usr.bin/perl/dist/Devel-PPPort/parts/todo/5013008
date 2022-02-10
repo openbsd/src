@@ -1,5 +1,4 @@
 5.013008
-foldEQ_latin1                  # U
 parse_arithexpr                # U
 parse_fullexpr                 # U
 parse_listexpr                 # U

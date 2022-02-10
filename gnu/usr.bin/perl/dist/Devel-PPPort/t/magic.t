@@ -16,7 +16,7 @@ BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
     unshift @INC, '../lib' if -d '../lib' && -d '../ext';
-    require Config; import Config;
+    require Config; Config->import;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
       print "1..0 # Skip -- Perl configured without Devel::PPPort module\n";
@@ -48,7 +48,7 @@ package Devel::PPPort;
 use vars '@ISA';
 require DynaLoader;
 @ISA = qw(DynaLoader);
-bootstrap Devel::PPPort;
+Devel::PPPort->bootstrap;
 
 package main;
 
@@ -114,8 +114,8 @@ is($h{sv}, 'Perl');
 
 # v1 is treated as a bareword in older perls...
 my $ver = do { local $SIG{'__WARN__'} = sub {}; eval qq[v1.2.0] };
-ok("$]" < 5.009 || $@ eq '');
-ok("$]" < 5.009 || Devel::PPPort::SvVSTRING_mg($ver));
+ok(ivers($]) < ivers("5.009") || $@ eq '');
+ok(ivers($]) < ivers("5.009") || Devel::PPPort::SvVSTRING_mg($ver));
 ok(!Devel::PPPort::SvVSTRING_mg(4711));
 
 my $foo = 'bar';
@@ -157,7 +157,7 @@ $fetch = $negative;
 is tied($negative)->{fetch}, 1;
 is tied($negative)->{store}, 0;
 is Devel::PPPort::magic_SvIV_nomg($negative), -1;
-if (ivers($]) >= ivers(5.6)) {
+if (ivers($]) >= ivers("5.6")) {
     ok !Devel::PPPort::SVf_IVisUV($negative);
 } else {
     skip 'SVf_IVisUV is unsupported', 1;
@@ -165,7 +165,7 @@ if (ivers($]) >= ivers(5.6)) {
 is tied($negative)->{fetch}, 1;
 is tied($negative)->{store}, 0;
 Devel::PPPort::magic_SvUV_nomg($negative);
-if (ivers($]) >= ivers(5.6)) {
+if (ivers($]) >= ivers("5.6")) {
     ok !Devel::PPPort::SVf_IVisUV($negative);
 } else {
     skip 'SVf_IVisUV is unsupported', 1;
@@ -179,7 +179,7 @@ $fetch = $big;
 is tied($big)->{fetch}, 1;
 is tied($big)->{store}, 0;
 Devel::PPPort::magic_SvIV_nomg($big);
-if (ivers($]) >= ivers(5.6)) {
+if (ivers($]) >= ivers("5.6")) {
     ok Devel::PPPort::SVf_IVisUV($big);
 } else {
     skip 'SVf_IVisUV is unsupported', 1;
@@ -187,7 +187,7 @@ if (ivers($]) >= ivers(5.6)) {
 is tied($big)->{fetch}, 1;
 is tied($big)->{store}, 0;
 is Devel::PPPort::magic_SvUV_nomg($big), Devel::PPPort::above_IV_MAX();
-if (ivers($]) >= ivers(5.6)) {
+if (ivers($]) >= ivers("5.6")) {
     ok Devel::PPPort::SVf_IVisUV($big);
 } else {
     skip 'SVf_IVisUV is unsupported', 1;

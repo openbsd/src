@@ -6,3 +6,5 @@ isPSXSPC_LC_uvchr              # U
 isWORDCHAR_LC_uvchr            # U
 isXDIGIT_LC_uvchr              # U
 SvREFCNT_dec_NN                # U
+SvTRUE_NN                      # U
+SvTRUE_nomg_NN                 # U

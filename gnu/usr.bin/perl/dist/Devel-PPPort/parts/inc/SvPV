@@ -82,7 +82,7 @@ __UNDEFINED__  SV_SMAGIC                0
 __UNDEFINED__  SV_HAS_TRAILING_NUL      0
 __UNDEFINED__  SV_COW_SHARED_HASH_KEYS  0
 
-#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#if defined(PERL_USE_GCC_BRACE_GROUPS)
   __UNDEFINED__ sv_2pv_flags(sv, lp, flags) ({ SV *_sv = (sv); const I32 _flags = (flags); STRLEN *_lp = lp; _lp = _lp ? : &PL_na; (!(_flags & SV_GMAGIC) && SvGMAGICAL(_sv)) ? ({ char *_pv; SvGMAGICAL_off(_sv); _pv = sv_2pv(_sv, _lp); SvGMAGICAL_on(_sv); _pv; }) : sv_2pv(_sv, _lp); })
   __UNDEFINED__ sv_pvn_force_flags(sv, lp, flags) ({ SV *_sv = (sv); const I32 _flags = (flags); STRLEN *_lp = lp; _lp = _lp ? : &PL_na; (!(_flags & SV_GMAGIC) && SvGMAGICAL(_sv)) ? ({ char *_pv; SvGMAGICAL_off(_sv); _pv = sv_pvn_force(_sv, _lp); SvGMAGICAL_on(_sv); _pv; }) : sv_pvn_force(_sv, _lp); })
 #else
@@ -144,6 +144,11 @@ __UNDEFINED__  SvPV_nolen(sv) \
 __UNDEFINED__  SvPV_nolen_const(sv) \
                  ((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
                   ? SvPVX_const(sv) : sv_2pv_flags(sv, D_PPP_SVPV_NOLEN_LP_ARG, SV_GMAGIC|SV_CONST_RETURN))
+#  if defined(PERL_USE_GCC_BRACE_GROUPS)
+__UNDEFINED__  SvPVx_nolen_const(sv) ({SV *sV_ = (sv); SvPV_nolen_const(sV_); })
+#  else
+__UNDEFINED__  SvPVx_nolen_const(sv)  (PL_Sv = sv, SvPV_nolen_const(PL_Sv))
+#  endif
 
 __UNDEFINED__  SvPV_nomg(sv, lp) SvPV_flags(sv, lp, 0)
 __UNDEFINED__  SvPV_nomg_const(sv, lp) SvPV_flags_const(sv, lp, 0)
@@ -155,6 +160,8 @@ __UNDEFINED__  SvPV_renew(sv,n) STMT_START { SvLEN_set(sv, n); \
                  SvPV_set((sv), (char *) saferealloc(          \
                        (Malloc_t)SvPVX(sv), (MEM_SIZE)((n)))); \
                } STMT_END
+
+__UNDEFINED__  SvPVCLEAR(sv) sv_setpvs((sv), "")
 
 =xsubs
 
@@ -419,8 +426,14 @@ SvPV_renew(sv, nlen, insv)
                 SvCUR_set(sv, slen);
                 mXPUSHi(SvLEN(sv));
 
+void
+SvPVCLEAR(sv)
+        SV *sv
+        CODE:
+                SvPVCLEAR(sv);
 
-=tests plan => 49
+
+=tests plan => 50
 
 my $mhx = "mhx";
 
@@ -475,6 +488,9 @@ $mhx = 42; is(&Devel::PPPort::SvPV_nomg($mhx), 2);
 $mhx = 42; is(&Devel::PPPort::SvPV_nomg_const($mhx), 2);
 $mhx = 42; is(&Devel::PPPort::SvPV_nomg_const_nolen($mhx), 0);
 $mhx = 42; is(&Devel::PPPort::SvPV_nomg_nolen($mhx), 0);
+
+&Devel::PPPort::SvPVCLEAR($mhx);
+is($mhx, "");
 
 my $str = "";
 &Devel::PPPort::SvPV_force($str);

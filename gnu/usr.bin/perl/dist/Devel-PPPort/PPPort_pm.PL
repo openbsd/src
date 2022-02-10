@@ -85,7 +85,25 @@ my %raw_base = %{&parse_todo('parts/base')};
 # determine
 my %raw_todo = %{&parse_todo('parts/todo')};
 
-# Invert so each key is the 7 digit version number, and it's value is an array
+# The items defined by config.h are found instead by scanprov which currently
+# doesn't write them to the todo files.  Instead add them here.  All such have
+# the K code, and we know certain things about them, so set their flags
+# accordingly.
+for (keys %raw_base) {
+    if (   exists $raw_base{$_}{code}
+        && $raw_base{$_}{code} eq 'K')
+    {
+        $embed{$_}->{flags}{'A'} = 1;
+        $embed{$_}->{flags}{'m'} = 1;
+        $embed{$_}->{flags}{'d'} = 1;
+        $embed{$_}->{flags}{'T'} = 1;
+        #
+        # Don't override any existing
+        $raw_todo{$_} = $raw_base{$_} unless exists $raw_todo{$_};
+    }
+}
+
+# Invert so each key is the 7 digit version number, and its value is an array
 # of all symbols within it, like:
 #          '5005003' => [
 #                         'POPpx',
@@ -106,7 +124,7 @@ my @todo_list = reverse sort keys %todo;
 # directories are empty (which should only happen during regeneration of the
 # base and todo files).).  Actually the final element is for blead (at the
 # time things were regenerated), which is 1 beyond the max version supported.
-my $INT_MAX_PERL = (@todo_list) ? $todo_list[0] - 1 : '5030000'; # used for __MAX_PERL__
+my $INT_MAX_PERL = (@todo_list) ? $todo_list[0] - 1 : '5034000'; # used for __MAX_PERL__
 my $MAX_PERL = format_version($INT_MAX_PERL);
 my $INT_MIN_PERL = (@todo_list) ? $todo_list[-1] : 5003007;
 my $MIN_PERL = format_version($INT_MIN_PERL);
@@ -138,21 +156,30 @@ for (@provided) {
   }
 }
 
-my @perl_api;
+my %perl_api;
 for (@provided) {
   next if /^Perl_(.*)/ && exists $embed{$1};
   next if exists $embed{$_};
-  push @perl_api, $_;
+  $perl_api{$_} = 1;
   check(2, "No API definition for provided element $_ found.");
 }
 
-# At this point @perl_api is the list of things we provide that weren't found
-# in the .fnc files.
-my @prototype_unknown = @perl_api;
+# At this point the keys of %perl_api give the list of things we provide that
+# weren't found in the .fnc files.
+my @prototype_unknown = keys %perl_api;
 
 # Add in the .fnc file definitions.
-push @perl_api, keys %embed;
-@perl_api = sort dictionary_order @perl_api;
+for (keys %embed) {
+    $perl_api{$_} = 1;
+}
+
+# Finally, scanprov has found macros of various types
+my @scanprov_found_macros = grep { $raw_base{$_}{code} =~ /[KMZ]/ } keys %raw_base;
+for (@scanprov_found_macros) {
+    $perl_api{$_} = 1;
+}
+
+my @perl_api = sort dictionary_order keys %perl_api;
 
 for (@perl_api) {   # $_ is the item name
   if (exists $provides{$_} && !exists $raw_base{$_}) {
@@ -175,18 +202,19 @@ for (@perl_api) {   # $_ is the item name
   $e = $embed{$_} if exists $embed{$_};
   my $is_documented = 0;
   my $is_accessible = 0;
+  my $has_thread = 1;
   if (defined $e) {
     if (exists $e->{flags}{'p'}) {    # Has 'Perl_' prefix
       my $args = $e->{args};
       $line .= 'v' if @$args && $args->[-1][0] eq '...';
     }
     $line .= 'o' if exists $e->{ppport_fnc};
-    $line .= 'n' if exists $e->{flags}{'T'};  # No thread context parameter
     $line .= 'd' if exists $e->{flags}{'D'};  # deprecated
     $line .= 'x' if exists $e->{flags}{'x'};  # experimental
     $line .= 'c' if        exists $e->{flags}{'C'}      # core-only
                    || (    exists $e->{flags}{'X'}
                        && (exists $e->{flags}{'E'} || ! exists $e->{flags}{'m'}));
+    $has_thread = 0 if exists $e->{flags}{'T'};  # No thread context parameter
     $is_accessible = 1 if exists $e->{flags}{'A'}
                        || exists $e->{flags}{'C'}
                        || (     exists $e->{flags}{'X'}
@@ -195,21 +223,29 @@ for (@perl_api) {   # $_ is the item name
     $is_documented = 1 if exists $e->{flags}{'d'};
   }
 
-  # scanprov adds the M and F flags.  The M is for provided macros; F for
-  # functions we didn't find in testing (usually because they are hidden
-  # behind ifdefs, like PERL_GLOBAL_STRUCT_PRIVATE).  None of them were
-  # verified
+  # scanprov adds several flags:
+  #     F is for functions we didn't find in testing (usually because they are
+  #       hidden behind ifdefs, like USE_THREADS if built on unthreaded perls,
+  #       or vice-versa.
+  #     K for config.h #defines.  These are considered provided and are
+  #       documented in config.h (mnemonic: K is like c in config)
+  #     M for provided, undocumented macros.  If they were documented, they
+  #       would have been found before scanprov was run.
+  #     Z for macros that aren't documented or provided.  (mnemonic:
+  #       'Zecret').  Some of these may be hidden behind an #ifdef PERL_CORE.
+  # None of these were verified by compilation
   if (exists $raw_base{$_}{code}) {
-    $line .= 'V' if $raw_base{$_}{code} =~ /[MFX]/;
+    $line .= 'V' if $raw_base{$_}{code} =~ /[FKMXZ]/;
     $is_accessible = 1 if $raw_base{$_}{code} =~ /M/;
   }
+  $line .= 'n' unless $has_thread;
   $line .= 'i' unless $is_accessible;
   $line .= 'u' unless $is_documented;
 
   $_ = $line;
 }
 
-$data =~ s/^([\t ]*)__PERL_API__(\s*?)$/
+$data =~ s/^([\t ]*)__ALL_ELEMENTS__(\s*?)$/
            join "\n", map "$1$_", sort dictionary_order @perl_api
           /gem;
 
@@ -218,7 +254,7 @@ my $undocumented = "(undocumented)";
 my @todo;
 for (@todo_list) {
   my $ver = format_version($_);
-  $ver .= " (at least)" if $_ == $todo_list[-1];
+  $ver .= " (or maybe earlier)" if $_ == $todo_list[-1];
   my $todo = "=item perl $ver\n\n";
   for (sort dictionary_order @{$todo{$_}}) {
     $todo .= "  $_";
@@ -488,7 +524,7 @@ __DATA__
 #
 #  This file was automatically generated from the definition files in the
 #  parts/inc/ subdirectory by PPPort_pm.PL. To learn more about how all this
-#  works, please read the F<HACKERS> file that came with this distribution.
+#  works, please read the L<HACKERS> file that came with this distribution.
 #
 ################################################################################
 #
@@ -567,7 +603,16 @@ They are most probably not XS writers. Also, don't make F<ppport.h>
 optional. Rather, just take the most recent copy of F<ppport.h> that
 you can find (e.g. by generating it with the latest C<Devel::PPPort>
 release from CPAN), copy it into your project, adjust your project to
-use it, and distribute the header along with your module.
+use it, test it, and distribute the header along with your module.
+
+It is important to use the most recent version of F<ppport.h>.  You do need to
+test before shipping a newer version than you already had.  One possible
+failure is that someone had to convert a backported element from a macro into
+a function, and actual functions must be enabled with a NEED macro to minimize
+the possibility of namespace pollution.  See L<HACKERS> for details.  The
+developers of C<Devel::PPPort> want to hear if there are other problems that
+arise from using a later F<ppport.h>.  Use
+L<https://github.com/Dual-Life/Devel-PPPort/issues> to report any.
 
 =head2 Running ppport.h
 
@@ -691,7 +736,7 @@ Versions >= 3.22 are maintained by perl5 porters
 
 Version 3.x, Copyright (C) 2004-2013, Marcus Holland-Moritz.
 
-             Copyright (C) 2018, The perl5 porters
+             Copyright (C) 2018-2020, The perl5 porters
 
 Version 2.x, Copyright (C) 2001, Paul Marquess.
 
@@ -711,7 +756,7 @@ package Devel::PPPort;
 use strict;
 use vars qw($VERSION $data);
 
-$VERSION = '3.57';
+$VERSION = '3.64';
 
 sub _init_data
 {
@@ -747,7 +792,7 @@ sub WriteFile
 
 __DATA__
 #if 0
-<<'SKIP';
+my $void = <<'SKIP';
 #endif
 /*
 ----------------------------------------------------------------------

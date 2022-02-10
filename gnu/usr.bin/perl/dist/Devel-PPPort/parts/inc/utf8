@@ -34,8 +34,9 @@ __UNDEFINED__  UTF8_MAXBYTES   UTF8_MAXLEN
 __UNDEF_NOT_PROVIDED__ UTF_START_MARK(len)                                   \
                     (((len) >  7) ? 0xFF : (0xFF & (0xFE << (7-(len)))))
 
-#if { VERSION < 5.018 }     /* On non-EBCDIC was valid before this, */
-                            /* but easier to just do one check */
+/* On non-EBCDIC was valid for some releases earlier than this, but easier to
+ * just do one check */
+#if { VERSION < 5.018 }
 #  undef UTF8_MAXBYTES_CASE
 #endif
 
@@ -127,17 +128,14 @@ __UNDEFINED__ UTF8_IS_INVARIANT(c)  (isASCII(c) || isCNTRL_L1(c))
 __UNDEFINED__ UVCHR_IS_INVARIANT(c)  UTF8_IS_INVARIANT(c)
 
 #ifdef UVCHR_IS_INVARIANT
-#  if 'A' == 65
-#    ifdef QUADKIND
-#      define D_PPP_UVCHR_SKIP_UPPER(c)                                         \
-          (WIDEST_UTYPE) (c) <                                                  \
-        (((WIDEST_UTYPE) 1) << (6 * D_PPP_BYTE_INFO_BITS)) ? 7 : 13
-#    else
-#      define D_PPP_UVCHR_SKIP_UPPER(c) 7  /* 32 bit platform */
-#    endif
-#  else
-     /* In the releases this is backported to, UTF-EBCDIC had a max of 2**31-1 */
+#  if 'A' != 65 || UVSIZE < 8
+     /* 32 bit platform, which includes UTF-EBCDIC on the releases this is
+      * backported to */
 #    define D_PPP_UVCHR_SKIP_UPPER(c) 7
+#  else
+#    define D_PPP_UVCHR_SKIP_UPPER(c)                                       \
+        (((WIDEST_UTYPE) (c)) <                                             \
+         (((WIDEST_UTYPE) 1) << (6 * D_PPP_BYTE_INFO_BITS)) ? 7 : 13)
 #  endif
 
 __UNDEFINED__ UVCHR_SKIP(c)                                                     \
@@ -362,7 +360,9 @@ utf8_to_uvchr_buf(pTHX_ const U8 *s, const U8 *send, STRLEN *retlen)
          * disabled, so this 'if' will be true, and so later on, we know that
          * 's' is dereferencible */
         if (do_warnings) {
-            *retlen = (STRLEN) -1;
+            if (retlen) {
+                *retlen = (STRLEN) -1;
+            }
         }
         else {
             ret = D_PPP_utf8_to_uvchr_buf_callee(
@@ -435,7 +435,7 @@ __UNDEFINED__  utf8_to_uvchr(s, lp)                                             
    /* Also note that SvGETMAGIC() may change presence of SVf_UTF8 flag */
 #  if { VERSION < 5.17.5 }
 #    undef sv_len_utf8
-#    if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#    if defined(PERL_USE_GCC_BRACE_GROUPS)
 #      define sv_len_utf8_nomg(sv) ({ SV *_sv2 = (sv); (SvUTF8(_sv2) ? Perl_sv_len_utf8(aTHX_ (!SvGMAGICAL(_sv2) ? _sv2 : sv_mortalcopy_flags(_sv2, SV_NOSTEAL))) : ({ STRLEN _len; SvPV_nomg(_sv2, _len); _len; })); })
 #      define sv_len_utf8(sv) ({ SV *_sv1 = (sv); SvGETMAGIC(_sv1); sv_len_utf8_nomg(_sv1); })
 #    else
@@ -443,7 +443,7 @@ __UNDEFINED__  utf8_to_uvchr(s, lp)                                             
 #      define sv_len_utf8(sv) (PL_Sv = (sv), SvGETMAGIC(PL_Sv), sv_len_utf8_nomg(PL_Sv))
 #    endif
 #  endif
-#  if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#  if defined(PERL_USE_GCC_BRACE_GROUPS)
      __UNDEFINED__ sv_len_utf8_nomg(sv) ({ SV *_sv = (sv); sv_len_utf8(!SvGMAGICAL(_sv) ? _sv : sv_mortalcopy_flags(_sv, SV_NOSTEAL)); })
 #  else
      __UNDEFINED__ sv_len_utf8_nomg(sv) ((PL_Sv = (sv)), sv_len_utf8(!SvGMAGICAL(PL_Sv) ? PL_Sv : sv_mortalcopy_flags(PL_Sv, SV_NOSTEAL)))
@@ -821,7 +821,7 @@ else {
 
     # An empty input is an assertion failure on debugging builds.  It is
     # deliberately the first test.
-    require Config; import Config;
+    require Config; Config->import;
     use vars '%Config';
 
     # VMS doesn't put DEBUGGING in ccflags, and Windows doesn't have

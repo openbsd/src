@@ -6,7 +6,7 @@ gv_fullname4                   # U
 isPSXSPC_LC                    # U
 isUTF8_CHAR                    # U
 is_utf8_string                 # U
-NVSIZE                         # E
+Perl_isnan                     # U
 save_generic_pvref             # U
 SvGAMAGIC                      # U
 utf8_to_bytes                  # U

@@ -16,7 +16,7 @@ BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
     unshift @INC, '../lib' if -d '../lib' && -d '../ext';
-    require Config; import Config;
+    require Config; Config->import;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
       print "1..0 # Skip -- Perl configured without Devel::PPPort module\n";
@@ -48,11 +48,11 @@ package Devel::PPPort;
 use vars '@ISA';
 require DynaLoader;
 @ISA = qw(DynaLoader);
-bootstrap Devel::PPPort;
+Devel::PPPort->bootstrap;
 
 package main;
 
-BEGIN { if ("$]" < '5.006') { $^W = 0; } }
+BEGIN { if (ivers($]) < ivers('5.006')) { $^W = 0; } }
 
 my $warn;
 my $die;
@@ -174,17 +174,17 @@ ok Devel::PPPort::mess_sv(do {my $tmp = "\xE1"}, 1) =~ /^\xE1 at \Q$0\E line /;
 ok Devel::PPPort::mess_sv("\xC3\xA1", 0) =~ /^\xC3\xA1 at \Q$0\E line /;
 ok Devel::PPPort::mess_sv(do {my $tmp = "\xC3\xA1"}, 1) =~ /^\xC3\xA1 at \Q$0\E line /;
 
-if ("$]" >= '5.006') {
-    BEGIN { if ("$]" >= '5.006' && "$]" < '5.008') { require utf8; utf8->import(); } }
+if (ivers($]) >= ivers('5.006')) {
+    BEGIN { if (ivers($]) >= ivers('5.006') && ivers($]) < ivers('5.008')) { require utf8; utf8->import(); } }
 
     undef $die;
     ok !defined eval { Devel::PPPort::croak_sv("\x{100}\n") };
-    if ("$]" < '5.007001' || "$]" > '5.007003') {
+    if (ivers($]) < ivers('5.007001') || ivers($]) > ivers('5.007003')) {
         is $@, "\x{100}\n";
     } else {
         skip 'skip: broken utf8 support in die hook', 1;
     }
-    if ("$]" < '5.007001' || "$]" > '5.008') {
+    if (ivers($]) < ivers('5.007001') || ivers($]) > ivers('5.008')) {
         is $die, "\x{100}\n";
     } else {
         skip 'skip: broken utf8 support in die hook', 1;
@@ -192,18 +192,18 @@ if ("$]" >= '5.006') {
 
     undef $die;
     ok !defined eval { Devel::PPPort::croak_sv("\x{100}") };
-    if ("$]" < '5.007001' || "$]" > '5.007003') {
+    if (ivers($]) < ivers('5.007001') || ivers($]) > ivers('5.007003')) {
         ok $@ =~ /^\x{100} at \Q$0\E line /;
     } else {
         skip 'skip: broken utf8 support in die hook', 1;
     }
-    if ("$]" < '5.007001' || "$]" > '5.008') {
+    if (ivers($]) < ivers('5.007001') || ivers($]) > ivers('5.008')) {
         ok $die =~ /^\x{100} at \Q$0\E line /;
     } else {
         skip 'skip: broken utf8 support in die hook', 1;
     }
 
-    if ("$]" < '5.007001' || "$]" > '5.008') {
+    if (ivers($]) < ivers('5.007001') || ivers($]) > ivers('5.008')) {
         undef $warn;
         Devel::PPPort::warn_sv("\x{100}\n");
         is $warn, "\x{100}\n";
@@ -226,9 +226,9 @@ if ("$]" >= '5.006') {
 
 if (ord('A') != 65) {
     skip 'skip: no ASCII support', 24;
-} elsif (      "$]" >= '5.008'
-         &&    "$]" != '5.013000'     # Broken in these ranges
-         && ! ("$]" >= '5.011005' && "$]" <= '5.012000'))
+} elsif (      ivers($]) >= ivers('5.008')
+         &&    ivers($]) != ivers('5.013000')     # Broken in these ranges
+         && ! (ivers($]) >= ivers('5.011005') && ivers($]) <= ivers('5.012000')))
 {
     undef $die;
     ok !defined eval { Devel::PPPort::croak_sv(eval '"\N{U+E1}\n"') };
@@ -272,7 +272,7 @@ if (ord('A') != 65) {
     Devel::PPPort::warn_sv("\xC3\xA1");
     ok $warn =~ eval 'qr/^\N{U+C3}\N{U+A1} at \Q$0\E line /';
 
-    if ("$]" < '5.004') {
+    if (ivers($]) < ivers('5.004')) {
         skip 'skip: no support for mess_sv', 8;
     }
     else {
@@ -292,7 +292,7 @@ if (ord('A') != 65) {
     skip 'skip: no support for \N{U+..} syntax', 24;
 }
 
-if ("$]" >= '5.007003' or ("$]" >= '5.006001' and "$]" < '5.007')) {
+if (ivers($]) >= ivers('5.007003') or (ivers($]) >= ivers('5.006001') and ivers($]) < ivers('5.007'))) {
     undef $die;
     ok !defined eval { Devel::PPPort::croak_sv($scalar_ref) };
     ok $@ == $scalar_ref;

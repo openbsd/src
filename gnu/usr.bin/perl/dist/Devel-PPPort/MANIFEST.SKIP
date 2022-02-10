@@ -1,5 +1,6 @@
 ^\.git
 ^MYMETA.*$
+^META_new.*
 ^Makefile$
 ~$
 \.old(?:\..*)?$
@@ -22,3 +23,4 @@
 Devel-PPPort.*
 Devel-PPPort.*\.tar\.gz$
 .travis.yml
+.appveyor.yml

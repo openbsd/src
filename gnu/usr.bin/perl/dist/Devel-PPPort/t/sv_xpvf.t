@@ -16,7 +16,7 @@ BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
     unshift @INC, '../lib' if -d '../lib' && -d '../ext';
-    require Config; import Config;
+    require Config; Config->import;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
       print "1..0 # Skip -- Perl configured without Devel::PPPort module\n";
@@ -48,7 +48,7 @@ package Devel::PPPort;
 use vars '@ISA';
 require DynaLoader;
 @ISA = qw(DynaLoader);
-bootstrap Devel::PPPort;
+Devel::PPPort->bootstrap;
 
 package main;
 
@@ -58,25 +58,25 @@ tie %h, 'Tie::StdHash';
 $h{foo} = 'foo-';
 $h{bar} = '';
 
-is(&Devel::PPPort::vnewSVpvf(), "$]" >= 5.004 ? 'Perl-42' : '%s-%d');
-is(&Devel::PPPort::sv_vcatpvf('1-2-3-'), "$]" >= 5.004 ? '1-2-3-Perl-42' : '1-2-3-%s-%d');
-is(&Devel::PPPort::sv_vsetpvf('1-2-3-'), "$]" >= 5.004 ? 'Perl-42' : '%s-%d');
+is(&Devel::PPPort::vnewSVpvf(), ivers($]) >= ivers("5.004") ? 'Perl-42' : '%s-%d');
+is(&Devel::PPPort::sv_vcatpvf('1-2-3-'), ivers($]) >= ivers("5.004") ? '1-2-3-Perl-42' : '1-2-3-%s-%d');
+is(&Devel::PPPort::sv_vsetpvf('1-2-3-'), ivers($]) >= ivers("5.004") ? 'Perl-42' : '%s-%d');
 
 &Devel::PPPort::sv_catpvf_mg($h{foo});
-is($h{foo}, "$]" >= 5.004 ? 'foo-Perl-42' : 'foo-');
+is($h{foo}, ivers($]) >= ivers("5.004") ? 'foo-Perl-42' : 'foo-');
 
 &Devel::PPPort::Perl_sv_catpvf_mg($h{foo});
-is($h{foo}, "$]" >= 5.004 ? 'foo-Perl-42-Perl-43' : 'foo-');
+is($h{foo}, ivers($]) >= ivers("5.004") ? 'foo-Perl-42-Perl-43' : 'foo-');
 
 &Devel::PPPort::sv_catpvf_mg_nocontext($h{foo});
-is($h{foo}, "$]" >= 5.004 ? 'foo-Perl-42-Perl-43-Perl-44' : 'foo-');
+is($h{foo}, ivers($]) >= ivers("5.004") ? 'foo-Perl-42-Perl-43-Perl-44' : 'foo-');
 
 &Devel::PPPort::sv_setpvf_mg($h{bar});
-is($h{bar}, "$]" >= 5.004 ? 'mhx-42' : '');
+is($h{bar}, ivers($]) >= ivers("5.004") ? 'mhx-42' : '');
 
 &Devel::PPPort::Perl_sv_setpvf_mg($h{bar});
-is($h{bar}, "$]" >= 5.004 ? 'foo-43' : '');
+is($h{bar}, ivers($]) >= ivers("5.004") ? 'foo-43' : '');
 
 &Devel::PPPort::sv_setpvf_mg_nocontext($h{bar});
-is($h{bar}, "$]" >= 5.004 ? 'bar-44' : '');
+is($h{bar}, ivers($]) >= ivers("5.004") ? 'bar-44' : '');
 

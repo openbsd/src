@@ -22,7 +22,7 @@ __UNDEFINED__ SV_NOSTEAL 16
 
 #if ( { VERSION >= 5.7.3 } && { VERSION < 5.8.7 } ) || ( { VERSION >= 5.9.0 } && { VERSION < 5.9.2 } )
 #undef sv_setsv_flags
-#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#if defined(PERL_USE_GCC_BRACE_GROUPS)
 #define sv_setsv_flags(dstr, sstr, flags)                                          \
   STMT_START {                                                                     \
     if (((flags) & SV_NOSTEAL) && (sstr) && (SvFLAGS((SV *)(sstr)) & SVs_TEMP)) {  \
@@ -48,7 +48,7 @@ __UNDEFINED__ SV_NOSTEAL 16
 #endif
 #endif
 
-#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#if defined(PERL_USE_GCC_BRACE_GROUPS)
 __UNDEFINED__ sv_setsv_flags(dstr, sstr, flags)                                    \
   STMT_START {                                                                     \
     if (((flags) & SV_NOSTEAL) && (sstr) && (SvFLAGS((SV *)(sstr)) & SVs_TEMP)) {  \
@@ -101,7 +101,7 @@ __UNDEFINED__ sv_setsv_flags(dstr, sstr, flags)                                 
   )
 #endif
 
-#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#if defined(PERL_USE_GCC_BRACE_GROUPS)
 __UNDEFINED__ newSVsv_flags(sv, flags) ({ SV *_sv = newSV(0); sv_setsv_flags(_sv, (sv), (flags)); _sv; })
 #else
 __UNDEFINED__ newSVsv_flags(sv, flags) ((PL_Sv = newSV(0)), sv_setsv_flags(PL_Sv, (sv), (flags)), PL_Sv)

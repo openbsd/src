@@ -1,3 +1,2 @@
 5.021001
 markstack_grow                 # E (Perl_markstack_grow)
-WARN_EXPERIMENTAL__WIN32_PERLIO # E

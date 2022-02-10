@@ -15,86 +15,83 @@
 :
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :
-: This file lists all API functions/macros that are provided purely
-: by Devel::PPPort, or that are not public.  It is in the same format as the
-: F<embed.fnc> that ships with the Perl source code.
+: This file lists all functions/macros that are provided by Devel::PPPort that
+: would not be tested otherwise; because either they are not public, or they
+: exist only in D:P.  It is in the same format as the F<embed.fnc> that ships
+: with the Perl source code.
 :
 : Since these are used only to provide the argument types, it's ok to have the
-: return value be void for some where it's an issues
+: return value be void for some where it's a potential issue.
 
-Amn|void|aTHXR
-Amn|void|aTHXR_
-md|int|AvFILLp|AV* av
-Amn|void|DEFSV
-Amn|void|dMY_CXT_SV
-Amn|void|dNOOP
-Amn|void|dTHXR
-Amn|void|dXSTARG
-Amn|void|END_EXTERN_C
-Amn|void|EXTERN_C
-Amn|void|GV_NOADD_MASK
-Amn|void|IN_PERL_COMPILETIME
-Amn|void|NOOP
-Amn|void|PERL_BCDVERSION
-Amn|void|Perl_eval_pv
-Amn|void|Perl_eval_sv
-Amn|void|PERL_MAGIC_glob
-Amn|void|PERL_MAGIC_mutex
-Amn|void|PERL_MAGIC_overload
-Amn|void|PERL_MAGIC_overload_elem
-Amn|void|PERL_PV_PRETTY_DUMP
-Amn|void|PERL_PV_PRETTY_NOCLEAR
-Amn|void|PERL_PV_PRETTY_REGPROP
-Amn|void|PERL_SIGNALS_UNSAFE_FLAG
-Amn|void|PERL_UINT_MIN
-Amn|void|PERL_UNUSED_CONTEXT
-Amn|void|PERL_UNUSED_DECL
-Amn|void|PERL_USE_GCC_BRACE_GROUPS
-Amn|void|PL_bufend
-Amn|void|PL_bufptr
-Amn|void|PL_compiling
-Amn|void|PL_copline
-Amn|void|PL_DBsignal
-mnd|SV *|PL_DBsingle
-mnd|GV *|PL_DBsub
-mnd|SV *|PL_DBtrace
-Amn|void|PL_debstash
-Amn|void|PL_diehook
-Amn|void|PL_dirty
-mnd|U8|PL_dowarn
-Amn|void|PL_error_count
-Amn|void|PL_expect
-Amn|void|PL_hexdigit
-Amn|void|PL_hints
-Amn|void|PL_in_my
-Amn|void|PL_in_my_stash
-Amn|void|PL_laststatval
-Amn|void|PL_lex_state
-Amn|void|PL_lex_stuff
-Amn|void|PL_linestr
-Amn|void|PL_mess_sv
-Amn|void|PL_no_modify
-Amn|void|PL_perldb
-Amn|void|PL_ppaddr
-Amn|void|PL_rsfp
-Amn|void|PL_rsfp_filters
-Amn|void|PL_stack_base
-Amn|void|PL_stack_sp
-Amn|void|PL_statcache
-Amn|void|PL_stdingv
-Amn|void|PL_Sv
-Amn|void|PL_sv_arenaroot
-Amn|void|PL_tainted
-Amn|void|PL_tainting
-Amn|void|PL_tokenbuf
-Amn|void|PL_Xpv
-Amn|void|PTRV
-Amn|void|SAVE_DEFSV
-Amn|void|START_EXTERN_C
-Amn|void|SV_CONST_RETURN
-Amn|void|SV_COW_SHARED_HASH_KEYS
+AmnT|void|aTHXR
+AmnT|void|aTHXR_
+AmnT|void|dTHXR
+AmnT|void|dXSTARG
+AmnT|void|IVdf
+AmnT|void|IVSIZE
+AmnT|void|IVTYPE
+AmnT|void|LOCK_LC_NUMERIC_STANDARD
+AmnT|void|LONGSIZE
+AmnT|void|NOT_REACHED
+AmnT|void|NVef
+AmnT|void|NVff
+AmnT|void|NVgf
+AmnT|void|NVTYPE
+AmnT|void|PERL_ARGS_ASSERT_CROAK_XS_USAGE
+AmnT|void|PERL_BCDVERSION
+AmnT|void|Perl_eval_pv
+AmnT|void|Perl_eval_sv
+AmnT|void|PERL_MAGIC_glob
+AmnT|void|PERL_MAGIC_mutex
+AmnT|void|PERL_MAGIC_overload
+AmnT|void|PERL_MAGIC_overload_elem
+AmnT|void|Perl_warner_nocontext
+AmnT|void|PL_bufend
+AmnT|void|PL_bufptr
+AmnT|void|PL_compiling
+AmnT|void|PL_copline
+AmnT|void|PL_DBsignal
+AmnT|void|PL_debstash
+AmnT|void|PL_diehook
+AmnT|void|PL_dirty
+AmnT|void|PL_error_count
+AmnT|void|PL_expect
+AmnT|void|PL_hints
+AmnT|void|PL_in_my
+AmnT|void|PL_in_my_stash
+AmnT|void|PL_laststatval
+AmnT|void|PL_lex_state
+AmnT|void|PL_lex_stuff
+AmnT|void|PL_linestr
+AmnT|void|PL_mess_sv
+AmnT|void|PL_no_modify
+AmnT|void|PL_perldb
+AmnT|void|PL_ppaddr
+AmnT|void|PL_rsfp
+AmnT|void|PL_rsfp_filters
+AmnT|void|PL_signals
+AmnT|void|PL_stack_base
+AmnT|void|PL_stack_sp
+AmnT|void|PL_statcache
+AmnT|void|PL_stdingv
+AmnT|void|PL_sv_arenaroot
+AmnT|void|PL_tainted
+AmnT|void|PL_tainting
+AmnT|void|PL_tokenbuf
+AmnT|void|PL_Xpv
+AmnT|void|PTRV
+AmnT|void|SV_CONST_RETURN
+AmnT|void|SV_COW_SHARED_HASH_KEYS
 Am|void|sv_magic_portable|NN SV* sv|NULLOK SV* obj|int how|NULLOK const char* name|I32 namlen
-Amn|void|SV_MUTABLE_RETURN
-Amn|void|SV_UTF8_NO_ENCODING
-Amn|void|WARN_ASSERTIONS
-Amn|void|XSprePUSH
+AmnT|void|SV_MUTABLE_RETURN
+AmnT|void|UNLOCK_LC_NUMERIC_STANDARD
+AmnT|void|UVof
+AmnT|void|UVSIZE
+AmnT|void|UVTYPE
+AmnT|void|UVuf
+AmnT|void|UVXf
+AmnT|void|UVxf
+AmnT|void|WARN_ASSERTIONS
+AmnT|void|WIDEST_UTYPE
+AmnT|void|XSprePUSH
+

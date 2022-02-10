@@ -33,6 +33,8 @@ STMT_START
 SvRX
 WIDEST_UTYPE
 XSRETURN
+NOT_REACHED
+ASSUME
 
 =implementation
 
@@ -50,12 +52,59 @@ __UNDEFINED__ __ASSERT_(statement)  assert(statement),
 __UNDEFINED__ __ASSERT_(statement)
 #endif
 
+__UNDEFINED__  __has_builtin(x) 0
+
+#if __has_builtin(__builtin_unreachable)
+#  define D_PPP_HAS_BUILTIN_UNREACHABLE
+#elif (defined(__GNUC__) && (   __GNUC__ > 4                              \
+                             || __GNUC__ == 4 && __GNUC_MINOR__ >= 5))
+#  define D_PPP_HAS_BUILTIN_UNREACHABLE
+#endif
+
+#ifndef ASSUME
+#  ifdef DEBUGGING
+#    define ASSUME(x) assert(x)
+#  elif defined(_MSC_VER)
+#    define ASSUME(x) __assume(x)
+#  elif defined(__ARMCC_VERSION)
+#    define ASSUME(x) __promise(x)
+#  elif defined(D_PPP_HAS_BUILTIN_UNREACHABLE)
+#    define ASSUME(x) ((x) ? (void) 0 : __builtin_unreachable())
+#  else
+#    define ASSUME(x) assert(x)
+#  endif
+#endif
+
+#ifndef NOT_REACHED
+#  ifdef D_PPP_HAS_BUILTIN_UNREACHABLE
+#    define NOT_REACHED                                                     \
+        STMT_START {                                                        \
+            ASSUME(!"UNREACHABLE"); __builtin_unreachable();                \
+        } STMT_END
+#  elif ! defined(__GNUC__) && (defined(__sun) || defined(__hpux))
+#    define NOT_REACHED
+#  else
+#    define NOT_REACHED  ASSUME(!"UNREACHABLE")
+#  endif
+#endif
+
+#ifndef WIDEST_UTYPE
+# ifdef QUADKIND
+#  ifdef U64TYPE
+#   define WIDEST_UTYPE U64TYPE
+#  else
+#   define WIDEST_UTYPE unsigned Quad_t
+#  endif
+# else
+#  define WIDEST_UTYPE U32
+# endif
+#endif
+
 /* These could become provided if/when they become part of the public API */
 __UNDEF_NOT_PROVIDED__ withinCOUNT(c, l, n)                                    \
    (((WIDEST_UTYPE) (((c)) - ((l) | 0))) <= (((WIDEST_UTYPE) ((n) | 0))))
 __UNDEF_NOT_PROVIDED__ inRANGE(c, l, u)                                        \
    (  (sizeof(c) == sizeof(U8))  ? withinCOUNT(((U8)  (c)), (l), ((u) - (l)))  \
-    : (sizeof(c) == sizeof(U16)) ? withinCOUNT(((U16) (c)), (l), ((u) - (l)))  \
     : (sizeof(c) == sizeof(U32)) ? withinCOUNT(((U32) (c)), (l), ((u) - (l)))  \
     : (withinCOUNT(((WIDEST_UTYPE) (c)), (l), ((u) - (l)))))
 
@@ -237,12 +286,17 @@ __UNDEF_NOT_PROVIDED__  PERL_GCC_BRACE_GROUPS_FORBIDDEN
 
 #undef STMT_START
 #undef STMT_END
-#if defined(VOIDFLAGS) && (VOIDFLAGS) && (defined(sun) || defined(__sun__)) && !defined(__GNUC__)
+#if defined(VOIDFLAGS) && defined(PERL_USE_GCC_BRACE_GROUPS)
+#  define STMT_START    (void)( /* gcc supports ``({ STATEMENTS; })'' */
+#  define STMT_END      )
+#else
+#  if defined(VOIDFLAGS) && (VOIDFLAGS) && (defined(sun) || defined(__sun__)) && !defined(__GNUC__)
 #    define STMT_START  if (1)
 #    define STMT_END    else (void)0
-#else
+#  else
 #    define STMT_START  do
 #    define STMT_END    while (0)
+#  endif
 #endif
 
 __UNDEFINED__  boolSV(b)    ((b) ? &PL_sv_yes : &PL_sv_no)
@@ -257,6 +311,7 @@ __UNDEFINED__  AvFILLp      AvFILL
 
 __UNDEFINED__  av_tindex    AvFILL
 __UNDEFINED__  av_top_index AvFILL
+__UNDEFINED__  av_count(av) (AvFILL(av)+1)
 
 __UNDEFINED__  ERRSV        get_sv("@",FALSE)
 
@@ -285,7 +340,7 @@ __UNDEFINED__  dITEMS          I32 items = SP - MARK
 __UNDEFINED__  dXSTARG         SV * targ = sv_newmortal()
 
 __UNDEFINED__  dAXMARK         I32 ax = POPMARK; \
-                               register SV ** const mark = PL_stack_base + ax++
+                               SV ** const mark = PL_stack_base + ax++
 
 
 __UNDEFINED__  XSprePUSH       (sp = PL_stack_base + ax - 1)
@@ -343,18 +398,6 @@ typedef OP* (CPERLscope(*Perl_check_t)) (pTHX_ OP*);
 
 #endif
 
-#ifndef WIDEST_UTYPE
-# ifdef QUADKIND
-#  ifdef U64TYPE
-#   define WIDEST_UTYPE U64TYPE
-#  else
-#   define WIDEST_UTYPE Quad_t
-#  endif
-# else
-#  define WIDEST_UTYPE U32
-# endif
-#endif
-
 /* On versions without NATIVE_TO_ASCII, only ASCII is supported */
 #if defined(EBCDIC) && defined(NATIVE_TO_ASCI)
 __UNDEFINED__ NATIVE_TO_LATIN1(c) NATIVE_TO_ASCII(c)
@@ -392,8 +435,8 @@ __UNDEFINED__ UNI_TO_NATIVE(c) (c)
 #ifdef EBCDIC
 
 /* This is the first version where these macros are fully correct on EBCDIC
- * platforms.  Relying on * the C library functions, as earlier releases did,
- * causes problems with * locales */
+ * platforms.  Relying on the C library functions, as earlier releases did,
+ * causes problems with locales */
 # if { VERSION < 5.22.0 }
 #  undef isALNUM
 #  undef isALNUM_A
@@ -557,10 +600,10 @@ __UNDEFINED__ isUPPER(c)    (        (c) >= 'A' && (c) <= 'Z'                   
 
 __UNDEFINED__ isASCII(c)        ((WIDEST_UTYPE) (c) <= 127)
 __UNDEFINED__ isCNTRL(c)        ((WIDEST_UTYPE) (c) < ' ' || (c) == 127)
-__UNDEFINED__ isCNTRL_L1(c)     (isCNTRL(c) || (   (WIDEST_UTYPE) (c) <= 0x9F  \
-                                                && (WIDEST_UTYPE) (c) >= 0x80))
-__UNDEFINED__ isLOWER(c)        ((c) >= 'a' && (c) <= 'z')
-__UNDEFINED__ isUPPER(c)        ((c) <= 'Z' && (c) >= 'A')
+__UNDEFINED__ isCNTRL_L1(c)     (   (WIDEST_UTYPE) (c) < ' '                \
+                                 || inRANGE((c), 0x7F, 0x9F))
+__UNDEFINED__ isLOWER(c)        inRANGE((c), 'a', 'z')
+__UNDEFINED__ isUPPER(c)        inRANGE((c), 'A', 'Z')
 
 #endif /* Below are definitions common to EBCDIC and ASCII */
 
@@ -639,8 +682,8 @@ __UNDEFINED__ isWORDCHAR(c)     (isALPHANUMERIC(c) || (c) == '_')
 __UNDEFINED__ isWORDCHAR_L1(c)  (isIDFIRST_L1(c) || isDIGIT(c))
 __UNDEFINED__ isWORDCHAR_LC(c)  (isIDFIRST_LC(c) || isDIGIT_LC(c))
 __UNDEFINED__ isXDIGIT(c)       (   isDIGIT(c)                                 \
-                                 || ((c) >= 'a' && (c) <= 'f')                 \
-                                 || ((c) >= 'A' && (c) <= 'F'))
+                                 || inRANGE((c), 'a', 'f')                     \
+                                 || inRANGE((c), 'A', 'F'))
 __UNDEFINED__ isXDIGIT_L1(c)    isXDIGIT(c)
 __UNDEFINED__ isXDIGIT_LC(c)    isxdigit(c)
 
@@ -1063,13 +1106,18 @@ __UNDEFINED__ LIKELY(x) (x)
 __UNDEFINED__ UNLIKELY(x) (x)
 
 #ifndef MUTABLE_PTR
-#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#if defined(PERL_USE_GCC_BRACE_GROUPS)
 #  define MUTABLE_PTR(p) ({ void *_p = (p); _p; })
 #else
 #  define MUTABLE_PTR(p) ((void *) (p))
 #endif
 #endif
 
+__UNDEFINED__ MUTABLE_AV(p)   ((AV *)MUTABLE_PTR(p))
+__UNDEFINED__ MUTABLE_CV(p)   ((CV *)MUTABLE_PTR(p))
+__UNDEFINED__ MUTABLE_GV(p)   ((GV *)MUTABLE_PTR(p))
+__UNDEFINED__ MUTABLE_HV(p)   ((HV *)MUTABLE_PTR(p))
+__UNDEFINED__ MUTABLE_IO(p)   ((IO *)MUTABLE_PTR(p))
 __UNDEFINED__ MUTABLE_SV(p)   ((SV *)MUTABLE_PTR(p))
 
 =xsmisc
@@ -2522,7 +2570,15 @@ av_top_index(av)
         OUTPUT:
                 RETVAL
 
-=tests plan => 26826
+STRLEN
+av_count(av)
+        SV *av
+        CODE:
+                RETVAL = av_count((AV*)SvRV(av));
+        OUTPUT:
+                RETVAL
+
+=tests plan => 26827
 
 use vars qw($my_sv @my_av %my_hv);
 
@@ -2968,3 +3024,4 @@ for $name (keys %case_changing) {
 
 is(&Devel::PPPort::av_top_index([1,2,3]), 2);
 is(&Devel::PPPort::av_tindex([1,2,3,4]), 3);
+is(&Devel::PPPort::av_count([1,2,3,4]), 4);

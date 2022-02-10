@@ -54,7 +54,8 @@ ppport.h - Perl/Pollution/Portability version __VERSION__
                               from ppport.h
 
   --list-provided             list provided API
-  --list-unsupported          list unsupported API
+  --list-unsupported          list API that isn't supported all the way
+                              back
   --api-info=name             show Perl API portability information
 
 =head1 COMPATIBILITY
@@ -155,15 +156,22 @@ if it has dependencies, and if there are hints or warnings for it.
 
 =head2 --list-unsupported
 
-Lists the API elements that are known not to be supported by
-F<ppport.h> and below which version of Perl they probably
-won't be available or work.
+Lists the API elements that are known not to be FULLY supported by F<ppport.h>,
+and below which version of Perl they probably won't be available or work.
+By FULLY, we mean that support isn't provided all the way back to the first
+version of Perl that F<ppport.h> supports at all.
 
 =head2 --api-info=I<name>
 
-Show portability information for API elements matching I<name>.
+Show portability information for elements matching I<name>.
 If I<name> is surrounded by slashes, it is interpreted as a regular
 expression.
+
+Normally, only API elements are shown, but if there are no matching API
+elements but there are some other matching elements, those are shown.  This
+allows you to conveniently find when functions internal to the core
+implementation were added; only people working on the core are likely to find
+this last part useful.
 
 =head1 DESCRIPTION
 
@@ -189,6 +197,50 @@ global Perl variables without the C<PL_> prefix is deprecated. Also,
 some API functions used to have a C<perl_> prefix. Using this form is
 also deprecated. You can safely use the supported API, as F<ppport.h>
 will provide wrappers for older Perl versions.
+
+=item *
+
+Although the purpose of F<ppport.h> is to keep you from having to concern
+yourself with what version you are running under, there may arise instances
+where you have to do so.  These macros, the same ones as in base Perl, are
+available to you in all versions, and are what you should use:
+
+=over 4
+
+=item C<PERL_VERSION_I<xx>(major, minor, patch)>
+
+Returns whether or not the perl currently being compiled has the specified
+relationship I<xx> to the perl given by the parameters.  I<xx> is one of
+C<EQ>, C<NE>, C<LT>, C<LE>, C<GT>, C<GE>.
+
+For example,
+
+ #if PERL_VERSION_GT(5,24,2)
+   code that will only be compiled on perls after v5.24.2
+ #else
+   fallback code
+ #endif
+
+Note that this is usable in making compile-time decisions
+
+You may use the special value '*' for the final number to mean ALL possible
+values for it.  Thus,
+
+ #if PERL_VERSION_EQ(5,31,'*')
+
+means all perls in the 5.31 series.  And
+
+ #if PERL_VERSION_NE(5,24,'*')
+
+means all perls EXCEPT 5.24 ones.  And
+
+ #if PERL_VERSION_LE(5,9,'*')
+
+is effectively
+
+ #if PERL_VERSION_LT(5,10,0)
+
+=back
 
 =item *
 
@@ -301,7 +353,7 @@ before sending a bug report.
 
 If F<ppport.h> was generated using the latest version of
 C<Devel::PPPort> and is causing failure of this module, please
-send a bug report to L<perlbug@perl.org|mailto:perlbug@perl.org>.
+file a bug report at L<https://github.com/Dual-Life/Devel-PPPort/issues>
 
 Please include the following information:
 

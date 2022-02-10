@@ -1,5 +1,5 @@
 5.031005
-gimme_V                        # U
+gimme_V                        # F added by devel/scanprov
 isALPHANUMERIC_utf8            # A
 isALPHA_utf8                   # A
 isASCII_utf8                   # A
@@ -17,6 +17,14 @@ isSPACE_utf8                   # A
 isUPPER_utf8                   # A
 isWORDCHAR_utf8                # A
 isXDIGIT_utf8                  # A
+LEXACT                         # Z added by devel/scanprov
+OPERANDl                       # Z added by devel/scanprov
+OPERANDs                       # Z added by devel/scanprov
+setSTR_LEN                     # Z added by devel/scanprov
+STRINGl                        # Z added by devel/scanprov
+STRINGs                        # Z added by devel/scanprov
+STR_LENl                       # Z added by devel/scanprov
+STR_LENs                       # Z added by devel/scanprov
 toFOLD_utf8                    # A
 toLOWER_utf8                   # A
 toTITLE_utf8                   # A

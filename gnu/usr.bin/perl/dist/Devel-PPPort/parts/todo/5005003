@@ -2,3 +2,4 @@
 get_vtbl                       # U
 POPpx                          # E
 save_generic_svref             # U
+SvTIED_obj                     # U

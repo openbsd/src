@@ -1,0 +1,9 @@
+5.035010
+LOCK_LC_NUMERIC_STANDARD       # E
+PERL_ARGS_ASSERT_CROAK_XS_USAGE # E
+PERL_VERSION_EQ                # E
+PERL_VERSION_NE                # E
+UNLOCK_LC_NUMERIC_STANDARD     # E
+utf16_to_utf8                  # U (Perl_utf16_to_utf8)
+utf16_to_utf8_reversed         # U (Perl_utf16_to_utf8_reversed)
+UTF8_IS_REPLACEMENT            # U

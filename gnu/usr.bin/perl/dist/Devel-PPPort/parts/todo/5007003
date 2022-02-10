@@ -1,13 +1,8 @@
 5.007003
-ckWARN3                        # U
-ckWARN3_d                      # U
-ckWARN4                        # U
-ckWARN4_d                      # U
+atfork_lock                    # U (Perl_atfork_lock)
+atfork_unlock                  # U (Perl_atfork_unlock)
 custom_op_desc                 # U
 custom_op_name                 # U
-cx_dup                         # E (Perl_cx_dup)
-deb                            # U
-deb_nocontext                  # U
 debstack                       # U
 debstackptrs                   # U
 foldEQ_utf8                    # U
@@ -21,33 +16,36 @@ my_fork                        # U
 my_socketpair                  # U
 OP_DESC                        # U
 OP_NAME                        # U
+Perl_deb                       # U
+Perl_deb_nocontext             # U
 perl_destruct                  # E (perl_destruct)
 PERL_EXIT_DESTRUCT_END         # E
-PerlIO_clearerr                # U (PerlIO_clearerr)
-PerlIO_close                   # U (PerlIO_close)
-PerlIO_eof                     # U (PerlIO_eof)
-PerlIO_error                   # U (PerlIO_error)
-PerlIO_fileno                  # U (PerlIO_fileno)
-PerlIO_fill                    # U (PerlIO_fill)
-PerlIO_flush                   # U (PerlIO_flush)
-PerlIO_get_base                # U (PerlIO_get_base)
-PerlIO_get_bufsiz              # U (PerlIO_get_bufsiz)
-PerlIO_get_cnt                 # U (PerlIO_get_cnt)
-PerlIO_get_ptr                 # U (PerlIO_get_ptr)
-PerlIO_read                    # U (PerlIO_read)
-PerlIO_seek                    # U (PerlIO_seek)
-PerlIO_set_cnt                 # U (PerlIO_set_cnt)
-PerlIO_setlinebuf              # U (PerlIO_setlinebuf)
-PerlIO_set_ptrcnt              # U (PerlIO_set_ptrcnt)
-PerlIO_stderr                  # U (PerlIO_stderr)
-PerlIO_stdin                   # U (PerlIO_stdin)
-PerlIO_stdout                  # U (PerlIO_stdout)
-PerlIO_tell                    # U (PerlIO_tell)
-PerlIO_unread                  # U (PerlIO_unread)
-PerlIO_write                   # U (PerlIO_write)
+PerlIO_clearerr                # E (PerlIO_clearerr)
+PerlIO_close                   # E (PerlIO_close)
+PerlIO_eof                     # E (PerlIO_eof)
+PerlIO_error                   # E (PerlIO_error)
+PerlIO_fileno                  # E (PerlIO_fileno)
+PerlIO_flush                   # E (PerlIO_flush)
+PerlIO_get_base                # E (PerlIO_get_base)
+PerlIO_get_bufsiz              # E (PerlIO_get_bufsiz)
+PerlIO_get_cnt                 # E (PerlIO_get_cnt)
+PerlIO_get_ptr                 # E (PerlIO_get_ptr)
+PERLIO_K_MULTIARG              # E
+PerlIO_read                    # E (PerlIO_read)
+PerlIO_seek                    # E (PerlIO_seek)
+PerlIO_set_cnt                 # E (PerlIO_set_cnt)
+PerlIO_setlinebuf              # E (PerlIO_setlinebuf)
+PerlIO_set_ptrcnt              # E (PerlIO_set_ptrcnt)
+PerlIO_stderr                  # E (PerlIO_stderr)
+PerlIO_stdin                   # E (PerlIO_stdin)
+PerlIO_stdout                  # E (PerlIO_stdout)
+PerlIO_tell                    # E (PerlIO_tell)
+PerlIO_unread                  # E (PerlIO_unread)
+PerlIO_write                   # E (PerlIO_write)
+Perl_isfinite                  # U
+Perl_isinf                     # U
 PL_peepp                       # E
 pv_uni_display                 # U
-rvpv_dup                       # E
 savesharedpv                   # U
 save_shared_pvref              # U
 si_dup                         # E (Perl_si_dup)
@@ -57,13 +55,15 @@ sv_copypv                      # U
 sv_dup                         # E (Perl_sv_dup)
 SvLOCK                         # U
 sv_magicext                    # U
-sv_nolocking                   # U
 sv_nosharing                   # U
-sv_nounlocking                 # U
 sv_recode_to_utf8              # U
 SvSHARE                        # U
 sv_uni_display                 # U
 SvUNLOCK                       # U
+UNI_DISPLAY_BACKSLASH          # E
+UNI_DISPLAY_ISPRINT            # E
+UNI_DISPLAY_QQ                 # E
+UNI_DISPLAY_REGEX              # E
 unpack_str                     # U
 uvchr_to_utf8_flags            # U
 vdeb                           # U

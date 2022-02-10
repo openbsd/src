@@ -16,7 +16,7 @@ BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
     unshift @INC, '../lib' if -d '../lib' && -d '../ext';
-    require Config; import Config;
+    require Config; Config->import;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
       print "1..0 # Skip -- Perl configured without Devel::PPPort module\n";
@@ -48,7 +48,7 @@ package Devel::PPPort;
 use vars '@ISA';
 require DynaLoader;
 @ISA = qw(DynaLoader);
-bootstrap Devel::PPPort;
+Devel::PPPort->bootstrap;
 
 package main;
 
@@ -115,7 +115,7 @@ ok(!eval { $@ = 'string1'; Devel::PPPort::eval_pv('$@ = "string2"; die "string3"
 ok($@ =~ /^string3 at \(eval [0-9]+\) line 1\.\n$/);
 ok(!eval { Devel::PPPort::eval_pv('die False->new', 1); 1 }, 'check false value is rethrown');
 
-if ("$]" >= '5.007003' or ("$]" >= '5.006001' and "$]" < '5.007')) {
+if (ivers($]) >= ivers('5.007003') or (ivers($]) >= ivers('5.006001') and ivers($]) < ivers('5.007'))) {
     my $hashref = { key => 'value' };
     is(eval { Devel::PPPort::eval_pv('die $hashref', 1); 1 }, undef, 'check plain hashref is rethrown');
     is(ref($@), 'HASH', 'check $@ is hashref') and
@@ -142,7 +142,7 @@ ok(!eval { $@ = 'string1'; Devel::PPPort::eval_sv('$@ = "string2"; die "string3"
 ok($@ =~ /^string3 at \(eval [0-9]+\) line 1\.\n$/);
 ok(!eval { Devel::PPPort::eval_sv('die False->new', &Devel::PPPort::G_RETHROW); 1 }, 'check false value is rethrown');
 
-if ("$]" >= '5.007003' or ("$]" >= '5.006001' and "$]" < '5.007')) {
+if (ivers($]) >= ivers('5.007003') or (ivers($]) >= ivers('5.006001') and ivers($]) < ivers('5.007'))) {
     my $hashref = { key => 'value' };
     is(eval { Devel::PPPort::eval_sv('die $hashref', &Devel::PPPort::G_RETHROW); 1 }, undef, 'check plain hashref is rethrown');
     is(ref($@), 'HASH', 'check $@ is hashref') and

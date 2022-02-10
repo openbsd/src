@@ -11,13 +11,7 @@
 
 =provides
 
-GV_NOADD_MASK
-gv_fetchpvn_flags
-GvSVn
-isGV_with_GP
-gv_fetchsv
-get_cvn_flags
-gv_init_pvn
+__UNDEFINED__
 
 =implementation
 
@@ -25,8 +19,13 @@ gv_init_pvn
 #undef gv_fetchpvn_flags
 #endif
 
-__UNDEFINED__ GV_NOADD_MASK 0xE0
-__UNDEFINED__ gv_fetchpvn_flags(name, len, flags, sv_type) gv_fetchpv(SvPVX(sv_2mortal(newSVpvn((name), (len)))), ((flags) & GV_NOADD_MASK) ? FALSE : TRUE, (I32)(sv_type))
+#ifdef GV_NOADD_MASK
+#  define D_PPP_GV_NOADD_MASK  GV_NOADD_MASK
+#else
+#  define D_PPP_GV_NOADD_MASK  0xE0
+#endif
+
+__UNDEFINED__ gv_fetchpvn_flags(name, len, flags, sv_type) gv_fetchpv(SvPVX(sv_2mortal(newSVpvn((name), (len)))), ((flags) & D_PPP_GV_NOADD_MASK) ? FALSE : TRUE, (I32)(sv_type))
 
 __UNDEFINED__ GvSVn(gv)        GvSV(gv)
 __UNDEFINED__ isGV_with_GP(gv) isGV(gv)

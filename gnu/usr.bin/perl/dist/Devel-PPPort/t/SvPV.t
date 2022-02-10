@@ -16,7 +16,7 @@ BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
     unshift @INC, '../lib' if -d '../lib' && -d '../ext';
-    require Config; import Config;
+    require Config; Config->import;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
       print "1..0 # Skip -- Perl configured without Devel::PPPort module\n";
@@ -34,9 +34,9 @@ BEGIN {
     require 'inctools';
   }
 
-  if (49) {
+  if (50) {
     load();
-    plan(tests => 49);
+    plan(tests => 50);
   }
 }
 
@@ -48,7 +48,7 @@ package Devel::PPPort;
 use vars '@ISA';
 require DynaLoader;
 @ISA = qw(DynaLoader);
-bootstrap Devel::PPPort;
+Devel::PPPort->bootstrap;
 
 package main;
 
@@ -105,6 +105,9 @@ $mhx = 42; is(&Devel::PPPort::SvPV_nomg($mhx), 2);
 $mhx = 42; is(&Devel::PPPort::SvPV_nomg_const($mhx), 2);
 $mhx = 42; is(&Devel::PPPort::SvPV_nomg_const_nolen($mhx), 0);
 $mhx = 42; is(&Devel::PPPort::SvPV_nomg_nolen($mhx), 0);
+
+&Devel::PPPort::SvPVCLEAR($mhx);
+is($mhx, "");
 
 my $str = "";
 &Devel::PPPort::SvPV_force($str);

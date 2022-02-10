@@ -1,22 +1,40 @@
 #!/usr/bin/perl -w
+$|=1;
 ################################################################################
 #
-#  scanprov -- scan Perl headers for provided macros, and add known
-#              exceptions, and functions we weren't able to otherwise find.
-#              Thus the purpose of this file has been expanded beyond what its
-#              name says.
+#  scanprov -- scan Perl headers for macros, and add known exceptions, and
+#              functions we weren't able to otherwise find.  Thus the purpose
+#              of this file has been expanded beyond what its name says.
+#
+#  Besides the normal options, 'mode=clean' is understood as 'write', but
+#  first remove any scanprov lines added in previous runs of this.
 #
 #  The lines added have a code to signify they are added by us:
-#   M means it is a macro
-#   X means it is a known exceptional item
 #   F means it is a function in embed.fnc that the normal routines didn't find
+#   K means it is a macro in config.h, hence is provided, and documented
+#   M means it is a provided by D:P macro
+#   X means it is a known exceptional item
+#   Z means it is an unprovided macro without documentation
 #
 #  The regeneration routines do not know the prototypes for the macros scanned
 #  for, which is gotten from documentation in the source.  (If they were
 #  documented, they would be put in parts/apidoc.fnc, and test cases generated
-#  for them in mktodo.pl).  Therefore these are all undocumented.  It would be
-#  best if people would add document to them in the perl source, and then this
-#  portion of this function would be minimized.
+#  for them in mktodo.pl).  Therefore these are all undocumented, except for
+#  things from config.h which are all documented there, and many of which are
+#  just defined or not defined, and hence can't be tested.  Thus looking for
+#  them here is the most convenient option, which is why it's done here.
+#
+#  The scope of this program has also expanded to look in almost all header
+#  files for almost all macros that aren't documented nor provided.  This
+#  allows ppport.h --api-info=/foo/ to return when a given element actually
+#  came into existence, which can be a time saver for developers of the perl
+#  core.
+#
+#  It would be best if people would add documentation to them in the perl
+#  source, and then this portion of this function would be minimized.
+#
+#  On Linux nm and other uses by D:P, these are the remaining unused capital
+#  flags: HJLOQY
 #
 ################################################################################
 #
@@ -46,7 +64,9 @@ our %opt = (
 
 GetOptions(\%opt, qw( install=s mode=s blead=s debug=i debug-start=s)) or die;
 
-my $write = $opt{mode} eq 'write';
+my $clean = $opt{mode} eq 'clean';
+my $write = $clean || $opt{mode} eq 'write';
+my $debug = $opt{debug};
 
 # Get the list of known macros.  Functions are calculated separately below
 my %embed = map { $_->{flags}{m} ? ( $_->{name} => 1 ) : () }
@@ -63,11 +83,33 @@ push @provided, keys %$hard_to_test_ref;
 my $base_dir = 'parts/base';
 my $todo_dir = 'parts/todo';
 
+# The identifying text placed in every entry by this program
+my $id_text = "added by $0";
+
 if ($write) {
 
-    # Get the list of files, which are returned sorted, and so the min version
-    # is in the 0th element
+    # Get the list of files
     my @files = all_files_in_dir($base_dir);
+
+    # If asked to, first strip out the results of previous incarnations of
+    # this script
+    if ($clean) {
+        print "Cleaning previous $0 runs\n";
+        foreach my $file (@files) {
+            open my $fh, "+<", $file or die "$file: $!\n";
+            my @lines = <$fh>;
+            my $orig_count = @lines;
+            @lines = grep { $_ !~ /$id_text/ } @lines;
+            next if @lines == $orig_count;  # No need to write if unchanged.
+            truncate $fh, 0;
+            seek $fh, 0, 0;
+            print $fh @lines;
+            close $fh or die "$file: $!\n";
+        }
+    }
+
+    # The file list is returned sorted, and so the min version is in the 0th
+    # element
     my $file =  $files[0];
     my $min_perl = $file;
     $min_perl =~ s,.*/,,;    # The name is the integer of __MIN_PERL__
@@ -76,15 +118,25 @@ if ($write) {
     # exist all the way back.  Add them now to avoid throwing later things
     # off.
     print "-- $file --\n";
-    open F, ">>$file" or die "$file: $!\n";
+    open my $fh, "+<", $file or die "$file: $!\n";
+    my @lines = <$fh>;
+    my $count = @lines;
     for (qw(RETVAL CALL THIS)) { # These are also in hard_to_test_for(),
                                  # so can't be in blead, as they are skipped
                                  # in testing, so no real need to check that
                                  # they aren't dups.
+        my $line = format_output_line($_, 'X');
+        next if grep { /$line/ } @lines;
         print "Adding $_ to $file\n";
-        print F format_output_line($_, 'X');
+        push @lines, $line;
     }
-    close F;
+    if ($count != @lines) {
+        @lines = sort symbol_order @lines;
+        truncate $fh, 0;
+        seek $fh, 0, 0;
+        print $fh @lines;
+    }
+    close $fh;
 
     # Now we're going to add the hard to test symbols.  The hash has been
     # manually populated and commited, with the version number ppport supports
@@ -116,15 +168,24 @@ if ($write) {
     foreach my $version (keys %add_by_version) {
         my $file = "$todo_dir/" . int_parse_version($version);
         print "-- Adding known exceptions to $file --\n";
-        my $need_version_line = ! -e $file;
-        open F, ">>$file" or die "$file: $!\n";
-        print F format_version_line($version) . "\n" if $need_version_line;
-        foreach my $symbol (sort dictionary_order @{$add_by_version{$version}})
-        {
-            print "adding $symbol\n";
-            print F format_output_line($symbol, 'X');
+        open my $fh, "+<", $file or die "$file: $!\n";
+        my @lines = <$fh>;
+        my $count = @lines;
+        push @lines, format_version_line($version) . "\n" unless @lines;
+        foreach my $symbol (@{$add_by_version{$version}}) {
+            my $line = format_output_line($symbol, 'X');
+            unless (grep { /$line/ } @lines) {;
+                print "adding $symbol\n";
+                push @lines, $line unless grep { /$line/ } @lines;
+            }
         }
-        close F;
+        if (@lines != $count) {
+            @lines = sort symbol_order @lines;
+            truncate $fh, 0;
+            seek $fh, 0, 0;
+            print $fh @lines;
+        }
+        close $fh;
     }
 }
 
@@ -147,8 +208,7 @@ my $base_ref = parse_todo($base_dir);
 my @functions = parse_embed(qw(parts/embed.fnc));
 
 # We could just gather data for the publicly available ones, but having this
-# information available for everything is useful (for those who know where to
-# look)
+# information available for everything is useful.
 #@functions = grep { exists $_->{flags}{A} } @functions;
 
 # The ones we don't have info on are the ones in embed.fnc that aren't in the
@@ -171,12 +231,23 @@ find_first_mentions($perls_ref,
                    'F'
                    );
 
+sub symbol_order    # Sort based on first word on line
+{
+    my $stripped_a = $a =~ s/ ^ \s* //rx;
+    $stripped_a =~ s/ \s.* //x;
+
+    my $stripped_b = $b =~ s/ ^ \s* //rx;
+    $stripped_b =~ s/ \s.* //x;
+
+    return dictionary_order($stripped_a, $stripped_b);
+}
+
 sub format_output_line
 {
     my $sym = shift;
     my $code = shift;
 
-    return sprintf "%-30s # $code added by $0\n", $sym;
+    return sprintf "%-30s # $code $id_text\n", $sym;
 }
 
 sub find_first_mentions
@@ -187,14 +258,18 @@ sub find_first_mentions
     my $strip_comments = shift;
     my $code           = shift; # Mark entries as having this type
 
+    use feature 'state';
+    state $first_perl = 1;
+
     $hdrs = [ $hdrs ] unless ref $hdrs;
 
-    my @remaining = @$look_for_ref;
+    my %remaining;
+    $remaining{$_} = $code for @$look_for_ref;
 
     my %v;
 
     # We look in descending order of perl versions.  Each time through the
-    # loop @remaining is narrowed.
+    # loop %remaining is narrowed.
     for my $p (@$perls_ref) {
         print "checking perl $p->{version}...\n";
 
@@ -204,23 +279,87 @@ sub find_first_mentions
         local @ARGV;
         push @ARGV, glob "$archlib/CORE/$_" for @$hdrs;
 
+        # %sym's keys are every single thing that looks like an identifier
+        # (beginning with a non-digit \w, followed by \w*) that occurs in any
+        # header, regardless of where (outside of comments).  For macros, it
+        # can't end in an underscore, nor be like 'AbCd', which are marks for
+        # internal.
         my %sym;
 
-        # %sym's keys are every single thing that looks like an identifier
-        # (beginning with a non-digit \w, followed by \w*) that occurs in all
-        # the headers, regardless of where (outside of comments).
         local $/ = undef;
-        while (<>) {  # Read in the next file
+        while (<<>>) {  # Read in the whole next file as one string.
+
+            # This would override function definitions with macro ones
+            next if $code eq 'M' && $ARGV =~ m! / embed\.h $ !x;
+
+            my $is_config_h = $ARGV =~ m! / config\.h $ !x;
+
+            my $contents = $_;
+
+            # Strip initial '/*' in config.h /*#define... lines.  This just
+            # means the item isn't available on the platform this program is
+            # being run on.
+            $contents =~ s! ^ /\* \s* (?=\#\s*define\s) !!mx if $is_config_h;
 
             # Strip comments, from perl faq
             if ($strip_comments) {
-                s#/\*[^*]*\*+([^/*][^*]*\*+)*/|("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|.[^/"'\\]*)#defined $2 ? $2 : ""#gse;
+                $contents =~ s#/\*[^*]*\*+([^/*][^*]*\*+)*/|("(\\.|[^"\\])*"|'(\\.|[^'\\])*'|.[^/"'\\]*)#defined $2 ? $2 : ""#gse;
             }
 
-            $sym{$_}++ for /(\b[^\W\d]\w*)/g;
+            # For macros, we look for #defines
+            if ($code eq 'M') {
+                my %defines;
+
+                while ($contents =~ m/ ^ \s* \# \s* define \s+
+
+                                       # A symbol not ending in underscore
+                                       ( [A-Za-z][_A-Za-z0-9]*[A-Za-z0-9] )
+                                     /mxg)
+                {
+                    my $this_define = $1;
+
+                    # These are internal and not of external interest, so just
+                    # noise if we were to index them
+                    next if $this_define =~ / ^ PERL_ARGS_ASSERT /x;
+
+                    # Names like AbCd are internal
+                    next if $this_define =~ /[[:upper:]][[:lower:]][[:upper:]][[:lower:]]/;
+
+                    $defines{$this_define}++;
+                }
+                $sym{$_}++ for keys %defines;
+
+                # For functions, etc we get all the symbols for the latest
+                # perl passed in, but for macros, it is just the ones for the
+                # known documented ones, and we have to find the rest.  This
+                # allows us to keep the logic for that in just one place:
+                # here.
+                if ($first_perl) {
+
+                    # config.h symbols are documented; the rest aren't, so use
+                    # different flags so downstream processing knows which are
+                    # which.
+                    if ($is_config_h) {
+                        foreach my $define (keys %defines) {
+                            $remaining{$define} = 'K';
+                        }
+                    }
+                    else {
+                        foreach my $define (keys %defines) {
+                            # Don't override input 'M' symbols.
+                            $remaining{$define} = 'Z'
+                                            unless defined $remaining{$define};
+                        }
+                    }
+                }
+            }
+            else {  # Look for potential function names; remember comments
+                    # have been stripped off.
+                $sym{$_}++ for /(\b[^\W\d]\w*)/g;
+            }
         }
 
-        # @remaining is narrowed to include only those identifier-like things
+        # %remaining is narrowed to include only those identifier-like things
         # that are mentioned in one of the input hdrs in this release.  (If it
         # isn't even mentioned, it won't exist in the release.)  For those not
         # mentioned, a key is added of the identifier-like thing in %v.  It is
@@ -229,13 +368,20 @@ sub find_first_mentions
         # the provided element was mentioned there, and now it no longer is.
         # We take that to mean that to mean that the element became provided
         # for in n+1.
-        @remaining = map { $sym{$_} or $v{$p->{todo}}{$_}++;
-                            $sym{$_} ? $_ : ()
-                        } @remaining;
+        foreach my $symbol (keys %remaining) {
+            next if defined $sym{$symbol};  # Still exists in this release
 
+            # Gone in this release, must have come into existence in the next
+            # higher one.
+            $v{$p->{todo}}{$symbol} = delete $remaining{$symbol};
+        }
+
+        $first_perl = 0;
     }
 
-    $v{$perls_ref->[-1]{file}}{$_}++ for @remaining;
+    # After all releases, assume that anything still defined came into
+    # existence in that earliest release.
+    $v{$perls_ref->[-1]{file}}{$_} = $remaining{$_} for keys %remaining;
 
     # Read in the parts/base files.  The hash ref has keys being all symbols
     # found in all the files in base/, which are all we are concerned with
@@ -252,30 +398,41 @@ sub find_first_mentions
     #                  'UTF8_MAXBYTES' => 1
     #                },
 
-    for my $v (keys %v) {
+    for my $version (keys %v) {
 
         # Things listed in blead (the most recent file) are special.  They are
         # there by default because we haven't found them anywhere, so they
         # don't really exist as far as we can determine, so shouldn't be
         # listed as existing.
-        next if $v > $perls_ref->[0]->{file};
+        next if $version > $perls_ref->[0]->{file};
 
-        # @new becomes the symbols for version $v not already in the file for
-        # $v
-        my @new = sort dictionary_order grep { !exists $base_ref->{$_} }
-                                                                keys %{$v{$v}};
+        # @new becomes the symbols for $version not already in the file for it
+        my @new = sort symbol_order grep { !exists $base_ref->{$_} }
+                                                                keys %{$v{$version}};
         @new or next; # Nothing new, skip writing
 
-        my $file = $v;
+        my $file = $version;
         $file =~ s/\.//g;
         $file = "$base_dir/$file";
         -e $file or die "non-existent: $file\n";
         print "-- $file --\n";
-        $write and (open F, ">>$file" or die "$file: $!\n");
-        for (@new) {
-            print "adding $_\n";
-            $write and print F format_output_line($_, $code);
+        if ($write) {
+            open my $fh, "+<", $file or die "$file: $!\n";
+            my @lines = <$fh>;
+            my $count = @lines;
+            for my $new (@new) {
+                my $line = format_output_line($new, $v{$version}{$new});
+                next if grep { /$line/ } @lines;
+                print "adding $new\n";
+                push @lines, $line;
+            }
+            if (@lines != $count) {
+                @lines = sort symbol_order @lines;
+                truncate $fh, 0;
+                seek $fh, 0, 0;
+                print $fh @lines;
+            }
+            close $fh;
         }
-        $write and close F;
     }
 }

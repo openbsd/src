@@ -1,7 +1,3 @@
 5.027008
-cx_popgiven                    # U
-cx_popwhen                     # U
-cx_pushgiven                   # U
-cx_pushwhen                    # U
 newWHENOP                      # U
 WARN_EXPERIMENTAL__SCRIPT_RUN  # E

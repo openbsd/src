@@ -252,7 +252,7 @@ pv_display()
 my $uni = &Devel::PPPort::pv_escape_can_unicode();
 
 # sanity check
-ok($uni ? "$]" >= 5.006 : "$]" < 5.008);
+ok($uni ? ivers($]) >= ivers("5.006") : ivers($]) < ivers("5.008"));
 
 my @r;
 

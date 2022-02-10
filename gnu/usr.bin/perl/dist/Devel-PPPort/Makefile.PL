@@ -11,6 +11,11 @@
 #  This program is free software; you can redistribute it and/or
 #  modify it under the same terms as Perl itself.
 #
+# CAUTION! that this runs on 5.003.  That means there are certain restrictions
+# apply.  The most likely gotchas are in the HACKERS file under "How to
+# backport something".  Under the tests paragraph, there is a list of things
+# to avoid.
+#
 ################################################################################
 
 require 5.003;
@@ -53,7 +58,7 @@ WriteMakefile(%mf);
 
 sub configure
 {
-  my @clean    = qw{ $(H_FILES) RealPPPort.xs RealPPPort.c PPPort.pm };
+  my @clean    = qw{ $(H_FILES) RealPPPort.xs RealPPPort.c PPPort.pm t/*.t };
   my %depend   = (
     '$(OBJECT)' => '$(H_FILES)',
     'Makefile' => '$(VERSION_FROM)',
@@ -63,7 +68,7 @@ sub configure
     'ppport_h.PL'  => 'ppport.h',
     'PPPort_pm.PL' => 'PPPort.pm',
     'RealPPPort_xs.PL' => 'RealPPPort.xs',
-    #'mktests.PL' => $t_01_test,
+    'mktests.PL' => $t_01_test,
   );
   my @moreopts;
 
@@ -127,7 +132,15 @@ sub configure
 
   if ($Config{gccversion}) {
     my $define = '-W -Wall';
-    $define .= ' -Wdeclaration-after-statement' if $Config{gccversion} =~ /^(\d+\.\d+)\./ && $1 >= 3.4;
+    if ($] < 5.035005 && $Config{gccversion} =~ /^(\d+\.\d+)\./ && $1 >= 3.4) {
+      # v5.35.5 enables some C99 features including mixed declarations and code,
+      # and uses them in inline.h, hence we can't enable this warning flag
+      # without generating false positive warnings.
+      # Earlier versions of perl support older compilers that are strict C89,
+      # hence code in ppport.h needs to avoid mixed declarations and code, hence
+      # enable this warning on earlier perls so that we can still spot problems.
+      $define .= ' -Wdeclaration-after-statement';
+    }
     push @moreopts, DEFINE => $define;
   }
 
@@ -144,7 +157,11 @@ sub configure
 sub MY::postamble
 {
   package MY;
+  use Config;
   my $post = shift->SUPER::postamble(@_);
+  # .PHONY is a syntax error in MMK/MMS
+  my $phony = ($Config{make} =~ m/MM(K|S)/) ? 'PHONY' : '.PHONY';
+  $post .= "\n\n${phony}: purge_all regen_pm regen_xs regen_tests regen_h regen_release_date\n\n";
   $post .= <<'POSTAMBLE';
 
 purge_all: realclean
@@ -162,7 +179,10 @@ regen_tests:
 regen_h:
 	$(PERL) -I$(INST_ARCHLIB) -I$(INST_LIB) -I$(PERL_ARCHLIB) -I$(PERL_LIB) ppport_h.PL
 
-regen: regen_pm regen_xs regen_tests regen_h
+regen_release_date:
+	$(PERL) -I$(INST_ARCHLIB) -I$(INST_LIB) -I$(PERL_ARCHLIB) -I$(PERL_LIB) devel/update_release_date.pl
+
+regen: regen_pm regen_xs regen_tests regen_h regen_release_date
 
 POSTAMBLE
   return $post;
@@ -207,6 +227,24 @@ TESTS_IN_T
   return $updated;
 }
 
+sub MY::dist_basics
+{
+  package MY;
+  my $original = shift->SUPER::dist_basics(@_);
+
+  my $updated = '';
+  my @rules = split( m{^\s*$}m, $original );
+  my $rule;
+  foreach $rule ( @rules ) {
+    if ( $rule =~ m{^\s*^manifest\s+:}m ) {
+      $rule =~ s{^(\s*^manifest\s+:.*)}{$1 $t_01_test}m; # make sure we regenerate tests
+    }
+    $updated .= $rule;
+  }
+
+  return $updated;
+}
+
 sub MY::dist_core
 {
   package MY;
@@ -217,8 +255,10 @@ sub MY::dist_core
   my $rule;
   foreach $rule ( @rules ) {
     if ( $rule =~ m{^\s*^dist\s+:}m ) {
-        $rule =~ s{:}{: PPPort.pm manifest}; # make sure we update PPPort.pm
+        $rule =~ s{:}{: PPPort.pm manifest regen}; # make sure we update PPPort.pm
         $rule .= qq[\t].q[$(NOECHO) $(ECHO) "Warning: Please check '__MAX_PERL__' value in PPPort_pm.PL"].qq[\n];
+        # checking that the tarball has no Pax Header - avoid false positives by using [P]axHEader
+        $rule .= qq[\t].q[$(NOECHO) zgrep -a -e '[P]axHeader' $(DISTVNAME).tar$(SUFFIX) && ( $(ECHO) "ERROR: Pax Header detected in tarball"; rm -f $(DISTVNAME).tar$(SUFFIX) ) ||:].qq[\n];
     }
     $updated .= $rule;
   }

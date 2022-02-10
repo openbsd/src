@@ -7,15 +7,14 @@ hek_dup                        # U
 MY_CXT                         # E
 MY_CXT_CLONE                   # E
 MY_CXT_INIT                    # E
-my_cxt_init                    # U
 new_version                    # U
 parser_dup                     # U
+Perl_my_cxt_init               # U
+_pMY_CXT                       # X added by devel/scanprov
 pMY_CXT                        # E
-regdupe_internal               # U
+pMY_CXT_                       # X added by devel/scanprov
 save_set_svflags               # U
 SVs_PADSTALE                   # E
 vcmp                           # U
 vnumify                        # U
 vstringify                     # U
-_pMY_CXT                       # X added by devel/scanprov
-pMY_CXT_                       # X added by devel/scanprov

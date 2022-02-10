@@ -1,28 +1,79 @@
 Revision history for Devel-PPPort
 
- 3.57 - 2020-01-31
+3.64 - 2022-02-01
+  * Fix: better support for STMT_START / STMT_END definition
+  * Fix: Only use '-Wdeclaration-after-statement' if possible
+  * 5.55.2 functions: av_fetch_simple, av_store_simple, voidnonfinal
+  * 5.33 functions: pack_cat, pad_compname_type
+  * apicheck.pl: multiple improvements & code refactor for regenerating files
 
- * Fix eval_sv for Perl versions prior to 5.6.0 (Pali)
- * Fix t/ppphtest.t for Perl versions prior to 5.6.0 (Pali)
- * Fix compilation of sv_setsv_flags when GCC extensions are not present (Pali)
- * Fix SV_NOSTEAL on 5.7.2 (Karl Williamson)
- * Fix multiple unit test issues (Craig A. Berry, Karl Williamson, Pali)
- * Avoid generating warnings on early Perls (Karl Williamson)
- * Backport memCHRs (Karl Williamson)
- * Implement sv_setsv_flags() with SV_NOSTEAL and SV_GMAGIC flags for Perl versions < 5.7.3 (Pali)
- * Implement UTF8f format and its UTF8fARG macro (Pali)
+3.63 - 2021-07-06
+  * Backport SvPVCLEAR
+  * Backport ASSUME
+  * Backport NOT_REACHED
+  * Backport G_LIST
+  * various internal changes
+  
+3.62 - 2020-10-16
+  * Restore missing PPPort.pm
+  * Fix metaCPAN indexing
 
- 3.56 - 2019-11-25
+3.61 - 2020-10-12
+  * Fix scanprov
+  * Define PERL_ARGS_ASSERT_CROAK_XS_USAGE when setting croak_xs_usage
+  * Backport ck_warner, ck_warner_d, ckWARN_d, ckWARN_2, ckWARN_3, ckWARN_4, ckWARN2_d, ckWARN3_d, ckWARN4_d
+  * Backport packWARN, packWARN2, packWARN3, packWARN4
+  * Backport LC_NUMERIC locale handling
+  * Backport SvPVx_nolen_const
+  * Backport MUTABLE_AV, MUTABLE_CV, MUTABLE_GV, MUTABLE_HV, MUTABLE_IO
+  * Backport vwarner
+  * Use PERL_USE_GCC_BRACE_GROUPS
+  * Remove C `register` declaration
+  * Implement return value for newCONSTSUB()
 
- * mktests.PL: use FindBin for INC setup
- * devel/regenerate: Adjust POD line length
- * Fix compilation with Visual C++ bugs introduced in 3.55 (Tomasz Konojacki)
- * Fix mess.t failures when on VC++ when $0 contains backslashes (Tomasz Konojacki)
- * Fix failing builds on 5.20.[1-3] introduced in 3.55 (Karl Williamson)
- * Change tests to accept and use Test::More-like functions (Karl Williamson)
+3.60 - 2020-08-11
+  * Restore PERL_BCDVERSION helper which is used on CPAN
+  * A few API elements were not properly found, like IVTYPE
 
- 3.55 - 2019-11-07
+3.59 - 2020-08-10
+  * Add PERL_VERSION_* compare macros
+  * Rename PERL_BCDVERSION to internal name to discourage future use
+  * Stop versioning generated test files
+  * Enforce strict & warnings
+  * Avoid indirect calls
+  * scanprov: multiple improvements
+  * Use ivers() in tests
+  * Update POD documentation and HACKERS file
+  * Change ppport.h --api-info to not output non-API info unless that is the
+    only match
+  * Find more elements to be listed in the --api-info option (and similar) to
+    ppport.h
 
+3.58 - 2020-03-09
+  * Safer definition of UVCHR_SKIP
+  * Make sure WIDEST_UTYPE is unsigned
+  * Avoid Pax Header in tarballs
+
+3.57 - 2020-01-31
+  * Fix eval_sv for Perl versions prior to 5.6.0 (Pali)
+  * Fix t/ppphtest.t for Perl versions prior to 5.6.0 (Pali)
+  * Fix compilation of sv_setsv_flags when GCC extensions are not present (Pali)
+  * Fix SV_NOSTEAL on 5.7.2 (Karl Williamson)
+  * Fix multiple unit test issues (Craig A. Berry, Karl Williamson, Pali)
+  * Avoid generating warnings on early Perls (Karl Williamson)
+  * Backport memCHRs (Karl Williamson)
+  * Implement sv_setsv_flags() with SV_NOSTEAL and SV_GMAGIC flags for Perl versions < 5.7.3 (Pali)
+  * Implement UTF8f format and its UTF8fARG macro (Pali)
+
+3.56 - 2019-11-25
+  * mktests.PL: use FindBin for INC setup
+  * devel/regenerate: Adjust POD line length
+  * Fix compilation with Visual C++ bugs introduced in 3.55 (Tomasz Konojacki)
+  * Fix mess.t failures when on VC++ when $0 contains backslashes (Tomasz Konojacki)
+  * Fix failing builds on 5.20.[1-3] introduced in 3.55 (Karl Williamson)
+  * Change tests to accept and use Test::More-like functions (Karl Williamson)
+
+3.55 - 2019-11-07
   * Fix p5-Text-Xslate on Perl 5.8.5 (Nicolas R)
   * Fix EBCDIC build problem (Karl Williamson)
   * Fix isGRAPH_L1() bug (Karl Williamson)
@@ -43,8 +94,7 @@ Revision history for Devel-PPPort
   * Backport UTF8_SKIP (Karl Williamson)
   * Backport UNI to/from NATIVE (Karl Williamson)
 
- 3.54 - 2019-09-27
-
+3.54 - 2019-09-27
   * Fix Unix-format path in Devel::PPPort's Makefile.PL
   * Fix utf8_to_uvchr_buf for 5.7.0
   * Add hint for utf8_to_uvchr()

@@ -1,12 +1,4 @@
 5.010000
-hv_common                      # U
-hv_common_key_len              # U
-reentrant_free                 # U
-reentrant_init                 # U
-reentrant_retry                # U
-reentrant_size                 # U
 START_MY_CXT                   # E
 sv_destroyable                 # U
-sys_init                       # U
-sys_init3                      # U
-sys_term                       # U
+UVf                            # E

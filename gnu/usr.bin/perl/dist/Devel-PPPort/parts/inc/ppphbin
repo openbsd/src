@@ -18,7 +18,7 @@ use strict;
 BEGIN { require warnings if "$]" > '5.006' }
 
 # Disable broken TRIE-optimization
-BEGIN { eval '${^RE_TRIE_MAXBUF} = -1' if "$]" >= 5.009004 && "$]" <= 5.009005 }
+BEGIN { eval '${^RE_TRIE_MAXBUF} = -1' if "$]" >= "5.009004" && "$]" <= "5.009005"}
 
 my $VERSION = __VERSION__;
 
@@ -92,7 +92,7 @@ my %API = map { /^(\w+)\|([^|]*)\|([^|]*)\|(\w*)$/
                       (index($4, 'V') >= 0 ? ( unverified => 1  ) : ()),
                     } )
                 : die "invalid spec: $_" } qw(
-__PERL_API__
+__ALL_ELEMENTS__
 );
 
 if (exists $opt{'list-unsupported'}) {
@@ -104,7 +104,9 @@ if (exists $opt{'list-unsupported'}) {
     next if $API{$f}{experimental};
     next unless $API{$f}{todo};
     next if int_parse_version($API{$f}{todo}) <= $int_min_perl;
-    print "$f ", '.'x(40-length($f)), " ", format_version($API{$f}{todo}), "\n";
+    my $repeat = 40 - length($f);
+    $repeat = 0 if $repeat < 0;
+    print "$f ", '.'x $repeat, " ", format_version($API{$f}{todo}), "\n";
   }
   exit 0;
 }
@@ -216,7 +218,6 @@ while (<DATA>) {
 
   # Set $replace to the number given for lines that look like
   # / * Replace: \d+ * /
-  # (blanks added to keep real C comments from appearing in this file)
   # Thus setting it to 1 starts a region where replacements are automatically
   # done, and setting it to 0 ends that region.
   $replace     = $1 if m{^\s*$rccs\s+Replace:\s+(\d+)\s+$rcce\s*$};
@@ -226,17 +227,14 @@ while (<DATA>) {
   $replace{$2} = $1 if $replace and m{^\s*#\s*define\s+(\w+)(?:\([^)]*\))?\s+(\w+)};
 
   # Add bar => foo to %replace for lines like '#define foo bar  / * Replace * /
-  # (blanks added to keep real C comments from appearing in this file)
   $replace{$2} = $1 if m{^\s*#\s*define\s+(\w+)(?:\([^)]*\))?\s+(\w+).*$rccs\s+Replace\s+$rcce};
 
   # Add foo => bar to %replace for lines like / * Replace foo with bar * /
-  # (blanks added to keep real C comments from appearing in this file)
-  $replace{$1} = $2 if m{^\s*$rccs\s+Replace (\w+) with (\w+)\s+$rcce\s*$};
+  $replace{$1} = $2 if m{^\s*$rccs\s+Replace (\w+) with (\w+.*?)\s+$rcce\s*$};
 
   # For lines like / * foo, bar depends on baz, bat * /
   # create a list of the elements on the rhs, and make that list apply to each
   # element in the lhs, which becomes a key in \%depends.
-  # (blanks added to keep real C comments from appearing in this file)
   if (m{^\s*$rccs\s+(\w+(\s*,\s*\w+)*)\s+depends\s+on\s+(\w+(\s*,\s*\w+)*)\s+$rcce\s*$}) {
     my @deps = map { s/\s+//g; $_ } split /,/, $3;
     my $d;
@@ -257,8 +255,29 @@ if (exists $opt{'api-info'}) {
   my $f;
   my $count = 0;
   my $match = $opt{'api-info'} =~ m!^/(.*)/$! ? $1 : "^\Q$opt{'api-info'}\E\$";
+
+  # Sort the names, and split into two classes; one for things that are part of
+  # the API; a second for things that aren't.
+  my @ok_to_use;
+  my @shouldnt_use;
   for $f (sort dictionary_order keys %API) {
     next unless $f =~ /$match/;
+    my $base = int_parse_version($API{$f}{base}) if $API{$f}{base};
+    if ($base && ! $API{$f}{inaccessible} && ! $API{$f}{core_only}) {
+        push @ok_to_use, $f;
+    }
+    else {
+        push @shouldnt_use, $f;
+    }
+  }
+
+  # We normally suppress non-API items.  But if the search matched no API
+  # items, output the non-ones.  This allows someone to get the info for an
+  # item if they ask for it specifically enough, but doesn't normally clutter
+  # the output with irrelevant results.
+  @ok_to_use = @shouldnt_use unless @ok_to_use;
+
+  for $f (@ok_to_use) {
     print "\n=== $f ===\n";
     my $info = 0;
     my $base;
@@ -266,8 +285,8 @@ if (exists $opt{'api-info'}) {
     my $todo;
     $todo = int_parse_version($API{$f}{todo}) if $API{$f}{todo};
 
-    # Output information if it is generally publicly usable
-    if ($base && ! $API{$f}{inaccessible} && ! $API{$f}{core_only}) {
+    # Output information
+    if ($base) {
         my $with_or= "";
         if (    $base <= $int_min_perl
             || (   (! $API{$f}{provided} && ! $todo)
@@ -275,7 +294,9 @@ if (exists $opt{'api-info'}) {
         {
             $with_or= " with or";
         }
-        print "\nSupported at least since perl-",
+
+        my $Supported = ($API{$f}{undocumented}) ? 'Available' : 'Supported';
+        print "\n$Supported at least since perl-",
               format_version($base), ",$with_or without $ppport.";
         if ($API{$f}{unverified}) {
             print "\nThis information is based on inspection of the source code",
@@ -594,7 +615,7 @@ for $filename (@files) {
         diag("Uses $func");
       }
     }
-    $warnings += hint($func);
+    $warnings += (hint($func) || 0);
   }
 
   unless ($opt{quiet}) {
@@ -882,7 +903,7 @@ sub hint
     $hint =~ s/^/   /mg;
     print "   --- hint for $func ---\n", $hint;
   }
-  $rv;
+  $rv || 0;
 }
 
 sub usage

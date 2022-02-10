@@ -54,6 +54,8 @@ if ($opt{todo}) {
 # Pass this through the Make, to apicheck.pl
 $ENV{'DPPP_ARGUMENTS'} = "--todo-dir=$opt{'todo-dir'} --todo=$todo_version";
 
+my $test_name_re =   qr/ \b DPPP_test_ (?: \d _ )? (\w+) \b /x;
+
 print "\n", ident_str(), "\n\n";
 
 my $fullperl = `which $opt{perl}`;
@@ -66,19 +68,73 @@ regen_Makefile();
 
 # List of functions that are never considered undefined.  Add to as necessary
 my %stdsym = map { ($_ => 1) } qw (
-  strlen
-  snprintf
-  strcmp
-  memcpy
-  strncmp
-  memmove
-  memcmp
-  tolower
+  acos
+  acosl
+  acosq
+  asin
+  asinl
+  asinq
+  atan
+  atan2
+  atan2l
+  atan2q
+  atanl
+  atanq
+  ceil
+  ceill
+  ceilq
+  cos
+  cosh
+  coshl
+  coshq
+  cosl
+  cosq
   exit
+  exp
+  expl
+  expq
+  floor
+  floorl
+  floorq
+  fmod
+  fmodl
+  fmodq
+  log
+  log10
+  log10l
+  log10q
+  logl
+  logq
+  memcmp
+  memcpy
+  memmove
   memset
-  vsnprintf
+  pow
+  powl
+  powq
   siglongjmp
+  sin
+  sinh
+  sinhl
+  sinhq
+  sinl
+  sinq
+  snprintf
   sprintf
+  sqrt
+  sqrtl
+  sqrtq
+  strcmp
+  strlen
+  strncmp
+  tan
+  tanh
+  tanhl
+  tanhq
+  tanl
+  tanq
+  tolower
+  vsnprintf
 );
 
 # Initialize %sym so that the keys are all the Text symbols for this perl,
@@ -156,7 +212,7 @@ retry:
   # 'E' (for error) entry.   If the function (possibly prefixed by '[Pp]erl')
   # is in %sym, it is added to @already_in_sym.  Otherwise, @new.
   for my $l (@{$r->{stderr}}) {
-    if ($l =~ /_DPPP_test_(\w+)/) {
+    if ($l =~ $test_name_re) {
       if (!$seen{$1}++) {
         my @s = grep { exists $sym{$_} } $1, "Perl_$1", "perl_$1";
         if (@s) {
@@ -210,10 +266,11 @@ retry:
       # btw being the count of occurrences in the element).
       for my $m (keys %{$symmap->{$u}}) {
 
-        # pthread_getspecific() is undefined.  khw doesn't know why.  But we
-        # have a bunch of things depending on it, so it doesn't work unless we
-        # ignore this apparently spurious issue.
-        next if $u eq 'pthread_getspecific';
+        # pthread_[gs]etspecific() are undefined.  khw doesn't know why; these
+        # are Posix functions.  But we have a bunch of things depending on
+        # them, so it doesn't work unless we ignore this apparently spurious
+        # issue.
+        next if $u =~ / ^ pthread_[gs]etspecific $ /x;
 
         if (!$seen{$m}++) {
           my $pl = $m;
@@ -372,7 +429,7 @@ if ($opt{final}) {
         join('', @{$r->{stdout}})."\n---\n".join('', @{$r->{stderr}});
 
     my $symbols = read_sym(file => $opt{shlib}, options => [qw( --defined-only )]);
-    my @stuff = map { /_DPPP_test_(.*)/ } keys %$symbols;
+    my @stuff = map { $_ =~ $test_name_re } keys %$symbols;
     %todo = map { $_ => 'T' } @stuff;
 
     print STDERR __LINE__, ": write at ", Dumper $file, $version, \%todo
@@ -557,14 +614,22 @@ sub get_apicheck_symbol_map
 
     # Get the list of macros that had parameter issues.  These are marked as
     # A, for absolute in nm terms
-    my %sym = map { /error: macro "(\w+)" (?:requires|passed) \d+ argument/ ? ($1 => 'A') : () }
-              @{$r->{stderr}};
+    my $absolute_err = 'A';
+    my %sym = map { /error: macro "(\w+)" (?:requires|passed) \d+ argument/
+                    ? ($1 => $absolute_err)
+                    : ()
+                  } @{$r->{stderr}};
 
     # Display these, and add them to the global %todo.
     if (keys %sym) {
       for my $s (sort dictionary_order keys %sym) {
-        display_sym('new', $s, $sym{$s});
+        if (defined $todo{$s} && $todo{$s} eq $absolute_err) {
+            # Otherwise could loop
+            die "cannot run make apicheck.i ($r->{didnotrun} / $r->{status}):\n".
+                join('', @{$r->{stdout}})."\n---\n".join('', @{$r->{stderr}});
+        }
         $todo{$s} = $sym{$s};
+        display_sym('new', $s, $sym{$s});
       }
 
       # And rewrite the todo file, including these new symbols.
@@ -591,11 +656,11 @@ sub get_apicheck_symbol_map
     print STDERR __LINE__, ": apicheck.i ", $_ if $opt{debug} > 5;
     next if /^#/;
 
-    # We only care about lines within one of our _DPPP_test_ functions.  If
+    # We only care about lines within one of our DPPP_test_ functions.  If
     # we're in one, $cur is set to the name of the current one.
     if (! defined $cur) {   # Not within such a function; see if this starts
                             # one
-      /_DPPP_test_(\w+)/ and $cur = $1;
+      $_ =~ $test_name_re and $cur = $1;
     }
     else {
 

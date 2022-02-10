@@ -28,7 +28,7 @@ __UNDEFINED__  sv_setuv(sv, uv)                     \
 
 __UNDEFINED__  newSVuv(uv)     ((uv) <= IV_MAX ? newSViv((IV)uv) : newSVnv((NV)uv))
 
-#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#if defined(PERL_USE_GCC_BRACE_GROUPS)
 __UNDEFINED__  sv_2uv(sv)      ({ SV *_sv = (sv); (UV) (SvNOK(_sv) ? SvNV(_sv) : sv_2nv(_sv)); })
 #else
 __UNDEFINED__  sv_2uv(sv)      ((PL_Sv = (sv)), (UV) (SvNOK(PL_Sv) ? SvNV(PL_Sv) : sv_2nv(PL_Sv)))
@@ -38,7 +38,7 @@ __UNDEFINED__  SvUVX(sv)       ((UV)SvIVX(sv))
 __UNDEFINED__  SvUVXx(sv)      SvUVX(sv)
 __UNDEFINED__  SvUV(sv)        (SvIOK(sv) ? SvUVX(sv) : sv_2uv(sv))
 
-#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#if defined(PERL_USE_GCC_BRACE_GROUPS)
 __UNDEFINED__  SvUVx(sv)       ({ SV *_sv = (sv)); SvUV(_sv); })
 #else
 __UNDEFINED__  SvUVx(sv)       ((PL_Sv = (sv)), SvUV(PL_Sv))
@@ -152,7 +152,7 @@ my_strnlen(s, max)
 
 =tests plan => 11
 
-BEGIN { require warnings if "$]" > '5.006' }
+BEGIN { require warnings if ivers($]) > ivers('5.006') }
 
 is(&Devel::PPPort::sv_setuv(42), 42);
 is(&Devel::PPPort::newSVuv(123), 123);

@@ -1,3 +1,5 @@
+#!/usr/bin/perl
+
 ################################################################################
 #
 #  mkapidoc.pl -- generate apidoc.fnc from scanning the Perl source
@@ -21,14 +23,20 @@
 
 use warnings;
 use strict;
+use File::Find;
+use re '/aa';
 
 my $PERLROOT = $ARGV[0];
-$PERLROOT = '../..' unless $PERLROOT;
+unless ($PERLROOT) {
+    $PERLROOT = '../..';
+    print STDERR "$0: perl directory root argument not specified. Assuming '$PERLROOT'\n";
+}
 
 die "'$PERLROOT' is invalid, or you haven't successfully run 'make' in it"
                                                 unless -e "$PERLROOT/warnings.h";
-    
-my $config= "$PERLROOT/config_h.SH";
+my $maindir = '.';
+require "$maindir/parts/ppptools.pl";
+
 my %seen;
 
 # Find the files in MANIFEST that are core, but not embed.fnc, nor .t's
@@ -39,79 +47,202 @@ while (<$m>) {                      # In embed.fnc,
     next if m! ^ embed \. fnc \t !x;
     next if m! ^ ( cpan | dist | t) / !x;
     next if m! [^\t]* \.t \t !x;
-    push @files, $_;
+    s/\t.*//;
+    push @files, "$PERLROOT/$_";
+}
+close $m or die "Can't close $m: $!";
+
+# Here, we have the lists of doc files and root First, get the known macros
+# and functions from embed.fnc, converting from an array into a hash (for
+# convenience)
+my %embeds;
+my %apidoc;
+
+foreach my $entry (parse_embed("$maindir/parts/embed.fnc")) {
+    my $name = $entry->{'name'};
+    my $cond = $entry->{'cond'};
+
+    my $flags = join "", sort { lc $a cmp lc $b or $a cmp $b }
+                                                    keys $entry->{flags}->%*;
+    my @arg_pairs;
+    foreach my $pair ($entry->{args}->@*) {
+        push @arg_pairs, join " ", $pair->@*;
+    }
+    my $args = join "|", @arg_pairs;
+
+    die "Multiple entries for $embeds{$name}{$cond}"
+                                                if defined $embeds{$name}{$cond};
+
+    # Save the embed.fnc entry
+    $embeds{$name}{$cond} = "$flags|$entry->{'ret'}|$name|$args";
 }
 
-# These files are also needed.  This might have to be added to in the future.
-push @files, qw(pod/perlguts.pod lib/perlxs.pod);
 
-# Find the apidoc entries in all these files
-my @entries;
-for (@files) {
+# Examine the SEE ALSO section of perlapi which should contain links to all
+# the pods with apidoc entries in them.  Add them to the MANIFEST list.
+my $file;
 
-    s/ \t .* //x;
-    open my $f, '<', "$PERLROOT/$_" or die "Can't open $_: $!";
+sub callback {
+    return unless $_ eq $file;
+    return if $_ eq 'config.h';   # We don't examine this one
+    return if $_ eq 'perlintern.pod';   # We don't examine this one
+    return if $File::Find::dir =~ / \/ ( cpan | dist | t ) \b /x;
+    push @files, $File::Find::name;
+}
+
+open my $a, '<', "$PERLROOT/pod/perlapi.pod"
+        or die "Can't open perlapi.pod ($PERLROOT needs to have been built): $!";
+while (<$a>) {
+    next unless / ^ =head1\ SEE\ ALSO /x;
+    while (<$a>) {
+        # The lines look like:
+        # F<config.h>, L<perlintern>, L<perlapio>, L<perlcall>, L<perlclib>,
+        last if /^=/;
+
+        my @tags = split /, \s* | \s+ /x;  # Allow comma- or just space-separated
+
+        foreach my $tag (@tags) {
+            if ($tag =~ / ^ F< (.*) > $ /x) {
+                $file = $1;
+            }
+            elsif ($tag =~ / ^ L< (.*) > $ /x) {
+                $file = "$1.pod";
+            }
+            else {
+                die "Unknown tag '$tag'";
+            }
+
+            find(\&callback, $PERLROOT);
+        }
+    }
+}
+
+my ($controlling_flags, $controlling_ret_type, $controlling_args);
+
+# Look through all the files that potentially have apidoc entries
+# These may be associated with embed.fnc, in which case we do nothing;
+# otherwise, we output them to apidoc.fnc, potentially modified.
+for my $file (@files) {
+
+    $file =~ s/ \t .* //x;      # Trim all but first column
+    open my $f, '<', "$file" or die "Can't open $file: $!";
 
     my $line;
     while (defined ($line = <$f>)) {
         chomp $line;
-        next unless $line =~ /^ =for \s+ apidoc \s+ 
-                             (  [^|]* \|        # flags
-                                [^|]* \|        # return type
-                              ( [^|]* )         # name
-                                (?: \| .* )?    # optional args
-                             ) /x;
-        my $meat = $1;
-        my $name = $2;
+        next unless $line =~ /  ^ =for \s+ apidoc ( _item )? \s+
+                               (?:
+                                  (   [^|]*? )  # flags, backoff trailing
+                                                # white space
+                                  \s* \| \s*
 
-        if (exists $seen{$name}) {
-            if ($seen{$name} ne $meat) {
-                print STDERR
-                    "Contradictory prototypes for $name,\n$seen{$name}\n$meat\n";
+                                  (   [^|]*? )  # return type
+
+                                  \s* \| \s*
+
+                               )?               # flags and ret type are all
+                                                # or nothing
+
+                               ( [^|]+? )       # name
+
+                               \s*
+
+                               (?:  \| \s* ( .* ) \s* )?    # optional args
+
+                               $
+                             /x;
+        my $item = $1 // 0;
+        my $flags = $2 // "";
+        my $ret_type = $3 // "";
+        my $name = $4;
+        my $args = $5 // "";
+
+        next unless $name;  # Not an apidoc line
+
+        # If embed.fnc already contains this name, this better be an empty
+        # entry, unless it has the M flag, meaning there is another macro
+        # defined for it.
+        if (defined $embeds{$name}) {
+            my @conds = keys $embeds{$name}->%*;
+
+            # If this is just the anchor for where the pod is in the source,
+            # the entry is already fully in embed.fnc.
+            if ("$flags$ret_type$args" eq "") {
+                if (! $item) {
+                    foreach my $cond (@conds) {
+                        # For a plain apidoc entry, save the inputs, so as to apply them
+                        # to any following apidoc_item lines.
+                        ($controlling_flags, $controlling_ret_type, $controlling_args)
+                            = $embeds{$name}{$cond} =~ / ( [^|]* ) \| ( [^|]* ) \| (?: [^|]* ) \| (.*) /x;
+                        $controlling_flags =~ s/[iMpb]//g;
+                        $controlling_flags .= 'm' unless $controlling_flags =~ /m/;
+                        last;
+                    }
+                }
+                next;
             }
-            next;
+
+            # And the only reason we should have something with other
+            # information than what's in embed.fnc is if it is an M flag,
+            # meaning there is an extra macro for this function, and this is
+            # documenting that.
+            my $msg;
+            foreach my $cond (@conds) {
+                if ($embeds{$name}{$cond} !~ / ^ [^|]* M /x) {
+                    $msg = "Specify only name when main entry is in embed.fnc";
+                    last;
+                }
+            }
+
+            if (! defined $msg) {
+                if ($flags !~ /m/) {
+                    $msg = "Must have 'm' flag for overriding 'M' embed.fnc entry";
+                }
+                elsif ($flags =~ /p/) {
+                    $msg = "Must not have 'p' flag for overriding 'M' embed.fnc entry";
+                }
+            }
+
+            die "$msg: $file: $.: \n'$line'\n" if defined $msg;
         }
 
-        $meat =~ s/[ \t]+$//;
-        $seen{$name} = $meat;
+        # Here, we have an entry for apidoc.fnc, one that isn't in embed.fnc.
+
+        # If this is an apidoc_item line, there was a plain apidoc line
+        # earlier, and we saved the values from that to use here (if here is
+        # empty).
+        if ($item) {
+            $flags = $controlling_flags unless $flags ne "";
+            $ret_type = $controlling_ret_type unless $ret_type ne "";
+            $args = $controlling_args unless $args ne "";
+        }
+        else {
+            # For a plain apidoc entry, save the inputs, so as to apply them
+            # to any following apidoc_item lines.
+            $controlling_flags = $flags;
+            $controlling_ret_type = $ret_type;
+            $controlling_args = $args;
+        }
 
         # Many of the entries omit the "d" flag to indicate they are
-        # documented, but we wouldn't have found this unless it was documented
-        # in the source
-        $meat =~ s/\|/d|/ unless $meat =~ /^[^|]*d/;
+        # documented, but we got here because of an apidoc line, which
+        # indicates it is documented in the source
+        $flags .= 'd' unless $flags =~ /d/;
 
-        push @entries, "$meat\n";
+        # We currently don't handle typedefs, nor this special case
+        next if $flags =~ /y/;
+        next if $name eq 'JMPENV_PUSH';
+
+        my $entry = "$flags|$ret_type|$name";
+        $entry .= "|$args" if $args ne "";
+        $apidoc{$name}{entry} = $entry;
     }
 }
 
-# The entries in config_h.SH are also (documented) macros that are
-# accessible to XS code, and ppport.h backports some of them.  We
-# use only the unconditionally compiled parameterless ones (as
-# that"s all that"s backported so far, and we don"t have to know
-# the types of the parameters).
-open(my $c, "<", $config) or die "$config: $!";
-my $if_depth = 0;   # We don"t use the ones within #if statements
-                    # The #ifndef that guards the whole file is not
-                    # noticed by the code below
-while (<$c>) {
-    $if_depth ++ if / ^ \# [[:blank:]]* (ifdef | if\ defined ) /x;
-    $if_depth -- if $if_depth > 0 && / ^ \# [[:blank:]]* endif /x;
-    next unless $if_depth <= 0;
-
-    # We are only interested in #defines with no parameters
-    next unless /^ \# [[:blank:]]* define [[:blank:]]+
-                        ( [A-Za-z][A-Za-z0-9]* )
-                        [[:blank:]]
-                /x;
-    next if $seen{$1}; # Ignore duplicates
-    push @entries, "Amnd||$1\n";
-    $seen{$1}++;
-}
-close $c or die "Close failed: $!";
-
-open my $out, ">", "parts/apidoc.fnc"
-                        or die "Can't open 'parts/apidoc.fnc' for writing: $!";
-require "./parts/inc/inctools";
+my $outfile = "$maindir/parts/apidoc.fnc";
+open my $out, ">", $outfile
+                        or die "Can't open '$outfile' for writing: $!";
+require "$maindir/parts/inc/inctools";
 print $out <<EOF;
 ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 :
@@ -128,5 +259,6 @@ print $out <<EOF;
 : source code, but are not contained in F<embed.fnc>.
 :
 EOF
-print $out sort sort_api_lines @entries;
+print $out join "\n", sort sort_api_lines map { $apidoc{$_}{entry} } keys %apidoc;
 close $out or die "Close failed: $!";
+print "$outfile regenerated\n";

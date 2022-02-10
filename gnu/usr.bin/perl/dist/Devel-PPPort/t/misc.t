@@ -16,7 +16,7 @@ BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
     unshift @INC, '../lib' if -d '../lib' && -d '../ext';
-    require Config; import Config;
+    require Config; Config->import;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
       print "1..0 # Skip -- Perl configured without Devel::PPPort module\n";
@@ -34,9 +34,9 @@ BEGIN {
     require 'inctools';
   }
 
-  if (26826) {
+  if (26827) {
     load();
-    plan(tests => 26826);
+    plan(tests => 26827);
   }
 }
 
@@ -48,7 +48,7 @@ package Devel::PPPort;
 use vars '@ISA';
 require DynaLoader;
 @ISA = qw(DynaLoader);
-bootstrap Devel::PPPort;
+Devel::PPPort->bootstrap;
 
 package main;
 
@@ -496,4 +496,5 @@ for $name (keys %case_changing) {
 
 is(&Devel::PPPort::av_top_index([1,2,3]), 2);
 is(&Devel::PPPort::av_tindex([1,2,3,4]), 3);
+is(&Devel::PPPort::av_count([1,2,3,4]), 4);
 

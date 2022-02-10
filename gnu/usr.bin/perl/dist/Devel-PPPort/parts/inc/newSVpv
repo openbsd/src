@@ -31,7 +31,7 @@ __UNDEFINED__  newSVpvn_utf8(s, len, u)  newSVpvn_flags((s), (len), (u) ? SVf_UT
 __UNDEFINED__  SVf_UTF8  0
 
 #ifndef newSVpvn_flags
-#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#if defined(PERL_USE_GCC_BRACE_GROUPS)
 # define newSVpvn_flags(s, len, flags) ({ SV *_sv = newSVpvn(D_PPP_CONSTPV_ARG((s)), (len)); SvFLAGS(_sv) |= ((flags) & SVf_UTF8); ((flags) & SVs_TEMP) ? sv_2mortal(_sv) : _sv; })
 #else
 # define newSVpvn_flags(s, len, flags) ((PL_Sv = newSVpvn(D_PPP_CONSTPV_ARG((s)), (len))), SvFLAGS(PL_Sv) |= ((flags) & SVf_UTF8), (((flags) & SVs_TEMP) ? sv_2mortal(PL_Sv) : PL_Sv))
@@ -88,7 +88,7 @@ ok(!defined($s[4]));
 ok(@s == 1);
 is($s[0], "test");
 
-if ("$]" >= 5.008001) {
+if (ivers($]) >= ivers("5.008001")) {
   require utf8;
   ok(utf8::is_utf8($s[0]));
 }

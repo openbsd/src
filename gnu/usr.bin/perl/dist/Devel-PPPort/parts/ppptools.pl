@@ -65,8 +65,8 @@ sub parse_todo
       my $code = $1;
       s/^\s+//; s/\s+$//;
       /^\s*$/ and next;
-      /^\w+$/ or die "invalid identifier: $_\n";
-      exists $todo{$_} and die "duplicate identifier: $_ ($todo{$_} <=> $version)\n";
+      /^\w+$/ or die "parse_todo: invalid identifier in $todo: $_\n";
+      exists $todo{$_} and die "parse_todo: duplicate identifier in $todo: $_ ($todo{$_} <=> $version)\n";
       $todo{$_}{'version'} = $version;
       $todo{$_}{'code'} = $code if $code;
     }
@@ -80,7 +80,7 @@ sub expand_version
 {
   my($op, $ver) = @_;
   my($r, $v, $s) = parse_version($ver);
-  $r == 5 or die "only Perl revision 5 is supported\n";
+  $r =~ / ^ [57] $ /x  or die "only Perl revisions [57] are supported\n";
   my $bcdver = sprintf "0x%d%03d%03d", $r, $v, $s;
   return "(PERL_BCDVERSION $op $bcdver)";
 }
@@ -299,7 +299,8 @@ sub trim_arg        # Splits the argument into type and name, returning the
   s/^\s+//; s/\s+$//;             # No leading, trailing spacd
   s/\s+/ /g;                      # Collapse multiple space into one
 
-  return ($_, $name);
+  return ($_, $name) if defined $name;
+  return $_;
 }
 
 sub parse_embed
@@ -362,6 +363,12 @@ sub parse_embed
           }
 
           if ($name =~ /^[^\W\d]\w*$/) {
+            my $cond = ppcond(\@pps);
+            if ($cond =~ /defined\(PERL_IN_[A-Z0-9_]+_[CH]/ && $flags =~ /A/)
+            {
+                warn "$name marked as API, but restricted scope: $cond\n";
+            }
+            #warn "$name: $cond" if length $cond && $flags =~ /A/;
             for (@args) {
               $_ = [trim_arg($_)];
             }
@@ -371,11 +378,11 @@ sub parse_embed
               flags => { map { $_, 1 } $flags =~ /./g },
               ret   => $ret,
               args  => \@args,
-              cond  => ppcond(\@pps),
+              cond  => $cond,
             };
             $func[-1]{'ppport_fnc'} = 1 if $file =~ /ppport\.fnc/;
           }
-          else {
+          elsif ($flags !~ /y/) {
             warn "mysterious name [$name] in $file, line $.\n";
           }
         }
@@ -433,13 +440,19 @@ sub known_but_hard_to_test_for
     #
     # The values for the keys are each the version that ppport.h makes them
     # work on, and were gleaned by manually looking at the code parts/inc/*.
-    # For non-ppport.h, scanprov will automatically figure out the version
+    # For functions, scanprov will automatically figure out the version
     # they were introduced in.
 
     my %return;
 
-    for (qw(CLASS dXSI32 items ix pTHX_ RETVAL StructCopy svtype
-            STMT_START STMT_END STR_WITH_LEN THIS XS))
+
+
+
+
+for (qw(CLASS CPERLscope dMY_CXT_SV dXSI32 END_EXTERN_C EXTERN_C items
+        ix PERL_USE_GCC_BRACE_GROUPS PL_hexdigit pTHX_ PTRV
+        RETVAL START_EXTERN_C STMT_END STMT_START StructCopy
+        STR_WITH_LEN svtype THIS XS XSPROTO))
     {
         # __MIN_PERL__ is this at the time of this commit.  This is the
         # earliest these have been tested to at the time of the commit, but
@@ -448,6 +461,9 @@ sub known_but_hard_to_test_for
     }
     for (qw(_pMY_CXT pMY_CXT_)) {
         $return{$_} = '5.9.0';
+    }
+    for (qw(PERLIO_FUNCS_DECL)) {
+        $return{$_} = '5.9.3';
     }
     for (qw(XopDISABLE XopENABLE XopENTRY XopENTRYCUSTOM XopENTRY_set)) {
         $return{$_} = '5.13.7';

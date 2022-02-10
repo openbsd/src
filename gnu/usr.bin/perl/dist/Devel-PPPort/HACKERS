@@ -14,13 +14,12 @@ lying around in this distribution.
 =head2 How to backport something
 
 First, make sure that what you want to backport is documented.  If it's worth
-backporting, it surely is worth documenting.  Send a documentation patch to 
-L<perlbug@perl.org|mailto:perlbug@perl.org> if necessary.  Also,
-C<Devel::PPPort> cannot automatically generate proper information about the
-item without at least knowing its API prototype.  It can get this from
-F<embed.fnc> if the item is a function, but if it is a macro, there needs to be
-at least a S<C<=for apidoc>> line for C<Devel::PPPort> to be able to figure
-things out on its own.
+backporting, it surely is worth documenting.  Submit a documentation patch to
+L<https://github.com/Perl/perl5/issues> if necessary.  Also, C<Devel::PPPort>
+cannot automatically generate proper information about the item without at
+least knowing its API prototype.  It can get this from F<embed.fnc> if the item
+is a function, but if it is a macro, there needs to be at least a S<C<=for
+apidoc>> line for C<Devel::PPPort> to be able to figure things out on its own.
 
 Next, figure out where to place your implementation.  Look at all the files in
 F<parts/inc/> for one that fits what you're planning.  If there isn't one,
@@ -134,17 +133,25 @@ object will not get missing symbols when loaded.
 It also means you have to check for and skip tests that aren't relevant to this
 version.  The recommended way to do this is like:
 
- if (ivers($]) < ivers(5.6.2)) {
+ if (ivers($]) < ivers(5.6)) {           # No quotes needed
     skip "reason", $count;
  }
- elsif (if (ivers($]) > ivers(5.5) {
+ elsif (if (ivers($]) > ivers("5.5.4") {
+     # Quotes needed for double-dotted versions prior to 5.6.0
     skip "other reason", $count;
+ }
+ else {
+    do_the_test
  }
 
 C<ivers()> is a function automatically made available to all F<.t> files.  It
 converts any reasonble expression of a version number into an integer, which
 can reliably be compared using numeric comparison operators, with the output of
 a second C<ivers()> call on a different version number, like in the result above.
+
+It's worth emphasizing that, due to bugs in early perl parsing, if you use a
+version number containing two dots on a version befor 5.6.0, it has to be
+quoted.
 
 =back
 
@@ -153,10 +160,29 @@ In all sections, lines that begin with C<##> are completely ignored.
 =head2 Implementation Section Details
 
 You can implement API elements via C functions or macros, or simple variables.
-For a function, just place its body in this C<=implementation> section.  But it
-is preferable to use a macro if feasible.  Otherwise, the user must explicitly
-request that it get loaded, by defining a C<NEED_I<function>> (or I<variable>)
-as described in F<ppport.h>.
+It is preferable to use a macro if feasible.  Otherwise, the user must
+explicitly request that it get loaded, by defining a C<NEED_I<function>> (or
+I<variable>) as described in F<ppport.h>.  If a function, I<foo> is required,
+place its body in this C<=implementation> section, like so:
+
+ #if { NEED foo }
+
+ char *
+ foo(pTHX_ const U8 *arg1, const U32 arg2, ...)
+ {
+    ...
+ }
+
+ #endif
+
+Similarly for a variable.
+
+It's obviously best to use a macro if at all feasible.  Sometimes what once
+was implemented with a macro now requires a function; perhaps an edge case was
+overlooked.  Doing so will cause the new F<ppport.h> to not be drop-in
+compatible with the older version, and can hence cause breakage.  This
+incompatiblity (while easily solved) really needs to be stressed in
+documentation.
 
 =over
 
@@ -204,20 +230,18 @@ Perl public API.
 
 =item Version numbers
 
-Version checking can be tricky to get correct (besides being buggy in some perl
-versions).
-C<ivers()> is used in the C<=tests> section to overcome this, and constructs
+Version checking used to be tricky to get correct (besides being buggy in some
+perl versions).
+C<ivers()> is used in the C<=tests> section to overcome this. and constructs
 like the following in the C language sections.
 
   #if { VERSION < 5.9.3 }
 
-instead of
+You SHOULD be using this construct or the alternatives listed below for ALL
+version checks, and not come up with something on your own.
 
-  #if ((PERL_VERSION < 9) \
-    || (PERL_VERSION == 9 && PERL_SUBVERSION < 3))
-
-The version number can be either of the new form C<5.x.x> or the older
-form C<5.00x_yy>. Both are translated into the correct preprocessor
+In this form, the version number can be either of the new form C<5.x.y> or the
+older form C<5.00x_yy>. Both are translated into the correct preprocessor
 statements. It is also possible to combine this with other statements:
 
   #if { VERSION >= 5.004 } && !defined(sv_vcatpvf)
@@ -229,14 +253,40 @@ statements. It is also possible to combine this with other statements:
 This not only works in the C<=implementation> section, but also in
 the C<=xsubs>, C<=xsinit>, C<=xsmisc>, C<=xshead> and C<=xsboot> sections.
 
+Alternatively, you can use the forms now available in regular Perl:
+
+  #if PERL_VERSION_EQ(5,9,3)
+  #if PERL_VERSION_NE(5,9,3)
+  #if PERL_VERSION_LT(5,9,3)
+  #if PERL_VERSION_GT(5,9,3)
+  #if PERL_VERSION_LE(5,9,3)
+  #if PERL_VERSION_GE(5,9,3)
+
+These forms have the advantage over the '{ VERSION ... }' form in that you may
+use the special value '*' for the final number to mean ALL possible values for
+it.  Thus,
+
+ #if PERL_VERSION_EQ(5,31,'*')
+
+means all perls in the 5.31 series.  And
+
+ #if PERL_VERSION_NE(5,24,'*')
+
+means all perls EXCEPT 5.24 ones.  And
+
+ #if PERL_VERSION_LE(5,9,'*')
+
+is effectively
+
+ #if PERL_VERSION_LT(5,10,0)
+
 =item Hints
 
 If you add a comment like so:
 
  /* Hint: PL_expect, PL_copline, PL_rsfp
-    paragraphs of stuff about foo you want to have
-    shown when ppport.h outputs something about PL_expect or
-    PL_copline or PL_rsfp
+    paragraphs of stuff you want to have shown when ppport.h outputs
+    something about any one of PL_expect, PL_copline, or PL_rsfp
  */
 
 Earlier versions of F<ppport.h> required an asterisk at the beginning of every
@@ -244,12 +294,11 @@ continuation line, or else the content would be silently dropped.
 
 =item Warnings
 
-A more serious caution about C<foo> can be displayed by instead saying
+A more serious caution can be displayed by instead saying
 
  /* Warning: PL_expect, PL_copline, PL_rsfp
-    paragraphs of stuff about foo you want to have
-    shown when ppport.h outputs something about PL_expect or
-    PL_copline or PL_rsfp
+    paragraphs of stuff you want to have shown when ppport.h outputs
+    something about any one of PL_expect, PL_copline, or PL_rsfp
  */
 
 Earlier versions of F<ppport.h> required an asterisk at the beginning of every
@@ -394,12 +443,14 @@ some of these have been in limbo for many years, so should be documented.
 
 And you will need updated API information. Copy the latest F<embed.fnc> file
 from bleadperl to the F<parts> directory and run F<devel/mkapidoc.pl> to
-collect the remaining information in F<parts/apidoc.fnc>.
+collect the remaining information in F<parts/apidoc.fnc>.  This needs to be
+done after the perl has been compiled, as there are generated files that feed
+it.
 
 =item *
 
 The final step before regenerating everything is to run
-F</devel/mkppport_fnc.pl> to update the F</parts/ppport.fnc> file.
+F<devel/mkppport_fnc.pl> to update the F</parts/ppport.fnc> file.
 
 =back
 
@@ -598,7 +649,7 @@ No known bugs.
 
 =head1 COPYRIGHT
 
-Version 3.x, Copyright (C) 2004-2019, Marcus Holland-Moritz
+Version 3.x, Copyright (C) 2004-2020, Marcus Holland-Moritz
 and Perl 5 porters
 
 Version 2.x, Copyright (C) 2001, Paul Marquess.

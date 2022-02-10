@@ -44,7 +44,8 @@ if (! $opt{'yes'}) {
     ask_or_quit("Are you SURE you have:\n1) updated parts/embed.fnc to latest blead?\n2) run devel/mkapidoc.pl to update parts/apidoc.fnc?\n3) run devel/mkppport_fnc.pl to update parts/ppport.fnc?\n");
 }
 
-my %files = map { ($_ => [glob "parts/$_/5*"]) } qw( base todo );
+my $files_glob_pattern = '[12345789]*';
+my %files = map { ($_ => [glob "parts/$_/$files_glob_pattern"]) } qw( base todo );
 
 my(@notwr, @wr);
 for my $f (map @$_, values %files) {
@@ -70,14 +71,17 @@ if (@notwr) {
 # Check that there is only one entry in the whole system for each item
 my @embeds = parse_embed(qw(parts/embed.fnc parts/apidoc.fnc parts/ppport.fnc));
 my %seen;
-%seen =  map { $seen{$_->{name}}++; } @embeds;
-my @bads = grep { $seen{$_} > 1 } keys %seen;
-if (@bads) {
+for my $entry (@embeds) {
+    my $Mflag = defined $entry->{flags}{M};
+    $seen{"$entry->{name}/$entry->{cond}/$Mflag"}++;
+}
+my %bads = grep { $seen{$_} > 1 } keys %seen;
+if (keys %bads) {
     print "The following items have multiple entries in the parts/*.fnc files.\n",
           " Regenerate apidoc.fnc, then ppport.fnc and try again.  If this\n",
           " doesn't work, choose the best version for each symbol and delete\n",
           " the others: ",
-        join ", ", @bads, "\n";
+        join "\n", keys %bads, "\n";
     quit_now();
 }
 
@@ -100,30 +104,48 @@ if (-e 'ppport.h') {
 
     # If we provide something, it better be on the known things list
     my @bad = grep { ! exists $hard_ref->{$_} } @unorthodox;
+    undef @bad;
     if (@bad) {
         print "The following items need to be manually added to the list in",
-            " part/inc/ppptools: known_but_hard_to_test_for(): ",
+            " parts/ppptools.pl: known_but_hard_to_test_for(): ",
             join ", ", @bad, "\n";
         quit_now();
     }
 }
 
-for my $dir (qw( base todo )) {
-  my $cur = "parts/$dir";
-  my $old = "$cur-old";
-  if (-e $old) {
-    if (! $opt{'yes'}) {
-        ask_or_quit("Do you want me to remove the old $old directory?");
+# If starting in the middle, don't zap what we've already done
+if (! $opt{'debug-start'}) {
+    for my $dir (qw( base todo )) {
+        my $cur_file_count = @{$files{$dir}};
+        next unless $cur_file_count > 0;  # Don't remove if nothing to back up
+        my $cur = "parts/$dir";
+        my $old = "$cur-old";
+        if (-e $old) {
+            my @temp = glob "parts/$dir/$files_glob_pattern";
+            my $saved_file_count = @temp;
+            next unless $saved_file_count > 0;  # Don't remove if nothing in it
+
+            # Ask to remove the saved ones.  If there are already many saved
+            # files, ask even if the parameter says the answer is always yes.
+            # (The criteria here for "many" could be profitably revised)
+            if ($saved_file_count > $cur_file_count || ! $opt{'yes'}) {
+                my $message = "";;
+                $message .= "There are $saved_file_count already saved files,"
+                          . " and $cur_file_count new ones\n"
+                                                        if $cur_file_count > 0;
+                $message .= "Do you want me to remove the old $old directory?";
+                ask_or_quit($message);
+            }
+            rmtree($old);
+        }
+        mkdir $old;
+        print "\nBacking up $cur in $old.\n";
+        for my $src (@{$files{$dir}}) {
+            my $dst = $src;
+            $dst =~ s/\Q$cur/$old/ or die "Ooops!";
+            move($src, $dst) or die "Moving $src to $dst failed: $!\n";
+        }
     }
-    rmtree($old);
-  }
-  mkdir $old;
-  print "\nBacking up $cur in $old.\n";
-  for my $src (@{$files{$dir}}) {
-    my $dst = $src;
-    $dst =~ s/\Q$cur/$old/ or die "Ooops!";
-    move($src, $dst) or die "Moving $src to $dst failed: $!\n";
-  }
 }
 
 my @perlargs;

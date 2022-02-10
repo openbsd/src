@@ -1,18 +1,4 @@
 5.023008
 clear_defarray                 # U
-cx_popblock                    # U
-cx_popeval                     # U
-cx_popformat                   # U
-cx_poploop                     # U
-cx_popsub                      # U
-cx_popsub_args                 # U
-cx_popsub_common               # U
-cx_pushblock                   # U
-cx_pusheval                    # U
-cx_pushformat                  # U
-cx_pushloop_for                # U
-cx_pushloop_plain              # U
-cx_pushsub                     # U
-cx_topblock                    # U
 leave_adjust_stacks            # U
-savetmps                       # U
+Perl_savetmps                  # U

@@ -1,17 +1,11 @@
 5.008001
 CvPADLIST                      # E
-doing_taint                    # U
-find_runcv                     # U
+IN_PERL_RUNTIME                # E
 is_utf8_string_loc             # U
 packlist                       # U
-pad_add_anon                   # U
-pad_new                        # E
-pad_setsv                      # U
-pad_tidy                       # E
 PL_comppad                     # E
-save_bool                      # U
+SAVEBOOL                       # U
 savestack_grow_cnt             # U
-seed                           # U
 sv_cat_decode                  # U
 sv_setpviv                     # U
 sv_setpviv_mg                  # U

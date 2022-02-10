@@ -16,7 +16,7 @@ BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
     unshift @INC, '../lib' if -d '../lib' && -d '../ext';
-    require Config; import Config;
+    require Config; Config->import;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
       print "1..0 # Skip -- Perl configured without Devel::PPPort module\n";
@@ -34,9 +34,9 @@ BEGIN {
     require 'inctools';
   }
 
-  if (238) {
+  if (235) {
     load();
-    plan(tests => 238);
+    plan(tests => 235);
   }
 }
 
@@ -48,13 +48,15 @@ package Devel::PPPort;
 use vars '@ISA';
 require DynaLoader;
 @ISA = qw(DynaLoader);
-bootstrap Devel::PPPort;
+Devel::PPPort->bootstrap;
 
 package main;
 
+# BEWARE: This number and SKIP_SLOW_TESTS must be the same!!!
+
 BEGIN {
   if ($ENV{'SKIP_SLOW_TESTS'}) {
-    skip("skip: SKIP_SLOW_TESTS", 238);
+    skip("skip: SKIP_SLOW_TESTS", 235);
     exit 0;
   }
 }
@@ -325,7 +327,6 @@ ok($o =~ /^Uses newCONSTSUB/m);
 ok($o =~ /^Uses PL_expect/m);
 ok($o =~ /^Uses SvPV_nolen.*depends.*sv_2pv_flags/m);
 ok($o =~ /WARNING: PL_expect/m);
-ok($o =~ /hint for newCONSTSUB/m);
 ok($o =~ /^Analysis completed \(1 warning\)/m);
 ok($o =~ /^Looks good/m);
 
@@ -337,7 +338,6 @@ ok($o =~ /^Uses newCONSTSUB/m);
 ok($o =~ /^Uses PL_expect/m);
 ok($o =~ /^Uses SvPV_nolen.*depends.*sv_2pv_flags/m);
 ok($o =~ /WARNING: PL_expect/m);
-ok($o !~ /hint for newCONSTSUB/m);
 ok($o =~ /^Analysis completed \(1 warning\)/m);
 ok($o =~ /^Looks good/m);
 
@@ -349,7 +349,6 @@ ok($o !~ /^Uses newCONSTSUB/m);
 ok($o !~ /^Uses PL_expect/m);
 ok($o !~ /^Uses SvPV_nolen/m);
 ok($o =~ /WARNING: PL_expect/m);
-ok($o !~ /hint for newCONSTSUB/m);
 ok($o =~ /^Analysis completed \(1 warning\)/m);
 ok($o =~ /^Looks good/m);
 
@@ -655,8 +654,8 @@ ok($o !~ /Uses SvPVutf8_force/m);
 $o = ppport(qw(--nochanges --compat-version=5.999.999));
 ok($o !~ /Uses SvPVutf8_force/m);
 
-$o = ppport(qw(--nochanges --compat-version=6.0.0));
-ok($o =~ /Only Perl 5 is supported/m);
+$o = ppport(qw(--nochanges --compat-version=8.0.0));
+ok($o =~ /Only Perl \[57\] are supported/m);
 
 $o = ppport(qw(--nochanges --compat-version=5.1000.999));
 ok($o =~ /Invalid version number: 5.1000.999/m);
@@ -721,7 +720,10 @@ my %p;
 my $fail = 0;
 for (@o) {
   my($name, $flags) = /^(\w+)(?:\s+\[(\w+(?:,\s+\w+)*)\])?$/ or $fail++;
-  exists $p{$name} and $fail++;
+  {
+    'warnings'->unimport('uninitialized') if ivers($]) > ivers('5.006');
+    exists $p{$name} and $fail++;
+  }
   $p{$name} = defined $flags ? { map { ($_ => 1) } $flags =~ /(\w+)/g } : '';
 }
 ok(@o > 100);
@@ -761,8 +763,8 @@ my @o = ppport(qw(--list-unsupported));
 my %p;
 my $fail = 0;
 for (@o) {
-  my($name, $ver) = /^(\w+)\s*\.+\s*([\d._]+)$/ or $fail++;
-  exists $p{$name} and $fail++;
+  my($name, $ver) = /^(\w+)\s*\.*\s*([\d._]+)$/ or $fail++;
+  { exists $p{$name} and $fail++; }
   $p{$name} = $ver;
 }
 ok(@o > 100);

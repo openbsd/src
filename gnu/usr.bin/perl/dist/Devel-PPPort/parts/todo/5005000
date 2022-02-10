@@ -1,8 +1,6 @@
 5.005000
-cx_dump                        # U
 debop                          # U
 debprofdump                    # U
-DOUBLESIZE                     # E
 fbm_compile                    # E (Perl_fbm_compile)
 fbm_instr                      # E (Perl_fbm_instr)
 get_op_descs                   # U
@@ -14,17 +12,10 @@ newHVhv                        # U
 new_stackinfo                  # E
 PL_curpad                      # E
 PL_in_my_stash                 # E
+PL_maxsysfd                    # E
 PL_modglobal                   # E
-PTRSIZE                        # E
+PL_restartop                   # E
 regdump                        # U
-regexec_flags                  # U
-regnext                        # E (Perl_regnext)
-runops_debug                   # U
-runops_standard                # U
-save_iv                        # U (save_iv)
-sv_iv                          # U
-sv_nv                          # U
 sv_peek                        # U
-sv_pvn                         # U
 sv_pvn_nomg                    # U
-sv_true                        # U
+SvPVx_force                    # U

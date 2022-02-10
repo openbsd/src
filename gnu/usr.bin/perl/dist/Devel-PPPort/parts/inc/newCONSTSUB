@@ -19,11 +19,6 @@ NEED_newCONSTSUB    /* Because we define this weirdly */
 
 =implementation
 
-/* Hint: newCONSTSUB
- * Returns a CV* as of perl-5.7.1. This return value is not supported
- * by Devel::PPPort.
- */
-
 /* newCONSTSUB from IO.xs is in the core starting with 5.004_63 */
 #if { VERSION < 5.004_63 } && { VERSION != 5.004_05 }
 
@@ -37,9 +32,10 @@ NEED_newCONSTSUB    /* Because we define this weirdly */
 /* (There's no PL_parser in perl < 5.005, so this is completely safe)     */
 #define D_PPP_PL_copline PL_copline
 
-void
+CV *
 newCONSTSUB(HV *stash, const char *name, SV *sv)
 {
+        CV *cv;
         U32 oldhints = PL_hints;
         HV *old_cop_stash = PL_curcop->cop_stash;
         HV *old_curstash = PL_curstash;
@@ -50,7 +46,7 @@ newCONSTSUB(HV *stash, const char *name, SV *sv)
         if (stash)
                 PL_curstash = PL_curcop->cop_stash = stash;
 
-        newSUB(
+        cv = newSUB(
 
                 start_subparse(FALSE, 0),
 
@@ -63,6 +59,8 @@ newCONSTSUB(HV *stash, const char *name, SV *sv)
         PL_curcop->cop_stash = old_cop_stash;
         PL_curstash = old_curstash;
         PL_curcop->cop_line = oldline;
+
+        return cv;
 }
 #endif
 #endif

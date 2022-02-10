@@ -1,11 +1,7 @@
 5.004000
-ARCHNAME                       # E
-block_end                      # E (Perl_block_end)
 block_gimme                    # U
-block_start                    # E (Perl_block_start)
 call_list                      # U
 delimcpy                       # U
-form                           # U
 GIMME_V                        # E
 gv_autoload4                   # U
 gv_fetchmethod_autoload        # U
@@ -18,7 +14,6 @@ ibcmp_locale                   # U
 IN_LOCALE                      # E
 IN_LOCALE_COMPILETIME          # E
 IN_LOCALE_RUNTIME              # E
-intro_my                       # U
 isALNUM_LC                     # U
 isALPHA_LC                     # U
 isALPHANUMERIC_LC              # U
@@ -30,35 +25,36 @@ isPRINT_LC                     # U
 isSPACE_LC                     # U
 isUPPER_LC                     # U
 isWORDCHAR_LC                  # U
-mess                           # E (Perl_mess)
+JMPENV_JUMP                    # U
 mess_sv                        # U
 my_failure_exit                # U
-newSVpvf                       # U
-PERL_USE_GCC_BRACE_GROUPS      # E
+Perl_ck_warner                 # U
+Perl_ck_warner_d               # U
+Perl_form                      # U
+Perl_mess                      # E (Perl_mess)
+Perl_newSVpvf                  # U
+Perl_sv_catpvf                 # U
+Perl_sv_catpvf_mg              # U
+Perl_sv_setpvf                 # U
+Perl_sv_setpvf_mg              # U
+Perl_warner                    # U
+Perl_warner_nocontext          # E
 PL_mess_sv                     # E
 POPu                           # E
 rsignal                        # E
 rsignal_state                  # E
 save_gp                        # U
-save_I16                       # U
-share_hek                      # E
-SHORTSIZE                      # E
-sv_catpvf                      # U
-sv_catpvf_mg                   # U
+SAVEI16                        # U
+SAVESTACK_POS                  # U
 sv_cmp_locale                  # U
 sv_derived_from                # U
 sv_magic_portable              # U
 SvSetMagicSV                   # U
 SvSetMagicSV_nosteal           # U
-sv_setpvf                      # U
-sv_setpvf_mg                   # U
 SvSetSV_nosteal                # U
-sv_taint                       # U
-sv_tainted                     # U
 SvTAINTED                      # U
 SvTAINTED_off                  # U
 SvTAINTED_on                   # U
-sv_untaint                     # U
 sv_vcatpvf                     # U
 sv_vcatpvf_mg                  # U
 sv_vcatpvfn                    # U
@@ -68,4 +64,4 @@ sv_vsetpvfn                    # U
 toLOWER_LC                     # U
 vmess                          # U
 vnewSVpvf                      # U
-warner                         # U
+vwarner                        # U

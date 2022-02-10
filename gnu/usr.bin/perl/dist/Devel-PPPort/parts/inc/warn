@@ -13,8 +13,13 @@
 
 __UNDEFINED__
 ckWARN
+ckWARN_d
 warner
+ck_warner
+ck_warner_d
 Perl_warner
+Perl_ck_warner
+Perl_ck_warner_d
 Perl_warner_nocontext
 
 =implementation
@@ -67,7 +72,10 @@ __UNDEFINED__  WARN_UTF8                44
 __UNDEFINED__  WARN_VOID                45
 __UNDEFINED__  WARN_ASSERTIONS          46
 
-__UNDEFINED__  packWARN(a)              (a)
+__UNDEFINED__  packWARN(a)         (a)
+__UNDEFINED__  packWARN2(a,b)      (packWARN(a)      << 8 | (b))
+__UNDEFINED__  packWARN3(a,b,c)    (packWARN2(a,b)   << 8 | (c))
+__UNDEFINED__  packWARN4(a,b,c,d)  (packWARN3(a,b,c) << 8 | (d))
 
 #ifndef ckWARN
 #  ifdef G_WARN_ON
@@ -77,34 +85,107 @@ __UNDEFINED__  packWARN(a)              (a)
 #  endif
 #endif
 
+__UNDEFINED__ ckWARN2(a,b)      (ckWARN(a) || ckWARN(b))
+__UNDEFINED__ ckWARN3(a,b,c)    (ckWARN(c) || ckWARN2(a,b))
+__UNDEFINED__ ckWARN4(a,b,c,d)  (ckWARN(d) || ckWARN3(a,b,c))
+
+#ifndef ckWARN_d
+#  ifdef isLEXWARN_off
+#    define ckWARN_d(a)  (isLEXWARN_off || ckWARN(a))
+#  else
+#    define ckWARN_d(a)  1
+#  endif
+#endif
+
+__UNDEFINED__ ckWARN2_d(a,b)     (ckWARN_d(a) || ckWARN_d(b))
+__UNDEFINED__ ckWARN3_d(a,b,c)   (ckWARN_d(c) || ckWARN2_d(a,b))
+__UNDEFINED__ ckWARN4_d(a,b,c,d) (ckWARN_d(d) || ckWARN3_d(a,b,c))
+
+__UNDEFINED__ vwarner(err, pat, argsp)                      \
+        STMT_START {    SV *sv;                             \
+                        PERL_UNUSED_ARG(err);               \
+                        sv = vnewSVpvf(pat, argsp);         \
+                        sv_2mortal(sv);                     \
+                        warn("%s", SvPV_nolen(sv));         \
+        } STMT_END
+
+
 #if { VERSION >= 5.004 } && !defined(warner)
-#if { NEED warner }
+#  if { NEED warner }
 
 void
 warner(U32 err, const char *pat, ...)
 {
-  SV *sv;
   va_list args;
-
-  PERL_UNUSED_ARG(err);
-
   va_start(args, pat);
-  sv = vnewSVpvf(pat, &args);
+  vwarner(err, pat, &args);
   va_end(args);
-  sv_2mortal(sv);
-  warn("%s", SvPV_nolen(sv));
 }
 
-#define warner  Perl_warner
+#    define warner  Perl_warner
 
-#define Perl_warner_nocontext  Perl_warner
+#    define Perl_warner_nocontext  Perl_warner
 
+#  endif
 #endif
+
+#if { VERSION >= 5.004 } && !defined(ck_warner)
+#  if { NEED ck_warner }
+
+void
+ck_warner(pTHX_ U32 err, const char *pat, ...)
+{
+    va_list args;
+
+    if (   ! ckWARN((err      ) & 0xFF)
+        && ! ckWARN((err >>  8) & 0xFF)
+        && ! ckWARN((err >> 16) & 0xFF)
+        && ! ckWARN((err >> 24) & 0xFF))
+    {
+        return;
+    }
+
+    va_start(args, pat);
+    vwarner(err, pat, &args);
+    va_end(args);
+}
+
+#    define ck_warner  Perl_ck_warner
+#  endif
+#endif
+
+#if { VERSION >= 5.004 } && !defined(ck_warner_d)
+#  if { NEED ck_warner_d }
+
+void
+ck_warner_d(pTHX_ U32 err, const char *pat, ...)
+{
+    va_list args;
+
+    if (   ! ckWARN_d((err      ) & 0xFF)
+        && ! ckWARN_d((err >>  8) & 0xFF)
+        && ! ckWARN_d((err >> 16) & 0xFF)
+        && ! ckWARN_d((err >> 24) & 0xFF))
+    {
+        return;
+    }
+
+    va_start(args, pat);
+    vwarner(err, pat, &args);
+    va_end(args);
+}
+
+#    define ck_warner_d  Perl_ck_warner_d
+
+
+#  endif
 #endif
 
 =xsinit
 
 #define NEED_warner
+#define NEED_ck_warner
+#define NEED_ck_warner_d
 
 =xsubs
 
@@ -123,6 +204,20 @@ Perl_warner()
 #endif
 
 void
+Perl_ck_warner()
+        CODE:
+#if { VERSION >= 5.004 }
+                Perl_ck_warner(aTHX_ packWARN(WARN_MISC), "Perl_ck_warner %s:%d", "bar", 42);
+#endif
+
+void
+Perl_ck_warner_d()
+        CODE:
+#if { VERSION >= 5.004 }
+                Perl_ck_warner_d(aTHX_ packWARN(WARN_MISC), "Perl_ck_warner_d %s:%d", "bar", 42);
+#endif
+
+void
 Perl_warner_nocontext()
         CODE:
 #if { VERSION >= 5.004 }
@@ -137,7 +232,15 @@ ckWARN()
                   Perl_warner_nocontext(packWARN(WARN_MISC), "ckWARN %s:%d", "bar", 42);
 #endif
 
-=tests plan => 5
+void
+ckWARN_d()
+        CODE:
+#if { VERSION >= 5.004 }
+                if (ckWARN_d(WARN_MISC))
+                  Perl_warner_nocontext(packWARN(WARN_MISC), "ckWARN_d %s:%d", "bar", 42);
+#endif
+
+=tests plan => 11
 
 $^W = 0;
 
@@ -147,22 +250,46 @@ $SIG{'__WARN__'} = sub { $warning = $_[0] };
 
 $warning = '';
 Devel::PPPort::warner();
-ok("$]" >= 5.004 ? $warning =~ /^warner bar:42/ : $warning eq '');
+ok(ivers($]) >= ivers("5.004") ? $warning =~ /^warner bar:42/ : $warning eq '');
 
 $warning = '';
 Devel::PPPort::Perl_warner();
-ok("$]" >= 5.004 ? $warning =~ /^Perl_warner bar:42/ : $warning eq '');
+ok(ivers($]) >= ivers("5.004") ? $warning =~ /^Perl_warner bar:42/ : $warning eq '');
 
 $warning = '';
 Devel::PPPort::Perl_warner_nocontext();
-ok("$]" >= 5.004 ? $warning =~ /^Perl_warner_nocontext bar:42/ : $warning eq '');
+ok(ivers($]) >= ivers("5.004") ? $warning =~ /^Perl_warner_nocontext bar:42/ : $warning eq '');
 
 $warning = '';
 Devel::PPPort::ckWARN();
 is($warning, '');
 
+$warning = '';
+Devel::PPPort::ckWARN_d();
+ok(ivers($]) >= ivers("5.004") ? $warning =~ /^ckWARN_d bar:42/ : $warning eq '');
+
+$warning = '';
+Devel::PPPort::Perl_ck_warner();
+ok($warning eq '');
+
+$warning = '';
+Devel::PPPort::Perl_ck_warner_d();
+ok(ivers($]) >= ivers("5.004") ? $warning =~ /^Perl_ck_warner_d bar:42/ : $warning eq '');
+
 $^W = 1;
 
 $warning = '';
 Devel::PPPort::ckWARN();
-ok("$]" >= 5.004 ? $warning =~ /^ckWARN bar:42/ : $warning eq '');
+ok(ivers($]) >= ivers("5.004") ? $warning =~ /^ckWARN bar:42/ : $warning eq '');
+
+$warning = '';
+Devel::PPPort::ckWARN_d();
+ok(ivers($]) >= ivers("5.004") ? $warning =~ /^ckWARN_d bar:42/ : $warning eq '');
+
+$warning = '';
+Devel::PPPort::Perl_ck_warner();
+ok(ivers($]) >= ivers("5.004") ? $warning =~ /^Perl_ck_warner bar:42/ : $warning eq '');
+
+$warning = '';
+Devel::PPPort::Perl_ck_warner_d();
+ok(ivers($]) >= ivers("5.004") ? $warning =~ /^Perl_ck_warner_d bar:42/ : $warning eq '');

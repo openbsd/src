@@ -42,11 +42,13 @@ __UNDEFINED__ Perl_eval_pv   perl_eval_pv
 #endif
 #endif
 
+__UNDEFINED__ G_LIST         G_ARRAY    /* Replace */
+
 __UNDEFINED__ PERL_LOADMOD_DENY         0x1
 __UNDEFINED__ PERL_LOADMOD_NOIMPORT     0x2
 __UNDEFINED__ PERL_LOADMOD_IMPORT_OPS   0x4
 
-#if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#if defined(PERL_USE_GCC_BRACE_GROUPS)
 # define D_PPP_CROAK_IF_ERROR(cond) ({ SV *_errsv; ((cond) && (_errsv = ERRSV) && (SvROK(_errsv) || SvTRUE(_errsv)) && (croak_sv(_errsv), 1)); })
 #else
 # define D_PPP_CROAK_IF_ERROR(cond) ((cond) && (SvROK(ERRSV) || SvTRUE(ERRSV)) && (croak_sv(ERRSV), 1))
@@ -71,7 +73,7 @@ __UNDEFINED__ PERL_LOADMOD_IMPORT_OPS   0x4
 # ifdef eval_sv
 #  undef eval_sv
 # endif
-# if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+# if defined(PERL_USE_GCC_BRACE_GROUPS)
 #  define eval_sv(sv, flags) ({ I32 _flags = (flags); I32 _ret = Perl_eval_sv(aTHX_ sv, (_flags & ~G_RETHROW)); D_PPP_CROAK_IF_ERROR(_flags & G_RETHROW); _ret; })
 # else
 #  define eval_sv(sv, flags) ((PL_na = Perl_eval_sv(aTHX_ sv, ((flags) & ~G_RETHROW))), D_PPP_CROAK_IF_ERROR((flags) & G_RETHROW), (I32)PL_na)
@@ -82,7 +84,7 @@ __UNDEFINED__ PERL_LOADMOD_IMPORT_OPS   0x4
 #if { VERSION < 5.31.2 }
 # ifdef eval_pv
 #  undef eval_pv
-#  if defined(__GNUC__) && !defined(PERL_GCC_BRACE_GROUPS_FORBIDDEN)
+#  if defined(PERL_USE_GCC_BRACE_GROUPS)
 #   define eval_pv(p, croak_on_error) ({ SV *_sv = Perl_eval_pv(aTHX_ p, 0); D_PPP_CROAK_IF_ERROR(croak_on_error); _sv; })
 #  else
 #   define eval_pv(p, croak_on_error) ((PL_Sv = Perl_eval_pv(aTHX_ p, 0)), D_PPP_CROAK_IF_ERROR(croak_on_error), PL_Sv)
@@ -128,9 +130,9 @@ vload_module(U32 flags, SV *name, SV *ver, va_list *args)
 
     OP * const modname = newSVOP(OP_CONST, 0, name);
     /* 5.005 has a somewhat hacky force_normal that doesn't croak on
-       SvREADONLY() if PL_compling is true. Current perls take care in
+       SvREADONLY() if PL_compiling is true. Current perls take care in
        ck_require() to correctly turn off SvREADONLY before calling
-       force_normal_flags(). This seems a better fix than fudging PL_compling
+       force_normal_flags(). This seems a better fix than fudging PL_compiling
      */
     SvREADONLY_off(((SVOP*)modname)->op_sv);
     modname->op_private |= OPpCONST_BARE;
@@ -409,7 +411,7 @@ ok(!eval { $@ = 'string1'; Devel::PPPort::eval_pv('$@ = "string2"; die "string3"
 ok($@ =~ /^string3 at \(eval [0-9]+\) line 1\.\n$/);
 ok(!eval { Devel::PPPort::eval_pv('die False->new', 1); 1 }, 'check false value is rethrown');
 
-if ("$]" >= '5.007003' or ("$]" >= '5.006001' and "$]" < '5.007')) {
+if (ivers($]) >= ivers('5.007003') or (ivers($]) >= ivers('5.006001') and ivers($]) < ivers('5.007'))) {
     my $hashref = { key => 'value' };
     is(eval { Devel::PPPort::eval_pv('die $hashref', 1); 1 }, undef, 'check plain hashref is rethrown');
     is(ref($@), 'HASH', 'check $@ is hashref') and
@@ -436,7 +438,7 @@ ok(!eval { $@ = 'string1'; Devel::PPPort::eval_sv('$@ = "string2"; die "string3"
 ok($@ =~ /^string3 at \(eval [0-9]+\) line 1\.\n$/);
 ok(!eval { Devel::PPPort::eval_sv('die False->new', &Devel::PPPort::G_RETHROW); 1 }, 'check false value is rethrown');
 
-if ("$]" >= '5.007003' or ("$]" >= '5.006001' and "$]" < '5.007')) {
+if (ivers($]) >= ivers('5.007003') or (ivers($]) >= ivers('5.006001') and ivers($]) < ivers('5.007'))) {
     my $hashref = { key => 'value' };
     is(eval { Devel::PPPort::eval_sv('die $hashref', &Devel::PPPort::G_RETHROW); 1 }, undef, 'check plain hashref is rethrown');
     is(ref($@), 'HASH', 'check $@ is hashref') and

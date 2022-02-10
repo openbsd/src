@@ -16,7 +16,7 @@ BEGIN {
   if ($ENV{'PERL_CORE'}) {
     chdir 't' if -d 't';
     unshift @INC, '../lib' if -d '../lib' && -d '../ext';
-    require Config; import Config;
+    require Config; Config->import;
     use vars '%Config';
     if (" $Config{'extensions'} " !~ m[ Devel/PPPort ]) {
       print "1..0 # Skip -- Perl configured without Devel::PPPort module\n";
@@ -48,7 +48,7 @@ package Devel::PPPort;
 use vars '@ISA';
 require DynaLoader;
 @ISA = qw(DynaLoader);
-bootstrap Devel::PPPort;
+Devel::PPPort->bootstrap;
 
 package main;
 
@@ -60,7 +60,7 @@ ok(!&Devel::PPPort::PL_sv_no());
 is(&Devel::PPPort::PL_na("abcd"), 4);
 is(&Devel::PPPort::PL_Sv(), "mhx");
 ok(defined &Devel::PPPort::PL_tokenbuf());
-ok("$]" >= 5.009005 || &Devel::PPPort::PL_parser());
+ok(ivers($]) >= ivers("5.009005") || &Devel::PPPort::PL_parser());
 ok(&Devel::PPPort::PL_hexdigit() =~ /^[0-9a-zA-Z]+$/);
 ok(defined &Devel::PPPort::PL_hints());
 is(&Devel::PPPort::PL_ppaddr("mhx"), "MHX");
@@ -76,7 +76,7 @@ for (&Devel::PPPort::other_variables()) {
     local $SIG{'__WARN__'} = sub { push @w, @_ };
     ok(&Devel::PPPort::dummy_parser_warning());
   }
-  if ("$]" >= 5.009005) {
+  if (ivers($]) >= ivers("5.009005")) {
     ok(@w >= 0);
     for (@w) {
       print "# $_";
@@ -92,11 +92,11 @@ for (&Devel::PPPort::other_variables()) {
   is($fail, 0);
 }
 
-ok(&Devel::PPPort::no_dummy_parser_vars(1) >= ("$]" < 5.009005 ? 1 : 0));
+ok(&Devel::PPPort::no_dummy_parser_vars(1) >= (ivers($]) < ivers("5.009005") ? 1 : 0));
 
 eval { &Devel::PPPort::no_dummy_parser_vars(0) };
 
-if ("$]" < 5.009005) {
+if (ivers($]) < ivers("5.009005")) {
   is($@, '');
 }
 else {

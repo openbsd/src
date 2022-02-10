@@ -1,5 +1,4 @@
 5.011002
-CHARBITS                       # E
 ENTER_with_name                # U
 LEAVE_with_name                # U
 lex_bufutf8                    # U
@@ -16,3 +15,4 @@ lex_stuff_sv                   # U
 LEX_STUFF_UTF8                 # E
 lex_unstuff                    # U
 PL_keyword_plugin              # E
+toLOWER_LATIN1                 # U

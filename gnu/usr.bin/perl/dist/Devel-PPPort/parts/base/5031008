@@ -1,4 +1,5 @@
 5.031008
-memCHRs                        # U
 grok_bin_oct_hex               # F added by devel/scanprov
+memCHRs                        # U
 output_non_portable            # F added by devel/scanprov
+PERL_SCAN_NOTIFY_ILLDIGIT      # Z added by devel/scanprov
