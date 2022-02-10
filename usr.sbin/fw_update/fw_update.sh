@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.35 2022/01/30 02:39:19 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.36 2022/02/10 00:29:32 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -49,6 +49,7 @@ cleanup() {
 	[ "${FTPPID:-}" ] && kill -TERM -"$FTPPID" 2>/dev/null
 	[ "${FWPKGTMP:-}" ] && rm -rf "$FWPKGTMP"
 	"$REMOVE_LOCALSRC" && rm -rf "$LOCALSRC"
+	[ -e "${CFILE}" ] && [ ! -s "$CFILE" ] && rm -f "$CFILE"
 }
 trap cleanup EXIT
 
@@ -122,6 +123,21 @@ fetch() {
 	return 0
 }
 
+# If we fail to fetch the CFILE, we don't want to try again
+# but we might be doing this in a subshell so write out
+# a blank file indicating failure.
+check_cfile() {
+	if [ -e "$CFILE" ]; then
+		[ -s "$CFILE" ] || return 1
+		return 0
+	fi
+	if ! fetch_cfile "$@"; then
+		echo -n > "$CFILE"
+		return 1
+	fi
+	return 0
+}
+
 fetch_cfile() {
 	if "$DOWNLOAD"; then
 		set +o noclobber # we want to get the latest CFILE
@@ -131,14 +147,14 @@ fetch_cfile() {
 		    echo "Signature check of SHA256.sig failed" >&2 && return 1
 	elif [ ! -e "$CFILE" ]; then
 		echo "${0##*/}: $CFILE: No such file or directory" >&2
-		return 2
+		return 1
 	fi
 
 	return 0
 }
 
 verify() {
-	[ -e "$CFILE" ] || fetch_cfile || return 1
+	check_cfile || return 1
 	# The installer sha256 lacks -C, do it by hand
 	if ! fgrep -qx "SHA256 (${1##*/}) = $( /bin/sha256 -qb "$1" )" "$CFILE"; then
 		((VERBOSE != 1)) && echo "Checksum test for ${1##*/} failed." >&2
@@ -168,7 +184,7 @@ firmware_in_dmesg() {
 }
 
 firmware_filename() {
-	[ -e "$CFILE" ] || fetch_cfile || return 1
+	check_cfile || return 1
 	sed -n "s/.*(\($1-firmware-.*\.tgz\)).*/\1/p" "$CFILE" | sed '$!d'
 }
 
@@ -365,7 +381,7 @@ if [ "$OPT_F" ]; then
 	# Always check for latest CFILE and so latest firmware
 	if [ -e "$LOCALSRC/$CFILE" ]; then
 		mv "$LOCALSRC/$CFILE" "$LOCALSRC/$CFILE-OLD"
-		if fetch_cfile; then
+		if check_cfile; then
 			rm -f "$LOCALSRC/$CFILE-OLD"
 		else
 			mv "$LOCALSRC/$CFILE-OLD" "$LOCALSRC/$CFILE"
@@ -457,7 +473,7 @@ for f in "${devices[@]}"; do
 
 	verify_existing=true
 	if [ "$f" = "$d" ]; then
-		f=$( firmware_filename "$d" || true )
+		f=$( firmware_filename "$d" ) || continue
 		if [ ! "$f" ]; then
 			if "$INSTALL" && unregister_firmware "$d"; then
 				unregister="$unregister,$d"
@@ -501,7 +517,7 @@ for f in "${devices[@]}"; do
 		elif "$DOWNLOAD"; then
 			((VERBOSE == 1)) && echo " failed."
 			((VERBOSE > 1)) && echo "Refetching $f"
-			rm -f $f
+			rm -f "$f"
 		else
 			"$pending_status" && echo " failed."
 			continue
