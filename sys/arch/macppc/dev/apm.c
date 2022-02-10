@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.24 2021/03/26 23:34:50 kn Exp $	*/
+/*	$OpenBSD: apm.c,v 1.25 2022/02/10 05:48:02 gkoehler Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -52,6 +52,9 @@
 #include <machine/autoconf.h>
 
 #include <macppc/dev/pm_direct.h>
+
+#include "wsdisplay.h"
+#include <dev/wscons/wsdisplayvar.h>
 
 #if defined(APMDEBUG)
 #define DPRINTF(x)	printf x
@@ -213,14 +216,14 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	switch (cmd) {
 		/* some ioctl names from linux */
 	case APM_IOC_STANDBY:
-	case APM_IOC_STANDBY_REQ:
 	case APM_IOC_SUSPEND:
-	case APM_IOC_SUSPEND_REQ:
-	case APM_IOC_DEV_CTL:
-		if ((flag & FWRITE) == 0)
+		if ((flag & FWRITE) == 0) {
 			error = EBADF;
-		else
-			error = EOPNOTSUPP;
+			break;
+		}
+#ifdef SUSPEND
+		sleep_state(sc, SLEEP_SUSPEND);
+#endif
 		break;
 	case APM_IOC_PRN_CTL:
 		if ((flag & FWRITE) == 0)
@@ -331,3 +334,66 @@ apmkqfilter(dev_t dev, struct knote *kn)
 
 	return (0);
 }
+
+#ifdef SUSPEND
+void
+sleep_clocks(void *v)
+{
+}
+
+int
+sleep_showstate(void *v, int sleepmode)
+{
+	switch (sleepmode) {
+	case SLEEP_SUSPEND:
+		/* TODO blink the light */
+		return 0;
+	default:
+		return EOPNOTSUPP;
+	}
+}
+
+int
+sleep_setstate(void *v)
+{
+	printf("TODO sleep_setstate\n");
+	return 0;
+}
+
+int
+sleep_resume(void *v)
+{
+	return 0;
+}
+
+void
+gosleep(void *v)
+{
+}
+
+void
+display_suspend(void *v)
+{
+#if NWSDISPLAY > 0
+	wsdisplay_suspend();
+#endif /* NWSDISPLAY > 0 */
+}
+
+void
+display_resume(void *v)
+{
+#if NWSDISPLAY > 0
+	wsdisplay_resume();
+#endif /* NWSDISPLAY > 0 */
+}
+
+void
+suspend_finish(void *v)
+{
+}
+
+void
+disable_lid_wakeups(void *v)
+{
+}
+#endif /* SUSPEND */
