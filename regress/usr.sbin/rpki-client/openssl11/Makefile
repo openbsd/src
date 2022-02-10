@@ -18,10 +18,12 @@ a_time_tm_gen.c: a_time_tm.c
 
 CLEANFILES += a_time_tm_gen.c a_time_tm_gen.c.tmp
 
+SRCS_test-ip =		a_time_tm_gen.c o_time.c
 SRCS_test-mft =		a_time_tm_gen.c o_time.c
 SRCS_test-roa =		a_time_tm_gen.c o_time.c
 SRCS_test-cert =	a_time_tm_gen.c o_time.c
 SRCS_test-gbr =		a_time_tm_gen.c o_time.c
+SRCS_test-tal =		a_time_tm_gen.c o_time.c
 SRCS_test-bgpsec =	a_time_tm_gen.c o_time.c
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/
 

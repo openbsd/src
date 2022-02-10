@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.18 2022/02/04 13:11:14 claudio Exp $
+# $OpenBSD: Makefile.inc,v 1.19 2022/02/10 19:16:44 tb Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -18,7 +18,7 @@ CFLAGS+=	-I${.CURDIR}/.. -I${.CURDIR}/../../../../usr.sbin/rpki-client
 LDADD+=		-lcrypto -lutil
 DPADD+=		${LIBCRYPTO} ${LIBUTIL}
 
-SRCS_test-ip=	test-ip.c ip.c io.c encoding.c print.c
+SRCS_test-ip +=		test-ip.c ip.c io.c encoding.c print.c x509.c
 run-regress-test-ip: test-ip
 	./test-ip
 
@@ -48,7 +48,7 @@ run-regress-test-gbr: test-gbr
 	./test-gbr -v ${.CURDIR}/../gbr/*.gbr
 
 SRCS_test-tal+=	test-tal.c tal.c ip.c io.c log.c validate.c \
-		encoding.c print.c dummy.c
+		encoding.c print.c dummy.c x509.c
 run-regress-test-tal: test-tal
 	./test-tal -v ${.CURDIR}/../tal/*.tal
 
