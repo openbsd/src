@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.554 2022/02/11 17:09:39 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.555 2022/02/11 17:19:59 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -392,7 +392,7 @@ see
 .Ev REORDER_DEPENDENCIES
 .Pc .
 .It Cm generate-readmes
-Generate READMEs and rc scripts from
+Generate READMEs, rc scripts and login.conf.d files from
 .Pa ${PKGDIR}
 into
 .Pa ${WRKINST} .
@@ -2105,21 +2105,6 @@ Defaults to
 Set to
 .Sq Yes
 to show every acquire/release lock operation.
-.It Ev LOGIN_CONF
-List of files copied during
-.Cm post-install
-from
-.Ev PKGDIR
-into
-.Pa ${PREFIX}/share/examples/login.conf.d .
-When a port provides a daemon requiring non-default
-.Xr login.conf 5
-attributes, a sample file should be provided,
-listed in
-.Ev LOGIN_CONF ,
-and used as a template by adding
-.Cm @sample /etc/login.conf.d/${ Ns Va class Ns }
-to the packing-list.
 .It Ev LP64_ARCHS
 Set to the list of 64-bit architectures.
 Read-only.
@@ -3680,6 +3665,20 @@ Variables from
 will be expanded.
 Multi-package ports will use
 .Pa README${SUBPACKAGE} .
+.It Pa ${PKGDIR}/<foo>.login
+login.conf.d file for class <foo>.
+Will be installed as
+.Ar ${PREFIX}/share/examples/login.conf.d/foo
+at the end of
+.Cm fake .
+When a port provides a daemon started by
+.Xr rc.d 8
+requiring non-default
+.Xr login.conf 5
+attributes, a sample file should be provided
+and used as a template by adding
+.Cm @sample /etc/login.conf.d/${ Ns Va class Ns }
+to the packing list.
 .It Pa ${PKGDIR}/<foo>.rc
 Startup script for <foo>.
 Will be installed as
