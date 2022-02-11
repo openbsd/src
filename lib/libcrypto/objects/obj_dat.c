@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.45 2022/01/08 21:36:39 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.46 2022/02/11 16:39:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -458,9 +458,9 @@ OBJ_obj2nid(const ASN1_OBJECT *a)
 	const unsigned int *op;
 	ADDED_OBJ ad, *adp;
 
-	if (a == NULL)
+	if (a == NULL || a->length == 0)
 		return (NID_undef);
-	if (a->nid != 0)
+	if (a->nid != NID_undef)
 		return (a->nid);
 
 	if (added != NULL) {
