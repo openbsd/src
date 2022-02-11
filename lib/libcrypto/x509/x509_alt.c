@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_alt.c,v 1.7 2022/02/11 17:39:36 tb Exp $ */
+/* $OpenBSD: x509_alt.c,v 1.8 2022/02/11 17:41:55 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -677,7 +677,8 @@ v2i_GENERAL_NAME_ex(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 		}
 		break;
 	case GEN_IPADD:
-		if (len != 4 && len != 16) {
+		if ((!is_nc && len != 4 && len != 16) ||
+		    (is_nc && len != 8 && len != 32)) {
 			X509V3error(X509V3_R_BAD_IP_ADDRESS);
 			ERR_asprintf_error_data("name=%s len=%zu", name, len);
 			goto err;
