@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.553 2022/02/11 15:49:25 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.554 2022/02/11 17:09:39 jmc Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2116,7 +2116,7 @@ When a port provides a daemon requiring non-default
 .Xr login.conf 5
 attributes, a sample file should be provided,
 listed in
-.Ev LOGIN_CONF,
+.Ev LOGIN_CONF ,
 and used as a template by adding
 .Cm @sample /etc/login.conf.d/${ Ns Va class Ns }
 to the packing-list.
