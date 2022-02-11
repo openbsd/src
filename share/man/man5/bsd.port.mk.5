@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.552 2022/02/11 12:42:24 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.553 2022/02/11 15:49:25 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -194,7 +194,7 @@ Uninstall package.
 .It Va package
 Remove all copies of package file.
 .It Va plist
-Remove registered packing lists of all subpackages.
+Remove registered packing-lists of all subpackages.
 .It Va test
 Clean test cookie.
 .It Va sub
@@ -836,29 +836,21 @@ and
 .Ev FORCE_UPDATE
 as well.
 .It Cm update-plist
-Update the packing lists for a port, using the fake installation and the
-existing packing lists.
-.Cm update-plist
-should produce a mostly correct
-.Pa PLIST
-file, handling GNU
-.Xr info 1
-files, setuid files, and empty directories.
-It moves an existing file to
-.Pa PLIST.orig .
-If the generated list includes files and directories that shouldn't be
-included, comment these like this:
-.Bd -literal
-@comment unwanted-file
-@comment unwanted-dir/
-.Ed
-.Pp
-Subsequent calls to
-.Cm update-plist
-will automatically recognize and handle such lines correctly.
-.Pp
-.Cm update-plist
-may not handle flavor and multi-packages situations correctly yet, so beware.
+Update the packing-lists for a port, using the fake installation and the
+existing packing lists, by invoking
+.Xr update-plist 1
+with the correct parameters, along with
+port-specific options
+.Po
+.Ev UPDATE_PLIST_ARGS
+.Pc
+and user settings
+.Po
+.Ev UPDATE_PLIST_OPTS
+.Pc .
+Also see
+.Ev SUBST_VARS
+for details about the default handling of variable substitution.
 .It Cm verbose-show
 Similar to
 .Cm show ,
@@ -2127,7 +2119,7 @@ listed in
 .Ev LOGIN_CONF,
 and used as a template by adding
 .Cm @sample /etc/login.conf.d/${ Ns Va class Ns }
-to the packing list.
+to the packing-list.
 .It Ev LP64_ARCHS
 Set to the list of 64-bit architectures.
 Read-only.
@@ -2676,7 +2668,7 @@ it will automatically override
 User settings, defaults to
 .Sq \&No .
 .It Ev PKGDIR
-Location for packaging information (packing list, port description, messages).
+Location for packaging information (packing-list, port description, messages).
 .Cm update-plist
 may create it.
 Must be a valid directory.
@@ -3152,7 +3144,7 @@ from
 .Ev BASESYSCONFDIR ,
 which defaults to
 .Pa /etc .
-Passed to gnu configure scripts and substituted in PLISTs.
+Passed to gnu configure scripts and substituted in packing-lists.
 .It Ev TAR
 Name of the tar binary.
 .It Ev TARGETS
@@ -3480,7 +3472,8 @@ other files pertinent to the package.
 .It "Discovered old directory in ..."
 This message comes from
 .Xr update-plist 1 .
-A directory was found in the PLIST that used to be needed but is no longer,
+A directory was found in the packing-list file mentioned in the diagnostic.
+That directory line used to be needed but is no longer,
 because it's now accounted for through dependencies.
 Indicates the old directory has been removed.
 .It "Error: change in plist between ..."
@@ -4134,7 +4127,7 @@ if
 this is
 .Sq -no_map-gfx .
 .It
-Generate the actual PLIST from the template ${PLIST},
+Generate the actual packing-list from the template ${PLIST},
 by inserting fragments
 and applying the same variable substitutions as other package information.
 .El
@@ -4195,7 +4188,8 @@ Some programs will prefer to use rpath to find their own libraries.
 .Pp
 The special
 .Cm update-plist
-target does a fairly good job of automatically generating the PLIST.
+target does a fairly good job of automatically generating the packing-list
+information.
 .Pp
 If
 .Ev PLIST_REPOSITORY
@@ -4567,7 +4561,7 @@ Use SUBST_VARS instead.
 .Ox
 does not allow general substitutions of the form VAR=value, but uses
 only a list of variables instead.
-Most package files gets transformed, instead of only the packing list.
+Most package files gets transformed, instead of only the packing-list.
 .It Ev PREFERRED_CIPHERS
 Allowing user change of cryptographic digest is dangerous.
 .It Ev RECURSIVE_FETCH_LIST
@@ -4674,7 +4668,7 @@ shared libraries.
 Use PLIST directly.
 Until revision 1.295,
 .Nm
-did not substitute variables in the packing list unless this special form
+did not substitute variables in the packing-list unless this special form
 was used.
 .It Pa ${PKGDIR}/REQ*
 Old requirement script.
