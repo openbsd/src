@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_alt.c,v 1.6 2022/02/11 17:37:54 tb Exp $ */
+/* $OpenBSD: x509_alt.c,v 1.7 2022/02/11 17:39:36 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -649,6 +649,8 @@ v2i_GENERAL_NAME_ex(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 	}
 
 	ret = a2i_GENERAL_NAME(out, method, ctx, type, value, is_nc);
+	if (ret == NULL)
+		return NULL;
 
 	/* Validate what we have for sanity */
 	type = x509_constraints_general_to_bytes(ret, &bytes, &len);
