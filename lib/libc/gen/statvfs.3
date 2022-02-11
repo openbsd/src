@@ -1,4 +1,4 @@
-.\"	$OpenBSD: statvfs.3,v 1.8 2015/01/29 01:46:30 schwarze Exp $
+.\"	$OpenBSD: statvfs.3,v 1.9 2022/02/11 15:11:35 millert Exp $
 .\"	$NetBSD: statfs.2,v 1.10 1995/06/29 11:40:48 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)statfs.2	8.3 (Berkeley) 2/11/94
 .\"
-.Dd $Mdocdate: January 29 2015 $
+.Dd $Mdocdate: February 11 2022 $
 .Dt STATVFS 3
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@ struct statvfs {
         fsblkcnt_t    f_bavail;   /* free blocks for non-root */
         fsfilcnt_t    f_files;    /* total file inodes */
         fsfilcnt_t    f_ffree;    /* free file inodes */
-        fsfilcnt_t    f_favail;   /* free file inodes for to non-root */
+        fsfilcnt_t    f_favail;   /* free file inodes for non-root */
         unsigned long f_fsid;     /* file system id */
         unsigned long f_flag;     /* bit mask of f_flag values */
         unsigned long f_namemax;  /* maximum filename length */

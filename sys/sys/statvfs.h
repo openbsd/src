@@ -1,4 +1,4 @@
-/*	$OpenBSD: statvfs.h,v 1.3 2013/03/24 17:45:50 deraadt Exp $	*/
+/*	$OpenBSD: statvfs.h,v 1.4 2022/02/11 15:11:35 millert Exp $	*/
 
 /*
  * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
@@ -29,7 +29,7 @@ struct statvfs {
 	fsblkcnt_t	f_bavail;	/* free blocks for non-root */
 	fsfilcnt_t	f_files;	/* total file inodes */
 	fsfilcnt_t	f_ffree;	/* free file inodes */
-	fsfilcnt_t	f_favail;	/* free file inodes for to non-root */
+	fsfilcnt_t	f_favail;	/* free file inodes for non-root */
 	unsigned long	f_fsid;		/* file system id */
 	unsigned long	f_flag;		/* bit mask of f_flag values */
 	unsigned long	f_namemax;	/* maximum filename length */
