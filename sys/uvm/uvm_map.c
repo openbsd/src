@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.285 2022/02/11 09:25:04 kn Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.286 2022/02/11 12:06:48 kn Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -2734,7 +2734,6 @@ uvm_map_teardown(struct vm_map *map)
 	KERNEL_ASSERT_UNLOCKED();
 
 	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
-	vm_map_lock(map);
 
 	/* Remove address selectors. */
 	uvm_addr_destroy(map->uaddr_exe);
