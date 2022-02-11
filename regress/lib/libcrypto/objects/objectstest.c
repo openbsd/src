@@ -1,4 +1,4 @@
-/* $OpenBSD: objectstest.c,v 1.1 2022/02/11 16:34:23 jsing Exp $ */
+/* $OpenBSD: objectstest.c,v 1.2 2022/02/11 16:39:50 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -211,7 +211,7 @@ obj_nid_test(struct obj_test *ot)
 	int nid;
 	int failed = 1;
 
-	if (ot->nid == NID_undef)
+	if (ot->nid == NID_undef && ot->oid != NULL)
 		return 0;
 
 	if ((obj = OBJ_nid2obj(ot->nid)) == NULL) {
