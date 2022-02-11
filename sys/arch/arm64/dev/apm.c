@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.11 2022/02/11 00:43:27 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.12 2022/02/11 01:55:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -349,11 +349,6 @@ apm_record_event(u_int event, const char *src, const char *msg)
 }
 
 #ifdef SUSPEND
-
-void
-sleep_clocks(void *v)
-{
-}
 
 #ifdef MULTIPROCESSOR
 

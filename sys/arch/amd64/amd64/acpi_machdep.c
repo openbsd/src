@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.97 2022/02/10 16:41:51 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.98 2022/02/11 01:55:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -375,17 +375,6 @@ acpi_attach_machdep(struct acpi_softc *sc)
 }
 
 #ifndef SMALL_KERNEL
-
-void
-sleep_clocks(void *v)
-{
-	rtcstop();
-
-#if NLAPIC > 0
-	lapic_disable();
-#endif
-}
-
 /*
  * This function may not have local variables due to a bug between
  * acpi_savecpu() and the resume path.
@@ -393,6 +382,11 @@ sleep_clocks(void *v)
 int
 acpi_sleep_cpu(struct acpi_softc *sc, int state)
 {
+	rtcstop();
+#if NLAPIC > 0
+	lapic_disable();
+#endif
+
 	/*
 	 * ACPI defines two wakeup vectors. One is used for ACPI 1.0
 	 * implementations - it's in the FACS table as wakeup_vector and

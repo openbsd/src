@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.79 2022/02/10 16:41:53 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.80 2022/02/11 01:55:12 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -334,17 +334,6 @@ acpi_attach_machdep(struct acpi_softc *sc)
 int	save_lapic_tpr;
 #endif
 
-void
-sleep_clocks(void *v)
-{
-	rtcstop();
-
-#if NLAPIC > 0
-	save_lapic_tpr = lapic_tpr;
-	lapic_disable();
-#endif
-}
-
 /*
  * This function may not have local variables due to a bug between
  * acpi_savecpu() and the resume path.
@@ -352,6 +341,12 @@ sleep_clocks(void *v)
 int
 acpi_sleep_cpu(struct acpi_softc *sc, int state)
 {
+	rtcstop();
+#if NLAPIC > 0
+	save_lapic_tpr = lapic_tpr;
+	lapic_disable();
+#endif
+
 	/* i386 does lazy pmap_activate: switch to kernel memory view */
 	pmap_activate(curproc);
 

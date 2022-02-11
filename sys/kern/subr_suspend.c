@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.2 2022/02/10 16:41:53 deraadt Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.3 2022/02/11 01:55:12 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -103,7 +103,6 @@ sleep_state(void *v, int sleepmode)
 
 	if (config_suspend_all(DVACT_SUSPEND) != 0)
 		goto fail_suspend;
-	sleep_clocks(v);
 
 	suspend_randomness();
 
