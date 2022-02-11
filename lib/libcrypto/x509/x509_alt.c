@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_alt.c,v 1.5 2021/10/28 10:58:23 tb Exp $ */
+/* $OpenBSD: x509_alt.c,v 1.6 2022/02/11 17:37:54 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -686,7 +686,8 @@ v2i_GENERAL_NAME_ex(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 	}
 	return ret;
  err:
-	GENERAL_NAME_free(ret);
+	if (out == NULL)
+		GENERAL_NAME_free(ret);
 	return NULL;
 }
 
