@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.179 2022/02/08 08:56:41 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.180 2022/02/11 07:25:50 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -2093,12 +2093,6 @@ klist_remove_locked(struct klist *klist, struct knote *kn)
 	KLIST_ASSERT_LOCKED(klist);
 
 	SLIST_REMOVE(&klist->kl_list, kn, knote, kn_selnext);
-}
-
-int
-klist_empty(struct klist *klist)
-{
-	return (SLIST_EMPTY(&klist->kl_list));
 }
 
 /*

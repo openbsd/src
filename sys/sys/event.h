@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.62 2022/02/08 08:56:41 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.63 2022/02/11 07:25:50 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -314,8 +314,13 @@ extern void	klist_insert(struct klist *, struct knote *);
 extern void	klist_insert_locked(struct klist *, struct knote *);
 extern void	klist_remove(struct klist *, struct knote *);
 extern void	klist_remove_locked(struct klist *, struct knote *);
-extern int	klist_empty(struct klist *);
 extern void	klist_invalidate(struct klist *);
+
+static inline int
+klist_empty(struct klist *klist)
+{
+	return (SLIST_EMPTY(&klist->kl_list));
+}
 
 #else	/* !_KERNEL */
 
