@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.36 2022/02/10 00:29:32 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.37 2022/02/11 00:46:58 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -42,11 +42,13 @@ INSTALL=true
 LOCALSRC=
 
 unset FTPPID
+unset LOCKPID
 unset FWPKGTMP
 REMOVE_LOCALSRC=false
 cleanup() {
 	set +o errexit # ignore errors from killing ftp
 	[ "${FTPPID:-}" ] && kill -TERM -"$FTPPID" 2>/dev/null
+	[ "${LOCKPID:-}" ] && kill -TERM -"$LOCKPID" 2>/dev/null
 	[ "${FWPKGTMP:-}" ] && rm -rf "$FWPKGTMP"
 	"$REMOVE_LOCALSRC" && rm -rf "$LOCALSRC"
 	[ -e "${CFILE}" ] && [ ! -s "$CFILE" ] && rm -f "$CFILE"
@@ -192,6 +194,35 @@ firmware_devicename() {
 	local _d="${1##*/}"
 	_d="${_d%-firmware-*}"
 	echo "$_d"
+}
+
+lock_db() {
+	[ "${LOCKPID:-}" ] && return 0
+
+	# The installer doesn't have perl, so we can't lock there
+	[ -e /usr/bin/perl ] || return 0
+
+	set -o monitor
+	perl <<'EOL' |&
+		use v5.16;
+		use warnings;
+		use OpenBSD::PackageInfo qw< lock_db unlock_db >;
+		use OpenBSD::BaseState;
+
+		$|=1;
+
+		lock_db(0, 'OpenBSD::BaseState');
+		END { unlock_db }
+		$SIG{TERM} = sub { exit };
+	
+		say $$;
+		sleep;
+EOL
+	set +o monitor
+
+	read -rp LOCKPID
+
+	return 0
 }
 
 installed_firmware() {
@@ -401,6 +432,7 @@ set -sA devices -- "$@"
 
 if "$DELETE"; then
 	[ "$OPT_F" ] && echo "Cannot use -F and -d" >&2 && usage
+	lock_db
 
 	# Show the "Uninstall" message when just deleting not upgrading
 	((VERBOSE)) && VERBOSE=3
@@ -463,6 +495,8 @@ else
 fi
 
 [ "${devices[*]:-}" ] || exit
+
+lock_db
 
 added=''
 updated=''
