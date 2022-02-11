@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.211 2022/02/05 04:08:27 dlg Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.212 2022/02/11 07:28:29 visa Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -580,16 +580,12 @@ out:
 void
 bpf_wakeup(struct bpf_d *d)
 {
-	struct klist *klist;
-
 	MUTEX_ASSERT_LOCKED(&d->bd_mtx);
 
 	if (d->bd_nreaders)
 		wakeup(d);
 
-	klist = &d->bd_sel.si_note;
-	if (!klist_empty(klist))
-		knote(klist, 0);
+	KNOTE(&d->bd_sel.si_note, 0);
 
 	/*
 	 * As long as pgsigio() and selwakeup() need to be protected
