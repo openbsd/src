@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.63 2022/02/11 07:25:50 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.64 2022/02/11 07:27:07 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -154,7 +154,7 @@ struct klist {
 
 #define KNOTE(list, hint)	do { \
 					struct klist *__list = (list); \
-					if (__list != NULL) \
+					if (!klist_empty(__list)) \
 						knote(__list, hint); \
 				} while (0)
 
