@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.10 2022/02/10 06:52:13 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.11 2022/02/11 00:43:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -352,17 +352,6 @@ apm_record_event(u_int event, const char *src, const char *msg)
 
 void
 sleep_clocks(void *v)
-{
-}
-
-int
-sleep_cpu(void *v, int state)
-{
-	return 0;
-}
-
-void
-resume_cpu(void *sc, int state)
 {
 }
 
