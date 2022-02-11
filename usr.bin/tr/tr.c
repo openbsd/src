@@ -1,4 +1,4 @@
-/*	$OpenBSD: tr.c,v 1.20 2021/11/02 15:45:52 cheloha Exp $	*/
+/*	$OpenBSD: tr.c,v 1.21 2022/02/11 16:09:21 cheloha Exp $	*/
 /*	$NetBSD: tr.c,v 1.5 1995/08/31 22:13:48 jtc Exp $	*/
 
 /*
@@ -40,7 +40,8 @@
 
 #include "extern.h"
 
-static int string1[NCHARS] = {
+int delete[NCHARS], squeeze[NCHARS];
+int translate[NCHARS] = {
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,		/* ASCII */
 	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
 	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -73,7 +74,7 @@ static int string1[NCHARS] = {
 	0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef,
 	0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7,
 	0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff,
-}, string2[NCHARS];
+};
 
 STR s1 = { STRING1, NORMAL, 0, OOBCH, { 0, OOBCH }, NULL, NULL };
 STR s2 = { STRING2, NORMAL, 0, OOBCH, { 0, OOBCH }, NULL, NULL };
@@ -122,11 +123,11 @@ main(int argc, char *argv[])
 		if (argc != 2)
 			usage();
 
-		setup(string1, argv[0], &s1, cflag);
-		setup(string2, argv[1], &s2, 0);
+		setup(delete, argv[0], &s1, cflag);
+		setup(squeeze, argv[1], &s2, 0);
 
 		for (lastch = OOBCH; (ch = getchar()) != EOF;)
-			if (!string1[ch] && (!string2[ch] || lastch != ch)) {
+			if (!delete[ch] && (!squeeze[ch] || lastch != ch)) {
 				lastch = ch;
 				(void)putchar(ch);
 			}
@@ -141,10 +142,10 @@ main(int argc, char *argv[])
 		if (argc != 1)
 			usage();
 
-		setup(string1, argv[0], &s1, cflag);
+		setup(delete, argv[0], &s1, cflag);
 
 		while ((ch = getchar()) != EOF)
-			if (!string1[ch])
+			if (!delete[ch])
 				(void)putchar(ch);
 		exit(0);
 	}
@@ -154,10 +155,10 @@ main(int argc, char *argv[])
 	 * Squeeze all characters (or complemented characters) in string1.
 	 */
 	if (sflag && argc == 1) {
-		setup(string1, argv[0], &s1, cflag);
+		setup(squeeze, argv[0], &s1, cflag);
 
 		for (lastch = OOBCH; (ch = getchar()) != EOF;)
-			if (!string1[ch] || lastch != ch) {
+			if (!squeeze[ch] || lastch != ch) {
 				lastch = ch;
 				(void)putchar(ch);
 			}
@@ -177,7 +178,7 @@ main(int argc, char *argv[])
 	s2.str = (unsigned char *)argv[1];
 
 	if (cflag)
-		for (cnt = NCHARS, p = string1; cnt--;)
+		for (cnt = NCHARS, p = translate; cnt--;)
 			*p++ = OOBCH;
 
 	if (!next(&s2))
@@ -187,45 +188,45 @@ main(int argc, char *argv[])
 	ch = s2.lastch;
 	if (sflag)
 		while (next(&s1)) {
-			string1[s1.lastch] = ch = s2.lastch;
-			string2[ch] = 1;
+			translate[s1.lastch] = ch = s2.lastch;
+			squeeze[ch] = 1;
 			(void)next(&s2);
 		}
 	else
 		while (next(&s1)) {
-			string1[s1.lastch] = ch = s2.lastch;
+			translate[s1.lastch] = ch = s2.lastch;
 			(void)next(&s2);
 		}
 
 	if (cflag)
-		for (cnt = 0, p = string1; cnt < NCHARS; ++p, ++cnt)
+		for (cnt = 0, p = translate; cnt < NCHARS; ++p, ++cnt)
 			*p = *p == OOBCH ? ch : cnt;
 
 	if (sflag)
 		for (lastch = OOBCH; (ch = getchar()) != EOF;) {
-			ch = string1[ch];
-			if (!string2[ch] || lastch != ch) {
+			ch = translate[ch];
+			if (!squeeze[ch] || lastch != ch) {
 				lastch = ch;
 				(void)putchar(ch);
 			}
 		}
 	else
 		while ((ch = getchar()) != EOF)
-			(void)putchar(string1[ch]);
+			(void)putchar(translate[ch]);
 	exit (0);
 }
 
 static void
-setup(int *string, char *arg, STR *str, int cflag)
+setup(int *table, char *arg, STR *str, int cflag)
 {
 	int cnt, *p;
 
 	str->str = (unsigned char *)arg;
-	bzero(string, NCHARS * sizeof(int));
+	bzero(table, NCHARS * sizeof(int));
 	while (next(str))
-		string[str->lastch] = 1;
+		table[str->lastch] = 1;
 	if (cflag)
-		for (p = string, cnt = NCHARS; cnt--; ++p)
+		for (p = table, cnt = NCHARS; cnt--; ++p)
 			*p = !*p;
 }
 
