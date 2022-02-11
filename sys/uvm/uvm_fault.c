@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.127 2022/02/10 10:15:35 kn Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.128 2022/02/11 09:25:04 kn Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -1616,7 +1616,6 @@ uvm_fault_unwire_locked(vm_map_t map, vaddr_t start, vaddr_t end)
 	struct vm_page *pg;
 
 	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
-	vm_map_assert_anylock(map);
 
 	/*
 	 * we assume that the area we are unwiring has actually been wired
