@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.27 2022/02/12 16:22:03 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.28 2022/02/12 16:22:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -335,6 +335,21 @@ apmkqfilter(dev_t dev, struct knote *kn)
 }
 
 #ifdef SUSPEND
+
+#ifdef MULTIPROCESSOR
+
+void
+sleep_mp(void)
+{
+}
+
+void
+resume_mp(void)
+{
+}
+
+#endif /* MULTIPROCESSOR */
+
 int
 sleep_showstate(void *v, int sleepmode)
 {
