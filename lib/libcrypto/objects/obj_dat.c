@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.46 2022/02/11 16:39:16 jsing Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.47 2022/02/12 03:01:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -526,10 +526,9 @@ OBJ_txt2obj(const char *s, int no_name)
 int
 OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 {
-	int i, ret = 0, len, nid, first = 1, use_bn;
-	BIGNUM *bl = NULL;
-	unsigned long l;
+	int i, ret = 0, len, nid, first = 1;
 	const unsigned char *p;
+	uint64_t l;
 
 	/* Ensure that, at every state, |buf| is NUL-terminated. */
 	if (buf_len > 0)
@@ -554,42 +553,24 @@ OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 
 	while (len > 0) {
 		l = 0;
-		use_bn = 0;
 		for (;;) {
 			unsigned char c = *p++;
 			len--;
 			if ((len == 0) && (c & 0x80))
 				goto err;
-			if (use_bn) {
-				if (!BN_add_word(bl, c & 0x7f))
-					goto err;
-			} else
-				l |= c & 0x7f;
+			l |= c & 0x7f;
 			if (!(c & 0x80))
 				break;
-			if (!use_bn && (l > (ULONG_MAX >> 7L))) {
-				if (!bl && !(bl = BN_new()))
-					goto err;
-				if (!BN_set_word(bl, l))
-					goto err;
-				use_bn = 1;
-			}
-			if (use_bn) {
-				if (!BN_lshift(bl, bl, 7))
-					goto err;
-			} else
-				l <<= 7L;
+			if (l > (UINT64_MAX >> 7L))
+				goto err;
+			l <<= 7L;
 		}
 
 		if (first) {
 			first = 0;
 			if (l >= 80) {
 				i = 2;
-				if (use_bn) {
-					if (!BN_sub_word(bl, 80))
-						goto err;
-				} else
-					l -= 80;
+				l -= 80;
 			} else {
 				i = (int)(l / 40);
 				l -= (long)(i * 40);
@@ -602,39 +583,19 @@ OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 			ret++;
 		}
 
-		if (use_bn) {
-			char *bndec;
-
-			bndec = BN_bn2dec(bl);
-			if (!bndec)
-				goto err;
-			i = snprintf(buf, buf_len, ".%s", bndec);
-			free(bndec);
-			if (i < 0)
-				goto err;
-			if (i >= buf_len) {
-				buf_len = 0;
-			} else {
-				buf += i;
-				buf_len -= i;
-			}
-			ret += i;
+		i = snprintf(buf, buf_len, ".%llu", l);
+		if (i < 0)
+			goto err;
+		if (i >= buf_len) {
+			buf_len = 0;
 		} else {
-			i = snprintf(buf, buf_len, ".%lu", l);
-			if (i < 0)
-				goto err;
-			if (i >= buf_len) {
-				buf_len = 0;
-			} else {
-				buf += i;
-				buf_len -= i;
-			}
-			ret += i;
+			buf += i;
+			buf_len -= i;
 		}
+		ret += i;
 	}
 
  out:
-	BN_free(bl);
 	return ret;
 
  err:
