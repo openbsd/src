@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.241 2022/02/10 14:59:35 millert Exp $	*/
+/*	$OpenBSD: mta.c,v 1.242 2022/02/12 18:22:04 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -123,12 +123,6 @@ void mta_unblock(struct mta_source *, char *);
 int mta_is_blocked(struct mta_source *, char *);
 static int mta_block_cmp(const struct mta_block *, const struct mta_block *);
 SPLAY_PROTOTYPE(mta_block_tree, mta_block, entry, mta_block_cmp);
-
-/*
- * This function is not publicy exported because it is a hack until libtls
- * has a proper privsep setup
- */
-void tls_config_use_fake_private_key(struct tls_config *config);
 
 static struct mta_relay_tree		relays;
 static struct mta_domain_tree		domains;
@@ -506,7 +500,7 @@ mta_setup_dispatcher(struct dispatcher *dispatcher)
 			fatal("client pki \"%s\" not found ", remote->pki);
 
 		tls_config_set_dheparams(config, dheparams[pki->pki_dhe]);
-		tls_config_use_fake_private_key(config);
+		tls_config_set_sign_cb(config, ca_sign, NULL);
 		if (tls_config_set_keypair_mem(config, pki->pki_cert,
 		    pki->pki_cert_len, NULL, 0) == -1)
 		fatal("tls_config_set_keypair_mem");

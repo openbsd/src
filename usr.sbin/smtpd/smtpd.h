@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.672 2022/02/10 14:59:35 millert Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.673 2022/02/12 18:22:04 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -329,9 +329,7 @@ enum imsg_type {
 	IMSG_FILTER_SMTP_DATA_BEGIN,
 	IMSG_FILTER_SMTP_DATA_END,
 
-	IMSG_CA_RSA_PRIVENC,
-	IMSG_CA_RSA_PRIVDEC,
-	IMSG_CA_ECDSA_SIGN,
+	IMSG_CA_SIGN,
 };
 
 enum smtp_proc_type {
@@ -1271,12 +1269,8 @@ void bounce_fd(int);
 
 
 /* ca.c */
-int	 ca(void);
-int	 ca_X509_verify(void *, void *, const char *, const char *, const char **);
-void	 ca_imsg(struct mproc *, struct imsg *);
-void	 ca_init(void);
-void	 ca_engine_init(void);
-
+int ca(void);
+int ca_sign(void *, const char *, const uint8_t *, size_t, int, uint8_t **, size_t *);
 
 /* compress_backend.c */
 struct compress_backend *compress_backend_lookup(const char *);

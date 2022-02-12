@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp.c,v 1.171 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: smtp.c,v 1.172 2022/02/12 18:22:04 eric Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -46,12 +46,6 @@ proxy_session(struct listener *listener, int sock,
 	const struct sockaddr_storage *));
 
 static void smtp_accepted(struct listener *, int, const struct sockaddr_storage *, struct io *);
-
-/*
- * This function are not publicy exported because it is a hack until libtls
- * has a proper privsep setup
- */
-void tls_config_use_fake_private_key(struct tls_config *config);
 
 #define	SMTP_FD_RESERVE	5
 static size_t	sessions;
@@ -183,7 +177,7 @@ smtp_setup_listener_tls(struct listener *l)
 	if (tls_config_set_dheparams(config, dheparams[pki->pki_dhe]) == -1)
 		fatal("tls_config_set_dheparams");
 
-	tls_config_use_fake_private_key(config);
+	tls_config_set_sign_cb(config, ca_sign, NULL);
 	for (i = 0; i < l->pkicount; i++) {
 		pki = l->pki[i];
 		if (i == 0) {
