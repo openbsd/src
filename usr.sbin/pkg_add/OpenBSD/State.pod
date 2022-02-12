@@ -1,4 +1,4 @@
-$OpenBSD: State.pod,v 1.2 2021/01/30 10:37:22 espie Exp $
+$OpenBSD: State.pod,v 1.3 2022/02/12 09:46:19 espie Exp $
 
 =head1 NAME
 
@@ -36,6 +36,9 @@ Subclass C<OpenBSD::State::AddCreateDelete> adds progressmeter behavior, along
 with options -m, -n and -x.
 
 Some methods can be used and overridden safely.
+
+See also C<OpenBSD::BaseState> which contains most of the stateless utility
+code like C<say> and friends.
 
 =over 4
 
@@ -112,6 +115,30 @@ string.
 
 callback for C<SIGCONT>, to be overridden by subclasses if some specific
 treatment (such as terminal redraw/reset) is needed.
+
+=item $state->sync_display
+
+hook to be overriden. Called by all the print functions prior to displaying
+anything. To be used to write things out cleanly (e.g., wipe out a 
+progressmeter line prior to writing an error message, for instance)
+
+=item $state->system([child setup], [parent setup], @args)
+
+calls C<exec> without an extra shell, with optional code to be run on the
+child, and optional code to be run on the father, then wait for the child
+and write possible errors
+
+=item $state->verbose_system([child setup], [parent setup], @args)
+
+like system, except it always shows what it's running
+
+=item $state->copy_file(@names)
+
+verbose interface to C<File::Copy> with error reporting.
+
+=item $state->unlink(@names)
+
+verbose interface to C<unlink> with error reporting.
 
 =back
 
