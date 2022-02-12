@@ -1,4 +1,4 @@
-/* $OpenBSD: objectstest.c,v 1.2 2022/02/11 16:39:50 jsing Exp $ */
+/* $OpenBSD: objectstest.c,v 1.3 2022/02/12 03:02:47 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -353,20 +353,20 @@ struct oid_large_test oid_large_tests[] = {
 		.oid = "1.3.18446744073709551616",
 		.asn1_der = asn1_large_oid2,
 		.asn1_der_len = sizeof(asn1_large_oid2),
-		.obj2txt = 1,
+		.obj2txt = 0,
 	},
 	{
 		.oid = "1.3.340282366920938463463374607431768211455",
 		.asn1_der = asn1_large_oid3,
 		.asn1_der_len = sizeof(asn1_large_oid3),
-		.obj2txt = 1,
+		.obj2txt = 0,
 	},
 	{
 		.oid = "1.3.115792089237316195423570985008687907853269984665640"
 		    "564039457584007913129639935",
 		.asn1_der = asn1_large_oid4,
 		.asn1_der_len = sizeof(asn1_large_oid4),
-		.obj2txt = 1,
+		.obj2txt = 0,
 	},
 };
 
