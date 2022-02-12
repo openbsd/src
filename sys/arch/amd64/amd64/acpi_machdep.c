@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.98 2022/02/11 01:55:12 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.99 2022/02/12 16:25:42 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -42,7 +42,6 @@
 #include <machine/apmvar.h>
 
 #include "isa.h"
-#include "wsdisplay.h"
 #include "ioapic.h"
 #include "lapic.h"
 
@@ -55,8 +54,6 @@
 #if NLAPIC > 0
 #include <machine/i82489var.h>
 #endif
-
-#include <dev/wscons/wsdisplayvar.h>
 
 extern u_char acpi_real_mode_resume[], acpi_resume_end[];
 extern u_char acpi_tramp_data_start[], acpi_tramp_data_end[];
