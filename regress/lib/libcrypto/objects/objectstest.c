@@ -1,4 +1,4 @@
-/* $OpenBSD: objectstest.c,v 1.3 2022/02/12 03:02:47 jsing Exp $ */
+/* $OpenBSD: objectstest.c,v 1.4 2022/02/12 12:42:19 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -89,6 +89,15 @@ struct obj_test obj_tests[] = {
 		.nid = NID_stateOrProvinceName,
 		.data = {
 			0x55, 0x04, 0x08,
+		},
+		.data_len = 3,
+	},
+	{
+		.oid = "2.23.43.1",
+		.sn = "wap-wsg",
+		.nid = NID_wap_wsg,
+		.data = {
+			0x67, 0x2b, 0x01,
 		},
 		.data_len = 3,
 	},
@@ -256,9 +265,7 @@ obj_oid_test(struct obj_test *ot)
 	if (ot->oid == NULL)
 		return 0;
 
-	/* XXX - need to also test with no_name == 0. */
-
-	if ((obj = OBJ_txt2obj(ot->oid, 1)) == NULL) {
+	if ((obj = OBJ_txt2obj(ot->oid, 0)) == NULL) {
 		fprintf(stderr, "FAIL: OBJ_txt2obj() failed for '%s'\n", ot->oid);
 		goto failed;
 	}
@@ -299,6 +306,93 @@ obj_oid_tests(void)
 
 	for (i = 0; i < N_OBJ_TESTS; i++)
 		failed |= obj_oid_test(&obj_tests[i]);
+
+	return failed;
+}
+
+static int
+obj_txt_test(struct obj_test *ot)
+{
+	ASN1_OBJECT *obj = NULL;
+	const char *want;
+	char buf[1024];
+	int len, nid;
+	int failed = 1;
+
+	if (ot->oid == NULL)
+		return 0;
+
+	if (ot->sn != NULL) {
+		if ((obj = OBJ_txt2obj(ot->sn, 0)) == NULL) {
+			fprintf(stderr, "FAIL: OBJ_txt2obj() failed for '%s'\n",
+			    ot->sn);
+			goto failed;
+		}
+		if ((nid = OBJ_obj2nid(obj)) != ot->nid) {
+			fprintf(stderr, "FAIL: OBJ_txt2obj() failed for '%s', "
+			    "got nid %d want %d\n", ot->sn, nid, ot->nid);
+			goto failed;
+		}
+		ASN1_OBJECT_free(obj);
+		obj = NULL;
+	}
+	if (ot->ln != NULL) {
+		if ((obj = OBJ_txt2obj(ot->ln, 0)) == NULL) {
+			fprintf(stderr, "FAIL: OBJ_txt2obj() failed for '%s'\n",
+			    ot->ln);
+			goto failed;
+		}
+		if ((nid = OBJ_obj2nid(obj)) != ot->nid) {
+			fprintf(stderr, "FAIL: OBJ_txt2obj() failed for '%s', "
+			    "got nid %d want %d\n", ot->ln, nid, ot->nid);
+			goto failed;
+		}
+		ASN1_OBJECT_free(obj);
+		obj = NULL;
+	}
+
+	if ((obj = OBJ_txt2obj(ot->oid, 0)) == NULL) {
+		fprintf(stderr, "FAIL: OBJ_txt2obj() failed for '%s'\n", ot->oid);
+		goto failed;
+	}
+	if ((nid = OBJ_obj2nid(obj)) != ot->nid) {
+		fprintf(stderr, "FAIL: OBJ_txt2obj() failed for '%s', "
+		    "got nid %d want %d\n", ot->oid, nid, ot->nid);
+		goto failed;
+	}
+
+	len = OBJ_obj2txt(buf, sizeof(buf), obj, 0);
+	if (len <= 0 || (size_t)len >= sizeof(buf)) {
+		fprintf(stderr, "FAIL: OBJ_obj2txt() failed for '%s'\n", ot->oid);
+		goto failed;
+	}
+	want = ot->ln;
+	if (want == NULL)
+		want = ot->sn;
+	if (want == NULL)
+		want = ot->oid;
+	if (strcmp(buf, want) != 0) {
+		fprintf(stderr, "FAIL: OBJ_obj2txt() returned '%s', want '%s'\n",
+		    buf, want);
+		goto failed;
+	}
+
+	failed = 0;
+
+ failed:
+	ASN1_OBJECT_free(obj);
+
+	return failed;
+}
+
+static int
+obj_txt_tests(void)
+{
+	int failed = 0;
+	size_t i;
+
+	for (i = 0; i < N_OBJ_TESTS; i++)
+		failed |= obj_txt_test(&obj_tests[i]);
 
 	return failed;
 }
@@ -432,6 +526,7 @@ main(int argc, char **argv)
 	failed |= obj_name_tests();
 	failed |= obj_nid_tests();
 	failed |= obj_oid_tests();
+	failed |= obj_txt_tests();
 	failed |= obj_oid_large_tests();
 
 	return (failed);
