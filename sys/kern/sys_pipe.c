@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.133 2021/12/13 14:56:55 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.134 2022/02/12 14:07:26 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -78,25 +78,18 @@ static const struct fileops pipeops = {
 
 void	filt_pipedetach(struct knote *kn);
 int	filt_piperead(struct knote *kn, long hint);
-int	filt_pipereadmodify(struct kevent *kev, struct knote *kn);
-int	filt_pipereadprocess(struct knote *kn, struct kevent *kev);
-int	filt_piperead_common(struct knote *kn, struct pipe *rpipe);
 int	filt_pipewrite(struct knote *kn, long hint);
-int	filt_pipewritemodify(struct kevent *kev, struct knote *kn);
-int	filt_pipewriteprocess(struct knote *kn, struct kevent *kev);
-int	filt_pipewrite_common(struct knote *kn, struct pipe *rpipe);
 int	filt_pipeexcept(struct knote *kn, long hint);
-int	filt_pipeexceptmodify(struct kevent *kev, struct knote *kn);
-int	filt_pipeexceptprocess(struct knote *kn, struct kevent *kev);
-int	filt_pipeexcept_common(struct knote *kn, struct pipe *rpipe);
+int	filt_pipemodify(struct kevent *kev, struct knote *kn);
+int	filt_pipeprocess(struct knote *kn, struct kevent *kev);
 
 const struct filterops pipe_rfiltops = {
 	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_pipedetach,
 	.f_event	= filt_piperead,
-	.f_modify	= filt_pipereadmodify,
-	.f_process	= filt_pipereadprocess,
+	.f_modify	= filt_pipemodify,
+	.f_process	= filt_pipeprocess,
 };
 
 const struct filterops pipe_wfiltops = {
@@ -104,8 +97,8 @@ const struct filterops pipe_wfiltops = {
 	.f_attach	= NULL,
 	.f_detach	= filt_pipedetach,
 	.f_event	= filt_pipewrite,
-	.f_modify	= filt_pipewritemodify,
-	.f_process	= filt_pipewriteprocess,
+	.f_modify	= filt_pipemodify,
+	.f_process	= filt_pipeprocess,
 };
 
 const struct filterops pipe_efiltops = {
@@ -113,8 +106,8 @@ const struct filterops pipe_efiltops = {
 	.f_attach	= NULL,
 	.f_detach	= filt_pipedetach,
 	.f_event	= filt_pipeexcept,
-	.f_modify	= filt_pipeexceptmodify,
-	.f_process	= filt_pipeexceptprocess,
+	.f_modify	= filt_pipemodify,
+	.f_process	= filt_pipeprocess,
 };
 
 /*
@@ -954,9 +947,9 @@ filt_pipedetach(struct knote *kn)
 }
 
 int
-filt_piperead_common(struct knote *kn, struct pipe *rpipe)
+filt_piperead(struct knote *kn, long hint)
 {
-	struct pipe *wpipe;
+	struct pipe *rpipe = kn->kn_fp->f_data, *wpipe;
 
 	rw_assert_wrlock(rpipe->pipe_lock);
 
@@ -975,49 +968,9 @@ filt_piperead_common(struct knote *kn, struct pipe *rpipe)
 }
 
 int
-filt_piperead(struct knote *kn, long hint)
+filt_pipewrite(struct knote *kn, long hint)
 {
-	struct pipe *rpipe = kn->kn_fp->f_data;
-
-	return (filt_piperead_common(kn, rpipe));
-}
-
-int
-filt_pipereadmodify(struct kevent *kev, struct knote *kn)
-{
-	struct pipe *rpipe = kn->kn_fp->f_data;
-	int active;
-
-	rw_enter_write(rpipe->pipe_lock);
-	knote_modify(kev, kn);
-	active = filt_piperead_common(kn, rpipe);
-	rw_exit_write(rpipe->pipe_lock);
-
-	return (active);
-}
-
-int
-filt_pipereadprocess(struct knote *kn, struct kevent *kev)
-{
-	struct pipe *rpipe = kn->kn_fp->f_data;
-	int active;
-
-	rw_enter_write(rpipe->pipe_lock);
-	if (kev != NULL && (kn->kn_flags & EV_ONESHOT))
-		active = 1;
-	else
-		active = filt_piperead_common(kn, rpipe);
-	if (active)
-		knote_submit(kn, kev);
-	rw_exit_write(rpipe->pipe_lock);
-
-	return (active);
-}
-
-int
-filt_pipewrite_common(struct knote *kn, struct pipe *rpipe)
-{
-	struct pipe *wpipe;
+	struct pipe *rpipe = kn->kn_fp->f_data, *wpipe;
 
 	rw_assert_wrlock(rpipe->pipe_lock);
 
@@ -1036,49 +989,9 @@ filt_pipewrite_common(struct knote *kn, struct pipe *rpipe)
 }
 
 int
-filt_pipewrite(struct knote *kn, long hint)
+filt_pipeexcept(struct knote *kn, long hint)
 {
-	struct pipe *rpipe = kn->kn_fp->f_data;
-
-	return (filt_pipewrite_common(kn, rpipe));
-}
-
-int
-filt_pipewritemodify(struct kevent *kev, struct knote *kn)
-{
-	struct pipe *rpipe = kn->kn_fp->f_data;
-	int active;
-
-	rw_enter_write(rpipe->pipe_lock);
-	knote_modify(kev, kn);
-	active = filt_pipewrite_common(kn, rpipe);
-	rw_exit_write(rpipe->pipe_lock);
-
-	return (active);
-}
-
-int
-filt_pipewriteprocess(struct knote *kn, struct kevent *kev)
-{
-	struct pipe *rpipe = kn->kn_fp->f_data;
-	int active;
-
-	rw_enter_write(rpipe->pipe_lock);
-	if (kev != NULL && (kn->kn_flags & EV_ONESHOT))
-		active = 1;
-	else
-		active = filt_pipewrite_common(kn, rpipe);
-	if (active)
-		knote_submit(kn, kev);
-	rw_exit_write(rpipe->pipe_lock);
-
-	return (active);
-}
-
-int
-filt_pipeexcept_common(struct knote *kn, struct pipe *rpipe)
-{
-	struct pipe *wpipe;
+	struct pipe *rpipe = kn->kn_fp->f_data, *wpipe;
 	int active = 0;
 
 	rw_assert_wrlock(rpipe->pipe_lock);
@@ -1096,29 +1009,21 @@ filt_pipeexcept_common(struct knote *kn, struct pipe *rpipe)
 }
 
 int
-filt_pipeexcept(struct knote *kn, long hint)
-{
-	struct pipe *rpipe = kn->kn_fp->f_data;
-
-	return (filt_pipeexcept_common(kn, rpipe));
-}
-
-int
-filt_pipeexceptmodify(struct kevent *kev, struct knote *kn)
+filt_pipemodify(struct kevent *kev, struct knote *kn)
 {
 	struct pipe *rpipe = kn->kn_fp->f_data;
 	int active;
 
 	rw_enter_write(rpipe->pipe_lock);
 	knote_modify(kev, kn);
-	active = filt_pipeexcept_common(kn, rpipe);
+	active = kn->kn_fop->f_event(kn, 0);
 	rw_exit_write(rpipe->pipe_lock);
 
 	return (active);
 }
 
 int
-filt_pipeexceptprocess(struct knote *kn, struct kevent *kev)
+filt_pipeprocess(struct knote *kn, struct kevent *kev)
 {
 	struct pipe *rpipe = kn->kn_fp->f_data;
 	int active;
@@ -1127,7 +1032,7 @@ filt_pipeexceptprocess(struct knote *kn, struct kevent *kev)
 	if (kev != NULL && (kn->kn_flags & EV_ONESHOT))
 		active = 1;
 	else
-		active = filt_pipeexcept_common(kn, rpipe);
+		active = kn->kn_fop->f_event(kn, 0);
 	if (active)
 		knote_submit(kn, kev);
 	rw_exit_write(rpipe->pipe_lock);
