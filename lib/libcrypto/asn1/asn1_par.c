@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_par.c,v 1.33 2022/01/20 10:49:56 inoguchi Exp $ */
+/* $OpenBSD: asn1_par.c,v 1.34 2022/02/12 03:07:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -233,12 +233,13 @@ asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offset,
 						goto end;
 				}
 			} else if (tag == V_ASN1_BOOLEAN) {
-				if (len != 1 || p >= tot) {
+				if (len == 1 && p < tot) {
+					BIO_printf(bp, ":%u", p[0]);
+				} else {
 					if (BIO_write(bp, "Bad boolean\n",
 					    12) <= 0)
 						goto end;
 				}
-				BIO_printf(bp, ":%u", p[0]);
 			} else if (tag == V_ASN1_BMPSTRING) {
 				/* do the BMP thang */
 			} else if (tag == V_ASN1_OCTET_STRING) {
