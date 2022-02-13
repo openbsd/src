@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.6 2022/01/13 08:59:10 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.7 2022/02/13 11:58:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <machine/fdt.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
@@ -48,6 +49,8 @@ extern void (*cpuresetfn)(void);
 #define SMC_KEYNOTFOUND		0x84
 
 #define SMC_SRAM_SIZE		0x4000
+
+#define SMC_GPIO_CMD_OUTPUT	(0x01 << 24)
 
 #define SMC_KEY(s)	((s[0] << 24) | (s[1] << 16) | (s[2] << 8) | s[3])
 
@@ -82,6 +85,8 @@ struct aplsmc_softc {
 	struct rtkit_state	*sc_rs;
 	uint8_t			sc_msgid;
 	uint64_t		sc_data;
+
+	struct gpio_controller	sc_gc;
 
 	struct aplsmc_sensor	*sc_smcsensors[APLSMC_MAX_SENSORS];
 	struct ksensor		sc_sensors[APLSMC_MAX_SENSORS];
@@ -186,6 +191,7 @@ int	aplsmc_send_cmd(struct aplsmc_softc *, uint16_t, uint32_t, uint16_t);
 int	aplsmc_wait_cmd(struct aplsmc_softc *sc);
 int	aplsmc_read_key(struct aplsmc_softc *, uint32_t, void *, size_t);
 void	aplsmc_refresh_sensors(void *);
+void	aplsmc_set_pin(void *, uint32_t *, int);
 void	aplsmc_reset(void);
 
 int
@@ -201,7 +207,7 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct aplsmc_softc *sc = (struct aplsmc_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	int error;
+	int error, node;
 	int i;
 
 	if (faa->fa_nreg < 1) {
@@ -248,6 +254,14 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	node = OF_getnodebyname(faa->fa_node, "gpio");
+	if (node) {
+		sc->sc_gc.gc_node = node;
+		sc->sc_gc.gc_cookie = sc;
+		sc->sc_gc.gc_set_pin = aplsmc_set_pin;
+		gpio_controller_register(&sc->sc_gc);
+	}
 
 	for (i = 0; i < nitems(aplsmc_sensors); i++) {
 		struct smc_key_info info;
@@ -364,6 +378,16 @@ aplsmc_read_key(struct aplsmc_softc *sc, uint32_t key, void *data, size_t len)
 	return 0;
 }
 
+int
+aplsmc_write_key(struct aplsmc_softc *sc, uint32_t key, void *data, size_t len)
+{
+	bus_space_write_region_1(sc->sc_iot, sc->sc_sram_ioh, 0, data, len);
+	bus_space_barrier(sc->sc_iot, sc->sc_sram_ioh, 0, len,
+	    BUS_SPACE_BARRIER_WRITE);
+	aplsmc_send_cmd(sc, SMC_WRITE_KEY, key, len);
+	return aplsmc_wait_cmd(sc);
+}
+
 void
 aplsmc_refresh_sensors(void *arg)
 {
@@ -431,16 +455,33 @@ aplsmc_refresh_sensors(void *arg)
 }
 
 void
+aplsmc_set_pin(void *cookie, uint32_t *cells, int val)
+{
+	struct aplsmc_softc *sc = cookie;
+	static char *digits = "0123456789abcdef";
+	uint32_t pin = cells[0];
+	uint32_t flags = cells[1];
+	uint32_t key = SMC_KEY("gP\0\0");
+	uint32_t data;
+
+	KASSERT(pin < 256);
+
+	key |= (digits[(pin >> 0) & 0xf] << 0);
+	key |= (digits[(pin >> 8) & 0xf] << 8);
+
+	if (flags & GPIO_ACTIVE_LOW)
+		val = !val;
+	data = SMC_GPIO_CMD_OUTPUT | !!val;
+
+	aplsmc_write_key(sc, key, &data, sizeof(data));
+}
+
+void
 aplsmc_reset(void)
 {
 	struct aplsmc_softc *sc = aplsmc_sc;
 	uint32_t key = SMC_KEY("MBSE");
 	uint32_t data = SMC_KEY("off1");
 
-	bus_space_write_region_1(sc->sc_iot, sc->sc_sram_ioh, 0,
-	    (uint8_t *)&data, sizeof(data));
-	bus_space_barrier(sc->sc_iot, sc->sc_sram_ioh, 0, sizeof(data),
-	    BUS_SPACE_BARRIER_WRITE);
-	aplsmc_send_cmd(sc, SMC_WRITE_KEY, key, sizeof(data));
-	aplsmc_wait_cmd(sc);
+	aplsmc_write_key(sc, key, &data, sizeof(data));
 }
