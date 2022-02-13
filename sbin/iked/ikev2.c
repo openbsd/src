@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.344 2021/12/09 13:49:45 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.345 2022/02/13 12:26:54 mbuhl Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -5564,7 +5564,7 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 
 	if (!key) {
 		/*
-		 * Set PRF key to generate SKEEYSEED = prf(Ni | Nr, g^ir)
+		 * Set PRF key to generate SKEYSEED = prf(Ni | Nr, g^ir)
 		 */
 		if ((ninr = ibuf_new(sa->sa_inonce->buf, ilen)) == NULL ||
 		    ibuf_add(ninr, sa->sa_rnonce->buf, rlen) != 0) {
@@ -5575,7 +5575,7 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 		key = ninr;
 	} else {
 		/*
-		 * Set PRF key to generate SKEEYSEED = prf(key, g^ir | Ni | Nr)
+		 * Set PRF key to generate SKEYSEED = prf(key, g^ir | Ni | Nr)
 		 */
 		if (ibuf_add(dhsecret, sa->sa_inonce->buf, ilen) != 0 ||
 		    ibuf_add(dhsecret, sa->sa_rnonce->buf, rlen) != 0) {
