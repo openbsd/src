@@ -2558,6 +2558,7 @@
 ./usr/local/share/doc
 ./usr/local/share/doc/pkg-readmes
 ./usr/local/share/examples
+./usr/local/share/examples/login.conf.d
 ./usr/local/share/misc
 ./usr/local/share/nls
 ./usr/local/share/nls/C
