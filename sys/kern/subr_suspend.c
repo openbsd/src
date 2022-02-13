@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.3 2022/02/11 01:55:12 deraadt Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.4 2022/02/13 15:56:55 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -80,6 +80,8 @@ sleep_state(void *v, int sleepmode)
 
 	
 #ifdef MULTIPROCESSOR
+	sched_stop_secondary_cpus();
+	KASSERT(CPU_IS_PRIMARY(curcpu()));
 	sleep_mp();
 #endif
 
@@ -148,6 +150,7 @@ fail_suspend:
 
 #ifdef MULTIPROCESSOR
 	resume_mp();
+	sched_start_secondary_cpus();
 #endif
 
 	vfs_stall(curproc, 0);

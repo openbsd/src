@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.81 2022/02/12 16:26:57 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.82 2022/02/13 15:56:55 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -459,9 +459,6 @@ sleep_mp(void)
 {
 	int i;
 
-	sched_stop_secondary_cpus();
-	KASSERT(CPU_IS_PRIMARY(curcpu()));
-
 	/* 
 	 * Wait for cpus to halt so we know their FPU state has been
 	 * saved and their caches have been written back.
@@ -511,9 +508,7 @@ resume_mp(void)
 
 		ci->ci_idepth = 0;
 	}
-
 	cpu_boot_secondary_processors();
-	sched_start_secondary_cpus();
 }
 #endif /* MULTIPROCESSOR */
 
