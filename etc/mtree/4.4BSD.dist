@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.320 2022/02/10 13:06:07 robert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.321 2022/02/13 00:02:16 ajacoutot Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -310,6 +310,8 @@ usr
                 ..
             ..
             examples
+                login.conf.d
+                ..
             ..
             misc
             ..
