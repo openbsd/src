@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.212 2022/02/11 07:28:29 visa Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.213 2022/02/13 12:58:46 visa Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1257,7 +1257,7 @@ filt_bpfreadmodify(struct kevent *kev, struct knote *kn)
 	int active;
 
 	mtx_enter(&d->bd_mtx);
-	knote_modify(kev, kn);
+	knote_assign(kev, kn);
 	active = filt_bpfread_common(kn, d);
 	mtx_leave(&d->bd_mtx);
 

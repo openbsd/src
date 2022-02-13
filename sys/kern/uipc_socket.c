@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.271 2021/12/24 06:50:16 visa Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.272 2022/02/13 12:58:46 visa Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -2142,7 +2142,7 @@ filt_soreadmodify(struct kevent *kev, struct knote *kn)
 	int rv, s;
 
 	s = solock(so);
-	knote_modify(kev, kn);
+	knote_assign(kev, kn);
 	rv = filt_soread_common(kn, so);
 	sounlock(so, s);
 
@@ -2220,7 +2220,7 @@ filt_sowritemodify(struct kevent *kev, struct knote *kn)
 	int rv, s;
 
 	s = solock(so);
-	knote_modify(kev, kn);
+	knote_assign(kev, kn);
 	rv = filt_sowrite_common(kn, so);
 	sounlock(so, s);
 
@@ -2290,7 +2290,7 @@ filt_soexceptmodify(struct kevent *kev, struct knote *kn)
 	int rv, s;
 
 	s = solock(so);
-	knote_modify(kev, kn);
+	knote_assign(kev, kn);
 	rv = filt_soexcept_common(kn, so);
 	sounlock(so, s);
 
@@ -2352,7 +2352,7 @@ filt_solistenmodify(struct kevent *kev, struct knote *kn)
 	int rv, s;
 
 	s = solock(so);
-	knote_modify(kev, kn);
+	knote_assign(kev, kn);
 	rv = filt_solisten_common(kn, so);
 	sounlock(so, s);
 

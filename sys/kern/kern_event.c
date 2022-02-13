@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.180 2022/02/11 07:25:50 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.181 2022/02/13 12:58:46 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -304,7 +304,7 @@ filt_kqueuemodify(struct kevent *kev, struct knote *kn)
 	int active;
 
 	mtx_enter(&kq->kq_lock);
-	knote_modify(kev, kn);
+	knote_assign(kev, kn);
 	active = filt_kqueue_common(kn, kq);
 	mtx_leave(&kq->kq_lock);
 
@@ -541,7 +541,7 @@ filt_timermodify(struct kevent *kev, struct knote *kn)
 	mtx_leave(&kq->kq_lock);
 
 	kn->kn_data = 0;
-	knote_modify(kev, kn);
+	knote_assign(kev, kn);
 	/* Reinit timeout to invoke tick adjustment again. */
 	timeout_set(to, filt_timerexpire, kn);
 	filt_timer_timeout_add(kn);
@@ -585,7 +585,7 @@ filt_seltrue(struct knote *kn, long hint)
 int
 filt_seltruemodify(struct kevent *kev, struct knote *kn)
 {
-	knote_modify(kev, kn);
+	knote_assign(kev, kn);
 	return (kn->kn_fop->f_event(kn, 0));
 }
 
@@ -739,7 +739,7 @@ filter_modify(struct kevent *kev, struct knote *kn)
 		} else {
 			/* Emulate f_modify using f_event. */
 			s = splhigh();
-			knote_modify(kev, kn);
+			knote_assign(kev, kn);
 			active = kn->kn_fop->f_event(kn, 0);
 			splx(s);
 		}
@@ -2010,12 +2010,12 @@ knote_dequeue(struct knote *kn)
 }
 
 /*
- * Modify the knote's parameters.
+ * Assign parameters to the knote.
  *
  * The knote's object lock must be held.
  */
 void
-knote_modify(const struct kevent *kev, struct knote *kn)
+knote_assign(const struct kevent *kev, struct knote *kn)
 {
 	if ((kn->kn_fop->f_flags & FILTEROP_MPSAFE) == 0)
 		KERNEL_ASSERT_LOCKED();

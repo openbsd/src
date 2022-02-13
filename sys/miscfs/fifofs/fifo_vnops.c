@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.90 2021/12/14 15:53:42 visa Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.91 2022/02/13 12:58:46 visa Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -611,7 +611,7 @@ filt_fiforeadmodify(struct kevent *kev, struct knote *kn)
 	int rv, s;
 
 	s = solock(so);
-	knote_modify(kev, kn);
+	knote_assign(kev, kn);
 	rv = filt_fiforead_common(kn, so);
 	sounlock(so, s);
 
@@ -678,7 +678,7 @@ filt_fifowritemodify(struct kevent *kev, struct knote *kn)
 	int rv, s;
 
 	s = solock(so);
-	knote_modify(kev, kn);
+	knote_assign(kev, kn);
 	rv = filt_fifowrite_common(kn, so);
 	sounlock(so, s);
 
@@ -737,7 +737,7 @@ filt_fifoexceptmodify(struct kevent *kev, struct knote *kn)
 	int rv, s;
 
 	s = solock(so);
-	knote_modify(kev, kn);
+	knote_assign(kev, kn);
 	rv = filt_fifoexcept_common(kn, so);
 	sounlock(so, s);
 
