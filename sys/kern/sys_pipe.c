@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.135 2022/02/13 12:58:46 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.136 2022/02/13 13:05:51 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -1015,8 +1015,7 @@ filt_pipemodify(struct kevent *kev, struct knote *kn)
 	int active;
 
 	rw_enter_write(rpipe->pipe_lock);
-	knote_assign(kev, kn);
-	active = kn->kn_fop->f_event(kn, 0);
+	active = knote_modify(kev, kn);
 	rw_exit_write(rpipe->pipe_lock);
 
 	return (active);
@@ -1029,12 +1028,7 @@ filt_pipeprocess(struct knote *kn, struct kevent *kev)
 	int active;
 
 	rw_enter_write(rpipe->pipe_lock);
-	if (kev != NULL && (kn->kn_flags & EV_ONESHOT))
-		active = 1;
-	else
-		active = kn->kn_fop->f_event(kn, 0);
-	if (active)
-		knote_submit(kn, kev);
+	active = knote_process(kn, kev);
 	rw_exit_write(rpipe->pipe_lock);
 
 	return (active);

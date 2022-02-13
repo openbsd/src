@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.181 2022/02/13 12:58:46 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.182 2022/02/13 13:05:51 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -737,10 +737,8 @@ filter_modify(struct kevent *kev, struct knote *kn)
 		if (kn->kn_fop->f_modify != NULL) {
 			active = kn->kn_fop->f_modify(kev, kn);
 		} else {
-			/* Emulate f_modify using f_event. */
 			s = splhigh();
-			knote_assign(kev, kn);
-			active = kn->kn_fop->f_event(kn, 0);
+			active = knote_modify(kev, kn);
 			splx(s);
 		}
 		KERNEL_UNLOCK();
@@ -760,18 +758,8 @@ filter_process(struct knote *kn, struct kevent *kev)
 		if (kn->kn_fop->f_process != NULL) {
 			active = kn->kn_fop->f_process(kn, kev);
 		} else {
-			/* Emulate f_process using f_event. */
 			s = splhigh();
-			/*
-			 * If called from kqueue_scan(), skip f_event
-			 * when EV_ONESHOT is set, to preserve old behaviour.
-			 */
-			if (kev != NULL && (kn->kn_flags & EV_ONESHOT))
-				active = 1;
-			else
-				active = kn->kn_fop->f_event(kn, 0);
-			if (active)
-				knote_submit(kn, kev);
+			active = knote_process(kn, kev);
 			splx(s);
 		}
 		KERNEL_UNLOCK();
