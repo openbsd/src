@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.40 2022/02/06 09:07:42 robert Exp $	*/
+/*	$OpenBSD: apm.c,v 1.41 2022/02/13 21:27:51 jmc Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -394,7 +394,7 @@ balony:
 		}
 
 		if (doac)
-			printf("A/C adapter state: %s\n",
+			printf("AC adapter state: %s\n",
 			    ac_state(reply.batterystate.ac_state));
 
 		if (doperf)
