@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.5 2022/01/02 20:10:24 kettenis Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.6 2022/02/13 15:54:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -31,7 +31,14 @@
 
 #include <ddb/db_output.h>
 
+#define APL_IPI_LOCAL_RR_EL1	s3_5_c15_c0_1
+#define APL_IPI_GLOBAL_RR_EL1	s3_5_c15_c0_1
+#define APL_IPI_SR_EL1		s3_5_c15_c1_1
+#define  APL_IPI_SR_EL1_PENDING	(1 << 0)
+
+#define CNTV_CTL_ENABLE		(1 << 0)
 #define CNTV_CTL_IMASK		(1 << 1)
+#define CNTV_CTL_ISTATUS	(1 << 2)
 
 #define AIC_INFO		0x0004
 #define  AIC_INFO_NIRQ(val)	((val) & 0xffff)
@@ -91,6 +98,7 @@ struct aplintc_softc {
 
 	uint32_t		sc_cpuremap[AIC_MAXCPUS];
 	u_int			sc_ipi_reason[AIC_MAXCPUS];
+	struct evcount		sc_ipi_count;
 };
 
 struct aplintc_softc *aplintc_sc;
@@ -120,7 +128,7 @@ void 	*aplintc_intr_establish(void *, int *, int, struct cpu_info *,
 void	aplintc_intr_disestablish(void *);
 
 void	aplintc_send_ipi(struct cpu_info *, int);
-void	aplintc_handle_ipi(struct aplintc_softc *, uint32_t);
+void	aplintc_handle_ipi(struct aplintc_softc *);
 
 int
 aplintc_match(struct device *parent, void *match, void *aux)
@@ -164,6 +172,7 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 	aplintc_sc = sc;
 	aplintc_cpuinit();
 
+	evcount_attach(&sc->sc_ipi_count, "ipi", NULL);
 	arm_set_intr_handler(aplintc_splraise, aplintc_spllower, aplintc_splx,
 	    aplintc_setipl, aplintc_irq_handler, aplintc_fiq_handler);
 
@@ -239,11 +248,6 @@ aplintc_irq_handler(void *frame)
 	irq = AIC_EVENT_IRQ(event);
 	type = AIC_EVENT_TYPE(event);
 
-	if (type == AIC_EVENT_TYPE_IPI) {
-		aplintc_handle_ipi(sc, irq);
-		return;
-	}
-
 	if (type != AIC_EVENT_TYPE_IRQ) {
 		printf("%s: unexpected event type %d\n", __func__, type);
 		return;
@@ -281,18 +285,28 @@ aplintc_fiq_handler(void *frame)
 	uint64_t reg;
 	int s;
 
-	if (ci->ci_cpl >= IPL_CLOCK) {
-		/* Mask timer interrupt and mark as pending. */
-		reg = READ_SPECIALREG(cntv_ctl_el0);
-		WRITE_SPECIALREG(cntv_ctl_el0, reg | CNTV_CTL_IMASK);
-		sc->sc_fiq_pending[ci->ci_cpuid] = 1;
-		return;
+	/* Handle IPIs. */
+	reg = READ_SPECIALREG(APL_IPI_SR_EL1);
+	if (reg & APL_IPI_SR_EL1_PENDING) {
+		WRITE_SPECIALREG(APL_IPI_SR_EL1, APL_IPI_SR_EL1_PENDING);
+		aplintc_handle_ipi(sc);
 	}
 
-	s = aplintc_splraise(IPL_CLOCK);
-	sc->sc_fiq_handler->ih_func(frame);
-	sc->sc_fiq_handler->ih_count.ec_count++;
-	aplintc_splx(s);
+	/* Handle timer interrupts. */
+	reg = READ_SPECIALREG(cntv_ctl_el0);
+	if ((reg & (CNTV_CTL_ENABLE | CNTV_CTL_IMASK | CNTV_CTL_ISTATUS)) ==
+	    (CNTV_CTL_ENABLE | CNTV_CTL_ISTATUS)) {
+		if (ci->ci_cpl >= IPL_CLOCK) {
+			/* Mask timer interrupt and mark as pending. */
+			WRITE_SPECIALREG(cntv_ctl_el0, reg | CNTV_CTL_IMASK);
+			sc->sc_fiq_pending[ci->ci_cpuid] = 1;
+		} else {
+			s = aplintc_splraise(IPL_CLOCK);
+			sc->sc_fiq_handler->ih_func(frame);
+			sc->sc_fiq_handler->ih_count.ec_count++;
+			aplintc_splx(s);
+		}
+	}
 }
 
 void
@@ -460,7 +474,7 @@ void
 aplintc_send_ipi(struct cpu_info *ci, int reason)
 {
 	struct aplintc_softc *sc = aplintc_sc;
-	uint32_t hwid;
+	uint64_t sendmask;
 
 	if (ci == curcpu() && reason == ARM_IPI_NOP)
 		return;
@@ -470,19 +484,21 @@ aplintc_send_ipi(struct cpu_info *ci, int reason)
 		sc->sc_ipi_reason[ci->ci_cpuid] = reason;
 	membar_producer();
 
-	hwid = sc->sc_cpuremap[ci->ci_cpuid];
-	HWRITE4(sc, AIC_IPI_SEND, (1U << hwid));
+	sendmask = (ci->ci_mpidr & MPIDR_AFF0);
+	if ((curcpu()->ci_mpidr & MPIDR_AFF1) == (ci->ci_mpidr & MPIDR_AFF1)) {
+		/* Same cluster, so request local delivery. */
+		WRITE_SPECIALREG(APL_IPI_LOCAL_RR_EL1, sendmask);
+	} else {
+		/* Different cluster, so request global delivery. */
+		sendmask |= (ci->ci_mpidr & MPIDR_AFF1) << 8;
+		WRITE_SPECIALREG(APL_IPI_GLOBAL_RR_EL1, sendmask);
+	}
 }
 
 void
-aplintc_handle_ipi(struct aplintc_softc *sc, uint32_t irq)
+aplintc_handle_ipi(struct aplintc_softc *sc)
 {
 	struct cpu_info *ci = curcpu();
-
-	if (irq != AIC_EVENT_IPI_OTHER)
-		panic("%s: unexpected irq %d", __func__, irq);
-
-	HWRITE4(sc, AIC_IPI_ACK, AIC_IPI_OTHER);
 
 	membar_consumer();
 	if (sc->sc_ipi_reason[ci->ci_cpuid] == ARM_IPI_DDB) {
@@ -492,5 +508,5 @@ aplintc_handle_ipi(struct aplintc_softc *sc, uint32_t irq)
 #endif
 	}
 
-	HWRITE4(sc, AIC_IPI_MASK_CLR, AIC_IPI_OTHER);
+	sc->sc_ipi_count.ec_count++;
 }
