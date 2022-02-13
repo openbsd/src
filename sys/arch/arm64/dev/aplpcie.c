@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpcie.c,v 1.10 2022/01/07 19:03:57 kettenis Exp $	*/
+/*	$OpenBSD: aplpcie.c,v 1.11 2022/02/13 12:02:21 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -381,8 +381,9 @@ void
 aplpcie_init_port(struct aplpcie_softc *sc, int node)
 {
 	uint32_t reg[5];
+	uint32_t *pwren_gpio;
 	uint32_t *reset_gpio;
-	int reset_gpiolen;
+	int pwren_gpiolen, reset_gpiolen;
 	uint32_t stat;
 	int port, timo;
 
@@ -393,6 +394,7 @@ aplpcie_init_port(struct aplpcie_softc *sc, int node)
 	if (port >= APLPCIE_MAX_PORTS || sc->sc_port_ios[port] == 0)
 		return;
 
+	pwren_gpiolen = OF_getproplen(node, "pwren-gpios");
 	reset_gpiolen = OF_getproplen(node, "reset-gpios");
 	if (reset_gpiolen <= 0)
 		return;
@@ -419,6 +421,16 @@ aplpcie_init_port(struct aplpcie_softc *sc, int node)
 	gpio_controller_config_pin(reset_gpio, GPIO_CONFIG_OUTPUT);
 	gpio_controller_set_pin(reset_gpio, 1);
 
+	/* Power up the device if necessary. */
+	if (pwren_gpiolen > 0) {
+		pwren_gpio = malloc(pwren_gpiolen, M_TEMP, M_WAITOK);
+		OF_getpropintarray(node, "pwren-gpios",
+		    pwren_gpio, pwren_gpiolen);
+		gpio_controller_config_pin(pwren_gpio, GPIO_CONFIG_OUTPUT);
+		gpio_controller_set_pin(pwren_gpio, 1);
+		free(pwren_gpio, M_TEMP, pwren_gpiolen);
+	}
+
 	/* Setup Refclk. */
 	RSET4(sc, PCIE_CORE_LANE_CTRL(port), PCIE_CORE_LANE_CTRL_CFGACC);
 	RSET4(sc, PCIE_CORE_LANE_CONF(port), PCIE_CORE_LANE_CONF_REFCLK0REQ);
@@ -442,9 +454,13 @@ aplpcie_init_port(struct aplpcie_softc *sc, int node)
 
 	/*
 	 * PERST# must remain asserted for at least 100us after the
-	 * reference clock becomes stable.
+	 * reference clock becomes stable.  But also has to remain
+	 * active at least 100ms after power up.
 	 */
-	delay(100);
+	if (pwren_gpiolen > 0)
+		delay(100000);
+	else
+		delay(100);
 
 	/* Deassert PERST#. */
 	PSET4(sc, port, PCIE_PORT_PERST, PCIE_PORT_PERST_DIS);
