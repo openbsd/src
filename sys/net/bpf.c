@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.213 2022/02/13 12:58:46 visa Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.214 2022/02/13 23:11:10 bluhm Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -198,6 +198,8 @@ bpf_movein(struct uio *uio, struct bpf_d *d, struct mbuf **mp,
 		return (EIO);
 	}
 
+	if (uio->uio_resid > MAXMCLBYTES)
+		return (EMSGSIZE);
 	len = uio->uio_resid;
 	if (len < hlen)
 		return (EINVAL);
@@ -211,7 +213,6 @@ bpf_movein(struct uio *uio, struct bpf_d *d, struct mbuf **mp,
 	 * Allocate enough space for headers and the aligned payload.
 	 */
 	mlen = max(max_linkhdr, hlen) + roundup(alen, sizeof(long));
-
 	if (mlen > MAXMCLBYTES)
 		return (EMSGSIZE);
 
