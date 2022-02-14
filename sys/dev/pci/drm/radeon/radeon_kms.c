@@ -556,10 +556,11 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 		bus_size_t start, end;
 		bus_addr_t base;
 
+		KASSERT(pa->pa_memex != NULL);
+
 		start = max(PCI_MEM_START, pa->pa_memex->ex_start);
 		end = min(PCI_MEM_END, pa->pa_memex->ex_end);
-		if (pa->pa_memex == NULL ||
-		    extent_alloc_subregion(pa->pa_memex, start, end,
+		if (extent_alloc_subregion(pa->pa_memex, start, end,
 		    rdev->fb_aper_size, rdev->fb_aper_size, 0, 0, 0, &base)) {
 			printf(": can't reserve framebuffer space\n");
 			return;
