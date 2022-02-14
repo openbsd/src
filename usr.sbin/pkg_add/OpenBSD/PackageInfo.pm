@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.61 2020/01/28 11:25:44 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.62 2022/02/14 10:34:36 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -191,15 +191,23 @@ sub lock_db($;$)
 {
 	my ($shared, $state) = @_;
 	my $mode = $shared ? LOCK_SH : LOCK_EX;
+	my $s = 
+	    sub {
+		if (!defined $state) {
+			require OpenBSD::BaseState;
+			return 'OpenBSD::BaseState';
+		} else {
+			return $state;
+		}
+	    };
 	open($dlock, '<', $pkg_db) or return;
 	if (flock($dlock, $mode | LOCK_NB)) {
 		return;
 	}
-	$state->errprint("Package database already locked... awaiting release... ")
-		if defined $state;
+	&$s->errprint("Package database already locked... awaiting release... ");
 	while (!flock($dlock, $mode)) {
 	}
-	$state->errsay("done!") if defined $state;
+	&$s->errsay("done!");
 	return;
 }
 
