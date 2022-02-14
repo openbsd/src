@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.120 2022/02/10 17:33:28 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.121 2022/02/14 14:46:16 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -651,5 +651,8 @@ int	mkpath(const char *);
 
 /* Maximum allowd repositories per tal */
 #define MAX_REPO_PER_TAL	1000
+
+/* Maximum number of delta files per RRDP notification file. */
+#define MAX_RRDP_DELTAS		300
 
 #endif /* ! EXTERN_H */
