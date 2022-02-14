@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.15 2020/12/23 11:58:36 kettenis Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.16 2022/02/14 12:54:43 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -328,8 +328,7 @@ regulator_gpio_get(int node)
 {
 	uint32_t *gpio, *gpios, *states;
 	uint32_t idx, value;
-	size_t glen, slen;
-	int i;
+	int glen, slen, i;
 
 	pinctrl_byname(node, "default");
 
@@ -377,10 +376,9 @@ int
 regulator_gpio_set(int node, uint32_t value)
 {
 	uint32_t *gpio, *gpios, *states;
-	size_t glen, slen;
 	uint32_t min, max;
 	uint32_t idx;
-	int i;
+	int glen, slen, i;
 
 	pinctrl_byname(node, "default");
 
