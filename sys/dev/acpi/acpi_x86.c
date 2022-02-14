@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.1 2022/02/09 23:54:34 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.2 2022/02/14 19:25:03 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -115,7 +115,7 @@ gosleep(void *v)
 	struct acpi_softc *sc = v;
 
 	acpibtn_enable_psw();   /* enable _LID for wakeup */
-	acpi_indicator(v, ACPI_SST_SLEEPING);
+	acpi_indicator(sc, ACPI_SST_SLEEPING);
 
 	/* 3rd suspend AML step: _GTS(tostate) */
 	aml_node_setval(sc, sc->sc_gts, sc->sc_state);
