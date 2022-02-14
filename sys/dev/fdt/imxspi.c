@@ -1,4 +1,4 @@
-/* $OpenBSD: imxspi.c,v 1.3 2021/10/31 15:12:00 kettenis Exp $ */
+/* $OpenBSD: imxspi.c,v 1.4 2022/02/14 00:53:40 jsg Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -91,7 +91,7 @@ struct imxspi_softc {
 	int			 sc_node;
 
 	uint32_t		*sc_gpio;
-	size_t			 sc_gpiolen;
+	int			 sc_gpiolen;
 
 	struct rwlock		 sc_buslock;
 	struct spi_controller	 sc_tag;
@@ -179,7 +179,7 @@ imxspi_attachhook(struct device *self)
 	clock_enable(sc->sc_node, NULL);
 
 	sc->sc_gpiolen = OF_getproplen(sc->sc_node, "cs-gpios");
-	if (sc->sc_gpiolen) {
+	if (sc->sc_gpiolen > 0) {
 		sc->sc_gpio = malloc(sc->sc_gpiolen, M_DEVBUF, M_WAITOK);
 		OF_getpropintarray(sc->sc_node, "cs-gpios",
 		    sc->sc_gpio, sc->sc_gpiolen);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: simpleamp.c,v 1.1 2020/06/10 23:59:07 patrick Exp $	*/
+/*	$OpenBSD: simpleamp.c,v 1.2 2022/02/14 00:53:40 jsg Exp $	*/
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -42,7 +42,7 @@ struct simpleamp_softc {
 	struct dai_device	sc_dai;
 
 	uint32_t		*sc_gpio;
-	size_t			sc_gpiolen;
+	int			sc_gpiolen;
 	uint32_t		sc_vcc;
 };
 
