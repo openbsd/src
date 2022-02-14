@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_udp.c,v 1.26 2019/06/28 13:32:42 deraadt Exp $ */
+/*	$OpenBSD: svc_udp.c,v 1.27 2022/02/14 03:38:59 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -60,7 +60,7 @@ static void		cache_set(SVCXPRT *, u_long);
 static int		cache_get(SVCXPRT *, struct rpc_msg *, char **,
 			    u_long *);
 
-static struct xp_ops svcudp_op = {
+static const struct xp_ops svcudp_op = {
 	svcudp_recv,
 	svcudp_stat,
 	svcudp_getargs,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_stdio.c,v 1.15 2019/06/28 13:32:42 deraadt Exp $ */
+/*	$OpenBSD: xdr_stdio.c,v 1.16 2022/02/14 03:38:59 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -55,7 +55,7 @@ static void	xdrstdio_destroy(XDR *);
 /*
  * Ops vector for stdio type XDR
  */
-static struct xdr_ops	xdrstdio_ops = {
+static const struct xdr_ops	xdrstdio_ops = {
 	xdrstdio_getlong,	/* deserialize a long int */
 	xdrstdio_putlong,	/* serialize a long int */
 	xdrstdio_getbytes,	/* deserialize counted bytes */

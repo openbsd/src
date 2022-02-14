@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_tcp.c,v 1.41 2020/07/06 13:33:06 pirofti Exp $ */
+/*	$OpenBSD: svc_tcp.c,v 1.42 2022/02/14 03:38:59 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -63,7 +63,7 @@ static bool_t		svctcp_freeargs(SVCXPRT *xprt, xdrproc_t xdr_args,
 			    caddr_t args_ptr);
 static void		svctcp_destroy(SVCXPRT *xprt);
 
-static struct xp_ops svctcp_op = {
+static const struct xp_ops svctcp_op = {
 	svctcp_recv,
 	svctcp_stat,
 	svctcp_getargs,
@@ -78,7 +78,7 @@ static struct xp_ops svctcp_op = {
 static bool_t		rendezvous_request(SVCXPRT *xprt, struct rpc_msg *);
 static enum xprt_stat	rendezvous_stat(SVCXPRT *xprt);
 
-static struct xp_ops svctcp_rendezvous_op = {
+static const struct xp_ops svctcp_rendezvous_op = {
 	rendezvous_request,
 	rendezvous_stat,
 	/* XXX abort illegal in library */

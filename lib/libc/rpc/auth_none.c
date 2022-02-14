@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_none.c,v 1.14 2015/11/01 03:45:29 guenther Exp $ */
+/*	$OpenBSD: auth_none.c,v 1.15 2022/02/14 03:38:59 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -53,7 +53,7 @@ static bool_t	authnone_validate(struct __rpc_auth *, struct opaque_auth *);
 static bool_t	authnone_marshal(struct __rpc_auth *, XDR *);
 static bool_t	authnone_refresh(struct __rpc_auth *);
 
-static struct auth_ops ops = {
+static const struct auth_ops ops = {
 	authnone_verf,
 	authnone_marshal,
 	authnone_validate,

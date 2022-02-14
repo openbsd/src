@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_raw.c,v 1.20 2015/11/01 03:45:29 guenther Exp $ */
+/*	$OpenBSD: clnt_raw.c,v 1.21 2022/02/14 03:38:59 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -66,7 +66,7 @@ static bool_t		clntraw_freeres(CLIENT *, xdrproc_t, caddr_t);
 static bool_t		clntraw_control(CLIENT *, u_int, void *);
 static void		clntraw_destroy(CLIENT *);
 
-static struct clnt_ops client_ops = {
+static const struct clnt_ops client_ops = {
 	clntraw_call,
 	clntraw_abort,
 	clntraw_geterr,

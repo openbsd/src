@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_mem.c,v 1.17 2015/11/01 03:45:29 guenther Exp $ */
+/*	$OpenBSD: xdr_mem.c,v 1.18 2022/02/14 03:38:59 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -59,7 +59,7 @@ static int32_t *xdrmem_inline_aligned(XDR *, u_int);
 static int32_t *xdrmem_inline_unaligned(XDR *, u_int);
 static void	xdrmem_destroy(XDR *);
 
-static struct	xdr_ops xdrmem_ops_aligned = {
+static const struct xdr_ops xdrmem_ops_aligned = {
 	xdrmem_getlong_aligned,
 	xdrmem_putlong_aligned,
 	xdrmem_getbytes,
@@ -71,7 +71,7 @@ static struct	xdr_ops xdrmem_ops_aligned = {
 	NULL,	/* xdrmem_control */
 };
 
-static struct	xdr_ops xdrmem_ops_unaligned = {
+static const struct xdr_ops xdrmem_ops_unaligned = {
 	xdrmem_getlong_unaligned,
 	xdrmem_putlong_unaligned,
 	xdrmem_getbytes,

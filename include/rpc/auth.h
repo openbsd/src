@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.h,v 1.8 2015/09/13 12:29:03 guenther Exp $	*/
+/*	$OpenBSD: auth.h,v 1.9 2022/02/14 03:38:59 guenther Exp $	*/
 /*	$NetBSD: auth.h,v 1.7 1995/04/29 05:27:55 cgd Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ typedef struct __rpc_auth {
 	struct	opaque_auth	ah_cred;
 	struct	opaque_auth	ah_verf;
 	union	des_block	ah_key;
-	struct auth_ops {
+	const struct auth_ops {
 		void	(*ah_nextverf)(struct __rpc_auth *);
 		/* nextverf & serialize */
 		int	(*ah_marshal)(struct __rpc_auth *, XDR *);

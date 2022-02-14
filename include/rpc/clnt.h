@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt.h,v 1.11 2010/09/01 14:43:34 millert Exp $	*/
+/*	$OpenBSD: clnt.h,v 1.12 2022/02/14 03:38:59 guenther Exp $	*/
 /*	$NetBSD: clnt.h,v 1.6 1995/04/29 05:27:58 cgd Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ struct rpc_err {
  */
 typedef struct __rpc_client {
 	AUTH	*cl_auth;			/* authenticator */
-	struct clnt_ops {
+	const struct clnt_ops {
 		/* call remote procedure */
 		enum clnt_stat	(*cl_call)(struct __rpc_client *,
 				    unsigned long, xdrproc_t, caddr_t, 

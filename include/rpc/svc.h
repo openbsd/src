@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.h,v 1.16 2016/08/27 04:28:28 guenther Exp $	*/
+/*	$OpenBSD: svc.h,v 1.17 2022/02/14 03:38:59 guenther Exp $	*/
 /*	$NetBSD: svc.h,v 1.9 1995/04/29 05:28:01 cgd Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ enum xprt_stat {
 typedef struct __rpc_svcxprt {
 	int		xp_sock;
 	unsigned short	xp_port;	 /* associated port number */
-	struct xp_ops {
+	const struct xp_ops {
 		/* receive incoming requests */
 		bool_t	(*xp_recv)(struct __rpc_svcxprt *,
 			    struct rpc_msg *);

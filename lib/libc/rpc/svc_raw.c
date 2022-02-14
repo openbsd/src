@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc_raw.c,v 1.12 2015/11/01 03:45:29 guenther Exp $ */
+/*	$OpenBSD: svc_raw.c,v 1.13 2022/02/14 03:38:59 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -61,7 +61,7 @@ static bool_t		svcraw_freeargs(SVCXPRT *xprt, xdrproc_t xdr_args,
 			    caddr_t args_ptr);
 static void		svcraw_destroy(SVCXPRT *xprt);
 
-static struct xp_ops server_ops = {
+static const struct xp_ops server_ops = {
 	svcraw_recv,
 	svcraw_stat,
 	svcraw_getargs,

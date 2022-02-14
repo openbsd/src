@@ -1,4 +1,4 @@
-/*	$OpenBSD: clnt_tcp.c,v 1.34 2020/07/06 13:33:06 pirofti Exp $ */
+/*	$OpenBSD: clnt_tcp.c,v 1.35 2022/02/14 03:38:59 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -68,7 +68,7 @@ static bool_t		clnttcp_freeres(CLIENT *, xdrproc_t, caddr_t);
 static bool_t           clnttcp_control(CLIENT *, u_int, void *);
 static void		clnttcp_destroy(CLIENT *);
 
-static struct clnt_ops tcp_ops = {
+static const struct clnt_ops tcp_ops = {
 	clnttcp_call,
 	clnttcp_abort,
 	clnttcp_geterr,

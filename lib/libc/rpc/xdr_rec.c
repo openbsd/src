@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_rec.c,v 1.22 2016/09/21 04:38:56 guenther Exp $ */
+/*	$OpenBSD: xdr_rec.c,v 1.23 2022/02/14 03:38:59 guenther Exp $ */
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -80,7 +80,7 @@ PROTO_NORMAL(__xdrrec_getrec);
 
 struct ct_data;
 
-static struct  xdr_ops xdrrec_ops = {
+static const struct xdr_ops xdrrec_ops = {
 	xdrrec_getlong,
 	xdrrec_putlong,
 	xdrrec_getbytes,
