@@ -498,10 +498,8 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 	int			 i;
 	uint8_t			 rmmio_bar;
 	paddr_t			 fb_aper;
-#if !defined(__sparc64__)
 	pcireg_t		 addr, mask;
 	int			 s;
-#endif
 
 #if defined(__sparc64__) || defined(__macppc__)
 	extern int fbnode;
@@ -551,7 +549,6 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 		printf(": can't get frambuffer info\n");
 		return;
 	}
-#if !defined(__sparc64__)
 	if (rdev->fb_aper_offset == 0) {
 		bus_size_t start, end;
 		bus_addr_t base;
@@ -571,7 +568,6 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 			    RADEON_PCI_MEM + 4, (uint64_t)base >> 32);
 		rdev->fb_aper_offset = base;
 	}
-#endif
 
 	for (i = PCI_MAPREG_START; i < PCI_MAPREG_END; i += 4) {
 		type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, i);
@@ -611,7 +607,6 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 	}
 	rdev->rmmio = bus_space_vaddr(rdev->memt, rdev->rmmio_bsh);
 
-#if !defined(__sparc64__)
 	/*
 	 * Make sure we have a base address for the ROM such that we
 	 * can map it later.
@@ -634,7 +629,6 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 		    size, 0, 0, 0, &base) == 0)
 			pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, base);
 	}
-#endif
 
 #ifdef notyet
 	mtx_init(&rdev->swi_lock, IPL_TTY);
