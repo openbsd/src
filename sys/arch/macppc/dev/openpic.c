@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.87 2021/03/11 11:16:58 jsg Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.88 2022/02/14 23:20:46 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -480,13 +480,14 @@ openpic_intr_disestablish(void *lcp, void *arg)
 {
 	struct intrhand *ih = arg;
 	int irq = ih->ih_irq;
-	struct intrq *iq = &openpic_handler[irq];
+	struct intrq *iq;
 	int s;
 
 	if (!LEGAL_IRQ(irq)) {
 		printf("%s: bogus irq %d", __func__, irq);
 		return;
 	}
+	iq = &openpic_handler[irq];
 
 	/*
 	 * Remove the handler from the chain.
