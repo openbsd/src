@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwgpio.c,v 1.5 2021/12/29 17:52:22 patrick Exp $	*/
+/*	$OpenBSD: dwgpio.c,v 1.6 2022/02/14 02:57:21 jsg Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  *
@@ -150,7 +150,7 @@ dwgpio_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ih[i] = acpi_intr_establish(aaa->aaa_irq[i],
 		    aaa->aaa_irq_flags[i], IPL_BIO, dwgpio_intr,
 		    sc, sc->sc_dev.dv_xname);
-		if (sc->sc_ih == NULL) {
+		if (sc->sc_ih[i] == NULL) {
 			printf(": can't establish interrupt\n");
 			goto unmap;
 		}
