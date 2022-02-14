@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.11 2017/03/16 18:13:44 miod Exp $	*/
+/*	$OpenBSD: bus.h,v 1.12 2022/02/14 13:03:52 aoyama Exp $	*/
 /*	$NetBSD: bus.h,v 1.9 1998/01/13 18:32:15 scottr Exp $	*/
 
 /*-
@@ -146,13 +146,7 @@ bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
  * Allocate a region of bus space.
  */
 
-static __inline__ int
-bus_space_alloc(bus_space_tag_t tag, bus_addr_t rstart, bus_addr_t rend,
-    bus_size_t size, bus_size_t alignment, bus_size_t boundary, int flags,
-    bus_addr_t *addrp, bus_space_handle_t *handlep)
-{
-	panic("bus_space_alloc: unimplemented");
-}
+/* XXX: currently unimplemented on luna88k */
 
 /*
  *	int bus_space_free(bus_space_tag_t t,
@@ -161,11 +155,7 @@ bus_space_alloc(bus_space_tag_t tag, bus_addr_t rstart, bus_addr_t rend,
  * Free a region of bus space.
  */
 
-static __inline__ void
-bus_space_free(bus_space_tag_t tag, bus_space_handle_t handle, bus_size_t size)
-{
-	panic("bus_space_free: unimplemented");
-}
+/* XXX: currently unimplemented on luna88k */
 
 /*
  *	u_intN_t bus_space_read_N(bus_space_tag_t tag,
