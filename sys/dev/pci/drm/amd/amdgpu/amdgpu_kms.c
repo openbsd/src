@@ -1873,6 +1873,10 @@ amdgpu_attach(struct device *parent, struct device *self, void *aux)
 
 	dev = drm_attach_pci(&amdgpu_kms_driver, pa, 0, adev->primary,
 	    self, &adev->ddev);
+	if (dev == NULL) {
+		printf("%s: drm attach failed\n", adev->self.dv_xname);
+		return;
+	}
 	adev->pdev = dev->pdev;
 	adev->is_fw_fb = adev->primary;
 

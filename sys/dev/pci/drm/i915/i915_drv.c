@@ -2397,6 +2397,10 @@ inteldrm_attach(struct device *parent, struct device *self, void *aux)
 
 	dev = drm_attach_pci(&driver, pa, 0, dev_priv->primary,
 	    self, &dev_priv->drm);
+	if (dev == NULL) {
+		printf("%s: drm attach failed\n", dev_priv->sc_dev.dv_xname);
+		return;
+	}
 
 	id = drm_find_description(PCI_VENDOR(pa->pa_id),
 	    PCI_PRODUCT(pa->pa_id), pciidlist);
