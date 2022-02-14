@@ -630,10 +630,6 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 			pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_ROM_REG, base);
 	}
 
-#ifdef notyet
-	mtx_init(&rdev->swi_lock, IPL_TTY);
-#endif
-
 	/* update BUS flag */
 	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP, NULL, NULL)) {
 		rdev->flags |= RADEON_IS_AGP;
