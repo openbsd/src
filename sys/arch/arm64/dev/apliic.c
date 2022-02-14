@@ -1,4 +1,4 @@
-/*	$OpenBSD: apliic.c,v 1.2 2022/01/15 11:04:16 kettenis Exp $	*/
+/*	$OpenBSD: apliic.c,v 1.3 2022/02/14 14:55:53 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -18,6 +18,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -224,32 +225,37 @@ apliic_bus_scan(struct device *self, struct i2cbus_attach_args *iba, void *arg)
 {
 	int iba_node = *(int *)arg;
 	struct i2c_attach_args ia;
-	char name[32], status[32];
+	char status[32];
+	char *compat;
 	uint32_t reg[1];
 	int node;
+	int len;
 
 	for (node = OF_child(iba_node); node; node = OF_peer(node)) {
-		memset(name, 0, sizeof(name));
 		memset(status, 0, sizeof(status));
-		memset(reg, 0, sizeof(reg));
-
-		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
-			continue;
-		if (name[0] == '\0')
-			continue;
-
 		if (OF_getprop(node, "status", status, sizeof(status)) > 0 &&
 		    strcmp(status, "disabled") == 0)
 			continue;
 
+		memset(reg, 0, sizeof(reg));
 		if (OF_getprop(node, "reg", &reg, sizeof(reg)) != sizeof(reg))
 			continue;
+
+		len = OF_getproplen(node, "compatible");
+		if (len <= 0)
+			continue;
+
+		compat = malloc(len, M_TEMP, M_WAITOK);
+		OF_getprop(node, "compatible", compat, len);
 
 		memset(&ia, 0, sizeof(ia));
 		ia.ia_tag = iba->iba_tag;
 		ia.ia_addr = bemtoh32(&reg[0]);
-		ia.ia_name = name;
+		ia.ia_name = compat;
+		ia.ia_namelen = len;
 		ia.ia_cookie = &node;
 		config_found(self, &ia, iic_print);
+
+		free(compat, M_TEMP, len);
 	}
 }
