@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.201 2022/01/28 07:11:15 guenther Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.202 2022/02/14 11:26:05 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -332,11 +332,6 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 			process_reparent(pr, initprocess);
 			wakeup(ppr);
 		}
-
-		/*
-		 * Release the process's signal state.
-		 */
-		sigactsfree(pr);
 	}
 
 	/* just a thread? detach it from its process */
@@ -731,6 +726,7 @@ process_zap(struct process *pr)
 		free(pr->ps_ptstat, M_SUBPROC, sizeof(*pr->ps_ptstat));
 	pool_put(&rusage_pool, pr->ps_ru);
 	KASSERT(TAILQ_EMPTY(&pr->ps_threads));
+	sigactsfree(pr->ps_sigacts);
 	lim_free(pr->ps_limit);
 	crfree(pr->ps_ucred);
 	pool_put(&process_pool, pr);

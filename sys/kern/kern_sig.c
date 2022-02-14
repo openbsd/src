@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.293 2022/02/06 09:57:59 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.294 2022/02/14 11:26:05 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -72,6 +72,8 @@
 #include <uvm/uvm_extern.h>
 #include <machine/tcb.h>
 
+int nosuidcoredump = 1;
+
 int	filt_sigattach(struct knote *kn);
 void	filt_sigdetach(struct knote *kn);
 int	filt_signal(struct knote *kn, long hint);
@@ -132,8 +134,9 @@ void proc_stop(struct proc *p, int);
 void proc_stop_sweep(void *);
 void *proc_stop_si;
 
+void setsigctx(struct proc *, int, struct sigctx *);
 void postsig_done(struct proc *, int, sigset_t, int);
-void postsig(struct proc *, int);
+void postsig(struct proc *, int, struct sigctx *);
 int cansignal(struct proc *, struct process *, int);
 
 struct pool sigacts_pool;	/* memory pool for sigacts structures */
@@ -242,12 +245,8 @@ sigactsinit(struct process *pr)
  * Release a sigacts structure.
  */
 void
-sigactsfree(struct process *pr)
+sigactsfree(struct sigacts *ps)
 {
-	struct sigacts *ps = pr->ps_sigacts;
-
-	pr->ps_sigacts = NULL;
-
 	pool_put(&sigacts_pool, ps);
 }
 
@@ -494,7 +493,6 @@ sys_sigprocmask(struct proc *p, void *v, register_t *retval)
 int
 sys_sigpending(struct proc *p, void *v, register_t *retval)
 {
-
 	*retval = p->p_siglist | p->p_p->ps_siglist;
 	return (0);
 }
@@ -1174,6 +1172,23 @@ out:
 		wakeup(pr->ps_pptr);
 }
 
+/* fill the signal context which should be used by postsig() and issignal() */
+void
+setsigctx(struct proc *p, int signum, struct sigctx *sctx)
+{
+	struct sigacts *ps = p->p_p->ps_sigacts;
+	sigset_t mask;
+
+	mask = sigmask(signum);
+	sctx->sig_action = ps->ps_sigact[signum];
+	sctx->sig_catchmask = ps->ps_catchmask[signum];
+	sctx->sig_reset = (ps->ps_sigreset & mask) != 0;
+	sctx->sig_info = (ps->ps_siginfo & mask) != 0;
+	sctx->sig_intr = (ps->ps_sigintr & mask) != 0;
+	sctx->sig_onstack = (ps->ps_sigonstack & mask) != 0;
+	sctx->sig_ignore = (ps->ps_sigignore & mask) != 0;
+}
+
 /*
  * Determine signal that should be delivered to process p, the current
  * process, 0 if none.
@@ -1184,14 +1199,14 @@ out:
  * they aren't returned.  This is checked after each entry to the system for
  * a syscall or trap. The normal call sequence is
  *
- *	while (signum = cursig(curproc))
- *		postsig(signum);
+ *	while (signum = cursig(curproc, &ctx))
+ *		postsig(signum, &ctx);
  *
  * Assumes that if the P_SINTR flag is set, we're holding both the
  * kernel and scheduler locks.
  */
 int
-cursig(struct proc *p)
+cursig(struct proc *p, struct sigctx *sctx)
 {
 	struct process *pr = p->p_p;
 	int signum, mask, prop;
@@ -1199,6 +1214,7 @@ cursig(struct proc *p)
 	int s;
 
 	KERNEL_ASSERT_LOCKED();
+	KASSERT(p == curproc);
 
 	for (;;) {
 		mask = (p->p_siglist | pr->ps_siglist);
@@ -1210,15 +1226,17 @@ cursig(struct proc *p)
 			return (0);
 		signum = ffs((long)mask);
 		mask = sigmask(signum);
+
+		/* take the signal! */
 		atomic_clearbits_int(&p->p_siglist, mask);
 		atomic_clearbits_int(&pr->ps_siglist, mask);
+		setsigctx(p, signum, sctx);
 
 		/*
 		 * We should see pending but ignored signals
 		 * only if PS_TRACED was on when they were posted.
 		 */
-		if (mask & pr->ps_sigacts->ps_sigignore &&
-		    (pr->ps_flags & PS_TRACED) == 0)
+		if (sctx->sig_ignore && (pr->ps_flags & PS_TRACED) == 0)
 			continue;
 
 		/*
@@ -1260,6 +1278,7 @@ cursig(struct proc *p)
 			/* take the signal! */
 			atomic_clearbits_int(&p->p_siglist, mask);
 			atomic_clearbits_int(&pr->ps_siglist, mask);
+			setsigctx(p, signum, sctx);
 		}
 
 		prop = sigprop[signum];
@@ -1269,7 +1288,7 @@ cursig(struct proc *p)
 		 * Return the signal's number, or fall through
 		 * to clear it from the pending mask.
 		 */
-		switch ((long)pr->ps_sigacts->ps_sigact[signum]) {
+		switch ((long)sctx->sig_action) {
 		case (long)SIG_DFL:
 			/*
 			 * Don't take default actions on system processes.
@@ -1392,28 +1411,19 @@ proc_stop_sweep(void *v)
  * from the current set of pending signals.
  */
 void
-postsig(struct proc *p, int signum)
+postsig(struct proc *p, int signum, struct sigctx *sctx)
 {
-	struct process *pr = p->p_p;
-	struct sigacts *ps = pr->ps_sigacts;
-	sig_t action;
 	u_long trapno;
 	int mask, returnmask;
-	sigset_t catchmask;
 	siginfo_t si;
 	union sigval sigval;
-	int s, code, info, onstack, reset;
+	int s, code;
 
 	KASSERT(signum != 0);
 	KERNEL_ASSERT_LOCKED();
 
 	mask = sigmask(signum);
 	atomic_clearbits_int(&p->p_siglist, mask);
-	action = ps->ps_sigact[signum];
-	catchmask = ps->ps_catchmask[signum];
-	info = (ps->ps_siginfo & mask) != 0;
-	onstack = (ps->ps_sigonstack & mask) != 0;
-	reset = (ps->ps_sigreset & mask) != 0;
 	sigval.sival_ptr = NULL;
 
 	if (p->p_sisig != signum) {
@@ -1429,11 +1439,11 @@ postsig(struct proc *p, int signum)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PSIG)) {
-		ktrpsig(p, signum, action, p->p_flag & P_SIGSUSPEND ?
+		ktrpsig(p, signum, sctx->sig_action, p->p_flag & P_SIGSUSPEND ?
 		    p->p_oldmask : p->p_sigmask, code, &si);
 	}
 #endif
-	if (action == SIG_DFL) {
+	if (sctx->sig_action == SIG_DFL) {
 		/*
 		 * Default action, where the default is to kill
 		 * the process.  (Other cases were ignored above.)
@@ -1445,7 +1455,7 @@ postsig(struct proc *p, int signum)
 		 * If we get here, the signal must be caught.
 		 */
 #ifdef DIAGNOSTIC
-		if (action == SIG_IGN || (p->p_sigmask & mask))
+		if (sctx->sig_action == SIG_IGN || (p->p_sigmask & mask))
 			panic("postsig action");
 #endif
 		/*
@@ -1475,11 +1485,12 @@ postsig(struct proc *p, int signum)
 			p->p_sigval.sival_ptr = NULL;
 		}
 
-		if (sendsig(action, signum, returnmask, &si, info, onstack)) {
+		if (sendsig(sctx->sig_action, signum, returnmask, &si,
+		    sctx->sig_info, sctx->sig_onstack)) {
 			sigexit(p, SIGILL);
 			/* NOTREACHED */
 		}
-		postsig_done(p, signum, catchmask, reset);
+		postsig_done(p, signum, sctx->sig_catchmask, sctx->sig_reset);
 		splx(s);
 	}
 }
@@ -1543,8 +1554,6 @@ sigismasked(struct proc *p, int sig)
 
 	return 0;
 }
-
-int nosuidcoredump = 1;
 
 struct coredump_iostate {
 	struct proc *io_proc;
@@ -1745,7 +1754,6 @@ coredump_unmap(void *cookie, vaddr_t start, vaddr_t end)
 int
 sys_nosys(struct proc *p, void *v, register_t *retval)
 {
-
 	ptsignal(p, SIGSYS, STHREAD);
 	return (ENOSYS);
 }
@@ -1759,6 +1767,7 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 		syscallarg(siginfo_t *) info;
 		syscallarg(const struct timespec *) timeout;
 	} */ *uap = v;
+	struct sigctx ctx;
 	sigset_t mask = SCARG(uap, sigmask) &~ sigcantmask;
 	siginfo_t si;
 	uint64_t nsecs = INFSLP;
@@ -1783,7 +1792,7 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 
 	dosigsuspend(p, p->p_sigmask &~ mask);
 	for (;;) {
-		si.si_signo = cursig(p);
+		si.si_signo = cursig(p, &ctx);
 		if (si.si_signo != 0) {
 			sigset_t smask = sigmask(si.si_signo);
 			if (smask & mask) {
@@ -1898,6 +1907,7 @@ filt_signal(struct knote *kn, long hint)
 void
 userret(struct proc *p)
 {
+	struct sigctx ctx;
 	int signum;
 
 	/* send SIGPROF or SIGVTALRM if their timers interrupted this thread */
@@ -1916,8 +1926,8 @@ userret(struct proc *p)
 
 	if (SIGPENDING(p) != 0 || ISSET(p->p_p->ps_flags, PS_TRACED)) {
 		KERNEL_LOCK();
-		while ((signum = cursig(p)) != 0)
-			postsig(p, signum);
+		while ((signum = cursig(p, &ctx)) != 0)
+			postsig(p, signum, &ctx);
 		KERNEL_UNLOCK();
 	}
 
@@ -1932,8 +1942,8 @@ userret(struct proc *p)
 		p->p_sigmask = p->p_oldmask;
 
 		KERNEL_LOCK();
-		while ((signum = cursig(p)) != 0)
-			postsig(p, signum);
+		while ((signum = cursig(p, &ctx)) != 0)
+			postsig(p, signum, &ctx);
 		KERNEL_UNLOCK();
 	}
 
