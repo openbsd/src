@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2021/12/27 16:20:20 visa Exp $
+#	$OpenBSD: Makefile,v 1.10 2022/02/14 06:39:19 visa Exp $
 
 PROGS=		poll_close poll_iocond poll_regevent pollnval pollretval
 LDADD=		-lpthread -lutil
@@ -17,8 +17,5 @@ run-regress-poll_iocond-${t}: poll_iocond
 #REGRESS_TARGETS+=	run-regress-poll_iocond-${t}
 .endfor
 CLEANFILES+=		iocond_fifo
-
-# pty test expects kqueue backend which sets POLLIN on HUP.
-REGRESS_EXPECTED_FAILURES+=	run-regress-poll_iocond-pty
 
 .include <bsd.regress.mk>
