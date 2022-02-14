@@ -670,7 +670,7 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 	if (pci_intr_map_msi(pa, &rdev->intrh) == 0)
 		rdev->msi_enabled = 1;
 	else if (pci_intr_map(pa, &rdev->intrh) != 0) {
-		printf(": couldn't map interrupt\n");
+		printf("%s: couldn't map interrupt\n", rdev->self.dv_xname);
 		return;
 	}
 	printf("%s: %s\n", rdev->self.dv_xname,

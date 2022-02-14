@@ -1891,13 +1891,15 @@ amdgpu_attach(struct device *parent, struct device *self, void *aux)
 		drm_sched_fence_slab_init();
 
 		if (amdgpu_sync_init()) {
-			printf(": amdgpu_sync_init failed\n");
+			printf("%s: amdgpu_sync_init failed\n",
+			    adev->self.dv_xname);
 			return;
 		}
 
 		if (amdgpu_fence_slab_init()) {
 			amdgpu_sync_fini();
-			printf(": amdgpu_fence_slab_init failed\n");
+			printf("%s: amdgpu_fence_slab_init failed\n",
+			    adev->self.dv_xname);
 			return;
 		}
 
@@ -1910,7 +1912,7 @@ amdgpu_attach(struct device *parent, struct device *self, void *aux)
 	if (pci_intr_map_msi(pa, &adev->intrh) == 0)
 		adev->irq.msi_enabled = true;
 	else if (pci_intr_map(pa, &adev->intrh) != 0) {
-		printf(": couldn't map interrupt\n");
+		printf("%s: couldn't map interrupt\n", adev->self.dv_xname);
 		return;
 	}
 	printf("%s: %s\n", adev->self.dv_xname,
