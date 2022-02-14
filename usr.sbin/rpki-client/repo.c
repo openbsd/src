@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.30 2022/02/02 15:13:00 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.31 2022/02/14 14:47:49 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -887,7 +887,7 @@ rsync_finish(unsigned int id, int ok)
 			tr->state = REPO_DONE;
 			repo_done(tr, 1);
 		} else {
-			logx("ta/%s: load from network failed", tr->descr);
+			warnx("ta/%s: load from network failed", tr->descr);
 			stats.rsync_fails++;
 			tr->uriidx++;
 			ta_fetch(tr);
@@ -907,7 +907,7 @@ rsync_finish(unsigned int id, int ok)
 		stats.rsync_repos++;
 		rr->state = REPO_DONE;
 	} else {
-		logx("%s: load from network failed, fallback to cache",
+		warnx("%s: load from network failed, fallback to cache",
 		    rr->basedir);
 		stats.rsync_fails++;
 		rr->state = REPO_FAILED;
@@ -938,7 +938,7 @@ rrdp_finish(unsigned int id, int ok)
 		stats.rrdp_repos++;
 		rr->state = REPO_DONE;
 	} else {
-		logx("%s: load from network failed, fallback to rsync",
+		warnx("%s: load from network failed, fallback to rsync",
 		    rr->notifyuri);
 		stats.rrdp_fails++;
 		rr->state = REPO_FAILED;
@@ -990,7 +990,7 @@ http_finish(unsigned int id, enum http_result res, const char *last_mod)
 			warn("unlink %s", tr->temp);
 
 		tr->uriidx++;
-		logx("ta/%s: load from network failed", tr->descr);
+		warnx("ta/%s: load from network failed", tr->descr);
 		ta_fetch(tr);
 	}
 }
