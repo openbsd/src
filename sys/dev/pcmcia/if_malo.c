@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.97 2022/01/09 05:42:58 jsg Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.98 2022/02/14 23:02:15 jsg Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -742,7 +742,7 @@ cmalo_media_change(struct ifnet *ifp)
 {
 	int error;
 
-	if ((error = ieee80211_media_change(ifp) != ENETRESET))
+	if ((error = ieee80211_media_change(ifp)) != ENETRESET)
 		return (error);
 
 	if (ifp->if_flags & (IFF_UP | IFF_RUNNING))
