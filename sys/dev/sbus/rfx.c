@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfx.c,v 1.12 2014/01/22 03:03:09 jsg Exp $	*/
+/*	$OpenBSD: rfx.c,v 1.13 2022/02/15 10:36:59 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -141,7 +141,6 @@ struct wsdisplay_accessops rfx_accessops = {
 int	rfxmatch(struct device *, void *, void *);
 void	rfxattach(struct device *, struct device *, void *);
 
-#if defined(OpenBSD)
 struct cfattach rfx_ca = {
 	sizeof (struct rfx_softc), rfxmatch, rfxattach
 };
@@ -149,9 +148,6 @@ struct cfattach rfx_ca = {
 struct cfdriver rfx_cd = {
 	NULL, "rfx", DV_DULL
 };
-#else
-CFATTACH_DECL(rfx, sizeof (struct rfx_softc), rfxmatch, rfxattach, NULL, NULL);
-#endif
 
 /*
  * Match a supported RasterFlex card.
