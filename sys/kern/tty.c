@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.173 2021/12/15 15:30:47 visa Exp $	*/
+/*	$OpenBSD: tty.c,v 1.174 2022/02/15 03:53:58 jsg Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -852,13 +852,6 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 			return (ENOTTY);
 		*(int *)data = tp->t_session->s_leader->ps_pid;
 		break;
-#ifdef TIOCHPCL
-	case TIOCHPCL:			/* hang up on last close */
-		s = spltty();
-		SET(tp->t_cflag, HUPCL);
-		splx(s);
-		break;
-#endif
 	case TIOCNXCL:			/* reset exclusive use of tty */
 		s = spltty();
 		CLR(tp->t_state, TS_XCLUDE);
