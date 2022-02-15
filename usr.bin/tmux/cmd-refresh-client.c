@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.45 2021/08/27 17:15:57 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.46 2022/02/15 13:03:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -225,7 +225,7 @@ cmd_refresh_client_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	if (args_has(args, 'l')) {
-		tty_putcode_ptr2(&tc->tty, TTYC_MS, "", "?");
+		tty_send_osc52_query(&tc->tty);
 		return (CMD_RETURN_NORMAL);
 	}
 

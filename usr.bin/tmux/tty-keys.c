@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.151 2021/10/21 08:36:51 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.152 2022/02/15 13:03:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1216,6 +1216,11 @@ tty_keys_clipboard(__unused struct tty *tty, const char *buf, size_t len,
 		return (0);
 	buf++;
 	end--;
+
+	/* If we did not request this, ignore it. */
+	if (~tty->flags & TTY_OSC52QUERY)
+		return (0);
+	tty->flags &= ~TTY_OSC52QUERY;
 
 	/* It has to be a string so copy it. */
 	copy = xmalloc(end + 1);
