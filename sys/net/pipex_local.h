@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.44 2022/01/02 22:36:04 jsg Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.45 2022/02/15 03:31:17 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -45,10 +45,6 @@
 #define PIPEX_CLOSE_TIMEOUT		30
 #define	PIPEX_PPPMINLEN			5
 	/* minimum PPP header length is 1 and minimum ppp payload length is 4 */
-
-#ifndef	NNBY		/* usually defined on the <sys/types.h> */
-#define	NNBY	8	/* number of bits of a byte */
-#endif
 
 #define PIPEX_MPPE_NOLDKEY		64 /* should be power of two */
 #define PIPEX_MPPE_OLDKEYMASK		(PIPEX_MPPE_NOLDKEY - 1)
