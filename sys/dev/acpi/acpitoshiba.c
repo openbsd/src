@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitoshiba.c,v 1.14 2022/02/08 17:25:12 deraadt Exp $ */
+/* $OpenBSD: acpitoshiba.c,v 1.15 2022/02/15 21:13:39 kettenis Exp $ */
 /*-
  * Copyright (c) 2003 Hiroyuki Aizu <aizu@navi.org>
  * All rights reserved.
@@ -89,6 +89,8 @@ struct acpitoshiba_softc {
 	struct device		 sc_dev;
 	struct acpi_softc	*sc_acpi;
 	struct aml_node		*sc_devnode;
+
+	uint32_t		 sc_brightness;
 };
 
 int	toshiba_enable_events(struct acpitoshiba_softc *);
@@ -100,7 +102,7 @@ int	toshiba_get_brightness(struct acpitoshiba_softc *, uint32_t *);
 int	toshiba_set_brightness(struct acpitoshiba_softc *, uint32_t *);
 int	toshiba_get_video_output(struct acpitoshiba_softc *, uint32_t *);
 int	toshiba_set_video_output(struct acpitoshiba_softc *, uint32_t *);
-int	toshiba_find_brightness(struct acpitoshiba_softc *, int *);
+void	toshiba_update_brightness(void *, int);
 int	toshiba_fn_key_brightness_up(struct acpitoshiba_softc *);
 int	toshiba_fn_key_brightness_down(struct acpitoshiba_softc *);
 int	toshiba_fn_key_video_output(struct acpitoshiba_softc *);
@@ -129,29 +131,14 @@ const char *acpitoshiba_hids[] = {
 int
 get_param_brightness(struct wsdisplay_param *dp)
 {
-	struct acpitoshiba_softc	*sc = NULL;
-	int i, ret;
-
-	for (i = 0; i < acpitoshiba_cd.cd_ndevs; i++) {
-		if (acpitoshiba_cd.cd_devs[i] == NULL)
-			continue;
-
-		sc = (struct acpitoshiba_softc *)acpitoshiba_cd.cd_devs[i];
-	}
+	struct acpitoshiba_softc *sc = acpitoshiba_cd.cd_devs[0];
 
 	if (sc != NULL) {
-		rw_enter_write(&sc->sc_acpi->sc_lck);
-
 		/* default settings */
 		dp->min = HCI_LCD_BRIGHTNESS_MIN;
 		dp->max = HCI_LCD_BRIGHTNESS_MAX;
-
-		ret = toshiba_get_brightness(sc, &dp->curval);
-
-		rw_exit_write(&sc->sc_acpi->sc_lck);
-
-		if ((dp->curval != -1) && (ret != HCI_FAILURE) )
-			return (0);
+		dp->curval = sc->sc_brightness;
+		return (0);
 	}
 
 	return (1);
@@ -174,23 +161,17 @@ acpitoshiba_get_param(struct wsdisplay_param *dp)
 int
 set_param_brightness(struct wsdisplay_param *dp)
 {
-	struct acpitoshiba_softc	*sc = NULL;
-	int i, ret;
-
-	for (i = 0; i < acpitoshiba_cd.cd_ndevs; i++) {
-		if (acpitoshiba_cd.cd_devs[i] == NULL)
-			continue;
-
-		sc = (struct acpitoshiba_softc *)acpitoshiba_cd.cd_devs[i];
-	}
+	struct acpitoshiba_softc *sc = acpitoshiba_cd.cd_devs[0];
 
 	if (sc != NULL) {
-		rw_enter_write(&sc->sc_acpi->sc_lck);
-		ret = toshiba_find_brightness(sc, &dp->curval);
-		rw_exit_write(&sc->sc_acpi->sc_lck);
-
-		if ((dp->curval != -1) && (ret != HCI_FAILURE))
-			return (0);
+		if (dp->curval < HCI_LCD_BRIGHTNESS_MIN)
+			dp->curval = HCI_LCD_BRIGHTNESS_MIN;
+		if (dp->curval > HCI_LCD_BRIGHTNESS_MAX)
+			dp->curval = HCI_LCD_BRIGHTNESS_MAX;
+		sc->sc_brightness = dp->curval;
+		acpi_addtask(sc->sc_acpi, toshiba_update_brightness, sc, 0);
+		acpi_wakeup(sc->sc_acpi);
+		return (0);
 	}
 
 	return (1);
@@ -210,29 +191,12 @@ acpitoshiba_set_param(struct wsdisplay_param *dp)
 	}
 }
 
-int
-toshiba_find_brightness(struct acpitoshiba_softc *sc, int *new_blevel)
+void
+toshiba_update_brightness(void *arg0, int arg1)
 {
-	int ret, current_blevel;
+	struct acpitoshiba_softc *sc = arg0;
 
-	ret = toshiba_get_brightness(sc, &current_blevel);
-	if (ret != HCI_SUCCESS)
-		return (1);
-
-	if (current_blevel != *new_blevel) {
-		if (*new_blevel >= HCI_LCD_BRIGHTNESS_MAX)
-			*new_blevel = current_blevel = HCI_LCD_BRIGHTNESS_MAX;
-		else if (*new_blevel <= HCI_LCD_BRIGHTNESS_MIN)
-			*new_blevel = current_blevel = HCI_LCD_BRIGHTNESS_MIN;
-		else
-			current_blevel = *new_blevel;
-
-		ret = toshiba_set_brightness(sc, &current_blevel);
-		if (ret != HCI_SUCCESS)
-			return (1);
-	}
-
-	return (0);
+	toshiba_set_brightness(sc, &sc->sc_brightness);
 }
 
 int
@@ -315,12 +279,14 @@ toshiba_attach(struct device *parent, struct device *self, void *aux)
 		/* Run toshiba_hotkey on button presses */
 		aml_register_notify(sc->sc_devnode, aa->aaa_dev,
 				toshiba_hotkey, sc, ACPIDEV_NOPOLL);
+	}
 
+	ret = toshiba_get_brightness(sc, &sc->sc_brightness);
+	if (ret != HCI_FAILURE) {
 		/* wsconsctl purpose */
 		ws_get_param = acpitoshiba_get_param;
 		ws_set_param = acpitoshiba_set_param;
 	}
-
 }
 
 int
@@ -452,6 +418,7 @@ toshiba_set_brightness(struct acpitoshiba_softc *sc, uint32_t *brightness)
 		return (HCI_FAILURE);
 	}
 
+	sc->sc_brightness = *brightness;
 	return (HCI_SUCCESS);
 }
 
