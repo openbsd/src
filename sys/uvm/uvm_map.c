@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.287 2022/02/14 21:11:02 kn Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.288 2022/02/15 11:54:19 kn Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3681,9 +3681,7 @@ uvmspace_free(struct vmspace *vm)
 			shmexit(vm);
 #endif
 
-		vm_map_lock(&vm->vm_map);
 		uvm_map_teardown(&vm->vm_map);
-		vm_map_unlock(&vm->vm_map);
 		pool_put(&uvm_vmspace_pool, vm);
 	}
 }
