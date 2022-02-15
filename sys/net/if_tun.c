@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.232 2022/02/15 04:16:10 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.233 2022/02/15 04:19:52 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -415,7 +415,9 @@ tun_dev_open(dev_t dev, const struct if_clone *ifc, int mode, struct proc *p)
 	CLR(sc->sc_flags, stayup);
 
 	/* automatically mark the interface running on open */
+	NET_LOCK();
 	SET(ifp->if_flags, IFF_UP | IFF_RUNNING);
+	NET_UNLOCK();
 	tun_link_state(ifp, LINK_STATE_FULL_DUPLEX);
 	if_put(ifp);
 
@@ -456,7 +458,9 @@ tun_dev_close(dev_t dev, struct proc *p)
 	/*
 	 * junk all pending output
 	 */
+	NET_LOCK();
 	CLR(ifp->if_flags, IFF_UP | IFF_RUNNING);
+	NET_UNLOCK();
 	ifq_purge(&ifp->if_snd);
 
 	CLR(sc->sc_flags, TUN_ASYNC);
@@ -469,7 +473,6 @@ tun_dev_close(dev_t dev, struct proc *p)
 			destroy = 1;
 			strlcpy(name, ifp->if_xname, sizeof(name));
 		} else {
-			CLR(ifp->if_flags, IFF_UP | IFF_RUNNING);
 			tun_link_state(ifp, LINK_STATE_DOWN);
 		}
 	}
