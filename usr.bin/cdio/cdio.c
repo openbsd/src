@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.83 2021/11/28 19:28:41 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.84 2022/02/15 08:17:50 jsg Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -431,17 +431,14 @@ run(int cmd, char *arg)
 		rc = ioctl(fd, CDIOCEJECT);
 		if (rc == -1)
 			return (rc);
-#if defined(__OpenBSD__)
 		close(fd);
 		fd = -1;
-#endif
 		if (track_names)
 			free_names(track_names);
 		track_names = NULL;
 		return (0);
 
 	case CMD_CLOSE:
-#if defined(CDIOCCLOSE)
 		if (!open_cd(cdname, 0))
 			return (0);
 
@@ -452,10 +449,6 @@ run(int cmd, char *arg)
 		close(fd);
 		fd = -1;
 		return (0);
-#else
-		printf("%s: Command not yet supported\n", __progname);
-		return (0);
-#endif
 
 	case CMD_PLAY:
 		if (!open_cd(cdname, 0))
