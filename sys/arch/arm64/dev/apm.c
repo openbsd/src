@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.13 2022/02/15 02:38:16 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.14 2022/02/15 16:54:48 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -380,6 +380,11 @@ void
 gosleep(void *v)
 {
 	// XXX
+}
+
+void
+sleep_abort(void *v)
+{
 }
 
 int

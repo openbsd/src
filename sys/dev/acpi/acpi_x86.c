@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.5 2022/02/15 02:38:17 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.6 2022/02/15 16:54:48 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -132,6 +132,14 @@ gosleep(void *v)
 	/* Resume */
 
 	acpi_resume_cpu(sc, sc->sc_state);
+	sc->sc_state = ACPI_STATE_S0;
+}
+
+void
+sleep_abort(void *v)
+{
+	struct acpi_softc *sc = v;
+
 	sc->sc_state = ACPI_STATE_S0;
 }
 

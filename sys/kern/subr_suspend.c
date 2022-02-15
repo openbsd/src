@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.5 2022/02/15 02:38:18 deraadt Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.6 2022/02/15 16:54:48 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -63,14 +63,17 @@ sleep_state(void *v, int sleepmode)
 		uvmpd_hibernate();
 		if (hibernate_alloc()) {
 			printf("failed to allocate hibernate memory\n");
+			sleep_abort(v);
 			goto fail_alloc;
 		}
 	}
 #endif /* HIBERNATE */
 
 	sensor_quiesce();
-	if (config_suspend_all(DVACT_QUIESCE))
+	if (config_suspend_all(DVACT_QUIESCE)) {
+		sleep_abort(v);
 		goto fail_quiesce;
+	}
 
 	vfs_stall(curproc, 1);
 #if NSOFTRAID > 0
@@ -103,13 +106,17 @@ sleep_state(void *v, int sleepmode)
 	intr_disable();	/* PSL_I for resume; PIC/APIC broken until repair */
 	cold = 2;	/* Force other code to delay() instead of tsleep() */
 
-	if (config_suspend_all(DVACT_SUSPEND) != 0)
+	if (config_suspend_all(DVACT_SUSPEND) != 0) {
+		sleep_abort(v);
 		goto fail_suspend;
+	}
 
 	suspend_randomness();
 
-	if (sleep_setstate(v))
+	if (sleep_setstate(v)) {
+		sleep_abort(v);
 		goto fail_pts;
+	}
 
 	if (sleepmode == SLEEP_SUSPEND) {
 		/*

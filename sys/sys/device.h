@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.59 2022/02/15 02:38:18 deraadt Exp $	*/
+/*	$OpenBSD: device.h,v 1.60 2022/02/15 16:54:48 deraadt Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -207,6 +207,7 @@ void	resume_mp(void);
 int	sleep_showstate(void *v, int sleepmode);
 int	sleep_setstate(void *v);
 int	sleep_resume(void *v);
+void	sleep_abort(void *v);
 void	gosleep(void *v);
 void	display_suspend(void *v);
 void	display_resume(void *v);
