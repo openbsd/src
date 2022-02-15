@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.81 2022/02/14 18:09:08 rob Exp $	*/
+/*	$OpenBSD: print.c,v 1.82 2022/02/15 23:16:00 rob Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -289,6 +289,8 @@ printstate(const struct kinfo_proc *kp, VARENT *ve)
 		else
 			*cp++ = 'u';
 	}
+	if (kp->p_psflags & PS_CHROOT)
+		*cp++ = 'c';
 	*cp = '\0';
 
 	if (state == 'R' && kp->p_cpuid != KI_NOCPU) {
