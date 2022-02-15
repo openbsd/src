@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.40 2021/03/07 06:21:38 jsg Exp $	*/
+/*	$OpenBSD: uha.c,v 1.41 2022/02/15 12:04:44 jsg Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -76,6 +76,7 @@ void uha_reset_mscp(struct uha_softc *, struct uha_mscp *);
 void uha_mscp_free(void *, void *);
 void *uha_mscp_alloc(void *);
 void uha_scsi_cmd(struct scsi_xfer *);
+int uhaprint(void *, const char *);
 
 struct scsi_adapter uha_switch = {
 	uha_scsi_cmd, NULL, NULL, NULL, NULL
@@ -87,18 +88,13 @@ struct cfdriver uha_cd = {
 
 #define	UHA_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 
-#ifdef __OpenBSD__
-int	uhaprint(void *, const char *);
-
 int
 uhaprint(void *aux, const char *name)
 {
-
 	if (name != NULL)
 		printf("%s: scsibus ", name);
 	return UNCONF;
 }
-#endif
 
 /*
  * Attach all the sub-devices we can find
