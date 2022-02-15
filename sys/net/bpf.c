@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.214 2022/02/13 23:11:10 bluhm Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.215 2022/02/15 08:43:50 visa Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1229,8 +1229,13 @@ filt_bpfrdetach(struct knote *kn)
 }
 
 int
-filt_bpfread_common(struct knote *kn, struct bpf_d *d)
+filt_bpfread(struct knote *kn, long hint)
 {
+	struct bpf_d *d = kn->kn_hook;
+
+	if (hint == NOTE_SUBMIT) /* ignore activation from selwakeup */
+		return (0);
+
 	MUTEX_ASSERT_LOCKED(&d->bd_mtx);
 
 	kn->kn_data = d->bd_hlen;
@@ -1241,25 +1246,13 @@ filt_bpfread_common(struct knote *kn, struct bpf_d *d)
 }
 
 int
-filt_bpfread(struct knote *kn, long hint)
-{
-	struct bpf_d *d = kn->kn_hook;
-
-	if (hint == NOTE_SUBMIT) /* ignore activation from selwakeup */
-		return (0);
-
-	return (filt_bpfread_common(kn, d));
-}
-
-int
 filt_bpfreadmodify(struct kevent *kev, struct knote *kn)
 {
 	struct bpf_d *d = kn->kn_hook;
 	int active;
 
 	mtx_enter(&d->bd_mtx);
-	knote_assign(kev, kn);
-	active = filt_bpfread_common(kn, d);
+	active = knote_modify_fn(kev, kn, filt_bpfread);
 	mtx_leave(&d->bd_mtx);
 
 	return (active);
@@ -1272,12 +1265,7 @@ filt_bpfreadprocess(struct knote *kn, struct kevent *kev)
 	int active;
 
 	mtx_enter(&d->bd_mtx);
-	if (kev != NULL && (kn->kn_flags & EV_ONESHOT))
-		active = 1;
-	else
-		active = filt_bpfread_common(kn, d);
-	if (active)
-		knote_submit(kn, kev);
+	active = knote_process_fn(kn, kev, filt_bpfread);
 	mtx_leave(&d->bd_mtx);
 
 	return (active);
