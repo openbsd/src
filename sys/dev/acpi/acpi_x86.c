@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.4 2022/02/15 02:29:23 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.5 2022/02/15 02:38:17 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -140,6 +140,8 @@ sleep_resume(void *v)
 {
 	struct acpi_softc *sc = v;
 
+	acpibtn_disable_psw();		/* disable _LID for wakeup */
+
 	/* 3rd resume AML step: _TTS(runstate) */
 	if (aml_node_setval(sc, sc->sc_tts, sc->sc_state) != 0)
 		return (EINVAL);
@@ -159,13 +161,6 @@ suspend_finish(void *v)
 	/* If we woke up but all the lids are closed, go back to sleep */
 	if (acpibtn_numopenlids() == 0 && lid_action != 0)
 		acpi_addtask(sc, acpi_sleep_task, sc, sc->sc_state);
-}
-
-void
-disable_lid_wakeups(void *v)
-{
-	acpibtn_disable_psw();		/* disable _LID for wakeup */
-
 }
 
 void

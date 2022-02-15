@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.4 2022/02/13 15:56:55 deraadt Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.5 2022/02/15 02:38:18 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -138,8 +138,6 @@ fail_suspend:
 	cold = 0;
 	intr_enable();
 	splx(s);
-
-	disable_lid_wakeups(v);
 
 	inittodr(gettime());
 
