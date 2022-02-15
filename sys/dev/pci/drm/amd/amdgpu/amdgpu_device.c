@@ -1031,7 +1031,7 @@ static int amdgpu_device_doorbell_init(struct amdgpu_device *adev)
 		return 0;
 	}
 
-#ifdef __linux
+#ifdef __linux__
 	if (pci_resource_flags(adev->pdev, 2) & IORESOURCE_UNSET)
 		return -EINVAL;
 #endif

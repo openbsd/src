@@ -961,7 +961,7 @@ int i915_driver_probe(struct drm_i915_private *i915, const struct pci_device_id 
 #endif
 	int ret;
 
-#ifdef __linux
+#ifdef __linux__
 	i915 = i915_driver_create(pdev, ent);
 	if (IS_ERR(i915))
 		return PTR_ERR(i915);

@@ -1436,7 +1436,7 @@ int radeon_device_init(struct radeon_device *rdev,
 		radeon_doorbell_init(rdev);
 
 	/* io port mapping */
-#ifdef linux
+#ifdef __linux__
 	for (i = 0; i < DEVICE_COUNT_RESOURCE; i++) {
 		if (pci_resource_flags(rdev->pdev, i) & IORESOURCE_IO) {
 			rdev->rio_mem_size = pci_resource_len(rdev->pdev, i);
