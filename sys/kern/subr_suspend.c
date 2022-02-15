@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.6 2022/02/15 16:54:48 deraadt Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.7 2022/02/15 21:17:12 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -33,6 +33,7 @@
 #endif
 
 #include "softraid.h"
+#include "wsdisplay.h"
 
 int
 sleep_state(void *v, int sleepmode)
@@ -49,7 +50,9 @@ sleep_state(void *v, int sleepmode)
 	if (sleep_showstate(v, sleepmode))
 		return EOPNOTSUPP;
 
-	display_suspend(v);
+#if NWSDISPLAY > 0
+	wsdisplay_suspend();
+#endif
 
 	stop_periodic_resettodr();
 
@@ -175,8 +178,9 @@ fail_alloc:
 
 	start_periodic_resettodr();
 
-	display_resume(v);
-
+#if NWSDISPLAY > 0
+	wsdisplay_resume();
+#endif
 	sys_sync(curproc, NULL, NULL);
 
 	/* Restore hw.setperf */

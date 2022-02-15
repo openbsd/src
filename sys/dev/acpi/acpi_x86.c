@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.6 2022/02/15 16:54:48 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.7 2022/02/15 21:17:12 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -50,7 +50,6 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/dsdt.h>
-#include <dev/wscons/wsdisplayvar.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
@@ -64,7 +63,6 @@
 #define APMDEV_CTL	8
 
 #include "wd.h"
-#include "wsdisplay.h"
 #include "softraid.h"
 
 int
@@ -169,32 +167,4 @@ suspend_finish(void *v)
 	/* If we woke up but all the lids are closed, go back to sleep */
 	if (acpibtn_numopenlids() == 0 && lid_action != 0)
 		acpi_addtask(sc, acpi_sleep_task, sc, sc->sc_state);
-}
-
-void
-display_suspend(void *v)
-{
-#if NWSDISPLAY > 0
-	struct acpi_softc *sc = v;
-
-	/*
-	 * Temporarily release the lock to prevent the X server from
-	 * blocking on setting the display brightness.
-	 */
-	rw_exit_write(&sc->sc_lck);
-	wsdisplay_suspend();
-	rw_enter_write(&sc->sc_lck);
-#endif /* NWSDISPLAY > 0 */
-}
-
-void
-display_resume(void *v)
-{
-#if NWSDISPLAY > 0
-	struct acpi_softc *sc = v;
-
-	rw_exit_write(&sc->sc_lck);
-	wsdisplay_resume();
-	rw_enter_write(&sc->sc_lck);
-#endif /* NWSDISPLAY > 0 */
 }

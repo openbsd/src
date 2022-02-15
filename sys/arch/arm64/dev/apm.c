@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.14 2022/02/15 16:54:48 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.15 2022/02/15 21:17:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -32,7 +32,6 @@
  */
 
 #include "apm.h"
-#include "wsdisplay.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,8 +48,6 @@
 #include <machine/cpu.h>
 #include <machine/acpiapm.h>
 #include <machine/apmvar.h>
-
-#include <dev/wscons/wsdisplayvar.h>
 
 #if defined(APMDEBUG)
 #define DPRINTF(x)	printf x
@@ -391,38 +388,6 @@ int
 sleep_resume(void *v)
 {
 	return 0;
-}
-
-void
-display_suspend(void *v)
-{
-#if 0
-#if NWSDISPLAY > 0
-	struct acpi_softc *sc = v;
-
-	/*
-	 * Temporarily release the lock to prevent the X server from
-	 * blocking on setting the display brightness.
-	 */
-	rw_exit_write(&sc->sc_lck);		/* XXX replace this interlock */
-	wsdisplay_suspend();
-	rw_enter_write(&sc->sc_lck);
-#endif /* NWSDISPLAY > 0 */
-#endif
-}
-
-void
-display_resume(void *v)
-{
-#if 0
-#if NWSDISPLAY > 0
-	struct acpi_softc *sc = v;
-
-	rw_exit_write(&sc->sc_lck);		/* XXX replace this interlock */
-	wsdisplay_resume();
-	rw_enter_write(&sc->sc_lck);
-#endif /* NWSDISPLAY > 0 */
-#endif
 }
 
 void

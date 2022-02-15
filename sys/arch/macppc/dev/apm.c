@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.30 2022/02/15 16:54:48 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.31 2022/02/15 21:17:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -52,9 +52,6 @@
 #include <machine/autoconf.h>
 
 #include <macppc/dev/pm_direct.h>
-
-#include "wsdisplay.h"
-#include <dev/wscons/wsdisplayvar.h>
 
 #if defined(APMDEBUG)
 #define DPRINTF(x)	printf x
@@ -383,22 +380,6 @@ sleep_resume(void *v)
 void
 gosleep(void *v)
 {
-}
-
-void
-display_suspend(void *v)
-{
-#if NWSDISPLAY > 0
-	wsdisplay_suspend();
-#endif /* NWSDISPLAY > 0 */
-}
-
-void
-display_resume(void *v)
-{
-#if NWSDISPLAY > 0
-	wsdisplay_resume();
-#endif /* NWSDISPLAY > 0 */
 }
 
 void
