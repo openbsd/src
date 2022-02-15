@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.198 2021/12/07 07:28:44 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.199 2022/02/15 13:11:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2235,15 +2235,19 @@ input_enter_dcs(struct input_ctx *ictx)
 static int
 input_dcs_dispatch(struct input_ctx *ictx)
 {
+	struct window_pane	*wp = ictx->wp;
 	struct screen_write_ctx	*sctx = &ictx->ctx;
 	u_char			*buf = ictx->input_buf;
 	size_t			 len = ictx->input_len;
 	const char		 prefix[] = "tmux;";
 	const u_int		 prefixlen = (sizeof prefix) - 1;
 
+	if (wp == NULL)
+		return (0);
 	if (ictx->flags & INPUT_DISCARD)
 		return (0);
-
+	if (!options_get_number(ictx->wp->options, "allow-passthrough"))
+		return (0);
 	log_debug("%s: \"%s\"", __func__, buf);
 
 	if (len >= prefixlen && strncmp(buf, prefix, prefixlen) == 0)
