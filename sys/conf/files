@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.709 2022/02/08 17:25:11 deraadt Exp $
+#	$OpenBSD: files,v 1.710 2022/02/16 01:25:45 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -573,7 +573,7 @@ pseudo-device mpip: ifnet, mpls
 pseudo-device bpe: ifnet, ether, ifmedia, etherbridge
 pseudo-device vether: ifnet, ether
 pseudo-device pppx: ifnet
-pseudo-device vxlan: ifnet, ether, ifmedia
+pseudo-device vxlan: ifnet, ether, etherbridge
 pseudo-device wg: ifnet
 
 pseudo-device ksyms

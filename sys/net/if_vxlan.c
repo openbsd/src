@@ -1,7 +1,7 @@
-/*	$OpenBSD: if_vxlan.c,v 1.83 2022/01/10 14:07:59 jan Exp $	*/
+/*	$OpenBSD: if_vxlan.c,v 1.84 2022/02/16 01:25:45 dlg Exp $ */
 
 /*
- * Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,475 +17,781 @@
  */
 
 #include "bpfilter.h"
-#include "vxlan.h"
-#include "vlan.h"
 #include "pf.h"
-#include "bridge.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/sockio.h>
 #include <sys/ioctl.h>
+#include <sys/timeout.h>
+#include <sys/pool.h>
+#include <sys/tree.h>
+#include <sys/refcnt.h>
+#include <sys/smr.h>
+
+#include <sys/socket.h>
+#include <sys/socketvar.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
+#include <net/if_dl.h>
 #include <net/if_media.h>
+#include <net/if_types.h>
 #include <net/route.h>
-
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
+#include <net/rtable.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
 #include <netinet/udp.h>
-#include <netinet/udp_var.h>
 #include <netinet/in_pcb.h>
+#include <netinet/ip_var.h>
 
-#if NPF > 0
-#include <net/pfvar.h>
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
+#include <netinet6/in6_var.h>
 #endif
 
-#if NBRIDGE > 0
+/* for bridge stuff */
 #include <net/if_bridge.h>
+#include <net/if_etherbridge.h>
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
 #endif
 
-#include <net/if_vxlan.h>
+/*
+ * The protocol.
+ */
+
+#define VXLANMTU		1492
+#define VXLAN_PORT		4789
+
+struct vxlan_header {
+	uint32_t		vxlan_flags;
+#define VXLAN_F_I			(1U << 27)
+	uint32_t		vxlan_id;
+#define VXLAN_VNI_SHIFT			8
+#define VXLAN_VNI_MASK			(0xffffffU << VXLAN_VNI_SHIFT)
+};
+
+#define VXLAN_VNI_MAX			0x00ffffffU
+#define VXLAN_VNI_MIN			0x00000000U
+
+/*
+ * The driver.
+ */
+
+union vxlan_addr {
+	struct in_addr		in4;
+	struct in6_addr		in6;
+};
+
+struct vxlan_softc;
+
+struct vxlan_peer {
+	RBT_ENTRY(vxlan_peer)	 p_entry;
+
+	struct vxlan_header	 p_header;
+	union vxlan_addr	 p_addr;
+
+	struct vxlan_softc	*p_sc;
+};
+
+RBT_HEAD(vxlan_peers, vxlan_peer);
+
+struct vxlan_tep {
+	TAILQ_ENTRY(vxlan_tep)	 vt_entry;
+
+	sa_family_t		 vt_af;
+	unsigned int		 vt_rdomain;
+	union vxlan_addr	 vt_addr;
+#define vt_addr4 vt_addr.in4
+#define vt_addr6 vt_addr.in6
+	in_port_t		 vt_port;
+
+	struct socket		*vt_so;
+
+	struct mutex		 vt_mtx;
+	struct vxlan_peers	 vt_peers;
+};
+
+TAILQ_HEAD(vxlan_teps, vxlan_tep);
+
+enum vxlan_tunnel_mode {
+	VXLAN_TMODE_UNSET,
+	VXLAN_TMODE_P2P,	 /* unicast destination, no learning */
+	VXLAN_TMODE_LEARNING,	 /* multicast destination, learning */
+	VXLAN_TMODE_ENDPOINT,	 /* unset destination, no learning */
+};
 
 struct vxlan_softc {
 	struct arpcom		 sc_ac;
-	struct ifmedia		 sc_media;
+	struct etherbridge	 sc_eb;
 
-	struct ip_moptions	 sc_imo;
-	struct task		 sc_atask;
-	struct task		 sc_ltask;
+	unsigned int		 sc_rdomain;
+	sa_family_t		 sc_af;
+	union vxlan_addr	 sc_src;
+	union vxlan_addr	 sc_dst;
+	in_port_t		 sc_port;
+	struct vxlan_header	 sc_header;
+	unsigned int		 sc_if_index0;
+
 	struct task		 sc_dtask;
+	void			*sc_inmulti;
 
-	struct sockaddr_storage	 sc_src;
-	struct sockaddr_storage	 sc_dst;
-	in_port_t		 sc_dstport;
-	u_int			 sc_rdomain;
-	int64_t			 sc_vnetid;
+	enum vxlan_tunnel_mode	 sc_mode;
+	struct vxlan_peer	*sc_ucast_peer;
+	struct vxlan_peer	*sc_mcast_peer;
+	struct refcnt		 sc_refs;
+
 	uint16_t		 sc_df;
-	u_int8_t		 sc_ttl;
+	int			 sc_ttl;
 	int			 sc_txhprio;
+	int			 sc_rxhprio;
 
-	struct task		 sc_sendtask;
-
-	LIST_ENTRY(vxlan_softc)	 sc_entry;
+	struct task		 sc_send_task;
 };
 
-void	 vxlanattach(int);
-int	 vxlanioctl(struct ifnet *, u_long, caddr_t);
-void	 vxlanstart(struct ifnet *);
-int	 vxlan_clone_create(struct if_clone *, int);
-int	 vxlan_clone_destroy(struct ifnet *);
-void	 vxlan_multicast_cleanup(struct ifnet *);
-int	 vxlan_multicast_join(struct ifnet *, struct sockaddr *,
-	    struct sockaddr *);
-int	 vxlan_media_change(struct ifnet *);
-void	 vxlan_media_status(struct ifnet *, struct ifmediareq *);
-int	 vxlan_config(struct ifnet *, struct sockaddr *, struct sockaddr *);
-int	 vxlan_output(struct ifnet *, struct mbuf *);
-void	 vxlan_addr_change(void *);
-void	 vxlan_if_change(void *);
-void	 vxlan_link_change(void *);
-void	 vxlan_send_dispatch(void *);
+void		vxlanattach(int);
 
-int	 vxlan_sockaddr_cmp(struct sockaddr *, struct sockaddr *);
-uint16_t vxlan_sockaddr_port(struct sockaddr *);
+static int	vxlan_clone_create(struct if_clone *, int);
+static int	vxlan_clone_destroy(struct ifnet *);
 
-struct if_clone	vxlan_cloner =
+static int	vxlan_output(struct ifnet *, struct mbuf *,
+		    struct sockaddr *, struct rtentry *);
+static int	vxlan_enqueue(struct ifnet *, struct mbuf *);
+static void	vxlan_start(struct ifqueue *);
+static void	vxlan_send(void *);
+
+static int	vxlan_ioctl(struct ifnet *, u_long, caddr_t);
+static int	vxlan_up(struct vxlan_softc *);
+static int	vxlan_down(struct vxlan_softc *);
+static int	vxlan_addmulti(struct vxlan_softc *, struct ifnet *);
+static void	vxlan_delmulti(struct vxlan_softc *);
+
+static struct mbuf *
+		vxlan_input(void *, struct mbuf *,
+		    struct ip *, struct ip6_hdr *, void *, int);
+
+static int	vxlan_set_rdomain(struct vxlan_softc *, const struct ifreq *);
+static int	vxlan_get_rdomain(struct vxlan_softc *, struct ifreq *);
+static int	vxlan_set_tunnel(struct vxlan_softc *,
+		    const struct if_laddrreq *);
+static int	vxlan_get_tunnel(struct vxlan_softc *, struct if_laddrreq *);
+static int	vxlan_del_tunnel(struct vxlan_softc *);
+static int	vxlan_set_vnetid(struct vxlan_softc *, const struct ifreq *);
+static int	vxlan_get_vnetid(struct vxlan_softc *, struct ifreq *);
+static int	vxlan_del_vnetid(struct vxlan_softc *);
+static int	vxlan_set_parent(struct vxlan_softc *,
+		    const struct if_parent *);
+static int	vxlan_get_parent(struct vxlan_softc *, struct if_parent *);
+static int	vxlan_del_parent(struct vxlan_softc *);
+
+static int	vxlan_add_addr(struct vxlan_softc *, const struct ifbareq *);
+static int	vxlan_del_addr(struct vxlan_softc *, const struct ifbareq *);
+
+static void	vxlan_detach_hook(void *);
+
+static struct if_clone vxlan_cloner =
     IF_CLONE_INITIALIZER("vxlan", vxlan_clone_create, vxlan_clone_destroy);
 
-int	 vxlan_enable = 0;
-u_long	 vxlan_tagmask;
+static int	 vxlan_eb_port_eq(void *, void *, void *);
+static void	*vxlan_eb_port_take(void *, void *);
+static void	 vxlan_eb_port_rele(void *, void *);
+static size_t	 vxlan_eb_port_ifname(void *, char *, size_t, void *);
+static void	 vxlan_eb_port_sa(void *, struct sockaddr_storage *, void *);
 
-#define VXLAN_TAGHASHSIZE		 32
-#define VXLAN_TAGHASH(tag)		 ((unsigned int)tag & vxlan_tagmask)
-LIST_HEAD(vxlan_taghash, vxlan_softc)	*vxlan_tagh, vxlan_any;
+static const struct etherbridge_ops vxlan_etherbridge_ops = {
+	vxlan_eb_port_eq,
+	vxlan_eb_port_take,
+	vxlan_eb_port_rele,
+	vxlan_eb_port_ifname,
+	vxlan_eb_port_sa,
+};
+
+static struct rwlock vxlan_lock = RWLOCK_INITIALIZER("vteps");
+static struct vxlan_teps vxlan_teps = TAILQ_HEAD_INITIALIZER(vxlan_teps);
+static struct pool vxlan_endpoint_pool;
+
+static inline int	vxlan_peer_cmp(const struct vxlan_peer *,
+			    const struct vxlan_peer *);
+
+RBT_PROTOTYPE(vxlan_peers, vxlan_peer, p_entry, vxlan_peer_cmp);
 
 void
 vxlanattach(int count)
 {
-	/* Regular vxlan interfaces with a VNI */
-	if ((vxlan_tagh = hashinit(VXLAN_TAGHASHSIZE, M_DEVBUF, M_NOWAIT,
-	    &vxlan_tagmask)) == NULL)
-		panic("vxlanattach: hashinit");
-
-	/* multipoint-to-multipoint interfaces that accept any VNI */
-	LIST_INIT(&vxlan_any);
-
 	if_clone_attach(&vxlan_cloner);
 }
 
-int
+static int
 vxlan_clone_create(struct if_clone *ifc, int unit)
 {
-	struct ifnet		*ifp;
-	struct vxlan_softc	*sc;
+	struct vxlan_softc *sc;
+	struct ifnet *ifp;
+	int error;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
-	sc->sc_imo.imo_membership = mallocarray(IP_MIN_MEMBERSHIPS,
-	    sizeof(struct in_multi *), M_IPMOPTS, M_WAITOK|M_ZERO);
-	sc->sc_imo.imo_max_memberships = IP_MIN_MEMBERSHIPS;
-	sc->sc_dstport = htons(VXLAN_PORT);
-	sc->sc_vnetid = VXLAN_VNI_UNSET;
-	sc->sc_txhprio = IFQ_TOS2PRIO(IPTOS_PREC_ROUTINE); /* 0 */
-	sc->sc_df = htons(0);
-	task_set(&sc->sc_atask, vxlan_addr_change, sc);
-	task_set(&sc->sc_ltask, vxlan_link_change, sc);
-	task_set(&sc->sc_dtask, vxlan_if_change, sc);
-	task_set(&sc->sc_sendtask, vxlan_send_dispatch, sc);
+	if (vxlan_endpoint_pool.pr_size == 0) {
+		pool_init(&vxlan_endpoint_pool, sizeof(union vxlan_addr),
+		    0, IPL_SOFTNET, 0, "vxlanep", NULL);
+	}
+
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO|M_CANFAIL);
+	if (sc == NULL)
+		return (ENOMEM);
 
 	ifp = &sc->sc_ac.ac_if;
-	snprintf(ifp->if_xname, sizeof ifp->if_xname, "vxlan%d", unit);
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ether_fakeaddr(ifp);
+
+	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
+	    ifc->ifc_name, unit);
+
+	error = etherbridge_init(&sc->sc_eb, ifp->if_xname,
+	    &vxlan_etherbridge_ops, sc);
+	if (error == -1) {
+		free(sc, M_DEVBUF, sizeof(*sc));
+		return (error);
+	}
+
+	sc->sc_af = AF_UNSPEC;
+	sc->sc_txhprio = 0;
+	sc->sc_rxhprio = IF_HDRPRIO_OUTER;
+	sc->sc_df = 0;
+	sc->sc_ttl = IP_DEFAULT_MULTICAST_TTL;
+
+	task_set(&sc->sc_dtask, vxlan_detach_hook, sc);
+	refcnt_init(&sc->sc_refs);
+	task_set(&sc->sc_send_task, vxlan_send, sc);
 
 	ifp->if_softc = sc;
-	ifp->if_ioctl = vxlanioctl;
-	ifp->if_start = vxlanstart;
-
 	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
-	ifp->if_xflags = IFXF_CLONED;
-
-	ifmedia_init(&sc->sc_media, 0, vxlan_media_change,
-	    vxlan_media_status);
-	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
-	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
+	ifp->if_ioctl = vxlan_ioctl;
+	ifp->if_output = vxlan_output;
+	ifp->if_enqueue = vxlan_enqueue;
+	ifp->if_qstart = vxlan_start;
+	ifp->if_flags = IFF_BROADCAST | IFF_MULTICAST | IFF_SIMPLEX;
+	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
+	ether_fakeaddr(ifp);
 
 	if_counters_alloc(ifp);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-#if 0
-	/*
-	 * Instead of using a decreased MTU of 1450 bytes, prefer
-	 * to use the default Ethernet-size MTU of 1500 bytes and to
-	 * increase the MTU of the outer transport interfaces to
-	 * at least 1550 bytes. The following is disabled by default.
-	 */
-	ifp->if_mtu = ETHERMTU - sizeof(struct ether_header);
-	ifp->if_mtu -= sizeof(struct vxlanudphdr) + sizeof(struct ipovly);
-#endif
-
-	LIST_INSERT_HEAD(&vxlan_tagh[VXLAN_TAGHASH(0)], sc, sc_entry);
-	vxlan_enable++;
-
 	return (0);
 }
 
-int
+static int
 vxlan_clone_destroy(struct ifnet *ifp)
 {
-	struct vxlan_softc	*sc = ifp->if_softc;
+	struct vxlan_softc *sc = ifp->if_softc;
 
 	NET_LOCK();
-	vxlan_multicast_cleanup(ifp);
+	if (ISSET(ifp->if_flags, IFF_RUNNING))
+		vxlan_down(sc);
 	NET_UNLOCK();
 
-	vxlan_enable--;
-	LIST_REMOVE(sc, sc_entry);
-
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
-	if (!task_del(net_tq(ifp->if_index), &sc->sc_sendtask))
-		taskq_barrier(net_tq(ifp->if_index));
+	etherbridge_destroy(&sc->sc_eb);
 
-	free(sc->sc_imo.imo_membership, M_IPMOPTS,
-	    sc->sc_imo.imo_max_memberships * sizeof(struct in_multi *));
+	refcnt_finalize(&sc->sc_refs, "vxlanfini");
+
 	free(sc, M_DEVBUF, sizeof(*sc));
 
 	return (0);
 }
 
-void
-vxlan_multicast_cleanup(struct ifnet *ifp)
+static struct vxlan_softc *
+vxlan_take(struct vxlan_softc *sc)
 {
-	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
-	struct ip_moptions	*imo = &sc->sc_imo;
-	struct ifnet		*mifp;
-
-	mifp = if_get(imo->imo_ifidx);
-	if (mifp != NULL) {
-		if_addrhook_del(mifp, &sc->sc_atask);
-		if_linkstatehook_del(mifp, &sc->sc_ltask);
-		if_detachhook_del(mifp, &sc->sc_dtask);
-
-		if_put(mifp);
-	}
-
-	if (imo->imo_num_memberships > 0) {
-		in_delmulti(imo->imo_membership[--imo->imo_num_memberships]);
-		imo->imo_ifidx = 0;
-	}
+	refcnt_take(&sc->sc_refs);
+	return (sc);
 }
 
-int
-vxlan_multicast_join(struct ifnet *ifp, struct sockaddr *src,
-    struct sockaddr *dst)
+static void
+vxlan_rele(struct vxlan_softc *sc)
 {
-	struct vxlan_softc	*sc = ifp->if_softc;
-	struct ip_moptions	*imo = &sc->sc_imo;
-	struct sockaddr_in	*src4, *dst4;
-#ifdef INET6
-	struct sockaddr_in6	*dst6;
-#endif /* INET6 */
-	struct ifaddr		*ifa;
-	struct ifnet		*mifp;
+	refcnt_rele_wake(&sc->sc_refs);
+}
 
-	switch (dst->sa_family) {
-	case AF_INET:
-		dst4 = satosin(dst);
-		if (!IN_MULTICAST(dst4->sin_addr.s_addr))
-			return (0);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		dst6 = satosin6(dst);
-		if (!IN6_IS_ADDR_MULTICAST(&dst6->sin6_addr))
-			return (0);
+static struct mbuf *
+vxlan_encap(struct vxlan_softc *sc, struct mbuf *m,
+    struct mbuf *(ip_encap)(struct vxlan_softc *sc, struct mbuf *,
+    const union vxlan_addr *, uint8_t))
+{
+	struct mbuf *m0;
+	union vxlan_addr gateway;
+	const union vxlan_addr *endpoint;
+	struct vxlan_header *vh;
+	struct udphdr *uh;
+	int prio;
+	uint8_t tos;
 
-		/* Multicast mode is currently not supported for IPv6 */
-		return (EAFNOSUPPORT);
-#endif /* INET6 */
-	default:
-		return (EAFNOSUPPORT);
+	if (sc->sc_mode == VXLAN_TMODE_UNSET)
+		goto drop;
+
+	if (sc->sc_mode == VXLAN_TMODE_P2P)
+		endpoint = &sc->sc_dst;
+	else { /* VXLAN_TMODE_LEARNING || VXLAN_TMODE_ENDPOINT */
+		struct ether_header *eh = mtod(m, struct ether_header *);
+
+		smr_read_enter();
+		endpoint = etherbridge_resolve_ea(&sc->sc_eb,
+		    (struct ether_addr *)eh->ether_dhost);
+		if (endpoint != NULL) {
+			gateway = *endpoint;
+			endpoint = &gateway;
+		}
+		smr_read_leave();
+
+		if (endpoint == NULL) {
+			if (sc->sc_mode == VXLAN_TMODE_ENDPOINT)
+				goto drop;
+
+			/* "flood" to unknown destinations */
+			endpoint = &sc->sc_dst;
+		}
 	}
 
-	src4 = satosin(src);
-	dst4 = satosin(dst);
+	/* force prepend mbuf because of payload alignment */
+	m0 = m_get(M_DONTWAIT, m->m_type);
+	if (m0 == NULL)
+		goto drop;
 
-	if (src4->sin_addr.s_addr == INADDR_ANY ||
-	    IN_MULTICAST(src4->sin_addr.s_addr))
-		return (EINVAL);
-	if ((ifa = ifa_ifwithaddr(src, sc->sc_rdomain)) == NULL ||
-	    (mifp = ifa->ifa_ifp) == NULL ||
-	    (mifp->if_flags & IFF_MULTICAST) == 0)
-		return (EADDRNOTAVAIL);
+	m_align(m0, 0);
+	m0->m_len = 0;
 
-	if ((imo->imo_membership[0] =
-	    in_addmulti(&dst4->sin_addr, mifp)) == NULL)
+	M_MOVE_PKTHDR(m0, m);
+	m0->m_next = m;
+
+	m = m_prepend(m0, sizeof(*vh), M_DONTWAIT);
+	if (m == NULL)
+		return (NULL);
+
+	vh = mtod(m, struct vxlan_header *);
+	*vh = sc->sc_header;
+
+	m = m_prepend(m, sizeof(*uh), M_DONTWAIT);
+	if (m == NULL)
+		return (NULL);
+
+	uh = mtod(m, struct udphdr *);
+	uh->uh_sport = sc->sc_port; /* XXX */
+	uh->uh_dport = sc->sc_port;
+	htobem16(&uh->uh_ulen, m->m_pkthdr.len);
+	uh->uh_sum = htons(0);
+
+	SET(m->m_pkthdr.csum_flags, M_UDP_CSUM_OUT);
+
+	prio = sc->sc_txhprio;
+	if (prio == IF_HDRPRIO_PACKET)
+		prio = m->m_pkthdr.pf.prio;
+	tos = IFQ_PRIO2TOS(prio);
+
+	CLR(m->m_flags, M_BCAST|M_MCAST);
+	m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
+
+#if NPF > 0
+	pf_pkt_addr_changed(m);
+#endif
+
+	return ((*ip_encap)(sc, m, endpoint, tos));
+drop:
+	m_freem(m);
+	return (NULL);
+}
+
+static struct mbuf *
+vxlan_encap_ipv4(struct vxlan_softc *sc, struct mbuf *m,
+    const union vxlan_addr *endpoint, uint8_t tos)
+{
+	struct ip *ip;
+
+	m = m_prepend(m, sizeof(*ip), M_DONTWAIT);
+	if (m == NULL)
+		return (NULL);
+
+	ip = mtod(m, struct ip *);
+	ip->ip_v = IPVERSION;
+	ip->ip_hl = sizeof(*ip) >> 2;
+	ip->ip_off = sc->sc_df;
+	ip->ip_tos = tos;
+	ip->ip_len = htons(m->m_pkthdr.len);
+	ip->ip_ttl = sc->sc_ttl;
+	ip->ip_p = IPPROTO_UDP;
+	ip->ip_src = sc->sc_src.in4;
+	ip->ip_dst = endpoint->in4;
+
+	return (m);
+}
+
+#ifdef INET6
+static struct mbuf *
+vxlan_encap_ipv6(struct vxlan_softc *sc, struct mbuf *m,
+    const union vxlan_addr *endpoint, uint8_t tos)
+{
+	struct ip6_hdr *ip6;
+	int len = m->m_pkthdr.len;
+
+	m = m_prepend(m, sizeof(*ip6), M_DONTWAIT);
+	if (m == NULL)
+		return (NULL);
+
+	ip6 = mtod(m, struct ip6_hdr *);
+	ip6->ip6_flow = ISSET(m->m_pkthdr.csum_flags, M_FLOWID) ?
+	    htonl(m->m_pkthdr.ph_flowid) : 0;
+	ip6->ip6_vfc |= IPV6_VERSION;
+	ip6->ip6_flow |= htonl((uint32_t)tos << 20);
+	ip6->ip6_plen = htons(len);
+	ip6->ip6_nxt = IPPROTO_UDP;
+	ip6->ip6_hlim = sc->sc_ttl;
+	ip6->ip6_src = sc->sc_src.in6;
+	ip6->ip6_dst = endpoint->in6;
+
+	if (sc->sc_df)
+		SET(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT);
+
+	return (m);
+}
+#endif /* INET6 */
+
+static int
+vxlan_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
+{
+	struct m_tag *mtag;
+	int error = 0;
+
+	mtag = NULL;
+	while ((mtag = m_tag_find(m, PACKET_TAG_GRE, mtag)) != NULL) {
+		if (memcmp((caddr_t)(mtag + 1), &ifp->if_index,
+		    sizeof(ifp->if_index)) == 0) {
+			error = EIO;
+			goto drop;
+		}
+	}
+
+	mtag = m_tag_get(PACKET_TAG_GRE, sizeof(ifp->if_index), M_NOWAIT);
+	if (mtag == NULL) {
+		error = ENOBUFS;
+		goto drop;
+	}
+	memcpy((caddr_t)(mtag + 1), &ifp->if_index, sizeof(ifp->if_index));
+	m_tag_prepend(m, mtag);
+
+	return (ether_output(ifp, m, dst, rt));
+
+drop:
+	m_freem(m);
+	return (error);
+}
+
+static int
+vxlan_enqueue(struct ifnet *ifp, struct mbuf *m)
+{
+	struct vxlan_softc *sc = ifp->if_softc;
+	struct ifqueue *ifq = &ifp->if_snd;
+
+	if (ifq_enqueue(ifq, m) != 0)
 		return (ENOBUFS);
 
-	imo->imo_num_memberships++;
-	imo->imo_ifidx = mifp->if_index;
-	if (sc->sc_ttl > 0)
-		imo->imo_ttl = sc->sc_ttl;
-	else
-		imo->imo_ttl = IP_DEFAULT_MULTICAST_TTL;
-	imo->imo_loop = 0;
-
-	/*
-	 * Use interface hooks to track any changes on the interface
-	 * that is used to send out the tunnel traffic as multicast.
-	 */
-	if_addrhook_add(mifp, &sc->sc_atask);
-	if_linkstatehook_add(mifp, &sc->sc_ltask);
-	if_detachhook_add(mifp, &sc->sc_dtask);
+	task_add(ifq->ifq_softnet, &sc->sc_send_task);
 
 	return (0);
 }
 
-void
-vxlanstart(struct ifnet *ifp)
+static void
+vxlan_start(struct ifqueue *ifq)
 {
-	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
+	struct ifnet *ifp = ifq->ifq_if;
+	struct vxlan_softc *sc = ifp->if_softc;
 
-	task_add(net_tq(ifp->if_index), &sc->sc_sendtask);
+	task_add(ifq->ifq_softnet, &sc->sc_send_task);
 }
 
-void
-vxlan_send_dispatch(void *xsc)
+static uint64_t
+vxlan_send_ipv4(struct vxlan_softc *sc, struct mbuf_list *ml)
 {
-	struct vxlan_softc	*sc = xsc;
-	struct ifnet		*ifp = &sc->sc_ac.ac_if;
-	struct mbuf		*m;
-	struct mbuf_list	 ml;
+	struct ip_moptions imo;
+	struct mbuf *m;
+	uint64_t oerrors = 0;
 
-	ml_init(&ml);
-	for (;;) {
-		m = ifq_dequeue(&ifp->if_snd);
-		if (m == NULL)
-			break;
+	imo.imo_ifidx = sc->sc_if_index0;
+	imo.imo_ttl = sc->sc_ttl;
+	imo.imo_loop = 0;
 
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
+	NET_LOCK();
+	while ((m = ml_dequeue(ml)) != NULL) {
+		if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &imo, NULL, 0) != 0)
+			oerrors++;
+	}
+	NET_UNLOCK();
+
+	return (oerrors);
+}
+
+#ifdef INET6
+static uint64_t
+vxlan_send_ipv6(struct vxlan_softc *sc, struct mbuf_list *ml)
+{
+	struct ip6_moptions im6o;
+	struct mbuf *m;
+	uint64_t oerrors = 0;
+
+	im6o.im6o_ifidx = sc->sc_if_index0;
+	im6o.im6o_hlim = sc->sc_ttl;
+	im6o.im6o_loop = 0;
+
+	NET_LOCK();
+	while ((m = ml_dequeue(ml)) != NULL) {
+		if (ip6_output(m, NULL, NULL, 0, &im6o, NULL) != 0)
+			oerrors++;
+	}
+	NET_UNLOCK();
+
+	return (oerrors);
+}
+#endif /* INET6 */
+
+static void
+vxlan_send(void *arg)
+{
+	struct vxlan_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct mbuf *(*ip_encap)(struct vxlan_softc *, struct mbuf *,
+	    const union vxlan_addr *, uint8_t);
+	uint64_t (*ip_send)(struct vxlan_softc *, struct mbuf_list *);
+	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
+	struct mbuf *m;
+	uint64_t oerrors;
+
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		return;
+
+	switch (sc->sc_af) {
+	case AF_INET:
+		ip_encap = vxlan_encap_ipv4;
+		ip_send = vxlan_send_ipv4;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		ip_encap = vxlan_encap_ipv6;
+		ip_send = vxlan_send_ipv6;
+		break;
 #endif
+	default:
+		unhandled_af(sc->sc_af);
+		/* NOTREACHED */
+	}
+
+	while ((m = ifq_dequeue(&ifp->if_snd)) != NULL) {
+#if NBPFILTER > 0
+		caddr_t if_bpf = READ_ONCE(ifp->if_bpf);
+		if (if_bpf != NULL)
+			bpf_mtap_ether(if_bpf, m, BPF_DIRECTION_OUT);
+#endif
+		m = vxlan_encap(sc, m, ip_encap);
+		if (m == NULL)
+			continue;
 
 		ml_enqueue(&ml, m);
 	}
 
-	if (ml_empty(&ml))
-		return;
+	oerrors = (*ip_send)(sc, &ml);
 
-	NET_LOCK();
-	while ((m = ml_dequeue(&ml)) != NULL) {
-		vxlan_output(ifp, m);
-	}
-	NET_UNLOCK();
+	counters_add(ifp->if_counters, ifc_oerrors, oerrors);
 }
 
-
-int
-vxlan_config(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
+static struct mbuf *
+vxlan_input(void *arg, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
+    void *uhp, int hlen)
 {
-	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
-	int			 reset = 0, error, af;
-	socklen_t		 slen;
-	in_port_t		 port;
-	struct vxlan_taghash	*tagh;
+	struct vxlan_tep *vt = arg;
+	union vxlan_addr addr;
+	struct vxlan_peer key, *p;
+	struct udphdr *uh;
+	struct vxlan_header *vh;
+	struct ether_header *eh;
+	int vhlen = hlen + sizeof(*vh);
+	struct mbuf *n;
+	int off;
+	in_port_t port;
+	struct vxlan_softc *sc = NULL;
+	struct ifnet *ifp;
 
-	if (src != NULL && dst != NULL) {
-		if ((af = src->sa_family) != dst->sa_family)
-			return (EAFNOSUPPORT);
-	} else {
-		/* Reset current configuration */
-		af = sc->sc_src.ss_family;
-		src = sstosa(&sc->sc_src);
-		dst = sstosa(&sc->sc_dst);
-		reset = 1;
-	}
+	if (m->m_pkthdr.len < vhlen)
+		goto drop;
 
-	switch (af) {
-	case AF_INET:
-		slen = sizeof(struct sockaddr_in);
-		break;
+	uh = uhp;
+	port = uh->uh_sport;
+
+	if (ip != NULL)
+		addr.in4 = ip->ip_src;
 #ifdef INET6
-	case AF_INET6:
-		slen = sizeof(struct sockaddr_in6);
-		break;
-#endif /* INET6 */
-	default:
-		return (EAFNOSUPPORT);
+	else
+		addr.in6 = ip6->ip6_src;
+#endif
+
+	if (m->m_len < vhlen) {
+		m = m_pullup(m, vhlen);
+		if (m == NULL)
+			return (NULL);
 	}
 
-	if (src->sa_len != slen || dst->sa_len != slen)
-		return (EINVAL);
+	/* can't use ip/ip6/uh after this */
 
-	vxlan_multicast_cleanup(ifp);
+	vh = (struct vxlan_header *)(mtod(m, caddr_t) + hlen);
 
-	/* returns without error if multicast is not configured */
-	if ((error = vxlan_multicast_join(ifp, src, dst)) != 0)
-		return (error);
+	memset(&key, 0, sizeof(key));
+	key.p_addr = addr;
+	key.p_header.vxlan_flags = vh->vxlan_flags & htonl(VXLAN_F_I);
+	key.p_header.vxlan_id = vh->vxlan_id & htonl(VXLAN_VNI_MASK);
 
-	if ((port = vxlan_sockaddr_port(dst)) != 0)
-		sc->sc_dstport = port;
+	mtx_enter(&vt->vt_mtx);
+	p = RBT_FIND(vxlan_peers, &vt->vt_peers, &key);
+	if (p == NULL) {
+		memset(&key.p_addr, 0, sizeof(key.p_addr));
+		p = RBT_FIND(vxlan_peers, &vt->vt_peers, &key);
+	}
+	if (p != NULL)
+		sc = vxlan_take(p->p_sc);
+	mtx_leave(&vt->vt_mtx);
 
-	if (!reset) {
-		bzero(&sc->sc_src, sizeof(sc->sc_src));
-		bzero(&sc->sc_dst, sizeof(sc->sc_dst));
-		memcpy(&sc->sc_src, src, src->sa_len);
-		memcpy(&sc->sc_dst, dst, dst->sa_len);
+	if (sc == NULL)
+		goto drop;
+
+	ifp = &sc->sc_ac.ac_if;
+	if (ISSET(ifp->if_flags, IFF_LINK0) && port != sc->sc_port)
+		goto rele_drop;
+
+	m_adj(m, vhlen);
+
+	if (m->m_pkthdr.len < sizeof(*eh))
+		goto rele_drop;
+
+	if (m->m_len < sizeof(*eh)) {
+		m = m_pullup(m, sizeof(*eh));
+		if (m == NULL)
+			goto rele;
 	}
 
-	if (sc->sc_vnetid == VXLAN_VNI_ANY) {
-		/*
-		 * If the interface accepts any VNI, put it into a separate
-		 * list that is not part of the main hash.
-		 */
-		tagh = &vxlan_any;
-	} else
-		tagh = &vxlan_tagh[VXLAN_TAGHASH(sc->sc_vnetid)];
+	n = m_getptr(m, sizeof(*eh), &off);
+	if (n == NULL)
+		goto rele_drop;
 
-	LIST_REMOVE(sc, sc_entry);
-	LIST_INSERT_HEAD(tagh, sc, sc_entry);
+	if (!ALIGNED_POINTER(mtod(n, caddr_t) + off, uint32_t)) {
+		n = m_dup_pkt(m, ETHER_ALIGN, M_NOWAIT);
+		m_freem(m);
+		if (n == NULL)
+			goto rele;
+		m = n;
+	}
 
-	return (0);
+	if (sc->sc_mode == VXLAN_TMODE_LEARNING) {
+		eh = mtod(m, struct ether_header *);
+		etherbridge_map_ea(&sc->sc_eb, &addr,
+		    (struct ether_addr *)eh->ether_shost);
+	}
+
+	/* XXX prio */
+
+	if_vinput(ifp, m);
+rele:
+	vxlan_rele(sc);
+	return (NULL);
+
+rele_drop:
+	vxlan_rele(sc);
+drop:
+	m_freem(m);
+	return (NULL);
 }
 
-int
-vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+static int
+vxlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
-	struct ifreq		*ifr = (struct ifreq *)data;
-	struct if_laddrreq	*lifr = (struct if_laddrreq *)data;
-	int			 error = 0;
+	struct vxlan_softc *sc = ifp->if_softc;
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifbrparam *bparam = (struct ifbrparam *)data;
+	int error = 0;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
-		ifp->if_flags |= IFF_UP;
-		/* FALLTHROUGH */
-
+		break;
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			ifp->if_flags |= IFF_RUNNING;
+		if (ISSET(ifp->if_flags, IFF_UP)) {
+			if (!ISSET(ifp->if_flags, IFF_RUNNING))
+				error = vxlan_up(sc);
+			else
+				error = 0;
 		} else {
-			ifp->if_flags &= ~IFF_RUNNING;
+			if (ISSET(ifp->if_flags, IFF_RUNNING))
+				error = vxlan_down(sc);
 		}
-		break;
-
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
-
-	case SIOCSLIFPHYADDR:
-		error = vxlan_config(ifp,
-		    sstosa(&lifr->addr),
-		    sstosa(&lifr->dstaddr));
-		break;
-
-	case SIOCDIFPHYADDR:
-		vxlan_multicast_cleanup(ifp);
-		bzero(&sc->sc_src, sizeof(sc->sc_src));
-		bzero(&sc->sc_dst, sizeof(sc->sc_dst));
-		sc->sc_dstport = htons(VXLAN_PORT);
-		break;
-
-	case SIOCGLIFPHYADDR:
-		if (sc->sc_dst.ss_family == AF_UNSPEC) {
-			error = EADDRNOTAVAIL;
-			break;
-		}
-		bzero(&lifr->addr, sizeof(lifr->addr));
-		bzero(&lifr->dstaddr, sizeof(lifr->dstaddr));
-		memcpy(&lifr->addr, &sc->sc_src, sc->sc_src.ss_len);
-		memcpy(&lifr->dstaddr, &sc->sc_dst, sc->sc_dst.ss_len);
 		break;
 
 	case SIOCSLIFPHYRTABLE:
-		if (ifr->ifr_rdomainid < 0 ||
-		    ifr->ifr_rdomainid > RT_TABLEID_MAX ||
-		    !rtable_exists(ifr->ifr_rdomainid)) {
-			error = EINVAL;
-			break;
-		}
-		sc->sc_rdomain = ifr->ifr_rdomainid;
-		(void)vxlan_config(ifp, NULL, NULL);
+		error = vxlan_set_rdomain(sc, ifr);
 		break;
-
 	case SIOCGLIFPHYRTABLE:
-		ifr->ifr_rdomainid = sc->sc_rdomain;
+		error = vxlan_get_rdomain(sc, ifr);
 		break;
 
-	case SIOCSLIFPHYTTL:
-		if (ifr->ifr_ttl < 0 || ifr->ifr_ttl > 0xff) {
-			error = EINVAL;
-			break;
-		}
-		if (sc->sc_ttl == (u_int8_t)ifr->ifr_ttl)
-			break;
-		sc->sc_ttl = (u_int8_t)(ifr->ifr_ttl);
-		(void)vxlan_config(ifp, NULL, NULL);
+	case SIOCSLIFPHYADDR:
+		error = vxlan_set_tunnel(sc, (const struct if_laddrreq *)data);
+		break;
+	case SIOCGLIFPHYADDR:
+		error = vxlan_get_tunnel(sc, (struct if_laddrreq *)data);
+		break;
+	case SIOCDIFPHYADDR:
+		error = vxlan_del_tunnel(sc);
 		break;
 
-	case SIOCGLIFPHYTTL:
-		ifr->ifr_ttl = (int)sc->sc_ttl;
+	case SIOCSVNETID:
+		error = vxlan_set_vnetid(sc, ifr);
+		break;
+	case SIOCGVNETID:
+		error = vxlan_get_vnetid(sc, ifr);
+		break;
+	case SIOCDVNETID:
+		error = vxlan_del_vnetid(sc);
+		break;
+
+	case SIOCSIFPARENT:
+		error = vxlan_set_parent(sc, (struct if_parent *)data);
+		break;
+	case SIOCGIFPARENT:
+		error = vxlan_get_parent(sc, (struct if_parent *)data);
+		break;
+	case SIOCDIFPARENT:
+		error = vxlan_del_parent(sc);
+		break;
+
+	case SIOCSTXHPRIO:
+		error = if_txhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_txhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGTXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_txhprio;
+		break;
+
+	case SIOCSRXHPRIO:
+		error = if_rxhprio_l2_check(ifr->ifr_hdrprio);
+		if (error != 0)
+			break;
+
+		sc->sc_rxhprio = ifr->ifr_hdrprio;
+		break;
+	case SIOCGRXHPRIO:
+		ifr->ifr_hdrprio = sc->sc_rxhprio;
 		break;
 
 	case SIOCSLIFPHYDF:
@@ -496,50 +802,45 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		ifr->ifr_df = sc->sc_df ? 1 : 0;
 		break;
 
-	case SIOCSTXHPRIO:
-		if (ifr->ifr_hdrprio == IF_HDRPRIO_PACKET)
-			; /* fall through */
-		else if (ifr->ifr_hdrprio < IF_HDRPRIO_MIN ||
-		    ifr->ifr_hdrprio > IF_HDRPRIO_MAX) {
+	case SIOCSLIFPHYTTL:
+		if (ifr->ifr_ttl < 1 || ifr->ifr_ttl > 0xff) {
 			error = EINVAL;
 			break;
 		}
 
-		sc->sc_txhprio = ifr->ifr_hdrprio;
+		/* commit */
+		sc->sc_ttl = (uint8_t)ifr->ifr_ttl;
 		break;
-	case SIOCGTXHPRIO:
-		ifr->ifr_hdrprio = sc->sc_txhprio;
-		break;
-
-	case SIOCSVNETID:
-		if (sc->sc_vnetid == ifr->ifr_vnetid)
-			break;
-
-		if ((ifr->ifr_vnetid != VXLAN_VNI_ANY) &&
-		    (ifr->ifr_vnetid > VXLAN_VNI_MAX ||
-		     ifr->ifr_vnetid < VXLAN_VNI_MIN)) {
-			error = EINVAL;
-			break;
-		}
-
-		sc->sc_vnetid = (int)ifr->ifr_vnetid;
-		(void)vxlan_config(ifp, NULL, NULL);
+	case SIOCGLIFPHYTTL:
+		ifr->ifr_ttl = (int)sc->sc_ttl;
 		break;
 
-	case SIOCGVNETID:
-		if ((sc->sc_vnetid != VXLAN_VNI_ANY) &&
-		    (sc->sc_vnetid > VXLAN_VNI_MAX ||
-		     sc->sc_vnetid < VXLAN_VNI_MIN)) {
-			error = EADDRNOTAVAIL;
-			break;
-		}
-
-		ifr->ifr_vnetid = sc->sc_vnetid;
+	case SIOCBRDGSCACHE:
+		error = etherbridge_set_max(&sc->sc_eb, bparam);
+		break;
+	case SIOCBRDGGCACHE:
+		error = etherbridge_get_max(&sc->sc_eb, bparam);
+		break;
+	case SIOCBRDGSTO:
+		error = etherbridge_set_tmo(&sc->sc_eb, bparam);
+		break;
+	case SIOCBRDGGTO:
+		error = etherbridge_get_tmo(&sc->sc_eb, bparam);
 		break;
 
-	case SIOCDVNETID:
-		sc->sc_vnetid = VXLAN_VNI_UNSET;
-		(void)vxlan_config(ifp, NULL, NULL);
+	case SIOCBRDGRTS:
+		error = etherbridge_rtfind(&sc->sc_eb,
+		    (struct ifbaconf *)data);
+		break;
+	case SIOCBRDGFLUSH:
+		etherbridge_flush(&sc->sc_eb,
+		    ((struct ifbreq *)data)->ifbr_ifsflags);
+		break;
+	case SIOCBRDGSADDR:
+		error = vxlan_add_addr(sc, (struct ifbareq *)data);
+		break;
+	case SIOCBRDGDADDR:
+		error = vxlan_del_addr(sc, (struct ifbareq *)data);
 		break;
 
 	default:
@@ -550,465 +851,960 @@ vxlanioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (error);
 }
 
-int
-vxlan_media_change(struct ifnet *ifp)
+static struct vxlan_tep *
+vxlan_tep_get(struct vxlan_softc *sc, const union vxlan_addr *addr)
 {
-	return (0);
-}
+	struct vxlan_tep *vt;
 
-void
-vxlan_media_status(struct ifnet *ifp, struct ifmediareq *imr)
-{
-	imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
-}
-
-int
-vxlan_sockaddr_cmp(struct sockaddr *srcsa, struct sockaddr *dstsa)
-{
-	struct sockaddr_in	*src4, *dst4;
-#ifdef INET6
-	struct sockaddr_in6	*src6, *dst6;
-#endif /* INET6 */
-
-	if (srcsa->sa_family != dstsa->sa_family)
-		return (1);
-
-	switch (dstsa->sa_family) {
-	case AF_INET:
-		src4 = satosin(srcsa);
-		dst4 = satosin(dstsa);
-		if (src4->sin_addr.s_addr == dst4->sin_addr.s_addr)
-			return (0);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		src6 = satosin6(srcsa);
-		dst6 = satosin6(dstsa);
-		if (IN6_ARE_ADDR_EQUAL(&src6->sin6_addr, &dst6->sin6_addr) &&
-		    src6->sin6_scope_id == dst6->sin6_scope_id)
-			return (0);
-		break;
-#endif /* INET6 */
+	TAILQ_FOREACH(vt, &vxlan_teps, vt_entry) {
+		if (sc->sc_af == vt->vt_af &&
+		    sc->sc_rdomain == vt->vt_rdomain &&
+		    memcmp(addr, &vt->vt_addr, sizeof(*addr)) == 0 &&
+		    sc->sc_port == vt->vt_port)
+			return (vt);
 	}
 
-	return (1);
-}
-
-uint16_t
-vxlan_sockaddr_port(struct sockaddr *sa)
-{
-	struct sockaddr_in	*sin4;
-#ifdef INET6
-	struct sockaddr_in6	*sin6;
-#endif /* INET6 */
-
-	switch (sa->sa_family) {
-	case AF_INET:
-		sin4 = satosin(sa);
-		return (sin4->sin_port);
-#ifdef INET6
-	case AF_INET6:
-		sin6 = satosin6(sa);
-		return (sin6->sin6_port);
-#endif /* INET6 */
-	default:
-		break;
-	}
-
-	return (0);
-}
-
-int
-vxlan_lookup(struct mbuf *m, struct udphdr *uh, int iphlen,
-    struct sockaddr *srcsa, struct sockaddr *dstsa)
-{
-	struct vxlan_softc	*sc = NULL, *sc_cand = NULL;
-	struct vxlan_header	 v;
-	int			 vni;
-	struct ifnet		*ifp;
-	int			 skip;
-#if NBRIDGE > 0
-	struct bridge_tunneltag	*brtag;
-#endif
-	struct mbuf		*n;
-	int			 off;
-
-	/* XXX Should verify the UDP port first before copying the packet */
-	skip = iphlen + sizeof(*uh);
-	if (m->m_pkthdr.len - skip < sizeof(v))
-		return (0);
-	m_copydata(m, skip, sizeof(v), &v);
-	skip += sizeof(v);
-
-	if (v.vxlan_flags & htonl(VXLAN_RESERVED1) ||
-	    v.vxlan_id & htonl(VXLAN_RESERVED2))
-		return (0);
-
-	vni = ntohl(v.vxlan_id) >> VXLAN_VNI_S;
-	if ((v.vxlan_flags & htonl(VXLAN_FLAGS_VNI)) == 0) {
-		if (vni != 0)
-			return (0);
-
-		vni = VXLAN_VNI_UNSET;
-	}
-
-	NET_ASSERT_LOCKED();
-	/* First search for a vxlan(4) interface with the packet's VNI */
-	LIST_FOREACH(sc, &vxlan_tagh[VXLAN_TAGHASH(vni)], sc_entry) {
-		if ((uh->uh_dport == sc->sc_dstport) &&
-		    vni == sc->sc_vnetid &&
-		    sc->sc_rdomain == rtable_l2(m->m_pkthdr.ph_rtableid)) {
-			sc_cand = sc;
-			if (vxlan_sockaddr_cmp(srcsa, sstosa(&sc->sc_dst)) == 0)
-				goto found;
-		}
-	}
-
-	/*
-	 * Now loop through all the vxlan(4) interfaces that are configured
-	 * to accept any VNI and operating in multipoint-to-multipoint mode
-	 * that is used in combination with bridge(4) or switch(4).
-	 * If a vxlan(4) interface has been found for the packet's VNI, this
-	 * code is not reached as the other interface is more specific.
-	 */
-	LIST_FOREACH(sc, &vxlan_any, sc_entry) {
-		if ((uh->uh_dport == sc->sc_dstport) &&
-		    (sc->sc_rdomain == rtable_l2(m->m_pkthdr.ph_rtableid))) {
-			sc_cand = sc;
-			goto found;
-		}
-	}
-
-	if (sc_cand) {
-		sc = sc_cand;
-		goto found;
-	}
-
-	/* not found */
-	return (0);
-
- found:
-	if (m->m_pkthdr.len < skip + sizeof(struct ether_header)) {
-		m_freem(m);
-		return (EINVAL);
-	}
-
-	m_adj(m, skip);
-	ifp = &sc->sc_ac.ac_if;
-
-#if NBRIDGE > 0
-	/* Store the tunnel src/dst IP and vni for the bridge or switch */
-	if ((ifp->if_bridgeidx != 0 || ifp->if_switchport != NULL) &&
-	    srcsa->sa_family != AF_UNSPEC &&
-	    ((brtag = bridge_tunneltag(m)) != NULL)) {
-		memcpy(&brtag->brtag_peer.sa, srcsa, srcsa->sa_len);
-		memcpy(&brtag->brtag_local.sa, dstsa, dstsa->sa_len);
-		brtag->brtag_id = vni;
-	}
-#endif
-
-	m->m_flags &= ~(M_BCAST|M_MCAST);
-
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
-	if ((m->m_len < sizeof(struct ether_header)) &&
-	    (m = m_pullup(m, sizeof(struct ether_header))) == NULL)
-		return (ENOBUFS);
-
-	n = m_getptr(m, sizeof(struct ether_header), &off);
-	if (n == NULL) {
-		m_freem(m);
-		return (EINVAL);
-	}
-	if (!ALIGNED_POINTER(mtod(n, caddr_t) + off, uint32_t)) {
-		n = m_dup_pkt(m, ETHER_ALIGN, M_NOWAIT);
-		/* Dispose of the original mbuf chain */
-		m_freem(m);
-		if (n == NULL)
-			return (ENOBUFS);
-		m = n;
-	}
-
-	if_vinput(ifp, m);
-
-	/* success */
-	return (1);
-}
-
-struct mbuf *
-vxlan_encap4(struct ifnet *ifp, struct mbuf *m,
-    struct sockaddr *src, struct sockaddr *dst)
-{
-	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
-	struct ip		*ip;
-
-	/*
-	 * Remove multicast and broadcast flags or encapsulated packet
-	 * ends up as multicast or broadcast packet.
-	 */
-	m->m_flags &= ~(M_BCAST|M_MCAST);
-
-	M_PREPEND(m, sizeof(*ip), M_DONTWAIT);
-	if (m == NULL)
-		return (NULL);
-
-	ip = mtod(m, struct ip *);
-	ip->ip_v = IPVERSION;
-	ip->ip_hl = sizeof(struct ip) >> 2;
-	ip->ip_id = htons(ip_randomid());
-	ip->ip_off = sc->sc_df;
-	ip->ip_p = IPPROTO_UDP;
-	ip->ip_tos = IFQ_PRIO2TOS(sc->sc_txhprio == IF_HDRPRIO_PACKET ?
-	    m->m_pkthdr.pf.prio : sc->sc_txhprio);
-	ip->ip_len = htons(m->m_pkthdr.len);
-
-	ip->ip_src = satosin(src)->sin_addr;
-	ip->ip_dst = satosin(dst)->sin_addr;
-
-	if (sc->sc_ttl > 0)
-		ip->ip_ttl = sc->sc_ttl;
-	else
-		ip->ip_ttl = IPDEFTTL;
-
-	return (m);
-}
-
-#ifdef INET6
-struct mbuf *
-vxlan_encap6(struct ifnet *ifp, struct mbuf *m,
-    struct sockaddr *src, struct sockaddr *dst)
-{
-	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
-	struct ip6_hdr		*ip6;
-	struct in6_addr		*in6a;
-	uint32_t		 flow;
-
-	/*
-	 * Remove multicast and broadcast flags or encapsulated packet
-	 * ends up as multicast or broadcast packet.
-	 */
-	m->m_flags &= ~(M_BCAST|M_MCAST);
-
-	M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
-	if (m == NULL)
-		return (NULL);
-
-	flow = (uint32_t)IFQ_PRIO2TOS(sc->sc_txhprio == IF_HDRPRIO_PACKET ?
-	    m->m_pkthdr.pf.prio : sc->sc_txhprio) << 20;
-
-	ip6 = mtod(m, struct ip6_hdr *);
-	ip6->ip6_flow = htonl(flow);
-	ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
-	ip6->ip6_vfc |= IPV6_VERSION;
-	ip6->ip6_nxt = IPPROTO_UDP;
-	ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(struct ip6_hdr));
-	if (in6_embedscope(&ip6->ip6_src, satosin6(src), NULL) != 0)
-		goto drop;
-	if (in6_embedscope(&ip6->ip6_dst, satosin6(dst), NULL) != 0)
-		goto drop;
-
-	if (sc->sc_ttl > 0)
-		ip6->ip6_hlim = sc->sc_ttl;
-	else
-		ip6->ip6_hlim = ip6_defhlim;
-
-	if (IN6_IS_ADDR_UNSPECIFIED(&satosin6(src)->sin6_addr)) {
-		if (in6_selectsrc(&in6a, satosin6(dst), NULL,
-		    sc->sc_rdomain) != 0)
-			goto drop;
-
-		ip6->ip6_src = *in6a;
-	}
-
-	if (sc->sc_df)
-		SET(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT);
-
-	/*
-	 * The UDP checksum of VXLAN packets should be set to zero,
-	 * but the IPv6 UDP checksum is not optional.  There is an RFC 6539
-	 * to relax the IPv6 UDP checksum requirement for tunnels, but it
-	 * is currently not supported by most implementations.
-	 */
-	m->m_pkthdr.csum_flags |= M_UDP_CSUM_OUT;
-
-	return (m);
-
-drop:
-	m_freem(m);
 	return (NULL);
 }
-#endif /* INET6 */
 
-int
-vxlan_output(struct ifnet *ifp, struct mbuf *m)
+static int
+vxlan_tep_add_addr(struct vxlan_softc *sc, const union vxlan_addr *addr,
+    struct vxlan_peer *p)
 {
-	struct vxlan_softc	*sc = (struct vxlan_softc *)ifp->if_softc;
-	struct vxlanudphdr	*vu;
-	struct sockaddr		*src, *dst;
-#if NBRIDGE > 0
-	struct bridge_tunneltag	*brtag;
+	struct mbuf m;
+	struct vxlan_tep *vt;
+	struct socket *so;
+	struct sockaddr_in *sin;
+#ifdef INET6
+	struct sockaddr_in6 *sin6;
 #endif
-	int			 error, af;
-	uint32_t		 tag;
-	struct mbuf		*m0;
+	int error;
+	int s;
 
-	/* VXLAN header, needs new mbuf because of alignment issues */
-	MGET(m0, M_DONTWAIT, m->m_type);
-	if (m0 == NULL) {
-		ifp->if_oerrors++;
-		return (ENOBUFS);
-	}
-	M_MOVE_PKTHDR(m0, m);
-	m0->m_next = m;
-	m = m0;
-	m_align(m, sizeof(*vu));
-	m->m_len = sizeof(*vu);
-	m->m_pkthdr.len += sizeof(*vu);
+	vt = vxlan_tep_get(sc, addr);
+	if (vt != NULL) {
+		struct vxlan_peer *op;
 
-	src = sstosa(&sc->sc_src);
-	dst = sstosa(&sc->sc_dst);
-	af = src->sa_family;
+		mtx_enter(&vt->vt_mtx);
+		op = RBT_INSERT(vxlan_peers, &vt->vt_peers, p);
+		mtx_leave(&vt->vt_mtx);
 
-	vu = mtod(m, struct vxlanudphdr *);
-	vu->vu_u.uh_sport = sc->sc_dstport;
-	vu->vu_u.uh_dport = sc->sc_dstport;
-	vu->vu_u.uh_ulen = htons(m->m_pkthdr.len);
-	vu->vu_u.uh_sum = 0;
-	tag = sc->sc_vnetid;
+		if (op != NULL)
+			return (EADDRINUSE);
 
-#if NBRIDGE > 0
-	if ((brtag = bridge_tunnel(m)) != NULL) {
-		dst = &brtag->brtag_peer.sa;
-
-		/* If accepting any VNI, source ip address is from brtag */
-		if (sc->sc_vnetid == VXLAN_VNI_ANY) {
-			src = &brtag->brtag_local.sa;
-			tag = (uint32_t)brtag->brtag_id;
-			af = src->sa_family;
-		}
-
-		if (dst->sa_family != af) {
-			ifp->if_oerrors++;
-			m_freem(m);
-			return (EINVAL);
-		}
-	} else
-#endif
-	if (sc->sc_vnetid == VXLAN_VNI_ANY) {
-		/*
-		 * If accepting any VNI, build the vxlan header only by
-		 * bridge_tunneltag or drop packet if the tag does not exist.
-		 */
-		ifp->if_oerrors++;
-		m_freem(m);
-		return (ENETUNREACH);
+		return (0);
 	}
 
-	if (sc->sc_vnetid != VXLAN_VNI_UNSET) {
-		vu->vu_v.vxlan_flags = htonl(VXLAN_FLAGS_VNI);
-		vu->vu_v.vxlan_id = htonl(tag << VXLAN_VNI_S);
+	vt = malloc(sizeof(*vt), M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (vt == NULL)
+		return (ENOMEM);
+
+	vt->vt_af = sc->sc_af;
+	vt->vt_rdomain = sc->sc_rdomain;
+	vt->vt_addr = *addr;
+	vt->vt_port = sc->sc_port;
+
+	mtx_init(&vt->vt_mtx, IPL_SOFTNET);
+	RBT_INIT(vxlan_peers, &vt->vt_peers);
+	RBT_INSERT(vxlan_peers, &vt->vt_peers, p);
+
+	error = socreate(vt->vt_af, &so, SOCK_DGRAM, IPPROTO_UDP);
+	if (error != 0)
+		goto free;
+
+	s = solock(so);
+
+	sotoinpcb(so)->inp_upcall = vxlan_input;
+	sotoinpcb(so)->inp_upcall_arg = vt;
+
+	m_inithdr(&m);
+	m.m_len = sizeof(vt->vt_rdomain);
+	*mtod(&m, unsigned int *) = vt->vt_rdomain;
+	error = sosetopt(so, SOL_SOCKET, SO_RTABLE, &m);
+	if (error != 0)
+		goto close;
+
+	m_inithdr(&m);
+	switch (vt->vt_af) {
+	case AF_INET:
+		sin = mtod(&m, struct sockaddr_in *);
+		memset(sin, 0, sizeof(*sin));
+		sin->sin_len = sizeof(*sin);
+		sin->sin_family = AF_INET;
+		sin->sin_addr = addr->in4;
+		sin->sin_port = vt->vt_port;
+
+		m.m_len = sizeof(*sin);
+		break;
+
+#ifdef INET6
+	case AF_INET6:
+		sin6 = mtod(&m, struct sockaddr_in6 *);
+		sin6->sin6_len = sizeof(*sin6);
+		sin6->sin6_family = AF_INET6;
+		in6_recoverscope(sin6, &addr->in6);
+		sin6->sin6_port = sc->sc_port;
+
+		m.m_len = sizeof(*sin6);
+		break;
+#endif
+	default:
+		unhandled_af(vt->vt_af);
+	}
+
+	error = sobind(so, &m, curproc);
+	if (error != 0)
+		goto close;
+
+	sounlock(so, s);
+
+	rw_assert_wrlock(&vxlan_lock);
+	TAILQ_INSERT_TAIL(&vxlan_teps, vt, vt_entry);
+
+	vt->vt_so = so;
+
+	return (0);
+
+close:
+	sounlock(so, s);
+	soclose(so, MSG_DONTWAIT);
+free:
+	free(vt, M_DEVBUF, sizeof(*vt));
+	return (error);
+}
+
+static void
+vxlan_tep_del_addr(struct vxlan_softc *sc, const union vxlan_addr *addr,
+    struct vxlan_peer *p)
+{
+	struct vxlan_tep *vt;
+	int empty;
+
+	vt = vxlan_tep_get(sc, addr);
+	if (vt == NULL)
+		panic("unable to find vxlan_tep for peer %p (sc %p)", p, sc);
+
+	mtx_enter(&vt->vt_mtx);
+	RBT_REMOVE(vxlan_peers, &vt->vt_peers, p);
+	empty = RBT_EMPTY(vxlan_peers, &vt->vt_peers);
+	mtx_leave(&vt->vt_mtx);
+
+	if (!empty)
+		return;
+
+	rw_assert_wrlock(&vxlan_lock);
+	TAILQ_REMOVE(&vxlan_teps, vt, vt_entry);
+
+	soclose(vt->vt_so, MSG_DONTWAIT);
+	free(vt, M_DEVBUF, sizeof(*vt));
+}
+
+static int
+vxlan_tep_up(struct vxlan_softc *sc)
+{
+	struct vxlan_peer *up, *mp;
+	int error;
+
+	up = malloc(sizeof(*up), M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (up == NULL)
+		return (ENOMEM);
+
+	if (sc->sc_mode == VXLAN_TMODE_P2P)
+		up->p_addr = sc->sc_dst;
+	up->p_header = sc->sc_header;
+	up->p_sc = vxlan_take(sc);
+
+	error = vxlan_tep_add_addr(sc, &sc->sc_src, up);
+	if (error != 0)
+		goto freeup;
+
+	sc->sc_ucast_peer = up;
+
+	if (sc->sc_mode != VXLAN_TMODE_LEARNING)
+		return (0);
+
+	mp = malloc(sizeof(*mp), M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (mp == NULL) {
+		error = ENOMEM;
+		goto delup;
+	}
+
+	/* addr is multicast, leave it as 0s */
+	mp->p_header = sc->sc_header;
+	mp->p_sc = vxlan_take(sc);
+
+	/* destination address is a multicast group we want to join */
+	error = vxlan_tep_add_addr(sc, &sc->sc_dst, up);
+	if (error != 0)
+		goto freemp;
+
+	sc->sc_mcast_peer = mp;
+
+	return (0);
+
+freemp:
+	vxlan_rele(mp->p_sc);
+	free(mp, M_DEVBUF, sizeof(*mp));
+delup:
+	vxlan_tep_del_addr(sc, &sc->sc_src, up);
+freeup:
+	vxlan_rele(up->p_sc);
+	free(up, M_DEVBUF, sizeof(*up));
+	return (error);
+}
+
+static void
+vxlan_tep_down(struct vxlan_softc *sc)
+{
+	struct vxlan_peer *up = sc->sc_ucast_peer;
+
+	if (sc->sc_mode == VXLAN_TMODE_LEARNING) {
+		struct vxlan_peer *mp = sc->sc_mcast_peer;
+		vxlan_tep_del_addr(sc, &sc->sc_dst, mp);
+		vxlan_rele(mp->p_sc);
+		free(mp, M_DEVBUF, sizeof(*mp));
+	}
+
+	vxlan_tep_del_addr(sc, &sc->sc_src, up);
+	vxlan_rele(up->p_sc);
+	free(up, M_DEVBUF, sizeof(*up));
+}
+
+static int
+vxlan_up(struct vxlan_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct ifnet *ifp0 = NULL;
+	int error;
+
+	KASSERT(!ISSET(ifp->if_flags, IFF_RUNNING));
+	NET_ASSERT_LOCKED();
+
+	if (sc->sc_af == AF_UNSPEC)
+		return (EDESTADDRREQ);
+	KASSERT(sc->sc_mode != VXLAN_TMODE_UNSET);
+
+	NET_UNLOCK();
+
+	error = rw_enter(&vxlan_lock, RW_WRITE|RW_INTR);
+	if (error != 0)
+		goto netlock;
+
+	NET_LOCK();
+	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+		/* something else beat us */
+		rw_exit(&vxlan_lock);
+		return (0);
+	}
+	NET_UNLOCK();
+
+	if (sc->sc_mode != VXLAN_TMODE_P2P) {
+		error = etherbridge_up(&sc->sc_eb);
+		if (error != 0)
+			goto unlock;
+	}
+
+	if (sc->sc_mode == VXLAN_TMODE_LEARNING) {
+		ifp0 = if_get(sc->sc_if_index0);
+		if (ifp0 == NULL) {
+			error = ENXIO;
+			goto down;
+		}
+
+		/* check again if multicast will work on top of the parent */
+		if (!ISSET(ifp0->if_flags, IFF_MULTICAST)) {
+			error = EPROTONOSUPPORT;
+			goto put;
+		}
+
+		error = vxlan_addmulti(sc, ifp0);
+		if (error != 0)
+			goto put;
+
+		/* Register callback if parent wants to unregister */
+		if_detachhook_add(ifp0, &sc->sc_dtask);
 	} else {
-		vu->vu_v.vxlan_flags = htonl(0);
-		vu->vu_v.vxlan_id = htonl(0);
+		if (sc->sc_if_index0 != 0) {
+			error = EPROTONOSUPPORT;
+			goto down;
+		}
 	}
 
-	switch (af) {
-	case AF_INET:
-		m = vxlan_encap4(ifp, m, src, dst);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		m = vxlan_encap6(ifp, m, src, dst);
-		break;
-#endif /* INET6 */
-	default:
-		m_freem(m);
-		m = NULL;
-	}
+	error = vxlan_tep_up(sc);
+	if (error != 0)
+		goto del;
 
-	if (m == NULL) {
-		ifp->if_oerrors++;
-		return (ENOBUFS);
-	}
+	if_put(ifp0);
 
-#if NBRIDGE > 0
-	if (brtag != NULL)
-		bridge_tunneluntag(m);
-#endif
+	NET_LOCK();
+	SET(ifp->if_flags, IFF_RUNNING);
+	rw_exit(&vxlan_lock);
 
-	m->m_pkthdr.ph_rtableid = sc->sc_rdomain;
+	return (0);
 
-#if NPF > 0
-	pf_pkt_addr_changed(m);
-#endif
-
-	switch (af) {
-	case AF_INET:
-		error = ip_output(m, NULL, NULL, IP_RAWOUTPUT,
-		    &sc->sc_imo, NULL, 0);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		error = ip6_output(m, NULL, NULL, IPV6_MINMTU, NULL, NULL);
-		break;
-#endif /* INET6 */
-	default:
-		m_freem(m);
-		error = EAFNOSUPPORT;
-	}
-
-	if (error)
-		ifp->if_oerrors++;
+del:
+	if (ifp0 != NULL)
+		if_detachhook_del(ifp0, &sc->sc_dtask);
+	vxlan_delmulti(sc);
+put:
+	if_put(ifp0);
+down:
+	if (sc->sc_mode != VXLAN_TMODE_P2P)
+		etherbridge_down(&sc->sc_eb);
+unlock:
+	rw_exit(&vxlan_lock);
+netlock:
+	NET_LOCK();
 
 	return (error);
 }
 
-void
-vxlan_addr_change(void *arg)
+static int
+vxlan_down(struct vxlan_softc *sc)
 {
-	struct vxlan_softc	*sc = arg;
-	struct ifnet		*ifp = &sc->sc_ac.ac_if;
-	int			 error;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct ifnet *ifp0;
+	int error;
 
-	/*
-	 * Reset the configuration after resume or any possible address
-	 * configuration changes.
-	 */
-	if ((error = vxlan_config(ifp, NULL, NULL))) {
-		/*
-		 * The source address of the tunnel can temporarily disappear,
-		 * after a link state change when running the DHCP client,
-		 * so keep it configured.
-		 */
+	KASSERT(ISSET(ifp->if_flags, IFF_RUNNING));
+	NET_UNLOCK();
+
+	error = rw_enter(&vxlan_lock, RW_WRITE|RW_INTR);
+	if (error != 0) {
+		NET_LOCK();
+		return (error);
+	}
+
+	NET_LOCK();
+	if (!ISSET(ifp->if_flags, IFF_RUNNING)) {
+		/* something else beat us */
+		rw_exit(&vxlan_lock);
+		return (0);
+	}
+	NET_UNLOCK();
+
+	vxlan_tep_down(sc);
+
+	if (sc->sc_mode == VXLAN_TMODE_LEARNING) {
+		vxlan_delmulti(sc);
+		ifp0 = if_get(sc->sc_if_index0);
+		if (ifp0 != NULL) {
+			if_detachhook_del(ifp0, &sc->sc_dtask);
+		}
+		if_put(ifp0);
+	}
+
+	if (sc->sc_mode != VXLAN_TMODE_P2P)
+		etherbridge_down(&sc->sc_eb);
+
+	taskq_del_barrier(ifp->if_snd.ifq_softnet, &sc->sc_send_task);
+	NET_LOCK();
+	CLR(ifp->if_flags, IFF_RUNNING);
+	rw_exit(&vxlan_lock);
+
+	return (0);
+}
+
+static int
+vxlan_addmulti(struct vxlan_softc *sc, struct ifnet *ifp0)
+{
+	int error = 0;
+
+	NET_LOCK();
+
+	switch (sc->sc_af) {
+	case AF_INET:
+		sc->sc_inmulti = in_addmulti(&sc->sc_dst.in4, ifp0);
+		if (sc->sc_inmulti == NULL)
+			error = EADDRNOTAVAIL;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		sc->sc_inmulti = in6_addmulti(&sc->sc_dst.in6, ifp0, &error);
+		break;
+#endif
+	default:
+		unhandled_af(sc->sc_af);
+	}
+
+	NET_UNLOCK();
+
+	return (error);
+}
+
+static void
+vxlan_delmulti(struct vxlan_softc *sc)
+{
+	NET_LOCK();
+
+	switch (sc->sc_af) {
+	case AF_INET:
+		in_delmulti(sc->sc_inmulti);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		in6_delmulti(sc->sc_inmulti);
+		break;
+#endif
+	default:
+		unhandled_af(sc->sc_af);
+	}
+
+	sc->sc_inmulti = NULL; /* keep it tidy */
+
+	NET_UNLOCK();
+}
+
+static int
+vxlan_set_rdomain(struct vxlan_softc *sc, const struct ifreq *ifr)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
+	if (ifr->ifr_rdomainid < 0 ||
+	    ifr->ifr_rdomainid > RT_TABLEID_MAX)
+		return (EINVAL);
+	if (!rtable_exists(ifr->ifr_rdomainid))
+		return (EADDRNOTAVAIL);
+
+	if (sc->sc_rdomain == ifr->ifr_rdomainid)
+		return (0);
+
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+		return (EBUSY);
+
+	/* commit */
+	sc->sc_rdomain = ifr->ifr_rdomainid;
+	etherbridge_flush(&sc->sc_eb, IFBF_FLUSHALL);
+
+	return (0);
+}
+
+static int
+vxlan_get_rdomain(struct vxlan_softc *sc, struct ifreq *ifr)
+{
+	ifr->ifr_rdomainid = sc->sc_rdomain;
+
+	return (0);
+}
+
+static int
+vxlan_set_tunnel(struct vxlan_softc *sc, const struct if_laddrreq *req)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct sockaddr *src = (struct sockaddr *)&req->addr;
+	struct sockaddr *dst = (struct sockaddr *)&req->dstaddr;
+	struct sockaddr_in *src4, *dst4;
+#ifdef INET6
+	struct sockaddr_in6 *src6, *dst6;
+	int error;
+#endif
+	union vxlan_addr saddr, daddr;
+	unsigned int mode = VXLAN_TMODE_ENDPOINT;
+	in_port_t port = htons(VXLAN_PORT);
+
+	memset(&saddr, 0, sizeof(saddr));
+	memset(&daddr, 0, sizeof(daddr));
+
+	/* validate */
+	switch (src->sa_family) {
+	case AF_INET:
+		src4 = (struct sockaddr_in *)src;
+		if (in_nullhost(src4->sin_addr) ||
+		    IN_MULTICAST(src4->sin_addr.s_addr))
+			return (EINVAL);
+
+		if (src4->sin_port != htons(0))
+			port = src4->sin_port;
+
+		if (dst->sa_family != AF_UNSPEC) {
+			if (dst->sa_family != AF_INET)
+				return (EINVAL);
+
+			dst4 = (struct sockaddr_in *)dst;
+			if (in_nullhost(dst4->sin_addr))
+				return (EINVAL);
+
+			/* all good */
+			mode = IN_MULTICAST(dst4->sin_addr.s_addr) ?
+			    VXLAN_TMODE_LEARNING : VXLAN_TMODE_P2P;
+			daddr.in4 = dst4->sin_addr;
+		}
+
+		saddr.in4 = src4->sin_addr;
+		break;
+
+#ifdef INET6
+	case AF_INET6:
+		src6 = (struct sockaddr_in6 *)src;
+		if (IN6_IS_ADDR_UNSPECIFIED(&src6->sin6_addr) ||
+		    IN6_IS_ADDR_MULTICAST(&src6->sin6_addr))
+			return (EINVAL);
+
+		if (src6->sin6_port != htons(0))
+			port = src6->sin6_port;
+
+		if (dst->sa_family != AF_UNSPEC) {
+			if (dst->sa_family != AF_INET6)
+				return (EINVAL);
+
+			dst6 = (struct sockaddr_in6 *)dst;
+			if (IN6_IS_ADDR_UNSPECIFIED(&dst6->sin6_addr))
+				return (EINVAL);
+
+			if (src6->sin6_scope_id != dst6->sin6_scope_id)
+				return (EINVAL);
+
+			/* all good */
+			mode = IN6_IS_ADDR_MULTICAST(&dst6->sin6_addr) ?
+			    VXLAN_TMODE_LEARNING : VXLAN_TMODE_P2P;
+			error = in6_embedscope(&daddr.in6, dst6, NULL);
+			if (error != 0)
+				return (error);
+		}
+
+		error = in6_embedscope(&saddr.in6, src6, NULL);
+		if (error != 0)
+			return (error);
+
+		break;
+#endif
+	default:
+		return (EAFNOSUPPORT);
+	}
+
+	if (memcmp(&sc->sc_src, &saddr, sizeof(sc->sc_src)) == 0 &&
+	    memcmp(&sc->sc_dst, &daddr, sizeof(sc->sc_dst)) == 0 &&
+	    sc->sc_port == port)
+		return (0);
+
+	if (ISSET(ifp->if_flags, IFF_RUNNING))
+		return (EBUSY);
+
+	/* commit */
+	sc->sc_af = src->sa_family;
+	sc->sc_src = saddr;
+	sc->sc_dst = daddr;
+	sc->sc_port = port;
+	sc->sc_mode = mode;
+	etherbridge_flush(&sc->sc_eb, IFBF_FLUSHALL);
+
+	return (0);
+}
+
+static int
+vxlan_get_tunnel(struct vxlan_softc *sc, struct if_laddrreq *req)
+{
+	struct sockaddr *dstaddr = (struct sockaddr *)&req->dstaddr;
+	struct sockaddr_in *sin;
+#ifdef INET6
+	struct sockaddr_in6 *sin6;
+#endif
+
+	if (sc->sc_af == AF_UNSPEC)
+		return (EADDRNOTAVAIL);
+	KASSERT(sc->sc_mode != VXLAN_TMODE_UNSET);
+
+	memset(&req->addr, 0, sizeof(req->addr));
+	memset(&req->dstaddr, 0, sizeof(req->dstaddr));
+
+	/* default to endpoint */
+	dstaddr->sa_len = 2;
+	dstaddr->sa_family = AF_UNSPEC;
+
+	switch (sc->sc_af) {
+	case AF_INET:
+		sin = (struct sockaddr_in *)&req->addr;
+		sin->sin_len = sizeof(*sin);
+		sin->sin_family = AF_INET;
+		sin->sin_addr = sc->sc_src.in4;
+		sin->sin_port = sc->sc_port;
+
+		if (sc->sc_mode == VXLAN_TMODE_ENDPOINT)
+			break;
+
+		sin = (struct sockaddr_in *)&req->dstaddr;
+		sin->sin_len = sizeof(*sin);
+		sin->sin_family = AF_INET;
+		sin->sin_addr = sc->sc_dst.in4;
+		break;
+
+#ifdef INET6
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6 *)&req->addr;
+		sin6->sin6_len = sizeof(*sin6);
+		sin6->sin6_family = AF_INET6;
+		in6_recoverscope(sin6, &sc->sc_src.in6);
+		sin6->sin6_port = sc->sc_port;
+
+		if (sc->sc_mode == VXLAN_TMODE_ENDPOINT)
+			break;
+
+		sin6 = (struct sockaddr_in6 *)&req->dstaddr;
+		sin6->sin6_len = sizeof(*sin6);
+		sin6->sin6_family = AF_INET6;
+		in6_recoverscope(sin6, &sc->sc_dst.in6);
+		break;
+#endif
+	default:
+		unhandled_af(sc->sc_af);
+	}
+
+	return (0);
+}
+
+static int
+vxlan_del_tunnel(struct vxlan_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
+	if (sc->sc_af == AF_UNSPEC)
+		return (0);
+
+	if (ISSET(ifp->if_flags, IFF_RUNNING))
+		return (EBUSY);
+
+	/* commit */
+	sc->sc_af = AF_UNSPEC;
+	memset(&sc->sc_src, 0, sizeof(sc->sc_src));
+	memset(&sc->sc_dst, 0, sizeof(sc->sc_dst));
+	sc->sc_port = htons(0);
+	sc->sc_mode = VXLAN_TMODE_UNSET;
+	etherbridge_flush(&sc->sc_eb, IFBF_FLUSHALL);
+
+	return (0);
+}
+
+static int
+vxlan_set_vnetid(struct vxlan_softc *sc, const struct ifreq *ifr)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	uint32_t vni;
+
+	if (ifr->ifr_vnetid < VXLAN_VNI_MIN ||
+	    ifr->ifr_vnetid > VXLAN_VNI_MAX)
+		return (EINVAL);
+
+	vni = htonl(ifr->ifr_vnetid << VXLAN_VNI_SHIFT);
+	if (ISSET(sc->sc_header.vxlan_flags, htonl(VXLAN_F_I)) &&
+	    sc->sc_header.vxlan_id == vni)
+		return (0);
+
+	if (ISSET(ifp->if_flags, IFF_RUNNING))
+		return (EBUSY);
+
+	/* commit */
+	SET(sc->sc_header.vxlan_flags, htonl(VXLAN_F_I));
+	sc->sc_header.vxlan_id = vni;
+	etherbridge_flush(&sc->sc_eb, IFBF_FLUSHALL);
+
+	return (0);
+}
+
+static int
+vxlan_get_vnetid(struct vxlan_softc *sc, struct ifreq *ifr)
+{
+	uint32_t vni;
+
+	if (!ISSET(sc->sc_header.vxlan_flags, htonl(VXLAN_F_I)))
+		return (EADDRNOTAVAIL);
+
+	vni = ntohl(sc->sc_header.vxlan_id);
+	vni &= VXLAN_VNI_MASK;
+	vni >>= VXLAN_VNI_SHIFT;
+
+	ifr->ifr_vnetid = vni;
+
+	return (0);
+}
+
+static int
+vxlan_del_vnetid(struct vxlan_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
+	if (!ISSET(sc->sc_header.vxlan_flags, htonl(VXLAN_F_I)))
+		return (0);
+
+	if (ISSET(ifp->if_flags, IFF_RUNNING))
+		return (EBUSY);
+
+	/* commit */
+	CLR(sc->sc_header.vxlan_flags, htonl(VXLAN_F_I));
+	sc->sc_header.vxlan_id = htonl(0 << VXLAN_VNI_SHIFT);
+	etherbridge_flush(&sc->sc_eb, IFBF_FLUSHALL);
+
+	return (0);
+}
+
+static int
+vxlan_set_parent(struct vxlan_softc *sc, const struct if_parent *p)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct ifnet *ifp0;
+	int error = 0;
+
+	ifp0 = if_unit(p->ifp_parent);
+	if (ifp0 == NULL)
+		return (ENXIO);
+
+	if (!ISSET(ifp0->if_flags, IFF_MULTICAST)) {
+		error = ENXIO;
+		goto put;
+	}
+
+	if (sc->sc_if_index0 == ifp0->if_index)
+		goto put;
+
+	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+		error = EBUSY;
+		goto put;
+	}
+
+	/* commit */
+	sc->sc_if_index0 = ifp0->if_index;
+	etherbridge_flush(&sc->sc_eb, IFBF_FLUSHALL);
+
+put:
+	if_put(ifp0);
+	return (error);
+}
+
+static int
+vxlan_get_parent(struct vxlan_softc *sc, struct if_parent *p)
+{
+	struct ifnet *ifp0;
+	int error = 0;
+
+	ifp0 = if_get(sc->sc_if_index0);
+	if (ifp0 == NULL)
+		error = EADDRNOTAVAIL;
+	else
+		strlcpy(p->ifp_parent, ifp0->if_xname, sizeof(p->ifp_parent));
+	if_put(ifp0);
+
+	return (error);
+}
+
+static int
+vxlan_del_parent(struct vxlan_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
+	if (sc->sc_if_index0 == 0)
+		return (0);
+
+	if (ISSET(ifp->if_flags, IFF_RUNNING))
+		return (EBUSY);
+
+	/* commit */
+	sc->sc_if_index0 = 0;
+	etherbridge_flush(&sc->sc_eb, IFBF_FLUSHALL);
+
+	return (0);
+}
+
+static int
+vxlan_add_addr(struct vxlan_softc *sc, const struct ifbareq *ifba)
+{
+	struct sockaddr_in *sin;
+#ifdef INET6
+	struct sockaddr_in6 *sin6;
+	struct sockaddr_in6 src6 = {
+		.sin6_len = sizeof(src6),
+		.sin6_family = AF_UNSPEC,
+	};
+	int error;
+#endif
+	union vxlan_addr endpoint;
+	unsigned int type;
+
+	switch (sc->sc_mode) {
+	case VXLAN_TMODE_UNSET:
+		return (ENOPROTOOPT);
+	case VXLAN_TMODE_P2P:
+		return (EPROTONOSUPPORT);
+	default:
+		break;
+	}
+
+	/* ignore ifba_ifsname */
+
+	if (ISSET(ifba->ifba_flags, ~IFBAF_TYPEMASK))
+		return (EINVAL);
+	switch (ifba->ifba_flags & IFBAF_TYPEMASK) {
+	case IFBAF_DYNAMIC:
+		type = EBE_DYNAMIC;
+		break;
+	case IFBAF_STATIC:
+		type = EBE_STATIC;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	memset(&endpoint, 0, sizeof(endpoint));
+
+	if (ifba->ifba_dstsa.ss_family != sc->sc_af)
+		return (EAFNOSUPPORT);
+	switch (ifba->ifba_dstsa.ss_family) {
+	case AF_INET:
+		sin = (struct sockaddr_in *)&ifba->ifba_dstsa;
+		if (in_nullhost(sin->sin_addr) ||
+		    IN_MULTICAST(sin->sin_addr.s_addr))
+			return (EADDRNOTAVAIL);
+
+		if (sin->sin_port != htons(0))
+			return (EADDRNOTAVAIL);
+
+		endpoint.in4 = sin->sin_addr;
+		break;
+
+#ifdef INET6
+	case AF_INET6:
+		sin6 = (struct sockaddr_in6 *)&ifba->ifba_dstsa;
+		if (IN6_IS_ADDR_UNSPECIFIED(&sin6->sin6_addr) ||
+		    IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr))
+			return (EADDRNOTAVAIL);
+
+		in6_recoverscope(&src6, &sc->sc_src.in6);
+		if (src6.sin6_scope_id != sin6->sin6_scope_id)
+			return (EADDRNOTAVAIL);
+
+		if (sin6->sin6_port != htons(0))
+			return (EADDRNOTAVAIL);
+
+		error = in6_embedscope(&endpoint.in6, sin6, NULL);
+		if (error != 0)
+			return (error);
+
+		break;
+#endif
+	default: /* AF_UNSPEC */
+		return (EADDRNOTAVAIL);
+	}
+
+	return (etherbridge_add_addr(&sc->sc_eb, &endpoint,
+	    &ifba->ifba_dst, type));
+}
+
+static int
+vxlan_del_addr(struct vxlan_softc *sc, const struct ifbareq *ifba)
+{
+	return (etherbridge_del_addr(&sc->sc_eb, &ifba->ifba_dst));
+}
+
+void
+vxlan_detach_hook(void *arg)
+{
+	struct vxlan_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
+	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+		vxlan_down(sc);
+		CLR(ifp->if_flags, IFF_UP);
+	}
+
+	sc->sc_if_index0 = 0;
+}
+
+static int
+vxlan_eb_port_eq(void *arg, void *a, void *b)
+{
+	const union vxlan_addr *va = a, *vb = b;
+	size_t i;
+
+	for (i = 0; i < nitems(va->in6.s6_addr32); i++) {
+		if (va->in6.s6_addr32[i] != vb->in6.s6_addr32[i])
+			return (0);
+	}
+
+	return (1);
+}
+
+static void *
+vxlan_eb_port_take(void *arg, void *port)
+{
+	union vxlan_addr *endpoint;
+
+	endpoint = pool_get(&vxlan_endpoint_pool, PR_NOWAIT);
+	if (endpoint == NULL)
+		return (NULL);
+
+	*endpoint = *(union vxlan_addr *)port;
+
+	return (endpoint);
+}
+
+static void
+vxlan_eb_port_rele(void *arg, void *port)
+{
+	union vxlan_addr *endpoint = port;
+
+	pool_put(&vxlan_endpoint_pool, endpoint);
+}
+
+static size_t
+vxlan_eb_port_ifname(void *arg, char *dst, size_t len, void *port)
+{
+	struct vxlan_softc *sc = arg;
+
+	return (strlcpy(dst, sc->sc_ac.ac_if.if_xname, len));
+}
+
+static void
+vxlan_eb_port_sa(void *arg, struct sockaddr_storage *ss, void *port)
+{
+	struct vxlan_softc *sc = arg;
+	union vxlan_addr *endpoint = port;
+
+	switch (sc->sc_af) {
+	case AF_INET: {
+		struct sockaddr_in *sin = (struct sockaddr_in *)ss;
+
+		sin->sin_len = sizeof(*sin);
+		sin->sin_family = AF_INET;
+		sin->sin_addr = endpoint->in4;
+		break;
+	}
+#ifdef INET6
+	case AF_INET6: {
+		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)ss;
+
+		sin6->sin6_len = sizeof(*sin6);
+		sin6->sin6_family = AF_INET6;
+		in6_recoverscope(sin6, &endpoint->in6);
+		break;
+	}
+#endif /* INET6 */
+	default:
+		unhandled_af(sc->sc_af);
 	}
 }
 
-void
-vxlan_if_change(void *arg)
+static inline int
+vxlan_peer_cmp(const struct vxlan_peer *ap, const struct vxlan_peer *bp)
 {
-	struct vxlan_softc	*sc = arg;
-	struct ifnet		*ifp = &sc->sc_ac.ac_if;
+	size_t i;
 
-	/*
-	 * Reset the configuration after the parent interface disappeared.
-	 */
-	vxlan_multicast_cleanup(ifp);
-	memset(&sc->sc_src, 0, sizeof(sc->sc_src));
-	memset(&sc->sc_dst, 0, sizeof(sc->sc_dst));
-	sc->sc_dstport = htons(VXLAN_PORT);
+	if (ap->p_header.vxlan_id > bp->p_header.vxlan_id)
+		return (1);
+	if (ap->p_header.vxlan_id < bp->p_header.vxlan_id)
+		return (-1);
+	if (ap->p_header.vxlan_flags > bp->p_header.vxlan_flags)
+		return (1);
+	if (ap->p_header.vxlan_flags < bp->p_header.vxlan_flags)
+		return (-1);
+
+	for (i = 0; i < nitems(ap->p_addr.in6.s6_addr32); i++) {
+		if (ap->p_addr.in6.s6_addr32[i] >
+		    bp->p_addr.in6.s6_addr32[i])
+			return (1);
+		if (ap->p_addr.in6.s6_addr32[i] <
+		    bp->p_addr.in6.s6_addr32[i])
+			return (-1);
+	}
+
+	return (0);
 }
 
-void
-vxlan_link_change(void *arg)
-{
-	struct vxlan_softc	*sc = arg;
-	struct ifnet		*ifp = &sc->sc_ac.ac_if;
-
-	/*
-	 * The machine might have lost its multicast associations after
-	 * link state changes.  This fixes a problem with VMware after
-	 * suspend/resume of the host or guest.
-	 */
-	(void)vxlan_config(ifp, NULL, NULL);
-}
+RBT_GENERATE(vxlan_peers, vxlan_peer, p_entry, vxlan_peer_cmp);
