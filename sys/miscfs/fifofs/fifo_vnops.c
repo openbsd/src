@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.92 2022/02/16 13:18:08 visa Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.93 2022/02/16 13:19:33 visa Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -129,7 +129,7 @@ const struct filterops fifowrite_filtops = {
 };
 
 const struct filterops fifoexcept_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_fifordetach,
 	.f_event	= filt_fifoexcept,
