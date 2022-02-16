@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.8 2022/02/16 06:41:27 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.9 2022/02/16 07:13:09 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -155,17 +155,28 @@ sleep_resume(void *v)
 	return 0;
 }
 
+
+static int
+checklids(struct acpi_softc *sc)
+{
+	extern int lid_action;
+	int lids;
+
+	lids = acpibtn_numopenlids();
+	if (lids == 0 && lid_action != 0)
+		return EAGAIN;
+	return 0;
+}	
+
+
 int
 suspend_finish(void *v)
 {
 	struct acpi_softc *sc = v;
-	extern int lid_action;
 
 	acpi_record_event(sc, APM_NORMAL_RESUME);
 	acpi_indicator(sc, ACPI_SST_WORKING);
 
 	/* If we woke up but all the lids are closed, go back to sleep */
-	if (acpibtn_numopenlids() == 0 && lid_action != 0)
-		acpi_addtask(sc, acpi_sleep_task, sc, sc->sc_state);
-	return 0;
+	return checklids(sc);
 }
