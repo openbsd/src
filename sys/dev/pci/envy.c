@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.81 2020/01/05 01:07:58 jsg Exp $	*/
+/*	$OpenBSD: envy.c,v 1.82 2022/02/16 06:21:19 anton Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1761,7 +1761,7 @@ envyattach(struct device *parent, struct device *self, void *aux)
 	printf("%s: %s, %u inputs, %u outputs\n", DEVNAME(sc),
 	    sc->card->name, sc->card->nich, sc->card->noch);
 	envy_reset(sc);
-	sc->audio = audio_attach_mi(&envy_hw_if, sc, &sc->dev);
+	sc->audio = audio_attach_mi(&envy_hw_if, sc, NULL, &sc->dev);
 #if NMIDI > 0
 	if (sc->card->nmidi > 0 && (!sc->isht ||
 		sc->eeprom[ENVY_EEPROM_CONF] & ENVY_CONF_MIDI)) {

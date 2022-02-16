@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.58 2020/01/11 09:09:09 cheloha Exp $ */
+/*      $OpenBSD: eap.c,v 1.59 2022/02/16 06:21:19 anton Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -588,7 +588,7 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 		eap_hw_if = &eap1371_hw_if;
 	}
 
-	audio_attach_mi(eap_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(eap_hw_if, sc, NULL, &sc->sc_dev);
 #if NMIDI > 0
 	sc->sc_mididev = midi_attach_mi(&eap_midi_hw_if, sc, &sc->sc_dev);
 #endif

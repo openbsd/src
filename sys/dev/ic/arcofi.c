@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.17 2016/09/19 22:21:09 kettenis Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.18 2022/02/16 06:21:18 anton Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -1125,7 +1125,7 @@ arcofi_attach(struct arcofi_softc *sc, const char *version)
 	arcofi_write(sc, ARCOFI_FIFO_IR, 0);
 	arcofi_write(sc, ARCOFI_CSR, CSR_INTR_ENABLE);
 
-	audio_attach_mi(&arcofi_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&arcofi_hw_if, sc, NULL, &sc->sc_dev);
 	return;
 
 error:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.60 2019/12/01 21:14:13 fcambus Exp $ */
+/*	$OpenBSD: auvia.c,v 1.61 2022/02/16 06:21:18 anton Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -346,7 +346,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	    AudioCoutputs, AudioNmaster, NULL);
 	auvia_set_port(sc, &ctl);
 
-	audio_attach_mi(&auvia_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&auvia_hw_if, sc, NULL, &sc->sc_dev);
 	sc->codec_if->vtbl->unlock(sc->codec_if);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86.c,v 1.3 2016/09/19 06:46:43 ratchov Exp $	*/
+/*	$OpenBSD: nec86.c,v 1.4 2022/02/16 06:21:18 anton Exp $	*/
 /*	$NecBSD: nec86.c,v 1.11 1999/07/23 11:04:39 honda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -237,7 +237,7 @@ nec86_attachsubr(struct nec86_softc *sc)
 
 	if (sc->sc_attached == 0) {
 		printf(": %s\n", boardname[ysc->model]);
-		audio_attach_mi(&nec86_hw_if, ysc, &ysc->sc_dev);
+		audio_attach_mi(&nec86_hw_if, ysc, NULL, &ysc->sc_dev);
 		sc->sc_attached = 1;
 	}
 }

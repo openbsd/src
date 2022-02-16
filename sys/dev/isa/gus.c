@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.48 2021/03/07 06:17:03 jsg Exp $	*/
+/*	$OpenBSD: gus.c,v 1.49 2022/02/16 06:21:18 anton Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -3398,7 +3398,7 @@ gus_subattach(struct gus_softc *sc, struct isa_attach_args *ia)
 	 */
 
 	audio_attach_mi(&gus_hw_if, HAS_CODEC(sc) ? (void *)&sc->sc_codec :
-	    (void *)sc, &sc->sc_dev);
+	    (void *)sc, NULL, &sc->sc_dev);
 }
 
 /*

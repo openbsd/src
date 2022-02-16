@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.56 2022/01/09 05:42:58 jsg Exp $	*/
+/*	$OpenBSD: yds.c,v 1.57 2022/02/16 06:21:19 anton Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -785,7 +785,7 @@ yds_attachhook(struct device *self)
 		sc->sc_codec[0].codec_if, AudioCoutputs, AudioNmaster, NULL);
 	yds_mixer_set_port(sc, &ctl);
 
-	audio_attach_mi(&yds_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&yds_hw_if, sc, NULL, &sc->sc_dev);
 
 	/* Watch for power changes */
 	sc->suspend = DVACT_RESUME;

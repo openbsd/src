@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.17 2019/12/14 12:37:05 fcambus Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.18 2022/02/16 06:21:18 anton Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -334,7 +334,7 @@ auglx_attach(struct device *parent, struct device *self, void *aux)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, bar_size);
 		return;
 	}
-	audio_attach_mi(&auglx_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&auglx_hw_if, sc, NULL, &sc->sc_dev);
 }
 
 /* Functions to communicate with the AC97 Codec via the ACC */

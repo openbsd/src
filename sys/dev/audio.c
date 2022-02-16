@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.194 2022/01/09 05:42:36 jsg Exp $	*/
+/*	$OpenBSD: audio.c,v 1.195 2022/02/16 06:21:18 anton Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -112,6 +112,7 @@ struct mixer_ev {
 struct audio_softc {
 	struct device dev;
 	struct audio_hw_if *ops;	/* driver funcs */
+	void *cookie;			/* wskbd cookie */
 	void *arg;			/* first arg to driver funcs */
 	int mode;			/* bitmask of AUMODE_* */
 	int quiesce;			/* device suspended */
@@ -1236,6 +1237,7 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 	sc->ops = ops;
+	sc->cookie = sa->cookie;
 	sc->arg = arg;
 
 #if NWSKBD > 0
@@ -1467,13 +1469,14 @@ audio_submatch(struct device *parent, void *match, void *aux)
 }
 
 struct device *
-audio_attach_mi(struct audio_hw_if *ops, void *arg, struct device *dev)
+audio_attach_mi(struct audio_hw_if *ops, void *arg, void *cookie, struct device *dev)
 {
 	struct audio_attach_args aa;
 
 	aa.type = AUDIODEV_TYPE_AUDIO;
 	aa.hwif = ops;
 	aa.hdl = arg;
+	aa.cookie = cookie;
 
 	/*
 	 * attach this driver to the caller (hardware driver), this

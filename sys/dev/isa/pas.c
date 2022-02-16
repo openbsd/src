@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.30 2021/03/07 06:17:04 jsg Exp $	*/
+/*	$OpenBSD: pas.c,v 1.31 2022/02/16 06:21:18 anton Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -398,5 +398,5 @@ pasattach(struct device *parent, struct device *self, void *aux)
 	
 	sbdsp_attach(&sc->sc_sbdsp);
 
-	audio_attach_mi(&pas_hw_if, &sc->sc_sbdsp, &sc->sc_sbdsp.sc_dev);
+	audio_attach_mi(&pas_hw_if, &sc->sc_sbdsp, NULL, &sc->sc_sbdsp.sc_dev);
 }

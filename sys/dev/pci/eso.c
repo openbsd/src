@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.47 2020/01/19 00:18:34 cheloha Exp $	*/
+/*	$OpenBSD: eso.c,v 1.48 2022/02/16 06:21:19 anton Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -289,7 +289,7 @@ eso_attach(struct device *parent, struct device *self, void *aux)
 		config_defer((struct device *)sc, eso_defer);
 	}
 	
-	audio_attach_mi(&eso_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&eso_hw_if, sc, NULL, &sc->sc_dev);
 
 	aa.type = AUDIODEV_TYPE_OPL;
 	aa.hwif = NULL;

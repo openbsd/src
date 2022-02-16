@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.30 2021/03/07 06:17:04 jsg Exp $	*/
+/*	$OpenBSD: sb.c,v 1.31 2022/02/16 06:21:18 anton Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -264,7 +264,7 @@ sbattach(struct sbdsp_softc *sc)
 	midi_attach_mi(mhw, sc, &sc->sc_dev);
 #endif
 
-	audio_attach_mi(&sb_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&sb_hw_if, sc, NULL, &sc->sc_dev);
 
 	arg.type = AUDIODEV_TYPE_OPL;
 	arg.hwif = 0;

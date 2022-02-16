@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.37 2022/02/02 03:55:29 jsg Exp $ */
+/*      $OpenBSD: sv.c,v 1.38 2022/02/16 06:21:19 anton Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -357,7 +357,7 @@ sv_attach(struct device *parent, struct device *self, void *aux)
 
   sv_init_mixer(sc);
 
-  audio_attach_mi(&sv_hw_if, sc, &sc->sc_dev);
+  audio_attach_mi(&sv_hw_if, sc, NULL, &sc->sc_dev);
 }
 
 #ifdef AUDIO_DEBUG

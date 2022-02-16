@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.35 2020/05/29 04:42:23 deraadt Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.36 2022/02/16 06:21:18 anton Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -249,7 +249,7 @@ harmony_attach(parent, self, aux)
 	if ((rev & CS4215_REV_VER) >= CS4215_REV_VER_E)
 		sc->sc_hasulinear8 = 1;
 
-	audio_attach_mi(&harmony_sa_hw_if, sc, &sc->sc_dv);
+	audio_attach_mi(&harmony_sa_hw_if, sc, NULL, &sc->sc_dv);
 
 	timeout_set(&sc->sc_acc_tmo, harmony_acc_tmo, sc);
 	sc->sc_acc_num = 0xa5a5a5a5;

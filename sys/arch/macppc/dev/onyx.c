@@ -1,4 +1,4 @@
-/*	$OpenBSD: onyx.c,v 1.12 2016/09/19 06:46:43 ratchov Exp $	*/
+/*	$OpenBSD: onyx.c,v 1.13 2022/02/16 06:21:18 anton Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -165,7 +165,7 @@ onyx_defer(struct device *dev)
 
 	/* XXX If i2c has failed to attach, what should we do? */
 
-	audio_attach_mi(&onyx_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&onyx_hw_if, sc, NULL, &sc->sc_dev);
 
 	deq_reset(sc);
 	onyx_set_volume(sc, 192, 192);

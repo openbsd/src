@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.43 2018/04/11 04:48:31 ratchov Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.44 2022/02/16 06:21:19 anton Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -727,7 +727,7 @@ maestro_attach(struct device *parent, struct device *self, void *aux)
 	sc->record.mode = 0;
 
 	/* Attach audio */
-	audio_attach_mi(&maestro_hw_if, sc, &sc->dev);
+	audio_attach_mi(&maestro_hw_if, sc, NULL, &sc->dev);
 	return;
 
  bad:

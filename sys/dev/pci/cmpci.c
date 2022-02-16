@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.46 2022/01/09 05:42:45 jsg Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.47 2022/02/16 06:21:18 anton Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -392,7 +392,7 @@ cmpci_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_dmat = pa->pa_dmat;
 
-	audio_attach_mi(&cmpci_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&cmpci_hw_if, sc, NULL, &sc->sc_dev);
 
 	/* attach OPL device */
 	aa.type = AUDIODEV_TYPE_OPL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.38 2017/01/04 07:33:14 ratchov Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.39 2022/02/16 06:21:19 anton Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -243,7 +243,7 @@ cs4231_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	audio_attach_mi(&cs4231_sa_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&cs4231_sa_hw_if, sc, NULL, &sc->sc_dev);
 
 	/* Default to speaker, unmuted, reasonable volume */
 	sc->sc_out_port = CSPORT_SPEAKER;

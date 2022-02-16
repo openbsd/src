@@ -1,4 +1,4 @@
-/*	$OpenBSD: aoa.c,v 1.11 2020/08/26 03:29:06 visa Exp $	*/
+/*	$OpenBSD: aoa.c,v 1.12 2022/02/16 06:21:18 anton Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -134,7 +134,7 @@ aoa_defer(struct device *dev)
 {
 	struct aoa_softc *sc = (struct aoa_softc *)dev;
 
-	audio_attach_mi(&aoa_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&aoa_hw_if, sc, NULL, &sc->sc_dev);
 	deq_reset(sc);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: graphaudio.c,v 1.1 2021/04/07 17:12:22 kettenis Exp $	*/
+/*	$OpenBSD: graphaudio.c,v 1.2 2022/02/16 06:21:18 anton Exp $	*/
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -186,7 +186,7 @@ graphaudio_attach_deferred(struct device *self)
 
 	graphaudio_set_format(sc, fmt, pol, clk);
 
-	audio_attach_mi(&graphaudio_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&graphaudio_hw_if, sc, NULL, &sc->sc_dev);
 }
 
 void

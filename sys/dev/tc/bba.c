@@ -1,4 +1,4 @@
-/*	$OpenBSD: bba.c,v 1.7 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: bba.c,v 1.8 2022/02/16 06:21:19 anton Exp $	*/
 /* $NetBSD: bba.c,v 1.38 2011/06/04 01:27:57 tsutsui Exp $ */
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -229,7 +229,7 @@ bba_attach(struct device *parent, struct device *self, void *aux)
 	ioasic_intr_establish(parent, ia->iada_cookie, IPL_AUDIO,
 	    bba_intr, sc, self->dv_xname);
 
-	audio_attach_mi(&bba_hw_if, sc, self);
+	audio_attach_mi(&bba_hw_if, sc, NULL, self);
 }
 
 void

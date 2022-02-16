@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.44 2022/01/09 05:42:45 jsg Exp $ */
+/* $OpenBSD: auixp.c,v 1.45 2022/02/16 06:21:18 anton Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -1035,7 +1035,7 @@ auixp_post_config(struct device *self)
 		return;
 	}
 
-	audio_attach_mi(&auixp_hw_if, &sc->sc_codec, &sc->sc_dev);
+	audio_attach_mi(&auixp_hw_if, &sc->sc_codec, NULL, &sc->sc_dev);
 
 	if (sc->has_spdif)
 		sc->has_spdif = 0;

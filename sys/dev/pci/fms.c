@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.30 2016/12/20 15:31:00 ratchov Exp $ */
+/*	$OpenBSD: fms.c,v 1.31 2022/02/16 06:21:19 anton Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -256,7 +256,7 @@ fms_attach(struct device *parent, struct device *self, void *aux)
 		fms_set_port(sc, &ctl);
 	}
 
-	audio_attach_mi(&fms_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&fms_hw_if, sc, NULL, &sc->sc_dev);
 
 	aa.type = AUDIODEV_TYPE_OPL;
 	aa.hwif = NULL;

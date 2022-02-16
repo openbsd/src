@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.26 2022/01/09 05:42:42 jsg Exp $	*/
+/*	$OpenBSD: ess.c,v 1.27 2022/02/16 06:21:18 anton Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -975,9 +975,9 @@ essattach(struct ess_softc *sc)
 	sc->spkr_state = SPKR_OFF;
 
 	if (ESS_USE_AUDIO1(sc->sc_model))
-		audio_attach_mi(&ess_1788_hw_if, sc, &sc->sc_dev);
+		audio_attach_mi(&ess_1788_hw_if, sc, NULL, &sc->sc_dev);
 	else
-		audio_attach_mi(&ess_1888_hw_if, sc, &sc->sc_dev);
+		audio_attach_mi(&ess_1888_hw_if, sc, NULL, &sc->sc_dev);
 
 	arg.type = AUDIODEV_TYPE_OPL;
 	arg.hwif = 0;

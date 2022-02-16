@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.15 2021/11/28 14:10:32 mglocker Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.16 2022/02/16 06:21:19 anton Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -958,7 +958,7 @@ utvfu_attach(struct device *parent, struct device *self, void *aux)
 
 	rw_init(&sc->sc_audio.rwlock, "audiorwl");
 
-	sc->sc_audiodev = audio_attach_mi(&utvfu_au_hw_if, sc, &sc->sc_dev);
+	sc->sc_audiodev = audio_attach_mi(&utvfu_au_hw_if, sc, NULL, &sc->sc_dev);
 	sc->sc_videodev = video_attach_mi(&utvfu_vid_hw_if, sc, &sc->sc_dev);
 }
 

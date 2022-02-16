@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.39 2020/08/26 03:29:06 visa Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.40 2022/02/16 06:21:18 anton Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -486,7 +486,7 @@ snapper_defer(struct device *dev)
 
 	/* XXX If i2c has failed to attach, what should we do? */
 
-	audio_attach_mi(&snapper_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&snapper_hw_if, sc, NULL, &sc->sc_dev);
 
 	/* kiic_setmode(sc->sc_i2c, I2C_STDSUBMODE); */
 	snapper_init(sc);

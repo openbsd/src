@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.44 2020/01/11 09:08:39 cheloha Exp $	*/
+/*	$OpenBSD: autri.c,v 1.45 2022/02/16 06:21:18 anton Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -574,7 +574,7 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 	ctl.dev = autri_get_portnum_by_name(sc,AudioCoutputs,AudioNmaster,NULL);
 	autri_mixer_set_port(sc, &ctl);
 
-	audio_attach_mi(&autri_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&autri_hw_if, sc, NULL, &sc->sc_dev);
 
 #if NMIDI > 0
 	midi_attach_mi(&autri_midi_hw_if, sc, &sc->sc_dev);

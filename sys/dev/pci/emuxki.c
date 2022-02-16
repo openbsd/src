@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.55 2022/01/09 05:42:45 jsg Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.56 2022/02/16 06:21:19 anton Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -474,7 +474,7 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 	if (emuxki_scinit(sc, 0) ||
 	    /* APS has no ac97 XXX */
 	    (sc->sc_flags & EMUXKI_APS || emuxki_ac97_init(sc)) ||
-	    (sc->sc_audev = audio_attach_mi(&emuxki_hw_if, sc, self)) == NULL) {
+	    (sc->sc_audev = audio_attach_mi(&emuxki_hw_if, sc, NULL, self)) == NULL) {
 		emuxki_pci_shutdown(sc);
 		return;
 	}

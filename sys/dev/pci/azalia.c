@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.268 2022/01/11 00:37:23 jsg Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.269 2022/02/16 06:21:18 anton Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -588,7 +588,7 @@ azalia_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (azalia_init_streams(sc))
 		goto err_exit;
 
-	audio_attach_mi(&azalia_hw_if, sc, &sc->dev);
+	audio_attach_mi(&azalia_hw_if, sc, NULL, &sc->dev);
 
 	return;
 

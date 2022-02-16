@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.113 2022/01/09 05:42:45 jsg Exp $	*/
+/*	$OpenBSD: auich.c,v 1.114 2022/02/16 06:21:18 anton Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -512,7 +512,7 @@ auich_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_disestablish_intr;
 	sc->codec_if->vtbl->unlock(sc->codec_if);
 
-	audio_attach_mi(&auich_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(&auich_hw_if, sc, NULL, &sc->sc_dev);
 
 	/* Watch for power changes */
 	sc->suspend = DVACT_RESUME;
