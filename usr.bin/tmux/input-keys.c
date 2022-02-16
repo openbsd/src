@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.86 2021/08/20 17:50:42 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.87 2022/02/16 18:55:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -578,13 +578,13 @@ input_key_get_mouse(struct screen *s, struct mouse_event *m, u_int x, u_int y,
 	 */
 	if (m->sgr_type != ' ') {
 		if (MOUSE_DRAG(m->sgr_b) &&
-		    MOUSE_BUTTONS(m->sgr_b) == 3 &&
+		    MOUSE_RELEASE(m->sgr_b) &&
 		    (~s->mode & MODE_MOUSE_ALL))
 			return (0);
 	} else {
 		if (MOUSE_DRAG(m->b) &&
-		    MOUSE_BUTTONS(m->b) == 3 &&
-		    MOUSE_BUTTONS(m->lb) == 3 &&
+		    MOUSE_RELEASE(m->b) &&
+		    MOUSE_RELEASE(m->lb) &&
 		    (~s->mode & MODE_MOUSE_ALL))
 			return (0);
 	}
