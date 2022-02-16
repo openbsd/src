@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.69 2021/12/16 02:01:59 sashan Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.70 2022/02/16 08:46:11 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -498,6 +498,13 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 				if (pfr_pool_get(rpool, &raddr, &rmask, af))
 					return (1);
 			}
+		} else if (PF_AZERO(&rpool->counter, af)) {
+			/*
+			 * fall back to POOL_NONE if there are no addresses in
+			 * pool
+			 */
+			pf_addrcpy(naddr, raddr, af);
+			break;
 		} else if (pf_match_addr(0, raddr, rmask, &rpool->counter, af))
 			return (1);
 
