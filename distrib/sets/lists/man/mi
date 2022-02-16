@@ -1821,6 +1821,7 @@
 ./usr/share/man/man4/ricohrtc.4
 ./usr/share/man/man4/riscv64/intro.4
 ./usr/share/man/man4/riscv64/mpfclock.4
+./usr/share/man/man4/riscv64/mpfiic.4
 ./usr/share/man/man4/riscv64/plic.4
 ./usr/share/man/man4/riscv64/sfcc.4
 ./usr/share/man/man4/riscv64/sfclock.4
