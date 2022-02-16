@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vxlan.4,v 1.12 2022/02/16 06:54:08 dlg Exp $
+.\"	$OpenBSD: vxlan.4,v 1.13 2022/02/16 07:17:41 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -30,7 +30,7 @@ Ethernet networks on top of IPv4 and IPv6 networks using the
 Virtual eXtensible Local Area Network (VXLAN) protocol.
 .Pp
 VXLAN datagrams consist of an Ethernet payload encapsulated by an
-8 byte VXLAN header, which in turn is encapsulated by UDP and IP
+8-byte VXLAN header, which in turn is encapsulated by UDP and IP
 headers.
 Different VXLAN tunnels or overlays between the same VXLAN Tunnel
 Endpoints (VTEPs) can be distinguished by an optional 24-bit Virtual
