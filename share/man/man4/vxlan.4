@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vxlan.4,v 1.11 2022/02/16 02:13:43 dlg Exp $
+.\"	$OpenBSD: vxlan.4,v 1.12 2022/02/16 06:54:08 dlg Exp $
 .\"
 .\" Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -60,13 +60,20 @@ When a unicast IP address is configured as the tunnel destination,
 all traffic is sent to a single tunnel endpoint.
 .It Ic learning mode
 When a multicast IP address is configured as the tunnel destination,
-broadcast, multicast, and unknown unicast packets are sent to the
+.Nm
+operates as a learning bridge.
+Broadcast, multicast, and unknown unicast packets are sent to the
 specified multicast group.
 Packets received by the tunnel source address are used to dynamically
 learn the endpoint addresses for the encapsulated Ethernet source
 addresses.
-.\" .It Ic endpoint mode
-.\" When configured without a tunnel destination address,
+.It Ic endpoint mode
+When configured without a tunnel destination address,
+.Nm
+operates as a bridge, but with learning disabled.
+Endpoints for Ethernet addresses must be added explicitly before
+packets will be sent for those addresses.
+All valid VXLAN packets sent to the local address will be accepted.
 .El
 .Sh EXAMPLES
 Create a point-to-point tunnel using Virtual Network Identifier 5:
