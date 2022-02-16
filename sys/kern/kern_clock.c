@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.102 2021/01/13 16:28:49 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.103 2022/02/16 08:01:32 jsg Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -357,10 +357,8 @@ statclock(struct clockframe *frame)
 			}
 		}
 #endif
-#if defined(PROC_PC)
 		if (p != NULL && p->p_p->ps_flags & PS_PROFIL)
 			addupc_intr(p, PROC_PC(p));
-#endif
 		if (--spc->spc_pscnt > 0)
 			return;
 		/*
