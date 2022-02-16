@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.9 2022/02/16 07:13:09 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.10 2022/02/16 20:20:36 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -104,12 +104,6 @@ sleep_setstate(void *v)
 	if (aml_node_setval(sc, sc->sc_pts, sc->sc_state) != 0)
 		return (EINVAL);
 	acpi_indicator(sc, ACPI_SST_WAKING);    /* blink */
-
-	acpibtn_enable_psw();   /* enable _LID for wakeup */
-	acpi_indicator(sc, ACPI_SST_SLEEPING);
-
-	/* 3rd suspend AML step: _GTS(tostate) */
-	aml_node_setval(sc, sc->sc_gts, sc->sc_state);
 	return 0;
 }
 
@@ -118,6 +112,12 @@ gosleep(void *v)
 {
 	struct acpi_softc *sc = v;
 	int ret;
+
+	acpibtn_enable_psw();   /* enable _LID for wakeup */
+	acpi_indicator(sc, ACPI_SST_SLEEPING);
+
+	/* 3rd suspend AML step: _GTS(tostate) */
+	aml_node_setval(sc, sc->sc_gts, sc->sc_state);
 
 	/* Clear fixed event status */
 	acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0, ACPI_PM1_ALL_STS);
