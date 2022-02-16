@@ -1,4 +1,4 @@
-#	$OpenBSD: files.riscv64,v 1.18 2022/01/05 03:32:44 visa Exp $
+#	$OpenBSD: files.riscv64,v 1.19 2022/02/16 13:07:36 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -88,6 +88,11 @@ file	arch/riscv64/dev/plic.c			plic
 device	mpfclock
 attach	mpfclock at fdt
 file	arch/riscv64/dev/mpfclock.c		mpfclock
+
+# PolarFire SoC MSS I2C controller
+device	mpfiic: i2cbus
+attach	mpfiic at fdt
+file	arch/riscv64/dev/mpfiic.c		mpfiic
 
 # L2 cache controller
 device	sfcc

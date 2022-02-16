@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.122 2021/12/24 07:05:55 jmc Exp $
+.\"	$OpenBSD: iic.4,v 1.123 2022/02/16 13:07:36 visa Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 24 2021 $
+.Dd $Mdocdate: February 16 2022 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -48,6 +48,7 @@
 .Cd "iic* at mviic?                 # arm64"
 .Cd "iic* at rkiic?                 # arm64 armv7"
 .Cd "iic* at sxitwi?                # arm64 armv7"
+.Cd "iic* at mpfiic?                # riscv64"
 .Cd "iic* at ociic?                 # riscv64"
 .Sh DESCRIPTION
 .Tn I2C
@@ -113,6 +114,8 @@ Intel ICH SMBus controller
 Freescale i.MX I2C controller
 .It Xr kiic 4
 Apple Kauai I2C controller
+.It Xr mpfiic 4
+Microchip PolarFire SoC MSS I2C controller
 .It Xr mviic 4
 Marvell Armada 3700 I2C Controller
 .It Xr nviic 4

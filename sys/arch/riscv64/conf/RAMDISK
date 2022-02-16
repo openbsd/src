@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.29 2022/01/18 07:53:39 visa Exp $
+#	$OpenBSD: RAMDISK,v 1.30 2022/02/16 13:07:36 visa Exp $
 
 machine		riscv64
 maxusers	4
@@ -39,6 +39,8 @@ com*		at fdt?
 cdsdhc*		at fdt?
 sdmmc*		at cdsdhc?
 mpfclock*	at fdt? early 1
+mpfiic*		at fdt?
+iic*		at mpfiic?
 
 # SiFive SoCs
 sfclock*	at fdt? early 1 # PRCI
