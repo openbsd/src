@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.372 2022/02/09 11:42:58 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.373 2022/02/16 04:25:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1364,15 +1364,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 		if (rule->rt && !rule->direction) {
-			error = EINVAL;
-			pf_rule_free(rule);
-			rule = NULL;
-			break;
-		}
-
-		if (rule->scrub_flags & PFSTATE_SETPRIO &&
-		    (rule->set_prio[0] > IFQ_MAXPRIO ||
-		    rule->set_prio[1] > IFQ_MAXPRIO)) {
 			error = EINVAL;
 			pf_rule_free(rule);
 			rule = NULL;
@@ -3070,6 +3061,11 @@ int
 pf_rule_copyin(struct pf_rule *from, struct pf_rule *to)
 {
 	int i;
+
+	if (from->scrub_flags & PFSTATE_SETPRIO &&
+	    (from->set_prio[0] > IFQ_MAXPRIO ||
+	    from->set_prio[1] > IFQ_MAXPRIO))
+		return (EINVAL);
 
 	to->src = from->src;
 	to->src.addr.p.tbl = NULL;
