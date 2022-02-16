@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.31 2022/02/15 21:17:12 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.32 2022/02/16 06:41:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -377,14 +377,16 @@ sleep_resume(void *v)
 	return 0;
 }
 
-void
+int
 gosleep(void *v)
 {
+	return EOPNOTSUPP;
 }
 
-void
+int
 suspend_finish(void *v)
 {
+	return 0;
 }
 
 #endif /* SUSPEND */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.15 2022/02/15 21:17:12 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.16 2022/02/16 06:41:27 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -373,10 +373,10 @@ sleep_setstate(void *v)
 	return 0;
 }
 
-void
+int
 gosleep(void *v)
 {
-	// XXX
+	return EOPNOTSUPP;
 }
 
 void
@@ -390,7 +390,7 @@ sleep_resume(void *v)
 	return 0;
 }
 
-void
+int
 suspend_finish(void *v)
 {
 #if 0
@@ -405,7 +405,7 @@ suspend_finish(void *v)
 	if (acpibtn_numopenlids() == 0 && lid_action != 0)
 		acpi_addtask(sc, acpi_sleep_task, sc, sc->sc_state);
 #endif
+	return 0;
 }
 
 #endif /* SUSPEND */
-

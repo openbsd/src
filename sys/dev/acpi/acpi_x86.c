@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.7 2022/02/15 21:17:12 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.8 2022/02/16 06:41:27 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -113,10 +113,11 @@ sleep_setstate(void *v)
 	return 0;
 }
 
-void
+int
 gosleep(void *v)
 {
 	struct acpi_softc *sc = v;
+	int ret;
 
 	/* Clear fixed event status */
 	acpi_write_pmreg(sc, ACPIREG_PM1_STS, 0, ACPI_PM1_ALL_STS);
@@ -125,12 +126,11 @@ gosleep(void *v)
 	acpi_disable_allgpes(sc);
 	acpi_enable_wakegpes(sc, sc->sc_state);
 
-	/* Sleep */
-	acpi_sleep_cpu(sc, sc->sc_state);
-	/* Resume */
-
+	ret = acpi_sleep_cpu(sc, sc->sc_state);
 	acpi_resume_cpu(sc, sc->sc_state);
 	sc->sc_state = ACPI_STATE_S0;
+
+	return ret;
 }
 
 void
@@ -155,7 +155,7 @@ sleep_resume(void *v)
 	return 0;
 }
 
-void
+int
 suspend_finish(void *v)
 {
 	struct acpi_softc *sc = v;
@@ -167,4 +167,5 @@ suspend_finish(void *v)
 	/* If we woke up but all the lids are closed, go back to sleep */
 	if (acpibtn_numopenlids() == 0 && lid_action != 0)
 		acpi_addtask(sc, acpi_sleep_task, sc, sc->sc_state);
+	return 0;
 }

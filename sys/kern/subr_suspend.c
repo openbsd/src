@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.7 2022/02/15 21:17:12 deraadt Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.8 2022/02/16 06:41:27 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -132,7 +132,7 @@ sleep_state(void *v, int sleepmode)
 		boothowto &= ~RB_POWERDOWN;
 	}
 
-	gosleep(v);
+	error = gosleep(v);
 
 #ifdef HIBERNATE
 	if (sleepmode == SLEEP_HIBERNATE) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.61 2022/02/15 21:17:12 deraadt Exp $	*/
+/*	$OpenBSD: device.h,v 1.62 2022/02/16 06:41:27 deraadt Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -208,8 +208,8 @@ int	sleep_showstate(void *v, int sleepmode);
 int	sleep_setstate(void *v);
 int	sleep_resume(void *v);
 void	sleep_abort(void *v);
-void	gosleep(void *v);
-void	suspend_finish(void *v);
+int	gosleep(void *v);
+int	suspend_finish(void *v);
 
 struct device *device_mainbus(void);
 struct device *device_mpath(void);
