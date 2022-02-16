@@ -1,7 +1,8 @@
-# $OpenBSD: Makefile,v 1.1 2021/09/28 08:35:06 fcambus Exp $
+# $OpenBSD: Makefile,v 1.2 2022/02/16 03:49:40 gnezdo Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR+=profile
+SUBDIR+=ubsan_minimal
 
 .include <bsd.subdir.mk>
