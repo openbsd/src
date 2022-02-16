@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.84 2022/02/16 01:25:45 dlg Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.85 2022/02/16 01:45:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -623,6 +623,8 @@ vxlan_input(void *arg, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
 	in_port_t port;
 	struct vxlan_softc *sc = NULL;
 	struct ifnet *ifp;
+	int rxhprio;
+	uint8_t tos;
 
 	if (m->m_pkthdr.len < vhlen)
 		goto drop;
@@ -630,11 +632,15 @@ vxlan_input(void *arg, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
 	uh = uhp;
 	port = uh->uh_sport;
 
-	if (ip != NULL)
+	if (ip != NULL) {
 		addr.in4 = ip->ip_src;
+		tos = ip->ip_tos;
+	}
 #ifdef INET6
-	else
+	else {
 		addr.in6 = ip6->ip6_src;
+		tos = bemtoh32(&ip6->ip6_flow) >> 20;
+	}
 #endif
 
 	if (m->m_len < vhlen) {
@@ -698,7 +704,18 @@ vxlan_input(void *arg, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
 		    (struct ether_addr *)eh->ether_shost);
 	}
 
-	/* XXX prio */
+	rxhprio = sc->sc_rxhprio;
+	switch (rxhprio) {
+	case IF_HDRPRIO_PACKET:
+		/* nop */
+		break;
+	case IF_HDRPRIO_OUTER:
+		m->m_pkthdr.pf.prio = IFQ_TOS2PRIO(tos);
+		break;
+	default:
+		m->m_pkthdr.pf.prio = rxhprio;
+		break;                                                  \
+        }                                                               \
 
 	if_vinput(ifp, m);
 rele:
