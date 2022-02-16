@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.35 2022/01/04 06:20:37 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.36 2022/02/16 10:35:57 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -727,7 +727,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 	size_t			 rem, i;
 	uint32_t		 sum, usum, lease_time = 0, renewal_time = 0;
 	uint32_t		 rebinding_time = 0;
-	uint8_t			*p, dho = DHO_PAD, dho_len;
+	uint8_t			*p, dho = DHO_PAD, dho_len, slen;
 	uint8_t			 dhcp_message_type = 0;
 	int			 routes_len = 0, routers = 0, csr = 0;
 	char			 from[sizeof("xx:xx:xx:xx:xx:xx")];
@@ -1014,18 +1014,30 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			rem -= dho_len;
 			break;
 		case DHO_HOST_NAME:
-			if ( dho_len < 1)
+			if (dho_len < 1)
 				goto wrong_length;
-			strvisx(hostname, p, dho_len, VIS_SAFE);
+			/* MUST delete trailing NUL, per RFC 2132 */
+			slen = dho_len;
+			while (slen > 0 && p[slen - 1] == '\0')
+				slen--;
+			if (slen < 1)
+				goto wrong_length;
+			strvisx(hostname, p, slen, VIS_SAFE);
 			if (log_getverbose() > 1)
 				log_debug("DHO_HOST_NAME: %s", hostname);
 			p += dho_len;
 			rem -= dho_len;
 			break;
 		case DHO_DOMAIN_NAME:
-			if ( dho_len < 1)
+			if (dho_len < 1)
 				goto wrong_length;
-			strvisx(domainname, p, dho_len, VIS_SAFE);
+			/* MUST delete trailing NUL, per RFC 2132 */
+			slen = dho_len;
+			while (slen > 0 && p[slen - 1] == '\0')
+				slen--;
+			if (slen < 1)
+				goto wrong_length;
+			strvisx(domainname, p, slen, VIS_SAFE);
 			if (log_getverbose() > 1)
 				log_debug("DHO_DOMAIN_NAME: %s", domainname);
 			p += dho_len;
