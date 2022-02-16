@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbdvar.h,v 1.3 2017/05/12 09:16:55 mpi Exp $ */
+/* $OpenBSD: wskbdvar.h,v 1.4 2022/02/16 06:23:42 anton Exp $ */
 /* $NetBSD: wskbdvar.h,v 1.8 1999/12/01 23:22:59 augustss Exp $ */
 
 /*
@@ -71,6 +71,8 @@ struct wskbddev_attach_args {
 
 	const struct wskbd_accessops *accessops;        /* access ops */
 	void	*accesscookie;				/* access cookie */
+
+	void	*audiocookie;
 };
 
 #define	WSKBDDEVCF_CONSOLE	0

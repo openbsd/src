@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.166 2022/02/16 06:21:19 anton Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.167 2022/02/16 06:23:42 anton Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -3841,7 +3841,7 @@ uaudio_attach(struct device *parent, struct device *self, void *aux)
 	/* print a nice uaudio attach line */
 	uaudio_print(sc);
 
-	audio_attach_mi(&uaudio_hw_if, sc, NULL, &sc->dev);
+	audio_attach_mi(&uaudio_hw_if, sc, arg->cookie, &sc->dev);
 }
 
 int

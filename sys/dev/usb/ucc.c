@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.29 2022/01/09 05:43:00 jsg Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.30 2022/02/16 06:23:42 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -104,7 +104,7 @@ void	ucc_attach(struct device *, struct device *, void *);
 int	ucc_detach(struct device *, int);
 void	ucc_intr(struct uhidev *, void *, u_int);
 
-void	ucc_attach_wskbd(struct ucc_softc *);
+void	ucc_attach_wskbd(struct ucc_softc *, void *);
 int	ucc_enable(void *, int);
 void	ucc_set_leds(void *, int);
 int	ucc_ioctl(void *, u_long, caddr_t, int, struct proc *);
@@ -680,7 +680,7 @@ ucc_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Cannot load an empty map. */
 	if (sc->sc_maplen > 0)
-		ucc_attach_wskbd(sc);
+		ucc_attach_wskbd(sc, uha->uaa->cookie);
 }
 
 int
@@ -772,7 +772,7 @@ unknown:
 }
 
 void
-ucc_attach_wskbd(struct ucc_softc *sc)
+ucc_attach_wskbd(struct ucc_softc *sc, void *cookie)
 {
 	static const struct wskbd_accessops accessops = {
 		.enable		= ucc_enable,
@@ -784,6 +784,7 @@ ucc_attach_wskbd(struct ucc_softc *sc)
 		.keymap		= &sc->sc_keymap,
 		.accessops	= &accessops,
 		.accesscookie	= sc,
+		.audiocookie	= cookie,
 	};
 
 	sc->sc_keydesc[0].name = KB_US;

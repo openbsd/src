@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.195 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: audio.c,v 1.196 2022/02/16 06:23:42 anton Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -96,6 +96,8 @@ struct wskbd_vol
 #define WSKBD_MUTE_DISABLE	2
 #define WSKBD_MUTE_ENABLE	3
 };
+
+int wskbd_set_mixervolume_unit(int, long, long);
 #endif
 
 /*
@@ -2455,10 +2457,6 @@ wskbd_mixer_init(struct audio_softc *sc)
 	};
 	int i;
 
-	if (sc->dev.dv_unit != 0) {
-		DPRINTF("%s: not configuring wskbd keys\n", DEVNAME(sc));
-		return;
-	}
 	for (i = 0; i < sizeof(spkr_names) / sizeof(spkr_names[0]); i++) {
 		if (wskbd_initvol(sc, &sc->spkr,
 			spkr_names[i].cn, spkr_names[i].dn))
@@ -2569,13 +2567,48 @@ wskbd_set_mixermute(long mute, long out)
 	return 0;
 }
 
+/*
+ * Adjust the volume of the audio device associated with the given cookie.
+ * Otherwise, fallback to audio0.
+ */
+int
+wskbd_set_mixervolume_dev(void *cookie, long dir, long out)
+{
+	int unit = 0;
+	int i;
+
+	for (i = 0; i < audio_cd.cd_ndevs; i++) {
+		struct audio_softc *sc;
+
+		sc = (struct audio_softc *)device_lookup(&audio_cd, i);
+		if (sc == NULL)
+			continue;
+		if (sc->cookie != cookie) {
+			device_unref(&sc->dev);
+			continue;
+		}
+
+		device_unref(&sc->dev);
+		unit = i;
+		break;
+	}
+
+	return wskbd_set_mixervolume_unit(unit, dir, out);
+}
+
 int
 wskbd_set_mixervolume(long dir, long out)
+{
+	return wskbd_set_mixervolume_unit(0, dir, out);
+}
+
+int
+wskbd_set_mixervolume_unit(int unit, long dir, long out)
 {
 	struct audio_softc *sc;
 	struct wskbd_vol *vol;
 
-	sc = (struct audio_softc *)device_lookup(&audio_cd, 0);
+	sc = (struct audio_softc *)device_lookup(&audio_cd, unit);
 	if (sc == NULL)
 		return ENODEV;
 	vol = out ? &sc->spkr : &sc->mic;

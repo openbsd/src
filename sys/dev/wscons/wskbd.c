@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.110 2021/12/30 06:55:11 anton Exp $ */
+/* $OpenBSD: wskbd.c,v 1.111 2022/02/16 06:23:42 anton Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -169,6 +169,10 @@ struct wskbd_softc {
 
 	int	sc_refcnt;
 	u_char	sc_dying;		/* device is being detached */
+
+#if NAUDIO > 0
+	void	*sc_audiocookie;
+#endif
 };
 
 #define MOD_SHIFT_L		(1 << 0)
@@ -307,7 +311,7 @@ static struct wskbd_internal wskbd_console_data;
 void	wskbd_update_layout(struct wskbd_internal *, kbd_t);
 
 #if NAUDIO > 0
-extern int wskbd_set_mixervolume(long, long);
+extern int wskbd_set_mixervolume_dev(void *, long, long);
 #endif
 
 void
@@ -393,6 +397,10 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 
 #if NWSDISPLAY > 0
 	timeout_set(&sc->sc_repeat_ch, wskbd_repeat, sc);
+#endif
+
+#if NAUDIO > 0
+	sc->sc_audiocookie = ap->audiocookie;
 #endif
 
 	sc->id->t_sc = sc;
@@ -1766,13 +1774,13 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 		switch (ksym) {
 #if NAUDIO > 0
 		case KS_AudioMute:
-			wskbd_set_mixervolume(0, 1);
+			wskbd_set_mixervolume_dev(sc->sc_audiocookie, 0, 1);
 			return (0);
 		case KS_AudioLower:
-			wskbd_set_mixervolume(-1, 1);
+			wskbd_set_mixervolume_dev(sc->sc_audiocookie, -1, 1);
 			return (0);
 		case KS_AudioRaise:
-			wskbd_set_mixervolume(1, 1);
+			wskbd_set_mixervolume_dev(sc->sc_audiocookie, 1, 1);
 			return (0);
 #endif
 		default:

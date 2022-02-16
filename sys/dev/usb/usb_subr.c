@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.157 2022/01/09 05:43:02 jsg Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.158 2022/02/16 06:23:42 anton Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -839,6 +839,11 @@ usbd_status
 usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
     int addr)
 {
+	/*
+	 * Used to correlate audio and wskbd devices as this is the common point
+	 * of attachment between the two.
+	 */
+	static char *cookie = 0;
 	struct usb_attach_arg uaa;
 	usb_device_descriptor_t *dd = &dev->ddesc;
 	int i, confi, nifaces;
@@ -860,6 +865,7 @@ usbd_probe_and_attach(struct device *parent, struct usbd_device *dev, int port,
 	uaa.vendor = UGETW(dd->idVendor);
 	uaa.product = UGETW(dd->idProduct);
 	uaa.release = UGETW(dd->bcdDevice);
+	uaa.cookie = ++cookie;
 
 	/* First try with device specific drivers. */
 	DPRINTF(("usbd_probe_and_attach trying device specific drivers\n"));
