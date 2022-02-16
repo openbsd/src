@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.9 2022/02/16 06:47:28 deraadt Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.10 2022/02/16 16:44:17 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -53,11 +53,9 @@ top:
 
 	if (sleep_showstate(v, sleepmode))
 		return EOPNOTSUPP;
-
 #if NWSDISPLAY > 0
 	wsdisplay_suspend();
 #endif
-
 	stop_periodic_resettodr();
 
 #ifdef HIBERNATE
@@ -71,7 +69,8 @@ top:
 		if (hibernate_alloc()) {
 			printf("failed to allocate hibernate memory\n");
 			sleep_abort(v);
-			goto fail_alloc;
+			error = ENOMEM;
+			goto fail_hiballoc;
 		}
 	}
 #endif /* HIBERNATE */
@@ -79,6 +78,7 @@ top:
 	sensor_quiesce();
 	if (config_suspend_all(DVACT_QUIESCE)) {
 		sleep_abort(v);
+		error = EIO;
 		goto fail_quiesce;
 	}
 
@@ -87,8 +87,6 @@ top:
 	sr_quiesce();
 #endif
 	bufq_quiesce();
-
-	
 #ifdef MULTIPROCESSOR
 	sched_stop_secondary_cpus();
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
@@ -115,13 +113,13 @@ top:
 
 	if (config_suspend_all(DVACT_SUSPEND) != 0) {
 		sleep_abort(v);
+		error = EDEADLK;
 		goto fail_suspend;
 	}
-
 	suspend_randomness();
-
 	if (sleep_setstate(v)) {
 		sleep_abort(v);
+		error = ENOTBLK;
 		goto fail_pts;
 	}
 
@@ -154,17 +152,12 @@ fail_suspend:
 	splx(s);
 
 	inittodr(gettime());
-
 	sleep_resume(v);
-
-	/* force RNG upper level reseed */
 	resume_randomness(rndbuf, rndbuflen);
-
 #ifdef MULTIPROCESSOR
 	resume_mp();
 	sched_start_secondary_cpus();
 #endif
-
 	vfs_stall(curproc, 0);
 	bufq_restart();
 
@@ -175,24 +168,19 @@ fail_quiesce:
 #ifdef HIBERNATE
 	if (sleepmode == SLEEP_HIBERNATE) {
 		hibernate_free();
-fail_alloc:
+fail_hiballoc:
 		hibernate_resume_bufcache();
 	}
 #endif /* HIBERNATE */
 
 	start_periodic_resettodr();
-
 #if NWSDISPLAY > 0
 	wsdisplay_resume();
 #endif
 	sys_sync(curproc, NULL, NULL);
-
-	/* Restore hw.setperf */
 	if (cpu_setperf != NULL)
-		cpu_setperf(perflevel);
-
+		cpu_setperf(perflevel);	/* Restore hw.setperf */
 	if (suspend_finish(v) == EAGAIN)
 		goto top;
-
 	return (error);
 }
