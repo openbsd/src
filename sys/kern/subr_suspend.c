@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.8 2022/02/16 06:41:27 deraadt Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.9 2022/02/16 06:47:28 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -38,14 +38,18 @@
 int
 sleep_state(void *v, int sleepmode)
 {
-	int error = ENXIO;
+	int error, s;
 	extern int perflevel;
-	size_t rndbuflen = 0;
-	char *rndbuf = NULL;
-	int s;
+	size_t rndbuflen;
+	char *rndbuf;
 #if NSOFTRAID > 0
 	extern void sr_quiesce(void);
 #endif
+
+top:
+	error = ENXIO;
+	rndbuf = NULL;
+	rndbuflen = 0;
 
 	if (sleep_showstate(v, sleepmode))
 		return EOPNOTSUPP;
@@ -187,7 +191,8 @@ fail_alloc:
 	if (cpu_setperf != NULL)
 		cpu_setperf(perflevel);
 
-	suspend_finish(v);
+	if (suspend_finish(v) == EAGAIN)
+		goto top;
 
 	return (error);
 }
