@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.355 2022/02/15 23:16:00 rob Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.356 2022/02/17 03:12:34 rob Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -829,7 +829,7 @@ sys_chroot(struct proc *p, void *v, register_t *retval)
 		vrele(old_cdir);
 	} else
 		fdp->fd_rdir = nd.ni_vp;
-	p->p_p->ps_flags |= PS_CHROOT;
+	atomic_setbits_int(&p->p_p->ps_flags, PS_CHROOT);
 	return (0);
 }
 
