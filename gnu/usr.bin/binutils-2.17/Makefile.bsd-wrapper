@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.26 2021/12/17 17:06:39 jca Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.27 2022/02/17 16:28:37 phessler Exp $
 
 .include <bsd.own.mk>
 
@@ -38,16 +38,18 @@ SUBDIRS+=	 ld gas
 CONF_SUBDIRS+=	 ld gas
 INST_SUBDIRS+=	 ld gas
 MAN+=		gas/doc/as.1	ld/ld.bfd.1
+.endif
+
 .if ${AR_VERSION:L} == "binutils"
 MAN+=		binutils/doc/ar.1
 .else
 # skip installing ar(1) which is am__EXEEXT_7
 SKIP_AR=	am__EXEEXT_7=
 .endif
+
 .if ${LINKER_VERSION:L} == "bfd"
 maninstall:
 		cd ${DESTDIR}${MANDIR}1 && rm -f ld.1 && ln ld.bfd.1 ld.1
-.endif
 .endif
 
 # Used by the GNU Makefile
