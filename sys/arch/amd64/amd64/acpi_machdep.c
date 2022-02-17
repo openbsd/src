@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.101 2022/02/17 17:17:11 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.102 2022/02/17 17:22:22 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -17,8 +17,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/memrange.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -32,12 +30,10 @@
 
 #include <machine/cpuvar.h>
 
-#include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/dsdt.h>
 #include <dev/isa/isareg.h>
-#include <dev/pci/pcivar.h>
 
 #include <machine/apmvar.h>
 

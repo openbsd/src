@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.83 2022/02/17 17:17:11 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.84 2022/02/17 17:22:24 deraadt Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -17,9 +17,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/memrange.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -29,22 +26,16 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/biosvar.h>
-#include <machine/bus.h>
-#include <machine/conf.h>
-#include <machine/acpiapm.h>
 #include <i386/isa/isa_machdep.h>
 
-#include <machine/cpu.h>
-#include <machine/cpufunc.h>
-#include <machine/cpuvar.h>
-#include <machine/npx.h>
+#include <machine/conf.h>
+#include <machine/acpiapm.h>
 
-#include <dev/acpi/acpireg.h>
+#include <machine/cpuvar.h>
+
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidev.h>
-#include <dev/acpi/dsdt.h>
 #include <dev/isa/isareg.h>
-#include <dev/pci/pcivar.h>
 
 #include <machine/apmvar.h>
 
@@ -58,7 +49,6 @@
 #endif
 
 #if NLAPIC > 0
-#include <machine/apicvar.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 #endif
