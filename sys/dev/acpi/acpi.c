@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.412 2022/02/10 07:39:20 visa Exp $ */
+/* $OpenBSD: acpi.c,v 1.413 2022/02/17 00:21:40 jsg Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -18,23 +18,15 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/fcntl.h>
-#include <sys/ioccom.h>
 #include <sys/event.h>
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/sched.h>
-#include <sys/reboot.h>
-#include <sys/sysctl.h>
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
-#include <sys/sensors.h>
-#include <sys/timetc.h>
 
 #ifdef HIBERNATE
 #include <sys/hibernate.h>
@@ -42,7 +34,6 @@
 
 #include <machine/conf.h>
 #include <machine/cpufunc.h>
-#include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/acpi/acpireg.h>
@@ -50,11 +41,9 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/dsdt.h>
-#include <dev/wscons/wsdisplayvar.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
-
 #include <dev/pci/pciidevar.h>
 
 #include <machine/apmvar.h>
@@ -64,8 +53,6 @@
 #define APMDEV_CTL	8
 
 #include "wd.h"
-#include "wsdisplay.h"
-#include "softraid.h"
 
 #ifdef ACPI_DEBUG
 int	acpi_debug = 16;
