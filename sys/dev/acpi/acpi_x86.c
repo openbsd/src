@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.10 2022/02/16 20:20:36 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.11 2022/02/17 00:11:21 jsg Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -18,52 +18,18 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/buf.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/pool.h>
-#include <sys/fcntl.h>
-#include <sys/ioccom.h>
-#include <sys/event.h>
-#include <sys/signalvar.h>
-#include <sys/proc.h>
-#include <sys/kthread.h>
-#include <sys/sched.h>
-#include <sys/reboot.h>
-#include <sys/sysctl.h>
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
-#include <sys/sensors.h>
-#include <sys/timetc.h>
 
-#ifdef HIBERNATE
-#include <sys/hibernate.h>
-#endif
-
-#include <machine/conf.h>
-#include <machine/cpufunc.h>
-#include <machine/bus.h>
-
-#include <dev/pci/pcivar.h>
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-#include <dev/acpi/amltypes.h>
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/dsdt.h>
-
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/ppbreg.h>
-
-#include <dev/pci/pciidevar.h>
 
 #include <machine/apmvar.h>
 #define APMUNIT(dev)	(minor(dev)&0xf0)
 #define APMDEV(dev)	(minor(dev)&0x0f)
 #define APMDEV_NORMAL	0
 #define APMDEV_CTL	8
-
-#include "wd.h"
-#include "softraid.h"
 
 int
 sleep_showstate(void *v, int sleepmode)
