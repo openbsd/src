@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.11 2022/02/17 00:11:21 jsg Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.12 2022/02/17 00:47:47 jsg Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -26,10 +26,6 @@
 #include <dev/acpi/dsdt.h>
 
 #include <machine/apmvar.h>
-#define APMUNIT(dev)	(minor(dev)&0xf0)
-#define APMDEV(dev)	(minor(dev)&0x0f)
-#define APMDEV_NORMAL	0
-#define APMDEV_CTL	8
 
 int
 sleep_showstate(void *v, int sleepmode)
