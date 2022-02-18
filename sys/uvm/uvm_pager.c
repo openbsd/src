@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.77 2021/12/15 12:53:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.78 2022/02/18 09:04:38 kettenis Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -118,7 +118,8 @@ uvm_pseg_init(struct uvm_pseg *pseg)
 {
 	KASSERT(pseg->start == 0);
 	KASSERT(pseg->use == 0);
-	pseg->start = uvm_km_valloc_try(kernel_map, MAX_PAGER_SEGS * MAXBSIZE);
+	pseg->start = (vaddr_t)km_alloc(MAX_PAGER_SEGS * MAXBSIZE,
+	    &kv_any, &kp_none, &kd_trylock);
 }
 
 /*
@@ -235,8 +236,10 @@ uvm_pseg_release(vaddr_t segaddr)
 
 	mtx_leave(&uvm_pseg_lck);
 
-	if (va)
-		uvm_km_free(kernel_map, va, MAX_PAGER_SEGS * MAXBSIZE);
+	if (va) {
+		km_free((void *)va, MAX_PAGER_SEGS * MAXBSIZE,
+		    &kv_any, &kp_none);
+	}
 }
 
 /*

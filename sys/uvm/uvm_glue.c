@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.80 2021/03/26 13:40:05 mpi Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.81 2022/02/18 09:04:38 kettenis Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -190,7 +190,8 @@ retry:
 		return (0);
 	}
 
-	if ((va = uvm_km_valloc(kernel_map, sz)) == 0) {
+	va = (vaddr_t)km_alloc(sz, &kv_any, &kp_none, &kd_nowait);
+	if (va == 0) {
 		error = ENOMEM;
 		goto out_unwire;
 	}
@@ -218,7 +219,7 @@ retry:
 	pmap_kremove(sva, sz);
 	pmap_update(pmap_kernel());
 out_unmap:
-	uvm_km_free(kernel_map, sva, sz);
+	km_free((void *)sva, sz, &kv_any, &kp_none);
 out_unwire:
 	uvm_fault_unwire_locked(map, start, end);
 	vm_map_unlock_read(map);
