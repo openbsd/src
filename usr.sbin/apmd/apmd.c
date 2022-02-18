@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.107 2022/02/06 09:07:42 robert Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.108 2022/02/18 15:22:22 robert Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -163,7 +163,8 @@ power_status(int fd, int force, struct apm_power_info *pinfo)
 		if (force ||
 		    bstate.ac_state != last.ac_state ||
 		    bstate.battery_state != last.battery_state ||
-		    (bstate.minutes_left && bstate.minutes_left < 15) ||
+		    ((bstate.battery_state != APM_BATT_CHARGING) &&
+		     (bstate.minutes_left && bstate.minutes_left < 15)) ||
 		    abs(bstate.battery_life - last.battery_life) >= 10) {
 			if ((int)bstate.minutes_left > 0)
 				logmsg(priority, "battery status: %s. "
