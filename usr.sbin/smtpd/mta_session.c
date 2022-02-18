@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.145 2022/02/10 14:59:35 millert Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.146 2022/02/18 17:02:06 millert Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1563,7 +1563,7 @@ mta_error(struct mta_session *s, const char *fmt, ...)
 static void
 mta_tls_init(struct mta_session *s)
 {
-	struct tls_config *tls_config;
+	struct dispatcher_remote *remote;
 	struct tls *tls;
 
 	if ((tls = tls_client()) == NULL) {
@@ -1572,8 +1572,14 @@ mta_tls_init(struct mta_session *s)
 		return;
 	}
 
-	tls_config = s->relay->dispatcher->u.remote.tls_config;
-	if (tls_configure(tls, tls_config) == -1) {
+	remote = &s->relay->dispatcher->u.remote;
+	if ((s->flags & MTA_WANT_SECURE) && !remote->tls_required) {
+		/* If TLS not explicitly configured, use implicit config. */
+		remote->tls_required = 1;
+		remote->tls_verify = 1;
+		tls_config_verify(remote->tls_config);
+	}
+	if (tls_configure(tls, remote->tls_config) == -1) {
 		log_info("%016"PRIx64" mta closing reason=tls-failure", s->id);
 		tls_free(tls);
 		mta_free(s);
