@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.32 2019/03/31 02:27:28 krw Exp $	*/
+/*	$OpenBSD: extern.h,v 1.33 2022/02/18 16:16:11 krw Exp $	*/
 
 /*
  * Copyright (c) 2003 Theo de Raadt <deraadt@openbsd.org>
@@ -29,7 +29,6 @@ int	duid_parse(struct disklabel *, char *);
 
 void	readlabel(int);
 int	parselabel(void);
-struct disklabel *makebootarea(char *, struct disklabel *);
 int	editor(int);
 int	editor_allocspace(struct disklabel *);
 void	mpsave(struct disklabel *);
