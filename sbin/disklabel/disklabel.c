@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.238 2022/02/18 17:45:43 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.239 2022/02/18 19:26:40 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -93,7 +93,6 @@ int	checklabel(struct disklabel *);
 void	readlabel(int);
 int	parselabel(void);
 void	makelabel(char *, char *, struct disklabel *);
-int	writelabel(int, struct disklabel *);
 int	edit(struct disklabel *, int);
 int	editit(const char *);
 char	*skip(char *);
