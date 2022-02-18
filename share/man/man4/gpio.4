@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gpio.4,v 1.27 2020/05/16 16:37:49 martin Exp $
+.\"	$OpenBSD: gpio.4,v 1.28 2022/02/18 10:51:43 visa Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2020 $
+.Dd $Mdocdate: February 18 2022 $
 .Dt GPIO 4
 .Os
 .Sh NAME
@@ -27,6 +27,7 @@
 .Cd "gpio* at glxpcib?" Pq i386
 .Cd "gpio* at gscpcib?" Pq i386
 .Cd "gpio* at isagpio?"
+.Cd "gpio* at mpfgpio?" Pq riscv64
 .Cd "gpio* at nsclpcsio?"
 .Cd "gpio* at omgpio?" Pq armv7
 .Cd "gpio* at pcagpio?"

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.riscv64,v 1.19 2022/02/16 13:07:36 visa Exp $
+#	$OpenBSD: files.riscv64,v 1.20 2022/02/18 10:51:43 visa Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -89,6 +89,11 @@ device	mpfclock
 attach	mpfclock at fdt
 file	arch/riscv64/dev/mpfclock.c		mpfclock
 
+# PolarFire SoC MSS GPIO controller
+device	mpfgpio: gpiobus
+attach	mpfgpio at fdt
+file	arch/riscv64/dev/mpfgpio.c		mpfgpio
+
 # PolarFire SoC MSS I2C controller
 device	mpfiic: i2cbus
 attach	mpfiic at fdt
@@ -133,6 +138,9 @@ include "dev/ofw/files.ofw"
 
 # Machine-independent FDT drivers
 include "dev/fdt/files.fdt"
+
+# Machine-independent GPIO drivers
+include "dev/gpio/files.gpio"
 
 # Machine-independent SCSI drivers
 include "scsi/files.scsi"

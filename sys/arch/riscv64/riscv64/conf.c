@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 2021/11/30 02:13:57 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.14 2022/02/18 10:51:43 visa Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -111,6 +111,7 @@ cdev_decl(pci);
 #include "pppx.h"
 #include "fuse.h"
 #include "openprom.h"
+#include "gpio.h"
 #include "ipmi.h"
 
 struct cdevsw	cdevsw[] =
@@ -211,7 +212,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 85 */
 	cdev_notdef(),			/* 86 */
 	cdev_drm_init(NDRM,drm),	/* 87: drm */
-	cdev_notdef(),			/* 88: GPIO interface */
+	cdev_gpio_init(NGPIO,gpio),	/* 88: GPIO interface */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 89: vscsi */
 	cdev_disk_init(1,diskmap),	/* 90: disk mapper */
 	cdev_pppx_init(NPPPX,pppx),	/* 91: pppx */
