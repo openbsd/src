@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.85 2022/02/16 01:45:31 dlg Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.86 2022/02/18 00:46:42 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1160,9 +1160,11 @@ vxlan_up(struct vxlan_softc *sc)
 	return (0);
 
 del:
-	if (ifp0 != NULL)
-		if_detachhook_del(ifp0, &sc->sc_dtask);
-	vxlan_delmulti(sc);
+	if (sc->sc_mode == VXLAN_TMODE_LEARNING) {
+		if (ifp0 != NULL)
+			if_detachhook_del(ifp0, &sc->sc_dtask);
+		vxlan_delmulti(sc);
+	}
 put:
 	if_put(ifp0);
 down:
