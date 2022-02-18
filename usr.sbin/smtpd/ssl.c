@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.97 2022/02/12 18:22:04 eric Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.98 2022/02/18 16:57:36 millert Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -23,6 +23,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <openssl/engine.h>
+#include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <string.h>
 #include <unistd.h>
@@ -242,4 +243,60 @@ ssl_error(const char *where)
 		ERR_error_string_n(code, errbuf, sizeof(errbuf));
 		log_debug("debug: SSL library error: %s: %s", where, errbuf);
 	}
+}
+
+static void
+hash_x509(X509 *cert, char *hash, size_t hashlen)
+{
+	static const char	hex[] = "0123456789abcdef";
+	size_t			off;
+	char			digest[EVP_MAX_MD_SIZE];
+	int		 	dlen, i;
+
+	if (X509_pubkey_digest(cert, EVP_sha256(), digest, &dlen) != 1)
+		fatalx("%s: X509_pubkey_digest failed", __func__);
+
+	if (hashlen < 2 * dlen + sizeof("SHA256:"))
+		fatalx("%s: hash buffer to small", __func__);
+
+	off = strlcpy(hash, "SHA256:", hashlen);
+
+	for (i = 0; i < dlen; i++) {
+		hash[off++] = hex[(digest[i] >> 4) & 0x0f];
+		hash[off++] = hex[digest[i] & 0x0f];
+	}
+	hash[off] = 0;
+}
+
+char *
+ssl_pubkey_hash(const char *buf, off_t len)
+{
+#define TLS_CERT_HASH_SIZE	128
+	BIO		*in;
+	X509		*x509 = NULL;
+	char		*hash = NULL;
+
+	if ((in = BIO_new_mem_buf(buf, len)) == NULL) {
+		log_warnx("%s: BIO_new_mem_buf failed", __func__);
+		return NULL;
+	}
+
+	if ((x509 = PEM_read_bio_X509(in, NULL, NULL, NULL)) == NULL) {
+		log_warnx("%s: PEM_read_bio_X509 failed", __func__);
+		goto fail;
+	}
+
+	if ((hash = malloc(TLS_CERT_HASH_SIZE)) == NULL) {
+		log_warn("%s: malloc", __func__);
+		goto fail;
+	}
+	hash_x509(x509, hash, TLS_CERT_HASH_SIZE);
+
+fail:
+	BIO_free(in);
+
+	if (x509)
+		X509_free(x509);
+
+	return hash;
 }

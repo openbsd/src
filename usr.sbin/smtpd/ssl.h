@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.25 2022/02/12 18:22:04 eric Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.26 2022/02/18 16:57:36 millert Exp $	*/
 /*
  * Copyright (c) 2013 Gilles Chehade <gilles@poolp.org>
  *
@@ -44,3 +44,4 @@ void ssl_error(const char *);
 int ssl_load_certificate(struct pki *, const char *);
 int ssl_load_keyfile(struct pki *, const char *, const char *);
 int ssl_load_cafile(struct ca *, const char *);
+char *ssl_pubkey_hash(const char *, off_t);

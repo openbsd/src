@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.c,v 1.342 2022/02/12 18:22:04 eric Exp $	*/
+/*	$OpenBSD: smtpd.c,v 1.343 2022/02/18 16:57:36 millert Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -2100,7 +2100,9 @@ imsg_to_str(int type)
 	CASE(IMSG_FILTER_SMTP_DATA_BEGIN);
 	CASE(IMSG_FILTER_SMTP_DATA_END);
 
-	CASE(IMSG_CA_SIGN);
+	CASE(IMSG_CA_RSA_PRIVENC);
+	CASE(IMSG_CA_RSA_PRIVDEC);
+	CASE(IMSG_CA_ECDSA_SIGN);
 	default:
 		(void)snprintf(buf, sizeof(buf), "IMSG_??? (%d)", type);
 
