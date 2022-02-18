@@ -1,4 +1,4 @@
-.\" $OpenBSD: clang-local.1,v 1.22 2021/09/07 17:39:49 semarie Exp $
+.\" $OpenBSD: clang-local.1,v 1.23 2022/02/18 00:39:18 jca Exp $
 .\"
 .\" Copyright (c) 2016 Pascal Stumpf <pascal@stumpf.co>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: September 7 2021 $
+.Dd $Mdocdate: February 18 2022 $
 .Dt CLANG-LOCAL 1
 .Os
 .Sh NAME
@@ -92,6 +92,12 @@ The
 option to treat signed integer overflows as defined is enabled by default to
 prevent dangerous optimizations which could remove security critical overflow
 checks.
+.It
+The base system includes the ubsan_minimal sanitizer runtime
+but not the fully-featured ubsan runtime.
+See the documentation for the
+.Fl fsanitize-minimal-runtime
+flag.
 .It
 The
 .Xr malloc 3 ,
