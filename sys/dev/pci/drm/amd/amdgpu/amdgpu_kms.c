@@ -1708,9 +1708,9 @@ amdgpu_probe(struct device *parent, void *match, void *aux)
 		if (flags & AMD_EXP_HW_SUPPORT)
 			return 0;
 		else
-			return 20;		
+			return 20;
 	}
-	
+
 	return 0;
 }
 
@@ -2282,13 +2282,13 @@ amdgpu_detach(struct device *self, int flags)
 
 		drm_sched_fence_slab_fini();
 	}
-	
+
 	config_detach(adev->ddev.dev, flags);
 
 	return 0;
 }
 
-int     
+int
 amdgpu_activate(struct device *self, int act)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)self;
