@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.87 2022/02/18 01:27:39 dlg Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.88 2022/02/18 03:22:27 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -860,9 +860,19 @@ vxlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = vxlan_del_addr(sc, (struct ifbareq *)data);
 		break;
 
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		/* no hardware to program */
+		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
 		break;
+	}
+
+	if (error == ENETRESET) {
+		/* no hardware to program */
+		error = 0;
 	}
 
 	return (error);
