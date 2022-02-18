@@ -1821,6 +1821,7 @@
 ./usr/share/man/man4/ricohrtc.4
 ./usr/share/man/man4/riscv64/intro.4
 ./usr/share/man/man4/riscv64/mpfclock.4
+./usr/share/man/man4/riscv64/mpfgpio.4
 ./usr/share/man/man4/riscv64/mpfiic.4
 ./usr/share/man/man4/riscv64/plic.4
 ./usr/share/man/man4/riscv64/sfcc.4
@@ -2552,6 +2553,7 @@
 ./usr/share/man/man8/ripd.8
 ./usr/share/man/man8/riscv64/MAKEDEV.8
 ./usr/share/man/man8/riscv64/eeprom.8
+./usr/share/man/man8/riscv64/gpioctl.8
 ./usr/share/man/man8/rmgroup.8
 ./usr/share/man/man8/rmt.8
 ./usr/share/man/man8/route.8
