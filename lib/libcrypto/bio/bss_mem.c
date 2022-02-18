@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_mem.c,v 1.18 2022/01/07 09:02:17 tb Exp $ */
+/* $OpenBSD: bss_mem.c,v 1.19 2022/02/18 17:30:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,6 +57,7 @@
  */
 
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -66,13 +67,13 @@
 
 #include "bio_local.h"
 
-static int mem_write(BIO *h, const char *buf, int num);
-static int mem_read(BIO *h, char *buf, int size);
-static int mem_puts(BIO *h, const char *str);
-static int mem_gets(BIO *h, char *str, int size);
-static long mem_ctrl(BIO *h, int cmd, long arg1, void *arg2);
-static int mem_new(BIO *h);
-static int mem_free(BIO *data);
+static int mem_new(BIO *bio);
+static int mem_free(BIO *bio);
+static int mem_write(BIO *bio, const char *in, int in_len);
+static int mem_read(BIO *bio, char *out, int out_len);
+static int mem_puts(BIO *bio, const char *in);
+static int mem_gets(BIO *bio, char *out, int out_len);
+static long mem_ctrl(BIO *bio, int cmd, long arg1, void *arg2);
 
 static const BIO_METHOD mem_method = {
 	.type = BIO_TYPE_MEM,
@@ -86,137 +87,157 @@ static const BIO_METHOD mem_method = {
 	.destroy = mem_free
 };
 
-/* bio->num is used to hold the value to return on 'empty', if it is
- * 0, should_retry is not set */
+/*
+ * bio->num is used to hold the value to return on 'empty', if it is
+ * 0, should_retry is not set.
+ */
 
 const BIO_METHOD *
 BIO_s_mem(void)
 {
-	return (&mem_method);
+	return &mem_method;
 }
 
 BIO *
-BIO_new_mem_buf(const void *buf, int len)
+BIO_new_mem_buf(const void *buf, int buf_len)
 {
-	BIO *ret;
+	BIO *bio;
 	BUF_MEM *b;
-	size_t sz;
 
-	if (!buf) {
+	if (buf == NULL) {
 		BIOerror(BIO_R_NULL_PARAMETER);
 		return NULL;
 	}
-	sz = (len < 0) ? strlen(buf) : (size_t)len;
-	if (!(ret = BIO_new(BIO_s_mem())))
+	if (buf_len == -1)
+		buf_len = strlen(buf);
+	if (buf_len < 0) {
+		BIOerror(BIO_R_INVALID_ARGUMENT);
 		return NULL;
-	b = (BUF_MEM *)ret->ptr;
+	}
+
+	if ((bio = BIO_new(BIO_s_mem())) == NULL)
+		return NULL;
+
+	b = bio->ptr;
 	b->data = (void *)buf;	/* Trust in the BIO_FLAGS_MEM_RDONLY flag. */
-	b->length = sz;
-	b->max = sz;
-	ret->flags |= BIO_FLAGS_MEM_RDONLY;
-	/* Since this is static data retrying wont help */
-	ret->num = 0;
-	return ret;
+	b->length = buf_len;
+	b->max = buf_len;
+	bio->flags |= BIO_FLAGS_MEM_RDONLY;
+	/* Since this is static data retrying will not help. */
+	bio->num = 0;
+
+	return bio;
 }
 
 static int
-mem_new(BIO *bi)
+mem_new(BIO *bio)
 {
 	BUF_MEM *b;
 
 	if ((b = BUF_MEM_new()) == NULL)
-		return (0);
-	bi->shutdown = 1;
-	bi->init = 1;
-	bi->num = -1;
-	bi->ptr = (char *)b;
-	return (1);
+		return 0;
+
+	bio->shutdown = 1;
+	bio->init = 1;
+	bio->num = -1;
+	bio->ptr = b;
+
+	return 1;
 }
 
 static int
-mem_free(BIO *a)
+mem_free(BIO *bio)
 {
-	if (a == NULL)
-		return (0);
-	if (a->shutdown) {
-		if ((a->init) && (a->ptr != NULL)) {
-			BUF_MEM *b;
-			b = (BUF_MEM *)a->ptr;
-			if (a->flags & BIO_FLAGS_MEM_RDONLY)
-				b->data = NULL;
-			BUF_MEM_free(b);
-			a->ptr = NULL;
-		}
-	}
-	return (1);
+	BUF_MEM *b;
+
+	if (bio == NULL)
+		return 0;
+	if (!bio->shutdown || !bio->init || bio->ptr == NULL)
+		return 1;
+
+	b = bio->ptr;
+	if (bio->flags & BIO_FLAGS_MEM_RDONLY)
+		b->data = NULL;
+	BUF_MEM_free(b);
+	bio->ptr = NULL;
+
+	return 1;
 }
 
 static int
-mem_read(BIO *b, char *out, int outl)
+mem_read(BIO *bio, char *out, int out_len)
 {
-	int ret = -1;
-	BUF_MEM *bm;
+	BUF_MEM *bm = bio->ptr;
 
-	bm = (BUF_MEM *)b->ptr;
-	BIO_clear_retry_flags(b);
-	ret = (outl >=0 && (size_t)outl > bm->length) ? (int)bm->length : outl;
-	if ((out != NULL) && (ret > 0)) {
-		memcpy(out, bm->data, ret);
-		bm->length -= ret;
-		if (b->flags & BIO_FLAGS_MEM_RDONLY)
-			bm->data += ret;
-		else {
-			memmove(&(bm->data[0]), &(bm->data[ret]), bm->length);
-		}
-	} else if (bm->length == 0) {
-		ret = b->num;
-		if (ret != 0)
-			BIO_set_retry_read(b);
+	BIO_clear_retry_flags(bio);
+
+	if (out == NULL || out_len <= 0)
+		return 0;
+
+	if ((size_t)out_len > bm->length)
+		out_len = bm->length;
+
+	if (out_len == 0) {
+		if (bio->num != 0)
+			BIO_set_retry_read(bio);
+		return bio->num;
 	}
-	return (ret);
+
+	memcpy(out, bm->data, out_len);
+	bm->length -= out_len;
+	if (bio->flags & BIO_FLAGS_MEM_RDONLY) {
+		bm->data += out_len;
+	} else {
+		memmove(&(bm->data[0]), &(bm->data[out_len]),
+		    bm->length);
+	}
+	return out_len;
 }
 
 static int
-mem_write(BIO *b, const char *in, int inl)
+mem_write(BIO *bio, const char *in, int in_len)
 {
-	int ret = -1;
-	int blen;
-	BUF_MEM *bm;
+	BUF_MEM *bm = bio->ptr;
+	size_t buf_len;
 
-	bm = (BUF_MEM *)b->ptr;
-	if (in == NULL) {
-		BIOerror(BIO_R_NULL_PARAMETER);
-		goto end;
-	}
+	BIO_clear_retry_flags(bio);
 
-	if (b->flags & BIO_FLAGS_MEM_RDONLY) {
+	if (in == NULL || in_len <= 0)
+		return 0;
+
+	if (bio->flags & BIO_FLAGS_MEM_RDONLY) {
 		BIOerror(BIO_R_WRITE_TO_READ_ONLY_BIO);
-		goto end;
+		return -1;
 	}
 
-	BIO_clear_retry_flags(b);
-	blen = bm->length;
-	if (BUF_MEM_grow_clean(bm, blen + inl) != (blen + inl))
-		goto end;
-	memcpy(&(bm->data[blen]), in, inl);
-	ret = inl;
-end:
-	return (ret);
+	/*
+	 * Check for overflow and ensure we do not exceed an int, otherwise we
+	 * cannot tell if BUF_MEM_grow_clean() succeeded.
+	 */
+	buf_len = bm->length + in_len;
+	if (buf_len < bm->length || buf_len > INT_MAX)
+		return -1;
+
+	if (BUF_MEM_grow_clean(bm, buf_len) != buf_len)
+		return -1;
+
+	memcpy(&bm->data[buf_len - in_len], in, in_len);
+
+	return in_len;
 }
 
 static long
-mem_ctrl(BIO *b, int cmd, long num, void *ptr)
+mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
 {
+	BUF_MEM *bm = bio->ptr;
 	long ret = 1;
 	char **pptr;
-
-	BUF_MEM *bm = (BUF_MEM *)b->ptr;
 
 	switch (cmd) {
 	case BIO_CTRL_RESET:
 		if (bm->data != NULL) {
 			/* For read only case reset to the start again */
-			if (b->flags & BIO_FLAGS_MEM_RDONLY) {
+			if (bio->flags & BIO_FLAGS_MEM_RDONLY) {
 				bm->data -= bm->max - bm->length;
 				bm->length = bm->max;
 			} else {
@@ -229,19 +250,19 @@ mem_ctrl(BIO *b, int cmd, long num, void *ptr)
 		ret = (long)(bm->length == 0);
 		break;
 	case BIO_C_SET_BUF_MEM_EOF_RETURN:
-		b->num = (int)num;
+		bio->num = (int)num;
 		break;
 	case BIO_CTRL_INFO:
-		ret = (long)bm->length;
 		if (ptr != NULL) {
 			pptr = (char **)ptr;
-			*pptr = (char *)&(bm->data[0]);
+			*pptr = (char *)bm->data;
 		}
+		ret = (long)bm->length;
 		break;
 	case BIO_C_SET_BUF_MEM:
-		mem_free(b);
-		b->shutdown = (int)num;
-		b->ptr = ptr;
+		mem_free(bio);
+		bio->shutdown = (int)num;
+		bio->ptr = ptr;
 		break;
 	case BIO_C_GET_BUF_MEM_PTR:
 		if (ptr != NULL) {
@@ -250,12 +271,11 @@ mem_ctrl(BIO *b, int cmd, long num, void *ptr)
 		}
 		break;
 	case BIO_CTRL_GET_CLOSE:
-		ret = (long)b->shutdown;
+		ret = (long)bio->shutdown;
 		break;
 	case BIO_CTRL_SET_CLOSE:
-		b->shutdown = (int)num;
+		bio->shutdown = (int)num;
 		break;
-
 	case BIO_CTRL_WPENDING:
 		ret = 0L;
 		break;
@@ -272,27 +292,29 @@ mem_ctrl(BIO *b, int cmd, long num, void *ptr)
 		ret = 0;
 		break;
 	}
-	return (ret);
+	return ret;
 }
 
 static int
-mem_gets(BIO *bp, char *buf, int size)
+mem_gets(BIO *bio, char *out, int out_len)
 {
-	int i, j;
-	int ret = -1;
+	BUF_MEM *bm = bio->ptr;
+	int i, out_max;
 	char *p;
-	BUF_MEM *bm = (BUF_MEM *)bp->ptr;
+	int ret = -1;
 
-	BIO_clear_retry_flags(bp);
-	j = bm->length;
-	if ((size - 1) < j)
-		j = size - 1;
-	if (j <= 0) {
-		*buf = '\0';
+	BIO_clear_retry_flags(bio);
+
+	out_max = bm->length;
+	if (out_len - 1 < out_max)
+		out_max = out_len - 1;
+	if (out_max <= 0) {
+		*out = '\0';
 		return 0;
 	}
+
 	p = bm->data;
-	for (i = 0; i < j; i++) {
+	for (i = 0; i < out_max; i++) {
 		if (p[i] == '\n') {
 			i++;
 			break;
@@ -300,24 +322,17 @@ mem_gets(BIO *bp, char *buf, int size)
 	}
 
 	/*
-	 * i is now the max num of bytes to copy, either j or up to
-	 * and including the first newline
+	 * i is now the max num of bytes to copy, either out_max or up to and
+	 * including the first newline
 	 */ 
+	if ((ret = mem_read(bio, out, i)) > 0)
+		out[ret] = '\0';
 
-	i = mem_read(bp, buf, i);
-	if (i > 0)
-		buf[i] = '\0';
-	ret = i;
-	return (ret);
+	return ret;
 }
 
 static int
-mem_puts(BIO *bp, const char *str)
+mem_puts(BIO *bio, const char *in)
 {
-	int n, ret;
-
-	n = strlen(str);
-	ret = mem_write(bp, str, n);
-	/* memory semantics is that it will always work */
-	return (ret);
+	return mem_write(bio, in, strlen(in));
 }
