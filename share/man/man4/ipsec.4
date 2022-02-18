@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.86 2022/02/17 12:24:08 jsg Exp $
+.\" $OpenBSD: ipsec.4,v 1.87 2022/02/18 23:17:15 jsg Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: February 17 2022 $
+.Dd $Mdocdate: February 18 2022 $
 .Dt IPSEC 4
 .Os
 .Sh NAME
@@ -118,9 +118,9 @@ data, some of the IP header data, and a certain secret value
 (the authentication key).
 This value is then sent with the rest of each packet.
 The receiver performs the same computation, and if the value matches,
-he knows no one tampered with the data (integrity), the address information
+it knows no one tampered with the data (integrity), the address information
 (authenticity) or a sequence number (replay protection).
-He knows this because the secret authentication key makes sure no
+It knows this because the secret authentication key makes sure no
 active attacker (man-in-the-middle) can recompute the correct value after
 altering the packet.
 The algorithms used to compute these values are called hash algorithms and are

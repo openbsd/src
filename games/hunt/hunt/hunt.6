@@ -1,5 +1,5 @@
 .\"	$NetBSD: hunt.6,v 1.3 1997/10/10 16:32:30 lukem Exp $
-.\"	$OpenBSD: hunt.6,v 1.22 2014/09/28 07:53:02 schwarze Exp $
+.\"	$OpenBSD: hunt.6,v 1.23 2022/02/18 23:17:14 jsg Exp $
 .\"
 .\" Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
 .\" San Francisco, California
@@ -31,7 +31,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 28 2014 $
+.Dd $Mdocdate: February 18 2022 $
 .Dt HUNT 6
 .Os
 .Sh NAME
@@ -350,16 +350,15 @@ Slime goes around walls, not through them.
 .It
 Walls regenerate, reappearing in the order they were destroyed.
 One percent of the regenerated walls will be diagonal walls or doors.
-When a wall is generated directly beneath a player, he is thrown in
+When a wall is generated directly beneath a player, they are thrown in
 a random direction for a random period of time.
-When he lands, he
-sustains damage
+When the player lands, they sustain damage
 .Po
 up to 20 percent of the amount of damage already sustained
 .Pc ;
 i.e.,
-the less damage he had, the more nimble he is and
-therefore less likely to hurt himself on landing.
+the less damage the player had, the more nimble they are and
+therefore less likely to hurt themselves on landing.
 .\"It
 .\"There is a volcano close to the center of the maze which goes off
 .\"close to every 30 deaths.
@@ -465,7 +464,7 @@ how many times player died
 .It Still
 how many times player died without typing in any commands
 .It Saved
-how many times a shot/bomb would have killed player if he hadn't
+how many times a shot/bomb would have killed player if they hadn't
 ducked or absorbed it
 .It Connect
 current connection state(s) of player:

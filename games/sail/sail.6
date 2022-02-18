@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sail.6,v 1.23 2016/09/09 15:32:28 tb Exp $
+.\"	$OpenBSD: sail.6,v 1.24 2022/02/18 23:17:14 jsg Exp $
 .\"	$NetBSD: sail.6,v 1.4 1995/04/22 10:37:24 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sail.6	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: September 9 2016 $
+.Dd $Mdocdate: February 18 2022 $
 .Dt SAIL 6
 .Os
 .Sh NAME
@@ -60,13 +60,13 @@ players or the computer.
 They may re-enact one of the many historical sea battles recorded
 in the game, or they can choose a fictional battle.
 .Pp
-As a sea captain in the
+As sea captains in the
 .Nm
-Navy, the player has complete control over the workings of his ship.
-He must order every maneuver, change the set of his sails, and judge the
-right moment to let loose the terrible destruction of his broadsides.
-In addition to fighting the enemy, he must harness the powers of the wind
-and sea to make them work for him.
+Navy, players have complete control over the workings of their ship.
+They must order every maneuver, change the set of their sails, and judge the
+right moments to let loose the terrible destruction of their broadsides.
+In addition to fighting their enemies,
+they must harness the powers of the wind and sea.
 The outcome of many battles during the age of sail was decided by the
 ability of one captain to hold the
 .Sq weather gage .
@@ -87,7 +87,7 @@ Play the first available ship instead of prompting for a choice.
 .Sh IMPLEMENTATION
 .Nm
 is really two programs in one.
-Each player starts up a process which runs his own ship.
+All players start a process which runs their ship.
 In addition, a
 .Em driver
 process is forked
@@ -97,10 +97,10 @@ to run the computer ships and take care of global bookkeeping.
 Because the driver must calculate moves for each ship it controls, the
 more ships the computer is playing, the slower the game will appear.
 .Pp
-If a player joins a game in progress, he will synchronize
+Players who join a game in progress will synchronize
 with the other players
 .Pq a rather slow process for everyone ,
-and then he may play along with the rest.
+and then they may play along with the rest.
 .Pp
 To implement a multi-user game in
 .Ux
@@ -145,8 +145,8 @@ that succeeds in linking will have exclusive access to the temporary file.
 .Ss "CONSEQUENCES OF SEPARATE PLAYER AND DRIVER PROCESSES"
 When players do something of global interest, such as moving or firing,
 the driver must coordinate the action with the other ships in the game.
-For example, if a player wants to move in a certain direction, he writes a
-message into the temporary file requesting that the driver move his ship.
+For example, players who want to move in a certain direction, write a
+message into the temporary file requesting that the driver move their ship.
 Each
 .Dq turn ,
 the driver reads all the messages sent from the players and
@@ -155,7 +155,7 @@ It then writes back into the temporary file new values of variables, etc.
 .Pp
 The most noticeable effect this communication has on the game is the
 delay in moving.
-Suppose a player types a move for his ship and hits return.
+Suppose a player types a move and hits return.
 What happens then?
 The player process saves up messages to
 be written to the temporary file in a buffer.
@@ -168,7 +168,7 @@ Finally, when the player process gets around to doing another 7-second update,
 the results of the move are displayed on the screen.
 Hence, every movement requires four
 exclusive accesses to the temporary file (anywhere from 7 to 21 seconds
-depending upon asynchrony) before the player sees the results of his moves.
+depending upon asynchrony) before players see the results of their moves.
 .Pp
 In practice, the delays are not as annoying as they would appear.
 There is room for
@@ -997,7 +997,7 @@ tricky.
 Ed Wang rewrote the
 .Fn angle
 routine in 1981 to be less incorrect, and he added code to let a player
-select which ship he wanted at the start of the game.
+select a ship at the start of the game.
 .\"instead of the first one available).
 .Pp
 Captain Happy (Craig Leres) is responsible for making

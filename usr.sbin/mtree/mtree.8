@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mtree.8,v 1.41 2019/09/02 21:18:41 deraadt Exp $
+.\"	$OpenBSD: mtree.8,v 1.42 2022/02/18 23:17:16 jsg Exp $
 .\"	$NetBSD: mtree.8,v 1.4 1995/03/07 21:26:25 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)mtree.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: September 2 2019 $
+.Dd $Mdocdate: February 18 2022 $
 .Dt MTREE 8
 .Os
 .Sh NAME
@@ -318,7 +318,7 @@ Then, periodically,
 and
 .Xr sha256 1
 should be run against the on-line specifications.
-While it is possible for the bad guys to change the on-line specifications
+While it is possible for attackers to change the on-line specifications
 to conform to their modified binaries, it is believed to be
 impractical for them to create a modified specification which has
 the same SHA-256 digest as the original.

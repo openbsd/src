@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lprm.1,v 1.12 2020/04/23 21:28:10 jmc Exp $
+.\"	$OpenBSD: lprm.1,v 1.13 2022/02/18 23:17:16 jsg Exp $
 .\"	$NetBSD: lprm.1,v 1.10 2002/01/19 03:23:47 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)lprm.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: April 23 2020 $
+.Dd $Mdocdate: February 18 2022 $
 .Dt LPRM 1
 .Os
 .Sh NAME
@@ -133,7 +133,7 @@ daemon and the job number of the currently active job.
 .Sh DIAGNOSTICS
 .Bl -tag -width Ds
 .It Sy Permission denied
-Printed if the user tries to remove files other than his own.
+File to remove was owned by another user.
 .El
 .Sh SEE ALSO
 .Xr lpq 1 ,

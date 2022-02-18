@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mount_tmpfs.8,v 1.4 2014/11/16 02:22:10 brad Exp $
+.\"	$OpenBSD: mount_tmpfs.8,v 1.5 2022/02/18 23:17:15 jsg Exp $
 .\"	$NetBSD: mount_tmpfs.8,v 1.14 2008/04/30 13:10:53 martin Exp $
 .\"
 .\" Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 16 2014 $
+.Dd $Mdocdate: February 18 2022 $
 .Dt MOUNT_TMPFS 8
 .Os
 .Sh NAME
@@ -141,7 +141,7 @@ File system meta-data is not pageable.
 If there is not enough main memory to hold this information, the system may
 become unstable or very unresponsive because it will not be able to allocate
 required memory.
-A malicious user could trigger this condition if he could create lots of
+A malicious user could trigger this condition by creating lots of
 files inside a size-unbounded tmpfs file system.
 Limiting the number of nodes per file system
 .Pq Fl n

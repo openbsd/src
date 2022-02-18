@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cribbage.6,v 1.15 2015/03/12 02:19:10 bentley Exp $
+.\"	$OpenBSD: cribbage.6,v 1.16 2022/02/18 23:17:13 jsg Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)cribbage.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd $Mdocdate: March 12 2015 $
+.Dd $Mdocdate: February 18 2022 $
 .Dt CRIBBAGE 6
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ are needed \(en if so, it will print out the appropriate section from
 options include:
 .Bl -tag -width indent
 .It Fl e
-When the player makes a mistake scoring his hand or crib, provide an
+When players make a mistake scoring their hand or crib, provide an
 explanation of the correct score.
 .Po
 This is especially useful for beginning players.
@@ -64,12 +64,12 @@ the opponent may claim the overlooked points.
 Print a shorter form of all messages \(en this is only recommended for
 users who have played the game without specifying this option.
 .It Fl r
-Instead of asking the player to cut the deck, the program will randomly
+Instead of asking players to cut the deck, the program will randomly
 cut the deck.
 .El
 .Pp
 .Nm
-first asks the player whether he wishes to play a short game
+first asks whether to play a short game
 .Po
 .Dq once around ,
 to 61
@@ -116,8 +116,8 @@ The program keeps track of the scoring of all points and the total of
 the cards on the table.
 .Pp
 After play, the hands are scored.
-The program requests the player to score his hand
-.Pq and the crib, if it is his
+The program requests players to score their hand
+.Pq and the crib, if it is theirs
 by printing out the appropriate cards.
 Play continues until one player reaches the game limit
 .Pq 61 or 121 .

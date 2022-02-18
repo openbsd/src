@@ -1,7 +1,7 @@
-.\"	$OpenBSD: phantasia.6tbl,v 1.10 2016/09/09 15:32:28 tb Exp $
+.\"	$OpenBSD: phantasia.6tbl,v 1.11 2022/02/18 23:17:14 jsg Exp $
 .\"	$NetBSD: phantasia.6,v 1.9 2002/09/26 18:32:03 wiz Exp $
 .\"
-.Dd $Mdocdate: September 9 2016 $
+.Dd $Mdocdate: February 18 2022 $
 .Dt PHANTASIA 6
 .Os
 .Sh NAME
@@ -196,7 +196,7 @@ Paralyzed monsters wake up very fast when nicked.
 This is essentially a battle of wits with the monster.
 Success is based upon the player's and the monster's
 .Em brains .
-The player gets credit for slaying the monster if he/she succeeds.
+If successful, the player gets credit for slaying the monster.
 Otherwise, nothing happens, and the chance to
 .Ic luckout
 is lost.
@@ -339,8 +339,7 @@ can overcome the player, and how much
 .Em poison
 the player can withstand.
 .Ss Spells
-During the course of the game, the player may exercise his/her
-magic powers.
+During the course of the game, the player may use magic powers.
 These cases are described below.
 .Bl -tag -width "all or nothing" -offset indent
 .It Ic cloak
@@ -353,7 +352,7 @@ These cases are described below.
 Used during normal play.
 Prevents monsters from finding the character,
 as well as hiding the player from other players.
-His/her coordinates show up as '?' in the
+The player's coordinates show up as '?' in the
 .Ic players
 option.
 Players cannot collect
@@ -861,7 +860,8 @@ and
 They come in four different flavors.
 All
 .Em rings
-rest the player to maximum and cause him/her to hit much harder
+rest the player to maximum,
+and cause them to hit much harder
 in battle with monsters (assuming the
 .Em ring
 is being used for battle.)
@@ -876,8 +876,8 @@ After a few times of using these types, the player falls
 under the control of the
 .Em ring ,
 and strange, random things will occur.
-Eventually, the player dies, and gives his/her name to a monster
-on the file.
+Eventually, the player dies,
+and the player's name is given to a monster on the file.
 Dying before the
 .Em ring
 is used up also renames the monster.
@@ -888,7 +888,7 @@ are much more benign.
 The one from a
 .Em nazgul
 is good for a limited number of battle rounds, and will save
-the player from death if it was being used when he/she died.
+the player from death if it was being used.
 The one from
 .Em Dark Lord
 is the same, except that it never is used up.
@@ -920,7 +920,7 @@ reaches
 are converted to
 .Em gold .
 .Pp
-Once a player is king, he/she may do certain things while in
+Once a player is king, they may do certain things while in
 the Lord's Chamber (0,0).
 These are exercised with the
 .Ic decree
@@ -947,17 +947,16 @@ A
 protects from king's curses.
 .It Ic energy void
 The king may put a number of these scattered about
-his/her kingdom as he/she pleases.
-If a player hits one, he/she loses
+the kingdom.
+If a player hits one, they lose
 .Em mana , energy ,
 and
 .Em gold .
 The energy void disappears after being hit.
 .It Ic bestow
 This is also done to another player.
-The king may wish to reward one or more loyal subjects by sharing his/her
-riches
-.Em ( gold ) .
+The king may wish to reward one or more loyal subjects by sharing
+.Em gold .
 Or it is a convenient way to dispose of some unwanted deadweight.
 .It Ic collect taxes
 Everyone pays 7% tax on all
@@ -1013,9 +1012,9 @@ may
 .Ic teleport
 with greater ease.
 .Pp
-Upon finding the grail, the player advances to position of
+Upon finding the grail, players advance to position of
 .Em valar .
-He/she may then exercise more and niftier options under
+They may then exercise more and niftier options under
 .Ic intervention .
 These include all of the council members' options plus the
 ability to move other players about, bless them, and throw monsters at
@@ -1024,7 +1023,7 @@ A
 .Em valar Ns 's
 blessing has the same effect as the treasure
 .Em blessing ,
-except that the affected player does not get his/her
+except that the affected player does not get the
 .Em blessing
 flag set.
 All
@@ -1043,11 +1042,13 @@ or call monsters.
 .Em valar
 finds a
 .Em transporter . )
-This is to allow him/her to dispose of excess
+This is to allow the
+.Em valar
+to dispose of excess
 .Em gold .
 Any monsters which a
 .Em valar
-encounters are based upon his/her size.
+encounters are based upon the valar's size.
 Only one valar may exist at a time.
 The current valar is replaced when another player finds the grail.
 The valar is then bumped back to the council of the wise.
@@ -1097,8 +1098,8 @@ from the other character types.
 .El
 .Ss Special Places
 Certain regions of the playing grid have different names.
-In general, this is only to give the player some idea of
-his/her present location.
+In general, this is only to give players some idea of
+their present location.
 Some special places do exist.
 .Bl -tag -width "Trading Posts"
 .It Em Trading Posts
@@ -1206,8 +1207,8 @@ One-time chance to try to win against the foe.
 Has a 10% chance of working.
 .El
 .Pp
-Sometimes waits for the other player may be excessive, because
-he/she may be battling a monster.
+Sometimes waits for other players may be excessive, because
+they may be battling a monster.
 Upon slaying a player in battle the winner gets the other's
 .Em experience
 and treasures.

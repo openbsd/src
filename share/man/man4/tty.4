@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tty.4,v 1.54 2022/02/06 00:29:02 jsg Exp $
+.\"	$OpenBSD: tty.4,v 1.55 2022/02/18 23:17:15 jsg Exp $
 .\"	$NetBSD: tty.4,v 1.4 1996/03/19 04:26:01 paulus Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)tty.4	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: February 6 2022 $
+.Dd $Mdocdate: February 18 2022 $
 .Dt TTY 4
 .Os
 .Sh NAME
@@ -107,14 +107,13 @@ For more information on dial-out, see
 When an interactive user logs in, the system prepares the line to
 behave in a certain way (called a
 .Em "line discipline" ) ,
-the particular details of which are described in
+described in
 .Xr stty 1
 at the command level, and in
 .Xr termios 4
 at the programming level.
-A user may be concerned with changing settings associated with his particular
-login terminal and should refer to the preceding man pages for the common
-cases.
+To change settings associated with a login terminal,
+refer to the preceding man pages for the common cases.
 The remainder of this man page is concerned with describing details of using
 and controlling terminal devices at a low level, such as that possibly
 required by a program wishing to provide features similar to those provided
