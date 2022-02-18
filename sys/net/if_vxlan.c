@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.86 2022/02/18 00:46:42 dlg Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.87 2022/02/18 01:27:39 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1288,7 +1288,7 @@ vxlan_set_rdomain(struct vxlan_softc *sc, const struct ifreq *ifr)
 	if (sc->sc_rdomain == ifr->ifr_rdomainid)
 		return (0);
 
-	if (!ISSET(ifp->if_flags, IFF_RUNNING))
+	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		return (EBUSY);
 
 	/* commit */
