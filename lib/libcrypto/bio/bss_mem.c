@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_mem.c,v 1.20 2022/02/19 08:11:16 jsing Exp $ */
+/* $OpenBSD: bss_mem.c,v 1.21 2022/02/19 15:59:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,7 +69,23 @@
 
 struct bio_mem {
 	BUF_MEM *buf;
+	size_t read_offset;
 };
+
+static size_t
+bio_mem_pending(struct bio_mem *bm)
+{
+	if (bm->read_offset > bm->buf->length)
+		return 0;
+
+	return bm->buf->length - bm->read_offset;
+}
+
+static uint8_t *
+bio_mem_read_ptr(struct bio_mem *bm)
+{
+	return &bm->buf->data[bm->read_offset];
+}
 
 static int mem_new(BIO *bio);
 static int mem_free(BIO *bio);
@@ -185,8 +201,8 @@ mem_read(BIO *bio, char *out, int out_len)
 	if (out == NULL || out_len <= 0)
 		return 0;
 
-	if ((size_t)out_len > bm->buf->length)
-		out_len = bm->buf->length;
+	if ((size_t)out_len > bio_mem_pending(bm))
+		out_len = bio_mem_pending(bm);
 
 	if (out_len == 0) {
 		if (bio->num != 0)
@@ -194,14 +210,9 @@ mem_read(BIO *bio, char *out, int out_len)
 		return bio->num;
 	}
 
-	memcpy(out, bm->buf->data, out_len);
-	bm->buf->length -= out_len;
-	if (bio->flags & BIO_FLAGS_MEM_RDONLY) {
-		bm->buf->data += out_len;
-	} else {
-		memmove(&(bm->buf->data[0]), &(bm->buf->data[out_len]),
-		    bm->buf->length);
-	}
+	memcpy(out, bio_mem_read_ptr(bm), out_len);
+	bm->read_offset += out_len;
+
 	return out_len;
 }
 
@@ -219,6 +230,13 @@ mem_write(BIO *bio, const char *in, int in_len)
 	if (bio->flags & BIO_FLAGS_MEM_RDONLY) {
 		BIOerror(BIO_R_WRITE_TO_READ_ONLY_BIO);
 		return -1;
+	}
+
+	if (bm->read_offset > 4096) {
+		memmove(bm->buf->data, bio_mem_read_ptr(bm),
+		    bio_mem_pending(bm));
+		bm->buf->length = bio_mem_pending(bm);
+		bm->read_offset = 0;
 	}
 
 	/*
@@ -247,18 +265,15 @@ mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
 	switch (cmd) {
 	case BIO_CTRL_RESET:
 		if (bm->buf->data != NULL) {
-			/* For read only case reset to the start again */
-			if (bio->flags & BIO_FLAGS_MEM_RDONLY) {
-				bm->buf->data -= bm->buf->max - bm->buf->length;
-				bm->buf->length = bm->buf->max;
-			} else {
+			if (!(bio->flags & BIO_FLAGS_MEM_RDONLY)) {
 				memset(bm->buf->data, 0, bm->buf->max);
 				bm->buf->length = 0;
 			}
+			bm->read_offset = 0;
 		}
 		break;
 	case BIO_CTRL_EOF:
-		ret = (long)(bm->buf->length == 0);
+		ret = (long)(bio_mem_pending(bm) == 0);
 		break;
 	case BIO_C_SET_BUF_MEM_EOF_RETURN:
 		bio->num = (int)num;
@@ -266,14 +281,15 @@ mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
 	case BIO_CTRL_INFO:
 		if (ptr != NULL) {
 			pptr = (void **)ptr;
-			*pptr = bm->buf->data;
+			*pptr = bio_mem_read_ptr(bm);
 		}
-		ret = (long)bm->buf->length;
+		ret = (long)bio_mem_pending(bm);
 		break;
 	case BIO_C_SET_BUF_MEM:
 		BUF_MEM_free(bm->buf);
 		bio->shutdown = (int)num;
 		bm->buf = ptr;
+		bm->read_offset = 0;
 		break;
 	case BIO_C_GET_BUF_MEM_PTR:
 		if (ptr != NULL) {
@@ -291,7 +307,7 @@ mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
 		ret = 0L;
 		break;
 	case BIO_CTRL_PENDING:
-		ret = (long)bm->buf->length;
+		ret = (long)bio_mem_pending(bm);
 		break;
 	case BIO_CTRL_DUP:
 	case BIO_CTRL_FLUSH:
@@ -316,7 +332,7 @@ mem_gets(BIO *bio, char *out, int out_len)
 
 	BIO_clear_retry_flags(bio);
 
-	out_max = bm->buf->length;
+	out_max = bio_mem_pending(bm);
 	if (out_len - 1 < out_max)
 		out_max = out_len - 1;
 	if (out_max <= 0) {
@@ -324,7 +340,7 @@ mem_gets(BIO *bio, char *out, int out_len)
 		return 0;
 	}
 
-	p = bm->buf->data;
+	p = bio_mem_read_ptr(bm);
 	for (i = 0; i < out_max; i++) {
 		if (p[i] == '\n') {
 			i++;
