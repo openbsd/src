@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.144 2021/11/10 20:15:26 otto Exp $
+.\"	$OpenBSD: disklabel.8,v 1.145 2022/02/19 22:08:27 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: November 10 2021 $
+.Dd $Mdocdate: February 19 2022 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -356,7 +356,7 @@ Edit drive parameters.
 This option is used to set the following parameters:
 disk type, a descriptive label string, sectors/track,
 tracks/cylinder, sectors/cylinder, number of cylinders,
-total sectors, rpm, and interleave.
+and total sectors.
 .It Xo
 .Cm g
 .Op Ar d | u
