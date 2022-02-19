@@ -1,4 +1,4 @@
-.\" $OpenBSD: tokeninit.8,v 1.13 2013/08/14 06:32:37 jmc Exp $
+.\" $OpenBSD: tokeninit.8,v 1.14 2022/02/19 10:17:39 jsg Exp $
 .\"
 .\" Copyright (c) 1995 Migration Associates Corporation. All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .\"
 .\"	BSDI $From: tokeninit.8,v 1.3 1997/01/16 03:23:11 bostic Exp $
 .\"
-.Dd $Mdocdate: August 14 2013 $
+.Dd $Mdocdate: February 19 2022 $
 .Dt TOKENINIT 8
 .Os
 .Sh NAME
@@ -160,28 +160,6 @@ database of information for SNK-004 system
 Diagnostic messages are logged via
 .Xr syslog 3
 with the LOG_AUTH facility.
-.Sh COMMENTS
-A supplier for ActivCard tokens may be obtained by contacting:
-.Bd -unfilled -offset indent
-ActivCard, Inc.
-303 Twin Dolphin Dr., Ste 420
-Redwood City, CA 94065
-Tel: (415) 654-1700
-Fax: (415) 654-1701
-.Ed
-.Pp
-CRYPTOCard tokens may be obtained by contacting:
-.Bd -unfilled -offset indent
-CRYPTOCard Incorporated
-Attn: Wade Clark
-1649 Barclay Blvd.
-Buffalo Grove, Illinois 60089
-Tel: (800) 307-7042 / (708) 459-6500
-Fax: (708) 459-6599
-<token@cryptocard.com>
-.Ed
-.Pp
-SNK-004 tokens are no longer available for purchase.
 .Sh SEE ALSO
 .Xr x99token 1 ,
 .Xr syslog 3 ,
