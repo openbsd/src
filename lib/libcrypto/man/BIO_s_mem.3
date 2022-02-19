@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_mem.3,v 1.14 2019/06/06 01:06:58 schwarze Exp $
+.\" $OpenBSD: BIO_s_mem.3,v 1.15 2022/02/19 16:00:14 jsing Exp $
 .\" full merge up to: OpenSSL 8711efb4 Mon Apr 20 11:33:12 2009 +0000
 .\" selective merge up to: OpenSSL 36359cec Mar 7 14:37:23 2018 +0100
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: February 19 2022 $
 .Dt BIO_S_MEM 3
 .Os
 .Sh NAME
@@ -199,14 +199,6 @@ until the BIO is freed.
 .Pp
 Writes to memory BIOs will always succeed if memory is available:
 their size can grow indefinitely.
-.Pp
-Every read from a read/write memory BIO will remove the data just read
-with an internal copy operation.
-If a BIO contains a lot of data and it is read in small chunks,
-the operation can be very slow.
-The use of a read only memory BIO avoids this problem.
-If the BIO must be read/write then adding a buffering BIO
-to the chain will speed up the process.
 .Sh RETURN VALUES
 .Fn BIO_s_mem
 returns a pointer to a static object.
@@ -275,6 +267,3 @@ There should be an option to set the maximum size of a memory BIO.
 .Pp
 There should be a way to "rewind" a read/write BIO without destroying
 its contents.
-.Pp
-The copying operation should not occur after every small read
-of a large BIO to improve efficiency.
