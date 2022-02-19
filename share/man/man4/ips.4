@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ips.4,v 1.17 2022/02/18 10:24:32 jsg Exp $
+.\"	$OpenBSD: ips.4,v 1.18 2022/02/19 23:45:51 jsg Exp $
 .\"
 .\" Copyright (c) 2006, 2009 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 18 2022 $
+.Dd $Mdocdate: February 19 2022 $
 .Dt IPS 4
 .Os
 .Sh NAME
@@ -46,13 +46,11 @@ All RAID configuration is done through the bootable
 IBM ServeRAID Support CD;
 a CD image is freely available at the IBM website.
 .Pp
-The management interface is provided through the
+RAID management is done through the
 .Xr bio 4
-device or one of the daughter
-.Xr sd 4
-devices as implemented in the
+device with the
 .Xr bioctl 8
-utility.
+command.
 Logical disk status is exposed under the
 .Va hw.sensors
 .Xr sysctl 8

@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ami.4,v 1.44 2013/11/04 14:07:15 deraadt Exp $
+.\"	$OpenBSD: ami.4,v 1.45 2022/02/19 23:45:51 jsg Exp $
 .\"
 .\" Michael Shalayeff, 2001. Public Domain.
 .\"
-.Dd $Mdocdate: November 4 2013 $
+.Dd $Mdocdate: February 19 2022 $
 .Dt AMI 4
 .Os
 .Sh NAME
@@ -94,13 +94,11 @@ Although the controllers are actual RAID controllers,
 the driver makes them look just like SCSI controllers.
 All RAID configuration is done through the controllers' BIOSes.
 .Pp
-The management interface is provided through the
+RAID management is done through the
 .Xr bio 4
-device or one of the daughter
-.Xr sd 4
-devices as implemented in the
+device with the
 .Xr bioctl 8
-utility.
+command.
 Logical disk status is exposed under the
 .Va hw.sensors
 .Xr sysctl 8
