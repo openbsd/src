@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_mem.c,v 1.19 2022/02/18 17:30:13 jsing Exp $ */
+/* $OpenBSD: bss_mem.c,v 1.20 2022/02/19 08:11:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,6 +67,10 @@
 
 #include "bio_local.h"
 
+struct bio_mem {
+	BUF_MEM *buf;
+};
+
 static int mem_new(BIO *bio);
 static int mem_free(BIO *bio);
 static int mem_write(BIO *bio, const char *in, int in_len);
@@ -101,8 +105,8 @@ BIO_s_mem(void)
 BIO *
 BIO_new_mem_buf(const void *buf, int buf_len)
 {
+	struct bio_mem *bm;
 	BIO *bio;
-	BUF_MEM *b;
 
 	if (buf == NULL) {
 		BIOerror(BIO_R_NULL_PARAMETER);
@@ -118,10 +122,10 @@ BIO_new_mem_buf(const void *buf, int buf_len)
 	if ((bio = BIO_new(BIO_s_mem())) == NULL)
 		return NULL;
 
-	b = bio->ptr;
-	b->data = (void *)buf;	/* Trust in the BIO_FLAGS_MEM_RDONLY flag. */
-	b->length = buf_len;
-	b->max = buf_len;
+	bm = bio->ptr;
+	bm->buf->data = (void *)buf; /* Trust in the BIO_FLAGS_MEM_RDONLY flag. */
+	bm->buf->length = buf_len;
+	bm->buf->max = buf_len;
 	bio->flags |= BIO_FLAGS_MEM_RDONLY;
 	/* Since this is static data retrying will not help. */
 	bio->num = 0;
@@ -132,15 +136,19 @@ BIO_new_mem_buf(const void *buf, int buf_len)
 static int
 mem_new(BIO *bio)
 {
-	BUF_MEM *b;
+	struct bio_mem *bm;
 
-	if ((b = BUF_MEM_new()) == NULL)
+	if ((bm = calloc(1, sizeof(*bm))) == NULL)
 		return 0;
+	if ((bm->buf = BUF_MEM_new()) == NULL) {
+		free(bm);
+		return 0;
+	}
 
 	bio->shutdown = 1;
 	bio->init = 1;
 	bio->num = -1;
-	bio->ptr = b;
+	bio->ptr = bm;
 
 	return 1;
 }
@@ -148,17 +156,20 @@ mem_new(BIO *bio)
 static int
 mem_free(BIO *bio)
 {
-	BUF_MEM *b;
+	struct bio_mem *bm;
 
 	if (bio == NULL)
 		return 0;
-	if (!bio->shutdown || !bio->init || bio->ptr == NULL)
+	if (!bio->init || bio->ptr == NULL)
 		return 1;
 
-	b = bio->ptr;
-	if (bio->flags & BIO_FLAGS_MEM_RDONLY)
-		b->data = NULL;
-	BUF_MEM_free(b);
+	bm = bio->ptr;
+	if (bio->shutdown) {
+		if (bio->flags & BIO_FLAGS_MEM_RDONLY)
+			bm->buf->data = NULL;
+		BUF_MEM_free(bm->buf);
+	}
+	free(bm);
 	bio->ptr = NULL;
 
 	return 1;
@@ -167,15 +178,15 @@ mem_free(BIO *bio)
 static int
 mem_read(BIO *bio, char *out, int out_len)
 {
-	BUF_MEM *bm = bio->ptr;
+	struct bio_mem *bm = bio->ptr;
 
 	BIO_clear_retry_flags(bio);
 
 	if (out == NULL || out_len <= 0)
 		return 0;
 
-	if ((size_t)out_len > bm->length)
-		out_len = bm->length;
+	if ((size_t)out_len > bm->buf->length)
+		out_len = bm->buf->length;
 
 	if (out_len == 0) {
 		if (bio->num != 0)
@@ -183,13 +194,13 @@ mem_read(BIO *bio, char *out, int out_len)
 		return bio->num;
 	}
 
-	memcpy(out, bm->data, out_len);
-	bm->length -= out_len;
+	memcpy(out, bm->buf->data, out_len);
+	bm->buf->length -= out_len;
 	if (bio->flags & BIO_FLAGS_MEM_RDONLY) {
-		bm->data += out_len;
+		bm->buf->data += out_len;
 	} else {
-		memmove(&(bm->data[0]), &(bm->data[out_len]),
-		    bm->length);
+		memmove(&(bm->buf->data[0]), &(bm->buf->data[out_len]),
+		    bm->buf->length);
 	}
 	return out_len;
 }
@@ -197,7 +208,7 @@ mem_read(BIO *bio, char *out, int out_len)
 static int
 mem_write(BIO *bio, const char *in, int in_len)
 {
-	BUF_MEM *bm = bio->ptr;
+	struct bio_mem *bm = bio->ptr;
 	size_t buf_len;
 
 	BIO_clear_retry_flags(bio);
@@ -214,14 +225,14 @@ mem_write(BIO *bio, const char *in, int in_len)
 	 * Check for overflow and ensure we do not exceed an int, otherwise we
 	 * cannot tell if BUF_MEM_grow_clean() succeeded.
 	 */
-	buf_len = bm->length + in_len;
-	if (buf_len < bm->length || buf_len > INT_MAX)
+	buf_len = bm->buf->length + in_len;
+	if (buf_len < bm->buf->length || buf_len > INT_MAX)
 		return -1;
 
-	if (BUF_MEM_grow_clean(bm, buf_len) != buf_len)
+	if (BUF_MEM_grow_clean(bm->buf, buf_len) != buf_len)
 		return -1;
 
-	memcpy(&bm->data[buf_len - in_len], in, in_len);
+	memcpy(&bm->buf->data[buf_len - in_len], in, in_len);
 
 	return in_len;
 }
@@ -229,45 +240,45 @@ mem_write(BIO *bio, const char *in, int in_len)
 static long
 mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
 {
-	BUF_MEM *bm = bio->ptr;
+	struct bio_mem *bm = bio->ptr;
+	void **pptr;
 	long ret = 1;
-	char **pptr;
 
 	switch (cmd) {
 	case BIO_CTRL_RESET:
-		if (bm->data != NULL) {
+		if (bm->buf->data != NULL) {
 			/* For read only case reset to the start again */
 			if (bio->flags & BIO_FLAGS_MEM_RDONLY) {
-				bm->data -= bm->max - bm->length;
-				bm->length = bm->max;
+				bm->buf->data -= bm->buf->max - bm->buf->length;
+				bm->buf->length = bm->buf->max;
 			} else {
-				memset(bm->data, 0, bm->max);
-				bm->length = 0;
+				memset(bm->buf->data, 0, bm->buf->max);
+				bm->buf->length = 0;
 			}
 		}
 		break;
 	case BIO_CTRL_EOF:
-		ret = (long)(bm->length == 0);
+		ret = (long)(bm->buf->length == 0);
 		break;
 	case BIO_C_SET_BUF_MEM_EOF_RETURN:
 		bio->num = (int)num;
 		break;
 	case BIO_CTRL_INFO:
 		if (ptr != NULL) {
-			pptr = (char **)ptr;
-			*pptr = (char *)bm->data;
+			pptr = (void **)ptr;
+			*pptr = bm->buf->data;
 		}
-		ret = (long)bm->length;
+		ret = (long)bm->buf->length;
 		break;
 	case BIO_C_SET_BUF_MEM:
-		mem_free(bio);
+		BUF_MEM_free(bm->buf);
 		bio->shutdown = (int)num;
-		bio->ptr = ptr;
+		bm->buf = ptr;
 		break;
 	case BIO_C_GET_BUF_MEM_PTR:
 		if (ptr != NULL) {
-			pptr = (char **)ptr;
-			*pptr = (char *)bm;
+			pptr = (void **)ptr;
+			*pptr = bm->buf;
 		}
 		break;
 	case BIO_CTRL_GET_CLOSE:
@@ -280,7 +291,7 @@ mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
 		ret = 0L;
 		break;
 	case BIO_CTRL_PENDING:
-		ret = (long)bm->length;
+		ret = (long)bm->buf->length;
 		break;
 	case BIO_CTRL_DUP:
 	case BIO_CTRL_FLUSH:
@@ -298,14 +309,14 @@ mem_ctrl(BIO *bio, int cmd, long num, void *ptr)
 static int
 mem_gets(BIO *bio, char *out, int out_len)
 {
-	BUF_MEM *bm = bio->ptr;
+	struct bio_mem *bm = bio->ptr;
 	int i, out_max;
 	char *p;
 	int ret = -1;
 
 	BIO_clear_retry_flags(bio);
 
-	out_max = bm->length;
+	out_max = bm->buf->length;
 	if (out_len - 1 < out_max)
 		out_max = out_len - 1;
 	if (out_max <= 0) {
@@ -313,7 +324,7 @@ mem_gets(BIO *bio, char *out, int out_len)
 		return 0;
 	}
 
-	p = bm->data;
+	p = bm->buf->data;
 	for (i = 0; i < out_max; i++) {
 		if (p[i] == '\n') {
 			i++;
