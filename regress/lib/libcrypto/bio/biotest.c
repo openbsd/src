@@ -1,4 +1,4 @@
-/*	$OpenBSD: biotest.c,v 1.7 2022/02/17 18:51:58 jsing Exp $	*/
+/*	$OpenBSD: biotest.c,v 1.8 2022/02/19 16:00:57 jsing Exp $	*/
 /*
  * Copyright (c) 2014, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -274,6 +274,76 @@ bio_mem_test(void)
 }
 
 static int
+bio_mem_small_io_test(void)
+{
+	uint8_t buf[2];
+	int i, j, ret;
+	BIO *bio;
+	int failed = 1;
+
+	memset(buf, 0xdb, sizeof(buf));
+
+	if ((bio = BIO_new(BIO_s_mem())) == NULL) {
+		fprintf(stderr, "FAIL: BIO_new() returned NULL\n");
+		goto failure;
+	}
+
+	for (i = 0; i < 100; i++) {
+		if (!BIO_reset(bio)) {
+			fprintf(stderr, "FAIL: BIO_reset() failed\n");
+			goto failure;
+		}
+		for (j = 0; j < 25000; j++) {
+			ret = BIO_write(bio, buf, sizeof(buf));
+			if (ret != sizeof(buf)) {
+				fprintf(stderr, "FAIL: BIO_write() = %d, "
+				    "want %zu\n", ret, sizeof(buf));
+				goto failure;
+			}
+		}
+		for (j = 0; j < 25000; j++) {
+			ret = BIO_read(bio, buf, sizeof(buf));
+			if (ret != sizeof(buf)) {
+				fprintf(stderr, "FAIL: BIO_read() = %d, "
+				    "want %zu\n", ret, sizeof(buf));
+				goto failure;
+			}
+			ret = BIO_write(bio, buf, sizeof(buf));
+			if (ret != sizeof(buf)) {
+				fprintf(stderr, "FAIL: BIO_write() = %d, "
+				    "want %zu\n", ret, sizeof(buf));
+				goto failure;
+			}
+		}
+		for (j = 0; j < 25000; j++) {
+			ret = BIO_read(bio, buf, sizeof(buf));
+			if (ret != sizeof(buf)) {
+				fprintf(stderr, "FAIL: BIO_read() = %d, "
+				    "want %zu\n", ret, sizeof(buf));
+				goto failure;
+			}
+		}
+		if (!BIO_eof(bio)) {
+			fprintf(stderr, "FAIL: BIO not EOF\n");
+			goto failure;
+		}
+	}
+
+	if (buf[0] != 0xdb || buf[1] != 0xdb) {
+		fprintf(stderr, "FAIL: buf = {0x%x, 0x%x}, want {0xdb, 0xdb}\n",
+		    buf[0], buf[1]);
+		goto failure;
+	}
+
+	failed = 0;
+
+ failure:
+	BIO_free(bio);
+
+	return failed;
+}
+
+static int
 bio_mem_readonly_test(void)
 {
 	uint8_t *data = NULL;
@@ -389,6 +459,7 @@ do_bio_mem_tests(void)
 	int failed = 0;
 
 	failed |= bio_mem_test();
+	failed |= bio_mem_small_io_test();
 	failed |= bio_mem_readonly_test();
 
 	return failed;
