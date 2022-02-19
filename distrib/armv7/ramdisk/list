@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.46 2021/10/04 01:34:29 kevlo Exp $
+#	$OpenBSD: list,v 1.47 2022/02/19 08:33:28 visa Exp $
 
 SRCDIRS distrib/special
 
@@ -63,6 +63,7 @@ LINK	instbin					usr/bin/sed
 LINK	instbin					usr/bin/signify
 LINK	instbin					usr/bin/tee
 LINK	instbin					usr/sbin/chroot
+LINK	instbin					usr/sbin/installboot
 LINK	instbin					usr/sbin/mkuboot
 LINK	instbin					usr/sbin/pwd_mkdb
 ARGVLINK ksh					-sh

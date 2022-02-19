@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.51 2022/02/07 20:24:30 krw Exp $
+#	$OpenBSD: install.md,v 1.52 2022/02/19 08:33:28 visa Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,7 +31,6 @@
 # machine dependent section of installation/upgrade script.
 #
 
-NEWFSARGS_msdos="-F 16 -L boot"
 MOUNT_ARGS_msdos="-o-l"
 
 md_installboot() {
@@ -47,10 +46,14 @@ md_installboot() {
 	*)				;; # XXX: Handle unknown platform?
 	esac
 
-	# Mount MSDOS partition, extract U-Boot and copy UEFI boot program
+	if ! installboot -r /mnt ${1}; then
+		echo "\nFailed to install bootblocks."
+		echo "You will not be able to boot OpenBSD from ${1}."
+		exit
+	fi
+
+	# Apply some final tweaks on selected platforms
 	mount ${MOUNT_ARGS_msdos} ${_disk}i /mnt/mnt
-	mkdir -p /mnt/mnt/efi/boot
-	cp /mnt/usr/mdec/BOOTARM.EFI /mnt/mnt/efi/boot/bootarm.efi
 
 	_mdec=/usr/mdec/$_plat
 
@@ -82,6 +85,8 @@ md_installboot() {
 		    bs=1024 seek=8 >/dev/null 2>&1
 		;;
 	esac
+
+	umount /mnt/mnt
 }
 
 md_prep_fdisk() {
@@ -91,7 +96,6 @@ md_prep_fdisk() {
 	local bootsectorstart="32768"
 	local bootsectorsize="32768"
 	local bootfstype="msdos"
-	local newfs_args=${NEWFSARGS_msdos}
 
 	while :; do
 		_d=whole
@@ -106,8 +110,7 @@ md_prep_fdisk() {
 			echo -n "Creating a ${bootfstype} partition and an OpenBSD partition for rest of $_disk..."
 			fdisk -iy -b "${bootsectorsize}@${bootsectorstart}:${bootparttype}" ${_disk} >/dev/null
 			echo "done."
-			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
-			newfs -t ${bootfstype} ${newfs_args} ${_disk}i
+			installboot -p $_disk
 			return ;;
 		[eE]*)
 			# Manually configure the MBR.
