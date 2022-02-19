@@ -1,4 +1,4 @@
-.\"	$OpenBSD: OCSP_REQUEST_new.3,v 1.11 2021/08/06 21:45:55 schwarze Exp $
+.\"	$OpenBSD: OCSP_REQUEST_new.3,v 1.12 2022/02/19 13:09:36 jsg Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 6 2021 $
+.Dd $Mdocdate: February 19 2022 $
 .Dt OCSP_REQUEST_NEW 3
 .Os
 .Sh NAME
@@ -173,7 +173,7 @@ object, representing an ASN.1
 structure defined in RFC 6960.
 Such objects are used inside
 .Vt OCSP_REQINFO .
-Each one asks about the validity of one certificiate.
+Each one asks about the validity of one certificate.
 .Fn OCSP_ONEREQ_free
 frees
 .Fa onereq .
