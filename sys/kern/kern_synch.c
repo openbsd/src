@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.181 2022/02/14 11:26:05 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.182 2022/02/19 23:56:18 deraadt Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -222,6 +222,10 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 	if (priority & PCATCH)
 		KERNEL_ASSERT_LOCKED();
 
+#ifdef DDB
+	if (cold == 2)
+		db_stack_dump();
+#endif
 	if (cold || panicstr) {
 		/*
 		 * After a panic, or during autoconfiguration,
