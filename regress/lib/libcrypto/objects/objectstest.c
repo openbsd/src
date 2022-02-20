@@ -1,4 +1,4 @@
-/* $OpenBSD: objectstest.c,v 1.4 2022/02/12 12:42:19 jsing Exp $ */
+/* $OpenBSD: objectstest.c,v 1.5 2022/02/20 13:47:53 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -287,6 +287,17 @@ obj_oid_test(struct obj_test *ot)
 	if (strcmp(buf, ot->oid) != 0) {
 		fprintf(stderr, "FAIL: OBJ_obj2txt() returned '%s', want '%s'\n",
 		    buf, ot->oid);
+		goto failed;
+	}
+
+	if ((OBJ_obj2txt(NULL, 0, obj, 1) != len)) {
+		fprintf(stderr, "FAIL: OBJ_obj2txt() with NULL buffer != %d\n",
+		    len);
+		goto failed;
+	}
+	if ((OBJ_obj2txt(buf, 3, obj, 1) != len)) {
+		fprintf(stderr, "FAIL: OBJ_obj2txt() with short buffer != %d\n",
+		    len);
 		goto failed;
 	}
 
