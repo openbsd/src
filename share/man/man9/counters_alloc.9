@@ -1,4 +1,4 @@
-.\"	$OpenBSD: counters_alloc.9,v 1.11 2020/08/27 09:29:16 fcambus Exp $
+.\"	$OpenBSD: counters_alloc.9,v 1.12 2022/02/20 23:11:01 dlg Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 27 2020 $
+.Dd $Mdocdate: February 20 2022 $
 .Dt COUNTERS_ALLOC 9
 .Os
 .Sh NAME
@@ -78,13 +78,14 @@ Updates to counters should be limited to addition or subtraction
 of uint64_t values.
 .Pp
 An alternate implementation of the API is provided on uni-processor
+systems
 (i.e. when the kernel is not built with
 .Dv MULTIPROCESSOR
 defined)
-systems that provides no overhead compared to direct access to a
+that provides no overhead compared to direct access to a
 data structure.
 This allows the API to be used without affecting the performance
-uni-processor systems.
+of uni-processor systems.
 .Pp
 .Fn counters_alloc
 allocates memory for a series of uint64_t values on each CPU.
@@ -143,7 +144,6 @@ and
 .Fn counters_alloc_ncpus
 cannot be deallocated with
 .Fa counters_free .
-Any attempt to do so will lead to undefined behaviour.
 .Pp
 .Fn counters_enter
 provides access to the current CPU's set of counters referenced by
