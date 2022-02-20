@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.39 2022/02/19 02:19:42 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.40 2022/02/20 18:06:05 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -492,123 +492,123 @@ else
 	    { [ "${devices[*]:-}" ] && echo " found." || echo " done." ; }
 fi
 
-[ "${devices[*]:-}" ] || exit
-
-lock_db
 
 added=''
 updated=''
 kept=''
 unregister=''
-for f in "${devices[@]}"; do
-	d="$( firmware_devicename "$f" )"
+if [ "${devices[*]:-}" ]; then
+	lock_db
+	for f in "${devices[@]}"; do
+		d="$( firmware_devicename "$f" )"
 
-	verify_existing=true
-	if [ "$f" = "$d" ]; then
-		f=$( firmware_filename "$d" ) || continue
-		if [ ! "$f" ]; then
-			if "$INSTALL" && unregister_firmware "$d"; then
-				unregister="$unregister,$d"
-			else
-				echo "Unable to find firmware for $d" >&2
+		verify_existing=true
+		if [ "$f" = "$d" ]; then
+			f=$( firmware_filename "$d" ) || continue
+			if [ ! "$f" ]; then
+				if "$INSTALL" && unregister_firmware "$d"; then
+					unregister="$unregister,$d"
+				else
+					echo "Unable to find firmware for $d" >&2
+				fi
+				continue
 			fi
-			continue
-		fi
-		f="$LOCALSRC/$f"
-	elif ! "$INSTALL" && ! grep -Fq "($f)" "$CFILE" ; then
-		echo "Cannot download local file $f" >&2
-		exit 1
-	else
-		# Don't verify files specified on the command-line
-		verify_existing=false
-	fi
-
-	set -A installed -- $( installed_firmware '' "$d-firmware-" '*' )
-
-	if "$INSTALL" && [ "${installed[*]:-}" ]; then
-		for i in "${installed[@]}"; do
-			if [ "${f##*/}" = "$i.tgz" ]; then
-				((VERBOSE > 2)) && echo "Keep $i"
-				kept="$kept,$d"
-				continue 2
-			fi
-		done
-	fi
-
-	pending_status=false
-	if "$verify_existing" && [ -e "$f" ]; then
-		if ((VERBOSE == 1)); then
-		 	echo -n "Verify ${f##*/} ..."
-			pending_status=true
-		elif ((VERBOSE > 1)) && ! "$INSTALL"; then
-		    echo "Keep/Verify ${f##*/}"
+			f="$LOCALSRC/$f"
+		elif ! "$INSTALL" && ! grep -Fq "($f)" "$CFILE" ; then
+			echo "Cannot download local file $f" >&2
+			exit 1
+		else
+			# Don't verify files specified on the command-line
+			verify_existing=false
 		fi
 
-		if "$DRYRUN" || verify "$f"; then
- 			"$INSTALL" || kept="$kept,$d"
-		elif "$DOWNLOAD"; then
-			((VERBOSE == 1)) && echo " failed."
-			((VERBOSE > 1)) && echo "Refetching $f"
-			rm -f "$f"
-		else
-			"$pending_status" && echo " failed."
-			continue
- 		fi
-	fi
+		set -A installed -- $( installed_firmware '' "$d-firmware-" '*' )
 
-	if [ -e "$f" ]; then
-		"$pending_status" && ! "$INSTALL" && echo " done."
-	elif "$DOWNLOAD"; then
-		if "$DRYRUN"; then
-			((VERBOSE)) && echo "Get/Verify ${f##*/}"
-		else
+		if "$INSTALL" && [ "${installed[*]:-}" ]; then
+			for i in "${installed[@]}"; do
+				if [ "${f##*/}" = "$i.tgz" ]; then
+					((VERBOSE > 2)) && echo "Keep $i"
+					kept="$kept,$d"
+					continue 2
+				fi
+			done
+		fi
+
+		pending_status=false
+		if "$verify_existing" && [ -e "$f" ]; then
 			if ((VERBOSE == 1)); then
-				echo -n "Get/Verify ${f##*/} ..."
+				echo -n "Verify ${f##*/} ..."
 				pending_status=true
+			elif ((VERBOSE > 1)) && ! "$INSTALL"; then
+			    echo "Keep/Verify ${f##*/}"
 			fi
-			fetch  "$f" &&
-			verify "$f" || {
+
+			if "$DRYRUN" || verify "$f"; then
+				"$INSTALL" || kept="$kept,$d"
+			elif "$DOWNLOAD"; then
+				((VERBOSE == 1)) && echo " failed."
+				((VERBOSE > 1)) && echo "Refetching $f"
+				rm -f "$f"
+			else
 				"$pending_status" && echo " failed."
 				continue
-			}
+			fi
+		fi
+
+		if [ -e "$f" ]; then
 			"$pending_status" && ! "$INSTALL" && echo " done."
+		elif "$DOWNLOAD"; then
+			if "$DRYRUN"; then
+				((VERBOSE)) && echo "Get/Verify ${f##*/}"
+			else
+				if ((VERBOSE == 1)); then
+					echo -n "Get/Verify ${f##*/} ..."
+					pending_status=true
+				fi
+				fetch  "$f" &&
+				verify "$f" || {
+					"$pending_status" && echo " failed."
+					continue
+				}
+				"$pending_status" && ! "$INSTALL" && echo " done."
+			fi
+			"$INSTALL" || added="$added,$d"
+		elif "$INSTALL"; then
+			echo "Cannot install ${f##*/}, not found" >&2
+			continue
 		fi
-		"$INSTALL" || added="$added,$d"
-	elif "$INSTALL"; then
-		echo "Cannot install ${f##*/}, not found" >&2
-		continue
-	fi
 
-	"$INSTALL" || continue
+		"$INSTALL" || continue
 
-	update="Install"
-	if [ "${installed[*]:-}" ]; then
-		update="Update"
-		for i in "${installed[@]}"; do
-			"$DRYRUN" || delete_firmware "$i"
-		done
-	fi
-
-	if "$DRYRUN"; then
-		((VERBOSE)) && echo "$update $f"
-	else
-		if ((VERBOSE == 1)) && ! "$pending_status"; then
-			echo -n "Install ${f##*/} ..."
-			pending_status=true
+		update="Install"
+		if [ "${installed[*]:-}" ]; then
+			update="Update"
+			for i in "${installed[@]}"; do
+				"$DRYRUN" || delete_firmware "$i"
+			done
 		fi
-		add_firmware "$f" "$update"
-	fi
 
-	f="${f##*/}"
-	f="${f%.tgz}"
-	if [ "$update" = Install ]; then
-		"$pending_status" && echo " installed."
-		added="$added,$d"
-	else
-		"$pending_status" && echo " updated."
-		updated="$updated,$d"
-	fi
-done
+		if "$DRYRUN"; then
+			((VERBOSE)) && echo "$update $f"
+		else
+			if ((VERBOSE == 1)) && ! "$pending_status"; then
+				echo -n "Install ${f##*/} ..."
+				pending_status=true
+			fi
+			add_firmware "$f" "$update"
+		fi
+
+		f="${f##*/}"
+		f="${f%.tgz}"
+		if [ "$update" = Install ]; then
+			"$pending_status" && echo " installed."
+			added="$added,$d"
+		else
+			"$pending_status" && echo " updated."
+			updated="$updated,$d"
+		fi
+	done
+fi
 
 added="${added:#,}"
 updated="${updated:#,}"
