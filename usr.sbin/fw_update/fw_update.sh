@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.41 2022/02/20 19:24:19 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.42 2022/02/20 21:53:04 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -29,7 +29,7 @@ VERSION=${VERSION:-"${VNAME%.*}${VNAME#*.}"}
 HTTP_FWDIR="$VNAME"
 VTYPE=$( sed -n "/^OpenBSD $VNAME\([^ ]*\).*$/s//\1/p" \
     /var/run/dmesg.boot | sed '$!d' )
-[[ $VTYPE == -!(stable) ]] && HTTP_FWDIR=snapshots
+[ "$VTYPE" = -current ] && HTTP_FWDIR=snapshots
 
 FWURL=http://firmware.openbsd.org/firmware/${HTTP_FWDIR}
 FWPUB_KEY=${DESTDIR}/etc/signify/openbsd-${VERSION}-fw.pub
