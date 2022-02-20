@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_oaep.c,v 1.34 2021/12/12 21:30:14 tb Exp $ */
+/* $OpenBSD: rsa_oaep.c,v 1.35 2022/02/20 19:16:34 tb Exp $ */
 /*
  * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -224,17 +224,16 @@ RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
 		from -= 1 & mask;
 		*--em = *from & mask;
 	}
-	from = em;
 
 	/*
 	 * The first byte must be zero, however we must not leak if this is
 	 * true. See James H. Manger, "A Chosen Ciphertext Attack on RSA
 	 * Optimal Asymmetric Encryption Padding (OAEP) [...]", CRYPTO 2001).
 	 */
-	good = constant_time_is_zero(from[0]);
+	good = constant_time_is_zero(em[0]);
 
-	maskedseed = from + 1;
-	maskeddb = from + 1 + mdlen;
+	maskedseed = em + 1;
+	maskeddb = em + 1 + mdlen;
 
 	if (PKCS1_MGF1(seed, mdlen, maskeddb, dblen, mgf1md))
 		goto cleanup;
@@ -290,15 +289,16 @@ RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
 	 * should be noted that failure is indistinguishable from normal
 	 * operation if |tlen| is fixed by protocol.
 	 */
-	tlen = constant_time_select_int(constant_time_lt(dblen, tlen), dblen, tlen);
+	tlen = constant_time_select_int(constant_time_lt(dblen - mdlen - 1, tlen),
+	    dblen - mdlen - 1, tlen);
 	msg_index = constant_time_select_int(good, msg_index, dblen - tlen);
 	mlen = dblen - msg_index;
-	for (from = db + msg_index, mask = good, i = 0; i < tlen; i++) {
-		unsigned int equals = constant_time_eq(i, mlen);
+	for (mask = good, i = 0; i < tlen; i++) {
+		unsigned int equals = constant_time_eq(msg_index, dblen);
 
-		from -= dblen & equals; /* if (i == mlen) rewind   */
-		mask &= mask ^ equals;  /* if (i == mlen) mask = 0 */
-		to[i] = constant_time_select_8(mask, from[i], to[i]);
+		msg_index -= tlen & equals;	/* rewind at EOF */
+		mask &= ~equals;		/* mask = 0 at EOF */
+		to[i] = constant_time_select_8(mask, db[msg_index++], to[i]);
 	}
 
 	/*
