@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.40 2022/02/20 18:06:05 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.41 2022/02/20 19:24:19 afresh1 Exp $
 #
 # Copyright (c) 2021 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -146,7 +146,8 @@ fetch_cfile() {
 		fetch "$CFILE" || return 1
 		set -o noclobber
 		! signify -qVep "$FWPUB_KEY" -x "$CFILE" -m "$CFILE" &&
-		    echo "Signature check of SHA256.sig failed" >&2 && return 1
+		    echo "Signature check of SHA256.sig failed" >&2 &&
+		    rm -f "$CFILE" && return 1
 	elif [ ! -e "$CFILE" ]; then
 		echo "${0##*/}: $CFILE: No such file or directory" >&2
 		return 1
