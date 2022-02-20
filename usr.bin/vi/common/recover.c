@@ -1,4 +1,4 @@
-/*	$OpenBSD: recover.c,v 1.31 2021/10/24 21:24:17 deraadt Exp $	*/
+/*	$OpenBSD: recover.c,v 1.32 2022/02/20 19:45:51 tb Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -252,6 +252,8 @@ rcv_sync(SCR *sp, u_int flags)
 
 	/* Sync the file if it's been modified. */
 	if (F_ISSET(ep, F_MODIFIED)) {
+		/* Clear recovery sync flag. */
+		F_CLR(ep, F_RCV_SYNC);
 		if (ep->db->sync(ep->db, R_RECNOSYNC)) {
 			F_CLR(ep, F_RCV_ON | F_RCV_NORM);
 			msgq_str(sp, M_SYSERR,

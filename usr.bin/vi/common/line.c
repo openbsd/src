@@ -1,4 +1,4 @@
-/*	$OpenBSD: line.c,v 1.15 2016/01/06 22:28:52 millert Exp $	*/
+/*	$OpenBSD: line.c,v 1.16 2022/02/20 19:45:51 tb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -218,7 +218,7 @@ db_delete(SCR *sp, recno_t lno)
 	/* File now modified. */
 	if (F_ISSET(ep, F_FIRSTMODIFY))
 		(void)rcv_init(sp);
-	F_SET(ep, F_MODIFIED);
+	F_SET(ep, F_MODIFIED | F_RCV_SYNC);
 
 	/* Update screen. */
 	return (scr_update(sp, lno, LINE_DELETE, 1));
@@ -266,7 +266,7 @@ db_append(SCR *sp, int update, recno_t lno, char *p, size_t len)
 	/* File now dirty. */
 	if (F_ISSET(ep, F_FIRSTMODIFY))
 		(void)rcv_init(sp);
-	F_SET(ep, F_MODIFIED);
+	F_SET(ep, F_MODIFIED | F_RCV_SYNC);
 
 	/* Log change. */
 	log_line(sp, lno + 1, LOG_LINE_APPEND);
@@ -334,7 +334,7 @@ db_insert(SCR *sp, recno_t lno, char *p, size_t len)
 	/* File now dirty. */
 	if (F_ISSET(ep, F_FIRSTMODIFY))
 		(void)rcv_init(sp);
-	F_SET(ep, F_MODIFIED);
+	F_SET(ep, F_MODIFIED | F_RCV_SYNC);
 
 	/* Log change. */
 	log_line(sp, lno, LOG_LINE_INSERT);
@@ -394,7 +394,7 @@ db_set(SCR *sp, recno_t lno, char *p, size_t len)
 	/* File now dirty. */
 	if (F_ISSET(ep, F_FIRSTMODIFY))
 		(void)rcv_init(sp);
-	F_SET(ep, F_MODIFIED);
+	F_SET(ep, F_MODIFIED | F_RCV_SYNC);
 
 	/* Log after change. */
 	log_line(sp, lno, LOG_LINE_RESET_F);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex.c,v 1.21 2016/03/19 00:21:28 mestre Exp $	*/
+/*	$OpenBSD: ex.c,v 1.22 2022/02/20 19:45:51 tb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -132,6 +132,10 @@ ex(SCR **spp)
 			CLR_INTERRUPT(sp);
 			msgq(sp, M_ERR, "Interrupted");
 		}
+
+		/* Sync recovery if changes were made. */
+		if (F_ISSET(sp->ep, F_RCV_SYNC))
+			rcv_sync(sp, 0);
 
 		/*
 		 * If the last command caused a restart, or switched screens

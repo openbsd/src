@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.22 2019/01/24 15:09:41 millert Exp $	*/
+/*	$OpenBSD: vi.c,v 1.23 2022/02/20 19:45:51 tb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -399,6 +399,10 @@ intr:			CLR_INTERRUPT(sp);
 			F_SET(sp, SC_SCR_CENTER);
 			(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
 		}
+
+		/* Sync recovery if changes were made. */
+		if (F_ISSET(sp->ep, F_RCV_SYNC))
+			rcv_sync(sp, 0);
 
 		/* If leaving vi, return to the main editor loop. */
 		if (F_ISSET(gp, G_SRESTART) || F_ISSET(sp, SC_EX)) {
