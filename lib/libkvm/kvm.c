@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.70 2021/12/01 16:51:57 deraadt Exp $ */
+/*	$OpenBSD: kvm.c,v 1.71 2022/02/20 00:09:29 deraadt Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -35,6 +35,7 @@
  */
 
 #include <sys/param.h>	/* MAXCOMLEN MID_MACHINE */
+#include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>

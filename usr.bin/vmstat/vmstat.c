@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.151 2021/07/12 15:09:20 beck Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.152 2022/02/20 00:09:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -32,6 +32,7 @@
 
 #include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/time.h>
+#include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/namei.h>
 #include <sys/malloc.h>

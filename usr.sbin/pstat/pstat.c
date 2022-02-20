@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.127 2021/11/15 15:14:24 millert Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.128 2022/02/20 00:09:30 deraadt Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -32,6 +32,7 @@
 
 #include <sys/param.h>	/* MAXCOMLEN DEV_BSIZE */
 #include <sys/types.h>
+#include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/vnode.h>

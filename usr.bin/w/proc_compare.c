@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc_compare.c,v 1.15 2015/01/16 06:40:14 deraadt Exp $	*/
+/*	$OpenBSD: proc_compare.c,v 1.16 2022/02/20 00:09:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -30,6 +30,7 @@
  */
 
 #include <sys/param.h>	/* MAXCOMLEN */
+#include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
