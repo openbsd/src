@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.224 2022/02/09 23:55:33 deraadt Exp $
+# $OpenBSD: GENERIC,v 1.225 2022/02/20 19:25:57 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -140,6 +140,7 @@ gpiokeys*	at fdt?
 gpioleds*	at fdt?
 
 # Apple
+aplcpu*		at fdt?
 apldart*	at fdt? early 1
 apldog*		at fdt? early 1
 apliic*		at fdt?

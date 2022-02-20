@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.55 2022/02/02 22:55:57 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.56 2022/02/20 19:25:57 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -138,6 +138,10 @@ file	arch/arm64/dev/agintc.c			agintc | agintcmsi
 device	agtimer
 attach	agtimer at fdt
 file	arch/arm64/dev/agtimer.c		agtimer
+
+device	aplcpu
+attach	aplcpu at fdt
+file	arch/arm64/dev/aplcpu.c			aplcpu
 
 device	apldart
 attach	apldart at fdt
