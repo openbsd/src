@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.79 2021/10/24 17:05:04 mpi Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.80 2022/02/21 11:09:52 jsg Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ struct cfdriver psycho_cd = {
  * "sabre" is the UltraSPARC IIi onboard UPA to PCI bridge.  It manages a
  * single PCI bus and does not have a streaming buffer.  It often has an APB
  * (advanced PCI bridge) connected to it, which was designed specifically for
- * the IIi.  The APB let's the IIi handle two independednt PCI buses, and
+ * the IIi.  The APB lets the IIi handle two independent PCI buses, and
  * appears as two "simba"'s underneath the sabre.
  *
  * "psycho" and "psycho+" is a dual UPA to PCI bridge.  It sits on the UPA bus
