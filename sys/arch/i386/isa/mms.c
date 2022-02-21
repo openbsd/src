@@ -1,4 +1,4 @@
-/* $OpenBSD: mms.c,v 1.20 2016/06/05 20:02:36 bru Exp $ */
+/* $OpenBSD: mms.c,v 1.21 2022/02/21 10:24:28 mpi Exp $ */
 /*	$NetBSD: mms.c,v 1.35 2000/01/08 02:57:25 takemura Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@ int mmsprobe(struct device *, void *, void *);
 void mmsattach(struct device *, struct device *, void *);
 int mmsintr(void *);
 
-struct cfattach mms_ca = {
+const struct cfattach mms_ca = {
 	sizeof(struct mms_softc), mmsprobe, mmsattach
 };
 

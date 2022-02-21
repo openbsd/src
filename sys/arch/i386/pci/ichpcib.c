@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichpcib.c,v 1.30 2021/02/23 04:44:30 cheloha Exp $	*/
+/*	$OpenBSD: ichpcib.c,v 1.31 2022/02/21 10:24:28 mpi Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -68,7 +68,7 @@ struct timecounter ichpcib_timecounter = {
 	.tc_user = 0,
 };
 
-struct cfattach ichpcib_ca = {
+const struct cfattach ichpcib_ca = {
 	sizeof(struct ichpcib_softc), ichpcib_match, ichpcib_attach
 };
 

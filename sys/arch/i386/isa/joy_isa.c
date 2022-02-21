@@ -1,4 +1,4 @@
-/*	$OpenBSD: joy_isa.c,v 1.7 2007/08/01 13:18:18 martin Exp $	*/
+/*	$OpenBSD: joy_isa.c,v 1.8 2022/02/21 10:24:28 mpi Exp $	*/
 /*	$NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 int		joy_isa_probe(struct device *, void *, void *);
 void		joy_isa_attach(struct device *, struct device *, void *);
 
-struct cfattach joy_isa_ca = {
+const struct cfattach joy_isa_ca = {
 	sizeof(struct joy_softc), joy_isa_probe, joy_isa_attach
 };
 

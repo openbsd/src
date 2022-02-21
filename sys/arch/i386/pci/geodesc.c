@@ -1,4 +1,4 @@
-/*	$OpenBSD: geodesc.c,v 1.16 2021/02/23 04:44:30 cheloha Exp $	*/
+/*	$OpenBSD: geodesc.c,v 1.17 2022/02/21 10:24:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl <markus@openbsd.org>
@@ -48,7 +48,7 @@ void	sc1100_sysreset(void);
 int	geodesc_wdogctl_cb(void *, int);
 #endif /* SMALL_KERNEL */
 
-struct cfattach geodesc_ca = {
+const struct cfattach geodesc_ca = {
 	sizeof(struct geodesc_softc), geodesc_match, geodesc_attach,
 	NULL, geodesc_activate
 };

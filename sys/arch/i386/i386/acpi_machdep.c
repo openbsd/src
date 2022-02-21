@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpi_machdep.c,v 1.84 2022/02/17 17:22:24 deraadt Exp $	*/
+/*	$OpenBSD: acpi_machdep.c,v 1.85 2022/02/21 10:24:28 mpi Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -71,7 +71,7 @@ u_int8_t	*acpi_scan(struct acpi_mem_map *, paddr_t, size_t);
 int	acpi_match(struct device *, void *, void *);
 void	acpi_attach(struct device *, struct device *, void *);
 
-struct cfattach acpi_ca = {
+const struct cfattach acpi_ca = {
 	sizeof(struct acpi_softc), acpi_match, acpi_attach
 };
 

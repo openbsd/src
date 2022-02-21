@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscpm.c,v 1.12 2021/03/11 11:16:57 jsg Exp $	*/
+/*	$OpenBSD: gscpm.c,v 1.13 2022/02/21 10:24:28 mpi Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -60,7 +60,7 @@ struct timecounter gscpm_timecounter = {
 	.tc_user = 0,
 };
 
-struct cfattach gscpm_ca = {
+const struct cfattach gscpm_ca = {
 	sizeof (struct gscpm_softc),
 	gscpm_match,
 	gscpm_attach

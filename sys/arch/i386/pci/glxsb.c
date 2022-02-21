@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxsb.c,v 1.40 2021/10/24 10:26:22 patrick Exp $	*/
+/*	$OpenBSD: glxsb.c,v 1.41 2022/02/21 10:24:28 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Tom Cosgrove <tom@openbsd.org>
@@ -176,7 +176,7 @@ void	glxsb_attach(struct device *, struct device *, void *);
 int	glxsb_activate(struct device *, int);
 void	glxsb_rnd(void *);
 
-struct cfattach glxsb_ca = {
+const struct cfattach glxsb_ca = {
 	sizeof(struct glxsb_softc), glxsb_match, glxsb_attach, NULL,
 	glxsb_activate
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: joy_isapnp.c,v 1.7 2007/08/01 13:18:18 martin Exp $	*/
+/*	$OpenBSD: joy_isapnp.c,v 1.8 2022/02/21 10:24:28 mpi Exp $	*/
 /*	$NetBSD: joy.c,v 1.3 1996/05/05 19:46:15 christos Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 int		joy_isapnp_probe(struct device *, void *, void *);
 void		joy_isapnp_attach(struct device *, struct device *, void *);
 
-struct cfattach joy_isapnp_ca = {
+const struct cfattach joy_isapnp_ca = {
 	sizeof(struct joy_softc), joy_isapnp_probe, joy_isapnp_attach
 };
 

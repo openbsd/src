@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.48 2015/09/08 08:33:26 deraadt Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.49 2022/02/21 10:24:28 mpi Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -134,7 +134,7 @@ struct cfdriver pcibios_cd = {
 int pcibiosprobe(struct device *, void *, void *);
 void pcibiosattach(struct device *, struct device *, void *);
 
-struct cfattach pcibios_ca = {
+const struct cfattach pcibios_ca = {
 	sizeof(struct pcibios_softc), pcibiosprobe, pcibiosattach
 };
 

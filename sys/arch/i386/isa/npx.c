@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.72 2020/09/24 21:14:32 deraadt Exp $	*/
+/*	$OpenBSD: npx.c,v 1.73 2022/02/21 10:24:28 mpi Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -114,7 +114,7 @@ struct npx_softc {
 int npxprobe(struct device *, void *, void *);
 void npxattach(struct device *, struct device *, void *);
 
-struct cfattach npx_ca = {
+const struct cfattach npx_ca = {
 	sizeof(struct npx_softc), npxprobe, npxattach
 };
 

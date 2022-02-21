@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.107 2021/03/11 11:16:57 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.108 2022/02/21 10:24:28 mpi Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -179,7 +179,7 @@ struct cpu_softc {
 	struct cpu_info *sc_info;
 };
 
-struct cfattach cpu_ca = {
+const struct cfattach cpu_ca = {
 	sizeof(struct cpu_softc), cpu_match, cpu_attach, NULL, cpu_activate
 };
 

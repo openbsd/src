@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.61 2019/10/12 15:56:17 cheloha Exp $ */
+/*	$OpenBSD: esm.c,v 1.62 2022/02/21 10:24:28 mpi Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -124,7 +124,7 @@ struct esm_softc {
 	volatile int		sc_wdog_tickle;
 };
 
-struct cfattach esm_ca = {
+const struct cfattach esm_ca = {
 	sizeof(struct esm_softc), esm_match, esm_attach,
 	NULL, esm_activate
 };

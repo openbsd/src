@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpbios.c,v 1.43 2021/03/11 11:16:57 jsg Exp $	*/
+/*	$OpenBSD: mpbios.c,v 1.44 2022/02/21 10:24:28 mpi Exp $	*/
 /*	$NetBSD: mpbios.c,v 1.2 2002/10/01 12:56:57 fvdl Exp $	*/
 
 /*-
@@ -197,7 +197,7 @@ int mp_verbose = 0;
 int	mpbios_match(struct device *, void *, void *);
 void	mpbios_attach(struct device *, struct device *, void *);
 
-struct cfattach mpbios_ca = {
+const struct cfattach mpbios_ca = {
 	sizeof(struct device), mpbios_match, mpbios_attach
 };
 
