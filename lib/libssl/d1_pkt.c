@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.117 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.118 2022/02/21 18:22:20 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -735,38 +735,9 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		goto start;
 	}
 
-	if (rr->type == SSL3_RT_ALERT && rr->length >= DTLS1_AL_HEADER_LENGTH &&
-	    rr->off == 0) {
-		int alert_level = rr->data[0];
-		int alert_descr = rr->data[1];
-
-		ssl_msg_callback(s, 0, SSL3_RT_ALERT, rr->data, 2);
-
-		ssl_info_callback(s, SSL_CB_READ_ALERT,
-		    (alert_level << 8) | alert_descr);
-
-		if (alert_level == SSL3_AL_WARNING) {
-			s->s3->warn_alert = alert_descr;
-			if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
-				s->internal->shutdown |= SSL_RECEIVED_SHUTDOWN;
-				return (0);
-			}
-		} else if (alert_level == SSL3_AL_FATAL) {
-			s->internal->rwstate = SSL_NOTHING;
-			s->s3->fatal_alert = alert_descr;
-			SSLerror(s, SSL_AD_REASON_OFFSET + alert_descr);
-			ERR_asprintf_error_data("SSL alert number %d",
-			    alert_descr);
-			s->internal->shutdown|=SSL_RECEIVED_SHUTDOWN;
-			SSL_CTX_remove_session(s->ctx, s->session);
-			return (0);
-		} else {
-			al = SSL_AD_ILLEGAL_PARAMETER;
-			SSLerror(s, SSL_R_UNKNOWN_ALERT_TYPE);
-			goto fatal_err;
-		}
-
-		rr->length = 0;
+	if (rr->type == SSL3_RT_ALERT) {
+		if ((ret = ssl3_read_alert(s)) <= 0)
+			return ret;
 		goto start;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.53 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.54 2022/02/21 18:22:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -685,6 +685,73 @@ ssl3_write_pending(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	}
 }
 
+int
+ssl3_read_alert(SSL *s)
+{
+	SSL3_RECORD_INTERNAL *rr = &s->s3->rrec;
+	uint8_t alert_level, alert_descr;
+
+	/*
+	 * TLSv1.2 permits an alert to be fragmented across multiple records or
+	 * for multiple alerts to be be coalesced into a single alert record.
+	 * In the case of DTLS, there is no way to reassemble an alert
+	 * fragmented across multiple records, hence a full alert must be
+	 * available in the record.
+	 */
+	while (rr->length > 0 &&
+	    s->s3->alert_fragment_len < sizeof(s->s3->alert_fragment)) {
+		s->s3->alert_fragment[s->s3->alert_fragment_len++] =
+		    rr->data[rr->off++];
+		rr->length--;
+	}
+	if (s->s3->alert_fragment_len < sizeof(s->s3->alert_fragment)) {
+		if (SSL_is_dtls(s)) {
+			SSLerror(s, SSL_R_BAD_LENGTH);
+			ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+			return -1;
+		}
+		return 1;
+	}
+
+	ssl_msg_callback(s, 0, SSL3_RT_ALERT, s->s3->alert_fragment, 2);
+
+	alert_level = s->s3->alert_fragment[0];
+	alert_descr = s->s3->alert_fragment[1];
+	s->s3->alert_fragment_len = 0;
+
+	ssl_info_callback(s, SSL_CB_READ_ALERT,
+	    (alert_level << 8) | alert_descr);
+
+	if (alert_level == SSL3_AL_WARNING) {
+		s->s3->warn_alert = alert_descr;
+		if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
+			s->internal->shutdown |= SSL_RECEIVED_SHUTDOWN;
+			return 0;
+		}
+		/* We requested renegotiation and the peer rejected it. */
+		if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
+			SSLerror(s, SSL_R_NO_RENEGOTIATION);
+			ssl3_send_alert(s, SSL3_AL_FATAL,
+			    SSL_AD_HANDSHAKE_FAILURE);
+			return -1;
+		}
+	} else if (alert_level == SSL3_AL_FATAL) {
+		s->internal->rwstate = SSL_NOTHING;
+		s->s3->fatal_alert = alert_descr;
+		SSLerror(s, SSL_AD_REASON_OFFSET + alert_descr);
+		ERR_asprintf_error_data("SSL alert number %d", alert_descr);
+		s->internal->shutdown |= SSL_RECEIVED_SHUTDOWN;
+		SSL_CTX_remove_session(s->ctx, s->session);
+		return 0;
+	} else {
+		SSLerror(s, SSL_R_UNKNOWN_ALERT_TYPE);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
+		return -1;
+	}
+
+	return 1;
+}
+
 /* Return up to 'len' payload bytes received in 'type' records.
  * 'type' is one of the following:
  *
@@ -875,10 +942,6 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 			dest_maxlen = sizeof s->s3->handshake_fragment;
 			dest = s->s3->handshake_fragment;
 			dest_len = &s->s3->handshake_fragment_len;
-		} else if (rr->type == SSL3_RT_ALERT) {
-			dest_maxlen = sizeof s->s3->alert_fragment;
-			dest = s->s3->alert_fragment;
-			dest_len = &s->s3->alert_fragment_len;
 		}
 		if (dest_maxlen > 0) {
 			/* available space in 'dest' */
@@ -966,53 +1029,10 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
 		goto start;
 	}
-	if (s->s3->alert_fragment_len >= 2) {
-		int alert_level = s->s3->alert_fragment[0];
-		int alert_descr = s->s3->alert_fragment[1];
 
-		s->s3->alert_fragment_len = 0;
-
-		ssl_msg_callback(s, 0, SSL3_RT_ALERT,
-		    s->s3->alert_fragment, 2);
-
-		ssl_info_callback(s, SSL_CB_READ_ALERT,
-		    (alert_level << 8) | alert_descr);
-
-		if (alert_level == SSL3_AL_WARNING) {
-			s->s3->warn_alert = alert_descr;
-			if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
-				s->internal->shutdown |= SSL_RECEIVED_SHUTDOWN;
-				return (0);
-			}
-			/* This is a warning but we receive it if we requested
-			 * renegotiation and the peer denied it. Terminate with
-			 * a fatal alert because if application tried to
-			 * renegotiatie it presumably had a good reason and
-			 * expects it to succeed.
-			 *
-			 * In future we might have a renegotiation where we
-			 * don't care if the peer refused it where we carry on.
-			 */
-			else if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
-				al = SSL_AD_HANDSHAKE_FAILURE;
-				SSLerror(s, SSL_R_NO_RENEGOTIATION);
-				goto fatal_err;
-			}
-		} else if (alert_level == SSL3_AL_FATAL) {
-			s->internal->rwstate = SSL_NOTHING;
-			s->s3->fatal_alert = alert_descr;
-			SSLerror(s, SSL_AD_REASON_OFFSET + alert_descr);
-			ERR_asprintf_error_data("SSL alert number %d",
-			    alert_descr);
-			s->internal->shutdown |= SSL_RECEIVED_SHUTDOWN;
-			SSL_CTX_remove_session(s->ctx, s->session);
-			return (0);
-		} else {
-			al = SSL_AD_ILLEGAL_PARAMETER;
-			SSLerror(s, SSL_R_UNKNOWN_ALERT_TYPE);
-			goto fatal_err;
-		}
-
+	if (rr->type == SSL3_RT_ALERT) {
+		if ((ret = ssl3_read_alert(s)) <= 0)
+			return ret;
 		goto start;
 	}
 
