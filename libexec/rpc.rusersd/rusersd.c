@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusersd.c,v 1.21 2019/06/28 13:32:53 deraadt Exp $	*/
+/*	$OpenBSD: rusersd.c,v 1.22 2022/02/21 19:49:46 mestre Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -80,11 +80,11 @@ main(int argc, char *argv[])
 		syslog(LOG_ERR, "no such user _rusersd");
 		exit(1);
 	}
-	if (chroot("/var/empty") == -1) {
-		syslog(LOG_ERR, "cannot chdir to /var/empty.");
+
+	if (unveil("/dev", "r") == -1) {
+		syslog(LOG_ERR, "unveil /dev");
 		exit(1);
 	}
-	chdir("/");
 
 	setgroups(1, &pw->pw_gid);
 	setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid);
