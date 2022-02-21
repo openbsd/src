@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.47 2017/08/17 20:50:51 tom Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.48 2022/02/21 19:22:21 kettenis Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -171,48 +171,57 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 #endif
 }
 
+struct kmem_va_mode kv_physwait = {
+	.kv_map = &phys_map,
+	.kv_wait = 1,
+};
+
 /*
  * Map a user I/O request into kernel virtual address space.
  * Note: the pages are already locked by uvm_vslock(), so we
  * do not need to pass an access_type to pmap_enter().
  */
 void
-vmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t faddr, taddr, off;
-	paddr_t pa;
-	struct proc *p;
+	paddr_t fpa;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	p = bp->b_proc;
 	faddr = trunc_page((vaddr_t)(bp->b_saveaddr = bp->b_data));
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
-	taddr = uvm_km_valloc_wait(phys_map, len);
+	taddr = (vaddr_t)km_alloc(len, &kv_physwait, &kp_none, &kd_waitok);
 	bp->b_data = (caddr_t)(taddr + off);
-	len = atop(len);
-	while (len--) {
-		if (pmap_extract(vm_map_pmap(&p->p_vmspace->vm_map),
-		    faddr, &pa) == FALSE)
-			panic("vmapbuf: null page frame");
-		pmap_enter(vm_map_pmap(phys_map), taddr, trunc_page(pa),
-		    PROT_READ | PROT_WRITE, PMAP_WIRED);
+	/*
+	 * The region is locked, so we expect that pmap_pte() will return
+	 * non-NULL.
+	 * XXX: unwise to expect this in a multithreaded environment.
+	 * anything can happen to a pmap between the time we lock a
+	 * region, release the pmap lock, and then relock it for
+	 * the pmap_extract().
+	 *
+	 * no need to flush TLB since we expect nothing to be mapped
+	 * where we we just allocated (TLB will be flushed when our
+	 * mapping is removed).
+	 */
+	while (len) {
+		(void) pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
+		    faddr, &fpa);
+		pmap_kenter_pa(taddr, fpa, PROT_READ | PROT_WRITE);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
+		len -= PAGE_SIZE;
 	}
-	pmap_update(vm_map_pmap(phys_map));
+	pmap_update(pmap_kernel());
 }
 
 /*
  * Unmap a previously-mapped user I/O request.
  */
 void
-vunmapbuf(bp, len)
-	struct buf *bp;
-	vsize_t len;
+vunmapbuf(struct buf *bp, vsize_t len)
 {
 	vaddr_t addr, off;
 
@@ -221,9 +230,9 @@ vunmapbuf(bp, len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
-	pmap_remove(vm_map_pmap(phys_map), addr, addr + len);
-	pmap_update(vm_map_pmap(phys_map));
-	uvm_km_free_wakeup(phys_map, addr, len);
+	pmap_kremove(addr, len);
+	pmap_update(pmap_kernel());
+	km_free((void *)addr, len, &kv_physwait, &kp_none);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
