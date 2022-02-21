@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.217 2021/09/11 18:08:32 kettenis Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.218 2022/02/21 09:57:18 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1158,7 +1158,7 @@ pmap_pv_page_free(struct pool *pp, void *v)
 /*
  * main pv_entry manipulation functions:
  *   pmap_enter_pv: enter a mapping onto a pv list
- *   pmap_remove_pv: remove a mappiing from a pv list
+ *   pmap_remove_pv: remove a mapping from a pv list
  */
 
 /*
