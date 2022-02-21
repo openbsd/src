@@ -1,4 +1,4 @@
-/*	$OpenBSD: phb.c,v 1.21 2020/12/20 21:03:53 kettenis Exp $	*/
+/*	$OpenBSD: phb.c,v 1.22 2022/02/21 11:15:09 jsg Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -358,7 +358,7 @@ phb_attach(struct device *parent, struct device *self, void *aux)
 	 * physical page at address zero as mapped at 4 GB in PCI
 	 * address space.  If we fail to set up this TCE table we fall
 	 * back on using no-translate operation, which means that
-	 * devices that don't implenent 64 address lines may not
+	 * devices that don't implement 64 address lines may not
 	 * function properly.
 	 */
 	phb_setup_tce_table(sc);
