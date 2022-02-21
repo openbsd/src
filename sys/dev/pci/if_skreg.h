@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_skreg.h,v 1.63 2022/01/09 05:42:54 jsg Exp $	*/
+/*	$OpenBSD: if_skreg.h,v 1.64 2022/02/21 07:15:42 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1835,7 +1835,7 @@ struct msk_status_desc {
 #define YU_RXSTAT_MIIERR	0x00000020	/* MII error */
 #define YU_RXSTAT_BADFC		0x00000040	/* bad flow-control packet */
 #define YU_RXSTAT_GOODFC	0x00000080	/* good flow-control packet */
-#define YU_RXSTAT_RXOK		0x00000100	/* receice OK (Good packet) */
+#define YU_RXSTAT_RXOK		0x00000100	/* receive OK (Good packet) */
 #define YU_RXSTAT_BROADCAST	0x00000200	/* broadcast packet */
 #define YU_RXSTAT_MULTICAST	0x00000400	/* multicast packet */
 #define YU_RXSTAT_RUNT		0x00000800	/* undersize packet */
