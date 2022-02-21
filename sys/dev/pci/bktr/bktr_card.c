@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_card.c,v 1.15 2007/06/11 08:10:22 robert Exp $	*/
+/*	$OpenBSD: bktr_card.c,v 1.16 2022/02/21 12:18:54 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -104,7 +104,7 @@
  * the data for each type of card
  *
  * Note:
- *   these entried MUST be kept in the order defined by the CARD_XXX defines!
+ *   these entries MUST be kept in the order defined by the CARD_XXX defines!
  */
 static const struct CARDTYPE cards[] = {
 
