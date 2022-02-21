@@ -1,4 +1,4 @@
-/*	$OpenBSD: sh_machdep.c,v 1.53 2021/10/06 15:46:03 claudio Exp $	*/
+/*	$OpenBSD: sh_machdep.c,v 1.54 2022/02/21 10:51:36 jsg Exp $	*/
 /*	$NetBSD: sh3_machdep.c,v 1.59 2006/03/04 01:13:36 uwe Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ sh_cpu_init(int arch, int product)
 	/* Hardclock, RTC initialize. */
 	machine_clock_init();
 
-	/* ICU initiailze. */
+	/* ICU initialize. */
 	intc_init();
 
 	/* Exception vector. */
