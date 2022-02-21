@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$Id: vxlan_2.sh,v 1.2 2016/11/30 22:21:20 vgross Exp $
+#	$Id: vxlan_2.sh,v 1.3 2022/02/21 00:36:22 dlg Exp $
 
 
 CAPFILE=$(mktemp -t regress_vxlan.XXXXXXX)
@@ -22,6 +22,7 @@ do_ping()
 {
 	local source="$1"
 	local dest="${VXLAN_NETID}${2}"
+	$PING -q -c 1 -w 1 -V "$source" "$dest" > /dev/null # warm up arp
 	$PING -q -c 3 -w 1 -V "$source" "$dest" | grep -q ' 0.0% packet loss' && return
 	echo "Failed to ping $dest from vstack $source"
 	STATUS=1
@@ -96,7 +97,7 @@ vstack_add() {
 	$SUDO ifconfig "$vstack_pairname" rdomain "$vstack" $IFCONFIG_OPTS
 	$SUDO ifconfig "$vstack_pairname" "$AF" "${vstack_tunsrc}${PAIR_PREFX}" up
 	$SUDO ifconfig "vxlan$vstack" rdomain "$vstack" tunneldomain "$vstack" $IFCONFIG_OPTS
-	$SUDO ifconfig "vxlan$vstack" vnetid "$VNETID" tunnel "$vstack_tunsrc" "${VXLAN_TUNDST}${tundst_sufx}" up
+	$SUDO ifconfig "vxlan$vstack" vnetid "$VNETID" tunnel "$vstack_tunsrc" "${VXLAN_TUNDST}${tundst_sufx}" parent "$vstack_pairname" up
 	[[ -n $DYNAMIC ]] && $SUDO ifconfig "bridge$vstack" rdomain "$vstack" add "vxlan$vstack" $IFCONFIG_OPTS up
 }
 
