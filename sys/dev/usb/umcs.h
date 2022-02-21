@@ -1,4 +1,4 @@
-/* $OpenBSD: umcs.h,v 1.4 2022/01/09 05:43:01 jsg Exp $ */
+/* $OpenBSD: umcs.h,v 1.5 2022/02/21 12:41:39 jsg Exp $ */
 /* $NetBSD: umcs.h,v 1.1 2014/03/16 09:34:45 martin Exp $ */
 
 /*-
@@ -62,7 +62,7 @@
 #define	UMCS_CTRL3		0x0b	/* Control bits for UART 3, R/W */
 #define	UMCS_SP4		0x0c	/* Options for for UART 4, R/W */
 #define	UMCS_CTRL4		0x0d	/* Control bits for UART 4, R/W */
-#define	UMCS_PLL_DIV_M		0x0e	/* Pre-diviedr for PLL, R/W */
+#define	UMCS_PLL_DIV_M		0x0e	/* Pre-divider for PLL, R/W */
 #define	UMCS_UNKNOWN1		0x0f	/* NOT MENTIONED AND NOT USED */
 #define	UMCS_PLL_DIV_N		0x10	/* Loop divider for PLL, R/W */
 #define	UMCS_CLK_MUX		0x12	/* PLL clock & Int. ep ctrl, R/W */
