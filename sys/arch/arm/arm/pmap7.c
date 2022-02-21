@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap7.c,v 1.62 2022/02/01 19:57:28 kettenis Exp $	*/
+/*	$OpenBSD: pmap7.c,v 1.63 2022/02/21 19:15:58 kettenis Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -625,7 +625,8 @@ printf("%s: %d\n", __func__, ++nl1);
 
 	/* Allocate a L1 page table */
 	for (;;) {
-		va = uvm_km_valloc(kernel_map, L1_TABLE_SIZE);
+		va = (vaddr_t)km_alloc(L1_TABLE_SIZE, &kv_any, &kp_none,
+		    &kd_nowait);
 		if (va != 0)
 			break;
 		uvm_wait("alloc_l1_va");
@@ -686,7 +687,7 @@ pmap_free_l1(pmap_t pm)
 	uvm_pglistfree(&mlist);
 
 	/* free backing va */
-	uvm_km_free(kernel_map, (vaddr_t)l1->l1_kva, L1_TABLE_SIZE);
+	km_free(l1->l1_kva, L1_TABLE_SIZE, &kv_any, &kp_none);
 
 	free(l1, M_VMPMAP, 0);
 }
