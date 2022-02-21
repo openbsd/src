@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmu.h,v 1.2 2008/06/26 05:42:12 ray Exp $	*/
+/*	$OpenBSD: mmu.h,v 1.3 2022/02/21 12:16:55 jsg Exp $	*/
 /*	$NetBSD: mmu.h,v 1.9 2006/03/04 01:55:03 uwe Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
  *				Call after exception vector was installed.
  *
  * TLB access ops.
- *	sh_tlb_invalidate_addr	invalidate TLB entris for given
+ *	sh_tlb_invalidate_addr	invalidate TLB entries for given
  *				virtual addr with ASID.
  *	sh_tlb_invalidate_asid	invalidate TLB entries for given ASID.
  *	sh_tlb_invalidate_all	invalidate all non-wired TLB entries.
