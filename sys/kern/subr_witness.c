@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.47 2021/03/23 10:22:20 mpi Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.48 2022/02/21 14:16:49 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -677,7 +677,7 @@ witness_ddb_display_list(int(*prnt)(const char *fmt, ...),
 		if (!w->w_acquired || w->w_ddb_level > 0)
 			continue;
 
-		/* This lock has no anscestors - display its descendants. */
+		/* This lock has no ancestors - display its descendants. */
 		witness_ddb_display_descendants(prnt, w, 0);
 	}
 }
