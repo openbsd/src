@@ -62,7 +62,7 @@
 #define	VFPSCR_CC_Z		(0x40000000)	/* comparison equal */
 #define	VFPSCR_CC_C		(0x20000000)	/* comparison = > unordered */
 #define	VFPSCR_CC_V		(0x10000000)	/* comparison unordered */
-#define	VFPSCR_QC		(0x08000000)	/* saturation cululative */
+#define	VFPSCR_QC		(0x08000000)	/* cumulative saturation */
 #define	VFPSCR_DN		(0x02000000)	/* default NaN enable */
 #define	VFPSCR_FZ		(0x01000000)	/* flush to zero enabled */
 
