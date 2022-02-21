@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.45 2022/02/16 06:21:18 anton Exp $ */
+/* $OpenBSD: auixp.c,v 1.46 2022/02/21 08:50:18 jsg Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -263,7 +263,7 @@ auixp_commit_settings(void *hdl)
 		value &= ~ATI_REG_CMD_SPDF_CONFIG_MASK;
 		value |=  ATI_REG_CMD_SPDF_CONFIG_34; /* NetBSD AC'97 default */
 
-		/* XXX this is probably not necessary unless splitted XXX */
+		/* XXX this is probably not necessary unless split XXX */
 		value &= ~ATI_REG_CMD_INTERLEAVE_SPDF;
 		if (params->precision <= 16)
 			value |= ATI_REG_CMD_INTERLEAVE_SPDF;
@@ -1372,7 +1372,7 @@ auixp_enable_dma(struct auixp_softc *sc, struct auixp_dma *dma)
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
-	/* lets not stress the DMA engine more than necesssary */
+	/* lets not stress the DMA engine more than necessary */
 	value = bus_space_read_4(iot, ioh, ATI_REG_CMD);
 	if (!(value & dma->dma_enable_bit)) {
 		value |= dma->dma_enable_bit;
