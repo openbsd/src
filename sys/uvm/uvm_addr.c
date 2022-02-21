@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_addr.c,v 1.30 2021/03/20 10:24:21 mpi Exp $	*/
+/*	$OpenBSD: uvm_addr.c,v 1.31 2022/02/21 10:26:20 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Ariane van der Steldt <ariane@stack.nl>
@@ -815,7 +815,7 @@ uaddr_bestfit_insert(struct vm_map *map, struct uvm_addr_state *uaddr_p,
 	if ((rb_rv = RBT_INSERT(uaddr_free_rbtree, &uaddr->ubf_free, entry)) !=
 	    NULL) {
 		panic("%s: duplicate insertion: state %p "
-		    "interting %p, colliding with %p", __func__,
+		    "inserting %p, colliding with %p", __func__,
 		    uaddr, entry, rb_rv);
 	}
 }
