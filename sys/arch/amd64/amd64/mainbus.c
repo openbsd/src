@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.51 2021/08/31 15:52:59 patrick Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.52 2022/02/21 11:03:39 mpi Exp $	*/
 /*	$NetBSD: mainbus.c,v 1.1 2003/04/26 18:39:29 fvdl Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ void	replacemds(void);
 int	mainbus_match(struct device *, void *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach mainbus_ca = {
+const struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbus_match, mainbus_attach
 };
 

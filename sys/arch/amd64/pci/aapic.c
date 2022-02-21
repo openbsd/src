@@ -1,4 +1,4 @@
-/*	$OpenBSD: aapic.c,v 1.6 2015/03/14 03:38:46 jsg Exp $	*/
+/*	$OpenBSD: aapic.c,v 1.7 2022/02/21 11:03:39 mpi Exp $	*/
 /* 	$NetBSD: aapic.c,v 1.3 2005/01/13 23:40:01 fvdl Exp $	*/
 
 /*
@@ -31,7 +31,7 @@ struct aapic_softc {
 	struct device sc_dev;
 };
 
-struct cfattach aapic_ca = {
+const struct cfattach aapic_ca = {
 	sizeof(struct aapic_softc), aapic_match, aapic_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.154 2021/08/31 17:40:59 dv Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.155 2022/02/21 11:03:39 mpi Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -375,7 +375,7 @@ struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 				      mp_cpu_start_cleanup };
 #endif /* MULTIPROCESSOR */
 
-struct cfattach cpu_ca = {
+const struct cfattach cpu_ca = {
 	sizeof(struct cpu_softc), cpu_match, cpu_attach, NULL, cpu_activate
 };
 

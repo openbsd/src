@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.29 2018/08/25 16:09:29 kettenis Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.30 2022/02/21 11:03:39 mpi Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -225,7 +225,7 @@ ioapic_print_redir(struct ioapic_softc *sc, char *why, int pin)
 	apic_format_redir(sc->sc_pic.pic_name, why, pin, redirhi, redirlo);
 }
 
-struct cfattach ioapic_ca = {
+const struct cfattach ioapic_ca = {
 	sizeof(struct ioapic_softc), ioapic_match, ioapic_attach, NULL,
 	ioapic_activate
 };
