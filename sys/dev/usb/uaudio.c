@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.167 2022/02/16 06:23:42 anton Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.168 2022/02/21 14:21:58 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1538,7 +1538,7 @@ uaudio_process_unit(struct uaudio_softc *sc,
 
 /*
  * Try to set the unit name to the name of its destination terminal. If
- * the name is ambigus (already given to another source unit or having
+ * the name is ambiguous (already given to another source unit or having
  * multiple destinations) then return 0.
  */
 int
@@ -1564,7 +1564,7 @@ uaudio_setname_dsts(struct uaudio_softc *sc, struct uaudio_unit *u, char *name)
 
 /*
  * Try to set the unit name to the name of its source terminal. If the
- * name is ambigus (already given to another destination unit or
+ * name is ambiguous (already given to another destination unit or
  * having multiple sources) then return 0.
  */
 int
