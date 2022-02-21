@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.37 2020/06/24 22:03:42 cheloha Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.38 2022/02/21 13:51:04 jsg Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 /*
  * Copyright (c) 2009 Bret S. Lambert <blambert@openbsd.org>
@@ -709,7 +709,7 @@ sysctl_sysvmsg(int *name, u_int namelen, void *where, size_t *sizep)
 		/*
 		 * Special case #3: the previous array-based implementation
 		 * exported the array indices and userland has come to rely
-		 * upon these indices, so keep behavior consisitent.
+		 * upon these indices, so keep behavior consistent.
 		 */
 		TAILQ_FOREACH(que, &msg_queues, que_next)
 			memcpy(&info->msgids[que->que_ix], &que->msqid_ds,
