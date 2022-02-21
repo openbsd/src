@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.32 2021/07/06 09:34:07 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.33 2022/02/21 10:44:58 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.41 2006/01/21 04:24:12 uwe Exp $	*/
 
 /*-
@@ -193,7 +193,7 @@ void need_resched(struct cpu_info *);
 /*
  * Switch from P2 (uncached) back to P1 (cached).  We need to be
  * running on P2 to access cache control, memory-mapped cache and TLB
- * arrays, etc. and after touching them at least 8 instructinos are
+ * arrays, etc. and after touching them at least 8 instructions are
  * necessary before jumping to P1, so provide that padding here.
  */
 #define RUN_P1						\
