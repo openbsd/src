@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_tc.c,v 1.12 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_le_tc.c,v 1.13 2022/02/21 08:27:51 jsg Exp $	*/
 /*	$NetBSD: if_le_tc.c,v 1.12 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ le_tc_attach(struct device *parent, struct device *self, void *aux)
 
 	/*
 	 * TC lance boards have onboard SRAM buffers.  DMA
-	 * between the onbard RAM and main memory is not possible,
+	 * between the onboard RAM and main memory is not possible,
 	 * so  DMA setup is not required.
 	 */
 
