@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.88 2022/02/14 23:20:46 jsg Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.89 2022/02/21 10:38:50 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -269,7 +269,7 @@ openpic_attach(struct device *parent, struct device *self, void *aux)
 	for (irq = 0; irq < openpic_numirq; irq++)
 		openpic_write(OPENPIC_IDEST(irq), 1 << 0);
 
-	/* clear all pending interrunts */
+	/* clear all pending interrupts */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		openpic_read_irq(ci->ci_cpuid);
 		openpic_eoi(ci->ci_cpuid);
@@ -289,7 +289,7 @@ openpic_attach(struct device *parent, struct device *self, void *aux)
 	evcount_attach(&ipi_count, "ipi", &ipi_irq);
 #endif
 
-	/* clear all pending interrunts */
+	/* clear all pending interrupts */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		openpic_read_irq(0);
 		openpic_eoi(0);
