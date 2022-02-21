@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_object.c,v 1.24 2022/01/17 13:55:32 mpi Exp $	*/
+/*	$OpenBSD: uvm_object.c,v 1.25 2022/02/21 16:08:36 kn Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ uvm_obj_wire(struct uvm_object *uobj, voff_t start, voff_t end,
 
 	left = (end - start) >> PAGE_SHIFT;
 
-	rw_enter(uobj->vmobjlock, RW_WRITE);
+	rw_enter(uobj->vmobjlock, RW_WRITE | RW_DUPOK);
 	while (left) {
 
 		npages = MIN(FETCH_PAGECOUNT, left);
@@ -147,7 +147,7 @@ uvm_obj_wire(struct uvm_object *uobj, voff_t start, voff_t end,
 		if (error)
 			goto error;
 
-		rw_enter(uobj->vmobjlock, RW_WRITE);
+		rw_enter(uobj->vmobjlock, RW_WRITE | RW_DUPOK);
 		for (i = 0; i < npages; i++) {
 
 			KASSERT(pgs[i] != NULL);
@@ -197,7 +197,7 @@ uvm_obj_unwire(struct uvm_object *uobj, voff_t start, voff_t end)
 	struct vm_page *pg;
 	off_t offset;
 
-	rw_enter(uobj->vmobjlock, RW_WRITE);
+	rw_enter(uobj->vmobjlock, RW_WRITE | RW_DUPOK);
 	uvm_lock_pageq();
 	for (offset = start; offset < end; offset += PAGE_SIZE) {
 		pg = uvm_pagelookup(uobj, offset);
