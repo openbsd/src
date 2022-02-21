@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmtimer.c,v 1.14 2021/10/24 17:52:27 mpi Exp $	*/
+/*	$OpenBSD: dmtimer.c,v 1.15 2022/02/21 10:57:58 jsg Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -17,7 +17,7 @@
  */
 
 /*
- *	WARNING - this timer initializion has not been checked
+ *	WARNING - this timer initialization has not been checked
  *	to see if it will do _ANYTHING_ sane if the omap enters
  *	low power mode.
  */
