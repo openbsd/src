@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.73 2022/01/09 05:42:52 jsg Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.74 2022/02/21 12:36:21 jsg Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1065,7 +1065,7 @@ ixgb_dma_malloc(struct ixgb_softc *sc, bus_size_t size,
 	r = bus_dmamem_alloc(dma->dma_tag, size, PAGE_SIZE, 0, &dma->dma_seg,
 	    1, &dma->dma_nseg, BUS_DMA_NOWAIT);
 	if (r != 0) {
-		printf("%s: ixgb_dma_malloc: bus_dmammem_alloc failed; "
+		printf("%s: ixgb_dma_malloc: bus_dmamem_alloc failed; "
 			"size %lu, error %d\n", sc->sc_dv.dv_xname,
 			(unsigned long)size, r);
 		goto fail_1;
@@ -1074,7 +1074,7 @@ ixgb_dma_malloc(struct ixgb_softc *sc, bus_size_t size,
 	r = bus_dmamem_map(dma->dma_tag, &dma->dma_seg, dma->dma_nseg, size,
 	    &dma->dma_vaddr, BUS_DMA_NOWAIT);
 	if (r != 0) {
-		printf("%s: ixgb_dma_malloc: bus_dmammem_map failed; "
+		printf("%s: ixgb_dma_malloc: bus_dmamem_map failed; "
 			"size %lu, error %d\n", sc->sc_dv.dv_xname,
 			(unsigned long)size, r);
 		goto fail_2;
