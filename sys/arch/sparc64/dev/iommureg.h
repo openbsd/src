@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommureg.h,v 1.19 2022/01/02 05:40:06 jsg Exp $	*/
+/*	$OpenBSD: iommureg.h,v 1.20 2022/02/21 10:20:51 jsg Exp $	*/
 /*	$NetBSD: iommureg.h,v 1.6 2001/07/20 00:07:13 eeh Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  * controllers.
  */
 
-/* iommmu registers */
+/* iommu registers */
 struct iommureg {
 	volatile u_int64_t	iommu_cr;	/* IOMMU control register */
 	volatile u_int64_t	iommu_tsb;	/* IOMMU TSB base register */
