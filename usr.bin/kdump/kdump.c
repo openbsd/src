@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.145 2021/12/23 18:50:32 guenther Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.146 2022/02/22 03:31:50 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -74,6 +74,8 @@
 #include "kdump.h"
 #include "kdump_subr.h"
 #include "extern.h"
+
+#define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 
 enum {
 	TIMESTAMP_NONE,
