@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.91 2022/02/22 11:10:41 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.92 2022/02/22 13:31:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -503,7 +503,8 @@ session_set_current(struct session *s, struct winlink *wl)
 	winlink_stack_push(&s->lastw, s->curw);
 	s->curw = wl;
 	if (options_get_number(global_options, "focus-events")) {
-		window_update_focus(old->window);
+		if (old != NULL)
+			window_update_focus(old->window);
 		window_update_focus(wl->window);
 	}
 	winlink_clear_flags(wl);
