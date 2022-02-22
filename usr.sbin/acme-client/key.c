@@ -1,4 +1,4 @@
-/*	$Id: key.c,v 1.3 2021/11/18 17:26:43 tb Exp $ */
+/*	$Id: key.c,v 1.4 2022/02/22 12:36:17 tb Exp $ */
 /*
  * Copyright (c) 2019 Renaud Allard <renaud@allard.it>
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -98,7 +98,7 @@ ec_key_create(FILE *f, const char *fname)
 	/* Serialise the key to the disc in EC format */
 
 	if (!PEM_write_ECPrivateKey(f, eckey, NULL, NULL, 0, NULL, NULL)) {
-		warnx("PEM_write_ECPrivateKey");
+		warnx("%s: PEM_write_ECPrivateKey", fname);
 		goto err;
 	}
 
@@ -112,8 +112,6 @@ ec_key_create(FILE *f, const char *fname)
 		warnx("EVP_PKEY_assign_EC_KEY");
 		goto err;
 	}
-
-	warnx("%s: PEM_write_ECPrivateKey", fname);
 
 	goto out;
 
