@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.4 2022/02/22 23:24:09 tb Exp $	*/
+/*	$OpenBSD: seq.c,v 1.5 2022/02/22 23:25:44 tb Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -108,9 +108,9 @@ main(int argc, char *argv[])
 		decimal_point = locale->decimal_point;
 
 	/*
-         * Process options, but handle negative numbers separately
-         * least they trip up getopt(3).
-         */
+	 * Process options, but handle negative numbers separately
+	 * least they trip up getopt(3).
+	 */
 	while ((optind < argc) && !numeric(argv[optind]) &&
 	    (c = getopt_long(argc, argv, "+f:s:w", long_opts, NULL)) != -1) {
 
@@ -149,7 +149,7 @@ main(int argc, char *argv[])
 
 	if (argc > 1)
 		first = e_atof(argv[0]);
-	
+
 	if (argc > 2) {
 		incr = e_atof(argv[1]);
 		/* Plan 9/GNU don't do zero */
@@ -171,7 +171,7 @@ main(int argc, char *argv[])
 		if (!valid_format(fmt))
 			errx(1, "invalid format string: `%s'", fmt);
 		/*
-	         * XXX to be bug for bug compatible with Plan 9 add a
+		 * XXX to be bug for bug compatible with Plan 9 add a
 		 * newline if none found at the end of the format string.
 		 */
 	} else
