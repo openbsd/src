@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.225 2022/02/22 03:34:51 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.226 2022/02/22 17:05:51 deraadt Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 #ifndef _SYS_SYSCTL_H_
 #define	_SYS_SYSCTL_H_
 
+#include <sys/syslimits.h>
 #include <uvm/uvmexp.h>
 
 /*
@@ -355,7 +356,7 @@ struct ctlname {
  * binary compatibility can be preserved.
  */
 #define	KI_NGROUPS	16
-#define	KI_MAXCOMLEN	24	/* extra for 8 byte alignment */
+#define	KI_MAXCOMLEN	_MAXCOMLEN	/* includes NUL */
 #define	KI_WMESGLEN	8
 #define	KI_MAXLOGNAME	32
 #define	KI_EMULNAMELEN	8
