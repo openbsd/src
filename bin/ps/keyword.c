@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.50 2022/02/22 17:30:07 deraadt Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.51 2022/02/22 17:42:52 millert Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -33,7 +33,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
-#include <sys/sysctl.h>
 
 #include <err.h>
 #include <errno.h>
@@ -82,6 +81,8 @@ int	utime(), stime(), ixrss(), idrss(), isrss();
 
 #define	USERLEN	8
 #define	CWDLEN	40
+#define	UCOMMLEN (sizeof(((struct kinfo_proc *)NULL)->p_comm) - 1)
+#define	WCHANLEN (sizeof(((struct kinfo_proc *)NULL)->p_wmesg) - 1)
 
 /* Bit types must match their respective entries in struct kinfo_proc */
 /* Entries must be sorted in lexical ascending order! */
@@ -180,14 +181,14 @@ VAR var[] = {
 	{"tsiz", "TSIZ", NULL, 0, tsize, 4},
 	{"tt", "TT", NULL, LJUST, tname, 3},
 	{"tty", "TTY", NULL, LJUST, longtname, 8},
-	{"ucomm", "UCOMM", NULL, LJUST, ucomm, KI_MAXCOMLEN},
+	{"ucomm", "UCOMM", NULL, LJUST, ucomm, UCOMMLEN},
 	UID("uid", "UID", pvar, POFF(p_uid)),
 	{"upr", "UPR", NULL, 0, pvar, 3, 0, POFF(p_usrpri), UINT8, "d"},
 	{"user", "USER", NULL, LJUST, euname, USERLEN},
 	{"usrpri", "", "upr"},
 	{"vsize", "", "vsz"},
 	{"vsz", "VSZ", NULL, 0, vsize, 5},
-	{"wchan", "WCHAN", NULL, LJUST, wchan, KI_WMESGLEN - 1},
+	{"wchan", "WCHAN", NULL, LJUST, wchan, WCHANLEN},
 	{"xstat", "XSTAT", NULL, 0, pvar, 4, 0, POFF(p_xstat), UINT16, "x"},
 	{""},
 };

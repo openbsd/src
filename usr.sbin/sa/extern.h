@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.7 2022/02/22 17:22:29 deraadt Exp $ */
+/*	$OpenBSD: extern.h,v 1.8 2022/02/22 17:42:52 millert Exp $ */
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -30,13 +30,14 @@
  *
  */
 
-#include <sys/sysctl.h>
 #include <db.h>
+
+#define CI_COMMLEN	(sizeof(((struct acct *)NULL)->ac_comm))
 
 /* structures */
 
 struct cmdinfo {
-	char		ci_comm[KI_MAXCOMLEN+1];	/* command name (+ '*') */
+	char		ci_comm[CI_COMMLEN+1];	/* command name (+ '*') */
 	uid_t		ci_uid;			/* user id */
 	pid_t		ci_pid;			/* pid */
 	uint64_t	ci_calls;		/* number of calls */
