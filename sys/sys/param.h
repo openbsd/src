@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.136 2022/02/20 17:11:05 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.137 2022/02/22 17:04:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -59,7 +59,7 @@
  */
 #include <sys/syslimits.h>
 
-#define	MAXCOMLEN	16		/* max command name remembered */
+#define	MAXCOMLEN	_MAXCOMLEN-1	/* max command name remembered, without NUL */
 #define	MAXINTERP	128		/* max interpreter file name length */
 #define	MAXLOGNAME	LOGIN_NAME_MAX	/* max login name length w/ NUL */
 #define	MAXUPRC		CHILD_MAX	/* max simultaneous processes */
