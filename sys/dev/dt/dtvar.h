@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.11 2022/01/09 05:42:37 jsg Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.12 2022/02/22 17:26:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -24,14 +24,14 @@
 #include <sys/time.h>
 
 /*
- * Length of provider/probe/function names, including terminating '\0'.
+ * Length of provider/probe/function names, including NUL.
  */
 #define DTNAMESIZE	16
 
 /*
- * Length of process name, keep in sync with MAXCOMLEN.
+ * Length of process name, including NUL.
  */
-#define DTMAXCOMLEN	16
+#define DTMAXCOMLEN	_MAXCOMLEN
 
 /*
  * Maximum number of arguments passed to a function.
@@ -52,7 +52,7 @@ struct dt_evt {
 	 * Recorded if the corresponding flag is set.
 	 */
 	struct stacktrace 	dtev_kstack;	/* kernel stack frame */
-	char			dtev_comm[DTMAXCOMLEN+1]; /* current pr. name */
+	char			dtev_comm[DTMAXCOMLEN]; /* current pr. name */
 	union {
 		register_t		E_entry[DTMAXFUNCARGS];
 		struct {

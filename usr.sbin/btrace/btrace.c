@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.61 2021/12/07 22:17:03 guenther Exp $ */
+/*	$OpenBSD: btrace.c,v 1.62 2022/02/22 17:26:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -492,7 +492,7 @@ rules_setup(int fd)
 
 	/* Initialize "fake" event for BEGIN/END */
 	bt_devt.dtev_pbn = -1;
-	memcpy(&bt_devt.dtev_comm, getprogname(), sizeof(bt_devt.dtev_comm));
+	strlcpy(bt_devt.dtev_comm, getprogname(), sizeof(bt_devt.dtev_comm));
 	bt_devt.dtev_pid = getpid();
 	bt_devt.dtev_tid = getthrid();
 	clock_gettime(CLOCK_REALTIME, &bt_devt.dtev_tsp);

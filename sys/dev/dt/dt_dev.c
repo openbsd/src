@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.20 2022/01/20 07:49:25 visa Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.21 2022/02/22 17:26:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -658,7 +658,7 @@ dt_pcb_ring_get(struct dt_pcb *dp, int profiling)
 	nanotime(&dtev->dtev_tsp);
 
 	if (ISSET(dp->dp_evtflags, DTEVT_EXECNAME))
-		memcpy(dtev->dtev_comm, p->p_p->ps_comm, DTMAXCOMLEN - 1);
+		strlcpy(dtev->dtev_comm, p->p_p->ps_comm, sizeof(dtev->dtev_comm));
 
 	if (ISSET(dp->dp_evtflags, DTEVT_KSTACK|DTEVT_USTACK)) {
 		if (profiling)
