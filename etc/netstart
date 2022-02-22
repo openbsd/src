@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.216 2021/09/02 19:38:20 bluhm Exp $
+#	$OpenBSD: netstart,v 1.217 2022/02/22 06:44:40 dlg Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -331,7 +331,7 @@ vifscreate
 
 # Configure all the non-loopback interfaces which we know about, but
 # do not start interfaces which must be delayed. Refer to hostname.if(5)
-ifmstart "" "aggr trunk svlan vlan carp pppoe tun tap gif etherip gre egre pflow wg"
+ifmstart "" "aggr trunk svlan vlan carp pppoe tun tap gif etherip gre egre nvgre eoip vxlan pflow wg"
 
 # The aggr and trunk interfaces need to come up first in this list.
 # The (s)vlan interfaces need to come up after trunk.
@@ -360,7 +360,7 @@ else
 fi
 
 # Configure interfaces that rely on routing
-ifmstart "tun tap gif etherip gre egre pflow wg"
+ifmstart "tun tap gif etherip gre egre nvgre eoip vxlan pflow wg"
 
 if [[ $ip6kernel == YES ]]; then
 	# Ensure IPv6 Duplicate Address Detection (DAD) is completed.
