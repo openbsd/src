@@ -430,6 +430,7 @@
 ./usr/share/man/man1/sdiff.1
 ./usr/share/man/man1/sed.1
 ./usr/share/man/man1/sendbug.1
+./usr/share/man/man1/seq.1
 ./usr/share/man/man1/sftp.1
 ./usr/share/man/man1/sh.1
 ./usr/share/man/man1/shar.1

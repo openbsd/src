@@ -619,6 +619,7 @@
 ./usr/bin/sdiff
 ./usr/bin/sed
 ./usr/bin/sendbug
+./usr/bin/seq
 ./usr/bin/sftp
 ./usr/bin/shar
 ./usr/bin/showmount
