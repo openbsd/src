@@ -1,4 +1,4 @@
-/*	$OpenBSD: keyword.c,v 1.49 2022/01/05 04:10:36 guenther Exp $	*/
+/*	$OpenBSD: keyword.c,v 1.50 2022/02/22 17:30:07 deraadt Exp $	*/
 /*	$NetBSD: keyword.c,v 1.12.6.1 1996/05/30 21:25:13 cgd Exp $	*/
 
 /*-
@@ -30,9 +30,10 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXCOMLEN */
+#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/sysctl.h>
 
 #include <err.h>
 #include <errno.h>
@@ -179,7 +180,7 @@ VAR var[] = {
 	{"tsiz", "TSIZ", NULL, 0, tsize, 4},
 	{"tt", "TT", NULL, LJUST, tname, 3},
 	{"tty", "TTY", NULL, LJUST, longtname, 8},
-	{"ucomm", "UCOMM", NULL, LJUST, ucomm, MAXCOMLEN},
+	{"ucomm", "UCOMM", NULL, LJUST, ucomm, KI_MAXCOMLEN},
 	UID("uid", "UID", pvar, POFF(p_uid)),
 	{"upr", "UPR", NULL, 0, pvar, 3, 0, POFF(p_usrpri), UINT8, "d"},
 	{"user", "USER", NULL, LJUST, euname, USERLEN},
