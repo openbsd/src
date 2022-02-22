@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_file2.c,v 1.56 2021/09/10 00:02:43 deraadt Exp $	*/
+/*	$OpenBSD: kvm_file2.c,v 1.57 2022/02/22 17:35:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
@@ -54,7 +54,6 @@
 
 #define __need_process
 
-#include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/uio.h>

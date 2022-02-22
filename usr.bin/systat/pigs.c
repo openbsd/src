@@ -1,4 +1,4 @@
-/*	$OpenBSD: pigs.c,v 1.32 2019/06/28 13:35:04 deraadt Exp $	*/
+/*	$OpenBSD: pigs.c,v 1.33 2022/02/22 17:35:01 deraadt Exp $	*/
 /*	$NetBSD: pigs.c,v 1.3 1995/04/29 05:54:50 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
  * Pigs display from Bill Reeves at Lucasfilm
  */
 
-#include <sys/param.h>	/* MAXCOMLEN */
+#include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/resource.h>

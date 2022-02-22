@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.15 2021/09/01 15:54:40 deraadt Exp $	*/
+/*	$OpenBSD: subr.c,v 1.16 2022/02/22 17:35:01 deraadt Exp $	*/
 /*	$NetBSD: subr.c,v 1.6 1995/08/31 23:01:45 jtc Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXCOMLEN */
+#include <sys/types.h>
 #include <sys/time.h>
 #include <sys/signal.h>
 #include <sys/ktrace.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.66 2019/06/28 13:35:05 deraadt Exp $	*/
+/*	$OpenBSD: w.c,v 1.67 2022/02/22 17:35:01 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -35,7 +35,6 @@
  * This program is similar to the systat command on Tenex/Tops 10/20
  *
  */
-#include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>

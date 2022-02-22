@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.93 2022/02/22 03:33:12 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.94 2022/02/22 17:35:01 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -34,7 +34,6 @@
  * Cursed vmstat -- from Robert Elz.
  */
 
-#include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/types.h>
 #include <sys/namei.h>
 #include <sys/signal.h>

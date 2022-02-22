@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.37 2021/09/17 15:13:50 deraadt Exp $
+# $OpenBSD: mksubr,v 1.38 2022/02/22 17:35:01 deraadt Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -259,7 +259,6 @@ _EOF_
 # C start
 
 cat <<_EOF_
-#include <sys/param.h>	 /* MAXCOMLEN */
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/event.h>

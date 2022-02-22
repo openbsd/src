@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.152 2022/02/20 00:09:29 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.153 2022/02/22 17:35:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -30,7 +30,6 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/time.h>
 #include <sys/signal.h>
 #include <sys/proc.h>

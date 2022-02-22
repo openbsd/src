@@ -1,4 +1,4 @@
-/* $OpenBSD: procname.c,v 1.19 2021/12/07 00:40:03 deraadt Exp $ */
+/* $OpenBSD: procname.c,v 1.20 2022/02/22 17:35:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -16,7 +16,6 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/param.h>	/* MAXCOMLEN */
 #include <sys/types.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
