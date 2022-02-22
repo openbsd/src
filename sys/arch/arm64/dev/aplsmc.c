@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.7 2022/02/13 11:58:53 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.8 2022/02/22 20:37:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -467,7 +467,7 @@ aplsmc_set_pin(void *cookie, uint32_t *cells, int val)
 	KASSERT(pin < 256);
 
 	key |= (digits[(pin >> 0) & 0xf] << 0);
-	key |= (digits[(pin >> 8) & 0xf] << 8);
+	key |= (digits[(pin >> 4) & 0xf] << 8);
 
 	if (flags & GPIO_ACTIVE_LOW)
 		val = !val;
