@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.267 2022/01/04 06:32:40 yasuoka Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.268 2022/02/22 01:35:41 guenther Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -94,7 +94,6 @@
 #include <netinet/icmp6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
-#include <netinet6/ip6protosw.h>
 
 #include <crypto/idgen.h>
 

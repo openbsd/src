@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.106 2021/10/24 22:59:47 bluhm Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.107 2022/02/22 01:35:41 guenther Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -93,7 +93,6 @@
 
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
-#include <netinet6/ip6protosw.h>
 
 #include "gif.h"
 #if NGIF > 0

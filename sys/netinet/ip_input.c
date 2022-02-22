@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.365 2022/01/25 04:04:40 gnezdo Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.366 2022/02/22 01:35:40 guenther Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -64,7 +64,6 @@
 #include <net/if_types.h>
 
 #ifdef INET6
-#include <netinet6/ip6protosw.h>
 #include <netinet6/ip6_var.h>
 #endif
 
