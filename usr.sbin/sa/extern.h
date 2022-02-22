@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 2019/01/17 06:21:46 tedu Exp $ */
+/*	$OpenBSD: extern.h,v 1.7 2022/02/22 17:22:29 deraadt Exp $ */
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -30,21 +30,22 @@
  *
  */
 
-#include <sys/param.h>	/* MAXCOMLEN */
+#include <sys/sysctl.h>
 #include <db.h>
 
 /* structures */
 
 struct cmdinfo {
-	char		ci_comm[MAXCOMLEN+2];	/* command name (+ '*') */
+	char		ci_comm[KI_MAXCOMLEN+1];	/* command name (+ '*') */
 	uid_t		ci_uid;			/* user id */
+	pid_t		ci_pid;			/* pid */
 	uint64_t	ci_calls;		/* number of calls */
 	uint64_t	ci_etime;		/* elapsed time */
 	uint64_t	ci_utime;		/* user time */
 	uint64_t	ci_stime;		/* system time */
 	uint64_t	ci_mem;			/* memory use */
 	uint64_t	ci_io;			/* number of disk i/o ops */
-	u_int		ci_flags;		/* flags; see below */
+	uint32_t	ci_flags;		/* flags; see below */
 };
 #define	CI_UNPRINTABLE	0x0001			/* unprintable chars in name */
 

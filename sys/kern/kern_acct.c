@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_acct.c,v 1.45 2021/12/13 16:37:37 deraadt Exp $	*/
+/*	$OpenBSD: kern_acct.c,v 1.46 2022/02/22 17:22:29 deraadt Exp $	*/
 /*	$NetBSD: kern_acct.c,v 1.42 1996/02/04 02:15:12 christos Exp $	*/
 
 /*-
@@ -234,6 +234,9 @@ acct_process(struct proc *p)
 
 	/* (8) The boolean flags that tell how process terminated or misbehaved. */
 	acct.ac_flag = pr->ps_acflag;
+
+	/* Extensions */
+	acct.ac_pid = pr->ps_pid;
 
 	/*
 	 * Now, just write the accounting information to the file.

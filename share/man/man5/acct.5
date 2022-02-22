@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acct.5,v 1.25 2021/12/13 16:37:37 deraadt Exp $
+.\"	$OpenBSD: acct.5,v 1.26 2022/02/22 17:22:29 deraadt Exp $
 .\"	$NetBSD: acct.5,v 1.4 1995/10/22 01:40:10 ghudson Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)acct.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: December 13 2021 $
+.Dd $Mdocdate: February 22 2022 $
 .Dt ACCT 5
 .Os
 .Sh NAME
@@ -57,16 +57,17 @@ to the accounting file.
 typedef u_int16_t comp_t;
 
 struct acct {
-	char	  ac_comm[10];	/* command name */
+	char	  ac_comm[24];	/* command name, incl NUL */
 	comp_t	  ac_utime;	/* user time */
 	comp_t	  ac_stime;	/* system time */
 	comp_t	  ac_etime;	/* elapsed time */
+	comp_t	  ac_io;	/* count of IO blocks */
 	time_t	  ac_btime;	/* starting time */
 	uid_t	  ac_uid;	/* user id */
 	gid_t	  ac_gid;	/* group id */
-	u_int16_t ac_mem;	/* average memory usage */
-	comp_t	  ac_io;	/* count of IO blocks */
+	u_int32_t ac_mem;	/* average memory usage */
 	dev_t	  ac_tty;	/* controlling tty, or -1 */
+	pid_t	  ac_pid;	/* process id */
 
 #define	AFORK	0x01		/* fork'd but not exec'd */
 #define	AMAP	0x04		/* system call or stack mapping violation */
@@ -75,7 +76,7 @@ struct acct {
 #define	APLEDGE	0x20		/* killed due to pledge violation */
 #define	ATRAP	0x40		/* memory access violation */
 #define	AUNVEIL	0x80		/* unveil access violation */
-	u_int8_t  ac_flag;	/* accounting flags */
+	u_int32_t ac_flag;	/* accounting flags */
 };
 
 /*

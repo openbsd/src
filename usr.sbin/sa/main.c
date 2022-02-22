@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.17 2021/10/24 21:24:19 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.18 2022/02/22 17:22:29 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -339,6 +339,7 @@ acct_load(char *pn, int wr)
 		ci.ci_uid = ac.ac_uid;
 		ci.ci_mem = ac.ac_mem;
 		ci.ci_io = decode_comp_t(ac.ac_io) / AHZ;
+		ci.ci_pid = ac.ac_pid;
 
 		if (!uflag) {
 			/* and enter it into the usracct and pacct databases */
@@ -347,10 +348,10 @@ acct_load(char *pn, int wr)
 			if (sflag || (mflag && !qflag))
 				usracct_add(&ci);
 		} else if (!qflag)
-			printf("%6u %12.2f cpu %12lluk mem %12llu io %s\n",
+			printf("%6u %12.2f cpu %12lluk mem %12llu io pid %u %s\n",
 			    ci.ci_uid,
 			    (ci.ci_utime + ci.ci_stime) / (double) AHZ,
-			    ci.ci_mem, ci.ci_io, ci.ci_comm);
+			    ci.ci_mem, ci.ci_io, ci.ci_pid, ci.ci_comm);
 	}
 
 	/* finally, return the file descriptor for possible truncation */
