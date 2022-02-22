@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.196 2022/02/16 06:23:42 anton Exp $	*/
+/*	$OpenBSD: audio.c,v 1.197 2022/02/22 07:34:06 visa Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -170,32 +170,40 @@ struct cfdriver audio_cd = {
 
 void filt_audioctlrdetach(struct knote *);
 int filt_audioctlread(struct knote *, long);
+int filt_audiomodify(struct kevent *, struct knote *);
+int filt_audioprocess(struct knote *, struct kevent *);
 
 const struct filterops audioctlread_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_audioctlrdetach,
 	.f_event	= filt_audioctlread,
+	.f_modify	= filt_audiomodify,
+	.f_process	= filt_audioprocess,
 };
 
 void filt_audiowdetach(struct knote *);
 int filt_audiowrite(struct knote *, long);
 
 const struct filterops audiowrite_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_audiowdetach,
 	.f_event	= filt_audiowrite,
+	.f_modify	= filt_audiomodify,
+	.f_process	= filt_audioprocess,
 };
 
 void filt_audiordetach(struct knote *);
 int filt_audioread(struct knote *, long);
 
 const struct filterops audioread_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_audiordetach,
 	.f_event	= filt_audioread,
+	.f_modify	= filt_audiomodify,
+	.f_process	= filt_audioprocess,
 };
 
 /*
@@ -308,11 +316,12 @@ audio_buf_wakeup(void *addr)
 int
 audio_buf_init(struct audio_softc *sc, struct audio_buf *buf, int dir)
 {
+	klist_init_mutex(&buf->sel.si_note, &audio_lock);
 	buf->softintr = softintr_establish(IPL_SOFTAUDIO,
 	    audio_buf_wakeup, buf);
 	if (buf->softintr == NULL) {
 		printf("%s: can't establish softintr\n", DEVNAME(sc));
-		return ENOMEM;
+		goto bad;
 	}
 	if (sc->ops->round_buffersize) {
 		buf->datalen = sc->ops->round_buffersize(sc->arg,
@@ -326,9 +335,12 @@ audio_buf_init(struct audio_softc *sc, struct audio_buf *buf, int dir)
 		buf->data = malloc(buf->datalen, M_DEVBUF, M_WAITOK);
 	if (buf->data == NULL) {
 		softintr_disestablish(buf->softintr);
-		return ENOMEM;
+		goto bad;
 	}
 	return 0;
+bad:
+	klist_free(&buf->sel.si_note);
+	return ENOMEM;
 }
 
 void
@@ -339,6 +351,7 @@ audio_buf_done(struct audio_softc *sc, struct audio_buf *buf)
 	else
 		free(buf->data, M_DEVBUF, buf->datalen);
 	softintr_disestablish(buf->softintr);
+	klist_free(&buf->sel.si_note);
 }
 
 /*
@@ -1260,9 +1273,11 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	klist_init_mutex(&sc->mix_sel.si_note, &audio_lock);
 	sc->mix_softintr = softintr_establish(IPL_SOFTAUDIO,
 	    audio_mixer_wakeup, sc);
 	if (sc->mix_softintr == NULL) {
+		klist_free(&sc->mix_sel.si_note);
 		audio_buf_done(sc, &sc->rec);
 		audio_buf_done(sc, &sc->play);
 		sc->ops = 0;
@@ -1455,6 +1470,7 @@ audio_detach(struct device *self, int flags)
 
 	/* free resources */
 	softintr_disestablish(sc->mix_softintr);
+	klist_free(&sc->mix_sel.si_note);
 	free(sc->mix_evbuf, M_DEVBUF, sc->mix_nent * sizeof(struct mixer_ev));
 	free(sc->mix_ents, M_DEVBUF, sc->mix_nent * sizeof(struct mixer_ctrl));
 	audio_buf_done(sc, &sc->play);
@@ -2298,9 +2314,7 @@ audiokqfilter(dev_t dev, struct knote *kn)
 	}
 	kn->kn_hook = sc;
 
-	mtx_enter(&audio_lock);
-	klist_insert_locked(klist, kn);
-	mtx_leave(&audio_lock);
+	klist_insert(klist, kn);
 done:
 	device_unref(&sc->dev);
 	return error;
@@ -2311,24 +2325,17 @@ filt_audiordetach(struct knote *kn)
 {
 	struct audio_softc *sc = kn->kn_hook;
 
-	mtx_enter(&audio_lock);
-	klist_remove_locked(&sc->rec.sel.si_note, kn);
-	mtx_leave(&audio_lock);
+	klist_remove(&sc->rec.sel.si_note, kn);
 }
 
 int
 filt_audioread(struct knote *kn, long hint)
 {
 	struct audio_softc *sc = kn->kn_hook;
-	int retval = 0;
 
-	if ((hint & NOTE_SUBMIT) == 0)
-		mtx_enter(&audio_lock);
-	retval = (sc->mode & AUMODE_RECORD) && (sc->rec.used > 0);
-	if ((hint & NOTE_SUBMIT) == 0)
-		mtx_leave(&audio_lock);
+	MUTEX_ASSERT_LOCKED(&audio_lock);
 
-	return retval;
+	return (sc->mode & AUMODE_RECORD) && (sc->rec.used > 0);
 }
 
 void
@@ -2336,24 +2343,17 @@ filt_audiowdetach(struct knote *kn)
 {
 	struct audio_softc *sc = kn->kn_hook;
 
-	mtx_enter(&audio_lock);
-	klist_remove_locked(&sc->play.sel.si_note, kn);
-	mtx_leave(&audio_lock);
+	klist_remove(&sc->play.sel.si_note, kn);
 }
 
 int
 filt_audiowrite(struct knote *kn, long hint)
 {
 	struct audio_softc *sc = kn->kn_hook;
-	int retval = 0;
 
-	if ((hint & NOTE_SUBMIT) == 0)
-		mtx_enter(&audio_lock);
-	retval = (sc->mode & AUMODE_PLAY) && (sc->play.used < sc->play.len);
-	if ((hint & NOTE_SUBMIT) == 0)
-		mtx_leave(&audio_lock);
+	MUTEX_ASSERT_LOCKED(&audio_lock);
 
-	return retval;
+	return (sc->mode & AUMODE_PLAY) && (sc->play.used < sc->play.len);
 }
 
 void
@@ -2361,24 +2361,41 @@ filt_audioctlrdetach(struct knote *kn)
 {
 	struct audio_softc *sc = kn->kn_hook;
 
-	mtx_enter(&audio_lock);
-	klist_remove_locked(&sc->mix_sel.si_note, kn);
-	mtx_leave(&audio_lock);
+	klist_remove(&sc->mix_sel.si_note, kn);
 }
 
 int
 filt_audioctlread(struct knote *kn, long hint)
 {
 	struct audio_softc *sc = kn->kn_hook;
-	int retval = 0;
 
-	if ((hint & NOTE_SUBMIT) == 0)
-		mtx_enter(&audio_lock);
-	retval = (sc->mix_isopen && sc->mix_pending);
-	if ((hint & NOTE_SUBMIT) == 0)
-		mtx_leave(&audio_lock);
+	MUTEX_ASSERT_LOCKED(&audio_lock);
 
-	return retval;
+	return (sc->mix_isopen && sc->mix_pending);
+}
+
+int
+filt_audiomodify(struct kevent *kev, struct knote *kn)
+{
+	int active;
+
+	mtx_enter(&audio_lock);
+	active = knote_modify(kev, kn);
+	mtx_leave(&audio_lock);
+
+	return active;
+}
+
+int
+filt_audioprocess(struct knote *kn, struct kevent *kev)
+{
+	int active;
+
+	mtx_enter(&audio_lock);
+	active = knote_process(kn, kev);
+	mtx_leave(&audio_lock);
+
+	return active;
 }
 
 #if NWSKBD > 0
