@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi_opal.c,v 1.1 2021/01/23 12:10:08 kettenis Exp $	*/
+/*	$OpenBSD: ipmi_opal.c,v 1.2 2022/02/22 13:34:23 visa Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -109,7 +109,7 @@ ipmi_opal_buildmsg(struct ipmi_cmd *c)
 	struct opal_ipmi_msg *msg = (struct opal_ipmi_msg *)sc->sc_buf;
 
 	msg->version = OPAL_IPMI_MSG_FORMAT_VERSION_1;
-	msg->netfn = NETFN_LUN(c->c_netfn, c->c_rslun);;
+	msg->netfn = NETFN_LUN(c->c_netfn, c->c_rslun);
 	msg->cmd = c->c_cmd;
 	if (c->c_txlen && c->c_data)
 		memcpy(msg->data, c->c_data, c->c_txlen);

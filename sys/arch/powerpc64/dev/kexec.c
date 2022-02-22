@@ -1,4 +1,4 @@
-/*	$OpenBSD: kexec.c,v 1.6 2021/11/27 06:14:10 deraadt Exp $	*/
+/*	$OpenBSD: kexec.c,v 1.7 2022/02/22 13:34:23 visa Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -94,7 +94,7 @@ kexec_kexec(struct kexec_args *kargs, struct proc *p)
 	vaddr_t start = VM_MAX_ADDRESS;
 	vaddr_t end = 0;
 	paddr_t start_pa, initrd_pa;
-	vsize_t align = 0;;
+	vsize_t align = 0;
 	caddr_t addr = NULL;
 	caddr_t symaddr = NULL;
 	size_t phsize, shsize, size, symsize;

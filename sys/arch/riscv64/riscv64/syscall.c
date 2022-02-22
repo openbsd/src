@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.11 2021/12/09 00:26:11 guenther Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.12 2022/02/22 13:34:23 visa Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -116,7 +116,7 @@ void
 child_return(void *arg)
 {
 	struct proc *p = arg;
-	struct trapframe *frame = process_frame(p);;
+	struct trapframe *frame = process_frame(p);
 
 	frame->tf_a[0] = 0;
 	frame->tf_a[1] = 1;
