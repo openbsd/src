@@ -1,4 +1,4 @@
-/*	$Id: key.c,v 1.5 2022/02/22 12:38:30 tb Exp $ */
+/*	$Id: key.c,v 1.6 2022/02/22 13:45:09 tb Exp $ */
 /*
  * Copyright (c) 2019 Renaud Allard <renaud@allard.it>
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -116,10 +116,10 @@ ec_key_create(FILE *f, const char *fname)
 	goto out;
 
 err:
-	EC_KEY_free(eckey);
 	EVP_PKEY_free(pkey);
 	pkey = NULL;
 out:
+	EC_KEY_free(eckey);
 	return pkey;
 }
 
