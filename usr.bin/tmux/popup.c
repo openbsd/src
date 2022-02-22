@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.45 2022/02/16 18:55:05 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.46 2022/02/22 11:01:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -690,7 +690,7 @@ popup_display(int flags, enum box_lines lines, struct cmdq_item *item, u_int px,
 	}
 	pd->border_cell.attr = 0;
 
-	screen_init(&pd->s, sx - 2, sy - 2, 0);
+	screen_init(&pd->s, jx, jy, 0);
 	colour_palette_init(&pd->palette);
 	colour_palette_from_option(&pd->palette, global_w_options);
 
