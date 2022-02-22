@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.1 2022/02/22 15:15:34 millert Exp $	*/
+/*	$OpenBSD: seq.c,v 1.2 2022/02/22 16:08:59 rob Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -411,7 +411,7 @@ static __dead void
 usage(int error)
 {
 	fprintf(stderr,
-	    "usage: %s [-vw] [-f format] [-s string] [first [incr]] last\n",
+	    "usage: %s [-w] [-f format] [-s string] [first [incr]] last\n",
 	    getprogname());
 	exit(error);
 }
