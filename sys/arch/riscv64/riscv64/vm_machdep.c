@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.7 2021/06/30 22:20:56 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.8 2022/02/22 07:47:46 visa Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -92,8 +92,9 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	tf->tf_sstatus &= ~(SSTATUS_SPP); /* Enter user mode. */
 
 	sf = (struct switchframe *)tf - 1;
-	sf->sf_s[0] = (uint64_t)func;
-	sf->sf_s[1] = (uint64_t)arg;
+	sf->sf_s[0] = 0;		/* Terminate chain of call frames. */
+	sf->sf_s[1] = (uint64_t)func;
+	sf->sf_s[2] = (uint64_t)arg;
 	sf->sf_ra = (u_int64_t)&proc_trampoline;
 	pcb->pcb_sp = (uint64_t)sf;
 }
