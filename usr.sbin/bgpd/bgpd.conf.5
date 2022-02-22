@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.215 2021/09/01 15:06:47 job Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.216 2022/02/22 12:08:22 job Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 1 2021 $
+.Dd $Mdocdate: February 22 2022 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -424,6 +424,11 @@ One single
 may be defined, against which
 .Xr bgpd 8
 will validate the origin of each prefix.
+The
+.Ic roa-set
+is merged with the tables received via
+.Ic rtr
+sessions.
 .Pp
 A set definition can span multiple lines, and an optional comma is allowed
 between elements.
@@ -496,9 +501,8 @@ prefix-set as64496set { 192.0.2.0/24 prefixlen >= 26,
 .Xc
 The
 .Ic roa-set
-holds a collection of Validated
-.Em Route Origin Authorization
-Payloads (VRP).
+holds a collection of
+.Em Validated ROA Payloads Pq VRPs .
 Each received prefix is checked against the
 .Ic roa-set ,
 and the Origin Validation State (OVS) is set.
@@ -516,8 +520,22 @@ roa-set { 192.0.2.0/23 maxlen 24 source-as 64511
 The
 .Ic rtr
 block specifies a
-.Em RPKI to Router Protocol
+.Em RPKI to Router Pq RTR
 session.
+.Em RTR
+sessions provide another means to load
+.Em VRP
+sets into
+.Xr bgpd 8 .
+Changes propagated via the RTR protocol do not need a config reload and are
+immediatly applied.
+The union of all
+.Em VRP
+sets received via
+.Ic rtr
+sessions and the entries in the
+.Ic roa-set
+is used to validate the orgin of routes.
 The rtr session properties are as follows:
 .Pp
 .Bl -tag -width Ds -compact
