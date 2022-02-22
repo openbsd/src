@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.3 2022/02/22 16:14:38 rob Exp $	*/
+/*	$OpenBSD: seq.c,v 1.4 2022/02/22 23:24:09 tb Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -195,8 +195,9 @@ main(int argc, char *argv[])
 	 * loop held true due to a rounding error and we still need to print
 	 * 'last'.
 	 */
-	asprintf(&cur_print, fmt, cur);
-	asprintf(&last_print, fmt, last);
+	if (asprintf(&cur_print, fmt, cur) == -1 ||
+	    asprintf(&last_print, fmt, last) == -1)
+		err(1, "asprintf");
 	if (strcmp(cur_print, last_print) == 0 && cur != last_shown_value) {
 		if (cur != first)
 		    fputs(sep, stdout);
