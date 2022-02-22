@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.277 2022/01/18 10:48:33 dlg Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.278 2022/02/22 01:15:02 guenther Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -80,7 +80,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>

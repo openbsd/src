@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.401 2022/02/07 11:03:34 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.402 2022/02/22 01:15:02 guenther Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -108,7 +108,6 @@
 #include <sys/socketvar.h>
 #include <sys/timeout.h>
 #include <sys/domain.h>
-#include <sys/protosw.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>

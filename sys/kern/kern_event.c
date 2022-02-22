@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.182 2022/02/13 13:05:51 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.183 2022/02/22 01:15:01 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -45,7 +45,6 @@
 #include <sys/eventvar.h>
 #include <sys/ktrace.h>
 #include <sys/pool.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>

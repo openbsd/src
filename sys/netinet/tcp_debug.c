@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_debug.c,v 1.29 2019/04/05 14:42:06 bluhm Exp $	*/
+/*	$OpenBSD: tcp_debug.c,v 1.30 2022/02/22 01:15:02 guenther Exp $	*/
 /*	$NetBSD: tcp_debug.c,v 1.10 1996/02/13 23:43:36 christos Exp $	*/
 
 /*
@@ -80,7 +80,6 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
-#include <sys/protosw.h>
 
 #include <net/route.h>
 

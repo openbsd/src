@@ -1,4 +1,4 @@
-/*	$OpenBSD: dest6.c,v 1.17 2017/04/14 20:46:31 bluhm Exp $	*/
+/*	$OpenBSD: dest6.c,v 1.18 2022/02/22 01:15:02 guenther Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -33,8 +33,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 #include <sys/time.h>

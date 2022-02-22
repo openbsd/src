@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.237 2022/01/02 22:36:04 jsg Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.238 2022/02/22 01:15:02 guenther Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -75,7 +75,6 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <sys/domain.h>
 
 #include <net/if.h>
 #include <net/if_var.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.31 2021/03/11 11:16:58 jsg Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.32 2022/02/22 01:15:01 guenther Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -38,7 +38,6 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/buf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
 #include <sys/ioctl.h>

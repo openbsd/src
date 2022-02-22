@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.140 2022/01/09 05:42:54 jsg Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.141 2022/02/22 01:15:01 guenther Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -63,7 +63,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>

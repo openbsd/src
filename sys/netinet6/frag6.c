@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.86 2019/08/26 18:47:53 bluhm Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.87 2022/02/22 01:15:02 guenther Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -33,8 +33,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 #include <sys/time.h>

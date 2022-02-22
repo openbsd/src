@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.76 2017/04/11 14:43:49 dhill Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.77 2022/02/22 01:15:01 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -39,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>

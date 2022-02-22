@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.105 2022/01/02 22:36:04 jsg Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.106 2022/02/22 01:15:02 guenther Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -35,8 +35,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
 #include <sys/time.h>

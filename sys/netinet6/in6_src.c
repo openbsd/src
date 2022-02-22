@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_src.c,v 1.85 2021/03/10 10:21:49 jsg Exp $	*/
+/*	$OpenBSD: in6_src.c,v 1.86 2022/02/22 01:15:02 guenther Exp $	*/
 /*	$KAME: in6_src.c,v 1.36 2001/02/06 04:08:17 itojun Exp $	*/
 
 /*
@@ -64,7 +64,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/ioctl.h>

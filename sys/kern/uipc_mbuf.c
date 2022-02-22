@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.282 2022/02/14 04:33:18 dlg Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.283 2022/02/22 01:15:01 guenther Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -81,8 +81,6 @@
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-#include <sys/domain.h>
-#include <sys/protosw.h>
 #include <sys/pool.h>
 #include <sys/percpu.h>
 #include <sys/sysctl.h>

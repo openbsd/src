@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.138 2022/01/11 03:13:59 jsg Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.139 2022/02/22 01:15:02 guenther Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/vnode.h>
-#include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/signalvar.h>
 #include <sys/socket.h>

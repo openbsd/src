@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.46 2015/11/24 17:11:40 mpi Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.47 2022/02/22 01:15:01 guenther Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -39,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>

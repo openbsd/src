@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.21 2022/02/20 19:59:29 tb Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.22 2022/02/22 01:15:02 guenther Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -30,7 +30,6 @@
 #include <sys/percpu.h>
 #include <sys/ioctl.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
 
 #include <net/if.h>
 #include <net/if_var.h>

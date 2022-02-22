@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.234 2022/02/16 02:22:39 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.235 2022/02/22 01:15:02 guenther Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
 #include <sys/sigio.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>

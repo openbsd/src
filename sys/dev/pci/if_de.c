@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.138 2022/01/09 05:42:50 jsg Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.139 2022/02/22 01:15:01 guenther Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>

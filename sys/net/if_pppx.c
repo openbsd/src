@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.113 2021/12/30 14:25:39 anton Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.114 2022/02/22 01:15:02 guenther Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -53,7 +53,6 @@
 #include <sys/pool.h>
 #include <sys/mbuf.h>
 #include <sys/errno.h>
-#include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/vnode.h>
