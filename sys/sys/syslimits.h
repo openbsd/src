@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslimits.h,v 1.14 2020/04/02 18:00:00 deraadt Exp $	*/
+/*	$OpenBSD: syslimits.h,v 1.15 2022/02/22 16:58:08 deraadt Exp $	*/
 /*	$NetBSD: syslimits.h,v 1.12 1995/10/05 05:26:19 thorpej Exp $	*/
 
 /*
@@ -75,3 +75,5 @@
 #if __POSIX_VISIBLE >= 200112
 #define HOST_NAME_MAX		255	/* max hostname length w/o NUL */
 #endif
+
+#define _MAXCOMLEN		24	/* includes NUL */
