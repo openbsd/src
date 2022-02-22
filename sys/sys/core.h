@@ -1,4 +1,4 @@
-/*	$OpenBSD: core.h,v 1.7 2016/09/17 06:09:08 guenther Exp $	*/
+/*	$OpenBSD: core.h,v 1.8 2022/02/22 17:14:13 deraadt Exp $	*/
 /*	$NetBSD: core.h,v 1.4 1994/10/29 08:20:14 cgd Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ struct core {
 	u_int16_t c_hdrsize;		/* Size of this header (machdep algn) */
 	u_int16_t c_seghdrsize;		/* Size of a segment header */
 	u_int32_t c_nseg;		/* # of core segments */
-	char	c_name[MAXCOMLEN+1];	/* Copy of p->p_comm */
+	char	c_name[_MAXCOMLEN];	/* Copy of p->p_comm, incl NUL */
 	u_int32_t c_signo;		/* Killing signal */
 	u_long	c_ucode;		/* Hmm ? */
 	u_long	c_cpusize;		/* Size of machine dependent segment */

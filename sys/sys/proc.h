@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.326 2022/02/15 23:16:00 rob Exp $	*/
+/*	$OpenBSD: proc.h,v 1.327 2022/02/22 17:14:14 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -212,7 +212,7 @@ struct process {
 	struct	plimit *ps_limit;	/* [m,R] Process limits. */
 	struct	pgrp *ps_pgrp;		/* Pointer to process group. */
 
-	char	ps_comm[MAXCOMLEN+1];
+	char	ps_comm[_MAXCOMLEN];	/* command name, incl NUL */
 
 	vaddr_t	ps_strings;		/* User pointers to argv/env */
 	vaddr_t ps_timekeep; 		/* User pointer to timekeep */

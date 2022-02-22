@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.40 2021/03/10 10:21:47 jsg Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.41 2022/02/22 17:14:14 deraadt Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
  */
 
 #include <sys/uio.h>
+#include <sys/syslimits.h>
 
 /*
  * operations to ktrace system call  (KTROP(op))
@@ -54,7 +55,7 @@ struct ktr_header {
 	pid_t	ktr_pid;		/* process id */
 	pid_t	ktr_tid;		/* thread id */
 	struct	timespec ktr_time;	/* timestamp */
-	char	ktr_comm[MAXCOMLEN+1];	/* command name */
+	char	ktr_comm[_MAXCOMLEN];	/* command name, incl NUL */
 	size_t	ktr_len;		/* length of buf */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.229 2022/02/07 19:30:48 guenther Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.230 2022/02/22 17:14:14 deraadt Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -508,8 +508,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	/* set command name & other accounting info */
 	memset(pr->ps_comm, 0, sizeof(pr->ps_comm));
-	len = min(nid.ni_cnd.cn_namelen, MAXCOMLEN);
-	memcpy(pr->ps_comm, nid.ni_cnd.cn_nameptr, len);
+	strlcpy(pr->ps_comm, nid.ni_cnd.cn_nameptr, sizeof(pr->ps_comm));
 	pr->ps_acflag &= ~AFORK;
 
 	/* record proc's vnode, for use by sysctl */
