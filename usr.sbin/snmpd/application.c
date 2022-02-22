@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.2 2022/01/30 13:27:39 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.3 2022/02/22 15:59:13 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -610,7 +610,7 @@ appl_processpdu(struct snmp_message *statereference, const char *ctxname,
 	size_t i, varbindlen = 0, repeaterlen;
 
 	/* pdu must be ASN.1 validated in snmpe.c */
-	(void) ober_scanf_elements(pdu, "{iiie", &requestid, &nonrepeaters,
+	(void) ober_scanf_elements(pdu, "{diie", &requestid, &nonrepeaters,
 	    &maxrepetitions, &varbindlist);
 
 	/* RFC 3413, section 3.2, processPDU, item 5, final bullet */
