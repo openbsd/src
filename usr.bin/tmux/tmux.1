@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.877 2022/02/15 13:11:29 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.878 2022/02/22 10:53:34 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 15 2022 $
+.Dd $Mdocdate: February 22 2022 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4589,6 +4589,11 @@ Run when a session is renamed.
 Run when a window is linked into a session.
 .It window-renamed
 Run when a window is renamed.
+.It window-resized
+Run when a window is resized.
+This may be after the
+.Ar client-resized
+hook is run.
 .It window-unlinked
 Run when a window is unlinked from a session.
 .El
