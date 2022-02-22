@@ -1,4 +1,4 @@
-/*	$Id: key.c,v 1.4 2022/02/22 12:36:17 tb Exp $ */
+/*	$Id: key.c,v 1.5 2022/02/22 12:38:30 tb Exp $ */
 /*
  * Copyright (c) 2019 Renaud Allard <renaud@allard.it>
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -90,7 +90,7 @@ ec_key_create(FILE *f, const char *fname)
 		warnx("EC_KEY_generate_key");
 		goto err;
 	}
-	
+
 	/* set OPENSSL_EC_NAMED_CURVE to be able to load the key */
 
 	EC_KEY_set_asn1_flag(eckey, OPENSSL_EC_NAMED_CURVE);
@@ -104,7 +104,7 @@ ec_key_create(FILE *f, const char *fname)
 
 	/* Convert the EC key into a PKEY structure */
 
-	if ((pkey=EVP_PKEY_new()) == NULL) {
+	if ((pkey = EVP_PKEY_new()) == NULL) {
 		warnx("EVP_PKEY_new");
 		goto err;
 	}
