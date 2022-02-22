@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmstat.c,v 1.92 2022/02/20 00:09:29 deraadt Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.93 2022/02/22 03:33:12 deraadt Exp $	*/
 /*	$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@
 
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
+#define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
 
 static struct Info {
 	struct	cpustats cpustats;
