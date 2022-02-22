@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.4 2021/07/09 20:59:51 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.5 2022/02/22 07:46:04 visa Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -43,6 +43,9 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 
+extern unsigned char	cpu_exception_handler_supervisor[];
+extern unsigned char	cpu_exception_handler_user[];
+
 db_regs_t ddb_regs;
 
 #define INKERNEL(va)	(((vaddr_t)(va)) & (1ULL << 63))
@@ -51,7 +54,7 @@ void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
 {
-	vaddr_t		frame, lastframe, ra, lastra, sp;
+	vaddr_t		frame, lastframe, ra, subr;
 	char		c, *cp = modif;
 	db_expr_t	offset;
 	Elf_Sym *	sym;
@@ -68,60 +71,73 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 	}
 
 	if (!have_addr) {
-		sp = ddb_regs.tf_sp;
 		ra = ddb_regs.tf_ra;
-		lastra = ddb_regs.tf_ra;
 		frame = ddb_regs.tf_s[0];
 	} else {
-		sp = addr;
-		db_read_bytes(sp - 16, sizeof(vaddr_t), (char *)&frame);
-		db_read_bytes(sp - 8, sizeof(vaddr_t), (char *)&ra);
-		lastra = 0;
+		db_read_bytes(addr - 16, sizeof(vaddr_t), (char *)&frame);
+		db_read_bytes(addr - 8, sizeof(vaddr_t), (char *)&ra);
 	}
 
-	while (count-- && frame != 0) {
-		lastframe = frame;
-
-		sym = db_search_symbol(lastra, DB_STGY_ANY, &offset);
-		db_symbol_values(sym, &name, NULL);
+	while (count != 0 && frame != 0) {
+		if (INKERNEL(frame)) {
+			sym = db_search_symbol(ra, DB_STGY_ANY, &offset);
+			db_symbol_values(sym, &name, NULL);
+		} else {
+			sym = NULL;
+			name = NULL;
+		}
 
 		if (name == NULL || strcmp(name, "end") == 0) {
-			(*pr)("%llx at 0x%lx", lastra, ra - 4);
+			(*pr)("%llx() at 0x%lx", ra, ra);
 		} else {
 			(*pr)("%s() at ", name);
-			db_printsym(ra - 4, DB_STGY_PROC, pr);
+			db_printsym(ra, DB_STGY_PROC, pr);
 		}
 		(*pr)("\n");
 
-		// can we detect traps ?
-		db_read_bytes(frame - 16, sizeof(vaddr_t), (char *)&frame);
-		if (frame == 0)
+		if ((frame & 0x7) != 0) {
+			(*pr)("bad frame pointer: 0x%lx\n", frame);
 			break;
-		lastra = ra;
-		db_read_bytes(frame - 8, sizeof(vaddr_t), (char *)&ra);
-
-#if 0
-		if (name != NULL) {
-			if ((strcmp (name, "handle_el0_irq") == 0) ||
-			    (strcmp (name, "handle_el1_irq") == 0)) {
-				(*pr)("--- interrupt ---\n");
-			} else if (
-			    (strcmp (name, "handle_el0_sync") == 0) ||
-			    (strcmp (name, "handle_el1_sync") == 0)) {
-				(*pr)("--- trap ---\n");
-			}
 		}
-#endif
+
+		subr = 0;
+		if (sym != NULL)
+			subr = ra - (vaddr_t)offset;
+
+		lastframe = frame;
+		if (subr == (vaddr_t)cpu_exception_handler_supervisor ||
+		    subr == (vaddr_t)cpu_exception_handler_user) {
+			struct trapframe *tf = (struct trapframe *)frame;
+
+			db_read_bytes((vaddr_t)&tf->tf_ra, sizeof(ra),
+			    (char *)&ra);
+			db_read_bytes((vaddr_t)&tf->tf_s[0], sizeof(frame),
+			    (char *)&frame);
+		} else {
+			db_read_bytes(frame - 16, sizeof(frame),
+			    (char *)&frame);
+			if (frame == 0)
+				break;
+			if ((frame & 0x7) != 0) {
+				(*pr)("bad frame pointer: 0x%lx\n", frame);
+				break;
+			}
+			db_read_bytes(frame - 8, sizeof(ra), (char *)&ra);
+		}
+
 		if (INKERNEL(frame)) {
 			if (frame <= lastframe) {
-				(*pr)("Bad frame pointer: 0x%lx\n", frame);
+				(*pr)("bad frame pointer: 0x%lx\n", frame);
 				break;
 			}
 		} else {
-			if (kernel_only)
+			if (kernel_only) {
+				(*pr)("end of kernel\n");
 				break;
+			}
 		}
 
 		--count;
 	}
+	(*pr)("end trace frame: 0x%lx, count: %d\n", frame, count);
 }
