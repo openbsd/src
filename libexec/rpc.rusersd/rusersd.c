@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusersd.c,v 1.22 2022/02/21 19:49:46 mestre Exp $	*/
+/*	$OpenBSD: rusersd.c,v 1.23 2022/02/22 08:20:35 mestre Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -83,6 +83,10 @@ main(int argc, char *argv[])
 
 	if (unveil("/dev", "r") == -1) {
 		syslog(LOG_ERR, "unveil /dev");
+		exit(1);
+	}
+	if (unveil(NULL, NULL) == -1) {
+		syslog(LOG_ERR, "unveil");
 		exit(1);
 	}
 
