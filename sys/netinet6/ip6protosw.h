@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6protosw.h,v 1.15 2022/01/02 22:36:05 jsg Exp $	*/
+/*	$OpenBSD: ip6protosw.h,v 1.16 2022/02/22 01:02:57 guenther Exp $	*/
 /*	$KAME: ip6protosw.h,v 1.22 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -108,10 +108,5 @@ struct ip6ctlparam {
 	void *ip6c_cmdarg;		/* control command dependent data */
 	u_int8_t ip6c_nxt;		/* final next header field */
 };
-
-#ifdef _KERNEL
-extern u_char ip6_protox[];
-extern const struct protosw inet6sw[];
-#endif
 
 #endif /* !_NETINET6_IP6PROTOSW_H_ */
