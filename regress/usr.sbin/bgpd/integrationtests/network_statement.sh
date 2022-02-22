@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: network_statement.sh,v 1.5 2021/10/11 05:45:43 anton Exp $
+#	$OpenBSD: network_statement.sh,v 1.6 2022/02/22 06:04:46 anton Exp $
 
 set -e
 
@@ -47,7 +47,7 @@ wait_until() {
 	local _i=0
 
 	cat >"$TMP"
-	while [ "$_i" -lt 4 ]; do
+	while [ "$_i" -lt 8 ]; do
 		sh -x "$TMP" && return 0
 		sleep 0.5
 		_i="$((_i + 1))"
