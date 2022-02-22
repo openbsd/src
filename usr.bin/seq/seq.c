@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.2 2022/02/22 16:08:59 rob Exp $	*/
+/*	$OpenBSD: seq.c,v 1.3 2022/02/22 16:14:38 rob Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -98,6 +98,9 @@ main(int argc, char *argv[])
 	const char *term = "\n";
 	char *cur_print, *last_print;
 	char pad = ZERO;
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	/* Determine the locale's decimal point. */
 	locale = localeconv();
