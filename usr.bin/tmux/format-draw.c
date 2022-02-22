@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.25 2021/10/26 12:22:23 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.26 2022/02/22 11:07:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1154,13 +1154,13 @@ format_trim_right(const char *expanded, u_int limit)
 	while (*cp != '\0') {
 		if (*cp == '#') {
 			end = format_leading_hashes(cp, &n, &leading_width);
+			copy_width = leading_width;
 			if (width <= skip) {
-				if (skip - width >= leading_width)
+				if (skip - width >= copy_width)
 					copy_width = 0;
 				else
 					copy_width -= (skip - width);
-			} else
-				copy_width = leading_width;
+			}
 			if (copy_width != 0) {
 				if (n == 1)
 					*out++ = '#';
