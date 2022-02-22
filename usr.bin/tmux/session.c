@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.90 2021/09/17 07:20:49 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.91 2022/02/22 11:10:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -29,7 +29,7 @@
 #include "tmux.h"
 
 struct sessions		sessions;
-static u_int		next_session_id;
+u_int			next_session_id;
 struct session_groups	session_groups = RB_INITIALIZER(&session_groups);
 
 static void	session_free(int, short, void *);

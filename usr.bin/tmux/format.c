@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.299 2021/10/25 21:21:16 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.300 2022/02/22 11:10:41 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1650,6 +1650,13 @@ format_cb_mouse_y(struct format_tree *ft)
 	return (NULL);
 }
 
+/* Callback for next_session_id. */
+static void *
+format_cb_next_session_id(__unused struct format_tree *ft)
+{
+	return (format_printf("$%u", next_session_id));
+}
+
 /* Callback for origin_flag. */
 static void *
 format_cb_origin_flag(struct format_tree *ft)
@@ -2706,6 +2713,9 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "mouse_y", FORMAT_TABLE_STRING,
 	  format_cb_mouse_y
+	},
+	{ "next_session_id", FORMAT_TABLE_STRING,
+	  format_cb_next_session_id
 	},
 	{ "origin_flag", FORMAT_TABLE_STRING,
 	  format_cb_origin_flag
