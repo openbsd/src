@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2022/01/19 11:05:36 martijn Exp $
+# $OpenBSD: Makefile,v 1.4 2022/02/23 10:28:05 martijn Exp $
 
 SNMP?=			/usr/bin/snmp
 SNMPD?=			/usr/sbin/snmpd -f ${.OBJDIR}/snmpd.conf
@@ -17,6 +17,9 @@ REGRESS_TARGETS=
 REGRESS_CLEANUP=	stop
 REGRESS_SKIP_TARGETS=
 CLEANFILES=
+
+IFIDX!=			ifconfig egress | awk '/index/{print $$2}'
+IFLLADDR!=		ifconfig egress | awk '/lladdr/{gsub(":", " ", $$2); print toupper($$2)}'
 
 CLEANFILES+=		snmpd.conf
 snmpd.conf: Makefile
@@ -546,11 +549,13 @@ output_oid:
 
 REGRESS_TARGETS+=	output_hexstring
 CLEANFILES+=		output_hexstring.res output_hexstring.exp
+.if ${IFIDX} == ""
+REGRESS_SKIP_TARGETS+=	output_hexstring
+.endif
 output_hexstring:
 # (Ab)use table for known unknown Hex-string. In this case: lladdr
-	printf "ifPhysAddress.1 = Hex-STRING: " > $@.exp
-	ifconfig $$(${SNMPGET} -v2c -cpublic 127.0.0.1 ifDescr.1 | awk '{print $$4}') | awk '/lladdr/{gsub(":", " ", $$2); print toupper($$2)}' >> $@.exp
-	${SNMPGET} -v2c -cpublic 127.0.0.1 ifPhysAddress.1 > $@.res
+	printf "ifPhysAddress.%d = Hex-STRING: %s\n" "${IFIDX}" "${IFLLADDR}" > $@.exp
+	${SNMPGET} -v2c -cpublic 127.0.0.1 ifPhysAddress.${IFIDX} > $@.res
 	diff -up $@.exp $@.res
 
 REGRESS_TARGETS+=	output_ipstring
@@ -592,11 +597,13 @@ output_quiettype_ipstring:
 
 REGRESS_TARGETS+=	output_quiettype_hexstring
 CLEANFILES+=		output_quiettype_hexstring.res output_quiettype_hexstring.exp
+.if ${IFIDX} == ""
+REGRESS_SKIP_TARGETS+=	output_quiettype_hexstring
+.endif
 output_quiettype_hexstring:
 # (Ab)use table for known unknown Hex-string. In this case: lladdr
-	printf "ifPhysAddress.1 = " > $@.exp
-	ifconfig $$(${SNMPGET} -v2c -cpublic -OQ 127.0.0.1 ifDescr.1 | awk '{print $$3}') | awk '/lladdr/{gsub(":", " ", $$2); print toupper($$2)}' >> $@.exp
-	${SNMPGET} -v2c -cpublic -OQ 127.0.0.1 ifPhysAddress.1 > $@.res
+	printf "ifPhysAddress.%d = %s\n" "${IFIDX}" "${IFLLADDR}" > $@.exp
+	${SNMPGET} -v2c -cpublic -OQ 127.0.0.1 ifPhysAddress.${IFIDX} > $@.res
 	diff -up $@.exp $@.res
 
 REGRESS_TARGETS+=	output_varbind_string
@@ -631,11 +638,13 @@ output_varbind_ipstring:
 
 REGRESS_TARGETS+=	output_varbind_hexstring
 CLEANFILES+=		output_varbind_hexstring.res output_varbind_hexstring.exp
+.if ${IFIDX} == ""
+REGRESS_SKIP_TARGETS+=	output_varbind_hexstring
+.endif
 output_varbind_hexstring:
 # (Ab)use table for known unknown Hex-string. In this case: lladdr
-	printf "Hex-STRING: " > $@.exp
-	ifconfig $$(${SNMPGET} -v2c -cpublic -Ov 127.0.0.1 ifDescr.1 | awk '{print $$2}') | awk '/lladdr/{gsub(":", " ", $$2); print toupper($$2)}' >> $@.exp
-	${SNMPGET} -v2c -cpublic -Ov 127.0.0.1 ifPhysAddress.1 > $@.res
+	printf "Hex-STRING: %s\n" "${IFLLADDR}" > $@.exp
+	${SNMPGET} -v2c -cpublic -Ov 127.0.0.1 ifPhysAddress.${IFIDX} > $@.res
 	diff -up $@.exp $@.res
 
 REGRESS_TARGETS+=	output_quiettype_varbind
@@ -647,15 +656,18 @@ output_quiettype_varbind:
 
 REGRESS_TARGETS+=	output_ascii
 CLEANFILES+=		output_ascii.res output_ascii.exp
+.if ${IFIDX} == ""
+REGRESS_SKIP_TARGETS+=	output_ascii
+.endif
 output_ascii:
 # Not a full test, since a mac-address can contain all kind of weirdness,
 # so no guarantee that we handle everything. But I don't know a better
 # alternative at this moment.
 # Abuse $@.res for intermediate variable for easier cleanup.
-	printf 'ifPhysAddress.1 = STRING: "' > $@.exp
-	${SNMPGET} -v2c -cpublic -OvQx 127.0.0.1 ifPhysAddress.1 | tr ' ' '\n' | while read byte; do printf "\x$${byte}" | tr -c '[:print:]' '.'; done >> $@.exp
+	printf 'ifPhysAddress.%d = STRING: "' "${IFIDX}" > $@.exp
+	printf "%s\n" "${IFLLADDR}" | tr ' ' '\n' | while read byte; do printf "\x$${byte}" | tr -c '[:print:]' '.'; done >> $@.exp
 	printf '"\n' >> $@.exp
-	${SNMPGET} -v2c -cpublic -Oa 127.0.0.1 ifPhysAddress.1 > $@.res
+	${SNMPGET} -v2c -cpublic -Oa 127.0.0.1 ifPhysAddress.${IFIDX} > $@.res
 	diff -up $@.exp $@.res
 
 REGRESS_TARGETS+=	output_fulloid_mib
@@ -718,11 +730,13 @@ output_quiet_ipstring:
 
 REGRESS_TARGETS+=	output_quiet_hexstring
 CLEANFILES+=		output_quiet_hexstring.res output_quiet_hexstring.exp
+.if ${IFIDX} == ""
+REGRESS_SKIP_TARGETS+=	output_quiet_hexstring
+.endif
 output_quiet_hexstring:
 # (Ab)use table for known unknown Hex-string. In this case: lladdr
-	printf "ifPhysAddress.1 " > $@.exp
-	${SNMPGET} -v2c -cpublic -OQv 127.0.0.1 ifPhysAddress.1 >> $@.exp
-	${SNMPGET} -v2c -cpublic -Oq 127.0.0.1 ifPhysAddress.1 > $@.res
+	printf "ifPhysAddress.%d %s\n" "${IFIDX}" "${IFLLADDR}" > $@.exp
+	${SNMPGET} -v2c -cpublic -Oq 127.0.0.1 ifPhysAddress.${IFIDX} > $@.res
 	diff -up $@.exp $@.res
 
 REGRESS_TARGETS+=	output_hex
