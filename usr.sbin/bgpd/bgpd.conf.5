@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.216 2022/02/22 12:08:22 job Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.217 2022/02/23 11:20:35 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 22 2022 $
+.Dd $Mdocdate: February 23 2022 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -237,8 +237,8 @@ The default is 90 seconds.
 The minimum acceptable holdtime in seconds.
 This value must be at least 3.
 .Pp
-.It Ic listen on Ar address
-Specify the local IP address for
+.It Ic listen on Ar address Op Ic port Ar port
+Specify the local IP address and optional port for
 .Xr bgpd 8
 to listen on.
 The default is to listen on all local addresses on the current default
@@ -1078,6 +1078,9 @@ aes-128-cbc <key>
 .Pp
 Keys must be given in hexadecimal format.
 After changing settings a session needs to be reset to use the new keys.
+The
+.Ic ipsec
+flows only work with session using the default port 179.
 .Pp
 .It Xo
 .Ic ipsec
@@ -1113,6 +1116,9 @@ and
 .Xr bgpd 8
 daemons on both sides, the session should be established.
 After changing settings a session needs to be reset to use the new keys.
+The
+.Ic ipsec
+flows only work with session using the default port 179.
 .Pp
 .It Ic local-address Ar address
 .It Ic no local-address
@@ -1183,6 +1189,11 @@ statement defines the maximum hops the neighbor may be away.
 .Pp
 .It Ic passive
 Do not attempt to actively open a TCP connection to the neighbor system.
+.Pp
+.It Ic port Ar port
+Connect to the peer using
+.Ar port
+instead of the default BGP port 179.
 .Pp
 .It Xo
 .Ic reject Ic as-set

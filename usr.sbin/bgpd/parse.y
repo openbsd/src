@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.421 2022/02/22 17:24:12 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.422 2022/02/23 11:20:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -575,7 +575,7 @@ roa_set_l	: prefixset_item SOURCEAS as4number_any	expires		{
 
 rtr		: RTR address	{
 			currtr = get_rtr(&$2);
-			currtr->remote_port = 323;
+			currtr->remote_port = RTR_PORT;
 			if (insert_rtr(currtr) == -1) {
 				free(currtr);
 				YYERROR;
@@ -584,7 +584,7 @@ rtr		: RTR address	{
 		}
 		| RTR address	{
 			currtr = get_rtr(&$2);
-			currtr->remote_port = 323;
+			currtr->remote_port = RTR_PORT;
 		} '{' optnl rtropt_l optnl '}' {
 			if (insert_rtr(currtr) == -1) {
 				free(currtr);
@@ -618,7 +618,7 @@ rtropt		: DESCR STRING		{
 		}
 		| PORT NUMBER {
 			if ($2 < 1 || $2 > USHRT_MAX) {
-				yyerror("local-port must be between %u and %u",
+				yyerror("port must be between %u and %u",
 				    1, USHRT_MAX);
 				YYERROR;
 			}
@@ -671,6 +671,26 @@ conf_main	: AS as4number		{
 			la->fd = -1;
 			la->reconf = RECONF_REINIT;
 			sa = addr2sa(&$3, BGP_PORT, &la->sa_len);
+			memcpy(&la->sa, sa, la->sa_len);
+			TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
+		}
+		| LISTEN ON address PORT NUMBER	{
+			struct listen_addr	*la;
+			struct sockaddr		*sa;
+
+			if ($5 < 1 || $5 > USHRT_MAX) {
+				yyerror("port must be between %u and %u",
+				    1, USHRT_MAX);
+				YYERROR;
+			}
+
+			if ((la = calloc(1, sizeof(struct listen_addr))) ==
+			    NULL)
+				fatal("parse conf_main listen on calloc");
+
+			la->fd = -1;
+			la->reconf = RECONF_REINIT;
+			sa = addr2sa(&$3, $5, &la->sa_len);
 			memcpy(&la->sa, sa, la->sa_len);
 			TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
 		}
@@ -1769,6 +1789,14 @@ peeropts	: REMOTEAS as4number	{
 				curpeer->conf.flags |= PEERFLAG_NO_AS_SET;
 			else
 				curpeer->conf.flags &= ~PEERFLAG_NO_AS_SET;
+		}
+		| PORT NUMBER {
+			if ($2 < 1 || $2 > USHRT_MAX) {
+				yyerror("port must be between %u and %u",
+				    1, USHRT_MAX);
+				YYERROR;
+			}
+			curpeer->conf.remote_port = $2;
 		}
 		| RDE EVALUATE STRING {
 			if (!strcmp($3, "all"))
@@ -3497,28 +3525,55 @@ errors:
 
 		free_config(conf);
 		return (NULL);
-	} else {
-		/* update clusterid in case it was not set explicitly */
-		if ((conf->flags & BGPD_FLAG_REFLECTOR) && conf->clusterid == 0)
-			conf->clusterid = conf->bgpid;
-
-		/*
-		 * Concatenate filter list and static group and peer filtersets
-		 * together. Static group sets come first then peer sets
-		 * last normal filter rules.
-		 */
-		TAILQ_CONCAT(conf->filters, groupfilter_l, entry);
-		TAILQ_CONCAT(conf->filters, peerfilter_l, entry);
-		TAILQ_CONCAT(conf->filters, filter_l, entry);
-
-		optimize_filters(conf->filters);
-
-		free(filter_l);
-		free(peerfilter_l);
-		free(groupfilter_l);
-
-		return (conf);
 	}
+
+	/* Create default listeners if none where specified. */
+	if (TAILQ_EMPTY(conf->listen_addrs)) {
+		struct listen_addr *la;
+
+		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
+			fatal("setup_listeners calloc");
+		la->fd = -1;
+		la->flags = DEFAULT_LISTENER;
+		la->reconf = RECONF_REINIT;
+		la->sa_len = sizeof(struct sockaddr_in);
+		((struct sockaddr_in *)&la->sa)->sin_family = AF_INET;
+		((struct sockaddr_in *)&la->sa)->sin_addr.s_addr =
+		    htonl(INADDR_ANY);
+		((struct sockaddr_in *)&la->sa)->sin_port = htons(BGP_PORT);
+		TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
+
+		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
+			fatal("setup_listeners calloc");
+		la->fd = -1;
+		la->flags = DEFAULT_LISTENER;
+		la->reconf = RECONF_REINIT;
+		la->sa_len = sizeof(struct sockaddr_in6);
+		((struct sockaddr_in6 *)&la->sa)->sin6_family = AF_INET6;
+		((struct sockaddr_in6 *)&la->sa)->sin6_port = htons(BGP_PORT);
+		TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
+	}
+
+	/* update clusterid in case it was not set explicitly */
+	if ((conf->flags & BGPD_FLAG_REFLECTOR) && conf->clusterid == 0)
+		conf->clusterid = conf->bgpid;
+
+	/*
+	 * Concatenate filter list and static group and peer filtersets
+	 * together. Static group sets come first then peer sets
+	 * last normal filter rules.
+	 */
+	TAILQ_CONCAT(conf->filters, groupfilter_l, entry);
+	TAILQ_CONCAT(conf->filters, peerfilter_l, entry);
+	TAILQ_CONCAT(conf->filters, filter_l, entry);
+
+	optimize_filters(conf->filters);
+
+	free(filter_l);
+	free(peerfilter_l);
+	free(groupfilter_l);
+
+	return (conf);
 }
 
 int
@@ -3968,6 +4023,7 @@ alloc_peer(void)
 	p->conf.capabilities.as4byte = 1;
 	p->conf.local_as = conf->as;
 	p->conf.local_short_as = conf->short_as;
+	p->conf.remote_port = BGP_PORT;
 
 	if (conf->flags & BGPD_FLAG_DECISION_TRANS_AS)
 		p->conf.flags |= PEERFLAG_TRANS_AS;
@@ -3988,12 +4044,6 @@ new_peer(void)
 
 	if (curgroup != NULL) {
 		memcpy(p, curgroup, sizeof(struct peer));
-		if (strlcpy(p->conf.group, curgroup->conf.group,
-		    sizeof(p->conf.group)) >= sizeof(p->conf.group))
-			fatalx("new_peer group strlcpy");
-		if (strlcpy(p->conf.descr, curgroup->conf.descr,
-		    sizeof(p->conf.descr)) >= sizeof(p->conf.descr))
-			fatalx("new_peer descr strlcpy");
 		p->conf.groupid = curgroup->conf.id;
 	}
 	return (p);

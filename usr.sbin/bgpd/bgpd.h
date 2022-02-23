@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.419 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.420 2022/02/23 11:20:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -36,6 +36,7 @@
 
 #define	BGP_VERSION			4
 #define	BGP_PORT			179
+#define	RTR_PORT			323
 #define	CONFFILE			"/etc/bgpd.conf"
 #define	BGPD_USER			"_bgpd"
 #define	PEER_DESCR_LEN			32
@@ -402,6 +403,7 @@ struct peer_config {
 	uint16_t		 holdtime;
 	uint16_t		 min_holdtime;
 	uint16_t		 local_short_as;
+	uint16_t		 remote_port;
 	uint8_t			 template;
 	uint8_t			 remote_masklen;
 	uint8_t			 ebgp;		/* 0 = ibgp else ebgp */

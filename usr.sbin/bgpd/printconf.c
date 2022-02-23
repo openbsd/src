@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.149 2022/02/06 09:51:19 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.150 2022/02/23 11:20:35 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -401,9 +401,17 @@ print_mainconf(struct bgpd_config *conf)
 	if (conf->log & BGPD_LOG_UPDATES)
 		printf("log updates\n");
 
-	TAILQ_FOREACH(la, conf->listen_addrs, entry)
-		printf("listen on %s\n",
+	TAILQ_FOREACH(la, conf->listen_addrs, entry) {
+		struct bgpd_addr addr;
+		uint16_t port;
+
+		sa2addr((struct sockaddr *)&la->sa, &addr, &port);
+		printf("listen on %s",
 		    log_sockaddr((struct sockaddr *)&la->sa, la->sa_len));
+		if (port != BGP_PORT)
+			printf(" port %hu", port);
+		printf("\n");
+	}
 
 	if (conf->flags & BGPD_FLAG_NEXTHOP_BGP)
 		printf("nexthop qualify via bgp\n");
@@ -633,6 +641,8 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 	if (p->local_addr_v6.aid)
 		printf("%s\tlocal-address %s\n", c,
 		   log_addr(&p->local_addr_v6));
+	if (p->remote_port != BGP_PORT)
+		printf("%s\tport %hu\n", c, p->remote_port);
 	if (p->max_prefix) {
 		printf("%s\tmax-prefix %u", c, p->max_prefix);
 		if (p->max_prefix_restart)

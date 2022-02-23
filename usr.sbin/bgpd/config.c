@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.100 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: config.c,v 1.101 2022/02/23 11:20:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -446,30 +446,6 @@ prepare_listeners(struct bgpd_config *conf)
 	struct listen_addr	*la, *next;
 	int			 opt = 1;
 	int			 r = 0;
-
-	if (TAILQ_EMPTY(conf->listen_addrs)) {
-		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
-			fatal("setup_listeners calloc");
-		la->fd = -1;
-		la->flags = DEFAULT_LISTENER;
-		la->reconf = RECONF_REINIT;
-		la->sa_len = sizeof(struct sockaddr_in);
-		((struct sockaddr_in *)&la->sa)->sin_family = AF_INET;
-		((struct sockaddr_in *)&la->sa)->sin_addr.s_addr =
-		    htonl(INADDR_ANY);
-		((struct sockaddr_in *)&la->sa)->sin_port = htons(BGP_PORT);
-		TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
-
-		if ((la = calloc(1, sizeof(struct listen_addr))) == NULL)
-			fatal("setup_listeners calloc");
-		la->fd = -1;
-		la->flags = DEFAULT_LISTENER;
-		la->reconf = RECONF_REINIT;
-		la->sa_len = sizeof(struct sockaddr_in6);
-		((struct sockaddr_in6 *)&la->sa)->sin6_family = AF_INET6;
-		((struct sockaddr_in6 *)&la->sa)->sin6_port = htons(BGP_PORT);
-		TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
-	}
 
 	for (la = TAILQ_FIRST(conf->listen_addrs); la != NULL; la = next) {
 		next = TAILQ_NEXT(la, entry);
