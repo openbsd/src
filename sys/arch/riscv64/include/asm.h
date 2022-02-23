@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: asm.h,v 1.3 2022/02/23 07:16:26 jsg Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -38,16 +38,8 @@
 #ifndef _MACHINE_ASM_H_
 #define	_MACHINE_ASM_H_
 
-#ifdef __ELF__
-# define _C_LABEL(x)	x
-#else
-# ifdef __STDC__
-#  define _C_LABEL(x)	_ ## x
-# else
-#  define _C_LABEL(x)	_/**/x
-# endif
-#endif
-#define	_ASM_LABEL(x)	x
+#define _C_LABEL(x)	x
+#define _ASM_LABEL(x)	x
 
 #ifdef __STDC__
 # define __CONCAT(x,y)	x ## y
@@ -99,7 +91,7 @@
 #define EENTRY(sym)	 .globl  sym; sym:
 #define EEND(sym)
 
-#if defined(__ELF__) && defined(__PIC__)
+#ifdef __PIC__
 #ifdef __STDC__
 #define	PIC_SYM(x,y)	x ## ( ## y ## )
 #else
@@ -109,28 +101,22 @@
 #define	PIC_SYM(x,y)	x
 #endif
 
-#ifdef __ELF__
 #define	STRONG_ALIAS(alias,sym)						\
 	.global alias;							\
 	alias = sym
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-#endif
 
 #ifdef __STDC__
 #define	WARN_REFERENCES(sym,msg)					\
 	.stabs msg ## ,30,0,0,0 ;					\
 	.stabs __STRING(_C_LABEL(sym)) ## ,1,0,0,0
-#elif defined(__ELF__)
-#define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg,30,0,0,0 ;						\
-	.stabs __STRING(sym),1,0,0,0
 #else
 #define	WARN_REFERENCES(sym,msg)					\
 	.stabs msg,30,0,0,0 ;						\
-	.stabs __STRING(_/**/sym),1,0,0,0
-#endif /* __STDC__ */
+	.stabs __STRING(sym),1,0,0,0
+#endif
 
 #define	WEAK_REFERENCE(sym, alias)				\
 	.weak alias;						\
