@@ -80,7 +80,7 @@ struct rbtree_type;
 /**
  * number of labels from QNAME that are always send individually when using
  * QNAME minimisation, even when the number of labels of the QNAME is bigger
- * tham MAX_MINIMISE_COUNT */
+ * than MAX_MINIMISE_COUNT */
 #define MINIMISE_ONE_LAB	4
 #define MINIMISE_MULTIPLE_LABS	(MAX_MINIMISE_COUNT - MINIMISE_ONE_LAB)
 /** at what query-sent-count to stop target fetch policy */
@@ -94,8 +94,6 @@ extern int UNKNOWN_SERVER_NICENESS;
  * Equals RTT_MAX_TIMEOUT
  */
 #define USEFUL_SERVER_TOP_TIMEOUT	120000
-/** number of retries on outgoing queries */
-#define OUTBOUND_MSG_RETRY 5
 /** RTT band, within this amount from the best, servers are chosen randomly.
  * Chosen so that the UNKNOWN_SERVER_NICENESS falls within the band of a 
  * fast server, this causes server exploration as a side benefit. msec. */
@@ -139,6 +137,9 @@ struct iter_env {
 	lock_basic_type queries_ratelimit_lock;
 	/** number of queries that have been ratelimited */
 	size_t num_queries_ratelimited;
+
+	/** number of retries on outgoing queries */
+	int outbound_msg_retry;
 };
 
 /**
@@ -378,7 +379,7 @@ struct iter_qstate {
 	/** list of pending queries to authoritative servers. */
 	struct outbound_list outlist;
 
-	/** QNAME minimisation state, RFC7816 */
+	/** QNAME minimisation state, RFC9156 */
 	enum minimisation_state minimisation_state;
 
 	/** State for capsfail: QNAME minimisation state for comparisons. */

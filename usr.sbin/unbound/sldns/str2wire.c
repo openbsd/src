@@ -25,8 +25,10 @@
 #include <netdb.h>
 #endif
 
+/** bits for the offset */
+#define RET_OFFSET_MASK (((unsigned)(~LDNS_WIREPARSE_MASK))>>LDNS_WIREPARSE_SHIFT)
 /** return an error */
-#define RET_ERR(e, off) ((int)((e)|((off)<<LDNS_WIREPARSE_SHIFT)))
+#define RET_ERR(e, off) ((int)(((e)&LDNS_WIREPARSE_MASK)|(((off)&RET_OFFSET_MASK)<<LDNS_WIREPARSE_SHIFT)))
 /** Move parse error but keep its ID */
 #define RET_ERR_SHIFT(e, move) RET_ERR(LDNS_WIREPARSE_ERROR(e), LDNS_WIREPARSE_OFFSET(e)+(move));
 
@@ -543,9 +545,10 @@ sldns_parse_rdf_token(sldns_buffer* strbuf, char* token, size_t token_len,
 {
 	size_t slen;
 
-	/* skip spaces */
+	/* skip spaces and tabs */
 	while(sldns_buffer_remaining(strbuf) > 0 && !*quoted &&
-		*(sldns_buffer_current(strbuf)) == ' ') {
+		(*(sldns_buffer_current(strbuf)) == ' ' ||
+		*(sldns_buffer_current(strbuf)) == '\t')) {
 		sldns_buffer_skip(strbuf, 1);
 	}
 
@@ -601,7 +604,10 @@ sldns_affix_token(sldns_buffer* strbuf, char* token, size_t* token_len,
 	size_t addstrlen = 0;
 
 	/* add space */
-	if(addlen < 1) return 0;
+	/* when addlen < 2, the token buffer is full considering the NULL byte
+	 * from strlen and will lead to buffer overflow with the second
+	 * assignement below. */
+	if(addlen < 2) return 0;
 	token[*token_strlen] = ' ';
 	token[++(*token_strlen)] = 0;
 
@@ -1427,7 +1433,7 @@ sldns_str2wire_svcbparam_parse_next_unescaped_comma(const char *val)
 }
 
 /* The source is already properly unescaped, this double unescaping is purely to allow for
- * comma's in comma seperated alpn lists.
+ * comma's in comma separated alpn lists.
  * 
  * In draft-ietf-dnsop-svcb-https-06 Section 7:
  * To enable simpler parsing, this SvcParamValue MUST NOT contain escape sequences.
@@ -1565,7 +1571,7 @@ sldns_str2wire_svcparam_value(const char *key, size_t key_len,
 	return LDNS_WIREPARSE_ERR_GENERAL;
 }
 
-int sldns_str2wire_svcparam_buf(const char* str, uint8_t* rd, size_t* rd_len)
+static int sldns_str2wire_svcparam_buf(const char* str, uint8_t* rd, size_t* rd_len)
 {
 	const char* eq_pos;
 	char unescaped_val[LDNS_MAX_RDFLEN];
