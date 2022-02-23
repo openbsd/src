@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2017/05/30 15:36:13 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2022/02/23 22:50:32 bluhm Exp $
 
 WARNINGS=Yes
 
@@ -6,12 +6,15 @@ PROG=		test_parser
 SRCS=		tests.c common.c test_parser_fuzz.c
 IKEOBJS=	ikev2_pld.o imsg_util.o log.o util.o \
 		ikev2_map.o eap_map.o
-CLEANFILES=	${IKEOBJS}
+CLEANFILES=	${IKEOBJS} ${PROG}.log
 
 LDADD+=		-lutil -lcrypto ${IKEOBJS}
 DPADD+=		${LIBUTIL} ${LIBCRYPTO}
 CFLAGS+=	-I${.CURDIR}/../../../../sbin/iked
 CFLAGS+=	-Wno-missing-field-initializers
+
+run-regress-${PROG}: ${PROG}
+	./${PROG} >${PROG}.log 2>&1
 
 test_parser: ${IKEOBJS}
 
