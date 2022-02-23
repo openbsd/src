@@ -1,3 +1,6 @@
+7 February 2022: Wouter
+	- Fix that TCP interface does not use TLS when TLS is also configured.
+
 3 February 2022: Wouter
 	- Fix for #611: Integer overflow in sldns_wire2str_pkt_scan.
 
