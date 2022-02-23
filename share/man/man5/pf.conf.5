@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.591 2022/02/18 23:17:15 jsg Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.592 2022/02/23 13:37:06 dlg Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 18 2022 $
+.Dd $Mdocdate: February 23 2022 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -498,9 +498,23 @@ Used to redirect packets to a local socket bound to
 .Ar host
 and
 .Ar port .
-The packets will not be modified, so
-.Xr getsockname 2
-on the socket will return the original destination address of the packet.
+The packets will not be modified, preserving the original destination
+address for the application to access.
+.Dv SOCK_STREAM
+connections can access the original destination address using
+.Xr getsockname 2 .
+.Dv SOCK_DGRAM
+sockets can be configured with the
+.Xr ip 4
+.Dv IP_RECVDSTADDR
+and
+.Dv IP_RECVDSTPORT
+socket options when receiving IPv4 packets, or the
+.Xr ip6 4
+.Dv IPV6_RECVPKTINFO
+and
+.Dv IPV6_RECVDSTPORT
+socket options when receiving IPv6 packets.
 .Pp
 .It Cm flags Ar a Ns / Ns Ar b | Cm any
 This rule only applies to TCP packets that have the flags
