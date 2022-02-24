@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.239 2022/02/18 19:26:40 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.240 2022/02/24 14:44:14 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -91,8 +91,8 @@ int	donothing;
 void	makedisktab(FILE *, struct disklabel *);
 int	checklabel(struct disklabel *);
 void	readlabel(int);
-int	parselabel(void);
-void	makelabel(char *, char *, struct disklabel *);
+void	parsefstab(void);
+void	parsedisktab(char *, struct disklabel *);
 int	edit(struct disklabel *, int);
 int	editit(const char *);
 char	*skip(char *);
@@ -226,8 +226,9 @@ main(int argc, char *argv[])
 
 		if (autotable != NULL)
 			parse_autotable(autotable);
-		error = parselabel();
-		if (op == WRITE && aflag && error)
+		parsefstab();
+		error = aflag ? editor_allocspace(&lab) : 0;
+		if (op == WRITE && error)
 			errx(1, "autoalloc failed");
 	} else if (argc == 2 || argc == 3) {
 		/* Ensure f is a disk device before pledging. */
@@ -237,7 +238,9 @@ main(int argc, char *argv[])
 		if (pledge("stdio rpath wpath disklabel", NULL) == -1)
 			err(1, "pledge");
 
-		makelabel(argv[1], argc == 3 ? argv[2] : NULL, &lab);
+		parsedisktab(argv[1], &lab);
+		if (argc == 3)
+			strncpy(lab.d_packname, argv[2], sizeof(lab.d_packname));
 	} else
 		usage();
 
@@ -289,12 +292,10 @@ main(int argc, char *argv[])
 }
 
 /*
- * Construct a prototype disklabel from /etc/disktab.  As a side
- * effect, set the names of the primary and secondary boot files
- * if specified.
+ * Construct a prototype disklabel from /etc/disktab.
  */
 void
-makelabel(char *type, char *name, struct disklabel *lp)
+parsedisktab(char *type, struct disklabel *lp)
 {
 	struct disklabel *dp;
 
@@ -302,12 +303,7 @@ makelabel(char *type, char *name, struct disklabel *lp)
 	if (dp == NULL)
 		errx(1, "unknown disk type: %s", type);
 	*lp = *dp;
-	/* d_packname is union d_boot[01], so zero */
-	memset(lp->d_packname, 0, sizeof(lp->d_packname));
-	if (name)
-		(void)strncpy(lp->d_packname, name, sizeof(lp->d_packname));
 }
-
 
 int
 writelabel(int f, struct disklabel *lp)
@@ -354,8 +350,8 @@ readlabel(int f)
 	}
 }
 
-int
-parselabel(void)
+void
+parsefstab(void)
 {
 	char *partname, *partduid;
 	struct fstab *fsent;
@@ -383,10 +379,6 @@ parselabel(void)
 	endfsent();
 	free(partduid);
 	free(partname);
-
-	if (aflag)
-		return editor_allocspace(&lab);
-	return 0;
 }
 
 void
