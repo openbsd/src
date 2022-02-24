@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.33 2022/02/24 08:31:11 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.34 2022/02/24 21:07:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -486,8 +486,6 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 		DSAerror(ERR_R_DSA_LIB);
 		return 0;
 	}
-
-	DSA_print_fp(stdout, dsa, 0);
 
 	/* FIPS 186-3 allows only three different sizes for q. */
 	qbits = BN_num_bits(dsa->q);
