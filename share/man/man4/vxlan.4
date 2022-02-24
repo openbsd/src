@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vxlan.4,v 1.14 2022/02/24 03:25:18 dlg Exp $
+.\"	$OpenBSD: vxlan.4,v 1.15 2022/02/24 03:57:06 dlg Exp $
 .\"
 .\" Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -74,6 +74,87 @@ operates as a bridge, but with learning disabled.
 Endpoints for Ethernet addresses must be added explicitly before
 packets will be encapsulated for those addresses.
 All valid VXLAN packets sent to the local address will be accepted.
+.El
+.Pp
+.Nm
+supports the following
+.Xr ioctl 2
+calls for configuration:
+.Bl -tag -width indent -offset 3n
+.It Dv SIOCSLIFPHYADDR Fa "struct if_laddrreq *"
+Set the IPv4 or IPv6 addresses used for the exchange of encapsulated
+traffic.
+The interface will operate in point-to-point mode if the destination
+address is unicast,
+learning mode if the destination address is multicast,
+or endpoint mode if the destination address is unspecified.
+A non-standard UDP port for VXLAN packets can be specified by the
+port in the source address, otherwise use 0 to request the default.
+The addresses may only be configured while the interface is down.
+.It Dv SIOCGLIFPHYADDR Fa "struct if_laddrreq *"
+Get the addresses configured for the exchange of encapsulated packets.
+.It Dv SIOCDIFPHYADDR Fa "struct ifreq *"
+Clear the addresses used for the exchange of encapsulated packets.
+The addresses may only be cleared while the interface is down.
+.It Dv SIOCSVNETID Fa "struct ifreq *"
+Configure a virtual network identifier for use in the VXLAN header.
+The virtual network identifier may only be configured while the
+interface is down.
+.It Dv SIOCGVNETID Fa "struct ifreq *"
+Get the virtual network identifier used in the VXLAN header.
+.It Dv SIOCDVNETID Fa "struct ifreq *"
+Remove the virtual network identifier.
+The virtual network identifier may only be disabled while the
+interface is down.
+.It Dv SIOCSLIFPHYRTABLE Fa "struct ifreq *"
+Set the routing table the encapsulated traffic operates in.
+The routing table may only be configured while the interface is down.
+.It Dv SIOCGLIFPHYRTABLE Fa "struct ifreq *"
+Get the routing table the encapsulated traffic operates in.
+.It Dv SIOCSLIFPHYTTL Fa "struct ifreq *"
+Set the Time-To-Live field in IPv4 encapsulation headers, or the
+Hop Limit field in IPv6 encapsulation headers.
+.It Dv SIOCGLIFPHYTTL Fa "struct ifreq *"
+Get the value used in the Time-To-Live field in an IPv4 encapsulation
+header or the Hop Limit field in an IPv6 encapsulation header.
+.It Dv SIOCSLIFPHYDF Fa "struct ifreq *"
+Configure whether the encapsulated traffic sent by the interface
+can be fragmented or not.
+This sets the Don't Fragment (DF) bit on IPv4 packets,
+and disables fragmentation of IPv6 packets.
+.It Dv SIOCGLIFPHYDF Fa "struct ifreq *"
+Get whether the encapsulated traffic sent by the interface can be
+fragmented or not.
+.It Dv SIOCSRXHPRIO Fa "struct ifreq *"
+Set the priority value for received packets.
+Values may be from 0 to 7,
+.Dv IF_HDRPRIO_PACKET
+to specify that the current priority of a packet should be kept,
+or
+.Dv IF_HDRPRIO_OUTER
+to use the value in the Type of Service field in IPv4
+or the Traffic Class field in IPv6 encapsulation headers.
+.It Dv SIOCGRXHPRIO Fa "struct ifreq *"
+Get the priority value for received packets.
+.It Dv SIOCSTXHPRIO Fa "struct ifreq *"
+Set the priority value used in the Type of Service field in IPv4
+headers, or the Traffic Class field in IPv6 headers.
+Values may be from 0 to 7, or
+.Dv IF_HDRPRIO_PACKET
+to specify that the current priority of a packet should be used.
+.It Dv SIOCGTXHPRIO Fa "struct ifreq *"
+Get the priority value used in the Type of Service field in IPv4
+headers, or the Traffic Class field in IPv6 headers.
+.It Dv SIOCSIFPARENT Fa "struct if_parent *"
+Configure which interface will be joined to the multicast group
+specified by the tunnel destination address.
+The parent interface may only be configured for interfaces in
+learning mode, and while the interface is down.
+.It Dv SIOCGIFPARENT Fa "struct if_parent *"
+Get the name of the interface used for multicast communication.
+.It Dv SIOCGIFPARENT Fa "struct ireq *"
+Remove the configuration of the interface used for multicast
+communication.
 .El
 .Sh EXAMPLES
 Create a point-to-point tunnel using Virtual Network Identifier 5:
