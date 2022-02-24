@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.222 2022/01/11 08:09:14 mvs Exp $
+;	$OpenBSD: syscalls.master,v 1.223 2022/02/24 07:41:51 mvs Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -99,7 +99,7 @@
 			    socklen_t *anamelen); }
 31	STD NOLOCK	{ int sys_getpeername(int fdes, struct sockaddr *asa, \
 			    socklen_t *alen); }
-32	STD		{ int sys_getsockname(int fdes, struct sockaddr *asa, \
+32	STD NOLOCK	{ int sys_getsockname(int fdes, struct sockaddr *asa, \
 			    socklen_t *alen); }
 33	STD		{ int sys_access(const char *path, int amode); }
 34	STD		{ int sys_chflags(const char *path, u_int flags); }
