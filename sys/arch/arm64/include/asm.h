@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.7 2022/02/23 07:16:26 jsg Exp $	*/
+/*	$OpenBSD: asm.h,v 1.8 2022/02/24 07:08:21 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
@@ -132,11 +132,7 @@
 #define EEND(sym)
 
 #ifdef __PIC__
-#ifdef __STDC__
-#define	PIC_SYM(x,y)	x ## ( ## y ## )
-#else
-#define	PIC_SYM(x,y)	x/**/(/**/y/**/)
-#endif
+#define	PIC_SYM(x,y)	x(y)
 #else
 #define	PIC_SYM(x,y)	x
 #endif
