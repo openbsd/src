@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.43 2022/01/07 09:35:36 tb Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.44 2022/02/24 08:35:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -315,24 +315,25 @@ dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
 	BN_CTX *ctx;
 	BIGNUM u1, u2, t1;
 	BN_MONT_CTX *mont = NULL;
-	int ret = -1, i;
+	int qbits;
+	int ret = -1;
 
 	if (!dsa->p || !dsa->q || !dsa->g) {
 		DSAerror(DSA_R_MISSING_PARAMETERS);
 		return -1;
 	}
 
-	i = BN_num_bits(dsa->q);
 	/* FIPS 186-3 allows only three different sizes for q. */
-	if (i != 160 && i != 224 && i != 256) {
+	qbits = BN_num_bits(dsa->q);
+	if (qbits != 160 && qbits != 224 && qbits != 256) {
 		DSAerror(DSA_R_BAD_Q_VALUE);
 		return -1;
 	}
-
 	if (BN_num_bits(dsa->p) > OPENSSL_DSA_MAX_MODULUS_BITS) {
 		DSAerror(DSA_R_MODULUS_TOO_LARGE);
 		return -1;
 	}
+
 	BN_init(&u1);
 	BN_init(&u2);
 	BN_init(&t1);
@@ -359,8 +360,8 @@ dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
 	 * If the digest length is greater than the size of q use the
 	 * BN_num_bits(dsa->q) leftmost bits of the digest, see FIPS 186-3, 4.2.
 	 */
-	if (dgst_len > (i >> 3))
-		dgst_len = (i >> 3);
+	if (dgst_len > (qbits >> 3))
+		dgst_len = (qbits >> 3);
 
 	/* Save m in u1. */
 	if (BN_bin2bn(dgst, dgst_len, &u1) == NULL)
