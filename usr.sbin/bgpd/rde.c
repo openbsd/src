@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.534 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.535 2022/02/24 14:54:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2422,7 +2422,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 		}
 	} else {
 		if (peer_has_add_path(peer, p->pt->aid, CAPA_AP_SEND)) {
-			rib.path_id = 0;	/* XXX add-path send */
+			rib.path_id = p->path_id_tx;
 			rib.flags |= F_PREF_PATH_ID;
 		}
 	}
@@ -2507,12 +2507,16 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req, int adjout)
 	if ((req->flags & F_CTL_INVALID) &&
 	    (asp->flags & F_ATTR_PARSE_ERR) == 0)
 		return;
-	/*
-	 * XXX handle out specially since then we want to match against our
-	 * path ids.
-	 */
-	if ((req->flags & F_CTL_HAS_PATHID) && req->path_id != p->path_id)
-		return;
+	if ((req->flags & F_CTL_HAS_PATHID)) {
+		/* Match against the transmit path id if adjout is used.  */
+		if (adjout) {
+			if (req->path_id != p->path_id_tx)
+				return;
+		} else {
+			if (req->path_id != p->path_id)
+				return;
+		}
+	}
 	if (req->as.type != AS_UNDEF &&
 	    !aspath_match(asp->aspath, &req->as, 0))
 		return;

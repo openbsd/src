@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.132 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.133 2022/02/24 14:54:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -632,8 +632,7 @@ up_dump_prefix(u_char *buf, int len, struct prefix_tree *prefix_head,
 		if (peer_has_add_path(peer, p->pt->aid, CAPA_AP_SEND)) {
 			if (len <= wpos + (int)sizeof(pathid))
 				break;
-			/* XXX add-path send side */
-			pathid = 0;
+			pathid = htonl(p->path_id_tx);
 			memcpy(buf + wpos, &pathid, sizeof(pathid));
 			wpos += sizeof(pathid);
 		}
