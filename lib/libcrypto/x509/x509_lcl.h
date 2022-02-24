@@ -66,6 +66,8 @@ __BEGIN_HIDDEN_DECLS
 
 #define X509_CERT_HASH_EVP	EVP_sha512()
 #define X509_CERT_HASH_LEN	SHA512_DIGEST_LENGTH
+#define X509_CRL_HASH_EVP	EVP_sha512()
+#define X509_CRL_HASH_LEN	SHA512_DIGEST_LENGTH
 
 struct X509_pubkey_st {
 	X509_ALGOR *algor;
@@ -227,9 +229,7 @@ struct X509_crl_st {
 	/* CRL and base CRL numbers for delta processing */
 	ASN1_INTEGER *crl_number;
 	ASN1_INTEGER *base_crl_number;
-#ifndef OPENSSL_NO_SHA
-	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
-#endif
+	unsigned char hash[X509_CRL_HASH_LEN];
 	STACK_OF(GENERAL_NAMES) *issuers;
 	const X509_CRL_METHOD *meth;
 	void *meth_data;

@@ -1,4 +1,4 @@
-/* $OpenBSD: x_crl.c,v 1.36 2021/12/03 17:07:53 jsing Exp $ */
+/* $OpenBSD: x_crl.c,v 1.37 2022/02/24 22:05:06 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -288,9 +288,7 @@ crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 		break;
 
 	case ASN1_OP_D2I_POST:
-#ifndef OPENSSL_NO_SHA
-		X509_CRL_digest(crl, EVP_sha1(), crl->sha1_hash, NULL);
-#endif
+		X509_CRL_digest(crl, X509_CRL_HASH_EVP, crl->hash, NULL);
 		crl->idp = X509_CRL_get_ext_d2i(crl,
 		    NID_issuing_distribution_point, NULL, NULL);
 		if (crl->idp)
