@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: frame.h,v 1.3 2022/02/24 14:19:10 visa Exp $	*/
 
 /*
  * Copyright (c) 2019 Brian Bamsch <bbamsch@google.com>
@@ -64,6 +64,7 @@ typedef struct trapframe {
 	register_t tf_sstatus;
 	register_t tf_stval;
 	register_t tf_scause;
+	register_t tf_pad;
 } trapframe_t;
 
 /*
@@ -85,6 +86,7 @@ struct sigframe {
 struct switchframe {
 	register_t sf_s[12];
 	register_t sf_ra;
+	register_t sf_pad;
 };
 
 struct callframe {

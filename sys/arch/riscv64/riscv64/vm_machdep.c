@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.9 2022/02/24 14:16:53 visa Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.10 2022/02/24 14:19:10 visa Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -61,6 +61,10 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	struct pcb *pcb1 = &p1->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
+
+	/* Ensure proper stack alignment. */
+	CTASSERT((sizeof(struct trapframe) & STACKALIGNBYTES) == 0);
+	CTASSERT((sizeof(struct switchframe) & STACKALIGNBYTES) == 0);
 
 	/* Save FPU state to PCB if necessary. */
 	if (pcb1->pcb_flags & PCB_FPU)
