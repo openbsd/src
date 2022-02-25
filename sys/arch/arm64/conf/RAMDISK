@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.167 2022/01/08 15:30:46 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.168 2022/02/25 13:51:02 visa Exp $
 
 machine		arm64
 maxusers	4
@@ -238,6 +238,9 @@ sxisyscon*	at fdt? early 1	# System controller
 sxitwi*		at fdt?		# I2C controller
 iic*		at sxitwi?	# I2C bus
 dwxe*		at fdt?
+
+# Xilinx Zynq UltraScale+ SoCs
+cduart*		at fdt?
 
 # PCI
 ppb*		at pci?			# PCI-PCI bridges

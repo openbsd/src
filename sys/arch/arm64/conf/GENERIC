@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.225 2022/02/20 19:25:57 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.226 2022/02/25 13:51:02 visa Exp $
 #
 # GENERIC machine description file
 #
@@ -305,6 +305,9 @@ sxitemp*	at fdt?		# Temperature sensor
 sxitwi*		at fdt?	early 1	# I2C controller
 iic*		at sxitwi?	# I2C bus
 dwxe*		at fdt?
+
+# Xilinx Zynq UltraScale+ SoCs
+cduart*		at fdt?
 
 # PCI
 ppb*		at pci?			# PCI-PCI bridges
