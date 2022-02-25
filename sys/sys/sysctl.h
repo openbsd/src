@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.226 2022/02/22 17:05:51 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.227 2022/02/25 18:05:49 rob Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -433,7 +433,7 @@ struct kinfo_proc {
 	u_int8_t p_nice;		/* U_CHAR: Process "nice" value. */
 
 	u_int16_t p_xstat;		/* U_SHORT: Exit status for wait; also stop signal. */
-	u_int16_t p_acflag;		/* U_SHORT: Accounting flags. */
+	u_int16_t p_spare;		/* U_SHORT: unused */
 
 	char	p_comm[KI_MAXCOMLEN];
 
@@ -475,7 +475,7 @@ struct kinfo_proc {
 	u_int32_t p_uctime_sec;		/* STRUCT TIMEVAL: child u+s time. */
 	u_int32_t p_uctime_usec;	/* STRUCT TIMEVAL: child u+s time. */
 	u_int32_t p_psflags;		/* UINT: PS_* flags on the process. */
-	int32_t p_spare;		/* INT: unused. */
+	u_int32_t p_acflag;		/* UINT: Accounting flags. */
 	u_int32_t p_svuid;		/* UID_T: saved user id */
 	u_int32_t p_svgid;		/* GID_T: saved group id */
 	char    p_emul[KI_EMULNAMELEN];	/* syscall emulation name */
