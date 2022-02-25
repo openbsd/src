@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.226 2022/02/25 11:36:54 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.227 2022/02/25 12:56:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -297,11 +297,9 @@ struct rib_entry *
 rib_get(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
 {
 	struct rib_entry xre, *re;
-	struct pt_entry	*pte;
 
-	pte = pt_fill(prefix, prefixlen);
 	memset(&xre, 0, sizeof(xre));
-	xre.prefix = pte;
+	xre.prefix = pt_fill(prefix, prefixlen);
 
 	re = RB_FIND(rib_tree, rib_tree(rib), &xre);
 	if (re && re->rib_id != rib->id)
@@ -921,11 +919,9 @@ prefix_adjout_get(struct rde_peer *peer, uint32_t path_id,
     struct bgpd_addr *prefix, int prefixlen)
 {
 	struct prefix xp;
-	struct pt_entry	*pte;
 
 	memset(&xp, 0, sizeof(xp));
-	pte = pt_fill(prefix, prefixlen);
-	xp.pt = pte;
+	xp.pt = pt_fill(prefix, prefixlen);
 	xp.path_id_tx = path_id;
 
 	return RB_FIND(prefix_index, &peer->adj_rib_out, &xp);
@@ -940,11 +936,9 @@ prefix_adjout_lookup(struct rde_peer *peer, struct bgpd_addr *prefix,
     int prefixlen)
 {
 	struct prefix xp, *np;
-	struct pt_entry	*pte;
 
 	memset(&xp, 0, sizeof(xp));
-	pte = pt_fill(prefix, prefixlen);
-	xp.pt = pte;
+	xp.pt = pt_fill(prefix, prefixlen);
 
 	np = RB_NFIND(prefix_index, &peer->adj_rib_out, &xp);
 	if (np != NULL && pt_prefix_cmp(np->pt, xp.pt) != 0)
