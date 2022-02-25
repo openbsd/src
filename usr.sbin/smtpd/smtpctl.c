@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.169 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.170 2022/02/25 17:31:40 rob Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -725,10 +725,10 @@ do_show_message(int argc, struct parameter *argv)
 		msgid = argv[0].u.u_msgid;
 
 	if (!bsnprintf(buf, sizeof(buf), "%s%s/%02x/%08x/message",
-		PATH_SPOOL,
-		PATH_QUEUE,
-		(msgid & 0xff000000) >> 24,
-		msgid))
+	    PATH_SPOOL,
+	    PATH_QUEUE,
+	    (msgid & 0xff000000) >> 24,
+	    msgid))
 		errx(1, "unable to retrieve message");
 
 	display(buf);
