@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.62 2021/07/18 23:02:57 kn Exp $
+.\" $OpenBSD: pledge.2,v 1.63 2022/02/25 18:24:01 tedu Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 18 2021 $
+.Dd $Mdocdate: February 25 2022 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -514,7 +514,8 @@ process:
 .Xr setlogin 2 ,
 .Xr setrlimit 2 ,
 .Xr getpriority 2 ,
-.Xr setpriority 2
+.Xr setpriority 2 ,
+.Xr setrtable 2
 .It Cm pf
 Allows a subset of
 .Xr ioctl 2

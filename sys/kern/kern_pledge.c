@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.279 2022/02/04 17:50:28 tedu Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.280 2022/02/25 18:24:01 tedu Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -300,6 +300,7 @@ const uint64_t pledge_syscalls[SYS_MAXSYSCALL] = {
 	[SYS_setresgid] = PLEDGE_ID,
 	[SYS_setgroups] = PLEDGE_ID,
 	[SYS_setlogin] = PLEDGE_ID,
+	[SYS_setrtable] = PLEDGE_ID,
 
 	[SYS_unveil] = PLEDGE_UNVEIL,
 
