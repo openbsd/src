@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.34 2022/02/25 08:36:01 guenther Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.35 2022/02/25 23:51:04 guenther Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -58,7 +58,6 @@ struct sockaddr;
 struct socket;
 struct domain;
 struct proc;
-struct pr_usrreqs;
 
 struct protosw {
 	short	pr_type;		/* socket type used for */
@@ -81,7 +80,9 @@ struct protosw {
 					/* user request: see list below */
 	int	(*pr_usrreq)(struct socket *, int, struct mbuf *,
 		    struct mbuf *, struct mbuf *, struct proc *);
-	const struct pr_usrreqs *pr_usrreqs;
+
+	int	(*pr_attach)(struct socket *, int);
+	int	(*pr_detach)(struct socket *);
 
 /* utility hooks */
 	void	(*pr_init)(void);	/* initialization hook */
@@ -226,15 +227,7 @@ char	*prcorequests[] = {
 #endif
 
 #ifdef _KERNEL
-struct ifnet;
-
-struct pr_usrreqs {
-	int	(*pru_attach)(struct socket *, int _proto);
-	int	(*pru_detach)(struct socket *);
-	int	(*pru_control)(struct socket *, u_long _cmd, caddr_t _data,
-		    struct ifnet *_ifp);
-};
-
+struct sockaddr;
 const struct protosw *pffindproto(int, int, int);
 const struct protosw *pffindtype(int, int);
 void pfctlinput(int, struct sockaddr *);

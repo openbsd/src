@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.245 2022/02/25 08:33:26 guenther Exp $	*/
+/*	$OpenBSD: in6.c,v 1.246 2022/02/25 23:51:04 guenther Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -115,6 +115,7 @@ const struct in6_addr in6mask64 = IN6MASK64;
 const struct in6_addr in6mask96 = IN6MASK96;
 const struct in6_addr in6mask128 = IN6MASK128;
 
+int in6_ioctl(u_long, caddr_t, struct ifnet *, int);
 int in6_ioctl_change_ifaddr(u_long, caddr_t, struct ifnet *);
 int in6_ioctl_get(u_long, caddr_t, struct ifnet *);
 int in6_check_embed_scope(struct sockaddr_in6 *, unsigned int);

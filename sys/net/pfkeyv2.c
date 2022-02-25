@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.230 2022/02/25 08:36:01 guenther Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.231 2022/02/25 23:51:03 guenther Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -199,11 +199,6 @@ pfdatatopacket(void *data, int len, struct mbuf **packet)
 	return (0);
 }
 
-const struct pr_usrreqs pfkeyv2_usrreqs = {
-	.pru_attach	= pfkeyv2_attach,
-	.pru_detach	= pfkeyv2_detach,
-};
-
 const struct protosw pfkeysw[] = {
 {
   .pr_type      = SOCK_RAW,
@@ -212,7 +207,8 @@ const struct protosw pfkeysw[] = {
   .pr_flags     = PR_ATOMIC | PR_ADDR,
   .pr_output    = pfkeyv2_output,
   .pr_usrreq    = pfkeyv2_usrreq,
-  .pr_usrreqs	= &pfkeyv2_usrreqs,
+  .pr_attach    = pfkeyv2_attach,
+  .pr_detach    = pfkeyv2_detach,
   .pr_sysctl    = pfkeyv2_sysctl,
 }
 };
@@ -338,6 +334,9 @@ pfkeyv2_usrreq(struct socket *so, int req, struct mbuf *m,
 {
 	struct pkpcb *kp;
 	int error = 0;
+
+	if (req == PRU_CONTROL)
+		return (EOPNOTSUPP);
 
 	soassertlocked(so);
 

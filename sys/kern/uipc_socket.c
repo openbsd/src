@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.274 2022/02/25 08:36:01 guenther Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.275 2022/02/25 23:51:03 guenther Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 		prp = pffindproto(dom, proto, type);
 	else
 		prp = pffindtype(dom, type);
-	if (prp == NULL || prp->pr_usrreqs->pru_attach == NULL)
+	if (prp == NULL || prp->pr_attach == NULL)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
@@ -192,7 +192,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	so->so_rcv.sb_timeo_nsecs = INFSLP;
 
 	s = solock(so);
-	error = (*prp->pr_usrreqs->pru_attach)(so, proto);
+	error = (*prp->pr_attach)(so, proto);
 	if (error) {
 		so->so_state |= SS_NOFDREF;
 		/* sofree() calls sounlock(). */
@@ -347,8 +347,8 @@ soclose(struct socket *so, int flags)
 drop:
 	if (so->so_pcb) {
 		int error2;
-		KASSERT(so->so_proto->pr_usrreqs->pru_detach != NULL);
-		error2 = (*so->so_proto->pr_usrreqs->pru_detach)(so);
+		KASSERT(so->so_proto->pr_detach);
+		error2 = (*so->so_proto->pr_detach)(so);
 		if (error == 0)
 			error = error2;
 	}

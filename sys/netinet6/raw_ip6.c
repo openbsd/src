@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.140 2022/02/25 08:36:01 guenther Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.141 2022/02/25 23:51:04 guenther Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -96,9 +96,6 @@
 #endif
 
 #include <sys/stdarg.h>
-
-int	rip6_attach(struct socket *, int);
-int	rip6_detach(struct socket *);
 
 /*
  * Raw interface to IP6 protocol.
@@ -562,6 +559,10 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct inpcb *in6p;
 	int error = 0;
 
+	if (req == PRU_CONTROL)
+		return (in6_control(so, (u_long)m, (caddr_t)nam,
+		    (struct ifnet *)control));
+
 	soassertlocked(so);
 
 	in6p = sotoinpcb(so);
@@ -764,12 +765,6 @@ rip6_detach(struct socket *so)
 
 	return (0);
 }
-
-const struct pr_usrreqs rip6_usrreqs = {
-	.pru_attach	= rip6_attach,
-	.pru_detach	= rip6_detach,
-	.pru_control	= in6_control,
-};
 
 int
 rip6_sysctl_rip6stat(void *oldp, size_t *oldplen, void *newp)

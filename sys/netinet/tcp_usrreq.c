@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.182 2022/02/25 08:36:01 guenther Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.183 2022/02/25 23:51:03 guenther Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -100,9 +100,6 @@
 #include <netinet6/in6_var.h>
 #endif
 
-int	tcp_attach(struct socket *, int);
-int	tcp_detach(struct socket *);
-
 #ifndef TCP_SENDSPACE
 #define	TCP_SENDSPACE	1024*16
 #endif
@@ -151,6 +148,17 @@ tcp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct tcpcb *otp = NULL, *tp = NULL;
 	int error = 0;
 	short ostate;
+
+	if (req == PRU_CONTROL) {
+#ifdef INET6
+		if (sotopf(so) == PF_INET6)
+			return in6_control(so, (u_long)m, (caddr_t)nam,
+			    (struct ifnet *)control);
+		else
+#endif /* INET6 */
+			return (in_control(so, (u_long)m, (caddr_t)nam,
+			    (struct ifnet *)control));
+	}
 
 	soassertlocked(so);
 
@@ -660,19 +668,6 @@ tcp_detach(struct socket *so)
 		tcp_trace(TA_USER, ostate, tp, otp, NULL, PRU_DETACH, 0);
 	return (error);
 }
-
-const struct pr_usrreqs tcp_usrreqs = {
-	.pru_attach	= tcp_attach,
-	.pru_detach	= tcp_detach,
-	.pru_control	= in_control,
-};
-#ifdef INET6
-const struct pr_usrreqs tcp6_usrreqs = {
-	.pru_attach	= tcp_attach,
-	.pru_detach	= tcp_detach,
-	.pru_control	= in6_control,
-};
-#endif
 
 /*
  * Initiate (or continue) disconnect.

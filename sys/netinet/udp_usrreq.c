@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.270 2022/02/25 08:36:01 guenther Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.271 2022/02/25 23:51:03 guenther Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -111,9 +111,6 @@
 #include <netinet/if_ether.h>
 #include <net/pipex.h>
 #endif
-
-int	udp_attach(struct socket *, int);
-int	udp_detach(struct socket *);
 
 /*
  * UDP protocol implementation.
@@ -1030,6 +1027,17 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	struct inpcb *inp;
 	int error = 0;
 
+	if (req == PRU_CONTROL) {
+#ifdef INET6
+		if (sotopf(so) == PF_INET6)
+			return (in6_control(so, (u_long)m, (caddr_t)addr,
+			    (struct ifnet *)control));
+		else
+#endif /* INET6 */
+			return (in_control(so, (u_long)m, (caddr_t)addr,
+			    (struct ifnet *)control));
+	}
+
 	soassertlocked(so);
 
 	inp = sotoinpcb(so);
@@ -1241,19 +1249,6 @@ udp_detach(struct socket *so)
 	in_pcbdetach(inp);
 	return (0);
 }
-
-const struct pr_usrreqs udp_usrreqs = {
-	.pru_attach	= udp_attach,
-	.pru_detach	= udp_detach,
-	.pru_control	= in_control,
-};
-#ifdef INET6
-const struct pr_usrreqs udp6_usrreqs = {
-	.pru_attach	= udp_attach,
-	.pru_detach	= udp_detach,
-	.pru_control	= in6_control,
-};
-#endif
 
 /*
  * Sysctl for udp variables.

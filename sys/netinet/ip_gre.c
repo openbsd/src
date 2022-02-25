@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.72 2022/02/25 08:36:01 guenther Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.73 2022/02/25 23:51:03 guenther Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -92,9 +92,4 @@ gre_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 #endif
 	return rip_usrreq(so, req, m, nam, control, p);
 }
-
-const struct pr_usrreqs gre_usrreqs = {
-	.pru_attach	= rip_attach,
-	.pru_detach	= rip_detach,
-};
 #endif /* if NGRE > 0 */

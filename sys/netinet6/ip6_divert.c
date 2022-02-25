@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.64 2022/02/25 08:36:01 guenther Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.65 2022/02/25 23:51:04 guenther Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -41,9 +41,6 @@
 #include <netinet/icmp6.h>
 
 #include <net/pfvar.h>
-
-int	divert6_attach(struct socket *, int);
-int	divert6_detach(struct socket *);
 
 struct	inpcbtable	divb6table;
 struct	cpumem		*div6counters;
@@ -251,6 +248,11 @@ divert6_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
 
+	if (req == PRU_CONTROL) {
+		return (in6_control(so, (u_long)m, (caddr_t)addr,
+		    (struct ifnet *)control));
+	}
+
 	soassertlocked(so);
 
 	if (inp == NULL) {
@@ -349,12 +351,6 @@ divert6_detach(struct socket *so)
 
 	return (0);
 }
-
-const struct pr_usrreqs divert6_usrreqs = {
-	.pru_attach	= divert6_attach,
-	.pru_detach	= divert6_detach,
-	.pru_control	= in6_control,
-};
 
 int
 divert6_sysctl_div6stat(void *oldp, size_t *oldlenp, void *newp)

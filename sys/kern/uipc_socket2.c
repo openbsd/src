@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.119 2022/02/25 08:36:01 guenther Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.120 2022/02/25 23:51:03 guenther Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -150,7 +150,7 @@ sonewconn(struct socket *head, int connstatus)
 
 	/*
 	 * XXXSMP as long as `so' and `head' share the same lock, we
-	 * can call soreserve() and pru_attach() below w/o explicitly
+	 * can call soreserve() and pr_attach() below w/o explicitly
 	 * locking `so'.
 	 */
 	soassertlocked(head);
@@ -194,7 +194,7 @@ sonewconn(struct socket *head, int connstatus)
 	sigio_copy(&so->so_sigio, &head->so_sigio);
 
 	soqinsque(head, so, soqueue);
-	if ((*so->so_proto->pr_usrreqs->pru_attach)(so, 0)) {
+	if ((*so->so_proto->pr_attach)(so, 0)) {
 		(void) soqremque(so, soqueue);
 		sigio_free(&so->so_sigio);
 		klist_free(&so->so_rcv.sb_sel.si_note);

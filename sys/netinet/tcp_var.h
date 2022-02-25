@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.138 2022/02/25 08:36:01 guenther Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.139 2022/02/25 23:51:03 guenther Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -703,6 +703,8 @@ struct tcpcb *
 int	 tcp_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 int	 tcp_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
+int	 tcp_attach(struct socket *, int);
+int	 tcp_detach(struct socket *);
 void	 tcp_xmit_timer(struct tcpcb *, int);
 void	 tcpdropoldhalfopen(struct tcpcb *, u_int16_t);
 void	 tcp_sack_option(struct tcpcb *,struct tcphdr *,u_char *,int);
@@ -734,11 +736,6 @@ tcp_trace(short act, short ostate, struct tcpcb *tp, struct tcpcb *otp,
     caddr_t headers, int req, int len)
 {
 }
-#endif
-
-extern const struct pr_usrreqs tcp_usrreqs;
-#ifdef INET6
-extern const struct pr_usrreqs tcp6_usrreqs;
 #endif
 
 #endif /* _KERNEL */
