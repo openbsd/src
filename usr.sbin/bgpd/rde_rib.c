@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.225 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.226 2022/02/25 11:36:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -860,6 +860,21 @@ static void		 prefix_free(struct prefix *);
 
 /* RB tree comparison function */
 static inline int
+prefix_index_cmp(struct prefix *a, struct prefix *b)
+{
+	int r;
+	r = pt_prefix_cmp(a->pt, b->pt);
+	if (r != 0)
+		return r;
+
+	if (a->path_id_tx > b->path_id_tx)
+		return 1;
+	if (a->path_id_tx < b->path_id_tx)
+		return -1;
+	return 0;
+}
+
+static inline int
 prefix_cmp(struct prefix *a, struct prefix *b)
 {
 	if (a->eor != b->eor)
@@ -876,22 +891,14 @@ prefix_cmp(struct prefix *a, struct prefix *b)
 		return (a->nexthop > b->nexthop ? 1 : -1);
 	if (a->nhflags != b->nhflags)
 		return (a->nhflags > b->nhflags ? 1 : -1);
-	/* XXX path_id ??? */
-	return pt_prefix_cmp(a->pt, b->pt);
-}
-
-static inline int
-prefix_index_cmp(struct prefix *a, struct prefix *b)
-{
-	/* XXX path_id ??? */
-	return pt_prefix_cmp(a->pt, b->pt);
+	return prefix_index_cmp(a, b);
 }
 
 RB_GENERATE(prefix_tree, prefix, entry.tree.update, prefix_cmp)
 RB_GENERATE_STATIC(prefix_index, prefix, entry.tree.index, prefix_index_cmp)
 
 /*
- * search for specified prefix of a peer. Returns NULL if not found.
+ * Search for specified prefix of a peer. Returns NULL if not found.
  */
 struct prefix *
 prefix_get(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
@@ -906,11 +913,12 @@ prefix_get(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
 }
 
 /*
- * lookup prefix in the peer prefix_index. Returns NULL if not found.
+ * Search for specified prefix in the peer prefix_index.
+ * Returns NULL if not found.
  */
 struct prefix *
-prefix_lookup(struct rde_peer *peer, struct bgpd_addr *prefix,
-    int prefixlen)
+prefix_adjout_get(struct rde_peer *peer, uint32_t path_id,
+    struct bgpd_addr *prefix, int prefixlen)
 {
 	struct prefix xp;
 	struct pt_entry	*pte;
@@ -918,12 +926,49 @@ prefix_lookup(struct rde_peer *peer, struct bgpd_addr *prefix,
 	memset(&xp, 0, sizeof(xp));
 	pte = pt_fill(prefix, prefixlen);
 	xp.pt = pte;
+	xp.path_id_tx = path_id;
 
 	return RB_FIND(prefix_index, &peer->adj_rib_out, &xp);
 }
 
+/*
+ * Lookup a prefix without considering path_id in the peer prefix_index.
+ * Returns NULL if not found.
+ */
 struct prefix *
-prefix_match(struct rde_peer *peer, struct bgpd_addr *addr)
+prefix_adjout_lookup(struct rde_peer *peer, struct bgpd_addr *prefix,
+    int prefixlen)
+{
+	struct prefix xp, *np;
+	struct pt_entry	*pte;
+
+	memset(&xp, 0, sizeof(xp));
+	pte = pt_fill(prefix, prefixlen);
+	xp.pt = pte;
+
+	np = RB_NFIND(prefix_index, &peer->adj_rib_out, &xp);
+	if (np != NULL && pt_prefix_cmp(np->pt, xp.pt) != 0)
+		return NULL;
+	return np;
+}
+
+struct prefix *
+prefix_adjout_next(struct rde_peer *peer, struct prefix *p)
+{
+	struct prefix *np;
+
+	np = RB_NEXT(prefix_index, &peer->adj_rib_out, p);
+	if (np == NULL || p->pt != np->pt)
+		return NULL;
+	return np;
+}
+
+/*
+ * Lookup addr in the peer prefix_index. Returns first match.
+ * Returns NULL if not found.
+ */
+struct prefix *
+prefix_adjout_match(struct rde_peer *peer, struct bgpd_addr *addr)
 {
 	struct prefix *p;
 	int i;
@@ -932,7 +977,7 @@ prefix_match(struct rde_peer *peer, struct bgpd_addr *addr)
 	case AID_INET:
 	case AID_VPN_IPv4:
 		for (i = 32; i >= 0; i--) {
-			p = prefix_lookup(peer, addr, i);
+			p = prefix_adjout_lookup(peer, addr, i);
 			if (p != NULL)
 				return p;
 		}
@@ -940,7 +985,7 @@ prefix_match(struct rde_peer *peer, struct bgpd_addr *addr)
 	case AID_INET6:
 	case AID_VPN_IPv6:
 		for (i = 128; i >= 0; i--) {
-			p = prefix_lookup(peer, addr, i);
+			p = prefix_adjout_lookup(peer, addr, i);
 			if (p != NULL)
 				return p;
 		}
@@ -1143,7 +1188,7 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 	struct prefix *p;
 	int created = 0;
 
-	if ((p = prefix_lookup(peer, prefix, prefixlen)) != NULL) {
+	if ((p = prefix_adjout_get(peer, 0, prefix, prefixlen)) != NULL) {
 		if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
 			fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit",
 			    __func__);
@@ -1192,6 +1237,7 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 			p->pt = pt_add(prefix, prefixlen);
 		pt_ref(p->pt);
 		p->peer = peer;
+		p->path_id_tx = 0 /* XXX force this for now */;
 
 		if (RB_INSERT(prefix_index, &peer->adj_rib_out, p) != NULL)
 			fatalx("%s: RB index invariant violated", __func__);
@@ -1235,7 +1281,7 @@ prefix_adjout_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 {
 	struct prefix *p;
 
-	p = prefix_lookup(peer, prefix, prefixlen);
+	p = prefix_adjout_get(peer, 0, prefix, prefixlen);
 	if (p == NULL)		/* Got a dummy withdrawn request. */
 		return (0);
 

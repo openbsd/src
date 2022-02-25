@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.243 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.244 2022/02/25 11:36:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -582,8 +582,13 @@ void		 path_put(struct rde_aspath *);
 #define	PREFIX_SIZE(x)	(((x) + 7) / 8 + 1)
 struct prefix	*prefix_get(struct rib *, struct rde_peer *, uint32_t,
 		    struct bgpd_addr *, int);
-struct prefix	*prefix_lookup(struct rde_peer *, struct bgpd_addr *, int);
+struct prefix	*prefix_adjout_get(struct rde_peer *, uint32_t,
+		    struct bgpd_addr *, int);
 struct prefix	*prefix_match(struct rde_peer *, struct bgpd_addr *);
+struct prefix	*prefix_adjout_match(struct rde_peer *, struct bgpd_addr *);
+struct prefix	*prefix_adjout_lookup(struct rde_peer *, struct bgpd_addr *,
+		     int);
+struct prefix	*prefix_adjout_next(struct rde_peer *, struct prefix *);
 int		 prefix_update(struct rib *, struct rde_peer *, uint32_t,
 		     struct filterstate *, struct bgpd_addr *, int, uint8_t);
 int		 prefix_withdraw(struct rib *, struct rde_peer *, uint32_t,

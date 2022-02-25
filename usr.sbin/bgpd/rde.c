@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.535 2022/02/24 14:54:03 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.536 2022/02/25 11:36:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2728,12 +2728,16 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 
 			do {
 				if (req->prefixlen == hostplen)
-					p = prefix_match(peer, &req->prefix);
+					p = prefix_adjout_match(peer,
+					    &req->prefix);
 				else
-					p = prefix_lookup(peer, &req->prefix,
-					    req->prefixlen);
-				if (p)
+					p = prefix_adjout_lookup(peer,
+					    &req->prefix, req->prefixlen);
+				/* dump all matching paths */
+				while (p != NULL) {
 					rde_dump_adjout_upcall(p, ctx);
+					p = prefix_adjout_next(peer, p);
+				};
 			} while ((peer = peer_match(&req->neighbor,
 			    peer->conf.id)));
 
