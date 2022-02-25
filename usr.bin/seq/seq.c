@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.5 2022/02/22 23:25:44 tb Exp $	*/
+/*	$OpenBSD: seq.c,v 1.6 2022/02/25 16:00:39 tb Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -54,8 +54,7 @@
 static const char *decimal_point = ".";	/* default */
 static char default_format[] = { "%g" };	/* default */
 
-static const struct option long_opts[] =
-{
+static const struct option long_opts[] = {
 	{"format",	required_argument,	NULL, 'f'},
 	{"help",	no_argument,		NULL, 'h'},
 	{"separator",	required_argument,	NULL, 's'},
@@ -154,7 +153,7 @@ main(int argc, char *argv[])
 		incr = e_atof(argv[1]);
 		/* Plan 9/GNU don't do zero */
 		if (incr == 0.0)
-			errx(1, "zero %screment", (first < last)? "in" : "de");
+			errx(1, "zero %screment", (first < last) ? "in" : "de");
 	}
 
 	/* default is one for Plan 9/GNU work alike */
@@ -180,7 +179,7 @@ main(int argc, char *argv[])
 	for (step = 1, cur = first; incr > 0 ? cur <= last : cur >= last;
 	    cur = first + incr * step++) {
 		if (cur != first)
-		    fputs(sep, stdout);
+			fputs(sep, stdout);
 		printf(fmt, cur);
 		last_shown_value = cur;
 	}
@@ -200,7 +199,7 @@ main(int argc, char *argv[])
 		err(1, "asprintf");
 	if (strcmp(cur_print, last_print) == 0 && cur != last_shown_value) {
 		if (cur != first)
-		    fputs(sep, stdout);
+			fputs(sep, stdout);
 		fputs(last_print, stdout);
 	}
 	free(cur_print);
@@ -290,18 +289,18 @@ valid_format(const char *fmt)
 
 		/* conversion */
 		switch (*fmt) {
-		    case 'A':
-		    case 'a':
-		    case 'E':
-		    case 'e':
-		    case 'F':
-		    case 'f':
-		    case 'G':
-		    case 'g':
+		case 'A':
+		case 'a':
+		case 'E':
+		case 'e':
+		case 'F':
+		case 'f':
+		case 'G':
+		case 'g':
 			/* floating point formats are accepted */
 			conversions++;
 			break;
-		    default:
+		default:
 			/* anything else is not */
 			return 0;
 		}
@@ -401,7 +400,7 @@ generate_format(double first, double incr, double last, int equalize, char pad)
 	/* XXX if incr is floating point fix the precision */
 	if (precision) {
 		snprintf(buf, sizeof(buf), "%%%c%d.%d%c", pad,
-		    MAXIMUM(width1, width2) + (int) strlen(decimal_point) +
+		    MAXIMUM(width1, width2) + (int)strlen(decimal_point) +
 		    precision, precision, (cc) ? cc : 'f');
 	} else {
 		snprintf(buf, sizeof(buf), "%%%c%d%c", pad,
