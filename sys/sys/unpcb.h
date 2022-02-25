@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpcb.h,v 1.23 2022/01/11 23:59:55 jsg Exp $	*/
+/*	$OpenBSD: unpcb.h,v 1.24 2022/02/25 08:36:01 guenther Exp $	*/
 /*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
 
 /*
@@ -120,4 +120,6 @@ void	unp_shutdown(struct unpcb *);
 int 	unp_externalize(struct mbuf *, socklen_t, int);
 int	unp_internalize(struct mbuf *, struct proc *);
 void 	unp_dispose(struct mbuf *);
+
+extern const struct pr_usrreqs uipc_usrreqs;
 #endif /* _KERNEL */

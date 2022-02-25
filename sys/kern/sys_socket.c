@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.47 2021/10/24 00:02:25 jsg Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.48 2022/02/25 08:36:01 guenther Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -139,9 +139,11 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		}
 		if (IOCGROUP(cmd) == 'r')
 			return (EOPNOTSUPP);
+		if (so->so_proto->pr_usrreqs->pru_control == NULL)
+			return (EOPNOTSUPP);
 		KERNEL_LOCK();
-		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-		    (struct mbuf *)cmd, (struct mbuf *)data, NULL, p));
+		error = ((*so->so_proto->pr_usrreqs->pru_control)(so, cmd,
+		    data, NULL));
 		KERNEL_UNLOCK();
 		break;
 	}

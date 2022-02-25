@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.161 2021/12/29 07:15:13 anton Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.162 2022/02/25 08:36:01 guenther Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -150,8 +150,6 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct socket *so2;
 	int error = 0;
 
-	if (req == PRU_CONTROL)
-		return (EOPNOTSUPP);
 	if (req != PRU_SEND && control && control->m_len) {
 		error = EOPNOTSUPP;
 		goto release;
@@ -471,6 +469,11 @@ uipc_detach(struct socket *so)
 
 	return (0);
 }
+
+const struct pr_usrreqs uipc_usrreqs = {
+	.pru_attach	= uipc_attach,
+	.pru_detach	= uipc_detach,
+};
 
 int
 uipc_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,

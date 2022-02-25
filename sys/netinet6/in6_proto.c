@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.107 2022/02/22 01:35:41 guenther Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.108 2022/02/25 08:36:01 guenther Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -141,8 +141,7 @@ const struct protosw inet6sw[] = {
   .pr_ctlinput	= udp6_ctlinput,
   .pr_ctloutput	= ip6_ctloutput,
   .pr_usrreq	= udp_usrreq,
-  .pr_attach	= udp_attach,
-  .pr_detach	= udp_detach,
+  .pr_usrreqs	= &udp6_usrreqs,
   .pr_sysctl	= udp_sysctl
 },
 {
@@ -154,8 +153,7 @@ const struct protosw inet6sw[] = {
   .pr_ctlinput	= tcp6_ctlinput,
   .pr_ctloutput	= tcp_ctloutput,
   .pr_usrreq	= tcp_usrreq,
-  .pr_attach	= tcp_attach,
-  .pr_detach	= tcp_detach,
+  .pr_usrreqs	= &tcp6_usrreqs,
   .pr_sysctl	= tcp_sysctl
 },
 {
@@ -167,8 +165,7 @@ const struct protosw inet6sw[] = {
   .pr_ctlinput	= rip6_ctlinput,
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
-  .pr_attach	= rip6_attach,
-  .pr_detach	= rip6_detach,
+  .pr_usrreqs	= &rip6_usrreqs,
   .pr_sysctl	= rip6_sysctl
 },
 {
@@ -180,8 +177,7 @@ const struct protosw inet6sw[] = {
   .pr_ctlinput	= rip6_ctlinput,
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
-  .pr_attach	= rip6_attach,
-  .pr_detach	= rip6_detach,
+  .pr_usrreqs	= &rip6_usrreqs,
   .pr_init	= icmp6_init,
   .pr_fasttimo	= icmp6_fasttimo,
   .pr_sysctl	= icmp6_sysctl
@@ -216,8 +212,7 @@ const struct protosw inet6sw[] = {
   .pr_input	= ah46_input,
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
-  .pr_attach	= rip6_attach,
-  .pr_detach	= rip6_detach,
+  .pr_usrreqs	= &rip6_usrreqs,
   .pr_sysctl	= ah_sysctl
 },
 {
@@ -228,8 +223,7 @@ const struct protosw inet6sw[] = {
   .pr_input	= esp46_input,
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
-  .pr_attach	= rip6_attach,
-  .pr_detach	= rip6_detach,
+  .pr_usrreqs	= &rip6_usrreqs,
   .pr_sysctl	= esp_sysctl
 },
 {
@@ -240,8 +234,7 @@ const struct protosw inet6sw[] = {
   .pr_input	= ipcomp46_input,
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
-  .pr_attach	= rip6_attach,
-  .pr_detach	= rip6_detach,
+  .pr_usrreqs	= &rip6_usrreqs,
   .pr_sysctl	= ipcomp_sysctl
 },
 #endif /* IPSEC */
@@ -257,8 +250,7 @@ const struct protosw inet6sw[] = {
 #endif
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,	/* XXX */
-  .pr_attach	= rip6_attach,
-  .pr_detach	= rip6_detach,
+  .pr_usrreqs	= &rip6_usrreqs,
 },
 {
   .pr_type	= SOCK_RAW,
@@ -272,8 +264,7 @@ const struct protosw inet6sw[] = {
 #endif
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,	/* XXX */
-  .pr_attach	= rip6_attach,
-  .pr_detach	= rip6_detach,
+  .pr_usrreqs	= &rip6_usrreqs,
 },
 #if defined(MPLS) && NGIF > 0
 {
@@ -288,8 +279,7 @@ const struct protosw inet6sw[] = {
 #endif
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,	/* XXX */
-  .pr_attach	= rip6_attach,
-  .pr_detach	= rip6_detach,
+  .pr_usrreqs	= &rip6_usrreqs,
 },
 #endif /* MPLS */
 #if NCARP > 0
@@ -301,8 +291,7 @@ const struct protosw inet6sw[] = {
   .pr_input	= carp6_proto_input,
   .pr_ctloutput = rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
-  .pr_attach	= rip6_attach,
-  .pr_detach	= rip6_detach,
+  .pr_usrreqs	= &rip6_usrreqs,
   .pr_sysctl	= carp_sysctl
 },
 #endif /* NCARP */
@@ -314,8 +303,7 @@ const struct protosw inet6sw[] = {
   .pr_flags	= PR_ATOMIC|PR_ADDR,
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= divert6_usrreq,
-  .pr_attach	= divert6_attach,
-  .pr_detach	= divert6_detach,
+  .pr_usrreqs	= &divert6_usrreqs,
   .pr_init	= divert6_init,
   .pr_sysctl	= divert6_sysctl
 },
@@ -329,8 +317,7 @@ const struct protosw inet6sw[] = {
   .pr_input	= ip6_etherip_input,
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
-  .pr_attach	= rip6_attach,
-  .pr_detach	= rip6_detach,
+  .pr_usrreqs	= &rip6_usrreqs,
 },
 #endif /* NETHERIP */
 #if NGRE > 0
@@ -342,8 +329,7 @@ const struct protosw inet6sw[] = {
   .pr_input	= gre_input6,
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
-  .pr_attach	= rip6_attach,
-  .pr_detach	= rip6_detach,
+  .pr_usrreqs	= &rip6_usrreqs,
 },
 #endif /* NGRE */
 {
@@ -354,8 +340,7 @@ const struct protosw inet6sw[] = {
   .pr_input	= rip6_input,
   .pr_ctloutput	= rip6_ctloutput,
   .pr_usrreq	= rip6_usrreq,
-  .pr_attach	= rip6_attach,
-  .pr_detach	= rip6_detach,
+  .pr_usrreqs	= &rip6_usrreqs,
   .pr_init	= rip6_init
 }
 };

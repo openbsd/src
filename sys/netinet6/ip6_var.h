@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.89 2021/12/01 12:51:09 bluhm Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.90 2022/02/25 08:36:01 guenther Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -348,8 +348,6 @@ int	rip6_output(struct mbuf *, struct socket *, struct sockaddr *,
 	    struct mbuf *);
 int	rip6_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct proc *);
-int	rip6_attach(struct socket *, int);
-int	rip6_detach(struct socket *);
 int	rip6_sysctl(int *, u_int, void *, size_t *, void *, size_t);
 
 int	dest6_input(struct mbuf **, int *, int, int);
@@ -370,6 +368,8 @@ int	ip6_output_ipsec_lookup(struct mbuf *, struct inpcb *, struct tdb **);
 int	ip6_output_ipsec_send(struct tdb *, struct mbuf *, struct route_in6 *,
 	    int, int);
 #endif /* IPSEC */
+
+extern const struct pr_usrreqs rip6_usrreqs;
 
 #endif /* _KERNEL */
 

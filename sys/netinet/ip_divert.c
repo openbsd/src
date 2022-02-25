@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.64 2020/11/16 06:38:20 gnezdo Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.65 2022/02/25 08:36:01 guenther Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -40,6 +40,9 @@
 #include <netinet/ip_icmp.h>
 
 #include <net/pfvar.h>
+
+int	divert_attach(struct socket *, int);
+int	divert_detach(struct socket *);
 
 struct	inpcbtable	divbtable;
 struct	cpumem		*divcounters;
@@ -243,11 +246,6 @@ divert_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 	struct inpcb *inp = sotoinpcb(so);
 	int error = 0;
 
-	if (req == PRU_CONTROL) {
-		return (in_control(so, (u_long)m, (caddr_t)addr,
-		    (struct ifnet *)control));
-	}
-
 	soassertlocked(so);
 
 	if (inp == NULL) {
@@ -345,6 +343,12 @@ divert_detach(struct socket *so)
 	in_pcbdetach(inp);
 	return (0);
 }
+
+const struct pr_usrreqs divert_usrreqs = {
+	.pru_attach    = divert_attach,
+	.pru_detach    = divert_detach,
+	.pru_control   = in_control,
+};
 
 int
 divert_sysctl_divstat(void *oldp, size_t *oldlenp, void *newp)

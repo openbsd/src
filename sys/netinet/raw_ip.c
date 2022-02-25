@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.119 2019/02/04 21:40:52 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.120 2022/02/25 08:36:01 guenther Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -432,10 +432,6 @@ rip_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct inpcb *inp;
 	int error = 0;
 
-	if (req == PRU_CONTROL)
-		return (in_control(so, (u_long)m, (caddr_t)nam,
-		    (struct ifnet *)control));
-
 	soassertlocked(so);
 
 	inp = sotoinpcb(so);
@@ -617,3 +613,9 @@ rip_detach(struct socket *so)
 
 	return (0);
 }
+
+const struct pr_usrreqs rip_usrreqs = {
+	.pru_attach	= rip_attach,
+	.pru_detach	= rip_detach,
+	.pru_control	= in_control,
+};
