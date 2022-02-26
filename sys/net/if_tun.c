@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.235 2022/02/22 01:15:02 guenther Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.236 2022/02/26 02:15:45 dlg Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -373,9 +373,18 @@ tun_dev_open(dev_t dev, const struct if_clone *ifc, int mode, struct proc *p)
 	struct ifnet *ifp;
 	int error;
 	u_short stayup = 0;
+	struct vnode *vp;
 
 	char name[IFNAMSIZ];
 	unsigned int rdomain;
+
+	/*
+	 * Find the vnode associated with this open before we sleep
+	 * and let something else revoke it. Our caller has a reference
+	 * to it so we don't need to account for it.
+	 */
+	if (!vfinddev(dev, VCHR, &vp))
+		panic("%s vfinddev failed", __func__);
 
 	snprintf(name, sizeof(name), "%s%u", ifc->ifc_name, minor(dev));
 	rdomain = rtable_l2(p->p_p->ps_rtableid);
@@ -411,6 +420,12 @@ tun_dev_open(dev_t dev, const struct if_clone *ifc, int mode, struct proc *p)
 			/* XXX if_clone_destroy if stayup? */
 			goto done;
 		}
+	}
+
+	/* Has tun_clone_destroy torn the rug out under us? */
+	if (vp->v_type == VBAD) {
+		error = ENXIO;
+		goto done;
 	}
 
 	if (sc->sc_dev != 0) {
