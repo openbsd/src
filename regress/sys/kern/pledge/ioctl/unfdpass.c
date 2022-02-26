@@ -1,4 +1,4 @@
-/*	$OpenBSD: unfdpass.c,v 1.2 2021/12/13 16:56:50 deraadt Exp $	*/
+/*	$OpenBSD: unfdpass.c,v 1.3 2022/02/26 20:14:06 bluhm Exp $	*/
 /*	$NetBSD: unfdpass.c,v 1.3 1998/06/24 23:51:30 thorpej Exp $	*/
 
 /*-
@@ -86,7 +86,7 @@ main(int argc, char *argv[])
 
 	if (pledge("stdio rpath wpath sendfd recvfd proc pf", NULL)
 	    == -1)
-		errx(1, "pledge");
+		err(1, "pledge");
 
 	if ((fdpf_postpledge = open("/dev/pf", O_RDWR)) == -1) {
 		err(1, "%s: cannot open pf socket", __func__);
@@ -131,7 +131,7 @@ main(int argc, char *argv[])
 	}
 
 	if (pledge("stdio recvfd pf", NULL) == -1)
-		errx(1, "pledge");
+		err(1, "pledge");
 
 	/*
 	 * Give sender a chance to run.  We will get going again
@@ -182,20 +182,17 @@ main(int argc, char *argv[])
 	 * Read the files and print their contents.
 	 */
 	if (files == NULL)
-		warnx("didn't get fd control message");
-	else {
-		if (ioctl(files[0], DIOCGETSTATUS, &status) == -1)
-			err(1, "%s: DIOCGETSTATUS", __func__);
-		if (!status.running)
-			errx(1, "%s: pf is disabled", __func__);
-		else
-			printf("pf is running\n");
-	}
+		errx(1, "didn't get fd control message");
+
+	if (ioctl(files[0], DIOCGETSTATUS, &status) == -1)
+		err(1, "%s: DIOCGETSTATUS", __func__);
+	if (!status.running)
+		warnx("%s: pf is disabled", __func__);
 
 	/*
 	 * All done!
 	 */
-	exit(0);
+	return 0;
 }
 
 void
@@ -241,5 +238,5 @@ child(int sock, int fdpf)
 	/*
 	 * All done!
 	 */
-	exit(0);
+	_exit(0);
 }

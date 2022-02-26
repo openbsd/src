@@ -1,29 +1,18 @@
-#	$OpenBSD: Makefile,v 1.2 2017/02/21 16:31:58 bluhm Exp $
-TEST_CASES_OK+=		pfioctl1
-TEST_CASES_FAILED+=	pfioctl2
+#	$OpenBSD: Makefile,v 1.3 2022/02/26 20:14:06 bluhm Exp $
 
-REGRESS_TARGETS=	tests_ok tests_failed do-unfdpass1
-WARNINGS=		Yes
-CFLAGS+=		-Wall -Wundef -Werror
-CLEANFILES+=		${TEST_CASES_OK} ${TEST_CASES_FAILED} *.core \
-			file1 file2 file3 output test-sock unfdpass
+PROGS=		pfioctl1 pfioctl2 unfdpass
+WARNINGS=	Yes
 
-tests_ok: ${TEST_CASES_OK}
-	@for test in $>; do \
-		${SUDO} ./$$test; \
-	done
+run-regress-pfioctl1: pfioctl1
+	${SUDO} ./pfioctl1
 
-tests_failed: ${TEST_CASES_FAILED}
-	@for test in $>; do \
-		rm -f ./$$test.core; \
-		if ${SUDO} ./$$test; then false; else true; fi; \
-		rm -f ./$$test.core; \
-	done
+run-regress-pfioctl2: pfioctl2
+	${SUDO} rm -f pfioctl2.core
+	ulimit -c unlimited; ! ${SUDO} ./pfioctl2
+	${SUDO} rm pfioctl2.core
 
-do-unfdpass1: unfdpass
-	${SUDO} ./unfdpass > output
-	cmp -s ${.CURDIR}/expected output
-#	${SUDO} ./unfdpass -f > output
-#	cmp -s ${.CURDIR}/expectedfail output
+run-regress-unfdpass: unfdpass
+	${SUDO} ./unfdpass
+	${SUDO} ./unfdpass -f
 
 .include <bsd.regress.mk>

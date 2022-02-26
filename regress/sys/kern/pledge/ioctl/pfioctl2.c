@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfioctl2.c,v 1.2 2017/03/24 21:18:00 benno Exp $ */
+/*	$OpenBSD: pfioctl2.c,v 1.3 2022/02/26 20:14:06 bluhm Exp $ */
 /*
  * Copyright (c) 2016 Sebastian Benoit <benno@openbsd.org>
  *
@@ -41,7 +41,7 @@ test_pf_status(int s)
 	if (ioctl(s, DIOCGETSTATUS, &status) == -1)
 		err(1, "%s: DIOCGETSTATUS", __func__);
 	if (!status.running)
-		errx(1, "%s: pf is disabled", __func__);
+		warnx("%s: pf is disabled", __func__);
 
 	return (ret);
 }
@@ -54,7 +54,7 @@ main(int argc, char *argv[])
 
 	printf("pf ioctl with file opened after pledge fails\n");
 	if (pledge("stdio pf", NULL) == -1)
-		errx(1, "pledge");
+		err(1, "pledge");
 
 	/* this fd is not fdpledged, test should fail */
 	if ((s = open(PF_SOCKET, O_RDWR)) == -1) {
