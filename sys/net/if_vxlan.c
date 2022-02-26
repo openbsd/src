@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.89 2022/02/21 05:19:07 dlg Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.90 2022/02/26 04:46:34 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -324,6 +324,8 @@ vxlan_encap(struct vxlan_softc *sc, struct mbuf *m,
     struct mbuf *(ip_encap)(struct vxlan_softc *sc, struct mbuf *,
     const union vxlan_addr *, uint8_t))
 {
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct m_tag *mtag;
 	struct mbuf *m0;
 	union vxlan_addr gateway;
 	const union vxlan_addr *endpoint;
@@ -387,6 +389,13 @@ vxlan_encap(struct vxlan_softc *sc, struct mbuf *m,
 	uh->uh_sum = htons(0);
 
 	SET(m->m_pkthdr.csum_flags, M_UDP_CSUM_OUT);
+
+	mtag = m_tag_get(PACKET_TAG_GRE, sizeof(ifp->if_index), M_NOWAIT);
+	if (mtag == NULL)
+		goto drop;
+
+	*(int *)(mtag + 1) = ifp->if_index;
+	m_tag_prepend(m, mtag);
 
 	prio = sc->sc_txhprio;
 	if (prio == IF_HDRPRIO_PACKET)
@@ -465,30 +474,16 @@ vxlan_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
     struct rtentry *rt)
 {
 	struct m_tag *mtag;
-	int error = 0;
 
 	mtag = NULL;
 	while ((mtag = m_tag_find(m, PACKET_TAG_GRE, mtag)) != NULL) {
-		if (memcmp((caddr_t)(mtag + 1), &ifp->if_index,
-		    sizeof(ifp->if_index)) == 0) {
-			error = EIO;
-			goto drop;
+		if (*(int *)(mtag + 1) == ifp->if_index) {
+			m_freem(m);
+			return (EIO);
 		}
 	}
 
-	mtag = m_tag_get(PACKET_TAG_GRE, sizeof(ifp->if_index), M_NOWAIT);
-	if (mtag == NULL) {
-		error = ENOBUFS;
-		goto drop;
-	}
-	memcpy((caddr_t)(mtag + 1), &ifp->if_index, sizeof(ifp->if_index));
-	m_tag_prepend(m, mtag);
-
 	return (ether_output(ifp, m, dst, rt));
-
-drop:
-	m_freem(m);
-	return (error);
 }
 
 static int
