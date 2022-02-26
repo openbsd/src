@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.536 2022/02/25 11:36:54 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.537 2022/02/26 11:48:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2737,7 +2737,7 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 				while (p != NULL) {
 					rde_dump_adjout_upcall(p, ctx);
 					p = prefix_adjout_next(peer, p);
-				};
+				}
 			} while ((peer = peer_match(&req->neighbor,
 			    peer->conf.id)));
 
