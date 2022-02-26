@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.41 2022/02/10 13:06:07 robert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.42 2022/02/26 17:42:12 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <millert@openbsd.org>
@@ -700,8 +700,11 @@ setuserpath(login_cap_t *lc, const struct passwd *pwd)
 	char *path = NULL, *opath = NULL, *op, *np;
 	int len, error;
 
+	/*
+	 * If we have no capabilities then set _PATH_DEFPATH.
+	 */
 	if (lc->lc_cap == NULL)
-		goto setit;		/* impossible */
+		goto setit;
 
 	if ((len = cgetustr(lc->lc_cap, "path", &opath)) <= 0)
 		goto setit;
@@ -753,8 +756,12 @@ setuserenv(login_cap_t *lc, const struct passwd *pwd)
 	char *beg, *end, *ep, *list, *value;
 	int len, error;
 
+	/*
+	 * If we have no capabilities then there is nothing to do and
+	 * we can just return success.
+	 */
 	if (lc->lc_cap == NULL)
-		return (-1);		/* impossible */
+		return (0);
 
 	if ((len = cgetustr(lc->lc_cap, "setenv", &list)) <= 0)
 		return (0);
