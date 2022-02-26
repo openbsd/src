@@ -1,10 +1,11 @@
-#	$OpenBSD: Makefile,v 1.15 2022/01/14 09:38:50 tb Exp $
+#	$OpenBSD: Makefile,v 1.16 2022/02/26 16:45:31 jsing Exp $
 
 PROGS = \
 	asn1api \
 	asn1basic \
 	asn1complex \
 	asn1evp \
+	asn1object \
 	asn1string_copy \
 	asn1time \
 	asn1x509 \
