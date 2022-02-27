@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.12 2022/02/22 17:26:04 deraadt Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.13 2022/02/27 10:14:01 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -51,7 +51,7 @@ struct dt_evt {
 	/*
 	 * Recorded if the corresponding flag is set.
 	 */
-	struct stacktrace 	dtev_kstack;	/* kernel stack frame */
+	struct stacktrace	dtev_kstack;	/* kernel stack frame */
 	char			dtev_comm[DTMAXCOMLEN]; /* current pr. name */
 	union {
 		register_t		E_entry[DTMAXFUNCARGS];
@@ -110,7 +110,7 @@ struct dtioc_probe_info {
 };
 
 struct dtioc_probe {
-	size_t		 	 dtpr_size;	/* size of the buffer */
+	size_t			 dtpr_size;	/* size of the buffer */
 	struct dtioc_probe_info	*dtpr_probes;	/* array of probe info */
 };
 

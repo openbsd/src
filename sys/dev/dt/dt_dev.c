@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.21 2022/02/22 17:26:04 deraadt Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.22 2022/02/27 10:14:01 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -405,7 +405,7 @@ dt_ioctl_record_start(struct dt_softc *sc)
 		return EBUSY;
 
 	KERNEL_ASSERT_LOCKED();
- 	if (TAILQ_EMPTY(&sc->ds_pcbs))
+	if (TAILQ_EMPTY(&sc->ds_pcbs))
 		return ENOENT;
 
 	rw_enter_write(&dt_lock);
@@ -586,7 +586,7 @@ dt_pcb_filter(struct dt_pcb *dp)
 {
 	struct dt_filter *dtf = &dp->dp_filter;
 	struct proc *p = curproc;
-	unsigned int var;
+	unsigned int var = 0;
 	int match = 1;
 
 	/* Filter out tracing program. */
