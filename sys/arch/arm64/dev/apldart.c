@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.9 2022/02/06 19:10:07 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.10 2022/02/27 17:36:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -70,7 +70,7 @@
  */
 #define DART_OFFSET_MASK	7
 
-#define DART_L1_TABLE		0xb
+#define DART_L1_TABLE		0x3
 #define DART_L2_INVAL		0
 #define DART_L2_VALID		(1 << 0)
 #define DART_L2_FULL_PAGE	(1 << 1)
