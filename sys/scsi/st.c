@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.188 2022/01/11 23:10:11 jsg Exp $	*/
+/*	$OpenBSD: st.c,v 1.189 2022/02/27 02:27:55 krw Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -360,8 +360,8 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 	if (st == NULL)
 		return ENXIO;
 	if (ISSET(st->flags, ST_DYING)) {
-		error = ENXIO;
-		goto done;
+		device_unref(&st->sc_dev);
+		return ENXIO;
 	}
 	link = st->sc_link;
 
