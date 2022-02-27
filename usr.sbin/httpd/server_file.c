@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.70 2021/04/29 18:23:07 dv Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.71 2022/02/27 20:30:30 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -223,26 +223,56 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 	const char		*errstr = NULL;
 	int			 fd = -1, ret, code = 500;
 	size_t			 bufsiz;
+	struct stat		 gzst;
+	char			 gzpath[PATH_MAX];
 
 	if ((ret = server_file_method(clt)) != 0) {
 		code = ret;
 		goto abort;
 	}
 
+	media = media_find_config(env, srv_conf, path);
+
 	if ((ret = server_file_modified_since(clt->clt_descreq, st)) != -1) {
 		/* send the header without a body */
-		media = media_find_config(env, srv_conf, path);
 		if ((ret = server_response_http(clt, ret, media, -1,
 		    MINIMUM(time(NULL), st->st_mtim.tv_sec))) == -1)
 			goto fail;
 		goto done;
 	}
 
+	/* change path to path.gz if necessary. */
+	if (srv_conf->flags & SRVFLAG_GZIP_STATIC) {
+		struct http_descriptor	*req = clt->clt_descreq;
+		struct http_descriptor	*resp = clt->clt_descresp;
+		struct kv		*r, key;
+
+		/* check Accept-Encoding header */
+		key.kv_key = "Accept-Encoding";
+		r = kv_find(&req->http_headers, &key);
+
+		if (r != NULL && strstr(r->kv_value, "gzip") != NULL) {
+			/* append ".gz" to path and check existence */
+			if (strlcpy(gzpath, path, sizeof(gzpath)) >=
+			    sizeof(gzpath) ||
+			    strlcat(gzpath, ".gz", sizeof(gzpath)) >=
+			    sizeof(gzpath))
+				goto abort;
+
+			if ((access(gzpath, R_OK) == 0) &&
+			    (stat(gzpath, &gzst) == 0)) {
+				path = gzpath;
+				st = &gzst;
+				kv_add(&resp->http_headers,
+				    "Content-Encoding", "gzip");
+			}
+		}
+	}
+
 	/* Now open the file, should be readable or we have another problem */
 	if ((fd = open(path, O_RDONLY)) == -1)
 		goto abort;
 
-	media = media_find_config(env, srv_conf, path);
 	ret = server_response_http(clt, 200, media, st->st_size,
 	    MINIMUM(time(NULL), st->st_mtim.tv_sec));
 	switch (ret) {

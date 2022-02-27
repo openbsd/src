@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.119 2021/10/24 16:01:04 ian Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.120 2022/02/27 20:30:30 bluhm Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 24 2021 $
+.Dd $Mdocdate: February 27 2022 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -425,6 +425,12 @@ A variable that is set to a comma separated list of TLS client verification
 features in use
 .Pq omitted when TLS client verification is not in use .
 .El
+.It Ic gzip-static
+Enable static gzip compression to save bandwith.
+.Pp
+If gzip encoding is accepted and if the requested file exists with
+an additional .gz suffix, use the compressed file instead and deliver
+it with content encoding gzip.
 .It Ic hsts Oo Ar option Oc
 Enable HTTP Strict Transport Security.
 Valid options are:
