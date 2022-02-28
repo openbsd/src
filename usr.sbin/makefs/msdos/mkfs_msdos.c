@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs_msdos.c,v 1.6 2021/10/06 00:40:41 deraadt Exp $	*/
+/*	$OpenBSD: mkfs_msdos.c,v 1.7 2022/02/28 16:17:37 krw Exp $	*/
 /*	$NetBSD: mkfs_msdos.c,v 1.10 2016/04/03 11:00:13 mlelstv Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <signal.h>
 
 #include <util.h>
-#include <disktab.h>
 
 #include "makefs.h"
 #include "msdos/mkfs_msdos.h"
