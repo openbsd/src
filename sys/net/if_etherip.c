@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.49 2021/05/16 15:10:20 deraadt Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.50 2022/02/28 00:12:11 dlg Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -104,6 +104,8 @@ void etheripattach(int);
 int etherip_clone_create(struct if_clone *, int);
 int etherip_clone_destroy(struct ifnet *);
 int etherip_ioctl(struct ifnet *, u_long, caddr_t);
+int etherip_output(struct ifnet *, struct mbuf *, struct sockaddr *,
+    struct rtentry *);
 void etherip_start(struct ifnet *);
 int etherip_media_change(struct ifnet *);
 void etherip_media_status(struct ifnet *, struct ifmediareq *);
@@ -147,6 +149,7 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_softc = sc;
 	ifp->if_hardmtu = ETHER_MAX_HARDMTU_LEN;
 	ifp->if_ioctl = etherip_ioctl;
+	ifp->if_output = etherip_output;
 	ifp->if_start = etherip_start;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED;
@@ -201,6 +204,23 @@ etherip_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 {
 	imr->ifm_active = IFM_ETHER | IFM_AUTO;
 	imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
+}
+
+int
+etherip_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+    struct rtentry *rt)
+{
+ 	struct m_tag *mtag;
+
+	mtag = NULL;
+	while ((mtag = m_tag_find(m, PACKET_TAG_GRE, mtag)) != NULL) {
+		if (*(int *)(mtag + 1) == ifp->if_index) {
+			m_freem(m);
+			return (EIO);
+		}
+	}
+ 
+	return (ether_output(ifp, m, dst, rt));
 }
 
 void
@@ -509,6 +529,7 @@ int
 ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 {
 	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
+	struct m_tag *mtag;
 	struct etherip_header *eip;
 	struct ip *ip;
 
@@ -537,6 +558,15 @@ ip_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	eip->eip_ver = ETHERIP_VERSION;
 	eip->eip_res = 0;
 	eip->eip_pad = 0;
+
+	mtag = m_tag_get(PACKET_TAG_GRE, sizeof(ifp->if_index), M_NOWAIT);
+	if (mtag == NULL) {
+		m_freem(m);
+		return (ENOMEM);
+	}
+
+	*(int *)(mtag + 1) = ifp->if_index;
+	m_tag_prepend(m, mtag);
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	m->m_pkthdr.ph_rtableid = sc->sc_tunnel.t_rtableid;
@@ -669,6 +699,7 @@ int
 ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 {
 	struct etherip_softc *sc = ifp->if_softc;
+	struct m_tag *mtag;
 	struct ip6_hdr *ip6;
 	struct etherip_header *eip;
 	uint16_t len;
@@ -703,6 +734,15 @@ ip6_etherip_output(struct ifnet *ifp, struct mbuf *m)
 	eip->eip_ver = ETHERIP_VERSION;
 	eip->eip_res = 0;
 	eip->eip_pad = 0;
+
+	mtag = m_tag_get(PACKET_TAG_GRE, sizeof(ifp->if_index), M_NOWAIT);
+	if (mtag == NULL) {
+		m_freem(m);
+		return (ENOMEM);
+	}
+
+	*(int *)(mtag + 1) = ifp->if_index;
+	m_tag_prepend(m, mtag);
 
 	if (sc->sc_df)
 		SET(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT);
