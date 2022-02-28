@@ -41,8 +41,6 @@
 	howmany(sizeof(long) * NBBY, RADIX_TREE_MAP_SHIFT)
 
 #define	RADIX_TREE_ENTRY_MASK 3UL
-#define	RADIX_TREE_EXCEPTIONAL_ENTRY 2UL
-#define	RADIX_TREE_EXCEPTIONAL_SHIFT 2
 
 struct radix_tree_node {
 	void		*slots[RADIX_TREE_MAP_SIZE];
