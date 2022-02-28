@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.158 2022/01/25 07:10:19 visa Exp $	*/
+/*	$OpenBSD: trap.c,v 1.159 2022/02/28 15:49:57 visa Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1379,7 +1379,6 @@ stacktrace_save_at(struct stacktrace *st, unsigned int skip)
 	extern char k_intr[];
 	extern char u_intr[];
 	db_expr_t diff;
-	char *name;
 	Elf_Sym *sym;
 	struct trapframe *tf;
 	vaddr_t pc, ra, sp, subr, va;
@@ -1413,7 +1412,6 @@ stacktrace_save_at(struct stacktrace *st, unsigned int skip)
 		sym = db_search_symbol(pc, DB_STGY_PROC, &diff);
 		if (sym == NULL)
 			break;
-		db_symbol_values(sym, &name, NULL);
 		subr = pc - (vaddr_t)diff;
 
 		if ((subr & 0x3) != 0)
