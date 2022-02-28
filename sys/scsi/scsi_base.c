@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.279 2021/05/13 02:22:33 krw Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.280 2022/02/28 14:48:11 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -864,10 +864,14 @@ again:
 	received = xs->datalen - xs->resid;
 	scsi_xs_put(xs);
 
-	if (error != 0)
+	if (error != 0) {
+		SC_DEBUG(link, SDEV_DB2, ("INQUIRE error %d\n", error));
 		return error;
-	if (received < SID_SCSI2_HDRLEN)
+	}
+	if (received < SID_SCSI2_HDRLEN) {
+		SC_DEBUG(link, SDEV_DB2, ("INQUIRE data < SID_SCSI2_HDRLEN\n"));
 		return EINVAL;
+	}
 
 	avail = SID_SCSI2_HDRLEN + inqbuf->additional_length;
 
@@ -882,6 +886,10 @@ again:
 	printf("got %d of %d bytes of inquiry data:\n", received,
 	    avail);
 	scsi_show_mem((u_char *)inqbuf, received);
+	sc_print_addr(link);
+	scsi_show_inquiry_header(inqbuf);
+	sc_print_addr(link);
+	scsi_show_inquiry_match(inqbuf);
 #endif /* SCSIDEBUG */
 
 	if (avail > received)
@@ -2840,5 +2848,60 @@ scsi_show_flags(u_int32_t flags, const char **names)
 	if (unnamed != 0)
 		printf("%s0x%08x", first ? "" : ", ", unnamed);
 	printf(">");
+}
+
+void
+scsi_show_inquiry_header(struct scsi_inquiry_data *inqbuf)
+{
+	switch (inqbuf->device & SID_QUAL) {
+	case SID_QUAL_RSVD:
+		printf("SID_QUAL_RSVD, ");
+		break;
+	case SID_QUAL_BAD_LU:
+		printf("SID_QUAL_BAD_LU, ");
+		break;
+	case SID_QUAL_LU_OFFLINE:
+		printf("SID_QUAL_LU_OFFLINE, ");
+		break;
+	case SID_QUAL_LU_OK:
+		printf("SID_QUAL_LU_OK, ");
+		break;
+	default:
+		printf("SID_QUAL = 0x%02x, ", inqbuf->device & SID_QUAL);
+		break;
+	}
+	printf("%s, ", devicetypenames[inqbuf->device & SID_TYPE]);
+	if (ISSET(inqbuf->dev_qual2, SID_REMOVABLE))
+		printf("T_REMOV, ");
+	else
+		printf("T_FIXED, ");
+	printf("SID_ANSII_REV %u, SID_RESPONSE_DATA_FMT %u\n",
+	    SID_ANSII_REV(inqbuf),
+	    inqbuf->response_format & SID_RESPONSE_DATA_FMT);
+}
+
+void
+scsi_show_inquiry_match(struct scsi_inquiry_data *inqbuf)
+{
+	char				 visbuf[65];
+	unsigned int			 inqbytes;
+
+	inqbytes = SID_SCSI2_HDRLEN + inqbuf->additional_length;
+	printf("<");
+	if (inqbytes >= offsetof(struct scsi_inquiry_data, product))
+		scsi_strvis(visbuf, inqbuf->vendor, sizeof(inqbuf->vendor));
+	else
+		visbuf[0] = '\0';
+	printf("\"%s\", ", visbuf);
+	if (inqbytes >= offsetof(struct scsi_inquiry_data, revision))
+		scsi_strvis(visbuf, inqbuf->product, sizeof(inqbuf->product));
+	else
+		visbuf[0] = '\0';
+	printf("\"%s\", ", visbuf);
+	if (inqbytes >= offsetof(struct scsi_inquiry_data, extra))
+		scsi_strvis(visbuf, inqbuf->revision, sizeof(inqbuf->revision));
+	else
+		visbuf[0] = '\0';
+	printf("\"%s\">\n", visbuf);
 }
 #endif /* SCSIDEBUG */

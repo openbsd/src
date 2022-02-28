@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_debug.h,v 1.22 2020/07/27 19:19:50 krw Exp $	*/
+/*	$OpenBSD: scsi_debug.h,v 1.23 2022/02/28 14:48:11 krw Exp $	*/
 /*	$NetBSD: scsi_debug.h,v 1.7 1996/10/12 23:23:16 christos Exp $	*/
 
 /*
@@ -46,6 +46,8 @@ void	scsi_show_sense(struct scsi_xfer *);
 void	scsi_show_xs(struct scsi_xfer *);
 void	scsi_show_mem(u_char *, int);
 void	scsi_show_flags(u_int32_t, const char **);
+void	scsi_show_inquiry_header(struct scsi_inquiry_data *);
+void	scsi_show_inquiry_match(struct scsi_inquiry_data *);
 
 /*
  * This is the usual debug macro for use with the above bits
