@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.156 2021/08/27 17:25:55 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.157 2022/02/28 09:34:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -530,7 +530,7 @@ client_signal(int sig)
 	if (sig == SIGCHLD)
 		waitpid(WAIT_ANY, &status, WNOHANG);
 	else if (!client_attached) {
-		if (sig == SIGTERM)
+		if (sig == SIGTERM || sig == SIGHUP)
 			proc_exit(client_proc);
 	} else {
 		switch (sig) {
