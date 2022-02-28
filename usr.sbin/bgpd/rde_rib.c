@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.227 2022/02/25 12:56:12 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.228 2022/02/28 14:32:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -848,9 +848,9 @@ static int	prefix_move(struct prefix *, struct rde_peer *,
 		    struct nexthop *, uint8_t, uint8_t);
 
 static void	prefix_link(struct prefix *, struct rib_entry *,
-		     struct rde_peer *, uint32_t, struct rde_aspath *,
-		     struct rde_community *, struct nexthop *,
-		     uint8_t, uint8_t);
+		     struct pt_entry *, struct rde_peer *, uint32_t,
+		     struct rde_aspath *, struct rde_community *,
+		     struct nexthop *, uint8_t, uint8_t);
 static void	prefix_unlink(struct prefix *);
 
 static struct prefix	*prefix_alloc(void);
@@ -941,18 +941,21 @@ prefix_adjout_lookup(struct rde_peer *peer, struct bgpd_addr *prefix,
 	xp.pt = pt_fill(prefix, prefixlen);
 
 	np = RB_NFIND(prefix_index, &peer->adj_rib_out, &xp);
-	if (np != NULL && pt_prefix_cmp(np->pt, xp.pt) != 0)
+	if (np == NULL || pt_prefix_cmp(np->pt, xp.pt) != 0)
 		return NULL;
 	return np;
 }
 
+/*
+ * Return next prefix after a lookup that is actually an update.
+ */
 struct prefix *
 prefix_adjout_next(struct rde_peer *peer, struct prefix *p)
 {
 	struct prefix *np;
 
 	np = RB_NEXT(prefix_index, &peer->adj_rib_out, p);
-	if (np == NULL || p->pt != np->pt)
+	if (np == NULL || np->pt != p->pt)
 		return NULL;
 	return np;
 }
@@ -1060,7 +1063,14 @@ prefix_add(struct bgpd_addr *prefix, int prefixlen, struct rib *rib,
 		re = rib_add(rib, prefix, prefixlen);
 
 	p = prefix_alloc();
-	prefix_link(p, re, peer, path_id, asp, comm, nexthop, nhflags, vstate);
+	prefix_link(p, re, re->prefix, peer, path_id, asp, comm, nexthop,
+	    nhflags, vstate);
+
+	/* add possible pftable reference form aspath */
+	if (asp && asp->pftableid)
+		rde_pftable_add(asp->pftableid, p);
+	/* make route decision */
+	prefix_evaluate(re, p, NULL);
 	return (1);
 }
 
@@ -1082,18 +1092,8 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 
 	/* add new prefix node */
 	np = prefix_alloc();
-	/* add reference to new AS path and communities */
-	np->aspath = path_ref(asp);
-	np->communities = communities_ref(comm);
-	np->peer = peer;
-	np->entry.list.re = prefix_re(p);
-	np->pt = p->pt; /* skip refcnt update since ref is moved */
-	np->path_id = p->path_id;
-	np->validation_state = vstate;
-	np->nhflags = nhflags;
-	np->nexthop = nexthop_ref(nexthop);
-	nexthop_link(np);
-	np->lastchange = getmonotime();
+	prefix_link(np, prefix_re(p), p->pt, peer, p->path_id, asp, comm,
+	    nexthop, nhflags, vstate);
 
 	/* add possible pftable reference from new aspath */
 	if (asp && asp->pftableid)
@@ -1105,21 +1105,12 @@ prefix_move(struct prefix *p, struct rde_peer *peer,
 	 */
 	prefix_evaluate(prefix_re(np), np, p);
 
-	/* remove possible pftable reference from old path first */
+	/* remove possible pftable reference from old path */
 	if (p->aspath && p->aspath->pftableid)
 		rde_pftable_del(p->aspath->pftableid, p);
 
 	/* remove old prefix node */
-	nexthop_unlink(p);
-	nexthop_unref(p->nexthop);
-	communities_unref(p->communities);
-	path_unref(p->aspath);
-	p->communities = NULL;
-	p->nexthop = NULL;
-	p->aspath = NULL;
-	p->peer = NULL;
-	p->pt = NULL;
-	p->entry.list.re = NULL;
+	prefix_unlink(p);
 	prefix_free(p);
 
 	return (0);
@@ -1213,14 +1204,10 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 				prefix_head = &peer->updates[prefix->aid];
 				RB_REMOVE(prefix_tree, prefix_head, p);
 			}
+			/* unlink prefix so it can be relinked below */
+			prefix_unlink(p);
 		}
-		/* unlink from aspath and remove nexthop ref */
-		nexthop_unref(p->nexthop);
-		communities_unref(p->communities);
-		path_unref(p->aspath);
 		p->flags &= ~PREFIX_FLAG_MASK;
-
-		/* peer and pt remain */
 	} else {
 		p = prefix_alloc();
 		p->flags |= PREFIX_FLAG_ADJOUT;
@@ -1248,13 +1235,8 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 		comm = communities_link(&state->communities);
 	}
 
-	p->aspath = path_ref(asp);
-	p->communities = communities_ref(comm);
-	p->nexthop = nexthop_ref(state->nexthop);
-	p->nhflags = state->nhflags;
-
-	p->validation_state = vstate;
-	p->lastchange = getmonotime();
+	prefix_link(p, NULL, p->pt, peer, 0, asp, comm, state->nexthop,
+	    state->nhflags, vstate);
 
 	if (p->flags & PREFIX_FLAG_MASK)
 		fatalx("%s: bad flags %x", __func__, p->flags);
@@ -1282,35 +1264,18 @@ prefix_adjout_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 	if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
 		fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit", __func__);
 
-	/* already a withdraw, shortcut */
-	if (p->flags & PREFIX_FLAG_WITHDRAW) {
-		p->lastchange = getmonotime();
-		p->flags &= ~PREFIX_FLAG_STALE;
-		return (0);
-	}
+	/* already a withdraw, error */
+	if (p->flags & PREFIX_FLAG_WITHDRAW)
+		log_warnx("%s: prefix already withdrawed", __func__);
 	/* pending update just got withdrawn */
 	if (p->flags & PREFIX_FLAG_UPDATE)
 		RB_REMOVE(prefix_tree, &peer->updates[p->pt->aid], p);
+	/* unlink prefix if it was linked (not a withdraw or dead) */
+	if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) == 0)
+		prefix_unlink(p);
+
 	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
 	p->flags &= ~PREFIX_FLAG_MASK;
-
-	/* remove nexthop ref ... */
-	nexthop_unref(p->nexthop);
-	p->nexthop = NULL;
-	p->nhflags = 0;
-
-	/* unlink from aspath ...*/
-	path_unref(p->aspath);
-	p->aspath = NULL;
-
-	/* ... communities ... */
-	communities_unref(p->communities);
-	p->communities = NULL;
-	/* and unlink from aspath */
-	path_unref(p->aspath);
-	p->aspath = NULL;
-	/* re already NULL */
-
 	p->lastchange = getmonotime();
 
 	p->flags |= PREFIX_FLAG_WITHDRAW;
@@ -1353,34 +1318,25 @@ prefix_adjout_destroy(struct prefix *p)
 
 	if (p->flags & PREFIX_FLAG_WITHDRAW)
 		RB_REMOVE(prefix_tree, &peer->withdraws[p->pt->aid], p);
-	else if (p->flags & PREFIX_FLAG_UPDATE)
+	if (p->flags & PREFIX_FLAG_UPDATE)
 		RB_REMOVE(prefix_tree, &peer->updates[p->pt->aid], p);
+	/* unlink prefix if it was linked (not a withdraw or dead) */
+	if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) == 0)
+		prefix_unlink(p);
+
 	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
 	p->flags &= ~PREFIX_FLAG_MASK;
 
 
 	if (prefix_is_locked(p)) {
-		/* remove nexthop ref ... */
-		nexthop_unref(p->nexthop);
-		p->nexthop = NULL;
-		/* ... communities ... */
-		communities_unref(p->communities);
-		p->communities = NULL;
-		/* and unlink from aspath */
-		path_unref(p->aspath);
-		p->aspath = NULL;
-		p->nhflags = 0;
-		/* re already NULL */
-
-		/* finally mark prefix dead */
+		/* mark prefix dead but leave it for prefix_restart */
 		p->flags |= PREFIX_FLAG_DEAD;
-		return;
+	} else {
+		RB_REMOVE(prefix_index, &peer->adj_rib_out, p);
+		/* remove the last prefix reference before free */
+		pt_unref(p->pt);
+		prefix_free(p);
 	}
-
-	RB_REMOVE(prefix_index, &peer->adj_rib_out, p);
-
-	prefix_unlink(p);
-	prefix_free(p);
 }
 
 static void
@@ -1588,31 +1544,24 @@ prefix_destroy(struct prefix *p)
  * Link a prefix into the different parent objects.
  */
 static void
-prefix_link(struct prefix *p, struct rib_entry *re, struct rde_peer *peer,
-    uint32_t path_id, struct rde_aspath *asp, struct rde_community *comm,
-    struct nexthop *nexthop, uint8_t nhflags, uint8_t vstate)
+prefix_link(struct prefix *p, struct rib_entry *re, struct pt_entry *pt,
+    struct rde_peer *peer, uint32_t path_id, struct rde_aspath *asp,
+    struct rde_community *comm, struct nexthop *nexthop, uint8_t nhflags,
+    uint8_t vstate)
 {
-	if (p->flags & PREFIX_FLAG_ADJOUT)
-		fatalx("%s: prefix with PREFIX_FLAG_ADJOUT hit", __func__);
 
-	p->entry.list.re = re;
+	if (re)
+		p->entry.list.re = re;
 	p->aspath = path_ref(asp);
 	p->communities = communities_ref(comm);
 	p->peer = peer;
-	p->pt = pt_ref(re->prefix);
+	p->pt = pt_ref(pt);
 	p->path_id = path_id;
 	p->validation_state = vstate;
 	p->nhflags = nhflags;
 	p->nexthop = nexthop_ref(nexthop);
 	nexthop_link(p);
 	p->lastchange = getmonotime();
-
-	/* add possible pftable reference from aspath */
-	if (asp && asp->pftableid)
-		rde_pftable_add(asp->pftableid, p);
-
-	/* make route decision */
-	prefix_evaluate(re, p, NULL);
 }
 
 /*
@@ -1624,24 +1573,22 @@ prefix_unlink(struct prefix *p)
 	struct rib_entry	*re = prefix_re(p);
 
 	/* destroy all references to other objects */
+	/* remove nexthop ref ... */
 	nexthop_unlink(p);
 	nexthop_unref(p->nexthop);
-	communities_unref(p->communities);
-	path_unref(p->aspath);
-	pt_unref(p->pt);
-	p->communities = NULL;
 	p->nexthop = NULL;
+	p->nhflags = 0;
+	/* ... communities ... */
+	communities_unref(p->communities);
+	p->communities = NULL;
+	/* and unlink from aspath */
+	path_unref(p->aspath);
 	p->aspath = NULL;
-	p->peer = NULL;
-	p->pt = NULL;
 
 	if (re && rib_empty(re))
 		rib_remove(re);
 
-	/*
-	 * It's the caller's duty to do accounting and remove empty aspath
-	 * structures. Also freeing the unlinked prefix is the caller's duty.
-	 */
+	pt_unref(p->pt);
 }
 
 /* alloc and zero new entry. May not fail. */
@@ -1857,6 +1804,8 @@ void
 nexthop_link(struct prefix *p)
 {
 	if (p->nexthop == NULL)
+		return;
+	if (p->flags & PREFIX_FLAG_ADJOUT)
 		return;
 
 	/* no need to link prefixes in RIBs that have no decision process */
