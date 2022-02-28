@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.55 2019/03/24 17:56:54 deraadt Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.56 2022/02/28 21:56:29 dtucker Exp $	*/
 
 /*
  * Copyright (c) 1996, David Mazieres <dm@uun.org>
@@ -78,7 +78,7 @@ _rs_init(u_char *buf, size_t n)
 			_exit(1);
 	}
 
-	chacha_keysetup(&rsx->rs_chacha, buf, KEYSZ * 8, 0);
+	chacha_keysetup(&rsx->rs_chacha, buf, KEYSZ * 8);
 	chacha_ivsetup(&rsx->rs_chacha, buf + KEYSZ);
 }
 
