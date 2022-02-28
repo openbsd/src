@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.10 2022/02/27 17:36:52 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.11 2022/02/28 15:51:02 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -117,6 +117,7 @@ struct apldart_softc {
 	struct extent		*sc_dvamap;
 	struct mutex		sc_dvamap_mtx;
 
+	int			sc_shift;
 	struct apldart_dmamem	*sc_l1;
 	struct apldart_dmamem	**sc_l2;
 
@@ -185,7 +186,8 @@ apldart_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,t8103-dart");
+	return OF_is_compatible(faa->fa_node, "apple,t8103-dart") ||
+	    OF_is_compatible(faa->fa_node, "apple,t6000-dart");
 }
 
 void
@@ -238,6 +240,9 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	if (OF_is_compatible(faa->fa_node, "apple,t6000-dart"))
+		sc->sc_shift = 4;
+
 	/*
 	 * Skip the first page to help catching bugs where a device is
 	 * doing DMA to/from address zero because we didn't properly
@@ -277,7 +282,8 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	for (idx = 0; idx < nl2; idx++) {
 		sc->sc_l2[idx] = apldart_dmamem_alloc(sc->sc_dmat,
 		    DART_PAGE_SIZE, DART_PAGE_SIZE);
-		l1[idx] = APLDART_DMA_DVA(sc->sc_l2[idx]) | DART_L1_TABLE;
+		pa = APLDART_DMA_DVA(sc->sc_l2[idx]);
+		l1[idx] = (pa >> sc->sc_shift) | DART_L1_TABLE;
 	}
 
 	/* Install page tables. */
@@ -405,7 +411,7 @@ apldart_load_map(struct apldart_softc *sc, bus_dmamap_t map)
 				end = apldart_round_offset(len) - 1;
 
 			tte = apldart_lookup_tte(sc, dva);
-			*tte = pa | DART_L2_VALID |
+			*tte = (pa >> sc->sc_shift) | DART_L2_VALID |
 			    DART_L2_START(start) | DART_L2_END(end);
 
 			pa += DART_PAGE_SIZE;
