@@ -1,4 +1,4 @@
-/* $OpenBSD: input-keys.c,v 1.87 2022/02/16 18:55:05 nicm Exp $ */
+/* $OpenBSD: input-keys.c,v 1.88 2022/02/28 09:24:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -418,7 +418,7 @@ int
 input_key(struct screen *s, struct bufferevent *bev, key_code key)
 {
 	struct input_key_entry	*ike;
-	key_code		 justkey, newkey, outkey;
+	key_code		 justkey, newkey, outkey, modifiers;
 	struct utf8_data	 ud;
 	char			 tmp[64], modifier;
 
@@ -519,7 +519,12 @@ input_key(struct screen *s, struct bufferevent *bev, key_code key)
 		return (input_key(s, bev, key & ~KEYC_CTRL));
 	}
 	outkey = (key & KEYC_MASK_KEY);
-	switch (key & KEYC_MASK_MODIFIERS) {
+	modifiers = (key & KEYC_MASK_MODIFIERS);
+	if (outkey < ' ') {
+		outkey = 64 + outkey;
+		modifiers |= KEYC_CTRL;
+	}
+	switch (modifiers) {
 	case KEYC_SHIFT:
 		modifier = '2';
 		break;
