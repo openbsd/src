@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.537 2022/02/26 11:48:50 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.538 2022/02/28 12:52:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2574,6 +2574,8 @@ rde_dump_adjout_upcall(struct prefix *p, void *ptr)
 {
 	struct rde_dump_ctx	*ctx = ptr;
 
+	if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
+		fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit", __func__);
 	if (p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD))
 		return;
 	rde_dump_filter(p, &ctx->req, 1);
@@ -2585,6 +2587,8 @@ rde_dump_adjout_prefix_upcall(struct prefix *p, void *ptr)
 	struct rde_dump_ctx	*ctx = ptr;
 	struct bgpd_addr	 addr;
 
+	if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
+		fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit", __func__);
 	if (p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD))
 		return;
 
