@@ -1111,9 +1111,7 @@ struct amdgpu_device {
 	char				serial[20];
 
 	atomic_t			throttling_logging_enabled;
-#ifdef notyet
 	struct ratelimit_state		throttling_logging_rs;
-#endif
 	uint32_t                        ras_hw_enabled;
 	uint32_t                        ras_enabled;
 

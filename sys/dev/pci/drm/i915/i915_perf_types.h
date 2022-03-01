@@ -422,9 +422,7 @@ struct i915_perf {
 	 * For rate limiting any notifications of spurious
 	 * invalid OA reports
 	 */
-#ifdef notyet
 	struct ratelimit_state spurious_report_rs;
-#endif
 
 	/**
 	 * For rate limiting any notifications of tail pointer

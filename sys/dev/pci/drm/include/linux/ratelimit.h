@@ -7,11 +7,24 @@ struct ratelimit_state {
 };
 
 #define DEFINE_RATELIMIT_STATE(name, interval, burst) \
-	int name __used = 1;
+	struct ratelimit_state name
 
-#define __ratelimit(x)	(1)
+#define RATELIMIT_MSG_ON_RELEASE	(1 << 0)
 
-#define ratelimit_state_init(x, y, z)
-#define ratelimit_set_flags(x, y)
+static inline int
+__ratelimit(struct ratelimit_state *rs)
+{
+	return 1;
+}
+
+static inline void
+ratelimit_state_init(struct ratelimit_state *rs, int interval, int burst)
+{
+}
+
+static inline void
+ratelimit_set_flags(struct ratelimit_state *rs, unsigned long flags)
+{
+}
 
 #endif

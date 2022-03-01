@@ -4507,7 +4507,6 @@ void i915_perf_init(struct drm_i915_private *i915)
 		 *
 		 * Using the same limiting factors as printk_ratelimit()
 		 */
-#ifdef notyet
 		ratelimit_state_init(&perf->spurious_report_rs, 5 * HZ, 10);
 		/* Since we use a DRM_NOTE for spurious reports it would be
 		 * inconsistent to let __ratelimit() automatically print a
@@ -4515,7 +4514,6 @@ void i915_perf_init(struct drm_i915_private *i915)
 		 */
 		ratelimit_set_flags(&perf->spurious_report_rs,
 				    RATELIMIT_MSG_ON_RELEASE);
-#endif
 
 		ratelimit_state_init(&perf->tail_pointer_race,
 				     5 * HZ, 10);
