@@ -3,10 +3,6 @@
 #ifndef _LINUX_TIMEKEEPING_H
 #define _LINUX_TIMEKEEPING_H
 
-#define ktime_get_boottime()	ktime_get()
-#define ktime_get_boottime_ns()	ktime_get_ns()
-#define get_seconds()		gettime()
-
 static inline time_t
 ktime_get_real_seconds(void)
 {
@@ -25,6 +21,18 @@ static inline uint64_t
 ktime_get_ns(void)
 {
 	return ktime_get();
+}
+
+static inline ktime_t
+ktime_get_boottime(void)
+{
+	return ktime_get();
+}
+
+static inline uint64_t
+ktime_get_boottime_ns(void)
+{
+	return ktime_get_ns();
 }
 
 #endif

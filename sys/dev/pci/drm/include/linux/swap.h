@@ -39,6 +39,10 @@ get_nr_swap_pages(void)
  * XXX For now, we don't want the shrinker to be too aggressive, so
  * pretend we're not called from the pagedaemon even if we are.
  */
-#define current_is_kswapd()	0
+static inline int
+current_is_kswapd(void)
+{
+	return 0;
+}
 
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: idr.h,v 1.4 2020/11/14 15:00:20 kettenis Exp $	*/
+/*	$OpenBSD: idr.h,v 1.5 2022/03/01 04:08:04 jsg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -36,17 +36,26 @@ struct idr {
 void idr_init(struct idr *);
 void idr_preload(unsigned int);
 int idr_alloc(struct idr *, void *, int, int, gfp_t);
-#define idr_preload_end()
 void *idr_find(struct idr *, unsigned long);
 void *idr_replace(struct idr *, void *, unsigned long);
 void *idr_remove(struct idr *, unsigned long);
 void idr_destroy(struct idr *);
 int idr_for_each(struct idr *, int (*)(int, void *, void *), void *);
 void *idr_get_next(struct idr *, int *);
-#define idr_init_base(idr, base)	idr_init(idr)
 
 #define idr_for_each_entry(idp, entry, id) \
 	for (id = 0; ((entry) = idr_get_next(idp, &(id))) != NULL; id++)
+
+static inline void
+idr_init_base(struct idr *idr, int base)
+{
+	idr_init(idr);
+}
+
+static inline void
+idr_preload_end(void)
+{
+}
 
 static inline bool
 idr_is_empty(const struct idr *idr)

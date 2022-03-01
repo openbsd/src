@@ -6,8 +6,17 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 
-#define get_random_u32()	arc4random()
-#define get_random_int()	arc4random()
+static inline uint32_t
+get_random_u32(void)
+{
+	return arc4random();
+}
+
+static inline unsigned int
+get_random_int(void)
+{
+	return arc4random();
+}
 
 static inline uint64_t
 get_random_u64(void)

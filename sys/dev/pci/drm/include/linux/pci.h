@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.9 2022/02/28 02:40:16 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.10 2022/03/01 04:08:04 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -304,14 +304,36 @@ pcie_set_readrq(struct pci_dev *pdev, int rrq)
 	return pcie_capability_write_word(pdev, PCI_PCIE_DCSR, val);
 }
 
-#define pci_set_master(x)
-#define pci_clear_master(x)
+static inline void
+pci_set_master(struct pci_dev *pdev)
+{
+}
 
-#define pci_save_state(x)
-#define pci_restore_state(x)
+static inline void
+pci_clear_master(struct pci_dev *pdev)
+{
+}
 
-#define pci_enable_msi(x)	0
-#define pci_disable_msi(x)
+static inline void
+pci_save_state(struct pci_dev *pdev)
+{
+}
+
+static inline void
+pci_restore_state(struct pci_dev *pdev)
+{
+}
+
+static inline int
+pci_enable_msi(struct pci_dev *pdev)
+{
+	return 0;
+}
+
+static inline void
+pci_disable_msi(struct pci_dev *pdev)
+{
+}
 
 typedef enum {
 	PCI_D0,
@@ -366,11 +388,27 @@ pcie_bandwidth_available(struct pci_dev *pdev, struct pci_dev **ldev,
 		*width = pcie_get_width_cap(bdev);
 }
 
-#define pci_save_state(x)
-#define pci_enable_device(x)		0
-#define pci_disable_device(x)
-#define pci_is_thunderbolt_attached(x) false
-#define pci_set_drvdata(x, y)
+static inline int
+pci_enable_device(struct pci_dev *pdev)
+{
+	return 0;
+}
+
+static inline void
+pci_disable_device(struct pci_dev *pdev)
+{
+}
+
+static inline bool
+pci_is_thunderbolt_attached(struct pci_dev *pdev)
+{
+	return false;
+}
+
+static inline void
+pci_set_drvdata(struct pci_dev *pdev, void *data)
+{
+}
 
 static inline int
 pci_domain_nr(struct pci_bus *pbus)
@@ -395,11 +433,14 @@ pci_set_power_state(struct pci_dev *dev, int state)
 	return 0;
 }
 
+static inline void
+pci_unregister_driver(void *d)
+{
+}
+
 #define PCI_CLASS_DISPLAY_VGA \
     ((PCI_CLASS_DISPLAY << 8) | PCI_SUBCLASS_DISPLAY_VGA)
 #define PCI_CLASS_DISPLAY_OTHER \
     ((PCI_CLASS_DISPLAY << 8) | PCI_SUBCLASS_DISPLAY_MISC)
-
-#define pci_unregister_driver(x)
 
 #endif /* _LINUX_PCI_H_ */

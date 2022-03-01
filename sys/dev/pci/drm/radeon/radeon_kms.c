@@ -755,8 +755,9 @@ radeondrm_forcedetach(struct radeon_device *rdev)
 void
 radeondrm_attachhook(struct device *self)
 {
-	struct radeon_device	*rdev = (struct radeon_device *)self;
-	int			 r, acpi_status;
+	struct radeon_device *rdev = (struct radeon_device *)self;
+	struct drm_device *dev = rdev->ddev;
+	int r, acpi_status;
 
 	/* radeon_device_init should report only fatal error
 	 * like memory allocation failure or iomapping failure,

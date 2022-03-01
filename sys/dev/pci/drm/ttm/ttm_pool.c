@@ -221,9 +221,7 @@ static int ttm_pool_map(struct ttm_pool *pool, unsigned int order,
 		return -ENOSYS;
 #endif
 	} else {
-#ifdef notyet
 		size_t size = (1ULL << order) * PAGE_SIZE;
-#endif
 
 		addr = dma_map_page(pool->dev, p, 0, size, DMA_BIDIRECTIONAL);
 		if (dma_mapping_error(pool->dev, addr))

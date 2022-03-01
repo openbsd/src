@@ -956,6 +956,7 @@ int i915_driver_probe(struct drm_i915_private *i915, const struct pci_device_id 
 {
 	const struct intel_device_info *match_info =
 		(struct intel_device_info *)ent->driver_data;
+	struct pci_dev *pdev = i915->drm.pdev;
 #ifdef __linux__
 	struct drm_i915_private *i915;
 #endif

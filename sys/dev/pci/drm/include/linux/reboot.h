@@ -5,10 +5,19 @@
 
 #include <sys/reboot.h>
 
-#define register_reboot_notifier(x)
-#define unregister_reboot_notifier(x)
+struct notifier_block;
 
 #define SYS_RESTART 0
+
+static inline void
+register_reboot_notifier(struct notifier_block *nb)
+{
+}
+
+static inline void
+unregister_reboot_notifier(struct notifier_block *nb)
+{
+}
 
 static inline void
 orderly_poweroff(bool force)

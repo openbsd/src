@@ -5,8 +5,15 @@
 
 #include <asm/preempt.h>
 
-#define preempt_enable()
-#define preempt_disable()
+static inline void
+preempt_enable(void)
+{
+}
+
+static inline void
+preempt_disable(void)
+{
+}
 
 static inline bool
 in_irq(void)
@@ -19,8 +26,22 @@ in_irq(void)
 #endif
 }
 
-#define in_interrupt()	in_irq()
-#define in_task()	(!in_irq())
-#define in_atomic()	0
+static inline bool
+in_interrupt(void)
+{
+	return in_irq();
+}
+
+static inline bool
+in_task(void)
+{
+	return !in_irq();
+}
+
+static inline bool
+in_atomic(void)
+{
+	return false;
+}
 
 #endif

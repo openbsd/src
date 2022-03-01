@@ -5,6 +5,7 @@
 
 enum dma_data_direction {
 	DMA_NONE,
+	DMA_BIDIRECTIONAL,
 };
 
 #endif

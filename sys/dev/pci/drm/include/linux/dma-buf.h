@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma-buf.h,v 1.3 2021/07/07 02:38:36 jsg Exp $	*/
+/*	$OpenBSD: dma-buf.h,v 1.4 2022/03/01 04:08:04 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -24,6 +24,7 @@
 #include <linux/list.h>
 
 struct dma_buf_ops;
+struct device;
 
 struct dma_buf {
 	const struct dma_buf_ops *ops;
@@ -64,7 +65,16 @@ struct dma_buf_export_info {
 
 struct dma_buf *dma_buf_export(const struct dma_buf_export_info *);
 
-#define dma_buf_attach(x, y) NULL
-#define dma_buf_detach(x, y) panic("dma_buf_detach")
+static inline struct dma_buf_attachment *
+dma_buf_attach(struct dma_buf *buf, struct device *dev)
+{
+	return NULL;
+}
+
+static inline void
+dma_buf_detach(struct dma_buf *buf, struct dma_buf_attachment *dba)
+{
+	panic("dma_buf_detach");
+}
 
 #endif

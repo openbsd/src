@@ -5,7 +5,14 @@
 
 #include <linux/preempt.h>
 
-#define local_bh_disable()
-#define local_bh_enable()
+static inline void
+local_bh_disable(void)
+{
+}
+
+static inline void
+local_bh_enable(void)
+{
+}
 
 #endif

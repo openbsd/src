@@ -3,9 +3,28 @@
 #ifndef _LINUX_CONSOLE_H
 #define _LINUX_CONSOLE_H
 
-#define console_lock()
-#define console_trylock()	1
-#define console_unlock()
-#define vgacon_text_force()	false
+#include <linux/types.h>
+
+static inline void
+console_lock(void)
+{
+}
+
+static inline int
+console_trylock(void)
+{
+	return 1;
+}
+
+static inline void
+console_unlock(void)
+{
+}
+
+static inline bool
+vgacon_text_force(void)
+{
+	return false;
+}
 
 #endif

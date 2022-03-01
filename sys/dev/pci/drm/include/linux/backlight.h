@@ -6,6 +6,7 @@
 #include <sys/task.h>
 
 struct backlight_device;
+struct device;
 
 struct backlight_properties {
 	int type;
@@ -29,7 +30,11 @@ struct backlight_device {
 	void *data;
 };
 
-#define bl_get_data(bd)	(bd)->data
+static inline void *
+bl_get_data(struct backlight_device *bd)
+{
+	return bd->data;
+}
 
 #define BACKLIGHT_RAW		0
 #define BACKLIGHT_FIRMWARE	1
@@ -70,6 +75,10 @@ void backlight_schedule_update_status(struct backlight_device *);
 int backlight_enable(struct backlight_device *);
 int backlight_disable(struct backlight_device *);
 
-#define devm_of_find_backlight(x)	NULL
+static inline struct backlight_device *
+devm_of_find_backlight(struct device *dev)
+{
+	return NULL;
+}
 
 #endif
