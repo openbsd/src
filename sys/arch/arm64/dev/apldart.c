@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.11 2022/02/28 15:51:02 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.12 2022/03/01 20:45:27 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -198,7 +198,7 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	paddr_t pa;
 	volatile uint64_t *l1;
 	int ntte, nl1, nl2;
-	uint32_t config, params2;
+	uint32_t config, params2, tcr, ttbr;
 	int sid, idx;
 
 	if (faa->fa_nreg < 1) {
@@ -220,6 +220,26 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	if (config & DART_CONFIG_LOCK) {
 		printf(": locked\n");
 		return;
+	}
+
+	/*
+	 * Resetting the DART used for the display controller will
+	 * kill the framebuffer.  This should be the only DART that
+	 * has translation enabled and a valid translation table
+	 * installed.  Skip this DART for now.
+	 */
+	for (sid = 0; sid < DART_NUM_STREAMS; sid++) {
+		tcr = HREAD4(sc, DART_TCR(sid));
+		if ((tcr & DART_TCR_TRANSLATE_ENABLE) == 0)
+			continue;
+
+		for (idx = 0; idx < 4; idx++) {
+			ttbr = HREAD4(sc, DART_TTBR(sid, idx));
+			if (ttbr & DART_TTBR_VALID) {
+				printf(": translating\n");
+				return;
+			}
+		}
 	}
 
 	/*
