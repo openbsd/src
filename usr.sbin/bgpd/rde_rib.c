@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.228 2022/02/28 14:32:01 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.229 2022/03/01 09:38:06 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1284,24 +1284,6 @@ prefix_adjout_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
 	return (1);
 }
 
-static struct prefix *
-prefix_restart(struct rib_context *ctx)
-{
-	struct prefix *p;
-
-	p = prefix_unlock(ctx->ctx_p);
-
-	if (prefix_is_dead(p)) {
-		struct prefix *next;
-
-		next = RB_NEXT(prefix_index, unused, p);
-		prefix_adjout_destroy(p);
-		p = next;
-	}
-	ctx->ctx_p = NULL;
-	return p;
-}
-
 void
 prefix_adjout_destroy(struct prefix *p)
 {
@@ -1327,7 +1309,6 @@ prefix_adjout_destroy(struct prefix *p)
 	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
 	p->flags &= ~PREFIX_FLAG_MASK;
 
-
 	if (prefix_is_locked(p)) {
 		/* mark prefix dead but leave it for prefix_restart */
 		p->flags |= PREFIX_FLAG_DEAD;
@@ -1337,6 +1318,24 @@ prefix_adjout_destroy(struct prefix *p)
 		pt_unref(p->pt);
 		prefix_free(p);
 	}
+}
+
+static struct prefix *
+prefix_restart(struct rib_context *ctx)
+{
+	struct prefix *p;
+
+	p = prefix_unlock(ctx->ctx_p);
+
+	if (prefix_is_dead(p)) {
+		struct prefix *next;
+
+		next = RB_NEXT(prefix_index, unused, p);
+		prefix_adjout_destroy(p);
+		p = next;
+	}
+	ctx->ctx_p = NULL;
+	return p;
 }
 
 static void
