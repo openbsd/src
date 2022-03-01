@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.69 2021/11/16 16:45:23 kn Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.70 2022/03/01 18:30:23 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -734,6 +734,7 @@ void
 handle_query(struct pending_query *pq)
 {
 	struct query_imsg	 query_imsg;
+	struct query_info	 skip;
 	struct bl_node		 find;
 	int			 rcode;
 	char			*str;
@@ -773,7 +774,12 @@ handle_query(struct pending_query *pq)
 		goto send_answer;
 	}
 
-	rcode = parse_extract_edns(pq->qmsg, &pq->edns, pq->region);
+	sldns_buffer_rewind(pq->qbuf);
+	if (!query_info_parse(&skip, pq->qbuf)) {
+		error_answer(pq, LDNS_RCODE_SERVFAIL);
+		goto send_answer;
+	}
+	rcode = parse_edns_from_pkt(pq->qbuf, &pq->edns, pq->region);
 	if (rcode != LDNS_RCODE_NOERROR) {
 		error_answer(pq, rcode);
 		goto send_answer;
@@ -999,6 +1005,7 @@ void
 resend_dns64_query(struct pending_query *opq) {
 	struct pending_query	*pq;
 	struct query_imsg	 query_imsg;
+	struct query_info	 skip;
 	int			 rcode;
 	char			 dname[LDNS_MAX_DOMAINLEN + 1];
 
@@ -1059,7 +1066,12 @@ resend_dns64_query(struct pending_query *opq) {
 		goto drop;
 	}
 
-	rcode = parse_extract_edns(pq->qmsg, &pq->edns, pq->region);
+	sldns_buffer_rewind(pq->qbuf);
+	if (!query_info_parse(&skip, pq->qbuf)) {
+		error_answer(pq, LDNS_RCODE_SERVFAIL);
+		goto send_answer;
+	}
+	rcode = parse_edns_from_pkt(pq->qbuf, &pq->edns, pq->region);
 	if (rcode != LDNS_RCODE_NOERROR) {
 		error_answer(pq, rcode);
 		goto send_answer;
