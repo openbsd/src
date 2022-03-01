@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.256 2021/10/25 22:20:47 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.257 2022/03/01 23:53:03 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -670,14 +670,6 @@ in_pcbnotifyall(struct inpcbtable *table, struct sockaddr *dst, u_int rtable,
 	u_int rdomain;
 
 	NET_ASSERT_LOCKED();
-
-#ifdef INET6
-	/*
-	 * See in6_pcbnotify() for IPv6 codepath.  By the time this
-	 * gets called, the addresses passed are either definitely IPv4 or
-	 * IPv6; *_pcbnotify() never gets called with v4-mapped v6 addresses.
-	 */
-#endif /* INET6 */
 
 	if (dst->sa_family != AF_INET)
 		return;
