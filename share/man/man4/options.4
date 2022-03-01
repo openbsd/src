@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.267 2019/11/05 07:53:58 jmc Exp $
+.\"	$OpenBSD: options.4,v 1.268 2022/03/01 14:39:30 krw Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -34,7 +34,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd $Mdocdate: November 5 2019 $
+.Dd $Mdocdate: March 1 2022 $
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -493,16 +493,15 @@ seconds before starting to probe the first SCSI bus.
 This can be used if a SCSI device needs extra time to get ready.
 .It Cd option SCSIDEBUG
 Enable printing of SCSI subsystem debugging info to the console.
-Each of
-.Em SCSIDEBUG_LEVEL ,
+Debugging info on the probing and attachment of all SCSI devices will
+be printed.
+.Pp
+Additional information can be requested by setting
 .Em SCSIDEBUG_BUSES ,
-.Em SCSIDEBUG_TARGETS
-and
+.Em SCSIDEBUG_LEVEL ,
 .Em SCSIDEBUG_LUNS
-must have non-zero values for any debugging info to be printed.
-Only
-.Em SCSIDEBUG_LEVEL
-has a default value (SDEV_DB1 | SDEV_DB2) that is non-zero.
+and
+.Em SCSIDEBUG_TARGETS .
 .It Cd option SCSIDEBUG_BUSES= Ns Ar value
 Define which SCSI buses will print debug info.
 Each bit enables debugging info for the corresponding bus.
@@ -518,9 +517,8 @@ bits.
 0x0080	(SDEV_DB4) miscellaneous addition debugging
 .Ed
 .Pp
-If
 .Em SCSIDEBUG_LEVEL
-is undefined, a value of 0x0030 (SDEV_DB1|SDEV_DB2) is used.
+defaults to a value of 0x0030 (SDEV_DB1|SDEV_DB2).
 .It Cd option SCSIDEBUG_LUNS= Ns Ar value
 Define which SCSI luns will print debug info.
 Each bit enables debugging info for the corresponding lun.
