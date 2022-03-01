@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.91 2022/02/28 02:40:16 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.92 2022/03/01 11:50:37 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1132,12 +1132,9 @@ fail:
 }
 
 int
-i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
+__i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
 {
 	int ret, retries;
-
-	if (adap->lock_ops)
-		adap->lock_ops->lock_bus(adap, 0);
 
 	retries = adap->retries;
 retry:
@@ -1149,6 +1146,19 @@ retry:
 		retries--;
 		goto retry;
 	}
+
+	return ret;
+}
+
+int
+i2c_transfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
+{
+	int ret; 
+
+	if (adap->lock_ops)
+		adap->lock_ops->lock_bus(adap, 0);
+
+	ret = __i2c_transfer(adap, msgs, num);
 
 	if (adap->lock_ops)
 		adap->lock_ops->unlock_bus(adap, 0);
