@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.45 2021/07/10 12:25:46 anton Exp $
+#	$OpenBSD: Makefile,v 1.46 2022/03/01 06:13:17 anton Exp $
 
 # Regression tests by Niall O'Higgins <niallo@openbsd.org>.
 # ksh -> Makefile by Ray Lai <ray@cyth.net>.
@@ -602,7 +602,8 @@ test-ci-keywords: clean
 	@sed 's/.*/$$&$$/' ${.CURDIR}/keywords.in > file
 	@sed 's/^[A-Z][A-Z]*[a-z][a-z]*: .*/$$&$$/' ${.CURDIR}/keywords.out > newfile
 	@echo . | ${CI} -q -u file
-	@sed -e 's,${USER},USER,' -e "s/\($$[A-Z][a-z]*: \).*file,v/\1file,v/" \
+	@sed -e "s,$$(logname),USER," \
+	    -e "s/\($$[A-Z][a-z]*: \).*file,v/\1file,v/" \
 	    -e 's,[0-9][0-9][0-9][0-9]/[0-9][0-9]/[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9],YYYY/MM/DD HH:MI:SS,' \
 	    file | ${DIFF} newfile -
 
