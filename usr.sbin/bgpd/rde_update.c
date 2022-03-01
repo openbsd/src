@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.133 2022/02/24 14:54:03 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.134 2022/03/01 09:53:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -605,7 +605,7 @@ up_is_eor(struct rde_peer *peer, uint8_t aid)
 		 * prefix_adjout_destroy() can't handle that.
 		 */
 		RB_REMOVE(prefix_tree, &peer->updates[aid], p);
-		p->flags &= ~PREFIX_FLAG_MASK;
+		p->flags &= ~PREFIX_FLAG_UPDATE;
 		prefix_adjout_destroy(p);
 		return 1;
 	}
@@ -651,9 +651,6 @@ up_dump_prefix(u_char *buf, int len, struct prefix_tree *prefix_head,
 		    np->eor)
 			done = 1;
 
-		/* prefix sent, remove from list and clear flag */
-		RB_REMOVE(prefix_tree, prefix_head, p);
-		p->flags &= ~PREFIX_FLAG_MASK;
 
 		if (withdraw) {
 			/* prefix no longer needed, remove it */
@@ -662,6 +659,8 @@ up_dump_prefix(u_char *buf, int len, struct prefix_tree *prefix_head,
 			peer->prefix_sent_withdraw++;
 		} else {
 			/* prefix still in Adj-RIB-Out, keep it */
+			RB_REMOVE(prefix_tree, prefix_head, p);
+			p->flags &= ~PREFIX_FLAG_UPDATE;
 			peer->up_nlricnt--;
 			peer->prefix_sent_update++;
 		}
