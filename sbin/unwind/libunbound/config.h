@@ -73,6 +73,9 @@
 /* If we have be64toh */
 #define HAVE_BE64TOH 1
 
+/* Define to 1 if you have the `BIO_set_callback_ex' function. */
+#define HAVE_BIO_SET_CALLBACK_EX 1
+
 /* Define to 1 if you have the <bsd/stdlib.h> header file. */
 /* #undef HAVE_BSD_STDLIB_H */
 
@@ -224,7 +227,7 @@
 #define HAVE_EVP_DIGESTVERIFY 1
 
 /* Define to 1 if you have the `EVP_dss1' function. */
-#define HAVE_EVP_DSS1 1
+/* #undef HAVE_EVP_DSS1 */
 
 /* Define to 1 if you have the `EVP_EncryptInit_ex' function. */
 #define HAVE_EVP_ENCRYPTINIT_EX 1
@@ -260,7 +263,7 @@
 #define HAVE_FCNTL 1
 
 /* Define to 1 if you have the `FIPS_mode' function. */
-/* #undef HAVE_FIPS_MODE */
+#define HAVE_FIPS_MODE 1
 
 /* Define to 1 if you have the `fork' function. */
 #define HAVE_FORK 1
@@ -315,6 +318,9 @@
 
 /* Define to 1 if you have the <ifaddrs.h> header file. */
 #define HAVE_IFADDRS_H 1
+
+/* Define to 1 if you have the `if_nametoindex' function. */
+#define HAVE_IF_NAMETOINDEX 1
 
 /* Define to 1 if you have the `if_nametoindex' function. */
 #define HAVE_IF_NAMETOINDEX 1
@@ -378,6 +384,9 @@
 
 /* Define to 1 if you have the <netinet/tcp.h> header file. */
 #define HAVE_NETINET_TCP_H 1
+
+/* Define to 1 if you have the <netioapi.h> header file. */
+/* #undef HAVE_NETIOAPI_H */
 
 /* Use libnettle for crypto */
 /* #undef HAVE_NETTLE */
@@ -536,7 +545,7 @@
 #define HAVE_SSL_CTX_SET_ALPN_SELECT_CB 1
 
 /* Define to 1 if you have the `SSL_CTX_set_ciphersuites' function. */
-/* #undef HAVE_SSL_CTX_SET_CIPHERSUITES */
+#define HAVE_SSL_CTX_SET_CIPHERSUITES 1
 
 /* Define to 1 if you have the `SSL_CTX_set_security_level' function. */
 /* #undef HAVE_SSL_CTX_SET_SECURITY_LEVEL */
@@ -751,7 +760,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.13.2"
+#define PACKAGE_STRING "unbound 1.15.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -760,7 +769,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.13.2"
+#define PACKAGE_VERSION "1.15.0"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -783,7 +792,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,13,2,0
+#define RSRC_PACKAGE_VERSION 1,15,0,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"

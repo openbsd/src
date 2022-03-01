@@ -869,9 +869,14 @@ set_ip_dscp(int socket, int addrfamily, int dscp)
 	ds = dscp << 2;
 	switch(addrfamily) {
 	case AF_INET6:
-		if(setsockopt(socket, IPPROTO_IPV6, IPV6_TCLASS, (void*)&ds, sizeof(ds)) < 0)
+	#ifdef IPV6_TCLASS
+		if(setsockopt(socket, IPPROTO_IPV6, IPV6_TCLASS, (void*)&ds,
+			sizeof(ds)) < 0)
 			return sock_strerror(errno);
 		break;
+	#else
+		return "IPV6_TCLASS not defined on this system";
+	#endif
 	default:
 		if(setsockopt(socket, IPPROTO_IP, IP_TOS, (void*)&ds, sizeof(ds)) < 0)
 			return sock_strerror(errno);
@@ -1306,6 +1311,38 @@ listen_cp_insert(struct comm_point* c, struct listen_dnsport* front)
 	return 1;
 }
 
+void listen_setup_locks(void)
+{
+	if(!stream_wait_lock_inited) {
+		lock_basic_init(&stream_wait_count_lock);
+		stream_wait_lock_inited = 1;
+	}
+	if(!http2_query_buffer_lock_inited) {
+		lock_basic_init(&http2_query_buffer_count_lock);
+		http2_query_buffer_lock_inited = 1;
+	}
+	if(!http2_response_buffer_lock_inited) {
+		lock_basic_init(&http2_response_buffer_count_lock);
+		http2_response_buffer_lock_inited = 1;
+	}
+}
+
+void listen_desetup_locks(void)
+{
+	if(stream_wait_lock_inited) {
+		stream_wait_lock_inited = 0;
+		lock_basic_destroy(&stream_wait_count_lock);
+	}
+	if(http2_query_buffer_lock_inited) {
+		http2_query_buffer_lock_inited = 0;
+		lock_basic_destroy(&http2_query_buffer_count_lock);
+	}
+	if(http2_response_buffer_lock_inited) {
+		http2_response_buffer_lock_inited = 0;
+		lock_basic_destroy(&http2_response_buffer_count_lock);
+	}
+}
+
 struct listen_dnsport* 
 listen_create(struct comm_base* base, struct listen_port* ports,
 	size_t bufsize, int tcp_accept_count, int tcp_idle_timeout,
@@ -1327,57 +1364,44 @@ listen_create(struct comm_base* base, struct listen_port* ports,
 		free(front);
 		return NULL;
 	}
-	if(!stream_wait_lock_inited) {
-		lock_basic_init(&stream_wait_count_lock);
-		stream_wait_lock_inited = 1;
-	}
-	if(!http2_query_buffer_lock_inited) {
-		lock_basic_init(&http2_query_buffer_count_lock);
-		http2_query_buffer_lock_inited = 1;
-	}
-	if(!http2_response_buffer_lock_inited) {
-		lock_basic_init(&http2_response_buffer_count_lock);
-		http2_response_buffer_lock_inited = 1;
-	}
 
 	/* create comm points as needed */
 	while(ports) {
 		struct comm_point* cp = NULL;
 		if(ports->ftype == listen_type_udp ||
-		   ports->ftype == listen_type_udp_dnscrypt)
-			cp = comm_point_create_udp(base, ports->fd, 
+		   ports->ftype == listen_type_udp_dnscrypt) {
+			cp = comm_point_create_udp(base, ports->fd,
 				front->udp_buff, cb, cb_arg, ports->socket);
-		else if(ports->ftype == listen_type_tcp ||
-				ports->ftype == listen_type_tcp_dnscrypt)
-			cp = comm_point_create_tcp(base, ports->fd, 
+		} else if(ports->ftype == listen_type_tcp ||
+				ports->ftype == listen_type_tcp_dnscrypt) {
+			cp = comm_point_create_tcp(base, ports->fd,
 				tcp_accept_count, tcp_idle_timeout,
 				harden_large_queries, 0, NULL,
 				tcp_conn_limit, bufsize, front->udp_buff,
 				ports->ftype, cb, cb_arg, ports->socket);
-		else if(ports->ftype == listen_type_ssl ||
+		} else if(ports->ftype == listen_type_ssl ||
 			ports->ftype == listen_type_http) {
-			cp = comm_point_create_tcp(base, ports->fd, 
+			cp = comm_point_create_tcp(base, ports->fd,
 				tcp_accept_count, tcp_idle_timeout,
 				harden_large_queries,
 				http_max_streams, http_endpoint,
 				tcp_conn_limit, bufsize, front->udp_buff,
 				ports->ftype, cb, cb_arg, ports->socket);
-			if(http_notls && ports->ftype == listen_type_http)
-				cp->ssl = NULL;
-			else
-				cp->ssl = sslctx;
 			if(ports->ftype == listen_type_http) {
 				if(!sslctx && !http_notls) {
-				  log_warn("HTTPS port configured, but no TLS "
-					"tls-service-key or tls-service-pem "
-					"set");
+					log_warn("HTTPS port configured, but "
+						"no TLS tls-service-key or "
+						"tls-service-pem set");
 				}
 #ifndef HAVE_SSL_CTX_SET_ALPN_SELECT_CB
-				if(!http_notls)
-				  log_warn("Unbound is not compiled with an "
-					"OpenSSL version supporting ALPN "
-					" (OpenSSL >= 1.0.2). This is required "
-					"to use DNS-over-HTTPS");
+				if(!http_notls) {
+					log_warn("Unbound is not compiled "
+						"with an OpenSSL version "
+						"supporting ALPN "
+						"(OpenSSL >= 1.0.2). This "
+						"is required to use "
+						"DNS-over-HTTPS");
+				}
 #endif
 #ifndef HAVE_NGHTTP2_NGHTTP2_H
 				log_warn("Unbound is not compiled with "
@@ -1386,14 +1410,25 @@ listen_create(struct comm_base* base, struct listen_port* ports,
 #endif
 			}
 		} else if(ports->ftype == listen_type_udpancil ||
-				  ports->ftype == listen_type_udpancil_dnscrypt)
-			cp = comm_point_create_udp_ancil(base, ports->fd, 
+				  ports->ftype == listen_type_udpancil_dnscrypt) {
+			cp = comm_point_create_udp_ancil(base, ports->fd,
 				front->udp_buff, cb, cb_arg, ports->socket);
+		}
 		if(!cp) {
-			log_err("can't create commpoint");	
+			log_err("can't create commpoint");
 			listen_delete(front);
 			return NULL;
 		}
+		if((http_notls && ports->ftype == listen_type_http) ||
+			(ports->ftype == listen_type_tcp) ||
+			(ports->ftype == listen_type_udp) ||
+			(ports->ftype == listen_type_udpancil) ||
+			(ports->ftype == listen_type_tcp_dnscrypt) ||
+			(ports->ftype == listen_type_udp_dnscrypt) ||
+			(ports->ftype == listen_type_udpancil_dnscrypt))
+			cp->ssl = NULL;
+		else
+			cp->ssl = sslctx;
 		cp->dtenv = dtenv;
 		cp->do_not_close = 1;
 #ifdef USE_DNSCRYPT
@@ -1454,18 +1489,6 @@ listen_delete(struct listen_dnsport* front)
 #endif
 	sldns_buffer_free(front->udp_buff);
 	free(front);
-	if(stream_wait_lock_inited) {
-		stream_wait_lock_inited = 0;
-		lock_basic_destroy(&stream_wait_count_lock);
-	}
-	if(http2_query_buffer_lock_inited) {
-		http2_query_buffer_lock_inited = 0;
-		lock_basic_destroy(&http2_query_buffer_count_lock);
-	}
-	if(http2_response_buffer_lock_inited) {
-		http2_response_buffer_lock_inited = 0;
-		lock_basic_destroy(&http2_response_buffer_count_lock);
-	}
 }
 
 #ifdef HAVE_GETIFADDRS
@@ -2610,7 +2633,7 @@ static int http2_req_begin_headers_cb(nghttp2_session* session,
 	int ret;
 	if(frame->hd.type != NGHTTP2_HEADERS ||
 		frame->headers.cat != NGHTTP2_HCAT_REQUEST) {
-		/* only interrested in request headers */
+		/* only interested in request headers */
 		return 0;
 	}
 	if(!(h2_stream = http2_stream_create(frame->hd.stream_id))) {
@@ -2738,7 +2761,7 @@ static int http2_req_header_cb(nghttp2_session* session,
 	 * the HEADER */
 	if(frame->hd.type != NGHTTP2_HEADERS ||
 		frame->headers.cat != NGHTTP2_HCAT_REQUEST) {
-		/* only interrested in request headers */
+		/* only interested in request headers */
 		return 0;
 	}
 	if(!(h2_stream = nghttp2_session_get_stream_user_data(session,
@@ -2834,7 +2857,7 @@ static int http2_req_header_cb(nghttp2_session* session,
 			h2_stream->query_too_large = 1;
 			return 0;
 		}
-		/* guaranteed to only contian digits and be null terminated */
+		/* guaranteed to only contain digits and be null terminated */
 		h2_stream->content_length = atoi((const char*)value);
 		if(h2_stream->content_length >
 			h2_session->c->http2_stream_max_qbuffer_size) {
@@ -2874,7 +2897,7 @@ static int http2_req_data_chunk_recv_cb(nghttp2_session* ATTR_UNUSED(session),
 			/* setting this to msg-buffer-size can result in a lot
 			 * of memory consuption. Most queries should fit in a
 			 * single DATA frame, and most POST queries will
-			 * containt content-length which does not impose this
+			 * contain content-length which does not impose this
 			 * limit. */
 			qlen = len;
 		}
