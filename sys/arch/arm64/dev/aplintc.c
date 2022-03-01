@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.6 2022/02/13 15:54:07 kettenis Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.7 2022/03/01 21:29:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -31,6 +31,9 @@
 
 #include <ddb/db_output.h>
 
+#define APL_IRQ_CR_EL1		s3_4_c15_c10_4
+#define  APL_IRQ_CR_EL1_DISABLE	(3 << 0)
+
 #define APL_IPI_LOCAL_RR_EL1	s3_5_c15_c0_1
 #define APL_IPI_GLOBAL_RR_EL1	s3_5_c15_c0_1
 #define APL_IPI_SR_EL1		s3_5_c15_c1_1
@@ -45,6 +48,7 @@
 #define AIC_WHOAMI		0x2000
 #define AIC_EVENT		0x2004
 #define  AIC_EVENT_TYPE(val)	((val) >> 16)
+#define  AIC_EVENT_TYPE_NONE	0
 #define  AIC_EVENT_TYPE_IRQ	1
 #define  AIC_EVENT_TYPE_IPI	4
 #define  AIC_EVENT_IRQ(val)	((val) & 0xffff)
@@ -64,12 +68,24 @@
 #define AIC_MASK_CLR(irq)	(0x4180 + (((irq) >> 5) << 2))
 #define  AIC_MASK_BIT(irq)	(1U << ((irq) & 0x1f))
 
+#define AIC2_CONFIG		0x0014
+#define  AIC2_CONFIG_ENABLE	(1 << 0)
+#define AIC2_SW_SET(irq)	(0x6000 + (((irq) >> 5) << 2))
+#define AIC2_SW_CLR(irq)	(0x6200 + (((irq) >> 5) << 2))
+#define AIC2_MASK_SET(irq)	(0x6400 + (((irq) >> 5) << 2))
+#define AIC2_MASK_CLR(irq)	(0x6600 + (((irq) >> 5) << 2))
+#define AIC2_EVENT		0xc000
+
 #define AIC_MAXCPUS		32
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
 #define HWRITE4(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+#define HSET4(sc, reg, bits)						\
+	HWRITE4((sc), (reg), HREAD4((sc), (reg)) | (bits))
+#define HCLR4(sc, reg, bits)						\
+	HWRITE4((sc), (reg), HREAD4((sc), (reg)) & ~(bits))
 
 struct intrhand {
 	TAILQ_ENTRY(intrhand) ih_list;
@@ -87,6 +103,8 @@ struct aplintc_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	int			sc_version;
 
 	struct interrupt_controller sc_ic;
 
@@ -135,7 +153,8 @@ aplintc_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,aic");
+	return OF_is_compatible(faa->fa_node, "apple,aic") ||
+	    OF_is_compatible(faa->fa_node, "apple,aic2");
 }
 
 void
@@ -157,6 +176,11 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map registers\n");
 		return;
 	}
+
+	if (OF_is_compatible(faa->fa_node, "apple,aic2"))
+		sc->sc_version = 2;
+	else
+		sc->sc_version = 1;
 
 	info = HREAD4(sc, AIC_INFO);
 	sc->sc_nirq = AIC_INFO_NIRQ(info);
@@ -185,6 +209,9 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 	arm_intr_register_fdt(&sc->sc_ic);
 
 	intr_send_ipi_func = aplintc_send_ipi;
+
+	if (sc->sc_version == 2)
+		HSET4(sc, AIC2_CONFIG, AIC2_CONFIG_ENABLE);
 }
 
 void
@@ -196,9 +223,20 @@ aplintc_cpuinit(void)
 
 	KASSERT(ci->ci_cpuid < AIC_MAXCPUS);
 
-	hwid = HREAD4(sc, AIC_WHOAMI);
-	KASSERT(hwid < AIC_MAXCPUS);
-	sc->sc_cpuremap[ci->ci_cpuid] = hwid;
+	/*
+	 * AIC2 does not provide us with a way to target external
+	 * interrupts to a particular core.  Therefore, disable IRQ
+	 * delivery to the secondary CPUs which makes sure all
+	 * external interrupts are delivered to the primary CPU.
+	 */
+	if (!CPU_IS_PRIMARY(ci))
+		WRITE_SPECIALREG(APL_IRQ_CR_EL1, APL_IRQ_CR_EL1_DISABLE);
+
+	if (sc->sc_version == 1) {
+		hwid = HREAD4(sc, AIC_WHOAMI);
+		KASSERT(hwid < AIC_MAXCPUS);
+		sc->sc_cpuremap[ci->ci_cpuid] = hwid;
+	}
 }
 
 void
@@ -244,12 +282,18 @@ aplintc_irq_handler(void *frame)
 	uint32_t irq, type;
 	int s;
 
-	event = HREAD4(sc, AIC_EVENT);
+	if (sc->sc_version == 1)
+		event = HREAD4(sc, AIC_EVENT);
+	else
+		event = HREAD4(sc, AIC2_EVENT);
 	irq = AIC_EVENT_IRQ(event);
 	type = AIC_EVENT_TYPE(event);
 
 	if (type != AIC_EVENT_TYPE_IRQ) {
-		printf("%s: unexpected event type %d\n", __func__, type);
+		if (type != AIC_EVENT_TYPE_NONE) {
+			printf("%s: unexpected event type %d\n",
+			    __func__, type);
+		}
 		return;
 	}
 
@@ -259,7 +303,10 @@ aplintc_irq_handler(void *frame)
 	if (sc->sc_irq_handler[irq] == NULL)
 		return;
 
-	HWRITE4(sc, AIC_SW_CLR(irq), AIC_SW_BIT(irq));
+	if (sc->sc_version == 1)
+		HWRITE4(sc, AIC_SW_CLR(irq), AIC_SW_BIT(irq));
+	else
+		HWRITE4(sc, AIC2_SW_CLR(irq), AIC_SW_BIT(irq));
 
 	ih = sc->sc_irq_handler[irq];
 
@@ -273,7 +320,10 @@ aplintc_irq_handler(void *frame)
 		intr_disable();
 		aplintc_splx(s);
 
-		HWRITE4(sc, AIC_MASK_CLR(irq), AIC_MASK_BIT(irq));
+		if (sc->sc_version == 1)
+			HWRITE4(sc, AIC_MASK_CLR(irq), AIC_MASK_BIT(irq));
+		else
+			HWRITE4(sc, AIC2_MASK_CLR(irq), AIC_MASK_BIT(irq));
 	}
 }
 
@@ -367,10 +417,17 @@ aplintc_splx(int new)
 				TAILQ_REMOVE(&sc->sc_irq_list[ipl],
 				    ih, ih_list);
 
-				HWRITE4(sc, AIC_SW_SET(ih->ih_irq),
-				    AIC_SW_BIT(ih->ih_irq));
-				HWRITE4(sc, AIC_MASK_CLR(ih->ih_irq),
-				    AIC_MASK_BIT(ih->ih_irq));
+				if (sc->sc_version == 1) {
+					HWRITE4(sc, AIC_SW_SET(ih->ih_irq),
+					    AIC_SW_BIT(ih->ih_irq));
+					HWRITE4(sc, AIC_MASK_CLR(ih->ih_irq),
+					    AIC_MASK_BIT(ih->ih_irq));
+				} else {
+					HWRITE4(sc, AIC2_SW_SET(ih->ih_irq),
+					    AIC_SW_BIT(ih->ih_irq));
+					HWRITE4(sc, AIC2_MASK_CLR(ih->ih_irq),
+					    AIC_MASK_BIT(ih->ih_irq));
+				}
 			}
 		}
 	}
@@ -397,7 +454,12 @@ aplintc_intr_establish(void *cookie, int *cell, int level,
 	struct aplintc_softc *sc = cookie;
 	struct intrhand *ih;
 	uint32_t type = cell[0];
-	uint32_t irq = cell[1];
+	uint32_t irq;
+
+	if (sc->sc_version == 1)
+		irq = cell[1];
+	else
+		irq = cell[2];
 
 	if (type == 0) {
 		KASSERT(level != (IPL_CLOCK | IPL_MPSAFE));
@@ -429,8 +491,12 @@ aplintc_intr_establish(void *cookie, int *cell, int level,
 
 	if (type == 0) {
 		sc->sc_irq_handler[irq] = ih;
-		HWRITE4(sc, AIC_TARGET_CPU(irq), 1);
-		HWRITE4(sc, AIC_MASK_CLR(irq), AIC_MASK_BIT(irq));
+		if (sc->sc_version == 1) {
+			HWRITE4(sc, AIC_TARGET_CPU(irq), 1);
+			HWRITE4(sc, AIC_MASK_CLR(irq), AIC_MASK_BIT(irq));
+		} else {
+			HWRITE4(sc, AIC2_MASK_CLR(irq), AIC_MASK_BIT(irq));
+		}
 	} else
 		sc->sc_fiq_handler = ih;
 
@@ -449,8 +515,13 @@ aplintc_intr_disestablish(void *cookie)
 
 	daif = intr_disable();
 
-	HWRITE4(sc, AIC_SW_CLR(ih->ih_irq), AIC_SW_BIT(ih->ih_irq));
-	HWRITE4(sc, AIC_MASK_SET(ih->ih_irq), AIC_MASK_BIT(ih->ih_irq));
+	if (sc->sc_version == 1) {
+		HWRITE4(sc, AIC_SW_CLR(ih->ih_irq), AIC_SW_BIT(ih->ih_irq));
+		HWRITE4(sc, AIC_MASK_SET(ih->ih_irq), AIC_MASK_BIT(ih->ih_irq));
+	} else {
+		HWRITE4(sc, AIC2_SW_CLR(ih->ih_irq), AIC_SW_BIT(ih->ih_irq));
+		HWRITE4(sc, AIC2_MASK_SET(ih->ih_irq), AIC_MASK_BIT(ih->ih_irq));
+	}
 
 	/* Remove ourselves from the list of pending IRQs. */
 	TAILQ_FOREACH(tmp, &sc->sc_irq_list[ih->ih_ipl], ih_list) {
