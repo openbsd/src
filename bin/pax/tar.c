@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.69 2021/06/14 00:36:13 deraadt Exp $	*/
+/*	$OpenBSD: tar.c,v 1.70 2022/03/01 21:19:11 sthen Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -415,6 +415,7 @@ tar_rd(ARCHD *arcn, char *buf)
 	else
 		arcn->sb.st_mtime = val;
 	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
+	arcn->sb.st_ctimensec = arcn->sb.st_atimensec = arcn->sb.st_mtimensec;
 
 	/*
 	 * have to look at the last character, it may be a '/' and that is used
@@ -784,12 +785,21 @@ reset:
 	arcn->sb.st_mode = (mode_t)(asc_ul(hd->mode, sizeof(hd->mode), OCT) &
 	    0xfff);
 	arcn->sb.st_size = (off_t)asc_ull(hd->size, sizeof(hd->size), OCT);
-	val = asc_ull(hd->mtime, sizeof(hd->mtime), OCT);
-	if (val > MAX_TIME_T)
-		arcn->sb.st_mtime = INT_MAX;                    /* XXX 2038 */
-	else
-		arcn->sb.st_mtime = val;
-	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
+	if (arcn->sb.st_mtime == 0) {
+		val = asc_ull(hd->mtime, sizeof(hd->mtime), OCT);
+		if (val > MAX_TIME_T)
+			arcn->sb.st_mtime = INT_MAX;		/* XXX 2038 */
+		else
+			arcn->sb.st_mtime = val;
+	}
+	if (arcn->sb.st_ctime == 0) {
+		arcn->sb.st_ctime = arcn->sb.st_mtime;
+		arcn->sb.st_ctimensec = arcn->sb.st_mtimensec;
+	}
+	if (arcn->sb.st_atime == 0) {
+		arcn->sb.st_atime = arcn->sb.st_mtime;
+		arcn->sb.st_atimensec = arcn->sb.st_mtimensec;
+	}
 
 	/*
 	 * If we can find the ascii names for gname and uname in the password
@@ -1192,6 +1202,40 @@ expandname(char *buf, size_t len, char **gnu_name, const char *name,
 #define MAXXHDRSZ	BLKMULT
 
 static int
+rd_time(struct timespec *ts, const char *keyword, char *p)
+{
+	const char *errstr;
+	char *q;
+	int multiplier;
+
+	if ((q = strchr(p, '.')) != NULL)
+		*q = '\0';
+
+	ts->tv_sec = strtonum(p, 0, MAX_TIME_T, &errstr);
+	if (errstr != NULL) {
+		paxwarn(1, "%s is %s: %s", keyword, errstr, p);
+		return -1;
+	}
+
+	ts->tv_nsec = 0;
+
+	if (q == NULL)
+		return 0;
+
+	multiplier = 100000000;
+	for (q++; *q != '\0'; q++) {
+		if (!isdigit((unsigned char)*q)) {
+			paxwarn(1, "%s contains non-digit", keyword);
+			return -1;
+		}
+		ts->tv_nsec += (*q - '0') * multiplier;
+		multiplier /= 10;
+	}
+
+	return 0;
+}
+
+static int
 rd_xheader(ARCHD *arcn, int global, off_t size)
 {
 	char buf[MAXXHDRSZ];
@@ -1269,6 +1313,18 @@ rd_xheader(ARCHD *arcn, int global, off_t size)
 			} else if (!strcmp(keyword, "linkpath")) {
 				arcn->ln_nlen = strlcpy(arcn->ln_name, p,
 				    sizeof(arcn->ln_name));
+			} else if (!strcmp(keyword, "mtime")) {
+				ret = rd_time(&arcn->sb.st_mtim, keyword, p);
+				if (ret < 0)
+					break;
+			} else if (!strcmp(keyword, "atime")) {
+				ret = rd_time(&arcn->sb.st_atim, keyword, p);
+				if (ret < 0)
+					break;
+			} else if (!strcmp(keyword, "ctime")) {
+				ret = rd_time(&arcn->sb.st_ctim, keyword, p);
+				if (ret < 0)
+					break;
 			}
 		}
 		p = nextp;
