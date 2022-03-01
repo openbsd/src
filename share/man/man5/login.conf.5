@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.68 2022/02/10 13:06:07 robert Exp $
+.\" $OpenBSD: login.conf.5,v 1.69 2022/03/01 01:22:11 tedu Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: February 10 2022 $
+.Dd $Mdocdate: March 1 2022 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -282,6 +282,10 @@ Initial priority (nice) level.
 .Pp
 .It requirehome Ta bool Ta Dv false Ta
 Require home directory to login.
+.\"
+.Pp
+.It rtable Ta number Ta Dv 0 Ta
+Rtable to be set for the class.
 .\"
 .Pp
 .It setenv Ta envlist Ta "" Ta

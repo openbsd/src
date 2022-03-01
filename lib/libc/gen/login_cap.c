@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.42 2022/02/26 17:42:12 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.43 2022/03/01 01:22:11 tedu Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <millert@openbsd.org>
@@ -52,6 +52,7 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/socket.h>
 
 #include <err.h>
 #include <errno.h>
@@ -584,7 +585,7 @@ int
 setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 {
 	login_cap_t *flc;
-	quad_t p;
+	quad_t p, rtable;
 	int i;
 
 	flc = NULL;
@@ -633,6 +634,14 @@ setusercontext(login_cap_t *lc, struct passwd *pwd, uid_t uid, u_int flags)
 	if (flags & LOGIN_SETUMASK) {
 		p = login_getcapnum(lc, "umask", LOGIN_DEFUMASK,LOGIN_DEFUMASK);
 		umask((mode_t)p);
+	}
+
+	if (flags & LOGIN_SETRTABLE) {
+		rtable = login_getcapnum(lc, "rtable", 0, 0);
+
+		if (setrtable((int)rtable) == -1) {
+			syslog(LOG_ERR, "%s: setrtable: %m", lc->lc_class);
+		}
 	}
 
 	if (flags & LOGIN_SETGROUP) {
