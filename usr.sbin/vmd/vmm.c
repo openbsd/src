@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.103 2022/01/04 15:25:05 claudio Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.104 2022/03/01 21:46:19 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -51,6 +51,7 @@
 
 #include "vmd.h"
 #include "vmm.h"
+#include "atomicio.h"
 
 void	vmm_sighdlr(int, short, void *);
 int	vmm_start_vm(struct imsg *, uint32_t *, pid_t *);
@@ -145,7 +146,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_START_VM_END:
 		res = vmm_start_vm(imsg, &id, &pid);
 		/* Check if the ID can be mapped correctly */
-		if ((id = vm_id2vmid(id, NULL)) == 0)
+		if (res == 0 && (id = vm_id2vmid(id, NULL)) == 0)
 			res = ENOENT;
 		cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		break;
@@ -615,7 +616,8 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 	struct vmd_vm		*vm;
 	int			 ret = EINVAL;
 	int			 fds[2];
-	size_t			 i, j;
+	pid_t			 vm_pid;
+	size_t			 i, j, sz;
 
 	if ((vm = vm_getbyvmid(imsg->hdr.peerid)) == NULL) {
 		log_warnx("%s: can't find vm", __func__);
@@ -635,18 +637,18 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		fatal("socketpair");
 
 	/* Start child vmd for this VM (fork, chroot, drop privs) */
-	ret = fork();
+	vm_pid = fork();
 
 	/* Start child failed? - cleanup and leave */
-	if (ret == -1) {
+	if (vm_pid == -1) {
 		log_warnx("%s: start child failed", __func__);
 		ret = EIO;
 		goto err;
 	}
 
-	if (ret > 0) {
+	if (vm_pid > 0) {
 		/* Parent */
-		vm->vm_pid = ret;
+		vm->vm_pid = vm_pid;
 		close(fds[1]);
 
 		for (i = 0 ; i < vcp->vcp_ndisks; i++) {
@@ -674,9 +676,14 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		}
 
 		/* Read back the kernel-generated vm id from the child */
-		if (read(fds[0], &vcp->vcp_id, sizeof(vcp->vcp_id)) !=
-		    sizeof(vcp->vcp_id))
-			fatal("read vcp id");
+		sz = atomicio(read, fds[0], &vcp->vcp_id, sizeof(vcp->vcp_id));
+		if (sz != sizeof(vcp->vcp_id)) {
+			log_debug("%s: failed to receive vm id from vm %s",
+			    __func__, vcp->vcp_name);
+			/* vmd could not allocate memory for the vm. */
+			ret = ENOMEM;
+			goto err;
+		}
 
 		if (vcp->vcp_id == 0)
 			goto err;

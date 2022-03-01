@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.67 2021/12/30 08:12:23 claudio Exp $	*/
+/*	$OpenBSD: vm.c,v 1.68 2022/03/01 21:46:19 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -26,6 +26,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
 
 #include <dev/ic/i8253reg.h>
 #include <dev/isa/isareg.h>
@@ -292,17 +293,24 @@ start_vm(struct vmd_vm *vm, int fd)
 	ret = alloc_guest_mem(vcp);
 
 	if (ret) {
+		struct rlimit lim;
+		char buf[FMT_SCALED_STRSIZE];
+		if (ret == ENOMEM && getrlimit(RLIMIT_DATA, &lim) == 0) {
+			if (fmt_scaled(lim.rlim_cur, buf) == 0)
+				fatalx("could not allocate guest memory (data "
+				    "limit is %s)", buf);
+		}
 		errno = ret;
-		fatal("could not allocate guest memory - exiting");
+		fatal("could not allocate guest memory");
 	}
 
 	ret = vmm_create_vm(vcp);
 	current_vm = vm;
 
 	/* send back the kernel-generated vm id (0 on error) */
-	if (write(fd, &vcp->vcp_id, sizeof(vcp->vcp_id)) !=
+	if (atomicio(vwrite, fd, &vcp->vcp_id, sizeof(vcp->vcp_id)) !=
 	    sizeof(vcp->vcp_id))
-		fatal("write vcp id");
+		fatal("failed to send created vm id to vmm process");
 
 	if (ret) {
 		errno = ret;
@@ -319,10 +327,9 @@ start_vm(struct vmd_vm *vm, int fd)
 		fatal("pledge");
 
 	if (vm->vm_state & VM_STATE_RECEIVED) {
-		ret = read(vm->vm_receive_fd, &vrp, sizeof(vrp));
-		if (ret != sizeof(vrp)) {
+		ret = atomicio(read, vm->vm_receive_fd, &vrp, sizeof(vrp));
+		if (ret != sizeof(vrp))
 			fatal("received incomplete vrp - exiting");
-		}
 		vrs = vrp.vrwp_regs;
 	} else {
 		/*
