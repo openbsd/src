@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.8 2022/02/22 20:37:19 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.9 2022/03/02 12:44:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
+#include <dev/clock_subr.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_misc.h>
@@ -88,6 +89,9 @@ struct aplsmc_softc {
 
 	struct gpio_controller	sc_gc;
 
+	int			sc_rtc_node;
+	struct todr_chip_handle sc_todr;
+	
 	struct aplsmc_sensor	*sc_smcsensors[APLSMC_MAX_SENSORS];
 	struct ksensor		sc_sensors[APLSMC_MAX_SENSORS];
 	int			sc_nsensors;
@@ -95,6 +99,8 @@ struct aplsmc_softc {
 };
 
 struct aplsmc_softc *aplsmc_sc;
+
+#ifndef SMALL_KERNEL
 
 struct aplsmc_sensor aplsmc_sensors[] = {
 	{ "ACDI", "ui16", SENSOR_INDICATOR, 1, "power supply" },
@@ -120,6 +126,8 @@ struct aplsmc_sensor aplsmc_sensors[] = {
 	{ "VD0R", "flt ", SENSOR_VOLTS_DC, 1000000, "input" },
 };
 
+#endif
+
 int	aplsmc_match(struct device *, void *, void *);
 void	aplsmc_attach(struct device *, struct device *, void *);
 
@@ -131,67 +139,15 @@ struct cfdriver aplsmc_cd = {
 	NULL, "aplsmc", DV_DULL
 };
 
-#if NAPM > 0
-int
-aplsmc_apminfo(struct apm_power_info *info)
-{
-	struct aplsmc_sensor *sensor;
-	struct ksensor *ksensor;
-	struct aplsmc_softc *sc = aplsmc_sc; 
-	int remaining = -1, capacity = -1, i;
-
-	info->battery_state = APM_BATT_UNKNOWN;
-	info->ac_state = APM_AC_UNKNOWN;
-	info->battery_life = 0;
-	info->minutes_left = -1;
-
-	for (i = 0; i < sc->sc_nsensors; i++) {
-		sensor = sc->sc_smcsensors[i];
-		ksensor = &sc->sc_sensors[i];
-
-		if (ksensor->flags & SENSOR_FUNKNOWN)
-			continue;
-
-		if (strcmp(sensor->key, "ACDI") == 0) {
-			info->ac_state = ksensor->value ?
-				APM_AC_ON : APM_AC_OFF;
-		} else if (strcmp(sensor->key, "B0RM") == 0)
-			remaining = ksensor->value;
-		else if (strcmp(sensor->key, "B0FC") == 0)
-			capacity = ksensor->value;
-		else if ((strcmp(sensor->key, "B0TE") == 0) &&
-			 (ksensor->value != 0xffff))
-			info->minutes_left = ksensor->value;
-		else if ((strcmp(sensor->key, "B0TF") == 0) &&
-			 (ksensor->value != 0xffff)) {
-			info->battery_state = APM_BATT_CHARGING;
-			info->minutes_left = ksensor->value;
-		}
-	}
-
-	/* calculate remaining battery if we have sane values */
-	if (remaining > -1 && capacity > 0) {
-		info->battery_life = ((remaining * 100) / capacity);
-		if (info->battery_state != APM_BATT_CHARGING) {
-			if (info->battery_life > 50)
-				info->battery_state = APM_BATT_HIGH;
-			else if (info->battery_life > 25)
-				info->battery_state = APM_BATT_LOW;
-			else
-				info->battery_state = APM_BATT_CRITICAL;
-		}
-	}
-
-	return 0;
-}
-#endif   
-
 void	aplsmc_callback(void *, uint64_t);
 int	aplsmc_send_cmd(struct aplsmc_softc *, uint16_t, uint32_t, uint16_t);
 int	aplsmc_wait_cmd(struct aplsmc_softc *sc);
 int	aplsmc_read_key(struct aplsmc_softc *, uint32_t, void *, size_t);
 void	aplsmc_refresh_sensors(void *);
+int	aplsmc_apminfo(struct apm_power_info *);
 void	aplsmc_set_pin(void *, uint32_t *, int);
+int	aplsmc_gettime(struct todr_chip_handle *, struct timeval *);
+int	aplsmc_settime(struct todr_chip_handle *, struct timeval *);
 void	aplsmc_reset(void);
 
 int
@@ -208,7 +164,9 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 	struct aplsmc_softc *sc = (struct aplsmc_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	int error, node;
+#ifndef SMALL_KERNEL
 	int i;
+#endif
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
@@ -263,6 +221,20 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 		gpio_controller_register(&sc->sc_gc);
 	}
 
+	node = OF_getnodebyname(faa->fa_node, "rtc");
+	if (node) {
+		sc->sc_rtc_node = node;
+		sc->sc_todr.cookie = sc;
+		sc->sc_todr.todr_gettime = aplsmc_gettime;
+		sc->sc_todr.todr_settime = aplsmc_settime;
+		todr_attach(&sc->sc_todr);
+	}
+
+	aplsmc_sc = sc;
+	cpuresetfn = aplsmc_reset;
+
+#ifndef SMALL_KERNEL
+
 	for (i = 0; i < nitems(aplsmc_sensors); i++) {
 		struct smc_key_info info;
 
@@ -304,11 +276,10 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sc_sensordev);
 	sensor_task_register(sc, aplsmc_refresh_sensors, 5);
 
-	aplsmc_sc = sc;
-	cpuresetfn = aplsmc_reset;
-
 #if NAPM > 0
 	apm_setinfohook(aplsmc_apminfo);
+#endif
+
 #endif
 }
 
@@ -388,6 +359,8 @@ aplsmc_write_key(struct aplsmc_softc *sc, uint32_t key, void *data, size_t len)
 	return aplsmc_wait_cmd(sc);
 }
 
+#ifndef SMALL_KERNEL
+
 void
 aplsmc_refresh_sensors(void *arg)
 {
@@ -454,6 +427,64 @@ aplsmc_refresh_sensors(void *arg)
 	}
 }
 
+#if NAPM > 0
+
+int
+aplsmc_apminfo(struct apm_power_info *info)
+{
+	struct aplsmc_sensor *sensor;
+	struct ksensor *ksensor;
+	struct aplsmc_softc *sc = aplsmc_sc; 
+	int remaining = -1, capacity = -1, i;
+
+	info->battery_state = APM_BATT_UNKNOWN;
+	info->ac_state = APM_AC_UNKNOWN;
+	info->battery_life = 0;
+	info->minutes_left = -1;
+
+	for (i = 0; i < sc->sc_nsensors; i++) {
+		sensor = sc->sc_smcsensors[i];
+		ksensor = &sc->sc_sensors[i];
+
+		if (ksensor->flags & SENSOR_FUNKNOWN)
+			continue;
+
+		if (strcmp(sensor->key, "ACDI") == 0) {
+			info->ac_state = ksensor->value ?
+				APM_AC_ON : APM_AC_OFF;
+		} else if (strcmp(sensor->key, "B0RM") == 0)
+			remaining = ksensor->value;
+		else if (strcmp(sensor->key, "B0FC") == 0)
+			capacity = ksensor->value;
+		else if ((strcmp(sensor->key, "B0TE") == 0) &&
+			 (ksensor->value != 0xffff))
+			info->minutes_left = ksensor->value;
+		else if ((strcmp(sensor->key, "B0TF") == 0) &&
+			 (ksensor->value != 0xffff)) {
+			info->battery_state = APM_BATT_CHARGING;
+			info->minutes_left = ksensor->value;
+		}
+	}
+
+	/* calculate remaining battery if we have sane values */
+	if (remaining > -1 && capacity > 0) {
+		info->battery_life = ((remaining * 100) / capacity);
+		if (info->battery_state != APM_BATT_CHARGING) {
+			if (info->battery_life > 50)
+				info->battery_state = APM_BATT_HIGH;
+			else if (info->battery_life > 25)
+				info->battery_state = APM_BATT_LOW;
+			else
+				info->battery_state = APM_BATT_CRITICAL;
+		}
+	}
+
+	return 0;
+}
+
+#endif
+#endif
+
 void
 aplsmc_set_pin(void *cookie, uint32_t *cells, int val)
 {
@@ -474,6 +505,54 @@ aplsmc_set_pin(void *cookie, uint32_t *cells, int val)
 	data = SMC_GPIO_CMD_OUTPUT | !!val;
 
 	aplsmc_write_key(sc, key, &data, sizeof(data));
+}
+
+#define RTC_OFFSET_LEN	6
+#define SMC_CLKM_LEN	6
+
+int
+aplsmc_gettime(struct todr_chip_handle *handle, struct timeval *tv)
+{
+	struct aplsmc_softc *sc = handle->cookie;
+	uint8_t data[8] = {};
+	uint64_t offset, time;
+	int error;
+
+	error = nvmem_read_cell(sc->sc_rtc_node, "rtc_offset", &data,
+	    RTC_OFFSET_LEN);
+	if (error)
+		return error;
+	offset = lemtoh64(data);
+
+	error = aplsmc_read_key(sc, SMC_KEY("CLKM"), &data, SMC_CLKM_LEN);
+	if (error)
+		return error;
+	time = lemtoh64(data) + offset;
+
+	tv->tv_sec = (time >> 15);
+	tv->tv_usec = (((time & 0x7fff) * 1000000) >> 15);
+	return 0;
+}
+
+int
+aplsmc_settime(struct todr_chip_handle *handle, struct timeval *tv)
+{
+	struct aplsmc_softc *sc = handle->cookie;
+	uint8_t data[8] = {};
+	uint64_t offset, time;
+	int error;
+
+	error = aplsmc_read_key(sc, SMC_KEY("CLKM"), &data, SMC_CLKM_LEN);
+	if (error)
+		return error;
+
+	time = ((uint64_t)tv->tv_sec << 15);
+	time |= ((uint64_t)tv->tv_usec << 15) / 1000000;
+	offset = time - lemtoh64(data);
+
+	htolem64(data, offset);
+	return nvmem_write_cell(sc->sc_rtc_node, "rtc_offset", &data,
+	    RTC_OFFSET_LEN);
 }
 
 void
