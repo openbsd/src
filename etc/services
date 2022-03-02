@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.103 2021/09/02 10:46:22 deraadt Exp $
+# $OpenBSD: services,v 1.104 2022/03/02 11:43:52 landry Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -173,6 +173,8 @@ imaps		993/tcp				# imap4 protocol over TLS/SSL
 pop3s		995/tcp		spop3		# pop3 protocol over TLS/SSL
 socks		1080/tcp			# Socks
 kpop		1109/tcp			# Pop with Kerberos
+openvpn		1194/tcp			# OpenVPN
+openvpn		1194/udp			# OpenVPN
 ms-sql-s	1433/tcp	Microsoft-SQL-Server
 ms-sql-s	1433/udp	Microsoft-SQL-Server
 ms-sql-m	1434/tcp	Microsoft-SQL-Monitor
