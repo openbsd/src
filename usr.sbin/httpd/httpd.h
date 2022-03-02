@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.159 2022/02/27 20:30:30 bluhm Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.160 2022/03/02 11:10:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -130,10 +130,6 @@ RB_HEAD(kvtree, kv);
 struct kv {
 	char			*kv_key;
 	char			*kv_value;
-
-#define KV_FLAG_INVALID		 0x01
-#define KV_FLAG_GLOBBING	 0x02
-	uint8_t			 kv_flags;
 
 	struct kvlist		 kv_children;
 	struct kv		*kv_parent;

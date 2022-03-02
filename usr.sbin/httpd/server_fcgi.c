@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_fcgi.c,v 1.89 2021/10/23 15:52:44 benno Exp $	*/
+/*	$OpenBSD: server_fcgi.c,v 1.90 2022/03/02 11:10:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2014 Florian Obser <florian@openbsd.org>
@@ -701,9 +701,6 @@ server_fcgi_writeheader(struct client *clt, struct kv *hdr, void *arg)
 	char				*val, *name, *p;
 	const char			*key;
 	int				 ret;
-
-	if (hdr->kv_flags & KV_FLAG_INVALID)
-		return (0);
 
 	/* The key might have been updated in the parent */
 	if (hdr->kv_parent != NULL && hdr->kv_parent->kv_key != NULL)

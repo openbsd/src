@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_http.c,v 1.149 2021/11/11 15:52:33 claudio Exp $	*/
+/*	$OpenBSD: server_http.c,v 1.150 2022/03/02 11:10:43 florian Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthias Pressfreund <mpfr@fn.de>
@@ -1646,9 +1646,6 @@ server_writeheader_http(struct client *clt, struct kv *hdr, void *arg)
 {
 	char			*ptr;
 	const char		*key;
-
-	if (hdr->kv_flags & KV_FLAG_INVALID)
-		return (0);
 
 	/* The key might have been updated in the parent */
 	if (hdr->kv_parent != NULL && hdr->kv_parent->kv_key != NULL)
