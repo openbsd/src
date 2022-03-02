@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpmu.c,v 1.3 2022/01/13 08:59:10 kettenis Exp $	*/
+/*	$OpenBSD: aplpmu.c,v 1.4 2022/03/02 12:35:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
@@ -25,6 +26,7 @@
 #include <dev/clock_subr.h>
 #include <dev/fdt/spmivar.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
 extern void (*cpuresetfn)(void);
@@ -51,6 +53,13 @@ extern void (*powerdownfn)(void);
 #define SERA_POWERDOWN		0x9f0f
 #define SERA_POWERDOWN_MAGIC	0x08
 
+struct aplpmu_nvmem {
+	struct aplpmu_softc	*an_sc;
+	struct nvmem_device	an_nd;
+	bus_addr_t		an_base;
+	bus_size_t		an_size;
+};
+
 struct aplpmu_softc {
 	struct device		sc_dev;
 	spmi_tag_t		sc_tag;
@@ -76,13 +85,16 @@ struct cfdriver aplpmu_cd = {
 int	aplpmu_gettime(struct todr_chip_handle *, struct timeval *);
 int	aplpmu_settime(struct todr_chip_handle *, struct timeval *);
 void	aplpmu_powerdown(void);
+int	aplpmu_nvmem_read(void *, bus_addr_t, void *, bus_size_t);
+int	aplpmu_nvmem_write(void *, bus_addr_t, const void *, bus_size_t);
 
 int
 aplpmu_match(struct device *parent, void *match, void *aux)
 {
 	struct spmi_attach_args *sa = aux;
 
-	return OF_is_compatible(sa->sa_node, "apple,sera-pmu");
+	return OF_is_compatible(sa->sa_node, "apple,sera-pmu") ||
+	    OF_is_compatible(sa->sa_node, "apple,spmi-pmu");
 }
 
 void
@@ -91,28 +103,53 @@ aplpmu_attach(struct device *parent, struct device *self, void *aux)
 	struct aplpmu_softc *sc = (struct aplpmu_softc *)self;
 	struct spmi_attach_args *sa = aux;
 	uint8_t data[8] = {};
-	int error;
+	int error, node;
 
 	sc->sc_tag = sa->sa_tag;
 	sc->sc_sid = sa->sa_sid;
 
-	error = spmi_cmd_read(sc->sc_tag, sc->sc_sid, SPMI_CMD_EXT_READL,
-	    SERA_TIME_OFFSET, &data, SERA_TIME_LEN);
-	if (error) {
-		printf(": can't read offset\n");
-		return;
+	if (OF_is_compatible(sa->sa_node, "apple,sera-pmu")) {
+		error = spmi_cmd_read(sc->sc_tag, sc->sc_sid,
+		    SPMI_CMD_EXT_READL, SERA_TIME_OFFSET,
+		    &data, SERA_TIME_LEN);
+		if (error) {
+			printf(": can't read offset\n");
+			return;
+		}
+		sc->sc_offset = lemtoh64(data);
+
+		sc->sc_todr.cookie = sc;
+		sc->sc_todr.todr_gettime = aplpmu_gettime;
+		sc->sc_todr.todr_settime = aplpmu_settime;
+		todr_attach(&sc->sc_todr);
+
+		aplpmu_sc = sc;
+		powerdownfn = aplpmu_powerdown;
 	}
-	sc->sc_offset = lemtoh64(data);
 
 	printf("\n");
 
-	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = aplpmu_gettime;
-	sc->sc_todr.todr_settime = aplpmu_settime;
-	todr_attach(&sc->sc_todr);
+	for (node = OF_child(sa->sa_node); node; node = OF_peer(node)) {
+		struct aplpmu_nvmem *an;
+		uint32_t reg[2];
 
-	aplpmu_sc = sc;
-	powerdownfn = aplpmu_powerdown;
+		if (!OF_is_compatible(node, "apple,spmi-pmu-nvmem"))
+			continue;
+
+		if (OF_getpropintarray(node, "reg", reg,
+		    sizeof(reg)) != sizeof(reg))
+			continue;
+
+		an = malloc(sizeof(*an), M_DEVBUF, M_WAITOK);
+		an->an_sc = sc;
+		an->an_base = reg[0];
+		an->an_size = reg[1];
+		an->an_nd.nd_node = node;
+		an->an_nd.nd_cookie = an;
+		an->an_nd.nd_read = aplpmu_nvmem_read;
+		an->an_nd.nd_write = aplpmu_nvmem_write;
+		nvmem_register(&an->an_nd);
+	}
 }
 
 int
@@ -166,4 +203,31 @@ aplpmu_powerdown(void)
 	    SERA_POWERDOWN, &data, sizeof(data));
 
 	cpuresetfn();
+}
+
+int
+aplpmu_nvmem_read(void *cookie, bus_addr_t addr, void *data, bus_size_t size)
+{
+	struct aplpmu_nvmem *an = cookie;
+	struct aplpmu_softc *sc = an->an_sc;
+
+	if (addr >= an->an_size || addr + size > an->an_size)
+		return EINVAL;
+
+	return spmi_cmd_read(sc->sc_tag, sc->sc_sid, SPMI_CMD_EXT_READL,
+	    an->an_base + addr, data, size);
+}
+
+int
+aplpmu_nvmem_write(void *cookie, bus_addr_t addr, const void *data,
+    bus_size_t size)
+{
+	struct aplpmu_nvmem *an = cookie;
+	struct aplpmu_softc *sc = an->an_sc;
+
+	if (addr >= an->an_size || addr + size > an->an_size)
+		return EINVAL;
+
+	return spmi_cmd_write(sc->sc_tag, sc->sc_sid, SPMI_CMD_EXT_WRITEL,
+	    an->an_base + addr, data, size);
 }
