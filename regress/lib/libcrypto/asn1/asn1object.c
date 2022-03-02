@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1object.c,v 1.1 2022/02/26 16:45:31 jsing Exp $ */
+/* $OpenBSD: asn1object.c,v 1.2 2022/03/02 17:39:56 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2021, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -71,6 +71,30 @@ struct asn1_object_test {
 
 struct asn1_object_test asn1_object_tests[] = {
 	{
+		.oid = "2.5",
+		.txt = "directory services (X.500)",
+		.content = {
+			0x55,
+		},
+		.content_len = 1,
+		.der = {
+			0x06, 0x01, 0x55,
+		},
+		.der_len = 3,
+	},
+	{
+		.oid = "2.5.4",
+		.txt = "X509",
+		.content = {
+			0x55, 0x04,
+		},
+		.content_len = 2,
+		.der = {
+			0x06, 0x02, 0x55, 0x04,
+		},
+		.der_len = 4,
+	},
+	{
 		.oid = "2.5.4.10",
 		.txt = "organizationName",
 		.content = {
@@ -95,6 +119,42 @@ struct asn1_object_test asn1_object_tests[] = {
 		.der_len = 5,
 	},
 	{
+		.oid = "2.5 4.10",
+		.txt = "organizationName",
+		.content = {
+			0x55, 0x04, 0x0a,
+		},
+		.content_len = 3,
+		.der = {
+			0x06, 0x03, 0x55, 0x04, 0x0a,
+		},
+		.der_len = 5,
+	},
+	{
+		.oid = "2.5.0.0",
+		.txt = "2.5.0.0",
+		.content = {
+			0x55, 0x00, 0x00,
+		},
+		.content_len = 3,
+		.der = {
+			0x06, 0x03, 0x55, 0x00, 0x00,
+		},
+		.der_len = 5,
+	},
+	{
+		.oid = "0.0.0.0",
+		.txt = "0.0.0.0",
+		.content = {
+			0x00, 0x00, 0x00,
+		},
+		.content_len = 3,
+		.der = {
+			0x06, 0x03, 0x00, 0x00, 0x00,
+		},
+		.der_len = 5,
+	},
+	{
 		.oid = "1.3.6.1.4.1.11129.2.4.5",
 		.txt = "CT Certificate SCTs",
 		.content = {
@@ -109,13 +169,25 @@ struct asn1_object_test asn1_object_tests[] = {
 		.der_len = 12,
 	},
 	{
+		.oid = "2.00005.0000000000004.10",
+		.content = {
+			0x55, 0x04, 0x0a,
+		},
+		.content_len = 3,
+		.der = {
+			0x06, 0x03, 0x55, 0x04, 0x0a,
+		},
+		.der_len = 5,
+		.want_error = 0, /* XXX */
+	},
+	{
 		.oid = "2..5.4.10",
 		.content = {
-			0x00, 0x00, 0x00, 0x00,
+			0x50, 0x05, 0x04, 0x0a,
 		},
 		.content_len = 4,
 		.der = {
-			0x06, 0x04, 0x00, 0x00, 0x00, 0x00,
+			0x06, 0x04, 0x50, 0x05, 0x04, 0x0a,
 		},
 		.der_len = 6,
 		.want_error = 0, /* XXX */
@@ -123,11 +195,11 @@ struct asn1_object_test asn1_object_tests[] = {
 	{
 		.oid = "2.5..4.10",
 		.content = {
-			0x00, 0x00, 0x00, 0x00,
+			0x55, 0x00, 0x04, 0x0a,
 		},
 		.content_len = 4,
 		.der = {
-			0x06, 0x04, 0x00, 0x00, 0x00, 0x00,
+			0x06, 0x04, 0x55, 0x00, 0x04, 0x0a,
 		},
 		.der_len = 6,
 		.want_error = 0, /* XXX */
@@ -135,11 +207,11 @@ struct asn1_object_test asn1_object_tests[] = {
 	{
 		.oid = "2.5.4..10",
 		.content = {
-			0x00, 0x00, 0x00, 0x00,
+			0x55, 0x04, 0x00, 0x0a,
 		},
 		.content_len = 4,
 		.der = {
-			0x06, 0x04, 0x00, 0x00, 0x00, 0x00,
+			0x06, 0x04, 0x55, 0x04, 0x00, 0x0a,
 		},
 		.der_len = 6,
 		.want_error = 0, /* XXX */
@@ -147,11 +219,11 @@ struct asn1_object_test asn1_object_tests[] = {
 	{
 		.oid = "2.5.4.10.",
 		.content = {
-			0x00, 0x00, 0x00,
+			0x55, 0x04, 0x0a,
 		},
 		.content_len = 3,
 		.der = {
-			0x06, 0x03, 0x00, 0x00, 0x00,
+			0x06, 0x03, 0x55, 0x04, 0x0a,
 		},
 		.der_len = 5,
 		.want_error = 0, /* XXX */
@@ -161,12 +233,28 @@ struct asn1_object_test asn1_object_tests[] = {
 		.want_error = ASN1_R_FIRST_NUM_TOO_LARGE,
 	},
 	{
+		.oid = "0.40.4.10",
+		.want_error = ASN1_R_SECOND_NUMBER_TOO_LARGE,
+	},
+	{
+		.oid = "1.40.4.10",
+		.want_error = ASN1_R_SECOND_NUMBER_TOO_LARGE,
+	},
+	{
 		.oid = "2",
 		.want_error = ASN1_R_MISSING_SECOND_NUMBER,
 	},
 	{
 		.oid = "2,5,4,10",
 		.want_error = ASN1_R_INVALID_SEPARATOR,
+	},
+	{
+		.oid = "2.5,4.10",
+		.want_error = ASN1_R_INVALID_DIGIT,
+	},
+	{
+		.oid = "2.5a.4.10",
+		.want_error = ASN1_R_INVALID_DIGIT,
 	},
 };
 
@@ -185,22 +273,32 @@ do_asn1_object_test(struct asn1_object_test *aot)
 
 	ERR_clear_error();
 
+	ret = a2d_ASN1_OBJECT(NULL, 0, aot->oid, -1);
+	if (ret < 0 || (size_t)ret != aot->content_len) {
+		fprintf(stderr, "FAIL: a2d_ASN1_OBJECT('%s') = %d, want %zu\n",
+		    aot->oid, ret, aot->content_len);
+		goto failed;
+	}
 	ret = a2d_ASN1_OBJECT(buf, sizeof(buf), aot->oid, -1);
 	if (ret < 0 || (size_t)ret != aot->content_len) {
-		fprintf(stderr, "FAIL: a2d_ASN1_OBJECT() = %d, want %zu\n",
-		    ret, aot->content_len);
+		fprintf(stderr, "FAIL: a2d_ASN1_OBJECT('%s') = %d, want %zu\n",
+		    aot->oid, ret, aot->content_len);
 		goto failed;
 	}
 	if (aot->content_len == 0) {
 		err = ERR_peek_error();
 		if (ERR_GET_REASON(err) != aot->want_error) {
-			fprintf(stderr, "FAIL: Got error reason %d, "
-			    "want %d\n", ERR_GET_REASON(err),
-			    aot->want_error);
+			fprintf(stderr, "FAIL: a2d_ASN1_OBJECT('%s') - got "
+			    "error reason %d, want %d\n", aot->oid,
+			    ERR_GET_REASON(err), aot->want_error);
 			goto failed;
 		}
 		goto done;
 	}
+
+	if (!asn1_compare_bytes("ASN1_OBJECT content", buf, ret, aot->content,
+	    aot->content_len))
+		goto failed;
 
 	p = aot->content;
 	if ((aobj = c2i_ASN1_OBJECT(NULL, &p, aot->content_len)) == NULL) {
@@ -320,8 +418,8 @@ asn1_object_txt_test(void)
 		goto failed;
 	}
 
-	p = &asn1_object_tests[0].der[0];
-	len = asn1_object_tests[0].der_len;
+	p = &asn1_object_tests[2].der[0];
+	len = asn1_object_tests[2].der_len;
 	aobj = d2i_ASN1_OBJECT(NULL, &p, len);
 	if (aobj == NULL) {
 		fprintf(stderr, "FAIL: d2i_ASN1_OBJECT() failed\n");
