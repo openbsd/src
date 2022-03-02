@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.135 2022/03/02 14:44:46 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.136 2022/03/02 16:51:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -168,14 +168,8 @@ again:
 		}
 
 		up_prep_adjout(peer, &state, addr.aid);
-
-		/* only send update if path changed */
-		if (prefix_adjout_update(peer, &state, &addr,
-		    new->pt->prefixlen, prefix_vstate(new)) == 1) {
-			peer->prefix_out_cnt++;
-			peer->up_nlricnt++;
-		}
-
+		prefix_adjout_update(peer, &state, &addr,
+		    new->pt->prefixlen, prefix_vstate(new));
 		rde_filterstate_clean(&state);
 
 		/* max prefix checker outbound */
@@ -229,13 +223,7 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	}
 
 	up_prep_adjout(peer, &state, addr.aid);
-
-	if (prefix_adjout_update(peer, &state, &addr, 0, ROA_NOTFOUND) == 1) {
-		peer->prefix_out_cnt++;
-		peer->up_nlricnt++;
-	}
-
-	/* no longer needed */
+	prefix_adjout_update(peer, &state, &addr, 0, ROA_NOTFOUND);
 	rde_filterstate_clean(&state);
 
 	/* max prefix checker outbound */

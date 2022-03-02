@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.231 2022/03/02 14:44:46 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.232 2022/03/02 16:51:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1163,29 +1163,27 @@ prefix_add_eor(struct rde_peer *peer, uint8_t aid)
 /*
  * Put a prefix from the Adj-RIB-Out onto the update queue.
  */
-int
+void
 prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
     struct bgpd_addr *prefix, int prefixlen, uint8_t vstate)
 {
-	struct prefix_tree *prefix_head = NULL;
 	struct rde_aspath *asp;
 	struct rde_community *comm;
 	struct prefix *p;
-	int created = 0;
 
 	if ((p = prefix_adjout_get(peer, 0, prefix, prefixlen)) != NULL) {
 		if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
 			fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit",
 			    __func__);
+
 		/* prefix is already in the Adj-RIB-Out */
 		if (p->flags & PREFIX_FLAG_WITHDRAW) {
-			created = 1;	/* consider this a new entry */
+			RB_REMOVE(prefix_tree,
+			    &peer->withdraws[prefix->aid], p);
 			peer->up_wcnt--;
-			prefix_head = &peer->withdraws[prefix->aid];
-			RB_REMOVE(prefix_tree, prefix_head, p);
-		} else if (p->flags & PREFIX_FLAG_DEAD) {
-			created = 1;	/* consider this a new entry */
-		} else {
+		}
+		if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) ==
+		    0) {
 			if (prefix_nhflags(p) == state->nhflags &&
 			    prefix_nexthop(p) == state->nexthop &&
 			    communities_equal(&state->communities,
@@ -1196,22 +1194,23 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 				p->validation_state = vstate;
 				p->lastchange = getmonotime();
 				p->flags &= ~PREFIX_FLAG_STALE;
-				return 0;
+				return;
 			}
 
 			if (p->flags & PREFIX_FLAG_UPDATE) {
-				/* created = 0 so up_nlricnt is not increased */
-				prefix_head = &peer->updates[prefix->aid];
-				RB_REMOVE(prefix_tree, prefix_head, p);
+				RB_REMOVE(prefix_tree,
+				    &peer->updates[prefix->aid], p);
+				peer->up_nlricnt--;
 			}
 			/* unlink prefix so it can be relinked below */
 			prefix_unlink(p);
+			peer->prefix_out_cnt--;
 		}
+		/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
 		p->flags &= ~PREFIX_FLAG_MASK;
 	} else {
 		p = prefix_alloc();
 		p->flags |= PREFIX_FLAG_ADJOUT;
-		created = 1;
 
 		p->pt = pt_get(prefix, prefixlen);
 		if (p->pt == NULL)
@@ -1237,14 +1236,14 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 
 	prefix_link(p, NULL, p->pt, peer, 0, asp, comm, state->nexthop,
 	    state->nhflags, vstate);
+	peer->prefix_out_cnt++;
 
 	if (p->flags & PREFIX_FLAG_MASK)
 		fatalx("%s: bad flags %x", __func__, p->flags);
 	p->flags |= PREFIX_FLAG_UPDATE;
 	if (RB_INSERT(prefix_tree, &peer->updates[prefix->aid], p) != NULL)
 		fatalx("%s: RB tree invariant violated", __func__);
-
-	return created;
+	peer->up_nlricnt++;
 }
 
 /*
@@ -1283,7 +1282,6 @@ prefix_adjout_withdraw(struct prefix *p)
 	p->flags |= PREFIX_FLAG_WITHDRAW;
 	if (RB_INSERT(prefix_tree, &peer->withdraws[p->pt->aid], p) != NULL)
 		fatalx("%s: RB tree invariant violated", __func__);
-
 	peer->up_wcnt++;
 }
 
