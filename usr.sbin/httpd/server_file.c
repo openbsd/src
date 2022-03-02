@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.71 2022/02/27 20:30:30 bluhm Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.72 2022/03/02 19:52:19 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -253,14 +253,11 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 
 		if (r != NULL && strstr(r->kv_value, "gzip") != NULL) {
 			/* append ".gz" to path and check existence */
-			if (strlcpy(gzpath, path, sizeof(gzpath)) >=
-			    sizeof(gzpath) ||
-			    strlcat(gzpath, ".gz", sizeof(gzpath)) >=
-			    sizeof(gzpath))
+			ret = snprintf(gzpath, sizeof(gzpath), "%s.gz", path);
+			if (ret < 0 || (size_t)ret >= sizeof(gzpath))
 				goto abort;
-
-			if ((access(gzpath, R_OK) == 0) &&
-			    (stat(gzpath, &gzst) == 0)) {
+			if (access(gzpath, R_OK) == 0 &&
+			    stat(gzpath, &gzst) == 0) {
 				path = gzpath;
 				st = &gzst;
 				kv_add(&resp->http_headers,
