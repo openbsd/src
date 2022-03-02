@@ -1597,8 +1597,6 @@ static void update_bw_bounding_box(struct dc *dc, struct clk_bw_params *bw_param
 	unsigned int i, closest_clk_lvl = 0, k = 0;
 	int j;
 
-	DC_FP_START();
-
 	dcn2_1_ip.max_num_otg = pool->base.res_cap->num_timing_generator;
 	dcn2_1_ip.max_num_dpp = pool->base.pipe_count;
 	dcn2_1_soc.num_chans = bw_params->num_channels;
@@ -1648,8 +1646,6 @@ static void update_bw_bounding_box(struct dc *dc, struct clk_bw_params *bw_param
 		dcn2_1_soc.clock_limits[dcn2_1_soc.num_states] = dcn2_1_soc.clock_limits[dcn2_1_soc.num_states - 1];
 		dcn2_1_soc.clock_limits[dcn2_1_soc.num_states].state = dcn2_1_soc.num_states;
 	}
-
-	DC_FP_END();
 
 	dml_init_instance(&dc->dml, &dcn2_1_soc, &dcn2_1_ip, DML_PROJECT_DCN21);
 }
