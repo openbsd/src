@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.538 2022/02/28 12:52:38 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.539 2022/03/02 14:44:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3050,9 +3050,7 @@ rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old,
 static void
 rde_up_flush_upcall(struct prefix *p, void *ptr)
 {
-	struct rde_peer *peer = ptr;
-
-	up_generate_updates(out_rules, peer, NULL, p);
+	prefix_adjout_withdraw(p);
 }
 
 u_char	queue_buf[4096];
@@ -3444,7 +3442,7 @@ rde_reload_done(void)
 
 		if (peer->reconf_rib) {
 			if (prefix_dump_new(peer, AID_UNSPEC,
-			    RDE_RUNNER_ROUNDS, peer, rde_up_flush_upcall,
+			    RDE_RUNNER_ROUNDS, NULL, rde_up_flush_upcall,
 			    rde_softreconfig_in_done, NULL) == -1)
 				fatal("%s: prefix_dump_new", __func__);
 			log_peer_info(&peer->conf, "flushing Adj-RIB-Out");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.230 2022/03/01 09:39:36 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.231 2022/03/02 14:44:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1251,37 +1251,40 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
  * Withdraw a prefix from the Adj-RIB-Out, this unlinks the aspath but leaves
  * the prefix in the RIB linked to the peer withdraw list.
  */
-int
-prefix_adjout_withdraw(struct rde_peer *peer, struct bgpd_addr *prefix,
-    int prefixlen)
+void
+prefix_adjout_withdraw(struct prefix *p)
 {
-	struct prefix *p;
-
-	p = prefix_adjout_get(peer, 0, prefix, prefixlen);
-	if (p == NULL)		/* Got a dummy withdrawn request. */
-		return (0);
+	struct rde_peer *peer = prefix_peer(p);
 
 	if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
 		fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit", __func__);
 
-	/* already a withdraw, error */
-	if (p->flags & PREFIX_FLAG_WITHDRAW)
-		log_warnx("%s: prefix already withdrawed", __func__);
+	/* already a withdraw, shortcut */
+	if (p->flags & PREFIX_FLAG_WITHDRAW) {
+		p->lastchange = getmonotime();
+		p->flags &= ~PREFIX_FLAG_STALE;
+		return;
+	}
 	/* pending update just got withdrawn */
-	if (p->flags & PREFIX_FLAG_UPDATE)
+	if (p->flags & PREFIX_FLAG_UPDATE) {
 		RB_REMOVE(prefix_tree, &peer->updates[p->pt->aid], p);
+		peer->up_nlricnt--;
+	}
 	/* unlink prefix if it was linked (not a withdraw or dead) */
-	if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) == 0)
+	if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) == 0) {
 		prefix_unlink(p);
+		peer->prefix_out_cnt--;
+	}
 
 	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
 	p->flags &= ~PREFIX_FLAG_MASK;
 	p->lastchange = getmonotime();
 
 	p->flags |= PREFIX_FLAG_WITHDRAW;
-	if (RB_INSERT(prefix_tree, &peer->withdraws[prefix->aid], p) != NULL)
+	if (RB_INSERT(prefix_tree, &peer->withdraws[p->pt->aid], p) != NULL)
 		fatalx("%s: RB tree invariant violated", __func__);
-	return (1);
+
+	peer->up_wcnt++;
 }
 
 void
@@ -1298,13 +1301,19 @@ prefix_adjout_destroy(struct prefix *p)
 		return;
 	}
 
-	if (p->flags & PREFIX_FLAG_WITHDRAW)
+	if (p->flags & PREFIX_FLAG_WITHDRAW) {
 		RB_REMOVE(prefix_tree, &peer->withdraws[p->pt->aid], p);
-	if (p->flags & PREFIX_FLAG_UPDATE)
+		peer->up_wcnt--;
+	}
+	if (p->flags & PREFIX_FLAG_UPDATE) {
 		RB_REMOVE(prefix_tree, &peer->updates[p->pt->aid], p);
+		peer->up_nlricnt--;
+	}
 	/* unlink prefix if it was linked (not a withdraw or dead) */
-	if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) == 0)
+	if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) == 0) {
 		prefix_unlink(p);
+		peer->prefix_out_cnt--;
+	}
 
 	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
 	p->flags &= ~PREFIX_FLAG_MASK;

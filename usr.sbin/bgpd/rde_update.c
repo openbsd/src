@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.134 2022/03/01 09:53:42 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.135 2022/03/02 14:44:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -102,6 +102,7 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 {
 	struct filterstate	state;
 	struct bgpd_addr	addr;
+	struct prefix		*p;
 	int			need_withdraw;
 	uint8_t			prefixlen;
 
@@ -119,10 +120,8 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 again:
 	if (new == NULL) {
 		/* withdraw prefix */
-		if (prefix_adjout_withdraw(peer, &addr, prefixlen) == 1) {
-			peer->prefix_out_cnt--;
-			peer->up_wcnt++;
-		}
+		if ((p = prefix_adjout_get(peer, 0, &addr, prefixlen)) != NULL)
+			prefix_adjout_withdraw(p);
 	} else {
 		need_withdraw = 0;
 		/*
@@ -655,7 +654,6 @@ up_dump_prefix(u_char *buf, int len, struct prefix_tree *prefix_head,
 		if (withdraw) {
 			/* prefix no longer needed, remove it */
 			prefix_adjout_destroy(p);
-			peer->up_wcnt--;
 			peer->prefix_sent_withdraw++;
 		} else {
 			/* prefix still in Adj-RIB-Out, keep it */
