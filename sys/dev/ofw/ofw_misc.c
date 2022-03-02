@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.34 2021/12/18 09:19:25 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.35 2022/03/02 12:00:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -597,7 +597,46 @@ nvmem_read_cell(int node, const char *name, void *data, bus_size_t size)
 		return EINVAL;
 
 	nd = nc->nc_nd;
+	if (nd->nd_read == NULL)
+		return EACCES;
 	return nd->nd_read(nd->nd_cookie, nc->nc_addr, data, size);
+}
+
+int
+nvmem_write_cell(int node, const char *name, const void *data, bus_size_t size)
+{
+	struct nvmem_device *nd;
+	struct nvmem_cell *nc;
+	uint32_t phandle, *phandles;
+	int id, len;
+
+	id = OF_getindex(node, name, "nvmem-cell-names");
+	if (id < 0)
+		return ENXIO;
+
+	len = OF_getproplen(node, "nvmem-cells");
+	if (len <= 0)
+		return ENXIO;
+
+	phandles = malloc(len, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "nvmem-cells", phandles, len);
+	phandle = phandles[id];
+	free(phandles, M_TEMP, len);
+
+	LIST_FOREACH(nc, &nvmem_cells, nc_list) {
+		if (nc->nc_phandle == phandle)
+			break;
+	}
+	if (nc == NULL)
+		return ENXIO;
+
+	if (size > nc->nc_size)
+		return EINVAL;
+
+	nd = nc->nc_nd;
+	if (nd->nd_write == NULL)
+		return EACCES;
+	return nd->nd_write(nd->nd_cookie, nc->nc_addr, data, size);
 }
 
 /* Port/endpoint interface support */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.22 2021/12/18 09:19:25 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.23 2022/03/02 12:00:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -125,6 +125,7 @@ struct nvmem_device {
 	int	nd_node;
 	void	*nd_cookie;
 	int	(*nd_read)(void *, bus_addr_t, void *, bus_size_t);
+	int	(*nd_write)(void *, bus_addr_t, const void *, bus_size_t);
 
 	LIST_ENTRY(nvmem_device) nd_list;
 	uint32_t nd_phandle;
@@ -133,6 +134,7 @@ struct nvmem_device {
 void	nvmem_register(struct nvmem_device *);
 int	nvmem_read(uint32_t, bus_addr_t, void *, bus_size_t);
 int	nvmem_read_cell(int, const char *name, void *, bus_size_t);
+int	nvmem_write_cell(int, const char *name, const void *, bus_size_t);
 
 /* Port/endpoint interface support */
 
