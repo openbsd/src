@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.234 2022/01/04 06:32:39 yasuoka Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.235 2022/03/02 20:16:43 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -42,10 +42,13 @@
 
 /*
  * Locks used to protect struct members in this file:
- *	I	Immutable after creation
+ *	I	immutable after creation
+ *	a	atomic operations
+ *	N	net lock
  *	F	ipsec_flows_mtx
- *	a	atomic
+ *	m	tdb_mtx			fields of struct tdb
  *	p	ipo_tdb_mtx		link policy to TDB global mutex
+ *	s	tdb_sadb_mtx		SA database global mutex
  */
 
 /* IPSP global definitions. */
@@ -306,14 +309,6 @@ struct ipsec_policy {
 #define	IPSP_IDENTITY_USERFQDN		3
 #define	IPSP_IDENTITY_ASN1_DN		4
 
-/*
- * Locks used to protect struct members in this file:
- *	I	immutable after creation
- *	N	net lock
- *	m	tdb_mtx
- *	p	ipo_tdb_mtx		link policy to TDB global mutex
- *	s	tdb_sadb_mtx		SA database global mutex
- */
 struct tdb {				/* tunnel descriptor block */
 	/*
 	 * Each TDB is on three hash tables: one keyed on dst/spi/sproto,
