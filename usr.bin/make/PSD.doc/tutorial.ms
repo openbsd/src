@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tutorial.ms,v 1.13 2007/11/02 17:27:24 espie Exp $
+.\"	$OpenBSD: tutorial.ms,v 1.14 2022/03/02 09:39:41 jmc Exp $
 .\"	$NetBSD: tutorial.ms,v 1.3 1996/03/06 00:15:31 christos Exp $
 .\" Copyright (c) 1988, 1989 by Adam de Boor
 .\" Copyright (c) 1989 by Berkeley Softworks
@@ -168,9 +168,9 @@ other files to be complete and b) what to do about files that are
 .Ix 0 def makefile
 kept in the top-most directory of the system to be built. While you
 can call the makefile anything you want, Make will look for
-.CW Makefile
-and
 .CW makefile
+and
+.CW Makefile
 (in that order) in the current directory if you don't tell it
 otherwise.
 .Ix 0 def makefile default
@@ -1164,9 +1164,9 @@ of output.
 .IP "\fB\-f\fP \fImakefile\fP"
 .Ix 0 def flags -f
 Specify a makefile to read different from the standard makefiles
-.CW Makefile "\&" (
+.CW makefile "\&" (
 or
-.CW makefile ).
+.CW Makefile ).
 .Ix 0 ref makefile default
 .Ix 0 ref makefile other
 If
