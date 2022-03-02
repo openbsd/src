@@ -1855,7 +1855,7 @@ amdgpu_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	/* from amdgpu_pci_probe() */
+	/* from amdgpu_pci_probe(), aspm test done later */
 
 	if (!amdgpu_virtual_display &&
 	     amdgpu_device_asic_has_dc_support(adev->family))
@@ -1879,6 +1879,10 @@ amdgpu_attach(struct device *parent, struct device *self, void *aux)
 	}
 	adev->pdev = dev->pdev;
 	adev->is_fw_fb = adev->primary;
+
+	/* from amdgpu_pci_probe() */
+	if (amdgpu_aspm == -1 && !pcie_aspm_enabled(adev->pdev))
+		amdgpu_aspm = 0;
 
 	if (!supports_atomic)
 		dev->driver_features &= ~DRIVER_ATOMIC;
