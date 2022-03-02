@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.91 2021/10/22 12:30:53 bluhm Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.92 2022/03/02 09:27:34 claudio Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  *
@@ -196,7 +196,7 @@ struct sadb_protocol {
 struct sadb_x_policy {
 	uint16_t  sadb_x_policy_len;
 	uint16_t  sadb_x_policy_exttype;
-	u_int32_t sadb_x_policy_seq;
+	uint32_t  sadb_x_policy_seq;
 };
 
 struct sadb_x_udpencap {
@@ -209,14 +209,14 @@ struct sadb_x_udpencap {
 struct sadb_x_tag {
 	uint16_t  sadb_x_tag_len;
 	uint16_t  sadb_x_tag_exttype;
-	u_int32_t sadb_x_tag_taglen;
+	uint32_t  sadb_x_tag_taglen;
 };
 
 struct sadb_x_replay {
 	uint16_t  sadb_x_replay_len;
 	uint16_t  sadb_x_replay_exttype;
-	u_int32_t sadb_x_replay_reserved;
-	u_int64_t sadb_x_replay_count;
+	uint32_t  sadb_x_replay_reserved;
+	uint64_t  sadb_x_replay_count;
 };
 
 struct sadb_x_rdomain {
@@ -229,7 +229,7 @@ struct sadb_x_rdomain {
 struct sadb_x_tap {
 	uint16_t  sadb_x_tap_len;
 	uint16_t  sadb_x_tap_exttype;
-	u_int32_t sadb_x_tap_unit;
+	uint32_t  sadb_x_tap_unit;
 };
 
 struct sadb_x_counter {
@@ -249,7 +249,7 @@ struct sadb_x_counter {
 struct sadb_x_mtu {
 	uint16_t  sadb_x_mtu_len;
 	uint16_t  sadb_x_mtu_exttype;
-	u_int32_t sadb_x_mtu_mtu;
+	uint32_t  sadb_x_mtu_mtu;
 };
 
 #ifdef _KERNEL
