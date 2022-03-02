@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.19 2021/12/26 15:44:29 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.20 2022/03/02 17:53:03 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -765,8 +765,7 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 				vname->af = AF_INET;
 			if (len == 16)
 				vname->af = AF_INET6;
-			if (vname->af != AF_INET && vname->af !=
-			    AF_INET6) {
+			if (vname->af != AF_INET && vname->af != AF_INET6) {
 				*error = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 				goto err;
 			}
