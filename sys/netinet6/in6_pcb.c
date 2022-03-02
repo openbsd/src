@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.112 2021/02/11 10:41:19 patrick Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.113 2022/03/02 12:53:15 bluhm Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -364,7 +364,7 @@ in6_setpeeraddr(struct inpcb *inp, struct mbuf *nam)
  * Also perform input-side security policy check
  *    once PCB to be notified has been located.
  */
-int
+void
 in6_pcbnotify(struct inpcbtable *table, struct sockaddr_in6 *dst,
     uint fport_arg, const struct sockaddr_in6 *src, uint lport_arg,
     u_int rtable, int cmd, void *cmdarg, void (*notify)(struct inpcb *, int))
@@ -372,23 +372,23 @@ in6_pcbnotify(struct inpcbtable *table, struct sockaddr_in6 *dst,
 	struct inpcb *inp, *ninp;
 	u_short fport = fport_arg, lport = lport_arg;
 	struct sockaddr_in6 sa6_src;
-	int errno, nmatch = 0;
+	int errno;
 	u_int32_t flowinfo;
 	u_int rdomain;
 
 	NET_ASSERT_LOCKED();
 
 	if ((unsigned)cmd >= PRC_NCMDS)
-		return (0);
+		return;
 
 	if (IN6_IS_ADDR_UNSPECIFIED(&dst->sin6_addr))
-		return (0);
+		return;
 	if (IN6_IS_ADDR_V4MAPPED(&dst->sin6_addr)) {
 #ifdef DIAGNOSTIC
 		printf("%s: Huh?  Thought we never got "
 		       "called with mapped!\n", __func__);
 #endif
-		return (0);
+		return;
 	}
 
 	/*
@@ -488,11 +488,9 @@ in6_pcbnotify(struct inpcbtable *table, struct sockaddr_in6 *dst,
 			continue;
 		}
 	  do_notify:
-		nmatch++;
 		if (notify)
 			(*notify)(inp, errno);
 	}
-	return (nmatch);
 }
 
 struct inpcb *

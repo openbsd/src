@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.271 2022/02/25 23:51:03 guenther Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.272 2022/03/02 12:53:15 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -791,10 +791,10 @@ udp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			 */
 		}
 
-		(void) in6_pcbnotify(&udbtable, &sa6, uh.uh_dport,
+		in6_pcbnotify(&udbtable, &sa6, uh.uh_dport,
 		    &sa6_src, uh.uh_sport, rdomain, cmd, cmdarg, notify);
 	} else {
-		(void) in6_pcbnotify(&udbtable, &sa6, 0,
+		in6_pcbnotify(&udbtable, &sa6, 0,
 		    &sa6_any, 0, rdomain, cmd, cmdarg, notify);
 	}
 }

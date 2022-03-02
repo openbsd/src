@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.183 2022/01/02 22:36:04 jsg Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.184 2022/03/02 12:53:15 bluhm Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -687,7 +687,7 @@ tcp6_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *d)
 			syn_cache_unreach((struct sockaddr *)sa6_src,
 			    sa, &th, rdomain);
 	} else {
-		(void) in6_pcbnotify(&tcbtable, sa6, 0,
+		in6_pcbnotify(&tcbtable, sa6, 0,
 		    sa6_src, 0, rdomain, cmd, NULL, notify);
 	}
 }
@@ -822,7 +822,7 @@ tcp_ctlinput(int cmd, struct sockaddr *sa, u_int rdomain, void *v)
 void
 tcp6_mtudisc_callback(struct sockaddr_in6 *sin6, u_int rdomain)
 {
-	(void) in6_pcbnotify(&tcbtable, sin6, 0,
+	in6_pcbnotify(&tcbtable, sin6, 0,
 	    &sa6_any, 0, rdomain, PRC_MSGSIZE, NULL, tcp_mtudisc);
 }
 #endif /* INET6 */

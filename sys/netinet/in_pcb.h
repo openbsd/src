@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.122 2022/01/20 11:06:57 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.123 2022/03/02 12:53:15 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -310,7 +310,7 @@ struct rtentry *
 	in_pcbrtentry(struct inpcb *);
 
 /* INET6 stuff */
-int	in6_pcbnotify(struct inpcbtable *, struct sockaddr_in6 *,
+void	in6_pcbnotify(struct inpcbtable *, struct sockaddr_in6 *,
 	u_int, const struct sockaddr_in6 *, u_int, u_int, int, void *,
 	void (*)(struct inpcb *, int));
 int	in6_selecthlim(struct inpcb *);
