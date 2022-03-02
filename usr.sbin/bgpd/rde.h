@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.245 2022/03/02 14:44:46 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.246 2022/03/02 14:49:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -597,7 +597,7 @@ void		 prefix_add_eor(struct rde_peer *, uint8_t);
 int		 prefix_adjout_update(struct rde_peer *, struct filterstate *,
 		    struct bgpd_addr *, int, uint8_t);
 void		 prefix_adjout_withdraw(struct prefix *);
-void		 prefix_adjout_destroy(struct prefix *p);
+void		 prefix_adjout_destroy(struct prefix *);
 void		 prefix_adjout_dump(struct rde_peer *, void *,
 		    void (*)(struct prefix *, void *));
 int		 prefix_dump_new(struct rde_peer *, uint8_t, unsigned int,
