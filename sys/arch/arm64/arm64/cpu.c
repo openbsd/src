@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.60 2022/01/01 18:54:09 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.61 2022/03/02 12:45:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -49,6 +49,7 @@
 #define CPU_IMPL_AMCC		0x50
 #define CPU_IMPL_APPLE		0x61
 
+/* ARM */
 #define CPU_PART_CORTEX_A34	0xd02
 #define CPU_PART_CORTEX_A53	0xd03
 #define CPU_PART_CORTEX_A35	0xd04
@@ -74,15 +75,22 @@
 #define CPU_PART_NEOVERSE_E1	0xd4a
 #define CPU_PART_CORTEX_A78C	0xd4b
 
+/* Cavium */
 #define CPU_PART_THUNDERX_T88	0x0a1
 #define CPU_PART_THUNDERX_T81	0x0a2
 #define CPU_PART_THUNDERX_T83	0x0a3
 #define CPU_PART_THUNDERX2_T99	0x0af
 
+/* Applied Micro */
 #define CPU_PART_X_GENE		0x000
 
+/* Apple */
 #define CPU_PART_ICESTORM	0x022
 #define CPU_PART_FIRESTORM	0x023
+#define CPU_PART_ICESTORM_PRO	0x024
+#define CPU_PART_FIRESTORM_PRO	0x025
+#define CPU_PART_ICESTORM_MAX	0x028
+#define CPU_PART_FIRESTORM_MAX	0x029
 
 #define CPU_IMPL(midr)  (((midr) >> 24) & 0xff)
 #define CPU_PART(midr)  (((midr) >> 4) & 0xfff)
@@ -142,6 +150,10 @@ struct cpu_cores cpu_cores_amcc[] = {
 struct cpu_cores cpu_cores_apple[] = {
 	{ CPU_PART_ICESTORM, "Icestorm" },
 	{ CPU_PART_FIRESTORM, "Firestorm" },
+	{ CPU_PART_ICESTORM_PRO, "Icestorm Pro" },
+	{ CPU_PART_FIRESTORM_PRO, "Firestorm Pro" },
+	{ CPU_PART_ICESTORM_MAX, "Icestorm Max" },
+	{ CPU_PART_FIRESTORM_MAX, "Firestorm Max" },
 	{ 0, NULL },
 };
 
