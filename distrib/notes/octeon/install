@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.19 2020/07/05 22:27:48 tj Exp $
+dnl	$OpenBSD: install,v 1.20 2022/03/02 09:35:24 stsp Exp $
 OpenBSDInstallPrelude
 
 OpenBSDInstallPart2
@@ -89,6 +89,29 @@ On the EdgeRouter Lite, bootcmd may also reset the USB controller for
 more reliable USB device detection:
 
   usb reset; fatload usb 0 ${loadaddr} boot; bootoctlinux rootdev=sd0 numcores=2
+
+On some models, such as ER-6p, unattended boot from a USB disk will fail
+if U-Boot attempts to verify the MD5 checksum of the file loaded by fatload:
+
+  reading vmlinux.64.md5
+  33 bytes read in 303 ms (0 Bytes/s)
+  md5 checksum error.
+  Octeon ubnt_e300(ram)#
+
+At this point, the 'bootoctlinux' command can be used to boot manually.
+
+The file 'vmlinux.64.md5' can be renamed from the running OpenBSD system.
+In case of ER-6p, the file 'vmlinux.64.md5' resides on a FAT partition
+of the internal MMC, which is accessible from OpenBSD via /dev/sd1i:
+
+   # mount /dev/sd1i /mnt
+   # mv /mnt/vmlinux.64.md5 /mnt/vmlinux.64.md5.unused
+   # reboot
+
+Unattended boot should now succeed, even though U-Boot will warn:
+
+  reading vmlinux.64.md5
+  ** Unable to read file vmlinux.64.md5 **
 
 OpenBSDCongratulations
 
