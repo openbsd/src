@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.257 2022/03/01 23:53:03 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.258 2022/03/02 21:30:58 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -740,7 +740,7 @@ in_rtchange(struct inpcb *inp, int errno)
 {
 	if (inp->inp_route.ro_rt) {
 		rtfree(inp->inp_route.ro_rt);
-		inp->inp_route.ro_rt = 0;
+		inp->inp_route.ro_rt = NULL;
 		/*
 		 * A new route can be allocated the next time
 		 * output is attempted.
