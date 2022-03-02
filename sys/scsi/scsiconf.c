@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.239 2022/02/28 14:48:11 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.240 2022/03/02 13:58:08 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -75,7 +75,8 @@ int	scsibussubprint(void *, const char *);
 int	scsibusbioctl(struct device *, u_long, caddr_t);
 #endif /* NBIO > 0 */
 
-void	scsi_get_target_luns(struct scsi_link *, struct scsi_lun_array *);
+void	scsi_get_target_luns(struct scsibus_softc *, int,
+    struct scsi_lun_array *);
 void	scsi_add_link(struct scsi_link *);
 void	scsi_remove_link(struct scsi_link *);
 void	scsi_print_link(struct scsi_link *);
@@ -441,18 +442,15 @@ int
 scsi_probe_target(struct scsibus_softc *sb, int target)
 {
 	struct scsi_lun_array		 lunarray;
-	struct scsi_link		*link0;
 	int				 i, r, rv = 0;
 
 	if (target < 0 || target == sb->sb_adapter_target)
 		return EINVAL;
 
-	/* Probe all possible luns on target. */
-	scsi_probe_link(sb, target, 0, 0);
-	link0 = scsi_get_link(sb, target, 0);
-	if (link0 == NULL)
+	scsi_get_target_luns(sb, target, &lunarray);
+	if (lunarray.count == 0)
 		return EINVAL;
-	scsi_get_target_luns(link0, &lunarray);
+
 	for (i = 0; i < lunarray.count; i++) {
 		r = scsi_probe_link(sb, target, lunarray.luns[i],
 		    lunarray.dumbscan);
@@ -862,10 +860,20 @@ scsi_remove_link(struct scsi_link *link)
 }
 
 void
-scsi_get_target_luns(struct scsi_link *link0, struct scsi_lun_array *lunarray)
+scsi_get_target_luns(struct scsibus_softc *sb, int target,
+    struct scsi_lun_array *lunarray)
 {
 	struct scsi_report_luns_data	*report;
+	struct scsi_link		*link0;
 	int				 i, nluns, rv = 0;
+
+	/* LUN 0 *must* be present. */
+	scsi_probe_link(sb, target, 0, 0);
+	link0 = scsi_get_link(sb, target, 0);
+	if (link0 == NULL) {
+		lunarray->count = 0;
+		return;
+	}
 
 	/* Initialize dumbscan result. Just in case. */
 	report = NULL;
