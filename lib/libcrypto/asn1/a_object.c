@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.37 2022/01/07 11:13:54 tb Exp $ */
+/* $OpenBSD: a_object.c,v 1.38 2022/03/02 11:28:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -270,37 +270,190 @@ a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 	return (0);
 }
 
-int
-i2t_ASN1_OBJECT(char *buf, int buf_len, const ASN1_OBJECT *a)
+static int
+oid_parse_arc(CBS *cbs, uint64_t *out_arc)
 {
-	return OBJ_obj2txt(buf, buf_len, a, 0);
+	uint64_t arc = 0;
+	uint8_t val;
+
+	do {
+		if (!CBS_get_u8(cbs, &val))
+			return 0;
+		if (arc == 0 && val == 0x80)
+			return 0;
+		if (arc > (UINT64_MAX >> 7))
+			return 0;
+		arc = (arc << 7) | (val & 0x7f);
+	} while (val & 0x80);
+
+	*out_arc = arc;
+
+	return 1;
+}
+
+static int
+oid_add_arc_txt(CBB *cbb, uint64_t arc, int first)
+{
+	const char *fmt = ".%llu";
+	char s[22]; /* Digits in decimal representation of 2^64-1, plus '.' and NUL. */
+	int n;
+
+	if (first)
+		fmt = "%llu";
+	n = snprintf(s, sizeof(s), fmt, (unsigned long long)arc);
+	if (n < 0 || (size_t)n >= sizeof(s))
+		return 0;
+	if (!CBB_add_bytes(cbb, s, n))
+		return 0;
+
+	return 1;
+}
+
+static int
+c2a_ASN1_OBJECT(CBS *cbs, CBB *cbb)
+{
+	uint64_t arc, si1, si2;
+
+	/*
+	 * X.690 section 8.19 - the first two subidentifiers are encoded as
+	 * (x * 40) + y, with x being limited to [0,1,2].
+	 */
+	if (!oid_parse_arc(cbs, &arc))
+		return 0;
+	if ((si1 = arc / 40) > 2)
+		si1 = 2;
+	si2 = arc - si1 * 40;
+
+	if (!oid_add_arc_txt(cbb, si1, 1))
+		return 0;
+	if (!oid_add_arc_txt(cbb, si2, 0))
+		return 0;
+
+	while (CBS_len(cbs) > 0) {
+		if (!oid_parse_arc(cbs, &arc))
+			return 0;
+		if (!oid_add_arc_txt(cbb, arc, 0))
+			return 0;
+	}
+
+	/* NUL terminate. */
+	if (!CBB_add_u8(cbb, 0))
+		return 0;
+
+	return 1;
+}
+
+static int
+i2t_ASN1_OBJECT_oid(const ASN1_OBJECT *aobj, CBB *cbb)
+{
+	CBS cbs;
+
+	CBS_init(&cbs, aobj->data, aobj->length);
+
+	return c2a_ASN1_OBJECT(&cbs, cbb);
+}
+
+static int
+i2t_ASN1_OBJECT_name(const ASN1_OBJECT *aobj, CBB *cbb, const char **out_name)
+{
+	const char *name;
+	int nid;
+
+	if ((nid = OBJ_obj2nid(aobj)) == NID_undef)
+		return 0;
+
+	if ((name = OBJ_nid2ln(nid)) == NULL)
+		name = OBJ_nid2sn(nid);
+	if (name == NULL)
+		return 0;
+
+	*out_name = name;
+
+	if (!CBB_add_bytes(cbb, name, strlen(name)))
+		return 0;
+
+	/* NUL terminate. */
+	if (!CBB_add_u8(cbb, 0))
+		return 0;
+
+	return 1;
+}
+
+static int
+i2t_ASN1_OBJECT_cbb(const ASN1_OBJECT *aobj, CBB *cbb, int no_name)
+{
+	const char *name;
+
+	if (!no_name) {
+		if (i2t_ASN1_OBJECT_name(aobj, cbb, &name))
+			return 1;
+		if (name != NULL)
+			return 0;
+	}
+	return i2t_ASN1_OBJECT_oid(aobj, cbb);
 }
 
 int
-i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a)
+i2t_ASN1_OBJECT_internal(const ASN1_OBJECT *aobj, char *buf, int buf_len, int no_name)
 {
-	char *tmp = NULL;
-	size_t tlen = 256;
-	int i = -1;
+	uint8_t *data = NULL;
+	size_t data_len;
+	CBB cbb;
+	int ret = 0;
 
-	if ((a == NULL) || (a->data == NULL))
-		return(BIO_write(bp, "NULL", 4));
-	if ((tmp = malloc(tlen)) == NULL)
-		return -1;
-	i = i2t_ASN1_OBJECT(tmp, tlen, a);
-	if (i > (int)(tlen - 1)) {
-		freezero(tmp, tlen);
-		if ((tmp = malloc(i + 1)) == NULL)
-			return -1;
-		tlen = i + 1;
-		i = i2t_ASN1_OBJECT(tmp, tlen, a);
+	if (buf_len < 0)
+		return 0;
+	if (buf_len > 0)
+		buf[0] = '\0';
+
+	if (!CBB_init(&cbb, 0))
+		goto err;
+	if (!i2t_ASN1_OBJECT_cbb(aobj, &cbb, no_name))
+		goto err;
+	if (!CBB_finish(&cbb, &data, &data_len))
+		goto err;
+
+	ret = strlcpy(buf, data, buf_len);
+ err:
+	CBB_cleanup(&cbb);
+	free(data);
+
+	return ret;
+}
+
+int
+i2t_ASN1_OBJECT(char *buf, int buf_len, const ASN1_OBJECT *aobj)
+{
+	return i2t_ASN1_OBJECT_internal(aobj, buf, buf_len, 0);
+}
+
+int
+i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *aobj)
+{
+	uint8_t *data = NULL;
+	size_t data_len;
+	CBB cbb;
+	int ret = -1;
+
+	if (aobj == NULL || aobj->data == NULL)
+		return BIO_write(bp, "NULL", 4);
+
+	if (!CBB_init(&cbb, 0))
+		goto err;
+	if (!i2t_ASN1_OBJECT_cbb(aobj, &cbb, 0)) {
+		ret = BIO_write(bp, "<INVALID>", 9);
+		goto err;
 	}
-	if (i <= 0)
-		i = BIO_write(bp, "<INVALID>", 9);
-	else
-		i = BIO_write(bp, tmp, i);
-	freezero(tmp, tlen);
-	return (i);
+	if (!CBB_finish(&cbb, &data, &data_len))
+		goto err;
+		
+	ret = BIO_write(bp, data, data_len);
+
+ err:
+	CBB_cleanup(&cbb);
+	free(data);
+
+	return ret;
 }
 
 ASN1_OBJECT *

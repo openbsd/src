@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.47 2022/02/12 03:01:59 jsing Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.48 2022/03/02 11:28:00 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -524,83 +524,12 @@ OBJ_txt2obj(const char *s, int no_name)
 }
 
 int
-OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
+OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *aobj, int no_name)
 {
-	int i, ret = 0, len, nid, first = 1;
-	const unsigned char *p;
-	uint64_t l;
+	if (aobj == NULL || aobj->data == NULL)
+		return 0;
 
-	/* Ensure that, at every state, |buf| is NUL-terminated. */
-	if (buf_len > 0)
-		buf[0] = '\0';
-
-	if ((a == NULL) || (a->data == NULL))
-		goto err;
-
-	if (!no_name && (nid = OBJ_obj2nid(a)) != NID_undef) {
-		const char *s;
-		s = OBJ_nid2ln(nid);
-		if (s == NULL)
-			s = OBJ_nid2sn(nid);
-		if (s) {
-			ret = strlcpy(buf, s, buf_len);
-			goto out;
-		}
-	}
-
-	len = a->length;
-	p = a->data;
-
-	while (len > 0) {
-		l = 0;
-		for (;;) {
-			unsigned char c = *p++;
-			len--;
-			if ((len == 0) && (c & 0x80))
-				goto err;
-			l |= c & 0x7f;
-			if (!(c & 0x80))
-				break;
-			if (l > (UINT64_MAX >> 7L))
-				goto err;
-			l <<= 7L;
-		}
-
-		if (first) {
-			first = 0;
-			if (l >= 80) {
-				i = 2;
-				l -= 80;
-			} else {
-				i = (int)(l / 40);
-				l -= (long)(i * 40);
-			}
-			if (buf_len > 1) {
-				*buf++ = i + '0';
-				*buf = '\0';
-				buf_len--;
-			}
-			ret++;
-		}
-
-		i = snprintf(buf, buf_len, ".%llu", l);
-		if (i < 0)
-			goto err;
-		if (i >= buf_len) {
-			buf_len = 0;
-		} else {
-			buf += i;
-			buf_len -= i;
-		}
-		ret += i;
-	}
-
- out:
-	return ret;
-
- err:
-	ret = 0;
-	goto out;
+	return i2t_ASN1_OBJECT_internal(aobj, buf, buf_len, no_name);
 }
 
 int
