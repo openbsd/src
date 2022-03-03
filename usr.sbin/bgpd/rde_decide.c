@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.88 2022/03/01 09:46:22 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.89 2022/03/03 13:06:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -454,8 +454,10 @@ void
 prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 {
 	struct prefix	*xp;
+	struct rib	*rib;
 
-	if (re_rib(re)->flags & F_RIB_NOEVALUATE) {
+	rib = re_rib(re);
+	if (rib->flags & F_RIB_NOEVALUATE) {
 		/* decision process is turned off */
 		if (old != NULL)
 			LIST_REMOVE(old, entry.list.rib);
@@ -468,7 +470,7 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 			 * active. Clean up now to ensure that the RIB
 			 * is consistant.
 			 */
-			rde_generate_updates(re_rib(re), NULL, re->active, 0);
+			rde_generate_updates(rib, NULL, re->active, 0);
 			re->active = NULL;
 		}
 		return;
@@ -494,7 +496,9 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 		 * but remember that xp may be NULL aka ineligible.
 		 * Additional decision may be made by the called functions.
 		 */
-		rde_generate_updates(re_rib(re), xp, re->active, 0);
+		rde_generate_updates(rib, xp, re->active, 0);
+		if ((rib->flags & F_RIB_NOFIB) == 0)
+			rde_send_kroute(rib, xp, re->active);
 		re->active = xp;
 		return;
 	}
@@ -506,5 +510,5 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	 */
 	if (rde_evaluate_all())
 		if ((new != NULL && prefix_eligible(new)) || old != NULL)
-			rde_generate_updates(re_rib(re), re->active, NULL, 1);
+			rde_generate_updates(rib, re->active, NULL, 1);
 }

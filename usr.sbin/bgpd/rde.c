@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.539 2022/03/02 14:44:46 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.540 2022/03/03 13:06:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2912,9 +2912,7 @@ void
 rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 {
 	struct kroute_full	 kr;
-	struct bgpd_addr	 addr;
 	struct prefix		*p;
-	struct rde_aspath	*asp;
 	struct l3vpn		*vpn;
 	enum imsg_type		 type;
 
@@ -2934,21 +2932,21 @@ rde_send_kroute(struct rib *rib, struct prefix *new, struct prefix *old)
 		p = new;
 	}
 
-	asp = prefix_aspath(p);
-	pt_getaddr(p->pt, &addr);
 	bzero(&kr, sizeof(kr));
-	memcpy(&kr.prefix, &addr, sizeof(kr.prefix));
+	pt_getaddr(p->pt, &kr.prefix);
 	kr.prefixlen = p->pt->prefixlen;
-	if (prefix_nhflags(p) == NEXTHOP_REJECT)
-		kr.flags |= F_REJECT;
-	if (prefix_nhflags(p) == NEXTHOP_BLACKHOLE)
-		kr.flags |= F_BLACKHOLE;
-	if (type == IMSG_KROUTE_CHANGE)
+	if (type == IMSG_KROUTE_CHANGE) {
+		if (prefix_nhflags(p) == NEXTHOP_REJECT)
+			kr.flags |= F_REJECT;
+		if (prefix_nhflags(p) == NEXTHOP_BLACKHOLE)
+			kr.flags |= F_BLACKHOLE;
 		memcpy(&kr.nexthop, &prefix_nexthop(p)->true_nexthop,
 		    sizeof(kr.nexthop));
-	strlcpy(kr.label, rtlabel_id2name(asp->rtlabelid), sizeof(kr.label));
+		strlcpy(kr.label, rtlabel_id2name(prefix_aspath(p)->rtlabelid),
+		    sizeof(kr.label));
+	}
 
-	switch (addr.aid) {
+	switch (kr.prefix.aid) {
 	case AID_VPN_IPv4:
 	case AID_VPN_IPv6:
 		if (!(rib->flags & F_RIB_LOCAL))
@@ -3026,9 +3024,6 @@ rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old,
 	 */
 	if (old == NULL && new == NULL)
 		return;
-
-	if (!eval_all && (rib->flags & F_RIB_NOFIB) == 0)
-		rde_send_kroute(rib, new, old);
 
 	if (new)
 		aid = new->pt->aid;
