@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.39 2022/03/02 17:45:39 tb Exp $ */
+/* $OpenBSD: a_object.c,v 1.40 2022/03/03 08:06:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -447,7 +447,7 @@ i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *aobj)
 	if (!CBB_finish(&cbb, &data, &data_len))
 		goto err;
 
-	ret = BIO_write(bp, data, data_len);
+	ret = BIO_write(bp, data, strlen(data));
 
  err:
 	CBB_cleanup(&cbb);
