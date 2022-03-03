@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.20 2022/03/02 17:53:03 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.21 2022/03/03 11:29:05 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -747,13 +747,13 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 			vname->type = GEN_URI;
 			break;
 		case GEN_DIRNAME:
+			if (len == 0) {
+				*error = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+				goto err;
+			}
 			if (bytes == NULL || ((vname->der = malloc(len)) ==
 			    NULL)) {
 				*error = X509_V_ERR_OUT_OF_MEM;
-				goto err;
-			}
-			if (len == 0) {
-				*error = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 				goto err;
 			}
 			memcpy(vname->der, bytes, len);
