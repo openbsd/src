@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.71 2022/03/01 18:34:21 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.72 2022/03/03 18:54:07 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1196,7 +1196,7 @@ check_query(sldns_buffer* pkt)
 		    LDNS_ARCOUNT(sldns_buffer_begin(pkt)));
 		return (LDNS_RCODE_FORMERR);
 	}
-	return 0;
+	return (LDNS_RCODE_NOERROR);
 }
 
 void
