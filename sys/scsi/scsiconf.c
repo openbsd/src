@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.241 2022/03/02 17:47:11 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.242 2022/03/03 16:52:07 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -75,9 +75,7 @@ int	scsibussubprint(void *, const char *);
 int	scsibusbioctl(struct device *, u_long, caddr_t);
 #endif /* NBIO > 0 */
 
-struct scsi_link *scsi_alloc_link(struct scsibus_softc *, int, int);
-void	scsi_get_target_luns(struct scsibus_softc *, int,
-    struct scsi_lun_array *);
+void	scsi_get_target_luns(struct scsi_link *, struct scsi_lun_array *);
 void	scsi_add_link(struct scsi_link *);
 void	scsi_remove_link(struct scsi_link *);
 void	scsi_print_link(struct scsi_link *);
@@ -443,15 +441,18 @@ int
 scsi_probe_target(struct scsibus_softc *sb, int target)
 {
 	struct scsi_lun_array		 lunarray;
+	struct scsi_link		*link0;
 	int				 i, r, rv = 0;
 
 	if (target < 0 || target == sb->sb_adapter_target)
 		return EINVAL;
 
-	scsi_get_target_luns(sb, target, &lunarray);
-	if (lunarray.count == 0)
+	/* Probe all possible luns on target. */
+	scsi_probe_link(sb, target, 0, 0);
+	link0 = scsi_get_link(sb, target, 0);
+	if (link0 == NULL)
 		return EINVAL;
-
+	scsi_get_target_luns(link0, &lunarray);
 	for (i = 0; i < lunarray.count; i++) {
 		r = scsi_probe_link(sb, target, lunarray.luns[i],
 		    lunarray.dumbscan);
@@ -473,15 +474,31 @@ scsi_probe_lun(struct scsibus_softc *sb, int target, int lun)
 	return scsi_probe_link(sb, target, lun, 0);
 }
 
-struct scsi_link *
-scsi_alloc_link(struct scsibus_softc *sb, int target, int lun)
+/*
+ * Given a target and lun, ask the device what it is, and find the correct
+ * driver table entry.
+ *
+ * Return 0 if further LUNs are possible, EINVAL if not.
+ */
+int
+scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 {
-	struct scsi_link	*link;
+	struct scsi_attach_args			 sa;
+	const struct scsi_quirk_inquiry_pattern	*finger;
+	struct scsi_inquiry_data		*inqbuf, *usbinqbuf;
+	struct scsi_link			*link, *link0;
+	struct cfdata				*cf;
+	int					 inqbytes, priority, rslt = 0;
+	u_int16_t				 devquirks;
+
+	/* Skip this slot if it is already attached and try the next LUN. */
+	if (scsi_get_link(sb, target, lun) != NULL)
+		return 0;
 
 	link = malloc(sizeof(*link), M_DEVBUF, M_NOWAIT);
 	if (link == NULL) {
 		SC_DEBUG(link, SDEV_DB2, ("malloc(scsi_link) failed.\n"));
-		return NULL;
+		return EINVAL;
 	}
 
 	link->state = 0;
@@ -501,56 +518,7 @@ scsi_alloc_link(struct scsibus_softc *sb, int target, int lun)
 	link->pending = 0;
 	link->pool = sb->sb_pool;
 
-#ifdef SCSIDEBUG
-	if (((sb->sc_dev.dv_unit < 32) &&
-	    ((1U << sb->sc_dev.dv_unit) & scsidebug_buses)) &&
-	    ((target < 32) && ((1U << target) & scsidebug_targets)) &&
-	    ((lun < 32) && ((1U << lun) & scsidebug_luns)))
-		SET(link->flags, scsidebug_level);
-#endif /* SCSIDEBUG */
-
-	if (link->pool == NULL) {
-		link->pool = malloc(sizeof(*link->pool), M_DEVBUF, M_NOWAIT);
-		if (link->pool == NULL) {
-			SC_DEBUG(link, SDEV_DB2, ("malloc(pool) failed.\n"));
-			goto bad;
-		}
-		scsi_iopool_init(link->pool, link,
-		    scsi_default_get, scsi_default_put);
-
-		SET(link->flags, SDEV_OWN_IOPL);
-	}
-
 	SC_DEBUG(link, SDEV_DB2, ("scsi_link created.\n"));
-	return link;
-
-bad:
-	free(link, M_DEVBUF, sizeof(*link));
-	return NULL;
-}
-
-/*
- * Given a target and lun, ask the device what it is, and find the correct
- * driver table entry.
- *
- * Return 0 if further LUNs are possible, EINVAL if not.
- */
-int
-scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
-{
-	struct scsi_attach_args			 sa;
-	const struct scsi_quirk_inquiry_pattern	*finger;
-	struct scsi_inquiry_data		*inqbuf, *usbinqbuf;
-	struct scsi_link			*link, *link0;
-	struct cfdata				*cf;
-	int					 inqbytes, priority, rslt = 0;
-	u_int16_t				 devquirks;
-
-	if (scsi_get_link(sb, target, lun) != NULL)
-		return 0;
-	link = scsi_alloc_link(sb, target, lun);
-	if (link == NULL)
-		return EINVAL;
 
 	/* Ask the adapter if this will be a valid device. */
 	if (sb->sb_adapter->dev_probe != NULL &&
@@ -563,6 +531,24 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	}
 
 	/*
+	 * If we havent been given an io pool by now then fall back to
+	 * using link->openings.
+	 */
+	if (link->pool == NULL) {
+		link->pool = malloc(sizeof(*link->pool),
+		    M_DEVBUF, M_NOWAIT);
+		if (link->pool == NULL) {
+			SC_DEBUG(link, SDEV_DB2, ("malloc(pool) failed.\n"));
+			rslt = ENOMEM;
+			goto bad;
+		}
+		scsi_iopool_init(link->pool, link,
+		    scsi_default_get, scsi_default_put);
+
+		SET(link->flags, SDEV_OWN_IOPL);
+	}
+
+	/*
 	 * Tell drivers that are paying attention to avoid sync/wide/tags until
 	 * INQUIRY data has been processed and the quirks information is
 	 * complete. Some drivers set bits in quirks before we get here, so
@@ -570,6 +556,18 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	 */
 	devquirks = link->quirks;
 	SET(link->quirks, SDEV_NOSYNC | SDEV_NOWIDE | SDEV_NOTAGS);
+
+	/*
+	 * Ask the device what it is.
+	 */
+#ifdef SCSIDEBUG
+	if (((sb->sc_dev.dv_unit < 32) &&
+	    ((1U << sb->sc_dev.dv_unit) & scsidebug_buses)) &&
+	    ((target < 32) && ((1U << target) & scsidebug_targets)) &&
+	    ((lun < 32) && ((1U << lun) & scsidebug_luns)))
+		SET(link->flags, scsidebug_level);
+#endif /* SCSIDEBUG */
+
 	if (lun == 0) {
 		/* Clear any outstanding errors. */
 		scsi_test_unit_ready(link, TEST_READY_RETRIES,
@@ -864,20 +862,10 @@ scsi_remove_link(struct scsi_link *link)
 }
 
 void
-scsi_get_target_luns(struct scsibus_softc *sb, int target,
-    struct scsi_lun_array *lunarray)
+scsi_get_target_luns(struct scsi_link *link0, struct scsi_lun_array *lunarray)
 {
 	struct scsi_report_luns_data	*report;
-	struct scsi_link		*link0;
 	int				 i, nluns, rv = 0;
-
-	/* LUN 0 *must* be present. */
-	scsi_probe_link(sb, target, 0, 0);
-	link0 = scsi_get_link(sb, target, 0);
-	if (link0 == NULL) {
-		lunarray->count = 0;
-		return;
-	}
 
 	/* Initialize dumbscan result. Just in case. */
 	report = NULL;
