@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.52 2021/11/02 10:57:04 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.53 2022/03/03 08:24:12 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -131,8 +131,9 @@ args_parse(const struct args_parse *parse, struct args_value *values,
 	u_int			 i;
 	enum args_parse_type	 type;
 	struct args_value	*value, *new;
-	u_char			 flag, argument;
+	u_char			 flag;
 	const char		*found, *string, *s;
+	int			 optional_argument;
 
 	if (count == 0)
 		return (args_create());
@@ -169,11 +170,14 @@ args_parse(const struct args_parse *parse, struct args_value *values,
 				args_free(args);
 				return (NULL);
 			}
-			argument = *++found;
-			if (argument != ':') {
+			if (*++found != ':') {
 				log_debug("%s: -%c", __func__, flag);
 				args_set(args, flag, NULL);
 				continue;
+			}
+			if (*found == ':') {
+				optional_argument = 1;
+				found++;
 			}
 			new = xcalloc(1, sizeof *new);
 			if (*string != '\0') {
@@ -181,6 +185,12 @@ args_parse(const struct args_parse *parse, struct args_value *values,
 				new->string = xstrdup(string);
 			} else {
 				if (i == count) {
+					if (optional_argument) {
+						log_debug("%s: -%c", __func__,
+						    flag);
+						args_set(args, flag, NULL);
+						continue;
+					}
 					xasprintf(cause,
 					    "-%c expects an argument",
 					    flag);
