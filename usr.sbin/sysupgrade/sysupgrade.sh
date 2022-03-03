@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.45 2022/02/11 12:58:18 florian Exp $
+# $OpenBSD: sysupgrade.sh,v 1.46 2022/03/03 10:12:08 sdk Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -123,10 +123,8 @@ fi
 
 if $SNAP; then
 	URL=${MIRROR}/snapshots/${ARCH}/
-	FW_URL=http://firmware.openbsd.org/firmware/snapshots/
 else
 	URL=${MIRROR}/${NEXT_VERSION}/${ARCH}/
-	FW_URL=http://firmware.openbsd.org/firmware/${NEXT_VERSION}/
 fi
 
 install -d -o 0 -g 0 -m 0755 ${SETSDIR}
@@ -196,7 +194,15 @@ __EOT
 fi
 
 echo Fetching updated firmware.
-fw_update -p ${FW_URL} || true
+set -A _NEXTKERNV -- $(what bsd |
+	sed -n '2s/^[[:blank:]]OpenBSD \([1-9][0-9]*\.[0-9]\)\([^ ]*\).*/\1 \2/p')
+
+if [[ ${_NEXTKERNV[1]} == '-current' ]]; then
+	FW_URL=http://firmware.openbsd.org/firmware/snapshots/
+else
+	FW_URL=http://firmware.openbsd.org/firmware/${_NEXTKERNV[0]}/
+fi
+VNAME="${_NEXTKERNV[0]}" fw_update -p ${FW_URL} || true
 
 install -F -m 700 bsd.rd /bsd.upgrade
 logger -t sysupgrade -p kern.info "installed new /bsd.upgrade. Old kernel version: $(sysctl -n kern.version)"
