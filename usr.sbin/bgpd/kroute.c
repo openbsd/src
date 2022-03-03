@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.242 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.243 2022/03/03 11:19:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1625,7 +1625,6 @@ kr_tofull(struct kroute *kr)
 	kf.nexthop.aid = AID_INET;
 	kf.nexthop.v4.s_addr = kr->nexthop.s_addr;
 	strlcpy(kf.label, rtlabel_id2name(kr->labelid), sizeof(kf.label));
-	kf.labelid = kr->labelid;
 	kf.flags = kr->flags;
 	kf.ifindex = kr->ifindex;
 	kf.prefixlen = kr->prefixlen;
@@ -1646,7 +1645,6 @@ kr6_tofull(struct kroute6 *kr6)
 	kf.nexthop.aid = AID_INET6;
 	memcpy(&kf.nexthop.v6, &kr6->nexthop, sizeof(struct in6_addr));
 	strlcpy(kf.label, rtlabel_id2name(kr6->labelid), sizeof(kf.label));
-	kf.labelid = kr6->labelid;
 	kf.flags = kr6->flags;
 	kf.ifindex = kr6->ifindex;
 	kf.prefixlen = kr6->prefixlen;
