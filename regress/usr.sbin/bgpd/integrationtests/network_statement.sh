@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: network_statement.sh,v 1.6 2022/02/22 06:04:46 anton Exp $
+#	$OpenBSD: network_statement.sh,v 1.7 2022/03/04 11:01:15 claudio Exp $
 
 set -e
 
@@ -89,14 +89,14 @@ ifconfig lo${RDOMAIN1} inet 127.0.0.1/8
 ifconfig lo${RDOMAIN2} inet 127.0.0.1/8
 
 echo add routes
+route -T ${RDOMAIN1} exec ${BGPD} \
+	-v -f ${BGPDCONFIGDIR}/bgpd.network_statement.rdomain1.conf
 route -T ${RDOMAIN2} add ${PAIR2STATIC} ${PAIR1IP}
 ifconfig ${PAIR2} alias ${PAIR2CONNIP}/${PAIR2CONNPREF}
 route -T ${RDOMAIN2} add -label PAIR2RTABLE ${PAIR2RTABLE} \
 	${PAIR1IP}
 route -T ${RDOMAIN2} add -priority 55 ${PAIR2PRIORITY} \
 	${PAIR1IP}
-route -T ${RDOMAIN1} exec ${BGPD} \
-	-v -f ${BGPDCONFIGDIR}/bgpd.network_statement.rdomain1.conf
 route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.network_statement.rdomain2.conf
 
