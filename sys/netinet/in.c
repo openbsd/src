@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.171 2021/03/10 10:21:48 jsg Exp $	*/
+/*	$OpenBSD: in.c,v 1.172 2022/03/04 21:09:03 bluhm Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -866,10 +866,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		 * New address; allocate a new multicast record
 		 * and link it into the interface's multicast list.
 		 */
-		inm = malloc(sizeof(*inm), M_IPMADDR, M_NOWAIT | M_ZERO);
-		if (inm == NULL)
-			return (NULL);
-
+		inm = malloc(sizeof(*inm), M_IPMADDR, M_WAITOK | M_ZERO);
 		inm->inm_sin.sin_len = sizeof(struct sockaddr_in);
 		inm->inm_sin.sin_family = AF_INET;
 		inm->inm_sin.sin_addr = *ap;
