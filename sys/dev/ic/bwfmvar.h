@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmvar.h,v 1.29 2022/03/02 16:35:49 kettenis Exp $ */
+/* $OpenBSD: bwfmvar.h,v 1.30 2022/03/04 22:34:41 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -173,6 +173,8 @@ struct bwfm_softc {
 	int			 sc_node;
 	int			 sc_initialized;
 	int			 sc_tx_timer;
+
+	int			 sc_scan_ver;
 
 	int			 (*sc_newstate)(struct ieee80211com *,
 				     enum ieee80211_state, int);

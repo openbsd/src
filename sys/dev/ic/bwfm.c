@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.99 2022/03/02 16:35:49 kettenis Exp $ */
+/* $OpenBSD: bwfm.c,v 1.100 2022/03/04 22:34:41 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -273,6 +273,8 @@ bwfm_preinit(struct bwfm_softc *sc)
 		nmode = 0;
 	if (bwfm_fwvar_var_get_int(sc, "vhtmode", &vhtmode))
 		vhtmode = 0;
+	if (bwfm_fwvar_var_get_int(sc, "scan_ver", &sc->sc_scan_ver))
+		sc->sc_scan_ver = 0;
 	if (bwfm_fwvar_cmd_get_data(sc, BWFM_C_GET_BANDLIST, bandlist,
 	    sizeof(bandlist))) {
 		printf("%s: couldn't get supported band list\n", DEVNAME(sc));
@@ -2135,10 +2137,10 @@ bwfm_hostap(struct bwfm_softc *sc)
 #endif
 
 void
-bwfm_scan(struct bwfm_softc *sc)
+bwfm_scan_v0(struct bwfm_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct bwfm_escan_params *params;
+	struct bwfm_escan_params_v0 *params;
 	uint32_t nssid = 0, nchan = 0;
 	size_t params_size, chan_size, ssid_size;
 	struct bwfm_ssid *ssid;
@@ -2193,9 +2195,78 @@ bwfm_scan(struct bwfm_softc *sc)
 }
 
 void
-bwfm_scan_abort(struct bwfm_softc *sc)
+bwfm_scan_v2(struct bwfm_softc *sc)
 {
-	struct bwfm_escan_params *params;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct bwfm_escan_params_v2 *params;
+	uint32_t nssid = 0, nchan = 0;
+	size_t params_size, chan_size, ssid_size;
+	struct bwfm_ssid *ssid;
+
+	if (ic->ic_flags & IEEE80211_F_ASCAN &&
+	    ic->ic_des_esslen && ic->ic_des_esslen <= BWFM_MAX_SSID_LEN)
+		nssid = 1;
+
+	chan_size = roundup(nchan * sizeof(uint16_t), sizeof(uint32_t));
+	ssid_size = sizeof(struct bwfm_ssid) * nssid;
+	params_size = sizeof(*params) + chan_size + ssid_size;
+
+	params = malloc(params_size, M_TEMP, M_WAITOK | M_ZERO);
+	ssid = (struct bwfm_ssid *)
+	    (((uint8_t *)params) + sizeof(*params) + chan_size);
+
+	params->scan_params.version = 2;
+	params->scan_params.length = params_size;
+	memset(params->scan_params.bssid, 0xff,
+	    sizeof(params->scan_params.bssid));
+	params->scan_params.bss_type = 2;
+	params->scan_params.scan_type = BWFM_SCANTYPE_PASSIVE;
+	params->scan_params.nprobes = htole32(-1);
+	params->scan_params.active_time = htole32(-1);
+	params->scan_params.passive_time = htole32(-1);
+	params->scan_params.home_time = htole32(-1);
+	params->version = htole32(BWFM_ESCAN_REQ_VERSION_V2);
+	params->action = htole16(WL_ESCAN_ACTION_START);
+	params->sync_id = htole16(0x1234);
+
+	if (ic->ic_flags & IEEE80211_F_ASCAN &&
+	    ic->ic_des_esslen && ic->ic_des_esslen <= BWFM_MAX_SSID_LEN) {
+		params->scan_params.scan_type = BWFM_SCANTYPE_ACTIVE;
+		ssid->len = htole32(ic->ic_des_esslen);
+		memcpy(ssid->ssid, ic->ic_des_essid, ic->ic_des_esslen);
+	}
+
+	params->scan_params.channel_num = htole32(
+	    nssid << BWFM_CHANNUM_NSSID_SHIFT |
+	    nchan << BWFM_CHANNUM_NCHAN_SHIFT);
+
+#if 0
+	/* Scan a specific channel */
+	params->scan_params.channel_list[0] = htole16(
+	    (1 & 0xff) << 0 |
+	    (3 & 0x3) << 8 |
+	    (2 & 0x3) << 10 |
+	    (2 & 0x3) << 12
+	    );
+#endif
+
+	bwfm_fwvar_var_set_data(sc, "escan", params, params_size);
+	free(params, M_TEMP, params_size);
+}
+
+void
+bwfm_scan(struct bwfm_softc *sc)
+{
+	if (sc->sc_scan_ver == 0)
+		bwfm_scan_v0(sc);
+	else
+		bwfm_scan_v2(sc);
+}
+
+void
+bwfm_scan_abort_v0(struct bwfm_softc *sc)
+{
+	struct bwfm_escan_params_v0 *params;
 	size_t params_size;
 
 	params_size = sizeof(*params) + sizeof(uint16_t);
@@ -2215,6 +2286,42 @@ bwfm_scan_abort(struct bwfm_softc *sc)
 	params->scan_params.channel_list[0] = htole16(-1);
 	bwfm_fwvar_var_set_data(sc, "escan", params, params_size);
 	free(params, M_TEMP, params_size);
+}
+
+void
+bwfm_scan_abort_v2(struct bwfm_softc *sc)
+{
+	struct bwfm_escan_params_v2 *params;
+	size_t params_size;
+
+	params_size = sizeof(*params) + sizeof(uint16_t);
+	params = malloc(params_size, M_TEMP, M_WAITOK | M_ZERO);
+	params->scan_params.version = 2;
+	params->scan_params.length = params_size;
+	memset(params->scan_params.bssid, 0xff,
+	    sizeof(params->scan_params.bssid));
+	params->scan_params.bss_type = 2;
+	params->scan_params.scan_type = BWFM_SCANTYPE_PASSIVE;
+	params->scan_params.nprobes = htole32(-1);
+	params->scan_params.active_time = htole32(-1);
+	params->scan_params.passive_time = htole32(-1);
+	params->scan_params.home_time = htole32(-1);
+	params->version = htole32(BWFM_ESCAN_REQ_VERSION_V2);
+	params->action = htole16(WL_ESCAN_ACTION_START);
+	params->sync_id = htole16(0x1234);
+	params->scan_params.channel_num = htole32(1);
+	params->scan_params.channel_list[0] = htole16(-1);
+	bwfm_fwvar_var_set_data(sc, "escan", params, params_size);
+	free(params, M_TEMP, params_size);
+}
+
+void
+bwfm_scan_abort(struct bwfm_softc *sc)
+{
+	if (sc->sc_scan_ver == 0)
+		bwfm_scan_abort_v0(sc);
+	else
+		bwfm_scan_abort_v2(sc);
 }
 
 struct mbuf *

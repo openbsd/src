@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfmreg.h,v 1.25 2022/01/09 05:42:38 jsg Exp $ */
+/* $OpenBSD: bwfmreg.h,v 1.26 2022/03/04 22:34:41 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -511,7 +511,7 @@ struct bwfm_ssid {
 	uint8_t ssid[BWFM_MAX_SSID_LEN];
 };
 
-struct bwfm_scan_params {
+struct bwfm_scan_params_v0 {
 	struct bwfm_ssid ssid;
 	uint8_t bssid[ETHER_ADDR_LEN];
 	uint8_t bss_type;
@@ -532,6 +532,22 @@ struct bwfm_scan_params {
 	uint16_t channel_list[];
 };
 
+struct bwfm_scan_params_v2 {
+	uint16_t version;
+	uint16_t length;
+	struct bwfm_ssid ssid;
+	uint8_t bssid[ETHER_ADDR_LEN];
+	uint8_t bss_type;
+	uint8_t pad;
+	uint32_t scan_type;
+	uint32_t nprobes;
+	uint32_t active_time;
+	uint32_t passive_time;
+	uint32_t home_time;
+	uint32_t channel_num;
+	uint16_t channel_list[];
+};
+
 struct bwfm_scan_results {
 	uint32_t buflen;
 	uint32_t version;
@@ -539,7 +555,7 @@ struct bwfm_scan_results {
 	struct bwfm_bss_info bss_info[];
 };
 
-struct bwfm_escan_params {
+struct bwfm_escan_params_v0 {
 	uint32_t version;
 #define BWFM_ESCAN_REQ_VERSION		1
 	uint16_t action;
@@ -547,7 +563,15 @@ struct bwfm_escan_params {
 #define WL_ESCAN_ACTION_CONTINUE	2
 #define WL_ESCAN_ACTION_ABORT		3
 	uint16_t sync_id;
-	struct bwfm_scan_params scan_params;
+	struct bwfm_scan_params_v0 scan_params;
+};
+
+struct bwfm_escan_params_v2 {
+	uint32_t version;
+#define BWFM_ESCAN_REQ_VERSION_V2	2
+	uint16_t action;
+	uint16_t sync_id;
+	struct bwfm_scan_params_v2 scan_params;
 };
 
 struct bwfm_escan_results {
