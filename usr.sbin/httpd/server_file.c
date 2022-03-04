@@ -1,4 +1,4 @@
-/*	$OpenBSD: server_file.c,v 1.73 2022/03/02 23:27:43 deraadt Exp $	*/
+/*	$OpenBSD: server_file.c,v 1.74 2022/03/04 01:46:07 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2017 Reyk Floeter <reyk@openbsd.org>
@@ -40,11 +40,12 @@
 int		 server_file_access(struct httpd *, struct client *,
 		    char *, size_t);
 int		 server_file_request(struct httpd *, struct client *,
-		    char *, time_t);
+		    char *, struct timespec *);
 int		 server_partial_file_request(struct httpd *, struct client *,
-		    char *, time_t, char *);
+		    char *, struct timespec *, char *);
 int		 server_file_index(struct httpd *, struct client *);
-int		 server_file_modified_since(struct http_descriptor *, time_t);
+int		 server_file_modified_since(struct http_descriptor *,
+		    struct timespec *);
 int		 server_file_method(struct client *);
 int		 parse_range_spec(char *, size_t, struct range *);
 int		 parse_ranges(struct client *, char *, size_t);
@@ -136,9 +137,9 @@ server_file_access(struct httpd *env, struct client *clt,
 	r = kv_find(&desc->http_headers, &key);
 	if (r != NULL)
 		return (server_partial_file_request(env, clt, path,
-		    st.st_mtim.tv_sec, r->kv_value));
+		    &st.st_mtim, r->kv_value));
 	else
-		return (server_file_request(env, clt, path, st.st_mtim.tv_sec));
+		return (server_file_request(env, clt, path, &st.st_mtim));
 
  fail:
 	switch (errno) {
@@ -212,7 +213,7 @@ server_file_method(struct client *clt)
 
 int
 server_file_request(struct httpd *env, struct client *clt, char *path,
-    time_t mtim)
+    struct timespec *mtim)
 {
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct media_type	*media;
@@ -231,7 +232,7 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 	if ((ret = server_file_modified_since(clt->clt_descreq, mtim)) != -1) {
 		/* send the header without a body */
 		if ((ret = server_response_http(clt, ret, media, -1,
-		    MINIMUM(time(NULL), mtim))) == -1)
+		    MINIMUM(time(NULL), mtim->tv_sec))) == -1)
 			goto fail;
 		goto done;
 	}
@@ -251,9 +252,20 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 			ret = snprintf(gzpath, sizeof(gzpath), "%s.gz", path);
 			if (ret < 0 || (size_t)ret >= sizeof(gzpath))
 				goto abort;
-			if ((fd = open(gzpath, O_RDONLY)) > 0)
-				kv_add(&resp->http_headers,
-				    "Content-Encoding", "gzip");
+			if ((fd = open(gzpath, O_RDONLY)) != -1) {
+				/* .gz must be a file, and not older */
+				if (fstat(fd, &st) != -1 &&
+				    S_ISREG(st.st_mode) &&
+				    timespeccmp(&st.st_mtim, mtim, >=)) {
+					kv_add(&resp->http_headers,
+					    "Content-Encoding", "gzip");
+					/* Use original file timestamp */
+					st.st_mtim = *mtim;
+				} else {
+					close(fd);
+					fd = -1;
+				}
+			}
 		}
 	}
 
@@ -261,9 +273,9 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 	if (fd == -1) {
 		if ((fd = open(path, O_RDONLY)) == -1)
 			goto abort;
+		if (fstat(fd, &st) == -1)
+			goto abort;
 	}
-	if (fstat(fd, &st) == -1)
-		goto abort;
 
 	ret = server_response_http(clt, 200, media, st.st_size,
 	    MINIMUM(time(NULL), st.st_mtim.tv_sec));
@@ -318,7 +330,7 @@ server_file_request(struct httpd *env, struct client *clt, char *path,
 
 int
 server_partial_file_request(struct httpd *env, struct client *clt, char *path,
-    time_t mtim, char *range_str)
+    struct timespec *mtim, char *range_str)
 {
 	struct server_config	*srv_conf = clt->clt_srv_conf;
 	struct http_descriptor	*resp = clt->clt_descresp;
@@ -686,7 +698,7 @@ server_file_error(struct bufferevent *bev, short error, void *arg)
 }
 
 int
-server_file_modified_since(struct http_descriptor *desc, time_t mtim)
+server_file_modified_since(struct http_descriptor *desc, struct timespec *mtim)
 {
 	struct kv	 key, *since;
 	struct tm	 tm;
@@ -702,7 +714,7 @@ server_file_modified_since(struct http_descriptor *desc, time_t mtim)
 		 */
 		if (strptime(since->kv_value,
 		    "%a, %d %h %Y %T %Z", &tm) != NULL &&
-		    timegm(&tm) >= mtim)
+		    timegm(&tm) >= mtim->tv_sec)
 			return (304);
 	}
 
