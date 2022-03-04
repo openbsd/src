@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.258 2022/03/02 21:30:58 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.259 2022/03/04 20:35:10 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -175,14 +175,10 @@ in_pcbinit(struct inpcbtable *table, int hashsize)
 {
 
 	TAILQ_INIT(&table->inpt_queue);
-	table->inpt_hashtbl = hashinit(hashsize, M_PCB, M_NOWAIT,
+	table->inpt_hashtbl = hashinit(hashsize, M_PCB, M_WAITOK,
 	    &table->inpt_mask);
-	if (table->inpt_hashtbl == NULL)
-		panic("in_pcbinit: hashinit failed");
-	table->inpt_lhashtbl = hashinit(hashsize, M_PCB, M_NOWAIT,
+	table->inpt_lhashtbl = hashinit(hashsize, M_PCB, M_WAITOK,
 	    &table->inpt_lmask);
-	if (table->inpt_lhashtbl == NULL)
-		panic("in_pcbinit: hashinit failed for lport");
 	table->inpt_count = 0;
 	table->inpt_size = hashsize;
 	arc4random_buf(&table->inpt_key, sizeof(table->inpt_key));
