@@ -29,10 +29,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login_cap.3,v 1.18 2021/06/03 13:38:18 deraadt Exp $
+.\" $OpenBSD: login_cap.3,v 1.19 2022/03/04 08:47:53 tb Exp $
 .\" BSDI $From: login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp $
 .\"
-.Dd $Mdocdate: June 3 2021 $
+.Dd $Mdocdate: March 4 2022 $
 .Dt LOGIN_GETCLASS 3
 .Os
 .Sh NAME
@@ -246,6 +246,9 @@ Sets the priority by
 .It Dv LOGIN_SETRESOURCES
 Sets the various system resources by
 .Xr setrlimit 2 .
+.It Dv LOGIN_SETRTABLE
+Sets the routing table by
+.Xr setrtable 2 .
 .It Dv LOGIN_SETUMASK
 Sets the umask by
 .Xr umask 2 .
@@ -261,6 +264,7 @@ Sets all of the above.
 .Xr setlogin 2 ,
 .Xr setpriority 2 ,
 .Xr setrlimit 2 ,
+.Xr setrtable 2 ,
 .Xr setuid 2 ,
 .Xr umask 2 ,
 .Xr initgroups 3 ,
