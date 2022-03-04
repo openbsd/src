@@ -230,6 +230,38 @@ Optional<std::string> elf::findFromSearchPaths(StringRef path) {
   return None;
 }
 
+namespace {
+// Must be in sync with findMajMinShlib in clang/lib/Driver/Driver.cpp.
+llvm::Optional<std::string> findMajMinShlib(StringRef dir, const Twine& libNameSo) {
+  // Handle OpenBSD-style maj/min shlib scheme
+  llvm::SmallString<128> Scratch;
+  const StringRef LibName = (libNameSo + ".").toStringRef(Scratch);
+  int MaxMaj = -1, MaxMin = -1;
+  std::error_code EC;
+  for (llvm::sys::fs::directory_iterator LI(dir, EC), LE;
+       LI != LE; LI = LI.increment(EC)) {
+    StringRef FilePath = LI->path();
+    StringRef FileName = llvm::sys::path::filename(FilePath);
+    if (!(FileName.startswith(LibName)))
+      continue;
+    std::pair<StringRef, StringRef> MajMin =
+      FileName.substr(LibName.size()).split('.');
+    int Maj, Min;
+    if (MajMin.first.getAsInteger(10, Maj) || Maj < 0)
+      continue;
+    if (MajMin.second.getAsInteger(10, Min) || Min < 0)
+      continue;
+    if (Maj > MaxMaj)
+      MaxMaj = Maj, MaxMin = Min;
+    if (MaxMaj == Maj && Min > MaxMin)
+      MaxMin = Min;
+  }
+  if (MaxMaj >= 0)
+    return findFile(dir, LibName + Twine(MaxMaj) + "." + Twine(MaxMin));
+  return None;
+}
+}  // namespace
+
 // This is for -l<basename>. We'll look for lib<basename>.so or lib<basename>.a from
 // search paths.
 Optional<std::string> elf::searchLibraryBaseName(StringRef name) {
@@ -237,32 +269,8 @@ Optional<std::string> elf::searchLibraryBaseName(StringRef name) {
     if (!config->isStatic) {
       if (Optional<std::string> s = findFile(dir, "lib" + name + ".so"))
         return s;
-
-      // Handle OpenBSD-style maj/min shlib scheme
-      llvm::SmallString<128> Scratch;
-      const StringRef LibName = ("lib" + name + ".so.").toStringRef(Scratch);
-      int MaxMaj = -1, MaxMin = -1;
-      std::error_code EC;
-      for (fs::directory_iterator LI(dir, EC), LE;
-          LI != LE; LI = LI.increment(EC)) {
-        StringRef FilePath = LI->path();
-        StringRef FileName = path::filename(FilePath);
-        if (!(FileName.startswith(LibName)))
-          continue;
-        std::pair<StringRef, StringRef> MajMin =
-          FileName.substr(LibName.size()).split('.');
-        int Maj, Min;
-        if (MajMin.first.getAsInteger(10, Maj) || Maj < 0)
-          continue;
-        if (MajMin.second.getAsInteger(10, Min) || Min < 0)
-          continue;
-        if (Maj > MaxMaj)
-          MaxMaj = Maj, MaxMin = Min;
-        if (MaxMaj == Maj && Min > MaxMin)
-          MaxMin = Min;
-      }
-      if (MaxMaj >= 0)
-        return findFile(dir, LibName + Twine(MaxMaj) + "." + Twine(MaxMin));
+      if (Optional<std::string> s = findMajMinShlib(dir, "lib" + name + ".so"))
+        return s;
     }
     if (Optional<std::string> s = findFile(dir, "lib" + name + ".a"))
       return s;

@@ -5089,7 +5089,50 @@ const char *Driver::GetNamedOutputPath(Compilation &C, const JobAction &JA,
   }
 }
 
+
+namespace {
+static Optional<std::string> findFile(StringRef path1, const Twine &path2) {
+  SmallString<128> s;
+  llvm::sys::path::append(s, path1, path2);
+
+  if (llvm::sys::fs::exists(s))
+    return std::string(s);
+  return None;
+}
+
+// Must be in sync with findMajMinShlib in lld/ELF/DriverUtils.cpp.
+llvm::Optional<std::string> findMajMinShlib(StringRef dir, const Twine& libNameSo) {
+  // Handle OpenBSD-style maj/min shlib scheme
+  llvm::SmallString<128> Scratch;
+  const StringRef LibName = (libNameSo + ".").toStringRef(Scratch);
+  int MaxMaj = -1, MaxMin = -1;
+  std::error_code EC;
+  for (llvm::sys::fs::directory_iterator LI(dir, EC), LE;
+       LI != LE; LI = LI.increment(EC)) {
+    StringRef FilePath = LI->path();
+    StringRef FileName = llvm::sys::path::filename(FilePath);
+    if (!(FileName.startswith(LibName)))
+      continue;
+    std::pair<StringRef, StringRef> MajMin =
+      FileName.substr(LibName.size()).split('.');
+    int Maj, Min;
+    if (MajMin.first.getAsInteger(10, Maj) || Maj < 0)
+      continue;
+    if (MajMin.second.getAsInteger(10, Min) || Min < 0)
+      continue;
+    if (Maj > MaxMaj)
+      MaxMaj = Maj, MaxMin = Min;
+    if (MaxMaj == Maj && Min > MaxMin)
+      MaxMin = Min;
+  }
+  if (MaxMaj >= 0)
+    return findFile(dir, LibName + Twine(MaxMaj) + "." + Twine(MaxMin));
+  return None;
+}
+}  // namespace
+
 std::string Driver::GetFilePath(StringRef Name, const ToolChain &TC) const {
+  const bool lookForLibDotSo = Name.startswith("lib") && Name.endswith(".so");
   // Search for Name in a list of paths.
   auto SearchPaths = [&](const llvm::SmallVectorImpl<std::string> &P)
       -> llvm::Optional<std::string> {
@@ -5099,9 +5142,14 @@ std::string Driver::GetFilePath(StringRef Name, const ToolChain &TC) const {
       if (Dir.empty())
         continue;
       SmallString<128> P(Dir[0] == '=' ? SysRoot + Dir.substr(1) : Dir);
-      llvm::sys::path::append(P, Name);
-      if (llvm::sys::fs::exists(Twine(P)))
-        return std::string(P);
+      if (!lookForLibDotSo) {
+	llvm::sys::path::append(P, Name);
+	if (llvm::sys::fs::exists(Twine(P)))
+	  return std::string(P);
+      } else {
+	if (auto s = findMajMinShlib(P, Name))
+	  return std::string(*s);
+      }
     }
     return None;
   };
