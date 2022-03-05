@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.136 2021/07/25 07:12:51 aoyama Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.137 2022/03/05 11:03:30 aoyama Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -203,28 +203,6 @@ vaddr_t first_addr;
 vaddr_t last_addr;
 
 extern struct user *proc0paddr;
-
-/*
- * This is to fake out the console routines, while booting.
- * We could use directly the romtty console, but we want to be able to
- * configure a kernel without romtty since we do not necessarily need a
- * full-blown console driver.
- */
-cons_decl(romtty);
-extern void nullcnpollc(dev_t, int);
-
-struct consdev romttycons = {
-	NULL, 
-	NULL, 
-	romttycngetc, 
-	romttycnputc,
-	nullcnpollc,
-	NULL,
-	makedev(14, 0),
-	CN_LOWPRI,
-};
-
-struct consdev *cn_tab = &romttycons;
 
 /*
  * Early console initialization: called early on from main, before vm init.
@@ -1067,56 +1045,6 @@ luna88k_bootstrap()
 #ifdef DEBUG
 	printf("leaving luna88k_bootstrap()\n");
 #endif
-}
-
-/*
- * Rom console routines: 
- * Enables printing of boot messages before consinit().
- */
-
-#define __ROM_FUNC_TABLE	((int **)0x00001100)
-#define ROMGETC()	(*(int (*)(void))__ROM_FUNC_TABLE[3])()
-#define ROMPUTC(x)	(*(void (*)(int))__ROM_FUNC_TABLE[4])(x)
-
-void
-romttycnprobe(cp)
-	struct consdev *cp;
-{
-	cp->cn_dev = makedev(14, 0);
-	cp->cn_pri = CN_LOWPRI;
-}
-
-void
-romttycninit(cp)
-	struct consdev *cp;
-{
-	/* Nothing to do */
-}
-
-int
-romttycngetc(dev)
-	dev_t dev;
-{
-	int s, c;
-
-	do {
-		s = splhigh();
-		c = ROMGETC();
-		splx(s);
-	} while (c == -1);
-	return c;
-}
-
-void
-romttycnputc(dev, c)
-	dev_t dev;
-	int c;
-{
-	int s;
-
-	s = splhigh();
-	ROMPUTC(c);
-	splx(s);
 }
 
 /* powerdown */
