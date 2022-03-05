@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.13 2022/02/17 17:17:09 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.14 2022/03/05 16:58:35 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -45,12 +45,15 @@ sleep_showstate(void *v, int sleepmode)
 
 	if (sc->sc_sleeptype[sc->sc_state].slp_typa == -1 ||
 	    sc->sc_sleeptype[sc->sc_state].slp_typb == -1) {
-		printf("%s: state S%d unavailable\n",
-		    sc->sc_dev.dv_xname, sc->sc_state);
-		if (sc->sc_state == ACPI_STATE_S4)
+		if (sc->sc_state == ACPI_STATE_S4) {
 			sc->sc_state = ACPI_STATE_S5;	/* No S4, use S5 */
-		else
+			printf("%s: S5 unavailable, using S5\n",
+			    sc->sc_dev.dv_xname);
+		} else {
+			printf("%s: state S%d unavailable\n",
+			    sc->sc_dev.dv_xname, sc->sc_state);
 			return (EOPNOTSUPP);
+		}
 	}
 
 	/* 1st suspend AML step: _TTS(tostate) */
