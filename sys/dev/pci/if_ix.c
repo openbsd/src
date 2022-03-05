@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.182 2022/02/08 03:38:00 dlg Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.183 2022/03/05 17:00:14 deraadt Exp $	*/
 
 /******************************************************************************
 
@@ -102,6 +102,7 @@ const struct pci_matchid ixgbe_devices[] = {
 int	ixgbe_probe(struct device *, void *, void *);
 void	ixgbe_attach(struct device *, struct device *, void *);
 int	ixgbe_detach(struct device *, int);
+int	ixgbe_activate(struct device *, int);
 void	ixgbe_start(struct ifqueue *);
 int	ixgbe_ioctl(struct ifnet *, u_long, caddr_t);
 int	ixgbe_rxrinfo(struct ix_softc *, struct if_rxrinfo *);
@@ -199,7 +200,8 @@ struct cfdriver ix_cd = {
 };
 
 struct cfattach ix_ca = {
-	sizeof(struct ix_softc), ixgbe_probe, ixgbe_attach, ixgbe_detach
+	sizeof(struct ix_softc), ixgbe_probe, ixgbe_attach, ixgbe_detach,
+	ixgbe_activate
 };
 
 int ixgbe_smart_speed = ixgbe_smart_speed_on;
@@ -388,6 +390,48 @@ ixgbe_detach(struct device *self, int flags)
 	/* XXX kstat */
 
 	return (0);
+}
+
+int
+ixgbe_activate(struct device *self, int act)
+{
+	struct ix_softc *sc = (struct ix_softc *)self;
+	struct ifnet *ifp = &sc->arpcom.ac_if;
+	struct ixgbe_hw		*hw = &sc->hw;
+	uint32_t			 ctrl_ext;
+	int rv = 0;
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		if (ifp->if_flags & IFF_RUNNING)
+			ixgbe_stop(sc);
+		break;
+	case DVACT_RESUME:
+		ixgbe_init_hw(hw);
+
+		/* Enable the optics for 82599 SFP+ fiber */
+		if (sc->hw.mac.ops.enable_tx_laser)
+			sc->hw.mac.ops.enable_tx_laser(&sc->hw);
+
+		/* Enable power to the phy */
+		if (hw->phy.ops.set_phy_power)
+			hw->phy.ops.set_phy_power(&sc->hw, TRUE);
+
+		/* Get the PCI-E bus info and determine LAN ID */
+		hw->mac.ops.get_bus_info(hw);
+
+		/* let hardware know driver is loaded */
+		ctrl_ext = IXGBE_READ_REG(&sc->hw, IXGBE_CTRL_EXT);
+		ctrl_ext |= IXGBE_CTRL_EXT_DRV_LOAD;
+		IXGBE_WRITE_REG(&sc->hw, IXGBE_CTRL_EXT, ctrl_ext);
+
+		if (ifp->if_flags & IFF_UP)
+			ixgbe_init(sc);
+		break;
+	default:
+		break;
+	}
+	return (rv);
 }
 
 /*********************************************************************
@@ -1585,6 +1629,7 @@ ixgbe_stop(void *arg)
 #if NKSTAT > 0
 	timeout_del(&sc->sc_kstat_tmo);
 #endif
+	ifp->if_timer = 0;
 
 	INIT_DEBUGOUT("ixgbe_stop: begin\n");
 	ixgbe_disable_intr(sc);
