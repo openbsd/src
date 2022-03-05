@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.126 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.127 2022/03/05 07:13:48 bket Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -448,7 +448,7 @@ ssl_cipher_get_evp(const SSL_SESSION *ss, const EVP_CIPHER **enc,
 
 	/*
 	 * This function does not handle EVP_AEAD.
-	 * See ssl_cipher_get_aead_evp instead.
+	 * See ssl_cipher_get_evp_aead instead.
 	 */
 	if (ss->cipher->algorithm_mac & SSL_AEAD)
 		return 0;
