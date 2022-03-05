@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1object.c,v 1.2 2022/03/02 17:39:56 jsing Exp $ */
+/* $OpenBSD: asn1object.c,v 1.3 2022/03/05 14:16:13 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2021, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -397,10 +397,14 @@ asn1_object_bad_content_test(void)
 static int
 asn1_object_txt_test(void)
 {
+	const char *obj_txt = "organizationName";
 	ASN1_OBJECT *aobj = NULL;
 	uint8_t small_buf[2];
 	const uint8_t *p;
 	int err, len, ret;
+	BIO *bio = NULL;
+	char *data;
+	long data_len;
 	int failed = 1;
 
 	ERR_clear_error();
@@ -426,9 +430,40 @@ asn1_object_txt_test(void)
 		goto failed;
 	}
 	ret = i2t_ASN1_OBJECT(small_buf, sizeof(small_buf), aobj);
-	if (ret != 16) {
+	if (ret < 0 || (unsigned long)ret != strlen(obj_txt)) {
 		fprintf(stderr, "FAIL: i2t_ASN1_OBJECT() with small buffer "
-		    "returned %d, want %d\n", ret, 16);
+		    "returned %d, want %lu\n", ret, strlen(obj_txt));
+		goto failed;
+	}
+
+	if ((bio = BIO_new(BIO_s_mem())) == NULL) {
+		fprintf(stderr, "FAIL: BIO_new() returned NULL\n");
+		goto failed;
+	}
+	ret = i2a_ASN1_OBJECT(bio, NULL);
+	if (ret != 4) {
+		fprintf(stderr, "FAIL: i2a_ASN1_OBJECT(_, NULL) returned %d, "
+		    "want 4\n", ret);
+		goto failed;
+	}
+	data_len = BIO_get_mem_data(bio, &data);
+	if (ret != data_len || memcmp("NULL", data, data_len) != 0) {
+		fprintf(stderr, "FAIL: i2a_ASN1_OBJECT(_, NULL) did not return "
+		    "'NULL'\n");
+		goto failed;
+	}
+
+	BIO_reset(bio);
+	ret = i2a_ASN1_OBJECT(bio, aobj);
+	if (ret < 0 || (unsigned long)ret != strlen(obj_txt)) {
+		fprintf(stderr, "FAIL: i2a_ASN1_OBJECT() returned %d, "
+		    "want %lu\n", ret, strlen(obj_txt));
+		goto failed;
+	}
+	data_len = BIO_get_mem_data(bio, &data);
+	if (ret != data_len || memcmp(obj_txt, data, data_len) != 0) {
+		fprintf(stderr, "FAIL: i2a_ASN1_OBJECT() did not return "
+		    "'%s'\n", obj_txt);
 		goto failed;
 	}
 
@@ -436,6 +471,7 @@ asn1_object_txt_test(void)
 
  failed:
 	ASN1_OBJECT_free(aobj);
+	BIO_free(bio);
 
 	return failed;
 }
