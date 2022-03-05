@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.47 2021/01/19 19:35:59 mvs Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.48 2022/03/05 09:50:49 jsg Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 
 #include "ether.h"
 
-#if !defined(NFSCLIENT) || (NETHER == 0 && NFDDI == 0)
+#if !defined(NFSCLIENT) || (NETHER == 0)
 
 int
 nfs_boot_init(struct nfs_diskless *nd, struct proc *procp)
