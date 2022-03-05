@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.16 2014/06/03 12:11:19 aoyama Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.17 2022/03/05 06:59:12 aoyama Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -130,8 +130,10 @@ m8820x_setup_board_config()
 	max_cmmus = ncpusfound << 1;
 	cmmu_shift = 1;	/* fixed 2:1 configuration */
 
+#ifdef M8820X_DEBUG
 	/*
 	 * Now that we know which CMMUs are there, report every association
+	 * Note: consinit() is not called yet, we need ROM console here
 	 */
 	for (num = 0; num < ncpusfound; num++) {
 		volatile unsigned *cr;
@@ -143,6 +145,7 @@ m8820x_setup_board_config()
 		printf("CPU%d is associated to %d MC8820%c CMMUs\n",
 		    num, 1 << cmmu_shift, type == M88204_ID ? '4' : '0');
 	}
+#endif
 }
 
 /*
