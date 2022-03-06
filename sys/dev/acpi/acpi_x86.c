@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_x86.c,v 1.14 2022/03/05 16:58:35 deraadt Exp $ */
+/* $OpenBSD: acpi_x86.c,v 1.15 2022/03/06 15:12:00 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -47,7 +47,7 @@ sleep_showstate(void *v, int sleepmode)
 	    sc->sc_sleeptype[sc->sc_state].slp_typb == -1) {
 		if (sc->sc_state == ACPI_STATE_S4) {
 			sc->sc_state = ACPI_STATE_S5;	/* No S4, use S5 */
-			printf("%s: S5 unavailable, using S5\n",
+			printf("%s: S4 unavailable, using S5\n",
 			    sc->sc_dev.dv_xname);
 		} else {
 			printf("%s: state S%d unavailable\n",
