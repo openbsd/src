@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.710 2022/02/16 01:25:45 dlg Exp $
+#	$OpenBSD: files,v 1.711 2022/03/06 08:40:34 jsg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -440,12 +440,10 @@ define	eisabus {}			# EISA attachment
 define	pcibus {[bus = -1]}		# PCI attachment
 define	tcbus {}			# TurboChannel attachment
 define	usbus {}			# USB attachment
-define	usbdev {}			# USB function attachment
 define	pcmciabus {[controller = -1], [socket = -1]}	# PCMCIA attachment
 define	cbbus {[slot = -1]}		# CardBus attachment
 define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
 define	sdmmcbus {}			# SD/MMC attachment
-define	btbus {}			# Bluetooth host controller
 define	agpbus {}			# AGP bridge
 device	virtio {}			# VirtIO
 
