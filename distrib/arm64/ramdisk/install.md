@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.26 2022/03/06 19:09:29 kettenis Exp $
+#	$OpenBSD: install.md,v 1.27 2022/03/06 19:35:22 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ md_consoleinfo() {
 		CSPEED=115200;;
 	esac
 
-	_fw=$(dmesgtail | sed -n 's!^bwfm0: failed.*/\(.*\),.*$!\1!p' | grep -m 1 "")
+	_fw=$(dmesgtail | sed -n '\!^bwfm0: failed!{s!^.*/\(.*\),.*$!\1!p;q;}')
 	case $(sysctl -n machdep.compatible) in
 	apple,*)
 		make_dev sd0
@@ -203,8 +203,7 @@ md_consoleinfo() {
 			rm -rf /usr/mdec/rpi
 			tar -x -C /etc/firmware \
 			    -f /mnt2/vendorfw/firmware.tar "*$_fw*"
-			mkdir -p /etc/firmware/apple-bwfm
-			mv /etc/firmware/brcm/* /etc/firmware/apple-bwfm/
+			mv /etc/firmware/brcm /etc/firmware/apple-bwfm
 			umount /mnt2
 		fi
 	esac
