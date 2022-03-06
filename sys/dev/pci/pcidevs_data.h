@@ -23856,6 +23856,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "JMB368 IDE",
 	},
 	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB58x,
+	    "JMB58x AHCI",
+	},
+	{
 	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_FIREWIRE,
 	    "FireWire",
 	},
