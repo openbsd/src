@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.68 2022/03/04 22:34:41 kettenis Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.69 2022/03/06 18:52:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1121,6 +1121,10 @@ next:
 			OF_getprop(sc->sc_sc.sc_node, "brcm,board-type",
 			    board_type, sizeof(board_type));
 			strlcpy(product, &board_type[6], sizeof(product));
+			if (strncmp(board_type, "apple,", 6) == 0) {
+				strlcpy(sc->sc_sc.sc_fwdir, "apple-bwfm/",
+				    sizeof(sc->sc_sc.sc_fwdir));
+			}
 		}
 		printf("%s: firmware C-%s%s%s/P-%s_M-%s_V-%s__m-%s\n",
 		    DEVNAME(sc), chip,

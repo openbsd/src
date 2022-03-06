@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.100 2022/03/04 22:34:41 kettenis Exp $ */
+/* $OpenBSD: bwfm.c,v 1.101 2022/03/06 18:52:47 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -3161,17 +3161,18 @@ bwfm_loadfirmware(struct bwfm_softc *sc, const char *chip, const char *bus,
 		board_type = sc->sc_board_type;
 
 	if (board_type != NULL) {
-		r = snprintf(name, sizeof(name), "brcmfmac%s%s.%s.bin", chip,
-		    bus, board_type);
+		r = snprintf(name, sizeof(name), "%sbrcmfmac%s%s.%s.bin",
+		    sc->sc_fwdir, chip, bus, board_type);
 		if ((r > 0 && r < sizeof(name)) &&
 		    loadfirmware(name, ucode, size) != 0)
 			*size = 0;
 	}
 	if (*size == 0) {
-		snprintf(name, sizeof(name), "brcmfmac%s%s.bin", chip, bus);
+		snprintf(name, sizeof(name), "%sbrcmfmac%s%s.bin",
+		    sc->sc_fwdir, chip, bus);
 		if (loadfirmware(name, ucode, size) != 0) {
-			snprintf(name, sizeof(name), "brcmfmac%s%s%s%s.bin",
-			    chip, bus, board_type ? "." : "",
+			snprintf(name, sizeof(name), "%sbrcmfmac%s%s%s%s.bin",
+			    sc->sc_fwdir, chip, bus, board_type ? "." : "",
 			    board_type ? board_type : "");
 			printf("%s: failed loadfirmware of file %s\n",
 			    DEVNAME(sc), name);
@@ -3182,28 +3183,29 @@ bwfm_loadfirmware(struct bwfm_softc *sc, const char *chip, const char *bus,
 	/* .txt needs to be processed first */
 	if (strlen(sc->sc_modrev) > 0) {
 		r = snprintf(name, sizeof(name),
-		    "brcmfmac%s%s.%s-%s-%s-%s.txt", chip, bus, board_type,
-		    sc->sc_module, sc->sc_vendor, sc->sc_modrev);
+		    "%sbrcmfmac%s%s.%s-%s-%s-%s.txt", sc->sc_fwdir, chip, bus,
+		    board_type, sc->sc_module, sc->sc_vendor, sc->sc_modrev);
 		if (r > 0 && r < sizeof(name))
 			loadfirmware(name, nvram, nvsize);
 	}
 	if (*nvsize == 0 && strlen(sc->sc_vendor) > 0) {
 		r = snprintf(name, sizeof(name),
-		    "brcmfmac%s%s.%s-%s-%s.txt", chip, bus, board_type,
-		    sc->sc_module, sc->sc_vendor);
+		    "%sbrcmfmac%s%s.%s-%s-%s.txt", sc->sc_fwdir, chip, bus,
+		    board_type, sc->sc_module, sc->sc_vendor);
 		if (r > 0 && r < sizeof(name))
 			loadfirmware(name, nvram, nvsize);
 	}
 
 	if (*nvsize == 0 && board_type != NULL) {
-		r = snprintf(name, sizeof(name), "brcmfmac%s%s.%s.txt", chip,
-		    bus, board_type);
+		r = snprintf(name, sizeof(name), "%sbrcmfmac%s%s.%s.txt",
+		    sc->sc_fwdir, chip, bus, board_type);
 		if (r > 0 && r < sizeof(name))
 			loadfirmware(name, nvram, nvsize);
 	}
 
 	if (*nvsize == 0) {
-		snprintf(name, sizeof(name), "brcmfmac%s%s.txt", chip, bus);
+		snprintf(name, sizeof(name), "%sbrcmfmac%s%s.txt",
+		    sc->sc_fwdir, chip, bus);
 		loadfirmware(name, nvram, nvsize);
 	}
 
@@ -3219,14 +3221,16 @@ bwfm_loadfirmware(struct bwfm_softc *sc, const char *chip, const char *bus,
 
 	/* .nvram is the pre-processed version */
 	if (*nvlen == 0) {
-		snprintf(name, sizeof(name), "brcmfmac%s%s.nvram", chip, bus);
+		snprintf(name, sizeof(name), "%sbrcmfmac%s%s.nvram",
+		    sc->sc_fwdir, chip, bus);
 		if (loadfirmware(name, nvram, nvsize) == 0)
 			*nvlen = *nvsize;
 	}
 
 	if (*nvlen == 0 && strcmp(bus, "-sdio") == 0) {
-		snprintf(name, sizeof(name), "brcmfmac%s%s%s%s.txt", chip, bus,
-		    board_type ? "." : "", board_type ? board_type : "");
+		snprintf(name, sizeof(name), "%sbrcmfmac%s%s%s%s.txt",
+		    sc->sc_fwdir, chip, bus, board_type ? "." : "",
+		    board_type ? board_type : "");
 		printf("%s: failed loadfirmware of file %s\n",
 		    DEVNAME(sc), name);
 		free(*ucode, M_DEVBUF, *size);
@@ -3234,24 +3238,27 @@ bwfm_loadfirmware(struct bwfm_softc *sc, const char *chip, const char *bus,
 	}
 
 	if (board_type != NULL) {
-		r = snprintf(name, sizeof(name), "brcmfmac%s%s.%s.clm_blob",
-		    chip, bus, board_type);
+		r = snprintf(name, sizeof(name), "%sbrcmfmac%s%s.%s.clm_blob",
+		    sc->sc_fwdir, chip, bus, board_type);
 		if (r > 0 && r < sizeof(name))
 			loadfirmware(name, &sc->sc_clm, &sc->sc_clmsize);
 	}
 	if (sc->sc_clmsize == 0) {
-		snprintf(name, sizeof(name), "brcmfmac%s%s.clm_blob", chip, bus);
+		snprintf(name, sizeof(name), "%sbrcmfmac%s%s.clm_blob",
+		    sc->sc_fwdir, chip, bus);
 		loadfirmware(name, &sc->sc_clm, &sc->sc_clmsize);
 	}
 
 	if (board_type != NULL) {
-		r = snprintf(name, sizeof(name), "brcmfmac%s%s.%s.txcap_blob",
+		r = snprintf(name, sizeof(name),
+		    "%sbrcmfmac%s%s.%s.txcap_blob", sc->sc_fwdir,
 		    chip, bus, board_type);
 		if (r > 0 && r < sizeof(name))
 			loadfirmware(name, &sc->sc_txcap, &sc->sc_txcapsize);
 	}
 	if (sc->sc_txcapsize == 0) {
-		snprintf(name, sizeof(name), "brcmfmac%s%s.txcap_blob", chip, bus);
+		snprintf(name, sizeof(name), "%sbrcmfmac%s%s.txcap_blob",
+		    sc->sc_fwdir, chip, bus);
 		loadfirmware(name, &sc->sc_txcap, &sc->sc_txcapsize);
 	}
 
