@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.25 2022/02/10 20:07:47 krw Exp $
+#	$OpenBSD: install.md,v 1.26 2022/03/06 19:09:29 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@ md_installboot() {
 	local _disk=/dev/$1 _mdec _plat
 
 	case $(sysctl -n machdep.compatible) in
+	apple,*)		_plat=apple;;
 	pine64,pine64*(+))	_plat=pine64;;
 	raspberrypi,*)		_plat=rpi;
 	esac
@@ -53,6 +54,9 @@ md_installboot() {
 	_mdec=/usr/mdec/$_plat
 
 	case $_plat in
+	apple)
+		(cd /etc/firmware; pax -rw apple-bwfm /mnt/etc/firmware)
+		;;
 	pine64)
 		dd if=$_mdec/u-boot-sunxi-with-spl.bin of=${_disk}c \
 		    bs=1024 seek=8 >/dev/null 2>&1
@@ -180,6 +184,8 @@ md_congrats() {
 }
 
 md_consoleinfo() {
+	local _fw
+
 	CTTY=console
 	DEFCONS=y
 	case $CSPEED in
@@ -187,5 +193,19 @@ md_consoleinfo() {
 		;;
 	*)
 		CSPEED=115200;;
+	esac
+
+	_fw=$(dmesgtail | sed -n 's!^bwfm0: failed.*/\(.*\),.*$!\1!p' | grep -m 1 "")
+	case $(sysctl -n machdep.compatible) in
+	apple,*)
+		make_dev sd0
+		if mount -o ro ${MOUNT_ARGS_msdos} /dev/sd0l /mnt2; then
+			rm -rf /usr/mdec/rpi
+			tar -x -C /etc/firmware \
+			    -f /mnt2/vendorfw/firmware.tar "*$_fw*"
+			mkdir -p /etc/firmware/apple-bwfm
+			mv /etc/firmware/brcm/* /etc/firmware/apple-bwfm/
+			umount /mnt2
+		fi
 	esac
 }
