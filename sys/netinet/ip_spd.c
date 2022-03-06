@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.112 2022/02/22 01:15:02 guenther Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.113 2022/03/06 15:24:50 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -160,7 +160,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 	struct ipsec_policy *ipo;
 	struct ipsec_ids *ids = NULL;
 	int error, signore = 0, dignore = 0;
-	u_int rdomain = rtable_l2(m->m_pkthdr.ph_rtableid);
+	u_int rdomain;
 
 	NET_ASSERT_LOCKED();
 
@@ -168,11 +168,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 	 * If there are no flows in place, there's no point
 	 * continuing with the SPD lookup.
 	 */
-	if (!ipsec_in_use && inp == NULL) {
-		if (tdbout != NULL)
-			*tdbout = NULL;
-		return 0;
-	}
+	if (!ipsec_in_use)
+		return ipsp_spd_inp(m, inp, NULL, tdbout);
 
 	/*
 	 * If an input packet is destined to a BYPASS socket, just accept it.
@@ -302,6 +299,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 	}
 
 	/* Actual SPD lookup. */
+	rdomain = rtable_l2(m->m_pkthdr.ph_rtableid);
 	if ((rnh = spd_table_get(rdomain)) == NULL ||
 	    (rn = rn_match((caddr_t)&dst, rnh)) == NULL) {
 		/*
