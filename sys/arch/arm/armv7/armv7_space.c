@@ -1,4 +1,4 @@
-/*	$OpenBSD: armv7_space.c,v 1.10 2018/03/20 23:04:48 patrick Exp $ */
+/*	$OpenBSD: armv7_space.c,v 1.11 2022/03/06 12:16:27 kettenis Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -178,8 +178,8 @@ armv7_bs_map(void *t, uint64_t bpa, bus_size_t size,
 
 	/* XXX use extent manager to check duplicate mapping */
 
-	va = uvm_km_valloc(kernel_map, endpa - startpa);
-	if (! va)
+	va = (vaddr_t)km_alloc(endpa - startpa, &kv_any, &kp_none, &kd_nowait);
+	if (va == 0)
 		return(ENOMEM);
 
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
@@ -204,9 +204,9 @@ armv7_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 
 	pmap_kremove(va, endva - va);
 	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, bsh, size);
-}
 
+	km_free((void *)va, endva - va, &kv_any, &kp_none);
+}
 
 int
 armv7_bs_subregion(void *t, bus_space_handle_t bsh, bus_size_t offset,
