@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.41 2020/10/06 07:23:15 gerhard Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.42 2022/03/07 08:13:13 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -161,31 +161,24 @@ struct ieee80211chanreq {
 	u_int16_t	i_channel;
 };
 
-#ifndef _KERNEL
 /*
  * Channels are specified by frequency and attributes.
  */
-struct ieee80211_channel {
+struct ieee80211_chaninfo {
 	u_int16_t	ic_freq;	/* setting in MHz */
 	u_int16_t	ic_flags;	/* see below */
 };
 
 /*
- * Channel attributes (XXX must keep in sync with radiotap flags).
+ * Channel attributes.
  */
-#define IEEE80211_CHAN_CCK	0x0020	/* CCK channel */
-#define IEEE80211_CHAN_OFDM	0x0040	/* OFDM channel */
-#define IEEE80211_CHAN_2GHZ	0x0080	/* 2 GHz spectrum channel */
-#define IEEE80211_CHAN_5GHZ	0x0100	/* 5 GHz spectrum channel */
-#define IEEE80211_CHAN_PASSIVE	0x0200	/* Only passive scan allowed */
-#define IEEE80211_CHAN_DYN	0x0400	/* Dynamic CCK-OFDM channel */
-#define IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
-#define IEEE80211_CHAN_HT	0x2000	/* 11n/HT channel */
-#endif	/* !_KERNEL */
+#define IEEE80211_CHANINFO_2GHZ		0x0080	/* 2 GHz spectrum channel */
+#define IEEE80211_CHANINFO_5GHZ		0x0100	/* 5 GHz spectrum channel */
+#define IEEE80211_CHANINFO_PASSIVE	0x0200	/* Only passive scan allowed */
 
 struct ieee80211_chanreq_all {
 	char		i_name[IFNAMSIZ];	/* if_name, e.g. "wi0" */
-	struct ieee80211_channel *i_chans;
+	struct ieee80211_chaninfo *i_chans; /* array of 256 elements */
 };
 
 #ifndef IEEE80211_CHAN_ANY

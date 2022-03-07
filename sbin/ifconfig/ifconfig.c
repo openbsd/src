@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.452 2022/02/22 09:55:54 dlg Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.453 2022/03/07 08:13:13 stsp Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -115,6 +115,10 @@
 #endif /* SMALL */
 
 #include "ifconfig.h"
+
+#ifndef nitems
+#define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
@@ -2670,7 +2674,7 @@ join_status(void)
 void
 ieee80211_listchans(void)
 {
-	static struct ieee80211_channel chans[256+1];
+	static struct ieee80211_chaninfo chans[256];
 	struct ieee80211_chanreq_all ca;
 	int i;
 
@@ -2684,11 +2688,11 @@ ieee80211_listchans(void)
 		return;
 	}
 	printf("\t\t%4s  %-8s  %s\n", "chan", "freq", "properties");
-	for (i = 1; i <= 256; i++) {
-		if (chans[i].ic_flags == 0)
+	for (i = 1; i < nitems(chans); i++) {
+		if (chans[i].ic_freq == 0)
 			continue;
 		printf("\t\t%4d  %4d MHz  ", i, chans[i].ic_freq);
-		if (chans[i].ic_flags & IEEE80211_CHAN_PASSIVE)
+		if (chans[i].ic_flags & IEEE80211_CHANINFO_PASSIVE)
 			printf("passive scan");
 		else
 			putchar('-');
