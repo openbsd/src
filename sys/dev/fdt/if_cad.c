@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.9 2022/01/27 17:34:51 visa Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.10 2022/03/07 13:02:53 visa Exp $	*/
 
 /*
  * Copyright (c) 2021-2022 Visa Hankala
@@ -30,6 +30,7 @@
 #include <sys/ioctl.h>
 #include <sys/mutex.h>
 #include <sys/kstat.h>
+#include <sys/rwlock.h>
 #include <sys/task.h>
 #include <sys/timeout.h>
 
@@ -297,6 +298,7 @@ struct cad_softc {
 	unsigned int		sc_rx_cons;
 	uint32_t		sc_netctl;
 
+	struct rwlock		sc_cfg_lock;
 	struct task		sc_statchg_task;
 	uint32_t		sc_tx_freq;
 
@@ -467,10 +469,13 @@ cad_attach(struct device *parent, struct device *self, void *aux)
 	if (OF_is_compatible(faa->fa_node, "cdns,zynq-gem"))
 		sc->sc_rxhang_erratum = 1;
 
+	rw_init(&sc->sc_cfg_lock, "cadcfg");
 	timeout_set(&sc->sc_tick, cad_tick, sc);
 	task_set(&sc->sc_statchg_task, cad_statchg_task, sc);
 
+	rw_enter_write(&sc->sc_cfg_lock);
 	cad_reset(sc);
+	rw_exit_write(&sc->sc_cfg_lock);
 
 	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_NET | IPL_MPSAFE,
 	    cad_intr, sc, sc->sc_dev.dv_xname);
@@ -548,6 +553,9 @@ cad_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int error = 0;
 	int s;
 
+	NET_UNLOCK();
+	rw_enter_write(&sc->sc_cfg_lock);
+	NET_LOCK();
 	s = splnet();
 
 	switch (cmd) {
@@ -585,6 +593,7 @@ cad_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	}
 
 	splx(s);
+	rw_exit_write(&sc->sc_cfg_lock);
 
 	return error;
 }
@@ -597,6 +606,8 @@ cad_reset(struct cad_softc *sc)
 	};
 	unsigned int freq, i;
 	uint32_t div, netcfg;
+
+	rw_assert_wrlock(&sc->sc_cfg_lock);
 
 	HWRITE4(sc, GEM_NETCTL, 0);
 	HWRITE4(sc, GEM_IDR, ~0U);
@@ -654,6 +665,11 @@ cad_up(struct cad_softc *sc)
 	int flags = BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW;
 	unsigned int i, nrxd, ntxd;
 	uint32_t val;
+
+	rw_assert_wrlock(&sc->sc_cfg_lock);
+
+	/* Release lock for memory allocation. */
+	NET_UNLOCK();
 
 	if (sc->sc_dma64)
 		flags |= BUS_DMA_64BIT;
@@ -810,6 +826,8 @@ cad_up(struct cad_softc *sc)
 		}
 	}
 
+	NET_LOCK();
+
 	/*
 	 * Set MAC address filters.
 	 */
@@ -905,10 +923,15 @@ cad_down(struct cad_softc *sc)
 	struct cad_buf *rxb, *txb;
 	unsigned int i, timeout;
 
+	rw_assert_wrlock(&sc->sc_cfg_lock);
+
 	ifp->if_flags &= ~IFF_RUNNING;
 
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
+
+	/* Avoid lock order issues with barriers. */
+	NET_UNLOCK();
 
 	timeout_del_barrier(&sc->sc_tick);
 
@@ -981,6 +1004,8 @@ cad_down(struct cad_softc *sc)
 	cad_dmamem_free(sc, sc->sc_rxring);
 	sc->sc_rxring = NULL;
 	sc->sc_rxdesc = NULL;
+
+	NET_LOCK();
 }
 
 uint8_t
@@ -1010,6 +1035,8 @@ cad_iff(struct cad_softc *sc)
 	struct ether_multistep step;
 	uint64_t hash;
 	uint32_t netcfg;
+
+	rw_assert_wrlock(&sc->sc_cfg_lock);
 
 	netcfg = HREAD4(sc, GEM_NETCFG);
 	netcfg &= ~GEM_NETCFG_UCASTHASHEN;
