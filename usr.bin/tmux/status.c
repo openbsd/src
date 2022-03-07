@@ -1,4 +1,4 @@
-/* $OpenBSD: status.c,v 1.232 2022/02/03 10:07:11 nicm Exp $ */
+/* $OpenBSD: status.c,v 1.233 2022/03/07 11:52:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1798,7 +1798,7 @@ status_prompt_complete_window_menu(struct client *c, struct session *s,
 		item.name = tmp;
 		item.key = '0' + size - 1;
 		item.command = NULL;
-		menu_add_item(menu, &item, NULL, NULL, NULL);
+		menu_add_item(menu, &item, NULL, c, NULL);
 		free(tmp);
 
 		if (size == height)
