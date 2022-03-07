@@ -1,4 +1,4 @@
-/*	$OpenBSD: sndiod.c,v 1.47 2021/11/01 14:43:25 ratchov Exp $	*/
+/*	$OpenBSD: sndiod.c,v 1.48 2022/03/07 08:58:33 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -83,6 +83,13 @@
  */
 #ifndef DEFAULT_BUFSZ
 #define DEFAULT_BUFSZ	7680
+#endif
+
+/*
+ * default device precision
+ */
+#ifndef DEFAULT_BITS
+#define DEFAULT_BITS	16
 #endif
 
 void sigint(int);
@@ -486,7 +493,11 @@ main(int argc, char **argv)
 	pmax = 1;
 	rmin = 0;
 	rmax = 1;
-	aparams_init(&par);
+	par.bits = DEFAULT_BITS;
+	par.bps = APARAMS_BPS(par.bits);
+	par.le = ADATA_LE;
+	par.sig = 1;
+	par.msb = 0;
 	mode = MODE_PLAY | MODE_REC;
 	dev_first = dev_next = NULL;
 	port_first = port_next = NULL;

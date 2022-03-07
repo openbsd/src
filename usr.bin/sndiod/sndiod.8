@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sndiod.8,v 1.15 2022/02/18 23:17:16 jsg Exp $
+.\"	$OpenBSD: sndiod.8,v 1.16 2022/03/07 08:58:33 ratchov Exp $
 .\"
 .\" Copyright (c) 2006-2012 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 18 2022 $
+.Dd $Mdocdate: March 7 2022 $
 .Dt SNDIOD 8
 .Os
 .Sh NAME
@@ -578,11 +578,6 @@ $ sndiod -r 48000 -b 480 -z 240
 .Sh BUGS
 Resampling is low quality; down-sampling especially should be avoided
 when recording.
-.Pp
-Processing is done using 16-bit arithmetic,
-thus samples with more than 16 bits are rounded.
-16 bits (i.e. 97dB dynamic) are largely enough for most applications though.
-Processing precision can be increased to 24-bit at compilation time though.
 .Pp
 If
 .Fl a Ar off
