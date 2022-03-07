@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsp.h,v 1.8 2021/05/25 08:06:12 ratchov Exp $	*/
+/*	$OpenBSD: dsp.h,v 1.9 2022/03/07 09:04:45 ratchov Exp $	*/
 /*
  * Copyright (c) 2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -25,28 +25,14 @@
  * boundary is excluded. We represent them as signed fixed point numbers
  * of ADATA_BITS. We also assume that 2^(ADATA_BITS - 1) fits in a int.
  */
-#ifndef ADATA_BITS
-#define ADATA_BITS			16
-#endif
+#define ADATA_BITS			24
 #define ADATA_LE			(BYTE_ORDER == LITTLE_ENDIAN)
 #define ADATA_UNIT			(1 << (ADATA_BITS - 1))
-
-#if ADATA_BITS == 16
-
-#define ADATA_MUL(x,y)		(((int)(x) * (int)(y)) >> (ADATA_BITS - 1))
-
-typedef short adata_t;
-
-#elif ADATA_BITS == 24
 
 #define ADATA_MUL(x,y)		\
 	((int)(((long long)(x) * (long long)(y)) >> (ADATA_BITS - 1)))
 
 typedef int adata_t;
-
-#else
-#error "only 16-bit and 24-bit precisions are supported"
-#endif
 
 /*
  * The FIR is sampled and stored in a table of fixed-point numbers

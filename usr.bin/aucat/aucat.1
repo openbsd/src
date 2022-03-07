@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.116 2020/04/22 05:37:00 jmc Exp $
+.\"	$OpenBSD: aucat.1,v 1.117 2022/03/07 09:04:45 ratchov Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 22 2020 $
+.Dd $Mdocdate: March 7 2022 $
 .Dt AUCAT 1
 .Os
 .Sh NAME
@@ -88,7 +88,7 @@ Increase log verbosity.
 .It Fl e Ar enc
 Encoding of the audio file.
 The default is
-.Va s16 .
+.Va s24 .
 Encoding names use the following scheme: signedness
 .Po
 .Va s

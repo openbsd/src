@@ -1393,7 +1393,11 @@ main(int argc, char **argv)
 	rate = DEFAULT_RATE;
 	cmin = 0;
 	cmax = 1;
-	aparams_init(&par);
+	par.bits = ADATA_BITS;
+	par.bps = APARAMS_BPS(par.bits);
+	par.le = ADATA_LE;
+	par.sig = 1;
+	par.msb = 1;
 	hdr = AFILE_HDR_AUTO;
 	n_flag = 0;
 	port = NULL;
