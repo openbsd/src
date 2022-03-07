@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.19 2021/06/16 16:55:02 dv Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.20 2022/03/07 14:17:47 dv Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -264,17 +264,15 @@ vioscsi_handle_inquiry(struct vioscsi_dev *dev,
 {
 	int ret = 0;
 	struct virtio_scsi_res_hdr resp;
-	uint16_t inq_len;
-	struct scsi_inquiry *inq;
 	struct scsi_inquiry_data *inq_data;
 
+#if DEBUG
+	struct scsi_inquiry *inq = (struct scsi_inquiry *)(req->cdb);
+	log_debug("%s: INQ - EVPD %d PAGE_CODE 0x%08x LEN %d", __func__,
+	    inq->flags & SI_EVPD, inq->pagecode, _2btol(inq->length));
+#endif /* DEBUG */
+
 	memset(&resp, 0, sizeof(resp));
-	inq = (struct scsi_inquiry *)(req->cdb);
-	inq_len = (uint16_t)_2btol(inq->length);
-
-	DPRINTF("%s: INQ - EVPD %d PAGE_CODE 0x%08x LEN %d", __func__,
-	    inq->flags & SI_EVPD, inq->pagecode, inq_len);
-
 	vioscsi_prepare_resp(&resp,
 	    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
 
@@ -484,18 +482,16 @@ vioscsi_handle_mode_sense_big(struct vioscsi_dev *dev,
 	uint8_t mode_page_code;
 	uint8_t *mode_reply;
 	uint8_t mode_reply_len = 0;
-	uint16_t mode_sense_len;
 	struct scsi_mode_sense_big *mode_sense_10;
 
 	memset(&resp, 0, sizeof(resp));
 	mode_sense_10 = (struct scsi_mode_sense_big *)(req->cdb);
 	mode_page_ctl = mode_sense_10->page & SMS_PAGE_CTRL;
 	mode_page_code = mode_sense_10->page & SMS_PAGE_CODE;
-	mode_sense_len = (uint16_t)_2btol(mode_sense_10->length);
 
 	DPRINTF("%s: M_SENSE_10 - DBD %d Page Ctrl 0x%x Code 0x%x Len %u",
 	    __func__, mode_sense_10->byte2 & SMS_DBD, mode_page_ctl,
-	    mode_page_code, mode_sense_len);
+	    mode_page_code, (uint16_t)_2btol(mode_sense_10->length));
 
 	if (mode_page_ctl == SMS_PAGE_CTRL_CURRENT &&
 	    (mode_page_code == ERR_RECOVERY_PAGE ||
@@ -620,16 +616,16 @@ vioscsi_handle_read_capacity(struct vioscsi_dev *dev,
 {
 	int ret = 0;
 	struct virtio_scsi_res_hdr resp;
-	uint32_t r_cap_addr;
-	struct scsi_read_capacity *r_cap;
 	struct scsi_read_cap_data *r_cap_data;
 
-	memset(&resp, 0, sizeof(resp));
-	r_cap = (struct scsi_read_capacity *)(req->cdb);
-	r_cap_addr = _4btol(r_cap->addr);
-	DPRINTF("%s: %s - Addr 0x%08x", __func__,
-	    vioscsi_op_names(r_cap->opcode), r_cap_addr);
+#if DEBUG
+	struct scsi_read_capacity *r_cap =
+	    (struct scsi_read_capacity *)(req->cdb);
+	log_debug("%s: %s - Addr 0x%08x", __func__,
+	    vioscsi_op_names(r_cap->opcode), _4btol(r_cap->addr));
+#endif /* DEBUG */
 
+	memset(&resp, 0, sizeof(resp));
 	vioscsi_prepare_resp(&resp,
 	    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
 
@@ -709,16 +705,16 @@ vioscsi_handle_read_capacity_16(struct vioscsi_dev *dev,
 {
 	int ret = 0;
 	struct virtio_scsi_res_hdr resp;
-	uint64_t r_cap_addr_16;
-	struct scsi_read_capacity_16 *r_cap_16;
 	struct scsi_read_cap_data_16 *r_cap_data_16;
 
-	memset(&resp, 0, sizeof(resp));
-	r_cap_16 = (struct scsi_read_capacity_16 *)(req->cdb);
-	r_cap_addr_16 = _8btol(r_cap_16->addr);
-	DPRINTF("%s: %s - Addr 0x%016llx", __func__,
-	    vioscsi_op_names(r_cap_16->opcode), r_cap_addr_16);
+#if DEBUG
+	struct scsi_read_capacity_16 *r_cap_16 =
+	    (struct scsi_read_capacity_16 *)(req->cdb);
+	log_debug("%s: %s - Addr 0x%016llx", __func__,
+	    vioscsi_op_names(r_cap_16->opcode), _8btol(r_cap_16->addr));
+#endif /* DEBUG */
 
+	memset(&resp, 0, sizeof(resp));
 	vioscsi_prepare_resp(&resp, VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
 
 	r_cap_data_16 = calloc(1, sizeof(struct scsi_read_cap_data_16));
@@ -1191,14 +1187,10 @@ vioscsi_handle_mechanism_status(struct vioscsi_dev *dev,
 {
 	int ret = 0;
 	struct virtio_scsi_res_hdr resp;
-	uint16_t mech_status_len;
-	struct scsi_mechanism_status *mech_status;
 	struct scsi_mechanism_status_header *mech_status_header;
 
-	memset(&resp, 0, sizeof(resp));
-	mech_status = (struct scsi_mechanism_status *)(req->cdb);
-	mech_status_len = (uint16_t)_2btol(mech_status->length);
-	DPRINTF("%s: MECH_STATUS Len %u", __func__, mech_status_len);
+	DPRINTF("%s: MECH_STATUS Len %u", __func__,
+	    _2btol(((struct scsi_mechanism_status *)(req->cdb))->length));
 
 	mech_status_header = calloc(1,
 	    sizeof(struct scsi_mechanism_status_header));
@@ -1207,6 +1199,7 @@ vioscsi_handle_mechanism_status(struct vioscsi_dev *dev,
 		goto mech_out;
 
 	/* return a 0 header since we are not a changer */
+	memset(&resp, 0, sizeof(resp));
 	vioscsi_prepare_resp(&resp,
 	    VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
 
@@ -1250,20 +1243,14 @@ vioscsi_handle_read_toc(struct vioscsi_dev *dev,
 {
 	int ret = 0;
 	struct virtio_scsi_res_hdr resp;
-	uint16_t toc_len;
 	uint16_t toc_data_len;
 	uint8_t toc_data[TOC_DATA_SIZE];
 	uint8_t *toc_data_p;
-	struct scsi_read_toc *toc;
+	struct scsi_read_toc *toc = (struct scsi_read_toc *)(req->cdb);
 
-	memset(&resp, 0, sizeof(resp));
-	toc = (struct scsi_read_toc *)(req->cdb);
-	toc_len = (uint16_t)_2btol(toc->data_len);
 	DPRINTF("%s: %s - MSF %d Track 0x%02x Addr 0x%04x",
-	    __func__, vioscsi_op_names(toc->opcode),
-	    ((toc->byte2 >> 1) & 1), toc->from_track, toc_len);
-
-	memset(toc_data, 0, sizeof(toc_data));
+	    __func__, vioscsi_op_names(toc->opcode), ((toc->byte2 >> 1) & 1),
+	    toc->from_track, _2btol(toc->data_len));
 
 	/* Tracks should be 0, 1, or LEAD_OUT_TRACK, 0xaa */
 	if (toc->from_track > 1 &&
@@ -1272,6 +1259,7 @@ vioscsi_handle_read_toc(struct vioscsi_dev *dev,
 		log_warnx("%s: illegal request Track 0x%02x",
 		    __func__, toc->from_track);
 
+		memset(&resp, 0, sizeof(resp));
 		vioscsi_prepare_resp(&resp,
 		    VIRTIO_SCSI_S_OK, SCSI_CHECK, SKEY_ILLEGAL_REQUEST,
 		    SENSE_ILLEGAL_CDB_FIELD, SENSE_DEFAULT_ASCQ);
@@ -1315,6 +1303,7 @@ vioscsi_handle_read_toc(struct vioscsi_dev *dev,
 	 * [3]: Reserved, 0
 	 * [4-7]: Track Start Address, LBA
 	 */
+	memset(toc_data, 0, sizeof(toc_data));
 	toc_data_p = toc_data + 2;
 	*toc_data_p++ = READ_TOC_START_TRACK;
 	*toc_data_p++ = READ_TOC_LAST_TRACK;
@@ -1390,14 +1379,12 @@ vioscsi_handle_read_disc_info(struct vioscsi_dev *dev,
 {
 	int ret = 0;
 	struct virtio_scsi_res_hdr resp;
-	struct scsi_read_disc_information *read_disc;
 
-	memset(&resp, 0, sizeof(resp));
-	read_disc =
-	    (struct scsi_read_disc_information *)(req->cdb);
-	DPRINTF("%s: Disc Info %x", __func__, read_disc->byte2);
+	DPRINTF("%s: Disc Info %x", __func__,
+		((struct scsi_read_disc_information *)(req->cdb))->byte2);
 
 	/* send back unsupported */
+	memset(&resp, 0, sizeof(resp));
 	vioscsi_prepare_resp(&resp,
 	    VIRTIO_SCSI_S_OK, SCSI_CHECK, SKEY_ILLEGAL_REQUEST,
 	    SENSE_ILLEGAL_CDB_FIELD, SENSE_DEFAULT_ASCQ);
@@ -1521,10 +1508,7 @@ vioscsi_handle_get_config(struct vioscsi_dev *dev,
 {
 	int ret = 0;
 	struct virtio_scsi_res_hdr resp;
-	uint16_t get_conf_feature;
-	uint16_t get_conf_len;
 	uint8_t *get_conf_reply;
-	struct scsi_get_configuration *get_configuration;
 	struct scsi_config_feature_header *config_feature_header;
 	struct scsi_config_generic_descriptor *config_generic_desc;
 	struct scsi_config_profile_descriptor *config_profile_desc;
@@ -1533,12 +1517,13 @@ vioscsi_handle_get_config(struct vioscsi_dev *dev,
 	struct scsi_config_remove_media_descriptor *config_remove_media_desc;
 	struct scsi_config_random_read_descriptor *config_random_read_desc;
 
-	memset(&resp, 0, sizeof(resp));
-	get_configuration = (struct scsi_get_configuration *)(req->cdb);
-	get_conf_feature = (uint16_t)_2btol(get_configuration->feature);
-	get_conf_len = (uint16_t)_2btol(get_configuration->length);
-	DPRINTF("%s: Conf RT %x Feature %d Len %d", __func__,
-	    get_configuration->byte2, get_conf_feature, get_conf_len);
+#if DEBUG
+	struct scsi_get_configuration *get_configuration =
+	    (struct scsi_get_configuration *)(req->cdb);
+	log_debug("%s: Conf RT %x Feature %d Len %d", __func__,
+	    get_configuration->byte2, _2btol(get_configuration->feature),
+	    _2btol(get_configuration->length));
+#endif /* DEBUG */
 
 	get_conf_reply = (uint8_t*)calloc(G_CONFIG_REPLY_SIZE, sizeof(uint8_t));
 
@@ -1617,6 +1602,7 @@ vioscsi_handle_get_config(struct vioscsi_dev *dev,
 	_lto2b(CONFIG_RANDOM_READ_BLOCKING_TYPE,
 	    config_random_read_desc->blocking_type);
 
+	memset(&resp, 0, sizeof(resp));
 	vioscsi_prepare_resp(&resp, VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
 
 	/* Move index for response */
