@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.21 2022/01/09 05:42:58 jsg Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.22 2022/03/07 18:52:16 dv Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -913,7 +913,7 @@ vio_add_rx_mbuf(struct vio_softc *sc, int i)
 	    m, BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (r) {
 		m_freem(m);
-		sc->sc_rx_mbufs[i] = 0;
+		sc->sc_rx_mbufs[i] = NULL;
 		return r;
 	}
 
@@ -1146,7 +1146,7 @@ vio_txeof(struct virtqueue *vq)
 		    BUS_DMASYNC_POSTWRITE);
 		m = sc->sc_tx_mbufs[slot];
 		bus_dmamap_unload(vsc->sc_dmat, sc->sc_tx_dmamaps[slot]);
-		sc->sc_tx_mbufs[slot] = 0;
+		sc->sc_tx_mbufs[slot] = NULL;
 		virtio_dequeue_commit(vq, slot);
 		m_freem(m);
 	}
