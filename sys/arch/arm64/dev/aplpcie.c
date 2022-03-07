@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpcie.c,v 1.11 2022/02/13 12:02:21 kettenis Exp $	*/
+/*	$OpenBSD: aplpcie.c,v 1.12 2022/03/07 11:08:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -127,7 +127,8 @@ struct aplpcie_softc {
 
 	int			sc_msi;
 	bus_addr_t		sc_msi_doorbell;
-	uint32_t		sc_msi_range[5];
+	uint32_t		sc_msi_range[6];
+	int			sc_msi_rangelen;
 	struct interrupt_controller sc_msi_ic;
 };
 
@@ -229,8 +230,12 @@ aplpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_msi_doorbell =
 	    OF_getpropint64(sc->sc_node, "msi-doorbell", 0xffff000ULL);
-	if (OF_getpropintarray(sc->sc_node, "msi-ranges", sc->sc_msi_range,
-	    sizeof(sc->sc_msi_range)) != sizeof(sc->sc_msi_range)) {
+	sc->sc_msi_rangelen = OF_getpropintarray(sc->sc_node, "msi-ranges",
+	    sc->sc_msi_range, sizeof(sc->sc_msi_range));
+	if (sc->sc_msi_rangelen <= 0 ||
+	    (sc->sc_msi_rangelen % sizeof(uint32_t)) ||
+	    (sc->sc_msi_rangelen / sizeof(uint32_t)) < 5 ||
+	    (sc->sc_msi_rangelen / sizeof(uint32_t) > 6)) {
 		printf(": invalid msi-ranges property\n");
 		return;
 	}
@@ -665,17 +670,18 @@ aplpcie_intr_establish_msi(void *cookie, uint64_t *addr, uint64_t *data,
     int level, struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
 	struct aplpcie_softc *sc = cookie;
-	uint32_t cells[3];
+	uint32_t cells[4];
+	int ncells;
 
-	if (sc->sc_msi >= sc->sc_msi_range[4])
+	ncells = sc->sc_msi_rangelen / sizeof(uint32_t);
+	if (sc->sc_msi >= sc->sc_msi_range[ncells - 1])
 		return NULL;
 
 	*addr = sc->sc_msi_doorbell;
 	*data = sc->sc_msi++;
 
-	cells[0] = sc->sc_msi_range[1];
-	cells[1] = sc->sc_msi_range[2] + *data;
-	cells[2] = sc->sc_msi_range[3];
+	memcpy(cells, &sc->sc_msi_range[1], sizeof(cells));
+	cells[ncells - 4] += *data;
 
 	return fdt_intr_parent_establish(&sc->sc_msi_ic, cells,
 	    level, ci, func, arg, name);
