@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.5 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.6 2022/03/08 13:02:42 tb Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -442,19 +442,19 @@ rtr_parse_ipv4_prefix(struct rtr_session *rs, uint8_t *buf, size_t len)
 	}
 
 	memcpy(&ip4, buf + sizeof(struct rtr_header), sizeof(ip4));
-
-	if ((roa = calloc(1, sizeof(*roa))) == NULL) {
-		log_warn("rtr %s: received %s",
-		    log_rtr(rs), log_rtr_type(IPV4_PREFIX));
-		rtr_send_error(rs, INTERNAL_ERROR, "out of memory", NULL, 0);
-		return -1;
-	}
 	if (ip4.prefixlen > 32 || ip4.maxlen > 32 ||
 	    ip4.prefixlen > ip4.maxlen) {
 		log_warnx("rtr: %s: received %s: bad prefixlen / maxlen",
 		    log_rtr(rs), log_rtr_type(IPV4_PREFIX));
 		rtr_send_error(rs, CORRUPT_DATA, "bad prefixlen / maxlen",
 		    buf, len);
+		return -1;
+	}
+
+	if ((roa = calloc(1, sizeof(*roa))) == NULL) {
+		log_warn("rtr %s: received %s",
+		    log_rtr(rs), log_rtr_type(IPV4_PREFIX));
+		rtr_send_error(rs, INTERNAL_ERROR, "out of memory", NULL, 0);
 		return -1;
 	}
 	roa->aid = AID_INET;
@@ -511,19 +511,19 @@ rtr_parse_ipv6_prefix(struct rtr_session *rs, uint8_t *buf, size_t len)
 	}
 
 	memcpy(&ip6, buf + sizeof(struct rtr_header), sizeof(ip6));
-
-	if ((roa = calloc(1, sizeof(*roa))) == NULL) {
-		log_warn("rtr %s: received %s",
-		    log_rtr(rs), log_rtr_type(IPV6_PREFIX));
-		rtr_send_error(rs, INTERNAL_ERROR, "out of memory", NULL, 0);
-		return -1;
-	}
 	if (ip6.prefixlen > 128 || ip6.maxlen > 128 ||
 	    ip6.prefixlen > ip6.maxlen) {
 		log_warnx("rtr: %s: received %s: bad prefixlen / maxlen",
 		    log_rtr(rs), log_rtr_type(IPV6_PREFIX));
 		rtr_send_error(rs, CORRUPT_DATA, "bad prefixlen / maxlen",
 		    buf, len);
+		return -1;
+	}
+
+	if ((roa = calloc(1, sizeof(*roa))) == NULL) {
+		log_warn("rtr %s: received %s",
+		    log_rtr(rs), log_rtr_type(IPV6_PREFIX));
+		rtr_send_error(rs, INTERNAL_ERROR, "out of memory", NULL, 0);
 		return -1;
 	}
 	roa->aid = AID_INET6;
