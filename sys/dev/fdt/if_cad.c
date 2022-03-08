@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.10 2022/03/07 13:02:53 visa Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.11 2022/03/08 16:13:08 visa Exp $	*/
 
 /*
  * Copyright (c) 2021-2022 Visa Hankala
@@ -578,6 +578,11 @@ cad_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
+		break;
+
+	case SIOCGIFRXR:
+		error = if_rxr_ioctl((struct if_rxrinfo *)ifr->ifr_data,
+		    NULL, MCLBYTES, &sc->sc_rx_ring);
 		break;
 
 	default:
