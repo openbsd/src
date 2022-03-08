@@ -300,7 +300,6 @@
 ./usr/include/dev/ic/lancevar.h
 ./usr/include/dev/ic/lemacreg.h
 ./usr/include/dev/ic/lemacvar.h
-./usr/include/dev/ic/lm700x.h
 ./usr/include/dev/ic/lm78var.h
 ./usr/include/dev/ic/lptreg.h
 ./usr/include/dev/ic/lptvar.h
@@ -343,7 +342,6 @@
 ./usr/include/dev/ic/pgtreg.h
 ./usr/include/dev/ic/pgtvar.h
 ./usr/include/dev/ic/pluartvar.h
-./usr/include/dev/ic/pt2254a.h
 ./usr/include/dev/ic/qlareg.h
 ./usr/include/dev/ic/qlavar.h
 ./usr/include/dev/ic/qlwreg.h
@@ -382,7 +380,6 @@
 ./usr/include/dev/ic/smc93cx6var.h
 ./usr/include/dev/ic/stireg.h
 ./usr/include/dev/ic/stivar.h
-./usr/include/dev/ic/tc921x.h
 ./usr/include/dev/ic/tcic2reg.h
 ./usr/include/dev/ic/tcic2var.h
 ./usr/include/dev/ic/tea5757.h
@@ -398,8 +395,6 @@
 ./usr/include/dev/ic/w83l518d_sdmmc.h
 ./usr/include/dev/ic/w83l518dreg.h
 ./usr/include/dev/ic/w83l518dvar.h
-./usr/include/dev/ic/wd33c93reg.h
-./usr/include/dev/ic/wd33c93var.h
 ./usr/include/dev/ic/wdcevent.h
 ./usr/include/dev/ic/wdcreg.h
 ./usr/include/dev/ic/wdcvar.h
