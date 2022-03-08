@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.30 2022/02/16 06:23:42 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.31 2022/03/08 12:47:33 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -30,6 +30,8 @@
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
+
+#define DEVNAME(sc)	((sc)->sc_hdev.sc_dev.dv_xname)
 
 /* #define UCC_DEBUG */
 #ifdef UCC_DEBUG
@@ -711,14 +713,14 @@ ucc_intr(struct uhidev *addr, void *data, u_int len)
 	ucc_dump(__func__, data, len);
 
 	if (len > sc->sc_input.i_bufsiz) {
-		DPRINTF("%s: too much data: len %d, bufsiz %d\n", __func__,
+		DPRINTF("%s: too much data: len %d, bufsiz %d\n", DEVNAME(sc),
 		    len, sc->sc_input.i_bufsiz);
 		return;
 	}
 
 	error = ucc_intr_slice(sc, data, buf, &len);
 	if (error) {
-		DPRINTF("%s: slice failure: error %d\n", __func__, error);
+		DPRINTF("%s: slice failure: error %d\n", DEVNAME(sc), error);
 		return;
 	}
 
@@ -768,7 +770,7 @@ ucc_intr(struct uhidev *addr, void *data, u_int len)
 	return;
 
 unknown:
-	DPRINTF("%s: unknown key: bit %d\n", __func__, bit);
+	DPRINTF("%s: unknown key: bit %d\n", DEVNAME(sc), bit);
 }
 
 void
@@ -964,7 +966,7 @@ ucc_hid_parse(struct ucc_softc *sc, void *desc, int descsiz)
 	}
 	hid_end_parse(hd);
 
-	DPRINTF("%s: input: off %d, len %d\n", __func__,
+	DPRINTF("%s: input: off %d, len %d\n", DEVNAME(sc),
 	    sc->sc_input.i_off, sc->sc_input.i_len);
 
 	return error;
@@ -1021,7 +1023,7 @@ ucc_add_key(struct ucc_softc *sc, int32_t usage, u_int bit)
 		sc->sc_raw[bit] = us;
 	}
 
-	DPRINTF("%s: bit %d, usage \"%s\"\n", __func__,
+	DPRINTF("%s: bit %d, usage \"%s\"\n", DEVNAME(sc),
 	    bit, us->us_name);
 	return 0;
 }
@@ -1054,7 +1056,7 @@ ucc_add_key_volume(struct ucc_softc *sc, const struct hid_item *hi,
 	sc->sc_volume.v_len = len;
 
 	DPRINTF("%s: inc %d, dec %d, off %d, len %d, min %d, max %d\n",
-	    __func__, sc->sc_volume.v_inc, sc->sc_volume.v_dec,
+	    DEVNAME(sc), sc->sc_volume.v_inc, sc->sc_volume.v_dec,
 	    sc->sc_volume.v_off, sc->sc_volume.v_len,
 	    hi->logical_minimum, hi->logical_maximum);
 
