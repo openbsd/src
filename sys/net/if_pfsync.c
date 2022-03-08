@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.300 2022/02/25 22:18:44 bluhm Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.301 2022/03/08 20:46:01 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -212,7 +212,7 @@ struct pfsync_softc {
 	struct ip		 sc_template;
 
 	struct pf_state_queue	 sc_qs[PFSYNC_S_COUNT];
-	struct mutex		 sc_mtx[PFSYNC_S_COUNT];
+	struct mutex		 sc_st_mtx;
 	size_t			 sc_len;
 
 	struct pfsync_upd_reqs	 sc_upd_req_list;
@@ -324,13 +324,6 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 	struct pfsync_softc *sc;
 	struct ifnet *ifp;
 	int q;
-	static const char *mtx_names[] = {
-		"iack_mtx",
-		"upd_c_mtx",
-		"del_mtx",
-		"ins_mtx",
-		"upd_mtx",
-		"" };
 
 	if (unit != 0)
 		return (EINVAL);
@@ -338,10 +331,9 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 	pfsync_sync_ok = 1;
 
 	sc = malloc(sizeof(*pfsyncif), M_DEVBUF, M_WAITOK|M_ZERO);
-	for (q = 0; q < PFSYNC_S_COUNT; q++) {
+	for (q = 0; q < PFSYNC_S_COUNT; q++)
 		TAILQ_INIT(&sc->sc_qs[q]);
-		mtx_init_flags(&sc->sc_mtx[q], IPL_SOFTNET, mtx_names[q], 0);
-	}
+	mtx_init_flags(&sc->sc_st_mtx, IPL_SOFTNET, "st_mtx", 0);
 
 	pool_init(&sc->sc_pool, PFSYNC_PLSIZE, 0, IPL_SOFTNET, 0, "pfsync",
 	    NULL);
@@ -1585,9 +1577,7 @@ pfsync_grab_snapshot(struct pfsync_snapshot *sn, struct pfsync_softc *sc)
 
 	sn->sn_sc = sc;
 
-	for (q = 0; q < PFSYNC_S_COUNT; q++)
-		mtx_enter(&sc->sc_mtx[q]);
-
+	mtx_enter(&sc->sc_st_mtx);
 	mtx_enter(&sc->sc_upd_req_mtx);
 	mtx_enter(&sc->sc_tdb_mtx);
 
@@ -1612,9 +1602,7 @@ pfsync_grab_snapshot(struct pfsync_snapshot *sn, struct pfsync_softc *sc)
 
 	mtx_leave(&sc->sc_tdb_mtx);
 	mtx_leave(&sc->sc_upd_req_mtx);
-
-	for (q = (PFSYNC_S_COUNT - 1); q >= 0; q--)
-		mtx_leave(&sc->sc_mtx[q]);
+	mtx_leave(&sc->sc_st_mtx);
 }
 
 void
@@ -2420,14 +2408,14 @@ pfsync_q_ins(struct pf_state *st, int q)
 		panic("pfsync pkt len is too low %zd", sc->sc_len);
 #endif
 	do {
-		mtx_enter(&sc->sc_mtx[q]);
+		mtx_enter(&sc->sc_st_mtx);
 
 		/*
 		 * If two threads are competing to insert the same state, then
 		 * there must be just single winner.
 		 */
 		if (st->sync_state != PFSYNC_S_NONE) {
-			mtx_leave(&sc->sc_mtx[q]);
+			mtx_leave(&sc->sc_st_mtx);
 			break;
 		}
 
@@ -2439,7 +2427,7 @@ pfsync_q_ins(struct pf_state *st, int q)
 		sc_len = atomic_add_long_nv(&sc->sc_len, nlen);
 		if (sc_len > sc->sc_if.if_mtu) {
 			atomic_sub_long(&sc->sc_len, nlen);
-			mtx_leave(&sc->sc_mtx[q]);
+			mtx_leave(&sc->sc_st_mtx);
 			pfsync_sendout();
 			continue;
 		}
@@ -2448,7 +2436,7 @@ pfsync_q_ins(struct pf_state *st, int q)
 
 		TAILQ_INSERT_TAIL(&sc->sc_qs[q], st, sync_list);
 		st->sync_state = q;
-		mtx_leave(&sc->sc_mtx[q]);
+		mtx_leave(&sc->sc_st_mtx);
 	} while (0);
 }
 
@@ -2456,18 +2444,19 @@ void
 pfsync_q_del(struct pf_state *st)
 {
 	struct pfsync_softc *sc = pfsyncif;
-	int q = st->sync_state;
+	int q;
 
 	KASSERT(st->sync_state != PFSYNC_S_NONE);
 
-	mtx_enter(&sc->sc_mtx[q]);
+	mtx_enter(&sc->sc_st_mtx);
+	q = st->sync_state;
 	atomic_sub_long(&sc->sc_len, pfsync_qs[q].len);
 	TAILQ_REMOVE(&sc->sc_qs[q], st, sync_list);
 	if (TAILQ_EMPTY(&sc->sc_qs[q]))
 		atomic_sub_long(&sc->sc_len, sizeof (struct pfsync_subheader));
-	mtx_leave(&sc->sc_mtx[q]);
-
 	st->sync_state = PFSYNC_S_NONE;
+	mtx_leave(&sc->sc_st_mtx);
+
 	pf_state_unref(st);
 }
 
