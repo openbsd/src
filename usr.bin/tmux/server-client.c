@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.391 2022/02/16 18:55:05 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.392 2022/03/08 12:01:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -425,6 +425,7 @@ server_client_lost(struct client *c)
 	if (c->flags & CLIENT_TERMINAL)
 		tty_free(&c->tty);
 	free(c->ttyname);
+	free(c->clipboard_panes);
 
 	free(c->term_name);
 	free(c->term_type);

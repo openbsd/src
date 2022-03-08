@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1162 2022/03/08 11:28:40 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1163 2022/03/08 12:01:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1331,7 +1331,7 @@ LIST_HEAD(tty_terms, tty_term);
 struct tty {
 	struct client	*client;
 	struct event	 start_timer;
-	struct event	 query_timer;
+	struct event	 clipboard_timer;
 
 	u_int		 sx;
 	u_int		 sy;
@@ -1764,6 +1764,7 @@ struct client {
 #define CLIENT_CONTROL_PAUSEAFTER 0x100000000ULL
 #define CLIENT_CONTROL_WAITEXIT 0x200000000ULL
 #define CLIENT_WINDOWSIZECHANGED 0x400000000ULL
+#define CLIENT_CLIPBOARDBUFFER 0x800000000ULL
 #define CLIENT_ALLREDRAWFLAGS		\
 	(CLIENT_REDRAWWINDOW|		\
 	 CLIENT_REDRAWSTATUS|		\
@@ -1843,6 +1844,9 @@ struct client {
 	struct event		 overlay_timer;
 
 	struct client_files	 files;
+
+	u_int			*clipboard_panes;
+	u_int			 clipboard_npanes;
 
 	TAILQ_ENTRY(client)	 entry;
 };
@@ -2232,7 +2236,7 @@ void	tty_reset(struct tty *);
 void	tty_region_off(struct tty *);
 void	tty_margin_off(struct tty *);
 void	tty_cursor(struct tty *, u_int, u_int);
-void	tty_send_osc52_query(struct tty *);
+void	tty_clipboard_query(struct tty *);
 void	tty_putcode(struct tty *, enum tty_code_code);
 void	tty_putcode1(struct tty *, enum tty_code_code, int);
 void	tty_putcode2(struct tty *, enum tty_code_code, int, int);
@@ -2678,6 +2682,8 @@ void	 input_parse_pane(struct window_pane *);
 void	 input_parse_buffer(struct window_pane *, u_char *, size_t);
 void	 input_parse_screen(struct input_ctx *, struct screen *,
 	     screen_write_init_ctx_cb, void *, u_char *, size_t);
+void	 input_reply_clipboard(struct bufferevent *, const char *, size_t,
+	     const char *);
 
 /* input-key.c */
 void	 input_key_build(void);

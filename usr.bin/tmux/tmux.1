@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.880 2022/03/08 11:28:40 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.881 2022/03/08 12:01:19 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -1338,11 +1338,12 @@ and sets an environment variable for the newly created session; it may be
 specified multiple times.
 .Tg refresh
 .It Xo Ic refresh-client
-.Op Fl cDlLRSU
+.Op Fl cDLRSU
 .Op Fl A Ar pane:state
 .Op Fl B Ar name:what:format
 .Op Fl C Ar size
 .Op Fl f Ar flags
+.Op Fl l Op Ar target-pane
 .Op Fl t Ar target-client
 .Op Ar adjustment
 .Xc
@@ -1456,7 +1457,11 @@ sets a comma-separated list of client flags, see
 .Fl l
 requests the clipboard from the client using the
 .Xr xterm 1
-escape sequence and stores it in a new paste buffer.
+escape sequence.
+If
+Ar target-pane
+is given, the clipboard is sent (in encoded form), otherwise it is stored in a
+new paste buffer.
 .Pp
 .Fl L ,
 .Fl R ,
