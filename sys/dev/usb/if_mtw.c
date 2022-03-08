@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtw.c,v 1.3 2021/12/30 15:09:49 kevlo Exp $	*/
+/*	$OpenBSD: if_mtw.c,v 1.4 2022/03/08 06:05:58 hastings Exp $	*/
 /*
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2013-2014 Kevin Lo
@@ -917,6 +917,7 @@ mtw_write_cfg(struct mtw_softc *sc, uint16_t reg, uint32_t val)
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, reg);
 	USETW(req.wLength, 4);
+	val = htole32(val);
 	error = usbd_do_request(sc->sc_udev, &req, &val);
 	return error;
 }
