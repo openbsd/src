@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucc.c,v 1.31 2022/03/08 12:47:33 anton Exp $	*/
+/*	$OpenBSD: ucc.c,v 1.32 2022/03/08 19:32:41 anton Exp $	*/
 
 /*
  * Copyright (c) 2021 Anton Lindqvist <anton@openbsd.org>
@@ -36,11 +36,12 @@
 /* #define UCC_DEBUG */
 #ifdef UCC_DEBUG
 #define DPRINTF(x...)	do { if (ucc_debug) printf(x); } while (0)
-void	ucc_dump(const char *, uint8_t *, u_int);
+struct ucc_softc;
+void	ucc_dump(struct ucc_softc *, const char *, uint8_t *, u_int);
 int	ucc_debug = 1;
 #else
 #define DPRINTF(x...)
-#define ucc_dump(prefix, data, len)
+#define ucc_dump(sc, prefix, data, len)
 #endif
 
 struct ucc_softc {
@@ -710,7 +711,7 @@ ucc_intr(struct uhidev *addr, void *data, u_int len)
 	int error;
 	u_int bit = 0;
 
-	ucc_dump(__func__, data, len);
+	ucc_dump(sc, __func__, data, len);
 
 	if (len > sc->sc_input.i_bufsiz) {
 		DPRINTF("%s: too much data: len %d, bufsiz %d\n", DEVNAME(sc),
@@ -725,7 +726,7 @@ ucc_intr(struct uhidev *addr, void *data, u_int len)
 	}
 
 	/* Dump the buffer again after slicing. */
-	ucc_dump(__func__, buf, len);
+	ucc_dump(sc, __func__, buf, len);
 
 	if (ucc_setbits(sc, buf, len, &bit)) {
 		/* All zeroes, assume key up event. */
@@ -1231,14 +1232,14 @@ ucc_setbits(struct ucc_softc *sc, uint8_t *data, int len, u_int *bit)
 #ifdef UCC_DEBUG
 
 void
-ucc_dump(const char *prefix, uint8_t *data, u_int len)
+ucc_dump(struct ucc_softc *sc, const char *prefix, uint8_t *data, u_int len)
 {
 	u_int i;
 
 	if (ucc_debug == 0)
 		return;
 
-	printf("%s:", prefix);
+	printf("%s: %s:", DEVNAME(sc), prefix);
 	for (i = 0; i < len; i++)
 		printf(" %02x", data[i]);
 	printf("\n");
