@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-list-clients.c,v 1.38 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-list-clients.c,v 1.39 2022/03/08 11:28:40 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -31,6 +31,8 @@
 #define LIST_CLIENTS_TEMPLATE						\
 	"#{client_name}: #{session_name} "				\
 	"[#{client_width}x#{client_height} #{client_termname}] "	\
+	"#{?#{!=:#{client_uid},#{uid}},"				\
+	"[user #{?client_user,#{client_user},#{client_uid},}] ,}"	\
 	"#{?client_flags,(,}#{client_flags}#{?client_flags,),}"
 
 static enum cmd_retval	cmd_list_clients_exec(struct cmd *, struct cmdq_item *);
