@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.712 2022/03/07 23:40:53 jsg Exp $
+#	$OpenBSD: files,v 1.713 2022/03/08 00:13:19 jsg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -28,9 +28,6 @@ define firmload
 
 # radio device attributes
 define tea5757
-define lm700x
-define tc921x
-define pt2254a
 
 device	video
 attach	video at video
@@ -653,9 +650,6 @@ file dev/firmload.c			firmload
 file dev/ic/dp8390.c			dp8390nic
 file dev/ic/rtl80x9.c			rtl80x9
 file dev/ic/tea5757.c			tea5757
-file dev/ic/lm700x.c			lm700x
-file dev/ic/tc921x.c			tc921x
-file dev/ic/pt2254a.c			pt2254a
 file dev/midi.c				midi | midibus		needs-flag
 file dev/mulaw.c			audio			needs-flag
 file dev/vnd.c				vnd			needs-flag
