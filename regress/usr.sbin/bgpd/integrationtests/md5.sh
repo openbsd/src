@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: md5.sh,v 1.4 2019/08/06 07:31:53 claudio Exp $
+#	$OpenBSD: md5.sh,v 1.5 2022/03/08 17:20:52 claudio Exp $
 
 set -e
 
@@ -67,10 +67,11 @@ ifconfig lo${RDOMAIN2} inet 127.0.0.1/8
 echo run bgpds
 route -T ${RDOMAIN1} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.md5.rdomain1.conf
+sleep 1
 route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.md5.rdomain2.conf
 
-sleep 3
+sleep 2
 
 echo test1
 route -T ${RDOMAIN1} exec bgpctl sh sum | \
