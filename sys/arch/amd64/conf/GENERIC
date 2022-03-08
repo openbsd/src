@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.511 2022/02/08 17:25:11 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.512 2022/03/08 15:08:01 hastings Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -324,7 +324,7 @@ uath*	at uhub?		# Atheros AR5005UG/AR5005UX
 ural*	at uhub?		# Ralink RT2500USB
 rum*	at uhub?		# Ralink RT2501USB/RT2601USB
 run*	at uhub?		# Ralink RT2700U/RT2800U/RT3000U
-#mtw*	at uhub?		# MediaTek MT7601U
+mtw*	at uhub?		# MediaTek MT7601U
 otus*	at uhub?		# Atheros AR9001U
 athn*	at uhub?		# Atheros AR9002U
 zyd*	at uhub?		# Zydas ZD1211

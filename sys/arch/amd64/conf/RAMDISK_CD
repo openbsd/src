@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.198 2022/01/02 23:14:26 jsg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.199 2022/03/08 15:08:01 hastings Exp $
 
 machine		amd64
 maxusers	4
@@ -133,7 +133,7 @@ ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host
 ural*		at uhub?		# Ralink RT2500
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 run*		at uhub?		# Ralink RT2700U/RT2800U/RT3000U
-#mtw*		at uhub?		# MediaTek MT7601U
+mtw*		at uhub?		# MediaTek MT7601U
 zyd*		at uhub?		# Zydas ZD1211
 upgt*		at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
 urtw*		at uhub?		# Realtek 8187
