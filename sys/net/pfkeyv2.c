@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.231 2022/02/25 23:51:03 guenther Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.232 2022/03/08 22:30:38 bluhm Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1996,7 +1996,7 @@ pfkeyv2_send(struct socket *so, void *message, int len)
 
 			TAILQ_INIT(&ipo->ipo_acquires);
 			ipo->ipo_rdomain = rdomain;
-			ipo->ipo_ref_count = 1;
+			refcnt_init(&ipo->ipo_refcnt);
 
 			/* Add SPD entry */
 			if ((rnh = spd_table_get(rdomain)) == NULL ||
