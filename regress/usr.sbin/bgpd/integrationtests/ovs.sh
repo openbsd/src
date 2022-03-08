@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: ovs.sh,v 1.3 2019/08/06 07:31:53 claudio Exp $
+#	$OpenBSD: ovs.sh,v 1.4 2022/03/08 07:50:34 claudio Exp $
 
 set -e
 
@@ -75,14 +75,14 @@ ifconfig lo${RDOMAIN1} inet 127.0.0.1/8
 ifconfig lo${RDOMAIN2} inet 127.0.0.1/8
 
 echo add routes
+route -T ${RDOMAIN1} exec ${BGPD} \
+	-v -f ${BGPDCONFIGDIR}/bgpd.ovs.rdomain1.conf
 route -T ${RDOMAIN2} add ${PAIR2STATIC} ${PAIR1IP}
 ifconfig ${PAIR2} alias ${PAIR2CONNIP}/${PAIR2CONNPREF}
 route -T ${RDOMAIN2} add -label PAIR2RTABLE ${PAIR2RTABLE} \
 	${PAIR1IP}
 route -T ${RDOMAIN2} add -priority 55 ${PAIR2PRIORITY} \
 	${PAIR1IP}
-route -T ${RDOMAIN1} exec ${BGPD} \
-	-v -f ${BGPDCONFIGDIR}/bgpd.ovs.rdomain1.conf
 route -T ${RDOMAIN2} exec ${BGPD} \
 	-v -f ${BGPDCONFIGDIR}/bgpd.ovs.rdomain2.conf
 
