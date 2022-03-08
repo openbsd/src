@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1163 2022/03/08 12:01:19 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1164 2022/03/08 18:31:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1026,6 +1026,7 @@ struct window_pane {
 	pid_t		 pid;
 	char		 tty[TTY_NAME_MAX];
 	int		 status;
+	struct timeval	 dead_time;
 
 	int		 fd;
 	struct bufferevent *event;

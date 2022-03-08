@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.158 2022/02/17 09:58:47 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.159 2022/03/08 18:31:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1059,6 +1059,19 @@ const struct options_table_entry options_table[] = {
 	  .default_num = 0,
 	  .text = "Whether panes should remain ('on') or be automatically "
 		  "killed ('off' or 'failed') when the program inside exits."
+	},
+
+	{ .name = "remain-on-exit-format",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .default_str = "Pane is dead ("
+			 "#{?#{!=:#{pane_dead_status},},"
+	                 "status #{pane_dead_status},}"
+			 "#{?#{!=:#{pane_dead_signal},},"
+	                 "signal #{pane_dead_signal},}, "
+			 "#{t:pane_dead_time})",
+	  .text = "Message shown after the program in a pane has exited, if "
+	          "remain-on-exit is enabled."
 	},
 
 	{ .name = "synchronize-panes",
