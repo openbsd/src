@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.4 2021/10/09 08:38:13 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.5 2022/03/08 06:56:14 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -846,6 +846,7 @@ int	aq_set_linkmode(struct aq_softc *, enum aq_link_speed,
     enum aq_link_fc, enum aq_link_eee);
 void	aq_watchdog(struct ifnet *);
 void	aq_enable_intr(struct aq_softc *, int, int);
+int	aq_rxrinfo(struct aq_softc *, struct if_rxrinfo *);
 int	aq_ioctl(struct ifnet *, u_long, caddr_t);
 int	aq_up(struct aq_softc *);
 void	aq_down(struct aq_softc *);
@@ -2665,6 +2666,28 @@ aq_update_link_status(struct aq_softc *sc)
 	}
 }
 
+int
+aq_rxrinfo(struct aq_softc *sc, struct if_rxrinfo *ifri)
+{
+	struct if_rxring_info *ifr;
+	int i;
+	int error;
+
+	ifr = mallocarray(sc->sc_nqueues, sizeof(*ifr), M_TEMP,
+	    M_WAITOK | M_ZERO | M_CANFAIL);
+	if (ifr == NULL)
+		return (ENOMEM);
+
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		ifr[i].ifr_size = MCLBYTES;
+		ifr[i].ifr_info = sc->sc_queues[i].q_rx.rx_rxr;
+	}
+
+	error = if_rxr_info_ioctl(ifri, sc->sc_nqueues, ifr);
+	free(ifr, M_TEMP, sc->sc_nqueues * sizeof(*ifr));
+
+	return (error);
+}
 
 int
 aq_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
@@ -2696,6 +2719,11 @@ aq_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
+
+	case SIOCGIFRXR:
+		error = aq_rxrinfo(sc, (struct if_rxrinfo *)ifr->ifr_data);
+		break;
+
 	default:
 		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
 	}
