@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.186 2021/08/09 16:41:21 espie Exp $
+# $OpenBSD: Add.pm,v 1.187 2022/03/09 12:27:51 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -76,7 +76,7 @@ sub record_partial_installation
 	$n->set_pkgname($borked);
 
 	# last file may have not copied correctly
-	my $last = $n->{state}->{lastfile};
+	my $last = $n->{state}{lastfile};
 	if (defined $last && defined($last->{d})) {
 
 		my $old = $last->{d};
@@ -308,6 +308,12 @@ sub find_extractible
 {
 	my ($self, $state, $wanted, $tied) = @_;
 	$state->{partial}{$self} = 1;
+}
+
+package OpenBSD::PackingElement::Cwd;
+sub find_extractible
+{
+	&OpenBSD::PackingElement::Meta::find_extractible;
 }
 
 package OpenBSD::PackingElement::ExtraInfo;
