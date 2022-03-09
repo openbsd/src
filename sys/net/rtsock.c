@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.326 2022/02/25 23:51:03 guenther Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.327 2022/03/09 17:29:52 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -2218,9 +2218,12 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 		*given = w.w_where - (caddr_t)where;
 		if (*given < w.w_needed)
 			return (ENOMEM);
-	} else
-		*given = w.w_needed + w.w_needed / 10;
-
+	} else if (w.w_needed == 0) {
+		*given = 0;
+	} else {
+		*given = roundup(w.w_needed + MAX(w.w_needed / 10, 1024),
+		    PAGE_SIZE);
+	}
 	return (error);
 }
 
