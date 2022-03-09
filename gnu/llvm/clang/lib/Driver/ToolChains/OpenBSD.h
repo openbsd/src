@@ -81,7 +81,12 @@ public:
                             FileType Type = ToolChain::FT_Static) const override;
 
   bool IsUnwindTablesDefault(const llvm::opt::ArgList &Args) const override {
-    return true;
+    switch (getArch()) {
+      case llvm::Triple::arm:
+        return false;
+      default:
+        return true;
+    }
   }
 
   LangOptions::StackProtectorMode
