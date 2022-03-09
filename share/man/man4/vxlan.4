@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vxlan.4,v 1.15 2022/02/24 03:57:06 dlg Exp $
+.\"	$OpenBSD: vxlan.4,v 1.16 2022/03/09 12:19:25 jsg Exp $
 .\"
 .\" Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 24 2022 $
+.Dd $Mdocdate: March 9 2022 $
 .Dt VXLAN 4
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ VXLAN datagrams consist of an Ethernet payload encapsulated by an
 headers.
 Different VXLAN tunnels or overlays between the same VXLAN Tunnel
 Endpoints (VTEPs) can be distinguished by an optional 24-bit Virtual
-Network Idenfitier (VNI).
+Network Identifier (VNI).
 .Pp
 A
 .Nm
