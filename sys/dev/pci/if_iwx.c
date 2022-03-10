@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.135 2022/03/10 15:21:08 bluhm Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.136 2022/03/10 21:00:51 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8017,7 +8017,7 @@ iwx_init(struct ifnet *ifp)
 	if (sc->sc_nvm.sku_cap_11n_enable)
 		iwx_setup_ht_rates(sc);
 
-	KASSERT(atomic_load_int(&sc->task_refs.r_refs) == 0);
+	KASSERT(sc->task_refs.r_refs == 0);
 	refcnt_init(&sc->task_refs);
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_flags |= IFF_RUNNING;
@@ -8139,7 +8139,7 @@ iwx_stop(struct ifnet *ifp)
 	iwx_del_task(sc, systq, &sc->mac_ctxt_task);
 	iwx_del_task(sc, systq, &sc->phy_ctxt_task);
 	iwx_del_task(sc, systq, &sc->bgscan_done_task);
-	KASSERT(atomic_load_int(&sc->task_refs.r_refs) >= 1);
+	KASSERT(sc->task_refs.r_refs >= 1);
 	refcnt_finalize(&sc->task_refs, "iwxstop");
 
 	iwx_stop_device(sc);

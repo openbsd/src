@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.392 2022/03/10 15:21:08 bluhm Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.393 2022/03/10 21:00:51 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9975,7 +9975,7 @@ iwm_init(struct ifnet *ifp)
 
 	generation = ++sc->sc_generation;
 
-	KASSERT(atomic_load_int(&sc->task_refs.r_refs) == 0);
+	KASSERT(sc->task_refs.r_refs == 0);
 	refcnt_init(&sc->task_refs);
 
 	err = iwm_preinit(sc);
@@ -10116,7 +10116,7 @@ iwm_stop(struct ifnet *ifp)
 	iwm_del_task(sc, systq, &sc->mac_ctxt_task);
 	iwm_del_task(sc, systq, &sc->phy_ctxt_task);
 	iwm_del_task(sc, systq, &sc->bgscan_done_task);
-	KASSERT(atomic_load_int(&sc->task_refs.r_refs) >= 1);
+	KASSERT(sc->task_refs.r_refs >= 1);
 	refcnt_finalize(&sc->task_refs, "iwmstop");
 
 	iwm_stop_device(sc);
