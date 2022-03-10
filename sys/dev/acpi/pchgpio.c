@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchgpio.c,v 1.10 2021/12/21 20:53:46 kettenis Exp $	*/
+/*	$OpenBSD: pchgpio.c,v 1.11 2022/03/10 10:30:10 hastings Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  * Copyright (c) 2020 James Hastings
@@ -107,12 +107,75 @@ struct cfdriver pchgpio_cd = {
 };
 
 const char *pchgpio_hids[] = {
+	"INT344B",
 	"INT3450",
+	"INT3451",
+	"INT345D",
 	"INT34BB",
 	"INT34C5",
 	"INT34C6",
 	NULL
 };
+
+/* Sunrisepoint-LP */
+
+const struct pchgpio_group spt_lp_groups[] =
+{
+	/* Community 0 */
+	{ 0, 0, 0, 23, 0 },		/* GPP_A */
+	{ 0, 1, 24, 47, 24 },		/* GPP_B */
+
+	/* Community 1 */
+	{ 1, 0, 48, 71, 48 },		/* GPP_C */
+	{ 1, 1, 72, 95, 72 },		/* GPP_D */
+	{ 1, 2, 96, 119, 96 },		/* GPP_E */
+	
+	/* Community 3 */
+	{ 2, 0, 120, 143, 120 },	/* GPP_F */
+	{ 2, 1, 144, 151, 144 },	/* GPP_G */
+};
+
+const struct pchgpio_device spt_lp_device =
+{
+	.pad_size = 8,
+	.gpi_is = 0x100,
+	.gpi_ie = 0x120,
+	.groups = spt_lp_groups,
+	.ngroups = nitems(spt_lp_groups),
+	.npins = 176,
+};
+
+/* Sunrisepoint-H */
+
+const struct pchgpio_group spt_h_groups[] =
+{
+	/* Community 0 */
+	{ 0, 0, 0, 23, 0 },		/* GPP_A */
+	{ 0, 1, 24, 47, 24 },		/* GPP_B */
+
+	/* Community 1 */
+	{ 1, 0, 48, 71, 48 },		/* GPP_C */
+	{ 1, 1, 72, 95, 72 },		/* GPP_D */
+	{ 1, 2, 96, 108, 96 },		/* GPP_E */
+	{ 1, 3, 109, 132, 120 },	/* GPP_F */
+	{ 1, 4, 133, 156, 144 },	/* GPP_G */
+	{ 1, 5, 157, 180, 168 },	/* GPP_H */
+
+	/* Community 3 */
+	{ 2, 0, 181, 191, 192 },	/* GPP_I */
+};
+
+const struct pchgpio_device spt_h_device =
+{
+	.pad_size = 8,
+	.gpi_is = 0x100,
+	.gpi_ie = 0x120,
+	.groups = spt_h_groups,
+	.ngroups = nitems(spt_h_groups),
+	.npins = 224,
+};
+
+/* Cannon Lake-H */
 
 const struct pchgpio_group cnl_h_groups[] =
 {
@@ -146,6 +209,8 @@ const struct pchgpio_device cnl_h_device =
 	.npins = 384,
 };
 
+/* Cannon Lake-LP */
+
 const struct pchgpio_group cnl_lp_groups[] =
 {
 	/* Community 0 */
@@ -172,6 +237,8 @@ const struct pchgpio_device cnl_lp_device =
 	.ngroups = nitems(cnl_lp_groups),
 	.npins = 320,
 };
+
+/* Tiger Lake-LP */
 
 const struct pchgpio_group tgl_lp_groups[] =
 {
@@ -204,6 +271,8 @@ const struct pchgpio_device tgl_lp_device =
 	.ngroups = nitems(tgl_lp_groups),
 	.npins = 360,
 };
+
+/* Tiger Lake-H */
 
 const struct pchgpio_group tgl_h_groups[] =
 {
@@ -242,7 +311,10 @@ const struct pchgpio_device tgl_h_device =
 };
 
 struct pchgpio_match pchgpio_devices[] = {
+	{ "INT344B", &spt_lp_device },
 	{ "INT3450", &cnl_h_device },
+	{ "INT3451", &spt_h_device },
+	{ "INT345D", &spt_h_device },
 	{ "INT34BB", &cnl_lp_device },
 	{ "INT34C5", &tgl_lp_device },
 	{ "INT34C6", &tgl_h_device },
@@ -465,11 +537,38 @@ pchgpio_intr_establish(void *cookie, int pin, int flags,
 }
 
 int
+pchgpio_intr_handle(struct pchgpio_softc *sc, int group, int bit)
+{
+	uint32_t enable;
+	int gpiobase, pin, handled = 0;
+	uint8_t bank, bar;
+
+	bar = sc->sc_device->groups[group].bar;
+	bank = sc->sc_device->groups[group].bank;
+	gpiobase = sc->sc_device->groups[group].gpiobase;
+
+	pin = gpiobase + bit;
+	if (sc->sc_pin_ih[pin].ih_func) {
+		sc->sc_pin_ih[pin].ih_func(sc->sc_pin_ih[pin].ih_arg);
+		handled = 1;
+	} else {
+		/* Mask unhandled interrupt */
+		enable = bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
+		    sc->sc_device->gpi_ie + bank * 4);
+		enable &= ~(1 << bit);
+		bus_space_write_4(sc->sc_memt[bar], sc->sc_memh[bar],
+		    sc->sc_device->gpi_ie + bank * 4, enable);
+	}
+
+	return handled;
+}
+
+int
 pchgpio_intr(void *arg)
 {
 	struct pchgpio_softc *sc = arg;
 	uint32_t status, enable;
-	int gpiobase, group, bit, pin, handled = 0;
+	int group, bit, handled = 0;
 	uint16_t base, limit;
 	uint8_t bank, bar;
 
@@ -478,7 +577,6 @@ pchgpio_intr(void *arg)
 		bank = sc->sc_device->groups[group].bank;
 		base = sc->sc_device->groups[group].base;
 		limit = sc->sc_device->groups[group].limit;
-		gpiobase = sc->sc_device->groups[group].gpiobase;
 
 		status = bus_space_read_4(sc->sc_memt[bar], sc->sc_memh[bar],
 		    sc->sc_device->gpi_is + bank * 4);
@@ -491,10 +589,8 @@ pchgpio_intr(void *arg)
 			continue;
 
 		for (bit = 0; bit <= (limit - base); bit++) {
-			pin = gpiobase + bit;
-			if (status & (1 << bit) && sc->sc_pin_ih[pin].ih_func)
-				sc->sc_pin_ih[pin].ih_func(sc->sc_pin_ih[pin].ih_arg);
-			handled = 1;
+			if (status & (1 << bit))
+				handled |= pchgpio_intr_handle(sc, group, bit);
 		}
 	}
 
