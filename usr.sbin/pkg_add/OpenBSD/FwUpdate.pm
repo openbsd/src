@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.33 2021/10/04 17:05:44 deraadt Exp $
+# $OpenBSD: FwUpdate.pm,v 1.34 2022/03/10 07:18:24 hastings Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -148,7 +148,7 @@ OpenBSD::Auto::cache(updater,
 
 my %possible_drivers = map {($_, "$_-firmware")}
     (qw(acx amdgpu athn bwfm bwi intel inteldrm ipw iwi
-	iwm iwn iwx malo ogx otus pgt radeondrm
+	iwm iwn iwx malo mtw ogx otus pgt radeondrm
 	uath upgt uvideo vmm wpi));
 
 my %match = map {($_, qr{^\Q$_\E\d+\s+at\s})} (keys %possible_drivers);
