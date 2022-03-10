@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.217 2022/02/23 11:20:35 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.218 2022/03/10 01:45:30 jsg Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 23 2022 $
+.Dd $Mdocdate: March 10 2022 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -528,7 +528,7 @@ sessions provide another means to load
 sets into
 .Xr bgpd 8 .
 Changes propagated via the RTR protocol do not need a config reload and are
-immediatly applied.
+immediately applied.
 The union of all
 .Em VRP
 sets received via
