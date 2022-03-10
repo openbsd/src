@@ -3046,6 +3046,7 @@
 ./usr/share/man/man9/atomic_cas_uint.9
 ./usr/share/man/man9/atomic_dec_int.9
 ./usr/share/man/man9/atomic_inc_int.9
+./usr/share/man/man9/atomic_load_int.9
 ./usr/share/man/man9/atomic_setbits_int.9
 ./usr/share/man/man9/atomic_sub_int.9
 ./usr/share/man/man9/atomic_swap_uint.9

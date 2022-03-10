@@ -1,6 +1,7 @@
-/*	$OpenBSD: atomic.h,v 1.6 2019/03/09 06:14:21 visa Exp $ */
+/*	$OpenBSD: atomic.h,v 1.7 2022/03/10 14:12:40 bluhm Exp $ */
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
+ * Copyright (c) 2022 Alexander Bluhm <bluhm@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -194,6 +195,50 @@ atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
 #ifndef atomic_dec_long
 #define atomic_dec_long(_p) ((void)atomic_dec_long_nv(_p))
 #endif
+
+#ifdef _KERNEL
+/*
+ * atomic_load_* - read from memory
+ */
+
+static void membar_datadep_consumer(void);
+
+static inline unsigned int
+atomic_load_int(volatile unsigned int *p)
+{
+	unsigned int v;
+
+	v = *p;
+	membar_datadep_consumer();
+	return v;
+}
+
+static inline unsigned long
+atomic_load_long(volatile unsigned long *p)
+{
+	unsigned long v;
+
+	v = *p;
+	membar_datadep_consumer();
+	return v;
+}
+
+/*
+ * atomic_store_* - write to memory
+ */
+
+static inline void
+atomic_store_int(volatile unsigned int *p, unsigned int v)
+{
+	*p = v;
+}
+
+static inline void
+atomic_store_long(volatile unsigned long *p, unsigned long v)
+{
+	*p = v;
+}
+#endif /* _KERNEL */
 
 /*
  * memory barriers
