@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.161 2022/01/19 02:08:24 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.162 2022/03/10 10:46:56 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1086,8 +1086,6 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 				uvm_pagefree(pg);
 				uvm_unlock_pageq();
 			} else {
-				atomic_clearbits_int(&pg->pg_flags, PG_BUSY);
-				UVM_PAGE_OWN(pg, NULL);
 				rw_enter(pg->uanon->an_lock, RW_WRITE);
 				uvm_anon_release(pg->uanon);
 			}
