@@ -124,8 +124,8 @@ uint32_t RISCV::calcEFlags() const {
       target |= EF_RISCV_RVC;
 
     if ((eflags & EF_RISCV_FLOAT_ABI) != (target & EF_RISCV_FLOAT_ABI))
-      error(toString(f) +
-            ": cannot link object files with different floating-point ABI");
+      warn(toString(f) +
+            ": linking object files with different floating-point ABI");
 
     if ((eflags & EF_RISCV_RVE) != (target & EF_RISCV_RVE))
       error(toString(f) +
