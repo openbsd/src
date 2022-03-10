@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.28 2020/08/09 14:35:32 mvs Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.29 2022/03/10 03:09:55 jsg Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 9 2020 $
+.Dd $Mdocdate: March 10 2022 $
 .Dt NPPPD.CONF 5
 .Os
 .Sh NAME
@@ -570,7 +570,7 @@ so that
 selects this authentication setting only for a user who has the username
 that matches this suffix pattern.
 .\" .It Ic eap-capable Ar yes | no
-.\" Specify whether this authentcation server is able to use EAP.
+.\" Specify whether this authentication server is able to use EAP.
 .\" Default is `yes'.
 .It Ic strip-nt-domain Ar yes | no
 Specify whether
