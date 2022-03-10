@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.182 2022/02/19 23:56:18 deraadt Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.183 2022/03/10 15:21:08 bluhm Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -804,7 +804,7 @@ sys___thrwakeup(struct proc *p, void *v, register_t *retval)
 void
 refcnt_init(struct refcnt *r)
 {
-	r->refs = 1;
+	atomic_store_int(&r->r_refs, 1);
 }
 
 void
@@ -813,10 +813,10 @@ refcnt_take(struct refcnt *r)
 #ifdef DIAGNOSTIC
 	u_int refcnt;
 
-	refcnt = atomic_inc_int_nv(&r->refs);
+	refcnt = atomic_inc_int_nv(&r->r_refs);
 	KASSERT(refcnt != 0);
 #else
-	atomic_inc_int(&r->refs);
+	atomic_inc_int(&r->r_refs);
 #endif
 }
 
@@ -825,7 +825,7 @@ refcnt_rele(struct refcnt *r)
 {
 	u_int refcnt;
 
-	refcnt = atomic_dec_int_nv(&r->refs);
+	refcnt = atomic_dec_int_nv(&r->r_refs);
 	KASSERT(refcnt != ~0);
 
 	return (refcnt == 0);
@@ -844,10 +844,10 @@ refcnt_finalize(struct refcnt *r, const char *wmesg)
 	struct sleep_state sls;
 	u_int refcnt;
 
-	refcnt = atomic_dec_int_nv(&r->refs);
+	refcnt = atomic_dec_int_nv(&r->r_refs);
 	while (refcnt) {
 		sleep_setup(&sls, r, PWAIT, wmesg, 0);
-		refcnt = r->refs;
+		refcnt = atomic_load_int(&r->r_refs);
 		sleep_finish(&sls, refcnt);
 	}
 }
@@ -855,13 +855,13 @@ refcnt_finalize(struct refcnt *r, const char *wmesg)
 void
 cond_init(struct cond *c)
 {
-	c->c_wait = 1;
+	atomic_store_int(&c->c_wait, 1);
 }
 
 void
 cond_signal(struct cond *c)
 {
-	c->c_wait = 0;
+	atomic_store_int(&c->c_wait, 0);
 
 	wakeup_one(c);
 }
@@ -870,12 +870,12 @@ void
 cond_wait(struct cond *c, const char *wmesg)
 {
 	struct sleep_state sls;
-	int wait;
+	unsigned int wait;
 
-	wait = c->c_wait;
+	wait = atomic_load_int(&c->c_wait);
 	while (wait) {
 		sleep_setup(&sls, c, PWAIT, wmesg, 0);
-		wait = c->c_wait;
+		wait = atomic_load_int(&c->c_wait);
 		sleep_finish(&sls, wait);
 	}
 }

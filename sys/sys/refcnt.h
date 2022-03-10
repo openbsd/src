@@ -1,4 +1,4 @@
-/*	$OpenBSD: refcnt.h,v 1.4 2016/06/07 07:53:33 mpi Exp $ */
+/*	$OpenBSD: refcnt.h,v 1.5 2022/03/10 15:21:08 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -19,11 +19,16 @@
 #ifndef _SYS_REFCNT_H_
 #define _SYS_REFCNT_H_
 
+/*
+ * Locks used to protect struct members in this file:
+ *	a	atomic operations
+ */
+
 struct refcnt {
-	unsigned int refs;
+	unsigned int	r_refs;		/* [a] reference counter */
 };
 
-#define REFCNT_INITIALIZER()	{ .refs = 1 }
+#define REFCNT_INITIALIZER()		{ .r_refs = 1 }
 
 #ifdef _KERNEL
 
