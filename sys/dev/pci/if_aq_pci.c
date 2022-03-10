@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.5 2022/03/08 06:56:14 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.6 2022/03/10 11:35:13 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -250,6 +250,9 @@
 #define  RPB_RXB_XOFF_EN			(1 << 31)
 #define  RPB_RXB_XOFF_THRESH_HI                 0x3FFF0000
 #define  RPB_RXB_XOFF_THRESH_LO                 0x3FFF
+
+#define RX_DMA_DESC_CACHE_INIT_REG		0x5a00
+#define  RX_DMA_DESC_CACHE_INIT			(1 << 0)
 
 #define RX_DMA_INT_DESC_WRWB_EN_REG		0x5a30
 #define  RX_DMA_INT_DESC_WRWB_EN		(1 << 2)
@@ -2482,11 +2485,23 @@ aq_queue_down(struct aq_softc *sc, struct aq_queues *aq)
 	aq_dmamem_free(sc, &rx->rx_mem);
 }
 
+void
+aq_invalidate_rx_desc_cache(struct aq_softc *sc)
+{
+	uint32_t cache;
+
+	cache = AQ_READ_REG(sc, RX_DMA_DESC_CACHE_INIT_REG);
+	AQ_WRITE_REG_BIT(sc, RX_DMA_DESC_CACHE_INIT_REG, RX_DMA_DESC_CACHE_INIT,
+	    (cache & RX_DMA_DESC_CACHE_INIT) ^ RX_DMA_DESC_CACHE_INIT);
+}
+
 int
 aq_up(struct aq_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i;
+
+	aq_invalidate_rx_desc_cache(sc);
 
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		if (aq_queue_up(sc, &sc->sc_queues[i]) != 0)
@@ -2529,10 +2544,14 @@ aq_down(struct aq_softc *sc)
 	aq_enable_intr(sc, 1, 0);
 	intr_barrier(sc->sc_ih);
 
+	AQ_WRITE_REG_BIT(sc, TPB_TX_BUF_REG, TPB_TX_BUF_EN, 0);
+	AQ_WRITE_REG_BIT(sc, RPB_RPF_RX_REG, RPB_RPF_RX_BUF_EN, 0);
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		/* queue intr barrier? */
 		aq_queue_down(sc, &sc->sc_queues[i]);
 	}
+
+	aq_invalidate_rx_desc_cache(sc);
 }
 
 void
