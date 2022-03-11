@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.53 2022/02/10 11:10:40 tb Exp $  */
+/*	$OpenBSD: http.c,v 1.54 2022/03/11 09:57:54 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1809,6 +1809,9 @@ proc_http(char *bind_addr, int fd)
 		timeout = INFTIM;
 		now = getmonotime();
 		LIST_FOREACH(conn, &active, entry) {
+			if (i >= NPFDS)
+				errx(1, "too many connections");
+
 			if (conn->io_time == 0)
 				conn->io_time = now + HTTP_IO_TIMEOUT;
 
@@ -1828,10 +1831,11 @@ proc_http(char *bind_addr, int fd)
 			pfds[i].events = conn->events;
 			conn->pfd = &pfds[i];
 			i++;
-			if (i > NPFDS)
-				errx(1, "too many connections");
 		}
 		LIST_FOREACH(conn, &idle, entry) {
+			if (i >= NPFDS)
+				errx(1, "too many connections");
+
 			if (conn->idle_time <= now)
 				timeout = 0;
 			else {
@@ -1844,8 +1848,6 @@ proc_http(char *bind_addr, int fd)
 			pfds[i].events = POLLIN;
 			conn->pfd = &pfds[i];
 			i++;
-			if (i > NPFDS)
-				errx(1, "too many connections");
 		}
 
 		if (poll(pfds, i, timeout) == -1) {
