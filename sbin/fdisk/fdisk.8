@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.109 2022/02/03 13:24:04 visa Exp $
+.\"	$OpenBSD: fdisk.8,v 1.110 2022/03/11 22:29:55 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 3 2022 $
+.Dd $Mdocdate: March 11 2022 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -69,6 +69,19 @@ all existing partitions except the boot partitions
 .Sq HiFive FSBL
 and
 .Sq HiFive BBL .
+.Pp
+If one of
+.Sq APFS ISC ,
+.Sq APFS ,
+.Sq APFS Recovry
+is detected then any existing
+.Sq EFI system
+will also be preserved.
+If the preserved
+.Sq EFI system
+partition has fewer blocks than the number requested with
+.Fl b
+the modification of the GPT is aborted.
 .It Fl b Ar blocks Ns Op @ Ns Ar offset Ns Op : Ns Ar type
 Configures a special boot partition of the specified number of blocks, offset
 and type.

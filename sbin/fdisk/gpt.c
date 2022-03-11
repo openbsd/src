@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.58 2022/02/04 23:32:17 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.59 2022/03/11 22:29:55 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -49,6 +49,7 @@ struct gpt_partition	**sort_gpt(void);
 int			  lba_start_cmp(const void *e1, const void *e2);
 int			  lba_free(uint64_t *, uint64_t *);
 int			  add_partition(const uint8_t *, const char *, uint64_t);
+int			  find_partition(const uint8_t *);
 int			  get_header(const uint64_t);
 int			  get_partition_table(void);
 int			  init_gh(void);
@@ -414,6 +415,23 @@ GPT_print_part(const int n, const char *units, const int verbosity)
 }
 
 int
+find_partition(const uint8_t *beuuid)
+{
+	struct uuid		uuid, gp_type;
+	unsigned int		pn, pncnt;
+
+	uuid_dec_be(beuuid, &uuid);
+	uuid_enc_le(&gp_type, &uuid);
+
+	pncnt = letoh32(gh.gh_part_num);
+	for (pn = 0; pn < pncnt; pn++) {
+		if (uuid_compare(&gp[pn].gp_type, &gp_type, NULL) == 0)
+			return pn;
+	}
+	return -1;
+}
+
+int
 add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 {
 	struct uuid		uuid, gp_type;
@@ -529,6 +547,7 @@ init_gp(const int how)
 	struct gpt_partition	oldgp[NGPTPARTITIONS];
 	const uint8_t		gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
 	const uint8_t		gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
+	uint64_t		prt_ns;
 	int			pn, rslt;
 
 	memcpy(&oldgp, &gp, sizeof(oldgp));
@@ -544,8 +563,18 @@ init_gp(const int how)
 
 	rslt = 0;
 	if (disk.dk_bootprt.prt_ns > 0) {
-		rslt = add_partition(gpt_uuid_efi_system, "EFI System Area",
-		    disk.dk_bootprt.prt_ns);
+		pn = find_partition(gpt_uuid_efi_system);
+		if (pn == -1) {
+			rslt = add_partition(gpt_uuid_efi_system,
+			    "EFI System Area", disk.dk_bootprt.prt_ns);
+		} else {
+			prt_ns = gp[pn].gp_lba_end - gp[pn].gp_lba_start + 1;
+			if (prt_ns < disk.dk_bootprt.prt_ns) {
+				printf("EFI System Area < %llu sectors\n",
+				    disk.dk_bootprt.prt_ns);
+				rslt = -1;
+			}
+		}
 	}
 	if (rslt == 0)
 		rslt = add_partition(gpt_uuid_openbsd, "OpenBSD Area", 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.142 2022/02/04 23:32:17 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.143 2022/03/11 22:29:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -167,14 +167,16 @@ main(int argc, char *argv[])
 
 	switch (init) {
 	case INIT_GPT:
-		GPT_init(GHANDGP);
+		if (GPT_init(GHANDGP))
+			errx(1, "-g could not create valid GPT");
 		if (ask_yn("Do you wish to write new GPT?"))
 			Xwrite(NULL, &gmbr);
 		break;
 	case INIT_GPTPARTITIONS:
 		if (GPT_read(ANYGPT))
 			errx(1, "-A requires a valid GPT");
-		GPT_init(GPONLY);
+		if (GPT_init(GPONLY))
+			errx(1, "-A could not create valid GPT");
 		if (ask_yn("Do you wish to write new GPT?"))
 			Xwrite(NULL, &gmbr);
 		break;

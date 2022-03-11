@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.116 2022/02/04 23:32:17 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.117 2022/03/11 22:29:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -29,6 +29,7 @@
 #include "part.h"
 #include "disk.h"
 #include "misc.h"
+#include "gpt.h"
 
 const char		*ascii_id(const int);
 
@@ -183,26 +184,49 @@ const struct gpt_type		gpt_types[] = {
 int
 PRT_protected_guid(const struct uuid *uuid)
 {
-	char			*str = NULL;
+	const uint8_t		 gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
+	struct uuid		 uuid_efi_system;
+	char			*efistr = NULL, *str = NULL;
+	char			*typename;
 	int			 rslt = 0;
 	unsigned int		 i;
 	uint32_t		 status;
 
+	uuid_dec_be(gpt_uuid_efi_system, &uuid_efi_system);
+
+	uuid_to_string(&uuid_efi_system, &efistr, &status);
+	if (status != uuid_s_ok) {
+		rslt = -1;
+		goto done;
+	}
 	uuid_to_string(uuid, &str, &status);
 	if (status != uuid_s_ok) {
 		rslt = -1;
 		goto done;
 	}
 
-	for(i = 0; i < nitems(gpt_types); i++) {
-		if (strncmp(str, gpt_types[i].gt_guid, UUID_STR_LEN) == 0) {
-			if (gpt_types[i].gt_protected)
-				rslt = -1;
+	if (strncmp(str, efistr, UUID_STR_LEN) == 0) {
+		/* Look for partitions indicating a need to preserve EFI Sys */
+		for (i = 0; i < NGPTPARTITIONS; i++) {
+			typename = PRT_uuid_to_typename(&gp[i].gp_type);
+			if (strncmp(typename, "APFS ", 5))
+				continue;
+			rslt = -1;
 			break;
+		}
+	} else {
+		for(i = 0; i < nitems(gpt_types); i++) {
+			if (strncmp(str, gpt_types[i].gt_guid, UUID_STR_LEN))
+				continue;
+			if (gpt_types[i].gt_protected) {
+				rslt = -1;
+				break;
+			}
 		}
 	}
 
  done:
+	free(efistr);
 	free(str);
 	return rslt;
 }
