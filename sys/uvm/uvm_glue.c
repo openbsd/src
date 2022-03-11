@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.81 2022/02/18 09:04:38 kettenis Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.82 2022/03/11 19:24:19 kettenis Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
@@ -110,13 +110,26 @@ uvm_vslock(struct proc *p, caddr_t addr, size_t len, vm_prot_t access_type)
 {
 	struct vm_map *map = &p->p_vmspace->vm_map;
 	vaddr_t start, end;
+	int error, mapv;
 
 	start = trunc_page((vaddr_t)addr);
 	end = round_page((vaddr_t)addr + len);
 	if (end <= start)
 		return (EINVAL);
 
-	return uvm_fault_wire(map, start, end, access_type);
+	vm_map_lock_read(map);
+retry:
+	mapv = map->timestamp;
+	vm_map_unlock_read(map);
+
+	if ((error = uvm_fault_wire(map, start, end, access_type)))
+		return (error);
+
+	vm_map_lock_read(map);
+	if (mapv != map->timestamp)
+		goto retry;
+
+	return (0);
 }
 
 /*
@@ -133,7 +146,8 @@ uvm_vsunlock(struct proc *p, caddr_t addr, size_t len)
 	end = round_page((vaddr_t)addr + len);
 	KASSERT(end > start);
 
-	uvm_fault_unwire(&p->p_vmspace->vm_map, start, end);
+	uvm_fault_unwire_locked(&p->p_vmspace->vm_map, start, end);
+	vm_map_unlock_read(&p->p_vmspace->vm_map);
 }
 
 /*

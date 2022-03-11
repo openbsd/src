@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.288 2022/02/15 11:54:19 kn Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.289 2022/03/11 19:24:19 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -4522,7 +4522,12 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 		return 0;
 
 	/* Acquire lock on srcmap. */
-	vm_map_lock(srcmap);
+	if (flags & UVM_EXTRACT_RDLOCKED) {
+		vm_map_busy(srcmap);
+		vm_map_upgrade(srcmap);
+		vm_map_unbusy(srcmap);
+	} else
+		vm_map_lock(srcmap);
 
 	/* Lock srcmap, lookup first and last entry in <start,len>. */
 	first = uvm_map_entrybyaddr(&srcmap->addr, start);
@@ -4624,7 +4629,10 @@ fail2:
 	vm_map_unlock(kernel_map);
 
 fail:
-	vm_map_unlock(srcmap);
+	if (flags & UVM_EXTRACT_RDLOCKED)
+		vm_map_downgrade(srcmap);
+	else
+		vm_map_unlock(srcmap);
 
 	uvm_unmap_detach(&dead, 0);
 
@@ -5581,7 +5589,9 @@ uvm_map_fill_vmmap(struct vm_map *map, struct kinfo_vmentry *kve,
 	 */
 	start = (vaddr_t)kve[0].kve_start;
 
-	vm_map_lock(map);
+	vm_map_busy(map);
+	vm_map_upgrade(map);
+	vm_map_unbusy(map);
 	RBT_FOREACH(entry, uvm_map_addr, &map->addr) {
 		if (cnt == maxcnt) {
 			error = ENOMEM;
@@ -5605,7 +5615,7 @@ uvm_map_fill_vmmap(struct vm_map *map, struct kinfo_vmentry *kve,
 		kve++;
 		cnt++;
 	}
-	vm_map_unlock(map);
+	vm_map_downgrade(map);
 
 	KASSERT(cnt <= maxcnt);
 

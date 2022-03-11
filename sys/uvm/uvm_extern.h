@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.158 2021/06/28 11:19:01 mpi Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.159 2022/03/11 19:24:19 kettenis Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -291,6 +291,7 @@ void			uvm_init_percpu(void);
 int			uvm_io(vm_map_t, struct uio *, int);
 
 #define	UVM_IO_FIXPROT	0x01
+#define	UVM_IO_RDLOCKED	0x02
 
 vaddr_t			uvm_km_alloc1(vm_map_t, vsize_t, vsize_t, boolean_t);
 void			uvm_km_free(vm_map_t, vaddr_t, vsize_t);

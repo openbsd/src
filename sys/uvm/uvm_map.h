@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.73 2022/02/11 09:25:04 kn Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.74 2022/03/11 19:24:19 kettenis Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -116,7 +116,8 @@
 /*
  * extract flags
  */
-#define UVM_EXTRACT_FIXPROT	0x8	/* set prot to maxprot as we go */
+#define UVM_EXTRACT_FIXPROT	0x1	/* set prot to maxprot as we go */
+#define UVM_EXTRACT_RDLOCKED	0x2	/* map is already read-locked */
 
 #endif /* _KERNEL */
 
