@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt_scaled.c,v 1.21 2022/03/11 07:29:53 dtucker Exp $	*/
+/*	$OpenBSD: fmt_scaled.c,v 1.22 2022/03/11 09:04:59 dtucker Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Ian F. Darwin.  All rights reserved.
@@ -185,8 +185,7 @@ scan_scaled(char *scaled, long long *result)
 			/* truncate fpart so it does't overflow.
 			 * then scale fractional part.
 			 */
-			while (fpart >= LLONG_MAX / scale_fact ||
-			    fpart <= LLONG_MIN / scale_fact) {
+			while (fpart >= LLONG_MAX / scale_fact) {
 				fpart /= 10;
 				fract_digits--;
 			}
