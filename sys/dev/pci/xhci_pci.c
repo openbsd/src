@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_pci.c,v 1.10 2018/11/18 08:46:57 jmatthew Exp $ */
+/*	$OpenBSD: xhci_pci.c,v 1.11 2022/03/11 18:00:52 mpi Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ int	xhci_pci_detach(struct device *, int);
 int	xhci_pci_activate(struct device *, int);
 void	xhci_pci_takecontroller(struct xhci_pci_softc *, int);
 
-struct cfattach xhci_pci_ca = {
+const struct cfattach xhci_pci_ca = {
 	sizeof(struct xhci_pci_softc), xhci_pci_match, xhci_pci_attach,
 	xhci_pci_detach, xhci_pci_activate
 };

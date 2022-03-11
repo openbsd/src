@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_pci.c,v 1.47 2022/02/22 01:15:01 guenther Exp $	*/
+/*	$OpenBSD: if_xl_pci.c,v 1.48 2022/03/11 18:00:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -95,7 +95,7 @@ struct xl_pci_softc {
 	bus_size_t		psc_funsize;
 };
 
-struct cfattach xl_pci_ca = {
+const struct cfattach xl_pci_ca = {
 	sizeof(struct xl_pci_softc), xl_pci_match, xl_pci_attach,
 	xl_pci_detach, xl_activate
 };

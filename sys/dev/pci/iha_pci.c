@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha_pci.c,v 1.19 2021/03/05 12:40:13 jsg Exp $ */
+/*	$OpenBSD: iha_pci.c,v 1.20 2022/03/11 18:00:50 mpi Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -47,7 +47,7 @@
 int  iha_pci_probe(struct device *, void *, void *);
 void iha_pci_attach(struct device *, struct device *, void *);
 
-struct cfattach iha_pci_ca = {
+const struct cfattach iha_pci_ca = {
 	sizeof(struct iha_softc), iha_pci_probe, iha_pci_attach
 };
 

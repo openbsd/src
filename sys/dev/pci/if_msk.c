@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.141 2022/01/15 04:10:01 jsg Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.142 2022/03/11 18:00:46 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -2302,7 +2302,7 @@ msk_stop(struct sk_if_softc *sc_if, int softonly)
 	}
 }
 
-struct cfattach mskc_ca = {
+const struct cfattach mskc_ca = {
 	sizeof(struct sk_softc), mskc_probe, mskc_attach, mskc_detach,
 	mskc_activate
 };
@@ -2311,7 +2311,7 @@ struct cfdriver mskc_cd = {
 	NULL, "mskc", DV_DULL
 };
 
-struct cfattach msk_ca = {
+const struct cfattach msk_ca = {
 	sizeof(struct sk_if_softc), msk_probe, msk_attach, msk_detach,
 	msk_activate
 };

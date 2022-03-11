@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.25 2014/12/19 22:44:58 guenther Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.26 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -194,7 +194,7 @@ struct aac_ident {
 	{ 0, 0, 0, 0 }
 };
 
-struct cfattach aac_pci_ca = {
+const struct cfattach aac_pci_ca = {
 	sizeof (struct aac_softc), aac_pci_probe, aac_pci_attach
 };
 

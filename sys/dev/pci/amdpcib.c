@@ -1,4 +1,4 @@
-/*      $OpenBSD: amdpcib.c,v 1.3 2015/03/14 03:38:48 jsg Exp $	*/
+/*      $OpenBSD: amdpcib.c,v 1.4 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -81,7 +81,7 @@ struct cfdriver amdpcib_cd = {
 int	amdpcib_match(struct device *, void *, void *);
 void	amdpcib_attach(struct device *, struct device *, void *);
 
-struct cfattach amdpcib_ca = {
+const struct cfattach amdpcib_ca = {
 	sizeof(struct amdpcib_softc), amdpcib_match, amdpcib_attach
 };
 

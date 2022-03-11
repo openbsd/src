@@ -1,4 +1,4 @@
-/*	$OpenBSD: xspd.c,v 1.6 2017/07/18 11:42:51 mikeb Exp $	*/
+/*	$OpenBSD: xspd.c,v 1.7 2022/03/11 18:00:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -46,7 +46,7 @@ struct cfdriver xspd_cd = {
 	NULL, "xspd", DV_DULL
 };
 
-struct cfattach xspd_ca = {
+const struct cfattach xspd_ca = {
 	sizeof(struct xspd_softc), xspd_match, xspd_attach, NULL, NULL
 };
 

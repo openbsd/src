@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_pci.c,v 1.17 2019/05/10 16:44:36 bcook Exp $ */
+/*	$OpenBSD: if_bwi_pci.c,v 1.18 2022/03/11 18:00:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -72,7 +72,7 @@ struct bwi_pci_softc {
 	bus_size_t		 psc_mapsize;
 };
 
-struct cfattach bwi_pci_ca = {
+const struct cfattach bwi_pci_ca = {
 	sizeof(struct bwi_pci_softc), bwi_pci_match, bwi_pci_attach,
 	bwi_pci_detach, bwi_pci_activate
 };

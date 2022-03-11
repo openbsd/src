@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.145 2021/04/15 18:32:19 stsp Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.146 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -136,7 +136,7 @@ int iwi_debug = 0;
 #define DPRINTFN(n, x)
 #endif
 
-struct cfattach iwi_ca = {
+const struct cfattach iwi_ca = {
 	sizeof (struct iwi_softc), iwi_match, iwi_attach, NULL,
 	iwi_activate
 };

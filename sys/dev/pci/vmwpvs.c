@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.25 2022/02/21 11:20:34 jsg Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.26 2022/03/11 18:00:52 mpi Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -339,7 +339,7 @@ int	vmwpvs_intr(void *);
 #define vmwpvs_barrier(_s, _r, _l, _d) \
 	bus_space_barrier((_s)->sc_iot, (_s)->sc_ioh, (_r), (_l), (_d))
 
-struct cfattach vmwpvs_ca = {
+const struct cfattach vmwpvs_ca = {
 	sizeof(struct vmwpvs_softc),
 	vmwpvs_match,
 	vmwpvs_attach,

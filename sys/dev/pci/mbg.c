@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbg.c,v 1.32 2020/12/06 19:23:11 cheloha Exp $ */
+/*	$OpenBSD: mbg.c,v 1.33 2022/03/11 18:00:50 mpi Exp $ */
 
 /*
  * Copyright (c) 2006, 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -147,7 +147,7 @@ int	mbg_read_asic(struct mbg_softc *, int cmd, char *buf, size_t len,
 	    struct timespec *tstamp);
 void	mbg_timeout(void *);
 
-struct cfattach mbg_ca = {
+const struct cfattach mbg_ca = {
 	sizeof(struct mbg_softc), mbg_probe, mbg_attach
 };
 

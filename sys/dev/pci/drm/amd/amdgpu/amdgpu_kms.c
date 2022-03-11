@@ -108,7 +108,7 @@ extern int amdgpu_exp_hw_support;
  */
 int amdgpu_fatal_error;
 
-struct cfattach amdgpu_ca = {
+const struct cfattach amdgpu_ca = {
         sizeof (struct amdgpu_device), amdgpu_probe, amdgpu_attach,
         amdgpu_detach, amdgpu_activate
 };

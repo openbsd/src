@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.46 2022/01/16 11:34:05 dlg Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.47 2022/03/11 18:00:48 mpi Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -470,7 +470,7 @@ int	pcn_copy_small = 0;
 int	pcn_match(struct device *, void *, void *);
 void	pcn_attach(struct device *, struct device *, void *);
 
-struct cfattach pcn_ca = {
+const struct cfattach pcn_ca = {
 	sizeof(struct pcn_softc), pcn_match, pcn_attach,
 };
 

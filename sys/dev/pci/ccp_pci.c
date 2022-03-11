@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp_pci.c,v 1.5 2020/01/04 01:34:24 jsg Exp $ */
+/*	$OpenBSD: ccp_pci.c,v 1.6 2022/03/11 18:00:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
@@ -36,7 +36,7 @@
 int	ccp_pci_match(struct device *, void *, void *);
 void	ccp_pci_attach(struct device *, struct device *, void *);
 
-struct cfattach ccp_pci_ca = {
+const struct cfattach ccp_pci_ca = {
 	sizeof(struct ccp_softc),
 	ccp_pci_match,
 	ccp_pci_attach,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_amd.c,v 1.22 2022/01/09 05:42:45 jsg Exp $	*/
+/*	$OpenBSD: agp_amd.c,v 1.23 2022/03/11 18:00:45 mpi Exp $	*/
 /*	$NetBSD: agp_amd.c,v 1.6 2001/10/06 02:48:50 thorpej Exp $	*/
 
 /*-
@@ -87,7 +87,7 @@ void	agp_amd_bind_page(void *, bus_size_t, paddr_t, int);
 void	agp_amd_unbind_page(void *, bus_size_t);
 void	agp_amd_flush_tlb(void *);
 
-struct cfattach amdagp_ca = {
+const struct cfattach amdagp_ca = {
 	sizeof(struct agp_amd_softc), agp_amd_probe, agp_amd_attach, NULL,
 	agp_amd_activate
 };

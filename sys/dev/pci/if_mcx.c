@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.103 2022/01/09 05:42:54 jsg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.104 2022/03/11 18:00:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -2628,7 +2628,7 @@ struct cfdriver mcx_cd = {
 	DV_IFNET,
 };
 
-struct cfattach mcx_ca = {
+const struct cfattach mcx_ca = {
 	sizeof(struct mcx_softc),
 	mcx_match,
 	mcx_attach,

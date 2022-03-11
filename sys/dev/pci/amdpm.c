@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdpm.c,v 1.37 2021/02/23 04:44:31 cheloha Exp $	*/
+/*	$OpenBSD: amdpm.c,v 1.38 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -185,7 +185,7 @@ int	amdpm_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 
 int	amdpm_intr(void *);
 
-struct cfattach amdpm_ca = {
+const struct cfattach amdpm_ca = {
 	sizeof(struct amdpm_softc), amdpm_match, amdpm_attach,
 	NULL, amdpm_activate
 };

@@ -1,4 +1,4 @@
-/*      $OpenBSD: neo.c,v 1.35 2022/02/16 06:21:19 anton Exp $       */
+/*      $OpenBSD: neo.c,v 1.36 2022/03/11 18:00:51 mpi Exp $       */
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -207,7 +207,7 @@ struct cfdriver neo_cd = {
 };
 
 
-struct cfattach neo_ca = {
+const struct cfattach neo_ca = {
 	sizeof(struct neo_softc), neo_match, neo_attach, NULL,
 	neo_activate
 };

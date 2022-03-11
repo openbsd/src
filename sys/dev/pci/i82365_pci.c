@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_pci.c,v 1.13 2021/03/05 12:40:13 jsg Exp $ */
+/*	$OpenBSD: i82365_pci.c,v 1.14 2022/03/11 18:00:45 mpi Exp $ */
 /*	$NetBSD: i82365_pci.c,v 1.11 2000/02/24 03:42:44 itohy Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 int	pcic_pci_match(struct device *, void *, void *);
 void	pcic_pci_attach(struct device *, struct device *, void *);
 
-struct cfattach pcic_pci_ca = {
+const struct cfattach pcic_pci_ca = {
 	sizeof(struct pcic_pci_softc), pcic_pci_match, pcic_pci_attach
 };
 

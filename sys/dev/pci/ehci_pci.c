@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_pci.c,v 1.31 2019/05/02 20:28:46 kettenis Exp $ */
+/*	$OpenBSD: ehci_pci.c,v 1.32 2022/03/11 18:00:45 mpi Exp $ */
 /*	$NetBSD: ehci_pci.c,v 1.15 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
@@ -80,7 +80,7 @@ void	ehci_pci_givecontroller(struct ehci_pci_softc *);
 #endif
 void	ehci_pci_takecontroller(struct ehci_pci_softc *, int);
 
-struct cfattach ehci_pci_ca = {
+const struct cfattach ehci_pci_ca = {
 	sizeof(struct ehci_pci_softc), ehci_pci_match, ehci_pci_attach,
 	ehci_pci_detach, ehci_pci_activate
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_ali.c,v 1.16 2022/01/09 05:42:45 jsg Exp $	*/
+/*	$OpenBSD: agp_ali.c,v 1.17 2022/03/11 18:00:45 mpi Exp $	*/
 /*	$NetBSD: agp_ali.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 
@@ -68,7 +68,7 @@ void	agp_ali_bind_page(void *, bus_addr_t, paddr_t, int);
 void	agp_ali_unbind_page(void *, bus_addr_t);
 void	agp_ali_flush_tlb(void *);
 
-struct cfattach aliagp_ca = {
+const struct cfattach aliagp_ca = {
 	sizeof(struct agp_ali_softc), agp_ali_probe, agp_ali_attach,
 	NULL, agp_ali_activate
 };

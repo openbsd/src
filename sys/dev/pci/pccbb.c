@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.102 2022/02/02 03:48:48 jsg Exp $	*/
+/*	$OpenBSD: pccbb.c,v 1.103 2022/03/11 18:00:51 mpi Exp $	*/
 /*	$NetBSD: pccbb.c,v 1.96 2004/03/28 09:49:31 nakayama Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ void	cb_show_regs(pci_chipset_tag_t, pcitag_t, bus_space_tag_t,
     bus_space_handle_t memh);
 #endif
 
-struct cfattach cbb_pci_ca = {
+const struct cfattach cbb_pci_ca = {
 	sizeof(struct pccbb_softc), pcicbbmatch, pccbbattach, NULL,
 	pccbbactivate
 };

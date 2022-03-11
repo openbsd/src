@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.45 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: autri.c,v 1.46 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -114,7 +114,7 @@ struct cfdriver autri_cd = {
 	NULL, "autri", DV_DULL
 };
 
-struct cfattach autri_ca = {
+const struct cfattach autri_ca = {
 	sizeof(struct autri_softc), autri_match, autri_attach, NULL,
 	autri_activate
 };

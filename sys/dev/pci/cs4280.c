@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.55 2022/02/16 06:21:19 anton Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.56 2022/03/11 18:00:45 mpi Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -185,7 +185,7 @@ struct	cfdriver clcs_cd = {
 	NULL, "clcs", DV_DULL
 };
 
-struct cfattach clcs_ca = {
+const struct cfattach clcs_ca = {
 	sizeof(struct cs4280_softc), cs4280_match, cs4280_attach, NULL,
 	cs4280_activate
 };

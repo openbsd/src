@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.36 2022/02/16 06:21:19 anton Exp $	*/
+/*	$OpenBSD: esa.c,v 1.37 2022/03/11 18:00:45 mpi Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -180,7 +180,7 @@ struct cfdriver esa_cd = {
 	NULL, "esa", DV_DULL
 };
 
-struct cfattach esa_ca = {
+const struct cfattach esa_ca = {
 	sizeof(struct esa_softc), esa_match, esa_attach,
 	esa_detach, esa_activate
 };

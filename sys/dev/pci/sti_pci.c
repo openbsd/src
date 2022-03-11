@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.8 2014/08/30 14:42:05 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.9 2022/03/11 18:00:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007 Miodrag Vallat.
@@ -42,7 +42,7 @@ struct	sti_pci_softc {
 	bus_space_handle_t	sc_romh;
 };
 
-struct cfattach sti_pci_ca = {
+const struct cfattach sti_pci_ca = {
 	sizeof(struct sti_pci_softc), sti_pci_match, sti_pci_attach
 };
 

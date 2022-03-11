@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.31 2022/02/16 06:21:19 anton Exp $ */
+/*	$OpenBSD: fms.c,v 1.32 2022/03/11 18:00:45 mpi Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -95,7 +95,7 @@ struct  cfdriver fms_cd = {
 	NULL, "fms", DV_DULL
 };
 
-struct cfattach fms_ca = {
+const struct cfattach fms_ca = {
 	sizeof (struct fms_softc), fms_match, fms_attach
 };
 

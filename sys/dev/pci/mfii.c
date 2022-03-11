@@ -1,4 +1,4 @@
-/* $OpenBSD: mfii.c,v 1.83 2020/12/15 03:05:31 dlg Exp $ */
+/* $OpenBSD: mfii.c,v 1.84 2022/03/11 18:00:50 mpi Exp $ */
 
 /*
  * Copyright (c) 2012 David Gwynne <dlg@openbsd.org>
@@ -363,7 +363,7 @@ void		mfii_attach(struct device *, struct device *, void *);
 int		mfii_detach(struct device *, int);
 int		mfii_activate(struct device *, int);
 
-struct cfattach mfii_ca = {
+const struct cfattach mfii_ca = {
 	sizeof(struct mfii_softc),
 	mfii_match,
 	mfii_attach,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gcu.c,v 1.5 2022/01/09 05:42:45 jsg Exp $	*/
+/*	$OpenBSD: gcu.c,v 1.6 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -42,7 +42,7 @@ struct cfdriver gcu_cd = {
 	NULL, "gcu", DV_IFNET
 };
 
-struct cfattach gcu_ca = {
+const struct cfattach gcu_ca = {
 	sizeof(struct gcu_softc), gcu_probe, gcu_attach
 };
 

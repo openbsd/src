@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe_pci.c,v 1.14 2021/03/05 12:40:13 jsg Exp $	*/
+/*	$OpenBSD: twe_pci.c,v 1.15 2022/03/11 18:00:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -49,7 +49,7 @@
 int	twe_pci_match(struct device *, void *, void *);
 void	twe_pci_attach(struct device *, struct device *, void *);
 
-struct cfattach twe_pci_ca = {
+const struct cfattach twe_pci_ca = {
 	sizeof(struct twe_softc), twe_pci_match, twe_pci_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.40 2022/02/16 06:21:19 anton Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.41 2022/03/11 18:00:45 mpi Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -236,7 +236,7 @@ struct midi_hw_if cs4281_midi_hw_if = {
 };
 #endif
 
-struct cfattach clct_ca = {
+const struct cfattach clct_ca = {
 	sizeof(struct cs4281_softc), cs4281_match, cs4281_attach, NULL,
 	cs4281_activate
 };

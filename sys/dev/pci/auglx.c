@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.18 2022/02/16 06:21:18 anton Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.19 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -270,7 +270,7 @@ int	auglx_write_codec(void *, u_int8_t, u_int16_t);
 void	auglx_reset_codec(void *);
 enum ac97_host_flags	auglx_flags_codec(void *);
 
-struct cfattach auglx_ca = {
+const struct cfattach auglx_ca = {
 	sizeof(struct auglx_softc), auglx_match, auglx_attach, NULL,
 	auglx_activate
 };

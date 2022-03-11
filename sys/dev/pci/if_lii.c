@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lii.c,v 1.45 2022/01/09 05:42:54 jsg Exp $	*/
+/*	$OpenBSD: if_lii.c,v 1.46 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -125,7 +125,7 @@ struct cfdriver lii_cd = {
 	DV_IFNET
 };
 
-struct cfattach lii_ca = {
+const struct cfattach lii_ca = {
 	sizeof(struct lii_softc),
 	lii_match,
 	lii_attach,

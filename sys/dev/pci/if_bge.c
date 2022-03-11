@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.397 2022/01/09 05:42:46 jsg Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.398 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -120,7 +120,7 @@ void bge_attach(struct device *, struct device *, void *);
 int bge_detach(struct device *, int);
 int bge_activate(struct device *, int);
 
-struct cfattach bge_ca = {
+const struct cfattach bge_ca = {
 	sizeof(struct bge_softc), bge_probe, bge_attach, bge_detach,
 	bge_activate
 };

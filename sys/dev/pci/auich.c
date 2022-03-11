@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.114 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: auich.c,v 1.115 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -251,7 +251,7 @@ int  auich_intr(void *);
 
 int auich_activate(struct device *, int);
 
-struct cfattach auich_ca = {
+const struct cfattach auich_ca = {
 	sizeof(struct auich_softc), auich_match, auich_attach,
 	NULL, auich_activate
 };

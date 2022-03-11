@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bce.c,v 1.54 2022/01/09 05:42:46 jsg Exp $ */
+/* $OpenBSD: if_bce.c,v 1.55 2022/03/11 18:00:45 mpi Exp $ */
 /* $NetBSD: if_bce.c,v 1.3 2003/09/29 01:53:02 mrg Exp $	 */
 
 /*
@@ -163,7 +163,7 @@ int	bcedebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-struct cfattach bce_ca = {
+const struct cfattach bce_ca = {
 	sizeof(struct bce_softc), bce_probe, bce_attach, NULL, bce_activate
 };
 struct cfdriver bce_cd = {

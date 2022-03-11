@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_et.c,v 1.41 2022/01/09 05:42:50 jsg Exp $	*/
+/*	$OpenBSD: if_et.c,v 1.42 2022/03/11 18:00:45 mpi Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
  * 
@@ -158,7 +158,7 @@ const struct pci_matchid et_devices[] = {
 	{ PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_ET1310_GBE }
 };
 
-struct cfattach et_ca = {
+const struct cfattach et_ca = {
 	sizeof (struct et_softc), et_match, et_attach, et_detach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci_pci.c,v 1.15 2018/08/03 22:18:13 kettenis Exp $ */
+/*	$OpenBSD: ahci_pci.c,v 1.16 2022/03/11 18:00:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -164,7 +164,7 @@ void			ahci_pci_attach(struct device *, struct device *,
 int			ahci_pci_detach(struct device *, int);
 int			ahci_pci_activate(struct device *, int);
 
-struct cfattach ahci_pci_ca = {
+const struct cfattach ahci_pci_ca = {
 	sizeof(struct ahci_pci_softc),
 	ahci_pci_match,
 	ahci_pci_attach,
@@ -172,7 +172,7 @@ struct cfattach ahci_pci_ca = {
 	ahci_pci_activate
 };
 
-struct cfattach ahci_jmb_ca = {
+const struct cfattach ahci_jmb_ca = {
 	sizeof(struct ahci_pci_softc),
 	ahci_pci_match,
 	ahci_pci_attach,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.27 2022/01/09 05:42:45 jsg Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.28 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -284,7 +284,7 @@ int	ahd_pci_probe(struct device *, void *, void *);
 void	ahd_pci_attach(struct device *, struct device *, void *);
 int	ahd_activate(struct device *, int);
 
-struct cfattach ahd_pci_ca = {
+const struct cfattach ahd_pci_ca = {
         sizeof(struct ahd_softc), ahd_pci_probe, ahd_pci_attach,
 	NULL, ahd_activate
 };

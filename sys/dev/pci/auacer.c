@@ -1,4 +1,4 @@
-/*	$OpenBSD: auacer.c,v 1.23 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: auacer.c,v 1.24 2022/03/11 18:00:45 mpi Exp $	*/
 /*	$NetBSD: auacer.c,v 1.3 2004/11/10 04:20:26 kent Exp $	*/
 
 /*-
@@ -144,7 +144,7 @@ void	auacer_attach(struct device *, struct device *, void *);
 int	auacer_activate(struct device *, int);
 int	auacer_intr(void *); 
 
-struct cfattach auacer_ca = {
+const struct cfattach auacer_ca = {
         sizeof(struct auacer_softc), auacer_match, auacer_attach, NULL,
 	auacer_activate
 };

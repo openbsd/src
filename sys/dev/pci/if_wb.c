@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.73 2021/03/05 12:40:13 jsg Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.74 2022/03/11 18:00:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1579,7 +1579,7 @@ wb_stop(struct wb_softc *sc)
 	bzero(&sc->wb_ldata->wb_tx_list, sizeof(sc->wb_ldata->wb_tx_list));
 }
 
-struct cfattach wb_ca = {
+const struct cfattach wb_ca = {
 	sizeof(struct wb_softc), wb_probe, wb_attach
 };
 

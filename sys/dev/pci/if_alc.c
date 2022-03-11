@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_alc.c,v 1.54 2020/07/10 13:26:37 patrick Exp $	*/
+/*	$OpenBSD: if_alc.c,v 1.55 2022/03/11 18:00:45 mpi Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -149,7 +149,7 @@ const struct pci_matchid alc_devices[] = {
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_E2500 }
 };
 
-struct cfattach alc_ca = {
+const struct cfattach alc_ca = {
 	sizeof (struct alc_softc), alc_match, alc_attach, alc_detach,
 	alc_activate
 };

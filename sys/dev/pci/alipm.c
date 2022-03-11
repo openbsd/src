@@ -1,4 +1,4 @@
-/*	$OpenBSD: alipm.c,v 1.16 2012/10/05 10:51:28 haesbaert Exp $	*/
+/*	$OpenBSD: alipm.c,v 1.17 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -114,7 +114,7 @@ void	alipm_smb_release_bus(void *, int);
 int	alipm_smb_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 	    size_t, void *, size_t, int);
 
-struct cfattach alipm_ca = {
+const struct cfattach alipm_ca = {
 	sizeof(struct alipm_softc),
 	alipm_match,
 	alipm_attach

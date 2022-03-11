@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_sis.c,v 1.19 2022/01/09 05:42:45 jsg Exp $	*/
+/*	$OpenBSD: agp_sis.c,v 1.20 2022/03/11 18:00:45 mpi Exp $	*/
 /*	$NetBSD: agp_sis.c,v 1.2 2001/09/15 00:25:00 thorpej Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@ void	agp_sis_bind_page(void *, bus_addr_t, paddr_t, int);
 void	agp_sis_unbind_page(void *, bus_addr_t);
 void	agp_sis_flush_tlb(void *);
 
-struct cfattach sisagp_ca = {
+const struct cfattach sisagp_ca = {
 	sizeof(struct agp_sis_softc), agp_sis_probe, agp_sis_attach,
 	NULL, agp_sis_activate
 };

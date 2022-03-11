@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.34 2021/03/05 12:40:14 jsg Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.35 2022/03/11 18:00:53 mpi Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -110,7 +110,7 @@ paddr_t	bktr_mmap(dev_t, off_t, int);
 static int      bktr_probe(struct device *, void *, void *);
 static void     bktr_attach(struct device *, struct device *, void *);
 
-struct cfattach bktr_ca = {
+const struct cfattach bktr_ca = {
         sizeof(struct bktr_softc), bktr_probe, bktr_attach
 };
 

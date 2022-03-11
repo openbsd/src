@@ -1,4 +1,4 @@
-/*	$OpenBSD: viapm.c,v 1.20 2021/02/23 04:44:31 cheloha Exp $	*/
+/*	$OpenBSD: viapm.c,v 1.21 2022/03/11 18:00:52 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis <kettenis@openbsd.org>
@@ -226,7 +226,7 @@ long	val_to_uV(unsigned int, int);
 void	viapm_refresh_sensor_data(struct viapm_softc *);
 void	viapm_refresh(void *);
 
-struct cfattach viapm_ca = {
+const struct cfattach viapm_ca = {
 	sizeof(struct viapm_softc), viapm_match, viapm_attach
 };
 

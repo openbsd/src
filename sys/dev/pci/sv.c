@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.38 2022/02/16 06:21:19 anton Exp $ */
+/*      $OpenBSD: sv.c,v 1.39 2022/03/11 18:00:51 mpi Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -118,7 +118,7 @@ struct sv_softc {
 };
 
 
-struct cfattach sv_ca = {
+const struct cfattach sv_ca = {
 	sizeof(struct sv_softc), sv_match, sv_attach
 };
 

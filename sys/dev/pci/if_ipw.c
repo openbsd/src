@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.130 2022/01/09 05:42:50 jsg Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.131 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -129,7 +129,7 @@ int ipw_debug = 0;
 #define DPRINTFN(n, x)
 #endif
 
-struct cfattach ipw_ca = {
+const struct cfattach ipw_ca = {
 	sizeof (struct ipw_softc), ipw_match, ipw_attach, NULL,
 	ipw_activate
 };

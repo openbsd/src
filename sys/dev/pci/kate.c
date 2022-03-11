@@ -1,4 +1,4 @@
-/*	$OpenBSD: kate.c,v 1.7 2020/01/04 01:34:24 jsg Exp $	*/
+/*	$OpenBSD: kate.c,v 1.8 2022/03/11 18:00:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -80,7 +80,7 @@ int	kate_match(struct device *, void *, void *);
 void	kate_attach(struct device *, struct device *, void *);
 void	kate_refresh(void *);
 
-struct cfattach kate_ca = {
+const struct cfattach kate_ca = {
 	sizeof(struct kate_softc), kate_match, kate_attach
 };
 

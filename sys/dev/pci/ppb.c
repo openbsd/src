@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.69 2022/01/05 18:54:20 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.70 2022/03/11 18:00:51 mpi Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ void	ppbattach(struct device *, struct device *, void *);
 int	ppbdetach(struct device *self, int flags);
 int	ppbactivate(struct device *self, int act);
 
-struct cfattach ppb_ca = {
+const struct cfattach ppb_ca = {
 	sizeof(struct ppb_softc), ppbmatch, ppbattach, ppbdetach, ppbactivate
 };
 

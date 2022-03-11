@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpii.c,v 1.141 2022/01/09 05:42:56 jsg Exp $	*/
+/*	$OpenBSD: mpii.c,v 1.142 2022/03/11 18:00:50 mpi Exp $	*/
 /*
  * Copyright (c) 2010, 2012 Mike Belopuhov
  * Copyright (c) 2009 James Giannoules
@@ -248,7 +248,7 @@ int	mpii_detach(struct device *, int);
 
 int	mpii_intr(void *);
 
-struct cfattach mpii_ca = {
+const struct cfattach mpii_ca = {
 	sizeof(struct mpii_softc),
 	mpii_match,
 	mpii_attach,

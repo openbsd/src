@@ -1,4 +1,4 @@
-/* $OpenBSD: vga_pci.c,v 1.89 2022/01/09 05:42:58 jsg Exp $ */
+/* $OpenBSD: vga_pci.c,v 1.90 2022/03/11 18:00:52 mpi Exp $ */
 /* $NetBSD: vga_pci.c,v 1.3 1998/06/08 06:55:58 thorpej Exp $ */
 
 /*
@@ -103,7 +103,7 @@ void	vga_save_state(struct vga_pci_softc *);
 void	vga_restore_state(struct vga_pci_softc *);
 #endif
 
-struct cfattach vga_pci_ca = {
+const struct cfattach vga_pci_ca = {
 	sizeof(struct vga_pci_softc), vga_pci_match, vga_pci_attach,
 	NULL, vga_pci_activate
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.131 2022/01/09 05:42:46 jsg Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.132 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -391,7 +391,7 @@ void	bnx_tick(void *);
 /****************************************************************************/
 /* OpenBSD device dispatch table.                                           */
 /****************************************************************************/
-struct cfattach bnx_ca = {
+const struct cfattach bnx_ca = {
 	sizeof(struct bnx_softc), bnx_probe, bnx_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.69 2022/03/06 18:52:47 kettenis Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.70 2022/03/11 18:00:45 mpi Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -330,7 +330,7 @@ struct bwfm_proto_ops bwfm_pci_msgbuf_ops = {
 	.proto_rxctl = NULL,
 };
 
-struct cfattach bwfm_pci_ca = {
+const struct cfattach bwfm_pci_ca = {
 	sizeof(struct bwfm_pci_softc),
 	bwfm_pci_match,
 	bwfm_pci_attach,

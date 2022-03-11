@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tht.c,v 1.144 2022/01/09 05:42:56 jsg Exp $ */
+/*	$OpenBSD: if_tht.c,v 1.145 2022/03/11 18:00:48 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -403,7 +403,7 @@ int			thtc_match(struct device *, void *, void *);
 void			thtc_attach(struct device *, struct device *, void *);
 int			thtc_print(void *, const char *);
 
-struct cfattach thtc_ca = {
+const struct cfattach thtc_ca = {
 	sizeof(struct thtc_softc), thtc_match, thtc_attach
 };
 
@@ -501,7 +501,7 @@ void			tht_attach(struct device *, struct device *, void *);
 void			tht_mountroot(struct device *);
 int			tht_intr(void *);
 
-struct cfattach tht_ca = {
+const struct cfattach tht_ca = {
 	sizeof(struct tht_softc), tht_match, tht_attach
 };
 

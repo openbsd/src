@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.30 2021/09/03 14:04:35 patrick Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.31 2022/03/11 18:00:52 mpi Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ struct virtio_pci_softc {
 	enum irq_type		sc_irq_type;
 };
 
-struct cfattach virtio_pci_ca = {
+const struct cfattach virtio_pci_ca = {
 	sizeof(struct virtio_pci_softc),
 	virtio_pci_match,
 	virtio_pci_attach,

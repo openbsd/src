@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.57 2022/02/16 06:21:19 anton Exp $	*/
+/*	$OpenBSD: yds.c,v 1.58 2022/03/11 18:00:52 mpi Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ void YWRITE4(struct yds_softc *sc,bus_size_t r,u_int32_t x)
 #define	YWRITEREGION4(sc, r, x, c)	\
 	bus_space_write_region_4((sc)->memt, (sc)->memh, (r), (x), (c) / 4)
 
-struct cfattach yds_ca = {
+const struct cfattach yds_ca = {
 	sizeof(struct yds_softc), yds_match, yds_attach, NULL,
 	yds_activate
 };

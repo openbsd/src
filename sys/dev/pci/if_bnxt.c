@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.34 2021/07/24 05:49:59 jmatthew Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.35 2022/03/11 18:00:45 mpi Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -399,7 +399,7 @@ int bnxt_hwrm_fw_set_time(struct bnxt_softc *softc, uint16_t year,
 #endif
 
 
-struct cfattach bnxt_ca = {
+const struct cfattach bnxt_ca = {
 	sizeof(struct bnxt_softc), bnxt_match, bnxt_attach
 };
 

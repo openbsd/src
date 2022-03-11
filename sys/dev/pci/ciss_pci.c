@@ -1,4 +1,4 @@
-/*	$OpenBSD: ciss_pci.c,v 1.21 2020/01/05 01:07:58 jsg Exp $	*/
+/*	$OpenBSD: ciss_pci.c,v 1.22 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -41,7 +41,7 @@ int	ciss_pci_match(struct device *, void *, void *);
 void	ciss_pci_attach(struct device *, struct device *, void *);
 int	ciss_activate(struct device *, int);
 
-struct cfattach ciss_pci_ca = {
+const struct cfattach ciss_pci_ca = {
 	sizeof(struct ciss_softc), ciss_pci_match, ciss_pci_attach,
 	NULL, ciss_activate
 };

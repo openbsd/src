@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vge.c,v 1.75 2022/01/09 05:42:56 jsg Exp $	*/
+/*	$OpenBSD: if_vge.c,v 1.76 2022/03/11 18:00:50 mpi Exp $	*/
 /*	$FreeBSD: if_vge.c,v 1.3 2004/09/11 22:13:25 wpaul Exp $	*/
 /*
  * Copyright (c) 2004
@@ -153,7 +153,7 @@ int vge_cam_set		(struct vge_softc *, uint8_t *);
 void vge_iff		(struct vge_softc *);
 void vge_reset		(struct vge_softc *);
 
-struct cfattach vge_ca = {
+const struct cfattach vge_ca = {
 	sizeof(struct vge_softc), vge_probe, vge_attach, vge_detach
 };
 

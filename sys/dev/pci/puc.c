@@ -1,4 +1,4 @@
-/*	$OpenBSD: puc.c,v 1.30 2020/08/14 18:14:11 jcs Exp $	*/
+/*	$OpenBSD: puc.c,v 1.31 2022/03/11 18:00:51 mpi Exp $	*/
 /*	$NetBSD: puc.c,v 1.3 1999/02/06 06:29:54 cgd Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ void	*puc_pci_intr_establish(struct puc_attach_args *, int,
     int (*)(void *), void *, char *);
 int	puc_pci_xr17v35x_intr(void *arg);
 
-struct cfattach puc_pci_ca = {
+const struct cfattach puc_pci_ca = {
 	sizeof(struct puc_pci_softc), puc_pci_match,
 	puc_pci_attach, puc_pci_detach
 };

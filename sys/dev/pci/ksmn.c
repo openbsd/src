@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksmn.c,v 1.5 2021/07/20 18:33:59 jcs Exp $	*/
+/*	$OpenBSD: ksmn.c,v 1.6 2022/03/11 18:00:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 2019 Bryan Steele <brynet@openbsd.org>
@@ -84,7 +84,7 @@ int	ksmn_match(struct device *, void *, void *);
 void	ksmn_attach(struct device *, struct device *, void *);
 void	ksmn_refresh(void *);
 
-struct cfattach ksmn_ca = {
+const struct cfattach ksmn_ca = {
 	sizeof(struct ksmn_softc), ksmn_match, ksmn_attach
 };
 

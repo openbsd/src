@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv_pci.c,v 1.14 2021/03/05 12:40:13 jsg Exp $	*/
+/*	$OpenBSD: adv_pci.c,v 1.15 2022/03/11 18:00:45 mpi Exp $	*/
 /*	$NetBSD: adv_pci.c,v 1.5 1998/09/26 15:52:55 dante Exp $	*/
 
 /*
@@ -84,7 +84,7 @@
 int	adv_pci_match(struct device *, void *, void *);
 void	adv_pci_attach(struct device *, struct device *, void *);
 
-struct cfattach adv_pci_ca =
+const struct cfattach adv_pci_ca =
 {
 	sizeof(ASC_SOFTC), adv_pci_match, adv_pci_attach
 };

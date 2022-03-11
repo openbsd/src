@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtd_pci.c,v 1.11 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_mtd_pci.c,v 1.12 2022/03/11 18:00:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -54,7 +54,7 @@ static int mtd_pci_match(struct device *, void *, void *);
 static void mtd_pci_attach(struct device *, struct device *, void *);
 
 
-struct cfattach mtd_pci_ca = {
+const struct cfattach mtd_pci_ca = {
 	sizeof(struct mtd_softc), mtd_pci_match, mtd_pci_attach
 };
 

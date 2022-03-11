@@ -117,7 +117,7 @@ struct mmuagp_softc {
 	int			 n_mctrl;
 };
 
-struct cfattach mmuagp_ca = {
+const struct cfattach mmuagp_ca = {
         sizeof(struct mmuagp_softc), mmuagp_probe, mmuagp_attach
 };
 

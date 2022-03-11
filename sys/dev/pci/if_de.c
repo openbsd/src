@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.139 2022/02/22 01:15:01 guenther Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.140 2022/03/11 18:00:45 mpi Exp $	*/
 /*	$NetBSD: if_de.c,v 1.58 1998/01/12 09:39:58 thorpej Exp $	*/
 
 /*-
@@ -120,7 +120,7 @@
 int tulip_probe(struct device *parent, void *match, void *aux);
 void tulip_attach(struct device * const parent, struct device * const self, void * const aux);
 
-struct cfattach de_ca = {
+const struct cfattach de_ca = {
 	sizeof(tulip_softc_t), tulip_probe, tulip_attach
 };
 

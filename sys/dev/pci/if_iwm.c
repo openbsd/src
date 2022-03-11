@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.393 2022/03/10 21:00:51 bluhm Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.394 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -11774,7 +11774,7 @@ struct cfdriver iwm_cd = {
 	NULL, "iwm", DV_IFNET
 };
 
-struct cfattach iwm_ca = {
+const struct cfattach iwm_ca = {
 	sizeof(struct iwm_softc), iwm_match, iwm_attach,
 	NULL, iwm_activate
 };

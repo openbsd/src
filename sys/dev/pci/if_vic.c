@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vic.c,v 1.103 2022/01/09 05:42:56 jsg Exp $	*/
+/*	$OpenBSD: if_vic.c,v 1.104 2022/03/11 18:00:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Reyk Floeter <reyk@openbsd.org>
@@ -305,7 +305,7 @@ struct cfdriver vic_cd = {
 int		vic_match(struct device *, void *, void *);
 void		vic_attach(struct device *, struct device *, void *);
 
-struct cfattach vic_ca = {
+const struct cfattach vic_ca = {
 	sizeof(struct vic_softc), vic_match, vic_attach
 };
 

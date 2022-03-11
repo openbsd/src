@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pci.c,v 1.19 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_an_pci.c,v 1.20 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -86,7 +86,7 @@
 int an_pci_match(struct device *, void *, void *);
 void an_pci_attach(struct device *, struct device *, void *);
 
-struct cfattach an_pci_ca = {
+const struct cfattach an_pci_ca = {
 	sizeof (struct an_softc), an_pci_match, an_pci_attach
 };
 

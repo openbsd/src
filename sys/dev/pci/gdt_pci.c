@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.26 2020/01/05 01:07:58 jsg Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.27 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -143,7 +143,7 @@ void	gdt_mpr_release_event(struct gdt_softc *, struct gdt_ccb *);
 void	gdt_mpr_set_sema0(struct gdt_softc *);
 int	gdt_mpr_test_busy(struct gdt_softc *);
 
-struct cfattach gdt_pci_ca = {
+const struct cfattach gdt_pci_ca = {
 	sizeof (struct gdt_softc), gdt_pci_probe, gdt_pci_attach
 };
 

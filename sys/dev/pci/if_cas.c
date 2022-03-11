@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cas.c,v 1.53 2020/07/10 13:26:37 patrick Exp $	*/
+/*	$OpenBSD: if_cas.c,v 1.54 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  *
@@ -95,7 +95,7 @@ int	cas_match(struct device *, void *, void *);
 void	cas_attach(struct device *, struct device *, void *);
 int	cas_pci_enaddr(struct cas_softc *, struct pci_attach_args *);
 
-struct cfattach cas_ca = {
+const struct cfattach cas_ca = {
 	sizeof(struct cas_softc), cas_match, cas_attach
 };
 

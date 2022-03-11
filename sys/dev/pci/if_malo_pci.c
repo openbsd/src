@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malo_pci.c,v 1.10 2015/11/24 17:11:39 mpi Exp $ */
+/*	$OpenBSD: if_malo_pci.c,v 1.11 2022/03/11 18:00:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -69,7 +69,7 @@ struct malo_pci_softc {
 	bus_size_t		 sc_mapsize2;
 };
 
-struct cfattach malo_pci_ca = {
+const struct cfattach malo_pci_ca = {
 	sizeof(struct malo_pci_softc), malo_pci_match, malo_pci_attach,
 	malo_pci_detach, malo_pci_activate
 };

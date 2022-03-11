@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.61 2022/02/16 06:21:18 anton Exp $ */
+/*	$OpenBSD: auvia.c,v 1.62 2022/03/11 18:00:45 mpi Exp $ */
 /*	$NetBSD: auvia.c,v 1.28 2002/11/04 16:38:49 kent Exp $	*/
 
 /*-
@@ -103,7 +103,7 @@ struct  cfdriver auvia_cd = {
 	NULL, "auvia", DV_DULL
 };
 
-struct cfattach auvia_ca = {
+const struct cfattach auvia_ca = {
 	sizeof (struct auvia_softc), auvia_match, auvia_attach,
 	    NULL, auvia_activate
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amas.c,v 1.6 2020/01/04 01:34:24 jsg Exp $	*/
+/*	$OpenBSD: amas.c,v 1.7 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2009 Ariane van der Steldt <ariane@stack.nl>
@@ -119,7 +119,7 @@ static const struct amas_feature_t amas_feature[] = {
 };
 
 /* Probe code. */
-struct cfattach amas_ca = {
+const struct cfattach amas_ca = {
 	sizeof(struct amas_softc),
 	amas_match,
 	amas_attach

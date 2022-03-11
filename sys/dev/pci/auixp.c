@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.46 2022/02/21 08:50:18 jsg Exp $ */
+/* $OpenBSD: auixp.c,v 1.47 2022/03/11 18:00:45 mpi Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -95,7 +95,7 @@ int	auixp_detach(struct device *, int);
 
 int	auixp_activate(struct device *, int);
 
-struct cfattach auixp_ca = {
+const struct cfattach auixp_ca = {
 	sizeof(struct auixp_softc), auixp_match, auixp_attach,
 	NULL, auixp_activate
 };

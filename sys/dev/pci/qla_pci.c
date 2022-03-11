@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla_pci.c,v 1.8 2014/04/03 20:01:47 brad Exp $ */
+/*	$OpenBSD: qla_pci.c,v 1.9 2022/03/11 18:00:51 mpi Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -59,7 +59,7 @@ struct qla_pci_softc {
 	void			*psc_ih;
 };
 
-struct cfattach qla_pci_ca = {
+const struct cfattach qla_pci_ca = {
 	sizeof(struct qla_pci_softc),
 	qla_pci_match,
 	qla_pci_attach

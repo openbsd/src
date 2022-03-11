@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_pci.c,v 1.39 2015/11/28 09:42:10 jmatthew Exp $	*/
+/*	$OpenBSD: if_gem_pci.c,v 1.40 2022/03/11 18:00:45 mpi Exp $	*/
 /*	$NetBSD: if_gem_pci.c,v 1.1 2001/09/16 00:11:42 eeh Exp $ */
 
 /*
@@ -79,7 +79,7 @@ void	gem_attach_pci(struct device *, struct device *, void *);
 int	gem_detach_pci(struct device *, int);
 int	gem_pci_enaddr(struct gem_softc *, struct pci_attach_args *);
 
-struct cfattach gem_pci_ca = {
+const struct cfattach gem_pci_ca = {
 	sizeof(struct gem_pci_softc), gem_match_pci, gem_attach_pci,
 	gem_detach_pci
 };

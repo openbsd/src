@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.123 2022/01/05 16:46:11 deraadt Exp $	*/
+/*	$OpenBSD: pci.c,v 1.124 2022/03/11 18:00:51 mpi Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ struct pci_dev {
 extern int allowaperture;
 #endif
 
-struct cfattach pci_ca = {
+const struct cfattach pci_ca = {
 	sizeof(struct pci_softc), pcimatch, pciattach, pcidetach, pciactivate
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.133 2020/10/15 13:22:13 krw Exp $	*/
+/*	$OpenBSD: ips.c,v 1.134 2022/03/11 18:00:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -483,7 +483,7 @@ void	ips_ccb_put(void *, void *);
 int	ips_dmamem_alloc(struct dmamem *, bus_dma_tag_t, bus_size_t);
 void	ips_dmamem_free(struct dmamem *);
 
-struct cfattach ips_ca = {
+const struct cfattach ips_ca = {
 	sizeof(struct ips_softc),
 	ips_match,
 	ips_attach

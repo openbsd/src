@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.360 2022/01/09 05:42:50 jsg Exp $ */
+/* $OpenBSD: if_em.c,v 1.361 2022/03/11 18:00:45 mpi Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -319,7 +319,7 @@ void	em_tbi_adjust_stats(struct em_softc *, uint32_t, uint8_t *);
  *  OpenBSD Device Interface Entry Points
  *********************************************************************/
 
-struct cfattach em_ca = {
+const struct cfattach em_ca = {
 	sizeof(struct em_softc), em_probe, em_attach, em_detach,
 	em_activate
 };

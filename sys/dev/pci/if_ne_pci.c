@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.20 2014/12/22 02:28:52 tedu Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.21 2022/03/11 18:00:48 mpi Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -74,7 +74,7 @@ struct ne_pci_softc {
 int ne_pci_match(struct device *, void *, void *);
 void ne_pci_attach(struct device *, struct device *, void *);
 
-struct cfattach ne_pci_ca = {
+const struct cfattach ne_pci_ca = {
 	sizeof(struct ne_pci_softc), ne_pci_match, ne_pci_attach
 };
 

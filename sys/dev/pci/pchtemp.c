@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchtemp.c,v 1.6 2020/10/07 11:19:28 jsg Exp $	*/
+/*	$OpenBSD: pchtemp.c,v 1.7 2022/03/11 18:00:51 mpi Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -54,7 +54,7 @@ struct cfdriver pchtemp_cd = {
 	NULL, "pchtemp", DV_DULL
 };
 
-struct cfattach pchtemp_ca = {
+const struct cfattach pchtemp_ca = {
 	sizeof(struct pchtemp_softc), pchtemp_match, pchtemp_attach
 };
 

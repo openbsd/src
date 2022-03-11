@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.141 2022/02/22 01:15:01 guenther Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.142 2022/03/11 18:00:48 mpi Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -97,7 +97,7 @@ int sis_probe(struct device *, void *, void *);
 void sis_attach(struct device *, struct device *, void *);
 int sis_activate(struct device *, int);
 
-struct cfattach sis_ca = {
+const struct cfattach sis_ca = {
 	sizeof(struct sis_softc), sis_probe, sis_attach, NULL,
 	sis_activate
 };

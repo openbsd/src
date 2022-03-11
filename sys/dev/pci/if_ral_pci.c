@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_pci.c,v 1.27 2018/10/02 02:05:34 kevlo Exp $  */
+/*	$OpenBSD: if_ral_pci.c,v 1.28 2022/03/11 18:00:48 mpi Exp $  */
 
 /*-
  * Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -106,7 +106,7 @@ int	ral_pci_detach(struct device *, int);
 int	ral_pci_activate(struct device *, int);
 void	ral_pci_wakeup(struct ral_pci_softc *);
 
-struct cfattach ral_pci_ca = {
+const struct cfattach ral_pci_ca = {
 	sizeof (struct ral_pci_softc), ral_pci_match, ral_pci_attach,
 	ral_pci_detach, ral_pci_activate
 };

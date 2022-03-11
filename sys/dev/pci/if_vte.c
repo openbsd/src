@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vte.c,v 1.24 2020/07/10 13:26:38 patrick Exp $	*/
+/*	$OpenBSD: if_vte.c,v 1.25 2022/03/11 18:00:50 mpi Exp $	*/
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -103,7 +103,7 @@ const struct pci_matchid vte_devices[] = {
 	{ PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6040_ETHER }
 };
 
-struct cfattach vte_ca = {
+const struct cfattach vte_ca = {
 	sizeof(struct vte_softc), vte_match, vte_attach
 };
 

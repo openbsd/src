@@ -1,4 +1,4 @@
-/*	$OpenBSD: qle.c,v 1.61 2020/09/22 19:32:53 krw Exp $ */
+/*	$OpenBSD: qle.c,v 1.62 2022/03/11 18:00:51 mpi Exp $ */
 
 /*
  * Copyright (c) 2013, 2014 Jonathan Matthew <jmatthew@openbsd.org>
@@ -235,7 +235,7 @@ int	qle_match(struct device *, void *, void *);
 void	qle_attach(struct device *, struct device *, void *);
 int	qle_detach(struct device *, int);
 
-struct cfattach qle_ca = {
+const struct cfattach qle_ca = {
 	sizeof(struct qle_softc),
 	qle_match,
 	qle_attach,

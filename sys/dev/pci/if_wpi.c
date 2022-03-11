@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.155 2020/12/12 11:48:53 jan Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.156 2022/03/11 18:00:50 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -159,7 +159,7 @@ struct cfdriver wpi_cd = {
 	NULL, "wpi", DV_IFNET
 };
 
-struct cfattach wpi_ca = {
+const struct cfattach wpi_ca = {
 	sizeof (struct wpi_softc), wpi_match, wpi_attach, wpi_detach,
 	wpi_activate
 };

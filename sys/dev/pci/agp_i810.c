@@ -1,4 +1,4 @@
-/*	$OpenBSD: agp_i810.c,v 1.94 2019/04/14 10:14:50 jsg Exp $	*/
+/*	$OpenBSD: agp_i810.c,v 1.95 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -107,7 +107,7 @@ int	intagp_gmch_match(struct pci_attach_args *);
 extern void	intagp_dma_sync(bus_dma_tag_t, bus_dmamap_t,
 		    bus_addr_t, bus_size_t, int);
 
-struct cfattach intagp_ca = {
+const struct cfattach intagp_ca = {
 	sizeof(struct agp_i810_softc), agp_i810_probe, agp_i810_attach,
 	NULL, agp_i810_activate,
 };

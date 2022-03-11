@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xge.c,v 1.81 2022/01/09 05:42:56 jsg Exp $	*/
+/*	$OpenBSD: if_xge.c,v 1.82 2022/03/11 18:00:50 mpi Exp $	*/
 /*	$NetBSD: if_xge.c,v 1.1 2005/09/09 10:30:27 ragge Exp $	*/
 
 /*
@@ -328,7 +328,7 @@ pif_wkey(struct xge_softc *sc, bus_size_t csr, uint64_t val)
 #endif
 }
 
-struct cfattach xge_ca = {
+const struct cfattach xge_ca = {
 	sizeof(struct xge_softc), xge_match, xge_attach
 };
 

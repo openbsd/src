@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.95 2020/12/12 11:48:53 jan Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.96 2022/03/11 18:00:48 mpi Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1915,7 +1915,7 @@ nge_stop(struct nge_softc *sc)
 		sizeof(sc->nge_ldata->nge_tx_list));
 }
 
-struct cfattach nge_ca = {
+const struct cfattach nge_ca = {
 	sizeof(struct nge_softc), nge_probe, nge_attach
 };
 

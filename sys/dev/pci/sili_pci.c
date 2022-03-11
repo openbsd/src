@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili_pci.c,v 1.14 2013/12/06 21:03:04 deraadt Exp $ */
+/*	$OpenBSD: sili_pci.c,v 1.15 2022/03/11 18:00:51 mpi Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -48,7 +48,7 @@ struct sili_pci_softc {
 	void			*psc_ih;
 };
 
-struct cfattach sili_pci_ca = {
+const struct cfattach sili_pci_ca = {
 	sizeof(struct sili_pci_softc),
 	sili_pci_match,
 	sili_pci_attach,

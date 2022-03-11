@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_devar.h,v 1.40 2022/01/09 05:42:50 jsg Exp $	*/
+/*	$OpenBSD: if_devar.h,v 1.41 2022/03/11 18:00:45 mpi Exp $	*/
 /*	$NetBSD: if_devar.h,v 1.13 1997/06/08 18:46:36 thorpej Exp $	*/
 
 /*-
@@ -792,7 +792,6 @@ static const struct {
 			  TULIP_MAX_TXSEG, TULIP_DATA_PER_DESC, \
 			  0, BUS_DMA_NOWAIT, (mapp))
 
-extern struct cfattach de_ca;
 extern struct cfdriver de_cd;
 #define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) de_cd.cd_devs[unit])
 #define TULIP_IFP_TO_SOFTC(ifp)         ((tulip_softc_t *)((ifp)->if_softc))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_pci.c,v 1.33 2015/11/24 17:11:39 mpi Exp $ */
+/*	$OpenBSD: if_rl_pci.c,v 1.34 2022/03/11 18:00:48 mpi Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -84,7 +84,7 @@ struct rl_pci_softc {
 	bus_size_t		psc_mapsize;
 };
 
-struct cfattach rl_pci_ca = {
+const struct cfattach rl_pci_ca = {
 	sizeof(struct rl_pci_softc), rl_pci_match, rl_pci_attach, rl_pci_detach,
 	rl_activate
 };

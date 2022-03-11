@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_pci.c,v 1.23 2022/01/18 11:36:21 patrick Exp $	*/
+/*	$OpenBSD: sdhc_pci.c,v 1.24 2022/03/11 18:00:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -62,7 +62,7 @@ void	sdhc_pci_conf_write(pci_chipset_tag_t, pcitag_t, int, uint8_t);
 void	sdhc_takecontroller(struct pci_attach_args *);
 void	sdhc_ricohfix(struct sdhc_pci_softc *);
 
-struct cfattach sdhc_pci_ca = {
+const struct cfattach sdhc_pci_ca = {
 	sizeof(struct sdhc_pci_softc), sdhc_pci_match, sdhc_pci_attach,
 	NULL, sdhc_pci_activate
 };

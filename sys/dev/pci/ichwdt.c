@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichwdt.c,v 1.6 2016/03/19 11:34:22 mpi Exp $	*/
+/*	$OpenBSD: ichwdt.c,v 1.7 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -57,7 +57,7 @@ int	ichwdt_activate(struct device *, int);
 
 int	ichwdt_cb(void *, int);
 
-struct cfattach ichwdt_ca = {
+const struct cfattach ichwdt_ca = {
 	sizeof(struct ichwdt_softc),
 	ichwdt_match,
 	ichwdt_attach,

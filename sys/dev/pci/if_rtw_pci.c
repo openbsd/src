@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtw_pci.c,v 1.20 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_rtw_pci.c,v 1.21 2022/03/11 18:00:48 mpi Exp $	*/
 /*	$NetBSD: if_rtw_pci.c,v 1.1 2004/09/26 02:33:36 dyoung Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@ struct rtw_pci_softc {
 int	rtw_pci_match(struct device *, void *, void *);
 void	rtw_pci_attach(struct device *, struct device *, void *);
 
-struct cfattach rtw_pci_ca = {
+const struct cfattach rtw_pci_ca = {
 	sizeof (struct rtw_pci_softc), rtw_pci_match, rtw_pci_attach,
 	    rtw_pci_detach, rtw_activate
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ale.c,v 1.48 2020/07/10 13:26:37 patrick Exp $	*/
+/*	$OpenBSD: if_ale.c,v 1.49 2022/03/11 18:00:45 mpi Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -113,7 +113,7 @@ const struct pci_matchid ale_devices[] = {
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L1E }
 };
 
-struct cfattach ale_ca = {
+const struct cfattach ale_ca = {
 	sizeof (struct ale_softc), ale_match, ale_attach, NULL,
 	ale_activate
 };

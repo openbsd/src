@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.37 2020/07/10 13:26:37 patrick Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.38 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -110,7 +110,7 @@ const struct pci_matchid age_devices[] = {
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_L1 }
 };
 
-struct cfattach age_ca = {
+const struct cfattach age_ca = {
 	sizeof (struct age_softc), age_match, age_attach
 };
 

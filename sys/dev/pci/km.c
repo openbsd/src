@@ -1,4 +1,4 @@
-/*	$OpenBSD: km.c,v 1.13 2020/01/05 01:07:58 jsg Exp $	*/
+/*	$OpenBSD: km.c,v 1.14 2022/03/11 18:00:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 2008 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -58,7 +58,7 @@ int	km_match(struct device *, void *, void *);
 void	km_attach(struct device *, struct device *, void *);
 void	km_refresh(void *);
 
-struct cfattach km_ca = {
+const struct cfattach km_ca = {
 	sizeof(struct km_softc), km_match, km_attach
 };
 

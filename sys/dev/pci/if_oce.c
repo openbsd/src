@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.105 2022/01/09 05:42:54 jsg Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.106 2022/03/11 18:00:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -499,7 +499,7 @@ struct cfdriver oce_cd = {
 	NULL, "oce", DV_IFNET
 };
 
-struct cfattach oce_ca = {
+const struct cfattach oce_ca = {
 	sizeof(struct oce_softc), oce_match, oce_attach, NULL, NULL
 };
 

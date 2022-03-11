@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdt.c,v 1.25 2020/11/29 03:17:27 kevlo Exp $	*/
+/*	$OpenBSD: wdt.c,v 1.26 2022/03/11 18:00:52 mpi Exp $	*/
 
 /*-
  * Copyright (c) 1998,1999 Alex Nash
@@ -63,7 +63,7 @@ void	wdt_buzzer_off(struct wdt_softc *);
 void	wdt_timer_disable(struct wdt_softc *);
 void	wdt_buzzer_enable(struct wdt_softc *);
 
-struct cfattach wdt_ca = {
+const struct cfattach wdt_ca = {
 	sizeof(struct wdt_softc), wdt_probe, wdt_attach,
 	NULL, wdt_activate
 };

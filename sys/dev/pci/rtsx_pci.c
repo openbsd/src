@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx_pci.c,v 1.14 2017/09/06 13:07:38 jcs Exp $	*/
+/*	$OpenBSD: rtsx_pci.c,v 1.15 2022/03/11 18:00:51 mpi Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -38,7 +38,7 @@ struct rtsx_pci_softc {
 int	rtsx_pci_match(struct device *, void *, void *);
 void	rtsx_pci_attach(struct device *, struct device *, void *);
 
-struct cfattach rtsx_pci_ca = {
+const struct cfattach rtsx_pci_ca = {
 	sizeof(struct rtsx_pci_softc), rtsx_pci_match, rtsx_pci_attach,
 	NULL, rtsx_activate
 };

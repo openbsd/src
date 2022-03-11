@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.255 2022/03/09 11:38:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.256 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -316,7 +316,7 @@ struct cfdriver iwn_cd = {
 	NULL, "iwn", DV_IFNET
 };
 
-struct cfattach iwn_ca = {
+const struct cfattach iwn_ca = {
 	sizeof (struct iwn_softc), iwn_match, iwn_attach, iwn_detach,
 	iwn_activate
 };

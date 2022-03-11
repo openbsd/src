@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvme_pci.c,v 1.9 2021/05/31 04:13:42 dlg Exp $ */
+/*	$OpenBSD: nvme_pci.c,v 1.10 2022/03/11 18:00:51 mpi Exp $ */
 
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
@@ -52,7 +52,7 @@ void	nvme_pci_attach(struct device *, struct device *, void *);
 int	nvme_pci_detach(struct device *, int);
 int	nvme_pci_activate(struct device *, int);
 
-struct cfattach nvme_pci_ca = {
+const struct cfattach nvme_pci_ca = {
 	sizeof(struct nvme_pci_softc),
 	nvme_pci_match,
 	nvme_pci_attach,

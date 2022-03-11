@@ -106,7 +106,7 @@ struct cfdriver itherm_cd = {
 	NULL, "itherm", DV_DULL
 };
 
-struct cfattach itherm_ca = {
+const struct cfattach itherm_ca = {
 	sizeof(struct itherm_softc), itherm_probe, itherm_attach, NULL,
 	itherm_activate
 };

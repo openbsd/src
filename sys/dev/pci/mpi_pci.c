@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpi_pci.c,v 1.25 2014/09/15 12:00:04 dlg Exp $ */
+/*	$OpenBSD: mpi_pci.c,v 1.26 2022/03/11 18:00:50 mpi Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -56,7 +56,7 @@ struct mpi_pci_softc {
 	void			*psc_ih;
 };
 
-struct cfattach mpi_pci_ca = {
+const struct cfattach mpi_pci_ca = {
 	sizeof(struct mpi_pci_softc), mpi_pci_match, mpi_pci_attach,
 	mpi_pci_detach
 };

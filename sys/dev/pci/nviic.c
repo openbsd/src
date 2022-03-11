@@ -1,4 +1,4 @@
-/*	$OpenBSD: nviic.c,v 1.17 2015/03/14 03:38:48 jsg Exp $ */
+/*	$OpenBSD: nviic.c,v 1.18 2022/03/11 18:00:51 mpi Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -93,7 +93,7 @@ struct nviic_softc {
 	struct nviic_controller	sc_nc[NVIIC_NBUS];
 };
 
-struct cfattach nviic_ca = {
+const struct cfattach nviic_ca = {
 	sizeof(struct nviic_softc), nviic_match, nviic_attach
 };
 

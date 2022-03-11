@@ -1,4 +1,4 @@
-/*	$OpenBSD: ichiic.c,v 1.47 2022/01/11 00:37:23 jsg Exp $	*/
+/*	$OpenBSD: ichiic.c,v 1.48 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -74,7 +74,7 @@ int	ichiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 
 int	ichiic_intr(void *);
 
-struct cfattach ichiic_ca = {
+const struct cfattach ichiic_ca = {
 	sizeof(struct ichiic_softc),
 	ichiic_match,
 	ichiic_attach

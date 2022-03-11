@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.66 2020/01/05 01:07:58 jsg Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.67 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -81,7 +81,7 @@ struct fxp_pci_softc {
 	bus_size_t		psc_mapsize;
 };
 
-struct cfattach fxp_pci_ca = {
+const struct cfattach fxp_pci_ca = {
 	sizeof(struct fxp_pci_softc), fxp_pci_match, fxp_pci_attach,
 	fxp_pci_detach, fxp_activate
 };

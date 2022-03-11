@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.75 2022/01/09 05:42:56 jsg Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.76 2022/03/11 18:00:50 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -2021,7 +2021,7 @@ tl_wait_up(void *xsc)
 	ifq_clr_oactive(&ifp->if_snd);
 }
 
-struct cfattach tl_ca = {
+const struct cfattach tl_ca = {
 	sizeof(struct tl_softc), tl_probe, tl_attach
 };
 

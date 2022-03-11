@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_pci.c,v 1.18 2015/12/11 16:07:02 mpi Exp $  */
+/*	$OpenBSD: if_pgt_pci.c,v 1.19 2022/03/11 18:00:48 mpi Exp $  */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -65,7 +65,7 @@ struct pgt_pci_softc {
 	bus_size_t		sc_mapsize;
 };
 
-struct cfattach pgt_pci_ca = {
+const struct cfattach pgt_pci_ca = {
 	sizeof(struct pgt_pci_softc), pgt_pci_match, pgt_pci_attach,
 	pgt_pci_detach, pgt_activate
 };

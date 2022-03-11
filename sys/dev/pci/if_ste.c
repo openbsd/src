@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ste.c,v 1.68 2022/02/22 01:15:01 guenther Exp $ */
+/*	$OpenBSD: if_ste.c,v 1.69 2022/03/11 18:00:48 mpi Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -139,7 +139,7 @@ const struct pci_matchid ste_devices[] = {
 	{ PCI_VENDOR_SUNDANCE, PCI_PRODUCT_SUNDANCE_ST201_2 }
 };
 
-struct cfattach ste_ca = {
+const struct cfattach ste_ca = {
 	sizeof(struct ste_softc), ste_probe, ste_attach
 };
 

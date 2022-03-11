@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.82 2022/02/10 16:22:00 bluhm Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.83 2022/03/11 18:00:45 mpi Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1411,7 +1411,7 @@ struct cfdriver ixl_cd = {
 	DV_IFNET,
 };
 
-struct cfattach ixl_ca = {
+const struct cfattach ixl_ca = {
 	sizeof(struct ixl_softc),
 	ixl_match,
 	ixl_attach,

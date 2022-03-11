@@ -1,4 +1,4 @@
-/*      $OpenBSD: glxpcib.c,v 1.15 2022/01/09 05:42:45 jsg Exp $	*/
+/*      $OpenBSD: glxpcib.c,v 1.16 2022/03/11 18:00:45 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -222,7 +222,7 @@ int	glxpcib_activate(struct device *, int);
 int	glxpcib_search(struct device *, void *, void *);
 int	glxpcib_print(void *, const char *);
 
-struct cfattach glxpcib_ca = {
+const struct cfattach glxpcib_ca = {
 	sizeof(struct glxpcib_softc), glxpcib_match, glxpcib_attach,
 	NULL, glxpcib_activate
 };

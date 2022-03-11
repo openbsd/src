@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_pci.c,v 1.9 2015/11/24 17:11:39 mpi Exp $  */
+/*	$OpenBSD: if_acx_pci.c,v 1.10 2022/03/11 18:00:45 mpi Exp $  */
 
 /*-
  * Copyright (c) 2006 Theo de Raadt <deraadt@openbsd.org>
@@ -79,7 +79,7 @@ int	acx_pci_match(struct device *, void *, void *);
 void	acx_pci_attach(struct device *, struct device *, void *);
 int	acx_pci_detach(struct device *, int);
 
-struct cfattach acx_pci_ca = {
+const struct cfattach acx_pci_ca = {
 	sizeof (struct acx_pci_softc), acx_pci_match, acx_pci_attach,
 	acx_pci_detach
 };

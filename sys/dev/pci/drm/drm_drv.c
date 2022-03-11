@@ -1501,7 +1501,7 @@ drm_activate(struct device *self, int act)
 	return (0);
 }
 
-struct cfattach drm_ca = {
+const struct cfattach drm_ca = {
 	sizeof(struct drm_softc), drm_probe, drm_attach,
 	drm_detach, drm_activate
 };

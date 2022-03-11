@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.362 2022/01/09 05:42:58 jsg Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.363 2022/03/11 18:00:51 mpi Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -1403,12 +1403,12 @@ void	pciide_attach(struct device *, struct device *, void *);
 int	pciide_detach(struct device *, int);
 int	pciide_activate(struct device *, int);
 
-struct cfattach pciide_pci_ca = {
+const struct cfattach pciide_pci_ca = {
 	sizeof(struct pciide_softc), pciide_match, pciide_attach,
 	pciide_detach, pciide_activate
 };
 
-struct cfattach pciide_jmb_ca = {
+const struct cfattach pciide_jmb_ca = {
 	sizeof(struct pciide_softc), pciide_match, pciide_attach,
 	pciide_detach, pciide_activate
 };

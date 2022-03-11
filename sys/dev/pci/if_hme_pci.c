@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_pci.c,v 1.23 2021/03/05 12:40:13 jsg Exp $	*/
+/*	$OpenBSD: if_hme_pci.c,v 1.24 2022/03/11 18:00:45 mpi Exp $	*/
 /*	$NetBSD: if_hme_pci.c,v 1.3 2000/12/28 22:59:13 sommerfeld Exp $	*/
 
 /*
@@ -72,7 +72,7 @@ void	hmeattach_pci(struct device *, struct device *, void *);
 int	hmedetach_pci(struct device *, int);
 int	hme_pci_enaddr(struct hme_softc *, struct pci_attach_args *);
 
-struct cfattach hme_pci_ca = {
+const struct cfattach hme_pci_ca = {
 	sizeof(struct hme_pci_softc), hmematch_pci, hmeattach_pci, hmedetach_pci
 };
 

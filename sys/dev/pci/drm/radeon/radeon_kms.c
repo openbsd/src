@@ -88,7 +88,7 @@ extern const struct drm_driver kms_driver;
  */
 int radeon_fatal_error;
 
-struct cfattach radeondrm_ca = {
+const struct cfattach radeondrm_ca = {
         sizeof (struct radeon_device), radeondrm_probe, radeondrm_attach_kms,
         radeondrm_detach_kms, radeondrm_activate_kms
 };

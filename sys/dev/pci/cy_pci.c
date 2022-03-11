@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_pci.c,v 1.15 2021/03/05 12:40:13 jsg Exp $	*/
+/*	$OpenBSD: cy_pci.c,v 1.16 2022/03/11 18:00:45 mpi Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -60,7 +60,7 @@ struct cy_pci_softc {
 	bus_space_handle_t	sc_ioh;		/* PLX i/o handle */
 };
 
-struct cfattach cy_pci_ca = {
+const struct cfattach cy_pci_ca = {
 	sizeof(struct cy_pci_softc), cy_pci_match, cy_pci_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re_pci.c,v 1.55 2021/01/24 01:59:20 jsg Exp $	*/
+/*	$OpenBSD: if_re_pci.c,v 1.56 2022/03/11 18:00:48 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Peter Valchev <pvalchev@openbsd.org>
@@ -82,7 +82,7 @@ int	re_pci_activate(struct device *, int);
 /*
  * PCI autoconfig definitions
  */
-struct cfattach re_pci_ca = {
+const struct cfattach re_pci_ca = {
 	sizeof(struct re_pci_softc),
 	re_pci_probe,
 	re_pci_attach,

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.74 2022/02/21 12:36:21 jsg Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.75 2022/03/11 18:00:45 mpi Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -119,7 +119,7 @@ void ixgb_dma_free(struct ixgb_softc *, struct ixgb_dma_alloc *);
  *  OpenBSD Device Interface Entry Points
  *********************************************************************/
 
-struct cfattach ixgb_ca = {
+const struct cfattach ixgb_ca = {
 	sizeof(struct ixgb_softc), ixgb_probe, ixgb_attach
 };
 

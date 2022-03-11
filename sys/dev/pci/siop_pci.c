@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci.c,v 1.7 2010/07/23 07:47:13 jsg Exp $ */
+/*	$OpenBSD: siop_pci.c,v 1.8 2022/03/11 18:00:51 mpi Exp $ */
 /*	$NetBSD: siop_pci.c,v 1.18 2005/06/28 00:28:42 thorpej Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ struct siop_pci_softc {
 	struct siop_pci_common_softc siop_pci;
 };
 
-struct cfattach siop_pci_ca = {
+const struct cfattach siop_pci_ca = {
 	sizeof(struct siop_pci_softc), siop_pci_match, siop_pci_attach
 };
 

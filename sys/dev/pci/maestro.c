@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.44 2022/02/16 06:21:19 anton Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.45 2022/03/11 18:00:50 mpi Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -522,7 +522,7 @@ struct cfdriver maestro_cd = {
 	NULL, "maestro", DV_DULL
 };
 
-struct cfattach maestro_ca = {
+const struct cfattach maestro_ca = {
 	sizeof (struct maestro_softc), maestro_match, maestro_attach,
 	NULL, maestro_activate
 };

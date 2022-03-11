@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.269 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.270 2022/03/11 18:00:45 mpi Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -280,7 +280,7 @@ int	azalia_resume(azalia_t *);
 int	azalia_resume_codec(codec_t *);
 
 /* variables */
-struct cfattach azalia_ca = {
+const struct cfattach azalia_ca = {
 	sizeof(azalia_t), azalia_pci_match, azalia_pci_attach,
 	azalia_pci_detach, azalia_pci_activate
 };

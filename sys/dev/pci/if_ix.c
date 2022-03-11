@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.183 2022/03/05 17:00:14 deraadt Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.184 2022/03/11 18:00:45 mpi Exp $	*/
 
 /******************************************************************************
 
@@ -199,7 +199,7 @@ struct cfdriver ix_cd = {
 	NULL, "ix", DV_IFNET
 };
 
-struct cfattach ix_ca = {
+const struct cfattach ix_ca = {
 	sizeof(struct ix_softc), ixgbe_probe, ixgbe_attach, ixgbe_detach,
 	ixgbe_activate
 };

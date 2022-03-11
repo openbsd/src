@@ -2316,7 +2316,7 @@ int	inteldrm_detach(struct device *, int);
 int	inteldrm_activate(struct device *, int);
 void	inteldrm_attachhook(struct device *);
 
-struct cfattach inteldrm_ca = {
+const struct cfattach inteldrm_ca = {
 	sizeof(struct inteldrm_softc), inteldrm_match, inteldrm_attach,
 	inteldrm_detach, inteldrm_activate
 };

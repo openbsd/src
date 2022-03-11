@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.59 2022/02/16 06:21:19 anton Exp $ */
+/*      $OpenBSD: eap.c,v 1.60 2022/03/11 18:00:45 mpi Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -153,7 +153,7 @@ int	eap_freemem(struct eap_softc *, struct eap_dma *);
 #define EREAD2(sc, r) bus_space_read_2((sc)->iot, (sc)->ioh, (r))
 #define EREAD4(sc, r) bus_space_read_4((sc)->iot, (sc)->ioh, (r))
 
-struct cfattach eap_ca = {
+const struct cfattach eap_ca = {
 	sizeof(struct eap_softc), eap_match, eap_attach, NULL, eap_activate
 };
 

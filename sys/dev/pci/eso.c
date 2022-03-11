@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.48 2022/02/16 06:21:19 anton Exp $	*/
+/*	$OpenBSD: eso.c,v 1.49 2022/03/11 18:00:45 mpi Exp $	*/
 /*	$NetBSD: eso.c,v 1.48 2006/12/18 23:13:39 kleink Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ void eso_attach(struct device *, struct device *, void *);
 int eso_activate(struct device *, int);
 void eso_defer(struct device *);
 
-struct cfattach eso_ca = {
+const struct cfattach eso_ca = {
 	sizeof (struct eso_softc), eso_match, eso_attach, NULL,
 	eso_activate
 };
