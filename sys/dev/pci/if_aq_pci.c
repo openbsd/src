@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.6 2022/03/10 11:35:13 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.7 2022/03/11 12:14:17 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -2508,7 +2508,8 @@ aq_up(struct aq_softc *sc)
 			goto downqueues;
 	}
 
-	/* filters? */
+	aq_set_mac_addr(sc, AQ_HW_MAC_OWN, sc->sc_arpcom.ac_enaddr);
+
 	/* enable checksum offload */
 
 	SET(ifp->if_flags, IFF_RUNNING);
@@ -2766,24 +2767,21 @@ aq_iff(struct aq_softc *sc)
 	struct ether_multistep step;
 	int idx;
 
-	if (ifp->if_flags & IFF_PROMISC || ac->ac_multirangecnt > 0) {
+	if (ifp->if_flags & IFF_PROMISC) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		AQ_WRITE_REG_BIT(sc, RPF_L2BC_REG, RPF_L2BC_PROMISC, 1);
-	} else if (ac->ac_multicnt >= AQ_HW_MAC_NUM ||
-	    ISSET(ifp->if_flags, IFF_ALLMULTI)) {
+	} else if (ac->ac_multirangecnt > 0 ||
+	    ac->ac_multicnt >= AQ_HW_MAC_NUM) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		AQ_WRITE_REG_BIT(sc, RPF_L2BC_REG, RPF_L2BC_PROMISC, 0);
 		AQ_WRITE_REG_BIT(sc, RPF_MCAST_FILTER_MASK_REG,
 		    RPF_MCAST_FILTER_MASK_ALLMULTI, 1);
 		AQ_WRITE_REG_BIT(sc, RPF_MCAST_FILTER_REG(0),
 		    RPF_MCAST_FILTER_EN, 1);
-	} else if (ac->ac_multicnt == 0) {
-		AQ_WRITE_REG_BIT(sc, RPF_L2BC_REG, RPF_L2BC_PROMISC, 0);
-		AQ_WRITE_REG_BIT(sc, RPF_MCAST_FILTER_REG(0),
-		    RPF_MCAST_FILTER_EN, 0);
 	} else {
+		ifp->if_flags &= ~IFF_ALLMULTI;
 		idx = AQ_HW_MAC_OWN + 1;
 
-		/* turn on allmulti while we're rewriting? */
 		AQ_WRITE_REG_BIT(sc, RPF_L2BC_REG, RPF_L2BC_PROMISC, 0);
 
 		ETHER_FIRST_MULTI(step, ac, enm);
@@ -2798,7 +2796,7 @@ aq_iff(struct aq_softc *sc)
 		AQ_WRITE_REG_BIT(sc, RPF_MCAST_FILTER_MASK_REG,
 		    RPF_MCAST_FILTER_MASK_ALLMULTI, 0);
 		AQ_WRITE_REG_BIT(sc, RPF_MCAST_FILTER_REG(0),
-		    RPF_MCAST_FILTER_EN, 1);
+		    RPF_MCAST_FILTER_EN, 0);
 	}
 }
 
