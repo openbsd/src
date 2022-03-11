@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1986 2022/02/26 13:38:11 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.1988 2022/03/11 08:28:40 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -23828,6 +23828,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "JMC260",
 	},
 	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB58X,
+	    "JMB58x AHCI",
+	},
+	{
 	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB360,
 	    "JMB360 SATA",
 	},
@@ -23854,10 +23858,6 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB368,
 	    "JMB368 IDE",
-	},
-	{
-	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB58x,
-	    "JMB58x AHCI",
 	},
 	{
 	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_FIREWIRE,
