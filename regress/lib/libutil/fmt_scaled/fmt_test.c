@@ -1,4 +1,4 @@
-/* $OpenBSD: fmt_test.c,v 1.17 2021/06/20 14:09:59 tb Exp $ */
+/* $OpenBSD: fmt_test.c,v 1.18 2022/03/11 07:29:53 dtucker Exp $ */
 
 /*
  * Combined tests for fmt_scaled and scan_scaled.
@@ -188,6 +188,9 @@ struct {					/* the test cases */
 	{ "",		0, 0 },			/* boundary */
 	{ "--1", -1, EINVAL },
 	{ "++42", -1, EINVAL },
+	{ "-.060000000000000000E", -69175290276410818, 0 },
+	{ "-.600000000000000000E", -691752902764108185, 0 },
+	{ "-60000000000000000E", 0, ERANGE },
 	{ "SCALE_OVERFLOW", 0, ERANGE },
 	{ "SCALE_UNDERFLOW", 0, ERANGE },
 	{ "LLONG_MAX_K", (LLONG_MAX / 1024) * 1024, 0 },
