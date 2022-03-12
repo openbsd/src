@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.118 2022/02/21 18:22:20 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.119 2022/03/12 12:53:03 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -748,33 +748,8 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	}
 
 	if (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC) {
-		/* 'Change Cipher Spec' is just a single byte, so we know
-		 * exactly what the record payload has to look like */
-		/* XDTLS: check that epoch is consistent */
-		if ((rr->length != DTLS1_CCS_HEADER_LENGTH) ||
-		    (rr->off != 0) || (rr->data[0] != SSL3_MT_CCS)) {
-			al = SSL_AD_DECODE_ERROR;
-			SSLerror(s, SSL_R_BAD_CHANGE_CIPHER_SPEC);
-			goto fatal_err;
-		}
-
-		ssl_msg_callback(s, 0, SSL3_RT_CHANGE_CIPHER_SPEC, rr->data, 1);
-
-		/* We can't process a CCS now, because previous handshake
-		 * messages are still missing, so just drop it.
-		 */
-		if (!s->d1->change_cipher_spec_ok) {
-			rr->length = 0;
-			goto start;
-		}
-
-		s->d1->change_cipher_spec_ok = 0;
-
-		s->s3->change_cipher_spec = 1;
-		if (!ssl3_do_change_cipher_spec(s))
-			goto err;
-
-		rr->length = 0;
+		if ((ret = ssl3_read_change_cipher_spec(s)) <= 0)
+			return ret;
 		goto start;
 	}
 
@@ -872,7 +847,7 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
  fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
- err:
+
 	return (-1);
 }
 

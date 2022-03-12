@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.54 2022/02/21 18:22:20 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.55 2022/03/12 12:53:03 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -752,6 +752,68 @@ ssl3_read_alert(SSL *s)
 	return 1;
 }
 
+int
+ssl3_read_change_cipher_spec(SSL *s)
+{
+	SSL3_RECORD_INTERNAL *rr = &s->s3->rrec;
+
+	/*
+	 * 'Change Cipher Spec' is just a single byte, so we know exactly what
+	 * the record payload has to look like.
+	 */
+	if (rr->length != 1 || rr->off != 0) {
+		SSLerror(s, SSL_R_BAD_CHANGE_CIPHER_SPEC);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+		return -1;
+	}
+	if (rr->data[0] != SSL3_MT_CCS) {
+		SSLerror(s, SSL_R_BAD_CHANGE_CIPHER_SPEC);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
+		return -1;
+	}
+
+	/* XDTLS: check that epoch is consistent */
+
+	ssl_msg_callback(s, 0, SSL3_RT_CHANGE_CIPHER_SPEC, rr->data, 1);
+
+	/* Check that we have a cipher to change to. */
+	if (s->s3->hs.cipher == NULL) {
+		SSLerror(s, SSL_R_CCS_RECEIVED_EARLY);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE);
+		return -1;
+	}
+
+	/* Check that we should be receiving a Change Cipher Spec. */
+	if (SSL_is_dtls(s)) {
+		if (!s->d1->change_cipher_spec_ok) {
+			/*
+			 * We can't process a CCS now, because previous
+			 * handshake messages are still missing, so just
+			 * drop it.
+			 */
+			rr->length = 0;
+			return 1;
+		}
+		s->d1->change_cipher_spec_ok = 0;
+	} else {
+		if ((s->s3->flags & SSL3_FLAGS_CCS_OK) == 0) {
+			SSLerror(s, SSL_R_CCS_RECEIVED_EARLY);
+			ssl3_send_alert(s, SSL3_AL_FATAL,
+			    SSL_AD_UNEXPECTED_MESSAGE);
+			return -1;
+		}
+		s->s3->flags &= ~SSL3_FLAGS_CCS_OK;
+	}
+
+	rr->length = 0;
+
+	s->s3->change_cipher_spec = 1;
+	if (!ssl3_do_change_cipher_spec(s))
+		return -1;
+
+	return 1;
+}
+
 /* Return up to 'len' payload bytes received in 'type' records.
  * 'type' is one of the following:
  *
@@ -1044,39 +1106,9 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	}
 
 	if (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC) {
-		/* 'Change Cipher Spec' is just a single byte, so we know
-		 * exactly what the record payload has to look like */
-		if ((rr->length != 1) || (rr->off != 0) ||
-			(rr->data[0] != SSL3_MT_CCS)) {
-			al = SSL_AD_ILLEGAL_PARAMETER;
-			SSLerror(s, SSL_R_BAD_CHANGE_CIPHER_SPEC);
-			goto fatal_err;
-		}
-
-		/* Check we have a cipher to change to */
-		if (s->s3->hs.cipher == NULL) {
-			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerror(s, SSL_R_CCS_RECEIVED_EARLY);
-			goto fatal_err;
-		}
-
-		/* Check that we should be receiving a Change Cipher Spec. */
-		if (!(s->s3->flags & SSL3_FLAGS_CCS_OK)) {
-			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerror(s, SSL_R_CCS_RECEIVED_EARLY);
-			goto fatal_err;
-		}
-		s->s3->flags &= ~SSL3_FLAGS_CCS_OK;
-
-		rr->length = 0;
-
-		ssl_msg_callback(s, 0, SSL3_RT_CHANGE_CIPHER_SPEC, rr->data, 1);
-
-		s->s3->change_cipher_spec = 1;
-		if (!ssl3_do_change_cipher_spec(s))
-			goto err;
-		else
-			goto start;
+		if ((ret = ssl3_read_change_cipher_spec(s)) <= 0)
+			return ret;
+		goto start;
 	}
 
 	/* Unexpected handshake message (Client Hello, or protocol violation) */
@@ -1155,7 +1187,7 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
  fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
- err:
+
 	return (-1);
 }
 
