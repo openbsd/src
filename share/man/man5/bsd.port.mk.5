@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.558 2022/03/11 12:01:22 kn Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.559 2022/03/12 12:20:03 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 11 2022 $
+.Dd $Mdocdate: March 12 2022 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2239,6 +2239,13 @@ Likewise for
 .It Ev MODPERL_TEST_TARGET
 Likewise for
 .Cm do-test .
+.It Ev MODPERL_REGEN_PPPORT
+Normally, ppport.h will be regenerated using a current version of
+.Xr Devel::PPPort 3p
+if present.
+Set to
+.Sq \&No
+to disable this.
 .It Ev MODULES
 External modules mechanism, documented separately.
 Modules such as
