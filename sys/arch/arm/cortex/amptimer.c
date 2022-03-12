@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.13 2021/05/16 03:39:27 jsg Exp $ */
+/* $OpenBSD: amptimer.c,v 1.14 2022/03/12 14:40:41 mpi Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -122,7 +122,7 @@ void	*ampintc_intr_establish(int, int, int, struct cpu_info *,
 
 
 
-struct cfattach amptimer_ca = {
+const struct cfattach amptimer_ca = {
 	sizeof (struct amptimer_softc), amptimer_match, amptimer_attach
 };
 

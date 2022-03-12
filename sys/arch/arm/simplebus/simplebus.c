@@ -1,4 +1,4 @@
-/* $OpenBSD: simplebus.c,v 1.18 2021/12/06 20:01:54 kettenis Exp $ */
+/* $OpenBSD: simplebus.c,v 1.19 2022/03/12 14:40:41 mpi Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -39,7 +39,7 @@ int simplebus_dmamap_load_buffer(bus_dma_tag_t, bus_dmamap_t, void *,
 int simplebus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
     bus_dma_segment_t *, int, bus_size_t, int);
 
-struct cfattach simplebus_ca = {
+const struct cfattach simplebus_ca = {
 	sizeof(struct simplebus_softc), simplebus_match, simplebus_attach
 };
 
