@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.94 2021/12/15 12:53:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.95 2022/03/12 12:34:22 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /* 
@@ -243,7 +243,9 @@ uvm_pageout(void *arg)
 
 		uvm_unlock_fpageq();
 
-		/* now lock page queues and recompute inactive count */
+		/*
+		 * now lock page queues and recompute inactive count
+		 */
 		uvm_lock_pageq();
 		if (npages != uvmexp.npages) {	/* check for new pages? */
 			npages = uvmexp.npages;
@@ -271,7 +273,9 @@ uvm_pageout(void *arg)
 #endif
 		uvm_lock_pageq();
 
-		/* Scan if needed to meet our targets. */
+		/*
+		 * scan if needed
+		 */
 		if (pma != NULL ||
 		    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg) ||
 		    ((uvmexp.inactive + BUFPAGES_INACT) < uvmexp.inactarg)) {
@@ -304,7 +308,9 @@ uvm_pageout(void *arg)
 		}
 		uvm_unlock_fpageq();
 
-		/* scan done. unlock page queues (only lock we are holding) */
+		/*
+		 * scan done.  unlock page queues (the only lock we are holding)
+		 */
 		uvm_unlock_pageq();
 
 		sched_pause(yield);

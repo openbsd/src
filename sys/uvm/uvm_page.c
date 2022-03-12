@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.162 2022/03/10 10:46:56 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.163 2022/03/12 12:34:22 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -985,7 +985,9 @@ uvm_pageclean(struct vm_page *pg)
 	if (pg->pg_flags & PG_TABLED)
 		uvm_pageremove(pg);
 
-	/* now remove the page from the queues */
+	/*
+	 * now remove the page from the queues
+	 */
 	if (pg->pg_flags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
 		flags_to_clear |= PQ_ACTIVE;
@@ -1000,7 +1002,9 @@ uvm_pageclean(struct vm_page *pg)
 		uvmexp.inactive--;
 	}
 
-	/* if the page was wired, unwire it now. */
+	/*
+	 * if the page was wired, unwire it now.
+	 */
 	if (pg->wire_count) {
 		pg->wire_count = 0;
 		uvmexp.wired--;
