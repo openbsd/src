@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.7 2022/03/01 21:29:10 kettenis Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.8 2022/03/12 11:28:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -103,6 +103,7 @@ struct aplintc_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	bus_space_handle_t	sc_event_ioh;
 
 	int			sc_version;
 
@@ -181,6 +182,28 @@ aplintc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_version = 2;
 	else
 		sc->sc_version = 1;
+
+	/*
+	 * AIC2 has the event register specified separately.  However
+	 * a preliminary device tree binding for AIC2 had it included
+	 * in the main register area, like with AIC1.  Support both
+	 * for now.
+	 */
+	if (faa->fa_nreg > 1) {
+		if (bus_space_map(sc->sc_iot, faa->fa_reg[1].addr,
+		    faa->fa_reg[1].size, 0, &sc->sc_event_ioh)) {
+			printf(": can't map event register\n");
+			return;
+		}
+	} else {
+		if (sc->sc_version == 1) {
+			bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+			    AIC_EVENT, 4, &sc->sc_event_ioh);
+		} else {
+			bus_space_subregion(sc->sc_iot, sc->sc_ioh,
+			    AIC2_EVENT, 4, &sc->sc_event_ioh);
+		}
+	}
 
 	info = HREAD4(sc, AIC_INFO);
 	sc->sc_nirq = AIC_INFO_NIRQ(info);
@@ -282,10 +305,7 @@ aplintc_irq_handler(void *frame)
 	uint32_t irq, type;
 	int s;
 
-	if (sc->sc_version == 1)
-		event = HREAD4(sc, AIC_EVENT);
-	else
-		event = HREAD4(sc, AIC2_EVENT);
+	event = bus_space_read_4(sc->sc_iot, sc->sc_event_ioh, 0);
 	irq = AIC_EVENT_IRQ(event);
 	type = AIC_EVENT_TYPE(event);
 
