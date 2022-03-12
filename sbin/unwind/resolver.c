@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.154 2021/12/18 10:34:19 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.155 2022/03/12 14:35:29 florian Exp $	*/
 
 
 /*
@@ -2249,7 +2249,7 @@ check_dns64(void)
 	}
 
 	if ((asr_ctx = asr_resolver_from_string(resolv_conf)) != NULL) {
-		if ((aq = res_query_async("ipv4only.arpa", LDNS_RR_CLASS_IN,
+		if ((aq = res_query_async("ipv4only.arpa.", LDNS_RR_CLASS_IN,
 		    LDNS_RR_TYPE_AAAA, asr_ctx)) == NULL) {
 			log_warn("%s: res_query_async", __func__);
 			asr_resolver_free(asr_ctx);
