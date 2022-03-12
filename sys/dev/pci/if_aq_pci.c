@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.7 2022/03/11 12:14:17 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.8 2022/03/12 23:54:53 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -116,7 +116,7 @@
 #define AQ_TXD_NUM 				2048
 #define AQ_RXD_NUM 				2048
 
-#define AQ_TX_MAX_SEGMENTS			1	/* XXX */
+#define AQ_TX_MAX_SEGMENTS			32
 
 #define AQ_LINKSTAT_IRQ				31
 
@@ -2235,10 +2235,13 @@ aq_txeof(struct aq_softc *sc, struct aq_txring *tx)
 
 	while (idx != end) {
 		as = &tx->tx_slots[idx];
-		bus_dmamap_unload(sc->sc_dmat, as->as_map);
 
-		m_freem(as->as_m);
-		as->as_m = NULL;
+		if (as->as_m != NULL) {
+			bus_dmamap_unload(sc->sc_dmat, as->as_map);
+
+			m_freem(as->as_m);
+			as->as_m = NULL;
+		}
 
 		idx++;
 		if (idx == AQ_TXD_NUM)
@@ -2264,6 +2267,7 @@ aq_start(struct ifqueue *ifq)
 	struct aq_slot *as;
 	struct mbuf *m;
 	uint32_t idx, free, used, ctl1, ctl2;
+	int error, i;
 
 	idx = tx->tx_prod;
 	free = tx->tx_cons + AQ_TXD_NUM - tx->tx_prod;
@@ -2283,16 +2287,20 @@ aq_start(struct ifqueue *ifq)
 		if (m == NULL)
 			break;
 
-		txd = ring + idx;
 		as = &tx->tx_slots[idx];
 
-		if (m_defrag(m, M_DONTWAIT) != 0) {
-			m_freem(m);
-			break;
-		}
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, as->as_map, m,
+		    BUS_DMA_STREAMING | BUS_DMA_NOWAIT);
+		if (error == EFBIG) {
+			if (m_defrag(m, M_DONTWAIT)) {
+				m_freem(m);
+				break;
+			}
 
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, as->as_map, m,
-		    BUS_DMA_STREAMING | BUS_DMA_NOWAIT) != 0) {
+			error = bus_dmamap_load_mbuf(sc->sc_dmat, as->as_map,
+			    m, BUS_DMA_STREAMING | BUS_DMA_NOWAIT);
+		}
+		if (error != 0) {
 			m_freem(m);
 			break;
 		}
@@ -2306,19 +2314,27 @@ aq_start(struct ifqueue *ifq)
 		bus_dmamap_sync(sc->sc_dmat, as->as_map, 0,
 		    as->as_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
-		ctl1 = AQ_TXDESC_CTL1_TYPE_TXD | (as->as_map->dm_segs[0].ds_len <<
-		    AQ_TXDESC_CTL1_BLEN_SHIFT) | AQ_TXDESC_CTL1_CMD_FCS |
-		    AQ_TXDESC_CTL1_CMD_EOP | AQ_TXDESC_CTL1_CMD_WB;
 		ctl2 = m->m_pkthdr.len << AQ_TXDESC_CTL2_LEN_SHIFT;
+		ctl1 = AQ_TXDESC_CTL1_TYPE_TXD | AQ_TXDESC_CTL1_CMD_FCS;
 
-		txd->buf_addr = htole64(as->as_map->dm_segs[0].ds_addr);
-		txd->ctl1 = htole32(ctl1);
-		txd->ctl2 = htole32(ctl2);
+		for (i = 0; i < as->as_map->dm_nsegs; i++) {
 
-		idx++;
-		if (idx == AQ_TXD_NUM)
-			idx = 0;
-		used++;
+			if (i == as->as_map->dm_nsegs - 1)
+				ctl1 |= AQ_TXDESC_CTL1_CMD_EOP |
+				    AQ_TXDESC_CTL1_CMD_WB;
+
+			txd = ring + idx;
+			txd->buf_addr = htole64(as->as_map->dm_segs[i].ds_addr);
+			txd->ctl1 = htole32(ctl1 |
+			    (as->as_map->dm_segs[i].ds_len <<
+			    AQ_TXDESC_CTL1_BLEN_SHIFT));
+			txd->ctl2 = htole32(ctl2);
+
+			idx++;
+			if (idx == AQ_TXD_NUM)
+				idx = 0;
+			used++;
+		}
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, AQ_DMA_MAP(&tx->tx_mem), 0,
