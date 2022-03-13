@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.22 2022/03/13 16:25:58 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.23 2022/03/13 17:23:02 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -636,7 +636,11 @@ int
 x509_constraints_dirname(uint8_t *dirname, size_t dlen,
     uint8_t *constraint, size_t len)
 {
-	if (len != dlen)
+	/*
+	 * The constraint must be a prefix in DER format, so it can't be
+	 * longer than the name it is checked against.
+	 */
+	if (len > dlen)
 		return 0;
 	return (memcmp(constraint, dirname, len) == 0);
 }
