@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_internal.h,v 1.16 2021/11/24 05:38:12 beck Exp $ */
+/* $OpenBSD: x509_internal.h,v 1.17 2022/03/13 17:08:04 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -126,6 +126,8 @@ int x509_constraints_extract_names(struct x509_constraints_names *names,
 int x509_constraints_extract_constraints(X509 *cert,
     struct x509_constraints_names *permitted,
     struct x509_constraints_names *excluded, int *error);
+int x509_constraints_validate(GENERAL_NAME *constraint,
+    struct x509_constraints_name *name, int *error);
 int x509_constraints_check(struct x509_constraints_names *names,
     struct x509_constraints_names *permitted,
     struct x509_constraints_names *excluded, int *error);
