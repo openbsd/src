@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.8 2022/03/12 23:54:53 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.9 2022/03/13 10:13:54 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -79,6 +79,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -654,6 +655,7 @@ struct aq_tx_desc {
 #define AQ_TXDESC_CTL1_TYPE_TXD	0x00000001
 #define AQ_TXDESC_CTL1_TYPE_TXC	0x00000002
 #define AQ_TXDESC_CTL1_BLEN_SHIFT 4
+#define AQ_TXDESC_CTL1_VLAN_SHIFT 4
 #define AQ_TXDESC_CTL1_DD	(1 << 20)
 #define AQ_TXDESC_CTL1_CMD_EOP	(1 << 21)
 #define AQ_TXDESC_CTL1_CMD_VLAN	(1 << 22)
@@ -1035,6 +1037,9 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = aq_watchdog;
 	ifp->if_hardmtu = 9000;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
+#if NVLAN > 0
+	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
+#endif
 	ifq_set_maxlen(&ifp->if_snd, AQ_TXD_NUM);
 
 	ifmedia_init(&sc->sc_media, IFM_IMASK, aq_ifmedia_change,
@@ -1799,7 +1804,7 @@ aq_hw_init_rx_path(struct aq_softc *sc)
 	    ETHERTYPE_QINQ);
 	AQ_WRITE_REG_BIT(sc, RPF_VLAN_TPID_REG, RPF_VLAN_TPID_INNER,
 	    ETHERTYPE_VLAN);
-	AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG, RPF_VLAN_MODE_PROMISC, 0);
+	AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG, RPF_VLAN_MODE_PROMISC, 1);
 
 	if (sc->sc_features & FEATURES_REV_B) {
 		AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG,
@@ -2022,6 +2027,7 @@ void
 aq_rxring_reset(struct aq_softc *sc, struct aq_rxring *rx, int start)
 {
 	daddr_t paddr;
+	int strip;
 
 	AQ_WRITE_REG_BIT(sc, RX_DMA_DESC_REG(rx->rx_q), RX_DMA_DESC_EN, 0);
 	/* drain */
@@ -2043,8 +2049,14 @@ aq_rxring_reset(struct aq_softc *sc, struct aq_rxring *rx, int start)
 	    RX_DMA_DESC_BUFSIZE_HDR, 0);
 	AQ_WRITE_REG_BIT(sc, RX_DMA_DESC_REG(rx->rx_q),
 	    RX_DMA_DESC_HEADER_SPLIT, 0);
+
+#if NVLAN > 0
+	strip = 1;
+#else
+	strip = 0;
+#endif
 	AQ_WRITE_REG_BIT(sc, RX_DMA_DESC_REG(rx->rx_q),
-	    RX_DMA_DESC_VLAN_STRIP, 0);
+	    RX_DMA_DESC_VLAN_STRIP, strip);
 
 	rx->rx_cons = AQ_READ_REG(sc, RX_DMA_DESC_HEAD_PTR_REG(rx->rx_q)) &
 	    RX_DMA_DESC_HEAD_PTR;
@@ -2186,7 +2198,14 @@ aq_rxeof(struct aq_softc *sc, struct aq_rxring *rx)
 
 		pktlen = lemtoh16(&rxd->pkt_len);
 		rxd_type = lemtoh32(&rxd->type);
-		/* rss hash, vlan */
+		/* rss hash */
+
+#if NVLAN > 0
+		if (rxd_type & (AQ_RXDESC_TYPE_VLAN | AQ_RXDESC_TYPE_VLAN2)) {
+			m->m_pkthdr.ether_vtag = lemtoh16(&rxd->vlan);
+			m->m_flags |= M_VLANTAG;
+		}
+#endif
 
 		if ((status & AQ_RXDESC_STATUS_MACERR) ||
 		    (rxd_type & AQ_RXDESC_TYPE_DMA_ERR)) {
@@ -2278,7 +2297,7 @@ aq_start(struct ifqueue *ifq)
 	ring = (struct aq_tx_desc *)AQ_DMA_KVA(&tx->tx_mem);
 
 	for (;;) {
-		if (used + AQ_TX_MAX_SEGMENTS >= free) {
+		if (used + AQ_TX_MAX_SEGMENTS + 1 >= free) {
 			ifq_set_oactive(ifq);
 			break;
 		}
@@ -2316,6 +2335,23 @@ aq_start(struct ifqueue *ifq)
 
 		ctl2 = m->m_pkthdr.len << AQ_TXDESC_CTL2_LEN_SHIFT;
 		ctl1 = AQ_TXDESC_CTL1_TYPE_TXD | AQ_TXDESC_CTL1_CMD_FCS;
+#if NVLAN > 0
+		if (m->m_flags & M_VLANTAG) {
+			txd = ring + idx;
+			txd->buf_addr = 0;
+			txd->ctl1 = htole32(AQ_TXDESC_CTL1_TYPE_TXC |
+			    (m->m_pkthdr.ether_vtag << AQ_TXDESC_CTL1_VLAN_SHIFT));
+			txd->ctl2 = 0;
+
+			ctl1 |= AQ_TXDESC_CTL1_CMD_VLAN;
+			ctl2 |= AQ_TXDESC_CTL2_CTX_EN;
+
+			idx++;
+			if (idx == AQ_TXD_NUM)
+				idx = 0;
+			used++;
+		}
+#endif
 
 		for (i = 0; i < as->as_map->dm_nsegs; i++) {
 
