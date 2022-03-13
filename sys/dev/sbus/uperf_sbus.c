@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf_sbus.c,v 1.10 2022/01/09 05:42:58 jsg Exp $	*/
+/*	$OpenBSD: uperf_sbus.c,v 1.11 2022/03/13 13:34:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -60,7 +60,7 @@ struct uperf_sbus_softc {
 	bus_space_handle_t	sc_bus_h;	/* direct register handle */
 };
 
-struct cfattach uperf_sbus_ca = {
+const struct cfattach uperf_sbus_ca = {
 	sizeof(struct uperf_sbus_softc), uperf_sbus_match, uperf_sbus_attach
 };
 

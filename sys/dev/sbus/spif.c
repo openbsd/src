@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.25 2021/09/01 16:10:39 jan Exp $	*/
+/*	$OpenBSD: spif.c,v 1.26 2022/03/13 13:34:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -94,7 +94,7 @@ int	sbpppoll(dev_t, int, struct proc *);
 int	sbppkqfilter(dev_t, struct knote *);
 int	sbppioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
-struct cfattach spif_ca = {
+const struct cfattach spif_ca = {
 	sizeof (struct spif_softc), spifmatch, spifattach
 };
 
@@ -102,7 +102,7 @@ struct cfdriver spif_cd = {
 	NULL, "spif", DV_DULL
 };
 
-struct cfattach stty_ca = {
+const struct cfattach stty_ca = {
 	sizeof(struct stty_softc), sttymatch, sttyattach
 };
 
@@ -110,7 +110,7 @@ struct cfdriver stty_cd = {
 	NULL, "stty", DV_TTY
 };
 
-struct cfattach sbpp_ca = {
+const struct cfattach sbpp_ca = {
 	sizeof(struct sbpp_softc), sbppmatch, sbppattach
 };
 

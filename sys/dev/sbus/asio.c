@@ -1,4 +1,4 @@
-/*	$OpenBSD: asio.c,v 1.11 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: asio.c,v 1.12 2022/03/13 13:34:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -84,7 +84,7 @@ void	asio_attach(struct device *, struct device *, void *);
 int	asio_print(void *, const char *);
 void	asio_intr_enable(struct device *, u_int8_t);
 
-struct cfattach asio_ca = {
+const struct cfattach asio_ca = {
 	sizeof(struct asio_softc), asio_match, asio_attach
 };
 
@@ -177,7 +177,7 @@ asio_print(void *aux, const char *name)
 int	com_asio_match(struct device *, void *, void *);
 void	com_asio_attach(struct device *, struct device *, void *);
 
-struct cfattach com_asio_ca = {
+const struct cfattach com_asio_ca = {
 	sizeof(struct com_softc), com_asio_match, com_asio_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.12 2013/10/20 20:07:31 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.13 2022/03/13 13:34:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
@@ -204,7 +204,7 @@ struct wsdisplay_accessops vigra_accessops = {
 int	vigramatch(struct device *, void *, void *);
 void	vigraattach(struct device *, struct device *, void *);
 
-struct cfattach vigra_ca = {
+const struct cfattach vigra_ca = {
 	sizeof (struct vigra_softc), vigramatch, vigraattach
 };
 

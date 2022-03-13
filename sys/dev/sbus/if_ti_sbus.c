@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti_sbus.c,v 1.4 2015/11/24 17:11:40 mpi Exp $	*/
+/*	$OpenBSD: if_ti_sbus.c,v 1.5 2022/03/13 13:34:54 mpi Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -44,7 +44,7 @@ struct ti_sbus_softc {
 int	ti_sbus_match(struct device *, void *, void *);
 void	ti_sbus_attach(struct device *, struct device *, void *);
 
-struct cfattach ti_sbus_ca = {
+const struct cfattach ti_sbus_ca = {
 	sizeof(struct ti_sbus_softc), ti_sbus_match, ti_sbus_attach
 };
 

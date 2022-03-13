@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gem_sbus.c,v 1.10 2015/11/28 09:42:10 jmatthew Exp $	*/
+/*	$OpenBSD: if_gem_sbus.c,v 1.11 2022/03/13 13:34:54 mpi Exp $	*/
 /*	$NetBSD: if_gem_sbus.c,v 1.1 2006/11/24 13:23:32 martin Exp $	*/
 
 /*-
@@ -68,7 +68,7 @@ struct gem_sbus_softc {
 int	gemmatch_sbus(struct device *, void *, void *);
 void	gemattach_sbus(struct device *, struct device *, void *);
 
-struct cfattach gem_sbus_ca = {
+const struct cfattach gem_sbus_ca = {
 	sizeof(struct gem_sbus_softc), gemmatch_sbus, gemattach_sbus
 };
 

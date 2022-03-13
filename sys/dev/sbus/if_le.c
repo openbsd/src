@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.17 2015/09/11 13:02:28 stsp Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.18 2022/03/13 13:34:54 mpi Exp $	*/
 /*	$NetBSD: if_le.c,v 1.17 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@ static uint64_t lemedia[] = {
 	IFM_ETHER | IFM_10_5
 };
 
-struct cfattach le_sbus_ca = {
+const struct cfattach le_sbus_ca = {
 	sizeof(struct le_softc), lematch_sbus, leattach_sbus
 };
 

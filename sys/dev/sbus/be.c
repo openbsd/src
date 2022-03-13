@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.43 2020/07/10 13:22:21 patrick Exp $	*/
+/*	$OpenBSD: be.c,v 1.44 2022/03/13 13:34:54 mpi Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -177,7 +177,7 @@ void	be_intphy_status(struct be_softc *);
 int	be_intphy_service(struct be_softc *, struct mii_data *, int);
 
 
-struct cfattach be_ca = {
+const struct cfattach be_ca = {
 	sizeof(struct be_softc), bematch, beattach
 };
 

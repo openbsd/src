@@ -1,4 +1,4 @@
-/*	$OpenBSD: qlw_sbus.c,v 1.1 2014/03/15 21:49:47 kettenis Exp $	*/
+/*	$OpenBSD: qlw_sbus.c,v 1.2 2022/03/13 13:34:54 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Mark Kettenis
  *
@@ -39,7 +39,7 @@
 int	qlw_sbus_match(struct device *, void *, void *);
 void	qlw_sbus_attach(struct device *, struct device *, void *);
 
-struct cfattach qlw_sbus_ca = {
+const struct cfattach qlw_sbus_ca = {
 	sizeof(struct qlw_softc),
 	qlw_sbus_match,
 	qlw_sbus_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apio.c,v 1.8 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: apio.c,v 1.9 2022/03/13 13:34:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -77,7 +77,7 @@ void	apio_attach(struct device *, struct device *, void *);
 int	apio_print(void *, const char *);
 void	apio_intr_enable(struct device *, u_int8_t);
 
-struct cfattach apio_ca = {
+const struct cfattach apio_ca = {
 	sizeof(struct apio_softc), apio_match, apio_attach
 };
 
@@ -174,7 +174,7 @@ struct lpt_apio_softc {
 	void *sc_ih;
 };
 
-struct cfattach lpt_apio_ca = {
+const struct cfattach lpt_apio_ca = {
 	sizeof(struct lpt_apio_softc), lpt_apio_match, lpt_apio_attach
 };
 

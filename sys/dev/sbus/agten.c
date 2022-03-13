@@ -1,4 +1,4 @@
-/*	$OpenBSD: agten.c,v 1.11 2018/12/27 11:09:17 claudio Exp $	*/
+/*	$OpenBSD: agten.c,v 1.12 2022/03/13 13:34:54 mpi Exp $	*/
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
  * All rights reserved.
@@ -122,7 +122,7 @@ struct wsdisplay_accessops agten_accessops = {
 int agtenmatch(struct device *, void *, void *);
 void agtenattach(struct device *, struct device *, void *);
 
-struct cfattach agten_ca = {
+const struct cfattach agten_ca = {
 	sizeof(struct agten_softc), agtenmatch, agtenattach
 };
 

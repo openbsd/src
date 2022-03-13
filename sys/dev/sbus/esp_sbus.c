@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.25 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.26 2022/03/13 13:34:54 mpi Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -75,10 +75,10 @@ int	espmatch_sbus(struct device *, void *, void *);
 
 
 /* Linkup to the rest of the kernel */
-struct cfattach esp_sbus_ca = {
+const struct cfattach esp_sbus_ca = {
 	sizeof(struct esp_softc), espmatch_sbus, espattach_sbus
 };
-struct cfattach esp_dma_ca = {
+const struct cfattach esp_dma_ca = {
 	sizeof(struct esp_softc), espmatch_sbus, espattach_dma
 };
 

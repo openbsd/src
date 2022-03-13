@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffer.c,v 1.10 2012/12/05 23:20:21 deraadt Exp $	*/
+/*	$OpenBSD: lebuffer.c,v 1.11 2022/03/13 13:34:54 mpi Exp $	*/
 /*	$NetBSD: lebuffer.c,v 1.12 2002/03/11 16:00:57 pk Exp $ */
 
 /*-
@@ -48,7 +48,7 @@ int	lebufprint(void *, const char *);
 int	lebufmatch(struct device *, void *, void *);
 void	lebufattach(struct device *, struct device *, void *);
 
-struct cfattach lebuffer_ca = {
+const struct cfattach lebuffer_ca = {
 	sizeof(struct lebuf_softc), lebufmatch, lebufattach
 };
 

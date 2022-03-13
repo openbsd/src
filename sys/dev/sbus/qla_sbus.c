@@ -1,4 +1,4 @@
-/*	$OpenBSD: qla_sbus.c,v 1.2 2014/07/12 18:48:52 tedu Exp $	*/
+/*	$OpenBSD: qla_sbus.c,v 1.3 2022/03/13 13:34:54 mpi Exp $	*/
 /*
  * Copyright (c) 2014 Mark Kettenis
  *
@@ -41,7 +41,7 @@
 int	qla_sbus_match(struct device *, void *, void *);
 void	qla_sbus_attach(struct device *, struct device *, void *);
 
-struct cfattach qla_sbus_ca = {
+const struct cfattach qla_sbus_ca = {
 	sizeof(struct qla_softc),
 	qla_sbus_match,
 	qla_sbus_attach

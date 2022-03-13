@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.45 2013/10/20 20:07:30 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.46 2022/03/13 13:34:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -146,7 +146,7 @@ struct wsdisplay_accessops cgthree_accessops = {
 int	cgthreematch(struct device *, void *, void *);
 void	cgthreeattach(struct device *, struct device *, void *);
 
-struct cfattach cgthree_ca = {
+const struct cfattach cgthree_ca = {
 	sizeof (struct cgthree_softc), cgthreematch, cgthreeattach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mgx.c,v 1.14 2020/05/25 09:55:49 jsg Exp $	*/
+/*	$OpenBSD: mgx.c,v 1.15 2022/03/13 13:34:54 mpi Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -165,7 +165,7 @@ int	mgx_wait_fifo(struct mgx_softc *, uint);
 int mgxmatch(struct device *, void *, void *);
 void mgxattach(struct device *, struct device *, void *);
 
-struct cfattach mgx_ca = {
+const struct cfattach mgx_ca = {
 	sizeof(struct mgx_softc), mgxmatch, mgxattach
 };
 

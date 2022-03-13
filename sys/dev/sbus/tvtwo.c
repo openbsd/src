@@ -1,4 +1,4 @@
-/*	$OpenBSD: tvtwo.c,v 1.16 2022/01/09 05:42:58 jsg Exp $	*/
+/*	$OpenBSD: tvtwo.c,v 1.17 2022/03/13 13:34:54 mpi Exp $	*/
 
 /*
  * Copyright (c) 2003, 2006, 2008, Miodrag Vallat.
@@ -144,7 +144,7 @@ void	tvtwo_setcolor(void *, u_int, u_int8_t, u_int8_t, u_int8_t);
 int	tvtwomatch(struct device *, void *, void *);
 void	tvtwoattach(struct device *, struct device *, void *);
 
-struct cfattach tvtwo_ca = {
+const struct cfattach tvtwo_ca = {
 	sizeof(struct tvtwo_softc), tvtwomatch, tvtwoattach
 };
 

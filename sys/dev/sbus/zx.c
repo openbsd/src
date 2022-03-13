@@ -1,4 +1,4 @@
-/*	$OpenBSD: zx.c,v 1.22 2022/01/09 05:42:59 jsg Exp $	*/
+/*	$OpenBSD: zx.c,v 1.23 2022/03/13 13:34:54 mpi Exp $	*/
 /*	$NetBSD: zx.c,v 1.5 2002/10/02 16:52:46 thorpej Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ int	zx_copyrows(void *, int, int, int);
 int	zx_eraserows(void *, int, int, uint32_t);
 int	zx_do_cursor(struct rasops_info *);
 
-struct cfattach zx_ca = {
+const struct cfattach zx_ca = {
 	sizeof(struct zx_softc), zx_match, zx_attach
 };
 
