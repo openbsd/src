@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_alt.c,v 1.8 2022/02/11 17:41:55 tb Exp $ */
+/* $OpenBSD: x509_alt.c,v 1.9 2022/03/13 16:30:31 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -654,7 +654,7 @@ v2i_GENERAL_NAME_ex(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 
 	/* Validate what we have for sanity */
 	type = x509_constraints_general_to_bytes(ret, &bytes, &len);
-	switch(type) {
+	switch (type) {
 	case GEN_DNS:
 		if (!x509_constraints_valid_sandns(bytes, len)) {
 			X509V3error(X509V3_R_BAD_OBJECT);
