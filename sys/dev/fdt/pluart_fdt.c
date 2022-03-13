@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart_fdt.c,v 1.5 2022/03/11 06:45:22 anton Exp $	*/
+/*	$OpenBSD: pluart_fdt.c,v 1.6 2022/03/13 21:17:52 kettenis Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -68,9 +68,6 @@ pluart_fdt_attach(struct device *parent, struct device *self, void *aux)
 		printf(": no registers\n");
 		return;
 	}
-
-	if (OF_is_compatible(faa->fa_node, "arm,sbsa-uart"))
-		sc->sc_hwflags |= COM_HW_SBSA;
 
 	sc->sc_irq = fdt_intr_establish(faa->fa_node, IPL_TTY, pluart_intr,
 	    sc, sc->sc_dev.dv_xname);
