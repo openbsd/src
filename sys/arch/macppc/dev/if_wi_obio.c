@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.19 2015/11/24 17:11:38 mpi Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.20 2022/03/13 12:33:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -82,7 +82,7 @@ struct wi_obio_softc {
 	u_int keywest;
 };
 
-struct cfattach wi_obio_ca = {
+const struct cfattach wi_obio_ca = {
 	sizeof (struct wi_obio_softc), wi_obio_match, wi_obio_attach,
 	wi_obio_detach, wi_obio_activate
 };

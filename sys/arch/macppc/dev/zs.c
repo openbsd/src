@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.31 2021/03/11 11:16:58 jsg Exp $	*/
+/*	$OpenBSD: zs.c,v 1.32 2022/03/13 12:33:01 mpi Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ int	zs_print(void *, const char *name);
 int  zs_enable (struct zs_chanstate *);
 void zs_disable (struct zs_chanstate *);
 
-struct cfattach zs_ca = {
+const struct cfattach zs_ca = {
 	sizeof(struct zsc_softc), zs_match, zs_attach
 };
 

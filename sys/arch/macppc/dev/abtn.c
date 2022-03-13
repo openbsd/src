@@ -1,4 +1,4 @@
-/*	$OpenBSD: abtn.c,v 1.17 2015/01/27 09:45:51 dlg Exp $	*/
+/*	$OpenBSD: abtn.c,v 1.18 2022/03/13 12:33:01 mpi Exp $	*/
 /*	$NetBSD: abtn.c,v 1.1 1999/07/12 17:48:26 tsubai Exp $	*/
 
 /*-
@@ -65,7 +65,7 @@ extern int wskbd_set_mixervolume(long, long);
 #endif
 #endif
 
-struct cfattach abtn_ca = {
+const struct cfattach abtn_ca = {
 	sizeof(struct abtn_softc), abtn_match, abtn_attach
 };
 struct cfdriver abtn_cd = {

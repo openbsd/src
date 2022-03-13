@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysbutton.c,v 1.6 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: sysbutton.c,v 1.7 2022/03/13 12:33:01 mpi Exp $	*/
 /*
  * Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd.org>
  *
@@ -36,7 +36,7 @@ int sysbutton_match(struct device *, void *, void *);
 void sysbutton_attach(struct device *, struct device *, void *);
 int sysbutton_intr(void *);
 
-struct cfattach sysbutton_ca = {
+const struct cfattach sysbutton_ca = {
 	sizeof(struct sysbutton_softc), sysbutton_match,
 	sysbutton_attach
 };

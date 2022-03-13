@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.40 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.41 2022/03/13 12:33:01 mpi Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -70,7 +70,7 @@ void snapper_set_input(struct snapper_softc *, int);
 int tas3004_write(struct snapper_softc *, u_int, const void *);
 int tas3004_init(struct snapper_softc *);
 
-struct cfattach snapper_ca = {
+const struct cfattach snapper_ca = {
 	sizeof(struct snapper_softc), snapper_match, snapper_attach
 };
 struct cfdriver snapper_cd = {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kiic.c,v 1.4 2013/10/09 17:53:29 mpi Exp $	*/
+/*	$OpenBSD: kiic.c,v 1.5 2022/03/13 12:33:01 mpi Exp $	*/
 /*	$NetBSD: kiic.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -56,10 +56,10 @@ void kiic_i2c_release_bus(void *, int);
 int kiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
     void *, size_t, int);
 
-struct cfattach kiic_ca = {
+const struct cfattach kiic_ca = {
 	sizeof(struct kiic_softc), kiic_match, kiic_attach
 };
-struct cfattach kiic_memc_ca = {
+const struct cfattach kiic_memc_ca = {
 	sizeof(struct kiic_softc), kiic_match, kiic_attach
 };
 

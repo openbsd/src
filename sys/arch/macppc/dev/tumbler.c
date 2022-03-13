@@ -1,4 +1,4 @@
-/*	$OpenBSD: tumbler.c,v 1.10 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: tumbler.c,v 1.11 2022/03/13 12:33:01 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2001,2003 Tsubai Masanari.  All rights reserved.
@@ -68,7 +68,7 @@ void tumbler_set_treble(struct tumbler_softc *, int);
 int tas3001_write(struct tumbler_softc *, u_int, const void *);
 int tas3001_init(struct tumbler_softc *);
 
-struct cfattach tumbler_ca = {
+const struct cfattach tumbler_ca = {
 	sizeof(struct tumbler_softc), tumbler_match, tumbler_attach
 };
 struct cfdriver tumbler_cd = {

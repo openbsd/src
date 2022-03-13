@@ -1,4 +1,4 @@
-/*	$OpenBSD: kauaiata.c,v 1.10 2008/04/25 14:51:35 jmc Exp $ */
+/*	$OpenBSD: kauaiata.c,v 1.11 2022/03/13 12:33:01 mpi Exp $ */
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -57,7 +57,7 @@ void kauaiataattach(struct device *parent, struct device *self, void *aux);
 int kauaiata_print(void *aux, const char *dev);
 
 
-struct cfattach kauaiata_ca = {
+const struct cfattach kauaiata_ca = {
 	sizeof(struct kauaiata_softc), kauaiatamatch, kauaiataattach,
 };
 

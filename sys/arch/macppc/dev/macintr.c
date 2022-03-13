@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.55 2019/09/03 17:51:52 deraadt Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.56 2022/03/13 12:33:01 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2008 Dale Rahn <drahn@openbsd.org>
@@ -86,7 +86,7 @@ void	mac_ext_intr(void);
 void	macintr_collect_preconf_intr(void);
 void	macintr_setipl(int ipl);
 
-struct cfattach macintr_ca = {
+const struct cfattach macintr_ca = {
 	sizeof(struct macintr_softc),
 	macintr_match,
 	macintr_attach

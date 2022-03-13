@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.22 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.23 2022/03/13 12:33:01 mpi Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -63,7 +63,7 @@ struct cfdriver macobio_cd = {
 };
 
 
-struct cfattach macobio_ca = {
+const struct cfattach macobio_ca = {
 	sizeof(struct macobio_softc), macobio_match, macobio_attach
 };
 

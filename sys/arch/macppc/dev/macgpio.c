@@ -1,4 +1,4 @@
-/*	$OpenBSD: macgpio.c,v 1.9 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: macgpio.c,v 1.10 2022/03/13 12:33:01 mpi Exp $	*/
 /*	$NetBSD: gpio.c,v 1.2 2001/02/27 05:16:33 matt Exp $	*/
 
 /*-
@@ -58,11 +58,11 @@ struct gpio_softc {
 	u_int8_t *sc_port;
 };
 
-struct cfattach macgpio_ca = {
+const struct cfattach macgpio_ca = {
 	sizeof(struct gpio_softc), macgpio_match, macgpio_attach
 };
 
-struct cfattach macgpio_gpio_ca = {
+const struct cfattach macgpio_gpio_ca = {
 	sizeof(struct gpio_softc), macgpio_gpio_match, macgpio_gpio_attach
 };
 

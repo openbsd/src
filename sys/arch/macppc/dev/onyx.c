@@ -1,4 +1,4 @@
-/*	$OpenBSD: onyx.c,v 1.13 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: onyx.c,v 1.14 2022/03/13 12:33:01 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -72,7 +72,7 @@ void onyx_attach(struct device *, struct device *, void *);
 void onyx_defer(struct device *);
 void onyx_set_volume(struct onyx_softc *, int, int);
 
-struct cfattach onyx_ca = {
+const struct cfattach onyx_ca = {
 	sizeof(struct onyx_softc), onyx_match, onyx_attach
 };
 

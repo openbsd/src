@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.27 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: mem.c,v 1.28 2022/03/13 12:33:01 mpi Exp $	*/
 /*	$NetBSD: mem.c,v 1.1 1996/09/30 16:34:50 ws Exp $ */
 
 /*
@@ -93,7 +93,7 @@ struct cfdriver mem_cd = {
 	NULL, "mem", DV_DULL
 };
 
-struct cfattach mem_ca = {
+const struct cfattach mem_ca = {
 	sizeof(struct mem_softc), mem_match, mem_attach
 };
 

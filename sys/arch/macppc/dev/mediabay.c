@@ -1,4 +1,4 @@
-/*	$OpenBSD: mediabay.c,v 1.7 2019/10/08 13:21:38 cheloha Exp $	*/
+/*	$OpenBSD: mediabay.c,v 1.8 2022/03/13 12:33:01 mpi Exp $	*/
 /*	$NetBSD: mediabay.c,v 1.9 2003/07/15 02:43:29 lukem Exp $	*/
 
 /*-
@@ -60,7 +60,7 @@ int mediabay_intr(void *);
 void mediabay_create_kthread(void *);
 void mediabay_kthread(void *);
 
-struct cfattach mediabay_ca = {
+const struct cfattach mediabay_ca = {
 	sizeof(struct mediabay_softc), mediabay_match, mediabay_attach
 };
 struct cfdriver mediabay_cd = {

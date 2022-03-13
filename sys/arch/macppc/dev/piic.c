@@ -1,4 +1,4 @@
-/*	$OpenBSD: piic.c,v 1.3 2011/06/16 10:44:33 mpi Exp $	*/
+/*	$OpenBSD: piic.c,v 1.4 2022/03/13 12:33:01 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -39,7 +39,7 @@ struct piic_softc {
 int     piic_match(struct device *, void *, void *);
 void    piic_attach(struct device *, struct device *, void *);
 
-struct cfattach piic_ca = {
+const struct cfattach piic_ca = {
 	sizeof(struct piic_softc), piic_match, piic_attach
 };
 

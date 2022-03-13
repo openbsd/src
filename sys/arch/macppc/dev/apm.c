@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.32 2022/02/16 06:41:27 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.33 2022/03/13 12:33:01 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -68,7 +68,7 @@ struct apm_softc {
 int apmmatch(struct device *, void *, void *);
 void apmattach(struct device *, struct device *, void *);
 
-struct cfattach apm_ca = {
+const struct cfattach apm_ca = {
 	sizeof(struct apm_softc), apmmatch, apmattach
 };
 

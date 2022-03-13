@@ -1,4 +1,4 @@
-/*	$OpenBSD: daca.c,v 1.11 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: daca.c,v 1.12 2022/03/13 12:33:01 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2002,2003 Tsubai Masanari.  All rights reserved.
@@ -63,7 +63,7 @@ void daca_defer(struct device *);
 void daca_init(struct daca_softc *);
 void daca_set_volume(struct daca_softc *, int, int);
 
-struct cfattach daca_ca = {
+const struct cfattach daca_ca = {
 	sizeof(struct daca_softc), daca_match, daca_attach
 };
 

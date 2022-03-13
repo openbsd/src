@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.43 2020/07/10 13:22:19 patrick Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.44 2022/03/13 12:33:01 mpi Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -123,7 +123,7 @@ void bmac_mii_tick(void *);
 u_int32_t bmac_mbo_read(struct device *);
 void bmac_mbo_write(struct device *, u_int32_t);
 
-struct cfattach bm_ca = {
+const struct cfattach bm_ca = {
 	sizeof(struct bmac_softc), bmac_match, bmac_attach
 };
 

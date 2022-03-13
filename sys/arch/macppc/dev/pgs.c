@@ -1,4 +1,4 @@
-/*	$OpenBSD: pgs.c,v 1.5 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: pgs.c,v 1.6 2022/03/13 12:33:01 mpi Exp $	*/
 /*
  * Copyright (c) 2010 Jasper Lievisse Adriaanse <jasper@openbsd.org>
  *
@@ -41,7 +41,7 @@ void	pgs_attach(struct device *, struct device *, void *);
 int	pgs_match(struct device *, void *, void *);
 int	pgs_intr(void *);
 
-struct cfattach pgs_ca = {
+const struct cfattach pgs_ca = {
 	sizeof(struct pgs_softc), pgs_match, pgs_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: asms.c,v 1.7 2008/04/25 16:37:44 xsa Exp $	*/
+/*	$OpenBSD: asms.c,v 1.8 2022/03/13 12:33:01 mpi Exp $	*/
 /*
  * Copyright (c) 2005 Xavier Santolaria <xsa@openbsd.org>
  *
@@ -69,7 +69,7 @@ int	asms_match(struct device *, void *, void *);
 void	asms_attach(struct device *, struct device *, void *);
 void	asms_refresh(void *);
 
-struct cfattach asms_ca = {
+const struct cfattach asms_ca = {
 	sizeof(struct asms_softc), asms_match, asms_attach
 };
 

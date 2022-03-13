@@ -1,4 +1,4 @@
-/* $OpenBSD: xlights.c,v 1.10 2020/01/10 04:13:31 cheloha Exp $ */
+/* $OpenBSD: xlights.c,v 1.11 2022/03/13 12:33:01 mpi Exp $ */
 /*
  * Copyright (c) 2007 Gordon Willem Klok <gwk@openbsd,org>
  *
@@ -56,7 +56,7 @@ void xlights_deferred(void *);
 void xlights_theosDOT(void *);
 void xlights_timeout(void *);
 
-struct cfattach xlights_ca = {
+const struct cfattach xlights_ca = {
 	sizeof(struct xlights_softc), xlights_match,
 	xlights_attach
 };
