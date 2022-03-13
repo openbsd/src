@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.21 2022/03/02 11:28:00 jsing Exp $ */
+/* $OpenBSD: asn1_locl.h,v 1.22 2022/03/13 14:58:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -160,8 +160,6 @@ struct x509_crl_method_st {
 	    ASN1_INTEGER *ser, X509_NAME *issuer);
 	int (*crl_verify)(X509_CRL *crl, EVP_PKEY *pk);
 };
-
-int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype, char *free_cont, const ASN1_ITEM *it);
 
 int asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it);
 int asn1_set_choice_selector(ASN1_VALUE **pval, int value, const ASN1_ITEM *it);

@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.48 2022/01/07 12:24:17 tb Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.49 2022/03/13 14:58:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -95,6 +95,8 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in,
 static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in,
     long len, const ASN1_ITEM *it, int tag, int aclass, char opt,
     ASN1_TLC *ctx);
+static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *content, int len,
+    int utype, const ASN1_ITEM *it);
 
 static void
 asn1_tlc_invalidate(ASN1_TLC *ctx)
@@ -662,9 +664,9 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 {
 	int ret = 0, utype;
 	long plen;
-	char cst, inf, free_cont = 0;
+	char cst, inf;
 	const unsigned char *p;
-	const unsigned char *cont = NULL;
+	const unsigned char *content = NULL;
 	uint8_t *data = NULL;
 	size_t data_len = 0;
 	CBB cbb;
@@ -732,14 +734,14 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 			return 0;
 		}
 
-		cont = *in;
+		content = *in;
 		/* If indefinite length constructed find the real end */
 		if (inf) {
 			if (!asn1_find_end(&p, plen, inf))
 				goto err;
-			len = p - cont;
+			len = p - content;
 		} else {
-			len = p - cont + plen;
+			len = p - content + plen;
 			p += plen;
 		}
 	} else if (cst) {
@@ -754,29 +756,22 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 			goto err;
 		if (!asn1_collect(&cbb, &p, plen, inf, -1, V_ASN1_UNIVERSAL, 0))
 			goto err;
-
-		/* Append a final NUL to string. */
-		if (!CBB_add_u8(&cbb, 0))
-			goto err;
-
 		if (!CBB_finish(&cbb, &data, &data_len))
 			goto err;
 
-		free_cont = 1;
-
-		if (data_len < 1 || data_len > LONG_MAX)
+		if (data_len > LONG_MAX)
 			goto err;
 
-		cont = data;
-		len = data_len - 1;
+		content = data;
+		len = data_len;
 	} else {
-		cont = p;
+		content = p;
 		len = plen;
 		p += plen;
 	}
 
 	/* We now have content length and type: translate into a structure */
-	if (!asn1_ex_c2i(pval, cont, len, utype, &free_cont, it))
+	if (!asn1_ex_c2i(pval, content, len, utype, it))
 		goto err;
 
 	*in = p;
@@ -784,18 +779,16 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 
  err:
 	CBB_cleanup(&cbb);
-
-	if (free_cont)
-		freezero(data, data_len);
+	freezero(data, data_len);
 
 	return ret;
 }
 
 /* Translate ASN1 content octets into a structure */
 
-int
-asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
-    char *free_cont, const ASN1_ITEM *it)
+static int
+asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *content, int len, int utype,
+    const ASN1_ITEM *it)
 {
 	ASN1_VALUE **opval = NULL;
 	ASN1_STRING *stmp;
@@ -805,10 +798,11 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 
 	if (it->funcs != NULL) {
 		const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
+		char free_content = 0;
 
 		if (pf->prim_c2i == NULL)
 			return 0;
-		return pf->prim_c2i(pval, cont, len, utype, free_cont, it);
+		return pf->prim_c2i(pval, content, len, utype, &free_content, it);
 	}
 
 	/* If ANY type clear type and set pointer to internal value */
@@ -828,7 +822,7 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 	}
 	switch (utype) {
 	case V_ASN1_OBJECT:
-		if (!c2i_ASN1_OBJECT((ASN1_OBJECT **)pval, &cont, len))
+		if (!c2i_ASN1_OBJECT((ASN1_OBJECT **)pval, &content, len))
 			goto err;
 		break;
 
@@ -847,19 +841,19 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 		} else {
 			ASN1_BOOLEAN *tbool;
 			tbool = (ASN1_BOOLEAN *)pval;
-			*tbool = *cont;
+			*tbool = *content;
 		}
 		break;
 
 	case V_ASN1_BIT_STRING:
-		if (!c2i_ASN1_BIT_STRING((ASN1_BIT_STRING **)pval, &cont, len))
+		if (!c2i_ASN1_BIT_STRING((ASN1_BIT_STRING **)pval, &content, len))
 			goto err;
 		break;
 
 	case V_ASN1_INTEGER:
 	case V_ASN1_ENUMERATED:
 		tint = (ASN1_INTEGER **)pval;
-		if (!c2i_ASN1_INTEGER(tint, &cont, len))
+		if (!c2i_ASN1_INTEGER(tint, &content, len))
 			goto err;
 		/* Fixup type to match the expected form */
 		(*tint)->type = utype | ((*tint)->type & V_ASN1_NEG);
@@ -891,10 +885,9 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 			ASN1error(ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH);
 			goto err;
 		}
-		/* All based on ASN1_STRING and handled the same */
-		if (!*pval) {
-			stmp = ASN1_STRING_type_new(utype);
-			if (!stmp) {
+		/* All based on ASN1_STRING and handled the same way. */
+		if (*pval == NULL) {
+			if ((stmp = ASN1_STRING_type_new(utype)) == NULL) {
 				ASN1error(ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
@@ -903,19 +896,10 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 			stmp = (ASN1_STRING *)*pval;
 			stmp->type = utype;
 		}
-		/* If we've already allocated a buffer use it */
-		if (*free_cont) {
-			free(stmp->data);
-			stmp->data = (unsigned char *)cont; /* UGLY CAST! RL */
-			stmp->length = len;
-			*free_cont = 0;
-		} else {
-			if (!ASN1_STRING_set(stmp, cont, len)) {
-				ASN1error(ERR_R_MALLOC_FAILURE);
-				ASN1_STRING_free(stmp);
-				*pval = NULL;
-				goto err;
-			}
+		if (!ASN1_STRING_set(stmp, content, len)) {
+			ASN1_STRING_free(stmp);
+			*pval = NULL;
+			goto err;
 		}
 		break;
 	}
@@ -933,7 +917,6 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
 	}
 	return ret;
 }
-
 
 /* This function finds the end of an ASN1 structure when passed its maximum
  * length, whether it is indefinite length and a pointer to the content.
