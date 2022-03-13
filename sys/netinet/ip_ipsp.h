@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.236 2022/03/08 22:30:38 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.237 2022/03/13 21:38:32 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -45,6 +45,7 @@
  *	I	immutable after creation
  *	a	atomic operations
  *	N	net lock
+ *	A	ipsec_acquire_mtx
  *	F	ipsec_flows_mtx
  *	m	tdb_mtx			fields of struct tdb
  *	p	ipo_tdb_mtx		link policy to TDB global mutex
@@ -251,11 +252,14 @@ struct ipsec_acquire {
 	u_int32_t			ipa_seq;
 	struct sockaddr_encap		ipa_info;
 	struct sockaddr_encap		ipa_mask;
+	struct refcnt			ipa_refcnt;
 	struct timeout			ipa_timeout;
-	struct ipsec_policy		*ipa_policy;
-	TAILQ_ENTRY(ipsec_acquire)	ipa_ipo_next;
-	TAILQ_ENTRY(ipsec_acquire)	ipa_next;
+	struct ipsec_policy		*ipa_policy;	/* [A] back pointer */
+	TAILQ_ENTRY(ipsec_acquire)	ipa_ipo_next;	/* [A] per policy */
+	TAILQ_ENTRY(ipsec_acquire)	ipa_next;	/* [A] global list */
 };
+
+TAILQ_HEAD(ipsec_acquire_head, ipsec_acquire);
 
 struct ipsec_policy {
 	struct radix_node	ipo_nodes[2];	/* radix tree glue */
@@ -287,9 +291,9 @@ struct ipsec_policy {
 
 	struct ipsec_ids	*ipo_ids;
 
-	TAILQ_HEAD(ipo_acquires_head, ipsec_acquire) ipo_acquires; /* List of acquires */
-	TAILQ_ENTRY(ipsec_policy)	ipo_tdb_next;	/* List TDB policies */
-	TAILQ_ENTRY(ipsec_policy)	ipo_list;	/* List of all policies */
+	struct ipsec_acquire_head ipo_acquires;	/* [A] List of acquires */
+	TAILQ_ENTRY(ipsec_policy) ipo_tdb_next;	/* [p] List TDB policies */
+	TAILQ_ENTRY(ipsec_policy) ipo_list;	/* List of all policies */
 };
 
 #define	IPSP_POLICY_NONE	0x0000	/* No flags set */
@@ -682,6 +686,7 @@ ssize_t	ipsec_hdrsz(struct tdb *);
 void	ipsec_adjust_mtu(struct mbuf *, u_int32_t);
 void	ipsec_set_mtu(struct tdb *, u_int32_t);
 struct	ipsec_acquire *ipsec_get_acquire(u_int32_t);
+void	ipsec_unref_acquire(struct ipsec_acquire *);
 int	ipsec_forward_check(struct mbuf *, int, int);
 int	ipsec_local_check(struct mbuf *, int, int, int);
 

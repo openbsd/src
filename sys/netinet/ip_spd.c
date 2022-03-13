@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.114 2022/03/08 22:30:38 bluhm Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.115 2022/03/13 21:38:32 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -43,10 +43,11 @@ int	ipsp_spd_inp(struct mbuf *, struct inpcb *, struct ipsec_policy *,
 	    struct tdb **);
 int	ipsp_acquire_sa(struct ipsec_policy *, union sockaddr_union *,
 	    union sockaddr_union *, struct sockaddr_encap *, struct mbuf *);
-struct	ipsec_acquire *ipsp_pending_acquire(struct ipsec_policy *,
-	    union sockaddr_union *);
-void	ipsp_delete_acquire_timo(void *);
+int	ipsp_pending_acquire(struct ipsec_policy *, union sockaddr_union *);
+void	ipsp_delete_acquire_timer(void *);
+void	ipsp_delete_acquire_locked(struct ipsec_acquire *);
 void	ipsp_delete_acquire(struct ipsec_acquire *);
+void	ipsp_unref_acquire_locked(struct ipsec_acquire *);
 
 struct pool ipsec_policy_pool;
 struct pool ipsec_acquire_pool;
@@ -60,7 +61,9 @@ struct mutex ipo_tdb_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
 /* Protected by the NET_LOCK(). */
 struct radix_node_head **spd_tables;
 unsigned int spd_table_max;
-TAILQ_HEAD(ipsec_acquire_head, ipsec_acquire) ipsec_acquire_head =
+
+struct mutex ipsec_acquire_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
+struct ipsec_acquire_head ipsec_acquire_head =
     TAILQ_HEAD_INITIALIZER(ipsec_acquire_head);
 
 struct radix_node_head *
@@ -686,8 +689,10 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 	}
 	mtx_leave(&ipo_tdb_mtx);
 
+	mtx_enter(&ipsec_acquire_mtx);
 	while ((ipa = TAILQ_FIRST(&ipo->ipo_acquires)) != NULL)
-		ipsp_delete_acquire(ipa);
+		ipsp_delete_acquire_locked(ipa);
+	mtx_leave(&ipsec_acquire_mtx);
 
 	TAILQ_REMOVE(&ipsec_policy_head, ipo, ipo_list);
 
@@ -702,13 +707,11 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 }
 
 void
-ipsp_delete_acquire_timo(void *v)
+ipsp_delete_acquire_timer(void *v)
 {
 	struct ipsec_acquire *ipa = v;
 
-	NET_LOCK();
 	ipsp_delete_acquire(ipa);
-	NET_UNLOCK();
 }
 
 /*
@@ -717,13 +720,38 @@ ipsp_delete_acquire_timo(void *v)
 void
 ipsp_delete_acquire(struct ipsec_acquire *ipa)
 {
-	NET_ASSERT_LOCKED();
+	mtx_enter(&ipsec_acquire_mtx);
+	ipsp_delete_acquire_locked(ipa);
+	mtx_leave(&ipsec_acquire_mtx);
+}
 
-	timeout_del(&ipa->ipa_timeout);
+void
+ipsp_delete_acquire_locked(struct ipsec_acquire *ipa)
+{
+	if (timeout_del(&ipa->ipa_timeout) == 1)
+		refcnt_rele(&ipa->ipa_refcnt);
+	ipsp_unref_acquire_locked(ipa);
+}
+
+void
+ipsec_unref_acquire(struct ipsec_acquire *ipa)
+{
+	mtx_enter(&ipsec_acquire_mtx);
+	ipsp_unref_acquire_locked(ipa);
+	mtx_leave(&ipsec_acquire_mtx);
+}
+
+void
+ipsp_unref_acquire_locked(struct ipsec_acquire *ipa)
+{
+	MUTEX_ASSERT_LOCKED(&ipsec_acquire_mtx);
+
+	if (refcnt_rele(&ipa->ipa_refcnt) == 0)
+		return;
 	TAILQ_REMOVE(&ipsec_acquire_head, ipa, ipa_next);
-	if (ipa->ipa_policy != NULL)
-		TAILQ_REMOVE(&ipa->ipa_policy->ipo_acquires, ipa,
-		    ipa_ipo_next);
+	TAILQ_REMOVE(&ipa->ipa_policy->ipo_acquires, ipa, ipa_ipo_next);
+	ipa->ipa_policy = NULL;
+
 	pool_put(&ipsec_acquire_pool, ipa);
 }
 
@@ -731,19 +759,21 @@ ipsp_delete_acquire(struct ipsec_acquire *ipa)
  * Find out if there's an ACQUIRE pending.
  * XXX Need a better structure.
  */
-struct ipsec_acquire *
+int
 ipsp_pending_acquire(struct ipsec_policy *ipo, union sockaddr_union *gw)
 {
 	struct ipsec_acquire *ipa;
 
 	NET_ASSERT_LOCKED();
 
-	TAILQ_FOREACH (ipa, &ipo->ipo_acquires, ipa_ipo_next) {
+	mtx_enter(&ipsec_acquire_mtx);
+	TAILQ_FOREACH(ipa, &ipo->ipo_acquires, ipa_ipo_next) {
 		if (!memcmp(gw, &ipa->ipa_addr, gw->sa.sa_len))
-			return ipa;
+			break;
 	}
+	mtx_leave(&ipsec_acquire_mtx);
 
-	return NULL;
+	return (ipa != NULL);
 }
 
 /*
@@ -759,7 +789,7 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 	NET_ASSERT_LOCKED();
 
 	/* Check whether request has been made already. */
-	if ((ipa = ipsp_pending_acquire(ipo, gw)) != NULL)
+	if (ipsp_pending_acquire(ipo, gw))
 		return 0;
 
 	/* Add request in cache and proceed. */
@@ -769,7 +799,8 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 
 	ipa->ipa_addr = *gw;
 
-	timeout_set_proc(&ipa->ipa_timeout, ipsp_delete_acquire_timo, ipa);
+	refcnt_init(&ipa->ipa_refcnt);
+	timeout_set(&ipa->ipa_timeout, ipsp_delete_acquire_timer, ipa);
 
 	ipa->ipa_info.sen_len = ipa->ipa_mask.sen_len = SENT_LEN;
 	ipa->ipa_info.sen_family = ipa->ipa_mask.sen_family = PF_KEY;
@@ -850,13 +881,15 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		return 0;
 	}
 
+	mtx_enter(&ipsec_acquire_mtx);
 #ifdef IPSEC
-	timeout_add_sec(&ipa->ipa_timeout, ipsec_expire_acquire);
+	if (timeout_add_sec(&ipa->ipa_timeout, ipsec_expire_acquire) == 1)
+		refcnt_take(&ipa->ipa_refcnt);
 #endif
-
 	TAILQ_INSERT_TAIL(&ipsec_acquire_head, ipa, ipa_next);
 	TAILQ_INSERT_TAIL(&ipo->ipo_acquires, ipa, ipa_ipo_next);
 	ipa->ipa_policy = ipo;
+	mtx_leave(&ipsec_acquire_mtx);
 
 	/* PF_KEYv2 notification message. */
 	return pfkeyv2_acquire(ipo, gw, laddr, &ipa->ipa_seq, ddst);
@@ -908,9 +941,14 @@ ipsec_get_acquire(u_int32_t seq)
 
 	NET_ASSERT_LOCKED();
 
-	TAILQ_FOREACH (ipa, &ipsec_acquire_head, ipa_next)
-		if (ipa->ipa_seq == seq)
-			return ipa;
+	mtx_enter(&ipsec_acquire_mtx);
+	TAILQ_FOREACH(ipa, &ipsec_acquire_head, ipa_next) {
+		if (ipa->ipa_seq == seq) {
+			refcnt_take(&ipa->ipa_refcnt);
+			break;
+		}
+	}
+	mtx_leave(&ipsec_acquire_mtx);
 
-	return NULL;
+	return ipa;
 }
