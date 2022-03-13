@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_alt.c,v 1.9 2022/03/13 16:30:31 tb Exp $ */
+/* $OpenBSD: x509_alt.c,v 1.10 2022/03/13 16:48:49 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -652,7 +652,25 @@ v2i_GENERAL_NAME_ex(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 	if (ret == NULL)
 		return NULL;
 
-	/* Validate what we have for sanity */
+	/*
+	 * Validate what we have for sanity.
+	 */
+
+	if (is_nc) {
+		struct x509_constraints_name constraints_name;
+		int error = 0;
+
+		memset(&constraints_name, 0, sizeof(constraints_name));
+		type = x509_constraints_validate(ret, &constraints_name, &error);
+		if (type == 0 || error != 0) {
+			X509V3error(X509V3_R_BAD_OBJECT);
+			ERR_asprintf_error_data("name=%s", name);
+			goto err;
+		}
+		x509_constraints_name_clear(&constraints_name);
+		return ret;
+	}
+
 	type = x509_constraints_general_to_bytes(ret, &bytes, &len);
 	switch (type) {
 	case GEN_DNS:
@@ -677,8 +695,7 @@ v2i_GENERAL_NAME_ex(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 		}
 		break;
 	case GEN_IPADD:
-		if ((!is_nc && len != 4 && len != 16) ||
-		    (is_nc && len != 8 && len != 32)) {
+		if (len != 4 && len != 16) {
 			X509V3error(X509V3_R_BAD_IP_ADDRESS);
 			ERR_asprintf_error_data("name=%s len=%zu", name, len);
 			goto err;
