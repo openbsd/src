@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.74 2020/11/09 14:07:49 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.75 2022/03/13 13:28:09 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -68,6 +68,7 @@ sub thorough_check
 
 sub basic_check
 {
+	1
 }
 
 sub find_dependencies
@@ -108,13 +109,15 @@ sub basic_check
 			} else {
 				$state->log("#1 is not a symlink", $name);
 			}
+			return 0;
 		} else {
 			if (readlink($name) ne $self->{symlink}) {
 				$state->log("#1 should point to #2 but points to #3 instead",
 				    $name, $self->{symlink}, readlink($name));
+				return 0;
 			}
 		}
-		return;
+		return 1;
 	}
 	if (!-e $name) {
 		if (-l $name) {
@@ -123,32 +126,39 @@ sub basic_check
 		} else {
 			$state->log("#1 should exist", $name);
 		}
-	}
-	if (!-f _) {
+	    	return 0;
+	} elsif (!-f _) {
 		$state->log("#1 is not a file", $name);
+		return 0;
 	}
 	if ($self->{link}) {
 		my ($a, $b) = (stat _)[0, 1];
 		if (!-f $state->destdir($self->{link})) {
 			$state->log("#1 should link to non-existent #2",
 			    $name, $self->{link});
+			return 0;
 		} else {
 			my ($c, $d) = (stat _)[0, 1];
 			if (defined $a && defined $c) {
 				if ($a != $c || $b != $d) {
 					$state->log("#1 doesn't link to #2",
 					    $name, $self->{link});
+					return 0;
 				}
 			}
+
 		}
 	}
+	return 1;
 }
 
 sub thorough_check
 {
 	my ($self, $state) = @_;
 	my $name = $state->destdir($self->fullname);
-	$self->basic_check($state);
+	if (!$self->basic_check($state)) {
+		return;
+	}
 	return if $self->{link} or $self->{symlink} or $self->{nochecksum};
 	if (!-r $name) {
 		$state->log("can't read #1", $name);
@@ -196,6 +206,7 @@ sub basic_check
 	my ($self, $state) = @_;
 	my $name = $state->destdir($self->fullname);
 	$state->{known}{dirname($name)}{basename($name)} = 1;
+	return 1;
 }
 
 package OpenBSD::PackingElement::Sampledir;
@@ -204,6 +215,7 @@ sub basic_check
 	my ($self, $state) = @_;
 	my $name = $state->destdir($self->fullname);
 	$state->{known}{$name} //= {};
+	return 1;
 }
 
 package OpenBSD::PackingElement::Mandir;
@@ -215,6 +227,7 @@ sub basic_check
 	for my $file (OpenBSD::Paths::man_cruft()) {
 		$state->{known}{$name}{$file} = 1;
 	}
+	return 1;
 }
 
 package OpenBSD::PackingElement::Fontdir;
@@ -226,6 +239,7 @@ sub basic_check
 	for my $i (qw(fonts.alias fonts.scale fonts.dir)) {
 		$state->{known}{$name}{$i} = 1;
 	}
+	return 1;
 }
 
 package OpenBSD::PackingElement::Infodir;
@@ -235,6 +249,7 @@ sub basic_check
 	$self->SUPER::basic_check($state);
 	my $name = $state->destdir($self->fullname);
 	$state->{known}{$name}{'dir'} = 1;
+	return 1;
 }
 
 package OpenBSD::PackingElement::Depend;
