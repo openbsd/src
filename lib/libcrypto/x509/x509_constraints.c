@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.21 2022/03/03 11:29:05 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.22 2022/03/13 16:25:58 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -949,7 +949,10 @@ x509_constraints_validate(GENERAL_NAME *constraint,
 	case GEN_URI:
 		if (!x509_constraints_valid_domain_constraint(bytes, len))
 			goto err;
-		name->name = strdup(bytes);
+		if ((name->name = strdup(bytes)) == NULL) {
+			*error = X509_V_ERR_OUT_OF_MEM;
+			return 0;
+		}
 		name->type = GEN_URI;
 		break;
 	default:
