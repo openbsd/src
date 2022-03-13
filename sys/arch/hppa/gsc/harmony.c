@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.36 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.37 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -1159,6 +1159,6 @@ struct cfdriver harmony_cd = {
 	NULL, "harmony", DV_DULL
 };
 
-struct cfattach harmony_ca = {
+const struct cfattach harmony_ca = {
 	sizeof(struct harmony_softc), harmony_match, harmony_attach
 };

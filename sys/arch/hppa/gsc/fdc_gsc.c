@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdc_gsc.c,v 1.5 2004/04/07 18:24:19 mickey Exp $	*/
+/*	$OpenBSD: fdc_gsc.c,v 1.6 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -45,7 +45,7 @@
 int fdc_gsc_probe(struct device *, void *, void *);
 void fdc_gsc_attach(struct device *, struct device *, void *);
 
-struct cfattach fdc_gsc_ca = {
+const struct cfattach fdc_gsc_ca = {
 	sizeof(struct fdc_softc), fdc_gsc_probe, fdc_gsc_attach
 };
 

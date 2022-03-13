@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_gsc.c,v 1.21 2007/07/15 19:25:49 kettenis Exp $	*/
+/*	$OpenBSD: com_gsc.c,v 1.22 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -51,7 +51,7 @@ struct com_gsc_regs {
 int	com_gsc_probe(struct device *, void *, void *);
 void	com_gsc_attach(struct device *, struct device *, void *);
 
-struct cfattach com_gsc_ca = {
+const struct cfattach com_gsc_ca = {
 	sizeof(struct com_softc), com_gsc_probe, com_gsc_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssio.c,v 1.7 2009/03/08 22:19:04 miod Exp $	*/
+/*	$OpenBSD: ssio.c,v 1.8 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -114,7 +114,7 @@ struct ssio_softc {
 	void *sc_ih;
 };
 
-struct cfattach ssio_ca = {
+const struct cfattach ssio_ca = {
 	sizeof(struct ssio_softc), ssio_match, ssio_attach
 };
 

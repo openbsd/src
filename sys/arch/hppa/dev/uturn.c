@@ -1,4 +1,4 @@
-/*	$OpenBSD: uturn.c,v 1.7 2010/04/29 13:48:29 jsing Exp $	*/
+/*	$OpenBSD: uturn.c,v 1.8 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2004 Michael Shalayeff
@@ -54,7 +54,7 @@ struct uturn_softc {
 int	uturnmatch(struct device *, void *, void *);
 void	uturnattach(struct device *, struct device *, void *);
 
-struct cfattach uturn_ca = {
+const struct cfattach uturn_ca = {
 	sizeof(struct uturn_softc), uturnmatch, uturnattach
 };
 

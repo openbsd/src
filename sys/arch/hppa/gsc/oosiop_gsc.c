@@ -1,4 +1,4 @@
-/*	$OpenBSD: oosiop_gsc.c,v 1.3 2010/04/20 20:21:54 miod Exp $	*/
+/*	$OpenBSD: oosiop_gsc.c,v 1.4 2022/03/13 08:04:38 mpi Exp $	*/
 /*	$NetBSD: oosiop_gsc.c,v 1.2 2003/07/15 02:29:25 lukem Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ int oosiop_gsc_match(struct device *, void *, void *);
 void oosiop_gsc_attach(struct device *, struct device *, void *);
 int oosiop_gsc_intr(void *);
 
-struct cfattach oosiop_gsc_ca = {
+const struct cfattach oosiop_gsc_ca = {
 	sizeof(struct oosiop_softc), oosiop_gsc_match, oosiop_gsc_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: phantomas.c,v 1.5 2010/04/29 13:48:29 jsing Exp $	*/
+/*	$OpenBSD: phantomas.c,v 1.6 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -48,7 +48,7 @@ struct phantomas_softc {
 int	phantomasmatch(struct device *, void *, void *);
 void	phantomasattach(struct device *, struct device *, void *);
 
-struct cfattach phantomas_ca = {
+const struct cfattach phantomas_ca = {
 	sizeof(struct phantomas_softc), phantomasmatch, phantomasattach
 };
 

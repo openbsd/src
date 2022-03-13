@@ -1,4 +1,4 @@
-/*	$OpenBSD: elroy.c,v 1.11 2012/02/25 17:08:49 miod Exp $	*/
+/*	$OpenBSD: elroy.c,v 1.12 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2005 Michael Shalayeff
@@ -49,7 +49,7 @@ int	elroy_match(struct device *, void *, void *);
 void	elroy_attach(struct device *, struct device *, void *);
 int	elroy_intr(void *);
 
-struct cfattach elroy_ca = {
+const struct cfattach elroy_ca = {
 	sizeof(struct elroy_softc), elroy_match, elroy_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcd.c,v 1.5 2020/03/06 01:45:32 cheloha Exp $	*/
+/*	$OpenBSD: lcd.c,v 1.6 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -48,7 +48,7 @@ struct lcd_softc {
 int	lcd_match(struct device *, void *, void *);
 void	lcd_attach(struct device *, struct device *, void *);
 
-struct cfattach lcd_ca = {
+const struct cfattach lcd_ca = {
 	sizeof(struct lcd_softc), lcd_match, lcd_attach
 };
 

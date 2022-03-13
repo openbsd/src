@@ -1,4 +1,4 @@
-/*	$OpenBSD: astro.c,v 1.17 2014/11/16 12:30:57 deraadt Exp $	*/
+/*	$OpenBSD: astro.c,v 1.18 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -156,7 +156,7 @@ struct iommu_map_state {
 int	astro_match(struct device *, void *, void *);
 void	astro_attach(struct device *, struct device *, void *);
 
-struct cfattach astro_ca = {
+const struct cfattach astro_ca = {
 	sizeof(struct astro_softc), astro_match, astro_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hil_gsc.c,v 1.5 2005/12/22 07:09:52 miod Exp $	*/
+/*	$OpenBSD: hil_gsc.c,v 1.6 2022/03/13 08:04:38 mpi Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -51,7 +51,7 @@ struct hil_gsc_softc {
 	int		 sc_hil_console;
 };
 
-struct cfattach hil_gsc_ca = {
+const struct cfattach hil_gsc_ca = {
 	sizeof(struct hil_gsc_softc), hil_gsc_match, hil_gsc_attach
 };
 

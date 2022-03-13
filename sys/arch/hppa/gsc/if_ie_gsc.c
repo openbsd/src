@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.29 2015/11/24 17:11:38 mpi Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.30 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -70,7 +70,7 @@ struct ie_gsc_regs {
 int	ie_gsc_probe(struct device *, void *, void *);
 void	ie_gsc_attach(struct device *, struct device *, void *);
 
-struct cfattach ie_gsc_ca = {
+const struct cfattach ie_gsc_ca = {
 	sizeof(struct ie_softc), ie_gsc_probe, ie_gsc_attach
 };
 

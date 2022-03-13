@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_ssio.c,v 1.1 2007/06/20 18:22:15 kettenis Exp $	*/
+/*	$OpenBSD: lpt_ssio.c,v 1.2 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -30,7 +30,7 @@
 int lpt_ssio_match(struct device *, void *, void *);
 void lpt_ssio_attach(struct device *, struct device *, void *);
 
-struct cfattach lpt_ssio_ca = {
+const struct cfattach lpt_ssio_ca = {
 	sizeof(struct lpt_softc), lpt_ssio_match, lpt_ssio_attach
 };
 

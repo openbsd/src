@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_gsc.c,v 1.4 2007/08/23 21:01:22 kettenis Exp $	*/
+/*	$OpenBSD: siop_gsc.c,v 1.5 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -54,7 +54,7 @@ struct siop_gsc_softc {
 	struct hppa_bus_space_tag sc_bustag;
 };
 
-struct cfattach siop_gsc_ca = {
+const struct cfattach siop_gsc_ca = {
 	sizeof(struct siop_gsc_softc), siop_gsc_match, siop_gsc_attach
 };
 

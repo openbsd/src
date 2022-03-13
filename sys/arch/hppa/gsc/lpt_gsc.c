@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_gsc.c,v 1.12 2011/09/16 17:20:07 miod Exp $	*/
+/*	$OpenBSD: lpt_gsc.c,v 1.13 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -71,7 +71,7 @@
 int	lpt_gsc_probe(struct device *, void *, void *);
 void	lpt_gsc_attach(struct device *, struct device *, void *);
 
-struct cfattach lpt_gsc_ca = {
+const struct cfattach lpt_gsc_ca = {
 	sizeof(struct lpt_softc), lpt_gsc_probe, lpt_gsc_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_sgc.c,v 1.40 2014/08/30 14:42:05 miod Exp $	*/
+/*	$OpenBSD: sti_sgc.c,v 1.41 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2000-2003 Michael Shalayeff
@@ -61,7 +61,7 @@ int	sti_sgc_probe(struct device *, void *, void *);
 void	sti_sgc_attach(struct device *, struct device *, void *);
 paddr_t	sti_sgc_getrom(int, struct confargs *);
 
-struct cfattach sti_gedoens_ca = {
+const struct cfattach sti_gedoens_ca = {
 	sizeof(struct sti_softc), sti_sgc_probe, sti_sgc_attach
 };
 

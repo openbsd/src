@@ -1,4 +1,4 @@
-/*	$OpenBSD: dino.c,v 1.32 2018/05/14 13:54:39 kettenis Exp $	*/
+/*	$OpenBSD: dino.c,v 1.33 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Michael Shalayeff
@@ -126,7 +126,7 @@ int	dinomatch(struct device *, void *, void *);
 void	dinoattach(struct device *, struct device *, void *);
 int	dino_intr(void *);
 
-struct cfattach dino_ca = {
+const struct cfattach dino_ca = {
 	sizeof(struct dino_softc), dinomatch, dinoattach
 };
 

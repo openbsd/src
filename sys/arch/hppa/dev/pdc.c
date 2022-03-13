@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.40 2018/02/19 08:59:52 mpi Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.41 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -63,7 +63,7 @@ struct consdev pdccons = { NULL, NULL, pdccngetc, pdccnputc,
 int pdcmatch(struct device *, void *, void *);
 void pdcattach(struct device *, struct device *, void *);
 
-struct cfattach pdc_ca = {
+const struct cfattach pdc_ca = {
 	sizeof(pdcsoftc_t), pdcmatch, pdcattach
 };
 

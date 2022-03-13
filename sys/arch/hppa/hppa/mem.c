@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 2017/12/30 20:46:59 guenther Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -144,7 +144,7 @@ struct mem_softc {
 int	memmatch(struct device *, void *, void *);
 void	memattach(struct device *, struct device *, void *);
 
-struct cfattach mem_ca = {
+const struct cfattach mem_ca = {
 	sizeof(struct mem_softc), memmatch, memattach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_sgc.c,v 1.1 2007/08/05 19:09:52 kettenis Exp $	*/
+/*	$OpenBSD: siop_sgc.c,v 1.2 2022/03/13 08:04:38 mpi Exp $	*/
 
 /*
  * Copyright (c) 2007 Mark Kettenis
@@ -54,7 +54,7 @@ struct siop_sgc_softc {
 	struct hppa_bus_space_tag sc_bustag;
 };
 
-struct cfattach siop_gedoens_ca = {
+const struct cfattach siop_gedoens_ca = {
 	sizeof(struct siop_sgc_softc), siop_sgc_match, siop_sgc_attach
 };
 
