@@ -1,4 +1,4 @@
-/*	$OpenBSD: lca.c,v 1.23 2013/06/04 19:12:34 miod Exp $	*/
+/*	$OpenBSD: lca.c,v 1.24 2022/03/13 08:04:13 mpi Exp $	*/
 /*	$NetBSD: lca.c,v 1.14 1996/12/05 01:39:35 cgd Exp $	*/
 
 /*-
@@ -89,7 +89,7 @@
 int	lcamatch(struct device *, void *, void *);
 void	lcaattach(struct device *, struct device *, void *);
 
-struct cfattach lca_ca = {
+const struct cfattach lca_ca = {
 	sizeof(struct device), lcamatch, lcaattach,
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: cia.c,v 1.26 2017/10/20 12:05:01 mpi Exp $ */
+/* $OpenBSD: cia.c,v 1.27 2022/03/13 08:04:13 mpi Exp $ */
 /* $NetBSD: cia.c,v 1.56 2000/06/29 08:58:45 mrg Exp $ */
 
 /*-
@@ -95,7 +95,7 @@
 int	ciamatch(struct device *, void *, void *);
 void	ciaattach(struct device *, struct device *, void *);
 
-struct cfattach cia_ca = {
+const struct cfattach cia_ca = {
 	sizeof(struct device), ciamatch, ciaattach,
 };
 

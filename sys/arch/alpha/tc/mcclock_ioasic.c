@@ -1,4 +1,4 @@
-/* $OpenBSD: mcclock_ioasic.c,v 1.6 2002/05/02 22:56:06 miod Exp $ */
+/* $OpenBSD: mcclock_ioasic.c,v 1.7 2022/03/13 08:04:13 mpi Exp $ */
 /* $NetBSD: mcclock_ioasic.c,v 1.9 2000/07/04 02:37:51 nisimura Exp $ */
 
 /*
@@ -53,7 +53,7 @@ struct mcclock_ioasic_softc {
 int	mcclock_ioasic_match(struct device *, void *, void *);
 void	mcclock_ioasic_attach(struct device *, struct device *, void *);
 
-struct cfattach mcclock_ioasic_ca = {
+const struct cfattach mcclock_ioasic_ca = {
 	sizeof (struct mcclock_ioasic_softc), mcclock_ioasic_match,
 	    mcclock_ioasic_attach, 
 };

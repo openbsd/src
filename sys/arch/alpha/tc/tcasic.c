@@ -1,4 +1,4 @@
-/* $OpenBSD: tcasic.c,v 1.18 2020/05/23 08:40:55 jsg Exp $ */
+/* $OpenBSD: tcasic.c,v 1.19 2022/03/13 08:04:13 mpi Exp $ */
 /* $NetBSD: tcasic.c,v 1.36 2001/08/23 01:16:52 nisimura Exp $ */
 
 /*
@@ -44,7 +44,7 @@ int	tcasicmatch(struct device *, void *, void *);
 void	tcasicattach(struct device *, struct device *, void *);
 int	tcasicactivate(struct device *, int);
 
-struct cfattach tcasic_ca = {
+const struct cfattach tcasic_ca = {
 	.ca_devsize = sizeof (struct device),
 	.ca_match = tcasicmatch,
 	.ca_attach = tcasicattach,

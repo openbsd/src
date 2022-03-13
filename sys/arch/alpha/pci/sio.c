@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.40 2015/08/15 19:26:00 miod Exp $	*/
+/*	$OpenBSD: sio.c,v 1.41 2022/03/13 08:04:13 mpi Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ struct cfdriver sio_cd = {
 
 int	pcebmatch(struct device *, void *, void *);
 
-struct cfattach pceb_ca = {
+const struct cfattach pceb_ca = {
 	sizeof(struct sio_softc), pcebmatch, sioattach,
 };
 

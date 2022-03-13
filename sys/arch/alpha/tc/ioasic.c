@@ -1,4 +1,4 @@
-/* $OpenBSD: ioasic.c,v 1.18 2017/10/11 08:14:28 mpi Exp $ */
+/* $OpenBSD: ioasic.c,v 1.19 2022/03/13 08:04:13 mpi Exp $ */
 /* $NetBSD: ioasic.c,v 1.34 2000/07/18 06:10:06 thorpej Exp $ */
 
 /*-
@@ -81,7 +81,7 @@
 int	ioasicmatch(struct device *, void *, void *);
 void	ioasicattach(struct device *, struct device *, void *);
 
-struct cfattach ioasic_ca = {
+const struct cfattach ioasic_ca = {
 	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach,
 };
 

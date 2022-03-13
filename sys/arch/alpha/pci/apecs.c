@@ -1,4 +1,4 @@
-/*	$OpenBSD: apecs.c,v 1.22 2009/03/30 21:43:13 kettenis Exp $	*/
+/*	$OpenBSD: apecs.c,v 1.23 2022/03/13 08:04:13 mpi Exp $	*/
 /*	$NetBSD: apecs.c,v 1.16 1996/12/05 01:39:34 cgd Exp $	*/
 
 /*-
@@ -90,7 +90,7 @@
 int	apecsmatch(struct device *, void *, void *);
 void	apecsattach(struct device *, struct device *, void *);
 
-struct cfattach apecs_ca = {
+const struct cfattach apecs_ca = {
 	sizeof(struct device), apecsmatch, apecsattach,
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: mcbus.c,v 1.4 2021/03/11 11:16:54 jsg Exp $ */
+/* $OpenBSD: mcbus.c,v 1.5 2022/03/13 08:04:13 mpi Exp $ */
 /* $NetBSD: mcbus.c,v 1.19 2007/03/04 05:59:11 christos Exp $ */
 
 /*
@@ -68,7 +68,7 @@ typedef struct {
 	u_int8_t	mcbus_types[MCBUS_MID_MAX];
 } mcbus_softc_t;
 
-struct cfattach mcbus_ca = {
+const struct cfattach mcbus_ca = {
 	sizeof(mcbus_softc_t), mcbusmatch, mcbusattach
 };
 

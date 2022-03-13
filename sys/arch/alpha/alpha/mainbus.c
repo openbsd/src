@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.14 2013/12/22 18:52:34 miod Exp $ */
+/* $OpenBSD: mainbus.c,v 1.15 2022/03/13 08:04:13 mpi Exp $ */
 /* $NetBSD: mainbus.c,v 1.27 1998/06/24 01:10:35 ross Exp $ */
 
 /*
@@ -43,7 +43,7 @@ static int	mbmatch(struct device *, void *, void *);
 static void	mbattach(struct device *, struct device *, void *);
 static int	mbprint(void *, const char *);
 
-struct cfattach mainbus_ca = {
+const struct cfattach mainbus_ca = {
 	sizeof(struct device), mbmatch, mbattach
 };
 

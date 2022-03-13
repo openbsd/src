@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.44 2020/07/15 08:24:29 fcambus Exp $ */
+/* $OpenBSD: cpu.c,v 1.45 2022/03/13 08:04:13 mpi Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -107,7 +107,7 @@ u_long	cpu_implver, cpu_amask;
 int	cpumatch(struct device *, void *, void *);
 void	cpuattach(struct device *, struct device *, void *);
 
-struct cfattach cpu_ca = {
+const struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach
 };
 
