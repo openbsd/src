@@ -1,4 +1,4 @@
-/* $OpenBSD: ieee80211_radiotap.h,v 1.16 2020/10/09 08:53:16 mpi Exp $ */
+/* $OpenBSD: ieee80211_radiotap.h,v 1.17 2022/03/14 15:06:04 stsp Exp $ */
 /* $FreeBSD: src/sys/net80211/ieee80211_radiotap.h,v 1.3 2004/04/05 22:13:21 sam Exp $ */
 /* $NetBSD: ieee80211_radiotap.h,v 1.9 2004/06/06 04:13:28 dyoung Exp $ */
 
@@ -193,6 +193,7 @@ enum ieee80211_radiotap_type {
 #define IEEE80211_CHAN_XR	0x1000	/* Extended range OFDM channel */
 #define IEEE80211_CHAN_HT	0x2000	/* 11n/HT channel */
 #define IEEE80211_CHAN_VHT	0x4000	/* 11ac/VHT channel */
+#define IEEE80211_CHAN_40MHZ	0x8000	/* use of 40 MHz is allowed */
 #endif	/* !_KERNEL */
 
 /* For IEEE80211_RADIOTAP_FLAGS */
