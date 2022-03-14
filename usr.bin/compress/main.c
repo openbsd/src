@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.98 2021/01/18 00:46:58 mortimer Exp $	*/
+/*	$OpenBSD: main.c,v 1.99 2022/03/14 21:52:08 solene Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,8 +75,8 @@ const struct compressor {
 		"deflate",
 		".gz",
 		"\037\213",
-		"123456789ab:cdfhLlNnOo:qrS:tVv",
-		"cfhLlNno:qrtVv",
+		"123456789ab:cdfhkLlNnOo:qrS:tVv",
+		"cfhkLlNno:qrtVv",
 		"fhqr",
 		gz_ropen,
 		gz_read,
@@ -141,6 +141,7 @@ const struct option longopts[] = {
 	{ "uncompress",	no_argument,		0, 'd' },
 	{ "force",	no_argument,		0, 'f' },
 	{ "help",	no_argument,		0, 'h' },
+	{ "keep",	no_argument,		0, 'k' },
 	{ "list",	no_argument,		0, 'l' },
 	{ "license",	no_argument,		0, 'L' },
 	{ "no-name",	no_argument,		0, 'n' },
@@ -166,12 +167,12 @@ main(int argc, char *argv[])
 	const char *optstr, *s;
 	char *p, *infile;
 	char outfile[PATH_MAX], _infile[PATH_MAX], suffix[16];
-	int bits, ch, error, rc, cflag, oflag;
+	int bits, ch, error, rc, cflag, kflag, oflag;
 
 	if (pledge("stdio rpath wpath cpath fattr chown", NULL) == -1)
 		err(1, "pledge");
 
-	bits = cflag = oflag = 0;
+	bits = cflag = kflag = oflag = 0;
 	storename = -1;
 	p = __progname;
 	if (p[0] == 'g') {
@@ -275,6 +276,9 @@ main(int argc, char *argv[])
 			method = M_DEFLATE;
 			strlcpy(suffix, method->suffix, sizeof(suffix));
 			bits = 6;
+			break;
+		case 'k':
+			kflag = 1;
 			break;
 		case 'l':
 			list++;
@@ -458,8 +462,8 @@ main(int argc, char *argv[])
 
 		switch (error) {
 		case SUCCESS:
-			if (!cat && !testmode) {
-				if (!pipin && unlink(infile) && verbose >= 0)
+			if (!cat && !pipin && !testmode && !kflag) {
+				if (unlink(infile) == -1 && verbose >= 0)
 					warn("input: %s", infile);
 			}
 			break;
@@ -947,13 +951,13 @@ usage(int status)
 		fprintf(stderr, "usage: %s [-123456789cdf%sh%slNnOqrt%sv] "
 		    "[-b bits] [-o filename] [-S suffix]\n"
 		    "       %*s [file ...]\n", __progname,
-		    !gzip ? "g" : "", gzip ? "L" : "", gzip ? "V" : "",
+		    !gzip ? "g" : "", gzip ? "kL" : "", gzip ? "V" : "",
 		    (int)strlen(__progname), "");
 		break;
 	case MODE_DECOMP:
 		fprintf(stderr, "usage: %s [-cfh%slNnqrt%sv] [-o filename] "
 		    "[file ...]\n", __progname,
-		    gzip ? "L" : "", gzip ? "V" : "");
+		    gzip ? "kL" : "", gzip ? "V" : "");
 		break;
 	case MODE_CAT:
 		fprintf(stderr, "usage: %s [-f%shqr] [file ...]\n",

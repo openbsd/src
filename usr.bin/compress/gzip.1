@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gzip.1,v 1.14 2014/10/07 21:06:30 deraadt Exp $
+.\"	$OpenBSD: gzip.1,v 1.15 2022/03/14 21:52:08 solene Exp $
 .\"
 .\" Copyright (c) 1986, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)compress.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: October 7 2014 $
+.Dd $Mdocdate: March 14 2022 $
 .Dt GZIP 1
 .Os
 .Sh NAME
@@ -43,13 +43,13 @@
 .Nd compress and expand data (deflate mode)
 .Sh SYNOPSIS
 .Nm gzip
-.Op Fl 123456789cdfhLlNnOqrtVv
+.Op Fl 123456789cdfhkLlNnOqrtVv
 .Op Fl b Ar bits
 .Op Fl o Ar filename
 .Op Fl S Ar suffix
 .Op Ar
 .Nm gunzip
-.Op Fl cfhLlNnqrtVv
+.Op Fl cfhkLlNnqrtVv
 .Op Fl o Ar filename
 .Op Ar
 .Nm gzcat
@@ -183,6 +183,8 @@ behave as
 .Xr cat 1 .
 .It Fl h
 Print a short help message.
+.It Fl k
+Keep input files after compression or decompression.
 .It Fl L
 A no-op which exists for compatibility only.
 On GNU gzip, it displays the program's license.
