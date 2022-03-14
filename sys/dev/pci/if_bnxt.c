@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.35 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.36 2022/03/14 23:41:42 dlg Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -452,6 +452,7 @@ bdmfree:
 void
 bnxt_dmamem_free(struct bnxt_softc *sc, struct bnxt_dmamem *m)
 {
+	bus_dmamap_unload(sc->sc_dmat, m->bdm_map);
 	bus_dmamem_unmap(sc->sc_dmat, m->bdm_kva, m->bdm_size);
 	bus_dmamem_free(sc->sc_dmat, &m->bdm_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, m->bdm_map);
