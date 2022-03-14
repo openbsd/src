@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.55 2022/03/12 12:53:03 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.56 2022/03/14 16:49:35 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -814,6 +814,134 @@ ssl3_read_change_cipher_spec(SSL *s)
 	return 1;
 }
 
+static int
+ssl3_read_handshake_unexpected(SSL *s)
+{
+	SSL3_RECORD_INTERNAL *rr = &s->s3->rrec;
+	int i;
+
+	/*
+	 * We need four bytes of handshake data so we have a handshake message
+	 * header - this may be in the same record or fragmented across multiple
+	 * records.
+	 */
+	while (rr->length > 0 &&
+	    s->s3->handshake_fragment_len < sizeof(s->s3->handshake_fragment)) {
+		s->s3->handshake_fragment[s->s3->handshake_fragment_len++] =
+		    rr->data[rr->off++];
+		rr->length--;
+	}
+
+	if (s->s3->handshake_fragment_len < sizeof(s->s3->handshake_fragment))
+		return 1;
+
+	if (s->internal->in_handshake) {
+		SSLerror(s, ERR_R_INTERNAL_ERROR);
+		return -1;
+	}
+
+	/*
+	 * This code currently deals with HelloRequest and ClientHello messages -
+	 * anything else is pushed to the handshake_func. Almost all of this
+	 * belongs in the client/server handshake code.
+	 */
+
+	/* If we are a client, check for an incoming 'Hello Request': */
+	if ((!s->server) && (s->s3->handshake_fragment_len >= 4) &&
+	    (s->s3->handshake_fragment[0] == SSL3_MT_HELLO_REQUEST) &&
+	    (s->session != NULL) && (s->session->cipher != NULL)) {
+		s->s3->handshake_fragment_len = 0;
+
+		if ((s->s3->handshake_fragment[1] != 0) ||
+		    (s->s3->handshake_fragment[2] != 0) ||
+		    (s->s3->handshake_fragment[3] != 0)) {
+			SSLerror(s, SSL_R_BAD_HELLO_REQUEST);
+			ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+			return -1;
+		}
+
+		ssl_msg_callback(s, 0, SSL3_RT_HANDSHAKE,
+		    s->s3->handshake_fragment, 4);
+
+		if (SSL_is_init_finished(s) &&
+		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
+		    !s->s3->renegotiate) {
+			ssl3_renegotiate(s);
+			if (ssl3_renegotiate_check(s)) {
+				i = s->internal->handshake_func(s);
+				if (i < 0)
+					return (i);
+				if (i == 0) {
+					SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
+					return (-1);
+				}
+
+				if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
+					if (s->s3->rbuf.left == 0) {
+						ssl_force_want_read(s);
+						return (-1);
+					}
+				}
+			}
+		}
+		/* we either finished a handshake or ignored the request,
+		 * now try again to obtain the (application) data we were asked for */
+		return 1;
+	}
+
+	/* Disallow client initiated renegotiation if configured. */
+	if (s->server && SSL_is_init_finished(s) &&
+	    s->s3->handshake_fragment_len >= 4 &&
+	    s->s3->handshake_fragment[0] == SSL3_MT_CLIENT_HELLO &&
+	    (s->internal->options & SSL_OP_NO_CLIENT_RENEGOTIATION)) {
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_NO_RENEGOTIATION);
+		return -1;
+	}
+
+	/* If we are a server and get a client hello when renegotiation isn't
+	 * allowed send back a no renegotiation alert and carry on.
+	 * WARNING: experimental code, needs reviewing (steve)
+	 */
+	if (s->server &&
+	    SSL_is_init_finished(s) &&
+	    !s->s3->send_connection_binding &&
+	    (s->s3->handshake_fragment_len >= 4) &&
+	    (s->s3->handshake_fragment[0] == SSL3_MT_CLIENT_HELLO) &&
+	    (s->session != NULL) && (s->session->cipher != NULL)) {
+		/*s->s3->handshake_fragment_len = 0;*/
+		rr->length = 0;
+		ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
+		return 1;
+	}
+
+	/* Unexpected handshake message (Client Hello, or protocol violation) */
+	if ((s->s3->handshake_fragment_len >= 4) && !s->internal->in_handshake) {
+		if (((s->s3->hs.state&SSL_ST_MASK) == SSL_ST_OK) &&
+		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
+			s->s3->hs.state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
+			s->internal->renegotiate = 1;
+			s->internal->new_session = 1;
+		}
+		i = s->internal->handshake_func(s);
+		if (i < 0)
+			return (i);
+		if (i == 0) {
+			SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
+			return (-1);
+		}
+
+		if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
+			if (s->s3->rbuf.left == 0) {
+				ssl_force_want_read(s);
+				return (-1);
+			}
+		}
+		return 1;
+	}
+
+	return 1;
+}
+
 /* Return up to 'len' payload bytes received in 'type' records.
  * 'type' is one of the following:
  *
@@ -950,7 +1078,6 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		return (0);
 	}
 
-
 	/* SSL3_RT_APPLICATION_DATA or SSL3_RT_HANDSHAKE */
 	if (type == rr->type) {
 		/* make sure that we are not getting application data when we
@@ -986,111 +1113,10 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		return (n);
 	}
 
-
-	/* If we get here, then type != rr->type; if we have a handshake
-	 * message, then it was unexpected (Hello Request or Client Hello). */
-
-	{
-		/*
-		 * In case of record types for which we have 'fragment'
-		 * storage, * fill that so that we can process the data
-		 * at a fixed place.
-		 */
-		unsigned int dest_maxlen = 0;
-		unsigned char *dest = NULL;
-		unsigned int *dest_len = NULL;
-
-		if (rr->type == SSL3_RT_HANDSHAKE) {
-			dest_maxlen = sizeof s->s3->handshake_fragment;
-			dest = s->s3->handshake_fragment;
-			dest_len = &s->s3->handshake_fragment_len;
-		}
-		if (dest_maxlen > 0) {
-			/* available space in 'dest' */
-			n = dest_maxlen - *dest_len;
-			if (rr->length < n)
-				n = rr->length; /* available bytes */
-
-			/* now move 'n' bytes: */
-			while (n-- > 0) {
-				dest[(*dest_len)++] = rr->data[rr->off++];
-				rr->length--;
-			}
-
-			if (*dest_len < dest_maxlen)
-				goto start; /* fragment was too small */
-		}
-	}
-
-	/* s->s3->handshake_fragment_len == 4  iff  rr->type == SSL3_RT_HANDSHAKE;
-	 * s->s3->alert_fragment_len == 2      iff  rr->type == SSL3_RT_ALERT.
-	 * (Possibly rr is 'empty' now, i.e. rr->length may be 0.) */
-
-	/* If we are a client, check for an incoming 'Hello Request': */
-	if ((!s->server) && (s->s3->handshake_fragment_len >= 4) &&
-	    (s->s3->handshake_fragment[0] == SSL3_MT_HELLO_REQUEST) &&
-	    (s->session != NULL) && (s->session->cipher != NULL)) {
-		s->s3->handshake_fragment_len = 0;
-
-		if ((s->s3->handshake_fragment[1] != 0) ||
-		    (s->s3->handshake_fragment[2] != 0) ||
-		    (s->s3->handshake_fragment[3] != 0)) {
-			al = SSL_AD_DECODE_ERROR;
-			SSLerror(s, SSL_R_BAD_HELLO_REQUEST);
-			goto fatal_err;
-		}
-
-		ssl_msg_callback(s, 0, SSL3_RT_HANDSHAKE,
-		    s->s3->handshake_fragment, 4);
-
-		if (SSL_is_init_finished(s) &&
-		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
-		    !s->s3->renegotiate) {
-			ssl3_renegotiate(s);
-			if (ssl3_renegotiate_check(s)) {
-				i = s->internal->handshake_func(s);
-				if (i < 0)
-					return (i);
-				if (i == 0) {
-					SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
-					return (-1);
-				}
-
-				if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-					if (s->s3->rbuf.left == 0) {
-						ssl_force_want_read(s);
-						return (-1);
-					}
-				}
-			}
-		}
-		/* we either finished a handshake or ignored the request,
-		 * now try again to obtain the (application) data we were asked for */
-		goto start;
-	}
-	/* Disallow client initiated renegotiation if configured. */
-	if (s->server && SSL_is_init_finished(s) &&
-	    s->s3->handshake_fragment_len >= 4 &&
-	    s->s3->handshake_fragment[0] == SSL3_MT_CLIENT_HELLO &&
-	    (s->internal->options & SSL_OP_NO_CLIENT_RENEGOTIATION)) {
-		al = SSL_AD_NO_RENEGOTIATION;
-		goto fatal_err;
-	}
-	/* If we are a server and get a client hello when renegotiation isn't
-	 * allowed send back a no renegotiation alert and carry on.
-	 * WARNING: experimental code, needs reviewing (steve)
+	/*
+	 * If we get here, then type != rr->type; if we have a handshake
+	 * message, then it was unexpected (Hello Request or Client Hello).
 	 */
-	if (s->server &&
-	    SSL_is_init_finished(s) &&
-	    !s->s3->send_connection_binding &&
-	    (s->s3->handshake_fragment_len >= 4) &&
-	    (s->s3->handshake_fragment[0] == SSL3_MT_CLIENT_HELLO) &&
-	    (s->session != NULL) && (s->session->cipher != NULL)) {
-		/*s->s3->handshake_fragment_len = 0;*/
-		rr->length = 0;
-		ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
-		goto start;
-	}
 
 	if (rr->type == SSL3_RT_ALERT) {
 		if ((ret = ssl3_read_alert(s)) <= 0)
@@ -1111,28 +1137,9 @@ ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		goto start;
 	}
 
-	/* Unexpected handshake message (Client Hello, or protocol violation) */
-	if ((s->s3->handshake_fragment_len >= 4) && !s->internal->in_handshake) {
-		if (((s->s3->hs.state&SSL_ST_MASK) == SSL_ST_OK) &&
-		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
-			s->s3->hs.state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
-			s->internal->renegotiate = 1;
-			s->internal->new_session = 1;
-		}
-		i = s->internal->handshake_func(s);
-		if (i < 0)
-			return (i);
-		if (i == 0) {
-			SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
-			return (-1);
-		}
-
-		if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-			if (s->s3->rbuf.left == 0) {
-				ssl_force_want_read(s);
-				return (-1);
-			}
-		}
+	if (rr->type == SSL3_RT_HANDSHAKE) {
+		if ((ret = ssl3_read_handshake_unexpected(s)) <= 0)
+			return ret;
 		goto start;
 	}
 

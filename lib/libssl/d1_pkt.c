@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.119 2022/03/12 12:53:03 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.120 2022/03/14 16:49:35 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -482,6 +482,123 @@ dtls1_get_record(SSL *s)
 	return (1);
 }
 
+static int
+dtls1_read_handshake_unexpected(SSL *s)
+{
+	SSL3_RECORD_INTERNAL *rr = &s->s3->rrec;
+	int i;
+
+	if (s->internal->in_handshake) {
+		SSLerror(s, ERR_R_INTERNAL_ERROR);
+		return -1;
+	}
+
+	/* If we are a client, check for an incoming 'Hello Request': */
+	if (!s->server && rr->type == SSL3_RT_HANDSHAKE &&
+	    rr->length >= DTLS1_HM_HEADER_LENGTH && rr->off == 0 &&
+	    rr->data[0] == SSL3_MT_HELLO_REQUEST &&
+	    s->session != NULL && s->session->cipher != NULL) {
+		struct hm_header_st msg_hdr;
+		CBS cbs;
+
+		CBS_init(&cbs, rr->data, rr->length);
+		if (!dtls1_get_message_header(&cbs, &msg_hdr))
+			return -1; /* XXX - probably should drop/continue. */
+		if (msg_hdr.msg_len != 0) {
+			SSLerror(s, SSL_R_BAD_HELLO_REQUEST);
+			ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
+			return -1;
+		}
+		rr->length = 0;
+
+		/* no need to check sequence number on HELLO REQUEST messages */
+
+		ssl_msg_callback(s, 0, SSL3_RT_HANDSHAKE, rr->data, 4);
+
+		if (SSL_is_init_finished(s) &&
+		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
+		    !s->s3->renegotiate) {
+			s->d1->handshake_read_seq++;
+			s->internal->new_session = 1;
+			ssl3_renegotiate(s);
+			if (ssl3_renegotiate_check(s)) {
+				i = s->internal->handshake_func(s);
+				if (i < 0)
+					return (i);
+				if (i == 0) {
+					SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
+					return (-1);
+				}
+
+				if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
+					if (s->s3->rbuf.left == 0) {
+						ssl_force_want_read(s);
+						return (-1);
+					}
+				}
+			}
+		}
+		/* we either finished a handshake or ignored the request,
+		 * now try again to obtain the (application) data we were asked for */
+		rr->length = 0;
+		return 1;
+	}
+
+	/* Unexpected handshake message (Client Hello, or protocol violation) */
+	if (rr->type == SSL3_RT_HANDSHAKE &&
+	    rr->length >= DTLS1_HM_HEADER_LENGTH && rr->off == 0 &&
+	    !s->internal->in_handshake) {
+		struct hm_header_st msg_hdr;
+		CBS cbs;
+
+		/* this may just be a stale retransmit */
+		CBS_init(&cbs, rr->data, rr->length);
+		if (!dtls1_get_message_header(&cbs, &msg_hdr))
+			return -1; /* XXX - this should probably drop/continue. */
+		if (rr->epoch != tls12_record_layer_read_epoch(s->internal->rl)) {
+			rr->length = 0;
+			return 1;
+		}
+
+		/* If we are server, we may have a repeated FINISHED of the
+		 * client here, then retransmit our CCS and FINISHED.
+		 */
+		if (msg_hdr.type == SSL3_MT_FINISHED) {
+			if (dtls1_check_timeout_num(s) < 0)
+				return -1;
+
+			dtls1_retransmit_buffered_messages(s);
+			rr->length = 0;
+			return 1;
+		}
+
+		if (((s->s3->hs.state&SSL_ST_MASK) == SSL_ST_OK) &&
+		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
+			s->s3->hs.state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
+			s->internal->renegotiate = 1;
+			s->internal->new_session = 1;
+		}
+		i = s->internal->handshake_func(s);
+		if (i < 0)
+			return (i);
+		if (i == 0) {
+			SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
+			return (-1);
+		}
+
+		if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
+			if (s->s3->rbuf.left == 0) {
+				ssl_force_want_read(s);
+				return (-1);
+			}
+		}
+		rr->length = 0;
+		return 1;
+	}
+
+	return 1;
+}
+
 /* Return up to 'len' payload bytes received in 'type' records.
  * 'type' is one of the following:
  *
@@ -684,57 +801,6 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		}
 	}
 
-	/* If we are a client, check for an incoming 'Hello Request': */
-	if (!s->server && rr->type == SSL3_RT_HANDSHAKE &&
-	    rr->length >= DTLS1_HM_HEADER_LENGTH && rr->off == 0 &&
-	    rr->data[0] == SSL3_MT_HELLO_REQUEST &&
-	    s->session != NULL && s->session->cipher != NULL) {
-		struct hm_header_st msg_hdr;
-		CBS cbs;
-
-		CBS_init(&cbs, rr->data, rr->length);
-		if (!dtls1_get_message_header(&cbs, &msg_hdr))
-			return -1;
-		if (msg_hdr.msg_len != 0) {
-			al = SSL_AD_DECODE_ERROR;
-			SSLerror(s, SSL_R_BAD_HELLO_REQUEST);
-			goto fatal_err;
-		}
-		rr->length = 0;
-
-		/* no need to check sequence number on HELLO REQUEST messages */
-
-		ssl_msg_callback(s, 0, SSL3_RT_HANDSHAKE, rr->data, 4);
-
-		if (SSL_is_init_finished(s) &&
-		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
-		    !s->s3->renegotiate) {
-			s->d1->handshake_read_seq++;
-			s->internal->new_session = 1;
-			ssl3_renegotiate(s);
-			if (ssl3_renegotiate_check(s)) {
-				i = s->internal->handshake_func(s);
-				if (i < 0)
-					return (i);
-				if (i == 0) {
-					SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
-					return (-1);
-				}
-
-				if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-					if (s->s3->rbuf.left == 0) {
-						ssl_force_want_read(s);
-						return (-1);
-					}
-				}
-			}
-		}
-		/* we either finished a handshake or ignored the request,
-		 * now try again to obtain the (application) data we were asked for */
-		rr->length = 0;
-		goto start;
-	}
-
 	if (rr->type == SSL3_RT_ALERT) {
 		if ((ret = ssl3_read_alert(s)) <= 0)
 			return ret;
@@ -753,55 +819,9 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 		goto start;
 	}
 
-	/* Unexpected handshake message (Client Hello, or protocol violation) */
-	if (rr->type == SSL3_RT_HANDSHAKE &&
-	    rr->length >= DTLS1_HM_HEADER_LENGTH && rr->off == 0 &&
-	    !s->internal->in_handshake) {
-		struct hm_header_st msg_hdr;
-		CBS cbs;
-
-		/* this may just be a stale retransmit */
-		CBS_init(&cbs, rr->data, rr->length);
-		if (!dtls1_get_message_header(&cbs, &msg_hdr))
-			return -1;
-		if (rr->epoch != tls12_record_layer_read_epoch(s->internal->rl)) {
-			rr->length = 0;
-			goto start;
-		}
-
-		/* If we are server, we may have a repeated FINISHED of the
-		 * client here, then retransmit our CCS and FINISHED.
-		 */
-		if (msg_hdr.type == SSL3_MT_FINISHED) {
-			if (dtls1_check_timeout_num(s) < 0)
-				return -1;
-
-			dtls1_retransmit_buffered_messages(s);
-			rr->length = 0;
-			goto start;
-		}
-
-		if (((s->s3->hs.state&SSL_ST_MASK) == SSL_ST_OK) &&
-		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
-			s->s3->hs.state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
-			s->internal->renegotiate = 1;
-			s->internal->new_session = 1;
-		}
-		i = s->internal->handshake_func(s);
-		if (i < 0)
-			return (i);
-		if (i == 0) {
-			SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
-			return (-1);
-		}
-
-		if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-			if (s->s3->rbuf.left == 0) {
-				ssl_force_want_read(s);
-				return (-1);
-			}
-		}
-		rr->length = 0;
+	if (rr->type == SSL3_RT_HANDSHAKE) {
+		if ((ret = dtls1_read_handshake_unexpected(s)) <= 0)
+			return ret;
 		goto start;
 	}
 
