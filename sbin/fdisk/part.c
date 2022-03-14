@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.118 2022/03/14 14:22:32 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.119 2022/03/14 14:28:58 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -186,7 +186,7 @@ PRT_protected_guid(const struct uuid *uuid)
 	const uint8_t		 gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
 	struct uuid		 uuid_efi_system;
 	char			*efistr = NULL, *str = NULL;
-	char			*typename;
+	const char		*typename;
 	int			 rslt = 0;
 	unsigned int		 i;
 	uint32_t		 status;
@@ -419,7 +419,7 @@ PRT_lba_to_chs(const struct prt *prt, struct chs *start, struct chs *end)
 	return 0;
 }
 
-char *
+const char *
 PRT_uuid_to_typename(const struct uuid *uuid)
 {
 	static char		 partition_type[UUID_STR_LEN + 1];
