@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2021/07/05 16:11:52 bluhm Exp $
+# $OpenBSD: Makefile,v 1.10 2022/03/14 00:51:27 bluhm Exp $
 
 PROGS=		mmap-sysctl-copyin mmap-sysctl-copyout
 CLEANFILES=	diskimage
@@ -94,7 +94,7 @@ run-ktrace-netcat:
 	    ktrace -f /mnt/regress-nfs-client/netcat-server.ktrace \
 	    nc -n -v -l 127.0.0.1 0 2>server.log &
 	# Wait until netcat is listening.
-	for  i in `jot 30`; do\
+	for  i in `jot 100`; do\
 	    if fgrep -q Listening server.log; then break; fi; sleep .1; done
 	fgrep Listening server.log
 	echo bar | \
