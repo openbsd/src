@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.123 2022/03/02 12:53:15 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.124 2022/03/14 17:23:00 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -73,6 +73,13 @@
 
 #include <crypto/siphash.h>
 
+/*
+ * Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	N	net lock
+ *	t	inpt_mtx		pcb table mutex
+ */
+
 struct pf_state_key;
 
 union inpaddru {
@@ -91,10 +98,11 @@ union inpaddru {
  * control block.
  */
 struct inpcb {
-	LIST_ENTRY(inpcb) inp_hash;		/* local and foreign hash */
-	LIST_ENTRY(inpcb) inp_lhash;		/* local port hash */
-	TAILQ_ENTRY(inpcb) inp_queue;		/* inet PCB queue */
-	struct	  inpcbtable *inp_table;	/* inet queue/hash table */
+	LIST_ENTRY(inpcb) inp_hash;		/* [t] local and foreign hash */
+	LIST_ENTRY(inpcb) inp_lhash;		/* [t] local port hash */
+	TAILQ_ENTRY(inpcb) inp_queue;		/* [t] inet PCB queue */
+	SIMPLEQ_ENTRY(inpcb) inp_notify;	/* [N] queue to notify PCB */
+	struct	  inpcbtable *inp_table;	/* [I] inet queue/hash table */
 	union	  inpaddru inp_faddru;		/* Foreign address. */
 	union	  inpaddru inp_laddru;		/* Local address. */
 #define	inp_faddr	inp_faddru.iau_a4u.inaddr
@@ -154,12 +162,13 @@ struct inpcb {
 LIST_HEAD(inpcbhead, inpcb);
 
 struct inpcbtable {
-	TAILQ_HEAD(inpthead, inpcb) inpt_queue;	/* inet PCB queue */
-	struct	inpcbhead *inpt_hashtbl;	/* local and foreign hash */
-	struct	inpcbhead *inpt_lhashtbl;	/* local port hash */
-	SIPHASH_KEY inpt_key, inpt_lkey;	/* secrets for hashes */
-	u_long	inpt_mask, inpt_lmask;		/* hash masks */
-	int	inpt_count, inpt_size;		/* queue count, hash size */
+	struct mutex inpt_mtx;			/* protect queue and hash */
+	TAILQ_HEAD(inpthead, inpcb) inpt_queue;	/* [t] inet PCB queue */
+	struct	inpcbhead *inpt_hashtbl;	/* [t] local and foreign hash */
+	struct	inpcbhead *inpt_lhashtbl;	/* [t] local port hash */
+	SIPHASH_KEY inpt_key, inpt_lkey;	/* [t] secrets for hashes */
+	u_long	inpt_mask, inpt_lmask;		/* [t] hash masks */
+	int	inpt_count, inpt_size;		/* [t] queue count, hash size */
 };
 
 /* flags in inp_flags: */
