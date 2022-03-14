@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.24 2022/03/14 21:15:49 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.25 2022/03/14 21:29:46 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -938,17 +938,24 @@ x509_constraints_validate(GENERAL_NAME *constraint,
 		name->type = GEN_DNS;
 		break;
 	case GEN_EMAIL:
-		if (memchr(bytes, '@', len) != NULL) {
+		if (len > 0 && memchr(bytes + 1, '@', len - 1) != NULL) {
 			if (!x509_constraints_parse_mailbox(bytes, len, name))
 				goto err;
-		} else {
-			if (!x509_constraints_valid_domain_constraint(bytes,
-			    len))
-				goto err;
-			if ((name->name = strdup(bytes)) == NULL) {
-				error = X509_V_ERR_OUT_OF_MEM;
-				goto err;
-			}
+			break;
+		}
+		/*
+		 * Mail constraints of the form @domain.com are accepted by
+		 * OpenSSL and Microsoft.
+		 */
+		if (len > 0 && bytes[0] == '@') {
+			bytes++;
+			len--;
+		}
+		if (!x509_constraints_valid_domain_constraint(bytes, len))
+			goto err;
+		if ((name->name = strdup(bytes)) == NULL) {
+			error = X509_V_ERR_OUT_OF_MEM;
+			goto err;
 		}
 		name->type = GEN_EMAIL;
 		break;
