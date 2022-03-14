@@ -1,4 +1,4 @@
-/* $OpenBSD: a_string.c,v 1.4 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: a_string.c,v 1.5 2022/03/14 16:23:29 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,11 +56,11 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
+#include <limits.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/asn1.h>
-#include <openssl/buffer.h>
 #include <openssl/err.h>
 
 #include "asn1_locl.h"
@@ -68,31 +68,33 @@
 ASN1_STRING *
 ASN1_STRING_new(void)
 {
-	return (ASN1_STRING_type_new(V_ASN1_OCTET_STRING));
+	return ASN1_STRING_type_new(V_ASN1_OCTET_STRING);
 }
 
 ASN1_STRING *
 ASN1_STRING_type_new(int type)
 {
-	ASN1_STRING *a;
+	ASN1_STRING *astr;
 
-	if ((a = calloc(1, sizeof(ASN1_STRING))) == NULL) {
+	if ((astr = calloc(1, sizeof(ASN1_STRING))) == NULL) {
 		ASN1error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
-	a->type = type;
+	astr->type = type;
 
-	return a;
+	return astr;
 }
 
 void
-ASN1_STRING_free(ASN1_STRING *a)
+ASN1_STRING_free(ASN1_STRING *astr)
 {
-	if (a == NULL)
+	if (astr == NULL)
 		return;
-	if (a->data != NULL && !(a->flags & ASN1_STRING_FLAG_NDEF))
-		freezero(a->data, a->length);
-	free(a);
+
+	if (astr->data != NULL && !(astr->flags & ASN1_STRING_FLAG_NDEF))
+		freezero(astr->data, astr->length);
+
+	free(astr);
 }
 
 int
@@ -111,68 +113,72 @@ ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
 }
 
 int
-ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
+ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *src)
 {
-	if (str == NULL)
+	if (src == NULL)
 		return 0;
-	if (!ASN1_STRING_set(dst, str->data, str->length))
+
+	if (!ASN1_STRING_set(dst, src->data, src->length))
 		return 0;
-	dst->type = str->type;
-	dst->flags = str->flags;
+
+	dst->type = src->type;
+	dst->flags = src->flags & ~ASN1_STRING_FLAG_NDEF;
+
 	return 1;
 }
 
 ASN1_STRING *
-ASN1_STRING_dup(const ASN1_STRING *str)
+ASN1_STRING_dup(const ASN1_STRING *src)
 {
-	ASN1_STRING *ret;
+	ASN1_STRING *astr;
 
-	if (!str)
+	if (src == NULL)
 		return NULL;
-	ret = ASN1_STRING_new();
-	if (!ret)
+
+	if ((astr = ASN1_STRING_new()) == NULL)
 		return NULL;
-	if (!ASN1_STRING_copy(ret, str)) {
-		ASN1_STRING_free(ret);
+	if (!ASN1_STRING_copy(astr, src)) {
+		ASN1_STRING_free(astr);
 		return NULL;
 	}
-	return ret;
+	return astr;
 }
 
 int
-ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
+ASN1_STRING_set(ASN1_STRING *astr, const void *_data, int len)
 {
 	const char *data = _data;
 
 	if (len < 0) {
 		if (data == NULL)
-			return (0);
+			return 0;
 		else
 			len = strlen(data);
 	}
-	if ((str->length < len) || (str->data == NULL)) {
+	if ((astr->length < len) || (astr->data == NULL)) {
 		unsigned char *tmp;
-		tmp = realloc(str->data, len + 1);
+		tmp = realloc(astr->data, len + 1);
 		if (tmp == NULL) {
 			ASN1error(ERR_R_MALLOC_FAILURE);
-			return (0);
+			return 0;
 		}
-		str->data = tmp;
+		astr->data = tmp;
 	}
-	str->length = len;
+	astr->length = len;
 	if (data != NULL) {
-		memmove(str->data, data, len);
+		memmove(astr->data, data, len);
 	}
-	str->data[str->length] = '\0';
-	return (1);
+	astr->data[astr->length] = '\0';
+
+	return 1;
 }
 
 void
-ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
+ASN1_STRING_set0(ASN1_STRING *astr, void *data, int len)
 {
-	freezero(str->data, str->length);
-	str->data = data;
-	str->length = len;
+	freezero(astr->data, astr->length);
+	astr->data = data;
+	astr->length = len;
 }
 
 void
@@ -182,47 +188,49 @@ asn1_add_error(const unsigned char *address, int offset)
 }
 
 int
-ASN1_STRING_length(const ASN1_STRING *x)
+ASN1_STRING_length(const ASN1_STRING *astr)
 {
-	return (x->length);
+	return astr->length;
 }
 
 void
-ASN1_STRING_length_set(ASN1_STRING *x, int len)
+ASN1_STRING_length_set(ASN1_STRING *astr, int len)
 {
-	x->length = len;
+	/* This is dangerous and unfixable. */
+	astr->length = len;
 }
 
 int
-ASN1_STRING_type(const ASN1_STRING *x)
+ASN1_STRING_type(const ASN1_STRING *astr)
 {
-	return (x->type);
+	return astr->type;
 }
 
 unsigned char *
-ASN1_STRING_data(ASN1_STRING *x)
+ASN1_STRING_data(ASN1_STRING *astr)
 {
-	return (x->data);
+	return astr->data;
 }
 
 const unsigned char *
-ASN1_STRING_get0_data(const ASN1_STRING *x)
+ASN1_STRING_get0_data(const ASN1_STRING *astr)
 {
-	return (x->data);
+	return astr->data;
 }
 
 int
-ASN1_STRING_print(BIO *bp, const ASN1_STRING *v)
+ASN1_STRING_print(BIO *bp, const ASN1_STRING *astr)
 {
 	int i, n;
 	char buf[80];
 	const char *p;
 
-	if (v == NULL)
-		return (0);
+	if (astr == NULL)
+		return 0;
+
 	n = 0;
-	p = (const char *)v->data;
-	for (i = 0; i < v->length; i++) {
+	p = (const char *)astr->data;
+	for (i = 0; i < astr->length; i++) {
 		if ((p[i] > '~') || ((p[i] < ' ') &&
 		    (p[i] != '\n') && (p[i] != '\r')))
 			buf[n] = '.';
@@ -231,14 +239,16 @@ ASN1_STRING_print(BIO *bp, const ASN1_STRING *v)
 		n++;
 		if (n >= 80) {
 			if (BIO_write(bp, buf, n) <= 0)
-				return (0);
+				return 0;
 			n = 0;
 		}
 	}
-	if (n > 0)
+	if (n > 0) {
 		if (BIO_write(bp, buf, n) <= 0)
-			return (0);
-	return (1);
+			return 0;
+	}
+
+	return 1;
 }
 
 /*
@@ -251,11 +261,12 @@ ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in)
 	ASN1_STRING stmp, *str = &stmp;
 	int mbflag, ret;
 
-	if (!in)
+	if (in == NULL)
 		return -1;
 
 	if ((mbflag = asn1_tag2charwidth(in->type)) == -1)
 		return -1;
+
 	mbflag |= MBSTRING_FLAG;
 
 	stmp.data = NULL;
@@ -269,41 +280,41 @@ ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in)
 }
 
 int
-i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *a, int type)
+i2a_ASN1_STRING(BIO *bp, const ASN1_STRING *astr, int type)
 {
 	int i, n = 0;
 	static const char h[] = "0123456789ABCDEF";
 	char buf[2];
 
-	if (a == NULL)
-		return (0);
+	if (astr == NULL)
+		return 0;
 
-	if (a->length == 0) {
+	if (astr->length == 0) {
 		if (BIO_write(bp, "0", 1) != 1)
 			goto err;
 		n = 1;
 	} else {
-		for (i = 0; i < a->length; i++) {
+		for (i = 0; i < astr->length; i++) {
 			if ((i != 0) && (i % 35 == 0)) {
 				if (BIO_write(bp, "\\\n", 2) != 2)
 					goto err;
 				n += 2;
 			}
-			buf[0] = h[((unsigned char)a->data[i] >> 4) & 0x0f];
-			buf[1] = h[((unsigned char)a->data[i]) & 0x0f];
+			buf[0] = h[((unsigned char)astr->data[i] >> 4) & 0x0f];
+			buf[1] = h[((unsigned char)astr->data[i]) & 0x0f];
 			if (BIO_write(bp, buf, 2) != 2)
 				goto err;
 			n += 2;
 		}
 	}
-	return (n);
+	return n;
 
  err:
-	return (-1);
+	return -1;
 }
 
 int
-a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
+a2i_ASN1_STRING(BIO *bp, ASN1_STRING *astr, char *buf, int size)
 {
 	int ret = 0;
 	int i, j, k, m, n, again, bufsize;
@@ -380,13 +391,15 @@ a2i_ASN1_STRING(BIO *bp, ASN1_STRING *bs, char *buf, int size)
 		else
 			break;
 	}
-	bs->length = num;
-	bs->data = s;
-	return (1);
+	astr->length = num;
+	astr->data = s;
+
+	return 1;
 
  err_sl:
 	ASN1error(ASN1_R_SHORT_LINE);
  err:
 	free(s);
-	return (ret);
+
+	return ret;
 }
