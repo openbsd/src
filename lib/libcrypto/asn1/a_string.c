@@ -1,4 +1,4 @@
-/* $OpenBSD: a_string.c,v 1.5 2022/03/14 16:23:29 jsing Exp $ */
+/* $OpenBSD: a_string.c,v 1.6 2022/03/14 16:35:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,14 +85,24 @@ ASN1_STRING_type_new(int type)
 	return astr;
 }
 
+static void
+ASN1_STRING_clear(ASN1_STRING *astr)
+{
+	if (!(astr->flags & ASN1_STRING_FLAG_NDEF))
+		freezero(astr->data, astr->length);
+
+	astr->flags &= ~ASN1_STRING_FLAG_NDEF;
+	astr->data = NULL;
+	astr->length = 0;
+}
+ 
 void
 ASN1_STRING_free(ASN1_STRING *astr)
 {
 	if (astr == NULL)
 		return;
 
-	if (astr->data != NULL && !(astr->flags & ASN1_STRING_FLAG_NDEF))
-		freezero(astr->data, astr->length);
+	ASN1_STRING_clear(astr);
 
 	free(astr);
 }
@@ -176,7 +186,8 @@ ASN1_STRING_set(ASN1_STRING *astr, const void *_data, int len)
 void
 ASN1_STRING_set0(ASN1_STRING *astr, void *data, int len)
 {
-	freezero(astr->data, astr->length);
+	ASN1_STRING_clear(astr);
+
 	astr->data = data;
 	astr->length = len;
 }
