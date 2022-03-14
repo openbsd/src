@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.560 2022/03/14 10:56:55 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.561 2022/03/14 10:58:35 sthen Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1665,7 +1665,7 @@ to form a full package-name conforming to
 .It Ev ERRORS
 List of errors found while parsing the port's Makefile.
 Display the errors before making any target, and if any error starts with
-.Qq Fatal: ,
+.Qq Fatal : ,
 do not make anything.
 For instance:
 .Bd -literal -offset indent
@@ -4125,7 +4125,8 @@ from templates in ${PKG_DIR}.
 .It
 If not overridden by the user, determine which set of templates to use,
 depending on the current SUBPACKAGE and FLAVOR information.
-Set PLIST${SUBPACKAGE}, DESCR${SUBPACKAGE}, COMMENT${SUBPACKAGE}, MESSAGE${SUBPACKAGE}, UNMESSAGE${SUBPACKAGE} accordingly.
+Set PLIST${SUBPACKAGE}, DESCR${SUBPACKAGE}, COMMENT${SUBPACKAGE},
+MESSAGE${SUBPACKAGE}, UNMESSAGE${SUBPACKAGE} accordingly.
 .It
 Generate the actual DESCR, and if needed, MESSAGE, UNMESSAGE,
 from the templates in ${DESCR}, ${MESSAGE}, ${UNMESSAGE}, by
