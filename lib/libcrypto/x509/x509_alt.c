@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_alt.c,v 1.10 2022/03/13 16:48:49 tb Exp $ */
+/* $OpenBSD: x509_alt.c,v 1.11 2022/03/14 21:15:49 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -657,17 +657,14 @@ v2i_GENERAL_NAME_ex(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 	 */
 
 	if (is_nc) {
-		struct x509_constraints_name constraints_name;
-		int error = 0;
+		struct x509_constraints_name *constraints_name = NULL;
 
-		memset(&constraints_name, 0, sizeof(constraints_name));
-		type = x509_constraints_validate(ret, &constraints_name, &error);
-		if (type == 0 || error != 0) {
+		if (!x509_constraints_validate(ret, &constraints_name, NULL)) {
 			X509V3error(X509V3_R_BAD_OBJECT);
 			ERR_asprintf_error_data("name=%s", name);
 			goto err;
 		}
-		x509_constraints_name_clear(&constraints_name);
+		x509_constraints_name_free(constraints_name);
 		return ret;
 	}
 

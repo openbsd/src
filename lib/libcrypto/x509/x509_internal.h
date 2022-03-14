@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_internal.h,v 1.17 2022/03/13 17:08:04 tb Exp $ */
+/* $OpenBSD: x509_internal.h,v 1.18 2022/03/14 21:15:49 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -101,6 +101,7 @@ time_t x509_verify_asn1_time_to_time_t(const ASN1_TIME *atime, int notafter);
 struct x509_verify_ctx *x509_verify_ctx_new_from_xsc(X509_STORE_CTX *xsc);
 
 void x509_constraints_name_clear(struct x509_constraints_name *name);
+void x509_constraints_name_free(struct x509_constraints_name *name);
 int x509_constraints_names_add(struct x509_constraints_names *names,
     struct x509_constraints_name *name);
 struct x509_constraints_names *x509_constraints_names_dup(
@@ -127,7 +128,7 @@ int x509_constraints_extract_constraints(X509 *cert,
     struct x509_constraints_names *permitted,
     struct x509_constraints_names *excluded, int *error);
 int x509_constraints_validate(GENERAL_NAME *constraint,
-    struct x509_constraints_name *name, int *error);
+    struct x509_constraints_name **out_name, int *error);
 int x509_constraints_check(struct x509_constraints_names *names,
     struct x509_constraints_names *permitted,
     struct x509_constraints_names *excluded, int *error);
