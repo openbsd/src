@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.12 2022/03/01 20:45:27 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.13 2022/03/14 13:08:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -516,6 +516,9 @@ apldart_dmamap_destroy(bus_dma_tag_t t, bus_dmamap_t map)
 {
 	struct apldart_softc *sc = t->_cookie;
 	struct apldart_map_state *ams = map->_dm_cookie;
+
+	if (map->dm_nsegs)
+		apldart_dmamap_unload(t, map);
 
 	free(ams, M_DEVBUF, map->_dm_segcnt * sizeof(*ams));
 	sc->sc_dmat->_dmamap_destroy(sc->sc_dmat, map);
