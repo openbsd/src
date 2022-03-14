@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.35 2022/01/28 07:11:14 guenther Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.36 2022/03/14 15:08:50 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -6431,7 +6431,9 @@ struct iwx_umac_scan_iter_complete_notif {
 #define IWX_STA_FLG_MAX_AGG_SIZE_256K	(5 << IWX_STA_FLG_MAX_AGG_SIZE_SHIFT)
 #define IWX_STA_FLG_MAX_AGG_SIZE_512K	(6 << IWX_STA_FLG_MAX_AGG_SIZE_SHIFT)
 #define IWX_STA_FLG_MAX_AGG_SIZE_1024K	(7 << IWX_STA_FLG_MAX_AGG_SIZE_SHIFT)
-#define IWX_STA_FLG_MAX_AGG_SIZE_MSK	(7 << IWX_STA_FLG_MAX_AGG_SIZE_SHIFT)
+#define IWX_STA_FLG_MAX_AGG_SIZE_2M	(8 << IWX_STA_FLG_MAX_AGG_SIZE_SHIFT)
+#define IWX_STA_FLG_MAX_AGG_SIZE_4M	(9 << IWX_STA_FLG_MAX_AGG_SIZE_SHIFT)
+#define IWX_STA_FLG_MAX_AGG_SIZE_MSK	(0xf << IWX_STA_FLG_MAX_AGG_SIZE_SHIFT)
 
 #define IWX_STA_FLG_AGG_MPDU_DENS_SHIFT	23
 #define IWX_STA_FLG_AGG_MPDU_DENS_2US	(4 << IWX_STA_FLG_AGG_MPDU_DENS_SHIFT)
