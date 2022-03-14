@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.203 2021/12/09 13:49:45 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.204 2022/03/14 12:58:55 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -364,7 +364,8 @@ struct iked_id {
     "\20\01CERT\02CERTVALID\03CERTREQ\04AUTH\05AUTHVALID\06SA\07EAPVALID" \
     "\10CHILDSA\11INF"
 
-TAILQ_HEAD(iked_msgqueue, iked_message);
+TAILQ_HEAD(iked_msgqueue, iked_msg_retransmit);
+TAILQ_HEAD(iked_msg_fragqueue, iked_message);
 
 struct iked_sahdr {
 	uint64_t			 sh_ispi;	/* Initiator SPI */
@@ -628,10 +629,15 @@ struct iked_message {
 	uint16_t		 msg_attrlength;
 
 	/* Retransmit queue */
-	struct iked_timer	 msg_timer;
 	TAILQ_ENTRY(iked_message)
 				 msg_entry;
-	int			 msg_tries;	/* retransmits sent */
+};
+
+struct iked_msg_retransmit {
+	struct iked_msg_fragqueue	      mrt_frags;
+	TAILQ_ENTRY(iked_msg_retransmit)      mrt_entry;
+	struct iked_timer		      mrt_timer;
+	int				      mrt_tries;
 #define IKED_RETRANSMIT_TRIES	 5		/* try 5 times */
 };
 
@@ -1071,22 +1077,18 @@ int	 ikev2_msg_integr(struct iked *, struct iked_sa *, struct ibuf *);
 int	 ikev2_msg_frompeer(struct iked_message *);
 struct iked_socket *
 	 ikev2_msg_getsocket(struct iked *, int, int);
+int	 ikev2_msg_enqueue(struct iked *, struct iked_msgqueue *,
+	    struct iked_message *, int);
 int	 ikev2_msg_retransmit_response(struct iked *, struct iked_sa *,
-	    struct iked_message *);
+	    struct iked_message *, uint8_t);
 void	 ikev2_msg_prevail(struct iked *, struct iked_msgqueue *,
 	    struct iked_message *);
 void	 ikev2_msg_dispose(struct iked *, struct iked_msgqueue *,
-	    struct iked_message *);
+	    struct iked_msg_retransmit *);
 void	 ikev2_msg_flushqueue(struct iked *, struct iked_msgqueue *);
-struct iked_message *
+struct iked_msg_retransmit *
 	 ikev2_msg_lookup(struct iked *, struct iked_msgqueue *,
-	    struct iked_message *, struct ike_header *);
-void	 ikev2_msg_lookup_dispose_all(struct iked *env,
-	    struct iked_msgqueue *queue, struct iked_message *msg,
-	    struct ike_header *hdr);
-int	 ikev2_msg_lookup_retransmit_all(struct iked *env,
-	    struct iked_msgqueue *queue, struct iked_message *msg,
-	    struct ike_header *hdr, struct iked_sa *sa);
+	    struct iked_message *, uint8_t);
 
 /* ikev2_pld.c */
 int	 ikev2_pld_parse(struct iked *, struct ike_header *,

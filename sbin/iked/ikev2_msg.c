@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.84 2021/12/01 16:42:13 deraadt Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.85 2022/03/14 12:58:55 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -319,13 +319,19 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 	m->msg_exchange = exchange;
 
 	if (flags & IKEV2_FLAG_RESPONSE) {
-		TAILQ_INSERT_TAIL(&sa->sa_responses, m, msg_entry);
-		timer_set(env, &m->msg_timer, ikev2_msg_response_timeout, m);
-		timer_add(env, &m->msg_timer, IKED_RESPONSE_TIMEOUT);
+		if (ikev2_msg_enqueue(env, &sa->sa_responses, m,
+		    IKED_RESPONSE_TIMEOUT) != 0) {
+			ikev2_msg_cleanup(env, m);
+			free(m);
+			return (-1);
+		}
 	} else {
-		TAILQ_INSERT_TAIL(&sa->sa_requests, m, msg_entry);
-		timer_set(env, &m->msg_timer, ikev2_msg_retransmit_timeout, m);
-		timer_add(env, &m->msg_timer, IKED_RETRANSMIT_TIMEOUT);
+		if (ikev2_msg_enqueue(env, &sa->sa_requests, m,
+		    IKED_RETRANSMIT_TIMEOUT) != 0) {
+			ikev2_msg_cleanup(env, m);
+			free(m);
+			return (-1);
+		}
 	}
 
 	return (0);
@@ -1165,145 +1171,156 @@ ikev2_msg_getsocket(struct iked *env, int af, int natt)
 	return (NULL);
 }
 
+int
+ikev2_msg_enqueue(struct iked *env, struct iked_msgqueue *queue,
+    struct iked_message *msg, int timeout)
+{
+	struct iked_msg_retransmit *mr;
+
+	if ((mr = ikev2_msg_lookup(env, queue, msg, msg->msg_exchange)) ==
+	    NULL) {
+		if ((mr = calloc(1, sizeof(*mr))) == NULL)
+			return (-1);
+		TAILQ_INIT(&mr->mrt_frags);
+		mr->mrt_tries = 0;
+
+		timer_set(env, &mr->mrt_timer, msg->msg_response ?
+		    ikev2_msg_response_timeout : ikev2_msg_retransmit_timeout,
+		    mr);
+		timer_add(env, &mr->mrt_timer, timeout);
+
+		TAILQ_INSERT_TAIL(queue, mr, mrt_entry);
+	}
+
+	TAILQ_INSERT_TAIL(&mr->mrt_frags, msg, msg_entry);
+
+	return 0;
+}
+
 void
 ikev2_msg_prevail(struct iked *env, struct iked_msgqueue *queue,
     struct iked_message *msg)
 {
-	struct iked_message	*m, *mtmp;
+	struct iked_msg_retransmit	*mr, *mrtmp;
 
-	TAILQ_FOREACH_SAFE(m, queue, msg_entry, mtmp) {
-		if (m->msg_msgid < msg->msg_msgid)
-			ikev2_msg_dispose(env, queue, m);
+	TAILQ_FOREACH_SAFE(mr, queue, mrt_entry, mrtmp) {
+		if (TAILQ_FIRST(&mr->mrt_frags)->msg_msgid < msg->msg_msgid)
+			ikev2_msg_dispose(env, queue, mr);
 	}
 }
 
 void
 ikev2_msg_dispose(struct iked *env, struct iked_msgqueue *queue,
-    struct iked_message *msg)
+    struct iked_msg_retransmit *mr)
 {
-	TAILQ_REMOVE(queue, msg, msg_entry);
-	timer_del(env, &msg->msg_timer);
-	ikev2_msg_cleanup(env, msg);
-	free(msg);
+	struct iked_message	*m;
+
+	while ((m = TAILQ_FIRST(&mr->mrt_frags)) != NULL) {
+		TAILQ_REMOVE(&mr->mrt_frags, m, msg_entry);
+		ikev2_msg_cleanup(env, m);
+		free(m);
+	}
+
+	timer_del(env, &mr->mrt_timer);
+	TAILQ_REMOVE(queue, mr, mrt_entry);
+	free(mr);
 }
 
 void
 ikev2_msg_flushqueue(struct iked *env, struct iked_msgqueue *queue)
 {
-	struct iked_message	*m = NULL;
+	struct iked_msg_retransmit	*mr = NULL;
 
-	while ((m = TAILQ_FIRST(queue)) != NULL)
-		ikev2_msg_dispose(env, queue, m);
+	while ((mr = TAILQ_FIRST(queue)) != NULL)
+		ikev2_msg_dispose(env, queue, mr);
 }
 
-struct iked_message *
+struct iked_msg_retransmit *
 ikev2_msg_lookup(struct iked *env, struct iked_msgqueue *queue,
-    struct iked_message *msg, struct ike_header *hdr)
+    struct iked_message *msg, uint8_t exchange)
 {
-	struct iked_message	*m = NULL;
+	struct iked_msg_retransmit	*mr = NULL;
 
-	TAILQ_FOREACH(m, queue, msg_entry) {
-		if (m->msg_msgid == msg->msg_msgid &&
-		    m->msg_exchange == hdr->ike_exchange)
+	TAILQ_FOREACH(mr, queue, mrt_entry) {
+		if (TAILQ_FIRST(&mr->mrt_frags)->msg_msgid ==
+		    msg->msg_msgid &&
+		    TAILQ_FIRST(&mr->mrt_frags)->msg_exchange == exchange)
 			break;
 	}
 
-	return (m);
-}
-
-void
-ikev2_msg_lookup_dispose_all(struct iked *env, struct iked_msgqueue *queue,
-    struct iked_message *msg, struct ike_header *hdr)
-{
-	struct iked_message	*m = NULL, *tmp = NULL;
-
-	TAILQ_FOREACH_SAFE(m, queue, msg_entry, tmp) {
-		if (m->msg_msgid == msg->msg_msgid &&
-		    m->msg_exchange == hdr->ike_exchange) {
-			TAILQ_REMOVE(queue, m, msg_entry);
-			timer_del(env, &m->msg_timer);
-			ikev2_msg_cleanup(env, m);
-			free(m);
-		}
-	}
-}
-
-int
-ikev2_msg_lookup_retransmit_all(struct iked *env, struct iked_msgqueue *queue,
-    struct iked_message *msg, struct ike_header *hdr, struct iked_sa *sa)
-{
-	struct iked_message	*m = NULL, *tmp = NULL;
-	int count = 0;
-
-	TAILQ_FOREACH_SAFE(m, queue, msg_entry, tmp) {
-		if (m->msg_msgid == msg->msg_msgid &&
-		    m->msg_exchange == hdr->ike_exchange) {
-			if (ikev2_msg_retransmit_response(env, sa, m))
-				return -1;
-			count++;
-		}
-	}
-	return count;
+	return (mr);
 }
 
 int
 ikev2_msg_retransmit_response(struct iked *env, struct iked_sa *sa,
-    struct iked_message *msg)
+    struct iked_message *msg, uint8_t exchange)
 {
-	if (sendtofrom(msg->msg_fd, ibuf_data(msg->msg_data),
-	    ibuf_size(msg->msg_data), 0,
-	    (struct sockaddr *)&msg->msg_peer, msg->msg_peerlen,
-	    (struct sockaddr *)&msg->msg_local, msg->msg_locallen) == -1) {
-		log_warn("%s: sendtofrom", __func__);
-		return (-1);
-	}
-	log_info("%sretransmit %s res %u local %s peer %s",
-	    SPI_SA(sa, NULL),
-	    print_map(msg->msg_exchange, ikev2_exchange_map),
-	    msg->msg_msgid,
-	    print_host((struct sockaddr *)&msg->msg_local, NULL, 0),
-	    print_host((struct sockaddr *)&msg->msg_peer, NULL, 0));
+	struct iked_msg_retransmit	*mr = NULL;
+	struct iked_message	*m = NULL;
 
-	timer_add(env, &msg->msg_timer, IKED_RESPONSE_TIMEOUT);
+	if ((mr = ikev2_msg_lookup(env, &sa->sa_responses, msg, exchange))
+	    == NULL)
+		return (0);
+
+	TAILQ_FOREACH(m, &mr->mrt_frags, msg_entry) {
+		if (sendtofrom(m->msg_fd, ibuf_data(m->msg_data),
+		    ibuf_size(m->msg_data), 0,
+		    (struct sockaddr *)&m->msg_peer, m->msg_peerlen,
+		    (struct sockaddr *)&m->msg_local, m->msg_locallen) == -1) {
+			log_warn("%s: sendtofrom", __func__);
+			return (-1);
+		}
+		log_info("%sretransmit %s res %u local %s peer %s",
+		    SPI_SA(sa, NULL),
+		    print_map(exchange, ikev2_exchange_map),
+		    m->msg_msgid,
+		    print_host((struct sockaddr *)&m->msg_local, NULL, 0),
+		    print_host((struct sockaddr *)&m->msg_peer, NULL, 0));
+	}
+
+	timer_add(env, &mr->mrt_timer, IKED_RESPONSE_TIMEOUT);
 	return (0);
 }
 
 void
 ikev2_msg_response_timeout(struct iked *env, void *arg)
 {
-	struct iked_message	*msg = arg;
-	struct iked_sa		*sa = msg->msg_sa;
+	struct iked_msg_retransmit	*mr = arg;
+	struct iked_sa		*sa;
 
-	ikev2_msg_dispose(env, &sa->sa_responses, msg);
+	sa = TAILQ_FIRST(&mr->mrt_frags)->msg_sa;
+	ikev2_msg_dispose(env, &sa->sa_responses, mr);
 }
 
 void
 ikev2_msg_retransmit_timeout(struct iked *env, void *arg)
 {
-	struct iked_message	*msg = arg;
+	struct iked_msg_retransmit *mr = arg;
+	struct iked_message	*msg = TAILQ_FIRST(&mr->mrt_frags);
 	struct iked_sa		*sa = msg->msg_sa;
 
-	if (msg->msg_tries < IKED_RETRANSMIT_TRIES) {
-		if (sendtofrom(msg->msg_fd, ibuf_data(msg->msg_data),
-		    ibuf_size(msg->msg_data), 0,
-		    (struct sockaddr *)&msg->msg_peer, msg->msg_peerlen,
-		    (struct sockaddr *)&msg->msg_local,
-		    msg->msg_locallen) == -1) {
-			log_warn("%s: sendtofrom", __func__);
-			ikev2_ike_sa_setreason(sa, "retransmit failed");
-			sa_free(env, sa);
-			return;
+	if (mr->mrt_tries < IKED_RETRANSMIT_TRIES) {
+		TAILQ_FOREACH(msg, &mr->mrt_frags, msg_entry) {
+			if (sendtofrom(msg->msg_fd, ibuf_data(msg->msg_data),
+			    ibuf_size(msg->msg_data), 0,
+			    (struct sockaddr *)&msg->msg_peer, msg->msg_peerlen,
+			    (struct sockaddr *)&msg->msg_local,
+			    msg->msg_locallen) == -1) {
+				log_warn("%s: sendtofrom", __func__);
+				ikev2_ike_sa_setreason(sa, "retransmit failed");
+				sa_free(env, sa);
+				return;
+			}
+			log_info("%sretransmit %d %s req %u peer %s "
+			    "local %s", SPI_SA(sa, NULL), mr->mrt_tries + 1,
+			    print_map(msg->msg_exchange, ikev2_exchange_map),
+			    msg->msg_msgid,
+			    print_host((struct sockaddr *)&msg->msg_peer, NULL, 0),
+			    print_host((struct sockaddr *)&msg->msg_local, NULL, 0));
 		}
 		/* Exponential timeout */
-		timer_add(env, &msg->msg_timer,
-		    IKED_RETRANSMIT_TIMEOUT * (2 << (msg->msg_tries++)));
-		log_info("%sretransmit %d %s req %u peer %s local %s",
-		    SPI_SA(sa, NULL),
-		    msg->msg_tries,
-		    print_map(msg->msg_exchange, ikev2_exchange_map),
-		    msg->msg_msgid,
-		    print_host((struct sockaddr *)&msg->msg_peer, NULL, 0),
-		    print_host((struct sockaddr *)&msg->msg_local, NULL, 0));
+		timer_add(env, &mr->mrt_timer,
+		    IKED_RETRANSMIT_TIMEOUT * (2 << (mr->mrt_tries++)));
 	} else {
 		log_debug("%s: retransmit limit reached for req %u",
 		    __func__, msg->msg_msgid);

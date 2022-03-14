@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.122 2021/12/01 16:42:13 deraadt Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.123 2022/03/14 12:58:55 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1746,6 +1746,12 @@ ikev2_frags_reassemble(struct iked *env, struct ikev2_payload *pld,
 	log_debug("%s: Defragmented length %zd", __func__,
 	    sa_frag->frag_total_size);
 	print_hex(ibuf_data(e), 0,  sa_frag->frag_total_size);
+
+	/* Drop the original request's packets from the retransmit queue */
+	if (msg->msg_response)
+		ikev2_msg_dispose(env, &msg->msg_sa->sa_requests,
+		    ikev2_msg_lookup(env, &msg->msg_sa->sa_requests, msg,
+		    msg->msg_exchange));
 
 	/*
 	 * Parse decrypted payload

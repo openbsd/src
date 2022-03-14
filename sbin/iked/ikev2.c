@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.345 2022/02/13 12:26:54 mbuhl Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.346 2022/03/14 12:58:55 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -583,6 +583,7 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 {
 	struct ike_header	*hdr;
 	struct iked_sa		*sa;
+	struct iked_msg_retransmit *mr;
 	unsigned int		 initiator, flag = 0;
 	int			 r;
 
@@ -635,9 +636,10 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 	if (msg->msg_response) {
 		if (msg->msg_msgid > sa->sa_reqid)
 			return;
+		mr = ikev2_msg_lookup(env, &sa->sa_requests, msg,
+		    hdr->ike_exchange);
 		if (hdr->ike_exchange != IKEV2_EXCHANGE_INFORMATIONAL &&
-		    !ikev2_msg_lookup(env, &sa->sa_requests, msg, hdr) &&
-		    sa->sa_fragments.frag_count == 0)
+		    mr == NULL && sa->sa_fragments.frag_count == 0)
 			return;
 		if (flag) {
 			if ((sa->sa_stateflags & flag) == 0)
@@ -651,7 +653,8 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		/*
 		 * There's no need to keep the request (fragments) around
 		 */
-		ikev2_msg_lookup_dispose_all(env, &sa->sa_requests, msg, hdr);
+		if (mr != NULL && hdr->ike_nextpayload != IKEV2_PAYLOAD_SKF)
+			ikev2_msg_dispose(env, &sa->sa_requests, mr);
 	} else {
 		/*
 		 * IKE_SA_INIT is special since it always uses the message id 0.
@@ -678,8 +681,8 @@ ikev2_recv(struct iked *env, struct iked_message *msg)
 		/*
 		 * See if we have responded to this request before
 		 */
-		if ((r = ikev2_msg_lookup_retransmit_all(env, &sa->sa_responses,
-		    msg, hdr, sa)) != 0) {
+		if ((r = ikev2_msg_retransmit_response(env, sa, msg,
+		    hdr->ike_exchange)) != 0) {
 			if (r == -1) {
 				log_warn("%s: failed to retransmit a "
 				    "response", __func__);
@@ -7176,9 +7179,10 @@ ikev2_cp_fixflow(struct iked_sa *sa, struct iked_flow *flow,
 int
 ikev2_update_sa_addresses(struct iked *env, struct iked_sa *sa)
 {
-	struct iked_childsa	*csa, *ipcomp;
-	struct iked_flow	*flow, *oflow;
-	struct iked_message	*msg;
+	struct iked_childsa		*csa, *ipcomp;
+	struct iked_flow		*flow, *oflow;
+	struct iked_message		*msg;
+	struct iked_msg_retransmit	*mr;
 
 	if (!sa_stateok(sa, IKEV2_STATE_ESTABLISHED))
 		return -1;
@@ -7221,17 +7225,21 @@ ikev2_update_sa_addresses(struct iked *env, struct iked_sa *sa)
 	}
 
 	/* update pending requests and responses */
-	TAILQ_FOREACH(msg, &sa->sa_requests, msg_entry) {
-		msg->msg_local = sa->sa_local.addr;
-		msg->msg_locallen = sa->sa_local.addr.ss_len;
-		msg->msg_peer = sa->sa_peer.addr;
-		msg->msg_peerlen = sa->sa_peer.addr.ss_len;
+	TAILQ_FOREACH(mr, &sa->sa_requests, mrt_entry) {
+		TAILQ_FOREACH(msg, &mr->mrt_frags, msg_entry) {
+			msg->msg_local = sa->sa_local.addr;
+			msg->msg_locallen = sa->sa_local.addr.ss_len;
+			msg->msg_peer = sa->sa_peer.addr;
+			msg->msg_peerlen = sa->sa_peer.addr.ss_len;
+		}
 	}
-	TAILQ_FOREACH(msg, &sa->sa_responses, msg_entry) {
-		msg->msg_local = sa->sa_local.addr;
-		msg->msg_locallen = sa->sa_local.addr.ss_len;
-		msg->msg_peer = sa->sa_peer.addr;
-		msg->msg_peerlen = sa->sa_peer.addr.ss_len;
+	TAILQ_FOREACH(mr, &sa->sa_responses, mrt_entry) {
+		TAILQ_FOREACH(msg, &mr->mrt_frags, msg_entry) {
+			msg->msg_local = sa->sa_local.addr;
+			msg->msg_locallen = sa->sa_local.addr.ss_len;
+			msg->msg_peer = sa->sa_peer.addr;
+			msg->msg_peerlen = sa->sa_peer.addr.ss_len;
+		}
 	}
 
 	/* Update sa_peer_loaded, to match in-kernel information */
