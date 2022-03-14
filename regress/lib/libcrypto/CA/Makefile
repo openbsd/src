@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2020/12/26 14:42:09 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.4 2022/03/14 21:30:48 tb Exp $
 
 CLEANFILES +=	*.pem *.serial *.txt *.attr *.old
 
@@ -59,7 +59,7 @@ server.key.pem: stamp-clean
 server.csr.pem: intermediate.cnf server.key.pem
 	# server req
 	openssl req -batch -config ${.CURDIR}/intermediate.cnf -new -sha256 \
-	    -subj '/CN=server/O=OpenBSD/OU=So and Sos/C=CA' \
+	    -subj '/CN=server.openbsd.org/OU=So and Sos/O=OpenBSD/C=CA' \
 	    -key server.key.pem -out server.csr.pem
 
 # Sign server key
@@ -77,7 +77,7 @@ client.key.pem: stamp-clean
 client.csr.pem: intermediate.cnf intermediate.cert.pem client.key.pem
 	# client req
 	openssl req -batch -config ${.CURDIR}/intermediate.cnf -new -sha256 \
-	    -subj '/CN=client/O=OpenBSD/OU=So and Sos/C=CA' \
+	    -subj '/CN=client/OU=So and Sos/O=OpenBSD/C=CA' \
 	    -key client.key.pem -out client.csr.pem
 
 # Sign client key
