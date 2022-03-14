@@ -375,7 +375,7 @@ _dt_strings_end:
 	.globl	dt_blob_end
 dt_blob_end:
 _dt_blob_end:
-	.space	4096, 0
+	.space	16384, 0
 	.globl	dt_blob_abs_end
 dt_blob_abs_end:
 _dt_blob_abs_end:

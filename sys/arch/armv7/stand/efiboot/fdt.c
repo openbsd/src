@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.c,v 1.7 2021/03/11 11:16:56 jsg Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.8 2022/03/14 19:09:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
@@ -141,13 +141,10 @@ fdt_add_str(char *name)
 	size_t len = roundup(strlen(name) + 1, sizeof(uint32_t));
 	char *end = tree.strings + tree.strings_size;
 
-	memmove(end + len, end, tree.end - end);
+	if (end + len > tree.end)
+		panic("FDT overflow");
+
 	tree.strings_size += len;
-	if (tree.tree > tree.strings)
-		tree.tree += len;
-	if (tree.memory > tree.strings)
-		tree.memory += len;
-	tree.end += len;
 	memset(end, 0, len);
 	memcpy(end, name, strlen(name));
 
@@ -222,6 +219,7 @@ fdt_node_property(void *node, char *name, char **out)
 int
 fdt_node_set_property(void *node, char *name, void *data, int len)
 {
+	char *end = tree.strings + tree.strings_size;
 	uint32_t *ptr, *next;
 	uint32_t nameid;
 	uint32_t curlen;
@@ -246,14 +244,13 @@ fdt_node_set_property(void *node, char *name, void *data, int len)
 			curlen = betoh32(*(ptr + 1));
 			delta = roundup(len, sizeof(uint32_t)) -
 			    roundup(curlen, sizeof(uint32_t));
+			if (end + delta > tree.end)
+				panic("FDT overflow");
+
 			memmove((char *)next + delta, next,
-			    tree.end - (char *)next);
+			    end - (char *)next);
 			tree.struct_size += delta;
-			if (tree.strings > tree.tree)
-				tree.strings += delta;
-			if (tree.memory > tree.tree)
-				tree.memory += delta;
-			tree.end += delta;
+			tree.strings += delta;
 			*(ptr + 1) = htobe32(len);
 			memcpy(ptr + 3, data, len);
 			return 1;
@@ -266,6 +263,7 @@ fdt_node_set_property(void *node, char *name, void *data, int len)
 int
 fdt_node_add_property(void *node, char *name, void *data, int len)
 {
+	char *end = tree.strings + tree.strings_size;
 	char *dummy;
 
 	if (!tree_inited)
@@ -277,15 +275,14 @@ fdt_node_add_property(void *node, char *name, void *data, int len)
 		if (betoh32(*ptr) != FDT_NODE_BEGIN)
 			return 0;
 
+		if (end + 3 * sizeof(uint32_t) > tree.end)
+			panic("FDT overflow");
+
 		ptr = skip_node_name(ptr + 1);
 
-		memmove(ptr + 3, ptr, tree.end - (char *)ptr);
+		memmove(ptr + 3, ptr, end - (char *)ptr);
 		tree.struct_size += 3 * sizeof(uint32_t);
-		if (tree.strings > tree.tree)
-			tree.strings += 3 * sizeof(uint32_t);
-		if (tree.memory > tree.tree)
-			tree.memory += 3 * sizeof(uint32_t);
-		tree.end += 3 * sizeof(uint32_t);
+		tree.strings += 3 * sizeof(uint32_t);
 		*ptr++ = htobe32(FDT_PROPERTY);
 		*ptr++ = htobe32(0);
 		*ptr++ = htobe32(fdt_add_str(name));
@@ -298,6 +295,7 @@ int
 fdt_node_add_node(void *node, char *name, void **child)
 {
 	size_t len = roundup(strlen(name) + 1, sizeof(uint32_t)) + 8;
+	char *end = tree.strings + tree.strings_size;
 	uint32_t *ptr = (uint32_t *)node;
 
 	if (!tree_inited)
@@ -306,6 +304,9 @@ fdt_node_add_node(void *node, char *name, void **child)
 	if (betoh32(*ptr) != FDT_NODE_BEGIN)
 		return 0;
 
+	if (end + len > tree.end)
+		panic("FDT overflow");
+
 	ptr = skip_node_name(ptr + 1);
 	ptr = skip_props(ptr);
 
@@ -313,13 +314,9 @@ fdt_node_add_node(void *node, char *name, void **child)
 	while (betoh32(*ptr) == FDT_NODE_BEGIN)
 		ptr = skip_node(ptr);
 
-	memmove((char *)ptr + len, ptr, tree.end - (char *)ptr);
+	memmove((char *)ptr + len, ptr, end - (char *)ptr);
 	tree.struct_size += len;
-	if (tree.strings > tree.tree)
-		tree.strings += len;
-	if (tree.memory > tree.tree)
-		tree.memory += len;
-	tree.end += len;
+	tree.strings += len;
 
 	*child = ptr;
 	*ptr++ = htobe32(FDT_NODE_BEGIN);

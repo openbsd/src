@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2021/12/14 11:05:37 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.15 2022/03/14 19:09:32 kettenis Exp $
 
 NOMAN=		#
 
@@ -85,6 +85,6 @@ NOPROG=yes
 .endif
 
 DTC=	dtc
-DTCOPTS= -p 4096 -H epapr
+DTCOPTS= -p 16384 -H epapr
 update-blob:
 	${DTC} ${DTCOPTS} -O asm -o ${.CURDIR}/dt_blob.S ${.CURDIR}/acpi.dts
