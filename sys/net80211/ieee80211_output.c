@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_output.c,v 1.136 2022/01/05 05:18:25 dlg Exp $	*/
+/*	$OpenBSD: ieee80211_output.c,v 1.137 2022/03/14 15:07:24 stsp Exp $	*/
 /*	$NetBSD: ieee80211_output.c,v 1.13 2004/05/31 11:02:55 dyoung Exp $	*/
 
 /*-
@@ -319,6 +319,12 @@ const struct ieee80211_edca_ac_params
 		[EDCA_AC_VI] = { 3,  4, 2,  94 },
 		[EDCA_AC_VO] = { 2,  3, 2,  47 }
 	},
+	[IEEE80211_MODE_11AC] = {
+		[EDCA_AC_BK] = { 4, 10, 7,   0 },
+		[EDCA_AC_BE] = { 4, 10, 3,   0 },
+		[EDCA_AC_VI] = { 3,  4, 2,  94 },
+		[EDCA_AC_VO] = { 2,  3, 2,  47 }
+	},
 };
 
 #ifndef IEEE80211_STA_ONLY
@@ -343,6 +349,12 @@ const struct ieee80211_edca_ac_params
 		[EDCA_AC_VO] = { 2,  3, 1,  47 }
 	},
 	[IEEE80211_MODE_11N] = {
+		[EDCA_AC_BK] = { 4, 10, 7,   0 },
+		[EDCA_AC_BE] = { 4,  6, 3,   0 },
+		[EDCA_AC_VI] = { 3,  4, 1,  94 },
+		[EDCA_AC_VO] = { 2,  3, 1,  47 }
+	},
+	[IEEE80211_MODE_11AC] = {
 		[EDCA_AC_BK] = { 4, 10, 7,   0 },
 		[EDCA_AC_BE] = { 4,  6, 3,   0 },
 		[EDCA_AC_VI] = { 3,  4, 1,  94 },
@@ -1177,6 +1189,22 @@ ieee80211_add_htop(u_int8_t *frm, struct ieee80211com *ic)
 }
 #endif	/* !IEEE80211_STA_ONLY */
 
+/*
+ * Add a VHT Capabilities element to a frame (see 802.11ac-2013 8.4.2.160.2).
+ */
+u_int8_t *
+ieee80211_add_vhtcaps(u_int8_t *frm, struct ieee80211com *ic)
+{
+	*frm++ = IEEE80211_ELEMID_VHTCAPS;
+	*frm++ = 12;
+	LE_WRITE_4(frm, ic->ic_vhtcaps); frm += 4;
+	LE_WRITE_2(frm, ic->ic_vht_rxmcs); frm += 2;
+	LE_WRITE_2(frm, ic->ic_vht_rx_max_lgi_mbit_s); frm += 2;
+	LE_WRITE_2(frm, ic->ic_vht_txmcs); frm += 2;
+	LE_WRITE_2(frm, ic->ic_vht_tx_max_lgi_mbit_s); frm += 2;
+	return frm;
+}
+
 #ifndef IEEE80211_STA_ONLY
 /*
  * Add a Timeout Interval element to a frame (see 7.3.2.49).
@@ -1234,7 +1262,8 @@ ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
 	    2 + min(rs->rs_nrates, IEEE80211_RATE_SIZE) +
 	    ((rs->rs_nrates > IEEE80211_RATE_SIZE) ?
 		2 + rs->rs_nrates - IEEE80211_RATE_SIZE : 0) +
-	    ((ic->ic_flags & IEEE80211_F_HTON) ? 28 + 9 : 0));
+	    ((ic->ic_flags & IEEE80211_F_HTON) ? 28 + 9 : 0) +
+	    ((ic->ic_flags & IEEE80211_F_VHTON) ? 14 : 0));
 	if (m == NULL)
 		return NULL;
 
@@ -1247,6 +1276,8 @@ ieee80211_get_probe_req(struct ieee80211com *ic, struct ieee80211_node *ni)
 		frm = ieee80211_add_htcaps(frm, ic);
 		frm = ieee80211_add_wme_info(frm, ic);
 	}
+	if (ic->ic_flags & IEEE80211_F_VHTON)
+		frm = ieee80211_add_htcaps(frm, ic);
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 
@@ -1414,7 +1445,8 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 	    (((ic->ic_flags & IEEE80211_F_RSNON) &&
 	      (ni->ni_rsnprotos & IEEE80211_PROTO_WPA)) ?
 		2 + IEEE80211_WPAIE_MAXLEN : 0) +
-	    ((ic->ic_flags & IEEE80211_F_HTON) ? 28 + 9 : 0));
+	    ((ic->ic_flags & IEEE80211_F_HTON) ? 28 + 9 : 0) +
+	    ((ic->ic_flags & IEEE80211_F_VHTON) ? 14 : 0));
 	if (m == NULL)
 		return NULL;
 
@@ -1449,6 +1481,8 @@ ieee80211_get_assoc_req(struct ieee80211com *ic, struct ieee80211_node *ni,
 		frm = ieee80211_add_htcaps(frm, ic);
 		frm = ieee80211_add_wme_info(frm, ic);
 	}
+	if (ic->ic_flags & IEEE80211_F_VHTON)
+		frm = ieee80211_add_vhtcaps(frm, ic);
 
 	m->m_pkthdr.len = m->m_len = frm - mtod(m, u_int8_t *);
 

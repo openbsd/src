@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.h,v 1.42 2022/03/07 08:13:13 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.h,v 1.43 2022/03/14 15:07:24 stsp Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.h,v 1.7 2004/04/30 22:51:04 dyoung Exp $	*/
 
 /*-
@@ -110,6 +110,8 @@ struct ieee80211_stats {
 	u_int32_t	is_ht_rx_ba_window_gap_timeout;
 	u_int32_t	is_ht_rx_ba_timeout;
 	u_int32_t	is_ht_tx_ba_timeout;
+	u_int32_t	is_vht_nego_no_mandatory_mcs;
+	u_int32_t	is_vht_nego_no_basic_mcs;
 };
 
 #define	SIOCG80211STATS		_IOWR('i', 242, struct ifreq)

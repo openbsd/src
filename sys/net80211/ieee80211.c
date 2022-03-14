@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211.c,v 1.86 2021/12/05 11:33:45 stsp Exp $	*/
+/*	$OpenBSD: ieee80211.c,v 1.87 2022/03/14 15:07:24 stsp Exp $	*/
 /*	$NetBSD: ieee80211.c,v 1.19 2004/06/06 05:45:29 dyoung Exp $	*/
 
 /*-
@@ -472,11 +472,10 @@ ieee80211_media_init(struct ifnet *ifp,
 				ADD(ic, IFM_IEEE80211_VHT_MCS0 + i,
 				    mopt | IFM_IEEE80211_MONITOR);
 		}
-#if 0
 		ic->ic_flags |= IEEE80211_F_VHTON; /* enable 11ac by default */
+		ic->ic_flags |= IEEE80211_F_HTON; /* 11ac implies 11n */
 		if (ic->ic_caps & IEEE80211_C_QOS)
 			ic->ic_flags |= IEEE80211_F_QOS;
-#endif
 	}
 
 	ieee80211_media_status(ifp, &imr);
@@ -663,6 +662,7 @@ ieee80211_media_change(struct ifnet *ifp)
 	    (newphymode == IEEE80211_MODE_AUTO ||
 	    newphymode == IEEE80211_MODE_11AC)) {
 		ic->ic_flags |= IEEE80211_F_VHTON;
+		ic->ic_flags |= IEEE80211_F_HTON;
 		ieee80211_configure_ampdu_tx(ic, 1);
 	} else if ((ic->ic_modecaps & (1 << IEEE80211_MODE_11N)) &&
 	    (newphymode == IEEE80211_MODE_AUTO ||

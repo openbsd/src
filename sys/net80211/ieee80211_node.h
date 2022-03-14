@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.91 2022/01/12 08:29:27 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.92 2022/03/14 15:07:24 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -352,6 +352,19 @@ struct ieee80211_node {
 	uint16_t		ni_htop2;
 	uint8_t			ni_basic_mcs[howmany(128,NBBY)];
 
+	/* VHT capabilities */
+	uint32_t		ni_vhtcaps;
+	uint16_t		ni_vht_rxmcs;
+	uint16_t		ni_vht_rx_max_lgi_mbit_s;
+	uint16_t		ni_vht_txmcs;
+	uint16_t		ni_vht_tx_max_lgi_mbit_s;
+
+	/* VHT operation */
+	uint8_t			ni_vht_chan_width;
+	uint8_t			ni_vht_chan_center_freq_idx0;
+	uint8_t			ni_vht_chan_center_freq_idx1;
+	uint16_t		ni_vht_basic_mcs;
+
 	/* Timeout handlers which trigger Tx Block Ack negotiation. */
 	struct timeout		ni_addba_req_to[IEEE80211_NUM_TID];
 	int			ni_addba_req_intval[IEEE80211_NUM_TID];
@@ -406,6 +419,9 @@ struct ieee80211_node {
 #define IEEE80211_NODE_HT_SGI40		0x8000	/* SGI on 40 MHz negotiated */ 
 #define IEEE80211_NODE_VHT		0x10000	/* VHT negotiated */
 #define IEEE80211_NODE_HTCAP		0x20000	/* claims to support HT */
+#define IEEE80211_NODE_VHTCAP		0x40000	/* claims to support VHT */
+#define IEEE80211_NODE_VHT_SGI80	0x80000	/* SGI on 80 MHz negotiated */ 
+#define IEEE80211_NODE_VHT_SGI160	0x100000 /* SGI on 160 MHz negotiated */ 
 
 	/* If not NULL, this function gets called when ni_refcnt hits zero. */
 	void			(*ni_unref_cb)(struct ieee80211com *,
@@ -500,6 +516,64 @@ ieee80211_node_supports_ht_chan40(struct ieee80211_node *ni)
 	    (ni->ni_htop0 & IEEE80211_HTOP0_CHW));
 }
 
+/* 
+ * Check if the peer supports VHT.
+ * Require a VHT capabilities IE and support for VHT MCS with a single
+ * spatial stream.
+ */
+static inline int
+ieee80211_node_supports_vht(struct ieee80211_node *ni)
+{
+	uint16_t rx_mcs;
+
+	rx_mcs = (ni->ni_vht_rxmcs & IEEE80211_VHT_MCS_FOR_SS_MASK(1)) >>
+	    IEEE80211_VHT_MCS_FOR_SS_SHIFT(1);
+
+	return ((ni->ni_flags & IEEE80211_NODE_VHTCAP) &&
+	    rx_mcs != IEEE80211_VHT_MCS_SS_NOT_SUPP);
+}
+
+/* Check if the peer supports VHT short guard interval (SGI) on 80 MHz. */
+static inline int
+ieee80211_node_supports_vht_sgi80(struct ieee80211_node *ni)
+{
+	return ieee80211_node_supports_vht(ni) &&
+	    (ni->ni_vhtcaps & IEEE80211_VHTCAP_SGI80);
+}
+
+/* Check if the peer supports VHT short guard interval (SGI) on 160 MHz. */
+static inline int
+ieee80211_node_supports_vht_sgi160(struct ieee80211_node *ni)
+{
+	return ieee80211_node_supports_vht(ni) &&
+	    (ni->ni_vhtcaps & IEEE80211_VHTCAP_SGI160);
+}
+
+/* Check if the peer can receive frames sent on an 80 MHz channel. */
+static inline int
+ieee80211_node_supports_vht_chan80(struct ieee80211_node *ni)
+{
+	uint8_t cap_chan_width, op_chan_width;
+
+	if (!ieee80211_node_supports_vht(ni))
+		return 0;
+
+	cap_chan_width = (ni->ni_vhtcaps & IEEE80211_VHTCAP_CHAN_WIDTH_MASK) >>
+	    IEEE80211_VHTCAP_CHAN_WIDTH_SHIFT;
+	if (cap_chan_width != IEEE80211_VHTCAP_CHAN_WIDTH_80 &&	 
+	    cap_chan_width != IEEE80211_VHTCAP_CHAN_WIDTH_160 &&	 
+	    cap_chan_width != IEEE80211_VHTCAP_CHAN_WIDTH_160_8080)
+		return 0;
+
+	op_chan_width = (ni->ni_vht_chan_width &
+	    IEEE80211_VHTOP0_CHAN_WIDTH_MASK) >>
+	    IEEE80211_VHTOP0_CHAN_WIDTH_SHIFT;
+
+	return (op_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80 ||
+	    op_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160 ||
+	    op_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_8080);
+}
+
 struct ieee80211com;
 
 typedef void ieee80211_iter_func(void *, struct ieee80211_node *);
@@ -536,6 +610,11 @@ void ieee80211_setup_htcaps(struct ieee80211_node *, const uint8_t *,
     uint8_t);
 void ieee80211_clear_htcaps(struct ieee80211_node *);
 int ieee80211_setup_htop(struct ieee80211_node *, const uint8_t *,
+    uint8_t, int);
+void ieee80211_setup_vhtcaps(struct ieee80211_node *, const uint8_t *,
+    uint8_t);
+void ieee80211_clear_vhtcaps(struct ieee80211_node *);
+int ieee80211_setup_vhtop(struct ieee80211_node *, const uint8_t *,
     uint8_t, int);
 int ieee80211_setup_rates(struct ieee80211com *,
 	    struct ieee80211_node *, const u_int8_t *, const u_int8_t *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_proto.c,v 1.107 2021/12/05 11:33:45 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_proto.c,v 1.108 2022/03/14 15:07:24 stsp Exp $	*/
 /*	$NetBSD: ieee80211_proto.c,v 1.8 2004/04/30 23:58:20 dyoung Exp $	*/
 
 /*-
@@ -75,6 +75,7 @@ const char * const ieee80211_phymode_name[] = {
 	"11b",		/* IEEE80211_MODE_11B */
 	"11g",		/* IEEE80211_MODE_11G */
 	"11n",		/* IEEE80211_MODE_11N */
+	"11ac",		/* IEEE80211_MODE_11AC */
 };
 
 void ieee80211_set_beacon_miss_threshold(struct ieee80211com *);
@@ -613,6 +614,58 @@ ieee80211_ht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
 	if (ieee80211_node_supports_ht_sgi40(ni) &&
 	    (ic->ic_htcaps & IEEE80211_HTCAP_SGI40))
 		ni->ni_flags |= IEEE80211_NODE_HT_SGI40;
+}
+
+void
+ieee80211_vht_negotiate(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	int n;
+
+	ni->ni_flags &= ~(IEEE80211_NODE_VHT | IEEE80211_NODE_VHT_SGI80 |
+	    IEEE80211_NODE_VHT_SGI160);
+
+	/* Check if we support VHT. */
+	if ((ic->ic_modecaps & (1 << IEEE80211_MODE_11AC)) == 0)
+		return;
+
+	/* Check if VHT support has been explicitly disabled. */
+	if ((ic->ic_flags & IEEE80211_F_VHTON) == 0)
+		return;
+
+	/*
+	 * Check if the peer supports VHT.
+	 * MCS 0-7 for a single spatial stream are mandatory.
+	 */
+	if (!ieee80211_node_supports_vht(ni)) {
+		ic->ic_stats.is_vht_nego_no_mandatory_mcs++;
+		return;
+	}
+
+	if (ic->ic_opmode == IEEE80211_M_STA) {
+		/* We must support the AP's basic MCS set. */
+		for (n = 1; n <= IEEE80211_VHT_NUM_SS; n++) {
+			uint16_t basic_mcs = (ni->ni_vht_basic_mcs &
+			    IEEE80211_VHT_MCS_FOR_SS_MASK(n)) >>
+			    IEEE80211_VHT_MCS_FOR_SS_SHIFT(n);
+			uint16_t rx_mcs = (ic->ic_vht_rxmcs &
+			    IEEE80211_VHT_MCS_FOR_SS_MASK(n)) >>
+			    IEEE80211_VHT_MCS_FOR_SS_SHIFT(n);
+			if (basic_mcs != IEEE80211_VHT_MCS_SS_NOT_SUPP &&
+			    basic_mcs > rx_mcs) {
+				ic->ic_stats.is_vht_nego_no_basic_mcs++;
+				return;
+			}
+		}
+	}
+
+	ni->ni_flags |= IEEE80211_NODE_VHT;
+
+	if ((ni->ni_vhtcaps & IEEE80211_VHTCAP_SGI80) &&
+	    (ic->ic_vhtcaps & IEEE80211_VHTCAP_SGI80))
+		ni->ni_flags |= IEEE80211_NODE_VHT_SGI80;
+	if ((ni->ni_vhtcaps & IEEE80211_VHTCAP_SGI160) &&
+	    (ic->ic_vhtcaps & IEEE80211_VHTCAP_SGI160))
+		ni->ni_flags |= IEEE80211_NODE_VHT_SGI160;
 }
 
 void
@@ -1259,7 +1312,7 @@ justcleanup:
 				else
 					printf(" start %u%sMb",
 					    rate / 2, (rate & 1) ? ".5" : "");
-				printf(" %s preamble %s slot time%s%s\n",
+				printf(" %s preamble %s slot time%s%s%s\n",
 				    (ic->ic_flags & IEEE80211_F_SHPREAMBLE) ?
 					"short" : "long",
 				    (ic->ic_flags & IEEE80211_F_SHSLOT) ?
@@ -1267,7 +1320,9 @@ justcleanup:
 				    (ic->ic_flags & IEEE80211_F_USEPROT) ?
 					" protection enabled" : "",
 				    (ni->ni_flags & IEEE80211_NODE_HT) ?
-					" HT enabled" : "");
+					" HT enabled" : "",
+				    (ni->ni_flags & IEEE80211_NODE_VHT) ?
+					" VHT enabled" : "");
 			}
 			if (!(ic->ic_flags & IEEE80211_F_RSNON)) {
 				/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.191 2022/01/12 08:29:27 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.192 2022/03/14 15:07:24 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -87,6 +87,7 @@ void ieee80211_node_join_ht(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_join_rsn(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_join_11g(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_ht(struct ieee80211com *, struct ieee80211_node *);
+void ieee80211_node_leave_vht(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_rsn(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_11g(struct ieee80211com *, struct ieee80211_node *);
 void ieee80211_node_leave_pwrsave(struct ieee80211com *,
@@ -2411,6 +2412,71 @@ ieee80211_setup_htop(struct ieee80211_node *ni, const uint8_t *data,
 }
 
 /*
+ * Install received VHT caps information in the node's state block.
+ */
+void
+ieee80211_setup_vhtcaps(struct ieee80211_node *ni, const uint8_t *data,
+    uint8_t len)
+{
+	if (len != 12)
+		return;
+
+	ni->ni_vhtcaps = (data[0] | (data[1] << 8) | data[2] << 16 |
+	    data[3] << 24);
+	ni->ni_vht_rxmcs = (data[4] | (data[5] << 8));
+	ni->ni_vht_rx_max_lgi_mbit_s = ((data[6] | (data[7] << 8)) &
+	    IEEE80211_VHT_MAX_LGI_MBIT_S_MASK);
+	ni->ni_vht_txmcs = (data[8] | (data[9] << 8));
+	ni->ni_vht_tx_max_lgi_mbit_s = ((data[10] | (data[11] << 8)) &
+	    IEEE80211_VHT_MAX_LGI_MBIT_S_MASK);
+
+	ni->ni_flags |= IEEE80211_NODE_VHTCAP;
+}
+
+/*
+ * Install received VHT op information in the node's state block.
+ */
+int
+ieee80211_setup_vhtop(struct ieee80211_node *ni, const uint8_t *data,
+    uint8_t len, int isprobe)
+{
+
+	if (len != 5)
+		return 0;
+
+	if (data[0] != IEEE80211_VHTOP0_CHAN_WIDTH_HT &&
+	    data[0] != IEEE80211_VHTOP0_CHAN_WIDTH_80 &&
+	    data[0] != IEEE80211_VHTOP0_CHAN_WIDTH_160 &&
+	    data[0] != IEEE80211_VHTOP0_CHAN_WIDTH_8080)
+		return 0;
+
+	ni->ni_vht_chan_width = data[0];
+	ni->ni_vht_chan_center_freq_idx0 = data[1];
+	ni->ni_vht_chan_center_freq_idx1 = data[2];
+	ni->ni_vht_basic_mcs = (data[3] | data[4] << 8);
+	return 1;
+}
+
+#ifndef IEEE80211_STA_ONLY
+/* 
+ * Handle nodes switching from 11ac into legacy modes.
+ */
+void
+ieee80211_clear_vhtcaps(struct ieee80211_node *ni)
+{
+	ni->ni_vhtcaps = 0;
+	ni->ni_vht_rxmcs = 0;
+	ni->ni_vht_rx_max_lgi_mbit_s = 0;
+	ni->ni_vht_txmcs = 0;
+	ni->ni_vht_tx_max_lgi_mbit_s = 0;
+
+	ni->ni_flags &= ~(IEEE80211_NODE_VHT | IEEE80211_NODE_VHT_SGI80 |
+	    IEEE80211_NODE_VHT_SGI160 | IEEE80211_NODE_VHTCAP);
+
+}
+#endif
+
+/*
  * Install received rate set information in the node's state block.
  */
 int
@@ -2772,6 +2838,15 @@ ieee80211_node_leave_ht(struct ieee80211com *ic, struct ieee80211_node *ni)
 }
 
 /*
+ * Handle a VHT STA leaving a VHT network.
+ */
+void
+ieee80211_node_leave_vht(struct ieee80211com *ic, struct ieee80211_node *ni)
+{
+	ieee80211_clear_vhtcaps(ni);
+}
+
+/*
  * Handle a station leaving an RSN network.
  */
 void
@@ -2910,6 +2985,8 @@ ieee80211_node_leave(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	if (ni->ni_flags & IEEE80211_NODE_HT)
 		ieee80211_node_leave_ht(ic, ni);
+	if (ni->ni_flags & IEEE80211_NODE_VHT)
+		ieee80211_node_leave_vht(ic, ni);
 
 	if (ic->ic_node_leave != NULL)
 		(*ic->ic_node_leave)(ic, ni);
