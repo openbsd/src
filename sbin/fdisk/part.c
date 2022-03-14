@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.117 2022/03/11 22:29:55 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.118 2022/03/14 14:22:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -141,7 +141,6 @@ struct gpt_type {
 	int	gt_protected;
 	char	gt_sname[14];
 	char	gt_guid[UUID_STR_LEN + 1];
-
 };
 
 const struct gpt_type		gpt_types[] = {
