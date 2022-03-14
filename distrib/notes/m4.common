@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.131 2021/12/25 17:26:13 tj Exp $
+dnl	$OpenBSD: m4.common,v 1.132 2022/03/14 20:07:57 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -113,11 +113,10 @@ dnl Describes compXX.tgz.
 dnl
 define({:-OpenBSDcomp-:},
 {:-	comp{:--:}OSrev	 The OpenBSD/MACHINE Compiler tools.  All of the tools relating
-		 to C, C++ and Objective-C are supported.  This set includes
-		 the system {:-include-:} files (/usr/{:-include-:}), the linker, the
-		 compiler tool chain, and the various system libraries{:--:}ifelse(MDSO,,.,{:-
-		 (except the shared libraries, which are included as part of
-		 the base set).-:})
+		 to C and C++ are supported.  This set includes the system
+		 {:-include-:} files (/usr/{:-include-:}), the linker, the compiler
+		 toolchain, and the various system libraries{:--:}ifelse(MDSO,,.,{:- (except the
+		 shared libraries, which are included as part of the base set).-:})
 		 This set also includes the manual pages for all of the
 		 utilities it contains, as well as the system call and library
 		 manual pages.showsize($1,$2)-:})dnl
