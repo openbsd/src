@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.9 2022/03/13 10:13:54 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.10 2022/03/15 02:07:21 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -239,6 +239,10 @@
 #define RPF_RPB_RX_TC_UPT_REG                   0x54c4
 #define  RPF_RPB_RX_TC_UPT_MASK(i)              (0x00000007 << ((i) * 4))
 
+#define RPO_HWCSUM_REG				0x5580
+#define  RPO_HWCSUM_L4CSUM_EN			(1 << 0)
+#define  RPO_HWCSUM_IP4CSUM_EN			(1 << 1)
+
 #define RPB_RPF_RX_REG				0x5700
 #define  RPB_RPF_RX_TC_MODE			(1 << 8)
 #define  RPB_RPF_RX_FC_MODE			0x30
@@ -314,6 +318,10 @@
 
 #define AQ_HW_TXBUF_MAX         160
 #define AQ_HW_RXBUF_MAX         320
+
+#define TPO_HWCSUM_REG				0x7800
+#define  TPO_HWCSUM_L4CSUM_EN			(1 << 0)
+#define  TPO_HWCSUM_IP4CSUM_EN			(1 << 1)
 
 #define THM_LSO_TCP_FLAG1_REG			0x7820
 #define  THM_LSO_TCP_FLAG1_FIRST		0xFFF
@@ -635,13 +643,13 @@ struct aq_rx_desc_wb {
 #define AQ_RXDESC_TYPE_VLAN2	(1 << 10)
 #define AQ_RXDESC_TYPE_DMA_ERR	(1 << 12)
 #define AQ_RXDESC_TYPE_V4_SUM	(1 << 19)
-#define AQ_RXDESC_TYPE_TCP_SUM	(1 << 20)
+#define AQ_RXDESC_TYPE_L4_SUM	(1 << 20)
 	uint32_t		rss_hash;
 	uint16_t		status;
 #define AQ_RXDESC_STATUS_DD	(1 << 0)
 #define AQ_RXDESC_STATUS_EOP	(1 << 1)
 #define AQ_RXDESC_STATUS_MACERR (1 << 2)
-#define AQ_RXDESC_STATUS_V4_SUM (1 << 3)
+#define AQ_RXDESC_STATUS_V4_SUM_NG (1 << 3)
 #define AQ_RXDESC_STATUS_L4_SUM_ERR (1 << 4)
 #define AQ_RXDESC_STATUS_L4_SUM_OK (1 << 5)
 	uint16_t		pkt_len;
@@ -1036,7 +1044,9 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_qstart = aq_start;
 	ifp->if_watchdog = aq_watchdog;
 	ifp->if_hardmtu = 9000;
-	ifp->if_capabilities = IFCAP_VLAN_MTU;
+	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
+	    IFCAP_CSUM_UDPv4 | IFCAP_CSUM_UDPv6 | IFCAP_CSUM_TCPv4 |
+	    IFCAP_CSUM_TCPv6;
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
@@ -2207,6 +2217,15 @@ aq_rxeof(struct aq_softc *sc, struct aq_rxring *rx)
 		}
 #endif
 
+		if ((rxd_type & AQ_RXDESC_TYPE_V4_SUM) &&
+		    ((status & AQ_RXDESC_STATUS_V4_SUM_NG) == 0))
+			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
+
+		if ((rxd_type & AQ_RXDESC_TYPE_L4_SUM) &&
+		   (status & AQ_RXDESC_STATUS_L4_SUM_OK))
+			m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK |
+			    M_TCP_CSUM_IN_OK;
+
 		if ((status & AQ_RXDESC_STATUS_MACERR) ||
 		    (rxd_type & AQ_RXDESC_TYPE_DMA_ERR)) {
 			printf("%s:rx: rx error (status %x type %x)\n",
@@ -2352,6 +2371,11 @@ aq_start(struct ifqueue *ifq)
 			used++;
 		}
 #endif
+
+		if (m->m_pkthdr.csum_flags & M_IPV4_CSUM_OUT)
+			ctl1 |= AQ_TXDESC_CTL1_CMD_IP4CSUM;
+		if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT | M_UDP_CSUM_OUT))
+			ctl1 |= AQ_TXDESC_CTL1_CMD_L4CSUM;
 
 		for (i = 0; i < as->as_map->dm_nsegs; i++) {
 
@@ -2562,7 +2586,11 @@ aq_up(struct aq_softc *sc)
 
 	aq_set_mac_addr(sc, AQ_HW_MAC_OWN, sc->sc_arpcom.ac_enaddr);
 
-	/* enable checksum offload */
+	AQ_WRITE_REG_BIT(sc, TPO_HWCSUM_REG, TPO_HWCSUM_IP4CSUM_EN, 1);
+	AQ_WRITE_REG_BIT(sc, TPO_HWCSUM_REG, TPO_HWCSUM_L4CSUM_EN, 1);
+
+	AQ_WRITE_REG_BIT(sc, RPO_HWCSUM_REG, RPO_HWCSUM_IP4CSUM_EN, 1);
+	AQ_WRITE_REG_BIT(sc, RPO_HWCSUM_REG, RPO_HWCSUM_L4CSUM_EN, 1);
 
 	SET(ifp->if_flags, IFF_RUNNING);
 	aq_enable_intr(sc, 1, 1);
