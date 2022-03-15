@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.184 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.185 2022/03/15 11:22:10 jan Exp $	*/
 
 /******************************************************************************
 
@@ -1922,6 +1922,7 @@ ixgbe_setup_interface(struct ix_softc *sc)
 
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4;
 
 	/*
 	 * Specify the media types supported by this sc and register
@@ -2468,13 +2469,14 @@ ixgbe_free_transmit_buffers(struct tx_ring *txr)
  *
  **********************************************************************/
 
-static inline void
-ixgbe_csum_offload(struct mbuf *mp,
-    uint32_t *vlan_macip_lens, uint32_t *type_tucmd_mlhl)
+static inline int
+ixgbe_csum_offload(struct mbuf *mp, uint32_t *vlan_macip_lens,
+    uint32_t *type_tucmd_mlhl, uint32_t *olinfo_status)
 {
 	struct ether_header *eh = mtod(mp, struct ether_header *);
 	struct mbuf *m;
 	int hoff;
+	int offload = 0;
 	uint32_t iphlen;
 	uint8_t ipproto;
 
@@ -2490,6 +2492,11 @@ ixgbe_csum_offload(struct mbuf *mp,
 
 		iphlen = ip->ip_hl << 2;
 		ipproto = ip->ip_p;
+
+		if (ISSET(mp->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT)) {
+			*olinfo_status |= IXGBE_TXD_POPTS_IXSM << 8;
+			offload = 1;
+		}
 
 		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV4;
 		break;
@@ -2512,25 +2519,29 @@ ixgbe_csum_offload(struct mbuf *mp,
 #endif
 
 	default:
-		panic("CSUM_OUT set for non-IP packet");
-		/* NOTREACHED */
+		return offload;
 	}
 
 	*vlan_macip_lens |= iphlen;
 
 	switch (ipproto) {
 	case IPPROTO_TCP:
-		KASSERT(ISSET(mp->m_pkthdr.csum_flags, M_TCP_CSUM_OUT));
 		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_TCP;
+		if (ISSET(mp->m_pkthdr.csum_flags, M_TCP_CSUM_OUT)) {
+			*olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
+			offload = 1;
+		}
 		break;
 	case IPPROTO_UDP:
-		KASSERT(ISSET(mp->m_pkthdr.csum_flags, M_UDP_CSUM_OUT));
 		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_L4T_UDP;
+		if (ISSET(mp->m_pkthdr.csum_flags, M_UDP_CSUM_OUT)) {
+			*olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
+			offload = 1;
+		}
 		break;
-	default:
-		panic("CSUM_OUT set for wrong protocol");
-		/* NOTREACHED */
 	}
+
+	return offload;
 }
 
 static int
@@ -2555,11 +2566,8 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	}
 #endif
 
-	if (ISSET(mp->m_pkthdr.csum_flags, M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) {
-		ixgbe_csum_offload(mp, &vlan_macip_lens, &type_tucmd_mlhl);
-		*olinfo_status |= IXGBE_TXD_POPTS_TXSM << 8;
-		offload |= 1;
-	}
+	offload |= ixgbe_csum_offload(mp, &vlan_macip_lens, &type_tucmd_mlhl,
+	    olinfo_status);
 
 	if (!offload)
 		return (0);
