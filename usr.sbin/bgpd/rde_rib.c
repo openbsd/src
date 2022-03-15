@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.232 2022/03/02 16:51:43 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.233 2022/03/15 14:39:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1171,46 +1171,10 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 	struct rde_community *comm;
 	struct prefix *p;
 
-	if ((p = prefix_adjout_get(peer, 0, prefix, prefixlen)) != NULL) {
-		if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
-			fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit",
-			    __func__);
-
-		/* prefix is already in the Adj-RIB-Out */
-		if (p->flags & PREFIX_FLAG_WITHDRAW) {
-			RB_REMOVE(prefix_tree,
-			    &peer->withdraws[prefix->aid], p);
-			peer->up_wcnt--;
-		}
-		if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) ==
-		    0) {
-			if (prefix_nhflags(p) == state->nhflags &&
-			    prefix_nexthop(p) == state->nexthop &&
-			    communities_equal(&state->communities,
-			    prefix_communities(p)) &&
-			    path_compare(&state->aspath, prefix_aspath(p)) ==
-			    0) {
-				/* nothing changed */
-				p->validation_state = vstate;
-				p->lastchange = getmonotime();
-				p->flags &= ~PREFIX_FLAG_STALE;
-				return;
-			}
-
-			if (p->flags & PREFIX_FLAG_UPDATE) {
-				RB_REMOVE(prefix_tree,
-				    &peer->updates[prefix->aid], p);
-				peer->up_nlricnt--;
-			}
-			/* unlink prefix so it can be relinked below */
-			prefix_unlink(p);
-			peer->prefix_out_cnt--;
-		}
-		/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
-		p->flags &= ~PREFIX_FLAG_MASK;
-	} else {
+	if ((p = prefix_adjout_get(peer, 0, prefix, prefixlen)) == NULL) {
 		p = prefix_alloc();
-		p->flags |= PREFIX_FLAG_ADJOUT;
+		/* initally mark DEAD so code below is skipped */
+		p->flags |= PREFIX_FLAG_ADJOUT | PREFIX_FLAG_DEAD;
 
 		p->pt = pt_get(prefix, prefixlen);
 		if (p->pt == NULL)
@@ -1222,6 +1186,39 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 		if (RB_INSERT(prefix_index, &peer->adj_rib_out, p) != NULL)
 			fatalx("%s: RB index invariant violated", __func__);
 	}
+
+	if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
+		fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit", __func__);
+	if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) == 0) {
+		if (prefix_nhflags(p) == state->nhflags &&
+		    prefix_nexthop(p) == state->nexthop &&
+		    communities_equal(&state->communities,
+		    prefix_communities(p)) &&
+		    path_compare(&state->aspath, prefix_aspath(p)) == 0) {
+			/* nothing changed */
+			p->validation_state = vstate;
+			p->lastchange = getmonotime();
+			p->flags &= ~PREFIX_FLAG_STALE;
+			return;
+		}
+
+		/* if pending update unhook it before it is unlinked */
+		if (p->flags & PREFIX_FLAG_UPDATE) {
+			RB_REMOVE(prefix_tree, &peer->updates[prefix->aid], p);
+			peer->up_nlricnt--;
+		}
+
+		/* unlink prefix so it can be relinked below */
+		prefix_unlink(p);
+		peer->prefix_out_cnt--;
+	}
+	if (p->flags & PREFIX_FLAG_WITHDRAW) {
+		RB_REMOVE(prefix_tree, &peer->withdraws[prefix->aid], p);
+		peer->up_wcnt--;
+	}
+
+	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
+	p->flags &= ~PREFIX_FLAG_MASK;
 
 	if ((asp = path_lookup(&state->aspath)) == NULL) {
 		/* Path not available, create and link a new one. */
