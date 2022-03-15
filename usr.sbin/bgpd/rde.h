@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.247 2022/03/02 16:51:43 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.248 2022/03/15 16:50:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -333,7 +333,7 @@ struct prefix {
 	uint32_t			 path_id_tx;
 	uint8_t				 validation_state;
 	uint8_t				 nhflags;
-	uint8_t				 eor;
+	uint8_t				 unused;
 	uint8_t				 flags;
 #define	PREFIX_FLAG_WITHDRAW	0x01	/* enqueued on withdraw queue */
 #define	PREFIX_FLAG_UPDATE	0x02	/* enqueued on update queue */
@@ -341,6 +341,7 @@ struct prefix {
 #define	PREFIX_FLAG_STALE	0x08	/* stale entry (graceful reload) */
 #define	PREFIX_FLAG_MASK	0x0f	/* mask for the prefix types */
 #define	PREFIX_FLAG_ADJOUT	0x10	/* prefix is in the adj-out rib */
+#define	PREFIX_FLAG_EOR		0x20	/* prefix is EoR */
 #define	PREFIX_NEXTHOP_LINKED	0x40	/* prefix is linked onto nexthop list */
 #define	PREFIX_FLAG_LOCKED	0x80	/* locked by rib walker */
 };

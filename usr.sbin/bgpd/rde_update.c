@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.136 2022/03/02 16:51:43 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.137 2022/03/15 16:50:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -586,7 +586,7 @@ up_is_eor(struct rde_peer *peer, uint8_t aid)
 	struct prefix *p;
 
 	p = RB_MIN(prefix_tree, &peer->updates[aid]);
-	if (p != NULL && p->eor) {
+	if (p != NULL && (p->flags & PREFIX_FLAG_EOR)) {
 		/*
 		 * Need to remove eor from update tree because
 		 * prefix_adjout_destroy() can't handle that.
@@ -635,7 +635,7 @@ up_dump_prefix(u_char *buf, int len, struct prefix_tree *prefix_head,
 		    np->communities != p->communities ||
 		    np->nexthop != p->nexthop ||
 		    np->nhflags != p->nhflags ||
-		    np->eor)
+		    (np->flags & PREFIX_FLAG_EOR))
 			done = 1;
 
 

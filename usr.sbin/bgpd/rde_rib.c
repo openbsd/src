@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.233 2022/03/15 14:39:34 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.234 2022/03/15 16:50:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -875,10 +875,10 @@ prefix_index_cmp(struct prefix *a, struct prefix *b)
 static inline int
 prefix_cmp(struct prefix *a, struct prefix *b)
 {
-	if (a->eor != b->eor)
-		return a->eor - b->eor;
-	/* if EOR marker no need to check the rest also a->eor == b->eor */
-	if (a->eor)
+	if ((a->flags & PREFIX_FLAG_EOR) != (b->flags & PREFIX_FLAG_EOR))
+		return (a->flags & PREFIX_FLAG_EOR) ? 1 : -1;
+	/* if EOR marker no need to check the rest */
+	if (a->flags & PREFIX_FLAG_EOR)
 		return 0;
 
 	if (a->aspath != b->aspath)
@@ -1152,8 +1152,7 @@ prefix_add_eor(struct rde_peer *peer, uint8_t aid)
 	struct prefix *p;
 
 	p = prefix_alloc();
-	p->flags = PREFIX_FLAG_ADJOUT | PREFIX_FLAG_UPDATE;
-	p->eor = 1;
+	p->flags = PREFIX_FLAG_ADJOUT | PREFIX_FLAG_UPDATE | PREFIX_FLAG_EOR;
 	if (RB_INSERT(prefix_tree, &peer->updates[aid], p) != NULL)
 		/* no need to add if EoR marker already present */
 		prefix_free(p);
@@ -1290,7 +1289,7 @@ prefix_adjout_destroy(struct prefix *p)
 	if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
 		fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit", __func__);
 
-	if (p->eor) {
+	if (p->flags & PREFIX_FLAG_EOR) {
 		/* EOR marker is not linked in the index */
 		prefix_free(p);
 		return;
