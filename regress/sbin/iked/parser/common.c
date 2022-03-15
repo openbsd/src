@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.11 2021/11/29 15:56:33 tobhe Exp $ */
+/*	$OpenBSD: common.c,v 1.12 2022/03/15 13:07:33 tobhe Exp $ */
 /*
  * A bunch of stub functions so we can compile and link ikev2_pld.c
  * in a standalone program for testing purposes.
@@ -207,4 +207,17 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 void
 ikev2_ike_sa_setreason(struct iked_sa *sa, char *r)
 {
+}
+
+void
+ikev2_msg_dispose(struct iked *env, struct iked_msgqueue *queue,
+    struct iked_msg_retransmit *mr)
+{
+}
+
+struct iked_msg_retransmit *
+ikev2_msg_lookup(struct iked *env, struct iked_msgqueue *queue,
+    struct iked_message *msg, uint8_t exchange)
+{
+	return NULL;
 }
