@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.26 2022/02/06 13:56:14 op Exp $
+.\"	$OpenBSD: dpb.1,v 1.27 2022/03/15 14:53:53 espie Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 6 2022 $
+.Dd $Mdocdate: March 15 2022 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -869,6 +869,12 @@ Prevents
 .Nm
 from scheduling anything else on the same host after it starts building.
 .\".It Ar memoryhog
+.It Ar noconfigurejunk
+Port that looks for unneeded dependencies during its configure phase
+(typically, optional tools like doxygen to rebuild documentation).
+Similar to
+.Ar nojunk
+but less expensive, since the configure phase is most often limited in scope.
 .It Ar nojunk
 Port that hardcodes includes in its Makefile mechanisms.
 Prevents
