@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.422 2022/02/23 11:20:35 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.423 2022/03/15 11:13:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -48,6 +48,8 @@
 #include "rde.h"
 #include "log.h"
 
+#define MACRO_NAME_LEN		128
+
 TAILQ_HEAD(files, file)		 files = TAILQ_HEAD_INITIALIZER(files);
 static struct file {
 	TAILQ_ENTRY(file)	 entry;
@@ -74,6 +76,7 @@ int		 igetc(void);
 int		 lgetc(int);
 void		 lungetc(int);
 int		 findeol(void);
+int		 expand_macro(void);
 
 TAILQ_HEAD(symhead, sym)	 symhead = TAILQ_HEAD_INITIALIZER(symhead);
 struct sym {
@@ -380,17 +383,25 @@ yesno		:  STRING			{
 
 varset		: STRING '=' string		{
 			char *s = $1;
+			if (strlen($1) >= MACRO_NAME_LEN) {
+				yyerror("macro name to long, max %d characters",
+				    MACRO_NAME_LEN - 1);
+				free($1);
+				free($3);
+				YYERROR;
+			}
+			do {
+				if (isalnum((unsigned char)*s) || *s == '_')
+					continue;
+				yyerror("macro name can only contain "
+					    "alphanumerics and '_'");
+				free($1);
+				free($3);
+				YYERROR;
+			} while (*++s);
+
 			if (cmd_opts & BGPD_OPT_VERBOSE)
 				printf("%s = \"%s\"\n", $1, $3);
-			while (*s++) {
-				if (isspace((unsigned char)*s)) {
-					yyerror("macro name cannot contain "
-					    "whitespace");
-					free($1);
-					free($3);
-					YYERROR;
-				}
-			}
 			if (symset($1, $3, 0) == -1)
 				fatal("cannot store variable");
 			free($1);
@@ -3169,10 +3180,46 @@ findeol(void)
 }
 
 int
+expand_macro(void)
+{
+	char	 buf[MACRO_NAME_LEN];
+	char	*p, *val;
+	int	 c;
+
+	p = buf;
+	while (1) {
+		if ((c = lgetc('$')) == EOF)
+			return (ERROR);
+		if (p + 1 >= buf + sizeof(buf) - 1) {
+			yyerror("macro name too long");
+			return (ERROR);
+		}
+		if (isalnum(c) || c == '_') {
+			*p++ = c;
+			continue;
+		}
+		*p = '\0';
+		lungetc(c);
+		break;
+	}
+	val = symget(buf);
+	if (val == NULL)
+		yyerror("macro '%s' not defined", buf);
+	p = val + strlen(val) - 1;
+	lungetc(DONE_EXPAND);
+	while (p >= val) {
+		lungetc((unsigned char)*p);
+		p--;
+	}
+	lungetc(START_EXPAND);
+	return (0);
+}
+
+int
 yylex(void)
 {
 	char	 buf[8096];
-	char	*p, *val;
+	char	*p;
 	int	 quotec, next, c;
 	int	 token;
 
@@ -3186,34 +3233,9 @@ top:
 		while ((c = lgetc(0)) != '\n' && c != EOF)
 			; /* nothing */
 	if (c == '$' && !expanding) {
-		while (1) {
-			if ((c = lgetc(0)) == EOF)
-				return (0);
-
-			if (p + 1 >= buf + sizeof(buf) - 1) {
-				yyerror("string too long");
-				return (findeol());
-			}
-			if (isalnum(c) || c == '_') {
-				*p++ = c;
-				continue;
-			}
-			*p = '\0';
-			lungetc(c);
-			break;
-		}
-		val = symget(buf);
-		if (val == NULL) {
-			yyerror("macro '%s' not defined", buf);
-			return (findeol());
-		}
-		p = val + strlen(val) - 1;
-		lungetc(DONE_EXPAND);
-		while (p >= val) {
-			lungetc((unsigned char)*p);
-			p--;
-		}
-		lungetc(START_EXPAND);
+		c = expand_macro();
+		if (c != 0)
+			return (c);
 		goto top;
 	}
 
@@ -3321,7 +3343,13 @@ nodigits:
 
 	if (isalnum(c) || c == ':' || c == '_' || c == '*') {
 		do {
-			*p++ = c;
+			if (c == '$' && !expanding) {
+				c = expand_macro();
+				if (c != 0)
+					return (c);
+			} else
+				*p++ = c;
+
 			if ((size_t)(p-buf) >= sizeof(buf)) {
 				yyerror("string too long");
 				return (findeol());
