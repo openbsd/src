@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.59 2022/03/11 22:29:55 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.60 2022/03/15 17:59:39 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -554,7 +554,7 @@ init_gp(const int how)
 	if (how == GHANDGP)
 		memset(&gp, 0, sizeof(gp));
 	else {
-		for (pn = 0; pn < NGPTPARTITIONS; pn++) {
+		for (pn = 0; pn < letoh32(gh.gh_part_num); pn++) {
 			if (PRT_protected_guid(&gp[pn].gp_type))
 				continue;
 			memset(&gp[pn], 0, sizeof(gp[pn]));
