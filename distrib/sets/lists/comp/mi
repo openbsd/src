@@ -978,7 +978,6 @@
 ./usr/include/net/if_types.h
 ./usr/include/net/if_var.h
 ./usr/include/net/if_vlan_var.h
-./usr/include/net/if_vxlan.h
 ./usr/include/net/if_wg.h
 ./usr/include/net/ifq.h
 ./usr/include/net/netisr.h
