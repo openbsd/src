@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.40 2022/03/03 08:06:57 tb Exp $ */
+/* $OpenBSD: a_object.c,v 1.41 2022/03/15 18:47:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -358,6 +358,8 @@ i2t_ASN1_OBJECT_name(const ASN1_OBJECT *aobj, CBB *cbb, const char **out_name)
 {
 	const char *name;
 	int nid;
+
+	*out_name = NULL;
 
 	if ((nid = OBJ_obj2nid(aobj)) == NID_undef)
 		return 0;
