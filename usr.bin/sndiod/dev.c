@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.103 2021/11/01 14:43:24 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.104 2022/03/15 05:53:37 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -1776,7 +1776,7 @@ slot_new(struct opt *opt, unsigned int id, char *who,
 
 found:
 	/* open device, this may change opt's device */
-	if (!opt_ref(s->opt))
+	if (!opt_ref(opt))
 		return NULL;
 	s->opt = opt;
 	s->ops = ops;
