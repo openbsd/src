@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1object.c,v 1.3 2022/03/05 14:16:13 jsing Exp $ */
+/* $OpenBSD: asn1object.c,v 1.4 2022/03/15 18:29:12 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -453,7 +453,10 @@ asn1_object_txt_test(void)
 		goto failed;
 	}
 
-	BIO_reset(bio);
+	if ((ret = BIO_reset(bio)) <= 0) {
+		fprintf(stderr, "FAIL: BIO_reset failed: ret = %d\n", ret);
+		goto failed;
+	}
 	ret = i2a_ASN1_OBJECT(bio, aobj);
 	if (ret < 0 || (unsigned long)ret != strlen(obj_txt)) {
 		fprintf(stderr, "FAIL: i2a_ASN1_OBJECT() returned %d, "
