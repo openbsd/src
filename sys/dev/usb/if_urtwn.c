@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.98 2021/10/04 01:33:42 kevlo Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.99 2022/03/15 09:23:01 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1448,7 +1448,7 @@ urtwn_tx_fill_desc(struct urtwn_softc *sc, uint8_t **txdp, struct mbuf *m,
 {
 	struct r92c_tx_desc_usb *txd;
 	struct ieee80211com *ic = &sc->sc_sc.sc_ic;
-	uint8_t raid, type;
+	uint8_t raid, type, rtsrate;
 	uint32_t pktlen;
 
 	txd = (struct r92c_tx_desc_usb *)*txdp;
@@ -1507,16 +1507,20 @@ urtwn_tx_fill_desc(struct urtwn_softc *sc, uint8_t **txdp, struct mbuf *m,
 		}
 		txd->txdw5 |= htole32(0x0001ff00);
 
+		if (ic->ic_curmode == IEEE80211_MODE_11B)
+			rtsrate = 0; /* CCK1 */
+		else
+			rtsrate = 8; /* OFDM24 */
+
 		if (sc->sc_sc.chip & RTWN_CHIP_88E) {
 			/* Use AMRR */
 			txd->txdw4 |= htole32(R92C_TXDW4_DRVRATE);
-			txd->txdw4 |= htole32(SM(R92C_TXDW4_RTSRATE,
-			    ni->ni_txrate));
+			txd->txdw4 |= htole32(SM(R92C_TXDW4_RTSRATE, rtsrate));
 			txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE,
 			    ni->ni_txrate));
 		} else {
-			/* Send RTS at OFDM24 and data at OFDM54. */
-			txd->txdw4 |= htole32(SM(R92C_TXDW4_RTSRATE, 8));
+			/* Send data at OFDM54. */
+			txd->txdw4 |= htole32(SM(R92C_TXDW4_RTSRATE, rtsrate));
 			txd->txdw5 |= htole32(SM(R92C_TXDW5_DATARATE, 11));
 		}
 	} else {
@@ -1600,7 +1604,7 @@ urtwn_tx_fill_desc_gen2(struct urtwn_softc *sc, uint8_t **txdp, struct mbuf *m,
 
 		/* Use AMRR */
 		txd->txdw3 |= htole32(R92E_TXDW3_DRVRATE);
-		txd->txdw4 |= htole32(SM(R92E_TXDW4_RTSRATE, ni->ni_txrate));
+		txd->txdw4 |= htole32(SM(R92E_TXDW4_RTSRATE, 8));
 		txd->txdw4 |= htole32(SM(R92E_TXDW4_DATARATE, ni->ni_txrate));
 	} else {
 		txd->txdw1 |= htole32(
