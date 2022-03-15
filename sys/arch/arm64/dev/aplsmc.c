@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.9 2022/03/02 12:44:48 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.10 2022/03/15 18:46:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -37,22 +37,23 @@
 
 extern void (*cpuresetfn)(void);
 
+/* SMC mailbox endpoint */
 #define SMC_EP			32
 
+/* SMC commands */
 #define SMC_READ_KEY		0x10
 #define SMC_WRITE_KEY		0x11
 #define SMC_GET_KEY_BY_INDEX	0x12
 #define SMC_GET_KEY_INFO	0x13
 #define SMC_GET_SRAM_ADDR	0x17
+#define  SMC_SRAM_SIZE		0x4000
 
+/* SMC errors */
 #define SMC_ERROR(d)		((d) & 0xff)
 #define SMC_OK			0x00
 #define SMC_KEYNOTFOUND		0x84
 
-#define SMC_SRAM_SIZE		0x4000
-
-#define SMC_GPIO_CMD_OUTPUT	(0x01 << 24)
-
+/* SMC keys */
 #define SMC_KEY(s)	((s[0] << 24) | (s[1] << 16) | (s[2] << 8) | s[3])
 
 struct smc_key_info {
@@ -60,6 +61,13 @@ struct smc_key_info {
 	uint8_t		type[4];
 	uint8_t		flags;
 };
+
+/* SMC GPIO commands */
+#define SMC_GPIO_CMD_OUTPUT	(0x01 << 24)
+
+/* RTC related constants */
+#define RTC_OFFSET_LEN		6
+#define SMC_CLKM_LEN		6
 
 struct aplsmc_sensor {
 	const char	*key;
@@ -163,6 +171,7 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct aplsmc_softc *sc = (struct aplsmc_softc *)self;
 	struct fdt_attach_args *faa = aux;
+	uint8_t data[SMC_CLKM_LEN];
 	int error, node;
 #ifndef SMALL_KERNEL
 	int i;
@@ -221,8 +230,14 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 		gpio_controller_register(&sc->sc_gc);
 	}
 
+	/*
+	 * Only provide TODR implementation if the "CLKM" key is
+	 * supported by the SMC firmware.
+	 */
+	error = aplsmc_read_key(sc, SMC_KEY("CLKM"), &data, SMC_CLKM_LEN);
+
 	node = OF_getnodebyname(faa->fa_node, "rtc");
-	if (node) {
+	if (node && error == 0) {
 		sc->sc_rtc_node = node;
 		sc->sc_todr.cookie = sc;
 		sc->sc_todr.todr_gettime = aplsmc_gettime;
@@ -336,6 +351,16 @@ aplsmc_read_key(struct aplsmc_softc *sc, uint32_t key, void *data, size_t len)
 	error = aplsmc_wait_cmd(sc);
 	if (error)
 		return error;
+	switch (SMC_ERROR(sc->sc_data)) {
+	case SMC_OK:
+		break;
+	case SMC_KEYNOTFOUND:
+		return EINVAL;
+		break;
+	default:
+		return EIO;
+		break;
+	}
 
 	len = min(len, (sc->sc_data >> 16) & 0xffff);
 	if (len > sizeof(uint32_t)) {
@@ -506,9 +531,6 @@ aplsmc_set_pin(void *cookie, uint32_t *cells, int val)
 
 	aplsmc_write_key(sc, key, &data, sizeof(data));
 }
-
-#define RTC_OFFSET_LEN	6
-#define SMC_CLKM_LEN	6
 
 int
 aplsmc_gettime(struct todr_chip_handle *handle, struct timeval *tv)
