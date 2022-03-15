@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.75 2022/03/13 13:28:09 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.76 2022/03/15 08:12:53 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1087,14 +1087,21 @@ sub run
 {
 	my ($self, $state) = @_;
 
-	my @list = installed_packages();
-	$self->sanity_check($state, \@list);
-	$self->dependencies_check($state, \@list);
+	my $list = [installed_packages()];
+
+	my $list2;
+	if (@ARGV != 0) {
+		$list2 = \@ARGV;
+	} else {
+		$list2 = $list;
+	}
+	$self->sanity_check($state, $list);
+	$self->dependencies_check($state, $list);
 	$state->log->dump;
-	$self->reverse_dependencies_check($state, \@list);
+	$self->reverse_dependencies_check($state, $list);
 	$state->log->dump;
 	if ($state->{quick} < 2) {
-		$self->package_files_check($state, \@list);
+		$self->package_files_check($state, $list2);
 		$state->log->dump;
 	}
 	if ($state->{filesystem}) {
@@ -1109,9 +1116,6 @@ sub parse_and_run
 
 	my $state = OpenBSD::PkgCheck::State->new($cmd);
 	$state->handle_options;
-	if (@ARGV != 0) {
-		$state->usage;
-	}
 	lock_db(0, $state) unless $state->{subst}->value('nolock');
 	$self->run($state);
 	return 0;
