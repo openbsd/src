@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.77 2022/02/04 16:34:15 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.78 2022/03/16 11:44:36 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -485,7 +485,7 @@ IPAddressFamily_find_in_parent(IPAddrBlocks *parent, IPAddressFamily *child_af)
 {
 	int index;
 
-	sk_IPAddressFamily_set_cmp_func(parent, IPAddressFamily_cmp);
+	(void)sk_IPAddressFamily_set_cmp_func(parent, IPAddressFamily_cmp);
 
 	if ((index = sk_IPAddressFamily_find(parent, child_af)) < 0)
 		return NULL;
@@ -1049,10 +1049,12 @@ make_prefix_or_range(IPAddrBlocks *addr, const unsigned afi,
 
 	switch (afi) {
 	case IANA_AFI_IPV4:
-		sk_IPAddressOrRange_set_cmp_func(aors, v4IPAddressOrRange_cmp);
+		(void)sk_IPAddressOrRange_set_cmp_func(aors,
+		    v4IPAddressOrRange_cmp);
 		break;
 	case IANA_AFI_IPV6:
-		sk_IPAddressOrRange_set_cmp_func(aors, v6IPAddressOrRange_cmp);
+		(void)sk_IPAddressOrRange_set_cmp_func(aors,
+		    v6IPAddressOrRange_cmp);
 		break;
 	}
 
@@ -1349,7 +1351,7 @@ IPAddressOrRanges_canonize(IPAddressOrRanges *aors, const unsigned afi)
 		if (!make_addressRange(&merged, a_min, b_max, afi, length))
 			return 0;
 		sk_IPAddressOrRange_set(aors, i, merged);
-		sk_IPAddressOrRange_delete(aors, i + 1);
+		(void)sk_IPAddressOrRange_delete(aors, i + 1);
 		IPAddressOrRange_free(a);
 		IPAddressOrRange_free(b);
 		i--;
@@ -1394,7 +1396,7 @@ X509v3_addr_canonize(IPAddrBlocks *addr)
 			return 0;
 	}
 
-	sk_IPAddressFamily_set_cmp_func(addr, IPAddressFamily_cmp);
+	(void)sk_IPAddressFamily_set_cmp_func(addr, IPAddressFamily_cmp);
 	sk_IPAddressFamily_sort(addr);
 
 	return X509v3_addr_is_canonical(addr);
