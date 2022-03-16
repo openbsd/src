@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventvar.h,v 1.13 2022/02/08 08:56:41 visa Exp $	*/
+/*	$OpenBSD: eventvar.h,v 1.14 2022/03/16 14:38:43 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -32,6 +32,7 @@
 #define _SYS_EVENTVAR_H_
 
 #include <sys/mutex.h>
+#include <sys/refcnt.h>
 #include <sys/task.h>
 
 #define KQ_NEVENTS	8		/* minimize copy{in,out} calls */
@@ -47,7 +48,7 @@ struct kqueue {
 	struct		mutex kq_lock;		/* lock for queue access */
 	TAILQ_HEAD(, knote) kq_head;		/* [q] list of pending event */
 	int		kq_count;		/* [q] # of pending events */
-	u_int		kq_refs;		/* [a] # of references */
+	struct		refcnt kq_refcnt;	/* [a] # of references */
 	struct		selinfo kq_sel;
 	struct		filedesc *kq_fdp;	/* [I] fd table of this kq */
 

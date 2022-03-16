@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.183 2022/02/22 01:15:01 guenther Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.184 2022/03/16 14:38:43 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -199,7 +199,7 @@ const struct filterops *const sysfilt_ops[] = {
 void
 KQREF(struct kqueue *kq)
 {
-	atomic_inc_int(&kq->kq_refs);
+	refcnt_take(&kq->kq_refcnt);
 }
 
 void
@@ -207,7 +207,7 @@ KQRELE(struct kqueue *kq)
 {
 	struct filedesc *fdp;
 
-	if (atomic_dec_int_nv(&kq->kq_refs) > 0)
+	if (refcnt_rele(&kq->kq_refcnt) == 0)
 		return;
 
 	fdp = kq->kq_fdp;
@@ -837,7 +837,7 @@ kqpoll_exit(void)
 
 	kqueue_purge(p, p->p_kq);
 	kqueue_terminate(p, p->p_kq);
-	KASSERT(p->p_kq->kq_refs == 1);
+	KASSERT(p->p_kq->kq_refcnt.r_refs == 1);
 	KQRELE(p->p_kq);
 	p->p_kq = NULL;
 }
@@ -848,7 +848,7 @@ kqueue_alloc(struct filedesc *fdp)
 	struct kqueue *kq;
 
 	kq = pool_get(&kqueue_pool, PR_WAITOK | PR_ZERO);
-	kq->kq_refs = 1;
+	refcnt_init(&kq->kq_refcnt);
 	kq->kq_fdp = fdp;
 	TAILQ_INIT(&kq->kq_head);
 	mtx_init(&kq->kq_lock, IPL_HIGH);
