@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.121 2022/03/15 17:59:39 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.122 2022/03/16 17:03:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -463,7 +463,7 @@ PRT_uuid_to_typename(const struct uuid *uuid)
 	static char		 typename[UUID_STR_LEN + 1];
 	const struct gpt_type	*gt;
 	char			*uuidstr;
-	int			 status;
+	uint32_t		 status;
 
 	memset(typename, 0, sizeof(typename));
 
@@ -496,7 +496,8 @@ struct uuid *
 PRT_type_to_uuid(const int type)
 {
 	static struct uuid	guid;
-	int			i, entries, status = uuid_s_ok;
+	int			i, entries;
+	uint32_t		status = uuid_s_ok;
 
 	memset(&guid, 0, sizeof(guid));
 

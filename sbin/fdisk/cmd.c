@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.153 2022/03/15 17:59:39 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.154 2022/03/16 17:03:13 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -277,7 +277,7 @@ gsetpid(const int pn)
 {
 	struct uuid		 gp_type, gp_guid;
 	struct gpt_partition	*gg;
-	int			 status;
+	uint32_t		 status;
 
 	gg = &gp[pn];
 
@@ -606,7 +606,7 @@ ask_uuid(const struct uuid *olduuid)
 	static struct uuid	 uuid;
 	char			 lbuf[100];
 	char			*dflt = NULL;
-	int			 status;
+	uint32_t		 status;
 	int			 num = 0;
 
 	uuid = *olduuid;

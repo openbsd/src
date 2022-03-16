@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.60 2022/03/15 17:59:39 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.61 2022/03/16 17:03:13 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -307,7 +307,8 @@ GPT_print(const char *units, const int verbosity)
 	const int		 secsize = dl.d_secsize;
 	char			*guidstr = NULL;
 	double			 size;
-	int			 i, status;
+	int			 i;
+	uint32_t		 status;
 
 #ifdef	DEBUG
 	char			*p;
@@ -392,7 +393,7 @@ GPT_print_part(const int n, const char *units, const int verbosity)
 	char			*guidstr = NULL;
 	double			 size;
 	uint64_t		 sectors;
-	int			 status;
+	uint32_t		 status;
 
 	uuid_dec_le(&partn->gp_type, &guid);
 	sectors = letoh64(partn->gp_lba_end) - letoh64(partn->gp_lba_start) + 1;
