@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2022/03/15 16:28:42 tb Exp $
+#	$OpenBSD: Makefile,v 1.10 2022/03/16 12:37:44 bluhm Exp $
 
 .include "../../Makefile.inc"
 
@@ -27,7 +27,7 @@ run-bn_mod_exp2_mont: bn_mod_exp2_mont
 	./bn_mod_exp2_mont
 
 REGRESS_TARGETS += run-bn_mod_sqrt
-run-bn_mod_sqrt: bn_mod_exp2_mont
+run-bn_mod_sqrt: bn_mod_sqrt
 	./bn_mod_sqrt
 
 REGRESS_TARGETS += run-bn_to_string
