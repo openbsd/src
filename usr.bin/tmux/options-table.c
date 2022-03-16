@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.159 2022/03/08 18:31:46 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.160 2022/03/16 17:00:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -880,6 +880,13 @@ const struct options_table_entry options_table[] = {
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
 	  .text = "Style of the marked line in copy mode."
+	},
+
+	{ .name = "fill-character",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "",
+	  .text = "Character used to fill unused parts of window."
 	},
 
 	{ .name = "main-pane-height",

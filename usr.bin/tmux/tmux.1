@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.882 2022/03/08 18:31:46 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.883 2022/03/16 17:00:17 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 8 2022 $
+.Dd $Mdocdate: March 16 2022 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4113,6 +4113,9 @@ Set clock colour.
 .Op Ic 12 | 24
 .Xc
 Set clock hour format.
+.Pp
+.It Ic fill-character Ar character
+Set the character used to fill areas of the terminal unused by a window.
 .Pp
 .It Ic main-pane-height Ar height
 .It Ic main-pane-width Ar width

@@ -1,4 +1,4 @@
-/* $OpenBSD: options.c,v 1.67 2021/11/03 13:37:17 nicm Exp $ */
+/* $OpenBSD: options.c,v 1.68 2022/03/16 17:00:17 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1108,6 +1108,8 @@ options_push_changes(const char *name)
 	struct window_pane	*wp;
 	int			 c;
 
+	log_debug("%s: %s", __func__, name);
+
 	if (strcmp(name, "automatic-rename") == 0) {
 		RB_FOREACH(w, windows, &windows) {
 			if (w->active == NULL)
@@ -1129,6 +1131,10 @@ options_push_changes(const char *name)
 			    name), &wp->screen->default_cstyle,
 			    &wp->screen->default_mode);
 		}
+	}
+	if (strcmp(name, "fill-character") == 0) {
+		RB_FOREACH(w, windows, &windows)
+			window_set_fill_character(w);
 	}
 	if (strcmp(name, "key-table") == 0) {
 		TAILQ_FOREACH(loop, &clients, entry)
