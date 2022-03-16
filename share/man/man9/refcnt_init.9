@@ -1,4 +1,4 @@
-.\"	$OpenBSD: refcnt_init.9,v 1.1 2015/09/11 19:13:22 dlg Exp $
+.\"	$OpenBSD: refcnt_init.9,v 1.2 2022/03/16 14:13:01 visa Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 11 2015 $
+.Dd $Mdocdate: March 16 2022 $
 .Dt REFCNT_INIT 9
 .Os
 .Sh NAME
@@ -23,6 +23,8 @@
 .Nm refcnt_rele ,
 .Nm refcnt_rele_wake ,
 .Nm refcnt_finalize ,
+.Nm refcnt_shared ,
+.Nm refcnt_read ,
 .Nm REFCNT_INITIALIZER
 .Nd reference count API
 .Sh SYNOPSIS
@@ -37,6 +39,10 @@
 .Fn "refcnt_rele_wake" "struct refcnt *r"
 .Ft void
 .Fn "refcnt_finalize" "struct refcnt *r" "const char *wmesg"
+.Ft int
+.Fn "refcnt_shared" "struct refcnt *r"
+.Ft unsigned int
+.Fn "refcnt_read" "struct refcnt *r"
 .Fn "REFCNT_INITIALIZER"
 .Sh DESCRIPTION
 The refcnt API provides simple reference counters that can be used
@@ -68,14 +74,26 @@ There may only be one caller to
 per refcnt
 .Fa r .
 .Pp
+.Fn refcnt_shared
+tests if the object has multiple references.
+.Pp
+.Fn refcnt_read
+returns a snapshot of the counter value.
+Its use is discouraged,
+code should use
+.Fn refcnt_shared
+whenever possible.
+.Pp
 .Fn REFCNT_INITIALIZER
 initialises a declaration of a refcnt to 1.
 .Sh CONTEXT
 .Fn refcnt_init ,
 .Fn refcnt_take ,
 .Fn refcnt_rele ,
+.Fn refcnt_rele_wake ,
+.Fn refcnt_shared
 and
-.Fn refcnt_rele_wake
+.Fn refcnt_read
 can be called during autoconf, from process context, or from interrupt
 context.
 .Pp
@@ -85,3 +103,10 @@ can be called from process context.
 .Fn refcnt_rele
 returns a non-zero value if the last reference has been released,
 otherwise 0.
+.Pp
+.Fn refcnt_shared
+returns a non-zero value if the object has multiple references,
+otherwise 0.
+.Pp
+.Fn refcnt_read
+returns a snapshot of the counter value.

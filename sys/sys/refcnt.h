@@ -1,4 +1,4 @@
-/*	$OpenBSD: refcnt.h,v 1.5 2022/03/10 15:21:08 bluhm Exp $ */
+/*	$OpenBSD: refcnt.h,v 1.6 2022/03/16 14:13:01 visa Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -37,6 +37,8 @@ void	refcnt_take(struct refcnt *);
 int	refcnt_rele(struct refcnt *);
 void	refcnt_rele_wake(struct refcnt *);
 void	refcnt_finalize(struct refcnt *, const char *);
+int	refcnt_shared(struct refcnt *);
+unsigned int	refcnt_read(struct refcnt *);
 
 #endif /* _KERNEL */
 

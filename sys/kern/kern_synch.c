@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.183 2022/03/10 15:21:08 bluhm Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.184 2022/03/16 14:13:01 visa Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -850,6 +850,18 @@ refcnt_finalize(struct refcnt *r, const char *wmesg)
 		refcnt = atomic_load_int(&r->r_refs);
 		sleep_finish(&sls, refcnt);
 	}
+}
+
+int
+refcnt_shared(struct refcnt *r)
+{
+	return (atomic_load_int(&r->r_refs) > 1);
+}
+
+unsigned int
+refcnt_read(struct refcnt *r)
+{
+	return (atomic_load_int(&r->r_refs));
 }
 
 void
