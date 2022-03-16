@@ -586,7 +586,7 @@ cutest_udb.o: $(srcdir)/tpkg/cutest/cutest_udb.c config.h $(srcdir)/tpkg/cutest/
 cutest_udbrad.o: $(srcdir)/tpkg/cutest/cutest_udbrad.c config.h \
  $(srcdir)/tpkg/cutest/cutest.h $(srcdir)/udbradtree.h $(srcdir)/udb.h
 cutest_util.o: $(srcdir)/tpkg/cutest/cutest_util.c config.h $(srcdir)/tpkg/cutest/cutest.h \
- $(srcdir)/region-allocator.h $(srcdir)/util.h
+ $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/xfrd-tcp.h
 qtest.o: $(srcdir)/tpkg/cutest/qtest.c config.h $(srcdir)/tpkg/cutest/qtest.h $(srcdir)/buffer.h \
  $(srcdir)/region-allocator.h $(srcdir)/util.h $(srcdir)/query.h $(srcdir)/namedb.h $(srcdir)/dname.h $(srcdir)/buffer.h $(srcdir)/dns.h \
  $(srcdir)/radtree.h $(srcdir)/rbtree.h $(srcdir)/nsd.h $(srcdir)/edns.h $(srcdir)/packet.h $(srcdir)/tsig.h $(srcdir)/namedb.h $(srcdir)/util.h $(srcdir)/nsec3.h \

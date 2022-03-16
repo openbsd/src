@@ -156,12 +156,15 @@ xfrd_pipe_cmp(const void* a, const void* b)
 	return (uintptr_t)x < (uintptr_t)y ? -1 : 1;
 }
 
-struct xfrd_tcp_set* xfrd_tcp_set_create(struct region* region, const char *tls_cert_bundle)
+struct xfrd_tcp_set* xfrd_tcp_set_create(struct region* region, const char *tls_cert_bundle, int tcp_max, int tcp_pipeline)
 {
 	int i;
 	struct xfrd_tcp_set* tcp_set = region_alloc(region,
 		sizeof(struct xfrd_tcp_set));
 	memset(tcp_set, 0, sizeof(struct xfrd_tcp_set));
+	tcp_set->tcp_state = NULL;
+	tcp_set->tcp_max = tcp_max;
+	tcp_set->tcp_pipeline = tcp_pipeline;
 	tcp_set->tcp_count = 0;
 	tcp_set->tcp_waiting_first = 0;
 	tcp_set->tcp_waiting_last = 0;
@@ -180,25 +183,189 @@ struct xfrd_tcp_set* xfrd_tcp_set_create(struct region* region, const char *tls_
 	(void)tls_cert_bundle;
 	log_msg(LOG_INFO, "xfrd: No TLS 1.3 support - XFR-over-TLS not available");
 #endif
-	for(i=0; i<XFRD_MAX_TCP; i++)
-		tcp_set->tcp_state[i] = xfrd_tcp_pipeline_create(region);
+	tcp_set->tcp_state = region_alloc(region,
+		sizeof(*tcp_set->tcp_state)*tcp_set->tcp_max);
+	for(i=0; i<tcp_set->tcp_max; i++)
+		tcp_set->tcp_state[i] = xfrd_tcp_pipeline_create(region,
+			tcp_pipeline);
 	tcp_set->pipetree = rbtree_create(region, &xfrd_pipe_cmp);
 	return tcp_set;
 }
 
+static int pipeline_id_compare(const void* x, const void* y)
+{
+	struct xfrd_tcp_pipeline_id* a = (struct xfrd_tcp_pipeline_id*)x;
+	struct xfrd_tcp_pipeline_id* b = (struct xfrd_tcp_pipeline_id*)y;
+	if(a->id < b->id)
+		return -1;
+	if(a->id > b->id)
+		return 1;
+	return 0;
+}
+
+void pick_id_values(uint16_t* array, int num, int max)
+{
+	uint8_t inserted[65536];
+	int j, done;
+	if(num == 65536) {
+		/* all of them, loop and insert */
+		int i;
+		for(i=0; i<num; i++)
+			array[i] = (uint16_t)i;
+		return;
+	}
+	assert(max <= 65536);
+	/* This uses the Robert Floyd sampling algorithm */
+	/* keep track if values are already inserted, using the bitmap
+	 * in insert array */
+	memset(inserted, 0, sizeof(inserted[0])*max);
+	done=0;
+	for(j = max-num; j<max; j++) {
+		/* random generate creates from 0..arg-1 */
+		int t;
+		if(j+1 <= 1)
+			t = 0;
+		else	t = random_generate(j+1);
+		if(!inserted[t]) {
+			array[done++]=t;
+			inserted[t] = 1;
+		} else {
+			array[done++]=j;
+			inserted[j] = 1;
+		}
+	}
+}
+
+static void
+clear_pipeline_entry(struct xfrd_tcp_pipeline* tp, rbnode_type* node)
+{
+	struct xfrd_tcp_pipeline_id *n;
+	if(node == NULL || node == RBTREE_NULL)
+		return;
+	clear_pipeline_entry(tp, node->left);
+	node->left = NULL;
+	clear_pipeline_entry(tp, node->right);
+	node->right = NULL;
+	/* move the node into the free list */
+	n = (struct xfrd_tcp_pipeline_id*)node;
+	n->next_free = tp->pipe_id_free_list;
+	tp->pipe_id_free_list = n;
+}
+
+static void
+xfrd_tcp_pipeline_cleanup(struct xfrd_tcp_pipeline* tp)
+{
+	/* move entries into free list */
+	clear_pipeline_entry(tp, tp->zone_per_id->root);
+	/* clear the tree */
+	tp->zone_per_id->count = 0;
+	tp->zone_per_id->root = RBTREE_NULL;
+}
+
+static void
+xfrd_tcp_pipeline_init(struct xfrd_tcp_pipeline* tp)
+{
+	tp->key.node.key = tp;
+	tp->key.num_unused = tp->pipe_num;
+	tp->key.num_skip = 0;
+	tp->tcp_send_first = NULL;
+	tp->tcp_send_last = NULL;
+	xfrd_tcp_pipeline_cleanup(tp);
+	pick_id_values(tp->unused, tp->pipe_num, 65536);
+}
+
 struct xfrd_tcp_pipeline*
-xfrd_tcp_pipeline_create(region_type* region)
+xfrd_tcp_pipeline_create(region_type* region, int tcp_pipeline)
 {
 	int i;
 	struct xfrd_tcp_pipeline* tp = (struct xfrd_tcp_pipeline*)
 		region_alloc_zero(region, sizeof(*tp));
-	tp->key.num_unused = ID_PIPE_NUM;
-	assert(sizeof(tp->unused)/sizeof(tp->unused[0]) == ID_PIPE_NUM);
-	for(i=0; i<ID_PIPE_NUM; i++)
-		tp->unused[i] = (uint16_t)i;
+	if(tcp_pipeline < 0)
+		tcp_pipeline = 0;
+	if(tcp_pipeline > 65536)
+		tcp_pipeline = 65536; /* max 16 bit ID numbers */
+	tp->pipe_num = tcp_pipeline;
+	tp->key.num_unused = tp->pipe_num;
+	tp->zone_per_id = rbtree_create(region, &pipeline_id_compare);
+	tp->pipe_id_free_list = NULL;
+	for(i=0; i<tp->pipe_num; i++) {
+		struct xfrd_tcp_pipeline_id* n = (struct xfrd_tcp_pipeline_id*)
+			region_alloc_zero(region, sizeof(*n));
+		n->next_free = tp->pipe_id_free_list;
+		tp->pipe_id_free_list = n;
+	}
+	tp->unused = (uint16_t*)region_alloc_zero(region,
+		sizeof(tp->unused[0])*tp->pipe_num);
 	tp->tcp_r = xfrd_tcp_create(region, QIOBUFSZ);
 	tp->tcp_w = xfrd_tcp_create(region, 512);
+	xfrd_tcp_pipeline_init(tp);
 	return tp;
+}
+
+static struct xfrd_zone*
+xfrd_tcp_pipeline_lookup_id(struct xfrd_tcp_pipeline* tp, uint16_t id)
+{
+	struct xfrd_tcp_pipeline_id key;
+	rbnode_type* n;
+	memset(&key, 0, sizeof(key));
+	key.node.key = &key;
+	key.id = id;
+	n = rbtree_search(tp->zone_per_id, &key);
+	if(n && n != RBTREE_NULL) {
+		return ((struct xfrd_tcp_pipeline_id*)n)->zone;
+	}
+	return NULL;
+}
+
+static void
+xfrd_tcp_pipeline_insert_id(struct xfrd_tcp_pipeline* tp, uint16_t id,
+	struct xfrd_zone* zone)
+{
+	struct xfrd_tcp_pipeline_id* n;
+	/* because there are tp->pipe_num preallocated entries, and we have
+	 * only tp->pipe_num id values, the list cannot be empty now. */
+	assert(tp->pipe_id_free_list != NULL);
+	/* pick up next free xfrd_tcp_pipeline_id node */
+	n = tp->pipe_id_free_list;
+	tp->pipe_id_free_list = n->next_free;
+	n->next_free = NULL;
+	memset(&n->node, 0, sizeof(n->node));
+	n->node.key = n;
+	n->id = id;
+	n->zone = zone;
+	rbtree_insert(tp->zone_per_id, &n->node);
+}
+
+static void
+xfrd_tcp_pipeline_remove_id(struct xfrd_tcp_pipeline* tp, uint16_t id)
+{
+	struct xfrd_tcp_pipeline_id key;
+	rbnode_type* node;
+	memset(&key, 0, sizeof(key));
+	key.node.key = &key;
+	key.id = id;
+	node = rbtree_delete(tp->zone_per_id, &key);
+	if(node && node != RBTREE_NULL) {
+		struct xfrd_tcp_pipeline_id* n =
+			(struct xfrd_tcp_pipeline_id*)node;
+		n->next_free = tp->pipe_id_free_list;
+		tp->pipe_id_free_list = n;
+	}
+}
+
+static void
+xfrd_tcp_pipeline_skip_id(struct xfrd_tcp_pipeline* tp, uint16_t id)
+{
+	struct xfrd_tcp_pipeline_id key;
+	rbnode_type* n;
+	memset(&key, 0, sizeof(key));
+	key.node.key = &key;
+	key.id = id;
+	n = rbtree_search(tp->zone_per_id, &key);
+	if(n && n != RBTREE_NULL) {
+		struct xfrd_tcp_pipeline_id* zid = (struct xfrd_tcp_pipeline_id*)n;
+		zid->zone = TCP_NULL_SKIP;
+	}
 }
 
 void
@@ -346,7 +513,7 @@ pipeline_find(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 	struct xfrd_tcp_pipeline_key k, *key=&k;
 	key->node.key = key;
 	key->ip_len = xfrd_acl_sockaddr_to(zone->master, &key->ip);
-	key->num_unused = ID_PIPE_NUM;
+	key->num_unused = set->tcp_pipeline;
 	/* lookup existing tcp transfer to the master with highest unused */
 	if(rbtree_find_less_equal(set->pipetree, key, &sme)) {
 		/* exact match, strange, fully unused tcp cannot be open */
@@ -407,11 +574,12 @@ tcp_pipe_sendlist_popfirst(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 
 /* remove zone from tcp pipe ID map */
 static void
-tcp_pipe_id_remove(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
+tcp_pipe_id_remove(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone,
+	int alsotree)
 {
-	assert(tp->key.num_unused < ID_PIPE_NUM && tp->key.num_unused >= 0);
-	assert(tp->id[zone->query_id] == zone);
-	tp->id[zone->query_id] = NULL;
+	assert(tp->key.num_unused < tp->pipe_num && tp->key.num_unused >= 0);
+	if(alsotree)
+		xfrd_tcp_pipeline_remove_id(tp, zone->query_id);
 	tp->unused[tp->key.num_unused] = zone->query_id;
 	/* must remove and re-add for sort order in tree */
 	(void)rbtree_delete(xfrd->tcp_set->pipetree, &tp->key.node);
@@ -423,22 +591,25 @@ tcp_pipe_id_remove(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 static void
 xfrd_tcp_pipe_stop(struct xfrd_tcp_pipeline* tp)
 {
-	int i, conn = -1;
-	assert(tp->key.num_unused < ID_PIPE_NUM); /* at least one 'in-use' */
-	assert(ID_PIPE_NUM - tp->key.num_unused > tp->key.num_skip); /* at least one 'nonskip' */
+	struct xfrd_tcp_pipeline_id* zid;
+	int conn = -1;
+	assert(tp->key.num_unused < tp->pipe_num); /* at least one 'in-use' */
+	assert(tp->pipe_num - tp->key.num_unused > tp->key.num_skip); /* at least one 'nonskip' */
 	/* need to retry for all the zones connected to it */
 	/* these could use different lists and go to a different nextmaster*/
-	for(i=0; i<ID_PIPE_NUM; i++) {
-		if(tp->id[i] && tp->id[i] != TCP_NULL_SKIP) {
-			xfrd_zone_type* zone = tp->id[i];
+	RBTREE_FOR(zid, struct xfrd_tcp_pipeline_id*, tp->zone_per_id) {
+		xfrd_zone_type* zone = zid->zone;
+		if(zone && zone != TCP_NULL_SKIP) {
+			assert(zone->query_id == zid->id);
 			conn = zone->tcp_conn;
 			zone->tcp_conn = -1;
 			zone->tcp_waiting = 0;
 			tcp_pipe_sendlist_remove(tp, zone);
-			tcp_pipe_id_remove(tp, zone);
+			tcp_pipe_id_remove(tp, zone, 0);
 			xfrd_set_refresh_now(zone);
 		}
 	}
+	xfrd_tcp_pipeline_cleanup(tp);
 	assert(conn != -1);
 	/* now release the entire tcp pipe */
 	xfrd_tcp_pipe_release(xfrd->tcp_set, tp, conn);
@@ -508,7 +679,7 @@ pipeline_setup_new_zone(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 	idx = random_generate(tp->key.num_unused);
 	zone->query_id = tp->unused[idx];
 	tp->unused[idx] = tp->unused[tp->key.num_unused-1];
-	tp->id[zone->query_id] = zone;
+	xfrd_tcp_pipeline_insert_id(tp, zone->query_id, zone);
 	/* decrement unused counter, and fixup tree */
 	(void)rbtree_delete(set->pipetree, &tp->key.node);
 	tp->key.num_unused--;
@@ -538,12 +709,12 @@ xfrd_tcp_obtain(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 	assert(zone->tcp_conn == -1);
 	assert(zone->tcp_waiting == 0);
 
-	if(set->tcp_count < XFRD_MAX_TCP) {
+	if(set->tcp_count < set->tcp_max) {
 		int i;
 		assert(!set->tcp_waiting_first);
 		set->tcp_count ++;
 		/* find a free tcp_buffer */
-		for(i=0; i<XFRD_MAX_TCP; i++) {
+		for(i=0; i<set->tcp_max; i++) {
 			if(set->tcp_state[i]->tcp_r->fd == -1) {
 				zone->tcp_conn = i;
 				break;
@@ -568,15 +739,7 @@ xfrd_tcp_obtain(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 			return;
 		}
 		/* ip and ip_len set by tcp_open */
-		tp->key.node.key = tp;
-		tp->key.num_unused = ID_PIPE_NUM;
-		tp->key.num_skip = 0;
-		tp->tcp_send_first = NULL;
-		tp->tcp_send_last = NULL;
-		memset(tp->id, 0, sizeof(tp->id));
-		for(i=0; i<ID_PIPE_NUM; i++) {
-			tp->unused[i] = i;
-		}
+		xfrd_tcp_pipeline_init(tp);
 
 		/* insert into tree */
 		(void)rbtree_insert(set->pipetree, &tp->key.node);
@@ -590,7 +753,7 @@ xfrd_tcp_obtain(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 		int i;
 		if(zone->zone_handler.ev_fd != -1)
 			xfrd_udp_release(zone);
-		for(i=0; i<XFRD_MAX_TCP; i++) {
+		for(i=0; i<set->tcp_max; i++) {
 			if(set->tcp_state[i] == tp)
 				zone->tcp_conn = i;
 		}
@@ -602,7 +765,7 @@ xfrd_tcp_obtain(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 
 	/* wait, at end of line */
 	DEBUG(DEBUG_XFRD,2, (LOG_INFO, "xfrd: max number of tcp "
-		"connections (%d) reached.", XFRD_MAX_TCP));
+		"connections (%d) reached.", set->tcp_max));
 	zone->tcp_waiting_next = 0;
 	zone->tcp_waiting_prev = set->tcp_waiting_last;
 	zone->tcp_waiting = 1;
@@ -1312,7 +1475,7 @@ xfrd_tcp_read(struct xfrd_tcp_pipeline* tp)
 		tcp_conn_ready_for_reading(tcp);
 		return;
 	}
-	zone = tp->id[ID(tcp->packet)];
+	zone = xfrd_tcp_pipeline_lookup_id(tp, ID(tcp->packet));
 	if(!zone || zone == TCP_NULL_SKIP) {
 		/* no zone for this id? skip it */
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO,
@@ -1333,7 +1496,7 @@ xfrd_tcp_read(struct xfrd_tcp_pipeline* tp)
 			break;
 		case xfrd_packet_newlease:
 			/* set to skip if more packets with this ID */
-			tp->id[zone->query_id] = TCP_NULL_SKIP;
+			xfrd_tcp_pipeline_skip_id(tp, zone->query_id);
 			tp->key.num_skip++;
 			/* fall through to remove zone from tp */
 			/* fallthrough */
@@ -1356,7 +1519,7 @@ xfrd_tcp_read(struct xfrd_tcp_pipeline* tp)
 		case xfrd_packet_tcp:
 		default:
 			/* set to skip if more packets with this ID */
-			tp->id[zone->query_id] = TCP_NULL_SKIP;
+			xfrd_tcp_pipeline_skip_id(tp, zone->query_id);
 			tp->key.num_skip++;
 			xfrd_tcp_release(xfrd->tcp_set, zone);
 			/* query next server */
@@ -1380,8 +1543,8 @@ xfrd_tcp_release(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 	/* remove from tcp_send list */
 	tcp_pipe_sendlist_remove(tp, zone);
 	/* remove it from the ID list */
-	if(tp->id[zone->query_id] != TCP_NULL_SKIP)
-		tcp_pipe_id_remove(tp, zone);
+	if(xfrd_tcp_pipeline_lookup_id(tp, zone->query_id) != TCP_NULL_SKIP)
+		tcp_pipe_id_remove(tp, zone, 1);
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: released tcp pipe now %d unused",
 		tp->key.num_unused));
 	/* if pipe was full, but no more, then see if waiting element is
@@ -1410,7 +1573,7 @@ xfrd_tcp_release(struct xfrd_tcp_set* set, xfrd_zone_type* zone)
 	}
 
 	/* if all unused, or only skipped leftover, close the pipeline */
-	if(tp->key.num_unused >= ID_PIPE_NUM || tp->key.num_skip >= ID_PIPE_NUM - tp->key.num_unused)
+	if(tp->key.num_unused >= tp->pipe_num || tp->key.num_skip >= tp->pipe_num - tp->key.num_unused)
 		xfrd_tcp_pipe_release(set, tp, conn);
 }
 
@@ -1446,9 +1609,7 @@ xfrd_tcp_pipe_release(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 	/* a waiting zone can use the free tcp slot (to another server) */
 	/* if that zone fails to set-up or connect, we try to start the next
 	 * waiting zone in the list */
-	while(set->tcp_count == XFRD_MAX_TCP && set->tcp_waiting_first) {
-		int i;
-
+	while(set->tcp_count == set->tcp_max && set->tcp_waiting_first) {
 		/* pop first waiting process */
 		xfrd_zone_type* zone = set->tcp_waiting_first;
 		/* start it */
@@ -1467,15 +1628,7 @@ xfrd_tcp_pipe_release(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 		}
 		/* re-init this tcppipe */
 		/* ip and ip_len set by tcp_open */
-		tp->key.node.key = tp;
-		tp->key.num_unused = ID_PIPE_NUM;
-		tp->key.num_skip = 0;
-		tp->tcp_send_first = NULL;
-		tp->tcp_send_last = NULL;
-		memset(tp->id, 0, sizeof(tp->id));
-		for(i=0; i<ID_PIPE_NUM; i++) {
-			tp->unused[i] = i;
-		}
+		xfrd_tcp_pipeline_init(tp);
 
 		/* insert into tree */
 		(void)rbtree_insert(set->pipetree, &tp->key.node);

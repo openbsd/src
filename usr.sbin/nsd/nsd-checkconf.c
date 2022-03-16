@@ -433,6 +433,8 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_INT(tcp_timeout, o);
 		SERV_GET_INT(tcp_mss, o);
 		SERV_GET_INT(outgoing_tcp_mss, o);
+		SERV_GET_INT(xfrd_tcp_max, o);
+		SERV_GET_INT(xfrd_tcp_pipeline, o);
 		SERV_GET_INT(ipv4_edns_size, o);
 		SERV_GET_INT(ipv6_edns_size, o);
 		SERV_GET_INT(statistics, o);
@@ -581,6 +583,8 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\ttcp-timeout: %d\n", opt->tcp_timeout);
 	printf("\ttcp-mss: %d\n", opt->tcp_mss);
 	printf("\toutgoing-tcp-mss: %d\n", opt->outgoing_tcp_mss);
+	printf("\txfrd-tcp-max: %d\n", opt->xfrd_tcp_max);
+	printf("\txfrd-tcp-pipeline: %d\n", opt->xfrd_tcp_pipeline);
 	printf("\tipv4-edns-size: %d\n", (int) opt->ipv4_edns_size);
 	printf("\tipv6-edns-size: %d\n", (int) opt->ipv6_edns_size);
 	print_string_var("pidfile:", opt->pidfile);

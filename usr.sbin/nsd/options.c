@@ -91,6 +91,8 @@ nsd_options_create(region_type* region)
 	opt->port = UDP_PORT;
 /* deprecated?	opt->port = TCP_PORT; */
 	opt->reuseport = 0;
+	opt->xfrd_tcp_max = 128;
+	opt->xfrd_tcp_pipeline = 128;
 	opt->statistics = 0;
 	opt->chroot = 0;
 	opt->username = USER;

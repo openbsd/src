@@ -1,4 +1,4 @@
-.TH "nsd\-checkzone" "8" "Dec  9, 2021" "NLnet Labs" "nsd 4.3.9"
+.TH "nsd\-checkzone" "8" "Feb 17, 2022" "NLnet Labs" "nsd 4.4.0"
 .\" Copyright (c) 2014, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -25,6 +25,12 @@ The name of the zone to check, eg. "example.com".
 .TP
 .I zonefile
 The file to read, eg. "zones/example.com.zone.signed".
+.TP
+.B \-p
+Print the zone contents to stdout if the zone is ok. This prints the
+contents as it has been parsed, not literally a copy of the input, but
+as printed by the formatting routines in NSD, much like the nsd-control
+command write does.
 .SH "SEE ALSO"
 \fInsd\fR(8), \fInsd-checkconf\fR(8)
 .SH "AUTHORS"

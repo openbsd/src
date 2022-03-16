@@ -1149,7 +1149,7 @@ grow_extra_check(udb_alloc* alloc, uint64_t ge)
 	return ge;
 }
 
-/** see if free space is enogh to warrant shrink (while file is open) */
+/** see if free space is enough to warrant shrink (while file is open) */
 static int
 enough_free(udb_alloc* alloc)
 {

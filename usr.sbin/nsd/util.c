@@ -529,7 +529,7 @@ strtoserial(const char* nptr, const char** endptr)
 			i += (**endptr - '0');
 			break;
 		default:
-			break;
+			return 0;
 		}
 	}
 	serial += i;

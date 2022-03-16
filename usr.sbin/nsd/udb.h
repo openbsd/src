@@ -198,7 +198,7 @@ struct udb_base {
 	udb_ptr** ram_hash;
 	/** size of the current udb_ptr hashtable array */
 	size_t ram_size;
-	/** mask for the curren udb_ptr hashtable lookups */
+	/** mask for the current udb_ptr hashtable lookups */
 	int ram_mask;
 	/** number of ptrs in ram, used to decide when to grow */
 	size_t ram_num;

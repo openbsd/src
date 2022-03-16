@@ -43,7 +43,7 @@ SERVERNAME=nsd
 CLIENTNAME=nsd-control
 
 # validity period for certificates
-DAYS=3650
+DAYS=7200
 
 # size of keys in bits
 BITS=3072
@@ -86,9 +86,7 @@ fatal() {
 usage() {
     cat <<EOF
 usage: $0 OPTIONS
-
 OPTIONS
-
 -d <dir>  used directory to store keys and certificates (default: $DESTDIR)
 -h        show help notice
 -r        recreate certificates
@@ -99,7 +97,7 @@ OPTIND=1
 while getopts 'd:hr' arg; do
     case "$arg" in
       d) DESTDIR="$OPTARG" ;;
-      h) usage; exit 0 ;;
+      h) usage; exit 1 ;;
       r) RECREATE=1 ;;
       ?) fatal "'$arg' unknown option" ;;
     esac
@@ -122,13 +120,19 @@ if [ ! -f "$SVR_BASE.key" ]; then
 fi
 
 cat >server.cnf <<EOF
+[req]
 default_bits=$BITS
 default_md=$HASH
 prompt=no
 distinguished_name=req_distinguished_name
-
+x509_extensions=v3_ca
 [req_distinguished_name]
 commonName=$SERVERNAME
+[v3_ca]
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid:always,issuer:always
+basicConstraints=critical,CA:TRUE,pathlen:0
+subjectAltName=DNS:$SERVERNAME
 EOF
 
 [ -f server.cnf ] || fatal "cannot create openssl configuration"
@@ -159,9 +163,12 @@ default_bits=$BITS
 default_md=$HASH
 prompt=no
 distinguished_name=req_distinguished_name
-
+req_extensions=v3_req
 [req_distinguished_name]
 commonName=$CLIENTNAME
+[v3_req]
+basicConstraints=critical,CA:FALSE
+subjectAltName=DNS:$CLIENTNAME
 EOF
 
 [ -f client.cnf ] || fatal "cannot create openssl configuration"
@@ -183,6 +190,8 @@ if [ ! -f "$CTL_BASE.pem" -o $RECREATE -eq 1 ]; then
                   -CAkey "$SVR_BASE.key" \
                   -CAcreateserial \
                   -$HASH \
+                  -extfile client.cnf \
+                  -extensions v3_req \
                   -out "$CTL_BASE.pem"
 
     [ ! -f "CTL_BASE.pem" ] || fatal "cannot create signed client certificate"
@@ -198,7 +207,6 @@ chmod o-rw \
 cleanup
 
 echo "Setup success. Certificates created. Enable in nsd.conf file to use"
-
 
 # create trusted usage pem
 # openssl x509 -in $CTL_BASE.pem -addtrust clientAuth -out $CTL_BASE"_trust.pem"

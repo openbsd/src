@@ -112,6 +112,10 @@ struct nsd_options {
 	int minimal_responses;
 	int refuse_any;
 	int reuseport;
+	/* max number of xfrd tcp sockets */
+	int xfrd_tcp_max;
+	/* max number of simultaneous requests on xfrd tcp socket */
+	int xfrd_tcp_pipeline;
 
 	/* private key file for TLS */
 	char* tls_service_key;

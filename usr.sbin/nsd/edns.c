@@ -21,6 +21,12 @@
 #include "nsd.h"
 #include "query.h"
 
+#if !defined(HAVE_SSL) || !defined(HAVE_CRYPTO_MEMCMP)
+/* we need fixed time compare, pull it in from tsig.c */
+#define CRYPTO_memcmp memcmp_fixedtime
+int memcmp_fixedtime(const void *s1, const void *s2, size_t n);
+#endif
+
 void
 edns_init_data(edns_data_type *data, uint16_t max_length)
 {

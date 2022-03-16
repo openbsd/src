@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Dec  9, 2021" "NLnet Labs" "nsd 4.3.9"
+.TH "nsd.conf" "5" "Feb 17, 2022" "NLnet Labs" "nsd 4.4.0"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -298,12 +298,28 @@ negotiation between server and client.
 .TP
 .B outgoing\-tcp\-mss:\fR <number>
 Maximum segment size (MSS) of TCP socket for outgoing XFR request
-to other namesevers. Value lower than
+to other nameservers. Value lower than
 common MSS on Ethernet (1220 for example) will
 address path MTU problem.
 Note that not all platform supports socket option to set MSS (TCP_MAXSEG).
 Default is system default MSS determined by interface MTU and
 negotiation between NSD and other servers.
+.TP
+.B xfrd\-tcp\-max:\fR <number>
+Number of sockets for xfrd to use for outgoing zone transfers. Default 128.
+Increase it to allow more zone transfer sockets, like to 256.
+To save memory, this can be lowered, set it lower together with some other
+settings to have reduced memory footprint for NSD. xfrd\-tcp\-max: 32
+and xfrd\-tcp\-pipeline: 128 and rrl\-size: 1000
+.IP
+This reduces memory footprint, other memory usage is caused mainly by
+the server\-count setting, the number of server processes, and the
+tcp\-count setting, which keeps buffers per server process, and by the
+size of the zone data.
+.TP
+.B xfrd\-tcp\-pipeline:\fR <number>
+Number of simultaneous outgoing zone transfers that are possible on the
+tcp sockets of xfrd. Max is 65536, default is 128.
 .TP
 .B ipv4\-edns\-size:\fR <number>
 Preferred EDNS buffer size for IPv4.  Default 1232.
@@ -493,7 +509,7 @@ With the value 0 the rate is unlimited.
 .\" rrlend
 .TP
 .B answer\-cookie:\fR <yes or no>
-Enable to answer to requests containig DNS Cookies as specified in RFC7873.
+Enable to answer to requests containing DNS Cookies as specified in RFC7873.
 Default is yes.
 .TP
 .B cookie\-secret:\fR <128 bit hex string>

@@ -1,9 +1,54 @@
+10 February 2022: Wouter
+	- Tag for 4.4.0rc1 release.
+
+9 February 2022: Wouter
+	- Fix unit tests for nds-control-setup exit code and the
+	  xfrd-tcp-max default.
+
+7 February 2022: Wouter
+	- Merge #207 Sync nsd-control-setup with unbound-control-setup to
+	  generate certificates with SANs.
+
+28 January 2022: Wouter
+	- Fix #206: build with --without-ssl fails.
+
+27 January 2022: Wouter
+	- current code branch continues as version 4.4.0, because of added
+	  feature.
+
+26 January 2022: Wouter
+	- Merge #193: Lower memory usage of the XFRD process by default.
+	  Instead of preallocating all elements, they are allocated when used.
+	  There are options for managing the memory usage, defaults are the
+	  same as before. xfrd-tcp-max sets the number of sockets for tcp
+	  connections that xfrd can make to download zone contents. And
+	  xfrd-tcp-pipeline the number of simultaneous transfers over the
+	  same connection.
+
+12 January 2022: Wouter
+	- Fix to document nsd-checkzone -p in the man page for nsd-checkzone.
+
+7 January 2022: Wouter
+	- Fix to change file mode before changing file owner for the
+	  nsd-control unix socket file.
+
+3 January 2022: Wouter
+	- Merge #204 from jonathangray: correct some spelling mistakes.
+
+15 December 2021: Wouter
+	- Fix #200: nsd-checkzone succeeds even with incorrect serial in SOA
+	  record.
+
 2 December 2021: Wouter
 	- Fix socket_partitioning unit test for FreeBSD.
 	- Fix SVCB test to work around older dig with drill.
+	- Fix unit test to not syslog setlogin failures.
 
 1 December 2021: Wouter
 	- Set up for branch for 4.3.9 release.
+	  This became release 4.3.9 on 9 Dec 2021 and included the changes
+	  until the SVCB fix on 2 dec 2021, but not the setlogin fix.
+	  The main branch continues as 4.3.10.
 	- Fix unit tests for new answer-cookie default.
 
 30 November 2021: Wouter

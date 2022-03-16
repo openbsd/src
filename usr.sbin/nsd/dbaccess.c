@@ -491,7 +491,7 @@ namedb_open (const char* filename, struct nsd_options* opt)
 #endif /* HAVE_MMAP */
 }
 
-/** the the file mtime stat (or nonexist or error) */
+/** get the file mtime stat (or nonexist or error) */
 int
 file_get_mtime(const char* file, struct timespec* mtime, int* nonexist)
 {

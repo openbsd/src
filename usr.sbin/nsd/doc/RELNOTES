@@ -1,5 +1,28 @@
 NSD RELEASE NOTES
 
+4.4.0
+================
+FEATURES:
+	- Merge #193: Lower memory usage of the XFRD process by default.
+	  Instead of preallocating all elements, they are allocated when used.
+	  There are options for managing the memory usage, defaults are the
+	  same as before. xfrd-tcp-max sets the number of sockets for tcp
+	  connections that xfrd can make to download zone contents. And
+	  xfrd-tcp-pipeline the number of simultaneous transfers over the
+	  same connection.
+BUG FIXES:
+	- Fix #200: nsd-checkzone succeeds even with incorrect serial in SOA
+	  record.
+	- Merge #204 from jonathangray: correct some spelling mistakes.
+	- Fix to change file mode before changing file owner for the
+	  nsd-control unix socket file.
+	- Fix to document nsd-checkzone -p in the man page for nsd-checkzone.
+	- Fix #206: build with --without-ssl fails.
+	- Merge #207 Sync nsd-control-setup with unbound-control-setup to
+	  generate certificates with SANs.
+	- Fix unit tests for nds-control-setup exit code and the
+	  xfrd-tcp-max default.
+
 4.3.9
 ================
 BUG FIXES:

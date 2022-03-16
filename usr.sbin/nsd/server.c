@@ -367,7 +367,7 @@ static void report_tcp_fastopen_config() {
 	}
 	if (!(tcp_fastopen_value & TCP_FASTOPEN_SERVER_BIT_MASK)) {
 		log_msg(LOG_WARNING, "Error: TCP Fast Open support is available and configured in NSD by default.\n");
-		log_msg(LOG_WARNING, "However the kernel paramenters are not configured to support TCP_FASTOPEN in server mode.\n");
+		log_msg(LOG_WARNING, "However the kernel parameters are not configured to support TCP_FASTOPEN in server mode.\n");
 		log_msg(LOG_WARNING, "To enable TFO use the command:");
 		log_msg(LOG_WARNING, "  'sudo sysctl -w net.ipv4.tcp_fastopen=2' for pure server mode or\n");
 		log_msg(LOG_WARNING, "  'sudo sysctl -w net.ipv4.tcp_fastopen=3' for both client and server mode\n");

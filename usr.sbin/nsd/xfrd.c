@@ -196,7 +196,7 @@ xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active,
 	daemon_remote_attach(xfrd->nsd->rc, xfrd);
 #endif
 
-	xfrd->tcp_set = xfrd_tcp_set_create(xfrd->region, nsd->options->tls_cert_bundle);
+	xfrd->tcp_set = xfrd_tcp_set_create(xfrd->region, nsd->options->tls_cert_bundle, nsd->options->xfrd_tcp_max, nsd->options->xfrd_tcp_pipeline);
 	xfrd->tcp_set->tcp_timeout = nsd->tcp_timeout;
 #if !defined(HAVE_ARC4RANDOM) && !defined(HAVE_GETRANDOM)
 	srandom((unsigned long) getpid() * (unsigned long) time(NULL));

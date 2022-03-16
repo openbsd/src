@@ -436,15 +436,15 @@ add_open(struct daemon_remote* rc, struct nsd_options* cfg, const char* ip,
 		 */
 		if(fd != -1) {
 #ifdef HAVE_CHOWN
+			if(chmod(ip, (mode_t)(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)) == -1) {
+				VERBOSITY(3, (LOG_INFO, "cannot chmod control socket %s: %s", ip, strerror(errno)));
+			}
 			if (cfg->username && cfg->username[0] &&
 				nsd.uid != (uid_t)-1) {
 				if(chown(ip, nsd.uid, nsd.gid) == -1)
 					VERBOSITY(2, (LOG_INFO, "cannot chown %u.%u %s: %s",
 					  (unsigned)nsd.uid, (unsigned)nsd.gid,
 					  ip, strerror(errno)));
-			}
-			if(chmod(ip, (mode_t)(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP)) == -1) {
-				VERBOSITY(3, (LOG_INFO, "cannot chmod control socket %s: %s", ip, strerror(errno)));
 			}
 #else
 			(void)cfg;
