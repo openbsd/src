@@ -1,4 +1,4 @@
-/* $OpenBSD: a_string.c,v 1.6 2022/03/14 16:35:45 jsing Exp $ */
+/* $OpenBSD: a_string.c,v 1.7 2022/03/17 17:17:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,26 +159,33 @@ ASN1_STRING_set(ASN1_STRING *astr, const void *_data, int len)
 {
 	const char *data = _data;
 
-	if (len < 0) {
+	if (len == -1) {
+		size_t slen;
+
 		if (data == NULL)
 			return 0;
-		else
-			len = strlen(data);
-	}
-	if ((astr->length < len) || (astr->data == NULL)) {
-		unsigned char *tmp;
-		tmp = realloc(astr->data, len + 1);
-		if (tmp == NULL) {
-			ASN1error(ERR_R_MALLOC_FAILURE);
+
+		if ((slen = strlen(data)) > INT_MAX)
 			return 0;
-		}
-		astr->data = tmp;
+
+		len = (int)slen;
+	}
+
+	ASN1_STRING_clear(astr);
+
+	if (len < 0 || len >= INT_MAX)
+		return 0;
+
+	if ((astr->data = calloc(1, len + 1)) == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		return (0);
 	}
 	astr->length = len;
+
 	if (data != NULL) {
-		memmove(astr->data, data, len);
+		memcpy(astr->data, data, len);
+		astr->data[len] = '\0';
 	}
-	astr->data[astr->length] = '\0';
 
 	return 1;
 }
