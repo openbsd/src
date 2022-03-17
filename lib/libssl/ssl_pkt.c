@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.56 2022/03/14 16:49:35 jsing Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.57 2022/03/17 17:28:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -818,7 +818,10 @@ static int
 ssl3_read_handshake_unexpected(SSL *s)
 {
 	SSL3_RECORD_INTERNAL *rr = &s->s3->rrec;
-	int i;
+	uint32_t hs_msg_length;
+	uint8_t hs_msg_type;
+	CBS cbs;
+	int ret;
 
 	/*
 	 * We need four bytes of handshake data so we have a handshake message
@@ -846,99 +849,132 @@ ssl3_read_handshake_unexpected(SSL *s)
 	 * belongs in the client/server handshake code.
 	 */
 
-	/* If we are a client, check for an incoming 'Hello Request': */
-	if ((!s->server) && (s->s3->handshake_fragment_len >= 4) &&
-	    (s->s3->handshake_fragment[0] == SSL3_MT_HELLO_REQUEST) &&
-	    (s->session != NULL) && (s->session->cipher != NULL)) {
-		s->s3->handshake_fragment_len = 0;
+	/* Parse handshake message header. */
+	CBS_init(&cbs, s->s3->handshake_fragment, s->s3->handshake_fragment_len);
+	if (!CBS_get_u8(&cbs, &hs_msg_type))
+		return -1;
+	if (!CBS_get_u24(&cbs, &hs_msg_length))
+		return -1;
 
-		if ((s->s3->handshake_fragment[1] != 0) ||
-		    (s->s3->handshake_fragment[2] != 0) ||
-		    (s->s3->handshake_fragment[3] != 0)) {
+	if (hs_msg_type == SSL3_MT_HELLO_REQUEST) {
+		/*
+		 * Incoming HelloRequest messages should only be received by a
+		 * client. A server may send these at any time - a client should
+		 * ignore the message if received in the middle of a handshake.
+		 * See RFC 5246 sections 7.4 and 7.4.1.1.
+		 */
+		if (s->server) {
+			SSLerror(s, SSL_R_UNEXPECTED_MESSAGE);
+			ssl3_send_alert(s, SSL3_AL_FATAL,
+			     SSL_AD_UNEXPECTED_MESSAGE);
+			return -1;
+		}
+
+		if (hs_msg_length != 0) {
 			SSLerror(s, SSL_R_BAD_HELLO_REQUEST);
 			ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_DECODE_ERROR);
 			return -1;
 		}
 
 		ssl_msg_callback(s, 0, SSL3_RT_HANDSHAKE,
-		    s->s3->handshake_fragment, 4);
+		    s->s3->handshake_fragment, s->s3->handshake_fragment_len);
 
-		if (SSL_is_init_finished(s) &&
-		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) &&
-		    !s->s3->renegotiate) {
-			ssl3_renegotiate(s);
-			if (ssl3_renegotiate_check(s)) {
-				i = s->internal->handshake_func(s);
-				if (i < 0)
-					return (i);
-				if (i == 0) {
-					SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
-					return (-1);
-				}
+		s->s3->handshake_fragment_len = 0;
 
-				if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-					if (s->s3->rbuf.left == 0) {
-						ssl_force_want_read(s);
-						return (-1);
-					}
-				}
-			}
+		/*
+		 * It should be impossible to hit this, but keep the safety
+		 * harness for now...
+		 */
+		if (s->session == NULL || s->session->cipher == NULL)
+			return 1;
+
+		/*
+		 * Ignore this message if we're currently handshaking,
+		 * renegotiation is already pending or renegotiation is disabled
+		 * via flags.
+		 */
+		if (!SSL_is_init_finished(s) || s->s3->renegotiate ||
+		    (s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) != 0)
+			return 1;
+
+		if (!ssl3_renegotiate(s))
+			return 1;
+		if (!ssl3_renegotiate_check(s))
+			return 1;
+
+	} else if (hs_msg_type == SSL3_MT_CLIENT_HELLO) {
+		/*
+		 * Incoming ClientHello messages should only be received by a
+		 * server. A client may send these in response to server
+		 * initiated renegotiation (HelloRequest) or in order to
+		 * initiate renegotiation by the client. See RFC 5246 section
+		 * 7.4.1.2.
+		 */
+		if (!s->server) {
+			SSLerror(s, SSL_R_UNEXPECTED_MESSAGE);
+			ssl3_send_alert(s, SSL3_AL_FATAL,
+			     SSL_AD_UNEXPECTED_MESSAGE);
+			return -1;
 		}
-		/* we either finished a handshake or ignored the request,
-		 * now try again to obtain the (application) data we were asked for */
-		return 1;
-	}
 
-	/* Disallow client initiated renegotiation if configured. */
-	if (s->server && SSL_is_init_finished(s) &&
-	    s->s3->handshake_fragment_len >= 4 &&
-	    s->s3->handshake_fragment[0] == SSL3_MT_CLIENT_HELLO &&
-	    (s->internal->options & SSL_OP_NO_CLIENT_RENEGOTIATION)) {
-		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_NO_RENEGOTIATION);
+		/*
+		 * A client should not be sending a ClientHello unless we're not
+		 * currently handshaking.
+		 */
+		if (!SSL_is_init_finished(s)) {
+			SSLerror(s, SSL_R_UNEXPECTED_MESSAGE);
+			ssl3_send_alert(s, SSL3_AL_FATAL,
+			    SSL_AD_UNEXPECTED_MESSAGE);
+			return -1;
+		}
+
+		if ((s->internal->options & SSL_OP_NO_CLIENT_RENEGOTIATION) != 0) {
+			ssl3_send_alert(s, SSL3_AL_FATAL,
+			    SSL_AD_NO_RENEGOTIATION);
+			return -1;
+		}
+
+		if (s->session == NULL || s->session->cipher == NULL) {
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
+			return -1;
+		}
+
+		/* Client requested renegotiation but it is not permitted. */
+		if (!s->s3->send_connection_binding ||
+		    (s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS) != 0) {
+			ssl3_send_alert(s, SSL3_AL_WARNING,
+			    SSL_AD_NO_RENEGOTIATION);
+			return 1;
+		}
+
+		s->s3->hs.state = SSL_ST_ACCEPT;
+		s->internal->renegotiate = 1;
+		s->internal->new_session = 1;
+
+	} else {
+		SSLerror(s, SSL_R_UNEXPECTED_MESSAGE);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE);
 		return -1;
 	}
 
-	/* If we are a server and get a client hello when renegotiation isn't
-	 * allowed send back a no renegotiation alert and carry on.
-	 * WARNING: experimental code, needs reviewing (steve)
+	if ((ret = s->internal->handshake_func(s)) < 0)
+		return ret;
+	if (ret == 0) {
+		SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
+		return -1;
+	}
+
+	if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
+		if (s->s3->rbuf.left == 0) {
+			ssl_force_want_read(s);
+			return -1;
+		}
+	}
+
+	/*
+	 * We either finished a handshake or ignored the request, now try again
+	 * to obtain the (application) data we were asked for.
 	 */
-	if (s->server &&
-	    SSL_is_init_finished(s) &&
-	    !s->s3->send_connection_binding &&
-	    (s->s3->handshake_fragment_len >= 4) &&
-	    (s->s3->handshake_fragment[0] == SSL3_MT_CLIENT_HELLO) &&
-	    (s->session != NULL) && (s->session->cipher != NULL)) {
-		/*s->s3->handshake_fragment_len = 0;*/
-		rr->length = 0;
-		ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
-		return 1;
-	}
-
-	/* Unexpected handshake message (Client Hello, or protocol violation) */
-	if ((s->s3->handshake_fragment_len >= 4) && !s->internal->in_handshake) {
-		if (((s->s3->hs.state&SSL_ST_MASK) == SSL_ST_OK) &&
-		    !(s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)) {
-			s->s3->hs.state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
-			s->internal->renegotiate = 1;
-			s->internal->new_session = 1;
-		}
-		i = s->internal->handshake_func(s);
-		if (i < 0)
-			return (i);
-		if (i == 0) {
-			SSLerror(s, SSL_R_SSL_HANDSHAKE_FAILURE);
-			return (-1);
-		}
-
-		if (!(s->internal->mode & SSL_MODE_AUTO_RETRY)) {
-			if (s->s3->rbuf.left == 0) {
-				ssl_force_want_read(s);
-				return (-1);
-			}
-		}
-		return 1;
-	}
-
 	return 1;
 }
 
