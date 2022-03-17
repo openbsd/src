@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.387 2022/03/12 12:53:03 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.388 2022/03/17 17:22:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1434,7 +1434,7 @@ void ssl_free_wbio_buffer(SSL *s);
 
 int tls1_transcript_hash_init(SSL *s);
 int tls1_transcript_hash_update(SSL *s, const unsigned char *buf, size_t len);
-int tls1_transcript_hash_value(SSL *s, const unsigned char *out, size_t len,
+int tls1_transcript_hash_value(SSL *s, unsigned char *out, size_t len,
     size_t *outlen);
 void tls1_transcript_hash_free(SSL *s);
 

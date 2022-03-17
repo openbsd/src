@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_transcript.c,v 1.6 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: ssl_transcript.c,v 1.7 2022/03/17 17:22:16 jsing Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -69,7 +69,7 @@ tls1_transcript_hash_update(SSL *s, const unsigned char *buf, size_t len)
 }
 
 int
-tls1_transcript_hash_value(SSL *s, const unsigned char *out, size_t len,
+tls1_transcript_hash_value(SSL *s, unsigned char *out, size_t len,
     size_t *outlen)
 {
 	EVP_MD_CTX *mdctx = NULL;
@@ -90,7 +90,7 @@ tls1_transcript_hash_value(SSL *s, const unsigned char *out, size_t len,
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
-	if (!EVP_DigestFinal_ex(mdctx, (unsigned char *)out, &mdlen)) {
+	if (!EVP_DigestFinal_ex(mdctx, out, &mdlen)) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
