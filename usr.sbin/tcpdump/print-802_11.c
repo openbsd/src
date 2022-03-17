@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-802_11.c,v 1.41 2021/06/28 14:35:42 stsp Exp $	*/
+/*	$OpenBSD: print-802_11.c,v 1.42 2022/03/17 14:00:53 stsp Exp $	*/
 
 /*
  * Copyright (c) 2005 Reyk Floeter <reyk@openbsd.org>
@@ -101,6 +101,8 @@ void	 ieee80211_print_essid(u_int8_t *, u_int);
 void	 ieee80211_print_country(u_int8_t *, u_int);
 void	 ieee80211_print_htcaps(u_int8_t *, u_int);
 void	 ieee80211_print_htop(u_int8_t *, u_int);
+void	 ieee80211_print_vhtcaps(u_int8_t *, u_int);
+void	 ieee80211_print_vhtop(u_int8_t *, u_int);
 void	 ieee80211_print_rsncipher(u_int8_t []);
 void	 ieee80211_print_akm(u_int8_t []);
 void	 ieee80211_print_rsn(u_int8_t *, u_int);
@@ -607,6 +609,199 @@ ieee80211_print_htop(u_int8_t *data, u_int len)
 }
 
 void
+print_vht_mcsmap(uint16_t mcsmap)
+{
+	int nss, mcs;
+
+	for (nss = 1; nss < IEEE80211_VHT_NUM_SS; nss++) {
+		mcs = (mcsmap & IEEE80211_VHT_MCS_FOR_SS_MASK(nss)) >>
+		    IEEE80211_VHT_MCS_FOR_SS_SHIFT(nss);
+		switch (mcs) {
+		case IEEE80211_VHT_MCS_0_9:
+			printf(" 0-9@%uSS", nss);
+			break;
+		case IEEE80211_VHT_MCS_0_8:
+			printf(" 0-8@%uSS", nss);
+			break;
+		case IEEE80211_VHT_MCS_0_7:
+			printf(" 0-7@%uSS", nss);
+			break;
+		case IEEE80211_VHT_MCS_SS_NOT_SUPP:
+		default:
+			break;
+		}
+	}
+}
+
+/* Caller checks len */
+void
+ieee80211_print_vhtcaps(u_int8_t *data, u_int len)
+{
+	uint32_t vhtcaps;
+	uint16_t rxmcs, txmcs, max_lgi;
+	uint32_t rxstbc, num_sts, max_ampdu, link_adapt;
+
+	if (len < 12) {
+		ieee80211_print_element(data, len);
+		return;
+	}
+
+	vhtcaps = (data[0] | (data[1] << 8) | data[2] << 16 |
+	    data[3] << 24);
+	printf("=<");
+
+	/* max MPDU length */
+	switch (vhtcaps & IEEE80211_VHTCAP_MAX_MPDU_LENGTH_MASK) {
+	case IEEE80211_VHTCAP_MAX_MPDU_LENGTH_11454:
+		printf("max MPDU 11454");
+		break;
+	case IEEE80211_VHTCAP_MAX_MPDU_LENGTH_7991:
+		printf("max MPDU 7991");
+		break;
+	case IEEE80211_VHTCAP_MAX_MPDU_LENGTH_3895:
+	default:
+		printf("max MPDU 3895");
+		break;
+	}
+
+	/* supported channel widths */
+	switch ((vhtcaps & IEEE80211_VHTCAP_CHAN_WIDTH_MASK) <<
+	    IEEE80211_VHTCAP_CHAN_WIDTH_SHIFT) {
+	case IEEE80211_VHTCAP_CHAN_WIDTH_160_8080:
+		printf(",80+80MHz");
+		/* fallthrough */
+	case IEEE80211_VHTCAP_CHAN_WIDTH_160:
+		printf(",160MHz");
+		/* fallthrough */
+	case IEEE80211_VHTCAP_CHAN_WIDTH_80:
+	default:
+		printf(",80MHz");
+		break;
+	}
+
+	/* LDPC coding */
+	if (vhtcaps & IEEE80211_VHTCAP_RX_LDPC)
+		printf(",LDPC");
+
+	/* short guard interval */
+	if (vhtcaps & IEEE80211_VHTCAP_SGI80)
+		printf(",SGI@80MHz");
+	if (vhtcaps & IEEE80211_VHTCAP_SGI160)
+		printf(",SGI@160MHz");
+
+	/* space-time block coding */
+	if (vhtcaps & IEEE80211_VHTCAP_TX_STBC)
+		printf(",TxSTBC");
+	rxstbc = (vhtcaps & IEEE80211_VHTCAP_RX_STBC_SS_MASK)
+	    >> IEEE80211_VHTCAP_RX_STBC_SS_SHIFT;
+	if (rxstbc > 0 && rxstbc <= 7)
+		printf(",RxSTBC %d stream", rxstbc);
+
+	/* beamforming */
+	if (vhtcaps & IEEE80211_VHTCAP_SU_BEAMFORMER) {
+		printf(",beamformer");
+		num_sts = ((vhtcaps & IEEE80211_VHTCAP_NUM_STS_MASK) >>
+		    IEEE80211_VHTCAP_NUM_STS_SHIFT);
+		if (num_sts)
+			printf(" STS %u", num_sts);
+	}
+	if (vhtcaps & IEEE80211_VHTCAP_SU_BEAMFORMEE) {
+		printf(",beamformee");
+		num_sts = ((vhtcaps & IEEE80211_VHTCAP_BEAMFORMEE_STS_MASK) >>
+		    IEEE80211_VHTCAP_BEAMFORMEE_STS_SHIFT);
+		if (num_sts)
+			printf(" STS %u", num_sts);
+	}
+
+	if (vhtcaps & IEEE80211_VHTCAP_TXOP_PS)
+		printf(",TXOP PS");
+	if (vhtcaps & IEEE80211_VHTCAP_HTC_VHT)
+		printf(",+HTC VHT");
+
+	/* max A-MPDU length */
+	max_ampdu = ((vhtcaps & IEEE80211_VHTCAP_MAX_AMPDU_LEN_MASK) >>
+	    IEEE80211_VHTCAP_MAX_AMPDU_LEN_SHIFT);
+	if (max_ampdu >= IEEE80211_VHTCAP_MAX_AMPDU_LEN_8K &&
+	    max_ampdu <= IEEE80211_VHTCAP_MAX_AMPDU_LEN_1024K)
+		printf(",max A-MPDU %uK", (1 << (max_ampdu + 3)));
+
+	link_adapt = ((vhtcaps & IEEE80211_VHTCAP_LINK_ADAPT_MASK) >>
+	    IEEE80211_VHTCAP_LINK_ADAPT_SHIFT);
+	if (link_adapt == IEEE80211_VHTCAP_LINK_ADAPT_UNSOL_MFB)
+		printf(",linkadapt unsolicited MFB");
+	else if (link_adapt == IEEE80211_VHTCAP_LINK_ADAPT_MRQ_MFB)
+		printf(",linkadapt MRQ MFB");
+
+	if (vhtcaps & IEEE80211_VHTCAP_RX_ANT_PATTERN)
+		printf(",Rx ant pattern consistent");
+	if (vhtcaps & IEEE80211_VHTCAP_TX_ANT_PATTERN)
+		printf(",Tx ant pattern consistent");
+
+	/* Supported MCS set. */
+	rxmcs = (data[4] | (data[5] << 8));
+	printf(",RxMCS");
+	print_vht_mcsmap(rxmcs);	
+	max_lgi = ((data[6] | (data[7] << 8)) &
+	    IEEE80211_VHT_MAX_LGI_MBIT_S_MASK);
+	if (max_lgi)
+		printf(",Rx max LGI rate %uMbit/s", max_lgi);
+	txmcs = (data[8] | (data[9] << 8));
+	printf(",TxMCS");
+	print_vht_mcsmap(txmcs);	
+	max_lgi = ((data[6] | (data[7] << 8)) &
+	    IEEE80211_VHT_MAX_LGI_MBIT_S_MASK);
+	if (max_lgi)
+		printf(",Tx max LGI rate %uMbit/s", max_lgi);
+
+	printf(">");
+}
+
+/* Caller checks len */
+void
+ieee80211_print_vhtop(u_int8_t *data, u_int len)
+{
+	u_int8_t chan_width, freq_idx0, freq_idx1;
+	uint16_t basic_mcs;
+
+	if (len < 5) {
+		ieee80211_print_element(data, len);
+		return;
+	}
+
+	chan_width = data[0];
+	printf("=<");
+
+	switch (chan_width) {
+	case IEEE80211_VHTOP0_CHAN_WIDTH_8080:
+		printf("80+80MHz chan");
+		break;
+	case IEEE80211_VHTOP0_CHAN_WIDTH_160:
+		printf("160MHz chan");
+		break;
+	case IEEE80211_VHTOP0_CHAN_WIDTH_80:
+		printf("80MHz chan");
+		break;
+	case IEEE80211_VHTOP0_CHAN_WIDTH_HT:
+	default:
+		printf("using HT chan width");
+		break;
+	}
+
+	freq_idx0 = data[1];
+	if (freq_idx0)
+		printf(",center chan %u", freq_idx0);
+	freq_idx1 = data[2];
+	if (freq_idx1)
+		printf(",second center chan %u", freq_idx1);
+
+	basic_mcs = (data[3] | data[4] << 8);
+	printf(",basic MCS set");
+	print_vht_mcsmap(basic_mcs);
+
+	printf(">");
+}
+
+void
 ieee80211_print_rsncipher(uint8_t selector[4])
 {
 	if (memcmp(selector, MICROSOFT_OUI, 3) != 0 &&
@@ -967,6 +1162,16 @@ ieee80211_print_elements(uint8_t *frm)
 			printf(", htop");
 			if (vflag)
 				ieee80211_print_htop(data, len);
+			break;
+		case IEEE80211_ELEMID_VHTCAPS:
+			printf(", vhtcaps");
+			if (vflag)
+				ieee80211_print_vhtcaps(data, len);
+			break;
+		case IEEE80211_ELEMID_VHTOP:
+			printf(", vhtop");
+			if (vflag)
+				ieee80211_print_vhtop(data, len);
 			break;
 		case IEEE80211_ELEMID_POWER_CONSTRAINT:
 			ELEM_CHECK(1);
