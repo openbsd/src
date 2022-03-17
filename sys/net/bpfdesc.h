@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.45 2021/01/21 12:33:14 dlg Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.46 2022/03/17 14:22:03 visa Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -98,7 +98,7 @@ struct bpf_d {
 	int		bd_sig;		/* signal to send upon packet reception */
 	struct sigio_ref
 			bd_sigio;	/* async I/O registration */
-	u_int		bd_ref;		/* reference count */
+	struct refcnt	bd_refcnt;	/* reference count */
 	struct selinfo	bd_sel;		/* bsd select info */
 	int		bd_unit;	/* logical unit number */
 	LIST_ENTRY(bpf_d) bd_list;	/* descriptor list */

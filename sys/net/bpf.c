@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.215 2022/02/15 08:43:50 visa Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.216 2022/03/17 14:22:03 visa Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include <sys/sysctl.h>
 #include <sys/rwlock.h>
 #include <sys/atomic.h>
+#include <sys/refcnt.h>
 #include <sys/smr.h>
 #include <sys/specdev.h>
 #include <sys/selinfo.h>
@@ -398,7 +399,7 @@ bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 
 	bd->bd_rtout = 0;	/* no timeout by default */
 
-	bpf_get(bd);
+	refcnt_init(&bd->bd_refcnt);
 	LIST_INSERT_HEAD(&bpf_d_list, bd, bd_list);
 
 	return (0);
@@ -1645,7 +1646,7 @@ bpf_d_smr(void *smr)
 void
 bpf_get(struct bpf_d *bd)
 {
-	atomic_inc_int(&bd->bd_ref);
+	refcnt_take(&bd->bd_refcnt);
 }
 
 /*
@@ -1655,7 +1656,7 @@ bpf_get(struct bpf_d *bd)
 void
 bpf_put(struct bpf_d *bd)
 {
-	if (atomic_dec_int_nv(&bd->bd_ref) > 0)
+	if (refcnt_rele(&bd->bd_refcnt) == 0)
 		return;
 
 	smr_call(&bd->bd_smr, bpf_d_smr, bd);
