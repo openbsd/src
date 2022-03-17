@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.205 2021/10/26 12:22:23 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.206 2022/03/17 11:35:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1427,7 +1427,11 @@ screen_write_clearendofscreen(struct screen_write_ctx *ctx, u_int bg)
 	ttyctx.bg = bg;
 
 	/* Scroll into history if it is enabled and clearing entire screen. */
-	if (s->cx == 0 && s->cy == 0 && (gd->flags & GRID_HISTORY))
+	if (s->cx == 0 &&
+	    s->cy == 0 &&
+	    (gd->flags & GRID_HISTORY) &&
+	    ctx->wp != NULL &&
+	    options_get_number(ctx->wp->options, "scroll-on-clear"))
 		grid_view_clear_history(gd, bg);
 	else {
 		if (s->cx <= sx - 1)

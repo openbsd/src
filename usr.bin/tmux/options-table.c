@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.160 2022/03/16 17:00:17 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.161 2022/03/17 11:35:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1079,6 +1079,14 @@ const struct options_table_entry options_table[] = {
 			 "#{t:pane_dead_time})",
 	  .text = "Message shown after the program in a pane has exited, if "
 	          "remain-on-exit is enabled."
+	},
+
+	{ .name = "scroll-on-clear",
+	  .type = OPTIONS_TABLE_FLAG,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .default_num = 1,
+	  .text = "Whether the contents of the screen should be scrolled into"
+		  "history when clearing the whole screen."
 	},
 
 	{ .name = "synchronize-panes",
