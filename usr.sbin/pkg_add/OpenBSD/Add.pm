@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.187 2022/03/09 12:27:51 espie Exp $
+# $OpenBSD: Add.pm,v 1.188 2022/03/17 21:45:51 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -466,6 +466,7 @@ sub find_safe_dir
 	my $fullname = $self->fullname;
 	my $filename = $state->{destdir}.$fullname;
 	my $d = dirname($filename);
+	my $orig = $d;
 
 	# we go back up until we find an existing directory.
 	# hopefully this will be on the same file system.
@@ -483,6 +484,12 @@ sub find_safe_dir
 	if (!-e _ && !$state->{not}) {
 		$state->make_path($d, $fullname);
 	}
+	if ($state->{current_set}{simple_update} && 
+	    $d eq $orig && 
+	    !-e $filename) {
+		$self->{avoid_temp} = $filename;
+	}
+
 	return $d;
 }
 
@@ -503,6 +510,18 @@ sub create_temp
 	return ($fh, $tempname);
 }
 
+sub may_create_temp
+{
+	my ($self, $d, $state) = @_;
+	if ($self->{avoid_temp}) {
+		if (open(my $fh, '>', $self->{avoid_temp})) {
+			return ($fh, $self->{avoid_temp});
+		}
+	}
+	delete $self->{avoid_temp};
+	return $self->create_temp($d, $state);
+}
+
 sub tie
 {
 	my ($self, $state) = @_;
@@ -513,20 +532,29 @@ sub tie
 	$self->SUPER::extract($state);
 
 	my $d = $self->find_safe_dir($state);
+	my $src = $self->{tieto}->realname($state);
+	my $dest = $self->realname($state);
+	if ($state->{current_set}{simple_update} && $src eq $dest) {
+		$state->say("No name change on tied file #1", $src)
+		    if $state->verbose >= 3;
+		$state->{current_set}{dont_delete}{$dest} = 1;
+		$self->{avoid_temp} = 1;
+		return;
+	}
 	if ($state->{not}) {
 		$state->say("link #1 -> #2", 
 		    $self->name, $d) if $state->verbose >= 3;
 	} else {
-		my ($fh, $tempname) = $self->create_temp($d, $state);
+		my ($fh, $tempname) = $self->may_create_temp($d, $state);
 
 		return if !defined $tempname;
-		my $src = $self->{tieto}->realname($state);
 		unlink($tempname);
 		$state->say("link #1 -> #2", $src, $tempname)
 		    if $state->verbose >= 3;
 		link($src, $tempname) || $state->copy_file($src, $tempname);
 	}
 }
+
 
 sub extract
 {
@@ -540,13 +568,16 @@ sub extract
 		    $self->name, $d) if $state->verbose >= 3;
 		$state->{archive}->skip;
 	} else {
-		my ($fh, $tempname) = $self->create_temp($d, $state);
-		if (!defined $tempname) {
+		my ($fh, $filename) = $self->may_create_temp($d, $state);
+		if (!defined $filename) {
 			$state->{archive}->skip;
 			return;
 		}
 
-		$state->say("extract #1 -> #2", $self->name, $tempname) 
+		if ($self->{avoid_temp}) {
+			$state->{current_set}{dont_delete}{$filename} = 1;
+		}
+		$state->say("extract #1 -> #2", $self->name, $filename) 
 		    if $state->verbose >= 3;
 
 
@@ -555,7 +586,7 @@ sub extract
 			    $self->stringize);
 		}
 		$file->extract_to_fh($fh);
-		$self->may_check_digest($tempname, $state);
+		$self->may_check_digest($filename, $state);
 	}
 }
 
@@ -576,17 +607,21 @@ sub install
 	} elsif (defined $self->{symlink}) {
 		symlink($self->{symlink}, $destdir.$fullname);
 	} else {
-		if (!defined $self->{tempname}) {
-			return if $state->allow_nonroot($fullname);
-			$state->fatal("No tempname for #1", $fullname);
+		if (defined $self->{avoid_temp}) {
+			delete $self->{avoid_temp};
+		} else {
+			if (!defined $self->{tempname}) {
+				return if $state->allow_nonroot($fullname);
+				$state->fatal("No tempname for #1", $fullname);
+			}
+			rename($self->{tempname}, $destdir.$fullname) or
+			    $state->fatal("can't move #1 to #2: #3",
+				$self->{tempname}, $fullname, $!);
+			$state->say("moving #1 -> #2",
+			    $self->{tempname}, $destdir.$fullname)
+				if $state->verbose >= 5;
+			delete $self->{tempname};
 		}
-		rename($self->{tempname}, $destdir.$fullname) or
-		    $state->fatal("can't move #1 to #2: #3",
-			$self->{tempname}, $fullname, $!);
-		$state->say("moving #1 -> #2",
-		    $self->{tempname}, $destdir.$fullname)
-			if $state->verbose >= 5;
-		delete $self->{tempname};
 	}
 	$self->set_modes($state, $destdir.$fullname);
 }

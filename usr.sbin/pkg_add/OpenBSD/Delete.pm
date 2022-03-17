@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.160 2019/07/24 18:05:26 espie Exp $
+# $OpenBSD: Delete.pm,v 1.161 2022/03/17 21:45:51 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -449,6 +449,7 @@ sub delete
 {
 	my ($self, $state) = @_;
 	my $realname = $self->realname($state);
+	return if defined $state->{current_set}{dont_delete}{$realname};
 
 	if (defined $self->{symlink}) {
 		if (-l $realname) {
