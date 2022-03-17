@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_static.c,v 1.12 2022/01/26 06:31:31 kn Exp $ */
+/*	$OpenBSD: dt_prov_static.c,v 1.13 2022/03/17 14:53:59 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -91,7 +91,7 @@ DT_STATIC_PROBE2(smr, thread, "uint64_t", "uint64_t");
 /*
  * List of all static probes
  */
-struct dt_probe *dtps_static[] = {
+struct dt_probe *const dtps_static[] = {
 	/* Scheduler */
 	&_DT_STATIC_P(sched, dequeue),
 	&_DT_STATIC_P(sched, enqueue),
