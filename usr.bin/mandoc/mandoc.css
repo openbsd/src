@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.35 2021/03/30 19:23:50 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.36 2022/03/17 18:45:43 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  *
@@ -195,7 +195,7 @@ code.Nm {	font-style: normal;
 		font-family: inherit; }
 .Ar {		font-style: italic;
 		font-weight: normal; }
-.Op {		display: inline; }
+.Op {		display: inline flow; }
 .Ic {		font-style: normal;
 		font-weight: bold;
 		font-family: inherit; }
@@ -250,7 +250,7 @@ a.In { }
 
 /* Physical markup. */
 
-.Bf {		display: inline; }
+.Bf {		display: inline flow; }
 .No {		font-style: normal;
 		font-weight: normal; }
 .Em {		font-style: italic;
@@ -267,7 +267,7 @@ h1.Sh, h2.Ss {	position: relative; }
 .An, .Ar, .Cd, .Cm, .Dv, .Em, .Er, .Ev, .Fa, .Fd, .Fl, .Fn, .Ft,
 .Ic, code.In, .Lb, .Lk, .Ms, .Mt, .Nd, code.Nm, .Pa, .Rs,
 .St, .Sx, .Sy, .Va, .Vt, .Xr {
-		display: inline-block;
+		display: inline flow;
 		position: relative; }
 
 .An::before {	content: "An"; }
