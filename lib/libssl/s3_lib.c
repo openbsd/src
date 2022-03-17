@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.227 2022/02/05 18:18:18 tb Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.228 2022/03/17 17:24:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2698,35 +2698,28 @@ int
 ssl3_renegotiate(SSL *s)
 {
 	if (s->internal->handshake_func == NULL)
-		return (1);
+		return 1;
 
 	if (s->s3->flags & SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS)
-		return (0);
+		return 0;
 
 	s->s3->renegotiate = 1;
-	return (1);
+
+	return 1;
 }
 
 int
 ssl3_renegotiate_check(SSL *s)
 {
-	int	ret = 0;
+	if (!s->s3->renegotiate)
+		return 0;
+	if (SSL_in_init(s) || s->s3->rbuf.left != 0 || s->s3->wbuf.left != 0)
+		return 0;
 
-	if (s->s3->renegotiate) {
-		if ((s->s3->rbuf.left == 0) && (s->s3->wbuf.left == 0) &&
-		    !SSL_in_init(s)) {
-			/*
-			 * If we are the server, and we have sent
-			 * a 'RENEGOTIATE' message, we need to go
-			 * to SSL_ST_ACCEPT.
-			 */
-			/* SSL_ST_ACCEPT */
-			s->s3->hs.state = SSL_ST_RENEGOTIATE;
-			s->s3->renegotiate = 0;
-			s->s3->num_renegotiations++;
-			s->s3->total_renegotiations++;
-			ret = 1;
-		}
-	}
-	return (ret);
+	s->s3->hs.state = SSL_ST_RENEGOTIATE;
+	s->s3->renegotiate = 0;
+	s->s3->num_renegotiations++;
+	s->s3->total_renegotiations++;
+
+	return 1;
 }
