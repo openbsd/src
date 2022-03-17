@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.39 2022/03/16 22:32:50 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.40 2022/03/17 00:28:29 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -554,7 +554,7 @@ efi_makebootargs(char *bootargs, int howto)
 	if (BS->AllocatePages(AllocateAnyPages, EfiLoaderData,
 	    EFI_SIZE_TO_PAGES(len), &addr) == EFI_SUCCESS) {
 		memcpy((void *)addr, fdt, fdt_get_size(fdt));
-		((struct fdt_head *)addr)->fh_size = len;
+		((struct fdt_head *)addr)->fh_size = htobe32(len);
 		fdt = (void *)addr;
 	}
 
