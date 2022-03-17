@@ -1,4 +1,4 @@
-/*	$OpenBSD: wg_cookie.c,v 1.3 2021/03/10 10:21:48 jsg Exp $ */
+/*	$OpenBSD: wg_cookie.c,v 1.4 2022/03/17 18:51:56 tb Exp $ */
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  * Copyright (C) 2019-2020 Matt Dunwoodie <ncon@noconroy.net>
@@ -37,7 +37,7 @@ static void	cookie_macs_mac2(struct cookie_macs *, const void *, size_t,
 static int	cookie_timer_expired(struct timespec *, time_t, long);
 static void	cookie_checker_make_cookie(struct cookie_checker *,
 			uint8_t[COOKIE_COOKIE_SIZE], struct sockaddr *);
-static int	ratelimit_init(struct ratelimit *, struct pool *pool);
+static int	ratelimit_init(struct ratelimit *, struct pool *);
 static void	ratelimit_deinit(struct ratelimit *);
 static void	ratelimit_gc(struct ratelimit *, int);
 static int	ratelimit_allow(struct ratelimit *, struct sockaddr *);
