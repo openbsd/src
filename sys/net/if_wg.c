@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.22 2022/02/22 01:15:02 guenther Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.23 2022/03/17 18:27:56 sthen Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -2023,7 +2023,7 @@ wg_input(void *_sc, struct mbuf *m, struct ip *ip, struct ip6_hdr *ip6,
 
 	/*
 	 * Ensure mbuf is contiguous over full length of packet. This is done
-	 * os we can directly read the handshake values in wg_handshake, and so
+	 * so we can directly read the handshake values in wg_handshake, and so
 	 * we can decrypt a transport packet by passing a single buffer to
 	 * noise_remote_decrypt in wg_decap.
 	 */

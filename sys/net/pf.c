@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1125 2022/03/05 10:43:32 jsg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1126 2022/03/17 18:27:55 sthen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1340,7 +1340,7 @@ pf_state_expires(const struct pf_state *state, uint8_t stimeout)
 	 * this function may be called by the state purge task while
 	 * the state is being modified. avoid inconsistent reads of
 	 * state->timeout by having the caller do the read (and any
-	 * chacks it needs to do on the same variable) and then pass
+	 * checks it needs to do on the same variable) and then pass
 	 * their view of the timeout in here for this function to use.
 	 * the only consequence of using a stale timeout value is
 	 * that the state won't be a candidate for purging until the
