@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.153 2022/02/22 01:15:02 guenther Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.154 2022/03/17 10:15:13 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1690,6 +1690,26 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		}
 	}
 
+	/*
+	 * now allocate a buf for the i/o.
+	 * [make sure we don't put the pagedaemon to sleep...]
+	 */
+	pflag = (async || curproc == uvm.pagedaemon_proc) ? PR_NOWAIT :
+	    PR_WAITOK;
+	bp = pool_get(&bufpool, pflag | PR_ZERO);
+
+	/*
+	 * if we failed to get a swapbuf, return "try again"
+	 */
+	if (bp == NULL) {
+		if (bounce) {
+			uvm_pagermapout(bouncekva, npages);
+			uvm_swap_freepages(tpps, npages);
+		}
+		uvm_pagermapout(kva, npages);
+		return (VM_PAGER_AGAIN);
+	}
+
 	/* encrypt to swap */
 	if (write && bounce) {
 		int i, opages;
@@ -1729,35 +1749,6 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 				      PGO_PDFREECLUST);
 
 		kva = bouncekva;
-	}
-
-	/*
-	 * now allocate a buf for the i/o.
-	 * [make sure we don't put the pagedaemon to sleep...]
-	 */
-	pflag = (async || curproc == uvm.pagedaemon_proc) ? PR_NOWAIT :
-	    PR_WAITOK;
-	bp = pool_get(&bufpool, pflag | PR_ZERO);
-
-	/*
-	 * if we failed to get a swapbuf, return "try again"
-	 */
-	if (bp == NULL) {
-		if (write && bounce) {
-#ifdef UVM_SWAP_ENCRYPT
-			int i;
-
-			/* swap encrypt needs cleanup */
-			if (encrypt)
-				for (i = 0; i < npages; i++)
-					SWAP_KEY_PUT(sdp, SWD_KEY(sdp,
-					    startslot + i));
-#endif
-
-			uvm_pagermapout(kva, npages);
-			uvm_swap_freepages(tpps, npages);
-		}
-		return (VM_PAGER_AGAIN);
 	}
 
 	/*
