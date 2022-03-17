@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.78 2021/10/24 00:02:25 jsg Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.79 2022/03/17 14:23:34 visa Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 inline void
 crset(struct ucred *newcr, const struct ucred *cr)
 {
-	KASSERT(cr->cr_ref > 0);
+	KASSERT(cr->cr_refcnt.r_refs > 0);
 	memcpy(
 	    (char *)newcr    + offsetof(struct ucred, cr_startcopy),
 	    (const char *)cr + offsetof(struct ucred, cr_startcopy),
@@ -945,7 +945,7 @@ crget(void)
 	struct ucred *cr;
 
 	cr = pool_get(&ucred_pool, PR_WAITOK|PR_ZERO);
-	cr->cr_ref = 1;
+	refcnt_init(&cr->cr_refcnt);
 	return (cr);
 }
 
@@ -956,7 +956,7 @@ crget(void)
 struct ucred *
 crhold(struct ucred *cr)
 {
-	atomic_inc_int(&cr->cr_ref);
+	refcnt_take(&cr->cr_refcnt);
 	return (cr);
 }
 
@@ -967,8 +967,7 @@ crhold(struct ucred *cr)
 void
 crfree(struct ucred *cr)
 {
-
-	if (atomic_dec_int_nv(&cr->cr_ref) == 0)
+	if (refcnt_rele(&cr->cr_refcnt))
 		pool_put(&ucred_pool, cr);
 }
 
@@ -980,12 +979,12 @@ crcopy(struct ucred *cr)
 {
 	struct ucred *newcr;
 
-	if (cr->cr_ref == 1)
+	if (!refcnt_shared(&cr->cr_refcnt))
 		return (cr);
 	newcr = crget();
 	*newcr = *cr;
 	crfree(cr);
-	newcr->cr_ref = 1;
+	refcnt_init(&newcr->cr_refcnt);
 	return (newcr);
 }
 
@@ -999,7 +998,7 @@ crdup(struct ucred *cr)
 
 	newcr = crget();
 	*newcr = *cr;
-	newcr->cr_ref = 1;
+	refcnt_init(&newcr->cr_refcnt);
 	return (newcr);
 }
 
@@ -1011,7 +1010,7 @@ crfromxucred(struct ucred *cr, const struct xucred *xcr)
 {
 	if (xcr->cr_ngroups < 0 || xcr->cr_ngroups > NGROUPS_MAX)
 		return (EINVAL);
-	cr->cr_ref = 1;
+	refcnt_init(&cr->cr_refcnt);
 	cr->cr_uid = xcr->cr_uid;
 	cr->cr_gid = xcr->cr_gid;
 	cr->cr_ngroups = xcr->cr_ngroups;
