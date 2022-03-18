@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.13 2021/11/25 03:50:42 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.14 2022/03/18 22:28:06 jsg Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A64/H5
@@ -18,6 +18,13 @@ The following machines are targeted by OpenBSD/MACHINE:
 	Ampere eMAG
 		Lenovo ThinkSystem HR330A
 		Lenovo ThinkSystem HR350A
+	Apple M1
+		Apple Mac mini (M1, 2020)
+		Apple MacBook Pro (13-inch, M1, 2020)
+		Apple MacBook Air (M1, 2020)
+		Apple iMac (24-inch, M1, 2021)
+		Apple MacBook Pro (14-inch, M1 Pro/Max, 2021)
+		Apple MacBook Pro (16-inch, M1 Pro/Max, 2021)
 	Broadcom BCM2837/BCM2711
 		Raspberry Pi 3
 		Raspberry Pi 3 Model B+
