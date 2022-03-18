@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.2 2006/06/02 21:16:44 uwe Exp $
+#	$OpenBSD: devlist2h.awk,v 1.3 2022/03/18 11:08:34 miod Exp $
 #	$NetBSD: devlist2h.awk,v 1.2 1998/07/22 11:47:13 christos Exp $
 #
 # Copyright (c) 1998, Christos Zoulas
@@ -80,7 +80,6 @@ NR == 1 {
 $1 == "vendor" {
 	nvendors++
 
-	vendorindex[$2] = nvendors;		# record index for this name, for later.
 	vendors[nvendors, 1] = $2;		# name
 	vendors[nvendors, 2] = $3;		# id
 	printf("#define\tSDMMC_VENDOR_%s\t%s\t", vendors[nvendors, 1],
@@ -95,45 +94,8 @@ $1 == "product" {
 	products[nproducts, 1] = $2;		# vendor name
 	products[nproducts, 2] = $3;		# product id
 	products[nproducts, 3] = $4;		# id
-
-	f = 5;
-
-	if ($4 == "{") {
-		products[nproducts, 3] = "SDMMC_PRODUCT_INVALID"
-		z = "{ "
-		for (i = 0; i < 4; i++) {
-			if (f <= NF) {
-				gsub("&sp", " ", $f)
-				gsub("&tab", "\t", $f)
-				gsub("&nl", "\n", $f)
-				z = z $f " "
-				f++
-			}
-			else {
-				if (i == 3)
-					z = z "NULL "
-				else
-					z = z "NULL, "
-			}
-		}
-		products[nproducts, 4] = z $f
-		f++
-	}
-	else {
-		products[nproducts, 4] = "{ NULL, NULL, NULL, NULL }"
-	}
-	printf("#define\tSDMMC_CIS_%s_%s\t%s\n",
-	    products[nproducts, 1], products[nproducts, 2],
-	    products[nproducts, 4]) > hfile
 	printf("#define\tSDMMC_PRODUCT_%s_%s\t%s\n", products[nproducts, 1],
 	    products[nproducts, 2], products[nproducts, 3]) > hfile
-
-#	products[nproducts, 5] = collectline(f, line)
-#
-#	printf("#define\tSDMMC_STR_%s_%s\t\"%s\"\n",
-#	    products[nproducts, 1], products[nproducts, 2],
-#	    products[nproducts, 5]) > hfile
-
 	next
 }
 {
