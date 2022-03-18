@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.289 2022/02/06 16:11:58 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.290 2022/03/18 18:01:17 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2566,8 +2566,6 @@ SSL_get_error(const SSL *s, int i)
 int
 SSL_do_handshake(SSL *s)
 {
-	int	ret = 1;
-
 	if (s->internal->handshake_func == NULL) {
 		SSLerror(s, SSL_R_CONNECTION_TYPE_NOT_SET);
 		return (-1);
@@ -2575,10 +2573,10 @@ SSL_do_handshake(SSL *s)
 
 	s->method->ssl_renegotiate_check(s);
 
-	if (SSL_in_init(s) || SSL_in_before(s)) {
-		ret = s->internal->handshake_func(s);
-	}
-	return (ret);
+	if (!SSL_in_init(s) && !SSL_in_before(s))
+		return 1;
+
+	return s->internal->handshake_func(s);
 }
 
 /*
