@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bwfm_sdio.c,v 1.42 2021/11/02 14:49:53 patrick Exp $ */
+/* $OpenBSD: if_bwfm_sdio.c,v 1.43 2022/03/18 11:09:39 miod Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -45,6 +45,7 @@
 
 #include <net80211/ieee80211_var.h>
 
+#include <dev/sdmmc/sdmmcdevs.h>
 #include <dev/sdmmc/sdmmcvar.h>
 
 #include <dev/ic/bwfmvar.h>
@@ -207,27 +208,27 @@ bwfm_sdio_match(struct device *parent, void *match, void *aux)
 
 	/* Look for Broadcom. */
 	cis = &sf->sc->sc_fn0->cis;
-	if (cis->manufacturer != 0x02d0)
+	if (cis->manufacturer != SDMMC_VENDOR_BROADCOM)
 		return 0;
 
 	/* Look for supported chips. */
 	switch (cis->product) {
-	case 0x4324:
-	case 0x4330:
-	case 0x4334:
-	case 0x4329:
-	case 0x4335:
-	case 0x4339:
-	case 0x4345:
-	case 0x4354:
-	case 0x4356:
-	case 0x4359:
-	case 0xa887:	/* BCM43143 */
-	case 0xa94c:	/* BCM43340 */
-	case 0xa94d:	/* BCM43341 */
-	case 0xa962:	/* BCM43362 */
-	case 0xa9a6:	/* BCM43430 */
-	case 0xa9bf:	/* BCM43364 */
+	case SDMMC_PRODUCT_BROADCOM_BCM4324:
+	case SDMMC_PRODUCT_BROADCOM_BCM4329:
+	case SDMMC_PRODUCT_BROADCOM_BCM4330:
+	case SDMMC_PRODUCT_BROADCOM_BCM4334:
+	case SDMMC_PRODUCT_BROADCOM_BCM4335:
+	case SDMMC_PRODUCT_BROADCOM_BCM4339:
+	case SDMMC_PRODUCT_BROADCOM_BCM4345:
+	case SDMMC_PRODUCT_BROADCOM_BCM4354:
+	case SDMMC_PRODUCT_BROADCOM_BCM4356:
+	case SDMMC_PRODUCT_BROADCOM_BCM4359:
+	case SDMMC_PRODUCT_BROADCOM_BCM43143:
+	case SDMMC_PRODUCT_BROADCOM_BCM43340:
+	case SDMMC_PRODUCT_BROADCOM_BCM43341:
+	case SDMMC_PRODUCT_BROADCOM_BCM43362:
+	case SDMMC_PRODUCT_BROADCOM_BCM43430:
+	case SDMMC_PRODUCT_BROADCOM_BCM43364:
 		break;
 	default:
 		return 0;
