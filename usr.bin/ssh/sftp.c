@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp.c,v 1.212 2021/09/11 09:05:50 schwarze Exp $ */
+/* $OpenBSD: sftp.c,v 1.213 2022/03/18 02:50:21 djm Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -2235,9 +2235,7 @@ interactive_loop(struct sftp_conn *conn, char *file1, char *file2)
 static void
 connect_to_server(char *path, char **args, int *in, int *out)
 {
-	int c_in, c_out;
-
-	int inout[2];
+	int c_in, c_out, inout[2];
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, inout) == -1)
 		fatal("socketpair: %s", strerror(errno));
