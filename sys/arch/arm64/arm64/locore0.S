@@ -1,4 +1,4 @@
-/* $OpenBSD: locore0.S,v 1.6 2021/02/16 12:33:22 kettenis Exp $ */
+/* $OpenBSD: locore0.S,v 1.7 2022/03/18 01:49:47 jsg Exp $ */
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
  * All rights reserved.
@@ -177,9 +177,9 @@ virtdone:
  * This builds the page tables containing the identity map, and the kernel
  * virtual map.
  *
- * It relys on:
+ * It relies on:
  *  We were loaded to an address that is on a 2MiB boundary
- *  All the memory must not cross a 1GiB boundaty
+ *  All the memory must not cross a 1GiB boundary
  *  x28 contains the physical address we were loaded from
  *
  *  There are 3 pages before that address for the page tables
