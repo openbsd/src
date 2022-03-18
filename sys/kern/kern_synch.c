@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.184 2022/03/16 14:13:01 visa Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.185 2022/03/18 15:32:06 bluhm Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -810,25 +810,21 @@ refcnt_init(struct refcnt *r)
 void
 refcnt_take(struct refcnt *r)
 {
-#ifdef DIAGNOSTIC
-	u_int refcnt;
+	u_int refs;
 
-	refcnt = atomic_inc_int_nv(&r->r_refs);
-	KASSERT(refcnt != 0);
-#else
-	atomic_inc_int(&r->r_refs);
-#endif
+	refs = atomic_inc_int_nv(&r->r_refs);
+	KASSERT(refs != 0);
+	(void)refs;
 }
 
 int
 refcnt_rele(struct refcnt *r)
 {
-	u_int refcnt;
+	u_int refs;
 
-	refcnt = atomic_dec_int_nv(&r->r_refs);
-	KASSERT(refcnt != ~0);
-
-	return (refcnt == 0);
+	refs = atomic_dec_int_nv(&r->r_refs);
+	KASSERT(refs != ~0);
+	return (refs == 0);
 }
 
 void
@@ -842,26 +838,33 @@ void
 refcnt_finalize(struct refcnt *r, const char *wmesg)
 {
 	struct sleep_state sls;
-	u_int refcnt;
+	u_int refs;
 
-	refcnt = atomic_dec_int_nv(&r->r_refs);
-	while (refcnt) {
+	refs = atomic_dec_int_nv(&r->r_refs);
+	KASSERT(refs != ~0);
+	while (refs) {
 		sleep_setup(&sls, r, PWAIT, wmesg, 0);
-		refcnt = atomic_load_int(&r->r_refs);
-		sleep_finish(&sls, refcnt);
+		refs = atomic_load_int(&r->r_refs);
+		sleep_finish(&sls, refs);
 	}
 }
 
 int
 refcnt_shared(struct refcnt *r)
 {
-	return (atomic_load_int(&r->r_refs) > 1);
+	u_int refs;
+
+	refs = atomic_load_int(&r->r_refs);
+	return (refs > 1);
 }
 
 unsigned int
 refcnt_read(struct refcnt *r)
 {
-	return (atomic_load_int(&r->r_refs));
+	u_int refs;
+
+	refs = atomic_load_int(&r->r_refs);
+	return (refs);
 }
 
 void
