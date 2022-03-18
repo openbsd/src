@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.24 2019/06/21 09:39:48 visa Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.25 2022/03/18 14:45:39 visa Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #ifndef	_SYS_RESOURCEVAR_H_
 #define	_SYS_RESOURCEVAR_H_
 
+#include <sys/refcnt.h>
 #include <sys/timeout.h>
 
 /*
@@ -44,7 +45,7 @@
  */
 struct plimit {
 	struct	rlimit pl_rlimit[RLIM_NLIMITS];
-	u_int	pl_refcnt;		/* number of references */
+	struct	refcnt pl_refcnt;
 };
 
 /* add user profiling from AST */

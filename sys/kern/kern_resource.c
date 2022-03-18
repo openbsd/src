@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.71 2021/02/08 10:51:01 mpi Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.72 2022/03/18 14:45:39 visa Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -582,7 +582,7 @@ lim_startup(struct plimit *limit0)
 	limit0->pl_rlimit[RLIMIT_RSS].rlim_max = lim;
 	limit0->pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
 	limit0->pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
-	limit0->pl_refcnt = 1;
+	refcnt_init(&limit0->pl_refcnt);
 }
 
 /*
@@ -598,14 +598,14 @@ lim_copy(struct plimit *lim)
 	newlim = pool_get(&plimit_pool, PR_WAITOK);
 	memcpy(newlim->pl_rlimit, lim->pl_rlimit,
 	    sizeof(struct rlimit) * RLIM_NLIMITS);
-	newlim->pl_refcnt = 1;
+	refcnt_init(&newlim->pl_refcnt);
 	return (newlim);
 }
 
 void
 lim_free(struct plimit *lim)
 {
-	if (atomic_dec_int_nv(&lim->pl_refcnt) > 0)
+	if (refcnt_rele(&lim->pl_refcnt) == 0)
 		return;
 	pool_put(&plimit_pool, lim);
 }
@@ -617,7 +617,7 @@ lim_fork(struct process *parent, struct process *child)
 
 	mtx_enter(&parent->ps_mtx);
 	limit = parent->ps_limit;
-	atomic_inc_int(&limit->pl_refcnt);
+	refcnt_take(&limit->pl_refcnt);
 	mtx_leave(&parent->ps_mtx);
 
 	child->ps_limit = limit;
@@ -650,7 +650,7 @@ lim_write_begin(void)
 	 */
 
 	limit = p->p_p->ps_limit;
-	if (P_HASSIBLING(p) || limit->pl_refcnt > 1)
+	if (P_HASSIBLING(p) || refcnt_shared(&limit->pl_refcnt))
 		limit = lim_copy(limit);
 
 	return (limit);
@@ -703,7 +703,7 @@ lim_read_enter(void)
 	if (limit != pr->ps_limit) {
 		mtx_enter(&pr->ps_mtx);
 		limit = pr->ps_limit;
-		atomic_inc_int(&limit->pl_refcnt);
+		refcnt_take(&limit->pl_refcnt);
 		mtx_leave(&pr->ps_mtx);
 		if (p->p_limit != NULL)
 			lim_free(p->p_limit);
