@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.394 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.395 2022/03/19 10:26:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -143,6 +143,7 @@
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_amrr.h>
 #include <net80211/ieee80211_ra.h>
+#include <net80211/ieee80211_ra_vht.h>
 #include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_priv.h> /* for SEQ_LT */
 #undef DPRINTF /* defined in ieee80211_priv.h */
@@ -222,7 +223,7 @@ const struct iwm_rate {
 #define IWM_RVAL_IS_OFDM(_i_) ((_i_) >= 12 && (_i_) != 22)
 
 /* Convert an MCS index into an iwm_rates[] index. */
-const int iwm_mcs2ridx[] = {
+const int iwm_ht_mcs2ridx[] = {
 	IWM_RATE_MCS_0_INDEX,
 	IWM_RATE_MCS_1_INDEX,
 	IWM_RATE_MCS_2_INDEX,
@@ -247,7 +248,7 @@ struct iwm_nvm_section {
 };
 
 int	iwm_is_mimo_ht_plcp(uint8_t);
-int	iwm_is_mimo_mcs(int);
+int	iwm_is_mimo_ht_mcs(int);
 int	iwm_store_cscheme(struct iwm_softc *, uint8_t *, size_t);
 int	iwm_firmware_store_section(struct iwm_softc *, enum iwm_ucode_type,
 	    uint8_t *, size_t);
@@ -334,6 +335,7 @@ void	iwm_init_channel_map(struct iwm_softc *, const uint16_t * const,
 	    const uint8_t *nvm_channels, int nchan);
 int	iwm_mimo_enabled(struct iwm_softc *);
 void	iwm_setup_ht_rates(struct iwm_softc *);
+void	iwm_setup_vht_rates(struct iwm_softc *);
 void	iwm_mac_ctxt_task(void *);
 void	iwm_phy_ctxt_task(void *);
 void	iwm_updateprot(struct ieee80211com *);
@@ -396,6 +398,8 @@ void	iwm_rx_frame(struct iwm_softc *, struct mbuf *, int, uint32_t, int, int,
 	    uint32_t, struct ieee80211_rxinfo *, struct mbuf_list *);
 void	iwm_ht_single_rate_control(struct iwm_softc *, struct ieee80211_node *,
 	    int, uint8_t, int);
+void	iwm_vht_single_rate_control(struct iwm_softc *, struct ieee80211_node *,
+	    int, int, uint8_t, int);
 void	iwm_rx_tx_cmd_single(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_node *, int, int);
 void	iwm_txd_done(struct iwm_softc *, struct iwm_tx_data *);
@@ -409,14 +413,15 @@ void	iwm_rx_compressed_ba(struct iwm_softc *, struct iwm_rx_packet *);
 void	iwm_rx_bmiss(struct iwm_softc *, struct iwm_rx_packet *,
 	    struct iwm_rx_data *);
 int	iwm_binding_cmd(struct iwm_softc *, struct iwm_node *, uint32_t);
+uint8_t	iwm_get_vht_ctrl_pos(struct ieee80211com *, struct ieee80211_channel *);
 int	iwm_phy_ctxt_cmd_uhb(struct iwm_softc *, struct iwm_phy_ctxt *, uint8_t,
-	    uint8_t, uint32_t, uint32_t, uint8_t);
+	    uint8_t, uint32_t, uint32_t, uint8_t, uint8_t);
 void	iwm_phy_ctxt_cmd_hdr(struct iwm_softc *, struct iwm_phy_ctxt *,
 	    struct iwm_phy_context_cmd *, uint32_t, uint32_t);
 void	iwm_phy_ctxt_cmd_data(struct iwm_softc *, struct iwm_phy_context_cmd *,
-	    struct ieee80211_channel *, uint8_t, uint8_t, uint8_t);
+	    struct ieee80211_channel *, uint8_t, uint8_t, uint8_t, uint8_t);
 int	iwm_phy_ctxt_cmd(struct iwm_softc *, struct iwm_phy_ctxt *, uint8_t,
-	    uint8_t, uint32_t, uint32_t, uint8_t);
+	    uint8_t, uint32_t, uint32_t, uint8_t, uint8_t);
 int	iwm_send_cmd(struct iwm_softc *, struct iwm_host_cmd *);
 int	iwm_send_cmd_pdu(struct iwm_softc *, uint32_t, uint32_t, uint16_t,
 	    const void *);
@@ -428,7 +433,7 @@ void	iwm_free_resp(struct iwm_softc *, struct iwm_host_cmd *);
 void	iwm_cmd_done(struct iwm_softc *, int, int, int);
 void	iwm_update_sched(struct iwm_softc *, int, int, uint8_t, uint16_t);
 void	iwm_reset_sched(struct iwm_softc *, int, int, uint8_t);
-const struct iwm_rate *iwm_tx_fill_cmd(struct iwm_softc *, struct iwm_node *,
+uint8_t	iwm_tx_fill_cmd(struct iwm_softc *, struct iwm_node *,
 	    struct ieee80211_frame *, struct iwm_tx_cmd *);
 int	iwm_tx(struct iwm_softc *, struct mbuf *, struct ieee80211_node *, int);
 int	iwm_flush_tx_path(struct iwm_softc *, int);
@@ -484,7 +489,8 @@ int	iwm_umac_scan_abort(struct iwm_softc *);
 int	iwm_lmac_scan_abort(struct iwm_softc *);
 int	iwm_scan_abort(struct iwm_softc *);
 int	iwm_phy_ctxt_update(struct iwm_softc *, struct iwm_phy_ctxt *,
-	    struct ieee80211_channel *, uint8_t, uint8_t, uint32_t, uint8_t);
+	    struct ieee80211_channel *, uint8_t, uint8_t, uint32_t, uint8_t,
+	    uint8_t);
 int	iwm_auth(struct iwm_softc *);
 int	iwm_deauth(struct iwm_softc *);
 int	iwm_run(struct iwm_softc *);
@@ -499,6 +505,8 @@ void	iwm_delete_key_v1(struct ieee80211com *,
 void	iwm_delete_key(struct ieee80211com *,
 	    struct ieee80211_node *, struct ieee80211_key *);
 void	iwm_calib_timeout(void *);
+void	iwm_set_rate_table_vht(struct iwm_node *, struct iwm_lq_cmd *);
+void	iwm_set_rate_table(struct iwm_node *, struct iwm_lq_cmd *);
 void	iwm_setrates(struct iwm_node *, int);
 int	iwm_media_change(struct ifnet *);
 void	iwm_newstate_task(void *);
@@ -583,9 +591,9 @@ iwm_is_mimo_ht_plcp(uint8_t ht_plcp)
 }
 
 int
-iwm_is_mimo_mcs(int mcs)
+iwm_is_mimo_ht_mcs(int mcs)
 {
-	int ridx = iwm_mcs2ridx[mcs];
+	int ridx = iwm_ht_mcs2ridx[mcs];
 	return iwm_is_mimo_ht_plcp(iwm_rates[ridx].ht_plcp);
 	
 }
@@ -3078,6 +3086,12 @@ iwm_init_channel_map(struct iwm_softc *sc, const uint16_t * const nvm_ch_flags,
 			if (ch_flags & IWM_NVM_CHANNEL_40MHZ)
 				channel->ic_flags |= IEEE80211_CHAN_40MHZ;
 		}
+
+		if (is_5ghz && data->sku_cap_11ac_enable) {
+			channel->ic_flags |= IEEE80211_CHAN_VHT;
+			if (ch_flags & IWM_NVM_CHANNEL_80MHZ)
+				channel->ic_xflags |= IEEE80211_CHANX_80MHZ;
+		}
 	}
 }
 
@@ -3109,6 +3123,34 @@ iwm_setup_ht_rates(struct iwm_softc *sc)
 	if ((rx_ant & IWM_ANT_AB) == IWM_ANT_AB ||
 	    (rx_ant & IWM_ANT_BC) == IWM_ANT_BC)
 		ic->ic_sup_mcs[1] = 0xff;	/* MCS 8-15 */
+}
+
+void
+iwm_setup_vht_rates(struct iwm_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint8_t rx_ant = iwm_fw_valid_rx_ant(sc);
+	int n;
+
+	ic->ic_vht_rxmcs = (IEEE80211_VHT_MCS_0_9 <<
+	    IEEE80211_VHT_MCS_FOR_SS_SHIFT(1));
+
+	if (iwm_mimo_enabled(sc) &&
+	    ((rx_ant & IWM_ANT_AB) == IWM_ANT_AB ||
+	    (rx_ant & IWM_ANT_BC) == IWM_ANT_BC)) {
+		ic->ic_vht_rxmcs |= (IEEE80211_VHT_MCS_0_9 <<
+		    IEEE80211_VHT_MCS_FOR_SS_SHIFT(2));
+	} else {
+		ic->ic_vht_rxmcs |= (IEEE80211_VHT_MCS_SS_NOT_SUPP <<
+		    IEEE80211_VHT_MCS_FOR_SS_SHIFT(2));
+	}
+
+	for (n = 3; n <= IEEE80211_VHT_NUM_SS; n++) {
+		ic->ic_vht_rxmcs |= (IEEE80211_VHT_MCS_SS_NOT_SUPP <<
+		    IEEE80211_VHT_MCS_FOR_SS_SHIFT(n));
+	}
+
+	ic->ic_vht_txmcs = ic->ic_vht_rxmcs;
 }
 
 void
@@ -3419,7 +3461,7 @@ iwm_phy_ctxt_task(void *arg)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_node *in = (void *)ic->ic_bss;
 	struct ieee80211_node *ni = &in->in_ni;
-	uint8_t chains, sco;
+	uint8_t chains, sco, vht_chan_width;
 	int err, s = splnet();
 
 	if ((sc->sc_flags & IWM_FLAG_SHUTDOWN) ||
@@ -3431,13 +3473,23 @@ iwm_phy_ctxt_task(void *arg)
 	}
 
 	chains = iwm_mimo_enabled(sc) ? 2 : 1;
-	if (ieee80211_node_supports_ht_chan40(ni))
+	if ((ni->ni_flags & IEEE80211_NODE_HT) &&
+	    IEEE80211_CHAN_40MHZ_ALLOWED(ni->ni_chan) &&
+	    ieee80211_node_supports_ht_chan40(ni))
 		sco = (ni->ni_htop0 & IEEE80211_HTOP0_SCO_MASK);
 	else
 		sco = IEEE80211_HTOP0_SCO_SCN;
-	if (in->in_phyctxt->sco != sco) {
+	if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
+	    IEEE80211_CHAN_80MHZ_ALLOWED(in->in_ni.ni_chan) &&
+	    ieee80211_node_supports_vht_chan80(ni))
+		vht_chan_width = IEEE80211_VHTOP0_CHAN_WIDTH_80;
+	else
+		vht_chan_width = IEEE80211_VHTOP0_CHAN_WIDTH_HT;
+	if (in->in_phyctxt->sco != sco ||
+	    in->in_phyctxt->vht_chan_width != vht_chan_width) {
 		err = iwm_phy_ctxt_update(sc, in->in_phyctxt,
-		    in->in_phyctxt->channel, chains, chains, 0, sco);
+		    in->in_phyctxt->channel, chains, chains, 0, sco,
+		    vht_chan_width);
 		if (err)
 			printf("%s: failed to update PHY\n", DEVNAME(sc));
 		iwm_setrates(in, 0);
@@ -3834,6 +3886,7 @@ iwm_parse_nvm_data(struct iwm_softc *sc, const uint16_t *nvm_hw,
 	data->sku_cap_band_24GHz_enable = sku & IWM_NVM_SKU_CAP_BAND_24GHZ;
 	data->sku_cap_band_52GHz_enable = sku & IWM_NVM_SKU_CAP_BAND_52GHZ;
 	data->sku_cap_11n_enable = sku & IWM_NVM_SKU_CAP_11N_ENABLE;
+	data->sku_cap_11ac_enable = sku & IWM_NVM_SKU_CAP_11AC_ENABLE;
 	data->sku_cap_mimo_disable = sku & IWM_NVM_SKU_CAP_MIMO_DISABLE;
 
 	if (sc->sc_device_family >= IWM_DEVICE_FAMILY_8000) {
@@ -4759,8 +4812,13 @@ iwm_rx_frame(struct iwm_softc *sc, struct mbuf *m, int chanidx,
 		tap->wr_chan_freq =
 		    htole16(ic->ic_channels[chanidx].ic_freq);
 		chan_flags = ic->ic_channels[chanidx].ic_flags;
-		if (ic->ic_curmode != IEEE80211_MODE_11N)
+		if (ic->ic_curmode != IEEE80211_MODE_11N &&
+		    ic->ic_curmode != IEEE80211_MODE_11AC) {
 			chan_flags &= ~IEEE80211_CHAN_HT;
+			chan_flags &= ~IEEE80211_CHAN_40MHZ;
+		}
+		if (ic->ic_curmode != IEEE80211_MODE_11AC)
+			chan_flags &= ~IEEE80211_CHAN_VHT;
 		tap->wr_chan_flags = htole16(chan_flags);
 		tap->wr_dbm_antsignal = (int8_t)rxi->rxi_rssi;
 		tap->wr_dbm_antnoise = (int8_t)sc->sc_noise;
@@ -5424,14 +5482,18 @@ iwm_ra_choose(struct iwm_softc *sc, struct ieee80211_node *ni)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_node *in = (void *)ni;
 	int old_txmcs = ni->ni_txmcs;
+	int old_nss = ni->ni_vht_ss;
 
-	ieee80211_ra_choose(&in->in_rn, ic, ni);
+	if (ni->ni_flags & IEEE80211_NODE_VHT)
+		ieee80211_ra_vht_choose(&in->in_rn_vht, ic, ni);
+	else
+		ieee80211_ra_choose(&in->in_rn, ic, ni);
 
 	/* 
 	 * If RA has chosen a new TX rate we must update
 	 * the firmware's LQ rate table.
 	 */
-	if (ni->ni_txmcs != old_txmcs)
+	if (ni->ni_txmcs != old_txmcs || ni->ni_vht_ss != old_nss)
 		iwm_setrates(in, 1);
 }
 
@@ -5481,6 +5543,47 @@ iwm_ht_single_rate_control(struct iwm_softc *sc, struct ieee80211_node *ni,
 }
 
 void
+iwm_vht_single_rate_control(struct iwm_softc *sc, struct ieee80211_node *ni,
+    int txmcs, int nss, uint8_t failure_frame, int txfail)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct iwm_node *in = (void *)ni;
+
+	/* Ignore Tx reports which don't match our last LQ command. */
+	if (txmcs != ni->ni_txmcs && nss != ni->ni_vht_ss) {
+		if (++in->lq_rate_mismatch > 15) {
+			/* Try to sync firmware with the driver... */
+			iwm_setrates(in, 1);
+			in->lq_rate_mismatch = 0;
+		}
+	} else {
+		int mcs = txmcs;
+		unsigned int retries = 0, i;
+
+		in->lq_rate_mismatch = 0;
+
+		for (i = 0; i < failure_frame; i++) {
+			if (mcs > 0) {
+				ieee80211_ra_vht_add_stats(&in->in_rn_vht,
+				    ic, ni, mcs, nss, 1, 1);
+				mcs--;
+			} else
+				retries++;
+		}
+
+		if (txfail && failure_frame == 0) {
+			ieee80211_ra_vht_add_stats(&in->in_rn_vht, ic, ni,
+			    txmcs, nss, 1, 1);
+		} else {
+			ieee80211_ra_vht_add_stats(&in->in_rn_vht, ic, ni,
+			    mcs, nss, retries + 1, retries);
+		}
+
+		iwm_ra_choose(sc, ni);
+	}
+}
+
+void
 iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
     struct iwm_node *in, int txmcs, int txrate)
 {
@@ -5489,6 +5592,7 @@ iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 	struct ifnet *ifp = IC2IFP(ic);
 	struct iwm_tx_resp *tx_resp = (void *)pkt->data;
 	int status = le16toh(tx_resp->status.status) & IWM_TX_STATUS_MSK;
+	uint32_t initial_rate = le32toh(tx_resp->initial_rate);
 	int txfail;
 	
 	KASSERT(tx_resp->frame_count == 1);
@@ -5520,9 +5624,17 @@ iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 			if (tx_resp->failure_frame > 0)
 				in->in_amn.amn_retrycnt++;
 		}
+	} else if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
+	    ic->ic_fixed_mcs == -1 && ic->ic_state == IEEE80211_S_RUN &&
+	    (initial_rate & IWM_RATE_MCS_VHT_MSK)) {
+		int txmcs = initial_rate & IWM_RATE_VHT_MCS_RATE_CODE_MSK;
+		int nss = ((initial_rate & IWM_RATE_VHT_MCS_NSS_MSK) >>
+		    IWM_RATE_VHT_MCS_NSS_POS) + 1;
+		iwm_vht_single_rate_control(sc, ni, txmcs, nss,
+		    tx_resp->failure_frame, txfail);
 	} else if (ic->ic_fixed_mcs == -1 && ic->ic_state == IEEE80211_S_RUN &&
-	    (le32toh(tx_resp->initial_rate) & IWM_RATE_MCS_HT_MSK)) {
-		int txmcs = le32toh(tx_resp->initial_rate) &
+	    (initial_rate & IWM_RATE_MCS_HT_MSK)) {
+		int txmcs = initial_rate &
 		    (IWM_RATE_HT_MCS_RATE_CODE_MSK | IWM_RATE_HT_MCS_NSS_MSK);
 		iwm_ht_single_rate_control(sc, ni, txmcs,
 		    tx_resp->failure_frame, txfail);
@@ -5548,6 +5660,7 @@ iwm_txd_done(struct iwm_softc *sc, struct iwm_tx_data *txd)
 	txd->in = NULL;
 	txd->ampdu_nframes = 0;
 	txd->ampdu_txmcs = 0;
+	txd->ampdu_txnss = 0;
 }
 
 void
@@ -5612,10 +5725,20 @@ iwm_ampdu_tx_done(struct iwm_softc *sc, struct iwm_cmd_header *cmd_hdr,
 				continue;
 
 			/* The Tx rate was the same for all subframes. */
-			txdata->ampdu_txmcs = initial_rate &
-			   (IWM_RATE_HT_MCS_RATE_CODE_MSK |
-			   IWM_RATE_HT_MCS_NSS_MSK);
-			txdata->ampdu_nframes = nframes;
+			if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
+			    (initial_rate & IWM_RATE_MCS_VHT_MSK)) {
+				txdata->ampdu_txmcs = initial_rate &
+				    IWM_RATE_VHT_MCS_RATE_CODE_MSK;
+				txdata->ampdu_txnss = ((initial_rate &
+				    IWM_RATE_VHT_MCS_NSS_MSK) >>
+				    IWM_RATE_VHT_MCS_NSS_POS) + 1;
+				txdata->ampdu_nframes = nframes;
+			} else if (initial_rate & IWM_RATE_MCS_HT_MSK) {
+				txdata->ampdu_txmcs = initial_rate &
+				    (IWM_RATE_HT_MCS_RATE_CODE_MSK |
+				    IWM_RATE_HT_MCS_NSS_MSK);
+				txdata->ampdu_nframes = nframes;
+			}
 		}
 		return;
 	}
@@ -5642,12 +5765,27 @@ iwm_ampdu_tx_done(struct iwm_softc *sc, struct iwm_cmd_header *cmd_hdr,
 			 * The firmware might have made several such
 			 * attempts but we don't keep track of this.
 			 */
-			ieee80211_ra_add_stats_ht(&in->in_rn, ic, ni,
-			    txdata->ampdu_txmcs, 1, 1);
+			if (ni->ni_flags & IEEE80211_NODE_VHT) {
+				ieee80211_ra_vht_add_stats(&in->in_rn_vht,
+				    ic, ni, txdata->ampdu_txmcs,
+				    txdata->ampdu_txnss, 1, 1);
+			} else {
+				ieee80211_ra_add_stats_ht(&in->in_rn, ic, ni,
+				    txdata->ampdu_txmcs, 1, 1);
+			}
 		}
 
 		/* Report the final single-frame Tx attempt. */
-		if (initial_rate & IWM_RATE_HT_MCS_RATE_CODE_MSK) {
+		if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
+		    (initial_rate & IWM_RATE_MCS_VHT_MSK)) {
+			int txmcs = initial_rate &
+			    IWM_RATE_VHT_MCS_RATE_CODE_MSK;
+			int nss = ((initial_rate &
+			    IWM_RATE_VHT_MCS_NSS_MSK) >>
+			    IWM_RATE_VHT_MCS_NSS_POS) + 1;
+			iwm_vht_single_rate_control(sc, ni, txmcs, nss,
+			    failure_frame, txfail);
+		} else if (initial_rate & IWM_RATE_MCS_HT_MSK) {
 			int txmcs = initial_rate &
 			   (IWM_RATE_HT_MCS_RATE_CODE_MSK |
 			   IWM_RATE_HT_MCS_NSS_MSK);
@@ -5763,9 +5901,14 @@ iwm_ampdu_rate_control(struct iwm_softc *sc, struct ieee80211_node *ni,
 			 * before failing an A-MPDU subframe the firmware
 			 * sends it as a single frame at least once.
 			 */
-			ieee80211_ra_add_stats_ht(&in->in_rn, ic, ni,
-			    txdata->ampdu_txmcs, 1, 0);
-
+			if (ni->ni_flags & IEEE80211_NODE_VHT) {
+				ieee80211_ra_vht_add_stats(&in->in_rn_vht,
+				    ic, ni, txdata->ampdu_txmcs,
+				    txdata->ampdu_txnss, 1, 0);
+			} else {
+				ieee80211_ra_add_stats_ht(&in->in_rn, ic, ni,
+				    txdata->ampdu_txmcs, 1, 0);
+			}
 			/* Report this frame only once. */
 			txdata->ampdu_nframes = 0;
 		}
@@ -5946,7 +6089,7 @@ iwm_phy_ctxt_cmd_hdr(struct iwm_softc *sc, struct iwm_phy_ctxt *ctxt,
 void
 iwm_phy_ctxt_cmd_data(struct iwm_softc *sc, struct iwm_phy_context_cmd *cmd,
     struct ieee80211_channel *chan, uint8_t chains_static,
-    uint8_t chains_dynamic, uint8_t sco)
+    uint8_t chains_dynamic, uint8_t sco, uint8_t vht_chan_width)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint8_t active_cnt, idle_cnt;
@@ -5954,7 +6097,10 @@ iwm_phy_ctxt_cmd_data(struct iwm_softc *sc, struct iwm_phy_context_cmd *cmd,
 	cmd->ci.band = IEEE80211_IS_CHAN_2GHZ(chan) ?
 	    IWM_PHY_BAND_24 : IWM_PHY_BAND_5;
 	cmd->ci.channel = ieee80211_chan2ieee(ic, chan);
-	if (chan->ic_flags & IEEE80211_CHAN_40MHZ) {
+	if (vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80) {
+		cmd->ci.ctrl_pos = iwm_get_vht_ctrl_pos(ic, chan);
+		cmd->ci.width = IWM_PHY_VHT_CHANNEL_MODE80;
+	} else if (chan->ic_flags & IEEE80211_CHAN_40MHZ) {
 		if (sco == IEEE80211_HTOP0_SCO_SCA) {
 			/* secondary chan above -> control chan below */
 			cmd->ci.ctrl_pos = IWM_PHY_VHT_CTRL_POS_1_BELOW;
@@ -5985,10 +6131,42 @@ iwm_phy_ctxt_cmd_data(struct iwm_softc *sc, struct iwm_phy_context_cmd *cmd,
 	cmd->txchain_info = htole32(iwm_fw_valid_tx_ant(sc));
 }
 
+uint8_t
+iwm_get_vht_ctrl_pos(struct ieee80211com *ic, struct ieee80211_channel *chan)
+{
+	int center_idx = ic->ic_bss->ni_vht_chan_center_freq_idx0;
+	int primary_idx = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+	/*
+	 * The FW is expected to check the control channel position only
+	 * when in HT/VHT and the channel width is not 20MHz. Return
+	 * this value as the default one:
+	 */
+	uint8_t pos = IWM_PHY_VHT_CTRL_POS_1_BELOW;
+
+	switch (primary_idx - center_idx) {
+	case -6:
+		pos = IWM_PHY_VHT_CTRL_POS_2_BELOW;
+		break;
+	case -2:
+		pos = IWM_PHY_VHT_CTRL_POS_1_BELOW;
+		break;
+	case 2:
+		pos = IWM_PHY_VHT_CTRL_POS_1_ABOVE;
+		break;
+	case 6:
+		pos = IWM_PHY_VHT_CTRL_POS_2_ABOVE;
+		break;
+	default:
+		break;
+	}
+
+	return pos;
+}
+
 int
 iwm_phy_ctxt_cmd_uhb(struct iwm_softc *sc, struct iwm_phy_ctxt *ctxt,
     uint8_t chains_static, uint8_t chains_dynamic, uint32_t action,
-    uint32_t apply_time, uint8_t sco)
+    uint32_t apply_time, uint8_t sco, uint8_t vht_chan_width)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_phy_context_cmd_uhb cmd;
@@ -6004,7 +6182,10 @@ iwm_phy_ctxt_cmd_uhb(struct iwm_softc *sc, struct iwm_phy_ctxt *ctxt,
 	cmd.ci.band = IEEE80211_IS_CHAN_2GHZ(chan) ?
 	    IWM_PHY_BAND_24 : IWM_PHY_BAND_5;
 	cmd.ci.channel = htole32(ieee80211_chan2ieee(ic, chan));
-	if (chan->ic_flags & IEEE80211_CHAN_40MHZ) {
+	if (vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80) {
+		cmd.ci.ctrl_pos = iwm_get_vht_ctrl_pos(ic, chan);
+		cmd.ci.width = IWM_PHY_VHT_CHANNEL_MODE80;
+	} else if (chan->ic_flags & IEEE80211_CHAN_40MHZ) {
 		if (sco == IEEE80211_HTOP0_SCO_SCA) {
 			/* secondary chan above -> control chan below */
 			cmd.ci.ctrl_pos = IWM_PHY_VHT_CTRL_POS_1_BELOW;
@@ -6037,7 +6218,7 @@ iwm_phy_ctxt_cmd_uhb(struct iwm_softc *sc, struct iwm_phy_ctxt *ctxt,
 int
 iwm_phy_ctxt_cmd(struct iwm_softc *sc, struct iwm_phy_ctxt *ctxt,
     uint8_t chains_static, uint8_t chains_dynamic, uint32_t action,
-    uint32_t apply_time, uint8_t sco)
+    uint32_t apply_time, uint8_t sco, uint8_t vht_chan_width)
 {
 	struct iwm_phy_context_cmd cmd;
 
@@ -6050,12 +6231,12 @@ iwm_phy_ctxt_cmd(struct iwm_softc *sc, struct iwm_phy_ctxt *ctxt,
 	 */
 	if (isset(sc->sc_enabled_capa, IWM_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS))
 		return iwm_phy_ctxt_cmd_uhb(sc, ctxt, chains_static,
-		    chains_dynamic, action, apply_time, sco);
+		    chains_dynamic, action, apply_time, sco, vht_chan_width);
 
 	iwm_phy_ctxt_cmd_hdr(sc, ctxt, &cmd, action, apply_time);
 
 	iwm_phy_ctxt_cmd_data(sc, &cmd, ctxt->channel,
-	    chains_static, chains_dynamic, sco);
+	    chains_static, chains_dynamic, sco, vht_chan_width);
 
 	return iwm_send_cmd_pdu(sc, IWM_PHY_CONTEXT_CMD, 0,
 	    sizeof(struct iwm_phy_context_cmd), &cmd);
@@ -6388,9 +6569,9 @@ iwm_reset_sched(struct iwm_softc *sc, int qid, int idx, uint8_t sta_id)
 /*
  * Fill in various bit for management frames, and leave them
  * unfilled for data frames (firmware takes care of that).
- * Return the selected TX rate.
+ * Return the selected legacy TX rate, or zero if HT/VHT is used.
  */
-const struct iwm_rate *
+uint8_t
 iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
     struct ieee80211_frame *wh, struct iwm_tx_cmd *tx)
 {
@@ -6400,6 +6581,7 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	int type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	int min_ridx = iwm_rval2ridx(ieee80211_min_basic_rate(ic));
 	int ridx, rate_flags;
+	uint8_t rate = 0;
 
 	tx->rts_retry_limit = IWM_RTS_DFAULT_RETRY_LIMIT;
 	tx->data_retry_limit = IWM_LOW_RETRY_LIMIT;
@@ -6410,7 +6592,10 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 		ridx = min_ridx;
 		tx->data_retry_limit = IWM_MGMT_DFAULT_RETRY_LIMIT;
 	} else if (ic->ic_fixed_mcs != -1) {
-		ridx = sc->sc_fixed_ridx;
+		if (ni->ni_flags & IEEE80211_NODE_VHT)
+			ridx = IWM_FIRST_OFDM_RATE;
+		else
+			ridx = sc->sc_fixed_ridx;
 	} else if (ic->ic_fixed_rate != -1) {
 		ridx = sc->sc_fixed_ridx;
  	} else {
@@ -6418,10 +6603,8 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 		/* Use firmware rateset retry table. */
 		tx->initial_rate_index = 0;
 		tx->tx_flags |= htole32(IWM_TX_CMD_FLG_STA_RATE);
-		if (ni->ni_flags & IEEE80211_NODE_HT) {
-			ridx = iwm_mcs2ridx[ni->ni_txmcs];
-			return &iwm_rates[ridx];
-		}
+		if (ni->ni_flags & IEEE80211_NODE_HT) /* VHT implies HT */
+			return 0;
 		ridx = (IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) ?
 		    IWM_RIDX_OFDM : IWM_RIDX_CCK;
 		for (i = 0; i < ni->ni_rates.rs_nrates; i++) {
@@ -6431,11 +6614,12 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 				break;
 			}
 		}
-		return &iwm_rates[ridx];
+		return iwm_rates[ridx].rate & 0xff;
 	}
 
 	rinfo = &iwm_rates[ridx];
-	if (iwm_is_mimo_ht_plcp(rinfo->ht_plcp))
+	if ((ni->ni_flags & IEEE80211_NODE_VHT) == 0 &&
+	    iwm_is_mimo_ht_plcp(rinfo->ht_plcp))
 		rate_flags = IWM_RATE_MCS_ANT_AB_MSK;
 	else if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000)
 		rate_flags = IWM_RATE_MCS_ANT_B_MSK;
@@ -6446,13 +6630,26 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	if ((ni->ni_flags & IEEE80211_NODE_HT) &&
 	    type == IEEE80211_FC0_TYPE_DATA &&
 	    rinfo->ht_plcp != IWM_RATE_HT_SISO_MCS_INV_PLCP) {
-		uint8_t sco;
-		if (ieee80211_node_supports_ht_chan40(ni))
+		uint8_t sco = IEEE80211_HTOP0_SCO_SCN;
+		uint8_t vht_chan_width = IEEE80211_VHTOP0_CHAN_WIDTH_HT;
+		if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
+		    IEEE80211_CHAN_80MHZ_ALLOWED(ni->ni_chan) &&
+		    ieee80211_node_supports_vht_chan80(ni))
+			vht_chan_width = IEEE80211_VHTOP0_CHAN_WIDTH_80;
+		else if (IEEE80211_CHAN_40MHZ_ALLOWED(ni->ni_chan) &&
+		    ieee80211_node_supports_ht_chan40(ni))
 			sco = (ni->ni_htop0 & IEEE80211_HTOP0_SCO_MASK);
+		if (ni->ni_flags & IEEE80211_NODE_VHT)
+			rate_flags |= IWM_RATE_MCS_VHT_MSK; 
 		else
-			sco = IEEE80211_HTOP0_SCO_SCN;
-		rate_flags |= IWM_RATE_MCS_HT_MSK; 
-		if ((sco == IEEE80211_HTOP0_SCO_SCA || 
+			rate_flags |= IWM_RATE_MCS_HT_MSK; 
+		if (vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80 &&
+		    in->in_phyctxt != NULL &&
+		    in->in_phyctxt->vht_chan_width == vht_chan_width) {
+			rate_flags |= IWM_RATE_MCS_CHAN_WIDTH_80;
+			if (ieee80211_node_supports_vht_sgi80(ni))
+				rate_flags |= IWM_RATE_MCS_SGI_MSK;
+		} else if ((sco == IEEE80211_HTOP0_SCO_SCA || 
 		    sco == IEEE80211_HTOP0_SCO_SCB) &&
 		    in->in_phyctxt != NULL && in->in_phyctxt->sco == sco) {
 			rate_flags |= IWM_RATE_MCS_CHAN_WIDTH_40;
@@ -6460,11 +6657,20 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 				rate_flags |= IWM_RATE_MCS_SGI_MSK;
 		} else if (ieee80211_node_supports_ht_sgi20(ni))
 			rate_flags |= IWM_RATE_MCS_SGI_MSK;
-		tx->rate_n_flags = htole32(rate_flags | rinfo->ht_plcp);
+		if (ni->ni_flags & IEEE80211_NODE_VHT) {
+			/*
+			 * ifmedia only provides an MCS index, no NSS.
+			 * Use a fixed SISO rate.
+			 */
+			tx->rate_n_flags = htole32(rate_flags |
+			    (ic->ic_fixed_mcs &
+			    IWM_RATE_VHT_MCS_RATE_CODE_MSK));
+		} else
+			tx->rate_n_flags = htole32(rate_flags | rinfo->ht_plcp);
 	} else
 		tx->rate_n_flags = htole32(rate_flags | rinfo->plcp);
 
-	return rinfo;
+	return rate;
 }
 
 #define TB0_SIZE 16
@@ -6480,7 +6686,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	struct iwm_tx_cmd *tx;
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
-	const struct iwm_rate *rinfo;
+	uint8_t rate;
 	uint8_t *ivp;
 	uint32_t flags;
 	u_int hdrlen;
@@ -6549,7 +6755,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	tx = (void *)cmd->data;
 	memset(tx, 0, sizeof(*tx));
 
-	rinfo = iwm_tx_fill_cmd(sc, in, wh, tx);
+	rate = iwm_tx_fill_cmd(sc, in, wh, tx);
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -6559,16 +6765,20 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 		tap->wt_flags = 0;
 		tap->wt_chan_freq = htole16(ni->ni_chan->ic_freq);
 		chan_flags = ni->ni_chan->ic_flags;
-		if (ic->ic_curmode != IEEE80211_MODE_11N)
+		if (ic->ic_curmode != IEEE80211_MODE_11N &&
+		    ic->ic_curmode != IEEE80211_MODE_11AC) {
 			chan_flags &= ~IEEE80211_CHAN_HT;
+			chan_flags &= ~IEEE80211_CHAN_40MHZ;
+		}
+		if (ic->ic_curmode != IEEE80211_MODE_11AC)
+			chan_flags &= ~IEEE80211_CHAN_VHT;
 		tap->wt_chan_flags = htole16(chan_flags);
 		if ((ni->ni_flags & IEEE80211_NODE_HT) &&
 		    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
-		    type == IEEE80211_FC0_TYPE_DATA &&
-		    rinfo->ht_plcp != IWM_RATE_HT_SISO_MCS_INV_PLCP) {
-			tap->wt_rate = (0x80 | rinfo->ht_plcp);
+		    type == IEEE80211_FC0_TYPE_DATA) {
+			tap->wt_rate = (0x80 | ni->ni_txmcs);
 		} else
-			tap->wt_rate = rinfo->rate;
+			tap->wt_rate = rate;
 		if ((ic->ic_flags & IEEE80211_F_WEPON) &&
 		    (wh->i_fc[1] & IEEE80211_FC1_PROTECTED))
 			tap->wt_flags |= IEEE80211_RADIOTAP_F_WEP;
@@ -6708,6 +6918,7 @@ iwm_tx(struct iwm_softc *sc, struct mbuf *m, struct ieee80211_node *ni, int ac)
 	data->txmcs = ni->ni_txmcs;
 	data->txrate = ni->ni_txrate;
 	data->ampdu_txmcs = ni->ni_txmcs; /* updated upon Tx interrupt */
+	data->ampdu_txnss = ni->ni_vht_ss; /* updated upon Tx interrupt */
 
 	/* Fill TX descriptor. */
 	desc->num_tbs = 2 + data->map->dm_nsegs;
@@ -6978,7 +7189,9 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 {
 	struct iwm_add_sta_cmd add_sta_cmd;
 	int err;
-	uint32_t status;
+	uint32_t status, aggsize;
+	const uint32_t max_aggsize = (IWM_STA_FLG_MAX_AGG_SIZE_64K >>
+		    IWM_STA_FLG_MAX_AGG_SIZE_SHIFT);
 	size_t cmdsize;
 	struct ieee80211com *ic = &sc->sc_ic;
 
@@ -7041,24 +7254,52 @@ iwm_add_sta_cmd(struct iwm_softc *sc, struct iwm_node *in, int update)
 		    IWM_STA_FLG_AGG_MPDU_DENS_MSK);
 
 		if (iwm_mimo_enabled(sc)) {
-			if (in->in_ni.ni_rxmcs[1] != 0) {
-				add_sta_cmd.station_flags |=
-				    htole32(IWM_STA_FLG_MIMO_EN_MIMO2);
-			}
-			if (in->in_ni.ni_rxmcs[2] != 0) {
-				add_sta_cmd.station_flags |=
-				    htole32(IWM_STA_FLG_MIMO_EN_MIMO3);
+			if (in->in_ni.ni_flags & IEEE80211_NODE_VHT) {
+				uint16_t rx_mcs = (in->in_ni.ni_vht_rxmcs &
+				    IEEE80211_VHT_MCS_FOR_SS_MASK(2)) >>
+				    IEEE80211_VHT_MCS_FOR_SS_SHIFT(2);
+				if (rx_mcs != IEEE80211_VHT_MCS_SS_NOT_SUPP) {
+					add_sta_cmd.station_flags |=
+					    htole32(IWM_STA_FLG_MIMO_EN_MIMO2);
+				}
+			} else {
+				if (in->in_ni.ni_rxmcs[1] != 0) {
+					add_sta_cmd.station_flags |=
+					    htole32(IWM_STA_FLG_MIMO_EN_MIMO2);
+				}
+				if (in->in_ni.ni_rxmcs[2] != 0) {
+					add_sta_cmd.station_flags |=
+					    htole32(IWM_STA_FLG_MIMO_EN_MIMO3);
+				}
 			}
 		}
 
-		if (ieee80211_node_supports_ht_chan40(&in->in_ni)) {
+		if (IEEE80211_CHAN_40MHZ_ALLOWED(in->in_ni.ni_chan) &&
+		    ieee80211_node_supports_ht_chan40(&in->in_ni)) {
 			add_sta_cmd.station_flags |= htole32(
 			    IWM_STA_FLG_FAT_EN_40MHZ);
 		}
 
-		add_sta_cmd.station_flags
-		    |= htole32(IWM_STA_FLG_MAX_AGG_SIZE_64K);
-		switch (ic->ic_ampdu_params & IEEE80211_AMPDU_PARAM_SS) {
+		if (in->in_ni.ni_flags & IEEE80211_NODE_VHT) {
+			if (IEEE80211_CHAN_80MHZ_ALLOWED(in->in_ni.ni_chan) &&
+			    ieee80211_node_supports_vht_chan80(&in->in_ni)) {
+				add_sta_cmd.station_flags |= htole32(
+				    IWM_STA_FLG_FAT_EN_80MHZ);
+			}
+			aggsize = (in->in_ni.ni_vhtcaps &
+			    IEEE80211_VHTCAP_MAX_AMPDU_LEN_MASK) >>
+			    IEEE80211_VHTCAP_MAX_AMPDU_LEN_SHIFT;
+		} else {
+			aggsize = (in->in_ni.ni_ampdu_param &
+			    IEEE80211_AMPDU_PARAM_LE);
+		}
+		if (aggsize > max_aggsize)
+			aggsize = max_aggsize;
+		add_sta_cmd.station_flags |= htole32((aggsize <<
+		    IWM_STA_FLG_MAX_AGG_SIZE_SHIFT) &
+		    IWM_STA_FLG_MAX_AGG_SIZE_MSK);
+
+		switch (in->in_ni.ni_ampdu_param & IEEE80211_AMPDU_PARAM_SS) {
 		case IEEE80211_AMPDU_PARAM_SS_2:
 			add_sta_cmd.station_flags
 			    |= htole32(IWM_STA_FLG_AGG_MPDU_DENS_2US);
@@ -7430,7 +7671,15 @@ iwm_fill_probe_req(struct iwm_softc *sc, struct iwm_scan_probe_req *preq)
 			return ENOBUFS;
 		frm = ieee80211_add_htcaps(frm, ic);
 		/* XXX add WME info? */
+		remain -= frm - pos;
 	}
+
+	if (ic->ic_flags & IEEE80211_F_VHTON) {
+		if (remain < 14)
+			return ENOBUFS;
+		frm = ieee80211_add_vhtcaps(frm, ic);
+	}
+
 	preq->common_data.len = htole16(frm - pos);
 
 	return 0;
@@ -8416,7 +8665,8 @@ iwm_scan_abort(struct iwm_softc *sc)
 int
 iwm_phy_ctxt_update(struct iwm_softc *sc, struct iwm_phy_ctxt *phyctxt,
     struct ieee80211_channel *chan, uint8_t chains_static,
-    uint8_t chains_dynamic, uint32_t apply_time, uint8_t sco)
+    uint8_t chains_dynamic, uint32_t apply_time, uint8_t sco,
+    uint8_t vht_chan_width)
 {
 	uint16_t band_flags = (IEEE80211_CHAN_2GHZ | IEEE80211_CHAN_5GHZ);
 	int err;
@@ -8426,7 +8676,8 @@ iwm_phy_ctxt_update(struct iwm_softc *sc, struct iwm_phy_ctxt *phyctxt,
 	    (phyctxt->channel->ic_flags & band_flags) !=
 	    (chan->ic_flags & band_flags)) {
 		err = iwm_phy_ctxt_cmd(sc, phyctxt, chains_static,
-		    chains_dynamic, IWM_FW_CTXT_ACTION_REMOVE, apply_time, sco);
+		    chains_dynamic, IWM_FW_CTXT_ACTION_REMOVE, apply_time, sco,
+		    vht_chan_width);
 		if (err) {
 			printf("%s: could not remove PHY context "
 			    "(error %d)\n", DEVNAME(sc), err);
@@ -8434,7 +8685,8 @@ iwm_phy_ctxt_update(struct iwm_softc *sc, struct iwm_phy_ctxt *phyctxt,
 		}
 		phyctxt->channel = chan;
 		err = iwm_phy_ctxt_cmd(sc, phyctxt, chains_static,
-		    chains_dynamic, IWM_FW_CTXT_ACTION_ADD, apply_time, sco);
+		    chains_dynamic, IWM_FW_CTXT_ACTION_ADD, apply_time, sco,
+		    vht_chan_width);
 		if (err) {
 			printf("%s: could not add PHY context "
 			    "(error %d)\n", DEVNAME(sc), err);
@@ -8443,7 +8695,8 @@ iwm_phy_ctxt_update(struct iwm_softc *sc, struct iwm_phy_ctxt *phyctxt,
 	} else {
 		phyctxt->channel = chan;
 		err = iwm_phy_ctxt_cmd(sc, phyctxt, chains_static,
-		    chains_dynamic, IWM_FW_CTXT_ACTION_MODIFY, apply_time, sco);
+		    chains_dynamic, IWM_FW_CTXT_ACTION_MODIFY, apply_time, sco,
+		    vht_chan_width);
 		if (err) {
 			printf("%s: could not update PHY context (error %d)\n",
 			    DEVNAME(sc), err);
@@ -8452,6 +8705,7 @@ iwm_phy_ctxt_update(struct iwm_softc *sc, struct iwm_phy_ctxt *phyctxt,
 	}
 
 	phyctxt->sco = sco;
+	phyctxt->vht_chan_width = vht_chan_width;
 	return 0;
 }
 
@@ -8467,12 +8721,15 @@ iwm_auth(struct iwm_softc *sc)
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
 		err = iwm_phy_ctxt_update(sc, &sc->sc_phyctxt[0],
-		    ic->ic_ibss_chan, 1, 1, 0, IEEE80211_HTOP0_SCO_SCN);
+		    ic->ic_ibss_chan, 1, 1, 0, IEEE80211_HTOP0_SCO_SCN,
+		    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
 		if (err)
 			return err;
 	} else {
 		err = iwm_phy_ctxt_update(sc, &sc->sc_phyctxt[0],
-		    in->in_ni.ni_chan, 1, 1, 0, IEEE80211_HTOP0_SCO_SCN);
+		    in->in_ni.ni_chan, 1, 1, 0, IEEE80211_HTOP0_SCO_SCN,
+		    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
+		if (err)
 		if (err)
 			return err;
 	}
@@ -8586,7 +8843,8 @@ iwm_deauth(struct iwm_softc *sc)
 
 	/* Move unused PHY context to a default channel. */
 	err = iwm_phy_ctxt_update(sc, &sc->sc_phyctxt[0],
-	    &ic->ic_channels[1], 1, 1, 0, IEEE80211_HTOP0_SCO_SCN);
+	    &ic->ic_channels[1], 1, 1, 0, IEEE80211_HTOP0_SCO_SCN,
+	    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
 	if (err)
 		return err;
 
@@ -8615,28 +8873,36 @@ iwm_run(struct iwm_softc *sc)
 		uint8_t chains = iwm_mimo_enabled(sc) ? 2 : 1;
 		err = iwm_phy_ctxt_update(sc, in->in_phyctxt,
 		    in->in_phyctxt->channel, chains, chains,
-		    0, IEEE80211_HTOP0_SCO_SCN);
+		    0, IEEE80211_HTOP0_SCO_SCN,
+		    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
 		if (err) {
 			printf("%s: failed to update PHY\n", DEVNAME(sc));
 			return err;
 		}
 	} else if (ni->ni_flags & IEEE80211_NODE_HT) {
 		uint8_t chains = iwm_mimo_enabled(sc) ? 2 : 1;
-		uint8_t sco;
-		if (ieee80211_node_supports_ht_chan40(ni))
+		uint8_t sco, vht_chan_width;
+		if (IEEE80211_CHAN_40MHZ_ALLOWED(in->in_ni.ni_chan) &&
+		    ieee80211_node_supports_ht_chan40(ni))
 			sco = (ni->ni_htop0 & IEEE80211_HTOP0_SCO_MASK);
 		else
 			sco = IEEE80211_HTOP0_SCO_SCN;
+		if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
+		    IEEE80211_CHAN_80MHZ_ALLOWED(in->in_ni.ni_chan) &&
+		    ieee80211_node_supports_vht_chan80(ni))
+			vht_chan_width = IEEE80211_VHTOP0_CHAN_WIDTH_80;
+		else
+			vht_chan_width = IEEE80211_VHTOP0_CHAN_WIDTH_HT;
 		err = iwm_phy_ctxt_update(sc, in->in_phyctxt,
 		    in->in_phyctxt->channel, chains, chains,
-		    0, sco);
+		    0, sco, vht_chan_width);
 		if (err) {
 			printf("%s: failed to update PHY\n", DEVNAME(sc));
 			return err;
 		}
 	}
 
-	/* Update STA again, for HT-related settings such as MIMO. */
+	/* Update STA again to apply HT and VHT settings. */
 	err = iwm_add_sta_cmd(sc, in, 1);
 	if (err) {
 		printf("%s: could not update STA (error %d)\n",
@@ -8702,6 +8968,7 @@ iwm_run(struct iwm_softc *sc)
 
 	ieee80211_amrr_node_init(&sc->sc_amrr, &in->in_amn);
 	ieee80211_ra_node_init(&in->in_rn);
+	ieee80211_ra_vht_node_init(&in->in_rn_vht);
 
 	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
 		iwm_led_blink_start(sc);
@@ -8711,6 +8978,7 @@ iwm_run(struct iwm_softc *sc)
 	/* Start at lowest available bit-rate, AMRR will raise. */
 	in->in_ni.ni_txrate = 0;
 	in->in_ni.ni_txmcs = 0;
+	in->in_ni.ni_vht_ss = 1;
 	iwm_setrates(in, 0);
 
 	timeout_add_msec(&sc->sc_calib_to, 500);
@@ -8791,7 +9059,8 @@ iwm_run_stop(struct iwm_softc *sc)
 	/* Reset Tx chains in case MIMO or 40 MHz channels were enabled. */
 	if (in->in_ni.ni_flags & IEEE80211_NODE_HT) {
 		err = iwm_phy_ctxt_update(sc, in->in_phyctxt,
-		   in->in_phyctxt->channel, 1, 1, 0, IEEE80211_HTOP0_SCO_SCN);
+		    in->in_phyctxt->channel, 1, 1, 0, IEEE80211_HTOP0_SCO_SCN,
+		    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
 		if (err) {
 			printf("%s: failed to update PHY\n", DEVNAME(sc));
 			return err;
@@ -8947,26 +9216,97 @@ iwm_calib_timeout(void *arg)
 }
 
 void
-iwm_setrates(struct iwm_node *in, int async)
+iwm_set_rate_table_vht(struct iwm_node *in, struct iwm_lq_cmd *lqcmd)
 {
 	struct ieee80211_node *ni = &in->in_ni;
 	struct ieee80211com *ic = ni->ni_ic;
 	struct iwm_softc *sc = IC2IFP(ic)->if_softc;
-	struct iwm_lq_cmd lqcmd;
+	int ridx_min = iwm_rval2ridx(ieee80211_min_basic_rate(ic));
+	int i, tab, txmcs;
+
+	/*
+	 * Fill the LQ rate selection table with VHT rates in descending
+	 * order, i.e. with the node's current TX rate first. Keep reducing
+	 * channel width during later Tx attempts, and eventually fall back
+	 * to legacy OFDM. Do not mix SISO and MIMO rates.
+	 */
+	lqcmd->mimo_delim = 0;
+	txmcs = ni->ni_txmcs;
+	for (i = 0; i < nitems(lqcmd->rs_table); i++) {
+		if (txmcs >= 0) {
+			tab = IWM_RATE_MCS_VHT_MSK;
+			tab |= txmcs & IWM_RATE_VHT_MCS_RATE_CODE_MSK;
+			tab |= ((ni->ni_vht_ss - 1) <<
+			    IWM_RATE_VHT_MCS_NSS_POS) &
+			    IWM_RATE_VHT_MCS_NSS_MSK;
+			if (ni->ni_vht_ss > 1)
+				tab |= IWM_RATE_MCS_ANT_AB_MSK;
+			else {
+				if (sc->sc_device_family ==
+				    IWM_DEVICE_FAMILY_9000)
+					tab |= IWM_RATE_MCS_ANT_B_MSK;
+				else
+					tab |= IWM_RATE_MCS_ANT_A_MSK;
+			}
+
+			/*
+			 * First two Tx attempts may use 80MHz/SGI.
+			 * Next two Tx attempts may use 40MHz/SGI.
+			 * Beyond that use 20 MHz and decrease the rate.
+			 * As a special case, MCS 9 is invalid on 20 Mhz.
+			 */
+			if (txmcs == 9) {
+				if (i < 2 && in->in_phyctxt->vht_chan_width >=
+				    IEEE80211_VHTOP0_CHAN_WIDTH_80)
+					tab |= IWM_RATE_MCS_CHAN_WIDTH_80;
+				else
+					tab |= IWM_RATE_MCS_CHAN_WIDTH_40;
+				tab |= IWM_RATE_MCS_RTS_REQUIRED_MSK;
+				if (i < 4) {
+					if (ieee80211_ra_vht_use_sgi(ni))
+						tab |= IWM_RATE_MCS_SGI_MSK;
+				} else
+					txmcs--;
+			} else if (i < 2 && in->in_phyctxt->vht_chan_width >=
+			    IEEE80211_VHTOP0_CHAN_WIDTH_80) {
+				tab |= IWM_RATE_MCS_CHAN_WIDTH_80;
+				tab |= IWM_RATE_MCS_RTS_REQUIRED_MSK;
+				if (ieee80211_ra_vht_use_sgi(ni))
+					tab |= IWM_RATE_MCS_SGI_MSK;
+			} else if (i >= 2 && i < 4 &&
+			    in->in_phyctxt->vht_chan_width >=
+			    IEEE80211_VHTOP0_CHAN_WIDTH_HT &&
+			    (in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCA ||
+			    in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCB)) {
+				tab |= IWM_RATE_MCS_CHAN_WIDTH_40;
+				tab |= IWM_RATE_MCS_RTS_REQUIRED_MSK;
+				if (ieee80211_ra_vht_use_sgi(ni))
+					tab |= IWM_RATE_MCS_SGI_MSK;
+			} else if (txmcs >= 0)
+				txmcs--;
+		} else {
+			/* Fill the rest with the lowest possible rate. */
+			tab = iwm_rates[ridx_min].plcp;
+			if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000)
+				tab |= IWM_RATE_MCS_ANT_B_MSK;
+			else
+				tab |= IWM_RATE_MCS_ANT_A_MSK;
+			if (ni->ni_vht_ss > 1 && lqcmd->mimo_delim == 0)
+				lqcmd->mimo_delim = i;
+		}
+
+		lqcmd->rs_table[i] = htole32(tab);
+	}
+}
+
+void
+iwm_set_rate_table(struct iwm_node *in, struct iwm_lq_cmd *lqcmd)
+{
+	struct ieee80211_node *ni = &in->in_ni;
+	struct ieee80211com *ic = ni->ni_ic;
+	struct iwm_softc *sc = IC2IFP(ic)->if_softc;
 	struct ieee80211_rateset *rs = &ni->ni_rates;
 	int i, ridx, ridx_min, ridx_max, j, mimo, tab = 0;
-	struct iwm_host_cmd cmd = {
-		.id = IWM_LQ_CMD,
-		.len = { sizeof(lqcmd), },
-	};
-
-	cmd.flags = async ? IWM_CMD_ASYNC : 0;
-
-	memset(&lqcmd, 0, sizeof(lqcmd));
-	lqcmd.sta_id = IWM_STATION_ID;
-
-	if (ic->ic_flags & IEEE80211_F_USEPROT)
-		lqcmd.flags |= IWM_LQ_FLAG_USE_RTS_MSK;
 
 	/*
 	 * Fill the LQ rate selection table with legacy and/or HT rates
@@ -8979,13 +9319,13 @@ iwm_setrates(struct iwm_node *in, int async)
 	 */
 	j = 0;
 	ridx_min = iwm_rval2ridx(ieee80211_min_basic_rate(ic));
-	mimo = iwm_is_mimo_mcs(ni->ni_txmcs);
+	mimo = iwm_is_mimo_ht_mcs(ni->ni_txmcs);
 	ridx_max = (mimo ? IWM_RIDX_MAX : IWM_LAST_HT_SISO_RATE);
 	for (ridx = ridx_max; ridx >= ridx_min; ridx--) {
 		uint8_t plcp = iwm_rates[ridx].plcp;
 		uint8_t ht_plcp = iwm_rates[ridx].ht_plcp;
 
-		if (j >= nitems(lqcmd.rs_table))
+		if (j >= nitems(lqcmd->rs_table))
 			break;
 		tab = 0;
 		if (ni->ni_flags & IEEE80211_NODE_HT) {
@@ -8998,7 +9338,7 @@ iwm_setrates(struct iwm_node *in, int async)
 			for (i = ni->ni_txmcs; i >= 0; i--) {
 				if (isclr(ni->ni_rxmcs, i))
 					continue;
-				if (ridx != iwm_mcs2ridx[i])
+				if (ridx != iwm_ht_mcs2ridx[i])
 					continue;
 				tab = ht_plcp;
 				tab |= IWM_RATE_MCS_HT_MSK;
@@ -9038,13 +9378,13 @@ iwm_setrates(struct iwm_node *in, int async)
 
 		if (IWM_RIDX_IS_CCK(ridx))
 			tab |= IWM_RATE_MCS_CCK_MSK;
-		lqcmd.rs_table[j++] = htole32(tab);
+		lqcmd->rs_table[j++] = htole32(tab);
 	}
 
-	lqcmd.mimo_delim = (mimo ? j : 0);
+	lqcmd->mimo_delim = (mimo ? j : 0);
 
 	/* Fill the rest with the lowest possible rate */
-	while (j < nitems(lqcmd.rs_table)) {
+	while (j < nitems(lqcmd->rs_table)) {
 		tab = iwm_rates[ridx_min].plcp;
 		if (IWM_RIDX_IS_CCK(ridx_min))
 			tab |= IWM_RATE_MCS_CCK_MSK;
@@ -9052,8 +9392,34 @@ iwm_setrates(struct iwm_node *in, int async)
 			tab |= IWM_RATE_MCS_ANT_B_MSK;
 		else
 			tab |= IWM_RATE_MCS_ANT_A_MSK;
-		lqcmd.rs_table[j++] = htole32(tab);
+		lqcmd->rs_table[j++] = htole32(tab);
 	}
+}
+
+void
+iwm_setrates(struct iwm_node *in, int async)
+{
+	struct ieee80211_node *ni = &in->in_ni;
+	struct ieee80211com *ic = ni->ni_ic;
+	struct iwm_softc *sc = IC2IFP(ic)->if_softc;
+	struct iwm_lq_cmd lqcmd;
+	struct iwm_host_cmd cmd = {
+		.id = IWM_LQ_CMD,
+		.len = { sizeof(lqcmd), },
+	};
+
+	cmd.flags = async ? IWM_CMD_ASYNC : 0;
+
+	memset(&lqcmd, 0, sizeof(lqcmd));
+	lqcmd.sta_id = IWM_STATION_ID;
+
+	if (ic->ic_flags & IEEE80211_F_USEPROT)
+		lqcmd.flags |= IWM_LQ_FLAG_USE_RTS_MSK;
+
+	if (ni->ni_flags & IEEE80211_NODE_VHT)
+		iwm_set_rate_table_vht(in, &lqcmd);
+	else
+		iwm_set_rate_table(in, &lqcmd);
 
 	if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000)
 		lqcmd.single_stream_ant_msk = IWM_ANT_B;
@@ -9082,7 +9448,7 @@ iwm_media_change(struct ifnet *ifp)
 		return err;
 
 	if (ic->ic_fixed_mcs != -1)
-		sc->sc_fixed_ridx = iwm_mcs2ridx[ic->ic_fixed_mcs];
+		sc->sc_fixed_ridx = iwm_ht_mcs2ridx[ic->ic_fixed_mcs];
 	else if (ic->ic_fixed_rate != -1) {
 		rate = ic->ic_sup_rates[ic->ic_curmode].
 		    rs_rates[ic->ic_fixed_rate] & IEEE80211_RATE_VAL;
@@ -9846,7 +10212,8 @@ iwm_init_hw(struct iwm_softc *sc)
 		sc->sc_phyctxt[i].id = i;
 		sc->sc_phyctxt[i].channel = &ic->ic_channels[1];
 		err = iwm_phy_ctxt_cmd(sc, &sc->sc_phyctxt[i], 1, 1,
-		    IWM_FW_CTXT_ACTION_ADD, 0, IEEE80211_HTOP0_SCO_SCN);
+		    IWM_FW_CTXT_ACTION_ADD, 0, IEEE80211_HTOP0_SCO_SCN,
+		    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
 		if (err) {
 			printf("%s: could not add phy context %d (error %d)\n",
 			    DEVNAME(sc), i, err);
@@ -9997,6 +10364,8 @@ iwm_init(struct ifnet *ifp)
 
 	if (sc->sc_nvm.sku_cap_11n_enable)
 		iwm_setup_ht_rates(sc);
+	if (sc->sc_nvm.sku_cap_11ac_enable)
+		iwm_setup_vht_rates(sc);
 
 	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_flags |= IFF_RUNNING;
@@ -11554,6 +11923,13 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_aselcaps = 0;
 	ic->ic_ampdu_params = (IEEE80211_AMPDU_PARAM_SS_4 | 0x3 /* 64k */);
 
+	ic->ic_vhtcaps = IEEE80211_VHTCAP_MAX_MPDU_LENGTH_3895 |
+	    (IEEE80211_VHTCAP_MAX_AMPDU_LEN_64K <<
+	    IEEE80211_VHTCAP_MAX_AMPDU_LEN_SHIFT) |
+	    (IEEE80211_VHTCAP_CHAN_WIDTH_80 <<
+	     IEEE80211_VHTCAP_CHAN_WIDTH_SHIFT) | IEEE80211_VHTCAP_SGI80 |
+	    IEEE80211_VHTCAP_RX_ANT_PATTERN | IEEE80211_VHTCAP_TX_ANT_PATTERN;
+
 	ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
 	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
 	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
@@ -11561,6 +11937,8 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	for (i = 0; i < nitems(sc->sc_phyctxt); i++) {
 		sc->sc_phyctxt[i].id = i;
 		sc->sc_phyctxt[i].sco = IEEE80211_HTOP0_SCO_SCN;
+		sc->sc_phyctxt[i].vht_chan_width =
+		    IEEE80211_VHTOP0_CHAN_WIDTH_HT;
 	}
 
 	sc->sc_amrr.amrr_min_success_threshold =  1;

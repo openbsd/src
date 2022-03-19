@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.75 2022/01/09 05:42:52 jsg Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.76 2022/03/19 10:26:52 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -190,6 +190,7 @@ struct iwm_nvm_data {
 	int sku_cap_band_24GHz_enable;
 	int sku_cap_band_52GHz_enable;
 	int sku_cap_11n_enable;
+	int sku_cap_11ac_enable;
 	int sku_cap_amt_enable;
 	int sku_cap_ipan_enable;
 	int sku_cap_mimo_disable;
@@ -264,6 +265,7 @@ struct iwm_tx_data {
 
 	/* A-MPDU subframes */
 	int ampdu_txmcs;
+	int ampdu_txnss;
 	int ampdu_nframes;
 };
 
@@ -361,6 +363,7 @@ struct iwm_phy_ctxt {
 	uint32_t ref;
 	struct ieee80211_channel *channel;
 	uint8_t sco; /* 40 MHz secondary channel offset */
+	uint8_t vht_chan_width;
 };
 
 struct iwm_bf_data {
@@ -670,6 +673,7 @@ struct iwm_node {
 
 	struct ieee80211_amrr_node in_amn;
 	struct ieee80211_ra_node in_rn;
+	struct ieee80211_ra_vht_node in_rn_vht;
 	int lq_rate_mismatch;
 
 	struct iwm_rxq_dup_data dup_data;
