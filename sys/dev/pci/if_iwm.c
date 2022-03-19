@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.396 2022/03/19 14:50:01 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.397 2022/03/19 15:19:51 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5550,7 +5550,7 @@ iwm_vht_single_rate_control(struct iwm_softc *sc, struct ieee80211_node *ni,
 	struct iwm_node *in = (void *)ni;
 
 	/* Ignore Tx reports which don't match our last LQ command. */
-	if (txmcs != ni->ni_txmcs && nss != ni->ni_vht_ss) {
+	if (txmcs != ni->ni_txmcs || nss != ni->ni_vht_ss) {
 		if (++in->lq_rate_mismatch > 15) {
 			/* Try to sync firmware with the driver... */
 			iwm_setrates(in, 1);
