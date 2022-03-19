@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.192 2022/03/14 15:07:24 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.193 2022/03/19 15:20:32 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -480,6 +480,12 @@ ieee80211_ess_calculate_score(struct ieee80211com *ic,
 	    ni->ni_rssi > min_5ghz_rssi)
 		score += 2;
 
+	/* HT/VHT available */
+	if (ieee80211_node_supports_ht(ni))
+		score++;
+	if (ieee80211_node_supports_vht(ni))
+		score++;
+
 	/* Boost this AP if it had no auth/assoc failures in the past. */
 	if (ni->ni_fails == 0)
 		score += 21;
@@ -493,6 +499,7 @@ ieee80211_ess_calculate_score(struct ieee80211com *ic,
  *
  *  crypto: wpa2 > wpa1 > wep > open
  *  band: 5 GHz > 2 GHz provided 5 GHz rssi is above threshold
+ *  supported standard revisions: 11ac > 11n > 11a/b/g
  *  rssi: rssi1 > rssi2 as a numeric comparison with a slight
  *         disadvantage for 2 GHz APs
  *
