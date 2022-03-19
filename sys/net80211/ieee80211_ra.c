@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ra.c,v 1.4 2021/10/11 09:01:06 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ra.c,v 1.5 2022/03/19 10:28:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2021 Christian Ehrhardt <ehrhardt@genua.de>
@@ -70,7 +70,6 @@ int	ieee80211_ra_probe_valid(struct ieee80211_ra_goodput_stats *);
 #define RA_FP_DIV(a, b) \
 	(b == 0 ? (uint64_t)-1 : (((a) << RA_FP_SHIFT) / (b)))
 
-#define RA_DEBUG
 #ifdef RA_DEBUG
 #define DPRINTF(x)	do { if (ra_debug > 0) printf x; } while (0)
 #define DPRINTFN(n, x)	do { if (ra_debug >= (n)) printf x; } while (0)

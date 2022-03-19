@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ra_vht.c,v 1.1 2022/03/19 10:25:09 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ra_vht.c,v 1.2 2022/03/19 10:28:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2021 Christian Ehrhardt <ehrhardt@genua.de>
@@ -69,7 +69,6 @@ int	ieee80211_ra_vht_probe_valid(struct ieee80211_ra_vht_goodput_stats *);
 #define RA_FP_DIV(a, b) \
 	(b == 0 ? (uint64_t)-1 : (((a) << RA_FP_SHIFT) / (b)))
 
-#define RA_DEBUG
 #ifdef RA_DEBUG
 #define DPRINTF(x)	do { if (ra_vht_debug > 0) printf x; } while (0)
 #define DPRINTFN(n, x)	do { if (ra_vht_debug >= (n)) printf x; } while (0)
