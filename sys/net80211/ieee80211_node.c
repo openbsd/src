@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.193 2022/03/19 15:20:32 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.194 2022/03/19 15:21:13 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -1420,7 +1420,7 @@ ieee80211_node_choose_bss(struct ieee80211com *ic, int bgscan,
 	 * (as long as it meets the minimum RSSI threshold) since the 5Ghz band
 	 * is usually less saturated.
 	 */
-	if (selbs5 && selbs5->ni_rssi > min_5ghz_rssi)
+	if (selbs5 && (*ic->ic_node_checkrssi)(ic, selbs5))
 		selbs = selbs5;
 	else if (selbs5 && selbs2)
 		selbs = (selbs5->ni_rssi >= selbs2->ni_rssi ? selbs5 : selbs2);
