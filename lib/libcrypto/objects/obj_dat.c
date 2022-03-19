@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.48 2022/03/02 11:28:00 jsing Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.49 2022/03/19 17:49:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -485,12 +485,7 @@ OBJ_obj2nid(const ASN1_OBJECT *a)
 ASN1_OBJECT *
 OBJ_txt2obj(const char *s, int no_name)
 {
-	int nid = NID_undef;
-	ASN1_OBJECT *op = NULL;
-	unsigned char *buf;
-	unsigned char *p;
-	const unsigned char *cp;
-	int i, j;
+	int nid;
 
 	if (!no_name) {
 		if (((nid = OBJ_sn2nid(s)) != NID_undef) ||
@@ -498,29 +493,7 @@ OBJ_txt2obj(const char *s, int no_name)
 			return OBJ_nid2obj(nid);
 	}
 
-	/* Work out size of content octets */
-	i = a2d_ASN1_OBJECT(NULL, 0, s, -1);
-	if (i <= 0) {
-		/* Don't clear the error */
-		/*ERR_clear_error();*/
-		return NULL;
-	}
-	/* Work out total size */
-	j = ASN1_object_size(0, i, V_ASN1_OBJECT);
-
-	if ((buf = malloc(j)) == NULL)
-		return NULL;
-
-	p = buf;
-	/* Write out tag+length */
-	ASN1_put_object(&p, 0, i, V_ASN1_OBJECT, V_ASN1_UNIVERSAL);
-	/* Write out contents */
-	a2d_ASN1_OBJECT(p, i, s, -1);
-
-	cp = buf;
-	op = d2i_ASN1_OBJECT(NULL, &cp, j);
-	free(buf);
-	return op;
+	return t2i_ASN1_OBJECT_internal(s);
 }
 
 int

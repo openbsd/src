@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.42 2022/03/19 17:35:52 jsing Exp $ */
+/* $OpenBSD: a_object.c,v 1.43 2022/03/19 17:49:32 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -473,6 +473,43 @@ int
 i2t_ASN1_OBJECT(char *buf, int buf_len, const ASN1_OBJECT *aobj)
 {
 	return i2t_ASN1_OBJECT_internal(aobj, buf, buf_len, 0);
+}
+
+ASN1_OBJECT *
+t2i_ASN1_OBJECT_internal(const char *oid)
+{
+	ASN1_OBJECT *aobj = NULL;
+	uint8_t *data = NULL;
+	size_t data_len;
+	CBB cbb;
+	CBS cbs;
+
+	memset(&cbb, 0, sizeof(cbb));
+
+	CBS_init(&cbs, oid, strlen(oid));
+
+	if (!CBB_init(&cbb, 0))
+		goto err;
+	if (!a2c_ASN1_OBJECT_internal(&cbb, &cbs))
+		goto err;
+	if (!CBB_finish(&cbb, &data, &data_len))
+		goto err;
+
+	if (data_len > INT_MAX)
+		goto err;
+
+	if ((aobj = ASN1_OBJECT_new()) == NULL)
+		goto err;
+
+	aobj->data = data;
+	aobj->length = (int)data_len;
+	data = NULL;
+
+ err:
+	CBB_cleanup(&cbb);
+	free(data);
+
+	return aobj;
 }
 
 int

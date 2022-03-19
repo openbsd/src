@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.22 2022/03/13 14:58:14 jsing Exp $ */
+/* $OpenBSD: asn1_locl.h,v 1.23 2022/03/19 17:49:32 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -201,5 +201,6 @@ int asn1_tag2charwidth(int tag);
 
 int i2t_ASN1_OBJECT_internal(const ASN1_OBJECT *aobj, char *buf, int buf_len,
     int no_name);
+ASN1_OBJECT *t2i_ASN1_OBJECT_internal(const char *oid);
 
 __END_HIDDEN_DECLS
