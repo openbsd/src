@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.30 2022/03/14 15:08:50 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.31 2022/03/19 14:50:01 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -456,6 +456,7 @@ struct iwx_softc {
 	struct ieee80211com sc_ic;
 	int (*sc_newstate)(struct ieee80211com *, enum ieee80211_state, int);
 	int sc_newstate_pending;
+	int attached;
 
 	struct task		init_task; /* NB: not reference-counted */
 	struct refcnt		task_refs;

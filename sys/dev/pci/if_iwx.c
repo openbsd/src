@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.137 2022/03/14 15:08:50 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.138 2022/03/19 14:50:01 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9470,7 +9470,6 @@ iwx_preinit(struct iwx_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = IC2IFP(ic);
 	int err;
-	static int attached;
 
 	err = iwx_prepare_card_hw(sc);
 	if (err) {
@@ -9478,7 +9477,7 @@ iwx_preinit(struct iwx_softc *sc)
 		return err;
 	}
 
-	if (attached) {
+	if (sc->attached) {
 		/* Update MAC in case the upper layers changed it. */
 		IEEE80211_ADDR_COPY(sc->sc_ic.ic_myaddr,
 		    ((struct arpcom *)ifp)->ac_enaddr);
@@ -9497,7 +9496,7 @@ iwx_preinit(struct iwx_softc *sc)
 		return err;
 
 	/* Print version info and MAC address on first successful fw load. */
-	attached = 1;
+	sc->attached = 1;
 	printf("%s: hw rev 0x%x, fw ver %s, address %s\n",
 	    DEVNAME(sc), sc->sc_hw_rev & IWX_CSR_HW_REV_TYPE_MSK,
 	    sc->sc_fwver, ether_sprintf(sc->sc_nvm.hw_addr));

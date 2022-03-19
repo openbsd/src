@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwmvar.h,v 1.76 2022/03/19 10:26:52 stsp Exp $	*/
+/*	$OpenBSD: if_iwmvar.h,v 1.77 2022/03/19 14:50:01 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -476,6 +476,7 @@ struct iwm_softc {
 	struct ieee80211com sc_ic;
 	int (*sc_newstate)(struct ieee80211com *, enum ieee80211_state, int);
 	int sc_newstate_pending;
+	int attached;
 
 	struct ieee80211_amrr sc_amrr;
 	struct timeout sc_calib_to;
