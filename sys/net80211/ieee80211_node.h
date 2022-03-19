@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.92 2022/03/14 15:07:24 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.93 2022/03/19 10:25:09 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -113,16 +113,20 @@ extern const struct ieee80211_ht_rateset ieee80211_std_ratesets_11n[];
 #define IEEE80211_VHT_RATESET_MIMO2_80_SGI	11
 #define IEEE80211_VHT_NUM_RATESETS		12
 
-/* Maximum number of rates in a HT rateset. */
+/* Maximum number of rates in a VHT rateset. */
 #define IEEE80211_VHT_RATESET_MAX_NRATES	10
 
 struct ieee80211_vht_rateset {
+	int idx; /* This rateset's index in ieee80211_std_rateset_11ac[]. */
+
 	uint32_t nrates;
 	uint32_t rates[IEEE80211_VHT_RATESET_MAX_NRATES]; /* 500 kbit/s units */
 
 	/* Number of spatial streams used by rates in this rateset. */
 	int num_ss;
 
+	int chan40;
+	int chan80;
 	int sgi;
 };
 
@@ -572,6 +576,27 @@ ieee80211_node_supports_vht_chan80(struct ieee80211_node *ni)
 	return (op_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80 ||
 	    op_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160 ||
 	    op_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_8080);
+}
+
+/* Check if the peer can receive frames sent on a 160 MHz channel. */
+static inline int
+ieee80211_node_supports_vht_chan160(struct ieee80211_node *ni)
+{
+	uint8_t cap_chan_width, op_chan_width;
+
+	if (!ieee80211_node_supports_vht(ni))
+		return 0;
+
+	cap_chan_width = (ni->ni_vhtcaps & IEEE80211_VHTCAP_CHAN_WIDTH_MASK) >>
+	    IEEE80211_VHTCAP_CHAN_WIDTH_SHIFT;
+	if (cap_chan_width != IEEE80211_VHTCAP_CHAN_WIDTH_160)
+		return 0;
+
+	op_chan_width = (ni->ni_vht_chan_width &
+	    IEEE80211_VHTOP0_CHAN_WIDTH_MASK) >>
+	    IEEE80211_VHTOP0_CHAN_WIDTH_SHIFT;
+
+	return (op_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_160);
 }
 
 struct ieee80211com;
