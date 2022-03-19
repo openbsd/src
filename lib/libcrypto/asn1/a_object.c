@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.41 2022/03/15 18:47:22 jsing Exp $ */
+/* $OpenBSD: a_object.c,v 1.42 2022/03/19 17:35:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -62,7 +62,6 @@
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
-#include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
@@ -146,128 +145,25 @@ i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 	return (objsize);
 }
 
-int
-a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
+static int
+oid_add_arc(CBB *cbb, uint64_t arc)
 {
-	int i, first, len = 0, c, use_bn;
-	char ftmp[24], *tmp = ftmp;
-	int tmpsize = sizeof ftmp;
-	const char *p;
-	unsigned long l;
-	BIGNUM *bl = NULL;
+	int started = 0;
+	uint8_t val;
+	int i;
 
-	if (num == 0)
-		return (0);
-	else if (num == -1)
-		num = strlen(buf);
-
-	p = buf;
-	c = *(p++);
-	num--;
-	if ((c >= '0') && (c <= '2')) {
-		first= c-'0';
-	} else {
-		ASN1error(ASN1_R_FIRST_NUM_TOO_LARGE);
-		goto err;
+	for (i = (sizeof(arc) * 8) / 7; i >= 0; i--) {
+		val = (arc >> (i * 7)) & 0x7f;
+		if (!started && i != 0 && val == 0)
+			continue;
+		if (i > 0)
+			val |= 0x80;
+		if (!CBB_add_u8(cbb, val))
+			return 0;
+		started = 1;
 	}
 
-	if (num <= 0) {
-		ASN1error(ASN1_R_MISSING_SECOND_NUMBER);
-		goto err;
-	}
-	c = *(p++);
-	num--;
-	for (;;) {
-		if (num <= 0)
-			break;
-		if ((c != '.') && (c != ' ')) {
-			ASN1error(ASN1_R_INVALID_SEPARATOR);
-			goto err;
-		}
-		l = 0;
-		use_bn = 0;
-		for (;;) {
-			if (num <= 0)
-				break;
-			num--;
-			c = *(p++);
-			if ((c == ' ') || (c == '.'))
-				break;
-			if ((c < '0') || (c > '9')) {
-				ASN1error(ASN1_R_INVALID_DIGIT);
-				goto err;
-			}
-			if (!use_bn && l >= ((ULONG_MAX - 80) / 10L)) {
-				use_bn = 1;
-				if (!bl)
-					bl = BN_new();
-				if (!bl || !BN_set_word(bl, l))
-					goto err;
-			}
-			if (use_bn) {
-				if (!BN_mul_word(bl, 10L) ||
-				    !BN_add_word(bl, c-'0'))
-					goto err;
-			} else
-				l = l * 10L + (long)(c - '0');
-		}
-		if (len == 0) {
-			if ((first < 2) && (l >= 40)) {
-				ASN1error(ASN1_R_SECOND_NUMBER_TOO_LARGE);
-				goto err;
-			}
-			if (use_bn) {
-				if (!BN_add_word(bl, first * 40))
-					goto err;
-			} else
-				l += (long)first * 40;
-		}
-		i = 0;
-		if (use_bn) {
-			int blsize;
-			blsize = BN_num_bits(bl);
-			blsize = (blsize + 6) / 7;
-			if (blsize > tmpsize) {
-				if (tmp != ftmp)
-					free(tmp);
-				tmpsize = blsize + 32;
-				tmp = malloc(tmpsize);
-				if (!tmp)
-					goto err;
-			}
-			while (blsize--)
-				tmp[i++] = (unsigned char)BN_div_word(bl, 0x80L);
-		} else {
-
-			for (;;) {
-				tmp[i++] = (unsigned char)l & 0x7f;
-				l >>= 7L;
-				if (l == 0L)
-					break;
-			}
-
-		}
-		if (out != NULL) {
-			if (len + i > olen) {
-				ASN1error(ASN1_R_BUFFER_TOO_SMALL);
-				goto err;
-			}
-			while (--i > 0)
-				out[len++] = tmp[i]|0x80;
-			out[len++] = tmp[0];
-		} else
-			len += i;
-	}
-	if (tmp != ftmp)
-		free(tmp);
-	BN_free(bl);
-	return (len);
-
- err:
-	if (tmp != ftmp)
-		free(tmp);
-	BN_free(bl);
-	return (0);
+	return 1;
 }
 
 static int
@@ -310,6 +206,111 @@ oid_add_arc_txt(CBB *cbb, uint64_t arc, int first)
 }
 
 static int
+oid_parse_arc_txt(CBS *cbs, uint64_t *out_arc, char *separator, int first)
+{
+	uint64_t arc = 0;
+	int digits = 0;
+	uint8_t val;
+
+	if (!first) {
+		if (!CBS_get_u8(cbs, &val))
+			return 0;
+		if ((*separator == 0 && val != '.' && val != ' ') ||
+		    (*separator != 0 && val != *separator)) {
+			ASN1error(ASN1_R_INVALID_SEPARATOR);
+			return 0;
+		}
+		*separator = val;
+	}
+
+	while (CBS_len(cbs) > 0) {
+		if (!CBS_peek_u8(cbs, &val))
+			return 0;
+		if (val == '.' || val == ' ')
+			break;
+
+		if (!CBS_get_u8(cbs, &val))
+			return 0;
+		if (val < '0' || val > '9') {
+			/* For the first arc we treat this as the separator. */
+			if (first) {
+				ASN1error(ASN1_R_INVALID_SEPARATOR);
+				return 0;
+			}
+			ASN1error(ASN1_R_INVALID_DIGIT);
+			return 0;
+		}
+		val -= '0';
+
+		if (digits > 0 && arc == 0 && val == 0) {
+			ASN1error(ASN1_R_INVALID_NUMBER);
+			return 0;
+		}
+		digits++;
+
+		if (arc > UINT64_MAX / 10) {
+			ASN1error(ASN1_R_TOO_LONG);
+			return 0;
+		}
+		arc = arc * 10 + val;
+	}
+
+	if (digits < 1) {
+		ASN1error(ASN1_R_INVALID_NUMBER);
+		return 0;
+	}
+
+	*out_arc = arc;
+
+	return 1;
+}
+
+static int
+a2c_ASN1_OBJECT_internal(CBB *cbb, CBS *cbs)
+{
+	uint64_t arc, si1, si2;
+	char separator = 0;
+
+	if (!oid_parse_arc_txt(cbs, &si1, &separator, 1))
+		return 0;
+
+	if (CBS_len(cbs) == 0) {
+		ASN1error(ASN1_R_MISSING_SECOND_NUMBER);
+		return 0;
+	}
+
+	if (!oid_parse_arc_txt(cbs, &si2, &separator, 0))
+		return 0;
+
+	/*
+	 * X.690 section 8.19 - the first two subidentifiers are encoded as
+	 * (x * 40) + y, with x being limited to [0,1,2]. The second
+	 * subidentifier cannot exceed 39 for x < 2.
+	 */
+	if (si1 > 2) {
+		ASN1error(ASN1_R_FIRST_NUM_TOO_LARGE);
+		return 0;
+	}
+	if ((si1 < 2 && si2 >= 40) || si2 > UINT64_MAX - si1 * 40) {
+		ASN1error(ASN1_R_SECOND_NUMBER_TOO_LARGE);
+		return 0;
+	}
+	arc = si1 * 40 + si2;
+
+	if (!oid_add_arc(cbb, arc))
+		return 0;
+
+	while (CBS_len(cbs) > 0) {
+		if (!oid_parse_arc_txt(cbs, &arc, &separator, 0))
+			return 0;
+		if (!oid_add_arc(cbb, arc))
+			return 0;
+	}
+
+	return 1;
+}
+
+static int
 c2a_ASN1_OBJECT(CBS *cbs, CBB *cbb)
 {
 	uint64_t arc, si1, si2;
@@ -341,6 +342,51 @@ c2a_ASN1_OBJECT(CBS *cbs, CBB *cbb)
 		return 0;
 
 	return 1;
+}
+
+int
+a2d_ASN1_OBJECT(unsigned char *out, int out_len, const char *in, int in_len)
+{
+	uint8_t *data = NULL;
+	size_t data_len;
+	CBS cbs;
+	CBB cbb;
+	int ret = 0;
+
+	memset(&cbb, 0, sizeof(cbb));
+
+	if (in_len == -1)
+		in_len = strlen(in);
+	if (in_len <= 0)
+		goto err;
+
+	CBS_init(&cbs, in, in_len);
+
+	if (!CBB_init(&cbb, 0))
+		goto err;
+	if (!a2c_ASN1_OBJECT_internal(&cbb, &cbs))
+		goto err;
+	if (!CBB_finish(&cbb, &data, &data_len))
+		goto err;
+
+	if (data_len > INT_MAX)
+		goto err;
+
+	if (out != NULL) {
+		if (out_len <= 0 || (size_t)out_len < data_len) {
+			ASN1error(ASN1_R_BUFFER_TOO_SMALL);
+			goto err;
+		}
+		memcpy(out, data, data_len);
+	}
+
+	ret = (int)data_len;
+
+ err:
+	CBB_cleanup(&cbb);
+	free(data);
+
+	return ret;
 }
 
 static int
