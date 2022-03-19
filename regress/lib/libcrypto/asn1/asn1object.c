@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1object.c,v 1.4 2022/03/15 18:29:12 tb Exp $ */
+/* $OpenBSD: asn1object.c,v 1.5 2022/03/19 16:23:17 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2021, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -251,6 +251,10 @@ struct asn1_object_test asn1_object_tests[] = {
 	{
 		.oid = "2.5,4.10",
 		.want_error = ASN1_R_INVALID_DIGIT,
+	},
+	{
+		.oid = "2a.5.4.10",
+		.want_error = ASN1_R_INVALID_SEPARATOR,
 	},
 	{
 		.oid = "2.5a.4.10",
