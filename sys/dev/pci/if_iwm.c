@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.397 2022/03/19 15:19:51 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.398 2022/03/20 11:59:39 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7661,6 +7661,12 @@ iwm_fill_probe_req(struct iwm_softc *sc, struct iwm_scan_probe_req *preq)
 			frm = ieee80211_add_xrates(frm, rs);
 		preq->band_data[1].len = htole16(frm - pos);
 		remain -= frm - pos;
+		if (ic->ic_flags & IEEE80211_F_VHTON) {
+			if (remain < 14)
+				return ENOBUFS;
+			frm = ieee80211_add_vhtcaps(frm, ic);
+			remain -= frm - pos;
+		}
 	}
 
 	/* Send 11n IEs on both 2GHz and 5GHz bands. */
@@ -7672,12 +7678,6 @@ iwm_fill_probe_req(struct iwm_softc *sc, struct iwm_scan_probe_req *preq)
 		frm = ieee80211_add_htcaps(frm, ic);
 		/* XXX add WME info? */
 		remain -= frm - pos;
-	}
-
-	if (ic->ic_flags & IEEE80211_F_VHTON) {
-		if (remain < 14)
-			return ENOBUFS;
-		frm = ieee80211_add_vhtcaps(frm, ic);
 	}
 
 	preq->common_data.len = htole16(frm - pos);
