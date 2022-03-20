@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.10 2022/03/15 02:07:21 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.11 2022/03/20 00:01:33 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -265,6 +265,8 @@
 
 #define RX_INTR_MODERATION_CTL_REG(i)		(0x5a40 + (i) * 4)
 #define  RX_INTR_MODERATION_CTL_EN		(1 << 1)
+#define  RX_INTR_MODERATION_CTL_MIN		(0xFF << 8)
+#define  RX_INTR_MODERATION_CTL_MAX		(0x1FF << 16)
 
 #define RX_DMA_DESC_BASE_ADDRLSW_REG(i)		(0x5b00 + (i) * 0x20)
 #define RX_DMA_DESC_BASE_ADDRMSW_REG(i)		(0x5b04 + (i) * 0x20)
@@ -368,6 +370,8 @@
 
 #define TX_INTR_MODERATION_CTL_REG(i)		(0x8980 + (i) * 4)
 #define  TX_INTR_MODERATION_CTL_EN		(1 << 1)
+#define  TX_INTR_MODERATION_CTL_MIN		(0xFF << 8)
+#define  TX_INTR_MODERATION_CTL_MAX		(0x1FF << 16)
 
 #define __LOWEST_SET_BIT(__mask) (((((uint32_t)__mask) - 1) & ((uint32_t)__mask)) ^ ((uint32_t)__mask))
 #define __SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
@@ -962,6 +966,7 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	pcitag_t tag;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	int txmin, txmax, rxmin, rxmax;
 	int irqmode;
 	int i;
 
@@ -1095,6 +1100,15 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 	if_attach_iqueues(ifp, sc->sc_nqueues);
 	if_attach_queues(ifp, sc->sc_nqueues);
 
+	/*
+	 * set interrupt moderation for up to 20k interrupts per second,
+	 * more rx than tx.  these values are in units of 2us.
+	 */
+	txmin = 20;
+	txmax = 200;
+	rxmin = 6;
+	rxmax = 60;
+
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct aq_queues *aq = &sc->sc_queues[i];
 		struct aq_rxring *rx = &aq->q_rx;
@@ -1117,18 +1131,28 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 			/* map msix */
 		}
 
-		AQ_WRITE_REG(sc, TX_INTR_MODERATION_CTL_REG(i), 0);
-		AQ_WRITE_REG(sc, RX_INTR_MODERATION_CTL_REG(i), 0);
+		AQ_WRITE_REG_BIT(sc, TX_INTR_MODERATION_CTL_REG(i),
+		    TX_INTR_MODERATION_CTL_MIN, txmin);
+		AQ_WRITE_REG_BIT(sc, TX_INTR_MODERATION_CTL_REG(i),
+		    TX_INTR_MODERATION_CTL_MAX, txmax);
+		AQ_WRITE_REG_BIT(sc, TX_INTR_MODERATION_CTL_REG(i),
+		    TX_INTR_MODERATION_CTL_EN, 1);
+		AQ_WRITE_REG_BIT(sc, RX_INTR_MODERATION_CTL_REG(i),
+		    RX_INTR_MODERATION_CTL_MIN, rxmin);
+		AQ_WRITE_REG_BIT(sc, RX_INTR_MODERATION_CTL_REG(i),
+		    RX_INTR_MODERATION_CTL_MAX, rxmax);
+		AQ_WRITE_REG_BIT(sc, RX_INTR_MODERATION_CTL_REG(i),
+		    RX_INTR_MODERATION_CTL_EN, 1);
 	}
 
 	AQ_WRITE_REG_BIT(sc, TX_DMA_INT_DESC_WRWB_EN_REG,
-	    TX_DMA_INT_DESC_WRWB_EN, 1);
+	    TX_DMA_INT_DESC_WRWB_EN, 0);
 	AQ_WRITE_REG_BIT(sc, TX_DMA_INT_DESC_WRWB_EN_REG,
-	    TX_DMA_INT_DESC_MODERATE_EN, 0);
+	    TX_DMA_INT_DESC_MODERATE_EN, 1);
 	AQ_WRITE_REG_BIT(sc, RX_DMA_INT_DESC_WRWB_EN_REG,
-	    RX_DMA_INT_DESC_WRWB_EN, 1);
+	    RX_DMA_INT_DESC_WRWB_EN, 0);
 	AQ_WRITE_REG_BIT(sc, RX_DMA_INT_DESC_WRWB_EN_REG,
-	    RX_DMA_INT_DESC_MODERATE_EN, 0);
+	    RX_DMA_INT_DESC_MODERATE_EN, 1);
 
 	aq_enable_intr(sc, 1, 0);
 	printf("\n");
