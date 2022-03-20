@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.43 2022/03/19 17:49:32 jsing Exp $ */
+/* $OpenBSD: a_object.c,v 1.44 2022/03/20 13:27:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,28 +121,6 @@ ASN1_OBJECT_create(int nid, unsigned char *data, int len,
 	o.flags = ASN1_OBJECT_FLAG_DYNAMIC | ASN1_OBJECT_FLAG_DYNAMIC_STRINGS |
 	    ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 	return (OBJ_dup(&o));
-}
-
-int
-i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
-{
-	unsigned char *p;
-	int objsize;
-
-	if ((a == NULL) || (a->data == NULL))
-		return (0);
-
-	objsize = ASN1_object_size(0, a->length, V_ASN1_OBJECT);
-	if (pp == NULL)
-		return objsize;
-
-	p = *pp;
-	ASN1_put_object(&p, 0, a->length, V_ASN1_OBJECT, V_ASN1_UNIVERSAL);
-	memcpy(p, a->data, a->length);
-	p += a->length;
-
-	*pp = p;
-	return (objsize);
 }
 
 static int
@@ -542,36 +520,6 @@ i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *aobj)
 }
 
 ASN1_OBJECT *
-d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp, long length)
-{
-	const unsigned char *p;
-	long len;
-	int tag, xclass;
-	int inf, i;
-	ASN1_OBJECT *ret = NULL;
-
-	p = *pp;
-	inf = ASN1_get_object(&p, &len, &tag, &xclass, length);
-	if (inf & 0x80) {
-		i = ASN1_R_BAD_OBJECT_HEADER;
-		goto err;
-	}
-
-	if (tag != V_ASN1_OBJECT) {
-		i = ASN1_R_EXPECTING_AN_OBJECT;
-		goto err;
-	}
-	ret = c2i_ASN1_OBJECT(a, &p, len);
-	if (ret)
-		*pp = p;
-	return ret;
-
- err:
-	ASN1error(i);
-	return (NULL);
-}
-
-ASN1_OBJECT *
 c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp, long len)
 {
 	ASN1_OBJECT *ret;
@@ -644,5 +592,57 @@ c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp, long len)
  err:
 	if (a == NULL || ret != *a)
 		ASN1_OBJECT_free(ret);
+	return (NULL);
+}
+
+int
+i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
+{
+	unsigned char *p;
+	int objsize;
+
+	if ((a == NULL) || (a->data == NULL))
+		return (0);
+
+	objsize = ASN1_object_size(0, a->length, V_ASN1_OBJECT);
+	if (pp == NULL)
+		return objsize;
+
+	p = *pp;
+	ASN1_put_object(&p, 0, a->length, V_ASN1_OBJECT, V_ASN1_UNIVERSAL);
+	memcpy(p, a->data, a->length);
+	p += a->length;
+
+	*pp = p;
+	return (objsize);
+}
+
+ASN1_OBJECT *
+d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp, long length)
+{
+	const unsigned char *p;
+	long len;
+	int tag, xclass;
+	int inf, i;
+	ASN1_OBJECT *ret = NULL;
+
+	p = *pp;
+	inf = ASN1_get_object(&p, &len, &tag, &xclass, length);
+	if (inf & 0x80) {
+		i = ASN1_R_BAD_OBJECT_HEADER;
+		goto err;
+	}
+
+	if (tag != V_ASN1_OBJECT) {
+		i = ASN1_R_EXPECTING_AN_OBJECT;
+		goto err;
+	}
+	ret = c2i_ASN1_OBJECT(a, &p, len);
+	if (ret)
+		*pp = p;
+	return ret;
+
+ err:
+	ASN1error(i);
 	return (NULL);
 }
