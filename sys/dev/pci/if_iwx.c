@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.139 2022/03/20 11:59:39 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.140 2022/03/20 12:01:58 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3992,24 +3992,12 @@ iwx_rx_frame(struct iwx_softc *sc, struct mbuf *m, int chanidx,
 	struct ifnet *ifp = IC2IFP(ic);
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
-	struct ieee80211_channel *bss_chan;
-	uint8_t saved_bssid[IEEE80211_ADDR_LEN] = { 0 };
 
 	if (chanidx < 0 || chanidx >= nitems(ic->ic_channels))	
 		chanidx = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
 
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, wh);
-	if (ni == ic->ic_bss) {
-		/* 
-		 * We may switch ic_bss's channel during scans.
-		 * Record the current channel so we can restore it later.
-		 */
-		bss_chan = ni->ni_chan;
-		IEEE80211_ADDR_COPY(&saved_bssid, ni->ni_macaddr);
-	}
-	ni->ni_chan = &ic->ic_channels[chanidx];
-
 	if ((rxi->rxi_flags & IEEE80211_RXI_HWDEC) &&
 	    iwx_ccmp_decap(sc, m, ni, rxi) != 0) {
 		ifp->if_ierrors++;
@@ -4073,12 +4061,6 @@ iwx_rx_frame(struct iwx_softc *sc, struct mbuf *m, int chanidx,
 	}
 #endif
 	ieee80211_inputm(IC2IFP(ic), m, ni, rxi, ml);
-	/*
-	 * ieee80211_inputm() might have changed our BSS.
-	 * Restore ic_bss's channel if we are still in the same BSS.
-	 */
-	if (ni == ic->ic_bss && IEEE80211_ADDR_EQ(saved_bssid, ni->ni_macaddr))
-		ni->ni_chan = bss_chan;
 	ieee80211_release_node(ic, ni);
 }
 
@@ -4593,6 +4575,7 @@ iwx_rx_mpdu_mq(struct iwx_softc *sc, struct mbuf *m, void *pktdata,
 
 	rxi.rxi_rssi = rssi;
 	rxi.rxi_tstamp = le64toh(desc->v1.tsf_on_air_rise);
+	rxi.rxi_chan = chanidx;
 
 	if (iwx_rx_reorder(sc, m, chanidx, desc,
 	    (phy_info & IWX_RX_MPDU_PHY_SHORT_PREAMBLE),

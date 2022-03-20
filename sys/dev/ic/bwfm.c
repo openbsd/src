@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.101 2022/03/06 18:52:47 kettenis Exp $ */
+/* $OpenBSD: bwfm.c,v 1.102 2022/03/20 12:01:58 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2703,8 +2703,6 @@ bwfm_scan_node(struct bwfm_softc *sc, struct bwfm_bss_info *bss, size_t len)
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 	struct ieee80211_rxinfo rxi;
-	struct ieee80211_channel *bss_chan;
-	uint8_t saved_bssid[IEEE80211_ADDR_LEN] = { 0 };
 	struct mbuf *m;
 	uint32_t pktlen, ieslen;
 	uint16_t iesoff;
@@ -2739,28 +2737,14 @@ bwfm_scan_node(struct bwfm_softc *sc, struct bwfm_bss_info *bss, size_t len)
 	/* Finalize mbuf. */
 	m->m_pkthdr.len = m->m_len = pktlen;
 	ni = ieee80211_find_rxnode(ic, wh);
-	if (ni == ic->ic_bss) {
-		/*
-		 * We may switch ic_bss's channel during scans.
-		 * Record the current channel so we can restore it later.
-		 */
-		bss_chan = ni->ni_chan;
-		IEEE80211_ADDR_COPY(&saved_bssid, ni->ni_macaddr);
-	}
 	/* Channel mask equals IEEE80211_CHAN_MAX */
 	chanidx = bwfm_spec2chan(sc, letoh32(bss->chanspec));
-	ni->ni_chan = &ic->ic_channels[chanidx];
 	/* Supply RSSI */
 	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = (int16_t)letoh16(bss->rssi);
 	rxi.rxi_tstamp = 0;
+	rxi.rxi_chan = chanidx;
 	ieee80211_input(ifp, m, ni, &rxi);
-	/*
-	 * ieee80211_input() might have changed our BSS.
-	 * Restore ic_bss's channel if we are still in the same BSS.
-	 */
-	if (ni == ic->ic_bss && IEEE80211_ADDR_EQ(saved_bssid, ni->ni_macaddr))
-		ni->ni_chan = bss_chan;
 	/* Node is no longer needed. */
 	ieee80211_release_node(ic, ni);
 }

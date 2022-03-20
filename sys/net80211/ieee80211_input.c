@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_input.c,v 1.246 2022/03/20 07:50:32 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_input.c,v 1.247 2022/03/20 12:01:58 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2001 Atsushi Onoe
@@ -1648,7 +1648,10 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 
 	ssid = rates = xrates = edcaie = wmmie = rsnie = wpaie = tim = NULL;
 	htcaps = htop = vhtcaps = vhtop = NULL;
-	bchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+	if (rxi->rxi_chan)
+		bchan = rxi->rxi_chan;
+	else
+		bchan = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
 	chan = bchan;
 	erp = 0;
 	while (frm + 2 <= efrm) {
@@ -1744,9 +1747,10 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		ic->ic_stats.is_rx_badchan++;
 		return;
 	}
-	if ((ic->ic_state != IEEE80211_S_SCAN ||
+	if ((rxi->rxi_chan != 0 && chan != rxi->rxi_chan) ||
+	    ((ic->ic_state != IEEE80211_S_SCAN ||
 	     !(ic->ic_caps & IEEE80211_C_SCANALL)) &&
-	    chan != bchan) {
+	    chan != bchan)) {
 		/*
 		 * Frame was received on a channel different from the
 		 * one indicated in the DS params element id;
@@ -1783,11 +1787,13 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 	} else
 		is_new = 0;
 
+	ni->ni_chan = &ic->ic_channels[chan];
+
 	if (htcaps)
 		ieee80211_setup_htcaps(ni, htcaps + 2, htcaps[1]);
 	if (htop && !ieee80211_setup_htop(ni, htop + 2, htop[1], 1))
 		htop = NULL; /* invalid HTOP */
-	if (htcaps && vhtcaps && IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan)) {
+	if (htcaps && vhtcaps && IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) {
 		ieee80211_setup_vhtcaps(ni, vhtcaps + 2, vhtcaps[1]);
 		if (vhtop && !ieee80211_setup_vhtop(ni, vhtop + 2, vhtop[1], 1))
 			vhtop = NULL; /* invalid VHTOP */
@@ -1984,8 +1990,6 @@ ieee80211_recv_probe_resp(struct ieee80211com *ic, struct mbuf *m,
 		memcpy(ni->ni_essid, &ssid[2], ssid[1]);
 	}
 	IEEE80211_ADDR_COPY(ni->ni_bssid, wh->i_addr3);
-	/* XXX validate channel # */
-	ni->ni_chan = &ic->ic_channels[chan];
 	if (ic->ic_state == IEEE80211_S_SCAN &&
 	    IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) {
 		/*
@@ -2645,7 +2649,7 @@ ieee80211_recv_assoc_resp(struct ieee80211com *ic, struct mbuf *m,
 		ieee80211_setup_htop(ni, htop + 2, htop[1], 0);
 	ieee80211_ht_negotiate(ic, ni);
 
-	if (htcaps && vhtcaps && IEEE80211_IS_CHAN_5GHZ(ic->ic_bss->ni_chan)) {
+	if (htcaps && vhtcaps && IEEE80211_IS_CHAN_5GHZ(ni->ni_chan)) {
 		ieee80211_setup_vhtcaps(ni, vhtcaps + 2, vhtcaps[1]);
 		if (vhtop && !ieee80211_setup_vhtop(ni, vhtop + 2, vhtop[1], 1))
 			vhtop = NULL; /* invalid VHTOP */

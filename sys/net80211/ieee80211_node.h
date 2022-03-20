@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.h,v 1.93 2022/03/19 10:25:09 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.h,v 1.94 2022/03/20 12:01:58 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.h,v 1.9 2004/04/30 22:57:32 dyoung Exp $	*/
 
 /*-
@@ -192,6 +192,7 @@ struct ieee80211_rxinfo {
 	u_int32_t		rxi_flags;
 	u_int32_t		rxi_tstamp;
 	int			rxi_rssi;
+	uint8_t			rxi_chan;
 };
 #define IEEE80211_RXI_HWDEC		0x00000001
 #define IEEE80211_RXI_AMPDU_DONE	0x00000002
