@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.18 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.19 2022/03/21 19:22:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -208,7 +208,7 @@ int	arcofi_set_port(void *, mixer_ctrl_t *);
 int	arcofi_start_input(void *, void *, int, void (*)(void *), void *);
 int	arcofi_start_output(void *, void *, int, void (*)(void *), void *);
 
-/* const */ struct audio_hw_if arcofi_hw_if = {
+const struct audio_hw_if arcofi_hw_if = {
 	.open = arcofi_open,
 	.close = arcofi_close,
 	.set_params = arcofi_set_params,

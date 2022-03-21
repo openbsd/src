@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.168 2022/02/21 14:21:58 jsg Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.169 2022/03/21 19:22:42 miod Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -468,7 +468,7 @@ const struct cfattach uaudio_ca = {
 	sizeof(struct uaudio_softc), uaudio_match, uaudio_attach, uaudio_detach
 };
 
-struct audio_hw_if uaudio_hw_if = {
+const struct audio_hw_if uaudio_hw_if = {
 	uaudio_open,		/* open */
 	uaudio_close,		/* close */
 	uaudio_set_params,	/* set_params */

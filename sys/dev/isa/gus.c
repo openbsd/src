@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus.c,v 1.49 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: gus.c,v 1.50 2022/03/21 19:22:40 miod Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -260,7 +260,7 @@ static const unsigned short gus_log_volumes[512] = {
 /*
  * Interface to higher level audio driver
  */
-struct audio_hw_if gus_hw_if = {
+const struct audio_hw_if gus_hw_if = {
 	gusopen,
 	gusclose,
 	gus_set_params,
@@ -291,7 +291,7 @@ struct audio_hw_if gus_hw_if = {
 	NULL
 };
 
-static struct audio_hw_if gusmax_hw_if = {
+const static struct audio_hw_if gusmax_hw_if = {
 	gusmaxopen,
 	gusmax_close,
 	gusmax_set_params,
@@ -2082,7 +2082,6 @@ gus_init_cs4231(struct gus_softc *sc)
 		sc->sc_codec.parent = sc;
 		sc->sc_codec.sc_drq = sc->sc_recdrq;
 		sc->sc_codec.sc_recdrq = sc->sc_drq;
-		gus_hw_if = gusmax_hw_if;
 		/* enable line in and mic in the GUS mixer; the codec chip
 		   will do the real mixing for them. */
 		sc->sc_mixcontrol &= ~GUSMASK_LINE_IN; /* 0 enables. */
@@ -3397,8 +3396,12 @@ gus_subattach(struct gus_softc *sc, struct isa_attach_args *ia)
 	 * Attach to the generic audio layer
 	 */
 
-	audio_attach_mi(&gus_hw_if, HAS_CODEC(sc) ? (void *)&sc->sc_codec :
-	    (void *)sc, NULL, &sc->sc_dev);
+	if (HAS_CODEC(sc)) {
+		audio_attach_mi(&gusmax_hw_if, (void *)&sc->sc_codec, NULL,
+		    &sc->sc_dev);
+	} else {
+		audio_attach_mi(&gus_hw_if, (void *)sc, NULL, &sc->sc_dev);
+	}
 }
 
 /*

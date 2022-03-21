@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.27 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: ess.c,v 1.28 2022/03/21 19:22:40 miod Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ static char *essmodel[] = {
  * Define our interface to the higher level audio driver.
  */
 
-struct audio_hw_if ess_1788_hw_if = {
+const struct audio_hw_if ess_1788_hw_if = {
 	ess_open,
 	ess_1788_close,
 	ess_set_params,
@@ -222,7 +222,7 @@ struct audio_hw_if ess_1788_hw_if = {
 	ess_audio1_trigger_input
 };
 
-struct audio_hw_if ess_1888_hw_if = {
+const struct audio_hw_if ess_1888_hw_if = {
 	ess_open,
 	ess_1888_close,
 	ess_set_params,

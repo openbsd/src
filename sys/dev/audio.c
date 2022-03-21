@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.197 2022/02/22 07:34:06 visa Exp $	*/
+/*	$OpenBSD: audio.c,v 1.198 2022/03/21 19:22:39 miod Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -113,7 +113,7 @@ struct mixer_ev {
  */
 struct audio_softc {
 	struct device dev;
-	struct audio_hw_if *ops;	/* driver funcs */
+	const struct audio_hw_if *ops;	/* driver funcs */
 	void *cookie;			/* wskbd cookie */
 	void *arg;			/* first arg to driver funcs */
 	int mode;			/* bitmask of AUMODE_* */
@@ -1225,7 +1225,7 @@ audio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct audio_softc *sc = (void *)self;
 	struct audio_attach_args *sa = aux;
-	struct audio_hw_if *ops = sa->hwif;
+	const struct audio_hw_if *ops = sa->hwif;
 	struct mixer_devinfo *mi;
 	struct mixer_ctrl *ent;
 	void *arg = sa->hdl;
@@ -1487,7 +1487,8 @@ audio_submatch(struct device *parent, void *match, void *aux)
 }
 
 struct device *
-audio_attach_mi(struct audio_hw_if *ops, void *arg, void *cookie, struct device *dev)
+audio_attach_mi(const struct audio_hw_if *ops, void *arg, void *cookie,
+    struct device *dev)
 {
 	struct audio_attach_args aa;
 

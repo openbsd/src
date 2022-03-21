@@ -1,4 +1,4 @@
-/*	$OpenBSD: graphaudio.c,v 1.2 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: graphaudio.c,v 1.3 2022/03/21 19:22:40 miod Exp $	*/
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -65,7 +65,7 @@ int	graphaudio_trigger_input(void *, void *, void *, int,
 int	graphaudio_halt_output(void *);
 int	graphaudio_halt_input(void *);
 
-struct audio_hw_if graphaudio_hw_if = {
+const struct audio_hw_if graphaudio_hw_if = {
 	.open = graphaudio_open,
 	.close = graphaudio_close,
 	.set_params = graphaudio_set_params,
@@ -206,7 +206,7 @@ graphaudio_open(void *cookie, int flags)
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai;
-	struct audio_hw_if *hwif;
+	const struct audio_hw_if *hwif;
 	int error;
 
 	dai = sc->sc_dai_cpu;
@@ -237,7 +237,7 @@ graphaudio_close(void *cookie)
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai;
-	struct audio_hw_if *hwif;
+	const struct audio_hw_if *hwif;
 
 	dai = sc->sc_dai_codec;
 	hwif = dai->dd_hw_if;
@@ -256,7 +256,7 @@ graphaudio_set_params(void *cookie, int setmode, int usemode,
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai;
-	struct audio_hw_if *hwif;
+	const struct audio_hw_if *hwif;
 	uint32_t rate;
 	int error;
 
@@ -308,7 +308,7 @@ graphaudio_allocm(void *cookie, int direction, size_t size, int type,
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_cpu;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->allocm)
 		return hwif->allocm(dai->dd_cookie,
@@ -322,7 +322,7 @@ graphaudio_freem(void *cookie, void *addr, int type)
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_cpu;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->freem)
 		hwif->freem(dai->dd_cookie, addr, type);
@@ -333,7 +333,7 @@ graphaudio_set_port(void *cookie, mixer_ctrl_t *cp)
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_codec;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->set_port)
 		return hwif->set_port(dai->dd_cookie, cp);
@@ -346,7 +346,7 @@ graphaudio_get_port(void *cookie, mixer_ctrl_t *cp)
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_codec;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->get_port)
 		return hwif->get_port(dai->dd_cookie, cp);
@@ -359,7 +359,7 @@ graphaudio_query_devinfo(void *cookie, mixer_devinfo_t *dip)
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_codec;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->query_devinfo)
 		return hwif->query_devinfo(dai->dd_cookie, dip);
@@ -372,7 +372,7 @@ graphaudio_get_props(void *cookie)
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_cpu;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->get_props)
 		return hwif->get_props(dai->dd_cookie);
@@ -385,7 +385,7 @@ graphaudio_round_blocksize(void *cookie, int block)
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_cpu;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->round_blocksize)
 		return hwif->round_blocksize(dai->dd_cookie, block);
@@ -398,7 +398,7 @@ graphaudio_round_buffersize(void *cookie, int direction, size_t bufsize)
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_cpu;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->round_buffersize)
 		return hwif->round_buffersize(dai->dd_cookie,
@@ -413,7 +413,7 @@ graphaudio_trigger_output(void *cookie, void *start, void *end, int blksize,
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai;
-	struct audio_hw_if *hwif;
+	const struct audio_hw_if *hwif;
 	int error;
 
 	dai = sc->sc_dai_codec;
@@ -447,7 +447,7 @@ graphaudio_trigger_input(void *cookie, void *start, void *end, int blksize,
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai;
-	struct audio_hw_if *hwif;
+	const struct audio_hw_if *hwif;
 	int error;
 
 	dai = sc->sc_dai_codec;
@@ -480,7 +480,7 @@ graphaudio_halt_output(void *cookie)
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai;
-	struct audio_hw_if *hwif;
+	const struct audio_hw_if *hwif;
 
 	dai = sc->sc_dai_codec;
 	hwif = dai->dd_hw_if;
@@ -500,7 +500,7 @@ graphaudio_halt_input(void *cookie)
 {
 	struct graphaudio_softc *sc = cookie;
 	struct dai_device *dai;
-	struct audio_hw_if *hwif;
+	const struct audio_hw_if *hwif;
 
 	dai = sc->sc_dai_codec;
 	hwif = dai->dd_hw_if;

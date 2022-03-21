@@ -1,4 +1,4 @@
-/* $OpenBSD: rkiis.c,v 1.1 2020/06/11 00:02:08 patrick Exp $ */
+/* $OpenBSD: rkiis.c,v 1.2 2022/03/21 19:22:40 miod Exp $ */
 /* $NetBSD: rk_i2s.c,v 1.3 2020/02/29 05:51:10 isaki Exp $ */
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -200,7 +200,7 @@ struct rkiis_softc {
 	struct dai_device	sc_dai;
 };
 
-struct audio_hw_if rkiis_hw_if = {
+const struct audio_hw_if rkiis_hw_if = {
 	.set_params = rkiis_set_params,
 	.get_props = rkiis_get_props,
 	.allocm = rkiis_allocm,

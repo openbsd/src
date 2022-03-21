@@ -1,4 +1,4 @@
-/*	$OpenBSD: nec86var.h,v 1.1 2014/12/28 13:03:18 aoyama Exp $	*/
+/*	$OpenBSD: nec86var.h,v 1.2 2022/03/21 19:22:39 miod Exp $	*/
 /*	$NecBSD: nec86var.h,v 1.6 1998/03/14 07:04:57 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -55,7 +55,7 @@ struct nec86_softc {
 	int sc_intlevel;
 };
 
-extern  struct  audio_hw_if nec86_hw_if;
+extern  const struct  audio_hw_if nec86_hw_if;
 int	nec86_probesubr(bus_space_tag_t, bus_space_handle_t,
 	    bus_space_handle_t);
 void	nec86_attachsubr(struct nec86_softc *);

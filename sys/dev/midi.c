@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.52 2021/10/30 12:48:11 ratchov Exp $	*/
+/*	$OpenBSD: midi.c,v 1.53 2022/03/21 19:22:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -549,7 +549,7 @@ midiattach(struct device *parent, struct device *self, void *aux)
 	struct midi_info	  mi;
 	struct midi_softc        *sc = (struct midi_softc *)self;
 	struct audio_attach_args *sa = (struct audio_attach_args *)aux;
-	struct midi_hw_if        *hwif = sa->hwif;
+	const struct midi_hw_if  *hwif = sa->hwif;
 	void  			 *hdl = sa->hdl;
 
 #ifdef DIAGNOSTIC
@@ -645,7 +645,7 @@ midiprint(void *aux, const char *pnp)
 }
 
 struct device *
-midi_attach_mi(struct midi_hw_if *hwif, void *hdl, struct device *dev)
+midi_attach_mi(const struct midi_hw_if *hwif, void *hdl, struct device *dev)
 {
 	struct audio_attach_args arg;
 

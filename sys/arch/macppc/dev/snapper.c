@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.41 2022/03/13 12:33:01 mpi Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.42 2022/03/21 19:22:39 miod Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ struct cfdriver snapper_cd = {
 	NULL, "snapper", DV_DULL
 };
 
-struct audio_hw_if snapper_hw_if = {
+const struct audio_hw_if snapper_hw_if = {
 	i2s_open,
 	i2s_close,
 	i2s_set_params,

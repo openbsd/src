@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb.c,v 1.31 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: sb.c,v 1.32 2022/03/21 19:22:40 miod Exp $	*/
 /*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ void	sb_mpu401_close(void *);
 int	sb_mpu401_output(void *, int);
 void	sb_mpu401_getinfo(void *, struct midi_info *);
 
-struct midi_hw_if sb_midi_hw_if = {
+const struct midi_hw_if sb_midi_hw_if = {
 	sbdsp_midi_open,
 	sbdsp_midi_close,
 	sbdsp_midi_output,
@@ -79,7 +79,7 @@ struct midi_hw_if sb_midi_hw_if = {
 	0,			/* ioctl */
 };
 
-struct midi_hw_if sb_mpu401_hw_if = {
+const struct midi_hw_if sb_mpu401_hw_if = {
 	sb_mpu401_open,
 	sb_mpu401_close,
 	sb_mpu401_output,
@@ -93,7 +93,7 @@ struct midi_hw_if sb_mpu401_hw_if = {
  * Define our interface to the higher level audio driver.
  */
 
-struct audio_hw_if sb_hw_if = {
+const struct audio_hw_if sb_hw_if = {
 	sbdsp_open,
 	sbdsp_close,
 	sbdsp_set_params,
@@ -243,7 +243,7 @@ sbattach(struct sbdsp_softc *sc)
 {
 	struct audio_attach_args arg;
 #if NMIDI > 0
-	struct midi_hw_if *mhw = &sb_midi_hw_if;
+	const struct midi_hw_if *mhw = &sb_midi_hw_if;
 #endif
 
 	sc->sc_ih = isa_intr_establish(sc->sc_ic, sc->sc_irq,

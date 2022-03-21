@@ -1,4 +1,4 @@
-/*	$OpenBSD: envy.c,v 1.83 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: envy.c,v 1.84 2022/03/21 19:22:41 miod Exp $	*/
 /*
  * Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
  *
@@ -179,7 +179,7 @@ struct cfdriver envy_cd = {
 	NULL, "envy", DV_DULL
 };
 
-struct audio_hw_if envy_hw_if = {
+const struct audio_hw_if envy_hw_if = {
 	envy_open,		/* open */
 	envy_close,		/* close */
 	envy_set_params,	/* set_params */
@@ -205,7 +205,7 @@ struct audio_hw_if envy_hw_if = {
 };
 
 #if NMIDI > 0
-struct midi_hw_if envy_midi_hw_if = {
+const struct midi_hw_if envy_midi_hw_if = {
 	envy_midi_open,
 	envy_midi_close,
 	envy_midi_output,

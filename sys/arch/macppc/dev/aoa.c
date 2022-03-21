@@ -1,4 +1,4 @@
-/*	$OpenBSD: aoa.c,v 1.13 2022/03/13 12:33:01 mpi Exp $	*/
+/*	$OpenBSD: aoa.c,v 1.14 2022/03/21 19:22:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -65,7 +65,7 @@ struct cfdriver aoa_cd = {
 	NULL, "aoa", DV_DULL
 };
 
-struct audio_hw_if aoa_hw_if = {
+const struct audio_hw_if aoa_hw_if = {
 	i2s_open,
 	i2s_close,
 	i2s_set_params,

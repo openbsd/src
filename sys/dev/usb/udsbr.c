@@ -1,4 +1,4 @@
-/*	$OpenBSD: udsbr.c,v 1.27 2016/11/06 12:58:01 mpi Exp $	*/
+/*	$OpenBSD: udsbr.c,v 1.28 2022/03/21 19:22:42 miod Exp $	*/
 /*	$NetBSD: udsbr.c,v 1.7 2002/07/11 21:14:27 augustss Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ int	udsbrdebug = 0;
 int     udsbr_get_info(void *, struct radio_info *);
 int     udsbr_set_info(void *, struct radio_info *);
 
-struct radio_hw_if udsbr_hw_if = {
+const struct radio_hw_if udsbr_hw_if = {
 	NULL, /* open */
 	NULL, /* close */
 	udsbr_get_info,

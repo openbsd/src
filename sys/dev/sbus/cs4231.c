@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.40 2022/03/13 13:34:54 mpi Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.41 2022/03/21 19:22:41 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -151,7 +151,7 @@ int	cs4231_trigger_output(void *, void *, void *, int,
 int	cs4231_trigger_input(void *, void *, void *, int,
     void (*)(void *), void *, struct audio_params *);
 
-struct audio_hw_if cs4231_sa_hw_if = {
+const struct audio_hw_if cs4231_sa_hw_if = {
 	cs4231_open,
 	cs4231_close,
 	cs4231_set_params,

@@ -1,4 +1,4 @@
-/* $OpenBSD: radio.c,v 1.11 2016/09/22 00:47:19 jsg Exp $ */
+/* $OpenBSD: radio.c,v 1.12 2022/03/21 19:22:40 miod Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
 /*
@@ -152,7 +152,7 @@ radioioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
  */
 
 struct device *
-radio_attach_mi(struct radio_hw_if *rhwp, void *hdlp, struct device *dev)
+radio_attach_mi(const struct radio_hw_if *rhwp, void *hdlp, struct device *dev)
 {
 	struct audio_attach_args arg;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.115 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: auich.c,v 1.116 2022/03/21 19:22:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -315,7 +315,7 @@ void auich_freemem(struct auich_softc *, struct auich_dma *);
 
 void auich_resume(struct auich_softc *);
 
-struct audio_hw_if auich_hw_if = {
+const struct audio_hw_if auich_hw_if = {
 	auich_open,
 	auich_close,
 	auich_set_params,

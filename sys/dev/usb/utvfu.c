@@ -1,4 +1,4 @@
-/*	$OpenBSD: utvfu.c,v 1.16 2022/02/16 06:21:19 anton Exp $ */
+/*	$OpenBSD: utvfu.c,v 1.17 2022/03/21 19:22:42 miod Exp $ */
 /*
  * Copyright (c) 2013 Lubomir Rintel
  * Copyright (c) 2013 Federico Simoncelli
@@ -813,7 +813,7 @@ const struct cfattach utvfu_ca = {
 	NULL
 };
 
-struct video_hw_if utvfu_vid_hw_if = {
+const struct video_hw_if utvfu_vid_hw_if = {
 	utvfu_open,		/* open */
 	utvfu_close,		/* close */
 	utvfu_querycap,		/* VIDIOC_QUERYCAP */
@@ -842,7 +842,7 @@ struct video_hw_if utvfu_vid_hw_if = {
 	utvfu_start_read	/* start stream for read */
 };
 
-struct audio_hw_if utvfu_au_hw_if = {
+const struct audio_hw_if utvfu_au_hw_if = {
 	utvfu_audio_open,		/* open hardware */
 	utvfu_audio_close,		/* close hardware */
 	utvfu_audio_set_params,

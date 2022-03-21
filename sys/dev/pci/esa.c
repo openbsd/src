@@ -1,4 +1,4 @@
-/*	$OpenBSD: esa.c,v 1.37 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: esa.c,v 1.38 2022/03/21 19:22:41 miod Exp $	*/
 /* $NetBSD: esa.c,v 1.12 2002/03/24 14:17:35 jmcneill Exp $ */
 
 /*
@@ -151,7 +151,7 @@ void		esa_remove_list(struct esa_voice *, struct esa_list *, int);
 void		esa_suspend(struct esa_softc *);
 void		esa_resume(struct esa_softc *);
 
-struct audio_hw_if esa_hw_if = {
+const struct audio_hw_if esa_hw_if = {
 	esa_open,
 	esa_close,
 	esa_set_params,

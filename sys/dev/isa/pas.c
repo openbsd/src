@@ -1,4 +1,4 @@
-/*	$OpenBSD: pas.c,v 1.31 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: pas.c,v 1.32 2022/03/21 19:22:40 miod Exp $	*/
 /*	$NetBSD: pas.c,v 1.37 1998/01/12 09:43:43 thorpej Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ void	pasconf(int, int, int, int);
  * Define our interface to the higher level audio driver.
  */
 
-struct audio_hw_if pas_hw_if = {
+const struct audio_hw_if pas_hw_if = {
 	sbdsp_open,
 	sbdsp_close,
 	sbdsp_set_params,

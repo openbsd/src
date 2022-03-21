@@ -1,4 +1,4 @@
-/*      $OpenBSD: sv.c,v 1.39 2022/03/11 18:00:51 mpi Exp $ */
+/*      $OpenBSD: sv.c,v 1.40 2022/03/21 19:22:41 miod Exp $ */
 
 /*
  * Copyright (c) 1998 Constantine Paul Sapuntzakis
@@ -146,7 +146,7 @@ int	sv_get_props(void *);
 
 void    sv_dumpregs(struct sv_softc *sc);
 
-struct audio_hw_if sv_hw_if = {
+const struct audio_hw_if sv_hw_if = {
 	sv_open,
 	sv_close,
 	sv_set_params,

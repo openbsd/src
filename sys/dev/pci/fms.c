@@ -1,4 +1,4 @@
-/*	$OpenBSD: fms.c,v 1.32 2022/03/11 18:00:45 mpi Exp $ */
+/*	$OpenBSD: fms.c,v 1.33 2022/03/21 19:22:41 miod Exp $ */
 /*	$NetBSD: fms.c,v 1.5.4.1 2000/06/30 16:27:50 simonb Exp $	*/
 
 /*-
@@ -99,7 +99,7 @@ const struct cfattach fms_ca = {
 	sizeof (struct fms_softc), fms_match, fms_attach
 };
 
-struct audio_hw_if fms_hw_if = {
+const struct audio_hw_if fms_hw_if = {
 	fms_open,
 	fms_close,
 	fms_set_params,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gusvar.h,v 1.10 2016/09/19 06:46:44 ratchov Exp $	*/
+/*	$OpenBSD: gusvar.h,v 1.11 2022/03/21 19:22:40 miod Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -406,7 +406,7 @@ extern const int gus_addrs;
 
 #define splgus splaudio
 
-extern struct audio_hw_if gus_hw_if;
+extern const struct audio_hw_if gus_hw_if;
 
 #define FLIP_REV	5		/* This rev has flipped mixer chans */
 

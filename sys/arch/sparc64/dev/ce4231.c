@@ -1,4 +1,4 @@
-/*	$OpenBSD: ce4231.c,v 1.38 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: ce4231.c,v 1.39 2022/03/21 19:22:39 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -150,7 +150,7 @@ int	ce4231_trigger_output(void *, void *, void *, int,
 int	ce4231_trigger_input(void *, void *, void *, int,
     void (*intr)(void *), void *arg, struct audio_params *);
 
-struct audio_hw_if ce4231_sa_hw_if = {
+const struct audio_hw_if ce4231_sa_hw_if = {
 	ce4231_open,
 	ce4231_close,
 	ce4231_set_params,

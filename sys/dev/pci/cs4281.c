@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.41 2022/03/11 18:00:45 mpi Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.42 2022/03/21 19:22:41 miod Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ int cs4281_debug = 5;
 #define DPRINTFN(n,x)
 #endif
 
-struct audio_hw_if cs4281_hw_if = {
+const struct audio_hw_if cs4281_hw_if = {
 	cs4281_open,
 	cs4281_close,
 	cs4281_set_params,
@@ -227,7 +227,7 @@ int cs4281_midi_open(void *, int, void (*)(void *, int),
 		     void (*)(void *), void *);
 int cs4281_midi_output(void *, int);
 
-struct midi_hw_if cs4281_midi_hw_if = {
+const struct midi_hw_if cs4281_midi_hw_if = {
 	cs4281_midi_open,
 	cs4281_midi_close,
 	cs4281_midi_output,

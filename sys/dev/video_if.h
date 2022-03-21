@@ -1,4 +1,4 @@
-/*	$OpenBSD: video_if.h,v 1.18 2014/10/18 08:01:34 armani Exp $	*/
+/*	$OpenBSD: video_if.h,v 1.19 2022/03/21 19:22:40 miod Exp $	*/
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
  * Copyright (c) 2008 Marcus Glocker <mglocker@openbsd.org>
@@ -63,10 +63,11 @@ struct video_hw_if {
 };
 
 struct video_attach_args {
-        void	*hwif;
+        const void *hwif;
         void	*hdl;
 };
 
-struct device  *video_attach_mi(struct video_hw_if *, void *, struct device *);
+struct device  *video_attach_mi(const struct video_hw_if *, void *,
+	    struct device *);
 
 #endif /* _SYS_DEV_VIDEO_IF_H */

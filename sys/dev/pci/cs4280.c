@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.56 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.57 2022/03/21 19:22:41 miod Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -233,7 +233,7 @@ int	cs4280_midi_open(void *, int, void (*)(void *, int),
 int	cs4280_midi_output(void *, int);
 #endif
 
-struct audio_hw_if cs4280_hw_if = {
+const struct audio_hw_if cs4280_hw_if = {
 	cs4280_open,
 	cs4280_close,
 	cs4280_set_params,
@@ -259,7 +259,7 @@ struct audio_hw_if cs4280_hw_if = {
 };
 
 #if NMIDI > 0
-struct midi_hw_if cs4280_midi_hw_if = {
+const struct midi_hw_if cs4280_midi_hw_if = {
 	cs4280_midi_open,
 	cs4280_midi_close,
 	cs4280_midi_output,

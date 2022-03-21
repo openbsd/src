@@ -1,4 +1,4 @@
-/*	$OpenBSD: azalia.c,v 1.270 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: azalia.c,v 1.271 2022/03/21 19:22:41 miod Exp $	*/
 /*	$NetBSD: azalia.c,v 1.20 2006/05/07 08:31:44 kent Exp $	*/
 
 /*-
@@ -289,7 +289,7 @@ struct cfdriver azalia_cd = {
 	NULL, "azalia", DV_DULL, CD_SKIPHIBERNATE
 };
 
-struct audio_hw_if azalia_hw_if = {
+const struct audio_hw_if azalia_hw_if = {
 	azalia_open,
 	azalia_close,
 	azalia_set_params,

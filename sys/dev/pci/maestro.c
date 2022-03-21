@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.45 2022/03/11 18:00:50 mpi Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.46 2022/03/21 19:22:41 miod Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -527,7 +527,7 @@ const struct cfattach maestro_ca = {
 	NULL, maestro_activate
 };
 
-struct audio_hw_if maestro_hw_if = {
+const struct audio_hw_if maestro_hw_if = {
 	maestro_open,
 	maestro_close,
 	maestro_set_params,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.23 2022/03/02 12:00:46 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.24 2022/03/21 19:22:40 miod Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -191,7 +191,7 @@ void	*endpoint_get_cookie(struct endpoint *);
 struct dai_device {
 	int	dd_node;
 	void	*dd_cookie;
-	void	*dd_hw_if;
+	const void *dd_hw_if;
 	int	(*dd_set_format)(void *, uint32_t, uint32_t, uint32_t);
 	int	(*dd_set_sysclk)(void *, uint32_t);
 

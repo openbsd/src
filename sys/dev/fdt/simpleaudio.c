@@ -1,4 +1,4 @@
-/*	$OpenBSD: simpleaudio.c,v 1.3 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: simpleaudio.c,v 1.4 2022/03/21 19:22:40 miod Exp $	*/
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -67,7 +67,7 @@ int simpleaudio_trigger_input(void *, void *, void *, int,
 int simpleaudio_halt_output(void *);
 int simpleaudio_halt_input(void *);
 
-struct audio_hw_if simpleaudio_hw_if = {
+const struct audio_hw_if simpleaudio_hw_if = {
 	.open = simpleaudio_open,
 	.close = simpleaudio_close,
 	.set_params = simpleaudio_set_params,
@@ -226,7 +226,7 @@ simpleaudio_open(void *cookie, int flags)
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai;
-	struct audio_hw_if *hwif;
+	const struct audio_hw_if *hwif;
 	int error, i;
 
 	dai = sc->sc_dai_cpu;
@@ -269,7 +269,7 @@ simpleaudio_close(void *cookie)
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai;
-	struct audio_hw_if *hwif;
+	const struct audio_hw_if *hwif;
 	int i;
 
 	for (i = 0; i < sc->sc_dai_naux; i++) {
@@ -296,7 +296,7 @@ simpleaudio_set_params(void *cookie, int setmode, int usemode,
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai;
-	struct audio_hw_if *hwif;
+	const struct audio_hw_if *hwif;
 	uint32_t rate;
 	int error;
 
@@ -348,7 +348,7 @@ simpleaudio_allocm(void *cookie, int direction, size_t size, int type,
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_cpu;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->allocm)
 		return hwif->allocm(dai->dd_cookie,
@@ -362,7 +362,7 @@ simpleaudio_freem(void *cookie, void *addr, int type)
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_cpu;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->freem)
 		hwif->freem(dai->dd_cookie, addr, type);
@@ -373,7 +373,7 @@ simpleaudio_set_port(void *cookie, mixer_ctrl_t *cp)
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_codec;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->set_port)
 		return hwif->set_port(dai->dd_cookie, cp);
@@ -386,7 +386,7 @@ simpleaudio_get_port(void *cookie, mixer_ctrl_t *cp)
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_codec;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->get_port)
 		return hwif->get_port(dai->dd_cookie, cp);
@@ -399,7 +399,7 @@ simpleaudio_query_devinfo(void *cookie, mixer_devinfo_t *dip)
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_codec;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->query_devinfo)
 		return hwif->query_devinfo(dai->dd_cookie, dip);
@@ -412,7 +412,7 @@ simpleaudio_get_props(void *cookie)
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_cpu;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->get_props)
 		return hwif->get_props(dai->dd_cookie);
@@ -425,7 +425,7 @@ simpleaudio_round_blocksize(void *cookie, int block)
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_cpu;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->round_blocksize)
 		return hwif->round_blocksize(dai->dd_cookie, block);
@@ -438,7 +438,7 @@ simpleaudio_round_buffersize(void *cookie, int direction, size_t bufsize)
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai = sc->sc_dai_cpu;
-	struct audio_hw_if *hwif = dai->dd_hw_if;
+	const struct audio_hw_if *hwif = dai->dd_hw_if;
 
 	if (hwif->round_buffersize)
 		return hwif->round_buffersize(dai->dd_cookie,
@@ -453,7 +453,7 @@ simpleaudio_trigger_output(void *cookie, void *start, void *end, int blksize,
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai;
-	struct audio_hw_if *hwif;
+	const struct audio_hw_if *hwif;
 	int error, i;
 
 	for (i = 0; i < sc->sc_dai_naux; i++) {
@@ -500,7 +500,7 @@ simpleaudio_trigger_input(void *cookie, void *start, void *end, int blksize,
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai;
-	struct audio_hw_if *hwif;
+	const struct audio_hw_if *hwif;
 	int error, i;
 
 	for (i = 0; i < sc->sc_dai_naux; i++) {
@@ -545,7 +545,7 @@ int simpleaudio_halt_output(void *cookie)
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai;
-	struct audio_hw_if *hwif;
+	const struct audio_hw_if *hwif;
 	int i;
 
 	for (i = 0; i < sc->sc_dai_naux; i++) {
@@ -572,7 +572,7 @@ int simpleaudio_halt_input(void *cookie)
 {
 	struct simpleaudio_softc *sc = cookie;
 	struct dai_device *dai;
-	struct audio_hw_if *hwif;
+	const struct audio_hw_if *hwif;
 	int i;
 
 	for (i = 0; i < sc->sc_dai_naux; i++) {

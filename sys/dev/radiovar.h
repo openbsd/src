@@ -1,4 +1,4 @@
-/* $OpenBSD: radiovar.h,v 1.3 2002/01/05 02:23:03 mickey Exp $ */
+/* $OpenBSD: radiovar.h,v 1.4 2022/03/21 19:22:40 miod Exp $ */
 /* $RuOBSD: radiovar.h,v 1.3 2001/09/29 17:10:16 pva Exp $ */
 
 /*
@@ -33,7 +33,7 @@ struct radio_softc {
 	struct device	dev;
 	void		*hw_hdl;	/* hardware driver handle */
 	struct device	*sc_dev;	/* hardware device struct */
-	struct radio_hw_if *hw_if;	/* hardware interface */
+	const struct radio_hw_if *hw_if; /* hardware interface */
 	char		sc_dying;	/* device detached */
 };
 

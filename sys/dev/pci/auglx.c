@@ -1,4 +1,4 @@
-/*      $OpenBSD: auglx.c,v 1.19 2022/03/11 18:00:45 mpi Exp $	*/
+/*      $OpenBSD: auglx.c,v 1.20 2022/03/21 19:22:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -234,7 +234,7 @@ void auglx_free_prd(struct auglx_softc *sc, struct auglx_ring *bm);
 int auglx_allocmem(struct auglx_softc *, size_t, size_t, struct auglx_dma *);
 void auglx_freemem(struct auglx_softc *, struct auglx_dma *);
 
-struct audio_hw_if auglx_hw_if = {
+const struct audio_hw_if auglx_hw_if = {
 	auglx_open,
 	auglx_close,
 	auglx_set_params,

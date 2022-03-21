@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.37 2022/03/13 08:04:38 mpi Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.38 2022/03/21 19:22:39 miod Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -73,7 +73,7 @@ int     harmony_trigger_output(void *, void *, void *, int,
 int     harmony_trigger_input(void *, void *, void *, int,
     void (*intr)(void *), void *, struct audio_params *);
 
-struct audio_hw_if harmony_sa_hw_if = {
+const struct audio_hw_if harmony_sa_hw_if = {
 	harmony_open,
 	harmony_close,
 	harmony_set_params,

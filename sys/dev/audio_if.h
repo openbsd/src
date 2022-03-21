@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.37 2022/02/16 06:21:18 anton Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.38 2022/03/21 19:22:40 miod Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -141,7 +141,7 @@ struct audio_hw_if {
 
 struct audio_attach_args {
 	int	type;
-	void	*hwif;		/* either audio_hw_if * or midi_hw_if * */
+	const void *hwif;		/* either audio_hw_if * or midi_hw_if * */
 	void	*hdl;
 	void	*cookie;
 };
@@ -152,7 +152,8 @@ struct audio_attach_args {
 #define AUDIODEV_TYPE_RADIO	4
 
 /* Attach the MI driver(s) to the MD driver. */
-struct device *audio_attach_mi(struct audio_hw_if *, void *, void *, struct device *);
+struct device *audio_attach_mi(const struct audio_hw_if *, void *, void *,
+		   struct device *);
 int	       audioprint(void *, const char *);
 int	       audio_blksz_bytes(int,
 		   struct audio_params *, struct audio_params *, int);

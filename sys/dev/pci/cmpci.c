@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.48 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.49 2022/03/21 19:22:41 miod Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ int cmpci_trigger_input(void *, void *, void *, int,
 				    void (*)(void *), void *,
 				    struct audio_params *);
 
-struct audio_hw_if cmpci_hw_if = {
+const struct audio_hw_if cmpci_hw_if = {
 	cmpci_open,		/* open */
 	cmpci_close,		/* close */
 	cmpci_set_params,	/* set_params */

@@ -1,4 +1,4 @@
-/* $OpenBSD: es8316ac.c,v 1.1 2020/06/11 00:04:28 patrick Exp $ */
+/* $OpenBSD: es8316ac.c,v 1.2 2022/03/21 19:22:40 miod Exp $ */
 /* $NetBSD: es8316ac.c,v 1.2 2020/01/03 01:00:08 jmcneill Exp $ */
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -132,7 +132,7 @@ int escodec_set_port(void *, mixer_ctrl_t *);
 int escodec_get_port(void *, mixer_ctrl_t *);
 int escodec_query_devinfo(void *, mixer_devinfo_t *);
 
-struct audio_hw_if escodec_hw_if = {
+const struct audio_hw_if escodec_hw_if = {
 	.set_port = escodec_set_port,
 	.get_port = escodec_get_port,
 	.query_devinfo = escodec_query_devinfo,

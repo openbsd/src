@@ -1,4 +1,4 @@
-/*	$OpenBSD: daca.c,v 1.12 2022/03/13 12:33:01 mpi Exp $	*/
+/*	$OpenBSD: daca.c,v 1.13 2022/03/21 19:22:39 miod Exp $	*/
 
 /*-
  * Copyright (c) 2002,2003 Tsubai Masanari.  All rights reserved.
@@ -71,7 +71,7 @@ struct cfdriver daca_cd = {
 	NULL, "daca", DV_DULL
 };
 
-struct audio_hw_if daca_hw_if = {
+const struct audio_hw_if daca_hw_if = {
 	i2s_open,
 	i2s_close,
 	i2s_set_params,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tascodec.c,v 1.2 2022/02/14 14:57:00 kettenis Exp $	*/
+/*	$OpenBSD: tascodec.c,v 1.3 2022/03/21 19:22:40 miod Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -82,7 +82,7 @@ int	tascodec_trigger_output(void *, void *, void *, int,
 	    void (*)(void *), void *, struct audio_params *);
 int	tascodec_halt_output(void *);
 
-struct audio_hw_if tascodec_hw_if = {
+const struct audio_hw_if tascodec_hw_if = {
 	.set_port = tascodec_set_port,
 	.get_port = tascodec_get_port,
 	.query_devinfo = tascodec_query_devinfo,
