@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.540 2022/03/03 13:06:15 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.541 2022/03/21 10:15:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2401,7 +2401,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	rib.flags = 0;
 	re = prefix_re(p);
 	if (re != NULL && re->active == p)
-		rib.flags |= F_PREF_ACTIVE;
+		rib.flags |= F_PREF_BEST;
 	if (!peer->conf.ebgp)
 		rib.flags |= F_PREF_INTERNAL;
 	if (asp->flags & F_PREFIX_ANNOUNCED)
@@ -2502,7 +2502,7 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req, int adjout)
 	re = prefix_re(p);
 	if (asp == NULL)	/* skip pending withdraw in Adj-RIB-Out */
 		return;
-	if ((req->flags & F_CTL_ACTIVE) && re != NULL && re->active != p)
+	if ((req->flags & F_CTL_BEST) && re != NULL && re->active != p)
 		return;
 	if ((req->flags & F_CTL_INVALID) &&
 	    (asp->flags & F_ATTR_PARSE_ERR) == 0)
