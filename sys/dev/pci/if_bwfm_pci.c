@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwfm_pci.c,v 1.70 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_bwfm_pci.c,v 1.71 2022/03/21 19:46:56 kettenis Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -1062,7 +1062,6 @@ bwfm_pci_process_otp_tuple(struct bwfm_pci_softc *sc, uint8_t type, uint8_t size
 	struct bwfm_softc *bwfm = (void *)sc;
 	char chiprev[8] = "", module[8] = "", modrev[8] = "", vendor[8] = "", chip[8] = "";
 	char board_type[128] = "";
-	char product[16] = "unknown";
 	int len;
 
 	switch (type) {
@@ -1120,16 +1119,11 @@ next:
 		if (sc->sc_sc.sc_node) {
 			OF_getprop(sc->sc_sc.sc_node, "brcm,board-type",
 			    board_type, sizeof(board_type));
-			strlcpy(product, &board_type[6], sizeof(product));
 			if (strncmp(board_type, "apple,", 6) == 0) {
 				strlcpy(sc->sc_sc.sc_fwdir, "apple-bwfm/",
 				    sizeof(sc->sc_sc.sc_fwdir));
 			}
 		}
-		printf("%s: firmware C-%s%s%s/P-%s_M-%s_V-%s__m-%s\n",
-		    DEVNAME(sc), chip,
-		    *chiprev ? "__s-" : "", *chiprev ? chiprev : "",
-		    product, module, vendor, modrev);
 		strlcpy(sc->sc_sc.sc_board_type, board_type,
 		    sizeof(sc->sc_sc.sc_board_type));
 		strlcpy(sc->sc_sc.sc_module, module,
