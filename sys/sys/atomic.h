@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.8 2022/03/11 19:02:15 bluhm Exp $ */
+/*	$OpenBSD: atomic.h,v 1.9 2022/03/21 05:45:52 visa Exp $ */
 /*
  * Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
  * Copyright (c) 2022 Alexander Bluhm <bluhm@openbsd.org>
@@ -201,26 +201,16 @@ atomic_sub_long_nv(volatile unsigned long *p, unsigned long v)
  * atomic_load_* - read from memory
  */
 
-static inline void membar_datadep_consumer(void);
-
 static inline unsigned int
 atomic_load_int(volatile unsigned int *p)
 {
-	unsigned int v;
-
-	v = *p;
-	membar_datadep_consumer();
-	return v;
+	return *p;
 }
 
 static inline unsigned long
 atomic_load_long(volatile unsigned long *p)
 {
-	unsigned long v;
-
-	v = *p;
-	membar_datadep_consumer();
-	return v;
+	return *p;
 }
 
 /*
