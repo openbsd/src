@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.244 2022/03/21 00:20:40 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.245 2022/03/21 12:57:46 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -533,15 +533,14 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	 * using link->openings.
 	 */
 	if (link->pool == NULL) {
-		link->pool = malloc(sizeof(*link->pool),
-		    M_DEVBUF, M_NOWAIT);
+		link->pool = malloc(sizeof(*link->pool), M_DEVBUF, M_NOWAIT);
 		if (link->pool == NULL) {
 			SC_DEBUG(link, SDEV_DB2, ("malloc(pool) failed.\n"));
 			rslt = ENOMEM;
 			goto bad;
 		}
-		scsi_iopool_init(link->pool, link,
-		    scsi_default_get, scsi_default_put);
+		scsi_iopool_init(link->pool, link, scsi_default_get,
+		    scsi_default_put);
 
 		SET(link->flags, SDEV_OWN_IOPL);
 	}
@@ -722,7 +721,6 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	    SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
 
 	config_attach((struct device *)sb, cf, &sa, scsibussubprint);
-
 	return 0;
 
 free_devid:
