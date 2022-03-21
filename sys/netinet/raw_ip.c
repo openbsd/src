@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.123 2022/03/14 22:38:43 tb Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.124 2022/03/21 04:00:56 dlg Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -222,6 +222,7 @@ int
 rip_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
     struct mbuf *control)
 {
+	struct sockaddr_in *dst = satosin(dstaddr);
 	struct ip *ip;
 	struct inpcb *inp;
 	int flags, error;
@@ -246,8 +247,8 @@ rip_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 		ip->ip_off = htons(0);
 		ip->ip_p = inp->inp_ip.ip_p;
 		ip->ip_len = htons(m->m_pkthdr.len);
-		ip->ip_src = inp->inp_laddr;
-		ip->ip_dst = satosin(dstaddr)->sin_addr;
+		ip->ip_src.s_addr = INADDR_ANY;
+		ip->ip_dst = dst->sin_addr;
 		ip->ip_ttl = inp->inp_ip.ip_ttl ? inp->inp_ip.ip_ttl : MAXTTL;
 	} else {
 		if (m->m_pkthdr.len > IP_MAXPACKET) {
@@ -262,11 +263,23 @@ rip_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 		ip = mtod(m, struct ip *);
 		if (ip->ip_id == 0)
 			ip->ip_id = htons(ip_randomid());
+		dst->sin_addr = ip->ip_dst;
 
 		/* XXX prevent ip_output from overwriting header fields */
 		flags |= IP_RAWOUTPUT;
 		ipstat_inc(ips_rawout);
 	}
+
+	if (ip->ip_src.s_addr == INADDR_ANY) {
+		struct in_addr *laddr;
+
+		error = in_pcbselsrc(&laddr, dst, inp);
+		if (error != 0)
+			return (error);
+
+		ip->ip_src = *laddr;
+	}
+
 #ifdef INET6
 	/*
 	 * A thought:  Even though raw IP shouldn't be able to set IPv6
