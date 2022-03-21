@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.261 2022/03/14 22:38:43 tb Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.262 2022/03/21 03:51:09 dlg Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -893,11 +893,13 @@ in_pcbselsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 	}
 
 	/*
-	 * If the destination address is multicast and an outgoing
-	 * interface has been set as a multicast option, use the
-	 * address of that interface as our source address.
+	 * If the destination address is multicast or limited
+	 * broadcast (255.255.255.255) and an outgoing interface has
+	 * been set as a multicast option, use the address of that
+	 * interface as our source address.
 	 */
-	if (IN_MULTICAST(sin->sin_addr.s_addr) && mopts != NULL) {
+	if ((IN_MULTICAST(sin->sin_addr.s_addr) || 
+	    sin->sin_addr.s_addr == INADDR_BROADCAST) && mopts != NULL) {
 		struct ifnet *ifp;
 
 		ifp = if_get(mopts->imo_ifidx);
