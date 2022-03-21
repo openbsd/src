@@ -20,7 +20,6 @@
 ./usr/include/arm64/exec.h
 ./usr/include/arm64/fdt.h
 ./usr/include/arm64/fenv.h
-./usr/include/arm64/float.h
 ./usr/include/arm64/frame.h
 ./usr/include/arm64/hypervisor.h
 ./usr/include/arm64/ieee.h
@@ -31,7 +30,6 @@
 ./usr/include/arm64/limits.h
 ./usr/include/arm64/loadfile_machdep.h
 ./usr/include/arm64/lock.h
-./usr/include/arm64/machdep.h
 ./usr/include/arm64/mplock.h
 ./usr/include/arm64/mutex.h
 ./usr/include/arm64/openpromio.h
