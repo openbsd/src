@@ -1,4 +1,4 @@
-.\"     $OpenBSD: epic.4,v 1.9 2013/07/16 16:05:48 schwarze Exp $
+.\"     $OpenBSD: epic.4,v 1.10 2022/03/21 14:56:16 miod Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 16 2013 $
+.Dd $Mdocdate: March 21 2022 $
 .Dt EPIC 4
 .Os
 .Sh NAME
@@ -54,23 +54,23 @@ supports several media types, which are selected via the
 command.
 The supported media types are:
 .Bl -tag -width 6n -offset indent
-.It media autoselect
+.It Cm media No autoselect
 Attempt to autoselect the media type (default)
-.It media 100baseFX mediaopt full-duplex
+.It Cm media No 100baseFX Cm mediaopt No full-duplex
 Use 100baseFX (fiber), full duplex
-.It media 100baseFX Op mediaopt half-duplex
+.It Cm media No 100baseFX Cm mediaopt No half-duplex
 Use 100baseFX (fiber), half duplex
-.It media 100baseTX mediaopt full-duplex
+.It Cm media No 100baseTX Cm mediaopt No full-duplex
 Use 100baseTX, full duplex
-.It media 100baseTX Op mediaopt half-duplex
+.It Cm media No 100baseTX Cm mediaopt No half-duplex
 Use 100baseTX, half duplex
-.It media 100baseTX mediaopt loopback
+.It Cm media No 100baseTX Cm mediaopt No loopback
 Put the interface into loopback mode
-.It media 10baseT mediaopt full-duplex
+.It Cm media No 10baseT Cm mediaopt No full-duplex
 Use 10baseT, full duplex
-.It media 10baseT Op mediaopt half-duplex
+.It Cm media No 10baseT Cm mediaopt No half-duplex
 Use 10baseT, half duplex
-.It media 10baseT mediaopt loopback
+.It Cm media No 10baseT Cm mediaopt No loopback
 Put the interface into loopback mode
 .El
 .Sh SEE ALSO

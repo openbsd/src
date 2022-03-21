@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cas.4,v 1.9 2021/09/08 20:29:21 jmc Exp $
+.\"	$OpenBSD: cas.4,v 1.10 2022/03/21 14:56:16 miod Exp $
 .\"
 .\" Copyright (c) 2007 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 8 2021 $
+.Dd $Mdocdate: March 21 2022 $
 .Dt CAS 4
 .Os
 .Sh NAME
@@ -54,23 +54,23 @@ driver supports several media types, which are selected via the
 command.
 The supported media types are:
 .Bl -tag -width "media" -offset indent
-.It media autoselect
+.It Cm media No autoselect
 Attempt to autoselect the media type (default)
-.It media 1000baseT mediaopt full-duplex
+.It Cm media No 1000baseT Cm mediaopt No full-duplex
 Use 1000baseT on copper, full duplex
-.It media 1000baseT Op mediaopt half-duplex
+.It Cm media No 1000baseT Cm mediaopt No half-duplex
 Use 1000baseT on copper, half duplex
-.It media 1000baseSX  mediaopt full-duplex
+.It Cm media No 1000baseSX Cm mediaopt No full-duplex
 Use 1000baseSX on fiber, full duplex
-.It media 1000baseSX Op mediaopt half-duplex
+.It Cm media No 1000baseSX Cm mediaopt No half-duplex
 Use 1000baseSX on fiber, half duplex
-.It media 100baseTX  mediaopt full-duplex
+.It Cm media No 100baseTX Cm mediaopt No full-duplex
 Use 100baseTX, full duplex
-.It media 100baseTX Op mediaopt half-duplex
+.It Cm media No 100baseTX Cm mediaopt No half-duplex
 Use 100baseTX, half duplex
-.It media 10baseT mediaopt full-duplex
+.It Cm media No 10baseT Cm mediaopt No full-duplex
 Use 10baseT, full duplex
-.It media 10baseT Op mediaopt half-duplex
+.It Cm media No 10baseT Cm mediaopt No half-duplex
 Use 10baseT, half duplex
 .El
 .Sh SEE ALSO
