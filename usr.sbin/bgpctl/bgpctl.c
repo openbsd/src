@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.275 2022/02/06 09:52:32 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.276 2022/03/21 10:16:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -697,7 +697,7 @@ fmt_flags(uint8_t flags, int sum)
 			*p++ = 'S';
 		if (flags & F_PREF_ELIGIBLE)
 			*p++ = '*';
-		if (flags & F_PREF_ACTIVE)
+		if (flags & F_PREF_BEST)
 			*p++ = '>';
 		*p = '\0';
 		snprintf(buf, sizeof(buf), "%-5s", flagstr);
@@ -711,7 +711,7 @@ fmt_flags(uint8_t flags, int sum)
 			strlcat(buf, ", stale", sizeof(buf));
 		if (flags & F_PREF_ELIGIBLE)
 			strlcat(buf, ", valid", sizeof(buf));
-		if (flags & F_PREF_ACTIVE)
+		if (flags & F_PREF_BEST)
 			strlcat(buf, ", best", sizeof(buf));
 		if (flags & F_PREF_ANNOUNCE)
 			strlcat(buf, ", announced", sizeof(buf));

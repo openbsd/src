@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.13 2022/02/06 09:52:32 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.14 2022/03/21 10:16:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -875,7 +875,7 @@ json_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 
 	/* flags */
 	json_do_bool("valid", r->flags & F_PREF_ELIGIBLE);
-	if (r->flags & F_PREF_ACTIVE)
+	if (r->flags & F_PREF_BEST)
 		json_do_bool("best", 1);
 	if (r->flags & F_PREF_INTERNAL)
 		json_do_printf("source", "%s", "internal");
