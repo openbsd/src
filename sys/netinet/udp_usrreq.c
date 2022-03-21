@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.275 2022/03/21 09:12:34 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.276 2022/03/21 19:39:56 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -42,10 +42,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgements:
- * 	This product includes software developed by the University of
- * 	California, Berkeley and its contributors.
- * 	This product includes software developed at the Information
- * 	Technology Division, US Naval Research Laboratory.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ *	This product includes software developed at the Information
+ *	Technology Division, US Naval Research Laboratory.
  * 4. Neither the name of the NRL nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -107,7 +107,7 @@
 #include <net/pfvar.h>
 #endif
 
-#ifdef PIPEX 
+#ifdef PIPEX
 #include <netinet/if_ether.h>
 #include <net/pipex.h>
 #endif
@@ -387,8 +387,8 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 				    inp->inp_ip6_minhlim > ip6->ip6_hlim)
 					continue;
 				if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_laddr6))
-					if (!IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6,
-					    &ip6->ip6_dst))
+					if (!IN6_ARE_ADDR_EQUAL(
+					    &inp->inp_laddr6, &ip6->ip6_dst))
 						continue;
 			} else
 #endif /* INET6 */
@@ -406,8 +406,8 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 #ifdef INET6
 			if (ip6) {
 				if (!IN6_IS_ADDR_UNSPECIFIED(&inp->inp_faddr6))
-					if (!IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6,
-					    &ip6->ip6_src) ||
+					if (!IN6_ARE_ADDR_EQUAL(
+					    &inp->inp_faddr6, &ip6->ip6_src) ||
 					    inp->inp_fport != uh->uh_sport)
 						continue;
 			} else
@@ -506,7 +506,7 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			tdb_unref(tdb);
 			goto bad;
 		}
-		/* create ipsec options while we know that tdb cannot be modified */
+		/* create ipsec options, id is not modified after creation */
 		if (tdb && tdb->tdb_ids)
 			ipsecflowinfo = tdb->tdb_ids->id_flow;
 		tdb_unref(tdb);
@@ -1128,7 +1128,7 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 		if (inp->inp_pipex) {
 			struct pipex_session *session;
 
-			if (addr != NULL) 
+			if (addr != NULL)
 				session =
 				    pipex_l2tp_userland_lookup_session(m,
 					mtod(addr, struct sockaddr *));
