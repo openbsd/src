@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacd.h,v 1.35 2021/07/22 15:32:51 kn Exp $	*/
+/*	$OpenBSD: slaacd.h,v 1.36 2022/03/21 16:25:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -25,9 +25,6 @@
 
 #define SLAACD_SOIIKEY_LEN	16
 
-/* MAXDNAME from arpa/namesr.h */
-#define SLAACD_MAX_DNSSL	1025
-
 #define	MAX_RDNS_COUNT		8 /* max nameserver in a RTM_PROPOSAL */
 
 #define	IMSG_DATA_SIZE(imsg)	((imsg).hdr.len - IMSG_HEADER_SIZE)
@@ -47,7 +44,6 @@ enum imsg_type {
 	IMSG_CTL_SHOW_INTERFACE_INFO_RA,
 	IMSG_CTL_SHOW_INTERFACE_INFO_RA_PREFIX,
 	IMSG_CTL_SHOW_INTERFACE_INFO_RA_RDNS,
-	IMSG_CTL_SHOW_INTERFACE_INFO_RA_DNSSL,
 	IMSG_CTL_SHOW_INTERFACE_INFO_ADDR_PROPOSALS,
 	IMSG_CTL_SHOW_INTERFACE_INFO_ADDR_PROPOSAL,
 	IMSG_CTL_SHOW_INTERFACE_INFO_DFR_PROPOSALS,
@@ -121,11 +117,6 @@ struct ctl_engine_info_ra_prefix {
 struct ctl_engine_info_ra_rdns {
 	uint32_t		lifetime;
 	struct in6_addr		rdns;
-};
-
-struct ctl_engine_info_ra_dnssl {
-	uint32_t		lifetime;
-	char			dnssl[SLAACD_MAX_DNSSL];
 };
 
 struct ctl_engine_info_address_proposal {

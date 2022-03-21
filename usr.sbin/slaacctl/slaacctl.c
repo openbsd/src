@@ -1,4 +1,4 @@
-/*	$OpenBSD: slaacctl.c,v 1.22 2021/03/21 18:25:24 florian Exp $	*/
+/*	$OpenBSD: slaacctl.c,v 1.23 2022/03/21 16:25:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -177,7 +177,6 @@ show_interface_msg(struct imsg *imsg)
 	struct ctl_engine_info_ra		*cei_ra;
 	struct ctl_engine_info_ra_prefix	*cei_ra_prefix;
 	struct ctl_engine_info_ra_rdns		*cei_ra_rdns;
-	struct ctl_engine_info_ra_dnssl		*cei_ra_dnssl;
 	struct ctl_engine_info_address_proposal	*cei_addr_proposal;
 	struct ctl_engine_info_dfr_proposal	*cei_dfr_proposal;
 	struct ctl_engine_info_rdns_proposal	*cei_rdns_proposal;
@@ -256,11 +255,6 @@ show_interface_msg(struct imsg *imsg)
 		printf("\t\trdns: %s, lifetime: %u\n", inet_ntop(AF_INET6,
 		    &cei_ra_rdns->rdns, ntopbuf, INET6_ADDRSTRLEN),
 		    cei_ra_rdns->lifetime);
-		break;
-	case IMSG_CTL_SHOW_INTERFACE_INFO_RA_DNSSL:
-		cei_ra_dnssl = imsg->data;
-		printf("\t\tsearch: %s, lifetime: %u\n", cei_ra_dnssl->dnssl,
-		    cei_ra_dnssl->lifetime);
 		break;
 	case IMSG_CTL_SHOW_INTERFACE_INFO_ADDR_PROPOSALS:
 		printf("\tAddress proposals\n");

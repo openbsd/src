@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.76 2022/02/20 19:18:16 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.77 2022/03/21 16:25:47 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -156,11 +156,6 @@ struct radv_rdns {
 	struct in6_addr		rdns;
 };
 
-struct radv_dnssl {
-	LIST_ENTRY(radv_dnssl)	entries;
-	char			dnssl[SLAACD_MAX_DNSSL];
-};
-
 struct radv {
 	LIST_ENTRY(radv)		 entries;
 	struct sockaddr_in6		 from;
@@ -178,8 +173,6 @@ struct radv {
 	LIST_HEAD(, radv_prefix)	 prefixes;
 	uint32_t			 rdns_lifetime;
 	LIST_HEAD(, radv_rdns)		 rdns_servers;
-	uint32_t			 dnssl_lifetime;
-	LIST_HEAD(, radv_dnssl)		 dnssls;
 	uint32_t			 mtu;
 };
 
@@ -302,7 +295,6 @@ void			 gen_rdns_proposal(struct slaacd_iface *, struct
 void			 propose_rdns(struct rdns_proposal *);
 void			 free_rdns_proposal(struct rdns_proposal *);
 void			 compose_rdns_proposal(uint32_t, int);
-char			*parse_dnssl(char *, int);
 void			 update_iface_ra(struct slaacd_iface *, struct radv *);
 void			 update_iface_ra_dfr(struct slaacd_iface *,
     			     struct radv *);
@@ -765,14 +757,12 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 	struct ctl_engine_info_ra		 cei_ra;
 	struct ctl_engine_info_ra_prefix	 cei_ra_prefix;
 	struct ctl_engine_info_ra_rdns		 cei_ra_rdns;
-	struct ctl_engine_info_ra_dnssl		 cei_ra_dnssl;
 	struct ctl_engine_info_address_proposal	 cei_addr_proposal;
 	struct ctl_engine_info_dfr_proposal	 cei_dfr_proposal;
 	struct ctl_engine_info_rdns_proposal	 cei_rdns_proposal;
 	struct radv				*ra;
 	struct radv_prefix			*prefix;
 	struct radv_rdns			*rdns;
-	struct radv_dnssl			*dnssl;
 	struct address_proposal			*addr_proposal;
 	struct dfr_proposal			*dfr_proposal;
 	struct rdns_proposal			*rdns_proposal;
@@ -828,16 +818,6 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 			engine_imsg_compose_frontend(
 			    IMSG_CTL_SHOW_INTERFACE_INFO_RA_RDNS, pid,
 			    &cei_ra_rdns, sizeof(cei_ra_rdns));
-		}
-
-		LIST_FOREACH(dnssl, &ra->dnssls, entries) {
-			memset(&cei_ra_dnssl, 0, sizeof(cei_ra_dnssl));
-			memcpy(&cei_ra_dnssl.dnssl, &dnssl->dnssl,
-			    sizeof(cei_ra_dnssl.dnssl));
-			cei_ra_dnssl.lifetime = ra->dnssl_lifetime;
-			engine_imsg_compose_frontend(
-			    IMSG_CTL_SHOW_INTERFACE_INFO_RA_DNSSL, pid,
-			    &cei_ra_dnssl, sizeof(cei_ra_dnssl));
 		}
 	}
 
@@ -1036,7 +1016,6 @@ free_ra(struct radv *ra)
 {
 	struct radv_prefix	*prefix;
 	struct radv_rdns	*rdns;
-	struct radv_dnssl	*dnssl;
 
 	if (ra == NULL)
 		return;
@@ -1053,12 +1032,6 @@ free_ra(struct radv *ra)
 		rdns = LIST_FIRST(&ra->rdns_servers);
 		LIST_REMOVE(rdns, entries);
 		free(rdns);
-	}
-
-	while (!LIST_EMPTY(&ra->dnssls)) {
-		dnssl = LIST_FIRST(&ra->dnssls);
-		LIST_REMOVE(dnssl, entries);
-		free(dnssl);
 	}
 
 	free(ra);
@@ -1162,7 +1135,6 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 	struct radv		*radv;
 	struct radv_prefix	*prefix;
 	struct radv_rdns	*rdns;
-	struct radv_dnssl	*ra_dnssl;
 	ssize_t			 len = ra->len;
 	const char		*hbuf;
 	uint8_t			*p;
@@ -1200,7 +1172,6 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 
 	LIST_INIT(&radv->prefixes);
 	LIST_INIT(&radv->rdns_servers);
-	LIST_INIT(&radv->dnssls);
 
 	radv->min_lifetime = UINT32_MAX;
 
@@ -1251,11 +1222,9 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 		struct nd_opt_hdr *nd_opt_hdr = (struct nd_opt_hdr *)p;
 		struct nd_opt_prefix_info *prf;
 		struct nd_opt_rdnss *rdnss;
-		struct nd_opt_dnssl *dnssl;
 		struct nd_opt_mtu *mtu;
 		struct in6_addr *in6;
 		int i;
-		char *nssl;
 
 		len -= sizeof(struct nd_opt_hdr);
 		p += sizeof(struct nd_opt_hdr);
@@ -1323,37 +1292,6 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 				    entries);
 			}
 			break;
-		case ND_OPT_DNSSL:
-			if (nd_opt_hdr->nd_opt_len  < 2) {
-				log_warnx("invalid ND_OPT_DNSSL: len < 16");
-				goto err;
-			}
-
-			dnssl = (struct nd_opt_dnssl*) nd_opt_hdr;
-
-			if ((nssl = parse_dnssl(p + 6,
-			    (nd_opt_hdr->nd_opt_len - 1) * 8)) == NULL)
-				goto err; /* error logging in parse_dnssl */
-
-			if((ra_dnssl = calloc(1, sizeof(*ra_dnssl))) == NULL)
-				fatal("calloc");
-
-			radv->dnssl_lifetime = ntohl(
-			    dnssl->nd_opt_dnssl_lifetime);
-			if (radv->min_lifetime > radv->dnssl_lifetime)
-				radv->min_lifetime = radv->dnssl_lifetime;
-
-			if (strlcpy(ra_dnssl->dnssl, nssl,
-			    sizeof(ra_dnssl->dnssl)) >=
-			    sizeof(ra_dnssl->dnssl)) {
-				log_warnx("dnssl too long");
-				goto err;
-			}
-			free(nssl);
-
-			LIST_INSERT_HEAD(&radv->dnssls, ra_dnssl, entries);
-
-			break;
 		case ND_OPT_MTU:
 			if (nd_opt_hdr->nd_opt_len != 1) {
 				log_warnx("invalid ND_OPT_MTU: len != 1");
@@ -1369,6 +1307,7 @@ parse_ra(struct slaacd_iface *iface, struct imsg_ra *ra)
 			}
 
 			break;
+		case ND_OPT_DNSSL:
 		case ND_OPT_REDIRECTED_HEADER:
 		case ND_OPT_SOURCE_LINKADDR:
 		case ND_OPT_TARGET_LINKADDR:
@@ -1571,10 +1510,8 @@ debug_log_ra(struct imsg_ra *ra)
 		struct nd_opt_mtu *mtu;
 		struct nd_opt_prefix_info *prf;
 		struct nd_opt_rdnss *rdnss;
-		struct nd_opt_dnssl *dnssl;
 		struct in6_addr *in6;
 		int i;
-		char *nssl;
 
 		len -= sizeof(struct nd_opt_hdr);
 		p += sizeof(struct nd_opt_hdr);
@@ -1663,24 +1600,6 @@ debug_log_ra(struct imsg_ra *ra)
 				    ntopbuf, INET6_ADDRSTRLEN));
 			}
 			break;
-		case ND_OPT_DNSSL:
-			if (nd_opt_hdr->nd_opt_len  < 2) {
-				log_warnx("invalid ND_OPT_DNSSL: len < 16");
-				return;
-			}
-			dnssl = (struct nd_opt_dnssl*) nd_opt_hdr;
-			nssl = parse_dnssl(p + 6, (nd_opt_hdr->nd_opt_len - 1)
-			    * 8);
-
-			if (nssl == NULL)
-				return;
-
-			log_debug("\t\tND_OPT_DNSSL: lifetime: %u", ntohl(
-			    dnssl->nd_opt_dnssl_lifetime));
-			log_debug("\t\t\tsearch: %s", nssl);
-
-			free(nssl);
-			break;
 		default:
 			log_debug("\t\tUNKNOWN: %d", nd_opt_hdr->nd_opt_type);
 			break;
@@ -1691,48 +1610,6 @@ debug_log_ra(struct imsg_ra *ra)
 	}
 }
 #endif	/* SMALL */
-
-char*
-parse_dnssl(char* data, int datalen)
-{
-	int len, pos;
-	char *nssl, *nsslp;
-
-	if((nssl = calloc(1, datalen + 1)) == NULL) {
-		log_warn("malloc");
-		return NULL;
-	}
-	nsslp = nssl;
-
-	pos = 0;
-
-	do {
-		len = data[pos];
-		if (len > 63 || len + pos + 1 > datalen) {
-			free(nssl);
-			log_warnx("invalid label in DNSSL");
-			return NULL;
-		}
-		if (len == 0) {
-			if (pos < datalen && data[pos + 1] != 0)
-				*nsslp++ = ' '; /* seperator for next domain */
-			else
-				break;
-		} else {
-			if (pos != 0 && data[pos - 1] != 0) /* no . at front */
-				*nsslp++ = '.';
-			memcpy(nsslp, data + pos + 1, len);
-			nsslp += len;
-		}
-		pos += len + 1;
-	} while(pos < datalen);
-	if (len != 0) {
-		free(nssl);
-		log_warnx("invalid label in DNSSL");
-		return NULL;
-	}
-	return nssl;
-}
 
 void update_iface_ra(struct slaacd_iface *iface, struct radv *ra)
 {
