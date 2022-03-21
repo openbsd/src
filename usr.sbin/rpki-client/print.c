@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.5 2022/02/10 17:33:28 claudio Exp $ */
+/*	$OpenBSD: print.c,v 1.6 2022/03/21 10:39:51 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -28,19 +28,21 @@
 #include "extern.h"
 
 static const char *
-pretty_key_id(char *hex)
+pretty_key_id(const char *hex)
 {
 	static char buf[128];	/* bigger than SHA_DIGEST_LENGTH * 3 */
 	size_t i;
 
 	for (i = 0; i < sizeof(buf) && *hex != '\0'; i++) {
-		if  (i % 3 == 2 && *hex != '\0')
+		if  (i % 3 == 2)
 			buf[i] = ':';
 		else
 			buf[i] = *hex++;
 	}
 	if (i == sizeof(buf))
 		memcpy(buf + sizeof(buf) - 4, "...", 4);
+	else
+		buf[i] = '\0';
 	return buf;
 }
 
