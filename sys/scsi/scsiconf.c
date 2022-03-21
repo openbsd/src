@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.243 2022/03/03 19:10:13 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.244 2022/03/21 00:20:40 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -807,13 +807,15 @@ scsi_detach_link(struct scsi_link *link, int flags)
 	/* Detaching a device from scsibus is a five step process. */
 
 	/* 1. Wake up processes sleeping for an xs. */
-	scsi_link_shutdown(link);
+	if (link->pool != NULL)
+		scsi_link_shutdown(link);
 
 	/* 2. Detach the device. */
-	rv = config_detach(link->device_softc, flags);
-
-	if (rv != 0)
-		return rv;
+	if (link->device_softc != NULL) {
+		rv = config_detach(link->device_softc, flags);
+		if (rv != 0)
+			return rv;
+	}
 
 	/* 3. If it's using the openings io allocator, clean that up. */
 	if (ISSET(link->flags, SDEV_OWN_IOPL)) {
