@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.c,v 1.23 2022/01/04 06:20:37 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.c,v 1.24 2022/03/21 04:35:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -97,7 +97,8 @@ static struct imsgev	*iev_engine;
 #ifndef SMALL
 struct dhcpleased_conf	*main_conf;
 #endif
-char			*conffile;
+const char		 default_conffile[] = _PATH_CONF_FILE;
+const char		*conffile = default_conffile;
 pid_t			 frontend_pid;
 pid_t			 engine_pid;
 
@@ -308,13 +309,8 @@ main(int argc, char *argv[])
 		warnx("control socket setup failed");
 #endif /* SMALL */
 
-	if (conffile != NULL) {
-		if (unveil(conffile, "r") == -1)
-			fatal("unveil %s", conffile);
-	} else {
-		if (unveil(_PATH_CONF_FILE, "r") == -1)
-			fatal("unveil %s", _PATH_CONF_FILE);
-	}
+	if (unveil(conffile, "r") == -1)
+		fatal("unveil %s", conffile);
 	if (unveil("/dev/bpf", "rw") == -1)
 		fatal("unveil /dev/bpf");
 

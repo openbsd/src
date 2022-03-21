@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpleased.h,v 1.13 2022/01/04 06:20:37 florian Exp $	*/
+/*	$OpenBSD: dhcpleased.h,v 1.14 2022/03/21 04:35:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -318,7 +318,7 @@ int			*changed_ifaces(struct dhcpleased_conf *, struct
 void	print_config(struct dhcpleased_conf *);
 
 /* parse.y */
-struct dhcpleased_conf	*parse_config(char *);
+struct dhcpleased_conf	*parse_config(const char *);
 int			 cmdline_symset(char *);
 #else
 #define	sin_to_str(x...)	""

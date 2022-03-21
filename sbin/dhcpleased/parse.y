@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.6 2022/01/04 06:20:37 florian Exp $	*/
+/*	$OpenBSD: parse.y,v 1.7 2022/03/21 04:35:41 dlg Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -720,16 +720,17 @@ popfile(void)
 }
 
 struct dhcpleased_conf *
-parse_config(char *filename)
+parse_config(const char *filename)
 {
+	extern const char	 default_conffile[];
 	struct sym		*sym, *next;
 
 	conf = config_new_empty();
 
-	file = pushfile(filename != NULL ? filename : _PATH_CONF_FILE, 0);
+	file = pushfile(filename, 0);
 	if (file == NULL) {
 		/* no default config file is fine */
-		if (errno == ENOENT && filename == NULL)
+		if (errno == ENOENT && filename == default_conffile)
 			return (conf);
 		log_warn("%s", filename);
 		free(conf);
