@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.127 2022/03/21 09:12:34 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.128 2022/03/21 23:37:09 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ struct inpcb {
 	LIST_ENTRY(inpcb) inp_hash;		/* [t] local and foreign hash */
 	LIST_ENTRY(inpcb) inp_lhash;		/* [t] local port hash */
 	TAILQ_ENTRY(inpcb) inp_queue;		/* [t] inet PCB queue */
-	SIMPLEQ_ENTRY(inpcb) inp_notify;	/* [N] queue to notify PCB */
+	SIMPLEQ_ENTRY(inpcb) inp_notify;	/* [N] notify or udp append */
 	struct	  inpcbtable *inp_table;	/* [I] inet queue/hash table */
 	union	  inpaddru inp_faddru;		/* Foreign address. */
 	union	  inpaddru inp_laddru;		/* Local address. */

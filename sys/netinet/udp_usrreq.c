@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.276 2022/03/21 19:39:56 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.277 2022/03/21 23:37:09 bluhm Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -342,7 +342,8 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 	}
 
 	if (m->m_flags & (M_BCAST|M_MCAST)) {
-		struct inpcb *last;
+		SIMPLEQ_HEAD(, inpcb) inpcblist;
+
 		/*
 		 * Deliver a multicast or broadcast datagram to *all* sockets
 		 * for which the local and remote addresses and ports match
@@ -363,8 +364,8 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 		 * Locate pcb(s) for datagram.
 		 * (Algorithm copied from raw_intr().)
 		 */
-		last = NULL;
-		NET_ASSERT_LOCKED();
+		NET_ASSERT_WLOCKED();
+		SIMPLEQ_INIT(&inpcblist);
 		mtx_enter(&udbtable.inpt_mtx);
 		TAILQ_FOREACH(inp, &udbtable.inpt_queue, inp_queue) {
 			if (inp->inp_socket->so_state & SS_CANTRCVMORE)
@@ -419,16 +420,9 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 					continue;
 			}
 
-			if (last != NULL) {
-				struct mbuf *n;
+			in_pcbref(inp);
+			SIMPLEQ_INSERT_TAIL(&inpcblist, inp, inp_notify);
 
-				n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
-				if (n != NULL) {
-					udp_sbappend(last, n, ip, ip6, iphlen,
-					    uh, &srcsa.sa, 0);
-				}
-			}
-			last = inp;
 			/*
 			 * Don't look for additional matches if this one does
 			 * not have either the SO_REUSEPORT or SO_REUSEADDR
@@ -437,13 +431,13 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			 * port.  It assumes that an application will never
 			 * clear these options after setting them.
 			 */
-			if ((last->inp_socket->so_options & (SO_REUSEPORT |
+			if ((inp->inp_socket->so_options & (SO_REUSEPORT |
 			    SO_REUSEADDR)) == 0)
 				break;
 		}
 		mtx_leave(&udbtable.inpt_mtx);
 
-		if (last == NULL) {
+		if (SIMPLEQ_EMPTY(&inpcblist)) {
 			/*
 			 * No matching pcb found; discard datagram.
 			 * (No need to send an ICMP Port Unreachable
@@ -453,7 +447,20 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 			goto bad;
 		}
 
-		udp_sbappend(last, m, ip, ip6, iphlen, uh, &srcsa.sa, 0);
+		while ((inp = SIMPLEQ_FIRST(&inpcblist)) != NULL) {
+			struct mbuf *n;
+
+			SIMPLEQ_REMOVE_HEAD(&inpcblist, inp_notify);
+			if (SIMPLEQ_EMPTY(&inpcblist))
+				n = m;
+			else
+				n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
+			if (n != NULL) {
+				udp_sbappend(inp, n, ip, ip6, iphlen, uh,
+				    &srcsa.sa, 0);
+			}
+			in_pcbunref(inp);
+		}
 		return IPPROTO_DONE;
 	}
 	/*
