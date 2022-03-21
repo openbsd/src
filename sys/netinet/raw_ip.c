@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.124 2022/03/21 04:00:56 dlg Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.125 2022/03/21 09:12:34 bluhm Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -151,6 +151,7 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 	}
 #endif
 	NET_ASSERT_LOCKED();
+	mtx_enter(&rawcbtable.inpt_mtx);
 	TAILQ_FOREACH(inp, &rawcbtable.inpt_queue, inp_queue) {
 		if (inp->inp_socket->so_state & SS_CANTRCVMORE)
 			continue;
@@ -190,6 +191,8 @@ rip_input(struct mbuf **mp, int *offp, int proto, int af)
 		}
 		last = inp;
 	}
+	mtx_leave(&rawcbtable.inpt_mtx);
+
 	if (last) {
 		if (last->inp_flags & INP_CONTROLOPTS ||
 		    last->inp_socket->so_options & SO_TIMESTAMP)
