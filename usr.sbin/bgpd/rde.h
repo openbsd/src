@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.249 2022/03/21 13:33:20 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.250 2022/03/21 17:35:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -43,7 +43,6 @@ RB_HEAD(rib_tree, rib_entry);
 struct rib_entry {
 	RB_ENTRY(rib_entry)	 rib_e;
 	struct prefix_list	 prefix_h;
-	struct prefix		*active;	/* for fast access */
 	struct pt_entry		*prefix;
 	uint16_t		 rib_id;
 	uint16_t		 lock;
@@ -499,8 +498,10 @@ communities_unref(struct rde_community *comm)
 int	community_to_rd(struct community *, uint64_t *);
 
 /* rde_decide.c */
-int	prefix_eligible(struct prefix *);
-void	prefix_evaluate(struct rib_entry *, struct prefix *, struct prefix *);
+int		 prefix_eligible(struct prefix *);
+struct prefix	*prefix_best(struct rib_entry *);
+void		 prefix_evaluate(struct rib_entry *, struct prefix *,
+		     struct prefix *);
 
 /* rde_filter.c */
 void	rde_apply_set(struct filter_set_head *, struct rde_peer *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.235 2022/03/21 13:33:20 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.236 2022/03/21 17:35:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1523,7 +1523,7 @@ prefix_evaluate_all(struct prefix *p, enum nexthop_state state,
 		 */
 		if (state == NEXTHOP_REACH) {
 			if ((re_rib(re)->flags & F_RIB_NOFIB) == 0 &&
-			    p == re->active)
+			    p == prefix_best(re))
 				rde_send_kroute(re_rib(re), p, NULL);
 		}
 		return;

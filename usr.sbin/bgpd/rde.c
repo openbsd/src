@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.542 2022/03/21 13:33:20 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.543 2022/03/21 17:35:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2400,7 +2400,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	rib.validation_state = p->validation_state;
 	rib.flags = 0;
 	re = prefix_re(p);
-	if (re != NULL && re->active == p)
+	if (re != NULL && prefix_best(re) == p)
 		rib.flags |= F_PREF_BEST;
 	if (!peer->conf.ebgp)
 		rib.flags |= F_PREF_INTERNAL;
@@ -2502,7 +2502,7 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req, int adjout)
 	re = prefix_re(p);
 	if (asp == NULL)	/* skip pending withdraw in Adj-RIB-Out */
 		return;
-	if ((req->flags & F_CTL_BEST) && re != NULL && re->active != p)
+	if ((req->flags & F_CTL_BEST) && re != NULL && prefix_best(re) != p)
 		return;
 	if ((req->flags & F_CTL_INVALID) &&
 	    (asp->flags & F_ATTR_PARSE_ERR) == 0)
@@ -3713,11 +3713,11 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 static void
 rde_softreconfig_out(struct rib_entry *re, void *bula)
 {
-	struct prefix		*p = re->active;
+	struct prefix		*p;
 	struct rde_peer		*peer;
 	uint8_t			 aid = re->prefix->aid;
 
-	if (p == NULL)
+	if ((p = prefix_best(re)) == NULL)
 		/* no valid path for prefix */
 		return;
 
@@ -3750,12 +3750,10 @@ rde_softreconfig_sync_reeval(struct rib_entry *re, void *arg)
 			if (p->flags & PREFIX_NEXTHOP_LINKED)
 				nexthop_unlink(p);
 		}
-		re->active = NULL;
 		return;
 	}
 
 	/* evaluation process is turned on, so evaluate all prefixes again */
-	re->active = NULL;
 	prefixes = re->prefix_h;
 	LIST_INIT(&re->prefix_h);
 
@@ -3777,8 +3775,10 @@ rde_softreconfig_sync_reeval(struct rib_entry *re, void *arg)
 static void
 rde_softreconfig_sync_fib(struct rib_entry *re, void *bula)
 {
-	if (re->active)
-		rde_send_kroute(re_rib(re), re->active, NULL);
+	struct prefix *p;
+
+	if ((p = prefix_best(re)) != NULL)
+		rde_send_kroute(re_rib(re), p, NULL);
 }
 
 static void

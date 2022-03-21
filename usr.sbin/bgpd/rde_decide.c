@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.89 2022/03/03 13:06:15 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.90 2022/03/21 17:35:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -443,6 +443,23 @@ prefix_eligible(struct prefix *p)
 	return 1;
 }
 
+struct prefix *
+prefix_best(struct rib_entry *re)
+{
+	struct prefix	*xp;
+	struct rib	*rib;
+
+	rib = re_rib(re);
+	if (rib->flags & F_RIB_NOEVALUATE)
+		/* decision process is turned off */
+		return NULL;
+
+	xp = LIST_FIRST(&re->prefix_h);
+	if (xp != NULL && !prefix_eligible(xp))
+		xp = NULL;
+	return xp;
+}
+
 /*
  * Find the correct place to insert the prefix in the prefix list.
  * If the active prefix has changed we need to send an update also special
@@ -453,7 +470,7 @@ prefix_eligible(struct prefix *p)
 void
 prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 {
-	struct prefix	*xp;
+	struct prefix	*xp, *active;
 	struct rib	*rib;
 
 	rib = re_rib(re);
@@ -463,18 +480,10 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 			LIST_REMOVE(old, entry.list.rib);
 		if (new != NULL)
 			LIST_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
-		if (re->active) {
-			/*
-			 * During reloads it is possible that the decision
-			 * process is turned off but prefixes are still
-			 * active. Clean up now to ensure that the RIB
-			 * is consistant.
-			 */
-			rde_generate_updates(rib, NULL, re->active, 0);
-			re->active = NULL;
-		}
 		return;
 	}
+
+	active = prefix_best(re);
 
 	if (old != NULL)
 		prefix_remove(old, re);
@@ -490,16 +499,15 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	 * If the active prefix changed or the active prefix was removed
 	 * and added again then generate an update.
 	 */
-	if (re->active != xp || (old != NULL && xp == old)) {
+	if (active != xp || (old != NULL && xp == old)) {
 		/*
 		 * Send update withdrawing re->active and adding xp
 		 * but remember that xp may be NULL aka ineligible.
 		 * Additional decision may be made by the called functions.
 		 */
-		rde_generate_updates(rib, xp, re->active, 0);
+		rde_generate_updates(rib, xp, active, 0);
 		if ((rib->flags & F_RIB_NOFIB) == 0)
-			rde_send_kroute(rib, xp, re->active);
-		re->active = xp;
+			rde_send_kroute(rib, xp, active);
 		return;
 	}
 
@@ -510,5 +518,5 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	 */
 	if (rde_evaluate_all())
 		if ((new != NULL && prefix_eligible(new)) || old != NULL)
-			rde_generate_updates(rib, re->active, NULL, 1);
+			rde_generate_updates(rib, prefix_best(re), NULL, 1);
 }

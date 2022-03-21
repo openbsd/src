@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.13 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.14 2022/03/21 17:35:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -308,6 +308,7 @@ static void
 rde_up_dump_upcall(struct rib_entry *re, void *ptr)
 {
 	struct rde_peer		*peer = ptr;
+	struct prefix		*p;
 
 	if (peer->state != PEER_UP)
 		return;
@@ -319,10 +320,10 @@ rde_up_dump_upcall(struct rib_entry *re, void *ptr)
 		    aid2str(re->prefix->aid));
 
 	/* no eligible prefix, not even for 'evaluate all' */
-	if (re->active == NULL)
+	if ((p = prefix_best(re)) == NULL)
 		return;
 
-	up_generate_updates(out_rules, peer, re->active, NULL);
+	up_generate_updates(out_rules, peer, p, NULL);
 }
 
 static void
