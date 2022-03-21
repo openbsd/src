@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.234 2022/03/15 16:50:29 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.235 2022/03/21 13:33:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -179,7 +179,7 @@ rib_new(char *name, u_int rtableid, uint16_t flags)
  * or RECONF_REINIT (rerun the route decision process for every element)
  * depending on the new flags.
  */
-void
+int
 rib_update(struct rib *rib)
 {
 	/* flush fib first if there was one */
@@ -198,6 +198,8 @@ rib_update(struct rib *rib)
 	if (rib->fibstate != RECONF_REINIT &&
 	    (rib->flags & (F_RIB_NOFIB | F_RIB_NOEVALUATE)) == 0)
 		rib->fibstate = RECONF_RELOAD;
+
+	return (rib->fibstate == RECONF_REINIT);
 }
 
 struct rib *

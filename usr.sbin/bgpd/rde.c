@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.541 2022/03/21 10:15:34 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.542 2022/03/21 13:33:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3402,7 +3402,7 @@ rde_reload_done(void)
 
 	/* check if filter changed */
 	LIST_FOREACH(peer, &peerlist, peer_l) {
-		if (peer->conf.id == 0)	/* ignore peerself*/
+		if (peer->conf.id == 0)	/* ignore peerself */
 			continue;
 		peer->reconf_out = 0;
 		peer->reconf_rib = 0;
@@ -3469,7 +3469,33 @@ rde_reload_done(void)
 			rib_free(rib);
 			break;
 		case RECONF_RELOAD:
-			rib_update(rib);
+			if (rib_update(rib)) {
+				LIST_FOREACH(peer, &peerlist, peer_l) {
+					/* ignore peerself */
+					if (peer->conf.id == 0)
+						continue;
+					/* skip peers using a different rib */
+					if (peer->loc_rib_id != rib->id)
+						continue;
+					/* peer rib is already being flushed */
+					if (peer->reconf_rib)
+						continue;
+
+					if (prefix_dump_new(peer, AID_UNSPEC,
+					    RDE_RUNNER_ROUNDS, NULL,
+					    rde_up_flush_upcall,
+					    rde_softreconfig_in_done,
+					    NULL) == -1)
+						fatal("%s: prefix_dump_new",
+						    __func__);
+
+					log_peer_info(&peer->conf,
+					    "flushing Adj-RIB-Out");
+					/* account for the running flush */
+					softreconfig++;
+				}
+			}
+
 			rib->state = RECONF_KEEP;
 			/* FALLTHROUGH */
 		case RECONF_KEEP:
@@ -3717,17 +3743,14 @@ rde_softreconfig_sync_reeval(struct rib_entry *re, void *arg)
 	if (rib->flags & F_RIB_NOEVALUATE) {
 		/*
 		 * evaluation process is turned off
-		 * so remove all prefixes from adj-rib-out
-		 * also unlink nexthop if it was linked
+		 * all dependent adj-rib-out were already flushed
+		 * unlink nexthop if it was linked
 		 */
 		LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
 			if (p->flags & PREFIX_NEXTHOP_LINKED)
 				nexthop_unlink(p);
 		}
-		if (re->active) {
-			rde_generate_updates(rib, NULL, re->active, 0);
-			re->active = NULL;
-		}
+		re->active = NULL;
 		return;
 	}
 
@@ -3736,11 +3759,18 @@ rde_softreconfig_sync_reeval(struct rib_entry *re, void *arg)
 	prefixes = re->prefix_h;
 	LIST_INIT(&re->prefix_h);
 
+	/*
+	 * TODO: this code works but is not optimal. prefix_evaluate()
+	 * does a lot of extra work in the worst case. Would be better
+	 * to resort the list once and then call rde_generate_updates()
+	 * and rde_send_kroute() once.
+	 */
 	LIST_FOREACH_SAFE(p, &prefixes, entry.list.rib, next) {
 		/* need to re-link the nexthop if not already linked */
+		LIST_REMOVE(p, entry.list.rib);
 		if ((p->flags & PREFIX_NEXTHOP_LINKED) == 0)
 			nexthop_link(p);
-		prefix_evaluate(re, p, p);
+		prefix_evaluate(re, p, NULL);
 	}
 }
 
