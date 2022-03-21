@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid_rdesc.h,v 1.1 2013/10/25 03:09:59 jeremy Exp $ */
+/*	$OpenBSD: uhid_rdesc.h,v 1.2 2022/03/21 12:18:52 thfr Exp $ */
 /*	$NetBSD: ugraphire_rdesc.h,v 1.1 2000/12/29 01:47:49 augustss Exp $	*/
 /*	$FreeBSD: uxb360gp_rdesc.h,v 1.3 2008/05/24 18:35:55 ed Exp $ */
 /*
@@ -272,4 +272,94 @@ static const uByte uhid_xb360gp_report_descr[] = {
     0x95, 0x01,		/*  REPORT COUNT (1)			*/
     0x81, 0x01,		/*  INPUT (Constant)			*/
     0xc0,		/* END COLLECTION			*/
+};
+
+static const uByte uhid_xbonegp_report_descr[] = {
+    0x05, 0x01,			/* USAGE PAGE (Generic Desktop)			*/
+    0x09, 0x05,			/* USAGE (Gamepad)				*/
+    0xa1, 0x01,			/* COLLECTION (Application)			*/
+    /* Button packet */
+    0xa1, 0x00,			/*  COLLECTION (Physical)			*/
+    0x85, 0x20,			/*   REPORT ID (0x20)				*/
+    /* Skip unknown field and counter */
+    0x09, 0x00,			/*   USAGE (Undefined)				*/
+    0x75, 0x08,			/*   REPORT SIZE (8)				*/
+    0x95, 0x02,			/*   REPORT COUNT (2)				*/
+    0x81, 0x03,			/*   INPUT (Constant, Variable, Absolute)	*/
+    /* Payload size */
+    0x09, 0x3b,			/*   USAGE (Byte Count)				*/
+    0x95, 0x01,			/*   REPORT COUNT (1)				*/
+    0x81, 0x02,			/*   INPUT (Data, Variable, Absolute)		*/
+    /* 16 Buttons: 1-2=Unknown, 3=Start, 4=Back, 5-8=ABXY,
+     * 		   9-12=D-Pad(Up,Dn,Lt,Rt), 13=LB, 14=RB, 15=LS, 16=RS
+     */
+    /* Skip the first 2 as they are not used */
+    0x75, 0x01,			/*   REPORT SIZE (1)				*/
+    0x95, 0x02,			/*   REPORT COUNT (2)				*/
+    0x81, 0x01,			/*   INPUT (Constant)				*/
+    /* Assign buttons Start(7), Back(8), ABXY(1-4) */
+    0x15, 0x00,			/*   LOGICAL MINIMUM (0)			*/
+    0x25, 0x01,			/*   LOGICAL MAXIMUM (1)			*/
+    0x95, 0x06,			/*   REPORT COUNT (6)				*/
+    0x05, 0x09,			/*   USAGE PAGE (Button)			*/
+    0x09, 0x08,			/*   USAGE (Button 8)				*/
+    0x09, 0x07,			/*   USAGE (Button 7)				*/
+    0x09, 0x01,			/*   USAGE (Button 1)				*/
+    0x09, 0x02,			/*   USAGE (Button 2)				*/
+    0x09, 0x03,			/*   USAGE (Button 3)				*/
+    0x09, 0x04,			/*   USAGE (Button 4)				*/
+    0x81, 0x02,			/*   INPUT (Data, Variable, Absolute)		*/
+    /* D-Pad */
+    0x05, 0x01,			/*   USAGE PAGE (Generic Desktop)		*/
+    0x09, 0x01,			/*   USAGE (Pointer)				*/
+    0xa1, 0x00,			/*   COLLECTION (Physical)			*/
+    0x75, 0x01,			/*    REPORT SIZE (1)				*/
+    0x15, 0x00,			/*    LOGICAL MINIMUM (0)			*/
+    0x25, 0x01,			/*    LOGICAL MAXIMUM (1)			*/
+    0x95, 0x04,			/*    REPORT COUNT (4)				*/
+    0x05, 0x01,			/*    USAGE PAGE (Generic Desktop)		*/
+    0x09, 0x90,			/*    USAGE (D-Pad Up)				*/
+    0x09, 0x91,			/*    USAGE (D-Pad Down)			*/
+    0x09, 0x93,			/*    USAGE (D-Pad Left)			*/
+    0x09, 0x92,			/*    USAGE (D-Pad Right)			*/
+    0x81, 0x02,			/*    INPUT (Data, Variable, Absolute)		*/
+    0xc0,			/*   END COLLECTION				*/
+    /* Buttons 5-6 (Shoulder Buttons) and 9-10 (Stick Buttons) */
+    0x15, 0x00,			/*   LOGICAL MINIMUM (0)			*/
+    0x25, 0x01,			/*   LOGICAL MAXIMUM (1)			*/
+    0x95, 0x04,			/*   REPORT COUNT (4)				*/
+    0x05, 0x09,			/*   USAGE PAGE (Button)			*/
+    0x09, 0x05,			/*   USAGE (Button 5)				*/
+    0x09, 0x06,			/*   USAGE (Button 6)				*/
+    0x09, 0x09,			/*   USAGE (Button 9)				*/
+    0x09, 0x0a,			/*   USAGE (Button 10)				*/
+    0x81, 0x02,			/*   INPUT (Data, Variable, Absolute		*/
+    /* Triggers */
+    0x15, 0x00,			/*   LOGICAL MINIMUM (0)			*/
+    0x26, 0xff, 0x03,		/*   LOGICAL MAXIMUM (1023)			*/
+    0x75, 0x10,			/*   REPORT SIZE (16)				*/
+    0x95, 0x02,			/*   REPORT COUNT (2)				*/
+    0x05, 0x01,			/*   USAGE PAGE (Generic Desktop)		*/
+    0x09, 0x32,			/*   USAGE (Z)					*/
+    0x09, 0x35,			/*   USAGE (Rz)					*/
+    0x81, 0x02,			/*   INPUT (Data, Variable, Absolute)		*/
+    /* Sticks */
+    0x16, 0x00, 0x80,		/*   LOGICAL MINIMUM (-32768)			*/
+    0x26, 0xff, 0x7f,		/*   LOGICAL MAXIMUM (32767)			*/
+    0x09, 0x01,			/*   USAGE (Pointer)				*/
+    0xa1, 0x00,			/*   COLLECTION (Physical)			*/
+    0x95, 0x02,			/*    REPORT COUNT (2)				*/
+    0x05, 0x01,			/*    USAGE PAGE (Generic Desktop)		*/
+    0x09, 0x30,			/*    USAGE (X)					*/
+    0x09, 0x31,			/*    USAGE (Y)					*/
+    0x81, 0x02,			/*    INPUT (Data, Variable, Absolute)		*/
+    0xc0,			/*   END COLLECTION				*/
+    0x09, 0x01,			/*   USAGE (Pointer)				*/
+    0xa1, 0x00,			/*   COLLECTION (Physical)			*/
+    0x95, 0x02,			/*    REPORT COUNT (2)				*/
+    0x09, 0x33,			/*    USAGE (Rx)				*/
+    0x09, 0x34,			/*    USAGE (Ry)				*/
+    0x81, 0x02,			/*    INPUT (Data, Variable, Absolute)		*/
+    0xc0,			/*   END COLLECTION				*/
+    0xc0,			/* END COLLECTION				*/
 };
