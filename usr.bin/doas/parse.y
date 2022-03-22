@@ -1,4 +1,4 @@
-/* $OpenBSD: parse.y,v 1.30 2021/11/30 20:08:15 tobias Exp $ */
+/* $OpenBSD: parse.y,v 1.31 2022/03/22 20:36:49 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -84,6 +84,7 @@ grammar:	/* empty */
 
 rule:		action ident target cmd {
 			struct rule *r;
+
 			r = calloc(1, sizeof(*r));
 			if (!r)
 				errx(1, "can't allocate rule");
@@ -156,6 +157,7 @@ strlist:	/* empty */ {
 				errx(1, "can't allocate strlist");
 		} | strlist TSTRING {
 			int nstr = arraylen($1.strlist);
+
 			if (!($$.strlist = reallocarray($1.strlist, nstr + 2,
 			    sizeof(char *))))
 				errx(1, "can't allocate strlist");

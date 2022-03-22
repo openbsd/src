@@ -1,4 +1,4 @@
-/* $OpenBSD: doas.c,v 1.96 2022/03/04 05:37:21 tb Exp $ */
+/* $OpenBSD: doas.c,v 1.97 2022/03/22 20:36:49 deraadt Exp $ */
 /*
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -212,6 +212,7 @@ authuser_checkpass(char *myname, char *login_style)
 	}
 	if (!challenge) {
 		char host[HOST_NAME_MAX + 1];
+
 		if (gethostname(host, sizeof(host)))
 			snprintf(host, sizeof(host), "?");
 		snprintf(cbuf, sizeof(cbuf),
