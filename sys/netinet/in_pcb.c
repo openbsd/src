@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.263 2022/03/21 09:12:34 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.264 2022/03/22 18:02:54 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -921,7 +921,7 @@ in_pcbselsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 	 * been set as a multicast option, use the address of that
 	 * interface as our source address.
 	 */
-	if ((IN_MULTICAST(sin->sin_addr.s_addr) || 
+	if ((IN_MULTICAST(sin->sin_addr.s_addr) ||
 	    sin->sin_addr.s_addr == INADDR_BROADCAST) && mopts != NULL) {
 		struct ifnet *ifp;
 
