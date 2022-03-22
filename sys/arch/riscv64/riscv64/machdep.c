@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 2021/09/14 12:03:49 jca Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.27 2022/03/22 06:48:36 miod Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -418,7 +418,6 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 	tf->tf_sstatus |= SSTATUS_FS_OFF;
 
 	memset(tf, 0, sizeof(*tf));
-	tf->tf_a[0] = stack; // XXX Inherited from FreeBSD. Why?
 	tf->tf_sp = STACKALIGN(stack);
 	tf->tf_ra = pack->ep_entry;
 	tf->tf_sepc = pack->ep_entry;
