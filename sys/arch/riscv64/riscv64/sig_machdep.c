@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.9 2021/10/06 15:46:03 claudio Exp $	*/
+/*	$OpenBSD: sig_machdep.c,v 1.10 2022/03/22 06:49:25 miod Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,24 +84,6 @@ process_frame(struct proc *p)
 	return p->p_addr->u_pcb.pcb_tf;
 }
 
-void dumpframe (char *msg, struct trapframe *tf, void *p)
-{
-	int i;
-	printf("%s\n",msg);
-	printf("pc %lx ra %lx sp %lx tp %lx\n", tf->tf_sepc, tf->tf_ra, tf->tf_sp, tf->tf_tp);
-	for(i = 0; i < 7; i++)
-		printf("%st%d %lx", (i==0)?"":", ", i, tf->tf_t[i]);
-	printf("\n");
-	for(i = 0; i < 12; i++)
-		printf("%ss%d %lx", (i==0)?"":", ", i, tf->tf_s[i]);
-	printf("\n");
-	for(i = 0; i < 8; i++)
-		printf("%sa%d %lx", (i==0)?"":", ", i, tf->tf_a[i]);
-	printf("\n");
-	if (p != NULL)
-		printf("fp %p\n", p);
-}
-
 /*
  * Send an interrupt to process.
  *
@@ -176,10 +158,10 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
 	frame.sf_sc.sc_cookie = (long)&fp->sf_sc ^ p->p_p->ps_sigcookie;
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
-		 * Process has trashed its stack; give it an illegal
-		 * instruction to halt it in its tracks.
+		 * Process has trashed its stack; alert caller which
+		 * will give it an illegal instruction to halt it in
+		 * its tracks.
 		 */
-		/* NOTREACHED */
 		return 1;
 	}
 
