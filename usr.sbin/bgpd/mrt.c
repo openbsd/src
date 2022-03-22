@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.106 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.107 2022/03/22 10:53:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -620,7 +620,7 @@ mrt_dump_entry_v2_rib(struct rib_entry *re, struct ibuf **nb, struct ibuf **apb,
 	*np = 0;
 	*app = 0;
 
-	LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
+	TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib) {
 		struct nexthop		*nexthop;
 		struct bgpd_addr	*nh;
 		struct ibuf		*tbuf;
@@ -895,7 +895,7 @@ mrt_dump_upcall(struct rib_entry *re, void *ptr)
 	 * dumps the table so we do the same. If only the active route should
 	 * be dumped p should be set to p = pt->active.
 	 */
-	LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
+	TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib) {
 		if (mrtbuf->type == MRT_TABLE_DUMP)
 			mrt_dump_entry(mrtbuf, p, mrtbuf->seqnum++,
 			    prefix_peer(p));

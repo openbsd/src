@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.90 2022/03/21 17:35:56 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.91 2022/03/22 10:53:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -301,16 +301,16 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 void
 prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 {
-	struct prefix_list redo = LIST_HEAD_INITIALIZER(redo);
-	struct prefix *xp, *np, *tailp = NULL, *insertp = ep;
+	struct prefix_queue redo = TAILQ_HEAD_INITIALIZER(redo);
+	struct prefix *xp, *np, *insertp = ep;
 	int testall, selected = 0;
 
 	/* start scan at the entry point (ep) or the head if ep == NULL */
 	if (ep == NULL)
-		ep = LIST_FIRST(&re->prefix_h);
+		ep = TAILQ_FIRST(&re->prefix_h);
 
 	for (xp = ep; xp != NULL; xp = np) {
-		np = LIST_NEXT(xp, entry.list.rib);
+		np = TAILQ_NEXT(xp, entry.list.rib);
 
 		if (prefix_cmp(new, xp, &testall) > 0) {
 			/* new is preferred over xp */
@@ -321,14 +321,8 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 				 * MED inversion, take out prefix and
 				 * put it onto redo queue.
 				 */
-				LIST_REMOVE(xp, entry.list.rib);
-				if (tailp == NULL)
-					LIST_INSERT_HEAD(&redo, xp,
-					    entry.list.rib);
-				else
-					LIST_INSERT_AFTER(tailp, xp,
-					    entry.list.rib);
-				tailp = xp;
+				TAILQ_REMOVE(&re->prefix_h, xp, entry.list.rib);
+				TAILQ_INSERT_TAIL(&redo, xp, entry.list.rib);
 			} else {
 				/*
 				 * lock insertion point and
@@ -355,14 +349,14 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 	}
 
 	if (insertp == NULL)
-		LIST_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
+		TAILQ_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
 	else
-		LIST_INSERT_AFTER(insertp, new, entry.list.rib);
+		TAILQ_INSERT_AFTER(&re->prefix_h, insertp, new, entry.list.rib);
 
 	/* Fixup MED order again. All elements are < new */
-	while (!LIST_EMPTY(&redo)) {
-		xp = LIST_FIRST(&redo);
-		LIST_REMOVE(xp, entry.list.rib);
+	while (!TAILQ_EMPTY(&redo)) {
+		xp = TAILQ_FIRST(&redo);
+		TAILQ_REMOVE(&redo, xp, entry.list.rib);
 
 		prefix_insert(xp, new, re);
 	}
@@ -380,18 +374,18 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 void
 prefix_remove(struct prefix *old, struct rib_entry *re)
 {
-	struct prefix_list redo = LIST_HEAD_INITIALIZER(redo);
-	struct prefix *xp, *np, *tailp = NULL;
+	struct prefix_queue redo = TAILQ_HEAD_INITIALIZER(redo);
+	struct prefix *xp, *np;
 	int testall;
 
-	xp = LIST_NEXT(old, entry.list.rib);
-	LIST_REMOVE(old, entry.list.rib);
+	xp = TAILQ_NEXT(old, entry.list.rib);
+	TAILQ_REMOVE(&re->prefix_h, old, entry.list.rib);
 	/* check if a MED inversion could be possible */
 	prefix_cmp(old, xp, &testall);
 	if (testall > 0) {
 		/* maybe MED route, scan tail for other possible routes */
 		for (; xp != NULL; xp = np) {
-			np = LIST_NEXT(xp, entry.list.rib);
+			np = TAILQ_NEXT(xp, entry.list.rib);
 
 			/* only interested in the testall result */
 			prefix_cmp(old, xp, &testall);
@@ -402,22 +396,16 @@ prefix_remove(struct prefix *old, struct rib_entry *re)
 				 * possible MED inversion, take out prefix and
 				 * put it onto redo queue.
 				 */
-				LIST_REMOVE(xp, entry.list.rib);
-				if (tailp == NULL)
-					LIST_INSERT_HEAD(&redo, xp,
-					    entry.list.rib);
-				else
-					LIST_INSERT_AFTER(tailp, xp,
-					    entry.list.rib);
-				tailp = xp;
+				TAILQ_REMOVE(&re->prefix_h, xp, entry.list.rib);
+				TAILQ_INSERT_TAIL(&redo, xp, entry.list.rib);
 			}
 		}
 	}
 
 	/* Fixup MED order again, reinsert prefixes from the start */
-	while (!LIST_EMPTY(&redo)) {
-		xp = LIST_FIRST(&redo);
-		LIST_REMOVE(xp, entry.list.rib);
+	while (!TAILQ_EMPTY(&redo)) {
+		xp = TAILQ_FIRST(&redo);
+		TAILQ_REMOVE(&redo, xp, entry.list.rib);
 
 		prefix_insert(xp, NULL, re);
 	}
@@ -454,7 +442,7 @@ prefix_best(struct rib_entry *re)
 		/* decision process is turned off */
 		return NULL;
 
-	xp = LIST_FIRST(&re->prefix_h);
+	xp = TAILQ_FIRST(&re->prefix_h);
 	if (xp != NULL && !prefix_eligible(xp))
 		xp = NULL;
 	return xp;
@@ -477,9 +465,9 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	if (rib->flags & F_RIB_NOEVALUATE) {
 		/* decision process is turned off */
 		if (old != NULL)
-			LIST_REMOVE(old, entry.list.rib);
+			TAILQ_REMOVE(&re->prefix_h, old, entry.list.rib);
 		if (new != NULL)
-			LIST_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
+			TAILQ_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
 		return;
 	}
 
@@ -491,7 +479,7 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	if (new != NULL)
 		prefix_insert(new, NULL, re);
 
-	xp = LIST_FIRST(&re->prefix_h);
+	xp = TAILQ_FIRST(&re->prefix_h);
 	if (xp != NULL && !prefix_eligible(xp))
 		xp = NULL;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.543 2022/03/21 17:35:56 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.544 2022/03/22 10:53:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2536,7 +2536,7 @@ rde_dump_upcall(struct rib_entry *re, void *ptr)
 	struct rde_dump_ctx	*ctx = ptr;
 	struct prefix		*p;
 
-	LIST_FOREACH(p, &re->prefix_h, entry.list.rib)
+	TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib)
 		rde_dump_filter(p, &ctx->req, 0);
 }
 
@@ -2557,14 +2557,14 @@ rde_dump_prefix_upcall(struct rib_entry *re, void *ptr)
 			return;
 		if (!prefix_compare(&ctx->req.prefix, &addr,
 		    ctx->req.prefixlen))
-			LIST_FOREACH(p, &re->prefix_h, entry.list.rib)
+			TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib)
 				rde_dump_filter(p, &ctx->req, 0);
 	} else {
 		if (ctx->req.prefixlen < pt->prefixlen)
 			return;
 		if (!prefix_compare(&addr, &ctx->req.prefix,
 		    pt->prefixlen))
-			LIST_FOREACH(p, &re->prefix_h, entry.list.rib)
+			TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib)
 				rde_dump_filter(p, &ctx->req, 0);
 	}
 }
@@ -3673,7 +3673,7 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 
 	pt = re->prefix;
 	pt_getaddr(pt, &prefix);
-	LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
+	TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib) {
 		asp = prefix_aspath(p);
 		peer = prefix_peer(p);
 
@@ -3736,7 +3736,7 @@ rde_softreconfig_out(struct rib_entry *re, void *bula)
 static void
 rde_softreconfig_sync_reeval(struct rib_entry *re, void *arg)
 {
-	struct prefix_list	prefixes;
+	struct prefix_queue	prefixes = TAILQ_HEAD_INITIALIZER(prefixes);
 	struct prefix		*p, *next;
 	struct rib		*rib = arg;
 
@@ -3746,7 +3746,7 @@ rde_softreconfig_sync_reeval(struct rib_entry *re, void *arg)
 		 * all dependent adj-rib-out were already flushed
 		 * unlink nexthop if it was linked
 		 */
-		LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
+		TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib) {
 			if (p->flags & PREFIX_NEXTHOP_LINKED)
 				nexthop_unlink(p);
 		}
@@ -3754,8 +3754,7 @@ rde_softreconfig_sync_reeval(struct rib_entry *re, void *arg)
 	}
 
 	/* evaluation process is turned on, so evaluate all prefixes again */
-	prefixes = re->prefix_h;
-	LIST_INIT(&re->prefix_h);
+	TAILQ_CONCAT(&prefixes, &re->prefix_h, entry.list.rib);
 
 	/*
 	 * TODO: this code works but is not optimal. prefix_evaluate()
@@ -3763,9 +3762,9 @@ rde_softreconfig_sync_reeval(struct rib_entry *re, void *arg)
 	 * to resort the list once and then call rde_generate_updates()
 	 * and rde_send_kroute() once.
 	 */
-	LIST_FOREACH_SAFE(p, &prefixes, entry.list.rib, next) {
+	TAILQ_FOREACH_SAFE(p, &prefixes, entry.list.rib, next) {
 		/* need to re-link the nexthop if not already linked */
-		LIST_REMOVE(p, entry.list.rib);
+		TAILQ_REMOVE(&prefixes, p, entry.list.rib);
 		if ((p->flags & PREFIX_NEXTHOP_LINKED) == 0)
 			nexthop_link(p);
 		prefix_evaluate(re, p, NULL);
@@ -3818,7 +3817,7 @@ rde_roa_softreload(struct rib_entry *re, void *bula)
 
 	pt = re->prefix;
 	pt_getaddr(pt, &prefix);
-	LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
+	TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib) {
 		asp = prefix_aspath(p);
 		peer = prefix_peer(p);
 
@@ -4163,7 +4162,7 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 	struct bgpd_addr	 addr;
 	struct rde_dump_ctx	*ctx = ptr;
 
-	LIST_FOREACH(p, &re->prefix_h, entry.list.rib) {
+	TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib) {
 		asp = prefix_aspath(p);
 		if (!(asp->flags & F_PREFIX_ANNOUNCED))
 			continue;

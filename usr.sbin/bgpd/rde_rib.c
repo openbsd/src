@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.236 2022/03/21 17:35:56 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.237 2022/03/22 10:53:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -252,7 +252,7 @@ rib_free(struct rib *rib)
 		 * an empty check in prefix_destroy() it is not possible to
 		 * use the default for loop.
 		 */
-		while ((p = LIST_FIRST(&re->prefix_h))) {
+		while ((p = TAILQ_FIRST(&re->prefix_h))) {
 			struct rde_aspath *asp = prefix_aspath(p);
 			if (asp && asp->pftableid)
 				rde_pftable_del(asp->pftableid, p);
@@ -353,7 +353,7 @@ rib_add(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
 	if ((re = calloc(1, sizeof(*re))) == NULL)
 		fatal("rib_add");
 
-	LIST_INIT(&re->prefix_h);
+	TAILQ_INIT(&re->prefix_h);
 	re->prefix = pt_ref(pte);
 	re->rib_id = rib->id;
 
@@ -391,7 +391,7 @@ rib_remove(struct rib_entry *re)
 int
 rib_empty(struct rib_entry *re)
 {
-	return LIST_EMPTY(&re->prefix_h);
+	return TAILQ_EMPTY(&re->prefix_h);
 }
 
 static struct rib_entry *
@@ -1496,7 +1496,7 @@ prefix_bypeer(struct rib_entry *re, struct rde_peer *peer, uint32_t path_id)
 {
 	struct prefix	*p;
 
-	LIST_FOREACH(p, &re->prefix_h, entry.list.rib)
+	TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib)
 		if (prefix_peer(p) == peer && p->path_id == path_id)
 			return (p);
 	return (NULL);

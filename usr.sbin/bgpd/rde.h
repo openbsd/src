@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.250 2022/03/21 17:35:56 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.251 2022/03/22 10:53:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -38,11 +38,12 @@ enum peer_state {
 };
 
 LIST_HEAD(prefix_list, prefix);
+TAILQ_HEAD(prefix_queue, prefix);
 RB_HEAD(rib_tree, rib_entry);
 
 struct rib_entry {
 	RB_ENTRY(rib_entry)	 rib_e;
-	struct prefix_list	 prefix_h;
+	struct prefix_queue	 prefix_h;
 	struct pt_entry		*prefix;
 	uint16_t		 rib_id;
 	uint16_t		 lock;
@@ -315,7 +316,8 @@ struct pt_entry_vpn6 {
 struct prefix {
 	union {
 		struct {
-			LIST_ENTRY(prefix)	 rib, nexthop;
+			TAILQ_ENTRY(prefix)	 rib;
+			LIST_ENTRY(prefix)	 nexthop;
 			struct rib_entry	*re;
 		} list;
 		struct {
