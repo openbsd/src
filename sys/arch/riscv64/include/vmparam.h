@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.5 2021/07/02 10:42:22 kettenis Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.6 2022/03/22 06:47:38 miod Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -111,8 +111,7 @@
  * VM_MIN_USER_ADDRESS and VM_MAX_USER_ADDRESS define the start and end of the
  * user address space.
  */
-// XXX OpenBSD/arm64 starts VM_MIN_ADDRESS from PAGE_SIZE. Why?
-#define	VM_MIN_ADDRESS		(0x0000000000000000UL)
+#define	VM_MIN_ADDRESS		((vaddr_t)PAGE_SIZE)
 #define	VM_MAX_ADDRESS		(0xffffffffffffffffUL)
 
 #define	VM_MIN_KERNEL_ADDRESS	(0xffffffc000000000UL)
