@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide_test.c,v 1.8 2022/03/03 13:10:53 claudio Exp $ */
+/*	$OpenBSD: rde_decide_test.c,v 1.9 2022/03/22 10:57:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -240,12 +240,12 @@ test_evaluate(struct prefix **orig, struct prefix **in, size_t nin)
 		struct prefix *xp;
 
 		j = 0;
-		LIST_FOREACH(xp, &dummy_re.prefix_h, entry.list.rib)
+		TAILQ_FOREACH(xp, &dummy_re.prefix_h, entry.list.rib)
 			if (which(orig, xp) != j++)
 				r = 1;
 		if (r != 0) {
 			printf("bad order");
-			LIST_FOREACH(xp, &dummy_re.prefix_h, entry.list.rib)
+			TAILQ_FOREACH(xp, &dummy_re.prefix_h, entry.list.rib)
 				printf(" %zu", which(orig, xp));
 			printf(" FAILED\n");
 		}
