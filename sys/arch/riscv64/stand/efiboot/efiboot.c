@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.3 2021/10/26 10:45:55 patrick Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.4 2022/03/22 10:33:50 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -491,6 +491,7 @@ efi_makebootargs(char *bootargs, int howto)
 	u_char zero[8] = { 0 };
 	uint64_t uefi_system_table = htobe64((uintptr_t)ST);
 	uint32_t boothowto = htobe32(howto);
+	EFI_PHYSICAL_ADDRESS addr;
 	void *node;
 	size_t len;
 	int i;
@@ -501,6 +502,17 @@ efi_makebootargs(char *bootargs, int howto)
 			    &ST->ConfigurationTable[i].VendorGuid) == 0)
 				fdt = ST->ConfigurationTable[i].VendorTable;
 		}
+	}
+
+	if (!fdt_get_size(fdt))
+		return NULL;
+
+	len = roundup(fdt_get_size(fdt) + PAGE_SIZE, PAGE_SIZE);
+	if (BS->AllocatePages(AllocateAnyPages, EfiLoaderData,
+	    EFI_SIZE_TO_PAGES(len), &addr) == EFI_SUCCESS) {
+		memcpy((void *)addr, fdt, fdt_get_size(fdt));
+		((struct fdt_head *)addr)->fh_size = htobe32(len);
+		fdt = (void *)addr;
 	}
 
 	if (!fdt_init(fdt))
