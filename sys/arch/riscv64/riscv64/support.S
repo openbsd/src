@@ -1,4 +1,4 @@
-/*	$OpenBSD: support.S,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: support.S,v 1.3 2022/03/22 06:51:12 miod Exp $	*/
 
 /*-
  * Copyright (c) 2015-2020 Ruslan Bukin <br@bsdpad.com>
@@ -58,7 +58,7 @@ ENTRY(setjmp)
 	sd	s11, (11 * 8)(a0)
 	sd	ra, (12 * 8)(a0)
 
-	/* Return value */
+	/* Return zero */
 	li	a0, 0
 	ret
 END(setjmp)
@@ -83,7 +83,7 @@ ENTRY(longjmp)
 	ld	s11, (11 * 8)(a0)
 	ld	ra, (12 * 8)(a0)
 
-	/* Load the return value */
-	mv	a0, a1
+	/* Return nonzero */
+	li	a0, 1
 	ret
 END(longjmp)

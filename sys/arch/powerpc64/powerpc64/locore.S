@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.43 2021/01/23 12:10:08 kettenis Exp $	*/
+/*	$OpenBSD: locore.S,v 1.44 2022/03/22 06:51:12 miod Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -562,7 +562,7 @@ longjmp:
 	ld	%r29, 0x98(%r3)
 	ld	%r30, 0xa0(%r3)
 	ld	%r31, 0xa8(%r3)
-	mr	%r4, %r3	/* return val */
+	li	%r3, 1		/* return non-zero */
 	RETGUARD_CHECK(longjmp, %r11)
 	blr
 #endif
