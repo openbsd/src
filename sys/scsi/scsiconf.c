@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.245 2022/03/21 12:57:46 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.246 2022/03/22 16:29:58 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -472,12 +472,6 @@ scsi_probe_lun(struct scsibus_softc *sb, int target, int lun)
 	return scsi_probe_link(sb, target, lun, 0);
 }
 
-/*
- * Given a target and lun, ask the device what it is, and find the correct
- * driver table entry.
- *
- * Return 0 if further LUNs are possible, EINVAL if not.
- */
 int
 scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 {
@@ -681,8 +675,8 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 
 	sa.sa_sc_link = link;
 
-	if ((cf = config_search(scsibussubmatch, (struct device *)sb,
-	    &sa)) == 0) {
+	cf = config_search(scsibussubmatch, (struct device *)sb, &sa);
+	if (cf == NULL) {
 		scsibussubprint(&sa, sb->sc_dev.dv_xname);
 		printf(" not configured\n");
 		goto free_devid;
