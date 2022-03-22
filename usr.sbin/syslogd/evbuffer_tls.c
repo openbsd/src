@@ -1,4 +1,4 @@
-/*	$OpenBSD: evbuffer_tls.c,v 1.12 2019/06/28 13:32:51 deraadt Exp $ */
+/*	$OpenBSD: evbuffer_tls.c,v 1.13 2022/03/22 22:58:00 bluhm Exp $ */
 
 /*
  * Copyright (c) 2002-2004 Niels Provos <provos@citi.umich.edu>
@@ -111,6 +111,7 @@ buffertls_readcb(int fd, short event, void *arg)
 		what |= EVBUFFER_ERROR;
 		break;
 	case 0:
+		tls_close(ctx);
 		what |= EVBUFFER_EOF;
 		break;
 	}
