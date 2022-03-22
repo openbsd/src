@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.145 2022/03/21 09:12:34 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.146 2022/03/22 18:27:21 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -125,10 +125,19 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct in6_addr *key;
 	struct sockaddr_in6 rip6src;
 	struct mbuf *opts = NULL;
+	uint8_t type;
 
 	KASSERT(af == AF_INET6);
 
-	if (proto != IPPROTO_ICMPV6)
+	if (proto == IPPROTO_ICMPV6) {
+		struct icmp6_hdr *icmp6;
+
+		IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, *offp,
+		    sizeof(*icmp6));
+		if (icmp6 == NULL)
+			return IPPROTO_DONE;
+		type = icmp6->icmp6_type;
+	} else
 		rip6stat_inc(rip6s_ipackets);
 
 	bzero(&rip6src, sizeof(rip6src));
@@ -177,16 +186,7 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		    !IN6_ARE_ADDR_EQUAL(&in6p->inp_faddr6, &ip6->ip6_src))
 			continue;
 		if (proto == IPPROTO_ICMPV6 && in6p->inp_icmp6filt) {
-			struct icmp6_hdr *icmp6;
-
-			IP6_EXTHDR_GET(icmp6, struct icmp6_hdr *, m, *offp,
-			    sizeof(*icmp6));
-			if (icmp6 == NULL) {
-				mtx_leave(&rawin6pcbtable.inpt_mtx);
-				return IPPROTO_DONE;
-			}
-			if (ICMP6_FILTER_WILLBLOCK(icmp6->icmp6_type,
-			    in6p->inp_icmp6filt))
+			if (ICMP6_FILTER_WILLBLOCK(type, in6p->inp_icmp6filt))
 				continue;
 		}
 		if (proto != IPPROTO_ICMPV6 && in6p->inp_cksum6 != -1) {
