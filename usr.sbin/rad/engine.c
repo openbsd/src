@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.19 2021/05/13 11:22:15 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.20 2022/03/23 15:26:08 florian Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -23,6 +23,7 @@
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>
+#include <sys/time.h>
 #include <sys/uio.h>
 
 #include <netinet/in.h>
@@ -33,10 +34,11 @@
 #include <errno.h>
 #include <event.h>
 #include <imsg.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pwd.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "log.h"
@@ -46,7 +48,9 @@
 struct engine_iface {
 	TAILQ_ENTRY(engine_iface)	entry;
 	struct event			timer;
+	struct timespec			last_ra;
 	uint32_t			if_index;
+	int				ras_delayed;
 };
 
 TAILQ_HEAD(, engine_iface)	engine_interfaces;
@@ -464,19 +468,20 @@ void
 parse_rs(struct imsg_ra_rs *rs)
 {
 	struct nd_router_solicit	*nd_rs;
-	struct imsg_send_ra		 send_ra;
+	struct engine_iface		*engine_iface;
 	ssize_t				 len;
+	int				 unicast_ra = 0;
 	const char			*hbuf;
 	char				 ifnamebuf[IFNAMSIZ];
 	uint8_t				*p;
 
 	hbuf = sin6_to_str(&rs->from);
 
-	send_ra.if_index = rs->if_index;
-	memcpy(&send_ra.to, &all_nodes, sizeof(send_ra.to));
-
 	log_debug("got RS from %s on %s", hbuf, if_indextoname(rs->if_index,
 	    ifnamebuf));
+
+	if ((engine_iface = find_engine_iface_by_id(rs->if_index)) == NULL)
+		return;
 
 	len = rs->len;
 
@@ -517,7 +522,7 @@ parse_rs(struct imsg_ra_rs *rs)
 		switch (nd_opt_hdr->nd_opt_type) {
 		case ND_OPT_SOURCE_LINKADDR:
 			log_debug("got RS with source linkaddr option");
-			memcpy(&send_ra.to, &rs->from, sizeof(send_ra.to));
+			unicast_ra = 1;
 			break;
 		default:
 			log_debug("\t\tUNKNOWN: %d", nd_opt_hdr->nd_opt_type);
@@ -526,8 +531,34 @@ parse_rs(struct imsg_ra_rs *rs)
 		len -= nd_opt_hdr->nd_opt_len * 8 - 2;
 		p += nd_opt_hdr->nd_opt_len * 8 - 2;
 	}
-	engine_imsg_compose_frontend(IMSG_SEND_RA, 0, &send_ra,
-	    sizeof(send_ra));
+
+	if (unicast_ra) {
+		struct imsg_send_ra	 send_ra;
+
+		send_ra.if_index = rs->if_index;
+		memcpy(&send_ra.to, &rs->from, sizeof(send_ra.to));
+		engine_imsg_compose_frontend(IMSG_SEND_RA, 0, &send_ra,
+		    sizeof(send_ra));
+	} else {
+		struct timespec	 now, diff, ra_delay = {MIN_DELAY_BETWEEN_RAS, 0};
+		struct timeval	 tv = {0, 0};
+
+		/* a multicast RA is already scheduled within the next 3 seconds */
+		if (engine_iface->ras_delayed)
+			return;
+
+		engine_iface->ras_delayed = 1;
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		timespecsub(&now, &engine_iface->last_ra, &diff);
+
+		if (timespeccmp(&diff, &ra_delay, <)) {
+			timespecsub(&ra_delay, &diff, &ra_delay);
+			TIMESPEC_TO_TIMEVAL(&tv, &ra_delay);
+		}
+
+		tv.tv_usec = arc4random_uniform(MAX_RA_DELAY_TIME * 1000);
+		evtimer_add(&engine_iface->timer, &tv);
+	}
 }
 
 struct engine_iface*
@@ -607,4 +638,6 @@ iface_timeout(int fd, short events, void *arg)
 	memcpy(&send_ra.to, &all_nodes, sizeof(send_ra.to));
 	engine_imsg_compose_frontend(IMSG_SEND_RA, 0, &send_ra,
 	    sizeof(send_ra));
+	clock_gettime(CLOCK_MONOTONIC, &engine_iface->last_ra);
+	engine_iface->ras_delayed = 0;
 }
