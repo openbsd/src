@@ -1,13 +1,10 @@
-# $OpenBSD: Makefile,v 1.2 2021/06/18 14:09:31 mortimer Exp $
+# $OpenBSD: Makefile,v 1.3 2022/03/23 22:32:08 bluhm Exp $
 
 .include <bsd.own.mk>
 
 .if ${COMPILER_VERSION} == "clang"
 
-# Only amd64 has unwind info by default in llvm11. llvm12 adds more arches.
-CLANG_VERSION!=clang --version | head -1 | grep -E -o 'version [[:digit:]]+' | cut -d' ' -f 2
-CLANG_GE_12!=if [ ${CLANG_VERSION} -ge 12 ] ; then echo 1 ; fi
-.if ${MACHINE} == "amd64" || ${CLANG_GE_12} == "1"
+.if ${MACHINE} != "armv7"
 
 PROG=	t_backtrace
 
@@ -23,24 +20,20 @@ LDFLAGS+=	-Wl,--export-dynamic
 LDADD+=	-lexecinfo
 DPADD+=	${LIBEXECINFO}
 
-# Only needed while this lib is not installed
-CFLAGS+= -I${BSDSRCDIR}/lib/libexecinfo/
-LDFLAGS+= -L${BSDOBJDIR}/lib/libexecinfo/
-
 run-regress-${PROG}: ${PROG}
 	./${PROG} -r 1
 
-.else # Clang arch but no unwind info
+.else
 REGRESS_TARGETS=run-regress-skiparch
 run-regress-skiparch:
-	# No unwind info on this arch
+	# clang arch but no unwind info
 	@echo SKIPPED
 .endif
 
-.else # Not clang arch
+.else
 REGRESS_TARGETS=run-regress-skiparch
 run-regress-skiparch:
-	# backtrace() is a noop on non-unwind arches.
+	# not clang arch
 	@echo SKIPPED
 .endif
 
