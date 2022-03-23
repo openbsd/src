@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_cap.c,v 1.44 2022/03/20 23:24:03 millert Exp $	*/
+/*	$OpenBSD: login_cap.c,v 1.45 2022/03/23 14:39:52 millert Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Todd C. Miller <millert@openbsd.org>
@@ -573,7 +573,7 @@ setclasscontext(char *class, u_int flags)
 	login_cap_t *lc;
 
 	flags &= LOGIN_SETRESOURCES | LOGIN_SETPRIORITY | LOGIN_SETUMASK |
-	    LOGIN_SETPATH;
+	    LOGIN_SETPATH | LOGIN_SETRTABLE;
 
 	lc = login_getclass(class);
 	ret = lc ? setusercontext(lc, NULL, 0, flags) : -1;
