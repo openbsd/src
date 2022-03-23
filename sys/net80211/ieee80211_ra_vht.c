@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ra_vht.c,v 1.2 2022/03/19 10:28:44 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_ra_vht.c,v 1.3 2022/03/23 09:21:47 stsp Exp $	*/
 
 /*
  * Copyright (c) 2021 Christian Ehrhardt <ehrhardt@genua.de>
@@ -48,7 +48,7 @@ void	ieee80211_ra_vht_trigger_next_rateset(struct ieee80211_ra_vht_node *,
 	    struct ieee80211_node *);
 int	ieee80211_ra_vht_inter_mode_ra_finished(
 	    struct ieee80211_ra_vht_node *, struct ieee80211_node *);
-int	ieee80211_ra_vht_best_rate(struct ieee80211_ra_vht_node *,
+void	ieee80211_ra_vht_best_rate(struct ieee80211_ra_vht_node *,
 	    struct ieee80211_node *);
 void	ieee80211_ra_vht_probe_next_rate(struct ieee80211_ra_vht_node *,
 	    struct ieee80211_node *);
@@ -330,9 +330,9 @@ ieee80211_ra_vht_probe_next_rateset(struct ieee80211_ra_vht_node *rn,
 			break;
 		}
 	}
-	/* If all rates are lower the maximum rate is the closest match. */
+	/* If all rates are lower then the best rate is the closest match. */
 	if (mcs == rsnext->nrates)
-		ni->ni_txmcs = rn->max_mcs[rsnext->num_ss - 1];
+		ni->ni_txmcs = ieee80211_ra_vht_best_mcs_in_rateset(rn, rsnext);
 
 	/* Add rates from the next rateset as candidates. */
 	rn->candidate_rates[rsnext->num_ss - 1] |= (1 << ni->ni_txmcs);
@@ -427,8 +427,7 @@ ieee80211_ra_vht_intra_mode_ra_finished(struct ieee80211_ra_vht_node *rn,
 
 	/* Check if we had a better measurement at a previously probed MCS. */
 	best_mcs = ieee80211_ra_vht_best_mcs_in_rateset(rn, rs);
-	if (best_mcs != ni->ni_txmcs &&
-	    (rn->probed_rates[nss - 1] & (1 << best_mcs))) {
+	if (best_mcs != ni->ni_txmcs) {
 		if ((rn->probing & IEEE80211_RA_PROBING_UP) &&
 		    best_mcs < ni->ni_txmcs) {
 			ieee80211_ra_vht_trigger_next_rateset(rn, ni);
@@ -473,7 +472,7 @@ ieee80211_ra_vht_inter_mode_ra_finished(struct ieee80211_ra_vht_node *rn,
 	return ((rn->probing & IEEE80211_RA_PROBING_INTER) == 0);
 }
 
-int
+void
 ieee80211_ra_vht_best_rate(struct ieee80211_ra_vht_node *rn,
     struct ieee80211_node *ni)
 {
@@ -505,13 +504,16 @@ ieee80211_ra_vht_best_rate(struct ieee80211_ra_vht_node *rn,
 		    best_mcs, best_nss));
 		for (i = 0; i < IEEE80211_VHT_NUM_RATESETS; i++) {
 			rs = &ieee80211_std_ratesets_11ac[i];
+			if (rs->chan80 == 0 ||
+			    rs->sgi != ieee80211_ra_vht_use_sgi(ni))
+				continue;
 			for (j = 0; j < IEEE80211_VHT_RATESET_MAX_NRATES; j++) {
 				struct ieee80211_ra_vht_goodput_stats *g;
 				g = &rn->g[i][j];
 				if ((rn->valid_rates[rs->num_ss - 1] &
-				    (1 << i)) == 0)
+				    (1 << j)) == 0)
 					continue;
-				DPRINTF((" %d,%d{%s|", i, j,
+				DPRINTF((" %d,%d{%s|", j, rs->num_ss,
 				    ra_vht_fp_sprintf(g->measured)));
 				DPRINTF(("%s|", ra_vht_fp_sprintf(g->average)));
 				DPRINTF(("%s%%}", ra_vht_fp_sprintf(g->loss)));
@@ -520,7 +522,8 @@ ieee80211_ra_vht_best_rate(struct ieee80211_ra_vht_node *rn,
 		DPRINTF(("\n"));
 	}
 #endif
-	return best_mcs;
+	rn->best_mcs = best_mcs;
+	rn->best_nss = best_nss;
 }
 
 void
@@ -671,7 +674,7 @@ ieee80211_ra_vht_choose(struct ieee80211_ra_vht_node *rn,
 			DPRINTFN(3, ("probing MCS,NSS %d,%d\n",
 			    ni->ni_txmcs, ni->ni_vht_ss));
 		} else if (ieee80211_ra_vht_inter_mode_ra_finished(rn, ni)) {
-			rn->best_mcs = ieee80211_ra_vht_best_rate(rn, ni);
+			ieee80211_ra_vht_best_rate(rn, ni);
 			ni->ni_txmcs = rn->best_mcs;
 			ni->ni_vht_ss = rn->best_nss;
 			ieee80211_ra_vht_probe_done(rn, nss);
