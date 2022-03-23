@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.87 2022/03/19 10:28:38 sthen Exp $	*/
+/*	$OpenBSD: su.c,v 1.88 2022/03/23 02:18:22 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -355,6 +355,8 @@ main(int argc, char **argv)
 			flags &= ~LOGIN_SETLOGIN;
 	} else {
 		flags = LOGIN_SETRESOURCES|LOGIN_SETGROUP|LOGIN_SETUSER;
+		if (!asme)
+			flags |= LOGIN_SETRTABLE;
 		if (asthem)
 			flags |= LOGIN_SETENV|LOGIN_SETPRIORITY|LOGIN_SETUMASK;
 	}
