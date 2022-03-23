@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.373 2022/02/16 04:25:34 dlg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.374 2022/03/23 09:01:59 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -150,6 +150,7 @@ TAILQ_HEAD(pf_tags, pf_tagname)	pf_tags = TAILQ_HEAD_INITIALIZER(pf_tags),
  */
 struct rwlock		 pf_lock = RWLOCK_INITIALIZER("pf_lock");
 struct rwlock		 pf_state_lock = RWLOCK_INITIALIZER("pf_state_lock");
+struct rwlock		 pfioctl_rw = RWLOCK_INITIALIZER("pfioctl_rw");
 
 #if (PF_QNAME_SIZE != PF_TAG_NAME_SIZE)
 #error PF_QNAME_SIZE must be equal to PF_TAG_NAME_SIZE
@@ -1141,6 +1142,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		default:
 			return (EACCES);
 		}
+
+	if (flags & FWRITE)
+		rw_enter_write(&pfioctl_rw);
+	else
+		rw_enter_read(&pfioctl_rw);
 
 	switch (cmd) {
 
@@ -2945,8 +2951,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCSETIFFLAG: {
 		struct pfioc_iface *io = (struct pfioc_iface *)addr;
 
-		if (io == NULL)
-			return (EINVAL);
+		if (io == NULL) {
+			error = EINVAL;
+			break;
+		}
 
 		NET_LOCK();
 		PF_LOCK();
@@ -2959,8 +2967,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	case DIOCCLRIFFLAG: {
 		struct pfioc_iface *io = (struct pfioc_iface *)addr;
 
-		if (io == NULL)
-			return (EINVAL);
+		if (io == NULL) {
+			error = EINVAL;
+			break;
+		}
 
 		NET_LOCK();
 		PF_LOCK();
@@ -3020,6 +3030,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 	}
 fail:
+	if (flags & FWRITE)
+		rw_exit_write(&pfioctl_rw);
+	else
+		rw_exit_read(&pfioctl_rw);
+
 	return (error);
 }
 
