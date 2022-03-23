@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.235 2021/11/12 06:53:51 anton Exp $
+# $OpenBSD: Makefile,v 1.236 2022/03/23 22:07:10 bluhm Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check whether the output matches pfNN.ok
@@ -380,6 +380,7 @@ pf-loadanchors-setup:
 
 pf-changerule: changerule changerule-tail.ok changerule-head.ok \
     changerule-before.ok changerule-after.ok
+	echo 'pass all' | ${SUDO} ${PFCTL} -a regress -f -
 	${SUDO} ${PFCTL} -a 'regress/*' -Fr
 	echo 'pass all' | ${SUDO} ${PFCTL} -a regress -f -
 .for i in 10 20 30 40 50
