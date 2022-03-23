@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.399 2022/03/20 12:01:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.400 2022/03/23 09:22:49 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5532,6 +5532,8 @@ iwm_vht_single_rate_control(struct iwm_softc *sc, struct ieee80211_node *ni,
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwm_node *in = (void *)ni;
+	uint8_t vht_chan_width = IEEE80211_VHTOP0_CHAN_WIDTH_80;
+	uint8_t sco = IEEE80211_HTOP0_SCO_SCN;
 
 	/* Ignore Tx reports which don't match our last LQ command. */
 	if (txmcs != ni->ni_txmcs || nss != ni->ni_vht_ss) {
@@ -5544,13 +5546,34 @@ iwm_vht_single_rate_control(struct iwm_softc *sc, struct ieee80211_node *ni,
 		int mcs = txmcs;
 		unsigned int retries = 0, i;
 
+		if (in->in_phyctxt) {
+			vht_chan_width = in->in_phyctxt->vht_chan_width;
+			sco = in->in_phyctxt->sco;
+		}
 		in->lq_rate_mismatch = 0;
 
 		for (i = 0; i < failure_frame; i++) {
 			if (mcs > 0) {
 				ieee80211_ra_vht_add_stats(&in->in_rn_vht,
 				    ic, ni, mcs, nss, 1, 1);
-				mcs--;
+				if (vht_chan_width >=
+				    IEEE80211_VHTOP0_CHAN_WIDTH_80) {
+					/*
+					 * First 4 Tx attempts used same MCS,
+					 * twice at 80MHz and twice at 40MHz.
+					 */
+					if (i >= 4)
+						mcs--;
+				} else if (sco == IEEE80211_HTOP0_SCO_SCA ||
+				    sco == IEEE80211_HTOP0_SCO_SCB) {
+					/*
+					 * First 4 Tx attempts used same MCS,
+					 * four times at 40MHz.
+					 */
+					if (i >= 4)
+						mcs--;
+				} else
+					mcs--;
 			} else
 				retries++;
 		}
@@ -9234,7 +9257,7 @@ iwm_set_rate_table_vht(struct iwm_node *in, struct iwm_lq_cmd *lqcmd)
 			}
 
 			/*
-			 * First two Tx attempts may use 80MHz/SGI.
+			 * First two Tx attempts may use 80MHz/40MHz/SGI.
 			 * Next two Tx attempts may use 40MHz/SGI.
 			 * Beyond that use 20 MHz and decrease the rate.
 			 * As a special case, MCS 9 is invalid on 20 Mhz.
@@ -9257,7 +9280,7 @@ iwm_set_rate_table_vht(struct iwm_node *in, struct iwm_lq_cmd *lqcmd)
 				tab |= IWM_RATE_MCS_RTS_REQUIRED_MSK;
 				if (ieee80211_ra_vht_use_sgi(ni))
 					tab |= IWM_RATE_MCS_SGI_MSK;
-			} else if (i >= 2 && i < 4 &&
+			} else if (i < 4 &&
 			    in->in_phyctxt->vht_chan_width >=
 			    IEEE80211_VHTOP0_CHAN_WIDTH_HT &&
 			    (in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCA ||
