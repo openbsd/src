@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.2 2002/02/23 01:25:10 art Exp $
+# $OpenBSD: Makefile,v 1.3 2022/03/23 22:34:51 bluhm Exp $
 
-SUBDIR+= egcs
+SUBDIR+= egcs lib
 
 install:
 
