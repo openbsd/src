@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.27 2022/02/17 16:28:37 phessler Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.28 2022/03/23 14:23:44 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -29,8 +29,7 @@ MAN=		binutils/doc/addr2line.1 binutils/doc/objcopy.1 \
 SUBDIRS+=	binutils
 CONF_SUBDIRS+=	binutils
 INST_SUBDIRS+=	binutils
-MAN+=		binutils/doc/ranlib.1 \
-		binutils/doc/strings.1 binutils/doc/strip.1
+MAN+=		binutils/doc/strings.1 binutils/doc/strip.1
 
 .if (${TARGET_ARCH} != "aarch64" && ${TARGET_ARCH} != "powerpc64" && \
     ${TARGET_ARCH} != "riscv64")
@@ -41,10 +40,10 @@ MAN+=		gas/doc/as.1	ld/ld.bfd.1
 .endif
 
 .if ${AR_VERSION:L} == "binutils"
-MAN+=		binutils/doc/ar.1
+MAN+=		binutils/doc/ar.1 binutils/doc/ranlib.1
 .else
-# skip installing ar(1) which is am__EXEEXT_7
-SKIP_AR=	am__EXEEXT_7=
+# skip installing ar(1) and ranlib(1) which is am__EXEEXT_7 and am__EXEEXT_9
+SKIP_AR=	am__EXEEXT_7= am__EXEEXT_9=
 .endif
 
 .if ${LINKER_VERSION:L} == "bfd"
