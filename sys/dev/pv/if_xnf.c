@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xnf.c,v 1.67 2022/01/09 05:42:58 jsg Exp $	*/
+/*	$OpenBSD: if_xnf.c,v 1.68 2022/03/23 13:03:36 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015, 2016 Mike Belopuhov
@@ -720,6 +720,7 @@ xnf_txeof(struct xnf_softc *sc)
 		i = cons & (XNF_TX_DESC - 1);
 		txd = &txr->txr_desc[i];
 		id = txd->txd_rsp.txp_id;
+		KASSERT(id < XNF_TX_DESC);
 		txb = &sc->sc_tx_buf[id];
 
 		KASSERT(txb->txb_ndesc > 0);
@@ -776,6 +777,8 @@ xnf_rxeof(struct xnf_softc *sc)
 		len = rxd->rxd_rsp.rxp_status;
 		flags = rxd->rxd_rsp.rxp_flags;
 		offset = rxd->rxd_rsp.rxp_offset;
+
+		KASSERT(id < XNF_RX_DESC);
 
 		dmap = sc->sc_rx_dmap[id];
 		bus_dmamap_sync(sc->sc_dmat, dmap, 0, 0,
@@ -862,6 +865,7 @@ xnf_rx_ring_fill(struct xnf_softc *sc)
 		rxd = &rxr->rxr_desc[i];
 
 		id = rxd->rxd_rsp.rxp_id;
+		KASSERT(id < XNF_RX_DESC);
 		if (sc->sc_rx_buf[id])
 			break;
 		m = MCLGETL(NULL, M_DONTWAIT, XNF_MCLEN);
