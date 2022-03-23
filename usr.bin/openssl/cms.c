@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.29 2022/01/16 07:11:49 inoguchi Exp $ */
+/* $OpenBSD: cms.c,v 1.30 2022/03/23 15:16:59 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -769,12 +769,14 @@ static const struct option cms_options[] = {
 		.name = "nodetach",
 		.desc = "Use opaque signing",
 		.type = OPTION_VALUE_AND,
+		.opt.value = &cms_config.flags,
 		.value = ~CMS_DETACHED,
 	},
 	{
 		.name = "noindef",
 		.desc = "Disable CMS streaming",
 		.type = OPTION_VALUE_AND,
+		.opt.value = &cms_config.flags,
 		.value = ~CMS_STREAM,
 	},
 	{
