@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login_cap.3,v 1.20 2022/03/23 14:39:52 millert Exp $
+.\" $OpenBSD: login_cap.3,v 1.21 2022/03/23 14:51:42 millert Exp $
 .\" BSDI $From: login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp $
 .\"
 .Dd $Mdocdate: March 23 2022 $
@@ -224,39 +224,60 @@ The various bits available to be or-ed together to make up
 are:
 .Bl -tag -width LOGIN_SETRESOURCESXX
 .It Dv LOGIN_SETENV
-Sets environment variables specified by the setenv keyword.
+Sets environment variables specified by the
+.Li setenv
+keyword.
 .It Dv LOGIN_SETGROUP
 Set the group ID and call
-.Xr initgroups 3 .
-Requires the
+.Xr initgroups 3
+if the
 .Ar pwd
-field be specified.
+argument is non-NULL.
 .It Dv LOGIN_SETLOGIN
-Sets the login name by
-.Xr setlogin 2 .
-Requires the
+Sets the login name using
+.Xr setlogin 2
+if the
 .Ar pwd
-field be specified.
+argument is non-NULL.
 .It Dv LOGIN_SETPATH
 Sets the
 .Ev PATH
-environment variable.
+environment variable to the value of the
+.Li path
+keyword if specified, or to the value of
+.Li _PATH_DEFPATH
+in
+.In paths.h
+if not.
 .It Dv LOGIN_SETPRIORITY
-Sets the priority by
-.Xr setpriority 2 .
+Sets the priority, using 
+.Xr setpriority 2 ,
+to the value of the
+.Li priority
+keyword if specified, or to
+.Li 0
+if not.
 .It Dv LOGIN_SETRESOURCES
-Sets the various system resources by
+Sets the various system resources using
 .Xr setrlimit 2 .
 .It Dv LOGIN_SETRTABLE
-Sets the routing table by
+Sets the routing table to the value of the
+.Li rtable
+keyword, if specified,
+using
 .Xr setrtable 2 .
 .It Dv LOGIN_SETUMASK
-Sets the umask by
-.Xr umask 2 .
+Sets the umask, using
+.Xr umask 2 ,
+to the value of the
+.Li umask
+keyword if specified, or to
+.Li 022
+if not.
 .It Dv LOGIN_SETUSER
 Sets the user ID to
 .Ar uid
-by
+using
 .Xr setuid 2 .
 .It Dv LOGIN_SETALL
 Sets all of the above.
