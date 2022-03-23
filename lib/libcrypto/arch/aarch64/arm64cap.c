@@ -1,4 +1,4 @@
-/* $OpenBSD: armcap.c,v 1.8 2019/03/13 10:18:30 patrick Exp $ */
+/* $OpenBSD: arm64cap.c,v 1.1 2022/03/23 15:13:31 tb Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,7 +6,7 @@
 #include <signal.h>
 #include <openssl/crypto.h>
 
-#include "arm_arch.h"
+#include "arm64_arch.h"
 
 unsigned int OPENSSL_armcap_P;
 
