@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.146 2022/03/22 18:27:21 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.147 2022/03/23 00:16:07 bluhm Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -121,10 +121,9 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 	struct mbuf *m = *mp;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct inpcb *in6p;
-	struct inpcb *last = NULL;
+	SIMPLEQ_HEAD(, inpcb) inpcblist;
 	struct in6_addr *key;
 	struct sockaddr_in6 rip6src;
-	struct mbuf *opts = NULL;
 	uint8_t type;
 
 	KASSERT(af == AF_INET6);
@@ -165,7 +164,8 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		}
 	}
 #endif
-	NET_ASSERT_LOCKED();
+	NET_ASSERT_WLOCKED();
+	SIMPLEQ_INIT(&inpcblist);
 	mtx_enter(&rawin6pcbtable.inpt_mtx);
 	TAILQ_FOREACH(in6p, &rawin6pcbtable.inpt_queue, inp_queue) {
 		if (in6p->inp_socket->so_state & SS_CANTRCVMORE)
@@ -206,42 +206,13 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 				continue;
 			}
 		}
-		if (last) {
-			struct	mbuf *n;
-			if ((n = m_copym(m, 0, M_COPYALL, M_NOWAIT)) != NULL) {
-				if (last->inp_flags & IN6P_CONTROLOPTS)
-					ip6_savecontrol(last, n, &opts);
-				/* strip intermediate headers */
-				m_adj(n, *offp);
-				if (sbappendaddr(last->inp_socket,
-				    &last->inp_socket->so_rcv,
-				    sin6tosa(&rip6src), n, opts) == 0) {
-					/* should notify about lost packet */
-					m_freem(n);
-					m_freem(opts);
-					rip6stat_inc(rip6s_fullsock);
-				} else
-					sorwakeup(last->inp_socket);
-				opts = NULL;
-			}
-		}
-		last = in6p;
+
+		in_pcbref(in6p);
+		SIMPLEQ_INSERT_TAIL(&inpcblist, in6p, inp_notify);
 	}
 	mtx_leave(&rawin6pcbtable.inpt_mtx);
 
-	if (last) {
-		if (last->inp_flags & IN6P_CONTROLOPTS)
-			ip6_savecontrol(last, m, &opts);
-		/* strip intermediate headers */
-		m_adj(m, *offp);
-		if (sbappendaddr(last->inp_socket, &last->inp_socket->so_rcv,
-		    sin6tosa(&rip6src), m, opts) == 0) {
-			m_freem(m);
-			m_freem(opts);
-			rip6stat_inc(rip6s_fullsock);
-		} else
-			sorwakeup(last->inp_socket);
-	} else {
+	if (SIMPLEQ_EMPTY(&inpcblist)) {
 		struct counters_ref ref;
 		uint64_t *counters;
 
@@ -261,6 +232,32 @@ rip6_input(struct mbuf **mp, int *offp, int proto, int af)
 		counters = counters_enter(&ref, ip6counters);
 		counters[ip6s_delivered]--;
 		counters_leave(&ref, ip6counters);
+	}
+
+	while ((in6p = SIMPLEQ_FIRST(&inpcblist)) != NULL) {
+		struct mbuf *n, *opts = NULL;
+
+		SIMPLEQ_REMOVE_HEAD(&inpcblist, inp_notify);
+		if (SIMPLEQ_EMPTY(&inpcblist))
+			n = m;
+		else
+			n = m_copym(m, 0, M_COPYALL, M_NOWAIT);
+		if (n != NULL) {
+			if (in6p->inp_flags & IN6P_CONTROLOPTS)
+				ip6_savecontrol(in6p, n, &opts);
+			/* strip intermediate headers */
+			m_adj(n, *offp);
+			if (sbappendaddr(in6p->inp_socket,
+			    &in6p->inp_socket->so_rcv,
+			    sin6tosa(&rip6src), n, opts) == 0) {
+				/* should notify about lost packet */
+				m_freem(n);
+				m_freem(opts);
+				rip6stat_inc(rip6s_fullsock);
+			} else
+				sorwakeup(in6p->inp_socket);
+		}
+		in_pcbunref(in6p);
 	}
 	return IPPROTO_DONE;
 }
