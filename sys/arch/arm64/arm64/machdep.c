@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.68 2022/02/25 13:51:02 visa Exp $ */
+/* $OpenBSD: machdep.c,v 1.69 2022/03/23 23:36:35 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -313,6 +313,9 @@ cpu_switchto(struct proc *old, struct proc *new)
 	cpu_switchto_asm(old, new);
 }
 
+extern uint64_t cpu_id_aa64isar0;
+extern uint64_t cpu_id_aa64isar1;
+
 /*
  * machine dependent system variables.
  */
@@ -340,6 +343,10 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		error = sysctl_rdstring(oldp, oldlenp, newp, compatible);
 		free(compatible, M_TEMP, len);
 		return error;
+	case CPU_ID_AA64ISAR0:
+		return sysctl_rdquad(oldp, oldlenp, newp, cpu_id_aa64isar0);
+	case CPU_ID_AA64ISAR1:
+		return sysctl_rdquad(oldp, oldlenp, newp, cpu_id_aa64isar1);
 	default:
 		return (EOPNOTSUPP);
 	}

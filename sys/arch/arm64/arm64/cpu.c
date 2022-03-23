@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.61 2022/03/02 12:45:35 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.62 2022/03/23 23:36:35 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -173,6 +173,9 @@ const struct implementers {
 char cpu_model[64];
 int cpu_node;
 
+uint64_t cpu_id_aa64isar0;
+uint64_t cpu_id_aa64isar1;
+
 #ifdef CRYPTO
 int arm64_has_aes;
 #endif
@@ -343,6 +346,15 @@ cpu_identify(struct cpu_info *ci)
 	/*
 	 * Print CPU features encoded in the ID registers.
 	 */
+
+	if (READ_SPECIALREG(id_aa64isar0_el1) != cpu_id_aa64isar0) {
+		printf("\n%s: mismatched ID_AA64ISAR0_EL1",
+		    ci->ci_dev->dv_xname);
+	}
+	if (READ_SPECIALREG(id_aa64isar1_el1) != cpu_id_aa64isar1) {
+		printf("\n%s: mismatched ID_AA64ISAR1_EL1",
+		    ci->ci_dev->dv_xname);
+	}
 
 	printf("\n%s: ", ci->ci_dev->dv_xname);
 
@@ -684,6 +696,9 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		}
 	} else {
 #endif
+		cpu_id_aa64isar0 = READ_SPECIALREG(id_aa64isar0_el1);
+		cpu_id_aa64isar1 = READ_SPECIALREG(id_aa64isar1_el1);
+
 		cpu_identify(ci);
 
 		if (OF_getproplen(ci->ci_node, "clocks") > 0) {

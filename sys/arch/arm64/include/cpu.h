@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.24 2022/01/01 18:52:37 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.25 2022/03/23 23:36:35 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -26,11 +26,15 @@
  * CTL_MACHDEP definitions.
  */
 #define	CPU_COMPATIBLE		1	/* compatible property */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_ID_AA64ISAR0	2
+#define	CPU_ID_AA64ISAR1	3
+#define	CPU_MAXID		4	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "compatible", CTLTYPE_STRING }, \
+	{ "id_aa64isar0", CTLTYPE_QUAD }, \
+	{ "id_aa64isar1", CTLTYPE_QUAD }, \
 }
 
 #ifdef _KERNEL
