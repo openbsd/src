@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2021/09/12 07:06:08 anton Exp $
+#	$OpenBSD: Makefile,v 1.25 2022/03/24 22:11:11 bluhm Exp $
 
 SUBDIR+=	csu
 SUBDIR+=	libagentx
@@ -17,6 +17,7 @@ SUBDIR+=	libssl
 SUBDIR+=	libtls
 SUBDIR+=	libusbhid
 SUBDIR+=	libutil
+SUBDIR+=	libz
 
 install:
 
