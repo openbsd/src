@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.168 2021/10/24 21:24:19 deraadt Exp $ */
+/*	$OpenBSD: ntp.c,v 1.169 2022/03/24 07:37:19 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -291,8 +291,8 @@ ntp_main(struct ntpd_conf *nconf, struct passwd *pw, int argc, char **argv)
 				nextaction = p->deadline;
 
 			if (p->state == STATE_QUERY_SENT &&
-			    p->query->fd != -1) {
-				pfd[i].fd = p->query->fd;
+			    p->query.fd != -1) {
+				pfd[i].fd = p->query.fd;
 				pfd[i].events = POLLIN;
 				idx2peer[i - idx_peers] = p;
 				i++;

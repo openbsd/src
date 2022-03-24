@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.116 2021/04/21 09:38:11 bluhm Exp $ */
+/*	$OpenBSD: client.c,v 1.117 2022/03/24 07:37:19 otto Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -51,10 +51,9 @@ set_deadline(struct ntp_peer *p, time_t t)
 int
 client_peer_init(struct ntp_peer *p)
 {
-	if ((p->query = calloc(1, sizeof(struct ntp_query))) == NULL)
-		fatal("client_peer_init calloc");
-	p->query->fd = -1;
-	p->query->msg.status = MODE_CLIENT | (NTP_VERSION << 3);
+	p->query.fd = -1;
+	p->query.msg.status = MODE_CLIENT | (NTP_VERSION << 3);
+	p->query.xmttime = 0;
 	p->state = STATE_NONE;
 	p->shift = 0;
 	p->trustlevel = TRUSTLEVEL_PATHETIC;
@@ -91,7 +90,7 @@ client_addr_init(struct ntp_peer *p)
 		}
 	}
 
-	p->query->fd = -1;
+	p->query.fd = -1;
 	set_next(p, 0);
 
 	return (0);
@@ -100,9 +99,9 @@ client_addr_init(struct ntp_peer *p)
 int
 client_nextaddr(struct ntp_peer *p)
 {
-	if (p->query->fd != -1) {
-		close(p->query->fd);
-		p->query->fd = -1;
+	if (p->query.fd != -1) {
+		close(p->query.fd);
+		p->query.fd = -1;
 	}
 
 	if (p->state == STATE_DNS_INPROGRESS)
@@ -148,26 +147,26 @@ client_query(struct ntp_peer *p)
 	if (p->state < STATE_DNS_DONE || p->addr == NULL)
 		return (-1);
 
-	if (p->query->fd == -1) {
+	if (p->query.fd == -1) {
 		struct sockaddr *sa = (struct sockaddr *)&p->addr->ss;
 		struct sockaddr *qa4 = (struct sockaddr *)&p->query_addr4;
 		struct sockaddr *qa6 = (struct sockaddr *)&p->query_addr6;
 
-		if ((p->query->fd = socket(p->addr->ss.ss_family, SOCK_DGRAM,
+		if ((p->query.fd = socket(p->addr->ss.ss_family, SOCK_DGRAM,
 		    0)) == -1)
 			fatal("client_query socket");
 
 		if (p->addr->ss.ss_family == qa4->sa_family) {
-			if (bind(p->query->fd, qa4, SA_LEN(qa4)) == -1)
+			if (bind(p->query.fd, qa4, SA_LEN(qa4)) == -1)
 				fatal("couldn't bind to IPv4 query address: %s",
 				    log_sockaddr(qa4));
 		} else if (p->addr->ss.ss_family == qa6->sa_family) {
-			if (bind(p->query->fd, qa6, SA_LEN(qa6)) == -1)
+			if (bind(p->query.fd, qa6, SA_LEN(qa6)) == -1)
 				fatal("couldn't bind to IPv6 query address: %s",
 				    log_sockaddr(qa6));
 		}
 
-		if (connect(p->query->fd, sa, SA_LEN(sa)) == -1) {
+		if (connect(p->query.fd, sa, SA_LEN(sa)) == -1) {
 			if (errno == ECONNREFUSED || errno == ENETUNREACH ||
 			    errno == EHOSTUNREACH || errno == EADDRNOTAVAIL) {
 				/* cycle through addresses, but do increase
@@ -183,11 +182,11 @@ client_query(struct ntp_peer *p)
 				fatal("client_query connect");
 		}
 		val = IPTOS_LOWDELAY;
-		if (p->addr->ss.ss_family == AF_INET && setsockopt(p->query->fd,
+		if (p->addr->ss.ss_family == AF_INET && setsockopt(p->query.fd,
 		    IPPROTO_IP, IP_TOS, &val, sizeof(val)) == -1)
 			log_warn("setsockopt IPTOS_LOWDELAY");
 		val = 1;
-		if (setsockopt(p->query->fd, SOL_SOCKET, SO_TIMESTAMP,
+		if (setsockopt(p->query.fd, SOL_SOCKET, SO_TIMESTAMP,
 		    &val, sizeof(val)) == -1)
 			fatal("setsockopt SO_TIMESTAMP");
 	}
@@ -206,11 +205,11 @@ client_query(struct ntp_peer *p)
 	 * Save the real transmit timestamp locally.
 	 */
 
-	p->query->msg.xmttime.int_partl = arc4random();
-	p->query->msg.xmttime.fractionl = arc4random();
-	p->query->xmttime = gettime();
+	p->query.msg.xmttime.int_partl = arc4random();
+	p->query.msg.xmttime.fractionl = arc4random();
+	p->query.xmttime = gettime();
 
-	if (ntp_sendmsg(p->query->fd, NULL, &p->query->msg) == -1) {
+	if (ntp_sendmsg(p->query.fd, NULL, &p->query.msg) == -1) {
 		p->senderrors++;
 		set_next(p, INTERVAL_QUERY_PATHETIC);
 		p->trustlevel = TRUSTLEVEL_PATHETIC;
@@ -295,7 +294,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 	somsg.msg_control = cmsgbuf.buf;
 	somsg.msg_controllen = sizeof(cmsgbuf.buf);
 
-	if ((size = recvmsg(p->query->fd, &somsg, 0)) == -1) {
+	if ((size = recvmsg(p->query.fd, &somsg, 0)) == -1) {
 		if (errno == EHOSTUNREACH || errno == EHOSTDOWN ||
 		    errno == ENETUNREACH || errno == ENETDOWN ||
 		    errno == ECONNREFUSED || errno == EADDRNOTAVAIL ||
@@ -333,8 +332,8 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 
 	ntp_getmsg((struct sockaddr *)&p->addr->ss, buf, size, &msg);
 
-	if (msg.orgtime.int_partl != p->query->msg.xmttime.int_partl ||
-	    msg.orgtime.fractionl != p->query->msg.xmttime.fractionl)
+	if (msg.orgtime.int_partl != p->query.msg.xmttime.int_partl ||
+	    msg.orgtime.fractionl != p->query.msg.xmttime.fractionl)
 		return (0);
 
 	if ((msg.status & LI_ALARM) == LI_ALARM || msg.stratum == 0 ||
@@ -372,7 +371,7 @@ client_dispatch(struct ntp_peer *p, u_int8_t settime, u_int8_t automatic)
 	 *    d = (T4 - T1) - (T3 - T2)     t = ((T2 - T1) + (T3 - T4)) / 2.
 	 */
 
-	T1 = p->query->xmttime;
+	T1 = p->query.xmttime;
 	T2 = lfp_to_d(msg.rectime);
 	T3 = lfp_to_d(msg.xmttime);
 
