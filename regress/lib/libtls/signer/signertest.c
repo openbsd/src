@@ -1,4 +1,4 @@
-/* $OpenBSD: signertest.c,v 1.4 2022/02/01 17:19:16 jsing Exp $ */
+/* $OpenBSD: signertest.c,v 1.5 2022/03/24 15:58:57 tb Exp $ */
 /*
  * Copyright (c) 2017, 2018, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -31,6 +31,8 @@
 #include <openssl/x509.h>
 
 #include <tls.h>
+
+#include "tls_internal.h"
 
 const char *cert_path;
 int sign_cb_count;
