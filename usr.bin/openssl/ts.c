@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.18 2022/03/24 11:27:45 inoguchi Exp $ */
+/* $OpenBSD: ts.c,v 1.19 2022/03/24 11:40:07 inoguchi Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -81,29 +81,29 @@ static CONF *load_config_file(const char *configfile);
 
 /* Query related functions. */
 static int query_command(const char *data, char *digest,
-    const EVP_MD * md, const char *policy, int no_nonce,
+    const EVP_MD *md, const char *policy, int no_nonce,
     int cert, const char *in, const char *out, int text);
 static BIO *BIO_open_with_default(const char *file, const char *mode,
-    FILE * default_fp);
-static TS_REQ *create_query(BIO * data_bio, char *digest, const EVP_MD * md,
+    FILE *default_fp);
+static TS_REQ *create_query(BIO *data_bio, char *digest, const EVP_MD *md,
     const char *policy, int no_nonce, int cert);
-static int create_digest(BIO * input, char *digest,
-    const EVP_MD * md, unsigned char **md_value);
+static int create_digest(BIO *input, char *digest,
+    const EVP_MD *md, unsigned char **md_value);
 static ASN1_INTEGER *create_nonce(int bits);
 
 /* Reply related functions. */
-static int reply_command(CONF * conf, char *section,
+static int reply_command(CONF *conf, char *section,
     char *queryfile, char *passin, char *inkey,
     char *signer, char *chain, const char *policy,
     char *in, int token_in, char *out, int token_out,
     int text);
-static TS_RESP *read_PKCS7(BIO * in_bio);
-static TS_RESP *create_response(CONF * conf, const char *section,
+static TS_RESP *read_PKCS7(BIO *in_bio);
+static TS_RESP *create_response(CONF *conf, const char *section,
     char *queryfile, char *passin, char *inkey,
     char *signer, char *chain, const char *policy);
-static ASN1_INTEGER *serial_cb(TS_RESP_CTX * ctx, void *data);
+static ASN1_INTEGER *serial_cb(TS_RESP_CTX *ctx, void *data);
 static ASN1_INTEGER *next_serial(const char *serialfile);
-static int save_ts_serial(const char *serialfile, ASN1_INTEGER * serial);
+static int save_ts_serial(const char *serialfile, ASN1_INTEGER *serial);
 
 /* Verify related functions. */
 static int verify_command(char *data, char *digest, char *queryfile,
@@ -114,7 +114,7 @@ static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
     char *ca_path, char *ca_file,
     char *untrusted);
 static X509_STORE *create_cert_store(char *ca_path, char *ca_file);
-static int verify_cb(int ok, X509_STORE_CTX * ctx);
+static int verify_cb(int ok, X509_STORE_CTX *ctx);
 
 enum mode {
 	CMD_NONE, CMD_QUERY, CMD_REPLY, CMD_VERIFY
@@ -524,7 +524,7 @@ load_config_file(const char *configfile)
  */
 
 static int
-query_command(const char *data, char *digest, const EVP_MD * md,
+query_command(const char *data, char *digest, const EVP_MD *md,
     const char *policy, int no_nonce, int cert, const char *in,
     const char *out, int text)
 {
@@ -580,14 +580,14 @@ query_command(const char *data, char *digest, const EVP_MD * md,
 }
 
 static BIO *
-BIO_open_with_default(const char *file, const char *mode, FILE * default_fp)
+BIO_open_with_default(const char *file, const char *mode, FILE *default_fp)
 {
 	return file == NULL ? BIO_new_fp(default_fp, BIO_NOCLOSE) :
 	    BIO_new_file(file, mode);
 }
 
 static TS_REQ *
-create_query(BIO * data_bio, char *digest, const EVP_MD * md,
+create_query(BIO *data_bio, char *digest, const EVP_MD *md,
     const char *policy, int no_nonce, int cert)
 {
 	int ret = 0;
@@ -669,7 +669,7 @@ create_query(BIO * data_bio, char *digest, const EVP_MD * md,
 }
 
 static int
-create_digest(BIO * input, char *digest, const EVP_MD * md,
+create_digest(BIO *input, char *digest, const EVP_MD *md,
     unsigned char **md_value)
 {
 	int md_value_len;
@@ -752,7 +752,7 @@ create_nonce(int bits)
  */
 
 static int
-reply_command(CONF * conf, char *section, char *queryfile,
+reply_command(CONF *conf, char *section, char *queryfile,
     char *passin, char *inkey, char *signer, char *chain, const char *policy,
     char *in, int token_in, char *out, int token_out, int text)
 {
@@ -833,7 +833,7 @@ reply_command(CONF * conf, char *section, char *queryfile,
 
 /* Reads a PKCS7 token and adds default 'granted' status info to it. */
 static TS_RESP *
-read_PKCS7(BIO * in_bio)
+read_PKCS7(BIO *in_bio)
 {
 	int ret = 0;
 	PKCS7 *token = NULL;
@@ -877,7 +877,7 @@ read_PKCS7(BIO * in_bio)
 }
 
 static TS_RESP *
-create_response(CONF * conf, const char *section,
+create_response(CONF *conf, const char *section,
     char *queryfile, char *passin, char *inkey,
     char *signer, char *chain, const char *policy)
 {
@@ -962,7 +962,7 @@ create_response(CONF * conf, const char *section,
 }
 
 static ASN1_INTEGER *
-serial_cb(TS_RESP_CTX * ctx, void *data)
+serial_cb(TS_RESP_CTX *ctx, void *data)
 {
 	const char *serial_file = (const char *) data;
 	ASN1_INTEGER *serial = next_serial(serial_file);
@@ -1024,7 +1024,7 @@ next_serial(const char *serialfile)
 }
 
 static int
-save_ts_serial(const char *serialfile, ASN1_INTEGER * serial)
+save_ts_serial(const char *serialfile, ASN1_INTEGER *serial)
 {
 	int ret = 0;
 	BIO *out = NULL;
@@ -1207,7 +1207,7 @@ create_cert_store(char *ca_path, char *ca_file)
 }
 
 static int
-verify_cb(int ok, X509_STORE_CTX * ctx)
+verify_cb(int ok, X509_STORE_CTX *ctx)
 {
 	/*
 	char buf[256];
