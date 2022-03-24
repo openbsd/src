@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.61 2022/02/01 17:18:38 jsing Exp $ */
+/* $OpenBSD: tls.h,v 1.62 2022/03/24 15:56:34 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -72,10 +72,6 @@ extern "C" {
 #define TLS_MAX_SESSION_ID_LENGTH		32
 #define TLS_TICKET_KEY_SIZE			48
 
-#define TLS_PADDING_NONE			0
-#define TLS_PADDING_RSA_PKCS1			1
-#define TLS_PADDING_RSA_X9_31			2
-
 struct tls;
 struct tls_config;
 
@@ -83,9 +79,6 @@ typedef ssize_t (*tls_read_cb)(struct tls *_ctx, void *_buf, size_t _buflen,
     void *_cb_arg);
 typedef ssize_t (*tls_write_cb)(struct tls *_ctx, const void *_buf,
     size_t _buflen, void *_cb_arg);
-typedef int (*tls_sign_cb)(void *_cb_arg, const char *_pubkey_hash,
-    const uint8_t *_input, size_t _input_len, int _padding_type,
-    uint8_t **_out_signature, size_t *_out_signature_len);
 
 int tls_init(void);
 
@@ -142,8 +135,6 @@ int tls_config_set_ocsp_staple_file(struct tls_config *_config,
 int tls_config_set_protocols(struct tls_config *_config, uint32_t _protocols);
 int tls_config_set_session_fd(struct tls_config *_config, int _session_fd);
 int tls_config_set_verify_depth(struct tls_config *_config, int _verify_depth);
-int tls_config_set_sign_cb(struct tls_config *_config, tls_sign_cb _cb,
-    void *_cb_arg);
 
 void tls_config_prefer_ciphers_client(struct tls_config *_config);
 void tls_config_prefer_ciphers_server(struct tls_config *_config);
@@ -220,17 +211,6 @@ const char *tls_peer_ocsp_result(struct tls *_ctx);
 time_t tls_peer_ocsp_revocation_time(struct tls *_ctx);
 time_t tls_peer_ocsp_this_update(struct tls *_ctx);
 const char *tls_peer_ocsp_url(struct tls *_ctx);
-
-struct tls_signer* tls_signer_new(void);
-void tls_signer_free(struct tls_signer * _signer);
-const char *tls_signer_error(struct tls_signer * _signer);
-int tls_signer_add_keypair_file(struct tls_signer *_signer,
-    const char *_cert_file, const char *_key_file);
-int tls_signer_add_keypair_mem(struct tls_signer *_signer, const uint8_t *_cert,
-    size_t _cert_len, const uint8_t *_key, size_t _key_len);
-int tls_signer_sign(struct tls_signer *_signer, const char *_pubkey_hash,
-    const uint8_t *_input, size_t _input_len, int _padding_type,
-    uint8_t **_out_signature, size_t *_out_signature_len);
 
 #ifdef __cplusplus
 }
