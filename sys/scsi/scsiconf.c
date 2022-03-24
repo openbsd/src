@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.247 2022/03/23 14:36:01 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.248 2022/03/24 00:30:51 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -519,8 +519,7 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 			SC_DEBUG(link, SDEV_DB2, ("dev_probe(link) failed.\n"));
 			rslt = EINVAL;
 		}
-		free(link, M_DEVBUF, sizeof(*link));
-		return rslt;
+		goto free;
 	}
 
 	/*
@@ -623,7 +622,7 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 		/* The device doesn't distinguish between LUNs. */
 		SC_DEBUG(link, SDEV_DB1, ("IDENTIFY not supported.\n"));
 		rslt = EINVAL;
-		goto bad;
+		goto free_devid;
 	}
 
 	link->quirks = devquirks;	/* Restore what the device wanted. */
@@ -680,7 +679,7 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	if (cf == NULL) {
 		scsibussubprint(&sa, sb->sc_dev.dv_xname);
 		printf(" not configured\n");
-		goto bad;
+		goto free_devid;
 	}
 
 	/*
@@ -718,8 +717,17 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	config_attach((struct device *)sb, cf, &sa, scsibussubprint);
 	return 0;
 
+free_devid:
+	if (link->id)
+		devid_free(link->id);
 bad:
-	scsi_detach_link(link, DETACH_FORCE);
+	if (ISSET(link->flags, SDEV_OWN_IOPL))
+		free(link->pool, M_DEVBUF, sizeof(*link->pool));
+
+	if (sb->sb_adapter->dev_free != NULL)
+		sb->sb_adapter->dev_free(link);
+free:
+	free(link, M_DEVBUF, sizeof(*link));
 	return rslt;
 }
 
