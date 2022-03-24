@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.19 2022/03/24 11:40:07 inoguchi Exp $ */
+/* $OpenBSD: ts.c,v 1.20 2022/03/24 12:00:17 inoguchi Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -80,39 +80,34 @@ static ASN1_OBJECT *txt2obj(const char *oid);
 static CONF *load_config_file(const char *configfile);
 
 /* Query related functions. */
-static int query_command(const char *data, char *digest,
-    const EVP_MD *md, const char *policy, int no_nonce,
-    int cert, const char *in, const char *out, int text);
+static int query_command(const char *data, char *digest, const EVP_MD *md,
+    const char *policy, int no_nonce, int cert, const char *in, const char *out,
+    int text);
 static BIO *BIO_open_with_default(const char *file, const char *mode,
     FILE *default_fp);
 static TS_REQ *create_query(BIO *data_bio, char *digest, const EVP_MD *md,
     const char *policy, int no_nonce, int cert);
-static int create_digest(BIO *input, char *digest,
-    const EVP_MD *md, unsigned char **md_value);
+static int create_digest(BIO *input, char *digest, const EVP_MD *md,
+    unsigned char **md_value);
 static ASN1_INTEGER *create_nonce(int bits);
 
 /* Reply related functions. */
-static int reply_command(CONF *conf, char *section,
-    char *queryfile, char *passin, char *inkey,
-    char *signer, char *chain, const char *policy,
-    char *in, int token_in, char *out, int token_out,
-    int text);
+static int reply_command(CONF *conf, char *section, char *queryfile,
+    char *passin, char *inkey, char *signer, char *chain, const char *policy,
+    char *in, int token_in, char *out, int token_out, int text);
 static TS_RESP *read_PKCS7(BIO *in_bio);
 static TS_RESP *create_response(CONF *conf, const char *section,
-    char *queryfile, char *passin, char *inkey,
-    char *signer, char *chain, const char *policy);
+    char *queryfile, char *passin, char *inkey, char *signer, char *chain,
+    const char *policy);
 static ASN1_INTEGER *serial_cb(TS_RESP_CTX *ctx, void *data);
 static ASN1_INTEGER *next_serial(const char *serialfile);
 static int save_ts_serial(const char *serialfile, ASN1_INTEGER *serial);
 
 /* Verify related functions. */
-static int verify_command(char *data, char *digest, char *queryfile,
-    char *in, int token_in,
-    char *ca_path, char *ca_file, char *untrusted);
+static int verify_command(char *data, char *digest, char *queryfile, char *in,
+    int token_in, char *ca_path, char *ca_file, char *untrusted);
 static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
-    char *queryfile,
-    char *ca_path, char *ca_file,
-    char *untrusted);
+    char *queryfile, char *ca_path, char *ca_file, char *untrusted);
 static X509_STORE *create_cert_store(char *ca_path, char *ca_file);
 static int verify_cb(int ok, X509_STORE_CTX *ctx);
 
@@ -418,13 +413,16 @@ ts_main(int argc, char **argv)
 			goto usage;
 		/* Load the config file for possible policy OIDs. */
 		conf = load_config_file(ts_config.configfile);
-		ret = !query_command(ts_config.data, ts_config.digest, ts_config.md, ts_config.policy, ts_config.no_nonce, ts_config.cert,
-		    ts_config.in, ts_config.out, ts_config.text);
+		ret = !query_command(ts_config.data, ts_config.digest,
+		    ts_config.md, ts_config.policy, ts_config.no_nonce,
+		    ts_config.cert, ts_config.in, ts_config.out,
+		    ts_config.text);
 		break;
 	case CMD_REPLY:
 		conf = load_config_file(ts_config.configfile);
 		if (ts_config.in == NULL) {
-			ret = !(ts_config.queryfile != NULL && conf != NULL && !ts_config.token_in);
+			ret = !(ts_config.queryfile != NULL && conf != NULL &&
+			    !ts_config.token_in);
 			if (ret)
 				goto usage;
 		} else {
@@ -434,18 +432,25 @@ ts_main(int argc, char **argv)
 				goto usage;
 		}
 
-		ret = !reply_command(conf, ts_config.section, ts_config.queryfile,
-		    password, ts_config.inkey, ts_config.signer, ts_config.chain, ts_config.policy,
-		    ts_config.in, ts_config.token_in, ts_config.out, ts_config.token_out, ts_config.text);
+		ret = !reply_command(conf, ts_config.section,
+		    ts_config.queryfile, password, ts_config.inkey,
+		    ts_config.signer, ts_config.chain, ts_config.policy,
+		    ts_config.in, ts_config.token_in, ts_config.out,
+		    ts_config.token_out, ts_config.text);
 		break;
 	case CMD_VERIFY:
-		ret = !(((ts_config.queryfile && !ts_config.data && !ts_config.digest) ||
-		    (!ts_config.queryfile && ts_config.data && !ts_config.digest) ||
-		    (!ts_config.queryfile && !ts_config.data && ts_config.digest)) && ts_config.in != NULL);
+		ret = !(((ts_config.queryfile && !ts_config.data &&
+		    !ts_config.digest) ||
+		    (!ts_config.queryfile && ts_config.data &&
+		    !ts_config.digest) ||
+		    (!ts_config.queryfile && !ts_config.data &&
+		    ts_config.digest)) &&
+		    ts_config.in != NULL);
 		if (ret)
 			goto usage;
 
-		ret = !verify_command(ts_config.data, ts_config.digest, ts_config.queryfile, ts_config.in, ts_config.token_in,
+		ret = !verify_command(ts_config.data, ts_config.digest,
+		    ts_config.queryfile, ts_config.in, ts_config.token_in,
 		    ts_config.ca_path, ts_config.ca_file, ts_config.untrusted);
 	}
 
@@ -525,8 +530,8 @@ load_config_file(const char *configfile)
 
 static int
 query_command(const char *data, char *digest, const EVP_MD *md,
-    const char *policy, int no_nonce, int cert, const char *in,
-    const char *out, int text)
+    const char *policy, int no_nonce, int cert, const char *in, const char *out,
+    int text)
 {
 	int ret = 0;
 	TS_REQ *query = NULL;
@@ -587,8 +592,8 @@ BIO_open_with_default(const char *file, const char *mode, FILE *default_fp)
 }
 
 static TS_REQ *
-create_query(BIO *data_bio, char *digest, const EVP_MD *md,
-    const char *policy, int no_nonce, int cert)
+create_query(BIO *data_bio, char *digest, const EVP_MD *md, const char *policy,
+    int no_nonce, int cert)
 {
 	int ret = 0;
 	TS_REQ *ts_req = NULL;
@@ -747,14 +752,15 @@ create_nonce(int bits)
 	ASN1_INTEGER_free(nonce);
 	return NULL;
 }
+
 /*
  * Reply-related method definitions.
  */
 
 static int
-reply_command(CONF *conf, char *section, char *queryfile,
-    char *passin, char *inkey, char *signer, char *chain, const char *policy,
-    char *in, int token_in, char *out, int token_out, int text)
+reply_command(CONF *conf, char *section, char *queryfile, char *passin,
+    char *inkey, char *signer, char *chain, const char *policy, char *in,
+    int token_in, char *out, int token_out, int text)
 {
 	int ret = 0;
 	TS_RESP *response = NULL;
@@ -877,9 +883,8 @@ read_PKCS7(BIO *in_bio)
 }
 
 static TS_RESP *
-create_response(CONF *conf, const char *section,
-    char *queryfile, char *passin, char *inkey,
-    char *signer, char *chain, const char *policy)
+create_response(CONF *conf, const char *section, char *queryfile, char *passin,
+    char *inkey, char *signer, char *chain, const char *policy)
 {
 	int ret = 0;
 	TS_RESP *response = NULL;
