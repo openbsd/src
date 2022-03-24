@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.132 2022/03/14 20:07:57 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.133 2022/03/24 20:46:56 krw Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -745,7 +745,7 @@ installation system detects that it booted from the network, and
 isn't interrupted within 5 seconds, it attempts a fully-automatic
 installation.
 
-The installer runs dhclient(8) on the network interface the system
+The installer autoconfigures a DHCP ipv4 address on the network interface the system
 booted from, or in case of multiple interfaces it will ask which one
 to use. Upon success, it retrieves a response file via HTTP. If that
 fails, the installer asks for the response file location, which can be
