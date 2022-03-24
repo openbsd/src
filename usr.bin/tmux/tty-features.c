@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-features.c,v 1.21 2021/12/21 14:57:28 nicm Exp $ */
+/* $OpenBSD: tty-features.c,v 1.22 2022/03/24 09:05:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -50,6 +50,18 @@ static const char *tty_feature_title_capabilities[] = {
 static const struct tty_feature tty_feature_title = {
 	"title",
 	tty_feature_title_capabilities,
+	0
+};
+
+/* Terminal has OSC 7 working directory. */
+static const char *tty_feature_osc7_capabilities[] = {
+	"Swd=\\E]7;",
+	"fsl=\\a",
+	NULL
+};
+static const struct tty_feature tty_feature_osc7 = {
+	"osc7",
+	tty_feature_osc7_capabilities,
 	0
 };
 
@@ -249,6 +261,7 @@ static const struct tty_feature *tty_features[] = {
 	&tty_feature_focus,
 	&tty_feature_margins,
 	&tty_feature_mouse,
+	&tty_feature_osc7,
 	&tty_feature_overline,
 	&tty_feature_rectfill,
 	&tty_feature_rgb,

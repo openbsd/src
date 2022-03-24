@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.884 2022/03/17 11:35:37 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.885 2022/03/24 09:05:57 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 17 2022 $
+.Dd $Mdocdate: March 24 2022 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -3624,6 +3624,8 @@ Supports DECSLRM margins.
 Supports
 .Xr xterm 1
 mouse sequences.
+.It osc7
+Supports the OSC 7 working directory extension.
 .It overline
 Supports the overline SGR attribute.
 .It rectfill
@@ -6391,6 +6393,11 @@ $ printf '\e033[4 q'
 If
 .Em Se
 is not set, \&Ss with argument 0 will be used to reset the cursor style instead.
+.It Em \&Swd
+Set the opening sequence for the working directory notification.
+The sequence is terminated using the standard
+.Em fsl
+capability.
 .It Em \&Sync
 Start (parameter is 1) or end (parameter is 2) a synchronized update.
 .It Em \&Tc

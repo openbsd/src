@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.91 2021/08/25 07:37:20 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.92 2022/03/24 09:05:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -274,6 +274,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_SMUL] = { TTYCODE_STRING, "smul" },
 	[TTYC_SMXX] =  { TTYCODE_STRING, "smxx" },
 	[TTYC_SS] = { TTYCODE_STRING, "Ss" },
+	[TTYC_SWD] = { TTYCODE_STRING, "Swd" },
 	[TTYC_SYNC] = { TTYCODE_STRING, "Sync" },
 	[TTYC_TC] = { TTYCODE_FLAG, "Tc" },
 	[TTYC_TSL] = { TTYCODE_STRING, "tsl" },

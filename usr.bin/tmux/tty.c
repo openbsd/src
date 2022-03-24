@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.417 2022/03/08 12:01:19 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.418 2022/03/24 09:05:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -651,6 +651,18 @@ tty_set_title(struct tty *tty, const char *title)
 		return;
 
 	tty_putcode(tty, TTYC_TSL);
+	tty_puts(tty, title);
+	tty_putcode(tty, TTYC_FSL);
+}
+
+void
+tty_set_path(struct tty *tty, const char *title)
+{
+	if (!tty_term_has(tty->term, TTYC_SWD) ||
+	    !tty_term_has(tty->term, TTYC_FSL))
+		return;
+
+	tty_putcode(tty, TTYC_SWD);
 	tty_puts(tty, title);
 	tty_putcode(tty, TTYC_FSL);
 }
