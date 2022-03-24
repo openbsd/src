@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.21 2022/03/24 13:47:55 inoguchi Exp $ */
+/* $OpenBSD: ts.c,v 1.22 2022/03/24 14:07:08 inoguchi Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -1172,7 +1172,8 @@ create_cert_store(char *ca_path, char *ca_file)
 	int i;
 
 	/* Creating the X509_STORE object. */
-	cert_ctx = X509_STORE_new();
+	if ((cert_ctx = X509_STORE_new()) == NULL)
+		goto err;
 
 	/* Setting the callback for certificate chain verification. */
 	X509_STORE_set_verify_cb(cert_ctx, verify_cb);
