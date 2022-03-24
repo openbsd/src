@@ -1,4 +1,4 @@
-/* $OpenBSD: window-customize.c,v 1.13 2021/11/29 11:01:51 nicm Exp $ */
+/* $OpenBSD: window-customize.c,v 1.14 2022/03/24 12:07:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -680,9 +680,7 @@ window_customize_draw_option(struct window_customize_modedata *data,
 	}
 	ft = format_create_from_state(NULL, NULL, &fs);
 
-	if (oe == NULL)
-		text = "This is a user option.";
-	else if (oe->text == NULL)
+	if (oe == NULL || oe->text == NULL)
 		text = "This option doesn't have a description.";
 	else
 		text = oe->text;
