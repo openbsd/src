@@ -50,7 +50,7 @@ our %args = (
 		port => 514,
 	    }},
 	],
-	func => sub { redo_connect( shift, sub {
+	func => sub { redo_connect(shift, sub {
 	    my $self = shift;
 	    write_message($self, "client connect proto: ".
 		$self->{connectproto}) if $self->{connectproto};

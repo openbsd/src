@@ -1,4 +1,4 @@
-#	$OpenBSD: Proc.pm,v 1.9 2020/07/24 22:12:00 bluhm Exp $
+#	$OpenBSD: Proc.pm,v 1.10 2022/03/25 14:15:10 bluhm Exp $
 
 # Copyright (c) 2010-2020 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2014 Florian Riehm <mail@friehm.de>
@@ -25,6 +25,7 @@ use Errno;
 use IO::File;
 use POSIX;
 use Time::HiRes qw(time alarm sleep);
+use IO::Socket::SSL;
 
 my %CHILDREN;
 
@@ -131,7 +132,13 @@ sub run {
 	do {
 		$self->child();
 		print STDERR $self->{up}, "\n";
+		$self->{ts} = $self->{cs}
+		    if $self->{connectproto} && $self->{connectproto} eq "tls";
 		$self->{func}->($self);
+		$self->{ts}->close(SSL_fast_shutdown => 0)
+		    or die ref($self), " SSL shutdown: $!,$SSL_ERROR"
+		    if $self->{ts};
+		delete $self->{ts};
 	} while ($self->{redo});
 	print STDERR "Shutdown", "\n";
 

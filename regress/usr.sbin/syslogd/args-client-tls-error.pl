@@ -18,6 +18,7 @@ our %args = (
 	    port => 6514 },
 	func => sub {
 	    my $self = shift;
+	    delete $self->{ts};
 	    setsockopt(STDOUT, SOL_SOCKET, SO_LINGER, pack('ii', 1, 0))
 		or die ref($self), " set socket linger failed: $!";
 	},
@@ -35,7 +36,8 @@ our %args = (
     server => {
 	func => sub {
 	    my $self = shift;
-	    ${$self->{syslogd}}->loggrep("tls logger .* connection error", 5)
+	    ${$self->{syslogd}}->loggrep(
+		qr/tls logger .* connection (?:close|error)/, 5)
 		or die ref($self), " no connection error in syslogd.log";
 	},
 	loggrep => {},

@@ -14,6 +14,7 @@ our %args = (
 	    port => 6514 },
 	func => sub {
 	    my $self = shift;
+	    delete $self->{ts};
 	    shutdown(\*STDOUT, 1)
 		or die ref($self), " shutdown write failed: $!";
 	    ${$self->{syslogd}}->loggrep("tls logger .* connection close", 5)
