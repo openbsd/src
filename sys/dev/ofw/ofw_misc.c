@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.35 2022/03/02 12:00:46 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.36 2022/03/25 15:49:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -507,6 +507,8 @@ struct nvmem_cell {
 	struct nvmem_device *nc_nd;
 	bus_addr_t	nc_addr;
 	bus_size_t	nc_size;
+	uint32_t	nc_offset;
+	uint32_t	nc_bitlen;
 
 	LIST_ENTRY(nvmem_cell) nc_list;
 };
@@ -519,7 +521,7 @@ nvmem_register_child(int node, struct nvmem_device *nd)
 {
 	struct nvmem_cell *nc;
 	uint32_t phandle;
-	uint32_t reg[2];
+	uint32_t reg[2], bits[2] = {};
 
 	phandle = OF_getpropint(node, "phandle", 0);
 	if (phandle == 0)
@@ -528,11 +530,15 @@ nvmem_register_child(int node, struct nvmem_device *nd)
 	if (OF_getpropintarray(node, "reg", reg, sizeof(reg)) != sizeof(reg))
 		return;
 
+	OF_getpropintarray(node, "bits", bits, sizeof(bits));
+	
 	nc = malloc(sizeof(struct nvmem_cell), M_DEVBUF, M_WAITOK);
 	nc->nc_phandle = phandle;
 	nc->nc_nd = nd;
 	nc->nc_addr = reg[0];
 	nc->nc_size = reg[1];
+	nc->nc_offset = bits[0];
+	nc->nc_bitlen = bits[1];
 	LIST_INSERT_HEAD(&nvmem_cells, nc, nc_list);
 }
 
@@ -571,7 +577,8 @@ nvmem_read_cell(int node, const char *name, void *data, bus_size_t size)
 	struct nvmem_device *nd;
 	struct nvmem_cell *nc;
 	uint32_t phandle, *phandles;
-	int id, len;
+	uint32_t offset, bitlen;
+	int id, len, first;
 
 	id = OF_getindex(node, name, "nvmem-cell-names");
 	if (id < 0)
@@ -593,12 +600,46 @@ nvmem_read_cell(int node, const char *name, void *data, bus_size_t size)
 	if (nc == NULL)
 		return ENXIO;
 
-	if (size > nc->nc_size)
-		return EINVAL;
-
 	nd = nc->nc_nd;
 	if (nd->nd_read == NULL)
 		return EACCES;
+
+	first = 1;
+	offset = nc->nc_offset;
+	bitlen = nc->nc_bitlen;
+	while (bitlen > 0 && size > 0) {
+		uint8_t *p = data;
+		uint8_t mask, tmp;
+		int error;
+
+		error = nd->nd_read(nd->nd_cookie, nc->nc_addr, &tmp, 1);
+		if (error)
+			return error;
+
+		if (bitlen >= 8)
+			mask = 0xff;
+		else
+			mask = (1 << bitlen) - 1;
+
+		if (!first) {
+			*p++ |= (tmp << (8 - offset)) & (mask << (8 - offset));
+			bitlen -= MIN(offset, bitlen);
+			size--;
+		}
+
+		if (bitlen > 0 && size > 0) {
+			*p = (tmp >> offset) & (mask >> offset);
+			bitlen -= MIN(8 - offset, bitlen);
+		}
+
+		first = 0;
+	}
+	if (nc->nc_bitlen > 0)
+		return 0;
+
+	if (size > nc->nc_size)
+		return EINVAL;
+
 	return nd->nd_read(nd->nd_cookie, nc->nc_addr, data, size);
 }
 
@@ -608,7 +649,8 @@ nvmem_write_cell(int node, const char *name, const void *data, bus_size_t size)
 	struct nvmem_device *nd;
 	struct nvmem_cell *nc;
 	uint32_t phandle, *phandles;
-	int id, len;
+	uint32_t offset, bitlen;
+	int id, len, first;
 
 	id = OF_getindex(node, name, "nvmem-cell-names");
 	if (id < 0)
@@ -630,12 +672,50 @@ nvmem_write_cell(int node, const char *name, const void *data, bus_size_t size)
 	if (nc == NULL)
 		return ENXIO;
 
-	if (size > nc->nc_size)
-		return EINVAL;
-
 	nd = nc->nc_nd;
 	if (nd->nd_write == NULL)
 		return EACCES;
+
+	first = 1;
+	offset = nc->nc_offset;
+	bitlen = nc->nc_bitlen;
+	while (bitlen > 0 && size > 0) {
+		const uint8_t *p = data;
+		uint8_t mask, tmp;
+		int error;
+
+		error = nd->nd_read(nd->nd_cookie, nc->nc_addr, &tmp, 1);
+		if (error)
+			return error;
+
+		if (bitlen >= 8)
+			mask = 0xff;
+		else
+			mask = (1 << bitlen) - 1;
+
+		tmp &= ~(mask << offset);
+		tmp |= (*p++ << offset) & (mask << offset);
+		bitlen -= MIN(8 - offset, bitlen);
+		size--;
+
+		if (!first && bitlen > 0 && size > 0) {
+			tmp &= ~(mask >> (8 - offset));
+			tmp |= (*p >> (8 - offset)) & (mask >> (8 - offset));
+			bitlen -= MIN(offset, bitlen);
+		}
+
+		error = nd->nd_write(nd->nd_cookie, nc->nc_addr, &tmp, 1);
+		if (error)
+			return error;
+
+		first = 0;
+	}
+	if (nc->nc_bitlen > 0)
+		return 0;
+
+	if (size > nc->nc_size)
+		return EINVAL;
+
 	return nd->nd_write(nd->nd_cookie, nc->nc_addr, data, size);
 }
 
