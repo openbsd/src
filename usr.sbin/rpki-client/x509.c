@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.36 2022/02/10 17:33:28 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.37 2022/03/25 08:19:04 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -38,6 +38,10 @@ ASN1_OBJECT	*roa_oid;	/* id-ct-routeOriginAuthz CMS content type */
 ASN1_OBJECT	*mft_oid;	/* id-ct-rpkiManifest CMS content type */
 ASN1_OBJECT	*gbr_oid;	/* id-ct-rpkiGhostbusters CMS content type */
 ASN1_OBJECT	*bgpsec_oid;	/* id-kp-bgpsec-router Key Purpose */
+ASN1_OBJECT	*cnt_type_oid;	/* pkcs-9 id-contentType */
+ASN1_OBJECT	*msg_dgst_oid;	/* pkcs-9 id-messageDigest */
+ASN1_OBJECT	*sign_time_oid;	/* pkcs-9 id-signingTime */
+ASN1_OBJECT	*bin_sign_time_oid;	/* pkcs-9 id-aa-binarySigningTime */
 
 void
 x509_init_oid(void)
@@ -62,6 +66,16 @@ x509_init_oid(void)
 		    "1.2.840.113549.1.9.16.1.35");
 	if ((bgpsec_oid = OBJ_txt2obj("1.3.6.1.5.5.7.3.30", 1)) == NULL)
 		errx(1, "OBJ_txt2obj for %s failed", "1.3.6.1.5.5.7.3.30");
+	if ((cnt_type_oid = OBJ_txt2obj("1.2.840.113549.1.9.3", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed", "1.2.840.113549.1.9.3");
+	if ((msg_dgst_oid = OBJ_txt2obj("1.2.840.113549.1.9.4", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed", "1.2.840.113549.1.9.4");
+	if ((sign_time_oid = OBJ_txt2obj("1.2.840.113549.1.9.5", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed", "1.2.840.113549.1.9.5");
+	if ((bin_sign_time_oid =
+	    OBJ_txt2obj("1.2.840.113549.1.9.16.2.46", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed",
+		    "1.2.840.113549.1.9.16.2.46");
 }
 
 /*
