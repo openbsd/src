@@ -1,4 +1,4 @@
-/*	$OpenBSD: deflate.c,v 1.6 2021/07/28 07:36:06 tb Exp $ */
+/*	$OpenBSD: deflate.c,v 1.7 2022/03/25 00:42:27 tb Exp $ */
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -187,8 +187,11 @@ local const config configuration_table[10] = {
  * prev[] will be initialized on the fly.
  */
 #define CLEAR_HASH(s) \
-    s->head[s->hash_size-1] = NIL; \
-    zmemzero((Bytef *)s->head, (unsigned)(s->hash_size-1)*sizeof(*s->head));
+    do { \
+        s->head[s->hash_size-1] = NIL; \
+        zmemzero((Bytef *)s->head, \
+                 (unsigned)(s->hash_size-1)*sizeof(*s->head)); \
+    } while (0)
 
 /* ===========================================================================
  * Slide the hash table when sliding the window down (could be avoided with 32
