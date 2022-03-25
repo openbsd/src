@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.280 2022/02/25 18:24:01 tedu Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.281 2022/03/25 17:40:59 robert Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -998,6 +998,12 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 	    mib[0] == CTL_MACHDEP && mib[1] == CPU_SSE)
 		return (0);
 #endif /* CPU_SSE */
+
+#ifdef CPU_ID_AA64ISAR0
+	if (miblen == 2 &&		/* arm64 libcrypto inspects CPU features */
+	    mib[0] == CTL_MACHDEP && mib[1] == CPU_ID_AA64ISAR0)
+		return (0);
+#endif /* CPU_ID_AA64ISAR0 */
 
 	snprintf(buf, sizeof(buf), "%s(%d): pledge sysctl %d:",
 	    p->p_p->ps_comm, p->p_p->ps_pid, miblen);
