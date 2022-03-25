@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.10 2022/03/15 18:46:15 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.11 2022/03/25 15:52:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -36,6 +36,7 @@
 #include "apm.h"
 
 extern void (*cpuresetfn)(void);
+extern void (*powerdownfn)(void);
 
 /* SMC mailbox endpoint */
 #define SMC_EP			32
@@ -99,7 +100,9 @@ struct aplsmc_softc {
 
 	int			sc_rtc_node;
 	struct todr_chip_handle sc_todr;
-	
+
+	int			sc_reboot_node;
+
 	struct aplsmc_sensor	*sc_smcsensors[APLSMC_MAX_SENSORS];
 	struct ksensor		sc_sensors[APLSMC_MAX_SENSORS];
 	int			sc_nsensors;
@@ -157,6 +160,8 @@ void	aplsmc_set_pin(void *, uint32_t *, int);
 int	aplsmc_gettime(struct todr_chip_handle *, struct timeval *);
 int	aplsmc_settime(struct todr_chip_handle *, struct timeval *);
 void	aplsmc_reset(void);
+void	aplsmc_powerdown(void);
+void	aplsmc_reboot_attachhook(struct device *);
 
 int
 aplsmc_match(struct device *parent, void *match, void *aux)
@@ -222,6 +227,8 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	aplsmc_sc = sc;
+
 	node = OF_getnodebyname(faa->fa_node, "gpio");
 	if (node) {
 		sc->sc_gc.gc_node = node;
@@ -235,7 +242,6 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 	 * supported by the SMC firmware.
 	 */
 	error = aplsmc_read_key(sc, SMC_KEY("CLKM"), &data, SMC_CLKM_LEN);
-
 	node = OF_getnodebyname(faa->fa_node, "rtc");
 	if (node && error == 0) {
 		sc->sc_rtc_node = node;
@@ -245,8 +251,13 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 		todr_attach(&sc->sc_todr);
 	}
 
-	aplsmc_sc = sc;
-	cpuresetfn = aplsmc_reset;
+	node = OF_getnodebyname(faa->fa_node, "reboot");
+	if (node) {
+		sc->sc_reboot_node = node;
+		cpuresetfn = aplsmc_reset;
+		powerdownfn = aplsmc_powerdown;
+		config_mountroot(self, aplsmc_reboot_attachhook);
+	}
 
 #ifndef SMALL_KERNEL
 
@@ -578,11 +589,47 @@ aplsmc_settime(struct todr_chip_handle *handle, struct timeval *tv)
 }
 
 void
+aplsmc_reboot_attachhook(struct device *self)
+{
+	struct aplsmc_softc *sc = (struct aplsmc_softc *)self;
+	uint8_t count = 0;
+
+	/* Reset error counters. */
+	nvmem_write_cell(sc->sc_reboot_node, "boot_error_count",
+	    &count, sizeof(count));
+	nvmem_write_cell(sc->sc_reboot_node, "panic_count",
+	    &count, sizeof(count));
+}
+
+void
 aplsmc_reset(void)
 {
 	struct aplsmc_softc *sc = aplsmc_sc;
 	uint32_t key = SMC_KEY("MBSE");
-	uint32_t data = SMC_KEY("off1");
+	uint32_t rest = SMC_KEY("rest");
+	uint32_t phra = SMC_KEY("phra");
+	uint8_t boot_stage = 0;
 
-	aplsmc_write_key(sc, key, &data, sizeof(data));
+	aplsmc_write_key(sc, key, &rest, sizeof(rest));
+	nvmem_write_cell(sc->sc_reboot_node, "boot_stage",
+	    &boot_stage, sizeof(boot_stage));
+	aplsmc_write_key(sc, key, &phra, sizeof(phra));
+}
+
+void
+aplsmc_powerdown(void)
+{
+	struct aplsmc_softc *sc = aplsmc_sc;
+	uint32_t key = SMC_KEY("MBSE");
+	uint32_t offw = SMC_KEY("offw");
+	uint32_t off1 = SMC_KEY("off1");
+	uint8_t boot_stage = 0;
+	uint8_t shutdown_flag = 1;
+
+	aplsmc_write_key(sc, key, &offw, sizeof(offw));
+	nvmem_write_cell(sc->sc_reboot_node, "boot_stage",
+	    &boot_stage, sizeof(boot_stage));
+	nvmem_write_cell(sc->sc_reboot_node, "shutdown_flag",
+	    &shutdown_flag, sizeof(shutdown_flag));
+	aplsmc_write_key(sc, key, &off1, sizeof(off1));
 }
