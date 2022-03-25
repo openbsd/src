@@ -1,4 +1,4 @@
-/*	$OpenBSD: deflate.c,v 1.14 2022/03/25 10:54:27 tb Exp $ */
+/*	$OpenBSD: deflate.c,v 1.15 2022/03/25 10:58:39 tb Exp $ */
 /* deflate.c -- compress data using the deflation algorithm
  * Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -586,7 +586,8 @@ int ZEXPORT deflatePrime (strm, bits, value)
 
     if (deflateStateCheck(strm)) return Z_STREAM_ERROR;
     s = strm->state;
-    if (s->sym_buf < s->pending_out + ((Buf_size + 7) >> 3))
+    if (bits < 0 || bits > 16 ||
+        s->sym_buf < s->pending_out + ((Buf_size + 7) >> 3))
         return Z_BUF_ERROR;
     do {
         put = Buf_size - s->bi_valid;
