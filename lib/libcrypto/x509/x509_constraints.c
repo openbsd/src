@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.25 2022/03/14 21:29:46 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.26 2022/03/26 16:34:21 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -657,35 +657,45 @@ x509_constraints_general_to_bytes(GENERAL_NAME *name, uint8_t **bytes,
 
 	if (name->type == GEN_DNS) {
 		ASN1_IA5STRING *aname = name->d.dNSName;
+
 		*bytes = aname->data;
-		*len = strlen(aname->data);
+		*len = aname->length;
+
 		return name->type;
 	}
 	if (name->type == GEN_EMAIL) {
 		ASN1_IA5STRING *aname = name->d.rfc822Name;
+
 		*bytes = aname->data;
-		*len = strlen(aname->data);
+		*len = aname->length;
+
 		return name->type;
 	}
 	if (name->type == GEN_URI) {
 		ASN1_IA5STRING *aname = name->d.uniformResourceIdentifier;
+
 		*bytes = aname->data;
-		*len = strlen(aname->data);
+		*len = aname->length;
+
 		return name->type;
 	}
 	if (name->type == GEN_DIRNAME) {
 		X509_NAME *dname = name->d.directoryName;
+
 		if (!dname->modified || i2d_X509_NAME(dname, NULL) >= 0) {
 			*bytes = dname->canon_enc;
 			*len = dname->canon_enclen;
+
 			return name->type;
 		}
 	}
 	if (name->type == GEN_IPADD) {
 		*bytes = name->d.ip->data;
 		*len = name->d.ip->length;
+
 		return name->type;
 	}
+
 	return 0;
 }
 
@@ -723,7 +733,7 @@ x509_constraints_extract_names(struct x509_constraints_names *names,
 				*error = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
 				goto err;
 			}
-			if ((vname->name = strdup(bytes)) == NULL) {
+			if ((vname->name = strndup(bytes, len)) == NULL) {
 				*error = X509_V_ERR_OUT_OF_MEM;
 				goto err;
 			}
@@ -931,7 +941,7 @@ x509_constraints_validate(GENERAL_NAME *constraint,
 	case GEN_DNS:
 		if (!x509_constraints_valid_domain_constraint(bytes, len))
 			goto err;
-		if ((name->name = strdup(bytes)) == NULL) {
+		if ((name->name = strndup(bytes, len)) == NULL) {
 			error = X509_V_ERR_OUT_OF_MEM;
 			goto err;
 		}
@@ -953,7 +963,7 @@ x509_constraints_validate(GENERAL_NAME *constraint,
 		}
 		if (!x509_constraints_valid_domain_constraint(bytes, len))
 			goto err;
-		if ((name->name = strdup(bytes)) == NULL) {
+		if ((name->name = strndup(bytes, len)) == NULL) {
 			error = X509_V_ERR_OUT_OF_MEM;
 			goto err;
 		}
@@ -973,7 +983,7 @@ x509_constraints_validate(GENERAL_NAME *constraint,
 	case GEN_URI:
 		if (!x509_constraints_valid_domain_constraint(bytes, len))
 			goto err;
-		if ((name->name = strdup(bytes)) == NULL) {
+		if ((name->name = strndup(bytes, len)) == NULL) {
 			error = X509_V_ERR_OUT_OF_MEM;
 			goto err;
 		}

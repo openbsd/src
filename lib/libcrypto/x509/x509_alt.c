@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_alt.c,v 1.11 2022/03/14 21:15:49 tb Exp $ */
+/* $OpenBSD: x509_alt.c,v 1.12 2022/03/26 16:34:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -673,21 +673,24 @@ v2i_GENERAL_NAME_ex(GENERAL_NAME *out, const X509V3_EXT_METHOD *method,
 	case GEN_DNS:
 		if (!x509_constraints_valid_sandns(bytes, len)) {
 			X509V3error(X509V3_R_BAD_OBJECT);
-			ERR_asprintf_error_data("name=%s value='%s'", name, bytes);
+			ERR_asprintf_error_data("name=%s value='%.*s'", name,
+			    (int)len, bytes);
 			goto err;
 		}
 		break;
 	case GEN_URI:
 		if (!x509_constraints_uri_host(bytes, len, NULL)) {
 			X509V3error(X509V3_R_BAD_OBJECT);
-			ERR_asprintf_error_data("name=%s value='%s'", name, bytes);
+			ERR_asprintf_error_data("name=%s value='%.*s'", name,
+			    (int)len, bytes);
 			goto err;
 		}
 		break;
 	case GEN_EMAIL:
 		if (!x509_constraints_parse_mailbox(bytes, len, NULL)) {
 			X509V3error(X509V3_R_BAD_OBJECT);
-			ERR_asprintf_error_data("name=%s value='%s'", name, bytes);
+			ERR_asprintf_error_data("name=%s value='%.*s'", name,
+			    (int)len, bytes);
 			goto err;
 		}
 		break;
