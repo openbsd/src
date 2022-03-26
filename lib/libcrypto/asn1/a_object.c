@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.44 2022/03/20 13:27:23 jsing Exp $ */
+/* $OpenBSD: a_object.c,v 1.45 2022/03/26 14:54:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -155,12 +155,13 @@ oid_parse_arc(CBS *cbs, uint64_t *out_arc)
 			return 0;
 		if (arc == 0 && val == 0x80)
 			return 0;
-		if (arc > (UINT64_MAX >> 7))
+		if (out_arc != NULL && arc > (UINT64_MAX >> 7))
 			return 0;
 		arc = (arc << 7) | (val & 0x7f);
 	} while (val & 0x80);
 
-	*out_arc = arc;
+	if (out_arc != NULL)
+		*out_arc = arc;
 
 	return 1;
 }
@@ -519,80 +520,81 @@ i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *aobj)
 	return ret;
 }
 
-ASN1_OBJECT *
-c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp, long len)
+int
+c2i_ASN1_OBJECT_cbs(ASN1_OBJECT **out_aobj, CBS *content)
 {
-	ASN1_OBJECT *ret;
-	const unsigned char *p;
-	unsigned char *data;
-	int i, length;
+	ASN1_OBJECT *aobj = NULL;
+	uint8_t *data = NULL;
+	size_t data_len;
+	CBS cbs;
 
-	/*
-	 * Sanity check OID encoding:
-	 * - need at least one content octet
-	 * - MSB must be clear in the last octet
-	 * - can't have leading 0x80 in subidentifiers, see: X.690 8.19.2
-	 */
-	if (len <= 0 || len > INT_MAX || pp == NULL || (p = *pp) == NULL ||
-	    p[len - 1] & 0x80) {
+	if (out_aobj == NULL || *out_aobj != NULL)
+		goto err;
+
+	/* Parse and validate OID encoding per X.690 8.19.2. */
+	CBS_dup(content, &cbs);
+	if (CBS_len(&cbs) == 0) {
 		ASN1error(ASN1_R_INVALID_OBJECT_ENCODING);
-		return (NULL);
+		goto err;
 	}
-
-	/* Now 0 < len <= INT_MAX, so the cast is safe. */
-	length = (int)len;
-	for (i = 0; i < length; i++, p++) {
-		if (*p == 0x80 && (!i || !(p[-1] & 0x80))) {
+	while (CBS_len(&cbs) > 0) {
+		if (!oid_parse_arc(&cbs, NULL)) {
 			ASN1error(ASN1_R_INVALID_OBJECT_ENCODING);
-			return (NULL);
+			goto err;
 		}
 	}
 
-	if ((a == NULL) || ((*a) == NULL) ||
-	    !((*a)->flags & ASN1_OBJECT_FLAG_DYNAMIC)) {
-		if ((ret = ASN1_OBJECT_new()) == NULL)
-			return (NULL);
-	} else
-		ret = *a;
-
-	p = *pp;
-
-	/* detach data from object */
-	data = (unsigned char *)ret->data;
-	freezero(data, ret->length);
-
-	data = malloc(length);
-	if (data == NULL) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
+	if (!CBS_stow(content, &data, &data_len))
 		goto err;
-	}
 
-	memcpy(data, p, length);
+	if (data_len > INT_MAX)
+		goto err;
 
-	/* If there are dynamic strings, free them here, and clear the flag. */
-	if ((ret->flags & ASN1_OBJECT_FLAG_DYNAMIC_STRINGS) != 0) {
-		free((void *)ret->sn);
-		free((void *)ret->ln);
-		ret->flags &= ~ASN1_OBJECT_FLAG_DYNAMIC_STRINGS;
-	}
+	if ((aobj = ASN1_OBJECT_new()) == NULL)
+		goto err;
 
-	/* reattach data to object, after which it remains const */
-	ret->data = data;
-	ret->length = length;
-	ret->sn = NULL;
-	ret->ln = NULL;
-	ret->flags |= ASN1_OBJECT_FLAG_DYNAMIC_DATA;
-	p += length;
+	aobj->data = data;
+	aobj->length = (int)data_len; /* XXX - change length to size_t. */
+	aobj->flags |= ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 
-	if (a != NULL)
-		*a = ret;
-	*pp = p;
-	return (ret);
+	*out_aobj = aobj;
+
+	return 1;
 
  err:
-	if (a == NULL || ret != *a)
-		ASN1_OBJECT_free(ret);
-	return (NULL);
+	ASN1_OBJECT_free(aobj);
+	free(data);
+
+	return 0;
+}
+
+ASN1_OBJECT *
+c2i_ASN1_OBJECT(ASN1_OBJECT **out_aobj, const unsigned char **pp, long len)
+{
+	ASN1_OBJECT *aobj = NULL;
+	CBS content;
+
+	if (out_aobj != NULL) {
+		ASN1_OBJECT_free(*out_aobj);
+		*out_aobj = NULL;
+	}
+
+	if (len < 0) {
+		ASN1error(ASN1_R_LENGTH_ERROR);
+		return NULL;
+	}
+
+	CBS_init(&content, *pp, len);
+
+	if (!c2i_ASN1_OBJECT_cbs(&aobj, &content))
+		return NULL;
+
+	*pp = CBS_data(&content);
+
+	if (out_aobj != NULL)
+		*out_aobj = aobj;
+
+	return aobj;
 }
 
 int
@@ -618,31 +620,40 @@ i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 }
 
 ASN1_OBJECT *
-d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp, long length)
+d2i_ASN1_OBJECT(ASN1_OBJECT **out_aobj, const unsigned char **pp, long length)
 {
-	const unsigned char *p;
-	long len;
-	int tag, xclass;
-	int inf, i;
-	ASN1_OBJECT *ret = NULL;
+	ASN1_OBJECT *aobj = NULL;
+	uint32_t tag_number;
+	CBS cbs, content;
 
-	p = *pp;
-	inf = ASN1_get_object(&p, &len, &tag, &xclass, length);
-	if (inf & 0x80) {
-		i = ASN1_R_BAD_OBJECT_HEADER;
-		goto err;
+	if (out_aobj != NULL) {
+		ASN1_OBJECT_free(*out_aobj);
+		*out_aobj = NULL;
 	}
 
-	if (tag != V_ASN1_OBJECT) {
-		i = ASN1_R_EXPECTING_AN_OBJECT;
-		goto err;
+	if (length < 0) {
+		ASN1error(ASN1_R_LENGTH_ERROR);
+		return NULL;
 	}
-	ret = c2i_ASN1_OBJECT(a, &p, len);
-	if (ret)
-		*pp = p;
-	return ret;
 
- err:
-	ASN1error(i);
-	return (NULL);
+	CBS_init(&cbs, *pp, length);
+
+	if (!asn1_get_primitive(&cbs, 0, &tag_number, &content)) {
+		ASN1error(ASN1_R_BAD_OBJECT_HEADER);
+		return NULL;
+	}
+	if (tag_number != V_ASN1_OBJECT) {
+		ASN1error(ASN1_R_EXPECTING_AN_OBJECT);
+		return NULL;
+	}
+
+	if (!c2i_ASN1_OBJECT_cbs(&aobj, &content))
+		return NULL;
+
+	*pp = CBS_data(&content);
+
+	if (out_aobj != NULL)
+		*out_aobj = aobj;
+
+	return aobj;
 }
