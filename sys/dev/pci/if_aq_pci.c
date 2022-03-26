@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.11 2022/03/20 00:01:33 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.12 2022/03/26 06:04:20 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -698,6 +698,10 @@ struct aq_rxring {
 	struct if_rxring	 rx_rxr;
 	uint32_t		 rx_prod;
 	uint32_t		 rx_cons;
+
+	struct mbuf		*rx_m_head;
+	struct mbuf		**rx_m_tail;
+	int			 rx_m_error;
 };
 
 struct aq_txring {
@@ -1119,6 +1123,9 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 		rx->rx_q = i;
 		rx->rx_irq = i * 2;
 		rx->rx_ifiq = ifp->if_iqs[i];
+		rx->rx_m_head = NULL;
+		rx->rx_m_tail = &rx->rx_m_head;
+		rx->rx_m_error = 0;
 		ifp->if_iqs[i]->ifiq_softc = aq;
 		timeout_set(&rx->rx_refill, aq_refill, rx);
 
@@ -2136,7 +2143,7 @@ aq_rx_fill_slots(struct aq_softc *sc, struct aq_rxring *rx, uint nslots)
 		if (m == NULL)
 			break;
 
-		m->m_data += (m->m_ext.ext_size - MCLBYTES);
+		m->m_data += (m->m_ext.ext_size - (MCLBYTES + ETHER_ALIGN));
 		m->m_data += ETHER_ALIGN;
 		m->m_len = m->m_pkthdr.len = MCLBYTES;
 
@@ -2198,7 +2205,7 @@ aq_rxeof(struct aq_softc *sc, struct aq_rxring *rx)
 	uint32_t end, idx;
 	uint16_t pktlen, status;
 	uint32_t rxd_type;
-	struct mbuf *m;
+	struct mbuf *m, *mb;
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	int rxfree;
 
@@ -2227,12 +2234,19 @@ aq_rxeof(struct aq_softc *sc, struct aq_rxring *rx)
 			break;
 
 		rxfree++;
-		m = as->as_m;
+		mb = as->as_m;
 		as->as_m = NULL;
 
 		pktlen = lemtoh16(&rxd->pkt_len);
 		rxd_type = lemtoh32(&rxd->type);
 		/* rss hash */
+
+		mb->m_pkthdr.len = 0;
+		mb->m_next = NULL;
+		*rx->rx_m_tail = mb;
+		rx->rx_m_tail = &mb->m_next;
+
+		m = rx->rx_m_head;
 
 #if NVLAN > 0
 		if (rxd_type & (AQ_RXDESC_TYPE_VLAN | AQ_RXDESC_TYPE_VLAN2)) {
@@ -2254,10 +2268,25 @@ aq_rxeof(struct aq_softc *sc, struct aq_rxring *rx)
 		    (rxd_type & AQ_RXDESC_TYPE_DMA_ERR)) {
 			printf("%s:rx: rx error (status %x type %x)\n",
 			    DEVNAME(sc), status, rxd_type);
-			m_freem(m);
+			rx->rx_m_error = 1;
+		}
+
+		if (status & AQ_RXDESC_STATUS_EOP) {
+			mb->m_len = pktlen - m->m_pkthdr.len;
+			m->m_pkthdr.len = pktlen;
+			if (rx->rx_m_error != 0) {
+				ifp->if_ierrors++;
+				m_freem(m);
+			} else {
+				ml_enqueue(&ml, m);
+			}
+
+			rx->rx_m_head = NULL;
+			rx->rx_m_tail = &rx->rx_m_head;
+			rx->rx_m_error = 0;
 		} else {
-			m->m_pkthdr.len = m->m_len = pktlen;
-			ml_enqueue(&ml, m);
+			mb->m_len = MCLBYTES;
+			m->m_pkthdr.len += mb->m_len;
 		}
 
 		idx++;
@@ -2486,7 +2515,7 @@ aq_queue_up(struct aq_softc *sc, struct aq_queues *aq)
 	struct aq_rxring *rx;
 	struct aq_txring *tx;
 	struct aq_slot *as;
-	int i;
+	int i, mtu;
 
 	rx = &aq->q_rx;
 	rx->rx_slots = mallocarray(sizeof(*as), AQ_RXD_NUM, M_DEVBUF,
@@ -2524,11 +2553,11 @@ aq_queue_up(struct aq_softc *sc, struct aq_queues *aq)
 		goto destroy_rx_ring;
 	}
 
+	mtu = sc->sc_arpcom.ac_if.if_hardmtu;
 	for (i = 0; i < AQ_TXD_NUM; i++) {
 		as = &tx->tx_slots[i];
-		if (bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    AQ_TX_MAX_SEGMENTS, MCLBYTES, 0,
-		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
+		if (bus_dmamap_create(sc->sc_dmat, mtu, AQ_TX_MAX_SEGMENTS,
+		    MCLBYTES, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW | BUS_DMA_64BIT,
 		    &as->as_map) != 0) {
 			printf("%s: failed to allocated tx dma maps %d\n",
 			    DEVNAME(sc), aq->q_index);
@@ -2576,6 +2605,10 @@ aq_queue_down(struct aq_softc *sc, struct aq_queues *aq)
 	aq_dmamem_free(sc, &tx->tx_mem);
 
 	rx = &aq->q_rx;
+	m_freem(rx->rx_m_head);
+	rx->rx_m_head = NULL;
+	rx->rx_m_tail = &rx->rx_m_head;
+	rx->rx_m_error = 0;
 	aq_rxring_reset(sc, &aq->q_rx, 0);
 	if (rx->rx_slots != NULL) {
 		aq_free_slots(sc, rx->rx_slots, AQ_RXD_NUM, AQ_RXD_NUM);
@@ -2624,7 +2657,8 @@ aq_up(struct aq_softc *sc)
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		struct aq_queues *aq = &sc->sc_queues[i];
 
-		if_rxr_init(&aq->q_rx.rx_rxr, 1, AQ_RXD_NUM - 1);
+		if_rxr_init(&aq->q_rx.rx_rxr, howmany(ifp->if_hardmtu, MCLBYTES),
+		    AQ_RXD_NUM - 1);
 		aq_rx_fill(sc, &aq->q_rx);
 
 		ifq_clr_oactive(aq->q_tx.tx_ifq);
@@ -2649,7 +2683,6 @@ aq_down(struct aq_softc *sc)
 	aq_enable_intr(sc, 1, 0);
 	intr_barrier(sc->sc_ih);
 
-	AQ_WRITE_REG_BIT(sc, TPB_TX_BUF_REG, TPB_TX_BUF_EN, 0);
 	AQ_WRITE_REG_BIT(sc, RPB_RPF_RX_REG, RPB_RPF_RX_BUF_EN, 0);
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		/* queue intr barrier? */
