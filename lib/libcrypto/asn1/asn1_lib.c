@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.51 2021/12/25 07:04:03 jsing Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.52 2022/03/26 14:47:58 jsing Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <limits.h>
+#include <stdlib.h>
 
 #include "bytestring.h"
 
@@ -166,6 +167,36 @@ asn1_get_object_cbs(CBS *cbs, int der_mode, uint8_t *out_tag_class,
 	*out_tag_number = tag_number;
 	*out_indefinite = indefinite;
 	*out_length = length;
+
+	return 1;
+}
+
+int
+asn1_get_primitive(CBS *cbs, int der_mode, uint32_t *out_tag_number,
+    CBS *out_content)
+{
+	int constructed, indefinite;
+	uint32_t tag_number, length;
+	uint8_t tag_class;
+
+	*out_tag_number = 0;
+
+	CBS_init(out_content, NULL, 0);
+
+	if (!asn1_get_identifier_cbs(cbs, der_mode, &tag_class, &constructed,
+	    &tag_number))
+		return 0;
+	if (!asn1_get_length_cbs(cbs, der_mode, &indefinite, &length))
+		return 0;
+
+	/* A primitive is not constructed and has a definite length. */
+	if (constructed || indefinite)
+		return 0;
+
+	if (!CBS_get_bytes(cbs, out_content, length))
+		return 0;
+
+	*out_tag_number = tag_number;
 
 	return 1;
 }
