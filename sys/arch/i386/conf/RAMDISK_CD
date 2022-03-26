@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.249 2022/01/03 02:10:57 jsg Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.250 2022/03/26 14:25:14 stsp Exp $
 
 machine		i386
 maxusers	4
@@ -105,6 +105,7 @@ wi*		at uhub?		# WaveLAN IEEE 802.11DS
 ural*		at uhub?		# Ralink RT2500
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 run*		at uhub?		# Ralink RT2700U/RT2800U/RT3000U
+mtw*		at uhub?		# MediaTek MT7601U
 zyd*		at uhub?		# Zydas ZD1211
 upgt*		at uhub?		# Conexant/Intersil PrismGT SoftMAC USB
 urtw*		at uhub?		# Realtek 8187

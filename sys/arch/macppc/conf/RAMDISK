@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.120 2020/01/24 04:44:14 krw Exp $
+#	$OpenBSD: RAMDISK,v 1.121 2022/03/26 14:25:14 stsp Exp $
 
 machine		macppc powerpc
 maxusers	4
@@ -162,6 +162,7 @@ upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
 ugl*		at uhub?		# Genesys Logic GL620USB-A host-to-host
 udav*		at uhub?		# Davicom DM9601 based Ethernet
 mos*		at uhub?		# MOSCHIP MCS7730/7830 10/100 Ethernet
+mtw*		at uhub?		# MediaTek MT7601U
 ural*		at uhub?		# Ralink RT2500
 rum*		at uhub?		# Ralink RT2501USB/RT2601USB
 urtwn*		at uhub?		# Realtek RTL8188CU/RTL8192CU
