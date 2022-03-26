@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.121 2022/03/18 18:00:54 jsing Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.122 2022/03/26 15:00:51 jsing Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -825,37 +825,6 @@ dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	 * If we get here, then type != rr->type; if we have a handshake
 	 * message, then it was unexpected (Hello Request or Client Hello).
 	 */
-
-	{
-		unsigned int record_min_len = 0;
-
-		if (rr->type == SSL3_RT_HANDSHAKE) {
-			record_min_len = DTLS1_HM_HEADER_LENGTH;
-		} else if (rr->type == SSL3_RT_ALERT) {
-			record_min_len = DTLS1_AL_HEADER_LENGTH;
-		} else if (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC) {
-			record_min_len = DTLS1_CCS_HEADER_LENGTH;
-		} else if (rr->type == SSL3_RT_APPLICATION_DATA) {
-			/*
-			 * Application data while renegotiating is allowed.
-			 * Try reading again.
-			 */
-			s->s3->in_read_app_data = 2;
-			ssl_force_want_read(s);
-			return -1;
-		} else {
-			/* Not certain if this is the right error handling */
-			al = SSL_AD_UNEXPECTED_MESSAGE;
-			SSLerror(s, SSL_R_UNEXPECTED_RECORD);
-			goto fatal_err;
-		}
-
-		if (record_min_len > 0 && rr->length < record_min_len) {
-			s->internal->rstate = SSL_ST_READ_HEADER;
-			rr->length = 0;
-			goto start;
-		}
-	}
 
 	if (rr->type == SSL3_RT_ALERT) {
 		if ((ret = ssl3_read_alert(s)) <= 0)
