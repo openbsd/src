@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.22 2022/03/24 14:07:08 inoguchi Exp $ */
+/* $OpenBSD: ts.c,v 1.23 2022/03/27 00:37:10 inoguchi Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -678,13 +678,14 @@ create_digest(BIO *input, char *digest, const EVP_MD *md,
     unsigned char **md_value)
 {
 	int md_value_len;
+	EVP_MD_CTX *md_ctx = NULL;
 
 	md_value_len = EVP_MD_size(md);
 	if (md_value_len < 0)
 		goto err;
+
 	if (input != NULL) {
 		/* Digest must be computed from an input file. */
-		EVP_MD_CTX *md_ctx;
 		unsigned char buffer[4096];
 		int length;
 
@@ -695,16 +696,24 @@ create_digest(BIO *input, char *digest, const EVP_MD *md,
 		if ((md_ctx = EVP_MD_CTX_new()) == NULL)
 			goto err;
 
-		EVP_DigestInit(md_ctx, md);
+		if (!EVP_DigestInit(md_ctx, md))
+			goto err;
+
 		while ((length = BIO_read(input, buffer, sizeof(buffer))) > 0) {
-			EVP_DigestUpdate(md_ctx, buffer, length);
+			if (!EVP_DigestUpdate(md_ctx, buffer, length))
+				goto err;
 		}
-		EVP_DigestFinal(md_ctx, *md_value, NULL);
+
+		if (!EVP_DigestFinal(md_ctx, *md_value, NULL))
+			goto err;
 
 		EVP_MD_CTX_free(md_ctx);
+		md_ctx = NULL;
+
 	} else {
 		/* Digest bytes are specified with digest. */
 		long digest_len;
+
 		*md_value = string_to_hex(digest, &digest_len);
 		if (*md_value == NULL || md_value_len != digest_len) {
 			free(*md_value);
@@ -716,7 +725,9 @@ create_digest(BIO *input, char *digest, const EVP_MD *md,
 	}
 
 	return md_value_len;
+
  err:
+	EVP_MD_CTX_free(md_ctx);
 	return 0;
 }
 
