@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.163 2021/12/12 09:14:59 visa Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.164 2022/03/27 16:19:39 semarie Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -242,10 +242,6 @@ extern int		vttoif_tab[];
 
 #define REVOKEALL	0x0001		/* vop_revoke: revoke all aliases */
 
-
-TAILQ_HEAD(freelst, vnode);
-extern struct freelst vnode_hold_list;	/* free vnodes referencing buffers */
-extern struct freelst vnode_free_list;	/* vnode free list */
 
 #define	VATTR_NULL(vap)	vattr_null(vap)
 #define	NULLVP	((struct vnode *)NULL)

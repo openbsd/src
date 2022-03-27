@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.314 2022/01/25 04:04:40 gnezdo Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.315 2022/03/27 16:19:39 semarie Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -98,6 +98,7 @@ int suid_clear = 1;		/* 1 => clear SUID / SGID on owner change */
 	LIST_NEXT(bp, b_vnbufs) = NOLIST;				\
 }
 
+TAILQ_HEAD(freelst, vnode);
 struct freelst vnode_hold_list;	/* list of vnodes referencing buffers */
 struct freelst vnode_free_list;	/* vnode free list */
 
