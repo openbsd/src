@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.15 2022/03/28 08:19:15 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.16 2022/03/28 13:04:01 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -45,7 +45,7 @@ cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
 {
 	char				 buf[128], obuf[128];
 	const ASN1_OBJECT		*obj, *octype;
-	ASN1_OCTET_STRING		**os = NULL;
+	ASN1_OCTET_STRING		**os = NULL, *kid = NULL;
 	CMS_ContentInfo			*cms;
 	int				 rc = 0;
 	STACK_OF(X509)			*certs = NULL;
@@ -223,6 +223,16 @@ cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
 		goto out;
 	}
 	*xp = X509_dup(sk_X509_value(certs, 0));
+
+	if (CMS_SignerInfo_get0_signer_id(si, &kid, NULL, NULL) != 1 ||
+	    kid == NULL) {
+		warnx("%s: RFC 6488: could not extract SKI from SID", fn);
+		goto out;
+	}
+	if (CMS_SignerInfo_cert_cmp(si, *xp) != 0) {
+		warnx("%s: RFC 6488: wrong cert referenced by SignerInfo", fn);
+		goto out;
+	}
 
 	/* Verify that we have eContent to disseminate. */
 
