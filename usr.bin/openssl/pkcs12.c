@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.17 2022/03/28 10:56:26 inoguchi Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.18 2022/03/28 11:02:49 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -77,17 +77,18 @@
 #define CLCERTS		0x8
 #define CACERTS		0x10
 
-int get_cert_chain(X509 *cert, X509_STORE *store, STACK_OF(X509) **chain);
-int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen,
+static int get_cert_chain(X509 *cert, X509_STORE *store,
+    STACK_OF(X509) **chain);
+static int dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen,
     int options, char *pempass);
-int dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags, char *pass,
+static int dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags,
+    char *pass, int passlen, int options, char *pempass);
+static int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass,
     int passlen, int options, char *pempass);
-int dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bags, char *pass,
-    int passlen, int options, char *pempass);
-int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
+static int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
     const char *name);
-void hex_prin(BIO *out, unsigned char *buf, int len);
-int alg_print(BIO *x, const X509_ALGOR *alg);
+static void hex_prin(BIO *out, unsigned char *buf, int len);
+static int alg_print(BIO *x, const X509_ALGOR *alg);
 static int set_pbe(BIO *err, int *ppbe, const char *str);
 
 static struct {
@@ -818,9 +819,9 @@ pkcs12_main(int argc, char **argv)
 	return (ret);
 }
 
-int
-dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass,
-    int passlen, int options, char *pempass)
+static int
+dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass, int passlen, int options,
+    char *pempass)
 {
 	STACK_OF(PKCS7) *asafes = NULL;
 	STACK_OF(PKCS12_SAFEBAG) *bags;
@@ -863,11 +864,12 @@ dump_certs_keys_p12(BIO *out, PKCS12 *p12, char *pass,
 	return ret;
 }
 
-int
-dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags,
-    char *pass, int passlen, int options, char *pempass)
+static int
+dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags, char *pass,
+    int passlen, int options, char *pempass)
 {
 	int i;
+
 	for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
 		if (!dump_certs_pkeys_bag(out,
 			sk_PKCS12_SAFEBAG_value(bags, i),
@@ -878,9 +880,9 @@ dump_certs_pkeys_bags(BIO *out, STACK_OF(PKCS12_SAFEBAG) *bags,
 	return 1;
 }
 
-int
-dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
-    int passlen, int options, char *pempass)
+static int
+dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass, int passlen,
+    int options, char *pempass)
 {
 	EVP_PKEY *pkey;
 	PKCS8_PRIV_KEY_INFO *p8;
@@ -964,7 +966,7 @@ dump_certs_pkeys_bag(BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 }
 
 /* Given a single certificate return a verified chain or NULL if error */
-int
+static int
 get_cert_chain(X509 *cert, X509_STORE *store, STACK_OF(X509) **out_chain)
 {
 	X509_STORE_CTX *store_ctx = NULL;
@@ -989,11 +991,12 @@ get_cert_chain(X509 *cert, X509_STORE *store, STACK_OF(X509) **out_chain)
 	return ret;
 }
 
-int
+static int
 alg_print(BIO *x, const X509_ALGOR *alg)
 {
 	PBEPARAM *pbe;
 	const unsigned char *p;
+
 	p = alg->parameter->value.sequence->data;
 	pbe = d2i_PBEPARAM(NULL, &p, alg->parameter->value.sequence->length);
 	if (!pbe)
@@ -1006,7 +1009,7 @@ alg_print(BIO *x, const X509_ALGOR *alg)
 }
 
 /* Generalised attribute print: handle PKCS#8 and bag attributes */
-void
+static void
 print_attribute(BIO *out, const ASN1_TYPE *av)
 {
 	char *value;
@@ -1039,12 +1042,14 @@ print_attribute(BIO *out, const ASN1_TYPE *av)
 	}
 }
 
-int
-print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst, const char *name)
+static int
+print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
+    const char *name)
 {
 	X509_ATTRIBUTE *attr;
 	ASN1_TYPE *av;
 	int i, j, attr_nid;
+
 	if (!attrlst) {
 		BIO_printf(out, "%s: <No Attributes>\n", name);
 		return 1;
@@ -1078,10 +1083,11 @@ print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst, const char *nam
 	return 1;
 }
 
-void
+static void
 hex_prin(BIO *out, unsigned char *buf, int len)
 {
 	int i;
+
 	for (i = 0; i < len; i++)
 		BIO_printf(out, "%02X ", buf[i]);
 }
