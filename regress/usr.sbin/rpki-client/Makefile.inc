@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.19 2022/02/10 19:16:44 tb Exp $
+# $OpenBSD: Makefile.inc,v 1.20 2022/03/28 08:11:36 claudio Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -87,3 +87,4 @@ run-regress-test-rrdp: test-rrdp
 	./test-rrdp \
 	-n < ${.CURDIR}/../rrdp/notification_xmlns.xml 2>&1 | tee rrdp-r7.out
 	cmp ${.CURDIR}/../rrdp/rrdp-r7.out rrdp-r7.out
+	@echo OK
