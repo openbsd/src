@@ -1,4 +1,4 @@
-#	$OpenBSD: zipcodes,v 1.13 2021/09/03 08:22:25 bentley Exp $
+#	$OpenBSD: zipcodes,v 1.14 2022/03/28 10:29:44 bentley Exp $
 
 # Zip Code : Location
 #	@(#)zipcodes	5.1 (Berkeley) 2/8/91
@@ -37438,10 +37438,10 @@
 87025:Jemez Springs, NM
 87026:Laguna, NM
 87027:La Jara, NM
-87028:Lajoya, NM
+87028:La Joya, NM
 87029:Lindrith, NM
 87031:Los Lunas, NM
-87032:Mc Intosh, NM
+87032:McIntosh, NM
 87034:Grants, NM
 87035:Moriarty, NM
 87036:Mountainair, NM
@@ -37777,7 +37777,7 @@
 88255:Loco Hills, NM
 88256:Loving, NM
 88260:Lovington, NM
-88262:Mc Donald, NM
+88262:McDonald, NM
 88263:Malaga, NM
 88264:Maljamar, NM
 88265:Monument, NM
@@ -37833,7 +37833,7 @@
 88423:Glenrio, NM
 88424:Grenville, NM
 88426:Logan, NM
-88427:Mc Alister, NM
+88427:McAlister, NM
 88429:Mount Dora, NM
 88430:Nara Visa, NM
 88431:Newkirk, NM
