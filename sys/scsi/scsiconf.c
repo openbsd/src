@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.248 2022/03/24 00:30:51 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.249 2022/03/28 15:47:11 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -850,7 +850,16 @@ scsi_add_link(struct scsi_link *link)
 void
 scsi_remove_link(struct scsi_link *link)
 {
-	SLIST_REMOVE(&link->bus->sc_link_list, link, scsi_link, bus_list);
+	struct scsibus_softc	*sb = link->bus;
+	struct scsi_link	*elm, *tmp;
+
+	SLIST_FOREACH_SAFE(elm, &sb->sc_link_list, bus_list, tmp) {
+		if (elm == link) {
+			SLIST_REMOVE(&sb->sc_link_list, elm, scsi_link,
+			    bus_list);
+			break;
+		}
+	}
 }
 
 void
