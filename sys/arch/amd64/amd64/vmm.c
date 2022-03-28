@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.303 2022/01/29 19:23:02 guenther Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.304 2022/03/28 00:22:20 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <sys/user.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
+#include <sys/refcnt.h>
 #include <sys/rwlock.h>
 #include <sys/pledge.h>
 #include <sys/memrange.h>
@@ -88,6 +89,12 @@ SLIST_HEAD(vmlist_head, vm);
 struct vmm_softc {
 	struct device		sc_dev;
 
+	/* Suspend/Resume Synchronization */
+	struct refcnt		sc_refcnt;
+	volatile unsigned int	sc_status;
+#define VMM_SUSPENDED		(unsigned int) 0
+#define VMM_ACTIVE		(unsigned int) 1
+
 	/* Capabilities */
 	uint32_t		nr_vmx_cpus;
 	uint32_t		nr_svm_cpus;
@@ -115,9 +122,11 @@ void vmx_dump_vmcs_field(uint16_t, const char *);
 int vmm_enabled(void);
 int vmm_probe(struct device *, void *, void *);
 void vmm_attach(struct device *, struct device *, void *);
+int vmm_activate(struct device *, int);
 int vmmopen(dev_t, int, int, struct proc *);
 int vmmioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int vmmclose(dev_t, int, int, struct proc *);
+int vmm_quiesce_vmx(void);
 int vmm_start(void);
 int vmm_stop(void);
 size_t vm_create_check_mem_ranges(struct vm_create_params *);
@@ -264,7 +273,7 @@ struct cfdriver vmm_cd = {
 };
 
 const struct cfattach vmm_ca = {
-	sizeof(struct vmm_softc), vmm_probe, vmm_attach, NULL, NULL
+	sizeof(struct vmm_softc), vmm_probe, vmm_attach, NULL, vmm_activate
 };
 
 /*
@@ -367,6 +376,11 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
+	sc->sc_status = VMM_ACTIVE;
+
+	refcnt_init(&sc->sc_refcnt);
+	refcnt_rele(&sc->sc_refcnt);
+
 	sc->nr_vmx_cpus = 0;
 	sc->nr_svm_cpus = 0;
 	sc->nr_rvi_cpus = 0;
@@ -441,6 +455,137 @@ vmm_attach(struct device *parent, struct device *self, void *aux)
 }
 
 /*
+ * vmm_quiesce_vmx
+ *
+ * Prepare the host for suspend by flushing all VMCS states.
+ */
+int
+vmm_quiesce_vmx(void)
+{
+	struct vm		*vm;
+	struct vcpu		*vcpu;
+	int			 err;
+
+	/*
+	 * We should be only called from a quiescing device state so we
+	 * don't expect to sleep here. If we can't get all our locks,
+	 * something is wrong.
+	 */
+	if ((err = rw_enter(&vmm_softc->vm_lock, RW_WRITE | RW_NOSLEEP)))
+		return (err);
+
+	/* Iterate over each vm... */
+	SLIST_FOREACH(vm, &vmm_softc->vm_list, vm_link) {
+		if ((err = rw_enter(&vm->vm_vcpu_lock, RW_READ | RW_NOSLEEP)))
+			break;
+
+		/* Iterate over each vcpu... */
+		SLIST_FOREACH(vcpu, &vm->vm_vcpu_list, vc_vcpu_link) {
+			err = rw_enter(&vcpu->vc_lock, RW_WRITE | RW_NOSLEEP);
+			if (err)
+				break;
+
+			/* We can skip unlaunched VMCS. Nothing to flush. */
+			if (atomic_load_int(&vcpu->vc_vmx_vmcs_state)
+			    != VMCS_LAUNCHED) {
+				DPRINTF("%s: skipping vcpu %d for vm %d\n",
+				    __func__, vcpu->vc_id, vm->vm_id);
+				rw_exit_write(&vcpu->vc_lock);
+				continue;
+			}
+
+			if (vcpu->vc_last_pcpu != curcpu()) {
+				/* Remote cpu vmclear via ipi. */
+				err = vmx_remote_vmclear(vcpu->vc_last_pcpu,
+				    vcpu);
+				if (err)
+					printf("%s: failed to remote vmclear "
+					    "vcpu %d of vm %d\n", __func__,
+					    vcpu->vc_id, vm->vm_id);
+			} else {
+				/* Local cpu vmclear instruction. */
+				if ((err = vmclear(&vcpu->vc_control_pa)))
+					printf("%s: failed to locally vmclear "
+					    "vcpu %d of vm %d\n", __func__,
+					    vcpu->vc_id, vm->vm_id);
+				atomic_swap_uint(&vcpu->vc_vmx_vmcs_state,
+				    VMCS_CLEARED);
+			}
+
+			rw_exit_write(&vcpu->vc_lock);
+			if (err)
+				break;
+			DPRINTF("%s: cleared vcpu %d for vm %d\n", __func__,
+			    vcpu->vc_id, vm->vm_id);
+		}
+		rw_exit_read(&vm->vm_vcpu_lock);
+		if (err)
+			break;
+	}
+	rw_exit_write(&vmm_softc->vm_lock);
+
+	if (err)
+		return (err);
+	return (0);
+}
+
+/*
+ * vmm_activate
+ */
+int
+vmm_activate(struct device *self, int act)
+{
+	struct cpu_info		*ci = curcpu();
+	unsigned int		 old_state;
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		/* Block device users as we're suspending operation. */
+		old_state = atomic_cas_uint(&vmm_softc->sc_status, VMM_ACTIVE,
+		    VMM_SUSPENDED);
+		if (old_state != VMM_ACTIVE)
+			DPRINTF("%s: invalid device state on quiesce (%d)\n",
+			    __func__, old_state);
+
+		/* Wait for any device users to finish. */
+		while (refcnt_read(&vmm_softc->sc_refcnt) > 0)
+			tsleep_nsec(&vmm_softc, PPAUSE, "vmm", MSEC_TO_NSEC(1));
+
+		/* If we're not in vmm mode, nothing to do. */
+		if ((ci->ci_flags & CPUF_VMM) == 0)
+			break;
+
+		/* Intel systems need extra steps to sync vcpu state. */
+		if (vmm_softc->mode == VMM_MODE_EPT ||
+		    vmm_softc->mode == VMM_MODE_VMX)
+			if (vmm_quiesce_vmx())
+				DPRINTF("%s: vmx quiesce failed\n", __func__);
+
+		/* Stop virtualization mode on all cpus. */
+		vmm_stop();
+		break;
+
+	case DVACT_WAKEUP:
+		/* Restart virtualization mode on all cpu's. */
+		if (vmm_softc->vm_ct > 0)
+			vmm_start();
+
+		/* Set the device back to active. */
+		old_state = atomic_cas_uint(&vmm_softc->sc_status,
+		    VMM_SUSPENDED, VMM_ACTIVE);
+		if (old_state != VMM_SUSPENDED)
+			DPRINTF("%s: invalid device state on wakeup (%d)\n",
+			    __func__, old_state);
+
+		/* Notify any waiting device users. */
+		wakeup(&vmm_softc);
+		break;
+	}
+
+	return (0);
+}
+
+/*
  * vmmopen
  *
  * Called during open of /dev/vmm.
@@ -479,6 +624,22 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	int ret;
 
 	KERNEL_UNLOCK();
+
+	refcnt_take(&vmm_softc->sc_refcnt);
+	while (atomic_load_int(&vmm_softc->sc_status) != VMM_ACTIVE) {
+		refcnt_rele(&vmm_softc->sc_refcnt);
+		/* Wait for the signal that we're running again. */
+		ret = tsleep_nsec(&vmm_softc, PWAIT | PCATCH, "vmm",
+		    MSEC_TO_NSEC(1));
+		if (ret != ERESTART && ret != EINTR && ret != EWOULDBLOCK
+		    && ret != 0) {
+			printf("%s: unhandled wakeup (%d) for device\n",
+			    __func__, ret);
+			ret = EBUSY;
+			goto out;
+		}
+		refcnt_take(&vmm_softc->sc_refcnt);
+	}
 
 	switch (cmd) {
 	case VMM_IOC_CREATE:
@@ -524,6 +685,8 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		ret = ENOTTY;
 	}
 
+	refcnt_rele(&vmm_softc->sc_refcnt);
+out:
 	KERNEL_LOCK();
 
 	return (ret);
