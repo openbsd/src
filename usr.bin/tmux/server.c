@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.199 2022/03/25 06:14:42 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.200 2022/03/28 07:40:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -230,8 +230,10 @@ server_start(struct tmuxproc *client, int flags, struct event_base *base,
 		if (c != NULL) {
 			c->exit_message = cause;
 			c->flags |= CLIENT_EXIT;
-		} else
-			free(cause);
+		} else {
+			fprintf(stderr, "%s\n", cause);
+			exit(1);
+		}
 	}
 
 	evtimer_set(&server_ev_tidy, server_tidy_event, NULL);
