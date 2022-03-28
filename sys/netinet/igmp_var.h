@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp_var.h,v 1.14 2020/08/17 16:25:34 gnezdo Exp $	*/
+/*	$OpenBSD: igmp_var.h,v 1.15 2022/03/28 16:31:26 bluhm Exp $	*/
 /*	$NetBSD: igmp_var.h,v 1.9 1996/02/13 23:41:31 christos Exp $	*/
 
 /*
@@ -107,8 +107,8 @@ igmpstat_inc(enum igmpstat_counters c)
 
 void	igmp_init(void);
 int	igmp_input(struct mbuf **, int *, int, int);
-void	igmp_joingroup(struct in_multi *);
-void	igmp_leavegroup(struct in_multi *);
+void	igmp_joingroup(struct in_multi *, struct ifnet *);
+void	igmp_leavegroup(struct in_multi *, struct ifnet *);
 void	igmp_fasttimo(void);
 void	igmp_slowtimo(void);
 int	igmp_sysctl(int *, u_int, void *, size_t *, void *, size_t);

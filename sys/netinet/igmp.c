@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.77 2021/12/15 15:58:01 bluhm Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.78 2022/03/28 16:31:26 bluhm Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -483,17 +483,14 @@ igmp_input_if(struct ifnet *ifp, struct mbuf **mp, int *offp, int proto, int af)
 }
 
 void
-igmp_joingroup(struct in_multi *inm)
+igmp_joingroup(struct in_multi *inm, struct ifnet *ifp)
 {
-	struct ifnet* ifp;
 	int i;
-
-	ifp = if_get(inm->inm_ifidx);
 
 	inm->inm_state = IGMP_IDLE_MEMBER;
 
 	if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
-	    ifp && (ifp->if_flags & IFF_LOOPBACK) == 0) {
+	    (ifp->if_flags & IFF_LOOPBACK) == 0) {
 		i = rti_fill(inm);
 		igmp_sendpkt(ifp, inm, i, 0);
 		inm->inm_state = IGMP_DELAYING_MEMBER;
@@ -502,22 +499,16 @@ igmp_joingroup(struct in_multi *inm)
 		igmp_timers_are_running = 1;
 	} else
 		inm->inm_timer = 0;
-
-	if_put(ifp);
 }
 
 void
-igmp_leavegroup(struct in_multi *inm)
+igmp_leavegroup(struct in_multi *inm, struct ifnet *ifp)
 {
-	struct ifnet* ifp;
-
-	ifp = if_get(inm->inm_ifidx);
-
 	switch (inm->inm_state) {
 	case IGMP_DELAYING_MEMBER:
 	case IGMP_IDLE_MEMBER:
 		if (!IN_LOCAL_GROUP(inm->inm_addr.s_addr) &&
-		    ifp && (ifp->if_flags & IFF_LOOPBACK) == 0)
+		    (ifp->if_flags & IFF_LOOPBACK) == 0)
 			if (inm->inm_rti->rti_type != IGMP_v1_ROUTER)
 				igmp_sendpkt(ifp, inm,
 				    IGMP_HOST_LEAVE_MESSAGE,
@@ -528,7 +519,6 @@ igmp_leavegroup(struct in_multi *inm)
 	case IGMP_SLEEPING_MEMBER:
 		break;
 	}
-	if_put(ifp);
 }
 
 void

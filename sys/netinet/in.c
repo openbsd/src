@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.172 2022/03/04 21:09:03 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.173 2022/03/28 16:31:26 bluhm Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -891,7 +891,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		/*
 		 * Let IGMP know that we have joined a new IP multicast group.
 		 */
-		igmp_joingroup(inm);
+		igmp_joingroup(inm, ifp);
 	}
 
 	return (inm);
@@ -908,35 +908,34 @@ in_delmulti(struct in_multi *inm)
 
 	NET_ASSERT_LOCKED();
 
-	if (--inm->inm_refcnt == 0) {
+	if (--inm->inm_refcnt != 0)
+		return;
+
+	ifp = if_get(inm->inm_ifidx);
+	if (ifp != NULL) {
 		/*
 		 * No remaining claims to this record; let IGMP know that
 		 * we are leaving the multicast group.
 		 */
-		igmp_leavegroup(inm);
-		ifp = if_get(inm->inm_ifidx);
+		igmp_leavegroup(inm, ifp);
 
 		/*
 		 * Notify the network driver to update its multicast
 		 * reception filter.
 		 */
-		if (ifp != NULL) {
-			memset(&ifr, 0, sizeof(ifr));
-			satosin(&ifr.ifr_addr)->sin_len =
-			    sizeof(struct sockaddr_in);
-			satosin(&ifr.ifr_addr)->sin_family = AF_INET;
-			satosin(&ifr.ifr_addr)->sin_addr = inm->inm_addr;
-			KERNEL_LOCK();
-			(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
-			KERNEL_UNLOCK();
+		memset(&ifr, 0, sizeof(ifr));
+		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
+		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
+		satosin(&ifr.ifr_addr)->sin_addr = inm->inm_addr;
+		KERNEL_LOCK();
+		(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (caddr_t)&ifr);
+		KERNEL_UNLOCK();
 
-			TAILQ_REMOVE(&ifp->if_maddrlist, &inm->inm_ifma,
-			    ifma_list);
-		}
-		if_put(ifp);
-
-		free(inm, M_IPMADDR, sizeof(*inm));
+		TAILQ_REMOVE(&ifp->if_maddrlist, &inm->inm_ifma, ifma_list);
 	}
+	if_put(ifp);
+
+	free(inm, M_IPMADDR, sizeof(*inm));
 }
 
 /*
