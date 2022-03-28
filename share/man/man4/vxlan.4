@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vxlan.4,v 1.16 2022/03/09 12:19:25 jsg Exp $
+.\"	$OpenBSD: vxlan.4,v 1.17 2022/03/28 02:54:33 dlg Exp $
 .\"
 .\" Copyright (c) 2013 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 9 2022 $
+.Dd $Mdocdate: March 28 2022 $
 .Dt VXLAN 4
 .Os
 .Sh NAME
@@ -165,7 +165,9 @@ Create a point-to-point tunnel using Virtual Network Identifier 5:
 .Pp
 The following examples creates a learning overlay network:
 .Bd -literal -offset indent
-# ifconfig vxlan0 tunnel 192.168.1.100 239.1.1.100 vnetid 7395
+# ifconfig vxlan0 tunnel 192.168.1.100 239.1.1.100
+# ifconfig vxlan0 parent ix0
+# ifconfig vxlan0 vnetid 7395
 # ifconfig vxlan0 10.1.2.100/24
 .Ed
 .Pp
