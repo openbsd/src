@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.16 2021/10/31 16:47:27 tb Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.17 2022/03/28 10:56:26 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -88,7 +88,6 @@ int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
     const char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
 int alg_print(BIO *x, const X509_ALGOR *alg);
-int cert_load(BIO *in, STACK_OF(X509) *sk);
 static int set_pbe(BIO *err, int *ppbe, const char *str);
 
 static struct {
@@ -1004,23 +1003,6 @@ alg_print(BIO *x, const X509_ALGOR *alg)
 	    ASN1_INTEGER_get(pbe->iter));
 	PBEPARAM_free(pbe);
 	return 1;
-}
-
-/* Load all certificates from a given file */
-
-int
-cert_load(BIO *in, STACK_OF(X509) *sk)
-{
-	int ret;
-	X509 *cert;
-	ret = 0;
-	while ((cert = PEM_read_bio_X509(in, NULL, NULL, NULL))) {
-		ret = 1;
-		sk_X509_push(sk, cert);
-	}
-	if (ret)
-		ERR_clear_error();
-	return ret;
 }
 
 /* Generalised attribute print: handle PKCS#8 and bag attributes */
