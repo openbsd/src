@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.14 2022/03/25 08:19:04 claudio Exp $ */
+/*	$OpenBSD: cms.c,v 1.15 2022/03/28 08:19:15 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -149,7 +149,7 @@ cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
 		    "signed attribute", fn);
 		goto out;
 	}
-	if (CMS_unsigned_get_attr_count(si) > 0) {
+	if (CMS_unsigned_get_attr_count(si) != -1) {
 		cryptowarnx("%s: RFC 6488: CMS has unsignedAttrs", fn);
 		goto out;
 	}
