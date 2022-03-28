@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.60 2022/02/13 20:02:30 otto Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.61 2022/03/28 02:58:06 dlg Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -3230,7 +3230,7 @@ gen_pf_ifname(char *ifname)
 		    len - 1);
 		/* NOTREACHED */
 	}
-	b0 = gen_bcmp(off, strlen(ifname), ifname);
+	b0 = gen_bcmp(off, strlen(ifname) + 1, ifname);
 	return (b0);
 }
 
