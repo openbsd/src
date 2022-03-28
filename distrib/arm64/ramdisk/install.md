@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.29 2022/03/22 15:38:27 kettenis Exp $
+#	$OpenBSD: install.md,v 1.30 2022/03/28 18:53:40 kettenis Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -190,8 +190,13 @@ md_congrats() {
 md_consoleinfo() {
 	local _fw
 
-	CTTY=console
 	DEFCONS=y
+	case $(scan_dmesg '/^\([^ ]*\).*: console.*std.*$/s//\1/p') in
+	wsdisplay0)
+		CTTY=ttyC0;;
+	*)
+		CTTY=console;;
+	esac
 	case $CSPEED in
 	9600|19200|38400|57600|115200|1500000)
 		;;
