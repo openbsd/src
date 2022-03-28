@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.304 2022/03/28 00:22:20 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.305 2022/03/28 06:28:47 tb Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -494,6 +494,7 @@ vmm_quiesce_vmx(void)
 				continue;
 			}
 
+#ifdef MULTIPROCESSOR
 			if (vcpu->vc_last_pcpu != curcpu()) {
 				/* Remote cpu vmclear via ipi. */
 				err = vmx_remote_vmclear(vcpu->vc_last_pcpu,
@@ -502,7 +503,9 @@ vmm_quiesce_vmx(void)
 					printf("%s: failed to remote vmclear "
 					    "vcpu %d of vm %d\n", __func__,
 					    vcpu->vc_id, vm->vm_id);
-			} else {
+			} else
+#endif
+			{
 				/* Local cpu vmclear instruction. */
 				if ((err = vmclear(&vcpu->vc_control_pa)))
 					printf("%s: failed to locally vmclear "
