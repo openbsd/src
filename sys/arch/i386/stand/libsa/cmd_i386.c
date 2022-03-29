@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.36 2016/06/10 18:36:06 jcs Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.37 2022/03/29 13:57:53 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -119,7 +119,7 @@ Xboot(void)
 	dev += (cmd.argv[1][2] - '0');
 	part = (cmd.argv[1][3] - 'a');
 
-	if (part > 0)
+	if (part >= 0)
 		printf("[%x,%d]\n", dev, part);
 	else
 		printf("[%x]\n", dev);
@@ -131,7 +131,7 @@ Xboot(void)
 		goto bad;
 
 	/* Frob boot flag in buffer from HD */
-	if ((dev & 0x80) && (part > 0)){
+	if ((dev & 0x80) && (part >= 0)) {
 		int i, j;
 
 		for (i = 0, j = DOSPARTOFF; i < 4; i++, j += 16)
