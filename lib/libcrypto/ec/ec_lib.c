@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.43 2022/03/29 13:48:40 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.44 2022/03/29 14:03:12 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -384,6 +384,12 @@ EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
 			return 0;
 	} else if (!ec_guess_cofactor(group))
 		return 0;
+
+	/* Use Hasse's theorem to bound the cofactor. */
+	if (BN_num_bits(&group->cofactor) > BN_num_bits(&group->field) + 1) {
+		ECerror(EC_R_INVALID_GROUP_ORDER);
+		return 0;
+	}
 
 	return 1;
 }
