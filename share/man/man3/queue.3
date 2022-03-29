@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.69 2022/03/29 14:27:59 naddy Exp $
+.\"	$OpenBSD: queue.3,v 1.70 2022/03/29 18:15:52 naddy Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -758,7 +758,7 @@ and
 macros can be used to traverse the queue.
 The
 .Fn SIMPLEQ_FOREACH
-is used for queue traversal:
+macro is used for queue traversal:
 .Bd -literal -offset indent
 SIMPLEQ_FOREACH(np, head, FIELDNAME)
 .Ed
@@ -913,7 +913,7 @@ as it does not actually traverse
 .Pp
 The
 .Fn STAILQ_FOREACH
-is used for queue traversal:
+macro is used for queue traversal:
 .Bd -literal -offset indent
 STAILQ_FOREACH(np, head, FIELDNAME)
 .Ed

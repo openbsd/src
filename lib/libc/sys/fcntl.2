@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fcntl.2,v 1.33 2019/09/06 08:39:27 asou Exp $
+.\"	$OpenBSD: fcntl.2,v 1.34 2022/03/29 18:15:52 naddy Exp $
 .\"	$NetBSD: fcntl.2,v 1.6 1995/02/27 12:32:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd $Mdocdate: September 6 2019 $
+.Dd $Mdocdate: March 29 2022 $
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Sh DESCRIPTION
 The
 .Fn fcntl
-provides control over the properties of a file that is already open.
+system call provides control over the properties of a file that is already open.
 The argument
 .Fa fd
 is a descriptor to be operated on by

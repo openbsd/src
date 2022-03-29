@@ -1,4 +1,4 @@
-.\"	$OpenBSD: posix_spawn_file_actions_addopen.3,v 1.8 2014/11/30 02:41:43 schwarze Exp $
+.\"	$OpenBSD: posix_spawn_file_actions_addopen.3,v 1.9 2022/03/29 18:15:52 naddy Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 30 2014 $
+.Dd $Mdocdate: March 29 2022 $
 .Dt POSIX_SPAWN_FILE_ACTIONS_ADDOPEN 3
 .Os
 .Sh NAME
@@ -70,7 +70,7 @@ equals
 .It
 The
 .Fn posix_spawn_file_actions_addopen
-adds an action that causes
+function adds an action that causes
 .Bd -literal -offset indent
 open(path, oflag, mode);
 .Ed

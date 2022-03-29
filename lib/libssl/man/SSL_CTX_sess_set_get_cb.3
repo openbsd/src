@@ -1,4 +1,4 @@
-.\"	$OpenBSD: SSL_CTX_sess_set_get_cb.3,v 1.6 2018/04/25 14:07:57 schwarze Exp $
+.\"	$OpenBSD: SSL_CTX_sess_set_get_cb.3,v 1.7 2022/03/29 18:15:52 naddy Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Lutz Jaenicke <jaenicke@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 25 2018 $
+.Dd $Mdocdate: March 29 2022 $
 .Dt SSL_CTX_SESS_SET_GET_CB 3
 .Os
 .Sh NAME
@@ -151,7 +151,7 @@ caching is enabled (see
 .Xr SSL_CTX_set_session_cache_mode 3 ) .
 The
 .Fn new_session_cb
-is passed the
+function is passed the
 .Fa ssl
 connection and the ssl session
 .Fa sess .
@@ -159,7 +159,8 @@ If the callback returns 0, the session will be immediately removed again.
 .Pp
 The
 .Fn remove_session_cb
-is called whenever the SSL engine removes a session from the internal cache.
+function is called whenever the SSL engine removes a session from the
+internal cache.
 This happens when the session is removed because it is expired or when a
 connection was not shut down cleanly.
 It also happens for all sessions in the internal session cache when
@@ -184,7 +185,7 @@ The
 function is always called, also when session caching was disabled.
 The
 .Fn get_session_cb
-is passed the
+function is passed the
 .Fa ssl
 connection, the session id of length
 .Fa length

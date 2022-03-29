@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: rand.3,v 1.20 2021/02/12 17:03:51 deraadt Exp $
+.\"	$OpenBSD: rand.3,v 1.21 2022/03/29 18:15:52 naddy Exp $
 .\"
-.Dd $Mdocdate: February 12 2021 $
+.Dd $Mdocdate: March 29 2022 $
 .Dt RAND 3
 .Os
 .Sh NAME
@@ -94,7 +94,7 @@ was called, the result will be computed using the deterministic algorithm.
 .Pp
 The
 .Fn rand_r
-is a thread-safe version of
+function is a thread-safe version of
 .Fn rand .
 Storage for the seed must be provided through the
 .Fa seed

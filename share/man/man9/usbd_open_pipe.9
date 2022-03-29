@@ -1,4 +1,4 @@
-.\" $OpenBSD: usbd_open_pipe.9,v 1.4 2016/06/27 23:38:01 jmatthew Exp $
+.\" $OpenBSD: usbd_open_pipe.9,v 1.5 2022/03/29 18:15:52 naddy Exp $
 .\"
 .\" Copyright (c) 2015 Sean Levy <attila@stalphonsos.com>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 27 2016 $
+.Dd $Mdocdate: March 29 2022 $
 .Dt USBD_OPEN_PIPE 9
 .Os
 .Sh NAME
@@ -62,7 +62,7 @@ should be stored if the call is successful.
 .Pp
 The
 .Fn usbd_open_pipe_intr
-takes the following arguments:
+function takes the following arguments:
 .Bl -tag -width callback
 .It Fa iface
 The USB interface for which the pipe is to be created.

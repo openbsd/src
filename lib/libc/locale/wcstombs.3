@@ -1,4 +1,4 @@
-.\" $OpenBSD: wcstombs.3,v 1.7 2015/03/22 17:52:31 stsp Exp $
+.\" $OpenBSD: wcstombs.3,v 1.8 2022/03/29 18:15:52 naddy Exp $
 .\" $NetBSD: wcstombs.3,v 1.5 2003/09/08 17:54:32 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2015 $
+.Dd $Mdocdate: March 29 2022 $
 .Dt WCSTOMBS 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -70,8 +70,8 @@ There are special cases:
 .It s == NULL
 The
 .Fn wcstombs
-returns the number of bytes to store the whole multibyte character string
-corresponding to the wide-character string pointed to by
+function returns the number of bytes to store the whole multibyte
+character string corresponding to the wide-character string pointed to by
 .Fa pwcs .
 In this case,
 .Fa n

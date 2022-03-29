@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ieee80211_input.9,v 1.4 2013/07/17 20:21:53 schwarze Exp $
+.\"	$OpenBSD: ieee80211_input.9,v 1.5 2022/03/29 18:15:52 naddy Exp $
 .\"
 .\" Copyright (c) 2004 Bruce M. Simpson <bms@spc.org>
 .\" Copyright (c) 2004 Darron Broad <darron@kewl.org>
@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: src/share/man/man9/ieee80211_input.9,v 1.2 2004/07/07 12:59:39 ru Exp $
-.\" $Id: ieee80211_input.9,v 1.4 2013/07/17 20:21:53 schwarze Exp $
+.\" $Id: ieee80211_input.9,v 1.5 2022/03/29 18:15:52 naddy Exp $
 .\"
-.Dd $Mdocdate: July 17 2013 $
+.Dd $Mdocdate: March 29 2022 $
 .Dt IEEE80211_INPUT 9
 .Os
 .Sh NAME
@@ -90,7 +90,7 @@ It is typically called from within
 .\"
 The
 .Fn ieee80211_recv_mgmt
-performs input processing for 802.11 management frames.
+function performs input processing for 802.11 management frames.
 It is typically called from within
 .Fn ieee80211_input .
 .\"

@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ether_aton.3,v 1.1 2019/08/30 18:33:17 deraadt Exp $
+.\"	$OpenBSD: ether_aton.3,v 1.2 2022/03/29 18:15:52 naddy Exp $
 .\"
 .\" Written by roland@frob.com.  Public domain.
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: March 29 2022 $
 .Dt ETHER_ATON 3
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@ by colons.
 It returns a pointer to a static buffer that is reused for each call.
 The
 .Fn ether_aton
-converts an
+function converts an
 .Tn ASCII
 string of the same form and to a structure
 containing the 6 octets of the address.
