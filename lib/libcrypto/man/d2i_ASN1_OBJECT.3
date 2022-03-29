@@ -1,7 +1,6 @@
-.\"	$OpenBSD: d2i_ASN1_OBJECT.3,v 1.11 2021/12/08 13:21:04 schwarze Exp $
-.\"	OpenSSL 05ea606a May 20 20:52:46 2016 -0400
+.\" $OpenBSD: d2i_ASN1_OBJECT.3,v 1.12 2022/03/29 17:41:20 schwarze Exp $
 .\"
-.\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2017, 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 8 2021 $
+.Dd $Mdocdate: March 29 2022 $
 .Dt D2I_ASN1_OBJECT 3
 .Os
 .Sh NAME
@@ -42,32 +41,36 @@ These functions decode and encode ASN.1 object identifiers.
 For details about the semantics, examples, caveats, and bugs, see
 .Xr ASN1_item_d2i 3 .
 .Pp
+The LibreSSL implementation of
+.Fn d2i_ASN1_OBJECT
+always calls
+.Xr ASN1_OBJECT_free 3
+if an existing object is passed in via
+.Fa val_out
+and it always creates a new object from scratch.
+Other implementations may attempt to reuse an existing object,
+which is fragile and prone to bugs.
+Consequently, always passing
+.Dv NULL
+for the
+.Fa val_out
+argument is recommended.
+.Pp
 The objects returned from
 .Fn d2i_ASN1_OBJECT
 and the data contained in them are always marked as dynamically
 allocated, so when they are no longer needed,
 .Xr ASN1_OBJECT_free 3
 can be called on them.
-.Pp
-If reusing an existing object is attempted but the
-.Pf * Fa val_out
-passed in points to an object that is not marked as dynamically
-allocated, then the existing object is left untouched and
-.Fn d2i_ASN1_OBJECT
-behaves as if
-.Pf * Fa val_out
-would have been
-.Dv NULL :
-A new object is allocated and a pointer to it is both stored in
-.Pf * Fa val_out
-and returned.
 .Sh RETURN VALUES
 .Fn d2i_ASN1_OBJECT
-returns an
+returns a pointer to the new
 .Vt ASN1_OBJECT
 object or
 .Dv NULL
 if an error occurs.
+With other implementations, it might return a pointer to the reused
+.Vt ASN1_OBJECT .
 .Pp
 .Fn i2d_ASN1_OBJECT
 returns the number of bytes successfully encoded
@@ -101,7 +104,3 @@ on the returned object, and then
 and
 .Xr OBJ_nid2ln 3
 on the result.
-.Sh BUGS
-When reusing a dynamically allocated object that contains dynamically
-allocated names, the old names are not freed and the memory containing
-them is leaked.
