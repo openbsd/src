@@ -1,10 +1,11 @@
-/*	$OpenBSD: kqueue-regress.c,v 1.4 2020/03/08 09:40:52 visa Exp $	*/
+/*	$OpenBSD: kqueue-regress.c,v 1.5 2022/03/29 19:04:19 millert Exp $	*/
 /*
  *	Written by Anton Lindqvist <anton@openbsd.org> 2018 Public Domain
  */
 
 #include <sys/types.h>
 #include <sys/event.h>
+#include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/select.h>
 #include <sys/time.h>
@@ -16,6 +17,7 @@
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "main.h"
@@ -25,6 +27,7 @@ static int do_regress2(void);
 static int do_regress3(void);
 static int do_regress4(void);
 static int do_regress5(void);
+static int do_regress6(void);
 
 static void make_chain(int);
 
@@ -42,6 +45,8 @@ do_regress(int n)
 		return do_regress4();
 	case 5:
 		return do_regress5();
+	case 6:
+		return do_regress6();
 	default:
 		errx(1, "unknown regress test number %d", n);
 	}
@@ -301,4 +306,120 @@ do_regress5(void)
 	assert(pfd[0].revents & POLLIN);
 
 	return 0;
+}
+
+int
+test_regress6(int kq, size_t len)
+{
+	const struct timespec nap_time = { 0, 1 };
+	int i, kstatus, wstatus;
+	struct kevent event;
+	pid_t child, pid;
+	void *addr;
+
+	child = fork();
+	switch (child) {
+	case -1:
+		warn("fork");
+		return -1;
+	case 0:
+		/* fork a bunch of zombies to keep the reaper busy, then exit */
+		signal(SIGCHLD, SIG_IGN);
+		for (i = 0; i < 1000; i++) {
+			if (fork() == 0) {
+				/* Dirty some memory so uvm_exit has work. */
+				addr = mmap(NULL, len, PROT_READ|PROT_WRITE,
+				    MAP_ANON, -1, 0);
+				if (addr == MAP_FAILED)
+					err(1, "mmap");
+				memset(addr, 'A', len);
+				nanosleep(&nap_time, NULL);
+				_exit(2);
+			}
+		}
+		nanosleep(&nap_time, NULL);
+		_exit(1);
+	default:
+		/* parent */
+		break;
+	}
+
+	/* Register NOTE_EXIT and wait for child. */
+	EV_SET(&event, child, EVFILT_PROC, EV_ADD|EV_ONESHOT, NOTE_EXIT, 0,
+	    NULL);
+	if (kevent(kq, &event, 1, &event, 1, NULL) != 1)
+		err(1, "kevent");
+	if (event.flags & EV_ERROR)
+		errx(1, "kevent: %s", strerror(event.data));
+	if (event.ident != child)
+		errx(1, "expected child %d, got %lu", child, event.ident);
+	kstatus = event.data;
+	if (!WIFEXITED(kstatus))
+		errx(1, "child did not exit?");
+
+	pid = waitpid(child, &wstatus, WNOHANG);
+	switch (pid) {
+	case -1:
+		err(1, "waitpid %d", child);
+	case 0:
+		printf("kevent: child %d exited %d\n", child,
+		    WEXITSTATUS(kstatus));
+		printf("waitpid: child %d not ready\n", child);
+		break;
+	default:
+		if (wstatus != kstatus) {
+			/* macOS has a bug where kstatus is 0 */
+			warnx("kevent status 0x%x != waitpid status 0x%x",
+			    kstatus, wstatus);
+		}
+		break;
+	}
+
+	return pid;
+}
+
+/*
+ * Regression test for NOTE_EXIT waitability.
+ */
+static int
+do_regress6(void)
+{
+	int i, kq, page_size, rc;
+	struct rlimit rlim;
+
+	/* Bump process limits since we fork a lot. */
+	if (getrlimit(RLIMIT_NPROC, &rlim) == -1)
+		err(1, "getrlimit(RLIMIT_NPROC)");
+	rlim.rlim_cur = rlim.rlim_max;
+	if (setrlimit(RLIMIT_NPROC, &rlim) == -1)
+		err(1, "setrlimit(RLIMIT_NPROC)");
+
+	kq = kqueue();
+	if (kq == -1)
+		err(1, "kqueue");
+
+	page_size = getpagesize();
+
+	/* This test is inherently racey but fails within a few iterations. */
+	for (i = 0; i < 25; i++) {
+		rc = test_regress6(kq, page_size);
+		switch (rc) {
+		case -1:
+			goto done;
+		case 0:
+			printf("child not ready when NOTE_EXIT received");
+			if (i != 0)
+				printf(" (%d iterations)", i + 1);
+			putchar('\n');
+			goto done;
+		default:
+			/* keep trying */
+			continue;
+		}
+	}
+	printf("child exited as expected when NOTE_EXIT received\n");
+
+done:
+	close(kq);
+	return rc <= 0;
 }
