@@ -1,9 +1,13 @@
-# $OpenBSD: Makefile,v 1.2 2022/03/24 22:11:11 bluhm Exp $
+# $OpenBSD: Makefile,v 1.3 2022/03/29 17:13:11 bluhm Exp $
 
 # compile and run zlib test files from upstream
 # https://github.com/madler/zlib/tree/master/test
 
-PROGS=		example infcover minigzip
+# google chromium has special test for libz bugs
+# https://chromium.googlesource.com/chromium/src/third_party/+/refs/heads/main/zlib/contrib/tests/utils_unittest.cc
+
+PROGS=		example infcover minigzip utils_unittest
+SRCS_utils_unittest =	utils_unittest.cc
 LDADD=		-lz
 DPADD=		${LIBZ}
 CPPFLAGS=	-I${.CURDIR}/../../../lib/libz
@@ -28,6 +32,15 @@ run-${stategy}-level${level}-zero${zero}-rand${rand}: minigzip
 
 .endfor
 .endfor
+.endfor
+
+.for tst in 0 1 2 3 4 5
+
+REGRESS_TARGETS+=	run-utils_unittest-${tst}
+
+run-utils_unittest-${tst}: utils_unittest
+	./utils_unittest ${tst}
+
 .endfor
 
 .include <bsd.regress.mk>
