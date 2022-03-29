@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.42 2022/03/29 13:44:06 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.43 2022/03/29 13:48:40 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -321,10 +321,14 @@ ec_guess_cofactor(EC_GROUP *group)
 		goto err;
 
 	ret = 1;
+
  err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
-	BN_zero(&group->cofactor);
+
+	if (ret != 1)
+		BN_zero(&group->cofactor);
+
 	return ret;
 }
 
