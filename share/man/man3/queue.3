@@ -1,4 +1,4 @@
-.\"	$OpenBSD: queue.3,v 1.68 2020/12/30 13:33:38 millert Exp $
+.\"	$OpenBSD: queue.3,v 1.69 2022/03/29 14:27:59 naddy Exp $
 .\"	$NetBSD: queue.3,v 1.4 1995/07/03 00:25:36 mycroft Exp $
 .\"
 .\" Copyright (c) 1993 The Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd $Mdocdate: December 30 2020 $
+.Dd $Mdocdate: March 29 2022 $
 .Dt SLIST_INIT 3
 .Os
 .Sh NAME
@@ -928,7 +928,7 @@ it is permitted to remove var as well
 as free it from within the loop safely without interfering with the traversal.
 .Pp
 The
-.Fn STAILQ_FIRST
+.Fn STAILQ_FIRST ,
 .Fn STAILQ_NEXT ,
 and
 .Fn STAILQ_LAST
