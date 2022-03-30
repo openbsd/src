@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.138 2022/03/22 10:53:08 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.139 2022/03/30 16:06:32 tb Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -117,12 +117,7 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 		prefixlen = new->pt->prefixlen;
 	}
 
-again:
-	if (new == NULL) {
-		/* withdraw prefix */
-		if ((p = prefix_adjout_get(peer, 0, &addr, prefixlen)) != NULL)
-			prefix_adjout_withdraw(p);
-	} else {
+	while (new != NULL) {
 		need_withdraw = 0;
 		/*
 		 * up_test_update() needs to run before the output filters
@@ -142,10 +137,8 @@ again:
 		 * skip the filters.
 		 */
 		if (need_withdraw &&
-		    !(peer->flags & PEERFLAG_EVALUATE_ALL)) {
-			new = NULL;
-			goto again;
-		}
+		    !(peer->flags & PEERFLAG_EVALUATE_ALL))
+			break;
 
 		rde_filterstate_prep(&state, prefix_aspath(new),
 		    prefix_communities(new), prefix_nexthop(new),
@@ -153,19 +146,19 @@ again:
 		if (rde_filter(rules, peer, prefix_peer(new), &addr,
 		    prefixlen, prefix_vstate(new), &state) == ACTION_DENY) {
 			rde_filterstate_clean(&state);
-			if (peer->flags & PEERFLAG_EVALUATE_ALL)
+			if (peer->flags & PEERFLAG_EVALUATE_ALL) {
 				new = TAILQ_NEXT(new, entry.list.rib);
-			else
-				new = NULL;
-			if (new != NULL && !prefix_eligible(new))
-				new = NULL;
-			goto again;
+				if (new != NULL && prefix_eligible(new))
+					continue;
+			}
+			break;
 		}
 
-		if (need_withdraw) {
-			new = NULL;
-			goto again;
-		}
+		/* check if this was actually a withdraw */
+		if (need_withdraw)
+			break;
+
+		/* from here on we know this is an update */
 
 		up_prep_adjout(peer, &state, addr.aid);
 		prefix_adjout_update(peer, &state, &addr,
@@ -181,7 +174,13 @@ again:
 			rde_update_err(peer, ERR_CEASE,
 			    ERR_CEASE_MAX_SENT_PREFIX, NULL, 0);
 		}
+
+		return;
 	}
+
+	/* withdraw prefix */
+	if ((p = prefix_adjout_get(peer, 0, &addr, prefixlen)) != NULL)
+		prefix_adjout_withdraw(p);
 }
 
 struct rib_entry *rib_add(struct rib *, struct bgpd_addr *, int);
