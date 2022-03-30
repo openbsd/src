@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_pmeth.c,v 1.11 2021/12/12 21:27:38 tb Exp $ */
+/* $OpenBSD: hm_pmeth.c,v 1.12 2022/03/30 07:12:30 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -80,13 +80,9 @@ pkey_hmac_init(EVP_PKEY_CTX *ctx)
 {
 	HMAC_PKEY_CTX *hctx;
 
-	hctx = malloc(sizeof(HMAC_PKEY_CTX));
-	if (!hctx)
+	if ((hctx = calloc(1, sizeof(HMAC_PKEY_CTX))) == NULL)
 		return 0;
-	hctx->md = NULL;
-	hctx->ktmp.data = NULL;
-	hctx->ktmp.length = 0;
-	hctx->ktmp.flags = 0;
+
 	hctx->ktmp.type = V_ASN1_OCTET_STRING;
 	HMAC_CTX_init(&hctx->ctx);
 
