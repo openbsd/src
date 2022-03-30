@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.122 2021/12/21 14:57:28 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.123 2022/03/30 07:05:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1003,7 +1003,7 @@ grid_string_cells(struct grid *gd, u_int px, u_int py, u_int nx,
 
 	gl = grid_peek_line(gd, py);
 	for (xx = px; xx < px + nx; xx++) {
-		if (gl == NULL || xx >= gl->cellsize)
+		if (gl == NULL || xx >= gl->cellused)
 			break;
 		grid_get_cell(gd, xx, py, &gc);
 		if (gc.flags & GRID_FLAG_PADDING)
