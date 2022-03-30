@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.29 2019/09/13 15:47:47 schwarze Exp $
+.\"	$OpenBSD: audio.9,v 1.30 2022/03/30 19:03:20 miod Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 13 2019 $
+.Dd $Mdocdate: March 30 2022 $
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -104,7 +104,7 @@ when the latter calls
 This call is:
 .Bd -literal -offset indent
 struct device *
-audio_attach_mi(struct audio_hw_if *ahwp, void *hdl,
+audio_attach_mi(const struct audio_hw_if *ahwp, void *hdl,
 		struct device *dev);
 .Ed
 .Pp
