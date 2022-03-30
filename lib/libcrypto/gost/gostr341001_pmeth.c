@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_pmeth.c,v 1.15 2022/01/07 09:40:03 tb Exp $ */
+/* $OpenBSD: gostr341001_pmeth.c,v 1.16 2022/03/30 07:17:48 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -175,7 +175,10 @@ pkey_gost01_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 static void
 pkey_gost01_cleanup(EVP_PKEY_CTX *ctx)
 {
-	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
+	struct gost_pmeth_data *data;
+
+	if ((data = EVP_PKEY_CTX_get_data(ctx)) == NULL)
+		return;
 
 	free(data->shared_ukm);
 	free(data);

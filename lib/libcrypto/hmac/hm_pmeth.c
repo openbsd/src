@@ -1,4 +1,4 @@
-/* $OpenBSD: hm_pmeth.c,v 1.12 2022/03/30 07:12:30 tb Exp $ */
+/* $OpenBSD: hm_pmeth.c,v 1.13 2022/03/30 07:17:48 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2007.
  */
@@ -116,7 +116,10 @@ pkey_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 static void
 pkey_hmac_cleanup(EVP_PKEY_CTX *ctx)
 {
-	HMAC_PKEY_CTX *hctx = ctx->data;
+	HMAC_PKEY_CTX *hctx;
+
+	if ((hctx = ctx->data) == NULL)
+		return;
 
 	HMAC_CTX_cleanup(&hctx->ctx);
 	freezero(hctx->ktmp.data, hctx->ktmp.length);
