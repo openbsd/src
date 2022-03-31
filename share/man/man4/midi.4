@@ -1,4 +1,4 @@
-.\" $OpenBSD: midi.4,v 1.30 2022/03/31 17:27:21 naddy Exp $
+.\" $OpenBSD: midi.4,v 1.31 2022/03/31 17:30:05 naddy Exp $
 .\"
 .\" Copyright (c) 2006 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -254,7 +254,7 @@ full and the application may be blocked.
 The other common reason for MIDI data being delayed is the system
 load.
 Processes cannot be preempted while running in kernel mode.
-If there are too much processes running concurrently (especially
+If there are too many processes running concurrently (especially
 if they are running a lot of expensive system calls) then the
 scheduling of a real-time MIDI application may be delayed.
 Even on low-end machines this delay hardly reaches a few

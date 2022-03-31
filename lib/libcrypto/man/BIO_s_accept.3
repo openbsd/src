@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_s_accept.3,v 1.12 2022/03/31 17:27:16 naddy Exp $
+.\"	$OpenBSD: BIO_s_accept.3,v 1.13 2022/03/31 17:30:05 naddy Exp $
 .\"	OpenSSL c03726ca Thu Aug 27 12:28:08 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -220,7 +220,7 @@ will await an incoming connection, or request a retry in non-blocking mode.
 .Sh NOTES
 When an accept BIO is at the end of a chain, it will await an
 incoming connection before processing I/O calls.
-When an accept BIO is not at then end of a chain,
+When an accept BIO is not at the end of a chain,
 it passes I/O calls to the next BIO in the chain.
 .Pp
 When a connection is established, a new socket BIO is created
