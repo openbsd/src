@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdsatest.c,v 1.8 2022/01/12 09:02:34 tb Exp $	*/
+/*	$OpenBSD: ecdsatest.c,v 1.9 2022/03/31 09:36:09 tb Exp $	*/
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -103,9 +103,12 @@ x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
 		goto x962_int_err;
 	/* get the message digest */
-	EVP_DigestInit(md_ctx, EVP_sha1());
-	EVP_DigestUpdate(md_ctx, (const void*)message, 3);
-	EVP_DigestFinal(md_ctx, digest, &dgst_len);
+	if (!EVP_DigestInit(md_ctx, EVP_sha1()))
+		goto x962_int_err;
+	if (!EVP_DigestUpdate(md_ctx, (const void*)message, 3))
+		goto x962_int_err;
+	if (!EVP_DigestFinal(md_ctx, digest, &dgst_len))
+		goto x962_int_err;
 
 	BIO_printf(out, "testing %s: ", OBJ_nid2sn(nid));
 	/* create the key */
