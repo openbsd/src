@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.18 2021/08/28 08:22:48 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.19 2022/03/31 13:04:47 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -259,7 +259,7 @@ ASN1_TIME_adj_internal(ASN1_TIME *s, time_t t, int offset_day, long offset_sec,
 	int allocated = 0;
 	struct tm tm;
 	size_t len;
-	char * p;
+	char *p;
 
 	if (gmtime_r(&t, &tm) == NULL)
 		return (NULL);
@@ -288,8 +288,10 @@ ASN1_TIME_adj_internal(ASN1_TIME *s, time_t t, int offset_day, long offset_sec,
 	}
 
 	if (s == NULL) {
-		if ((s = ASN1_TIME_new()) == NULL)
+		if ((s = ASN1_TIME_new()) == NULL) {
+			free(p);
 			return (NULL);
+		}
 		allocated = 1;
 	}
 
