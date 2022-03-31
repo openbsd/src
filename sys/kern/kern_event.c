@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.185 2022/03/16 16:17:46 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.186 2022/03/31 01:41:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1885,12 +1885,9 @@ knote_fdclose(struct proc *p, int fd)
  * XXX this could be more efficient, doing a single pass down the klist
  */
 void
-knote_processexit(struct proc *p)
+knote_processexit(struct process *pr)
 {
-	struct process *pr = p->p_p;
-
 	KERNEL_ASSERT_LOCKED();
-	KASSERT(p == curproc);
 
 	KNOTE(&pr->ps_klist, NOTE_EXIT);
 

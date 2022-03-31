@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.202 2022/02/14 11:26:05 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.203 2022/03/31 01:41:22 millert Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -318,9 +318,6 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		calcru(&pr->ps_tu, &rup->ru_utime, &rup->ru_stime, NULL);
 		ruadd(rup, &pr->ps_cru);
 
-		/* notify interested parties of our demise and clean up */
-		knote_processexit(p);
-
 		/*
 		 * Notify parent that we're gone.  If we're not going to
 		 * become a zombie, reparent to process 1 (init) so that
@@ -457,12 +454,17 @@ reaper(void *arg)
 			if ((pr->ps_flags & PS_NOZOMBIE) == 0) {
 				/* Process is now a true zombie. */
 				atomic_setbits_int(&pr->ps_flags, PS_ZOMBIE);
-				prsignal(pr->ps_pptr, SIGCHLD);
+			}
 
-				/* Wake up the parent so it can get exit status. */
+			/* Notify listeners of our demise and clean up. */
+			knote_processexit(pr);
+
+			if (pr->ps_flags & PS_ZOMBIE) {
+				/* Post SIGCHLD and wake up parent. */
+				prsignal(pr->ps_pptr, SIGCHLD);
 				wakeup(pr->ps_pptr);
 			} else {
-				/* No one will wait for us. Just zap the process now */
+				/* No one will wait for us, just zap it. */
 				process_zap(pr);
 			}
 		}

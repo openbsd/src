@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.66 2022/02/13 13:03:02 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.67 2022/03/31 01:41:22 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -293,7 +293,7 @@ extern void	kqpoll_done(unsigned int);
 extern void	kqpoll_exit(void);
 extern void	knote(struct klist *list, long hint);
 extern void	knote_fdclose(struct proc *p, int fd);
-extern void	knote_processexit(struct proc *);
+extern void	knote_processexit(struct process *);
 extern void	knote_assign(const struct kevent *, struct knote *);
 extern void	knote_submit(struct knote *, struct kevent *);
 extern void	kqueue_init(void);
