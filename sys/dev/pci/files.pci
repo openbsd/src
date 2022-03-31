@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.358 2022/03/30 00:25:27 jmatthew Exp $
+#	$OpenBSD: files.pci,v 1.359 2022/03/31 21:41:17 jmatthew Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -231,7 +231,7 @@ attach	sili at pci with sili_pci
 file	dev/pci/sili_pci.c		sili_pci
 
 # Aquantia/Atlantic 10-Gigabit Ethernet
-device  aq: ether, ifnet, ifmedia, mii, intrmap
+device  aq: ether, ifnet, ifmedia, mii, intrmap, stoeplitz
 attach  aq at pci
 file    dev/pci/if_aq_pci.c                 aq
 

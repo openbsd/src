@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.13 2022/03/30 00:25:27 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.14 2022/03/31 21:41:17 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -91,6 +91,7 @@
 
 #include <net/if.h>
 #include <net/if_media.h>
+#include <net/toeplitz.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -114,6 +115,8 @@
 
 #define AQ_BAR0 				0x10
 #define AQ_MAXQ 				8
+#define AQ_RSS_KEYSIZE				40
+#define AQ_RSS_REDIR_ENTRIES			12
 
 #define AQ_TXD_NUM 				2048
 #define AQ_RXD_NUM 				2048
@@ -194,6 +197,8 @@
 #define  RX_SYSCONTROL_RESET_DIS		(1 << 29)
 
 #define RX_TCP_RSS_HASH_REG			0x5040
+#define  RX_TCP_RSS_HASH_RPF2			(0xf << 16)
+#define  RX_TCP_RSS_HASH_TYPE			(0xffff)
 
 #define RPF_L2BC_REG				0x5100
 #define  RPF_L2BC_EN				(1 << 0)
@@ -239,6 +244,19 @@
 
 #define RPF_RPB_RX_TC_UPT_REG                   0x54c4
 #define  RPF_RPB_RX_TC_UPT_MASK(i)              (0x00000007 << ((i) * 4))
+
+#define RPF_RSS_KEY_ADDR_REG			0x54d0
+#define  RPF_RSS_KEY_ADDR			0x1f
+#define  RPF_RSS_KEY_WR_EN			(1 << 5)
+#define RPF_RSS_KEY_WR_DATA_REG			0x54d4
+#define RPF_RSS_KEY_RD_DATA_REG			0x54d8
+
+#define RPF_RSS_REDIR_ADDR_REG			0x54e0
+#define  RPF_RSS_REDIR_ADDR			0xf
+#define  RPF_RSS_REDIR_WR_EN			(1 << 4)
+
+#define RPF_RSS_REDIR_WR_DATA_REG		0x54e4
+
 
 #define RPO_HWCSUM_REG				0x5580
 #define  RPO_HWCSUM_L4CSUM_EN			(1 << 0)
@@ -859,6 +877,7 @@ int	aq_fw_version_init(struct aq_softc *);
 int	aq_hw_init_ucp(struct aq_softc *);
 int	aq_fw_downld_dwords(struct aq_softc *, uint32_t, uint32_t *, uint32_t);
 int	aq_get_mac_addr(struct aq_softc *);
+int	aq_init_rss(struct aq_softc *);
 int	aq_hw_reset(struct aq_softc *);
 int	aq_hw_init(struct aq_softc *, int, int);
 void	aq_hw_qos_set(struct aq_softc *);
@@ -1054,6 +1073,9 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 		return;
 
 	if (aq_get_mac_addr(sc))
+		return;
+
+	if (aq_init_rss(sc))
 		return;
 
 	if (aq_hw_init(sc, irqmode, (sc->sc_nqueues > 1)))
@@ -1872,6 +1894,28 @@ aq_hw_init_rx_path(struct aq_softc *sc)
 		   RPF_ETHERTYPE_FILTER_EN, 0);
 	}
 
+	if (sc->sc_nqueues > 1) {
+		uint32_t bits;
+
+		AQ_WRITE_REG_BIT(sc, RPB_RPF_RX_REG, RPB_RPF_RX_TC_MODE, 1);
+		AQ_WRITE_REG_BIT(sc, RPB_RPF_RX_REG, RPB_RPF_RX_FC_MODE, 1);
+
+		switch (sc->sc_nqueues) {
+		case 2:
+			bits = 0x11111111;
+			break;
+		case 4:
+			bits = 0x22222222;	
+			break;
+		case 8:
+			bits = 0x33333333;
+			break;
+		}
+
+		AQ_WRITE_REG(sc, RX_FLR_RSS_CONTROL1_REG,
+		    RX_FLR_RSS_CONTROL1_EN | bits);
+	}
+
 	/* L2 and Multicast filters */
 	for (i = 0; i < AQ_HW_MAC_NUM; i++) {
 		AQ_WRITE_REG_BIT(sc, RPF_L2UC_MSW_REG(i), RPF_L2UC_MSW_EN, 0);
@@ -1895,7 +1939,14 @@ aq_hw_init_rx_path(struct aq_softc *sc)
 		    RPF_VLAN_MODE_UNTAGGED_ACTION, RPF_ACTION_HOST);
 	}
 
-	AQ_WRITE_REG(sc, RX_TCP_RSS_HASH_REG, 0);
+	if (sc->sc_features & FEATURES_RPF2)
+		AQ_WRITE_REG(sc, RX_TCP_RSS_HASH_REG, RX_TCP_RSS_HASH_RPF2);
+	else
+		AQ_WRITE_REG(sc, RX_TCP_RSS_HASH_REG, 0);
+
+	/* we might want to figure out what this magic number does */
+	AQ_WRITE_REG_BIT(sc, RX_TCP_RSS_HASH_REG, RX_TCP_RSS_HASH_TYPE,
+	    0x001e);
 
 	AQ_WRITE_REG_BIT(sc, RPF_L2BC_REG, RPF_L2BC_EN, 1);
 	AQ_WRITE_REG_BIT(sc, RPF_L2BC_REG, RPF_L2BC_ACTION, RPF_ACTION_HOST);
@@ -2065,6 +2116,69 @@ aq_hw_qos_set(struct aq_softc *sc)
 		AQ_WRITE_REG_BIT(sc, RPF_RPB_RX_TC_UPT_REG,
 		    RPF_RPB_RX_TC_UPT_MASK(i_priority), 0);
 	}
+}
+
+int
+aq_init_rss(struct aq_softc *sc)
+{
+	uint32_t rss_key[AQ_RSS_KEYSIZE / sizeof(uint32_t)];
+	uint32_t redir;
+	int bits, queue;
+	int error;
+	int i;
+	
+	if (sc->sc_nqueues == 1)
+		return 0;
+
+	/* rss key is composed of 32 bit registers */
+	stoeplitz_to_key(rss_key, sizeof(rss_key));
+	for (i = 0; i < nitems(rss_key); i++) {
+		AQ_WRITE_REG(sc, RPF_RSS_KEY_WR_DATA_REG, htole32(rss_key[i]));
+		AQ_WRITE_REG_BIT(sc, RPF_RSS_KEY_ADDR_REG, RPF_RSS_KEY_ADDR,
+		    nitems(rss_key) - 1 - i);
+		AQ_WRITE_REG_BIT(sc, RPF_RSS_KEY_ADDR_REG, RPF_RSS_KEY_WR_EN,
+		    1);
+		WAIT_FOR((AQ_READ_REG(sc, RPF_RSS_KEY_ADDR_REG) &
+		    RPF_RSS_KEY_WR_EN) == 0, 1000, 10, &error);
+		if (error != 0) {
+			printf(": timed out setting rss key\n");
+			return error;
+		}
+	}
+
+	/*
+	 * the redirection table has 64 entries, each entry is a 3 bit
+	 * queue number, packed into a 16 bit register, so there are 12
+	 * registers to program.
+	 */
+	bits = 0;
+	redir = 0;
+	queue = 0;
+	for (i = 0; i < AQ_RSS_REDIR_ENTRIES; i++) {
+		while (bits < 16) {
+			redir |= (queue << bits);
+			bits += 3;
+			queue++;
+			if (queue == sc->sc_nqueues)
+				queue = 0;
+		}
+
+		AQ_WRITE_REG(sc, RPF_RSS_REDIR_WR_DATA_REG, htole16(redir));
+		AQ_WRITE_REG_BIT(sc, RPF_RSS_REDIR_ADDR_REG, RPF_RSS_REDIR_ADDR,
+		    i);
+		AQ_WRITE_REG_BIT(sc, RPF_RSS_REDIR_ADDR_REG,
+		    RPF_RSS_REDIR_WR_EN, 1);
+		WAIT_FOR((AQ_READ_REG(sc, RPF_RSS_REDIR_ADDR_REG) &
+		    RPF_RSS_REDIR_WR_EN) == 0, 1000, 10, &error);
+		if (error != 0) {
+			printf(": timed out setting rss table\n");
+			return error;
+		}
+		redir >>= 16;
+		bits -= 16;
+	}
+
+	return 0;
 }
 
 void
@@ -2280,7 +2394,10 @@ aq_rxeof(struct aq_softc *sc, struct aq_rxring *rx)
 
 		pktlen = lemtoh16(&rxd->pkt_len);
 		rxd_type = lemtoh32(&rxd->type);
-		/* rss hash */
+		if ((rxd_type & AQ_RXDESC_TYPE_RSSTYPE) != 0) {
+			mb->m_pkthdr.ph_flowid = lemtoh32(&rxd->rss_hash);
+			mb->m_pkthdr.csum_flags |= M_FLOWID;
+		}
 
 		mb->m_pkthdr.len = 0;
 		mb->m_next = NULL;
