@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.30 2022/03/28 18:53:40 kettenis Exp $
+#	$OpenBSD: install.md,v 1.31 2022/03/31 16:16:09 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ md_consoleinfo() {
 	apple,*)
 		make_dev sd0
 		if mount -o ro /dev/sd0l /mnt2 2>/dev/null; then
-			rm -rf /usr/mdec/rpi
+			rm -rf /usr/mdec/rpi /etc/firmware/brcm /etc/firmware/apple-bwfm
 			if [[ -s /mnt2/vendorfw/firmware.tar ]]; then
 				tar -x -C /etc/firmware \
 				    -f /mnt2/vendorfw/firmware.tar "*$_fw*"
