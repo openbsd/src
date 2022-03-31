@@ -1,4 +1,4 @@
-/*	$OpenBSD: aldap.c,v 1.9 2019/10/24 12:39:26 tb Exp $ */
+/*	$OpenBSD: aldap.c,v 1.10 2022/03/31 09:03:48 martijn Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -580,15 +580,15 @@ int
 aldap_first_attr(struct aldap_message *msg, char **outkey,
     struct aldap_stringset **outvalues)
 {
-	struct ber_element *b, *c;
+	struct ber_element *b;
 	char *key;
 	struct aldap_stringset *ret;
 
 	if (msg->body.search.attrs == NULL)
 		goto fail;
 
-	if (ober_scanf_elements(msg->body.search.attrs, "{s(e)}e",
-	    &key, &b, &c) != 0)
+	if (ober_scanf_elements(msg->body.search.attrs, "{s(e)}",
+	    &key, &b) != 0)
 		goto fail;
 
 	msg->body.search.iter = msg->body.search.attrs->be_next;
@@ -610,7 +610,7 @@ int
 aldap_next_attr(struct aldap_message *msg, char **outkey,
     struct aldap_stringset **outvalues)
 {
-	struct ber_element *a, *b;
+	struct ber_element *a;
 	char *key;
 	struct aldap_stringset *ret;
 
@@ -622,8 +622,7 @@ aldap_next_attr(struct aldap_message *msg, char **outkey,
 	if (ober_get_eoc(msg->body.search.iter) == 0)
 		goto notfound;
 
-	if (ober_scanf_elements(msg->body.search.iter, "{s(e)}e", &key, &a, &b)
-	    != 0)
+	if (ober_scanf_elements(msg->body.search.iter, "{s(e)}", &key, &a) != 0)
 		goto fail;
 
 	msg->body.search.iter = msg->body.search.iter->be_next;
