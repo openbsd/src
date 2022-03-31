@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.47 2020/12/03 22:47:22 jmc Exp $
+.\" $OpenBSD: pppd.8,v 1.48 2022/03/31 17:27:31 naddy Exp $
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\"
 .\" Copyright (c) 1993-2003 Paul Mackerras <paulus@samba.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 3 2020 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt PPPD 8
 .Os
 .Sh NAME
@@ -561,7 +561,7 @@ If you are using a
 .Xr cua 4
 device (as opposed to a
 .Xr tty 4
-device)
+device),
 you should set this option.
 You should not use this option with a dialback setup as it will cause
 the chat script to exit when carrier drops.

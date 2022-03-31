@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcp-options.5,v 1.31 2019/05/08 22:00:55 krw Exp $
+.\"	$OpenBSD: dhcp-options.5,v 1.32 2022/03/31 17:27:29 naddy Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: May 8 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt DHCP-OPTIONS 5
 .Os
 .Sh NAME
@@ -294,7 +294,7 @@ used during DNS name resolution.
 When
 .Xr dhclient 8
 constructs
-.Xr resolv.conf 5
+.Xr resolv.conf 5 ,
 it will use this list of domains in preference to any information
 provided by the
 .Ic domain-name

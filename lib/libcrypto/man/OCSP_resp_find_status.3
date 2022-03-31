@@ -1,4 +1,4 @@
-.\" $OpenBSD: OCSP_resp_find_status.3,v 1.10 2019/08/27 10:00:41 schwarze Exp $
+.\" $OpenBSD: OCSP_resp_find_status.3,v 1.11 2022/03/31 17:27:17 naddy Exp $
 .\" full merge up to: OpenSSL c952780c Jun 21 07:03:34 2016 -0400
 .\" selective merge up to: OpenSSL 1212818e Sep 11 13:22:14 2018 +0100
 .\"
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 27 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt OCSP_RESP_FIND_STATUS 3
 .Os
 .Sh NAME
@@ -295,11 +295,11 @@ or
 .Fn OCSP_single_get0_status .
 If
 .Fa sec
-is non-zero it indicates how many seconds leeway should be allowed in
+is non-zero, it indicates how many seconds leeway should be allowed in
 the check.
 If
 .Fa maxsec
-is positive it indicates the maximum age of
+is positive, it indicates the maximum age of
 .Fa thisupd
 in seconds.
 .Pp

@@ -1,4 +1,4 @@
-.\" $OpenBSD: OCSP_sendreq_new.3,v 1.9 2019/08/27 10:48:41 schwarze Exp $
+.\" $OpenBSD: OCSP_sendreq_new.3,v 1.10 2022/03/31 17:27:17 naddy Exp $
 .\" full merge up to: OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 27 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt OCSP_SENDREQ_NEW 3
 .Os
 .Sh NAME
@@ -159,7 +159,7 @@ should be set to
 .Fn OCSP_sendreq_nbio
 performs non-blocking I/O on the OCSP request context
 .Fa rctx .
-When the operation is complete it returns the response in
+When the operation is complete, it returns the response in
 .Pf * Fa presp .
 If
 .Fn OCSP_sendreq_nbio

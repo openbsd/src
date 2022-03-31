@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaltstack.2,v 1.24 2021/11/21 23:44:55 jan Exp $
+.\"	$OpenBSD: sigaltstack.2,v 1.25 2022/03/31 17:27:16 naddy Exp $
 .\"	$NetBSD: sigaltstack.2,v 1.3 1995/02/27 10:41:52 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sigaltstack.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: November 21 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt SIGALTSTACK 2
 .Os
 .Sh NAME
@@ -136,7 +136,7 @@ Signal stacks may or may not be protected by the hardware and
 are not
 .Dq grown
 automatically as is done for the normal stack.
-If the stack overflows and this space is not protected
+If the stack overflows and this space is not protected,
 unpredictable results may occur.
 .Sh RETURN VALUES
 .Rv -std

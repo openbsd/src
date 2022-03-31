@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.1,v 1.30 2019/01/25 00:19:26 millert Exp $
+.\"	$OpenBSD: mktemp.1,v 1.31 2022/03/31 17:27:25 naddy Exp $
 .\"
 .\" Copyright (c) 1996, 2000, 2001, 2003, 2010, 2013
 .\"	Todd C. Miller <millert@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt MKTEMP 1
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@ to it, for example
 .Pa /tmp/tfile.XXXXXXXXXX .
 If no
 .Ar template
-is specified a default of
+is specified, a default of
 .Pa tmp.XXXXXXXXXX
 is used and the
 .Fl t

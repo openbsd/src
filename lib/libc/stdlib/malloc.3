@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.128 2021/04/09 06:04:15 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.129 2022/03/31 17:27:16 naddy Exp $
 .\"
-.Dd $Mdocdate: April 9 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -423,7 +423,7 @@ and multiplying
 .Fa oldnmemb
 and
 .Fa size
-results in integer overflow
+results in integer overflow,
 .Fn recallocarray
 returns
 .Dv NULL
@@ -610,7 +610,7 @@ Here is a brief description of the error messages and what they mean:
 .It Dq out of memory
 If the
 .Cm X
-option is specified it is an error for the allocation functions
+option is specified, it is an error for the allocation functions
 to return
 .Dv NULL .
 .It Dq bogus pointer (double free?)

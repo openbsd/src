@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_cond_init.3,v 1.11 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_cond_init.3,v 1.12 2022/03/31 17:27:17 naddy Exp $
 .\"
 .\" Copyright (c) 1997 Brian Cully <shmit@kublai.com>
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" $FreeBSD: pthread_cond_init.3,v 1.6 1999/08/28 00:03:03 peter Exp $
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt PTHREAD_COND_INIT 3
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ function creates a new condition variable, with attributes specified with
 If
 .Fa attr
 is
-.Dv NULL
+.Dv NULL ,
 the default attributes are used.
 .Sh RETURN VALUES
 If successful, the

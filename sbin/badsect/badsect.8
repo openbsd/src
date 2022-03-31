@@ -1,4 +1,4 @@
-.\"	$OpenBSD: badsect.8,v 1.17 2007/08/06 19:16:05 sobrado Exp $
+.\"	$OpenBSD: badsect.8,v 1.18 2022/03/31 17:27:19 naddy Exp $
 .\"	$NetBSD: badsect.8,v 1.8 1995/03/18 14:54:27 cgd Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)badsect.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: August 6 2007 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt BADSECT 8
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@ system call,
 creating an illegal file whose first block address is the block containing
 the bad sector, and whose name is the bad sector number.
 When it is discovered by
-.Em fsck
+.Em fsck ,
 it will ask
 .Dq Li "HOLD BAD BLOCK?"
 A positive response will cause

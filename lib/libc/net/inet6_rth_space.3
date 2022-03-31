@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_rth_space.3,v 1.7 2014/06/11 16:59:47 chrisz Exp $
+.\"	$OpenBSD: inet6_rth_space.3,v 1.8 2022/03/31 17:27:16 naddy Exp $
 .\"	$KAME: inet6_rth_space.3,v 1.7 2005/01/05 03:00:44 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 11 2014 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt INET6_RTH_SPACE 3
 .Os
 .\"
@@ -85,7 +85,7 @@ argument and containing the number of addresses specified in the
 .Fa segments
 argument.
 When the type is
-.Dv IPV6_RTHDR_TYPE_0
+.Dv IPV6_RTHDR_TYPE_0 ,
 the number of segments must be from 0 through 127.
 The return value from this function is the number of bytes required to
 store the routing header.

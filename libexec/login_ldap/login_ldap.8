@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_ldap.8,v 1.2 2020/09/12 17:14:23 martijn Exp $
+.\" $OpenBSD: login_ldap.8,v 1.3 2022/03/31 17:27:18 naddy Exp $
 .\" Copyright (c) 2002 Institute for Open Systems Technology Australia (IFOST)
 .\" Copyright (c) 2007 Michael Erdely <merdely@openbsd.org>
 .\" Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
@@ -26,7 +26,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 12 2020 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt LOGIN_LDAP 8
 .Os
 .Sh NAME
@@ -58,7 +58,7 @@ and
 are supported.
 The challenge service is not supported, but it is not an error to specify
 this service.
-If this happens
+If this happens,
 .Nm
 will request the response service.
 .It Fl v
@@ -69,7 +69,7 @@ This option is for compatibility and is ignored.
 searches for the
 .Ar user
 on the LDAP server based on the filter parameters in the configuration file.
-If the user is found it will try to bind to it using the supplied password.
+If the user is found, it will try to bind to it using the supplied password.
 .Pp
 .Nm
 uses the
@@ -78,7 +78,7 @@ uses the
 variable to determine the location of the configuration file.
 If no
 .Ar ldap-conffile
-can be found it will fall back to
+can be found, it will fall back to
 .Pa /etc/login_ldap.conf .
 The configuration file must be owned by root with group auth and permissions
 0640.
@@ -132,15 +132,15 @@ This option can be omitted if the binddn points directly to the user entry.
 DN used by
 .Nm
 to bind to the LDAP server.
-If no basedn is set this is used to bind directly to the user and uses the user
+If no basedn is set, this is used to bind directly to the user and uses the user
 supplied password.
 Use FORMAT FILTERS to specify the username in this case.
 .Pp
-If basedn is set it's used together with bindpw to bind to the LDAP server and
+If basedn is set, it is used together with bindpw to bind to the LDAP server and
 search for the user entry based on filter and scope.
 If
 .Ar binddn
-is omitted and basedn is set an anonymous bind is used to search for the user
+is omitted and basedn is set, an anonymous bind is used to search for the user
 entry.
 .El
 .Pp

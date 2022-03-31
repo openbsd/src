@@ -1,4 +1,4 @@
-.\"     $OpenBSD: intro.4,v 1.45 2014/09/19 12:24:37 schwarze Exp $
+.\"     $OpenBSD: intro.4,v 1.46 2022/03/31 17:27:21 naddy Exp $
 .\"     $NetBSD: intro.4,v 1.10 2003/05/06 07:44:54 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 19 2014 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt INTRO 4 alpha
 .Os
 .Sh NAME
@@ -106,7 +106,7 @@ When the resultant system is booted, the autoconfiguration facilities in
 the system probe for the device and, if found, enable the software support
 for it.
 If a device does not respond at autoconfiguration
-time it is not accessible at any time afterwards.
+time, it is not accessible at any time afterwards.
 To enable a device which did not autoconfigure,
 the system will have to be rebooted.
 .Pp

@@ -30,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.69 2022/03/01 01:22:11 tedu Exp $
+.\" $OpenBSD: login.conf.5,v 1.70 2022/03/31 17:27:23 naddy Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
-.Dd $Mdocdate: March 1 2022 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -220,7 +220,7 @@ utility.
 .\"
 .Pp
 .It nologin Ta file Ta "" Ta
-If the file exists it will be displayed
+If the file exists, it will be displayed
 and the login session will be terminated.
 .\"
 .Pp
@@ -252,7 +252,7 @@ sufficient, an exit code of 1 signals that the password failed the check.
 .It passwordtime Ta time Ta "" Ta
 The lifetime of a password in seconds, reset every time a user
 changes their password.
-When this value is exceeded the user will no longer be able to
+When this value is exceeded, the user will no longer be able to
 login unless the
 .Li password-dead
 option has been specified.
@@ -619,7 +619,7 @@ the value of
 .Li auth
 is used as the list of available authentication styles.
 .Pp
-If the user did not specify an authentication style the first style
+If the user did not specify an authentication style, the first style
 in the list of available styles is used.
 If the user did specify an authentication style and the style is in the
 list of available styles it will be used, otherwise the request is
@@ -801,7 +801,7 @@ statement on file descriptor 3.
 .Pp
 An authentication program must not assume it will be called as root,
 nor must it assume it will not be called as root.
-If it needs special permissions to access files it should be setuid or
+If it needs special permissions to access files, it should be setuid or
 setgid to the appropriate user/group.
 See
 .Xr chmod 1 .
@@ -810,7 +810,7 @@ When an authentication program is called with a service of
 .Li challenge
 it should do one of three things:
 .Pp
-If this style of authentication supports challenge response
+If this style of authentication supports challenge response,
 it should set the internal variable
 .Li challenge
 to be the appropriate challenge for the user.

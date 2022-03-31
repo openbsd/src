@@ -1,7 +1,7 @@
-.\"	$OpenBSD: phantasia.6tbl,v 1.11 2022/02/18 23:17:14 jsg Exp $
+.\"	$OpenBSD: phantasia.6tbl,v 1.12 2022/03/31 17:27:15 naddy Exp $
 .\"	$NetBSD: phantasia.6,v 1.9 2002/09/26 18:32:03 wiz Exp $
 .\"
-.Dd $Mdocdate: February 18 2022 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt PHANTASIA 6
 .Os
 .Sh NAME
@@ -399,7 +399,7 @@ none
 .br
 Used while combating monsters.
 Has a 25% chance of working.
-If it works it hits the monster just enough to kill it.
+If it works, it hits the monster just enough to kill it.
 If it fails, it doesn't hit the monster, and doubles the monster's
 .Em quickness
 and
@@ -478,7 +478,7 @@ and
 .Em brains ,
 and the monster's
 .Em experience .
-If it fails the player is transported instead.
+If it fails, the player is transported instead.
 60% of the time, the monster will drop any treasure it was carrying.
 .It Ic paralyze
 .Em magic level necessary :

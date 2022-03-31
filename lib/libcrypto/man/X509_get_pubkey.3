@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_get_pubkey.3,v 1.12 2021/10/26 18:05:07 tb Exp $
+.\" $OpenBSD: X509_get_pubkey.3,v 1.13 2022/03/31 17:27:17 naddy Exp $
 .\" selective merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 26 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt X509_GET_PUBKEY 3
 .Os
 .Sh NAME
@@ -128,7 +128,7 @@
 .Fn X509_get_pubkey
 attempts to decode the public key for certificate
 .Fa x .
-If successful it returns the public key as an
+If successful, it returns the public key as an
 .Vt EVP_PKEY
 pointer with its reference count incremented: this means the returned
 key must be freed up after use.

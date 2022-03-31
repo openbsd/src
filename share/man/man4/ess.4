@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ess.4,v 1.11 2008/06/26 05:42:06 ray Exp $
+.\"	$OpenBSD: ess.4,v 1.12 2022/03/31 17:27:20 naddy Exp $
 .\"	$NetBSD: ess.4,v 1.6 1999/04/13 20:25:29 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -25,7 +25,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 26 2008 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt ESS 4
 .Os
 .Sh NAME
@@ -57,7 +57,7 @@ The IRQ must be one of 5, 7, 9, 10 (or 15 on the 1887 only).
 The first DRQ channel must be selected from 0, 1, 3.
 The second DRQ channel (used for playback by the full-duplex 1888/1887, ignored
 by the 1788) can additionally be set to 5.
-If both DRQ channels are used they must be different.
+If both DRQ channels are used, they must be different.
 .Pp
 The joystick interface (if enabled) is handled by the
 .Xr joy 4

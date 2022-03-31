@@ -1,4 +1,4 @@
-.\" $OpenBSD: intro.4,v 1.2 2021/05/20 00:58:53 jsg Exp $
+.\" $OpenBSD: intro.4,v 1.3 2022/03/31 17:27:22 naddy Exp $
 .\"
 .\" Copyright (c) 2014 Sylvestre Gallon <syl@openbsd.org>
 .\" Copyright (c) 1983, 1986, 1991 Regents of the University of California.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 20 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt INTRO 4 powerpc64
 .Os
 .Sh NAME
@@ -78,7 +78,7 @@ When the resultant system is booted, the autoconfiguration facilities
 in the system probe for the device and, if found, enable the software
 support for it.
 If a device does not respond at autoconfiguration
-time it is not accessible at any time afterwards.
+time, it is not accessible at any time afterwards.
 To enable a device which did not autoconfigure,
 the system will have to be rebooted.
 .Pp

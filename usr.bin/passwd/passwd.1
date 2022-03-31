@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.47 2021/04/14 13:59:59 millert Exp $
+.\"	$OpenBSD: passwd.1,v 1.48 2022/03/31 17:27:26 naddy Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)passwd.1	6.11 (Berkeley) 7/24/91
 .\"
-.Dd $Mdocdate: April 14 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt PASSWD 1
 .Os
 .Sh NAME
@@ -92,10 +92,10 @@ will keep trying to lock the password file until it succeeds or
 you hit the interrupt character (control-C by default).
 If
 .Nm
-is interrupted while trying to gain the lock the password change will
+is interrupted while trying to gain the lock, the password change will
 be lost.
 .Pp
-If the process holding the lock was prematurely terminated the lock
+If the process holding the lock was prematurely terminated, the lock
 file may be stale and
 .Nm
 will wait forever trying to lock the password file.

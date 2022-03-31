@@ -1,4 +1,4 @@
-.\"	$OpenBSD: srp_enter.9,v 1.15 2017/01/18 13:18:07 dlg Exp $
+.\"	$OpenBSD: srp_enter.9,v 1.16 2022/03/31 17:27:23 naddy Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 18 2017 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt SRP_ENTER 9
 .Os
 .Sh NAME
@@ -104,7 +104,7 @@ replace the data referenced by the srp struct
 .Fa p
 with the data referenced by
 .Fa v .
-When the original data is no longer in use it will be destroyed by the garbage
+When the original data is no longer in use, it will be destroyed by the garbage
 collector
 .Fa gc .
 .Fn srp_update

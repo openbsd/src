@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_ext2fs.8,v 1.18 2015/10/14 14:33:45 deraadt Exp $
+.\"	$OpenBSD: fsck_ext2fs.8,v 1.19 2022/03/31 17:27:19 naddy Exp $
 .\"	$NetBSD: fsck_ext2fs.8,v 1.1 1997/06/11 11:21:48 bouyer Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer.
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)fsck.8	8.3 (Berkeley) 11/29/94
 .\"
-.Dd $Mdocdate: October 14 2015 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt FSCK_EXT2FS 8
 .Os
 .Sh NAME
@@ -230,7 +230,7 @@ The name assigned is the inode number.
 If the
 .Pa lost+found
 directory does not exist, it is created.
-If there is insufficient space its size is increased.
+If there is insufficient space, its size is increased.
 .Pp
 Because of inconsistencies between the block device and the buffer cache,
 the raw device should always be used.

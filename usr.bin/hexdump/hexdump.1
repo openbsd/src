@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hexdump.1,v 1.27 2020/01/16 16:46:47 schwarze Exp $
+.\"	$OpenBSD: hexdump.1,v 1.28 2022/03/31 17:27:25 naddy Exp $
 .\"	$NetBSD: hexdump.1,v 1.14 2001/12/07 14:46:24 bjh21 Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)hexdump.1	8.2 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: January 16 2020 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt HEXDUMP 1
 .Os
 .Sh NAME
@@ -173,7 +173,7 @@ one.
 Each format is applied iteration count times.
 .Pp
 The byte count is an optional positive integer.
-If specified it defines the number of bytes to be interpreted by
+If specified, it defines the number of bytes to be interpreted by
 each iteration of the format.
 .Pp
 If an iteration count and/or a byte count is specified, a single slash

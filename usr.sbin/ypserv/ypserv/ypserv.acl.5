@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypserv.acl.5,v 1.26 2020/11/01 21:32:04 jmc Exp $
+.\"	$OpenBSD: ypserv.acl.5,v 1.27 2022/03/31 17:27:32 naddy Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 1 2020 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt YPSERV.ACL 5
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ The YP
 server reads the configuration file and builds a list in memory.
 This list is processed from the beginning for every incoming request.
 As soon as a
-match is found in the list the search terminates and it returns success
+match is found in the list, the search terminates and it returns success
 or failure depending on which of
 .Ic allow
 or
@@ -63,7 +63,7 @@ or
 was specified.
 If no match was found in the list, success is returned.
 .Pp
-If access is denied every call will cause a
+If access is denied, every call will cause a
 .Dq no such domain
 error for the caller.
 .Pp

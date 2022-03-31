@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.8,v 1.32 2019/11/10 20:51:53 landry Exp $
+.\"	$OpenBSD: ospfd.8,v 1.33 2022/03/31 17:27:30 naddy Exp $
 .\"
 .\" Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 10 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt OSPFD 8
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ IP protocol number 89 is reserved for OSPF.
 All routers in an OSPF network spend most of their time keeping each others'
 LSDBs in sync.
 All routers must have the same information in the LSDB at all times.
-Every time the LSDB is updated the RIB is updated; if needed the FIB is
+Every time the LSDB is updated, the RIB is updated; if needed, the FIB is
 also updated.
 .Pp
 In a multi-access network such as Ethernet, it is unfeasible for all routers
@@ -83,7 +83,7 @@ A router not elected either DR or BDR will have 2-WAY adjacency with all
 routers but the DR and BDR.
 Routers with 2-WAY adjacency recognize that they know each other,
 but do not exchange information about their LSDBs.
-If a DR or BDR fails another router is elected DR or BDR
+If a DR or BDR fails, another router is elected DR or BDR
 and all routers form FULL adjacencies with the newly elected DR or BDR.
 .Pp
 When routers are connected via point-to-point links, DR and BDR

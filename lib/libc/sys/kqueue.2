@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.45 2021/11/21 23:44:55 jan Exp $
+.\"	$OpenBSD: kqueue.2,v 1.46 2022/03/31 17:27:16 naddy Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: November 21 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -206,7 +206,7 @@ Causes
 to return with
 .Dv EV_ERROR
 set without draining any pending events after updating events in the kqueue.
-When a filter is successfully added the
+When a filter is successfully added, the
 .Fa data
 field will be zero.
 This flag is useful for making bulk changes to a kqueue.

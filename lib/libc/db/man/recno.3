@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recno.3,v 1.20 2015/09/10 10:20:55 jmc Exp $
+.\"	$OpenBSD: recno.3,v 1.21 2022/03/31 17:27:15 naddy Exp $
 .\"	$NetBSD: recno.3,v 1.6 1996/05/03 21:26:51 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)recno.3	8.5 (Berkeley) 8/18/94
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt RECNO 3
 .Os
 .Sh NAME
@@ -118,14 +118,14 @@ This value is
 advisory, and the access method will allocate more memory rather than fail.
 If
 .Fa cachesize
-is 0 (no size is specified) a default cache is used.
+is 0 (no size is specified), a default cache is used.
 .It Fa psize
 The recno access method stores the in-memory copies of its records
 in a btree.
 This value is the size (in bytes) of the pages used for nodes in that tree.
 If
 .Fa psize
-is 0 (no page size is specified) a page size is chosen based on the
+is 0 (no page size is specified), a page size is chosen based on the
 underlying file system I/O block size.
 See
 .Xr btree 3
@@ -136,7 +136,7 @@ The number should represent the order as an integer; for example,
 big endian order would be the number 4,321.
 If
 .Fa lorder
-is 0 (no order is specified) the current host order is used.
+is 0 (no order is specified), the current host order is used.
 .It Fa reclen
 The length of a fixed-length record.
 .It Fa bval

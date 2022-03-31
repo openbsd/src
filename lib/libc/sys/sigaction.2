@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sigaction.2,v 1.75 2018/02/27 03:29:50 schwarze Exp $
+.\"	$OpenBSD: sigaction.2,v 1.76 2022/03/31 17:27:16 naddy Exp $
 .\"	$NetBSD: sigaction.2,v 1.7 1995/10/12 15:41:16 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)sigaction.2	8.2 (Berkeley) 4/3/94
 .\"
-.Dd $Mdocdate: February 27 2018 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt SIGACTION 2
 .Os
 .Sh NAME
@@ -116,7 +116,7 @@ before the signal's delivery.
 If the process wishes to resume in a different context, then it
 must arrange to restore the previous context itself.
 .Pp
-When a signal is delivered to a process a new signal mask is
+When a signal is delivered to a process, a new signal mask is
 installed for the duration of the process' signal handler
 (or until a
 .Xr sigprocmask 2

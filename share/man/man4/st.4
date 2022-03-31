@@ -1,4 +1,4 @@
-.\"	$OpenBSD: st.4,v 1.20 2016/09/04 14:42:58 naddy Exp $
+.\"	$OpenBSD: st.4,v 1.21 2022/03/31 17:27:21 naddy Exp $
 .\"	$NetBSD: st.4,v 1.2 1996/10/20 23:15:24 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 4 2016 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt ST 4
 .Os
 .Sh NAME
@@ -253,7 +253,7 @@ records.
 Rewind the device to the beginning of the media.
 .It Dv MTOFFL
 Rewind the media (and, if possible, eject).
-Even if the device cannot eject the media it will often no longer respond
+Even if the device cannot eject the media, it will often no longer respond
 to normal requests.
 .It Dv MTNOP
 No-op; set status only.

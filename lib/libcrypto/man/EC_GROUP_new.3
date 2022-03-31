@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EC_GROUP_new.3,v 1.13 2021/05/11 04:22:32 tb Exp $
+.\"	$OpenBSD: EC_GROUP_new.3,v 1.14 2022/03/31 17:27:16 naddy Exp $
 .\"	OpenSSL 6328d367 Sat Jul 4 21:58:30 2020 +0200
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 11 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt EC_GROUP_NEW 3
 .Os
 .Sh NAME
@@ -288,7 +288,7 @@ item has a unique integer ID
 .Pq Fa nid
 and a human readable comment string describing the curve.
 .Pp
-In order to construct a builtin curve use the function
+In order to construct a builtin curve, use the function
 .Fn EC_GROUP_new_by_curve_name
 and provide the
 .Fa nid

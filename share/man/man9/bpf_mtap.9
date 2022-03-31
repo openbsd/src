@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf_mtap.9,v 1.16 2019/09/30 01:55:26 dlg Exp $
+.\"	$OpenBSD: bpf_mtap.9,v 1.17 2022/03/31 17:27:23 naddy Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 30 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt BPF_MTAP 9
 .Os
 .Sh NAME
@@ -207,7 +207,7 @@ in the direction
 against an Ethernet packet in the mbuf
 .Fa m .
 If the mbuf is flagged with
-.Dv M_VLANTAG
+.Dv M_VLANTAG ,
 an Ethernet VLAN header is constructed using
 m->m_pkthdr.ether_vtag
 and

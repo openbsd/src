@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_s_connect.3,v 1.11 2018/05/12 20:12:17 schwarze Exp $
+.\"	$OpenBSD: BIO_s_connect.3,v 1.12 2022/03/31 17:27:16 naddy Exp $
 .\"	OpenSSL 186bb907 Apr 13 11:05:13 2015 -0700
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 12 2018 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt BIO_S_CONNECT 3
 .Os
 .Sh NAME
@@ -159,7 +159,7 @@ and also returns the socket.
 If
 .Fa c
 is not
-.Dv NULL
+.Dv NULL ,
 it should be of type
 .Vt "int *" .
 .Pp

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bemtoh32.9,v 1.7 2019/08/30 18:33:17 deraadt Exp $
+.\" $OpenBSD: bemtoh32.9,v 1.8 2022/03/31 17:27:23 naddy Exp $
 .\"
 .\" Copyright (c) 2014 David Gwynne <dlg@openbsd.org>
 .\" All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt BEMTOH32 9
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@
 .Sh DESCRIPTION
 This API provides a way to take advantage of an architecture's ability
 to load and store words in memory of different endians.
-If an architecture has no specialised support for these operations
+If an architecture has no specialised support for these operations,
 they will be implemented as a wrapper around the
 .Xr htobe64 3
 API.

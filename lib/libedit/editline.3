@@ -1,4 +1,4 @@
-.\"	$OpenBSD: editline.3,v 1.48 2021/08/14 11:30:12 schwarze Exp $
+.\"	$OpenBSD: editline.3,v 1.49 2022/03/31 17:27:17 naddy Exp $
 .\"	$NetBSD: editline.3,v 1.88 2016/02/25 14:59:22 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 14 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt EDITLINE 3
 .Os
 .Sh NAME
@@ -602,7 +602,7 @@ If
 .Fa name
 is a valid
 .Xr termcap 5
-capability set
+capability, set
 .Fa value
 to the current value of that capability.
 .It Dv EL_SIGNAL , Fa "int *s"
@@ -806,9 +806,9 @@ If
 has been called with a non-zero argument, the element
 will not be entered into the history if its contents match
 the ones of the current history element.
-If the element is entered
+If the element is entered,
 .Fn history
-returns 1; if it is ignored as a duplicate returns 0.
+returns 1; if it is ignored as a duplicate, returns 0.
 Finally
 .Fn history
 returns \-1 if an error occurred.

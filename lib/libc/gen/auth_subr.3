@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.25 2021/05/31 19:54:04 millert Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.26 2022/03/31 17:27:15 naddy Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	BSDI $From: auth_subr.3,v 2.5 2000/03/30 19:11:27 polk Exp $
-.Dd $Mdocdate: May 31 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt AUTH_OPEN 3
 .Os
 .Sh NAME
@@ -388,7 +388,7 @@ passed to the login scripts for their possible use.
 .It Dv AUTH_INTERACTIVE
 If set to any value, then the session is tagged as interactive.
 If not set, the session is not interactive.
-When the value is requested it is always either
+When the value is requested, it is always either
 .Dv NULL
 or
 .Dq True .
@@ -421,7 +421,7 @@ These variables are set by login scripts.
 When a new login script is run
 (by the
 .Fn auth_call
-function)
+function),
 the values from the previous login script are lost.
 (See
 .Xr login.conf 5
@@ -519,7 +519,7 @@ If no entry has been saved (either explicitly via
 or implicitly via
 .Fn auth_check_expire
 or
-.Fn auth_check_change )
+.Fn auth_check_change ) ,
 it returns
 .Dv NULL .
 Note that the memory containing the password file entry is freed by

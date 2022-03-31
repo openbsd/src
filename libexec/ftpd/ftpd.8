@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.76 2019/05/08 23:56:48 tedu Exp $
+.\"	$OpenBSD: ftpd.8,v 1.77 2022/03/31 17:27:18 naddy Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 8 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -341,7 +341,7 @@ to log in by specifying any password (by convention an email address for
 the user should be used as the password).
 .El
 .Pp
-Once a user is authenticated the user must be approved by any approval
+Once a user is authenticated, the user must be approved by any approval
 script defined (see
 .Xr login.conf 5 ) .
 If a valid approval script (by either :approve=...: or :approve-ftp=...:

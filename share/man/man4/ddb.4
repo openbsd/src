@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.100 2021/11/16 13:53:14 bluhm Exp $
+.\"	$OpenBSD: ddb.4,v 1.101 2022/03/31 17:27:20 naddy Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: November 16 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -665,7 +665,7 @@ at
 .Ar addr .
 If the
 .Cm /f
-modifier is specified the complete map is printed.
+modifier is specified, the complete map is printed.
 .\" --------------------
 .It Ic show mbuf Ar addr
 Prints the
@@ -689,7 +689,7 @@ at
 .Ar addr .
 If the
 .Cm /f
-modifier is specified prints out all
+modifier is specified, prints out all
 .Li vnodes
 (see also
 .Cm show vnode )
@@ -710,7 +710,7 @@ at
 .Ar addr .
 If the
 .Cm /f
-modifier is specified prints out additional
+modifier is specified, prints out additional
 information as well.
 .\" --------------------
 .It Xo
@@ -724,7 +724,7 @@ at
 .Ar addr .
 If the
 .Cm /f
-modifier is specified prints out additional
+modifier is specified, prints out additional
 information as well.
 .\" --------------------
 .It Xo
@@ -738,7 +738,7 @@ at
 .Ar addr .
 If the
 .Cm /f
-modifier is specified the complete object is printed.
+modifier is specified, the complete object is printed.
 .\" --------------------
 .It Xo
 .Ic show page
@@ -751,7 +751,7 @@ at
 .Ar addr .
 If the
 .Cm /f
-modifier is specified the complete page is printed.
+modifier is specified, the complete page is printed.
 .\" --------------------
 .It Ic show panic
 Prints the panic string.
@@ -776,7 +776,7 @@ Prints the
 .Li struct proc
 at
 .Ar addr .
-If an optional address is not specified
+If an optional address is not specified,
 .Li curproc
 is assumed.
 .\" --------------------
@@ -823,7 +823,7 @@ at
 .Ar addr .
 If the
 .Cm /f
-modifier is specified prints out all fields of this IPsec SA.
+modifier is specified, prints out all fields of this IPsec SA.
 .\" --------------------
 .It Ic show uvmexp
 Displays a selection of uvm counters and statistics.
@@ -839,7 +839,7 @@ at
 .Ar addr .
 If the
 .Cm /f
-modifier is specified prints out all
+modifier is specified, prints out all
 .Li bufs
 (see also
 .Cm show buf )

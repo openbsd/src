@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcrelay.8,v 1.16 2017/02/15 19:36:24 krw Exp $
+.\"	$OpenBSD: dhcrelay.8,v 1.17 2022/03/31 17:27:29 naddy Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: February 15 2017 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt DHCRELAY 8
 .Os
 .Sh NAME
@@ -92,7 +92,7 @@ The
 relay agent information sub-option value that
 .Nm
 should append on relayed packets.
-If this option is not specified it will use the interface number by default.
+If this option is not specified, it will use the interface number by default.
 .It Fl d
 Do not daemonize.
 If this option is specified,
@@ -116,7 +116,7 @@ The
 relay agent information sub-option value that
 .Nm
 should append on relayed packets.
-If this option is not specified it will use the destination address by default.
+If this option is not specified, it will use the destination address by default.
 .It Fl r
 Replace incoming Relay Agent Information with the one configured.
 .El

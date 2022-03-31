@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstat.1,v 1.92 2021/01/02 16:50:33 schwarze Exp $
+.\"	$OpenBSD: netstat.1,v 1.93 2022/03/31 17:27:26 naddy Exp $
 .\"	$NetBSD: netstat.1,v 1.11 1995/10/03 21:42:43 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)netstat.1	8.8 (Berkeley) 4/18/94
 .\"
-.Dd $Mdocdate: January 2 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt NETSTAT 1
 .Os
 .Sh NAME
@@ -118,7 +118,7 @@ useful for debugging e.g. with the
 flag.
 When used with the
 .Fl r
-flag it shows the internal addresses of the routing table.
+flag, it shows the internal addresses of the routing table.
 Only the super-user can see these addresses;
 unprivileged users will see them as 0x0.
 .It Fl a

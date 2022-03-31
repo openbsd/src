@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nanosleep.2,v 1.18 2021/07/25 15:47:26 cheloha Exp $
+.\"	$OpenBSD: nanosleep.2,v 1.19 2022/03/31 17:27:16 naddy Exp $
 .\"	$NetBSD: nanosleep.2,v 1.1 1997/04/17 18:12:02 jtc Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)sleep.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: July 25 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt NANOSLEEP 2
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@ If
 .Fn nanosleep
 sleeps the full
 .Fa timeout
-without interruption it returns 0.
+without interruption, it returns 0.
 Unless
 .Fa remainder
 is
@@ -65,7 +65,7 @@ it is set to zero.
 .Pp
 If
 .Fn nanosleep
-is interrupted by a signal it returns \-1 and the global variable
+is interrupted by a signal, it returns \-1 and the global variable
 .Va errno
 is set to
 .Dv EINTR .

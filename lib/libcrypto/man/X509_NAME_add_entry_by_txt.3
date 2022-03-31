@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_NAME_add_entry_by_txt.3,v 1.15 2021/12/09 19:01:52 schwarze Exp $
+.\"	$OpenBSD: X509_NAME_add_entry_by_txt.3,v 1.16 2022/03/31 17:27:17 naddy Exp $
 .\"	OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 9 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt X509_NAME_ADD_ENTRY_BY_TXT 3
 .Os
 .Sh NAME
@@ -205,11 +205,11 @@ if it is -1 it is appended.
 .Pp
 .Fa set
 determines how the new type is added.
-If it is zero a new RDN is created.
+If it is zero, a new RDN is created.
 .Pp
 If
 .Fa set
-is -1 or 1 it is added to the previous or next RDN structure
+is -1 or 1, it is added to the previous or next RDN structure
 respectively.
 This will then be a multivalued RDN: since multivalue RDNs are very
 seldom used,

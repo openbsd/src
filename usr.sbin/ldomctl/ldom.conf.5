@@ -1,4 +1,4 @@
-.\" $OpenBSD: ldom.conf.5,v 1.16 2021/11/17 15:13:36 kn Exp $
+.\" $OpenBSD: ldom.conf.5,v 1.17 2022/03/31 17:27:30 naddy Exp $
 .\"
 .\" Copyright (c) 2012 Mark Kettenis <kettenis@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 17 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt LDOM.CONF 5 sparc64
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ A scope with
 .Ar name
 .Dq primary
 configures resources for the primary domain.
-If no configuration for the primary domain exists it is assigned
+If no configuration for the primary domain exists, it is assigned
 all CPU and memory resources not used by any guest domains.
 .It Ic vcpu Ar number Ns Op : Ns Ar stride
 Declare the number of virtual CPUs assigned to a domain.

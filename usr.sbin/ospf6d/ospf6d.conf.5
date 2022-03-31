@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospf6d.conf.5,v 1.24 2020/05/16 16:58:12 jmc Exp $
+.\"	$OpenBSD: ospf6d.conf.5,v 1.25 2022/03/31 17:27:30 naddy Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2020 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt OSPF6D.CONF 5
 .Os
 .Sh NAME
@@ -318,14 +318,14 @@ The default value is 5 seconds; valid range is 5\-3600 seconds.
 Set the router dead time, a.k.a. neighbor inactivity timer.
 The default value is 40 seconds; valid range is 2\-65535 seconds.
 When a neighbor has been
-inactive for router-dead-time its state is set to DOWN.
+inactive for router-dead-time, its state is set to DOWN.
 Neighbors
 that have been inactive for more than 24 hours are completely removed.
 .It Ic router-priority Ar priority
 Set the router priority.
 The default value is 1; valid range is 0\-255.
 If set
-to 0 the router is not eligible as a Designated Router or Backup Designated
+to 0, the router is not eligible as a Designated Router or Backup Designated
 Router.
 .It Ic transmit-delay Ar seconds
 Set the transmit delay.

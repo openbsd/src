@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.218 2022/03/10 01:45:30 jsg Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.219 2022/03/31 17:27:29 naddy Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 10 2022 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -272,7 +272,7 @@ daemons, such as
 .Pq Ic default Ns | Ns Ic all
 .Xc
 If set to
-.Ar all
+.Ar all ,
 keep evaluating alternative paths in case the selected path is filtered
 out.
 By default if a path is filtered by the output filters then no alternative
@@ -380,7 +380,7 @@ Create a control socket at
 .Ar path .
 If
 .Ic restricted
-is specified a restricted control socket will be created.
+is specified, a restricted control socket will be created.
 By default
 .Pa /var/run/bgpd.sock.<rdomain>
 is used where
@@ -554,7 +554,7 @@ server.
 Specify the TCP destination port for the
 .Em rtr
 session.
-If not specified the default
+If not specified, the default
 .Ic port
 is
 .Em 323 .
@@ -1077,7 +1077,7 @@ aes-128-cbc <key>
 .Ed
 .Pp
 Keys must be given in hexadecimal format.
-After changing settings a session needs to be reset to use the new keys.
+After changing settings, a session needs to be reset to use the new keys.
 The
 .Ic ipsec
 flows only work with session using the default port 179.
@@ -1115,7 +1115,7 @@ After starting the
 and
 .Xr bgpd 8
 daemons on both sides, the session should be established.
-After changing settings a session needs to be reset to use the new keys.
+After changing settings, a session needs to be reset to use the new keys.
 The
 .Ic ipsec
 flows only work with session using the default port 179.
@@ -1218,7 +1218,7 @@ Set the AS number of the remote system.
 .Pq Ic default Ns | Ns Ic all
 .Xc
 If set to
-.Ar all
+.Ar all ,
 keep evaluating alternative paths in case the selected path is filtered
 out.
 By default if a path is filtered by the output filters then no alternative
@@ -1267,7 +1267,7 @@ The shared secret can either be given as a password or hexadecimal key.
 tcp md5sig password mekmitasdigoat
 tcp md5sig key deadbeef
 .Ed
-After changing keys a session needs to be reset to use the new keys.
+After changing keys, a session needs to be reset to use the new keys.
 .Pp
 .It Xo
 .Ic transparent-as
@@ -1387,7 +1387,7 @@ which is expanded to the current neighbor remote AS number, or
 which is expanded to the locally assigned AS number.
 .Pp
 When specifying an
-.Ic as-set Ar name
+.Ic as-set Ar name ,
 the AS path will instead be matched against all the AS numbers in the set.
 .Pp
 The

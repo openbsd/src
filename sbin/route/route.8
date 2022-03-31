@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.102 2021/10/26 15:48:25 kn Exp $
+.\"	$OpenBSD: route.8,v 1.103 2022/03/31 17:27:20 naddy Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: October 26 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -152,7 +152,7 @@ modifiers (listed below), only routes having destinations with addresses
 in the delineated family will be shown.
 If the
 .Fl iface
-modifier is used only interface specific messages (link state changes)
+modifier is used, only interface specific messages (link state changes)
 are shown.
 If a routing table is supplied with
 .Fl T ,
@@ -435,7 +435,7 @@ A specific routing priority can be specified with the optional
 .Tg
 .Fl priority
 qualifier.
-If no priority is specified the kernel will set a priority depending on the
+If no priority is specified, the kernel will set a priority depending on the
 .Dv RTF_STATIC
 flag to either
 .Dv RTP_STATIC

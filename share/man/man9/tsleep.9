@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tsleep.9,v 1.15 2020/03/20 03:37:09 cheloha Exp $
+.\"	$OpenBSD: tsleep.9,v 1.16 2022/03/31 17:27:23 naddy Exp $
 .\"	$NetBSD: sleep.9,v 1.11 1999/03/24 06:15:12 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 20 2020 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt TSLEEP 9
 .Os
 .Sh NAME
@@ -156,7 +156,7 @@ of processes executing in kernel mode.
 If the flag
 .Dv PCATCH
 is OR'ed into
-.Fa priority
+.Fa priority ,
 the process checks for posted signals before and after sleeping.
 .It Fa wmesg
 A pointer to a character string indicating the reason a process is sleeping.

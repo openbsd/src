@@ -1,4 +1,4 @@
-.\" $OpenBSD: hostapd.8,v 1.22 2022/02/18 02:20:33 jsg Exp $
+.\" $OpenBSD: hostapd.8,v 1.23 2022/03/31 17:27:29 naddy Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 18 2022 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt HOSTAPD 8
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ broadcasts an
 IAPP message when a new station is associated to the Host AP.
 When
 .Nm
-receives an ADD.notify message it tells the Host AP
+receives an ADD.notify message, it tells the Host AP
 to remove the specified station.
 .Pp
 .Nm

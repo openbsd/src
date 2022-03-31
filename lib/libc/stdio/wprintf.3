@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wprintf.3,v 1.9 2021/09/02 09:50:38 deraadt Exp $
+.\"	$OpenBSD: wprintf.3,v 1.10 2022/03/31 17:27:16 naddy Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)printf.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 2 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt WPRINTF 3
 .Os
 .Sh NAME
@@ -151,7 +151,7 @@ argument accessed will be used.
 Arguments are numbered starting at
 .Cm 1 .
 If unaccessed arguments in the format string are interspersed with ones that
-are accessed the results will be indeterminate.
+are accessed, the results will be indeterminate.
 .It
 Zero or more of the following flags:
 .Bl -tag -width "'0' (space)"

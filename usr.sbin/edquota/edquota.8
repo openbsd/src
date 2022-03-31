@@ -1,4 +1,4 @@
-.\"	$OpenBSD: edquota.8,v 1.12 2016/03/17 18:50:48 mmcc Exp $
+.\"	$OpenBSD: edquota.8,v 1.13 2022/03/31 17:27:29 naddy Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -31,9 +31,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)edquota.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: edquota.8,v 1.12 2016/03/17 18:50:48 mmcc Exp $
+.\"	$Id: edquota.8,v 1.13 2022/03/31 17:27:29 naddy Exp $
 .\"
-.Dd $Mdocdate: March 17 2016 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt EDQUOTA 8
 .Os
 .Sh NAME
@@ -140,7 +140,7 @@ quotas specified in
 .Pa /etc/fstab .
 When invoked with the
 .Fl g
-flag the grace period is
+flag, the grace period is
 set for all the filesystems with group quotas specified in
 .Pa /etc/fstab .
 The grace period may be specified in days, hours, minutes, or seconds.

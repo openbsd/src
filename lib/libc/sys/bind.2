@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bind.2,v 1.22 2021/01/03 18:10:27 rob Exp $
+.\"	$OpenBSD: bind.2,v 1.23 2022/03/31 17:27:16 naddy Exp $
 .\"	$NetBSD: bind.2,v 1.8 1995/10/12 15:40:46 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)bind.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 3 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt BIND 2
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 .Fn bind
 assigns a name to an unnamed socket.
 When a socket is created with
-.Xr socket 2
+.Xr socket 2 ,
 it exists in a name space (address family) but has no name assigned.
 .Fn bind
 requests that

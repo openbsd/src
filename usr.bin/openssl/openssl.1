@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.136 2022/02/18 10:24:32 jsg Exp $
+.\" $OpenBSD: openssl.1,v 1.137 2022/03/31 17:27:26 naddy Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: February 18 2022 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -272,7 +272,7 @@ If an OID
 .Pq object identifier
 is not part of
 .Nm openssl Ns 's
-internal table it will be represented in
+internal table, it will be represented in
 numerical form
 .Pq for example 1.2.3.4 .
 .Pp
@@ -1146,8 +1146,8 @@ should be linked to each certificate.
 One or more certificates of message recipients: used when encrypting a message.
 .It Fl certfile Ar file
 Allows additional certificates to be specified.
-When signing these will be included with the message.
-When verifying these will be searched for the signer's certificates.
+When signing, these will be included with the message.
+When verifying, these will be searched for the signer's certificates.
 The certificates should be in PEM format.
 .It Fl certsout Ar file
 A file that any certificates contained in the message are written to.
@@ -1198,7 +1198,7 @@ email address matches that specified in the From: address.
 .It Fl econtent_type Ar type
 Set the encapsulated content type, used with
 .Fl sign .
-If not supplied the Data type is used.
+If not supplied, the Data type is used.
 The type argument can be any valid OID name in either text or numerical format.
 .It Fl in Ar file
 The input message to be encrypted or signed or the message to be decrypted or
@@ -1227,7 +1227,7 @@ the certificate file specified with the
 or
 .Fl signer
 file.
-When signing this option can be used multiple times to specify successive keys.
+When signing, this option can be used multiple times to specify successive keys.
 .It Fl keyform Cm der | pem
 Input private key format.
 The default is
@@ -1270,7 +1270,7 @@ the
 .Fl certfile
 option for example).
 .It Fl nodetach
-When signing a message use opaque signing.
+When signing a message, use opaque signing.
 This form is more resistant to translation by mail relays but it cannot be
 read by mail agents that do not support S/MIME.
 Without this option cleartext signing with the MIME type multipart/signed is
@@ -1279,7 +1279,7 @@ used.
 Only the certificates specified in the
 .Fl certfile
 option are used.
-When verifying a message normally certificates (if any) included in the
+When verifying a message, normally certificates (if any) included in the
 message are searched for the signing certificate.
 The supplied certificates can still be used as untrusted CAs however.
 .It Fl nooldmime
@@ -1354,10 +1354,10 @@ operation.
 Add an explicit email address where signed receipts should be sent to.
 This option must be supplied if a signed receipt is requested.
 .It Fl recip Ar file
-When decrypting a message this specifies the recipient's certificate.
+When decrypting a message, this specifies the recipient's certificate.
 The certificate must match one of the recipients of the message or an
 error occurs.
-When encrypting a message this option may be used multiple times to
+When encrypting a message, this option may be used multiple times to
 specify each recipient.
 This form must be used if customised parameters are required (for example to
 specify RSA-OAEP).
@@ -1377,7 +1377,7 @@ operations.
 When used with
 .Fl encrypt
 or
-.Fl decrypt
+.Fl decrypt ,
 the supplied key is used to wrap or unwrap the content encryption key
 using an AES key in the KEKRecipientInfo type.
 .It Fl secretkeyid Ar id
@@ -1418,7 +1418,7 @@ This option currently has no effect.
 .It Fl text
 Add plain text (text/plain) MIME headers to the supplied message if
 encrypting or signing.
-If decrypting or verifying it strips off text headers: if the decrypted
+If decrypting or verifying, it strips off text headers: if the decrypted
 or verified message is not of MIME type text/plain then an error occurs.
 .It Fl verify_retcode
 Set verification error code to exit code to indicate what verification error
@@ -2280,7 +2280,7 @@ to use:
 this must be represented as a string comprised only of hex digits.
 .It Fl salt
 Use a salt in the key derivation routines (the default).
-When the salt is being used
+When the salt is being used,
 the first eight bytes of the encrypted data are reserved for the salt:
 it is randomly generated when encrypting a file and read from the
 encrypted file when it is decrypted.
@@ -2423,7 +2423,7 @@ The output format.
 .It Fl paramfile Ar file
 Some public key algorithms generate a private key based on a set of parameters,
 which can be supplied using this option.
-If this option is used the public key
+If this option is used, the public key
 algorithm used is determined by the parameters.
 This option must precede any
 .Fl pkeyopt
@@ -2710,7 +2710,7 @@ If an OCSP request is being created (using the
 .Fl cert
 and
 .Fl serial
-options)
+options),
 a nonce is automatically added; specifying
 .Fl no_nonce
 overrides this.
@@ -3306,7 +3306,7 @@ The MAC is used to check the file integrity but since it will normally
 have the same password as the keys and certificates it could also be attacked.
 By default, both MAC and encryption iteration counts are set to 2048;
 using these options the MAC and encryption iteration counts can be set to 1.
-Since this reduces the file security you should not use these options
+Since this reduces the file security, you should not use these options
 unless you really have to.
 Most software supports both MAC and key iteration counts.
 .It Fl out Ar file
@@ -3802,7 +3802,7 @@ generates an RSA key
 in size.
 If
 .Ar nbits
-is omitted
+is omitted,
 the default key size is used.
 .Pp
 .No dsa : Ns Ar file
@@ -5327,7 +5327,7 @@ option, for example).
 Do not do chain verification of signers' certificates: that is,
 don't use the certificates in the signed message as untrusted CAs.
 .It Fl nodetach
-When signing a message use opaque signing: this form is more resistant
+When signing a message, use opaque signing: this form is more resistant
 to translation by mail relays but it cannot be read by mail agents that
 do not support S/MIME.
 Without this option cleartext signing with the MIME type
@@ -5664,7 +5664,7 @@ This option does not require a request;
 it is useful, for example,
 to examine the content of a response or token
 or to extract the time stamp token from a response.
-If the input is a token and the output is a time stamp response a default
+If the input is a token and the output is a time stamp response, a default
 .Qq granted
 status info is added to the token.
 .It Fl inkey Ar private.pem
@@ -5685,7 +5685,7 @@ The key password source.
 The default policy to use for the response.
 Either dotted OID notation or OID names defined
 in the config file can be used.
-If no policy is requested the TSA uses its own default policy.
+If no policy is requested, the TSA uses its own default policy.
 .It Fl queryfile Ar request.tsq
 The file containing a DER-encoded time stamp request.
 .It Fl section Ar tsa_section
@@ -5795,7 +5795,7 @@ for a description.
 The file containing the hexadecimal serial number of the
 last time stamp response created.
 This number is incremented by 1 for each response.
-If the file does not exist at the time of response generation
+If the file does not exist at the time of response generation,
 a new file is created with serial number 1.
 This parameter is mandatory.
 .It Cm signer_cert

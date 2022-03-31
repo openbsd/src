@@ -1,4 +1,4 @@
-.\" $OpenBSD: tsearch.3,v 1.21 2019/01/25 00:19:25 millert Exp $
+.\" $OpenBSD: tsearch.3,v 1.22 2022/03/31 17:27:16 naddy Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt TSEARCH 3
 .Os
 .Sh NAME
@@ -63,7 +63,7 @@ except that if no match is found,
 is inserted into the tree and a pointer to it is returned.
 If
 .Fa rootp
-points to a null value a new binary search tree is created.
+points to a null value, a new binary search tree is created.
 .Pp
 .Fn tdelete
 deletes a node from the specified binary search tree and returns

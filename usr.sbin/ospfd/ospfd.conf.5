@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ospfd.conf.5,v 1.62 2020/05/16 16:58:12 jmc Exp $
+.\"	$OpenBSD: ospfd.conf.5,v 1.63 2022/03/31 17:27:30 naddy Exp $
 .\"
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -17,7 +17,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 16 2020 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt OSPFD.CONF 5
 .Os
 .Sh NAME
@@ -310,7 +310,7 @@ connection to the backbone area 0.0.0.0.
 Each interface can have several parameters configured individually, otherwise
 they are inherited.
 An interface is specified by its name.
-If multiple networks are configured an additional IP address can be supplied.
+If multiple networks are configured, an additional IP address can be supplied.
 By default the first IP address is used.
 .Bd -literal -offset indent
 interface em0 {
@@ -409,14 +409,14 @@ the timer is set to 1 second and hello packets are sent using the interval
 specified by
 .Ic fast-hello-interval .
 When a neighbor has been
-inactive for router-dead-time its state is set to DOWN.
+inactive for router-dead-time, its state is set to DOWN.
 Neighbors
 that have been inactive for more than 24 hours are completely removed.
 .It Ic router-priority Ar priority
 Set the router priority.
 The default value is 1; valid range is 0\-255.
 If set
-to 0 the router is not eligible as a Designated Router or Backup Designated
+to 0, the router is not eligible as a Designated Router or Backup Designated
 Router.
 .It Ic transmit-delay Ar seconds
 Set the transmit delay.

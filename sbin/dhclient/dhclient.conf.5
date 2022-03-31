@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhclient.conf.5,v 1.51 2020/07/17 22:21:18 krw Exp $
+.\"	$OpenBSD: dhclient.conf.5,v 1.52 2022/03/31 17:27:19 naddy Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/isc''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: July 17 2020 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt DHCLIENT.CONF 5
 .Os
 .Sh NAME
@@ -86,7 +86,7 @@ The default is 0 seconds, i.e. immediately use
 the first acceptable lease received.
 .It Ic timeout Ar seconds ;
 Sets the number of seconds to wait for a lease.
-If no lease is received the first valid lease in
+If no lease is received, the first valid lease in
 .Xr dhclient.leases 5
 will be used.
 The default is 30 seconds.
@@ -121,7 +121,7 @@ will be treated as
 .It Ic default Ar option option-value ;
 If no value for
 .Ar option
-is present in the lease use
+is present in the lease, use
 .Ar option-value .
 Each
 .Ic default
@@ -237,7 +237,7 @@ any specified
 statements are cumulative.
 If no
 .Ar option
-is specified all lease option values will be used unmodified.
+is specified, all lease option values will be used unmodified.
 .Ic uselease
 for
 .Ar option
@@ -273,7 +273,7 @@ only to the named interface.
 Discard leases from the specified address.
 If more than one
 .Ic reject
-is present all leases from any of the
+is present, all leases from any of the
 addresses will be discarded.
 .It Ic next-server Ar ip-address ;
 Use

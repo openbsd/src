@@ -25,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: sigvec.3,v 1.35 2017/05/29 11:10:29 jmc Exp $
+.\"	$OpenBSD: sigvec.3,v 1.36 2022/03/31 17:27:15 naddy Exp $
 .\"
-.Dd $Mdocdate: May 29 2017 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt SIGVEC 3
 .Os
 .Sh NAME
@@ -109,7 +109,7 @@ from before the signal's delivery.
 If the process wishes to resume in a different context, then it
 must arrange to restore the previous context itself.
 .Pp
-When a signal is delivered to a process a new signal mask is
+When a signal is delivered to a process, a new signal mask is
 installed for the duration of the process' signal handler
 (or until a
 .Xr sigblock 3

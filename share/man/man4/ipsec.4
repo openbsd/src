@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.87 2022/02/18 23:17:15 jsg Exp $
+.\" $OpenBSD: ipsec.4,v 1.88 2022/03/31 17:27:21 naddy Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: February 18 2022 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt IPSEC 4
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ into a remote machine over the Internet.
 .It Integrity
 \- Guarantee that the data does not get changed
 in transit.
-If you are on a line carrying invoicing data you
+If you are on a line carrying invoicing data, you
 probably want to know that the amounts and account numbers
 are correct and have not been modified by a third party.
 .It Authenticity
@@ -154,7 +154,7 @@ Information on automated key management for IKEv1 can be found in
 and for IKEv2 in
 .Xr iked.conf 5 .
 .Ss Security Parameter Indexes (SPIs)
-In order to identify an SA we need to have a unique name for it.
+In order to identify an SA, we need to have a unique name for it.
 This name is a triplet, consisting of the destination address, security
 parameter index (aka SPI) and the security protocol (ESP or AH).
 Since the destination address is part of the name, an SA is necessarily a
@@ -305,7 +305,7 @@ This option can only be used by privileged processes.
 This level is necessary for the key management daemon,
 .Xr isakmpd 8 .
 .It IPSEC_LEVEL_AVAIL
-If a Security Association is available it will be used for sending packets
+If a Security Association is available, it will be used for sending packets
 by that socket.
 .It IPSEC_LEVEL_USE
 Use IP Security for sending packets but still accept packets which are not

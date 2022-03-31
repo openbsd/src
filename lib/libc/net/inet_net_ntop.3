@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet_net_ntop.3,v 1.2 2021/09/01 15:59:22 claudio Exp $
+.\"	$OpenBSD: inet_net_ntop.3,v 1.3 2022/03/31 17:27:16 naddy Exp $
 .\"	$NetBSD: inet_net.3,v 1.1 1997/06/18 02:25:27 lukem Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 1 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt INET_NET_NTOP 3
 .Os
 .Sh NAME
@@ -110,7 +110,7 @@ is in the range
 and is used to explicitly specify the number of bits in the network address.
 When
 .Dq Li /bits
-is not specified the number of bits in the network address is calculated
+is not specified, the number of bits in the network address is calculated
 as the larger of the number of bits in the class to which the address
 belongs and the number of bits provided rounded up modulo 8.
 Examples:
@@ -176,7 +176,7 @@ is in the range
 and is used to explicitly specify the number of bits in the network address.
 When
 .Dq Li /bits
-is not specified 128 is used.
+is not specified, 128 is used.
 Note that when the number of bits is specified using
 .Dq Li /bits
 notation, the value of the address still includes all bits supplied

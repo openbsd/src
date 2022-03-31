@@ -1,4 +1,4 @@
-.\" $OpenBSD: fuse_new.3,v 1.6 2021/03/12 05:18:01 jsg Exp $
+.\" $OpenBSD: fuse_new.3,v 1.7 2022/03/31 17:27:17 naddy Exp $
 .\"
 .\" Copyright (c) 2013 Sylvestre Gallon <ccna.syl@gmail.com>
 .\" Copyright (c) 2018 Helg Bredow <helg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 12 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt FUSE_NEW 3
 .Os
 .Sh NAME
@@ -221,7 +221,7 @@ The file mode mask applied to the permission for all files by getattr.
 By default, FUSE will return an internal inode number for getattr and
 readdir and this will be different every time the file system is
 mounted.
-If this is set the file system's own inode number will be
+If this is set, the file system's own inode number will be
 reported instead.
 Useful only for file system that have inode numbers.
 .El

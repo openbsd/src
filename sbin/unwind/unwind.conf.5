@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unwind.conf.5,v 1.31 2021/10/24 15:57:17 kn Exp $
+.\"	$OpenBSD: unwind.conf.5,v 1.32 2022/03/31 17:27:20 naddy Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 24 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt UNWIND.CONF 5
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ forwarder { $fwd1 $fwd2 }
 .Bl -tag -width Ds
 .It Ic block list Ar file Op Cm log
 A file containing domains to block, one per line.
-If a domain from this list is queried
+If a domain from this list is queried,
 .Nm unwind
 answers with a return code of
 .Dv REFUSED .
@@ -131,7 +131,7 @@ and its subdomains by the given resolver
 .Ar type .
 If
 .Cm accept bogus
-is specified validation is not enforced.
+is specified, validation is not enforced.
 .El
 .Sh FILES
 .Bl -tag -width "/etc/unwind.conf" -compact

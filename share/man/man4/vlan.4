@@ -1,4 +1,4 @@
-.\" $OpenBSD: vlan.4,v 1.51 2020/10/04 12:44:49 kn Exp $
+.\" $OpenBSD: vlan.4,v 1.52 2022/03/31 17:27:21 naddy Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 4 2020 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt VLAN 4
 .Os
 .Sh NAME
@@ -122,9 +122,9 @@ Virtual interfaces without a configured virtual network identifier
 will use 0 in their protocols tag field.
 .It Dv SIOCSIFLLADDR Fa "struct ifreq *"
 Configure a custom MAC address on the virtual interface.
-When the virtual interface is using a custom MAC address the parent
+When the virtual interface is using a custom MAC address, the parent
 interface will be configured to promiscuously receive packets.
-When operating without a custom MAC address the virtual interface
+When operating without a custom MAC address, the virtual interface
 will inherit the parent interfaces MAC address.
 Configuring 00:00:00:00:00:00 as the MAC address will clear the
 custom MAC address configuration and resume operation with the

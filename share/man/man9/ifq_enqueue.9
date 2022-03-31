@@ -1,4 +1,4 @@
-.\"     $OpenBSD: ifq_enqueue.9,v 1.12 2021/03/20 21:02:56 sthen Exp $
+.\"     $OpenBSD: ifq_enqueue.9,v 1.13 2022/03/31 17:27:23 naddy Exp $
 .\"
 .\"  Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 20 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt IFQ_ENQUEUE 9
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ Enqueue mbuf
 on the
 .Fa ifq
 interface send queue.
-If the queue rejects the packet it will be freed with
+If the queue rejects the packet, it will be freed with
 .Xr m_freem 9
 and counted as a drop.
 .It Fn ifq_dequeue "struct ifqueue *ifq"

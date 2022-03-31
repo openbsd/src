@@ -1,9 +1,9 @@
-.\" $OpenBSD: pthread_attr_setguardsize.3,v 1.2 2013/06/05 03:44:50 tedu Exp $
+.\" $OpenBSD: pthread_attr_setguardsize.3,v 1.3 2022/03/31 17:27:17 naddy Exp $
 .\" Manual page derived from TOG's XPG6 documentation.
 .\"
 .\"  David Leonard, 2000. Public Domain.
 .\"
-.Dd $Mdocdate: June 5 2013 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt PTHREAD_ATTR_SETGUARDSIZE 3
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ attribute provides protection against overflow of the stack pointer.
 If a thread's stack is created with guard protection,
 the implementation allocates extra memory at the overflow end of
 the stack as a buffer against stack overflow of the stack pointer.
-If an application overflows into this buffer an error shall result
+If an application overflows into this buffer, an error shall result
 (possibly in a SIGSEGV signal being delivered to the thread).
 .Sh RETURN VALUES
 Upon successful completion,

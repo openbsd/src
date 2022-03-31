@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sh.1,v 1.153 2021/05/04 21:03:31 naddy Exp $
+.\"	$OpenBSD: sh.1,v 1.154 2022/03/31 17:27:14 naddy Exp $
 .\"
 .\" Copyright (c) 2015 Jason McIntyre <jmc@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 4 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt SH 1
 .Os
 .Sh NAME
@@ -1052,9 +1052,9 @@ argument is ignored for the commands
 .Ic 0 , ^ , $ ,
 and
 .Ic c .
-If the motion moves towards the beginning of the line
+If the motion moves towards the beginning of the line,
 the character under the cursor is not deleted;
-if it moves towards the end of the line
+if it moves towards the end of the line,
 it is deleted.
 .It Ic C
 Delete the characters between the cursor and the line end,
@@ -1089,7 +1089,7 @@ placing them in the save buffer.
 A special motion command,
 .Ic d ,
 may be used to delete the entire line.
-If the motion moves towards the beginning of the line
+If the motion moves towards the beginning of the line,
 the character under the cursor is not deleted.
 .It Oo Ar count Oc Ns Ic D
 Delete the characters between the cursor and the line end,
@@ -1100,7 +1100,7 @@ placing them in the save buffer.
 A special motion command,
 .Ic y ,
 may be used to yank the entire line.
-If the motion moves towards the beginning of the line
+If the motion moves towards the beginning of the line,
 the character under the cursor is not yanked.
 .It Oo Ar count Oc Ns Ic Y
 Yank (copy) the characters between the cursor and the line end,

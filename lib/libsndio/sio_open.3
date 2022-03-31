@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.52 2020/11/29 08:02:42 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.53 2022/03/31 17:27:18 naddy Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 29 2020 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -538,7 +538,7 @@ frame just written to become audible, expressed in number of frames.
 The exact playback
 latency can be obtained by subtracting the current position
 from the number of frames written.
-Once playback is actually started (first sample audible)
+Once playback is actually started (first sample audible),
 the latency will never exceed the
 .Fa bufsz
 parameter (see the sections above).

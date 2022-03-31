@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck_ffs.8,v 1.27 2021/03/08 02:47:26 jsg Exp $
+.\"	$OpenBSD: fsck_ffs.8,v 1.28 2022/03/31 17:27:19 naddy Exp $
 .\"	$NetBSD: fsck_ffs.8,v 1.12 1996/09/23 16:18:34 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)fsck.8	8.3 (Berkeley) 11/29/94
 .\"
-.Dd $Mdocdate: March 8 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt FSCK_FFS 8
 .Os
 .Sh NAME
@@ -140,7 +140,7 @@ Use the
 .Ar block#
 specified as
 the super block for the file system.
-If the primary superblock is corrupted
+If the primary superblock is corrupted,
 .Nm
 tries to find a valid alternate superblock based on the
 information in the disklabel.
@@ -305,7 +305,7 @@ The name assigned is the inode number.
 If the
 .Pa lost+found
 directory does not exist, it is created.
-If there is insufficient space its size is increased.
+If there is insufficient space, its size is increased.
 .Pp
 Because of inconsistencies between the block device and the buffer cache,
 the raw device should always be used.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usbhid.3,v 1.22 2021/05/30 19:54:52 jcs Exp $
+.\"	$OpenBSD: usbhid.3,v 1.23 2022/03/31 17:27:18 naddy Exp $
 .\"	$NetBSD: usbhid.3,v 1.5 2002/02/07 07:00:52 ross Exp $
 .\"
 .\" Copyright (c) 1999, 2001 Lennart Augustsson <augustss@netbsd.org>
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 30 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt USBHID 3
 .Os
 .Sh NAME
@@ -109,7 +109,7 @@ Alternatively a data buffer containing the report descriptor can be passed into
 .Fn hid_use_report_desc .
 The data is copied into an internal structure which can be accessed with
 .Fn hid_get_report_desc_data .
-When the report descriptor is no longer needed it should be freed by calling
+When the report descriptor is no longer needed, it should be freed by calling
 .Fn hid_dispose_report_desc .
 The type
 .Fa report_desc_t
@@ -146,7 +146,7 @@ function should be called to free internal data structures.
 To iterate through all the items in the report descriptor,
 .Fn hid_get_item
 should be called while it returns a value greater than 0.
-When the report descriptor ends it will return 0; a syntax
+When the report descriptor ends, it will return 0; a syntax
 error within the report descriptor will cause a return value less
 than 0.
 The struct pointed to by
@@ -163,7 +163,7 @@ the report.
 The size of a report (of a certain kind) can be computed by the
 .Fn hid_report_size
 function.
-If the report is prefixed by an ID byte it is given by
+If the report is prefixed by an ID byte, it is given by
 .Fa id .
 .Pp
 To locate a single item the

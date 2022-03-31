@@ -1,4 +1,4 @@
-.\" $OpenBSD: starttls.8,v 1.27 2019/08/12 19:49:14 tedu Exp $
+.\" $OpenBSD: starttls.8,v 1.28 2022/03/31 17:27:23 naddy Exp $
 .\"
 .\" Copyright (c) 2001 Jose Nazario <jose@monkey.org>
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 12 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt STARTTLS 8
 .Os
 .Sh NAME
@@ -123,7 +123,7 @@ You may adjust the lifetime of the certificate via the
 .Fl days
 parameter (one year in this example).
 .Pp
-After having installed the certificates
+After having installed the certificates,
 the mail server needs to be configured to accept TLS sessions
 and use the key and certificate.
 For
@@ -152,7 +152,7 @@ EHLO localhost
 .Ed
 .Pp
 After typing
-.Em EHLO localhost
+.Em EHLO localhost ,
 you should receive something like the following back.
 .Bd -literal -offset indent
 250-localhost Hello localhost [127.0.0.1], pleased to meet you

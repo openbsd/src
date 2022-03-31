@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ptrace.2,v 1.41 2021/11/21 23:44:55 jan Exp $
+.\"	$OpenBSD: ptrace.2,v 1.42 2022/03/31 17:27:16 naddy Exp $
 .\"	$NetBSD: ptrace.2,v 1.3 1996/02/23 01:39:41 jtc Exp $
 .\"
 .\" This file is in the public domain.
-.Dd $Mdocdate: November 21 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -231,7 +231,7 @@ On return the
 .Fa piod_len
 field in the descriptor will be updated with the actual number of bytes
 transferred.
-If the requested I/O couldn't be successfully performed
+If the requested I/O could not be successfully performed,
 .Fn ptrace
 will return
 .Li -1

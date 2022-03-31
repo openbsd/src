@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.111 2022/03/13 12:57:29 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.112 2022/03/31 17:27:19 naddy Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 13 2022 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -81,7 +81,7 @@ will also be preserved.
 If the preserved
 .Sq EFI system
 partition has fewer blocks than the number requested with
-.Fl b
+.Fl b ,
 the modification of the GPT is aborted.
 .It Fl b Ar blocks Ns Op @ Ns Ar offset Ns Op : Ns Ar type
 Configures a special boot partition of the specified number of blocks, offset
@@ -199,7 +199,7 @@ prints the partition table of the
 .Pp
 If
 .Ar disk
-does not contain a valid GPT the contents of the MBR are displayed.
+does not contain a valid GPT, the contents of the MBR are displayed.
 For example:
 .Bd -literal -offset 1n
 # fdisk sd0
@@ -276,7 +276,7 @@ The fields of the output are:
 Number identifying each partition table entry.
 .It Em "type"
 The partition type identifier.
-If the type is recognized the name of the type is displayed.
+If the type is recognized, the name of the type is displayed.
 Otherwise the type GUID is displayed.
 .It Em "start"
 The sector the partition starts on.
@@ -388,7 +388,7 @@ boot block.
 By default an MBR is initialized.
 If
 .Cm gpt
-is specified a protective MBR and a GPT are initialized.
+is specified, a protective MBR and a GPT are initialized.
 .It Cm edit Ar #
 Edit a given table entry in the memory copy of
 the current boot block.

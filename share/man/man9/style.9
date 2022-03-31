@@ -22,9 +22,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.77 2021/01/22 14:13:57 millert Exp $
+.\"	$OpenBSD: style.9,v 1.78 2022/03/31 17:27:23 naddy Exp $
 .\"
-.Dd $Mdocdate: January 22 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt STYLE 9
 .Os
 .Sh NAME
@@ -183,7 +183,7 @@ Enumeration values are all uppercase.
 enum enumtype { ONE, TWO } et;
 .Ed
 .Pp
-When defining unsigned integers use
+When defining unsigned integers, use
 .Dq "unsigned int"
 rather than just
 .Dq "unsigned" ;
@@ -466,7 +466,7 @@ volatile use the syntax
 volatile char *foo;
 .Ed
 .Pp
-If both the pointer and the thing pointed to are volatile use
+If both the pointer and the thing pointed to are volatile, use
 .Bd -literal -offset indent
 volatile char *volatile foo;
 .Ed

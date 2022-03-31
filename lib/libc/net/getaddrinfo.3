@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.59 2019/08/30 20:20:50 jmc Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.60 2022/03/31 17:27:16 naddy Exp $
 .\"	$KAME: getaddrinfo.3,v 1.36 2005/01/05 03:23:05 itojun Exp $
 .\"
 .\" Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 30 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt GETADDRINFO 3
 .Os
 .Sh NAME
@@ -105,7 +105,7 @@ or
 .Dv SOCK_RAW .
 When
 .Fa ai_socktype
-is zero the caller will accept any socket type.
+is zero, the caller will accept any socket type.
 .It Fa ai_protocol
 Indicates which transport protocol is desired,
 .Dv IPPROTO_UDP
@@ -113,7 +113,7 @@ or
 .Dv IPPROTO_TCP .
 If
 .Fa ai_protocol
-is zero the caller will accept any protocol.
+is zero, the caller will accept any protocol.
 .It Fa ai_flags
 .Fa ai_flags
 is formed by
@@ -180,7 +180,7 @@ and no service name resolution should be attempted.
 .It Dv AI_PASSIVE
 If the
 .Dv AI_PASSIVE
-bit is set it indicates that the returned socket address structure
+bit is set, it indicates that the returned socket address structure
 is intended for use in a call to
 .Xr bind 2 .
 In this case, if the

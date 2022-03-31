@@ -1,7 +1,7 @@
-.\"	$OpenBSD: chat.8,v 1.19 2011/07/25 18:33:19 jmc Exp $
+.\"	$OpenBSD: chat.8,v 1.20 2022/03/31 17:27:31 naddy Exp $
 .\" Id: chat.8,v 1.7 1998/02/04 01:35:49 paulus Exp $
 .\" manual page [] for chat 1.8
-.Dd $Mdocdate: July 25 2011 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt CHAT 8
 .Os
 .Sh NAME
@@ -264,7 +264,7 @@ The expected string is
 .Em CONNECT .
 If the string
 .Em CONNECT
-is received the remainder of the script is executed.
+is received, the remainder of the script is executed.
 However, should the modem find a busy telephone, it will send the string
 .Em BUSY .
 This will cause the string to match the abort character sequence.
@@ -366,7 +366,7 @@ The expected string is
 .Em CONNECT .
 If the string
 .Em CONNECT
-is received the remainder of the script is executed.
+is received, the remainder of the script is executed.
 In addition the program will write to the expect-file the string
 .Dq CONNECT
 plus any characters which follow it such as the connection rate.

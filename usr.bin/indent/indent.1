@@ -1,4 +1,4 @@
-.\"	$OpenBSD: indent.1,v 1.23 2013/06/24 16:01:05 jmc Exp $
+.\"	$OpenBSD: indent.1,v 1.24 2022/03/31 17:27:25 naddy Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)indent.1	8.1 (Berkeley) 7/1/93
 .\"
-.Dd $Mdocdate: June 24 2013 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt INDENT 1
 .Os
 .Sh NAME
@@ -117,7 +117,7 @@ checks to make sure it is different from
 .Pp
 If no
 .Ar input-file
-is specified
+is specified,
 input is read from stdin and the formatted file is written to stdout.
 .Pp
 The options listed below control the formatting style imposed by
@@ -329,7 +329,7 @@ and
 to be ignored.
 .It Fl pcs , npcs
 If true
-.Pq Fl pcs
+.Pq Fl pcs ,
 all procedure calls will have a space inserted between
 the name and the
 .Ql \&( .
@@ -337,7 +337,7 @@ The default is
 .Fl npcs .
 .It Fl psl , npsl
 If true
-.Pq Fl psl
+.Pq Fl psl ,
 the names of procedures being defined are placed in
 column 1 \- their types, if any, will be left on the previous lines.
 The default is

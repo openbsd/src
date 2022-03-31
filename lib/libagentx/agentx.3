@@ -1,4 +1,4 @@
-.\" $OpenBSD: agentx.3,v 1.7 2021/03/12 05:18:00 jsg Exp $
+.\" $OpenBSD: agentx.3,v 1.8 2022/03/31 17:27:15 naddy Exp $
 .\"
 .\" Copyright (c) 2020 Martijn van Duren <martijn@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 12 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt AGENTX 3
 .Os
 .Sh NAME
@@ -326,7 +326,7 @@ is created by
 .Fn agentx
 or when
 .Fa sa
-detects that there is no connection to the agentx master it calls out to
+detects that there is no connection to the agentx master, it calls out to
 .Fa nofd
 with itself,
 .Fa cookie
@@ -335,7 +335,7 @@ and an integer
 as arguments.
 If
 .Fa close
-is not set
+is not set,
 .Fn nofd
 is expected to set up a new
 .Fa fd
@@ -352,18 +352,18 @@ but must always be done as a result of a call to
 .Fn nofd .
 Once
 .Fn agentx_connect
-has been called the application is responsible for retrieving data when available
+has been called, the application is responsible for retrieving data when available
 on
 .Fa fd
 by calling
 .Fn agentx_read .
-If nonblocking writes are desirable the
+If nonblocking writes are desirable, the
 .Fn agentx_wantwrite
 pointer can be set to an application function and will be called as soon as
 there's data available to be written out.
 Once
 .Fa fd
-is ready for write the function
+is ready for a write, the function
 .Fn agentx_write
 should be called.
 .Pp
@@ -371,8 +371,8 @@ should be called.
 can be freed via
 .Fn agentx_free .
 It will close all active sessions and free all derived objects.
-Once freed no new objects can be derived from the freed objects.
-Once all sessions are closed it will call out to
+Once freed, no new objects can be derived from the freed objects.
+Once all sessions are closed, it will call out to
 .Fn nofd
 with
 .Fa close
@@ -390,7 +390,7 @@ The
 .Fa timeout
 argument specifies the maximum time in seconds the master should wait for a
 reply before determining we're gone.
-If set to 0 the agentx master determines the timeout.
+If set to 0, the agentx master determines the timeout.
 The
 .Fa oid
 and
@@ -407,7 +407,7 @@ The
 is the SNMPv3 context in which the objects operate and is built on top of
 agentx_session
 .Fa sas .
-If the default context is requested
+If the default context is requested,
 .Fa name
 must be NULL.
 .Pp
@@ -420,13 +420,13 @@ combination should point to an AGENT-CAPABILITIES object which describes the
 capabilities of the subagent.
 .Fa descr
 should be a textual description of the capabilities.
-If no AGENT-CAPABILITIES object is defined this function can be omitted.
+If no AGENT-CAPABILITIES object is defined, this function can be omitted.
 .Pp
 A
 .Vt agentx_region
 indicates a region inside the object-tree for which get- and set-requests will
 be queried.
-If the OID has already been claimed by another subagent it will try to claim it
+If the OID has already been claimed by another subagent, it will try to claim it
 on a lower priority.
 The
 .Fa timeout
@@ -450,7 +450,7 @@ registers the first available index;
 and
 .Fn agentx_index_integer_value
 tries to register a specific value.
-If the registration of an index fails an error will be logged and all objects
+If the registration of an index fails, an error will be logged and all objects
 using it will remain disabled.
 The OID where the index should be registered is documented by the MIB.
 These registered indices are usually used for tables where multiple subagents
@@ -483,7 +483,7 @@ and indexlen can't be more than
 .Dv AGENTX_OID_INDEX_MAX_LEN .
 If
 .Fa implied
-is set the final index must be of type OID or string and will omit the leading
+is set, the final index must be of type OID or string and will omit the leading
 length indicator.
 This value must only be set if specified in the MIB.
 .Fn getcb
@@ -529,8 +529,8 @@ Set the return value to an opaque value.
 .It Fn agentx_varbind_counter64
 Set the return value to an uint64_t of type counter64.
 .It Fn agentx_varbind_notfound
-When the request is of type GET return a nosuchinstance error.
-When the request is of type GETNEXT or GETBULK return an endofmibview error.
+When the request is of type GET, return a nosuchinstance error.
+When the request is of type GETNEXT or GETBULK, return an endofmibview error.
 On endofmibview the next object is queried.
 This function can only be called on objects that contain one or more *_dynamic
 indices.
@@ -612,7 +612,7 @@ is set the object must be reachable from the agentx master, else NULL is
 returned.
 If
 .Fa inclusive
-is set the object returned may also exactly match
+is set, the object returned may also exactly match
 .Fa oid .
 .It Fn agentx_context_uptime
 Returns the sysuptime in seconds for

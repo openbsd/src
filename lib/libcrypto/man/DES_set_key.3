@@ -1,4 +1,4 @@
-.\" $OpenBSD: DES_set_key.3,v 1.14 2019/06/06 01:06:58 schwarze Exp $
+.\" $OpenBSD: DES_set_key.3,v 1.15 2022/03/31 17:27:16 naddy Exp $
 .\" full merge up to:
 .\" OpenSSL man3/DES_random_key 521738e9 Oct 5 14:58:30 2018 -0400
 .\"
@@ -115,7 +115,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt DES_SET_KEY 3
 .Os
 .Sh NAME
@@ -747,7 +747,7 @@ If set to
 .Dv DES_PCBC_MODE
 (the default), DES_pcbc_encrypt is used.
 If set to
-.Dv DES_CBC_MODE
+.Dv DES_CBC_MODE ,
 DES_cbc_encrypt is used.
 .Sh RETURN VALUES
 .Fn DES_set_key ,

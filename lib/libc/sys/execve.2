@@ -1,4 +1,4 @@
-.\"	$OpenBSD: execve.2,v 1.55 2021/06/30 18:46:49 schwarze Exp $
+.\"	$OpenBSD: execve.2,v 1.56 2022/03/31 17:27:16 naddy Exp $
 .\"	$NetBSD: execve.2,v 1.9 1995/02/27 12:32:25 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)execve.2	8.3 (Berkeley) 1/24/94
 .\"
-.Dd $Mdocdate: June 30 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt EXECVE 2
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ An interpreter file begins with a line of the form:
 .Ed
 .Pp
 When an interpreter file is passed to
-.Fn execve
+.Fn execve ,
 the system instead calls
 .Fn execve
 with the specified
@@ -225,11 +225,11 @@ to the arguments themselves.
 As the
 .Fn execve
 function overlays the current process image
-with a new process image the successful call
+with a new process image, the successful call
 has no process to return to.
 If
 .Fn execve
-does return to the calling process an error has occurred; the
+does return to the calling process, an error has occurred; the
 return value will be \-1 and the global variable
 .Va errno
 is set to indicate the error.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hash.3,v 1.20 2016/05/09 11:13:10 naddy Exp $
+.\"	$OpenBSD: hash.3,v 1.21 2022/03/31 17:27:15 naddy Exp $
 .\"	$NetBSD: hash.3,v 1.6 1996/05/03 21:26:50 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)hash.3	8.6 (Berkeley) 8/18/94
 .\"
-.Dd $Mdocdate: May 9 2016 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt HASH 3
 .Os
 .Sh NAME
@@ -110,7 +110,7 @@ The number should represent the order as an integer; for example,
 big endian order would be the number 4,321.
 If
 .Fa lorder
-is 0 (no order is specified) the current host order is used.
+is 0 (no order is specified), the current host order is used.
 If the file already exists, the specified value is ignored and the
 value specified when the tree was created is used.
 .El

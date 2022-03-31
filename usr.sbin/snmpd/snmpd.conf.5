@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.58 2021/09/02 05:41:02 martijn Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.59 2022/03/31 17:27:31 naddy Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 2 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -145,7 +145,7 @@ or
 when
 .Ar port
 is 162.
-If no subsystem flags are specified it defaults to
+If no subsystem flags are specified, it defaults to
 .Ic snmpv3 .
 .Pp
 Having
@@ -348,7 +348,7 @@ must point to an existing global
 .Ic user .
 If
 .Ic seclevel
-is not defined it defaults to the global
+is not defined, it defaults to the global
 .Ic seclevel
 option.
 The IPv4 or IPv6 source address of the traps can be enforced using
@@ -380,7 +380,7 @@ must be either
 .Ic hmac-sha384 ,
 or
 .Ic hmac-sha512 .
-If omitted the default is
+If omitted, the default is
 .Ic hmac-sha1 .
 .Pp
 With

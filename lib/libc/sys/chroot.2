@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chroot.2,v 1.23 2021/01/03 18:10:27 rob Exp $
+.\"	$OpenBSD: chroot.2,v 1.24 2022/03/31 17:27:16 naddy Exp $
 .\"	$NetBSD: chroot.2,v 1.7 1995/02/27 12:32:12 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)chroot.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: January 3 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt CHROOT 2
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ to become the root directory, that is, the starting point for path
 searches of pathnames beginning with
 .Ql / .
 .Pp
-In order for a directory to become the root directory
+In order for a directory to become the root directory,
 a process must have execute (search) access for that directory.
 .Pp
 If the program is not currently running with an altered root directory,

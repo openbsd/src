@@ -1,4 +1,4 @@
-.\"	$OpenBSD: PKCS7_verify.3,v 1.10 2022/01/19 20:28:06 tb Exp $
+.\"	$OpenBSD: PKCS7_verify.3,v 1.11 2022/03/31 17:27:17 naddy Exp $
 .\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 19 2022 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt PKCS7_VERIFY 3
 .Os
 .Sh NAME
@@ -133,13 +133,13 @@ parameter (if it is not
 and then looking in any certificates contained in the
 .Fa p7
 structure itself.
-If any signer's certificates cannot be located the operation fails.
+If any signer's certificates cannot be located, the operation fails.
 .Pp
 Each signer's certificate is chain verified using the
 .Sy smimesign
 purpose and the supplied trusted certificate store.
 Any internal certificates in the message are used as untrusted CAs.
-If any chain verify fails an error code is returned.
+If any chain verify fails, an error code is returned.
 .Pp
 Finally, the signed content is read (and written to
 .Fa out

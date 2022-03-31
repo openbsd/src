@@ -1,4 +1,4 @@
-.\"	$OpenBSD: restore.8,v 1.40 2015/11/21 19:43:50 jmc Exp $
+.\"	$OpenBSD: restore.8,v 1.41 2022/03/31 17:27:20 naddy Exp $
 .\"	$NetBSD: restore.8,v 1.15 1997/07/01 05:37:53 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)restore.8	8.3 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: November 21 2015 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt RESTORE 8
 .Os
 .Sh NAME
@@ -302,7 +302,7 @@ Do not ask the user whether to abort the restore in the event of an error.
 Always try to skip over the bad block(s) and continue.
 .El
 .Sh ENVIRONMENT
-If the following environment variable exists it will be utilized by
+If the following environment variable exists, it will be utilized by
 .Nm restore :
 .Bl -tag -width "TMPDIR"
 .It Ev TMPDIR

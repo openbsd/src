@@ -1,4 +1,4 @@
-.\"	$OpenBSD: npppd.conf.5,v 1.29 2022/03/10 03:09:55 jsg Exp $
+.\"	$OpenBSD: npppd.conf.5,v 1.30 2022/03/31 17:27:30 naddy Exp $
 .\"
 .\" Copyright (c) 2012 YASUOKA Masahiko <yasuoka@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 10 2022 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt NPPPD.CONF 5
 .Os
 .Sh NAME
@@ -181,7 +181,7 @@ This option is for PPPoE only.
 .It Ic pppoe-accept-any-service Ar yes | no
 If
 .Dq yes
-is specified
+is specified,
 .Xr npppd 8
 accepts requests from clients that are accepting any service names.
 The default value is

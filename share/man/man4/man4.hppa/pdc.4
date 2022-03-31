@@ -1,4 +1,4 @@
-.\" $OpenBSD: pdc.4,v 1.11 2020/12/22 10:33:34 tobias Exp $
+.\" $OpenBSD: pdc.4,v 1.12 2022/03/31 17:27:21 naddy Exp $
 .\"
 .\" Copyright (c) 2004 Michael Shalayeff
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 22 2020 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt PDC 4 hppa
 .Os
 .Sh NAME
@@ -381,7 +381,7 @@ The memory location pointed to by
 will contain the resulting masks as returned
 by the PDC_MODEL_GETBOOTOPTS function.
 If an attempt is made to enable and disable the same test in one
-call a PDC_ERR_INVAL will be returned.
+call, a PDC_ERR_INVAL will be returned.
 .It Fn pdc "PDC_NVM" "PDC_NVM_READ" "offset" "ptr" "count"
 Read contents of the NVM at
 .Ar offset

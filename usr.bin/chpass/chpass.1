@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chpass.1,v 1.42 2019/04/23 17:52:12 schwarze Exp $
+.\"	$OpenBSD: chpass.1,v 1.43 2022/03/31 17:27:24 naddy Exp $
 .\"	$NetBSD: chpass.1,v 1.7 1996/05/15 21:50:40 jtc Exp $
 .\"
 .\" Copyright (c) 1988, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)chpass.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd $Mdocdate: April 23 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt CHPASS 1
 .Os
 .Sh NAME
@@ -237,9 +237,9 @@ will keep trying to lock the password file until it succeeds or
 the user hits the interrupt character (control-C by default).
 If
 .Nm
-is interrupted while trying to gain the lock any changes made will be lost.
+is interrupted while trying to gain the lock, any changes made will be lost.
 .Pp
-If the process holding the lock was prematurely terminated the lock
+If the process holding the lock was prematurely terminated, the lock
 file may be stale and
 .Nm
 will wait forever trying to lock the password file.

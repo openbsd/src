@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.85 2021/03/08 02:47:25 jsg Exp $
+.\"	$OpenBSD: csh.1,v 1.86 2022/03/31 17:27:13 naddy Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)csh.1	8.2 (Berkeley) 1/21/94
 .\"
-.Dd $Mdocdate: March 8 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt CSH 1
 .Os
 .Sh NAME
@@ -197,7 +197,7 @@ a line of command input is read and broken into
 This sequence of words is placed on the command history list and parsed.
 Finally each command in the current line is executed.
 .Pp
-When a login shell terminates it executes commands from the files
+When a login shell terminates, it executes commands from the files
 .Pa .logout
 in the user's home directory and
 .Pa /etc/csh.logout .
@@ -727,7 +727,7 @@ but break into words at blanks, tabs, and newlines.
 .El
 .Pp
 Unless preceded by a
-.Ql g
+.Ql g ,
 the change is applied only to the first
 modifiable word.
 With substitutions, it is an error for no word to be applicable.
@@ -958,7 +958,7 @@ a variable whose value consists of multiple words expands to
 separated by blanks.
 When the
 .Ql :q
-modifier is applied to a substitution
+modifier is applied to a substitution,
 the variable will expand to multiple words with each word separated
 by a blank and quoted to prevent later command or filename substitution.
 .Pp
@@ -996,9 +996,9 @@ number or two numbers separated by a
 .Ql \- .
 The first word of a variable's value is numbered
 .Ql 1 .
-If the first number of a range is omitted it defaults to
+If the first number of a range is omitted, it defaults to
 .Ql 1 .
-If the last number of a range is omitted it defaults to
+If the last number of a range is omitted, it defaults to
 .Ql $#name .
 The selector
 .Ql *
@@ -1675,7 +1675,7 @@ When this command is read from the terminal, the loop is read once
 prompting with
 .Ql \&?
 before any statements in the loop are executed.
-If you make a mistake typing in a loop at the terminal you can rub it out.
+If you make a mistake typing in a loop at the terminal, you can rub it out.
 .Pp
 .It Ic glob Ar wordlist
 Like
@@ -2200,7 +2200,7 @@ the
 .It Ic time Ar command
 With no argument, a summary of time used by this shell and its children
 is printed.
-If arguments are given
+If arguments are given,
 the specified simple command is timed and a time summary
 as described under the
 .Ic time
@@ -2444,7 +2444,7 @@ The filename expansion of
 .Dq Pa ~
 refers to this variable.
 .It Ic ignoreeof
-If set the shell ignores
+If set, the shell ignores
 end-of-file from input devices which are terminals.
 This prevents shells from accidentally being killed by control-Ds.
 .It Ic mail
@@ -2533,7 +2533,7 @@ The string that is printed before each command is read from
 an interactive terminal input.
 If a
 .Ql \&!
-appears in the string it will be replaced by the current event number
+appears in the string, it will be replaced by the current event number
 unless a preceding
 .Ql \e
 is given.
@@ -2585,7 +2585,7 @@ command-line option, causes the words of each command to be printed
 after history substitution.
 .El
 .Ss Non-built-in command execution
-When a command to be executed is found to not be a built-in command
+When a command to be executed is found to not be a built-in command,
 the shell attempts to execute the command via
 .Xr execve 2 .
 Each word in the variable

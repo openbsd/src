@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs_ext2fs.8,v 1.10 2020/01/16 16:46:47 schwarze Exp $
+.\"	$OpenBSD: newfs_ext2fs.8,v 1.11 2022/03/31 17:27:20 naddy Exp $
 .\"	$NetBSD: newfs_ext2fs.8,v 1.7 2009/12/01 08:47:25 pooka Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)newfs.8	8.6 (Berkeley) 5/3/95
 .\"
-.Dd $Mdocdate: January 16 2020 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt NEWFS_EXT2FS 8
 .Os
 .Sh NAME
@@ -57,7 +57,7 @@
 .Nm
 is used to initialize and clear ext2 file systems before first use.
 Before running
-.Nm
+.Nm ,
 the disk must be labeled using
 .Xr disklabel 8 .
 .Nm
@@ -203,7 +203,7 @@ is specified, the existing file.
 .Pp
 If
 .Ar size
-is negative the specified size is subtracted from the default size
+is negative, the specified size is subtracted from the default size
 (reserving space at the end of the partition).
 .It Fl V Ar verbose
 This controls the amount of information written to stdout:
@@ -225,7 +225,7 @@ All the super-block backup sector numbers are displayed (no progress bar).
 The default is 4.
 If
 .Fl N
-is specified
+is specified,
 .Nm
 stops before outputting the progress bar.
 .It Fl v Ar volname

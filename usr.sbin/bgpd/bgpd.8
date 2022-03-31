@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.8,v 1.71 2021/09/03 07:58:07 claudio Exp $
+.\" $OpenBSD: bgpd.8,v 1.72 2022/03/31 17:27:29 naddy Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 3 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt BGPD 8
 .Os
 .Sh NAME
@@ -103,7 +103,7 @@ The path coming from the neighbor with the lowest
 wins.
 If the
 .Em ORIGINATOR_ID
-attribute is present that value will be used in the comparison instead.
+attribute is present, that value will be used in the comparison instead.
 .It
 The path with the shortest
 .Em CLUSTER_LIST

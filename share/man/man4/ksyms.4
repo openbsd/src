@@ -1,4 +1,4 @@
-.\" $OpenBSD: ksyms.4,v 1.14 2019/01/25 00:19:26 millert Exp $
+.\" $OpenBSD: ksyms.4,v 1.15 2022/03/31 17:27:21 naddy Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 25 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt KSYMS 4
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@ The
 .Pa /dev/ksyms
 device is used to look up the symbol table name list from the running
 kernel.
-Because it represents the running kernel it is guaranteed
+Because it represents the running kernel, it is guaranteed
 to always be up to date even if the kernel file has been changed (or
 is even non-existent).
 It is most useful when used in conjunction with

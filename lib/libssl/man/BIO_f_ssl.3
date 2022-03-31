@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_f_ssl.3,v 1.11 2019/06/12 09:36:30 schwarze Exp $
+.\" $OpenBSD: BIO_f_ssl.3,v 1.12 2022/03/31 17:27:18 naddy Exp $
 .\" full merge up to: OpenSSL f672aee4 Feb 9 11:52:40 2016 -0500
 .\" selective merge up to: OpenSSL 61f805c1 Jan 16 01:01:46 2018 +0800
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 12 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt BIO_F_SSL 3
 .Os
 .Sh NAME
@@ -147,7 +147,7 @@ is appended to an
 .Vt SSL
 .Vt BIO
 using
-.Xr BIO_push 3
+.Xr BIO_push 3 ,
 it is automatically used as the
 .Vt SSL
 .Vt BIO Ns 's read and write
@@ -213,7 +213,7 @@ is 0, server mode is set.
 .Fn BIO_set_ssl_renegotiate_bytes
 sets the renegotiate byte count to
 .Fa num .
-When set after every
+When set, after every
 .Fa num
 bytes of I/O (read and write) the SSL session is automatically renegotiated.
 .Fa num
@@ -222,7 +222,7 @@ must be at least 512 bytes.
 .Fn BIO_set_ssl_renegotiate_timeout
 sets the renegotiate timeout to
 .Fa seconds .
-When the renegotiate timeout elapses the session is automatically renegotiated.
+When the renegotiate timeout elapses, the session is automatically renegotiated.
 .Pp
 .Fn BIO_get_num_renegotiates
 returns the total number of session renegotiations due to I/O or timeout.
@@ -303,7 +303,7 @@ established; the call
 should be used for non blocking connect
 .Vt BIO Ns s
 to determine if the call should be retried.
-If an SSL connection has already been established this call has no effect.
+If an SSL connection has already been established, this call has no effect.
 .Pp
 .Vt SSL
 .Vt BIO Ns s
@@ -325,7 +325,7 @@ using a blocking transport will never request a retry.
 Since unknown
 .Xr BIO_ctrl 3
 operations are sent through filter
-.Vt BIO Ns s
+.Vt BIO Ns s ,
 the server name and port can be set using
 .Xr BIO_set_conn_hostname 3
 and

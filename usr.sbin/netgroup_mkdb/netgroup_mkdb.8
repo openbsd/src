@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netgroup_mkdb.8,v 1.9 2018/06/07 11:37:21 jmc Exp $
+.\"	$OpenBSD: netgroup_mkdb.8,v 1.10 2022/03/31 17:27:30 naddy Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 7 2018 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt NETGROUP_MKDB 8
 .Os
 .Sh NAME
@@ -76,11 +76,11 @@ current netgroup file
 .Sh BUGS
 Because
 .Nm netgroup_mkdb
-guarantees not to install a partial destination file it must
+guarantees not to install a partial destination file, it must
 build a temporary file in the same file system and if successful use
 .Xr rename 2
 to install over the destination file.
 .Pp
 If
 .Nm netgroup_mkdb
-fails it will leave the previous version of the destination file intact.
+fails, it will leave the previous version of the destination file intact.

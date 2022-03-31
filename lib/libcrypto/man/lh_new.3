@@ -1,4 +1,4 @@
-.\" $OpenBSD: lh_new.3,v 1.8 2021/12/17 16:32:07 schwarze Exp $
+.\" $OpenBSD: lh_new.3,v 1.9 2022/03/31 17:27:17 naddy Exp $
 .\" full merge up to:
 .\" OpenSSL doc/crypto/lhash.pod 1bc74519 May 20 08:11:46 2016 -0400
 .\" selective merge up to:
@@ -118,7 +118,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: December 17 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt LH_NEW 3
 .Os
 .Sh NAME
@@ -488,7 +488,7 @@ The load is the number of items in the hash table divided by the size of
 the hash table.
 The default values are as follows.
 If (hash->up_load < load) => expand.
-if (hash->down_load > load) => contract.
+If (hash->down_load > load) => contract.
 The
 .Fa up_load
 has a default value of 1 and
@@ -503,12 +503,12 @@ variables.
 The 'load' is kept in a form which is multiplied by 256.
 So hash->up_load=8*256 will cause a load of 8 to be set.
 .Pp
-If you are interested in performance the field to watch is
+If you are interested in performance, the field to watch is
 .Fa num_comp_calls .
 The hash library keeps track of the 'hash' value for each item so when a
 lookup is done, the 'hashes' are compared, if there is a match, then a
 full compare is done, and hash->num_comp_calls is incremented.
-If num_comp_calls is not equal to num_delete plus num_retrieve it means
+If num_comp_calls is not equal to num_delete plus num_retrieve, it means
 that your hash function is generating hashes that are the same for
 different values.
 It is probably worth changing your hash function if this is the case

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pthread_barrier_init.3,v 1.4 2020/04/06 00:01:08 pirofti Exp $
+.\"	$OpenBSD: pthread_barrier_init.3,v 1.5 2022/03/31 17:27:17 naddy Exp $
 .\"
 .\" Copyright (c) 2012 Paul Irofti <paul@irofti.net>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: April 6 2020 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt PTHREAD_BARRIER_INIT 3
 .Os
 .Sh NAME
@@ -38,7 +38,7 @@ and with a threshold specified with
 If
 .Fa attr
 is
-.Dv NULL
+.Dv NULL ,
 the default attributes are used.
 The
 .Fa count

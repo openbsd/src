@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.145 2022/02/19 22:08:27 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.146 2022/03/31 17:27:19 naddy Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: February 19 2022 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -411,7 +411,7 @@ If a
 is given, the size and offsets are displayed in terms of the
 specified unit.
 If the unit is
-.Sq *
+.Sq * ,
 it is automatically determined by the size of the smallest
 partition.
 .It Cm q

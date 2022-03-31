@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mail.local.8,v 1.32 2020/05/27 03:12:06 millert Exp $
+.\"	$OpenBSD: mail.local.8,v 1.33 2022/03/31 17:27:19 naddy Exp $
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\"
 .\"	from: @(#)mail.local.8	6.8 (Berkeley) 4/27/91
 .\"
-.Dd $Mdocdate: May 27 2020 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt MAIL.LOCAL 8
 .Os
 .Sh NAME
@@ -158,7 +158,7 @@ users.
 If you are running
 .Xr sendmail 8
 and have disk quotas on
-.Pa /var/mail
+.Pa /var/mail ,
 it is imperative that you unset the
 .Dq m
 mailer flag for the

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.30 2022/03/30 19:03:20 miod Exp $
+.\"	$OpenBSD: audio.9,v 1.31 2022/03/31 17:27:23 naddy Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 30 2022 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -241,7 +241,7 @@ bytes from
 to the audio hardware.
 The call returns when the data transfer
 has been initiated (normally with DMA).
-When the hardware is ready to accept more samples the function
+When the hardware is ready to accept more samples, the function
 .Fa intr
 will be called with the argument
 .Fa intrarg .
@@ -259,7 +259,7 @@ bytes to
 from the audio hardware.
 The call returns when the data transfer
 has been initiated (normally with DMA).
-When the hardware is ready to deliver more samples the function
+When the hardware is ready to deliver more samples, the function
 .Fa intr
 will be called with the argument
 .Fa intrarg .
@@ -474,7 +474,7 @@ This function returns the adjusted number of blocks.
 .El
 .Pp
 If the audio hardware is capable of input from more
-than one source it should define
+than one source, it should define
 .Dv AudioNsource
 in class
 .Dv AudioCrecord .
@@ -496,7 +496,7 @@ and be of class
 .Dv AudioCinputs .
 .Pp
 If the audio hardware is capable of output to more than
-one destination it should define
+one destination, it should define
 .Dv AudioNoutput
 in class
 .Dv AudioCmonitor .

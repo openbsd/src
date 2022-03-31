@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_PKEY_sign.3,v 1.7 2018/03/23 04:34:23 schwarze Exp $
+.\"	$OpenBSD: EVP_PKEY_sign.3,v 1.8 2022/03/31 17:27:17 naddy Exp $
 .\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt EVP_PKEY_SIGN 3
 .Os
 .Sh NAME
@@ -102,7 +102,7 @@ then before the call the
 parameter should contain the length of the
 .Fa sig
 buffer.
-If the call is successful the signature is written to
+If the call is successful, the signature is written to
 .Fa sig
 and the amount of data written to
 .Fa siglen .

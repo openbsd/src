@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockopt.2,v 1.58 2021/10/08 14:12:58 jmc Exp $
+.\"	$OpenBSD: getsockopt.2,v 1.59 2022/03/31 17:27:16 naddy Exp $
 .\"	$NetBSD: getsockopt.2,v 1.7 1995/02/27 12:33:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockopt.2	8.3 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: October 8 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt GETSOCKOPT 2
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ they are always present at the uppermost
 .Dq socket
 level.
 .Pp
-When manipulating socket options the level at which the
+When manipulating socket options, the level at which the
 option resides and the name of the option must be specified.
 To manipulate options at the socket level,
 .Fa level

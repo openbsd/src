@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getsockname.2,v 1.30 2015/09/10 17:55:21 schwarze Exp $
+.\"	$OpenBSD: getsockname.2,v 1.31 2022/03/31 17:27:16 naddy Exp $
 .\"	$NetBSD: getsockname.2,v 1.6 1995/10/12 15:41:00 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)getsockname.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: September 10 2015 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt GETSOCKNAME 2
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ Common uses of this function are as follows:
 When
 .Xr bind 2
 is called with a port number of 0 (indicating the kernel should pick
-an ephemeral port)
+an ephemeral port),
 .Fn getsockname
 is used to retrieve the kernel-assigned port number.
 .It

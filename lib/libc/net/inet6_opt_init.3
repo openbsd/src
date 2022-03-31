@@ -1,4 +1,4 @@
-.\"	$OpenBSD: inet6_opt_init.3,v 1.7 2022/03/29 18:15:52 naddy Exp $
+.\"	$OpenBSD: inet6_opt_init.3,v 1.8 2022/03/31 17:27:16 naddy Exp $
 .\"	$KAME: inet6_opt_init.3,v 1.7 2004/12/27 05:08:23 itojun Exp $
 .\"
 .\" Copyright (C) 2004 WIDE Project.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 29 2022 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt INET6_OPT_INIT 3
 .Os
 .\"
@@ -97,7 +97,7 @@ The
 function can perform different jobs.
 When a valid
 .Fa extbuf
-argument is supplied it appends an option to the extension buffer and
+argument is supplied, it appends an option to the extension buffer and
 returns the updated total length as well as a pointer to the newly
 created option in
 .Fa databufp .
@@ -173,7 +173,7 @@ or
 When
 .Fa extbuf
 is not
-.Dv NULL
+.Dv NULL ,
 the function also sets up the appropriate padding bytes by inserting a
 Pad1 or PadN option of the proper length.
 .Pp
@@ -238,7 +238,7 @@ and
 point to the 8-bit option type, the 8-bit option length and the option
 data respectively.
 This function does not return any PAD1 or PADN options.
-When an error occurs or there are no more options the return
+When an error occurs or there are no more options, the return
 value is \-1.
 .\"
 .Ss inet6_opt_find

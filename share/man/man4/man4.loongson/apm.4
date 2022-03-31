@@ -1,4 +1,4 @@
-.\"     $OpenBSD: apm.4,v 1.6 2019/01/23 22:33:43 jsg Exp $
+.\"     $OpenBSD: apm.4,v 1.7 2022/03/31 17:27:22 naddy Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\"	AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
-.Dd $Mdocdate: January 23 2019 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt APM 4 loongson
 .Os
 .Sh NAME
@@ -150,7 +150,7 @@ value contains the estimated number of minutes of battery life remaining.
 .\" .Dv APM_NEVENTS
 .\" events.
 .\" This was defined as 16 at the time this documentation was written.
-.\" If the event list is full when a new event is detected the new event is lost.
+.\" If the event list is full when a new event is detected, the new event is lost.
 .\" .Dv APM_IOC_NEXTEVENT
 .\" ioctl returns the next event on the list or
 .\" .Er EAGAIN

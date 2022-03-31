@@ -1,4 +1,4 @@
-.\"	$OpenBSD: apm.4,v 1.15 2021/03/20 19:36:29 kn Exp $
+.\"	$OpenBSD: apm.4,v 1.16 2022/03/31 17:27:22 naddy Exp $
 .\"
 .\"	Copyright (c) 1998 Marco S. Hyman
 .\"
@@ -9,7 +9,7 @@
 .\"	LIMITATION, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
 .\"	FOR A PARTICULAR PURPOSE.
 .\"
-.Dd $Mdocdate: March 20 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt APM 4 macppc
 .Os
 .Sh NAME
@@ -142,7 +142,7 @@ The APM driver stores up to
 .Dv APM_NEVENTS
 events.
 This was defined as 16 at the time this documentation was written.
-If the event list is full when a new event is detected the new event is lost.
+If the event list is full when a new event is detected, the new event is lost.
 .Dv APM_IOC_NEXTEVENT
 ioctl returns the next event on the list or
 .Er EAGAIN

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: termcap.5,v 1.30 2016/12/28 22:47:11 schwarze Exp $
+.\"	$OpenBSD: termcap.5,v 1.31 2022/03/31 17:27:23 naddy Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)termcap.5	6.11 (Berkeley) 3/6/93
 .\"
-.Dd $Mdocdate: December 28 2016 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt TERMCAP 5
 .Os
 .Sh NAME
@@ -514,11 +514,11 @@ and
 .Sy \&\e\e .
 If it is necessary to place a
 .Sy \&:
-in a capability it must be escaped in octal as
+in a capability, it must be escaped in octal as
 .Sy \&\e072 .
 If it is necessary to place a
 .Dv NUL
-character in a string capability it must be encoded as
+character in a string capability, it must be encoded as
 .Sy \&\e200 .
 (The routines that deal with
 .Nm

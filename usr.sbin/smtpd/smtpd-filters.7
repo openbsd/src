@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd-filters.7,v 1.8 2021/11/21 06:48:15 jmc Exp $
+.\"	$OpenBSD: smtpd-filters.7,v 1.9 2022/03/31 17:27:31 naddy Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: November 21 2021 $
+.Dd $Mdocdate: March 31 2022 $
 .Dt SMTPD-FILTERS 7
 .Os
 .Sh NAME
@@ -181,7 +181,7 @@ config|subsystem|smtp-in
 .Pp
 When
 .Xr smtpd 8
-has sent all configuration keys it emits the following line:
+has sent all configuration keys, it emits the following line:
 .Bd -literal -offset indent
 config|ready
 .Ed
