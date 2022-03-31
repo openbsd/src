@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.53 2022/02/10 17:33:28 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.54 2022/03/31 12:00:00 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -117,6 +117,8 @@ rtype_from_file_extension(const char *fn)
 		return RTYPE_ROA;
 	if (strcasecmp(fn + sz - 4, ".gbr") == 0)
 		return RTYPE_GBR;
+	if (strcasecmp(fn + sz - 4, ".asa") == 0)
+		return RTYPE_ASPA;
 
 	return RTYPE_INVALID;
 }
@@ -157,6 +159,7 @@ rtype_from_mftfile(const char *fn)
 	case RTYPE_CRL:
 	case RTYPE_GBR:
 	case RTYPE_ROA:
+	case RTYPE_ASPA:
 		return type;
 	default:
 		return RTYPE_INVALID;

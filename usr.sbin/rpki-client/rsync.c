@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.32 2022/01/13 11:50:29 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.33 2022/03/31 12:00:00 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -318,6 +318,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 			args[i++] = "--include=*.gbr";
 			args[i++] = "--include=*.mft";
 			args[i++] = "--include=*.roa";
+			args[i++] = "--include=*.asa";
 			args[i++] = "--exclude=*";
 			if (bind_addr != NULL) {
 				args[i++] = "--address";
