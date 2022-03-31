@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.227 2022/03/26 14:25:14 stsp Exp $
+# $OpenBSD: GENERIC,v 1.228 2022/03/31 14:44:49 krw Exp $
 #
 # GENERIC machine description file
 #
@@ -482,13 +482,6 @@ rgephy*		at mii?			# Realtek 8169S/8110S PHY
 rlphy*		at mii?			# Realtek 8139 internal PHYs
 ukphy*		at mii?			# "unknown" PHYs
 urlphy*		at mii?			# Realtek RTL8150L internal PHY
-
-scsibus*	at scsi?
-sd*		at scsibus?
-cd*		at scsibus?
-st*		at scsibus?
-ch*		at scsibus?
-uk*		at scsibus?
 
 # I2C devices
 abcrtc*		at iic?			# Abracon x80x RTC
