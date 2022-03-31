@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.35 2022/01/14 08:16:13 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.36 2022/03/31 13:00:58 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1285,7 +1285,7 @@ EC_GROUP *
 d2i_ECPKParameters(EC_GROUP ** a, const unsigned char **in, long len)
 {
 	EC_GROUP *group = NULL;
-	ECPKPARAMETERS *params = NULL;
+	ECPKPARAMETERS *params;
 
 	if ((params = d2i_ECPKPARAMETERS(NULL, in, len)) == NULL) {
 		ECerror(EC_R_D2I_ECPKPARAMETERS_FAILURE);
@@ -1332,13 +1332,8 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 	EC_KEY *ret = NULL;
 	EC_PRIVATEKEY *priv_key = NULL;
 
-	if ((priv_key = EC_PRIVATEKEY_new()) == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	if ((priv_key = d2i_EC_PRIVATEKEY(&priv_key, in, len)) == NULL) {
+	if ((priv_key = d2i_EC_PRIVATEKEY(NULL, in, len)) == NULL) {
 		ECerror(ERR_R_EC_LIB);
-		EC_PRIVATEKEY_free(priv_key);
 		return NULL;
 	}
 	if (a == NULL || *a == NULL) {
