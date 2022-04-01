@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.56 2022/02/04 16:50:49 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.57 2022/04/01 10:00:41 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1078,7 +1078,7 @@ cert_parse_inner(const char *fn, const unsigned char *der, size_t len, int ta)
 		err(1, NULL);
 
 	if ((x = d2i_X509(NULL, &der, len)) == NULL) {
-		cryptowarnx("%s: d2i_X509_bio", p.fn);
+		cryptowarnx("%s: d2i_X509", p.fn);
 		goto out;
 	}
 
