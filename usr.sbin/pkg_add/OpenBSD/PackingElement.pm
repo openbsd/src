@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.278 2021/08/09 16:41:21 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.279 2022/04/01 10:14:17 sthen Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1673,7 +1673,8 @@ sub install
 {
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
-	$state->log("You may wish to update your font path for #1", $self->fullname);
+	$state->log("You may wish to update your font path for #1", $self->fullname)
+		unless $self->fullname =~ /^\/usr\/local\/share\/fonts/;
 	$state->{recorder}{fonts_todo}{$state->{destdir}.$self->fullname} = 1;
 }
 
