@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.14 2022/01/18 16:24:55 claudio Exp $ */
+/*	$OpenBSD: gbr.c,v 1.15 2022/04/01 17:22:07 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -63,19 +63,24 @@ gbr_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		err(1, NULL);
 	free(cms);
 
-	p.res->aia = x509_get_aia(*x509, fn);
-	p.res->aki = x509_get_aki(*x509, 0, fn);
-	p.res->ski = x509_get_ski(*x509, fn);
+	if (!x509_get_aia(*x509, fn, &p.res->aia))
+		goto out;
+	if (!x509_get_aki(*x509, fn, &p.res->aki))
+		goto out;
+	if (!x509_get_ski(*x509, fn, &p.res->ski))
+		goto out;
 	if (p.res->aia == NULL || p.res->aki == NULL || p.res->ski == NULL) {
 		warnx("%s: RFC 6487 section 4.8: "
 		    "missing AIA, AKI or SKI X509 extension", fn);
-		gbr_free(p.res);
-		X509_free(*x509);
-		*x509 = NULL;
-		return NULL;
+		goto out;
 	}
-
 	return p.res;
+
+out:
+	gbr_free(p.res);
+	X509_free(*x509);
+	*x509 = NULL;
+	return NULL;
 }
 
 /*

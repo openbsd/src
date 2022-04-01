@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.122 2022/03/31 12:00:00 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.123 2022/04/01 17:22:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -578,11 +578,11 @@ struct ibuf	*io_buf_recvfd(int, struct ibuf **);
 /* X509 helpers. */
 
 void		 x509_init_oid(void);
-char		*x509_get_aia(X509 *, const char *);
-char		*x509_get_aki(X509 *, int, const char *);
-char		*x509_get_ski(X509 *, const char *);
+int		 x509_get_aia(X509 *, const char *, char **);
+int		 x509_get_aki(X509 *, const char *, char **);
+int		 x509_get_ski(X509 *, const char *, char **);
 int		 x509_get_expire(X509 *, const char *, time_t *);
-char		*x509_get_crl(X509 *, const char *);
+int		 x509_get_crl(X509 *, const char *, char **);
 char		*x509_crl_get_aki(X509_CRL *, const char *);
 char		*x509_get_pubkey(X509 *, const char *);
 enum cert_purpose	 x509_get_purpose(X509 *, const char *);

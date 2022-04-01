@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.58 2022/04/01 13:27:38 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.59 2022/04/01 17:22:07 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1052,13 +1052,10 @@ certificate_policies(struct parse *p, X509_EXTENSION *ext)
 /*
  * Parse and partially validate an RPKI X509 certificate (either a trust
  * anchor or a certificate) as defined in RFC 6487.
- * If "ta" is set, this is a trust anchor and must be self-signed.
- * Returns the parse results or NULL on failure ("xp" will be NULL too).
- * On success, free the pointer with cert_free() and make sure that "xp"
- * is also dereferenced.
+ * Returns the parse results or NULL on failure.
  */
 static struct cert *
-cert_parse_inner(const char *fn, const unsigned char *der, size_t len, int ta)
+cert_parse_inner(const char *fn, const unsigned char *der, size_t len)
 {
 	int		 rc = 0, extsz, c;
 	int		 sia_present = 0;
@@ -1132,12 +1129,14 @@ cert_parse_inner(const char *fn, const unsigned char *der, size_t len, int ta)
 			goto out;
 	}
 
-	p.res->aki = x509_get_aki(x, ta, p.fn);
-	p.res->ski = x509_get_ski(x, p.fn);
-	if (!ta) {
-		p.res->aia = x509_get_aia(x, p.fn);
-		p.res->crl = x509_get_crl(x, p.fn);
-	}
+	if (!x509_get_aki(x, p.fn, &p.res->aki))
+		goto out;
+	if (!x509_get_ski(x, p.fn, &p.res->ski))
+		goto out;
+	if (!x509_get_aia(x, p.fn, &p.res->aia))
+		goto out;
+	if (!x509_get_crl(x, p.fn, &p.res->crl))
+		goto out;
 	if (!x509_get_expire(x, p.fn, &p.res->expires))
 		goto out;
 	p.res->purpose = x509_get_purpose(x, p.fn);
@@ -1198,7 +1197,7 @@ cert_parse(const char *fn, const unsigned char *der, size_t len)
 {
 	struct cert	*p;
 
-	if ((p = cert_parse_inner(fn, der, len, 0)) == NULL)
+	if ((p = cert_parse_inner(fn, der, len)) == NULL)
 		return NULL;
 
 	if (p->aki == NULL) {
@@ -1212,8 +1211,12 @@ cert_parse(const char *fn, const unsigned char *der, size_t len)
 		goto badcert;
 	}
 	if (p->aia == NULL) {
-		warnx("%s: RFC 6487 section 8.4.7: "
-		    "non-trust anchor missing AIA", fn);
+		warnx("%s: RFC 6487 section 8.4.7: AIA: extension missing", fn);
+		goto badcert;
+	}
+	if (p->crl == NULL) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL: "
+		    "no CRL distribution point extension", fn);
 		goto badcert;
 	}
 	return p;
@@ -1231,7 +1234,7 @@ ta_parse(const char *fn, const unsigned char *der, size_t len,
 	EVP_PKEY	*pk = NULL, *opk = NULL;
 	struct cert	*p;
 
-	if ((p = cert_parse_inner(fn, der, len, 1)) == NULL)
+	if ((p = cert_parse_inner(fn, der, len)) == NULL)
 		return NULL;
 
 	/* first check pubkey against the one from the TAL */

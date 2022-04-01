@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.38 2022/02/10 15:33:47 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.39 2022/04/01 17:22:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -351,9 +351,12 @@ roa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	if ((p.res = calloc(1, sizeof(struct roa))) == NULL)
 		err(1, NULL);
 
-	p.res->aia = x509_get_aia(*x509, fn);
-	p.res->aki = x509_get_aki(*x509, 0, fn);
-	p.res->ski = x509_get_ski(*x509, fn);
+	if (!x509_get_aia(*x509, fn, &p.res->aia))
+		goto out;
+	if (!x509_get_aki(*x509, fn, &p.res->aki))
+		goto out;
+	if (!x509_get_ski(*x509, fn, &p.res->ski))
+		goto out;
 	if (p.res->aia == NULL || p.res->aki == NULL || p.res->ski == NULL) {
 		warnx("%s: RFC 6487 section 4.8: "
 		    "missing AIA, AKI or SKI X509 extension", fn);

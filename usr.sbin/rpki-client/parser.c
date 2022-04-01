@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.64 2022/02/10 15:33:47 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.65 2022/04/01 17:22:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -360,7 +360,14 @@ proc_parser_mft_pre(char *file, const unsigned char *der, size_t len,
 
 	a = valid_ski_aki(file, &auths, mft->ski, mft->aki);
 	/* load CRL by hand, since it is referenced by the MFT itself */
-	c = x509_get_crl(x509, file);
+	if (!x509_get_crl(x509, file, &c) || c == NULL) {
+		if (c == NULL)
+			warnx("%s: RFC 6487 section 4.8.6: CRL: "
+			    "no CRL distribution point extension", file);
+		mft_free(mft);
+		X509_free(x509);
+		return NULL;
+	}
 	crlfile = strrchr(c, '/');
 	if (crlfile != NULL)
 		crlfile++;
@@ -1078,7 +1085,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		struct crl *c;
 		char *crl_uri;
 
-		crl_uri = x509_get_crl(x509, file);
+		x509_get_crl(x509, file, &crl_uri);
 		parse_load_crl(crl_uri);
 		free(crl_uri);
 		if (auth_find(&auths, aki) == NULL)

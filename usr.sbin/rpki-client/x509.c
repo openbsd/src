@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.37 2022/03/25 08:19:04 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.38 2022/04/01 17:22:07 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -83,22 +83,18 @@ x509_init_oid(void)
  * Returns the AKI or NULL if it could not be parsed.
  * The AKI is formatted as a hex string.
  */
-char *
-x509_get_aki(X509 *x, int ta, const char *fn)
+int
+x509_get_aki(X509 *x, const char *fn, char **aki)
 {
 	const unsigned char	*d;
 	AUTHORITY_KEYID		*akid;
 	ASN1_OCTET_STRING	*os;
-	int			 dsz, crit;
-	char			*res = NULL;
+	int			 dsz, crit, rc = 0;
 
+	*aki = NULL;
 	akid = X509_get_ext_d2i(x, NID_authority_key_identifier, &crit, NULL);
-	if (akid == NULL) {
-		if (!ta)
-			warnx("%s: RFC 6487 section 4.8.3: AKI: "
-			    "extension missing", fn);
-		return NULL;
-	}
+	if (akid == NULL)
+		return 1;
 	if (crit != 0) {
 		warnx("%s: RFC 6487 section 4.8.3: "
 		    "AKI: extension not non-critical", fn);
@@ -128,11 +124,11 @@ x509_get_aki(X509 *x, int ta, const char *fn)
 		goto out;
 	}
 
-	res = hex_encode(d, dsz);
-
+	*aki = hex_encode(d, dsz);
+	rc = 1;
 out:
 	AUTHORITY_KEYID_free(akid);
-	return res;
+	return rc;
 }
 
 /*
@@ -140,19 +136,17 @@ out:
  * Returns the SKI or NULL if it could not be parsed.
  * The SKI is formatted as a hex string.
  */
-char *
-x509_get_ski(X509 *x, const char *fn)
+int
+x509_get_ski(X509 *x, const char *fn, char **ski)
 {
 	const unsigned char	*d;
 	ASN1_OCTET_STRING	*os;
-	int			 dsz, crit;
-	char			*res = NULL;
+	int			 dsz, crit, rc = 0;
 
+	*ski = NULL;
 	os = X509_get_ext_d2i(x, NID_subject_key_identifier, &crit, NULL);
-	if (os == NULL) {
-		warnx("%s: RFC 6487 section 4.8.2: SKI: extension missing", fn);
-		return NULL;
-	}
+	if (os == NULL)
+		return 1;
 	if (crit != 0) {
 		warnx("%s: RFC 6487 section 4.8.2: "
 		    "SKI: extension not non-critical", fn);
@@ -169,10 +163,11 @@ x509_get_ski(X509 *x, const char *fn)
 		goto out;
 	}
 
-	res = hex_encode(d, dsz);
+	*ski = hex_encode(d, dsz);
+	rc = 1;
 out:
 	ASN1_OCTET_STRING_free(os);
-	return res;
+	return rc;
 }
 
 /*
@@ -281,19 +276,18 @@ x509_get_pubkey(X509 *x, const char *fn)
  * Returns NULL on failure, on success returns the AIA URI
  * (which has to be freed after use).
  */
-char *
-x509_get_aia(X509 *x, const char *fn)
+int
+x509_get_aia(X509 *x, const char *fn, char **aia)
 {
 	ACCESS_DESCRIPTION		*ad;
 	AUTHORITY_INFO_ACCESS		*info;
-	char				*aia = NULL;
-	int				 crit;
+	int				 crit, rc = 0;
 
+	*aia = NULL;
 	info = X509_get_ext_d2i(x, NID_info_access, &crit, NULL);
-	if (info == NULL) {
-		warnx("%s: RFC 6487 section 4.8.7: AIA: extension missing", fn);
-		return NULL;
-	}
+	if (info == NULL)
+		return 1;
+
 	if (crit != 0) {
 		warnx("%s: RFC 6487 section 4.8.7: "
 		    "AIA: extension not non-critical", fn);
@@ -325,15 +319,16 @@ x509_get_aia(X509 *x, const char *fn)
 		goto out;
 	}
 
-	aia = strndup(
+	*aia = strndup(
 	    ASN1_STRING_get0_data(ad->location->d.uniformResourceIdentifier),
 	    ASN1_STRING_length(ad->location->d.uniformResourceIdentifier));
-	if (aia == NULL)
+	if (*aia == NULL)
 		err(1, NULL);
+	rc = 1;
 
 out:
 	AUTHORITY_INFO_ACCESS_free(info);
-	return aia;
+	return rc;
 }
 
 /*
@@ -364,21 +359,19 @@ x509_get_expire(X509 *x, const char *fn, time_t *tt)
  * Returns NULL on failure, the crl URI on success which has to be freed
  * after use.
  */
-char *
-x509_get_crl(X509 *x, const char *fn)
+int
+x509_get_crl(X509 *x, const char *fn, char **crl)
 {
 	CRL_DIST_POINTS		*crldp;
 	DIST_POINT		*dp;
 	GENERAL_NAME		*name;
-	char			*crl = NULL;
-	int			 crit;
+	int			 crit, rc = 0;
 
+	*crl = NULL;
 	crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, &crit, NULL);
-	if (crldp == NULL) {
-		warnx("%s: RFC 6487 section 4.8.6: CRL: "
-		    "no CRL distribution point extension", fn);
-		return NULL;
-	}
+	if (crldp == NULL)
+		return 1;
+
 	if (crit != 0) {
 		warnx("%s: RFC 6487 section 4.8.6: "
 		    "CRL distribution point: extension not non-critical", fn);
@@ -425,14 +418,15 @@ x509_get_crl(X509 *x, const char *fn)
 		goto out;
 	}
 
-	crl = strndup(ASN1_STRING_get0_data(name->d.uniformResourceIdentifier),
+	*crl = strndup(ASN1_STRING_get0_data(name->d.uniformResourceIdentifier),
 	    ASN1_STRING_length(name->d.uniformResourceIdentifier));
-	if (crl == NULL)
+	if (*crl == NULL)
 		err(1, NULL);
+	rc = 1;
 
 out:
 	CRL_DIST_POINTS_free(crldp);
-	return crl;
+	return rc;
 }
 
 /*
