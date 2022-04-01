@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.78 2021/11/03 13:37:17 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.79 2022/04/01 10:11:59 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -104,7 +104,7 @@ screen_reinit(struct screen *s)
 	s->rupper = 0;
 	s->rlower = screen_size_y(s) - 1;
 
-	s->mode = MODE_CURSOR|MODE_WRAP;
+	s->mode = MODE_CURSOR|MODE_WRAP|(s->mode & MODE_CRLF);
 	if (options_get_number(global_options, "extended-keys") == 2)
 		s->mode |= MODE_KEXTENDED;
 
