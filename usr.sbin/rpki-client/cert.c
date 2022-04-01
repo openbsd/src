@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.57 2022/04/01 10:00:41 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.58 2022/04/01 13:27:38 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1171,11 +1171,6 @@ cert_parse_inner(const char *fn, const unsigned char *der, size_t len, int ta)
 			   p.fn);
 			goto out;
 		}
-		if (ta) {
-			warnx("%s: BGPsec cert can not be a trust anchor",
-			   p.fn);
-			goto out;
-		}
 		break;
 	default:
 		warnx("%s: x509_get_purpose failed in %s", p.fn, __func__);
@@ -1184,38 +1179,6 @@ cert_parse_inner(const char *fn, const unsigned char *der, size_t len, int ta)
 
 	if (p.res->ski == NULL) {
 		warnx("%s: RFC 6487 section 8.4.2: missing SKI", p.fn);
-		goto out;
-	}
-
-	if (ta && p.res->aki != NULL && strcmp(p.res->aki, p.res->ski)) {
-		warnx("%s: RFC 6487 section 8.4.2: "
-		    "trust anchor AKI, if specified, must match SKI", p.fn);
-		goto out;
-	}
-
-	if (!ta && p.res->aki == NULL) {
-		warnx("%s: RFC 6487 section 8.4.2: "
-		    "non-trust anchor missing AKI", p.fn);
-		goto out;
-	} else if (!ta && strcmp(p.res->aki, p.res->ski) == 0) {
-		warnx("%s: RFC 6487 section 8.4.2: "
-		    "non-trust anchor AKI may not match SKI", p.fn);
-		goto out;
-	}
-
-	if (!ta && p.res->aia == NULL) {
-		warnx("%s: RFC 6487 section 8.4.7: "
-		    "non-trust anchor missing AIA", p.fn);
-		goto out;
-	} else if (ta && p.res->aia != NULL) {
-		warnx("%s: RFC 6487 section 8.4.7: "
-		    "trust anchor must not have AIA", p.fn);
-		goto out;
-	}
-
-	if (ta && p.res->crl != NULL) {
-		warnx("%s: RFC 6487 section 8.4.2: "
-		    "trust anchor may not specify CRL resource", p.fn);
 		goto out;
 	}
 
@@ -1233,7 +1196,31 @@ out:
 struct cert *
 cert_parse(const char *fn, const unsigned char *der, size_t len)
 {
-	return cert_parse_inner(fn, der, len, 0);
+	struct cert	*p;
+
+	if ((p = cert_parse_inner(fn, der, len, 0)) == NULL)
+		return NULL;
+
+	if (p->aki == NULL) {
+		warnx("%s: RFC 6487 section 8.4.2: "
+		    "non-trust anchor missing AKI", fn);
+		goto badcert;
+	}
+	if (strcmp(p->aki, p->ski) == 0) {
+		warnx("%s: RFC 6487 section 8.4.2: "
+		    "non-trust anchor AKI may not match SKI", fn);
+		goto badcert;
+	}
+	if (p->aia == NULL) {
+		warnx("%s: RFC 6487 section 8.4.7: "
+		    "non-trust anchor missing AIA", fn);
+		goto badcert;
+	}
+	return p;
+
+badcert:
+	cert_free(p);
+	return NULL;
 }
 
 struct cert *
@@ -1243,7 +1230,6 @@ ta_parse(const char *fn, const unsigned char *der, size_t len,
 	ASN1_TIME	*notBefore, *notAfter;
 	EVP_PKEY	*pk = NULL, *opk = NULL;
 	struct cert	*p;
-	int		 rc = 0;
 
 	if ((p = cert_parse_inner(fn, der, len, 1)) == NULL)
 		return NULL;
@@ -1279,17 +1265,33 @@ ta_parse(const char *fn, const unsigned char *der, size_t len,
 		warnx("%s: certificate has expired", fn);
 		goto badcert;
 	}
+	if (p->aki != NULL && strcmp(p->aki, p->ski)) {
+		warnx("%s: RFC 6487 section 8.4.2: "
+		    "trust anchor AKI, if specified, must match SKI", fn);
+		goto badcert;
+	}
+	if (p->aia != NULL) {
+		warnx("%s: RFC 6487 section 8.4.7: "
+		    "trust anchor must not have AIA", fn);
+		goto badcert;
+	}
+	if (p->crl != NULL) {
+		warnx("%s: RFC 6487 section 8.4.2: "
+		    "trust anchor may not specify CRL resource", fn);
+		goto badcert;
+	}
+	if (p->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
+		warnx("%s: BGPsec cert cannot be a trust anchor", fn);
+		goto badcert;
+	}
 
-	rc = 1;
+	EVP_PKEY_free(pk);
+	return p;
 
 badcert:
 	EVP_PKEY_free(pk);
-	if (rc == 0) {
-		cert_free(p);
-		p = NULL;
-	}
-
-	return p;
+	cert_free(p);
+	return NULL;
 }
 
 /*
