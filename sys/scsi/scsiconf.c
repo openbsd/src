@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.250 2022/04/02 13:57:39 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.251 2022/04/02 17:25:10 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -802,7 +802,7 @@ scsi_detach_link(struct scsi_link *link, int flags)
 	}
 
 	/* 3. If it's using the openings io allocator, clean that up. */
-	if (ISSET(link->flags, SDEV_OWN_IOPL)) {
+	if (link->pool != NULL && ISSET(link->flags, SDEV_OWN_IOPL)) {
 		scsi_iopool_destroy(link->pool);
 		free(link->pool, M_DEVBUF, sizeof(*link->pool));
 	}
