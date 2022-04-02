@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.14 2022/03/31 21:41:17 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.15 2022/04/02 09:00:45 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -2309,6 +2309,8 @@ aq_rx_fill_slots(struct aq_softc *sc, struct aq_rxring *rx, uint nslots)
 		}
 		as->as_m = m;
 
+		bus_dmamap_sync(sc->sc_dmat, as->as_map, 0,
+		    as->as_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 		htolem64(&rd->buf_addr, as->as_map->dm_segs[0].ds_addr);
 		rd->hdr_addr = 0;
 		p++;
@@ -2451,6 +2453,10 @@ aq_rxeof(struct aq_softc *sc, struct aq_rxring *rx)
 		if (idx == AQ_RXD_NUM)
 			idx = 0;
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, AQ_DMA_MAP(&rx->rx_mem), 0,
+	    AQ_DMA_LEN(&rx->rx_mem), BUS_DMASYNC_PREREAD);
+
 	rx->rx_cons = idx;
 
 	if (rxfree > 0) {
@@ -2486,6 +2492,8 @@ aq_txeof(struct aq_softc *sc, struct aq_txring *tx)
 		as = &tx->tx_slots[idx];
 
 		if (as->as_m != NULL) {
+			bus_dmamap_sync(sc->sc_dmat, as->as_map, 0,
+			    as->as_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->sc_dmat, as->as_map);
 
 			m_freem(as->as_m);
@@ -2497,6 +2505,9 @@ aq_txeof(struct aq_softc *sc, struct aq_txring *tx)
 			idx = 0;
 		free++;
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, AQ_DMA_MAP(&tx->tx_mem), 0,
+	    AQ_DMA_LEN(&tx->tx_mem), BUS_DMASYNC_PREREAD);
 
 	tx->tx_cons = idx;
 
@@ -2770,6 +2781,14 @@ aq_queue_up(struct aq_softc *sc, struct aq_queues *aq)
 		goto destroy_tx_slots;
 	}
 
+	bus_dmamap_sync(sc->sc_dmat, AQ_DMA_MAP(&tx->tx_mem),
+	    0, AQ_DMA_LEN(&tx->tx_mem),
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+	bus_dmamap_sync(sc->sc_dmat, AQ_DMA_MAP(&rx->rx_mem),
+	    0, AQ_DMA_LEN(&rx->rx_mem),
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
 	aq_txring_reset(sc, tx, 1);
 	aq_rxring_reset(sc, rx, 1);
 	return 0;
@@ -2800,6 +2819,10 @@ aq_queue_down(struct aq_softc *sc, struct aq_queues *aq)
 		tx->tx_slots = NULL;
 	}
 
+	bus_dmamap_sync(sc->sc_dmat, AQ_DMA_MAP(&tx->tx_mem),
+	    0, AQ_DMA_LEN(&tx->tx_mem),
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
 	aq_dmamem_free(sc, &tx->tx_mem);
 
 	rx = &aq->q_rx;
@@ -2812,6 +2835,10 @@ aq_queue_down(struct aq_softc *sc, struct aq_queues *aq)
 		aq_free_slots(sc, rx->rx_slots, AQ_RXD_NUM, AQ_RXD_NUM);
 		rx->rx_slots = NULL;
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, AQ_DMA_MAP(&rx->rx_mem),
+	    0, AQ_DMA_LEN(&rx->rx_mem),
+	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
 	aq_dmamem_free(sc, &rx->rx_mem);
 }
