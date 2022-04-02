@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.65 2022/04/01 17:22:07 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.66 2022/04/02 12:17:53 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -47,6 +47,8 @@ static struct crl	*parse_load_crl_from_mft(struct entity *, const char *);
 static X509_STORE_CTX	*ctx;
 static struct auth_tree	 auths = RB_INITIALIZER(&auths);
 static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
+
+struct tal		*talobj[TALSZ_MAX];
 
 extern ASN1_OBJECT	*certpol_oid;
 
@@ -479,7 +481,10 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len)
 
 	/* Extract certificate data. */
 
-	cert = cert_parse(file, der, len);
+	cert = cert_parse_pre(file, der, len);
+	if (cert == NULL)
+		return NULL;
+	cert = cert_parse(file, cert);
 	if (cert == NULL)
 		return NULL;
 
@@ -504,7 +509,10 @@ proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
 
 	/* Extract certificate data. */
 
-	cert = ta_parse(file, der, len, pkey, pkeysz);
+	cert = cert_parse_pre(file, der, len);
+	if (cert == NULL)
+		return NULL;
+	cert = ta_parse(file, cert, pkey, pkeysz);
 	if (cert == NULL)
 		return NULL;
 
@@ -896,7 +904,7 @@ parse_load_cert(char *uri)
 		goto done;
 	}
 
-	cert = cert_parse(uri, f, flen);
+	cert = cert_parse_pre(uri, f, flen);
 	free(f);
 
 	if (cert == NULL)
@@ -994,6 +1002,35 @@ parse_load_ta(struct tal *tal)
 	free(f);
 }
 
+static struct tal *
+find_tal(struct cert *cert)
+{
+	EVP_PKEY	*pk, *opk;
+	struct tal	*tal;
+	int		 i;
+
+	if ((opk = X509_get0_pubkey(cert->x509)) == NULL)
+		return NULL;
+
+	for (i = 0; i < TALSZ_MAX; i++) {
+		const unsigned char *pkey;
+
+		if (talobj[i] == NULL)
+			break;
+		tal = talobj[i];
+		pkey = tal->pkey;
+		pk = d2i_PUBKEY(NULL, &pkey, tal->pkeysz);
+		if (pk == NULL)
+			continue;
+		if (EVP_PKEY_cmp(pk, opk) == 1) {
+			EVP_PKEY_free(pk);
+			return tal;
+		}
+		EVP_PKEY_free(pk);
+	}
+	return NULL;
+}
+
 /*
  * Parse file passed with -f option.
  */
@@ -1008,8 +1045,9 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	struct roa *roa = NULL;
 	struct gbr *gbr = NULL;
 	struct tal *tal = NULL;
-	enum rtype type;
 	char *aia = NULL, *aki = NULL;
+	enum rtype type;
+	int is_ta = 0;
 
 	if (num++ > 0)
 		printf("--\n");
@@ -1029,7 +1067,12 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 
 	switch (type) {
 	case RTYPE_CER:
-		cert = cert_parse(file, buf, len);
+		cert = cert_parse_pre(file, buf, len);
+		if (cert == NULL)
+			break;
+		is_ta = X509_get_extension_flags(cert->x509) & EXFLAG_SS;
+		if (!is_ta)
+			cert = cert_parse(file, cert);
 		if (cert == NULL)
 			break;
 		cert_print(cert);
@@ -1097,6 +1140,20 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			printf("Validation: OK\n");
 		else
 			printf("Validation: Failed\n");
+	} else if (is_ta) {
+		if ((tal = find_tal(cert)) != NULL) {
+			cert = ta_parse(file, cert, tal->pkey, tal->pkeysz);
+			printf("TAL: %s\n", tal->descr);
+			tal = NULL;
+		} else {
+			cert_free(cert);
+			cert = NULL;
+			printf("TAL: not found\n");
+		}
+		if (cert != NULL)
+			printf("Validation: OK\n");
+		else
+			printf("Validation: Failed\n");
 	}
 
 	X509_free(x509);
@@ -1131,8 +1188,8 @@ parse_file(struct entityq *q, struct msgbuf *msgq)
 				errx(1, "%s: could not parse tal file",
 				    entp->file);
 			tal->id = entp->talid;
+			talobj[tal->id] = tal;
 			parse_load_ta(tal);
-			tal_free(tal);
 			break;
 		default:
 			errx(1, "unhandled entity type %d", entp->type);

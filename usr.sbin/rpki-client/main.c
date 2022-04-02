@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.189 2022/02/10 18:58:46 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.190 2022/04/02 12:17:53 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -43,11 +43,6 @@
 
 #include "extern.h"
 #include "version.h"
-
-/*
- * Maximum number of TAL files we'll load.
- */
-#define	TALSZ_MAX	8
 
 const char	*tals[TALSZ_MAX];
 const char	*taldescs[TALSZ_MAX];

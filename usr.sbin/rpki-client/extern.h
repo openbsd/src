@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.123 2022/04/01 17:22:07 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.124 2022/04/02 12:17:53 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -422,9 +422,10 @@ struct tal	*tal_read(struct ibuf *);
 
 void		 cert_buffer(struct ibuf *, const struct cert *);
 void		 cert_free(struct cert *);
-struct cert	*cert_parse(const char *, const unsigned char *, size_t);
-struct cert	*ta_parse(const char *, const unsigned char *, size_t,
-		    const unsigned char *, size_t);
+struct cert	*cert_parse_pre(const char *, const unsigned char *, size_t);
+struct cert	*cert_parse(const char *, struct cert *);
+struct cert	*ta_parse(const char *, struct cert *, const unsigned char *,
+		    size_t);
 struct cert	*cert_read(struct ibuf *);
 void		 cert_insert_brks(struct brk_tree *, struct cert *);
 
@@ -630,6 +631,9 @@ int	mkpath(const char *);
 
 #define RPKI_PATH_OUT_DIR	"/var/db/rpki-client"
 #define RPKI_PATH_BASE_DIR	"/var/cache/rpki-client"
+
+/* Maximum number of TAL files we'll load. */
+#define	TALSZ_MAX	8
 
 /* Maximum number of IP and AS ranges accepted in any single file */
 #define MAX_IP_SIZE		200000

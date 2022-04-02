@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.59 2022/04/01 17:22:07 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.60 2022/04/02 12:17:53 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1054,8 +1054,8 @@ certificate_policies(struct parse *p, X509_EXTENSION *ext)
  * anchor or a certificate) as defined in RFC 6487.
  * Returns the parse results or NULL on failure.
  */
-static struct cert *
-cert_parse_inner(const char *fn, const unsigned char *der, size_t len)
+struct cert *
+cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 {
 	int		 rc = 0, extsz, c;
 	int		 sia_present = 0;
@@ -1193,13 +1193,8 @@ out:
 }
 
 struct cert *
-cert_parse(const char *fn, const unsigned char *der, size_t len)
+cert_parse(const char *fn, struct cert *p)
 {
-	struct cert	*p;
-
-	if ((p = cert_parse_inner(fn, der, len)) == NULL)
-		return NULL;
-
 	if (p->aki == NULL) {
 		warnx("%s: RFC 6487 section 8.4.2: "
 		    "non-trust anchor missing AKI", fn);
@@ -1227,15 +1222,11 @@ badcert:
 }
 
 struct cert *
-ta_parse(const char *fn, const unsigned char *der, size_t len,
-    const unsigned char *pkey, size_t pkeysz)
+ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
+    size_t pkeysz)
 {
 	ASN1_TIME	*notBefore, *notAfter;
-	EVP_PKEY	*pk = NULL, *opk = NULL;
-	struct cert	*p;
-
-	if ((p = cert_parse_inner(fn, der, len)) == NULL)
-		return NULL;
+	EVP_PKEY	*pk, *opk;
 
 	/* first check pubkey against the one from the TAL */
 	pk = d2i_PUBKEY(NULL, &pkey, pkeysz);
@@ -1246,7 +1237,8 @@ ta_parse(const char *fn, const unsigned char *der, size_t len,
 	if ((opk = X509_get0_pubkey(p->x509)) == NULL) {
 		cryptowarnx("%s: RFC 6487 (trust anchor): missing pubkey", fn);
 		goto badcert;
-	} else if (EVP_PKEY_cmp(pk, opk) != 1) {
+	}
+	if (EVP_PKEY_cmp(pk, opk) != 1) {
 		cryptowarnx("%s: RFC 6487 (trust anchor): "
 		    "pubkey does not match TAL pubkey", fn);
 		goto badcert;
