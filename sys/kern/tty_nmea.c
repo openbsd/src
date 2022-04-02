@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_nmea.c,v 1.50 2022/04/02 22:43:01 mlarkin Exp $ */
+/*	$OpenBSD: tty_nmea.c,v 1.51 2022/04/02 22:45:18 mlarkin Exp $ */
 
 /*
  * Copyright (c) 2006, 2007, 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -16,7 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* A tty line discipline to decode NMEA 0183 data to get the time. */
+/*
+ * A tty line discipline to decode NMEA 0183 data to get the time
+ * and GPS position data
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
