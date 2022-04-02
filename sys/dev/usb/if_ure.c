@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.29 2022/04/02 12:22:56 kevlo Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.30 2022/04/02 15:35:06 sthen Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * Copyright (c) 2020 Jonathon Fletcher <jonathon.fletcher@gmail.com>
@@ -2142,7 +2142,7 @@ ure_encap_txpkt(struct mbuf *m, char *buf, uint32_t maxlen)
 
 #if NVLAN > 0
 	if (m->m_flags & M_VLANTAG)
-		cflags |= swap16(m->m_pkthdr.ether_vtag | URE_TXPKT_VLAN_TAG);
+		cflags |= URE_TXPKT_VLAN_TAG | swap16(m->m_pkthdr.ether_vtag);
 #endif
 
 	txhdr.ure_pktlen = htole32(m->m_pkthdr.len | URE_TXPKT_TX_FS |
