@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvclock.c,v 1.10 2022/01/09 05:42:37 jsg Exp $	*/
+/*	$OpenBSD: mvclock.c,v 1.11 2022/04/03 20:23:14 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -73,6 +73,7 @@ mvclock_match(struct device *parent, void *match, void *aux)
 	int node = faa->fa_node;
 
 	return (OF_is_compatible(node, "marvell,ap806-clock") ||
+	    OF_is_compatible(node, "marvell,ap807-clock") ||
 	    OF_is_compatible(node, "marvell,cp110-clock") ||
 	    OF_is_compatible(node, "marvell,armada-3700-periph-clock-nb") ||
 	    OF_is_compatible(node, "marvell,armada-3700-periph-clock-sb") ||
@@ -100,7 +101,8 @@ mvclock_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_cd.cd_node = node;
 	sc->sc_cd.cd_cookie = sc;
-	if (OF_is_compatible(node, "marvell,ap806-clock")) {
+	if (OF_is_compatible(node, "marvell,ap806-clock") ||
+	    OF_is_compatible(node, "marvell,ap807-clock")) {
 		sc->sc_cd.cd_get_frequency = ap806_get_frequency;
 	} else if (OF_is_compatible(node, "marvell,cp110-clock")) {
 		sc->sc_cd.cd_get_frequency = cp110_get_frequency;
