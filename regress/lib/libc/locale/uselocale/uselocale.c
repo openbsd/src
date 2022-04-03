@@ -1,4 +1,4 @@
-/* $OpenBSD: uselocale.c,v 1.5 2017/08/16 13:52:50 schwarze Exp $ */
+/* $OpenBSD: uselocale.c,v 1.6 2022/04/03 16:52:50 anton Exp $ */
 /*
  * Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
  *
@@ -170,6 +170,10 @@ _test_MB_CUR_MAX(int line, int ee, size_t ar)
 #define	TEST_R(Fn, ...)		_test_##Fn(__LINE__, 0, __VA_ARGS__)
 #define	TEST_ER(Fn, ...)	_test_##Fn(__LINE__, __VA_ARGS__)
 
+static pthread_mutex_t		 mtx;
+static pthread_mutexattr_t	 mtxattr;
+static pthread_cond_t		 cond;
+
 /*
  * SWITCH_SIGNAL wakes the other thread.
  * SWITCH_WAIT goes to sleep.
@@ -179,40 +183,21 @@ _test_MB_CUR_MAX(int line, int ee, size_t ar)
 static void
 switch_thread(int step, int flags)
 {
-	static pthread_mutexattr_t	 ma;
-	static struct timespec		 t;
-	static pthread_cond_t		*c;
-	static pthread_mutex_t		*m;
-	int				 irc;
+	struct timespec	 t;
+	int		 irc;
 
-	if (m == NULL) {
-		if ((m = malloc(sizeof(*m))) == NULL)
-			err(1, NULL);
-		if ((irc = pthread_mutexattr_init(&ma)) != 0)
-			errc(1, irc, "pthread_mutexattr_init");
-		if ((irc = pthread_mutexattr_settype(&ma,
-		    PTHREAD_MUTEX_STRICT_NP)) != 0)
-			errc(1, irc, "pthread_mutexattr_settype");
-		if ((irc = pthread_mutex_init(m, &ma)) != 0)
-			errc(1, irc, "pthread_mutex_init");
-	}
-	if (c == NULL) {
-		if ((c = malloc(sizeof(*c))) == NULL)
-			err(1, NULL);
-		if ((irc = pthread_cond_init(c, NULL)) != 0)
-			errc(1, irc, "pthread_cond_init");
-	}
 	if (flags & SWITCH_SIGNAL) {
-		if ((irc = pthread_cond_signal(c)) != 0)
+		if ((irc = pthread_cond_signal(&cond)) != 0)
 			errc(1, irc, "pthread_cond_signal(%d)", step);
 	}
 	if (flags & SWITCH_WAIT) {
-		if ((irc = pthread_mutex_trylock(m)) != 0)
+		if ((irc = pthread_mutex_trylock(&mtx)) != 0)
 			errc(1, irc, "pthread_mutex_trylock(%d)", step);
 		t.tv_sec = time(NULL) + 2;
-		if ((irc = pthread_cond_timedwait(c, m, &t)) != 0)
+		t.tv_nsec = 0;
+		if ((irc = pthread_cond_timedwait(&cond, &mtx, &t)) != 0)
 			errc(1, irc, "pthread_cond_timedwait(%d)", step);
-		if ((irc = pthread_mutex_unlock(m)) != 0)
+		if ((irc = pthread_mutex_unlock(&mtx)) != 0)
 			errc(1, irc, "pthread_mutex_unlock(%d)", step);
 	}
 }
@@ -441,6 +426,16 @@ main(void)
 	unsetenv("LC_TIME");
 	unsetenv("LC_MESSAGES");
 	unsetenv("LANG");
+
+	if ((irc = pthread_mutexattr_init(&mtxattr)) != 0)
+		errc(1, irc, "pthread_mutexattr_init");
+	if ((irc = pthread_mutexattr_settype(&mtxattr,
+	    PTHREAD_MUTEX_STRICT_NP)) != 0)
+		errc(1, irc, "pthread_mutexattr_settype");
+	if ((irc = pthread_mutex_init(&mtx, &mtxattr)) != 0)
+		errc(1, irc, "pthread_mutex_init");
+	if ((irc = pthread_cond_init(&cond, NULL)) != 0)
+		errc(1, irc, "pthread_cond_init");
 
 	/* First let the child do some tests. */
 	if ((irc = pthread_create(&child_thread, NULL, child_func, NULL)) != 0)
