@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.22 2022/02/10 11:11:22 tb Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.23 2022/04/04 13:45:02 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -256,7 +256,6 @@ rrdp_failed(struct rrdp *s)
 	/* reset file state before retrying */
 	s->file_failed = 0;
 
-	/* XXX MUST do some cleanup in the repo here */
 	if (s->task == DELTA) {
 		/* fallback to a snapshot as per RFC8182 */
 		free_delta_xml(s->dxml);
