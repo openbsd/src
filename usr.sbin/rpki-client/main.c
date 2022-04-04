@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.190 2022/04/02 12:17:53 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.191 2022/04/04 12:11:54 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -348,9 +348,6 @@ queue_add_from_mft(const char *path, const struct mftfile *file,
  * Loops over queue_add_from_mft() for all files.
  * The order here is important: we want to parse the revocation
  * list *before* we parse anything else.
- * FIXME: set the type of file in the mftfile so that we don't need to
- * keep doing the check (this should be done in the parser, where we
- * check the suffix anyway).
  */
 static void
 queue_add_from_mft_set(const struct mft *mft, const char *name, struct repo *rp)
