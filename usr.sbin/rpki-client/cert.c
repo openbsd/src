@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.60 2022/04/02 12:17:53 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.61 2022/04/04 13:15:11 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -611,8 +611,6 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	/* FIXME: verify OID. */
-
 	t = sk_ASN1_TYPE_value(seq, 1);
 	if (t->type != V_ASN1_BOOLEAN) {
 		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
@@ -917,8 +915,6 @@ sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 		    p->fn, ASN1_tag2str(t->type), t->type);
 		goto out;
 	}
-
-	/* FIXME: verify OID. */
 
 	t = sk_ASN1_TYPE_value(seq, 1);
 	if (t->type != V_ASN1_BOOLEAN) {
