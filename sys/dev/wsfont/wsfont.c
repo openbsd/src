@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.61 2021/11/02 16:31:27 fcambus Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.62 2022/04/04 19:53:15 naddy Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -630,23 +630,23 @@ wsfont_unlock(int cookie)
  */
 
 struct wsfont_level1_glyphmap {
-	struct wsfont_level2_glyphmap **level2;
+	const struct wsfont_level2_glyphmap **level2;
 	int base;	/* High byte for first level2 entry	*/
 	int size;	/* Number of level2 entries		*/
 };
 
 struct wsfont_level2_glyphmap {
-	int base;	/* Low byte for first character		*/
-	int size;	/* Number of characters			*/
-	void *chars;	/* Pointer to character number entries  */
-	int width;	/* Size of each entry in bytes (1,2,4)  */
+	int base;		/* Low byte for first character		*/
+	int size;		/* Number of characters			*/
+	const void *chars;	/* Pointer to character number entries  */
+	int width;		/* Size of each entry in bytes (1,2,4)  */
 };
 
 /*
  * IBM 437 maps
  */
 
-static u_int8_t
+static const u_int8_t
 ibm437_chars_0[] = {
 	 0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15,
 	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
@@ -706,7 +706,7 @@ ibm437_chars_37[] = {
 	254
 };
 
-static struct wsfont_level2_glyphmap
+static const struct wsfont_level2_glyphmap
 ibm437_level2_0 = { 0, 256, ibm437_chars_0, 1 },
 ibm437_level2_1 = { 146, 1, ibm437_chars_1, 1 },
 ibm437_level2_3 = { 147, 50, ibm437_chars_3, 1 },
@@ -715,7 +715,7 @@ ibm437_level2_34 = { 5, 97, ibm437_chars_34, 1 },
 ibm437_level2_35 = { 16, 18, ibm437_chars_35, 1 },
 ibm437_level2_37 = { 0, 161, ibm437_chars_37, 1 };
 
-static struct wsfont_level2_glyphmap *ibm437_level1[] = {
+static const struct wsfont_level2_glyphmap *ibm437_level1[] = {
 	&ibm437_level2_0, &ibm437_level2_1, NULL, &ibm437_level2_3,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL,
@@ -728,7 +728,7 @@ static struct wsfont_level2_glyphmap *ibm437_level1[] = {
 	NULL, &ibm437_level2_37
 };
 
-static struct wsfont_level1_glyphmap encodings[] = {
+static const struct wsfont_level1_glyphmap encodings[] = {
 	/* WSDISPLAY_FONTENC_ISO */
 	{ NULL, 0, 0 },
 	/* WSDISPLAY_FONTENC_IBM */
@@ -749,9 +749,9 @@ wsfont_map_unichar(struct wsdisplay_font *font, int c)
 #if !defined(SMALL_KERNEL)
 	if (font->encoding >= 0 && font->encoding < nitems(encodings)) {
 		int hi = (c >> 8), lo = c & 255;
-		struct wsfont_level1_glyphmap *map1 =
+		const struct wsfont_level1_glyphmap *map1 =
 		    &encodings[font->encoding];
-		struct wsfont_level2_glyphmap *map2;
+		const struct wsfont_level2_glyphmap *map2;
 
 		hi -= map1->base;
 
