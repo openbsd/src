@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.375 2022/03/23 17:36:09 bluhm Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.376 2022/04/04 12:57:36 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -107,7 +107,7 @@ struct pfi_kif		*pf_kif_setup(struct pfi_kif *);
 void			 pf_addr_copyout(struct pf_addr_wrap *);
 void			 pf_trans_set_commit(void);
 void			 pf_pool_copyin(struct pf_pool *, struct pf_pool *);
-int			 pf_validate_range(u_int8_t, u_int16_t[2]);
+int			 pf_validate_range(u_int8_t, u_int16_t[2], int);
 int			 pf_rule_copyin(struct pf_rule *, struct pf_rule *);
 int			 pf_rule_checkaf(struct pf_rule *);
 u_int16_t		 pf_qname2qid(char *, int);
@@ -125,6 +125,9 @@ struct {
 	u_int32_t	reass;
 	u_int32_t	mask;
 } pf_trans_set;
+
+#define	PF_ORDER_HOST	0
+#define	PF_ORDER_NET	1
 
 #define	PF_TSET_STATUSIF	0x01
 #define	PF_TSET_DEBUG		0x02
@@ -3060,10 +3063,10 @@ pf_pool_copyin(struct pf_pool *from, struct pf_pool *to)
 }
 
 int
-pf_validate_range(u_int8_t op, u_int16_t port[2])
+pf_validate_range(u_int8_t op, u_int16_t port[2], int order)
 {
-	u_int16_t a = ntohs(port[0]);
-	u_int16_t b = ntohs(port[1]);
+	u_int16_t a = (order == PF_ORDER_NET) ? ntohs(port[0]) : port[0];
+	u_int16_t b = (order == PF_ORDER_NET) ? ntohs(port[1]) : port[1];
 
 	if ((op == PF_OP_RRG && a > b) ||  /* 34:12,  i.e. none */
 	    (op == PF_OP_IRG && a >= b) || /* 34><12, i.e. none */
@@ -3087,9 +3090,9 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to)
 	to->dst = from->dst;
 	to->dst.addr.p.tbl = NULL;
 
-	if (pf_validate_range(to->src.port_op, to->src.port))
+	if (pf_validate_range(to->src.port_op, to->src.port, PF_ORDER_NET))
 		return (EINVAL);
-	if (pf_validate_range(to->dst.port_op, to->dst.port))
+	if (pf_validate_range(to->dst.port_op, to->dst.port, PF_ORDER_NET))
 		return (EINVAL);
 
 	/* XXX union skip[] */
@@ -3109,7 +3112,8 @@ pf_rule_copyin(struct pf_rule *from, struct pf_rule *to)
 	pf_pool_copyin(&from->rdr, &to->rdr);
 	pf_pool_copyin(&from->route, &to->route);
 
-	if (pf_validate_range(to->rdr.port_op, to->rdr.proxy_port))
+	if (pf_validate_range(to->rdr.port_op, to->rdr.proxy_port,
+	    PF_ORDER_HOST))
 		return (EINVAL);
 
 	to->kif = (to->ifname[0]) ?
