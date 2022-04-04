@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkdir.c,v 1.7 2021/05/06 17:25:45 claudio Exp $	*/
+/*	$OpenBSD: mkdir.c,v 1.8 2022/04/04 16:02:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -32,6 +32,7 @@
 #include <sys/stat.h>
 
 #include <errno.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -39,10 +40,11 @@
 
 /*
  * mkpath -- create directories.
+ *	fd  - file descriptor to base dir or AT_FDCWD
  *	dir - path to create directories for
  */
 int
-mkpath(const char *dir)
+mkpathat(int fd, const char *dir)
 {
 	char *path, *slash;
 	int done;
@@ -59,7 +61,7 @@ mkpath(const char *dir)
 		done = (*slash == '\0');
 		*slash = '\0';
 
-		if (mkdir(path, 0755) == -1 && errno != EEXIST) {
+		if (mkdirat(fd, path, 0755) == -1 && errno != EEXIST) {
 			free(path);
 			return -1;
 		}
@@ -72,4 +74,10 @@ mkpath(const char *dir)
 
 	free(path);
 	return 0;
+}
+
+int
+mkpath(const char *dir)
+{
+	return mkpathat(AT_FDCWD, dir);
 }

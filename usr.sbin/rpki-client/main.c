@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.191 2022/04/04 12:11:54 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.192 2022/04/04 16:02:54 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1231,7 +1231,8 @@ main(int argc, char *argv[])
 
 	logx("all files parsed: generating output");
 
-	repo_cleanup(&fpt);
+	if (!noop)
+		repo_cleanup(&fpt, cachefd);
 
 	gettimeofday(&now_time, NULL);
 	timersub(&now_time, &start_time, &stats.elapsed_time);

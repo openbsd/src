@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.31 2022/02/14 14:47:49 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.32 2022/04/04 16:02:54 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -241,7 +241,7 @@ repo_dir(const char *uri, const char *dir, int hash)
  * This functions alters the path temporarily.
  */
 static int
-repo_mkpath(char *file)
+repo_mkpath(int fd, char *file)
 {
 	char *slash;
 
@@ -249,7 +249,7 @@ repo_mkpath(char *file)
 	slash = strrchr(file, '/');
 	assert(slash != NULL);
 	*slash = '\0';
-	if (mkpath(file) == -1) {
+	if (mkpathat(fd, file) == -1) {
 		warn("mkpath %s", file);
 		return -1;
 	}
@@ -838,7 +838,7 @@ rrdp_handle_file(unsigned int id, enum publish_type pt, char *uri,
 		if ((fn = rrdp_filename(rr, uri, 0)) == NULL)
 			return 0;
 
-		if (repo_mkpath(fn) == -1)
+		if (repo_mkpath(AT_FDCWD, fn) == -1)
 			goto fail;
 
 		fd = open(fn, O_WRONLY|O_CREAT|O_TRUNC, 0644);
@@ -1121,6 +1121,21 @@ repo_byid(unsigned int id)
 }
 
 /*
+ * Find repository by base path.
+ */
+static struct repo *
+repo_bypath(const char *path)
+{
+	struct repo	*rp;
+
+	SLIST_FOREACH(rp, &repos, entry) {
+		if (strcmp(rp->basedir, path) == 0)
+			return rp;
+	}
+	return NULL;
+}
+
+/*
  * Return the repository base or alternate directory.
  * Returned string must be freed by caller.
  */
@@ -1217,27 +1232,13 @@ repo_check_timeout(int timeout)
 	return timeout;
 }
 
-static char **
-add_to_del(char **del, size_t *dsz, char *file)
-{
-	size_t i = *dsz;
-
-	del = reallocarray(del, i + 1, sizeof(*del));
-	if (del == NULL)
-		err(1, NULL);
-	if ((del[i] = strdup(file)) == NULL)
-		err(1, NULL);
-	*dsz = i + 1;
-	return del;
-}
-
 /*
  * Delayed delete of files from RRDP. Since RRDP has no security built-in
  * this code needs to check if this RRDP repository is actually allowed to
  * remove the file referenced by the URI.
  */
-static char **
-repo_cleanup_rrdp(struct filepath_tree *tree, char **del, size_t *delsz)
+static void
+repo_cleanup_rrdp(struct filepath_tree *tree)
 {
 	struct rrdprepo *rr;
 	struct filepath *fp, *nfp;
@@ -1253,14 +1254,29 @@ repo_cleanup_rrdp(struct filepath_tree *tree, char **del, size_t *delsz)
 			}
 			/* try to remove file from rrdp repo ... */
 			fn = rrdp_filename(rr, fp->file, 0);
-			del = add_to_del(del, delsz, fn);
+
+			if (unlink(fn) == -1) {
+				if (errno != ENOENT)
+					warn("unlink %s", fn);
+			} else {
+				if (verbose > 1)
+					logx("deleted %s", fn);
+				stats.del_files++;
+			}
 			free(fn);
 
 			/* ... and from the valid repository if unused. */
 			fn = rrdp_filename(rr, fp->file, 1);
-			if (!filepath_exists(tree, fn))
-				del = add_to_del(del, delsz, fn);
-			else
+			if (!filepath_exists(tree, fn)) {
+				if (unlink(fn) == -1) {
+					if (errno != ENOENT)
+						warn("unlink %s", fn);
+				} else {
+					if (verbose > 1)
+						logx("deleted %s", fn);
+					stats.del_files++;
+				}
+			} else
 				warnx("%s: referenced file supposed to be "
 				    "deleted", fn);
 
@@ -1268,8 +1284,6 @@ repo_cleanup_rrdp(struct filepath_tree *tree, char **del, size_t *delsz)
 			filepath_put(&rr->deleted, fp);
 		}
 	}
-
-	return del;
 }
 
 /*
@@ -1298,7 +1312,7 @@ repo_move_valid(struct filepath_tree *tree)
 			fn = base + 1;
 		}
 
-		if (repo_mkpath(fn) == -1)
+		if (repo_mkpath(AT_FDCWD, fn) == -1)
 			continue;
 
 		if (rename(fp->file, fn) == -1) {
@@ -1318,9 +1332,21 @@ repo_move_valid(struct filepath_tree *tree)
 	}
 }
 
-#define	BASE_DIR	(void *)0x62617365
-#define	RSYNC_DIR	(void *)0x73796e63
-#define	RRDP_DIR	(void *)0x52524450
+#define	BASE_DIR	(void *)0x01
+#define	RSYNC_DIR	(void *)0x02
+#define	RRDP_DIR	(void *)0x03
+
+static const struct rrdprepo *
+repo_is_rrdp(struct repo *rp)
+{
+	/* check for special pointers first these are not a repository */
+	if (rp == NULL || rp == BASE_DIR || rp == RSYNC_DIR || rp == RRDP_DIR)
+		return NULL;
+
+	if (rp->rrdp)
+		return rp->rrdp->state == REPO_DONE ? rp->rrdp : NULL;
+	return NULL;
+}
 
 static inline char *
 skip_dotslash(char *in)
@@ -1331,18 +1357,17 @@ skip_dotslash(char *in)
 }
 
 void
-repo_cleanup(struct filepath_tree *tree)
+repo_cleanup(struct filepath_tree *tree, int cachefd)
 {
-	size_t i, cnt, delsz = 0, dirsz = 0;
-	char **del = NULL, **dir = NULL;
 	char *argv[2] = { ".", NULL };
 	FTS *fts;
 	FTSENT *e;
+	const struct rrdprepo *rr;
 
 	/* first move temp files which have been used to valid dir */
 	repo_move_valid(tree);
 	/* then delete files requested by rrdp */ 
-	del = repo_cleanup_rrdp(tree, del, &delsz);
+	repo_cleanup_rrdp(tree);
 
 	if ((fts = fts_open(argv, FTS_PHYSICAL | FTS_NOSTAT, NULL)) == NULL)
 		err(1, "fts_open");
@@ -1369,11 +1394,36 @@ repo_cleanup(struct filepath_tree *tree)
 			}
 			if (e->fts_parent->fts_pointer == RSYNC_DIR) {
 				/* no need to keep rsync files */
-				stats.extra_files++;
 				if (verbose > 1)
 					logx("superfluous %s", path);
 			}
-			del = add_to_del(del, &delsz, path);
+			rr = repo_is_rrdp(e->fts_parent->fts_pointer);
+			if (rr != NULL) {
+				char *fn;
+
+				if (asprintf(&fn, "%s/%s", rr->basedir,
+				    path) == -1)
+					err(1, NULL);
+
+				if (repo_mkpath(cachefd, fn) == 0) {
+					if (renameat(AT_FDCWD, e->fts_accpath,
+					    cachefd, fn) == -1)
+						warn("rename %s to %s", path,
+						    fn);
+					else if (verbose > 1)
+						logx("moved %s", path);
+					stats.extra_files++;
+				}
+				free(fn);
+			} else {
+				if (unlink(e->fts_accpath) == -1) {
+					warn("unlink %s", path);
+				} else {
+					if (verbose > 1)
+						logx("deleted %s", path);
+					stats.del_files++;
+				}
+			}
 			break;
 		case FTS_D:
 			if (e->fts_level == 1) {
@@ -1391,10 +1441,14 @@ repo_cleanup(struct filepath_tree *tree)
 			 * clear them if they are not used anymore but
 			 * only if rrdp is active.
 			 */
-			if (e->fts_pointer == RRDP_DIR && !noop &&
-			    e->fts_level == 2) {
+			if (e->fts_pointer == RRDP_DIR && e->fts_level == 2) {
 				if (!rrdp_is_active(path))
 					e->fts_pointer = NULL;
+			}
+			if (e->fts_pointer == BASE_DIR && e->fts_level > 1) {
+				e->fts_pointer = repo_bypath(path);
+				if (e->fts_pointer == NULL)
+					e->fts_pointer = BASE_DIR;
 			}
 			break;
 		case FTS_DP:
@@ -1405,15 +1459,21 @@ repo_cleanup(struct filepath_tree *tree)
 				if (e->fts_pointer == RRDP_DIR ||
 				    e->fts_pointer == RSYNC_DIR)
 					break;
-			if (e->fts_number == 0)
-				dir = add_to_del(dir, &dirsz, path);
 
 			e->fts_parent->fts_number += e->fts_number;
+
+			if (e->fts_number == 0) {
+				if (rmdir(e->fts_accpath) == -1)
+					warn("rmdir %s", path);
+				else
+					stats.del_dirs++;
+			}
 			break;
 		case FTS_SL:
 		case FTS_SLNONE:
 			warnx("symlink %s", path);
-			del = add_to_del(del, &delsz, path);
+			if (unlink(e->fts_accpath) == -1)
+				warn("unlink %s", path);
 			break;
 		case FTS_NS:
 		case FTS_ERR:
@@ -1435,32 +1495,6 @@ repo_cleanup(struct filepath_tree *tree)
 		err(1, "fts_read");
 	if (fts_close(fts) == -1)
 		err(1, "fts_close");
-
-	cnt = 0;
-	for (i = 0; i < delsz; i++) {
-		if (unlink(del[i]) == -1) {
-			if (errno != ENOENT)
-				warn("unlink %s", del[i]);
-		} else {
-			if (verbose > 1)
-				logx("deleted %s", del[i]);
-			cnt++;
-		}
-		free(del[i]);
-	}
-	free(del);
-	stats.del_files += cnt;
-
-	cnt = 0;
-	for (i = 0; i < dirsz; i++) {
-		if (rmdir(dir[i]) == -1)
-			warn("rmdir %s", dir[i]);
-		else
-			cnt++;
-		free(dir[i]);
-	}
-	free(dir);
-	stats.del_dirs += cnt;
 }
 
 void

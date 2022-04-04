@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.124 2022/04/02 12:17:53 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.125 2022/04/04 16:02:54 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -528,7 +528,7 @@ struct repo	*ta_lookup(int, struct tal *);
 struct repo	*repo_lookup(int, const char *, const char *);
 struct repo	*repo_byid(unsigned int);
 int		 repo_queued(struct repo *, struct entity *);
-void		 repo_cleanup(struct filepath_tree *);
+void		 repo_cleanup(struct filepath_tree *, int);
 void		 repo_free(void);
 
 void		 rsync_finish(unsigned int, int);
@@ -628,6 +628,7 @@ void		logx(const char *fmt, ...)
 time_t		getmonotime(void);
 
 int	mkpath(const char *);
+int	mkpathat(int, const char *);
 
 #define RPKI_PATH_OUT_DIR	"/var/db/rpki-client"
 #define RPKI_PATH_BASE_DIR	"/var/cache/rpki-client"
