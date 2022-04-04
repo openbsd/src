@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.33 2022/03/31 12:00:00 job Exp $ */
+/*	$OpenBSD: rsync.c,v 1.34 2022/04/04 13:47:58 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -137,20 +137,17 @@ proc_child(int signal)
  * does so.
  * It then responds with the identifier of the repo that it updated.
  * It only exits cleanly when fd is closed.
- * FIXME: limit the number of simultaneous process.
- * Currently, an attacker can trivially specify thousands of different
- * repositories and saturate our system.
  */
 void
 proc_rsync(char *prog, char *bind_addr, int fd)
 {
-	size_t			 i, idsz = 0, nprocs = 0;
+	size_t			 i, nprocs = 0;
 	int			 rc = 0;
 	struct pollfd		 pfd;
 	struct msgbuf		 msgq;
 	struct ibuf		*b, *inbuf = NULL;
 	sigset_t		 mask, oldmask;
-	struct rsyncproc	*ids = NULL;
+	struct rsyncproc	 ids[MAX_RSYNC_PROCESSES] = { 0 };
 
 	pfd.fd = fd;
 
@@ -231,10 +228,10 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 			while ((pid = waitpid(WAIT_ANY, &st, WNOHANG)) > 0) {
 				int ok = 1;
 
-				for (i = 0; i < idsz; i++)
+				for (i = 0; i < MAX_RSYNC_PROCESSES; i++)
 					if (ids[i].pid == pid)
 						break;
-				if (i >= idsz)
+				if (i >= MAX_RSYNC_PROCESSES)
 					errx(1, "waitpid: %d unexpected", pid);
 
 				if (!WIFEXITED(st)) {
@@ -278,6 +275,8 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 			break;
 
 		if (!(pfd.revents & POLLIN))
+			continue;
+		if (nprocs >= MAX_RSYNC_PROCESSES)
 			continue;
 
 		b = io_buf_read(fd, &inbuf);
@@ -339,16 +338,10 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 
 		/* Augment the list of running processes. */
 
-		for (i = 0; i < idsz; i++)
+		for (i = 0; i < MAX_RSYNC_PROCESSES; i++)
 			if (ids[i].pid == 0)
 				break;
-		if (i == idsz) {
-			ids = reallocarray(ids, idsz + 1, sizeof(*ids));
-			if (ids == NULL)
-				err(1, NULL);
-			idsz++;
-		}
-
+		assert(i < MAX_RSYNC_PROCESSES);
 		ids[i].id = id;
 		ids[i].pid = pid;
 		ids[i].uri = uri;
@@ -361,13 +354,12 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 	}
 
 	/* No need for these to be hanging around. */
-	for (i = 0; i < idsz; i++)
-		if (ids[i].pid > 0) {
+	for (i = 0; i < MAX_RSYNC_PROCESSES; i++)
+		if (ids[i].pid != 0) {
 			kill(ids[i].pid, SIGTERM);
 			free(ids[i].uri);
 		}
 
 	msgbuf_clear(&msgq);
-	free(ids);
 	exit(rc);
 }
