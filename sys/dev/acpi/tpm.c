@@ -1,4 +1,4 @@
-/* $OpenBSD: tpm.c,v 1.15 2021/12/21 20:53:46 kettenis Exp $ */
+/* $OpenBSD: tpm.c,v 1.16 2022/04/04 15:46:45 deraadt Exp $ */
 
 /*
  * Minimal interface to Trusted Platform Module chips implementing the
@@ -233,7 +233,7 @@ struct cfattach tpm_ca = {
 };
 
 struct cfdriver tpm_cd = {
-	NULL, "tpm", DV_DULL
+	NULL, "tpm", DV_DULL, CD_SKIPHIBERNATE	/* XXX */
 };
 
 const char *tpm_hids[] = {
