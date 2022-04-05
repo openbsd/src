@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.61 2022/04/04 13:15:11 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.62 2022/04/05 03:56:20 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -305,6 +305,12 @@ sbgp_sia_resource(struct parse *p, const unsigned char *d, size_t dsz)
 			goto out;
 	}
 
+	if (p->res->mft == NULL || p->res->repo == NULL) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA missing caRepository "
+		    "or rpkiManifest", p->fn);
+		goto out;
+	}
+
 	if (strstr(p->res->mft, p->res->repo) != p->res->mft) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: "
 		    "conflicting URIs for caRepository and rpkiManifest",
@@ -329,6 +335,12 @@ sbgp_sia(struct parse *p, X509_EXTENSION *ext)
 	ASN1_SEQUENCE_ANY	*seq = NULL;
 	const ASN1_TYPE		*t;
 	int			 dsz, rc = 0;
+
+	if (X509_EXTENSION_get_critical(ext)) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "extension not non-critical", p->fn);
+		goto out;
+	}
 
 	if ((dsz = i2d_X509_EXTENSION(ext, &sv)) < 0) {
 		cryptowarnx("%s: RFC 6487 section 4.8.8: SIA: "
