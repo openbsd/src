@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.124 2022/03/13 14:39:56 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.125 2022/04/06 14:15:27 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -655,6 +655,8 @@ sub partial_install
 	return failed_message($base_msg, $state->{received}, save_partial_set($set, $state));
 }
 
+# quick sub to build the dependency arcs for older packages
+# newer packages are handled by Dependencies.pm
 sub build_before
 {
 	my %known = map {($_->pkgname, 1)} @_;
@@ -765,9 +767,6 @@ sub really_add
 		$replacing = 1;
 	}
 	$state->{replacing} = $replacing;
-	# XXX placeholder for optimization
-	$state->{simple_update} = 0;
-	#$state->{simple_update} = $set->{simple_update};
 
 	my $handler = sub {
 		$state->{received} = shift;
@@ -918,7 +917,8 @@ sub newer_is_bad_arch
 sub may_tie_files
 {
 	my ($set, $state) = @_;
-	if ($set->newer > 0 && $set->older_to_do > 0 && !$state->defines('donttie')) {
+	if ($set->newer > 0 && $set->older_to_do > 0 && 
+	    !$state->defines('donttie')) {
 		my $sha = {};
 
 		for my $o ($set->older_to_do) {
