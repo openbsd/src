@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.251 2022/04/02 17:25:10 krw Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.252 2022/04/06 13:23:58 krw Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -598,16 +598,17 @@ scsi_probe_link(struct scsibus_softc *sb, int target, int lun, int dumbscan)
 	switch (inqbuf->device & SID_QUAL) {
 	case SID_QUAL_RSVD:
 	case SID_QUAL_BAD_LU:
+		goto bad;
 	case SID_QUAL_LU_OFFLINE:
+		if (lun == 0 && (inqbuf->device & SID_TYPE) == T_NODEVICE)
+			break;
 		goto bad;
 	case SID_QUAL_LU_OK:
-		break;
 	default:
+		if ((inqbuf->device & SID_TYPE) == T_NODEVICE)
+			goto bad;
 		break;
 	}
-
-	if ((inqbuf->device & SID_TYPE) == T_NODEVICE)
-		goto bad;
 
 	scsi_devid(link);
 

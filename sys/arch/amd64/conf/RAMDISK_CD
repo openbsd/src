@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.199 2022/03/08 15:08:01 hastings Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.200 2022/04/06 13:23:58 krw Exp $
 
 machine		amd64
 maxusers	4
@@ -190,6 +190,7 @@ scsibus*	at scsi?
 sd*		at scsibus?		# SCSI disk drives
 st*		at scsibus?		# SCSI tape drives
 cd*		at scsibus?		# SCSI CD-ROM drives
+uk*		at scsibus?		# Unknown SCSI devices
 
 pciide*		at pci? flags 0x0000
 wdc0		at isa? disable port 0x1f0 irq 14 flags 0x00
