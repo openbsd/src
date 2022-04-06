@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlphy.c,v 1.21 2013/12/28 03:30:41 deraadt Exp $	*/
+/*	$OpenBSD: tlphy.c,v 1.22 2022/04/06 18:59:29 naddy Exp $	*/
 /*	$NetBSD: tlphy.c,v 1.26 2000/07/04 03:29:00 thorpej Exp $	*/
 
 /*-
@@ -97,7 +97,7 @@ struct cfdriver tlphy_cd = {
 int	tlphymatch(struct device *, void *, void *);
 void	tlphyattach(struct device *, struct device *, void *);
 
-struct cfattach tlphy_ca = {
+const struct cfattach tlphy_ca = {
 	sizeof(struct tlphy_softc), tlphymatch, tlphyattach, mii_phy_detach
 };
 

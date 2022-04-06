@@ -1,4 +1,4 @@
-/* $OpenBSD: timekeeper.c,v 1.10 2017/11/03 06:54:06 aoyama Exp $ */
+/* $OpenBSD: timekeeper.c,v 1.11 2022/04/06 18:59:26 naddy Exp $ */
 /* $NetBSD: timekeeper.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
 
 /*-
@@ -64,7 +64,7 @@ struct timekeeper_softc {
 int  clock_match(struct device *, void *, void *);
 void clock_attach(struct device *, struct device *, void *);
 
-struct cfattach clock_ca = {
+const struct cfattach clock_ca = {
 	sizeof (struct timekeeper_softc), clock_match, clock_attach
 };
 

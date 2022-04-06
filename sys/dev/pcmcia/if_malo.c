@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_malo.c,v 1.98 2022/02/14 23:02:15 jsg Exp $ */
+/*      $OpenBSD: if_malo.c,v 1.99 2022/04/06 18:59:30 naddy Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -132,7 +132,7 @@ struct malo_pcmcia_softc {
 	void			*sc_ih;
 };
 
-struct cfattach malo_pcmcia_ca = {
+const struct cfattach malo_pcmcia_ca = {
 	sizeof(struct malo_pcmcia_softc),
 	malo_pcmcia_match,
 	malo_pcmcia_attach,

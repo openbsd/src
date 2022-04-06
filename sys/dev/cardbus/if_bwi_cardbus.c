@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bwi_cardbus.c,v 1.15 2013/12/06 21:03:02 deraadt Exp $ */
+/*	$OpenBSD: if_bwi_cardbus.c,v 1.16 2022/04/06 18:59:28 naddy Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -70,7 +70,7 @@ void		bwi_cardbus_disable(struct bwi_softc *);
 void		bwi_cardbus_conf_write(void *, uint32_t, uint32_t);
 uint32_t	bwi_cardbus_conf_read(void *, uint32_t);
 
-struct cfattach bwi_cardbus_ca = {
+const struct cfattach bwi_cardbus_ca = {
 	sizeof (struct bwi_cardbus_softc), bwi_cardbus_match,
 	bwi_cardbus_attach, bwi_cardbus_detach
 };

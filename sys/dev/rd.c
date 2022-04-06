@@ -1,4 +1,4 @@
-/*	$OpenBSD: rd.c,v 1.13 2017/12/30 23:08:29 guenther Exp $	*/
+/*	$OpenBSD: rd.c,v 1.14 2022/04/06 18:59:27 naddy Exp $	*/
 
 /*
  * Copyright (c) 2011 Matthew Dempsky <matthew@dempsky.org>
@@ -56,7 +56,7 @@ struct rd_softc {
 	struct disk	sc_dk;
 };
 
-struct cfattach rd_ca = {
+const struct cfattach rd_ca = {
 	sizeof(struct rd_softc),
 	rd_match,
 	rd_attach,

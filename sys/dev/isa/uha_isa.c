@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_isa.c,v 1.14 2021/03/07 06:17:04 jsg Exp $	*/
+/*	$OpenBSD: uha_isa.c,v 1.15 2022/04/06 18:59:29 naddy Exp $	*/
 /*	$NetBSD: uha_isa.c,v 1.5 1996/10/21 22:41:21 thorpej Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 int	uha_isa_probe(struct device *, void *, void *);
 void	uha_isa_attach(struct device *, struct device *, void *);
 
-struct cfattach uha_isa_ca = {
+const struct cfattach uha_isa_ca = {
 	sizeof(struct uha_softc), uha_isa_probe, uha_isa_attach
 };
 

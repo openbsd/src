@@ -1,4 +1,4 @@
-/*	$OpenBSD: aps.c,v 1.27 2022/01/09 05:42:42 jsg Exp $	*/
+/*	$OpenBSD: aps.c,v 1.28 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2005 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2008 Can Erkin Acar <canacar@openbsd.org>
@@ -155,7 +155,7 @@ void	 aps_refresh(void *);
 int	 aps_do_io(bus_space_tag_t, bus_space_handle_t,
 		   unsigned char *, int, int);
 
-struct cfattach aps_ca = {
+const struct cfattach aps_ca = {
 	sizeof(struct aps_softc),
 	aps_match, aps_attach, NULL, aps_activate
 };

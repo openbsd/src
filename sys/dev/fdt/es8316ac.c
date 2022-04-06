@@ -1,4 +1,4 @@
-/* $OpenBSD: es8316ac.c,v 1.2 2022/03/21 19:22:40 miod Exp $ */
+/* $OpenBSD: es8316ac.c,v 1.3 2022/04/06 18:59:28 naddy Exp $ */
 /* $NetBSD: es8316ac.c,v 1.2 2020/01/03 01:00:08 jmcneill Exp $ */
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -138,7 +138,7 @@ const struct audio_hw_if escodec_hw_if = {
 	.query_devinfo = escodec_query_devinfo,
 };
 
-struct cfattach escodec_ca = {
+const struct cfattach escodec_ca = {
 	sizeof(struct escodec_softc), escodec_match, escodec_attach
 };
 

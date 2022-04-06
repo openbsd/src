@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcclock_isa.c,v 1.2 2020/05/25 13:16:06 visa Exp $	*/
+/*	$OpenBSD: mcclock_isa.c,v 1.3 2022/04/06 18:59:26 naddy Exp $	*/
 /*	$NetBSD: mcclock_isa.c,v 1.5 1996/12/05 01:39:29 cgd Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ struct mcclock_isa_softc {
 int	mcclock_isa_match(struct device *, void *, void *);
 void	mcclock_isa_attach(struct device *, struct device *, void *);
 
-struct cfattach mcclock_isa_ca = {
+const struct cfattach mcclock_isa_ca = {
 	sizeof (struct mcclock_isa_softc), mcclock_isa_match,
 	    mcclock_isa_attach, 
 };

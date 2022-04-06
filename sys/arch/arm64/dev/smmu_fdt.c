@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_fdt.c,v 1.4 2021/06/25 17:41:22 patrick Exp $ */
+/* $OpenBSD: smmu_fdt.c,v 1.5 2022/04/06 18:59:26 naddy Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -44,7 +44,7 @@ void smmu_fdt_attach(struct device *, struct device *, void *);
 bus_dma_tag_t smmu_fdt_map(void *, uint32_t *, bus_dma_tag_t);
 void smmu_fdt_reserve(void *, uint32_t *, bus_addr_t, bus_size_t);
 
-struct cfattach smmu_fdt_ca = {
+const struct cfattach smmu_fdt_ca = {
 	sizeof(struct smmu_fdt_softc), smmu_fdt_match, smmu_fdt_attach
 };
 

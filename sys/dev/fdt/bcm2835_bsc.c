@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2835_bsc.c,v 1.3 2021/11/21 11:00:40 kettenis Exp $	*/
+/*	$OpenBSD: bcm2835_bsc.c,v 1.4 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -79,7 +79,7 @@ struct bcmbsc_softc {
 int	bcmbsc_match(struct device *, void *, void *);
 void	bcmbsc_attach(struct device *, struct device *, void *);
 
-struct cfattach	bcmbsc_ca = {
+const struct cfattach bcmbsc_ca = {
 	sizeof (struct bcmbsc_softc), bcmbsc_match, bcmbsc_attach
 };
 

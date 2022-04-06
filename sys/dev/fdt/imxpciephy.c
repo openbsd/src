@@ -1,4 +1,4 @@
-/* $OpenBSD: imxpciephy.c,v 1.1 2020/04/26 15:03:04 patrick Exp $ */
+/* $OpenBSD: imxpciephy.c,v 1.2 2022/04/06 18:59:28 naddy Exp $ */
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -35,7 +35,7 @@ struct imxpciephy_softc {
 int	imxpciephy_match(struct device *, void *, void *);
 void	imxpciephy_attach(struct device *, struct device *, void *);
 
-struct cfattach imxpciephy_ca = {
+const struct cfattach imxpciephy_ca = {
 	sizeof(struct imxpciephy_softc), imxpciephy_match, imxpciephy_attach
 };
 

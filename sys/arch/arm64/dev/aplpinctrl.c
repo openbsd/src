@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpinctrl.c,v 1.3 2021/12/23 20:48:24 patrick Exp $	*/
+/*	$OpenBSD: aplpinctrl.c,v 1.4 2022/04/06 18:59:26 naddy Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -86,7 +86,7 @@ struct aplpinctrl_softc {
 int	aplpinctrl_match(struct device *, void *, void *);
 void	aplpinctrl_attach(struct device *, struct device *, void *);
 
-struct cfattach	aplpinctrl_ca = {
+const struct cfattach	aplpinctrl_ca = {
 	sizeof (struct aplpinctrl_softc), aplpinctrl_match, aplpinctrl_attach
 };
 

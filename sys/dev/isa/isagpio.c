@@ -1,4 +1,4 @@
-/*	$OpenBSD: isagpio.c,v 1.4 2009/03/29 21:53:52 sthen Exp $	*/
+/*	$OpenBSD: isagpio.c,v 1.5 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2006 Oleg Safiullin <form@pdp-11.org.ru>
@@ -60,7 +60,7 @@ int	isagpio_pin_read(void *, int);
 void	isagpio_pin_write(void *, int, int);
 void	isagpio_pin_ctl(void *, int, int);
 
-struct cfattach isagpio_ca = {
+const struct cfattach isagpio_ca = {
 	sizeof(struct isagpio_softc), isagpio_match, isagpio_attach
 };
 

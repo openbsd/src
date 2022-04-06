@@ -1,4 +1,4 @@
-/* $OpenBSD: imxdog.c,v 1.3 2021/05/28 13:08:37 patrick Exp $ */
+/* $OpenBSD: imxdog.c,v 1.4 2022/04/06 18:59:28 naddy Exp $ */
 /*
  * Copyright (c) 2012-2013,2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -55,7 +55,7 @@ void	imxdog_attach(struct device *, struct device *, void *);
 void	imxdog_reset(void);
 void	imxdog_timeout(void *);
 
-struct cfattach	imxdog_ca = {
+const struct cfattach imxdog_ca = {
 	sizeof (struct imxdog_softc), imxdog_match, imxdog_attach
 };
 

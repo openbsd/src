@@ -1,4 +1,4 @@
-/*	$OpenBSD: spdmem_i2c.c,v 1.1 2010/03/22 21:20:58 miod Exp $	*/
+/*	$OpenBSD: spdmem_i2c.c,v 1.2 2022/04/06 18:59:28 naddy Exp $	*/
 /* $NetBSD: spdmem.c,v 1.3 2007/09/20 23:09:59 xtraeme Exp $ */
 
 /*
@@ -68,7 +68,7 @@ int	spdmem_iic_match(struct device *, void *, void *);
 void	spdmem_iic_attach(struct device *, struct device *, void *);
 uint8_t	spdmem_iic_read(struct spdmem_softc *, uint8_t);
 
-struct cfattach spdmem_iic_ca = {
+const struct cfattach spdmem_iic_ca = {
 	sizeof(struct spdmem_iic_softc), spdmem_iic_match, spdmem_iic_attach
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: smmu_acpi.c,v 1.3 2021/06/25 17:41:22 patrick Exp $ */
+/* $OpenBSD: smmu_acpi.c,v 1.4 2022/04/06 18:59:26 naddy Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -37,7 +37,7 @@ struct smmu_acpi_softc {
 int smmu_acpi_match(struct device *, void *, void *);
 void smmu_acpi_attach(struct device *, struct device *, void *);
 
-struct cfattach smmu_acpi_ca = {
+const struct cfattach smmu_acpi_ca = {
 	sizeof(struct smmu_acpi_softc), smmu_acpi_match, smmu_acpi_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: abl.c,v 1.4 2022/01/09 05:42:37 jsg Exp $ */
+/*	$OpenBSD: abl.c,v 1.5 2022/04/06 18:59:27 naddy Exp $ */
 
 /*
  * Copyright (c) 2020 Marcus Glocker <mglocker@openbsd.org>
@@ -69,7 +69,7 @@ int	abl_set_brightness(struct abl_softc *, uint8_t);
 int	abl_get_param(struct wsdisplay_param *);
 int	abl_set_param(struct wsdisplay_param *);
 
-struct cfattach abl_ca = {
+const struct cfattach abl_ca = {
 	sizeof(struct abl_softc), abl_match, abl_attach, NULL, NULL
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: onewire.c,v 1.18 2019/11/30 18:14:47 cheloha Exp $	*/
+/*	$OpenBSD: onewire.c,v 1.19 2022/04/06 18:59:29 naddy Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -71,7 +71,7 @@ void	onewire_thread(void *);
 void	onewire_createthread(void *);
 void	onewire_scan(struct onewire_softc *);
 
-struct cfattach onewire_ca = {
+const struct cfattach onewire_ca = {
 	sizeof(struct onewire_softc),
 	onewire_match,
 	onewire_attach,

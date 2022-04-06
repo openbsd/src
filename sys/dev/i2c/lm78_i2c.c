@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78_i2c.c,v 1.4 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: lm78_i2c.c,v 1.5 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -35,7 +35,7 @@ void lm_i2c_attach(struct device *, struct device *, void *);
 u_int8_t lm_i2c_readreg(struct lm_softc *, int);
 void lm_i2c_writereg(struct lm_softc *, int, int);
 
-struct cfattach lm_i2c_ca = {
+const struct cfattach lm_i2c_ca = {
 	sizeof(struct lm_i2c_softc), lm_i2c_match, lm_i2c_attach
 };
 

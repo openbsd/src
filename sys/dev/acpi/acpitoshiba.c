@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitoshiba.c,v 1.15 2022/02/15 21:13:39 kettenis Exp $ */
+/* $OpenBSD: acpitoshiba.c,v 1.16 2022/04/06 18:59:27 naddy Exp $ */
 /*-
  * Copyright (c) 2003 Hiroyuki Aizu <aizu@navi.org>
  * All rights reserved.
@@ -113,7 +113,7 @@ int	acpitoshiba_set_param(struct wsdisplay_param *);
 int	get_param_brightness(struct wsdisplay_param *);
 int	set_param_brightness(struct wsdisplay_param *);
 
-struct cfattach acpitoshiba_ca = {
+const struct cfattach acpitoshiba_ca = {
 	sizeof(struct acpitoshiba_softc), toshiba_match, toshiba_attach
 };
 

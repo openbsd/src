@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.107 2020/02/07 13:35:08 cheloha Exp $	*/
+/*	$OpenBSD: fd.c,v 1.108 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: fd.c,v 1.90 1996/05/12 23:12:03 mycroft Exp $	*/
 
 /*-
@@ -129,7 +129,7 @@ int fdprobe(struct device *, void *, void *);
 void fdattach(struct device *, struct device *, void *);
 int fdactivate(struct device *, int);
 
-struct cfattach fd_ca = {
+const struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fdprobe, fdattach, NULL, fdactivate
 };
 

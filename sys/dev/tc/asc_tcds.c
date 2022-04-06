@@ -1,4 +1,4 @@
-/* $OpenBSD: asc_tcds.c,v 1.8 2014/01/18 22:33:59 dlg Exp $ */
+/* $OpenBSD: asc_tcds.c,v 1.9 2022/04/06 18:59:30 naddy Exp $ */
 /* $NetBSD: asc_tcds.c,v 1.5 2001/11/15 09:48:19 lukem Exp $ */
 
 /*-
@@ -83,7 +83,7 @@ int  asc_tcds_match (struct device *, void *, void *);
 void asc_tcds_attach(struct device *, struct device *, void *);
 
 /* Linkup to the rest of the kernel */
-struct cfattach asc_tcds_ca = {
+const struct cfattach asc_tcds_ca = {
 	sizeof(struct asc_tcds_softc), asc_tcds_match, asc_tcds_attach
 };
 

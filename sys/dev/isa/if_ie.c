@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.58 2022/02/22 01:15:01 guenther Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.59 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -303,7 +303,7 @@ static __inline int ie_packet_len(struct ie_softc *);
 
 static void run_tdr(struct ie_softc *, struct ie_tdr_cmd *);
 
-struct cfattach ie_isa_ca = {
+const struct cfattach ie_isa_ca = {
 	sizeof(struct ie_softc), ieprobe, ieattach
 };
 

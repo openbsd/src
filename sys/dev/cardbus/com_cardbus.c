@@ -1,4 +1,4 @@
-/* $OpenBSD: com_cardbus.c,v 1.43 2015/11/14 14:47:56 miod Exp $ */
+/* $OpenBSD: com_cardbus.c,v 1.44 2022/04/06 18:59:27 naddy Exp $ */
 /* $NetBSD: com_cardbus.c,v 1.4 2000/04/17 09:21:59 joda Exp $ */
 
 /*
@@ -93,7 +93,7 @@ struct csdev *com_cardbus_find_csdev(struct cardbus_attach_args *);
 int	com_cardbus_gofigure(struct cardbus_attach_args *,
     struct com_cardbus_softc *);
 
-struct cfattach com_cardbus_ca = {
+const struct cfattach com_cardbus_ca = {
 	sizeof(struct com_cardbus_softc), com_cardbus_match,
 	com_cardbus_attach, com_cardbus_detach, com_activate
 };

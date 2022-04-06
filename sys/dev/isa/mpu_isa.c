@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpu_isa.c,v 1.7 2021/03/07 06:17:04 jsg Exp $	*/
+/*	$OpenBSD: mpu_isa.c,v 1.8 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2002 Sergey Smitienko. All rights reserved.
@@ -63,7 +63,7 @@ struct mpu_isa_softc {
 	struct mpu_softc sc_mpu;
 };
 
-struct cfattach mpu_isa_ca = {
+const struct cfattach mpu_isa_ca = {
 	sizeof(struct mpu_isa_softc), mpu_isa_match, mpu_isa_attach
 };
 

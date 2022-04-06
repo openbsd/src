@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpihve.c,v 1.3 2020/05/29 04:42:24 deraadt Exp $	*/
+/*	$OpenBSD: acpihve.c,v 1.4 2022/04/06 18:59:27 naddy Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan Gray <jsg@openbsd.org>
@@ -35,7 +35,7 @@ struct acpihve_softc {
 	struct device			sc_dev;
 };
 
-struct cfattach acpihve_ca = {
+const struct cfattach acpihve_ca = {
 	sizeof(struct acpihve_softc), acpihve_match, acpihve_attach
 };
 

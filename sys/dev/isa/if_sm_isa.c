@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_isa.c,v 1.15 2021/03/07 06:17:03 jsg Exp $	*/
+/*	$OpenBSD: if_sm_isa.c,v 1.16 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: if_sm_isa.c,v 1.4 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -75,7 +75,7 @@ struct sm_isa_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-struct cfattach sm_isa_ca = {
+const struct cfattach sm_isa_ca = {
 	sizeof(struct sm_isa_softc), sm_isa_match, sm_isa_attach
 };
 

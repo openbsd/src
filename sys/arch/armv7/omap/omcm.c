@@ -1,4 +1,4 @@
-/* $OpenBSD: omcm.c,v 1.2 2021/03/25 04:12:01 jsg Exp $ */
+/* $OpenBSD: omcm.c,v 1.3 2022/04/06 18:59:26 naddy Exp $ */
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -31,7 +31,7 @@ struct omcm_softc {
 int	omcm_match(struct device *, void *, void *);
 void	omcm_attach(struct device *, struct device *, void *);
 
-struct cfattach omcm_ca = {
+const struct cfattach omcm_ca = {
 	sizeof(struct omcm_softc), omcm_match, omcm_attach
 };
 

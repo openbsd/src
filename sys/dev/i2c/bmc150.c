@@ -1,4 +1,4 @@
-/*	$OpenBSD: bmc150.c,v 1.1 2017/11/30 14:53:21 kettenis Exp $	*/
+/*	$OpenBSD: bmc150.c,v 1.2 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2017 Mark Kettenis
@@ -59,7 +59,7 @@ struct bgw_softc {
 int	bgw_match(struct device *, void *, void *);
 void	bgw_attach(struct device *, struct device *, void *);
 
-struct cfattach bgw_ca = {
+const struct cfattach bgw_ca = {
 	sizeof(struct bgw_softc), bgw_match, bgw_attach
 };
 

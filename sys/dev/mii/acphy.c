@@ -1,4 +1,4 @@
-/*	$OpenBSD: acphy.c,v 1.9 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: acphy.c,v 1.10 2022/04/06 18:59:29 naddy Exp $	*/
 /*	$NetBSD: acphy.c,v 1.13 2003/04/29 01:49:33 thorpej Exp $	*/
 
 /*
@@ -59,7 +59,7 @@
 int	acphymatch(struct device *, void *, void *);
 void	acphyattach(struct device *, struct device *, void *);
 
-struct cfattach acphy_ca = {
+const struct cfattach acphy_ca = {
 	sizeof(struct mii_softc), acphymatch, acphyattach, mii_phy_detach
 };
 

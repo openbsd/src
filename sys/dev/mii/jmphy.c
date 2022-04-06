@@ -1,4 +1,4 @@
-/*	$OpenBSD: jmphy.c,v 1.6 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: jmphy.c,v 1.7 2022/04/06 18:59:29 naddy Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -59,7 +59,7 @@ const struct mii_phy_funcs jmphy_funcs = {
 	jmphy_service, jmphy_status, jmphy_reset,
 };
 
-struct cfattach jmphy_ca = {
+const struct cfattach jmphy_ca = {
 	sizeof (struct mii_softc), jmphy_match, jmphy_attach,
 	mii_phy_detach
 };

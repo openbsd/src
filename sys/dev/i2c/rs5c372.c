@@ -1,4 +1,4 @@
-/*	$OpenBSD: rs5c372.c,v 1.6 2021/04/24 10:15:15 mpi Exp $	*/
+/*	$OpenBSD: rs5c372.c,v 1.7 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: rs5c372.c,v 1.5 2006/03/29 06:41:24 thorpej Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ struct ricohrtc_softc {
 int ricohrtc_match(struct device *, void *, void *);
 void ricohrtc_attach(struct device *, struct device *, void *);
 
-struct cfattach ricohrtc_ca = {
+const struct cfattach ricohrtc_ca = {
 	sizeof(struct ricohrtc_softc), ricohrtc_match, ricohrtc_attach
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiiort.c,v 1.5 2021/11/26 15:21:26 patrick Exp $ */
+/* $OpenBSD: acpiiort.c,v 1.6 2022/04/06 18:59:26 naddy Exp $ */
 /*
  * Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
  *
@@ -31,7 +31,7 @@ SIMPLEQ_HEAD(, acpiiort_smmu) acpiiort_smmu_list =
 int acpiiort_match(struct device *, void *, void *);
 void acpiiort_attach(struct device *, struct device *, void *);
 
-struct cfattach acpiiort_ca = {
+const struct cfattach acpiiort_ca = {
 	sizeof(struct device), acpiiort_match, acpiiort_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl_cardbus.c,v 1.31 2020/06/17 10:48:44 claudio Exp $ */
+/*	$OpenBSD: if_rl_cardbus.c,v 1.32 2022/04/06 18:59:28 naddy Exp $ */
 /*	$NetBSD: if_rl_cardbus.c,v 1.3.8.3 2001/11/14 19:14:02 nathanw Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ static void rl_cardbus_attach(struct device *, struct device *, void *);
 static int rl_cardbus_detach(struct device *, int);
 void rl_cardbus_setup(struct rl_cardbus_softc *);
 
-struct cfattach rl_cardbus_ca = {
+const struct cfattach rl_cardbus_ca = {
 	sizeof(struct rl_cardbus_softc), rl_cardbus_match, rl_cardbus_attach,
 	    rl_cardbus_detach
 };

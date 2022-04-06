@@ -1,4 +1,4 @@
-/*    $OpenBSD: if_el.c,v 1.36 2021/03/07 06:17:03 jsg Exp $       */
+/*    $OpenBSD: if_el.c,v 1.37 2022/04/06 18:59:28 naddy Exp $       */
 /*	$NetBSD: if_el.c,v 1.39 1996/05/12 23:52:32 mycroft Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ static inline void el_hardreset(struct el_softc *);
 int elprobe(struct device *, void *, void *);
 void elattach(struct device *, struct device *, void *);
 
-struct cfattach el_ca = {
+const struct cfattach el_ca = {
 	sizeof(struct el_softc), elprobe, elattach
 };
 

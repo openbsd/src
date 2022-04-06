@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sm_pcmcia.c,v 1.38 2021/03/07 06:20:09 jsg Exp $	*/
+/*	$OpenBSD: if_sm_pcmcia.c,v 1.39 2022/04/06 18:59:30 naddy Exp $	*/
 /*	$NetBSD: if_sm_pcmcia.c,v 1.11 1998/08/15 20:47:32 thorpej Exp $  */
 
 /*-
@@ -81,7 +81,7 @@ struct sm_pcmcia_softc {
 	struct	pcmcia_function *sc_pf;		/* our PCMCIA function */
 };
 
-struct cfattach sm_pcmcia_ca = {
+const struct cfattach sm_pcmcia_ca = {
 	sizeof(struct sm_pcmcia_softc), sm_pcmcia_match, sm_pcmcia_attach,
 	sm_pcmcia_detach, sm_pcmcia_activate
 };

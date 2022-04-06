@@ -1,4 +1,4 @@
-/*	$OpenBSD: amphy.c,v 1.21 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: amphy.c,v 1.22 2022/04/06 18:59:29 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -58,7 +58,7 @@
 int	amphymatch(struct device *, void *, void *);
 void	amphyattach(struct device *, struct device *, void *);
 
-struct cfattach amphy_ca = {
+const struct cfattach amphy_ca = {
 	sizeof(struct mii_softc), amphymatch, amphyattach, mii_phy_detach
 };
 

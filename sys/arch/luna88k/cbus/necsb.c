@@ -1,4 +1,4 @@
-/*	$OpenBSD: necsb.c,v 1.4 2017/03/16 18:13:43 miod Exp $	*/
+/*	$OpenBSD: necsb.c,v 1.5 2022/04/06 18:59:26 naddy Exp $	*/
 /*	$NecBSD: nec86_isa.c,v 1.9 1998/09/26 11:31:11 kmatsuda Exp $	*/
 /*	$NetBSD$	*/
 
@@ -53,7 +53,7 @@
 int	necsb_match(struct device *, void *, void *);
 void	necsb_attach(struct device *, struct device *, void *);
 
-struct cfattach necsb_ca = {
+const struct cfattach necsb_ca = {
 	sizeof(struct nec86_softc), necsb_match, necsb_attach
 };
 

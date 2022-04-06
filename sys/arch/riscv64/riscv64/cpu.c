@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.12 2021/11/26 14:45:13 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.13 2022/04/06 18:59:27 naddy Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -74,7 +74,7 @@ struct cpu_info *cpu_info_list = &cpu_info_primary;
 int	cpu_match(struct device *, void *, void *);
 void	cpu_attach(struct device *, struct device *, void *);
 
-struct cfattach cpu_ca = {
+const struct cfattach cpu_ca = {
 	sizeof(struct device), cpu_match, cpu_attach
 };
 

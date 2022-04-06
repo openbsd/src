@@ -1,4 +1,4 @@
-/*	$OpenBSD: chvgpio.c,v 1.11 2021/12/21 20:53:46 kettenis Exp $	*/
+/*	$OpenBSD: chvgpio.c,v 1.12 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -107,7 +107,7 @@ chvgpio_write_pad_cfg1(struct chvgpio_softc *sc, int pin, uint32_t val)
 int	chvgpio_match(struct device *, void *, void *);
 void	chvgpio_attach(struct device *, struct device *, void *);
 
-struct cfattach chvgpio_ca = {
+const struct cfattach chvgpio_ca = {
 	sizeof(struct chvgpio_softc), chvgpio_match, chvgpio_attach
 };
 

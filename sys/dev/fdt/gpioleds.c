@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpioleds.c,v 1.3 2021/11/07 16:43:12 kn Exp $	*/
+/*	$OpenBSD: gpioleds.c,v 1.4 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2021 Klemens Nanni <kn@openbsd.org>
  *
@@ -38,7 +38,7 @@ struct gpioleds_softc {
 int	gpioleds_match(struct device *, void *, void *);
 void	gpioleds_attach(struct device *, struct device *, void *);
 
-struct cfattach gpioleds_ca = {
+const struct cfattach gpioleds_ca = {
 	sizeof (struct gpioleds_softc), gpioleds_match, gpioleds_attach
 };
 

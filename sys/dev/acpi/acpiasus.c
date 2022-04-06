@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiasus.c,v 1.19 2018/07/01 19:40:49 mlarkin Exp $ */
+/* $OpenBSD: acpiasus.c,v 1.20 2022/04/06 18:59:27 naddy Exp $ */
 /* $NetBSD: asus_acpi.c,v 1.2.2.2 2008/04/03 12:42:37 mjf Exp $ */
 /*
  * Copyright (c) 2007, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -86,7 +86,7 @@ int	acpiasus_activate(struct device *, int);
 extern int wskbd_set_mixervolume(long, long);
 #endif
 
-struct cfattach acpiasus_ca = {
+const struct cfattach acpiasus_ca = {
 	sizeof(struct acpiasus_softc), acpiasus_match, acpiasus_attach,
 	NULL, acpiasus_activate
 };

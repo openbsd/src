@@ -1,4 +1,4 @@
-/* $OpenBSD: rkanxdp.c,v 1.4 2020/06/08 04:47:58 jsg Exp $ */
+/* $OpenBSD: rkanxdp.c,v 1.5 2022/04/06 18:59:28 naddy Exp $ */
 /* $NetBSD: rk_anxdp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -77,7 +77,7 @@ void rkanxdp_encoder_dpms(struct drm_encoder *, int);
 int rkanxdp_ep_activate(void *, struct endpoint *, void *);
 void *rkanxdp_ep_get_cookie(void *, struct endpoint *);
 
-struct cfattach	rkanxdp_ca = {
+const struct cfattach rkanxdp_ca = {
 	sizeof (struct rkanxdp_softc), rkanxdp_match, rkanxdp_attach
 };
 

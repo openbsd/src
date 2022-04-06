@@ -1,4 +1,4 @@
-/* $OpenBSD: com_pci.c,v 1.1 2020/03/06 08:39:34 patrick Exp $ */
+/* $OpenBSD: com_pci.c,v 1.2 2022/04/06 18:59:29 naddy Exp $ */
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -89,7 +89,7 @@ struct com_pci_softc {
 	uint32_t		 sc_priv[LPSS_REG_NUM];
 };
 
-struct cfattach com_pci_ca = {
+const struct cfattach com_pci_ca = {
 	sizeof(struct com_pci_softc), com_pci_match,
 	com_pci_attach, com_pci_detach, com_pci_activate,
 };

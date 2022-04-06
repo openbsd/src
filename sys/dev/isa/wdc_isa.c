@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc_isa.c,v 1.16 2017/09/08 05:36:52 deraadt Exp $     */
+/*      $OpenBSD: wdc_isa.c,v 1.17 2022/04/06 18:59:29 naddy Exp $     */
 /*	$NetBSD: wdc_isa.c,v 1.15 1999/05/19 14:41:25 bouyer Exp $ */
 
 /*-
@@ -66,7 +66,7 @@ struct wdc_isa_softc {
 int	wdc_isa_probe(struct device *, void *, void *);
 void	wdc_isa_attach(struct device *, struct device *, void *);
 
-struct cfattach wdc_isa_ca = {
+const struct cfattach wdc_isa_ca = {
 	sizeof(struct wdc_isa_softc), wdc_isa_probe, wdc_isa_attach
 };
 

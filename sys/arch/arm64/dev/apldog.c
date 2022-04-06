@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldog.c,v 1.3 2022/01/13 08:59:10 kettenis Exp $	*/
+/*	$OpenBSD: apldog.c,v 1.4 2022/04/06 18:59:26 naddy Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -57,7 +57,7 @@ struct apldog_softc *apldog_sc;
 int	apldog_match(struct device *, void *, void *);
 void	apldog_attach(struct device *, struct device *, void *);
 
-struct cfattach	apldog_ca = {
+const struct cfattach	apldog_ca = {
 	sizeof (struct apldog_softc), apldog_match, apldog_attach
 };
 

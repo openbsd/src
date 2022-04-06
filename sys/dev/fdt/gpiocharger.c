@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiocharger.c,v 1.1 2021/09/25 18:40:08 kn Exp $	*/
+/*	$OpenBSD: gpiocharger.c,v 1.2 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2021 Klemens Nanni <kn@openbsd.org>
  *
@@ -43,7 +43,7 @@ struct gpiocharger_softc {
 int	gpiocharger_match(struct device *, void *, void *);
 void	gpiocharger_attach(struct device *, struct device *, void *);
 
-struct cfattach gpiocharger_ca = {
+const struct cfattach gpiocharger_ca = {
 	sizeof (struct gpiocharger_softc), gpiocharger_match, gpiocharger_attach
 };
 

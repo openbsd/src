@@ -1,4 +1,4 @@
-/* $OpenBSD: if_wi_pcmcia.c,v 1.75 2019/12/31 10:05:33 mpi Exp $ */
+/* $OpenBSD: if_wi_pcmcia.c,v 1.76 2022/04/06 18:59:30 naddy Exp $ */
 /* $NetBSD: if_wi_pcmcia.c,v 1.14 2001/11/26 04:34:56 ichiro Exp $ */
 
 /*
@@ -83,7 +83,7 @@ struct wi_pcmcia_softc {
 	struct pcmcia_function	*sc_pf;
 };
 
-struct cfattach wi_pcmcia_ca = {
+const struct cfattach wi_pcmcia_ca = {
 	sizeof (struct wi_pcmcia_softc), wi_pcmcia_match, wi_pcmcia_attach,
 	wi_pcmcia_detach, wi_pcmcia_activate
 };

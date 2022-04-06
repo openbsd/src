@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_acpi.c,v 1.1 2021/12/29 18:40:19 patrick Exp $	*/
+/*	$OpenBSD: ehci_acpi.c,v 1.2 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -46,7 +46,7 @@ struct ehci_acpi_softc {
 int	ehci_acpi_match(struct device *, void *, void *);
 void	ehci_acpi_attach(struct device *, struct device *, void *);
 
-struct cfattach ehci_acpi_ca = {
+const struct cfattach ehci_acpi_ca = {
 	sizeof(struct ehci_acpi_softc), ehci_acpi_match, ehci_acpi_attach
 };
 

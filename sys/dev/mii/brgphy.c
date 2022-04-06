@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.107 2021/06/17 09:30:32 kettenis Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.108 2022/04/06 18:59:29 naddy Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -63,7 +63,7 @@
 int brgphy_probe(struct device *, void *, void *);
 void brgphy_attach(struct device *, struct device *, void *);
 
-struct cfattach brgphy_ca = {
+const struct cfattach brgphy_ca = {
 	sizeof(struct mii_softc), brgphy_probe, brgphy_attach, mii_phy_detach
 };
 

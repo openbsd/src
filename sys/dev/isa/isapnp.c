@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.42 2021/03/07 06:17:03 jsg Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.43 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ void isapnp_attach(struct device *, struct device *, void *);
 # define DPRINTF(a)
 #endif
 
-struct cfattach isapnp_ca = {
+const struct cfattach isapnp_ca = {
 	sizeof(struct isapnp_softc), isapnp_match, isapnp_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: maxim6690.c,v 1.16 2007/10/20 22:06:43 cnst Exp $	*/
+/*	$OpenBSD: maxim6690.c,v 1.17 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -62,7 +62,7 @@ int	maxtmp_match(struct device *, void *, void *);
 void	maxtmp_attach(struct device *, struct device *, void *);
 void	maxtmp_refresh(void *);
 
-struct cfattach maxtmp_ca = {
+const struct cfattach maxtmp_ca = {
 	sizeof(struct maxtmp_softc), maxtmp_match, maxtmp_attach
 };
 

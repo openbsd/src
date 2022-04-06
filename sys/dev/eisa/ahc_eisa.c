@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_eisa.c,v 1.24 2021/03/07 06:18:48 jsg Exp $	*/
+/*	$OpenBSD: ahc_eisa.c,v 1.25 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: ahc_eisa.c,v 1.10 1996/10/21 22:30:58 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: ahc_eisa.c,v 1.24 2021/03/07 06:18:48 jsg Exp $
+ *	$Id: ahc_eisa.c,v 1.25 2022/04/06 18:59:28 naddy Exp $
  */
 
 #include <sys/param.h>
@@ -59,7 +59,7 @@ int   ahc_eisa_match(struct device *, void *, void *);
 void  ahc_eisa_attach(struct device *, struct device *, void *);
 
 
-struct cfattach ahc_eisa_ca = {
+const struct cfattach ahc_eisa_ca = {
 	sizeof(struct ahc_softc), ahc_eisa_match, ahc_eisa_attach
 };
 

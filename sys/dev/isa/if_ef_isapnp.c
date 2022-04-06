@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.40 2021/03/07 06:17:03 jsg Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.41 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -129,7 +129,7 @@ struct cfdriver ef_cd = {
 	NULL, "ef", DV_IFNET
 };
 
-struct cfattach ef_isapnp_ca = {
+const struct cfattach ef_isapnp_ca = {
 	sizeof(struct ef_softc), ef_isapnp_match, ef_isapnp_attach
 };
 

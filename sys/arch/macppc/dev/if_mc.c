@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mc.c,v 1.32 2022/02/22 01:15:01 guenther Exp $	*/
+/*	$OpenBSD: if_mc.c,v 1.33 2022/04/06 18:59:26 naddy Exp $	*/
 /*	$NetBSD: if_mc.c,v 1.9.16.1 2006/06/21 14:53:13 yamt Exp $	*/
 
 /*-
@@ -298,7 +298,7 @@ struct mc_softc {
 int	mc_match(struct device *, void *, void *);
 void	mc_attach(struct device *, struct device *, void *);
 
-struct  cfattach mc_ca = {
+const struct cfattach mc_ca = {
 	sizeof(struct mc_softc), mc_match, mc_attach
 };
 

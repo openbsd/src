@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ec.c,v 1.18 2022/01/09 05:42:44 jsg Exp $	*/
+/*	$OpenBSD: if_ec.c,v 1.19 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: if_ec.c,v 1.9 1998/07/05 06:49:12 jonathan Exp $	*/
 
 /*-
@@ -92,7 +92,7 @@ struct ec_softc {
 int	ec_probe(struct device *, void *, void *);
 void	ec_attach(struct device *, struct device *, void *);
 
-struct cfattach ec_ca = {
+const struct cfattach ec_ca = {
 	sizeof(struct ec_softc), ec_probe, ec_attach
 };
 

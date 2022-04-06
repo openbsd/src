@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplns.c,v 1.10 2022/01/10 09:07:28 kettenis Exp $ */
+/*	$OpenBSD: aplns.c,v 1.11 2022/04/06 18:59:26 naddy Exp $ */
 /*
  * Copyright (c) 2014, 2021 David Gwynne <dlg@openbsd.org>
  *
@@ -83,7 +83,7 @@ struct ans_nvmmu_tcb {
 int	aplns_match(struct device *, void *, void *);
 void	aplns_attach(struct device *, struct device *, void *);
 
-struct cfattach	aplns_ca = {
+const struct cfattach	aplns_ca = {
 	sizeof(struct device),
 	aplns_match,
 	aplns_attach
@@ -124,7 +124,7 @@ struct nvme_ans_softc {
 int	nvme_ans_match(struct device *, void *, void *);
 void	nvme_ans_attach(struct device *, struct device *, void *);
 
-struct cfattach nvme_ans_ca = {
+const struct cfattach nvme_ans_ca = {
 	sizeof(struct nvme_ans_softc),
 	nvme_ans_match,
 	nvme_ans_attach,

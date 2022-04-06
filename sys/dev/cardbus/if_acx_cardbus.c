@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_acx_cardbus.c,v 1.22 2015/11/24 17:11:39 mpi Exp $  */
+/*	$OpenBSD: if_acx_cardbus.c,v 1.23 2022/04/06 18:59:28 naddy Exp $  */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -82,7 +82,7 @@ int	acx_cardbus_match(struct device *, void *, void *);
 void	acx_cardbus_attach(struct device *, struct device *, void *);
 int	acx_cardbus_detach(struct device *, int);
 
-struct cfattach acx_cardbus_ca = {
+const struct cfattach acx_cardbus_ca = {
 	sizeof (struct acx_cardbus_softc), acx_cardbus_match,
 	acx_cardbus_attach, acx_cardbus_detach
 };

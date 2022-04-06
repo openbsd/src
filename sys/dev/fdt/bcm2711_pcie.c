@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcm2711_pcie.c,v 1.10 2021/12/06 18:02:58 kettenis Exp $	*/
+/*	$OpenBSD: bcm2711_pcie.c,v 1.11 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -84,7 +84,7 @@ struct bcmpcie_softc {
 int bcmpcie_match(struct device *, void *, void *);
 void bcmpcie_attach(struct device *, struct device *, void *);
 
-struct cfattach bcmpcie_ca = {
+const struct cfattach bcmpcie_ca = {
 	sizeof (struct bcmpcie_softc), bcmpcie_match, bcmpcie_attach
 };
 

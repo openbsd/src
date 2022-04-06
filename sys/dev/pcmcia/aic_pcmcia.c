@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_pcmcia.c,v 1.18 2021/03/07 06:20:09 jsg Exp $	*/
+/*	$OpenBSD: aic_pcmcia.c,v 1.19 2022/04/06 18:59:30 naddy Exp $	*/
 /*	$NetBSD: aic_pcmcia.c,v 1.6 1998/07/19 17:28:15 christos Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ struct aic_pcmcia_softc {
 	void *sc_ih;				/* interrupt handler */
 };
 
-struct cfattach aic_pcmcia_ca = {
+const struct cfattach aic_pcmcia_ca = {
 	sizeof(struct aic_pcmcia_softc), aic_pcmcia_match, aic_pcmcia_attach,
 	aic_pcmcia_detach
 };

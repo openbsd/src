@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_isa.c,v 1.17 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_ne_isa.c,v 1.18 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: if_ne_isa.c,v 1.6 1998/07/05 06:49:13 jonathan Exp $	*/
 
 /*-
@@ -77,7 +77,7 @@ struct ne_isa_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-struct cfattach ne_isa_ca = {
+const struct cfattach ne_isa_ca = {
 	sizeof(struct ne_isa_softc), ne_isa_match, ne_isa_attach
 };
 

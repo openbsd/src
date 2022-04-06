@@ -1,4 +1,4 @@
-/*	$OpenBSD: hilms.c,v 1.6 2016/06/05 20:15:54 bru Exp $	*/
+/*	$OpenBSD: hilms.c,v 1.7 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
  * All rights reserved.
@@ -62,7 +62,7 @@ struct cfdriver hilms_cd = {
 	NULL, "hilms", DV_DULL
 };
 
-struct cfattach hilms_ca = {
+const struct cfattach hilms_ca = {
 	sizeof(struct hilms_softc), hilmsprobe, hilmsattach, hilmsdetach,
 };
 

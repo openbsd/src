@@ -1,4 +1,4 @@
-/*     $OpenBSD: bcm2835_dmac.c,v 1.1 2020/04/21 18:56:54 tobhe Exp $ */
+/*     $OpenBSD: bcm2835_dmac.c,v 1.2 2022/04/06 18:59:28 naddy Exp $ */
 
 /*
  * Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
@@ -87,7 +87,7 @@ struct bcmdmac_channel {
 int bcmdmac_match(struct device *, void *, void *);
 void bcmdmac_attach(struct device *, struct device *, void *);
 
-struct cfattach bcmdmac_ca = {
+const struct cfattach bcmdmac_ca = {
 	sizeof(struct bcmdmac_softc),
 	bcmdmac_match,
 	bcmdmac_attach,

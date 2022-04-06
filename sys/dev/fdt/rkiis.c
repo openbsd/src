@@ -1,4 +1,4 @@
-/* $OpenBSD: rkiis.c,v 1.2 2022/03/21 19:22:40 miod Exp $ */
+/* $OpenBSD: rkiis.c,v 1.3 2022/04/06 18:59:28 naddy Exp $ */
 /* $NetBSD: rk_i2s.c,v 1.3 2020/02/29 05:51:10 isaki Exp $ */
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -211,7 +211,7 @@ const struct audio_hw_if rkiis_hw_if = {
 	.halt_input = rkiis_halt_input,
 };
 
-struct cfattach rkiis_ca = {
+const struct cfattach rkiis_ca = {
 	sizeof (struct rkiis_softc), rkiis_match, rkiis_attach
 };
 

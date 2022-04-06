@@ -1,4 +1,4 @@
-/*	$OpenBSD: owtemp.c,v 1.17 2019/11/30 18:14:47 cheloha Exp $	*/
+/*	$OpenBSD: owtemp.c,v 1.18 2022/04/06 18:59:29 naddy Exp $	*/
 
 /*
  * Copyright (c) 2006, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -64,7 +64,7 @@ int	owtemp_activate(struct device *, int);
 
 void	owtemp_update(void *);
 
-struct cfattach owtemp_ca = {
+const struct cfattach owtemp_ca = {
 	sizeof(struct owtemp_softc),
 	owtemp_match,
 	owtemp_attach,

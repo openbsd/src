@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsphyter.c,v 1.19 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: nsphyter.c,v 1.20 2022/04/06 18:59:29 naddy Exp $	*/
 /*	$NetBSD: nsphyter.c,v 1.5 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@
 int	nsphytermatch(struct device *, void *, void *);
 void	nsphyterattach(struct device *, struct device *, void *);
 
-struct cfattach nsphyter_ca = {
+const struct cfattach nsphyter_ca = {
 	sizeof(struct mii_softc), nsphytermatch, nsphyterattach,
 	mii_phy_detach
 };

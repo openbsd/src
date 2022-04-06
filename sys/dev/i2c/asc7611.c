@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc7611.c,v 1.2 2009/01/26 15:07:49 kettenis Exp $	*/
+/*	$OpenBSD: asc7611.c,v 1.3 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2008 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -84,7 +84,7 @@ uint8_t	andl_readreg(struct andl_softc *, uint8_t);
 void	andl_writereg(struct andl_softc *, uint8_t, uint8_t);
 
 
-struct cfattach andl_ca = {
+const struct cfattach andl_ca = {
 	sizeof(struct andl_softc), andl_match, andl_attach
 };
 

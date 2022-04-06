@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.100 2021/03/07 06:20:09 jsg Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.101 2022/04/06 18:59:30 naddy Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ u_int8_t *
 	    u_int8_t[ETHER_ADDR_LEN]);
 int	ne_pcmcia_ax88190_set_iobase(struct ne_pcmcia_softc *);
 
-struct cfattach ne_pcmcia_ca = {
+const struct cfattach ne_pcmcia_ca = {
 	sizeof(struct ne_pcmcia_softc), ne_pcmcia_match, ne_pcmcia_attach,
 	ne_pcmcia_detach, ne_pcmcia_activate
 };

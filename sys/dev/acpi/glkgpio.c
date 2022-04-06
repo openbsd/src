@@ -1,4 +1,4 @@
-/*	$OpenBSD: glkgpio.c,v 1.4 2021/12/21 20:53:46 kettenis Exp $	*/
+/*	$OpenBSD: glkgpio.c,v 1.5 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2019 James Hastings
@@ -60,7 +60,7 @@ struct glkgpio_softc {
 int	glkgpio_match(struct device *, void *, void *);
 void	glkgpio_attach(struct device *, struct device *, void *);
 
-struct cfattach glkgpio_ca = {
+const struct cfattach glkgpio_ca = {
 	sizeof(struct glkgpio_softc), glkgpio_match, glkgpio_attach
 };
 

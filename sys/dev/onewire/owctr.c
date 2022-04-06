@@ -1,4 +1,4 @@
-/*	$OpenBSD: owctr.c,v 1.8 2015/08/27 05:49:23 deraadt Exp $	*/
+/*	$OpenBSD: owctr.c,v 1.9 2022/04/06 18:59:29 naddy Exp $	*/
 /*
  * Copyright (c) 2010 John L. Scarfone <john@scarfone.net>
  *
@@ -70,7 +70,7 @@ int	owctr_activate(struct device *, int);
 void	owctr_update(void *);
 void	owctr_update_counter(void *, int);
 
-struct cfattach owctr_ca = {
+const struct cfattach owctr_ca = {
 	sizeof(struct owctr_softc),
 	owctr_match,
 	owctr_attach,

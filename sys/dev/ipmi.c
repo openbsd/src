@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.115 2021/01/23 12:10:08 kettenis Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.116 2022/04/06 18:59:27 naddy Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -1851,7 +1851,7 @@ void	ipmi_smbios_probe(struct smbios_ipmi *, struct ipmi_attach_args *);
 int	ipmi_match(struct device *, void *, void *);
 void	ipmi_attach(struct device *, struct device *, void *);
 
-struct cfattach ipmi_ca = {
+const struct cfattach ipmi_ca = {
 	sizeof(struct ipmi_softc), ipmi_match, ipmi_attach,
 	NULL, ipmi_activate
 };

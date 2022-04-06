@@ -1,4 +1,4 @@
-/*	$OpenBSD: shpcic.c,v 1.13 2017/06/22 11:34:51 tom Exp $	*/
+/*	$OpenBSD: shpcic.c,v 1.14 2022/04/06 18:59:27 naddy Exp $	*/
 /*	$NetBSD: shpcic.c,v 1.10 2005/12/24 20:07:32 perry Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ static const struct shpcic_product {
 int	shpcic_match(struct device *, void *, void *);
 void	shpcic_attach(struct device *, struct device *, void *);
 
-struct cfattach shpcic_ca = {
+const struct cfattach shpcic_ca = {
 	sizeof(struct shpcic_softc), shpcic_match, shpcic_attach
 };
 

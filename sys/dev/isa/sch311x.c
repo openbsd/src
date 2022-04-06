@@ -1,4 +1,4 @@
-/*	$OpenBSD: sch311x.c,v 1.17 2017/09/08 05:36:52 deraadt Exp $	*/
+/*	$OpenBSD: sch311x.c,v 1.18 2022/04/06 18:59:29 naddy Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2009 Michael Knudsen <mk@openbsd.org>
@@ -180,7 +180,7 @@ u_int8_t schsio_hwm_read(struct schsio_softc *sc, u_int8_t reg);
 void schsio_wdt_init(struct schsio_softc *sc);
 int schsio_wdt_cb(void *arg, int period);
 
-struct cfattach schsio_ca = {
+const struct cfattach schsio_ca = {
 	sizeof(struct schsio_softc),
 	schsio_probe,
 	schsio_attach,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxehci.c,v 1.5 2021/11/05 09:36:30 patrick Exp $ */
+/*	$OpenBSD: imxehci.c,v 1.6 2022/04/06 18:59:28 naddy Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -94,7 +94,7 @@ struct imxehci_softc {
 	uint32_t		sc_unit;
 };
 
-struct cfattach imxehci_ca = {
+const struct cfattach imxehci_ca = {
 	sizeof (struct imxehci_softc), imxehci_match, imxehci_attach,
 	imxehci_detach
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_isapnp.c,v 1.10 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_an_isapnp.c,v 1.11 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -53,7 +53,7 @@
 int an_isapnp_match(struct device *, void *, void *);
 void an_isapnp_attach(struct device *, struct device *, void *);
 
-struct cfattach an_isapnp_ca = {
+const struct cfattach an_isapnp_ca = {
 	sizeof(struct an_softc), an_isapnp_match, an_isapnp_attach
 };
 

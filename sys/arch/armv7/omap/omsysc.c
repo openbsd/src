@@ -1,4 +1,4 @@
-/* $OpenBSD: omsysc.c,v 1.2 2021/03/25 04:12:01 jsg Exp $ */
+/* $OpenBSD: omsysc.c,v 1.3 2022/04/06 18:59:26 naddy Exp $ */
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -33,7 +33,7 @@ struct omsysc_softc {
 int	omsysc_match(struct device *, void *, void *);
 void	omsysc_attach(struct device *, struct device *, void *);
 
-struct cfattach omsysc_ca = {
+const struct cfattach omsysc_ca = {
 	sizeof(struct omsysc_softc), omsysc_match, omsysc_attach
 };
 

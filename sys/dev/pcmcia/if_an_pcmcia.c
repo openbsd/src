@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_an_pcmcia.c,v 1.26 2015/11/24 17:11:40 mpi Exp $	*/
+/*	$OpenBSD: if_an_pcmcia.c,v 1.27 2022/04/06 18:59:30 naddy Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -65,7 +65,7 @@ struct an_pcmcia_softc {
 #define	AN_PCMCIA_ATTACHED	3
 };
 
-struct cfattach an_pcmcia_ca = {   
+const struct cfattach an_pcmcia_ca = {   
 	sizeof(struct an_pcmcia_softc), an_pcmcia_match, an_pcmcia_attach,
 	an_pcmcia_detach, an_pcmcia_activate
 };

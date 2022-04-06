@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_isa.c,v 1.9 2017/04/30 13:04:49 mpi Exp $	*/
+/*	$OpenBSD: com_isa.c,v 1.10 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
  *
@@ -74,7 +74,7 @@
 int com_isa_probe(struct device *, void *, void *);
 void com_isa_attach(struct device *, struct device *, void *);
 
-struct cfattach com_isa_ca = {
+const struct cfattach com_isa_ca = {
 	sizeof(struct com_softc), com_isa_probe, com_isa_attach, NULL,
 	com_activate
 };

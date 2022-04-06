@@ -1,4 +1,4 @@
-/*	$OpenBSD: xics.c,v 1.3 2020/09/21 11:14:28 kettenis Exp $	*/
+/*	$OpenBSD: xics.c,v 1.4 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -38,7 +38,7 @@ struct xics_softc {
 int	xics_match(struct device *, void *, void *);
 void	xics_attach(struct device *, struct device *, void *);
 
-struct cfattach	xics_ca = {
+const struct cfattach xics_ca = {
 	sizeof (struct xics_softc), xics_match, xics_attach
 };
 

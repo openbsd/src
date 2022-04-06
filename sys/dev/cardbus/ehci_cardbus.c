@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_cardbus.c,v 1.22 2015/11/11 02:29:14 jsg Exp $ */
+/*	$OpenBSD: ehci_cardbus.c,v 1.23 2022/04/06 18:59:27 naddy Exp $ */
 /*	$NetBSD: ehci_cardbus.c,v 1.6.6.3 2004/09/21 13:27:25 skrll Exp $	*/
 
 /*
@@ -61,7 +61,7 @@ struct ehci_cardbus_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-struct cfattach ehci_cardbus_ca = {
+const struct cfattach ehci_cardbus_ca = {
 	sizeof(struct ehci_cardbus_softc), ehci_cardbus_match,
 	ehci_cardbus_attach, ehci_cardbus_detach, ehci_activate
 };

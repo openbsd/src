@@ -1,4 +1,4 @@
-/*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
+/*      $OpenBSD: gpiosim.c,v 1.2 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -54,7 +54,7 @@ int	gpiosim_pin_read(void *, int);
 void	gpiosim_pin_write(void *, int, int);
 void	gpiosim_pin_ctl(void *, int, int);
 
-struct cfattach gpiosim_ca = {
+const struct cfattach gpiosim_ca = {
 	sizeof(struct gpiosim_softc), gpiosim_match, gpiosim_attach
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: pcppi.c,v 1.18 2022/01/09 05:42:44 jsg Exp $ */
+/* $OpenBSD: pcppi.c,v 1.19 2022/04/06 18:59:28 naddy Exp $ */
 /* $NetBSD: pcppi.c,v 1.1 1998/04/15 20:26:18 drochner Exp $ */
 
 /*
@@ -69,7 +69,7 @@ struct pcppi_softc {
 int	pcppi_match(struct device *, void *, void *);
 void	pcppi_attach(struct device *, struct device *, void *);
 
-struct cfattach pcppi_ca = {
+const struct cfattach pcppi_ca = {
 	sizeof(struct pcppi_softc), pcppi_match, pcppi_attach,
 };
 

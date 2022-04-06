@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpcie.c,v 1.12 2022/03/07 11:08:13 kettenis Exp $	*/
+/*	$OpenBSD: aplpcie.c,v 1.13 2022/04/06 18:59:26 naddy Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -135,7 +135,7 @@ struct aplpcie_softc {
 int	aplpcie_match(struct device *, void *, void *);
 void	aplpcie_attach(struct device *, struct device *, void *);
 
-struct cfattach	aplpcie_ca = {
+const struct cfattach	aplpcie_ca = {
 	sizeof (struct aplpcie_softc), aplpcie_match, aplpcie_attach
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: rktcphy.c,v 1.1 2021/06/29 12:43:09 patrick Exp $ */
+/* $OpenBSD: rktcphy.c,v 1.2 2022/04/06 18:59:28 naddy Exp $ */
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -128,7 +128,7 @@ void rktcphy_attach(struct device *, struct device *, void *);
 void rktcphy_set_usb2_only(struct rktcphy_softc *, int);
 int rktcphy_enable(void *, uint32_t *);
 
-struct cfattach	rktcphy_ca = {
+const struct cfattach rktcphy_ca = {
 	sizeof (struct rktcphy_softc), rktcphy_match, rktcphy_attach
 };
 

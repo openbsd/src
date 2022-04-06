@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdtemp.c,v 1.15 2014/11/14 07:03:22 jsg Exp $	*/
+/*	$OpenBSD: sdtemp.c,v 1.16 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2008 Theo de Raadt
@@ -43,7 +43,7 @@ int	sdtemp_match(struct device *, void *, void *);
 void	sdtemp_attach(struct device *, struct device *, void *);
 void	sdtemp_refresh(void *);
 
-struct cfattach sdtemp_ca = {
+const struct cfattach sdtemp_ca = {
 	sizeof(struct sdtemp_softc), sdtemp_match, sdtemp_attach
 };
 

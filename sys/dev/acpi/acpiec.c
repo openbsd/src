@@ -1,4 +1,4 @@
-/* $OpenBSD: acpiec.c,v 1.63 2021/02/23 00:03:01 jsg Exp $ */
+/* $OpenBSD: acpiec.c,v 1.64 2022/04/06 18:59:27 naddy Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -74,7 +74,7 @@ int		acpiec_gpehandler(struct acpi_softc *, int, void *);
 
 int	acpiec_reg(struct acpiec_softc *);
 
-struct cfattach acpiec_ca = {
+const struct cfattach acpiec_ca = {
 	sizeof(struct acpiec_softc), acpiec_match, acpiec_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm93.c,v 1.8 2007/10/31 20:46:17 cnst Exp $	*/
+/*	$OpenBSD: lm93.c,v 1.9 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2007 Theo de Raadt
@@ -131,7 +131,7 @@ void	lmn_attach(struct device *, struct device *, void *);
 
 void	lmn_refresh(void *);
 
-struct cfattach lmn_ca = {
+const struct cfattach lmn_ca = {
 	sizeof(struct lmn_softc), lmn_match, lmn_attach
 };
 

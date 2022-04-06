@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay.c,v 1.14 2020/05/25 09:55:48 jsg Exp $ */
+/* $OpenBSD: pcdisplay.c,v 1.15 2022/04/06 18:59:28 naddy Exp $ */
 /* $NetBSD: pcdisplay.c,v 1.9.4.1 2000/06/30 16:27:48 simonb Exp $ */
 
 /*
@@ -73,7 +73,7 @@ static void pcdisplay_init(struct pcdisplay_config *,
 static int pcdisplay_pack_attr(void *, int, int, int, uint32_t *);
 static void pcdisplay_unpack_attr(void *, uint32_t, int *, int *, int *);
 
-struct cfattach pcdisplay_ca = {
+const struct cfattach pcdisplay_ca = {
 	sizeof(struct pcdisplay_softc), pcdisplay_match, pcdisplay_attach,
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvkpcie.c,v 1.12 2022/02/08 09:41:04 jsg Exp $	*/
+/*	$OpenBSD: mvkpcie.c,v 1.13 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -207,7 +207,7 @@ struct mvkpcie_softc {
 int mvkpcie_match(struct device *, void *, void *);
 void mvkpcie_attach(struct device *, struct device *, void *);
 
-struct cfattach mvkpcie_ca = {
+const struct cfattach mvkpcie_ca = {
 	sizeof (struct mvkpcie_softc), mvkpcie_match, mvkpcie_attach
 };
 

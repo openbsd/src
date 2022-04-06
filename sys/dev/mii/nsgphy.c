@@ -1,4 +1,4 @@
-/*	$OpenBSD: nsgphy.c,v 1.25 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: nsgphy.c,v 1.26 2022/04/06 18:59:29 naddy Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 2001
@@ -68,7 +68,7 @@
 int	nsgphymatch(struct device*, void *, void *);
 void	nsgphyattach(struct device *, struct device *, void *);
 
-struct cfattach nsgphy_ca = {
+const struct cfattach nsgphy_ca = {
 	sizeof(struct mii_softc), nsgphymatch, nsgphyattach, mii_phy_detach
 };
 

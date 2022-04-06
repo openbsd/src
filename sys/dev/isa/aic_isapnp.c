@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_isapnp.c,v 1.2 2021/03/07 06:17:03 jsg Exp $	*/
+/*	$OpenBSD: aic_isapnp.c,v 1.3 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Arnholm
@@ -51,7 +51,7 @@
 int	aic_isapnp_match(struct device *, void *, void *);
 void	aic_isapnp_attach(struct device *, struct device *, void *);
 
-struct cfattach aic_isapnp_ca = {
+const struct cfattach aic_isapnp_ca = {
 	sizeof(struct aic_softc), aic_isapnp_match, aic_isapnp_attach
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpimadt.c,v 1.37 2018/06/29 17:39:18 kettenis Exp $ */
+/* $OpenBSD: acpimadt.c,v 1.38 2022/04/06 18:59:27 naddy Exp $ */
 /*
  * Copyright (c) 2006 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -43,7 +43,7 @@
 int acpimadt_match(struct device *, void *, void *);
 void acpimadt_attach(struct device *, struct device *, void *);
 
-struct cfattach acpimadt_ca = {
+const struct cfattach acpimadt_ca = {
 	sizeof(struct device), acpimadt_match, acpimadt_attach
 };
 

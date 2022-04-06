@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplgpio.c,v 1.4 2021/12/21 20:53:46 kettenis Exp $	*/
+/*	$OpenBSD: aplgpio.c,v 1.5 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2019 James Hastings
@@ -60,7 +60,7 @@ struct aplgpio_softc {
 int	aplgpio_match(struct device *, void *, void *);
 void	aplgpio_attach(struct device *, struct device *, void *);
 
-struct cfattach aplgpio_ca = {
+const struct cfattach aplgpio_ca = {
 	sizeof(struct aplgpio_softc), aplgpio_match, aplgpio_attach
 };
 

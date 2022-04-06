@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_we.c,v 1.27 2017/07/26 05:25:21 deraadt Exp $	*/
+/*	$OpenBSD: if_we.c,v 1.28 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: if_we.c,v 1.11 1998/07/05 06:49:14 jonathan Exp $	*/
 
 /*-
@@ -106,12 +106,12 @@ int	we_probe(struct device *, void *, void *);
 int	we_match(struct device *, void *, void *);
 void	we_attach(struct device *, struct device *, void *);
 
-struct cfattach we_isa_ca = {
+const struct cfattach we_isa_ca = {
 	sizeof(struct we_softc), we_probe, we_attach
 };
 
 #if NWE_ISAPNP
-struct cfattach we_isapnp_ca = {
+const struct cfattach we_isapnp_ca = {
 	sizeof(struct we_softc), we_match, we_attach
 };
 #endif /* NWE_ISAPNP */

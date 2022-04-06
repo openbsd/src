@@ -1,4 +1,4 @@
-/*	$OpenBSD: addcom_isa.c,v 1.6 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: addcom_isa.c,v 1.7 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: addcom_isa.c,v 1.2 2000/04/21 20:13:41 explorer Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ void addcomattach(struct device *, struct device *, void *);
 int addcomintr(void *);
 int addcomprint(void *, const char *);
 
-struct cfattach addcom_isa_ca = {
+const struct cfattach addcom_isa_ca = {
 	sizeof(struct addcom_softc), addcomprobe, addcomattach,
 };
 

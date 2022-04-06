@@ -1,4 +1,4 @@
-/*     $OpenBSD: bcm2835_mbox.c,v 1.2 2021/05/30 15:05:33 visa Exp $ */
+/*     $OpenBSD: bcm2835_mbox.c,v 1.3 2022/04/06 18:59:28 naddy Exp $ */
 
 /*
  * Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
@@ -85,7 +85,7 @@ static struct bcmmbox_softc *bcmmbox_sc;
 int bcmmbox_match(struct device *, void *, void *);
 void bcmmbox_attach(struct device *, struct device *, void *);
 
-struct cfattach bcmmbox_ca = {
+const struct cfattach bcmmbox_ca = {
 	sizeof(struct bcmmbox_softc),
 	bcmmbox_match,
 	bcmmbox_attach,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: qsphy.c,v 1.21 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: qsphy.c,v 1.22 2022/04/06 18:59:29 naddy Exp $	*/
 /*	$NetBSD: qsphy.c,v 1.19 2000/02/02 23:34:57 thorpej Exp $	*/
 
 /*-
@@ -78,7 +78,7 @@
 int	qsphymatch(struct device *, void *, void *);
 void	qsphyattach(struct device *, struct device *, void *);
 
-struct cfattach qsphy_ca = {
+const struct cfattach qsphy_ca = {
 	sizeof(struct mii_softc), qsphymatch, qsphyattach, mii_phy_detach
 };
 

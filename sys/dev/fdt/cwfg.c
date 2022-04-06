@@ -1,4 +1,4 @@
-/* $OpenBSD: cwfg.c,v 1.6 2021/04/01 12:06:00 kn Exp $ */
+/* $OpenBSD: cwfg.c,v 1.7 2022/04/06 18:59:28 naddy Exp $ */
 /* $NetBSD: cwfg.c,v 1.1 2020/01/03 18:00:05 jmcneill Exp $ */
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -104,7 +104,7 @@ int cwfg_read(struct cwfg_softc *, uint8_t, uint8_t *);
 int cwfg_write(struct cwfg_softc *, uint8_t, uint8_t);
 void cwfg_update_sensors(void *);
 
-struct cfattach cwfg_ca = {
+const struct cfattach cwfg_ca = {
 	sizeof(struct cwfg_softc), cwfg_match, cwfg_attach
 };
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibat.c,v 1.69 2022/02/09 16:10:05 dv Exp $ */
+/* $OpenBSD: acpibat.c,v 1.70 2022/04/06 18:59:27 naddy Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -33,7 +33,7 @@ int	acpibat_match(struct device *, void *, void *);
 void	acpibat_attach(struct device *, struct device *, void *);
 int	acpibat_activate(struct device *, int);
 
-struct cfattach acpibat_ca = {
+const struct cfattach acpibat_ca = {
 	sizeof(struct acpibat_softc),
 	acpibat_match,
 	acpibat_attach,

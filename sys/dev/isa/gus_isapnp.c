@@ -1,4 +1,4 @@
-/*	$OpenBSD: gus_isapnp.c,v 1.9 2021/03/07 06:17:03 jsg Exp $	*/
+/*	$OpenBSD: gus_isapnp.c,v 1.10 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
 
 /*-
@@ -122,7 +122,7 @@
 int	gus_isapnp_match(struct device *, void *, void *);
 void	gus_isapnp_attach(struct device *, struct device *, void *);
 
-struct cfattach gus_isapnp_ca = {
+const struct cfattach gus_isapnp_ca = {
 	sizeof(struct gus_softc), gus_isapnp_match, gus_isapnp_attach
 };
 

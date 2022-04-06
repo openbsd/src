@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78_isa.c,v 1.11 2022/01/09 05:42:44 jsg Exp $	*/
+/*	$OpenBSD: lm78_isa.c,v 1.12 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -52,13 +52,13 @@ u_int8_t lm_isa_readreg(struct lm_softc *, int);
 void lm_isa_writereg(struct lm_softc *, int, int);
 void lm_isa_remove_alias(struct lm_softc *, const char *);
 
-struct cfattach lm_isa_ca = {
+const struct cfattach lm_isa_ca = {
 	sizeof(struct lm_isa_softc),
 	lm_isa_match,
 	lm_isa_attach
 };
 
-struct cfattach lm_wbsio_ca = {
+const struct cfattach lm_wbsio_ca = {
 	sizeof(struct lm_isa_softc),
 	lm_wbsio_match,
 	lm_isa_attach

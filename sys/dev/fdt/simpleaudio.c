@@ -1,4 +1,4 @@
-/*	$OpenBSD: simpleaudio.c,v 1.4 2022/03/21 19:22:40 miod Exp $	*/
+/*	$OpenBSD: simpleaudio.c,v 1.5 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -85,7 +85,7 @@ const struct audio_hw_if simpleaudio_hw_if = {
 	.halt_input = simpleaudio_halt_input,
 };
 
-struct cfattach simpleaudio_ca = {
+const struct cfattach simpleaudio_ca = {
 	sizeof(struct simpleaudio_softc), simpleaudio_match, simpleaudio_attach
 };
 

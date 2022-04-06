@@ -1,4 +1,4 @@
-/*	$OpenBSD: fintek.c,v 1.8 2014/10/12 19:40:22 miod Exp $ */
+/*	$OpenBSD: fintek.c,v 1.9 2022/04/06 18:59:28 naddy Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
  *
@@ -54,7 +54,7 @@ int	fintek_write_reg(struct fintek_softc *sc, u_int8_t cmd, u_int8_t *data,
 	    size_t size);
 void	fintek_fullspeed(struct fintek_softc *sc);
 
-struct cfattach fintek_ca = {
+const struct cfattach fintek_ca = {
 	sizeof(struct fintek_softc), fintek_match, fintek_attach
 };
 

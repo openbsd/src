@@ -1,4 +1,4 @@
-/* $OpenBSD: rkvop.c,v 1.5 2022/01/14 06:52:58 jsg Exp $ */
+/* $OpenBSD: rkvop.c,v 1.6 2022/04/06 18:59:28 naddy Exp $ */
 /* $NetBSD: rk_vop.c,v 1.6 2020/01/05 12:14:35 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -185,7 +185,7 @@ struct rkvop_config rk3399_vop_lit_config = {
 	.set_polarity = rk3399_vop_set_polarity,
 };
 
-struct cfattach	rkvop_ca = {
+const struct cfattach rkvop_ca = {
 	sizeof (struct rkvop_softc), rkvop_match, rkvop_attach
 };
 

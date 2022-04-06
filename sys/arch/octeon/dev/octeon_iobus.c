@@ -1,4 +1,4 @@
-/*	$OpenBSD: octeon_iobus.c,v 1.25 2019/09/15 07:15:14 visa Exp $ */
+/*	$OpenBSD: octeon_iobus.c,v 1.26 2022/04/06 18:59:27 naddy Exp $ */
 
 /*
  * Copyright (c) 2000-2004 Opsycon AB  (www.opsycon.se)
@@ -89,7 +89,7 @@ void	 iobus_write_raw_8(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 bus_addr_t iobus_pa_to_device(paddr_t);
 paddr_t	 iobus_device_to_pa(bus_addr_t);
 
-struct cfattach iobus_ca = {
+const struct cfattach iobus_ca = {
 	sizeof(struct device), iobusmatch, iobusattach
 };
 

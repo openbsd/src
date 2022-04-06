@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_cardbus.c,v 1.15 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: uhci_cardbus.c,v 1.16 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ struct uhci_cardbus_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-struct cfattach uhci_cardbus_ca = {
+const struct cfattach uhci_cardbus_ca = {
 	sizeof(struct uhci_cardbus_softc), uhci_cardbus_match,
 	    uhci_cardbus_attach, uhci_cardbus_detach, uhci_activate
 };

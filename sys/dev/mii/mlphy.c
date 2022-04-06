@@ -1,4 +1,4 @@
-/*	$OpenBSD: mlphy.c,v 1.5 2014/12/05 15:50:04 mpi Exp $	*/
+/*	$OpenBSD: mlphy.c,v 1.6 2022/04/06 18:59:29 naddy Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999
@@ -130,7 +130,7 @@ struct mlphy_softc {
 int	mlphy_probe(struct device *, void *, void *);
 void	mlphy_attach(struct device *, struct device *, void *);
 
-struct cfattach mlphy_ca = {
+const struct cfattach mlphy_ca = {
 	sizeof(struct mii_softc), mlphy_probe, mlphy_attach, mii_phy_detach
 };
 

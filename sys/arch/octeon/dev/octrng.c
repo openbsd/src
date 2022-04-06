@@ -1,4 +1,4 @@
-/*	$OpenBSD: octrng.c,v 1.9 2020/05/29 04:42:24 deraadt Exp $	*/
+/*	$OpenBSD: octrng.c,v 1.10 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2013 Paul Irofti <paul@irofti.net>
  *
@@ -57,7 +57,7 @@ struct octrng_softc {
 	bus_space_handle_t sc_ioh;
 };
 
-struct cfattach octrng_ca = {
+const struct cfattach octrng_ca = {
 	sizeof(struct octrng_softc), octrng_match, octrng_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iophy.c,v 1.21 2021/03/05 09:37:20 jsg Exp $	*/
+/*	$OpenBSD: iophy.c,v 1.22 2022/04/06 18:59:29 naddy Exp $	*/
 /*	$NetBSD: iophy.c,v 1.8 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*
@@ -77,7 +77,7 @@
 int	iophymatch(struct device *, void *, void *);
 void	iophyattach(struct device *, struct device *, void *);
 
-struct cfattach iophy_ca = {
+const struct cfattach iophy_ca = {
 	sizeof(struct mii_softc), iophymatch, iophyattach, mii_phy_detach
 };
 

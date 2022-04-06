@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmp451.c,v 1.1 2021/06/23 15:25:39 kettenis Exp $	*/
+/*	$OpenBSD: tmp451.c,v 1.2 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -48,7 +48,7 @@ struct titmp_softc {
 int	titmp_match(struct device *, void *, void *);
 void	titmp_attach(struct device *, struct device *, void *);
 
-struct cfattach titmp_ca = {
+const struct cfattach titmp_ca = {
 	sizeof(struct titmp_softc), titmp_match, titmp_attach
 };
 

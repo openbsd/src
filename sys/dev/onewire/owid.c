@@ -1,4 +1,4 @@
-/*	$OpenBSD: owid.c,v 1.11 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: owid.c,v 1.12 2022/04/06 18:59:29 naddy Exp $	*/
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -46,7 +46,7 @@ void	owid_attach(struct device *, struct device *, void *);
 int	owid_detach(struct device *, int);
 int	owid_activate(struct device *, int);
 
-struct cfattach owid_ca = {
+const struct cfattach owid_ca = {
 	sizeof(struct owid_softc),
 	owid_match,
 	owid_attach,

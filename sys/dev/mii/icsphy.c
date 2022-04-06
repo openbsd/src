@@ -1,4 +1,4 @@
-/*	$OpenBSD: icsphy.c,v 1.24 2021/03/05 09:37:20 jsg Exp $	*/
+/*	$OpenBSD: icsphy.c,v 1.25 2022/04/06 18:59:29 naddy Exp $	*/
 /*	$NetBSD: icsphy.c,v 1.17 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@
 int	icsphymatch(struct device *, void *, void *);
 void	icsphyattach(struct device *, struct device *, void *);
 
-struct cfattach icsphy_ca = {
+const struct cfattach icsphy_ca = {
 	sizeof(struct mii_softc), icsphymatch, icsphyattach, mii_phy_detach
 };
 

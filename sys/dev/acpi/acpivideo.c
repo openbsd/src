@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivideo.c,v 1.13 2020/04/06 00:01:08 pirofti Exp $	*/
+/*	$OpenBSD: acpivideo.c,v 1.14 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2008 Federico G. Schwindt <fgsch@openbsd.org>
  * Copyright (c) 2009 Paul Irofti <paul@irofti.net>
@@ -57,7 +57,7 @@ int	acpivideo_print(void *, const char *);
 
 int	acpivideo_getpcibus(struct acpivideo_softc *, struct aml_node *);
 
-struct cfattach acpivideo_ca = {
+const struct cfattach acpivideo_ca = {
 	sizeof(struct acpivideo_softc), acpivideo_match, acpivideo_attach
 };
 

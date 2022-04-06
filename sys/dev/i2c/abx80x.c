@@ -1,4 +1,4 @@
-/*	$OpenBSD: abx80x.c,v 1.6 2020/04/29 19:18:31 patrick Exp $	*/
+/*	$OpenBSD: abx80x.c,v 1.7 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -72,7 +72,7 @@ struct abcrtc_softc {
 int	abcrtc_match(struct device *, void *, void *);
 void	abcrtc_attach(struct device *, struct device *, void *);
 
-struct cfattach abcrtc_ca = {
+const struct cfattach abcrtc_ca = {
 	sizeof(struct abcrtc_softc), abcrtc_match, abcrtc_attach
 };
 

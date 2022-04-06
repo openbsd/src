@@ -1,4 +1,4 @@
-/*	$OpenBSD: adm1026.c,v 1.11 2008/06/09 16:21:33 cnst Exp $	*/
+/*	$OpenBSD: adm1026.c,v 1.12 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -87,7 +87,7 @@ int	admcts_match(struct device *, void *, void *);
 void	admcts_attach(struct device *, struct device *, void *);
 void	admcts_refresh(void *);
 
-struct cfattach admcts_ca = {
+const struct cfattach admcts_ca = {
 	sizeof(struct admcts_softc), admcts_match, admcts_attach
 };
 

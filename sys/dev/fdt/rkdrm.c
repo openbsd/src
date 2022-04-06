@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.c,v 1.12 2022/01/14 06:52:58 jsg Exp $ */
+/* $OpenBSD: rkdrm.c,v 1.13 2022/04/06 18:59:28 naddy Exp $ */
 /* $NetBSD: rk_drm.c,v 1.3 2019/12/15 01:00:58 mrg Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -81,7 +81,7 @@ const struct drm_gem_object_funcs rkdrm_gem_object_funcs = {
 	.free = drm_gem_cma_free_object,
 };
 
-struct cfattach	rkdrm_ca = {
+const struct cfattach rkdrm_ca = {
 	sizeof (struct rkdrm_softc), rkdrm_match, rkdrm_attach
 };
 

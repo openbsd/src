@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpwrc.c,v 1.3 2020/12/27 17:59:32 kettenis Exp $	*/
+/*	$OpenBSD: amlpwrc.c,v 1.4 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -66,7 +66,7 @@ struct amlpwrc_softc {
 int amlpwrc_match(struct device *, void *, void *);
 void amlpwrc_attach(struct device *, struct device *, void *);
 
-struct cfattach	amlpwrc_ca = {
+const struct cfattach amlpwrc_ca = {
 	sizeof (struct amlpwrc_softc), amlpwrc_match, amlpwrc_attach
 };
 

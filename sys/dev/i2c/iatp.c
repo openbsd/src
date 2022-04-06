@@ -1,4 +1,4 @@
-/* $OpenBSD: iatp.c,v 1.8 2020/08/26 03:29:06 visa Exp $ */
+/* $OpenBSD: iatp.c,v 1.9 2022/04/06 18:59:28 naddy Exp $ */
 /*
  * Atmel maXTouch i2c touchscreen/touchpad driver
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
@@ -218,7 +218,7 @@ const struct wsmouse_accessops iatp_accessops = {
 	iatp_disable,
 };
 
-struct cfattach iatp_ca = {
+const struct cfattach iatp_ca = {
 	sizeof(struct iatp_softc),
 	iatp_match,
 	iatp_attach,

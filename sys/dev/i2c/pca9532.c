@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9532.c,v 1.3 2008/04/17 16:50:17 deraadt Exp $ */
+/*	$OpenBSD: pca9532.c,v 1.4 2022/04/06 18:59:28 naddy Exp $ */
 /*
  * Copyright (c) 2006 Dale Rahn <drahn@openbsd.org>
  *
@@ -51,7 +51,7 @@ int pcaled_gpio_pin_read(void *arg, int pin);
 void pcaled_gpio_pin_write (void *arg, int pin, int value);
 void pcaled_gpio_pin_ctl (void *arg, int pin, int flags);
 
-struct cfattach pcaled_ca = {
+const struct cfattach pcaled_ca = {
 	sizeof(struct pcaled_softc), pcaled_match, pcaled_attach
 };
 

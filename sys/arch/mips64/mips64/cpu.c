@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.81 2021/11/26 14:45:13 jsg Exp $ */
+/*	$OpenBSD: cpu.c,v 1.82 2022/04/06 18:59:26 naddy Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -54,7 +54,7 @@ vaddr_t	cache_valias_mask;
 int	cpu_has_synced_cp0_count;
 int	cpu_has_userlocal;
 
-struct cfattach cpu_ca = {
+const struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach
 };
 struct cfdriver cpu_cd = {

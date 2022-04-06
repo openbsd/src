@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_cardbus.c,v 1.16 2021/04/15 18:25:43 stsp Exp $	*/
+/*	$OpenBSD: if_athn_cardbus.c,v 1.17 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -81,7 +81,7 @@ uint32_t	athn_cardbus_read(struct athn_softc *, uint32_t);
 void		athn_cardbus_write(struct athn_softc *, uint32_t, uint32_t);
 void		athn_cardbus_write_barrier(struct athn_softc *);
 
-struct cfattach athn_cardbus_ca = {
+const struct cfattach athn_cardbus_ca = {
 	sizeof (struct athn_cardbus_softc),
 	athn_cardbus_match,
 	athn_cardbus_attach,

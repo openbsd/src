@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad741x.c,v 1.14 2008/04/17 19:01:48 deraadt Exp $	*/
+/*	$OpenBSD: ad741x.c,v 1.15 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -56,7 +56,7 @@ int	adc_match(struct device *, void *, void *);
 void	adc_attach(struct device *, struct device *, void *);
 void	adc_refresh(void *);
 
-struct cfattach adc_ca = {
+const struct cfattach adc_ca = {
 	sizeof(struct adc_softc), adc_match, adc_attach
 };
 

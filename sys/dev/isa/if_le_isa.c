@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isa.c,v 1.22 2014/12/22 02:28:51 tedu Exp $	*/
+/*	$OpenBSD: if_le_isa.c,v 1.23 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -72,7 +72,7 @@ static char *card_type[] =
 int	le_isa_probe(struct device *, void *, void *);
 void	le_isa_attach(struct device *, struct device *, void *);
 
-struct cfattach le_isa_ca = {
+const struct cfattach le_isa_ca = {
 	sizeof(struct le_softc), le_isa_probe, le_isa_attach
 };
 

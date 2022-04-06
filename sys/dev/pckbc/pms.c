@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.95 2020/10/23 22:06:27 bru Exp $ */
+/* $OpenBSD: pms.c,v 1.96 2022/04/06 18:59:30 naddy Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -324,7 +324,7 @@ int	elantech_set_absolute_mode_v2(struct pms_softc *);
 int	elantech_set_absolute_mode_v3(struct pms_softc *);
 int	elantech_set_absolute_mode_v4(struct pms_softc *);
 
-struct cfattach pms_ca = {
+const struct cfattach pms_ca = {
 	sizeof(struct pms_softc), pmsprobe, pmsattach, NULL,
 	pmsactivate
 };

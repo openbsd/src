@@ -1,4 +1,4 @@
-/*	$OpenBSD: tsl2560.c,v 1.7 2008/04/18 01:17:51 deraadt Exp $	*/
+/*	$OpenBSD: tsl2560.c,v 1.8 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -50,7 +50,7 @@ void	tsl_attach(struct device *, struct device *, void *);
 void	tsl_refresh(void *);
 u_int64_t tsl_lux(u_int32_t, u_int32_t);
 
-struct cfattach tsl_ca = {
+const struct cfattach tsl_ca = {
 	sizeof(struct tsl_softc), tsl_match, tsl_attach
 };
 

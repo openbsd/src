@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpci.c,v 1.2 2021/02/05 00:42:25 patrick Exp $ */
+/* $OpenBSD: tcpci.c,v 1.3 2022/04/06 18:59:28 naddy Exp $ */
 /*
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
  *
@@ -192,7 +192,7 @@ uint16_t tcpci_read_reg16(struct tcpci_softc *, uint8_t);
 void	 tcpci_write_reg8(struct tcpci_softc *, uint8_t, uint8_t);
 uint8_t	 tcpci_read_reg8(struct tcpci_softc *, uint8_t);
 
-struct cfattach tcpci_ca = {
+const struct cfattach tcpci_ca = {
 	sizeof(struct tcpci_softc),
 	tcpci_match,
 	tcpci_attach,

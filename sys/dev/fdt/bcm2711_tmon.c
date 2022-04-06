@@ -49,7 +49,7 @@ struct bcmtmon_softc {
 int	bcmtmon_match(struct device *, void *, void *);
 void	bcmtmon_attach(struct device *, struct device *, void *);
 
-struct cfattach	bcmtmon_ca = {
+const struct cfattach bcmtmon_ca = {
 	sizeof (struct bcmtmon_softc), bcmtmon_match, bcmtmon_attach
 };
 

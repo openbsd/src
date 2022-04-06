@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_isapnp.c,v 1.5 2017/04/30 13:04:49 mpi Exp $	*/
+/*	$OpenBSD: com_isapnp.c,v 1.6 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
  *
@@ -75,7 +75,7 @@
 int com_isapnp_probe(struct device *, void *, void *);
 void com_isapnp_attach(struct device *, struct device *, void *);
 
-struct cfattach com_isapnp_ca = {
+const struct cfattach com_isapnp_ca = {
 	sizeof(struct com_softc), com_isapnp_probe, com_isapnp_attach
 };
 

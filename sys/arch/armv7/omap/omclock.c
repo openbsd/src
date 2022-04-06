@@ -1,4 +1,4 @@
-/*	$OpenBSD: omclock.c,v 1.1 2020/04/10 22:02:45 kettenis Exp $	*/
+/*	$OpenBSD: omclock.c,v 1.2 2022/04/06 18:59:26 naddy Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -56,7 +56,7 @@ struct omclock_softc {
 int	omclock_match(struct device *, void *, void *);
 void	omclock_attach(struct device *, struct device *, void *);
 
-struct cfattach	omclock_ca = {
+const struct cfattach omclock_ca = {
 	sizeof (struct omclock_softc), omclock_match, omclock_attach
 };
 

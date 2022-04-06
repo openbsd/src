@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic_fdt.c,v 1.2 2021/03/11 09:15:25 patrick Exp $ */
+/* $OpenBSD: imxiic_fdt.c,v 1.3 2022/04/06 18:59:28 naddy Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -40,7 +40,7 @@ void imxiic_fdt_attach(struct device *, struct device *, void *);
 
 void imxiic_fdt_bus_scan(struct device *, struct i2cbus_attach_args *, void *);
 
-struct cfattach imxiic_fdt_ca = {
+const struct cfattach imxiic_fdt_ca = {
 	sizeof(struct imxiic_fdt_softc), imxiic_fdt_match, imxiic_fdt_attach
 };
 

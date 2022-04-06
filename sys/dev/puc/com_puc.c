@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.26 2021/03/05 13:20:19 jsg Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.27 2022/04/06 18:59:30 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -56,7 +56,7 @@ int	com_puc_match(struct device *, void *, void *);
 void	com_puc_attach(struct device *, struct device *, void *);
 int	com_puc_detach(struct device *, int);
 
-struct cfattach com_puc_ca = {
+const struct cfattach com_puc_ca = {
 	sizeof(struct com_softc), com_puc_match,
 	com_puc_attach, com_puc_detach, com_activate
 };

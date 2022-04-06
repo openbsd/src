@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_puc.c,v 1.10 2021/03/05 13:20:19 jsg Exp $	*/
+/*	$OpenBSD: lpt_puc.c,v 1.11 2022/04/06 18:59:30 naddy Exp $	*/
 /*	$NetBSD: lpt_puc.c,v 1.1 1998/06/26 18:52:41 cgd Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ int	lpt_puc_probe(struct device *, void *, void *);
 void	lpt_puc_attach(struct device *, struct device *, void *);
 int	lpt_puc_detach(struct device *, int);
 
-struct cfattach lpt_puc_ca = {
+const struct cfattach lpt_puc_ca = {
 	sizeof(struct lpt_softc), lpt_puc_probe, lpt_puc_attach, lpt_puc_detach,
 };
 

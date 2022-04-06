@@ -1,4 +1,4 @@
-/* $OpenBSD: asc_tc.c,v 1.12 2014/01/18 22:33:59 dlg Exp $ */
+/* $OpenBSD: asc_tc.c,v 1.13 2022/04/06 18:59:30 naddy Exp $ */
 /* $NetBSD: asc_tc.c,v 1.19 2001/11/15 09:48:19 lukem Exp $ */
 
 /*-
@@ -57,7 +57,7 @@ struct asc_tc_softc {
 int  asc_tc_match(struct device *, void *, void *);
 void asc_tc_attach(struct device *, struct device *, void *);
 
-struct cfattach asc_tc_ca = {
+const struct cfattach asc_tc_ca = {
 	sizeof(struct asc_tc_softc), asc_tc_match, asc_tc_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: omrng.c,v 1.2 2020/05/29 04:42:23 deraadt Exp $	*/
+/*	$OpenBSD: omrng.c,v 1.3 2022/04/06 18:59:26 naddy Exp $	*/
 /*
  * Copyright (c) 2018, 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -72,7 +72,7 @@ struct omrng_softc {
 int	omrng_match(struct device *, void *, void *);
 void	omrng_attach(struct device *, struct device *, void *);
 
-struct cfattach	omrng_ca = {
+const struct cfattach omrng_ca = {
 	sizeof (struct omrng_softc), omrng_match, omrng_attach
 };
 

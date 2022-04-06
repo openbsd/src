@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_cardbus.c,v 1.22 2019/01/07 03:41:06 dlg Exp $ */
+/*	$OpenBSD: ohci_cardbus.c,v 1.23 2022/04/06 18:59:28 naddy Exp $ */
 /*	$NetBSD: ohci_cardbus.c,v 1.19 2004/08/02 19:14:28 mycroft Exp $	*/
 
 /*
@@ -68,7 +68,7 @@ struct ohci_cardbus_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-struct cfattach ohci_cardbus_ca = {
+const struct cfattach ohci_cardbus_ca = {
 	sizeof(struct ohci_cardbus_softc), ohci_cardbus_match,
 	    ohci_cardbus_attach, ohci_cardbus_detach, ohci_activate
 };

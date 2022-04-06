@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.13 2022/03/14 13:08:32 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.14 2022/04/06 18:59:26 naddy Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -150,7 +150,7 @@ void	apldart_dmamem_free(bus_dma_tag_t, struct apldart_dmamem *);
 int	apldart_match(struct device *, void *, void *);
 void	apldart_attach(struct device *, struct device *, void *);
 
-struct cfattach	apldart_ca = {
+const struct cfattach	apldart_ca = {
 	sizeof (struct apldart_softc), apldart_match, apldart_attach
 };
 

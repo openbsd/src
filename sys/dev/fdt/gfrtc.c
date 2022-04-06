@@ -1,4 +1,4 @@
-/*	$OpenBSD: gfrtc.c,v 1.1 2021/04/24 05:14:45 jsg Exp $	*/
+/*	$OpenBSD: gfrtc.c,v 1.2 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2021 Jonathan Gray <jsg@openbsd.org>
@@ -52,7 +52,7 @@ void	gfrtc_attach(struct device *, struct device *, void *);
 int	gfrtc_gettime(struct todr_chip_handle *, struct timeval *);
 int	gfrtc_settime(struct todr_chip_handle *, struct timeval *);
 
-struct cfattach gfrtc_ca = {
+const struct cfattach gfrtc_ca = {
 	sizeof(struct gfrtc_softc), gfrtc_match, gfrtc_attach
 };
 

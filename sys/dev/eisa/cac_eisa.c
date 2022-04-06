@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac_eisa.c,v 1.6 2021/03/07 06:18:48 jsg Exp $	*/
+/*	$OpenBSD: cac_eisa.c,v 1.7 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: cac_eisa.c,v 1.1 2000/09/01 12:15:20 ad Exp $	*/
 
 /*-
@@ -91,7 +91,7 @@ void	cac_eisa_l0_intr_enable(struct cac_softc *, int);
 int	cac_eisa_l0_intr_pending(struct cac_softc *);
 void	cac_eisa_l0_submit(struct cac_softc *, struct cac_ccb *);
 
-struct cfattach cac_eisa_ca = {
+const struct cfattach cac_eisa_ca = {
 	sizeof(struct cac_softc), cac_eisa_match, cac_eisa_attach
 };
 

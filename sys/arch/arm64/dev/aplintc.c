@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplintc.c,v 1.9 2022/03/31 18:47:04 kettenis Exp $	*/
+/*	$OpenBSD: aplintc.c,v 1.10 2022/04/06 18:59:26 naddy Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis
  *
@@ -130,7 +130,7 @@ struct aplintc_softc *aplintc_sc;
 int	aplintc_match(struct device *, void *, void *);
 void	aplintc_attach(struct device *, struct device *, void *);
 
-struct cfattach	aplintc_ca = {
+const struct cfattach	aplintc_ca = {
 	sizeof (struct aplintc_softc), aplintc_match, aplintc_attach
 };
 

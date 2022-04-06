@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83795g.c,v 1.1 2011/07/03 21:30:20 kettenis Exp $	*/
+/*	$OpenBSD: w83795g.c,v 1.2 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2011 Mark Kettenis
@@ -91,7 +91,7 @@ uint8_t	nvt_readreg(struct nvt_softc *, uint8_t);
 void	nvt_writereg(struct nvt_softc *, uint8_t, uint8_t);
 
 
-struct cfattach nvt_ca = {
+const struct cfattach nvt_ca = {
 	sizeof(struct nvt_softc), nvt_match, nvt_attach
 };
 

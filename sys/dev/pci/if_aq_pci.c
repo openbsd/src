@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.15 2022/04/02 09:00:45 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.16 2022/04/06 18:59:29 naddy Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -937,7 +937,7 @@ const struct aq_firmware_ops aq_fw2x_ops = {
 	.get_stats = aq_fw2x_get_stats,
 };
 
-struct cfattach aq_ca = {
+const struct cfattach aq_ca = {
 	sizeof(struct aq_softc), aq_match, aq_attach, NULL,
 	aq_activate
 };

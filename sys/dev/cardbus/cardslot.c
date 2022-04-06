@@ -1,4 +1,4 @@
-/*	$OpenBSD: cardslot.c,v 1.22 2020/02/18 12:13:39 mpi Exp $	*/
+/*	$OpenBSD: cardslot.c,v 1.23 2022/04/06 18:59:27 naddy Exp $	*/
 /*	$NetBSD: cardslot.c,v 1.9 2000/03/22 09:35:06 haya Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ STATIC int cardslot_cb_print(void *aux, const char *pcic);
 STATIC int cardslot_16_print(void *, const char *);
 STATIC int cardslot_16_submatch(struct device *, void *,void *);
 
-struct cfattach cardslot_ca = {
+const struct cfattach cardslot_ca = {
 	sizeof(struct cardslot_softc), cardslotmatch, cardslotattach
 };
 

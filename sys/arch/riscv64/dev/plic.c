@@ -1,4 +1,4 @@
-/*	$OpenBSD: plic.c,v 1.9 2022/01/18 07:44:37 visa Exp $	*/
+/*	$OpenBSD: plic.c,v 1.10 2022/04/06 18:59:27 naddy Exp $	*/
 
 /*
  * Copyright (c) 2020, Mars Li <mengshi.li.mars@gmail.com>
@@ -133,7 +133,7 @@ void	plic_intr_enable_with_pri(int, uint32_t, int);
 void	plic_intr_disable(int, int);
 
 
-struct cfattach plic_ca = {
+const struct cfattach plic_ca = {
 	sizeof(struct plic_softc), plic_match, plic_attach,
 };
 

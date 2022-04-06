@@ -1,4 +1,4 @@
-/* $OpenBSD: acpicbkbd.c,v 1.2 2016/07/27 02:26:26 jcs Exp $ */
+/* $OpenBSD: acpicbkbd.c,v 1.3 2022/04/06 18:59:27 naddy Exp $ */
 /*
  * Copyright (c) 2016 joshua stein <jcs@openbsd.org>
  *
@@ -52,7 +52,7 @@ void	acpicbkbd_write_backlight(void *, int);
 extern int (*wskbd_get_backlight)(struct wskbd_backlight *);
 extern int (*wskbd_set_backlight)(struct wskbd_backlight *);
 
-struct cfattach acpicbkbd_ca = {
+const struct cfattach acpicbkbd_ca = {
 	sizeof(struct acpicbkbd_softc),
 	acpicbkbd_match,
 	acpicbkbd_attach,

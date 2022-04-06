@@ -1,4 +1,4 @@
-/*	$OpenBSD: cy_isa.c,v 1.10 2021/03/07 06:17:03 jsg Exp $	*/
+/*	$OpenBSD: cy_isa.c,v 1.11 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 1996 Timo Rossi.
  * All rights reserved.
@@ -52,7 +52,7 @@
 static int cy_isa_probe(struct device *, void *, void *);
 void cy_isa_attach(struct device *, struct device *, void *);
 
-struct cfattach cy_isa_ca = {
+const struct cfattach cy_isa_ca = {
 	sizeof(struct cy_softc), cy_isa_probe, cy_isa_attach
 };
 

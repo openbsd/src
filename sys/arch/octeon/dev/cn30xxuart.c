@@ -1,4 +1,4 @@
-/*	$OpenBSD: cn30xxuart.c,v 1.12 2019/09/28 22:20:25 deraadt Exp $	*/
+/*	$OpenBSD: cn30xxuart.c,v 1.13 2022/04/06 18:59:27 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -54,7 +54,7 @@ int	cn30xxuart_probe(struct device *, void *, void *);
 void	cn30xxuart_attach(struct device *, struct device *, void *);
 int	cn30xxuart_intr(void *);
 
-struct cfattach octuart_ca = {
+const struct cfattach octuart_ca = {
 	sizeof(struct com_softc), cn30xxuart_probe, cn30xxuart_attach
 };
 

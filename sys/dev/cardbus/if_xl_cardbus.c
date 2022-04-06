@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl_cardbus.c,v 1.33 2015/11/24 17:11:39 mpi Exp $ */
+/*	$OpenBSD: if_xl_cardbus.c,v 1.34 2022/04/06 18:59:28 naddy Exp $ */
 /*	$NetBSD: if_xl_cardbus.c,v 1.13 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ struct xl_cardbus_softc {
 	bus_size_t sc_mapsize;		/* size of mapped bus space region */
 };
 
-struct cfattach xl_cardbus_ca = {
+const struct cfattach xl_cardbus_ca = {
 	sizeof(struct xl_cardbus_softc), xl_cardbus_match,
 	    xl_cardbus_attach, xl_cardbus_detach
 };

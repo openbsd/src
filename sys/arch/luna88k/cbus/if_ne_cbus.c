@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_cbus.c,v 1.1 2019/12/30 12:16:12 aoyama Exp $	*/
+/*	$OpenBSD: if_ne_cbus.c,v 1.2 2022/04/06 18:59:26 naddy Exp $	*/
 /*	$NetBSD: if_ne_isa.c,v 1.6 1998/07/05 06:49:13 jonathan Exp $	*/
 
 /*-
@@ -104,7 +104,7 @@ struct ne_cbus_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-struct cfattach ne_cbus_ca = {
+const struct cfattach ne_cbus_ca = {
 	sizeof(struct ne_cbus_softc), ne_cbus_match, ne_cbus_attach
 };
 

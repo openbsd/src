@@ -1,4 +1,4 @@
-/*	$OpenBSD: rlphy.c,v 1.33 2014/11/24 00:13:42 brad Exp $	*/
+/*	$OpenBSD: rlphy.c,v 1.34 2022/04/06 18:59:29 naddy Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Jason L. Wright (jason@thought.net)
@@ -56,7 +56,7 @@
 int	rlphymatch(struct device *, void *, void *);
 void	rlphyattach(struct device *, struct device *, void *);
 
-struct cfattach rlphy_ca = {
+const struct cfattach rlphy_ca = {
 	sizeof(struct mii_softc), rlphymatch, rlphyattach, mii_phy_detach
 };
 

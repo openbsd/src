@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.40 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.41 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -87,7 +87,7 @@ int dc_cardbus_detach(struct device *, int);
 
 void dc_cardbus_setup(struct dc_cardbus_softc *csc);
 
-struct cfattach dc_cardbus_ca = {
+const struct cfattach dc_cardbus_ca = {
 	sizeof(struct dc_cardbus_softc), dc_cardbus_match, dc_cardbus_attach,
 	dc_cardbus_detach, dc_activate
 };

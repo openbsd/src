@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha_eisa.c,v 1.15 2021/03/07 06:18:48 jsg Exp $	*/
+/*	$OpenBSD: uha_eisa.c,v 1.16 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: uha_eisa.c,v 1.5 1996/10/21 22:31:07 thorpej Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 int	uha_eisa_match(struct device *, void *, void *);
 void	uha_eisa_attach(struct device *, struct device *, void *);
 
-struct cfattach uha_eisa_ca = {
+const struct cfattach uha_eisa_ca = {
 	sizeof(struct uha_softc), uha_eisa_match, uha_eisa_attach
 };
 

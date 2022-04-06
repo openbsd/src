@@ -1,4 +1,4 @@
-/*	$OpenBSD: asb100.c,v 1.11 2008/04/17 19:01:48 deraadt Exp $	*/
+/*	$OpenBSD: asb100.c,v 1.12 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2005 Damien Miller <djm@openbsd.org>
@@ -117,7 +117,7 @@ int	asbtm_match(struct device *, void *, void *);
 void	asbtm_attach(struct device *, struct device *, void *);
 void	asbtm_refresh(void *);
 
-struct cfattach asbtm_ca = {
+const struct cfattach asbtm_ca = {
 	sizeof(struct asbtm_softc), asbtm_match, asbtm_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atk0110.c,v 1.18 2022/01/09 05:42:37 jsg Exp $	*/
+/*	$OpenBSD: atk0110.c,v 1.19 2022/04/06 18:59:27 naddy Exp $	*/
 
 /*
  * Copyright (c) 2009 Constantine A. Murenin <cnst+openbsd@bugmail.mojo.ru>
@@ -113,7 +113,7 @@ void	aibs_probe(struct aibs_softc *);
 int	aibs_find_cb(struct aml_node *, void *);
 
 
-struct cfattach aibs_ca = {
+const struct cfattach aibs_ca = {
 	sizeof(struct aibs_softc), aibs_match, aibs_attach
 };
 

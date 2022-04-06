@@ -1,4 +1,4 @@
-/* $OpenBSD: acpitz.c,v 1.57 2022/02/09 16:03:53 dv Exp $ */
+/* $OpenBSD: acpitz.c,v 1.58 2022/04/06 18:59:27 naddy Exp $ */
 /*
  * Copyright (c) 2006 Can Erkin Acar <canacar@openbsd.org>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -67,7 +67,7 @@ int	acpitz_match(struct device *, void *, void *);
 void	acpitz_attach(struct device *, struct device *, void *);
 int	acpitz_activate(struct device *, int);
 
-struct cfattach acpitz_ca = {
+const struct cfattach acpitz_ca = {
 	sizeof(struct acpitz_softc), acpitz_match, acpitz_attach,
 	NULL, acpitz_activate
 };

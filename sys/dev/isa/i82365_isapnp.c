@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isapnp.c,v 1.10 2021/03/07 06:17:03 jsg Exp $ */
+/*	$OpenBSD: i82365_isapnp.c,v 1.11 2022/04/06 18:59:28 naddy Exp $ */
 /*	$NetBSD: i82365_isapnp.c,v 1.8 2000/02/23 17:22:11 soren Exp $	*/
 
 /*
@@ -66,7 +66,7 @@ int	pcicisapnp_debug = 0 /* XXX */ ;
 int	pcic_isapnp_match(struct device *, void *, void *);
 void	pcic_isapnp_attach(struct device *, struct device *, void *);
 
-struct cfattach pcic_isapnp_ca = {
+const struct cfattach pcic_isapnp_ca = {
 	sizeof(struct pcic_softc), pcic_isapnp_match, pcic_isapnp_attach
 };
 

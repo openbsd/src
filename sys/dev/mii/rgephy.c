@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.40 2018/02/27 19:47:10 kettenis Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.41 2022/04/06 18:59:29 naddy Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -63,7 +63,7 @@
 int	rgephymatch(struct device *, void *, void *);
 void	rgephyattach(struct device *, struct device *, void *);
 
-struct cfattach rgephy_ca = { sizeof(struct mii_softc),
+const struct cfattach rgephy_ca = { sizeof(struct mii_softc),
 	rgephymatch, rgephyattach, mii_phy_detach,
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplhidev.c,v 1.5 2022/02/14 00:53:40 jsg Exp $	*/
+/*	$OpenBSD: aplhidev.c,v 1.6 2022/04/06 18:59:26 naddy Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2013-2014 joshua stein <jcs@openbsd.org>
@@ -131,7 +131,7 @@ struct aplhidev_softc {
 int	 aplhidev_match(struct device *, void *, void *);
 void	 aplhidev_attach(struct device *, struct device *, void *);
 
-struct cfattach aplhidev_ca = {
+const struct cfattach aplhidev_ca = {
 	sizeof(struct aplhidev_softc), aplhidev_match, aplhidev_attach
 };
 
@@ -429,7 +429,7 @@ const struct wskbd_accessops aplkbd_accessops = {
 int	 aplkbd_match(struct device *, void *, void *);
 void	 aplkbd_attach(struct device *, struct device *, void *);
 
-struct cfattach aplkbd_ca = {
+const struct cfattach aplkbd_ca = {
 	sizeof(struct aplkbd_softc), aplkbd_match, aplkbd_attach
 };
 
@@ -611,7 +611,7 @@ const struct wsmouse_accessops aplms_accessops = {
 int	 aplms_match(struct device *, void *, void *);
 void	 aplms_attach(struct device *, struct device *, void *);
 
-struct cfattach aplms_ca = {
+const struct cfattach aplms_ca = {
 	sizeof(struct aplms_softc), aplms_match, aplms_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp_acpi.c,v 1.3 2021/12/21 20:53:46 kettenis Exp $	*/
+/*	$OpenBSD: ccp_acpi.c,v 1.4 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis
  *
@@ -35,7 +35,7 @@ struct ccp_acpi_softc {
 int	ccp_acpi_match(struct device *, void *, void *);
 void	ccp_acpi_attach(struct device *, struct device *, void *);
 
-struct cfattach ccp_acpi_ca = {
+const struct cfattach ccp_acpi_ca = {
 	sizeof(struct ccp_acpi_softc), ccp_acpi_match, ccp_acpi_attach
 };
 

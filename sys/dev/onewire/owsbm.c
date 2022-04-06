@@ -1,4 +1,4 @@
-/*	$OpenBSD: owsbm.c,v 1.10 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: owsbm.c,v 1.11 2022/04/06 18:59:29 naddy Exp $	*/
 
 /*
  * Copyright (c) 2007 Aaron Linville <aaron@linville.org>
@@ -79,7 +79,7 @@ int	owsbm_activate(struct device *, int);
 
 void	owsbm_update(void *);
 
-struct cfattach owsbm_ca = {
+const struct cfattach owsbm_ca = {
 	sizeof(struct owsbm_softc),
 	owsbm_match,
 	owsbm_attach,

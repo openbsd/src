@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_voyager.c,v 1.7 2019/01/07 03:41:06 dlg Exp $	*/
+/*	$OpenBSD: ohci_voyager.c,v 1.8 2022/04/06 18:59:26 naddy Exp $	*/
 /*	OpenBSD: ohci_pci.c,v 1.33 2008/06/26 05:42:17 ray Exp 	*/
 /*	$NetBSD: ohci_pci.c,v 1.23 2002/10/02 16:51:47 thorpej Exp $	*/
 
@@ -72,7 +72,7 @@ struct ohci_voyager_softc {
 	void 			*sc_ih;
 };
 
-struct cfattach ohci_voyager_ca = {
+const struct cfattach ohci_voyager_ca = {
 	sizeof(struct ohci_voyager_softc),
 	ohci_voyager_match, ohci_voyager_attach, NULL, ohci_activate
 };

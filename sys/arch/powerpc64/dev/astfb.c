@@ -1,4 +1,4 @@
-/*	$OpenBSD: astfb.c,v 1.3 2020/10/30 13:36:45 kettenis Exp $	*/
+/*	$OpenBSD: astfb.c,v 1.4 2022/04/06 18:59:27 naddy Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis.
@@ -70,7 +70,7 @@ struct wsdisplay_accessops astfb_accessops = {
 int	astfb_match(struct device *, void *, void *);
 void	astfb_attach(struct device *, struct device *, void *);
 
-struct cfattach astfb_ca = {
+const struct cfattach astfb_ca = {
 	sizeof(struct astfb_softc), astfb_match, astfb_attach
 };
 

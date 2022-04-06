@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.46 2015/03/14 03:38:47 jsg Exp $	*/
+/*	$OpenBSD: it.c,v 1.47 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -534,7 +534,7 @@ it_wdog_cb(void *arg, int period)
 }
 
 
-struct cfattach it_ca = {
+const struct cfattach it_ca = {
 	sizeof(struct it_softc),
 	it_match,
 	it_attach,

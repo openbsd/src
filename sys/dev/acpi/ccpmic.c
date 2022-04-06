@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccpmic.c,v 1.2 2018/05/21 15:00:25 kettenis Exp $	*/
+/*	$OpenBSD: ccpmic.c,v 1.3 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -78,7 +78,7 @@ struct ccpmic_softc {
 int	ccpmic_match(struct device *, void *, void *);
 void	ccpmic_attach(struct device *, struct device *, void *);
 
-struct cfattach ccpmic_ca = {
+const struct cfattach ccpmic_ca = {
 	sizeof(struct ccpmic_softc), ccpmic_match, ccpmic_attach
 };
 

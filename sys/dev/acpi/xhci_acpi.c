@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_acpi.c,v 1.5 2021/12/29 17:52:22 patrick Exp $	*/
+/*	$OpenBSD: xhci_acpi.c,v 1.6 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -46,7 +46,7 @@ struct xhci_acpi_softc {
 int	xhci_acpi_match(struct device *, void *, void *);
 void	xhci_acpi_attach(struct device *, struct device *, void *);
 
-struct cfattach xhci_acpi_ca = {
+const struct cfattach xhci_acpi_ca = {
 	sizeof(struct xhci_acpi_softc), xhci_acpi_match, xhci_acpi_attach
 };
 

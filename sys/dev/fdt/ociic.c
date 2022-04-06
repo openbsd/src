@@ -1,4 +1,4 @@
-/*	$OpenBSD: ociic.c,v 1.2 2021/06/23 13:39:12 kettenis Exp $	*/
+/*	$OpenBSD: ociic.c,v 1.3 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -89,7 +89,7 @@ ociic_clr(struct ociic_softc *sc, bus_size_t reg, uint8_t bits)
 int ociic_match(struct device *, void *, void *);
 void ociic_attach(struct device *, struct device *, void *);
 
-struct cfattach	ociic_ca = {
+const struct cfattach ociic_ca = {
 	sizeof (struct ociic_softc), ociic_match, ociic_attach
 };
 

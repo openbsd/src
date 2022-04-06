@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.46 2022/01/09 05:42:58 jsg Exp $ */
+/* $OpenBSD: pckbd.c,v 1.47 2022/04/06 18:59:29 naddy Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -125,7 +125,7 @@ int pckbdprobe(struct device *, void *, void *);
 void pckbdattach(struct device *, struct device *, void *);
 int pckbdactivate(struct device *, int);
 
-struct cfattach pckbd_ca = {
+const struct cfattach pckbd_ca = {
 	sizeof(struct pckbd_softc), 
 	pckbdprobe, 
 	pckbdattach, 

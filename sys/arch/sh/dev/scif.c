@@ -1,4 +1,4 @@
-/*	$OpenBSD: scif.c,v 1.20 2021/01/01 10:21:26 jan Exp $	*/
+/*	$OpenBSD: scif.c,v 1.21 2022/04/06 18:59:27 naddy Exp $	*/
 /*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
 
 /*-
@@ -225,7 +225,7 @@ unsigned int scifcn_speed = 9600;
 
 u_int scif_rbuf_size = SCIF_RING_SIZE;
 
-struct cfattach scif_ca = {
+const struct cfattach scif_ca = {
 	sizeof(struct scif_softc), scif_match, scif_attach
 };
 

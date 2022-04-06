@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_cbus.c,v 1.6 2019/06/30 00:23:22 aoyama Exp $	*/
+/*	$OpenBSD: i82365_cbus.c,v 1.7 2022/04/06 18:59:26 naddy Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ struct luna88k_bus_space_tag pcic_cbus_mem_bst = {
 	.bs_flags = TAG_LITTLE_ENDIAN
 };
 
-struct cfattach pcic_cbus_ca = {
+const struct cfattach pcic_cbus_ca = {
 	sizeof(struct pcic_softc), pcic_cbus_probe, pcic_cbus_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gscsio.c,v 1.13 2014/09/14 14:17:25 jsg Exp $	*/
+/*	$OpenBSD: gscsio.c,v 1.14 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -81,7 +81,7 @@ int	gscsio_acb_initiate_xfer(void *, i2c_addr_t, int);
 int	gscsio_acb_read_byte(void *, uint8_t *, int);
 int	gscsio_acb_write_byte(void *, uint8_t, int);
 
-struct cfattach gscsio_ca = {
+const struct cfattach gscsio_ca = {
 	sizeof(struct gscsio_softc),
 	gscsio_probe,
 	gscsio_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.61 2021/03/07 06:20:09 jsg Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.62 2022/04/06 18:59:30 naddy Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, Brandon Creighton, Job de Haas
@@ -152,7 +152,7 @@ struct cfdriver xe_cd = {
 	NULL, "xe", DV_IFNET
 };
 
-struct cfattach xe_pcmcia_ca = {
+const struct cfattach xe_pcmcia_ca = {
 	sizeof (struct xe_pcmcia_softc), xe_pcmcia_match, xe_pcmcia_attach,
 	xe_pcmcia_detach, xe_pcmcia_activate
 };

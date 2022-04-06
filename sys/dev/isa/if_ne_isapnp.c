@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_isapnp.c,v 1.16 2015/11/24 17:11:39 mpi Exp $	*/
+/*	$OpenBSD: if_ne_isapnp.c,v 1.17 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: if_ne_isapnp.c,v 1.7 1998/07/23 19:30:45 christos Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@ struct ne_isapnp_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-struct cfattach ne_isapnp_ca = {
+const struct cfattach ne_isapnp_ca = {
 	sizeof(struct ne_isapnp_softc), ne_isapnp_match, ne_isapnp_attach
 };
 

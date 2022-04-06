@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_ath_cardbus.c,v 1.19 2015/11/24 17:11:39 mpi Exp $   */
+/*      $OpenBSD: if_ath_cardbus.c,v 1.20 2022/04/06 18:59:28 naddy Exp $   */
 /*	$NetBSD: if_ath_cardbus.c,v 1.4 2004/08/02 19:14:28 mycroft Exp $ */
 
 /*
@@ -95,7 +95,7 @@ int	ath_cardbus_match(struct device *, void *, void *);
 void	ath_cardbus_attach(struct device *, struct device *, void *);
 int	ath_cardbus_detach(struct device *, int);
 
-struct cfattach ath_cardbus_ca = {
+const struct cfattach ath_cardbus_ca = {
 	sizeof(struct ath_cardbus_softc),
 	ath_cardbus_match,
 	ath_cardbus_attach,

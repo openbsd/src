@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_malo_cardbus.c,v 1.12 2013/12/06 21:03:02 deraadt Exp $ */
+/*	$OpenBSD: if_malo_cardbus.c,v 1.13 2022/04/06 18:59:28 naddy Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -65,7 +65,7 @@ void	malo_cardbus_setup(struct malo_cardbus_softc *csc);
 int	malo_cardbus_enable(struct malo_softc *sc);
 void	malo_cardbus_disable(struct malo_softc *sc);
 
-struct cfattach malo_cardbus_ca = {
+const struct cfattach malo_cardbus_ca = {
 	sizeof (struct malo_cardbus_softc), malo_cardbus_match,
 	malo_cardbus_attach, malo_cardbus_detach
 };

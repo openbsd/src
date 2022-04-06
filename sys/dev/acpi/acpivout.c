@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivout.c,v 1.24 2020/09/16 11:52:17 jsg Exp $	*/
+/*	$OpenBSD: acpivout.c,v 1.25 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2009 Paul Irofti <paul@irofti.net>
  *
@@ -74,7 +74,7 @@ void	acpivout_get_bcl(struct acpivout_softc *);
 int	acpivout_get_param(struct wsdisplay_param *);
 int	acpivout_set_param(struct wsdisplay_param *);
 
-struct cfattach acpivout_ca = {
+const struct cfattach acpivout_ca = {
 	sizeof(struct acpivout_softc), acpivout_match, acpivout_attach
 };
 

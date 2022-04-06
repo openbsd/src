@@ -1,4 +1,4 @@
-/* $OpenBSD: acpipwrres.c,v 1.10 2021/03/10 21:49:55 patrick Exp $ */
+/* $OpenBSD: acpipwrres.c,v 1.11 2022/04/06 18:59:27 naddy Exp $ */
 
 /*
  * Copyright (c) 2013 Martin Pieuchot <mpi@openbsd.org>
@@ -65,7 +65,7 @@ struct acpipwrres_consumer {
 	SIMPLEQ_ENTRY(acpipwrres_consumer)	cs_next;
 };
 
-struct cfattach acpipwrres_ca = {
+const struct cfattach acpipwrres_ca = {
 	sizeof(struct acpipwrres_softc), acpipwrres_match, acpipwrres_attach
 };
 

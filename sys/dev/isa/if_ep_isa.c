@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isa.c,v 1.31 2015/11/25 11:20:38 mpi Exp $	*/
+/*	$OpenBSD: if_ep_isa.c,v 1.32 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: if_ep_isa.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
 int ep_isa_probe(struct device *, void *, void *);
 void ep_isa_attach(struct device *, struct device *, void *);
 
-struct cfattach ep_isa_ca = {
+const struct cfattach ep_isa_ca = {
 	sizeof(struct ep_softc), ep_isa_probe, ep_isa_attach
 };
 

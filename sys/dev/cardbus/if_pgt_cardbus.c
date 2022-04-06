@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pgt_cardbus.c,v 1.18 2015/12/11 16:07:01 mpi Exp $ */
+/*	$OpenBSD: if_pgt_cardbus.c,v 1.19 2022/04/06 18:59:28 naddy Exp $ */
 
 /*
  * Copyright (c) 2006 Marcus Glocker <mglocker@openbsd.org>
@@ -72,7 +72,7 @@ void	pgt_cardbus_disable(struct pgt_softc *);
 void	pgt_cardbus_power(struct pgt_softc *, int);
 void	pgt_cardbus_setup(struct pgt_cardbus_softc *);
 
-struct cfattach pgt_cardbus_ca = {
+const struct cfattach pgt_cardbus_ca = {
 	sizeof(struct pgt_cardbus_softc), pgt_cardbus_match, pgt_cardbus_attach,
 	pgt_cardbus_detach
 };

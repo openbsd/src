@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.58 2020/08/24 15:06:10 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.59 2022/04/06 18:59:30 naddy Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -78,7 +78,7 @@ void sdmmc_dump_command(struct sdmmc_softc *, struct sdmmc_command *);
 #define DPRINTF(n,s)	do {} while (0)
 #endif
 
-struct cfattach sdmmc_ca = {
+const struct cfattach sdmmc_ca = {
 	sizeof(struct sdmmc_softc), sdmmc_match, sdmmc_attach, sdmmc_detach,
 	sdmmc_activate
 };

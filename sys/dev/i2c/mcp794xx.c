@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcp794xx.c,v 1.1 2019/09/06 09:38:19 patrick Exp $	*/
+/*	$OpenBSD: mcp794xx.c,v 1.2 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -56,7 +56,7 @@ struct mcprtc_softc {
 int	mcprtc_match(struct device *, void *, void *);
 void	mcprtc_attach(struct device *, struct device *, void *);
 
-struct cfattach mcprtc_ca = {
+const struct cfattach mcprtc_ca = {
 	sizeof(struct mcprtc_softc), mcprtc_match, mcprtc_attach
 };
 

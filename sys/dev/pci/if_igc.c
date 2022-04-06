@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.6 2022/01/09 23:28:19 patrick Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.7 2022/04/06 18:59:29 naddy Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -150,7 +150,7 @@ struct cfdriver igc_cd = {
 	NULL, "igc", DV_IFNET
 };
 
-struct cfattach igc_ca = {
+const struct cfattach igc_ca = {
 	sizeof(struct igc_softc), igc_match, igc_attach, igc_detach
 };
 

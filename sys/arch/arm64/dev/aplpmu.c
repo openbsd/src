@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpmu.c,v 1.4 2022/03/02 12:35:14 kettenis Exp $	*/
+/*	$OpenBSD: aplpmu.c,v 1.5 2022/04/06 18:59:26 naddy Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -74,7 +74,7 @@ struct aplpmu_softc *aplpmu_sc;
 int	aplpmu_match(struct device *, void *, void *);
 void	aplpmu_attach(struct device *, struct device *, void *);
 
-struct cfattach	aplpmu_ca = {
+const struct cfattach	aplpmu_ca = {
 	sizeof (struct aplpmu_softc), aplpmu_match, aplpmu_attach
 };
 

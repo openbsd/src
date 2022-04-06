@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.50 2020/07/10 13:22:20 patrick Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.51 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ struct eg_softc {
 int egprobe(struct device *, void *, void *);
 void egattach(struct device *, struct device *, void *);
 
-struct cfattach eg_ca = {
+const struct cfattach eg_ca = {
 	sizeof(struct eg_softc), egprobe, egattach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pca9554.c,v 1.18 2018/07/09 18:48:52 patrick Exp $	*/
+/*	$OpenBSD: pca9554.c,v 1.19 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -77,7 +77,7 @@ void	pcagpio_config_pin(void *, uint32_t *, int);
 int	pcagpio_get_pin(void *, uint32_t *);
 void	pcagpio_set_pin(void *, uint32_t *, int);
 
-struct cfattach pcagpio_ca = {
+const struct cfattach pcagpio_ca = {
 	sizeof(struct pcagpio_softc), pcagpio_match, pcagpio_attach
 };
 

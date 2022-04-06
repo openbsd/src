@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_tc.c,v 1.13 2022/02/21 08:27:51 jsg Exp $	*/
+/*	$OpenBSD: if_le_tc.c,v 1.14 2022/04/06 18:59:30 naddy Exp $	*/
 /*	$NetBSD: if_le_tc.c,v 1.12 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -56,7 +56,7 @@
 int	le_tc_match(struct device *, void *, void *);
 void	le_tc_attach(struct device *, struct device *, void *);
 
-struct cfattach le_tc_ca = {
+const struct cfattach le_tc_ca = {
 	sizeof(struct le_softc), le_tc_match, le_tc_attach
 };
 

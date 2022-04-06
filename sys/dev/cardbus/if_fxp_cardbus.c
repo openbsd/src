@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_cardbus.c,v 1.37 2020/01/05 01:07:58 jsg Exp $ */
+/*	$OpenBSD: if_fxp_cardbus.c,v 1.38 2022/04/06 18:59:28 naddy Exp $ */
 /*	$NetBSD: if_fxp_cardbus.c,v 1.12 2000/05/08 18:23:36 thorpej Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ struct fxp_cardbus_softc {
 	pci_chipset_tag_t pc;
 };
 
-struct cfattach fxp_cardbus_ca = {
+const struct cfattach fxp_cardbus_ca = {
 	sizeof(struct fxp_cardbus_softc), fxp_cardbus_match, fxp_cardbus_attach,
 	    fxp_cardbus_detach
 };

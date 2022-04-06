@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.53 2022/03/21 19:22:40 miod Exp $	*/
+/*	$OpenBSD: midi.c,v 1.54 2022/04/06 18:59:27 naddy Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -56,7 +56,7 @@ void	midi_out_do(struct midi_softc *);
 void	midi_attach(struct midi_softc *, struct device *);
 
 
-struct cfattach midi_ca = {
+const struct cfattach midi_ca = {
 	sizeof(struct midi_softc), midiprobe, midiattach, mididetach
 };
 

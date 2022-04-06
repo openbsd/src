@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.3 2021/06/25 17:41:22 patrick Exp $ */
+/* $OpenBSD: pciecam.c,v 1.4 2022/04/06 18:59:28 naddy Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -120,7 +120,7 @@ struct interrupt_controller pciecam_ic = {
 	.ic_barrier = intr_barrier
 };
 
-struct cfattach pciecam_ca = {
+const struct cfattach pciecam_ca = {
 	sizeof (struct pciecam_softc), pciecam_match, pciecam_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: atphy.c,v 1.12 2022/01/09 05:42:44 jsg Exp $	*/
+/*	$OpenBSD: atphy.c,v 1.13 2022/04/06 18:59:29 naddy Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -92,7 +92,7 @@ static const struct mii_phydesc atphys[] = {
 	  NULL },
 };
 
-struct cfattach atphy_ca = {
+const struct cfattach atphy_ca = {
 	sizeof (struct mii_softc), atphy_match, atphy_attach,
 	mii_phy_detach
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ral_cardbus.c,v 1.22 2015/11/24 17:11:39 mpi Exp $  */
+/*	$OpenBSD: if_ral_cardbus.c,v 1.23 2022/04/06 18:59:28 naddy Exp $  */
 
 /*-
  * Copyright (c) 2005-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -108,7 +108,7 @@ void	ral_cardbus_attach(struct device *, struct device *, void *);
 int	ral_cardbus_detach(struct device *, int);
 int	ral_cardbus_activate(struct device *, int);
 
-struct cfattach ral_cardbus_ca = {
+const struct cfattach ral_cardbus_ca = {
 	sizeof (struct ral_cardbus_softc), ral_cardbus_match,
 	ral_cardbus_attach, ral_cardbus_detach,
 	ral_cardbus_activate

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sb_isapnp.c,v 1.16 2021/03/07 06:17:04 jsg Exp $	*/
+/*	$OpenBSD: sb_isapnp.c,v 1.17 2022/04/06 18:59:29 naddy Exp $	*/
 /*	$NetBSD: sb_isa.c,v 1.3 1997/03/20 11:03:11 mycroft Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 int	sb_isapnp_match(struct device *, void *, void *);
 void	sb_isapnp_attach(struct device *, struct device *, void *);
 
-struct cfattach sb_isapnp_ca = {
+const struct cfattach sb_isapnp_ca = {
 	sizeof(struct sbdsp_softc), sb_isapnp_match, sb_isapnp_attach
 };
 

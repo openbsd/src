@@ -1,4 +1,4 @@
-/* $OpenBSD: tcds.c,v 1.9 2017/10/27 20:21:53 mpi Exp $ */
+/* $OpenBSD: tcds.c,v 1.10 2022/04/06 18:59:30 naddy Exp $ */
 /* $NetBSD: tcds.c,v 1.3 2001/11/13 06:26:10 lukem Exp $ */
 
 /*-
@@ -99,7 +99,7 @@ void	tcdsattach(struct device *, struct device *, void *);
 int     tcdsprint(void *, const char *);
 int	tcdssubmatch(struct device *, void *, void *);
 
-struct cfattach tcds_ca = {
+const struct cfattach tcds_ca = {
 	sizeof(struct tcds_softc), tcdsmatch, tcdsattach,
 };
 

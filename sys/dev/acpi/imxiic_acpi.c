@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiic_acpi.c,v 1.3 2021/12/21 20:53:46 kettenis Exp $ */
+/* $OpenBSD: imxiic_acpi.c,v 1.4 2022/04/06 18:59:27 naddy Exp $ */
 /*
  * Copyright (c) 2015, 2016 joshua stein <jcs@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -48,7 +48,7 @@ void	imxiic_acpi_bus_scan(struct device *, struct i2cbus_attach_args *,
 	    void *);
 int	imxiic_acpi_found_hid(struct aml_node *, void *);
 
-struct cfattach imxiic_acpi_ca = {
+const struct cfattach imxiic_acpi_ca = {
 	sizeof(struct imxiic_acpi_softc),
 	imxiic_acpi_match,
 	imxiic_acpi_attach,

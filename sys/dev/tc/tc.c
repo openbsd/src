@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc.c,v 1.20 2010/11/11 17:54:54 miod Exp $	*/
+/*	$OpenBSD: tc.c,v 1.21 2022/04/06 18:59:30 naddy Exp $	*/
 /*	$NetBSD: tc.c,v 1.29 2001/11/13 06:26:10 lukem Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 int	tcmatch(struct device *, void *, void *);
 void	tcattach(struct device *, struct device *, void *);
 
-struct cfattach tc_ca = {
+const struct cfattach tc_ca = {
 	sizeof(struct tc_softc), tcmatch, tcattach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_acpi.c,v 1.20 2022/01/18 11:36:21 patrick Exp $	*/
+/*	$OpenBSD: sdhc_acpi.c,v 1.21 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -50,7 +50,7 @@ struct sdhc_acpi_softc {
 int	sdhc_acpi_match(struct device *, void *, void *);
 void	sdhc_acpi_attach(struct device *, struct device *, void *);
 
-struct cfattach sdhc_acpi_ca = {
+const struct cfattach sdhc_acpi_ca = {
 	sizeof(struct sdhc_acpi_softc), sdhc_acpi_match, sdhc_acpi_attach
 };
 

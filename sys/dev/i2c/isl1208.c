@@ -1,4 +1,4 @@
-/*	$OpenBSD: isl1208.c,v 1.3 2020/04/24 22:42:31 kettenis Exp $	*/
+/*	$OpenBSD: isl1208.c,v 1.4 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -51,7 +51,7 @@ struct islrtc_softc {
 int	islrtc_match(struct device *, void *, void *);
 void	islrtc_attach(struct device *, struct device *, void *);
 
-struct cfattach islrtc_ca = {
+const struct cfattach islrtc_ca = {
 	sizeof(struct islrtc_softc), islrtc_match, islrtc_attach
 };
 

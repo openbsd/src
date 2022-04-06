@@ -1,4 +1,4 @@
-/*	$OpenBSD: w83l784r.c,v 1.12 2007/06/24 05:34:35 dlg Exp $	*/
+/*	$OpenBSD: w83l784r.c,v 1.13 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2006 Mark Kettenis
@@ -100,7 +100,7 @@ void	w83l785r_refresh_fanrpm(struct wbenv_softc *, int);
 u_int8_t wbenv_readreg(struct wbenv_softc *, u_int8_t);
 void	wbenv_writereg(struct wbenv_softc *, u_int8_t, u_int8_t);
 
-struct cfattach wbenv_ca = {
+const struct cfattach wbenv_ca = {
 	sizeof(struct wbenv_softc), wbenv_match, wbenv_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: luphy.c,v 1.6 2015/03/14 03:38:48 jsg Exp $	*/
+/*	$OpenBSD: luphy.c,v 1.7 2022/04/06 18:59:29 naddy Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marius Strobl
@@ -57,7 +57,7 @@
 int	luphymatch(struct device *, void *, void *);
 void	luphyattach(struct device *, struct device *, void *);
 
-struct cfattach luphy_ca = {
+const struct cfattach luphy_ca = {
 	sizeof(struct mii_softc), luphymatch, luphyattach, mii_phy_detach
 };
 

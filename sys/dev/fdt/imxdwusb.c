@@ -1,4 +1,4 @@
-/*	$OpenBSD: imxdwusb.c,v 1.4 2020/12/19 01:21:35 patrick Exp $	*/
+/*	$OpenBSD: imxdwusb.c,v 1.5 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
@@ -44,7 +44,7 @@ struct imxdwusb_softc {
 int	imxdwusb_match(struct device *, void *, void *);
 void	imxdwusb_attach(struct device *, struct device *, void *);
 
-struct cfattach imxdwusb_ca = {
+const struct cfattach imxdwusb_ca = {
 	sizeof(struct imxdwusb_softc), imxdwusb_match, imxdwusb_attach
 };
 

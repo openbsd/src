@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic_isa.c,v 1.9 2021/03/07 06:17:03 jsg Exp $	*/
+/*	$OpenBSD: aic_isa.c,v 1.10 2022/04/06 18:59:28 naddy Exp $	*/
 /*	$NetBSD: aic6360.c,v 1.52 1996/12/10 21:27:51 thorpej Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
 int	aic_isa_probe(struct device *, void *, void *);
 void	aic_isa_attach(struct device *, struct device *, void *);
 
-struct cfattach aic_isa_ca = {
+const struct cfattach aic_isa_ca = {
 	sizeof(struct aic_softc), aic_isa_probe, aic_isa_attach
 };
 

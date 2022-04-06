@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi_opal.c,v 1.2 2022/02/22 13:34:23 visa Exp $	*/
+/*	$OpenBSD: ipmi_opal.c,v 1.3 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -60,7 +60,7 @@ struct ipmi_if opal_if = {
 int	ipmi_opal_match(struct device *, void *, void *);
 void	ipmi_opal_attach(struct device *, struct device *, void *);
 
-struct cfattach ipmi_opal_ca = {
+const struct cfattach ipmi_opal_ca = {
 	sizeof (struct ipmi_opal_softc), ipmi_opal_match, ipmi_opal_attach
 };
 

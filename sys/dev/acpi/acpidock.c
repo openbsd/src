@@ -1,4 +1,4 @@
-/* $OpenBSD: acpidock.c,v 1.44 2015/03/14 03:38:46 jsg Exp $ */
+/* $OpenBSD: acpidock.c,v 1.45 2022/04/06 18:59:27 naddy Exp $ */
 /*
  * Copyright (c) 2006,2007 Michael Knudsen <mk@openbsd.org>
  *
@@ -36,7 +36,7 @@ struct aml_nodelist {
 int	acpidock_match(struct device *, void *, void *);
 void	acpidock_attach(struct device *, struct device *, void *);
 
-struct cfattach acpidock_ca = {
+const struct cfattach acpidock_ca = {
 	sizeof(struct acpidock_softc), acpidock_match, acpidock_attach
 };
 

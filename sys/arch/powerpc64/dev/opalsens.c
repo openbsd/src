@@ -1,4 +1,4 @@
-/*	$OpenBSD: opalsens.c,v 1.2 2020/07/15 07:15:00 kettenis Exp $	*/
+/*	$OpenBSD: opalsens.c,v 1.3 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -37,7 +37,7 @@ struct opalsens_softc {
 int	opalsens_match(struct device *, void *, void *);
 void	opalsens_attach(struct device *, struct device *, void *);
 
-struct cfattach	opalsens_ca = {
+const struct cfattach opalsens_ca = {
 	sizeof (struct opalsens_softc), opalsens_match, opalsens_attach
 };
 

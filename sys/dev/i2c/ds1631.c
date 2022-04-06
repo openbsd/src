@@ -1,4 +1,4 @@
-/*	$OpenBSD: ds1631.c,v 1.12 2016/05/12 21:00:23 kettenis Exp $	*/
+/*	$OpenBSD: ds1631.c,v 1.13 2022/04/06 18:59:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2005 Theo de Raadt
@@ -48,7 +48,7 @@ int	maxds_match(struct device *, void *, void *);
 void	maxds_attach(struct device *, struct device *, void *);
 void	maxds_refresh(void *);
 
-struct cfattach maxds_ca = {
+const struct cfattach maxds_ca = {
 	sizeof(struct maxds_softc), maxds_match, maxds_attach
 };
 

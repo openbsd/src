@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart_acpi.c,v 1.7 2022/03/13 21:17:52 kettenis Exp $	*/
+/*	$OpenBSD: pluart_acpi.c,v 1.8 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -41,7 +41,7 @@ struct pluart_acpi_softc {
 int	pluart_acpi_match(struct device *, void *, void *);
 void	pluart_acpi_attach(struct device *, struct device *, void *);
 
-struct cfattach pluart_acpi_ca = {
+const struct cfattach pluart_acpi_ca = {
 	sizeof(struct pluart_acpi_softc), pluart_acpi_match, pluart_acpi_attach
 };
 

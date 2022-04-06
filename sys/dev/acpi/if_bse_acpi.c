@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bse_acpi.c,v 1.5 2021/12/29 17:52:22 patrick Exp $	*/
+/*	$OpenBSD: if_bse_acpi.c,v 1.6 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis
  *
@@ -45,7 +45,7 @@ struct bse_acpi_softc {
 int	bse_acpi_match(struct device *, void *, void *);
 void	bse_acpi_attach(struct device *, struct device *, void *);
 
-struct cfattach bse_acpi_ca = {
+const struct cfattach bse_acpi_ca = {
 	sizeof(struct bse_acpi_softc), bse_acpi_match, bse_acpi_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.58 2020/12/25 12:59:52 visa Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.59 2022/04/06 18:59:27 naddy Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -78,7 +78,7 @@ struct vscsi_softc {
 #define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
 #define DEV2SC(_d) ((struct vscsi_softc *)device_lookup(&vscsi_cd, minor(_d)))
 
-struct cfattach vscsi_ca = {
+const struct cfattach vscsi_ca = {
 	sizeof(struct vscsi_softc),
 	vscsi_match,
 	vscsi_attach

@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpisurface.c,v 1.1 2018/06/30 18:15:12 mlarkin Exp $	*/
+/*	$OpenBSD: acpisurface.c,v 1.2 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2018 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -61,7 +61,7 @@ int	surface_hotkey(struct aml_node *, int, void *);
 extern int wskbd_set_mixervolume(long, long);
 #endif
 
-struct cfattach acpisurface_ca = {
+const struct cfattach acpisurface_ca = {
 	sizeof(struct acpisurface_softc), surface_match, surface_attach,
 	NULL, NULL
 };

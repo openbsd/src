@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.48 2021/07/07 21:21:48 patrick Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.49 2022/04/06 18:59:28 naddy Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -237,7 +237,7 @@ int	mvpp2_match(struct device *, void *, void *);
 void	mvpp2_attach(struct device *, struct device *, void *);
 void	mvpp2_attach_deferred(struct device *);
 
-struct cfattach mvppc_ca = {
+const struct cfattach mvppc_ca = {
 	sizeof(struct mvpp2_softc), mvpp2_match, mvpp2_attach
 };
 
@@ -248,7 +248,7 @@ struct cfdriver mvppc_cd = {
 int	mvpp2_port_match(struct device *, void *, void *);
 void	mvpp2_port_attach(struct device *, struct device *, void *);
 
-struct cfattach mvpp_ca = {
+const struct cfattach mvpp_ca = {
 	sizeof(struct mvpp2_port), mvpp2_port_match, mvpp2_port_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: opalcons.c,v 1.3 2020/10/30 13:26:29 kettenis Exp $	*/
+/*	$OpenBSD: opalcons.c,v 1.4 2022/04/06 18:59:27 naddy Exp $	*/
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -43,7 +43,7 @@ struct opalcons_softc {
 int	opalcons_match(struct device *, void *, void *);
 void	opalcons_attach(struct device *, struct device *, void *);
 
-struct cfattach	opalcons_ca = {
+const struct cfattach opalcons_ca = {
 	sizeof (struct opalcons_softc), opalcons_match, opalcons_attach
 };
 

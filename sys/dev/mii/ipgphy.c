@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipgphy.c,v 1.19 2015/07/19 06:28:12 yuo Exp $	*/
+/*	$OpenBSD: ipgphy.c,v 1.20 2022/04/06 18:59:29 naddy Exp $	*/
 
 /*-
  * Copyright (c) 2006, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -58,7 +58,7 @@
 int ipgphy_probe(struct device *, void *, void *);
 void ipgphy_attach(struct device *, struct device *, void *);
 
-struct cfattach ipgphy_ca = {
+const struct cfattach ipgphy_ca = {
 	sizeof(struct mii_softc), ipgphy_probe, ipgphy_attach, mii_phy_detach
 };
 
