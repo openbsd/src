@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.14 2021/08/31 01:54:12 jsg Exp $
+dnl	$OpenBSD: prep,v 1.15 2022/04/06 23:01:05 kettenis Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -51,6 +51,37 @@ script.
 	=> bootefi ${kernel_addr_r} ${fdt_addr_r}
 The bootloader will then run and try to load sd0a:/bsd off an FFS
 filesystem after a timeout.
+
+Install on Apple Silicon:
+
+  These machines do not come with UEFI firmware by default.  In order
+  to install OpenBSD on these machine you need to run the Asahi Linux
+  installer first in macOS or the macOS recovery environment.
+  Instructions on how to download and run the Asahi Linux installer
+  can be found at https://asahilinux.org/.  Run it in macOS or the
+  macOS recovery environment.
+
+  Note that while running the suggested:
+  	curl https://alx.sh | sh
+  is probably safe, it is teaching a bad habit.  It is better to
+  download the installer:
+	curl -o alx.sh https://alx.sh
+  and inspect the alx.sh script before running it:
+	sh alx.sh
+
+  You will have to create some free space for your OpenBSD install by
+  choosing the
+	"Resize an existing partition to make space for a new OS"
+  option first.  Once that is done, pick the
+	"Install an OS into free space"
+  option, choose
+	"UEFI environment only (m1n1 + U-Boot + ESP)"
+  and follow the steps presented to you.  
+
+  Now you can copy the miniroot or install image
+  ("miniroot{:--:}OSrev.img" or "install{:--:}OSrev.img") to a USB
+  drive, plug it into one of the type-C ports on the machine and reset
+  the machine to boot into the OpenBSD installer.
 
 Install on Raspberry Pi:
 
