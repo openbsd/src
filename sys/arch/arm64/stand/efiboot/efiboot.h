@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.h,v 1.5 2020/05/10 11:55:42 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.h,v 1.6 2022/04/06 21:27:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -25,6 +25,10 @@ void	efi_cons_probe(struct consdev *);
 void	efi_cons_init(struct consdev *);
 int	efi_cons_getc(dev_t);
 void	efi_cons_putc(dev_t, int);
+void	efi_com_probe(struct consdev *);
+void	efi_com_init(struct consdev *);
+int	efi_com_getc(dev_t);
+void	efi_com_putc(dev_t, int);
 void	efi_fb_probe(struct consdev *);
 void	efi_fb_init(struct consdev *);
 int	efi_fb_getc(dev_t);

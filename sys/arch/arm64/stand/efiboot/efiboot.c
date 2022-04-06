@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.40 2022/03/17 00:28:29 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.41 2022/04/06 21:27:03 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -120,8 +120,8 @@ static SIMPLE_INPUT_INTERFACE *conin;
  * kernel.  That's fine.  They're just used as an index into the cdevs
  * array and never passed on to the kernel.
  */
-static dev_t serial = makedev(0, 0);
-static dev_t framebuffer = makedev(1, 0);
+static dev_t serial = makedev(1, 0);
+static dev_t framebuffer = makedev(2, 0);
 
 static char framebuffer_path[128];
 
@@ -129,7 +129,7 @@ void
 efi_cons_probe(struct consdev *cn)
 {
 	cn->cn_pri = CN_MIDPRI;
-	cn->cn_dev = serial;
+	cn->cn_dev = makedev(0, 0);
 }
 
 void
@@ -188,6 +188,32 @@ efi_cons_putc(dev_t dev, int c)
 	buf[1] = 0;
 
 	conout->OutputString(conout, buf);
+}
+
+void
+efi_com_probe(struct consdev *cn)
+{
+	cn->cn_pri = CN_LOWPRI;
+	cn->cn_dev = serial;
+}
+
+void
+efi_com_init(struct consdev *cn)
+{
+	conin = ST->ConIn;
+	conout = ST->ConOut;
+}
+
+int
+efi_com_getc(dev_t dev)
+{
+	return efi_cons_getc(dev);
+}
+
+void
+efi_com_putc(dev_t dev, int c)
+{
+	efi_cons_putc(dev, c);
 }
 
 void
@@ -459,16 +485,32 @@ efi_console(void)
 {
 	void *node;
 
-	if (cn_tab->cn_dev != framebuffer)
-		return;
+	if (major(cn_tab->cn_dev) == major(serial)) {
+		char *serial_path;
+		char alias[16];
+		int len;
 
-	if (strlen(framebuffer_path) == 0)
-		return;
+		/* Construct alias and resolve it. */
+		snprintf(alias, sizeof(alias), "serial%d",
+		    minor(cn_tab->cn_dev));
+		node = fdt_find_node("/aliases");
+		len = fdt_node_property(node, alias, &serial_path);
+		if (len <= 0)
+			return;
 
-	/* Point stdout-path at the framebuffer node. */
-	node = fdt_find_node("/chosen");
-	fdt_node_add_property(node, "stdout-path",
-	    framebuffer_path, strlen(framebuffer_path) + 1);
+		/* Point stdout-path at the serial node. */
+		node = fdt_find_node("/chosen");
+		fdt_node_add_property(node, "stdout-path",
+		    serial_path, strlen(serial_path) + 1);
+	} else if (major(cn_tab->cn_dev) == major(framebuffer)) {
+		if (strlen(framebuffer_path) == 0)
+			return;
+
+		/* Point stdout-path at the framebuffer node. */
+		node = fdt_find_node("/chosen");
+		fdt_node_add_property(node, "stdout-path",
+		    framebuffer_path, strlen(framebuffer_path) + 1);
+	}
 }
 
 uint64_t dma_constraint[2] = { 0, -1 };
@@ -794,7 +836,7 @@ devboot(dev_t dev, char *p)
 	p[2] = '0' + sd_boot_vol;
 }
 
-const char cdevs[][4] = { "com", "fb" };
+const char cdevs[][4] = { "cons", "com", "fb" };
 const int ncdevs = nitems(cdevs);
 
 int
