@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.116 2022/04/06 18:59:27 naddy Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.117 2022/04/07 17:36:38 sthen Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -67,11 +67,22 @@ int	ipmi_enabled = 0;
 #define IPMI_BTMSG_DATASND		4
 #define IPMI_BTMSG_DATARCV		5
 
+/* IPMI 2.0, Table 42-3: Sensor Type Codes */
 #define IPMI_SENSOR_TYPE_TEMP		0x0101
 #define IPMI_SENSOR_TYPE_VOLT		0x0102
+#define IPMI_SENSOR_TYPE_CURRENT	0x0103
 #define IPMI_SENSOR_TYPE_FAN		0x0104
 #define IPMI_SENSOR_TYPE_INTRUSION	0x6F05
 #define IPMI_SENSOR_TYPE_PWRSUPPLY	0x6F08
+
+/* IPMI 2.0, Table 43-15: Sensor Unit Type Codes */
+#define IPMI_UNIT_TYPE_DEGREE_C		1
+#define IPMI_UNIT_TYPE_DEGREE_F		2
+#define IPMI_UNIT_TYPE_DEGREE_K		3
+#define IPMI_UNIT_TYPE_VOLTS		4
+#define IPMI_UNIT_TYPE_AMPS		5
+#define IPMI_UNIT_TYPE_WATTS		6
+#define IPMI_UNIT_TYPE_RPM		18
 
 #define IPMI_NAME_UNICODE		0x00
 #define IPMI_NAME_BCDPLUS		0x01
@@ -147,7 +158,7 @@ void	bt_buildmsg(struct ipmi_cmd *);
 void	cmn_buildmsg(struct ipmi_cmd *);
 
 int	getbits(u_int8_t *, int, int);
-int	ipmi_sensor_type(int, int, int);
+int	ipmi_sensor_type(int, int, int, int);
 
 void	ipmi_refresh_sensors(struct ipmi_softc *sc);
 int	ipmi_map_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia);
@@ -1214,6 +1225,9 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 		break;
 
 	case SENSOR_VOLTS_DC:
+	case SENSOR_VOLTS_AC:
+	case SENSOR_AMPS:
+	case SENSOR_WATTS:
 		psensor->i_sensor.value = ipmi_convert(reading[0], s1, 6);
 		break;
 
@@ -1231,6 +1245,7 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	switch (etype) {
 	case IPMI_SENSOR_TYPE_TEMP:
 	case IPMI_SENSOR_TYPE_VOLT:
+	case IPMI_SENSOR_TYPE_CURRENT:
 	case IPMI_SENSOR_TYPE_FAN:
 		/* non-recoverable threshold */
 		if (reading[2] & ((1 << 5) | (1 << 2)))
@@ -1309,17 +1324,26 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 }
 
 int
-ipmi_sensor_type(int type, int ext_type, int entity)
+ipmi_sensor_type(int type, int ext_type, int units2, int entity)
 {
+	switch (units2) {
+	case IPMI_UNIT_TYPE_AMPS:
+		return (SENSOR_AMPS);
+
+	case IPMI_UNIT_TYPE_RPM:
+		return (SENSOR_FANRPM);
+
+	/* XXX sensors framework distinguishes AC/DC but ipmi does not */
+	case IPMI_UNIT_TYPE_VOLTS:
+		return (SENSOR_VOLTS_DC);
+
+	case IPMI_UNIT_TYPE_WATTS:
+		return (SENSOR_WATTS);
+	}
+
 	switch (ext_type << 8L | type) {
 	case IPMI_SENSOR_TYPE_TEMP:
 		return (SENSOR_TEMP);
-
-	case IPMI_SENSOR_TYPE_VOLT:
-		return (SENSOR_VOLTS_DC);
-
-	case IPMI_SENSOR_TYPE_FAN:
-		return (SENSOR_FANRPM);
 
 	case IPMI_SENSOR_TYPE_PWRSUPPLY:
 		if (entity == IPMI_ENTITY_PWRSUPPLY)
@@ -1376,14 +1400,13 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 {
 	int			typ, idx;
 	struct ipmi_sensor	*psensor;
-#ifdef IPMI_DEBUG
 	struct sdrtype1		*s1 = (struct sdrtype1 *)psdr;
-#endif
 
-	typ = ipmi_sensor_type(sensor_type, ext_type, entity);
+	typ = ipmi_sensor_type(sensor_type, ext_type, s1->units2, entity);
 	if (typ == -1) {
 		dbg_printf(5, "Unknown sensor type:%.2x et:%.2x sn:%.2x "
-		    "name:%s\n", sensor_type, ext_type, sensor_num, name);
+		    "units2:%u name:%s\n", sensor_type, ext_type, sensor_num,
+		    s1->units2, name);
 		return 0;
 	}
 	for (idx = 0; idx < count; idx++) {
