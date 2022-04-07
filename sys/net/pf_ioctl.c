@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.376 2022/04/04 12:57:36 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.377 2022/04/07 14:13:01 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -93,7 +93,7 @@ int			 pfopen(dev_t, int, int, struct proc *);
 int			 pfclose(dev_t, int, int, struct proc *);
 int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int			 pf_begin_rules(u_int32_t *, const char *);
-int			 pf_rollback_rules(u_int32_t, char *);
+void			 pf_rollback_rules(u_int32_t, char *);
 void			 pf_remove_queues(void);
 int			 pf_commit_queues(void);
 void			 pf_free_queues(struct pf_queuehead *);
@@ -537,7 +537,7 @@ pf_begin_rules(u_int32_t *ticket, const char *anchor)
 	return (0);
 }
 
-int
+void
 pf_rollback_rules(u_int32_t ticket, char *anchor)
 {
 	struct pf_ruleset	*rs;
@@ -546,7 +546,7 @@ pf_rollback_rules(u_int32_t ticket, char *anchor)
 	rs = pf_find_ruleset(anchor);
 	if (rs == NULL || !rs->rules.inactive.open ||
 	    rs->rules.inactive.ticket != ticket)
-		return (0);
+		return;
 	while ((rule = TAILQ_FIRST(rs->rules.inactive.ptr)) != NULL) {
 		pf_rm_rule(rs->rules.inactive.ptr, rule);
 		rs->rules.inactive.rcount--;
@@ -555,11 +555,9 @@ pf_rollback_rules(u_int32_t ticket, char *anchor)
 
 	/* queue defs only in the main ruleset */
 	if (anchor[0])
-		return (0);
+		return;
 
 	pf_free_queues(pf_queues_inactive);
-
-	return (0);
 }
 
 void
@@ -2597,14 +2595,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				}
 				break;
 			case PF_TRANS_RULESET:
-				if ((error = pf_rollback_rules(ioe->ticket,
-				    ioe->anchor))) {
-					PF_UNLOCK();
-					NET_UNLOCK();
-					free(table, M_TEMP, sizeof(*table));
-					free(ioe, M_TEMP, sizeof(*ioe));
-					goto fail; /* really bad */
-				}
+				pf_rollback_rules(ioe->ticket, ioe->anchor);
 				break;
 			default:
 				PF_UNLOCK();
