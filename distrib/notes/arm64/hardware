@@ -1,8 +1,9 @@
-dnl	$OpenBSD: hardware,v 1.14 2022/03/18 22:28:06 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.15 2022/04/07 02:44:51 kevlo Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
-	Allwinner A64/H5
+	Allwinner A64/H5/H6
 		Pine64 Pine 64/64+
+		Pine64 Pine H64
 		Pine64 Pinebook
 		NanoPi A64
 		Orange Pi PC2
