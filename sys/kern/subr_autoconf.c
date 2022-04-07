@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.95 2021/10/26 16:29:49 deraadt Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.96 2022/04/07 09:37:32 tb Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -348,7 +348,7 @@ config_attach(struct device *parent, void *match, void *aux, cfprint_t print)
 	struct cfdata *cf;
 	struct device *dev;
 	struct cfdriver *cd;
-	struct cfattach *ca;
+	const struct cfattach *ca;
 
 	mtx_enter(&autoconf_attdet_mtx);
 	while (autoconf_attdet < 0)
@@ -428,7 +428,7 @@ config_make_softc(struct device *parent, struct cfdata *cf)
 {
 	struct device *dev;
 	struct cfdriver *cd;
-	struct cfattach *ca;
+	const struct cfattach *ca;
 
 	cd = cf->cf_driver;
 	ca = cf->cf_attach;
@@ -507,7 +507,7 @@ int
 config_detach(struct device *dev, int flags)
 {
 	struct cfdata *cf;
-	struct cfattach *ca;
+	const struct cfattach *ca;
 	struct cfdriver *cd;
 	int rv = 0, i;
 #ifdef DIAGNOSTIC
@@ -816,7 +816,7 @@ config_detach_children(struct device *parent, int flags)
 int
 config_suspend(struct device *dev, int act)
 {
-	struct cfattach *ca = dev->dv_cfdata->cf_attach;
+	const struct cfattach *ca = dev->dv_cfdata->cf_attach;
 	int r;
 
 	device_ref(dev);
@@ -998,7 +998,7 @@ device_ref(struct device *dv)
 void
 device_unref(struct device *dv)
 {
-	struct cfattach *ca;
+	const struct cfattach *ca;
 
 	if (atomic_dec_int_nv(&dv->dv_ref) == 0) {
 		ca = dv->dv_cfdata->cf_attach;

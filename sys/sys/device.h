@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.62 2022/02/16 06:41:27 deraadt Exp $	*/
+/*	$OpenBSD: device.h,v 1.63 2022/04/07 09:37:32 tb Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ TAILQ_HEAD(devicelist, device);
  * Configuration data (i.e., data placed in ioconf.c).
  */
 struct cfdata {
-	struct	cfattach *cf_attach;	/* config attachment */
+	const struct	cfattach *cf_attach;	/* config attachment */
 	struct	cfdriver *cf_driver;	/* config driver */
 	short	cf_unit;		/* unit number */
 	short	cf_fstate;		/* finding state (below) */
