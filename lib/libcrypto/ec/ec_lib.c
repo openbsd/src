@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.44 2022/03/29 14:03:12 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.45 2022/04/07 17:37:25 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -348,10 +348,10 @@ EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
 	}
 
 	/*
-	 * Require order >= 1 and enforce an upper bound of at most one bit more
+	 * Require order > 1 and enforce an upper bound of at most one bit more
 	 * than the field cardinality due to Hasse's theorem.
 	 */
-	if (order == NULL || BN_is_zero(order) || BN_is_negative(order) ||
+	if (order == NULL || BN_cmp(order, BN_value_one()) <= 0 ||
 	    BN_num_bits(order) > BN_num_bits(&group->field) + 1) {
 		ECerror(EC_R_INVALID_GROUP_ORDER);
 		return 0;

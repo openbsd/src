@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.23 2022/01/20 11:03:48 inoguchi Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.24 2022/04/07 17:37:25 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -160,6 +160,11 @@ ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	}
 	if (!EC_GROUP_get_order(group, order, ctx)) {
 		ECDSAerror(ERR_R_EC_LIB);
+		goto err;
+	}
+
+	if (BN_cmp(order, BN_value_one()) <= 0) {
+		ECDSAerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
 
