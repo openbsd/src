@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkioconf.c,v 1.38 2019/06/28 13:33:55 deraadt Exp $	*/
+/*	$OpenBSD: mkioconf.c,v 1.39 2022/04/07 10:11:27 tb Exp $	*/
 /*	$NetBSD: mkioconf.c,v 1.41 1996/11/11 14:18:49 mycroft Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ emitexterns(FILE *fp)
 	for (da = alldevas; da != NULL; da = da->d_next) {
 		if (!deva_has_instances(da, WILD))
 			continue;
-		if (fprintf(fp, "extern struct cfattach %s_ca;\n",
+		if (fprintf(fp, "extern const struct cfattach %s_ca;\n",
 			    da->d_name) < 0)
 			return (1);
 	}
@@ -383,7 +383,7 @@ struct cfdata cfdata[] = {\n\
 		return (1);
 	if (fprintf(fp, "    {0},\n    {0},\n    {0},\n    {0},\n") < 0)
 		return (1);
-	return (fputs("    {(struct cfattach *)-1}\n};\n", fp) == EOF);
+	return (fputs("    {(const struct cfattach *)-1}\n};\n", fp) == EOF);
 }
 
 /*
