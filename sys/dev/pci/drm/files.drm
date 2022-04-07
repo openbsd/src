@@ -1,4 +1,4 @@
-# $OpenBSD: files.drm,v 1.55 2022/04/07 07:30:54 jsg Exp $
+# $OpenBSD: files.drm,v 1.56 2022/04/07 07:39:54 jsg Exp $
 
 file	dev/pci/drm/dma-resv.c			drm
 file	dev/pci/drm/drm_agpsupport.c		drm & agp
@@ -144,6 +144,7 @@ file	dev/pci/drm/i915/display/intel_dp_mst.c		inteldrm
 file	dev/pci/drm/i915/display/intel_dpio_phy.c	inteldrm
 file	dev/pci/drm/i915/display/intel_dpll.c		inteldrm
 file	dev/pci/drm/i915/display/intel_dpll_mgr.c	inteldrm
+file	dev/pci/drm/i915/display/intel_dpt.c		inteldrm
 file	dev/pci/drm/i915/display/intel_dsb.c		inteldrm
 file	dev/pci/drm/i915/display/intel_dsi.c		inteldrm
 file	dev/pci/drm/i915/display/intel_dsi_dcs_backlight.c	inteldrm
