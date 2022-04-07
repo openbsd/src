@@ -1,4 +1,4 @@
-# $OpenBSD: files.drm,v 1.54 2022/02/03 04:45:01 jsg Exp $
+# $OpenBSD: files.drm,v 1.55 2022/04/07 07:30:54 jsg Exp $
 
 file	dev/pci/drm/dma-resv.c			drm
 file	dev/pci/drm/drm_agpsupport.c		drm & agp
@@ -998,6 +998,7 @@ file	dev/pci/drm/amd/display/dc/dml/display_mode_lib.c		amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dml/display_mode_vba.c		amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dml/display_rq_dlg_helpers.c		amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dml/dml1_display_rq_dlg_calc.c	amdgpu & bios
+file	dev/pci/drm/amd/display/dc/dml/dsc/rc_calc_fpu.c		amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dsc/dc_dsc.c				amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dsc/rc_calc.c			amdgpu & bios
 file	dev/pci/drm/amd/display/dc/dsc/rc_calc_dpi.c			amdgpu & bios
