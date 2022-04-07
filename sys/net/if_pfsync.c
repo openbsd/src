@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.301 2022/03/08 20:46:01 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.302 2022/04/07 13:38:54 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2238,7 +2238,7 @@ pfsync_request_update(u_int32_t creatorid, u_int64_t id)
 {
 	struct pfsync_softc *sc = pfsyncif;
 	struct pfsync_upd_req_item *item;
-	size_t nlen, sc_len;
+	size_t nlen, sclen;
 	int retry;
 
 	/*
@@ -2262,8 +2262,8 @@ pfsync_request_update(u_int32_t creatorid, u_int64_t id)
 		if (TAILQ_EMPTY(&sc->sc_upd_req_list))
 			nlen += sizeof(struct pfsync_subheader);
 
-		sc_len = atomic_add_long_nv(&sc->sc_len, nlen);
-		retry = (sc_len > sc->sc_if.if_mtu);
+		sclen = atomic_add_long_nv(&sc->sc_len, nlen);
+		retry = (sclen > sc->sc_if.if_mtu);
 		if (retry)
 			atomic_sub_long(&sc->sc_len, nlen);
 		else
@@ -2401,7 +2401,7 @@ void
 pfsync_q_ins(struct pf_state *st, int q)
 {
 	struct pfsync_softc *sc = pfsyncif;
-	size_t nlen, sc_len;
+	size_t nlen, sclen;
 
 #if defined(PFSYNC_DEBUG)
 	if (sc->sc_len < PFSYNC_MINPKT)
@@ -2424,8 +2424,8 @@ pfsync_q_ins(struct pf_state *st, int q)
 		if (TAILQ_EMPTY(&sc->sc_qs[q]))
 			nlen += sizeof(struct pfsync_subheader);
 
-		sc_len = atomic_add_long_nv(&sc->sc_len, nlen);
-		if (sc_len > sc->sc_if.if_mtu) {
+		sclen = atomic_add_long_nv(&sc->sc_len, nlen);
+		if (sclen > sc->sc_if.if_mtu) {
 			atomic_sub_long(&sc->sc_len, nlen);
 			mtx_leave(&sc->sc_st_mtx);
 			pfsync_sendout();
@@ -2464,7 +2464,7 @@ void
 pfsync_update_tdb(struct tdb *t, int output)
 {
 	struct pfsync_softc *sc = pfsyncif;
-	size_t nlen, sc_len;
+	size_t nlen, sclen;
 
 	if (sc == NULL)
 		return;
@@ -2485,8 +2485,8 @@ pfsync_update_tdb(struct tdb *t, int output)
 			if (TAILQ_EMPTY(&sc->sc_tdb_q))
 				nlen += sizeof(struct pfsync_subheader);
 
-			sc_len = atomic_add_long_nv(&sc->sc_len, nlen);
-			if (sc_len > sc->sc_if.if_mtu) {
+			sclen = atomic_add_long_nv(&sc->sc_len, nlen);
+			if (sclen > sc->sc_if.if_mtu) {
 				atomic_sub_long(&sc->sc_len, nlen);
 				mtx_leave(&t->tdb_mtx);
 				mtx_leave(&sc->sc_tdb_mtx);
@@ -2724,7 +2724,8 @@ pfsync_send_plus(void *plus, size_t pluslen)
 		pfsync_sendout();
 
 	sc->sc_plus = plus;
-	sc->sc_len += (sc->sc_pluslen = pluslen);
+	sc->sc_pluslen = pluslen;
+	atomic_add_long(&sc->sc_len, pluslen);
 
 	pfsync_sendout();
 }
