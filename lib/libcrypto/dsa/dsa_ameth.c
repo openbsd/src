@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.34 2022/02/24 21:07:03 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.35 2022/04/07 17:38:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -479,7 +479,7 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 {
 	DSA *dsa;
 	BN_CTX *ctx = NULL;
-	BIGNUM *j, *p1, *newp1;
+	BIGNUM *j, *p1, *newp1, *powg;
 	int qbits;
 
 	if (!(dsa = d2i_DSAPrivateKey(NULL, pder, derlen))) {
@@ -498,6 +498,13 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 		goto err;
 	}
 
+	/* Check that 1 < g < p. */
+	if (BN_cmp(dsa->g, BN_value_one()) <= 0 ||
+	    BN_cmp(dsa->g, dsa->p) >= 0) {
+		DSAerror(DSA_R_PARAMETER_ENCODING_ERROR); /* XXX */
+		goto err;
+	}
+
 	ctx = BN_CTX_new();
 	if (ctx == NULL)
 		goto err;
@@ -509,7 +516,8 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 	j = BN_CTX_get(ctx);
 	p1 = BN_CTX_get(ctx);
 	newp1 = BN_CTX_get(ctx);
-	if (j == NULL || p1 == NULL || newp1 == NULL)
+	powg = BN_CTX_get(ctx);
+	if (j == NULL || p1 == NULL || newp1 == NULL || powg == NULL)
 		goto err;
 	/* p1 = p - 1 */
 	if (BN_sub(p1, dsa->p, BN_value_one()) == 0)
@@ -522,6 +530,19 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 		goto err;
 	if (BN_cmp(newp1, p1) != 0) {
 		DSAerror(DSA_R_BAD_Q_VALUE);
+		goto err;
+	}
+
+	/*
+	 * Check that g generates a multiplicative subgroup of order q.
+	 * We only check that g^q == 1, so the order is a divisor of q.
+	 * Once we know that q is prime, this is enough.
+	 */
+
+	if (!BN_mod_exp_ct(powg, dsa->g, dsa->q, dsa->p, ctx))
+		goto err;
+	if (BN_cmp(powg, BN_value_one()) != 0) {
+		DSAerror(DSA_R_PARAMETER_ENCODING_ERROR); /* XXX */
 		goto err;
 	}
 
