@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.377 2022/04/07 14:13:01 mbuhl Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.378 2022/04/07 19:27:24 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2481,11 +2481,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		NET_LOCK();
 		PF_LOCK();
 		pf_default_rule_new = pf_default_rule;
+		PF_UNLOCK();
+		NET_UNLOCK();
 		memset(&pf_trans_set, 0, sizeof(pf_trans_set));
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
-				PF_UNLOCK();
-				NET_UNLOCK();
 				free(table, M_TEMP, sizeof(*table));
 				free(ioe, M_TEMP, sizeof(*ioe));
 				error = EFAULT;
@@ -2493,13 +2493,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 			if (strnlen(ioe->anchor, sizeof(ioe->anchor)) ==
 			    sizeof(ioe->anchor)) {
-				PF_UNLOCK();
-				NET_UNLOCK();
 				free(table, M_TEMP, sizeof(*table));
 				free(ioe, M_TEMP, sizeof(*ioe));
 				error = ENAMETOOLONG;
 				goto fail;
 			}
+			NET_LOCK();
+			PF_LOCK();
 			switch (ioe->type) {
 			case PF_TRANS_TABLE:
 				memset(table, 0, sizeof(*table));
@@ -2532,17 +2532,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EINVAL;
 				goto fail;
 			}
+			PF_UNLOCK();
+			NET_UNLOCK();
 			if (copyout(ioe, io->array+i, sizeof(io->array[i]))) {
-				PF_UNLOCK();
-				NET_UNLOCK();
 				free(table, M_TEMP, sizeof(*table));
 				free(ioe, M_TEMP, sizeof(*ioe));
 				error = EFAULT;
 				goto fail;
 			}
 		}
-		PF_UNLOCK();
-		NET_UNLOCK();
 		free(table, M_TEMP, sizeof(*table));
 		free(ioe, M_TEMP, sizeof(*ioe));
 		break;
