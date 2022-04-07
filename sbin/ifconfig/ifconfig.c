@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.453 2022/03/07 08:13:13 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.454 2022/04/07 16:41:13 naddy Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -3062,7 +3062,7 @@ const struct ifmedia_description ifm_type_descriptions[] =
 const struct ifmedia_description ifm_subtype_descriptions[] =
     IFM_SUBTYPE_DESCRIPTIONS;
 
-struct ifmedia_description ifm_mode_descriptions[] =
+const struct ifmedia_description ifm_mode_descriptions[] =
     IFM_MODE_DESCRIPTIONS;
 
 const struct ifmedia_description ifm_option_descriptions[] =

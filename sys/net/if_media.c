@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_media.c,v 1.31 2019/04/21 08:28:53 stsp Exp $	*/
+/*	$OpenBSD: if_media.c,v 1.32 2022/04/07 16:41:13 naddy Exp $	*/
 /*	$NetBSD: if_media.c,v 1.10 2000/03/13 23:52:39 soren Exp $	*/
 
 /*-
@@ -393,7 +393,7 @@ ifmedia_delete_instance(struct ifmedia *ifm, uint64_t inst)
  * Compute the interface `baudrate' from the media, for the interface
  * metrics (used by routing daemons).
  */
-struct ifmedia_baudrate ifmedia_baudrate_descriptions[] =
+const struct ifmedia_baudrate ifmedia_baudrate_descriptions[] =
     IFM_BAUDRATE_DESCRIPTIONS;
 
 uint64_t
@@ -413,13 +413,13 @@ ifmedia_baudrate(uint64_t mword)
 
 #ifdef IFMEDIA_DEBUG
 
-struct ifmedia_description ifm_type_descriptions[] =
+const struct ifmedia_description ifm_type_descriptions[] =
     IFM_TYPE_DESCRIPTIONS;
 
-struct ifmedia_description ifm_subtype_descriptions[] =
+const struct ifmedia_description ifm_subtype_descriptions[] =
     IFM_SUBTYPE_DESCRIPTIONS;
 
-struct ifmedia_description ifm_option_descriptions[] =
+const struct ifmedia_description ifm_option_descriptions[] =
     IFM_OPTION_DESCRIPTIONS;
 
 /*
@@ -428,7 +428,7 @@ struct ifmedia_description ifm_option_descriptions[] =
 static void
 ifmedia_printword(uint64_t ifmw)
 {
-	struct ifmedia_description *desc;
+	const struct ifmedia_description *desc;
 	uint64_t seen_option = 0;
 
 	/* Print the top-level interface type. */
