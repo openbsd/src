@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.55 2022/04/01 17:22:07 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.56 2022/04/08 15:29:59 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -85,9 +85,9 @@ mft_parse_time(const ASN1_GENERALIZEDTIME *from,
 		return 0;
 	}
 
-	if ((p->res->valid_from = mktime(&tm_from)) == -1 ||
-	    (p->res->valid_until = mktime(&tm_until)) == -1)
-		errx(1, "%s: mktime failed", p->fn);
+	if ((p->res->valid_from = timegm(&tm_from)) == -1 ||
+	    (p->res->valid_until = timegm(&tm_until)) == -1)
+		errx(1, "%s: timegm failed", p->fn);
 
 	return 1;
 }

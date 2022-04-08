@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.38 2022/04/01 17:22:07 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.39 2022/04/08 15:29:59 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -498,8 +498,8 @@ x509_get_time(const ASN1_TIME *at, time_t *t)
 	memset(&tm, 0, sizeof(tm));
 	if (ASN1_time_parse(at->data, at->length, &tm, 0) == -1)
 		return 0;
-	if ((*t = mktime(&tm)) == -1)
-		errx(1, "mktime failed");
+	if ((*t = timegm(&tm)) == -1)
+		errx(1, "timegm failed");
 	return 1;
 }
 
