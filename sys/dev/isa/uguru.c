@@ -1,4 +1,4 @@
-/*	$OpenBSD: uguru.c,v 1.6 2022/04/06 18:59:29 naddy Exp $	*/
+/*	$OpenBSD: uguru.c,v 1.7 2022/04/08 15:02:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2010 Mikko Tolmunen <oskari@sefirosu.org>
@@ -100,7 +100,7 @@ struct uguru_softc {
 	struct ksensor		 sc_sensors[UGURU_MAX_SENSORS];
 	struct ksensordev	 sc_sensordev;
 	int			 sc_numsensors;
-	struct uguru_sensor	*uguru_sensors;
+	const struct uguru_sensor *uguru_sensors;
 	struct {
 		uint8_t		 reading;
 /*		uint8_t		 flags; */
@@ -126,7 +126,7 @@ void	 uguru_refresh_fan(struct uguru_softc *, int);
 #define UGURU_R_VOLT	uguru_refresh_volt
 #define UGURU_R_FAN	uguru_refresh_fan
 
-struct uguru_sensor abitkv_sensors[] = {
+const struct uguru_sensor abitkv_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x00 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x01 },
 	{ "PWM", SENSOR_TEMP, UGURU_R_TEMP, 0x0f },
@@ -148,7 +148,7 @@ struct uguru_sensor abitkv_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitaa_sensors[] = {
+const struct uguru_sensor abitaa_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x00 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x01 },
 	{ "PWM1", SENSOR_TEMP, UGURU_R_TEMP, 0x0f },
@@ -174,7 +174,7 @@ struct uguru_sensor abitaa_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitav_sensors[] = {
+const struct uguru_sensor abitav_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x00 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x01 },
 	{ "PWM", SENSOR_TEMP, UGURU_R_TEMP, 0x0f },
@@ -200,7 +200,7 @@ struct uguru_sensor abitav_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitas_sensors[] = {
+const struct uguru_sensor abitas_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x00 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x01 },
 	{ "PWM", SENSOR_TEMP, UGURU_R_TEMP, 0x0f },
@@ -226,7 +226,7 @@ struct uguru_sensor abitas_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitax_sensors[] = {
+const struct uguru_sensor abitax_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x00 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x01 },
 	{ "PWM", SENSOR_TEMP, UGURU_R_TEMP, 0x0f },
@@ -250,7 +250,7 @@ struct uguru_sensor abitax_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitm4_sensors[] = {
+const struct uguru_sensor abitm4_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x00 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x01 },
 	{ "PWM1", SENSOR_TEMP, UGURU_R_TEMP, 0x02 },
@@ -278,7 +278,7 @@ struct uguru_sensor abitm4_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitan_sensors[] = {
+const struct uguru_sensor abitan_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x00 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x01 },
 	{ "PWM", SENSOR_TEMP, UGURU_R_TEMP, 0x0f },
@@ -305,7 +305,7 @@ struct uguru_sensor abitan_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abital_sensors[] = {
+const struct uguru_sensor abital_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x18 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x19 },
 	{ "PWM", SENSOR_TEMP, UGURU_R_TEMP, 0x1a },
@@ -331,7 +331,7 @@ struct uguru_sensor abital_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitaw_sensors[] = {
+const struct uguru_sensor abitaw_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x18 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x19 },
 	{ "PWM1", SENSOR_TEMP, UGURU_R_TEMP, 0x1a },
@@ -364,7 +364,7 @@ struct uguru_sensor abitaw_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitni_sensors[] = {
+const struct uguru_sensor abitni_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x18 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x19 },
 	{ "PWM", SENSOR_TEMP, UGURU_R_TEMP, 0x1a },
@@ -391,7 +391,7 @@ struct uguru_sensor abitni_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitat_sensors[] = {
+const struct uguru_sensor abitat_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x18 },
 	{ "NB", SENSOR_TEMP, UGURU_R_TEMP, 0x19 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x1a },
@@ -422,7 +422,7 @@ struct uguru_sensor abitat_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitan2_sensors[] = {
+const struct uguru_sensor abitan2_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x18 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x19 },
 	{ "PWM", SENSOR_TEMP, UGURU_R_TEMP, 0x1a },
@@ -449,7 +449,7 @@ struct uguru_sensor abitan2_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitab_sensors[] = {
+const struct uguru_sensor abitab_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x18 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x19 },
 	{ "PWM", SENSOR_TEMP, UGURU_R_TEMP, 0x1a },
@@ -477,7 +477,7 @@ struct uguru_sensor abitab_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitan3_sensors[] = {
+const struct uguru_sensor abitan3_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x18 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x19 },
 	{ "PWM", SENSOR_TEMP, UGURU_R_TEMP, 0x1a },
@@ -506,7 +506,7 @@ struct uguru_sensor abitan3_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitaw2_sensors[] = {
+const struct uguru_sensor abitaw2_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x18 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x19 },
 	{ "PWM1", SENSOR_TEMP, UGURU_R_TEMP, 0x1a },
@@ -539,7 +539,7 @@ struct uguru_sensor abitaw2_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitat2_sensors[] = {
+const struct uguru_sensor abitat2_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x18 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x1a },
 	{ "PWM", SENSOR_TEMP, UGURU_R_TEMP, 0x1b },
@@ -569,7 +569,7 @@ struct uguru_sensor abitat2_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitab2_sensors[] = {
+const struct uguru_sensor abitab2_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x18 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x19 },
 	{ "PWM1", SENSOR_TEMP, UGURU_R_TEMP, 0x1a },
@@ -601,7 +601,7 @@ struct uguru_sensor abitab2_sensors[] = {
 	{ NULL }
 };
 
-struct uguru_sensor abitin_sensors[] = {
+const struct uguru_sensor abitin_sensors[] = {
 	{ "CPU", SENSOR_TEMP, UGURU_R_TEMP, 0x18 },
 	{ "SYS", SENSOR_TEMP, UGURU_R_TEMP, 0x19 },
 	{ "PWM1", SENSOR_TEMP, UGURU_R_TEMP, 0x1a },
@@ -694,7 +694,7 @@ uguru_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct uguru_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
-	struct uguru_sensor *sensors;
+	const struct uguru_sensor *sensors;
 	uint8_t data[9];
 	uint16_t vendid, devid, sysid;
 	int i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm78.c,v 1.25 2019/12/17 01:34:59 mortimer Exp $	*/
+/*	$OpenBSD: lm78.c,v 1.26 2022/04/08 15:02:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -51,7 +51,7 @@ int  lm_match(struct lm_softc *);
 int  wb_match(struct lm_softc *);
 int  def_match(struct lm_softc *);
 
-void lm_setup_sensors(struct lm_softc *, struct lm_sensor *);
+void lm_setup_sensors(struct lm_softc *, const struct lm_sensor *);
 void lm_refresh(void *);
 
 void lm_refresh_sensor_data(struct lm_softc *);
@@ -74,13 +74,13 @@ struct lm_chip {
 	int (*chip_match)(struct lm_softc *);
 };
 
-struct lm_chip lm_chips[] = {
+const struct lm_chip lm_chips[] = {
 	{ wb_match },
 	{ lm_match },
 	{ def_match } /* Must be last */
 };
 
-struct lm_sensor lm78_sensors[] = {
+const struct lm_sensor lm78_sensors[] = {
 	/* Voltage */
 	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
 	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
@@ -101,7 +101,7 @@ struct lm_sensor lm78_sensors[] = {
 	{ NULL }
 };
 
-struct lm_sensor w83627hf_sensors[] = {
+const struct lm_sensor w83627hf_sensors[] = {
 	/* Voltage */
 	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
 	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
@@ -133,7 +133,7 @@ struct lm_sensor w83627hf_sensors[] = {
  * need special treatment, also because the reference voltage is 2.048 V
  * instead of the traditional 3.6 V.
  */
-struct lm_sensor w83627ehf_sensors[] = {
+const struct lm_sensor w83627ehf_sensors[] = {
 	/* Voltage */
 	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE / 2},
 	{ "+12V", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT(56, 10) / 2 },
@@ -163,7 +163,7 @@ struct lm_sensor w83627ehf_sensors[] = {
  * w83627dhg is almost identical to w83627ehf, except that 
  * it has 9 instead of 10 voltage sensors
  */
-struct lm_sensor w83627dhg_sensors[] = {
+const struct lm_sensor w83627dhg_sensors[] = {
 	/* Voltage */
 	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE / 2},
 	{ "+12V", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT(56, 10) / 2 },
@@ -188,7 +188,7 @@ struct lm_sensor w83627dhg_sensors[] = {
 	{ NULL }
 };
 
-struct lm_sensor nct6776f_sensors[] = {
+const struct lm_sensor nct6776f_sensors[] = {
 	/* Voltage */
 	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE / 2},
 	{ "+12V", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT(56, 10) / 2 },
@@ -216,7 +216,7 @@ struct lm_sensor nct6776f_sensors[] = {
 };
 
 /* NCT6779D */
-struct lm_sensor nct6779d_sensors[] = {
+const struct lm_sensor nct6779d_sensors[] = {
 	/* Voltage */
 	{ "VCore", SENSOR_VOLTS_DC, 4, 0x80, lm_refresh_volt, RFACT_NONE },
 	{ "VIN1", SENSOR_VOLTS_DC, 4, 0x81, lm_refresh_volt, RFACT(56, 10) / 2 },
@@ -252,7 +252,7 @@ struct lm_sensor nct6779d_sensors[] = {
 	{  NULL }
 };
 
-struct lm_sensor w83637hf_sensors[] = {
+const struct lm_sensor w83637hf_sensors[] = {
 	/* Voltage */
 	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, wb_w83637hf_refresh_vcore },
 	{ "+12V", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT(28, 10) },
@@ -275,7 +275,7 @@ struct lm_sensor w83637hf_sensors[] = {
 	{ NULL }
 };
 
-struct lm_sensor w83697hf_sensors[] = {
+const struct lm_sensor w83697hf_sensors[] = {
 	/* Voltage */
 	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
 	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
@@ -302,7 +302,7 @@ struct lm_sensor w83697hf_sensors[] = {
  * +5V, but using the values from the W83782D datasheets seems to
  * provide sensible results.
  */
-struct lm_sensor w83781d_sensors[] = {
+const struct lm_sensor w83781d_sensors[] = {
 	/* Voltage */
 	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
 	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
@@ -325,7 +325,7 @@ struct lm_sensor w83781d_sensors[] = {
 	{ NULL }
 };
 
-struct lm_sensor w83782d_sensors[] = {
+const struct lm_sensor w83782d_sensors[] = {
 	/* Voltage */
 	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
 	{ "VINR0", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
@@ -350,7 +350,7 @@ struct lm_sensor w83782d_sensors[] = {
 	{ NULL }
 };
 
-struct lm_sensor w83783s_sensors[] = {
+const struct lm_sensor w83783s_sensors[] = {
 	/* Voltage */
 	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
 	{ "+3.3V", SENSOR_VOLTS_DC, 0, 0x22, lm_refresh_volt, RFACT_NONE },
@@ -371,7 +371,7 @@ struct lm_sensor w83783s_sensors[] = {
 	{ NULL }
 };
 
-struct lm_sensor w83791d_sensors[] = {
+const struct lm_sensor w83791d_sensors[] = {
 	/* Voltage */
 	{ "VCore", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, 10000 },
 	{ "VINR0", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, 10000 },
@@ -399,7 +399,7 @@ struct lm_sensor w83791d_sensors[] = {
 	{ NULL }
 };
 
-struct lm_sensor w83792d_sensors[] = {
+const struct lm_sensor w83792d_sensors[] = {
 	/* Voltage */
 	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
 	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
@@ -428,7 +428,7 @@ struct lm_sensor w83792d_sensors[] = {
 	{ NULL }
 };
 
-struct lm_sensor as99127f_sensors[] = {
+const struct lm_sensor as99127f_sensors[] = {
 	/* Voltage */
 	{ "VCore A", SENSOR_VOLTS_DC, 0, 0x20, lm_refresh_volt, RFACT_NONE },
 	{ "VCore B", SENSOR_VOLTS_DC, 0, 0x21, lm_refresh_volt, RFACT_NONE },
@@ -662,7 +662,7 @@ wb_match(struct lm_softc *sc)
 }
 
 void
-lm_setup_sensors(struct lm_softc *sc, struct lm_sensor *sensors)
+lm_setup_sensors(struct lm_softc *sc, const struct lm_sensor *sensors)
 {
 	int i;
 

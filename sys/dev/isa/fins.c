@@ -1,4 +1,4 @@
-/*	$OpenBSD: fins.c,v 1.5 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: fins.c,v 1.6 2022/04/08 15:02:28 naddy Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Mark Kettenis
@@ -111,7 +111,7 @@ struct fins_softc {
 	struct ksensor fins_ksensors[FINS_MAX_SENSORS];
 	struct ksensordev fins_sensordev;
 	struct sensor_task *fins_sensortask;
-	struct fins_sensor *fins_sensors;
+	const struct fins_sensor *fins_sensors;
 
 	bus_space_handle_t sc_ioh_sens;
 	bus_space_handle_t sc_ioh_wdog;
@@ -139,7 +139,7 @@ static __inline u_int16_t fins_read_sens_2(struct fins_softc *, int);
 static __inline u_int8_t fins_read_wdog(struct fins_softc *, int);
 static __inline void fins_write_wdog(struct fins_softc *, int, u_int8_t);
 
-void fins_setup_sensors(struct fins_softc *, struct fins_sensor *);
+void fins_setup_sensors(struct fins_softc *, const struct fins_sensor *);
 void fins_refresh(void *);
 
 void fins_get_rpm(struct fins_softc *, int);
@@ -160,7 +160,7 @@ struct cfdriver fins_cd = {
 	NULL, "fins", DV_DULL
 };
 
-struct fins_sensor fins_71805_sensors[] = {
+const struct fins_sensor fins_71805_sensors[] = {
 	{ "+3.3V",  fins_get_volt, SENSOR_VOLTS_DC, FRFACT(100, 100),	0x10 },
 	{ "Vtt",    fins_get_volt, SENSOR_VOLTS_DC, FRFACT_NONE,	0x11 },
 	{ "Vram",   fins_get_volt, SENSOR_VOLTS_DC, FRFACT(100, 100),	0x12 },
@@ -184,7 +184,7 @@ struct fins_sensor fins_71805_sensors[] = {
 	{ NULL }
 };
 
-struct fins_sensor fins_71882_sensors[] = {
+const struct fins_sensor fins_71882_sensors[] = {
 	{ "+3.3V",  fins_get_volt, SENSOR_VOLTS_DC, FRFACT(100, 100),	0x20 },
 	{ "Vcore",  fins_get_volt, SENSOR_VOLTS_DC, FRFACT_NONE,	0x21 },
 	{ "Vram",   fins_get_volt, SENSOR_VOLTS_DC, FRFACT(100, 100),	0x22 },
@@ -384,7 +384,7 @@ fins_lock(bus_space_tag_t iot, bus_space_handle_t ioh)
 }
 
 void
-fins_setup_sensors(struct fins_softc *sc, struct fins_sensor *sensors)
+fins_setup_sensors(struct fins_softc *sc, const struct fins_sensor *sensors)
 {
 	int i;
 
@@ -431,7 +431,7 @@ void
 fins_get_volt(struct fins_softc *sc, int n)
 {
 	struct ksensor *sensor = &sc->fins_ksensors[n];
-	struct fins_sensor *fs = &sc->fins_sensors[n];
+	const struct fins_sensor *fs = &sc->fins_sensors[n];
 	int data;
 
 	data = fins_read_sens(sc, fs->fs_reg);
@@ -449,7 +449,7 @@ void
 fins_get_temp(struct fins_softc *sc, int n)
 {
 	struct ksensor *sensor = &sc->fins_ksensors[n];
-	struct fins_sensor *fs = &sc->fins_sensors[n];
+	const struct fins_sensor *fs = &sc->fins_sensors[n];
 	u_int data;
 	u_int max;
 
@@ -477,7 +477,7 @@ void
 fins_refresh_offset(struct fins_softc *sc, int n)
 {
 	struct ksensor *sensor = &sc->fins_ksensors[n];
-	struct fins_sensor *fs = &sc->fins_sensors[n];
+	const struct fins_sensor *fs = &sc->fins_sensors[n];
 	u_int data;
 
 	sensor->flags &= ~SENSOR_FINVALID;
@@ -492,7 +492,7 @@ void
 fins_get_rpm(struct fins_softc *sc, int n)
 {
 	struct ksensor *sensor = &sc->fins_ksensors[n];
-	struct fins_sensor *fs = &sc->fins_sensors[n];
+	const struct fins_sensor *fs = &sc->fins_sensors[n];
 	int data;
 
 	data = fins_read_sens_2(sc, fs->fs_reg);
