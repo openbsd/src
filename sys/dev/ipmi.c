@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmi.c,v 1.117 2022/04/07 17:36:38 sthen Exp $ */
+/*	$OpenBSD: ipmi.c,v 1.118 2022/04/08 13:13:14 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2015 Masao Uebayashi
@@ -1398,7 +1398,7 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
     int sensor_num, int sensor_type, int ext_type, int sensor_base,
     int entity, const char *name)
 {
-	int			typ, idx;
+	int			typ, idx, rc = 0;
 	struct ipmi_sensor	*psensor;
 	struct sdrtype1		*s1 = (struct sdrtype1 *)psdr;
 
@@ -1438,11 +1438,12 @@ add_child_sensors(struct ipmi_softc *sc, u_int8_t *psdr, int count,
 			dbg_printf(5, "	 reading: %lld [%s]\n",
 			    psensor->i_sensor.value,
 			    psensor->i_sensor.desc);
+			rc = 1;
 		} else
 			free(psensor, M_DEVBUF, sizeof(*psensor));
 	}
 
-	return (1);
+	return (rc);
 }
 
 /* Handle IPMI Timer - reread sensor values */
