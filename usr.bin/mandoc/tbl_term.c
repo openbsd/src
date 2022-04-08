@@ -1,4 +1,4 @@
-/*	$OpenBSD: tbl_term.c,v 1.63 2021/08/10 12:36:42 schwarze Exp $ */
+/*	$OpenBSD: tbl_term.c,v 1.64 2022/04/08 16:53:40 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2021 Ingo Schwarze <schwarze@openbsd.org>
@@ -818,8 +818,11 @@ tbl_literal(struct termp *tp, const struct tbl_dat *dp,
 	width = col->width;
 	ic = dp->layout->col;
 	hspans = dp->hspans;
-	while (hspans--)
-		width += tp->tbl.cols[++ic].width + 3;
+	while (hspans--) {
+		width += tp->tbl.cols[ic].spacing;
+		ic++;
+		width += tp->tbl.cols[ic].width;
+	}
 
 	padr = width > len ? width - len : 0;
 	padl = 0;
