@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1988 2022/03/11 08:28:40 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1989 2022/04/08 06:07:01 kevlo Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6875,6 +6875,7 @@
 #define	PCI_PRODUCT_MATROX_MARV_G200_SD	0xff04		/* MGA Marvel G200 SD */
 
 /* MediaTek products */
+#define	PCI_PRODUCT_MEDIATEK_MT7921K	0x0608		/* MT7921K */
 #define	PCI_PRODUCT_MEDIATEK_MT7921	0x7961		/* MT7921 */
 
 /* Meinberg Funkuhren */
