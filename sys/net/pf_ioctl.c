@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.378 2022/04/07 19:27:24 mbuhl Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.379 2022/04/09 13:15:44 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2558,12 +2558,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 		ioe = malloc(sizeof(*ioe), M_TEMP, M_WAITOK);
 		table = malloc(sizeof(*table), M_TEMP, M_WAITOK);
-		NET_LOCK();
-		PF_LOCK();
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
-				PF_UNLOCK();
-				NET_UNLOCK();
 				free(table, M_TEMP, sizeof(*table));
 				free(ioe, M_TEMP, sizeof(*ioe));
 				error = EFAULT;
@@ -2571,13 +2567,13 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			}
 			if (strnlen(ioe->anchor, sizeof(ioe->anchor)) ==
 			    sizeof(ioe->anchor)) {
-				PF_UNLOCK();
-				NET_UNLOCK();
 				free(table, M_TEMP, sizeof(*table));
 				free(ioe, M_TEMP, sizeof(*ioe));
 				error = ENAMETOOLONG;
 				goto fail;
 			}
+			NET_LOCK();
+			PF_LOCK();
 			switch (ioe->type) {
 			case PF_TRANS_TABLE:
 				memset(table, 0, sizeof(*table));
@@ -2603,9 +2599,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EINVAL;
 				goto fail; /* really bad */
 			}
+			PF_UNLOCK();
+			NET_UNLOCK();
 		}
-		PF_UNLOCK();
-		NET_UNLOCK();
 		free(table, M_TEMP, sizeof(*table));
 		free(ioe, M_TEMP, sizeof(*ioe));
 		break;
