@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.18 2021/09/04 22:15:33 bluhm Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.19 2022/04/09 01:49:43 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -63,14 +63,8 @@ _C_LABEL(vmm_dispatch_intr):
 _C_LABEL(vmxon):
 	RETGUARD_SETUP(vmxon, r11)
 	vmxon	(%rdi)
-	jz	failed_on
-	jc	failed_on
 	xorq	%rax, %rax
-	RETGUARD_CHECK(vmxon, r11)
-	ret
-	lfence
-failed_on:
-	movq	$0x01, %rax
+	setna	%al
 	RETGUARD_CHECK(vmxon, r11)
 	ret
 	lfence
@@ -78,14 +72,8 @@ failed_on:
 _C_LABEL(vmxoff):
 	RETGUARD_SETUP(vmxoff, r11)
 	vmxoff
-	jz	failed_off
-	jc	failed_off
 	xorq	%rax, %rax
-	RETGUARD_CHECK(vmxoff, r11)
-	ret
-	lfence
-failed_off:
-	movq	$0x01, %rax
+	setna	%al
 	RETGUARD_CHECK(vmxoff, r11)
 	ret
 	lfence
@@ -93,14 +81,8 @@ failed_off:
 _C_LABEL(vmclear):
 	RETGUARD_SETUP(vmclear, r11)
 	vmclear	(%rdi)
-	jz	failed_clear
-	jc	failed_clear
 	xorq	%rax, %rax
-	RETGUARD_CHECK(vmclear, r11)
-	ret
-	lfence
-failed_clear:
-	movq	$0x01, %rax
+	setna	%al
 	RETGUARD_CHECK(vmclear, r11)
 	ret
 	lfence
@@ -108,14 +90,8 @@ failed_clear:
 _C_LABEL(vmptrld):
 	RETGUARD_SETUP(vmptrld, r11)
 	vmptrld	(%rdi)
-	jz	failed_ptrld
-	jc	failed_ptrld
 	xorq	%rax, %rax
-	RETGUARD_CHECK(vmptrld, r11)
-	ret
-	lfence
-failed_ptrld:
-	movq	$0x01, %rax
+	setna	%al
 	RETGUARD_CHECK(vmptrld, r11)
 	ret
 	lfence
@@ -123,14 +99,8 @@ failed_ptrld:
 _C_LABEL(vmptrst):
 	RETGUARD_SETUP(vmptrst, r11)
 	vmptrst	(%rdi)
-	jz	failed_ptrst
-	jc	failed_ptrst
 	xorq	%rax, %rax
-	RETGUARD_CHECK(vmptrst, r11)
-	ret
-	lfence
-failed_ptrst:
-	movq	$0x01, %rax
+	setna	%al
 	RETGUARD_CHECK(vmptrst, r11)
 	ret
 	lfence
@@ -138,14 +108,8 @@ failed_ptrst:
 _C_LABEL(vmwrite):
 	RETGUARD_SETUP(vmwrite, r11)
 	vmwrite	%rsi, %rdi
-	jz	failed_write
-	jc	failed_write
 	xorq	%rax, %rax
-	RETGUARD_CHECK(vmwrite, r11)
-	ret
-	lfence
-failed_write:
-	movq	$0x01, %rax
+	setna	%al
 	RETGUARD_CHECK(vmwrite, r11)
 	ret
 	lfence
@@ -153,14 +117,8 @@ failed_write:
 _C_LABEL(vmread):
 	RETGUARD_SETUP(vmread, r11)
 	vmread	%rdi, (%rsi)
-	jz	failed_read
-	jc	failed_read
 	xorq	%rax, %rax
-	RETGUARD_CHECK(vmread, r11)
-	ret
-	lfence
-failed_read:
-	movq	$0x01, %rax
+	setna	%al
 	RETGUARD_CHECK(vmread, r11)
 	ret
 	lfence
