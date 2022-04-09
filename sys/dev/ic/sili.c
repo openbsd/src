@@ -1,4 +1,4 @@
-/*	$OpenBSD: sili.c,v 1.60 2022/01/09 05:42:42 jsg Exp $ */
+/*	$OpenBSD: sili.c,v 1.61 2022/04/09 20:10:26 naddy Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -202,7 +202,7 @@ void 			sili_simulate_error(struct sili_ccb *ccb,
 			    int *need_restart, int *err_port);
 #endif
 
-struct atascsi_methods sili_atascsi_methods = {
+const struct atascsi_methods sili_atascsi_methods = {
 	sili_ata_probe,
 	sili_ata_free,
 	sili_ata_get_xfer,

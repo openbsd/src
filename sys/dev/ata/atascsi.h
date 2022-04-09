@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.h,v 1.53 2019/08/19 17:16:55 krw Exp $ */
+/*	$OpenBSD: atascsi.h,v 1.54 2022/04/09 20:10:26 naddy Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -374,7 +374,7 @@ struct atascsi_methods {
 struct atascsi_attach_args {
 	void			*aaa_cookie;
 
-	struct atascsi_methods	*aaa_methods;
+	const struct atascsi_methods *aaa_methods;
 	void			(*aaa_minphys)(struct buf *,
 				    struct scsi_link *);
 	int			aaa_nports;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahci.c,v 1.37 2020/07/16 21:18:30 krw Exp $ */
+/*	$OpenBSD: ahci.c,v 1.38 2022/04/09 20:10:26 naddy Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -160,7 +160,7 @@ struct ata_xfer *	ahci_ata_get_xfer(void *, int);
 void			ahci_ata_put_xfer(struct ata_xfer *);
 void			ahci_ata_cmd(struct ata_xfer *);
 
-struct atascsi_methods ahci_atascsi_methods = {
+const struct atascsi_methods ahci_atascsi_methods = {
 	ahci_ata_probe,
 	ahci_ata_free,
 	ahci_ata_get_xfer,
