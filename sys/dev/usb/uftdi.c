@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.76 2020/02/22 14:01:34 jasper Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.77 2022/04/09 20:07:44 naddy Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.14 2003/02/23 04:20:07 simonb Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ void	uftdi_break(void *sc, int portno, int onoff);
 int	uftdi_8u232am_getrate(speed_t speed, int *rate);
 int	uftdi_2232h_getrate(speed_t speed, int *rate);
 
-struct ucom_methods uftdi_methods = {
+const struct ucom_methods uftdi_methods = {
 	uftdi_get_status,
 	uftdi_set,
 	uftdi_param,

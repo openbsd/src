@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.78 2021/10/29 14:25:05 jsg Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.79 2022/04/09 20:07:44 naddy Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -129,7 +129,7 @@ int  uplcom_param(void *, int, struct termios *);
 int  uplcom_open(void *, int);
 void uplcom_close(void *, int);
 
-struct	ucom_methods uplcom_methods = {
+const struct ucom_methods uplcom_methods = {
 	uplcom_get_status,
 	uplcom_set,
 	uplcom_param,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.40 2022/01/09 05:43:02 jsg Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.41 2022/04/09 20:07:44 naddy Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -173,7 +173,7 @@ int  uvscom_param(void *, int, struct termios *);
 int  uvscom_open(void *, int);
 void uvscom_close(void *, int);
 
-struct ucom_methods uvscom_methods = {
+const struct ucom_methods uvscom_methods = {
 	uvscom_get_status,
 	uvscom_set,
 	uvscom_param,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uslcom.c,v 1.43 2021/12/13 13:57:48 visa Exp $	*/
+/*	$OpenBSD: uslcom.c,v 1.44 2022/04/09 20:07:44 naddy Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -99,7 +99,7 @@ int	uslcom_open(void *sc, int portno);
 void	uslcom_close(void *, int);
 void	uslcom_break(void *sc, int portno, int onoff);
 
-struct ucom_methods uslcom_methods = {
+const struct ucom_methods uslcom_methods = {
 	uslcom_get_status,
 	uslcom_set,
 	uslcom_param,

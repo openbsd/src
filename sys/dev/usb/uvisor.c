@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.52 2020/02/22 14:01:35 jasper Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.53 2022/04/09 20:07:44 naddy Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.21 2003/08/03 21:59:26 nathanw Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ usbd_status uvisor_init(struct uvisor_softc *,
 void uvisor_close(void *, int);
 
 
-struct ucom_methods uvisor_methods = {
+const struct ucom_methods uvisor_methods = {
 	NULL,
 	NULL,
 	NULL,

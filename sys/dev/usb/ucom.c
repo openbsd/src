@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.71 2020/07/31 10:49:33 mglocker Exp $ */
+/*	$OpenBSD: ucom.c,v 1.72 2022/04/09 20:07:44 naddy Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ struct ucom_softc {
 	struct usbd_pipe	*sc_ipipe;	/* hid interrupt input pipe */
 	struct usbd_pipe	*sc_opipe;	/* hid interrupt pipe */
 
-	struct ucom_methods     *sc_methods;
+	const struct ucom_methods *sc_methods;
 	void                    *sc_parent;
 	int			sc_portno;
 

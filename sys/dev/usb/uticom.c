@@ -1,4 +1,4 @@
-/*	$OpenBSD: uticom.c,v 1.34 2020/07/31 10:49:33 mglocker Exp $	*/
+/*	$OpenBSD: uticom.c,v 1.35 2022/04/09 20:07:44 naddy Exp $	*/
 /*
  * Copyright (c) 2005 Dmitry Komissaroff <dxi@mail.ru>.
  *
@@ -154,7 +154,7 @@ void uticom_attach_hook(struct device *);
 static int uticom_download_fw(struct uticom_softc *sc, int pipeno,
     struct usbd_device *dev);
 
-struct ucom_methods uticom_methods = {
+const struct ucom_methods uticom_methods = {
 	uticom_get_status,
 	uticom_set,
 	uticom_param,

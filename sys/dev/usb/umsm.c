@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.120 2022/01/09 05:43:01 jsg Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.121 2022/04/09 20:07:44 naddy Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -83,7 +83,7 @@ usbd_status umsm_huawei_changemode(struct usbd_device *);
 usbd_status umsm_truinstall_changemode(struct usbd_device *);
 usbd_status umsm_umass_changemode(struct umsm_softc *);
 
-struct ucom_methods umsm_methods = {
+const struct ucom_methods umsm_methods = {
 	umsm_get_status,
 	umsm_set,
 	NULL,

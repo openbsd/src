@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipaq.c,v 1.27 2020/02/22 14:01:34 jasper Exp $	*/
+/*	$OpenBSD: uipaq.c,v 1.28 2022/04/09 20:07:44 naddy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ void	uipaq_rts(struct uipaq_softc *sc, int onoff);
 void	uipaq_break(struct uipaq_softc* sc, int onoff);
 
 
-struct ucom_methods uipaq_methods = {
+const struct ucom_methods uipaq_methods = {
 	NULL,
 	uipaq_set,
 	NULL,

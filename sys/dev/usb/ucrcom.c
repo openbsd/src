@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucrcom.c,v 1.1 2019/05/08 23:53:40 kettenis Exp $	*/
+/*	$OpenBSD: ucrcom.c,v 1.2 2022/04/09 20:07:44 naddy Exp $	*/
 
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -36,7 +36,7 @@ struct ucrcom_softc {
 	struct device		*sc_subdev;
 };
 
-struct ucom_methods ucrcom_methods = { NULL };
+const struct ucom_methods ucrcom_methods = { NULL };
 
 int ucrcom_match(struct device *, void *, void *);
 void ucrcom_attach(struct device *, struct device *, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.67 2021/01/29 17:12:19 sthen Exp $ */
+/*	$OpenBSD: umodem.c,v 1.68 2022/04/09 20:07:44 naddy Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ int	umodem_open(void *, int portno);
 void	umodem_close(void *, int portno);
 void	umodem_intr(struct usbd_xfer *, void *, usbd_status);
 
-struct ucom_methods umodem_methods = {
+const struct ucom_methods umodem_methods = {
 	umodem_get_status,
 	umodem_set,
 	umodem_param,

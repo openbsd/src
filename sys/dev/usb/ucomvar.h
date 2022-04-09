@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucomvar.h,v 1.18 2013/04/15 09:23:02 mglocker Exp $ */
+/*	$OpenBSD: ucomvar.h,v 1.19 2022/04/09 20:07:44 naddy Exp $ */
 /*	$NetBSD: ucomvar.h,v 1.10 2001/12/31 12:15:21 augustss Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ struct ucom_attach_args {
 	const char *info;	/* attach message */
 	struct usbd_device *device;
 	struct usbd_interface *iface;
-	struct ucom_methods *methods;
+	const struct ucom_methods *methods;
 	void *arg;
 };
 

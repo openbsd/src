@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchcom.c,v 1.32 2022/01/26 12:05:33 uaa Exp $	*/
+/*	$OpenBSD: uchcom.c,v 1.33 2022/04/09 20:07:44 naddy Exp $	*/
 /*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
 
 /*
@@ -215,7 +215,7 @@ int		uchcom_match(struct device *, void *, void *);
 void		uchcom_attach(struct device *, struct device *, void *);
 int		uchcom_detach(struct device *, int);
 
-struct	ucom_methods uchcom_methods = {
+const struct ucom_methods uchcom_methods = {
 	uchcom_get_status,
 	uchcom_set,
 	uchcom_param,

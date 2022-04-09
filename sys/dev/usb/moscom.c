@@ -1,4 +1,4 @@
-/*	$OpenBSD: moscom.c,v 1.24 2016/09/02 09:14:59 mpi Exp $	*/
+/*	$OpenBSD: moscom.c,v 1.25 2022/04/09 20:07:44 naddy Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -145,7 +145,7 @@ int	moscom_param(void *, int, struct termios *);
 int	moscom_open(void *, int);
 int	moscom_cmd(struct moscom_softc *, int, int);	
 
-struct ucom_methods moscom_methods = {
+const struct ucom_methods moscom_methods = {
 	NULL,
 	moscom_set,
 	moscom_param,

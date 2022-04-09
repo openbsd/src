@@ -1,4 +1,4 @@
-/*	$OpenBSD: uxrcom.c,v 1.2 2020/07/31 10:49:33 mglocker Exp $	*/
+/*	$OpenBSD: uxrcom.c,v 1.3 2022/04/09 20:07:44 naddy Exp $	*/
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -80,7 +80,7 @@ void	uxrcom_close(void *, int);
 void	uxrcom_break(void *, int, int);
 void	uxrcom_intr(struct usbd_xfer *, void *, usbd_status);
 
-struct ucom_methods uxrcom_methods = {
+const struct ucom_methods uxrcom_methods = {
 	uxrcom_get_status,
 	uxrcom_set,
 	uxrcom_param,

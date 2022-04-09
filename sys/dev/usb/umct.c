@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.48 2020/07/31 10:49:33 mglocker Exp $	*/
+/*	$OpenBSD: umct.c,v 1.49 2022/04/09 20:07:44 naddy Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ int  umct_param(void *, int, struct termios *);
 int  umct_open(void *, int);
 void umct_close(void *, int);
 
-struct	ucom_methods umct_methods = {
+const struct ucom_methods umct_methods = {
 	umct_get_status,
 	umct_set,
 	umct_param,

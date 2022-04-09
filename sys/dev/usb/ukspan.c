@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukspan.c,v 1.3 2020/02/17 19:29:55 jasper Exp $ */
+/*	$OpenBSD: ukspan.c,v 1.4 2022/04/09 20:07:44 naddy Exp $ */
 
 /*
  * Copyright (c) 2019 Cody Cutler <ccutler@csail.mit.edu>
@@ -172,7 +172,7 @@ static const struct usb_devno ukspan_devs[] = {
 	{ USB_VENDOR_KEYSPAN, USB_PRODUCT_KEYSPAN_USA19HS },
 };
 
-static struct ucom_methods ukspan_methods = {
+static const struct ucom_methods ukspan_methods = {
 	.ucom_get_status = ukspan_get_status,
 	.ucom_set = ukspan_set,
 	.ucom_param = ukspan_param,

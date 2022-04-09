@@ -1,4 +1,4 @@
-/* $OpenBSD: umcs.c,v 1.9 2022/01/09 05:43:01 jsg Exp $ */
+/* $OpenBSD: umcs.c,v 1.10 2022/04/09 20:07:44 naddy Exp $ */
 /* $NetBSD: umcs.c,v 1.8 2014/08/23 21:37:56 martin Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
@@ -119,7 +119,7 @@ int	umcs_param(void *, int, struct termios *);
 int	umcs_open(void *, int);
 void	umcs_close(void *, int);
 
-struct ucom_methods umcs_methods = {
+const struct ucom_methods umcs_methods = {
 	umcs_get_status,
 	umcs_set,
 	umcs_param,
