@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendbug.c,v 1.79 2022/03/29 18:44:12 jca Exp $	*/
+/*	$OpenBSD: sendbug.c,v 1.80 2022/04/10 17:47:54 jca Exp $	*/
 
 /*
  * Written by Ray Lai <ray@cyth.net>.
@@ -44,7 +44,8 @@ void	template(FILE *);
 void	usbdevs(FILE *);
 
 const char *categories = "system user library documentation kernel "
-    "alpha amd64 arm hppa i386 m88k mips64 powerpc riscv64 sh sparc64";
+    "alpha aarch64 amd64 arm hppa i386 m88k mips64 mips64el powerpc powerpc64 "
+    "riscv64 sh sparc64";
 const char *comment[] = {
 	"<synopsis of the problem (one line)>",
 	"<PR category (one line)>",
