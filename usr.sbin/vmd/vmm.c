@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.104 2022/03/01 21:46:19 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.105 2022/04/10 19:36:58 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -779,7 +779,7 @@ get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 		if (terminate) {
 			vtp.vtp_vm_id = info[i].vir_id;
 			if ((ret = terminate_vm(&vtp)) != 0)
-				return (ret);
+				break;
 			log_debug("%s: terminated vm %s (id %d)", __func__,
 			    info[i].vir_name, info[i].vir_id);
 			continue;
@@ -788,10 +788,12 @@ get_info_vm(struct privsep *ps, struct imsg *imsg, int terminate)
 		vir.vir_info.vir_id = vm_id2vmid(info[i].vir_id, NULL);
 		if (proc_compose_imsg(ps, PROC_PARENT, -1,
 		    IMSG_VMDOP_GET_INFO_VM_DATA, imsg->hdr.peerid, -1,
-		    &vir, sizeof(vir)) == -1)
-			return (EIO);
+		    &vir, sizeof(vir)) == -1) {
+			ret = EIO;
+			break;
+		}
 	}
 	free(info);
 
-	return (0);
+	return (ret);
 }
