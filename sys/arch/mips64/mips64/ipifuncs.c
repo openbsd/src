@@ -1,4 +1,4 @@
-/* $OpenBSD: ipifuncs.c,v 1.24 2021/07/24 08:21:13 visa Exp $ */
+/* $OpenBSD: ipifuncs.c,v 1.25 2022/04/10 13:23:14 visa Exp $ */
 /* $NetBSD: ipifuncs.c,v 1.40 2008/04/28 20:23:10 martin Exp $ */
 
 /*-
@@ -165,12 +165,6 @@ mips64_multicast_ipi(unsigned int cpumask, unsigned int ipimask)
 
 	cpumask &= ~(1 << cpu_number());
 
-	/*
-	 * Ensure that preceding stores are visible to other CPUs
-	 * before sending the IPI.
-	 */
-	membar_producer();
-
 	CPU_INFO_FOREACH(cii, ci) {
 		if (!(cpumask & (1UL << ci->ci_cpuid)) || !CPU_IS_RUNNING(ci))
 			continue;
@@ -199,19 +193,19 @@ mips64_ipi_nop(void)
 void
 smp_rendezvous_action(void)
 {
-	void* local_func_arg = smp_rv_func_arg;
-	void (*local_action_func)(void*) = smp_rv_action_func;
 	unsigned int cpumask = 1 << cpu_number();
 
-	/* Ensure we have up-to-date values. */
+	/* Signal readiness and acquire pre-action state. */
 	atomic_setbits_int(&smp_rv_waiters[0], cpumask);
+	membar_enter_after_atomic();
+
 	while (smp_rv_waiters[0] != smp_rv_map)
-		;
+		CPU_BUSY_CYCLE();
 
-	/* action function */
-	(*local_action_func)(local_func_arg);
+	(*smp_rv_action_func)(smp_rv_func_arg);
 
-	/* spin on exit rendezvous */
+	/* Release post-action state and signal completion. */
+	membar_exit_before_atomic();
 	atomic_setbits_int(&smp_rv_waiters[1], cpumask);
 }
 
@@ -236,6 +230,9 @@ smp_rendezvous_cpus(unsigned long map,
 	smp_rv_waiters[0] = 0;
 	smp_rv_waiters[1] = 0;
 
+	/* Release pre-action state before IPI send. */
+	membar_exit();
+
 	/* signal other processors, which will enter the IPI with interrupts off */
 	mips64_multicast_ipi(map, MIPS64_IPI_RENDEZVOUS);
 
@@ -244,7 +241,10 @@ smp_rendezvous_cpus(unsigned long map,
 		smp_rendezvous_action();
 
 	while (smp_rv_waiters[1] != smp_rv_map)
-		continue;
+		CPU_BUSY_CYCLE();
+
+	/* Acquire post-action state after read. */
+	membar_sync();
 
 	smp_rv_action_func = NULL;
 
