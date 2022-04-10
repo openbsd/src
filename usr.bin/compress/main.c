@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.99 2022/03/14 21:52:08 solene Exp $	*/
+/*	$OpenBSD: main.c,v 1.100 2022/04/10 18:05:39 jca Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@
 enum program_mode pmode;
 
 int cat, decomp, pipin, force, verbose, testmode, list, recurse, storename;
+int kflag;
 extern char *__progname;
 
 const struct compressor {
@@ -167,12 +168,12 @@ main(int argc, char *argv[])
 	const char *optstr, *s;
 	char *p, *infile;
 	char outfile[PATH_MAX], _infile[PATH_MAX], suffix[16];
-	int bits, ch, error, rc, cflag, kflag, oflag;
+	int bits, ch, error, rc, cflag, oflag;
 
 	if (pledge("stdio rpath wpath cpath fattr chown", NULL) == -1)
 		err(1, "pledge");
 
-	bits = cflag = kflag = oflag = 0;
+	bits = cflag = oflag = 0;
 	storename = -1;
 	p = __progname;
 	if (p[0] == 'g') {
@@ -932,8 +933,9 @@ verbose_info(const char *file, off_t compressed, off_t uncompressed,
 		return;
 	}
 	if (!pipin) {
-		fprintf(stderr, "\t%4.1f%% -- replaced with %s\n",
-		    (uncompressed - compressed) * 100.0 / uncompressed, file);
+		fprintf(stderr, "\t%4.1f%% -- %s %s\n",
+		    (uncompressed - compressed) * 100.0 / uncompressed,
+		    kflag ? "created" : "replaced with", file);
 	}
 	compressed += hlen;
 	fprintf(stderr, "%lld bytes in, %lld bytes out\n",
