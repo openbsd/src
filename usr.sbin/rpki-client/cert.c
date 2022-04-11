@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.63 2022/04/11 06:47:38 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.64 2022/04/11 08:04:43 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -989,7 +989,7 @@ certificate_policies(struct parse *p, X509_EXTENSION *ext)
 struct cert *
 cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 {
-	int		 rc = 0, extsz, c;
+	int		 extsz;
 	int		 sia_present = 0;
 	size_t		 i;
 	X509		*x = NULL;
@@ -1021,21 +1021,24 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		assert(ext != NULL);
 		obj = X509_EXTENSION_get_object(ext);
 		assert(obj != NULL);
-		c = 1;
 
 		switch (OBJ_obj2nid(obj)) {
 		case NID_sbgp_ipAddrBlock:
-			c = sbgp_ipaddrblk(&p, ext);
+			if (!sbgp_ipaddrblk(&p, ext))
+				goto out;
 			break;
 		case NID_sbgp_autonomousSysNum:
-			c = sbgp_assysnum(&p, ext);
+			if (!sbgp_assysnum(&p, ext))
+				goto out;
 			break;
 		case NID_sinfo_access:
 			sia_present = 1;
-			c = sbgp_sia(&p, ext);
+			if (!sbgp_sia(&p, ext))
+				goto out;
 			break;
 		case NID_certificate_policies:
-			c = certificate_policies(&p, ext);
+			if (!certificate_policies(&p, ext))
+				goto out;
 			break;
 		case NID_crl_distribution_points:
 			/* ignored here, handled later */
@@ -1057,8 +1060,6 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 			} */
 			break;
 		}
-		if (c == 0)
-			goto out;
 	}
 
 	if (!x509_get_aki(x, p.fn, &p.res->aki))
@@ -1114,14 +1115,12 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	}
 
 	p.res->x509 = x;
+	return p.res;
 
-	rc = 1;
 out:
-	if (rc == 0) {
-		cert_free(p.res);
-		X509_free(x);
-	}
-	return (rc == 0) ? NULL : p.res;
+	cert_free(p.res);
+	X509_free(x);
+	return NULL;
 }
 
 struct cert *
