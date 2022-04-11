@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.10 2022/03/01 04:08:04 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.11 2022/04/11 03:02:40 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -244,6 +244,21 @@ static inline bool
 pci_is_root_bus(struct pci_bus *pbus)
 {
 	return (pbus->bridgetag == NULL);
+}
+
+static inline struct pci_dev *
+pci_upstream_bridge(struct pci_dev *pdev)
+{
+	if (pci_is_root_bus(pdev->bus))
+		return NULL;
+	return pdev->bus->self;
+}
+
+/* XXX check for ACPI _PR3 */
+static inline bool
+pci_pr3_present(struct pci_dev *pdev)
+{
+	return false;
 }
 
 static inline int
