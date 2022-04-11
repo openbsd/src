@@ -4,6 +4,7 @@
 #define _LINUX_SYNC_FILE_H
 
 #include <linux/dma-fence.h>
+#include <linux/dma-fence-array.h>
 #include <linux/ktime.h>
 
 struct sync_file {
