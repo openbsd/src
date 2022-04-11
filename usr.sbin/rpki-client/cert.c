@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.64 2022/04/11 08:04:43 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.65 2022/04/11 08:28:54 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -162,15 +162,9 @@ sbgp_sia_resource_mft(struct parse *p, const char *d, size_t dsz)
 		return 0;
 	}
 
-	/* Make sure it's an MFT rsync address. */
+	/* Make sure it's an rsync address. */
 	if (!valid_uri(d, dsz, "rsync://")) {
 		warnx("%s: RFC 6487 section 4.8.8: bad MFT location", p->fn);
-		return 0;
-	}
-
-	if (dsz < 4 || strcasecmp(d + dsz - 4, ".mft") != 0) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "not an MFT file", p->fn);
 		return 0;
 	}
 
@@ -257,14 +251,27 @@ sbgp_sia_resource_entry(struct parse *p, ACCESS_DESCRIPTION *ad)
 }
 
 /*
- * Multiple locations as defined in RFC 6487, 4.8.8.1.
+ * Parse "Subject Information Access" extension, RFC 6487 4.8.8.
  * Returns zero on failure, non-zero on success.
  */
 static int
-sbgp_sia_resource(struct parse *p, AUTHORITY_INFO_ACCESS *sia)
+sbgp_sia(struct parse *p, X509_EXTENSION *ext)
 {
+	AUTHORITY_INFO_ACCESS	*sia = NULL;
 	ACCESS_DESCRIPTION	*ad;
 	int			 i, rc = 0;
+
+	if (X509_EXTENSION_get_critical(ext)) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "extension not non-critical", p->fn);
+		goto out;
+	}
+
+	if ((sia = X509V3_EXT_d2i(ext)) == NULL) {
+		cryptowarnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "failed extension parse", p->fn);
+		goto out;
+	}
 
 	for (i = 0; i < sk_ACCESS_DESCRIPTION_num(sia); i++) {
 		ad = sk_ACCESS_DESCRIPTION_value(sia, i);
@@ -285,34 +292,11 @@ sbgp_sia_resource(struct parse *p, AUTHORITY_INFO_ACCESS *sia)
 		goto out;
 	}
 
-	rc = 1;
- out:
-	return rc;
-}
-
-/*
- * Parse "Subject Information Access" extension, RFC 6487 4.8.8.
- * Returns zero on failure, non-zero on success.
- */
-static int
-sbgp_sia(struct parse *p, X509_EXTENSION *ext)
-{
-	AUTHORITY_INFO_ACCESS	*sia = NULL;
-	int			 rc = 0;
-
-	if (X509_EXTENSION_get_critical(ext)) {
+	if (rtype_from_file_extension(p->res->mft) != RTYPE_MFT) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "extension not non-critical", p->fn);
+		    "not an MFT file", p->fn);
 		goto out;
 	}
-
-	if ((sia = X509V3_EXT_d2i(ext)) == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "failed extension parse", p->fn);
-		goto out;
-	}
-	if (!sbgp_sia_resource(p, sia))
-		goto out;
 
 	rc = 1;
  out:
