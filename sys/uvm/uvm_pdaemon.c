@@ -1,9 +1,9 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.95 2022/03/12 12:34:22 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.96 2022/04/11 16:43:49 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
- * Copyright (c) 1991, 1993, The Regents of the University of California.  
+ * Copyright (c) 1991, 1993, The Regents of the University of California.
  *
  * All rights reserved.
  *
@@ -40,17 +40,17 @@
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
  * All rights reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and
  * its documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
  * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
  *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
@@ -123,7 +123,9 @@ uvm_wait(const char *wmsg)
 		panic("%s: cannot sleep for memory during boot", __func__);
 #endif
 
-	/* check for page daemon going to sleep (waiting for itself) */
+	/*
+	 * check for page daemon going to sleep (waiting for itself)
+	 */
 	if (curproc == uvm.pagedaemon_proc) {
 		printf("uvm_wait emergency bufbackoff\n");
 		if (bufbackoff(NULL, 4) == 0)
