@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.192 2022/04/04 16:02:54 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.193 2022/04/11 18:59:23 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -703,6 +703,34 @@ check_fs_size(int fd, const char *cachedir)
 	}
 }
 
+static pid_t
+process_start(const char *title, int *fd)
+{
+	int		 fl = SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK;
+	pid_t		 pid;
+	int		 pair[2];
+
+	if (socketpair(AF_UNIX, fl, 0, pair) == -1)
+		err(1, "socketpair");
+	if ((pid = fork()) == -1)
+		err(1, "fork");
+
+	if (pid == 0) {
+		setproctitle("%s", title);
+		/* change working directory to the cache directory */
+		if (fchdir(cachefd) == -1)
+			err(1, "fchdir");
+		if (timeout)
+			alarm(timeout);
+		close(pair[1]);
+		*fd = pair[0];
+	} else {
+		close(pair[0]);
+		*fd = pair[1];
+	}
+	return pid;
+}
+
 void
 suicide(int sig __attribute__((unused)))
 {
@@ -715,10 +743,8 @@ int
 main(int argc, char *argv[])
 {
 	int		 rc, c, st, proc, rsync, http, rrdp, hangup = 0;
-	int		 fl = SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK;
 	size_t		 i;
 	pid_t		 pid, procpid, rsyncpid, httppid, rrdppid;
-	int		 fd[2];
 	struct pollfd	 pfd[NPFD];
 	struct msgbuf	*queues[NPFD];
 	struct ibuf	*b, *httpbuf = NULL, *procbuf = NULL;
@@ -869,33 +895,11 @@ main(int argc, char *argv[])
 	 * manifests, certificates, etc.) and returning contents.
 	 */
 
-	if (socketpair(AF_UNIX, fl, 0, fd) == -1)
-		err(1, "socketpair");
-	if ((procpid = fork()) == -1)
-		err(1, "fork");
-
+	procpid = process_start("parser", &proc);
 	if (procpid == 0) {
-		close(fd[1]);
-
-		setproctitle("parser");
-		/* change working directory to the cache directory */
-		if (fchdir(cachefd) == -1)
-			err(1, "fchdir");
-
-		if (timeout)
-			alarm(timeout);
-
-		/* Only allow access to the cache directory. */
-		if (unveil(".", "r") == -1)
-			err(1, "%s: unveil", cachedir);
-		if (pledge("stdio rpath", NULL) == -1)
-			err(1, "pledge");
-		proc_parser(fd[0]);
+		proc_parser(proc);
 		errx(1, "parser process returned");
 	}
-
-	close(fd[0]);
-	proc = fd[1];
 
 	/*
 	 * Create a process that will do the rsync'ing.
@@ -905,32 +909,12 @@ main(int argc, char *argv[])
 	 */
 
 	if (!noop) {
-		if (socketpair(AF_UNIX, fl, 0, fd) == -1)
-			err(1, "socketpair");
-		if ((rsyncpid = fork()) == -1)
-			err(1, "fork");
-
+		rsyncpid = process_start("rsync", &rsync);
 		if (rsyncpid == 0) {
 			close(proc);
-			close(fd[1]);
-
-			setproctitle("rsync");
-			/* change working directory to the cache directory */
-			if (fchdir(cachefd) == -1)
-				err(1, "fchdir");
-
-			if (timeout)
-				alarm(timeout);
-
-			if (pledge("stdio rpath proc exec unveil", NULL) == -1)
-				err(1, "pledge");
-
-			proc_rsync(rsync_prog, bind_addr, fd[0]);
+			proc_rsync(rsync_prog, bind_addr, rsync);
 			errx(1, "rsync process returned");
 		}
-
-		close(fd[0]);
-		rsync = fd[1];
 	} else {
 		rsync = -1;
 		rsyncpid = -1;
@@ -942,34 +926,15 @@ main(int argc, char *argv[])
 	 * where the data should be written to.
 	 */
 
-	if (!noop) {
-		if (socketpair(AF_UNIX, fl, 0, fd) == -1)
-			err(1, "socketpair");
-		if ((httppid = fork()) == -1)
-			err(1, "fork");
+	if (!noop && rrdpon) {
+		httppid = process_start("http", &http);
 
 		if (httppid == 0) {
 			close(proc);
 			close(rsync);
-			close(fd[1]);
-
-			setproctitle("http");
-			/* change working directory to the cache directory */
-			if (fchdir(cachefd) == -1)
-				err(1, "fchdir");
-
-			if (timeout)
-				alarm(timeout);
-
-			if (pledge("stdio rpath inet dns recvfd", NULL) == -1)
-				err(1, "pledge");
-
-			proc_http(bind_addr, fd[0]);
+			proc_http(bind_addr, http);
 			errx(1, "http process returned");
 		}
-
-		close(fd[0]);
-		http = fd[1];
 	} else {
 		http = -1;
 		httppid = -1;
@@ -982,34 +947,14 @@ main(int argc, char *argv[])
 	 */
 
 	if (!noop && rrdpon) {
-		if (socketpair(AF_UNIX, fl, 0, fd) == -1)
-			err(1, "socketpair");
-		if ((rrdppid = fork()) == -1)
-			err(1, "fork");
-
+		rrdppid = process_start("rrdp", &rrdp);
 		if (rrdppid == 0) {
 			close(proc);
 			close(rsync);
 			close(http);
-			close(fd[1]);
-
-			setproctitle("rrdp");
-			/* change working directory to the cache directory */
-			if (fchdir(cachefd) == -1)
-				err(1, "fchdir");
-
-			if (timeout)
-				alarm(timeout);
-
-			if (pledge("stdio recvfd", NULL) == -1)
-				err(1, "pledge");
-
-			proc_rrdp(fd[0]);
-			/* NOTREACHED */
+			proc_rrdp(rrdp);
+			errx(1, "rrdp process returned");
 		}
-
-		close(fd[0]);
-		rrdp = fd[1];
 	} else {
 		rrdp = -1;
 		rrdppid = -1;

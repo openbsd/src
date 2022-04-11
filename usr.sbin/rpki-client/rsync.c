@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.34 2022/04/04 13:47:58 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.35 2022/04/11 18:59:23 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -149,8 +149,10 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 	sigset_t		 mask, oldmask;
 	struct rsyncproc	 ids[MAX_RSYNC_PROCESSES] = { 0 };
 
-	pfd.fd = fd;
+	if (pledge("stdio rpath proc exec unveil", NULL) == -1)
+		err(1, "pledge");
 
+	pfd.fd = fd;
 	msgbuf_init(&msgq);
 	msgq.fd = fd;
 

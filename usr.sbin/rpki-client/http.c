@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.54 2022/03/11 09:57:54 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.55 2022/04/11 18:59:23 claudio Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1772,6 +1772,9 @@ proc_http(char *bind_addr, int fd)
 	struct http_connection *conn, *nc;
 	struct http_request *req, *nr;
 	struct ibuf *b, *inbuf = NULL;
+
+	if (pledge("stdio rpath inet dns recvfd", NULL) == -1)
+		err(1, "pledge");
 
 	if (bind_addr != NULL) {
 		struct addrinfo hints, *res;

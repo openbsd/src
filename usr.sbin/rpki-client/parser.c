@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.66 2022/04/02 12:17:53 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.67 2022/04/11 18:59:23 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1218,6 +1218,12 @@ proc_parser(int fd)
 	struct pollfd	 pfd;
 	struct entity	*entp;
 	struct ibuf	*b, *inbuf = NULL;
+
+	/* Only allow access to the cache directory. */
+	if (unveil(".", "r") == -1)
+		err(1, "unveil cachedir");
+	if (pledge("stdio rpath", NULL) == -1)
+		err(1, "pledge");
 
 	ERR_load_crypto_strings();
 	OpenSSL_add_all_ciphers();
