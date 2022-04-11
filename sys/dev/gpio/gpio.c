@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpio.c,v 1.16 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: gpio.c,v 1.17 2022/04/11 14:30:05 visa Exp $	*/
 
 /*
  * Copyright (c) 2008 Marc Balmer <mbalmer@openbsd.org>
@@ -53,6 +53,7 @@ int	gpio_detach(struct device *, int);
 int	gpio_search(struct device *, void *, void *);
 int	gpio_print(void *, const char *);
 int	gpio_pinbyname(struct gpio_softc *, char *gp_name);
+int	gpio_ioctl(struct gpio_softc *, u_long, caddr_t, int);
 
 const struct cfattach gpio_ca = {
 	sizeof (struct gpio_softc),
@@ -249,16 +250,20 @@ int
 gpioopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct gpio_softc *sc;
+	int error = 0;
 
 	sc = (struct gpio_softc *)device_lookup(&gpio_cd, minor(dev));
 	if (sc == NULL)
 		return (ENXIO);
 
 	if (sc->sc_opened)
-		return (EBUSY);
-	sc->sc_opened = 1;
+		error = EBUSY;
+	else
+		sc->sc_opened = 1;
 
-	return (0);
+	device_unref(&sc->sc_dev);
+
+	return (error);
 }
 
 int
@@ -271,6 +276,8 @@ gpioclose(dev_t dev, int flag, int mode, struct proc *p)
 		return (ENXIO);
 
 	sc->sc_opened = 0;
+
+	device_unref(&sc->sc_dev);
 
 	return (0);
 }
@@ -287,9 +294,8 @@ gpio_pinbyname(struct gpio_softc *sc, char *gp_name)
 }
 
 int
-gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+gpio_ioctl(struct gpio_softc *sc, u_long cmd, caddr_t data, int flag)
 {
-	struct gpio_softc *sc;
 	gpio_chipset_tag_t gc;
 	struct gpio_info *info;
 	struct gpio_pin_op *op;
@@ -300,10 +306,6 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct gpio_pin_set *set;
 	struct device *dv;
 	int pin, value, flags, npins, found;
-
-	sc = (struct gpio_softc *)device_lookup(&gpio_cd, minor(dev));
-	if (sc == NULL)
-		return (ENXIO);
 
 	gc = sc->sc_gc;
 
@@ -520,4 +522,21 @@ gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	}
 
 	return (0);
+}
+
+int
+gpioioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	struct gpio_softc *sc;
+	int error;
+
+	sc = (struct gpio_softc *)device_lookup(&gpio_cd, minor(dev));
+	if (sc == NULL)
+		return (ENXIO);
+
+	error = gpio_ioctl(sc, cmd, data, flag);
+
+	device_unref(&sc->sc_dev);
+
+	return (error);
 }
