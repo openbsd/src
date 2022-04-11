@@ -10751,7 +10751,8 @@ static bool dm_edid_parser_send_cea(struct amdgpu_display_manager *dm,
 		vsdb->min_refresh_rate_hz = output->amd_vsdb.min_frame_rate;
 		vsdb->max_refresh_rate_hz = output->amd_vsdb.max_frame_rate;
 	} else {
-		DRM_WARN("Unknown EDID CEA parser results\n");
+		if (output->type != 0)
+			DRM_WARN("Unknown EDID CEA parser results\n");
 		return false;
 	}
 
