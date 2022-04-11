@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.62 2022/04/05 03:56:20 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.63 2022/04/11 06:47:38 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -214,63 +214,45 @@ sbgp_sia_resource_carepo(struct parse *p, const char *d, size_t dsz)
  * Returns zero on failure, non-zero on success.
  */
 static int
-sbgp_sia_resource_entry(struct parse *p,
-	const unsigned char *d, size_t dsz)
+sbgp_sia_resource_entry(struct parse *p, ACCESS_DESCRIPTION *ad)
 {
-	ASN1_SEQUENCE_ANY	*seq;
 	ASN1_OBJECT		*oid;
-	const ASN1_TYPE		*t;
-	int			 rc = 0, ptag;
-	long			 plen;
+	ASN1_IA5STRING		*uri = NULL;
+	int			 rc = 0;
 
-	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "failed ASN.1 sequence parse", p->fn);
-		goto out;
+	if (ad->location->type == GEN_URI)
+		uri = ad->location->d.uniformResourceIdentifier;
+
+	oid = ad->method;
+
+	if (OBJ_cmp(oid, carepo_oid) == 0) {
+		if (uri == NULL) {
+			warnx("%s: RFC 6487: 4.8.8.1 caRepository without URI",
+			    p->fn);
+			goto out;
+		}
+		if (!sbgp_sia_resource_carepo(p, uri->data, uri->length))
+			goto out;
+	} else if (OBJ_cmp(oid, manifest_oid) == 0) {
+		if (uri == NULL) {
+			warnx("%s: RFC 6487: 4.8.8 SIA manifest without URI",
+			    p->fn);
+			goto out;
+		}
+		if (!sbgp_sia_resource_mft(p, uri->data, uri->length))
+			goto out;
+	} else if (OBJ_cmp(oid, notify_oid) == 0) {
+		if (uri == NULL) {
+			warnx("%s: RFC 6487: 4.8.8 SIA resourceNotify "
+			    "without URI", p->fn);
+			goto out;
+		}
+		if (!sbgp_sia_resource_notify(p, uri->data, uri->length))
+			goto out;
 	}
-	if (sk_ASN1_TYPE_num(seq) != 2) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "want 2 elements, have %d",
-		    p->fn, sk_ASN1_TYPE_num(seq));
-		goto out;
-	}
 
-	/* Composed of an OID and its continuation. */
-
-	t = sk_ASN1_TYPE_value(seq, 0);
-	if (t->type != V_ASN1_OBJECT) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "want ASN.1 object, have %s (NID %d)",
-		    p->fn, ASN1_tag2str(t->type), t->type);
-		goto out;
-	}
-	oid = t->value.object;
-
-	t = sk_ASN1_TYPE_value(seq, 1);
-	if (t->type != V_ASN1_OTHER) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "want ASN.1 external, have %s (NID %d)",
-		    p->fn, ASN1_tag2str(t->type), t->type);
-		goto out;
-	}
-
-	/* FIXME: there must be a way to do this without ASN1_frame. */
-
-	d = t->value.asn1_string->data;
-	dsz = t->value.asn1_string->length;
-	if (!ASN1_frame(p->fn, dsz, &d, &plen, &ptag))
-		goto out;
-
-	if (OBJ_cmp(oid, carepo_oid) == 0)
-		rc = sbgp_sia_resource_carepo(p, d, plen);
-	else if (OBJ_cmp(oid, manifest_oid) == 0)
-		rc = sbgp_sia_resource_mft(p, d, plen);
-	else if (OBJ_cmp(oid, notify_oid) == 0)
-		rc = sbgp_sia_resource_notify(p, d, plen);
-	else
-		rc = 1;	/* silently ignore */
-out:
-	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
+	rc = 1;
+ out:
 	return rc;
 }
 
@@ -279,29 +261,14 @@ out:
  * Returns zero on failure, non-zero on success.
  */
 static int
-sbgp_sia_resource(struct parse *p, const unsigned char *d, size_t dsz)
+sbgp_sia_resource(struct parse *p, AUTHORITY_INFO_ACCESS *sia)
 {
-	ASN1_SEQUENCE_ANY	*seq;
-	const ASN1_TYPE		*t;
-	int			 rc = 0, i;
+	ACCESS_DESCRIPTION	*ad;
+	int			 i, rc = 0;
 
-	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "failed ASN.1 sequence parse", p->fn);
-		goto out;
-	}
-
-	for (i = 0; i < sk_ASN1_TYPE_num(seq); i++) {
-		t = sk_ASN1_TYPE_value(seq, i);
-		if (t->type != V_ASN1_SEQUENCE) {
-			warnx("%s: RFC 6487 section 4.8.8: SIA: "
-			    "want ASN.1 sequence, have %s (NID %d)",
-			    p->fn, ASN1_tag2str(t->type), t->type);
-			goto out;
-		}
-		d = t->value.asn1_string->data;
-		dsz = t->value.asn1_string->length;
-		if (!sbgp_sia_resource_entry(p, d, dsz))
+	for (i = 0; i < sk_ACCESS_DESCRIPTION_num(sia); i++) {
+		ad = sk_ACCESS_DESCRIPTION_value(sia, i);
+		if (!sbgp_sia_resource_entry(p, ad))
 			goto out;
 	}
 
@@ -317,9 +284,9 @@ sbgp_sia_resource(struct parse *p, const unsigned char *d, size_t dsz)
 		    p->fn);
 		goto out;
 	}
+
 	rc = 1;
-out:
-	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
+ out:
 	return rc;
 }
 
@@ -330,11 +297,8 @@ out:
 static int
 sbgp_sia(struct parse *p, X509_EXTENSION *ext)
 {
-	unsigned char		*sv = NULL;
-	const unsigned char	*d;
-	ASN1_SEQUENCE_ANY	*seq = NULL;
-	const ASN1_TYPE		*t;
-	int			 dsz, rc = 0;
+	AUTHORITY_INFO_ACCESS	*sia = NULL;
+	int			 rc = 0;
 
 	if (X509_EXTENSION_get_critical(ext)) {
 		warnx("%s: RFC 6487 section 4.8.8: SIA: "
@@ -342,57 +306,17 @@ sbgp_sia(struct parse *p, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if ((dsz = i2d_X509_EXTENSION(ext, &sv)) < 0) {
+	if ((sia = X509V3_EXT_d2i(ext)) == NULL) {
 		cryptowarnx("%s: RFC 6487 section 4.8.8: SIA: "
 		    "failed extension parse", p->fn);
 		goto out;
 	}
-	d = sv;
-
-	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "failed ASN.1 sequence parse", p->fn);
-		goto out;
-	}
-	if (sk_ASN1_TYPE_num(seq) != 2) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "want 2 elements, have %d", p->fn,
-		    sk_ASN1_TYPE_num(seq));
-		goto out;
-	}
-
-	t = sk_ASN1_TYPE_value(seq, 0);
-	if (t->type != V_ASN1_OBJECT) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "want ASN.1 object, have %s (NID %d)",
-		    p->fn, ASN1_tag2str(t->type), t->type);
-		goto out;
-	}
-	if (OBJ_obj2nid(t->value.object) != NID_sinfo_access) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "incorrect OID, have %s (NID %d)", p->fn,
-		    ASN1_tag2str(OBJ_obj2nid(t->value.object)),
-		    OBJ_obj2nid(t->value.object));
-		goto out;
-	}
-
-	t = sk_ASN1_TYPE_value(seq, 1);
-	if (t->type != V_ASN1_OCTET_STRING) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "want ASN.1 octet string, have %s (NID %d)",
-		    p->fn, ASN1_tag2str(t->type), t->type);
-		goto out;
-	}
-
-	d = t->value.octet_string->data;
-	dsz = t->value.octet_string->length;
-	if (!sbgp_sia_resource(p, d, dsz))
+	if (!sbgp_sia_resource(p, sia))
 		goto out;
 
 	rc = 1;
-out:
-	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
-	free(sv);
+ out:
+	AUTHORITY_INFO_ACCESS_free(sia);
 	return rc;
 }
 
