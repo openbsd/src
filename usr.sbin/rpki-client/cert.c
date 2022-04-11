@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.65 2022/04/11 08:28:54 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.66 2022/04/11 10:39:45 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -125,129 +125,37 @@ sbgp_addr(struct parse *p,
 }
 
 /*
- * Parse the SIA notify URL, 4.8.8.1.
- * Returns zero on failure, non-zero on success.
+ * Extract and validate a SIA accessLocation, RFC 6487, 4.8.8 and RFC 8192, 3.2.
+ * Returns 0 on failure and 1 on success.
  */
 static int
-sbgp_sia_resource_notify(struct parse *p, const char *d, size_t dsz)
+sbgp_sia_location(const char *fn, const char *descr, const char *proto,
+    GENERAL_NAME *location, char **out)
 {
-	if (p->res->notify != NULL) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "Notify location already specified", p->fn);
+	ASN1_IA5STRING	*uri;
+
+	if (*out != NULL) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: %s already specified",
+		    fn, descr);
 		return 0;
 	}
 
-	/* Make sure it's a https:// address. */
-	if (!valid_uri(d, dsz, "https://")) {
-		warnx("%s: RFC 8182 section 3.2: bad Notify URI", p->fn);
+	if (location->type != GEN_URI) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: %s not URI", fn, descr);
 		return 0;
 	}
 
-	if ((p->res->notify = strndup(d, dsz)) == NULL)
+	uri = location->d.uniformResourceIdentifier;
+
+	if (!valid_uri(uri->data, uri->length, proto)) {
+		warnx("%s: RFC 6487 section 4.8.8: bad %s location", fn, descr);
+		return 0;
+	}
+
+	if ((*out = strndup(uri->data, uri->length)) == NULL)
 		err(1, NULL);
 
 	return 1;
-}
-
-/*
- * Parse the SIA manifest, 4.8.8.1.
- * Returns zero on failure, non-zero on success.
- */
-static int
-sbgp_sia_resource_mft(struct parse *p, const char *d, size_t dsz)
-{
-	if (p->res->mft != NULL) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "MFT location already specified", p->fn);
-		return 0;
-	}
-
-	/* Make sure it's an rsync address. */
-	if (!valid_uri(d, dsz, "rsync://")) {
-		warnx("%s: RFC 6487 section 4.8.8: bad MFT location", p->fn);
-		return 0;
-	}
-
-	if ((p->res->mft = strndup(d, dsz)) == NULL)
-		err(1, NULL);
-
-	return 1;
-}
-
-/*
- * Parse the SIA manifest, 4.8.8.1.
- * Returns zero on failure, non-zero on success.
- */
-static int
-sbgp_sia_resource_carepo(struct parse *p, const char *d, size_t dsz)
-{
-	if (p->res->repo != NULL) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "CA repository already specified", p->fn);
-		return 0;
-	}
-
-	/* Make sure it's an rsync:// address. */
-	if (!valid_uri(d, dsz, "rsync://")) {
-		warnx("%s: RFC 6487 section 4.8.8: bad CA repository URI",
-		    p->fn);
-		return 0;
-	}
-
-	if ((p->res->repo = strndup(d, dsz)) == NULL)
-		err(1, NULL);
-
-	return 1;
-}
-
-/*
- * Parse the SIA entries, 4.8.8.1.
- * There may be multiple different resources at this location, so throw
- * out all but the matching resource type. Currently only two entries
- * are of interest: rpkiManifest and rpkiNotify.
- * Returns zero on failure, non-zero on success.
- */
-static int
-sbgp_sia_resource_entry(struct parse *p, ACCESS_DESCRIPTION *ad)
-{
-	ASN1_OBJECT		*oid;
-	ASN1_IA5STRING		*uri = NULL;
-	int			 rc = 0;
-
-	if (ad->location->type == GEN_URI)
-		uri = ad->location->d.uniformResourceIdentifier;
-
-	oid = ad->method;
-
-	if (OBJ_cmp(oid, carepo_oid) == 0) {
-		if (uri == NULL) {
-			warnx("%s: RFC 6487: 4.8.8.1 caRepository without URI",
-			    p->fn);
-			goto out;
-		}
-		if (!sbgp_sia_resource_carepo(p, uri->data, uri->length))
-			goto out;
-	} else if (OBJ_cmp(oid, manifest_oid) == 0) {
-		if (uri == NULL) {
-			warnx("%s: RFC 6487: 4.8.8 SIA manifest without URI",
-			    p->fn);
-			goto out;
-		}
-		if (!sbgp_sia_resource_mft(p, uri->data, uri->length))
-			goto out;
-	} else if (OBJ_cmp(oid, notify_oid) == 0) {
-		if (uri == NULL) {
-			warnx("%s: RFC 6487: 4.8.8 SIA resourceNotify "
-			    "without URI", p->fn);
-			goto out;
-		}
-		if (!sbgp_sia_resource_notify(p, uri->data, uri->length))
-			goto out;
-	}
-
-	rc = 1;
- out:
-	return rc;
 }
 
 /*
@@ -259,6 +167,7 @@ sbgp_sia(struct parse *p, X509_EXTENSION *ext)
 {
 	AUTHORITY_INFO_ACCESS	*sia = NULL;
 	ACCESS_DESCRIPTION	*ad;
+	ASN1_OBJECT		*oid;
 	int			 i, rc = 0;
 
 	if (X509_EXTENSION_get_critical(ext)) {
@@ -275,8 +184,22 @@ sbgp_sia(struct parse *p, X509_EXTENSION *ext)
 
 	for (i = 0; i < sk_ACCESS_DESCRIPTION_num(sia); i++) {
 		ad = sk_ACCESS_DESCRIPTION_value(sia, i);
-		if (!sbgp_sia_resource_entry(p, ad))
-			goto out;
+
+		oid = ad->method;
+
+		if (OBJ_cmp(oid, carepo_oid) == 0) {
+			if (!sbgp_sia_location(p->fn, "caRepository",
+			    "rsync://", ad->location, &p->res->repo))
+				goto out;
+		} else if (OBJ_cmp(oid, manifest_oid) == 0) {
+			if (!sbgp_sia_location(p->fn, "rpkiManifest",
+			    "rsync://", ad->location, &p->res->mft))
+				goto out;
+		} else if (OBJ_cmp(oid, notify_oid) == 0) {
+			if (!sbgp_sia_location(p->fn, "rpkiNotify",
+			    "https://", ad->location, &p->res->notify))
+				goto out;
+		}
 	}
 
 	if (p->res->mft == NULL || p->res->repo == NULL) {
