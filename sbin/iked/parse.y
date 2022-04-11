@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.139 2021/12/23 09:15:59 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.140 2022/04/11 20:41:21 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2919,6 +2919,7 @@ done:
 			free(ipsec_sa->xfs[i]->encxf);
 			free(ipsec_sa->xfs[i]->groupxf);
 			free(ipsec_sa->xfs[i]->prfxf);
+			free(ipsec_sa->xfs[i]->esnxf);
 			free(ipsec_sa->xfs[i]);
 		}
 		free(ipsec_sa->xfs);
