@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gnome-module.5,v 1.3 2021/11/18 09:51:30 ajacoutot Exp $
+.\"	$OpenBSD: gnome-module.5,v 1.4 2022/04/12 14:54:32 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 18 2021 $
+.Dd $Mdocdate: April 12 2022 $
 .Dt GNOME-MODULE 5
 .Os
 .Sh NAME
@@ -57,15 +57,20 @@ adds x11/gnome to
 and
 .Ev EXTRACT_SUFX
 will default to .tar.xz if unset.
+.Pp
 Unless
 .Li NO_BUILD=Yes ,
+.Pa devel/gettext,-tools
+is appended to
+.Ev MODGNOME_BUILD_DEPENDS
+for ports built using
+.Xr meson 1
+and
 .Pa textproc/intltool
-is also appended to
+is appended to
 .Ev MODULES
-and when CONFIGURE_STYLE is set to
-.Ar gnu
-or
-.Ar simple ,
+for other ports.
+.Pp
 .Ev USE_GMAKE
 is set to "Yes".
 .Pp
@@ -93,44 +98,58 @@ are always appended to
 .Ev CONFIGURE_ENV .
 .Pp
 Certain build/run dependencies and configure arguments and environment
-can be set by appending desktop-file-utils, docbook, gobject-introspection,
-gtk-update-icon-cache, shared-mime-info, vala and/or yelp to
+can be set by appending desktop-file-utils, docbook, gi-docgen,
+gobject-introspection, gtk-update-icon-cache, shared-mime-info,
+vala and/or yelp to
 .Ev MODGNOME_TOOLS .
 They are disabled otherwise.
+.Pp
 If
 .Ev MODGNOME_TOOLS
-is set to desktop-file-utils,
+includes desktop-file-utils,
 a dependency on
 .Pa devel/desktop-file-utils
 is appended to
 .Ev MODGNOME_RUN_DEPENDS
 and a link to /usr/bin/true is created under
 .Pa ${WRKDIR}/bin/desktop-file-validate .
+.Pp
 If
 .Ev MODGNOME_TOOLS
-is set to docbook,
+includes docbook,
 .Pa textproc/docbook-xsl
 is appended to
 .Ev MODGNOME_BUILD_DEPENDS .
 This option is used when the generation of the man pages included in the
 source tarball requires docbook XML/SGML/XSL definitions and stylesheets.
+.Pp
 If
 .Ev MODGNOME_TOOLS
-is set to gtk-update-icon-cache, a dependency on
+includes gi-docgen,
+.Pa textproc/gi-docgen
+is appended to
+.Ev MODGNOME_BUILD_DEPENDS .
+This option is used to generate documentation using GI-Docgen.
+.Pp
+If
+.Ev MODGNOME_TOOLS
+includes gtk-update-icon-cache, a dependency on
 .Pa x11/gtk+3,-guic
 is appended to
 .Ev MODGNOME_RUN_DEPENDS .
+.Pp
 If
 .Ev MODGNOME_TOOLS
-is set to shared-mime-info, a dependency on
+includes shared-mime-info, a dependency on
 .Pa misc/shared-mime-info
 is appended to
 .Ev MODGNOME_RUN_DEPENDS
 and a link to /usr/bin/true is created under
 .Pa ${WRKDIR}/bin/update-mime-database .
+.Pp
 If
 .Ev MODGNOME_TOOLS
-is set to yelp,
+includes yelp,
 .Pa textproc/itstool
 and
 .Pa x11/gnome/doc-utils
@@ -147,6 +166,7 @@ This option is to be used when any files are installed into
 .Pa share/gnome/help/
 or page files are installed into
 .Pa share/help/ .
+.Pp
 .Ev MODGNOME_BUILD_DEPENDS
 and
 .Ev MODGNOME_RUN_DEPENDS
