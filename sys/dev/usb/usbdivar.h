@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.81 2020/03/21 12:08:31 patrick Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.82 2022/04/12 19:41:11 naddy Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.70 2002/07/11 21:14:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -105,7 +105,7 @@ struct usbd_hub {
 struct usbd_bus {
 	/* Filled by HC driver */
 	struct device		bdev; /* base device, host adapter */
-	struct usbd_bus_methods	*methods;
+	const struct usbd_bus_methods *methods;
 #if NBPFILTER > 0
 	void			*bpfif;
 	caddr_t			bpf;
@@ -194,7 +194,7 @@ struct usbd_pipe {
 	int			interval;
 
 	/* Filled by HC driver. */
-	struct usbd_pipe_methods *methods;
+	const struct usbd_pipe_methods *methods;
 };
 
 struct usbd_xfer {

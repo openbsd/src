@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.164 2022/01/09 05:43:00 jsg Exp $ */
+/*	$OpenBSD: ohci.c,v 1.165 2022/04/12 19:41:11 naddy Exp $ */
 /*	$NetBSD: ohci.c,v 1.139 2003/02/22 05:24:16 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -197,7 +197,7 @@ OREAD4(struct ohci_softc *sc, bus_size_t r)
 }
 
 /* Reverse the bits in a value 0 .. 31 */
-u_int8_t revbits[OHCI_NO_INTRS] =
+const u_int8_t revbits[OHCI_NO_INTRS] =
   { 0x00, 0x10, 0x08, 0x18, 0x04, 0x14, 0x0c, 0x1c,
     0x02, 0x12, 0x0a, 0x1a, 0x06, 0x16, 0x0e, 0x1e,
     0x01, 0x11, 0x09, 0x19, 0x05, 0x15, 0x0d, 0x1d,
@@ -229,7 +229,7 @@ struct ohci_pipe {
 
 #define OHCI_INTR_ENDPT 1
 
-struct usbd_bus_methods ohci_bus_methods = {
+const struct usbd_bus_methods ohci_bus_methods = {
 	.open_pipe = ohci_open,
 	.dev_setaddr = ohci_setaddr,
 	.soft_intr = ohci_softintr,
@@ -238,7 +238,7 @@ struct usbd_bus_methods ohci_bus_methods = {
 	.freex = ohci_freex,
 };
 
-struct usbd_pipe_methods ohci_root_ctrl_methods = {
+const struct usbd_pipe_methods ohci_root_ctrl_methods = {
 	.transfer = ohci_root_ctrl_transfer,
 	.start = ohci_root_ctrl_start,
 	.abort = ohci_root_ctrl_abort,
@@ -246,7 +246,7 @@ struct usbd_pipe_methods ohci_root_ctrl_methods = {
 	.done = ohci_root_ctrl_done,
 };
 
-struct usbd_pipe_methods ohci_root_intr_methods = {
+const struct usbd_pipe_methods ohci_root_intr_methods = {
 	.transfer = ohci_root_intr_transfer,
 	.start = ohci_root_intr_start,
 	.abort = ohci_root_intr_abort,
@@ -254,7 +254,7 @@ struct usbd_pipe_methods ohci_root_intr_methods = {
 	.done = ohci_root_intr_done,
 };
 
-struct usbd_pipe_methods ohci_device_ctrl_methods = {
+const struct usbd_pipe_methods ohci_device_ctrl_methods = {
 	.transfer = ohci_device_ctrl_transfer,
 	.start = ohci_device_ctrl_start,
 	.abort = ohci_device_ctrl_abort,
@@ -262,7 +262,7 @@ struct usbd_pipe_methods ohci_device_ctrl_methods = {
 	.done = ohci_device_ctrl_done,
 };
 
-struct usbd_pipe_methods ohci_device_intr_methods = {
+const struct usbd_pipe_methods ohci_device_intr_methods = {
 	.transfer = ohci_device_intr_transfer,
 	.start = ohci_device_intr_start,
 	.abort = ohci_device_intr_abort,
@@ -271,7 +271,7 @@ struct usbd_pipe_methods ohci_device_intr_methods = {
 	.done = ohci_device_intr_done,
 };
 
-struct usbd_pipe_methods ohci_device_bulk_methods = {
+const struct usbd_pipe_methods ohci_device_bulk_methods = {
 	.transfer = ohci_device_bulk_transfer,
 	.start = ohci_device_bulk_start,
 	.abort = ohci_device_bulk_abort,
@@ -280,7 +280,7 @@ struct usbd_pipe_methods ohci_device_bulk_methods = {
 	.done = ohci_device_bulk_done,
 };
 
-struct usbd_pipe_methods ohci_device_isoc_methods = {
+const struct usbd_pipe_methods ohci_device_isoc_methods = {
 	.transfer = ohci_device_isoc_transfer,
 	.start = ohci_device_isoc_start,
 	.abort = ohci_device_isoc_abort,
@@ -1153,7 +1153,7 @@ ohci_rhsc_enable(void *v_sc)
 }
 
 #ifdef OHCI_DEBUG
-char *ohci_cc_strs[] = {
+const char *ohci_cc_strs[] = {
 	"NO_ERROR",
 	"CRC",
 	"BIT_STUFFING",
@@ -2189,7 +2189,7 @@ ohci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 /*
  * Data structures and routines to emulate the root hub.
  */
-usb_device_descriptor_t ohci_devd = {
+const usb_device_descriptor_t ohci_devd = {
 	USB_DEVICE_DESCRIPTOR_SIZE,
 	UDESC_DEVICE,		/* type */
 	{0x00, 0x01},		/* USB version */
@@ -2202,7 +2202,7 @@ usb_device_descriptor_t ohci_devd = {
 	1			/* # of configurations */
 };
 
-usb_config_descriptor_t ohci_confd = {
+const usb_config_descriptor_t ohci_confd = {
 	USB_CONFIG_DESCRIPTOR_SIZE,
 	UDESC_CONFIG,
 	{USB_CONFIG_DESCRIPTOR_SIZE +
@@ -2215,7 +2215,7 @@ usb_config_descriptor_t ohci_confd = {
 	0			/* max power */
 };
 
-usb_interface_descriptor_t ohci_ifcd = {
+const usb_interface_descriptor_t ohci_ifcd = {
 	USB_INTERFACE_DESCRIPTOR_SIZE,
 	UDESC_INTERFACE,
 	0,
@@ -2227,7 +2227,7 @@ usb_interface_descriptor_t ohci_ifcd = {
 	0
 };
 
-usb_endpoint_descriptor_t ohci_endpd = {
+const usb_endpoint_descriptor_t ohci_endpd = {
 	USB_ENDPOINT_DESCRIPTOR_SIZE,
 	UDESC_ENDPOINT,
 	UE_DIR_IN | OHCI_INTR_ENDPT,
@@ -2236,7 +2236,7 @@ usb_endpoint_descriptor_t ohci_endpd = {
 	255
 };
 
-usb_hub_descriptor_t ohci_hubd = {
+const usb_hub_descriptor_t ohci_hubd = {
 	USB_HUB_DESCRIPTOR_SIZE,
 	UDESC_HUB,
 	0,
@@ -2272,6 +2272,7 @@ ohci_root_ctrl_start(struct usbd_xfer *xfer)
 	int port, i;
 	int s, len, value, index, l, totlen = 0;
 	usb_port_status_t ps;
+	usb_device_descriptor_t devd;
 	usb_hub_descriptor_t hubd;
 	usbd_status err;
 	u_int32_t v;
@@ -2320,9 +2321,10 @@ ohci_root_ctrl_start(struct usbd_xfer *xfer)
 				err = USBD_IOERROR;
 				goto ret;
 			}
+			devd = ohci_devd;
+			USETW(devd.idVendor, sc->sc_id_vendor);
 			totlen = l = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
-			USETW(ohci_devd.idVendor, sc->sc_id_vendor);
-			memcpy(buf, &ohci_devd, l);
+			memcpy(buf, &devd, l);
 			break;
 		case UDESC_CONFIG:
 			if ((value & 0xff) != 0) {

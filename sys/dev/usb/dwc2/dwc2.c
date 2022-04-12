@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.59 2021/11/28 09:25:02 mglocker Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.60 2022/04/12 19:41:11 naddy Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -146,7 +146,7 @@ dwc2_free_bus_bandwidth(struct dwc2_hsotg *hsotg, u16 bw,
 
 #define DWC2_INTR_ENDPT 1
 
-STATIC struct usbd_bus_methods dwc2_bus_methods = {
+STATIC const struct usbd_bus_methods dwc2_bus_methods = {
 	.open_pipe =	dwc2_open,
 	.dev_setaddr =	dwc2_setaddr,
 	.soft_intr =	dwc2_softintr,
@@ -155,7 +155,7 @@ STATIC struct usbd_bus_methods dwc2_bus_methods = {
 	.freex =	dwc2_freex,
 };
 
-STATIC struct usbd_pipe_methods dwc2_root_ctrl_methods = {
+STATIC const struct usbd_pipe_methods dwc2_root_ctrl_methods = {
 	.transfer =	dwc2_root_ctrl_transfer,
 	.start =	dwc2_root_ctrl_start,
 	.abort =	dwc2_root_ctrl_abort,
@@ -164,7 +164,7 @@ STATIC struct usbd_pipe_methods dwc2_root_ctrl_methods = {
 	.done =		dwc2_root_ctrl_done,
 };
 
-STATIC struct usbd_pipe_methods dwc2_root_intr_methods = {
+STATIC const struct usbd_pipe_methods dwc2_root_intr_methods = {
 	.transfer =	dwc2_root_intr_transfer,
 	.start =	dwc2_root_intr_start,
 	.abort =	dwc2_root_intr_abort,
@@ -173,7 +173,7 @@ STATIC struct usbd_pipe_methods dwc2_root_intr_methods = {
 	.done =		dwc2_root_intr_done,
 };
 
-STATIC struct usbd_pipe_methods dwc2_device_ctrl_methods = {
+STATIC const struct usbd_pipe_methods dwc2_device_ctrl_methods = {
 	.transfer =	dwc2_device_ctrl_transfer,
 	.start =	dwc2_device_ctrl_start,
 	.abort =	dwc2_device_ctrl_abort,
@@ -182,7 +182,7 @@ STATIC struct usbd_pipe_methods dwc2_device_ctrl_methods = {
 	.done =		dwc2_device_ctrl_done,
 };
 
-STATIC struct usbd_pipe_methods dwc2_device_intr_methods = {
+STATIC const struct usbd_pipe_methods dwc2_device_intr_methods = {
 	.transfer =	dwc2_device_intr_transfer,
 	.start =	dwc2_device_intr_start,
 	.abort =	dwc2_device_intr_abort,
@@ -191,7 +191,7 @@ STATIC struct usbd_pipe_methods dwc2_device_intr_methods = {
 	.done =		dwc2_device_intr_done,
 };
 
-STATIC struct usbd_pipe_methods dwc2_device_bulk_methods = {
+STATIC const struct usbd_pipe_methods dwc2_device_bulk_methods = {
 	.transfer =	dwc2_device_bulk_transfer,
 	.start =	dwc2_device_bulk_start,
 	.abort =	dwc2_device_bulk_abort,
@@ -200,7 +200,7 @@ STATIC struct usbd_pipe_methods dwc2_device_bulk_methods = {
 	.done =		dwc2_device_bulk_done,
 };
 
-STATIC struct usbd_pipe_methods dwc2_device_isoc_methods = {
+STATIC const struct usbd_pipe_methods dwc2_device_isoc_methods = {
 	.transfer =	dwc2_device_isoc_transfer,
 	.start =	dwc2_device_isoc_start,
 	.abort =	dwc2_device_isoc_abort,
@@ -681,7 +681,6 @@ dwc2_root_ctrl_start(struct usbd_xfer *xfer)
 		switch (value) {
 		case C(0, UDESC_DEVICE):
 			l = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
-//			USETW(dwc2_devd.idVendor, sc->sc_id_vendor);
 			memcpy(buf, &dwc2_devd, l);
 			buf += l;
 			len -= l;

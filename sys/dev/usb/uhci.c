@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.155 2022/01/09 05:43:00 jsg Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.156 2022/04/12 19:41:11 naddy Exp $	*/
 /*	$NetBSD: uhci.c,v 1.172 2003/02/23 04:19:26 simonb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -246,7 +246,7 @@ UREAD4(struct uhci_softc *sc, bus_size_t r)
 
 #define UHCI_INTR_ENDPT 1
 
-struct usbd_bus_methods uhci_bus_methods = {
+const struct usbd_bus_methods uhci_bus_methods = {
 	.open_pipe = uhci_open,
 	.dev_setaddr = usbd_set_address,
 	.soft_intr = uhci_softintr,
@@ -255,7 +255,7 @@ struct usbd_bus_methods uhci_bus_methods = {
 	.freex = uhci_freex,
 };
 
-struct usbd_pipe_methods uhci_root_ctrl_methods = {
+const struct usbd_pipe_methods uhci_root_ctrl_methods = {
 	.transfer = uhci_root_ctrl_transfer,
 	.start = uhci_root_ctrl_start,
 	.abort = uhci_root_ctrl_abort,
@@ -263,7 +263,7 @@ struct usbd_pipe_methods uhci_root_ctrl_methods = {
 	.done = uhci_root_ctrl_done,
 };
 
-struct usbd_pipe_methods uhci_root_intr_methods = {
+const struct usbd_pipe_methods uhci_root_intr_methods = {
 	.transfer = uhci_root_intr_transfer,
 	.start = uhci_root_intr_start,
 	.abort = uhci_root_intr_abort,
@@ -271,7 +271,7 @@ struct usbd_pipe_methods uhci_root_intr_methods = {
 	.done = uhci_root_intr_done,
 };
 
-struct usbd_pipe_methods uhci_device_ctrl_methods = {
+const struct usbd_pipe_methods uhci_device_ctrl_methods = {
 	.transfer = uhci_device_ctrl_transfer,
 	.start = uhci_device_ctrl_start,
 	.abort = uhci_device_ctrl_abort,
@@ -279,7 +279,7 @@ struct usbd_pipe_methods uhci_device_ctrl_methods = {
 	.done = uhci_device_ctrl_done,
 };
 
-struct usbd_pipe_methods uhci_device_intr_methods = {
+const struct usbd_pipe_methods uhci_device_intr_methods = {
 	.transfer = uhci_device_intr_transfer,
 	.start = uhci_device_intr_start,
 	.abort = uhci_device_intr_abort,
@@ -288,7 +288,7 @@ struct usbd_pipe_methods uhci_device_intr_methods = {
 	.done = uhci_device_intr_done,
 };
 
-struct usbd_pipe_methods uhci_device_bulk_methods = {
+const struct usbd_pipe_methods uhci_device_bulk_methods = {
 	.transfer = uhci_device_bulk_transfer,
 	.start = uhci_device_bulk_start,
 	.abort = uhci_device_bulk_abort,
@@ -297,7 +297,7 @@ struct usbd_pipe_methods uhci_device_bulk_methods = {
 	.done = uhci_device_bulk_done,
 };
 
-struct usbd_pipe_methods uhci_device_isoc_methods = {
+const struct usbd_pipe_methods uhci_device_isoc_methods = {
 	.transfer = uhci_device_isoc_transfer,
 	.start = uhci_device_isoc_start,
 	.abort = uhci_device_isoc_abort,
@@ -2702,7 +2702,7 @@ uhci_open(struct usbd_pipe *pipe)
 /*
  * Data structures and routines to emulate the root hub.
  */
-usb_device_descriptor_t uhci_devd = {
+const usb_device_descriptor_t uhci_devd = {
 	USB_DEVICE_DESCRIPTOR_SIZE,
 	UDESC_DEVICE,		/* type */
 	{0x00, 0x01},		/* USB version */
@@ -2715,7 +2715,7 @@ usb_device_descriptor_t uhci_devd = {
 	1			/* # of configurations */
 };
 
-usb_config_descriptor_t uhci_confd = {
+const usb_config_descriptor_t uhci_confd = {
 	USB_CONFIG_DESCRIPTOR_SIZE,
 	UDESC_CONFIG,
 	{USB_CONFIG_DESCRIPTOR_SIZE +
@@ -2728,7 +2728,7 @@ usb_config_descriptor_t uhci_confd = {
 	0			/* max power */
 };
 
-usb_interface_descriptor_t uhci_ifcd = {
+const usb_interface_descriptor_t uhci_ifcd = {
 	USB_INTERFACE_DESCRIPTOR_SIZE,
 	UDESC_INTERFACE,
 	0,
@@ -2740,7 +2740,7 @@ usb_interface_descriptor_t uhci_ifcd = {
 	0
 };
 
-usb_endpoint_descriptor_t uhci_endpd = {
+const usb_endpoint_descriptor_t uhci_endpd = {
 	USB_ENDPOINT_DESCRIPTOR_SIZE,
 	UDESC_ENDPOINT,
 	UE_DIR_IN | UHCI_INTR_ENDPT,
@@ -2749,7 +2749,7 @@ usb_endpoint_descriptor_t uhci_endpd = {
 	255
 };
 
-usb_hub_descriptor_t uhci_hubd_piix = {
+const usb_hub_descriptor_t uhci_hubd_piix = {
 	USB_HUB_DESCRIPTOR_SIZE,
 	UDESC_HUB,
 	2,
@@ -2883,6 +2883,7 @@ uhci_root_ctrl_start(struct usbd_xfer *xfer)
 	int port, x;
 	int s, len, value, index, status, change, l, totlen = 0;
 	usb_port_status_t ps;
+	usb_device_descriptor_t devd;
 	usbd_status err;
 
 	if (sc->sc_bus.dying)
@@ -2928,9 +2929,10 @@ uhci_root_ctrl_start(struct usbd_xfer *xfer)
 				err = USBD_IOERROR;
 				goto ret;
 			}
+			devd = uhci_devd;
+			USETW(devd.idVendor, sc->sc_id_vendor);
 			totlen = l = min(len, USB_DEVICE_DESCRIPTOR_SIZE);
-			USETW(uhci_devd.idVendor, sc->sc_id_vendor);
-			memcpy(buf, &uhci_devd, l);
+			memcpy(buf, &devd, l);
 			break;
 		case UDESC_CONFIG:
 			if ((value & 0xff) != 0) {
