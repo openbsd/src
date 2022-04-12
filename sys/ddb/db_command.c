@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.92 2021/11/16 13:53:14 bluhm Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.93 2022/04/12 19:44:32 naddy Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -628,7 +628,7 @@ struct db_command db_boot_cmds[] = {
 struct db_command db_command_table[] = {
 #ifdef DB_MACHINE_COMMANDS
   /* this must be the first entry, if it exists */
-	{ "machine",	NULL,			0,		NULL},
+	{ "machine",	NULL,			0, db_machine_command_table },
 #endif
 	{ "kill",	db_kill_cmd,		0,		NULL },
 	{ "print",	db_print_cmd,		0,		NULL },
@@ -665,18 +665,6 @@ struct db_command db_command_table[] = {
 	{ "dmesg",	db_dmesg_cmd,		0,		NULL },
 	{ NULL,		NULL,			0,		NULL }
 };
-
-#ifdef DB_MACHINE_COMMANDS
-
-/* this function should be called to install the machine dependent
-   commands. It should be called before the debugger is enabled  */
-void
-db_machine_commands_install(struct db_command *ptr)
-{
-	db_command_table[0].more = ptr;
-}
-
-#endif
 
 struct db_command	*db_last_command = NULL;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: db_interface.c,v 1.26 2019/11/07 14:44:52 mpi Exp $ */
+/* $OpenBSD: db_interface.c,v 1.27 2022/04/12 19:44:31 naddy Exp $ */
 /* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
 /* 
@@ -527,5 +527,4 @@ db_mach_cpu(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 void
 db_machine_init()
 {
-	db_machine_commands_install(db_machine_command_table);
 }

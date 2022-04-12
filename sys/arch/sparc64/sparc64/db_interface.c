@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.56 2021/05/30 15:05:33 visa Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.57 2022/04/12 19:44:32 naddy Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -1363,5 +1363,4 @@ db_inst_trap_return(int inst)
 void
 db_machine_init(void)
 {
-	db_machine_commands_install(db_machine_command_table);
 }

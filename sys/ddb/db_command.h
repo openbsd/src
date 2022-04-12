@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.h,v 1.33 2019/11/07 13:16:25 mpi Exp $	*/
+/*	$OpenBSD: db_command.h,v 1.34 2022/04/12 19:44:32 naddy Exp $	*/
 /*	$NetBSD: db_command.h,v 1.8 1996/02/05 01:56:55 christos Exp $	*/
 
 /*
@@ -39,7 +39,6 @@ void db_error(char *);
 void db_skip_to_eol(void);
 void db_command_loop(void);
 void db_command(struct db_command **, struct db_command *);
-void db_machine_commands_install(struct db_command *);
 
 extern	vaddr_t db_dot, db_last_addr, db_prev, db_next;
 
@@ -57,3 +56,7 @@ struct db_command {
 #define	CS_SET_DOT	0x100		/* set dot after command */
 	struct db_command *more;	/* another level of command */
 };
+
+#ifdef DB_MACHINE_COMMANDS
+extern struct db_command db_machine_command_table[];
+#endif

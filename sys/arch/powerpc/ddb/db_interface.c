@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.8 2022/01/28 18:37:40 gkoehler Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.9 2022/04/12 19:44:32 naddy Exp $	*/
 /*      $NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 
 /*
@@ -236,10 +236,7 @@ db_machine_init(void)
 {
 #ifdef MULTIPROCESSOR
 	int i;
-#endif
 
-	db_machine_commands_install(db_machine_command_table);
-#ifdef MULTIPROCESSOR
 	for (i = 0; i < ncpus; i++) {
 		cpu_info[i].ci_ddb_paused = CI_DDB_RUNNING;
 	}
