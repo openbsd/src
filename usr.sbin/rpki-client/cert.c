@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.67 2022/04/12 08:45:34 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.68 2022/04/12 09:32:23 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -122,75 +122,6 @@ sbgp_addr(struct parse *p,
 		return 0;
 	}
 	return append_ip(p, ip);
-}
-
-/*
- * Parse "Subject Information Access" extension, RFC 6487 4.8.8.
- * Returns zero on failure, non-zero on success.
- */
-static int
-sbgp_sia(struct parse *p, X509_EXTENSION *ext)
-{
-	AUTHORITY_INFO_ACCESS	*sia = NULL;
-	ACCESS_DESCRIPTION	*ad;
-	ASN1_OBJECT		*oid;
-	int			 i, rc = 0;
-
-	if (X509_EXTENSION_get_critical(ext)) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "extension not non-critical", p->fn);
-		goto out;
-	}
-
-	if ((sia = X509V3_EXT_d2i(ext)) == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "failed extension parse", p->fn);
-		goto out;
-	}
-
-	for (i = 0; i < sk_ACCESS_DESCRIPTION_num(sia); i++) {
-		ad = sk_ACCESS_DESCRIPTION_value(sia, i);
-
-		oid = ad->method;
-
-		if (OBJ_cmp(oid, carepo_oid) == 0) {
-			if (!x509_location(p->fn, "SIA: caRepository",
-			    "rsync://", ad->location, &p->res->repo))
-				goto out;
-		} else if (OBJ_cmp(oid, manifest_oid) == 0) {
-			if (!x509_location(p->fn, "SIA: rpkiManifest",
-			    "rsync://", ad->location, &p->res->mft))
-				goto out;
-		} else if (OBJ_cmp(oid, notify_oid) == 0) {
-			if (!x509_location(p->fn, "SIA: rpkiNotify",
-			    "https://", ad->location, &p->res->notify))
-				goto out;
-		}
-	}
-
-	if (p->res->mft == NULL || p->res->repo == NULL) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA missing caRepository "
-		    "or rpkiManifest", p->fn);
-		goto out;
-	}
-
-	if (strstr(p->res->mft, p->res->repo) != p->res->mft) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "conflicting URIs for caRepository and rpkiManifest",
-		    p->fn);
-		goto out;
-	}
-
-	if (rtype_from_file_extension(p->res->mft) != RTYPE_MFT) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "not an MFT file", p->fn);
-		goto out;
-	}
-
-	rc = 1;
- out:
-	AUTHORITY_INFO_ACCESS_free(sia);
-	return rc;
 }
 
 /*
@@ -773,6 +704,75 @@ out:
 	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
 	sk_ASN1_TYPE_pop_free(sseq, ASN1_TYPE_free);
 	free(sv);
+	return rc;
+}
+
+/*
+ * Parse "Subject Information Access" extension, RFC 6487 4.8.8.
+ * Returns zero on failure, non-zero on success.
+ */
+static int
+sbgp_sia(struct parse *p, X509_EXTENSION *ext)
+{
+	AUTHORITY_INFO_ACCESS	*sia = NULL;
+	ACCESS_DESCRIPTION	*ad;
+	ASN1_OBJECT		*oid;
+	int			 i, rc = 0;
+
+	if (X509_EXTENSION_get_critical(ext)) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "extension not non-critical", p->fn);
+		goto out;
+	}
+
+	if ((sia = X509V3_EXT_d2i(ext)) == NULL) {
+		cryptowarnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "failed extension parse", p->fn);
+		goto out;
+	}
+
+	for (i = 0; i < sk_ACCESS_DESCRIPTION_num(sia); i++) {
+		ad = sk_ACCESS_DESCRIPTION_value(sia, i);
+
+		oid = ad->method;
+
+		if (OBJ_cmp(oid, carepo_oid) == 0) {
+			if (!x509_location(p->fn, "SIA: caRepository",
+			    "rsync://", ad->location, &p->res->repo))
+				goto out;
+		} else if (OBJ_cmp(oid, manifest_oid) == 0) {
+			if (!x509_location(p->fn, "SIA: rpkiManifest",
+			    "rsync://", ad->location, &p->res->mft))
+				goto out;
+		} else if (OBJ_cmp(oid, notify_oid) == 0) {
+			if (!x509_location(p->fn, "SIA: rpkiNotify",
+			    "https://", ad->location, &p->res->notify))
+				goto out;
+		}
+	}
+
+	if (p->res->mft == NULL || p->res->repo == NULL) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA missing caRepository "
+		    "or rpkiManifest", p->fn);
+		goto out;
+	}
+
+	if (strstr(p->res->mft, p->res->repo) != p->res->mft) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "conflicting URIs for caRepository and rpkiManifest",
+		    p->fn);
+		goto out;
+	}
+
+	if (rtype_from_file_extension(p->res->mft) != RTYPE_MFT) {
+		warnx("%s: RFC 6487 section 4.8.8: SIA: "
+		    "not an MFT file", p->fn);
+		goto out;
+	}
+
+	rc = 1;
+ out:
+	AUTHORITY_INFO_ACCESS_free(sia);
 	return rc;
 }
 
