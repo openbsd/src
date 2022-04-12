@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.66 2022/04/11 10:39:45 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.67 2022/04/12 08:45:34 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -125,40 +125,6 @@ sbgp_addr(struct parse *p,
 }
 
 /*
- * Extract and validate a SIA accessLocation, RFC 6487, 4.8.8 and RFC 8192, 3.2.
- * Returns 0 on failure and 1 on success.
- */
-static int
-sbgp_sia_location(const char *fn, const char *descr, const char *proto,
-    GENERAL_NAME *location, char **out)
-{
-	ASN1_IA5STRING	*uri;
-
-	if (*out != NULL) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: %s already specified",
-		    fn, descr);
-		return 0;
-	}
-
-	if (location->type != GEN_URI) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA: %s not URI", fn, descr);
-		return 0;
-	}
-
-	uri = location->d.uniformResourceIdentifier;
-
-	if (!valid_uri(uri->data, uri->length, proto)) {
-		warnx("%s: RFC 6487 section 4.8.8: bad %s location", fn, descr);
-		return 0;
-	}
-
-	if ((*out = strndup(uri->data, uri->length)) == NULL)
-		err(1, NULL);
-
-	return 1;
-}
-
-/*
  * Parse "Subject Information Access" extension, RFC 6487 4.8.8.
  * Returns zero on failure, non-zero on success.
  */
@@ -188,15 +154,15 @@ sbgp_sia(struct parse *p, X509_EXTENSION *ext)
 		oid = ad->method;
 
 		if (OBJ_cmp(oid, carepo_oid) == 0) {
-			if (!sbgp_sia_location(p->fn, "caRepository",
+			if (!x509_location(p->fn, "SIA: caRepository",
 			    "rsync://", ad->location, &p->res->repo))
 				goto out;
 		} else if (OBJ_cmp(oid, manifest_oid) == 0) {
-			if (!sbgp_sia_location(p->fn, "rpkiManifest",
+			if (!x509_location(p->fn, "SIA: rpkiManifest",
 			    "rsync://", ad->location, &p->res->mft))
 				goto out;
 		} else if (OBJ_cmp(oid, notify_oid) == 0) {
-			if (!sbgp_sia_location(p->fn, "rpkiNotify",
+			if (!x509_location(p->fn, "SIA: rpkiNotify",
 			    "https://", ad->location, &p->res->notify))
 				goto out;
 		}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.125 2022/04/04 16:02:54 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.126 2022/04/12 08:45:34 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -22,6 +22,7 @@
 #include <sys/time.h>
 
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 enum cert_as_type {
 	CERT_AS_ID, /* single identifier */
@@ -589,6 +590,8 @@ char		*x509_get_pubkey(X509 *, const char *);
 enum cert_purpose	 x509_get_purpose(X509 *, const char *);
 int		 x509_get_time(const ASN1_TIME *, time_t *);
 char		*x509_convert_seqnum(const char *, const ASN1_INTEGER *);
+int		 x509_location(const char *, const char *, const char *,
+		    GENERAL_NAME *, char **);
 
 /* printers */
 char		*time2str(time_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.39 2022/04/08 15:29:59 claudio Exp $ */
+/*	$OpenBSD: x509.c,v 1.40 2022/04/12 08:45:34 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -306,24 +306,10 @@ x509_get_aia(X509 *x, const char *fn, char **aia)
 		    "expected caIssuers, have %d", fn, OBJ_obj2nid(ad->method));
 		goto out;
 	}
-	if (ad->location->type != GEN_URI) {
-		warnx("%s: RFC 6487 section 4.8.7: AIA: "
-		    "want GEN_URI type, have %d", fn, ad->location->type);
-		goto out;
-	}
 
-	if (ASN1_STRING_length(ad->location->d.uniformResourceIdentifier)
-	    > MAX_URI_LENGTH) {
-		warnx("%s: RFC 6487 section 4.8.7: AIA: "
-		    "URI exceeds max length of %d", fn, MAX_URI_LENGTH);
+	if (!x509_location(fn, "AIA: caIssuers", NULL, ad->location, aia))
 		goto out;
-	}
 
-	*aia = strndup(
-	    ASN1_STRING_get0_data(ad->location->d.uniformResourceIdentifier),
-	    ASN1_STRING_length(ad->location->d.uniformResourceIdentifier));
-	if (*aia == NULL)
-		err(1, NULL);
 	rc = 1;
 
 out:
@@ -405,23 +391,9 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 	}
 
 	name = sk_GENERAL_NAME_value(dp->distpoint->name.fullname, 0);
-	if (name->type != GEN_URI) {
-		warnx("%s: RFC 6487 section 4.8.6: CRL: "
-		    "want URI type, have %d", fn, name->type);
-		goto out;
-	}
 
-	if (ASN1_STRING_length(name->d.uniformResourceIdentifier)
-	    > MAX_URI_LENGTH) {
-		warnx("%s: RFC 6487 section 4.8.6: CRL: "
-		    "URI exceeds max length of %d", fn, MAX_URI_LENGTH);
+	if (!x509_location(fn, "CRL distribution point", NULL, name, crl))
 		goto out;
-	}
-
-	*crl = strndup(ASN1_STRING_get0_data(name->d.uniformResourceIdentifier),
-	    ASN1_STRING_length(name->d.uniformResourceIdentifier));
-	if (*crl == NULL)
-		err(1, NULL);
 	rc = 1;
 
 out:
@@ -500,6 +472,40 @@ x509_get_time(const ASN1_TIME *at, time_t *t)
 		return 0;
 	if ((*t = timegm(&tm)) == -1)
 		errx(1, "timegm failed");
+	return 1;
+}
+
+/*
+ * Extract and validate an accessLocation, RFC 6487, 4.8 and RFC 8192, 3.2.
+ * Returns 0 on failure and 1 on success.
+ */
+int
+x509_location(const char *fn, const char *descr, const char *proto,
+    GENERAL_NAME *location, char **out)
+{
+	ASN1_IA5STRING	*uri;
+
+	if (*out != NULL) {
+		warnx("%s: RFC 6487 section 4.8: %s already specified", fn,
+		    descr);
+		return 0;
+	}
+
+	if (location->type != GEN_URI) {
+		warnx("%s: RFC 6487 section 4.8: %s not URI", fn, descr);
+		return 0;
+	}
+
+	uri = location->d.uniformResourceIdentifier;
+
+	if (!valid_uri(uri->data, uri->length, proto)) {
+		warnx("%s: RFC 6487 section 4.8: %s bad location", fn, descr);
+		return 0;
+	}
+
+	if ((*out = strndup(uri->data, uri->length)) == NULL)
+		err(1, NULL);
+
 	return 1;
 }
 
