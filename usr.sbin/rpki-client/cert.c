@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.68 2022/04/12 09:32:23 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.69 2022/04/12 09:48:23 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -752,7 +752,7 @@ sbgp_sia(struct parse *p, X509_EXTENSION *ext)
 	}
 
 	if (p->res->mft == NULL || p->res->repo == NULL) {
-		warnx("%s: RFC 6487 section 4.8.8: SIA missing caRepository "
+		warnx("%s: RFC 6487 section 4.8.8: SIA: missing caRepository "
 		    "or rpkiManifest", p->fn);
 		goto out;
 	}
