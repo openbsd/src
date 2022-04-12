@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.21 2022/04/11 08:29:34 tb Exp $
+# $OpenBSD: Makefile.inc,v 1.22 2022/04/12 08:46:33 tb Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -18,7 +18,8 @@ CFLAGS+=	-I${.CURDIR}/.. -I${.CURDIR}/../../../../usr.sbin/rpki-client
 LDADD+=		-lcrypto -lutil
 DPADD+=		${LIBCRYPTO} ${LIBUTIL}
 
-SRCS_test-ip +=		test-ip.c ip.c io.c encoding.c print.c x509.c
+SRCS_test-ip +=		test-ip.c ip.c io.c encoding.c print.c x509.c \
+			log.c validate.c as.c cert.c cms.c mft.c
 run-regress-test-ip: test-ip
 	./test-ip
 
@@ -38,12 +39,12 @@ run-regress-test-mft: test-mft
 	./test-mft -v ${.CURDIR}/../mft/*.mft
 
 SRCS_test-roa+=	test-roa.c roa.c cms.c x509.c ip.c as.c io.c log.c \
-		encoding.c print.c
+		encoding.c print.c validate.c cert.c mft.c
 run-regress-test-roa: test-roa
 	./test-roa -v ${.CURDIR}/../roa/*.roa
 
 SRCS_test-gbr+=	test-gbr.c gbr.c cms.c x509.c ip.c io.c log.c \
-		encoding.c print.c
+		encoding.c print.c validate.c as.c cert.c mft.c
 run-regress-test-gbr: test-gbr
 	./test-gbr -v ${.CURDIR}/../gbr/*.gbr
 
