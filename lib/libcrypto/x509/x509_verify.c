@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.54 2021/11/24 05:38:12 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.55 2022/04/12 10:42:35 tb Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -237,7 +237,8 @@ x509_verify_ctx_clear(struct x509_verify_ctx *ctx)
 }
 
 static int
-x509_verify_cert_cache_extensions(X509 *cert) {
+x509_verify_cert_cache_extensions(X509 *cert)
+{
 	if (!(cert->ex_flags & EXFLAG_SET)) {
 		CRYPTO_w_lock(CRYPTO_LOCK_X509);
 		x509v3_cache_extensions(cert);
@@ -1259,4 +1260,3 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 
 	return 0;
 }
-
