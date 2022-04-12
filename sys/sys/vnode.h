@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.164 2022/03/27 16:19:39 semarie Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.165 2022/04/12 14:34:11 semarie Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ RBT_HEAD(namecache_rb_cache, namecache);
  * Locks used to protect struct members in struct vnode:
  *	a	atomic
  *	V	vnode_mtx
+ *	B	IPL_BIO
  */
 struct uvm_vnode;
 struct vnode {
@@ -113,7 +114,7 @@ struct vnode {
 	struct	buf_rb_bufs v_bufs_tree;	/* lookup of all bufs */
 	struct	buflists v_cleanblkhd;		/* clean blocklist head */
 	struct	buflists v_dirtyblkhd;		/* dirty blocklist head */
-	u_int   v_numoutput;			/* num of writes in progress */
+	u_int   v_numoutput;		/* [B] num of writes in progress */
 	LIST_ENTRY(vnode) v_synclist;		/* vnode with dirty buffers */
 	union {
 		struct mount	*vu_mountedhere;/* ptr to mounted vfs (VDIR) */

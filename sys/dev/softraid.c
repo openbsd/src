@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.423 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: softraid.c,v 1.424 2022/04/12 14:34:11 semarie Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -404,6 +404,7 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t blkno,
 	size_t			bufsize, dma_bufsize;
 	int			rv = 1;
 	char			*dma_buf;
+	int			s;
 
 	DNPRINTF(SR_D_MISC, "%s: sr_rw(0x%x, %p, %zu, %lld 0x%lx)\n",
 	    DEVNAME(sc), dev, buf, size, (long long)blkno, flags);
@@ -437,8 +438,11 @@ sr_rw(struct sr_softc *sc, dev_t dev, char *buf, size_t size, daddr_t blkno,
 		b.b_resid = bufsize;
 		b.b_vp = vp;
 
-		if ((b.b_flags & B_READ) == 0)
+		if ((b.b_flags & B_READ) == 0) {
+			s = splbio();
 			vp->v_numoutput++;
+			splx(s);
+		}
 
 		LIST_INIT(&b.b_dep);
 		VOP_STRATEGY(vp, &b);
@@ -1980,6 +1984,7 @@ sr_ccb_rw(struct sr_discipline *sd, int chunk, daddr_t blkno,
 {
 	struct sr_chunk		*sc = sd->sd_vol.sv_chunks[chunk];
 	struct sr_ccb		*ccb = NULL;
+	int			s;
 
 	ccb = sr_ccb_get(sd);
 	if (ccb == NULL)
@@ -2006,8 +2011,11 @@ sr_ccb_rw(struct sr_discipline *sd, int chunk, daddr_t blkno,
 	ccb->ccb_buf.b_vp = sc->src_vn;
 	ccb->ccb_buf.b_bq = NULL;
 
-	if (!ISSET(ccb->ccb_buf.b_flags, B_READ))
+	if (!ISSET(ccb->ccb_buf.b_flags, B_READ)) {
+		s = splbio();
 		ccb->ccb_buf.b_vp->v_numoutput++;
+		splx(s);
+	}
 
 	LIST_INIT(&ccb->ccb_buf.b_dep);
 
