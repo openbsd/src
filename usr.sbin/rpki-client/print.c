@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.6 2022/03/21 10:39:51 claudio Exp $ */
+/*	$OpenBSD: print.c,v 1.7 2022/04/12 11:05:50 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+
+#include <openssl/evp.h>
 
 #include "extern.h"
 
@@ -62,10 +64,41 @@ time2str(time_t t)
 void
 tal_print(const struct tal *p)
 {
-	size_t	 i;
+	char			*ski;
+	EVP_PKEY		*pk;
+	RSA			*r;
+	const unsigned char	*der;
+	unsigned char		*rder = NULL;
+	unsigned char		 md[SHA_DIGEST_LENGTH];
+	int			 rder_len;
+	size_t			 i;
 
+	printf("Trust anchor name: %s\n", p->descr);
+
+	der = p->pkey;
+	pk = d2i_PUBKEY(NULL, &der, p->pkeysz);
+	if (pk == NULL)
+		errx(1, "d2i_PUBKEY failed in %s", __func__);
+
+	r = EVP_PKEY_get0_RSA(pk);
+	if (r == NULL)
+		errx(1, "EVP_PKEY_get0_RSA failed in %s", __func__);
+	if ((rder_len = i2d_RSAPublicKey(r, &rder)) <= 0)
+		errx(1, "i2d_RSAPublicKey failed in %s", __func__);
+
+	if (!EVP_Digest(rder, rder_len, md, NULL, EVP_sha1(), NULL))
+		errx(1, "EVP_Digest failed in %s", __func__);
+
+	ski = hex_encode(md, SHA_DIGEST_LENGTH);
+	printf("Subject key identifier: %s\n", pretty_key_id(ski));
+
+	printf("Trust anchor locations:\n");
 	for (i = 0; i < p->urisz; i++)
-		printf("%5zu: URI: %s\n", i + 1, p->uri[i]);
+		printf("%5zu: %s\n", i + 1, p->uri[i]);
+
+	EVP_PKEY_free(pk);
+	free(rder);
+	free(ski);
 }
 
 void
