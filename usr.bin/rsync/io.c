@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.21 2021/12/28 11:59:48 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.22 2022/04/12 14:51:04 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -585,8 +585,9 @@ io_read_ulong(struct sess *sess, int fd, uint64_t *val)
 	if (!io_read_int(sess, fd, &sval)) {
 		ERRX1("io_read_int");
 		return 0;
-	} else if (sval != -1) {
-		*val = (uint64_t)le32toh(sval);
+	}
+	if (sval != -1) {
+		*val = sval;
 		return 1;
 	}
 
