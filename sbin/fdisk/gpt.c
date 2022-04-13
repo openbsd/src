@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.61 2022/03/16 17:03:13 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.62 2022/04/13 15:07:25 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -115,8 +115,7 @@ int
 get_header(const uint64_t sector)
 {
 	char			*secbuf;
-	uint64_t		 partlastlba, partslen, lba_end;
-	int			 partspersec;
+	uint64_t		 gpbytes, gpsectors, lba_end;
 	uint32_t		 gh_csum;
 
 	secbuf = DISK_readsectors(sector, 1);
@@ -173,10 +172,9 @@ get_header(const uint64_t sector)
 			return -1;
 	}
 
-	/* XXX Assume part_num * part_size is multiple of secsize. */
-	partslen = letoh32(gh.gh_part_num) * letoh32(gh.gh_part_size) /
-	    dl.d_secsize;
-	lba_end = DL_GETDSIZE(&dl) - partslen - 2;
+	gpbytes = letoh32(gh.gh_part_num) * letoh32(gh.gh_part_size);
+	gpsectors = (gpbytes + dl.d_secsize - 1) / dl.d_secsize;
+	lba_end = DL_GETDSIZE(&dl) - gpsectors - 2;
 	if (letoh64(gh.gh_lba_end) > lba_end) {
 		DPRINTF("gpt last usable LBA: reduced from %llu to %llu\n",
 		    letoh64(gh.gh_lba_end), lba_end);
@@ -197,14 +195,12 @@ get_header(const uint64_t sector)
 		return -1;
 	}
 
-	partspersec = dl.d_secsize / letoh32(gh.gh_part_size);
-	partlastlba = letoh64(gh.gh_part_lba) +
-	    ((letoh32(gh.gh_part_num) + partspersec - 1) / partspersec) - 1;
-	if (partlastlba <= letoh64(gh.gh_lba_end) &&
-	    partlastlba >= letoh64(gh.gh_lba_start)) {
+	lba_end = letoh64(gh.gh_part_lba) + gpsectors - 1;
+	if (lba_end <= letoh64(gh.gh_lba_end) &&
+	    lba_end >= letoh64(gh.gh_lba_start)) {
 		DPRINTF("gpt partition table last LBA: expected < %llu or "
 		    "> %llu, got %llu\n", letoh64(gh.gh_lba_start),
-		    letoh64(gh.gh_lba_end), partlastlba);
+		    letoh64(gh.gh_lba_end), lba_end);
 		return -1;
 	}
 
@@ -234,7 +230,7 @@ get_partition_table(void)
 		return -1;
 	}
 	gpbytes = letoh32(gh.gh_part_num) * letoh32(gh.gh_part_size);
-	gpsectors = gpbytes / dl.d_secsize;
+	gpsectors = (gpbytes + dl.d_secsize - 1) / dl.d_secsize;
 	memset(&gp, 0, sizeof(gp));
 
 	secbuf = DISK_readsectors(letoh64(gh.gh_part_lba), gpsectors);
@@ -643,11 +639,8 @@ GPT_write(void)
 	if (MBR_write(&gmbr))
 		return -1;
 
-	/*
-	 * XXX Assume size of gp is multiple of sector size.
-	 */
 	gpbytes = letoh32(gh.gh_part_num) * letoh32(gh.gh_part_size);
-	gpsectors = gpbytes / dl.d_secsize;
+	gpsectors = (gpbytes + dl.d_secsize - 1) / dl.d_secsize;
 
 	prigh = GPTSECTOR;
 	prigp = prigh + 1;
