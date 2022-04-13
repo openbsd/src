@@ -1,1 +1,2 @@
+mandoc: nobody.in:3:2: WARNING: line scope broken: EOF breaks B
 mandoc: nobody.in: WARNING: no document body
