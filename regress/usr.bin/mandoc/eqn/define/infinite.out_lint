@@ -2,3 +2,4 @@ mandoc: infinite.in:10:2: ERROR: input stack limit exceeded, infinite loop?
 mandoc: infinite.in:16:2: ERROR: input stack limit exceeded, infinite loop?
 mandoc: infinite.in:22:2: ERROR: input stack limit exceeded, infinite loop?
 mandoc: infinite.in:28:2: ERROR: input stack limit exceeded, infinite loop?
+mandoc: infinite.in:34:2: ERROR: input stack limit exceeded, infinite loop?

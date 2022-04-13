@@ -4,12 +4,72 @@ NNAAMMEE
      ddeeffiinnee--iinnffiinniittee - infinite recursion in define statements
 
 DDEESSCCRRIIPPTTIIOONN
-     alone: eol
+     alone: _k_e_y eol
 
-     leading position: eol
+     leading position: _k_e_y _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x eol
 
-     middle position: eol
+     middle position: _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _k_e_y
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x
+     _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x _s_u_f_f_i_x eol
 
-     trailing position: eol
+     trailing position: _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x _p_r_e_f_i_x
+     _p_r_e_f_i_x _k_e_y eol
 
-OpenBSD                          July 4, 2017                          OpenBSD
+     nested expansion: _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t
+     _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t
+     _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t
+     _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t
+     _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t
+     _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t
+     _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t
+     _c_o_n_t_e_n_t _c_o_n_t_e_n_t _c_o_n_t_e_n_t _o_u_t_e_r eol
+
+OpenBSD                         April 13, 2022                         OpenBSD

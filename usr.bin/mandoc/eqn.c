@@ -1,7 +1,8 @@
-/*	$OpenBSD: eqn.c,v 1.47 2020/01/08 12:09:14 schwarze Exp $ */
+/* $OpenBSD: eqn.c,v 1.48 2022/04/13 20:19:18 schwarze Exp $ */
 /*
+ * Copyright (c) 2014, 2015, 2017, 2018, 2020, 2022
+ *               Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2014,2015,2017,2018,2020 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -373,19 +374,17 @@ eqn_def_find(struct eqn_node *ep)
 static enum eqn_tok
 eqn_next(struct eqn_node *ep, enum parse_mode mode)
 {
-	static int	 last_len, lim;
-
 	struct eqn_def	*def;
 	size_t		 start;
-	int		 diff, i, quoted;
+	int		 diff, i, newlen, quoted;
 	enum eqn_tok	 tok;
 
 	/*
 	 * Reset the recursion counter after advancing
-	 * beyond the end of the previous substitution.
+	 * beyond the end of the rightmost substitution.
 	 */
-	if (ep->end - ep->data >= last_len)
-		lim = 0;
+	if (ep->end - ep->data >= ep->sublen)
+		ep->subcnt = 0;
 
 	ep->start = ep->end;
 	quoted = mode == MODE_QUOTED;
@@ -432,10 +431,10 @@ eqn_next(struct eqn_node *ep, enum parse_mode mode)
 			return EQN_TOK__MAX;
 		if ((def = eqn_def_find(ep)) == NULL)
 			break;
-		if (++lim > EQN_NEST_MAX) {
+		if (++ep->subcnt > EQN_NEST_MAX) {
 			mandoc_msg(MANDOCERR_ROFFLOOP,
 			    ep->node->line, ep->node->pos, NULL);
-			return EQN_TOK_EOF;
+			break;
 		}
 
 		/* Replace a defined name with its string value. */
@@ -444,12 +443,15 @@ eqn_next(struct eqn_node *ep, enum parse_mode mode)
 			ep->sz += diff;
 			ep->data = mandoc_realloc(ep->data, ep->sz + 1);
 			ep->start = ep->data + start;
+			ep->sublen += diff;
 		}
 		if (diff)
 			memmove(ep->start + def->valsz, ep->start + ep->toksz,
 			    strlen(ep->start + ep->toksz) + 1);
 		memcpy(ep->start, def->val, def->valsz);
-		last_len = ep->start - ep->data + def->valsz;
+		newlen = ep->start - ep->data + def->valsz;
+		if (ep->sublen < newlen)
+			ep->sublen = newlen;
 	}
 	if (mode != MODE_TOK)
 		return quoted ? EQN_TOK_QUOTED : EQN_TOK__MAX;
@@ -676,6 +678,8 @@ eqn_parse(struct eqn_node *ep)
 		return;
 
 	ep->start = ep->end = ep->data;
+	ep->sublen = 0;
+	ep->subcnt = 0;
 
 next_tok:
 	tok = eqn_next(ep, MODE_TOK);
