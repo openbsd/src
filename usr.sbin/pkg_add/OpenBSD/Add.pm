@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.188 2022/03/17 21:45:51 espie Exp $
+# $OpenBSD: Add.pm,v 1.189 2022/04/13 21:20:23 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -626,6 +626,14 @@ sub install
 	$self->set_modes($state, $destdir.$fullname);
 }
 
+package OpenBSD::PackingElement::Extra;
+sub find_extractible
+{
+	my ($self, $state, $wanted, $tied) = @_;
+
+	$state->{current_set}{known_extra}{$self->fullname} = 1;
+}
+
 package OpenBSD::PackingElement::RcScript;
 sub install
 {
@@ -664,6 +672,9 @@ sub prepare_for_addition
 
 sub find_extractible
 {
+	my ($self, $state, $wanted, $tied) = @_;
+
+	$state->{current_set}{known_sample}{$self->fullname} = 1;
 }
 
 sub extract
