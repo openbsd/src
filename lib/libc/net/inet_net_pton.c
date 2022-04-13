@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_net_pton.c,v 1.11 2021/01/19 16:43:44 florian Exp $	*/
+/*	$OpenBSD: inet_net_pton.c,v 1.12 2022/04/13 16:20:11 millert Exp $	*/
 
 /*
  * Copyright (c) 2012 by Gilles Chehade <gilles@openbsd.org>
@@ -208,6 +208,7 @@ inet_net_pton_ipv6(const char *src, u_char *dst, size_t size)
 	struct in6_addr	 in6;
 	int		 ret;
 	int		 bits;
+	size_t		 bytes
 	char		 buf[INET6_ADDRSTRLEN + sizeof("/128")];
 	char		*sep;
 	const char	*errstr;
@@ -235,10 +236,11 @@ inet_net_pton_ipv6(const char *src, u_char *dst, size_t size)
 		}
 	}
 
-	if ((bits + 7) / 8 > size) {
+	bytes = (bits + 7) / 8;
+	if (bytes > size) {
 		errno = EMSGSIZE;
 		return (-1);
 	}
-	memcpy(dst, &in6.s6_addr, size);
+	memcpy(dst, &in6.s6_addr, bytes);
 	return (bits);
 }
