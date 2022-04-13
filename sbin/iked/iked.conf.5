@@ -1,4 +1,4 @@
-.\" $OpenBSD: iked.conf.5,v 1.92 2022/02/06 00:29:02 jsg Exp $
+.\" $OpenBSD: iked.conf.5,v 1.93 2022/04/13 11:06:15 tobhe Exp $
 .\"
 .\" Copyright (c) 2010 - 2014 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2004 Mathieu Sauve-Frankel  All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 6 2022 $
+.Dd $Mdocdate: April 13 2022 $
 .Dt IKED.CONF 5
 .Os
 .Sh NAME
@@ -1001,7 +1001,7 @@ This is useful in setups where AH cannot be used, e.g. when NAT is involved.
 The following group types are permitted with the
 .Ic group
 keyword:
-.Bl -column "brainpool224" "Group" "Size" "Curve25519" "Default" -offset indent
+.Bl -column "sntrup761x25519" "Group" "1190 B" "Hybrid PQKE" "Default" -offset indent
 .It Em Name Ta Em Group Ta Em Size Ta Em Type Ta Em Default
 .It Li modp768 Ta grp1 Ta 768 Ta "MODP" Ta "" Ta "[insecure]"
 .It Li modp1024 Ta grp2 Ta 1024 Ta "MODP" Ta "x" Ta "[weak]"
@@ -1021,6 +1021,7 @@ keyword:
 .It Li brainpool384 Ta grp29 Ta 384 Ta "ECP" Ta ""
 .It Li brainpool512 Ta grp30 Ta 512 Ta "ECP" Ta ""
 .It Li curve25519 Ta grp31 Ta 256 Ta "Curve25519" Ta "x"
+.It Li sntrup761x25519 Ta "" Ta 1190 B Ta "Hybrid PQKE" Ta ""
 .El
 .Pp
 The currently supported group types are either
