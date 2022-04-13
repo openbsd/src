@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.62 2022/04/13 15:07:25 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.63 2022/04/13 15:32:33 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -479,7 +479,7 @@ add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 	uuid_enc_le(&gp[pn].gp_guid, &uuid);
 	gh.gh_part_csum = htole32(crc32((unsigned char *)&gp, sizeof(gp)));
 	gh.gh_csum = 0;
-	gh.gh_csum = htole32(crc32((unsigned char *)&gh, sizeof(gh)));
+	gh.gh_csum = htole32(crc32((unsigned char *)&gh, letoh32(gh.gh_size)));
 
 	return 0;
 
