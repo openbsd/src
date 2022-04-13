@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftok.c,v 1.9 2019/06/28 13:32:41 deraadt Exp $ */
+/*	$OpenBSD: ftok.c,v 1.10 2022/04/13 16:23:53 millert Exp $ */
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
  * All rights reserved.
@@ -32,11 +32,12 @@
 key_t
 ftok(const char *path, int id)
 {
+	const unsigned int u_id = id;
 	struct stat st;
 
 	if (stat(path, &st) == -1)
 		return (key_t)-1;
 
 	return (key_t)
-	    ((id & 0xff) << 24 | (st.st_dev & 0xff) << 16 | (st.st_ino & 0xffff));
+	    ((u_id & 0xff) << 24 | (st.st_dev & 0xff) << 16 | (st.st_ino & 0xffff));
 }
