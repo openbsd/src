@@ -1,0 +1,27 @@
+.\" $OpenBSD: E1.in,v 1.1 2022/04/13 13:11:33 schwarze Exp $
+.Dd $Mdocdate: April 13 2022 $
+.Dt ESC-E 1
+.Os
+.Sh NAME
+.Nm esc-E
+.Nd copy-mode escaping of backslashes
+.Sh DESCRIPTION
+.ds myvar myval
+.nr myreg 1 1
+initial text
+.Pp
+string expansion: \*[myvar] \E*[myvar] \EE*[myvar] \EEE*[myvar]
+.Pp
+output device: \*(.T \E*[.T] \EE*(.T \EEE*(.T
+.Pp
+numerical expression test: \B'1' \EB'X' \EEB'2' \EEEB'Y'
+.Pp
+register:
+\n[myreg]
+\En+[myreg]
+\EEn+[myreg]
+\EEEn[myreg]
+.Pp
+special character: \(<= \E(>= \EE(<< \EEE(>>
+.Pp
+final text

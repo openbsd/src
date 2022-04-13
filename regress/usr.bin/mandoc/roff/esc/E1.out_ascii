@@ -1,0 +1,21 @@
+ESC-E(1)                    General Commands Manual                   ESC-E(1)
+
+NNAAMMEE
+     eesscc--EE - copy-mode escaping of backslashes
+
+DDEESSCCRRIIPPTTIIOONN
+     initial text
+
+     string expansion: myval myval myval myval
+
+     output device: ascii ascii ascii ascii
+
+     numerical expression test: 1 0 1 0
+
+     register: 1 2 3 3
+
+     special character: <= >= << >>
+
+     final text
+
+OpenBSD                         April 13, 2022                         OpenBSD
