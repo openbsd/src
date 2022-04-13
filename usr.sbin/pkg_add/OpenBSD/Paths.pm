@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.36 2019/07/04 15:08:27 espie Exp $
+# $OpenBSD: Paths.pm,v 1.37 2022/04/13 21:19:16 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -51,6 +51,7 @@ sub df() { '/bin/df' }
 sub ssh() { '/usr/bin/ssh' }
 sub make() { '/usr/bin/make' }
 sub mklocatedb() { '/usr/libexec/locate.mklocatedb' }
+sub locate() { '/usr/bin/locate' }
 sub hostname() { '/bin/hostname' }
 sub doas() { '/usr/bin/doas' }
 sub env() { '/usr/bin/env' }
@@ -70,6 +71,7 @@ sub master_keys() { ("/etc/master_key") }
 sub installurl() { "/etc/installurl" }
 sub srclocatedb() { "/usr/lib/locate/src.db" }
 sub xlocatedb() { "/usr/X11R6/lib/locate/xorg.db" }
+sub updateinfodb { '/usr/local/share/update.db' }
 
 sub font_cruft() { ("fonts.alias", "fonts.dir", "fonts.cache-1", "fonts.scale") }
 sub man_cruft() { ("whatis.db", "mandoc.db", "mandoc.index") }
