@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.264 2022/03/22 18:02:54 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.265 2022/04/14 14:10:22 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -404,7 +404,7 @@ in_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in *sin, int wild,
 	if (lport) {
 		struct inpcb *t;
 
-		if (so->so_euid) {
+		if (so->so_euid && !IN_MULTICAST(sin->sin_addr.s_addr)) {
 			t = in_pcblookup_local(table, &sin->sin_addr, lport,
 			    INPLOOKUP_WILDCARD, inp->inp_rtableid);
 			if (t && (so->so_euid != t->inp_socket->so_euid))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.116 2022/03/21 09:12:34 bluhm Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.117 2022/04/14 14:10:22 claudio Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -209,16 +209,14 @@ in6_pcbaddrisavail(struct inpcb *inp, struct sockaddr_in6 *sin6, int wild,
 	if (lport) {
 		struct inpcb *t;
 
-		if (so->so_euid) {
-			t = in_pcblookup_local(table,
-			    (struct in_addr *)&sin6->sin6_addr, lport,
+		if (so->so_euid && !IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
+			t = in_pcblookup_local(table, &sin6->sin6_addr, lport,
 			    INPLOOKUP_WILDCARD | INPLOOKUP_IPV6,
 			    inp->inp_rtableid);
 			if (t && (so->so_euid != t->inp_socket->so_euid))
 				return (EADDRINUSE);
 		}
-		t = in_pcblookup_local(table,
-		    (struct in_addr *)&sin6->sin6_addr, lport,
+		t = in_pcblookup_local(table, &sin6->sin6_addr, lport,
 		    wild, inp->inp_rtableid);
 		if (t && (reuseport & t->inp_socket->so_options) == 0)
 			return (EADDRINUSE);
