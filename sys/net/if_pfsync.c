@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.302 2022/04/07 13:38:54 bluhm Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.303 2022/04/14 11:39:44 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -315,7 +315,7 @@ pfsyncattach(int npfsync)
 {
 	if_clone_attach(&pfsync_cloner);
 	pfsynccounters = counters_alloc(pfsyncs_ncounters);
-	mq_init(&pfsync_mq, 4096, IPL_SOFTNET);
+	mq_init(&pfsync_mq, 4096, IPL_MPFLOOR);
 }
 
 int
@@ -333,21 +333,21 @@ pfsync_clone_create(struct if_clone *ifc, int unit)
 	sc = malloc(sizeof(*pfsyncif), M_DEVBUF, M_WAITOK|M_ZERO);
 	for (q = 0; q < PFSYNC_S_COUNT; q++)
 		TAILQ_INIT(&sc->sc_qs[q]);
-	mtx_init_flags(&sc->sc_st_mtx, IPL_SOFTNET, "st_mtx", 0);
+	mtx_init(&sc->sc_st_mtx, IPL_MPFLOOR);
 
-	pool_init(&sc->sc_pool, PFSYNC_PLSIZE, 0, IPL_SOFTNET, 0, "pfsync",
+	pool_init(&sc->sc_pool, PFSYNC_PLSIZE, 0, IPL_MPFLOOR, 0, "pfsync",
 	    NULL);
 	TAILQ_INIT(&sc->sc_upd_req_list);
-	mtx_init(&sc->sc_upd_req_mtx, IPL_SOFTNET);
+	mtx_init(&sc->sc_upd_req_mtx, IPL_MPFLOOR);
 	TAILQ_INIT(&sc->sc_deferrals);
-	mtx_init(&sc->sc_deferrals_mtx, IPL_SOFTNET);
+	mtx_init(&sc->sc_deferrals_mtx, IPL_MPFLOOR);
 	timeout_set_proc(&sc->sc_deferrals_tmo, pfsync_deferrals_tmo, sc);
 	task_set(&sc->sc_ltask, pfsync_syncdev_state, sc);
 	task_set(&sc->sc_dtask, pfsync_ifdetach, sc);
 	sc->sc_deferred = 0;
 
 	TAILQ_INIT(&sc->sc_tdb_q);
-	mtx_init(&sc->sc_tdb_mtx, IPL_SOFTNET);
+	mtx_init(&sc->sc_tdb_mtx, IPL_MPFLOOR);
 
 	sc->sc_len = PFSYNC_MINPKT;
 	sc->sc_maxupdates = 128;
