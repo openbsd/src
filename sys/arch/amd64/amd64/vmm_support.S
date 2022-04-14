@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.19 2022/04/09 01:49:43 dv Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.20 2022/04/14 20:24:15 bluhm Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -62,8 +62,8 @@ _C_LABEL(vmm_dispatch_intr):
 
 _C_LABEL(vmxon):
 	RETGUARD_SETUP(vmxon, r11)
-	vmxon	(%rdi)
 	xorq	%rax, %rax
+	vmxon	(%rdi)
 	setna	%al
 	RETGUARD_CHECK(vmxon, r11)
 	ret
@@ -71,8 +71,8 @@ _C_LABEL(vmxon):
 
 _C_LABEL(vmxoff):
 	RETGUARD_SETUP(vmxoff, r11)
-	vmxoff
 	xorq	%rax, %rax
+	vmxoff
 	setna	%al
 	RETGUARD_CHECK(vmxoff, r11)
 	ret
@@ -80,8 +80,8 @@ _C_LABEL(vmxoff):
 
 _C_LABEL(vmclear):
 	RETGUARD_SETUP(vmclear, r11)
-	vmclear	(%rdi)
 	xorq	%rax, %rax
+	vmclear	(%rdi)
 	setna	%al
 	RETGUARD_CHECK(vmclear, r11)
 	ret
@@ -89,8 +89,8 @@ _C_LABEL(vmclear):
 
 _C_LABEL(vmptrld):
 	RETGUARD_SETUP(vmptrld, r11)
-	vmptrld	(%rdi)
 	xorq	%rax, %rax
+	vmptrld	(%rdi)
 	setna	%al
 	RETGUARD_CHECK(vmptrld, r11)
 	ret
@@ -98,8 +98,8 @@ _C_LABEL(vmptrld):
 
 _C_LABEL(vmptrst):
 	RETGUARD_SETUP(vmptrst, r11)
-	vmptrst	(%rdi)
 	xorq	%rax, %rax
+	vmptrst	(%rdi)
 	setna	%al
 	RETGUARD_CHECK(vmptrst, r11)
 	ret
@@ -107,8 +107,8 @@ _C_LABEL(vmptrst):
 
 _C_LABEL(vmwrite):
 	RETGUARD_SETUP(vmwrite, r11)
-	vmwrite	%rsi, %rdi
 	xorq	%rax, %rax
+	vmwrite	%rsi, %rdi
 	setna	%al
 	RETGUARD_CHECK(vmwrite, r11)
 	ret
@@ -116,8 +116,8 @@ _C_LABEL(vmwrite):
 
 _C_LABEL(vmread):
 	RETGUARD_SETUP(vmread, r11)
-	vmread	%rdi, (%rsi)
 	xorq	%rax, %rax
+	vmread	%rdi, (%rsi)
 	setna	%al
 	RETGUARD_CHECK(vmread, r11)
 	ret
