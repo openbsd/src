@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.9 2022/04/12 19:44:32 naddy Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.10 2022/04/14 19:47:11 naddy Exp $	*/
 /*      $NetBSD: db_interface.c,v 1.12 2001/07/22 11:29:46 wiz Exp $ */
 
 /*
@@ -221,7 +221,7 @@ db_cpuinfo_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 #endif
 
-struct db_command db_machine_command_table[] = {
+const struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
 	{ "cpuinfo",    db_cpuinfo_cmd,         0,      NULL },
 	{ "startcpu",   db_startproc_cmd,       0,      NULL },

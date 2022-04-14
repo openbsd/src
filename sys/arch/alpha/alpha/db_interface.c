@@ -1,4 +1,4 @@
-/* $OpenBSD: db_interface.c,v 1.27 2022/04/12 19:44:31 naddy Exp $ */
+/* $OpenBSD: db_interface.c,v 1.28 2022/04/14 19:47:10 naddy Exp $ */
 /* $NetBSD: db_interface.c,v 1.8 1999/10/12 17:08:57 jdolecek Exp $ */
 
 /* 
@@ -85,7 +85,7 @@ db_regs_t ddb_regs;
 void	db_mach_cpu(db_expr_t, int, db_expr_t, char *);
 #endif
 
-struct db_command db_machine_command_table[] = {
+const struct db_command db_machine_command_table[] = {
 #if defined(MULTIPROCESSOR)
 	{ "ddbcpu",	db_mach_cpu,	0,	NULL },
 #endif

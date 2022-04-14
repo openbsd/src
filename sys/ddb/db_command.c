@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.93 2022/04/12 19:44:32 naddy Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.94 2022/04/14 19:47:12 naddy Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /*
@@ -79,8 +79,9 @@ vaddr_t		db_prev;	/* last address examined
 vaddr_t		db_next;	/* next address to be examined
 				   or written */
 
-int	db_cmd_search(char *, struct db_command *, struct db_command **);
-void	db_cmd_list(struct db_command *);
+int	db_cmd_search(char *, const struct db_command *,
+	    const struct db_command **);
+void	db_cmd_list(const struct db_command *);
 void	db_ctf_pprint_cmd(db_expr_t, int, db_expr_t,char *);
 void	db_map_print_cmd(db_expr_t, int, db_expr_t, char *);
 void	db_buf_print_cmd(db_expr_t, int, db_expr_t, char *);
@@ -146,9 +147,10 @@ db_skip_to_eol(void)
  * Search for command prefix.
  */
 int
-db_cmd_search(char *name, struct db_command *table, struct db_command **cmdp)
+db_cmd_search(char *name, const struct db_command *table,
+    const struct db_command **cmdp)
 {
-	struct db_command	*cmd;
+	const struct db_command	*cmd;
 	int			result = CMD_NONE;
 
 	for (cmd = table; cmd->name != 0; cmd++) {
@@ -180,9 +182,9 @@ db_cmd_search(char *name, struct db_command *table, struct db_command **cmdp)
 }
 
 void
-db_cmd_list(struct db_command *table)
+db_cmd_list(const struct db_command *table)
 {
-	struct db_command *cmd;
+	const struct db_command *cmd;
 
 	for (cmd = table; cmd->name != 0; cmd++) {
 		db_printf("%-12s", cmd->name);
@@ -191,9 +193,10 @@ db_cmd_list(struct db_command *table)
 }
 
 void
-db_command(struct db_command **last_cmdp, struct db_command *cmd_table)
+db_command(const struct db_command **last_cmdp,
+    const struct db_command *cmd_table)
 {
-	struct db_command	*cmd;
+	const struct db_command *cmd;
 	char		modif[TOK_STRING_SIZE];
 	db_expr_t	addr, count;
 	int		t, result, have_addr = 0;
@@ -558,7 +561,7 @@ db_bcstats_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif
  * 'show' commands
  */
 
-struct db_command db_show_all_cmds[] = {
+const struct db_command db_show_all_cmds[] = {
 	{ "procs",	db_show_all_procs,	0, NULL },
 	{ "callout",	db_show_callout,	0, NULL },
 	{ "pools",	db_show_all_pools,	0, NULL },
@@ -578,7 +581,7 @@ struct db_command db_show_all_cmds[] = {
 	{ NULL,		NULL,			0, NULL }
 };
 
-struct db_command db_show_cmds[] = {
+const struct db_command db_show_cmds[] = {
 	{ "all",	NULL,			0,	db_show_all_cmds },
 	{ "bcstats",	db_bcstats_print_cmd,	0,	NULL },
 	{ "breaks",	db_listbreak_cmd,	0,	NULL },
@@ -615,7 +618,7 @@ struct db_command db_show_cmds[] = {
 	{ NULL,		NULL,			0,	NULL }
 };
 
-struct db_command db_boot_cmds[] = {
+const struct db_command db_boot_cmds[] = {
 	{ "sync",	db_boot_sync_cmd,	0,	0 },
 	{ "crash",	db_boot_crash_cmd,	0,	0 },
 	{ "dump",	db_boot_dump_cmd,	0,	0 },
@@ -625,7 +628,7 @@ struct db_command db_boot_cmds[] = {
 	{ NULL, }
 };
 
-struct db_command db_command_table[] = {
+const struct db_command db_command_table[] = {
 #ifdef DB_MACHINE_COMMANDS
   /* this must be the first entry, if it exists */
 	{ "machine",	NULL,			0, db_machine_command_table },
@@ -666,7 +669,7 @@ struct db_command db_command_table[] = {
 	{ NULL,		NULL,			0,		NULL }
 };
 
-struct db_command	*db_last_command = NULL;
+const struct db_command	*db_last_command = NULL;
 
 void
 db_help_cmd(db_expr_t addr, int haddr, db_expr_t count, char *modif)

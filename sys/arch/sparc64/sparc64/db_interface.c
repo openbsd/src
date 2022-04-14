@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.57 2022/04/12 19:44:32 naddy Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.58 2022/04/14 19:47:12 naddy Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.61 2001/07/31 06:55:47 eeh Exp $ */
 
 /*
@@ -1167,7 +1167,7 @@ db_register_xir(void (*fun)(void *, int), void *arg)
 extern void db_esp(db_expr_t, int, db_expr_t, char *);
 #endif
 
-struct db_command db_machine_command_table[] = {
+const struct db_command db_machine_command_table[] = {
 	{ "ctx",	db_ctx_cmd,	0,	0 },
 	{ "dtlb",	db_dump_dtlb,	0,	0 },
 	{ "dtsb",	db_dump_dtsb,	0,	0 },

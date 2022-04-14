@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.38 2022/04/12 19:44:31 naddy Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.39 2022/04/14 19:47:10 naddy Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.1 2003/04/26 18:39:27 fvdl Exp $	*/
 
 /*
@@ -394,7 +394,7 @@ x86_ipi_db(struct cpu_info *ci)
 #endif /* MULTIPROCESSOR */
 
 #if NACPI > 0
-struct db_command db_acpi_cmds[] = {
+const struct db_command db_acpi_cmds[] = {
 	{ "disasm",	db_acpi_disasm,		CS_OWN,	NULL },
 	{ "showval",	db_acpi_showval,	CS_OWN,	NULL },
 	{ "tree",	db_acpi_tree,		0,	NULL },
@@ -403,7 +403,7 @@ struct db_command db_acpi_cmds[] = {
 };
 #endif /* NACPI > 0 */
 
-struct db_command db_machine_command_table[] = {
+const struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
 	{ "cpuinfo",	db_cpuinfo_cmd,		0,	0 },
 	{ "startcpu",	db_startproc_cmd,	0,	0 },

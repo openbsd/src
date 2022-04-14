@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.11 2022/04/12 19:44:31 naddy Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.12 2022/04/14 19:47:11 naddy Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /*
@@ -469,7 +469,7 @@ db_stopcpu(int cpu)
 }
 #endif
 
-struct db_command db_machine_command_table[] = {
+const struct db_command db_machine_command_table[] = {
 #ifdef MULTIPROCESSOR
 	{ "cpuinfo",    db_cpuinfo_cmd,         0,      NULL },
 	{ "startcpu",   db_startproc_cmd,       0,      NULL },

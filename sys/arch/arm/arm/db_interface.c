@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.18 2022/04/12 19:44:31 naddy Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.19 2022/04/14 19:47:10 naddy Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.34 2003/10/26 23:11:15 chris Exp $	*/
 
 /* 
@@ -340,7 +340,7 @@ db_enter(void)
 	asm(".word	0xe7ffffff");
 }
 
-struct db_command db_machine_command_table[] = {
+const struct db_command db_machine_command_table[] = {
 	{ "frame",	db_show_frame_cmd,	0, NULL },
 #ifdef ARM32_DB_COMMANDS
 	ARM32_DB_COMMANDS,
