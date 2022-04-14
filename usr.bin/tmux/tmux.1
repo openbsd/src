@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.886 2022/03/31 17:27:27 naddy Exp $
+.\" $OpenBSD: tmux.1,v 1.887 2022/04/14 06:59:29 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: April 14 2022 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5580,11 +5580,11 @@ session option.
 .Pp
 Commands related to the status line are as follows:
 .Bl -tag -width Ds
-.Tg clrphist
+.Tg clearphist
 .It Xo Ic clear-prompt-history
 .Op Fl T Ar prompt-type
 .Xc
-.D1 Pq alias: Ic clrphist
+.D1 Pq alias: Ic clearphist
 Clear status prompt history for prompt type
 .Ar prompt-type .
 If
