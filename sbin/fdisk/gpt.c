@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.64 2022/04/13 22:29:30 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.65 2022/04/14 16:33:25 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -155,6 +155,12 @@ get_header(const uint64_t sector)
 		return -1;
 	}
 
+	if ((dl.d_secsize % letoh32(gh.gh_part_size)) != 0) {
+		DPRINTF("gpt sector size %% partition size (%u %% %u) != 0\n",
+		    dl.d_secsize, letoh32(gh.gh_part_size));
+		return -1;
+	}
+
 	if (letoh32(gh.gh_part_num) > NGPTPARTITIONS) {
 		DPRINTF("gpt partition count: expected <= %u, got %u\n",
 		    NGPTPARTITIONS, letoh32(gh.gh_part_num));
@@ -218,17 +224,11 @@ get_partition_table(void)
 {
 	char			*secbuf;
 	uint64_t		 gpbytes, gpsectors;
-	uint32_t		 gh_part_csum, partspersec;
+	uint32_t		 gh_part_csum;
 
 	DPRINTF("gpt partition table being read from LBA %llu\n",
 	    letoh64(gh.gh_part_lba));
 
-	partspersec = dl.d_secsize / letoh32(gh.gh_part_size);
-	if (partspersec * letoh32(gh.gh_part_size) != dl.d_secsize) {
-		DPRINTF("gpt partition table entry invalid size. %u\n",
-		    letoh32(gh.gh_part_size));
-		return -1;
-	}
 	gpbytes = letoh32(gh.gh_part_num) * letoh32(gh.gh_part_size);
 	gpsectors = (gpbytes + dl.d_secsize - 1) / dl.d_secsize;
 	memset(&gp, 0, sizeof(gp));
