@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.126 2022/04/13 21:22:40 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.127 2022/04/15 08:03:33 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -37,7 +37,9 @@ sub has_different_sig
 {
 	my ($plist, $state) = @_;
 	if (!defined $plist->{different_sig}) {
-		my $n = OpenBSD::PackingList->from_installation($plist->pkgname)->signature;
+		my $n = 
+		    OpenBSD::PackingList->from_installation($plist->pkgname, 
+			\&OpenBSD::PackingList::UpdateInfoOnly)->signature;
 		my $o = $plist->signature;
 		my $r = $n->compare($o, $state);
 		$state->print("Comparing full signature for #1 \"#2\" vs. \"#3\":",
