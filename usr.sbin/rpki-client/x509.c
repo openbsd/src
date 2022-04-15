@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.40 2022/04/12 08:45:34 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.41 2022/04/15 12:59:44 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -350,8 +350,9 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 {
 	CRL_DIST_POINTS		*crldp;
 	DIST_POINT		*dp;
+	GENERAL_NAMES		*names;
 	GENERAL_NAME		*name;
-	int			 crit, rc = 0;
+	int			 i, crit, rc = 0;
 
 	*crl = NULL;
 	crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, &crit, NULL);
@@ -383,20 +384,25 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 		goto out;
 	}
 
-	if (sk_GENERAL_NAME_num(dp->distpoint->name.fullname) != 1) {
-		warnx("%s: RFC 6487 section 4.8.6: CRL: "
-		    "want 1 full name, have %d", fn,
-		    sk_GENERAL_NAME_num(dp->distpoint->name.fullname));
-		goto out;
+	names = dp->distpoint->name.fullname;
+	for (i = 0; i < sk_GENERAL_NAME_num(names); i++) {
+		name = sk_GENERAL_NAME_value(names, i);
+		/* Don't warn on non-rsync URI, so check this afterward. */
+		if (!x509_location(fn, "CRL distribution point", NULL, name,
+		    crl))
+			goto out;
+		if (strncasecmp(*crl, "rsync://", 8) == 0) {
+			rc = 1;
+			goto out;
+		}
+		free(*crl);
+		*crl = NULL;
 	}
 
-	name = sk_GENERAL_NAME_value(dp->distpoint->name.fullname, 0);
+	warnx("%s: RFC 6487 section 4.8.6: no rsync URI "
+	    "in CRL distributionPoint", fn);
 
-	if (!x509_location(fn, "CRL distribution point", NULL, name, crl))
-		goto out;
-	rc = 1;
-
-out:
+ out:
 	CRL_DIST_POINTS_free(crldp);
 	return rc;
 }
