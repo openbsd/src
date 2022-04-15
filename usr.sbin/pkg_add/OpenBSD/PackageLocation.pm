@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.54 2022/04/13 21:22:40 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.55 2022/04/15 10:54:00 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -60,10 +60,10 @@ OpenBSD::Auto::cache(update_info,
 	if ($self->name =~ /^quirks\-/) {
 		return $self->plist;
 	}
-#	if (-f OpenBSD::Paths->updateinfodb) {
-#		my $info = $self->get_update_info_fromdb;
-#		return $info if defined $info;
-#	}
+	if ($self->{repository}{is_cached}) {
+		my $info = $self->get_update_info_fromdb;
+		return $info if defined $info;
+	}
 	return $self->plist(\&OpenBSD::PackingList::UpdateInfoOnly,
 	    sub {
 		return 0 if $_[0] =~ m/^\@option\s+always-update\b/m;
@@ -72,21 +72,17 @@ OpenBSD::Auto::cache(update_info,
 	    });
     });
 
-my $db_location = "";
-
 sub set_db_location
 {
 	my ($class, $location) = @_;
 
-	$db_location = $location->{repository}->url;
+	# XXX UNCOMMENT THE NEXT LINE TO TURN ON CACHING
+#	$location->{repository}{is_cached} = 1;
 }
 
 sub get_update_info_fromdb
 {
 	my $self = shift;
-	if ($self->{repository}->url ne $db_location) {
-		return;
-	}
 	open my $fh, "-|", OpenBSD::Paths->locate, 
 	    '-d', OpenBSD::Paths->updateinfodb, $self->name.":*";
 	my $content = '';
