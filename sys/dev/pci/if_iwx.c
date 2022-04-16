@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.141 2022/04/06 18:59:29 naddy Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.142 2022/04/16 16:21:50 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -491,6 +491,7 @@ int	iwx_intr_msix(void *);
 int	iwx_match(struct device *, void *, void *);
 int	iwx_preinit(struct iwx_softc *);
 void	iwx_attach_hook(struct device *);
+const struct iwx_device_cfg *iwx_find_device_cfg(struct iwx_softc *);
 void	iwx_attach(struct device *, struct device *, void *);
 void	iwx_init_task(void *);
 int	iwx_activate(struct device *, int);
@@ -870,7 +871,7 @@ iwx_ctxt_info_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
 	/* size is in DWs */
 	ctxt_info->version.size = htole16(sizeof(*ctxt_info) / 4);
 
-	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_22560)
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210)
 		rb_size = IWX_CTXT_INFO_RB_SIZE_2K;
 	else
 		rb_size = IWX_CTXT_INFO_RB_SIZE_4K;
@@ -9392,60 +9393,191 @@ static const struct pci_matchid iwx_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_3 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_4,},
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_5,},
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_6,},
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_7,},
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_8,},
 };
 
-static const struct pci_matchid iwx_subsystem_id_ax201[] = {
-	{ PCI_VENDOR_INTEL,	0x0070 },
-	{ PCI_VENDOR_INTEL,	0x0074 },
-	{ PCI_VENDOR_INTEL,	0x0078 },
-	{ PCI_VENDOR_INTEL,	0x007c },
-	{ PCI_VENDOR_INTEL,	0x0310 },
-	{ PCI_VENDOR_INTEL,	0x2074 },
-	{ PCI_VENDOR_INTEL,	0x4070 },
-	/* TODO: There are more ax201 devices with "main" product ID 0x06f0 */
-};
 
 int
 iwx_match(struct device *parent, iwx_match_t match __unused, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	pcireg_t subid;
-	pci_vendor_id_t svid;
-	pci_product_id_t spid;
-	int i;
-
-	if (!pci_matchbyid(pa, iwx_devices, nitems(iwx_devices)))
-		return 0;
-
-	/*
-	 * Some PCI product IDs are shared among devices which use distinct
-	 * chips or firmware. We need to match the subsystem ID as well to
-	 * ensure that we have in fact found a supported device.
-	 */
-	subid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
-	svid = PCI_VENDOR(subid);
-	spid = PCI_PRODUCT(subid);
-
-	switch (PCI_PRODUCT(pa->pa_id)) {
-	case PCI_PRODUCT_INTEL_WL_22500_1: /* AX200 */
-		return 1; /* match any device */
-	case PCI_PRODUCT_INTEL_WL_22500_2: /* AX201 */
-	case PCI_PRODUCT_INTEL_WL_22500_3: /* AX201 */
-	case PCI_PRODUCT_INTEL_WL_22500_4: /* AX201 */
-	case PCI_PRODUCT_INTEL_WL_22500_5: /* AX201 */
-		for (i = 0; i < nitems(iwx_subsystem_id_ax201); i++) {
-			if (svid == iwx_subsystem_id_ax201[i].pm_vid &&
-			    spid == iwx_subsystem_id_ax201[i].pm_pid)
-				return 1;
-
-		}
-		break;
-	default:
-		break;
-	}
-
-	return 0;
+	return pci_matchbyid(pa, iwx_devices, nitems(iwx_devices));
 }
+
+/*
+ * The device info table below contains device-specific config overrides.
+ * The most important parameter derived from this table is the name of the
+ * firmware image to load.
+ *
+ * The Linux iwlwifi driver uses an "old" and a "new" device info table.
+ * The "old" table matches devices based on PCI vendor/product IDs only.
+ * The "new" table extends this with various device parameters derived
+ * from MAC type, RF type, and PCI subdevice ID.
+ *
+ * In iwlwifi "old" and "new" tables share the same array, where "old"
+ * entries contain dummy values for data defined only for "new" entries.
+ * As of 2022, Linux developers are still in the process of moving entries
+ * from "old" to "new" style and it looks like this effort has stalled in
+ * in some work-in-progress state for quite a while. Linux commits moving
+ * entries from "old" to "new" have at times been reverted due to regressions.
+ * Part of this complexity comes from iwlwifi supporting both iwm(4) and iwx(4)
+ * devices in the same driver.
+ *
+ * We try to avoid this mess while still recognizing supported iwx(4) devices
+ * correctly. Our table below contains only "new" entries declared in iwlwifi 
+ * with the _IWL_DEV_INFO() macro (with a leading underscore).
+ * Other devices are matched based on PCI vendor/product ID as usual.
+ */
+
+struct iwx_dev_info {
+	uint16_t device;
+	uint16_t subdevice;
+	uint16_t mac_type;
+	uint16_t rf_type;
+	uint8_t mac_step;
+	uint8_t rf_id;
+	uint8_t no_160;
+	uint8_t cores;
+	uint8_t cdb;
+	uint8_t jacket;
+	const struct iwx_device_cfg *cfg;
+};
+
+#define _IWX_DEV_INFO(_device, _subdevice, _mac_type, _mac_step, _rf_type, \
+		      _rf_id, _no_160, _cores, _cdb, _jacket, _cfg) \
+	{ .device = (_device), .subdevice = (_subdevice), .cfg = &(_cfg),  \
+	  .mac_type = _mac_type, .rf_type = _rf_type,	   \
+	  .no_160 = _no_160, .cores = _cores, .rf_id = _rf_id,		   \
+	  .mac_step = _mac_step, .cdb = _cdb, .jacket = _jacket }
+
+/*
+ * When adding entries to this table keep in mind that entries must
+ * be listed in the same order as in the Linux driver. Code walks this
+ * table backwards and uses the first matching entry it finds.
+ * Device firmware must be available in fw_update(8).
+ */
+static const struct iwx_dev_info iwx_dev_info_table[] = {
+	/* Qu with Jf, C step */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QU, IWX_SILICON_C_STEP,
+		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1,
+		      IWX_CFG_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_9560_qu_c0_jf_b0_cfg), /* 9461_160 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QU, IWX_SILICON_C_STEP,
+		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1,
+		      IWX_CFG_NO_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_9560_qu_c0_jf_b0_cfg), /* iwl9461 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QU, IWX_SILICON_C_STEP,
+		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1_DIV,
+		      IWX_CFG_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_9560_qu_c0_jf_b0_cfg), /* 9462_160 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QU, IWX_SILICON_C_STEP,
+		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1_DIV,
+		      IWX_CFG_NO_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_9560_qu_c0_jf_b0_cfg), /* 9462 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QU, IWX_SILICON_C_STEP,
+		      IWX_CFG_RF_TYPE_JF2, IWX_CFG_RF_ID_JF,
+		      IWX_CFG_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_9560_qu_c0_jf_b0_cfg), /* 9560_160 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QU, IWX_SILICON_C_STEP,
+		      IWX_CFG_RF_TYPE_JF2, IWX_CFG_RF_ID_JF,
+		      IWX_CFG_NO_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_9560_qu_c0_jf_b0_cfg), /* 9560 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, 0x1551,
+		      IWX_CFG_MAC_TYPE_QU, IWX_SILICON_C_STEP,
+		      IWX_CFG_RF_TYPE_JF2, IWX_CFG_RF_ID_JF,
+		      IWX_CFG_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY,
+		      iwx_9560_qu_c0_jf_b0_cfg), /* 9560_killer_1550s */
+	_IWX_DEV_INFO(IWX_CFG_ANY, 0x1552,
+		      IWX_CFG_MAC_TYPE_QU, IWX_SILICON_C_STEP,
+		      IWX_CFG_RF_TYPE_JF2, IWX_CFG_RF_ID_JF,
+		      IWX_CFG_NO_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY,
+		      iwx_9560_qu_c0_jf_b0_cfg), /* 9560_killer_1550i */
+
+	/* QuZ with Jf */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QUZ, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF2, IWX_CFG_RF_ID_JF,
+		      IWX_CFG_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_9560_quz_a0_jf_b0_cfg), /* 9461_160 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QUZ, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF2, IWX_CFG_RF_ID_JF,
+		      IWX_CFG_NO_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_9560_quz_a0_jf_b0_cfg), /* 9461 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QUZ, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1_DIV,
+		      IWX_CFG_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_9560_quz_a0_jf_b0_cfg), /* 9462_160 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QUZ, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1_DIV,
+		      IWX_CFG_NO_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_9560_quz_a0_jf_b0_cfg), /* 9462 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, 0x1551,
+		      IWX_CFG_MAC_TYPE_QUZ, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF2, IWX_CFG_RF_ID_JF,
+		      IWX_CFG_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY,
+		      iwx_9560_quz_a0_jf_b0_cfg), /* killer_1550s */
+	_IWX_DEV_INFO(IWX_CFG_ANY, 0x1552,
+		      IWX_CFG_MAC_TYPE_QUZ, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF2, IWX_CFG_RF_ID_JF,
+		      IWX_CFG_NO_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY,
+		      iwx_9560_quz_a0_jf_b0_cfg), /* 9560_killer_1550i */
+
+	/* Qu with Hr, B step */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QU, IWX_SILICON_B_STEP,
+		      IWX_CFG_RF_TYPE_HR1, IWX_CFG_ANY,
+		      IWX_CFG_ANY, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_qu_b0_hr1_b0), /* AX101 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QU, IWX_SILICON_B_STEP,
+		      IWX_CFG_RF_TYPE_HR2, IWX_CFG_ANY,
+		      IWX_CFG_NO_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_qu_b0_hr_b0), /* AX203 */
+
+	/* Qu with Hr, C step */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QU, IWX_SILICON_C_STEP,
+		      IWX_CFG_RF_TYPE_HR1, IWX_CFG_ANY,
+		      IWX_CFG_ANY, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_qu_c0_hr1_b0), /* AX101 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QU, IWX_SILICON_C_STEP,
+		      IWX_CFG_RF_TYPE_HR2, IWX_CFG_ANY,
+		      IWX_CFG_NO_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_qu_c0_hr_b0), /* AX203 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QU, IWX_SILICON_C_STEP,
+		      IWX_CFG_RF_TYPE_HR2, IWX_CFG_ANY,
+		      IWX_CFG_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_qu_c0_hr_b0), /* AX201 */
+
+	/* QuZ with Hr */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QUZ, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_HR1, IWX_CFG_ANY,
+		      IWX_CFG_ANY, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_quz_a0_hr1_b0), /* AX101 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_QUZ, IWX_SILICON_B_STEP,
+		      IWX_CFG_RF_TYPE_HR2, IWX_CFG_ANY,
+		      IWX_CFG_NO_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_cfg_quz_a0_hr_b0), /* AX203 */
+};
 
 int
 iwx_preinit(struct iwx_softc *sc)
@@ -9518,6 +9650,77 @@ iwx_attach_hook(struct device *self)
 	iwx_preinit(sc);
 }
 
+const struct iwx_device_cfg *
+iwx_find_device_cfg(struct iwx_softc *sc)
+{
+	pcireg_t sreg;
+	pci_product_id_t sdev_id;
+	uint16_t mac_type, rf_type;
+	uint8_t mac_step, cdb, jacket, rf_id, no_160, cores;
+	int i;
+
+	sreg = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_SUBSYS_ID_REG);
+	sdev_id = PCI_PRODUCT(sreg);
+	mac_type = IWX_CSR_HW_REV_TYPE(sc->sc_hw_rev);
+	mac_step = IWX_CSR_HW_REV_STEP(sc->sc_hw_rev << 2);
+	rf_type = IWX_CSR_HW_RFID_TYPE(sc->sc_hw_rf_id);
+	cdb = IWX_CSR_HW_RFID_IS_CDB(sc->sc_hw_rf_id);
+	jacket = IWX_CSR_HW_RFID_IS_JACKET(sc->sc_hw_rf_id);
+
+	rf_id = IWX_SUBDEVICE_RF_ID(sdev_id);
+	no_160 = IWX_SUBDEVICE_NO_160(sdev_id);
+	cores = IWX_SUBDEVICE_CORES(sdev_id);
+
+	for (i = nitems(iwx_dev_info_table) - 1; i >= 0; i--) {
+		 const struct iwx_dev_info *dev_info = &iwx_dev_info_table[i];
+
+		if (dev_info->device != (uint16_t)IWX_CFG_ANY &&
+		    dev_info->device != sc->sc_pid)
+			continue;
+
+		if (dev_info->subdevice != (uint16_t)IWX_CFG_ANY &&
+		    dev_info->subdevice != sdev_id)
+			continue;
+
+		if (dev_info->mac_type != (uint16_t)IWX_CFG_ANY &&
+		    dev_info->mac_type != mac_type)
+			continue;
+
+		if (dev_info->mac_step != (uint8_t)IWX_CFG_ANY &&
+		    dev_info->mac_step != mac_step)
+			continue;
+
+		if (dev_info->rf_type != (uint16_t)IWX_CFG_ANY &&
+		    dev_info->rf_type != rf_type)
+			continue;
+
+		if (dev_info->cdb != (uint8_t)IWX_CFG_ANY &&
+		    dev_info->cdb != cdb)
+			continue;
+
+		if (dev_info->jacket != (uint8_t)IWX_CFG_ANY &&
+		    dev_info->jacket != jacket)
+			continue;
+
+		if (dev_info->rf_id != (uint8_t)IWX_CFG_ANY &&
+		    dev_info->rf_id != rf_id)
+			continue;
+
+		if (dev_info->no_160 != (uint8_t)IWX_CFG_ANY &&
+		    dev_info->no_160 != no_160)
+			continue;
+
+		if (dev_info->cores != (uint8_t)IWX_CFG_ANY &&
+		    dev_info->cores != cores)
+			continue;
+
+		return dev_info->cfg;
+	}
+
+	return NULL;
+}
+
+
 void
 iwx_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -9528,9 +9731,11 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &ic->ic_if;
 	const char *intrstr;
+	const struct iwx_device_cfg *cfg;
 	int err;
 	int txq_i, i, j;
 
+	sc->sc_pid = pa->pa_id;
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
@@ -9600,6 +9805,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	IWX_WRITE(sc, IWX_CSR_FH_INT_STATUS, ~0);
 
 	sc->sc_hw_rev = IWX_READ(sc, IWX_CSR_HW_REV);
+	sc->sc_hw_rf_id = IWX_READ(sc, IWX_CSR_HW_RF_ID);
 
 	/*
 	 * In the 8000 HW family the format of the 4 bytes of CSR_HW_REV have
@@ -9612,7 +9818,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_INTEL_WL_22500_1:
-		sc->sc_fwname = "iwx-cc-a0-67";
+		sc->sc_fwname = IWX_CC_A_FW;
 		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
 		sc->sc_integrated = 0;
 		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_NONE;
@@ -9622,14 +9828,28 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_uhb_supported = 0;
 		break;
 	case PCI_PRODUCT_INTEL_WL_22500_2:
-	case PCI_PRODUCT_INTEL_WL_22500_3:
 	case PCI_PRODUCT_INTEL_WL_22500_5:
+		/* These devices should be QuZ only. */
 		if (sc->sc_hw_rev != IWX_CSR_HW_REV_TYPE_QUZ) {
 			printf("%s: unsupported AX201 adapter\n", DEVNAME(sc));
 			return;
 		}
-
-		sc->sc_fwname = "iwx-QuZ-a0-hr-b0-67";
+		sc->sc_fwname = IWX_QUZ_A_HR_B_FW;
+		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
+		sc->sc_integrated = 1;
+		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_200;
+		sc->sc_low_latency_xtal = 0;
+		sc->sc_xtal_latency = 500;
+		sc->sc_tx_with_siso_diversity = 0;
+		sc->sc_uhb_supported = 0;
+		break;
+	case PCI_PRODUCT_INTEL_WL_22500_3:
+		if (sc->sc_hw_rev == IWX_CSR_HW_REV_TYPE_QU_C0)
+			sc->sc_fwname = IWX_QU_C_HR_B_FW;
+		else if (sc->sc_hw_rev == IWX_CSR_HW_REV_TYPE_QUZ)
+			sc->sc_fwname = IWX_QUZ_A_HR_B_FW;
+		else
+			sc->sc_fwname = IWX_QU_B_HR_B_FW;
 		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
 		sc->sc_integrated = 1;
 		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_200;
@@ -9639,7 +9859,14 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_uhb_supported = 0;
 		break;
 	case PCI_PRODUCT_INTEL_WL_22500_4:
-		sc->sc_fwname = "iwx-Qu-c0-hr-b0-63";
+	case PCI_PRODUCT_INTEL_WL_22500_7:
+	case PCI_PRODUCT_INTEL_WL_22500_8:
+		if (sc->sc_hw_rev == IWX_CSR_HW_REV_TYPE_QU_C0)
+			sc->sc_fwname = IWX_QU_C_HR_B_FW;
+		else if (sc->sc_hw_rev == IWX_CSR_HW_REV_TYPE_QUZ)
+			sc->sc_fwname = IWX_QUZ_A_HR_B_FW;
+		else
+			sc->sc_fwname = IWX_QU_B_HR_B_FW;
 		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
 		sc->sc_integrated = 1;
 		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_1820;
@@ -9648,9 +9875,31 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_tx_with_siso_diversity = 0;
 		sc->sc_uhb_supported = 0;
 		break;
+	case PCI_PRODUCT_INTEL_WL_22500_6:
+		if (sc->sc_hw_rev == IWX_CSR_HW_REV_TYPE_QU_C0)
+			sc->sc_fwname = IWX_QU_C_HR_B_FW;
+		else if (sc->sc_hw_rev == IWX_CSR_HW_REV_TYPE_QUZ)
+			sc->sc_fwname = IWX_QUZ_A_HR_B_FW;
+		else
+			sc->sc_fwname = IWX_QU_B_HR_B_FW;
+		sc->sc_device_family = IWX_DEVICE_FAMILY_22000;
+		sc->sc_integrated = 1;
+		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_2500;
+		sc->sc_low_latency_xtal = 1;
+		sc->sc_xtal_latency = 12000;
+		sc->sc_tx_with_siso_diversity = 0;
+		sc->sc_uhb_supported = 0;
+		break;
 	default:
 		printf("%s: unknown adapter type\n", DEVNAME(sc));
 		return;
+	}
+
+	cfg = iwx_find_device_cfg(sc);
+	if (cfg) {
+		sc->sc_fwname = cfg->fw_name;
+		sc->sc_tx_with_siso_diversity = cfg->tx_with_siso_diversity;
+		sc->sc_uhb_supported = cfg->uhb_supported;
 	}
 
 	/* Allocate DMA memory for loading firmware. */

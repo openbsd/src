@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.36 2022/03/14 15:08:50 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.37 2022/04/16 16:21:50 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -271,6 +271,18 @@ struct iwx_context_info {
  */
 #define IWX_CSR_HW_REV              (0x028)
 
+/*
+ * RF ID revision info
+ * Bit fields:
+ * 31:24: Reserved (set to 0x0)
+ * 23:12: Type
+ * 11:8:  Step (A - 0x0, B - 0x1, etc)
+ * 7:4:   Dash
+ * 3:0:   Flavor
+ */
+#define IWX_CSR_HW_RF_ID		(0x09c)
+
+
 #define IWX_CSR_GIO_REG		(0x03C)
 
 /*
@@ -423,9 +435,20 @@ struct iwx_context_info {
 /* HW REV */
 #define IWX_CSR_HW_REV_DASH(_val)          (((_val) & 0x0000003) >> 0)
 #define IWX_CSR_HW_REV_STEP(_val)          (((_val) & 0x000000C) >> 2)
+#define IWX_CSR_HW_REV_TYPE(_val)          (((_val) & 0x000FFF0) >> 4)
 
 #define IWX_CSR_HW_REV_TYPE_MSK		(0x000FFF0)
+#define IWX_CSR_HW_REV_TYPE_QU_B0	(0x0000334)
+#define IWX_CSR_HW_REV_TYPE_QU_C0	(0x0000338)
 #define IWX_CSR_HW_REV_TYPE_QUZ		(0x0000354)
+
+/* HW RFID */
+#define IWX_CSR_HW_RFID_FLAVOR(_val)       (((_val) & 0x000000F) >> 0)
+#define IWX_CSR_HW_RFID_DASH(_val)         (((_val) & 0x00000F0) >> 4)
+#define IWX_CSR_HW_RFID_STEP(_val)         (((_val) & 0x0000F00) >> 8)
+#define IWX_CSR_HW_RFID_TYPE(_val)         (((_val) & 0x0FFF000) >> 12)
+#define IWX_CSR_HW_RFID_IS_CDB(_val)       (((_val) & 0x10000000) >> 28)
+#define IWX_CSR_HW_RFID_IS_JACKET(_val)    (((_val) & 0x20000000) >> 29)
 
 /* CSR GIO */
 #define IWX_CSR_GIO_REG_VAL_L0S_DISABLED	(0x00000002)
