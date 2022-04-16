@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.127 2022/04/15 08:03:33 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.128 2022/04/16 09:32:40 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -363,7 +363,7 @@ sub find_kept_handle
 	if ($set->{quirks}) {
 		# The installed package has inst: for a location, we want
 		# the newer one (which is identical)
-		OpenBSD::PackageLocation->set_db_location($n->location);
+		$n->location->{repository}->setup_cache($state->{setlist});
 	}
 	$set->move_kept($o);
 	$o->{tweaked} =
@@ -861,7 +861,7 @@ sub really_add
 		delete $handle->{partial};
 		OpenBSD::PkgCfl::register($handle, $state);
 		if ($set->{quirks}) {
-			OpenBSD::PackageLocation->set_db_location($handle->location);
+			$handle->location->{repository}->setup_cache($state->{setlist});
 		}
 	}
 	delete $state->{partial};

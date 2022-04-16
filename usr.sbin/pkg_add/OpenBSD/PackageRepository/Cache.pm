@@ -1,0 +1,114 @@
+# ex:ts=8 sw=4:
+# $OpenBSD: Cache.pm,v 1.1 2022/04/16 09:32:40 espie Exp $
+#
+# Copyright (c) 2022 Marc Espie <espie@openbsd.org>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+use strict;
+use warnings;
+
+# supplementary glue to add support for reading the update.db locate(1)
+# database in quirks
+package OpenBSD::PackageRepository::Cache;
+
+sub new
+{
+	my ($class, $state, $setlist) = @_;
+
+	return undef unless -f OpenBSD::Paths->updateinfodb;
+
+	my $o = bless { 
+	    raw_data => {}, 
+	    state => $state, 
+	    uncached => {}}, $class;
+
+	$o->prime_update_info_cache($state, $setlist);
+	return $o;
+
+}
+sub prime_update_info_cache
+{
+	my ($self, $state, $setlist) = @_;
+
+	my $progress = $state->progress;
+	my $stems = {};
+	# figure out a list of names to precache
+
+	# okay, so basically instead of hitting locate once for each
+	# package on the distant repository, we precache all the stems
+	# we are asking to update/install
+	# this is based on the assumption that most names are "regular"
+	# and we won't cache too little or too much
+	for my $set (@{$setlist}) {
+		for my $h ($set->older, $set->hints) {
+			next if $h->{update_found};
+			my $name = $h->pkgname;
+			$stems->{OpenBSD::PackageName::splitstem($h->{pkgname})} = 1;
+		}
+	}
+	my @list = keys %$stems;
+	$progress->set_header(
+	    $state->f("Precaching update information for #1 names...", 
+		scalar(@list)));
+	open my $fh, "-|", OpenBSD::Paths->locate, 
+	    '-d', OpenBSD::Paths->updateinfodb, map { "$_-[0-9]*"} @list;
+	while (<$fh>) {
+		$progress->working(100);
+		if (m/^(.*?)\:(.*)/) {
+			my ($pkgname, $value) = ($1, $2);
+			$self->{raw_data}{$pkgname} //= '';
+			$self->{raw_data}{$pkgname} .= "$value\n";
+			if ($value =~ m/\@option\s+always-update/) {
+				$self->{uncached}{$pkgname} = 1;
+			}
+		}
+	}
+	close($fh);
+}
+
+sub get_cached_info
+{
+	my ($self, $name) = @_;
+
+	if ($self->{uncached}{$name}) {
+		return undef;
+	}
+	my $content;
+	if (exists $self->{raw_data}{$name}) {
+		$content = $self->{raw_data}{$name};
+	} else {
+		$self->{state}->errsay("Calling locate on #1", $name);
+		$content = '';
+		open my $fh, "-|", OpenBSD::Paths->locate, 
+		    '-d', OpenBSD::Paths->updateinfodb, $name.":*";
+		while (<$fh>) {
+			if (m/\@option\s+always-update/) {
+				return undef;
+			}
+			if (m/^.*?\:(.*)/) {
+				$content .= $1."\n";
+			} else {
+				return undef;
+			}
+		}
+		close ($fh);
+	}
+	if ($content eq '') {
+		return undef;
+	}
+	open my $fh2, "<", \$content;
+	return OpenBSD::PackingList->read($fh2);
+}
+
+1;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.38 2017/03/11 11:25:01 espie Exp $
+# $OpenBSD: Installed.pm,v 1.39 2022/04/16 09:32:40 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -48,6 +48,28 @@ sub expand_locations
 		    'packages', 
 		    OpenBSD::Paths->machine_architecture);
 	}
+}
+
+sub get_cached_info
+{
+	my ($repository, $name) = @_;
+	if (defined $repository->{info_cache}) {
+		return $repository->{info_cache}->get_cached_info($name);
+	} else {
+		return undef;
+	}
+}
+
+sub setup_cache
+{
+	my ($repository, $setlist) = @_;
+	# XXX remove the next line to actually get the cache
+	return;
+	require OpenBSD::PackageRepository::Cache;
+
+	$repository->{info_cache} = 
+	    OpenBSD::PackageRepository::Cache->new(
+		$repository->{state}, $setlist);
 }
 
 sub parse_url

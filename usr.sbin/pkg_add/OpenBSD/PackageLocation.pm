@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.55 2022/04/15 10:54:00 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.56 2022/04/16 09:32:40 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -60,10 +60,8 @@ OpenBSD::Auto::cache(update_info,
 	if ($self->name =~ /^quirks\-/) {
 		return $self->plist;
 	}
-	if ($self->{repository}{is_cached}) {
-		my $info = $self->get_update_info_fromdb;
-		return $info if defined $info;
-	}
+	my $info = $self->{repository}->get_cached_info($self->name);
+	return $info if defined $info;
 	return $self->plist(\&OpenBSD::PackingList::UpdateInfoOnly,
 	    sub {
 		return 0 if $_[0] =~ m/^\@option\s+always-update\b/m;
@@ -71,38 +69,6 @@ OpenBSD::Auto::cache(update_info,
 		return 0;
 	    });
     });
-
-sub set_db_location
-{
-	my ($class, $location) = @_;
-
-	# XXX UNCOMMENT THE NEXT LINE TO TURN ON CACHING
-#	$location->{repository}{is_cached} = 1;
-}
-
-sub get_update_info_fromdb
-{
-	my $self = shift;
-	open my $fh, "-|", OpenBSD::Paths->locate, 
-	    '-d', OpenBSD::Paths->updateinfodb, $self->name.":*";
-	my $content = '';
-	while (<$fh>) {
-		if (m/\@option\s+always-update/) {
-			return undef;
-		}
-		if (m/^.*?\:(.*)/) {
-			$content .= $1."\n";
-		} else {
-			return undef;
-		}
-	}
-	close ($fh);
-	if ($content eq '') {
-		return undef;
-	}
-	open my $fh2, "<", \$content;
-	return OpenBSD::PackingList->read($fh2);
-}
 
 # make sure self is opened and move to the right location if need be.
 sub _opened

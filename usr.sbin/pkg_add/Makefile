@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.93 2022/01/21 17:41:41 espie Exp $
+# $OpenBSD: Makefile,v 1.94 2022/04/16 09:32:40 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -37,6 +37,7 @@ PACKAGES= \
     OpenBSD/PackageLocator.pm \
     OpenBSD/PackageName.pm \
     OpenBSD/PackageRepository.pm \
+    OpenBSD/PackageRepository/Cache.pm \
     OpenBSD/PackageRepository/HTTP.pm \
     OpenBSD/PackageRepository/Installed.pm \
     OpenBSD/PackageRepository/Persistent.pm \
