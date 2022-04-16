@@ -1,4 +1,4 @@
-/*	$OpenBSD: esm.c,v 1.62 2022/02/21 10:24:28 mpi Exp $ */
+/*	$OpenBSD: esm.c,v 1.63 2022/04/16 19:32:54 naddy Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -68,7 +68,7 @@ enum esm_sensor_type {
  * map esm sensor types to kernel sensor types.
  * keep this in sync with the esm_sensor_type enum above.
  */
-enum sensor_type esm_typemap[] = {
+const enum sensor_type esm_typemap[] = {
 	SENSOR_INTEGER,
 	SENSOR_INDICATOR,
 	SENSOR_TEMP,
@@ -149,7 +149,7 @@ void		esm_refresh(void *);
 int		esm_get_devmap(struct esm_softc *, int, struct esm_devmap *);
 void		esm_devmap(struct esm_softc *, struct esm_devmap *);
 void		esm_make_sensors(struct esm_softc *, struct esm_devmap *,
-		    struct esm_sensor_map *, int);
+		    const struct esm_sensor_map *, int);
 int		esm_thresholds(struct esm_softc *, struct esm_devmap *,
 		    struct esm_sensor *);
 
@@ -536,7 +536,7 @@ esm_get_devmap(struct esm_softc *sc, int dev, struct esm_devmap *devmap)
 	return (0);
 }
 
-struct esm_sensor_map esm_sensors_esm2[] = {
+const struct esm_sensor_map esm_sensors_esm2[] = {
 	{ ESM_S_UNKNOWN,	0,		"Motherboard" },
 	{ ESM_S_TEMP,		0,		"CPU 1" },
 	{ ESM_S_TEMP,		0,		"CPU 2" },
@@ -604,7 +604,7 @@ struct esm_sensor_map esm_sensors_esm2[] = {
 	{ ESM_S_UNKNOWN,	0,		"PS Over Temp" }
 };
 
-struct esm_sensor_map esm_sensors_backplane[] = {
+const struct esm_sensor_map esm_sensors_backplane[] = {
 	{ ESM_S_UNKNOWN,	0,		"Backplane" },
 	{ ESM_S_UNKNOWN,	0,		"Backplane Control" },
 	{ ESM_S_TEMP,		0,		"Backplane Top" },
@@ -639,7 +639,7 @@ struct esm_sensor_map esm_sensors_backplane[] = {
 	{ ESM_S_VOLTS,		0,		"Backplane +3.3V" },
 };
 
-struct esm_sensor_map esm_sensors_powerunit[] = {
+const struct esm_sensor_map esm_sensors_powerunit[] = {
 	{ ESM_S_UNKNOWN,	0,		"Power Unit" },
 	{ ESM_S_VOLTSx10,	0,		"Power Supply 1 +5V" },
 	{ ESM_S_VOLTSx10,	0,		"Power Supply 1 +12V" },
@@ -698,7 +698,7 @@ struct esm_sensor_map esm_sensors_powerunit[] = {
 void
 esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 {
-	struct esm_sensor_map	*sensor_map = NULL;
+	const struct esm_sensor_map *sensor_map = NULL;
 	const char		*name = NULL, *fname = NULL;
 	int			mapsize = 0;
 
@@ -828,7 +828,7 @@ esm_devmap(struct esm_softc *sc, struct esm_devmap *devmap)
 
 void
 esm_make_sensors(struct esm_softc *sc, struct esm_devmap *devmap,
-    struct esm_sensor_map *sensor_map, int mapsize)
+    const struct esm_sensor_map *sensor_map, int mapsize)
 {
 	struct esm_smb_req	req;
 	struct esm_smb_resp	resp;
