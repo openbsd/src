@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1989 2022/04/08 06:07:01 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.1990 2022/04/16 16:12:56 stsp Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -15884,6 +15884,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Wi-Fi 6 AX200",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_9,
+	    "Wi-Fi 6 AX210",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_10,
+	    "Wi-Fi 6 AX211",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945G_HB,
 	    "82945G Host",
 	},
@@ -18620,6 +18628,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E5 SAD",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_7,
+	    "Wi-Fi 6 AX201",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE8G_S_D_HB_2C,
 	    "Core 8G Host",
 	},
@@ -19248,6 +19260,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "500 Series Shared SRAM",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_6,
+	    "Wi-Fi 6 AX201",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_500SERIES_GSPI_2,
 	    "500 Series GSPI",
 	},
@@ -19612,6 +19628,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Jasper Lake Shared SRAM",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_8,
+	    "Wi-Fi 6 AX201",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_JSL_SDXC,
 	    "Jasper Lake SDXC",
 	},
@@ -19786,6 +19806,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LAN_6,
 	    "EP80579 LAN",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_11,
+	    "Wi-Fi 6 AX211",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RD,
@@ -20616,6 +20640,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "82740 AGP",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_12,
+	    "Wi-Fi 6 AX211",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_Z690_ESPI,
 	    "Z690 eSPI",
 	},
@@ -20832,6 +20860,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "HECI",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_13,
+	    "Wi-Fi 6 AX211",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_ISH,
 	    "ISH",
 	},
@@ -20854,6 +20886,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_UART_2,
 	    "UART",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_14,
+	    "Wi-Fi 6 AX210",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_15,
+	    "Wi-Fi 6 AX211",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_US15W_HB,
