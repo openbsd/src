@@ -1,4 +1,4 @@
-/*	$OpenBSD: it.c,v 1.47 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: it.c,v 1.48 2022/04/16 19:32:22 naddy Exp $	*/
 
 /*
  * Copyright (c) 2007-2008 Oleg Safiullin <form@pdp-11.org.ru>
@@ -70,7 +70,7 @@ int it_wdog_cb(void *, int);
 #define RFACT(x, y)		(RFACT_NONE * ((x) + (y)) / (y))
 
 
-struct {
+const struct {
 	enum sensor_type	type;
 	const char		*desc;
 } it_sensors[IT_EC_NUMSENSORS] = {
@@ -102,7 +102,7 @@ struct {
 };
 
 /* rfact values for voltage sensors */
-int it_vrfact[IT_VOLT_COUNT] = {
+const int it_vrfact[IT_VOLT_COUNT] = {
 	RFACT_NONE,		/* VCORE_A	*/
 	RFACT_NONE,		/* VCORE_A	*/
 	RFACT_NONE,		/* +3.3V	*/
@@ -114,12 +114,12 @@ int it_vrfact[IT_VOLT_COUNT] = {
 	RFACT_NONE		/* VBAT		*/
 };
 
-int it_fan_regs[] = {
+const int it_fan_regs[] = {
 	IT_EC_FAN_TAC1, IT_EC_FAN_TAC2, IT_EC_FAN_TAC3,
 	IT_EC_FAN_TAC4_LSB, IT_EC_FAN_TAC5_LSB
 };
 
-int it_fan_ext_regs[] = {
+const int it_fan_ext_regs[] = {
 	IT_EC_FAN_EXT_TAC1, IT_EC_FAN_EXT_TAC2, IT_EC_FAN_EXT_TAC3,
 	IT_EC_FAN_TAC4_MSB, IT_EC_FAN_TAC5_MSB
 };
