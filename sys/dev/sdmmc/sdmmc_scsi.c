@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.60 2021/03/27 14:36:28 kn Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.61 2022/04/16 19:19:59 naddy Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -92,7 +92,7 @@ void	sdmmc_done_xs(struct sdmmc_ccb *);
 void	sdmmc_stimeout(void *);
 void	sdmmc_minphys(struct buf *, struct scsi_link *);
 
-struct scsi_adapter sdmmc_switch = {
+const struct scsi_adapter sdmmc_switch = {
 	sdmmc_scsi_cmd, sdmmc_minphys, NULL, NULL, NULL
 };
 

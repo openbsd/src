@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.62 2021/11/22 10:17:14 mglocker Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.63 2022/04/16 19:19:59 naddy Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct umass_scsi_softc {
 int umass_scsi_probe(struct scsi_link *);
 void umass_scsi_cmd(struct scsi_xfer *);
 
-struct scsi_adapter umass_scsi_switch = {
+const struct scsi_adapter umass_scsi_switch = {
 	umass_scsi_cmd, NULL, umass_scsi_probe, NULL, NULL
 };
 

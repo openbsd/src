@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.200 2020/10/14 23:40:33 krw Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.201 2022/04/16 19:19:59 naddy Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -337,7 +337,7 @@ struct scsi_inquiry_pattern {
 };
 
 struct scsibus_attach_args {
-	struct	scsi_adapter	*saa_adapter;
+	const struct scsi_adapter *saa_adapter;
 	void			*saa_adapter_softc;
 	struct	scsi_iopool	*saa_pool;
 	u_int64_t		 saa_wwpn;
@@ -363,7 +363,7 @@ struct scsibus_softc {
 	struct device		 sc_dev;
 	SLIST_HEAD(, scsi_link)  sc_link_list;
 	void			*sb_adapter_softc;
-	struct	scsi_adapter	*sb_adapter;
+	const struct scsi_adapter *sb_adapter;
 	struct	scsi_iopool	*sb_pool;
 	u_int16_t		 sb_quirks;
 	u_int16_t		 sb_flags;

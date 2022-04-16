@@ -1,4 +1,4 @@
-/*	$OpenBSD: trm_pci.c,v 1.11 2022/04/06 18:59:29 naddy Exp $
+/*	$OpenBSD: trm_pci.c,v 1.12 2022/04/16 19:19:59 naddy Exp $
  * ------------------------------------------------------------
  *       O.S     : OpenBSD
  *    FILE NAME  : trm_pci.c
@@ -69,7 +69,7 @@ struct  cfdriver trm_cd = {
         NULL, "trm", DV_DULL
 };
 
-struct scsi_adapter trm_switch = {
+const struct scsi_adapter trm_switch = {
 	trm_scsi_cmd, NULL, NULL, NULL, NULL
 };
 

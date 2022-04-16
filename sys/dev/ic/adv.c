@@ -1,4 +1,4 @@
-/*	$OpenBSD: adv.c,v 1.52 2021/03/07 06:21:38 jsg Exp $	*/
+/*	$OpenBSD: adv.c,v 1.53 2022/04/16 19:19:58 naddy Exp $	*/
 /*	$NetBSD: adv.c,v 1.6 1998/10/28 20:39:45 dante Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ struct cfdriver adv_cd = {
 };
 
 
-struct scsi_adapter adv_switch = {
+const struct scsi_adapter adv_switch = {
 	adv_scsi_cmd, NULL, NULL, NULL, NULL
 };
 

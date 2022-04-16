@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.c,v 1.59 2020/09/22 19:32:52 krw Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.c,v 1.60 2022/04/16 19:19:58 naddy Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -81,7 +81,7 @@ struct cfdriver ahd_cd = {
 	NULL, "ahd", DV_DULL
 };
 
-static struct scsi_adapter ahd_switch = {
+static const struct scsi_adapter ahd_switch = {
 	ahd_action, NULL, NULL, NULL, NULL
 };
 

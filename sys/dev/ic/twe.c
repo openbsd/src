@@ -1,4 +1,4 @@
-/*	$OpenBSD: twe.c,v 1.66 2021/07/14 01:11:13 daniel Exp $	*/
+/*	$OpenBSD: twe.c,v 1.67 2022/04/16 19:19:59 naddy Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Michael Shalayeff.  All rights reserved.
@@ -64,7 +64,7 @@ struct cfdriver twe_cd = {
 
 void	twe_scsi_cmd(struct scsi_xfer *);
 
-struct scsi_adapter twe_switch = {
+const struct scsi_adapter twe_switch = {
 	twe_scsi_cmd, NULL, NULL, NULL, NULL
 };
 

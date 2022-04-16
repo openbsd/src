@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.261 2022/01/09 05:42:38 jsg Exp $	*/
+/*	$OpenBSD: ami.c,v 1.262 2022/04/16 19:19:58 naddy Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -96,13 +96,13 @@ struct cfdriver ami_cd = {
 void	ami_scsi_cmd(struct scsi_xfer *);
 int	ami_scsi_ioctl(struct scsi_link *, u_long, caddr_t, int);
 
-struct scsi_adapter ami_switch = {
+const struct scsi_adapter ami_switch = {
 	ami_scsi_cmd, NULL, NULL, NULL, ami_scsi_ioctl
 };
 
 void	ami_scsi_raw_cmd(struct scsi_xfer *);
 
-struct scsi_adapter ami_raw_switch = {
+const struct scsi_adapter ami_raw_switch = {
 	ami_scsi_raw_cmd, NULL, NULL, NULL, NULL
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.93 2022/01/09 05:42:37 jsg Exp $	*/
+/*	$OpenBSD: aac.c,v 1.94 2022/04/16 19:19:58 naddy Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -129,7 +129,7 @@ struct cfdriver aac_cd = {
 	NULL, "aac", DV_DULL
 };
 
-struct scsi_adapter aac_switch = {
+const struct scsi_adapter aac_switch = {
 	aac_scsi_cmd, NULL, NULL, NULL, NULL
 };
 

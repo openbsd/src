@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.12 2022/04/06 18:59:26 naddy Exp $ */
+/* $OpenBSD: spc.c,v 1.13 2022/04/16 19:19:58 naddy Exp $ */
 /* $NetBSD: spc.c,v 1.4 2003/07/05 19:00:17 tsutsui Exp $ */
 
 /*-
@@ -59,7 +59,7 @@ struct cfdriver spc_cd = {
 	NULL, "spc", DV_DULL
 };
 
-struct scsi_adapter spc_switch = {
+const struct scsi_adapter spc_switch = {
 	spc_scsi_cmd, NULL, NULL, NULL, NULL
 };
 

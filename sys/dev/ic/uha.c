@@ -1,4 +1,4 @@
-/*	$OpenBSD: uha.c,v 1.41 2022/02/15 12:04:44 jsg Exp $	*/
+/*	$OpenBSD: uha.c,v 1.42 2022/04/16 19:19:59 naddy Exp $	*/
 /*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -78,7 +78,7 @@ void *uha_mscp_alloc(void *);
 void uha_scsi_cmd(struct scsi_xfer *);
 int uhaprint(void *, const char *);
 
-struct scsi_adapter uha_switch = {
+const struct scsi_adapter uha_switch = {
 	uha_scsi_cmd, NULL, NULL, NULL, NULL
 };
 

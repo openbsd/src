@@ -1,4 +1,4 @@
-/* $OpenBSD: mfi.c,v 1.187 2020/09/22 19:32:52 krw Exp $ */
+/* $OpenBSD: mfi.c,v 1.188 2022/04/16 19:19:59 naddy Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
  *
@@ -62,11 +62,11 @@ int	mfi_ioctl_cache(struct scsi_link *, u_long,  struct dk_cache *);
 void	mfi_pd_scsi_cmd(struct scsi_xfer *);
 int	mfi_pd_scsi_probe(struct scsi_link *);
 
-struct scsi_adapter mfi_switch = {
+const struct scsi_adapter mfi_switch = {
 	mfi_scsi_cmd, NULL, NULL, NULL, mfi_scsi_ioctl
 };
 
-struct scsi_adapter mfi_pd_switch = {
+const struct scsi_adapter mfi_pd_switch = {
 	mfi_pd_scsi_cmd, NULL, mfi_pd_scsi_probe, NULL, mfi_scsi_ioctl
 };
 

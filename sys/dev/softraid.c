@@ -1,4 +1,4 @@
-/* $OpenBSD: softraid.c,v 1.424 2022/04/12 14:34:11 semarie Exp $ */
+/* $OpenBSD: softraid.c,v 1.425 2022/04/16 19:19:58 naddy Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2009 Marco Peereboom <marco@peereboom.us>
  * Copyright (c) 2008 Chris Kuethe <ckuethe@openbsd.org>
@@ -175,7 +175,7 @@ struct			sr_hotplug_list_head	sr_hotplug_callbacks;
 extern void		(*softraid_disk_attach)(struct disk *, int);
 
 /* scsi glue */
-struct scsi_adapter sr_switch = {
+const struct scsi_adapter sr_switch = {
 	sr_scsi_cmd, NULL, sr_scsi_probe, NULL, sr_scsi_ioctl
 };
 

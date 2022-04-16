@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.59 2022/04/06 18:59:27 naddy Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.60 2022/04/16 19:19:58 naddy Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -94,7 +94,7 @@ void		vscsi_cmd(struct scsi_xfer *);
 int		vscsi_probe(struct scsi_link *);
 void		vscsi_free(struct scsi_link *);
 
-struct scsi_adapter vscsi_switch = {
+const struct scsi_adapter vscsi_switch = {
 	vscsi_cmd, NULL, vscsi_probe, vscsi_free, NULL
 };
 

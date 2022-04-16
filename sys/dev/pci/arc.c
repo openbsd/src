@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc.c,v 1.122 2022/03/11 18:00:45 mpi Exp $ */
+/*	$OpenBSD: arc.c,v 1.123 2022/04/16 19:19:59 naddy Exp $ */
 
 /*
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
@@ -686,7 +686,7 @@ struct cfdriver arc_cd = {
 	NULL, "arc", DV_DULL
 };
 
-struct scsi_adapter arc_switch = {
+const struct scsi_adapter arc_switch = {
 	arc_scsi_cmd, NULL, NULL, NULL, NULL
 };
 

@@ -247,7 +247,7 @@ const struct cfattach hvs_ca = {
 	sizeof(struct hvs_softc), hvs_match, hvs_attach
 };
 
-struct scsi_adapter hvs_switch = {
+const struct scsi_adapter hvs_switch = {
 	hvs_scsi_cmd, NULL, NULL, NULL, NULL
 };
 

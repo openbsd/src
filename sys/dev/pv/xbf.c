@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.51 2020/10/15 13:22:13 krw Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.52 2022/04/16 19:19:59 naddy Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -227,7 +227,7 @@ int	xbf_submit_cmd(struct scsi_xfer *);
 int	xbf_poll_cmd(struct scsi_xfer *);
 void	xbf_complete_cmd(struct xbf_softc *, struct xbf_ccb_queue *, int);
 
-struct scsi_adapter xbf_switch = {
+const struct scsi_adapter xbf_switch = {
 	xbf_scsi_cmd, NULL, NULL, NULL, NULL
 };
 

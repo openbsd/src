@@ -1,4 +1,4 @@
-/*	$OpenBSD: osiop.c,v 1.63 2020/09/22 19:32:52 krw Exp $	*/
+/*	$OpenBSD: osiop.c,v 1.64 2022/04/16 19:19:59 naddy Exp $	*/
 /*	$NetBSD: osiop.c,v 1.9 2002/04/05 18:27:54 bouyer Exp $	*/
 
 /*
@@ -179,7 +179,7 @@ struct cfdriver osiop_cd = {
 	NULL, "osiop", DV_DULL
 };
 
-struct scsi_adapter osiop_switch = {
+const struct scsi_adapter osiop_switch = {
 	osiop_scsicmd, NULL, NULL, NULL, NULL
 };
 

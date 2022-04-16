@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_openbsd.c,v 1.71 2020/09/22 19:32:52 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_openbsd.c,v 1.72 2022/04/16 19:19:58 naddy Exp $	*/
 /*	$NetBSD: aic7xxx_osm.c,v 1.14 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ struct cfdriver ahc_cd = {
 	NULL, "ahc", DV_DULL
 };
 
-static struct scsi_adapter ahc_switch = {
+static const struct scsi_adapter ahc_switch = {
 	ahc_action, NULL, NULL, NULL, NULL
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cac.c,v 1.75 2022/01/09 05:42:38 jsg Exp $	*/
+/*	$OpenBSD: cac.c,v 1.76 2022/04/16 19:19:59 naddy Exp $	*/
 /*	$NetBSD: cac.c,v 1.15 2000/11/08 19:20:35 ad Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ struct cfdriver cac_cd = {
 
 void    cac_scsi_cmd(struct scsi_xfer *);
 
-struct scsi_adapter cac_switch = {
+const struct scsi_adapter cac_switch = {
 	cac_scsi_cmd, NULL, NULL, NULL, NULL
 };
 

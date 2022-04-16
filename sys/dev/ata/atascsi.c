@@ -1,4 +1,4 @@
-/*	$OpenBSD: atascsi.c,v 1.152 2022/04/09 20:10:26 naddy Exp $ */
+/*	$OpenBSD: atascsi.c,v 1.153 2022/04/16 19:19:58 naddy Exp $ */
 
 /*
  * Copyright (c) 2007 David Gwynne <dlg@openbsd.org>
@@ -94,7 +94,7 @@ int		atascsi_probe(struct scsi_link *);
 void		atascsi_free(struct scsi_link *);
 
 /* template */
-struct scsi_adapter atascsi_switch = {
+const struct scsi_adapter atascsi_switch = {
 	atascsi_cmd, NULL, atascsi_probe, atascsi_free, NULL
 };
 

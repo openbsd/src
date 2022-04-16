@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352var.h,v 1.8 2021/03/11 11:16:58 jsg Exp $	*/
+/*	$OpenBSD: mb89352var.h,v 1.9 2022/04/16 19:19:58 naddy Exp $	*/
 /*	$NetBSD: mb89352var.h,v 1.6 2003/08/02 12:48:09 tsutsui Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
@@ -203,7 +203,7 @@ extern int spc_debug; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
 #define SPC_TRACE(s)	SPC_PRINT(SPC_SHOWTRACE, s)
 #define SPC_START(s)	SPC_PRINT(SPC_SHOWSTART, s)
 
-void	spc_attach(struct spc_softc *, struct scsi_adapter *);
+void	spc_attach(struct spc_softc *, const struct scsi_adapter *);
 int	spc_intr(void *);
 int	spc_find(bus_space_tag_t, bus_space_handle_t, int);
 void	spc_init(struct spc_softc *);

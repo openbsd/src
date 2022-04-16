@@ -1,4 +1,4 @@
-/*	$OpenBSD: vdsk.c,v 1.72 2021/10/24 17:05:04 mpi Exp $	*/
+/*	$OpenBSD: vdsk.c,v 1.73 2022/04/16 19:19:58 naddy Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
  *
@@ -179,7 +179,7 @@ struct cfdriver vdsk_cd = {
 
 void	vdsk_scsi_cmd(struct scsi_xfer *);
 
-struct scsi_adapter vdsk_switch = {
+const struct scsi_adapter vdsk_switch = {
 	vdsk_scsi_cmd, NULL, NULL, NULL, NULL
 };
 

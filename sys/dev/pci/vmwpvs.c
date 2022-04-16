@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmwpvs.c,v 1.26 2022/03/11 18:00:52 mpi Exp $ */
+/*	$OpenBSD: vmwpvs.c,v 1.27 2022/04/16 19:19:59 naddy Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -354,7 +354,7 @@ struct cfdriver vmwpvs_cd = {
 
 void		vmwpvs_scsi_cmd(struct scsi_xfer *);
 
-struct scsi_adapter vmwpvs_switch = {
+const struct scsi_adapter vmwpvs_switch = {
 	vmwpvs_scsi_cmd, NULL, NULL, NULL, NULL
 };
 

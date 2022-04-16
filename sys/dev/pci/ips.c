@@ -1,4 +1,4 @@
-/*	$OpenBSD: ips.c,v 1.134 2022/03/11 18:00:50 mpi Exp $	*/
+/*	$OpenBSD: ips.c,v 1.135 2022/04/16 19:19:59 naddy Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2009 Alexander Yurchenko <grange@openbsd.org>
@@ -493,11 +493,11 @@ struct cfdriver ips_cd = {
 	NULL, "ips", DV_DULL
 };
 
-static struct scsi_adapter ips_switch = {
+static const struct scsi_adapter ips_switch = {
 	ips_scsi_cmd, NULL, NULL, NULL, ips_scsi_ioctl
 };
 
-static struct scsi_adapter ips_pt_switch = {
+static const struct scsi_adapter ips_pt_switch = {
 	ips_scsi_pt_cmd, NULL, NULL, NULL, NULL
 };
 

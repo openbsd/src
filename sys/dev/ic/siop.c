@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.88 2022/01/09 05:42:42 jsg Exp $ */
+/*	$OpenBSD: siop.c,v 1.89 2022/04/16 19:19:59 naddy Exp $ */
 /*	$NetBSD: siop.c,v 1.79 2005/11/18 23:10:32 bouyer Exp $	*/
 
 /*
@@ -102,7 +102,7 @@ struct cfdriver siop_cd = {
 	NULL, "siop", DV_DULL
 };
 
-struct scsi_adapter siop_switch = {
+const struct scsi_adapter siop_switch = {
 	siop_scsicmd, NULL, siop_scsiprobe, siop_scsifree, NULL
 };
 
