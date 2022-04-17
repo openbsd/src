@@ -1144,6 +1144,7 @@
 ./usr/libdata/perl5/OpenBSD/PackageName.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository
 ./usr/libdata/perl5/OpenBSD/PackageRepository.pm
+./usr/libdata/perl5/OpenBSD/PackageRepository/Cache.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository/HTTP.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository/Installed.pm
 ./usr/libdata/perl5/OpenBSD/PackageRepository/Persistent.pm
