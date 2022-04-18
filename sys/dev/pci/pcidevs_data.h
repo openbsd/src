@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1990 2022/04/16 16:12:56 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.1991 2022/04/18 05:50:29 kevlo Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -28880,6 +28880,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "R1710 SPI",
 	},
 	{
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_M2010_VGA,
+	    "M2010 VGA",
+	},
+	{
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_M2015_VGA,
+	    "M2015 VGA",
+	},
+	{
 	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R3010_HDA,
 	    "R3010 HDA",
 	},
@@ -28892,12 +28900,24 @@ static const struct pci_known_product pci_known_products[] = {
 	    "R6021 Host",
 	},
 	{
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6023_HB,
+	    "R6023 Host",
+	},
+	{
 	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6025_HB,
 	    "R6025 Host",
 	},
 	{
 	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6031_ISA,
 	    "R6031 ISA",
+	},
+	{
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6035_ISA,
+	    "R6035 ISA",
+	},
+	{
+	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6036_ISA,
+	    "R6036 ISA",
 	},
 	{
 	    PCI_VENDOR_RDC, PCI_PRODUCT_RDC_R6040_ETHER,
