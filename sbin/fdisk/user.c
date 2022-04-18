@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.79 2021/10/21 13:16:49 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.80 2022/04/18 17:32:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -78,7 +78,7 @@ USER_edit(const uint64_t lba_self, const uint64_t lba_firstembr)
 	printf("Enter 'help' for information\n");
 
 	for (;;) {
-		if (letoh64(gh.gh_sig) == GPTSIGNATURE && editlevel > 1)
+		if (gh.gh_sig == GPTSIGNATURE && editlevel > 1)
 			break;	/* 'reinit gpt'. Unwind recursion! */
 
 		i = ask_cmd(editlevel, &args);
@@ -130,13 +130,13 @@ USER_print_disk(const int verbosity)
 			} else {
 				printf("Primary GPT:\n");
 				GPT_read(PRIMARYGPT);
-				if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+				if (gh.gh_sig == GPTSIGNATURE)
 					GPT_print("s", verbosity);
 				else
 					printf("\tNot Found\n");
 				printf("\nSecondary GPT:\n");
 				GPT_read(SECONDARYGPT);
-				if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+				if (gh.gh_sig == GPTSIGNATURE)
 					GPT_print("s", verbosity);
 				else
 					printf("\tNot Found\n");
@@ -166,7 +166,7 @@ USER_help(void)
 
 	for (i = 0; i < nitems(cmd_table); i++) {
 		strlcpy(help, cmd_table[i].cmd_help, sizeof(help));
-		if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
+		if (gh.gh_sig == GPTSIGNATURE) {
 			if (cmd_table[i].cmd_gpt == 0)
 				continue;
 			mbrstr = strstr(help, "MBR");
@@ -182,7 +182,7 @@ ask_cmd(const int editlevel, char **arg)
 {
 	static char		 lbuf[100];
 	char			*cmd;
-	unsigned int		 i, gpt;
+	unsigned int		 i;
 
 	printf("%s%s: %d> ", disk.dk_name, modified ? "*" : "", editlevel);
 	fflush(stdout);
@@ -199,9 +199,8 @@ ask_cmd(const int editlevel, char **arg)
 	if (strcmp(cmd, "?") == 0)
 		cmd = "help";
 
-	gpt = letoh64(gh.gh_sig) == GPTSIGNATURE;
 	for (i = 0; i < nitems(cmd_table); i++) {
-		if (gpt && cmd_table[i].cmd_gpt == 0)
+		if (gh.gh_sig == GPTSIGNATURE && cmd_table[i].cmd_gpt == 0)
 			continue;
 		if (strstr(cmd_table[i].cmd_name, cmd) == cmd_table[i].cmd_name)
 			return i;

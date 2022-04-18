@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.154 2022/03/16 17:03:13 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.155 2022/04/18 17:32:16 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -102,7 +102,7 @@ Xswap(char *args, struct mbr *mbr)
 		return CMD_CONT;
 	}
 
-	if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
+	if (gh.gh_sig == GPTSIGNATURE) {
 		gg = gp[pt];
 		gp[pt] = gp[pf];
 		gp[pf] = gg;
@@ -173,8 +173,8 @@ parsepn(const char *pnstr)
 		return -1;
 	}
 
-	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
-		maxpn = letoh32(gh.gh_part_num) - 1;
+	if (gh.gh_sig == GPTSIGNATURE)
+		maxpn = gh.gh_part_num - 1;
 	else
 		maxpn = NDOSPART - 1;
 
@@ -255,7 +255,7 @@ Xedit(char *args, struct mbr *mbr)
 	if (pn == -1)
 		return CMD_CONT;
 
-	if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
+	if (gh.gh_sig == GPTSIGNATURE) {
 		oldgg = gp[pn];
 		if (gedit(pn))
 			gp[pn] = oldgg;
@@ -339,7 +339,7 @@ Xsetpid(char *args, struct mbr *mbr)
 	if (pn == -1)
 		return CMD_CONT;
 
-	if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
+	if (gh.gh_sig == GPTSIGNATURE) {
 		oldgg = gp[pn];
 		if (gsetpid(pn))
 			gp[pn] = oldgg;
@@ -394,7 +394,7 @@ Xselect(char *args, struct mbr *mbr)
 int
 Xprint(char *args, struct mbr *mbr)
 {
-	if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+	if (gh.gh_sig == GPTSIGNATURE)
 		GPT_print(args, VERBOSE);
 	else
 		MBR_print(mbr, args);
@@ -416,7 +416,7 @@ Xwrite(char *args, struct mbr *mbr)
 			return CMD_CONT;
 	}
 
-	if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
+	if (gh.gh_sig == GPTSIGNATURE) {
 		printf("Writing GPT.\n");
 		if (GPT_write() == -1) {
 			warn("error writing GPT");
@@ -485,7 +485,7 @@ Xflag(char *args, struct mbr *mbr)
 		return CMD_CONT;
 
 	if (flag != NULL) {
-		if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+		if (gh.gh_sig == GPTSIGNATURE)
 			val = strtonum(flag, 0, INT64_MAX, &errstr);
 		else
 			val = strtonum(flag, 0, 0xff, &errstr);
@@ -493,14 +493,14 @@ Xflag(char *args, struct mbr *mbr)
 			printf("flag value is %s: %s.\n", errstr, flag);
 			return CMD_CONT;
 		}
-		if (letoh64(gh.gh_sig) == GPTSIGNATURE)
+		if (gh.gh_sig == GPTSIGNATURE)
 			gp[pn].gp_attrs = htole64(val);
 		else
 			mbr->mbr_prt[pn].prt_flag = val;
 		printf("Partition %d flag value set to 0x%llx.\n", pn, val);
 	} else {
-		if (letoh64(gh.gh_sig) == GPTSIGNATURE) {
-			for (i = 0; i < letoh32(gh.gh_part_num); i++) {
+		if (gh.gh_sig == GPTSIGNATURE) {
+			for (i = 0; i < gh.gh_part_num; i++) {
 				if (i == pn)
 					gp[i].gp_attrs = htole64(GPTDOSACTIVE);
 				else
