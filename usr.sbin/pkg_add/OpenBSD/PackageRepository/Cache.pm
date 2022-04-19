@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Cache.pm,v 1.1 2022/04/16 09:32:40 espie Exp $
+# $OpenBSD: Cache.pm,v 1.2 2022/04/19 12:51:32 espie Exp $
 #
 # Copyright (c) 2022 Marc Espie <espie@openbsd.org>
 #
@@ -30,19 +30,31 @@ sub new
 
 	my $o = bless { 
 	    raw_data => {}, 
-	    state => $state, 
-	    uncached => {}}, $class;
+	    stems => {},
+	    state => $state }, $class;
 
 	$o->prime_update_info_cache($state, $setlist);
 	return $o;
 
 }
+sub pipe_locate
+{
+	my ($self, @params) = @_;
+	unshift(@params, OpenBSD::Paths->locate, 
+	    '-d', OpenBSD::Paths->updateinfodb, '--');
+	my $state = $self->{state};
+	$state->errsay("Running #1", join(' ', @params))
+	    if $state->defines("TEST_CACHING_VERBOSE");
+	return @params;
+}
+
 sub prime_update_info_cache
 {
 	my ($self, $state, $setlist) = @_;
 
 	my $progress = $state->progress;
-	my $stems = {};
+	my $uncached = {};
+	my $found = {};
 	# figure out a list of names to precache
 
 	# okay, so basically instead of hitting locate once for each
@@ -54,44 +66,60 @@ sub prime_update_info_cache
 		for my $h ($set->older, $set->hints) {
 			next if $h->{update_found};
 			my $name = $h->pkgname;
-			$stems->{OpenBSD::PackageName::splitstem($h->{pkgname})} = 1;
+			my $stem = OpenBSD::PackageName::splitstem($name);
+			next if $stem =~ m/^\.libs\d*\-/;
+			next if $stem =~ m/^partial\-/;
+			$self->{stems}{$stem} = 1;
 		}
 	}
-	my @list = keys %$stems;
+	# TODO actually ask quirks to extend the stemlist !
+	my @list = sort keys %{$self->{stems}};
+	return if @list == 0;
 	$progress->set_header(
 	    $state->f("Precaching update information for #1 names...", 
 		scalar(@list)));
-	open my $fh, "-|", OpenBSD::Paths->locate, 
-	    '-d', OpenBSD::Paths->updateinfodb, map { "$_-[0-9]*"} @list;
+	open my $fh, "-|", $self->pipe_locate(map { "$_-[0-9]*"} @list) or die $!;
 	while (<$fh>) {
 		$progress->working(100);
 		if (m/^(.*?)\:(.*)/) {
 			my ($pkgname, $value) = ($1, $2);
+			$found->{OpenBSD::PackageName::splitstem($pkgname)} = 1;
 			$self->{raw_data}{$pkgname} //= '';
 			$self->{raw_data}{$pkgname} .= "$value\n";
 			if ($value =~ m/\@option\s+always-update/) {
-				$self->{uncached}{$pkgname} = 1;
+				$uncached->{$pkgname} = 1;
 			}
 		}
 	}
 	close($fh);
+	for my $pkgname (keys %$uncached) {
+		delete $self->{raw_data}{$pkgname}
+	}
+	return unless $state->defines("TEST_CACHING_VERBOSE");
+	for my $k (@list) {
+		if (!defined $found->{$k}) {
+			$state->say("No cache entry for #1", $k);
+		}
+	}
 }
 
 sub get_cached_info
 {
 	my ($self, $name) = @_;
 
-	if ($self->{uncached}{$name}) {
-		return undef;
-	}
+	my $state = $self->{state};
 	my $content;
 	if (exists $self->{raw_data}{$name}) {
 		$content = $self->{raw_data}{$name};
 	} else {
-		$self->{state}->errsay("Calling locate on #1", $name);
+		my $stem = OpenBSD::PackageName::splitstem($name);
+		if (exists $self->{stems}{$stem}) {
+			$state->say("Negative caching for #1", $name)
+			    if $state->defines("TEST_CACHING_VERBOSE");
+			return undef;
+		}
 		$content = '';
-		open my $fh, "-|", OpenBSD::Paths->locate, 
-		    '-d', OpenBSD::Paths->updateinfodb, $name.":*";
+		open my $fh, "-|", $self->pipe_locate($name.":*") or die $!;
 		while (<$fh>) {
 			if (m/\@option\s+always-update/) {
 				return undef;
@@ -105,6 +133,8 @@ sub get_cached_info
 		close ($fh);
 	}
 	if ($content eq '') {
+		$state->say("Cache miss for #1", $name)
+		    if $state->defines("TEST_CACHING_VERBOSE");
 		return undef;
 	}
 	open my $fh2, "<", \$content;

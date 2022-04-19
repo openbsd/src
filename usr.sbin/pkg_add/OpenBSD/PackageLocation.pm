@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.56 2022/04/16 09:32:40 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.57 2022/04/19 12:51:32 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -57,17 +57,36 @@ OpenBSD::Auto::cache(pkgname,
 OpenBSD::Auto::cache(update_info,
     sub {
 	my $self = shift;
-	if ($self->name =~ /^quirks\-/) {
+	my $name = $self->name;
+	if ($name =~ /^quirks\-/) {
 		return $self->plist;
 	}
-	my $info = $self->{repository}->get_cached_info($self->name);
-	return $info if defined $info;
-	return $self->plist(\&OpenBSD::PackingList::UpdateInfoOnly,
+	my $state = $self->{repository}{state};
+	my $info = $self->{repository}->get_cached_info($name);
+	if (defined $info && 
+	    !defined $state->defines("TEST_CACHING_RECHECK")) {
+		return $info;
+	}
+	my $result = $self->plist(\&OpenBSD::PackingList::UpdateInfoOnly,
 	    sub {
 		return 0 if $_[0] =~ m/^\@option\s+always-update\b/m;
 		return 1 if $_[0] =~ m/^\@(?:newgroup|newuser|cwd)\b/m;
 		return 0;
 	    });
+	if (defined $info) {
+		my $s1 = OpenBSD::Signature->from_plist($info);
+		my $s2 = OpenBSD::Signature->from_plist($result);
+		my $r = $s1->compare($s2, $state);
+		if (defined $r && $r == 0) {
+			$state->say("Cache comparison for #1 is okay", $name)
+			    if $state->defines("TEST_CACHING_VERBOSE");
+			return $result;
+		} else {
+			$state->fatal("Signatures differ cache=#1, regular=#2",
+			    $s1->string, $s2->string);
+		}
+	}
+	return $result;
     });
 
 # make sure self is opened and move to the right location if need be.

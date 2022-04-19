@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.39 2022/04/16 09:32:40 espie Exp $
+# $OpenBSD: Installed.pm,v 1.40 2022/04/19 12:51:32 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -63,13 +63,14 @@ sub get_cached_info
 sub setup_cache
 {
 	my ($repository, $setlist) = @_;
-	# XXX remove the next line to actually get the cache
-	return;
+
+	my $state = $repository->{state};
+	return unless $state->defines("TEST_CACHING");
+	
 	require OpenBSD::PackageRepository::Cache;
 
 	$repository->{info_cache} = 
-	    OpenBSD::PackageRepository::Cache->new(
-		$repository->{state}, $setlist);
+	    OpenBSD::PackageRepository::Cache->new($state, $setlist);
 }
 
 sub parse_url
