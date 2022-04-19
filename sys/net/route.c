@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.403 2022/04/19 15:44:56 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.404 2022/04/19 19:19:31 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -148,8 +148,9 @@ struct cpumem *		rtcounters;
 int			rttrash;	/* routes not in table but not freed */
 int			ifatrash;	/* ifas not in ifp list but not free */
 
-struct pool		rtentry_pool;	/* pool for rtentry structures */
-struct pool		rttimer_pool;	/* pool for rttimer structures */
+struct pool	rtentry_pool;		/* pool for rtentry structures */
+struct pool	rttimer_pool;		/* pool for rttimer structures */
+struct pool	rttimer_queue_pool;	/* pool for rttimer_queue structures */
 
 int	rt_setgwroute(struct rtentry *, u_int);
 void	rt_putgwroute(struct rtentry *);
@@ -183,7 +184,7 @@ route_init(void)
 {
 	rtcounters = counters_alloc(rts_ncounters);
 
-	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, IPL_SOFTNET, 0,
+	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, IPL_MPFLOOR, 0,
 	    "rtentry", NULL);
 
 	while (rt_hashjitter == 0)
@@ -1387,8 +1388,10 @@ rt_timer_init(void)
 {
 	static struct timeout	rt_timer_timeout;
 
-	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, IPL_SOFTNET, 0,
-	    "rttmr", NULL);
+	pool_init(&rttimer_pool, sizeof(struct rttimer), 0,
+	    IPL_MPFLOOR, 0, "rttmr", NULL);
+	pool_init(&rttimer_queue_pool, sizeof(struct rttimer_queue), 0,
+	    IPL_MPFLOOR, 0, "rttmrq", NULL);
 
 	LIST_INIT(&rttimer_queue_head);
 	timeout_set_proc(&rt_timer_timeout, rt_timer_timer, &rt_timer_timeout);
@@ -1400,7 +1403,8 @@ rt_timer_queue_create(u_int timeout)
 {
 	struct rttimer_queue	*rtq;
 
-	if ((rtq = malloc(sizeof(*rtq), M_RTABLE, M_NOWAIT|M_ZERO)) == NULL)
+	rtq = pool_get(&rttimer_queue_pool, PR_NOWAIT | PR_ZERO);
+	if (rtq == NULL)
 		return (NULL);
 
 	rtq->rtq_timeout = timeout;
@@ -1436,7 +1440,7 @@ rt_timer_queue_destroy(struct rttimer_queue *rtq)
 	}
 
 	LIST_REMOVE(rtq, rtq_link);
-	free(rtq, M_RTABLE, sizeof(*rtq));
+	pool_put(&rttimer_queue_pool, rtq);
 }
 
 unsigned long
