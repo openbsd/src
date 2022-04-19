@@ -1,4 +1,4 @@
-/*	$OpenBSD: tls13_handshake.c,v 1.70 2021/09/16 19:25:30 jsing Exp $	*/
+/*	$OpenBSD: tls13_handshake.c,v 1.71 2022/04/19 17:01:43 tb Exp $	*/
 /*
  * Copyright (c) 2018-2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
@@ -291,8 +291,6 @@ tls13_handshake_message_name(uint8_t msg_type)
 		return "CertificateVerify";
 	case TLS13_MT_FINISHED:
 		return "Finished";
-	case TLS13_MT_KEY_UPDATE:
-		return "KeyUpdate";
 	}
 	return "Unknown";
 }
