@@ -1,4 +1,4 @@
-/*	$OpenBSD: encoding.c,v 1.10 2021/11/24 15:24:16 claudio Exp $  */
+/*	$OpenBSD: encoding.c,v 1.11 2022/04/19 19:01:19 claudio Exp $  */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -96,21 +96,21 @@ int
 base64_decode(const unsigned char *in, size_t inlen,
     unsigned char **out, size_t *outlen)
 {
-	static EVP_ENCODE_CTX *ctx;
-	unsigned char *to;
+	EVP_ENCODE_CTX *ctx;
+	unsigned char *to = NULL;
 	size_t tolen;
 	int evplen;
 
-	if (ctx == NULL && (ctx = EVP_ENCODE_CTX_new()) == NULL)
+	if ((ctx = EVP_ENCODE_CTX_new()) == NULL)
 		err(1, "EVP_ENCODE_CTX_new");
 
 	*out = NULL;
 	*outlen = 0;
 
 	if (base64_decode_len(inlen, &tolen) == -1)
-		return -1;
+		goto fail;
 	if ((to = malloc(tolen)) == NULL)
-		return -1;
+		err(1, NULL);
 
 	evplen = tolen;
 	EVP_DecodeInit(ctx);
@@ -121,10 +121,13 @@ base64_decode(const unsigned char *in, size_t inlen,
 		goto fail;
 	*outlen += evplen;
 	*out = to;
+
+	EVP_ENCODE_CTX_free(ctx);
 	return 0;
 
 fail:
 	free(to);
+	EVP_ENCODE_CTX_free(ctx);
 	return -1;
 }
 
