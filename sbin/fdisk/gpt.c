@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.67 2022/04/19 17:30:36 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.68 2022/04/19 17:36:36 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -317,12 +317,12 @@ GPT_print(const char *units, const int verbosity)
 	const int		 secsize = dl.d_secsize;
 	char			*guidstr = NULL;
 	double			 size;
-	uint64_t		 sig;
 	int			 i;
 	uint32_t		 status;
 
 #ifdef	DEBUG
 	char			*p;
+	uint64_t		 sig;
 
 	sig = htole64(gh.gh_sig);
 	p = (char *)&sig;
