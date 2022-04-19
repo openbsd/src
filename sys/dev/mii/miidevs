@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.130 2021/06/17 09:29:01 kettenis Exp $
+$OpenBSD: miidevs,v 1.131 2022/04/19 03:26:33 kevlo Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -288,6 +288,7 @@ model QUALITYSEMI QS6612	0x0000	QS6612 10/100 PHY
 
 /* RDC Semi. PHYs */
 model RDC R6040			0x0003	R6040 10/100 PHY
+model RDC R6040_2		0x0005	R6040 10/100 PHY
 
 /* Realtek PHYs */
 model xxREALTEK RTL8251		0x0000	RTL8251 PHY
