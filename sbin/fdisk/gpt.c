@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.66 2022/04/18 17:32:16 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.67 2022/04/19 17:30:36 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -427,13 +427,12 @@ int
 find_partition(const uint8_t *beuuid)
 {
 	struct uuid		uuid, gp_type;
-	unsigned int		pn, pncnt;
+	unsigned int		pn;
 
 	uuid_dec_be(beuuid, &uuid);
 	uuid_enc_le(&gp_type, &uuid);
 
-	pncnt = gh.gh_part_num;
-	for (pn = 0; pn < pncnt; pn++) {
+	for (pn = 0; pn < gh.gh_part_num; pn++) {
 		if (uuid_compare(&gp[pn].gp_type, &gp_type, NULL) == 0)
 			return pn;
 	}
@@ -446,17 +445,16 @@ add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 	struct uuid		uuid, gp_type;
 	int			rslt;
 	uint64_t		end, freesectors, gpbytes, start;
-	uint32_t		status, pn, pncnt;
+	uint32_t		status, pn;
 
 	uuid_dec_be(beuuid, &uuid);
 	uuid_enc_le(&gp_type, &uuid);
 
-	pncnt = gh.gh_part_num;
-	for (pn = 0; pn < pncnt; pn++) {
+	for (pn = 0; pn < gh.gh_part_num; pn++) {
 		if (uuid_is_nil(&gp[pn].gp_type, NULL))
 			break;
 	}
-	if (pn == pncnt)
+	if (pn == gh.gh_part_num)
 		goto done;
 
 	rslt = lba_free(&start, &end);
@@ -497,7 +495,7 @@ add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 	return 0;
 
  done:
-	if (pn != pncnt)
+	if (pn != gh.gh_part_num)
 		memset(&gp[pn], 0, sizeof(gp[pn]));
 	printf("unable to add %s\n", name);
 	return -1;
