@@ -1,4 +1,4 @@
-.\" $OpenBSD: kstat_create.9,v 1.4 2022/01/31 12:07:12 jmc Exp $
+.\" $OpenBSD: kstat_create.9,v 1.5 2022/04/19 01:39:38 dlg Exp $
 .\"
 .\" Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 31 2022 $
+.Dd $Mdocdate: April 19 2022 $
 .Dt KSTAT_CREATE 9
 .Os
 .Sh NAME
@@ -103,7 +103,6 @@ and configuration torn down before the kstat itself is freed with
 removes
 .Fa ks
 from the list of exported statistics and frees it.
-.\" might want a kstat_remove...
 .Sh CONTEXT
 .Fn kstat_create ,
 .Fn kstat_install ,
