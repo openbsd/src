@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.58 2022/04/19 09:52:29 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.59 2022/04/19 18:52:36 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -446,7 +446,7 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	int		 rc = 0;
 	size_t		 cmsz;
 	unsigned char	*cms;
-	char		*crldp, *crlfile;
+	char		*crldp = NULL, *crlfile;
 
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
@@ -488,7 +488,6 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	}
 	if ((p.res->crl = strdup(crlfile + 1)) == NULL)
 		err(1, NULL);
-	free(crldp);
 
 	if (mft_parse_econtent(cms, cmsz, &p) == 0)
 		goto out;
@@ -501,6 +500,7 @@ out:
 		X509_free(*x509);
 		*x509 = NULL;
 	}
+	free(crldp);
 	free(cms);
 	return p.res;
 }
