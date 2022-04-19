@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.23 2022/01/14 15:00:23 claudio Exp $ */
+/*	$OpenBSD: output-json.c,v 1.24 2022/04/19 13:52:24 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -28,7 +28,7 @@ outputheader_json(FILE *out, struct stats *st)
 	char		hn[NI_MAXHOST], tbuf[26];
 	struct tm	*tp;
 	time_t		t;
-	size_t		i;
+	int		i;
 
 	time(&t);
 	setenv("TZ", "UTC", 1);

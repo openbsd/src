@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.127 2022/04/19 09:52:29 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.128 2022/04/19 13:52:24 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -414,7 +414,7 @@ extern int filemode;
 extern const char *tals[];
 extern const char *taldescs[];
 extern unsigned int talrepocnt[];
-extern size_t talsz;
+extern int talsz;
 
 /* Routines for RPKI entities. */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.195 2022/04/19 11:07:33 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.196 2022/04/19 13:52:24 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -47,7 +47,7 @@
 const char	*tals[TALSZ_MAX];
 const char	*taldescs[TALSZ_MAX];
 unsigned int	 talrepocnt[TALSZ_MAX];
-size_t		 talsz;
+int		 talsz;
 
 size_t	entity_queue;
 int	timeout = 60*60;
@@ -620,11 +620,11 @@ rrdp_process(struct ibuf *b)
  * This may be zero.
  * Don't exceded "max" filenames.
  */
-static size_t
+static int
 tal_load_default(void)
 {
 	static const char *confdir = "/etc/rpki";
-	size_t s = 0;
+	int s = 0;
 	char *path;
 	DIR *dirp;
 	struct dirent *dp;
@@ -711,8 +711,7 @@ suicide(int sig __attribute__((unused)))
 int
 main(int argc, char *argv[])
 {
-	int		 rc, c, st, proc, rsync, http, rrdp, hangup = 0;
-	size_t		 i;
+	int		 rc, c, i, st, proc, rsync, http, rrdp, hangup = 0;
 	pid_t		 pid, procpid, rsyncpid, httppid, rrdppid;
 	struct pollfd	 pfd[NPFD];
 	struct msgbuf	*queues[NPFD];
@@ -1003,7 +1002,7 @@ main(int argc, char *argv[])
 
 		for (i = 0; i < NPFD; i++) {
 			if (pfd[i].revents & (POLLERR|POLLNVAL)) {
-				warnx("poll[%zu]: bad fd", i);
+				warnx("poll[%d]: bad fd", i);
 				hangup = 1;
 			}
 			if (pfd[i].revents & POLLHUP)
@@ -1011,12 +1010,12 @@ main(int argc, char *argv[])
 			if (pfd[i].revents & POLLOUT) {
 				switch (msgbuf_write(queues[i])) {
 				case 0:
-					warnx("write[%zu]: "
+					warnx("write[%d]: "
 					    "connection closed", i);
 					hangup = 1;
 					break;
 				case -1:
-					warn("write[%zu]", i);
+					warn("write[%d]", i);
 					hangup = 1;
 					break;
 				}

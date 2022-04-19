@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.24 2021/11/04 11:32:55 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.25 2022/04/19 13:52:24 claudio Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -201,7 +201,7 @@ outputheader(FILE *out, struct stats *st)
 	char		hn[NI_MAXHOST], tbuf[80];
 	struct tm	*tp;
 	time_t		t;
-	size_t		i;
+	int		i;
 
 	time(&t);
 	setenv("TZ", "UTC", 1);
