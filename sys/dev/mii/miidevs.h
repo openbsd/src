@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.133 2021/06/17 09:29:36 kettenis Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.134 2022/04/19 03:26:52 kevlo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.130 2021/06/17 09:29:01 kettenis Exp 
+ *	OpenBSD: miidevs,v 1.131 2022/04/19 03:26:33 kevlo Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -427,6 +427,8 @@
 /* RDC Semi. PHYs */
 #define	MII_MODEL_RDC_R6040	0x0003
 #define	MII_STR_RDC_R6040	"R6040 10/100 PHY"
+#define	MII_MODEL_RDC_R6040_2	0x0005
+#define	MII_STR_RDC_R6040_2	"R6040 10/100 PHY"
 
 /* Realtek PHYs */
 #define	MII_MODEL_xxREALTEK_RTL8251	0x0000
