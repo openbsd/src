@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.196 2022/04/19 13:52:24 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.197 2022/04/19 20:06:48 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -797,8 +797,7 @@ main(int argc, char *argv[])
 			break;
 		case 't':
 			if (talsz >= TALSZ_MAX)
-				err(1,
-				    "too many tal files specified");
+				err(1, "too many tal files specified");
 			tals[talsz++] = optarg;
 			break;
 		case 'T':
@@ -850,7 +849,6 @@ main(int argc, char *argv[])
 	}
 
 	check_fs_size(cachefd, cachedir);
-
 
 	if (talsz == 0)
 		talsz = tal_load_default();
