@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.121 2021/12/15 12:53:53 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.122 2022/04/19 15:30:52 semarie Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -358,8 +358,10 @@ uvn_detach(struct uvm_object *uobj)
 		    INFSLP);
 	}
 
-	if ((uvn->u_flags & UVM_VNODE_RELKILL) == 0)
+	if ((uvn->u_flags & UVM_VNODE_RELKILL) == 0) {
+		rw_exit(uobj->vmobjlock);
 		return;
+	}
 
 	/*
 	 * kill object now.   note that we can't be on the sync q because
