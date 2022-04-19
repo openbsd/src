@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.402 2022/02/22 01:15:02 guenther Exp $	*/
+/*	$OpenBSD: route.c,v 1.403 2022/04/19 15:44:56 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -151,7 +151,6 @@ int			ifatrash;	/* ifas not in ifp list but not free */
 struct pool		rtentry_pool;	/* pool for rtentry structures */
 struct pool		rttimer_pool;	/* pool for rttimer structures */
 
-void	rt_timer_init(void);
 int	rt_setgwroute(struct rtentry *, u_int);
 void	rt_putgwroute(struct rtentry *);
 int	rtflushclone1(struct rtentry *, void *, u_int);
@@ -1362,7 +1361,6 @@ rt_ifa_purge_walker(struct rtentry *rt, void *vifa, unsigned int rtableid)
  */
 
 LIST_HEAD(, rttimer_queue)	rttimer_queue_head;
-static int			rt_init_done = 0;
 
 #define RTTIMER_CALLOUT(r)	{					\
 	if (r->rtt_func != NULL) {					\
@@ -1389,25 +1387,18 @@ rt_timer_init(void)
 {
 	static struct timeout	rt_timer_timeout;
 
-	if (rt_init_done)
-		panic("rt_timer_init: already initialized");
-
 	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, IPL_SOFTNET, 0,
 	    "rttmr", NULL);
 
 	LIST_INIT(&rttimer_queue_head);
 	timeout_set_proc(&rt_timer_timeout, rt_timer_timer, &rt_timer_timeout);
 	timeout_add_sec(&rt_timer_timeout, 1);
-	rt_init_done = 1;
 }
 
 struct rttimer_queue *
 rt_timer_queue_create(u_int timeout)
 {
 	struct rttimer_queue	*rtq;
-
-	if (rt_init_done == 0)
-		rt_timer_init();
 
 	if ((rtq = malloc(sizeof(*rtq), M_RTABLE, M_NOWAIT|M_ZERO)) == NULL)
 		return (NULL);

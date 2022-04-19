@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.187 2021/11/12 15:49:41 deraadt Exp $	*/
+/*	$OpenBSD: route.h,v 1.188 2022/04/19 15:44:56 bluhm Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -451,6 +451,7 @@ void	 rtm_proposal(struct ifnet *, struct rt_addrinfo *, int, uint8_t);
 int	 rt_setgate(struct rtentry *, struct sockaddr *, u_int);
 struct rtentry *rt_getll(struct rtentry *);
 
+void			 rt_timer_init(void);
 int			 rt_timer_add(struct rtentry *,
 		             void(*)(struct rtentry *, struct rttimer *),
 			     struct rttimer_queue *, u_int);
