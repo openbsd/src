@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.194 2022/04/19 09:52:29 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.195 2022/04/19 11:07:33 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -724,8 +724,8 @@ main(int argc, char *argv[])
 	const char	*errs, *name;
 	struct vrp_tree	 vrps = RB_INITIALIZER(&vrps);
 	struct brk_tree  brks = RB_INITIALIZER(&brks);
-	struct rusage	ru;
-	struct timeval	start_time, now_time;
+	struct rusage	 ru;
+	struct timeval	 start_time, now_time;
 
 	gettimeofday(&start_time, NULL);
 
