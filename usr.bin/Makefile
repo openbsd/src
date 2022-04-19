@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.166 2022/02/22 15:15:34 millert Exp $
+#	$OpenBSD: Makefile,v 1.167 2022/04/19 01:32:06 dlg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,8 @@ SUBDIR= apply arch at aucat audioctl awk banner \
 	find fgen finger fmt fold from fstat ftp gencat getcap \
 	getconf getent getopt gprof grep head hexdump htpasswd id indent \
 	infocmp ipcrm ipcs \
-	join jot kdump keynote ktrace lam last lastcomm ldap leave less lex \
+	join jot kdump keynote kstat ktrace \
+	lam last lastcomm ldap leave less lex \
 	libtool lndir \
 	locale locate lock logger login logname look lorder \
 	m4 mail make mandoc mesg mg \
