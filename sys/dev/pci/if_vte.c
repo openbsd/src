@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vte.c,v 1.25 2022/03/11 18:00:50 mpi Exp $	*/
+/*	$OpenBSD: if_vte.c,v 1.26 2022/04/19 03:25:46 kevlo Exp $	*/
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.
@@ -1084,9 +1084,10 @@ vte_tick(void *arg)
 void
 vte_reset(struct vte_softc *sc)
 {
-	uint16_t mcr;
+	uint16_t mcr, mdcsc;
 	int i;
 
+	mdcsc = CSR_READ_2(sc, VTE_MDCSC);
 	mcr = CSR_READ_2(sc, VTE_MCR1);
 	CSR_WRITE_2(sc, VTE_MCR1, mcr | MCR1_MAC_RESET);
 	for (i = VTE_RESET_TIMEOUT; i > 0; i--) {
@@ -1105,6 +1106,14 @@ vte_reset(struct vte_softc *sc)
 	CSR_WRITE_2(sc, VTE_MACSM, 0x0002);
 	CSR_WRITE_2(sc, VTE_MACSM, 0);
 	DELAY(5000);
+
+	/*
+	 * On some SoCs (like Vortex86DX3) MDC speed control register value
+	 * needs to be restored to original value instead of default one,
+	 * otherwise some PHY registers may fail to be read.
+	 */
+	if (mdcsc != MDCSC_DEFAULT)
+		CSR_WRITE_2(sc, VTE_MDCSC, mdcsc);
 }
 
 int
