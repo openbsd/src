@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.29 2022/02/04 13:50:32 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.30 2022/04/19 09:52:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -247,7 +247,28 @@ valid_filehash(int fd, const char *hash, size_t hlen)
 
 	if (memcmp(hash, filehash, sizeof(filehash)) != 0)
 		return 0;
+	return 1;
+}
 
+/*
+ * Same as above but with a buffer instead of a fd.
+ */
+int
+valid_hash(unsigned char *buf, size_t len, const char *hash, size_t hlen)
+{
+	char	filehash[SHA256_DIGEST_LENGTH];
+
+	if (hlen != sizeof(filehash))
+		errx(1, "bad hash size");
+
+	if (buf == NULL || len == 0)
+		return 0;
+
+	if (!EVP_Digest(buf, len, filehash, NULL, EVP_sha256(), NULL))
+		errx(1, "EVP_Digest failed");
+
+	if (memcmp(hash, filehash, sizeof(filehash)) != 0)
+		return 0;
 	return 1;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.57 2022/04/11 10:03:12 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.58 2022/04/19 09:52:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -38,6 +38,7 @@
 struct	parse {
 	const char	*fn; /* manifest file name */
 	struct mft	*res; /* result object */
+	int		 found_crl;
 };
 
 extern ASN1_OBJECT    *mft_oid;
@@ -180,6 +181,7 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	size_t			 dsz = os->length;
 	int			 rc = 0;
 	struct mftfile		*fent;
+	enum rtype		 type;
 
 	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
 		cryptowarnx("%s: RFC 6486 section 4.2.1: FileAndHash: "
@@ -228,10 +230,17 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 		goto out;
 	}
 
+	type = rtype_from_mftfile(fn);
+	/* remember the filehash for the CRL in struct mft */
+	if (type == RTYPE_CRL && strcmp(fn, p->res->crl) == 0) {
+		memcpy(p->res->crlhash, hash->value.bit_string->data,
+		    SHA256_DIGEST_LENGTH);
+		p->found_crl = 1;
+	}
+
 	/* Insert the filename and hash value. */
 	fent = &p->res->files[p->res->filesz++];
-
-	fent->type = rtype_from_mftfile(fn);
+	fent->type = type;
 	fent->file = fn;
 	fn = NULL;
 	memcpy(fent->hash, hash->value.bit_string->data, SHA256_DIGEST_LENGTH);
@@ -281,6 +290,11 @@ mft_parse_flist(struct parse *p, const ASN1_OCTET_STRING *os)
 			goto out;
 		} else if (!mft_parse_filehash(p, t->value.octet_string))
 			goto out;
+	}
+
+	if (!p->found_crl) {
+		warnx("%s: CRL not part of MFT fileList", p->fn);
+		goto out;
 	}
 
 	rc = 1;
@@ -432,6 +446,7 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	int		 rc = 0;
 	size_t		 cmsz;
 	unsigned char	*cms;
+	char		*crldp, *crlfile;
 
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
@@ -455,6 +470,25 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		    "missing AIA, AKI or SKI X509 extension", fn);
 		goto out;
 	}
+
+	/* get CRL info for later */
+	if (!x509_get_crl(*x509, fn, &crldp))
+		goto out;
+	if (crldp == NULL) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL: "
+		    "missing CRL distribution point extension", fn);
+		goto out;
+	}
+	if ((crlfile = strrchr(crldp, '/')) == NULL ||
+	    !valid_filename(crlfile + 1, strlen(crlfile + 1)) ||
+	    rtype_from_file_extension(crlfile + 1) != RTYPE_CRL) {
+		warnx("%s: RFC 6487 section 4.8.6: CRL: "
+		    "bad CRL distribution point extension", fn);
+		goto out;
+	}
+	if ((p.res->crl = strdup(crlfile + 1)) == NULL)
+		err(1, NULL);
+	free(crldp);
 
 	if (mft_parse_econtent(cms, cmsz, &p) == 0)
 		goto out;

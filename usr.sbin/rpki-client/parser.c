@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.67 2022/04/11 18:59:23 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.68 2022/04/19 09:52:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -42,7 +42,6 @@
 static void		 build_chain(const struct auth *, STACK_OF(X509) **);
 static struct crl	*get_crl(const struct auth *);
 static void		 build_crls(const struct crl *, STACK_OF(X509_CRL) **);
-static struct crl	*parse_load_crl_from_mft(struct entity *, const char *);
 
 static X509_STORE_CTX	*ctx;
 static struct auth_tree	 auths = RB_INITIALIZER(&auths);
@@ -342,6 +341,45 @@ proc_parser_mft_check(const char *fn, struct mft *p)
 }
 
 /*
+ * Load the correct CRL using the info from the MFT.
+ */
+static struct crl *
+parse_load_crl_from_mft(struct entity *entp, struct mft *mft, enum location loc)
+{
+	struct crl	*crl = NULL;
+	unsigned char	*f = NULL;
+	char		*fn = NULL;
+	size_t		 flen;
+
+	while (1) {
+		fn = parse_filepath(entp->repoid, entp->path, mft->crl, loc);
+		if (fn == NULL)
+			goto next;
+
+		f = load_file(fn, &flen);
+		if (f == NULL && errno != ENOENT)
+			warn("parse file %s", fn);
+		if (f == NULL)
+			goto next;
+		if (!valid_hash(f, flen, mft->crlhash, sizeof(mft->crlhash)))
+			goto next;
+		crl = crl_parse(fn, f, flen);
+next:
+		free(f);
+		free(fn);
+		f = NULL;
+		fn = NULL;
+
+		if (crl != NULL)
+			return crl;
+		if (loc == DIR_TEMP)
+			loc = DIR_VALID;
+		else
+			return NULL;
+	}
+}
+
+/*
  * Parse and validate a manifest file. Skip checking the fileandhash
  * this is done in the post check. After this step we know the mft is
  * valid and can be compared.
@@ -349,44 +387,28 @@ proc_parser_mft_check(const char *fn, struct mft *p)
  */
 static struct mft *
 proc_parser_mft_pre(char *file, const unsigned char *der, size_t len,
-    struct entity *entp)
+    struct entity *entp, enum location loc, struct crl **crl)
 {
 	struct mft	*mft;
 	X509		*x509;
-	struct crl	*crl;
 	struct auth	*a;
-	char		*c, *crlfile;
 
+	*crl = NULL;
 	if ((mft = mft_parse(&x509, file, der, len)) == NULL)
 		return NULL;
+	*crl = parse_load_crl_from_mft(entp, mft, loc);
 
 	a = valid_ski_aki(file, &auths, mft->ski, mft->aki);
-	/* load CRL by hand, since it is referenced by the MFT itself */
-	if (!x509_get_crl(x509, file, &c) || c == NULL) {
-		if (c == NULL)
-			warnx("%s: RFC 6487 section 4.8.6: CRL: "
-			    "no CRL distribution point extension", file);
-		mft_free(mft);
+	if (!valid_x509(file, x509, a, *crl, 1)) {
 		X509_free(x509);
+		mft_free(mft);
+		crl_free(*crl);
+		*crl = NULL;
 		return NULL;
 	}
-	crlfile = strrchr(c, '/');
-	if (crlfile != NULL)
-		crlfile++;
-	else
-		crlfile = c;
-	crl = parse_load_crl_from_mft(entp, crlfile);
-	free(c);
-
-	if (!valid_x509(file, x509, a, crl, 1)) {
-		mft_free(mft);
-		crl_free(crl);
-		X509_free(x509);
-		return NULL;
-	}
-	crl_free(crl);
 	X509_free(x509);
 
+	mft->repoid = entp->repoid;
 	return mft;
 }
 
@@ -395,8 +417,7 @@ proc_parser_mft_pre(char *file, const unsigned char *der, size_t len,
  * Return the mft on success or NULL on failure.
  */
 static struct mft *
-proc_parser_mft_post(char *file, struct mft *mft, const char *path,
-    unsigned int repoid)
+proc_parser_mft_post(char *file, struct mft *mft, const char *path)
 {
 	/* check that now is not before from */
 	time_t now = time(NULL);
@@ -419,7 +440,6 @@ proc_parser_mft_post(char *file, struct mft *mft, const char *path,
 		mft->stale = 1;
 	}
 
-	mft->repoid = repoid;
 	if (path != NULL)
 		if ((mft->path = strdup(path)) == NULL)
 			err(1, NULL);
@@ -431,6 +451,65 @@ proc_parser_mft_post(char *file, struct mft *mft, const char *path,
 		}
 
 	return mft;
+}
+
+/*
+ * Load the most recent MFT by opening both options and comparing the two.
+ */
+static char *
+proc_parser_mft(struct entity *entp, struct mft **mp)
+{
+	struct mft	*mft1 = NULL, *mft2 = NULL;
+	struct crl	*crl, *crl1 = NULL, *crl2 = NULL;
+	char		*f, *file, *file1, *file2;
+	size_t		 flen;
+
+	*mp = NULL;
+	file1 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_VALID);
+	file2 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_TEMP);
+
+	if (file1 != NULL) {
+		f = load_file(file1, &flen);
+		if (f == NULL && errno != ENOENT)
+			warn("parse file %s", file1);
+		mft1 = proc_parser_mft_pre(file1, f, flen, entp, DIR_VALID,
+		    &crl1);
+		free(f);
+	}
+	if (file2 != NULL) {
+		f = load_file(file2, &flen);
+		if (f == NULL && errno != ENOENT)
+			warn("parse file %s", file2);
+		mft2 = proc_parser_mft_pre(file2, f, flen, entp, DIR_TEMP,
+		    &crl2);
+		free(f);
+	}
+
+	if (mft_compare(mft1, mft2) == 1) {
+		mft_free(mft2);
+		crl_free(crl2);
+		free(file2);
+		*mp = proc_parser_mft_post(file1, mft1, entp->path);
+		crl = crl1;
+		file = file1;
+	} else {
+		mft_free(mft1);
+		crl_free(crl1);
+		free(file1);
+		*mp = proc_parser_mft_post(file2, mft2, entp->path);
+		crl = crl2;
+		file = file2;
+	}
+
+	if (*mp != NULL) {
+		if (RB_INSERT(crl_tree, &crlt, crl) != NULL) {
+			warnx("%s: duplicate AKI %s", file, crl->aki);
+			crl_free(crl);
+		}
+	} else {
+		crl_free(crl);
+	}
+	return file;
 }
 
 /*
@@ -651,96 +730,6 @@ parse_load_file(struct entity *entp, unsigned char **f, size_t *flen)
 }
 
 /*
- * Load the most recent MFT by opening both options and comparing the two.
- */
-static char *
-parse_load_mft(struct entity *entp, struct mft **mft)
-{
-	struct mft	*mft1 = NULL, *mft2 = NULL;
-	char		*f, *file1, *file2;
-	size_t		 flen;
-
-	file1 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_VALID);
-	file2 = parse_filepath(entp->repoid, entp->path, entp->file, DIR_TEMP);
-
-	if (file1 != NULL) {
-		f = load_file(file1, &flen);
-		if (f == NULL && errno != ENOENT)
-			warn("parse file %s", file1);
-		mft1 = proc_parser_mft_pre(file1, f, flen, entp);
-		free(f);
-	}
-
-	if (file2 != NULL) {
-		f = load_file(file2, &flen);
-		if (f == NULL && errno != ENOENT)
-			warn("parse file %s", file2);
-		mft2 = proc_parser_mft_pre(file2, f, flen, entp);
-		free(f);
-	}
-
-	if (mft_compare(mft1, mft2) == 1) {
-		mft_free(mft2);
-		free(file2);
-		*mft = mft1;
-		return file1;
-	} else {
-		mft_free(mft1);
-		free(file1);
-		*mft = mft2;
-		return file2;
-	}
-}
-
-/*
- * Load the most recent CRL by opening both options and comparing the two.
- */
-static struct crl *
-parse_load_crl_from_mft(struct entity *entp, const char *file)
-{
-	struct crl	*crl1 = NULL, *crl2 = NULL;
-	char		*file1, *file2;
-	unsigned char	*f;
-	size_t		 flen;
-
-	if (file == NULL)
-		return NULL;
-
-	file1 = parse_filepath(entp->repoid, entp->path, file, DIR_VALID);
-	file2 = parse_filepath(entp->repoid, entp->path, file, DIR_TEMP);
-
-	if (file1 != NULL) {
-		f = load_file(file1, &flen);
-		if (f == NULL && errno != ENOENT)
-			warn("parse file %s", file1);
-		crl1 = crl_parse(file1, f, flen);
-		free(f);
-	}
-
-	if (file2 != NULL) {
-		f = load_file(file2, &flen);
-		if (f == NULL && errno != ENOENT)
-			warn("parse file %s", file2);
-		crl2 = crl_parse(file2, f, flen);
-		free(f);
-	}
-
-	free(file1);
-	free(file2);
-
-	if (crl1 == NULL || crl2 == NULL)
-		return crl2 == NULL ? crl1 : crl2;
-
-	if (crl1->issued >= crl2->issued) {
-		crl_free(crl2);
-		return crl1;
-	} else {
-		crl_free(crl1);
-		return crl2;
-	}
-}
-
-/*
  * Process an entity and responing to parent process.
  */
 static void
@@ -804,16 +793,16 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			 */
 			break;
 		case RTYPE_CRL:
-			file = parse_load_file(entp, &f, &flen);
+			/*
+			 * CRLs are already loaded with the MFT so nothing
+			 * really needs to be done here.
+			 */
+			file = parse_filepath(entp->repoid, entp->path,
+			    entp->file, entp->location);
 			io_str_buffer(b, file);
-			proc_parser_crl(file, f, flen);
 			break;
 		case RTYPE_MFT:
-			file = parse_load_mft(entp, &mft);
-
-			mft = proc_parser_mft_post(file, mft,
-			    entp->path, entp->repoid);
-
+			file = proc_parser_mft(entp, &mft);
 			io_str_buffer(b, file);
 			c = (mft != NULL);
 			io_simple_buffer(b, &c, sizeof(int));

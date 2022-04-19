@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.193 2022/04/11 18:59:23 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.194 2022/04/19 09:52:29 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -330,51 +330,21 @@ rrdp_http_done(unsigned int id, enum http_result res, const char *last_mod)
  * These are always relative to the directory in which "mft" sits.
  */
 static void
-queue_add_from_mft(const char *path, const struct mftfile *file,
-    struct repo *rp)
-{
-	char		*nfile, *npath = NULL;
-
-	if (path != NULL)
-		if ((npath = strdup(path)) == NULL)
-			err(1, NULL);
-	if ((nfile = strdup(file->file)) == NULL)
-		err(1, NULL);
-
-	entityq_add(npath, nfile, file->type, file->location, rp, NULL, 0, -1);
-}
-
-/*
- * Loops over queue_add_from_mft() for all files.
- * The order here is important: we want to parse the revocation
- * list *before* we parse anything else.
- */
-static void
-queue_add_from_mft_set(const struct mft *mft, const char *name, struct repo *rp)
+queue_add_from_mft(const struct mft *mft, struct repo *rp)
 {
 	size_t			 i;
 	const struct mftfile	*f;
+	char			*nfile, *npath = NULL;
 
 	for (i = 0; i < mft->filesz; i++) {
 		f = &mft->files[i];
-		if (f->type != RTYPE_CRL)
-			continue;
-		queue_add_from_mft(mft->path, f, rp);
-	}
-
-	for (i = 0; i < mft->filesz; i++) {
-		f = &mft->files[i];
-		switch (f->type) {
-		case RTYPE_CER:
-		case RTYPE_ROA:
-		case RTYPE_GBR:
-			queue_add_from_mft(mft->path, f, rp);
-			break;
-		case RTYPE_CRL:
-			continue;
-		default:
-			warnx("%s: unsupported file: %s", name, f->file);
-		}
+		if (mft->path != NULL)
+			if ((npath = strdup(mft->path)) == NULL)
+				err(1, NULL);
+		if ((nfile = strdup(f->file)) == NULL)
+			err(1, NULL);
+		entityq_add(npath, nfile, f->type, f->location, rp, NULL, 0,
+		    -1);
 	}
 }
 
@@ -553,8 +523,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		}
 		mft = mft_read(b);
 		if (!mft->stale)
-			queue_add_from_mft_set(mft, file,
-			    repo_byid(mft->repoid));
+			queue_add_from_mft(mft, repo_byid(mft->repoid));
 		else
 			st->mfts_stale++;
 		mft_free(mft);

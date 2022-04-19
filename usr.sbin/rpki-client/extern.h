@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.126 2022/04/12 08:45:34 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.127 2022/04/19 09:52:29 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -194,6 +194,8 @@ struct mft {
 	char		*aia; /* AIA */
 	char		*aki; /* AKI */
 	char		*ski; /* SKI */
+	char		*crl; /* CRL file name */
+	unsigned char	 crlhash[SHA256_DIGEST_LENGTH];
 	time_t		 valid_from;
 	time_t		 valid_until;
 	size_t		 filesz; /* number of filenames */
@@ -463,6 +465,7 @@ int		 valid_ta(const char *, struct auth_tree *,
 int		 valid_cert(const char *, struct auth *, const struct cert *);
 int		 valid_roa(const char *, struct auth *, struct roa *);
 int		 valid_filehash(int, const char *, size_t);
+int		 valid_hash(unsigned char *, size_t, const char *, size_t);
 int		 valid_uri(const char *, size_t, const char *);
 int		 valid_origin(const char *, const char *);
 
