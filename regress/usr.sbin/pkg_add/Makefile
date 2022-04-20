@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.79 2022/03/19 07:01:00 espie Exp $
+# $OpenBSD: Makefile,v 1.80 2022/04/20 09:08:09 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -19,7 +19,7 @@ REGRESS_ROOT_TARGETS = temp-error2-as-root
 # lots of tests that really require a vstat overhaul
 REGRESS_EXPECTED_FAILURES = collision-check1 collision-check2 \
 	collision-check5 collision-check6 collision-check7 \
-	exotest tying-2 temp-error3
+	exotest tying-2
 
 PERLSCRIPT = perl -I ${.CURDIR} ${.CURDIR}
 
@@ -48,7 +48,7 @@ D$i ?= ${.OBJDIR}/dest$i
 DEST$i ?= ${D$i}/usr/local
 .endfor
 
-# current maxes (used): D46, SRC28, plist27, rep7
+# current maxes (used): D46, SRC29, plist27, rep7
 pkgnames:
 	${PERLSCRIPT}/check-name
 
@@ -450,6 +450,13 @@ rep1/d-0.tgz: plist2
 	@echo "not coucou" >${SRC2}/g
 	@${CREATE_PKG} -B src2 -f plist2 $@
 
+rep2/d-1.tgz: plist2
+	@mkdir -p ${SRC29}
+	@touch ${SRC29}/a ${SRC29}/b ${SRC29}/c
+	@echo "zoinx" >${SRC29}/f
+	@echo "not zoinx" >${SRC29}/g
+	@${CREATE_PKG} -B src29 -f plist2 $@
+
 rep1/e-0.tgz: plist3
 	@mkdir -p ${SRC3}
 	@touch ${SRC3}/a ${SRC3}/c ${SRC3}/d
@@ -699,9 +706,10 @@ temp-error2-as-root:
 	@# XXX thx tedu for not allowing env thru
 	@${SUDO} make -C ${.CURDIR} temp-error2 XXXBASE=temp2bis XXXD=${D41}
 
-temp-error3: rep1/d-0.tgz temp3.ref
+temp-error3: rep1/d-0.tgz rep2/d-1.tgz temp3.ref
 	@-rm -rf ${D42}
-	@{ INJECT=inject-temp3 ROOT=${D42} SILENT=1 ${ADD_PKG} rep1/d-0.tgz 1>/dev/null|| echo $$?; } 2>&1|${SED_PIPE} >temp3.out
+	@ROOT=${D42} ${ADD_PKG} rep1/d-0.tgz
+	@{ INJECT=inject-temp3 ROOT=${D42} SILENT=1 ${ADD_PKG} -r rep2/d-1.tgz 1>/dev/null|| echo $$?; } 2>&1|${SED_PIPE} >temp3.out
 	@diff -u temp3.out ${.CURDIR}/temp3.ref
 
 temp-error4: rep0/qt-0.tgz rep1/qt-1.tgz
