@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.69 2022/04/19 13:25:08 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.70 2022/04/20 10:46:20 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -428,9 +428,9 @@ proc_parser_mft_post(char *file, struct mft *mft, const char *path)
 	}
 
 	/* check that now is not before from */
-	if (now < mft->valid_from) {
+	if (now < mft->valid_since) {
 		warnx("%s: mft not yet valid %s", file,
-		    time2str(mft->valid_from));
+		    time2str(mft->valid_since));
 		mft->stale = 1;
 	}
 	/* check that now is not after until */
@@ -1038,8 +1038,12 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	enum rtype type;
 	int is_ta = 0;
 
-	if (num++ > 0)
-		printf("--\n");
+	if (num++ > 0) {
+		if (outformats & FORMAT_JSON)
+			printf("\n");
+		else
+			printf("--\n");
+	}
 
 	if (strncmp(file, "rsync://", strlen("rsync://")) == 0) {
 		file += strlen("rsync://");
@@ -1050,7 +1054,10 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		}
 	}
 
-	printf("File: %s\n", file);
+	if (outformats & FORMAT_JSON)
+		printf("{\n\t\"file\": \"%s\",\n", file);
+	else
+		printf("File: %s\n", file);
 
 	type = rtype_from_file_extension(file);
 
@@ -1081,7 +1088,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		mft = mft_parse(&x509, file, buf, len);
 		if (mft == NULL)
 			break;
-		mft_print(mft);
+		mft_print(x509, mft);
 		aia = mft->aia;
 		aki = mft->aki;
 		break;
@@ -1089,7 +1096,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		roa = roa_parse(&x509, file, buf, len);
 		if (roa == NULL)
 			break;
-		roa_print(roa);
+		roa_print(x509, roa);
 		aia = roa->aia;
 		aki = roa->aki;
 		break;
@@ -1097,7 +1104,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		gbr = gbr_parse(&x509, file, buf, len);
 		if (gbr == NULL)
 			break;
-		gbr_print(gbr);
+		gbr_print(x509, gbr);
 		aia = gbr->aia;
 		aki = gbr->aki;
 		break;
@@ -1111,6 +1118,11 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		printf("%s: unsupported file type\n", file);
 		break;
 	}
+
+	if (outformats & FORMAT_JSON)
+		printf("\t\"validation\": \"");
+	else
+		printf("Validation: ");
 
 	if (aia != NULL) {
 		struct auth *a;
@@ -1126,24 +1138,33 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		c = get_crl(a);
 
 		if (valid_x509(file, x509, a, c, 0))
-			printf("Validation: OK\n");
+			printf("OK");
 		else
-			printf("Validation: Failed\n");
+			printf("Failed");
 	} else if (is_ta) {
 		if ((tal = find_tal(cert)) != NULL) {
 			cert = ta_parse(file, cert, tal->pkey, tal->pkeysz);
-			printf("TAL: %s\n", tal->descr);
-			tal = NULL;
+			if (cert != NULL)
+				printf("OK");
 		} else {
 			cert_free(cert);
 			cert = NULL;
-			printf("TAL: not found\n");
+			printf("Failed");
 		}
-		if (cert != NULL)
-			printf("Validation: OK\n");
-		else
-			printf("Validation: Failed\n");
 	}
+
+	if (is_ta) {
+		if (outformats & FORMAT_JSON) {
+			printf("\",\n\t\"tal\": \"%s\"\n", tal->descr);
+			printf("}");
+		} else {
+			printf("\nTAL: %s\n", tal->descr);
+		}
+		tal = NULL;
+	} else if (outformats & FORMAT_JSON)
+			printf("\"\n}");
+	else
+		printf("\n");
 
 	X509_free(x509);
 	cert_free(cert);

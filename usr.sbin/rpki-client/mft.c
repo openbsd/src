@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.59 2022/04/19 18:52:36 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.60 2022/04/20 10:46:20 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -86,7 +86,7 @@ mft_parse_time(const ASN1_GENERALIZEDTIME *from,
 		return 0;
 	}
 
-	if ((p->res->valid_from = timegm(&tm_from)) == -1 ||
+	if ((p->res->valid_since = timegm(&tm_from)) == -1 ||
 	    (p->res->valid_until = timegm(&tm_until)) == -1)
 		errx(1, "%s: timegm failed", p->fn);
 

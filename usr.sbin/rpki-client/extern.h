@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.128 2022/04/19 13:52:24 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.129 2022/04/20 10:46:20 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -196,7 +196,7 @@ struct mft {
 	char		*ski; /* SKI */
 	char		*crl; /* CRL file name */
 	unsigned char	 crlhash[SHA256_DIGEST_LENGTH];
-	time_t		 valid_from;
+	time_t		 valid_since;
 	time_t		 valid_until;
 	size_t		 filesz; /* number of filenames */
 	unsigned int	 repoid;
@@ -598,12 +598,13 @@ int		 x509_location(const char *, const char *, const char *,
 
 /* printers */
 char		*time2str(time_t);
+void		 x509_print(const X509 *);
 void		 tal_print(const struct tal *);
 void		 cert_print(const struct cert *);
 void		 crl_print(const struct crl *);
-void		 mft_print(const struct mft *);
-void		 roa_print(const struct roa *);
-void		 gbr_print(const struct gbr *);
+void		 mft_print(const X509 *, const struct mft *);
+void		 roa_print(const X509 *, const struct roa *);
+void		 gbr_print(const X509 *, const struct gbr *);
 
 /* Output! */
 
