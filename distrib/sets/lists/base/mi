@@ -514,6 +514,7 @@
 ./usr/bin/jot
 ./usr/bin/kdump
 ./usr/bin/keynote
+./usr/bin/kstat
 ./usr/bin/ktrace
 ./usr/bin/lam
 ./usr/bin/last

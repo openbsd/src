@@ -129,6 +129,7 @@
 ./usr/share/man/man1/keynote.1
 ./usr/share/man/man1/kill.1
 ./usr/share/man/man1/ksh.1
+./usr/share/man/man1/kstat.1
 ./usr/share/man/man1/ktrace.1
 ./usr/share/man/man1/lam.1
 ./usr/share/man/man1/last.1
