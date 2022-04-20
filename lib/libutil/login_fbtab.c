@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_fbtab.c,v 1.16 2015/11/27 01:57:59 mmcc Exp $	*/
+/*	$OpenBSD: login_fbtab.c,v 1.17 2022/04/20 21:55:17 jcs Exp $	*/
 
 /************************************************************************
 * Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
@@ -61,8 +61,8 @@
 #include <sys/stat.h>
 
 #include <errno.h>
-#include <dirent.h>
 #include <limits.h>
+#include <glob.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -134,49 +134,31 @@ login_fbtab(const char *tty, uid_t uid, gid_t gid)
 static void
 login_protect(const char *path, mode_t mask, uid_t uid, gid_t gid)
 {
-	char	buf[PATH_MAX];
-	size_t	pathlen = strlen(path);
-	DIR	*dir;
-	struct	dirent *ent;
+	glob_t	g;
+	size_t	n;
+	char	*gpath;
 
-	if (pathlen >= sizeof(buf)) {
+	if (strlen(path) >= PATH_MAX) {
 		errno = ENAMETOOLONG;
 		syslog(LOG_ERR, "%s: %s: %m", _PATH_FBTAB, path);
 		return;
 	}
 
-	if (strcmp("/*", path + pathlen - 2) != 0) {
-		if (chmod(path, mask) && errno != ENOENT)
-			syslog(LOG_ERR, "%s: chmod(%s): %m", _PATH_FBTAB, path);
-		if (chown(path, uid, gid) && errno != ENOENT)
-			syslog(LOG_ERR, "%s: chown(%s): %m", _PATH_FBTAB, path);
-	} else {
-		/*
-		 * This is a wildcard directory (/path/to/whatever/ * ).
-		 * Make a copy of path without the trailing '*' (but leave
-		 * the trailing '/' so we can append directory entries.)
-		 */
-		memcpy(buf, path, pathlen - 1);
-		buf[pathlen - 1] = '\0';
-		if ((dir = opendir(buf)) == NULL) {
-			syslog(LOG_ERR, "%s: opendir(%s): %m", _PATH_FBTAB,
-			    path);
-			return;
-		}
-
-		while ((ent = readdir(dir)) != NULL) {
-			if (strcmp(ent->d_name, ".")  != 0 &&
-			    strcmp(ent->d_name, "..") != 0) {
-				buf[pathlen - 1] = '\0';
-				if (strlcat(buf, ent->d_name, sizeof(buf))
-				    >= sizeof(buf)) {
-					errno = ENAMETOOLONG;
-					syslog(LOG_ERR, "%s: %s: %m",
-					    _PATH_FBTAB, path);
-				} else
-					login_protect(buf, mask, uid, gid);
-			}
-		}
-		closedir(dir);
+	if (glob(path, GLOB_NOSORT, NULL, &g) != 0) {
+		if (errno != ENOENT)
+			syslog(LOG_ERR, "%s: glob(%s): %m", _PATH_FBTAB, path);
+		globfree(&g);
+		return;
 	}
+
+	for (n = 0; n < g.gl_matchc; n++) {
+		gpath = g.gl_pathv[n];
+
+		if (chmod(gpath, mask) && errno != ENOENT)
+			syslog(LOG_ERR, "%s: chmod(%s): %m", _PATH_FBTAB, gpath);
+		if (chown(gpath, uid, gid) && errno != ENOENT)
+			syslog(LOG_ERR, "%s: chown(%s): %m", _PATH_FBTAB, gpath);
+	}
+
+	globfree(&g);
 }
