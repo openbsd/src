@@ -1,4 +1,4 @@
-/*	$OpenBSD: pty.c,v 1.21 2017/04/20 17:48:30 nicm Exp $	*/
+/*	$OpenBSD: pty.c,v 1.22 2022/04/20 14:00:19 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,8 +50,8 @@ getptmfd(void)
 }
 
 int
-openpty(int *amaster, int *aslave, char *name, struct termios *termp,
-    struct winsize *winp)
+openpty(int *amaster, int *aslave, char *name, const struct termios *termp,
+    const struct winsize *winp)
 {
 	int ptmfd;
 
@@ -67,7 +67,7 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 
 int
 fdopenpty(int ptmfd, int *amaster, int *aslave, char *name,
-    struct termios *termp, struct winsize *winp)
+    const struct termios *termp, const struct winsize *winp)
 {
 	int master, slave;
 	struct ptmget ptm;
@@ -97,7 +97,8 @@ fdopenpty(int ptmfd, int *amaster, int *aslave, char *name,
 }
 
 pid_t
-forkpty(int *amaster, char *name, struct termios *termp, struct winsize *winp)
+forkpty(int *amaster, char *name, const struct termios *termp,
+    const struct winsize *winp)
 {
 	int ptmfd;
 	pid_t pid;
@@ -113,8 +114,8 @@ forkpty(int *amaster, char *name, struct termios *termp, struct winsize *winp)
 }
 
 pid_t
-fdforkpty(int ptmfd, int *amaster, char *name, struct termios *termp,
-    struct winsize *winp)
+fdforkpty(int ptmfd, int *amaster, char *name, const struct termios *termp,
+    const struct winsize *winp)
 {
 	int master, slave;
 	pid_t pid;
