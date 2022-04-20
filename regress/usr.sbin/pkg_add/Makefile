@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.80 2022/04/20 09:08:09 espie Exp $
+# $OpenBSD: Makefile,v 1.81 2022/04/20 09:58:19 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -48,7 +48,7 @@ D$i ?= ${.OBJDIR}/dest$i
 DEST$i ?= ${D$i}/usr/local
 .endfor
 
-# current maxes (used): D46, SRC29, plist27, rep7
+# current maxes (used): D47, SRC30, plist27, rep7
 pkgnames:
 	${PERLSCRIPT}/check-name
 
@@ -730,8 +730,6 @@ rep0/syst-0.tgz:
 rep1/syst-0.tgz:
 	@${CREATE_PKG} -V 3 ${EMPTY} $@
 
-.PHONY: ${REGRESS_TARGETS}
-
 cksum-error: rep5/a-0.tgz
 	@-rm -rf ${D44}
 	@ROOT=${D44} SILENT=1 ${ADD_PKG} rep5/a-0.tgz
@@ -767,14 +765,28 @@ rep7/cups-1.tgz:
 	@${CREATE_PKG} -DREGRESSION_TESTING -P't/avahi-libs:avahi-libs-*:avahi-libs-0' -P't/avahi-glib:avahi-glib-*:avahi-glib-1' -W avahi.0.0 ${EMPTY} $@
 
 
+rep0/sym-0.tgz: plist19
+	@mkdir -p ${SRC30}
+	@ln -s /tmp ${SRC30}/a
+	@${CREATE_PKG} -B src30 -f plist19 $@
+
+
 XXX-warning: rep6/avahi-0.tgz rep6/cups-0.tgz rep7/avahi-1.tgz rep7/avahi-libs-1.tgz rep7/avahi-glib-1.tgz rep7/cups-1.tgz
 	@-rm -rf ${D46}
 	@ROOT=${D46} SILENT=1 ${ADD_PKG} rep6/cups-0.tgz
 	@ROOT=${D46} PKG_PATH=${.OBJDIR}/rep7 ${ADD_PKG} -u 2>warning
 	@if fgrep XXX warning; then exit 1; fi
 
+symlink: rep0/sym-0.tgz
+	@-rm -rf ${D47}
+	@ROOT=${D47} ${ADD_PKG} rep0/sym-0.tgz
+	@rm ${D47}/usr/local/a
+	@ROOT=${D47} ${ADD_PKG} -r -Dinstalled rep0/sym-0.tgz
+
 clean:
 	-rm -rf rep* dest* plist* src* signatures.out *.ref *.out
 	-${SUDO} rm -rf rep* dest* plist* src* signatures.out *.ref *.out
+
+.PHONY: ${REGRESS_TARGETS}
 
 .include <bsd.regress.mk>
