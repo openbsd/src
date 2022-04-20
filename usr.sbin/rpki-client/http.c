@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.56 2022/04/20 15:31:48 tb Exp $  */
+/*	$OpenBSD: http.c,v 1.57 2022/04/20 15:38:24 deraadt Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -381,7 +381,7 @@ proxy_parse_uri(char *uri)
 
 		if ((hosttail = strrchr(host, ']')) == NULL)
 			errx(1, "%s: unmatched opening bracket",
-			     http_info(uri));
+			    http_info(uri));
 		if (hosttail[1] == '\0' || hosttail[1] == ':')
 			host++;
 		if (hosttail[1] == ':')

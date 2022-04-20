@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.36 2022/04/20 15:31:48 tb Exp $ */
+/*	$OpenBSD: rsync.c,v 1.37 2022/04/20 15:38:24 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -248,7 +248,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 
 				b = io_new_buffer();
 				io_simple_buffer(b, &ids[i].id,
-				     sizeof(ids[i].id));
+				    sizeof(ids[i].id));
 				io_simple_buffer(b, &ok, sizeof(ok));
 				io_close_buffer(&msgq, b);
 

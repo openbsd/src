@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.129 2022/04/20 10:46:20 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.130 2022/04/20 15:38:24 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -359,7 +359,7 @@ struct entity {
 	char		*path;		/* path relative to repository */
 	char		*file;		/* filename or valid repo path */
 	unsigned char	*data;		/* optional data blob */
-	size_t		 datasz; 	/* length of optional data blob */
+	size_t		 datasz;	/* length of optional data blob */
 	unsigned int	 repoid;	/* repository identifier */
 	int		 talid;		/* tal identifier */
 	enum rtype	 type;		/* type of entity (not RTYPE_EOF) */
