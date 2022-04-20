@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.197 2022/04/19 20:06:48 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.198 2022/04/20 04:40:33 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -790,8 +790,6 @@ main(int argc, char *argv[])
 				errx(1, "-s: %s", errs);
 			if (timeout == 0)
 				repo_timeout = 24*60*60;
-			else if (timeout < 1)
-				errx(1, "-s: %i too small", timeout);
 			else
 				repo_timeout = timeout / 4;
 			break;
