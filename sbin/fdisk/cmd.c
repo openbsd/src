@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.156 2022/04/20 00:47:32 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.157 2022/04/20 15:49:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -44,7 +44,6 @@ int		 parsepn(const char *);
 int		 ask_num(const char *, int, int, int);
 int		 ask_pid(const int);
 struct uuid	*ask_uuid(const struct uuid *);
-char		*ask_string(const char *, const char *);
 
 extern const unsigned char	manpage[];
 extern const int		manpage_sz;
@@ -119,9 +118,6 @@ int
 gedit(const int pn)
 {
 	struct uuid		 oldtype;
-	char			*name;
-	uint16_t		*utf;
-	int			 i;
 
 	oldtype = gp[pn].gp_type;
 
@@ -137,26 +133,11 @@ gedit(const int pn)
 	}
 
 	if (GPT_get_lba_start(pn) == -1 ||
-	    GPT_get_lba_end(pn) == -1) {
+	    GPT_get_lba_end(pn) == -1 ||
+	    GPT_get_name(pn) == -1) {
 		return -1;
 	}
 
-	name = ask_string("Partition name", utf16le_to_string(gp[pn].gp_name));
-	if (strlen(name) >= GPTPARTNAMESIZE) {
-		printf("partition name must be < %d characters\n",
-		    GPTPARTNAMESIZE);
-		return -1;
-	}
-	/*
-	 * N.B.: simple memcpy() could copy trash from static buf! This
-	 * would create false positives for the partition having changed.
-	 */
-	utf = string_to_utf16le(name);
-	for (i = 0; i < GPTPARTNAMESIZE; i++) {
-		gp[pn].gp_name[i] = utf[i];
-		if (utf[i] == 0)
-			break;
-	}
 	return 0;
 }
 
@@ -659,19 +640,4 @@ ask_uuid(const struct uuid *olduuid)
  done:
 	free(dflt);
 	return &uuid;
-}
-
-char *
-ask_string(const char *prompt, const char *oval)
-{
-	static char		buf[UUID_STR_LEN + 1];
-
-	buf[0] = '\0';
-	printf("%s: [%s] ", prompt, oval ? oval : "");
-	string_from_line(buf, sizeof(buf), UNTRIMMED);
-
-	if (buf[0] == '\0' && oval)
-		strlcpy(buf, oval, sizeof(buf));
-
-	return buf;
 }

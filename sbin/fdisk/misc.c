@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.86 2021/09/13 15:07:51 krw Exp $	*/
+/*	$OpenBSD: misc.c,v 1.87 2022/04/20 15:49:56 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -232,40 +232,6 @@ getuint64(const char *prompt, uint64_t oval, const uint64_t minval,
 	} while (1);
 
 	return (uint64_t)d;
-}
-
-char *
-utf16le_to_string(const uint16_t *utf)
-{
-	static char		name[GPTPARTNAMESIZE];
-	int			i;
-
-	for (i = 0; i < GPTPARTNAMESIZE; i++) {
-		name[i] = letoh16(utf[i]) & 0x7F;
-		if (name[i] == '\0')
-			break;
-	}
-	if (i == GPTPARTNAMESIZE)
-		name[i - 1] = '\0';
-
-	return name;
-}
-
-uint16_t *
-string_to_utf16le(const char *ch)
-{
-	static uint16_t		utf[GPTPARTNAMESIZE];
-	int			i;
-
-	for (i = 0; i < GPTPARTNAMESIZE; i++) {
-		utf[i] = htole16((unsigned int)ch[i]);
-		if (utf[i] == 0)
-			break;
-	}
-	if (i == GPTPARTNAMESIZE)
-		utf[i - 1] = 0;
-
-	return utf;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.70 2022/04/20 00:47:32 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.71 2022/04/20 15:49:56 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -57,6 +57,33 @@ int			  init_gp(const int);
 uint32_t		  crc32(const u_char *, const uint32_t);
 int			  protective_mbr(const struct mbr *);
 int			  gpt_chk_mbr(struct dos_partition *, uint64_t);
+void			  string_to_name(const unsigned int, const char *);
+const char		 *name_to_string(const unsigned int);
+
+void
+string_to_name(const unsigned int pn, const char *ch)
+{
+	unsigned int			i;
+
+	memset(gp[pn].gp_name, 0, sizeof(gp[pn].gp_name));
+
+	for (i = 0; i < sizeof(gp[pn].gp_name) && ch[i] != '\0'; i++)
+		gp[pn].gp_name[i] = htole16((unsigned int)ch[i]);
+}
+
+const char *
+name_to_string(const unsigned int pn)
+{
+	static char		name[GPTPARTNAMESIZE + 1];
+	unsigned int		i;
+
+	memset(name, 0, sizeof(name));
+
+	for (i = 0; i < sizeof(name) && gp[pn].gp_name[i] != 0; i++)
+		name[i] = letoh16(gp[pn].gp_name[i]) & 0x7F;
+
+	return name;
+}
 
 /*
  * Return the index into dp[] of the EFI GPT (0xEE) partition, or -1 if no such
@@ -417,7 +444,7 @@ GPT_print_part(const unsigned int pn, const char *units, const int verbosity)
 			printf("      <invalid partition guid>             ");
 		else
 			printf("      %-36s ", guidstr);
-		printf("%-36s\n", utf16le_to_string(gp[pn].gp_name));
+		printf("%-36s\n", name_to_string(pn));
 		free(guidstr);
 	}
 }
@@ -478,8 +505,7 @@ add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 	gp[pn].gp_type = gp_type;
 	gp[pn].gp_lba_start = htole64(start);
 	gp[pn].gp_lba_end = htole64(end);
-	memcpy(gp[pn].gp_name, string_to_utf16le(name),
-	    sizeof(gp[pn].gp_name));
+	string_to_name(pn, name);
 
 	uuid_create(&uuid, &status);
 	if (status != uuid_s_ok)
@@ -854,6 +880,29 @@ GPT_get_lba_end(const unsigned int pn)
 	ns = getuint64("Partition size", ns, 1, ns);
 
 	gp[pn].gp_lba_end = htole64(bs + ns - 1);
+
+	return 0;
+}
+
+int
+GPT_get_name(const unsigned int pn)
+{
+	char			 name[GPTPARTNAMESIZE + 1];
+
+	printf("Partition name: [%s] ", name_to_string(pn));
+	string_from_line(name, sizeof(name), UNTRIMMED);
+
+	switch (strlen(name)) {
+	case 0:
+		break;
+	case GPTPARTNAMESIZE:
+		printf("partition name must be < %d characters\n",
+		    GPTPARTNAMESIZE);
+		return -1;
+	default:
+		string_to_name(pn, name);
+		break;
+	}
 
 	return 0;
 }
