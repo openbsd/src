@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.70 2022/04/20 10:46:20 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.71 2022/04/20 15:13:08 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1146,6 +1146,13 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			cert = ta_parse(file, cert, tal->pkey, tal->pkeysz);
 			if (cert != NULL)
 				printf("OK");
+			else
+				printf("Failed");
+			if (outformats & FORMAT_JSON)
+				printf("\",\n\t\"tal\": \"%s", tal->descr);
+			else
+				printf("\nTAL: %s", tal->descr);
+			tal = NULL;
 		} else {
 			cert_free(cert);
 			cert = NULL;
@@ -1153,16 +1160,8 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		}
 	}
 
-	if (is_ta) {
-		if (outformats & FORMAT_JSON) {
-			printf("\",\n\t\"tal\": \"%s\"\n", tal->descr);
-			printf("}");
-		} else {
-			printf("\nTAL: %s\n", tal->descr);
-		}
-		tal = NULL;
-	} else if (outformats & FORMAT_JSON)
-			printf("\"\n}");
+	if (outformats & FORMAT_JSON)
+		printf("\"\n}");
 	else
 		printf("\n");
 
