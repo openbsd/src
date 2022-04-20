@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.155 2022/04/18 17:32:16 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.156 2022/04/20 00:47:32 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -119,20 +119,18 @@ int
 gedit(const int pn)
 {
 	struct uuid		 oldtype;
-	struct gpt_partition	*gg;
 	char			*name;
 	uint16_t		*utf;
 	int			 i;
 
-	gg = &gp[pn];
-	oldtype = gg->gp_type;
+	oldtype = gp[pn].gp_type;
 
 	if (gsetpid(pn))
 		return -1;
 
-	if (uuid_is_nil(&gg->gp_type, NULL)) {
+	if (uuid_is_nil(&gp[pn].gp_type, NULL)) {
 		if (uuid_is_nil(&oldtype, NULL) == 0) {
-			memset(gg, 0, sizeof(struct gpt_partition));
+			memset(&gp[pn], 0, sizeof(gp[pn]));
 			printf("Partition %d is disabled.\n", pn);
 		}
 		return 0;
@@ -143,7 +141,7 @@ gedit(const int pn)
 		return -1;
 	}
 
-	name = ask_string("Partition name", utf16le_to_string(gg->gp_name));
+	name = ask_string("Partition name", utf16le_to_string(gp[pn].gp_name));
 	if (strlen(name) >= GPTPARTNAMESIZE) {
 		printf("partition name must be < %d characters\n",
 		    GPTPARTNAMESIZE);
@@ -155,7 +153,7 @@ gedit(const int pn)
 	 */
 	utf = string_to_utf16le(name);
 	for (i = 0; i < GPTPARTNAMESIZE; i++) {
-		gg->gp_name[i] = utf[i];
+		gp[pn].gp_name[i] = utf[i];
 		if (utf[i] == 0)
 			break;
 	}
@@ -248,7 +246,6 @@ Xedit(char *args, struct mbr *mbr)
 {
 	struct gpt_partition	 oldgg;
 	struct prt		 oldprt;
-	struct gpt_partition	*gg;
 	int			 pn;
 
 	pn = parsepn(args);
@@ -259,7 +256,7 @@ Xedit(char *args, struct mbr *mbr)
 		oldgg = gp[pn];
 		if (gedit(pn))
 			gp[pn] = oldgg;
-		else if (memcmp(&gp[pn], &oldgg, sizeof(oldgg)))
+		else if (memcmp(&gp[pn], &oldgg, sizeof(gp[pn])))
 			return CMD_DIRTY;
 	} else {
 		oldprt = mbr->mbr_prt[pn];
@@ -276,15 +273,12 @@ int
 gsetpid(const int pn)
 {
 	struct uuid		 gp_type, gp_guid;
-	struct gpt_partition	*gg;
 	uint32_t		 status;
-
-	gg = &gp[pn];
 
 	GPT_print_parthdr(TERSE);
 	GPT_print_part(pn, "s", TERSE);
 
-	uuid_dec_le(&gg->gp_type, &gp_type);
+	uuid_dec_le(&gp[pn].gp_type, &gp_type);
 	if (PRT_protected_guid(&gp_type)) {
 		printf("can't edit partition type %s\n",
 		    PRT_uuid_to_typename(&gp_type));
@@ -298,7 +292,7 @@ gsetpid(const int pn)
 		return -1;
 	}
 
-	uuid_dec_le(&gg->gp_guid, &gp_guid);
+	uuid_dec_le(&gp[pn].gp_guid, &gp_guid);
 	if (uuid_is_nil(&gp_guid, NULL)) {
 		uuid_create(&gp_guid, &status);
 		if (status != uuid_s_ok) {
@@ -307,8 +301,8 @@ gsetpid(const int pn)
 		}
 	}
 
-	uuid_enc_le(&gg->gp_type, &gp_type);
-	uuid_enc_le(&gg->gp_guid, &gp_guid);
+	uuid_enc_le(&gp[pn].gp_type, &gp_type);
+	uuid_enc_le(&gp[pn].gp_guid, &gp_guid);
 
 	return 0;
 }
@@ -343,7 +337,7 @@ Xsetpid(char *args, struct mbr *mbr)
 		oldgg = gp[pn];
 		if (gsetpid(pn))
 			gp[pn] = oldgg;
-		else if (memcmp(&gp[pn], &oldgg, sizeof(oldgg)))
+		else if (memcmp(&gp[pn], &oldgg, sizeof(gp[pn])))
 			return CMD_DIRTY;
 	} else {
 		oldprt = mbr->mbr_prt[pn];

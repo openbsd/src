@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.69 2022/04/19 17:53:15 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.70 2022/04/20 00:47:32 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -397,28 +397,27 @@ GPT_print_part(const unsigned int pn, const char *units, const int verbosity)
 {
 	const struct unit_type	*ut;
 	struct uuid		 guid;
-	struct gpt_partition	*partn = &gp[pn];
 	char			*guidstr = NULL;
 	double			 size;
 	uint64_t		 sectors;
 	uint32_t		 status;
 
-	uuid_dec_le(&partn->gp_type, &guid);
-	sectors = letoh64(partn->gp_lba_end) - letoh64(partn->gp_lba_start) + 1;
+	uuid_dec_le(&gp[pn].gp_type, &guid);
+	sectors = letoh64(gp[pn].gp_lba_end) - letoh64(gp[pn].gp_lba_start) + 1;
 	size = units_size(units, sectors, &ut);
 	printf("%c%3u: %-36s [%12lld: %12.0f%s]\n",
-	    (letoh64(partn->gp_attrs) & GPTDOSACTIVE)?'*':' ', pn,
-	    PRT_uuid_to_typename(&guid), letoh64(partn->gp_lba_start),
+	    (letoh64(gp[pn].gp_attrs) & GPTDOSACTIVE) ? '*' : ' ', pn,
+	    PRT_uuid_to_typename(&guid), letoh64(gp[pn].gp_lba_start),
 	    size, ut->ut_abbr);
 
 	if (verbosity == VERBOSE) {
-		uuid_dec_le(&partn->gp_guid, &guid);
+		uuid_dec_le(&gp[pn].gp_guid, &guid);
 		uuid_to_string(&guid, &guidstr, &status);
 		if (status != uuid_s_ok)
 			printf("      <invalid partition guid>             ");
 		else
 			printf("      %-36s ", guidstr);
-		printf("%-36s\n", utf16le_to_string(partn->gp_name));
+		printf("%-36s\n", utf16le_to_string(gp[pn].gp_name));
 		free(guidstr);
 	}
 }
