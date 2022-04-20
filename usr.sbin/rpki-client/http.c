@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.55 2022/04/11 18:59:23 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.56 2022/04/20 15:31:48 tb Exp $  */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -436,7 +436,7 @@ http_parse_uri(char *uri, char **ohost, char **oport, char **opath)
 		warnx("%s: preposterous host length", http_info(uri));
 		return -1;
 	}
-	
+
 	if (memchr(host, '@', path - host) != NULL) {
 		warnx("%s: URI with userinfo not supported", http_info(uri));
 		return -1;
@@ -633,7 +633,7 @@ http_req_schedule(struct http_request *req)
 /*
  * Create a new HTTP connection which will be used for the HTTP request req.
  * On errors a req faulure is issued and both connection and request are freed.
- */ 
+ */
 static void
 http_new(struct http_request *req)
 {
@@ -803,7 +803,7 @@ http_connect(struct http_connection *conn)
 {
 	const char *cause = NULL;
 
-	assert(conn->fd == -1); 
+	assert(conn->fd == -1);
 	conn->state = STATE_CONNECT;
 
 	/* start the loop below with first or next address */
@@ -1140,7 +1140,7 @@ http_redirect(struct http_connection *conn)
 
 	logx("redirect to %s", http_info(uri));
 	http_req_new(conn->req->id, uri, mod_since, conn->req->redirect_loop,
-	    outfd);	
+	    outfd);
 
 	/* clear request before moving connection to idle */
 	http_req_free(conn->req);
@@ -1244,7 +1244,7 @@ http_parse_header(struct http_connection *conn, char *buf)
  * The line returned has any possible '\r' and '\n' at the end stripped.
  * The buffer is advanced to the start of the next line.
  * If there is currently no full line in the buffer NULL is returned.
- */ 
+ */
 static char *
 http_get_line(struct http_connection *conn)
 {
@@ -1407,7 +1407,7 @@ again:
 		} else if (conn->status == 304) {
 			return http_done(conn, HTTP_NOT_MOD);
 		}
-		
+
 		return http_failed(conn);
 	case STATE_RESPONSE_DATA:
 		if (conn->bufpos != conn->bufsz &&
@@ -1759,7 +1759,7 @@ http_setup(void)
 		err(1, "tls_load_file: %s", tls_default_ca_cert_file());
 	tls_config_set_ca_mem(tls_config, tls_ca_mem, tls_ca_size);
 
-        if ((httpproxy = getenv("http_proxy")) != NULL && *httpproxy == '\0')
+	if ((httpproxy = getenv("http_proxy")) != NULL && *httpproxy == '\0')
 		httpproxy = NULL;
 
 	proxy_parse_uri(httpproxy);
@@ -1821,7 +1821,7 @@ proc_http(char *bind_addr, int fd)
 			if (conn->io_time <= now)
 				timeout = 0;
 			else {
-				int diff = conn->io_time - now; 
+				int diff = conn->io_time - now;
 				diff *= 1000;
 				if (timeout == INFTIM || diff < timeout)
 					timeout = diff;
@@ -1842,7 +1842,7 @@ proc_http(char *bind_addr, int fd)
 			if (conn->idle_time <= now)
 				timeout = 0;
 			else {
-				int diff = conn->idle_time - now; 
+				int diff = conn->idle_time - now;
 				diff *= 1000;
 				if (timeout == INFTIM || diff < timeout)
 					timeout = diff;

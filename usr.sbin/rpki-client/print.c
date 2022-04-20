@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.8 2022/04/20 10:46:20 job Exp $ */
+/*	$OpenBSD: print.c,v 1.9 2022/04/20 15:31:48 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -101,7 +101,6 @@ tal_print(const struct tal *p)
 				printf(", ");
 		}
 		printf("]\n");
-	
 	} else {
 		printf("Trust anchor name: %s\n", p->descr);
 		printf("Subject key identifier: %s\n", pretty_key_id(ski));
@@ -109,7 +108,7 @@ tal_print(const struct tal *p)
 		for (i = 0; i < p->urisz; i++)
 			printf("%5zu: %s\n", i + 1, p->uri[i]);
 	}
-	
+
 	EVP_PKEY_free(pk);
 	free(rder);
 	free(ski);
@@ -131,9 +130,9 @@ x509_print(const X509 *x)
 	if (serial == NULL) {
 		warnx("x509_convert_seqnum failed in %s", __func__);
 		goto out;
-	}	
+	}
 
-	if (outformats & FORMAT_JSON) {	
+	if (outformats & FORMAT_JSON) {
 		printf("\t\"cert_serial\": \"%s\",\n", serial);
 	} else {
 		printf("Certificate serial: %s\n", serial);
@@ -293,7 +292,7 @@ crl_print(const struct crl *p)
 		printf("\t\"valid_since\": %lld,\n", (long long)p->issued);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 		printf("\t\"revoked_certs\": [\n");
-	} else {	
+	} else {
 		printf("CRL valid since: %s\n", time2str(p->issued));
 		printf("CRL valid until: %s\n", time2str(p->expires));
 		printf("Revoked Certificates:\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.35 2022/04/11 18:59:23 claudio Exp $ */
+/*	$OpenBSD: rsync.c,v 1.36 2022/04/20 15:31:48 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -44,7 +44,7 @@
 struct	rsyncproc {
 	char		*uri; /* uri of this rsync proc */
 	unsigned int	 id; /* identity of request */
-	pid_t	 	 pid; /* pid of process or 0 if unassociated */
+	pid_t		 pid; /* pid of process or 0 if unassociated */
 };
 
 /*

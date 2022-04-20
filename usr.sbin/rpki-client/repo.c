@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.32 2022/04/04 16:02:54 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.33 2022/04/20 15:31:48 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1243,7 +1243,7 @@ repo_cleanup_rrdp(struct filepath_tree *tree)
 	struct rrdprepo *rr;
 	struct filepath *fp, *nfp;
 	char *fn;
-	
+
 	SLIST_FOREACH(rr, &rrdprepos, entry) {
 		RB_FOREACH_SAFE(fp, filepath_tree, &rr->deleted, nfp) {
 			if (!rrdp_uri_valid(rr, fp->file)) {
@@ -1366,7 +1366,7 @@ repo_cleanup(struct filepath_tree *tree, int cachefd)
 
 	/* first move temp files which have been used to valid dir */
 	repo_move_valid(tree);
-	/* then delete files requested by rrdp */ 
+	/* then delete files requested by rrdp */
 	repo_cleanup_rrdp(tree);
 
 	if ((fts = fts_open(argv, FTS_PHYSICAL | FTS_NOSTAT, NULL)) == NULL)

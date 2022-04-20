@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bird.c,v 1.12 2021/10/11 16:50:03 job Exp $ */
+/*	$OpenBSD: output-bird.c,v 1.13 2022/04/20 15:31:48 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2020 Robert Scheck <robert@fedoraproject.org>
@@ -64,7 +64,7 @@ output_bird1v6(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 
 	RB_FOREACH(v, vrp_tree, vrps) {
 		char buf[64];
-	
+
 		if (v->afi == AFI_IPV6) {
 			ip_addr_print(&v->addr, v->afi, buf, sizeof(buf));
 			if (fprintf(out, "\troa %s max %u as %u;\n", buf,
