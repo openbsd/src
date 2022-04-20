@@ -57,13 +57,18 @@ package main;
 
 my $state = myState->new;
 $state->handle_options;
-my $plist = OpenBSD::PackingList->fromfile($state->opt('f'),
+my $filename = $state->opt('f');
+my $plist = OpenBSD::PackingList->fromfile($filename,
     sub {
 	my ($fh, $cont) = @_;
 	while (<$fh>) {
 		&$cont($state->{subst}->do($_));
 	}
     });
+
+if (!defined $plist) {
+	$state->fatal("Error reading packing-list #1", $filename);
+}
 
 my $localbase = $state->opt('L') // OpenBSD::Paths->localbase;
 $plist->populate($state->opt('B').$localbase);
