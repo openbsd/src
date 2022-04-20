@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.81 2022/04/20 09:58:19 espie Exp $
+# $OpenBSD: Makefile,v 1.82 2022/04/20 12:09:46 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -782,6 +782,14 @@ symlink: rep0/sym-0.tgz
 	@ROOT=${D47} ${ADD_PKG} rep0/sym-0.tgz
 	@rm ${D47}/usr/local/a
 	@ROOT=${D47} ${ADD_PKG} -r -Dinstalled rep0/sym-0.tgz
+
+no-symlink: rep1/d-0.tgz
+	@-rm -rf ${D48}
+	@ROOT=${D48} ${ADD_PKG} rep1/d-0.tgz
+	@rm -f ${D48}/usr/local/f /usr/local/a
+	@ROOT=${D48} ${ADD_PKG} -r -Dinstalled rep1/d-0.tgz
+	@test -f ${D48}/usr/local/f
+	@test -f ${D48}/usr/local/a
 
 clean:
 	-rm -rf rep* dest* plist* src* signatures.out *.ref *.out
