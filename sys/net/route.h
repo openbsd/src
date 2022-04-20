@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.189 2022/04/20 09:38:26 bluhm Exp $	*/
+/*	$OpenBSD: route.h,v 1.190 2022/04/20 17:58:22 bluhm Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -453,8 +453,8 @@ struct rtentry *rt_getll(struct rtentry *);
 
 void			 rt_timer_init(void);
 int			 rt_timer_add(struct rtentry *,
-		             void(*)(struct rtentry *, struct rttimer *),
-			     struct rttimer_queue *, u_int);
+			    void(*)(struct rtentry *, struct rttimer *),
+			    struct rttimer_queue *, u_int);
 void			 rt_timer_remove_all(struct rtentry *);
 struct rttimer_queue	*rt_timer_queue_create(int);
 void			 rt_timer_queue_change(struct rttimer_queue *, int);
@@ -477,11 +477,12 @@ int	 rt_ifa_del(struct ifaddr *, int, struct sockaddr *, unsigned int);
 void	 rt_ifa_purge(struct ifaddr *);
 int	 rt_ifa_addlocal(struct ifaddr *);
 int	 rt_ifa_dellocal(struct ifaddr *);
-void	 rtredirect(struct sockaddr *, struct sockaddr *, struct sockaddr *, struct rtentry **, unsigned int);
+void	 rtredirect(struct sockaddr *, struct sockaddr *, struct sockaddr *,
+	    struct rtentry **, unsigned int);
 int	 rtrequest(int, struct rt_addrinfo *, u_int8_t, struct rtentry **,
-	     u_int);
+	    u_int);
 int	 rtrequest_delete(struct rt_addrinfo *, u_int8_t, struct ifnet *,
-	     struct rtentry **, u_int);
+	    struct rtentry **, u_int);
 int	 rt_if_track(struct ifnet *);
 int	 rt_if_linkstate_change(struct rtentry *, void *, u_int);
 int	 rtdeletemsg(struct rtentry *, struct ifnet *, u_int);
