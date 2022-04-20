@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.366 2022/02/22 01:35:40 guenther Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.367 2022/04/20 09:38:26 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -91,10 +91,10 @@ int	ipsendredirects = 1;
 int	ip_dosourceroute = 0;
 int	ip_defttl = IPDEFTTL;
 int	ip_mtudisc = 1;
-u_int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
+int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
 int	ip_directedbcast = 0;
 
-struct rttimer_queue *ip_mtudisc_timeout_q = NULL;
+struct rttimer_queue *ip_mtudisc_timeout_q;
 
 /* Protects `ipq' and `ip_frags'. */
 struct mutex	ipq_mutex = MUTEX_INITIALIZER(IPL_SOFTNET);
@@ -201,9 +201,7 @@ ip_init(void)
 		    pr->pr_protocol < IPPROTO_MAX)
 			ip_protox[pr->pr_protocol] = pr - inetsw;
 	LIST_INIT(&ipq);
-	if (ip_mtudisc != 0)
-		ip_mtudisc_timeout_q =
-		    rt_timer_queue_create(ip_mtudisc_timeout);
+	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 
 	/* Fill in list of ports not to allocate dynamically. */
 	memset(&baddynamicports, 0, sizeof(baddynamicports));
@@ -1616,24 +1614,20 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (error);
 	case IPCTL_MTUDISC:
 		NET_LOCK();
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip_mtudisc);
-		if (ip_mtudisc != 0 && ip_mtudisc_timeout_q == NULL) {
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &ip_mtudisc);
+		if (ip_mtudisc == 0) {
+			rt_timer_queue_destroy(ip_mtudisc_timeout_q);
 			ip_mtudisc_timeout_q =
 			    rt_timer_queue_create(ip_mtudisc_timeout);
-		} else if (ip_mtudisc == 0 && ip_mtudisc_timeout_q != NULL) {
-			rt_timer_queue_destroy(ip_mtudisc_timeout_q);
-			ip_mtudisc_timeout_q = NULL;
 		}
 		NET_UNLOCK();
 		return error;
 	case IPCTL_MTUDISCTIMEOUT:
 		NET_LOCK();
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		   &ip_mtudisc_timeout);
-		if (ip_mtudisc_timeout_q != NULL)
-			rt_timer_queue_change(ip_mtudisc_timeout_q,
-					      ip_mtudisc_timeout);
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &ip_mtudisc_timeout, 0, INT_MAX);
+		rt_timer_queue_change(ip_mtudisc_timeout_q,
+		    ip_mtudisc_timeout);
 		NET_UNLOCK();
 		return (error);
 #ifdef IPSEC

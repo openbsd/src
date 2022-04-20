@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.187 2021/07/26 20:44:44 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.188 2022/04/20 09:38:26 bluhm Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -120,7 +120,7 @@ int	icmp_redirtimeout = 10 * 60;
 static int icmperrpps_count = 0;
 static struct timeval icmperrppslim_last;
 
-static struct rttimer_queue *icmp_redirect_timeout_q = NULL;
+struct rttimer_queue *icmp_redirect_timeout_q;
 struct cpumem *icmpcounters;
 
 const struct sysctl_bounded_args icmpctl_vars[] =  {
@@ -141,15 +141,8 @@ int icmp_sysctl_icmpstat(void *, size_t *, void *);
 void
 icmp_init(void)
 {
+	icmp_redirect_timeout_q = rt_timer_queue_create(icmp_redirtimeout);
 	icmpcounters = counters_alloc(icps_ncounters);
-	/*
-	 * This is only useful if the user initializes redirtimeout to
-	 * something other than zero.
-	 */
-	if (icmp_redirtimeout != 0) {
-		icmp_redirect_timeout_q =
-		    rt_timer_queue_create(icmp_redirtimeout);
-	}
 }
 
 struct mbuf *
@@ -640,12 +633,11 @@ reflect:
 #endif
 		rtredirect(sintosa(&sdst), sintosa(&sgw),
 		    sintosa(&ssrc), &newrt, m->m_pkthdr.ph_rtableid);
-		if (newrt != NULL && icmp_redirtimeout != 0) {
-			(void)rt_timer_add(newrt, icmp_redirect_timeout,
+		if (newrt != NULL && icmp_redirtimeout > 0) {
+			rt_timer_add(newrt, icmp_redirect_timeout,
 			    icmp_redirect_timeout_q, m->m_pkthdr.ph_rtableid);
 		}
-		if (newrt != NULL)
-			rtfree(newrt);
+		rtfree(newrt);
 		pfctlinput(PRC_REDIRECT_HOST, sintosa(&sdst));
 		break;
 	}
@@ -889,21 +881,11 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 
 	switch (name[0]) {
 	case ICMPCTL_REDIRTIMEOUT:
-
 		NET_LOCK();
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &icmp_redirtimeout);
-		if (icmp_redirect_timeout_q != NULL) {
-			if (icmp_redirtimeout == 0) {
-				rt_timer_queue_destroy(icmp_redirect_timeout_q);
-				icmp_redirect_timeout_q = NULL;
-			} else
-				rt_timer_queue_change(icmp_redirect_timeout_q,
-				    icmp_redirtimeout);
-		} else if (icmp_redirtimeout > 0) {
-			icmp_redirect_timeout_q =
-			    rt_timer_queue_create(icmp_redirtimeout);
-		}
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &icmp_redirtimeout, 0, INT_MAX);
+		rt_timer_queue_change(icmp_redirect_timeout_q,
+		    icmp_redirtimeout);
 		NET_UNLOCK();
 		break;
 

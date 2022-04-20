@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.404 2022/04/19 19:19:31 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.405 2022/04/20 09:38:25 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1399,13 +1399,11 @@ rt_timer_init(void)
 }
 
 struct rttimer_queue *
-rt_timer_queue_create(u_int timeout)
+rt_timer_queue_create(int timeout)
 {
 	struct rttimer_queue	*rtq;
 
-	rtq = pool_get(&rttimer_queue_pool, PR_NOWAIT | PR_ZERO);
-	if (rtq == NULL)
-		return (NULL);
+	rtq = pool_get(&rttimer_queue_pool, PR_WAITOK | PR_ZERO);
 
 	rtq->rtq_timeout = timeout;
 	rtq->rtq_count = 0;
@@ -1416,7 +1414,7 @@ rt_timer_queue_create(u_int timeout)
 }
 
 void
-rt_timer_queue_change(struct rttimer_queue *rtq, long timeout)
+rt_timer_queue_change(struct rttimer_queue *rtq, int timeout)
 {
 	rtq->rtq_timeout = timeout;
 }
@@ -1470,10 +1468,10 @@ rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *,
     struct rttimer *), struct rttimer_queue *queue, u_int rtableid)
 {
 	struct rttimer	*r;
-	long		 current_time;
+	time_t		 current_time;
 
 	current_time = getuptime();
-	rt->rt_expire = getuptime() + queue->rtq_timeout;
+	rt->rt_expire = current_time + queue->rtq_timeout;
 
 	/*
 	 * If there's already a timer with this action, destroy it before
@@ -1514,7 +1512,7 @@ rt_timer_timer(void *arg)
 	struct timeout		*to = (struct timeout *)arg;
 	struct rttimer_queue	*rtq;
 	struct rttimer		*r;
-	long			 current_time;
+	time_t			 current_time;
 
 	current_time = getuptime();
 

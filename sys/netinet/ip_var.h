@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.90 2022/02/25 23:51:03 guenther Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.91 2022/04/20 09:38:26 bluhm Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ extern int ip_defttl;			/* default IP ttl */
 #define IPMTUDISCTIMEOUT (10 * 60)	/* as per RFC 1191 */
 
 extern int ip_mtudisc;			/* mtu discovery */
-extern u_int ip_mtudisc_timeout;	/* seconds to timeout mtu discovery */
+extern int ip_mtudisc_timeout;		/* seconds to timeout mtu discovery */
 
 extern int ipport_firstauto;		/* min port for port allocation */
 extern int ipport_lastauto;		/* max port for port allocation */

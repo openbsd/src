@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.240 2022/02/22 01:35:41 guenther Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.241 2022/04/20 09:38:26 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1454,11 +1454,10 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 #endif
 	case IPV6CTL_MTUDISCTIMEOUT:
 		NET_LOCK();
-		error = sysctl_int(oldp, oldlenp, newp, newlen,
-		    &ip6_mtudisc_timeout);
-		if (icmp6_mtudisc_timeout_q != NULL)
-			rt_timer_queue_change(icmp6_mtudisc_timeout_q,
-			    ip6_mtudisc_timeout);
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+		    &ip6_mtudisc_timeout, 0, INT_MAX);
+		rt_timer_queue_change(icmp6_mtudisc_timeout_q,
+		    ip6_mtudisc_timeout);
 		NET_UNLOCK();
 		return (error);
 	case IPV6CTL_IFQUEUE:
