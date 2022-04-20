@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.303 2022/04/14 11:39:44 bluhm Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.304 2022/04/20 20:51:09 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1620,9 +1620,7 @@ pfsync_drop_snapshot(struct pfsync_snapshot *sn, struct pfsync_softc * sc)
 
 		while ((st = TAILQ_FIRST(&sn->sn_qs[q])) != NULL) {
 			TAILQ_REMOVE(&sn->sn_qs[q], st, sync_list);
-#ifdef PFSYNC_DEBUG
 			KASSERT(st->sync_state == q);
-#endif
 			st->sync_state = PFSYNC_S_NONE;
 			pf_state_unref(st);
 		}
@@ -1857,9 +1855,7 @@ pfsync_sendout(void)
 		count = 0;
 		while ((st = TAILQ_FIRST(&sn.sn_qs[q])) != NULL) {
 			TAILQ_REMOVE(&sn.sn_qs[q], st, sync_list);
-#ifdef PFSYNC_DEBUG
 			KASSERT(st->sync_state == q);
-#endif
 			st->sync_state = PFSYNC_S_NONE;
 			pfsync_qs[q].write(st, m->m_data + offset);
 			offset += pfsync_qs[q].len;
@@ -1916,9 +1912,7 @@ pfsync_insert_state(struct pf_state *st)
 	    ISSET(st->state_flags, PFSTATE_NOSYNC))
 		return;
 
-#ifdef PFSYNC_DEBUG
 	KASSERT(st->sync_state == PFSYNC_S_NONE);
-#endif
 
 	if (sc->sc_len == PFSYNC_MINPKT)
 		timeout_add_sec(&sc->sc_tmo, 1);
@@ -2403,7 +2397,7 @@ pfsync_q_ins(struct pf_state *st, int q)
 	struct pfsync_softc *sc = pfsyncif;
 	size_t nlen, sclen;
 
-#if defined(PFSYNC_DEBUG)
+#ifdef DIAGNOSTIC
 	if (sc->sc_len < PFSYNC_MINPKT)
 		panic("pfsync pkt len is too low %zd", sc->sc_len);
 #endif
