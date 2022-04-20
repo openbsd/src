@@ -1,4 +1,4 @@
-/*	$Id: test-mft.c,v 1.18 2022/01/19 08:24:43 claudio Exp $ */
+/*	$Id: test-mft.c,v 1.19 2022/04/20 17:26:53 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,6 +33,7 @@
 
 #include "extern.h"
 
+int outformats;
 int verbose;
 
 int
@@ -79,7 +80,7 @@ main(int argc, char *argv[])
 			continue;
 		}
 		if (verb)
-			mft_print(p);
+			mft_print(xp, p);
 		if (ppem) {
 			if (!PEM_write_bio_X509(bio_out, xp))
 				errx(1,

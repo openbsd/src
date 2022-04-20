@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.18 2022/04/02 12:23:20 claudio Exp $ */
+/*	$Id: test-cert.c,v 1.19 2022/04/20 17:26:53 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -32,6 +32,7 @@
 
 #include "extern.h"
 
+int outformats;
 int verbose;
 
 int

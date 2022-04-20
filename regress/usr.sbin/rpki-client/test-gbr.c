@@ -1,4 +1,4 @@
-/*	$Id: test-gbr.c,v 1.6 2022/01/19 08:24:43 claudio Exp $ */
+/*	$Id: test-gbr.c,v 1.7 2022/04/20 17:26:53 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -30,6 +30,7 @@
 
 #include "extern.h"
 
+int outformats;
 int verbose;
 
 int
@@ -77,7 +78,7 @@ main(int argc, char *argv[])
 			continue;
 		}
 		if (verb)
-			gbr_print(p);
+			gbr_print(xp, p);
 		if (ppem) {
 			if (!PEM_write_bio_X509(bio_out, xp))
 				errx(1,

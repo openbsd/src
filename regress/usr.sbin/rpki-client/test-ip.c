@@ -1,4 +1,4 @@
-/*	$Id: test-ip.c,v 1.4 2019/08/22 21:31:48 bluhm Exp $ */
+/*	$Id: test-ip.c,v 1.5 2022/04/20 17:26:53 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -31,6 +31,7 @@
 
 #include "extern.h"
 
+int outformats;
 int verbose;
 
 static void
