@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.31 2017/05/02 03:59:44 deraadt Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.32 2022/04/20 13:32:34 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -278,13 +278,14 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 		return ret;
 	}
 
+	BN_RECP_CTX_init(&recp);
+
 	BN_CTX_start(ctx);
 	if ((aa = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((val[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	BN_RECP_CTX_init(&recp);
 	if (m->neg) {
 		/* ignore sign of 'm' */
 		if (!BN_copy(aa, m))
