@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.72 2021/11/11 10:03:09 claudio Exp $	*/
+/*	$OpenBSD: conf.c,v 1.73 2022/04/20 14:21:56 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -179,7 +179,7 @@ struct cdevsw   cdevsw[] =
 	cdev_notdef(),			/* 48: */
 	cdev_notdef(),			/* 49: */
 	cdev_notdef(),			/* 50: */
-	cdev_ksyms_init(NKSTAT,kstat),	/* 51: kernel statistics */
+	cdev_kstat_init(NKSTAT,kstat),	/* 51: kernel statistics */
 	cdev_notdef(),			/* 52: */
 	cdev_notdef(),			/* 53: */
 	cdev_vscsi_init(NVSCSI,vscsi),	/* 54: vscsi */
