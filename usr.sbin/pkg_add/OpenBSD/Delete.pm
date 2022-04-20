@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.161 2022/03/17 21:45:51 espie Exp $
+# $OpenBSD: Delete.pm,v 1.162 2022/04/20 14:00:38 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -461,8 +461,13 @@ sub delete
 				return;
 			}
 		} else  {
-			$state->say("Bogus symlink: #1", $realname);
-			$self->do_not_delete($state);
+			if (-e $realname) {
+				$state->say("Bogus symlink: #1", $realname);
+				$self->do_not_delete($state);
+			} else {
+				$state->say("Can't delete missing symlink: #1",
+				    $realname);
+			}
 			return;
 		}
 	} else {
