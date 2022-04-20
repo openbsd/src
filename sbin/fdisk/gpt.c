@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.71 2022/04/20 15:49:56 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.72 2022/04/20 23:36:30 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -230,29 +230,31 @@ get_header(const uint64_t sector)
 	}
 
 	gh.gh_part_lba = letoh64(legh.gh_part_lba);
-	if (gh.gh_part_lba <= gh.gh_lba_end &&
-	    gh.gh_part_lba >= gh.gh_lba_start) {
-		DPRINTF("gpt partition table start lba: expected < %llu or "
-		    "> %llu, got %llu\n", gh.gh_lba_start,
-		    gh.gh_lba_end, gh.gh_part_lba);
-		return -1;
+	if (gh.gh_lba_self == GPTSECTOR) {
+		if (gh.gh_part_lba <= GPTSECTOR) {
+			DPRINTF("gpt partition entries start: expected > %u, "
+			    "got %llu\n", GPTSECTOR, gh.gh_part_lba);
+			return -1;
+		}
+		if (gh.gh_part_lba + gpsectors > gh.gh_lba_start) {
+			DPRINTF("gpt partition entries end: expected < %llu, "
+			    "got %llu\n", gh.gh_lba_start,
+			    gh.gh_part_lba + gpsectors);
+			return -1;
+		}
+	} else {
+		if (gh.gh_part_lba <= gh.gh_lba_end) {
+			DPRINTF("gpt partition entries start: expected > %llu, "
+			    "got %llu\n", gh.gh_lba_end, gh.gh_part_lba);
+			return -1;
+		}
+		if (gh.gh_part_lba + gpsectors > gh.gh_lba_self) {
+			DPRINTF("gpt partition entries end: expected < %llu, "
+			    "got %llu\n", gh.gh_lba_self,
+			    gh.gh_part_lba + gpsectors);
+			return -1;
+		}
 	}
-
-	lba_end = gh.gh_part_lba + gpsectors - 1;
-	if (lba_end <= gh.gh_lba_end &&
-	    lba_end >= gh.gh_lba_start) {
-		DPRINTF("gpt partition table last LBA: expected < %llu or "
-		    "> %llu, got %llu\n", gh.gh_lba_start,
-		    gh.gh_lba_end, lba_end);
-		return -1;
-	}
-
-	/*
-	 * Other possible paranoia checks:
-	 *	1) partition table starts before primary gpt lba.
-	 *	2) partition table extends into lowest partition.
-	 *	3) alt partition table starts before gh_lba_end.
-	 */
 
 	gh.gh_lba_alt = letoh32(legh.gh_lba_alt);
 	gh.gh_part_csum = letoh32(legh.gh_part_csum);
