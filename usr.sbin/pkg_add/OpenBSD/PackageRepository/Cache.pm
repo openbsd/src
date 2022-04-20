@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Cache.pm,v 1.3 2022/04/20 09:19:52 espie Exp $
+# $OpenBSD: Cache.pm,v 1.4 2022/04/20 09:24:07 espie Exp $
 #
 # Copyright (c) 2022 Marc Espie <espie@openbsd.org>
 #
@@ -70,6 +70,7 @@ sub prime_update_info_cache
 			next if $stem =~ m/^\.libs\d*\-/;
 			next if $stem =~ m/^partial\-/;
 			$stem =~ s/\%.*//; # zap branch info
+			$stem =~ s/\-\-.*//; # and set flavors
 			$self->{stems}{$stem} = 1;
 		}
 	}
