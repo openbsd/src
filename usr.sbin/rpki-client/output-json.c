@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.24 2022/04/19 13:52:24 claudio Exp $ */
+/*	$OpenBSD: output-json.c,v 1.25 2022/04/20 15:29:24 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -31,8 +31,7 @@ outputheader_json(FILE *out, struct stats *st)
 	int		i;
 
 	time(&t);
-	setenv("TZ", "UTC", 1);
-	tp = localtime(&t);
+	tp = gmtime(&t);
 	strftime(tbuf, sizeof tbuf, "%FT%TZ", tp);
 
 	gethostname(hn, sizeof hn);

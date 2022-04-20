@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.25 2022/04/19 13:52:24 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.26 2022/04/20 15:29:24 tb Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -204,9 +204,8 @@ outputheader(FILE *out, struct stats *st)
 	int		i;
 
 	time(&t);
-	setenv("TZ", "UTC", 1);
-	tp = localtime(&t);
-	strftime(tbuf, sizeof tbuf, "%a %b %e %H:%M:%S %Z %Y", tp);
+	tp = gmtime(&t);
+	strftime(tbuf, sizeof tbuf, "%a %b %e %H:%M:%S UTC %Y", tp);
 
 	gethostname(hn, sizeof hn);
 
