@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.18 2022/03/12 06:54:05 jmatthew Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.19 2022/04/21 05:08:39 kevlo Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -452,7 +452,7 @@ rge_encap(struct rge_queues *q, struct mbuf *m, int idx)
 	/* Set up hardware VLAN tagging. */
 #if NVLAN > 0
 	if (m->m_flags & M_VLANTAG)
-		cflags |= swap16(m->m_pkthdr.ether_vtag | RGE_TDEXTSTS_VTAG);
+		cflags |= swap16(m->m_pkthdr.ether_vtag) | RGE_TDEXTSTS_VTAG;
 #endif
 
 	cur = idx;
