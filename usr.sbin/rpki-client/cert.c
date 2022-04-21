@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.69 2022/04/12 09:48:23 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.70 2022/04/21 09:53:07 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1186,6 +1186,14 @@ cert_read(struct ibuf *b)
 	return p;
 }
 
+static inline int
+authcmp(struct auth *a, struct auth *b)
+{
+	return strcmp(a->cert->ski, b->cert->ski);
+}
+
+RB_GENERATE_STATIC(auth_tree, auth, entry, authcmp);
+
 struct auth *
 auth_find(struct auth_tree *auths, const char *aki)
 {
@@ -1214,14 +1222,6 @@ auth_insert(struct auth_tree *auths, struct cert *cert, struct auth *parent)
 	if (RB_INSERT(auth_tree, auths, na) != NULL)
 		err(1, "auth tree corrupted");
 }
-
-static inline int
-authcmp(struct auth *a, struct auth *b)
-{
-	return strcmp(a->cert->ski, b->cert->ski);
-}
-
-RB_GENERATE(auth_tree, auth, entry, authcmp);
 
 static void
 insert_brk(struct brk_tree *tree, struct cert *cert, int asid)

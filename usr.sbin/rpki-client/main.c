@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.198 2022/04/20 04:40:33 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.199 2022/04/21 09:53:07 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -861,8 +861,10 @@ main(int argc, char *argv[])
 
 	procpid = process_start("parser", &proc);
 	if (procpid == 0) {
-		proc_parser(proc);
-		errx(1, "parser process returned");
+		if (!filemode)
+			proc_parser(proc);
+		else
+			proc_filemode(proc);
 	}
 
 	/*
@@ -877,7 +879,6 @@ main(int argc, char *argv[])
 		if (rsyncpid == 0) {
 			close(proc);
 			proc_rsync(rsync_prog, bind_addr, rsync);
-			errx(1, "rsync process returned");
 		}
 	} else {
 		rsync = -1;
@@ -897,7 +898,6 @@ main(int argc, char *argv[])
 			close(proc);
 			close(rsync);
 			proc_http(bind_addr, http);
-			errx(1, "http process returned");
 		}
 	} else {
 		http = -1;
@@ -917,7 +917,6 @@ main(int argc, char *argv[])
 			close(rsync);
 			close(http);
 			proc_rrdp(rrdp);
-			errx(1, "rrdp process returned");
 		}
 	} else {
 		rrdp = -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.130 2022/04/20 15:38:24 deraadt Exp $ */
+/*	$OpenBSD: extern.h,v 1.131 2022/04/21 09:53:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -291,7 +291,6 @@ struct crl {
  * Tree of CRLs sorted by uri
  */
 RB_HEAD(crl_tree, crl);
-RB_PROTOTYPE(crl_tree, crl, entry, crlcmp);
 
 /*
  * An authentication tuple.
@@ -307,7 +306,6 @@ struct auth {
  * Tree of auth sorted by ski
  */
 RB_HEAD(auth_tree, auth);
-RB_PROTOTYPE(auth_tree, auth, entry, authcmp);
 
 struct auth	*auth_find(struct auth_tree *, const char *);
 void		 auth_insert(struct auth_tree *, struct cert *, struct auth *);
@@ -454,6 +452,8 @@ struct gbr	*gbr_parse(X509 **, const char *, const unsigned char *,
 
 /* crl.c */
 struct crl	*crl_parse(const char *, const unsigned char *, size_t);
+struct crl	*crl_get(struct crl_tree *, const struct auth *);
+int		 crl_insert(struct crl_tree *, struct crl *);
 void		 crl_free(struct crl *);
 
 /* Validation of our objects. */
@@ -468,6 +468,8 @@ int		 valid_filehash(int, const char *, size_t);
 int		 valid_hash(unsigned char *, size_t, const char *, size_t);
 int		 valid_uri(const char *, size_t, const char *);
 int		 valid_origin(const char *, const char *);
+int		 valid_x509(char *, X509_STORE_CTX *, X509 *, struct auth *,
+		    struct crl *, int);
 
 /* Working with CMS. */
 unsigned char	*cms_parse_validate(X509 **, const char *,
@@ -508,6 +510,7 @@ void		 entity_free(struct entity *);
 void		 entity_read_req(struct ibuf *, struct entity *);
 void		 entityq_flush(struct entityq *, struct repo *);
 void		 proc_parser(int) __attribute__((noreturn));
+void		 proc_filemode(int) __attribute__((noreturn));
 
 /* Rsync-specific. */
 
@@ -516,8 +519,8 @@ void		 proc_rsync(char *, char *, int) __attribute__((noreturn));
 
 /* HTTP and RRDP processes. */
 
-void		 proc_http(char *, int);
-void		 proc_rrdp(int);
+void		 proc_http(char *, int) __attribute__((noreturn));
+void		 proc_rrdp(int) __attribute__((noreturn));
 
 /* Repository handling */
 int		 filepath_add(struct filepath_tree *, char *);

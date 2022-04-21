@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.30 2022/04/19 09:52:29 claudio Exp $ */
+/*	$OpenBSD: validate.c,v 1.31 2022/04/21 09:53:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -29,6 +29,8 @@
 #include <unistd.h>
 
 #include "extern.h"
+
+extern ASN1_OBJECT	*certpol_oid;
 
 /*
  * Walk up the chain of certificates trying to match our AS number to
@@ -325,5 +327,162 @@ valid_origin(const char *uri, const char *proto)
 	if (strncasecmp(uri, proto, to - proto + 1) != 0)
 		return 0;
 
+	return 1;
+}
+
+/*
+ * Callback for X509_verify_cert() to handle critical extensions in old
+ * LibreSSL libraries or OpenSSL libs without RFC3779 support.
+ */
+static int
+verify_cb(int ok, X509_STORE_CTX *store_ctx)
+{
+	X509				*cert;
+	const STACK_OF(X509_EXTENSION)	*exts;
+	X509_EXTENSION			*ext;
+	ASN1_OBJECT			*obj;
+	char				*file;
+	int				 depth, error, i, nid;
+
+	error = X509_STORE_CTX_get_error(store_ctx);
+	depth = X509_STORE_CTX_get_error_depth(store_ctx);
+
+	if (error != X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION)
+		return ok;
+
+	if ((file = X509_STORE_CTX_get_app_data(store_ctx)) == NULL)
+		cryptoerrx("X509_STORE_CTX_get_app_data");
+
+	if ((cert = X509_STORE_CTX_get_current_cert(store_ctx)) == NULL) {
+		warnx("%s: got no current cert", file);
+		return 0;
+	}
+	if ((exts = X509_get0_extensions(cert)) == NULL) {
+		warnx("%s: got no cert extensions", file);
+		return 0;
+	}
+
+	for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
+		ext = sk_X509_EXTENSION_value(exts, i);
+
+		/* skip over non-critical and known extensions */
+		if (!X509_EXTENSION_get_critical(ext))
+			continue;
+		if (X509_supported_extension(ext))
+			continue;
+
+		if ((obj = X509_EXTENSION_get_object(ext)) == NULL) {
+			warnx("%s: got no extension object", file);
+			return 0;
+		}
+
+		nid = OBJ_obj2nid(obj);
+		switch (nid) {
+		case NID_sbgp_ipAddrBlock:
+		case NID_sbgp_autonomousSysNum:
+			continue;
+		default:
+			warnx("%s: depth %d: unknown extension: nid %d",
+			    file, depth, nid);
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+/*
+ * Walk the certificate tree to the root and build a certificate
+ * chain from cert->x509. All certs in the tree are validated and
+ * can be loaded as trusted stack into the validator.
+ */
+static void
+build_chain(const struct auth *a, STACK_OF(X509) **chain)
+{
+	*chain = NULL;
+
+	if (a == NULL)
+		return;
+
+	if ((*chain = sk_X509_new_null()) == NULL)
+		err(1, "sk_X509_new_null");
+	for (; a != NULL; a = a->parent) {
+		assert(a->cert->x509 != NULL);
+		if (!sk_X509_push(*chain, a->cert->x509))
+			errx(1, "sk_X509_push");
+	}
+}
+
+/*
+ * Add the CRL based on the certs SKI value.
+ * No need to insert any other CRL since those were already checked.
+ */
+static void
+build_crls(const struct crl *crl, STACK_OF(X509_CRL) **crls)
+{
+	*crls = NULL;
+
+	if (crl == NULL)
+		return;
+	if ((*crls = sk_X509_CRL_new_null()) == NULL)
+		errx(1, "sk_X509_CRL_new_null");
+	if (!sk_X509_CRL_push(*crls, crl->x509_crl))
+		err(1, "sk_X509_CRL_push");
+}
+
+/*
+ * Validate the X509 certificate.  If crl is NULL don't check CRL.
+ * Returns 1 for valid certificates, returns 0 if there is a verify error
+ */
+int
+valid_x509(char *file, X509_STORE_CTX *store_ctx, X509 *x509, struct auth *a,
+    struct crl *crl, int nowarn)
+{
+	X509_VERIFY_PARAM	*params;
+	ASN1_OBJECT		*cp_oid;
+	STACK_OF(X509)		*chain;
+	STACK_OF(X509_CRL)	*crls = NULL;
+	unsigned long		 flags;
+	int			 c;
+
+	build_chain(a, &chain);
+	build_crls(crl, &crls);
+
+	assert(store_ctx != NULL);
+	assert(x509 != NULL);
+	if (!X509_STORE_CTX_init(store_ctx, NULL, x509, NULL))
+		cryptoerrx("X509_STORE_CTX_init");
+
+	if ((params = X509_STORE_CTX_get0_param(store_ctx)) == NULL)
+		cryptoerrx("X509_STORE_CTX_get0_param");
+	if ((cp_oid = OBJ_dup(certpol_oid)) == NULL)
+		cryptoerrx("OBJ_dup");
+	if (!X509_VERIFY_PARAM_add0_policy(params, cp_oid))
+		cryptoerrx("X509_VERIFY_PARAM_add0_policy");
+
+	X509_STORE_CTX_set_verify_cb(store_ctx, verify_cb);
+	if (!X509_STORE_CTX_set_app_data(store_ctx, file))
+		cryptoerrx("X509_STORE_CTX_set_app_data");
+	flags = X509_V_FLAG_CRL_CHECK;
+	flags |= X509_V_FLAG_EXPLICIT_POLICY;
+	flags |= X509_V_FLAG_INHIBIT_MAP;
+	X509_STORE_CTX_set_flags(store_ctx, flags);
+	X509_STORE_CTX_set_depth(store_ctx, MAX_CERT_DEPTH);
+	X509_STORE_CTX_set0_trusted_stack(store_ctx, chain);
+	X509_STORE_CTX_set0_crls(store_ctx, crls);
+
+	if (X509_verify_cert(store_ctx) <= 0) {
+		c = X509_STORE_CTX_get_error(store_ctx);
+		if (!nowarn || verbose > 1)
+			warnx("%s: %s", file, X509_verify_cert_error_string(c));
+		X509_STORE_CTX_cleanup(store_ctx);
+		sk_X509_free(chain);
+		sk_X509_CRL_free(crls);
+		return 0;
+	}
+
+	X509_STORE_CTX_cleanup(store_ctx);
+	sk_X509_free(chain);
+	sk_X509_CRL_free(crls);
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.14 2022/02/10 15:33:47 claudio Exp $ */
+/*	$OpenBSD: crl.c,v 1.15 2022/04/21 09:53:07 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -87,7 +87,27 @@ crlcmp(struct crl *a, struct crl *b)
 	return strcmp(a->aki, b->aki);
 }
 
-RB_GENERATE(crl_tree, crl, entry, crlcmp);
+RB_GENERATE_STATIC(crl_tree, crl, entry, crlcmp);
+
+/*
+ * Find a CRL based on the auth SKI value.
+ */
+struct crl *
+crl_get(struct crl_tree *crlt, const struct auth *a)
+{
+	struct crl	find;
+
+	if (a == NULL)
+		return NULL;
+	find.aki = a->cert->ski;
+	return RB_FIND(crl_tree, crlt, &find);
+}
+
+int
+crl_insert(struct crl_tree *crlt, struct crl *crl)
+{
+	return RB_INSERT(crl_tree, crlt, crl) == NULL;
+}
 
 void
 crl_free(struct crl *crl)
