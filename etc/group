@@ -22,7 +22,6 @@ _sshagnt:*:34:
 _x11:*:35:
 utmp:*:45:
 _unwind:*:48:
-_switchd:*:49:
 _traceroute:*:50:
 _ping:*:51:
 _unbound:*:53:
