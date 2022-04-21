@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.43 2021/09/03 14:50:36 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.44 2022/04/21 18:01:09 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -49,7 +49,7 @@ class Test:
 
     def __repr__(self):
         return "<Test: %s tls12_args: %s tls13_args: %s>" % (
-                self.name, self.tls12_args, tls13_args
+                self.name, self.tls12_args, self.tls13_args
             )
 
 class TestGroup:
