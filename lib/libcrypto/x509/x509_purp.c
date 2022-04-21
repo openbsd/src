@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.13 2021/11/04 23:52:34 beck Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.14 2022/04/21 04:24:51 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -952,7 +952,7 @@ X509_get_extension_flags(X509 *x)
 {
 	/* Call for side-effect of computing hash and caching extensions */
 	if (X509_check_purpose(x, -1, -1) != 1)
-		return 0;
+		return EXFLAG_INVALID;
 
 	return x->ex_flags;
 }
