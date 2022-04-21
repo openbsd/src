@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wpi.c,v 1.156 2022/03/11 18:00:50 mpi Exp $	*/
+/*	$OpenBSD: if_wpi.c,v 1.157 2022/04/21 21:03:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006-2008
@@ -1262,7 +1262,7 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, wh);
 
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	if ((wh->i_fc[1] & IEEE80211_FC1_PROTECTED) &&
 	    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
 	    (ni->ni_flags & IEEE80211_NODE_RXPROT) &&
@@ -1333,7 +1333,6 @@ wpi_rx_done(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 
 	/* Send the frame to the 802.11 layer. */
 	rxi.rxi_rssi = stat->rssi;
-	rxi.rxi_tstamp = 0;	/* unused */
 	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 
 	/* Node is no longer needed. */

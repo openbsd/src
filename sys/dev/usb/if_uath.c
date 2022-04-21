@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uath.c,v 1.87 2021/02/25 02:48:20 dlg Exp $	*/
+/*	$OpenBSD: if_uath.c,v 1.88 2022/04/21 21:03:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -1221,7 +1221,7 @@ uath_data_rxeof(struct usbd_xfer *xfer, void *priv,
 	data->buf = mtod(data->m, uint8_t *);
 
 	wh = mtod(m, struct ieee80211_frame *);
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	if ((wh->i_fc[1] & IEEE80211_FC1_WEP) &&
 	    ic->ic_opmode != IEEE80211_M_MONITOR) {
 		/*
@@ -1263,7 +1263,6 @@ uath_data_rxeof(struct usbd_xfer *xfer, void *priv,
 	s = splnet();
 	ni = ieee80211_find_rxnode(ic, wh);
 	rxi.rxi_rssi = (int)betoh32(desc->rssi);
-	rxi.rxi_tstamp = 0;	/* unused */
 	ieee80211_input(ifp, m, ni, &rxi);
 
 	/* node is no longer needed */

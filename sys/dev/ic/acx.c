@@ -1,4 +1,4 @@
-/*	$OpenBSD: acx.c,v 1.126 2022/01/09 05:42:38 jsg Exp $ */
+/*	$OpenBSD: acx.c,v 1.127 2022/04/21 21:03:02 stsp Exp $ */
 
 /*
  * Copyright (c) 2006 Jonathan Gray <jsg@openbsd.org>
@@ -1354,7 +1354,7 @@ acx_rxeof(struct acx_softc *sc)
 			    sc->chip_rxbuf_exhdr);
 			wh = mtod(m, struct ieee80211_frame *);
 
-			rxi.rxi_flags = 0;
+			memset(&rxi, 0, sizeof(rxi));
 			if ((wh->i_fc[1] & IEEE80211_FC1_WEP) &&
 			    sc->chip_hw_crypt) {
 				/* Short circuit software WEP */

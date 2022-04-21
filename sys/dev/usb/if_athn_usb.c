@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_athn_usb.c,v 1.63 2021/11/22 10:17:14 mglocker Exp $	*/
+/*	$OpenBSD: if_athn_usb.c,v 1.64 2022/04/21 21:03:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2011 Damien Bergamini <damien.bergamini@free.fr>
@@ -2087,7 +2087,7 @@ athn_usb_rx_frame(struct athn_usb_softc *usc, struct mbuf *m,
 	m_adj(m, -IEEE80211_CRC_LEN);
 
 	/* Send the frame to the 802.11 layer. */
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_rssi = rs->rs_rssi + AR_USB_DEFAULT_NF;
 	rxi.rxi_tstamp = betoh64(rs->rs_tstamp);
 	if (!(wh->i_fc[0] & IEEE80211_FC0_TYPE_CTL) &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.99 2022/03/15 09:23:01 stsp Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.100 2022/04/21 21:03:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1265,9 +1265,8 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen,
 #endif
 
 	ni = ieee80211_find_rxnode(ic, wh);
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_rssi = rssi;
-	rxi.rxi_tstamp = 0;	/* Unused. */
 
 	/* Handle hardware decryption. */
 	if (((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL)

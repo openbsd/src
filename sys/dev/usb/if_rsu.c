@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rsu.c,v 1.50 2021/10/04 01:33:42 kevlo Exp $	*/
+/*	$OpenBSD: if_rsu.c,v 1.51 2022/04/21 21:03:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1131,9 +1131,8 @@ rsu_event_survey(struct rsu_softc *sc, uint8_t *buf, int len)
 	m->m_pkthdr.len = m->m_len = pktlen;
 
 	ni = ieee80211_find_rxnode(ic, wh);
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_rssi = letoh32(bss->rssi);
-	rxi.rxi_tstamp = 0;
 	ieee80211_input(ifp, m, ni, &rxi);
 	/* Node is no longer needed. */
 	ieee80211_release_node(ic, ni);
@@ -1384,9 +1383,8 @@ rsu_rx_frame(struct rsu_softc *sc, uint8_t *buf, int pktlen,
 #endif
 
 	ni = ieee80211_find_rxnode(ic, wh);
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_rssi = rssi;
-	rxi.rxi_tstamp = 0;	/* Unused. */
 	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 	/* Node is no longer needed. */
 	ieee80211_release_node(ic, ni);

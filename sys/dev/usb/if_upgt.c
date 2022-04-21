@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upgt.c,v 1.88 2022/01/09 05:43:00 jsg Exp $ */
+/*	$OpenBSD: if_upgt.c,v 1.89 2022/04/21 21:03:03 stsp Exp $ */
 
 /*
  * Copyright (c) 2007 Marcus Glocker <mglocker@openbsd.org>
@@ -1741,9 +1741,9 @@ upgt_rx(struct upgt_softc *sc, uint8_t *data, int pkglen)
 	ni = ieee80211_find_rxnode(ic, wh);
 
 	/* push the frame up to the 802.11 stack */
+	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_flags = 0;
 	rxi.rxi_rssi = rxdesc->rssi;
-	rxi.rxi_tstamp = 0;	/* unused */
 	ieee80211_input(ifp, m, ni, &rxi);
 
 	/* node is no longer needed */

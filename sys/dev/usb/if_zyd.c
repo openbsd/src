@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_zyd.c,v 1.127 2022/01/09 05:43:00 jsg Exp $	*/
+/*	$OpenBSD: if_zyd.c,v 1.128 2022/04/21 21:03:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1979,9 +1979,8 @@ zyd_rx_data(struct zyd_softc *sc, const uint8_t *buf, uint16_t len,
 	s = splnet();
 	wh = mtod(m, struct ieee80211_frame *);
 	ni = ieee80211_find_rxnode(ic, wh);
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_rssi = stat->rssi;
-	rxi.rxi_tstamp = 0;	/* unused */
 	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 
 	/* node is no longer needed */

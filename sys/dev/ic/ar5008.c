@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar5008.c,v 1.69 2021/10/11 09:01:05 stsp Exp $	*/
+/*	$OpenBSD: ar5008.c,v 1.70 2022/04/21 21:03:02 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -1039,7 +1039,7 @@ ar5008_rx_process(struct athn_softc *sc, struct mbuf_list *ml)
 	m_adj(m, -IEEE80211_CRC_LEN);
 
 	/* Send the frame to the 802.11 layer. */
-	rxi.rxi_flags = 0;	/* XXX */
+	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_rssi = MS(ds->ds_status4, AR_RXS4_RSSI_COMBINED);
 	rxi.rxi_rssi += AR_DEFAULT_NOISE_FLOOR;
 	rxi.rxi_tstamp = ds->ds_status2;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2560.c,v 1.89 2022/01/09 05:42:38 jsg Exp $  */
+/*	$OpenBSD: rt2560.c,v 1.90 2022/04/21 21:03:02 stsp Exp $  */
 
 /*-
  * Copyright (c) 2005, 2006
@@ -1196,7 +1196,7 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 		ni = ieee80211_find_rxnode(ic, wh);
 
 		/* send the frame to the 802.11 layer */
-		rxi.rxi_flags = 0;
+		memset(&rxi, 0, sizeof(rxi));
 		rxi.rxi_rssi = desc->rssi;
 		rxi.rxi_tstamp = 0;	/* unused */
 		ieee80211_inputm(ifp, m, ni, &rxi, &ml);

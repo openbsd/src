@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.257 2022/03/20 12:01:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.258 2022/04/21 21:03:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2131,7 +2131,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	}
 	ni = ieee80211_find_rxnode(ic, wh);
 
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	if (((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_CTL)
 	    && (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) &&
 	    !IEEE80211_IS_MULTICAST(wh->i_addr1) &&
@@ -2218,7 +2218,6 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 
 	/* Send the frame to the 802.11 layer. */
 	rxi.rxi_rssi = rssi;
-	rxi.rxi_tstamp = 0;	/* unused */
 	rxi.rxi_chan = chan;
 	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 

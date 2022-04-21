@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwi.c,v 1.132 2022/01/09 05:42:38 jsg Exp $	*/
+/*	$OpenBSD: bwi.c,v 1.133 2022/04/21 21:03:02 stsp Exp $	*/
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -8454,6 +8454,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		ni = ieee80211_find_rxnode(ic, wh);
 		type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 
+		memset(&rxi, 0, sizeof(rxi));
 		rxi.rxi_rssi = hdr->rxh_rssi;
 		rxi.rxi_tstamp = letoh16(hdr->rxh_tsf);
 		ieee80211_inputm(ifp, m, ni, &rxi, &ml);

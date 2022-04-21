@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtw.c,v 1.4 2022/03/08 06:05:58 hastings Exp $	*/
+/*	$OpenBSD: if_mtw.c,v 1.5 2022/04/21 21:03:03 stsp Exp $	*/
 /*
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2013-2014 Kevin Lo
@@ -2046,7 +2046,7 @@ mtw_rx_frame(struct mtw_softc *sc, uint8_t *buf, int dmalen,
 	}
 
 	wh = (struct ieee80211_frame *)(buf + rxwisize);
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
 		wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
 		rxi.rxi_flags |= IEEE80211_RXI_HWDEC;
@@ -2129,7 +2129,6 @@ mtw_rx_frame(struct mtw_softc *sc, uint8_t *buf, int dmalen,
 	s = splnet();
 	ni = ieee80211_find_rxnode(ic, wh);
 	rxi.rxi_rssi = rssi;
-	rxi.rxi_tstamp = 0;	/* unused */
 	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 
 	/* node is no longer needed */

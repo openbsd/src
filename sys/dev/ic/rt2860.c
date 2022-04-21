@@ -1,4 +1,4 @@
-/*	$OpenBSD: rt2860.c,v 1.101 2020/12/12 11:48:52 jan Exp $	*/
+/*	$OpenBSD: rt2860.c,v 1.102 2022/04/21 21:03:02 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1349,7 +1349,7 @@ rt2860_rx_intr(struct rt2860_softc *sc)
 		m->m_pkthdr.len = m->m_len = letoh16(rxwi->len) & 0xfff;
 
 		wh = mtod(m, struct ieee80211_frame *);
-		rxi.rxi_flags = 0;
+		memset(&rxi, 0, sizeof(rxi));
 		if (wh->i_fc[1] & IEEE80211_FC1_PROTECTED) {
 			/* frame is decrypted by hardware */
 			wh->i_fc[1] &= ~IEEE80211_FC1_PROTECTED;
@@ -1413,7 +1413,6 @@ skipbpf:
 
 		/* send the frame to the 802.11 layer */
 		rxi.rxi_rssi = rssi;
-		rxi.rxi_tstamp = 0;	/* unused */
 		ieee80211_inputm(ifp, m, ni, &rxi, &ml);
 
 		/* node is no longer needed */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.78 2021/02/25 02:48:20 dlg Exp $	*/
+/*	$OpenBSD: an.c,v 1.79 2022/04/21 21:03:02 stsp Exp $	*/
 /*	$NetBSD: an.c,v 1.34 2005/06/20 02:49:18 atatat Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -462,7 +462,7 @@ an_rxeof(struct an_softc *sc)
 #endif /* NBPFILTER > 0 */
 
 	wh = mtod(m, struct ieee80211_frame *);
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		/*
 		 * WEP is decrypted by hardware. Clear WEP bit

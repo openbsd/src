@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.133 2022/01/09 05:43:00 jsg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.134 2022/04/21 21:03:03 stsp Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -1728,7 +1728,7 @@ atu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	}
 #endif /* NBPFILTER > 0 */
 
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 		/*
 		 * WEP is decrypted by hardware. Clear WEP bit

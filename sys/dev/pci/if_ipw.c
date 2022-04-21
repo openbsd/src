@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.131 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.132 2022/04/21 21:03:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -907,9 +907,8 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	ni = ieee80211_find_rxnode(ic, wh);
 
 	/* send the frame to the upper layer */
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_rssi = status->rssi;
-	rxi.rxi_tstamp = 0;	/* unused */
 	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 
 	ieee80211_release_node(ic, ni);

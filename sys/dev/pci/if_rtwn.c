@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.39 2022/03/15 09:22:56 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.40 2022/04/21 21:03:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -972,9 +972,8 @@ rtwn_rx_frame(struct rtwn_pci_softc *sc, struct r92c_rx_desc_pci *rx_desc,
 #endif
 
 	ni = ieee80211_find_rxnode(ic, wh);
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_rssi = rssi;
-	rxi.rxi_tstamp = 0;	/* Unused. */
 	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 	/* Node is no longer needed. */
 	ieee80211_release_node(ic, ni);

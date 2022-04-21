@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.102 2022/03/20 12:01:58 stsp Exp $ */
+/* $OpenBSD: bwfm.c,v 1.103 2022/04/21 21:03:02 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -2439,9 +2439,7 @@ bwfm_rx_auth_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len)
 
 	/* Finalize mbuf. */
 	m->m_pkthdr.len = m->m_len = pktlen;
-	rxi.rxi_flags = 0;
-	rxi.rxi_rssi = 0;
-	rxi.rxi_tstamp = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	ieee80211_input(ifp, m, ic->ic_bss, &rxi);
 }
 
@@ -2495,9 +2493,7 @@ bwfm_rx_assoc_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len,
 		m_freem(m);
 		return;
 	}
-	rxi.rxi_flags = 0;
-	rxi.rxi_rssi = 0;
-	rxi.rxi_tstamp = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	ieee80211_input(ifp, m, ni, &rxi);
 }
 
@@ -2550,9 +2546,7 @@ bwfm_rx_leave_ind(struct bwfm_softc *sc, struct bwfm_event *e, size_t len,
 		m_freem(m);
 		return;
 	}
-	rxi.rxi_flags = 0;
-	rxi.rxi_rssi = 0;
-	rxi.rxi_tstamp = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	ieee80211_input(ifp, m, ni, &rxi);
 }
 #endif
@@ -2740,9 +2734,8 @@ bwfm_scan_node(struct bwfm_softc *sc, struct bwfm_bss_info *bss, size_t len)
 	/* Channel mask equals IEEE80211_CHAN_MAX */
 	chanidx = bwfm_spec2chan(sc, letoh32(bss->chanspec));
 	/* Supply RSSI */
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_rssi = (int16_t)letoh16(bss->rssi);
-	rxi.rxi_tstamp = 0;
 	rxi.rxi_chan = chanidx;
 	ieee80211_input(ifp, m, ni, &rxi);
 	/* Node is no longer needed. */

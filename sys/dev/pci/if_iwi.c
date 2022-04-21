@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.146 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.147 2022/04/21 21:03:03 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -960,9 +960,8 @@ iwi_frame_intr(struct iwi_softc *sc, struct iwi_rx_data *data,
 	ni = ieee80211_find_rxnode(ic, wh);
 
 	/* send the frame to the upper layer */
-	rxi.rxi_flags = 0;
+	memset(&rxi, 0, sizeof(rxi));
 	rxi.rxi_rssi = frame->rssi_dbm;
-	rxi.rxi_tstamp = 0;	/* unused */
 	ieee80211_inputm(ifp, m, ni, &rxi, ml);
 
 	/* node is no longer needed */

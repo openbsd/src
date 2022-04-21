@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.122 2020/10/11 07:05:28 mpi Exp $  */
+/*      $OpenBSD: ath.c,v 1.123 2022/04/21 21:03:02 stsp Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -1936,7 +1936,7 @@ ath_rx_proc(void *arg, int npending)
 #endif
 		m_adj(m, -IEEE80211_CRC_LEN);
 		wh = mtod(m, struct ieee80211_frame *);
-		rxi.rxi_flags = 0;
+		memset(&rxi, 0, sizeof(rxi));
 		if (!ath_softcrypto && (wh->i_fc[1] & IEEE80211_FC1_WEP)) {
 			/*
 			 * WEP is decrypted by hardware. Clear WEP bit

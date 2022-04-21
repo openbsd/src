@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.102 2022/01/09 05:42:39 jsg Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.103 2022/04/21 21:03:02 stsp Exp $	*/
 /*	$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 
 /*-
@@ -1287,7 +1287,7 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 		}
 #endif /* NBPFILTER > 0 */
 
-		rxi.rxi_flags = 0;
+		memset(&rxi, 0, sizeof(rxi));
 		rxi.rxi_rssi = rssi;
 		rxi.rxi_tstamp = htsftl;
 		ieee80211_inputm(&sc->sc_if, m, ni, &rxi, &ml);
