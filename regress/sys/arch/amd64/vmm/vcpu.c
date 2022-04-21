@@ -1,3 +1,4 @@
+/*	$OpenBSD: vcpu.c,v 1.2 2022/04/21 19:21:05 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
@@ -85,13 +86,8 @@ main(int argc, char **argv)
 	void				*p;
 
 	fd = open(VMM_NODE, O_RDWR);
-	if (fd == -1) {
-		if (errno == ENODEV) {
-			warn("SKIPPED");
-			return (0);
-		}
-		err(1, "open");
-	}
+	if (fd == -1)
+		err(1, "open %s", VMM_NODE);
 
 	/*
 	 * 1. Create our VM with 1 vcpu and 2 MiB of memory.
@@ -165,7 +161,7 @@ main(int argc, char **argv)
 		goto out;
 	}
 
-	for (int i = 0; i * sizeof(*info) < vip.vip_size; i++) {
+	for (i = 0; i * sizeof(*info) < vip.vip_size; i++) {
 		if (info[i].vir_id == vcp.vcp_id) {
 			ours = &info[i];
 			break;

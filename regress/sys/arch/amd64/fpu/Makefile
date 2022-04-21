@@ -1,4 +1,10 @@
-# $OpenBSD: Makefile,v 1.3 2021/05/17 13:54:42 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2022/04/21 19:21:05 bluhm Exp $
+
+.if "${MACHINE_ARCH}" != amd64
+regress:
+	# MACHINE_ARCH is not amd64
+	@echo SKIPPED
+.else
 
 PROGS =		fenv fdump fdfl feget fxproc0
 SRCS_fenv =	fenv.S
@@ -11,8 +17,9 @@ CFLAGS +=	-Wformat -Wno-compare-distinct-pointer-types
 WARNINGS =	yes
 CLEANFILES =	*.out
 
-MODEL !=	sysctl -n hw.model | tr -c '[:alnum:]' '_'
-ALLOWKMEM !=	sysctl -n kern.allowkmem
+.if ! (make(clean) || make(cleandir) || make(obj))
+MODEL !=	/sbin/sysctl -n hw.model | tr -c '[:alnum:]' '_'
+ALLOWKMEM !=	/sbin/sysctl -n kern.allowkmem
 
 REGRESS_TARGETS +=	run-regress-fenv
 run-regress-fenv: fenv fdump
@@ -52,6 +59,8 @@ run-regress-fxproc0: fxproc0
 .else
 	# Set sysctl kern.allowkmem=1 for additional tests.
 	@echo SKIPPED
+.endif
+.endif
 .endif
 
 .include <bsd.regress.mk>
