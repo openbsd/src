@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.78 2022/03/16 11:44:36 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.79 2022/04/21 04:48:12 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1780,11 +1780,11 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	if (ext == NULL) {
 		depth = 0;
 		cert = sk_X509_value(chain, depth);
+		if ((X509_get_extension_flags(cert) & EXFLAG_INVALID) != 0)
+			goto done;
 		if ((ext = cert->rfc3779_addr) == NULL)
 			goto done;
-	}
-
-	if (!X509v3_addr_is_canonical(ext)) {
+	} else if (!X509v3_addr_is_canonical(ext)) {
 		if ((ret = verify_error(ctx, cert,
 		    X509_V_ERR_INVALID_EXTENSION, depth)) == 0)
 			goto done;
@@ -1806,6 +1806,12 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	for (depth++; depth < sk_X509_num(chain); depth++) {
 		cert = sk_X509_value(chain, depth);
 
+		if ((X509_get_extension_flags(cert) & EXFLAG_INVALID) != 0) {
+			if ((ret = verify_error(ctx, cert,
+			    X509_V_ERR_INVALID_EXTENSION, depth)) == 0)
+				goto done;
+		}
+
 		if ((parent = cert->rfc3779_addr) == NULL) {
 			for (i = 0; i < sk_IPAddressFamily_num(child); i++) {
 				child_af = sk_IPAddressFamily_value(child, i);
@@ -1820,12 +1826,6 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 				break;
 			}
 			continue;
-		}
-
-		if (!X509v3_addr_is_canonical(parent)) {
-			if ((ret = verify_error(ctx, cert,
-			    X509_V_ERR_INVALID_EXTENSION, depth)) == 0)
-				goto done;
 		}
 
 		/*

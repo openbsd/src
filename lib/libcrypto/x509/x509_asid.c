@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.30 2021/12/25 15:46:05 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.31 2022/04/21 04:48:12 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1006,14 +1006,16 @@ asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	if (ext != NULL) {
 		i = -1;
 		x = NULL;
+		if (!X509v3_asid_is_canonical(ext))
+			validation_err(X509_V_ERR_INVALID_EXTENSION);
 	} else {
 		i = 0;
 		x = sk_X509_value(chain, i);
+		if ((X509_get_extension_flags(x) & EXFLAG_INVALID) != 0)
+			goto done;
 		if ((ext = x->rfc3779_asid) == NULL)
 			goto done;
 	}
-	if (!X509v3_asid_is_canonical(ext))
-		validation_err(X509_V_ERR_INVALID_EXTENSION);
 	if (ext->asnum != NULL) {
 		switch (ext->asnum->type) {
 		case ASIdentifierChoice_inherit:
@@ -1042,13 +1044,13 @@ asid_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	for (i++; i < sk_X509_num(chain); i++) {
 		x = sk_X509_value(chain, i);
 
+		if ((X509_get_extension_flags(x) & EXFLAG_INVALID) != 0)
+			validation_err(X509_V_ERR_INVALID_EXTENSION);
 		if (x->rfc3779_asid == NULL) {
 			if (child_as != NULL || child_rdi != NULL)
 				validation_err(X509_V_ERR_UNNESTED_RESOURCE);
 			continue;
 		}
-		if (!X509v3_asid_is_canonical(x->rfc3779_asid))
-			validation_err(X509_V_ERR_INVALID_EXTENSION);
 		if (x->rfc3779_asid->asnum == NULL && child_as != NULL) {
 			validation_err(X509_V_ERR_UNNESTED_RESOURCE);
 			child_as = NULL;

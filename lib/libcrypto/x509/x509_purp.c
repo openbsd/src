@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.14 2022/04/21 04:24:51 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.15 2022/04/21 04:48:12 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -600,8 +600,12 @@ x509v3_cache_extensions(X509 *x)
 	x->rfc3779_addr = X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, &i, NULL);
 	if (x->rfc3779_addr == NULL && i != -1)
 		x->ex_flags |= EXFLAG_INVALID;
+	if (!X509v3_addr_is_canonical(x->rfc3779_addr))
+		x->ex_flags |= EXFLAG_INVALID;
 	x->rfc3779_asid = X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum, &i, NULL);
 	if (x->rfc3779_asid == NULL && i != -1)
+		x->ex_flags |= EXFLAG_INVALID;
+	if (!X509v3_asid_is_canonical(x->rfc3779_asid))
 		x->ex_flags |= EXFLAG_INVALID;
 #endif
 
