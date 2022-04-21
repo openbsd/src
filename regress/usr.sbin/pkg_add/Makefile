@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.83 2022/04/20 12:10:33 espie Exp $
+# $OpenBSD: Makefile,v 1.84 2022/04/21 14:59:58 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -12,7 +12,7 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	usertest-1 usertest-2 usertest-3 cups-bug nettle-bug \
 	tying-1 tying-2 tag-delete setsprint temp-error1 \
 	temp-error2 temp-error2-as-root temp-error3 temp-error4 \
-	cksum-error system-version XXX-warning symlink no-symlink
+	cksum-error system-version XXX-warning no-symlink
 
 REGRESS_ROOT_TARGETS = temp-error2-as-root
 
