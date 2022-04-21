@@ -70,7 +70,7 @@ TargetInfo::TargetInfo(const llvm::Triple &T) : TargetOpts(), Triple(T) {
   // the alignment is 16 bytes on both 64-bit and 32-bit systems.
   if (T.isGNUEnvironment() || T.isWindowsMSVCEnvironment() || T.isAndroid())
     NewAlign = Triple.isArch64Bit() ? 128 : Triple.isArch32Bit() ? 64 : 0;
-  else if (T.isOSDarwin())
+  else if (T.isOSDarwin() || T.isOSOpenBSD())
     NewAlign = 128;
   else
     NewAlign = 0; // Infer from basic type alignment.
