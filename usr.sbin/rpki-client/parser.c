@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.72 2022/04/21 09:53:07 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.73 2022/04/21 12:59:03 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -389,40 +389,6 @@ proc_parser_mft(struct entity *entp, struct mft **mp)
 }
 
 /*
- * Validate a certificate, if invalid free the resouces and return NULL.
- */
-static struct cert *
-proc_parser_cert_validate(char *file, struct cert *cert)
-{
-	struct auth	*a;
-	struct crl	*crl;
-
-	a = valid_ski_aki(file, &auths, cert->ski, cert->aki);
-	crl = crl_get(&crlt, a);
-
-	if (!valid_x509(file, ctx, cert->x509, a, crl, 0)) {
-		cert_free(cert);
-		return NULL;
-	}
-
-	cert->talid = a->cert->talid;
-
-	/* Validate the cert */
-	if (!valid_cert(file, a, cert)) {
-		cert_free(cert);
-		return NULL;
-	}
-
-	/*
-	 * Add validated CA certs to the RPKI auth tree.
-	 */
-	if (cert->purpose == CERT_PURPOSE_CA)
-		auth_insert(&auths, cert, a);
-
-	return cert;
-}
-
-/*
  * Certificates are from manifests (has a digest and is signed with
  * another certificate) Parse the certificate, make sure its
  * signatures are valid (with CRLs), then validate the RPKI content.
@@ -433,17 +399,33 @@ static struct cert *
 proc_parser_cert(char *file, const unsigned char *der, size_t len)
 {
 	struct cert	*cert;
+	struct crl	*crl;
+	struct auth	*a;
 
 	/* Extract certificate data. */
 
 	cert = cert_parse_pre(file, der, len);
-	if (cert == NULL)
-		return NULL;
 	cert = cert_parse(file, cert);
 	if (cert == NULL)
 		return NULL;
 
-	cert = proc_parser_cert_validate(file, cert);
+	a = valid_ski_aki(file, &auths, cert->ski, cert->aki);
+	crl = crl_get(&crlt, a);
+
+	if (!valid_x509(file, ctx, cert->x509, a, crl, 0) ||
+	    !valid_cert(file, a, cert)) {
+		cert_free(cert);
+		return NULL;
+	}
+
+	cert->talid = a->cert->talid;
+
+	/*
+	 * Add validated CA certs to the RPKI auth tree.
+	 */
+	if (cert->purpose == CERT_PURPOSE_CA)
+		auth_insert(&auths, cert, a);
+
 	return cert;
 }
 
@@ -465,8 +447,6 @@ proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
 	/* Extract certificate data. */
 
 	cert = cert_parse_pre(file, der, len);
-	if (cert == NULL)
-		return NULL;
 	cert = ta_parse(file, cert, pkey, pkeysz);
 	if (cert == NULL)
 		return NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.1 2022/04/21 09:53:07 claudio Exp $ */
+/*	$OpenBSD: filemode.c,v 1.2 2022/04/21 12:59:03 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -44,80 +44,6 @@ static struct auth_tree	 auths = RB_INITIALIZER(&auths);
 static struct crl_tree	 crlt = RB_INITIALIZER(&crlt);
 
 struct tal		*talobj[TALSZ_MAX];
-
-/*
- * Validate a certificate, if invalid free the resouces and return NULL.
- */
-static struct cert *
-proc_parser_cert_validate(char *file, struct cert *cert)
-{
-	struct auth	*a;
-	struct crl	*crl;
-
-	a = valid_ski_aki(file, &auths, cert->ski, cert->aki);
-	crl = crl_get(&crlt, a);
-
-	if (!valid_x509(file, ctx, cert->x509, a, crl, 0)) {
-		cert_free(cert);
-		return NULL;
-	}
-
-	cert->talid = a->cert->talid;
-
-	/* Validate the cert */
-	if (!valid_cert(file, a, cert)) {
-		cert_free(cert);
-		return NULL;
-	}
-
-	/*
-	 * Add validated CA certs to the RPKI auth tree.
-	 */
-	if (cert->purpose == CERT_PURPOSE_CA)
-		auth_insert(&auths, cert, a);
-
-	return cert;
-}
-
-/*
- * Root certificates come from TALs (has a pkey and is self-signed).
- * Parse the certificate, ensure that its public key matches the
- * known public key from the TAL, and then validate the RPKI
- * content.
- *
- * This returns a certificate (which must not be freed) or NULL on
- * parse failure.
- */
-static struct cert *
-proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
-    unsigned char *pkey, size_t pkeysz, int talid)
-{
-	struct cert		*cert;
-
-	/* Extract certificate data. */
-
-	cert = cert_parse_pre(file, der, len);
-	if (cert == NULL)
-		return NULL;
-	cert = ta_parse(file, cert, pkey, pkeysz);
-	if (cert == NULL)
-		return NULL;
-
-	if (!valid_ta(file, &auths, cert)) {
-		warnx("%s: certificate not a valid ta", file);
-		cert_free(cert);
-		return NULL;
-	}
-
-	cert->talid = talid;
-
-	/*
-	 * Add valid roots to the RPKI auth tree.
-	 */
-	auth_insert(&auths, cert, NULL);
-
-	return cert;
-}
 
 /*
  * Use the X509 CRL Distribution Points to locate the CRL needed for
@@ -207,25 +133,25 @@ parse_load_cert(char *uri)
 static void
 parse_load_certchain(char *uri)
 {
-	struct cert *stack[MAX_CERT_DEPTH];
+	struct cert *stack[MAX_CERT_DEPTH] = { 0 };
 	char *filestack[MAX_CERT_DEPTH];
 	struct cert *cert;
-	int i, failed;
+	struct crl *crl;
+	struct auth *a;
+	int i;
 
 	for (i = 0; i < MAX_CERT_DEPTH; i++) {
-		cert = parse_load_cert(uri);
-		if (cert == NULL) {
+		filestack[i] = uri;
+		stack[i] = cert = parse_load_cert(uri);
+		if (cert == NULL || cert->purpose != CERT_PURPOSE_CA) {
 			warnx("failed to build authority chain");
-			return;
+			goto fail;
 		}
 		if (auth_find(&auths, cert->ski) != NULL) {
 			assert(i == 0);
-			cert_free(cert);
-			return;	/* cert already added */
+			goto fail;
 		}
-		stack[i] = cert;
-		filestack[i] = uri;
-		if (auth_find(&auths, cert->aki) != NULL)
+		if ((a = auth_find(&auths, cert->aki)) != NULL)
 			break;	/* found chain to TA */
 		uri = cert->aia;
 	}
@@ -233,47 +159,65 @@ parse_load_certchain(char *uri)
 	if (i >= MAX_CERT_DEPTH) {
 		warnx("authority chain exceeds max depth of %d",
 		    MAX_CERT_DEPTH);
-		for (i = 0; i < MAX_CERT_DEPTH; i++)
-			cert_free(stack[i]);
-		return;
+		goto fail;
 	}
 
 	/* TA found play back the stack and add all certs */
-	for (failed = 0; i >= 0; i--) {
+	for (; i >= 0; i--) {
 		cert = stack[i];
 		uri = filestack[i];
 
-		if (failed)
-			cert_free(cert);
-		else if (proc_parser_cert_validate(uri, cert) == NULL)
-			failed = 1;
+		crl = crl_get(&crlt, a);
+		if (!valid_x509(uri, ctx, cert->x509, a, crl, 0) || 
+		    !valid_cert(uri, a, cert))
+			goto fail;
+		cert->talid = a->cert->talid;
+		a = auth_insert(&auths, cert, a);
+		stack[i] = NULL;
 	}
+
+	return;
+fail:
+	for (i = 0; i < MAX_CERT_DEPTH; i++)
+		cert_free(stack[i]);
 }
 
 static void
 parse_load_ta(struct tal *tal)
 {
-	const char *file;
-	char *nfile, *f;
+	const char *filename;
+	struct cert *cert;
+	unsigned char *f = NULL;
+	char *file;
 	size_t flen;
 
 	/* does not matter which URI, all end with same filename */
-	file = strrchr(tal->uri[0], '/');
-	assert(file);
+	filename = strrchr(tal->uri[0], '/');
+	assert(filename);
 
-	if (asprintf(&nfile, "ta/%s%s", tal->descr, file) == -1)
+	if (asprintf(&file, "ta/%s%s", tal->descr, filename) == -1)
 		err(1, NULL);
 
-	f = load_file(nfile, &flen);
+	f = load_file(file, &flen);
 	if (f == NULL) {
-		warn("parse file %s", nfile);
-		free(nfile);
-		return;
+		warn("parse file %s", file);
+		goto out;
 	}
 
-	/* if TA is valid it was added as a root which is all we need */
-	proc_parser_root_cert(nfile, f, flen, tal->pkey, tal->pkeysz, tal->id);
-	free(nfile);
+	/* Extract certificate data. */
+	cert = cert_parse_pre(file, f, flen);
+	cert = ta_parse(file, cert, tal->pkey, tal->pkeysz);
+	if (cert == NULL)
+		goto out;
+
+	cert->talid = tal->id;
+
+	if (!valid_ta(file, &auths, cert))
+		cert_free(cert);
+	else
+		auth_insert(&auths, cert, NULL);
+out:
+	free(file);
 	free(f);
 }
 

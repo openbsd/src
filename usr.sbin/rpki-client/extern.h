@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.131 2022/04/21 09:53:07 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.132 2022/04/21 12:59:03 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -308,7 +308,7 @@ struct auth {
 RB_HEAD(auth_tree, auth);
 
 struct auth	*auth_find(struct auth_tree *, const char *);
-void		 auth_insert(struct auth_tree *, struct cert *, struct auth *);
+struct auth	*auth_insert(struct auth_tree *, struct cert *, struct auth *);
 
 enum http_result {
 	HTTP_FAILED,	/* anything else */

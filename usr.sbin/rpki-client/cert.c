@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.70 2022/04/21 09:53:07 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.71 2022/04/21 12:59:03 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -999,6 +999,9 @@ out:
 struct cert *
 cert_parse(const char *fn, struct cert *p)
 {
+	if (p == NULL)
+		return NULL;
+
 	if (p->aki == NULL) {
 		warnx("%s: RFC 6487 section 8.4.2: "
 		    "non-trust anchor missing AKI", fn);
@@ -1031,6 +1034,9 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 {
 	ASN1_TIME	*notBefore, *notAfter;
 	EVP_PKEY	*pk, *opk;
+
+	if (p == NULL)
+		return NULL;
 
 	/* first check pubkey against the one from the TAL */
 	pk = d2i_PUBKEY(NULL, &pkey, pkeysz);
@@ -1207,7 +1213,7 @@ auth_find(struct auth_tree *auths, const char *aki)
 	return RB_FIND(auth_tree, auths, &a);
 }
 
-void
+struct auth *
 auth_insert(struct auth_tree *auths, struct cert *cert, struct auth *parent)
 {
 	struct auth *na;
@@ -1221,6 +1227,8 @@ auth_insert(struct auth_tree *auths, struct cert *cert, struct auth *parent)
 
 	if (RB_INSERT(auth_tree, auths, na) != NULL)
 		err(1, "auth tree corrupted");
+
+	return na;
 }
 
 static void
