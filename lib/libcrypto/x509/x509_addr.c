@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.79 2022/04/21 04:48:12 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.80 2022/04/21 05:06:07 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1774,8 +1774,8 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 
 	/*
 	 * Figure out where to start. If we don't have an extension to check,
-	 * we're done.  Otherwise, check canonical form and set up for walking
-	 * up the chain.
+	 * (either extracted from the leaf or passed by the caller), we're done.
+	 * Otherwise, check canonical form and set up for walking up the chain.
 	 */
 	if (ext == NULL) {
 		depth = 0;
