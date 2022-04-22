@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_bang.c,v 1.11 2017/04/18 01:45:35 deraadt Exp $	*/
+/*	$OpenBSD: ex_bang.c,v 1.12 2022/04/22 15:48:29 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -170,6 +170,10 @@ ex_bang(SCR *sp, EXCMD *cmdp)
 	/* Ex terminates with a bang, even if the command fails. */
 	if (!F_ISSET(sp, SC_VI) && !F_ISSET(sp, SC_EX_SILENT))
 		(void)ex_puts(sp, "!\n");
+
+	/* Apply expandtab to the new text */
+	if (O_ISSET(sp, O_EXPANDTAB))
+		ex_retab(sp, cmdp);
 
 	/*
 	 * XXX

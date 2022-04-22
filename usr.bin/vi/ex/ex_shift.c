@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_shift.c,v 1.9 2020/04/30 10:40:21 millert Exp $	*/
+/*	$OpenBSD: ex_shift.c,v 1.10 2022/04/22 15:48:29 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -21,7 +21,7 @@
 
 #include "../common/common.h"
 
-enum which {LEFT, RIGHT};
+enum which {RETAB, LEFT, RIGHT};
 static int shift(SCR *, EXCMD *, enum which);
 
 /*
@@ -45,6 +45,18 @@ int
 ex_shiftr(SCR *sp, EXCMD *cmdp)
 {
 	return (shift(sp, cmdp, RIGHT));
+}
+
+/*
+ * ex_retab -- Expand tabs (if enabled)
+ *
+ *
+ * PUBLIC: int ex_retab(SCR *, EXCMD *);
+ */
+int
+ex_retab(SCR *sp, EXCMD *cmdp)
+{
+	return (shift(sp, cmdp, RETAB));
 }
 
 /*
@@ -109,7 +121,9 @@ shift(SCR *sp, EXCMD *cmdp, enum which rl)
 				break;
 
 		/* Calculate the new indent amount. */
-		if (rl == RIGHT)
+		if (rl == RETAB)
+			newcol = oldcol;
+		else if (rl == RIGHT)
 			newcol = oldcol + sw;
 		else {
 			newcol = oldcol < sw ? 0 : oldcol - sw;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vi.1,v 1.80 2022/03/31 17:27:28 naddy Exp $
+.\"	$OpenBSD: vi.1,v 1.81 2022/04/22 15:48:29 millert Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
@@ -14,7 +14,7 @@
 .\"
 .\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: April 22 2022 $
 .Dt VI 1
 .Os
 .Sh NAME
@@ -2356,8 +2356,12 @@ characters to
 when inserting, replacing or shifting text, autoindenting,
 indenting with
 .Aq Ic control-T ,
-or outdenting with
-.Aq Ic control-D .
+outdenting with
+.Aq Ic control-D ,
+or
+when filtering lines with the
+.Cm !\&
+command.
 .It Cm exrc , ex Bq off
 Read the startup files in the local directory.
 .It Cm extended Bq off
