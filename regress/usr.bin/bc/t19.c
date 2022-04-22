@@ -1,4 +1,4 @@
-/*	$OpenBSD: t19.c,v 1.4 2017/11/29 14:31:50 otto Exp $	*/
+/*	$OpenBSD: t19.c,v 1.5 2022/04/22 17:37:47 otto Exp $	*/
 
 /*
  * Copyright (c) 2012 Otto Moerbeek <otto@drijf.net>
@@ -51,7 +51,7 @@ main(void)
 				if (v == 0.0 && funcs[fi].f == logl)
 					continue;
 				snprintf(cmd, sizeof(cmd),
-				    "bc -l -e scale=%d -e '%s(%.19Lf)' -equit",
+				    "bc -l -e scale=%d -e '%s(%.36Lf)' -equit",
 				    scale[si], funcs[fi].name, v);
 				fp = popen(cmd, "r");
 				ret = fscanf(fp, "%Lf", &d1);
