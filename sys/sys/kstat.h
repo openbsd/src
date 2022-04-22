@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.h,v 1.2 2022/01/31 05:09:17 dlg Exp $ */
+/* $OpenBSD: kstat.h,v 1.3 2022/04/22 00:27:55 dlg Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -79,6 +79,9 @@ enum kstat_kv_type {
 	KSTAT_KV_T_STR,		/* trailing string */
 	KSTAT_KV_T_BYTES,	/* trailing bytes */
 	KSTAT_KV_T_TEMP,	/* temperature (uK) */
+	KSTAT_KV_T_COUNTER16,
+	KSTAT_KV_T_UINT16,
+	KSTAT_KV_T_INT16,
 };
 
 /* units only apply to integer types */
@@ -98,6 +101,8 @@ struct kstat_kv {
 		int64_t			v_s64;
 		uint32_t		v_u32;
 		int32_t			v_s32;
+		uint16_t		v_u16;
+		int16_t			v_s16;
 		size_t			v_len;
 	}			 kv_v;
 	enum kstat_kv_type	 kv_type;
@@ -110,6 +115,8 @@ struct kstat_kv {
 #define kstat_kv_s64(_kv)	(_kv)->kv_v.v_s64
 #define kstat_kv_u32(_kv)	(_kv)->kv_v.v_u32
 #define kstat_kv_s32(_kv)	(_kv)->kv_v.v_s32
+#define kstat_kv_u16(_kv)	(_kv)->kv_v.v_u16
+#define kstat_kv_s16(_kv)	(_kv)->kv_v.v_s16
 #define kstat_kv_len(_kv)	(_kv)->kv_v.v_len
 #define kstat_kv_temp(_kv)	(_kv)->kv_v.v_u64
 
