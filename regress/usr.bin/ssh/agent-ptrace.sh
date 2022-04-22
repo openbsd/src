@@ -1,11 +1,14 @@
-#	$OpenBSD: agent-ptrace.sh,v 1.4 2019/11/26 23:43:10 djm Exp $
+#	$OpenBSD: agent-ptrace.sh,v 1.5 2022/04/22 05:08:43 anton Exp $
 #	Placed in the Public Domain.
 
 tid="disallow agent ptrace attach"
 
 if [ "x$USER" = "xroot" ]; then
-	echo "Skipped: running as root"
-	exit 0
+	skip "running as root"
+fi
+
+if ! which gdb >/dev/null 2>&1; then
+	skip "gdb not found"
 fi
 
 trace "start agent"
