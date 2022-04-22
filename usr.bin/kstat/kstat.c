@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.8 2021/01/25 06:55:59 dlg Exp $ */
+/* $OpenBSD: kstat.c,v 1.9 2022/04/22 00:29:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -380,6 +380,13 @@ kstat_kv(const void *d, ssize_t len)
 			break;
 		case KSTAT_KV_T_INT32:
 			printf("%" PRId32, kstat_kv_s32(kv));
+			break;
+		case KSTAT_KV_T_COUNTER16:
+		case KSTAT_KV_T_UINT16:
+			printf("%" PRIu16, kstat_kv_u16(kv));
+			break;
+		case KSTAT_KV_T_INT16:
+			printf("%" PRId16, kstat_kv_s16(kv));
 			break;
 		case KSTAT_KV_T_STR:
 			blen = kstat_kv_len(kv);
