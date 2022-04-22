@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl_term.c,v 1.28 2017/07/20 08:37:48 anton Exp $	*/
+/*	$OpenBSD: cl_term.c,v 1.29 2022/04/22 15:50:07 tb Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -78,14 +78,18 @@ cl_term_init(SCR *sp)
 {
 	SEQ *qp;
 	TKLIST const *tkp;
+	size_t output_len;
 	char *t;
 
 	/* Command mappings. */
 	for (tkp = c_tklist; tkp->name != NULL; ++tkp) {
 		if ((t = tigetstr(tkp->ts)) == NULL || t == (char *)-1)
 			continue;
+		output_len = 0;
+		if (tkp->output != NULL)
+			output_len = strlen(tkp->output);
 		if (seq_set(sp, tkp->name, strlen(tkp->name), t, strlen(t),
-		    tkp->output, strlen(tkp->output), SEQ_COMMAND,
+		    tkp->output, output_len, SEQ_COMMAND,
 		    SEQ_NOOVERWRITE | SEQ_SCREEN))
 			return (1);
 	}
@@ -103,16 +107,13 @@ cl_term_init(SCR *sp)
 		 */
 		if (!strcmp(t, "\b"))
 			continue;
-		if (tkp->output == NULL) {
-			if (seq_set(sp, tkp->name, strlen(tkp->name),
-			    t, strlen(t), NULL, 0,
-			    SEQ_INPUT, SEQ_NOOVERWRITE | SEQ_SCREEN))
-				return (1);
-		} else
-			if (seq_set(sp, tkp->name, strlen(tkp->name),
-			    t, strlen(t), tkp->output, strlen(tkp->output),
-			    SEQ_INPUT, SEQ_NOOVERWRITE | SEQ_SCREEN))
-				return (1);
+		output_len = 0;
+		if (tkp->output != NULL)
+			output_len = strlen(tkp->output);
+		if (seq_set(sp, tkp->name, strlen(tkp->name), t, strlen(t),
+		    tkp->output, output_len, SEQ_INPUT,
+		    SEQ_NOOVERWRITE | SEQ_SCREEN))
+			return (1);
 	}
 
 	/*
