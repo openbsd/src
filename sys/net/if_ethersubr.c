@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.278 2022/02/22 01:15:02 guenther Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.279 2022/04/22 12:10:57 bluhm Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -221,7 +221,10 @@ ether_resolve(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	switch (af) {
 	case AF_INET:
+		KERNEL_LOCK();
+		/* XXXSMP there is a MP race in arpresolve() */
 		error = arpresolve(ifp, rt, m, dst, eh->ether_dhost);
+		KERNEL_UNLOCK();
 		if (error)
 			return (error);
 		eh->ether_type = htons(ETHERTYPE_IP);
@@ -244,7 +247,10 @@ ether_resolve(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 		break;
 #ifdef INET6
 	case AF_INET6:
+		KERNEL_LOCK();
+		/* XXXSMP there is a MP race in nd6_resolve() */
 		error = nd6_resolve(ifp, rt, m, dst, eh->ether_dhost);
+		KERNEL_UNLOCK();
 		if (error)
 			return (error);
 		eh->ether_type = htons(ETHERTYPE_IPV6);
@@ -270,13 +276,19 @@ ether_resolve(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			break;
 #ifdef INET6
 		case AF_INET6:
+			KERNEL_LOCK();
+			/* XXXSMP there is a MP race in nd6_resolve() */
 			error = nd6_resolve(ifp, rt, m, dst, eh->ether_dhost);
+			KERNEL_UNLOCK();
 			if (error)
 				return (error);
 			break;
 #endif
 		case AF_INET:
+			KERNEL_LOCK();
+			/* XXXSMP there is a MP race in arpresolve() */
 			error = arpresolve(ifp, rt, m, dst, eh->ether_dhost);
+			KERNEL_UNLOCK();
 			if (error)
 				return (error);
 			break;
@@ -528,12 +540,14 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	case ETHERTYPE_PPPOE:
 		if (m->m_flags & (M_MCAST | M_BCAST))
 			goto dropanyway;
+		KERNEL_LOCK();
 #ifdef PIPEX
 		if (pipex_enable) {
 			struct pipex_session *session;
 
 			if ((session = pipex_pppoe_lookup_session(m)) != NULL) {
 				pipex_pppoe_input(m, session);
+				KERNEL_UNLOCK();
 				return;
 			}
 		}
@@ -542,6 +556,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			pppoe_disc_input(m);
 		else
 			pppoe_data_input(m);
+		KERNEL_UNLOCK();
 		return;
 #endif
 #ifdef MPLS
