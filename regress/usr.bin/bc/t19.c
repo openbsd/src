@@ -1,4 +1,4 @@
-/*	$OpenBSD: t19.c,v 1.5 2022/04/22 17:37:47 otto Exp $	*/
+/*	$OpenBSD: t19.c,v 1.6 2022/04/22 18:05:29 otto Exp $	*/
 
 /*
  * Copyright (c) 2012 Otto Moerbeek <otto@drijf.net>
@@ -19,9 +19,10 @@
 #include <math.h>
 #include <stdio.h>
 
+#define PI 3.141592653589793238462643383279502884L
 int scale[] = { 1, 2, 3, 10, 15, 20, 30};
-long double num[] = {-10, -M_PI, -3, -2, -1, -0.5, -0.01, 0, 0.01, 
-  0.5, 1, 2, 3, M_PI, 10};
+long double num[] = {-10.0L, -PI, -3.0L, -2.0L, -1.0L, -0.5L, -0.01L, 0.0L,
+  0.01L, 0.5L, 1.0L, 2.0L, 3.0L, PI, 10.0L};
 
 struct func {const char *name; long double (*f)(long double);};
 
@@ -63,9 +64,7 @@ main(void)
 					prec = LDBL_EPSILON;
 				prec *= 2;
 				/* XXX cheating ? */
-				if (funcs[fi].f == logl)
-					prec *= 4;
-				else if (funcs[fi].f == expl)
+				if (funcs[fi].f == expl)
 					prec *= 8;
 				if (diff > prec) {
 					printf("%s %d %Le %Le %Le %Le %Le\n",
