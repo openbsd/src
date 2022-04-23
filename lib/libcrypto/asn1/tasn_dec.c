@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.49 2022/03/13 14:58:14 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.50 2022/04/23 18:47:08 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -95,8 +95,8 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in,
 static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in,
     long len, const ASN1_ITEM *it, int tag, int aclass, char opt,
     ASN1_TLC *ctx);
-static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *content, int len,
-    int utype, const ASN1_ITEM *it);
+static int asn1_ex_c2i(ASN1_VALUE **pval, CBS *content, int utype,
+    const ASN1_ITEM *it);
 
 static void
 asn1_tlc_invalidate(ASN1_TLC *ctx)
@@ -669,6 +669,7 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 	const unsigned char *content = NULL;
 	uint8_t *data = NULL;
 	size_t data_len = 0;
+	CBS cbs;
 	CBB cbb;
 	long len;
 
@@ -771,7 +772,10 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 	}
 
 	/* We now have content length and type: translate into a structure */
-	if (!asn1_ex_c2i(pval, content, len, utype, it))
+	if (len < 0)
+		goto err;
+	CBS_init(&cbs, content, len);
+	if (!asn1_ex_c2i(pval, &cbs, utype, it))
 		goto err;
 
 	*in = p;
@@ -784,17 +788,21 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 	return ret;
 }
 
-/* Translate ASN1 content octets into a structure */
-
+/* Translate ASN.1 content octets into a structure. */
 static int
-asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *content, int len, int utype,
-    const ASN1_ITEM *it)
+asn1_ex_c2i(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *it)
 {
 	ASN1_VALUE **opval = NULL;
 	ASN1_STRING *stmp;
 	ASN1_TYPE *typ = NULL;
 	ASN1_INTEGER **tint;
+	ASN1_BOOLEAN *tbool;
+	const uint8_t *p;
+	uint8_t u8val;
 	int ret = 0;
+
+	if (CBS_len(content) > INT_MAX)
+		return 0;
 
 	if (it->funcs != NULL) {
 		const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
@@ -802,7 +810,9 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *content, int len, int utype,
 
 		if (pf->prim_c2i == NULL)
 			return 0;
-		return pf->prim_c2i(pval, content, len, utype, &free_content, it);
+
+		return pf->prim_c2i(pval, CBS_data(content), CBS_len(content),
+		    utype, &free_content, it);
 	}
 
 	/* If ANY type clear type and set pointer to internal value */
@@ -822,12 +832,12 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *content, int len, int utype,
 	}
 	switch (utype) {
 	case V_ASN1_OBJECT:
-		if (!c2i_ASN1_OBJECT((ASN1_OBJECT **)pval, &content, len))
+		if (!c2i_ASN1_OBJECT_cbs((ASN1_OBJECT **)pval, content))
 			goto err;
 		break;
 
 	case V_ASN1_NULL:
-		if (len) {
+		if (CBS_len(content) != 0) {
 			ASN1error(ASN1_R_NULL_IS_WRONG_LENGTH);
 			goto err;
 		}
@@ -835,25 +845,28 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *content, int len, int utype,
 		break;
 
 	case V_ASN1_BOOLEAN:
-		if (len != 1) {
+		tbool = (ASN1_BOOLEAN *)pval;
+		if (CBS_len(content) != 1) {
 			ASN1error(ASN1_R_BOOLEAN_IS_WRONG_LENGTH);
 			goto err;
-		} else {
-			ASN1_BOOLEAN *tbool;
-			tbool = (ASN1_BOOLEAN *)pval;
-			*tbool = *content;
 		}
+		if (!CBS_get_u8(content, &u8val))
+			goto err;
+		*tbool = u8val;
 		break;
 
 	case V_ASN1_BIT_STRING:
-		if (!c2i_ASN1_BIT_STRING((ASN1_BIT_STRING **)pval, &content, len))
+		p = CBS_data(content);
+		if (!c2i_ASN1_BIT_STRING((ASN1_BIT_STRING **)pval, &p,
+		    CBS_len(content)))
 			goto err;
 		break;
 
 	case V_ASN1_INTEGER:
 	case V_ASN1_ENUMERATED:
 		tint = (ASN1_INTEGER **)pval;
-		if (!c2i_ASN1_INTEGER(tint, &content, len))
+		p = CBS_data(content);
+		if (!c2i_ASN1_INTEGER(tint, &p, CBS_len(content)))
 			goto err;
 		/* Fixup type to match the expected form */
 		(*tint)->type = utype | ((*tint)->type & V_ASN1_NEG);
@@ -877,11 +890,11 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *content, int len, int utype,
 	case V_ASN1_SET:
 	case V_ASN1_SEQUENCE:
 	default:
-		if (utype == V_ASN1_BMPSTRING && (len & 1)) {
+		if (utype == V_ASN1_BMPSTRING && (CBS_len(content) & 1)) {
 			ASN1error(ASN1_R_BMPSTRING_IS_WRONG_LENGTH);
 			goto err;
 		}
-		if (utype == V_ASN1_UNIVERSALSTRING && (len & 3)) {
+		if (utype == V_ASN1_UNIVERSALSTRING && (CBS_len(content) & 3)) {
 			ASN1error(ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH);
 			goto err;
 		}
@@ -896,7 +909,7 @@ asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *content, int len, int utype,
 			stmp = (ASN1_STRING *)*pval;
 			stmp->type = utype;
 		}
-		if (!ASN1_STRING_set(stmp, content, len)) {
+		if (!ASN1_STRING_set(stmp, CBS_data(content), CBS_len(content))) {
 			ASN1_STRING_free(stmp);
 			*pval = NULL;
 			goto err;
