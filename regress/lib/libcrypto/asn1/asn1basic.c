@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.4 2022/01/12 07:55:25 tb Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.5 2022/04/23 18:23:48 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -234,6 +234,252 @@ asn1_boolean_test(void)
 	return failed;
 }
 
+struct asn1_integer_test {
+	long value;
+	uint8_t content[64];
+	size_t content_len;
+	int content_neg;
+	uint8_t der[64];
+	size_t der_len;
+	int want_error;
+};
+
+struct asn1_integer_test asn1_integer_tests[] = {
+	{
+		.value = 0,
+		.content = {0x00},
+		.content_len = 1,
+		.der = {0x02, 0x01, 0x00},
+		.der_len = 3,
+	},
+	{
+		.value = 1,
+		.content = {0x01},
+		.content_len = 1,
+		.der = {0x02, 0x01, 0x01},
+		.der_len = 3,
+	},
+	{
+		.value = -1,
+		.content = {0x01},
+		.content_len = 1,
+		.content_neg = 1,
+		.der = {0x02, 0x01, 0xff},
+		.der_len = 3,
+	},
+	{
+		.value = 127,
+		.content = {0x7f},
+		.content_len = 1,
+		.der = {0x02, 0x01, 0x7f},
+		.der_len = 3,
+	},
+	{
+		.value = -127,
+		.content = {0x7f},
+		.content_len = 1,
+		.content_neg = 1,
+		.der = {0x02, 0x01, 0x81},
+		.der_len = 3,
+	},
+	{
+		.value = 128,
+		.content = {0x80},
+		.content_len = 1,
+		.der = {0x02, 0x02, 0x00, 0x80},
+		.der_len = 4,
+	},
+	{
+		.value = -128,
+		.content = {0x80},
+		.content_len = 1,
+		.content_neg = 1,
+		.der = {0x02, 0x01, 0x80},
+		.der_len = 3,
+	},
+	{
+		/* 2^64 */
+		.content = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		.content_len = 9,
+		.der = {0x02, 0x09, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		.der_len = 11,
+	},
+	{
+		/* -2^64 */
+		.content = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		.content_len = 9,
+		.content_neg = 1,
+		.der = {0x02, 0x09, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		.der_len = 11,
+	},
+#if 0
+	{
+		/* Invalid length. */
+		.der = {0x02, 0x00},
+		.der_len = 2,
+		.want_error = 1,
+	},
+	{
+		/* Invalid padding. */
+		.der = {0x02, 0x09, 0x00, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		.der_len = 11,
+		.want_error = 1,
+	},
+	{
+		/* Invalid padding. */
+		.der = {0x02, 0x09, 0xff, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+		.der_len = 11,
+		.want_error = 1,
+	},
+#endif
+};
+
+#define N_ASN1_INTEGER_TESTS \
+    (sizeof(asn1_integer_tests) / sizeof(*asn1_integer_tests))
+
+static int
+asn1_integer_set_test(struct asn1_integer_test *ait)
+{
+	ASN1_INTEGER *aint = NULL;
+	uint8_t *p = NULL, *pp;
+	int len;
+	int failed = 1;
+
+	if ((aint = ASN1_INTEGER_new()) == NULL) {
+		fprintf(stderr, "FAIL: ASN1_INTEGER_new() == NULL\n");
+		goto failed;
+	}
+	if (!ASN1_INTEGER_set(aint, ait->value)) {
+		fprintf(stderr, "FAIL: ASN1_INTEGER_(%ld) failed\n",
+		    ait->value);
+		goto failed;
+	}
+	if (ait->value != 0 &&
+	    !asn1_compare_bytes("INTEGER set", aint->data, aint->length,
+	    ait->content, ait->content_len))
+		goto failed;
+	if (ait->content_neg && aint->type != V_ASN1_NEG_INTEGER) {
+		fprintf(stderr, "FAIL: Not V_ASN1_NEG_INTEGER\n");
+		goto failed;
+	}
+	if ((len = i2d_ASN1_INTEGER(aint, NULL)) < 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_INTEGER() failed\n");
+		goto failed;
+	}
+	if ((p = malloc(len)) == NULL)
+		errx(1, "malloc");
+	memset(p, 0xbd, len);
+	pp = p;
+	if ((len = i2d_ASN1_INTEGER(aint, &pp)) < 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_INTEGER() failed\n");
+		goto failed;
+	}
+	if (!asn1_compare_bytes("INTEGER set", p, len, ait->der,
+	    ait->der_len))
+		goto failed;
+
+	failed = 0;
+
+ failed:
+	ASN1_INTEGER_free(aint);
+	free(p);
+
+	return failed;
+}
+
+static int
+asn1_integer_content_test(struct asn1_integer_test *ait)
+{
+	ASN1_INTEGER *aint = NULL;
+	uint8_t *p = NULL, *pp;
+	int len;
+	int failed = 1;
+
+	if ((aint = ASN1_INTEGER_new()) == NULL) {
+		fprintf(stderr, "FAIL: ASN1_INTEGER_new() == NULL\n");
+		goto failed;
+	}
+	if ((aint->data = malloc(ait->content_len)) == NULL)
+		errx(1, "malloc");
+	memcpy(aint->data, ait->content, ait->content_len);
+	aint->length = ait->content_len;
+	if (ait->content_neg)
+		aint->type = V_ASN1_NEG_INTEGER;
+
+	if ((len = i2d_ASN1_INTEGER(aint, NULL)) < 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_INTEGER() failed\n");
+		goto failed;
+	}
+	if ((p = malloc(len)) == NULL)
+		errx(1, "malloc");
+	memset(p, 0xbd, len);
+	pp = p;
+	if ((len = i2d_ASN1_INTEGER(aint, &pp)) < 0) {
+		fprintf(stderr, "FAIL: i2d_ASN1_INTEGER() failed\n");
+		goto failed;
+	}
+	if (!asn1_compare_bytes("INTEGER content", p, len, ait->der,
+	    ait->der_len))
+		goto failed;
+
+	failed = 0;
+
+ failed:
+	ASN1_INTEGER_free(aint);
+	free(p);
+
+	return failed;
+}
+
+static int
+asn1_integer_decode_test(struct asn1_integer_test *ait)
+{
+	ASN1_INTEGER *aint = NULL;
+	const uint8_t *q;
+	int failed = 1;
+
+	q = ait->der;
+	if (d2i_ASN1_INTEGER(&aint, &q, ait->der_len) != NULL) {
+		if (ait->want_error != 0) {
+			fprintf(stderr, "FAIL: INTEGER decoded when it should "
+			    "have failed\n");
+			goto failed;
+		}
+		if (!asn1_compare_bytes("INTEGER content", aint->data,
+		    aint->length, ait->content, ait->content_len))
+			goto failed;
+	} else if (ait->want_error == 0) {
+		fprintf(stderr, "FAIL: INTEGER failed to decode\n");
+		goto failed;
+	}
+
+	failed = 0;
+
+ failed:
+	ASN1_INTEGER_free(aint);
+
+	return failed;
+}
+
+static int
+asn1_integer_test(void)
+{
+	struct asn1_integer_test *ait;
+	int failed = 0;
+	size_t i;
+
+	for (i = 0; i < N_ASN1_INTEGER_TESTS; i++) {
+		ait = &asn1_integer_tests[i];
+		if (ait->content_len > 0 && ait->content_len <= 4)
+			failed |= asn1_integer_set_test(ait);
+		if (ait->content_len > 0)
+			failed |= asn1_integer_content_test(ait);
+		failed |= asn1_integer_decode_test(ait);
+	}
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -241,6 +487,7 @@ main(int argc, char **argv)
 
 	failed |= asn1_bit_string_test();
 	failed |= asn1_boolean_test();
+	failed |= asn1_integer_test();
 
 	return (failed);
 }
