@@ -1,4 +1,4 @@
-.\" $OpenBSD: bwfm.4,v 1.16 2022/01/05 17:39:24 jmc Exp $
+.\" $OpenBSD: bwfm.4,v 1.17 2022/04/23 18:15:02 sthen Exp $
 .\"
 .\" Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 5 2022 $
+.Dd $Mdocdate: April 23 2022 $
 .Dt BWFM 4
 .Os
 .Sh NAME
@@ -35,29 +35,29 @@ as well as the bus attachments recognized by the
 .Nm
 driver:
 .Bl -column "Chipset" "Spectrum" "MIMO" "Bus" -offset 6n
-.It Em Chipset Ta Em Spectrum Ta Em MIMO Ta Em Bus
-.It BCM43143 Ta 2GHz Ta 1x1 Ta SDMMC/USB
-.It BCM43236 Ta 2GHz/5GHz Ta 2x2 Ta USB
-.It BCM4324 Ta  2GHz/5GHz Ta 2x2 Ta SDMMC
-.It BCM43242 Ta 2GHz/5GHz Ta 2x2 Ta USB
-.It BCM4329 Ta  2GHz/5GHz Ta 2x2 Ta SDMMC
-.It BCM4330 Ta  2GHz/5GHz Ta 2x2 Ta SDMMC
-.It BCM4334 Ta  2GHz/5GHz Ta 2x2 Ta SDMMC
-.It BCM43340 Ta 2GHz/5GHz Ta 1x1 Ta SDMMC
-.It BCM43341 Ta 2GHz/5GHz Ta 1x1 Ta SDMMC
-.It BCM4335 Ta  2GHz/5GHz Ta 1x1 Ta SDMMC
-.It BCM43362 Ta 2GHz Ta 1x1 Ta SDMMC
-.It BCM43364 Ta 2GHz Ta 1x1 Ta SDMMC
-.It BCM4339 Ta  2GHz/5GHz Ta 1x1 Ta SDMMC
-.It BCM43430 Ta 2GHz Ta 1x1 Ta SDMMC
-.It BCM43455 Ta  2GHz/5GHz Ta 1x1 Ta SDMMC
-.It BCM43456 Ta  2GHz/5GHz Ta 2x2 Ta SDMMC
-.It BCM4350 Ta 2GHz/5GHz Ta 2x2 Ta PCI
-.It BCM4354 Ta  2GHz/5GHz Ta 2x2 Ta SDMMC
-.It BCM4356 Ta 2GHz/5GHz Ta 2x2 Ta PCI/SDMMC
-.It BCM43569 Ta 2GHz/5GHz Ta 2x2 Ta USB
-.It BCM43602 Ta 2GHz/5GHz Ta 3x3 Ta PCI
-.It BCM4371 Ta 2GHz/5GHz Ta 2x2 Ta PCI
+.It Em Chipset Ta Em Spectrum Ta Em Type Ta Em MIMO Ta Em Bus
+.It BCM43143 Ta 2GHz Ta 11n Ta 1x1 Ta SDMMC/USB
+.It BCM43236 Ta 2GHz/5GHz Ta 11n Ta 2x2 Ta USB
+.It BCM4324 Ta  2GHz/5GHz Ta 11n Ta 2x2 Ta SDMMC
+.It BCM43242 Ta 2GHz/5GHz Ta 11n Ta 2x2 Ta USB
+.It BCM4329 Ta  2GHz/5GHz Ta 11n Ta 2x2 Ta SDMMC
+.It BCM4330 Ta  2GHz/5GHz Ta 11n Ta 2x2 Ta SDMMC
+.It BCM4334 Ta  2GHz/5GHz Ta 11n Ta 2x2 Ta SDMMC
+.It BCM43340 Ta 2GHz/5GHz Ta 11n Ta 1x1 Ta SDMMC
+.It BCM43341 Ta 2GHz/5GHz Ta 11n Ta 1x1 Ta SDMMC
+.It BCM4335 Ta  2GHz/5GHz Ta 11ac Ta 1x1 Ta SDMMC
+.It BCM43362 Ta 2GHz Ta 11n Ta 1x1 Ta SDMMC
+.It BCM43364 Ta 2GHz Ta 11n Ta 1x1 Ta SDMMC
+.It BCM4339 Ta  2GHz/5GHz Ta 11ac Ta 1x1 Ta SDMMC
+.It BCM43430 Ta 2GHz Ta 11n Ta 1x1 Ta SDMMC
+.It BCM43455 Ta  2GHz/5GHz Ta 11ac Ta 1x1 Ta SDMMC
+.It BCM43456 Ta  2GHz/5GHz Ta 11ac Ta 2x2 Ta SDMMC
+.It BCM4350 Ta 2GHz/5GHz Ta 11ac Ta 2x2 Ta PCI
+.It BCM4354 Ta  2GHz/5GHz Ta 11ac Ta 2x2 Ta SDMMC
+.It BCM4356 Ta 2GHz/5GHz Ta 11ac Ta 2x2 Ta PCI/SDMMC
+.It BCM43569 Ta 2GHz/5GHz Ta 11ac Ta 2x2 Ta USB
+.It BCM43602 Ta 2GHz/5GHz Ta 11ac Ta 3x3 Ta PCI
+.It BCM4371 Ta 2GHz/5GHz Ta 11ac Ta 2x2 Ta PCI
 .El
 .Pp
 These are the modes the
