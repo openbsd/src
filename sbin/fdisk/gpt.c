@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.72 2022/04/20 23:36:30 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.73 2022/04/23 14:39:16 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -578,6 +578,7 @@ int
 init_gp(const int how)
 {
 	struct gpt_partition	oldgp[NGPTPARTITIONS];
+	struct uuid		gp_type;
 	const uint8_t		gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
 	const uint8_t		gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
 	uint64_t		prt_ns;
@@ -588,7 +589,8 @@ init_gp(const int how)
 		memset(&gp, 0, sizeof(gp));
 	else {
 		for (pn = 0; pn < gh.gh_part_num; pn++) {
-			if (PRT_protected_guid(&gp[pn].gp_type))
+			uuid_dec_le(&gp[pn].gp_type, &gp_type);
+			if (PRT_protected_guid(&gp_type))
 				continue;
 			memset(&gp[pn], 0, sizeof(gp[pn]));
 		}
