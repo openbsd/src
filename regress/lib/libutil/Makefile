@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.4 2019/05/13 10:00:29 rob Exp $
+# $OpenBSD: Makefile,v 1.5 2022/04/23 08:57:52 tobias Exp $
 
 # Makefile for regress/libutil
 
-SUBDIR=		bcrypt_pbkdf ber fmt_scaled pkcs5_pbkdf2
+SUBDIR=		bcrypt_pbkdf ber fmt_scaled imsg pkcs5_pbkdf2
 
 include:
 

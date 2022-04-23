@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.13 2021/03/31 17:42:24 eric Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.14 2022/04/23 08:57:52 tobias Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -73,7 +73,7 @@ ibuf_realloc(struct ibuf *buf, size_t len)
 	unsigned char	*b;
 
 	/* on static buffers max is eq size and so the following fails */
-	if (buf->wpos + len > buf->max) {
+	if (len > SIZE_MAX - buf->wpos || buf->wpos + len > buf->max) {
 		errno = ERANGE;
 		return (-1);
 	}
@@ -90,6 +90,11 @@ ibuf_realloc(struct ibuf *buf, size_t len)
 int
 ibuf_add(struct ibuf *buf, const void *data, size_t len)
 {
+	if (len > SIZE_MAX - buf->wpos) {
+		errno = ERANGE;
+		return (-1);
+	}
+
 	if (buf->wpos + len > buf->size)
 		if (ibuf_realloc(buf, len) == -1)
 			return (-1);
@@ -104,6 +109,11 @@ ibuf_reserve(struct ibuf *buf, size_t len)
 {
 	void	*b;
 
+	if (len > SIZE_MAX - buf->wpos) {
+		errno = ERANGE;
+		return (NULL);
+	}
+
 	if (buf->wpos + len > buf->size)
 		if (ibuf_realloc(buf, len) == -1)
 			return (NULL);
@@ -117,7 +127,7 @@ void *
 ibuf_seek(struct ibuf *buf, size_t pos, size_t len)
 {
 	/* only allowed to seek in already written parts */
-	if (pos + len > buf->wpos)
+	if (len > SIZE_MAX - pos || pos + len > buf->wpos)
 		return (NULL);
 
 	return (buf->buf + pos);
@@ -202,7 +212,7 @@ msgbuf_drain(struct msgbuf *msgbuf, size_t n)
 	for (buf = TAILQ_FIRST(&msgbuf->bufs); buf != NULL && n > 0;
 	    buf = next) {
 		next = TAILQ_NEXT(buf, entry);
-		if (buf->rpos + n >= buf->wpos) {
+		if (n >= buf->wpos - buf->rpos) {
 			n -= buf->wpos - buf->rpos;
 			ibuf_dequeue(msgbuf, buf);
 		} else {
