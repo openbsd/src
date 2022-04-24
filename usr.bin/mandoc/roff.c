@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.254 2022/04/24 13:34:53 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.255 2022/04/24 17:39:31 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -2431,9 +2431,11 @@ roff_cond_sub(ROFF_ARGS)
 			}
 		}
 	} else if (t != TOKEN_NONE &&
-	    (rr || roffs[t].flags & ROFFMAC_STRUCT))
+	    (rr || roffs[t].flags & ROFFMAC_STRUCT)) {
 		irc |= (*roffs[t].proc)(r, t, buf, ln, ppos, pos, offs);
-	else
+		if (irc & ROFF_WHILE)
+			irc &= ~(ROFF_LOOPCONT | ROFF_LOOPEXIT);
+	} else
 		irc |= rr ? ROFF_CONT : ROFF_IGN;
 	return irc;
 }
