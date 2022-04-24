@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.4 2022/04/24 18:19:52 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.5 2022/04/24 22:26:44 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -285,7 +285,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			return;
 		}
 	}
-
 
 	if (!EVP_Digest(buf, len, filehash, NULL, EVP_sha256(), NULL))
 		errx(1, "EVP_Digest failed in %s", __func__);
