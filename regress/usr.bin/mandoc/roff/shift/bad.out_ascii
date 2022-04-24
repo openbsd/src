@@ -14,8 +14,10 @@ DDEESSCCRRIIPPTTIIOONN
 
        argument used after call: ""
 
-       after shift badarg: "arg2" after excessive shift: 0 ""
+       after shift badarg: "arg2"
+       after shift -1: "arg2"
+       after excessive shift: 0 ""
 
        final text
 
-OpenBSD                         August 23, 2018                   SHIFT_BAD(1)
+OpenBSD                         April 24, 2022                    SHIFT_BAD(1)

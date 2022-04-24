@@ -1,6 +1,6 @@
-/* $OpenBSD: mandoc_msg.c,v 1.14 2021/08/14 13:51:46 schwarze Exp $ */
+/* $OpenBSD: mandoc_msg.c,v 1.15 2022/04/24 13:34:53 schwarze Exp $ */
 /*
- * Copyright (c) 2014-2021 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -214,6 +214,7 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"escaped character not allowed in a name",
 	"using macro argument outside macro",
 	"argument number is not numeric",
+	"negative argument, using 0",
 	"NOT IMPLEMENTED: Bd -file",
 	"skipping display without arguments",
 	"missing list type, using -item",

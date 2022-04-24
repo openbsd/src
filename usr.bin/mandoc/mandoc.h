@@ -1,6 +1,6 @@
-/* $OpenBSD: mandoc.h,v 1.216 2021/08/14 13:51:46 schwarze Exp $ */
+/* $OpenBSD: mandoc.h,v 1.217 2022/04/24 13:34:53 schwarze Exp $ */
 /*
- * Copyright (c) 2012-2021 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2012-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -215,6 +215,7 @@ enum	mandocerr {
 	MANDOCERR_NAMESC, /* escaped character not allowed in a name: name */
 	MANDOCERR_ARG_UNDEF, /* using macro argument outside macro */
 	MANDOCERR_ARG_NONUM, /* argument number is not numeric */
+	MANDOCERR_ARG_NEG, /* negative argument, using 0: request arg */
 	MANDOCERR_BD_FILE, /* NOT IMPLEMENTED: Bd -file */
 	MANDOCERR_BD_NOARG, /* skipping display without arguments: Bd */
 	MANDOCERR_BL_NOTYPE, /* missing list type, using -item: Bl */
