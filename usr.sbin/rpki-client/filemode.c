@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.3 2022/04/24 12:25:25 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.4 2022/04/24 18:19:52 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -168,7 +168,7 @@ parse_load_certchain(char *uri)
 		uri = filestack[i];
 
 		crl = crl_get(&crlt, a);
-		if (!valid_x509(uri, ctx, cert->x509, a, crl, 0) || 
+		if (!valid_x509(uri, ctx, cert->x509, a, crl, 0) ||
 		    !valid_cert(uri, a, cert))
 			goto fail;
 		cert->talid = a->cert->talid;
