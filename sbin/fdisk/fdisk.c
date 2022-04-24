@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.143 2022/03/11 22:29:55 krw Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.144 2022/04/24 12:13:37 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -275,10 +275,10 @@ get_default_dmbr(const char *mbrfile)
 
 	sz = sizeof(*dmbr);
 	len = read(fd, dmbr, sz);
-	close(fd);
-
 	if (len == -1)
 		err(1, "read('%s')", mbrfile);
 	else if (len != sz)
 		errx(1, "read('%s'): read %zd bytes of %zd", mbrfile, len, sz);
+
+	close(fd);
 }

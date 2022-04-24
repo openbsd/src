@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.157 2022/04/20 15:49:56 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.158 2022/04/24 12:13:37 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -394,13 +394,13 @@ Xwrite(char *args, struct mbr *mbr)
 	if (gh.gh_sig == GPTSIGNATURE) {
 		printf("Writing GPT.\n");
 		if (GPT_write() == -1) {
-			warn("error writing GPT");
+			warnx("error writing GPT");
 			return CMD_CONT;
 		}
 	} else {
 		printf("Writing MBR at offset %llu.\n", mbr->mbr_lba_self);
 		if (MBR_write(mbr) == -1) {
-			warn("error writing MBR");
+			warnx("error writing MBR");
 			return CMD_CONT;
 		}
 		GPT_zap_headers();
