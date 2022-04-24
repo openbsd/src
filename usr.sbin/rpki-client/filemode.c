@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.2 2022/04/21 12:59:03 claudio Exp $ */
+/*	$OpenBSD: filemode.c,v 1.3 2022/04/24 12:25:25 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -265,6 +265,8 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	struct gbr *gbr = NULL;
 	struct tal *tal = NULL;
 	char *aia = NULL, *aki = NULL;
+	char filehash[SHA256_DIGEST_LENGTH];
+	char *hash;
 	enum rtype type;
 	int is_ta = 0;
 
@@ -284,10 +286,22 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		}
 	}
 
-	if (outformats & FORMAT_JSON)
+
+	if (!EVP_Digest(buf, len, filehash, NULL, EVP_sha256(), NULL))
+		errx(1, "EVP_Digest failed in %s", __func__);
+
+	if (base64_encode(filehash, sizeof(filehash), &hash) == -1)
+		errx(1, "base64_encode failed in %s", __func__);
+
+	if (outformats & FORMAT_JSON) {
 		printf("{\n\t\"file\": \"%s\",\n", file);
-	else
+		printf("\t\"hash_id\": \"%s\",\n", hash);
+	} else {
 		printf("File: %s\n", file);
+		printf("Hash identifier: %s\n", hash);
+	}
+
+	free(hash);
 
 	type = rtype_from_file_extension(file);
 
