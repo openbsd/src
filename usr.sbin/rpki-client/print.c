@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.9 2022/04/20 15:31:48 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.10 2022/04/24 18:20:12 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -176,7 +176,8 @@ cert_print(const struct cert *p)
 	} else {
 		printf("Subject key identifier: %s\n", pretty_key_id(p->ski));
 		if (p->aki != NULL)
-			printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
+			printf("Authority key identifier: %s\n",
+			    pretty_key_id(p->aki));
 		x509_print(p->x509);
 		if (p->aia != NULL)
 			printf("Authority info access: %s\n", p->aia);
@@ -187,7 +188,8 @@ cert_print(const struct cert *p)
 		if (p->notify != NULL)
 			printf("Notify URL: %s\n", p->notify);
 		if (p->pubkey != NULL)
-			printf("BGPsec P-256 ECDSA public key: %s\n", p->pubkey);
+			printf("BGPsec P-256 ECDSA public key: %s\n",
+			    p->pubkey);
 		printf("Valid until: %s\n", tbuf);
 		printf("Subordinate Resources:\n");
 	}
