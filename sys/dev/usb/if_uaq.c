@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_uaq.c,v 1.2 2021/12/31 08:15:47 jmatthew Exp $	*/
+/*	$OpenBSD: if_uaq.c,v 1.3 2022/04/24 00:04:10 jmatthew Exp $	*/
 /*-
  * Copyright (c) 2021 Jonathan Matthew <jonathan@d14n.org>
  * All rights reserved.
@@ -75,7 +75,7 @@ int	uaqdebug = 0;
 #define UAQ_RX_BUF_ALIGN	8
 
 #define UAQ_TX_BUFSZ		16384
-#define UAQ_RX_BUFSZ		32768
+#define UAQ_RX_BUFSZ		(62 * 1024)
 
 #define UAQ_CTL_READ		1
 #define UAQ_CTL_WRITE		2
