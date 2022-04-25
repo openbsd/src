@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.39 2022/04/01 17:22:07 claudio Exp $ */
+/*	$OpenBSD: roa.c,v 1.40 2022/04/25 10:52:09 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -65,7 +65,7 @@ roa_parse_addr(const ASN1_OCTET_STRING *os, enum afi afi, struct parse *p)
 
 	if (sk_ASN1_TYPE_num(seq) != 1 &&
 	    sk_ASN1_TYPE_num(seq) != 2) {
-		warnx("%s: RFC 6482 section 3.3: adddress: "
+		warnx("%s: RFC 6482 section 3.3: address: "
 		    "want 1 or 2 elements, have %d",
 		    p->fn, sk_ASN1_TYPE_num(seq));
 		goto out;
