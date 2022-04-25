@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksmn.c,v 1.6 2022/03/11 18:00:50 mpi Exp $	*/
+/*	$OpenBSD: ksmn.c,v 1.7 2022/04/25 16:17:19 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Bryan Steele <brynet@openbsd.org>
@@ -42,6 +42,7 @@
   *     [31:21]  Current reported temperature.
   */
 #define SMU_17H_THM	0x59800
+#define SMU_17H_CCD_THM(o, x)	(SMU_17H_THM + (o) + ((x) * 4))
 #define GET_CURTMP(r)	(((r) >> 21) & 0x7ff)
 
 /*
@@ -50,6 +51,8 @@
  */
 #define CURTMP_17H_RANGE_SEL	(1 << 19)
 #define CURTMP_17H_RANGE_ADJUST	490
+#define CURTMP_CCD_VALID	(1 << 11)
+#define CURTMP_CCD_MASK		0x7ff
 
 /*
  * Undocumented tCTL offsets gleamed from Linux k10temp driver.
@@ -75,13 +78,18 @@ struct ksmn_softc {
 	pcitag_t		sc_pcitag;
 
 	int			sc_tctl_offset;
+	unsigned int		sc_ccd_valid;		/* available Tccds */
+	unsigned int		sc_ccd_offset;
 
-	struct ksensor		sc_sensor;
 	struct ksensordev	sc_sensordev;
+	struct ksensor		sc_sensor;		/* Tctl */
+	struct ksensor		sc_ccd_sensor[12];	/* Tccd */
 };
 
 int	ksmn_match(struct device *, void *, void *);
 void	ksmn_attach(struct device *, struct device *, void *);
+uint32_t	ksmn_read_reg(struct ksmn_softc *, uint32_t);
+void	ksmn_ccd_attach(struct ksmn_softc *, int);
 void	ksmn_refresh(void *);
 
 const struct cfattach ksmn_ca = {
@@ -113,7 +121,9 @@ ksmn_attach(struct device *parent, struct device *self, void *aux)
 	struct ksmn_softc	*sc = (struct ksmn_softc *)self;
 	struct pci_attach_args	*pa = aux;
 	struct curtmp_offset	*p;
-	extern char		cpu_model[];
+	struct cpu_info		*ci = curcpu();
+	extern char		 cpu_model[];
+
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
@@ -122,6 +132,7 @@ ksmn_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof(sc->sc_sensordev.xname));
 
 	sc->sc_sensor.type = SENSOR_TEMP;
+	snprintf(sc->sc_sensor.desc, sizeof(sc->sc_sensor.desc), "Tctl");
 	sensor_attach(&sc->sc_sensordev, &sc->sc_sensor);
 
 	/*
@@ -136,6 +147,38 @@ ksmn_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_tctl_offset = p->tctl_offset;
 	}
 
+	sc->sc_ccd_offset = 0x154;
+
+	if (ci->ci_family == 0x17 || ci->ci_family == 0x18) {
+		switch (ci->ci_model) {
+		case 0x1:	/* Zen */
+		case 0x8:	/* Zen+ */
+		case 0x11:	/* Zen APU */
+		case 0x18:	/* Zen+ APU */
+			ksmn_ccd_attach(sc, 4);
+			break;
+		case 0x31:	/* Zen2 Threadripper */
+		case 0x60:	/* Renoir */
+		case 0x68:	/* Lucienne */
+		case 0x71:	/* Zen2 */
+			ksmn_ccd_attach(sc, 8);
+			break;
+		}
+	} else if (ci->ci_family == 0x19) {
+		uint32_t m = ci->ci_model;
+
+		if ((m >= 0x40 && m <= 0x4f) ||
+		    (m >= 0x10 && m <= 0x1f) ||
+		    (m >= 0xa0 && m <= 0xaf))
+			sc->sc_ccd_offset = 0x300;
+
+		if ((m >= 0x10 && m <= 0x1f) ||
+		    (m >= 0xa0 && m <= 0xaf))
+			ksmn_ccd_attach(sc, 12);
+		else
+			ksmn_ccd_attach(sc, 8);
+	}
+
 	if (sensor_task_register(sc, ksmn_refresh, 5) == NULL) {
 		printf(": unable to register update task\n");
 		return;
@@ -146,18 +189,49 @@ ksmn_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 }
 
+uint32_t
+ksmn_read_reg(struct ksmn_softc *sc, uint32_t addr)
+{
+	uint32_t reg;
+	int s;
+
+	s = splhigh();
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, SMN_17H_ADDR_R, addr);
+	reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, SMN_17H_DATA_R);
+	splx(s);
+	return reg;
+}
+
+void
+ksmn_ccd_attach(struct ksmn_softc *sc, int nccd)
+{
+	struct ksensor *s;
+	uint32_t reg;
+	int i;
+
+	KASSERT(nccd > 0 && nccd < nitems(sc->sc_ccd_sensor));
+
+	for (i = 0; i < nccd; i++) {
+		reg = ksmn_read_reg(sc, SMU_17H_CCD_THM(sc->sc_ccd_offset, i));
+		if (reg & CURTMP_CCD_VALID) {
+			sc->sc_ccd_valid |= (1 << i);
+			s = &sc->sc_ccd_sensor[i];
+			s->type = SENSOR_TEMP;
+			snprintf(s->desc, sizeof(s->desc), "Tccd%d", i);
+			sensor_attach(&sc->sc_sensordev, s);
+		}
+	}
+}
+
 void
 ksmn_refresh(void *arg)
 {
 	struct ksmn_softc	*sc = arg;
 	struct ksensor		*s = &sc->sc_sensor;
 	pcireg_t		reg;
-	int 			raw, offset = 0;
+	int 			i, raw, offset = 0;
 
-	pci_conf_write(sc->sc_pc, sc->sc_pcitag, SMN_17H_ADDR_R,
-	    SMU_17H_THM);
-	reg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, SMN_17H_DATA_R);
-
+	reg = ksmn_read_reg(sc, SMU_17H_THM);
 	raw = GET_CURTMP(reg);
 	if ((reg & CURTMP_17H_RANGE_SEL) != 0)
 		offset -= CURTMP_17H_RANGE_ADJUST;
@@ -166,5 +240,16 @@ ksmn_refresh(void *arg)
 	offset *= 100000;
 
 	/* convert raw (in steps of 0.125C) to uC, add offset, uC to uK. */
-	s->value = ((raw * 125000) + offset) + 273150000;
+	s->value = raw * 125000 + offset + 273150000;
+
+	offset = CURTMP_17H_RANGE_ADJUST * 100000;
+	for (i = 0; i < nitems(sc->sc_ccd_sensor); i++) {
+		if (sc->sc_ccd_valid & (1 << i)) {
+			s = &sc->sc_ccd_sensor[i];
+			reg = ksmn_read_reg(sc,
+			    SMU_17H_CCD_THM(sc->sc_ccd_offset, i));
+			s->value = (reg & CURTMP_CCD_MASK) * 125000 - offset +
+			    273150000;
+		}
+	}
 }
