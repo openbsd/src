@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.73 2022/04/23 14:39:16 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.74 2022/04/25 13:07:53 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -472,7 +472,7 @@ add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 {
 	struct uuid		uuid, gp_type;
 	int			rslt;
-	uint64_t		end, freesectors, gpbytes, start;
+	uint64_t		end, freesectors, start;
 	uint32_t		status, pn;
 
 	uuid_dec_be(beuuid, &uuid);
@@ -514,10 +514,6 @@ add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 		goto done;
 
 	uuid_enc_le(&gp[pn].gp_guid, &uuid);
-	gpbytes = gh.gh_part_num * gh.gh_part_size;
-	gh.gh_part_csum = crc32((unsigned char *)&gp, gpbytes);
-	gh.gh_csum = 0;
-	gh.gh_csum = crc32((unsigned char *)&gh, gh.gh_size);
 
 	return 0;
 
