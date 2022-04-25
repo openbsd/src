@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.74 2021/10/10 15:34:21 krw Exp $	*/
+/*	$OpenBSD: disk.c,v 1.75 2022/04/25 17:10:09 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -37,6 +37,9 @@
 
 struct disk		disk;
 struct disklabel	dl;
+
+char		*readsectors(const uint64_t, const uint32_t);
+int		 writesectors(const void *, const uint64_t, const uint32_t);
 
 void
 DISK_open(const char *name, const int oflags)
@@ -114,7 +117,7 @@ DISK_printgeometry(const char *units)
  * The caller must free() the returned memory!
  */
 char *
-DISK_readsectors(const uint64_t sector, const uint32_t count)
+readsectors(const uint64_t sector, const uint32_t count)
 {
 	char			*secbuf;
 	ssize_t			 len;
@@ -156,8 +159,7 @@ DISK_readsectors(const uint64_t sector, const uint32_t count)
 }
 
 int
-DISK_writesectors(const char *buf, const uint64_t sector,
-    const uint32_t count)
+writesectors(const void *buf, const uint64_t sector, const uint32_t count)
 {
 	ssize_t			len;
 	off_t			off, where;
@@ -189,4 +191,42 @@ DISK_writesectors(const char *buf, const uint64_t sector,
 	}
 
 	return 0;
+}
+
+int
+DISK_readbytes(void *buf, const uint64_t sector, const size_t sz)
+{
+	char			*secbuf;
+	uint32_t		 count;
+
+	count = (sz + dl.d_secsize - 1) / dl.d_secsize;
+
+	secbuf = readsectors(sector, count);
+	if (secbuf == NULL)
+		return -1;
+
+	memcpy(buf, secbuf, sz);
+	free(secbuf);
+
+	return 0;
+}
+
+int
+DISK_writebytes(const void *buf, const uint64_t sector, const size_t sz)
+{
+	char 			*secbuf;
+	uint32_t		 count;
+	int			 rslt;
+
+	count = (sz + dl.d_secsize - 1) / dl.d_secsize;
+
+	secbuf = readsectors(sector, count);
+	if (secbuf == NULL)
+		return -1;
+
+	memcpy(secbuf, buf, sz);
+	rslt = writesectors(secbuf, sector, count);
+	free(secbuf);
+
+	return rslt;
 }

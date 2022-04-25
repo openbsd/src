@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.74 2022/04/25 13:07:53 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.75 2022/04/25 17:10:09 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -142,15 +142,10 @@ int
 get_header(const uint64_t sector)
 {
 	struct gpt_header	 legh;
-	char			*secbuf;
 	uint64_t		 gpbytes, gpsectors, lba_end;
 
-	secbuf = DISK_readsectors(sector, 1);
-	if (secbuf == NULL)
+	if (DISK_readbytes(&legh, sector, sizeof(legh)))
 		return -1;
-
-	memcpy(&legh, secbuf, sizeof(struct gpt_header));
-	free(secbuf);
 
 	gh.gh_sig = letoh64(legh.gh_sig);
 	if (gh.gh_sig != GPTSIGNATURE) {
@@ -267,23 +262,17 @@ get_header(const uint64_t sector)
 int
 get_partition_table(void)
 {
-	char			*secbuf;
-	uint64_t		 gpbytes, gpsectors;
+	uint64_t		 gpbytes;
 	uint32_t		 gh_part_csum;
 
 	DPRINTF("gpt partition table being read from LBA %llu\n",
 	    gh.gh_part_lba);
 
 	gpbytes = gh.gh_part_num * gh.gh_part_size;
-	gpsectors = (gpbytes + dl.d_secsize - 1) / dl.d_secsize;
 	memset(&gp, 0, sizeof(gp));
 
-	secbuf = DISK_readsectors(gh.gh_part_lba, gpsectors);
-	if (secbuf == NULL)
+	if (DISK_readbytes(&gp, gh.gh_part_lba, gpbytes))
 		return -1;
-
-	memcpy(&gp, secbuf, gpbytes);
-	free(secbuf);
 
 	gh_part_csum = gh.gh_part_csum;
 	gh.gh_part_csum = crc32((unsigned char *)&gp, gpbytes);
@@ -632,44 +621,35 @@ GPT_init(const int how)
 void
 GPT_zap_headers(void)
 {
-	char			*secbuf;
-	uint64_t		 sig;
+	struct gpt_header	legh;
 
-	secbuf = DISK_readsectors(GPTSECTOR, 1);
-	if (secbuf == NULL)
+	if (DISK_readbytes(&legh, GPTSECTOR, sizeof(legh)))
 		return;
 
-	memcpy(&sig, secbuf, sizeof(sig));
-	if (letoh64(sig) == GPTSIGNATURE) {
-		memset(secbuf, 0, dl.d_secsize);
-		if (DISK_writesectors(secbuf, GPTSECTOR, 1))
+	if (letoh64(legh.gh_sig) == GPTSIGNATURE) {
+		memset(&legh, 0, sizeof(legh));
+		if (DISK_writebytes(&legh, GPTSECTOR, sizeof(legh)))
 			DPRINTF("Unable to zap GPT header @ sector %d",
 			    GPTSECTOR);
 	}
-	free(secbuf);
 
-	secbuf = DISK_readsectors(DL_GETDSIZE(&dl) - 1, 1);
-	if (secbuf == NULL)
+	if (DISK_readbytes(&legh, DL_GETDSIZE(&dl) - 1, sizeof(legh)))
 		return;
 
-	memcpy(&sig, secbuf, sizeof(sig));
-	if (letoh64(sig) == GPTSIGNATURE) {
-		memset(secbuf, 0, dl.d_secsize);
-		if (DISK_writesectors(secbuf, DL_GETDSIZE(&dl) - 1, 1))
+	if (letoh64(legh.gh_sig) == GPTSIGNATURE) {
+		memset(&legh, 0, GPTMINHDRSIZE);
+		if (DISK_writebytes(&legh, DL_GETDSIZE(&dl) - 1, sizeof(legh)))
 			DPRINTF("Unable to zap GPT header @ sector %llu",
 			    DL_GETDSIZE(&dl) - 1);
 	}
-	free(secbuf);
 }
 
 int
 GPT_write(void)
 {
 	struct gpt_header	 legh;
-	char			*secbuf;
 	uint64_t		 altgh, altgp;
 	uint64_t		 gpbytes, gpsectors;
-	int			 rslt;
 
 	if (MBR_write(&gmbr))
 		return -1;
@@ -679,10 +659,6 @@ GPT_write(void)
 
 	altgh = DL_GETDSIZE(&dl) - 1;
 	altgp = altgh - gpsectors;
-
-	secbuf = DISK_readsectors(GPTSECTOR, 1);
-	if (secbuf == NULL)
-		return -1;
 
 	legh.gh_sig = htole64(GPTSIGNATURE);
 	legh.gh_rev = htole32(GPTREVISION);
@@ -698,12 +674,10 @@ GPT_write(void)
 	legh.gh_part_num = htole32(gh.gh_part_num);
 	legh.gh_part_size = htole32(GPTMINPARTSIZE);
 	legh.gh_part_csum = htole32(crc32((unsigned char *)&gp, gpbytes));
-
 	legh.gh_csum = htole32(crc32((unsigned char *)&legh, gh.gh_size));
-	memcpy(secbuf, &legh, sizeof(legh));
-	rslt = DISK_writesectors(secbuf, GPTSECTOR, 1);
-	free(secbuf);
-	if (rslt)
+
+	if (DISK_writebytes(&legh, GPTSECTOR, gh.gh_size) ||
+	    DISK_writebytes(&gp, GPTSECTOR + 1, gpbytes))
 		return -1;
 
 	legh.gh_lba_self = htole64(altgh);
@@ -712,19 +686,8 @@ GPT_write(void)
 	legh.gh_csum = 0;
 	legh.gh_csum = htole32(crc32((unsigned char *)&legh, gh.gh_size));
 
-	secbuf = DISK_readsectors(altgh, 1);
-	if (secbuf == NULL)
-		return -1;
-
-	memcpy(secbuf, &legh, gh.gh_size);
-	rslt = DISK_writesectors(secbuf, altgh, 1);
-	free(secbuf);
-	if (rslt)
-		return -1;
-
-	if (DISK_writesectors((const char *)&gp, GPTSECTOR + 1, gpsectors))
-		return -1;
-	if (DISK_writesectors((const char *)&gp, altgp, gpsectors))
+	if (DISK_writebytes(&legh, altgh, gh.gh_size) ||
+	    DISK_writebytes(&gp, altgp, gpbytes))
 		return -1;
 
 	/* Refresh in-kernel disklabel from the updated disk information. */
