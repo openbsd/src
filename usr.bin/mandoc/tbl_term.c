@@ -1,7 +1,7 @@
-/*	$OpenBSD: tbl_term.c,v 1.64 2022/04/08 16:53:40 schwarze Exp $ */
+/* $OpenBSD: tbl_term.c,v 1.65 2022/04/26 14:46:30 schwarze Exp $ */
 /*
+ * Copyright (c) 2011-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2011-2021 Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -288,6 +288,7 @@ term_tbl(struct termp *tp, const struct tbl_span *sp)
 			}
 			tp->tcol++;
 			tp->col = 0;
+			tp->flags &= ~(TERMP_BACKAFTER | TERMP_BACKBEFORE);
 			tbl_data(tp, sp->opts, cp, dp, tp->tbl.cols + ic);
 			if (dp != NULL &&
 			    (ic || sp->layout->first->pos != TBL_CELL_SPAN)) {

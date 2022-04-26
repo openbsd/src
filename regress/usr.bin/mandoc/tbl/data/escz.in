@@ -1,0 +1,14 @@
+.\" $OpenBSD: escz.in,v 1.1 2022/04/26 14:46:30 schwarze Exp $
+.TH TBL-DATA-ESCZ 1 "April 26, 2022"
+.SH NAME
+tbl-data-escz \- non-advancing glyph at the end of a tbl(7) cell
+.SH DESCRIPTION
+initial text
+.TS
+tab(:);
+LL.
+a:b
+c\zd:e
+.TE
+.sp
+final text
