@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.50 2022/04/23 18:47:08 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.51 2022/04/26 20:00:18 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -856,9 +856,7 @@ asn1_ex_c2i(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *it)
 		break;
 
 	case V_ASN1_BIT_STRING:
-		p = CBS_data(content);
-		if (!c2i_ASN1_BIT_STRING((ASN1_BIT_STRING **)pval, &p,
-		    CBS_len(content)))
+		if (!c2i_ASN1_BIT_STRING_cbs((ASN1_BIT_STRING **)pval, content))
 			goto err;
 		break;
 

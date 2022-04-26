@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.34 2022/04/23 18:56:54 jsing Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.35 2022/04/26 20:00:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -291,7 +291,7 @@ i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 	return (ret);
 }
 
-static int
+int
 c2i_ASN1_BIT_STRING_cbs(ASN1_BIT_STRING **out_abs, CBS *cbs)
 {
 	ASN1_BIT_STRING *abs = NULL;
@@ -300,8 +300,13 @@ c2i_ASN1_BIT_STRING_cbs(ASN1_BIT_STRING **out_abs, CBS *cbs)
 	uint8_t unused_bits;
 	int ret = 0;
 
-	if (out_abs == NULL || *out_abs != NULL)
+	if (out_abs == NULL)
 		goto err;
+
+	if (*out_abs != NULL) {
+		ASN1_BIT_STRING_free(*out_abs);
+		*out_abs = NULL;
+	}
 
 	if (!CBS_get_u8(cbs, &unused_bits)) {
 		ASN1error(ASN1_R_STRING_TOO_SHORT);
