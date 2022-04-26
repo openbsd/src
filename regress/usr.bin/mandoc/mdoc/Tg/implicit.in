@@ -1,4 +1,4 @@
-.\" $OpenBSD: implicit.in,v 1.1 2022/04/26 11:28:35 schwarze Exp $
+.\" $OpenBSD: implicit.in,v 1.2 2022/04/26 15:04:46 schwarze Exp $
 .Dd $Mdocdate: April 26 2022 $
 .Dt TG-IMPLICIT 1
 .Os
@@ -9,6 +9,6 @@
 BEGINTEST
 .Pp
 .Tg explicit
-.Sy implicit is unsused
+.Sy implicit is unused
 .Pp
 ENDTEST
