@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.28 2022/01/04 06:20:37 florian Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.29 2022/04/26 14:50:04 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -971,7 +971,8 @@ build_packet(uint8_t message_type, char *if_name, uint32_t xid,
 #endif /* SMALL */
 	{
 		if (gethostname(dhcp_hostname + 2,
-		    sizeof(dhcp_hostname) - 2) == 0) {
+		    sizeof(dhcp_hostname) - 2) == 0 &&
+		    dhcp_hostname[2] != '\0') {
 			if ((c = strchr(dhcp_hostname + 2, '.')) != NULL)
 				*c = '\0';
 			dhcp_hostname[1] = strlen(dhcp_hostname + 2);
