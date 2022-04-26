@@ -1,0 +1,15 @@
+TG-IMPLICIT(1) - General Commands Manual
+
+# NAME
+
+**Tg-implicit** - overriding implicit tagging
+
+# DESCRIPTION
+
+BEGINTEST
+
+**implicit is unsused**
+
+ENDTEST
+
+OpenBSD - April 26, 2022

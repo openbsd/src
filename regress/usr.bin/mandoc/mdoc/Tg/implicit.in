@@ -1,0 +1,14 @@
+.\" $OpenBSD: implicit.in,v 1.1 2022/04/26 11:28:35 schwarze Exp $
+.Dd $Mdocdate: April 26 2022 $
+.Dt TG-IMPLICIT 1
+.Os
+.Sh NAME
+.Nm Tg-implicit
+.Nd overriding implicit tagging
+.Sh DESCRIPTION
+BEGINTEST
+.Pp
+.Tg explicit
+.Sy implicit is unsused
+.Pp
+ENDTEST

@@ -1,6 +1,7 @@
-/* $OpenBSD: tag.c,v 1.36 2020/04/19 16:26:11 schwarze Exp $ */
+/* $OpenBSD: tag.c,v 1.37 2022/04/26 11:28:35 schwarze Exp $ */
 /*
- * Copyright (c) 2015,2016,2018,2019,2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2015, 2016, 2018, 2019, 2020, 2022
+ *               Ingo Schwarze <schwarze@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -78,7 +79,7 @@ tag_free(void)
 
 /*
  * Set a node where a term is defined,
- * unless it is already defined at a lower priority.
+ * unless the term is already defined at a lower priority.
  */
 void
 tag_put(const char *s, int prio, struct roff_node *n)
@@ -90,6 +91,18 @@ tag_put(const char *s, int prio, struct roff_node *n)
 	unsigned int		 slot;
 
 	assert(prio <= TAG_FALLBACK);
+
+	/*
+	 * If the node is already tagged, the existing tag is
+	 * explicit and we are now about to add an implicit tag.
+	 * Don't do that; just skip implicit tagging if the author
+	 * specified an explicit tag.
+	 */
+
+	if (n->flags & NODE_ID)
+		return;
+
+	/* Determine the implicit tag. */
 
 	if (s == NULL) {
 		if (n->child == NULL || n->child->type != ROFFT_TEXT)
@@ -148,7 +161,7 @@ tag_put(const char *s, int prio, struct roff_node *n)
 	 */
 
 	else if (entry->prio < prio)
-			return;
+		return;
 
 	/*
 	 * If the existing entry is worse, clear it.
