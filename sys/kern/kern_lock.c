@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lock.c,v 1.71 2020/03/05 09:28:31 claudio Exp $	*/
+/*	$OpenBSD: kern_lock.c,v 1.72 2022/04/26 15:31:14 dv Exp $	*/
 
 /*
  * Copyright (c) 2017 Visa Hankala
@@ -33,7 +33,7 @@
 #endif
 
 /* CPU-dependent timing, this needs to be settable from ddb. */
-int __mp_lock_spinout = 200000000;
+int __mp_lock_spinout = INT_MAX;
 #endif /* MP_LOCKDEBUG */
 
 #ifdef MULTIPROCESSOR
