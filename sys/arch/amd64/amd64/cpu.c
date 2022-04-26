@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.155 2022/02/21 11:03:39 mpi Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.156 2022/04/26 08:35:30 claudio Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -558,6 +558,11 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	ci->ci_func = caa->cpu_func;
 	ci->ci_handled_intr_level = IPL_NONE;
 
+#ifndef SMALL_KERNEL
+	strlcpy(ci->ci_sensordev.xname, ci->ci_dev->dv_xname,
+	    sizeof(ci->ci_sensordev.xname));
+#endif
+
 #if defined(MULTIPROCESSOR)
 	/*
 	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
@@ -663,6 +668,11 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #if NVMM > 0
 	cpu_init_vmm(ci);
 #endif /* NVMM > 0 */
+
+#ifndef SMALL_KERNEL
+	if (ci->ci_sensordev.sensors_count > 0)
+		sensordev_install(&ci->ci_sensordev);
+#endif
 }
 
 static void

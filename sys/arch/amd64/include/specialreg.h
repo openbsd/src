@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.91 2021/11/19 04:00:53 guenther Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.92 2022/04/26 08:35:30 claudio Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -235,6 +235,8 @@
  */
 #define	TPM_SENSOR	0x00000001	 /* Digital temp sensor */
 #define	TPM_ARAT	0x00000004	 /* APIC Timer Always Running */
+/* Thermal and Power Management (CPUID function 0x6) ECX bits */
+#define	TPM_EFFFREQ	0x00000001	 /* APERF & MPERF MSR present */
 
  /*
   * "Architectural Performance Monitoring" bits (CPUID function 0x0a):
@@ -369,6 +371,8 @@
 #define MSR_PERFCTR0		0x0c1
 #define MSR_PERFCTR1		0x0c2
 #define MSR_FSB_FREQ		0x0cd	/* Core Duo/Solo only */
+#define MSR_MPERF		0x0e7
+#define MSR_APERF		0x0e8
 #define MSR_MTRRcap		0x0fe
 #define MTRRcap_FIXED		0x100	/* bit 8 - fixed MTRRs supported */
 #define MTRRcap_WC		0x400	/* bit 10 - WC type supported */
