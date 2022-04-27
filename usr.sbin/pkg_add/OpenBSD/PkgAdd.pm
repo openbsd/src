@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.128 2022/04/16 09:32:40 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.129 2022/04/27 15:19:03 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -331,9 +331,6 @@ sub display_timestamp
 sub find_kept_handle
 {
 	my ($set, $n, $state) = @_;
-	unless (defined $n->{location} && defined $n->{location}{update_info}) {
-		$n->complete($state);
-	}
 	my $plist = $n->dependency_info;
 	return if !defined $plist;
 	my $pkgname = $plist->pkgname;
@@ -382,6 +379,23 @@ sub figure_out_kept
 
 	for my $n ($set->newer) {
 		$set->find_kept_handle($n, $state);
+	}
+}
+
+sub precomplete_handle
+{
+	my ($set, $n, $state) = @_;
+	unless (defined $n->{location} && defined $n->{location}{update_info}) {
+		$n->complete($state);
+	}
+}
+
+sub precomplete
+{
+	my ($set, $state) = @_;
+
+	for my $n ($set->newer) {
+		$set->precomplete_handle($n, $state);
 	}
 }
 
@@ -950,14 +964,13 @@ sub process_set
 		return ();
 	}
 
+	$set->precomplete($state);
 	for my $handle ($set->newer) {
 		if ($state->tracker->is_installed($handle->pkgname)) {
 			$set->move_kept($handle);
 			$handle->{tweaked} = OpenBSD::Add::tweak_package_status($handle->pkgname, $state);
 		}
 	}
-
-	$set->figure_out_kept($state);
 
 	if (newer_has_errors($set, $state)) {
 		return ();
@@ -972,6 +985,8 @@ sub process_set
 		$set->solver->check_for_loops($state);
 		return (@deps, $set);
 	}
+
+	$set->figure_out_kept($state);
 
 	if ($set->newer == 0 && $set->older_to_do == 0) {
 		$state->tracker->uptodate($set);
