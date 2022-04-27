@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.40 2022/04/19 12:51:32 espie Exp $
+# $OpenBSD: Installed.pm,v 1.41 2022/04/27 14:11:27 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -69,6 +69,8 @@ sub setup_cache
 	
 	require OpenBSD::PackageRepository::Cache;
 
+	# TODO before 7.2: if the repo is package-stable, also use 
+	# the cache for release because it ought to be more recent
 	$repository->{info_cache} = 
 	    OpenBSD::PackageRepository::Cache->new($state, $setlist);
 }
