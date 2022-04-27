@@ -10,7 +10,10 @@ DDEESSCCRRIIPPTTIIOONN
      single z with font escape: >xxbboolldd<
      single z with nospace escape: > new line<
      single z with overstrike: >abc<
+     single z with h escape: >m<
+     single z with char and h with positive argument: >a  b<
+     single z with char and h with zero argument: >ab<
      single z near the end of the line: ><
      double z: >x<
 
-OpenBSD                          July 4, 2017                          OpenBSD
+OpenBSD                         April 27, 2022                         OpenBSD

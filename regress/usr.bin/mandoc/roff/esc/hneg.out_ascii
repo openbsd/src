@@ -1,0 +1,10 @@
+ESC-HNEG(1)                 General Commands Manual                ESC-HNEG(1)
+
+NNAAMMEE
+     eesscc--hhnneegg - the roff escape h sequence with a negative argument
+
+DDEESSCCRRIIPPTTIIOONN
+     simple: >d<c
+     after z escape: >d<c
+
+OpenBSD                         April 27, 2022                         OpenBSD

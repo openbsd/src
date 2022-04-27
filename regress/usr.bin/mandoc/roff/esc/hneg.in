@@ -1,0 +1,11 @@
+.\" $OpenBSD: hneg.in,v 1.1 2022/04/27 13:30:19 schwarze Exp $
+.Dd $Mdocdate: April 27 2022 $
+.Dt ESC-HNEG 1
+.Os
+.Sh NAME
+.Nm esc-hneg
+.Nd the roff escape h sequence with a negative argument
+.Sh DESCRIPTION
+simple: >abc\h'-3'd<
+.br
+after z escape: >ab\zc\h'-2'd<
