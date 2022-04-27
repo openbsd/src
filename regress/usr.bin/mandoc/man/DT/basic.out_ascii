@@ -1,0 +1,21 @@
+DT-BASIC(1)                 General Commands Manual                DT-BASIC(1)
+
+NNAAMMEE
+       DT-basic - restore the default tabulator positions
+
+DDEESSCCRRIIPPTTIIOONN
+       Default tabs are every five columns:
+       1234 1234 1234 1234 1234
+       one  two  three     four
+
+       Custom tabs: column 6, then every 8 columns:
+       12345 1234567 1234567 1234567
+       one   two     three   four
+
+       bboolldd tteexxtt
+
+       Back to the default:
+       1234 1234 1234 1234 1234
+       one  two  three     four
+
+OpenBSD                         April 27, 2022                     DT-BASIC(1)

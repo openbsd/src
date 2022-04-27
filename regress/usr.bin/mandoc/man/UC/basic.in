@@ -1,0 +1,10 @@
+.\" $OpenBSD: basic.in,v 1.1 2022/04/27 17:04:15 schwarze Exp $
+.TH UC-BASIC 1 "April 27, 2022"
+.SH NAME
+UC-basic \- the University of California footer macro
+.SH DESCRIPTION
+initial text
+.B
+.UC
+bold text
+final text

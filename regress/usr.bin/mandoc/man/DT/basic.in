@@ -1,0 +1,22 @@
+.\" $OpenBSD: basic.in,v 1.1 2022/04/27 17:04:15 schwarze Exp $
+.TH DT-BASIC 1 "April 27, 2022"
+.SH NAME
+DT-basic \- restore the default tabulator positions
+.SH DESCRIPTION
+.nf
+Default tabs are every five columns:
+1234 1234 1234 1234 1234
+one	two	three	four
+.PP
+Custom tabs: column 6, then every 8 columns:
+12345 1234567 1234567 1234567
+.ta 6n T 8n
+one	two	three	four
+.PP
+.B
+.DT
+bold text
+.PP
+Back to the default:
+1234 1234 1234 1234 1234
+one	two	three	four

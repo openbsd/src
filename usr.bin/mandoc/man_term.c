@@ -1,6 +1,6 @@
-/* $OpenBSD: man_term.c,v 1.189 2021/06/28 19:49:57 schwarze Exp $ */
+/* $OpenBSD: man_term.c,v 1.190 2022/04/27 17:04:15 schwarze Exp $ */
 /*
- * Copyright (c) 2010-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010-2015,2017-2020,2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -119,10 +119,10 @@ static const struct man_term_act man_term_acts[MAN_MAX - MAN_TH] = {
 	{ pre_alternate, NULL, 0 }, /* RI */
 	{ NULL, NULL, 0 }, /* RE */
 	{ pre_RS, post_RS, 0 }, /* RS */
-	{ pre_DT, NULL, 0 }, /* DT */
+	{ pre_DT, NULL, MAN_NOTEXT }, /* DT */
 	{ pre_ign, NULL, MAN_NOTEXT }, /* UC */
 	{ pre_PD, NULL, MAN_NOTEXT }, /* PD */
-	{ pre_ign, NULL, 0 }, /* AT */
+	{ pre_ign, NULL, MAN_NOTEXT }, /* AT */
 	{ pre_in, NULL, MAN_NOTEXT }, /* in */
 	{ pre_SY, post_SY, 0 }, /* SY */
 	{ NULL, NULL, 0 }, /* YS */

@@ -1,0 +1,10 @@
+.\" $OpenBSD: basic.in,v 1.1 2022/04/27 17:04:15 schwarze Exp $
+.TH AT-BASIC 1 "April 27, 2022"
+.SH NAME
+AT-basic \- the AT&T footer macro
+.SH DESCRIPTION
+initial text
+.B
+.AT
+bold text
+final text
