@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.52 2022/04/27 17:28:34 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.53 2022/04/27 17:56:13 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -774,7 +774,6 @@ asn1_ex_c2i(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *it)
 	ASN1_TYPE *typ = NULL;
 	ASN1_INTEGER **tint;
 	ASN1_BOOLEAN *tbool;
-	const uint8_t *p;
 	uint8_t u8val;
 	int ret = 0;
 
@@ -840,8 +839,7 @@ asn1_ex_c2i(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *it)
 	case V_ASN1_INTEGER:
 	case V_ASN1_ENUMERATED:
 		tint = (ASN1_INTEGER **)pval;
-		p = CBS_data(content);
-		if (!c2i_ASN1_INTEGER(tint, &p, CBS_len(content)))
+		if (!c2i_ASN1_INTEGER_cbs(tint, content))
 			goto err;
 		/* Fixup type to match the expected form */
 		(*tint)->type = utype | ((*tint)->type & V_ASN1_NEG);
