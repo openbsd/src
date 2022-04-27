@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.305 2022/03/28 06:28:47 tb Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.306 2022/04/27 14:23:37 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4988,19 +4988,27 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 		vmm_fpusave(vcpu);
 		intr_restore(s);
 
-		TRACEPOINT(vmm, guest_exit, vcpu, vrp, exit_reason);
-
 		atomic_swap_uint(&vcpu->vc_vmx_vmcs_state, VMCS_LAUNCHED);
 		exit_reason = VM_EXIT_NONE;
 
 		/* If we exited successfully ... */
 		if (ret == 0) {
-			/*
-			 * ret == 0 implies we entered the guest, and later
-			 * exited for some valid reason
-			 */
 			exitinfo = vmx_get_exit_info(
 			    &vcpu->vc_gueststate.vg_rip, &exit_reason);
+			if (!(exitinfo & VMX_EXIT_INFO_HAVE_RIP)) {
+				printf("%s: cannot read guest rip\n", __func__);
+				ret = EINVAL;
+				break;
+			}
+			if (!(exitinfo & VMX_EXIT_INFO_HAVE_REASON)) {
+				printf("%s: cant read exit reason\n", __func__);
+				ret = EINVAL;
+				break;
+			}
+			vcpu->vc_gueststate.vg_exit_reason = exit_reason;
+			TRACEPOINT(vmm, guest_exit, vcpu, vrp, exit_reason);
+
+			/* Update our state */
 			if (vmread(VMCS_GUEST_IA32_RFLAGS,
 			    &vcpu->vc_gueststate.vg_rflags)) {
 				printf("%s: can't read guest rflags during "
@@ -5009,24 +5017,10 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 				break;
                         }
 
-			/* Update our state */
-			if (!(exitinfo & VMX_EXIT_INFO_HAVE_RIP)) {
-				printf("%s: cannot read guest rip\n", __func__);
-				ret = EINVAL;
-				break;
-			}
-
-			if (!(exitinfo & VMX_EXIT_INFO_HAVE_REASON)) {
-				printf("%s: cant read exit reason\n", __func__);
-				ret = EINVAL;
-				break;
-			}
-
 			/*
 			 * Handle the exit. This will alter "ret" to EAGAIN if
 			 * the exit handler determines help from vmd is needed.
 			 */
-			vcpu->vc_gueststate.vg_exit_reason = exit_reason;
 			ret = vmx_handle_exit(vcpu);
 
 			if (vcpu->vc_gueststate.vg_rflags & PSL_I)
@@ -7325,16 +7319,12 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		vmcb->v_tlb_control = SVM_TLB_CONTROL_FLUSH_NONE;
 		svm_set_clean(vcpu, SVM_CLEANBITS_ALL);
 
-		/* Record the exit reason on successful exit */
+		/* If we exited successfully ... */
 		if (ret == 0) {
 			exit_reason = vmcb->v_exitcode;
 			vcpu->vc_gueststate.vg_exit_reason = exit_reason;
-		}
+			TRACEPOINT(vmm, guest_exit, vcpu, vrp, exit_reason);
 
-		TRACEPOINT(vmm, guest_exit, vcpu, vrp, exit_reason);
-
-		/* If we exited successfully ... */
-		if (ret == 0) {
 			vcpu->vc_gueststate.vg_rflags = vmcb->v_rflags;
 
 			/*
