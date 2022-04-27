@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: network_statement.sh,v 1.5 2021/12/03 06:44:46 anton Exp $
+#	$OpenBSD: network_statement.sh,v 1.6 2022/04/27 23:34:46 bluhm Exp $
 set -e
 
 OSPF6D=$1
@@ -92,7 +92,7 @@ route -T ${RDOMAIN1} exec ${OSPF6D} \
 route -T ${RDOMAIN2} exec ${OSPF6D} \
     -v -f ${OBJDIR}/ospf6d.2.conf
 
-sleep 50
+sleep 55
 
 echo tests
 route -T ${RDOMAIN1} exec ospf6ctl sh fib
