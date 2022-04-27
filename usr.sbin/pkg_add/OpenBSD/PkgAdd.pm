@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.129 2022/04/27 15:19:03 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.130 2022/04/27 15:27:45 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -26,11 +26,17 @@ package OpenBSD::PackingList;
 
 sub uses_old_libs
 {
-	my $plist = shift;
+	my ($plist, $state) = @_;
 	require OpenBSD::RequiredBy;
 
-	return  grep {/^\.libs\d*\-/o}
-	    OpenBSD::Requiring->new($plist->pkgname)->list;
+	if (grep {/^\.libs\d*\-/o}
+	    OpenBSD::Requiring->new($plist->pkgname)->list) {
+	    	$state->say("#1 still uses old .libs",  $plist->pkgname)
+		    if $state->verbose >= 3;
+		return 1;
+	} else {
+	    	return 0;
+	}
 }
 
 sub has_different_sig
@@ -342,7 +348,7 @@ sub find_kept_handle
 	    (!$state->{allow_replacing} ||
 	      !$state->defines('installed') &&
 	      !$plist->has_different_sig($state) &&
-	      !$plist->uses_old_libs)) {
+	      !$plist->uses_old_libs($state))) {
 	      	$set->check_security($state, $plist, $n);
 	      	return;
 	}
