@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1complex.c,v 1.1 2021/12/09 16:30:57 jsing Exp $ */
+/* $OpenBSD: asn1complex.c,v 1.2 2022/04/27 17:43:41 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -162,6 +162,8 @@ do_asn1_constructed_test(const struct asn1_constructed_test *act)
 	const uint8_t *p;
 	long err;
 	int failed = 1;
+
+	ERR_clear_error();
 
 	p = act->asn1;
 	aos = d2i_ASN1_OCTET_STRING(NULL, &p, act->asn1_len);
