@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.162 2022/04/20 14:00:38 espie Exp $
+# $OpenBSD: Delete.pm,v 1.163 2022/04/27 14:55:08 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -116,7 +116,7 @@ sub unregister_dependencies
 	my $l = OpenBSD::Requiring->new($pkgname);
 
 	for my $name ($l->list) {
-		$state->say("remove dependency on #1", $name)
+		$state->say("remove dependency of #1 on #2", $pkgname, $name)
 		    if $state->verbose >= 3;
 		local $@;
 		try {
