@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.199 2022/04/21 09:53:07 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.200 2022/04/27 11:46:19 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -618,7 +618,7 @@ rrdp_process(struct ibuf *b)
  * Assign filenames ending in ".tal" in "/etc/rpki" into "tals",
  * returning the number of files found and filled-in.
  * This may be zero.
- * Don't exceded "max" filenames.
+ * Don't exceed "max" filenames.
  */
 static int
 tal_load_default(void)
