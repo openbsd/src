@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.38 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.39 2022/04/27 17:42:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,6 +65,8 @@
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+
+#include "bytestring.h"
 
 const ASN1_ITEM ASN1_INTEGER_it = {
 	.itype = ASN1_ITYPE_PRIMITIVE,
@@ -486,104 +488,147 @@ i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 	return (ret);
 }
 
-/* Convert just ASN1 INTEGER content octets to ASN1_INTEGER structure */
-
-ASN1_INTEGER *
-c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp, long len)
+static void
+asn1_aint_twos_complement(uint8_t *data, size_t data_len)
 {
-	ASN1_INTEGER *ret = NULL;
-	const unsigned char *p, *pend;
-	unsigned char *to, *s;
-	int i;
+	uint8_t carry = 1;
+	ssize_t i;
 
-	if ((a == NULL) || ((*a) == NULL)) {
-		if ((ret = ASN1_INTEGER_new()) == NULL)
-			return (NULL);
-	} else
-		ret = (*a);
+	for (i = data_len - 1; i >= 0; i--) {
+		data[i] = (data[i] ^ 0xff) + carry;
+		if (data[i] != 0)
+			carry = 0;
+	}
+}
 
-	if (!ASN1_INTEGER_valid(ret)) {
-		/*
-		 * XXX using i for an alert is confusing,
-		 * we should call this al
-		 */
-		i = ERR_R_ASN1_LENGTH_MISMATCH;
+static int
+asn1_aint_keep_twos_padding(const uint8_t *data, size_t data_len)
+{
+	size_t i;
+
+	/*
+	 * If a two's complement value has a padding byte (0xff) and the rest
+	 * of the value is all zeros, the padding byte cannot be removed as when
+	 * converted from two's complement this becomes 0x01 (in the place of
+	 * the padding byte) followed by the same number of zero bytes.
+	 */
+	if (data_len <= 1 || data[0] != 0xff)
+		return 0;
+	for (i = 1; i < data_len; i++) {
+		if (data[i] != 0)
+			return 0;
+	}
+	return 1;
+}
+
+int
+c2i_ASN1_INTEGER_cbs(ASN1_INTEGER **out_aint, CBS *cbs)
+{
+	ASN1_INTEGER *aint = NULL;
+	uint8_t *data = NULL;
+	size_t data_len = 0;
+	uint8_t padding, val;
+	uint8_t negative = 0;
+	int ret = 0;
+
+	if (out_aint == NULL)
+		goto err;
+
+	if (*out_aint != NULL) {
+		ASN1_INTEGER_free(*out_aint);
+		*out_aint = NULL;
+	}
+
+	if (CBS_len(cbs) == 0) {
+		/* XXX INVALID ENCODING? */
+		ASN1error(ERR_R_ASN1_LENGTH_MISMATCH);
 		goto err;
 	}
-
-	p = *pp;
-	pend = p + len;
-
-	/* We must malloc stuff, even for 0 bytes otherwise it
-	 * signifies a missing NULL parameter. */
-	if (len < 0 || len > INT_MAX) {
-		i = ERR_R_ASN1_LENGTH_MISMATCH;
+	if (!CBS_peek_u8(cbs, &val))
 		goto err;
-	}
-	s = malloc(len + 1);
-	if (s == NULL) {
-		i = ERR_R_MALLOC_FAILURE;
-		goto err;
-	}
-	to = s;
-	if (!len) {
-		/* Strictly speaking this is an illegal INTEGER but we
-		 * tolerate it.
-		 */
-		ret->type = V_ASN1_INTEGER;
-	} else if (*p & 0x80) /* a negative number */ {
-		ret->type = V_ASN1_NEG_INTEGER;
-		if ((*p == 0xff) && (len != 1)) {
-			p++;
-			len--;
+
+	/* Top most bit indicates sign, padding is all zeros or all ones. */
+	negative = (val >> 7);
+	padding = ~(negative - 1) & 0xff;
+
+	/*
+	 * Ensure that the first 9 bits are not all zero or all one, as per
+	 * X.690 section 8.3.2. Remove the padding octet if possible.
+	 */
+	if (CBS_len(cbs) > 1 && val == padding) {
+		if (!asn1_aint_keep_twos_padding(CBS_data(cbs), CBS_len(cbs))) {
+			if (!CBS_get_u8(cbs, &padding))
+				goto err;
+			if (!CBS_peek_u8(cbs, &val))
+				goto err;
+			if ((val >> 7) == (padding >> 7)) {
+				/* XXX INVALID ENCODING? */
+				ASN1error(ERR_R_ASN1_LENGTH_MISMATCH);
+				goto err;
+			}
 		}
-		i = len;
-		p += i - 1;
-		to += i - 1;
-		while((!*p) && i) {
-			*(to--) = 0;
-			i--;
-			p--;
-		}
-		/* Special case: if all zeros then the number will be of
-		 * the form FF followed by n zero bytes: this corresponds to
-		 * 1 followed by n zero bytes. We've already written n zeros
-		 * so we just append an extra one and set the first byte to
-		 * a 1. This is treated separately because it is the only case
-		 * where the number of bytes is larger than len.
-		 */
-		if (!i) {
-			*s = 1;
-			s[len] = 0;
-			len++;
-		} else {
-			*(to--) = (*(p--) ^ 0xff) + 1;
-			i--;
-			for (; i > 0; i--)
-				*(to--) = *(p--) ^ 0xff;
-		}
-	} else {
-		ret->type = V_ASN1_INTEGER;
-		if ((*p == 0) && (len != 1)) {
-			p++;
-			len--;
-		}
-		memcpy(s, p, len);
 	}
 
-	free(ret->data);
-	ret->data = s;
-	ret->length = (int)len;
-	if (a != NULL)
-		(*a) = ret;
-	*pp = pend;
-	return (ret);
+	if (!CBS_stow(cbs, &data, &data_len))
+		goto err;
+	if (data_len > INT_MAX)
+		goto err;
+
+	if ((aint = ASN1_INTEGER_new()) == NULL)
+		goto err;
+
+	/*
+	 * Negative integers are handled as a separate type - convert from
+	 * two's complement for internal representation.
+	 */
+	if (negative) {
+		aint->type = V_ASN1_NEG_INTEGER;
+		asn1_aint_twos_complement(data, data_len);
+	}
+
+	aint->data = data;
+	aint->length = (int)data_len;
+	data = NULL;
+
+	*out_aint = aint;
+	aint = NULL;
+
+	ret = 1;
 
  err:
-	ASN1error(i);
-	if (a == NULL || *a != ret)
-		ASN1_INTEGER_free(ret);
-	return (NULL);
+	ASN1_INTEGER_free(aint);
+	freezero(data, data_len);
+
+	return ret;
+}
+
+ASN1_INTEGER *
+c2i_ASN1_INTEGER(ASN1_INTEGER **out_aint, const unsigned char **pp, long len)
+{
+	ASN1_INTEGER *aint = NULL;
+	CBS content;
+
+	if (out_aint != NULL) {
+		ASN1_INTEGER_free(*out_aint);
+		*out_aint = NULL;
+	}
+
+	if (len < 0) {
+		ASN1error(ASN1_R_LENGTH_ERROR);
+		return NULL;
+	}
+
+	CBS_init(&content, *pp, len);
+
+	if (!c2i_ASN1_INTEGER_cbs(&aint, &content))
+		return NULL;
+
+	*pp = CBS_data(&content);
+
+	if (out_aint != NULL)
+		*out_aint = aint;
+
+	return aint;
 }
 
 int
