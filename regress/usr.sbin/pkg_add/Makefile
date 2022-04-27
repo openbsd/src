@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.84 2022/04/21 14:59:58 espie Exp $
+# $OpenBSD: Makefile,v 1.85 2022/04/27 15:15:45 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -12,14 +12,15 @@ REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	usertest-1 usertest-2 usertest-3 cups-bug nettle-bug \
 	tying-1 tying-2 tag-delete setsprint temp-error1 \
 	temp-error2 temp-error2-as-root temp-error3 temp-error4 \
-	cksum-error system-version XXX-warning no-symlink
+	cksum-error system-version XXX-warning symlink no-symlink \
+	oldlib2
 
 REGRESS_ROOT_TARGETS = temp-error2-as-root
 
 # lots of tests that really require a vstat overhaul
 REGRESS_EXPECTED_FAILURES = collision-check1 collision-check2 \
 	collision-check5 collision-check6 collision-check7 \
-	exotest tying-2 symlink no-symlink
+	exotest tying-2 no-symlink oldlib2
 
 PERLSCRIPT = perl -I ${.CURDIR} ${.CURDIR}
 
@@ -48,7 +49,7 @@ D$i ?= ${.OBJDIR}/dest$i
 DEST$i ?= ${D$i}/usr/local
 .endfor
 
-# current maxes (used): D47, SRC30, plist27, rep7
+# current maxes (used): D49, SRC30, plist27, rep7
 pkgnames:
 	${PERLSCRIPT}/check-name
 
@@ -371,6 +372,21 @@ rep1/p2-0.tgz: plist8
 
 rep0/p4-0.tgz: plist12
 	@${WITH} -B src15 -DLIBa_VERSION=0.0 -f plist12 $@ ${CPKG}
+
+rep1/p4-1.tgz: plist12
+	@${WITH} -B src31 -DLIBa_VERSION=1.0 -f plist12 $@ ${CPKG}
+
+rep0/boost-0.tgz: 
+	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.0.0' -P't/p4:p4-*:p4-0' ${EMPTY} $@
+	
+rep1/boost-0.tgz: 
+	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.1.0' -P't/p4:p4-*:p4-1' ${EMPTY} $@
+
+rep0/Imath-0.tgz:
+	@${CREATE_PKG} -DREGRESSION_TESTING -P't/boots:boost-*:boost-0' ${EMPTY} $@
+
+rep1/Imath-0.tgz:
+	@${CREATE_PKG} -DREGRESSION_TESTING -P't/boots:boost-*:boost-0' ${EMPTY} $@
 
 rep0/o4-0.tgz:
 	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.1.0' -P't/p4:p4-*:p4-0' ${EMPTY} $@
@@ -790,6 +806,26 @@ no-symlink: rep1/d-0.tgz
 	@ROOT=${D48} ${ADD_PKG} -r -Dinstalled rep1/d-0.tgz
 	@test -f ${D48}/usr/local/f
 	@test -f ${D48}/usr/local/a
+
+# this is a "temporary" test
+# oldlibs currently do a transitive closure because people might have
+# forgotten some wantlib
+# update is supposed to detect that and try to remove any dependency
+# on oldlibs.
+
+# in the following case, Imath does NOT depend on the libs in p4,
+# but pkg_add tries to be thorough. So Imath should get updated to the
+# version in rep1, which is supposed to be "fresh" and not (possibly)
+# depend on the old lib.
+# The name IS significant: the error only happens because Imath is before
+# boost (lexicographically)
+
+oldlib2: rep0/p4-0.tgz rep0/boost-0.tgz rep0/Imath-0.tgz \
+	rep1/p4-1.tgz rep1/boost-0.tgz rep1/Imath-0.tgz
+	@-rm -rf ${D49}
+	@ROOT=${D49} ${ADD_PKG} rep0/Imath-0.tgz
+	@ROOT=${D49} PKG_PATH=${.OBJDIR}/rep1 ${ADD_PKG} -u
+	@if fgrep -q .libs ${D49}/pkgdb/Imath-0/+REQUIRING; then exit 1; fi
 
 clean:
 	-rm -rf rep* dest* plist* src* signatures.out *.ref *.out
