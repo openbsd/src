@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.5 2022/04/23 18:23:48 jsing Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.6 2022/04/27 17:43:06 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -312,7 +312,6 @@ struct asn1_integer_test asn1_integer_tests[] = {
 		.der = {0x02, 0x09, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 		.der_len = 11,
 	},
-#if 0
 	{
 		/* Invalid length. */
 		.der = {0x02, 0x00},
@@ -331,7 +330,6 @@ struct asn1_integer_test asn1_integer_tests[] = {
 		.der_len = 11,
 		.want_error = 1,
 	},
-#endif
 };
 
 #define N_ASN1_INTEGER_TESTS \
