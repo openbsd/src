@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.45 2021/11/12 16:57:24 claudio Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.46 2022/04/28 21:04:24 dv Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -839,9 +839,14 @@ again:
 		}
 		return c;
 	case '/':
-		if (peek() == '{' || peek() == '/' || peek() == '\n') {
-			return ENDFILT;
+		while (isspace(peek())) {
+			if (lgetc() == '\n') {
+				yylval.lineno++;
+				yylval.colno = 0;
+			}
 		}
+		if (peek() == '{' || peek() == '/' || peek() == '\n')
+			return ENDFILT;
 		/* FALLTHROUGH */
 	case ',':
 	case '(':
