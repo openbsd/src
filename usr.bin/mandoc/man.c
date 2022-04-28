@@ -1,7 +1,7 @@
-/*	$OpenBSD: man.c,v 1.135 2019/01/05 00:36:46 schwarze Exp $ */
+/* $OpenBSD: man.c,v 1.136 2022/04/28 10:17:37 schwarze Exp $ */
 /*
+ * Copyright (c) 2013-2015,2017-2019,2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
- * Copyright (c) 2013-2015, 2017-2019 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2011 Joerg Sonnenberger <joerg@netbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -68,6 +68,9 @@ man_hasc(char *start)
 	return (ep - cp) % 2 ? NULL : ep;
 }
 
+/*
+ * Rewind all open next-line scopes.
+ */
 void
 man_descope(struct roff_man *man, int line, int offs, char *start)
 {
@@ -272,6 +275,10 @@ man_pmacro(struct roff_man *man, int ln, char *buf, int offs)
 	return 1;
 }
 
+/*
+ * Rewind open next-line scopes
+ * unless the tok request or macro is allowed inside them.
+ */
 void
 man_breakscope(struct roff_man *man, int tok)
 {
@@ -292,10 +299,15 @@ man_breakscope(struct roff_man *man, int tok)
 		    (man_macro(n->tok)->flags & (MAN_NSCOPED | MAN_ESCOPED))
 		     == MAN_NSCOPED)
 			n = n->parent;
-
-		mandoc_msg(MANDOCERR_BLK_LINE, n->line, n->pos,
-		    "%s breaks %s", roff_name[tok], roff_name[n->tok]);
-
+		for (;;) {
+			mandoc_msg(MANDOCERR_BLK_LINE, n->line, n->pos,
+			    "%s breaks %s", roff_name[tok], roff_name[n->tok]);
+			if (n->parent->type != ROFFT_ELEM ||
+			    (man_macro(n->parent->tok)->flags &
+			     MAN_ESCOPED) == 0)
+				break;
+			n = n->parent;
+		}
 		roff_node_delete(man, n);
 		man->flags &= ~MAN_ELINE;
 	}

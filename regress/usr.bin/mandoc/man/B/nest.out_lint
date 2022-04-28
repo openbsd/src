@@ -1,0 +1,6 @@
+mandoc: nest.in:12:2: WARNING: line scope broken: IR breaks SM
+mandoc: nest.in:11:2: WARNING: line scope broken: IR breaks B
+mandoc: nest.in:15:2: WARNING: line scope broken: SH breaks SM
+mandoc: nest.in:14:2: WARNING: line scope broken: SH breaks B
+mandoc: nest.in:18:2: WARNING: line scope broken: RI breaks B
+mandoc: nest.in:17:2: WARNING: line scope broken: RI breaks B

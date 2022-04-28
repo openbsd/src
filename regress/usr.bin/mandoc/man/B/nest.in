@@ -1,0 +1,20 @@
+.\" $OpenBSD: nest.in,v 1.1 2022/04/28 10:17:38 schwarze Exp $
+.TH B-ARGS 1 "April 28, 2022"
+.SH NAME
+B-nest \- nested next-line scopes
+.SH DESCRIPTION
+initial text
+.B
+.SM
+bold text
+back to roman
+.B
+.SM
+.IR italic roman
+.B
+.SM
+.SH
+.B
+.B
+.RI section header
+final text
