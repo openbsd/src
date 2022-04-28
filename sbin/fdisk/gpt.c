@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.75 2022/04/25 17:10:09 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.76 2022/04/28 13:22:19 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -262,29 +262,48 @@ get_header(const uint64_t sector)
 int
 get_partition_table(void)
 {
+	struct gpt_partition	*legp;
 	uint64_t		 gpbytes;
+	unsigned int		 pn;
+	int			 rslt = -1;
 	uint32_t		 gh_part_csum;
 
 	DPRINTF("gpt partition table being read from LBA %llu\n",
 	    gh.gh_part_lba);
 
 	gpbytes = gh.gh_part_num * gh.gh_part_size;
-	memset(&gp, 0, sizeof(gp));
 
-	if (DISK_readbytes(&gp, gh.gh_part_lba, gpbytes))
-		return -1;
+	legp = calloc(1, gpbytes);
+	if (legp == NULL)
+		err(1, "legp");
 
-	gh_part_csum = gh.gh_part_csum;
-	gh.gh_part_csum = crc32((unsigned char *)&gp, gpbytes);
+	if (DISK_readbytes(legp, gh.gh_part_lba, gpbytes))
+		goto done;
+	gh_part_csum = crc32((unsigned char *)legp, gpbytes);
+
 	if (gh_part_csum != gh.gh_part_csum) {
 		DPRINTF("gpt partition table checksum: expected 0x%x, "
 		    "got 0x%x\n", gh.gh_part_csum, gh_part_csum);
 		/* Accept wrong-endian checksum. */
 		if (swap32(gh_part_csum) != gh.gh_part_csum)
-			return -1;
+			goto done;
 	}
 
-	return 0;
+	memset(&gp, 0, sizeof(gp));
+	for (pn = 0; pn < gh.gh_part_num; pn++) {
+		uuid_dec_le(&legp[pn].gp_type, &gp[pn].gp_type);
+		uuid_dec_le(&legp[pn].gp_guid, &gp[pn].gp_guid);
+		gp[pn].gp_lba_start = letoh64(legp[pn].gp_lba_start);
+		gp[pn].gp_lba_end = letoh64(legp[pn].gp_lba_end);
+		gp[pn].gp_attrs = letoh64(legp[pn].gp_attrs);
+		memcpy(gp[pn].gp_name, legp[pn].gp_name,
+		    sizeof(gp[pn].gp_name));
+	}
+	rslt = 0;
+
+ done:
+	free(legp);
+	return rslt;
 }
 
 int
@@ -335,7 +354,7 @@ GPT_print(const char *units, const int verbosity)
 	const int		 secsize = dl.d_secsize;
 	char			*guidstr = NULL;
 	double			 size;
-	int			 i;
+	unsigned int		 i, pn;
 	uint32_t		 status;
 
 #ifdef	DEBUG
@@ -392,10 +411,10 @@ GPT_print(const char *units, const int verbosity)
 	}
 
 	GPT_print_parthdr(verbosity);
-	for (i = 0; i < gh.gh_part_num; i++) {
-		if (uuid_is_nil(&gp[i].gp_type, NULL))
+	for (pn = 0; pn < gh.gh_part_num; pn++) {
+		if (uuid_is_nil(&gp[pn].gp_type, NULL))
 			continue;
-		GPT_print_part(i, units, verbosity);
+		GPT_print_part(pn, units, verbosity);
 	}
 }
 
@@ -414,23 +433,20 @@ void
 GPT_print_part(const unsigned int pn, const char *units, const int verbosity)
 {
 	const struct unit_type	*ut;
-	struct uuid		 guid;
 	char			*guidstr = NULL;
 	double			 size;
 	uint64_t		 sectors;
 	uint32_t		 status;
 
-	uuid_dec_le(&gp[pn].gp_type, &guid);
-	sectors = letoh64(gp[pn].gp_lba_end) - letoh64(gp[pn].gp_lba_start) + 1;
+	sectors = gp[pn].gp_lba_end - gp[pn].gp_lba_start + 1;
 	size = units_size(units, sectors, &ut);
 	printf("%c%3u: %-36s [%12lld: %12.0f%s]\n",
-	    (letoh64(gp[pn].gp_attrs) & GPTDOSACTIVE) ? '*' : ' ', pn,
-	    PRT_uuid_to_typename(&guid), letoh64(gp[pn].gp_lba_start),
+	    gp[pn].gp_attrs & GPTDOSACTIVE ? '*' : ' ', pn,
+	    PRT_uuid_to_typename(&gp[pn].gp_type), gp[pn].gp_lba_start,
 	    size, ut->ut_abbr);
 
 	if (verbosity == VERBOSE) {
-		uuid_dec_le(&gp[pn].gp_guid, &guid);
-		uuid_to_string(&guid, &guidstr, &status);
+		uuid_to_string(&gp[pn].gp_guid, &guidstr, &status);
 		if (status != uuid_s_ok)
 			printf("      <invalid partition guid>             ");
 		else
@@ -443,14 +459,13 @@ GPT_print_part(const unsigned int pn, const char *units, const int verbosity)
 int
 find_partition(const uint8_t *beuuid)
 {
-	struct uuid		uuid, gp_type;
+	struct uuid		uuid;
 	unsigned int		pn;
 
 	uuid_dec_be(beuuid, &uuid);
-	uuid_enc_le(&gp_type, &uuid);
 
 	for (pn = 0; pn < gh.gh_part_num; pn++) {
-		if (uuid_compare(&gp[pn].gp_type, &gp_type, NULL) == 0)
+		if (uuid_compare(&gp[pn].gp_type, &uuid, NULL) == 0)
 			return pn;
 	}
 	return -1;
@@ -459,13 +474,12 @@ find_partition(const uint8_t *beuuid)
 int
 add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 {
-	struct uuid		uuid, gp_type;
+	struct uuid		uuid;
 	int			rslt;
 	uint64_t		end, freesectors, start;
 	uint32_t		status, pn;
 
 	uuid_dec_be(beuuid, &uuid);
-	uuid_enc_le(&gp_type, &uuid);
 
 	for (pn = 0; pn < gh.gh_part_num; pn++) {
 		if (uuid_is_nil(&gp[pn].gp_type, NULL))
@@ -493,18 +507,14 @@ add_partition(const uint8_t *beuuid, const char *name, uint64_t sectors)
 	else if (freesectors > sectors)
 		end = start + sectors - 1;
 
-	gp[pn].gp_type = gp_type;
-	gp[pn].gp_lba_start = htole64(start);
-	gp[pn].gp_lba_end = htole64(end);
+	gp[pn].gp_type = uuid;
+	gp[pn].gp_lba_start = start;
+	gp[pn].gp_lba_end = end;
 	string_to_name(pn, name);
 
-	uuid_create(&uuid, &status);
-	if (status != uuid_s_ok)
-		goto done;
-
-	uuid_enc_le(&gp[pn].gp_guid, &uuid);
-
-	return 0;
+	uuid_create(&gp[pn].gp_guid, &status);
+	if (status == uuid_s_ok)
+		return 0;
 
  done:
 	if (pn != gh.gh_part_num)
@@ -563,7 +573,6 @@ int
 init_gp(const int how)
 {
 	struct gpt_partition	oldgp[NGPTPARTITIONS];
-	struct uuid		gp_type;
 	const uint8_t		gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
 	const uint8_t		gpt_uuid_openbsd[] = GPT_UUID_OPENBSD;
 	uint64_t		prt_ns;
@@ -574,8 +583,7 @@ init_gp(const int how)
 		memset(&gp, 0, sizeof(gp));
 	else {
 		for (pn = 0; pn < gh.gh_part_num; pn++) {
-			uuid_dec_le(&gp[pn].gp_type, &gp_type);
-			if (PRT_protected_guid(&gp_type))
+			if (PRT_protected_guid(&gp[pn].gp_type))
 				continue;
 			memset(&gp[pn], 0, sizeof(gp[pn]));
 		}
@@ -648,8 +656,11 @@ int
 GPT_write(void)
 {
 	struct gpt_header	 legh;
+	struct gpt_partition	*legp;
 	uint64_t		 altgh, altgp;
 	uint64_t		 gpbytes, gpsectors;
+	unsigned int		 pn;
+	int			 rslt = -1;
 
 	if (MBR_write(&gmbr))
 		return -1;
@@ -663,7 +674,6 @@ GPT_write(void)
 	legh.gh_sig = htole64(GPTSIGNATURE);
 	legh.gh_rev = htole32(GPTREVISION);
 	legh.gh_size = htole32(GPTMINHDRSIZE);
-	legh.gh_csum = 0;
 	legh.gh_rsvd = 0;
 	legh.gh_lba_self = htole64(GPTSECTOR);
 	legh.gh_lba_alt = htole64(altgh);
@@ -673,12 +683,27 @@ GPT_write(void)
 	legh.gh_part_lba = htole64(GPTSECTOR + 1);
 	legh.gh_part_num = htole32(gh.gh_part_num);
 	legh.gh_part_size = htole32(GPTMINPARTSIZE);
-	legh.gh_part_csum = htole32(crc32((unsigned char *)&gp, gpbytes));
+
+	legp = calloc(1, gpbytes);
+	if (legp == NULL)
+		err(1, "legp");
+
+	for (pn = 0; pn < gh.gh_part_num; pn++) {
+		uuid_enc_le(&legp[pn].gp_type, &gp[pn].gp_type);
+		uuid_enc_le(&legp[pn].gp_guid, &gp[pn].gp_guid);
+		legp[pn].gp_lba_start = htole64(gp[pn].gp_lba_start);
+		legp[pn].gp_lba_end = htole64(gp[pn].gp_lba_end);
+		legp[pn].gp_attrs = htole64(gp[pn].gp_attrs);
+		memcpy(legp[pn].gp_name, gp[pn].gp_name,
+		    sizeof(legp[pn].gp_name));
+	}
+	legh.gh_part_csum = htole32(crc32((unsigned char *)legp, gpbytes));
+	legh.gh_csum = 0;
 	legh.gh_csum = htole32(crc32((unsigned char *)&legh, gh.gh_size));
 
 	if (DISK_writebytes(&legh, GPTSECTOR, gh.gh_size) ||
-	    DISK_writebytes(&gp, GPTSECTOR + 1, gpbytes))
-		return -1;
+	    DISK_writebytes(legp, GPTSECTOR + 1, gpbytes))
+		goto done;
 
 	legh.gh_lba_self = htole64(altgh);
 	legh.gh_lba_alt = htole64(GPTSECTOR);
@@ -688,13 +713,16 @@ GPT_write(void)
 
 	if (DISK_writebytes(&legh, altgh, gh.gh_size) ||
 	    DISK_writebytes(&gp, altgp, gpbytes))
-		return -1;
+		goto done;
 
 	/* Refresh in-kernel disklabel from the updated disk information. */
 	if (ioctl(disk.dk_fd, DIOCRLDINFO, 0) == -1)
 		warn("DIOCRLDINFO");
+	rslt = 0;
 
-	return 0;
+ done:
+	free(legp);
+	return rslt;
 }
 
 int
@@ -705,8 +733,8 @@ gp_lba_start_cmp(const void *e1, const void *e2)
 	uint64_t		 o1;
 	uint64_t		 o2;
 
-	o1 = letoh64(p1->gp_lba_start);
-	o2 = letoh64(p2->gp_lba_start);
+	o1 = p1->gp_lba_start;
+	o2 = p2->gp_lba_start;
 
 	if (o1 < o2)
 		return -1;
@@ -720,18 +748,18 @@ struct gpt_partition **
 sort_gpt(void)
 {
 	static struct gpt_partition	*sgp[NGPTPARTITIONS+2];
-	unsigned int			 i, j;
+	unsigned int			 i, pn;
 
 	memset(sgp, 0, sizeof(sgp));
 
-	j = 0;
-	for (i = 0; i < gh.gh_part_num; i++) {
-		if (letoh64(gp[i].gp_lba_start) >= gh.gh_lba_start)
-			sgp[j++] = &gp[i];
+	i = 0;
+	for (pn = 0; pn < gh.gh_part_num; pn++) {
+		if (gp[pn].gp_lba_start >= gh.gh_lba_start)
+			sgp[i++] = &gp[pn];
 	}
 
-	if (j > 1) {
-		if (mergesort(sgp, j, sizeof(sgp[0]), gp_lba_start_cmp) == -1) {
+	if (i > 1) {
+		if (mergesort(sgp, i, sizeof(sgp[0]), gp_lba_start_cmp) == -1) {
 			printf("unable to sort gpt by lba start\n");
 			return NULL;
 		}
@@ -758,12 +786,12 @@ lba_free(uint64_t *start, uint64_t *end)
 		bigbs = bs;
 		ns = 0;
 		for (i = 0; sgp[i] != NULL; i++) {
-			nextbs = letoh64(sgp[i]->gp_lba_start);
+			nextbs = sgp[i]->gp_lba_start;
 			if (bs < nextbs && ns < nextbs - bs) {
 				ns = nextbs - bs;
 				bigbs = bs;
 			}
-			bs = letoh64(sgp[i]->gp_lba_end) + 1;
+			bs = sgp[i]->gp_lba_end + 1;
 		}
 		nextbs = gh.gh_lba_end + 1;
 		if (bs < nextbs && ns < nextbs - bs) {
@@ -793,8 +821,8 @@ GPT_get_lba_start(const unsigned int pn)
 
 	bs = gh.gh_lba_start;
 
-	if (letoh64(gp[pn].gp_lba_start) >= bs) {
-		bs = letoh64(gp[pn].gp_lba_start);
+	if (gp[pn].gp_lba_start >= bs) {
+		bs = gp[pn].gp_lba_start;
 	} else {
 		rslt = lba_free(&bs, NULL);
 		if (rslt == -1) {
@@ -807,15 +835,14 @@ GPT_get_lba_start(const unsigned int pn)
 	for (i = 0; i < gh.gh_part_num; i++) {
 		if (i == pn)
 			continue;
-		if (bs >= letoh64(gp[i].gp_lba_start) &&
-		    bs <= letoh64(gp[i].gp_lba_end)) {
+		if (bs >= gp[i].gp_lba_start && bs <= gp[i].gp_lba_end) {
 			printf("partition %u can't start inside partition %u\n",
 			    pn, i);
 			return -1;
 		}
 	}
 
-	gp[pn].gp_lba_start = htole64(bs);
+	gp[pn].gp_lba_start = bs;
 
 	return 0;
 }
@@ -831,10 +858,10 @@ GPT_get_lba_end(const unsigned int pn)
 	if (sgp == NULL)
 		return -1;
 
-	bs = letoh64(gp[pn].gp_lba_start);
+	bs = gp[pn].gp_lba_start;
 	ns = gh.gh_lba_end - bs + 1;
 	for (i = 0; sgp[i] != NULL; i++) {
-		nextbs = letoh64(sgp[i]->gp_lba_start);
+		nextbs = sgp[i]->gp_lba_start;
 		if (nextbs > bs) {
 			ns = nextbs - bs;
 			break;
@@ -842,7 +869,7 @@ GPT_get_lba_end(const unsigned int pn)
 	}
 	ns = getuint64("Partition size", ns, 1, ns);
 
-	gp[pn].gp_lba_end = htole64(bs + ns - 1);
+	gp[pn].gp_lba_end = bs + ns - 1;
 
 	return 0;
 }

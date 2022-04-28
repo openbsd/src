@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.123 2022/04/18 17:32:16 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.124 2022/04/28 13:22:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -190,7 +190,7 @@ PRT_protected_guid(const struct uuid *uuid)
 	char			*efistr = NULL, *str = NULL;
 	const char		*typename;
 	int			 rslt = 0;
-	unsigned int		 i;
+	unsigned int		 i, pn;
 	uint32_t		 status;
 
 	uuid_dec_be(gpt_uuid_efi_system, &uuid_efi_system);
@@ -208,8 +208,8 @@ PRT_protected_guid(const struct uuid *uuid)
 
 	if (strncmp(str, efistr, UUID_STR_LEN) == 0) {
 		/* Look for partitions indicating a need to preserve EFI Sys */
-		for (i = 0; i < gh.gh_part_num; i++) {
-			typename = PRT_uuid_to_typename(&gp[i].gp_type);
+		for (pn = 0; pn < gh.gh_part_num; pn++) {
+			typename = PRT_uuid_to_typename(&gp[pn].gp_type);
 			if (strncmp(typename, "APFS ", 5))
 				continue;
 			rslt = -1;

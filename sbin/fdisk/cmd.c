@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.158 2022/04/24 12:13:37 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.159 2022/04/28 13:22:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -253,37 +253,31 @@ Xedit(char *args, struct mbr *mbr)
 int
 gsetpid(const int pn)
 {
-	struct uuid		 gp_type, gp_guid;
 	uint32_t		 status;
 
 	GPT_print_parthdr(TERSE);
 	GPT_print_part(pn, "s", TERSE);
 
-	uuid_dec_le(&gp[pn].gp_type, &gp_type);
-	if (PRT_protected_guid(&gp_type)) {
+	if (PRT_protected_guid(&gp[pn].gp_type)) {
 		printf("can't edit partition type %s\n",
-		    PRT_uuid_to_typename(&gp_type));
+		    PRT_uuid_to_typename(&gp[pn].gp_type));
 		return -1;
 	}
 
-	gp_type = *ask_uuid(&gp_type);
-	if (PRT_protected_guid(&gp_type)) {
+	gp[pn].gp_type = *ask_uuid(&gp[pn].gp_type);
+	if (PRT_protected_guid(&gp[pn].gp_type)) {
 		printf("can't change partition type to %s\n",
-		    PRT_uuid_to_typename(&gp_type));
+		    PRT_uuid_to_typename(&gp[pn].gp_type));
 		return -1;
 	}
 
-	uuid_dec_le(&gp[pn].gp_guid, &gp_guid);
-	if (uuid_is_nil(&gp_guid, NULL)) {
-		uuid_create(&gp_guid, &status);
+	if (uuid_is_nil(&gp[pn].gp_guid, NULL)) {
+		uuid_create(&gp[pn].gp_guid, &status);
 		if (status != uuid_s_ok) {
 			printf("could not create guid for partition\n");
 			return -1;
 		}
 	}
-
-	uuid_enc_le(&gp[pn].gp_type, &gp_type);
-	uuid_enc_le(&gp[pn].gp_guid, &gp_guid);
 
 	return 0;
 }
@@ -469,7 +463,7 @@ Xflag(char *args, struct mbr *mbr)
 			return CMD_CONT;
 		}
 		if (gh.gh_sig == GPTSIGNATURE)
-			gp[pn].gp_attrs = htole64(val);
+			gp[pn].gp_attrs = val;
 		else
 			mbr->mbr_prt[pn].prt_flag = val;
 		printf("Partition %d flag value set to 0x%llx.\n", pn, val);
@@ -477,9 +471,9 @@ Xflag(char *args, struct mbr *mbr)
 		if (gh.gh_sig == GPTSIGNATURE) {
 			for (i = 0; i < gh.gh_part_num; i++) {
 				if (i == pn)
-					gp[i].gp_attrs = htole64(GPTDOSACTIVE);
+					gp[i].gp_attrs = GPTDOSACTIVE;
 				else
-					gp[i].gp_attrs = htole64(0);
+					gp[i].gp_attrs = 0;
 			}
 		} else {
 			for (i = 0; i < NDOSPART; i++) {
