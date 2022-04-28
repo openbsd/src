@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.19 2022/03/31 13:04:47 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.20 2022/04/28 17:31:29 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -14,6 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
 #include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
@@ -75,59 +76,101 @@ ASN1_time_tm_clamp_notafter(struct tm *tm)
 	return 1;
 }
 
-/* Format a time as an RFC 5280 format Generalized time */
-char *
-gentime_string_from_tm(struct tm *tm)
+/* Convert time to GeneralizedTime, X.690, 11.7. */
+ASN1_TIME *
+tm_to_gentime(struct tm *tm, ASN1_TIME *atime)
 {
-	char *ret = NULL;
+	char *time_str = NULL;
 	int year;
 
 	year = tm->tm_year + 1900;
-	if (year < 0 || year > 9999)
-		return (NULL);
+	if (year < 0 || year > 9999) {
+		ASN1error(ASN1_R_ILLEGAL_TIME_VALUE);
+		goto err;
+	}
 
-	if (asprintf(&ret, "%04u%02u%02u%02u%02u%02uZ", year,
+	if (asprintf(&time_str, "%04u%02u%02u%02u%02u%02uZ", year,
 	    tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min,
-	    tm->tm_sec) == -1)
-		ret = NULL;
+	    tm->tm_sec) == -1) {
+		time_str = NULL;
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 
-	return (ret);
+	if (atime == NULL)
+		atime = ASN1_TIME_new();
+	if (atime == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	free(atime->data);
+	atime->data = time_str;
+	atime->length = GENTIME_LENGTH;
+	atime->type = V_ASN1_GENERALIZEDTIME;
+
+	return (atime);
+
+ err:
+	free(time_str);
+
+	return (NULL);
 }
 
-/* Format a time as an RFC 5280 format UTC time */
-char *
-utctime_string_from_tm(struct tm *tm)
+/* Convert time to UTCTime, X.690, 11.8. */
+ASN1_TIME *
+tm_to_utctime(struct tm *tm, ASN1_TIME *atime)
 {
-	char *ret = NULL;
+	char *time_str = NULL;
 
-	if (tm->tm_year >= 150 || tm->tm_year < 50)
-		return (NULL);
+	if (tm->tm_year >= 150 || tm->tm_year < 50) {
+		ASN1error(ASN1_R_ILLEGAL_TIME_VALUE);
+		goto err;
+	}
 
-	if (asprintf(&ret, "%02u%02u%02u%02u%02u%02uZ",
+	if (asprintf(&time_str, "%02u%02u%02u%02u%02u%02uZ",
 	    tm->tm_year % 100,  tm->tm_mon + 1, tm->tm_mday,
-	    tm->tm_hour, tm->tm_min, tm->tm_sec) == -1)
-		ret = NULL;
+	    tm->tm_hour, tm->tm_min, tm->tm_sec) == -1) {
+		time_str = NULL;
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 
-	return (ret);
+	if (atime == NULL)
+		atime = ASN1_TIME_new();
+	if (atime == NULL) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	free(atime->data);
+	atime->data = time_str;
+	atime->length = UTCTIME_LENGTH;
+	atime->type = V_ASN1_UTCTIME;
+
+	return (atime);
+
+ err:
+	free(time_str);
+
+	return (NULL);
 }
 
-/* Format a time correctly for an X509 object as per RFC 5280 */
-char *
-rfc5280_string_from_tm(struct tm *tm)
+ASN1_TIME *
+tm_to_rfc5280_time(struct tm *tm, ASN1_TIME *atime)
 {
-	char *ret = NULL;
 	int year;
 
 	year = tm->tm_year + 1900;
-	if (year < 1950 || year > 9999)
+	if (year < 1950 || year > 9999) {
+		ASN1error(ASN1_R_ILLEGAL_TIME_VALUE);
 		return (NULL);
+	}
 
 	if (year < 2050)
-		ret = utctime_string_from_tm(tm);
-	else
-		ret = gentime_string_from_tm(tm);
+		return (tm_to_utctime(tm, atime));
 
-	return (ret);
+	return (tm_to_gentime(tm, atime));
 }
 
 /*
@@ -256,63 +299,26 @@ static ASN1_TIME *
 ASN1_TIME_adj_internal(ASN1_TIME *s, time_t t, int offset_day, long offset_sec,
     int mode)
 {
-	int allocated = 0;
 	struct tm tm;
-	size_t len;
-	char *p;
 
 	if (gmtime_r(&t, &tm) == NULL)
 		return (NULL);
 
-	if (offset_day || offset_sec) {
+	if (offset_day != 0 || offset_sec != 0) {
 		if (!OPENSSL_gmtime_adj(&tm, offset_day, offset_sec))
 			return (NULL);
 	}
 
 	switch (mode) {
 	case V_ASN1_UTCTIME:
-		p = utctime_string_from_tm(&tm);
-		break;
+		return (tm_to_utctime(&tm, s));
 	case V_ASN1_GENERALIZEDTIME:
-		p = gentime_string_from_tm(&tm);
-		break;
+		return (tm_to_gentime(&tm, s));
 	case RFC5280:
-		p = rfc5280_string_from_tm(&tm);
-		break;
+		return (tm_to_rfc5280_time(&tm, s));
 	default:
 		return (NULL);
 	}
-	if (p == NULL) {
-		ASN1error(ASN1_R_ILLEGAL_TIME_VALUE);
-		return (NULL);
-	}
-
-	if (s == NULL) {
-		if ((s = ASN1_TIME_new()) == NULL) {
-			free(p);
-			return (NULL);
-		}
-		allocated = 1;
-	}
-
-	len = strlen(p);
-	switch (len) {
-	case GENTIME_LENGTH:
-		s->type = V_ASN1_GENERALIZEDTIME;
-		break;
-	case UTCTIME_LENGTH:
-		s->type = V_ASN1_UTCTIME;
-		break;
-	default:
-		if (allocated)
-			ASN1_TIME_free(s);
-		free(p);
-		return (NULL);
-	}
-	free(s->data);
-	s->data = p;
-	s->length = len;
-	return (s);
 }
 
 ASN1_TIME *
@@ -348,31 +354,23 @@ ASN1_TIME_check(const ASN1_TIME *t)
 ASN1_GENERALIZEDTIME *
 ASN1_TIME_to_generalizedtime(const ASN1_TIME *t, ASN1_GENERALIZEDTIME **out)
 {
-	ASN1_GENERALIZEDTIME *tmp = NULL;
+	ASN1_GENERALIZEDTIME *agt = NULL;
 	struct tm tm;
-	char *str;
 
 	if (t->type != V_ASN1_GENERALIZEDTIME && t->type != V_ASN1_UTCTIME)
 		return (NULL);
 
 	if (t->type != ASN1_time_parse(t->data, t->length, &tm, t->type))
 		return (NULL);
-	if ((str = gentime_string_from_tm(&tm)) == NULL)
-		return (NULL);
 
 	if (out != NULL)
-		tmp = *out;
-	if (tmp == NULL && (tmp = ASN1_GENERALIZEDTIME_new()) == NULL) {
-		free(str);
+		agt = *out;
+	if ((agt = tm_to_gentime(&tm, agt)) == NULL)
 		return (NULL);
-	}
 	if (out != NULL)
-		*out = tmp;
+		*out = agt;
 
-	free(tmp->data);
-	tmp->data = str;
-	tmp->length = strlen(str);
-	return (tmp);
+	return (agt);
 }
 
 int
