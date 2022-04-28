@@ -1,4 +1,4 @@
-B-ARGS(1)                   General Commands Manual                  B-ARGS(1)
+B-NEST(1)                   General Commands Manual                  B-NEST(1)
 
 NNAAMMEE
        B-nest - nested next-line scopes
@@ -9,4 +9,4 @@ DDEESSCCRRIIPPTTIIOONN
 section_h_e_a_d_e_r
        final text
 
-OpenBSD                         April 28, 2022                       B-ARGS(1)
+OpenBSD                         April 28, 2022                       B-NEST(1)

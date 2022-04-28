@@ -1,5 +1,5 @@
-.\" $OpenBSD: nest.in,v 1.1 2022/04/28 10:17:38 schwarze Exp $
-.TH B-ARGS 1 "April 28, 2022"
+.\" $OpenBSD: nest.in,v 1.2 2022/04/28 10:23:31 schwarze Exp $
+.TH B-NEST 1 "April 28, 2022"
 .SH NAME
 B-nest \- nested next-line scopes
 .SH DESCRIPTION
