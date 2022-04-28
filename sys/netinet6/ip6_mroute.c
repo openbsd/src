@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.127 2021/12/15 17:21:08 deraadt Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.128 2022/04/28 17:27:14 claudio Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -130,15 +130,13 @@ void phyint_send6(struct ifnet *, struct ip6_hdr *, struct mbuf *);
  * except for netstat or debugging purposes.
  */
 struct socket  *ip6_mrouter[RT_TABLEID_MAX + 1];
-struct rttimer_queue *mrouter6q[RT_TABLEID_MAX + 1];
+struct rttimer_queue *ip6_mrouterq;
 int		ip6_mrouter_ver = 0;
 int		ip6_mrtproto;    /* for netstat only */
 struct mrt6stat	mrt6stat;
 
 #define NO_RTE_FOUND	0x1
 #define RTE_FOUND	0x2
-
-#define		MCAST_EXPIRE_TIMEOUT 30		/* seconds */
 
 /*
  * Macros to compute elapsed time efficiently
@@ -494,7 +492,6 @@ ip6_mrouter_init(struct socket *so, int v, int cmd)
 
 	ip6_mrouter[rtableid] = so;
 	ip6_mrouter_ver = cmd;
-	mrouter6q[rtableid] = rt_timer_queue_create(MCAST_EXPIRE_TIMEOUT);
 
 	return (0);
 }
@@ -544,10 +541,8 @@ ip6_mrouter_done(struct socket *so)
 		ip6_mrouter_detach(ifp);
 	}
 
-	rt_timer_queue_destroy(mrouter6q[rtableid]);
 	ip6_mrouter[inp->inp_rtableid] = NULL;
 	ip6_mrouter_ver = 0;
-	mrouter6q[rtableid] = NULL;
 
 	return 0;
 }
@@ -682,7 +677,7 @@ mf6c_add_route(struct ifnet *ifp, struct sockaddr *origin,
 	}
 
 	rt->rt_llinfo = (caddr_t)mf6c;
-	rt_timer_add(rt, mf6c_expire_route, mrouter6q[rtableid], rtableid);
+	rt_timer_add(rt, mf6c_expire_route, ip6_mrouterq, rtableid);
 	mf6c->mf6c_parent = mf6cc->mf6cc_parent;
 	rtfree(rt);
 
@@ -1010,8 +1005,7 @@ mf6c_expire_route(struct rtentry *rt, struct rttimer *rtt)
 
 	if (mf6c->mf6c_expire == 0) {
 		mf6c->mf6c_expire = 1;
-		rt_timer_add(rt, mf6c_expire_route, mrouter6q[rtableid],
-		    rtableid);
+		rt_timer_add(rt, mf6c_expire_route, ip6_mrouterq, rtableid);
 		return;
 	}
 

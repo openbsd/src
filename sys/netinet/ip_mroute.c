@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.131 2021/12/15 17:21:08 deraadt Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.132 2022/04/28 17:27:14 claudio Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ int mcast_debug = 1;
  * except for netstat or debugging purposes.
  */
 struct socket	*ip_mrouter[RT_TABLEID_MAX + 1];
-struct rttimer_queue *mrouterq[RT_TABLEID_MAX + 1];
+struct rttimer_queue *ip_mrouterq;
 uint64_t	 mrt_count[RT_TABLEID_MAX + 1];
 int		ip_mrtproto = IGMP_DVMRP;    /* for netstat only */
 
@@ -515,12 +515,10 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 	if (*v != 1)
 		return (EINVAL);
 
-	if (ip_mrouter[rtableid] != NULL ||
-	    mrouterq[rtableid] != NULL)
+	if (ip_mrouter[rtableid] != NULL)
 		return (EADDRINUSE);
 
 	ip_mrouter[rtableid] = so;
-	mrouterq[rtableid] = rt_timer_queue_create(MCAST_EXPIRE_FREQUENCY);
 
 	return (0);
 }
@@ -572,8 +570,6 @@ ip_mrouter_done(struct socket *so)
 
 	mrt_api_config = 0;
 
-	rt_timer_queue_destroy(mrouterq[rtableid]);
-	mrouterq[rtableid] = NULL;
 	ip_mrouter[rtableid] = NULL;
 	mrt_count[rtableid] = 0;
 
@@ -791,16 +787,14 @@ mfc_expire_route(struct rtentry *rt, struct rttimer *rtt)
 		return;
 
 	DPRINTF("Route domain %d origin %#08X group %#08x interface %d "
-	    "expire %s", rtt->rtt_tableid,
-	    satosin(rt->rt_gateway)->sin_addr.s_addr,
+	    "expire %s", rtableid, satosin(rt->rt_gateway)->sin_addr.s_addr,
 	    satosin(rt_key(rt))->sin_addr.s_addr,
 	    rt->rt_ifidx, mfc->mfc_expire ? "yes" : "no");
 
 	/* Not expired, add it back to the queue. */
 	if (mfc->mfc_expire == 0) {
 		mfc->mfc_expire = 1;
-		rt_timer_add(rt, mfc_expire_route, mrouterq[rtableid],
-		    rtableid);
+		rt_timer_add(rt, mfc_expire_route, ip_mrouterq, rtableid);
 		return;
 	}
 
@@ -834,8 +828,7 @@ mfc_add_route(struct ifnet *ifp, struct sockaddr *origin,
 
 	rt->rt_llinfo = (caddr_t)mfc;
 
-	rt_timer_add(rt, mfc_expire_route, mrouterq[rtableid],
-	    rtableid);
+	rt_timer_add(rt, mfc_expire_route, ip_mrouterq, rtableid);
 
 	mfc->mfc_parent = mfccp->mfcc_parent;
 	mfc->mfc_pkt_cnt = 0;

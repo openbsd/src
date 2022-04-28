@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.h,v 1.20 2017/05/16 08:50:18 rzalamena Exp $	*/
+/*	$OpenBSD: ip6_mroute.h,v 1.21 2022/04/28 17:27:14 claudio Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -191,6 +191,11 @@ struct sioc_mif_req6 {
 };
 
 #if defined(_KERNEL)
+/* How frequent should we look for expired entries (in seconds). */
+#define	MCAST_EXPIRE_TIMEOUT	30
+
+extern struct rttimer_queue *ip6_mrouterq;
+
 /*
  * The kernel's multicast-interface structure.
  */

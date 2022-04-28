@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.368 2022/04/28 16:56:39 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.369 2022/04/28 17:27:14 claudio Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -105,10 +105,6 @@ LIST_HEAD(, ipq) ipq;
 /* Keep track of memory used for reassembly */
 int	ip_maxqueue = 300;
 int	ip_frags = 0;
-
-#ifdef MROUTING
-extern int ip_mrtproto;
-#endif
 
 const struct sysctl_bounded_args ipctl_vars[] = {
 #ifdef MROUTING
@@ -226,6 +222,9 @@ ip_init(void)
 	arpinit();
 #ifdef IPSEC
 	ipsec_init();
+#endif
+#ifdef MROUTING
+	ip_mrouterq = rt_timer_queue_create(MCAST_EXPIRE_FREQUENCY);
 #endif
 }
 

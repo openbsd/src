@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.28 2017/02/01 20:59:47 dhill Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.29 2022/04/28 17:27:14 claudio Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.23 2004/04/21 17:49:46 itojun Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
@@ -174,6 +174,9 @@ struct mrtstat {
 
 /* How frequent should we look for expired entries (in seconds). */
 #define MCAST_EXPIRE_FREQUENCY		30
+
+extern struct rttimer_queue *ip_mrouterq;
+extern int ip_mrtproto;
 
 /*
  * The kernel's virtual-interface structure.

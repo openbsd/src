@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.242 2022/04/28 16:56:39 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.243 2022/04/28 17:27:14 claudio Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -161,6 +161,9 @@ ip6_init(void)
 	mq_init(&ip6send_mq, 64, IPL_SOFTNET);
 
 	ip6counters = counters_alloc(ip6s_ncounters);
+#ifdef MROUTING
+	ip6_mrouterq = rt_timer_queue_create(MCAST_EXPIRE_TIMEOUT);
+#endif
 }
 
 /*
