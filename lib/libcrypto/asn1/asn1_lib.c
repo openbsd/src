@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.52 2022/03/26 14:47:58 jsing Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.53 2022/04/28 18:30:57 jsing Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -20,7 +20,7 @@
 
 #include "bytestring.h"
 
-static int
+int
 asn1_get_identifier_cbs(CBS *cbs, int der_mode, uint8_t *out_class,
     int *out_constructed, uint32_t *out_tag_number)
 {
@@ -76,7 +76,7 @@ asn1_get_identifier_cbs(CBS *cbs, int der_mode, uint8_t *out_class,
 	return 1;
 }
 
-static int
+int
 asn1_get_length_cbs(CBS *cbs, int der_mode, int *out_indefinite,
     uint32_t *out_length)
 {

@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.53 2022/04/27 17:56:13 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.54 2022/04/28 18:30:57 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -81,10 +81,6 @@ static int asn1_find_end(const unsigned char **in, long len, char inf);
 static int asn1_collect(CBB *cbb, const unsigned char **in, long len,
     char inf, int tag, int aclass, int depth);
 
-static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
-    char *inf, char *cst, const unsigned char **in, long len, int exptag,
-    int expclass, char opt);
-
 static int asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in,
     long len, const ASN1_ITEM *it, int tag, int aclass, char opt, int depth);
 static int asn1_template_ex_d2i(ASN1_VALUE **pval, const unsigned char **in,
@@ -95,6 +91,13 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in,
     long len, const ASN1_ITEM *it, int tag, int aclass, char opt);
 static int asn1_ex_c2i(ASN1_VALUE **pval, CBS *content, int utype,
     const ASN1_ITEM *it);
+
+static int asn1_check_tag_cbs(CBS *cbs, long *out_len, int *out_tag,
+    uint8_t *out_class, char *out_indefinite, char *out_constructed,
+    int expected_tag, int expected_class, char optional);
+static int asn1_check_tag(long *out_len, int *out_tag, uint8_t *out_class,
+    char *out_indefinite, char *out_constructed, const unsigned char **in,
+    long len, int expected_tag, int expected_class, char optional);
 
 ASN1_VALUE *
 ASN1_item_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
@@ -187,8 +190,8 @@ asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 
 		p = *in;
 		/* Just read in tag and class */
-		ret = asn1_check_tlen(NULL, &otag, &oclass, NULL, NULL,
-		    &p, len, -1, 0, 1);
+		ret = asn1_check_tag(NULL, &otag, &oclass, NULL, NULL, &p, len,
+		    -1, 0, 1);
 		if (!ret) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
 			goto err;
@@ -295,8 +298,8 @@ asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 			aclass = V_ASN1_UNIVERSAL;
 		}
 		/* Get SEQUENCE length and update len, p */
-		ret = asn1_check_tlen(&len, NULL, NULL, &seq_eoc, &cst,
-		    &p, len, tag, aclass, opt);
+		ret = asn1_check_tag(&len, NULL, NULL, &seq_eoc, &cst, &p, len,
+		    tag, aclass, opt);
 		if (!ret) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
 			goto err;
@@ -478,8 +481,8 @@ asn1_template_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long inlen,
 		 * content and where it starts: so read in EXPLICIT header to
 		 * get the info.
 		 */
-		ret = asn1_check_tlen(&len, NULL, NULL, &exp_eoc, &cst,
-		    &p, inlen, tt->tag, aclass, opt);
+		ret = asn1_check_tag(&len, NULL, NULL, &exp_eoc, &cst, &p,
+		    inlen, tt->tag, aclass, opt);
 		q = p;
 		if (!ret) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
@@ -555,8 +558,8 @@ asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
 				sktag = V_ASN1_SEQUENCE;
 		}
 		/* Get the tag */
-		ret = asn1_check_tlen(&len, NULL, NULL, &sk_eoc, NULL,
-		    &p, len, sktag, skaclass, opt);
+		ret = asn1_check_tag(&len, NULL, NULL, &sk_eoc, NULL, &p, len,
+		    sktag, skaclass, opt);
 		if (!ret) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
 			return 0;
@@ -680,8 +683,8 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 			return 0;
 		}
 		p = *in;
-		ret = asn1_check_tlen(NULL, &utype, &oclass, NULL, NULL,
-		    &p, inlen, -1, 0, 0);
+		ret = asn1_check_tag(NULL, &utype, &oclass, NULL, NULL, &p,
+		    inlen, -1, 0, 0);
 		if (!ret) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
 			return 0;
@@ -695,8 +698,8 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 	}
 	p = *in;
 	/* Check header */
-	ret = asn1_check_tlen(&plen, NULL, NULL, &inf, &cst,
-	    &p, inlen, tag, aclass, opt);
+	ret = asn1_check_tag(&plen, NULL, NULL, &inf, &cst, &p, inlen, tag,
+	    aclass, opt);
 	if (!ret) {
 		ASN1error(ERR_R_NESTED_ASN1_ERROR);
 		return 0;
@@ -938,7 +941,7 @@ asn1_find_end(const unsigned char **in, long len, char inf)
 		}
 		q = p;
 		/* Just read in a header: only care about the length */
-		if (!asn1_check_tlen(&plen, NULL, NULL, &inf, NULL, &p, len,
+		if (!asn1_check_tag(&plen, NULL, NULL, &inf, NULL, &p, len,
 		    -1, 0, 0)) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
 			return 0;
@@ -1001,8 +1004,8 @@ asn1_collect(CBB *cbb, const unsigned char **in, long len, char inf,
 			break;
 		}
 
-		if (!asn1_check_tlen(&plen, NULL, NULL, &ininf, &cst, &p,
-		    len, tag, aclass, 0)) {
+		if (!asn1_check_tag(&plen, NULL, NULL, &ininf, &cst, &p, len,
+		    tag, aclass, 0)) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
 			return 0;
 		}
@@ -1044,56 +1047,99 @@ asn1_check_eoc(const unsigned char **in, long len)
 	return 0;
 }
 
-/* Check an ASN1 tag and length: a bit like ASN1_get_object
- * but it sets the length for indefinite length constructed
- * form, we don't know the exact length but we can set an
- * upper bound to the amount of data available minus the
- * header length just read.
- */
-
 static int
-asn1_check_tlen(long *olen, int *otag, unsigned char *oclass, char *inf,
-    char *cst, const unsigned char **in, long len, int exptag, int expclass,
-    char opt)
+asn1_check_tag_cbs(CBS *cbs, long *out_len, int *out_tag, uint8_t *out_class,
+    char *out_indefinite, char *out_constructed, int expected_tag,
+    int expected_class, char optional)
 {
-	int i;
-	int ptag, pclass;
-	long plen;
-	const unsigned char *p, *q;
+	uint32_t tag_number, length;
+	int constructed, indefinite;
+	uint8_t tag_class;
 
-	p = *in;
-	q = p;
+	if (out_len != NULL)
+		*out_len = 0;
+	if (out_tag != NULL)
+		*out_tag = 0;
+	if (out_class != NULL)
+		*out_class = 0;
+	if (out_indefinite != NULL)
+		*out_indefinite = 0;
+	if (out_constructed != NULL)
+		*out_constructed = 0;
 
-	i = ASN1_get_object(&p, &plen, &ptag, &pclass, len);
-	if (i & 0x80) {
+	if (!asn1_get_identifier_cbs(cbs, 0, &tag_class, &constructed,
+	    &tag_number)) {
 		ASN1error(ASN1_R_BAD_OBJECT_HEADER);
 		return 0;
 	}
-	if (exptag >= 0) {
-		if ((exptag != ptag) || (expclass != pclass)) {
-			/* If type is OPTIONAL, not an error:
-			 * indicate missing type.
-			 */
-			if (opt)
+	if (expected_tag >= 0) {
+		if (expected_tag != tag_number ||
+		    expected_class != tag_class << 6) {
+			/* Indicate missing type if this is OPTIONAL. */
+			if (optional)
 				return -1;
+
 			ASN1error(ASN1_R_WRONG_TAG);
 			return 0;
 		}
 	}
+	if (!asn1_get_length_cbs(cbs, 0, &indefinite, &length)) {
+		ASN1error(ASN1_R_BAD_OBJECT_HEADER);
+		return 0;
+	}
 
-	if (i & 1)
-		plen = len - (p - q);
-	if (inf)
-		*inf = i & 1;
-	if (cst)
-		*cst = i & V_ASN1_CONSTRUCTED;
-	if (olen)
-		*olen = plen;
-	if (oclass)
-		*oclass = pclass;
-	if (otag)
-		*otag = ptag;
+	/* Indefinite length can only be used with constructed encoding. */
+	if (indefinite && !constructed) {
+		ASN1error(ASN1_R_BAD_OBJECT_HEADER);
+		return 0;
+	}
 
-	*in = p;
+	if (!indefinite && CBS_len(cbs) < length) {
+		ASN1error(ASN1_R_TOO_LONG);
+		return 0;
+	}
+
+	if (tag_number > INT_MAX || CBS_len(cbs) > INT_MAX) {
+		ASN1error(ASN1_R_TOO_LONG);
+		return 0;
+	}
+
+	if (indefinite)
+		length = CBS_len(cbs);
+
+	if (out_len != NULL)
+		*out_len = length;
+	if (out_tag != NULL)
+		*out_tag = tag_number;
+	if (out_class != NULL)
+		*out_class = tag_class << 6;
+	if (out_indefinite != NULL && indefinite)
+		*out_indefinite = 1 << 0;
+	if (out_constructed != NULL && constructed)
+		*out_constructed = 1 << 5;
+
 	return 1;
+}
+
+static int
+asn1_check_tag(long *out_len, int *out_tag, unsigned char *out_class,
+    char *out_indefinite, char *out_constructed, const unsigned char **in,
+    long len, int expected_tag, int expected_class, char optional)
+{
+	CBS cbs;
+	int ret;
+
+	if (len < 0)
+		return 0;
+
+	CBS_init(&cbs, *in, len);
+
+	ret = asn1_check_tag_cbs(&cbs, out_len, out_tag, out_class,
+	    out_indefinite, out_constructed, expected_tag, expected_class,
+	    optional);
+
+	if (ret == 1)
+		*in = CBS_data(&cbs);
+
+	return ret;
 }
