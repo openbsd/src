@@ -18,7 +18,7 @@ while :; do
 	if [ $? -ne 0 ]; then
 		break
 	fi
-	i=`expr $i + 1`
+	i=$((i + 1))
 done
 expect ENOSPC symlink test ${n0}/${n1}
 umount /dev/vnd1c

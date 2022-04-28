@@ -19,7 +19,7 @@ while :; do
 	if [ $? -ne 0 ]; then
 		break
 	fi
-	i=`expr $i + 1`
+	i=$((i + 1))
 done
 expect ENOSPC link ${n0}/${n1} ${n0}/${n2}
 umount /dev/vnd1c

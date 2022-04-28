@@ -19,7 +19,7 @@ while :; do
 	if [ $? -ne 0 ]; then
 		break
 	fi
-	i=`expr $i + 1`
+	i=$((i + 1))
 done
 test_check $i -eq 32767
 

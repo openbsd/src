@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: run,v 1.5 2017/01/12 17:15:10 bluhm Exp $
+# $OpenBSD: run,v 1.6 2022/04/28 22:11:59 jca Exp $
 # Heavily inspired on FreeBSD's misc.sh.
 
 totntest=0
@@ -23,13 +23,13 @@ expect()
   if [ $? -eq 0 ]; then
     echo "okay."
   else
-    nfail=`expr $nfail + 1`
+    nfail=$((nfail + 1))
     echo "failed:"
     echo " test\t$*"
     echo " expect\t$e"
     echo " result\t$r"
   fi
-  ntest=`expr $ntest + 1`
+  ntest=$((ntest + 1))
 }
 
 test_check()
@@ -38,11 +38,11 @@ test_check()
   if [ $* ]; then
     echo "okay."
   else
-    nfail=`expr $nfail + 1`
+    nfail=$((nfail + 1))
     echo "failed:"
     echo " test\t$*"
   fi
-  ntest=`expr $ntest + 1`
+  ntest=$((ntest + 1))
 }
 
 # Generate a random file/directory name.
@@ -57,8 +57,8 @@ for arg in $*; do
   echo $arg:
   sed -n 's/^desc=//p' $arg
   . $arg
-  totntest=`expr $totntest + $ntest`
-  totnfail=`expr $totnfail + $nfail`
+  totntest=$((totntest + ntest))
+  totnfail=$((totnfail + nfail))
 done
 
 echo "${totntest} tests completed, ${totnfail} failed."
