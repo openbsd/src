@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1complex.c,v 1.2 2022/04/27 17:43:41 jsing Exp $ */
+/* $OpenBSD: asn1complex.c,v 1.3 2022/04/28 18:36:38 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include <openssl/err.h>
 
 #include <err.h>
@@ -217,12 +218,107 @@ do_asn1_constructed_tests(void)
 	return failed;
 }
 
+/* Sequence with length. */
+const uint8_t asn1_sequence_ber[] = {
+	0x30, 0x16,
+	0x04, 0x01, 0x01,
+	0x04, 0x02, 0x01, 0x02,
+	0x04, 0x03, 0x01, 0x02, 0x03,
+	0x30, 0x80, 0x04, 0x01, 0x01, 0x00, 0x00,
+	0x04, 0x01, 0x01,
+
+	0x04, 0x01, 0x01, /* Trailing data. */
+};
+
+const uint8_t asn1_sequence_content[] = {
+	0x30, 0x16, 0x04, 0x01, 0x01, 0x04, 0x02, 0x01,
+	0x02, 0x04, 0x03, 0x01, 0x02, 0x03, 0x30, 0x80,
+	0x04, 0x01, 0x01, 0x00, 0x00, 0x04, 0x01, 0x01,
+};
+
+/* Sequence with indefinite length. */
+const uint8_t asn1_sequence_indefinite_ber[] = {
+	0x30, 0x80,
+	0x04, 0x01, 0x01,
+	0x04, 0x02, 0x01, 0x02,
+	0x04, 0x03, 0x01, 0x02, 0x03,
+	0x30, 0x80, 0x04, 0x01, 0x01, 0x00, 0x00,
+	0x04, 0x01, 0x01,
+	0x00, 0x00,
+
+	0x04, 0x01, 0x01, /* Trailing data. */
+};
+
+const uint8_t asn1_sequence_indefinite_content[] = {
+	0x30, 0x80, 0x04, 0x01, 0x01, 0x04, 0x02, 0x01,
+	0x02, 0x04, 0x03, 0x01, 0x02, 0x03, 0x30, 0x80,
+	0x04, 0x01, 0x01, 0x00, 0x00, 0x04, 0x01, 0x01,
+	0x00, 0x00,
+};
+
+static int
+do_asn1_sequence_string_tests(void)
+{
+	ASN1_STRING *astr = NULL;
+	const uint8_t *p;
+	long len;
+	int failed = 1;
+
+	ERR_clear_error();
+
+	/*
+	 * Test decoding of sequence with length and indefinite length into
+	 * a string - in this case the ASN.1 is not decoded and is stored
+	 * directly as the content for the string.
+	 */
+	if ((astr = ASN1_STRING_new()) == NULL) {
+		fprintf(stderr, "FAIL: ASN1_STRING_new() returned NULL\n");
+		goto failed;
+	}
+
+	p = asn1_sequence_ber;
+	len = sizeof(asn1_sequence_ber);
+	if (ASN1_item_d2i((ASN1_VALUE **)&astr, &p, len,
+	    &ASN1_SEQUENCE_it) == NULL) {
+		fprintf(stderr, "FAIL: failed to decode ASN1_SEQUENCE\n");
+		ERR_print_errors_fp(stderr);
+		goto failed;
+	}
+
+	if (!asn1_compare_bytes("sequence", ASN1_STRING_data(astr),
+	    ASN1_STRING_length(astr), asn1_sequence_content,
+	    sizeof(asn1_sequence_content)))
+		goto failed;
+
+	p = asn1_sequence_indefinite_ber;
+	len = sizeof(asn1_sequence_indefinite_ber);
+	if (ASN1_item_d2i((ASN1_VALUE **)&astr, &p, len,
+	    &ASN1_SEQUENCE_it) == NULL) {
+		fprintf(stderr, "FAIL: failed to decode ASN1_SEQUENCE\n");
+		ERR_print_errors_fp(stderr);
+		goto failed;
+	}
+
+	if (!asn1_compare_bytes("sequence indefinite", ASN1_STRING_data(astr),
+	    ASN1_STRING_length(astr), asn1_sequence_indefinite_content,
+	    sizeof(asn1_sequence_indefinite_content)))
+		goto failed;
+
+	failed = 0;
+
+ failed:
+	ASN1_STRING_free(astr);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
 	int failed = 0;
 
 	failed |= do_asn1_constructed_tests();
+	failed |= do_asn1_sequence_string_tests();
 
 	return (failed);
 }
