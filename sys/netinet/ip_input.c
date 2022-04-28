@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.367 2022/04/20 09:38:26 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.368 2022/04/28 16:56:39 bluhm Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -129,6 +129,8 @@ const struct sysctl_bounded_args ipctl_vars[] = {
 	{ IPCTL_ARPDOWN, &arpt_down, 0, INT_MAX },
 };
 
+struct niqueue ipintrq = NIQUEUE_INITIALIZER(IPQ_MAXLEN, NETISR_IP);
+
 struct pool ipqent_pool;
 struct pool ipq_pool;
 
@@ -142,6 +144,7 @@ static struct mbuf_queue	ipsendraw_mq;
 extern struct niqueue		arpinq;
 
 int	ip_ours(struct mbuf **, int *, int, int);
+int	ip_local(struct mbuf **, int *, int, int);
 int	ip_dooptions(struct mbuf *, struct ifnet *);
 int	in_ouraddr(struct mbuf *, struct ifnet *, struct rtentry **);
 
@@ -224,6 +227,43 @@ ip_init(void)
 #ifdef IPSEC
 	ipsec_init();
 #endif
+}
+
+/*
+ * Enqueue packet for local delivery.  Queuing is used as a boundary
+ * between the network layer (input/forward path) running with shared
+ * NET_RLOCK_IN_SOFTNET() and the transport layer needing it exclusively.
+ */
+int
+ip_ours(struct mbuf **mp, int *offp, int nxt, int af)
+{
+	/* We are already in a IPv4/IPv6 local deliver loop. */
+	if (af != AF_UNSPEC)
+		return ip_local(mp, offp, nxt, af);
+
+	niq_enqueue(&ipintrq, *mp);
+	*mp = NULL;
+	return IPPROTO_DONE;
+}
+
+/*
+ * Dequeue and process locally delivered packets.
+ */
+void
+ipintr(void)
+{
+	struct mbuf *m;
+	int off, nxt;
+
+	while ((m = niq_dequeue(&ipintrq)) != NULL) {
+#ifdef DIAGNOSTIC
+		if ((m->m_flags & M_PKTHDR) == 0)
+			panic("ipintr no HDR");
+#endif
+		off = 0;
+		nxt = ip_local(&m, &off, IPPROTO_IPV4, AF_UNSPEC);
+		KASSERT(nxt == IPPROTO_DONE);
+	}
 }
 
 /*
@@ -511,13 +551,15 @@ ip_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
  * If fragmented try to reassemble.  Pass to next level.
  */
 int
-ip_ours(struct mbuf **mp, int *offp, int nxt, int af)
+ip_local(struct mbuf **mp, int *offp, int nxt, int af)
 {
 	struct mbuf *m = *mp;
 	struct ip *ip = mtod(m, struct ip *);
 	struct ipq *fp;
 	struct ipqent *ipqe;
 	int mff, hlen;
+
+	NET_ASSERT_WLOCKED();
 
 	hlen = ip->ip_hl << 2;
 
@@ -1651,7 +1693,8 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		    newlen));
 #endif
 	case IPCTL_IFQUEUE:
-		return (EOPNOTSUPP);
+		return (sysctl_niq(name + 1, namelen - 1,
+		    oldp, oldlenp, newp, newlen, &ipintrq));
 	case IPCTL_ARPQUEUE:
 		return (sysctl_niq(name + 1, namelen - 1,
 		    oldp, oldlenp, newp, newlen, &arpinq));

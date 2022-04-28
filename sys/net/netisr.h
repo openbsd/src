@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.55 2021/01/05 20:43:36 kn Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.56 2022/04/28 16:56:39 bluhm Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -41,8 +41,10 @@
  * interrupt used for scheduling the network code to calls
  * on the lowest level routine of each protocol.
  */
+#define	NETISR_IP	2		/* same as AF_INET */
 #define	NETISR_PFSYNC	5		/* for pfsync "immediate" tx */
 #define	NETISR_ARP	18		/* same as AF_LINK */
+#define	NETISR_IPV6	24		/* same as AF_INET6 */
 #define	NETISR_PPP	28		/* for PPP processing */
 #define	NETISR_BRIDGE	29		/* for bridge processing */
 #define	NETISR_SWITCH	31		/* for switch dataplane */
@@ -57,6 +59,8 @@ extern int	netisr;			/* scheduling bits for network */
 extern struct task if_input_task_locked;
 
 void	arpintr(void);
+void	ipintr(void);
+void	ip6intr(void);
 void	pppintr(void);
 void	bridgeintr(void);
 void	switchintr(void);
