@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.122 2022/04/19 15:30:52 semarie Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.123 2022/04/28 18:12:33 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -163,11 +163,13 @@ uvn_attach(struct vnode *vp, vm_prot_t accessprot)
 	 */
 	if (uvn->u_flags & UVM_VNODE_VALID) {	/* already active? */
 
+		rw_enter(uvn->u_obj.vmobjlock, RW_WRITE);
 		/* regain vref if we were persisting */
 		if (uvn->u_obj.uo_refs == 0) {
 			vref(vp);
 		}
 		uvn->u_obj.uo_refs++;		/* bump uvn ref! */
+		rw_exit(uvn->u_obj.vmobjlock);
 
 		/* check for new writeable uvn */
 		if ((accessprot & PROT_WRITE) != 0 &&
@@ -1464,6 +1466,11 @@ uvm_vnp_sync(struct mount *mp)
 		if (mp && vp->v_mount != mp)
 			continue;
 
+		/* Spin to ensure `uvn_wlist' isn't modified concurrently. */
+		while (rw_enter(uvn->u_obj.vmobjlock, RW_WRITE|RW_NOSLEEP)) {
+			CPU_BUSY_CYCLE();
+		}
+
 		/*
 		 * If the vnode is "blocked" it means it must be dying, which
 		 * in turn means its in the process of being flushed out so
@@ -1472,8 +1479,10 @@ uvm_vnp_sync(struct mount *mp)
 		 * note that uvn must already be valid because we found it on
 		 * the wlist (this also means it can't be ALOCK'd).
 		 */
-		if ((uvn->u_flags & UVM_VNODE_BLOCKED) != 0)
+		if ((uvn->u_flags & UVM_VNODE_BLOCKED) != 0) {
+			rw_exit(uvn->u_obj.vmobjlock);
 			continue;
+		}
 
 		/*
 		 * gain reference.   watch out for persisting uvns (need to
@@ -1482,6 +1491,7 @@ uvm_vnp_sync(struct mount *mp)
 		if (uvn->u_obj.uo_refs == 0)
 			vref(vp);
 		uvn->u_obj.uo_refs++;
+		rw_exit(uvn->u_obj.vmobjlock);
 
 		SIMPLEQ_INSERT_HEAD(&uvn_sync_q, uvn, u_syncq);
 	}
