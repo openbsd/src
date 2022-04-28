@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.154 2022/03/17 10:15:13 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.155 2022/04/28 09:58:11 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1572,17 +1572,16 @@ uvm_swap_get(struct vm_page *page, int swslot, int flags)
 	}
 
 	KERNEL_LOCK();
-	/* this page is (about to be) no longer only in swap. */
-	atomic_dec_int(&uvmexp.swpgonly);
-
 	result = uvm_swap_io(&page, swslot, 1, B_READ |
 	    ((flags & PGO_SYNCIO) ? 0 : B_ASYNC));
-
-	if (result != VM_PAGER_OK && result != VM_PAGER_PEND) {
-		/* oops, the read failed so it really is still only in swap. */
-		atomic_inc_int(&uvmexp.swpgonly);
-	}
 	KERNEL_UNLOCK();
+
+	if (result == VM_PAGER_OK || result == VM_PAGER_PEND) {
+		/*
+		 * this page is no longer only in swap.
+		 */
+		atomic_dec_int(&uvmexp.swpgonly);
+	}
 	return (result);
 }
 
