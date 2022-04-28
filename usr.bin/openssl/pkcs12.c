@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs12.c,v 1.19 2022/04/28 15:29:10 inoguchi Exp $ */
+/* $OpenBSD: pkcs12.c,v 1.20 2022/04/28 15:42:10 inoguchi Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -784,7 +784,7 @@ pkcs12_main(int argc, char **argv)
 	if (!pkcs12_config.twopass)
 		strlcpy(macpass, pass, sizeof macpass);
 
-	if ((pkcs12_config.options & INFO) && p12->mac != NULL)
+	if ((pkcs12_config.options & INFO) != 0 && p12->mac != NULL)
 		BIO_printf(bio_err, "MAC Iteration %ld\n",
 		    p12->mac->iter ? ASN1_INTEGER_get(p12->mac->iter) : 1);
 	if (pkcs12_config.macver) {
@@ -1097,7 +1097,7 @@ set_pbe(BIO *err, int *ppbe, const char *str)
 {
 	if (str == NULL)
 		return 0;
-	if (!strcmp(str, "NONE")) {
+	if (strcmp(str, "NONE") == 0) {
 		*ppbe = -1;
 		return 1;
 	}
