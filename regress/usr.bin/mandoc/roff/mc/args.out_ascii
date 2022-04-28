@@ -1,0 +1,19 @@
+MC-ARGS(1)                  General Commands Manual                 MC-ARGS(1)
+
+NNAAMMEE
+       mc-args - arguments to the .mc request
+
+DDEESSCCRRIIPPTTIIOONN
+       initial text
+       ASCII character in the margin               |
+       invalid escape sequence
+       unsupported escape sequence
+       ignored escape sequence
+       special character in the margin             |
+       special character represented as string     <integral>
+       font escape in the margin
+       numbered character in the margin            |
+       Unicode character in the margin             |
+       overstriking in the margin
+
+OpenBSD                         April 28, 2022                      MC-ARGS(1)

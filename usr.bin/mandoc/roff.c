@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.255 2022/04/24 17:39:31 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.256 2022/04/28 16:16:46 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -225,6 +225,7 @@ static	int		 roff_line_ignore(ROFF_ARGS);
 static	void		 roff_man_alloc1(struct roff_man *);
 static	void		 roff_man_free1(struct roff_man *);
 static	int		 roff_manyarg(ROFF_ARGS);
+static	int		 roff_mc(ROFF_ARGS);
 static	int		 roff_noarg(ROFF_ARGS);
 static	int		 roff_nop(ROFF_ARGS);
 static	int		 roff_nr(ROFF_ARGS);
@@ -377,7 +378,7 @@ static	struct roffmac	 roffs[TOKEN_NONE] = {
 	{ roff_noarg, NULL, NULL, 0 },  /* fi */
 	{ roff_onearg, NULL, NULL, 0 },  /* ft */
 	{ roff_onearg, NULL, NULL, 0 },  /* ll */
-	{ roff_onearg, NULL, NULL, 0 },  /* mc */
+	{ roff_mc, NULL, NULL, 0 },  /* mc */
 	{ roff_noarg, NULL, NULL, 0 },  /* nf */
 	{ roff_onearg, NULL, NULL, 0 },  /* po */
 	{ roff_onearg, NULL, NULL, 0 },  /* rj */
@@ -3726,6 +3727,54 @@ roff_eo(ROFF_ARGS)
 	if (buf->buf[pos] != '\0')
 		mandoc_msg(MANDOCERR_ARG_SKIP,
 		    ln, pos, "eo %s", buf->buf + pos);
+	return ROFF_IGN;
+}
+
+static int
+roff_mc(ROFF_ARGS)
+{
+	struct roff_node	*n;
+	char			*cp;
+
+	/* Parse the first argument. */
+
+	cp = buf->buf + pos;
+	if (*cp != '\0')
+		cp++;
+	if (buf->buf[pos] == '\\') {
+		switch (mandoc_escape((const char **)&cp, NULL, NULL)) {
+		case ESCAPE_SPECIAL:
+		case ESCAPE_UNICODE:
+		case ESCAPE_NUMBERED:
+			break;
+		default:
+			*cp = '\0';
+			mandoc_msg(MANDOCERR_MC_ESC, ln, pos,
+			    "mc %s", buf->buf + pos);
+			buf->buf[pos] = '\0';
+			break;
+		}
+	}
+
+	/* Ignore additional arguments. */
+
+	while (*cp == ' ')
+		*cp++ = '\0';
+	if (*cp != '\0') {
+		mandoc_msg(MANDOCERR_MC_DIST, ln, (int)(cp - buf->buf),
+		    "mc ... %s", cp);
+		*cp = '\0';
+	}
+
+	/* Create the .mc node. */
+
+	roff_elem_alloc(r->man, ln, ppos, tok);
+	n = r->man->last;
+	if (buf->buf[pos] != '\0')
+		roff_word_alloc(r->man, ln, pos, buf->buf + pos);
+	n->flags |= NODE_LINE | NODE_VALID | NODE_ENDED;
+	r->man->last = n;
+	r->man->next = ROFF_NEXT_SIBLING;
 	return ROFF_IGN;
 }
 

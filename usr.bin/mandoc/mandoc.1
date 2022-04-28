@@ -1,4 +1,4 @@
-.\" $OpenBSD: mandoc.1,v 1.183 2022/04/24 13:34:53 schwarze Exp $
+.\" $OpenBSD: mandoc.1,v 1.184 2022/04/28 16:16:46 schwarze Exp $
 .\"
 .\" Copyright (c) 2012, 2014-2022 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2022 $
+.Dd $Mdocdate: April 28 2022 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -1754,6 +1754,15 @@ request or a
 layout modifier has an unknown
 .Ar font
 argument.
+.It Sy "ignoring distance argument"
+.Pq roff
+In addition to the margin character, an
+.Ic \&mc
+request has a second argument supposed to represent a distance, but the
+.Nm
+implementation of
+.Ic \&mc
+always ignores the second argument.
 .It Sy "odd number of characters in request"
 .Pq roff
 A
@@ -2124,6 +2133,13 @@ The first argument of a
 request is neither a single ASCII character
 nor a single character escape sequence.
 The request is ignored including all its arguments.
+.It Sy "skipping unusable escape sequence"
+.Pq roff
+The first argument of an
+.Ic mc
+request is neither a single ASCII character
+nor a single character escape sequence.
+All arguments are ignored and printing of a margin character is disabled.
 .It Sy "missing manual name, using \(dq\(dq"
 .Pq mdoc
 The first call to

@@ -1,0 +1,29 @@
+.\" $OpenBSD: args.in,v 1.1 2022/04/28 16:16:46 schwarze Exp $
+.TH MC-ARGS 1 "April 28, 2022"
+.SH NAME
+mc-args \- arguments to the .mc request
+.SH DESCRIPTION
+.ll 50n
+.nf
+initial text
+.mc |suffix
+ASCII character in the margin
+.mc \CXX
+invalid escape sequence
+.mc \!
+unsupported escape sequence
+.mc \a
+ignored escape sequence
+.mc \(ba
+special character in the margin
+.mc \[integral]
+special character represented as string
+.mc \fR
+font escape in the margin
+.mc \N'124'
+numbered character in the margin
+.mc \[u007C]suffix
+Unicode character in the margin
+.mc \o'o/'
+overstriking in the margin
+.ll
