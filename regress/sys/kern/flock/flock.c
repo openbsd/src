@@ -1288,6 +1288,7 @@ test15(int fd)
 		err(1, "reading from pipe (child)");
 
 	fd2 = dup(fd);
+	FAIL(fd2 == -1);
 	if (flock(fd, LOCK_SH) < 0)
 		err(1, "flock shared");
 
