@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.41 2022/04/27 14:11:27 espie Exp $
+# $OpenBSD: Installed.pm,v 1.42 2022/04/28 08:39:18 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -62,17 +62,22 @@ sub get_cached_info
 
 sub setup_cache
 {
-	my ($repository, $setlist) = @_;
+	my ($repo, $setlist) = @_;
 
-	my $state = $repository->{state};
+	my $state = $repo->{state};
 	return unless $state->defines("TEST_CACHING");
 	
 	require OpenBSD::PackageRepository::Cache;
 
-	# TODO before 7.2: if the repo is package-stable, also use 
-	# the cache for release because it ought to be more recent
-	$repository->{info_cache} = 
+	$repo->{info_cache} = 
 	    OpenBSD::PackageRepository::Cache->new($state, $setlist);
+	# if we're on package-stable, assume this new quirks also works
+	# with the corresponding release
+	if (defined $repo->{release}) {
+		my $url = $repo->urlscheme."://$repo->{host}$repo->{release}";
+		my $r2 = $repo->parse_url(\$url, $state);
+		$r2->{info_cache} = $repo->{info_cache};
+	}
 }
 
 sub parse_url
