@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2022/04/27 18:28:40 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2022/04/28 15:37:01 anton Exp $
 
 # Copyright (c) 2022 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -194,13 +194,13 @@ run-bpf-ping-record: stamp-stop
 
 REGRESS_TARGETS +=	run-icmp
 run-icmp: stamp-bpf
-	${SUDO} ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp.py N1
-	${SUDO} ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp.py N2
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp.py N2
 
 REGRESS_TARGETS +=	run-icmp6
 run-icmp6: stamp-bpf
-	${SUDO} ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6.py N1
-	${SUDO} ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6.py N2
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6.py N2
 
 REGRESS_TARGETS +=	run-bpf-icmp
 run-bpf-icmp: stamp-stop
@@ -216,13 +216,13 @@ run-bpf-icmp: stamp-stop
 
 REGRESS_TARGETS +=	run-icmp6-hop
 run-icmp6-hop: stamp-bpf
-	${SUDO} ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop.py N1
-	${SUDO} ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop.py N2
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop.py N2
 
 REGRESS_TARGETS +=	run-icmp6-dst
 run-icmp6-dst: stamp-bpf
-	${SUDO} ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_dst.py N1
-	${SUDO} ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_dst.py N2
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_dst.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_dst.py N2
 
 REGRESS_TARGETS +=	run-bpf-ext
 run-bpf-ext: stamp-stop
@@ -235,38 +235,38 @@ run-bpf-ext: stamp-stop
 
 REGRESS_TARGETS +=	run-icmp-pad
 run-icmp-pad: stamp-bpf
-	${SUDO} ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp_pad.py N1
-	${SUDO} ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp_pad.py N2
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp_pad.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp_pad.py N2
 
 REGRESS_TARGETS +=	run-icmp-eol
 run-icmp-eol: stamp-bpf
-	${SUDO} ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp_eol.py N1
-	${SUDO} ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp_eol.py N2
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp_eol.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp_eol.py N2
 
 REGRESS_TARGETS +=	run-icmp6-pad
 run-icmp6-pad: stamp-bpf
-	${SUDO} ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop_pad.py N1
-	${SUDO} ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop_pad.py N2
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop_pad.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop_pad.py N2
 
 REGRESS_TARGETS +=	run-icmp-ra
 run-icmp-ra: stamp-bpf
-	${SUDO} ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp_ra.py N1
-	${SUDO} ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp_ra.py N2
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp_ra.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp_ra.py N2
 
 REGRESS_TARGETS +=	run-icmp6-ra
 run-icmp6-ra: stamp-bpf
-	${SUDO} ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop_ra.py N1
-	${SUDO} ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop_ra.py N2
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop_ra.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop_ra.py N2
 
 REGRESS_TARGETS +=	run-icmp-bad
 run-icmp-bad: stamp-bpf
-	${SUDO} ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp_bad.py N1
-	${SUDO} ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp_bad.py N2
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp_bad.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp_bad.py N2
 
 REGRESS_TARGETS +=	run-icmp6-bad
 run-icmp6-bad: stamp-bpf
-	${SUDO} ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop_bad.py N1
-	${SUDO} ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop_bad.py N2
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop_bad.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop_bad.py N2
 
 REGRESS_TARGETS +=	run-bpf-opts
 run-bpf-opts: stamp-stop
