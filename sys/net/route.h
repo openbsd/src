@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.190 2022/04/20 17:58:22 bluhm Exp $	*/
+/*	$OpenBSD: route.h,v 1.191 2022/04/28 17:47:41 bluhm Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -34,6 +34,12 @@
 
 #ifndef _NET_ROUTE_H_
 #define _NET_ROUTE_H_
+
+/*
+ * Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	T	rttimer_mtx		route timer lists
+ */
 
 /*
  * Kernel resident routing tables.
@@ -400,21 +406,21 @@ rtstat_inc(enum rtstat_counters c)
  * These allow functions to be called for routes at specific times.
  */
 struct rttimer {
-	TAILQ_ENTRY(rttimer)	rtt_next;  /* entry on timer queue */
-	LIST_ENTRY(rttimer)	rtt_link;  /* multiple timers per rtentry */
-	struct rttimer_queue	*rtt_queue;/* back pointer to queue */
-	struct rtentry		*rtt_rt;   /* Back pointer to the route */
-	void			(*rtt_func)(struct rtentry *,
-						 struct rttimer *);
-	time_t			rtt_time; /* When this timer was registered */
-	u_int			rtt_tableid;	/* routing table id of rtt_rt */
+	TAILQ_ENTRY(rttimer)	rtt_next;	/* [T] entry on timer queue */
+	LIST_ENTRY(rttimer)	rtt_link;	/* [T] timers per rtentry */
+	struct rttimer_queue	*rtt_queue;	/* [T] back pointer to queue */
+	struct rtentry		*rtt_rt;	/* [I] back pointer to route */
+	void			(*rtt_func)	/* [I] callback */
+				    (struct rtentry *, struct rttimer *);
+	time_t			rtt_time;	/* [I] when timer registered */
+	u_int			rtt_tableid;	/* [I] rtable id of rtt_rt */
 };
 
 struct rttimer_queue {
-	TAILQ_HEAD(, rttimer)		rtq_head;
-	LIST_ENTRY(rttimer_queue)	rtq_link;
-	unsigned long			rtq_count;
-	int				rtq_timeout;
+	TAILQ_HEAD(, rttimer)		rtq_head;	/* [T] */
+	LIST_ENTRY(rttimer_queue)	rtq_link;	/* [T] */
+	unsigned long			rtq_count;	/* [T] */
+	int				rtq_timeout;	/* [T] */
 };
 
 const char	*rtlabel_id2name(u_int16_t);
