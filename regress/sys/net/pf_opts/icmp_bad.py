@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 
-print("send icmp unknown option")
+print("send icmp with unknown option")
 
 import os
 import sys

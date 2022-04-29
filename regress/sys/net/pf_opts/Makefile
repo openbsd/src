@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2022/04/28 15:37:01 anton Exp $
+# $OpenBSD: Makefile,v 1.3 2022/04/29 09:45:05 bluhm Exp $
 
 # Copyright (c) 2022 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -79,23 +79,23 @@ REGRESS_SETUP_ONCE +=	ifconfig
 ifconfig: unconfig
 	# Create and configure loopback interfaces.
 .for n in ${NUMS}
-	${SUDO} ifconfig lo$n rdomain $n
-	${SUDO} ifconfig lo$n inet 127.0.0.1/8
-	${SUDO} ifconfig lo$n inet 127.0.0.$n alias
-	${SUDO} ifconfig lo$n inet6 ::1/128
-	${SUDO} ifconfig lo$n inet6 fe80::$n/64
+	${SUDO} /sbin/ifconfig lo$n rdomain $n
+	${SUDO} /sbin/ifconfig lo$n inet 127.0.0.1/8
+	${SUDO} /sbin/ifconfig lo$n inet 127.0.0.$n alias
+	${SUDO} /sbin/ifconfig lo$n inet6 ::1/128
+	${SUDO} /sbin/ifconfig lo$n inet6 fe80::$n/64
 .endfor
-	${SUDO} route -n -T ${N1} add -inet -host 127.0.0.${N2} 127.0.0.1
-	${SUDO} route -n -T ${N2} add -inet -host 127.0.0.${N1} 127.0.0.1
+	${SUDO} /sbin/route -n -T ${N1} add -inet -host 127.0.0.${N2} 127.0.0.1
+	${SUDO} /sbin/route -n -T ${N2} add -inet -host 127.0.0.${N1} 127.0.0.1
 
 REGRESS_CLEANUP +=	unconfig
 unconfig: stamp-stop
 	# Destroy interfaces.
 .for n in ${NUMS}
-	-${SUDO} ifconfig lo$n inet 127.0.0.1 delete
-	-${SUDO} ifconfig lo$n inet 127.0.0.$n delete
-	-${SUDO} ifconfig lo$n inet6 ::1 delete
-	-${SUDO} ifconfig lo$n inet6 fe80::$n/64 delete
+	-${SUDO} /sbin/ifconfig lo$n inet 127.0.0.1 delete
+	-${SUDO} /sbin/ifconfig lo$n inet 127.0.0.$n delete
+	-${SUDO} /sbin/ifconfig lo$n inet6 ::1 delete
+	-${SUDO} /sbin/ifconfig lo$n inet6 fe80::$n/64 delete
 .endfor
 	rm -f stamp-ifconfig
 
@@ -278,6 +278,46 @@ run-bpf-opts: stamp-stop
 	grep ' fe80::${N2}: HBH icmp6' pflog0.tcpdump
 	grep ' fe80::${N2}: HBH (rtalert: 0x0000) icmp6' pflog0.tcpdump
 	grep ' fe80::${N2}: HBH (type 0x03: len=0) icmp6' pflog0.tcpdump
+	! grep '127.0.0.${N1}' pflog0.tcpdump
+	! grep 'fe80::${N1}' pflog0.tcpdump
+
+# multicast with router alert
+
+REGRESS_TARGETS +=	run-igmp
+run-igmp: stamp-bpf
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}igmp_ra.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}igmp_ra.py N2
+
+REGRESS_TARGETS +=	run-icmp6-mld
+run-icmp6-mld: stamp-bpf
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_mld_ra.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_mld_ra.py N2
+
+REGRESS_TARGETS +=	run-bpf-mcast
+run-bpf-mcast: stamp-stop
+	# Check that multicast protocol packet with router alert passed
+	grep ' 127.0.0.${N2}: igmp query .* IPOPT-148{4}' lo${N2}.tcpdump
+	grep ' fe80::${N2}: HBH (rtalert:.* icmp6: multicast ' lo${N2}.tcpdump
+	! grep '127.0.0.${N1}' pflog0.tcpdump
+	! grep 'fe80::${N1}' pflog0.tcpdump
+	! grep '127.0.0.${N2}' pflog0.tcpdump
+	! grep 'fe80::${N2}' pflog0.tcpdump
+
+REGRESS_TARGETS +=	run-igmp-bad
+run-igmp-bad: stamp-bpf
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}igmp_bad.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}igmp_bad.py N2
+
+REGRESS_TARGETS +=	run-icmp6-mld-bad
+run-icmp6-mld-bad: stamp-bpf
+	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_mld_bad.py N1
+	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_mld_bad.py N2
+
+REGRESS_TARGETS +=	run-bpf-mcast-bad
+run-bpf-mcast-bad: stamp-stop
+	# Check that multicast protocol packet with options were blocked
+	grep ' 127.0.0.${N2}: igmp query .* IPOPT-3{4}' pflog0.tcpdump
+	grep ' fe80::${N2}: HBH (type 0x03:.* icmp6: multicast ' pflog0.tcpdump
 	! grep '127.0.0.${N1}' pflog0.tcpdump
 	! grep 'fe80::${N1}' pflog0.tcpdump
 

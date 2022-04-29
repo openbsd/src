@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 
-print("send icmp option router alert")
+print("send icmp with router alert")
 
 import os
 import sys

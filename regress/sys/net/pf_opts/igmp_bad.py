@@ -1,14 +1,15 @@
 #!/usr/local/bin/python3
 
-print("send icmp with options padding")
+print("send internet group management protocol with unknown option")
 
 import os
 import sys
 from addr import *
 from scapy.all import *
+from scapy.contrib.igmp import *
 
 if len(sys.argv) != 2:
-	print("usage: icmp_pad.py Nn")
+	print("usage: igmp_bad.py Nn")
 	exit(2)
 
 N=sys.argv[1]
@@ -17,8 +18,7 @@ ADDR=eval("ADDR_"+N);
 
 pid=os.getpid()
 eid=pid & 0xffff
-payload=b"ABCDEFGHIJKLMNOP"
-packet=IP(src=ADDR, dst=ADDR, options=b"\001\001\001\001")/ \
-    ICMP(type=6, id=eid)/payload
+packet=IP(src=ADDR, dst=ADDR, options=b"\003\004\000\000")/ \
+    IGMP(type=0x11)
 
 send(packet, iface=IF)

@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 
-print("send icmp option end of list")
+print("send icmp with option end of list")
 
 import os
 import sys
