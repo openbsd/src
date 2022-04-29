@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3
 
-print("send icmp6 with hop by hop header with router alert")
+print("send icmp6 with hop by hop header with maxium padding")
 
 import os
 import sys
@@ -9,7 +9,7 @@ from addr import *
 from scapy.all import *
 
 if len(sys.argv) != 2:
-	print("usage: icmp6_hop_ra.py Nn")
+	print("usage: icmp6_hop_max.py Nn")
 	exit(2)
 
 N=sys.argv[1]
@@ -20,8 +20,7 @@ pid=os.getpid()
 eid=pid & 0xffff
 payload=b"ABCDEFGHIJKLMNOP"
 packet=IPv6(src=ADDR6, dst=ADDR6)/ \
-    IPv6ExtHdrHopByHop(options=[Pad1(),Pad1(),RouterAlert(),\
-    PadN(optdata=b"\x11\x22\x33\x44\x55\x66")])/ \
+    IPv6ExtHdrHopByHop(options=[PadN(optdata=255*b"\x11")])/ \
     ICMPv6Unknown(type=6, code=0, msgbody=payload)
 
 # send does not work for some reason, add the bpf loopback layer manually

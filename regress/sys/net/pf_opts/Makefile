@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2022/04/29 17:27:37 bluhm Exp $
+# $OpenBSD: Makefile,v 1.5 2022/04/29 18:58:33 bluhm Exp $
 
 # Copyright (c) 2022 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -235,8 +235,8 @@ run-icmp6-dst: stamp-bpf
 REGRESS_TARGETS +=	run-bpf-ext
 run-bpf-ext: stamp-stop
 	# Check that icmp6 packet with extension headers were blocked
-	fgrep ' fe80::${N2}: HBH icmp6' pflog0.tcpdump
-	fgrep ' fe80::${N2}: DSTOPT icmp6' pflog0.tcpdump
+	fgrep ' fe80::${N2}: HBH icmp6:' pflog0.tcpdump
+	fgrep ' fe80::${N2}: DSTOPT icmp6:' pflog0.tcpdump
 	! grep fe80::${N1} pflog0.tcpdump
 
 # icmp with options
@@ -255,6 +255,16 @@ REGRESS_TARGETS +=	run-icmp6-pad
 run-icmp6-pad: stamp-bpf
 	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop_pad.py N1
 	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop_pad.py N2
+
+REGRESS_TARGETS +=	run-icmp-max
+run-icmp-max: stamp-bpf
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp_max.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp_max.py N2
+
+REGRESS_TARGETS +=	run-icmp6-max
+run-icmp6-max: stamp-bpf
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop_max.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop_max.py N2
 
 REGRESS_TARGETS +=	run-icmp-ra
 run-icmp-ra: stamp-bpf
@@ -281,11 +291,13 @@ run-bpf-opts: stamp-stop
 	# Check that icmp packet with options were blocked
 	grep ' 127.0.0.${N2}:.* optlen=4 NOP NOP NOP NOP)' pflog0.tcpdump
 	grep ' 127.0.0.${N2}:.* optlen=4 NOP EOL-2)' pflog0.tcpdump
+	grep ' 127.0.0.${N2}:.* optlen=40 NOP ' pflog0.tcpdump
 	grep ' 127.0.0.${N2}:.* optlen=8 NOP IPOPT-148{4} NOP ' pflog0.tcpdump
 	grep ' 127.0.0.${N2}:.* optlen=4 IPOPT-3{4})' pflog0.tcpdump
-	grep ' fe80::${N2}: HBH icmp6' pflog0.tcpdump
-	grep ' fe80::${N2}: HBH (rtalert: 0x0000) icmp6' pflog0.tcpdump
-	grep ' fe80::${N2}: HBH (type 0x03: len=0) icmp6' pflog0.tcpdump
+	grep ' fe80::${N2}: HBH icmp6:.* (len 28,' pflog0.tcpdump
+	grep ' fe80::${N2}: HBH icmp6:.* (len 284,' pflog0.tcpdump
+	grep ' fe80::${N2}: HBH (rtalert: 0x0000) icmp6:' pflog0.tcpdump
+	grep ' fe80::${N2}: HBH (type 0x03: len=0) icmp6:' pflog0.tcpdump
 	! grep '127.0.0.${N1}' pflog0.tcpdump
 	! grep 'fe80::${N1}' pflog0.tcpdump
 
