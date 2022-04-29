@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.53 2022/03/31 17:27:18 naddy Exp $
+.\" $OpenBSD: sio_open.3,v 1.54 2022/04/29 08:30:48 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: April 29 2022 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -25,6 +25,7 @@
 .Nm sio_getcap ,
 .Nm sio_start ,
 .Nm sio_stop ,
+.Nm sio_flush ,
 .Nm sio_read ,
 .Nm sio_write ,
 .Nm sio_onmove ,
@@ -53,6 +54,8 @@
 .Fn sio_start "struct sio_hdl *hdl"
 .Ft "int"
 .Fn sio_stop "struct sio_hdl *hdl"
+.Ft "int"
+.Fn sio_flush "struct sio_hdl *hdl"
 .Ft "size_t"
 .Fn sio_read "struct sio_hdl *hdl" "void *addr" "size_t nbytes"
 .Ft "size_t"
@@ -257,6 +260,8 @@ Parameters cannot be changed after
 .Fn sio_start
 has been called,
 .Fn sio_stop
+or
+.Fn sio_flush
 must be called before parameters can be changed.
 .Pp
 If the device is exposed by the
@@ -410,6 +415,14 @@ If samples to play are queued but playback hasn't started yet
 then playback is forced immediately; playback will actually stop
 once the buffer is drained.
 In no case are samples in the play buffer discarded.
+.Pp
+The
+.Fn sio_flush
+function stops playback and recording immediately,
+possibly discarding play buffer contents, and puts the audio subsystem
+in the same state as before
+.Fn sio_start
+is called.
 .Ss Playing and recording
 When record mode is selected, the
 .Fn sio_read
@@ -748,6 +761,7 @@ The
 .Fn sio_getcap ,
 .Fn sio_start ,
 .Fn sio_stop ,
+.Fn sio_flush ,
 and
 .Fn sio_setvol
 functions return 1 on success and 0 on failure.
@@ -828,7 +842,8 @@ The
 .Fn sio_getpar ,
 .Fn sio_getcap ,
 .Fn sio_start ,
+.Fn sio_stop ,
 and
-.Fn sio_stop
+.Fn sio_flush
 functions may block for a very short period of time, thus they should
 be avoided in code sections where blocking is not desirable.

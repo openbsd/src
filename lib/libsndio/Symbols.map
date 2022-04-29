@@ -11,6 +11,7 @@
 		sio_read;
 		sio_start;
 		sio_stop;
+		sio_flush;
 		sio_nfds;
 		sio_pollfd;
 		sio_revents;

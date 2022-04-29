@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_priv.h,v 1.9 2015/01/16 16:48:52 deraadt Exp $	*/
+/*	$OpenBSD: sio_priv.h,v 1.10 2022/04/29 08:30:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -58,6 +58,7 @@ struct sio_ops {
 	size_t (*read)(struct sio_hdl *, void *, size_t);
 	int (*start)(struct sio_hdl *);
 	int (*stop)(struct sio_hdl *);
+	int (*flush)(struct sio_hdl *);
 	int (*nfds)(struct sio_hdl *);
 	int (*pollfd)(struct sio_hdl *, struct pollfd *, int);
 	int (*revents)(struct sio_hdl *, struct pollfd *);

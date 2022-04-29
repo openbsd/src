@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_aucat.c,v 1.20 2016/01/09 08:27:24 ratchov Exp $	*/
+/*	$OpenBSD: sio_aucat.c,v 1.21 2022/04/29 08:30:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -49,6 +49,7 @@ struct sio_aucat_hdl {
 static void sio_aucat_close(struct sio_hdl *);
 static int sio_aucat_start(struct sio_hdl *);
 static int sio_aucat_stop(struct sio_hdl *);
+static int sio_aucat_flush(struct sio_hdl *);
 static int sio_aucat_setpar(struct sio_hdl *, struct sio_par *);
 static int sio_aucat_getpar(struct sio_hdl *, struct sio_par *);
 static int sio_aucat_getcap(struct sio_hdl *, struct sio_cap *);
@@ -69,6 +70,7 @@ static struct sio_ops sio_aucat_ops = {
 	sio_aucat_read,
 	sio_aucat_start,
 	sio_aucat_stop,
+	sio_aucat_flush,
 	sio_aucat_nfds,
 	sio_aucat_pollfd,
 	sio_aucat_revents,
@@ -207,7 +209,7 @@ sio_aucat_start(struct sio_hdl *sh)
 }
 
 static int
-sio_aucat_stop(struct sio_hdl *sh)
+sio_aucat_drain(struct sio_hdl *sh, int drain)
 {
 #define ZERO_MAX 0x400
 	static unsigned char zero[ZERO_MAX];
@@ -240,6 +242,7 @@ sio_aucat_stop(struct sio_hdl *sh)
 	 */
 	AMSG_INIT(&hdl->aucat.wmsg);
 	hdl->aucat.wmsg.cmd = htonl(AMSG_STOP);
+	hdl->aucat.wmsg.u.stop.drain = drain;
 	hdl->aucat.wtodo = sizeof(struct amsg);
 	if (!_aucat_wmsg(&hdl->aucat, &hdl->sio.eof))
 		return 0;
@@ -260,6 +263,18 @@ sio_aucat_stop(struct sio_hdl *sh)
 		}
 	}
 	return 1;
+}
+
+static int
+sio_aucat_stop(struct sio_hdl *sh)
+{
+	return sio_aucat_drain(sh, 1);
+}
+
+static int
+sio_aucat_flush(struct sio_hdl *sh)
+{
+	return sio_aucat_drain(sh, 0);
 }
 
 static int

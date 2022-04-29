@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio_sun.c,v 1.28 2019/06/28 13:32:42 deraadt Exp $	*/
+/*	$OpenBSD: sio_sun.c,v 1.29 2022/04/29 08:30:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008 Alexandre Ratchov <alex@caoua.org>
  *
@@ -48,7 +48,7 @@ struct sio_sun_hdl {
 
 static void sio_sun_close(struct sio_hdl *);
 static int sio_sun_start(struct sio_hdl *);
-static int sio_sun_stop(struct sio_hdl *);
+static int sio_sun_flush(struct sio_hdl *);
 static int sio_sun_setpar(struct sio_hdl *, struct sio_par *);
 static int sio_sun_getpar(struct sio_hdl *, struct sio_par *);
 static int sio_sun_getcap(struct sio_hdl *, struct sio_cap *);
@@ -66,7 +66,8 @@ static struct sio_ops sio_sun_ops = {
 	sio_sun_write,
 	sio_sun_read,
 	sio_sun_start,
-	sio_sun_stop,
+	NULL,
+	sio_sun_flush,
 	sio_sun_nfds,
 	sio_sun_pollfd,
 	sio_sun_revents,
@@ -395,7 +396,7 @@ sio_sun_start(struct sio_hdl *sh)
 }
 
 static int
-sio_sun_stop(struct sio_hdl *sh)
+sio_sun_flush(struct sio_hdl *sh)
 {
 	struct sio_sun_hdl *hdl = (struct sio_sun_hdl *)sh;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siofile.c,v 1.25 2021/11/01 14:43:25 ratchov Exp $	*/
+/*	$OpenBSD: siofile.c,v 1.26 2022/04/29 08:30:48 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -317,7 +317,7 @@ dev_sio_start(struct dev *d)
 void
 dev_sio_stop(struct dev *d)
 {
-	if (!sio_eof(d->sio.hdl) && !sio_stop(d->sio.hdl)) {
+	if (!sio_eof(d->sio.hdl) && !sio_flush(d->sio.hdl)) {
 		if (log_level >= 1) {
 			dev_log(d);
 			log_puts(": failed to stop device\n");
