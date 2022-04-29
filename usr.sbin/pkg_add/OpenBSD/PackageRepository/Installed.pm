@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.42 2022/04/28 08:39:18 espie Exp $
+# $OpenBSD: Installed.pm,v 1.43 2022/04/29 10:44:05 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -65,7 +65,7 @@ sub setup_cache
 	my ($repo, $setlist) = @_;
 
 	my $state = $repo->{state};
-	return unless $state->defines("TEST_CACHING");
+	return if $state->defines("NO_CACHING");
 	
 	require OpenBSD::PackageRepository::Cache;
 

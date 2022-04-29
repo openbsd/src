@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Cache.pm,v 1.4 2022/04/20 09:24:07 espie Exp $
+# $OpenBSD: Cache.pm,v 1.5 2022/04/29 10:44:05 espie Exp $
 #
 # Copyright (c) 2022 Marc Espie <espie@openbsd.org>
 #
@@ -44,7 +44,7 @@ sub pipe_locate
 	    '-d', OpenBSD::Paths->updateinfodb, '--');
 	my $state = $self->{state};
 	$state->errsay("Running #1", join(' ', @params))
-	    if $state->defines("TEST_CACHING_VERBOSE");
+	    if $state->defines("CACHING_VERBOSE");
 	return @params;
 }
 
@@ -97,7 +97,7 @@ sub prime_update_info_cache
 	for my $pkgname (keys %$uncached) {
 		delete $self->{raw_data}{$pkgname}
 	}
-	return unless $state->defines("TEST_CACHING_VERBOSE");
+	return unless $state->defines("CACHING_VERBOSE");
 	for my $k (@list) {
 		if (!defined $found->{$k}) {
 			$state->say("No cache entry for #1", $k);
@@ -117,7 +117,7 @@ sub get_cached_info
 		my $stem = OpenBSD::PackageName::splitstem($name);
 		if (exists $self->{stems}{$stem}) {
 			$state->say("Negative caching for #1", $name)
-			    if $state->defines("TEST_CACHING_VERBOSE");
+			    if $state->defines("CACHING_VERBOSE");
 			return undef;
 		}
 		$content = '';
@@ -136,7 +136,7 @@ sub get_cached_info
 	}
 	if ($content eq '') {
 		$state->say("Cache miss for #1", $name)
-		    if $state->defines("TEST_CACHING_VERBOSE");
+		    if $state->defines("CACHING_VERBOSE");
 		return undef;
 	}
 	open my $fh2, "<", \$content;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.57 2022/04/19 12:51:32 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.58 2022/04/29 10:44:05 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -64,7 +64,7 @@ OpenBSD::Auto::cache(update_info,
 	my $state = $self->{repository}{state};
 	my $info = $self->{repository}->get_cached_info($name);
 	if (defined $info && 
-	    !defined $state->defines("TEST_CACHING_RECHECK")) {
+	    !defined $state->defines("CACHING_RECHECK")) {
 		return $info;
 	}
 	my $result = $self->plist(\&OpenBSD::PackingList::UpdateInfoOnly,
