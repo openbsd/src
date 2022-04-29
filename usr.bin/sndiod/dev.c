@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev.c,v 1.104 2022/03/15 05:53:37 ratchov Exp $	*/
+/*	$OpenBSD: dev.c,v 1.105 2022/04/29 09:12:57 ratchov Exp $	*/
 /*
  * Copyright (c) 2008-2012 Alexandre Ratchov <alex@caoua.org>
  *
@@ -680,8 +680,8 @@ dev_cycle(struct dev *d)
 	 * check if the device is actually used. If it isn't,
 	 * then close it
 	 */
-	if (d->slot_list == NULL && (mtc_array[0].dev != d ||
-	    mtc_array[0].tstate != MTC_RUN)) {
+	if (d->slot_list == NULL && d->idle >= d->bufsz &&
+	    (mtc_array[0].dev != d || mtc_array[0].tstate != MTC_RUN)) {
 		if (log_level >= 2) {
 			dev_log(d);
 			log_puts(": device stopped\n");
@@ -744,6 +744,8 @@ dev_cycle(struct dev *d)
 			log_puts("\n");
 		}
 #endif
+		d->idle = 0;
+
 		/*
 		 * skip cycles for XRUN_SYNC correction
 		 */
@@ -857,6 +859,9 @@ dev_onmove(struct dev *d, int delta)
 	struct slot *s, *snext;
 
 	d->delta += delta;
+
+	if (d->slot_list == NULL)
+		d->idle += delta;
 
 	for (s = d->slot_list; s != NULL; s = snext) {
 		/*
@@ -1284,6 +1289,7 @@ dev_wakeup(struct dev *d)
 		} else {
 			d->prime = 0;
 		}
+		d->idle = 0;
 		d->poffs = 0;
 
 		/*
