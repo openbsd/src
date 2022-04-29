@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.9 2022/04/08 18:17:24 bluhm Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.10 2022/04/29 08:58:49 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -180,6 +180,9 @@ struct pf_pdesc {
 	u_int32_t	 fragoff;	/* fragment header offset */
 	u_int32_t	 jumbolen;	/* length from v6 jumbo header */
 	u_int32_t	 badopts;	/* v4 options or v6 routing headers */
+#define PF_OPT_OTHER		0x0001
+#define PF_OPT_JUMBO		0x0002
+#define PF_OPT_ROUTER_ALERT	0x0004
 
 	u_int16_t	 rdomain;	/* original routing domain */
 	u_int16_t	 virtual_proto;
