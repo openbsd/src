@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2021/04/21 10:18:35 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.3 2022/04/29 17:27:37 bluhm Exp $
 
 # Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -52,7 +52,7 @@ regress:
 	@echo SKIPPED
 .endif
 
-PF_STATUS !=	${SUDO} pfctl -si | sed -n 's/^Status: \([^ ]*\) .*/\1/p'
+PF_STATUS !=	${SUDO} /sbin/pfctl -si | sed -n 's/^Status: \([^ ]*\) .*/\1/p'
 .if empty(PF_STATUS:MEnabled)
 regress:
 	@echo pf status: "${PF_STATUS}"
@@ -60,7 +60,7 @@ regress:
 	@echo SKIPPED
 .endif
 
-PF_SKIP !=	${SUDO} pfctl -sI -v | sed -n 's/ (skip)//p'
+PF_SKIP !=	${SUDO} /sbin/pfctl -sI -v | sed -n 's/ (skip)//p'
 .if ! empty(PF_SKIP:Mlo*:Nlo0)
 regress:
 	@echo pf skip: "${PF_SKIP}"
@@ -68,7 +68,8 @@ regress:
 	@echo SKIPPED
 .endif
 
-PF_ANCHOR !=	${SUDO} pfctl -sr | sed -n 's/^anchor "\([^"]*\)" all$$/\1/p'
+PF_ANCHOR !=	${SUDO} /sbin/pfctl -sr |\
+		    sed -n 's/^anchor "\([^"]*\)" all$$/\1/p'
 .if empty(PF_ANCHOR:Mregress)
 regress:
 	@echo pf anchor: "${PF_ANCHOR}"
@@ -84,49 +85,50 @@ REGRESS_SETUP_ONCE +=	ifconfig
 ifconfig: unconfig
 	# Create and configure pflog and loopback interfaces.
 .for n in ${NUMS}
-	${SUDO} ifconfig lo$n rdomain $n
-	${SUDO} ifconfig lo$n inet 127.0.0.1/8
-	${SUDO} ifconfig lo$n inet6 ::1/128
-	${SUDO} route -n -T $n add -inet 169.254.0.0/16 127.0.0.1
-	${SUDO} route -n -T $n add -inet6 fc00::/48 ::1
+	${SUDO} /sbin/ifconfig lo$n rdomain $n
+	${SUDO} /sbin/ifconfig lo$n inet 127.0.0.1/8
+	${SUDO} /sbin/ifconfig lo$n inet6 ::1/128
+	${SUDO} /sbin/route -n -T $n add -inet 169.254.0.0/16 127.0.0.1
+	${SUDO} /sbin/route -n -T $n add -inet6 fc00::/48 ::1
 .endfor
 .for n in ${PAIRS}
-	${SUDO} ifconfig pair$n rdomain $n
-	${SUDO} ifconfig pair$n inet ${IP_$n}/24
-	${SUDO} ifconfig pair$n inet6 ${IP6_$n}/64
+	${SUDO} /sbin/ifconfig pair$n rdomain $n
+	${SUDO} /sbin/ifconfig pair$n inet ${IP_$n}/24
+	${SUDO} /sbin/ifconfig pair$n inet6 ${IP6_$n}/64
 .endfor
-	${SUDO} ifconfig pair${N1} patch pair${N2}
-	${SUDO} ifconfig lo${N3} inet ${IP_${N3}}/24 alias
-	${SUDO} ifconfig lo${N3} inet6 ${IP6_${N3}}/64
-	${SUDO} ifconfig pair${N1} mtu 8000
-	${SUDO} route -n -T ${N1} add -inet ${IP_${N3}} ${IP_${N2}}
-	${SUDO} route -n -T ${N1} add -inet6 ${IP6_${N3}} ${IP6_${N2}}
+	${SUDO} /sbin/ifconfig pair${N1} patch pair${N2}
+	${SUDO} /sbin/ifconfig lo${N3} inet ${IP_${N3}}/24 alias
+	${SUDO} /sbin/ifconfig lo${N3} inet6 ${IP6_${N3}}/64
+	${SUDO} /sbin/ifconfig pair${N1} mtu 8000
+	${SUDO} /sbin/route -n -T ${N1} add -inet ${IP_${N3}} ${IP_${N2}}
+	${SUDO} /sbin/route -n -T ${N1} add -inet6 ${IP6_${N3}} ${IP6_${N2}}
 	# Wait until IPv6 addresses are no longer tentative.
 	for i in `jot 50`; do\
-	    if ! { ifconfig pair${N1}; ifconfig pair${N2}; ifconfig lo${N3}; }\
-		| fgrep -q tentative; then\
+	    if ! { /sbin/ifconfig pair${N1}; /sbin/ifconfig pair${N2};\
+		/sbin/ifconfig lo${N3}; } | fgrep -q tentative; then\
 		    break;\
 	    fi;\
 	    sleep .1;\
 	done
-	! { ifconfig pair${N1}; ifconfig pair${N2}; ifconfig lo${N3};}\
-	    | fgrep tentative
+	! { /sbin/ifconfig pair${N1}; /sbin/ifconfig pair${N2};\
+	    /sbin/ifconfig lo${N3}; } | fgrep tentative
 
 REGRESS_CLEANUP +=	unconfig
 unconfig:
 	# Destroy interfaces.
-	-${SUDO} route -n -T ${N1} delete -inet ${IP_${N3}}
-	-${SUDO} route -n -T ${N1} delete -inet6 ${IP6_${N3}}
-	-${SUDO} ifconfig lo${N3} inet ${IP_${N3}} delete
-	-${SUDO} ifconfig lo${N3} inet6 ${IP6_${N3}} delete
+	-${SUDO} /sbin/route -n -T ${N1} delete -inet ${IP_${N3}}
+	-${SUDO} /sbin/route -n -T ${N1} delete -inet6 ${IP6_${N3}}
+	-${SUDO} /sbin/ifconfig lo${N3} rdomain ${N3}
+	-${SUDO} /sbin/ifconfig lo${N3} inet ${IP_${N3}} delete
+	-${SUDO} /sbin/ifconfig lo${N3} inet6 ${IP6_${N3}} delete
 .for n in ${PAIRS}
-	-${SUDO} ifconfig pair$n destroy
+	-${SUDO} /sbin/ifconfig pair$n destroy
 .endfor
 .for n in ${NUMS}
-	-${SUDO} route -n -T $n delete -inet 169.254.0.0/16
-	-${SUDO} route -n -T $n delete -inet6 fc00::/48
-	-${SUDO} ifconfig lo$n inet 127.0.0.1 delete
-	-${SUDO} ifconfig lo$n inet6 ::1 delete
+	-${SUDO} /sbin/route -n -T $n delete -inet 169.254.0.0/16
+	-${SUDO} /sbin/route -n -T $n delete -inet6 fc00::/48
+	-${SUDO} /sbin/ifconfig lo$n inet 127.0.0.1 delete
+	-${SUDO} /sbin/ifconfig lo$n inet6 ::1 delete
 .endfor
 	rm -f stamp-ifconfig
 
@@ -146,17 +148,17 @@ REGRESS_SETUP_ONCE +=	pfctl
 pfctl: addr.py pf.conf
 	# Load the pf rules into the kernel.
 	cat addr.py ${.CURDIR}/pf.conf | /sbin/pfctl -n -f -
-	cat addr.py ${.CURDIR}/pf.conf | ${SUDO} pfctl -a regress -f -
+	cat addr.py ${.CURDIR}/pf.conf | ${SUDO} /sbin/pfctl -a regress -f -
 
 .for f in 1 2 3
 .for t in 1 2 3
 REGRESS_TARGETS +=	run-ping-$f-$t
 run-ping-$f-$t:
-	ping -c 1 -w 1 -n -V ${N$f} -I ${IP_${N$f}} ${IP_${N$t}}
+	/sbin/ping -c 1 -w 1 -n -V ${N$f} -I ${IP_${N$f}} ${IP_${N$t}}
 
 REGRESS_TARGETS +=	run-ping6-$f-$t
 run-ping6-$f-$t:
-	ping6 -c 1 -w 1 -n -V ${N$f} -I ${IP6_${N$f}} ${IP6_${N$t}}
+	/sbin/ping6 -c 1 -w 1 -n -V ${N$f} -I ${IP6_${N$f}} ${IP6_${N$t}}
 
 REGRESS_TARGETS +=	run-tcpbench-$f-$t
 run-tcpbench-$f-$t:
@@ -170,7 +172,7 @@ run-tcpbench-$f-$t:
 	tcpbench -4 -t 5 -V ${N$f} -b ${IP_${N$f}} ${IP_${N$t}}
 .if $f == "3" && $t == "1"
 	# path MTU discovery must create a dynamic route
-	route -T ${N$f} -n get -host -inet ${IP_${N$t}} | grep DYNAMIC
+	/sbin/route -T ${N$f} -n get -host -inet ${IP_${N$t}} | grep DYNAMIC
 .endif
 
 REGRESS_TARGETS +=	run-tcpbench6-$f-$t
@@ -185,7 +187,7 @@ run-tcpbench6-$f-$t:
 	tcpbench -6 -t 5 -V ${N$f} -b ${IP6_${N$f}} ${IP6_${N$t}}
 .if $f == "3" && $t == "1"
 	# path MTU discovery in other rtable does not work in ip6_output()
-	route -T ${N$f} -n get -host -inet6 ${IP6_${N$t}}
+	/sbin/route -T ${N$f} -n get -host -inet6 ${IP6_${N$t}}
 	@echo DISABLED
 .endif
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2022/04/29 09:45:05 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2022/04/29 17:27:37 bluhm Exp $
 
 # Copyright (c) 2022 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -39,7 +39,7 @@ NUMS =		${N1} ${N2}
 
 .if ! (make(clean) || make(cleandir) || make(obj))
 
-PF_STATUS !=	${SUDO} pfctl -si | sed -n 's/^Status: \([^ ]*\) .*/\1/p'
+PF_STATUS !=	${SUDO} /sbin/pfctl -si | sed -n 's/^Status: \([^ ]*\) .*/\1/p'
 .if empty(PF_STATUS:MEnabled)
 regress:
 	@echo pf status: "${PF_STATUS}"
@@ -47,7 +47,7 @@ regress:
 	@echo SKIPPED
 .endif
 
-PF_SKIP !=	${SUDO} pfctl -sI -v | sed -n 's/ (skip)//p'
+PF_SKIP !=	${SUDO} /sbin/pfctl -sI -v | sed -n 's/ (skip)//p'
 .if ! empty(PF_SKIP:Mlo*:Nlo0)
 regress:
 	@echo pf skip: "${PF_SKIP}"
@@ -55,7 +55,8 @@ regress:
 	@echo SKIPPED
 .endif
 
-PF_ANCHOR !=	${SUDO} pfctl -sr | sed -n 's/^anchor "\([^"]*\)" all$$/\1/p'
+PF_ANCHOR !=	${SUDO} /sbin/pfctl -sr |\
+		    sed -n 's/^anchor "\([^"]*\)" all$$/\1/p'
 .if empty(PF_ANCHOR:Mregress)
 regress:
 	@echo pf anchor: "${PF_ANCHOR}"
@@ -85,13 +86,22 @@ ifconfig: unconfig
 	${SUDO} /sbin/ifconfig lo$n inet6 ::1/128
 	${SUDO} /sbin/ifconfig lo$n inet6 fe80::$n/64
 .endfor
-	${SUDO} /sbin/route -n -T ${N1} add -inet -host 127.0.0.${N2} 127.0.0.1
-	${SUDO} /sbin/route -n -T ${N2} add -inet -host 127.0.0.${N1} 127.0.0.1
+	# Wait until IPv6 addresses are no longer tentative.
+	for i in `jot 50`; do\
+	    if ! { /sbin/ifconfig lo${N1}; /sbin/ifconfig lo${N2}; }\
+		| fgrep -q tentative; then\
+		    break;\
+	    fi;\
+	    sleep .1;\
+	done
+	! { /sbin/ifconfig lo${N1}; /sbin/ifconfig lo${N2}; }\
+	    | fgrep tentative
 
 REGRESS_CLEANUP +=	unconfig
 unconfig: stamp-stop
 	# Destroy interfaces.
 .for n in ${NUMS}
+	-${SUDO} /sbin/ifconfig lo$n rdomain $n
 	-${SUDO} /sbin/ifconfig lo$n inet 127.0.0.1 delete
 	-${SUDO} /sbin/ifconfig lo$n inet 127.0.0.$n delete
 	-${SUDO} /sbin/ifconfig lo$n inet6 ::1 delete
@@ -114,7 +124,7 @@ REGRESS_SETUP_ONCE +=	pfctl
 pfctl: addr.py pf.conf
 	# Load the pf rules into the kernel.
 	cat addr.py ${.CURDIR}/pf.conf | /sbin/pfctl -n -f -
-	cat addr.py ${.CURDIR}/pf.conf | ${SUDO} pfctl -a regress -f -
+	cat addr.py ${.CURDIR}/pf.conf | ${SUDO} /sbin/pfctl -a regress -f -
 
 # run tcpdump on lo and pflog device
 DUMPCMD =	/usr/sbin/tcpdump -l -e -vvv -s 2048 -ni
@@ -144,10 +154,8 @@ stamp-stop:
 # Only do that if necessary to keep visible output short.
 .if ${.CURDIR} == ${.OBJDIR}
 PYTHON =	python3 -u ./
-PYPATH =
 .else
-PYTHON =	python3 -u ${.CURDIR}/
-PYPATH =	PYTHONPATH=${.OBJDIR}
+PYTHON =	env PYTHONPATH=${.OBJDIR} python3 -u ${.CURDIR}/
 .endif
 
 # ping
@@ -194,13 +202,13 @@ run-bpf-ping-record: stamp-stop
 
 REGRESS_TARGETS +=	run-icmp
 run-icmp: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp.py N2
 
 REGRESS_TARGETS +=	run-icmp6
 run-icmp6: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp6.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp6.py N2
 
 REGRESS_TARGETS +=	run-bpf-icmp
 run-bpf-icmp: stamp-stop
@@ -216,13 +224,13 @@ run-bpf-icmp: stamp-stop
 
 REGRESS_TARGETS +=	run-icmp6-hop
 run-icmp6-hop: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop.py N2
 
 REGRESS_TARGETS +=	run-icmp6-dst
 run-icmp6-dst: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_dst.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_dst.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp6_dst.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp6_dst.py N2
 
 REGRESS_TARGETS +=	run-bpf-ext
 run-bpf-ext: stamp-stop
@@ -235,38 +243,38 @@ run-bpf-ext: stamp-stop
 
 REGRESS_TARGETS +=	run-icmp-pad
 run-icmp-pad: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp_pad.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp_pad.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp_pad.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp_pad.py N2
 
 REGRESS_TARGETS +=	run-icmp-eol
 run-icmp-eol: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp_eol.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp_eol.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp_eol.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp_eol.py N2
 
 REGRESS_TARGETS +=	run-icmp6-pad
 run-icmp6-pad: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop_pad.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop_pad.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop_pad.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop_pad.py N2
 
 REGRESS_TARGETS +=	run-icmp-ra
 run-icmp-ra: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp_ra.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp_ra.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp_ra.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp_ra.py N2
 
 REGRESS_TARGETS +=	run-icmp6-ra
 run-icmp6-ra: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop_ra.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop_ra.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop_ra.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop_ra.py N2
 
 REGRESS_TARGETS +=	run-icmp-bad
 run-icmp-bad: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp_bad.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp_bad.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp_bad.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp_bad.py N2
 
 REGRESS_TARGETS +=	run-icmp6-bad
 run-icmp6-bad: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop_bad.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop_bad.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp6_hop_bad.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp6_hop_bad.py N2
 
 REGRESS_TARGETS +=	run-bpf-opts
 run-bpf-opts: stamp-stop
@@ -285,13 +293,13 @@ run-bpf-opts: stamp-stop
 
 REGRESS_TARGETS +=	run-igmp
 run-igmp: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}igmp_ra.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}igmp_ra.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}igmp_ra.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}igmp_ra.py N2
 
 REGRESS_TARGETS +=	run-icmp6-mld
 run-icmp6-mld: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_mld_ra.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_mld_ra.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp6_mld_ra.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp6_mld_ra.py N2
 
 REGRESS_TARGETS +=	run-bpf-mcast
 run-bpf-mcast: stamp-stop
@@ -305,13 +313,13 @@ run-bpf-mcast: stamp-stop
 
 REGRESS_TARGETS +=	run-igmp-bad
 run-igmp-bad: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}igmp_bad.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}igmp_bad.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}igmp_bad.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}igmp_bad.py N2
 
 REGRESS_TARGETS +=	run-icmp6-mld-bad
 run-icmp6-mld-bad: stamp-bpf
-	${SUDO} env ${PYPATH} /sbin/route -T ${N1} exec ${PYTHON}icmp6_mld_bad.py N1
-	${SUDO} env ${PYPATH} /sbin/route -T ${N2} exec ${PYTHON}icmp6_mld_bad.py N2
+	${SUDO} /sbin/route -T ${N1} exec ${PYTHON}icmp6_mld_bad.py N1
+	${SUDO} /sbin/route -T ${N2} exec ${PYTHON}icmp6_mld_bad.py N2
 
 REGRESS_TARGETS +=	run-bpf-mcast-bad
 run-bpf-mcast-bad: stamp-stop

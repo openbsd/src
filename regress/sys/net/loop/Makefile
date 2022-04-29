@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2021/07/06 11:26:47 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.9 2022/04/29 17:27:37 bluhm Exp $
 
 # Copyright (c) 2017-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -37,7 +37,7 @@ regress:
 	@echo SKIPPED
 .endif
 
-PF_STATUS !=	${SUDO} pfctl -si | sed -n 's/^Status: \([^ ]*\) .*/\1/p'
+PF_STATUS !=	${SUDO} /sbin/pfctl -si | sed -n 's/^Status: \([^ ]*\) .*/\1/p'
 .if empty(PF_STATUS:MEnabled)
 regress:
 	@echo pf status: "${PF_STATUS}"
@@ -45,7 +45,7 @@ regress:
 	@echo SKIPPED
 .endif
 
-PF_SKIP !=	${SUDO} pfctl -sI -v | sed -n 's/ (skip)//p'
+PF_SKIP !=	${SUDO} /sbin/pfctl -sI -v | sed -n 's/ (skip)//p'
 .if ! empty(PF_SKIP:Mlo*:Nlo0)
 regress:
 	@echo pf skip: "${PF_SKIP}"
@@ -53,7 +53,8 @@ regress:
 	@echo SKIPPED
 .endif
 
-PF_ANCHOR !=	${SUDO} pfctl -sr | sed -n 's/^anchor "\([^"]*\)" all$$/\1/p'
+PF_ANCHOR !=	${SUDO} /sbin/pfctl -sr |\
+		    sed -n 's/^anchor "\([^"]*\)" all$$/\1/p'
 .if empty(PF_ANCHOR:Mregress)
 regress:
 	@echo pf anchor: "${PF_ANCHOR}"
@@ -77,21 +78,32 @@ REGRESS_SETUP_ONCE +=	ifconfig
 ifconfig: unconfig
 	# Create and configure loopback interfaces.
 .for n in ${NUMS}
-	${SUDO} ifconfig lo$n rdomain $n
-	${SUDO} ifconfig lo$n inet 127.0.0.1/8
-	${SUDO} ifconfig lo$n inet 127.0.0.$n alias
-	${SUDO} route -n -T $n add -inet -host 10.6.6.6 127.0.0.1
-	${SUDO} route -n -T $n add -inet -host 10.7.7.7 127.0.0.1
+	${SUDO} /sbin/ifconfig lo$n rdomain $n
+	${SUDO} /sbin/ifconfig lo$n inet 127.0.0.1/8
+	${SUDO} /sbin/ifconfig lo$n inet 127.0.0.$n alias
+	${SUDO} /sbin/route -n -T $n add -inet -host 10.6.6.6 127.0.0.1
+	${SUDO} /sbin/route -n -T $n add -inet -host 10.7.7.7 127.0.0.1
 .endfor
-	${SUDO} route -n -T ${N1} add -inet -host 127.0.0.${N2} 127.0.0.1
-	${SUDO} route -n -T ${N2} add -inet -host 127.0.0.${N1} 127.0.0.1
+	${SUDO} /sbin/route -n -T ${N1} add -inet -host 127.0.0.${N2} 127.0.0.1
+	${SUDO} /sbin/route -n -T ${N2} add -inet -host 127.0.0.${N1} 127.0.0.1
+	# Wait until IPv6 addresses are no longer tentative.
+	for i in `jot 50`; do\
+	    if ! { /sbin/ifconfig lo${N1}; /sbin/ifconfig lo${N2}; }\
+		| fgrep -q tentative; then\
+		    break;\
+	    fi;\
+	    sleep .1;\
+	done
+	! { /sbin/ifconfig lo${N1}; /sbin/ifconfig lo${N2}; }\
+	    | fgrep tentative
 
 REGRESS_CLEANUP +=	unconfig
 unconfig: stamp-stop
 	# Destroy interfaces.
 .for n in ${NUMS}
-	-${SUDO} ifconfig lo$n 127.0.0.1 delete
-	-${SUDO} ifconfig lo$n 127.0.0.$n delete
+	-${SUDO} /sbin/ifconfig lo$n rdomain $n
+	-${SUDO} /sbin/ifconfig lo$n inet 127.0.0.1 delete
+	-${SUDO} /sbin/ifconfig lo$n inet 127.0.0.$n delete
 .endfor
 	rm -f stamp-ifconfig
 
@@ -109,7 +121,7 @@ REGRESS_SETUP_ONCE +=	pfctl
 pfctl: addr.py pf.conf
 	# Load the pf rules into the kernel.
 	cat addr.py ${.CURDIR}/pf.conf | /sbin/pfctl -n -f -
-	cat addr.py ${.CURDIR}/pf.conf | ${SUDO} pfctl -a regress -f -
+	cat addr.py ${.CURDIR}/pf.conf | ${SUDO} /sbin/pfctl -a regress -f -
 
 # run tcpdump on lo devices
 DUMPCMD =	/usr/sbin/tcpdump -l -e -vvv -s 2048 -ni

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2021/10/02 07:07:08 anton Exp $
+# $OpenBSD: Makefile,v 1.10 2022/04/29 17:27:38 bluhm Exp $
 #
 #  template_v10
 #  ----------------
@@ -34,7 +34,7 @@ LDADD=	-levent
 
 .if ! (make(clean) || make(cleandir) || make(obj))
 
-PF_STATUS !=	${SUDO} pfctl -si | sed -n 's/^Status: \([^ ]*\) .*/\1/p'
+PF_STATUS !=	${SUDO} /sbin/pfctl -si | sed -n 's/^Status: \([^ ]*\) .*/\1/p'
 .if empty(PF_STATUS:MEnabled)
 regress:
 	@echo pf status: "${PF_STATUS}"
