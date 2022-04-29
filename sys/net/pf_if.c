@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.103 2021/12/26 01:00:32 sashan Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.104 2022/04/29 09:55:43 mbuhl Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -755,7 +755,7 @@ pfi_update_status(const char *name, struct pf_status *pfs)
 	}
 }
 
-int
+void
 pfi_get_ifaces(const char *name, struct pfi_kif *buf, int *size)
 {
 	struct pfi_kif	*p, *nextp;
@@ -768,17 +768,11 @@ pfi_get_ifaces(const char *name, struct pfi_kif *buf, int *size)
 		if (*size > n++) {
 			if (!p->pfik_tzero)
 				p->pfik_tzero = gettime();
-			pfi_kif_ref(p, PFI_KIF_REF_RULE);
-			if (copyout(p, buf++, sizeof(*buf))) {
-				pfi_kif_unref(p, PFI_KIF_REF_RULE);
-				return (EFAULT);
-			}
+			memcpy(buf++, p, sizeof(*buf));
 			nextp = RB_NEXT(pfi_ifhead, &pfi_ifs, p);
-			pfi_kif_unref(p, PFI_KIF_REF_RULE);
 		}
 	}
 	*size = n;
-	return (0);
 }
 
 int

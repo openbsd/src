@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.379 2022/04/09 13:15:44 mbuhl Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.380 2022/04/29 09:55:43 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2921,18 +2921,30 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		break;
 
 	case DIOCIGETIFACES: {
-		struct pfioc_iface *io = (struct pfioc_iface *)addr;
+		struct pfioc_iface	*io = (struct pfioc_iface *)addr;
+		struct pfi_kif		*kif_buf;
+		int			 apfiio_size = io->pfiio_size;
 
 		if (io->pfiio_esize != sizeof(struct pfi_kif)) {
 			error = ENODEV;
 			goto fail;
 		}
+
+		if ((kif_buf = mallocarray(sizeof(*kif_buf), apfiio_size,
+		    M_TEMP, M_WAITOK|M_CANFAIL)) == NULL) {
+			error = EINVAL;
+			goto fail;
+		}
+
 		NET_LOCK();
 		PF_LOCK();
-		error = pfi_get_ifaces(io->pfiio_name, io->pfiio_buffer,
-		    &io->pfiio_size);
+		pfi_get_ifaces(io->pfiio_name, kif_buf, &io->pfiio_size);
 		PF_UNLOCK();
 		NET_UNLOCK();
+		if (copyout(kif_buf, io->pfiio_buffer, sizeof(*kif_buf) *
+		    io->pfiio_size))
+			error = EFAULT;
+		free(kif_buf, M_TEMP, sizeof(*kif_buf) * apfiio_size);
 		break;
 	}
 
