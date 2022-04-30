@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.185 2022/03/18 15:32:06 bluhm Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.186 2022/04/30 14:44:04 visa Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -822,9 +822,14 @@ refcnt_rele(struct refcnt *r)
 {
 	u_int refs;
 
+	membar_exit_before_atomic();
 	refs = atomic_dec_int_nv(&r->r_refs);
 	KASSERT(refs != ~0);
-	return (refs == 0);
+	if (refs == 0) {
+		membar_enter_after_atomic();
+		return (1);
+	}
+	return (0);
 }
 
 void
@@ -840,6 +845,7 @@ refcnt_finalize(struct refcnt *r, const char *wmesg)
 	struct sleep_state sls;
 	u_int refs;
 
+	membar_exit_before_atomic();
 	refs = atomic_dec_int_nv(&r->r_refs);
 	KASSERT(refs != ~0);
 	while (refs) {
@@ -847,6 +853,8 @@ refcnt_finalize(struct refcnt *r, const char *wmesg)
 		refs = atomic_load_int(&r->r_refs);
 		sleep_finish(&sls, refs);
 	}
+	/* Order subsequent loads and stores after refs == 0 load. */
+	membar_sync();
 }
 
 int
