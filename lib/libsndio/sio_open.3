@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.54 2022/04/29 08:30:48 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.55 2022/04/30 08:47:18 ratchov Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 29 2022 $
+.Dd $Mdocdate: April 30 2022 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -409,7 +409,7 @@ The
 function puts the audio subsystem
 in the same state as before
 .Fn sio_start
-is called.
+was called.
 It stops recording, drains the play buffer and then stops playback.
 If samples to play are queued but playback hasn't started yet
 then playback is forced immediately; playback will actually stop
@@ -422,7 +422,7 @@ function stops playback and recording immediately,
 possibly discarding play buffer contents, and puts the audio subsystem
 in the same state as before
 .Fn sio_start
-is called.
+was called.
 .Ss Playing and recording
 When record mode is selected, the
 .Fn sio_read
