@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.269 2022/03/10 15:21:08 bluhm Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.270 2022/04/30 13:28:53 mvs Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -1205,7 +1205,7 @@ ipsp_ids_insert(struct ipsec_ids *ids)
 	found = RBT_INSERT(ipsec_ids_tree, &ipsec_ids_tree, ids);
 	if (found) {
 		/* if refcount was zero, then timeout is running */
-		if (atomic_inc_int_nv(&found->id_refcount) == 1) {
+		if ((++found->id_refcount) == 1) {
 			LIST_REMOVE(found, id_gc_list);
 
 			if (LIST_EMPTY(&ipsp_ids_gc_list))
@@ -1248,7 +1248,12 @@ ipsp_ids_lookup(u_int32_t ipsecflowinfo)
 
 	mtx_enter(&ipsec_flows_mtx);
 	ids = RBT_FIND(ipsec_ids_flows, &ipsec_ids_flows, &key);
-	atomic_inc_int(&ids->id_refcount);
+	if (ids != NULL) {
+		if (ids->id_refcount != 0)
+			ids->id_refcount++;
+		else
+			ids = NULL;
+	}
 	mtx_leave(&ipsec_flows_mtx);
 
 	return ids;
@@ -1290,6 +1295,8 @@ ipsp_ids_free(struct ipsec_ids *ids)
 	if (ids == NULL)
 		return;
 
+	mtx_enter(&ipsec_flows_mtx);
+
 	/*
 	 * If the refcount becomes zero, then a timeout is started. This
 	 * timeout must be cancelled if refcount is increased from zero.
@@ -1297,10 +1304,10 @@ ipsp_ids_free(struct ipsec_ids *ids)
 	DPRINTF("ids %p count %d", ids, ids->id_refcount);
 	KASSERT(ids->id_refcount > 0);
 
-	if (atomic_dec_int_nv(&ids->id_refcount) > 0)
+	if ((--ids->id_refcount) > 0) {
+		mtx_leave(&ipsec_flows_mtx);
 		return;
-
-	mtx_enter(&ipsec_flows_mtx);
+	}
 
 	/*
 	 * Add second for the case ipsp_ids_gc() is already running and
