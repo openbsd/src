@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.96 2022/04/11 16:43:49 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.97 2022/04/30 17:58:43 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -879,6 +879,8 @@ uvmpd_scan(void)
 	int free, inactive_shortage, swap_shortage, pages_freed;
 	struct vm_page *p, *nextpg;
 	struct uvm_object *uobj;
+	struct vm_anon *anon;
+	struct rwlock *slock;
 	boolean_t got_it;
 
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
@@ -947,20 +949,34 @@ uvmpd_scan(void)
 	     p != NULL && (inactive_shortage > 0 || swap_shortage > 0);
 	     p = nextpg) {
 		nextpg = TAILQ_NEXT(p, pageq);
-
-		/* skip this page if it's busy. */
-		if (p->pg_flags & PG_BUSY)
+		if (p->pg_flags & PG_BUSY) {
 			continue;
+		}
 
-		if (p->pg_flags & PQ_ANON) {
-			KASSERT(p->uanon != NULL);
-			if (rw_enter(p->uanon->an_lock, RW_WRITE|RW_NOSLEEP))
+		/*
+		 * lock the page's owner.
+		 */
+		if (p->uobject != NULL) {
+			uobj = p->uobject;
+			slock = uobj->vmobjlock;
+			if (rw_enter(slock, RW_WRITE|RW_NOSLEEP)) {
 				continue;
+			}
 		} else {
-			KASSERT(p->uobject != NULL);
-			if (rw_enter(p->uobject->vmobjlock,
-			    RW_WRITE|RW_NOSLEEP))
+			anon = p->uanon;
+			KASSERT(p->uanon != NULL);
+			slock = anon->an_lock;
+			if (rw_enter(slock, RW_WRITE|RW_NOSLEEP)) {
 				continue;
+			}
+		}
+
+		/*
+		 * skip this page if it's busy.
+		 */
+		if ((p->pg_flags & PG_BUSY) != 0) {
+			rw_exit(slock);
+			continue;
 		}
 
 		/*
@@ -997,10 +1013,11 @@ uvmpd_scan(void)
 			uvmexp.pddeact++;
 			inactive_shortage--;
 		}
-		if (p->pg_flags & PQ_ANON)
-			rw_exit(p->uanon->an_lock);
-		else
-			rw_exit(p->uobject->vmobjlock);
+
+		/*
+		 * we're done with this page.
+		 */
+		rw_exit(slock);
 	}
 }
 
