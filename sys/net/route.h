@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.191 2022/04/28 17:47:41 bluhm Exp $	*/
+/*	$OpenBSD: route.h,v 1.192 2022/04/30 07:20:35 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -411,7 +411,7 @@ struct rttimer {
 	struct rttimer_queue	*rtt_queue;	/* [T] back pointer to queue */
 	struct rtentry		*rtt_rt;	/* [I] back pointer to route */
 	void			(*rtt_func)	/* [I] callback */
-				    (struct rtentry *, struct rttimer *);
+				    (struct rtentry *, u_int);
 	time_t			rtt_time;	/* [I] when timer registered */
 	u_int			rtt_tableid;	/* [I] rtable id of rtt_rt */
 };
@@ -459,7 +459,7 @@ struct rtentry *rt_getll(struct rtentry *);
 
 void			 rt_timer_init(void);
 int			 rt_timer_add(struct rtentry *,
-			    void(*)(struct rtentry *, struct rttimer *),
+			    void(*)(struct rtentry *, u_int),
 			    struct rttimer_queue *, u_int);
 void			 rt_timer_remove_all(struct rtentry *);
 struct rttimer_queue	*rt_timer_queue_create(int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.407 2022/04/28 17:47:41 bluhm Exp $	*/
+/*	$OpenBSD: route.c,v 1.408 2022/04/30 07:20:35 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1366,12 +1366,14 @@ LIST_HEAD(, rttimer_queue)	rttimer_queue_head;	/* [T] */
 
 #define RTTIMER_CALLOUT(r)	{					\
 	if (r->rtt_func != NULL) {					\
-		(*r->rtt_func)(r->rtt_rt, r);				\
+		(*r->rtt_func)(r->rtt_rt, r->rtt_tableid);		\
 	} else {							\
 		struct ifnet *ifp;					\
 									\
 		ifp = if_get(r->rtt_rt->rt_ifidx);			\
-		if (ifp != NULL)					\
+		if (ifp != NULL &&					\
+		    (r->rtt_rt->rt_flags & (RTF_DYNAMIC|RTF_HOST)) ==	\
+		    (RTF_DYNAMIC|RTF_HOST))				\
 			rtdeletemsg(r->rtt_rt, ifp, r->rtt_tableid);	\
 		if_put(ifp);						\
 	}								\
@@ -1484,8 +1486,8 @@ rt_timer_remove_all(struct rtentry *rt)
 }
 
 int
-rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *,
-    struct rttimer *), struct rttimer_queue *queue, u_int rtableid)
+rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *, u_int),
+     struct rttimer_queue *queue, u_int rtableid)
 {
 	struct rttimer	*r, *rnew;
 	time_t		 current_time;

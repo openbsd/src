@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.132 2022/04/28 17:27:14 claudio Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.133 2022/04/30 07:20:35 claudio Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ int get_version(struct mbuf *);
 int add_vif(struct socket *, struct mbuf *);
 int del_vif(struct socket *, struct mbuf *);
 void update_mfc_params(struct mfcctl2 *, int, unsigned int);
-void mfc_expire_route(struct rtentry *, struct rttimer *);
+void mfc_expire_route(struct rtentry *, u_int);
 int mfc_add(struct mfcctl2 *, struct in_addr *, struct in_addr *,
     int, unsigned int, int);
 int add_mfc(struct socket *, struct mbuf *);
@@ -777,10 +777,9 @@ vif_delete(struct ifnet *ifp)
 }
 
 void
-mfc_expire_route(struct rtentry *rt, struct rttimer *rtt)
+mfc_expire_route(struct rtentry *rt, u_int rtableid)
 {
 	struct mfc	*mfc = (struct mfc *)rt->rt_llinfo;
-	unsigned int	 rtableid = rtt->rtt_tableid;
 
 	/* Skip entry being deleted. */
 	if (mfc == NULL)

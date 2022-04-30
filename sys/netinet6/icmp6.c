@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.239 2022/04/20 09:38:26 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.240 2022/04/30 07:20:35 claudio Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -137,8 +137,7 @@ int	icmp6_ratelimit(const struct in6_addr *, const int, const int);
 const char *icmp6_redirect_diag(struct in6_addr *, struct in6_addr *,
 	    struct in6_addr *);
 int	icmp6_notify_error(struct mbuf *, int, int, int);
-void	icmp6_mtudisc_timeout(struct rtentry *, struct rttimer *);
-void	icmp6_redirect_timeout(struct rtentry *, struct rttimer *);
+void	icmp6_mtudisc_timeout(struct rtentry *, u_int);
 
 void
 icmp6_init(void)
@@ -1405,8 +1404,8 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		rtredirect(sin6tosa(&sdst), sin6tosa(&sgw), sin6tosa(&ssrc),
 		    &newrt, m->m_pkthdr.ph_rtableid);
 		if (newrt != NULL && icmp6_redirtimeout > 0) {
-			rt_timer_add(newrt, icmp6_redirect_timeout,
-			    icmp6_redirect_timeout_q, m->m_pkthdr.ph_rtableid);
+			rt_timer_add(newrt, NULL, icmp6_redirect_timeout_q,
+			    m->m_pkthdr.ph_rtableid);
 		}
 		rtfree(newrt);
 	}
@@ -1841,7 +1840,7 @@ bad:
 }
 
 void
-icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
+icmp6_mtudisc_timeout(struct rtentry *rt, u_int rtableid)
 {
 	struct ifnet *ifp;
 
@@ -1852,28 +1851,10 @@ icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 		return;
 
 	if ((rt->rt_flags & (RTF_DYNAMIC|RTF_HOST)) == (RTF_DYNAMIC|RTF_HOST)) {
-		rtdeletemsg(rt, ifp, r->rtt_tableid);
+		rtdeletemsg(rt, ifp, rtableid);
 	} else {
 		if (!(rt->rt_locks & RTV_MTU))
 			rt->rt_mtu = 0;
-	}
-
-	if_put(ifp);
-}
-
-void
-icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
-{
-	struct ifnet *ifp;
-
-	NET_ASSERT_LOCKED();
-
-	ifp = if_get(rt->rt_ifidx);
-	if (ifp == NULL)
-		return;
-
-	if ((rt->rt_flags & (RTF_DYNAMIC|RTF_HOST)) == (RTF_DYNAMIC|RTF_HOST)) {
-		rtdeletemsg(rt, ifp, r->rtt_tableid);
 	}
 
 	if_put(ifp);

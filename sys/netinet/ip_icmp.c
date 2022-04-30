@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.188 2022/04/20 09:38:26 bluhm Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.189 2022/04/30 07:20:35 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -132,9 +132,8 @@ const struct sysctl_bounded_args icmpctl_vars[] =  {
 };
 
 
-void icmp_mtudisc_timeout(struct rtentry *, struct rttimer *);
+void icmp_mtudisc_timeout(struct rtentry *, u_int);
 int icmp_ratelimit(const struct in_addr *, const int, const int);
-void icmp_redirect_timeout(struct rtentry *, struct rttimer *);
 int icmp_input_if(struct ifnet *, struct mbuf **, int *, int, int);
 int icmp_sysctl_icmpstat(void *, size_t *, void *);
 
@@ -634,8 +633,8 @@ reflect:
 		rtredirect(sintosa(&sdst), sintosa(&sgw),
 		    sintosa(&ssrc), &newrt, m->m_pkthdr.ph_rtableid);
 		if (newrt != NULL && icmp_redirtimeout > 0) {
-			rt_timer_add(newrt, icmp_redirect_timeout,
-			    icmp_redirect_timeout_q, m->m_pkthdr.ph_rtableid);
+			rt_timer_add(newrt, NULL, icmp_redirect_timeout_q,
+			    m->m_pkthdr.ph_rtableid);
 		}
 		rtfree(newrt);
 		pfctlinput(PRC_REDIRECT_HOST, sintosa(&sdst));
@@ -1053,7 +1052,7 @@ icmp_mtudisc(struct icmp *icp, u_int rtableid)
 }
 
 void
-icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
+icmp_mtudisc_timeout(struct rtentry *rt, u_int rtableid)
 {
 	struct ifnet *ifp;
 
@@ -1069,13 +1068,13 @@ icmp_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 
 		sin = *satosin(rt_key(rt));
 
-		rtdeletemsg(rt, ifp, r->rtt_tableid);
+		rtdeletemsg(rt, ifp, rtableid);
 
 		/* Notify TCP layer of increased Path MTU estimate */
 		ctlfunc = inetsw[ip_protox[IPPROTO_TCP]].pr_ctlinput;
 		if (ctlfunc)
 			(*ctlfunc)(PRC_MTUINC, sintosa(&sin),
-			    r->rtt_tableid, NULL);
+			    rtableid, NULL);
 	} else {
 		if ((rt->rt_locks & RTV_MTU) == 0)
 			rt->rt_mtu = 0;
@@ -1100,24 +1099,6 @@ icmp_ratelimit(const struct in_addr *dst, const int type, const int code)
 	    icmperrppslim))
 		return 1;	/* The packet is subject to rate limit */
 	return 0;	/* okay to send */
-}
-
-void
-icmp_redirect_timeout(struct rtentry *rt, struct rttimer *r)
-{
-	struct ifnet *ifp;
-
-	NET_ASSERT_LOCKED();
-
-	ifp = if_get(rt->rt_ifidx);
-	if (ifp == NULL)
-		return;
-
-	if ((rt->rt_flags & (RTF_DYNAMIC|RTF_HOST)) == (RTF_DYNAMIC|RTF_HOST)) {
-		rtdeletemsg(rt, ifp, r->rtt_tableid);
-	}
-
-	if_put(ifp);
 }
 
 int
