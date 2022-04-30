@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.256 2022/04/28 16:16:46 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.257 2022/04/30 11:32:39 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -2274,12 +2274,8 @@ roff_block_sub(ROFF_ARGS)
 	int		i, j;
 
 	/*
-	 * First check whether a custom macro exists at this level.  If
-	 * it does, then check against it.  This is some of groff's
-	 * stranger behaviours.  If we encountered a custom end-scope
-	 * tag and that tag also happens to be a "real" macro, then we
-	 * need to try interpreting it again as a real macro.  If it's
-	 * not, then return ignore.  Else continue.
+	 * If a custom end marker is a user-defined or predefined macro
+	 * or a request, interpret it.
 	 */
 
 	if (r->last->end) {
@@ -2305,20 +2301,17 @@ roff_block_sub(ROFF_ARGS)
 		}
 	}
 
-	/*
-	 * If we have no custom end-query or lookup failed, then try
-	 * pulling it out of the hashtable.
-	 */
+	/* Handle the standard end marker. */
 
 	t = roff_parse(r, buf->buf, &pos, ln, ppos);
+	if (t == ROFF_cblock)
+		return roff_cblock(r, t, buf, ln, ppos, pos, offs);
 
-	if (t != ROFF_cblock) {
-		if (tok != ROFF_ig)
-			roff_setstr(r, r->last->name, buf->buf + ppos, 2);
-		return ROFF_IGN;
-	}
+	/* Not an end marker, so append the line to the block. */
 
-	return (*roffs[t].proc)(r, t, buf, ln, ppos, pos, offs);
+	if (tok != ROFF_ig)
+		roff_setstr(r, r->last->name, buf->buf + ppos, 2);
+	return ROFF_IGN;
 }
 
 static int
