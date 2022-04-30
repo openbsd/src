@@ -1,0 +1,30 @@
+.\" $OpenBSD: req.in,v 1.1 2022/04/30 18:46:16 schwarze Exp $
+.TH TBL-MACRO-REQ 1 "April 30, 2022"
+.SH NAME
+tbl-macro-req \- requests generating nodes in a table
+.SH DESCRIPTION
+initial text
+.TS
+box tab(:);
+l | l .
+a:b:stray
+_
+c:T{
+d
+e
+T}
+.ce
+f:T{
+g
+.br
+h
+T}
+.if 1 .ce
+i:T{
+j
+.if 1 .br
+k
+T}
+.TE
+.PP
+final text

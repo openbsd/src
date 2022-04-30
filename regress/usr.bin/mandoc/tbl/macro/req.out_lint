@@ -1,0 +1,5 @@
+mandoc: req.in:10:5: ERROR: ignoring extra tbl data cells: stray
+mandoc: req.in:16:2: UNSUPP: ignoring macro in table: ce
+mandoc: req.in:19:2: UNSUPP: ignoring macro in table: br
+mandoc: req.in:22:8: UNSUPP: ignoring macro in table: ce
+mandoc: req.in:25:8: UNSUPP: ignoring macro in table: br

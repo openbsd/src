@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.257 2022/04/30 11:32:39 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.258 2022/04/30 18:46:16 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -235,6 +235,7 @@ static	enum roff_tok	 roff_parse(struct roff *, char *, int *,
 static	int		 roff_parsetext(struct roff *, struct buf *,
 				int, int *);
 static	int		 roff_renamed(ROFF_ARGS);
+static	int		 roff_req_or_macro(ROFF_ARGS);
 static	int		 roff_return(ROFF_ARGS);
 static	int		 roff_rm(ROFF_ARGS);
 static	int		 roff_rn(ROFF_ARGS);
@@ -1903,7 +1904,6 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs, size_t len)
 	/*
 	 * If a scope is open, go to the child handler for that macro,
 	 * as it may want to preprocess before doing anything with it.
-	 * Don't do so if an equation is open.
 	 */
 
 	if (r->last) {
@@ -1911,19 +1911,27 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs, size_t len)
 		return (*roffs[t].sub)(r, t, buf, ln, ppos, pos, offs);
 	}
 
-	/* No scope is open.  This is a new request or macro. */
-
 	r->options &= ~MPARSE_COMMENT;
 	spos = pos;
 	t = roff_parse(r, buf->buf, &pos, ln, ppos);
+	return roff_req_or_macro(r, t, buf, ln, spos, pos, offs);
+}
 
-	/* Tables ignore most macros. */
+/*
+ * Handle a new request or macro.
+ * May be called outside any scope or from inside a conditional scope.
+ */
+static int
+roff_req_or_macro(ROFF_ARGS) {
 
-	if (r->tbl != NULL && (t == TOKEN_NONE || t == ROFF_TS ||
-	    t == ROFF_br || t == ROFF_ce || t == ROFF_rj || t == ROFF_sp)) {
+	/* For now, tables ignore most macros and some request. */
+
+	if (r->tbl != NULL && (tok == TOKEN_NONE || tok == ROFF_TS ||
+	    tok == ROFF_br || tok == ROFF_ce || tok == ROFF_rj ||
+	    tok == ROFF_sp)) {
 		mandoc_msg(MANDOCERR_TBLMACRO,
-		    ln, pos, "%s", buf->buf + spos);
-		if (t != TOKEN_NONE)
+		    ln, ppos, "%s", buf->buf + ppos);
+		if (tok != TOKEN_NONE)
 			return ROFF_IGN;
 		while (buf->buf[pos] != '\0' && buf->buf[pos] != ' ')
 			pos++;
@@ -1936,9 +1944,9 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs, size_t len)
 
 	/* For now, let high level macros abort .ce mode. */
 
-	if (ctl && roffce_node != NULL &&
-	    (t == TOKEN_NONE || t == ROFF_Dd || t == ROFF_EQ ||
-	     t == ROFF_TH || t == ROFF_TS)) {
+	if (roffce_node != NULL &&
+	    (tok == TOKEN_NONE || tok == ROFF_Dd || tok == ROFF_EQ ||
+	     tok == ROFF_TH || tok == ROFF_TS)) {
 		r->man->last = roffce_node;
 		r->man->next = ROFF_NEXT_SIBLING;
 		roffce_lines = 0;
@@ -1950,12 +1958,12 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs, size_t len)
 	 * Let the standard macro set parsers handle it.
 	 */
 
-	if (t == TOKEN_NONE)
+	if (tok == TOKEN_NONE)
 		return ROFF_CONT;
 
-	/* Execute a roff request or a user defined macro. */
+	/* Execute a roff request or a user-defined macro. */
 
-	return (*roffs[t].proc)(r, t, buf, ln, spos, pos, offs);
+	return (*roffs[tok].proc)(r, tok, buf, ln, ppos, pos, offs);
 }
 
 /*
@@ -1998,8 +2006,10 @@ roff_endparse(struct roff *r)
 }
 
 /*
- * Parse a roff node's type from the input buffer.  This must be in the
- * form of ".foo xxx" in the usual way.
+ * Parse the request or macro name at buf[*pos].
+ * Return ROFF_RENAMED, ROFF_USERDEF, or a ROFF_* token value.
+ * For empty, undefined, mdoc(7), and man(7) macros, return TOKEN_NONE.
+ * As a side effect, set r->current_string to the definition or to NULL.
  */
 static enum roff_tok
 roff_parse(struct roff *r, char *buf, int *pos, int ln, int ppos)
@@ -2391,27 +2401,18 @@ static int
 roff_cond_sub(ROFF_ARGS)
 {
 	struct roffnode	*bl;
-	int		 irc, rr;
+	int		 irc, rr, spos;
 	enum roff_tok	 t;
 
 	rr = 0;  /* If arguments follow "\}", skip them. */
 	irc = roff_cond_checkend(r, tok, buf, ln, ppos, pos, &rr);
+	spos = pos;
 	t = roff_parse(r, buf->buf, &pos, ln, ppos);
 
-	/* For now, let high level macros abort .ce mode. */
-
-	if (roffce_node != NULL &&
-	    (t == TOKEN_NONE || t == ROFF_Dd || t == ROFF_EQ ||
-             t == ROFF_TH || t == ROFF_TS)) {
-		r->man->last = roffce_node;
-		r->man->next = ROFF_NEXT_SIBLING;
-		roffce_lines = 0;
-		roffce_node = NULL;
-	}
-
 	/*
-	 * Fully handle known macros when they are structurally
-	 * required or when the conditional evaluated to true.
+	 * Handle requests and macros if the conditional evaluated
+	 * to true or if they are structurally required.
+	 * The .break request is always handled specially.
 	 */
 
 	if (t == ROFF_break) {
@@ -2424,13 +2425,11 @@ roff_cond_sub(ROFF_ARGS)
 					break;
 			}
 		}
-	} else if (t != TOKEN_NONE &&
-	    (rr || roffs[t].flags & ROFFMAC_STRUCT)) {
-		irc |= (*roffs[t].proc)(r, t, buf, ln, ppos, pos, offs);
+	} else if (rr || (t < TOKEN_NONE && roffs[t].flags & ROFFMAC_STRUCT)) {
+		irc |= roff_req_or_macro(r, t, buf, ln, spos, pos, offs);
 		if (irc & ROFF_WHILE)
 			irc &= ~(ROFF_LOOPCONT | ROFF_LOOPEXIT);
-	} else
-		irc |= rr ? ROFF_CONT : ROFF_IGN;
+	}
 	return irc;
 }
 

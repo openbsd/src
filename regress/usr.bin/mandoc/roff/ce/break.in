@@ -1,0 +1,33 @@
+.\" $OpenBSD: break.in,v 1.1 2022/04/30 18:46:16 schwarze Exp $
+.TH CE-BREAK 1 "April 30, 2022"
+.SH NAME
+ce-break \- centering requests broken by high-level macros
+.SH DESCRIPTION
+initial
+text
+.ce 3
+Text centered with the .ce request is
+.I not
+filled.
+.rj 4
+Text adjusted to the right margin
+works in just the same way and is
+.I not
+filled either.
+.ce
+High-level macros break centering even in a
+.if 1 .I conditional
+block.
+.PP
+.nf
+Now entering
+explicit no-fill mode.
+.ce 3
+Text is still
+.I not
+filled.
+.PP
+.fi
+final
+text
+in fill mode
