@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.19 2021/11/15 14:57:57 claudio Exp $ */
+/*	$OpenBSD: map.c,v 1.20 2022/04/30 01:29:05 tedu Exp $ */
 
 /*
  * Copyright (c) 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -267,11 +267,26 @@ hist_increment(struct hist *hist, const char *key, long step)
 long
 hist_get_bin_suffix(long bin, char **suffix)
 {
+#define EXA	(PETA * 1024)
+#define PETA	(TERA * 1024)
+#define TERA	(GIGA * 1024)
 #define GIGA	(MEGA * 1024)
 #define MEGA	(KILO * 1024)
-#define KILO	(1024)
+#define KILO	(1024LL)
 
 	*suffix = "";
+	if (bin >= EXA) {
+		bin /= EXA;
+		*suffix = "E";
+	}
+	if (bin >= PETA) {
+		bin /= PETA;
+		*suffix = "P";
+	}
+	if (bin >= TERA) {
+		bin /= TERA;
+		*suffix = "T";
+	}
 	if (bin >= GIGA) {
 		bin /= GIGA;
 		*suffix = "G";
@@ -284,10 +299,7 @@ hist_get_bin_suffix(long bin, char **suffix)
 		bin /= KILO;
 		*suffix = "K";
 	}
-
 	return bin;
-#undef MEGA
-#undef KILO
 }
 
 /*
