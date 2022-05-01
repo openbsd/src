@@ -1,0 +1,19 @@
+ROFF-ESC-COMMENT(1)         General Commands Manual        ROFF-ESC-COMMENT(1)
+
+NNAAMMEE
+     rrooffff--eesscc--ccoommmmeenntt - roff(7) comments
+
+DDEESSCCRRIIPPTTIIOONN
+     text line continuation
+
+     macro line continuation: [--ff _f_i_l_e]
+
+     whitespace   at the end of an input line
+
+     text line with comment
+
+     continuation  requested by a comment
+
+     Surpisingly, the sequence \" does not start a comment.
+
+OpenBSD                           May 1, 2022                          OpenBSD

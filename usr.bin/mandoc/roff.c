@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.258 2022/04/30 18:46:16 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.259 2022/05/01 16:18:59 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -232,6 +232,8 @@ static	int		 roff_nr(ROFF_ARGS);
 static	int		 roff_onearg(ROFF_ARGS);
 static	enum roff_tok	 roff_parse(struct roff *, char *, int *,
 				int, int);
+static	int		 roff_parse_comment(struct roff *, struct buf *,
+				int, int, char);
 static	int		 roff_parsetext(struct roff *, struct buf *,
 				int, int *);
 static	int		 roff_renamed(ROFF_ARGS);
@@ -1229,6 +1231,98 @@ deroff(char **dest, const struct roff_node *n)
 
 /* --- main functions of the roff parser ---------------------------------- */
 
+static int
+roff_parse_comment(struct roff *r, struct buf *buf, int ln, int pos,
+    char newesc)
+{
+	struct roff_node *n;	/* used for header comments */
+	const char	*start;	/* start of the string to process */
+	const char	*cp;	/* for RCS id parsing */
+	char		*stesc;	/* start of an escape sequence ('\\') */
+	char		*ep;	/* end of comment string */
+	int		 rcsid;	/* kind of RCS id seen */
+
+	for (start = stesc = buf->buf + pos;; stesc++) {
+		/* The line ends without continuation or comment. */
+		if (stesc[0] == '\0')
+			return ROFF_CONT;
+
+		/* Unescaped byte: skip it. */
+		if (stesc[0] != newesc)
+			continue;
+
+		/* Backslash at end of line requests line continuation. */
+		if (stesc[1] == '\0') {
+			stesc[0] = '\0';
+			return ROFF_IGN | ROFF_APPEND;
+		}
+
+		/* Found a comment: process it. */
+		if (stesc[1] == '"' || stesc[1] == '#')
+			break;
+
+		/* Escaped escape character: skip them both. */
+		if (stesc[1] == newesc)
+			stesc++;
+	}
+
+	/* Look for an RCS id in the comment. */
+
+	rcsid = 0;
+	if ((cp = strstr(stesc + 2, "$" "OpenBSD")) != NULL) {
+		rcsid = 1 << MANDOC_OS_OPENBSD;
+		cp += 8;
+	} else if ((cp = strstr(stesc + 2, "$" "NetBSD")) != NULL) {
+		rcsid = 1 << MANDOC_OS_NETBSD;
+		cp += 7;
+	}
+	if (cp != NULL && isalnum((unsigned char)*cp) == 0 &&
+	    strchr(cp, '$') != NULL) {
+		if (r->man->meta.rcsids & rcsid)
+			mandoc_msg(MANDOCERR_RCS_REP, ln,
+			    (int)(stesc - buf->buf) + 2, "%s", stesc + 1);
+		r->man->meta.rcsids |= rcsid;
+	}
+
+	/* Warn about trailing whitespace at the end of the comment. */
+
+	ep = strchr(stesc + 2, '\0') - 1;
+	if (*ep == '\n')
+		*ep-- = '\0';
+	if (*ep == ' ' || *ep == '\t')
+		mandoc_msg(MANDOCERR_SPACE_EOL,
+		    ln, (int)(ep - buf->buf), NULL);
+
+	/* Save comments preceding the title macro in the syntax tree. */
+
+	if (r->options & MPARSE_COMMENT) {
+		while (*ep == ' ' || *ep == '\t')
+			ep--;
+		ep[1] = '\0';
+		n = roff_node_alloc(r->man, ln, stesc + 1 - buf->buf,
+		    ROFFT_COMMENT, TOKEN_NONE);
+		n->string = mandoc_strdup(stesc + 2);
+		roff_node_append(r->man, n);
+		n->flags |= NODE_VALID | NODE_ENDED;
+		r->man->next = ROFF_NEXT_SIBLING;
+	}
+
+	/* The comment requests line continuation. */
+
+	if (stesc[1] == '#') {
+		*stesc = '\0';
+		return ROFF_IGN | ROFF_APPEND;
+	}
+
+	/* Discard the comment including preceding whitespace. */
+
+	while (stesc > start && stesc[-1] == ' ' &&
+	    (stesc == start + 1 || stesc[-2] != '\\'))
+		stesc--;
+	*stesc = '\0';
+	return ROFF_CONT;
+}
+
 /*
  * In the current line, expand escape sequences that produce parsable
  * input text.  Also check the syntax of the remaining escape sequences,
@@ -1239,11 +1333,9 @@ roff_expand(struct roff *r, struct buf *buf, int ln, int pos, char newesc)
 {
 	struct mctx	*ctx;	/* current macro call context */
 	char		 ubuf[24]; /* buffer to print the number */
-	struct roff_node *n;	/* used for header comments */
 	const char	*start;	/* start of the string to process */
 	char		*stesc;	/* start of an escape sequence ('\\') */
 	const char	*esct;	/* type of esccape sequence */
-	char		*ep;	/* end of comment string */
 	const char	*stnam;	/* start of the name, after "[(*" */
 	const char	*cp;	/* end of the name, e.g. before ']' */
 	const char	*res;	/* the string to be substituted */
@@ -1257,98 +1349,15 @@ roff_expand(struct roff *r, struct buf *buf, int ln, int pos, char newesc)
 	int		 npos;	/* position in numeric expression */
 	int		 arg_complete; /* argument not interrupted by eol */
 	int		 quote_args; /* true for \\$@, false for \\$* */
-	int		 done;	/* no more input available */
 	int		 deftype; /* type of definition to paste */
-	int		 rcsid;	/* kind of RCS id seen */
 	enum mandocerr	 err;	/* for escape sequence problems */
 	char		 sign;	/* increment number register */
 	char		 term;	/* character terminating the escape */
 
-	/* Search forward for comments. */
-
-	done = 0;
 	start = buf->buf + pos;
-	for (stesc = buf->buf + pos; *stesc != '\0'; stesc++) {
-		if (stesc[0] != newesc || stesc[1] == '\0')
-			continue;
-		stesc++;
-		if (*stesc != '"' && *stesc != '#')
-			continue;
-
-		/* Comment found, look for RCS id. */
-
-		rcsid = 0;
-		if ((cp = strstr(stesc, "$" "OpenBSD")) != NULL) {
-			rcsid = 1 << MANDOC_OS_OPENBSD;
-			cp += 8;
-		} else if ((cp = strstr(stesc, "$" "NetBSD")) != NULL) {
-			rcsid = 1 << MANDOC_OS_NETBSD;
-			cp += 7;
-		}
-		if (cp != NULL &&
-		    isalnum((unsigned char)*cp) == 0 &&
-		    strchr(cp, '$') != NULL) {
-			if (r->man->meta.rcsids & rcsid)
-				mandoc_msg(MANDOCERR_RCS_REP, ln,
-				    (int)(stesc - buf->buf) + 1,
-				    "%s", stesc + 1);
-			r->man->meta.rcsids |= rcsid;
-		}
-
-		/* Handle trailing whitespace. */
-
-		ep = strchr(stesc--, '\0') - 1;
-		if (*ep == '\n') {
-			done = 1;
-			ep--;
-		}
-		if (*ep == ' ' || *ep == '\t')
-			mandoc_msg(MANDOCERR_SPACE_EOL,
-			    ln, (int)(ep - buf->buf), NULL);
-
-		/*
-		 * Save comments preceding the title macro
-		 * in the syntax tree.
-		 */
-
-		if (newesc != ASCII_ESC && r->options & MPARSE_COMMENT) {
-			while (*ep == ' ' || *ep == '\t')
-				ep--;
-			ep[1] = '\0';
-			n = roff_node_alloc(r->man,
-			    ln, stesc + 1 - buf->buf,
-			    ROFFT_COMMENT, TOKEN_NONE);
-			n->string = mandoc_strdup(stesc + 2);
-			roff_node_append(r->man, n);
-			n->flags |= NODE_VALID | NODE_ENDED;
-			r->man->next = ROFF_NEXT_SIBLING;
-		}
-
-		/* Line continuation with comment. */
-
-		if (stesc[1] == '#') {
-			*stesc = '\0';
-			return ROFF_IGN | ROFF_APPEND;
-		}
-
-		/* Discard normal comments. */
-
-		while (stesc > start && stesc[-1] == ' ' &&
-		    (stesc == start + 1 || stesc[-2] != '\\'))
-			stesc--;
-		*stesc = '\0';
-		break;
-	}
-	if (stesc == start)
-		return ROFF_CONT;
-	stesc--;
-
-	/* Notice the end of the input. */
-
-	if (*stesc == '\n') {
+	stesc = strchr(start, '\0') - 1;
+	if (stesc >= start && *stesc == '\n')
 		*stesc-- = '\0';
-		done = 1;
-	}
 
 	expand_count = 0;
 	while (stesc >= start) {
@@ -1387,15 +1396,11 @@ roff_expand(struct roff *r, struct buf *buf, int ln, int pos, char newesc)
 			while (stesc > cp)
 				*stesc-- = '\\';
 			continue;
-		} else if (stesc[1] != '\0') {
-			*stesc = '\\';
-		} else {
+		} else if (stesc[1] == '\0') {
 			*stesc-- = '\0';
-			if (done)
-				continue;
-			else
-				return ROFF_IGN | ROFF_APPEND;
-		}
+			continue;
+		} else
+			*stesc = '\\';
 
 		/* Decide whether to expand or to check only. */
 
@@ -1854,7 +1859,12 @@ roff_parseln(struct roff *r, int ln, struct buf *buf, int *offs, size_t len)
 		assert(e == ROFF_CONT);
 	}
 
-	/* Expand some escape sequences. */
+	/* Handle comments and escape sequences. */
+
+	e = roff_parse_comment(r, buf, ln, pos, r->escape);
+	if ((e & ROFF_MASK) == ROFF_IGN)
+		return e;
+	assert(e == ROFF_CONT);
 
 	e = roff_expand(r, buf, ln, pos, r->escape);
 	if ((e & ROFF_MASK) == ROFF_IGN)

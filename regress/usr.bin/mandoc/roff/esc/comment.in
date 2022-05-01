@@ -1,0 +1,25 @@
+.\" $OpenBSD: comment.in,v 1.1 2022/05/01 16:18:59 schwarze Exp $
+.Dd $Mdocdate: May 1 2022 $
+.Dt ROFF-ESC-COMMENT 1
+.Os
+.Sh NAME
+.Nm roff-esc-comment
+.Nd roff(7) comments
+.Sh DESCRIPTION
+text line cont\
+inuation
+.Pp
+macro line continuation:
+.Op Fl f A\
+r file
+.Pp
+whitespace  \&
+at the end of an input line
+.Pp
+text line with  \"not printed\
+comment
+.Pp
+continuation  \#not printed  
+requested by a comment
+.Pp
+Surpisingly, the sequence \\" does not start a comment.
