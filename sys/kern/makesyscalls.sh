@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$OpenBSD: makesyscalls.sh,v 1.15 2021/12/09 00:26:10 guenther Exp $
+#	$OpenBSD: makesyscalls.sh,v 1.16 2022/05/01 22:59:49 tedu Exp $
 #	$NetBSD: makesyscalls.sh,v 1.26 1998/01/09 06:17:51 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
@@ -70,28 +70,6 @@ sysent="sysent.switch"
 
 trap "rm $sysdcl $sysprotos $sysent" 0
 
-# Awk program (must support nawk extensions)
-# Use "awk" at Berkeley, "nawk" or "gawk" elsewhere.
-awk=${AWK:-awk}
-
-# Does this awk have a "toupper" function? (i.e. is it GNU awk)
-isgawk=`$awk 'BEGIN { print toupper("true"); exit; }' 2>/dev/null`
-
-# If this awk does not define "toupper" then define our own.
-if [ "$isgawk" = TRUE ] ; then
-	# GNU awk provides it.
-	toupper=
-else
-	# Provide our own toupper()
-	toupper='
-function toupper(str) {
-	_toupper_cmd = "echo "str" |tr a-z A-Z"
-	_toupper_cmd | getline _toupper_str;
-	close(_toupper_cmd);
-	return _toupper_str;
-}'
-fi
-
 # before handing it off to awk, make a few adjustments:
 #	(1) insert spaces around {, }, (, ), *, and commas.
 #	(2) get rid of any and all dollar signs (so that rcs id use safe)
@@ -111,8 +89,7 @@ s/\$//g
 2,${
 	/^#/!s/\([{}()*,]\)/ \1 /g
 }
-' < $2 | $awk "
-$toupper
+' < $2 | awk "
 BEGIN {
 	# to allow nested #if/#else/#endif sets
 	savedepth = 0
