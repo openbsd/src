@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.60 2022/04/12 19:41:11 naddy Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.61 2022/05/01 10:28:54 mglocker Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -1365,9 +1365,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 				dwc2_hcd_get_ep_bandwidth(hsotg, dpipe),
 				xfer);
 	}
-
 	mtx_leave(&hsotg->lock);
-// 	mtx_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
 
@@ -1705,7 +1703,7 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 		 * everything else does.
 		 */
 		if (!(xfertype == UE_CONTROL &&
-		    xfer->length == 0) &&
+		    UGETW(xfer->request.wLength) == 0) &&
 		    xfer->actlen > 0 /* XXX PR/53503 */
 		    ) {
 			int rd = usbd_xfer_isread(xfer);
