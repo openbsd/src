@@ -1,4 +1,4 @@
-/* $OpenBSD: bcmgenet.c,v 1.4 2020/12/12 11:48:52 jan Exp $ */
+/* $OpenBSD: bcmgenet.c,v 1.5 2022/05/02 06:30:05 anton Exp $ */
 /* $NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $ */
 
 /*-
@@ -512,7 +512,7 @@ genet_init_rings(struct genet_softc *sc, int qid)
 	/* Enable transmit DMA */
 	val = RD4(sc, GENET_TX_DMA_CTRL);
 	val |= GENET_TX_DMA_CTRL_EN;
-	val |= GENET_TX_DMA_CTRL_RBUF_EN(GENET_DMA_DEFAULT_QUEUE);
+	val |= GENET_TX_DMA_CTRL_RBUF_EN(qid);
 	WR4(sc, GENET_TX_DMA_CTRL, val);
 
 	/* RX ring */
@@ -549,7 +549,7 @@ genet_init_rings(struct genet_softc *sc, int qid)
 	/* Enable receive DMA */
 	val = RD4(sc, GENET_RX_DMA_CTRL);
 	val |= GENET_RX_DMA_CTRL_EN;
-	val |= GENET_RX_DMA_CTRL_RBUF_EN(GENET_DMA_DEFAULT_QUEUE);
+	val |= GENET_RX_DMA_CTRL_RBUF_EN(qid);
 	WR4(sc, GENET_RX_DMA_CTRL, val);
 }
 
