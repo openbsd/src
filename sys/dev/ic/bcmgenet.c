@@ -1,4 +1,4 @@
-/* $OpenBSD: bcmgenet.c,v 1.5 2022/05/02 06:30:05 anton Exp $ */
+/* $OpenBSD: bcmgenet.c,v 1.6 2022/05/02 06:30:45 anton Exp $ */
 /* $NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $ */
 
 /*-
@@ -439,10 +439,45 @@ genet_setup_rxfilter(struct genet_softc *sc)
 	WR4(sc, GENET_UMAC_MDF_CTRL, mdf_ctrl);
 }
 
+void
+genet_disable_dma(struct genet_softc *sc)
+{
+	uint32_t val;
+
+	/* Disable receiver */
+	val = RD4(sc, GENET_UMAC_CMD);
+	val &= ~GENET_UMAC_CMD_RXEN;
+	WR4(sc, GENET_UMAC_CMD, val);
+
+	/* Stop receive DMA */
+	val = RD4(sc, GENET_RX_DMA_CTRL);
+	val &= ~GENET_RX_DMA_CTRL_EN;
+	val &= ~GENET_RX_DMA_CTRL_RBUF_EN(GENET_DMA_DEFAULT_QUEUE);
+	WR4(sc, GENET_RX_DMA_CTRL, val);
+
+	/* Stop transmit DMA */
+	val = RD4(sc, GENET_TX_DMA_CTRL);
+	val &= ~GENET_TX_DMA_CTRL_EN;
+	val &= ~GENET_TX_DMA_CTRL_RBUF_EN(GENET_DMA_DEFAULT_QUEUE);
+	WR4(sc, GENET_TX_DMA_CTRL, val);
+
+	/* Flush data in the TX FIFO */
+	WR4(sc, GENET_UMAC_TX_FLUSH, 1);
+	delay(10);
+	WR4(sc, GENET_UMAC_TX_FLUSH, 0);
+
+	/* Disable transmitter */
+	val = RD4(sc, GENET_UMAC_CMD);
+	val &= ~GENET_UMAC_CMD_TXEN;
+	WR4(sc, GENET_UMAC_CMD, val);
+}
+
 int
 genet_reset(struct genet_softc *sc)
 {
 	uint32_t val;
+
+	genet_disable_dma(sc);
 
 	val = RD4(sc, GENET_SYS_RBUF_FLUSH_CTRL);
 	val |= GENET_SYS_RBUF_FLUSH_RESET;
@@ -607,7 +642,6 @@ genet_stop(struct genet_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct genet_bufmap *bmap;
-	uint32_t val;
 	int i;
 
 	timeout_del(&sc->sc_rxto);
@@ -615,32 +649,7 @@ genet_stop(struct genet_softc *sc)
 
 	mii_down(&sc->sc_mii);
 
-	/* Disable receiver */
-	val = RD4(sc, GENET_UMAC_CMD);
-	val &= ~GENET_UMAC_CMD_RXEN;
-	WR4(sc, GENET_UMAC_CMD, val);
-
-	/* Stop receive DMA */
-	val = RD4(sc, GENET_RX_DMA_CTRL);
-	val &= ~GENET_RX_DMA_CTRL_EN;
-	val &= ~GENET_RX_DMA_CTRL_RBUF_EN(GENET_DMA_DEFAULT_QUEUE);
-	WR4(sc, GENET_RX_DMA_CTRL, val);
-
-	/* Stop transmit DMA */
-	val = RD4(sc, GENET_TX_DMA_CTRL);
-	val &= ~GENET_TX_DMA_CTRL_EN;
-	val &= ~GENET_TX_DMA_CTRL_RBUF_EN(GENET_DMA_DEFAULT_QUEUE);
-	WR4(sc, GENET_TX_DMA_CTRL, val);
-
-	/* Flush data in the TX FIFO */
-	WR4(sc, GENET_UMAC_TX_FLUSH, 1);
-	delay(10);
-	WR4(sc, GENET_UMAC_TX_FLUSH, 0);
-
-	/* Disable transmitter */
-	val = RD4(sc, GENET_UMAC_CMD);
-	val &= ~GENET_UMAC_CMD_TXEN;
-	WR4(sc, GENET_UMAC_CMD, val);
+	genet_disable_dma(sc);
 
 	/* Disable interrupts */
 	genet_disable_intr(sc);
