@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1127 2022/04/29 08:58:49 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1128 2022/05/03 13:32:47 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6456,8 +6456,15 @@ pf_walk_header(struct pf_pdesc *pd, struct ip *h, u_short *reason)
 	pd->off += hlen;
 	pd->proto = h->ip_p;
 	/* IGMP packets have router alert options, allow them */
-	if (pd->proto == IPPROTO_IGMP)
+	if (pd->proto == IPPROTO_IGMP) {
+		/* According to RFC 1112 ttl must be set to 1. */
+		if ((h->ip_ttl != 1) || !IN_MULTICAST(h->ip_dst.s_addr)) {
+			DPFPRINTF(LOG_NOTICE, "Invalid IGMP");
+			REASON_SET(reason, PFRES_IPOPTIONS);
+			return (PF_DROP);
+		}
 		CLR(pd->badopts, PF_OPT_ROUTER_ALERT);
+	}
 	/* stop walking over non initial fragments */
 	if ((h->ip_off & htons(IP_OFFMASK)) != 0)
 		return (PF_PASS);
@@ -6698,6 +6705,19 @@ pf_walk_header6(struct pf_pdesc *pd, struct ip6_hdr *h, u_short *reason)
 			case MLD_LISTENER_REPORT:
 			case MLD_LISTENER_DONE:
 			case MLDV2_LISTENER_REPORT:
+				/*
+				 * According to RFC 2710 all MLD messages are
+				 * sent with hop-limit (ttl) set to 1, and link
+				 * local source address.  If either one is
+				 * missing then MLD message is invalid and
+				 * should be discarded.
+				 */
+				if ((h->ip6_hlim != 1) ||
+				    !IN6_IS_ADDR_LINKLOCAL(&h->ip6_src)) {
+					DPFPRINTF(LOG_NOTICE, "Invalid MLD");
+					REASON_SET(reason, PFRES_IPOPTIONS);
+					return (PF_DROP);
+				}
 				CLR(pd->badopts, PF_OPT_ROUTER_ALERT);
 				break;
 			}
