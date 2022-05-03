@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.123 2022/04/28 18:12:33 mpi Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.124 2022/05/03 21:20:35 bluhm Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -748,7 +748,7 @@ ReTry:
 			 */
 #ifdef DIAGNOSTIC
 			if (flags & PGO_SYNCIO)
-	panic("uvn_flush: PGO_SYNCIO return 'try again' error (impossible)");
+	panic("%s: PGO_SYNCIO return 'try again' error (impossible)", __func__);
 #endif
 			flags |= PGO_SYNCIO;
 			if (flags & PGO_FREE)
@@ -812,14 +812,20 @@ ReTry:
 			} else if (flags & PGO_FREE &&
 			    result != VM_PAGER_PEND) {
 				if (result != VM_PAGER_OK) {
-					printf("uvn_flush: obj=%p, "
-					   "offset=0x%llx.  error "
-					   "during pageout.\n",
-					    pp->uobject,
-					    (long long)pp->offset);
-					printf("uvn_flush: WARNING: "
-					    "changes to page may be "
-					    "lost!\n");
+					static struct timeval lasttime;
+					static const struct timeval interval =
+					    { 5, 0 };
+
+					if (ratecheck(&lasttime, &interval)) {
+						printf("%s: obj=%p, "
+						   "offset=0x%llx.  error "
+						   "during pageout.\n",
+						    __func__, pp->uobject,
+						    (long long)pp->offset);
+						printf("%s: WARNING: "
+						    "changes to page may be "
+						    "lost!\n", __func__);
+					}
 					retval = FALSE;
 				}
 				pmap_page_protect(ptmp, PROT_NONE);
