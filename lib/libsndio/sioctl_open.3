@@ -1,4 +1,4 @@
-.\" $OpenBSD: sioctl_open.3,v 1.12 2020/06/28 05:39:30 ratchov Exp $
+.\" $OpenBSD: sioctl_open.3,v 1.13 2022/05/03 13:03:30 ratchov Exp $
 .\"
 .\" Copyright (c) 2011-2020 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 28 2020 $
+.Dd $Mdocdate: May 3 2022 $
 .Dt SIOCTL_OPEN 3
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Fa "void (*cb)(void *arg, struct sioctl_desc *desc, int val)"
 .Fa "void *arg"
 .Fc
-.Ft void
+.Ft int
 .Fo sioctl_onval
 .Fa "struct sioctl_hdl *hdl"
 .Fa "void (*cb)(void *arg, unsigned int addr, unsigned int val)"
