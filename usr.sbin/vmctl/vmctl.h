@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.34 2021/01/27 07:21:12 deraadt Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.35 2022/05/03 21:39:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -48,7 +48,7 @@ struct parse_result {
 	char			*name;
 	char			*path;
 	char			*isopath;
-	long long		 size;
+	size_t			 size;
 	int			 nifs;
 	char			**nets;
 	int			 nnets;
@@ -93,7 +93,7 @@ int	 open_imagefile(int, const char *, int,
 int	 create_imagefile(int, const char *, const char *, long, const char **);
 int	 create_raw_imagefile(const char *, long);
 int	 create_qc2_imagefile(const char *, const char *, long);
-int	 vm_start(uint32_t, const char *, int, int, char **, int,
+int	 vm_start(uint32_t, const char *, size_t, int, char **, int,
 	    char **, int *, char *, char *, char *, unsigned int);
 int	 vm_start_complete(struct imsg *, int *, int);
 void	 terminate_vm(uint32_t, const char *, unsigned int);

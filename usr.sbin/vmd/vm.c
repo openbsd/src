@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.68 2022/03/01 21:46:19 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.69 2022/05/03 21:39:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -233,7 +233,7 @@ loadfile_bios(gzFile fp, off_t size, struct vcpu_reg_state *vrs)
 	if (gzseek(fp, 0, SEEK_SET) == -1)
 		return (-1);
 
-	/* The BIOS image must end at 1M */
+	/* The BIOS image must end at 1MB */
 	if ((off = 1048576 - size) < 0)
 		return (-1);
 
@@ -871,14 +871,12 @@ vcpu_reset(uint32_t vmid, uint32_t vcpu_id, struct vcpu_reg_state *vrs)
 void
 create_memory_map(struct vm_create_params *vcp)
 {
-	size_t len, mem_bytes, mem_mb;
+	size_t len, mem_bytes;
 
-	mem_mb = vcp->vcp_memranges[0].vmr_size;
+	mem_bytes = vcp->vcp_memranges[0].vmr_size;
 	vcp->vcp_nmemranges = 0;
-	if (mem_mb < 1 || mem_mb > VMM_MAX_VM_MEM_SIZE)
+	if (mem_bytes == 0 || mem_bytes > VMM_MAX_VM_MEM_SIZE)
 		return;
-
-	mem_bytes = mem_mb * 1024 * 1024;
 
 	/* First memory region: 0 - LOWMEM_KB (DOS low mem) */
 	len = LOWMEM_KB * 1024;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.108 2022/01/04 15:22:53 claudio Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.109 2022/05/03 21:39:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -56,7 +56,7 @@
 #define MAX_TAP			256
 #define NR_BACKLOG		5
 #define VMD_SWITCH_TYPE		"bridge"
-#define VM_DEFAULT_MEMORY	512
+#define VM_DEFAULT_MEMORY	512 * 1024 * 1024	/* 512 MiB */
 
 #define VMD_DEFAULT_STAGGERED_START_DELAY 30
 

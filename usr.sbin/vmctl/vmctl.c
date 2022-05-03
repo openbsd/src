@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.79 2021/06/10 19:50:05 dv Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.80 2022/05/03 21:39:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -73,7 +73,7 @@ struct imsgbuf *ibuf;
  *  ENOMEM if a memory allocation failure occurred.
  */
 int
-vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
+vm_start(uint32_t start_id, const char *name, size_t memsize, int nnics,
     char **nics, int ndisks, char **disks, int *disktypes, char *kernel,
     char *iso, char *instance, unsigned int bootdevice)
 {
@@ -122,7 +122,7 @@ vm_start(uint32_t start_id, const char *name, int memsize, int nnics,
 
 	/*
 	 * XXX: vmd(8) fills in the actual memory ranges. vmctl(8)
-	 * just passes in the actual memory size in MB here.
+	 * just passes in the actual memory size here.
 	 */
 	vcp->vcp_nmemranges = 1;
 	vcp->vcp_memranges[0].vmr_size = memsize;

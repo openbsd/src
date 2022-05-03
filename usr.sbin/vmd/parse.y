@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.59 2021/10/15 15:01:29 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.60 2022/05/03 21:39:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -1248,25 +1248,41 @@ symget(const char *nam)
 ssize_t
 parse_size(char *word, int64_t val)
 {
+	char		 result[FMT_SCALED_STRSIZE];
 	ssize_t		 size;
 	long long	 res;
 
 	if (word != NULL) {
 		if (scan_scaled(word, &res) != 0) {
-			log_warn("invalid size: %s", word);
+			log_warn("invalid memory size: %s", word);
 			return (-1);
 		}
 		val = (int64_t)res;
 	}
 
 	if (val < (1024 * 1024)) {
-		log_warnx("size must be at least one megabyte");
+		log_warnx("memory size must be at least 1MB");
 		return (-1);
-	} else
-		size = val / 1024 / 1024;
+	}
 
-	if ((size * 1024 * 1024) != val)
-		log_warnx("size rounded to %zd megabytes", size);
+	if (val > VMM_MAX_VM_MEM_SIZE) {
+		if (fmt_scaled(VMM_MAX_VM_MEM_SIZE, result) == 0)
+			log_warnx("memory size too large (limit is %s)",
+			    result);
+		else
+			log_warnx("memory size too large");
+		return (-1);
+	}
+
+	/* Round down to the megabyte. */
+	size = (val / (1024 * 1024)) * (1024 * 1024);
+
+	if (size != val) {
+		if (fmt_scaled(size, result) == 0)
+			log_warnx("memory size rounded to %s", result);
+		else
+			log_warnx("memory size rounded to %zd bytes", size);
+	}
 
 	return ((ssize_t)size);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.306 2022/04/27 14:23:37 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.307 2022/05/03 21:39:18 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1575,7 +1575,7 @@ vm_create_check_mem_ranges(struct vm_create_params *vcp)
 {
 	size_t i, memsize = 0;
 	struct vm_mem_range *vmr, *pvmr;
-	const paddr_t maxgpa = (uint64_t)VMM_MAX_VM_MEM_SIZE * 1024 * 1024;
+	const paddr_t maxgpa = VMM_MAX_VM_MEM_SIZE;
 
 	if (vcp->vcp_nmemranges == 0 ||
 	    vcp->vcp_nmemranges > VMM_MAX_MEM_RANGES)

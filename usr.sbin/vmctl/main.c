@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.68 2021/07/12 15:09:22 beck Exp $	*/
+/*	$OpenBSD: main.c,v 1.69 2022/05/03 21:39:18 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -404,23 +404,38 @@ parse_network(struct parse_result *res, char *word)
 int
 parse_size(struct parse_result *res, char *word)
 {
-	long long val = 0;
+	char		 result[FMT_SCALED_STRSIZE];
+	long long 	 val = 0;
 
 	if (word != NULL) {
 		if (scan_scaled(word, &val) != 0) {
-			warn("invalid size: %s", word);
+			warn("invalid memory size: %s", word);
 			return (-1);
 		}
 	}
 
 	if (val < (1024 * 1024)) {
-		warnx("size must be at least one megabyte");
+		warnx("memory size must be at least 1MB");
 		return (-1);
-	} else
-		res->size = val / 1024 / 1024;
+	}
 
-	if ((res->size * 1024 * 1024) != val)
-		warnx("size rounded to %lld megabytes", res->size);
+	if (val > VMM_MAX_VM_MEM_SIZE) {
+		if (fmt_scaled(VMM_MAX_VM_MEM_SIZE, result) == 0)
+			warnx("memory size too large (limit is %s)", result);
+		else
+			warnx("memory size too large");
+		return (-1);
+	}
+
+	/* Round down to the megabyte. */
+	res->size = (val / (1024 * 1024)) * (1024 * 1024);
+
+	if (res->size != (size_t)val) {
+		if (fmt_scaled(res->size, result) == 0)
+			warnx("memory size rounded to %s", result);
+		else
+			warnx("memory size rounded to %zu bytes", res->size);
+	}
 
 	return (0);
 }
