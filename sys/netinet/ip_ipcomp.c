@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.91 2021/12/23 12:21:48 bluhm Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.92 2022/05/03 09:18:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -167,7 +167,7 @@ ipcomp_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len - (skip + hlen);
-	crp->crp_flags = CRYPTO_F_IMBUF | CRYPTO_F_MPSAFE;
+	crp->crp_flags = CRYPTO_F_IMBUF;
 	crp->crp_buf = (caddr_t)m;
 	crp->crp_sid = tdb->tdb_cryptoid;
 
@@ -453,7 +453,7 @@ ipcomp_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
 	/* Crypto operation descriptor */
 	crp->crp_ilen = m->m_pkthdr.len;	/* Total input length */
-	crp->crp_flags = CRYPTO_F_IMBUF | CRYPTO_F_MPSAFE;
+	crp->crp_flags = CRYPTO_F_IMBUF;
 	crp->crp_buf = (caddr_t)m;
 	crp->crp_sid = tdb->tdb_cryptoid;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.173 2021/12/23 22:35:11 bluhm Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.174 2022/05/03 09:18:11 claudio Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -683,7 +683,7 @@ ah_input(struct mbuf **mp, struct tdb *tdb, int skip, int protoff)
 
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
-	crp->crp_flags = CRYPTO_F_IMBUF | CRYPTO_F_MPSAFE;
+	crp->crp_flags = CRYPTO_F_IMBUF;
 	crp->crp_buf = (caddr_t)m;
 	crp->crp_sid = tdb->tdb_cryptoid;
 
@@ -1106,7 +1106,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 
 	/* Crypto operation descriptor. */
 	crp->crp_ilen = m->m_pkthdr.len; /* Total input length. */
-	crp->crp_flags = CRYPTO_F_IMBUF | CRYPTO_F_MPSAFE;
+	crp->crp_flags = CRYPTO_F_IMBUF;
 	crp->crp_buf = (caddr_t)m;
 	crp->crp_sid = tdb->tdb_cryptoid;
 
