@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.112 2022/03/31 17:27:19 naddy Exp $
+.\"	$OpenBSD: fdisk.8,v 1.113 2022/05/03 11:48:47 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: May 3 2022 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@ The free space is maximized by deleting
 all existing partitions except the boot partitions
 .Sq APFS ISC ,
 .Sq APFS ,
-.Sq APFS Recovry ,
+.Sq APFS Recovery ,
 .Sq BIOS Boot ,
 .Sq HiFive FSBL
 and
@@ -74,7 +74,7 @@ If one of
 .Sq APFS ISC ,
 .Sq APFS ,
 or
-.Sq APFS Recovry
+.Sq APFS Recovery
 is detected then any existing
 .Sq EFI system
 will also be preserved.
