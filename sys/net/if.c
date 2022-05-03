@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.651 2022/04/30 21:13:57 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.652 2022/05/03 11:47:03 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ int	ifq_congestion;
 
 int		 netisr;
 
-#define	NET_TASKQ	1
+#define	NET_TASKQ	4
 struct taskq	*nettqmp[NET_TASKQ];
 
 struct task if_input_task_locked = TASK_INITIALIZER(if_netisr, NULL);
