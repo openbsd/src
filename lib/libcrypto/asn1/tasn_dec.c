@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.54 2022/04/28 18:30:57 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.55 2022/05/04 10:47:36 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -92,7 +92,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in,
 static int asn1_ex_c2i(ASN1_VALUE **pval, CBS *content, int utype,
     const ASN1_ITEM *it);
 
-static int asn1_check_tag_cbs(CBS *cbs, long *out_len, int *out_tag,
+static int asn1_check_tag_cbs(CBS *cbs, size_t *out_len, int *out_tag,
     uint8_t *out_class, char *out_indefinite, char *out_constructed,
     int expected_tag, int expected_class, char optional);
 static int asn1_check_tag(long *out_len, int *out_tag, uint8_t *out_class,
@@ -1048,7 +1048,7 @@ asn1_check_eoc(const unsigned char **in, long len)
 }
 
 static int
-asn1_check_tag_cbs(CBS *cbs, long *out_len, int *out_tag, uint8_t *out_class,
+asn1_check_tag_cbs(CBS *cbs, size_t *out_len, int *out_tag, uint8_t *out_class,
     char *out_indefinite, char *out_constructed, int expected_tag,
     int expected_class, char optional)
 {
@@ -1126,6 +1126,7 @@ asn1_check_tag(long *out_len, int *out_tag, unsigned char *out_class,
     char *out_indefinite, char *out_constructed, const unsigned char **in,
     long len, int expected_tag, int expected_class, char optional)
 {
+	size_t length;
 	CBS cbs;
 	int ret;
 
@@ -1134,9 +1135,14 @@ asn1_check_tag(long *out_len, int *out_tag, unsigned char *out_class,
 
 	CBS_init(&cbs, *in, len);
 
-	ret = asn1_check_tag_cbs(&cbs, out_len, out_tag, out_class,
+	ret = asn1_check_tag_cbs(&cbs, &length, out_tag, out_class,
 	    out_indefinite, out_constructed, expected_tag, expected_class,
 	    optional);
+
+	if (length > LONG_MAX)
+		return 0;
+	if (out_len != NULL)
+		*out_len = (long)length;
 
 	if (ret == 1)
 		*in = CBS_data(&cbs);
