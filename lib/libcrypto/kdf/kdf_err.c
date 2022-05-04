@@ -1,3 +1,4 @@
+/*	$OpenBSD: kdf_err.c,v 1.4 2022/05/04 18:49:50 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2018 The OpenSSL Project.  All rights reserved.
  *

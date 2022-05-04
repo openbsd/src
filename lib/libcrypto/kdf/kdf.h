@@ -1,3 +1,4 @@
+/*	$OpenBSD: kdf.h,v 1.5 2022/05/04 18:49:50 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
