@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.55 2022/05/04 10:47:36 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.56 2022/05/04 10:53:26 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -716,15 +716,9 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 		}
 
 		content = *in;
-		/* If indefinite length constructed find the real end */
-		if (inf) {
-			if (!asn1_find_end(&p, plen, inf))
-				goto err;
-			len = p - content;
-		} else {
-			len = p - content + plen;
-			p += plen;
-		}
+		if (!asn1_find_end(&p, plen, inf))
+			goto err;
+		len = p - content;
 	} else if (cst) {
 		/*
 		 * Should really check the internal tags are correct but
