@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.273 2022/01/13 10:34:07 martijn Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.274 2022/05/04 14:47:46 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -1562,7 +1562,6 @@ usage(void)
 void
 printline(char *hname, char *msgstr)
 {
-	int pri;
 	struct msg msg;
 	char *p, *q, line[LOG_MAXLINE + 4 + 1];  /* message, encoding, NUL */
 
@@ -1584,7 +1583,7 @@ printline(char *hname, char *msgstr)
 	 * messages with no facility specified.
 	 */
 	if (LOG_FAC(msg.m_pri) == LOG_KERN)
-		msg.m_pri = LOG_USER | LOG_PRI(pri);
+		msg.m_pri = LOG_USER | LOG_PRI(msg.m_pri);
 
 	if (msg.m_timestamp[0] == '\0')
 		current_time(msg.m_timestamp);
