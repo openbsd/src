@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.201 2022/05/04 13:07:35 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.202 2022/05/04 15:21:25 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -689,7 +689,7 @@ process_start(const char *title, int *fd)
 		/* change working directory to the cache directory */
 		if (fchdir(cachefd) == -1)
 			err(1, "fchdir");
-		if (timeout)
+		if (!filemode && timeout > 0)
 			alarm(timeout);
 		close(pair[1]);
 		*fd = pair[0];
@@ -923,7 +923,7 @@ main(int argc, char *argv[])
 		rrdppid = -1;
 	}
 
-	if (timeout) {
+	if (!filemode && timeout > 0) {
 		/*
 		 * Commit suicide eventually
 		 * cron will normally start a new one
