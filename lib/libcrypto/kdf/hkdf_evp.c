@@ -1,4 +1,4 @@
-/*	$OpenBSD: hkdf_evp.c,v 1.5 2022/05/04 18:56:34 tb Exp $ */
+/*	$OpenBSD: hkdf_evp.c,v 1.6 2022/05/04 19:15:52 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2016-2018 The OpenSSL Project.  All rights reserved.
  *
@@ -103,9 +103,10 @@ static void
 pkey_hkdf_cleanup(EVP_PKEY_CTX *ctx)
 {
 	HKDF_PKEY_CTX *kctx = ctx->data;
-	OPENSSL_clear_free(kctx -> salt, kctx -> salt_len);
-	OPENSSL_clear_free(kctx -> key, kctx -> key_len);
-	OPENSSL_cleanse(kctx -> info, kctx -> info_len);
+
+	OPENSSL_clear_free(kctx->salt, kctx->salt_len);
+	OPENSSL_clear_free(kctx->key, kctx->key_len);
+	OPENSSL_cleanse(kctx->info, kctx->info_len);
 	OPENSSL_free(kctx);
 }
 
