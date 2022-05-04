@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.115 2022/03/13 21:38:32 bluhm Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.116 2022/05/04 15:29:58 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -153,7 +153,7 @@ spd_table_walk(unsigned int rtableid,
  */
 int
 ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
-    struct tdb *tdbp, struct inpcb *inp, struct tdb **tdbout,
+    struct tdb *tdbin, struct inpcb *inp, struct tdb **tdbout,
     struct ipsec_ids *ipsecflowinfo_ids)
 {
 	struct radix_node_head *rnh;
@@ -232,7 +232,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 			 */
 			m_copydata(m, hlen, sizeof(u_int16_t),
 			    (caddr_t) &(ddst->sen_sport));
-			m_copydata(m, hlen + sizeof(u_int16_t), sizeof(u_int16_t),
+			m_copydata(m, hlen + sizeof(u_int16_t),
+			    sizeof(u_int16_t),
 			    (caddr_t) &(ddst->sen_dport));
 			break;
 
@@ -285,7 +286,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 			 */
 			m_copydata(m, hlen, sizeof(u_int16_t),
 			    (caddr_t) &(ddst->sen_ip6_sport));
-			m_copydata(m, hlen + sizeof(u_int16_t), sizeof(u_int16_t),
+			m_copydata(m, hlen + sizeof(u_int16_t),
+			    sizeof(u_int16_t),
 			    (caddr_t) &(ddst->sen_ip6_dport));
 			break;
 
@@ -504,28 +506,28 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 			return ipsp_spd_inp(m, inp, ipo, tdbout);
 		}
 	} else { /* IPSP_DIRECTION_IN */
-		if (tdbp != NULL) {
+		if (tdbin != NULL) {
 			/*
 			 * Special case for bundled IPcomp/ESP SAs:
 			 * 1) only IPcomp flows are loaded into kernel
 			 * 2) input processing processes ESP SA first
 			 * 3) then optional IPcomp processing happens
 			 * 4) we only update m_tag for ESP
-			 * => 'tdbp' is always set to ESP SA
+			 * => 'tdbin' is always set to ESP SA
 			 * => flow has ipo_proto for IPcomp
-			 * So if 'tdbp' points to an ESP SA and this 'tdbp' is
-			 * bundled with an IPcomp SA, then we replace 'tdbp'
-			 * with the IPcomp SA at tdbp->tdb_inext.
+			 * So if 'tdbin' points to an ESP SA and this 'tdbin' is
+			 * bundled with an IPcomp SA, then we replace 'tdbin'
+			 * with the IPcomp SA at tdbin->tdb_inext.
 			 */
 			if (ipo->ipo_sproto == IPPROTO_IPCOMP &&
-			    tdbp->tdb_sproto == IPPROTO_ESP &&
-			    tdbp->tdb_inext != NULL &&
-			    tdbp->tdb_inext->tdb_sproto == IPPROTO_IPCOMP)
-				tdbp = tdbp->tdb_inext;
+			    tdbin->tdb_sproto == IPPROTO_ESP &&
+			    tdbin->tdb_inext != NULL &&
+			    tdbin->tdb_inext->tdb_sproto == IPPROTO_IPCOMP)
+				tdbin = tdbin->tdb_inext;
 
 			/* Direct match in the cache. */
 			mtx_enter(&ipo_tdb_mtx);
-			if (ipo->ipo_tdb == tdbp) {
+			if (ipo->ipo_tdb == tdbin) {
 				error = ipsp_spd_inp(m, inp, ipo, tdbout);
 				mtx_leave(&ipo_tdb_mtx);
 				return error;
@@ -533,14 +535,15 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 			mtx_leave(&ipo_tdb_mtx);
 
 			if (memcmp(dignore ? &ssrc : &ipo->ipo_dst,
-			    &tdbp->tdb_src, tdbp->tdb_src.sa.sa_len) ||
-			    (ipo->ipo_sproto != tdbp->tdb_sproto))
+			    &tdbin->tdb_src, tdbin->tdb_src.sa.sa_len) ||
+			    (ipo->ipo_sproto != tdbin->tdb_sproto))
 				goto nomatchin;
 
 			/* Match source/dest IDs. */
 			if (ipo->ipo_ids)
-				if (tdbp->tdb_ids == NULL ||
-				    !ipsp_ids_match(ipo->ipo_ids, tdbp->tdb_ids))
+				if (tdbin->tdb_ids == NULL ||
+				    !ipsp_ids_match(ipo->ipo_ids,
+				    tdbin->tdb_ids))
 					goto nomatchin;
 
 			/* Add it to the cache. */
@@ -550,8 +553,8 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int direction,
 				    ipo, ipo_tdb_next);
 				tdb_unref(ipo->ipo_tdb);
 			}
-			ipo->ipo_tdb = tdb_ref(tdbp);
-			TAILQ_INSERT_TAIL(&tdbp->tdb_policy_head, ipo,
+			ipo->ipo_tdb = tdb_ref(tdbin);
+			TAILQ_INSERT_TAIL(&tdbin->tdb_policy_head, ipo,
 			    ipo_tdb_next);
 			error = ipsp_spd_inp(m, inp, ipo, tdbout);
 			mtx_leave(&ipo_tdb_mtx);
