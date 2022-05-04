@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.56 2022/05/04 10:53:26 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.57 2022/05/04 10:57:48 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -76,10 +76,11 @@
 #define ASN1_MAX_CONSTRUCTED_NEST 30
 
 static int asn1_check_eoc(const unsigned char **in, long len);
-static int asn1_find_end(const unsigned char **in, long len, char inf);
+static int asn1_check_eoc_cbs(CBS *cbs);
+static int asn1_find_end(CBS *cbs, size_t length, char indefinite);
 
-static int asn1_collect(CBB *cbb, const unsigned char **in, long len,
-    char inf, int tag, int aclass, int depth);
+static int asn1_collect(CBB *cbb, CBS *cbs, char indefinite, int expected_tag,
+    int expected_class, int depth);
 
 static int asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in,
     long len, const ASN1_ITEM *it, int tag, int aclass, char opt, int depth);
@@ -716,8 +717,12 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 		}
 
 		content = *in;
-		if (!asn1_find_end(&p, plen, inf))
+		if (plen < 0)
 			goto err;
+		CBS_init(&cbs, p, plen);
+		if (!asn1_find_end(&cbs, plen, inf))
+			goto err;
+		p = CBS_data(&cbs);
 		len = p - content;
 	} else if (cst) {
 		/*
@@ -729,8 +734,12 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 		 */
 		if (!CBB_init(&cbb, 0))
 			goto err;
-		if (!asn1_collect(&cbb, &p, plen, inf, -1, V_ASN1_UNIVERSAL, 0))
+		if (plen < 0)
 			goto err;
+		CBS_init(&cbs, p, plen);
+		if (!asn1_collect(&cbb, &cbs, inf, -1, V_ASN1_UNIVERSAL, 0))
+			goto err;
+		p = CBS_data(&cbs);
 		if (!CBB_finish(&cbb, &data, &data_len))
 			goto err;
 
@@ -901,63 +910,48 @@ asn1_ex_c2i(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *it)
 	return ret;
 }
 
-/* This function finds the end of an ASN1 structure when passed its maximum
- * length, whether it is indefinite length and a pointer to the content.
- * This is more efficient than calling asn1_collect because it does not
- * recurse on each indefinite length header.
- */
-
+/* Find the end of an ASN.1 object. */
 static int
-asn1_find_end(const unsigned char **in, long len, char inf)
+asn1_find_end(CBS *cbs, size_t length, char indefinite)
 {
-	int expected_eoc;
-	long plen;
-	const unsigned char *p = *in, *q;
+	size_t eoc_count;
 
-	/* If not indefinite length constructed just add length */
-	if (inf == 0) {
-		*in += len;
-		return 1;
-	}
-	expected_eoc = 1;
-	/* Indefinite length constructed form. Find the end when enough EOCs
-	 * are found. If more indefinite length constructed headers
-	 * are encountered increment the expected eoc count otherwise just
-	 * skip to the end of the data.
-	 */
-	while (len > 0) {
-		if (asn1_check_eoc(&p, len)) {
-			expected_eoc--;
-			if (expected_eoc == 0)
-				break;
-			len -= 2;
-			continue;
-		}
-		q = p;
-		/* Just read in a header: only care about the length */
-		if (!asn1_check_tag(&plen, NULL, NULL, &inf, NULL, &p, len,
-		    -1, 0, 0)) {
+	if (!indefinite) {
+		if (!CBS_skip(cbs, length)) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
 			return 0;
 		}
-		if (inf)
-			expected_eoc++;
-		else
-			p += plen;
-		len -= p - q;
+		return 1;
 	}
-	if (expected_eoc) {
+
+	eoc_count = 1;
+
+	while (CBS_len(cbs) > 0) {
+		if (asn1_check_eoc_cbs(cbs)) {
+			if (--eoc_count == 0)
+				break;
+			continue;
+		}
+		if (!asn1_check_tag_cbs(cbs, &length, NULL, NULL,
+		    &indefinite, NULL, -1, 0, 0)) {
+			ASN1error(ERR_R_NESTED_ASN1_ERROR);
+			return 0;
+		}
+		if (indefinite) {
+			eoc_count++;
+			continue;
+		}
+		if (!CBS_skip(cbs, length))
+			return 0;
+	}
+
+	if (eoc_count > 0) {
 		ASN1error(ASN1_R_MISSING_EOC);
 		return 0;
 	}
-	*in = p;
+
 	return 1;
 }
-/* This function collects the asn1 data from a constructred string
- * type into a buffer. The values of 'in' and 'len' should refer
- * to the contents of the constructed type and 'inf' should be set
- * if it is indefinite length.
- */
 
 #ifndef ASN1_MAX_STRING_NEST
 /* This determines how many levels of recursion are permitted in ASN1
@@ -968,63 +962,72 @@ asn1_find_end(const unsigned char **in, long len, char inf)
 #define ASN1_MAX_STRING_NEST 5
 #endif
 
+/* Collect the contents from a constructed ASN.1 object. */
 static int
-asn1_collect(CBB *cbb, const unsigned char **in, long len, char inf,
-    int tag, int aclass, int depth)
+asn1_collect(CBB *cbb, CBS *cbs, char indefinite, int expected_tag,
+    int expected_class, int depth)
 {
-	const unsigned char *p, *q;
-	long plen;
-	char cst, ininf;
+	char constructed;
+	size_t length;
+	CBS content;
+	int need_eoc;
 
 	if (depth > ASN1_MAX_STRING_NEST) {
 		ASN1error(ASN1_R_NESTED_ASN1_STRING);
 		return 0;
 	}
 
-	p = *in;
-	inf &= 1;
+	need_eoc = indefinite;
 
-	while (len > 0) {
-		q = p;
-		/* Check for EOC */
-		if (asn1_check_eoc(&p, len)) {
-			/* EOC is illegal outside indefinite length
-			 * constructed form */
-			if (!inf) {
+	while (CBS_len(cbs) > 0) {
+		if (asn1_check_eoc_cbs(cbs)) {
+			if (!need_eoc) {
 				ASN1error(ASN1_R_UNEXPECTED_EOC);
 				return 0;
 			}
-			inf = 0;
-			break;
+			return 1;
 		}
-
-		if (!asn1_check_tag(&plen, NULL, NULL, &ininf, &cst, &p, len,
-		    tag, aclass, 0)) {
+		if (!asn1_check_tag_cbs(cbs, &length, NULL, NULL, &indefinite,
+		    &constructed, expected_tag, expected_class, 0)) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
 			return 0;
 		}
 
-		/* If indefinite length constructed update max length */
-		if (cst) {
-			if (!asn1_collect(cbb, &p, plen, ininf, tag, aclass,
-			    depth + 1))
+		if (constructed) {
+			if (!asn1_collect(cbb, cbs, indefinite, expected_tag,
+			    expected_class, depth + 1))
 				return 0;
-		} else if (plen > 0) {
-			if (!CBB_add_bytes(cbb, p, plen))
-				return 0;
-			p += plen;
+			continue;
 		}
-		len -= p - q;
+
+		if (!CBS_get_bytes(cbs, &content, length)) {
+			ASN1error(ERR_R_NESTED_ASN1_ERROR);
+			return 0;
+		}
+		if (!CBB_add_bytes(cbb, CBS_data(&content), CBS_len(&content)))
+			return 0;
 	}
-	if (inf) {
+
+	if (need_eoc) {
 		ASN1error(ASN1_R_MISSING_EOC);
 		return 0;
 	}
-	*in = p;
+
 	return 1;
 }
 
-/* Check for ASN1 EOC and swallow it if found */
+static int
+asn1_check_eoc_cbs(CBS *cbs)
+{
+	uint16_t eoc;
+
+	if (!CBS_peek_u16(cbs, &eoc))
+		return 0;
+	if (eoc != 0)
+		return 0;
+
+	return CBS_skip(cbs, 2);
+}
 
 static int
 asn1_check_eoc(const unsigned char **in, long len)
