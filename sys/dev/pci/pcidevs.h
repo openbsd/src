@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1991 2022/04/18 05:50:29 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.1992 2022/05/04 08:10:43 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5495,15 +5495,13 @@
 #define	PCI_PRODUCT_INTEL_ADL_S_CL	0x467d		/* Core 12G CL */
 #define	PCI_PRODUCT_INTEL_ADL_S_VMD	0x467f		/* Core 12G VMD */
 #define	PCI_PRODUCT_INTEL_ADL_S_GT1_1	0x4680		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT1_2	0x4681		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT1_3	0x4682		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT0_1	0x4683		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT1_4	0x4688		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT1_5	0x4689		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT1_6	0x4690		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT1_7	0x4691		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT1_8	0x4692		/* Graphics */
-#define	PCI_PRODUCT_INTEL_ADL_S_GT0_2	0x4693		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT1_2	0x4682		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT1_3	0x4688		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT1_4	0x468a		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT1_5	0x4690		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT1_6	0x4691		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT1_7	0x4692		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_S_GT0_1	0x4693		/* Graphics */
 #define	PCI_PRODUCT_INTEL_ADL_P_GT2_4	0x46a0		/* Graphics */
 #define	PCI_PRODUCT_INTEL_ADL_P_GT2_5	0x46a1		/* Graphics */
 #define	PCI_PRODUCT_INTEL_ADL_P_GT2_6	0x46a2		/* Graphics */
@@ -5519,6 +5517,9 @@
 #define	PCI_PRODUCT_INTEL_ADL_P_GT2_16	0x46c1		/* Graphics */
 #define	PCI_PRODUCT_INTEL_ADL_P_GT2_17	0x46c2		/* Graphics */
 #define	PCI_PRODUCT_INTEL_ADL_P_GT2_18	0x46c3		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_N_GT_1	0x46d0		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_N_GT_2	0x46d1		/* Graphics */
+#define	PCI_PRODUCT_INTEL_ADL_N_GT_3	0x46d2		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RKL_GT_1	0x4c80		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_RKL_GT_2	0x4c8a		/* UHD Graphics */
 #define	PCI_PRODUCT_INTEL_RKL_GT_3	0x4c8b		/* UHD Graphics */
@@ -6578,6 +6579,18 @@
 #define	PCI_PRODUCT_INTEL_400SERIES_V_PCIE_21	0xa3eb		/* 400 Series PCIE */
 #define	PCI_PRODUCT_INTEL_400SERIES_V_PCIE_22	0xa3ec		/* 400 Series PCIE */
 #define	PCI_PRODUCT_INTEL_400SERIES_V_PCIE_23	0xa3ed		/* 400 Series PCIE */
+#define	PCI_PRODUCT_INTEL_RPL_P_GT_1	0xa720		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_P_GT_2	0xa721		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_S_GT_1	0xa780		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_S_GT_2	0xa781		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_S_GT_3	0xa782		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_S_GT_4	0xa783		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_S_GT_5	0xa788		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_S_GT_6	0xa789		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_P_GT_3	0xa7a0		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_P_GT_4	0xa7a1		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_P_GT_5	0xa7a8		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_P_GT_6	0xa7a9		/* Graphics */
 #define	PCI_PRODUCT_INTEL_21152	0xb152		/* S21152BB */
 #define	PCI_PRODUCT_INTEL_21154	0xb154		/* 21154AE/BE */
 #define	PCI_PRODUCT_INTEL_CORE_DMI_0	0xd130		/* Core DMI */
