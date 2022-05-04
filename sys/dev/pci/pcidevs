@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.1991 2022/04/18 05:50:29 kevlo Exp $
+$OpenBSD: pcidevs,v 1.1992 2022/05/04 08:10:43 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5490,15 +5490,13 @@ product INTEL ADL_S_TH		0x466f	Core 12G TH
 product INTEL ADL_S_CL		0x467d	Core 12G CL
 product INTEL ADL_S_VMD		0x467f	Core 12G VMD
 product INTEL ADL_S_GT1_1	0x4680	Graphics
-product INTEL ADL_S_GT1_2	0x4681	Graphics
-product INTEL ADL_S_GT1_3	0x4682	Graphics
-product INTEL ADL_S_GT0_1	0x4683	Graphics
-product INTEL ADL_S_GT1_4	0x4688	Graphics
-product INTEL ADL_S_GT1_5	0x4689	Graphics
-product INTEL ADL_S_GT1_6	0x4690	Graphics
-product INTEL ADL_S_GT1_7	0x4691	Graphics
-product INTEL ADL_S_GT1_8	0x4692	Graphics
-product INTEL ADL_S_GT0_2	0x4693	Graphics
+product INTEL ADL_S_GT1_2	0x4682	Graphics
+product INTEL ADL_S_GT1_3	0x4688	Graphics
+product INTEL ADL_S_GT1_4	0x468a	Graphics
+product INTEL ADL_S_GT1_5	0x4690	Graphics
+product INTEL ADL_S_GT1_6	0x4691	Graphics
+product INTEL ADL_S_GT1_7	0x4692	Graphics
+product INTEL ADL_S_GT0_1	0x4693	Graphics
 product INTEL ADL_P_GT2_4	0x46a0	Graphics
 product INTEL ADL_P_GT2_5	0x46a1	Graphics
 product INTEL ADL_P_GT2_6	0x46a2	Graphics
@@ -5514,6 +5512,9 @@ product INTEL ADL_P_GT2_15	0x46c0	Graphics
 product INTEL ADL_P_GT2_16	0x46c1	Graphics
 product INTEL ADL_P_GT2_17	0x46c2	Graphics
 product INTEL ADL_P_GT2_18	0x46c3	Graphics
+product INTEL ADL_N_GT_1	0x46d0	Graphics
+product INTEL ADL_N_GT_2	0x46d1	Graphics
+product INTEL ADL_N_GT_3	0x46d2	Graphics
 product INTEL RKL_GT_1		0x4c80	UHD Graphics
 product INTEL RKL_GT_2		0x4c8a	UHD Graphics
 product INTEL RKL_GT_3		0x4c8b	UHD Graphics
@@ -6573,6 +6574,18 @@ product INTEL 400SERIES_V_PCIE_20	0xa3ea	400 Series PCIE
 product INTEL 400SERIES_V_PCIE_21	0xa3eb	400 Series PCIE
 product INTEL 400SERIES_V_PCIE_22	0xa3ec	400 Series PCIE
 product INTEL 400SERIES_V_PCIE_23	0xa3ed	400 Series PCIE
+product INTEL RPL_P_GT_1	0xa720	Graphics
+product INTEL RPL_P_GT_2	0xa721	Graphics
+product INTEL RPL_S_GT_1	0xa780	Graphics
+product INTEL RPL_S_GT_2	0xa781	Graphics
+product INTEL RPL_S_GT_3	0xa782	Graphics
+product INTEL RPL_S_GT_4	0xa783	Graphics
+product INTEL RPL_S_GT_5	0xa788	Graphics
+product INTEL RPL_S_GT_6	0xa789	Graphics
+product INTEL RPL_P_GT_3	0xa7a0	Graphics
+product INTEL RPL_P_GT_4	0xa7a1	Graphics
+product INTEL RPL_P_GT_5	0xa7a8	Graphics
+product INTEL RPL_P_GT_6	0xa7a9	Graphics
 product INTEL 21152		0xb152	S21152BB
 product INTEL 21154		0xb154	21154AE/BE
 product INTEL CORE_DMI_0	0xd130	Core DMI
