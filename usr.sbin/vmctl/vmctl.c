@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.80 2022/05/03 21:39:18 dv Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.81 2022/05/04 02:24:26 dv Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -793,8 +793,7 @@ print_vm_info(struct vmop_info_result *list, size_t ct)
 			(void)strlcpy(curmem, "-", sizeof(curmem));
 			(void)strlcpy(maxmem, "-", sizeof(maxmem));
 
-			(void)fmt_scaled(vir->vir_memory_size * 1024 * 1024,
-			    maxmem);
+			(void)fmt_scaled(vir->vir_memory_size, maxmem);
 
 			if (running) {
 				if (*vmi->vir_ttyname == '\0')

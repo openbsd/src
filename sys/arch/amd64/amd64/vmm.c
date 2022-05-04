@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.307 2022/05/03 21:39:18 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.308 2022/05/04 02:24:26 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1635,7 +1635,6 @@ vm_create_check_mem_ranges(struct vm_create_params *vcp)
 
 	if (memsize % (1024 * 1024) != 0)
 		return (0);
-	memsize /= 1024 * 1024;
 	return (memsize);
 }
 
