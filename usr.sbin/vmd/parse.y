@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.60 2022/05/03 21:39:18 dv Exp $	*/
+/*	$OpenBSD: parse.y,v 1.61 2022/05/04 23:17:25 dv Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -1279,9 +1279,9 @@ parse_size(char *word, int64_t val)
 
 	if (size != val) {
 		if (fmt_scaled(size, result) == 0)
-			log_warnx("memory size rounded to %s", result);
+			log_debug("memory size rounded to %s", result);
 		else
-			log_warnx("memory size rounded to %zd bytes", size);
+			log_debug("memory size rounded to %zd bytes", size);
 	}
 
 	return ((ssize_t)size);

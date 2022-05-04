@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.81 2022/05/04 02:24:26 dv Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.82 2022/05/04 23:17:25 dv Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -59,7 +59,7 @@ struct imsgbuf *ibuf;
  * Parameters:
  *  start_id: optional ID of the VM
  *  name: optional name of the VM
- *  memsize: memory size (MB) of the VM to create
+ *  memsize: memory size (in bytes) of the VM to create
  *  nnics: number of vionet network interfaces to create
  *  nics: switch names of the network interfaces to create
  *  ndisks: number of disk images
@@ -925,7 +925,7 @@ open_imagefile(int type, const char *imgfile_path, int flags,
  *  type        : format of the image file
  *  imgfile_path: path to the image file to create
  *  base_path   : path to the qcow2 base image
- *  imgsize     : size of the image file to create (in MB)
+ *  imgsize     : size of the image file to create (in bytes)
  *  format      : string identifying the format
  *
  * Return:

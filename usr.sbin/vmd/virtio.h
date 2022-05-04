@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.41 2021/07/16 16:21:22 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.42 2022/05/04 23:17:25 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -290,9 +290,9 @@ void viornd_update_qa(void);
 int viornd_notifyq(void);
 
 ssize_t virtio_qcow2_get_base(int, char *, size_t, const char *);
-int virtio_qcow2_create(const char *, const char *, long);
+int virtio_qcow2_create(const char *, const char *, uint64_t);
 int virtio_qcow2_init(struct virtio_backing *, off_t *, int*, size_t);
-int virtio_raw_create(const char *, long);
+int virtio_raw_create(const char *, uint64_t);
 int virtio_raw_init(struct virtio_backing *, off_t *, int*, size_t);
 
 int virtio_blk_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);

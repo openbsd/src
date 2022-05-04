@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.69 2022/05/03 21:39:18 dv Exp $	*/
+/*	$OpenBSD: main.c,v 1.70 2022/05/04 23:17:25 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -401,30 +401,25 @@ parse_network(struct parse_result *res, char *word)
 	return (0);
 }
 
-int
-parse_size(struct parse_result *res, char *word)
+void
+parse_size(struct parse_result *res, char *word, const char *type)
 {
 	char		 result[FMT_SCALED_STRSIZE];
 	long long 	 val = 0;
 
 	if (word != NULL) {
-		if (scan_scaled(word, &val) != 0) {
-			warn("invalid memory size: %s", word);
-			return (-1);
-		}
+		if (scan_scaled(word, &val) != 0)
+			err(1, "invalid %s size: %s", type, word);
 	}
 
-	if (val < (1024 * 1024)) {
-		warnx("memory size must be at least 1MB");
-		return (-1);
-	}
+	if (val < (1024 * 1024))
+		errx(1, "%s size must be at least 1MB", type);
 
-	if (val > VMM_MAX_VM_MEM_SIZE) {
+	if (strcmp("memory", type) == 0 && val > VMM_MAX_VM_MEM_SIZE) {
 		if (fmt_scaled(VMM_MAX_VM_MEM_SIZE, result) == 0)
-			warnx("memory size too large (limit is %s)", result);
+			errx(1, "memory size too large (limit is %s)", result);
 		else
-			warnx("memory size too large");
-		return (-1);
+			errx(1, "memory size too large");
 	}
 
 	/* Round down to the megabyte. */
@@ -432,12 +427,10 @@ parse_size(struct parse_result *res, char *word)
 
 	if (res->size != (size_t)val) {
 		if (fmt_scaled(res->size, result) == 0)
-			warnx("memory size rounded to %s", result);
+			warnx("%s size rounded to %s", type, result);
 		else
-			warnx("memory size rounded to %zu bytes", res->size);
+			warnx("%s size rounded to %zuB", type, res->size);
 	}
-
-	return (0);
 }
 
 int
@@ -584,8 +577,7 @@ ctl_create(struct parse_result *res, int argc, char *argv[])
 			input = optarg;
 			break;
 		case 's':
-			if (parse_size(res, optarg) != 0)
-				errx(1, "invalid size: %s", optarg);
+			parse_size(res, optarg, "disk");
 			break;
 		default:
 			ctl_usage(res->ctl);
@@ -871,8 +863,7 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 		case 'm':
 			if (res->size)
 				errx(1, "memory specified multiple times");
-			if (parse_size(res, optarg) != 0)
-				errx(1, "invalid memory size: %s", optarg);
+			parse_size(res, optarg, "memory");
 			break;
 		case 'n':
 			if (parse_network(res, optarg) != 0)

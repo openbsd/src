@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioraw.c,v 1.6 2021/06/16 16:55:02 dv Exp $	*/
+/*	$OpenBSD: vioraw.c,v 1.7 2022/05/04 23:17:25 dv Exp $	*/
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
  *
@@ -81,7 +81,7 @@ virtio_raw_init(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
  *
  * Parameters:
  *  imgfile_path: path to the image file to create
- *  imgsize     : size of the image file to create (in MB)
+ *  imgsize     : size of the image file to create (in bytes)
  *
  * Return:
  *  EEXIST: The requested image file already exists
@@ -89,7 +89,7 @@ virtio_raw_init(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
  *  Exxxx : Various other Exxxx errno codes due to other I/O errors
  */
 int
-virtio_raw_create(const char *imgfile_path, long imgsize)
+virtio_raw_create(const char *imgfile_path, uint64_t imgsize)
 {
 	int fd, ret;
 
@@ -100,7 +100,7 @@ virtio_raw_create(const char *imgfile_path, long imgsize)
 		return (errno);
 
 	/* Extend to desired size */
-	if (ftruncate(fd, (off_t)imgsize * 1024 * 1024) == -1) {
+	if (ftruncate(fd, (off_t)imgsize) == -1) {
 		ret = errno;
 		close(fd);
 		unlink(imgfile_path);

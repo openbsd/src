@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.17 2022/01/04 15:21:40 claudio Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.18 2022/05/04 23:17:25 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -628,16 +628,14 @@ inc_refs(struct qcdisk *disk, off_t off, int newcluster)
  */
 int
 virtio_qcow2_create(const char *imgfile_path,
-    const char *base_path, long imgsize)
+    const char *base_path, uint64_t disksz)
 {
 	struct qcheader hdr, basehdr;
 	int fd, ret;
 	ssize_t base_len;
-	uint64_t l1sz, refsz, disksz, initsz, clustersz;
+	uint64_t l1sz, refsz, initsz, clustersz;
 	uint64_t l1off, refoff, v, i, l1entrysz, refentrysz;
 	uint16_t refs;
-
-	disksz = 1024 * 1024 * imgsize;
 
 	if (base_path) {
 		fd = open(base_path, O_RDONLY);
