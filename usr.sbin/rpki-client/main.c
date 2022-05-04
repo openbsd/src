@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.200 2022/04/27 11:46:19 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.201 2022/05/04 13:07:35 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -961,8 +961,8 @@ main(int argc, char *argv[])
 	queues[3] = &rrdpq;
 
 	/*
-	 * Prime the process with our TAL file.
-	 * This will contain (hopefully) links to our manifest and we
+	 * Prime the process with our TAL files.
+	 * These will (hopefully) contain links to manifests and we
 	 * can get the ball rolling.
 	 */
 
