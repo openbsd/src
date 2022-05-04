@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdf_err.c,v 1.5 2022/05/04 18:56:34 tb Exp $ */
+/*	$OpenBSD: kdf_err.c,v 1.6 2022/05/04 19:34:26 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2018 The OpenSSL Project.  All rights reserved.
  *
@@ -10,7 +10,6 @@
  *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
  *    notice, this list of conditions and the following disclaimer in
  *    the documentation and/or other materials provided with the
  *    distribution.
