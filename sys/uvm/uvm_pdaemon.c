@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.97 2022/04/30 17:58:43 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.98 2022/05/04 14:58:26 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -395,13 +395,6 @@ uvmpd_scan_inactive(struct pglist *pglst)
 	vaddr_t start;
 	int dirtyreacts;
 
-	/*
-	 * note: we currently keep swap-backed pages on a separate inactive
-	 * list from object-backed pages.   however, merging the two lists
-	 * back together again hasn't been ruled out.   thus, we keep our
-	 * swap cluster in "swpps" rather than in pps (allows us to mix
-	 * clustering types in the event of a mixed inactive queue).
-	 */
 	/*
 	 * swslot is non-zero if we are building a swap cluster.  we want
 	 * to stay in the loop while we have a page to scan or we have
@@ -881,7 +874,6 @@ uvmpd_scan(void)
 	struct uvm_object *uobj;
 	struct vm_anon *anon;
 	struct rwlock *slock;
-	boolean_t got_it;
 
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
@@ -917,14 +909,8 @@ uvmpd_scan(void)
 	 * alternate starting queue between swap and object based on the
 	 * low bit of uvmexp.pdrevs (which we bump by one each call).
 	 */
-	got_it = FALSE;
-	pages_freed = uvmexp.pdfreed;	/* XXX - int */
-	if ((uvmexp.pdrevs & 1) != 0 && uvmexp.nswapdev != 0)
-		got_it = uvmpd_scan_inactive(&uvm.page_inactive_swp);
-	if (!got_it)
-		got_it = uvmpd_scan_inactive(&uvm.page_inactive_obj);
-	if (!got_it && (uvmexp.pdrevs & 1) == 0 && uvmexp.nswapdev != 0)
-		(void) uvmpd_scan_inactive(&uvm.page_inactive_swp);
+	pages_freed = uvmexp.pdfreed;
+	(void) uvmpd_scan_inactive(&uvm.page_inactive);
 	pages_freed = uvmexp.pdfreed - pages_freed;
 
 	/*
@@ -1069,8 +1055,7 @@ uvmpd_drop(struct pglist *pglst)
 void
 uvmpd_hibernate(void)
 {
-	uvmpd_drop(&uvm.page_inactive_swp);
-	uvmpd_drop(&uvm.page_inactive_obj);
+	uvmpd_drop(&uvm.page_inactive);
 	uvmpd_drop(&uvm.page_active);
 }
 

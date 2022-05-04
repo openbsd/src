@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.164 2022/04/28 09:59:28 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.165 2022/05/04 14:58:26 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -185,8 +185,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 
 	TAILQ_INIT(&uvm.page_active);
-	TAILQ_INIT(&uvm.page_inactive_swp);
-	TAILQ_INIT(&uvm.page_inactive_obj);
+	TAILQ_INIT(&uvm.page_inactive);
 	mtx_init(&uvm.pageqlock, IPL_VM);
 	mtx_init(&uvm.fpageqlock, IPL_VM);
 	uvm_pmr_init();
@@ -994,10 +993,7 @@ uvm_pageclean(struct vm_page *pg)
 		uvmexp.active--;
 	}
 	if (pg->pg_flags & PQ_INACTIVE) {
-		if (pg->pg_flags & PQ_SWAPBACKED)
-			TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
-		else
-			TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
+		TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
 		flags_to_clear |= PQ_INACTIVE;
 		uvmexp.inactive--;
 	}
@@ -1253,10 +1249,7 @@ uvm_pagewire(struct vm_page *pg)
 			uvmexp.active--;
 		}
 		if (pg->pg_flags & PQ_INACTIVE) {
-			if (pg->pg_flags & PQ_SWAPBACKED)
-				TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
-			else
-				TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
+			TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
 			atomic_clearbits_int(&pg->pg_flags, PQ_INACTIVE);
 			uvmexp.inactive--;
 		}
@@ -1304,10 +1297,7 @@ uvm_pagedeactivate(struct vm_page *pg)
 	}
 	if ((pg->pg_flags & PQ_INACTIVE) == 0) {
 		KASSERT(pg->wire_count == 0);
-		if (pg->pg_flags & PQ_SWAPBACKED)
-			TAILQ_INSERT_TAIL(&uvm.page_inactive_swp, pg, pageq);
-		else
-			TAILQ_INSERT_TAIL(&uvm.page_inactive_obj, pg, pageq);
+		TAILQ_INSERT_TAIL(&uvm.page_inactive, pg, pageq);
 		atomic_setbits_int(&pg->pg_flags, PQ_INACTIVE);
 		uvmexp.inactive++;
 		pmap_clear_reference(pg);
@@ -1335,10 +1325,7 @@ uvm_pageactivate(struct vm_page *pg)
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
 	if (pg->pg_flags & PQ_INACTIVE) {
-		if (pg->pg_flags & PQ_SWAPBACKED)
-			TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
-		else
-			TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
+		TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
 		atomic_clearbits_int(&pg->pg_flags, PQ_INACTIVE);
 		uvmexp.inactive--;
 	}

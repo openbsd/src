@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.290 2022/03/12 08:11:07 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.291 2022/05/04 14:58:26 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3281,8 +3281,7 @@ uvm_page_printit(struct vm_page *pg, boolean_t full,
 			(*pr)("  >>> page not found in uvm_pmemrange <<<\n");
 		pgl = NULL;
 	} else if (pg->pg_flags & PQ_INACTIVE) {
-		pgl = (pg->pg_flags & PQ_SWAPBACKED) ?
-		    &uvm.page_inactive_swp : &uvm.page_inactive_obj;
+		pgl = &uvm.page_inactive;
 	} else if (pg->pg_flags & PQ_ACTIVE) {
 		pgl = &uvm.page_active;
  	} else {
