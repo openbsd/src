@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.192 2022/04/30 07:20:35 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.193 2022/05/04 16:52:10 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -410,8 +410,6 @@ struct rttimer {
 	LIST_ENTRY(rttimer)	rtt_link;	/* [T] timers per rtentry */
 	struct rttimer_queue	*rtt_queue;	/* [T] back pointer to queue */
 	struct rtentry		*rtt_rt;	/* [I] back pointer to route */
-	void			(*rtt_func)	/* [I] callback */
-				    (struct rtentry *, u_int);
 	time_t			rtt_time;	/* [I] when timer registered */
 	u_int			rtt_tableid;	/* [I] rtable id of rtt_rt */
 };
@@ -419,6 +417,8 @@ struct rttimer {
 struct rttimer_queue {
 	TAILQ_HEAD(, rttimer)		rtq_head;	/* [T] */
 	LIST_ENTRY(rttimer_queue)	rtq_link;	/* [T] */
+	void				(*rtq_func)	/* [I] callback */
+					    (struct rtentry *, u_int);
 	unsigned long			rtq_count;	/* [T] */
 	int				rtq_timeout;	/* [T] */
 };
@@ -459,12 +459,12 @@ struct rtentry *rt_getll(struct rtentry *);
 
 void			 rt_timer_init(void);
 int			 rt_timer_add(struct rtentry *,
-			    void(*)(struct rtentry *, u_int),
 			    struct rttimer_queue *, u_int);
 void			 rt_timer_remove_all(struct rtentry *);
-struct rttimer_queue	*rt_timer_queue_create(int);
+struct rttimer_queue	*rt_timer_queue_create(int,
+			    void(*)(struct rtentry *, u_int));
 void			 rt_timer_queue_change(struct rttimer_queue *, int);
-void			 rt_timer_queue_destroy(struct rttimer_queue *);
+void			 rt_timer_queue_flush(struct rttimer_queue *);
 unsigned long		 rt_timer_queue_count(struct rttimer_queue *);
 void			 rt_timer_timer(void *);
 

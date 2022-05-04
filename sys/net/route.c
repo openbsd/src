@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.408 2022/04/30 07:20:35 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.409 2022/05/04 16:52:10 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1365,8 +1365,8 @@ struct mutex			rttimer_mtx;
 LIST_HEAD(, rttimer_queue)	rttimer_queue_head;	/* [T] */
 
 #define RTTIMER_CALLOUT(r)	{					\
-	if (r->rtt_func != NULL) {					\
-		(*r->rtt_func)(r->rtt_rt, r->rtt_tableid);		\
+	if (r->rtt_queue->rtq_func != NULL) {				\
+		(*r->rtt_queue->rtq_func)(r->rtt_rt, r->rtt_tableid);	\
 	} else {							\
 		struct ifnet *ifp;					\
 									\
@@ -1403,7 +1403,7 @@ rt_timer_init(void)
 }
 
 struct rttimer_queue *
-rt_timer_queue_create(int timeout)
+rt_timer_queue_create(int timeout, void (*func)(struct rtentry *, u_int))
 {
 	struct rttimer_queue	*rtq;
 
@@ -1411,6 +1411,7 @@ rt_timer_queue_create(int timeout)
 
 	rtq->rtq_timeout = timeout;
 	rtq->rtq_count = 0;
+	rtq->rtq_func = func;
 	TAILQ_INIT(&rtq->rtq_head);
 
 	mtx_enter(&rttimer_mtx);
@@ -1429,7 +1430,7 @@ rt_timer_queue_change(struct rttimer_queue *rtq, int timeout)
 }
 
 void
-rt_timer_queue_destroy(struct rttimer_queue *rtq)
+rt_timer_queue_flush(struct rttimer_queue *rtq)
 {
 	struct rttimer		*r;
 	TAILQ_HEAD(, rttimer)	 rttlist;
@@ -1445,7 +1446,6 @@ rt_timer_queue_destroy(struct rttimer_queue *rtq)
 		KASSERT(rtq->rtq_count > 0);
 		rtq->rtq_count--;
 	}
-	LIST_REMOVE(rtq, rtq_link);
 	mtx_leave(&rttimer_mtx);
 
 	while ((r = TAILQ_FIRST(&rttlist)) != NULL) {
@@ -1453,7 +1453,6 @@ rt_timer_queue_destroy(struct rttimer_queue *rtq)
 		RTTIMER_CALLOUT(r);
 		pool_put(&rttimer_pool, r);
 	}
-	pool_put(&rttimer_queue_pool, rtq);
 }
 
 unsigned long
@@ -1486,8 +1485,7 @@ rt_timer_remove_all(struct rtentry *rt)
 }
 
 int
-rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *, u_int),
-     struct rttimer_queue *queue, u_int rtableid)
+rt_timer_add(struct rtentry *rt, struct rttimer_queue *queue, u_int rtableid)
 {
 	struct rttimer	*r, *rnew;
 	time_t		 current_time;
@@ -1500,7 +1498,6 @@ rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *, u_int),
 
 	rnew->rtt_rt = rt;
 	rnew->rtt_time = current_time;
-	rnew->rtt_func = func;
 	rnew->rtt_queue = queue;
 	rnew->rtt_tableid = rtableid;
 
@@ -1511,7 +1508,7 @@ rt_timer_add(struct rtentry *rt, void (*func)(struct rtentry *, u_int),
 	 * we add a new one.
 	 */
 	LIST_FOREACH(r, &rt->rt_timer, rtt_link) {
-		if (r->rtt_func == func) {
+		if (r->rtt_queue == queue) {
 			LIST_REMOVE(r, rtt_link);
 			TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
 			KASSERT(r->rtt_queue->rtq_count > 0);

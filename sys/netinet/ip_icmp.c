@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.189 2022/04/30 07:20:35 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.190 2022/05/04 16:52:10 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -120,6 +120,7 @@ int	icmp_redirtimeout = 10 * 60;
 static int icmperrpps_count = 0;
 static struct timeval icmperrppslim_last;
 
+struct rttimer_queue *ip_mtudisc_timeout_q;
 struct rttimer_queue *icmp_redirect_timeout_q;
 struct cpumem *icmpcounters;
 
@@ -140,7 +141,10 @@ int icmp_sysctl_icmpstat(void *, size_t *, void *);
 void
 icmp_init(void)
 {
-	icmp_redirect_timeout_q = rt_timer_queue_create(icmp_redirtimeout);
+	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout,
+	    &icmp_mtudisc_timeout);
+	icmp_redirect_timeout_q = rt_timer_queue_create(icmp_redirtimeout,
+	    NULL);
 	icmpcounters = counters_alloc(icps_ncounters);
 }
 
@@ -633,7 +637,7 @@ reflect:
 		rtredirect(sintosa(&sdst), sintosa(&sgw),
 		    sintosa(&ssrc), &newrt, m->m_pkthdr.ph_rtableid);
 		if (newrt != NULL && icmp_redirtimeout > 0) {
-			rt_timer_add(newrt, NULL, icmp_redirect_timeout_q,
+			rt_timer_add(newrt, icmp_redirect_timeout_q,
 			    m->m_pkthdr.ph_rtableid);
 		}
 		rtfree(newrt);
@@ -974,8 +978,7 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid, int ipsec)
 		rt = nrt;
 		rtm_send(rt, RTM_ADD, 0, rtableid);
 	}
-	error = rt_timer_add(rt, icmp_mtudisc_timeout, ip_mtudisc_timeout_q,
-	    rtableid);
+	error = rt_timer_add(rt, ip_mtudisc_timeout_q, rtableid);
 	if (error)
 		goto bad;
 

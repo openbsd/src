@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.369 2022/04/28 17:27:14 claudio Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.370 2022/05/04 16:52:10 claudio Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -93,8 +93,6 @@ int	ip_defttl = IPDEFTTL;
 int	ip_mtudisc = 1;
 int	ip_mtudisc_timeout = IPMTUDISCTIMEOUT;
 int	ip_directedbcast = 0;
-
-struct rttimer_queue *ip_mtudisc_timeout_q;
 
 /* Protects `ipq' and `ip_frags'. */
 struct mutex	ipq_mutex = MUTEX_INITIALIZER(IPL_SOFTNET);
@@ -200,7 +198,6 @@ ip_init(void)
 		    pr->pr_protocol < IPPROTO_MAX)
 			ip_protox[pr->pr_protocol] = pr - inetsw;
 	LIST_INIT(&ipq);
-	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 
 	/* Fill in list of ports not to allocate dynamically. */
 	memset(&baddynamicports, 0, sizeof(baddynamicports));
@@ -224,7 +221,8 @@ ip_init(void)
 	ipsec_init();
 #endif
 #ifdef MROUTING
-	ip_mrouterq = rt_timer_queue_create(MCAST_EXPIRE_FREQUENCY);
+	ip_mrouterq = rt_timer_queue_create(MCAST_EXPIRE_FREQUENCY,
+	    &mfc_expire_route);
 #endif
 }
 
@@ -1656,11 +1654,8 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case IPCTL_MTUDISC:
 		NET_LOCK();
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &ip_mtudisc);
-		if (ip_mtudisc == 0) {
-			rt_timer_queue_destroy(ip_mtudisc_timeout_q);
-			ip_mtudisc_timeout_q =
-			    rt_timer_queue_create(ip_mtudisc_timeout);
-		}
+		if (ip_mtudisc == 0)
+			rt_timer_queue_flush(ip_mtudisc_timeout_q);
 		NET_UNLOCK();
 		return error;
 	case IPCTL_MTUDISCTIMEOUT:

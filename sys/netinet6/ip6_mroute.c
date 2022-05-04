@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.129 2022/04/30 07:20:35 claudio Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.130 2022/05/04 16:52:10 claudio Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -176,7 +176,6 @@ struct rtentry *mf6c_find(struct ifnet *, struct in6_addr *,
 struct rtentry *mrt6_mcast_add(struct ifnet *, struct sockaddr *,
     struct sockaddr *);
 void mrt6_mcast_del(struct rtentry *, unsigned int);
-void mf6c_expire_route(struct rtentry *, u_int);
 
 /*
  * Handle MRT setsockopt commands to modify the multicast routing tables.
@@ -677,7 +676,7 @@ mf6c_add_route(struct ifnet *ifp, struct sockaddr *origin,
 	}
 
 	rt->rt_llinfo = (caddr_t)mf6c;
-	rt_timer_add(rt, mf6c_expire_route, ip6_mrouterq, rtableid);
+	rt_timer_add(rt, ip6_mrouterq, rtableid);
 	mf6c->mf6c_parent = mf6cc->mf6cc_parent;
 	rtfree(rt);
 
@@ -1004,7 +1003,7 @@ mf6c_expire_route(struct rtentry *rt, u_int rtableid)
 
 	if (mf6c->mf6c_expire == 0) {
 		mf6c->mf6c_expire = 1;
-		rt_timer_add(rt, mf6c_expire_route, ip6_mrouterq, rtableid);
+		rt_timer_add(rt, ip6_mrouterq, rtableid);
 		return;
 	}
 

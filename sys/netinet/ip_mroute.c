@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.133 2022/04/30 07:20:35 claudio Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.134 2022/05/04 16:52:10 claudio Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -113,7 +113,6 @@ int get_version(struct mbuf *);
 int add_vif(struct socket *, struct mbuf *);
 int del_vif(struct socket *, struct mbuf *);
 void update_mfc_params(struct mfcctl2 *, int, unsigned int);
-void mfc_expire_route(struct rtentry *, u_int);
 int mfc_add(struct mfcctl2 *, struct in_addr *, struct in_addr *,
     int, unsigned int, int);
 int add_mfc(struct socket *, struct mbuf *);
@@ -793,7 +792,7 @@ mfc_expire_route(struct rtentry *rt, u_int rtableid)
 	/* Not expired, add it back to the queue. */
 	if (mfc->mfc_expire == 0) {
 		mfc->mfc_expire = 1;
-		rt_timer_add(rt, mfc_expire_route, ip_mrouterq, rtableid);
+		rt_timer_add(rt, ip_mrouterq, rtableid);
 		return;
 	}
 
@@ -827,7 +826,7 @@ mfc_add_route(struct ifnet *ifp, struct sockaddr *origin,
 
 	rt->rt_llinfo = (caddr_t)mfc;
 
-	rt_timer_add(rt, mfc_expire_route, ip_mrouterq, rtableid);
+	rt_timer_add(rt, ip_mrouterq, rtableid);
 
 	mfc->mfc_parent = mfccp->mfcc_parent;
 	mfc->mfc_pkt_cnt = 0;

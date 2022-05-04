@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.240 2022/04/30 07:20:35 claudio Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.241 2022/05/04 16:52:10 claudio Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -143,8 +143,10 @@ void
 icmp6_init(void)
 {
 	mld6_init();
-	icmp6_mtudisc_timeout_q = rt_timer_queue_create(ip6_mtudisc_timeout);
-	icmp6_redirect_timeout_q = rt_timer_queue_create(icmp6_redirtimeout);
+	icmp6_mtudisc_timeout_q = rt_timer_queue_create(ip6_mtudisc_timeout,
+	    &icmp6_mtudisc_timeout);
+	icmp6_redirect_timeout_q = rt_timer_queue_create(icmp6_redirtimeout,
+	    NULL);
 	icmp6counters = counters_alloc(icp6s_ncounters);
 }
 
@@ -1404,7 +1406,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		rtredirect(sin6tosa(&sdst), sin6tosa(&sgw), sin6tosa(&ssrc),
 		    &newrt, m->m_pkthdr.ph_rtableid);
 		if (newrt != NULL && icmp6_redirtimeout > 0) {
-			rt_timer_add(newrt, NULL, icmp6_redirect_timeout_q,
+			rt_timer_add(newrt, icmp6_redirect_timeout_q,
 			    m->m_pkthdr.ph_rtableid);
 		}
 		rtfree(newrt);
@@ -1828,8 +1830,7 @@ icmp6_mtudisc_clone(struct sockaddr_in6 *dst, u_int rtableid, int ipsec)
 		rt = nrt;
 		rtm_send(rt, RTM_ADD, 0, rtableid);
 	}
-	error = rt_timer_add(rt, icmp6_mtudisc_timeout, icmp6_mtudisc_timeout_q,
-	    rtableid);
+	error = rt_timer_add(rt, icmp6_mtudisc_timeout_q, rtableid);
 	if (error)
 		goto bad;
 
