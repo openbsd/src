@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.146 2021/05/16 15:10:20 deraadt Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.147 2022/05/04 21:24:33 bluhm Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -188,7 +188,6 @@ malloc(size_t size, int type, int flags)
 	if (size > 65535 * PAGE_SIZE) {
 		if (flags & M_CANFAIL) {
 #ifndef SMALL_KERNEL
-			/* XXX lock */
 			if (ratecheck(&malloc_lasterr, &malloc_errintvl))
 				printf("malloc(): allocation too large, "
 				    "type = %d, size = %lu\n", type, size);

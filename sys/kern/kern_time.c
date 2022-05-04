@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.154 2021/06/18 15:59:14 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.155 2022/05/04 21:24:33 bluhm Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -782,11 +782,13 @@ itimerdecr(struct itimerspec *itp, long nsec)
 int
 ratecheck(struct timeval *lasttime, const struct timeval *mininterval)
 {
+	static struct mutex mtx = MUTEX_INITIALIZER(IPL_HIGH);
 	struct timeval tv, delta;
 	int rv = 0;
 
 	getmicrouptime(&tv);
 
+	mtx_enter(&mtx);
 	timersub(&tv, lasttime, &delta);
 
 	/*
@@ -798,6 +800,7 @@ ratecheck(struct timeval *lasttime, const struct timeval *mininterval)
 		*lasttime = tv;
 		rv = 1;
 	}
+	mtx_leave(&mtx);
 
 	return (rv);
 }
@@ -808,11 +811,13 @@ ratecheck(struct timeval *lasttime, const struct timeval *mininterval)
 int
 ppsratecheck(struct timeval *lasttime, int *curpps, int maxpps)
 {
+	static struct mutex mtx = MUTEX_INITIALIZER(IPL_HIGH);
 	struct timeval tv, delta;
 	int rv;
 
 	microuptime(&tv);
 
+	mtx_enter(&mtx);
 	timersub(&tv, lasttime, &delta);
 
 	/*
@@ -837,20 +842,11 @@ ppsratecheck(struct timeval *lasttime, int *curpps, int maxpps)
 	else
 		rv = 0;
 
-#if 1 /*DIAGNOSTIC?*/
 	/* be careful about wrap-around */
 	if (*curpps + 1 > *curpps)
 		*curpps = *curpps + 1;
-#else
-	/*
-	 * assume that there's not too many calls to this function.
-	 * not sure if the assumption holds, as it depends on *caller's*
-	 * behavior, not the behavior of this function.
-	 * IMHO it is wrong to make assumption on the caller's behavior,
-	 * so the above #if is #if 1, not #ifdef DIAGNOSTIC.
-	 */
-	*curpps = *curpps + 1;
-#endif
+
+	mtx_leave(&mtx);
 
 	return (rv);
 }
