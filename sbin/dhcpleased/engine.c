@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.36 2022/02/16 10:35:57 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.37 2022/05/04 05:57:18 florian Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -882,6 +882,8 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 	memset(&subnet_mask, 0, sizeof(subnet_mask));
 	memset(&routes, 0, sizeof(routes));
 	memset(&nameservers, 0, sizeof(nameservers));
+	memset(hostname, 0, sizeof(hostname));
+	memset(domainname, 0, sizeof(domainname));
 
 	while (rem > 0 && dho != DHO_END) {
 		dho = *p;
@@ -1014,14 +1016,18 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			rem -= dho_len;
 			break;
 		case DHO_HOST_NAME:
-			if (dho_len < 1)
-				goto wrong_length;
+			if (dho_len < 1) {
+				/*
+				 * Protocol violation: minimum length is 1;
+				 * pretend the option is not there
+				 */
+				break;
+			}
 			/* MUST delete trailing NUL, per RFC 2132 */
 			slen = dho_len;
 			while (slen > 0 && p[slen - 1] == '\0')
 				slen--;
-			if (slen < 1)
-				goto wrong_length;
+			/* slen might be 0 here, pretend option is not there. */
 			strvisx(hostname, p, slen, VIS_SAFE);
 			if (log_getverbose() > 1)
 				log_debug("DHO_HOST_NAME: %s", hostname);
@@ -1029,14 +1035,18 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 			rem -= dho_len;
 			break;
 		case DHO_DOMAIN_NAME:
-			if (dho_len < 1)
-				goto wrong_length;
+			if (dho_len < 1) {
+				/*
+				 * Protocol violation: minimum length is 1;
+				 * pretend the option is not there
+				 */
+				break;
+			}
 			/* MUST delete trailing NUL, per RFC 2132 */
 			slen = dho_len;
 			while (slen > 0 && p[slen - 1] == '\0')
 				slen--;
-			if (slen < 1)
-				goto wrong_length;
+			/* slen might be 0 here, pretend option is not there. */
 			strvisx(domainname, p, slen, VIS_SAFE);
 			if (log_getverbose() > 1)
 				log_debug("DHO_DOMAIN_NAME: %s", domainname);
