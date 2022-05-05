@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_lib.c,v 1.53 2022/04/28 18:30:57 jsing Exp $ */
+/* $OpenBSD: asn1_lib.c,v 1.54 2022/05/05 19:18:56 jsing Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -78,10 +78,10 @@ asn1_get_identifier_cbs(CBS *cbs, int der_mode, uint8_t *out_class,
 
 int
 asn1_get_length_cbs(CBS *cbs, int der_mode, int *out_indefinite,
-    uint32_t *out_length)
+    size_t *out_length)
 {
 	uint8_t len_bytes;
-	uint32_t length;
+	size_t length;
 	uint8_t val;
 
 	/*
@@ -127,7 +127,7 @@ asn1_get_length_cbs(CBS *cbs, int der_mode, int *out_indefinite,
 			return 0;
 		if (der_mode && length == 0 && val == 0)
 			return 0;
-		if (length > (UINT32_MAX >> 8))
+		if (length > (SIZE_MAX >> 8))
 			return 0;
 		length = (length << 8) | val;
 	}
@@ -140,11 +140,12 @@ asn1_get_length_cbs(CBS *cbs, int der_mode, int *out_indefinite,
 int
 asn1_get_object_cbs(CBS *cbs, int der_mode, uint8_t *out_tag_class,
     int *out_constructed, uint32_t *out_tag_number, int *out_indefinite,
-    uint32_t *out_length)
+    size_t *out_length)
 {
 	int constructed, indefinite;
-	uint32_t tag_number, length;
+	uint32_t tag_number;
 	uint8_t tag_class;
+	size_t length;
 
 	*out_tag_class = 0;
 	*out_constructed = 0;
@@ -176,8 +177,9 @@ asn1_get_primitive(CBS *cbs, int der_mode, uint32_t *out_tag_number,
     CBS *out_content)
 {
 	int constructed, indefinite;
-	uint32_t tag_number, length;
+	uint32_t tag_number;
 	uint8_t tag_class;
+	size_t length;
 
 	*out_tag_number = 0;
 

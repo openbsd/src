@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.57 2022/05/04 10:57:48 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.58 2022/05/05 19:18:56 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -1049,9 +1049,10 @@ asn1_check_tag_cbs(CBS *cbs, size_t *out_len, int *out_tag, uint8_t *out_class,
     char *out_indefinite, char *out_constructed, int expected_tag,
     int expected_class, char optional)
 {
-	uint32_t tag_number, length;
 	int constructed, indefinite;
+	uint32_t tag_number;
 	uint8_t tag_class;
+	size_t length;
 
 	if (out_len != NULL)
 		*out_len = 0;
@@ -1096,7 +1097,7 @@ asn1_check_tag_cbs(CBS *cbs, size_t *out_len, int *out_tag, uint8_t *out_class,
 		return 0;
 	}
 
-	if (tag_number > INT_MAX || CBS_len(cbs) > INT_MAX) {
+	if (tag_number > INT_MAX) {
 		ASN1error(ASN1_R_TOO_LONG);
 		return 0;
 	}

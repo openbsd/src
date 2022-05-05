@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_old_lib.c,v 1.3 2022/01/14 07:57:17 tb Exp $ */
+/* $OpenBSD: asn1_old_lib.c,v 1.4 2022/05/05 19:18:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,8 +72,9 @@ ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
     int *pclass, long omax)
 {
 	int constructed, indefinite;
-	uint32_t tag_number, length;
+	uint32_t tag_number;
 	uint8_t tag_class;
+	size_t length;
 	CBS cbs;
 	int ret = 0;
 
@@ -99,7 +100,7 @@ ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 	 * signal an error by setting the 8th bit in the return value... but we
 	 * still provide all of the decoded data.
 	 */
-	if (length > CBS_len(&cbs)) {
+	if (length > CBS_len(&cbs) || length > LONG_MAX) {
 		ASN1error(ASN1_R_TOO_LONG);
 		ret = 0x80;
 	}
