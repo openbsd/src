@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.h,v 1.22 2022/05/04 16:52:10 claudio Exp $	*/
+/*	$OpenBSD: ip6_mroute.h,v 1.23 2022/05/05 13:57:41 claudio Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -194,7 +194,7 @@ struct sioc_mif_req6 {
 /* How frequent should we look for expired entries (in seconds). */
 #define	MCAST_EXPIRE_TIMEOUT	30
 
-extern struct rttimer_queue *ip6_mrouterq;
+extern struct rttimer_queue ip6_mrouterq;
 void	mf6c_expire_route(struct rtentry *, u_int);
 
 /*

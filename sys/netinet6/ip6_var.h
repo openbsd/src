@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.91 2022/02/25 23:51:04 guenther Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.92 2022/05/05 13:57:41 claudio Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -268,7 +268,7 @@ ip6stat_add(enum ip6stat_counters c, uint64_t v)
 #define	IPV6_MINMTU		0x04	/* use minimum MTU (IPV6_USE_MIN_MTU) */
 
 extern int ip6_mtudisc_timeout;		/* mtu discovery */
-extern struct rttimer_queue *icmp6_mtudisc_timeout_q;
+extern struct rttimer_queue icmp6_mtudisc_timeout_q;
 
 extern int	ip6_defhlim;		/* default hop limit */
 extern int	ip6_defmcasthlim;	/* default multicast hop limit */

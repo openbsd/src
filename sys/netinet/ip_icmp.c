@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.190 2022/05/04 16:52:10 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.191 2022/05/05 13:57:40 claudio Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -120,8 +120,8 @@ int	icmp_redirtimeout = 10 * 60;
 static int icmperrpps_count = 0;
 static struct timeval icmperrppslim_last;
 
-struct rttimer_queue *ip_mtudisc_timeout_q;
-struct rttimer_queue *icmp_redirect_timeout_q;
+struct rttimer_queue ip_mtudisc_timeout_q;
+struct rttimer_queue icmp_redirect_timeout_q;
 struct cpumem *icmpcounters;
 
 const struct sysctl_bounded_args icmpctl_vars[] =  {
@@ -141,9 +141,9 @@ int icmp_sysctl_icmpstat(void *, size_t *, void *);
 void
 icmp_init(void)
 {
-	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout,
+	rt_timer_queue_init(&ip_mtudisc_timeout_q, ip_mtudisc_timeout,
 	    &icmp_mtudisc_timeout);
-	icmp_redirect_timeout_q = rt_timer_queue_create(icmp_redirtimeout,
+	rt_timer_queue_init(&icmp_redirect_timeout_q, icmp_redirtimeout,
 	    NULL);
 	icmpcounters = counters_alloc(icps_ncounters);
 }
@@ -637,7 +637,7 @@ reflect:
 		rtredirect(sintosa(&sdst), sintosa(&sgw),
 		    sintosa(&ssrc), &newrt, m->m_pkthdr.ph_rtableid);
 		if (newrt != NULL && icmp_redirtimeout > 0) {
-			rt_timer_add(newrt, icmp_redirect_timeout_q,
+			rt_timer_add(newrt, &icmp_redirect_timeout_q,
 			    m->m_pkthdr.ph_rtableid);
 		}
 		rtfree(newrt);
@@ -887,7 +887,7 @@ icmp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		NET_LOCK();
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
 		    &icmp_redirtimeout, 0, INT_MAX);
-		rt_timer_queue_change(icmp_redirect_timeout_q,
+		rt_timer_queue_change(&icmp_redirect_timeout_q,
 		    icmp_redirtimeout);
 		NET_UNLOCK();
 		break;
@@ -978,7 +978,7 @@ icmp_mtudisc_clone(struct in_addr dst, u_int rtableid, int ipsec)
 		rt = nrt;
 		rtm_send(rt, RTM_ADD, 0, rtableid);
 	}
-	error = rt_timer_add(rt, ip_mtudisc_timeout_q, rtableid);
+	error = rt_timer_add(rt, &ip_mtudisc_timeout_q, rtableid);
 	if (error)
 		goto bad;
 

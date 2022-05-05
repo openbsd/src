@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.409 2022/05/04 16:52:10 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.410 2022/05/05 13:57:40 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -150,7 +150,6 @@ int			ifatrash;	/* ifas not in ifp list but not free */
 
 struct pool	rtentry_pool;		/* pool for rtentry structures */
 struct pool	rttimer_pool;		/* pool for rttimer structures */
-struct pool	rttimer_queue_pool;	/* pool for rttimer_queue structures */
 
 int	rt_setgwroute(struct rtentry *, u_int);
 void	rt_putgwroute(struct rtentry *);
@@ -1393,8 +1392,6 @@ rt_timer_init(void)
 
 	pool_init(&rttimer_pool, sizeof(struct rttimer), 0,
 	    IPL_MPFLOOR, 0, "rttmr", NULL);
-	pool_init(&rttimer_queue_pool, sizeof(struct rttimer_queue), 0,
-	    IPL_MPFLOOR, 0, "rttmrq", NULL);
 
 	mtx_init(&rttimer_mtx, IPL_MPFLOOR);
 	LIST_INIT(&rttimer_queue_head);
@@ -1402,13 +1399,10 @@ rt_timer_init(void)
 	timeout_add_sec(&rt_timer_timeout, 1);
 }
 
-struct rttimer_queue *
-rt_timer_queue_create(int timeout, void (*func)(struct rtentry *, u_int))
+void
+rt_timer_queue_init(struct rttimer_queue *rtq, int timeout,
+    void (*func)(struct rtentry *, u_int))
 {
-	struct rttimer_queue	*rtq;
-
-	rtq = pool_get(&rttimer_queue_pool, PR_WAITOK | PR_ZERO);
-
 	rtq->rtq_timeout = timeout;
 	rtq->rtq_count = 0;
 	rtq->rtq_func = func;
@@ -1417,8 +1411,6 @@ rt_timer_queue_create(int timeout, void (*func)(struct rtentry *, u_int))
 	mtx_enter(&rttimer_mtx);
 	LIST_INSERT_HEAD(&rttimer_queue_head, rtq, rtq_link);
 	mtx_leave(&rttimer_mtx);
-
-	return (rtq);
 }
 
 void

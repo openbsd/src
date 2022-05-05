@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.370 2022/05/04 16:52:10 claudio Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.371 2022/05/05 13:57:40 claudio Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -221,7 +221,7 @@ ip_init(void)
 	ipsec_init();
 #endif
 #ifdef MROUTING
-	ip_mrouterq = rt_timer_queue_create(MCAST_EXPIRE_FREQUENCY,
+	rt_timer_queue_init(&ip_mrouterq, MCAST_EXPIRE_FREQUENCY,
 	    &mfc_expire_route);
 #endif
 }
@@ -1655,14 +1655,14 @@ ip_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		NET_LOCK();
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &ip_mtudisc);
 		if (ip_mtudisc == 0)
-			rt_timer_queue_flush(ip_mtudisc_timeout_q);
+			rt_timer_queue_flush(&ip_mtudisc_timeout_q);
 		NET_UNLOCK();
 		return error;
 	case IPCTL_MTUDISCTIMEOUT:
 		NET_LOCK();
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
 		    &ip_mtudisc_timeout, 0, INT_MAX);
-		rt_timer_queue_change(ip_mtudisc_timeout_q,
+		rt_timer_queue_change(&ip_mtudisc_timeout_q,
 		    ip_mtudisc_timeout);
 		NET_UNLOCK();
 		return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.134 2022/05/04 16:52:10 claudio Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.135 2022/05/05 13:57:40 claudio Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ int mcast_debug = 1;
  * except for netstat or debugging purposes.
  */
 struct socket	*ip_mrouter[RT_TABLEID_MAX + 1];
-struct rttimer_queue *ip_mrouterq;
+struct rttimer_queue ip_mrouterq;
 uint64_t	 mrt_count[RT_TABLEID_MAX + 1];
 int		ip_mrtproto = IGMP_DVMRP;    /* for netstat only */
 
@@ -792,7 +792,7 @@ mfc_expire_route(struct rtentry *rt, u_int rtableid)
 	/* Not expired, add it back to the queue. */
 	if (mfc->mfc_expire == 0) {
 		mfc->mfc_expire = 1;
-		rt_timer_add(rt, ip_mrouterq, rtableid);
+		rt_timer_add(rt, &ip_mrouterq, rtableid);
 		return;
 	}
 
@@ -826,7 +826,7 @@ mfc_add_route(struct ifnet *ifp, struct sockaddr *origin,
 
 	rt->rt_llinfo = (caddr_t)mfc;
 
-	rt_timer_add(rt, ip_mrouterq, rtableid);
+	rt_timer_add(rt, &ip_mrouterq, rtableid);
 
 	mfc->mfc_parent = mfccp->mfcc_parent;
 	mfc->mfc_pkt_cnt = 0;

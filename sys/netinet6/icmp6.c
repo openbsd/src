@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.241 2022/05/04 16:52:10 claudio Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.242 2022/05/05 13:57:40 claudio Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ struct icmp6_mtudisc_callback {
 LIST_HEAD(, icmp6_mtudisc_callback) icmp6_mtudisc_callbacks =
     LIST_HEAD_INITIALIZER(icmp6_mtudisc_callbacks);
 
-struct rttimer_queue *icmp6_mtudisc_timeout_q;
+struct rttimer_queue icmp6_mtudisc_timeout_q;
 
 /* XXX do these values make any sense? */
 static int icmp6_mtudisc_hiwat = 1280;
@@ -127,7 +127,7 @@ static int icmp6_mtudisc_lowat = 256;
 /*
  * keep track of # of redirect routes.
  */
-struct rttimer_queue *icmp6_redirect_timeout_q;
+struct rttimer_queue icmp6_redirect_timeout_q;
 
 /* XXX experimental, turned off */
 static int icmp6_redirect_lowat = -1;
@@ -143,9 +143,9 @@ void
 icmp6_init(void)
 {
 	mld6_init();
-	icmp6_mtudisc_timeout_q = rt_timer_queue_create(ip6_mtudisc_timeout,
+	rt_timer_queue_init(&icmp6_mtudisc_timeout_q, ip6_mtudisc_timeout,
 	    &icmp6_mtudisc_timeout);
-	icmp6_redirect_timeout_q = rt_timer_queue_create(icmp6_redirtimeout,
+	rt_timer_queue_init(&icmp6_redirect_timeout_q, icmp6_redirtimeout,
 	    NULL);
 	icmp6counters = counters_alloc(icp6s_ncounters);
 }
@@ -988,7 +988,7 @@ icmp6_mtudisc_update(struct ip6ctlparam *ip6cp, int validated)
 	 * allow non-validated cases if memory is plenty, to make traffic
 	 * from non-connected pcb happy.
 	 */
-	rtcount = rt_timer_queue_count(icmp6_mtudisc_timeout_q);
+	rtcount = rt_timer_queue_count(&icmp6_mtudisc_timeout_q);
 	if (validated) {
 		if (0 <= icmp6_mtudisc_hiwat && rtcount > icmp6_mtudisc_hiwat)
 			return;
@@ -1384,7 +1384,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		 * work just fine even if we do not install redirect route
 		 * (there will be additional hops, though).
 		 */
-		rtcount = rt_timer_queue_count(icmp6_redirect_timeout_q);
+		rtcount = rt_timer_queue_count(&icmp6_redirect_timeout_q);
 		if (0 <= ip6_maxdynroutes && rtcount >= ip6_maxdynroutes)
 			goto freeit;
 		else if (0 <= icmp6_redirect_lowat &&
@@ -1406,7 +1406,7 @@ icmp6_redirect_input(struct mbuf *m, int off)
 		rtredirect(sin6tosa(&sdst), sin6tosa(&sgw), sin6tosa(&ssrc),
 		    &newrt, m->m_pkthdr.ph_rtableid);
 		if (newrt != NULL && icmp6_redirtimeout > 0) {
-			rt_timer_add(newrt, icmp6_redirect_timeout_q,
+			rt_timer_add(newrt, &icmp6_redirect_timeout_q,
 			    m->m_pkthdr.ph_rtableid);
 		}
 		rtfree(newrt);
@@ -1830,7 +1830,7 @@ icmp6_mtudisc_clone(struct sockaddr_in6 *dst, u_int rtableid, int ipsec)
 		rt = nrt;
 		rtm_send(rt, RTM_ADD, 0, rtableid);
 	}
-	error = rt_timer_add(rt, icmp6_mtudisc_timeout_q, rtableid);
+	error = rt_timer_add(rt, &icmp6_mtudisc_timeout_q, rtableid);
 	if (error)
 		goto bad;
 
@@ -1903,7 +1903,7 @@ icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		NET_LOCK();
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
 		    &icmp6_redirtimeout, 0, INT_MAX);
-		rt_timer_queue_change(icmp6_redirect_timeout_q,
+		rt_timer_queue_change(&icmp6_redirect_timeout_q,
 		    icmp6_redirtimeout);
 		NET_UNLOCK();
 		break;

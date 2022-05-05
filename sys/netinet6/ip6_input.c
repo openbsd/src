@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.244 2022/05/04 16:52:10 claudio Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.245 2022/05/05 13:57:40 claudio Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ ip6_init(void)
 
 	ip6counters = counters_alloc(ip6s_ncounters);
 #ifdef MROUTING
-	ip6_mrouterq = rt_timer_queue_create(MCAST_EXPIRE_TIMEOUT,
+	rt_timer_queue_init(&ip6_mrouterq, MCAST_EXPIRE_TIMEOUT,
 	    &mf6c_expire_route);
 #endif
 }
@@ -1502,7 +1502,7 @@ ip6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		NET_LOCK();
 		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
 		    &ip6_mtudisc_timeout, 0, INT_MAX);
-		rt_timer_queue_change(icmp6_mtudisc_timeout_q,
+		rt_timer_queue_change(&icmp6_mtudisc_timeout_q,
 		    ip6_mtudisc_timeout);
 		NET_UNLOCK();
 		return (error);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.130 2022/05/04 16:52:10 claudio Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.131 2022/05/05 13:57:41 claudio Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -130,7 +130,7 @@ void phyint_send6(struct ifnet *, struct ip6_hdr *, struct mbuf *);
  * except for netstat or debugging purposes.
  */
 struct socket  *ip6_mrouter[RT_TABLEID_MAX + 1];
-struct rttimer_queue *ip6_mrouterq;
+struct rttimer_queue ip6_mrouterq;
 int		ip6_mrouter_ver = 0;
 int		ip6_mrtproto;    /* for netstat only */
 struct mrt6stat	mrt6stat;
@@ -676,7 +676,7 @@ mf6c_add_route(struct ifnet *ifp, struct sockaddr *origin,
 	}
 
 	rt->rt_llinfo = (caddr_t)mf6c;
-	rt_timer_add(rt, ip6_mrouterq, rtableid);
+	rt_timer_add(rt, &ip6_mrouterq, rtableid);
 	mf6c->mf6c_parent = mf6cc->mf6cc_parent;
 	rtfree(rt);
 
@@ -1003,7 +1003,7 @@ mf6c_expire_route(struct rtentry *rt, u_int rtableid)
 
 	if (mf6c->mf6c_expire == 0) {
 		mf6c->mf6c_expire = 1;
-		rt_timer_add(rt, ip6_mrouterq, rtableid);
+		rt_timer_add(rt, &ip6_mrouterq, rtableid);
 		return;
 	}
 

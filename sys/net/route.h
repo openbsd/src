@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.193 2022/05/04 16:52:10 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.194 2022/05/05 13:57:40 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -457,16 +457,16 @@ void	 rtm_proposal(struct ifnet *, struct rt_addrinfo *, int, uint8_t);
 int	 rt_setgate(struct rtentry *, struct sockaddr *, u_int);
 struct rtentry *rt_getll(struct rtentry *);
 
-void			 rt_timer_init(void);
-int			 rt_timer_add(struct rtentry *,
-			    struct rttimer_queue *, u_int);
-void			 rt_timer_remove_all(struct rtentry *);
-struct rttimer_queue	*rt_timer_queue_create(int,
-			    void(*)(struct rtentry *, u_int));
-void			 rt_timer_queue_change(struct rttimer_queue *, int);
-void			 rt_timer_queue_flush(struct rttimer_queue *);
-unsigned long		 rt_timer_queue_count(struct rttimer_queue *);
-void			 rt_timer_timer(void *);
+void		rt_timer_init(void);
+int		rt_timer_add(struct rtentry *,
+		    struct rttimer_queue *, u_int);
+void		rt_timer_remove_all(struct rtentry *);
+void		rt_timer_queue_init(struct rttimer_queue *, int,
+		    void(*)(struct rtentry *, u_int));
+void		rt_timer_queue_change(struct rttimer_queue *, int);
+void		rt_timer_queue_flush(struct rttimer_queue *);
+unsigned long	rt_timer_queue_count(struct rttimer_queue *);
+void		rt_timer_timer(void *);
 
 int	 rt_mpls_set(struct rtentry *, struct sockaddr *, uint8_t);
 void	 rt_mpls_clear(struct rtentry *);
