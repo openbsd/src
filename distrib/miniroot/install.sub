@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1195 2022/05/03 11:48:47 krw Exp $
+#	$OpenBSD: install.sub,v 1.1196 2022/05/05 20:07:23 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1652,7 +1652,7 @@ install_files() {
 
 		# Fetch and verify the set files.
 		for _f in $_get_sets; do
-			$UU && reset_watchdog
+			reset_watchdog
 
 			rm -f /tmp/h /tmp/fail
 
@@ -1717,7 +1717,7 @@ install_files() {
 
 	# Install the set files.
 	for _f in $_get_sets; do
-		$UU && reset_watchdog
+		reset_watchdog
 		_fsrc="$_src/$_f"
 
 		# Take the set file from the prefetch area if possible.
@@ -1766,7 +1766,7 @@ install_files() {
 		cp ${_src#file://}/SHA256 /mnt/var/db/installed.SHA256
 	fi
 
-	$UU && reset_watchdog
+	reset_watchdog
 }
 
 # Fetch install sets from an HTTP server possibly using a proxy.
@@ -3304,6 +3304,7 @@ do_upgrade() {
 
 	# Perform final steps common to both an install and an upgrade.
 	finish_up
+	[[ -n $WDPID ]] && kill -KILL $WDPID 2>/dev/null
 }
 
 check_unattendedupgrade() {
@@ -3330,20 +3331,19 @@ WATCHDOG_PERIOD_SEC=$((30 * 60))
 
 # Restart the background timer.
 reset_watchdog() {
-	kill -KILL $WDPID 2>/dev/null
-	start_watchdog
+	if [[ -n $WDPID ]]; then
+		kill -KILL $WDPID 2>/dev/null
+		start_watchdog
+	fi
 }
 
-# Start a co-process to reboot a stalled sysupgrade.
+# Start a process to reboot a stalled sysupgrade.
 # This mechanism is only used during non-interactive sysupgrade.
 start_watchdog() {
 	(
-		sleep $WATCHDOG_PERIOD_SEC && reboot
-	) |&
+		sleep $WATCHDOG_PERIOD_SEC && echo WATCHDOG > /dev/tty && reboot
+	) >/dev/null 2>&1 &
 	WDPID=$!
-
-	# Close standard input of the co-process.
-	exec 3>&p; exec 3>&-
 }
 
 # ------------------------------------------------------------------------------
@@ -3496,6 +3496,7 @@ elif $UU; then
 	check_unattendedupgrade || exit 1
 
 	start_watchdog
+	export WDPID
 
 	get_responsefile
 	do_autoinstall
