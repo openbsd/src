@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1128 2022/05/03 13:32:47 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1129 2022/05/05 16:44:22 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -7403,13 +7403,13 @@ done:
 	case PF_DIVERT:
 		switch (pd.af) {
 		case AF_INET:
-			if (!divert_packet(pd.m, pd.dir, r->divert.port))
-				pd.m = NULL;
+			divert_packet(pd.m, pd.dir, r->divert.port);
+			pd.m = NULL;
 			break;
 #ifdef INET6
 		case AF_INET6:
-			if (!divert6_packet(pd.m, pd.dir, r->divert.port))
-				pd.m = NULL;
+			divert6_packet(pd.m, pd.dir, r->divert.port);
+			pd.m = NULL;
 			break;
 #endif /* INET6 */
 		}
