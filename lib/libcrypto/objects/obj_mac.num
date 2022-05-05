@@ -1019,3 +1019,4 @@ ct_precert_scts	1018
 ct_precert_poison	1019
 ct_precert_signer	1020
 ct_cert_scts		1021
+hkdf			1022
