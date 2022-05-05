@@ -1,4 +1,4 @@
-/*	$OpenBSD: wall.c,v 1.35 2021/07/12 15:09:20 beck Exp $	*/
+/*	$OpenBSD: wall.c,v 1.36 2022/05/05 10:04:24 bluhm Exp $	*/
 /*	$NetBSD: wall.c,v 1.6 1994/11/17 07:17:58 jtc Exp $	*/
 
 /*
@@ -229,14 +229,17 @@ makemsg(char *fname)
 			err(1, "can't read %s", fname);
 		setegid(egid);
 	}
+	cnt = 0;
 	while (fgets(lbuf, sizeof(lbuf), stdin))
-		for (cnt = 0, p = lbuf; (ch = *p) != '\0'; ++p, ++cnt) {
+		for (p = lbuf; (ch = *p) != '\0'; ++p, ++cnt) {
 			if (cnt == 79 || ch == '\n') {
 				for (; cnt < 79; ++cnt)
 					putc(' ', fp);
 				putc('\r', fp);
 				putc('\n', fp);
 				cnt = -1;
+				if (ch != '\n')
+					p--;
 			} else if (!isu8cont(ch))
 				putc(isprint(ch) || isspace(ch) || ch == '\a' ?
 				    ch : '?', fp);
