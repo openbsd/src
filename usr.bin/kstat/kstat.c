@@ -1,4 +1,4 @@
-/* $OpenBSD: kstat.c,v 1.9 2022/04/22 00:29:20 dlg Exp $ */
+/* $OpenBSD: kstat.c,v 1.10 2022/05/05 22:36:36 cheloha Exp $ */
 
 /*
  * Copyright (c) 2020 David Gwynne <dlg@openbsd.org>
@@ -15,6 +15,8 @@
  */
 
 #include <ctype.h>
+#include <limits.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -104,6 +106,7 @@ kstat_cmp(const struct kstat_entry *ea, const struct kstat_entry *eb)
 RBT_PROTOTYPE(kstat_tree, kstat_entry, entry, kstat_cmp);
 RBT_GENERATE(kstat_tree, kstat_entry, entry, kstat_cmp);
 
+static void handle_alrm(int);
 static struct kstat_filter *
 		kstat_filter_parse(char *);
 static int	kstat_filter_entry(struct kstat_filters *,
@@ -134,16 +137,17 @@ main(int argc, char *argv[])
 	int fd;
 	const char *errstr;
 	int ch;
-	struct timespec interval = { 0, 0 };
+	struct itimerval itv;
+	sigset_t empty, mask;
 	int i;
+	unsigned int wait = 0;
 
 	while ((ch = getopt(argc, argv, "w:")) != -1) {
 		switch (ch) {
 		case 'w':
-			interval.tv_sec = strtonum(optarg, 1, 100000000,
-			    &errstr);
+			wait = strtonum(optarg, 1, UINT_MAX, &errstr);
 			if (errstr != NULL)
-				errx(1, "wait %s: %s", optarg, errstr);
+				errx(1, "wait is %s: %s", errstr, optarg);
 			break;
 		default:
 			usage();
@@ -168,12 +172,25 @@ main(int argc, char *argv[])
 	kstat_list(&kt, fd, version, &kfs);
 	kstat_print(&kt);
 
-	if (interval.tv_sec == 0)
+	if (wait == 0)
 		return (0);
 
-	for (;;) {
-		nanosleep(&interval, NULL);
+	if (signal(SIGALRM, handle_alrm) == SIG_ERR)
+		err(1, "signal");
+	sigemptyset(&empty);
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGALRM);
+	if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1)
+		err(1, "sigprocmask");
 
+	itv.it_value.tv_sec = wait;
+	itv.it_value.tv_usec = 0;
+	itv.it_interval = itv.it_value;
+	if (setitimer(ITIMER_REAL, &itv, NULL) == -1)
+		err(1, "setitimer");
+
+	for (;;) {
+		sigsuspend(&empty);
 		kstat_read(&kt, fd);
 		kstat_print(&kt);
 	}
@@ -547,4 +564,9 @@ kstat_read(struct kstat_tree *kt, int fd)
 		if (ioctl(fd, KSTATIOC_FIND_ID, ksreq) == -1)
 			err(1, "update id %llu", ksreq->ks_id);
 	}
+}
+
+static void
+handle_alrm(int signo)
+{
 }
