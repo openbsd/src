@@ -1,4 +1,4 @@
-/*	$OpenBSD: hkdf_evp.c,v 1.7 2022/05/05 07:50:06 tb Exp $ */
+/*	$OpenBSD: hkdf_evp.c,v 1.8 2022/05/05 07:53:30 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2016-2018 The OpenSSL Project.  All rights reserved.
  *
@@ -259,31 +259,15 @@ pkey_hkdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
 }
 
 const EVP_PKEY_METHOD hkdf_pkey_meth = {
-	EVP_PKEY_HKDF,
-	0,
-	pkey_hkdf_init,
-	0,
-	pkey_hkdf_cleanup,
+	.pkey_id = EVP_PKEY_HKDF,
+	.flags = 0,
 
-	0, 0,
-	0, 0,
+	.init = pkey_hkdf_init,
+	.copy = NULL,
+	.cleanup = pkey_hkdf_cleanup,
 
-	0,
-	0,
-
-	0,
-	0,
-
-	0, 0,
-
-	0, 0, 0, 0,
-
-	0, 0,
-
-	0, 0,
-
-	pkey_hkdf_derive_init,
-	pkey_hkdf_derive,
-	pkey_hkdf_ctrl,
-	pkey_hkdf_ctrl_str
+	.derive_init = pkey_hkdf_derive_init,
+	.derive = pkey_hkdf_derive,
+	.ctrl = pkey_hkdf_ctrl,
+	.ctrl_str = pkey_hkdf_ctrl_str,
 };
