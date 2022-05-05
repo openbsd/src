@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.99 2022/01/14 08:38:05 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.100 2022/05/05 08:48:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -112,6 +112,7 @@
 #define EVP_PKEY_GOSTIMIT NID_id_Gost28147_89_MAC
 #define EVP_PKEY_HMAC	NID_hmac
 #define EVP_PKEY_CMAC	NID_cmac
+#define EVP_PKEY_HKDF	NID_hkdf
 #define EVP_PKEY_GOSTR12_256 NID_id_tc26_gost3410_2012_256
 #define EVP_PKEY_GOSTR12_512 NID_id_tc26_gost3410_2012_512
 
