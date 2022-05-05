@@ -1,4 +1,4 @@
-/*	$Id: chngproc.c,v 1.16 2021/07/12 15:09:20 beck Exp $ */
+/*	$Id: chngproc.c,v 1.17 2022/05/05 19:51:35 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -16,6 +16,7 @@
  */
 
 #include <assert.h>
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -77,6 +78,18 @@ chngproc(int netsock, const char *root)
 			goto out;
 		else if ((tok = readstr(netsock, COMM_TOK)) == NULL)
 			goto out;
+		else if (strlen(tok) < 1) {
+			warnx("token is too short");
+			goto out;
+		}
+
+		for (i = 0; tok[i]; ++i) {
+			int ch = (unsigned char)tok[i];
+			if (!isalnum(ch) && ch != '-' && ch != '_') {
+				warnx("token is not a valid base64url");
+				goto out;
+			}
+		}
 
 		if (asprintf(&fmt, "%s.%s", tok, th) == -1) {
 			warn("asprintf");

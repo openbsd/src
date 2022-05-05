@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.54 2020/05/10 12:06:18 benno Exp $ */
+/*	$Id: main.c,v 1.55 2022/05/05 19:51:35 florian Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -20,6 +20,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <libgen.h>
+#include <locale.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,6 +56,9 @@ main(int argc, char *argv[])
 	struct authority_c	*authority = NULL;
 	struct domain_c		*domain = NULL;
 	struct altname_c	*ac;
+
+	if (setlocale(LC_CTYPE, "C") == NULL)
+		errx(1, "setlocale");
 
 	while ((c = getopt(argc, argv, "Fnrvf:")) != -1)
 		switch (c) {
