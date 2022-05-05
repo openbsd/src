@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1992 2022/05/04 08:10:43 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1993 2022/05/05 12:26:06 fcambus Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -823,6 +823,7 @@
 #define	PCI_PRODUCT_AMD_17_1X_XHCI_2	0x15e1		/* 17h/1xh xHCI */
 #define	PCI_PRODUCT_AMD_17_1X_ACP	0x15e2		/* 17h/1xh I2S Audio */
 #define	PCI_PRODUCT_AMD_17_1X_HDA	0x15e3		/* 17h/1xh HD Audio */
+#define	PCI_PRODUCT_AMD_17_1X_SFH	0x15e6		/* 17h/1xh SFH */
 #define	PCI_PRODUCT_AMD_17_1X_DF_0	0x15e8		/* 17h/1xh Data Fabric */
 #define	PCI_PRODUCT_AMD_17_1X_DF_1	0x15e9		/* 17h/1xh Data Fabric */
 #define	PCI_PRODUCT_AMD_17_1X_DF_2	0x15ea		/* 17h/1xh Data Fabric */
