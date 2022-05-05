@@ -1,4 +1,4 @@
-/*	$OpenBSD: hkdf_evp.c,v 1.13 2022/05/05 08:10:39 tb Exp $ */
+/*	$OpenBSD: hkdf_evp.c,v 1.14 2022/05/05 08:14:14 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2016-2018 The OpenSSL Project.  All rights reserved.
  *
@@ -242,21 +242,20 @@ pkey_hkdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
 
 	switch (kctx->mode) {
 	case EVP_PKEY_HKDEF_MODE_EXTRACT_AND_EXPAND:
-		return HKDF(kctx->md, kctx->salt, kctx->salt_len, kctx->key,
-		    kctx->key_len, kctx->info, kctx->info_len, key,
-		    *keylen) != NULL;
+		return HKDF(key, *keylen, kctx->md, kctx->salt, kctx->salt_len,
+		    kctx->key, kctx->key_len, kctx->info, kctx->info_len);
 
 	case EVP_PKEY_HKDEF_MODE_EXTRACT_ONLY:
 		if (key == NULL) {
 			*keylen = EVP_MD_size(kctx->md);
 			return 1;
 		}
-		return HKDF_Extract(kctx->md, kctx->salt, kctx->salt_len,
-		    kctx->key, kctx->key_len, key, keylen) != NULL;
+		return HKDF_extract(key, keylen, kctx->md, kctx->salt,
+		    kctx->salt_len, kctx->key, kctx->key_len);
 
 	case EVP_PKEY_HKDEF_MODE_EXPAND_ONLY:
-		return HKDF_Expand(kctx->md, kctx->key, kctx->key_len,
-		    kctx->info, kctx->info_len, key, *keylen) != NULL;
+		return HKDF_expand(key, *keylen, kctx->md, kctx->key,
+		    kctx->key_len, kctx->info, kctx->info_len);
 
 	default:
 		return 0;
