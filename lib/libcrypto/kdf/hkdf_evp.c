@@ -1,4 +1,4 @@
-/*	$OpenBSD: hkdf_evp.c,v 1.15 2022/05/05 11:26:36 tb Exp $ */
+/*	$OpenBSD: hkdf_evp.c,v 1.16 2022/05/05 19:44:23 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2016-2018 The OpenSSL Project.  All rights reserved.
  *
@@ -93,8 +93,7 @@ pkey_hkdf_cleanup(EVP_PKEY_CTX *ctx)
 
 	freezero(kctx->salt, kctx->salt_len);
 	freezero(kctx->key, kctx->key_len);
-	explicit_bzero(kctx->info, kctx->info_len);
-	free(kctx);
+	freezero(kctx, sizeof(*kctx));
 }
 
 static int
@@ -219,8 +218,7 @@ pkey_hkdf_derive_init(EVP_PKEY_CTX *ctx)
 
 	freezero(kctx->key, kctx->key_len);
 	freezero(kctx->salt, kctx->salt_len);
-	explicit_bzero(kctx->info, kctx->info_len);
-	memset(kctx, 0, sizeof(*kctx));
+	explicit_bzero(kctx, sizeof(*kctx));
 
 	return 1;
 }
