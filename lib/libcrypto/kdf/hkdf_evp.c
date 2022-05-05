@@ -1,4 +1,4 @@
-/*	$OpenBSD: hkdf_evp.c,v 1.12 2022/05/05 08:07:24 tb Exp $ */
+/*	$OpenBSD: hkdf_evp.c,v 1.13 2022/05/05 08:10:39 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2016-2018 The OpenSSL Project.  All rights reserved.
  *
@@ -77,7 +77,7 @@ pkey_hkdf_init(EVP_PKEY_CTX *ctx)
 	HKDF_PKEY_CTX *kctx;
 
 	if ((kctx = calloc(1, sizeof(*kctx))) == NULL) {
-		KDFerr(KDF_F_PKEY_HKDF_INIT, ERR_R_MALLOC_FAILURE);
+		KDFerror(ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 
@@ -208,7 +208,7 @@ pkey_hkdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
 		return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_HKDF_INFO,
 		    value);
 
-	KDFerr(KDF_F_PKEY_HKDF_CTRL_STR, KDF_R_UNKNOWN_PARAMETER_TYPE);
+	KDFerror(KDF_R_UNKNOWN_PARAMETER_TYPE);
 	return -2;
 }
 
@@ -232,11 +232,11 @@ pkey_hkdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
 	HKDF_PKEY_CTX *kctx = ctx->data;
 
 	if (kctx->md == NULL) {
-		KDFerr(KDF_F_PKEY_HKDF_DERIVE, KDF_R_MISSING_MESSAGE_DIGEST);
+		KDFerror(KDF_R_MISSING_MESSAGE_DIGEST);
 		return 0;
 	}
 	if (kctx->key == NULL) {
-		KDFerr(KDF_F_PKEY_HKDF_DERIVE, KDF_R_MISSING_KEY);
+		KDFerror(KDF_R_MISSING_KEY);
 		return 0;
 	}
 
