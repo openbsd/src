@@ -1,4 +1,4 @@
-/*	$OpenBSD: hkdf_evp.c,v 1.10 2022/05/05 08:03:11 tb Exp $ */
+/*	$OpenBSD: hkdf_evp.c,v 1.11 2022/05/05 08:05:58 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2016-2018 The OpenSSL Project.  All rights reserved.
  *
@@ -124,9 +124,10 @@ pkey_hkdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		if (kctx->salt != NULL)
 			freezero(kctx->salt, kctx->salt_len);
 
-		kctx->salt = OPENSSL_memdup(p2, p1);
+		kctx->salt = malloc(p1);
 		if (kctx->salt == NULL)
 			return 0;
+		memcpy(ktx->salt, p2, p1);
 
 		kctx->salt_len = p1;
 		return 1;
@@ -138,9 +139,10 @@ pkey_hkdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		if (kctx->key != NULL)
 			freezero(kctx->key, kctx->key_len);
 
-		kctx->key = OPENSSL_memdup(p2, p1);
+		kctx->key = malloc(p1);
 		if (kctx->key == NULL)
 			return 0;
+		memcpy(kctx->key, p2, p1);
 
 		kctx->key_len = p1;
 		return 1;
