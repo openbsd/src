@@ -1,4 +1,4 @@
-/*	$OpenBSD: hkdf_evp.c,v 1.9 2022/05/05 07:57:33 tb Exp $ */
+/*	$OpenBSD: hkdf_evp.c,v 1.10 2022/05/05 08:03:11 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2016-2018 The OpenSSL Project.  All rights reserved.
  *
@@ -76,7 +76,7 @@ pkey_hkdf_init(EVP_PKEY_CTX *ctx)
 {
 	HKDF_PKEY_CTX *kctx;
 
-	if ((kctx = OPENSSL_zalloc(sizeof(*kctx))) == NULL) {
+	if ((kctx = calloc(1, sizeof(*kctx))) == NULL) {
 		KDFerr(KDF_F_PKEY_HKDF_INIT, ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
@@ -91,10 +91,10 @@ pkey_hkdf_cleanup(EVP_PKEY_CTX *ctx)
 {
 	HKDF_PKEY_CTX *kctx = ctx->data;
 
-	OPENSSL_clear_free(kctx->salt, kctx->salt_len);
-	OPENSSL_clear_free(kctx->key, kctx->key_len);
-	OPENSSL_cleanse(kctx->info, kctx->info_len);
-	OPENSSL_free(kctx);
+	freezero(kctx->salt, kctx->salt_len);
+	freezero(kctx->key, kctx->key_len);
+	explicit_bzero(kctx->info, kctx->info_len);
+	free(kctx);
 }
 
 static int
@@ -122,7 +122,7 @@ pkey_hkdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 			return 0;
 
 		if (kctx->salt != NULL)
-			OPENSSL_clear_free(kctx->salt, kctx->salt_len);
+			freezero(kctx->salt, kctx->salt_len);
 
 		kctx->salt = OPENSSL_memdup(p2, p1);
 		if (kctx->salt == NULL)
@@ -136,7 +136,7 @@ pkey_hkdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 			return 0;
 
 		if (kctx->key != NULL)
-			OPENSSL_clear_free(kctx->key, kctx->key_len);
+			freezero(kctx->key, kctx->key_len);
 
 		kctx->key = OPENSSL_memdup(p2, p1);
 		if (kctx->key == NULL)
@@ -215,9 +215,9 @@ pkey_hkdf_derive_init(EVP_PKEY_CTX *ctx)
 {
 	HKDF_PKEY_CTX *kctx = ctx->data;
 
-	OPENSSL_clear_free(kctx->key, kctx->key_len);
-	OPENSSL_clear_free(kctx->salt, kctx->salt_len);
-	OPENSSL_cleanse(kctx->info, kctx->info_len);
+	freezero(kctx->key, kctx->key_len);
+	freezero(kctx->salt, kctx->salt_len);
+	explicit_bzero(kctx->info, kctx->info_len);
 	memset(kctx, 0, sizeof(*kctx));
 
 	return 1;
