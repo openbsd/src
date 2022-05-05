@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.173 2022/03/28 16:31:26 bluhm Exp $	*/
+/*	$OpenBSD: in.c,v 1.174 2022/05/05 08:43:37 claudio Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ in_canforward(struct in_addr in)
 {
 	u_int32_t net;
 
-	if (IN_EXPERIMENTAL(in.s_addr) || IN_MULTICAST(in.s_addr))
+	if (IN_MULTICAST(in.s_addr))
 		return (0);
 	if (IN_CLASSA(in.s_addr)) {
 		net = in.s_addr & IN_CLASSA_NET;
