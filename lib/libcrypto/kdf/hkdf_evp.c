@@ -1,4 +1,4 @@
-/*	$OpenBSD: hkdf_evp.c,v 1.6 2022/05/04 19:15:52 tb Exp $ */
+/*	$OpenBSD: hkdf_evp.c,v 1.7 2022/05/05 07:50:06 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2016-2018 The OpenSSL Project.  All rights reserved.
  *
@@ -56,22 +56,6 @@
 #include "crypto/evp.h"
 
 #define HKDF_MAXBUF 1024
-
-static unsigned char *HKDF(const EVP_MD *evp_md,
-    const unsigned char *salt, size_t salt_len,
-    const unsigned char *key, size_t key_len,
-    const unsigned char *info, size_t info_len,
-    unsigned char *okm, size_t okm_len);
-
-static unsigned char *HKDF_Extract(const EVP_MD *evp_md,
-    const unsigned char *salt, size_t salt_len,
-    const unsigned char *key, size_t key_len,
-    unsigned char *prk, size_t *prk_len);
-
-static unsigned char *HKDF_Expand(const EVP_MD *evp_md,
-    const unsigned char *prk, size_t prk_len,
-    const unsigned char *info, size_t info_len,
-    unsigned char *okm, size_t okm_len);
 
 typedef struct {
 	int mode;
@@ -303,103 +287,3 @@ const EVP_PKEY_METHOD hkdf_pkey_meth = {
 	pkey_hkdf_ctrl,
 	pkey_hkdf_ctrl_str
 };
-
-static unsigned char *
-HKDF(const EVP_MD *evp_md,
-    const unsigned char *salt, size_t salt_len,
-    const unsigned char *key, size_t key_len,
-    const unsigned char *info, size_t info_len,
-    unsigned char *okm, size_t okm_len)
-{
-	unsigned char prk[EVP_MAX_MD_SIZE];
-	unsigned char *ret;
-	size_t prk_len;
-
-	if (!HKDF_Extract(evp_md, salt, salt_len, key, key_len, prk, &prk_len))
-		return NULL;
-
-	ret = HKDF_Expand(evp_md, prk, prk_len, info, info_len, okm, okm_len);
-	OPENSSL_cleanse(prk, sizeof(prk));
-
-	return ret;
-}
-
-static unsigned char *
-HKDF_Extract(const EVP_MD *evp_md,
-    const unsigned char *salt, size_t salt_len,
-    const unsigned char *key, size_t key_len,
-    unsigned char *prk, size_t *prk_len)
-{
-	unsigned int tmp_len;
-
-	if (!HMAC(evp_md, salt, salt_len, key, key_len, prk, &tmp_len))
-		return NULL;
-
-	*prk_len = tmp_len;
-	return prk;
-}
-
-static unsigned char *
-HKDF_Expand(const EVP_MD *evp_md,
-    const unsigned char *prk, size_t prk_len,
-    const unsigned char *info, size_t info_len,
-    unsigned char *okm, size_t okm_len)
-{
-	HMAC_CTX *hmac;
-	unsigned char *ret = NULL;
-
-	unsigned int i;
-
-	unsigned char prev[EVP_MAX_MD_SIZE];
-
-	size_t done_len = 0, dig_len = EVP_MD_size(evp_md);
-
-	size_t n = okm_len / dig_len;
-	if (okm_len % dig_len)
-		n++;
-
-	if (n > 255 || okm == NULL)
-		return NULL;
-
-	if ((hmac = HMAC_CTX_new()) == NULL)
-		return NULL;
-
-	if (!HMAC_Init_ex(hmac, prk, prk_len, evp_md, NULL))
-		goto err;
-
-	for (i = 1; i <= n; i++) {
-		size_t copy_len;
-		const unsigned char ctr = i;
-
-		if (i > 1) {
-			if (!HMAC_Init_ex(hmac, NULL, 0, NULL, NULL))
-				goto err;
-
-			if (!HMAC_Update(hmac, prev, dig_len))
-				goto err;
-		}
-
-		if (!HMAC_Update(hmac, info, info_len))
-			goto err;
-
-		if (!HMAC_Update(hmac, &ctr, 1))
-			goto err;
-
-		if (!HMAC_Final(hmac, prev, NULL))
-			goto err;
-
-		copy_len = (done_len + dig_len > okm_len) ?
-		    okm_len - done_len :
-		    dig_len;
-
-		memcpy(okm + done_len, prev, copy_len);
-
-		done_len += copy_len;
-	}
-	ret = okm;
-
- err:
-	OPENSSL_cleanse(prev, sizeof(prev));
-	HMAC_CTX_free(hmac);
-	return ret;
-}
