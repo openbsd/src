@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdf_err.c,v 1.6 2022/05/04 19:34:26 tb Exp $ */
+/*	$OpenBSD: kdf_err.c,v 1.7 2022/05/05 07:48:07 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2018 The OpenSSL Project.  All rights reserved.
  *
@@ -58,7 +58,7 @@
  */
 
 #include <openssl/err.h>
-#include <openssl/kdferr.h>
+#include <openssl/kdf.h>
 
 #ifndef OPENSSL_NO_ERR
 
