@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.37 2022/05/04 05:57:18 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.38 2022/05/05 14:44:59 tb Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -1188,7 +1188,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		rem--;
 	}
 	if (rem != 0)
-		log_warnx("%s: %lu bytes garbage data from %s", __func__, rem,
+		log_debug("%s: %lu bytes garbage data from %s", __func__, rem,
 		    from);
 
 	log_debug("%s on %s from %s/%s to %s/%s",
