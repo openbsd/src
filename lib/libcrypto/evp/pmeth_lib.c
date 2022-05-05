@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.20 2022/01/10 12:10:26 tb Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.21 2022/05/05 08:42:27 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -56,6 +56,7 @@
  *
  */
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,6 +66,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/x509v3.h>
 
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
@@ -392,6 +394,38 @@ EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *name, const char *value)
 		    EVP_PKEY_CTRL_MD, value);
 	}
 	return ctx->pmeth->ctrl_str(ctx, name, value);
+}
+
+int
+EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str)
+{
+	size_t len;
+
+	if ((len = strlen(str)) > INT_MAX)
+		return -1;
+
+	return ctx->pmeth->ctrl(ctx, cmd, len, (void *)str);
+}
+
+int
+EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hexstr)
+{
+	unsigned char *hex = NULL;
+	long length;
+	int ret = 0;
+
+	if ((hex = string_to_hex(hexstr, &length)) == NULL)
+		goto err;
+	if (length < 0 || length > INT_MAX) {
+		ret = -1;
+		goto err;
+	}
+
+	ret = ctx->pmeth->ctrl(ctx, cmd, length, hex);
+
+ err:
+	free(hex);
+	return ret;
 }
 
 int
