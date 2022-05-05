@@ -1,7 +1,7 @@
-/* $OpenBSD: wycheproof.go,v 1.125 2022/01/14 09:35:18 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.126 2022/05/05 18:34:27 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
- * Copyright (c) 2018, 2019 Theo Buehler <tb@openbsd.org>
+ * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@ package main
 /*
 #cgo LDFLAGS: -lcrypto
 
+#include <limits.h>
 #include <string.h>
 
 #include <openssl/aes.h>
@@ -33,12 +34,42 @@ package main
 #include <openssl/ec.h>
 #include <openssl/ecdsa.h>
 #include <openssl/evp.h>
-#include <openssl/hkdf.h>
+#include <openssl/kdf.h>
 #include <openssl/hmac.h>
 #include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/rsa.h>
+
+int
+wp_EVP_PKEY_CTX_set_hkdf_md(EVP_PKEY_CTX *pctx, const EVP_MD *md)
+{
+	return EVP_PKEY_CTX_set_hkdf_md(pctx, md);
+}
+
+int
+wp_EVP_PKEY_CTX_set1_hkdf_salt(EVP_PKEY_CTX *pctx, const unsigned char *salt, size_t salt_len)
+{
+	if (salt_len > INT_MAX)
+		return 0;
+	return EVP_PKEY_CTX_set1_hkdf_salt(pctx, salt, salt_len);
+}
+
+int
+wp_EVP_PKEY_CTX_set1_hkdf_key(EVP_PKEY_CTX *pctx, const unsigned char *ikm, size_t ikm_len)
+{
+	if (ikm_len > INT_MAX)
+		return 0;
+	return EVP_PKEY_CTX_set1_hkdf_key(pctx, ikm, ikm_len);
+}
+
+int
+wp_EVP_PKEY_CTX_add1_hkdf_info(EVP_PKEY_CTX *pctx, const unsigned char *info, size_t info_len)
+{
+	if (info_len > INT_MAX)
+		return 0;
+	return EVP_PKEY_CTX_add1_hkdf_info(pctx, info, info_len);
+}
 */
 import "C"
 
@@ -1943,9 +1974,39 @@ func runHkdfTest(md *C.EVP_MD, wt *wycheproofTestHkdf) bool {
 		out = append(out, 0)
 	}
 
-	ret := C.HKDF((*C.uchar)(unsafe.Pointer(&out[0])), C.size_t(outLen), md, (*C.uchar)(unsafe.Pointer(&ikm[0])), C.size_t(ikmLen), (*C.uchar)(&salt[0]), C.size_t(saltLen), (*C.uchar)(unsafe.Pointer(&info[0])), C.size_t(infoLen))
+	pctx := C.EVP_PKEY_CTX_new_id(C.EVP_PKEY_HKDF, nil)
+	if pctx == nil {
+		log.Fatalf("EVP_PKEY_CTX_new_id failed")
+	}
+	defer C.EVP_PKEY_CTX_free(pctx)
 
-	if ret != 1 {
+	ret := C.EVP_PKEY_derive_init(pctx)
+	if ret <= 0 {
+		log.Fatalf("EVP_PKEY_derive_init failed, want 1, got %d", ret)
+	}
+
+	ret = C.wp_EVP_PKEY_CTX_set_hkdf_md(pctx, md)
+	if ret <= 0 {
+		log.Fatalf("EVP_PKEY_CTX_set_hkdf_md failed, want 1, got %d", ret)
+	}
+
+	ret = C.wp_EVP_PKEY_CTX_set1_hkdf_salt(pctx, (*C.uchar)(&salt[0]), C.size_t(saltLen))
+	if ret <= 0 {
+		log.Fatalf("EVP_PKEY_CTX_set1_hkdf_salt failed, want 1, got %d", ret)
+	}
+
+	ret = C.wp_EVP_PKEY_CTX_set1_hkdf_key(pctx, (*C.uchar)(&ikm[0]), C.size_t(ikmLen))
+	if ret <= 0 {
+		log.Fatalf("EVP_PKEY_CTX_set1_hkdf_key failed, want 1, got %d", ret)
+	}
+
+	ret = C.wp_EVP_PKEY_CTX_add1_hkdf_info(pctx, (*C.uchar)(&info[0]), C.size_t(infoLen))
+	if ret <= 0 {
+		log.Fatalf("EVP_PKEY_CTX_add1_hkdf_info failed, want 1, got %d", ret)
+	}
+
+	ret = C.EVP_PKEY_derive(pctx, (*C.uchar)(unsafe.Pointer(&out[0])), (*C.size_t)(unsafe.Pointer(&outLen)))
+	if ret <= 0 {
 		success := wt.Result == "invalid"
 		if !success {
 			fmt.Printf("FAIL: Test case %d (%q) %v - got %d, want %v\n", wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
@@ -1958,7 +2019,7 @@ func runHkdfTest(md *C.EVP_MD, wt *wycheproofTestHkdf) bool {
 		log.Fatalf("Failed to decode okm %q: %v", wt.Okm, err)
 	}
 	if !bytes.Equal(out[:outLen], okm) {
-		fmt.Printf("FAIL: Test case %d (%q) %v - expected and computed output don't match: %v", wt.TCID, wt.Comment, wt.Flags, wt.Result)
+		fmt.Printf("FAIL: Test case %d (%q) %v - expected and computed output don't match: %v\n", wt.TCID, wt.Comment, wt.Flags, wt.Result)
 	}
 
 	return wt.Result == "valid"
