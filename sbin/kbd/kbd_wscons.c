@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.35 2022/04/17 17:33:50 bluhm Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.36 2022/05/05 16:12:42 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -232,7 +232,7 @@ void
 kbd_set(char *name, int verbose)
 {
 	char	buf[LINE_MAX], *c, *b, device[sizeof "/dev/wskbd00"];
-	int	map = 0, v, i, fd;
+	int	map = 0, v, i, fd, error = 0;
 	struct nameint *n;
 
 	c = name;
@@ -271,19 +271,29 @@ kbd_set(char *name, int verbose)
 		fd = open(device, O_WRONLY);
 		if (fd == -1)
 			fd = open(device, O_RDONLY);
-		if (fd >= 0) {
+		if (fd == -1) {
+			/* remember the first error number */
+			if (error == 0)
+				error = errno;
+		} else {
+			/* at least one success, do not print error */
+			error = -1;
+
 			if (ioctl(fd, WSKBDIO_SETENCODING, &map) == -1) {
-				if (errno == EINVAL) {
-					fprintf(stderr,
-					    "%s: unsupported encoding %s on %s\n",
-					    __progname, name, device);
-				} else
-					err(1, "WSKBDIO_SETENCODING: %s", device);
-				v--;
-			}
-			v++;
+				if (errno != EINVAL)
+					err(1, "WSKBDIO_SETENCODING %s",
+					    device);
+				fprintf(stderr,
+				    "%s: unsupported encoding %s on %s\n",
+				    __progname, name, device);
+			} else
+				v++;
 			close(fd);
 		}
+	}
+	if (error > 0) {
+		errno = error;
+		err(1, "/dev/wskbd0");
 	}
 
 	if (verbose && v > 0)
