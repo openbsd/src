@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.186 2022/03/31 01:41:22 millert Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.187 2022/05/06 13:12:16 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1591,8 +1591,7 @@ kqueue_terminate(struct proc *p, struct kqueue *kq)
 	mtx_leave(&kq->kq_lock);
 
 	KASSERT(klist_empty(&kq->kq_sel.si_note));
-	task_del(systq, &kq->kq_task);
-
+	task_del(systqmp, &kq->kq_task);
 }
 
 int
@@ -1615,19 +1614,8 @@ kqueue_task(void *arg)
 {
 	struct kqueue *kq = arg;
 
-	/* Kernel lock is needed inside selwakeup(). */
-	KERNEL_ASSERT_LOCKED();
-
 	mtx_enter(&kqueue_klist_lock);
-	mtx_enter(&kq->kq_lock);
-	if (kq->kq_state & KQ_SEL) {
-		kq->kq_state &= ~KQ_SEL;
-		mtx_leave(&kq->kq_lock);
-		selwakeup(&kq->kq_sel);
-	} else {
-		mtx_leave(&kq->kq_lock);
-		KNOTE(&kq->kq_sel.si_note, 0);
-	}
+	KNOTE(&kq->kq_sel.si_note, 0);
 	mtx_leave(&kqueue_klist_lock);
 	KQRELE(kq);
 }
@@ -1641,10 +1629,10 @@ kqueue_wakeup(struct kqueue *kq)
 		kq->kq_state &= ~KQ_SLEEP;
 		wakeup(kq);
 	}
-	if ((kq->kq_state & KQ_SEL) || !klist_empty(&kq->kq_sel.si_note)) {
+	if (!klist_empty(&kq->kq_sel.si_note)) {
 		/* Defer activation to avoid recursion. */
 		KQREF(kq);
-		if (!task_add(systq, &kq->kq_task))
+		if (!task_add(systqmp, &kq->kq_task))
 			KQRELE(kq);
 	}
 }
