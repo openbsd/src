@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.275 2022/02/25 23:51:03 guenther Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.276 2022/05/06 13:09:41 visa Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -2039,7 +2039,7 @@ void
 sohasoutofband(struct socket *so)
 {
 	pgsigio(&so->so_sigio, SIGURG, 0);
-	selwakeup(&so->so_rcv.sb_sel);
+	KNOTE(&so->so_rcv.sb_sel.si_note, 0);
 }
 
 int
