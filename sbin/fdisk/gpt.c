@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.76 2022/04/28 13:22:19 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.77 2022/05/06 23:53:43 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -442,7 +442,7 @@ GPT_print_part(const unsigned int pn, const char *units, const int verbosity)
 	size = units_size(units, sectors, &ut);
 	printf("%c%3u: %-36s [%12lld: %12.0f%s]\n",
 	    gp[pn].gp_attrs & GPTDOSACTIVE ? '*' : ' ', pn,
-	    PRT_uuid_to_typename(&gp[pn].gp_type), gp[pn].gp_lba_start,
+	    PRT_uuid_to_sname(&gp[pn].gp_type), gp[pn].gp_lba_start,
 	    size, ut->ut_abbr);
 
 	if (verbosity == VERBOSE) {

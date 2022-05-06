@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.126 2022/05/06 14:22:49 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.127 2022/05/06 23:53:43 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -209,7 +209,7 @@ PRT_protected_guid(const struct uuid *uuid)
 	if (strncmp(str, efistr, UUID_STR_LEN) == 0) {
 		/* Look for partitions indicating a need to preserve EFI Sys */
 		for (pn = 0; pn < gh.gh_part_num; pn++) {
-			typename = PRT_uuid_to_typename(&gp[pn].gp_type);
+			typename = PRT_uuid_to_sname(&gp[pn].gp_type);
 			if (strncmp(typename, "APFS ", 5))
 				continue;
 			rslt = -1;
@@ -442,7 +442,7 @@ find_gpt_type(const struct uuid *uuid)
 }
 
 int
-PRT_uuid_to_protection(const struct uuid *uuid)
+PRT_uuid_to_protected(const struct uuid *uuid)
 {
 	const struct gpt_type	*gt;
 
@@ -454,7 +454,7 @@ PRT_uuid_to_protection(const struct uuid *uuid)
 }
 
 const char *
-PRT_uuid_to_typename(const struct uuid *uuid)
+PRT_uuid_to_sname(const struct uuid *uuid)
 {
 	static char		 typename[UUID_STR_LEN + 1];
 	const uint8_t		 gpt_uuid_msdos[] = GPT_UUID_MSDOS;
@@ -493,8 +493,8 @@ PRT_uuid_to_type(const struct uuid *uuid)
 		return gt->gt_type;
 }
 
-struct uuid *
-PRT_type_to_uuid(const int type)
+const struct uuid *
+PRT_type_to_guid(const int type)
 {
 	static struct uuid	guid;
 	int			i, entries;
