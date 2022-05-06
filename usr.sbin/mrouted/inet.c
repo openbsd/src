@@ -36,7 +36,6 @@ inet_valid_host(u_int32_t naddr)
     addr = ntohl(naddr);
 
     return (!(IN_MULTICAST(addr) ||
-	      IN_BADCLASS (addr) ||
 	      (addr & 0xff000000) == 0));
 }
 
@@ -83,7 +82,7 @@ inet_valid_subnet(u_int32_t nsubnet, u_int32_t nmask)
 	    (subnet & 0xff000000) == 0x7f000000 ||
 	    (subnet & 0xff000000) == 0x00000000) return (FALSE);
     }
-    else if (IN_CLASSD(subnet) || IN_BADCLASS(subnet)) {
+    else if (IN_CLASSD(subnet)) {
 	/* Above Class C address space */
 	return (FALSE);
     }

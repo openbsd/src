@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.544 2022/03/22 10:53:08 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.545 2022/05/06 15:51:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1790,10 +1790,10 @@ bad_flags:
 		UPD_READ(&nexthop.v4.s_addr, p, plen, 4);
 		/*
 		 * Check if the nexthop is a valid IP address. We consider
-		 * multicast and experimental addresses as invalid.
+		 * multicast addresses as invalid.
 		 */
 		tmp32 = ntohl(nexthop.v4.s_addr);
-		if (IN_MULTICAST(tmp32) || IN_BADCLASS(tmp32)) {
+		if (IN_MULTICAST(tmp32)) {
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_NEXTHOP,
 			    op, len);
 			return (-1);

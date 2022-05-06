@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.39 2017/11/17 20:48:30 jca Exp $	*/
+/*	$OpenBSD: auth.c,v 1.40 2022/05/06 15:51:09 claudio Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -1120,7 +1120,7 @@ bad_ip_adrs(addr)
 {
     addr = ntohl(addr);
     return (addr >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET
-	|| IN_MULTICAST(addr) || IN_BADCLASS(addr);
+	|| IN_MULTICAST(addr);
 }
 
 /*

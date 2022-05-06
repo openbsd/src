@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.5 2018/12/07 08:40:54 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.6 2022/05/06 15:51:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -223,7 +223,7 @@ bad_addr_v4(struct in_addr addr)
 
 	if (((a >> IN_CLASSA_NSHIFT) == 0) ||
 	    ((a >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET) ||
-	    IN_MULTICAST(a) || IN_BADCLASS(a))
+	    IN_MULTICAST(a))
 		return (1);
 
 	return (0);
