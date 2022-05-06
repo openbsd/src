@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.125 2022/05/03 11:48:47 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.126 2022/05/06 14:22:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -457,21 +457,26 @@ const char *
 PRT_uuid_to_typename(const struct uuid *uuid)
 {
 	static char		 typename[UUID_STR_LEN + 1];
+	const uint8_t		 gpt_uuid_msdos[] = GPT_UUID_MSDOS;
+	struct uuid		 uuid_msdos;
 	const struct gpt_type	*gt;
 	char			*uuidstr;
 	uint32_t		 status;
 
-	memset(typename, 0, sizeof(typename));
+	uuid_dec_be(gpt_uuid_msdos, &uuid_msdos);
+	if (uuid_compare(&uuid_msdos, uuid, NULL) == 0)
+		return "Microsoft basic data";
 
 	gt = find_gpt_type(uuid);
-	if (gt == NULL) {
-		uuid_to_string(uuid, &uuidstr, &status);
-		if (status == uuid_s_ok)
-			strlcpy(typename, uuidstr, sizeof(typename));
-		free(uuidstr);
-	} else {
-		strlcpy(typename, gt->gt_sname, sizeof(typename));
-	}
+	if (gt != NULL)
+		return gt->gt_sname;
+
+	uuid_to_string(uuid, &uuidstr, &status);
+	if (status == uuid_s_ok)
+		strlcpy(typename, uuidstr, sizeof(typename));
+	else
+		typename[0] = '\0';
+	free(uuidstr);
 
 	return typename;
 }
