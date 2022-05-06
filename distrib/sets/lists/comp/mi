@@ -1118,6 +1118,7 @@
 ./usr/include/openssl/hkdf.h
 ./usr/include/openssl/hmac.h
 ./usr/include/openssl/idea.h
+./usr/include/openssl/kdf.h
 ./usr/include/openssl/lhash.h
 ./usr/include/openssl/md4.h
 ./usr/include/openssl/md5.h
