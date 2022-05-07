@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsa_meth.c,v 1.2 2022/01/07 09:35:36 tb Exp $	*/
+/*	$OpenBSD: dsa_meth.c,v 1.3 2022/05/07 10:31:54 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -60,7 +60,7 @@ DSA_meth_dup(const DSA_METHOD *meth)
 		free(copy);
 		return NULL;
 	}
-	
+
 	return copy;
 }
 
