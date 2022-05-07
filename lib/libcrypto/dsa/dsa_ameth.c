@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.35 2022/04/07 17:38:24 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.36 2022/05/07 10:31:28 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -10,7 +10,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -90,7 +90,7 @@ dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 	X509_ALGOR_get0(NULL, &ptype, &pval, palg);
 
 	if (ptype == V_ASN1_SEQUENCE) {
-		pstr = pval;	
+		pstr = pval;
 		pm = pstr->data;
 		pmlen = pstr->length;
 
@@ -102,13 +102,13 @@ dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 		if (!(dsa = DSA_new())) {
 			DSAerror(ERR_R_MALLOC_FAILURE);
 			goto err;
-			}
+		}
 	} else {
 		DSAerror(DSA_R_PARAMETER_ENCODING_ERROR);
 		goto err;
 	}
 
-	if (!(public_key=d2i_ASN1_INTEGER(NULL, &p, pklen))) {
+	if (!(public_key = d2i_ASN1_INTEGER(NULL, &p, pklen))) {
 		DSAerror(DSA_R_DECODE_ERROR);
 		goto err;
 	}
@@ -434,7 +434,7 @@ do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
 	ret = 1;
 err:
 	free(m);
-	return(ret);
+	return ret;
 }
 
 static int
@@ -633,7 +633,7 @@ dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 				return -1;
 			if (!OBJ_find_sigid_by_algs(&snid, hnid,
 			    EVP_PKEY_id(pkey)))
-				return -1; 
+				return -1;
 			X509_ALGOR_set0(alg2, OBJ_nid2obj(snid), V_ASN1_UNDEF,
 			    0);
 		}
