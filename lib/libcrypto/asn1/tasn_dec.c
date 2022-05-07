@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.59 2022/05/07 10:03:49 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.60 2022/05/07 10:13:56 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -645,86 +645,89 @@ asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
 }
 
 static int
-asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
-    const ASN1_ITEM *it, int tag, int aclass, char opt)
+asn1_d2i_ex_primitive_cbs(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
+    int tag_number, int tag_class, char optional)
 {
-	int ret = 0, utype;
-	long plen;
-	char cst, inf;
-	const unsigned char *p;
-	const unsigned char *content = NULL;
+	CBS cbs_any, cbs_content, cbs_object, cbs_initial;
+	char constructed, indefinite;
 	uint8_t *data = NULL;
 	size_t data_len = 0;
-	CBS cbs;
+	int utype = it->utype;
+	unsigned char oclass;
+	size_t length;
 	CBB cbb;
-	long len;
+	int tag_ret;
+	int ret = 0;
 
 	memset(&cbb, 0, sizeof(cbb));
 
-	if (!pval) {
+	CBS_dup(cbs, &cbs_initial);
+	CBS_init(&cbs_content, NULL, 0);
+	CBS_init(&cbs_object, CBS_data(cbs), CBS_len(cbs));
+
+	if (pval == NULL) {
 		ASN1error(ASN1_R_ILLEGAL_NULL);
-		return 0; /* Should never happen */
+		goto err;
 	}
 
 	if (it->itype == ASN1_ITYPE_MSTRING) {
-		utype = tag;
-		tag = -1;
-	} else
-		utype = it->utype;
+		utype = tag_number;
+		tag_number = -1;
+	}
 
 	if (utype == V_ASN1_ANY) {
-		/* If type is ANY need to figure out type from tag */
-		unsigned char oclass;
-		if (tag >= 0) {
+		/* Determine type from ASN.1 tag. */
+		if (tag_number >= 0) {
 			ASN1error(ASN1_R_ILLEGAL_TAGGED_ANY);
-			return 0;
+			goto err;
 		}
-		if (opt) {
+		if (optional) {
 			ASN1error(ASN1_R_ILLEGAL_OPTIONAL_ANY);
-			return 0;
+			goto err;
 		}
-		p = *in;
-		ret = asn1_check_tag(NULL, &utype, &oclass, NULL, NULL, &p,
-		    inlen, -1, 0, 0);
-		if (!ret) {
+		/* XXX - avoid reading the header twice for ANY. */
+		CBS_dup(&cbs_object, &cbs_any);
+		tag_ret = asn1_check_tag_cbs(&cbs_any, NULL, &utype, &oclass,
+		    NULL, NULL, -1, 0, 0);
+		if (tag_ret != 1) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
-			return 0;
+			goto err;
 		}
 		if (oclass != V_ASN1_UNIVERSAL)
 			utype = V_ASN1_OTHER;
 	}
-	if (tag == -1) {
-		tag = utype;
-		aclass = V_ASN1_UNIVERSAL;
-	}
-	p = *in;
-	/* Check header */
-	ret = asn1_check_tag(&plen, NULL, NULL, &inf, &cst, &p, inlen, tag,
-	    aclass, opt);
-	if (!ret) {
-		ASN1error(ERR_R_NESTED_ASN1_ERROR);
-		return 0;
-	} else if (ret == -1)
-		return -1;
-	ret = 0;
-	/* SEQUENCE, SET and "OTHER" are left in encoded form */
-	if ((utype == V_ASN1_SEQUENCE) || (utype == V_ASN1_SET) ||
-	    (utype == V_ASN1_OTHER)) {
-		if (utype != V_ASN1_OTHER && !cst) {
-			/* SEQUENCE and SET must be constructed */
-			ASN1error(ASN1_R_TYPE_NOT_CONSTRUCTED);
-			return 0;
-		}
 
-		content = *in;
-		if (plen < 0)
+	if (tag_number == -1) {
+		tag_number = utype;
+		tag_class = V_ASN1_UNIVERSAL;
+	}
+
+	tag_ret = asn1_check_tag_cbs(&cbs_object, &length, NULL, NULL, &indefinite,
+	    &constructed, tag_number, tag_class, optional);
+	if (tag_ret == -1) {
+		ret = -1;
+		goto err;
+	}
+	if (tag_ret != 1) {
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		goto err;
+	}
+
+	/* SEQUENCE and SET must be constructed. */
+	if ((utype == V_ASN1_SEQUENCE || utype == V_ASN1_SET) && !constructed) {
+		ASN1error(ASN1_R_TYPE_NOT_CONSTRUCTED);
+		goto err;
+	}
+
+	/* SEQUENCE, SET and "OTHER" are left in encoded form. */
+	if (utype == V_ASN1_SEQUENCE || utype == V_ASN1_SET ||
+	    utype == V_ASN1_OTHER) {
+		if (!asn1_find_end(&cbs_object, length, indefinite))
 			goto err;
-		CBS_init(&cbs, p, plen);
-		if (!asn1_find_end(&cbs, plen, inf))
+		if (!CBS_get_bytes(&cbs_initial, &cbs_content,
+		    CBS_offset(&cbs_object)))
 			goto err;
-		p = CBS_data(&cbs);
-		len = p - content;
-	} else if (cst) {
+	} else if (constructed) {
 		/*
 		 * Should really check the internal tags are correct but
 		 * some things may get this wrong. The relevant specs
@@ -734,39 +737,50 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 		 */
 		if (!CBB_init(&cbb, 0))
 			goto err;
-		if (plen < 0)
+		if (!asn1_collect(&cbb, &cbs_object, indefinite, -1,
+		    V_ASN1_UNIVERSAL, 0))
 			goto err;
-		CBS_init(&cbs, p, plen);
-		if (!asn1_collect(&cbb, &cbs, inf, -1, V_ASN1_UNIVERSAL, 0))
-			goto err;
-		p = CBS_data(&cbs);
 		if (!CBB_finish(&cbb, &data, &data_len))
 			goto err;
 
-		if (data_len > LONG_MAX)
-			goto err;
-
-		content = data;
-		len = data_len;
+		CBS_init(&cbs_content, data, data_len);
 	} else {
-		content = p;
-		len = plen;
-		p += plen;
+		if (!CBS_get_bytes(&cbs_object, &cbs_content, length))
+			goto err;
 	}
 
-	/* We now have content length and type: translate into a structure */
-	if (len < 0)
-		goto err;
-	CBS_init(&cbs, content, len);
-	if (!asn1_ex_c2i(pval, &cbs, utype, it))
+	if (!asn1_ex_c2i(pval, &cbs_content, utype, it))
 		goto err;
 
-	*in = p;
+	if (!CBS_skip(cbs, CBS_offset(&cbs_object)))
+		goto err;
+
 	ret = 1;
 
  err:
 	CBB_cleanup(&cbb);
 	freezero(data, data_len);
+
+	return ret;
+}
+
+static int
+asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
+    const ASN1_ITEM *it, int tag_number, int tag_class, char optional)
+{
+	CBS cbs;
+	int ret;
+
+	if (inlen < 0)
+		return 0;
+
+	CBS_init(&cbs, *in, inlen);
+
+	ret = asn1_d2i_ex_primitive_cbs(pval, &cbs, it, tag_number, tag_class,
+	    optional);
+
+	if (ret == 1)
+		*in = CBS_data(&cbs);
 
 	return ret;
 }
