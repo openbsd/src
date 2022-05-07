@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.127 2022/05/06 23:53:43 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.128 2022/05/07 11:45:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -187,49 +187,21 @@ PRT_protected_guid(const struct uuid *uuid)
 {
 	const uint8_t		 gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
 	struct uuid		 uuid_efi_system;
-	char			*efistr = NULL, *str = NULL;
-	const char		*typename;
-	int			 rslt = 0;
-	unsigned int		 i, pn;
-	uint32_t		 status;
+	unsigned int		 pn;
+
+	if (PRT_uuid_to_protected(uuid))
+		return -1;
 
 	uuid_dec_be(gpt_uuid_efi_system, &uuid_efi_system);
-
-	uuid_to_string(&uuid_efi_system, &efistr, &status);
-	if (status != uuid_s_ok) {
-		rslt = -1;
-		goto done;
-	}
-	uuid_to_string(uuid, &str, &status);
-	if (status != uuid_s_ok) {
-		rslt = -1;
-		goto done;
-	}
-
-	if (strncmp(str, efistr, UUID_STR_LEN) == 0) {
-		/* Look for partitions indicating a need to preserve EFI Sys */
+	if (uuid_compare(uuid, &uuid_efi_system, NULL) == 0) {
 		for (pn = 0; pn < gh.gh_part_num; pn++) {
-			typename = PRT_uuid_to_sname(&gp[pn].gp_type);
-			if (strncmp(typename, "APFS ", 5))
-				continue;
-			rslt = -1;
-			break;
-		}
-	} else {
-		for(i = 0; i < nitems(gpt_types); i++) {
-			if (strncmp(str, gpt_types[i].gt_guid, UUID_STR_LEN))
-				continue;
-			if (gpt_types[i].gt_protected) {
-				rslt = -1;
-				break;
-			}
+			if (strncmp(PRT_uuid_to_sname(&gp[pn].gp_type), "APFS ",
+			    5) == 0)
+				return -1;
 		}
 	}
 
- done:
-	free(efistr);
-	free(str);
-	return rslt;
+	return 0;
 }
 
 void
