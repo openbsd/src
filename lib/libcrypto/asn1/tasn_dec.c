@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.58 2022/05/05 19:18:56 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.59 2022/05/07 10:03:49 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -771,47 +771,21 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 	return ret;
 }
 
-/* Translate ASN.1 content octets into a structure. */
 static int
-asn1_ex_c2i(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *it)
+asn1_ex_c2i_primitive(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *it)
 {
-	ASN1_VALUE **opval = NULL;
 	ASN1_STRING *stmp;
-	ASN1_TYPE *typ = NULL;
 	ASN1_INTEGER **tint;
 	ASN1_BOOLEAN *tbool;
 	uint8_t u8val;
 	int ret = 0;
 
+	if (it->funcs != NULL)
+		return 0;
+
 	if (CBS_len(content) > INT_MAX)
 		return 0;
 
-	if (it->funcs != NULL) {
-		const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
-		char free_content = 0;
-
-		if (pf->prim_c2i == NULL)
-			return 0;
-
-		return pf->prim_c2i(pval, CBS_data(content), CBS_len(content),
-		    utype, &free_content, it);
-	}
-
-	/* If ANY type clear type and set pointer to internal value */
-	if (it->utype == V_ASN1_ANY) {
-		if (!*pval) {
-			typ = ASN1_TYPE_new();
-			if (typ == NULL)
-				goto err;
-			*pval = (ASN1_VALUE *)typ;
-		} else
-			typ = (ASN1_TYPE *)*pval;
-
-		if (utype != typ->type)
-			ASN1_TYPE_set(typ, utype, NULL);
-		opval = pval;
-		pval = &typ->value.asn1_value;
-	}
 	switch (utype) {
 	case V_ASN1_OBJECT:
 		if (!c2i_ASN1_OBJECT_cbs((ASN1_OBJECT **)pval, content))
@@ -895,19 +869,65 @@ asn1_ex_c2i(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *it)
 		}
 		break;
 	}
-	/* If ASN1_ANY and NULL type fix up value */
-	if (typ && (utype == V_ASN1_NULL))
-		typ->value.ptr = NULL;
 
 	ret = 1;
 
  err:
-	if (!ret) {
-		ASN1_TYPE_free(typ);
-		if (opval)
-			*opval = NULL;
-	}
 	return ret;
+}
+
+static int
+asn1_ex_c2i_any(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *it)
+{
+	ASN1_TYPE *atype;
+
+	if (it->utype != V_ASN1_ANY || it->funcs != NULL)
+		return 0;
+
+	if (*pval != NULL) {
+		ASN1_TYPE_free((ASN1_TYPE *)*pval);
+		*pval = NULL;
+	}
+
+	if ((atype = ASN1_TYPE_new()) == NULL)
+		return 0;
+
+	if (!asn1_ex_c2i_primitive(&atype->value.asn1_value, content, utype, it)) {
+		ASN1_TYPE_free(atype);
+		return 0;
+	}
+	atype->type = utype;
+
+	/* Fix up value for ASN.1 NULL. */
+	if (atype->type == V_ASN1_NULL)
+		atype->value.ptr = NULL;
+
+	*pval = (ASN1_VALUE *)atype;
+
+	return 1;
+}
+
+static int
+asn1_ex_c2i(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *it)
+{
+	if (CBS_len(content) > INT_MAX)
+		return 0;
+
+	if (it->funcs != NULL) {
+		const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
+		char free_content = 0;
+
+		if (pf->prim_c2i == NULL)
+			return 0;
+
+		return pf->prim_c2i(pval, CBS_data(content), CBS_len(content),
+		    utype, &free_content, it);
+	}
+
+	if (it->utype == V_ASN1_ANY)
+		return asn1_ex_c2i_any(pval, content, utype, it);
+
+	return asn1_ex_c2i_primitive(pval, content, utype, it);
 }
 
 /* Find the end of an ASN.1 object. */
