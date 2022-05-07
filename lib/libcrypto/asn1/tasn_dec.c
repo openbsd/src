@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.60 2022/05/07 10:13:56 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.61 2022/05/07 15:50:25 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -121,27 +121,297 @@ ASN1_template_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 	return asn1_template_ex_d2i(pval, in, len, tt, 0, 0);
 }
 
-/* Decode an item, taking care of IMPLICIT tagging, if any.
+static int
+asn1_item_ex_d2i_choice(ASN1_VALUE **pval, const unsigned char **in, long len,
+    const ASN1_ITEM *it, int tag, int aclass, char opt, int depth)
+{
+	const ASN1_TEMPLATE *tt, *errtt = NULL;
+	const ASN1_AUX *aux = it->funcs;
+	ASN1_aux_cb *asn1_cb = NULL;
+	ASN1_VALUE **pchptr;
+	const unsigned char *p = NULL;
+	int i;
+	int ret = 0;
+	int combine;
+
+	combine = aclass & ASN1_TFLG_COMBINE;
+	aclass &= ~ASN1_TFLG_COMBINE;
+
+	if (it->itype != ASN1_ITYPE_CHOICE)
+		goto err;
+
+	if (aux && aux->asn1_cb)
+		asn1_cb = aux->asn1_cb;
+
+	/*
+	 * It never makes sense for CHOICE types to have implicit
+	 * tagging, so if tag != -1, then this looks like an error in
+	 * the template.
+	 */
+	if (tag != -1) {
+		ASN1error(ASN1_R_BAD_TEMPLATE);
+		goto err;
+	}
+
+	if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it, NULL))
+		goto auxerr;
+
+	if (*pval) {
+		/* Free up and zero CHOICE value if initialised */
+		i = asn1_get_choice_selector(pval, it);
+		if ((i >= 0) && (i < it->tcount)) {
+			tt = it->templates + i;
+			pchptr = asn1_get_field_ptr(pval, tt);
+			ASN1_template_free(pchptr, tt);
+			asn1_set_choice_selector(pval, -1, it);
+		}
+	} else if (!ASN1_item_ex_new(pval, it)) {
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		goto err;
+	}
+	/* CHOICE type, try each possibility in turn */
+	p = *in;
+	for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
+		pchptr = asn1_get_field_ptr(pval, tt);
+		/* We mark field as OPTIONAL so its absence
+		 * can be recognised.
+		 */
+		ret = asn1_template_ex_d2i(pchptr, &p, len, tt, 1,
+		    depth);
+		/* If field not present, try the next one */
+		if (ret == -1)
+			continue;
+		/* If positive return, read OK, break loop */
+		if (ret > 0)
+			break;
+		/* Otherwise must be an ASN1 parsing error */
+		errtt = tt;
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		goto err;
+	}
+
+	/* Did we fall off the end without reading anything? */
+	if (i == it->tcount) {
+		/* If OPTIONAL, this is OK */
+		if (opt) {
+			/* Free and zero it */
+			ASN1_item_ex_free(pval, it);
+			return -1;
+		}
+		ASN1error(ASN1_R_NO_MATCHING_CHOICE_TYPE);
+		goto err;
+	}
+
+	asn1_set_choice_selector(pval, i, it);
+	*in = p;
+	if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
+		goto auxerr;
+	return 1;
+
+ auxerr:
+	ASN1error(ASN1_R_AUX_ERROR);
+ err:
+	if (combine == 0)
+		ASN1_item_ex_free(pval, it);
+	if (errtt)
+		ERR_asprintf_error_data("Field=%s, Type=%s", errtt->field_name,
+		    it->sname);
+	else
+		ERR_asprintf_error_data("Type=%s", it->sname);
+	return 0;
+}
+
+static int
+asn1_item_ex_d2i_sequence(ASN1_VALUE **pval, const unsigned char **in, long len,
+    const ASN1_ITEM *it, int tag, int aclass, char opt, int depth)
+{
+	const ASN1_TEMPLATE *tt, *errtt = NULL;
+	const ASN1_AUX *aux = it->funcs;
+	ASN1_aux_cb *asn1_cb = NULL;
+	char seq_eoc, seq_nolen, cst, isopt;
+	const unsigned char *p = NULL, *q;
+	long tmplen;
+	int i;
+	int ret = 0;
+	int combine;
+
+	combine = aclass & ASN1_TFLG_COMBINE;
+	aclass &= ~ASN1_TFLG_COMBINE;
+
+	if (it->itype != ASN1_ITYPE_NDEF_SEQUENCE &&
+	    it->itype != ASN1_ITYPE_SEQUENCE)
+		goto err;
+
+	if (aux && aux->asn1_cb)
+		asn1_cb = aux->asn1_cb;
+
+	p = *in;
+	tmplen = len;
+
+	/* If no IMPLICIT tagging set to SEQUENCE, UNIVERSAL */
+	if (tag == -1) {
+		tag = V_ASN1_SEQUENCE;
+		aclass = V_ASN1_UNIVERSAL;
+	}
+	/* Get SEQUENCE length and update len, p */
+	ret = asn1_check_tag(&len, NULL, NULL, &seq_eoc, &cst, &p, len,
+	    tag, aclass, opt);
+	if (!ret) {
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		goto err;
+	} else if (ret == -1)
+		return -1;
+	if (aux && (aux->flags & ASN1_AFLG_BROKEN)) {
+		len = tmplen - (p - *in);
+		seq_nolen = 1;
+	}
+	/* If indefinite we don't do a length check */
+	else
+		seq_nolen = seq_eoc;
+	if (!cst) {
+		ASN1error(ASN1_R_SEQUENCE_NOT_CONSTRUCTED);
+		goto err;
+	}
+
+	if (!*pval && !ASN1_item_ex_new(pval, it)) {
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		goto err;
+	}
+
+	if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it, NULL))
+		goto auxerr;
+
+	/* Free up and zero any ADB found */
+	for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
+		if (tt->flags & ASN1_TFLG_ADB_MASK) {
+			const ASN1_TEMPLATE *seqtt;
+			ASN1_VALUE **pseqval;
+			seqtt = asn1_do_adb(pval, tt, 1);
+			if (!seqtt)
+				goto err;
+			pseqval = asn1_get_field_ptr(pval, seqtt);
+			ASN1_template_free(pseqval, seqtt);
+		}
+	}
+
+	/* Get each field entry */
+	for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
+		const ASN1_TEMPLATE *seqtt;
+		ASN1_VALUE **pseqval;
+		seqtt = asn1_do_adb(pval, tt, 1);
+		if (!seqtt)
+			goto err;
+		pseqval = asn1_get_field_ptr(pval, seqtt);
+		/* Have we ran out of data? */
+		if (!len)
+			break;
+		q = p;
+		if (asn1_check_eoc(&p, len)) {
+			if (!seq_eoc) {
+				ASN1error(ASN1_R_UNEXPECTED_EOC);
+				goto err;
+			}
+			len -= p - q;
+			seq_eoc = 0;
+			q = p;
+			break;
+		}
+		/* This determines the OPTIONAL flag value. The field
+		 * cannot be omitted if it is the last of a SEQUENCE
+		 * and there is still data to be read. This isn't
+		 * strictly necessary but it increases efficiency in
+		 * some cases.
+		 */
+		if (i == (it->tcount - 1))
+			isopt = 0;
+		else
+			isopt = (char)(seqtt->flags & ASN1_TFLG_OPTIONAL);
+		/* attempt to read in field, allowing each to be
+		 * OPTIONAL */
+
+		ret = asn1_template_ex_d2i(pseqval, &p, len,
+		    seqtt, isopt, depth);
+		if (!ret) {
+			errtt = seqtt;
+			goto err;
+		} else if (ret == -1) {
+			/* OPTIONAL component absent.
+			 * Free and zero the field.
+			 */
+			ASN1_template_free(pseqval, seqtt);
+			continue;
+		}
+		/* Update length */
+		len -= p - q;
+	}
+
+	/* Check for EOC if expecting one */
+	if (seq_eoc && !asn1_check_eoc(&p, len)) {
+		ASN1error(ASN1_R_MISSING_EOC);
+		goto err;
+	}
+	/* Check all data read */
+	if (!seq_nolen && len) {
+		ASN1error(ASN1_R_SEQUENCE_LENGTH_MISMATCH);
+		goto err;
+	}
+
+	/* If we get here we've got no more data in the SEQUENCE,
+	 * however we may not have read all fields so check all
+	 * remaining are OPTIONAL and clear any that are.
+	 */
+	for (; i < it->tcount; tt++, i++) {
+		const ASN1_TEMPLATE *seqtt;
+		seqtt = asn1_do_adb(pval, tt, 1);
+		if (!seqtt)
+			goto err;
+		if (seqtt->flags & ASN1_TFLG_OPTIONAL) {
+			ASN1_VALUE **pseqval;
+			pseqval = asn1_get_field_ptr(pval, seqtt);
+			ASN1_template_free(pseqval, seqtt);
+		} else {
+			errtt = seqtt;
+			ASN1error(ASN1_R_FIELD_MISSING);
+			goto err;
+		}
+	}
+	/* Save encoding */
+	if (!asn1_enc_save(pval, *in, p - *in, it)) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		goto auxerr;
+	}
+	*in = p;
+	if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
+		goto auxerr;
+	return 1;
+
+ auxerr:
+	ASN1error(ASN1_R_AUX_ERROR);
+ err:
+	if (combine == 0)
+		ASN1_item_ex_free(pval, it);
+	if (errtt)
+		ERR_asprintf_error_data("Field=%s, Type=%s", errtt->field_name,
+		    it->sname);
+	else
+		ERR_asprintf_error_data("Type=%s", it->sname);
+	return 0;
+}
+
+/*
+ * Decode an item, taking care of IMPLICIT tagging, if any.
  * If 'opt' set and tag mismatch return -1 to handle OPTIONAL
  */
-
 static int
 asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
     const ASN1_ITEM *it, int tag, int aclass, char opt, int depth)
 {
-	const ASN1_TEMPLATE *tt, *errtt = NULL;
 	const ASN1_EXTERN_FUNCS *ef;
-	const ASN1_AUX *aux = it->funcs;
-	ASN1_aux_cb *asn1_cb = NULL;
 	ASN1_TLC ctx = { 0 };
-	const unsigned char *p = NULL, *q;
+	const unsigned char *p = NULL;
 	unsigned char oclass;
-	char seq_eoc, seq_nolen, cst, isopt;
-	long tmplen;
-	int i;
 	int otag;
 	int ret = 0;
-	ASN1_VALUE **pchptr;
 	int combine;
 
 	combine = aclass & ASN1_TFLG_COMBINE;
@@ -149,9 +419,6 @@ asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 
 	if (!pval)
 		return 0;
-
-	if (aux && aux->asn1_cb)
-		asn1_cb = aux->asn1_cb;
 
 	if (++depth > ASN1_MAX_CONSTRUCTED_NEST) {
 		ASN1error(ASN1_R_NESTED_TOO_DEEP);
@@ -223,227 +490,24 @@ asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 		return ef->asn1_ex_d2i(pval, in, len, it, tag, aclass, opt, &ctx);
 
 	case ASN1_ITYPE_CHOICE:
-		/*
-		 * It never makes sense for CHOICE types to have implicit
-		 * tagging, so if tag != -1, then this looks like an error in
-		 * the template.
-		 */
-		if (tag != -1) {
-			ASN1error(ASN1_R_BAD_TEMPLATE);
-			goto err;
-		}
-
-		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it, NULL))
-			goto auxerr;
-
-		if (*pval) {
-			/* Free up and zero CHOICE value if initialised */
-			i = asn1_get_choice_selector(pval, it);
-			if ((i >= 0) && (i < it->tcount)) {
-				tt = it->templates + i;
-				pchptr = asn1_get_field_ptr(pval, tt);
-				ASN1_template_free(pchptr, tt);
-				asn1_set_choice_selector(pval, -1, it);
-			}
-		} else if (!ASN1_item_ex_new(pval, it)) {
-			ASN1error(ERR_R_NESTED_ASN1_ERROR);
-			goto err;
-		}
-		/* CHOICE type, try each possibility in turn */
-		p = *in;
-		for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
-			pchptr = asn1_get_field_ptr(pval, tt);
-			/* We mark field as OPTIONAL so its absence
-			 * can be recognised.
-			 */
-			ret = asn1_template_ex_d2i(pchptr, &p, len, tt, 1,
-			    depth);
-			/* If field not present, try the next one */
-			if (ret == -1)
-				continue;
-			/* If positive return, read OK, break loop */
-			if (ret > 0)
-				break;
-			/* Otherwise must be an ASN1 parsing error */
-			errtt = tt;
-			ASN1error(ERR_R_NESTED_ASN1_ERROR);
-			goto err;
-		}
-
-		/* Did we fall off the end without reading anything? */
-		if (i == it->tcount) {
-			/* If OPTIONAL, this is OK */
-			if (opt) {
-				/* Free and zero it */
-				ASN1_item_ex_free(pval, it);
-				return -1;
-			}
-			ASN1error(ASN1_R_NO_MATCHING_CHOICE_TYPE);
-			goto err;
-		}
-
-		asn1_set_choice_selector(pval, i, it);
-		*in = p;
-		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
-			goto auxerr;
-		return 1;
+		return asn1_item_ex_d2i_choice(pval, in, len, it, tag,
+		    aclass | combine, opt, depth);
 
 	case ASN1_ITYPE_NDEF_SEQUENCE:
 	case ASN1_ITYPE_SEQUENCE:
-		p = *in;
-		tmplen = len;
-
-		/* If no IMPLICIT tagging set to SEQUENCE, UNIVERSAL */
-		if (tag == -1) {
-			tag = V_ASN1_SEQUENCE;
-			aclass = V_ASN1_UNIVERSAL;
-		}
-		/* Get SEQUENCE length and update len, p */
-		ret = asn1_check_tag(&len, NULL, NULL, &seq_eoc, &cst, &p, len,
-		    tag, aclass, opt);
-		if (!ret) {
-			ASN1error(ERR_R_NESTED_ASN1_ERROR);
-			goto err;
-		} else if (ret == -1)
-			return -1;
-		if (aux && (aux->flags & ASN1_AFLG_BROKEN)) {
-			len = tmplen - (p - *in);
-			seq_nolen = 1;
-		}
-		/* If indefinite we don't do a length check */
-		else
-			seq_nolen = seq_eoc;
-		if (!cst) {
-			ASN1error(ASN1_R_SEQUENCE_NOT_CONSTRUCTED);
-			goto err;
-		}
-
-		if (!*pval && !ASN1_item_ex_new(pval, it)) {
-			ASN1error(ERR_R_NESTED_ASN1_ERROR);
-			goto err;
-		}
-
-		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it, NULL))
-			goto auxerr;
-
-		/* Free up and zero any ADB found */
-		for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
-			if (tt->flags & ASN1_TFLG_ADB_MASK) {
-				const ASN1_TEMPLATE *seqtt;
-				ASN1_VALUE **pseqval;
-				seqtt = asn1_do_adb(pval, tt, 1);
-				if (!seqtt)
-					goto err;
-				pseqval = asn1_get_field_ptr(pval, seqtt);
-				ASN1_template_free(pseqval, seqtt);
-			}
-		}
-
-		/* Get each field entry */
-		for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
-			const ASN1_TEMPLATE *seqtt;
-			ASN1_VALUE **pseqval;
-			seqtt = asn1_do_adb(pval, tt, 1);
-			if (!seqtt)
-				goto err;
-			pseqval = asn1_get_field_ptr(pval, seqtt);
-			/* Have we ran out of data? */
-			if (!len)
-				break;
-			q = p;
-			if (asn1_check_eoc(&p, len)) {
-				if (!seq_eoc) {
-					ASN1error(ASN1_R_UNEXPECTED_EOC);
-					goto err;
-				}
-				len -= p - q;
-				seq_eoc = 0;
-				q = p;
-				break;
-			}
-			/* This determines the OPTIONAL flag value. The field
-			 * cannot be omitted if it is the last of a SEQUENCE
-			 * and there is still data to be read. This isn't
-			 * strictly necessary but it increases efficiency in
-			 * some cases.
-			 */
-			if (i == (it->tcount - 1))
-				isopt = 0;
-			else
-				isopt = (char)(seqtt->flags & ASN1_TFLG_OPTIONAL);
-			/* attempt to read in field, allowing each to be
-			 * OPTIONAL */
-
-			ret = asn1_template_ex_d2i(pseqval, &p, len,
-			    seqtt, isopt, depth);
-			if (!ret) {
-				errtt = seqtt;
-				goto err;
-			} else if (ret == -1) {
-				/* OPTIONAL component absent.
-				 * Free and zero the field.
-				 */
-				ASN1_template_free(pseqval, seqtt);
-				continue;
-			}
-			/* Update length */
-			len -= p - q;
-		}
-
-		/* Check for EOC if expecting one */
-		if (seq_eoc && !asn1_check_eoc(&p, len)) {
-			ASN1error(ASN1_R_MISSING_EOC);
-			goto err;
-		}
-		/* Check all data read */
-		if (!seq_nolen && len) {
-			ASN1error(ASN1_R_SEQUENCE_LENGTH_MISMATCH);
-			goto err;
-		}
-
-		/* If we get here we've got no more data in the SEQUENCE,
-		 * however we may not have read all fields so check all
-		 * remaining are OPTIONAL and clear any that are.
-		 */
-		for (; i < it->tcount; tt++, i++) {
-			const ASN1_TEMPLATE *seqtt;
-			seqtt = asn1_do_adb(pval, tt, 1);
-			if (!seqtt)
-				goto err;
-			if (seqtt->flags & ASN1_TFLG_OPTIONAL) {
-				ASN1_VALUE **pseqval;
-				pseqval = asn1_get_field_ptr(pval, seqtt);
-				ASN1_template_free(pseqval, seqtt);
-			} else {
-				errtt = seqtt;
-				ASN1error(ASN1_R_FIELD_MISSING);
-				goto err;
-			}
-		}
-		/* Save encoding */
-		if (!asn1_enc_save(pval, *in, p - *in, it)) {
-			ASN1error(ERR_R_MALLOC_FAILURE);
-			goto auxerr;
-		}
-		*in = p;
-		if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
-			goto auxerr;
-		return 1;
+		return asn1_item_ex_d2i_sequence(pval, in, len, it, tag,
+		    aclass | combine, opt, depth);
 
 	default:
 		return 0;
 	}
 
- auxerr:
-	ASN1error(ASN1_R_AUX_ERROR);
  err:
 	if (combine == 0)
 		ASN1_item_ex_free(pval, it);
-	if (errtt)
-		ERR_asprintf_error_data("Field=%s, Type=%s", errtt->field_name,
-		    it->sname);
-	else
-		ERR_asprintf_error_data("Type=%s", it->sname);
+
+	ERR_asprintf_error_data("Type=%s", it->sname);
+
 	return 0;
 }
 
