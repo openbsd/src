@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Installed.pm,v 1.43 2022/04/29 10:44:05 espie Exp $
+# $OpenBSD: Installed.pm,v 1.44 2022/05/08 13:21:04 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -213,6 +213,27 @@ sub locations_list
 
 sub reinitialize
 {
+}
+
+sub decorate
+{
+	my ($self, $plist, $location) = @_;
+	unless ($plist->has('url')) {
+		OpenBSD::PackingElement::Url->add($plist, $location->url);
+	}
+	unless ($plist->has('signer')) {
+		if (exists $location->{signer}) {
+			OpenBSD::PackingElement::Signer->add($plist, 
+			    $location->{signer});
+		}
+	}
+	unless ($plist->has('digital-signature')) {
+		if (exists $location->{signdate}) {
+			OpenBSD::PackingElement::DigitalSignature->add($plist,
+			    join(':', 'signify2', $location->{signdate}, 
+			    	'external'));
+		}
+	}
 }
 
 package OpenBSD::PackageRepository::Installed;

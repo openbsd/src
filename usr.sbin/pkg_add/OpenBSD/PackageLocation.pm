@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.58 2022/04/29 10:44:05 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.59 2022/05/08 13:21:04 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -33,6 +33,12 @@ sub new
 	bless $self, $class;
 	return $self;
 
+}
+
+sub decorate
+{
+	my ($self, $plist) = @_;
+	$self->{repository}->decorate($plist, $self);
 }
 
 sub url
@@ -136,8 +142,7 @@ sub find_contents
 	while (my $e = $self->next) {
 		if ($e->isFile && is_info_name($e->{name})) {
 			if ($e->{name} eq CONTENTS ) {
-				my $v = 
-				    $self->{extra_content}.$e->contents($extra);
+				my $v = $e->contents($extra);
 				return $v;
 			}
 		} else {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.171 2019/11/08 14:50:58 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.172 2022/05/08 13:21:04 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -435,9 +435,9 @@ sub uncompress
 		if ($h) {
 			for my $line (split /\n/, $h->{Comment}) {
 				if ($line =~ m/^key=.*\/(.*)\.sec$/) {
-					$result .= "\@signer $1\n";
+					$object->{signer} = $1;
 				} elsif ($line =~ m/^date=(.*)$/) {
-					$result .= "\@digital-signature signify2:$1:external\n";
+					$object->{signdate} = $1;
 				}
 			}
 		} else {
@@ -445,7 +445,6 @@ sub uncompress
 			return undef;
 		}
 	}
-	$object->{extra_content} = $result;
 	return $fh;
 }
 

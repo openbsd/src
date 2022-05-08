@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.42 2017/03/07 16:21:28 espie Exp $
+# $OpenBSD: Handle.pm,v 1.43 2022/05/08 13:21:04 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -250,9 +250,7 @@ sub get_plist
 		return;
 	}
 	delete $location->{update_info};
-	unless ($plist->has('url')) {
-		OpenBSD::PackingElement::Url->add($plist, $location->url);
-	}
+	$location->decorate($plist);
 	if ($plist->localbase ne $state->{localbase}) {
 		$state->say("Localbase mismatch: package has: #1, user wants: #2",
 		    $plist->localbase, $state->{localbase});
