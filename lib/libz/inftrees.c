@@ -1,6 +1,6 @@
-/*	$OpenBSD: inftrees.c,v 1.10 2021/07/04 14:24:49 tb Exp $ */
+/*	$OpenBSD: inftrees.c,v 1.11 2022/05/08 14:04:22 tb Exp $ */
 /* inftrees.c -- generate Huffman trees for efficient decoding
- * Copyright (C) 1995-2017 Mark Adler
+ * Copyright (C) 1995-2022 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -61,7 +61,7 @@ unsigned short FAR *work;
         35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258, 0, 0};
     static const unsigned short lext[31] = { /* Length codes 257..285 extra */
         16, 16, 16, 16, 16, 16, 16, 16, 17, 17, 17, 17, 18, 18, 18, 18,
-        19, 19, 19, 19, 20, 20, 20, 20, 21, 21, 21, 21, 16, 77, 202};
+        19, 19, 19, 19, 20, 20, 20, 20, 21, 21, 21, 21, 16, 199, 202};
     static const unsigned short dbase[32] = { /* Distance codes 0..29 base */
         1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193,
         257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,

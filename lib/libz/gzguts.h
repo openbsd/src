@@ -1,7 +1,7 @@
-/*	$OpenBSD: gzguts.h,v 1.2 2021/07/04 17:41:23 tb Exp $ */
+/*	$OpenBSD: gzguts.h,v 1.3 2022/05/08 14:04:22 tb Exp $ */
 
 /* gzguts.h -- zlib internal header definitions for gz* operations
- * Copyright (C) 2004, 2005, 2010, 2011, 2012, 2013, 2016 Mark Adler
+ * Copyright (C) 2004-2019 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -41,7 +41,7 @@
 #  include <io.h>
 #endif
 
-#if defined(_WIN32) || defined(__CYGWIN__)
+#if defined(_WIN32)
 #  define WIDECHAR
 #endif
 
@@ -192,6 +192,7 @@ typedef struct {
         /* just for writing */
     int level;              /* compression level */
     int strategy;           /* compression strategy */
+    int reset;              /* true if a reset is pending after a Z_FINISH */
         /* seek request */
     z_off64_t skip;         /* amount to skip (already rewound if backwards) */
     int seek;               /* true if seek request pending */

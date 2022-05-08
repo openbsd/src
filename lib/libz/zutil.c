@@ -1,4 +1,4 @@
-/*	$OpenBSD: zutil.c,v 1.10 2021/07/04 14:24:49 tb Exp $ */
+/*	$OpenBSD: zutil.c,v 1.11 2022/05/08 14:04:22 tb Exp $ */
 /* zutil.c -- target dependent utility functions for the compression library
  * Copyright (C) 1995-2017 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h
@@ -135,8 +135,8 @@ const char * ZEXPORT zError(err)
     return ERR_MSG(err);
 }
 
-#if defined(_WIN32_WCE)
-    /* The Microsoft C Run-Time Library for Windows CE doesn't have
+#if defined(_WIN32_WCE) && _WIN32_WCE < 0x800
+    /* The older Microsoft C Run-Time Library for Windows CE doesn't have
      * errno.  We define it as a global variable to simplify porting.
      * Its value is always 0 and should not be used.
      */
