@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.189 2022/04/13 21:20:23 espie Exp $
+# $OpenBSD: Add.pm,v 1.190 2022/05/08 11:42:28 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -604,8 +604,12 @@ sub install
 	$state->make_path(dirname($destdir.$fullname), $fullname);
 	if (defined $self->{link}) {
 		link($destdir.$self->{link}, $destdir.$fullname);
+		$state->say("link #1 -> #2", $destdir.$self->{link}, 
+		    $destdir.$fullname) if $state->verbose >= 5;
 	} elsif (defined $self->{symlink}) {
 		symlink($self->{symlink}, $destdir.$fullname);
+		$state->say("symlink #1 -> #2", $self->{symlink}, 
+		    $destdir.$fullname) if $state->verbose >= 5;
 	} else {
 		if (defined $self->{avoid_temp}) {
 			delete $self->{avoid_temp};
