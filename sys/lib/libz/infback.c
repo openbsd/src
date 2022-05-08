@@ -1,6 +1,6 @@
-/*	$OpenBSD: infback.c,v 1.8 2021/07/22 16:40:20 tb Exp $ */
+/*	$OpenBSD: infback.c,v 1.9 2022/05/08 14:05:29 tb Exp $ */
 /* infback.c -- inflate using a call-back interface
- * Copyright (C) 1995-2016 Mark Adler
+ * Copyright (C) 1995-2022 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -514,6 +514,7 @@ void FAR *out_desc;
             }
             Tracev((stderr, "inflate:       codes ok\n"));
             state->mode = LEN;
+                /* fallthrough */
 
         case LEN:
 #ifndef SLOW
