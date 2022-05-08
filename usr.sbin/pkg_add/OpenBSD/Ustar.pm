@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.89 2021/08/09 16:40:20 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.90 2022/05/08 13:31:41 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -862,7 +862,7 @@ sub extract_to_fh
 
 sub contents
 {
-	my ($self, $lookfor) = @_;
+	my $self = shift;
 	my $toread = $self->{size};
 	my $buffer;
 	my $offset = 0;
@@ -874,10 +874,6 @@ sub contents
 
 	while ($toread != 0) {
 		my $sz = $toread;
-		if (defined $lookfor) {
-			last if (defined $buffer) and &$lookfor($buffer);
-			$sz = 1024 if $sz > 1024;
-		}
 		my $actual = read($self->{archive}{fh}, $buffer, $sz, $offset);
 		if (!defined $actual) {
 			$self->fatal("Error reading from archive: #1", $!);
