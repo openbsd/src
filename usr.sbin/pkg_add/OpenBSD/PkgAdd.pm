@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.130 2022/04/27 15:27:45 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.131 2022/05/08 11:06:06 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -84,7 +84,7 @@ sub hash_files
 	my ($self, $sha, $state) = @_;
 	return if $self->{link} or $self->{symlink} or $self->{nochecksum};
 	if (defined $self->{d}) {
-		$sha->{$self->{d}->key} = $self;
+		push @{$sha->{$self->{d}->key}}, $self;
 	}
 }
 
@@ -94,13 +94,17 @@ sub tie_files
 	return if $self->{link} or $self->{symlink} or $self->{nochecksum};
 	# XXX python doesn't like this, overreliance on timestamps
 	return if $self->{name} =~ m/\.py$/ && !defined $self->{ts};
-	if (defined $sha->{$self->{d}->key}) {
-		my $tied = $sha->{$self->{d}->key};
-		# don't tie if there's a problem with the file
-		my $realname = $tied->realname($state);
-		return unless -f $realname;
-		# and do a sanity check that this file wasn't altered
-		return unless (stat _)[7] == $self->{size};
+	if (exists $sha->{$self->{d}->key}) {
+		my ($tied, $realname);
+		for my $c (@{$sha->{$self->{d}->key}}) {
+			# don't tie if there's a problem with the file
+			my $realname = $c->realname($state);
+			next unless -f $realname;
+			# and do a sanity check that this file wasn't altered
+			next unless (stat _)[7] == $self->{size};
+			$tied = $c;
+			last if $tied->name eq $self->name;
+		}
 		if ($state->defines('checksum')) {
 			my $d = $self->compute_digest($realname, $self->{d});
 			# XXX we don't have to display anything here
