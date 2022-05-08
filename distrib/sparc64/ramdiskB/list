@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.55 2021/07/18 15:18:49 deraadt Exp $
+#	$OpenBSD: list,v 1.56 2022/05/08 23:54:10 deraadt Exp $
 
 SRCDIRS distrib/special
 
@@ -35,7 +35,7 @@ LINK	instbin					sbin/mknod
 LINK	instbin					sbin/mount
 LINK	instbin					sbin/mount_ffs
 LINK	instbin					sbin/newfs
-LINK	instbin					sbin/ping sbin/ping6
+LINK	instbin					sbin/ping
 LINK	instbin					sbin/reboot sbin/halt
 LINK	instbin					sbin/route
 LINK	instbin					sbin/sysctl
@@ -80,4 +80,4 @@ SYMLINK	install.sub				autoinstall
 SYMLINK	install.sub				install
 SYMLINK	install.sub				upgrade
 
-TZ
+#TZ		# this does not fit on the floppy
