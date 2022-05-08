@@ -766,7 +766,7 @@
 ./usr/lib/libtls.so.25.0
 ./usr/lib/libusbhid.so.7.1
 ./usr/lib/libutil.so.16.0
-./usr/lib/libz.so.6.0
+./usr/lib/libz.so.6.1
 ./usr/lib/locate
 ./usr/lib/locate/src.db
 ./usr/lib/pkgconfig
