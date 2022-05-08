@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.129 2022/05/08 13:33:01 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.130 2022/05/08 18:01:23 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -136,7 +136,9 @@ const struct mbr_type		mbr_types[] = {
 
 struct gpt_type {
 	int	gt_type;
-	int	gt_protected;
+	int	gt_attr;
+#define	GTATTR_PROTECT		(1 << 0)
+#define	GTATTR_PROTECT_EFISYS	(1 << 1)
 	char	gt_sname[14];
 	char	gt_guid[UUID_STR_LEN + 1];
 };
@@ -156,7 +158,7 @@ const struct gpt_type		gpt_types[] = {
 	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
 	{ 0x0C, 0, "FAT32L",
 	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x0D, 1, "BIOS Boot",
+	{ 0x0D, GTATTR_PROTECT, "BIOS Boot",
 	  "21686148-6449-6e6f-744e-656564454649" },
 	{ 0x0E, 0, "FAT16L",
 	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
@@ -194,15 +196,15 @@ const struct gpt_type		gpt_types[] = {
 	  "426f6f74-0000-11aa-aa11-00306543ecac" },
 	{ 0xAF, 0, "MacOS X HFS+",
 	  "48465300-0000-11aa-aa11-00306543ecac" },
-	{ 0xB0, 1, "APFS",
+	{ 0xB0, GTATTR_PROTECT | GTATTR_PROTECT_EFISYS, "APFS",
 	  "7c3457ef-0000-11aa-aa11-00306543ecac" },
-	{ 0xB1, 1, "APFS ISC",
+	{ 0xB1, GTATTR_PROTECT | GTATTR_PROTECT_EFISYS, "APFS ISC",
 	  "69646961-6700-11aa-aa11-00306543ecac" },
-	{ 0xB2, 1, "APFS Recovery",
+	{ 0xB2, GTATTR_PROTECT | GTATTR_PROTECT_EFISYS, "APFS Recovery",
 	  "52637672-7900-11aa-aa11-00306543ecac" },
-	{ 0xB3, 1, "HiFive FSBL",
+	{ 0xB3, GTATTR_PROTECT, "HiFive FSBL",
 	  "5b193300-fc78-40cd-8002-e86c45580b47" },
-	{ 0xB4, 1, "HiFive BBL",
+	{ 0xB4, GTATTR_PROTECT, "HiFive BBL",
 	  "2e54b353-1271-4842-806f-e436d6af6985" },
 	{ 0xBF, 0, "Solaris",
 	  "6a85cf4d-1dd2-11b2-99a6-080020736631" },
@@ -214,6 +216,7 @@ const struct gpt_type		gpt_types[] = {
 
 const struct gpt_type	*find_gpt_type(const struct uuid *);
 const char		*ascii_id(const int);
+int			 uuid_attr(const struct uuid *);
 
 const struct gpt_type *
 find_gpt_type(const struct uuid *uuid)
@@ -253,23 +256,32 @@ ascii_id(const int id)
 	return unknown;
 }
 
+int
+uuid_attr(const struct uuid *uuid)
+{
+	const struct gpt_type	*gt;
+
+	gt = find_gpt_type(uuid);
+	if (gt == NULL)
+		return 0;
+	else
+		return gt->gt_attr;
+}
 
 int
 PRT_protected_guid(const struct uuid *uuid)
 {
-	const uint8_t		 gpt_uuid_efi_system[] = GPT_UUID_EFI_SYSTEM;
-	struct uuid		 uuid_efi_system;
+	const struct gpt_type	*gt;
 	unsigned int		 pn;
 
-	if (PRT_uuid_to_protected(uuid))
-		return -1;
+	gt = find_gpt_type(uuid);
+	if (gt && gt->gt_attr & GTATTR_PROTECT)
+		return 1;
 
-	uuid_dec_be(gpt_uuid_efi_system, &uuid_efi_system);
-	if (uuid_compare(uuid, &uuid_efi_system, NULL) == 0) {
+	if (gt && gt->gt_type == DOSPTYP_EFISYS) {
 		for (pn = 0; pn < gh.gh_part_num; pn++) {
-			if (strncmp(PRT_uuid_to_sname(&gp[pn].gp_type), "APFS ",
-			    5) == 0)
-				return -1;
+			if (uuid_attr(&gp[pn].gp_type) & GTATTR_PROTECT_EFISYS)
+				return 1;
 		}
 	}
 
@@ -445,18 +457,6 @@ PRT_lba_to_chs(const struct prt *prt, struct chs *start, struct chs *end)
 		return -1;
 
 	return 0;
-}
-
-int
-PRT_uuid_to_protected(const struct uuid *uuid)
-{
-	const struct gpt_type	*gt;
-
-	gt = find_gpt_type(uuid);
-	if (gt == NULL)
-		return 0;
-	else
-		return gt->gt_protected;
 }
 
 const char *
