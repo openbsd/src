@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.128 2022/05/07 11:45:36 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.129 2022/05/08 13:33:01 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -30,8 +30,6 @@
 #include "disk.h"
 #include "misc.h"
 #include "gpt.h"
-
-const char		*ascii_id(const int);
 
 struct mbr_type {
 	int	mt_type;
@@ -144,43 +142,117 @@ struct gpt_type {
 };
 
 const struct gpt_type		gpt_types[] = {
-	{ 0x00, 0, "unused",		"00000000-0000-0000-0000-000000000000" },
-	{ 0x01, 0, "FAT12",		"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x04, 0, "FAT16S",		"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x06, 0, "FAT16B",		"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x07, 0, "NTFS",		"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x0B, 0, "FAT32",		"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x0C, 0, "FAT32L",		"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x0D, 1, "BIOS Boot",		"21686148-6449-6e6f-744e-656564454649" },
-	{ 0x0E, 0, "FAT16L",		"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x11, 0, "OS/2 hidden",	"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x14, 0, "OS/2 hidden",	"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x16, 0, "OS/2 hidden",	"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x17, 0, "OS/2 hidden",	"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x1C, 0, "ThinkPad Rec",	"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
-	{ 0x27, 0, "Win Recovery",	"de94bba4-06d1-4d40-a16a-bfd50179d6ac" },
-	{ 0x42, 0, "LinuxSwap DR",	"af9b60a0-1431-4f62-bc68-3311714a69ad" },
-	{ 0x7f, 0, "ChromeKernel",	"fe3a2a5d-4f32-41a7-b725-accc3285a309" },
-	{ 0x82, 0, "Linux swap",	"0657fd6d-a4ab-43c4-84e5-0933c84b4f4f" },
-	{ 0x83, 0, "Linux files*",	"0fc63daf-8483-4772-8e79-3d69d8477de4" },
-	{ 0x8E, 0, "Linux LVM",		"e6d6d379-f507-44c2-a23c-238f2a3df928" },
-	{ 0xA5, 0, "FreeBSD",		"516e7cb4-6ecf-11d6-8ff8-00022d09712b" },
-	{ 0xA6, 0, "OpenBSD",		"824cc7a0-36a8-11e3-890a-952519ad3f61" },
-	{ 0xA8, 0, "MacOS X",		"55465300-0000-11aa-aa11-00306543ecac" },
-	{ 0xA9, 0, "NetBSD",		"516e7cb4-6ecf-11d6-8ff8-00022d09712b" },
-	{ 0xAB, 0, "MacOS X boot",	"426f6f74-0000-11aa-aa11-00306543ecac" },
-	{ 0xAF, 0, "MacOS X HFS+",	"48465300-0000-11aa-aa11-00306543ecac" },
-	{ 0xB0, 1, "APFS",		"7c3457ef-0000-11aa-aa11-00306543ecac" },
-	{ 0xB1, 1, "APFS ISC",		"69646961-6700-11aa-aa11-00306543ecac" },
-	{ 0xB2, 1, "APFS Recovery",	"52637672-7900-11aa-aa11-00306543ecac" },
-	{ 0xB3, 1, "HiFive FSBL",	"5b193300-fc78-40cd-8002-e86c45580b47" },
-	{ 0xB4, 1, "HiFive BBL",	"2e54b353-1271-4842-806f-e436d6af6985" },
-	{ 0xBF, 0, "Solaris",		"6a85cf4d-1dd2-11b2-99a6-080020736631" },
-	{ 0xEB, 0, "BeOS/i386",		"42465331-3ba3-10f1-802a-4861696b7521" },
-	{ 0xEF, 0, "EFI Sys",		"c12a7328-f81f-11d2-ba4b-00a0c93ec93b" },
+	{ 0x00, 0, "unused",
+	  "00000000-0000-0000-0000-000000000000" },
+	{ 0x01, 0, "FAT12",
+	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x04, 0, "FAT16S",
+	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x06, 0, "FAT16B",
+	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x07, 0, "NTFS",
+	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x0B, 0, "FAT32",
+	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x0C, 0, "FAT32L",
+	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x0D, 1, "BIOS Boot",
+	  "21686148-6449-6e6f-744e-656564454649" },
+	{ 0x0E, 0, "FAT16L",
+	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x11, 0, "OS/2 hidden",
+	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x14, 0, "OS/2 hidden",
+	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x16, 0, "OS/2 hidden",
+	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x17, 0, "OS/2 hidden",
+	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x1C, 0, "ThinkPad Rec",
+	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	{ 0x27, 0, "Win Recovery",
+	  "de94bba4-06d1-4d40-a16a-bfd50179d6ac" },
+	{ 0x42, 0, "LinuxSwap DR",
+	  "af9b60a0-1431-4f62-bc68-3311714a69ad" },
+	{ 0x7f, 0, "ChromeKernel",
+	  "fe3a2a5d-4f32-41a7-b725-accc3285a309" },
+	{ 0x82, 0, "Linux swap",
+	  "0657fd6d-a4ab-43c4-84e5-0933c84b4f4f" },
+	{ 0x83, 0, "Linux files*",
+	  "0fc63daf-8483-4772-8e79-3d69d8477de4" },
+	{ 0x8E, 0, "Linux LVM",
+	  "e6d6d379-f507-44c2-a23c-238f2a3df928" },
+	{ 0xA5, 0, "FreeBSD",
+	  "516e7cb4-6ecf-11d6-8ff8-00022d09712b" },
+	{ 0xA6, 0, "OpenBSD",
+	  "824cc7a0-36a8-11e3-890a-952519ad3f61" },
+	{ 0xA8, 0, "MacOS X",
+	  "55465300-0000-11aa-aa11-00306543ecac" },
+	{ 0xA9, 0, "NetBSD",
+	  "516e7cb4-6ecf-11d6-8ff8-00022d09712b" },
+	{ 0xAB, 0, "MacOS X boot",
+	  "426f6f74-0000-11aa-aa11-00306543ecac" },
+	{ 0xAF, 0, "MacOS X HFS+",
+	  "48465300-0000-11aa-aa11-00306543ecac" },
+	{ 0xB0, 1, "APFS",
+	  "7c3457ef-0000-11aa-aa11-00306543ecac" },
+	{ 0xB1, 1, "APFS ISC",
+	  "69646961-6700-11aa-aa11-00306543ecac" },
+	{ 0xB2, 1, "APFS Recovery",
+	  "52637672-7900-11aa-aa11-00306543ecac" },
+	{ 0xB3, 1, "HiFive FSBL",
+	  "5b193300-fc78-40cd-8002-e86c45580b47" },
+	{ 0xB4, 1, "HiFive BBL",
+	  "2e54b353-1271-4842-806f-e436d6af6985" },
+	{ 0xBF, 0, "Solaris",
+	  "6a85cf4d-1dd2-11b2-99a6-080020736631" },
+	{ 0xEB, 0, "BeOS/i386",
+	  "42465331-3ba3-10f1-802a-4861696b7521" },
+	{ 0xEF, 0, "EFI Sys",
+	  "c12a7328-f81f-11d2-ba4b-00a0c93ec93b" },
 };
 
 const struct gpt_type	*find_gpt_type(const struct uuid *);
+const char		*ascii_id(const int);
+
+const struct gpt_type *
+find_gpt_type(const struct uuid *uuid)
+{
+	char			*uuidstr = NULL;
+	unsigned int		 i;
+	uint32_t		 status;
+
+	uuid_to_string(uuid, &uuidstr, &status);
+	if (status == uuid_s_ok) {
+		for (i = 0; i < nitems(gpt_types); i++) {
+			if (memcmp(gpt_types[i].gt_guid, uuidstr,
+			    sizeof(gpt_types[i].gt_guid)) == 0)
+				break;
+		}
+	} else
+		i = nitems(gpt_types);
+	free(uuidstr);
+
+	if (i < nitems(gpt_types))
+		return &gpt_types[i];
+	else
+		return NULL;
+}
+
+const char *
+ascii_id(const int id)
+{
+	static char		unknown[] = "<Unknown ID>";
+	int			i;
+
+	for (i = 0; i < nitems(mbr_types); i++) {
+		if (mbr_types[i].mt_type == id)
+			return mbr_types[i].mt_sname;
+	}
+
+	return unknown;
+}
+
 
 int
 PRT_protected_guid(const struct uuid *uuid)
@@ -244,20 +316,6 @@ PRT_print_gpttypes(void)
 			    gpt_types[cidx].gt_sname);
 		printf("\n");
 	}
-}
-
-const char *
-ascii_id(const int id)
-{
-	static char		unknown[] = "<Unknown ID>";
-	int			i;
-
-	for (i = 0; i < nitems(mbr_types); i++) {
-		if (mbr_types[i].mt_type == id)
-			return mbr_types[i].mt_sname;
-	}
-
-	return unknown;
 }
 
 void
@@ -387,30 +445,6 @@ PRT_lba_to_chs(const struct prt *prt, struct chs *start, struct chs *end)
 		return -1;
 
 	return 0;
-}
-
-const struct gpt_type *
-find_gpt_type(const struct uuid *uuid)
-{
-	char			*uuidstr = NULL;
-	unsigned int		 i;
-	uint32_t		 status;
-
-	uuid_to_string(uuid, &uuidstr, &status);
-	if (status == uuid_s_ok) {
-		for (i = 0; i < nitems(gpt_types); i++) {
-			if (memcmp(gpt_types[i].gt_guid, uuidstr,
-			    sizeof(gpt_types[i].gt_guid)) == 0)
-				break;
-		}
-	} else
-		i = nitems(gpt_types);
-	free(uuidstr);
-
-	if (i < nitems(gpt_types))
-		return &gpt_types[i];
-	else
-		return NULL;
 }
 
 int
