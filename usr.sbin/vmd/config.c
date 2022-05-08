@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.64 2021/11/10 20:49:04 sthen Exp $	*/
+/*	$OpenBSD: config.c,v 1.65 2022/05/08 14:44:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -231,6 +231,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	unsigned int		 unit;
 	struct timeval		 tv, rate, since_last;
 	struct vmop_addr_req	 var;
+	size_t			 bytes = 0;
 
 	if (vm->vm_state & VM_STATE_RUNNING) {
 		log_warnx("%s: vm is already running", __func__);
@@ -518,6 +519,14 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 
 	free(tapfds);
 
+	/* Collapse any memranges after the vm was sent to PROC_VMM */
+	if (vcp->vcp_nmemranges > 0) {
+		for (i = 0; i < vcp->vcp_nmemranges; i++)
+			bytes += vcp->vcp_memranges[i].vmr_size;
+		memset(&vcp->vcp_memranges, 0, sizeof(vcp->vcp_memranges));
+		vcp->vcp_nmemranges = 0;
+		vcp->vcp_memranges[0].vmr_size = bytes;
+	}
 	vm->vm_state |= VM_STATE_RUNNING;
 	return (0);
 

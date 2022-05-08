@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.130 2022/03/01 21:46:19 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.131 2022/05/08 14:44:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1162,7 +1162,8 @@ vm_stop(struct vmd_vm *vm, int keeptty, const char *caller)
 	    __func__, ps->ps_title[privsep_process], caller,
 	    vm->vm_vmid, keeptty ? ", keeping tty open" : "");
 
-	vm->vm_state &= ~(VM_STATE_RUNNING | VM_STATE_SHUTDOWN);
+	vm->vm_state &= ~(VM_STATE_RECEIVED | VM_STATE_RUNNING
+	    | VM_STATE_SHUTDOWN);
 
 	user_inc(&vm->vm_params.vmc_params, vm->vm_user, 0);
 	user_put(vm->vm_user);
