@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.7 2022/01/06 13:36:56 tb Exp $
+#	$OpenBSD: Makefile,v 1.8 2022/05/08 19:03:31 tb Exp $
 
 OPENSSL_RUBY_TESTS =	/usr/local/share/openssl-ruby-tests
-RUBY_BINREV =		30
+RUBY_BINREV =		31
 RUBY =			ruby${RUBY_BINREV}
 
 # We work in a subdirectory of obj/ since extconf.rb generates a Makefile whose
