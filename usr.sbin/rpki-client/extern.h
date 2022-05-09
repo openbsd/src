@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.132 2022/04/21 12:59:03 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.133 2022/05/09 17:02:34 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,6 +23,14 @@
 
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
+/*
+ * Enumeration for ASN.1 explicit tags in RSC eContent
+ */
+enum rsc_resourceblock_tag {
+	RSRCBLK_TYPE_ASID,
+	RSRCBLK_TYPE_IPADDRBLK,
+};
 
 enum cert_as_type {
 	CERT_AS_ID, /* single identifier */
@@ -164,6 +172,7 @@ enum rtype {
 	RTYPE_ASPA,
 	RTYPE_REPO,
 	RTYPE_FILE,
+	RTYPE_RSC,
 };
 
 enum location {
@@ -230,6 +239,29 @@ struct roa {
 	char		*aki; /* AKI */
 	char		*ski; /* SKI */
 	time_t		 expires; /* do not use after */
+};
+
+struct rscfile {
+	char		*filename; /* an optional filename on the checklist */
+	unsigned char	 hash[SHA256_DIGEST_LENGTH]; /* the digest */
+};
+
+/*
+ * A Signed Checklist (RSC)
+ */
+struct rsc {
+	int		 talid; /* RSC covered by what TAL */
+	int		 valid; /* eContent resources covered by EE's 3779? */
+	struct cert_ip	*ips; /* IP prefixes */
+	size_t		 ipsz; /* number of IP prefixes */
+	struct cert_as	*as; /* AS resources */
+	size_t		 asz; /* number of AS resources */
+	struct rscfile	*files; /* FileAndHashes in the RSC */
+	size_t		 filesz; /* number of FileAndHashes */
+	char		*aia; /* AIA */
+	char		*aki; /* AKI */
+	char		*ski; /* SKI */
+	time_t		 expires; /* Not After of the RSC EE */
 };
 
 /*
@@ -450,6 +482,10 @@ void		 gbr_free(struct gbr *);
 struct gbr	*gbr_parse(X509 **, const char *, const unsigned char *,
 		    size_t);
 
+void		 rsc_free(struct rsc *);
+struct rsc	*rsc_parse(X509 **, const char *, const unsigned char *,
+		    size_t);
+
 /* crl.c */
 struct crl	*crl_parse(const char *, const unsigned char *, size_t);
 struct crl	*crl_get(struct crl_tree *, const struct auth *);
@@ -470,6 +506,7 @@ int		 valid_uri(const char *, size_t, const char *);
 int		 valid_origin(const char *, const char *);
 int		 valid_x509(char *, X509_STORE_CTX *, X509 *, struct auth *,
 		    struct crl *, int);
+int		 valid_rsc(const char *, struct auth *, struct rsc *);
 
 /* Working with CMS. */
 unsigned char	*cms_parse_validate(X509 **, const char *,
@@ -608,6 +645,7 @@ void		 crl_print(const struct crl *);
 void		 mft_print(const X509 *, const struct mft *);
 void		 roa_print(const X509 *, const struct roa *);
 void		 gbr_print(const X509 *, const struct gbr *);
+void		 rsc_print(const X509 *, const struct rsc *);
 
 /* Output! */
 

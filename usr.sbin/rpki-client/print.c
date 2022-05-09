@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.10 2022/04/24 18:20:12 tb Exp $ */
+/*	$OpenBSD: print.c,v 1.11 2022/05/09 17:02:34 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -454,4 +454,120 @@ gbr_print(const X509 *x, const struct gbr *p)
 		printf("Authority info access: %s\n", p->aia);
 		printf("vcard:\n%s", p->vcard);
 	}
+}
+
+void
+rsc_print(const X509 *x, const struct rsc *p)
+{
+	char	 buf1[64], buf2[64], tbuf[21];
+	char	*hash;
+	int	 sockt;
+	size_t	 i, j;
+
+	strftime(tbuf, sizeof(tbuf), "%FT%TZ", gmtime(&p->expires));
+
+	if (outformats & FORMAT_JSON) {
+		printf("\t\"ski\": \"%s\",\n", pretty_key_id(p->ski));
+		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
+		x509_print(x);
+		printf("\t\"aia\": \"%s\",\n", p->aia);
+		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
+		printf("\t\"signed_with_resources\": [\n");
+	} else {
+		printf("Subject key identifier: %s\n", pretty_key_id(p->ski));
+		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
+		x509_print(x);
+		printf("Authority info access: %s\n", p->aia);
+		printf("Valid until: %s\n", tbuf);
+		printf("Signed with resources:\n");
+	}
+
+	for (i = 0; i < p->asz; i++) {
+		switch (p->as[i].type) {
+		case CERT_AS_ID:
+			if (outformats & FORMAT_JSON)
+				printf("\t\t{ \"asid\": %u }", p->as[i].id);
+			else
+				printf("%5zu: AS: %u", i + 1, p->as[i].id);
+			break;
+		case CERT_AS_RANGE:
+			if (outformats & FORMAT_JSON)
+				printf("\t\t{ \"asrange\": { \"min\": %u, "
+				    "\"max\": %u }}", p->as[i].range.min,
+				    p->as[i].range.max);
+			else
+				printf("%5zu: AS: %u -- %u", i + 1,
+				    p->as[i].range.min, p->as[i].range.max);
+			break;
+		case CERT_AS_INHERIT:
+			/* inheritance isn't possible in RSC */
+			break;
+		}
+		if (outformats & FORMAT_JSON && i + 1 < p->asz + p->ipsz)
+			printf(",\n");
+		else
+			printf("\n");
+	}
+
+	for (j = 0; j < p->ipsz; j++) {
+		switch (p->ips[j].type) {
+		case CERT_IP_ADDR:
+			ip_addr_print(&p->ips[j].ip,
+			    p->ips[j].afi, buf1, sizeof(buf1));
+			if (outformats & FORMAT_JSON)
+				printf("\t\t{ \"ip_prefix\": \"%s\" }", buf1);
+			else
+				printf("%5zu: IP: %s", i + j + 1, buf1);
+			break;
+		case CERT_IP_RANGE:
+			sockt = (p->ips[j].afi == AFI_IPV4) ?
+				AF_INET : AF_INET6;
+			inet_ntop(sockt, p->ips[j].min, buf1, sizeof(buf1));
+			inet_ntop(sockt, p->ips[j].max, buf2, sizeof(buf2));
+			if (outformats & FORMAT_JSON)
+				printf("\t\t{ \"ip_range\": { \"min\": \"%s\""
+				    ", \"max\": \"%s\" }}", buf1, buf2);
+			else
+				printf("%5zu: IP: %s -- %s", i + j + 1, buf1,
+				    buf2);
+			break;
+		case CERT_IP_INHERIT:
+			/* inheritance isn't possible in RSC */
+			break;
+		}
+		if (outformats & FORMAT_JSON && i + j + 1 < p->asz + p->ipsz)
+			printf(",\n");
+		else
+			printf("\n");
+	}
+
+	if (outformats & FORMAT_JSON) {
+		printf("\t],\n");
+		printf("\t\"filenamesandhashes\": [\n");
+	} else
+		printf("Filenames and hashes:\n");
+
+	for (i = 0; i < p->filesz; i++) {
+		if (base64_encode(p->files[i].hash, sizeof(p->files[i].hash),
+		    &hash) == -1)
+			errx(1, "base64_encode failure");
+
+		if (outformats & FORMAT_JSON) {
+			printf("\t\t{ \"filename\": \"%s\",",
+			    p->files[i].filename ? p->files[i].filename : "");
+			printf(" \"hash_digest\": \"%s\" }", hash);
+			if (i + 1 < p->filesz)
+				printf(",");
+			printf("\n");
+		} else {
+			printf("%5zu: %s\n", i + 1, p->files[i].filename
+			    ? p->files[i].filename : "no filename");
+			printf("\thash %s\n", hash);
+		}
+
+		free(hash);
+	}
+
+	if (outformats & FORMAT_JSON)
+		printf("\t],\n");
 }
