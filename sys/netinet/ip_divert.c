@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_divert.c,v 1.67 2022/05/05 16:44:22 bluhm Exp $ */
+/*      $OpenBSD: ip_divert.c,v 1.68 2022/05/09 19:33:46 bluhm Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -222,11 +222,19 @@ divert_packet(struct mbuf *m, int dir, u_int16_t divert_port)
 	}
 
 	so = inp->inp_socket;
+	/*
+	 * XXXSMP sbappendaddr() is not MP safe and this function is called
+	 * from pf with shared netlock.  To call only one sbappendaddr() from
+	 * divert_packet(), protect it with kernel lock.  All other places
+	 * call sbappendaddr() with exclusive net lock.  This blocks
+	 * divert_packet() as we have the shared lock.
+	 */
+	KERNEL_LOCK();
 	if (sbappendaddr(so, &so->so_rcv, sintosa(&sin), m, NULL) == 0) {
+		KERNEL_UNLOCK();
 		divstat_inc(divs_fullsock);
 		goto bad;
 	}
-	KERNEL_LOCK();
 	sorwakeup(inp->inp_socket);
 	KERNEL_UNLOCK();
 
