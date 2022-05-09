@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1196 2022/05/05 20:07:23 florian Exp $
+#	$OpenBSD: install.sub,v 1.1197 2022/05/09 22:42:53 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -76,7 +76,10 @@ usage() {
 wait_cgiinfo() {
 	local _l _s _key _val
 
-	wait "$CGIPID" 2>/dev/null
+	if [ -f /tmp/cgipid ]; then
+		wait "$(cat /tmp/cgipid)" 2>/dev/null
+		rm -f /tmp/cgipid
+	fi
 
 	# Ensure, there is actual data to extract info from.
 	[[ -s $CGI_INFO ]] || return
@@ -540,7 +543,7 @@ unlock() {
 
 # Add a trap to kill the dmesg listener co-process on exit of the installer.
 retrap() {
-	trap 'kill -KILL $CPPID 2>/dev/null; echo; stty echo; exit 0' \
+	trap 'if [ -f /tmp/cppid ]; then kill -KILL -$(cat /tmp/cppid) 2>/dev/null; rm -f /tmp/cppid; fi; echo; stty echo; exit 0' \
 		INT EXIT TERM
 }
 
@@ -559,6 +562,7 @@ start_dmesg_listener() {
 
 	# To ensure that only one dmesg listener instance can be active, run it
 	# in a co-process subshell of which there can always only be one active.
+	set -m
 	(
 	while :; do
 		lock
@@ -568,17 +572,17 @@ start_dmesg_listener() {
 		# contents of that file.
 		if [[ -e $_update && "$(dmesgtail)" != "$(<$_update)" ]]; then
 			dmesgtail >$_update
+			rm -f /tmp/cppid
 			kill -TERM 2>/dev/null $$ || exit 1
 		fi
 		unlock
 		sleep .5
 	done
 	) |&
-
-	# Save the co-process PID in a global variable so it can be used in
-	# the retrap() function which adds a trap to kill the co-process on
-	# exit of the installer script.
-	CPPID=$!
+	# Save the co-process pid so it can be used in the retrap() function which
+	# adds a trap to kill the co-process on exit of the installer script.
+	echo $! > /tmp/cppid
+	set +m
 	retrap
 }
 
@@ -2551,13 +2555,18 @@ start_cgiinfo() {
 		# Remember finish time for adjusting the received timestamp.
 		echo -n $SECONDS >$HTTP_SEC
 		feed_random
-	) & CGIPID=$!
+	) &
+	echo $! > /tmp/cgipid
 	set +m
 
 	# If the ftp process takes more than 12 seconds, kill it.
-	# XXX We are relying on the pid space not randomly biting us.
-	# XXX ftp could terminate early, and the pid could be reused.
-	(sleep 12; kill -INT -$CGIPID >/dev/null 2>&1) &
+	(
+		sleep 12;
+		if [ -f /tmp/cgipid ]; then
+			kill -INT -"$(cat /tmp/cgipid)" >/dev/null 2>&1
+			# wait will be done by wait_cgiinfo
+		fi
+	) &
 }
 
 # Create a skeletal but useful /etc/fstab from /tmp/i/fstab by stripping all
@@ -3304,7 +3313,11 @@ do_upgrade() {
 
 	# Perform final steps common to both an install and an upgrade.
 	finish_up
-	[[ -n $WDPID ]] && kill -KILL $WDPID 2>/dev/null
+	if [ -f /tmp/wdpid ]; then
+		kill -KILL "$(cat /tmp/wdpid)" 2>/dev/null
+		# do not bother waiting
+		rm -f /tmp/wdpid
+	fi
 }
 
 check_unattendedupgrade() {
@@ -3331,8 +3344,12 @@ WATCHDOG_PERIOD_SEC=$((30 * 60))
 
 # Restart the background timer.
 reset_watchdog() {
-	if [[ -n $WDPID ]]; then
-		kill -KILL $WDPID 2>/dev/null
+	local _pid
+	if [ -f /tmp/wdpid ]; then
+		_pid=$(cat /tmp/wdpid)
+		kill -KILL -$_pid 2>/dev/null
+		wait $_pid 2>/dev/null
+		rm -f /tmp/wdpid
 		start_watchdog
 	fi
 }
@@ -3340,10 +3357,12 @@ reset_watchdog() {
 # Start a process to reboot a stalled sysupgrade.
 # This mechanism is only used during non-interactive sysupgrade.
 start_watchdog() {
+	set -m
 	(
 		sleep $WATCHDOG_PERIOD_SEC && echo WATCHDOG > /dev/tty && reboot
 	) >/dev/null 2>&1 &
-	WDPID=$!
+	echo $! > /tmp/wdpid
+	set +m
 }
 
 # ------------------------------------------------------------------------------
@@ -3496,7 +3515,6 @@ elif $UU; then
 	check_unattendedupgrade || exit 1
 
 	start_watchdog
-	export WDPID
 
 	get_responsefile
 	do_autoinstall
