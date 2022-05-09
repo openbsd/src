@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwx.4,v 1.14 2022/04/16 16:22:46 stsp Exp $
+.\" $OpenBSD: iwx.4,v 1.15 2022/05/09 22:02:31 stsp Exp $
 .\"
 .\" Copyright (c) 2020 Stefan Sperling <stsp@openbsd.org>
 .\"
@@ -14,19 +14,19 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 16 2022 $
+.Dd $Mdocdate: May 9 2022 $
 .Dt IWX 4
 .Os
 .Sh NAME
 .Nm iwx
-.Nd Intel AX200/AX201 IEEE 802.11a/ac/ax/b/g/n wireless network devices
+.Nd Intel AX200/AX201/AX210/AX211 IEEE 802.11a/ac/ax/b/g/n wireless network devices
 .Sh SYNOPSIS
 .Cd "iwx* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Intel Wireless AX200 M.2 network adapters,
-and for Intel Wireless AX201 Integrated Connectivity (CNVi) network
+driver provides support for Intel Wireless AX200/AX210 M.2 network adapters,
+and for Intel Wireless AX201/AX211 Integrated Connectivity (CNVi) network
 adapters with companion RF M.2 modules.
 .Pp
 These are the modes the
@@ -90,6 +90,10 @@ which are loaded when an interface is brought up:
 .It Pa /etc/firmware/iwx-Qu-c0-jf-b0-63
 .It Pa /etc/firmware/iwx-QuZ-a0-hr-b0-67
 .It Pa /etc/firmware/iwx-QuZ-a0-jf-b0-63
+.It Pa /etc/firmware/iwx-so-a0-gf-a0-67
+.It Pa /etc/firmware/iwx-so-a0-gf4-a0-67
+.It Pa /etc/firmware/iwx-so-a0-jf-b0-64
+.It Pa /etc/firmware/iwx-ty-ao-gf-a0-67
 .El
 .Pp
 These firmware files are not free because Intel refuses to grant
