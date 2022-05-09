@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.41 2022/04/15 12:59:44 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.42 2022/05/09 17:13:06 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -42,6 +42,7 @@ ASN1_OBJECT	*cnt_type_oid;	/* pkcs-9 id-contentType */
 ASN1_OBJECT	*msg_dgst_oid;	/* pkcs-9 id-messageDigest */
 ASN1_OBJECT	*sign_time_oid;	/* pkcs-9 id-signingTime */
 ASN1_OBJECT	*bin_sign_time_oid;	/* pkcs-9 id-aa-binarySigningTime */
+ASN1_OBJECT	*rsc_oid;	/* id-ct-signedChecklist */
 
 void
 x509_init_oid(void)
@@ -76,6 +77,10 @@ x509_init_oid(void)
 	    OBJ_txt2obj("1.2.840.113549.1.9.16.2.46", 1)) == NULL)
 		errx(1, "OBJ_txt2obj for %s failed",
 		    "1.2.840.113549.1.9.16.2.46");
+	if ((rsc_oid = OBJ_txt2obj("1.2.840.113549.1.9.16.1.48", 1)) == NULL)
+		errx(1, "OBJ_txt2obj for %s failed",
+		    "1.2.840.113549.1.9.16.1.48");
+
 }
 
 /*
