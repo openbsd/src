@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.594 2022/05/09 20:29:23 sashan Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.595 2022/05/09 21:48:00 sthen Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -593,6 +593,13 @@ or
 .Cm icmp6-type
 .Pc
 must match.
+.Pp
+ICMP responses are not permitted unless they either match an
+existing request, or unless
+.Cm no state
+or
+.Cm keep state (sloppy)
+is specified.
 .Pp
 .It Cm label Ar string
 Adds a label to the rule, which can be used to identify the rule.
@@ -2177,7 +2184,7 @@ States created by this rule are exported on the
 .Xr pflow 4
 interface.
 .It Cm sloppy
-Uses a sloppy TCP connection tracker that does not check sequence
+For TCP, uses a sloppy connection tracker that does not check sequence
 numbers at all, which makes insertion and ICMP teardown attacks way
 easier.
 This is intended to be used in situations where one does not see all
@@ -2186,7 +2193,8 @@ It cannot be used with
 .Cm modulate state
 or
 .Cm synproxy state .
-With this option ICMP replies can create states.
+For ICMP, this option allows states to be created from replies,
+not just requests.
 .It Ar timeout seconds
 Changes the
 .Ar timeout
