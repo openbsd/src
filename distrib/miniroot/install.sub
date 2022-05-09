@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1197 2022/05/09 22:42:53 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1198 2022/05/09 22:43:57 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2543,7 +2543,6 @@ start_cgiinfo() {
 
 	# Ensure proper name resolution in case there's no dns yet.
 	add_hostent 199.185.178.80 ftplist1.openbsd.org
-	add_hostent 129.128.5.194 ftplist2.openbsd.org
 
 	# Make sure the ftp subshell gets its own process group.
 	set -m
