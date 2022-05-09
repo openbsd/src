@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.131 2022/05/08 11:06:06 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.132 2022/05/09 08:29:04 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -98,13 +98,14 @@ sub tie_files
 		my ($tied, $realname);
 		for my $c (@{$sha->{$self->{d}->key}}) {
 			# don't tie if there's a problem with the file
-			my $realname = $c->realname($state);
+			$realname = $c->realname($state);
 			next unless -f $realname;
 			# and do a sanity check that this file wasn't altered
 			next unless (stat _)[7] == $self->{size};
 			$tied = $c;
 			last if $tied->name eq $self->name;
 		}
+		return if !defined $tied;
 		if ($state->defines('checksum')) {
 			my $d = $self->compute_digest($realname, $self->{d});
 			# XXX we don't have to display anything here
