@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.160 2022/05/06 23:53:43 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.161 2022/05/09 15:09:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -377,11 +377,11 @@ Xwrite(char *args, struct mbr *mbr)
 	int			i, n;
 
 	for (i = 0, n = 0; i < NDOSPART; i++)
-		if (mbr->mbr_prt[i].prt_id == 0xA6)
+		if (mbr->mbr_prt[i].prt_id == DOSPTYP_OPENBSD)
 			n++;
-	if (n >= 2) {
+	if (n > 1) {
 		warnx("MBR contains more than one OpenBSD partition!");
-		if (!ask_yn("Write MBR anyway?"))
+		if (ask_yn("Write MBR anyway?") == 0)
 			return CMD_CONT;
 	}
 
