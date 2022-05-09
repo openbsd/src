@@ -26,6 +26,7 @@ SRCS_test-gbr =		a_time_tm_gen.c o_time.c
 SRCS_test-tal =		a_time_tm_gen.c o_time.c
 SRCS_test-bgpsec =	a_time_tm_gen.c o_time.c
 SRCS_test-rrdp =	a_time_tm_gen.c o_time.c
+SRCS_test-rsc =		a_time_tm_gen.c o_time.c
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/
 
 .PATH:		${.CURDIR}/..

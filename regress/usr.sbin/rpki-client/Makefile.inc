@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.23 2022/04/20 17:37:53 tb Exp $
+# $OpenBSD: Makefile.inc,v 1.24 2022/05/09 17:20:25 job Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -7,6 +7,7 @@ PROGS += test-cert
 PROGS += test-gbr
 PROGS += test-mft
 PROGS += test-roa
+PROGS += test-rsc
 PROGS += test-tal
 PROGS += test-rrdp
 
@@ -42,6 +43,11 @@ SRCS_test-roa+=	test-roa.c roa.c cms.c x509.c ip.c as.c io.c log.c \
 		encoding.c print.c validate.c cert.c mft.c
 run-regress-test-roa: test-roa
 	./test-roa -v ${.CURDIR}/../roa/*.roa
+
+SRCS_test-rsc+=	test-rsc.c rsc.c cms.c x509.c ip.c as.c io.c log.c \
+		encoding.c print.c validate.c cert.c mft.c
+run-regress-test-rsc: test-rsc
+	./test-rsc -v ${.CURDIR}/../rsc/*.sig
 
 SRCS_test-gbr+=	test-gbr.c gbr.c cms.c x509.c ip.c io.c log.c \
 		encoding.c print.c validate.c as.c cert.c mft.c
