@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1993 2022/05/05 12:26:06 fcambus Exp 
+ *	OpenBSD: pcidevs,v 1.1994 2022/05/09 12:27:40 stsp Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5610,6 +5610,7 @@
 #define	PCI_PRODUCT_INTEL_EP80579_LAN_3	0x5048		/* EP80579 LAN */
 #define	PCI_PRODUCT_INTEL_EP80579_LAN_6	0x5049		/* EP80579 LAN */
 #define	PCI_PRODUCT_INTEL_WL_22500_11	0x51f0		/* Wi-Fi 6 AX211 */
+#define	PCI_PRODUCT_INTEL_WL_22500_16	0x54f0		/* Wi-Fi 6 AX211 */
 #define	PCI_PRODUCT_INTEL_80960RD	0x5200		/* i960 RD */
 #define	PCI_PRODUCT_INTEL_PRO_100_SERVER	0x5201		/* PRO 100 Server */
 #define	PCI_PRODUCT_INTEL_I225_LMVP	0x5502		/* I225-LMvP */
