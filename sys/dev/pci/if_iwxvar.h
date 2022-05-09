@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.32 2022/04/16 16:21:50 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.33 2022/05/09 21:57:26 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -123,7 +123,7 @@ struct iwx_tx_radiotap_header {
 	 (1 << IEEE80211_RADIOTAP_RATE) |				\
 	 (1 << IEEE80211_RADIOTAP_CHANNEL))
 
-#define IWX_UCODE_SECT_MAX 49
+#define IWX_UCODE_SECT_MAX 52
 
 /*
  * fw_status is used to determine if we've already parsed the firmware file
@@ -169,6 +169,10 @@ struct iwx_fw_info {
 	size_t dbg_trigger_tlv_len[IWX_FW_DBG_TRIGGER_MAX];
 	struct iwx_fw_dbg_mem_seg_tlv *dbg_mem_tlv;
 	size_t n_mem_tlv;
+
+	/* Copy of firmware image loader found in file. */
+	uint8_t *iml;
+	size_t iml_len;
 };
 
 struct iwx_nvm_data {
@@ -243,7 +247,9 @@ struct iwx_tx_ring {
 	int			qid;
 	int			queued;
 	int			cur;
+	int			cur_hw;
 	int			tail;
+	int			tail_hw;
 	int			tid;
 };
 
@@ -458,18 +464,28 @@ struct iwx_ba_task_data {
  */
 struct iwx_device_cfg {
 	const char *fw_name;
+	const char *pnvm_name;
 	int 	    tx_with_siso_diversity;
 	int 	    uhb_supported;
+	int 	    xtal_latency;
+	int 	    low_latency_xtal;
 };
 
 /* Firmware listed here must be available in fw_update(8). */
 #define IWX_CC_A_FW	    	"iwx-cc-a0-67"
+#define IWX_TY_A_GF_A_FW	"iwx-ty-a0-gf-a0-67"
+#define IWX_TY_A_GF_A_PNVM	"iwx-ty-a0-gf-a0.pnvm"
 #define IWX_QU_B_HR_B_FW	"iwx-Qu-b0-hr-b0-63"
 #define IWX_QU_B_JF_B_FW	"iwx-Qu-b0-jf-b0-63"
 #define IWX_QU_C_HR_B_FW	"iwx-Qu-c0-hr-b0-63"
 #define IWX_QU_C_JF_B_FW	"iwx-Qu-c0-jf-b0-63"
 #define IWX_QUZ_A_HR_B_FW	"iwx-QuZ-a0-hr-b0-67"
 #define IWX_QUZ_A_JF_B_FW	"iwx-QuZ-a0-jf-b0-63"
+#define IWX_SO_A_GF_A_FW	"iwx-so-a0-gf-a0-67"
+#define IWX_SO_A_GF_A_PNVM	"iwx-so-a0-gf-a0.pnvm"
+#define IWX_SO_A_GF4_A_FW	"iwx-so-a0-gf4-a0-67"
+#define IWX_SO_A_GF4_A_PNVM	"iwx-so-a0-gf4-a0.pnvm"
+#define IWX_SO_A_JF_B_FW	"iwx-so-a0-jf-b0-64"
 
 const struct iwx_device_cfg iwx_9560_quz_a0_jf_b0_cfg = {
 	.fw_name = IWX_QUZ_A_JF_B_FW,
@@ -517,6 +533,43 @@ const struct iwx_device_cfg iwx_cfg_quz_a0_hr_b0 = {
 	.fw_name = IWX_QUZ_A_HR_B_FW,
 };
 
+const struct iwx_device_cfg iwx_2ax_cfg_so_gf_a0 = {
+	.fw_name = IWX_SO_A_GF_A_FW,
+	.pnvm_name = IWX_SO_A_GF_A_PNVM,
+	.uhb_supported = 1,
+};
+
+const struct iwx_device_cfg iwx_2ax_cfg_so_gf_a0_long = {
+	.fw_name = IWX_SO_A_GF_A_FW,
+	.pnvm_name = IWX_SO_A_GF_A_PNVM,
+	.uhb_supported = 1,
+	.xtal_latency = 12000,
+	.low_latency_xtal = 1,
+};
+
+const struct iwx_device_cfg iwx_2ax_cfg_so_gf4_a0 = {
+	.fw_name = IWX_SO_A_GF4_A_FW,
+	.pnvm_name = IWX_SO_A_GF4_A_PNVM,
+	.uhb_supported = 1,
+	.xtal_latency = 12000,
+	.low_latency_xtal = 1,
+};
+
+const struct iwx_device_cfg iwx_2ax_cfg_so_gf4_a0_long = {
+	.fw_name = IWX_SO_A_GF4_A_FW,
+	.pnvm_name = IWX_SO_A_GF4_A_PNVM,
+	.uhb_supported = 1,
+};
+
+const struct iwx_device_cfg iwx_2ax_cfg_ty_gf_a0 = {
+	.fw_name = IWX_TY_A_GF_A_FW,
+	.pnvm_name = IWX_TY_A_GF_A_PNVM,
+};
+
+const struct iwx_device_cfg iwx_2ax_cfg_so_jf_b0 = {
+	.fw_name = IWX_SO_A_JF_B_FW,
+};
+
 #define IWX_CFG_ANY (~0)
 
 #define IWX_CFG_MAC_TYPE_QU		0x33
@@ -525,11 +578,18 @@ const struct iwx_device_cfg iwx_cfg_quz_a0_hr_b0 = {
 #define IWX_CFG_MAC_TYPE_SO		0x37
 #define IWX_CFG_MAC_TYPE_SNJ		0x42
 #define IWX_CFG_MAC_TYPE_SOF		0x43
+#define IWX_CFG_MAC_TYPE_MA		0x44
+#define IWX_CFG_MAC_TYPE_BZ		0x46
+#define IWX_CFG_MAC_TYPE_GL		0x47
 
 #define IWX_CFG_RF_TYPE_JF2		0x105
 #define IWX_CFG_RF_TYPE_JF1		0x108
 #define IWX_CFG_RF_TYPE_HR2		0x10a
 #define IWX_CFG_RF_TYPE_HR1		0x10c
+#define IWX_CFG_RF_TYPE_GF		0x10d
+#define IWX_CFG_RF_TYPE_MR		0x110
+#define IWX_CFG_RF_TYPE_MS		0x111
+#define IWX_CFG_RF_TYPE_FM		0x112
 
 #define IWX_CFG_RF_ID_JF		0x3
 #define IWX_CFG_RF_ID_JF1		0x6
@@ -541,6 +601,7 @@ const struct iwx_device_cfg iwx_cfg_quz_a0_hr_b0 = {
 #define IWX_CFG_CORES_BT		0x0
 
 #define IWX_CFG_NO_CDB			0x0
+#define IWX_CFG_CDB			0x1
 
 #define IWX_SUBDEVICE_RF_ID(subdevice)	((uint16_t)((subdevice) & 0x00f0) >> 4)
 #define IWX_SUBDEVICE_NO_160(subdevice)	((uint16_t)((subdevice) & 0x0200) >> 9)
@@ -601,6 +662,7 @@ struct iwx_softc {
 	int qenablemsk;
 	int first_data_qid;
 	int aggqid[IEEE80211_NUM_TID];
+	int max_tfd_queue_size;
 
 	int sc_sf_state;
 
@@ -618,14 +680,21 @@ struct iwx_softc {
 	int sc_device_family;
 #define IWX_DEVICE_FAMILY_22000	1
 #define IWX_DEVICE_FAMILY_AX210	2
+	uint32_t sc_sku_id[3];
 
 	struct iwx_dma_info ctxt_info_dma;
 	struct iwx_self_init_dram init_dram;
+	struct iwx_dma_info prph_scratch_dma;
+	struct iwx_dma_info prph_info_dma;
+	struct iwx_dma_info iml_dma;
+	struct iwx_dma_info pnvm_dma;
+	uint32_t sc_pnvm_ver;
 
 	int sc_fw_chunk_done;
 	int sc_init_complete;
 #define IWX_INIT_COMPLETE	0x01
 #define IWX_CALIB_COMPLETE	0x02
+#define IWX_PNVM_COMPLETE	0x04
 
 	struct iwx_ucode_status sc_uc;
 	char sc_fwver[32];
@@ -661,6 +730,7 @@ struct iwx_softc {
 
 	struct iwx_nvm_data sc_nvm;
 	struct iwx_bf_data sc_bf;
+	const char *sc_pnvm_name;
 
 	int sc_tx_timer[IWX_NUM_TX_QUEUES];
 	int sc_rx_ba_sessions;
@@ -705,6 +775,8 @@ struct iwx_softc {
 	int sc_xtal_latency;
 	int sc_low_latency_xtal;
 	int sc_uhb_supported;
+	int sc_umac_prph_offset;
+	int sc_imr_enabled;
 
 #if NBPFILTER > 0
 	caddr_t			sc_drvbpf;

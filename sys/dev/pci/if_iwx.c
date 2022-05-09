@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.142 2022/04/16 16:21:50 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.143 2022/05/09 21:57:26 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -175,6 +175,7 @@ static const uint8_t iwx_nvm_channels_uhb[] = {
 };
 
 #define IWX_NUM_2GHZ_CHANNELS	14
+#define IWX_NUM_5GHZ_CHANNELS	37
 
 const struct iwx_rate {
 	uint16_t rate;
@@ -239,7 +240,10 @@ int	iwx_store_cscheme(struct iwx_softc *, uint8_t *, size_t);
 int	iwx_alloc_fw_monitor_block(struct iwx_softc *, uint8_t, uint8_t);
 int	iwx_alloc_fw_monitor(struct iwx_softc *, uint8_t);
 int	iwx_apply_debug_destination(struct iwx_softc *);
+void	iwx_set_ltr(struct iwx_softc *);
 int	iwx_ctxt_info_init(struct iwx_softc *, const struct iwx_fw_sects *);
+int	iwx_ctxt_info_gen3_init(struct iwx_softc *,
+	    const struct iwx_fw_sects *);
 void	iwx_ctxt_info_free_fw_img(struct iwx_softc *);
 void	iwx_ctxt_info_free_paging(struct iwx_softc *);
 int	iwx_init_fw_sec(struct iwx_softc *, const struct iwx_fw_sects *,
@@ -250,10 +254,15 @@ int	iwx_firmware_store_section(struct iwx_softc *, enum iwx_ucode_type,
 int	iwx_set_default_calib(struct iwx_softc *, const void *);
 void	iwx_fw_info_free(struct iwx_fw_info *);
 int	iwx_read_firmware(struct iwx_softc *);
+uint32_t iwx_prph_addr_mask(struct iwx_softc *);
 uint32_t iwx_read_prph_unlocked(struct iwx_softc *, uint32_t);
 uint32_t iwx_read_prph(struct iwx_softc *, uint32_t);
 void	iwx_write_prph_unlocked(struct iwx_softc *, uint32_t, uint32_t);
 void	iwx_write_prph(struct iwx_softc *, uint32_t, uint32_t);
+uint32_t iwx_read_umac_prph_unlocked(struct iwx_softc *, uint32_t);
+uint32_t iwx_read_umac_prph(struct iwx_softc *, uint32_t);
+void	iwx_write_umac_prph_unlocked(struct iwx_softc *, uint32_t, uint32_t);
+void	iwx_write_umac_prph(struct iwx_softc *, uint32_t, uint32_t);
 int	iwx_read_mem(struct iwx_softc *, uint32_t, void *, int);
 int	iwx_write_mem(struct iwx_softc *, uint32_t, const void *, int);
 int	iwx_write_mem32(struct iwx_softc *, uint32_t, uint32_t);
@@ -337,6 +346,10 @@ int	iwx_is_valid_mac_addr(const uint8_t *);
 int	iwx_nvm_get(struct iwx_softc *);
 int	iwx_load_firmware(struct iwx_softc *);
 int	iwx_start_fw(struct iwx_softc *);
+int	iwx_pnvm_handle_section(struct iwx_softc *, const uint8_t *, size_t);
+int	iwx_pnvm_parse(struct iwx_softc *, const uint8_t *, size_t);
+void	iwx_ctxt_info_gen3_set_pnvm(struct iwx_softc *);
+int	iwx_load_pnvm(struct iwx_softc *);
 int	iwx_send_tx_ant_cfg(struct iwx_softc *, uint8_t);
 int	iwx_send_phy_cfg_cmd(struct iwx_softc *);
 int	iwx_load_ucode_wait_alive(struct iwx_softc *);
@@ -357,7 +370,7 @@ void	iwx_rx_frame(struct iwx_softc *, struct mbuf *, int, uint32_t, int, int,
 	    uint32_t, struct ieee80211_rxinfo *, struct mbuf_list *);
 void	iwx_clear_tx_desc(struct iwx_softc *, struct iwx_tx_ring *, int);
 void	iwx_txd_done(struct iwx_softc *, struct iwx_tx_data *);
-void	iwx_txq_advance(struct iwx_softc *, struct iwx_tx_ring *, int);
+void	iwx_txq_advance(struct iwx_softc *, struct iwx_tx_ring *, uint16_t);
 void	iwx_rx_tx_cmd(struct iwx_softc *, struct iwx_rx_packet *,
 	    struct iwx_rx_data *);
 void	iwx_clear_oactive(struct iwx_softc *, struct iwx_tx_ring *);
@@ -381,8 +394,9 @@ int	iwx_send_cmd_pdu_status(struct iwx_softc *, uint32_t, uint16_t,
 void	iwx_free_resp(struct iwx_softc *, struct iwx_host_cmd *);
 void	iwx_cmd_done(struct iwx_softc *, int, int, int);
 const struct iwx_rate *iwx_tx_fill_cmd(struct iwx_softc *, struct iwx_node *,
-	    struct ieee80211_frame *, struct iwx_tx_cmd_gen2 *);
-void	iwx_tx_update_byte_tbl(struct iwx_tx_ring *, int, uint16_t, uint16_t);
+	    struct ieee80211_frame *, uint16_t *, uint32_t *);
+void	iwx_tx_update_byte_tbl(struct iwx_softc *, struct iwx_tx_ring *, int,
+	    uint16_t, uint16_t);
 int	iwx_tx(struct iwx_softc *, struct mbuf *, struct ieee80211_node *);
 int	iwx_flush_sta_tids(struct iwx_softc *, int, uint16_t);
 int	iwx_wait_tx_queues_empty(struct iwx_softc *);
@@ -854,16 +868,47 @@ monitor:
 	return 0;
 }
 
+void
+iwx_set_ltr(struct iwx_softc *sc)
+{
+	uint32_t ltr_val = IWX_CSR_LTR_LONG_VAL_AD_NO_SNOOP_REQ |
+	    ((IWX_CSR_LTR_LONG_VAL_AD_SCALE_USEC <<
+	    IWX_CSR_LTR_LONG_VAL_AD_NO_SNOOP_SCALE_SHIFT) &
+	    IWX_CSR_LTR_LONG_VAL_AD_NO_SNOOP_SCALE_MASK) |
+	    ((250 << IWX_CSR_LTR_LONG_VAL_AD_NO_SNOOP_VAL_SHIFT) &
+	    IWX_CSR_LTR_LONG_VAL_AD_NO_SNOOP_VAL_MASK) |
+	    IWX_CSR_LTR_LONG_VAL_AD_SNOOP_REQ |
+	    ((IWX_CSR_LTR_LONG_VAL_AD_SCALE_USEC <<
+	    IWX_CSR_LTR_LONG_VAL_AD_SNOOP_SCALE_SHIFT) &
+	    IWX_CSR_LTR_LONG_VAL_AD_SNOOP_SCALE_MASK) |
+	    (250 & IWX_CSR_LTR_LONG_VAL_AD_SNOOP_VAL);
+
+	/*
+	 * To workaround hardware latency issues during the boot process,
+	 * initialize the LTR to ~250 usec (see ltr_val above).
+	 * The firmware initializes this again later (to a smaller value).
+	 */
+	if (!sc->sc_integrated) {
+		IWX_WRITE(sc, IWX_CSR_LTR_LONG_VAL_AD, ltr_val);
+	} else if (sc->sc_integrated &&
+		   sc->sc_device_family == IWX_DEVICE_FAMILY_22000) {
+		iwx_write_prph(sc, IWX_HPM_MAC_LTR_CSR,
+		    IWX_HPM_MAC_LRT_ENABLE_ALL);
+		iwx_write_prph(sc, IWX_HPM_UMAC_LTR, ltr_val);
+	}
+}
+
 int
 iwx_ctxt_info_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
 {
 	struct iwx_context_info *ctxt_info;
 	struct iwx_context_info_rbd_cfg *rx_cfg;
-	uint32_t control_flags = 0, rb_size;
+	uint32_t control_flags = 0;
 	uint64_t paddr;
 	int err;
 
 	ctxt_info = sc->ctxt_info_dma.vaddr;
+	memset(ctxt_info, 0, sizeof(*ctxt_info));
 
 	ctxt_info->version.version = 0;
 	ctxt_info->version.mac_id =
@@ -871,16 +916,11 @@ iwx_ctxt_info_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
 	/* size is in DWs */
 	ctxt_info->version.size = htole16(sizeof(*ctxt_info) / 4);
 
-	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210)
-		rb_size = IWX_CTXT_INFO_RB_SIZE_2K;
-	else
-		rb_size = IWX_CTXT_INFO_RB_SIZE_4K;
-
 	KASSERT(IWX_RX_QUEUE_CB_SIZE(IWX_MQ_RX_TABLE_SIZE) < 0xF);
 	control_flags = IWX_CTXT_INFO_TFD_FORMAT_LONG |
 			(IWX_RX_QUEUE_CB_SIZE(IWX_MQ_RX_TABLE_SIZE) <<
 			 IWX_CTXT_INFO_RB_CB_SIZE_POS) |
-			(rb_size << IWX_CTXT_INFO_RB_SIZE_POS);
+			(IWX_CTXT_INFO_RB_SIZE_4K << IWX_CTXT_INFO_RB_SIZE_POS);
 	ctxt_info->control.control_flags = htole32(control_flags);
 
 	/* initialize RX default queue */
@@ -891,7 +931,7 @@ iwx_ctxt_info_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
 
 	/* initialize TX command queue */
 	ctxt_info->hcmd_cfg.cmd_queue_addr =
-		htole64(sc->txq[IWX_DQA_CMD_QUEUE].desc_dma.paddr);
+	    htole64(sc->txq[IWX_DQA_CMD_QUEUE].desc_dma.paddr);
 	ctxt_info->hcmd_cfg.cmd_queue_size =
 		IWX_TFD_QUEUE_CB_SIZE(IWX_TX_RING_COUNT);
 
@@ -925,11 +965,115 @@ iwx_ctxt_info_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
 		iwx_ctxt_info_free_fw_img(sc);
 		return EBUSY;
 	}
+
+	iwx_set_ltr(sc);
 	iwx_write_prph(sc, IWX_UREG_CPU_INIT_RUN, 1);
 	iwx_nic_unlock(sc);
 
 	/* Context info will be released upon alive or failure to get one */
 
+	return 0;
+}
+
+int
+iwx_ctxt_info_gen3_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
+{
+	struct iwx_context_info_gen3 *ctxt_info_gen3;
+	struct iwx_prph_scratch *prph_scratch;
+	struct iwx_prph_scratch_ctrl_cfg *prph_sc_ctrl;
+	uint16_t cb_size;
+	uint32_t control_flags, scratch_size;
+	uint64_t paddr;
+	int err;
+
+	if (sc->sc_fw.iml == NULL || sc->sc_fw.iml_len == 0) {
+		printf("%s: no image loader found in firmware file\n",
+		    DEVNAME(sc));
+		iwx_ctxt_info_free_fw_img(sc);
+		return EINVAL;
+	}
+
+	err = iwx_dma_contig_alloc(sc->sc_dmat, &sc->iml_dma,
+	    sc->sc_fw.iml_len, 0);
+	if (err) {
+		printf("%s: could not allocate DMA memory for "
+		    "firmware image loader\n", DEVNAME(sc));
+		iwx_ctxt_info_free_fw_img(sc);
+		return ENOMEM;
+	}
+
+	prph_scratch = sc->prph_scratch_dma.vaddr;
+	memset(prph_scratch, 0, sizeof(*prph_scratch));
+	prph_sc_ctrl = &prph_scratch->ctrl_cfg;
+	prph_sc_ctrl->version.version = 0;
+	prph_sc_ctrl->version.mac_id = htole16(IWX_READ(sc, IWX_CSR_HW_REV));
+	prph_sc_ctrl->version.size = htole16(sizeof(*prph_scratch) / 4);
+
+	control_flags = IWX_PRPH_SCRATCH_RB_SIZE_4K |
+	    IWX_PRPH_SCRATCH_MTR_MODE |
+	    (IWX_PRPH_MTR_FORMAT_256B & IWX_PRPH_SCRATCH_MTR_FORMAT);
+	if (sc->sc_imr_enabled)
+		control_flags |= IWX_PRPH_SCRATCH_IMR_DEBUG_EN;
+	prph_sc_ctrl->control.control_flags = htole32(control_flags);
+
+	/* initialize RX default queue */
+	prph_sc_ctrl->rbd_cfg.free_rbd_addr =
+	    htole64(sc->rxq.free_desc_dma.paddr);
+
+	/* allocate ucode sections in dram and set addresses */
+	err = iwx_init_fw_sec(sc, fws, &prph_scratch->dram);
+	if (err) {
+		iwx_dma_contig_free(&sc->iml_dma);
+		iwx_ctxt_info_free_fw_img(sc);
+		return err;
+	}
+
+	ctxt_info_gen3 = sc->ctxt_info_dma.vaddr;
+	memset(ctxt_info_gen3, 0, sizeof(*ctxt_info_gen3));
+	ctxt_info_gen3->prph_info_base_addr = htole64(sc->prph_info_dma.paddr);
+	ctxt_info_gen3->prph_scratch_base_addr =
+	    htole64(sc->prph_scratch_dma.paddr);
+	scratch_size = sizeof(*prph_scratch);
+	ctxt_info_gen3->prph_scratch_size = htole32(scratch_size);
+	ctxt_info_gen3->cr_head_idx_arr_base_addr =
+	    htole64(sc->rxq.stat_dma.paddr);
+	ctxt_info_gen3->tr_tail_idx_arr_base_addr =
+	    htole64(sc->prph_info_dma.paddr + PAGE_SIZE / 2);
+	ctxt_info_gen3->cr_tail_idx_arr_base_addr =
+	    htole64(sc->prph_info_dma.paddr + 3 * PAGE_SIZE / 4);
+	ctxt_info_gen3->mtr_base_addr =
+	    htole64(sc->txq[IWX_DQA_CMD_QUEUE].desc_dma.paddr);
+	ctxt_info_gen3->mcr_base_addr = htole64(sc->rxq.used_desc_dma.paddr);
+	cb_size = IWX_TFD_QUEUE_CB_SIZE(IWX_TX_RING_COUNT);
+	ctxt_info_gen3->mtr_size = htole16(cb_size);
+	cb_size = IWX_RX_QUEUE_CB_SIZE(IWX_MQ_RX_TABLE_SIZE);
+	ctxt_info_gen3->mcr_size = htole16(cb_size);
+
+	memcpy(sc->iml_dma.vaddr, sc->sc_fw.iml, sc->sc_fw.iml_len);
+
+	paddr = sc->ctxt_info_dma.paddr;
+	IWX_WRITE(sc, IWX_CSR_CTXT_INFO_ADDR, paddr & 0xffffffff);
+	IWX_WRITE(sc, IWX_CSR_CTXT_INFO_ADDR + 4, paddr >> 32);
+
+	paddr = sc->iml_dma.paddr;
+	IWX_WRITE(sc, IWX_CSR_IML_DATA_ADDR, paddr & 0xffffffff);
+	IWX_WRITE(sc, IWX_CSR_IML_DATA_ADDR + 4, paddr >> 32);
+	IWX_WRITE(sc, IWX_CSR_IML_SIZE_ADDR, sc->sc_fw.iml_len);
+
+	IWX_SETBITS(sc, IWX_CSR_CTXT_INFO_BOOT_CTRL,
+		    IWX_CSR_AUTO_FUNC_BOOT_ENA);
+	
+	/* kick FW self load */
+	if (!iwx_nic_lock(sc)) {
+		iwx_dma_contig_free(&sc->iml_dma);
+		iwx_ctxt_info_free_fw_img(sc);
+		return EBUSY;
+	}
+	iwx_set_ltr(sc);
+	iwx_write_umac_prph(sc, IWX_UREG_CPU_INIT_RUN, 1);
+	iwx_nic_unlock(sc);
+
+	/* Context info will be released upon alive or failure to get one */
 	return 0;
 }
 
@@ -1018,6 +1162,9 @@ iwx_fw_info_free(struct iwx_fw_info *fw)
 	fw->fw_rawsize = 0;
 	/* don't touch fw->fw_status */
 	memset(fw->fw_sects, 0, sizeof(fw->fw_sects));
+	free(fw->iml, M_DEVBUF, fw->iml_len);
+	fw->iml = NULL;
+	fw->iml_len = 0;
 }
 
 #define IWX_FW_ADDR_CACHE_CONTROL 0xC0000000
@@ -1346,6 +1493,21 @@ iwx_read_firmware(struct iwx_softc *sc)
 		case IWX_UCODE_TLV_FW_MEM_SEG:
 			break;
 
+		case IWX_UCODE_TLV_IML:
+			if (sc->sc_fw.iml != NULL) {
+				free(fw->iml, M_DEVBUF, fw->iml_len);
+				fw->iml_len = 0;
+			}
+			sc->sc_fw.iml = malloc(tlv_len, M_DEVBUF,
+			    M_WAIT | M_CANFAIL | M_ZERO);
+			if (sc->sc_fw.iml == NULL) {
+				err = ENOMEM;
+				goto parse_out;
+			}
+			memcpy(sc->sc_fw.iml, tlv_data, tlv_len);
+			sc->sc_fw.iml_len = tlv_len;
+			break;
+
 		case IWX_UCODE_TLV_CMD_VERSIONS:
 			if (tlv_len % sizeof(struct iwx_fw_cmd_version)) {
 				tlv_len /= sizeof(struct iwx_fw_cmd_version);
@@ -1424,10 +1586,19 @@ iwx_read_firmware(struct iwx_softc *sc)
 }
 
 uint32_t
+iwx_prph_addr_mask(struct iwx_softc *sc)
+{
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210)
+		return 0x00ffffff;
+	else
+		return 0x000fffff;
+}
+
+uint32_t
 iwx_read_prph_unlocked(struct iwx_softc *sc, uint32_t addr)
 {
-	IWX_WRITE(sc,
-	    IWX_HBUS_TARG_PRPH_RADDR, ((addr & 0x000fffff) | (3 << 24)));
+	uint32_t mask = iwx_prph_addr_mask(sc);
+	IWX_WRITE(sc, IWX_HBUS_TARG_PRPH_RADDR, ((addr & mask) | (3 << 24)));
 	IWX_BARRIER_READ_WRITE(sc);
 	return IWX_READ(sc, IWX_HBUS_TARG_PRPH_RDAT);
 }
@@ -1442,8 +1613,8 @@ iwx_read_prph(struct iwx_softc *sc, uint32_t addr)
 void
 iwx_write_prph_unlocked(struct iwx_softc *sc, uint32_t addr, uint32_t val)
 {
-	IWX_WRITE(sc,
-	    IWX_HBUS_TARG_PRPH_WADDR, ((addr & 0x000fffff) | (3 << 24)));
+	uint32_t mask = iwx_prph_addr_mask(sc);
+	IWX_WRITE(sc, IWX_HBUS_TARG_PRPH_WADDR, ((addr & mask) | (3 << 24)));
 	IWX_BARRIER_WRITE(sc);
 	IWX_WRITE(sc, IWX_HBUS_TARG_PRPH_WDAT, val);
 }
@@ -1460,6 +1631,30 @@ iwx_write_prph64(struct iwx_softc *sc, uint64_t addr, uint64_t val)
 {
 	iwx_write_prph(sc, (uint32_t)addr, val & 0xffffffff);
 	iwx_write_prph(sc, (uint32_t)addr + 4, val >> 32);
+}
+
+uint32_t
+iwx_read_umac_prph_unlocked(struct iwx_softc *sc, uint32_t addr)
+{
+	return iwx_read_prph_unlocked(sc, addr + sc->sc_umac_prph_offset);
+}
+
+uint32_t
+iwx_read_umac_prph(struct iwx_softc *sc, uint32_t addr)
+{
+	return iwx_read_prph(sc, addr + sc->sc_umac_prph_offset);
+}
+
+void
+iwx_write_umac_prph_unlocked(struct iwx_softc *sc, uint32_t addr, uint32_t val)
+{
+	iwx_write_prph_unlocked(sc, addr + sc->sc_umac_prph_offset, val);
+}
+
+void
+iwx_write_umac_prph(struct iwx_softc *sc, uint32_t addr, uint32_t val)
+{
+	iwx_write_prph(sc, addr + sc->sc_umac_prph_offset, val);
 }
 
 int
@@ -1609,12 +1804,17 @@ iwx_dma_contig_alloc(bus_dma_tag_t tag, struct iwx_dma_info *dma,
 		goto fail;
 
 	err = bus_dmamem_alloc(tag, size, alignment, 0, &dma->seg, 1, &nsegs,
-	    BUS_DMA_NOWAIT);
+	    BUS_DMA_NOWAIT | BUS_DMA_ZERO);
 	if (err)
 		goto fail;
 
+	if (nsegs > 1) {
+		err = ENOMEM;
+		goto fail;
+	}
+
 	err = bus_dmamem_map(tag, &dma->seg, 1, size, &va,
-	    BUS_DMA_NOWAIT);
+	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
 	if (err)
 		goto fail;
 	dma->vaddr = va;
@@ -1624,7 +1824,6 @@ iwx_dma_contig_alloc(bus_dma_tag_t tag, struct iwx_dma_info *dma,
 	if (err)
 		goto fail;
 
-	memset(dma->vaddr, 0, size);
 	bus_dmamap_sync(tag, dma->map, 0, size, BUS_DMASYNC_PREWRITE);
 	dma->paddr = dma->map->dm_segs[0].ds_addr;
 
@@ -1660,8 +1859,12 @@ iwx_alloc_rx_ring(struct iwx_softc *sc, struct iwx_rx_ring *ring)
 	ring->cur = 0;
 
 	/* Allocate RX descriptors (256-byte aligned). */
-	size = IWX_RX_MQ_RING_COUNT * sizeof(uint64_t);
-	err = iwx_dma_contig_alloc(sc->sc_dmat, &ring->free_desc_dma, size, 256);
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210)
+		size = sizeof(struct iwx_rx_transfer_desc);
+	else
+		size = sizeof(uint64_t);
+	err = iwx_dma_contig_alloc(sc->sc_dmat, &ring->free_desc_dma,
+	    size * IWX_RX_MQ_RING_COUNT, 256);
 	if (err) {
 		printf("%s: could not allocate RX ring DMA memory\n",
 		    DEVNAME(sc));
@@ -1670,8 +1873,11 @@ iwx_alloc_rx_ring(struct iwx_softc *sc, struct iwx_rx_ring *ring)
 	ring->desc = ring->free_desc_dma.vaddr;
 
 	/* Allocate RX status area (16-byte aligned). */
-	err = iwx_dma_contig_alloc(sc->sc_dmat, &ring->stat_dma,
-	    sizeof(*ring->stat), 16);
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210)
+		size = sizeof(uint16_t);
+	else
+		size = sizeof(*ring->stat);
+	err = iwx_dma_contig_alloc(sc->sc_dmat, &ring->stat_dma, size, 16);
 	if (err) {
 		printf("%s: could not allocate RX status DMA memory\n",
 		    DEVNAME(sc));
@@ -1679,9 +1885,12 @@ iwx_alloc_rx_ring(struct iwx_softc *sc, struct iwx_rx_ring *ring)
 	}
 	ring->stat = ring->stat_dma.vaddr;
 
-	size = IWX_RX_MQ_RING_COUNT * sizeof(uint32_t);
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210)
+		size = sizeof(struct iwx_rx_completion_desc);
+	else
+		size = sizeof(uint32_t);
 	err = iwx_dma_contig_alloc(sc->sc_dmat, &ring->used_desc_dma,
-	    size, 256);
+	    size * IWX_RX_MQ_RING_COUNT, 256);
 	if (err) {
 		printf("%s: could not allocate RX ring DMA memory\n",
 		    DEVNAME(sc));
@@ -1717,11 +1926,20 @@ iwx_disable_rx_dma(struct iwx_softc *sc)
 	int ntries;
 
 	if (iwx_nic_lock(sc)) {
-		iwx_write_prph(sc, IWX_RFH_RXF_DMA_CFG, 0);
+		if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210)
+			iwx_write_umac_prph(sc, IWX_RFH_RXF_DMA_CFG_GEN3, 0);
+		else
+			iwx_write_prph(sc, IWX_RFH_RXF_DMA_CFG, 0);
 		for (ntries = 0; ntries < 1000; ntries++) {
-			if (iwx_read_prph(sc, IWX_RFH_GEN_STATUS) &
-			    IWX_RXF_DMA_IDLE)
-				break;
+			if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210) {
+				if (iwx_read_umac_prph(sc,
+				    IWX_RFH_GEN_STATUS_GEN3) & IWX_RXF_DMA_IDLE)
+					break;
+			} else {
+				if (iwx_read_prph(sc, IWX_RFH_GEN_STATUS) &
+				    IWX_RXF_DMA_IDLE)
+					break;
+			}
 			DELAY(10);
 		}
 		iwx_nic_unlock(sc);
@@ -1734,7 +1952,11 @@ iwx_reset_rx_ring(struct iwx_softc *sc, struct iwx_rx_ring *ring)
 	ring->cur = 0;
 	bus_dmamap_sync(sc->sc_dmat, ring->stat_dma.map, 0,
 	    ring->stat_dma.size, BUS_DMASYNC_PREWRITE);
-	memset(ring->stat, 0, sizeof(*ring->stat));
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210) {
+		uint16_t *status = sc->rxq.stat_dma.vaddr;
+		*status = 0;
+	} else
+		memset(ring->stat, 0, sizeof(*ring->stat));
 	bus_dmamap_sync(sc->sc_dmat, ring->stat_dma.map, 0,
 	    ring->stat_dma.size, BUS_DMASYNC_POSTWRITE);
 
@@ -1770,11 +1992,15 @@ iwx_alloc_tx_ring(struct iwx_softc *sc, struct iwx_tx_ring *ring, int qid)
 	bus_addr_t paddr;
 	bus_size_t size;
 	int i, err;
+	size_t bc_tbl_size;
+	bus_size_t bc_align;
 
 	ring->qid = qid;
 	ring->queued = 0;
 	ring->cur = 0;
+	ring->cur_hw = 0;
 	ring->tail = 0;
+	ring->tail_hw = 0;
 
 	/* Allocate TX descriptors (256-byte aligned). */
 	size = IWX_TX_RING_COUNT * sizeof(struct iwx_tfh_tfd);
@@ -1802,8 +2028,16 @@ iwx_alloc_tx_ring(struct iwx_softc *sc, struct iwx_tx_ring *ring, int qid)
 	 * to firmware-side queue IDs.
 	 */
 
-	err = iwx_dma_contig_alloc(sc->sc_dmat, &ring->bc_tbl,
-	    sizeof(struct iwx_agn_scd_bc_tbl), 0);
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210) {
+		bc_tbl_size = sizeof(struct iwx_gen3_bc_tbl_entry) *
+		    IWX_TFD_QUEUE_BC_SIZE_GEN3_AX210;
+		bc_align = 128;
+	} else {
+		bc_tbl_size = sizeof(struct iwx_agn_scd_bc_tbl);
+		bc_align = 64;
+	}
+	err = iwx_dma_contig_alloc(sc->sc_dmat, &ring->bc_tbl, bc_tbl_size,
+	    bc_align);
 	if (err) {
 		printf("%s: could not allocate byte count table DMA memory\n",
 		    DEVNAME(sc));
@@ -1883,7 +2117,9 @@ iwx_reset_tx_ring(struct iwx_softc *sc, struct iwx_tx_ring *ring)
 	}
 	ring->queued = 0;
 	ring->cur = 0;
+	ring->cur_hw = 0;
 	ring->tail = 0;
+	ring->tail_hw = 0;
 	ring->tid = 0;
 }
 
@@ -2239,7 +2475,7 @@ iwx_conf_msix_hw(struct iwx_softc *sc, int stopped)
 	if (!sc->sc_msix) {
 		/* Newer chips default to MSIX. */
 		if (!stopped && iwx_nic_lock(sc)) {
-			iwx_write_prph(sc, IWX_UREG_CHICK,
+			iwx_write_umac_prph(sc, IWX_UREG_CHICK,
 			    IWX_UREG_CHICK_MSI_ENABLE);
 			iwx_nic_unlock(sc);
 		}
@@ -2247,7 +2483,8 @@ iwx_conf_msix_hw(struct iwx_softc *sc, int stopped)
 	}
 
 	if (!stopped && iwx_nic_lock(sc)) {
-		iwx_write_prph(sc, IWX_UREG_CHICK, IWX_UREG_CHICK_MSIX_ENABLE);
+		iwx_write_umac_prph(sc, IWX_UREG_CHICK,
+		    IWX_UREG_CHICK_MSIX_ENABLE);
 		iwx_nic_unlock(sc);
 	}
 
@@ -2279,7 +2516,7 @@ iwx_conf_msix_hw(struct iwx_softc *sc, int stopped)
 	    vector | IWX_MSIX_NON_AUTO_CLEAR_CAUSE);
 	IWX_WRITE_1(sc, IWX_CSR_MSIX_IVAR(IWX_MSIX_IVAR_CAUSE_REG_WAKEUP),
 	    vector | IWX_MSIX_NON_AUTO_CLEAR_CAUSE);
-	IWX_WRITE_1(sc, IWX_CSR_MSIX_IVAR(IWX_MSIX_IVAR_CAUSE_REG_IML),
+	IWX_WRITE_1(sc, IWX_CSR_MSIX_IVAR(IWX_MSIX_IVAR_CAUSE_REG_RESET_DONE),
 	    vector | IWX_MSIX_NON_AUTO_CLEAR_CAUSE);
 	IWX_WRITE_1(sc, IWX_CSR_MSIX_IVAR(IWX_MSIX_IVAR_CAUSE_REG_CT_KILL),
 	    vector | IWX_MSIX_NON_AUTO_CLEAR_CAUSE);
@@ -2307,7 +2544,7 @@ iwx_conf_msix_hw(struct iwx_softc *sc, int stopped)
 	IWX_CLRBITS(sc, IWX_CSR_MSIX_HW_INT_MASK_AD,
 	    IWX_MSIX_HW_INT_CAUSES_REG_ALIVE |
 	    IWX_MSIX_HW_INT_CAUSES_REG_WAKEUP |
-	    IWX_MSIX_HW_INT_CAUSES_REG_IML |
+	    IWX_MSIX_HW_INT_CAUSES_REG_RESET_DONE |
 	    IWX_MSIX_HW_INT_CAUSES_REG_CT_KILL |
 	    IWX_MSIX_HW_INT_CAUSES_REG_RF_KILL |
 	    IWX_MSIX_HW_INT_CAUSES_REG_PERIODIC |
@@ -2347,15 +2584,18 @@ iwx_start_hw(struct iwx_softc *sc)
 	if (err)
 		return err;
 
-	err = iwx_clear_persistence_bit(sc);
-	if (err)
-		return err;
+	if (sc->sc_device_family == IWX_DEVICE_FAMILY_22000) {
+		err = iwx_clear_persistence_bit(sc);
+		if (err)
+			return err;
+	}
 
 	/* Reset the entire device */
 	IWX_SETBITS(sc, IWX_CSR_RESET, IWX_CSR_RESET_REG_FLAG_SW_RESET);
 	DELAY(5000);
 
-	if (sc->sc_integrated) {
+	if (sc->sc_device_family == IWX_DEVICE_FAMILY_22000 &&
+	    sc->sc_integrated) {
 		IWX_SETBITS(sc, IWX_CSR_GP_CNTRL,
 		    IWX_CSR_GP_CNTRL_REG_FLAG_INIT_DONE);
 		DELAY(20);
@@ -2446,6 +2686,7 @@ iwx_stop_device(struct iwx_softc *sc)
 	iwx_prepare_card_hw(sc);
 
 	iwx_ctxt_info_free_paging(sc);
+	iwx_dma_contig_free(&sc->pnvm_dma);
 }
 
 void
@@ -2503,7 +2744,8 @@ iwx_nic_init(struct iwx_softc *sc)
 	int err;
 
 	iwx_apm_init(sc);
-	iwx_nic_config(sc);
+	if (sc->sc_device_family < IWX_DEVICE_FAMILY_AX210)
+		iwx_nic_config(sc);
 
 	err = iwx_nic_rx_init(sc);
 	if (err)
@@ -2593,8 +2835,9 @@ iwx_enable_txq(struct iwx_softc *sc, int sta_id, int qid, int tid,
 		goto out;
 	}
 
-	if (wr_idx != ring->cur) {
-		DPRINTF(("fw write index is %d but ring is %d\n", wr_idx, ring->cur));
+	if (wr_idx != ring->cur_hw) {
+		DPRINTF(("fw write index is %d but ring is %d\n",
+		    wr_idx, ring->cur_hw));
 		err = EIO;
 		goto out;
 	}
@@ -2781,6 +3024,10 @@ iwx_init_channel_map(struct iwx_softc *sc, uint16_t *channel_profile_v3,
 			ch_flags = le32_to_cpup(channel_profile_v4 + ch_idx);
 		else
 			ch_flags = le16_to_cpup(channel_profile_v3 + ch_idx);
+
+		/* net80211 cannot handle 6 GHz channel numbers yet */
+		if (ch_idx >= IWX_NUM_2GHZ_CHANNELS + IWX_NUM_5GHZ_CHANNELS)
+			break;
 
 		is_5ghz = ch_idx >= IWX_NUM_2GHZ_CHANNELS;
 		if (is_5ghz && !data->sku_cap_band_52GHz_enable)
@@ -3580,7 +3827,10 @@ iwx_load_firmware(struct iwx_softc *sc)
 	sc->sc_uc.uc_ok = 0;
 
 	fws = &sc->sc_fw.fw_sects[IWX_UCODE_TYPE_REGULAR];
-	err = iwx_ctxt_info_init(sc, fws);
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210)
+		err = iwx_ctxt_info_gen3_init(sc, fws);
+	else
+		err = iwx_ctxt_info_init(sc, fws);
 	if (err) {
 		printf("%s: could not init context info\n", DEVNAME(sc));
 		return err;
@@ -3593,6 +3843,7 @@ iwx_load_firmware(struct iwx_softc *sc)
 		iwx_ctxt_info_free_paging(sc);
 	}
 
+	iwx_dma_contig_free(&sc->iml_dma);
 	iwx_ctxt_info_free_fw_img(sc);
 
 	if (!sc->sc_uc.uc_ok)
@@ -3627,6 +3878,237 @@ iwx_start_fw(struct iwx_softc *sc)
 	iwx_enable_fwload_interrupt(sc);
 
 	return iwx_load_firmware(sc);
+}
+
+int
+iwx_pnvm_handle_section(struct iwx_softc *sc, const uint8_t *data,
+    size_t len)
+{
+	const struct iwx_ucode_tlv *tlv;
+	uint32_t sha1 = 0;
+	uint16_t mac_type = 0, rf_id = 0;
+	uint8_t *pnvm_data = NULL, *tmp;
+	int hw_match = 0;
+	uint32_t size = 0;
+	int err;
+
+	while (len >= sizeof(*tlv)) {
+		uint32_t tlv_len, tlv_type;
+
+		len -= sizeof(*tlv);
+		tlv = (const void *)data;
+
+		tlv_len = le32toh(tlv->length);
+		tlv_type = le32toh(tlv->type);
+
+		if (len < tlv_len) {
+			printf("%s: invalid TLV len: %zd/%u\n",
+			    DEVNAME(sc), len, tlv_len);
+			err = EINVAL;
+			goto out;
+		}
+
+		data += sizeof(*tlv);
+
+		switch (tlv_type) {
+		case IWX_UCODE_TLV_PNVM_VERSION:
+			if (tlv_len < sizeof(uint32_t))
+				break;
+
+			sha1 = le32_to_cpup((const uint32_t *)data);
+			break;
+		case IWX_UCODE_TLV_HW_TYPE:
+			if (tlv_len < 2 * sizeof(uint16_t))
+				break;
+
+			if (hw_match)
+				break;
+
+			mac_type = le16_to_cpup((const uint16_t *)data);
+			rf_id = le16_to_cpup((const uint16_t *)(data +
+			    sizeof(uint16_t)));
+
+			if (mac_type == IWX_CSR_HW_REV_TYPE(sc->sc_hw_rev) &&
+			    rf_id == IWX_CSR_HW_RFID_TYPE(sc->sc_hw_rf_id))
+				hw_match = 1;
+			break;
+		case IWX_UCODE_TLV_SEC_RT: {
+			const struct iwx_pnvm_section *section;
+			uint32_t data_len;
+
+			section = (const void *)data;
+			data_len = tlv_len - sizeof(*section);
+
+			/* TODO: remove, this is a deprecated separator */
+			if (le32_to_cpup((const uint32_t *)data) == 0xddddeeee)
+				break;
+
+			tmp = malloc(size + data_len, M_DEVBUF,
+			    M_WAITOK | M_CANFAIL | M_ZERO);
+			if (tmp == NULL) {
+				err = ENOMEM;
+				goto out;
+			}
+			memcpy(tmp, pnvm_data, size);
+			memcpy(tmp + size, section->data, data_len);
+			free(pnvm_data, M_DEVBUF, size);
+			pnvm_data = tmp;
+			size += data_len;
+			break;
+		}
+		case IWX_UCODE_TLV_PNVM_SKU:
+			/* New PNVM section started, stop parsing. */
+			goto done;
+		default:
+			break;
+		}
+
+		len -= roundup(tlv_len, 4);
+		data += roundup(tlv_len, 4);
+	}
+done:
+	if (!hw_match || size == 0) {
+		err = ENOENT;
+		goto out;
+	}
+
+	err = iwx_dma_contig_alloc(sc->sc_dmat, &sc->pnvm_dma, size, 0);
+	if (err) {
+		printf("%s: could not allocate DMA memory for PNVM\n",
+		    DEVNAME(sc));
+		err = ENOMEM;
+		goto out;
+	}
+	memcpy(sc->pnvm_dma.vaddr, pnvm_data, size);
+	iwx_ctxt_info_gen3_set_pnvm(sc);
+	sc->sc_pnvm_ver = sha1;
+out:
+	free(pnvm_data, M_DEVBUF, size);
+	return err;
+}
+
+int
+iwx_pnvm_parse(struct iwx_softc *sc, const uint8_t *data, size_t len)
+{
+	const struct iwx_ucode_tlv *tlv;
+
+	while (len >= sizeof(*tlv)) {
+		uint32_t tlv_len, tlv_type;
+
+		len -= sizeof(*tlv);
+		tlv = (const void *)data;
+
+		tlv_len = le32toh(tlv->length);
+		tlv_type = le32toh(tlv->type);
+
+		if (len < tlv_len)
+			return EINVAL;
+
+		if (tlv_type == IWX_UCODE_TLV_PNVM_SKU) {
+			const struct iwx_sku_id *sku_id =
+				(const void *)(data + sizeof(*tlv));
+
+			data += sizeof(*tlv) + roundup(tlv_len, 4);
+			len -= roundup(tlv_len, 4);
+
+			if (sc->sc_sku_id[0] == le32toh(sku_id->data[0]) &&
+			    sc->sc_sku_id[1] == le32toh(sku_id->data[1]) &&
+			    sc->sc_sku_id[2] == le32toh(sku_id->data[2]) &&
+			    iwx_pnvm_handle_section(sc, data, len) == 0)
+				return 0;
+		} else {
+			data += sizeof(*tlv) + roundup(tlv_len, 4);
+			len -= roundup(tlv_len, 4);
+		}
+	}
+
+	return ENOENT;
+}
+
+/* Make AX210 firmware loading context point at PNVM image in DMA memory. */
+void
+iwx_ctxt_info_gen3_set_pnvm(struct iwx_softc *sc)
+{
+	struct iwx_prph_scratch *prph_scratch;
+	struct iwx_prph_scratch_ctrl_cfg *prph_sc_ctrl;
+
+	prph_scratch = sc->prph_scratch_dma.vaddr;
+	prph_sc_ctrl = &prph_scratch->ctrl_cfg;
+
+	prph_sc_ctrl->pnvm_cfg.pnvm_base_addr = htole64(sc->pnvm_dma.paddr);
+	prph_sc_ctrl->pnvm_cfg.pnvm_size = htole32(sc->pnvm_dma.size);
+
+	bus_dmamap_sync(sc->sc_dmat, sc->pnvm_dma.map, 0, sc->pnvm_dma.size,
+	    BUS_DMASYNC_PREWRITE);
+}
+
+/*
+ * Load platform-NVM (non-volatile-memory) data from the filesystem.
+ * This data apparently contains regulatory information and affects device
+ * channel configuration.
+ * The SKU of AX210 devices tells us which PNVM file section is needed.
+ * Pre-AX210 devices store NVM data onboard.
+ */
+int
+iwx_load_pnvm(struct iwx_softc *sc)
+{
+	const int wait_flags = IWX_PNVM_COMPLETE;
+	int s, err = 0;
+	u_char *pnvm_data = NULL;
+	size_t pnvm_size = 0;
+
+	if (sc->sc_sku_id[0] == 0 &&
+	    sc->sc_sku_id[1] == 0 &&
+	    sc->sc_sku_id[2] == 0)
+		return 0;
+
+	if (sc->sc_pnvm_name) {
+		if (sc->pnvm_dma.vaddr == NULL) {
+			err = loadfirmware(sc->sc_pnvm_name,
+			    &pnvm_data, &pnvm_size);
+			if (err) {
+				printf("%s: could not read %s (error %d)\n",
+				    DEVNAME(sc), sc->sc_pnvm_name, err);
+				return err;
+			}
+
+			err = iwx_pnvm_parse(sc, pnvm_data, pnvm_size);
+			if (err && err != ENOENT) {
+				free(pnvm_data, M_DEVBUF, pnvm_size);
+				return err;
+			}
+		} else
+			iwx_ctxt_info_gen3_set_pnvm(sc);
+	}
+
+	s = splnet();
+
+	if (!iwx_nic_lock(sc)) {
+		splx(s);
+		free(pnvm_data, M_DEVBUF, pnvm_size);
+		return EBUSY;
+	}
+
+	/*
+	 * If we don't have a platform NVM file simply ask firmware
+	 * to proceed without it.
+	 */
+
+	iwx_write_umac_prph(sc, IWX_UREG_DOORBELL_TO_ISR6,
+	    IWX_UREG_DOORBELL_TO_ISR6_PNVM);
+
+	/* Wait for the pnvm complete notification from firmware. */
+	while ((sc->sc_init_complete & wait_flags) != wait_flags) {
+		err = tsleep_nsec(&sc->sc_init_complete, 0, "iwxinit",
+		    SEC_TO_NSEC(2));
+		if (err)
+			break;
+	}
+
+	splx(s);
+	iwx_nic_unlock(sc);
+	free(pnvm_data, M_DEVBUF, pnvm_size);
+	return err;
 }
 
 int
@@ -3679,6 +4161,12 @@ iwx_load_ucode_wait_alive(struct iwx_softc *sc)
 	err = iwx_start_fw(sc);
 	if (err)
 		return err;
+
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210) {
+		err = iwx_load_pnvm(sc);
+		if (err)
+			return err;
+	}
 
 	iwx_post_alive(sc);
 
@@ -3770,11 +4258,20 @@ iwx_update_rx_desc(struct iwx_softc *sc, struct iwx_rx_ring *ring, int idx)
 {
 	struct iwx_rx_data *data = &ring->data[idx];
 
-	((uint64_t *)ring->desc)[idx] =
-	    htole64(data->map->dm_segs[0].ds_addr | (idx & 0x0fff));
-	bus_dmamap_sync(sc->sc_dmat, ring->free_desc_dma.map,
-	    idx * sizeof(uint64_t), sizeof(uint64_t),
-	    BUS_DMASYNC_PREWRITE);
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210) {
+		struct iwx_rx_transfer_desc *desc = ring->desc;
+		desc[idx].rbid = htole16(idx & 0xffff);
+		desc[idx].addr = htole64(data->map->dm_segs[0].ds_addr);
+		bus_dmamap_sync(sc->sc_dmat, ring->free_desc_dma.map,
+		    idx * sizeof(*desc), sizeof(*desc),
+		    BUS_DMASYNC_PREWRITE);
+	} else {
+		((uint64_t *)ring->desc)[idx] =
+		    htole64(data->map->dm_segs[0].ds_addr | (idx & 0x0fff));
+		bus_dmamap_sync(sc->sc_dmat, ring->free_desc_dma.map,
+		    idx * sizeof(uint64_t), sizeof(uint64_t),
+		    BUS_DMASYNC_PREWRITE);
+	}
 }
 
 int
@@ -3830,8 +4327,13 @@ iwx_rxmq_get_signal_strength(struct iwx_softc *sc,
 {
 	int energy_a, energy_b;
 
-	energy_a = desc->v1.energy_a;
-	energy_b = desc->v1.energy_b;
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210) {
+		energy_a = desc->v3.energy_a;
+		energy_b = desc->v3.energy_b;
+	} else {
+		energy_a = desc->v1.energy_a;
+		energy_b = desc->v1.energy_b;
+	}
 	energy_a = energy_a ? -energy_a : -256;
 	energy_b = energy_b ? -energy_b : -256;
 	return MAX(energy_a, energy_b);
@@ -4453,6 +4955,17 @@ iwx_rx_mpdu_mq(struct iwx_softc *sc, struct mbuf *m, void *pktdata,
 	int rssi;
 	uint8_t chanidx;
 	uint16_t phy_info;
+	size_t desc_size;
+
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210)
+		desc_size = sizeof(*desc);
+	else
+		desc_size = IWX_RX_DESC_SIZE_V1;
+
+	if (maxlen < desc_size) {
+		m_freem(m);
+		return; /* drop */
+	}
 
 	desc = (struct iwx_rx_mpdu_desc *)pktdata;
 
@@ -4477,13 +4990,13 @@ iwx_rx_mpdu_mq(struct iwx_softc *sc, struct mbuf *m, void *pktdata,
 		m_freem(m);
 		return;
 	}
-	if (len > maxlen - sizeof(*desc)) {
+	if (len > maxlen - desc_size) {
 		IC2IFP(ic)->if_ierrors++;
 		m_freem(m);
 		return;
 	}
 
-	m->m_data = pktdata + sizeof(*desc);
+	m->m_data = pktdata + desc_size;
 	m->m_pkthdr.len = m->m_len = len;
 
 	/* Account for padding following the frame header. */
@@ -4565,17 +5078,24 @@ iwx_rx_mpdu_mq(struct iwx_softc *sc, struct mbuf *m, void *pktdata,
 		return;
 	}
 
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210) {
+		rate_n_flags = le32toh(desc->v3.rate_n_flags);
+		chanidx = desc->v3.channel;
+		device_timestamp = le32toh(desc->v3.gp2_on_air_rise);
+	} else {
+		rate_n_flags = le32toh(desc->v1.rate_n_flags);
+		chanidx = desc->v1.channel;
+		device_timestamp = le32toh(desc->v1.gp2_on_air_rise);
+	}
+
 	phy_info = le16toh(desc->phy_info);
-	rate_n_flags = le32toh(desc->v1.rate_n_flags);
-	chanidx = desc->v1.channel;
-	device_timestamp = desc->v1.gp2_on_air_rise;
 
 	rssi = iwx_rxmq_get_signal_strength(sc, desc);
 	rssi = (0 - IWX_MIN_DBM) + rssi;	/* normalize */
 	rssi = MIN(rssi, ic->ic_max_rssi);	/* clip to max. 100% */
 
 	rxi.rxi_rssi = rssi;
-	rxi.rxi_tstamp = le64toh(desc->v1.tsf_on_air_rise);
+	rxi.rxi_tstamp = device_timestamp;
 	rxi.rxi_chan = chanidx;
 
 	if (iwx_rx_reorder(sc, m, chanidx, desc,
@@ -4600,7 +5120,7 @@ iwx_clear_tx_desc(struct iwx_softc *sc, struct iwx_tx_ring *ring, int idx)
 		struct iwx_tfh_tb *tb = &desc->tbs[i];
 		memset(tb, 0, sizeof(*tb));
 	}
-	desc->num_tbs = 0;
+	desc->num_tbs = htole16(1);
 
 	bus_dmamap_sync(sc->sc_dmat, ring->desc_dma.map,
 	    (char *)(void *)desc - (char *)(void *)ring->desc_dma.vaddr,
@@ -4624,19 +5144,20 @@ iwx_txd_done(struct iwx_softc *sc, struct iwx_tx_data *txd)
 }
 
 void
-iwx_txq_advance(struct iwx_softc *sc, struct iwx_tx_ring *ring, int idx)
+iwx_txq_advance(struct iwx_softc *sc, struct iwx_tx_ring *ring, uint16_t idx)
 {
  	struct iwx_tx_data *txd;
 
-	while (ring->tail != idx) {
+	while (ring->tail_hw != idx) {
 		txd = &ring->data[ring->tail];
 		if (txd->m != NULL) {
 			iwx_clear_tx_desc(sc, ring, ring->tail);
-			iwx_tx_update_byte_tbl(ring, ring->tail, 0, 0);
+			iwx_tx_update_byte_tbl(sc, ring, ring->tail, 0, 0);
 			iwx_txd_done(sc, txd);
 			ring->queued--;
 		}
 		ring->tail = (ring->tail + 1) % IWX_TX_RING_COUNT;
+		ring->tail_hw = (ring->tail_hw + 1) % sc->max_tfd_queue_size;
 	}
 }
 
@@ -4678,15 +5199,16 @@ iwx_rx_tx_cmd(struct iwx_softc *sc, struct iwx_rx_packet *pkt,
 		ifp->if_oerrors++;
 
 	/*
-	 * On hardware supported by iwx(4) the SSN counter is only
-	 * 8 bit and corresponds to a Tx ring index rather than a
-	 * sequence number. Frames up to this index (non-inclusive)
-	 * can now be freed.
+	 * On hardware supported by iwx(4) the SSN counter corresponds
+	 * to a Tx ring index rather than a sequence number.
+	 * Frames up to this index (non-inclusive) can now be freed.
 	 */
 	memcpy(&ssn, &tx_resp->status + tx_resp->frame_count, sizeof(ssn));
-	ssn = le32toh(ssn) & 0xff;
-	iwx_txq_advance(sc, ring, ssn);
-	iwx_clear_oactive(sc, ring);
+	ssn = le32toh(ssn);
+	if (ssn < sc->max_tfd_queue_size) {
+		iwx_txq_advance(sc, ring, ssn);
+		iwx_clear_oactive(sc, ring);
+	}
 }
 
 void
@@ -4759,8 +5281,6 @@ iwx_rx_compressed_ba(struct iwx_softc *sc, struct iwx_rx_packet *pkt)
 			continue;
 
 		idx = le16toh(ba_tfd->tfd_index);
-		if (idx >= IWX_TX_RING_COUNT)
-			continue;
 		sc->sc_tx_timer[qid] = 0;
 		iwx_txq_advance(sc, ring, idx);
 		iwx_clear_oactive(sc, ring);
@@ -5159,7 +5679,8 @@ iwx_send_cmd(struct iwx_softc *sc, struct iwx_host_cmd *hcmd)
 	DPRINTF(("%s: sending command 0x%x\n", __func__, code));
 	ring->queued++;
 	ring->cur = (ring->cur + 1) % IWX_TX_RING_COUNT;
-	IWX_WRITE(sc, IWX_HBUS_TARG_WRPTR, ring->qid << 16 | ring->cur);
+	ring->cur_hw = (ring->cur_hw + 1) % sc->max_tfd_queue_size;
+	IWX_WRITE(sc, IWX_HBUS_TARG_WRPTR, ring->qid << 16 | ring->cur_hw);
 
 	if (!async) {
 		err = tsleep_nsec(desc, PCATCH, "iwxcmd", SEC_TO_NSEC(1));
@@ -5282,13 +5803,12 @@ iwx_cmd_done(struct iwx_softc *sc, int qid, int idx, int code)
 }
 
 /*
- * Fill in various bit for management frames, and leave them
- * unfilled for data frames (firmware takes care of that).
- * Return the selected TX rate.
+ * Determine the Tx command flags and Tx rate+flags to use.
+ * Return the selected Tx rate.
  */
 const struct iwx_rate *
 iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
-    struct ieee80211_frame *wh, struct iwx_tx_cmd_gen2 *tx)
+    struct ieee80211_frame *wh, uint16_t *flags, uint32_t *rate_n_flags)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = &in->in_ni;
@@ -5297,19 +5817,20 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 	int type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	int min_ridx = iwx_rval2ridx(ieee80211_min_basic_rate(ic));
 	int ridx, rate_flags;
-	uint32_t flags = 0;
+
+	*flags = 0;
 
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
 	    type != IEEE80211_FC0_TYPE_DATA) {
 		/* for non-data, use the lowest supported rate */
 		ridx = min_ridx;
-		flags |= IWX_TX_FLAGS_CMD_RATE;
+		*flags |= IWX_TX_FLAGS_CMD_RATE;
 	} else if (ic->ic_fixed_mcs != -1) {
 		ridx = sc->sc_fixed_ridx;
-		flags |= IWX_TX_FLAGS_CMD_RATE;
+		*flags |= IWX_TX_FLAGS_CMD_RATE;
 	} else if (ic->ic_fixed_rate != -1) {
 		ridx = sc->sc_fixed_ridx;
-		flags |= IWX_TX_FLAGS_CMD_RATE;
+		*flags |= IWX_TX_FLAGS_CMD_RATE;
 	} else if (ni->ni_flags & IEEE80211_NODE_HT) {
 		ridx = iwx_mcs2ridx[ni->ni_txmcs];
 	} else {
@@ -5322,8 +5843,7 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 
 	if ((ic->ic_flags & IEEE80211_F_RSNON) &&
 	    ni->ni_rsn_supp_state == RSNA_SUPP_PTKNEGOTIATING)
-		flags |= IWX_TX_FLAGS_HIGH_PRI;
-	tx->flags = htole32(flags);
+		*flags |= IWX_TX_FLAGS_HIGH_PRI;
 
 	rinfo = &iwx_rates[ridx];
 	if (iwx_is_mimo_ht_plcp(rinfo->ht_plcp))
@@ -5359,21 +5879,20 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 				rate_flags |= IWX_RATE_MCS_SGI_MSK;
 		} else if (ieee80211_node_supports_ht_sgi20(ni))
 			rate_flags |= IWX_RATE_MCS_SGI_MSK;
-		tx->rate_n_flags = htole32(rate_flags | rinfo->ht_plcp);
+		*rate_n_flags = rate_flags | rinfo->ht_plcp;
 	} else
-		tx->rate_n_flags = htole32(rate_flags | rinfo->plcp);
+		*rate_n_flags = rate_flags | rinfo->plcp;
 
 	return rinfo;
 }
 
 void
-iwx_tx_update_byte_tbl(struct iwx_tx_ring *txq, int idx, uint16_t byte_cnt,
-    uint16_t num_tbs)
+iwx_tx_update_byte_tbl(struct iwx_softc *sc, struct iwx_tx_ring *txq,
+    int idx, uint16_t byte_cnt, uint16_t num_tbs)
 {
 	uint8_t filled_tfd_size, num_fetch_chunks;
 	uint16_t len = byte_cnt;
 	uint16_t bc_ent;
-	struct iwx_agn_scd_bc_tbl *scd_bc_tbl = txq->bc_tbl.vaddr;
 
 	filled_tfd_size = offsetof(struct iwx_tfh_tfd, tbs) +
 			  num_tbs * sizeof(struct iwx_tfh_tb);
@@ -5387,10 +5906,21 @@ iwx_tx_update_byte_tbl(struct iwx_tx_ring *txq, int idx, uint16_t byte_cnt,
 	 */
 	num_fetch_chunks = howmany(filled_tfd_size, 64) - 1;
 
-	/* Before AX210, the HW expects DW */
-	len = howmany(len, 4);
-	bc_ent = htole16(len | (num_fetch_chunks << 12));
-	scd_bc_tbl->tfd_offset[idx] = bc_ent;
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210) {
+		struct iwx_gen3_bc_tbl_entry *scd_bc_tbl = txq->bc_tbl.vaddr;
+		/* Starting from AX210, the HW expects bytes */
+		bc_ent = htole16(len | (num_fetch_chunks << 14));
+		scd_bc_tbl[idx].tfd_offset = bc_ent;
+	} else {
+		struct iwx_agn_scd_bc_tbl *scd_bc_tbl = txq->bc_tbl.vaddr;
+		/* Before AX210, the HW expects DW */
+		len = howmany(len, 4);
+		bc_ent = htole16(len | (num_fetch_chunks << 12));
+		scd_bc_tbl->tfd_offset[idx] = bc_ent;
+	}
+
+	bus_dmamap_sync(sc->sc_dmat, txq->bc_tbl.map, 0,
+	    txq->bc_tbl.map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 }
 
 int
@@ -5402,16 +5932,17 @@ iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	struct iwx_tx_data *data;
 	struct iwx_tfh_tfd *desc;
 	struct iwx_device_cmd *cmd;
-	struct iwx_tx_cmd_gen2 *tx;
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
 	const struct iwx_rate *rinfo;
 	uint64_t paddr;
 	u_int hdrlen;
 	bus_dma_segment_t *seg;
-	uint16_t num_tbs;
+	uint32_t rate_n_flags;
+	uint16_t num_tbs, flags, offload_assist = 0;
 	uint8_t type, subtype;
 	int i, totlen, err, pad, qid;
+	size_t txcmd_size;
 
 	wh = mtod(m, struct ieee80211_frame *);
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
@@ -5450,10 +5981,7 @@ iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	cmd->hdr.qid = ring->qid;
 	cmd->hdr.idx = ring->cur;
 
-	tx = (void *)cmd->data;
-	memset(tx, 0, sizeof(*tx));
-
-	rinfo = iwx_tx_fill_cmd(sc, in, wh, tx);
+	rinfo = iwx_tx_fill_cmd(sc, in, wh, &flags, &rate_n_flags);
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -5494,27 +6022,42 @@ iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 				return ENOBUFS;
 			/* 802.11 header may have moved. */
 			wh = mtod(m, struct ieee80211_frame *);
-			tx->flags |= htole32(IWX_TX_FLAGS_ENCRYPT_DIS);
+			flags |= IWX_TX_FLAGS_ENCRYPT_DIS;
 		} else {
 			k->k_tsc++;
 			/* Hardware increments PN internally and adds IV. */
 		}
 	} else
-		tx->flags |= htole32(IWX_TX_FLAGS_ENCRYPT_DIS);
+		flags |= IWX_TX_FLAGS_ENCRYPT_DIS;
 
 	totlen = m->m_pkthdr.len;
 
 	if (hdrlen & 3) {
 		/* First segment length must be a multiple of 4. */
 		pad = 4 - (hdrlen & 3);
-		tx->offload_assist |= htole16(IWX_TX_CMD_OFFLD_PAD);
+		offload_assist |= IWX_TX_CMD_OFFLD_PAD;
 	} else
 		pad = 0;
 
-	tx->len = htole16(totlen);
-
-	/* Copy 802.11 header in TX command. */
-	memcpy(((uint8_t *)tx) + sizeof(*tx), wh, hdrlen);
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210) {
+		struct iwx_tx_cmd_gen3 *tx = (void *)cmd->data;
+		memset(tx, 0, sizeof(*tx));
+		tx->len = htole16(totlen);
+		tx->offload_assist = htole32(offload_assist);
+		tx->flags = htole16(flags);
+		tx->rate_n_flags = htole32(rate_n_flags);
+		memcpy(tx->hdr, wh, hdrlen);
+		txcmd_size = sizeof(*tx);
+	} else {
+		struct iwx_tx_cmd_gen2 *tx = (void *)cmd->data;
+		memset(tx, 0, sizeof(*tx));
+		tx->len = htole16(totlen);
+		tx->offload_assist = htole16(offload_assist);
+		tx->flags = htole32(flags);
+		tx->rate_n_flags = htole32(rate_n_flags);
+		memcpy(tx->hdr, wh, hdrlen);
+		txcmd_size = sizeof(*tx);
+	}
 
 	/* Trim 802.11 header. */
 	m_adj(m, hdrlen);
@@ -5554,7 +6097,7 @@ iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	if (data->cmd_paddr >> 32 != (data->cmd_paddr + le32toh(desc->tbs[0].tb_len)) >> 32)
 		DPRINTF(("%s: TB0 crosses 32bit boundary\n", __func__));
 	desc->tbs[1].tb_len = htole16(sizeof(struct iwx_cmd_header) +
-	    sizeof(*tx) + hdrlen + pad - IWX_FIRST_TB_SIZE);
+	    txcmd_size + hdrlen + pad - IWX_FIRST_TB_SIZE);
 	paddr = htole64(data->cmd_paddr + IWX_FIRST_TB_SIZE);
 	memcpy(&desc->tbs[1].addr, &paddr, sizeof(paddr));
 
@@ -5580,11 +6123,12 @@ iwx_tx(struct iwx_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	    (char *)(void *)desc - (char *)(void *)ring->desc_dma.vaddr,
 	    sizeof (*desc), BUS_DMASYNC_PREWRITE);
 
-	iwx_tx_update_byte_tbl(ring, ring->cur, totlen, num_tbs);
+	iwx_tx_update_byte_tbl(sc, ring, ring->cur, totlen, num_tbs);
 
 	/* Kick TX ring. */
 	ring->cur = (ring->cur + 1) % IWX_TX_RING_COUNT;
-	IWX_WRITE(sc, IWX_HBUS_TARG_WRPTR, ring->qid << 16 | ring->cur);
+	ring->cur_hw = (ring->cur_hw + 1) % sc->max_tfd_queue_size;
+	IWX_WRITE(sc, IWX_HBUS_TARG_WRPTR, ring->qid << 16 | ring->cur_hw);
 
 	/* Mark TX ring as full if we reach a certain threshold. */
 	if (++ring->queued > IWX_TX_RING_HIMARK) {
@@ -8586,7 +9130,7 @@ iwx_nic_umac_error(struct iwx_softc *sc)
 
 	base = sc->sc_uc.uc_umac_error_event_table;
 
-	if (base < 0x800000) {
+	if (base < 0x400000) {
 		printf("%s: Invalid error log pointer 0x%08x\n",
 		    DEVNAME(sc), base);
 		return;
@@ -8679,7 +9223,7 @@ iwx_nic_error(struct iwx_softc *sc)
 
 	printf("%s: dumping device error log\n", DEVNAME(sc));
 	base = sc->sc_uc.uc_lmac_error_event_table[0];
-	if (base < 0x800000) {
+	if (base < 0x400000) {
 		printf("%s: Invalid error log pointer 0x%08x\n",
 		    DEVNAME(sc), base);
 		return;
@@ -8755,8 +9299,9 @@ iwx_dump_driver_status(struct iwx_softc *sc)
 	for (i = 0; i < nitems(sc->txq); i++) {
 		struct iwx_tx_ring *ring = &sc->txq[i];
 		printf("  tx ring %2d: qid=%-2d cur=%-3d "
-		    "queued=%-3d\n",
-		    i, ring->qid, ring->cur, ring->queued);
+		    "cur_hw=%-3d queued=%-3d\n",
+		    i, ring->qid, ring->cur, ring->cur_hw,
+		    ring->queued);
 	}
 	printf("  rx ring: cur=%d\n", sc->rxq.cur);
 	printf("  802.11 state %s\n",
@@ -8851,7 +9396,9 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			    roundup(len, IWX_FH_RSCSR_FRAME_ALIGN);
 			nextpkt = (struct iwx_rx_packet *)
 			    (m0->m_data + nextoff);
-			if (nextoff + minsz >= IWX_RBUF_SIZE ||
+			/* AX210 devices ship only one packet per Rx buffer. */
+			if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210 ||
+			    nextoff + minsz >= IWX_RBUF_SIZE ||
 			    !iwx_rx_pkt_valid(nextpkt)) {
 				/* No need to copy last frame in buffer. */
 				if (offset > 0)
@@ -8924,6 +9471,12 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 				    resp5->lmac_data[0].dbg_ptrs.log_event_table_ptr);
 				sc->sc_uc.uc_umac_error_event_table = le32toh(
 				    resp5->umac_data.dbg_ptrs.error_info_addr);
+				sc->sc_sku_id[0] =
+				    le32toh(resp5->sku_id.data[0]);
+				sc->sc_sku_id[1] =
+				    le32toh(resp5->sku_id.data[1]);
+				sc->sc_sku_id[2] =
+				    le32toh(resp5->sku_id.data[2]);
 				if (resp5->status == IWX_ALIVE_STATUS_OK)
 					sc->sc_uc.uc_ok = 1;
 			} else if (iwx_rx_packet_payload_len(pkt) == sizeof(*resp4)) {
@@ -9119,6 +9672,12 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			break;
 		}
 
+		case IWX_WIDE_ID(IWX_REGULATORY_AND_NVM_GROUP,
+		    IWX_PNVM_INIT_COMPLETE):
+			sc->sc_init_complete |= IWX_PNVM_COMPLETE;
+			wakeup(&sc->sc_init_complete);
+			break;
+
 		default:
 			handled = 0;
 			printf("%s: unhandled firmware response 0x%x/0x%x "
@@ -9140,6 +9699,10 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 		}
 
 		offset += roundup(len, IWX_FH_RSCSR_FRAME_ALIGN);
+
+		/* AX210 devices ship only one packet per Rx buffer. */
+		if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210)
+			break;
 	}
 
 	if (m0 && m0 != data->m)
@@ -9155,7 +9718,11 @@ iwx_notif_intr(struct iwx_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, sc->rxq.stat_dma.map,
 	    0, sc->rxq.stat_dma.size, BUS_DMASYNC_POSTREAD);
 
-	hw = le16toh(sc->rxq.stat->closed_rb_num) & 0xfff;
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210) {
+		uint16_t *status = sc->rxq.stat_dma.vaddr;
+		hw = le16toh(*status) & 0xfff;
+	} else
+		hw = le16toh(sc->rxq.stat->closed_rb_num) & 0xfff;
 	hw &= (IWX_RX_MQ_RING_COUNT - 1);
 	while (sc->rxq.cur != hw) {
 		struct iwx_rx_data *data = &sc->rxq.data[sc->rxq.cur];
@@ -9396,6 +9963,7 @@ static const struct pci_matchid iwx_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_6,},
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_7,},
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_8,},
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_9,},
 };
 
 
@@ -9414,7 +9982,7 @@ iwx_match(struct device *parent, iwx_match_t match __unused, void *aux)
  * The Linux iwlwifi driver uses an "old" and a "new" device info table.
  * The "old" table matches devices based on PCI vendor/product IDs only.
  * The "new" table extends this with various device parameters derived
- * from MAC type, RF type, and PCI subdevice ID.
+ * from MAC type, and RF type.
  *
  * In iwlwifi "old" and "new" tables share the same array, where "old"
  * entries contain dummy values for data defined only for "new" entries.
@@ -9425,10 +9993,15 @@ iwx_match(struct device *parent, iwx_match_t match __unused, void *aux)
  * Part of this complexity comes from iwlwifi supporting both iwm(4) and iwx(4)
  * devices in the same driver.
  *
- * We try to avoid this mess while still recognizing supported iwx(4) devices
- * correctly. Our table below contains only "new" entries declared in iwlwifi 
+ * Our table below contains mostly "new" entries declared in iwlwifi 
  * with the _IWL_DEV_INFO() macro (with a leading underscore).
- * Other devices are matched based on PCI vendor/product ID as usual.
+ * Other devices are matched based on PCI vendor/product ID as usual,
+ * unless matching specific PCI subsystem vendor/product IDs is required.
+ *
+ * Some "old"-style entries are required to identify the firmware image to use.
+ * Others might be used to print a specific marketing name into Linux dmesg,
+ * but we can't be sure whether the corresponding devices would be matched
+ * correctly in the absence of their entries. So we include them just in case.
  */
 
 struct iwx_dev_info {
@@ -9452,6 +10025,11 @@ struct iwx_dev_info {
 	  .no_160 = _no_160, .cores = _cores, .rf_id = _rf_id,		   \
 	  .mac_step = _mac_step, .cdb = _cdb, .jacket = _jacket }
 
+#define IWX_DEV_INFO(_device, _subdevice, _cfg) \
+	_IWX_DEV_INFO(_device, _subdevice, IWX_CFG_ANY, IWX_CFG_ANY,	   \
+		      IWX_CFG_ANY, IWX_CFG_ANY, IWX_CFG_ANY, IWX_CFG_ANY,  \
+		      IWX_CFG_ANY, IWX_CFG_ANY, _cfg)
+
 /*
  * When adding entries to this table keep in mind that entries must
  * be listed in the same order as in the Linux driver. Code walks this
@@ -9459,6 +10037,56 @@ struct iwx_dev_info {
  * Device firmware must be available in fw_update(8).
  */
 static const struct iwx_dev_info iwx_dev_info_table[] = {
+	/* So with HR */
+	IWX_DEV_INFO(0x2725, 0x0090, iwx_2ax_cfg_so_gf_a0),
+	IWX_DEV_INFO(0x2725, 0x0020, iwx_2ax_cfg_ty_gf_a0),
+	IWX_DEV_INFO(0x2725, 0x2020, iwx_2ax_cfg_ty_gf_a0),
+	IWX_DEV_INFO(0x2725, 0x0024, iwx_2ax_cfg_ty_gf_a0),
+	IWX_DEV_INFO(0x2725, 0x0310, iwx_2ax_cfg_ty_gf_a0),
+	IWX_DEV_INFO(0x2725, 0x0510, iwx_2ax_cfg_ty_gf_a0),
+	IWX_DEV_INFO(0x2725, 0x0A10, iwx_2ax_cfg_ty_gf_a0),
+	IWX_DEV_INFO(0x2725, 0xE020, iwx_2ax_cfg_ty_gf_a0),
+	IWX_DEV_INFO(0x2725, 0xE024, iwx_2ax_cfg_ty_gf_a0),
+	IWX_DEV_INFO(0x2725, 0x4020, iwx_2ax_cfg_ty_gf_a0),
+	IWX_DEV_INFO(0x2725, 0x6020, iwx_2ax_cfg_ty_gf_a0),
+	IWX_DEV_INFO(0x2725, 0x6024, iwx_2ax_cfg_ty_gf_a0),
+	IWX_DEV_INFO(0x2725, 0x1673, iwx_2ax_cfg_ty_gf_a0), /* killer_1675w */
+	IWX_DEV_INFO(0x2725, 0x1674, iwx_2ax_cfg_ty_gf_a0), /* killer_1675x */
+	IWX_DEV_INFO(0x51f0, 0x1691, iwx_2ax_cfg_so_gf4_a0), /* killer_1690s */
+	IWX_DEV_INFO(0x51f0, 0x1692, iwx_2ax_cfg_so_gf4_a0), /* killer_1690i */
+	IWX_DEV_INFO(0x54f0, 0x1691, iwx_2ax_cfg_so_gf4_a0), /* killer_1690s */
+	IWX_DEV_INFO(0x54f0, 0x1692, iwx_2ax_cfg_so_gf4_a0), /* killer_1690i */
+	IWX_DEV_INFO(0x7a70, 0x0090, iwx_2ax_cfg_so_gf_a0_long),
+	IWX_DEV_INFO(0x7a70, 0x0098, iwx_2ax_cfg_so_gf_a0_long),
+	IWX_DEV_INFO(0x7a70, 0x00b0, iwx_2ax_cfg_so_gf4_a0_long),
+	IWX_DEV_INFO(0x7a70, 0x0310, iwx_2ax_cfg_so_gf_a0_long),
+	IWX_DEV_INFO(0x7a70, 0x0510, iwx_2ax_cfg_so_gf_a0_long),
+	IWX_DEV_INFO(0x7a70, 0x0a10, iwx_2ax_cfg_so_gf_a0_long),
+	IWX_DEV_INFO(0x7af0, 0x0090, iwx_2ax_cfg_so_gf_a0),
+	IWX_DEV_INFO(0x7af0, 0x0098, iwx_2ax_cfg_so_gf_a0),
+	IWX_DEV_INFO(0x7af0, 0x00b0, iwx_2ax_cfg_so_gf4_a0),
+	IWX_DEV_INFO(0x7a70, 0x1691, iwx_2ax_cfg_so_gf4_a0), /* killer_1690s */
+	IWX_DEV_INFO(0x7a70, 0x1692, iwx_2ax_cfg_so_gf4_a0), /* killer_1690i */
+	IWX_DEV_INFO(0x7af0, 0x0310, iwx_2ax_cfg_so_gf_a0),
+	IWX_DEV_INFO(0x7af0, 0x0510, iwx_2ax_cfg_so_gf_a0),
+	IWX_DEV_INFO(0x7af0, 0x0a10, iwx_2ax_cfg_so_gf_a0),
+	IWX_DEV_INFO(0x7f70, 0x1691, iwx_2ax_cfg_so_gf4_a0), /* killer_1690s */
+	IWX_DEV_INFO(0x7f70, 0x1692, iwx_2ax_cfg_so_gf4_a0), /* killer_1690i */
+
+	/* So with GF2 */
+	IWX_DEV_INFO(0x2726, 0x1671, iwx_2ax_cfg_so_gf_a0), /* killer_1675s */
+	IWX_DEV_INFO(0x2726, 0x1672, iwx_2ax_cfg_so_gf_a0), /* killer_1675i */
+	IWX_DEV_INFO(0x51f0, 0x1671, iwx_2ax_cfg_so_gf_a0), /* killer_1675s */
+	IWX_DEV_INFO(0x51f0, 0x1672, iwx_2ax_cfg_so_gf_a0), /* killer_1675i */
+	IWX_DEV_INFO(0x54f0, 0x1671, iwx_2ax_cfg_so_gf_a0), /* killer_1675s */
+	IWX_DEV_INFO(0x54f0, 0x1672, iwx_2ax_cfg_so_gf_a0), /* killer_1675i */
+	IWX_DEV_INFO(0x7a70, 0x1671, iwx_2ax_cfg_so_gf_a0), /* killer_1675s */
+	IWX_DEV_INFO(0x7a70, 0x1672, iwx_2ax_cfg_so_gf_a0), /* killer_1675i */
+	IWX_DEV_INFO(0x7af0, 0x1671, iwx_2ax_cfg_so_gf_a0), /* killer_1675s */
+	IWX_DEV_INFO(0x7af0, 0x1672, iwx_2ax_cfg_so_gf_a0), /* killer_1675i */
+	IWX_DEV_INFO(0x7f70, 0x1671, iwx_2ax_cfg_so_gf_a0), /* killer_1675s */
+	IWX_DEV_INFO(0x7f70, 0x1672, iwx_2ax_cfg_so_gf_a0), /* killer_1675i */
+
 	/* Qu with Jf, C step */
 	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
 		      IWX_CFG_MAC_TYPE_QU, IWX_SILICON_C_STEP,
@@ -9577,6 +10205,98 @@ static const struct iwx_dev_info iwx_dev_info_table[] = {
 		      IWX_CFG_RF_TYPE_HR2, IWX_CFG_ANY,
 		      IWX_CFG_NO_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
 		      iwx_cfg_quz_a0_hr_b0), /* AX203 */
+
+	/* SoF with JF2 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SOF, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF2, IWX_CFG_RF_ID_JF,
+		      IWX_CFG_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_2ax_cfg_so_jf_b0), /* 9560_160 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SOF, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF2, IWX_CFG_RF_ID_JF,
+		      IWX_CFG_NO_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_2ax_cfg_so_jf_b0), /* 9560 */
+
+	/* SoF with JF */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SOF, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1,
+		      IWX_CFG_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_2ax_cfg_so_jf_b0), /* 9461_160 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SOF, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1_DIV,
+		      IWX_CFG_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_2ax_cfg_so_jf_b0), /* 9462_160 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SOF, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1,
+		      IWX_CFG_NO_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_2ax_cfg_so_jf_b0), /* 9461_name */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SOF, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1_DIV,
+		      IWX_CFG_NO_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_2ax_cfg_so_jf_b0), /* 9462 */
+
+	/* So-F with GF */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SOF, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_GF, IWX_CFG_ANY,
+		      IWX_CFG_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_2ax_cfg_so_gf_a0), /* AX211 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SOF, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_GF, IWX_CFG_ANY,
+		      IWX_CFG_160, IWX_CFG_ANY, IWX_CFG_CDB, IWX_CFG_ANY,
+		      iwx_2ax_cfg_so_gf4_a0), /* AX411 */
+
+	/* So with GF */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SO, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_GF, IWX_CFG_ANY,
+		      IWX_CFG_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_2ax_cfg_so_gf_a0), /* AX211 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SO, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_GF, IWX_CFG_ANY,
+		      IWX_CFG_160, IWX_CFG_ANY, IWX_CFG_CDB, IWX_CFG_ANY,
+		      iwx_2ax_cfg_so_gf4_a0), /* AX411 */
+
+	/* So with JF2 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SO, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF2, IWX_CFG_RF_ID_JF,
+		      IWX_CFG_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_2ax_cfg_so_jf_b0), /* 9560_160 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SO, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF2, IWX_CFG_RF_ID_JF,
+		      IWX_CFG_NO_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_2ax_cfg_so_jf_b0), /* 9560 */
+
+	/* So with JF */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SO, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1,
+		      IWX_CFG_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_2ax_cfg_so_jf_b0), /* 9461_160 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SO, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1_DIV,
+		      IWX_CFG_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_2ax_cfg_so_jf_b0), /* 9462_160 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SO, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1,
+		      IWX_CFG_NO_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_2ax_cfg_so_jf_b0), /* iwl9461 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SO, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1_DIV,
+		      IWX_CFG_NO_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
+		      IWX_CFG_ANY, iwx_2ax_cfg_so_jf_b0), /* 9462 */
 };
 
 int
@@ -9612,9 +10332,17 @@ iwx_preinit(struct iwx_softc *sc)
 
 	/* Print version info and MAC address on first successful fw load. */
 	sc->attached = 1;
-	printf("%s: hw rev 0x%x, fw ver %s, address %s\n",
-	    DEVNAME(sc), sc->sc_hw_rev & IWX_CSR_HW_REV_TYPE_MSK,
-	    sc->sc_fwver, ether_sprintf(sc->sc_nvm.hw_addr));
+	if (sc->sc_pnvm_ver) {
+		printf("%s: hw rev 0x%x, fw %s, pnvm %08x, "
+		    "address %s\n",
+		    DEVNAME(sc), sc->sc_hw_rev & IWX_CSR_HW_REV_TYPE_MSK,
+		    sc->sc_fwver, sc->sc_pnvm_ver,
+		    ether_sprintf(sc->sc_nvm.hw_addr));
+	} else {
+		printf("%s: hw rev 0x%x, fw %s, address %s\n",
+		    DEVNAME(sc), sc->sc_hw_rev & IWX_CSR_HW_REV_TYPE_MSK,
+		    sc->sc_fwver, ether_sprintf(sc->sc_nvm.hw_addr));
+	}
 
 	if (sc->sc_nvm.sku_cap_11n_enable)
 		iwx_setup_ht_rates(sc);
@@ -9734,8 +10462,9 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	const struct iwx_device_cfg *cfg;
 	int err;
 	int txq_i, i, j;
+	size_t ctxt_info_size;
 
-	sc->sc_pid = pa->pa_id;
+	sc->sc_pid = PCI_PRODUCT(pa->pa_id);
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
@@ -9890,6 +10619,24 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_tx_with_siso_diversity = 0;
 		sc->sc_uhb_supported = 0;
 		break;
+	case PCI_PRODUCT_INTEL_WL_22500_9:
+	case PCI_PRODUCT_INTEL_WL_22500_10:
+	case PCI_PRODUCT_INTEL_WL_22500_11:
+	case PCI_PRODUCT_INTEL_WL_22500_12:
+	case PCI_PRODUCT_INTEL_WL_22500_13:
+	/* _14 is an MA device, not yet supported */
+	case PCI_PRODUCT_INTEL_WL_22500_15:
+	case PCI_PRODUCT_INTEL_WL_22500_16:
+		sc->sc_fwname = IWX_SO_A_GF_A_FW;
+		sc->sc_pnvm_name = IWX_SO_A_GF_A_PNVM;
+		sc->sc_device_family = IWX_DEVICE_FAMILY_AX210;
+		sc->sc_integrated = 0;
+		sc->sc_ltr_delay = IWX_SOC_FLAGS_LTR_APPLY_DELAY_NONE;
+		sc->sc_low_latency_xtal = 0;
+		sc->sc_xtal_latency = 0;
+		sc->sc_tx_with_siso_diversity = 0;
+		sc->sc_uhb_supported = 1;
+		break;
 	default:
 		printf("%s: unknown adapter type\n", DEVNAME(sc));
 		return;
@@ -9898,17 +10645,59 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	cfg = iwx_find_device_cfg(sc);
 	if (cfg) {
 		sc->sc_fwname = cfg->fw_name;
+		sc->sc_pnvm_name = cfg->pnvm_name;
 		sc->sc_tx_with_siso_diversity = cfg->tx_with_siso_diversity;
 		sc->sc_uhb_supported = cfg->uhb_supported;
+		if (cfg->xtal_latency) {
+			sc->sc_xtal_latency = cfg->xtal_latency;
+			sc->sc_low_latency_xtal = cfg->low_latency_xtal;
+		}
 	}
 
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210) {
+		sc->sc_umac_prph_offset = 0x300000;
+		sc->max_tfd_queue_size = IWX_TFD_QUEUE_SIZE_MAX_GEN3;
+	} else
+		sc->max_tfd_queue_size = IWX_TFD_QUEUE_SIZE_MAX;
+
 	/* Allocate DMA memory for loading firmware. */
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210)
+		ctxt_info_size = sizeof(struct iwx_context_info_gen3);
+	else
+		ctxt_info_size = sizeof(struct iwx_context_info);
 	err = iwx_dma_contig_alloc(sc->sc_dmat, &sc->ctxt_info_dma,
-	    sizeof(struct iwx_context_info), 0);
+	    ctxt_info_size, 0);
 	if (err) {
 		printf("%s: could not allocate memory for loading firmware\n",
 		    DEVNAME(sc));
 		return;
+	}
+
+	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210) {
+		err = iwx_dma_contig_alloc(sc->sc_dmat, &sc->prph_scratch_dma,
+		    sizeof(struct iwx_prph_scratch), 0);
+		if (err) {
+			printf("%s: could not allocate prph scratch memory\n",
+			    DEVNAME(sc));
+			goto fail1;
+		}
+
+		/*
+		 * Allocate prph information. The driver doesn't use this.
+		 * We use the second half of this page to give the device
+		 * some dummy TR/CR tail pointers - which shouldn't be
+		 * necessary as we don't use this, but the hardware still
+		 * reads/writes there and we can't let it go do that with
+		 * a NULL pointer.
+		 */
+		KASSERT(sizeof(struct iwx_prph_info) < PAGE_SIZE / 2);
+		err = iwx_dma_contig_alloc(sc->sc_dmat, &sc->prph_info_dma,
+		    PAGE_SIZE, 0);
+		if (err) {
+			printf("%s: could not allocate prph info memory\n",
+			    DEVNAME(sc));
+			goto fail1;
+		}
 	}
 
 	/* Allocate interrupt cause table (ICT).*/
@@ -10051,6 +10840,8 @@ fail4:	while (--txq_i >= 0)
 		iwx_dma_contig_free(&sc->ict_dma);
 	
 fail1:	iwx_dma_contig_free(&sc->ctxt_info_dma);
+	iwx_dma_contig_free(&sc->prph_scratch_dma);
+	iwx_dma_contig_free(&sc->prph_info_dma);
 	return;
 }
 
