@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_att.c,v 1.18 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x509_att.c,v 1.19 2022/05/09 19:19:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -324,10 +324,8 @@ X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *data,
 			goto err;
 		atype = attrtype;
 	}
-	if (!(attr->value.set = sk_ASN1_TYPE_new_null()))
-		goto err;
-	attr->single = 0;
-	/* This is a bit naughty because the attribute should really have
+	/*
+	 * This is a bit naughty because the attribute should really have
 	 * at least one value but some types use and zero length SET and
 	 * require this.
 	 */
@@ -343,7 +341,7 @@ X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *data,
 			goto err;
 	} else
 		ASN1_TYPE_set(ttmp, atype, stmp);
-	if (!sk_ASN1_TYPE_push(attr->value.set, ttmp))
+	if (!sk_ASN1_TYPE_push(attr->set, ttmp))
 		goto err;
 	return 1;
 
@@ -357,11 +355,10 @@ err:
 int
 X509_ATTRIBUTE_count(const X509_ATTRIBUTE *attr)
 {
-	if (!attr->single)
-		return sk_ASN1_TYPE_num(attr->value.set);
-	if (attr->value.single)
-		return 1;
-	return 0;
+	if (attr == NULL)
+		return 0;
+
+	return sk_ASN1_TYPE_num(attr->set);
 }
 
 ASN1_OBJECT *
@@ -392,10 +389,6 @@ X509_ATTRIBUTE_get0_type(X509_ATTRIBUTE *attr, int idx)
 {
 	if (attr == NULL)
 		return (NULL);
-	if (idx >= X509_ATTRIBUTE_count(attr))
-		return NULL;
-	if (!attr->single)
-		return sk_ASN1_TYPE_value(attr->value.set, idx);
-	else
-		return attr->value.single;
+
+	return sk_ASN1_TYPE_value(attr->set, idx);
 }

@@ -109,12 +109,7 @@ struct X509_extension_st {
 
 struct x509_attributes_st {
 	ASN1_OBJECT *object;
-	int single; /* 0 for a set, 1 for a single item (which is wrong) */
-	union {
-		char		*ptr;
-/* 0 */		STACK_OF(ASN1_TYPE) *set;
-/* 1 */		ASN1_TYPE	*single;
-	} value;
+	STACK_OF(ASN1_TYPE) *set;
 } /* X509_ATTRIBUTE */;
 
 struct X509_req_info_st {

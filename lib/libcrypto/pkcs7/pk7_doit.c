@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_doit.c,v 1.46 2021/12/12 21:30:14 tb Exp $ */
+/* $OpenBSD: pk7_doit.c,v 1.47 2022/05/09 19:19:33 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1129,12 +1129,8 @@ get_attribute(STACK_OF(X509_ATTRIBUTE) *sk, int nid)
 		return (NULL);
 	for (i = 0; i < sk_X509_ATTRIBUTE_num(sk); i++) {
 		xa = sk_X509_ATTRIBUTE_value(sk, i);
-		if (OBJ_cmp(xa->object, o) == 0) {
-			if (!xa->single && sk_ASN1_TYPE_num(xa->value.set))
-				return (sk_ASN1_TYPE_value(xa->value.set, 0));
-			else
-				return (NULL);
-		}
+		if (OBJ_cmp(xa->object, o) == 0)
+			return (sk_ASN1_TYPE_value(xa->set, 0));
 	}
 	return (NULL);
 }
