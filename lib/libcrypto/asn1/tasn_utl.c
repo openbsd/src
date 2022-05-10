@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_utl.c,v 1.13 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: tasn_utl.c,v 1.14 2022/05/10 05:19:23 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -205,8 +205,6 @@ asn1_get_field_ptr(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 {
 	ASN1_VALUE **pvaltmp;
 
-	if (tt->flags & ASN1_TFLG_COMBINE)
-		return pval;
 	pvaltmp = offset2ptr(*pval, tt->offset);
 	/* NOTE for BOOLEAN types the field is just a plain
  	 * int so we can't return int **, so settle for

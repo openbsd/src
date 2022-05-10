@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_new.c,v 1.21 2022/01/07 12:24:17 tb Exp $ */
+/* $OpenBSD: tasn_new.c,v 1.22 2022/05/10 05:19:22 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -66,8 +66,7 @@
 
 #include "asn1_locl.h"
 
-static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
-    int combine);
+static int asn1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void asn1_template_clear(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
 static void asn1_primitive_clear(ASN1_VALUE **pval, const ASN1_ITEM *it);
@@ -86,11 +85,11 @@ ASN1_item_new(const ASN1_ITEM *it)
 int
 ASN1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-	return asn1_item_ex_combine_new(pval, it, 0);
+	return asn1_item_ex_new(pval, it);
 }
 
 static int
-asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int combine)
+asn1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
 	const ASN1_TEMPLATE *tt = NULL;
 	const ASN1_EXTERN_FUNCS *ef;
@@ -102,9 +101,7 @@ asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int combine)
 	if (aux != NULL && aux->asn1_cb != NULL)
 		asn1_cb = aux->asn1_cb;
 
-	if (!combine)
-		*pval = NULL;
-
+	*pval = NULL;
 
 	switch (it->itype) {
 	case ASN1_ITYPE_EXTERN:
@@ -137,11 +134,9 @@ asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int combine)
 				return 1;
 			}
 		}
-		if (!combine) {
-			*pval = calloc(1, it->size);
-			if (!*pval)
-				goto memerr;
-		}
+		*pval = calloc(1, it->size);
+		if (!*pval)
+			goto memerr;
 		asn1_set_choice_selector(pval, -1, it);
 		if (asn1_cb && !asn1_cb(ASN1_OP_NEW_POST, pval, it, NULL))
 			goto auxerr;
@@ -157,13 +152,11 @@ asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int combine)
 				return 1;
 			}
 		}
-		if (!combine) {
-			*pval = calloc(1, it->size);
-			if (!*pval)
-				goto memerr;
-			asn1_do_lock(pval, 0, it);
-			asn1_enc_init(pval, it);
-		}
+		*pval = calloc(1, it->size);
+		if (!*pval)
+			goto memerr;
+		asn1_do_lock(pval, 0, it);
+		asn1_enc_init(pval, it);
 		for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
 			pseqval = asn1_get_field_ptr(pval, tt);
 			if (!ASN1_template_new(pseqval, tt))
@@ -249,7 +242,7 @@ ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 		goto done;
 	}
 	/* Otherwise pass it back to the item routine */
-	ret = asn1_item_ex_combine_new(pval, it, tt->flags & ASN1_TFLG_COMBINE);
+	ret = asn1_item_ex_new(pval, it);
  done:
 	return ret;
 }

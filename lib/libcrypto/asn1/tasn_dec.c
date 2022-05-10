@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.61 2022/05/07 15:50:25 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.62 2022/05/10 05:19:22 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -132,10 +132,6 @@ asn1_item_ex_d2i_choice(ASN1_VALUE **pval, const unsigned char **in, long len,
 	const unsigned char *p = NULL;
 	int i;
 	int ret = 0;
-	int combine;
-
-	combine = aclass & ASN1_TFLG_COMBINE;
-	aclass &= ~ASN1_TFLG_COMBINE;
 
 	if (it->itype != ASN1_ITYPE_CHOICE)
 		goto err;
@@ -211,8 +207,8 @@ asn1_item_ex_d2i_choice(ASN1_VALUE **pval, const unsigned char **in, long len,
  auxerr:
 	ASN1error(ASN1_R_AUX_ERROR);
  err:
-	if (combine == 0)
-		ASN1_item_ex_free(pval, it);
+	ASN1_item_ex_free(pval, it);
+
 	if (errtt)
 		ERR_asprintf_error_data("Field=%s, Type=%s", errtt->field_name,
 		    it->sname);
@@ -233,10 +229,6 @@ asn1_item_ex_d2i_sequence(ASN1_VALUE **pval, const unsigned char **in, long len,
 	long tmplen;
 	int i;
 	int ret = 0;
-	int combine;
-
-	combine = aclass & ASN1_TFLG_COMBINE;
-	aclass &= ~ASN1_TFLG_COMBINE;
 
 	if (it->itype != ASN1_ITYPE_NDEF_SEQUENCE &&
 	    it->itype != ASN1_ITYPE_SEQUENCE)
@@ -388,8 +380,8 @@ asn1_item_ex_d2i_sequence(ASN1_VALUE **pval, const unsigned char **in, long len,
  auxerr:
 	ASN1error(ASN1_R_AUX_ERROR);
  err:
-	if (combine == 0)
-		ASN1_item_ex_free(pval, it);
+	ASN1_item_ex_free(pval, it);
+
 	if (errtt)
 		ERR_asprintf_error_data("Field=%s, Type=%s", errtt->field_name,
 		    it->sname);
@@ -412,10 +404,6 @@ asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 	unsigned char oclass;
 	int otag;
 	int ret = 0;
-	int combine;
-
-	combine = aclass & ASN1_TFLG_COMBINE;
-	aclass &= ~ASN1_TFLG_COMBINE;
 
 	if (!pval)
 		return 0;
@@ -491,20 +479,19 @@ asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 
 	case ASN1_ITYPE_CHOICE:
 		return asn1_item_ex_d2i_choice(pval, in, len, it, tag,
-		    aclass | combine, opt, depth);
+		    aclass, opt, depth);
 
 	case ASN1_ITYPE_NDEF_SEQUENCE:
 	case ASN1_ITYPE_SEQUENCE:
 		return asn1_item_ex_d2i_sequence(pval, in, len, it, tag,
-		    aclass | combine, opt, depth);
+		    aclass, opt, depth);
 
 	default:
 		return 0;
 	}
 
  err:
-	if (combine == 0)
-		ASN1_item_ex_free(pval, it);
+	ASN1_item_ex_free(pval, it);
 
 	ERR_asprintf_error_data("Type=%s", it->sname);
 
@@ -691,8 +678,8 @@ asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
 			return -1;
 	} else {
 		/* Nothing special */
-		ret = asn1_item_ex_d2i(val, &p, len, tt->item,
-		    -1, tt->flags & ASN1_TFLG_COMBINE, opt, depth);
+		ret = asn1_item_ex_d2i(val, &p, len, tt->item, -1, 0,
+		    opt, depth);
 		if (!ret) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
 			goto err;
