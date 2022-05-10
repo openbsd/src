@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.15 2022/04/21 04:48:12 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.16 2022/05/10 19:42:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -671,8 +671,6 @@ X509_check_ca(X509 *x)
 		CRYPTO_w_lock(CRYPTO_LOCK_X509);
 		x509v3_cache_extensions(x);
 		CRYPTO_w_unlock(CRYPTO_LOCK_X509);
-		if (x->ex_flags & EXFLAG_INVALID)
-			return X509_V_ERR_UNSPECIFIED;
 	}
 
 	return check_ca(x);
