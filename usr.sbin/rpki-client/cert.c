@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.73 2022/05/10 16:17:07 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.74 2022/05/10 16:43:53 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -89,7 +89,6 @@ append_ip(struct parse *p, const struct cert_ip *ip)
 static int
 append_as(struct parse *p, const struct cert_as *as)
 {
-
 	if (!as_check_overlap(as, p->fn, p->res->as, p->res->asz))
 		return 0;
 	if (p->res->asz >= MAX_AS_SIZE)
@@ -103,24 +102,24 @@ append_as(struct parse *p, const struct cert_as *as)
 }
 
 /*
- * Construct a RFC 3779 2.2.3.8 range by its bit string.
+ * Construct a RFC 3779 2.2.3.8 range from its bit string.
  * Returns zero on failure, non-zero on success.
  */
 static int
-sbgp_addr(struct parse *p,
-	struct cert_ip *ip, const ASN1_BIT_STRING *bs)
+sbgp_addr(struct parse *p, struct cert_ip *ip, const ASN1_BIT_STRING *bs)
 {
-
 	if (!ip_addr_parse(bs, ip->afi, p->fn, &ip->ip)) {
 		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
 		    "invalid IP address", p->fn);
 		return 0;
 	}
+
 	if (!ip_cert_compose_ranges(ip)) {
 		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
 		    "IP address range reversed", p->fn);
 		return 0;
 	}
+
 	return append_ip(p, ip);
 }
 
@@ -493,7 +492,7 @@ sbgp_addr_or_range(struct parse *p, struct cert_ip *ip,
  * or SAFI group, etc.).
  * This is because it doesn't matter for our purposes: we're going to
  * validate in the same way regardless.
- * Returns zero no failure, non-zero on success.
+ * Returns zero on failure, non-zero on success.
  */
 static int
 sbgp_ipaddrfam(struct parse *p, const IPAddressFamily *af)
