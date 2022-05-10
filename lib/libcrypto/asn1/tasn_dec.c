@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.62 2022/05/10 05:19:22 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.63 2022/05/10 18:40:06 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -83,13 +83,16 @@ static int asn1_collect(CBB *cbb, CBS *cbs, char indefinite, int expected_tag,
     int expected_class, int depth);
 
 static int asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in,
-    long len, const ASN1_ITEM *it, int tag, int aclass, char opt, int depth);
+    long len, const ASN1_ITEM *it, int tag_number, int tag_class, char optional,
+    int depth);
+static int asn1_template_ex_d2i_cbs(ASN1_VALUE **pval, CBS *cbs,
+    const ASN1_TEMPLATE *tt, char optional, int depth);
 static int asn1_template_ex_d2i(ASN1_VALUE **pval, const unsigned char **in,
     long len, const ASN1_TEMPLATE *tt, char opt, int depth);
 static int asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in,
     long len, const ASN1_TEMPLATE *tt, char opt, int depth);
-static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in,
-    long len, const ASN1_ITEM *it, int tag, int aclass, char opt);
+static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, CBS *cbs,
+    const ASN1_ITEM *it, int tag_number, int tag_class, char optional);
 static int asn1_ex_c2i(ASN1_VALUE **pval, CBS *content, int utype,
     const ASN1_ITEM *it);
 
@@ -215,6 +218,26 @@ asn1_item_ex_d2i_choice(ASN1_VALUE **pval, const unsigned char **in, long len,
 	else
 		ERR_asprintf_error_data("Type=%s", it->sname);
 	return 0;
+}
+
+static int
+asn1_item_ex_d2i_choice_cbs(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
+    int tag_number, int tag_class, char optional, int depth)
+{
+	const unsigned char *p;
+	int ret;
+
+	if (CBS_len(cbs) > LONG_MAX)
+		return 0;
+
+	p = CBS_data(cbs);
+	ret = asn1_item_ex_d2i_choice(pval, &p, (long)CBS_len(cbs), it,
+	    tag_number, tag_class, optional, depth);
+	if (ret == 1) {
+		if (!CBS_skip(cbs, p - CBS_data(cbs)))
+			return 0;
+	}
+	return ret;
 }
 
 static int
@@ -390,22 +413,43 @@ asn1_item_ex_d2i_sequence(ASN1_VALUE **pval, const unsigned char **in, long len,
 	return 0;
 }
 
+static int
+asn1_item_ex_d2i_sequence_cbs(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
+    int tag_number, int tag_class, char optional, int depth)
+{
+	const unsigned char *p;
+	int ret;
+
+	if (CBS_len(cbs) > LONG_MAX)
+		return 0;
+
+	p = CBS_data(cbs);
+	ret = asn1_item_ex_d2i_sequence(pval, &p, (long)CBS_len(cbs), it,
+	    tag_number, tag_class, optional, depth);
+	if (ret == 1) {
+		if (!CBS_skip(cbs, p - CBS_data(cbs)))
+			return 0;
+	}
+	return ret;
+}
+
 /*
  * Decode an item, taking care of IMPLICIT tagging, if any.
  * If 'opt' set and tag mismatch return -1 to handle OPTIONAL
  */
 static int
-asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
-    const ASN1_ITEM *it, int tag, int aclass, char opt, int depth)
+asn1_item_ex_d2i_cbs(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
+    int tag_number, int tag_class, char optional, int depth)
 {
-	const ASN1_EXTERN_FUNCS *ef;
-	ASN1_TLC ctx = { 0 };
+	const ASN1_EXTERN_FUNCS *ef = it->funcs;
 	const unsigned char *p = NULL;
+	ASN1_TLC ctx = { 0 };
+	CBS cbs_mstring;
 	unsigned char oclass;
 	int otag;
 	int ret = 0;
 
-	if (!pval)
+	if (pval == NULL)
 		return 0;
 
 	if (++depth > ASN1_MAX_CONSTRUCTED_NEST) {
@@ -415,23 +459,23 @@ asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 
 	switch (it->itype) {
 	case ASN1_ITYPE_PRIMITIVE:
-		if (it->templates) {
-			/* tagging or OPTIONAL is currently illegal on an item
+		if (it->templates != NULL) {
+			/*
+			 * Tagging or OPTIONAL is currently illegal on an item
 			 * template because the flags can't get passed down.
 			 * In practice this isn't a problem: we include the
 			 * relevant flags from the item template in the
 			 * template itself.
 			 */
-			if ((tag != -1) || opt) {
+			if (tag_number != -1 || optional) {
 				ASN1error(ASN1_R_ILLEGAL_OPTIONS_ON_ITEM_TEMPLATE);
 				goto err;
 			}
-			return asn1_template_ex_d2i(pval, in, len,
-			    it->templates, opt, depth);
+			return asn1_template_ex_d2i_cbs(pval, cbs,
+			    it->templates, optional, depth);
 		}
-		return asn1_d2i_ex_primitive(pval, in, len, it,
-		    tag, aclass, opt);
-		break;
+		return asn1_d2i_ex_primitive(pval, cbs, it, tag_number,
+		    tag_class, optional);
 
 	case ASN1_ITYPE_MSTRING:
 		/*
@@ -439,52 +483,54 @@ asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 		 * tagging, so if tag != -1, then this looks like an error in
 		 * the template.
 		 */
-		if (tag != -1) {
+		if (tag_number != -1) {
 			ASN1error(ASN1_R_BAD_TEMPLATE);
 			goto err;
 		}
 
-		p = *in;
-		/* Just read in tag and class */
-		ret = asn1_check_tag(NULL, &otag, &oclass, NULL, NULL, &p, len,
-		    -1, 0, 1);
-		if (!ret) {
+		/* XXX - avoid reading the header twice for MSTRING. */
+		CBS_dup(cbs, &cbs_mstring);
+		if (asn1_check_tag_cbs(&cbs_mstring, NULL, &otag, &oclass,
+		    NULL, NULL, -1, 0, 1) != 1) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
 			goto err;
 		}
 
 		/* Must be UNIVERSAL class */
 		if (oclass != V_ASN1_UNIVERSAL) {
-			/* If OPTIONAL, assume this is OK */
-			if (opt)
+			if (optional)
 				return -1;
 			ASN1error(ASN1_R_MSTRING_NOT_UNIVERSAL);
 			goto err;
 		}
 		/* Check tag matches bit map */
 		if (!(ASN1_tag2bit(otag) & it->utype)) {
-			/* If OPTIONAL, assume this is OK */
-			if (opt)
+			if (optional)
 				return -1;
 			ASN1error(ASN1_R_MSTRING_WRONG_TAG);
 			goto err;
 		}
-		return asn1_d2i_ex_primitive(pval, in, len,
-		    it, otag, 0, 0);
+		return asn1_d2i_ex_primitive(pval, cbs, it, otag, 0, 0);
 
 	case ASN1_ITYPE_EXTERN:
-		/* Use new style d2i */
-		ef = it->funcs;
-		return ef->asn1_ex_d2i(pval, in, len, it, tag, aclass, opt, &ctx);
+		if (CBS_len(cbs) > LONG_MAX)
+			return 0;
+		p = CBS_data(cbs);
+		if ((ret = ef->asn1_ex_d2i(pval, &p, (long)CBS_len(cbs), it,
+		    tag_number, tag_class, optional, &ctx)) == 1) {
+			if (!CBS_skip(cbs, p - CBS_data(cbs)))
+				goto err;
+		}
+		return ret;
 
 	case ASN1_ITYPE_CHOICE:
-		return asn1_item_ex_d2i_choice(pval, in, len, it, tag,
-		    aclass, opt, depth);
+		return asn1_item_ex_d2i_choice_cbs(pval, cbs, it, tag_number,
+		    tag_class, optional, depth);
 
 	case ASN1_ITYPE_NDEF_SEQUENCE:
 	case ASN1_ITYPE_SEQUENCE:
-		return asn1_item_ex_d2i_sequence(pval, in, len, it, tag,
-		    aclass, opt, depth);
+		return asn1_item_ex_d2i_sequence_cbs(pval, cbs, it, tag_number,
+		    tag_class, optional, depth);
 
 	default:
 		return 0;
@@ -496,6 +542,28 @@ asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 	ERR_asprintf_error_data("Type=%s", it->sname);
 
 	return 0;
+}
+
+static int
+asn1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long inlen,
+    const ASN1_ITEM *it, int tag_number, int tag_class, char optional,
+    int depth)
+{
+	CBS cbs;
+	int ret;
+
+	if (inlen < 0)
+		return 0;
+
+	CBS_init(&cbs, *in, inlen);
+
+	ret = asn1_item_ex_d2i_cbs(pval, &cbs, it, tag_number, tag_class,
+	    optional, depth);
+
+	if (ret == 1)
+		*in = CBS_data(&cbs);
+
+	return ret;
 }
 
 int
@@ -576,6 +644,26 @@ asn1_template_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long inlen,
  err:
 	ASN1_template_free(val, tt);
 	return 0;
+}
+
+static int
+asn1_template_ex_d2i_cbs(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *tt,
+    char optional, int depth)
+{
+	const unsigned char *p;
+	int ret;
+
+	if (CBS_len(cbs) > LONG_MAX)
+		return 0;
+
+	p = CBS_data(cbs);
+	ret = asn1_template_ex_d2i(pval, &p, (long)CBS_len(cbs), tt,
+	    optional, depth);
+	if (ret == 1) {
+		if (!CBS_skip(cbs, p - CBS_data(cbs)))
+			return 0;
+	}
+	return ret;
 }
 
 static int
@@ -696,7 +784,7 @@ asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
 }
 
 static int
-asn1_d2i_ex_primitive_cbs(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
+asn1_d2i_ex_primitive(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
     int tag_number, int tag_class, char optional)
 {
 	CBS cbs_any, cbs_content, cbs_object, cbs_initial;
@@ -811,27 +899,6 @@ asn1_d2i_ex_primitive_cbs(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
  err:
 	CBB_cleanup(&cbb);
 	freezero(data, data_len);
-
-	return ret;
-}
-
-static int
-asn1_d2i_ex_primitive(ASN1_VALUE **pval, const unsigned char **in, long inlen,
-    const ASN1_ITEM *it, int tag_number, int tag_class, char optional)
-{
-	CBS cbs;
-	int ret;
-
-	if (inlen < 0)
-		return 0;
-
-	CBS_init(&cbs, *in, inlen);
-
-	ret = asn1_d2i_ex_primitive_cbs(pval, &cbs, it, tag_number, tag_class,
-	    optional);
-
-	if (ret == 1)
-		*in = CBS_data(&cbs);
 
 	return ret;
 }
