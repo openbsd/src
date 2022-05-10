@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.1 2022/05/09 17:02:34 job Exp $ */
+/*	$OpenBSD: rsc.c,v 1.2 2022/05/10 07:41:37 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -147,6 +147,8 @@ rsc_parse_filenamehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	}
 
 	if (elemsz == 2) {
+		ASN1_IA5STRING *filename;
+
 		file = sk_ASN1_TYPE_value(seq, i++);
 		if (file->type != V_ASN1_IA5STRING) {
 			warnx("%s: RSC FileNameAndHash: want ASN.1 IA5 string,"
@@ -154,25 +156,17 @@ rsc_parse_filenamehash(struct parse *p, const ASN1_OCTET_STRING *os)
 			    ASN1_tag2str(file->type), file->type);
 			goto out;
 		}
-		fn = strndup((const char *)file->value.ia5string->data,
-		    file->value.ia5string->length);
+
+		filename = file->value.ia5string;
+
+		if (!valid_filename(filename->data, filename->length)) {
+			warnx("%s: RSC FileNameAndHash: bad filename", p->fn);
+			goto out;
+		}
+
+		fn = strndup(filename->data, filename->length);
 		if (fn == NULL)
 			err(1, NULL);
-
-		/*
-		 * filename must confirm to portable file name character set
-		 * XXX: use valid_filename() instead
-		 */
-		if (strchr(fn, '/') != NULL) {
-			warnx("%s: path components disallowed in filename: %s",
-			    p->fn, fn);
-			goto out;
-		}
-		if (strchr(fn, '\n') != NULL) {
-			warnx("%s: newline disallowed in filename: %s",
-			    p->fn, fn);
-			goto out;
-		}
 	}
 
 	/* Now hash value. */

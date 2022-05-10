@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.62 2022/05/10 07:28:43 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.63 2022/05/10 07:41:37 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -129,16 +129,15 @@ rtype_from_file_extension(const char *fn)
 /*
  * Validate that a filename listed on a Manifest only contains characters
  * permitted in draft-ietf-sidrops-6486bis section 4.2.2
+ * Also ensure that there is exactly one '.'.
  */
 static int
-valid_filename(const char *fn, size_t len)
+valid_mft_filename(const char *fn, size_t len)
 {
 	const unsigned char *c;
-	size_t i;
 
-	for (c = fn, i = 0; i < len; i++, c++)
-		if (!isalnum(*c) && *c != '-' && *c != '_' && *c != '.')
-			return 0;
+	if (!valid_filename(fn, len))
+		return 0;
 
 	c = memchr(fn, '.', len);
 	if (c == NULL || c != memrchr(fn, '.', len))
@@ -206,7 +205,7 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 		    p->fn, ASN1_tag2str(file->type), file->type);
 		goto out;
 	}
-	if (!valid_filename(file->value.ia5string->data,
+	if (!valid_mft_filename(file->value.ia5string->data,
 	    file->value.ia5string->length)) {
 		warnx("%s: RFC 6486 section 4.2.2: bad filename", p->fn);
 		goto out;
@@ -484,7 +483,7 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 	if ((crlfile = strrchr(crldp, '/')) == NULL ||
-	    !valid_filename(crlfile + 1, strlen(crlfile + 1)) ||
+	    !valid_mft_filename(crlfile + 1, strlen(crlfile + 1)) ||
 	    rtype_from_file_extension(crlfile + 1) != RTYPE_CRL) {
 		warnx("%s: RFC 6487 section 4.8.6: CRL: "
 		    "bad CRL distribution point extension", fn);

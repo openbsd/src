@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.31 2022/04/21 09:53:07 claudio Exp $ */
+/*	$OpenBSD: validate.c,v 1.32 2022/05/10 07:41:37 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -271,6 +271,22 @@ valid_hash(unsigned char *buf, size_t len, const char *hash, size_t hlen)
 
 	if (memcmp(hash, filehash, sizeof(filehash)) != 0)
 		return 0;
+	return 1;
+}
+
+/*
+ * Validate that a filename only contains characters from the POSIX portable
+ * filename character set [A-Za-z0-9._-], see IEEE Std 1003.1-2013, 3.278.
+ */
+int
+valid_filename(const char *fn, size_t len)
+{
+	const unsigned char *c;
+	size_t i;
+
+	for (c = fn, i = 0; i < len; i++, c++)
+		if (!isalnum(*c) && *c != '-' && *c != '_' && *c != '.')
+			return 0;
 	return 1;
 }
 
