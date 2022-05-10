@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.71 2022/04/21 12:59:03 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.72 2022/05/10 15:45:04 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -161,7 +161,7 @@ sbgp_asrange(struct parse *p, const unsigned char *d, size_t dsz)
 	if (!as_id_parse(t->value.integer, &as.range.min)) {
 		warnx("%s: RFC 3779 section 3.2.3.8 (via RFC 1930): "
 		    "malformed AS identifier", p->fn);
-		return 0;
+		goto out;
 	}
 
 	t = sk_ASN1_TYPE_value(seq, 1);
@@ -174,7 +174,7 @@ sbgp_asrange(struct parse *p, const unsigned char *d, size_t dsz)
 	if (!as_id_parse(t->value.integer, &as.range.max)) {
 		warnx("%s: RFC 3779 section 3.2.3.8 (via RFC 1930): "
 		    "malformed AS identifier", p->fn);
-		return 0;
+		goto out;
 	}
 
 	if (as.range.max == as.range.min) {
@@ -471,7 +471,7 @@ sbgp_addr_range(struct parse *p, struct cert_ip *ip,
 	if (!ip_cert_compose_ranges(ip)) {
 		warnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
 		    "IP address range reversed", p->fn);
-		return 0;
+		goto out;
 	}
 
 	rc = append_ip(p, ip);
