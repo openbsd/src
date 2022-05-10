@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.42 2022/05/09 17:13:06 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.43 2022/05/10 10:52:09 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -184,10 +184,15 @@ x509_get_purpose(X509 *x, const char *fn)
 {
 	EXTENDED_KEY_USAGE		*eku = NULL;
 	int				 crit;
-	enum cert_purpose		 purpose = 0;
+	enum cert_purpose		 purpose = CERT_PURPOSE_INVALID;
 
 	if (X509_check_ca(x) == 1) {
 		purpose = CERT_PURPOSE_CA;
+		goto out;
+	}
+
+	if (X509_get_extension_flags(x) & EXFLAG_BCONS) {
+		warnx("%s: Basic Constraints ext in non-CA cert", fn);
 		goto out;
 	}
 
