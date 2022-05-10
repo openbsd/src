@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.40 2022/04/25 10:52:09 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.41 2022/05/10 07:28:43 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -143,7 +143,8 @@ roa_parse_ipfam(const ASN1_OCTET_STRING *os, struct parse *p)
 		cryptowarnx("%s: RFC 6482 section 3.3: ROAIPAddressFamily: "
 		    "failed ASN.1 sequence parse", p->fn);
 		goto out;
-	} else if (sk_ASN1_TYPE_num(seq) != 2) {
+	}
+	if (sk_ASN1_TYPE_num(seq) != 2) {
 		warnx("%s: RFC 6482 section 3.3: ROAIPAddressFamily: "
 		    "want 2 elements, have %d",
 		    p->fn, sk_ASN1_TYPE_num(seq));
@@ -236,7 +237,8 @@ roa_parse_ipblocks(const ASN1_OCTET_STRING *os, struct parse *p)
 			    "want ASN.1 sequence, have %s (NID %d)",
 			    p->fn, ASN1_tag2str(t->type), t->type);
 			goto out;
-		} else if (!roa_parse_ipfam(t->value.octet_string, p))
+		}
+		if (!roa_parse_ipfam(t->value.octet_string, p))
 			goto out;
 	}
 
@@ -305,7 +307,8 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		    "want ASN.1 integer, have %s (NID %d)",
 		    p->fn, ASN1_tag2str(t->type), t->type);
 		goto out;
-	} else if (!as_id_parse(t->value.integer, &p->res->asid)) {
+	}
+	if (!as_id_parse(t->value.integer, &p->res->asid)) {
 		warnx("%s: RFC 6482 section 3.2: asID: "
 		    "malformed AS identifier", p->fn);
 		goto out;
@@ -319,7 +322,8 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		    "want ASN.1 sequence, have %s (NID %d)",
 		    p->fn, ASN1_tag2str(t->type), t->type);
 		goto out;
-	} else if (!roa_parse_ipblocks(t->value.octet_string, p))
+	}
+	if (!roa_parse_ipblocks(t->value.octet_string, p))
 		goto out;
 
 	rc = 1;

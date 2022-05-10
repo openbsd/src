@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.202 2022/05/04 15:21:25 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.203 2022/05/10 07:28:43 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -499,7 +499,8 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 			break;
 		}
 		cert = cert_read(b);
-		if (cert->purpose == CERT_PURPOSE_CA) {
+		switch (cert->purpose) {
+		case CERT_PURPOSE_CA:
 			/*
 			 * Process the revocation list from the
 			 * certificate *first*, since it might mark that
@@ -507,11 +508,15 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 			 * process the MFT.
 			 */
 			queue_add_from_cert(cert);
-		} else if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
+			break;
+		case CERT_PURPOSE_BGPSEC_ROUTER:
 			cert_insert_brks(brktree, cert);
 			st->brks++;
-		} else
+			break;
+		default:
 			st->certs_fail++;
+			break;
+		}
 		cert_free(cert);
 		break;
 	case RTYPE_MFT:

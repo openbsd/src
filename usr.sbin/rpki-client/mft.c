@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.61 2022/05/09 17:02:34 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.62 2022/05/10 07:28:43 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -189,7 +189,8 @@ mft_parse_filehash(struct parse *p, const ASN1_OCTET_STRING *os)
 		cryptowarnx("%s: RFC 6486 section 4.2.1: FileAndHash: "
 		    "failed ASN.1 sequence parse", p->fn);
 		goto out;
-	} else if (sk_ASN1_TYPE_num(seq) != 2) {
+	}
+	if (sk_ASN1_TYPE_num(seq) != 2) {
 		warnx("%s: RFC 6486 section 4.2.1: FileAndHash: "
 		    "want 2 elements, have %d", p->fn,
 		    sk_ASN1_TYPE_num(seq));
@@ -290,7 +291,8 @@ mft_parse_flist(struct parse *p, const ASN1_OCTET_STRING *os)
 			    "want ASN.1 sequence, have %s (NID %d)",
 			    p->fn, ASN1_tag2str(t->type), t->type);
 			goto out;
-		} else if (!mft_parse_filehash(p, t->value.octet_string))
+		}
+		if (!mft_parse_filehash(p, t->value.octet_string))
 			goto out;
 	}
 
