@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.33 2022/05/09 21:57:26 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.34 2022/05/10 09:11:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -681,6 +681,7 @@ struct iwx_softc {
 #define IWX_DEVICE_FAMILY_22000	1
 #define IWX_DEVICE_FAMILY_AX210	2
 	uint32_t sc_sku_id[3];
+	uint32_t mac_addr_from_csr;
 
 	struct iwx_dma_info ctxt_info_dma;
 	struct iwx_self_init_dram init_dram;

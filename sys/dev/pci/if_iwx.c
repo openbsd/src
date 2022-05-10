@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.143 2022/05/09 21:57:26 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.144 2022/05/10 09:11:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -341,8 +341,9 @@ void	iwx_sta_tx_agg_start(struct iwx_softc *, struct ieee80211_node *,
 	    uint8_t);
 void	iwx_ba_task(void *);
 
-int	iwx_set_mac_addr_from_csr(struct iwx_softc *, struct iwx_nvm_data *);
+void	iwx_set_mac_addr_from_csr(struct iwx_softc *, struct iwx_nvm_data *);
 int	iwx_is_valid_mac_addr(const uint8_t *);
+void	iwx_flip_hw_address(uint32_t, uint32_t, uint8_t *);
 int	iwx_nvm_get(struct iwx_softc *);
 int	iwx_load_firmware(struct iwx_softc *);
 int	iwx_start_fw(struct iwx_softc *);
@@ -3688,31 +3689,33 @@ iwx_ampdu_tx_start(struct ieee80211com *ic, struct ieee80211_node *ni,
 	return EBUSY;
 }
 
-/* Read the mac address from WFMP registers. */
-int
+void
 iwx_set_mac_addr_from_csr(struct iwx_softc *sc, struct iwx_nvm_data *data)
 {
-	const uint8_t *hw_addr;
 	uint32_t mac_addr0, mac_addr1;
 
+	memset(data->hw_addr, 0, sizeof(data->hw_addr));
+
 	if (!iwx_nic_lock(sc))
-		return EBUSY;
+		return;
 
-	mac_addr0 = htole32(iwx_read_prph(sc, IWX_WFMP_MAC_ADDR_0));
-	mac_addr1 = htole32(iwx_read_prph(sc, IWX_WFMP_MAC_ADDR_1));
+	mac_addr0 = htole32(IWX_READ(sc, IWX_CSR_MAC_ADDR0_STRAP(sc)));
+	mac_addr1 = htole32(IWX_READ(sc, IWX_CSR_MAC_ADDR1_STRAP(sc)));
 
-	hw_addr = (const uint8_t *)&mac_addr0;
-	data->hw_addr[0] = hw_addr[3];
-	data->hw_addr[1] = hw_addr[2];
-	data->hw_addr[2] = hw_addr[1];
-	data->hw_addr[3] = hw_addr[0];
+	iwx_flip_hw_address(mac_addr0, mac_addr1, data->hw_addr);
 
-	hw_addr = (const uint8_t *)&mac_addr1;
-	data->hw_addr[4] = hw_addr[1];
-	data->hw_addr[5] = hw_addr[0];
+	/* If OEM fused a valid address, use it instead of the one in OTP. */
+	if (iwx_is_valid_mac_addr(data->hw_addr)) {
+		iwx_nic_unlock(sc);
+		return;
+	}
+
+	mac_addr0 = htole32(IWX_READ(sc, IWX_CSR_MAC_ADDR0_OTP(sc)));
+	mac_addr1 = htole32(IWX_READ(sc, IWX_CSR_MAC_ADDR1_OTP(sc)));
+
+	iwx_flip_hw_address(mac_addr0, mac_addr1, data->hw_addr);
 
 	iwx_nic_unlock(sc);
-	return 0;
 }
 
 int
@@ -3726,6 +3729,22 @@ iwx_is_valid_mac_addr(const uint8_t *addr)
 	    memcmp(etherbroadcastaddr, addr, sizeof(etherbroadcastaddr)) != 0 &&
 	    memcmp(etheranyaddr, addr, sizeof(etheranyaddr)) != 0 &&
 	    !ETHER_IS_MULTICAST(addr));
+}
+
+void
+iwx_flip_hw_address(uint32_t mac_addr0, uint32_t mac_addr1, uint8_t *dest)
+{
+	const uint8_t *hw_addr;
+
+	hw_addr = (const uint8_t *)&mac_addr0;
+	dest[0] = hw_addr[3];
+	dest[1] = hw_addr[2];
+	dest[2] = hw_addr[1];
+	dest[3] = hw_addr[0];
+
+	hw_addr = (const uint8_t *)&mac_addr1;
+	dest[4] = hw_addr[1];
+	dest[5] = hw_addr[0];
 }
 
 int
@@ -10653,6 +10672,8 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_low_latency_xtal = cfg->low_latency_xtal;
 		}
 	}
+
+	sc->mac_addr_from_csr = 0x380; /* differs on BZ hw generation */
 
 	if (sc->sc_device_family >= IWX_DEVICE_FAMILY_AX210) {
 		sc->sc_umac_prph_offset = 0x300000;
