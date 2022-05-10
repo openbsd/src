@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.47 2021/02/08 08:18:45 mpi Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.48 2022/05/10 16:56:16 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -81,7 +81,7 @@ static const struct rwlock_op {
 	},
 	{	/* RW_READ */
 		RWLOCK_READ_INCR,
-		RWLOCK_WRLOCK,
+		RWLOCK_WRLOCK | RWLOCK_WRWANT,
 		RWLOCK_WAIT,
 		0,
 		PLOCK
@@ -103,7 +103,7 @@ rw_enter_read(struct rwlock *rwl)
 {
 	unsigned long owner = rwl->rwl_owner;
 
-	if (__predict_false((owner & RWLOCK_WRLOCK) ||
+	if (__predict_false((owner & (RWLOCK_WRLOCK | RWLOCK_WRWANT)) ||
 	    rw_cas(&rwl->rwl_owner, owner, owner + RWLOCK_READ_INCR)))
 		rw_enter(rwl, RW_READ);
 	else {
@@ -345,6 +345,10 @@ rw_do_exit(struct rwlock *rwl, unsigned long wrlock)
 		else
 			set = (owner - RWLOCK_READ_INCR) &
 				~(RWLOCK_WAIT|RWLOCK_WRWANT);
+		/*
+		 * Potential MP race here.  If the owner had WRWANT set, we
+		 * cleared it and a reader can sneak in before a writer.
+		 */
 	} while (__predict_false(rw_cas(&rwl->rwl_owner, owner, set)));
 
 	if (owner & RWLOCK_WAIT)
