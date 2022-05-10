@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.745 2021/12/24 06:18:11 hastings Exp $
+$OpenBSD: usbdevs,v 1.746 2022/05/10 08:19:51 stsp Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3731,6 +3731,7 @@ product RALINK RT3370		0x3370	RT3370
 product RALINK RT3572		0x3572	RT3572
 product RALINK RT3573		0x3573	RT3573
 product RALINK RT5370		0x5370	RT5370
+product RALINK RT5372		0x5372	RT5372
 product RALINK RT5572		0x5572	RT5572
 product RALINK MT7601		0x7601  MT7601
 product RALINK MT7601_2		0x760a	MT7601
