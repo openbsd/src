@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.49 2022/01/08 06:49:42 guenther Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.50 2022/05/10 20:23:57 kettenis Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -75,6 +75,8 @@
 #include "util.h"
 #include "resolve.h"
 
+#define nitems(_a)     (sizeof((_a)) / sizeof((_a)[0]))
+
 int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 
 /*
@@ -96,11 +98,12 @@ int64_t pcookie __attribute__((section(".openbsd.randomdata"))) __dso_hidden;
 #define _RF_P		0x20000000		/* Location relative */
 #define _RF_G		0x10000000		/* GOT offset */
 #define _RF_B		0x08000000		/* Load address relative */
+#define _RF_E		0x02000000		/* ERROR */
 #define _RF_SZ(s)	(((s) & 0xff) << 8)	/* memory target size */
 #define _RF_RS(s)	((s) & 0xff)		/* right shift */
 static const int reloc_target_flags[] = {
 	0,							/* NONE */
-	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* RELOC_32*/
+	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* 32 */
 	_RF_S|_RF_A|_RF_P|	_RF_SZ(32) | _RF_RS(0),		/* PC32 */
 	_RF_G|			_RF_SZ(32) | _RF_RS(00),	/* GOT32 */
 	      _RF_A|		_RF_SZ(32) | _RF_RS(0),		/* PLT32 */
@@ -108,21 +111,21 @@ static const int reloc_target_flags[] = {
 	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* GLOB_DAT */
 	_RF_S|			_RF_SZ(32) | _RF_RS(0),		/* JUMP_SLOT */
 	      _RF_A|	_RF_B|	_RF_SZ(32) | _RF_RS(0),		/* RELATIVE */
-	0,							/* GOTOFF XXX */
-	0,							/* GOTPC XXX */
-	0,							/* DUMMY 11 */
-	0,							/* DUMMY 12 */
-	0,							/* DUMMY 13 */
-	0,							/* DUMMY 14 */
-	0,							/* DUMMY 15 */
-	0,							/* DUMMY 16 */
-	0,							/* DUMMY 17 */
-	0,							/* DUMMY 18 */
-	0,							/* DUMMY 19 */
-	_RF_S|_RF_A|		_RF_SZ(16) | _RF_RS(0),		/* RELOC_16 */
-	_RF_S|_RF_A|_RF_P|	_RF_SZ(16) | _RF_RS(0),		/* PC_16 */
-	_RF_S|_RF_A|		_RF_SZ(8) | _RF_RS(0),		/* RELOC_8 */
-	_RF_S|_RF_A|_RF_P|	_RF_SZ(8) | _RF_RS(0),		/* RELOC_PC8 */
+	_RF_E,							/* GOTOFF */
+	_RF_E,							/* GOTPC */
+	_RF_E,							/* 32PLT */
+	_RF_E,							/* DUMMY 12 */
+	_RF_E,							/* DUMMY 13 */
+	_RF_E,							/* TLS_TPOFF */
+	_RF_E,							/* TLS_IE */
+	_RF_E,							/* TLS_GITIE */
+	_RF_E,							/* TLS_LE */
+	_RF_E,							/* TLS_GD */
+	_RF_E,							/* TLS_LDM */
+	_RF_S|_RF_A|		_RF_SZ(16) | _RF_RS(0),		/* 16 */
+	_RF_S|_RF_A|_RF_P|	_RF_SZ(16) | _RF_RS(0),		/* PC16 */
+	_RF_S|_RF_A|		_RF_SZ(8) | _RF_RS(0),		/* 8 */
+	_RF_S|_RF_A|_RF_P|	_RF_SZ(8) | _RF_RS(0),		/* PC8 */
 };
 
 #define RELOC_RESOLVE_SYMBOL(t)		((reloc_target_flags[t] & _RF_S) != 0)
@@ -131,6 +134,8 @@ static const int reloc_target_flags[] = {
 #define RELOC_USE_ADDEND(t)		((reloc_target_flags[t] & _RF_A) != 0)
 #define RELOC_TARGET_SIZE(t)		((reloc_target_flags[t] >> 8) & 0xff)
 #define RELOC_VALUE_RIGHTSHIFT(t)	(reloc_target_flags[t] & 0xff)
+#define RELOC_ERROR(t) \
+	((t) >= nitems(reloc_target_flags) || (reloc_target_flags[t] & _RF_E))
 
 static const long reloc_target_bitmask[] = {
 #define _BM(x)	(~(-(1ULL << (x))))
@@ -200,6 +205,9 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 		const char *symn;
 
 		type = ELF_R_TYPE(rels->r_info);
+
+		if (RELOC_ERROR(type))
+			_dl_die("relocation error %d idx %ld", type, i);
 
 		if (type == R_TYPE(NONE))
 			continue;
