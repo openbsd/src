@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.77 2022/05/06 23:53:43 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.78 2022/05/10 00:56:27 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -312,9 +312,10 @@ GPT_read(const int which)
 	int			error;
 
 	error = MBR_read(0, 0, &gmbr);
-	if (error == 0)
-		error = protective_mbr(&gmbr);
 	if (error)
+		goto done;
+	error = protective_mbr(&gmbr);
+	if (error == -1)
 		goto done;
 
 	switch (which) {
