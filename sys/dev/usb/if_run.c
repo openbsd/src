@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.136 2022/04/21 21:03:03 stsp Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.137 2022/05/10 08:20:36 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -259,6 +259,7 @@ static const struct usb_devno run_devs[] = {
 	USB_ID(RALINK,		RT3572),
 	USB_ID(RALINK,		RT3573),
 	USB_ID(RALINK,		RT5370),
+	USB_ID(RALINK,		RT5372),
 	USB_ID(RALINK,		RT5572),
 	USB_ID(RALINK,		RT8070),
 	USB_ID(SAMSUNG,		WIS09ABGN),
