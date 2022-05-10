@@ -1,4 +1,4 @@
-/*	$OpenBSD: obio.c,v 1.10 2022/04/06 18:59:26 naddy Exp $	*/
+/*	$OpenBSD: obio.c,v 1.11 2022/05/10 18:04:50 kettenis Exp $	*/
 /*	$NetBSD: obio.c,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
 
 /*-
@@ -242,7 +242,7 @@ obio_iomem_add_mapping(bus_addr_t bpa, bus_size_t size, int type,
 		panic("obio_iomem_add_mapping: overflow");
 #endif
 
-	va = uvm_km_valloc(kernel_map, endpa - pa);
+	va = (vaddr_t)km_alloc(endpa - pa, &kv_any, &kp_none, &kd_nowait);
 	if (va == 0)
 		return (ENOMEM);
 
@@ -328,7 +328,7 @@ obio_iomem_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 	/*
 	 * Free the kernel virtual mapping.
 	 */
-	uvm_km_free(kernel_map, va, endva - va);
+	km_free((void *)va, endva - va, &kv_any, &kp_none);
 }
 
 int
