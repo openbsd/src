@@ -696,7 +696,7 @@ radeondrm_attach_kms(struct device *parent, struct device *self, void *aux)
 	fb_setsize(&rdev->sf, 8, 1152, 900, node, 0);
 
 	/*
-	 * The firmware sets up the framebuffer such that at starts at
+	 * The firmware sets up the framebuffer such that it starts at
 	 * an offset from the start of video memory.
 	 */
 	rdev->fb_offset =
