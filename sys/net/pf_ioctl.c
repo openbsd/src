@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.380 2022/04/29 09:55:43 mbuhl Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.381 2022/05/10 23:12:25 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2217,12 +2217,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENODEV;
 			goto fail;
 		}
-		NET_LOCK();
-		PF_LOCK();
 		error = pfr_add_tables(io->pfrio_buffer, io->pfrio_size,
 		    &io->pfrio_nadd, io->pfrio_flags | PFR_FLAG_USERIOCTL);
-		PF_UNLOCK();
-		NET_UNLOCK();
 		break;
 	}
 
