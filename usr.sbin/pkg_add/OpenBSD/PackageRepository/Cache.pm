@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Cache.pm,v 1.5 2022/04/29 10:44:05 espie Exp $
+# $OpenBSD: Cache.pm,v 1.6 2022/05/11 09:55:41 espie Exp $
 #
 # Copyright (c) 2022 Marc Espie <espie@openbsd.org>
 #
@@ -77,12 +77,16 @@ sub prime_update_info_cache
 	# TODO actually ask quirks to extend the stemlist !
 	my @list = sort keys %{$self->{stems}};
 	return if @list == 0;
+
+	my $total = scalar @list;
 	$progress->set_header(
 	    $state->f("Precaching update information for #1 names...", 
-		scalar(@list)));
-	open my $fh, "-|", $self->pipe_locate(map { "$_-[0-9]*"} @list) or die $!;
+		$total));
+	my $done = 0;
+	my $oldname = ""; 
+	open my $fh, "-|", $self->pipe_locate(map { "$_-[0-9]*"} @list) 
+	    or $state->fatal("Can't run locate: #1", $!);
 	while (<$fh>) {
-		$progress->working(100);
 		if (m/^(.*?)\:(.*)/) {
 			my ($pkgname, $value) = ($1, $2);
 			$found->{OpenBSD::PackageName::splitstem($pkgname)} = 1;
@@ -91,6 +95,11 @@ sub prime_update_info_cache
 			if ($value =~ m/\@option\s+always-update/) {
 				$uncached->{$pkgname} = 1;
 			}
+			if ($pkgname ne $oldname) {
+				$oldname = $pkgname;
+				$done++;
+			}
+			$progress->show($done, $total);
 		}
 	}
 	close($fh);
