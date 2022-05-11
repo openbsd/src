@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.191 2022/05/11 07:51:47 espie Exp $
+# $OpenBSD: Add.pm,v 1.192 2022/05/11 09:47:23 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -152,11 +152,11 @@ sub perform_extraction
 	# it's necessary to delete them so that skip_to_the_end will work
 	# correctly (relies on wanted being empty to trigger, and requires
 	# tied to be correct for the progress meter).
+	if (keys %$wanted == 0) {
+		skip_to_the_end($handle, $state, $tied, $p);
+		return;
+	}
 	while (my $file = $state->{archive}->next) {
-		if (keys %$wanted == 0) {
-			skip_to_the_end($handle, $state, $tied, $p);
-			last;
-		}
 		my $e = $tied->{$file->name};
 		if (defined $e) {
 			delete $tied->{$file->name};
@@ -183,11 +183,14 @@ sub perform_extraction
 		$e->prepare_to_extract($state, $file);
 		$e->extract($state, $file);
 		$p->advance($e);
+		if (keys %$wanted == 0) {
+			skip_to_the_end($handle, $state, $tied, $p);
+			last;
+		}
 	}
 	if (keys %$wanted > 0) {
 		$state->fatal("Truncated archive");
 	}
-	$p->saved;
 }
 
 my $user_tagged = {};
