@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.74 2022/05/10 16:43:53 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.75 2022/05/11 08:59:00 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -32,13 +32,6 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
-
-/*
- * Type of ASIdentifier (RFC 3779, 3.2.3).
- */
-#define	ASID_TYPE_ASNUM	0x00
-#define ASID_TYPE_RDI	0x01
-#define ASID_TYPE_MAX	ASID_TYPE_RDI
 
 /*
  * A parsing sequence of a file (which may just be <stdin>).
@@ -128,70 +121,36 @@ sbgp_addr(struct parse *p, struct cert_ip *ip, const ASN1_BIT_STRING *bs)
  * Returns zero on failure, non-zero on success.
  */
 static int
-sbgp_asrange(struct parse *p, const unsigned char *d, size_t dsz)
+sbgp_asrange(struct parse *p, const ASRange *range)
 {
 	struct cert_as		 as;
-	ASN1_SEQUENCE_ANY	*seq;
-	const ASN1_TYPE		*t;
-	int			 rc = 0;
-
-	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
-		cryptowarnx("%s: RFC 3779 section 3.2.3.8: ASRange: "
-		    "failed ASN.1 sequence parse", p->fn);
-		goto out;
-	}
-	if (sk_ASN1_TYPE_num(seq) != 2) {
-		warnx("%s: RFC 3779 section 3.2.3.8: ASRange: "
-		    "want 2 elements, have %d", p->fn,
-		    sk_ASN1_TYPE_num(seq));
-		goto out;
-	}
 
 	memset(&as, 0, sizeof(struct cert_as));
 	as.type = CERT_AS_RANGE;
 
-	t = sk_ASN1_TYPE_value(seq, 0);
-	if (t->type != V_ASN1_INTEGER) {
-		warnx("%s: RFC 3779 section 3.2.3.8: ASRange: "
-		    "want ASN.1 integer, have %s (NID %d)",
-		    p->fn, ASN1_tag2str(t->type), t->type);
-		goto out;
-	}
-	if (!as_id_parse(t->value.integer, &as.range.min)) {
+	if (!as_id_parse(range->min, &as.range.min)) {
 		warnx("%s: RFC 3779 section 3.2.3.8 (via RFC 1930): "
 		    "malformed AS identifier", p->fn);
-		goto out;
+		return 0;
 	}
 
-	t = sk_ASN1_TYPE_value(seq, 1);
-	if (t->type != V_ASN1_INTEGER) {
-		warnx("%s: RFC 3779 section 3.2.3.8: ASRange: "
-		    "want ASN.1 integer, have %s (NID %d)",
-		    p->fn, ASN1_tag2str(t->type), t->type);
-		goto out;
-	}
-	if (!as_id_parse(t->value.integer, &as.range.max)) {
+	if (!as_id_parse(range->max, &as.range.max)) {
 		warnx("%s: RFC 3779 section 3.2.3.8 (via RFC 1930): "
 		    "malformed AS identifier", p->fn);
-		goto out;
+		return 0;
 	}
 
 	if (as.range.max == as.range.min) {
 		warnx("%s: RFC 3379 section 3.2.3.8: ASRange: "
 		    "range is singular", p->fn);
-		goto out;
+		return 0;
 	} else if (as.range.max < as.range.min) {
 		warnx("%s: RFC 3379 section 3.2.3.8: ASRange: "
 		    "range is out of order", p->fn);
-		goto out;
+		return 0;
 	}
 
-	if (!append_as(p, &as))
-		goto out;
-	rc = 1;
-out:
-	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
-	return rc;
+	return append_as(p, &as);
 }
 
 /*
@@ -224,80 +183,46 @@ sbgp_asid(struct parse *p, const ASN1_INTEGER *i)
  * Returns zero on failure, non-zero on success.
  */
 static int
-sbgp_asnum(struct parse *p, const unsigned char *d, size_t dsz)
+sbgp_asnum(struct parse *p, const ASIdentifierChoice *aic)
 {
 	struct cert_as		 as;
-	ASN1_TYPE		*t, *tt;
-	ASN1_SEQUENCE_ANY	*seq = NULL;
-	int			 i, rc = 0;
-	const unsigned char	*sv = d;
+	const ASIdOrRanges	*aors = NULL;
+	const ASIdOrRange	*aor;
+	int			 i;
 
-	/* We can either be a null (inherit) or sequence. */
-
-	if ((t = d2i_ASN1_TYPE(NULL, &d, dsz)) == NULL) {
-		cryptowarnx("%s: RFC 3779 section 3.2.3.2: ASIdentifierChoice: "
-		    "failed ASN.1 type parse", p->fn);
-		goto out;
-	}
-
-	/*
-	 * Section 3779 3.2.3.3 is to inherit with an ASN.1 NULL type,
-	 * which is the easy case.
-	 */
-
-	switch (t->type) {
-	case V_ASN1_NULL:
+	switch (aic->type) {
+	case ASIdentifierChoice_inherit:
 		memset(&as, 0, sizeof(struct cert_as));
 		as.type = CERT_AS_INHERIT;
-		if (!append_as(p, &as))
-			goto out;
-		rc = 1;
-		goto out;
-	case V_ASN1_SEQUENCE:
+		return append_as(p, &as);
+	case ASIdentifierChoice_asIdsOrRanges:
+		aors = aic->u.asIdsOrRanges;
 		break;
 	default:
 		warnx("%s: RFC 3779 section 3.2.3.2: ASIdentifierChoice: "
-		    "want ASN.1 sequence or null, have %s (NID %d)",
-		    p->fn, ASN1_tag2str(t->type), t->type);
-		goto out;
+		    "unknown type %d", p->fn, aic->type);
+		return 0;
 	}
 
-	/* This is RFC 3779 3.2.3.4. */
-
-	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &sv, dsz)) == NULL) {
-		cryptowarnx("%s: RFC 3779 section 3.2.3.2: ASIdentifierChoice: "
-		    "failed ASN.1 sequence parse", p->fn);
-		goto out;
-	}
-
-	/* Accepts RFC 3779 3.2.3.6 or 3.2.3.7 (sequence). */
-
-	for (i = 0; i < sk_ASN1_TYPE_num(seq); i++) {
-		tt = sk_ASN1_TYPE_value(seq, i);
-		switch (tt->type) {
-		case V_ASN1_INTEGER:
-			if (!sbgp_asid(p, tt->value.integer))
-				goto out;
+	for (i = 0; i < sk_ASIdOrRange_num(aors); i++) {
+		aor = sk_ASIdOrRange_value(aors, i);
+		switch (aor->type) {
+		case ASIdOrRange_id:
+			if (!sbgp_asid(p, aor->u.id))
+				return 0;
 			break;
-		case V_ASN1_SEQUENCE:
-			d = tt->value.asn1_string->data;
-			dsz = tt->value.asn1_string->length;
-			if (!sbgp_asrange(p, d, dsz))
-				goto out;
+		case ASIdOrRange_range:
+			if (!sbgp_asrange(p, aor->u.range))
+				return 0;
 			break;
 		default:
 			warnx("%s: RFC 3779 section 3.2.3.5: ASIdOrRange: "
-			    "want ASN.1 sequence or integer, have %s (NID %d)",
-			    p->fn, ASN1_tag2str(tt->type), tt->type);
-			goto out;
+			    "unknown type %d", p->fn, aor->type);
+			return 0;
 		}
 	}
 
-	rc = 1;
-out:
-	ASN1_TYPE_free(t);
-	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
-	return rc;
+	return 1;
 }
 
 /*
@@ -308,12 +233,8 @@ out:
 static int
 sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
 {
-	unsigned char		*sv = NULL;
-	const unsigned char	*d;
-	ASN1_SEQUENCE_ANY	*seq = NULL, *sseq = NULL;
-	const ASN1_TYPE		*t;
-	int			 dsz, rc = 0, i, ptag;
-	long			 plen;
+	ASIdentifiers		*asidentifiers = NULL;
+	int			 rc = 0;
 
 	if (!X509_EXTENSION_get_critical(ext)) {
 		cryptowarnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
@@ -321,98 +242,30 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if ((dsz = i2d_X509_EXTENSION(ext, &sv)) < 0) {
+	if ((asidentifiers = X509V3_EXT_d2i(ext)) == NULL) {
 		cryptowarnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
 		    "failed extension parse", p->fn);
 		goto out;
 	}
 
-	/* Start with RFC 3779, section 3.2 top-level. */
-
-	d = sv;
-	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
-		    "failed ASN.1 sequence parse", p->fn);
-		goto out;
-	}
-	if (sk_ASN1_TYPE_num(seq) != 3) {
+	if (asidentifiers->rdi != NULL) {
 		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
-		    "want 3 elements, have %d", p->fn,
-		    sk_ASN1_TYPE_num(seq));
+		    "should not have RDI values", p->fn);
 		goto out;
 	}
 
-	t = sk_ASN1_TYPE_value(seq, 0);
-	if (t->type != V_ASN1_OBJECT) {
+	if (asidentifiers->asnum == NULL) {
 		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
-		    "want ASN.1 object, have %s (NID %d)",
-		    p->fn, ASN1_tag2str(t->type), t->type);
+		    "no AS number resource set", p->fn);
 		goto out;
 	}
 
-	t = sk_ASN1_TYPE_value(seq, 1);
-	if (t->type != V_ASN1_BOOLEAN) {
-		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
-		    "want ASN.1 boolean, have %s (NID %d)",
-		    p->fn, ASN1_tag2str(t->type), t->type);
+	if (!sbgp_asnum(p, asidentifiers->asnum))
 		goto out;
-	}
-
-	t = sk_ASN1_TYPE_value(seq, 2);
-	if (t->type != V_ASN1_OCTET_STRING) {
-		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
-		    "want ASN.1 octet string, have %s (NID %d)",
-		    p->fn, ASN1_tag2str(t->type), t->type);
-		goto out;
-	}
-
-	/* Within RFC 3779 3.2.3, check 3.2.3.1. */
-
-	d = t->value.octet_string->data;
-	dsz = t->value.octet_string->length;
-
-	if ((sseq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
-		cryptowarnx("%s: RFC 3779 section 3.2.3.1: ASIdentifiers: "
-		    "failed ASN.1 sequence parse", p->fn);
-		goto out;
-	}
-
-	/* Scan through for private 3.2.3.2 classes. */
-
-	for (i = 0; i < sk_ASN1_TYPE_num(sseq); i++) {
-		t = sk_ASN1_TYPE_value(sseq, i);
-		if (t->type != V_ASN1_OTHER) {
-			warnx("%s: RFC 3779 section 3.2.3.1: ASIdentifiers: "
-			    "want ASN.1 explicit, have %s (NID %d)", p->fn,
-			    ASN1_tag2str(t->type), t->type);
-			goto out;
-		}
-
-		/* Use the low-level ASN1_frame. */
-
-		d = t->value.asn1_string->data;
-		dsz = t->value.asn1_string->length;
-		if (!ASN1_frame(p->fn, dsz, &d, &plen, &ptag))
-			goto out;
-
-		/* Ignore bad AS identifiers and RDI entries. */
-
-		if (ptag > ASID_TYPE_MAX) {
-			warnx("%s: RFC 3779 section 3.2.3.1: ASIdentifiers: "
-			    "unknown explicit tag 0x%02x", p->fn, ptag);
-			goto out;
-		} else if (ptag == ASID_TYPE_RDI)
-			continue;
-
-		if (!sbgp_asnum(p, d, plen))
-			goto out;
-	}
 
 	rc = 1;
-out:
-	sk_ASN1_TYPE_pop_free(seq, ASN1_TYPE_free);
-	sk_ASN1_TYPE_pop_free(sseq, ASN1_TYPE_free);
-	free(sv);
+ out:
+	ASIdentifiers_free(asidentifiers);
 	return rc;
 }
 
