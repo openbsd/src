@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.7 2022/04/06 18:59:29 naddy Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.8 2022/05/11 06:14:15 kevlo Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -725,7 +725,7 @@ igc_dma_malloc(struct igc_softc *sc, bus_size_t size, struct igc_dma_alloc *dma)
 	    1, &dma->dma_nseg, BUS_DMA_NOWAIT))
 		goto destroy;
 	if (bus_dmamem_map(dma->dma_tag, &dma->dma_seg, dma->dma_nseg, size,
-	    &dma->dma_vaddr, BUS_DMA_NOWAIT))
+	    &dma->dma_vaddr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT))
 		goto free;
 	if (bus_dmamap_load(dma->dma_tag, dma->dma_map, dma->dma_vaddr, size,
 	    NULL, BUS_DMA_NOWAIT))

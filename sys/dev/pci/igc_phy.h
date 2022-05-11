@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_phy.h,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
+/*	$OpenBSD: igc_phy.h,v 1.2 2022/05/11 06:14:15 kevlo Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -19,7 +19,6 @@ int	igc_null_set_page(struct igc_hw *, uint16_t);
 int	igc_check_downshift_generic(struct igc_hw *);
 int	igc_check_reset_block_generic(struct igc_hw *);
 int	igc_get_phy_id(struct igc_hw *);
-int	igc_phy_sw_reset_generic(struct igc_hw *);
 int	igc_phy_hw_reset_generic(struct igc_hw *);
 int	igc_phy_reset_dsp_generic(struct igc_hw *);
 int	igc_set_d3_lplu_state_generic(struct igc_hw *, bool);

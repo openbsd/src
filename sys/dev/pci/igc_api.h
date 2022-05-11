@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_api.h,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
+/*	$OpenBSD: igc_api.h,v 1.2 2022/05/11 06:14:15 kevlo Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -40,7 +40,6 @@ int		igc_get_cable_length(struct igc_hw *);
 int		igc_validate_mdi_setting(struct igc_hw *);
 int		igc_get_phy_info(struct igc_hw *);
 int		igc_phy_hw_reset(struct igc_hw *);
-int		igc_phy_commit(struct igc_hw *);
 void		igc_power_up_phy(struct igc_hw *);
 void		igc_power_down_phy(struct igc_hw *);
 int		igc_read_mac_addr(struct igc_hw *);

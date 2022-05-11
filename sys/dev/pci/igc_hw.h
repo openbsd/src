@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_hw.h,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
+/*	$OpenBSD: igc_hw.h,v 1.2 2022/05/11 06:14:15 kevlo Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -49,19 +49,6 @@
 #include <dev/pci/igc_nvm.h>
 #include <dev/pci/igc_phy.h>
 #include <dev/pci/igc_regs.h>
-
-#if 0
-/* Enable/disable debugging statements in shared code */
-#define DBG	0
-
-#define DEBUGOUT(...)							\
-	do { if (DBG) printf(__VA_ARGS__); } while (0)
-#define DEBUGOUT1(...)		DEBUGOUT(__VA_ARGS__)
-#define DEBUGOUT2(...)		DEBUGOUT(__VA_ARGS__)
-#define DEBUGOUT3(...)		DEBUGOUT(__VA_ARGS__)
-#define DEBUGOUT7(...)		DEBUGOUT(__VA_ARGS__)
-#define DEBUGFUNC(F)		DEBUGOUT(F "\n")
-#endif
 
 struct igc_hw;
 
@@ -244,7 +231,6 @@ struct igc_phy_operations {
 	int	(*init_params)(struct igc_hw *);
 	int	(*acquire)(struct igc_hw *);
 	int	(*check_reset_block)(struct igc_hw *);
-	int	(*commit)(struct igc_hw *);
 	int	(*force_speed_duplex)(struct igc_hw *);
 	int	(*get_info)(struct igc_hw *);
 	int	(*set_page)(struct igc_hw *, uint16_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_phy.c,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
+/*	$OpenBSD: igc_phy.c,v 1.2 2022/05/11 06:14:15 kevlo Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -23,7 +23,6 @@ igc_init_phy_ops_generic(struct igc_hw *hw)
 	phy->ops.init_params = igc_null_ops_generic;
 	phy->ops.acquire = igc_null_ops_generic;
 	phy->ops.check_reset_block = igc_null_ops_generic;
-	phy->ops.commit = igc_null_ops_generic;
 	phy->ops.force_speed_duplex = igc_null_ops_generic;
 	phy->ops.get_info = igc_null_ops_generic;
 	phy->ops.set_page = igc_null_set_page;
@@ -149,14 +148,13 @@ igc_get_phy_id(struct igc_hw *hw)
 		return ret_val;
 
 	phy->id = (uint32_t)(phy_id << 16);
-	DELAY(20);
+	DELAY(200);
 	ret_val = phy->ops.read_reg(hw, PHY_ID2, &phy_id);
 	if (ret_val)
 		return ret_val;
 
 	phy->id |= (uint32_t)(phy_id & PHY_REVISION_MASK);
 	phy->revision = (uint32_t)(phy_id & ~PHY_REVISION_MASK);
-
 
 	return IGC_SUCCESS;
 }
@@ -311,7 +309,7 @@ igc_phy_setup_autoneg(struct igc_hw *hw)
 
 	if ((phy->autoneg_mask & ADVERTISE_2500_FULL) &&
 	    hw->phy.id == I225_I_PHY_ID) {
-	/* Read the MULTI GBT AN Control Register - reg 7.32 */
+		/* Read the MULTI GBT AN Control Register - reg 7.32 */
 		ret_val = phy->ops.read_reg(hw, (STANDARD_AN_REG_MASK <<
 		    MMD_DEVADDR_SHIFT) | ANEG_MULTIGBT_AN_CTRL,
 		    &aneg_multigbt_an_ctrl);
@@ -689,33 +687,56 @@ igc_phy_has_link_generic(struct igc_hw *hw, uint32_t iterations,
 }
 
 /**
- *  igc_phy_sw_reset_generic - PHY software reset
+ *  igc_phy_hw_reset_generic - PHY hardware reset
  *  @hw: pointer to the HW structure
  *
- *  Does a software reset of the PHY by reading the PHY control register and
- *  setting/write the control register reset bit to the PHY.
+ *  Verify the reset block is not blocking us from resetting.  Acquire
+ *  semaphore (if necessary) and read/set/write the device control reset
+ *  bit in the PHY.  Wait the appropriate delay time for the device to
+ *  reset and release the semaphore (if necessary).
  **/
 int
-igc_phy_sw_reset_generic(struct igc_hw *hw)
+igc_phy_hw_reset_generic(struct igc_hw *hw)
 {
-	uint16_t phy_ctrl;
+	struct igc_phy_info *phy = &hw->phy;
+	uint32_t ctrl, timeout = 10000, phpm = 0;
 	int ret_val;
 
-	DEBUGFUNC("igc_phy_sw_reset_generic");
+	DEBUGFUNC("igc_phy_hw_reset_generic");
 
-	if (!hw->phy.ops.read_reg)
-		return IGC_SUCCESS;
+	if (phy->ops.check_reset_block) {
+		ret_val = phy->ops.check_reset_block(hw);
+		if (ret_val)
+			return IGC_SUCCESS;
+	}
 
-	ret_val = hw->phy.ops.read_reg(hw, PHY_CONTROL, &phy_ctrl);
+	ret_val = phy->ops.acquire(hw);
 	if (ret_val)
 		return ret_val;
 
-	phy_ctrl |= MII_CR_RESET;
-	ret_val = hw->phy.ops.write_reg(hw, PHY_CONTROL, phy_ctrl);
-	if (ret_val)
-		return ret_val;
+	phpm = IGC_READ_REG(hw, IGC_I225_PHPM);
 
-	DELAY(1);
+	ctrl = IGC_READ_REG(hw, IGC_CTRL);
+	IGC_WRITE_REG(hw, IGC_CTRL, ctrl | IGC_CTRL_PHY_RST);
+	IGC_WRITE_FLUSH(hw);
+
+	DELAY(phy->reset_delay_us);
+
+	IGC_WRITE_REG(hw, IGC_CTRL, ctrl);
+	IGC_WRITE_FLUSH(hw);
+
+	DELAY(150);
+
+	do {
+		phpm = IGC_READ_REG(hw, IGC_I225_PHPM);
+		timeout--;
+		DELAY(1);
+	} while (!(phpm & IGC_I225_PHPM_RST_COMPL) && timeout);
+
+	if (!timeout)
+		DEBUGOUT("Timeout expired after a phy reset\n");
+
+	phy->ops.release(hw);
 
 	return ret_val;
 }
