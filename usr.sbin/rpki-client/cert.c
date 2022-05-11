@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.75 2022/05/11 08:59:00 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.76 2022/05/11 09:07:04 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -92,28 +92,6 @@ append_as(struct parse *p, const struct cert_as *as)
 		err(1, NULL);
 	p->res->as[p->res->asz++] = *as;
 	return 1;
-}
-
-/*
- * Construct a RFC 3779 2.2.3.8 range from its bit string.
- * Returns zero on failure, non-zero on success.
- */
-static int
-sbgp_addr(struct parse *p, struct cert_ip *ip, const ASN1_BIT_STRING *bs)
-{
-	if (!ip_addr_parse(bs, ip->afi, p->fn, &ip->ip)) {
-		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
-		    "invalid IP address", p->fn);
-		return 0;
-	}
-
-	if (!ip_cert_compose_ranges(ip)) {
-		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
-		    "IP address range reversed", p->fn);
-		return 0;
-	}
-
-	return append_ip(p, ip);
 }
 
 /*
@@ -267,6 +245,28 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
  out:
 	ASIdentifiers_free(asidentifiers);
 	return rc;
+}
+
+/*
+ * Construct a RFC 3779 2.2.3.8 range from its bit string.
+ * Returns zero on failure, non-zero on success.
+ */
+static int
+sbgp_addr(struct parse *p, struct cert_ip *ip, const ASN1_BIT_STRING *bs)
+{
+	if (!ip_addr_parse(bs, ip->afi, p->fn, &ip->ip)) {
+		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
+		    "invalid IP address", p->fn);
+		return 0;
+	}
+
+	if (!ip_cert_compose_ranges(ip)) {
+		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
+		    "IP address range reversed", p->fn);
+		return 0;
+	}
+
+	return append_ip(p, ip);
 }
 
 /*
