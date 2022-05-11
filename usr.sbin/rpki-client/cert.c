@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.76 2022/05/11 09:07:04 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.77 2022/05/11 09:40:00 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -95,7 +95,7 @@ append_as(struct parse *p, const struct cert_as *as)
 }
 
 /*
- * Parse a range of addresses as in 3.2.3.8.
+ * Parse a range of AS identifiers as in 3.2.3.8.
  * Returns zero on failure, non-zero on success.
  */
 static int
