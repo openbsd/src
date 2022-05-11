@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.16 2022/03/28 13:04:01 claudio Exp $ */
+/*	$OpenBSD: cms.c,v 1.17 2022/05/11 16:13:05 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -223,6 +223,12 @@ cms_parse_validate(X509 **xp, const char *fn, const unsigned char *der,
 		goto out;
 	}
 	*xp = X509_dup(sk_X509_value(certs, 0));
+
+	/* Cache X509v3 extensions, see X509_check_ca(3). */
+	if (X509_check_purpose(*xp, -1, -1) <= 0) {
+		cryptowarnx("%s: could not cache X509v3 extensions", fn);
+		goto out;
+	}
 
 	if (CMS_SignerInfo_get0_signer_id(si, &kid, NULL, NULL) != 1 ||
 	    kid == NULL) {

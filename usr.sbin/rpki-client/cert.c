@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.77 2022/05/11 09:40:00 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.78 2022/05/11 16:13:05 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -594,6 +594,12 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 
 	if ((x = d2i_X509(NULL, &der, len)) == NULL) {
 		cryptowarnx("%s: d2i_X509", p.fn);
+		goto out;
+	}
+
+	/* Cache X509v3 extensions, see X509_check_ca(3). */
+	if (X509_check_purpose(x, -1, -1) <= 0) {
+		cryptowarnx("%s: could not cache X509v3 extensions", p.fn);
 		goto out;
 	}
 
