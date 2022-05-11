@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.136 2022/05/11 14:42:01 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.137 2022/05/11 21:19:06 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -636,6 +636,7 @@ int		 x509_get_time(const ASN1_TIME *, time_t *);
 char		*x509_convert_seqnum(const char *, const ASN1_INTEGER *);
 int		 x509_location(const char *, const char *, const char *,
 		    GENERAL_NAME *, char **);
+int		 x509_inherits(X509 *);
 
 /* printers */
 char		*time2str(time_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.43 2022/05/10 10:52:09 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.44 2022/05/11 21:19:06 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -346,6 +346,51 @@ x509_get_expire(X509 *x, const char *fn, time_t *tt)
 	}
 	return 1;
 
+}
+
+/*
+ * Check whether the RFC 3779 extensions are set to inherit.
+ * Return 1 if both AS & IP are set to inherit.
+ * Return 0 on failure (such as missing extensions or no inheritance).
+ */
+int
+x509_inherits(X509 *x)
+{
+	STACK_OF(IPAddressFamily)	*addrblk = NULL;
+	ASIdentifiers			*asidentifiers = NULL;
+	const IPAddressFamily		*af;
+	int		 		 i, rc = 0;
+
+	addrblk = X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, NULL, NULL);
+	if (addrblk == NULL)
+		goto out;
+
+	/*
+	 * Check by hand, since X509v3_addr_inherits() success only means that
+	 * at least one address family inherits, not all of them.
+	 */
+	for (i = 0; i < sk_IPAddressFamily_num(addrblk); i++) {
+		af = sk_IPAddressFamily_value(addrblk, i);
+		if (af->ipAddressChoice->type != IPAddressChoice_inherit)
+			goto out;
+	}
+
+	asidentifiers = X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum, NULL,
+	    NULL);
+	if (asidentifiers == NULL)
+		goto out;
+
+	/* We need to have AS numbers and don't want RDIs. */
+	if (asidentifiers->asnum == NULL || asidentifiers->rdi != NULL)
+		goto out;
+	if (!X509v3_asid_inherits(asidentifiers))
+		goto out;
+
+	rc = 1;
+ out:
+	ASIdentifiers_free(asidentifiers);
+	sk_IPAddressFamily_pop_free(addrblk, IPAddressFamily_free);
+	return rc;
 }
 
 /*

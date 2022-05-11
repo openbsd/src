@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.15 2022/04/01 17:22:07 claudio Exp $ */
+/*	$OpenBSD: gbr.c,v 1.16 2022/05/11 21:19:06 job Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -74,9 +74,15 @@ gbr_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		    "missing AIA, AKI or SKI X509 extension", fn);
 		goto out;
 	}
+
+	if (!x509_inherits(*x509)) {
+		warnx("%s: RFC 3779 extension not set to inherit", fn);
+		goto out;
+	}
+
 	return p.res;
 
-out:
+ out:
 	gbr_free(p.res);
 	X509_free(*x509);
 	*x509 = NULL;

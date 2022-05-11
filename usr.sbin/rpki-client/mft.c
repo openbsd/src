@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.63 2022/05/10 07:41:37 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.64 2022/05/11 21:19:06 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -471,6 +471,11 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	if (p.res->aia == NULL || p.res->aki == NULL || p.res->ski == NULL) {
 		warnx("%s: RFC 6487 section 4.8: "
 		    "missing AIA, AKI or SKI X509 extension", fn);
+		goto out;
+	}
+
+	if (!x509_inherits(*x509)) {
+		warnx("%s: RFC 3779 extension not set to inherit", fn);
 		goto out;
 	}
 
