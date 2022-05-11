@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.135 2022/05/10 07:41:37 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.136 2022/05/11 14:42:01 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -507,6 +507,7 @@ int		 valid_uri(const char *, size_t, const char *);
 int		 valid_origin(const char *, const char *);
 int		 valid_x509(char *, X509_STORE_CTX *, X509 *, struct auth *,
 		    struct crl *, int);
+int		 valid_rsc(const char *, struct auth *, struct rsc *);
 
 /* Working with CMS. */
 unsigned char	*cms_parse_validate(X509 **, const char *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.6 2022/05/09 17:02:34 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.7 2022/05/11 14:42:01 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -380,6 +380,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		struct auth *a;
 		struct crl *c;
 		char *crl_uri;
+		int status;
 
 		x509_get_crl(x509, file, &crl_uri);
 		parse_load_crl(crl_uri);
@@ -389,7 +390,13 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		a = auth_find(&auths, aki);
 		c = crl_get(&crlt, a);
 
-		if (valid_x509(file, ctx, x509, a, c, 0))
+		if ((status = valid_x509(file, ctx, x509, a, c, 0))) {
+			if (type == RTYPE_ROA)
+				status = valid_roa(file, a, roa);
+			else if (type == RTYPE_RSC)
+				status = valid_rsc(file, a, rsc);
+		}
+		if (status)
 			printf("OK");
 		else
 			printf("Failed");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.32 2022/05/10 07:41:37 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.33 2022/05/11 14:42:01 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -500,5 +500,80 @@ valid_x509(char *file, X509_STORE_CTX *store_ctx, X509 *x509, struct auth *a,
 	X509_STORE_CTX_cleanup(store_ctx);
 	sk_X509_free(chain);
 	sk_X509_CRL_free(crls);
+	return 1;
+}
+
+/*
+ * Validate our RSC: check that all items in the ResourceBlock are contained.
+ * Returns 1 if valid, 0 otherwise.
+ */
+int
+valid_rsc(const char *fn, struct auth *a, struct rsc *rsc)
+{
+	size_t		i;
+	uint32_t	min, max;
+	char		buf1[64], buf2[64];
+
+	for (i = 0; i < rsc->asz; i++) {
+		if (rsc->as[i].type == CERT_AS_INHERIT) {
+			warnx("%s: RSC ResourceBlock: illegal inherit", fn);
+			return 0;
+		}
+
+		min = rsc->as[i].type == CERT_AS_RANGE ? rsc->as[i].range.min
+		    : rsc->as[i].id;
+		max = rsc->as[i].type == CERT_AS_RANGE ? rsc->as[i].range.max
+		    : rsc->as[i].id;
+		
+		if (valid_as(a, min, max))
+			continue;
+
+		switch (rsc->as[i].type) {
+		case CERT_AS_ID:
+			warnx("%s: RSC resourceBlock: uncovered AS Identifier: "
+			    "%u", fn, rsc->as[i].id);
+			break;
+		case CERT_AS_RANGE:
+				continue;
+			warnx("%s: RSC resourceBlock: uncovered AS Range: "
+			    "%u--%u", fn, min, max);
+			break;
+		default:
+			break;
+		}
+		return 0;
+	}
+
+	for (i = 0; i < rsc->ipsz; i++) {
+		if (rsc->ips[i].type == CERT_IP_INHERIT) {
+			warnx("%s: RSC ResourceBlock: illegal inherit", fn);
+			return 0;
+		}
+
+		if (valid_ip(a, rsc->ips[i].afi, rsc->ips[i].min,
+		    rsc->ips[i].max))
+			continue;
+
+		switch (rsc->ips[i].type) {
+		case CERT_IP_RANGE:
+			ip_addr_print(&rsc->ips[i].range.min,
+			   rsc->ips[i].afi, buf1, sizeof(buf1));
+			ip_addr_print(&rsc->ips[i].range.max,
+			   rsc->ips[i].afi, buf2, sizeof(buf2));
+			warnx("%s: RSC ResourceBlock: uncovered IP Range: "
+			   "%s--%s", fn, buf1, buf2);
+			break;
+		case CERT_IP_ADDR:
+			ip_addr_print(&rsc->ips[i].ip,
+			   rsc->ips[i].afi, buf1, sizeof(buf1));
+			warnx("%s: RSC ResourceBlock: uncovered IP: "
+			   "%s", fn, buf1);
+			break;
+		default:
+			break;
+		}
+		return 0;
+	}
+
 	return 1;
 }
