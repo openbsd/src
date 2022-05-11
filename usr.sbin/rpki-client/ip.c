@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.21 2021/12/26 12:32:28 tb Exp $ */
+/*	$OpenBSD: ip.c,v 1.22 2022/05/11 18:48:35 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -227,7 +227,7 @@ ip_addr_parse(const ASN1_BIT_STRING *p,
 		return 0;
 	}
 
-	memset (addr, 0, sizeof(struct ip_addr));
+	memset(addr, 0, sizeof(struct ip_addr));
 	addr->prefixlen = p->length * 8 - unused;
 	memcpy(addr->addr, p->data, p->length);
 	return 1;
