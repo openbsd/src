@@ -1,4 +1,4 @@
-$OpenBSD: Intro.pod,v 1.1 2020/12/20 15:30:58 daniel Exp $
+$OpenBSD: Intro.pod,v 1.2 2022/05/11 07:51:47 espie Exp $
 
 =head1 NAME
 
@@ -355,19 +355,6 @@ pkg_add only replaces packages with different signatures.
 Currently, pkg_add -u stops at the first entry in the PKG_PATH from which
 suitable candidates are found.
 
-=head1 BUGS AND LIMITATIONS
-
-There are a few desirable changes that will happen in the future:
-
-=over
-
-=item *
-
-there should be some carefully designed mechanisms to register more
-`global' processing, to avoid exec/unexec.
-
-=back
-
 =head1 LIST OF MODULES
 
 =over 3
@@ -391,9 +378,11 @@ the upper layer framework for handling signals safely.
 
 =item OpenBSD::ArcCheck
 
-additional layer on top of C<OpenBSD::Ustar> that matches extra
-information that the archive format cannot record with a packing-list.
-
+additional layer on top of C<OpenBSD::Ustar> that enforces extra
+rules specific to packages.
+In particular, we don't store timestamps in the packing-list to
+avoid gratuitous changes, and also, a lot of sensitive information
+is not allowed if it's not also annotated in the PackingList.
 
 =item OpenBSD::CollisionReport
 

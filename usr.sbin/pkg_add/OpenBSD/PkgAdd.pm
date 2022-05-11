@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.132 2022/05/09 08:29:04 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.133 2022/05/11 07:51:47 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -112,7 +112,10 @@ sub tie_files
 			# because delete will take care of that
 			return unless $d->equals($self->{d});
 		}
+		# so we found a match that find_extractible will use
 		$self->{tieto} = $tied;
+		# and we also need to tell size computation we won't be
+		# needing extra room for this.
 		$tied->{tied} = 1;
 		$state->say("Tying #1 to #2", $self->stringize,
 		    $tied->realname($state)) if $state->verbose >= 3;

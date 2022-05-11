@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.190 2022/05/08 11:42:28 espie Exp $
+# $OpenBSD: Add.pm,v 1.191 2022/05/11 07:51:47 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -111,6 +111,25 @@ sub perform_installation
 	}
 }
 
+sub skip_to_the_end
+{
+	my ($handle, $state, $tied, $p) = @_;
+	$state->tweak_header("skipping");
+	for my $e (values %$tied) {
+		$e->tie($state);
+		$p->advance($e);
+	}
+	if (keys %$tied > 0) {
+		# skipped entries should still be read in CACHE mode
+		if (defined $state->cache_directory) {
+			while (my $e = $state->{archive}->next) {
+			}
+		} else {
+			$handle->{location}{early_close} = 1;
+		}
+	}
+}
+
 sub perform_extraction
 {
 	my ($handle, $state) = @_;
@@ -121,25 +140,21 @@ sub perform_extraction
 	$state->{partial} = $handle->{partial};
 	$state->{archive} = $handle->{location};
 	$state->{check_digest} = $handle->{plist}{check_digest};
+
+	# archives are actually stored out of order, find_extractible 
+	# will dispatch the packing-list  entries into hashes keyed by names.
+	# For "tied" entries, also see tie_files in OpenBSD::PkgAdd.
 	my ($wanted, $tied) = ({}, {});
 	$handle->{plist}->find_extractible($state, $wanted, $tied);
 	my $p = $state->progress->new_sizer($handle->{plist}, $state);
+
+	# so iterate over the archive, and "consume" hashes entry as we go
+	# it's necessary to delete them so that skip_to_the_end will work
+	# correctly (relies on wanted being empty to trigger, and requires
+	# tied to be correct for the progress meter).
 	while (my $file = $state->{archive}->next) {
 		if (keys %$wanted == 0) {
-			$state->tweak_header("skipping");
-			for my $e (values %$tied) {
-				$e->tie($state);
-				$p->advance($e);
-			}
-			if (keys %$tied > 0) {
-				# skipped entries should still be read in CACHE mode
-				if (defined $state->cache_directory) {
-					while (my $e = $state->{archive}->next) {
-					}
-				} else {
-					$handle->{location}{early_close} = 1;
-				}
-			}
+			skip_to_the_end($handle, $state, $tied, $p);
 			last;
 		}
 		my $e = $tied->{$file->name};
@@ -158,10 +173,12 @@ sub perform_extraction
 			    $file->name);
 		}
 		delete $wanted->{$file->name};
+		# note that readmes are only recorded when !tied, since
+		# we only care if they changed
 		my $fullname = $e->fullname;
 		if ($fullname =~ m,^$state->{localbase}/share/doc/pkg-readmes/,) {
 			push(@{$state->{readmes}}, $fullname);
-	}
+		}
 
 		$e->prepare_to_extract($state, $file);
 		$e->extract($state, $file);
@@ -228,10 +245,33 @@ sub tag_user_packages
 	}
 }
 
-# used by newuser/newgroup to deal with options.
+# The whole package addition/replacecement works like this:
+# first we run tie_files in PkgAdd to figure out tieto
+# then "find_extractible" figures out the element of the plist that
+# belong in the archive (thus find_extractible is the hook that always
+# gets run on every plist entry just prior to extraction/skipping)
+#
+# Then the actual extraction proceeds through "prepare_to_extract" and
+# either "tie' OR "extract" depending on the element status.
+# Then later on, we run "install".
+#
+# Actual file system entries may get a tempname, or avoid temp altogether
+# 
+# In case of replacement, tempname will get used if the name is the same
+# but the file content is different.
+#
+# If pkg_add can figure out the name is the same, it will set avoidtemp
+#
+# Note that directories, hardlinks and symlinks are purely plist objects 
+# with no archive existence:
+# Links always get deleted/re-added even in replacement mode, while directory
+# deletion is delayed into OpenBSD::SharedItems, since several packages 
+# may mention the same directory.
+#
 package OpenBSD::PackingElement;
 use OpenBSD::Error;
 
+# used by newuser/newgroup to deal with options.
 my ($uidcache, $gidcache);
 
 sub prepare_for_addition
