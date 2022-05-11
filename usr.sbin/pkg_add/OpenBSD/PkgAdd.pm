@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.133 2022/05/11 07:51:47 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.134 2022/05/11 17:17:35 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -349,6 +349,7 @@ sub find_kept_handle
 	return if !defined $plist;
 	my $pkgname = $plist->pkgname;
 	if ($set->{quirks}) {
+		$n->{location}->decorate($plist);
 		display_timestamp($pkgname, $plist, $state);
 	}
 	# condition for no update
