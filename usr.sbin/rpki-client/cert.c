@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.79 2022/05/12 07:45:27 claudio Exp $ */
+/*	$OpenBSD: cert.c,v 1.80 2022/05/12 08:53:33 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -257,21 +257,28 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
  * Returns zero on failure, non-zero on success.
  */
 static int
-sbgp_addr(struct parse *p, struct cert_ip *ip, const ASN1_BIT_STRING *bs)
+sbgp_addr(struct parse *p, enum afi afi, const ASN1_BIT_STRING *bs)
 {
-	if (!ip_addr_parse(bs, ip->afi, p->fn, &ip->ip)) {
+	struct cert_ip	ip;
+
+	memset(&ip, 0, sizeof(struct cert_ip));
+
+	ip.afi = afi;
+	ip.type = CERT_IP_ADDR;
+
+	if (!ip_addr_parse(bs, afi, p->fn, &ip.ip)) {
 		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
 		    "invalid IP address", p->fn);
 		return 0;
 	}
 
-	if (!ip_cert_compose_ranges(ip)) {
+	if (!ip_cert_compose_ranges(&ip)) {
 		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
 		    "IP address range reversed", p->fn);
 		return 0;
 	}
 
-	return append_ip(p, ip);
+	return append_ip(p, &ip);
 }
 
 /*
@@ -279,28 +286,47 @@ sbgp_addr(struct parse *p, struct cert_ip *ip, const ASN1_BIT_STRING *bs)
  * Returns zero on failure, non-zero on success.
  */
 static int
-sbgp_addr_range(struct parse *p, struct cert_ip *ip,
-    const IPAddressRange *range)
+sbgp_addr_range(struct parse *p, enum afi afi, const IPAddressRange *range)
 {
-	if (!ip_addr_parse(range->min, ip->afi, p->fn, &ip->range.min)) {
+	struct cert_ip	ip;
+
+	memset(&ip, 0, sizeof(struct cert_ip));
+
+	ip.afi = afi;
+	ip.type = CERT_IP_RANGE;
+
+	if (!ip_addr_parse(range->min, afi, p->fn, &ip.range.min)) {
 		warnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
 		    "invalid IP address", p->fn);
 		return 0;
 	}
 
-	if (!ip_addr_parse(range->max, ip->afi, p->fn, &ip->range.max)) {
+	if (!ip_addr_parse(range->max, afi, p->fn, &ip.range.max)) {
 		warnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
 		    "invalid IP address", p->fn);
 		return 0;
 	}
 
-	if (!ip_cert_compose_ranges(ip)) {
+	if (!ip_cert_compose_ranges(&ip)) {
 		warnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
 		    "IP address range reversed", p->fn);
 		return 0;
 	}
 
-	return append_ip(p, ip);
+	return append_ip(p, &ip);
+}
+
+static int
+sbgp_addr_inherit(struct parse *p, enum afi afi)
+{
+	struct cert_ip	ip;
+
+	memset(&ip, 0, sizeof(struct cert_ip));
+
+	ip.afi = afi;
+	ip.type = CERT_IP_INHERIT;
+
+	return append_ip(p, &ip);
 }
 
 /*
@@ -310,25 +336,20 @@ sbgp_addr_range(struct parse *p, struct cert_ip *ip,
  * Returns zero on failure, non-zero on success.
  */
 static int
-sbgp_addr_or_range(struct parse *p, struct cert_ip *ip,
-    const IPAddressOrRanges *aors)
+sbgp_addr_or_range(struct parse *p, enum afi afi, const IPAddressOrRanges *aors)
 {
-	struct cert_ip		 nip;
 	const IPAddressOrRange	*aor;
 	int			 i, rc = 0;
 
 	for (i = 0; i < sk_IPAddressOrRange_num(aors); i++) {
-		nip = *ip;
 		aor = sk_IPAddressOrRange_value(aors, i);
 		switch (aor->type) {
 		case IPAddressOrRange_addressPrefix:
-			nip.type = CERT_IP_ADDR;
-			if (!sbgp_addr(p, &nip, aor->u.addressPrefix))
+			if (!sbgp_addr(p, afi, aor->u.addressPrefix))
 				goto out;
 			break;
 		case IPAddressOrRange_addressRange:
-			nip.type = CERT_IP_RANGE;
-			if (!sbgp_addr_range(p, &nip, aor->u.addressRange))
+			if (!sbgp_addr_range(p, afi, aor->u.addressRange))
 				goto out;
 			break;
 		default:
@@ -355,13 +376,11 @@ sbgp_addr_or_range(struct parse *p, struct cert_ip *ip,
 static int
 sbgp_ipaddrfam(struct parse *p, const IPAddressFamily *af)
 {
-	struct cert_ip		 ip;
+	enum afi		 afi;
 	const IPAddressChoice	*choice;
 	int			 rc = 0;
 
-	memset(&ip, 0, sizeof(struct cert_ip));
-
-	if (!ip_addr_afi_parse(p->fn, af->addressFamily, &ip.afi)) {
+	if (!ip_addr_afi_parse(p->fn, af->addressFamily, &afi)) {
 		warnx("%s: RFC 3779 section 2.2.3.2: addressFamily: "
 		    "invalid AFI", p->fn);
 		goto out;
@@ -370,12 +389,11 @@ sbgp_ipaddrfam(struct parse *p, const IPAddressFamily *af)
 	choice = af->ipAddressChoice;
 	switch (choice->type) {
 	case IPAddressChoice_addressesOrRanges:
-		if (!sbgp_addr_or_range(p, &ip, choice->u.addressesOrRanges))
+		if (!sbgp_addr_or_range(p, afi, choice->u.addressesOrRanges))
 			goto out;
 		break;
 	case IPAddressChoice_inherit:
-		ip.type = CERT_IP_INHERIT;
-		if (!append_ip(p, &ip))
+		if (!sbgp_addr_inherit(p, afi))
 			goto out;
 		break;
 	default:
