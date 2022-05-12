@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.32 2022/04/21 05:06:07 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.33 2022/05/12 19:56:43 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -944,20 +944,38 @@ asid_contains(ASIdOrRanges *parent, ASIdOrRanges *child)
 }
 
 /*
- * Test whether a is a subset of b.
+ * Test whether child is a subset of parent.
  */
 int
-X509v3_asid_subset(ASIdentifiers *a, ASIdentifiers *b)
+X509v3_asid_subset(ASIdentifiers *child, ASIdentifiers *parent)
 {
-	return (a == NULL ||
-	    a == b ||
-	    (b != NULL &&
-	     !X509v3_asid_inherits(a) &&
-	     !X509v3_asid_inherits(b) &&
-	     asid_contains(b->asnum->u.asIdsOrRanges,
-	     a->asnum->u.asIdsOrRanges) &&
-	     asid_contains(b->rdi->u.asIdsOrRanges,
-	     a->rdi->u.asIdsOrRanges)));
+	if (child == NULL || child == parent)
+		return 1;
+	if (parent == NULL)
+		return 0;
+
+	if (X509v3_asid_inherits(child) || X509v3_asid_inherits(parent))
+		return 0;
+
+	if (child->asnum != NULL) {
+		if (parent->asnum == NULL)
+			return 0;
+
+		if (!asid_contains(parent->asnum->u.asIdsOrRanges,
+		    child->asnum->u.asIdsOrRanges))
+			return 0;
+	}
+
+	if (child->rdi != NULL) {
+		if (parent->rdi == NULL)
+			return 0;
+
+		if (!asid_contains(parent->rdi->u.asIdsOrRanges,
+		    child->rdi->u.asIdsOrRanges))
+			return 0;
+	}
+
+	return 1;
 }
 
 /*
