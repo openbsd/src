@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_utl.c,v 1.14 2022/05/10 05:19:23 jsing Exp $ */
+/* $OpenBSD: tasn_utl.c,v 1.15 2022/05/12 19:24:38 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -153,7 +153,7 @@ asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 	enc = asn1_get_enc_ptr(pval, it);
 	if (enc) {
-		free(enc->enc);
+		freezero(enc->enc, enc->len);
 		enc->enc = NULL;
 		enc->len = 0;
 		enc->modified = 1;
@@ -170,7 +170,7 @@ asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
 	if (!enc)
 		return 1;
 
-	free(enc->enc);
+	freezero(enc->enc, enc->len);
 	enc->enc = malloc(inlen);
 	if (!enc->enc)
 		return 0;
