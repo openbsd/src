@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc3779.c,v 1.7 2022/05/12 10:12:18 tb Exp $ */
+/*	$OpenBSD: rfc3779.c,v 1.8 2022/05/12 19:58:45 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -1495,10 +1495,6 @@ struct ASIdentifiers_subset_test {
 	int			 is_subset_if_canonized;
 };
 
-/*
- * XXX: X509v3_asid_subset() assumes that both asnum and rdi are present
- * while they are both marked OPTIONAL in RFC 3779, 3.2.3...
- */
 const struct ASIdentifiers_subset_test ASIdentifiers_subset_data[] = {
 	{
 		.description = "simple subset relation",
@@ -1539,7 +1535,6 @@ const struct ASIdentifiers_subset_test ASIdentifiers_subset_data[] = {
 		.is_subset = 1,
 		.is_subset_if_canonized = 1,
 	},
-#if 0
 	{
 		.description = "only asnums",
 		.delegationsA = {
@@ -1681,7 +1676,6 @@ const struct ASIdentifiers_subset_test ASIdentifiers_subset_data[] = {
 		.is_subset = 1,
 		.is_subset_if_canonized = 1,
 	},
-#endif
 	{
 		.description = "subset relation only after canonization",
 		.delegationsA = {
