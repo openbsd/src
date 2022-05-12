@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.144 2022/05/10 09:11:44 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.145 2022/05/12 11:37:57 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9983,6 +9983,13 @@ static const struct pci_matchid iwx_devices[] = {
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_7,},
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_8,},
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_9,},
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_10,},
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_11,},
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_12,},
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_13,},
+	/* _14 is an MA device, not yet supported */
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_15,},
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_16,},
 };
 
 
