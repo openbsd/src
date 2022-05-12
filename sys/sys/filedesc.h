@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.45 2020/07/04 08:06:08 anton Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.46 2022/05/12 13:33:09 mvs Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -79,8 +79,8 @@ struct filedesc {
 	u_int	*fd_lomap;		/* [f] bitmap of free fds */
 	int	fd_lastfile;		/* [f] high-water mark of fd_ofiles */
 	int	fd_freefile;		/* [f] approx. next free file */
-	u_short	fd_cmask;		/* [f/w] mask for file creation */
-	u_short	fd_refcnt;		/* [K] reference count */
+	mode_t	fd_cmask;		/* [f/w] mask for file creation */
+	u_int	fd_refcnt;		/* [K] reference count */
 	struct rwlock fd_lock;		/* lock for the file descs */
 	struct mutex fd_fplock;		/* lock for reading fd_ofiles without
 					 * fd_lock */
