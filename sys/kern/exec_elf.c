@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.165 2021/12/09 00:26:10 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.166 2022/05/12 16:29:58 claudio Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1165,6 +1165,7 @@ coredump_notes_elf(struct proc *p, void *iocookie, size_t *sizep)
 	size_t size, notesize;
 	int error;
 
+	KASSERT(!P_HASSIBLING(p) || pr->ps_single != NULL);
 	size = 0;
 
 	/* First, write an elfcore_procinfo. */
