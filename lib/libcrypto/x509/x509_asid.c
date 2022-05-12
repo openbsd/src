@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_asid.c,v 1.33 2022/05/12 19:56:43 tb Exp $ */
+/*	$OpenBSD: x509_asid.c,v 1.34 2022/05/12 20:00:06 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -918,6 +918,7 @@ asid_contains(ASIdOrRanges *parent, ASIdOrRanges *child)
 
 	if (child == NULL || parent == child)
 		return 1;
+
 	if (parent == NULL)
 		return 0;
 
@@ -951,6 +952,7 @@ X509v3_asid_subset(ASIdentifiers *child, ASIdentifiers *parent)
 {
 	if (child == NULL || child == parent)
 		return 1;
+
 	if (parent == NULL)
 		return 0;
 
