@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.65 2022/05/12 19:33:19 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.66 2022/05/12 19:52:31 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -125,119 +125,100 @@ ASN1_template_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 }
 
 static int
-asn1_item_ex_d2i_choice(ASN1_VALUE **pval, const unsigned char **in, long len,
-    const ASN1_ITEM *it, int tag, int aclass, char opt, int depth)
+asn1_item_ex_d2i_choice(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
+    int tag_number, int tag_class, char optional, int depth)
 {
 	const ASN1_TEMPLATE *tt, *errtt = NULL;
 	const ASN1_AUX *aux = it->funcs;
 	ASN1_aux_cb *asn1_cb = NULL;
+	ASN1_VALUE *achoice = NULL;
 	ASN1_VALUE **pchptr;
-	const unsigned char *p = NULL;
-	int i;
-	int ret = 0;
+	int i, ret;
 
 	if (it->itype != ASN1_ITYPE_CHOICE)
 		goto err;
 
-	if (aux && aux->asn1_cb)
-		asn1_cb = aux->asn1_cb;
-
 	/*
-	 * It never makes sense for CHOICE types to have implicit
-	 * tagging, so if tag != -1, then this looks like an error in
-	 * the template.
+	 * It never makes sense for CHOICE types to have implicit tagging, so
+	 * if tag_number != -1, then this looks like an error in the template.
 	 */
-	if (tag != -1) {
+	if (tag_number != -1) {
 		ASN1error(ASN1_R_BAD_TEMPLATE);
 		goto err;
 	}
 
-	if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it, NULL))
-		goto auxerr;
+	if (*pval != NULL) {
+		ASN1_item_ex_free(pval, it);
+		*pval = NULL;
+	}
 
-	if (*pval) {
-		/* Free up and zero CHOICE value if initialised */
-		i = asn1_get_choice_selector(pval, it);
-		if ((i >= 0) && (i < it->tcount)) {
-			tt = it->templates + i;
-			pchptr = asn1_get_field_ptr(pval, tt);
-			ASN1_template_free(pchptr, tt);
-			asn1_set_choice_selector(pval, -1, it);
-		}
-	} else if (!ASN1_item_ex_new(pval, it)) {
-		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+	if (aux != NULL)
+		asn1_cb = aux->asn1_cb;
+
+	if (asn1_cb != NULL && !asn1_cb(ASN1_OP_D2I_PRE, &achoice, it, NULL)) {
+		ASN1error(ASN1_R_AUX_ERROR);
 		goto err;
 	}
-	/* CHOICE type, try each possibility in turn */
-	p = *in;
+
+	if (achoice == NULL) {
+		if (!ASN1_item_ex_new(&achoice, it)) {
+			ASN1error(ERR_R_NESTED_ASN1_ERROR);
+			goto err;
+		}
+	}
+
+	/* Try each possible CHOICE in turn. */
 	for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
-		pchptr = asn1_get_field_ptr(pval, tt);
-		/* We mark field as OPTIONAL so its absence
-		 * can be recognised.
-		 */
-		ret = asn1_template_ex_d2i(pchptr, &p, len, tt, 1,
-		    depth);
+		pchptr = asn1_get_field_ptr(&achoice, tt);
+
+		/* Mark field as OPTIONAL so its absence can be identified. */
+		ret = asn1_template_ex_d2i_cbs(pchptr, cbs, tt, 1, depth);
+
 		/* If field not present, try the next one */
 		if (ret == -1)
 			continue;
-		/* If positive return, read OK, break loop */
-		if (ret > 0)
-			break;
-		/* Otherwise must be an ASN1 parsing error */
-		errtt = tt;
-		ASN1error(ERR_R_NESTED_ASN1_ERROR);
-		goto err;
+
+		if (ret != 1) {
+			ASN1error(ERR_R_NESTED_ASN1_ERROR);
+			errtt = tt;
+			goto err;
+		}
+
+		/* We've successfully decoded an ASN.1 object. */
+		asn1_set_choice_selector(&achoice, i, it);
+		break;
 	}
 
 	/* Did we fall off the end without reading anything? */
 	if (i == it->tcount) {
-		/* If OPTIONAL, this is OK */
-		if (opt) {
-			/* Free and zero it */
-			ASN1_item_ex_free(pval, it);
+		if (optional) {
+			ASN1_item_ex_free(&achoice, it);
 			return -1;
 		}
 		ASN1error(ASN1_R_NO_MATCHING_CHOICE_TYPE);
 		goto err;
 	}
 
-	asn1_set_choice_selector(pval, i, it);
-	*in = p;
-	if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
-		goto auxerr;
+	if (asn1_cb != NULL && !asn1_cb(ASN1_OP_D2I_POST, &achoice, it, NULL)) {
+		ASN1error(ASN1_R_AUX_ERROR);
+		goto err;
+	}
+
+	*pval = achoice;
+	achoice = NULL;
+
 	return 1;
 
- auxerr:
-	ASN1error(ASN1_R_AUX_ERROR);
  err:
-	ASN1_item_ex_free(pval, it);
+	ASN1_item_ex_free(&achoice, it);
 
 	if (errtt)
 		ERR_asprintf_error_data("Field=%s, Type=%s", errtt->field_name,
 		    it->sname);
 	else
 		ERR_asprintf_error_data("Type=%s", it->sname);
+
 	return 0;
-}
-
-static int
-asn1_item_ex_d2i_choice_cbs(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
-    int tag_number, int tag_class, char optional, int depth)
-{
-	const unsigned char *p;
-	int ret;
-
-	if (CBS_len(cbs) > LONG_MAX)
-		return 0;
-
-	p = CBS_data(cbs);
-	ret = asn1_item_ex_d2i_choice(pval, &p, (long)CBS_len(cbs), it,
-	    tag_number, tag_class, optional, depth);
-	if (ret == 1) {
-		if (!CBS_skip(cbs, p - CBS_data(cbs)))
-			return 0;
-	}
-	return ret;
 }
 
 static int
@@ -518,7 +499,7 @@ asn1_item_ex_d2i_cbs(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 		return ret;
 
 	case ASN1_ITYPE_CHOICE:
-		return asn1_item_ex_d2i_choice_cbs(pval, cbs, it, tag_number,
+		return asn1_item_ex_d2i_choice(pval, cbs, it, tag_number,
 		    tag_class, optional, depth);
 
 	case ASN1_ITYPE_NDEF_SEQUENCE:
