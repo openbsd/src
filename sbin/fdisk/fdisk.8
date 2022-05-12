@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.113 2022/05/03 11:48:47 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.114 2022/05/12 14:10:05 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 3 2022 $
+.Dd $Mdocdate: May 12 2022 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -170,6 +170,7 @@ This is useful for writing new MBR bootcode onto an existing drive, and is
 equivalent to the DOS command
 .Dq FDISK /MBR .
 Note that this option will overwrite the NT disk signature, if present.
+Not available when editing a GPT.
 .It Fl v
 Print the contents of the MBR, the Primary GPT and the Secondary GPT.
 Also print more detailed GPT header and partition entry information.
