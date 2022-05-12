@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.34 2022/05/12 10:50:12 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.35 2022/05/12 10:53:59 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -347,67 +347,6 @@ valid_origin(const char *uri, const char *proto)
 }
 
 /*
- * Callback for X509_verify_cert() to handle critical extensions in old
- * LibreSSL libraries or OpenSSL libs without RFC3779 support.
- */
-static int
-verify_cb(int ok, X509_STORE_CTX *store_ctx)
-{
-	X509				*cert;
-	const STACK_OF(X509_EXTENSION)	*exts;
-	X509_EXTENSION			*ext;
-	ASN1_OBJECT			*obj;
-	char				*file;
-	int				 depth, error, i, nid;
-
-	error = X509_STORE_CTX_get_error(store_ctx);
-	depth = X509_STORE_CTX_get_error_depth(store_ctx);
-
-	if (error != X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION)
-		return ok;
-
-	if ((file = X509_STORE_CTX_get_app_data(store_ctx)) == NULL)
-		cryptoerrx("X509_STORE_CTX_get_app_data");
-
-	if ((cert = X509_STORE_CTX_get_current_cert(store_ctx)) == NULL) {
-		warnx("%s: got no current cert", file);
-		return 0;
-	}
-	if ((exts = X509_get0_extensions(cert)) == NULL) {
-		warnx("%s: got no cert extensions", file);
-		return 0;
-	}
-
-	for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
-		ext = sk_X509_EXTENSION_value(exts, i);
-
-		/* skip over non-critical and known extensions */
-		if (!X509_EXTENSION_get_critical(ext))
-			continue;
-		if (X509_supported_extension(ext))
-			continue;
-
-		if ((obj = X509_EXTENSION_get_object(ext)) == NULL) {
-			warnx("%s: got no extension object", file);
-			return 0;
-		}
-
-		nid = OBJ_obj2nid(obj);
-		switch (nid) {
-		case NID_sbgp_ipAddrBlock:
-		case NID_sbgp_autonomousSysNum:
-			continue;
-		default:
-			warnx("%s: depth %d: unknown extension: nid %d",
-			    file, depth, nid);
-			return 0;
-		}
-	}
-
-	return 1;
-}
-
-/*
  * Walk the certificate tree to the root and build a certificate
  * chain from cert->x509. All certs in the tree are validated and
  * can be loaded as trusted stack into the validator.
@@ -476,9 +415,6 @@ valid_x509(char *file, X509_STORE_CTX *store_ctx, X509 *x509, struct auth *a,
 	if (!X509_VERIFY_PARAM_add0_policy(params, cp_oid))
 		cryptoerrx("X509_VERIFY_PARAM_add0_policy");
 
-	X509_STORE_CTX_set_verify_cb(store_ctx, verify_cb);
-	if (!X509_STORE_CTX_set_app_data(store_ctx, file))
-		cryptoerrx("X509_STORE_CTX_set_app_data");
 	flags = X509_V_FLAG_CRL_CHECK;
 	flags |= X509_V_FLAG_EXPLICIT_POLICY;
 	flags |= X509_V_FLAG_INHIBIT_MAP;
