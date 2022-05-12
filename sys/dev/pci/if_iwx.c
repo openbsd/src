@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.145 2022/05/12 11:37:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.146 2022/05/12 21:33:31 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5883,7 +5883,10 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 		else if (IEEE80211_CHAN_40MHZ_ALLOWED(ni->ni_chan) &&
 		    ieee80211_node_supports_ht_chan40(ni))
 			sco = (ni->ni_htop0 & IEEE80211_HTOP0_SCO_MASK);
-		rate_flags |= IWX_RATE_MCS_HT_MSK; 
+		if (ni->ni_flags & IEEE80211_NODE_VHT)
+			rate_flags |= IWX_RATE_MCS_VHT_MSK; 
+		else
+			rate_flags |= IWX_RATE_MCS_HT_MSK; 
 		if (vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80 &&
 		    in->in_phyctxt != NULL &&
 		    in->in_phyctxt->vht_chan_width == vht_chan_width) {
