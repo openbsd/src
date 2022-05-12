@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_fre.c,v 1.19 2022/05/10 05:19:22 jsing Exp $ */
+/* $OpenBSD: tasn_fre.c,v 1.20 2022/05/12 19:55:58 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -144,7 +144,7 @@ asn1_item_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 			if (i == 2)
 				return;
 		}
-		asn1_enc_free(pval, it);
+		asn1_enc_cleanup(pval, it);
 		/* If we free up as normal we will invalidate any
 		 * ANY DEFINED BY field and we wont be able to
 		 * determine the type of the field it defines. So

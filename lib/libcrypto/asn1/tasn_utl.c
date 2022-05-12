@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_utl.c,v 1.16 2022/05/12 19:33:19 jsing Exp $ */
+/* $OpenBSD: tasn_utl.c,v 1.17 2022/05/12 19:55:58 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -161,7 +161,7 @@ asn1_enc_clear(ASN1_ENCODING *aenc)
 }
 
 void
-asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+asn1_enc_cleanup(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
 	ASN1_ENCODING *aenc;
 

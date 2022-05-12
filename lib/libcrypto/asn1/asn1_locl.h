@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.30 2022/05/12 19:33:19 jsing Exp $ */
+/* $OpenBSD: asn1_locl.h,v 1.31 2022/05/12 19:55:58 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -171,7 +171,7 @@ const ASN1_TEMPLATE *asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt, int
 int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it);
 
 void asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it);
-void asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
+void asn1_enc_cleanup(ASN1_VALUE **pval, const ASN1_ITEM *it);
 int asn1_enc_save(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it);
 int asn1_enc_restore(int *len, unsigned char **out, ASN1_VALUE **pval, const ASN1_ITEM *it);
 
