@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.98 2022/05/04 14:58:26 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.99 2022/05/12 12:49:31 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -923,12 +923,13 @@ uvmpd_scan(void)
 	 * detect if we're not going to be able to page anything out
 	 * until we free some swap resources from active pages.
 	 */
+	free = uvmexp.free - BUFPAGES_DEFICIT;
 	swap_shortage = 0;
-	if (uvmexp.free < uvmexp.freetarg &&
+	if (free < uvmexp.freetarg &&
 	    uvmexp.swpginuse == uvmexp.swpages &&
 	    !uvm_swapisfull() &&
 	    pages_freed == 0) {
-		swap_shortage = uvmexp.freetarg - uvmexp.free;
+		swap_shortage = uvmexp.freetarg - free;
 	}
 
 	for (p = TAILQ_FIRST(&uvm.page_active);
