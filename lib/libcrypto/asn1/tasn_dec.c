@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.64 2022/05/12 19:11:14 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.65 2022/05/12 19:33:19 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -249,6 +249,7 @@ asn1_item_ex_d2i_sequence(ASN1_VALUE **pval, const unsigned char **in, long len,
 	ASN1_aux_cb *asn1_cb = NULL;
 	char seq_eoc, seq_nolen, cst, isopt;
 	const unsigned char *p = NULL, *q;
+	CBS cbs;
 	int i;
 	int ret = 0;
 
@@ -383,9 +384,10 @@ asn1_item_ex_d2i_sequence(ASN1_VALUE **pval, const unsigned char **in, long len,
 		}
 	}
 	/* Save encoding */
-	if (!asn1_enc_save(pval, *in, p - *in, it)) {
+	CBS_init(&cbs, *in, p - *in);
+	if (!asn1_enc_save(pval, &cbs, it)) {
 		ASN1error(ERR_R_MALLOC_FAILURE);
-		goto auxerr;
+		goto err;
 	}
 	*in = p;
 	if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
