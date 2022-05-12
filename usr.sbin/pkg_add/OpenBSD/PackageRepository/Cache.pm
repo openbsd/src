@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Cache.pm,v 1.7 2022/05/11 11:18:04 espie Exp $
+# $OpenBSD: Cache.pm,v 1.8 2022/05/12 04:41:43 espie Exp $
 #
 # Copyright (c) 2022 Marc Espie <espie@openbsd.org>
 #
@@ -80,7 +80,7 @@ sub prime_update_info_cache
 
 	my $total = scalar @list;
 	$progress->set_header(
-	    $state->f("Reading update info for installed packages...", 
+	    $state->f("Reading update info for installed packages", 
 		$total));
 	my $done = 0;
 	my $oldname = ""; 
