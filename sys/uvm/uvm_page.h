@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.h,v 1.67 2022/01/29 06:25:33 aoyama Exp $	*/
+/*	$OpenBSD: uvm_page.h,v 1.68 2022/05/12 12:48:36 mpi Exp $	*/
 /*	$NetBSD: uvm_page.h,v 1.19 2000/12/28 08:24:55 chs Exp $	*/
 
 /* 
@@ -224,6 +224,7 @@ boolean_t	uvm_page_physget(paddr_t *);
 #endif
 
 void		uvm_pageactivate(struct vm_page *);
+void		uvm_pagedequeue(struct vm_page *);
 vaddr_t		uvm_pageboot_alloc(vsize_t);
 void		uvm_pagecopy(struct vm_page *, struct vm_page *);
 void		uvm_pagedeactivate(struct vm_page *);

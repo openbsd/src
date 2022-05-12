@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.165 2022/05/04 14:58:26 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.166 2022/05/12 12:48:36 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -987,16 +987,7 @@ uvm_pageclean(struct vm_page *pg)
 	/*
 	 * now remove the page from the queues
 	 */
-	if (pg->pg_flags & PQ_ACTIVE) {
-		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-		flags_to_clear |= PQ_ACTIVE;
-		uvmexp.active--;
-	}
-	if (pg->pg_flags & PQ_INACTIVE) {
-		TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
-		flags_to_clear |= PQ_INACTIVE;
-		uvmexp.inactive--;
-	}
+	uvm_pagedequeue(pg);
 
 	/*
 	 * if the page was wired, unwire it now.
@@ -1243,16 +1234,7 @@ uvm_pagewire(struct vm_page *pg)
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
 	if (pg->wire_count == 0) {
-		if (pg->pg_flags & PQ_ACTIVE) {
-			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-			atomic_clearbits_int(&pg->pg_flags, PQ_ACTIVE);
-			uvmexp.active--;
-		}
-		if (pg->pg_flags & PQ_INACTIVE) {
-			TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
-			atomic_clearbits_int(&pg->pg_flags, PQ_INACTIVE);
-			uvmexp.inactive--;
-		}
+		uvm_pagedequeue(pg);
 		uvmexp.wired++;
 	}
 	pg->wire_count++;
@@ -1324,28 +1306,32 @@ uvm_pageactivate(struct vm_page *pg)
 	KASSERT(uvm_page_owner_locked_p(pg));
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
+	uvm_pagedequeue(pg);
+	if (pg->wire_count == 0) {
+		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
+		atomic_setbits_int(&pg->pg_flags, PQ_ACTIVE);
+		uvmexp.active++;
+
+	}
+}
+
+/*
+ * uvm_pagedequeue: remove a page from any paging queue
+ */
+void
+uvm_pagedequeue(struct vm_page *pg)
+{
+	if (pg->pg_flags & PQ_ACTIVE) {
+		TAILQ_REMOVE(&uvm.page_active, pg, pageq);
+		atomic_clearbits_int(&pg->pg_flags, PQ_ACTIVE);
+		uvmexp.active--;
+	}
 	if (pg->pg_flags & PQ_INACTIVE) {
 		TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
 		atomic_clearbits_int(&pg->pg_flags, PQ_INACTIVE);
 		uvmexp.inactive--;
 	}
-	if (pg->wire_count == 0) {
-		/*
-		 * if page is already active, remove it from list so we
-		 * can put it at tail.  if it wasn't active, then mark
-		 * it active and bump active count
-		 */
-		if (pg->pg_flags & PQ_ACTIVE)
-			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
-		else {
-			atomic_setbits_int(&pg->pg_flags, PQ_ACTIVE);
-			uvmexp.active++;
-		}
-
-		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
-	}
 }
-
 /*
  * uvm_pagezero: zero fill a page
  */
