@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.187 2022/05/06 13:12:16 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.188 2022/05/12 13:33:00 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -121,8 +121,8 @@ void	knote_dequeue(struct knote *kn);
 int	knote_acquire(struct knote *kn, struct klist *, int);
 void	knote_release(struct knote *kn);
 void	knote_activate(struct knote *kn);
-void	knote_remove(struct proc *p, struct kqueue *kq, struct knlist *list,
-	    int purge);
+void	knote_remove(struct proc *p, struct kqueue *kq, struct knlist **plist,
+	    int idx, int purge);
 
 void	filt_kqdetach(struct knote *kn);
 int	filt_kqueue(struct knote *kn, long hint);
@@ -1563,10 +1563,10 @@ kqueue_purge(struct proc *p, struct kqueue *kq)
 
 	mtx_enter(&kq->kq_lock);
 	for (i = 0; i < kq->kq_knlistsize; i++)
-		knote_remove(p, kq, &kq->kq_knlist[i], 1);
+		knote_remove(p, kq, &kq->kq_knlist, i, 1);
 	if (kq->kq_knhashmask != 0) {
 		for (i = 0; i < kq->kq_knhashmask + 1; i++)
-			knote_remove(p, kq, &kq->kq_knhash[i], 1);
+			knote_remove(p, kq, &kq->kq_knhash, i, 1);
 	}
 	mtx_leave(&kq->kq_lock);
 }
@@ -1789,13 +1789,15 @@ knote(struct klist *list, long hint)
  * remove all knotes from a specified knlist
  */
 void
-knote_remove(struct proc *p, struct kqueue *kq, struct knlist *list, int purge)
+knote_remove(struct proc *p, struct kqueue *kq, struct knlist **plist, int idx,
+    int purge)
 {
 	struct knote *kn;
 
 	MUTEX_ASSERT_LOCKED(&kq->kq_lock);
 
-	while ((kn = SLIST_FIRST(list)) != NULL) {
+	/* Always fetch array pointer as another thread can resize kq_knlist. */
+	while ((kn = SLIST_FIRST(*plist + idx)) != NULL) {
 		KASSERT(kn->kn_kq == kq);
 
 		if (!purge) {
@@ -1863,7 +1865,7 @@ knote_fdclose(struct proc *p, int fd)
 	LIST_FOREACH(kq, &fdp->fd_kqlist, kq_next) {
 		mtx_enter(&kq->kq_lock);
 		if (fd < kq->kq_knlistsize)
-			knote_remove(p, kq, &kq->kq_knlist[fd], 0);
+			knote_remove(p, kq, &kq->kq_knlist, fd, 0);
 		mtx_leave(&kq->kq_lock);
 	}
 }
