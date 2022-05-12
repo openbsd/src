@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.80 2022/05/12 08:53:33 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.81 2022/05/12 10:49:22 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -60,17 +60,9 @@ extern ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
 static int
 append_ip(struct parse *p, const struct cert_ip *ip)
 {
-	struct cert	*res = p->res;
-
 	if (!ip_addr_check_overlap(ip, p->fn, p->res->ips, p->res->ipsz))
 		return 0;
-	if (res->ipsz >= MAX_IP_SIZE)
-		return 0;
-	res->ips = reallocarray(res->ips, res->ipsz + 1,
-	    sizeof(struct cert_ip));
-	if (res->ips == NULL)
-		err(1, NULL);
-	res->ips[res->ipsz++] = *ip;
+	p->res->ips[p->res->ipsz++] = *ip;
 	return 1;
 }
 
@@ -330,84 +322,6 @@ sbgp_addr_inherit(struct parse *p, enum afi afi)
 }
 
 /*
- * Parse an IP address or range, RFC 3779 2.2.3.7.
- * We don't constrain this parse (as specified in section 2.2.3.6) to
- * having any kind of order.
- * Returns zero on failure, non-zero on success.
- */
-static int
-sbgp_addr_or_range(struct parse *p, enum afi afi, const IPAddressOrRanges *aors)
-{
-	const IPAddressOrRange	*aor;
-	int			 i, rc = 0;
-
-	for (i = 0; i < sk_IPAddressOrRange_num(aors); i++) {
-		aor = sk_IPAddressOrRange_value(aors, i);
-		switch (aor->type) {
-		case IPAddressOrRange_addressPrefix:
-			if (!sbgp_addr(p, afi, aor->u.addressPrefix))
-				goto out;
-			break;
-		case IPAddressOrRange_addressRange:
-			if (!sbgp_addr_range(p, afi, aor->u.addressRange))
-				goto out;
-			break;
-		default:
-			warnx("%s: RFC 3779 section 2.2.3.7: IPAddressOrRange: "
-			    "unknown type %d", p->fn, aor->type);
-			goto out;
-		}
-	}
-
-	rc = 1;
- out:
-	return rc;
-}
-
-/*
- * Parse a sequence of address families as in RFC 3779 sec. 2.2.3.2.
- * Ignore several stipulations of the RFC (2.2.3.3).
- * Namely, we don't require entries to be ordered in any way (type, AFI
- * or SAFI group, etc.).
- * This is because it doesn't matter for our purposes: we're going to
- * validate in the same way regardless.
- * Returns zero on failure, non-zero on success.
- */
-static int
-sbgp_ipaddrfam(struct parse *p, const IPAddressFamily *af)
-{
-	enum afi		 afi;
-	const IPAddressChoice	*choice;
-	int			 rc = 0;
-
-	if (!ip_addr_afi_parse(p->fn, af->addressFamily, &afi)) {
-		warnx("%s: RFC 3779 section 2.2.3.2: addressFamily: "
-		    "invalid AFI", p->fn);
-		goto out;
-	}
-
-	choice = af->ipAddressChoice;
-	switch (choice->type) {
-	case IPAddressChoice_addressesOrRanges:
-		if (!sbgp_addr_or_range(p, afi, choice->u.addressesOrRanges))
-			goto out;
-		break;
-	case IPAddressChoice_inherit:
-		if (!sbgp_addr_inherit(p, afi))
-			goto out;
-		break;
-	default:
-		warnx("%s: RFC 3779 section 2.2.3.2: IPAddressChoice: "
-		    "unknown type %d", p->fn, choice->type);
-		goto out;
-	}
-
-	rc = 1;
- out:
-	return rc;
-}
-
-/*
  * Parse an sbgp-ipAddrBlock X509 extension, RFC 6487 4.8.10, with
  * syntax documented in RFC 3779 starting in section 2.2.
  * Returns zero on failure, non-zero on success.
@@ -417,7 +331,11 @@ sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 {
 	STACK_OF(IPAddressFamily)	*addrblk = NULL;
 	const IPAddressFamily		*af;
-	int				 i, rc = 0;
+	const IPAddressOrRanges		*aors;
+	const IPAddressOrRange		*aor;
+	enum afi			 afi;
+	size_t				 ipsz;
+	int				 i, j, rc = 0;
 
 	if (!X509_EXTENSION_get_critical(ext)) {
 		cryptowarnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
@@ -433,8 +351,58 @@ sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 
 	for (i = 0; i < sk_IPAddressFamily_num(addrblk); i++) {
 		af = sk_IPAddressFamily_value(addrblk, i);
-		if (!sbgp_ipaddrfam(p, af))
+
+		switch (af->ipAddressChoice->type) {
+		case IPAddressChoice_inherit:
+			aors = NULL;
+			ipsz = p->res->ipsz + 1;
+			break;
+		case IPAddressChoice_addressesOrRanges:
+			aors = af->ipAddressChoice->u.addressesOrRanges;
+			ipsz = p->res->ipsz + sk_IPAddressOrRange_num(aors);
+			break;
+		default:
+			warnx("%s: RFC 3779: IPAddressChoice: unknown type %d",
+			    p->fn, af->ipAddressChoice->type);
 			goto out;
+		}
+
+		if (ipsz >= MAX_IP_SIZE)
+			goto out;
+		p->res->ips = recallocarray(p->res->ips, p->res->ipsz, ipsz,
+		    sizeof(struct cert_ip));
+		if (p->res->ips == NULL)
+			err(1, NULL);
+
+		if (!ip_addr_afi_parse(p->fn, af->addressFamily, &afi)) {
+			warnx("%s: RFC 3779: invalid AFI", p->fn);
+			goto out;
+		}
+
+		if (aors == NULL) {
+			if (!sbgp_addr_inherit(p, afi))
+				goto out;
+			continue;
+		}
+
+		for (j = 0; j < sk_IPAddressOrRange_num(aors); j++) {
+			aor = sk_IPAddressOrRange_value(aors, j);
+			switch (aor->type) {
+			case IPAddressOrRange_addressPrefix:
+				if (!sbgp_addr(p, afi, aor->u.addressPrefix))
+					goto out;
+				break;
+			case IPAddressOrRange_addressRange:
+				if (!sbgp_addr_range(p, afi,
+				    aor->u.addressRange))
+					goto out;
+				break;
+			default:
+				warnx("%s: RFC 3779: IPAddressOrRange: "
+				    "unknown type %d", p->fn, aor->type);
+				goto out;
+			}
+		}
 	}
 
 	rc = 1;
