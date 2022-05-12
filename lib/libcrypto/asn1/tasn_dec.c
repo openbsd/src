@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.63 2022/05/10 18:40:06 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.64 2022/05/12 19:11:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -249,7 +249,6 @@ asn1_item_ex_d2i_sequence(ASN1_VALUE **pval, const unsigned char **in, long len,
 	ASN1_aux_cb *asn1_cb = NULL;
 	char seq_eoc, seq_nolen, cst, isopt;
 	const unsigned char *p = NULL, *q;
-	long tmplen;
 	int i;
 	int ret = 0;
 
@@ -261,7 +260,6 @@ asn1_item_ex_d2i_sequence(ASN1_VALUE **pval, const unsigned char **in, long len,
 		asn1_cb = aux->asn1_cb;
 
 	p = *in;
-	tmplen = len;
 
 	/* If no IMPLICIT tagging set to SEQUENCE, UNIVERSAL */
 	if (tag == -1) {
@@ -276,13 +274,7 @@ asn1_item_ex_d2i_sequence(ASN1_VALUE **pval, const unsigned char **in, long len,
 		goto err;
 	} else if (ret == -1)
 		return -1;
-	if (aux && (aux->flags & ASN1_AFLG_BROKEN)) {
-		len = tmplen - (p - *in);
-		seq_nolen = 1;
-	}
-	/* If indefinite we don't do a length check */
-	else
-		seq_nolen = seq_eoc;
+	seq_nolen = seq_eoc;
 	if (!cst) {
 		ASN1error(ASN1_R_SEQUENCE_NOT_CONSTRUCTED);
 		goto err;

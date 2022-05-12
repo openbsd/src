@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.20 2022/05/10 05:19:22 jsing Exp $ */
+/* $OpenBSD: asn1t.h,v 1.21 2022/05/12 19:11:14 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -183,10 +183,6 @@ extern "C" {
 	static const ASN1_AUX tname##_aux = {NULL, 0, 0, 0, cb, 0}; \
 	ASN1_SEQUENCE(tname)
 
-#define ASN1_BROKEN_SEQUENCE(tname) \
-	static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, 0, 0}; \
-	ASN1_SEQUENCE(tname)
-
 #define ASN1_SEQUENCE_ref(tname, cb, lck) \
 	static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), lck, cb, 0}; \
 	ASN1_SEQUENCE(tname)
@@ -218,8 +214,6 @@ extern "C" {
 		sizeof(tname),\
 		#tname \
 	ASN1_ITEM_end(tname)
-
-#define ASN1_BROKEN_SEQUENCE_END(stname) ASN1_SEQUENCE_END_ref(stname, stname)
 
 #define ASN1_SEQUENCE_END_enc(stname, tname) ASN1_SEQUENCE_END_ref(stname, tname)
 
@@ -745,8 +739,6 @@ typedef struct ASN1_STREAM_ARG_st {
 #define ASN1_AFLG_REFCOUNT	1
 /* Save the encoding of structure (useful for signatures) */
 #define ASN1_AFLG_ENCODING	2
-/* The Sequence length is invalid */
-#define ASN1_AFLG_BROKEN	4
 
 /* operation values for asn1_cb */
 
