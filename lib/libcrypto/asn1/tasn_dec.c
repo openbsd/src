@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.66 2022/05/12 19:52:31 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.67 2022/05/12 20:06:46 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -135,6 +135,9 @@ asn1_item_ex_d2i_choice(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 	ASN1_VALUE **pchptr;
 	int i, ret;
 
+	if (aux != NULL)
+		asn1_cb = aux->asn1_cb;
+
 	if (it->itype != ASN1_ITYPE_CHOICE)
 		goto err;
 
@@ -152,19 +155,14 @@ asn1_item_ex_d2i_choice(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 		*pval = NULL;
 	}
 
-	if (aux != NULL)
-		asn1_cb = aux->asn1_cb;
+	if (!ASN1_item_ex_new(&achoice, it)) {
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		goto err;
+	}
 
 	if (asn1_cb != NULL && !asn1_cb(ASN1_OP_D2I_PRE, &achoice, it, NULL)) {
 		ASN1error(ASN1_R_AUX_ERROR);
 		goto err;
-	}
-
-	if (achoice == NULL) {
-		if (!ASN1_item_ex_new(&achoice, it)) {
-			ASN1error(ERR_R_NESTED_ASN1_ERROR);
-			goto err;
-		}
 	}
 
 	/* Try each possible CHOICE in turn. */
