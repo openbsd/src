@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.174 2022/01/13 12:21:22 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.175 2022/05/12 14:21:06 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1549,6 +1549,8 @@ sub finish_manpages
 	}
 }
 
+# we maintain an LRU cache of files (by checksum) to speed-up
+# pkg_add -u
 sub save_history
 {
 	my ($self, $plist, $dir) = @_;
@@ -1608,6 +1610,7 @@ sub save_history
 		close($f);
 		rename("$fname.new", $fname);
 	}
+	# XXX if we don't have any history, we don't need to do this
 	# create a new list with check points.
 	my $l = [@$tail];
 	my $i = 0;
