@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.78 2022/05/11 16:13:05 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.79 2022/05/12 07:45:27 claudio Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -84,12 +84,6 @@ append_as(struct parse *p, const struct cert_as *as)
 {
 	if (!as_check_overlap(as, p->fn, p->res->as, p->res->asz))
 		return 0;
-	if (p->res->asz >= MAX_AS_SIZE)
-		return 0;
-	p->res->as = reallocarray(p->res->as, p->res->asz + 1,
-	    sizeof(struct cert_as));
-	if (p->res->as == NULL)
-		err(1, NULL);
 	p->res->as[p->res->asz++] = *as;
 	return 1;
 }
@@ -156,51 +150,15 @@ sbgp_asid(struct parse *p, const ASN1_INTEGER *i)
 	return append_as(p, &as);
 }
 
-/*
- * Parse one of RFC 3779 3.2.3.2.
- * Returns zero on failure, non-zero on success.
- */
 static int
-sbgp_asnum(struct parse *p, const ASIdentifierChoice *aic)
+sbgp_asinherit(struct parse *p)
 {
-	struct cert_as		 as;
-	const ASIdOrRanges	*aors = NULL;
-	const ASIdOrRange	*aor;
-	int			 i;
+	struct cert_as as;
 
-	switch (aic->type) {
-	case ASIdentifierChoice_inherit:
-		memset(&as, 0, sizeof(struct cert_as));
-		as.type = CERT_AS_INHERIT;
-		return append_as(p, &as);
-	case ASIdentifierChoice_asIdsOrRanges:
-		aors = aic->u.asIdsOrRanges;
-		break;
-	default:
-		warnx("%s: RFC 3779 section 3.2.3.2: ASIdentifierChoice: "
-		    "unknown type %d", p->fn, aic->type);
-		return 0;
-	}
+	memset(&as, 0, sizeof(struct cert_as));
+	as.type = CERT_AS_INHERIT;
 
-	for (i = 0; i < sk_ASIdOrRange_num(aors); i++) {
-		aor = sk_ASIdOrRange_value(aors, i);
-		switch (aor->type) {
-		case ASIdOrRange_id:
-			if (!sbgp_asid(p, aor->u.id))
-				return 0;
-			break;
-		case ASIdOrRange_range:
-			if (!sbgp_asrange(p, aor->u.range))
-				return 0;
-			break;
-		default:
-			warnx("%s: RFC 3779 section 3.2.3.5: ASIdOrRange: "
-			    "unknown type %d", p->fn, aor->type);
-			return 0;
-		}
-	}
-
-	return 1;
+	return append_as(p, &as);
 }
 
 /*
@@ -212,7 +170,9 @@ static int
 sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
 {
 	ASIdentifiers		*asidentifiers = NULL;
-	int			 rc = 0;
+	const ASIdOrRanges	*aors = NULL;
+	size_t			 asz;
+	int			 i, rc = 0;
 
 	if (!X509_EXTENSION_get_critical(ext)) {
 		cryptowarnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
@@ -238,8 +198,53 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	if (!sbgp_asnum(p, asidentifiers->asnum))
+	switch (asidentifiers->asnum->type) {
+	case ASIdentifierChoice_inherit:
+		asz = 1;
+		break;
+	case ASIdentifierChoice_asIdsOrRanges:
+		aors = asidentifiers->asnum->u.asIdsOrRanges;
+		asz = sk_ASIdOrRange_num(aors);
+		break;
+	default:
+		warnx("%s: RFC 3779 section 3.2.3.2: ASIdentifierChoice: "
+		    "unknown type %d", p->fn, asidentifiers->asnum->type);
 		goto out;
+	}
+
+	if (asz >= MAX_AS_SIZE) {
+		warnx("%s: too many AS number entries: limit %d",
+		    p->fn, MAX_AS_SIZE);
+		goto out;
+	}
+	p->res->as = calloc(asz, sizeof(struct cert_as));
+	if (p->res->as == NULL)
+		err(1, NULL);
+
+	if (aors == NULL) {
+		if (!sbgp_asinherit(p))
+			goto out;
+	}
+
+	for (i = 0; i < sk_ASIdOrRange_num(aors); i++) {
+		const ASIdOrRange *aor;
+
+		aor = sk_ASIdOrRange_value(aors, i);
+		switch (aor->type) {
+		case ASIdOrRange_id:
+			if (!sbgp_asid(p, aor->u.id))
+				goto out;
+			break;
+		case ASIdOrRange_range:
+			if (!sbgp_asrange(p, aor->u.range))
+				goto out;
+			break;
+		default:
+			warnx("%s: RFC 3779 section 3.2.3.5: ASIdOrRange: "
+			    "unknown type %d", p->fn, aor->type);
+			goto out;
+		}
+	}
 
 	rc = 1;
  out:
