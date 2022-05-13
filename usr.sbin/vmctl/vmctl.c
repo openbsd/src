@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.82 2022/05/04 23:17:25 dv Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.83 2022/05/13 00:17:20 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -935,7 +935,7 @@ open_imagefile(int type, const char *imgfile_path, int flags,
  */
 int
 create_imagefile(int type, const char *imgfile_path, const char *base_path,
-    long imgsize, const char **format)
+    uint64_t imgsize, const char **format)
 {
 	int	 ret;
 

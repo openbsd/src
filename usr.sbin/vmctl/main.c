@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.70 2022/05/04 23:17:25 dv Exp $	*/
+/*	$OpenBSD: main.c,v 1.71 2022/05/13 00:17:20 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -660,9 +660,8 @@ ctl_convert(const char *srcfile, const char *dstfile, int dsttype, size_t dstsiz
 	/* align to megabytes */
 	dst.size = ALIGNSZ(dstsize, 1048576);
 
-	if ((ret = create_imagefile(dst.type, dst.disk, NULL,
-	   dst.size / 1048576, &format)) != 0) {
-		errno = ret;
+	if ((ret = create_imagefile(dst.type, dst.disk, NULL, dst.size,
+	    &format)) != 0) {
 		errstr = "failed to create destination image file";
 		goto done;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.h,v 1.36 2022/05/04 23:17:25 dv Exp $	*/
+/*	$OpenBSD: vmctl.h,v 1.37 2022/05/13 00:17:20 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -90,7 +90,7 @@ __dead void
 /* vmctl.c */
 int	 open_imagefile(int, const char *, int,
 	    struct virtio_backing *, off_t *);
-int	 create_imagefile(int, const char *, const char *, long, const char **);
+int	 create_imagefile(int, const char *, const char *, uint64_t, const char **);
 int	 create_raw_imagefile(const char *, long);
 int	 create_qc2_imagefile(const char *, const char *, long);
 int	 vm_start(uint32_t, const char *, size_t, int, char **, int,
