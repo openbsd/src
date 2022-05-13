@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.239 2022/03/17 14:23:34 visa Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.240 2022/05/13 15:32:00 claudio Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -200,7 +200,7 @@ process_initialize(struct process *pr, struct proc *p)
 	TAILQ_INIT(&pr->ps_tslpqueue);
 
 	rw_init(&pr->ps_lock, "pslock");
-	mtx_init(&pr->ps_mtx, IPL_MPFLOOR);
+	mtx_init(&pr->ps_mtx, IPL_HIGH);
 
 	timeout_set_kclock(&pr->ps_realit_to, realitexpire, pr,
 	    KCLOCK_UPTIME, 0);

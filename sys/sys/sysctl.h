@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.227 2022/02/25 18:05:49 rob Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.228 2022/05/13 15:32:00 claudio Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -642,8 +642,15 @@ do {									\
 									\
 	(kp)->p_siglist = (p)->p_siglist | (pr)->ps_siglist;		\
 	(kp)->p_sigmask = (p)->p_sigmask;				\
+									\
+	PR_LOCK(pr);							\
 	(kp)->p_sigignore = (sa) ? (sa)->ps_sigignore : 0;		\
 	(kp)->p_sigcatch = (sa) ? (sa)->ps_sigcatch : 0;		\
+									\
+	if (lim)							\
+		(kp)->p_rlim_rss_cur =					\
+		    (lim)->pl_rlimit[RLIMIT_RSS].rlim_cur;		\
+	PR_UNLOCK(pr);							\
 									\
 	(kp)->p_stat = (p)->p_stat;					\
 	(kp)->p_nice = (pr)->ps_nice;					\
@@ -685,12 +692,6 @@ do {									\
 		if (show_addresses)					\
 			(kp)->p_wchan = PTRTOINT64((p)->p_wchan);	\
 	}								\
-									\
-	PR_LOCK(pr);							\
-	if (lim)							\
-		(kp)->p_rlim_rss_cur =					\
-		    (lim)->pl_rlimit[RLIMIT_RSS].rlim_cur;		\
-	PR_UNLOCK(pr);							\
 									\
 	if (((pr)->ps_flags & PS_ZOMBIE) == 0) {			\
 		struct timeval __tv;					\

@@ -1,4 +1,4 @@
-/*	$OpenBSD: signalvar.h,v 1.53 2022/02/14 11:26:05 claudio Exp $	*/
+/*	$OpenBSD: signalvar.h,v 1.54 2022/05/13 15:32:00 claudio Exp $	*/
 /*	$NetBSD: signalvar.h,v 1.17 1996/04/22 01:23:31 christos Exp $	*/
 
 /*
@@ -43,17 +43,21 @@
 /*
  * Process signal actions and state, needed only within the process
  * (not necessarily resident).
+ *
+ * Locks used to protect struct members in struct sigacts:
+ *	a	atomic operations
+ *	m	this process' `ps_mtx'
  */
 struct	sigacts {
-	sig_t	ps_sigact[NSIG];	/* disposition of signals */
-	sigset_t ps_catchmask[NSIG];	/* signals to be blocked */
-	sigset_t ps_sigonstack;		/* signals to take on sigstack */
-	sigset_t ps_sigintr;		/* signals that interrupt syscalls */
-	sigset_t ps_sigreset;		/* signals that reset when caught */
-	sigset_t ps_siginfo;		/* signals that provide siginfo */
-	sigset_t ps_sigignore;		/* signals being ignored */
-	sigset_t ps_sigcatch;		/* signals being caught by user */
-	int	ps_sigflags;		/* signal flags, below */
+	sig_t	ps_sigact[NSIG];	/* [m] disposition of signals */
+	sigset_t ps_catchmask[NSIG];	/* [m] signals to be blocked */
+	sigset_t ps_sigonstack;		/* [m] signals to take on sigstack */
+	sigset_t ps_sigintr;		/* [m] signals interrupt syscalls */
+	sigset_t ps_sigreset;		/* [m] signals that reset when caught */
+	sigset_t ps_siginfo;		/* [m] signals that provide siginfo */
+	sigset_t ps_sigignore;		/* [m] signals being ignored */
+	sigset_t ps_sigcatch;		/* [m] signals being caught by user */
+	int	ps_sigflags;		/* [a] signal flags, below */
 };
 
 /* signal flags */
@@ -97,6 +101,7 @@ struct sigctx {
 	int		sig_reset;
 	int		sig_info;
 	int		sig_ignore;
+	int		sig_catch;
 };
 
 /*

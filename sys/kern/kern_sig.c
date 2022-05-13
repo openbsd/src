@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.295 2022/03/11 10:05:38 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.296 2022/05/13 15:32:00 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -278,6 +278,7 @@ sys_sigaction(struct proc *p, void *v, register_t *retval)
 		return (EINVAL);
 	sa = &vec;
 	if (osa) {
+		mtx_enter(&p->p_p->ps_mtx);
 		sa->sa_handler = ps->ps_sigact[signum];
 		sa->sa_mask = ps->ps_catchmask[signum];
 		bit = sigmask(signum);
@@ -296,6 +297,7 @@ sys_sigaction(struct proc *p, void *v, register_t *retval)
 			if ((ps->ps_sigflags & SAS_NOCLDWAIT) != 0)
 				sa->sa_flags |= SA_NOCLDWAIT;
 		}
+		mtx_leave(&p->p_p->ps_mtx);
 		if ((sa->sa_mask & bit) == 0)
 			sa->sa_flags |= SA_NODEFER;
 		sa->sa_mask &= ~bit;
@@ -329,13 +331,10 @@ setsigvec(struct proc *p, int signum, struct sigaction *sa)
 {
 	struct sigacts *ps = p->p_p->ps_sigacts;
 	int bit;
-	int s;
 
 	bit = sigmask(signum);
-	/*
-	 * Change setting atomically.
-	 */
-	s = splhigh();
+
+	mtx_enter(&p->p_p->ps_mtx);
 	ps->ps_sigact[signum] = sa->sa_handler;
 	if ((sa->sa_flags & SA_NODEFER) == 0)
 		sa->sa_mask |= sigmask(signum);
@@ -396,7 +395,7 @@ setsigvec(struct proc *p, int signum, struct sigaction *sa)
 		else
 			ps->ps_sigcatch |= bit;
 	}
-	splx(s);
+	mtx_leave(&p->p_p->ps_mtx);
 }
 
 /*
@@ -424,6 +423,7 @@ execsigs(struct proc *p)
 	int nc, mask;
 
 	ps = p->p_p->ps_sigacts;
+	mtx_enter(&p->p_p->ps_mtx);
 
 	/*
 	 * Reset caught signals.  Held signals remain held
@@ -450,6 +450,7 @@ execsigs(struct proc *p)
 	atomic_clearbits_int(&ps->ps_sigflags, SAS_NOCLDWAIT);
 	if (ps->ps_sigact[SIGCHLD] == SIG_IGN)
 		ps->ps_sigact[SIGCHLD] = SIG_DFL;
+	mtx_leave(&p->p_p->ps_mtx);
 }
 
 /*
@@ -779,18 +780,18 @@ out:
 void
 postsig_done(struct proc *p, int signum, sigset_t catchmask, int reset)
 {
-	KERNEL_ASSERT_LOCKED();
-
 	p->p_ru.ru_nsignals++;
 	atomic_setbits_int(&p->p_sigmask, catchmask);
 	if (reset != 0) {
 		sigset_t mask = sigmask(signum);
 		struct sigacts *ps = p->p_p->ps_sigacts;
 
+		mtx_enter(&p->p_p->ps_mtx);
 		ps->ps_sigcatch &= ~mask;
 		if (signum != SIGCONT && sigprop[signum] & SA_IGNORE)
 			ps->ps_sigignore |= mask;
 		ps->ps_sigact[signum] = SIG_DFL;
+		mtx_leave(&p->p_p->ps_mtx);
 	}
 }
 
@@ -804,10 +805,9 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
     union sigval sigval)
 {
 	struct process *pr = p->p_p;
-	struct sigacts *ps = pr->ps_sigacts;
+	struct sigctx ctx;
 	int mask;
 
-	KERNEL_LOCK();
 	switch (signum) {
 	case SIGILL:
 	case SIGBUS:
@@ -817,28 +817,25 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 	}
 
 	mask = sigmask(signum);
-	if ((pr->ps_flags & PS_TRACED) == 0 &&
-	    (ps->ps_sigcatch & mask) != 0 &&
+	setsigctx(p, signum, &ctx);
+	if ((pr->ps_flags & PS_TRACED) == 0 && ctx.sig_catch != 0 &&
 	    (p->p_sigmask & mask) == 0) {
 		siginfo_t si;
-		sigset_t catchmask = ps->ps_catchmask[signum];
-		int info = (ps->ps_siginfo & mask) != 0;
-		int onstack = (ps->ps_sigonstack & mask) != 0;
-		int reset = (ps->ps_sigreset & mask) != 0;
 
 		initsiginfo(&si, signum, trapno, code, sigval);
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG)) {
-			ktrpsig(p, signum, ps->ps_sigact[signum],
+			ktrpsig(p, signum, ctx.sig_action,
 			    p->p_sigmask, code, &si);
 		}
 #endif
-		if (sendsig(ps->ps_sigact[signum], signum, p->p_sigmask, &si,
-		    info, onstack)) {
+		if (sendsig(ctx.sig_action, signum, p->p_sigmask, &si,
+		    ctx.sig_info, ctx.sig_onstack)) {
+			KERNEL_LOCK();
 			sigexit(p, SIGILL);
 			/* NOTREACHED */
 		}
-		postsig_done(p, signum, catchmask, reset);
+		postsig_done(p, signum, ctx.sig_catchmask, ctx.sig_reset);
 	} else {
 		p->p_sisig = signum;
 		p->p_sitrapno = trapno;	/* XXX for core dump/debugger */
@@ -854,14 +851,14 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 		    signum != SIGKILL && (p->p_sigmask & mask) != 0) {
 			int s;
 
-			pr->ps_xsig = signum;
-
 			single_thread_set(p, SINGLE_SUSPEND, 0);
+			pr->ps_xsig = signum;
 
 			SCHED_LOCK(s);
 			proc_stop(p, 1);
 			SCHED_UNLOCK(s);
 
+			signum = pr->ps_xsig;
 			single_thread_clear(p, 0);
 
 			/*
@@ -869,13 +866,10 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 			 * didn't give us a signal, skip sending the signal.
 			 */
 			if ((pr->ps_flags & PS_TRACED) == 0 ||
-			    pr->ps_xsig == 0) {
-				KERNEL_UNLOCK();
+			    signum == 0)
 				return;
-			}
 
 			/* update signal info */
-			signum = pr->ps_xsig;
 			p->p_sisig = signum;
 			mask = sigmask(signum);
 		}
@@ -893,12 +887,16 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 		 */
 		if ((pr->ps_flags & PS_TRACED) == 0 &&
 		    (sigprop[signum] & SA_KILL) &&
-		    ((p->p_sigmask & mask) || (ps->ps_sigignore & mask)) &&
-		    pr->ps_pid != 1)
+		    ((p->p_sigmask & mask) || ctx.sig_ignore) &&
+		    pr->ps_pid != 1) {
+			KERNEL_LOCK();
 			sigexit(p, signum);
+			/* NOTREACHED */
+		}
+		KERNEL_LOCK();
 		ptsignal(p, signum, STHREAD);
+		KERNEL_UNLOCK();
 	}
-	KERNEL_UNLOCK();
 }
 
 /*
@@ -1008,6 +1006,8 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	if (pr->ps_flags & PS_TRACED) {
 		action = SIG_DFL;
 	} else {
+		sigset_t sigcatch, sigignore;
+
 		/*
 		 * If the signal is being ignored,
 		 * then we forget about it immediately.
@@ -1015,11 +1015,16 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 * and if it is set to SIG_IGN,
 		 * action will be SIG_DFL here.)
 		 */
-		if (pr->ps_sigacts->ps_sigignore & mask)
+		mtx_enter(&pr->ps_mtx);
+		sigignore = pr->ps_sigacts->ps_sigignore;
+		sigcatch = pr->ps_sigacts->ps_sigcatch;
+		mtx_leave(&pr->ps_mtx);
+
+		if (sigignore & mask)
 			return;
 		if (p->p_sigmask & mask) {
 			action = SIG_HOLD;
-		} else if (pr->ps_sigacts->ps_sigcatch & mask) {
+		} else if (sigcatch & mask) {
 			action = SIG_CATCH;
 		} else {
 			action = SIG_DFL;
@@ -1052,7 +1057,6 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		atomic_clearbits_int(siglist, CONTSIGMASK);
 		atomic_clearbits_int(&p->p_flag, P_CONTINUED);
 	}
-	atomic_setbits_int(siglist, mask);
 
 	/*
 	 * XXX delay processing of SA_STOP signals unless action == SIG_DFL?
@@ -1066,8 +1070,11 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 	 * Defer further processing for signals which are held,
 	 * except that stopped processes must be continued by SIGCONT.
 	 */
-	if (action == SIG_HOLD && ((prop & SA_CONT) == 0 || p->p_stat != SSTOP))
+	if (action == SIG_HOLD && ((prop & SA_CONT) == 0 ||
+	    p->p_stat != SSTOP)) {
+		atomic_setbits_int(siglist, mask);
 		return;
+	}
 
 	SCHED_LOCK(s);
 
@@ -1095,7 +1102,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		 * be awakened.
 		 */
 		if ((prop & SA_CONT) && action == SIG_DFL) {
-			atomic_clearbits_int(siglist, mask);
+			mask = 0;
 			goto out;
 		}
 		/*
@@ -1109,7 +1116,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 */
 			if (pr->ps_flags & PS_PPWAIT)
 				goto out;
-			atomic_clearbits_int(siglist, mask);
+			mask = 0;
 			pr->ps_xsig = signum;
 			proc_stop(p, 0);
 			goto out;
@@ -1166,7 +1173,7 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 			 * Already stopped, don't need to stop again.
 			 * (If we did the shell could get confused.)
 			 */
-			atomic_clearbits_int(siglist, mask);
+			mask = 0;
 			goto out;
 		}
 
@@ -1181,6 +1188,9 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 		goto out;
 
 	case SONPROC:
+		/* set siglist before issuing the ast */
+		atomic_setbits_int(siglist, mask);
+		mask = 0;
 		signotify(p);
 		/* FALLTHROUGH */
 	default:
@@ -1202,6 +1212,9 @@ runfast:
 run:
 	setrunnable(p);
 out:
+	/* finally adjust siglist */
+	if (mask)
+		atomic_setbits_int(siglist, mask);
 	SCHED_UNLOCK(s);
 	if (wakeparent)
 		wakeup(pr->ps_pptr);
@@ -1214,6 +1227,7 @@ setsigctx(struct proc *p, int signum, struct sigctx *sctx)
 	struct sigacts *ps = p->p_p->ps_sigacts;
 	sigset_t mask;
 
+	mtx_enter(&p->p_p->ps_mtx);
 	mask = sigmask(signum);
 	sctx->sig_action = ps->ps_sigact[signum];
 	sctx->sig_catchmask = ps->ps_catchmask[signum];
@@ -1222,6 +1236,8 @@ setsigctx(struct proc *p, int signum, struct sigctx *sctx)
 	sctx->sig_intr = (ps->ps_sigintr & mask) != 0;
 	sctx->sig_onstack = (ps->ps_sigonstack & mask) != 0;
 	sctx->sig_ignore = (ps->ps_sigignore & mask) != 0;
+	sctx->sig_catch = (ps->ps_sigcatch & mask) != 0;
+	mtx_leave(&p->p_p->ps_mtx);
 }
 
 /*
@@ -1246,12 +1262,14 @@ cursig(struct proc *p, struct sigctx *sctx)
 	struct process *pr = p->p_p;
 	int signum, mask, prop;
 	int dolock = (p->p_flag & P_SINTR) == 0;
+	sigset_t ps_siglist;
 	int s;
 
-	KERNEL_ASSERT_LOCKED();
 	KASSERT(p == curproc);
 
 	for (;;) {
+		ps_siglist = READ_ONCE(pr->ps_siglist);
+		membar_consumer();
 		mask = SIGPENDING(p);
 		if (pr->ps_flags & PS_PPWAIT)
 			mask &= ~STOPSIGMASK;
@@ -1261,8 +1279,12 @@ cursig(struct proc *p, struct sigctx *sctx)
 		mask = sigmask(signum);
 
 		/* take the signal! */
+		if (atomic_cas_uint(&pr->ps_siglist, ps_siglist,
+		    ps_siglist & ~mask) != ps_siglist) {
+			/* lost race taking the process signal, restart */
+			continue;
+		}
 		atomic_clearbits_int(&p->p_siglist, mask);
-		atomic_clearbits_int(&pr->ps_siglist, mask);
 		setsigctx(p, signum, sctx);
 
 		/*
@@ -1279,15 +1301,30 @@ cursig(struct proc *p, struct sigctx *sctx)
 		 */
 		if (((pr->ps_flags & (PS_TRACED | PS_PPWAIT)) == PS_TRACED) &&
 		    signum != SIGKILL) {
-			pr->ps_xsig = signum;
-
 			single_thread_set(p, SINGLE_SUSPEND, 0);
+			pr->ps_xsig = signum;
 
 			if (dolock)
 				SCHED_LOCK(s);
 			proc_stop(p, 1);
 			if (dolock)
 				SCHED_UNLOCK(s);
+
+			/*
+			 * re-take the signal before releasing
+			 * the other threads. Must check the continue
+			 * conditions below and only take the signal if
+			 * those are not true.
+			 */
+			signum = pr->ps_xsig;
+			mask = sigmask(signum);
+			setsigctx(p, signum, sctx);
+			if (!((pr->ps_flags & PS_TRACED) == 0 ||
+			    signum == 0 ||
+			    (p->p_sigmask & mask) != 0)) {
+				atomic_clearbits_int(&p->p_siglist, mask);
+				atomic_clearbits_int(&pr->ps_siglist, mask);
+			}
 
 			single_thread_clear(p, 0);
 
@@ -1296,22 +1333,16 @@ cursig(struct proc *p, struct sigctx *sctx)
 			 * didn't give us a signal, look for more signals.
 			 */
 			if ((pr->ps_flags & PS_TRACED) == 0 ||
-			    pr->ps_xsig == 0)
+			    signum == 0)
 				continue;
 
 			/*
 			 * If the new signal is being masked, look for other
 			 * signals.
 			 */
-			signum = pr->ps_xsig;
-			mask = sigmask(signum);
 			if ((p->p_sigmask & mask) != 0)
 				continue;
 
-			/* take the signal! */
-			atomic_clearbits_int(&p->p_siglist, mask);
-			atomic_clearbits_int(&pr->ps_siglist, mask);
-			setsigctx(p, signum, sctx);
 		}
 
 		prop = sigprop[signum];
@@ -1450,10 +1481,9 @@ postsig(struct proc *p, int signum, struct sigctx *sctx)
 	int mask, returnmask;
 	siginfo_t si;
 	union sigval sigval;
-	int s, code;
+	int code;
 
 	KASSERT(signum != 0);
-	KERNEL_ASSERT_LOCKED();
 
 	mask = sigmask(signum);
 	atomic_clearbits_int(&p->p_siglist, mask);
@@ -1481,6 +1511,7 @@ postsig(struct proc *p, int signum, struct sigctx *sctx)
 		 * Default action, where the default is to kill
 		 * the process.  (Other cases were ignored above.)
 		 */
+		KERNEL_LOCK();
 		sigexit(p, signum);
 		/* NOTREACHED */
 	} else {
@@ -1500,11 +1531,6 @@ postsig(struct proc *p, int signum, struct sigctx *sctx)
 		 * mask from before the sigpause is what we want
 		 * restored after the signal processing is completed.
 		 */
-#ifdef MULTIPROCESSOR
-		s = splsched();
-#else
-		s = splhigh();
-#endif
 		if (p->p_flag & P_SIGSUSPEND) {
 			atomic_clearbits_int(&p->p_flag, P_SIGSUSPEND);
 			returnmask = p->p_oldmask;
@@ -1520,11 +1546,11 @@ postsig(struct proc *p, int signum, struct sigctx *sctx)
 
 		if (sendsig(sctx->sig_action, signum, returnmask, &si,
 		    sctx->sig_info, sctx->sig_onstack)) {
+			KERNEL_LOCK();
 			sigexit(p, SIGILL);
 			/* NOTREACHED */
 		}
 		postsig_done(p, signum, sctx->sig_catchmask, sctx->sig_reset);
-		splx(s);
 	}
 }
 
@@ -1580,12 +1606,14 @@ int
 sigismasked(struct proc *p, int sig)
 {
 	struct process *pr = p->p_p;
+	int rv;
 
-	if ((pr->ps_sigacts->ps_sigignore & sigmask(sig)) ||
-	    (p->p_sigmask & sigmask(sig)))
-	    	return 1;
+	mtx_enter(&pr->ps_mtx);
+	rv = (pr->ps_sigacts->ps_sigignore & sigmask(sig)) ||
+	    (p->p_sigmask & sigmask(sig));
+	mtx_leave(&pr->ps_mtx);
 
-	return 0;
+	return !!rv;
 }
 
 struct coredump_iostate {
@@ -1958,10 +1986,8 @@ userret(struct proc *p)
 	}
 
 	if (SIGPENDING(p) != 0) {
-		KERNEL_LOCK();
 		while ((signum = cursig(p, &ctx)) != 0)
 			postsig(p, signum, &ctx);
-		KERNEL_UNLOCK();
 	}
 
 	/*
@@ -1974,10 +2000,8 @@ userret(struct proc *p)
 		atomic_clearbits_int(&p->p_flag, P_SIGSUSPEND);
 		p->p_sigmask = p->p_oldmask;
 
-		KERNEL_LOCK();
 		while ((signum = cursig(p, &ctx)) != 0)
 			postsig(p, signum, &ctx);
-		KERNEL_UNLOCK();
 	}
 
 	if (p->p_flag & P_SUSPSINGLE)

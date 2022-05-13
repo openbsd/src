@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.186 2022/04/30 14:44:04 visa Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.187 2022/05/13 15:32:00 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -219,9 +219,6 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 	KASSERT(ident != &nowake || ISSET(priority, PCATCH) || timo != 0);
 	KASSERT(mtx != NULL);
 
-	if (priority & PCATCH)
-		KERNEL_ASSERT_LOCKED();
-
 #ifdef DDB
 	if (cold == 2)
 		db_stack_dump();
@@ -361,18 +358,7 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 #endif
 
 	sls->sls_catch = prio & PCATCH;
-	sls->sls_locked = 0;
 	sls->sls_timeout = 0;
-
-	/*
-	 * The kernel has to be locked for signal processing.
-	 * This is done here and not in sleep_finish() because
-	 * KERNEL_LOCK() has to be taken before SCHED_LOCK().
-	 */
-	if (sls->sls_catch != 0) {
-		KERNEL_LOCK();
-		sls->sls_locked = 1;
-	}
 
 	SCHED_LOCK(sls->sls_s);
 
@@ -398,9 +384,6 @@ sleep_finish(struct sleep_state *sls, int do_sleep)
 	int error = 0, error1 = 0;
 
 	if (sls->sls_catch != 0) {
-		/* sleep_setup() has locked the kernel. */
-		KERNEL_ASSERT_LOCKED();
-
 		/*
 		 * We put ourselves on the sleep queue and start our
 		 * timeout before calling sleep_signal_check(), as we could
@@ -461,9 +444,6 @@ sleep_finish(struct sleep_state *sls, int do_sleep)
 	/* Check if thread was woken up because of a unwind or signal */
 	if (sls->sls_catch != 0)
 		error = sleep_signal_check();
-
-	if (sls->sls_locked)
-		KERNEL_UNLOCK();
 
 	/* Signal errors are higher priority than timeouts. */
 	if (error == 0 && error1 != 0)
