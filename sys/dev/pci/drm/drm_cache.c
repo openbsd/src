@@ -32,9 +32,7 @@
 #include <linux/export.h>
 #include <linux/highmem.h>
 #include <linux/mem_encrypt.h>
-#ifdef __linux__
 #include <xen/xen.h>
-#endif
 
 #include <drm/drm_cache.h>
 
