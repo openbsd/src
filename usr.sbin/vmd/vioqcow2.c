@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.18 2022/05/04 23:17:25 dv Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.19 2022/05/13 16:46:34 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -176,7 +176,7 @@ virtio_qcow2_get_base(int fd, char *path, size_t npath, const char *dpath)
 	/*
 	 * Relative paths should be interpreted relative to the disk image,
 	 * rather than relative to the directory vmd happens to be running in,
-	 * since this is the only userful interpretation.
+	 * since this is the only useful interpretation.
 	 */
 	if (path[0] == '/') {
 		if (realpath(path, expanded) == NULL ||
@@ -619,7 +619,7 @@ inc_refs(struct qcdisk *disk, off_t off, int newcluster)
  *
  * Parameters:
  *  imgfile_path: path to the image file to create
- *  imgsize     : size of the image file to create (in MB)
+ *  imgsize     : size of the image file to create (in bytes)
  *
  * Return:
  *  EEXIST: The requested image file already exists
