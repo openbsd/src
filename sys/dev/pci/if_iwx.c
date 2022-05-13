@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.147 2022/05/13 05:06:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.148 2022/05/13 08:48:40 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1173,6 +1173,7 @@ iwx_fw_info_free(struct iwx_fw_info *fw)
 int
 iwx_read_firmware(struct iwx_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwx_fw_info *fw = &sc->sc_fw;
 	struct iwx_tlv_ucode_header *uhdr;
 	struct iwx_ucode_tlv tlv;
@@ -1198,6 +1199,9 @@ iwx_read_firmware(struct iwx_softc *sc)
 		    DEVNAME(sc), sc->sc_fwname, err);
 		goto out;
 	}
+
+	if (ic->ic_if.if_flags & IFF_DEBUG)
+		printf("%s: using firmware %s\n", DEVNAME(sc), sc->sc_fwname);
 
 	sc->sc_capaflags = 0;
 	sc->sc_capa_n_scan_channels = IWX_DEFAULT_SCAN_CHANNELS;
