@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1object.c,v 1.6 2022/03/19 17:37:10 jsing Exp $ */
+/* $OpenBSD: asn1object.c,v 1.7 2022/05/13 16:39:58 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -274,6 +274,11 @@ do_asn1_object_test(struct asn1_object_test *aot)
 	p = aot->der;
 	if ((aobj = d2i_ASN1_OBJECT(NULL, &p, aot->der_len)) == NULL) {
 		fprintf(stderr, "FAIL: d2i_ASN1_OBJECT() failed\n");
+		goto failed;
+	}
+	if (p != aot->der + aot->der_len) {
+		fprintf(stderr, "FAIL: d2i_ASN1_OBJECT() p = %p, want %p\n",
+		    p, aot->der + aot->der_len);
 		goto failed;
 	}
 
