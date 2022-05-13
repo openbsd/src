@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.35 2022/05/12 12:29:28 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.36 2022/05/13 05:06:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -485,6 +485,7 @@ struct iwx_device_cfg {
 #define IWX_SO_A_GF_A_PNVM	"iwx-so-a0-gf-a0.pnvm"
 #define IWX_SO_A_GF4_A_FW	"iwx-so-a0-gf4-a0-67"
 #define IWX_SO_A_GF4_A_PNVM	"iwx-so-a0-gf4-a0.pnvm"
+#define IWX_SO_A_HR_B_FW	"iwx-so-a0-hr-b0-64"
 #define IWX_SO_A_JF_B_FW	"iwx-so-a0-jf-b0-64"
 
 const struct iwx_device_cfg iwx_9560_quz_a0_jf_b0_cfg = {
@@ -527,6 +528,10 @@ const struct iwx_device_cfg iwx_quz_a0_hr1_b0 = {
 
 const struct iwx_device_cfg iwx_ax201_cfg_quz_hr = {
 	.fw_name = IWX_QUZ_A_HR_B_FW,
+};
+
+const struct iwx_device_cfg iwx_cfg_so_a0_hr_b0 = {
+	.fw_name = IWX_SO_A_HR_B_FW,
 };
 
 const struct iwx_device_cfg iwx_cfg_quz_a0_hr_b0 = {

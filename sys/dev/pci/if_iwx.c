@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.146 2022/05/12 21:33:31 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.147 2022/05/13 05:06:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -10268,6 +10268,40 @@ static const struct iwx_dev_info iwx_dev_info_table[] = {
 		      IWX_CFG_RF_TYPE_JF1, IWX_CFG_RF_ID_JF1_DIV,
 		      IWX_CFG_NO_160, IWX_CFG_CORES_BT, IWX_CFG_NO_CDB,
 		      IWX_CFG_ANY, iwx_2ax_cfg_so_jf_b0), /* 9462 */
+
+	/* So with Hr */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SO, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_HR2, IWX_CFG_ANY,
+		      IWX_CFG_NO_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_cfg_so_a0_hr_b0), /* AX203 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SO, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_HR1, IWX_CFG_ANY,
+		      IWX_CFG_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_cfg_so_a0_hr_b0), /* ax101 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SO, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_HR2, IWX_CFG_ANY,
+		      IWX_CFG_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_cfg_so_a0_hr_b0), /* ax201 */
+
+	/* So-F with Hr */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SOF, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_HR2, IWX_CFG_ANY,
+		      IWX_CFG_NO_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_cfg_so_a0_hr_b0), /* AX203 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SOF, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_HR1, IWX_CFG_ANY,
+		      IWX_CFG_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_cfg_so_a0_hr_b0), /* AX101 */
+	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
+		      IWX_CFG_MAC_TYPE_SOF, IWX_CFG_ANY,
+		      IWX_CFG_RF_TYPE_HR2, IWX_CFG_ANY,
+		      IWX_CFG_160, IWX_CFG_ANY, IWX_CFG_NO_CDB, IWX_CFG_ANY,
+		      iwx_cfg_so_a0_hr_b0), /* AX201 */
 
 	/* So-F with GF */
 	_IWX_DEV_INFO(IWX_CFG_ANY, IWX_CFG_ANY,
