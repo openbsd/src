@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.22 2022/05/11 18:48:35 tb Exp $ */
+/*	$OpenBSD: ip.c,v 1.23 2022/05/13 06:18:21 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -189,17 +189,9 @@ ip_addr_parse(const ASN1_BIT_STRING *p,
 	/* Weird OpenSSL-ism to get unused bit count. */
 
 	if ((p->flags & ASN1_STRING_FLAG_BITS_LEFT))
-		unused = p->flags & ~ASN1_STRING_FLAG_BITS_LEFT;
+		unused = p->flags & 0x07;
 
-	if (unused < 0) {
-		warnx("%s: RFC 3779 section 2.2.3.8: "
-		    "unused bit count must be non-negative", fn);
-		return 0;
-	} else if (unused >= 8) {
-		warnx("%s: RFC 3779 section 2.2.3.8: "
-		    "unused bit count must mask an unsigned char", fn);
-		return 0;
-	} else if (p->length == 0 && unused != 0) {
+	if (p->length == 0 && unused != 0) {
 		warnx("%s: RFC 3779 section 2.2.3.8: "
 		    "unused bit count must be zero if length is zero", fn);
 		return 0;
