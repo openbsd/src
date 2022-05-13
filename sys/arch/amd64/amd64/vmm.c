@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.308 2022/05/04 02:24:26 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.309 2022/05/13 18:19:32 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -5732,14 +5732,16 @@ vmx_fault_page(struct vcpu *vcpu, paddr_t gpa)
 	int fault_type, ret;
 
 	fault_type = vmx_get_guest_faulttype();
-	if (fault_type == -1) {
+	switch (fault_type) {
+	case -1:
 		printf("%s: invalid fault type\n", __func__);
 		return (EINVAL);
-	}
-
-	if (fault_type == VM_FAULT_PROTECT) {
+	case VM_FAULT_PROTECT:
 		vcpu->vc_exit.vee.vee_fault_type = VEE_FAULT_PROTECT;
 		return (EAGAIN);
+	default:
+		vcpu->vc_exit.vee.vee_fault_type = VEE_FAULT_HANDLED;
+		break;
 	}
 
 	/* We may sleep during uvm_fault(9), so reload VMCS. */
