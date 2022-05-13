@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: reorder_kernel.sh,v 1.10 2021/09/13 11:49:21 robert Exp $
+# $OpenBSD: reorder_kernel.sh,v 1.11 2022/05/13 13:20:16 sthen Exp $
 #
 # Copyright (c) 2017 Robert Peichaer <rpe@openbsd.org>
 #
@@ -43,8 +43,9 @@ trap 'logger -t $PROGNAME "kernel relinking done"' EXIT
 if [[ -f $KERNEL_DIR.tgz ]]; then
 	rm -rf $KERNEL_DIR/$KERNEL/*
 	# The directory containing the logfile was just deleted, redirect
-	# stdout again to a new logfile.
+	# stdout/stderr again to a new logfile.
 	exec 1>$LOGFILE
+	exec 2>&1
 	tar -C $KERNEL_DIR -xzf $KERNEL_DIR.tgz $KERNEL
 	rm -f $KERNEL_DIR.tgz
 fi
