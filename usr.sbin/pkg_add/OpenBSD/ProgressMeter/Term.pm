@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.42 2021/01/30 11:19:01 espie Exp $
+# $OpenBSD: Term.pm,v 1.43 2022/05/13 15:39:14 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -110,8 +110,18 @@ sub init
 	return unless defined $ENV{TERM} || defined $ENV{TERMCAP};
 	my $termios = POSIX::Termios->new;
 	$termios->getattr(0);
-	my $terminal = Term::Cap->Tgetent({ OSPEED =>
-	    $termios->getospeed});
+	my $terminal;
+	eval {
+		$terminal = 
+		    Term::Cap->Tgetent({ OSPEED => $termios->getospeed});
+	};
+	if ($@) {
+		chomp $@;
+		$@ =~ s/\s+at\s+.*\s+line\s+.*//;
+		$self->{state}->errsay("No progress meter: #1", $@);
+		bless $self, "OpenBSD::ProgressMeter::Stub";
+		return;
+	}
 	$self->{glitch} = $terminal->{_xn};
 	$self->{cleareol} = $terminal->Tputs("ce", 1);
 	$self->{hpa} = $terminal->Tputs("ch", 1);
