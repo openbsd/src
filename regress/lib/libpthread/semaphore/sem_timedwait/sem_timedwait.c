@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem_timedwait.c,v 1.4 2019/12/20 23:39:01 cheloha Exp $	*/
+/*	$OpenBSD: sem_timedwait.c,v 1.5 2022/05/13 15:32:49 anton Exp $	*/
 /*
  * Martin Pieuchot <mpi@openbsd.org>, 2011. Public Domain.
  */
@@ -98,6 +98,8 @@ main(int argc, char **argv)
 	delay.tv_nsec = info.tick * 1000;	/* usecs -> nsecs */
 	timespecadd(&delay, &delay, &delay);	/* up to two ticks of delay */
 	timespecadd(&ts, &delay, &ts);
+	fprintf(stderr, "timeout: expected %lld.%09ld actual %lld.%09ld\n",
+	    ts2.tv_sec, ts2.tv_nsec, ts.tv_sec, ts.tv_nsec);
 	ASSERT(timespeccmp(&ts2, &ts, <=));
 
 	CHECKe(sem_destroy(&sem));
