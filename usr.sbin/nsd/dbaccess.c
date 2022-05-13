@@ -30,6 +30,8 @@
 #include "nsec3.h"
 #include "difffile.h"
 #include "nsd.h"
+#include "ixfr.h"
+#include "ixfrcreate.h"
 
 static time_t udb_time = 0;
 static unsigned long udb_rrsets = 0;
@@ -62,43 +64,11 @@ namedb_close_udb(struct namedb* db)
 }
 
 void
-apex_rrset_checks(namedb_type* db, rrset_type* rrset, domain_type* domain)
+namedb_free_ixfr(struct namedb* db)
 {
-	uint32_t soa_minimum;
-	unsigned i;
-	zone_type* zone = rrset->zone;
-	assert(domain == zone->apex);
-	(void)domain;
-	if (rrset_rrtype(rrset) == TYPE_SOA) {
-		zone->soa_rrset = rrset;
-
-		/* BUG #103 add another soa with a tweaked ttl */
-		if(zone->soa_nx_rrset == 0) {
-			zone->soa_nx_rrset = region_alloc(db->region,
-				sizeof(rrset_type));
-			zone->soa_nx_rrset->rr_count = 1;
-			zone->soa_nx_rrset->next = 0;
-			zone->soa_nx_rrset->zone = zone;
-			zone->soa_nx_rrset->rrs = region_alloc(db->region,
-				sizeof(rr_type));
-		}
-		memcpy(zone->soa_nx_rrset->rrs, rrset->rrs, sizeof(rr_type));
-
-		/* check the ttl and MINIMUM value and set accordingly */
-		memcpy(&soa_minimum, rdata_atom_data(rrset->rrs->rdatas[6]),
-				rdata_atom_size(rrset->rrs->rdatas[6]));
-		if (rrset->rrs->ttl > ntohl(soa_minimum)) {
-			zone->soa_nx_rrset->rrs[0].ttl = ntohl(soa_minimum);
-		}
-	} else if (rrset_rrtype(rrset) == TYPE_NS) {
-		zone->ns_rrset = rrset;
-	} else if (rrset_rrtype(rrset) == TYPE_RRSIG) {
-		for (i = 0; i < rrset->rr_count; ++i) {
-			if(rr_rrsig_type_covered(&rrset->rrs[i])==TYPE_DNSKEY){
-				zone->is_secure = 1;
-				break;
-			}
-		}
+	struct radnode* n;
+	for(n=radix_first(db->zonetree); n; n=radix_next(n)) {
+		zone_ixfr_free(((zone_type*)n->elem)->ixfr);
 	}
 }
 
@@ -269,6 +239,7 @@ namedb_zone_create(namedb_type* db, const dname_type* dname,
 	zone->dshashtree = NULL;
 #endif
 	zone->opts = zo;
+	zone->ixfr = NULL;
 	zone->filename = NULL;
 	zone->logstr = NULL;
 	zone->mtime.tv_sec = 0;
@@ -309,6 +280,7 @@ namedb_zone_delete(namedb_type* db, zone_type* zone)
 	hash_tree_delete(db->region, zone->wchashtree);
 	hash_tree_delete(db->region, zone->dshashtree);
 #endif
+	zone_ixfr_free(zone->ixfr);
 	if(zone->filename)
 		region_recycle(db->region, zone->filename,
 			strlen(zone->filename)+1);
@@ -522,6 +494,8 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 	int nonexist = 0;
 	unsigned int errors;
 	const char* fname;
+	struct ixfr_create* ixfrcr = NULL;
+	int ixfr_create_already_done = 0;
 	if(!nsd->db || !zone || !zone->opts || !zone->opts->pattern->zonefile)
 		return;
 	mtime.tv_sec = 0;
@@ -576,6 +550,15 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 			return;
 		}
 	}
+	if(ixfr_create_from_difference(zone, fname,
+		&ixfr_create_already_done)) {
+		ixfrcr = ixfr_create_start(zone, fname,
+			zone->opts->pattern->ixfr_size, 0);
+		if(!ixfrcr) {
+			/* leaves the ixfrcr at NULL, so it is not created */
+			log_msg(LOG_ERR, "out of memory starting ixfr create");
+		}
+	}
 
 	assert(parser);
 	/* wipe zone from memory */
@@ -603,6 +586,7 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 				zone->apex)), domain_dname(zone->apex)->name_size)) {
 				/* tell that zone contents has been lost */
 				if(taskudb) task_new_soainfo(taskudb, last_task, zone, 0);
+				ixfr_create_cancel(ixfrcr);
 				return;
 			}
 			/* read from udb */
@@ -647,6 +631,20 @@ namedb_read_zonefile(struct nsd* nsd, struct zone* zone, udb_base* taskudb,
 				region_recycle(nsd->db->region, zone->logstr,
 					strlen(zone->logstr)+1);
 			zone->logstr = NULL;
+		}
+		if(ixfr_create_already_done) {
+			ixfr_readup_exist(zone, nsd, fname);
+		} else if(ixfrcr) {
+			if(!ixfr_create_perform(ixfrcr, zone, 1, nsd, fname,
+				zone->opts->pattern->ixfr_number)) {
+				log_msg(LOG_ERR, "failed to create IXFR");
+			} else {
+				VERBOSITY(2, (LOG_INFO, "zone %s created IXFR %s.ixfr",
+					zone->opts->name, fname));
+			}
+			ixfr_create_free(ixfrcr);
+		} else if(zone_is_ixfr_enabled(zone)) {
+			ixfr_read_from_file(nsd, zone, fname);
 		}
 	}
 	if(taskudb) task_new_soainfo(taskudb, last_task, zone, 0);

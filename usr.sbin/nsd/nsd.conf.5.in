@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Feb 17, 2022" "NLnet Labs" "nsd 4.4.0"
+.TH "nsd.conf" "5" "May 13, 2022" "NLnet Labs" "nsd 4.5.0"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -651,6 +651,10 @@ The zone options such as
 .BR notify ,
 .BR notify\-retry ,
 .BR provide\-xfr ,
+.BR store\-ixfr ,
+.BR ixfr\-number ,
+.BR ixfr\-size ,
+.BR create\-ixfr ,
 .BR zonestats ,
 and
 .B outgoing\-interface 
@@ -809,6 +813,35 @@ The ip\-address is a plain IP address (IPv4 or IPv6).
 A port number can be added using a suffix of @number, for example 
 1.2.3.4@5300.
 .RE
+.TP
+.B store\-ixfr:\fR <yes or no>
+If enabled, IXFR contents are stored and provided to the set of clients
+specified in the provide\-xfr statement. Default is no. IXFR contents is
+a smaller set of changes that differ between zone versions, where an AXFR
+contains the full contents of the zone.
+.TP
+.B ixfr\-number:\fR <number>
+The number of IXFR versions to store for this zone, at most. Default is 5.
+.TP
+.B ixfr\-size:\fR <number>
+The max storage to use for IXFR versions for this zone, in bytes.
+Default is 1048576. A value of 0 means unlimited, if you want to turn off
+IXFR storage, use the store\-ixfr option.
+NSD does not elide IXFR contents from versions that add and remove the same
+data, that merges version changes together to shorten the data, but leaves
+the data and change sequence as it was transmitted by another server.
+.TP
+.B create\-ixfr:\fR <yes or no>
+If enabled, IXFR data is created when a zonefile is read by the server.
+Also set store\-ixfr enabled, so that the contents are stored, when you use
+this. Default is off. If the server is not running, the nsd\-checkzone \-i
+option can be used to create an IXFR file. When an IXFR is created, the server
+spools a version of the zone to a temporary file, at the location where the
+ixfr files are stored. This creates IXFR data when the zone is read from file,
+but not when a zone is read by AXFR transfer from a server, because then
+the topmost server that originates the data is the one place where ixfr
+differences are computed and those differences are then transmitted verbatim
+to all the other servers.
 .TP
 .B max\-refresh\-time:\fR <seconds>
 Limit refresh time for secondary zones.  This is the timer which checks to see

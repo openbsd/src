@@ -21,6 +21,7 @@ struct nsd_options;
 struct udb_base;
 struct udb_ptr;
 struct nsd;
+struct zone_ixfr;
 
 typedef union rdata_atom rdata_atom_type;
 typedef struct rrset rrset_type;
@@ -137,6 +138,7 @@ struct zone
 	rbtree_type* dshashtree; /* tree, ds-parent-hash domains */
 #endif
 	struct zone_options* opts;
+	struct zone_ixfr* ixfr;
 	char*        filename; /* set if read from file, which file */
 	char*        logstr; /* set for zone xfer, the log string */
 	struct timespec mtime; /* time of last modification */
@@ -381,6 +383,8 @@ int namedb_lookup (struct namedb* db,
 struct namedb *namedb_open(const char *filename, struct nsd_options* opt);
 void namedb_close_udb(struct namedb* db);
 void namedb_close(struct namedb* db);
+/* free ixfr data stored for zones */
+void namedb_free_ixfr(struct namedb* db);
 void namedb_check_zonefiles(struct nsd* nsd, struct nsd_options* opt,
 	struct udb_base* taskudb, struct udb_ptr* last_task);
 void namedb_check_zonefile(struct nsd* nsd, struct udb_base* taskudb,
@@ -388,8 +392,6 @@ void namedb_check_zonefile(struct nsd* nsd, struct udb_base* taskudb,
 /** zone one zonefile into memory and revert on parse error, write to udb */
 void namedb_read_zonefile(struct nsd* nsd, struct zone* zone,
 	struct udb_base* taskudb, struct udb_ptr* last_task);
-void apex_rrset_checks(struct namedb* db, rrset_type* rrset,
-	domain_type* domain);
 zone_type* namedb_zone_create(namedb_type* db, const dname_type* dname,
         struct zone_options* zopt);
 void namedb_zone_delete(namedb_type* db, zone_type* zone);

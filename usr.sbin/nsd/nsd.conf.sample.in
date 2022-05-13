@@ -373,6 +373,14 @@ remote-control:
 	#provide-xfr: 192.0.2.0/24 my_tsig_key_name
 	# set the number of retries for notify.
 	#notify-retry: 5
+	# if yes, store and provide IXFRs.
+	#store-ixfr: no
+	# number of IXFR versions to store, at most.
+	#ixfr-number: 5
+	# size in bytes of max storage to use for IXFR versions.
+	#ixfr-size: 1048576
+	# if yes, create IXFR when a zonefile is read by the server.
+	#create-ixfr: no
 
 	# uncomment to provide AXFR to all the world
 	# provide-xfr: 0.0.0.0/0 NOKEY

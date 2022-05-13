@@ -147,5 +147,7 @@ int zonec_parse_string(region_type* region, domain_table_type* domains,
 	zone_type* zone, char* str, domain_type** parsed, int* num_rrs);
 /** check SSHFP type for failures and emit warnings */
 void check_sshfp(void);
+void apex_rrset_checks(struct namedb* db, rrset_type* rrset,
+	domain_type* domain);
 
 #endif /* _ZONEC_H_ */

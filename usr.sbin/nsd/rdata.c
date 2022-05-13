@@ -1006,6 +1006,7 @@ rdata_wireformat_to_rdata_atoms(region_type *region,
 			}
 			break;
 		case RDATA_WF_IPSECGATEWAY:
+			assert(i>1); /* we are past the gateway type */
 			switch(rdata_atom_data(temp_rdatas[1])[0]) /* gateway type */ {
 			default:
 			case IPSECKEY_NOGATEWAY:

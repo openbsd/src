@@ -284,6 +284,7 @@ stats_add(struct nsdst* total, struct nsdst* s)
 	total->ednserr += s->ednserr;
 	total->raxfr += s->raxfr;
 	total->nona += s->nona;
+	total->rixfr += s->rixfr;
 
 	total->db_disk = s->db_disk;
 	total->db_mem = s->db_mem;
@@ -317,6 +318,7 @@ stats_subtract(struct nsdst* total, struct nsdst* s)
 	total->ednserr -= s->ednserr;
 	total->raxfr -= s->raxfr;
 	total->nona -= s->nona;
+	total->rixfr -= s->rixfr;
 }
 
 #define FINAL_STATS_TIMEOUT 10 /* seconds */

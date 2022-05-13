@@ -1280,12 +1280,15 @@ static int
 udb_alloc_exp_needed(size_t sz)
 {
 	uint64_t asz = sz + sizeof(udb_chunk_d) + 1;
+	int exp;
 	if(asz > UDB_ALLOC_CHUNK_SIZE) {
 		return UDB_EXP_XL;
 	} else if(asz <= UDB_ALLOC_CHUNK_MINSIZE) {
 		return UDB_ALLOC_CHUNK_MINEXP;
 	}
-	return udb_exp_size(asz);
+	exp = udb_exp_size(asz);
+	assert(exp <= UDB_ALLOC_CHUNKS_MAX);
+	return exp;
 }
 
 udb_void udb_alloc_space(udb_alloc* alloc, size_t sz)

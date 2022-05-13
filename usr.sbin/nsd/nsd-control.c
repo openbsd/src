@@ -66,6 +66,7 @@
 #include "util.h"
 #include "tsig.h"
 #include "options.h"
+#include "zonec.h"
 
 static void usage(void) ATTR_NORETURN;
 static void ssl_err(const char* s) ATTR_NORETURN;
@@ -73,6 +74,14 @@ static void ssl_path_err(const char* s, const char *path) ATTR_NORETURN;
 
 /** timeout to wait for connection over stream, in msec */
 #define NSD_CONTROL_CONNECT_TIMEOUT 5000
+
+int zonec_parse_string(region_type* ATTR_UNUSED(region),
+	domain_table_type* ATTR_UNUSED(domains), zone_type* ATTR_UNUSED(zone),
+	char* ATTR_UNUSED(str), domain_type** ATTR_UNUSED(parsed),
+	int* ATTR_UNUSED(num_rrs))
+{
+	return 0;
+}
 
 /** Give nsd-control usage, and exit (1). */
 static void

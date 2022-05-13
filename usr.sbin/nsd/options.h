@@ -258,6 +258,14 @@ struct pattern_options {
 	uint8_t min_expire_time_expr;
 	uint64_t size_limit_xfr;
 	uint8_t multi_master_check;
+	uint8_t store_ixfr;
+	uint8_t store_ixfr_is_default;
+	uint64_t ixfr_size;
+	uint8_t ixfr_size_is_default;
+	uint32_t ixfr_number;
+	uint8_t ixfr_number_is_default;
+	uint8_t create_ixfr;
+	uint8_t create_ixfr_is_default;
 } ATTR_PACKED;
 
 #define PATTERN_IMPLICIT_MARKER "_implicit_"

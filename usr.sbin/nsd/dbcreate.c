@@ -23,6 +23,7 @@
 #include "udbzone.h"
 #include "options.h"
 #include "nsd.h"
+#include "ixfr.h"
 
 /* pathname directory separator character */
 #define PATHSEP '/'
@@ -138,7 +139,7 @@ write_zone(udb_base* udb, udb_ptr* z, zone_type* zone)
 		if(++c % ZONEC_PCT_COUNT == 0 && time(NULL) > t + ZONEC_PCT_TIME) {
 			t = time(NULL);
 			VERBOSITY(1, (LOG_INFO, "write %s %d %%",
-				zone->opts->name, (int)(c*((unsigned long)100)/n)));
+				zone->opts->name, (n==0)?0:(int)(c*((unsigned long)100)/n)));
 		}
 	}
 	return 1;
@@ -409,6 +410,8 @@ namedb_write_zonefile(struct nsd* nsd, struct zone_options* zopt)
 					strlen(zone->logstr)+1);
 			zone->logstr = NULL;
 		}
+		if(zone_is_ixfr_enabled(zone) && zone->ixfr)
+			ixfr_write_to_file(zone, zfile);
 	}
 }
 

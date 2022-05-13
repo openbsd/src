@@ -23,6 +23,8 @@
 #include "nsec3.h"
 #include "nsd.h"
 #include "rrl.h"
+#include "ixfr.h"
+#include "zonec.h"
 
 static int
 write_64(FILE *out, uint64_t val)
@@ -975,7 +977,7 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 	struct nsd_options* opt, uint32_t seq_nr, uint32_t seq_total,
 	int* is_axfr, int* delete_mode, int* rr_count,
 	udb_ptr* udbz, struct zone** zone_res, const char* patname, int* bytes,
-	int* softfail)
+	int* softfail, struct ixfr_store* ixfr_store)
 {
 	uint32_t msglen, checklen, pkttype;
 	int qcount, ancount, counter;
@@ -1067,6 +1069,7 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 			dname_to_string(dname_zone, 0)));
 	/* first RR: check if SOA and correct zone & serialno */
 	if(*rr_count == 0) {
+		size_t ttlpos;
 		DEBUG(DEBUG_XFRD,2, (LOG_INFO, "diff: %s parse first RR",
 			dname_to_string(dname_zone, 0)));
 		dname = dname_make_from_packet(region, packet, 1, 1);
@@ -1094,6 +1097,7 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 			region_destroy(region);
 			return 0;
 		}
+		ttlpos = buffer_position(packet);
 		buffer_skip(packet, sizeof(uint32_t)); /* ttl */
 		if(!buffer_available(packet, buffer_read_u16(packet)) ||
 			!packet_skip_dname(packet) /* skip prim_ns */ ||
@@ -1114,6 +1118,8 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 		*rr_count = 1;
 		*is_axfr = 0;
 		*delete_mode = 0;
+		if(ixfr_store)
+			ixfr_store_add_newsoa(ixfr_store, packet, ttlpos);
 		DEBUG(DEBUG_XFRD,2, (LOG_INFO, "diff: %s start count %d, ax %d, delmode %d",
 			dname_to_string(dname_zone, 0), *rr_count, *is_axfr, *delete_mode));
 	}
@@ -1159,6 +1165,10 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 			/* add everything else (incl end SOA) */
 			*delete_mode = 0;
 			*is_axfr = 1;
+			if(ixfr_store) {
+				ixfr_store_cancel(ixfr_store);
+				ixfr_store_delixfrs(zone_db);
+			}
 			DEBUG(DEBUG_XFRD,2, (LOG_INFO, "diff: %s sawAXFR count %d, ax %d, delmode %d",
 				dname_to_string(dname_zone, 0), *rr_count, *is_axfr, *delete_mode));
 		}
@@ -1186,6 +1196,8 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 					udb_zone_clear(db->udb, udbz);
 				*delete_mode = 0;
 				*is_axfr = 1;
+				if(ixfr_store)
+					ixfr_store_cancel(ixfr_store);
 			}
 			/* must have stuff in memory for a successful IXFR,
 			 * the serial number of the SOA has been checked
@@ -1199,6 +1211,9 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 				return 2;
 			}
 			buffer_set_position(packet, bufpos);
+			if(!*is_axfr && ixfr_store)
+				ixfr_store_add_oldsoa(ixfr_store, ttl, packet,
+					rrlen);
 		}
 		if(type == TYPE_SOA && !*is_axfr) {
 			/* switch from delete-part to add-part and back again,
@@ -1223,6 +1238,9 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 				&& seq_nr == seq_total-1) {
 				continue; /* do not delete final SOA RR for IXFR */
 			}
+			if(ixfr_store)
+				ixfr_store_delrr(ixfr_store, dname, type,
+					klass, ttl, packet, rrlen, region);
 			if(!delete_RR(db, dname, type, klass, packet,
 				rrlen, zone_db, region, udbz, softfail)) {
 				region_destroy(region);
@@ -1232,6 +1250,9 @@ apply_ixfr(namedb_type* db, FILE *in, const char* zone, uint32_t serialno,
 		else
 		{
 			/* add this rr */
+			if(ixfr_store)
+				ixfr_store_addrr(ixfr_store, dname, type,
+					klass, ttl, packet, rrlen, region);
 			if(!add_RR(db, dname, type, klass, ttl, packet,
 				rrlen, zone_db, udbz, softfail)) {
 				region_destroy(region);
@@ -1338,8 +1359,12 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 		int is_axfr=0, delete_mode=0, rr_count=0, softfail=0;
 		const dname_type* apex = domain_dname_const(zonedb->apex);
 		udb_ptr z;
+		struct ixfr_store* ixfr_store = NULL, ixfr_store_mem;
 
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "processing xfr: %s", zone_buf));
+		if(zone_is_ixfr_enabled(zonedb))
+			ixfr_store = ixfr_store_start(zonedb, &ixfr_store_mem,
+				old_serial, new_serial);
 		memset(&z, 0, sizeof(z)); /* if udb==NULL, have &z defined */
 		if(nsd->db->udb) {
 			if(udb_base_get_userflags(nsd->db->udb) != 0) {
@@ -1356,6 +1381,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 					/* out of disk space perhaps */
 					log_msg(LOG_ERR, "could not udb_create_zone "
 						"%s, disk space full?", zone_buf);
+					ixfr_store_free(ixfr_store);
 					return 0;
 				}
 			}
@@ -1369,7 +1395,7 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 			ret = apply_ixfr(nsd->db, in, zone_buf, new_serial, opt,
 				i, num_parts, &is_axfr, &delete_mode,
 				&rr_count, (nsd->db->udb?&z:NULL), &zonedb,
-				patname_buf, &num_bytes, &softfail);
+				patname_buf, &num_bytes, &softfail, ixfr_store);
 			assert(zonedb);
 			if(ret == 0) {
 				log_msg(LOG_ERR, "bad ixfr packet part %d in diff file for %s", (int)i, zone_buf);
@@ -1423,6 +1449,8 @@ apply_ixfr_for_zone(nsd_type* nsd, zone_type* zonedb, FILE* in,
 			if(taskudb)
 				task_new_soainfo(taskudb, last_task, zonedb, 0);
 		}
+		if(ixfr_store)
+			ixfr_store_finish(ixfr_store, nsd, log_buf);
 
 		if(1 <= verbosity) {
 			double elapsed = (double)(time_end_0 - time_start_0)+

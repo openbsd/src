@@ -1,5 +1,41 @@
+6 May 2022: Wouter
+	- Merge PR #209: IXFR out
+	  This adds IXFR out functionality to NSD. NSD can copy IXFRs from
+	  upstream to downstream clients, or create IXFRs from zonefiles.
+	  The options store-ixfr: yes and create-ixfr: yes can be used to
+	  turn this on. Default is turned off. The options ixfr-number and
+	  ixfr-size can be used to tune the number of IXFR transfers and
+	  total data size stored. This is configured per zone, the IXFRs
+	  are served to the hosts that are allowed to perform zone transfers.
+	  And if TSIG is configured, signed with the same key. The content
+	  is stored to file if a zonefile is configured for the zone, in
+	  the zonefile.ixfr and zonefile.ixfr.2, .. files. They contain
+	  readable text format. The number of IXFRs is num.rixfr in
+	  statistics output, also per zone if per zone statistics are enabled.
+	  If offline, nsd-checkzone -i can create ixfr files.
+	  NSD already supports requesting IXFRs, this addition allows NSD
+	  to serve IXFR transfers to clients.
+	  NSD stops responding with NOTIMPL to IXFR requests, also for zones
+	  that do not have IXFR enabled. The clients gets a full zone reply
+	  or a status reply if the serial is up to date.
+	- set version to 4.5.0 for feature change.
+	- Tag for 4.5.0rc1 release. It became the 4.5.0 release on 13 May 2022.
+
+14 April 2022: Wouter
+	- Update cirrus script FreeBSD version.
+
+25 March 2022: Wouter
+	- Fix spelling error in comment in svcbparam_lookup_key.
+
+2 March 2022: Wouter
+	- Fix code analyzer zero divide warning.
+	- Fix code analyzer large value with assertion.
+	- Fix another code analyzer zero divide warning.
+	- Fix code analyzer warning about uninitialized temp storage in loop.
+
 10 February 2022: Wouter
-	- Tag for 4.4.0rc1 release.
+	- Tag for 4.4.0rc1 release. This became 4.4.0 release on 17 Feb 2022,
+	  the code repository continues with version 4.4.1.
 
 9 February 2022: Wouter
 	- Fix unit tests for nds-control-setup exit code and the

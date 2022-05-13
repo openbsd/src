@@ -17,6 +17,7 @@
 #include "options.h"
 #include "query.h"
 #include "tsig.h"
+#include "ixfr.h"
 #include "difffile.h"
 #include "rrl.h"
 #include "bitset.h"
@@ -882,6 +883,14 @@ pattern_options_create(region_type* region)
 	p->rrl_whitelist = 0;
 #endif
 	p->multi_master_check = 0;
+	p->store_ixfr = 0;
+	p->store_ixfr_is_default = 1;
+	p->ixfr_size = IXFR_SIZE_DEFAULT;
+	p->ixfr_size_is_default = 1;
+	p->ixfr_number = IXFR_NUMBER_DEFAULT;
+	p->ixfr_number_is_default = 1;
+	p->create_ixfr = 0;
+	p->create_ixfr_is_default = 1;
 	return p;
 }
 
@@ -1026,6 +1035,14 @@ copy_pat_fixed(region_type* region, struct pattern_options* orig,
 	orig->rrl_whitelist = p->rrl_whitelist;
 #endif
 	orig->multi_master_check = p->multi_master_check;
+	orig->store_ixfr = p->store_ixfr;
+	orig->store_ixfr_is_default = p->store_ixfr_is_default;
+	orig->ixfr_size = p->ixfr_size;
+	orig->ixfr_size_is_default = p->ixfr_size_is_default;
+	orig->ixfr_number = p->ixfr_number;
+	orig->ixfr_number_is_default = p->ixfr_number_is_default;
+	orig->create_ixfr = p->create_ixfr;
+	orig->create_ixfr_is_default = p->create_ixfr_is_default;
 }
 
 void
@@ -1119,6 +1136,14 @@ pattern_options_equal(struct pattern_options* p, struct pattern_options* q)
 #endif
 	if(!booleq(p->multi_master_check,q->multi_master_check)) return 0;
 	if(p->size_limit_xfr != q->size_limit_xfr) return 0;
+	if(!booleq(p->store_ixfr,q->store_ixfr)) return 0;
+	if(!booleq(p->store_ixfr_is_default,q->store_ixfr_is_default)) return 0;
+	if(p->ixfr_size != q->ixfr_size) return 0;
+	if(!booleq(p->ixfr_size_is_default,q->ixfr_size_is_default)) return 0;
+	if(p->ixfr_number != q->ixfr_number) return 0;
+	if(!booleq(p->ixfr_number_is_default,q->ixfr_number_is_default)) return 0;
+	if(!booleq(p->create_ixfr,q->create_ixfr)) return 0;
+	if(!booleq(p->create_ixfr_is_default,q->create_ixfr_is_default)) return 0;
 	return 1;
 }
 
@@ -1285,6 +1310,14 @@ pattern_options_marshal(struct buffer* b, struct pattern_options* p)
 	marshal_u32(b, p->min_expire_time);
 	marshal_u8(b, p->min_expire_time_expr);
 	marshal_u8(b, p->multi_master_check);
+	marshal_u8(b, p->store_ixfr);
+	marshal_u8(b, p->store_ixfr_is_default);
+	marshal_u64(b, p->ixfr_size);
+	marshal_u8(b, p->ixfr_size_is_default);
+	marshal_u32(b, p->ixfr_number);
+	marshal_u8(b, p->ixfr_number_is_default);
+	marshal_u8(b, p->create_ixfr);
+	marshal_u8(b, p->create_ixfr_is_default);
 }
 
 struct pattern_options*
@@ -1320,6 +1353,14 @@ pattern_options_unmarshal(region_type* r, struct buffer* b)
 	p->min_expire_time = unmarshal_u32(b);
 	p->min_expire_time_expr = unmarshal_u8(b);
 	p->multi_master_check = unmarshal_u8(b);
+	p->store_ixfr = unmarshal_u8(b);
+	p->store_ixfr_is_default = unmarshal_u8(b);
+	p->ixfr_size = unmarshal_u64(b);
+	p->ixfr_size_is_default = unmarshal_u8(b);
+	p->ixfr_number = unmarshal_u32(b);
+	p->ixfr_number_is_default = unmarshal_u8(b);
+	p->create_ixfr = unmarshal_u8(b);
+	p->create_ixfr_is_default = unmarshal_u8(b);
 	return p;
 }
 
@@ -2116,6 +2157,22 @@ config_apply_pattern(struct pattern_options *dest, const char* name)
 	if(!expire_time_is_default(pat->min_expire_time_expr)) {
 		dest->min_expire_time = pat->min_expire_time;
 		dest->min_expire_time_expr = pat->min_expire_time_expr;
+	}
+	if(!pat->store_ixfr_is_default) {
+		dest->store_ixfr = pat->store_ixfr;
+		dest->store_ixfr_is_default = 0;
+	}
+	if(!pat->ixfr_size_is_default) {
+		dest->ixfr_size = pat->ixfr_size;
+		dest->ixfr_size_is_default = 0;
+	}
+	if(!pat->ixfr_number_is_default) {
+		dest->ixfr_number = pat->ixfr_number;
+		dest->ixfr_number_is_default = 0;
+	}
+	if(!pat->create_ixfr_is_default) {
+		dest->create_ixfr = pat->create_ixfr;
+		dest->create_ixfr_is_default = 0;
 	}
 	dest->size_limit_xfr = pat->size_limit_xfr;
 #ifdef RATELIMIT

@@ -776,7 +776,7 @@ svcbparam_lookup_key(const char *key, size_t key_len)
 		if (!strncmp(key, "mandatory", sizeof("mandatory")-1))
 			return SVCB_KEY_MANDATORY;
 		if (!strncmp(key, "echconfig", sizeof("echconfig")-1))
-			return SVCB_KEY_ECH; /* allow "echconfig as well as "ech" */
+			return SVCB_KEY_ECH; /* allow "echconfig" as well as "ech" */
 		break;
 
 	case sizeof("alpn")-1:
@@ -2367,5 +2367,46 @@ void check_sshfp(void)
 			"wrong length, %d bytes, should be 32",
 			domain_to_string(parser->current_rr.owner),
 			(int)size);
+	}
+}
+
+void
+apex_rrset_checks(namedb_type* db, rrset_type* rrset, domain_type* domain)
+{
+	uint32_t soa_minimum;
+	unsigned i;
+	zone_type* zone = rrset->zone;
+	assert(domain == zone->apex);
+	(void)domain;
+	if (rrset_rrtype(rrset) == TYPE_SOA) {
+		zone->soa_rrset = rrset;
+
+		/* BUG #103 add another soa with a tweaked ttl */
+		if(zone->soa_nx_rrset == 0) {
+			zone->soa_nx_rrset = region_alloc(db->region,
+				sizeof(rrset_type));
+			zone->soa_nx_rrset->rr_count = 1;
+			zone->soa_nx_rrset->next = 0;
+			zone->soa_nx_rrset->zone = zone;
+			zone->soa_nx_rrset->rrs = region_alloc(db->region,
+				sizeof(rr_type));
+		}
+		memcpy(zone->soa_nx_rrset->rrs, rrset->rrs, sizeof(rr_type));
+
+		/* check the ttl and MINIMUM value and set accordingly */
+		memcpy(&soa_minimum, rdata_atom_data(rrset->rrs->rdatas[6]),
+				rdata_atom_size(rrset->rrs->rdatas[6]));
+		if (rrset->rrs->ttl > ntohl(soa_minimum)) {
+			zone->soa_nx_rrset->rrs[0].ttl = ntohl(soa_minimum);
+		}
+	} else if (rrset_rrtype(rrset) == TYPE_NS) {
+		zone->ns_rrset = rrset;
+	} else if (rrset_rrtype(rrset) == TYPE_RRSIG) {
+		for (i = 0; i < rrset->rr_count; ++i) {
+			if(rr_rrsig_type_covered(&rrset->rrs[i])==TYPE_DNSKEY){
+				zone->is_secure = 1;
+				break;
+			}
+		}
 	}
 }

@@ -294,7 +294,7 @@ struct	nsd
 		stc_type rcode[17], opcode[6]; /* Rcodes & opcodes */
 		/* Dropped, truncated, queries for nonconfigured zone, tx errors */
 		stc_type dropped, truncated, wrongzone, txerr, rxerr;
-		stc_type edns, ednserr, raxfr, nona;
+		stc_type edns, ednserr, raxfr, nona, rixfr;
 		uint64_t db_disk, db_mem;
 	} st;
 	/* per zone stats, each an array per zone-stat-idx, stats per zone is

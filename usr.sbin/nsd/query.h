@@ -17,11 +17,13 @@
 #include "nsd.h"
 #include "packet.h"
 #include "tsig.h"
+struct ixfr_data;
 
 enum query_state {
 	QUERY_PROCESSED,
 	QUERY_DISCARDED,
-	QUERY_IN_AXFR
+	QUERY_IN_AXFR,
+	QUERY_IN_IXFR
 };
 typedef enum query_state query_state_type;
 
@@ -116,6 +118,24 @@ struct query {
 	domain_type *axfr_current_domain;
 	rrset_type  *axfr_current_rrset;
 	uint16_t     axfr_current_rr;
+
+	/* Used for IXFR processing,
+	 * indicates if the zone transfer is done, connection can close. */
+	int ixfr_is_done;
+	/* the ixfr data that is processed */
+	struct ixfr_data* ixfr_data;
+	/* the ixfr data that is the last segment */
+	struct ixfr_data* ixfr_end_data;
+	/* ixfr count of newsoa bytes added, 0 none, len means done */
+	size_t ixfr_count_newsoa;
+	/* ixfr count of oldsoa bytes added, 0 none, len means done */
+	size_t ixfr_count_oldsoa;
+	/* ixfr count of del bytes added, 0 none, len means done */
+	size_t ixfr_count_del;
+	/* ixfr count of add bytes added, 0 none, len means done */
+	size_t ixfr_count_add;
+	/* position for the end of SOA record, for UDP truncation */
+	size_t ixfr_pos_of_newsoa;
 
 #ifdef RATELIMIT
 	/* if we encountered a wildcard, its domain */

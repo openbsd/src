@@ -288,6 +288,10 @@ min-refresh-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MIN_REFRESH_TIM
 max-retry-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MAX_RETRY_TIME;}
 min-retry-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MIN_RETRY_TIME;}
 min-expire-time{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MIN_EXPIRE_TIME;}
+store-ixfr{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_STORE_IXFR;}
+ixfr-size{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IXFR_SIZE;}
+ixfr-number{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_IXFR_NUMBER;}
+create-ixfr{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_CREATE_IXFR;}
 multi-master-check{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_MULTI_MASTER_CHECK;}
 tls-service-key{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_KEY;}
 tls-service-ocsp{COLON}	{ LEXOUT(("v(%s) ", yytext)); return VAR_TLS_SERVICE_OCSP;}

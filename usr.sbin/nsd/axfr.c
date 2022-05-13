@@ -13,12 +13,13 @@
 #include "dns.h"
 #include "packet.h"
 #include "options.h"
+#include "ixfr.h"
 
 /* draft-ietf-dnsop-rfc2845bis-06, section 5.3.1 says to sign every packet */
 #define AXFR_TSIG_SIGN_EVERY_NTH	0	/* tsig sign every N packets. */
 
 query_state_type
-query_axfr(struct nsd *nsd, struct query *query)
+query_axfr(struct nsd *nsd, struct query *query, int wstats)
 {
 	domain_type *closest_match;
 	domain_type *closest_encloser;
@@ -45,7 +46,9 @@ query_axfr(struct nsd *nsd, struct query *query)
 	if (query->axfr_zone == NULL) {
 		domain_type* qdomain;
 		/* Start AXFR.  */
-		STATUP(nsd, raxfr);
+		if(wstats) {
+			STATUP(nsd, raxfr);
+		}
 		exact = namedb_lookup(nsd->db,
 				      query->qname,
 				      &closest_match,
@@ -63,7 +66,9 @@ query_axfr(struct nsd *nsd, struct query *query)
 			RCODE_SET(query->packet, RCODE_NOTAUTH);
 			return QUERY_PROCESSED;
 		}
-		ZTATUP(nsd, query->axfr_zone, raxfr);
+		if(wstats) {
+			ZTATUP(nsd, query->axfr_zone, raxfr);
+		}
 
 		query->axfr_current_domain = qdomain;
 		query->axfr_current_rrset = NULL;
@@ -163,64 +168,78 @@ return_answer:
 	return QUERY_IN_AXFR;
 }
 
+/* See if the query can be admitted. */
+static int axfr_ixfr_can_admit_query(struct nsd* nsd, struct query* q)
+{
+	struct acl_options *acl = NULL;
+	struct zone_options* zone_opt;
+	zone_opt = zone_options_find(nsd->options, q->qname);
+	if(!zone_opt ||
+	   acl_check_incoming(zone_opt->pattern->provide_xfr, q, &acl)==-1)
+	{
+		if (verbosity >= 2) {
+			char a[128];
+			addr2str(&q->addr, a, sizeof(a));
+			VERBOSITY(2, (LOG_INFO, "%s for %s from %s refused, %s",
+				(q->qtype==TYPE_AXFR?"axfr":"ixfr"),
+				dname_to_string(q->qname, NULL), a, acl?"blocked":"no acl matches"));
+		}
+		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "%s refused, %s",
+			(q->qtype==TYPE_AXFR?"axfr":"ixfr"),
+			acl?"blocked":"no acl matches"));
+		if (!zone_opt) {
+			RCODE_SET(q->packet, RCODE_NOTAUTH);
+		} else {
+			RCODE_SET(q->packet, RCODE_REFUSE);
+			/* RFC8914 - Extended DNS Errors
+			 * 4.19.  Extended DNS Error Code 18 - Prohibited */
+			q->edns.ede = EDE_PROHIBITED;
+		}
+		return 0;
+	}
+	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "%s admitted acl %s %s",
+		(q->qtype==TYPE_AXFR?"axfr":"ixfr"),
+		acl->ip_address_spec, acl->key_name?acl->key_name:"NOKEY"));
+	if (verbosity >= 1) {
+		char a[128];
+		addr2str(&q->addr, a, sizeof(a));
+		VERBOSITY(1, (LOG_INFO, "%s for %s from %s",
+			(q->qtype==TYPE_AXFR?"axfr":"ixfr"),
+			dname_to_string(q->qname, NULL), a));
+	}
+	return 1;
+}
+
 /*
  * Answer if this is an AXFR or IXFR query.
  */
 query_state_type
 answer_axfr_ixfr(struct nsd *nsd, struct query *q)
 {
-	struct acl_options *acl = NULL;
 	/* Is it AXFR? */
 	switch (q->qtype) {
 	case TYPE_AXFR:
 		if (q->tcp) {
-			struct zone_options* zone_opt;
-			zone_opt = zone_options_find(nsd->options, q->qname);
-			if(!zone_opt ||
-			   acl_check_incoming(zone_opt->pattern->provide_xfr, q, &acl)==-1)
-			{
-				if (verbosity >= 2) {
-					char a[128];
-					addr2str(&q->addr, a, sizeof(a));
-					VERBOSITY(2, (LOG_INFO, "axfr for %s from %s refused, %s",
-						dname_to_string(q->qname, NULL), a, acl?"blocked":"no acl matches"));
-				}
-				DEBUG(DEBUG_XFRD,1, (LOG_INFO, "axfr refused, %s",
-					acl?"blocked":"no acl matches"));
-				if (!zone_opt) {
-					RCODE_SET(q->packet, RCODE_NOTAUTH);
-				} else {
-					RCODE_SET(q->packet, RCODE_REFUSE);
-					/* RFC8914 - Extended DNS Errors
-					 * 4.19.  Extended DNS Error Code 18 - Prohibited */
-					q->edns.ede = EDE_PROHIBITED;
-				}
+			if(!axfr_ixfr_can_admit_query(nsd, q))
 				return QUERY_PROCESSED;
-			}
-			DEBUG(DEBUG_XFRD,1, (LOG_INFO, "axfr admitted acl %s %s",
-				acl->ip_address_spec, acl->key_name?acl->key_name:"NOKEY"));
-			if (verbosity >= 1) {
-				char a[128];
-				addr2str(&q->addr, a, sizeof(a));
-				VERBOSITY(1, (LOG_INFO, "%s for %s from %s",
-					(q->qtype==TYPE_AXFR?"axfr":"ixfr"),
-					dname_to_string(q->qname, NULL), a));
-			}
-			return query_axfr(nsd, q);
+			return query_axfr(nsd, q, 1);
 		}
 		/* AXFR over UDP queries are discarded. */
 		RCODE_SET(q->packet, RCODE_IMPL);
 		return QUERY_PROCESSED;
 	case TYPE_IXFR:
-		/* get rid of authority section, if present */
-		NSCOUNT_SET(q->packet, 0);
-		if(QDCOUNT(q->packet) > 0 && (size_t)QHEADERSZ+4+
-			q->qname->name_size <= buffer_limit(q->packet)) {
-			buffer_set_position(q->packet, QHEADERSZ+4+
-				q->qname->name_size);
+		if(!axfr_ixfr_can_admit_query(nsd, q)) {
+			/* get rid of authority section, if present */
+			NSCOUNT_SET(q->packet, 0);
+			ARCOUNT_SET(q->packet, 0);
+			if(QDCOUNT(q->packet) > 0 && (size_t)QHEADERSZ+4+
+				q->qname->name_size <= buffer_limit(q->packet)) {
+				buffer_set_position(q->packet, QHEADERSZ+4+
+					q->qname->name_size);
+			}
+			return QUERY_PROCESSED;
 		}
-		RCODE_SET(q->packet, RCODE_IMPL);
-		return QUERY_PROCESSED;
+		return query_ixfr(nsd, q);
 	default:
 		return QUERY_DISCARDED;
 	}

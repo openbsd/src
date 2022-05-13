@@ -2668,6 +2668,10 @@ print_stat_block(RES* ssl, char* n, char* d, struct nsdst* st)
 	if(!ssl_printf(ssl, "%s%snum.raxfr=%lu\n", n, d, (unsigned long)st->raxfr))
 		return;
 
+	/* number of requested-ixfr, number of times ixfr served to clients */
+	if(!ssl_printf(ssl, "%s%snum.rixfr=%lu\n", n, d, (unsigned long)st->rixfr))
+		return;
+
 	/* truncated */
 	if(!ssl_printf(ssl, "%s%snum.truncated=%lu\n", n, d,
 		(unsigned long)st->truncated))
