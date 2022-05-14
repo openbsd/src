@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.36 2022/05/13 05:06:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.37 2022/05/14 05:48:44 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -266,7 +266,6 @@ struct iwx_rx_ring {
 	struct iwx_dma_info	free_desc_dma;
 	struct iwx_dma_info	stat_dma;
 	struct iwx_dma_info	used_desc_dma;
-	struct iwx_dma_info	buf_dma;
 	void			*desc;
 	struct iwx_rb_status	*stat;
 	struct iwx_rx_data	data[IWX_RX_MQ_RING_COUNT];
