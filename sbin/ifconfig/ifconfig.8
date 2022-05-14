@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.381 2021/12/29 21:41:28 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.382 2022/05/14 07:22:10 denis Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: December 29 2021 $
+.Dd $Mdocdate: May 14 2022 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1806,6 +1806,7 @@ for a complete list of the available protocols.
 .Op Oo Fl Oc Ns Cm keepalive Ar period count
 .Op Cm rxprio Ar prio
 .Op Oo Fl Oc Ns Cm tunnel Ar src_address dest_address
+.Op Cm tunneladdr Ar src_address
 .Op Oo Fl Oc Ns Cm tunneldf
 .Op Oo Fl Oc Ns Cm tunneldomain Ar rtable
 .Op Cm tunnelttl Ar ttl
@@ -1864,8 +1865,20 @@ Both addresses must be of the same family.
 The optional destination port can be specified for interfaces such as
 .Xr vxlan 4 ,
 which further encapsulate the packets in UDP datagrams.
+This directive is incompatible with
+.Cm tunneladdr .
 .It Cm -tunnel
 Remove the source and destination tunnel addresses.
+.It Cm tunneladdr Ar src_address
+Set the outer IP address of the tunnel.
+This is useful for point-to-multipoint tunnels where peers are in different
+subnets like
+.Xr vxlan 4
+endpoint mode or
+.Xr mgre 4 .
+It is incompatible with the
+.Cm tunnel
+directive.
 .It Cm tunneldf
 Do not allow fragmentation of encapsulated packets.
 .It Cm -tunneldf
