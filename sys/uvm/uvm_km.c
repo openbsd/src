@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_km.c,v 1.148 2022/02/03 17:06:09 kn Exp $	*/
+/*	$OpenBSD: uvm_km.c,v 1.149 2022/05/14 15:25:57 kettenis Exp $	*/
 /*	$NetBSD: uvm_km.c,v 1.42 2001/01/14 02:10:01 thorpej Exp $	*/
 
 /* 
@@ -530,47 +530,6 @@ uvm_km_alloc1(struct vm_map *map, vsize_t size, vsize_t align, boolean_t zeroit)
 }
 
 /*
- * uvm_km_valloc: allocate zero-fill memory in the kernel's address space
- *
- * => memory is not allocated until fault time
- */
-
-vaddr_t
-uvm_km_valloc(struct vm_map *map, vsize_t size)
-{
-	return uvm_km_valloc_align(map, size, 0, 0);
-}
-
-vaddr_t
-uvm_km_valloc_try(struct vm_map *map, vsize_t size)
-{
-	return uvm_km_valloc_align(map, size, 0, UVM_KMF_TRYLOCK);
-}
-
-vaddr_t
-uvm_km_valloc_align(struct vm_map *map, vsize_t size, vsize_t align, int flags)
-{
-	vaddr_t kva;
-
-	KASSERT(vm_map_pmap(map) == pmap_kernel());
-
-	size = round_page(size);
-	kva = vm_map_min(map);		/* hint */
-
-	/*
-	 * allocate some virtual space.  will be demand filled by kernel_object.
-	 */
-	if (__predict_false(uvm_map(map, &kva, size, uvm.kernel_object,
-	    UVM_UNKNOWN_OFFSET, align,
-	    UVM_MAPFLAG(PROT_READ | PROT_WRITE, PROT_READ | PROT_WRITE,
-	    MAP_INHERIT_NONE, MADV_RANDOM, flags)) != 0)) {
-		return 0;
-	}
-
-	return kva;
-}
-
-/*
  * uvm_km_valloc_wait: allocate zero-fill memory in the kernel's address space
  *
  * => memory is not allocated until fault time
@@ -606,12 +565,6 @@ uvm_km_valloc_prefer_wait(struct vm_map *map, vsize_t size, voff_t prefer)
 		tsleep_nsec(map, PVM, "vallocwait", INFSLP);
 	}
 	/*NOTREACHED*/
-}
-
-vaddr_t
-uvm_km_valloc_wait(struct vm_map *map, vsize_t size)
-{
-	return uvm_km_valloc_prefer_wait(map, size, UVM_UNKNOWN_OFFSET);
 }
 
 #if defined(__HAVE_PMAP_DIRECT)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.160 2022/03/12 08:11:07 mpi Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.161 2022/05/14 15:25:57 kettenis Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -300,11 +300,6 @@ vaddr_t			uvm_km_kmemalloc_pla(struct vm_map *,
 			    paddr_t, paddr_t, paddr_t, paddr_t, int);
 #define uvm_km_kmemalloc(map, obj, sz, flags)				\
 	uvm_km_kmemalloc_pla(map, obj, sz, 0, flags, 0, (paddr_t)-1, 0, 0, 0)
-vaddr_t			uvm_km_valloc(vm_map_t, vsize_t);
-vaddr_t			uvm_km_valloc_try(vm_map_t, vsize_t);
-vaddr_t			uvm_km_valloc_wait(vm_map_t, vsize_t);
-vaddr_t			uvm_km_valloc_align(struct vm_map *, vsize_t,
-			    vsize_t, int);
 vaddr_t			uvm_km_valloc_prefer_wait(vm_map_t, vsize_t, voff_t);
 struct vm_map		*uvm_km_suballoc(vm_map_t, vaddr_t *, vaddr_t *,
 			    vsize_t, int, boolean_t, vm_map_t);
