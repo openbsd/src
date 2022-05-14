@@ -1,4 +1,4 @@
-/*	$OpenBSD: fseek.c,v 1.13 2019/06/28 13:32:42 deraadt Exp $ */
+/*	$OpenBSD: fseek.c,v 1.14 2022/05/14 05:06:32 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -250,4 +250,3 @@ fseek(FILE *fp, long offset, int whence)
 {
 	return (fseeko(fp, offset, whence));
 }
-DEF_STRONG(fseek);

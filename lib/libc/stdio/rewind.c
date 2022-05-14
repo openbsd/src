@@ -1,4 +1,4 @@
-/*	$OpenBSD: rewind.c,v 1.6 2015/08/31 02:53:57 guenther Exp $ */
+/*	$OpenBSD: rewind.c,v 1.7 2022/05/14 05:06:32 guenther Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 void
 rewind(FILE *fp)
 {
-	(void) fseek(fp, 0L, SEEK_SET);
+	fseeko(fp, 0, SEEK_SET);
 	clearerr(fp);
 	errno = 0;      /* not required, but seems reasonable */
 }

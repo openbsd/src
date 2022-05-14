@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdio.h,v 1.7 2016/09/06 19:56:36 guenther Exp $	*/
+/*	$OpenBSD: stdio.h,v 1.8 2022/05/14 05:06:32 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -65,7 +65,7 @@ PROTO_NORMAL(fputs);
 PROTO_NORMAL(fread);
 PROTO_NORMAL(freopen);
 PROTO_NORMAL(fscanf);
-PROTO_NORMAL(fseek);
+PROTO_STD_DEPRECATED(fseek);
 PROTO_NORMAL(fseeko);
 PROTO_NORMAL(fsetpos);
 PROTO_NORMAL(ftell);
