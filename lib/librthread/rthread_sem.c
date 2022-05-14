@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem.c,v 1.32 2020/04/06 00:01:08 pirofti Exp $ */
+/*	$OpenBSD: rthread_sem.c,v 1.33 2022/05/14 14:52:20 cheloha Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2018 Paul Irofti <paul@irofti.net>
@@ -254,8 +254,7 @@ sem_timedwait(sem_t *semp, const struct timespec *abstime)
 	int error;
 	PREP_CANCEL_POINT(tib);
 
-	if (!semp || !(sem = *semp) || abstime == NULL ||
-	   abstime->tv_nsec < 0 || abstime->tv_nsec >= 1000000000) {
+	if (!semp || !(sem = *semp) || !abstime || !timespecisvalid(abstime)) {
 		errno = EINVAL;
 		return (-1);
 	}

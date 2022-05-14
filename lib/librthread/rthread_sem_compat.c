@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_sem_compat.c,v 1.1 2018/06/08 13:53:01 pirofti Exp $ */
+/*	$OpenBSD: rthread_sem_compat.c,v 1.2 2022/05/14 14:52:20 cheloha Exp $ */
 /*
  * Copyright (c) 2004,2005,2013 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -266,8 +267,7 @@ sem_timedwait(sem_t *semp, const struct timespec *abstime)
 	int r;
 	PREP_CANCEL_POINT(tib);
 
-	if (!semp || !(sem = *semp) || abstime == NULL ||
-	    abstime->tv_nsec < 0 || abstime->tv_nsec >= 1000000000) {
+	if (!semp || !(sem = *semp) || !abstime || !timespecisvalid(abstime)) {
 		errno = EINVAL;
 		return (-1);
 	}

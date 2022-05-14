@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_rwlock_compat.c,v 1.1 2019/02/13 13:15:39 mpi Exp $ */
+/*	$OpenBSD: rthread_rwlock_compat.c,v 1.2 2022/05/14 14:52:20 cheloha Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
@@ -143,8 +143,7 @@ int
 pthread_rwlock_timedrdlock(pthread_rwlock_t *lockp,
     const struct timespec *abstime)
 {
-	if (abstime == NULL || abstime->tv_nsec < 0 ||
-	    abstime->tv_nsec >= 1000000000)
+	if (abstime == NULL || !timespecisvalid(abstime))
 		return (EINVAL);
 	return (_rthread_rwlock_rdlock(lockp, abstime, 0));
 }
@@ -210,8 +209,7 @@ int
 pthread_rwlock_timedwrlock(pthread_rwlock_t *lockp,
     const struct timespec *abstime)
 {
-	if (abstime == NULL || abstime->tv_nsec < 0 ||
-	    abstime->tv_nsec >= 1000000000)
+	if (abstime == NULL || !timespecisvalid(abstime))
 		return (EINVAL);
 	return (_rthread_rwlock_wrlock(lockp, abstime, 0));
 }
