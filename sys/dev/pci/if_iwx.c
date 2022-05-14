@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.148 2022/05/13 08:48:40 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.149 2022/05/14 05:42:39 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3653,7 +3653,7 @@ iwx_ampdu_rx_stop(struct ieee80211com *ic, struct ieee80211_node *ni,
 	if (tid >= IWX_MAX_TID_COUNT || sc->ba_rx.stop_tidmask & (1 << tid))
 		return;
 
-	sc->ba_rx.stop_tidmask = (1 << tid);
+	sc->ba_rx.stop_tidmask |= (1 << tid);
 	iwx_add_task(sc, systq, &sc->ba_task);
 }
 
