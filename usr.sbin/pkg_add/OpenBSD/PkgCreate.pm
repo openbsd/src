@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.177 2022/05/15 08:02:23 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.178 2022/05/15 08:58:33 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -209,9 +209,9 @@ sub pretend_to_archive
 sub record_digest {}
 sub stub_digest {}
 sub archive {}
-sub really_archived { 0 }
 sub comment_create_package {}
 sub grab_manpages {}
+sub register_for_archival {}
 
 sub print_file {}
 
@@ -397,17 +397,19 @@ sub archive
 	$state->new_gstream;
 }
 
-package OpenBSD::PackingElement::Meta;
-sub record_digest
+package OpenBSD::PackingElement::LRUFrontier;
+our @ISA = qw(OpenBSD::PackingElement::Meta);
+sub new
 {
-	my ($self, $original, $entries, $new, $tail) = @_;
-	push(@$new, $self);
+	my $class = shift;
+	bless {}, $class;
 }
 
-sub stub_digest
+sub comment_create_package
 {
-	my ($self, $ordered) = @_;
-	push(@$ordered, $self);
+	my ($self, $state) = @_;
+	$self->SUPER::comment_create_package($state);
+	$state->say("LRU: end of modified files");
 }
 
 package OpenBSD::PackingElement::RcScript;
@@ -422,6 +424,18 @@ sub set_destdir
 }
 
 package OpenBSD::PackingElement::SpecialFile;
+sub record_digest
+{
+	my ($self, $original, $entries, $new, $tail) = @_;
+	push(@$new, $self);
+}
+
+sub stub_digest
+{
+	my ($self, $ordered) = @_;
+	push(@$ordered, $self);
+}
+
 sub archive
 {
 	&OpenBSD::PackingElement::FileBase::archive;
@@ -478,7 +492,7 @@ sub prepare_for_archival
 
 sub forbidden() { 1 }
 
-sub stub_digest
+sub register_for_archival
 {
 	my ($self, $ordered) = @_;
 	push(@$ordered, $self);
@@ -544,6 +558,12 @@ sub record_digest
 	}
 }
 
+sub register_for_archival
+{
+	my ($self, $ordered) = @_;
+	push(@$ordered, $self);
+}
+
 sub set_destdir
 {
 	my ($self, $state) = @_;
@@ -561,7 +581,6 @@ sub archive
 	$o->write unless $state->{bad};
 }
 
-sub really_archived { 1 }
 sub pretend_to_archive
 {
 	my ($self, $state) = @_;
@@ -1551,71 +1570,72 @@ sub finish_manpages
 # pkg_add -u
 sub save_history
 {
-	my ($self, $plist, $dir) = @_;
+	my ($self, $plist, $state, $dir) = @_;
 
-	# grab the old stuff:
-	# - order
-	# - and presence
-	my (%known, %found);
-	my $fname;
-	if (defined $dir) {
-		unless (-d $dir) {
-			require File::Path;
+	unless (-d $dir) {
+		require File::Path;
 
-			File::Path::make_path($dir);
-		}
-
-		my $name = $plist->fullpkgpath;
-		$name =~ s,/,.,g;
-		$fname = "$dir/$name";
-		my $n = 0;
-
-		if (open(my $f, '<', $fname)) {
-			while (<$f>) {
-				chomp;
-				$known{$_} //= $n++;
-			}
-			close($f);
-		}
+		File::Path::make_path($dir);
 	}
-	my @new;
+
+	my $name = $plist->fullpkgpath;
+	$name =~ s,/,.,g;
+	my $fname = "$dir/$name";
+
+	# if we have history, we record the order of checksums
+	my $known = {};
+	if (open(my $f, '<', $fname)) {
+		while (<$f>) {
+			chomp;
+			$known->{$_} //= $.;
+		}
+		close($f);
+	}
+
+	my $todo = [];		
 	my $entries = {};
 	my $list = [];
 	my $tail = [];
-	$plist->record_digest(\@new, $entries, $list, $tail);
+	# scan the plist: find data we need to sort, index them by hash,
+	# directly put some stuff at start of list, and put non indexed stuff
+	# at end (e.g., symlinks and hardlinks)
+	$plist->record_digest($todo, $entries, $list, $tail);
 
-	my $f;
-	if (defined $fname) {
-		open($f, ">", "$fname.new");
-	}
+	my $name2 = "$fname.new";
+	open(my $f, ">", $name2) or 
+	    $state->fatal("Can't create #1: #2", $name2, $!);
 	
-	# split list
+	my $found = {};
+	# split the remaining list
 	# - first, unknown stuff
-	for my $h (@new) {
-		if ($known{$h}) {
-			$found{$h} = $known{$h};
+	for my $h (@$todo) {
+		if ($known->{$h}) {
+			$found->{$h} = $known->{$h};
 		} else {
 			print $f "$h\n" if defined $f;
 			push(@$list, (shift @{$entries->{$h}}));
 		}
 	}
+	# dummy entry for verbose output
+	push(@$list, OpenBSD::PackingElement::LRUFrontier->new);
 	# - then known stuff, preserve the order
-	for my $h (sort  {$found{$a} <=> $found{$b}} keys %found) {
+	for my $h (sort  {$found->{$a} <=> $found->{$b}} keys %$found) {
 		print $f "$h\n" if defined $f;
 		push(@$list, @{$entries->{$h}});
 	}
-	if (defined $f) {
-		close($f);
-		rename("$fname.new", $fname);
-	}
-	# XXX if we don't have any history, we don't need to do this
-	# create a new list with check points.
+	close($f);
+	rename($name2, $fname) or 
+	    $state->fatal("Can't rename #1->#2: #3", $name2, $fname, $!);
+	# even with no former history, it's a good idea to save chunks
+	# for instance: packages like texlive will not change all that
+	# fast, so there's a good chance the end chunks will be ordered
+	# correctly
 	my $l = [@$tail];
 	my $i = 0;
 	my $end_marker = OpenBSD::PackingElement::StreamMarker->new;
 	while (@$list > 0) {
 		my $e = pop @$list;
-		if ($e->really_archived && $i++ % 16 == 0) {
+		if ($i++ % 16 == 0) {
 			unshift @$l, $end_marker;
 		}
 		unshift @$l, $e;
@@ -1706,8 +1726,12 @@ sub run_command
 				$plist = $self->make_plist_with_sum($state, 
 				    $plist);
 			}
-			$ordered = $self->save_history($plist, 
-			    $state->defines('HISTORY_DIR'));
+			if (defined(my $dir = $state->defines('HISTORY_DIR'))) {
+				$ordered = $self->save_history($plist, 
+				    $state, $dir);
+			} else {
+				$plist->register_for_archival($ordered);
+			}
 			$self->show_bad_symlinks($state);
 		}
 		$state->end_status;
