@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.25 2022/01/04 06:32:39 yasuoka Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.26 2022/05/15 03:18:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -139,13 +139,13 @@ struct veb_port {
 	struct veb_rule_list		 p_vr_list[2];
 #define VEB_RULE_LIST_OUT			0
 #define VEB_RULE_LIST_IN			1
-
-	SMR_TAILQ_ENTRY(veb_port)	 p_entry;
 };
 
 struct veb_ports {
-	SMR_TAILQ_HEAD(, veb_port)	 l_list;
-	unsigned int			 l_count;
+	struct refcnt			 m_refs;
+	unsigned int			 m_count;
+
+	/* followed by an array of veb_port pointers */
 };
 
 struct veb_softc {
@@ -155,8 +155,8 @@ struct veb_softc {
 	struct etherbridge		 sc_eb;
 
 	struct rwlock			 sc_rule_lock;
-	struct veb_ports		 sc_ports;
-	struct veb_ports		 sc_spans;
+	struct veb_ports		*sc_ports;
+	struct veb_ports		*sc_spans;
 };
 
 #define DPRINTF(_sc, fmt...)    do { \
@@ -184,8 +184,25 @@ static int	veb_p_ioctl(struct ifnet *, u_long, caddr_t);
 static int	veb_p_output(struct ifnet *, struct mbuf *,
 		    struct sockaddr *, struct rtentry *);
 
-static void	veb_p_dtor(struct veb_softc *, struct veb_port *,
-		    const char *);
+static inline size_t
+veb_ports_size(unsigned int n)
+{
+	/* use of _ALIGN is inspired by CMSGs */
+	return _ALIGN(sizeof(struct veb_ports)) +
+	    n * sizeof(struct veb_port *);
+}
+
+static inline struct veb_port **
+veb_ports_array(struct veb_ports *m)
+{
+	return (struct veb_port **)((caddr_t)m + _ALIGN(sizeof(*m)));
+}
+
+static void	veb_ports_free(struct veb_ports *);
+
+static void	veb_p_unlink(struct veb_softc *, struct veb_port *);
+static void	veb_p_fini(struct veb_port *);
+static void	veb_p_dtor(struct veb_softc *, struct veb_port *);
 static int	veb_add_port(struct veb_softc *,
 		    const struct ifbreq *, unsigned int);
 static int	veb_del_port(struct veb_softc *,
@@ -271,8 +288,8 @@ veb_clone_create(struct if_clone *ifc, int unit)
 		return (ENOMEM);
 
 	rw_init(&sc->sc_rule_lock, "vebrlk");
-	SMR_TAILQ_INIT(&sc->sc_ports.l_list);
-	SMR_TAILQ_INIT(&sc->sc_spans.l_list);
+	sc->sc_ports = NULL;
+	sc->sc_spans = NULL;
 
 	ifp = &sc->sc_if;
 
@@ -314,7 +331,10 @@ static int
 veb_clone_destroy(struct ifnet *ifp)
 {
 	struct veb_softc *sc = ifp->if_softc;
-	struct veb_port *p, *np;
+	struct veb_ports *mp, *ms;
+	struct veb_port **ps;
+	struct veb_port *p;
+	unsigned int i;
 
 	NET_LOCK();
 	sc->sc_dead = 1;
@@ -326,10 +346,61 @@ veb_clone_destroy(struct ifnet *ifp)
 	if_detach(ifp);
 
 	NET_LOCK();
-	SMR_TAILQ_FOREACH_SAFE_LOCKED(p, &sc->sc_ports.l_list, p_entry, np)
-		veb_p_dtor(sc, p, "destroy");
-	SMR_TAILQ_FOREACH_SAFE_LOCKED(p, &sc->sc_spans.l_list, p_entry, np)
-		veb_p_dtor(sc, p, "destroy");
+
+	/*
+	 * this is an upside down version of veb_p_dtor() and
+	 * veb_ports_destroy() to avoid a lot of malloc/free and
+	 * smr_barrier calls if we remove ports one by one.
+	 */
+
+	mp = SMR_PTR_GET_LOCKED(&sc->sc_ports);
+	SMR_PTR_SET_LOCKED(&sc->sc_ports, NULL);
+	if (mp != NULL) {
+		ps = veb_ports_array(mp);
+		for (i = 0; i < mp->m_count; i++)
+			veb_p_unlink(sc, ps[i]);
+	}
+
+	ms = SMR_PTR_GET_LOCKED(&sc->sc_spans);
+	SMR_PTR_SET_LOCKED(&sc->sc_spans, NULL);
+	if (ms != NULL) {
+		ps = veb_ports_array(ms);
+		for (i = 0; i < ms->m_count; i++)
+			veb_p_unlink(sc, ps[i]);
+	}
+
+	if (mp != NULL || ms != NULL) {
+		smr_barrier(); /* everything everywhere all at once */
+
+		if (mp != NULL) {
+			refcnt_finalize(&mp->m_refs, "vebdtor");
+
+			ps = veb_ports_array(mp);
+			for (i = 0; i < mp->m_count; i++) {
+				p = ps[i];
+				/* the ports map holds a port ref */
+				refcnt_rele(&p->p_refs);
+				/* now we can finalize the port */
+				veb_p_fini(p);
+			}
+
+			veb_ports_free(mp);
+		}
+		if (ms != NULL) {
+			refcnt_finalize(&ms->m_refs, "vebdtor");
+
+			ps = veb_ports_array(ms);
+			for (i = 0; i < ms->m_count; i++) {
+				p = ps[i];
+				/* the ports map holds a port ref */
+				refcnt_rele(&p->p_refs);
+				/* now we can finalize the port */
+				veb_p_fini(p);
+			}
+
+			veb_ports_free(ms);
+		}
+	}
 	NET_UNLOCK();
 
 	etherbridge_destroy(&sc->sc_eb);
@@ -349,12 +420,25 @@ veb_span_input(struct ifnet *ifp0, struct mbuf *m, uint64_t dst, void *brport)
 static void
 veb_span(struct veb_softc *sc, struct mbuf *m0)
 {
+	struct veb_ports *sm;
+	struct veb_port **ps;
 	struct veb_port *p;
 	struct ifnet *ifp0;
 	struct mbuf *m;
+	unsigned int i;
 
 	smr_read_enter();
-	SMR_TAILQ_FOREACH(p, &sc->sc_spans.l_list, p_entry) {
+	sm = SMR_PTR_GET(&sc->sc_spans);
+	if (sm != NULL)
+		refcnt_take(&sm->m_refs);
+	smr_read_leave();
+	if (sm == NULL)
+		return;
+
+	ps = veb_ports_array(sm);
+	for (i = 0; i < sm->m_count; i++) {
+		p = ps[i];
+
 		ifp0 = p->p_ifp0;
 		if (!ISSET(ifp0->if_flags, IFF_RUNNING))
 			continue;
@@ -367,7 +451,7 @@ veb_span(struct veb_softc *sc, struct mbuf *m0)
 
 		if_enqueue(ifp0, m); /* XXX count error */
 	}
-	smr_read_leave();
+	refcnt_rele_wake(&sm->m_refs);
 }
 
 static int
@@ -847,9 +931,12 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
     uint64_t src, uint64_t dst)
 {
 	struct ifnet *ifp = &sc->sc_if;
+	struct veb_ports *pm;
+	struct veb_port **ps;
 	struct veb_port *tp;
 	struct ifnet *ifp0;
 	struct mbuf *m;
+	unsigned int i;
 
 #if NPF > 0
 	/*
@@ -873,7 +960,17 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 	    m0->m_pkthdr.len);
 
 	smr_read_enter();
-	SMR_TAILQ_FOREACH(tp, &sc->sc_ports.l_list, p_entry) {
+	pm = SMR_PTR_GET(&sc->sc_ports);
+	if (__predict_true(pm != NULL))
+		refcnt_take(&pm->m_refs);
+	smr_read_leave();
+	if (__predict_false(pm == NULL))
+		goto done;
+
+	ps = veb_ports_array(pm);
+	for (i = 0; i < pm->m_count; i++) {
+		tp = ps[i];
+
 		if (rp == tp || (rp->p_protected & tp->p_protected)) {
 			/*
 			 * don't let Ethernet packets hairpin or
@@ -906,8 +1003,9 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 
 		(*tp->p_enqueue)(ifp0, m); /* XXX count error */
 	}
-	smr_read_leave();
+	refcnt_rele_wake(&pm->m_refs);
 
+done:
 	m_freem(m0);
 }
 
@@ -1241,12 +1339,99 @@ veb_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return (error);
 }
 
+static struct veb_ports *
+veb_ports_insert(struct veb_ports *om, struct veb_port *p)
+{
+	struct veb_ports *nm;
+	struct veb_port **nps, **ops;
+	unsigned int ocount = om != NULL ? om->m_count : 0;
+	unsigned int ncount = ocount + 1;
+	unsigned int i;
+
+	nm = malloc(veb_ports_size(ncount), M_DEVBUF, M_WAITOK|M_ZERO);
+
+	refcnt_init(&nm->m_refs);
+	nm->m_count = ncount;
+
+	nps = veb_ports_array(nm);
+
+	if (om != NULL) {
+		ops = veb_ports_array(om);
+		for (i = 0; i < ocount; i++) {
+			struct veb_port *op = ops[i];
+			refcnt_take(&op->p_refs);
+			nps[i] = op;
+		}
+	} else
+		i = 0;
+
+	refcnt_take(&p->p_refs);
+	nps[i] = p;
+
+	return (nm);
+}
+
+static struct veb_ports *
+veb_ports_remove(struct veb_ports *om, struct veb_port *p)
+{
+	struct veb_ports *nm;
+	struct veb_port **nps, **ops;
+	unsigned int ocount = om->m_count;
+	unsigned int ncount = ocount - 1;
+	unsigned int i, j;
+
+	if (ncount == 0)
+		return (NULL);
+
+	nm = malloc(veb_ports_size(ncount), M_DEVBUF, M_WAITOK|M_ZERO);
+
+	refcnt_init(&nm->m_refs);
+	nm->m_count = ncount;
+
+	nps = veb_ports_array(nm);
+	j = 0;
+
+	ops = veb_ports_array(om);
+	for (i = 0; i < ocount; i++) {
+		struct veb_port *op = ops[i];
+		if (op == p)
+			continue;
+
+		refcnt_take(&op->p_refs);
+		nps[j++] = op;
+	}
+	KASSERT(j == ncount);
+
+	return (nm);
+}
+
+static inline void
+veb_ports_free(struct veb_ports *m)
+{
+	free(m, M_DEVBUF, veb_ports_size(m->m_count));
+}
+
+static void
+veb_ports_destroy(struct veb_ports *m)
+{
+	struct veb_port **ps = veb_ports_array(m);
+	unsigned int i;
+
+	for (i = 0; i < m->m_count; i++) {
+		struct veb_port *p = ps[i];
+		refcnt_rele_wake(&p->p_refs);
+	}
+
+	veb_ports_free(m);
+}
+
 static int
 veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct ifnet *ifp0;
-	struct veb_ports *port_list;
+	struct veb_ports **ports_ptr;
+	struct veb_ports *om, *nm;
 	struct veb_port *p;
 	int isvport;
 	int error;
@@ -1294,7 +1479,7 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 	p->p_output = ifp0->if_output;
 
 	if (span) {
-		port_list = &sc->sc_spans;
+		ports_ptr = &sc->sc_spans;
 
 		if (isvport) {
 			error = EPROTONOSUPPORT;
@@ -1304,7 +1489,7 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 		p->p_brport.eb_input = veb_span_input;
 		p->p_bif_flags = IFBIF_SPAN;
 	} else {
-		port_list = &sc->sc_ports;
+		ports_ptr = &sc->sc_ports;
 
 		error = ifpromisc(ifp0, 1);
 		if (error != 0)
@@ -1317,6 +1502,9 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 
 	p->p_brport.eb_port_take = veb_eb_brport_take;
 	p->p_brport.eb_port_rele = veb_eb_brport_rele;
+
+	om = SMR_PTR_GET_LOCKED(ports_ptr);
+	nm = veb_ports_insert(om, p);
 
 	/* this might have changed if we slept for malloc or ifpromisc */
 	error = ether_brport_isset(ifp0);
@@ -1332,8 +1520,7 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 	p->p_brport.eb_port = p;
 
 	/* commit */
-	SMR_TAILQ_INSERT_TAIL_LOCKED(&port_list->l_list, p, p_entry);
-	port_list->l_count++;
+	SMR_PTR_SET_LOCKED(ports_ptr, nm);
 
 	ether_brport_set(ifp0, &p->p_brport);
 	if (!isvport) { /* vport is special */
@@ -1342,6 +1529,13 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 	}
 
 	veb_p_linkch(p);
+
+	/* clean up the old veb_ports map */
+	smr_barrier();
+	if (om != NULL) {
+		refcnt_finalize(&om->m_refs, "vebports");
+		veb_ports_destroy(om);
+	}
 
 	return (0);
 
@@ -1358,12 +1552,19 @@ put:
 static struct veb_port *
 veb_trunkport(struct veb_softc *sc, const char *name, unsigned int span)
 {
-	struct veb_ports *port_list;
+	struct veb_ports *m;
+	struct veb_port **ps;
 	struct veb_port *p;
+	unsigned int i;
 
-	port_list = span ? &sc->sc_spans : &sc->sc_ports;
+	m = SMR_PTR_GET_LOCKED(span ? &sc->sc_spans : &sc->sc_ports);
+	if (m == NULL)
+		return (NULL);
 
-	SMR_TAILQ_FOREACH_LOCKED(p, &port_list->l_list, p_entry) {
+	ps = veb_ports_array(m);
+	for (i = 0; i < m->m_count; i++) {
+		p = ps[i];
+
 		if (strcmp(p->p_ifp0->if_xname, name) == 0)
 			return (p);
 	}
@@ -1381,7 +1582,7 @@ veb_del_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 	if (p == NULL)
 		return (EINVAL);
 
-	veb_p_dtor(sc, p, "del");
+	veb_p_dtor(sc, p);
 
 	return (0);
 }
@@ -1389,20 +1590,31 @@ veb_del_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 static struct veb_port *
 veb_port_get(struct veb_softc *sc, const char *name)
 {
+	struct veb_ports *m;
+	struct veb_port **ps;
 	struct veb_port *p;
+	struct ifnet *ifp0;
+	unsigned int i;
 
 	NET_ASSERT_LOCKED();
 
-	SMR_TAILQ_FOREACH_LOCKED(p, &sc->sc_ports.l_list, p_entry) {
-		struct ifnet *ifp0 = p->p_ifp0;
+	m = SMR_PTR_GET_LOCKED(&sc->sc_ports);
+	if (m == NULL)
+		return (NULL);
+
+	ps = veb_ports_array(m);
+	for (i = 0; i < m->m_count; i++) {
+		p = ps[i];
+		ifp0 = p->p_ifp0;
+
 		if (strncmp(ifp0->if_xname, name,
 		    sizeof(ifp0->if_xname)) == 0) {
 			refcnt_take(&p->p_refs);
-			break;
+			return (p);
 		}
 	}
 
-	return (p);
+	return (NULL);
 }
 
 static void
@@ -1712,56 +1924,77 @@ static int
 veb_port_list(struct veb_softc *sc, struct ifbifconf *bifc)
 {
 	struct ifnet *ifp = &sc->sc_if;
+	struct veb_ports *m;
+	struct veb_port **ps;
 	struct veb_port *p;
 	struct ifnet *ifp0;
 	struct ifbreq breq;
 	int n = 0, error = 0;
+	unsigned int i;
 
 	NET_ASSERT_LOCKED();
 
 	if (bifc->ifbic_len == 0) {
-		n = sc->sc_ports.l_count + sc->sc_spans.l_count;
+		m = SMR_PTR_GET_LOCKED(&sc->sc_ports);
+		if (m != NULL)
+			n += m->m_count;
+		m = SMR_PTR_GET_LOCKED(&sc->sc_spans);
+		if (m != NULL)
+			n += m->m_count;
 		goto done;
 	}
 
-	SMR_TAILQ_FOREACH_LOCKED(p, &sc->sc_ports.l_list, p_entry) {
-		if (bifc->ifbic_len < sizeof(breq))
-			break;
+	m = SMR_PTR_GET_LOCKED(&sc->sc_ports);
+	if (m != NULL) {
+		ps = veb_ports_array(m);
+		for (i = 0; i < m->m_count; i++) {
+			if (bifc->ifbic_len < sizeof(breq))
+				break;
 
-		memset(&breq, 0, sizeof(breq));
+			p = ps[i];
 
-		ifp0 = p->p_ifp0;
+			memset(&breq, 0, sizeof(breq));
 
-		strlcpy(breq.ifbr_name, ifp->if_xname, IFNAMSIZ);
-		strlcpy(breq.ifbr_ifsname, ifp0->if_xname, IFNAMSIZ);
+			ifp0 = p->p_ifp0;
 
-		breq.ifbr_ifsflags = p->p_bif_flags;
-		breq.ifbr_portno = ifp0->if_index;
-		breq.ifbr_protected = p->p_protected;
-		if ((error = copyout(&breq, bifc->ifbic_req + n,
-		    sizeof(breq))) != 0)
-			goto done;
+			strlcpy(breq.ifbr_name, ifp->if_xname, IFNAMSIZ);
+			strlcpy(breq.ifbr_ifsname, ifp0->if_xname, IFNAMSIZ);
 
-		bifc->ifbic_len -= sizeof(breq);
-		n++;
+			breq.ifbr_ifsflags = p->p_bif_flags;
+			breq.ifbr_portno = ifp0->if_index;
+			breq.ifbr_protected = p->p_protected;
+			if ((error = copyout(&breq, bifc->ifbic_req + n,
+			    sizeof(breq))) != 0)
+				goto done;
+
+			bifc->ifbic_len -= sizeof(breq);
+			n++;
+		}
 	}
 
-	SMR_TAILQ_FOREACH_LOCKED(p, &sc->sc_spans.l_list, p_entry) {
-		if (bifc->ifbic_len < sizeof(breq))
-			break;
+	m = SMR_PTR_GET_LOCKED(&sc->sc_spans);
+	if (m != NULL) {
+		ps = veb_ports_array(m);
+		for (i = 0; i < m->m_count; i++) {
+			if (bifc->ifbic_len < sizeof(breq))
+				break;
 
-		memset(&breq, 0, sizeof(breq));
+			p = ps[i];
 
-		strlcpy(breq.ifbr_name, ifp->if_xname, IFNAMSIZ);
-		strlcpy(breq.ifbr_ifsname, p->p_ifp0->if_xname, IFNAMSIZ);
+			memset(&breq, 0, sizeof(breq));
 
-		breq.ifbr_ifsflags = p->p_bif_flags;
-		if ((error = copyout(&breq, bifc->ifbic_req + n,
-		    sizeof(breq))) != 0)
-			goto done;
+			strlcpy(breq.ifbr_name, ifp->if_xname, IFNAMSIZ);
+			strlcpy(breq.ifbr_ifsname, p->p_ifp0->if_xname,
+			    IFNAMSIZ);
 
-		bifc->ifbic_len -= sizeof(breq);
-		n++;
+			breq.ifbr_ifsflags = p->p_bif_flags;
+			if ((error = copyout(&breq, bifc->ifbic_req + n,
+			    sizeof(breq))) != 0)
+				goto done;
+
+			bifc->ifbic_len -= sizeof(breq);
+			n++;
+		}
 	}
 
 done:
@@ -1904,46 +2137,67 @@ veb_p_output(struct ifnet *ifp0, struct mbuf *m, struct sockaddr *dst,
 	return ((*p_output)(ifp0, m, dst, rt));
 }
 
+/*
+ * there must be an smr_barrier after ether_brport_clr() and before
+ * veb_port is freed in veb_p_fini()
+ */
+
 static void
-veb_p_dtor(struct veb_softc *sc, struct veb_port *p, const char *op)
+veb_p_unlink(struct veb_softc *sc, struct veb_port *p)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct ifnet *ifp0 = p->p_ifp0;
-	struct veb_ports *port_list;
-
-	DPRINTF(sc, "%s %s: destroying port\n",
-	    ifp->if_xname, ifp0->if_xname);
 
 	ifp0->if_ioctl = p->p_ioctl;
 	ifp0->if_output = p->p_output;
 
-	ether_brport_clr(ifp0);
+	ether_brport_clr(ifp0); /* needs an smr_barrier */
 
 	if_detachhook_del(ifp0, &p->p_dtask);
 	if_linkstatehook_del(ifp0, &p->p_ltask);
 
-	if (ISSET(p->p_bif_flags, IFBIF_SPAN)) {
-		port_list = &sc->sc_spans;
-	} else {
+	if (!ISSET(p->p_bif_flags, IFBIF_SPAN)) {
 		if (ifpromisc(ifp0, 0) != 0) {
 			log(LOG_WARNING, "%s %s: unable to disable promisc\n",
 			    ifp->if_xname, ifp0->if_xname);
 		}
 
 		etherbridge_detach_port(&sc->sc_eb, p);
-
-		port_list = &sc->sc_ports;
 	}
-	SMR_TAILQ_REMOVE_LOCKED(&port_list->l_list, p, p_entry);
-	port_list->l_count--;
+}
+
+static void
+veb_p_fini(struct veb_port *p)
+{
+	struct ifnet *ifp0 = p->p_ifp0;
 
 	refcnt_finalize(&p->p_refs, "vebpdtor");
-	smr_barrier();
-
 	veb_rule_list_free(TAILQ_FIRST(&p->p_vrl));
 
 	if_put(ifp0);
-	free(p, M_DEVBUF, sizeof(*p));
+	free(p, M_DEVBUF, sizeof(*p)); /* hope you didn't forget smr_barrier */
+}
+
+static void
+veb_p_dtor(struct veb_softc *sc, struct veb_port *p)
+{
+	struct veb_ports **ports_ptr;
+	struct veb_ports *om, *nm;
+
+	ports_ptr = ISSET(p->p_bif_flags, IFBIF_SPAN) ?
+	    &sc->sc_spans : &sc->sc_ports;
+
+	om = SMR_PTR_GET_LOCKED(ports_ptr);
+	nm = veb_ports_remove(om, p);
+	SMR_PTR_SET_LOCKED(ports_ptr, nm);
+
+	veb_p_unlink(sc, p);
+
+	smr_barrier();
+	refcnt_finalize(&om->m_refs, "vebports");
+	veb_ports_destroy(om);
+
+	veb_p_fini(p);
 }
 
 static void
@@ -1952,7 +2206,7 @@ veb_p_detach(void *arg)
 	struct veb_port *p = arg;
 	struct veb_softc *sc = p->p_veb;
 
-	veb_p_dtor(sc, p, "detach");
+	veb_p_dtor(sc, p);
 
 	NET_ASSERT_LOCKED();
 }
