@@ -1,4 +1,4 @@
-/*	$OpenBSD: encoding.c,v 1.12 2022/04/20 15:31:48 tb Exp $  */
+/*	$OpenBSD: encoding.c,v 1.13 2022/05/15 15:00:53 deraadt Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.58 2022/05/04 10:17:16 claudio Exp $  */
+/*	$OpenBSD: http.c,v 1.59 2022/05/15 15:00:53 deraadt Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>

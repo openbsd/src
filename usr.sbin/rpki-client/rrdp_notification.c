@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.14 2022/02/14 14:46:16 job Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.15 2022/05/15 15:00:53 deraadt Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -431,7 +431,7 @@ notification_get_next(struct notification_xml *nxml, char *hash, size_t hlen,
 		nxml->current->serial = nxml->serial;
 		return nxml->snapshot_uri;
 	case DELTA:
-		/* first bump serial, then use first delta  */
+		/* first bump serial, then use first delta */
 		nxml->current->serial += 1;
 		d = TAILQ_FIRST(&nxml->delta_q);
 		assert(d->serial == nxml->current->serial);

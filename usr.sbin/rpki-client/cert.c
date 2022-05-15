@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.81 2022/05/12 10:49:22 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.82 2022/05/15 15:00:53 deraadt Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -678,12 +678,12 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		}
 		if (p.res->ipsz > 0) {
 			warnx("%s: unexpected IP resources in BGPsec cert",
-			   p.fn);
+			    p.fn);
 			goto out;
 		}
 		if (sia_present) {
 			warnx("%s: unexpected SIA extension in BGPsec cert",
-			   p.fn);
+			    p.fn);
 			goto out;
 		}
 		break;
@@ -776,7 +776,7 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 		warnx("%s: certificate not yet valid", fn);
 		goto badcert;
 	}
-	if (X509_cmp_current_time(notAfter) != 1)  {
+	if (X509_cmp_current_time(notAfter) != 1) {
 		warnx("%s: certificate has expired", fn);
 		goto badcert;
 	}

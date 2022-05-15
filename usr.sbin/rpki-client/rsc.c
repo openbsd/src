@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.2 2022/05/10 07:41:37 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.3 2022/05/15 15:00:53 deraadt Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -381,12 +381,12 @@ rsc_parse_aslist(struct parse *p, const unsigned char *d, size_t dsz)
 static int
 rsc_parse_ipaddrfamitem(struct parse *p, const ASN1_OCTET_STRING *os)
 {
-	ASN1_OCTET_STRING       *aos = NULL;
+	ASN1_OCTET_STRING	*aos = NULL;
 	IPAddressOrRange	*aor = NULL;
 	int			 tag;
-	const unsigned char     *cnt = os->data;
+	const unsigned char	*cnt = os->data;
 	long			 cntsz;
-	const unsigned char     *d;
+	const unsigned char	*d;
 	struct cert_ip		 ip;
 	int			 rc = 0;
 

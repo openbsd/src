@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.35 2022/05/12 10:53:59 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.36 2022/05/15 15:00:53 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -493,17 +493,17 @@ valid_rsc(const char *fn, struct auth *a, struct rsc *rsc)
 		switch (rsc->ips[i].type) {
 		case CERT_IP_RANGE:
 			ip_addr_print(&rsc->ips[i].range.min,
-			   rsc->ips[i].afi, buf1, sizeof(buf1));
+			    rsc->ips[i].afi, buf1, sizeof(buf1));
 			ip_addr_print(&rsc->ips[i].range.max,
-			   rsc->ips[i].afi, buf2, sizeof(buf2));
+			    rsc->ips[i].afi, buf2, sizeof(buf2));
 			warnx("%s: RSC ResourceBlock: uncovered IP Range: "
-			   "%s--%s", fn, buf1, buf2);
+			    "%s--%s", fn, buf1, buf2);
 			break;
 		case CERT_IP_ADDR:
 			ip_addr_print(&rsc->ips[i].ip,
-			   rsc->ips[i].afi, buf1, sizeof(buf1));
+			    rsc->ips[i].afi, buf1, sizeof(buf1));
 			warnx("%s: RSC ResourceBlock: uncovered IP: "
-			   "%s", fn, buf1);
+			    "%s", fn, buf1);
 			break;
 		default:
 			break;

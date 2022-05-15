@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.11 2022/05/09 17:02:34 job Exp $ */
+/*	$OpenBSD: print.c,v 1.12 2022/05/15 15:00:53 deraadt Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -36,7 +36,7 @@ pretty_key_id(const char *hex)
 	size_t i;
 
 	for (i = 0; i < sizeof(buf) && *hex != '\0'; i++) {
-		if  (i % 3 == 2)
+		if (i % 3 == 2)
 			buf[i] = ':';
 		else
 			buf[i] = *hex++;

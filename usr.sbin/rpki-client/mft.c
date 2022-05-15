@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.64 2022/05/11 21:19:06 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.65 2022/05/15 15:00:53 deraadt Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -41,7 +41,7 @@ struct	parse {
 	int		 found_crl;
 };
 
-extern ASN1_OBJECT    *mft_oid;
+extern ASN1_OBJECT	*mft_oid;
 
 /*
  * Convert an ASN1_GENERALIZEDTIME to a struct tm.
