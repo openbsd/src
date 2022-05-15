@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.165 2021/06/28 11:25:14 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.166 2022/05/15 12:49:55 espie Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -15,7 +15,7 @@
 .\" Jordan K. Hubbard
 .\"
 .\"
-.Dd $Mdocdate: June 28 2021 $
+.Dd $Mdocdate: May 15 2022 $
 .Dt PKG_ADD 1
 .Os
 .Sh NAME
@@ -36,13 +36,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-command is used to install or update packages created
-from the
+command is used to install or update
+.Xr packages 7
+created from the
 .Xr ports 7
 tree.
 .Bd -filled -offset indent
 .Em Note :
-System distribution files, e.g., base58.tgz, comp58.tgz, are
+System distribution files, e.g., base71.tgz, comp71.tgz, are
 .Em not
 packages and may not be installed using
 .Nm .
@@ -58,7 +59,7 @@ or option
 .Fl D Cm unsigned
 is used.
 .Pp
-If a package is digitally signed:
+If a package is signed:
 .Bl -bullet
 .It
 .Nm
@@ -68,7 +69,14 @@ emitted by a valid signing key, as stored in
 .It
 .Nm
 verifies that the compressed package data matches the signature, before
-it decompresses and unpacks files.
+it decompresses and unpacks files
+.Po
+see
+.Xr signify 1
+in
+.Fl z
+mode
+.Pc .
 .El
 .Pp
 .Nm
@@ -182,11 +190,11 @@ options
 .Fl I/i .
 .Pp
 For instance
-.Sq Nm Ar screen
+.Sq Nm Ar vim
 is ambiguous as it matches
-.Ar screen-4.03p6
-and
-.Ar screen-4.03p6-shm .
+.Ar vim-*-no_x11 ,
+.Ar vim-*-gtk3 ,
+and a few other flavors.
 .Pp
 To avoid ambiguities,
 .Nm
@@ -194,11 +202,11 @@ supports
 .Sq stems with flavors ,
 that is, a stem separated from flavors with a double dash.
 For instance, the previous ambiguity could be resolved by using
-.Sq Nm Ar screen--
-(matches only the empty flavor)
+.Sq Nm Ar vim--no_x11
+(matches only the gtk3 flavor)
 or
-.Sq Nm Ar screen--shm
-(matches only the shm flavor).
+.Sq Nm Ar vim--gtk3
+(matches only the gtk3 flavor).
 .Pp
 There is also an ambiguity related to ports with multiple branches.
 For instance
@@ -214,7 +222,7 @@ can be used to restrict matches to a branch matching the
 The above ambiguities can be resolved using
 .Sq Nm Ar postfix Ns % Ns Ar stable
 and
-.Sq Nm Ar python Ns % Ns Ar 3.4 ,
+.Sq Nm Ar python Ns % Ns Ar 3.9 ,
 respectively.
 .Pp
 All paths recognize certain special sequences,
@@ -281,9 +289,9 @@ user's opinion in interactive mode,
 then install default packages that satisfy the dependencies.
 .Pp
 .Sy Warning:
-Since the
+Since
 .Nm
-command may execute scripts or programs contained within a package file,
+may execute scripts or programs contained within a package file,
 your system may be susceptible to
 .Dq trojan horses
 or other subtle attacks from miscreants who create dangerous packages.
@@ -351,10 +359,7 @@ Corresponds to list of public keys under
 .Pa /etc/signify
 we want to trust.
 Defaults to any key matching
-.Sq *pkg
-for packages, and any key matching
-.Sq *fw
-for firmware.
+.Sq *pkg .
 .It Cm snap | Cm snapshot
 Force
 .Sq %c
@@ -369,7 +374,7 @@ But see
 .Ev TRUSTED_PKG_PATH ,
 which is more discriminating.
 .It Cm updatedepends
-Force update even if forward dependencies no longer match.
+Force update even if dependencies no longer match.
 .El
 .It Fl I
 Force non-interactive mode.
@@ -425,27 +430,6 @@ Check that package can be distributed on ftp.
 Do not bother with checksums for configuration files.
 .It Fl r
 Replace existing packages.
-.Nm
-will try to take every precaution to make sure the replacement can
-proceed before removing the old package and adding the new one, and it
-should also handle shared libraries correctly.
-Among other things,
-.Nm
-will refuse to replace packages as soon as it needs to run scripts that
-might fail
-.Po
-use
-.Fl D Cm update
-to force the replacement
-.Pc ;
-.Nm
-will also refuse to replace packages when the dependencies don't quite
-match
-.Po
-use
-.Fl D Cm updatedepends
-to force the replacement
-.Pc .
 .It Fl s
 Don't actually install packages, skip as many steps as needed and report
 only the disk size changes that would happen.
@@ -468,11 +452,7 @@ This relies on
 .Ev PKG_PATH
 to figure out the new package names.
 .It Fl V
-Turn on statistics output.
-For now, only displays the number of packages done/total number of packages.
-Several
-.Fl V
-will turn on more statistics in the future.
+Displays the number of packages done/total number of packages.
 .It Fl v
 Turn on verbose output.
 Several
@@ -501,7 +481,7 @@ Disable progress meter.
 .It Fl z
 Fuzzy package addition:
 .Nm
-should do its best to match package names passed on the command line,
+will do its best to match package names passed on the command line,
 even if the versions don't match and it will proceed even if
 some packages can't be found.
 .El
@@ -573,8 +553,8 @@ For each new package in an updateset,
 .Nm
 extracts the package's
 .Dq packing information
-(the packing-list, description, and installation/deinstallation scripts)
-into a special staging directory in
+(the packing-list and description mostly)
+into a special staging directory under
 .Pa /tmp
 (or
 .Ev PKG_TMPDIR
@@ -669,13 +649,11 @@ updatesets will be merged.
 Otherwise,
 .Nm
 will add them to the current updateset, and rerun update to find suitable
-update to those packages.
+updates to those packages.
 .It
 A check is made to determine whether the old packages will be deleted without
 issue, and whether the new packages will install correctly.
-This includes refusing to run any code (unless
-.Fl D Cm update ) ,
-and verifying
+This includes verifying
 that the new package still matches dependencies (unless
 .Fl D Cm updatedepends ) .
 .It
@@ -684,10 +662,15 @@ packages that does no longer exist in the new packages, but that is required
 from a wantlib of another package is kept along in a stub package named
 .Pa \&.libs-<pkgname> .
 .It
+.Nm
+uses sha256 checksums to avoid extracting too much: if a file from an
+old package didn't change, it will be reused verbatim, and the extraction
+will often finish early.
+.It
 The new packages are extracted to the filesystem, using temporary filenames
 of the form
 .Pa pkg.XXXXXXX
-since the old packages are still there.
+if necessary to avoid conflicts with the old packages.
 The packing-list is amended to record these names as @temp annotations,
 in cases the installation fails.
 .It
