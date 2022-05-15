@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.176 2022/05/12 17:01:01 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.177 2022/05/15 08:02:23 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -498,14 +498,12 @@ sub archive
 {
 	my ($self, $state) = @_;
 	$self->SUPER::archive($state);
-	$state->new_gstream;
 }
 
 sub comment_create_package
 {
 	my ($self, $state) = @_;
 	$self->SUPER::comment_create_package($state);
-	$state->say("GZIP: END OF SIGNATURE CHUNK");
 }
 
 sub stub_digest
