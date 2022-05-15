@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.277 2022/03/21 23:37:09 bluhm Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.278 2022/05/15 09:12:20 dlg Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -866,7 +866,7 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 	u_int32_t ipsecflowinfo = 0;
 	struct sockaddr_in src_sin;
 	int len = m->m_pkthdr.len;
-	struct in_addr *laddr;
+	struct in_addr laddr;
 	int error = 0;
 
 #ifdef DIAGNOSTIC
@@ -966,14 +966,14 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 			    (error =
 			    in_pcbaddrisavail(inp, &src_sin, 0, curproc)))
 				goto release;
-			laddr = &src_sin.sin_addr;
+			laddr = src_sin.sin_addr;
 		}
 	} else {
 		if (inp->inp_faddr.s_addr == INADDR_ANY) {
 			error = ENOTCONN;
 			goto release;
 		}
-		laddr = &inp->inp_laddr;
+		laddr = inp->inp_laddr;
 	}
 
 	/*
@@ -994,7 +994,7 @@ udp_output(struct inpcb *inp, struct mbuf *m, struct mbuf *addr,
 	bzero(ui->ui_x1, sizeof ui->ui_x1);
 	ui->ui_pr = IPPROTO_UDP;
 	ui->ui_len = htons((u_int16_t)len + sizeof (struct udphdr));
-	ui->ui_src = *laddr;
+	ui->ui_src = laddr;
 	ui->ui_dst = sin ? sin->sin_addr : inp->inp_faddr;
 	ui->ui_sport = inp->inp_lport;
 	ui->ui_dport = sin ? sin->sin_port : inp->inp_fport;

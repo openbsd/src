@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.265 2022/04/14 14:10:22 claudio Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.266 2022/05/15 09:12:20 dlg Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -480,7 +480,7 @@ in_pcbpickport(u_int16_t *lport, void *laddr, int wild, struct inpcb *inp,
 int
 in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 {
-	struct in_addr *ina = NULL;
+	struct in_addr ina;
 	struct sockaddr_in *sin;
 	int error;
 
@@ -499,7 +499,7 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 		return (error);
 
 	if (in_pcbhashlookup(inp->inp_table, sin->sin_addr, sin->sin_port,
-	    *ina, inp->inp_lport, inp->inp_rtableid) != NULL)
+	    ina, inp->inp_lport, inp->inp_rtableid) != NULL)
 		return (EADDRINUSE);
 
 	KASSERT(inp->inp_laddr.s_addr == INADDR_ANY || inp->inp_lport);
@@ -510,13 +510,13 @@ in_pcbconnect(struct inpcb *inp, struct mbuf *nam)
 			if (error)
 				return (error);
 			if (in_pcbhashlookup(inp->inp_table, sin->sin_addr,
-			    sin->sin_port, *ina, inp->inp_lport,
+			    sin->sin_port, ina, inp->inp_lport,
 			    inp->inp_rtableid) != NULL) {
 				inp->inp_lport = 0;
 				return (EADDRINUSE);
 			}
 		}
-		inp->inp_laddr = *ina;
+		inp->inp_laddr = ina;
 	}
 	inp->inp_faddr = sin->sin_addr;
 	inp->inp_fport = sin->sin_port;
@@ -893,7 +893,7 @@ in_pcbrtentry(struct inpcb *inp)
  * an entry to the caller for later use.
  */
 int
-in_pcbselsrc(struct in_addr **insrc, struct sockaddr_in *sin,
+in_pcbselsrc(struct in_addr *insrc, struct sockaddr_in *sin,
     struct inpcb *inp)
 {
 	struct ip_moptions *mopts = inp->inp_moptions;
@@ -909,9 +909,9 @@ in_pcbselsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 	 * If the socket(if any) is already bound, use that bound address
 	 * unless it is INADDR_ANY or INADDR_BROADCAST.
 	 */
-	if (laddr && laddr->s_addr != INADDR_ANY &&
+	if (laddr->s_addr != INADDR_ANY &&
 	    laddr->s_addr != INADDR_BROADCAST) {
-		*insrc = laddr;
+		*insrc = *laddr;
 		return (0);
 	}
 
@@ -934,7 +934,7 @@ in_pcbselsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 				return (EADDRNOTAVAIL);
 			}
 
-			*insrc = &ia->ia_addr.sin_addr;
+			*insrc = ia->ia_addr.sin_addr;
 			if_put(ifp);
 			return (0);
 		}
@@ -985,7 +985,7 @@ in_pcbselsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 			struct ifaddr *ifa;
 			if ((ifa = ifa_ifwithaddr(ip4_source, rtableid)) !=
 			    NULL && ISSET(ifa->ifa_ifp->if_flags, IFF_UP)) {
-				*insrc = &satosin(ip4_source)->sin_addr;
+				*insrc = satosin(ip4_source)->sin_addr;
 				return (0);
 			}
 		}
@@ -994,7 +994,7 @@ in_pcbselsrc(struct in_addr **insrc, struct sockaddr_in *sin,
 	if (ia == NULL)
 		return (EADDRNOTAVAIL);
 
-	*insrc = &ia->ia_addr.sin_addr;
+	*insrc = ia->ia_addr.sin_addr;
 	return (0);
 }
 

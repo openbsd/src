@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip.c,v 1.127 2022/03/23 17:22:28 bluhm Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.128 2022/05/15 09:12:20 dlg Exp $	*/
 /*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
@@ -276,13 +276,9 @@ rip_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	}
 
 	if (ip->ip_src.s_addr == INADDR_ANY) {
-		struct in_addr *laddr;
-
-		error = in_pcbselsrc(&laddr, dst, inp);
+		error = in_pcbselsrc(&ip->ip_src, dst, inp);
 		if (error != 0)
 			return (error);
-
-		ip->ip_src = *laddr;
 	}
 
 #ifdef INET6
