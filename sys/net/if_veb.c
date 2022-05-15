@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.26 2022/05/15 03:18:41 dlg Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.27 2022/05/15 03:54:07 deraadt Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -198,7 +198,7 @@ veb_ports_array(struct veb_ports *m)
 	return (struct veb_port **)((caddr_t)m + _ALIGN(sizeof(*m)));
 }
 
-static void	veb_ports_free(struct veb_ports *);
+static inline void veb_ports_free(struct veb_ports *);
 
 static void	veb_p_unlink(struct veb_softc *, struct veb_port *);
 static void	veb_p_fini(struct veb_port *);
