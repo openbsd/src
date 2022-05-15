@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.36 2022/05/15 15:00:53 deraadt Exp $ */
+/*	$OpenBSD: validate.c,v 1.37 2022/05/15 16:40:43 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -470,7 +470,6 @@ valid_rsc(const char *fn, struct auth *a, struct rsc *rsc)
 			    "%u", fn, rsc->as[i].id);
 			break;
 		case CERT_AS_RANGE:
-				continue;
 			warnx("%s: RSC resourceBlock: uncovered AS Range: "
 			    "%u--%u", fn, min, max);
 			break;
