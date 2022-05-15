@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.27 2022/05/15 03:54:07 deraadt Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.28 2022/05/15 21:37:29 bluhm Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -293,8 +293,7 @@ veb_clone_create(struct if_clone *ifc, int unit)
 
 	ifp = &sc->sc_if;
 
-	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
-	    ifc->ifc_name, unit);
+	snprintf(ifp->if_xname, IFNAMSIZ, "%s%d", ifc->ifc_name, unit);
 
 	error = etherbridge_init(&sc->sc_eb, ifp->if_xname,
 	    &veb_etherbridge_ops, sc);
@@ -1565,7 +1564,7 @@ veb_trunkport(struct veb_softc *sc, const char *name, unsigned int span)
 	for (i = 0; i < m->m_count; i++) {
 		p = ps[i];
 
-		if (strcmp(p->p_ifp0->if_xname, name) == 0)
+		if (strncmp(p->p_ifp0->if_xname, name, IFNAMSIZ) == 0)
 			return (p);
 	}
 
@@ -1593,7 +1592,6 @@ veb_port_get(struct veb_softc *sc, const char *name)
 	struct veb_ports *m;
 	struct veb_port **ps;
 	struct veb_port *p;
-	struct ifnet *ifp0;
 	unsigned int i;
 
 	NET_ASSERT_LOCKED();
@@ -1605,10 +1603,8 @@ veb_port_get(struct veb_softc *sc, const char *name)
 	ps = veb_ports_array(m);
 	for (i = 0; i < m->m_count; i++) {
 		p = ps[i];
-		ifp0 = p->p_ifp0;
 
-		if (strncmp(ifp0->if_xname, name,
-		    sizeof(ifp0->if_xname)) == 0) {
+		if (strncmp(p->p_ifp0->if_xname, name, IFNAMSIZ) == 0) {
 			refcnt_take(&p->p_refs);
 			return (p);
 		}
@@ -1899,10 +1895,8 @@ veb_rule_list_get(struct veb_softc *sc, struct ifbrlconf *ifbrl)
 
 	ifbr = ifbrs;
 	TAILQ_FOREACH(vr, &p->p_vrl, vr_entry) {
-		strlcpy(ifbr->ifbr_name, sc->sc_if.if_xname,
-		    sizeof(ifbr->ifbr_name));
-		strlcpy(ifbr->ifbr_ifsname, p->p_ifp0->if_xname,
-		    sizeof(ifbr->ifbr_ifsname));
+		strlcpy(ifbr->ifbr_name, sc->sc_if.if_xname, IFNAMSIZ);
+		strlcpy(ifbr->ifbr_ifsname, p->p_ifp0->if_xname, IFNAMSIZ);
 		veb_rule2ifbr(ifbr, vr);
 
 		ifbr++;
@@ -2206,9 +2200,9 @@ veb_p_detach(void *arg)
 	struct veb_port *p = arg;
 	struct veb_softc *sc = p->p_veb;
 
-	veb_p_dtor(sc, p);
-
 	NET_ASSERT_LOCKED();
+
+	veb_p_dtor(sc, p);
 }
 
 static int
@@ -2339,8 +2333,7 @@ vport_clone_create(struct if_clone *ifc, int unit)
 
 	ifp = &sc->sc_ac.ac_if;
 
-	snprintf(ifp->if_xname, sizeof(ifp->if_xname), "%s%d",
-	    ifc->ifc_name, unit);
+	snprintf(ifp->if_xname, IFNAMSIZ, "%s%d", ifc->ifc_name, unit);
 
 	ifp->if_softc = sc;
 	ifp->if_type = IFT_ETHER;
