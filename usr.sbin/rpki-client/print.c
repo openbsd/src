@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.12 2022/05/15 15:00:53 deraadt Exp $ */
+/*	$OpenBSD: print.c,v 1.13 2022/05/15 16:43:34 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -72,7 +72,6 @@ tal_print(const struct tal *p)
 	unsigned char		 md[SHA_DIGEST_LENGTH];
 	int			 rder_len;
 	size_t			 i;
-
 
 	der = p->pkey;
 	pk = d2i_PUBKEY(NULL, &der, p->pkeysz);
@@ -242,7 +241,7 @@ cert_print(const struct cert *p)
 			break;
 		case CERT_IP_RANGE:
 			sockt = (p->ips[j].afi == AFI_IPV4) ?
-				AF_INET : AF_INET6;
+			    AF_INET : AF_INET6;
 			inet_ntop(sockt, p->ips[j].min, buf1, sizeof(buf1));
 			inet_ntop(sockt, p->ips[j].max, buf2, sizeof(buf2));
 			if (outformats & FORMAT_JSON)
@@ -375,8 +374,6 @@ mft_print(const X509 *x, const struct mft *p)
 
 	if (outformats & FORMAT_JSON)
 		printf("\t],\n");
-
-
 }
 
 void
@@ -406,7 +403,7 @@ roa_print(const X509 *x, const struct roa *p)
 			printf("\t\"vrps\": [\n");
 
 		ip_addr_print(&p->ips[i].addr,
-			p->ips[i].afi, buf, sizeof(buf));
+		    p->ips[i].afi, buf, sizeof(buf));
 
 		if (outformats & FORMAT_JSON) {
 			printf("\t\t{ \"prefix\": \"%s\",", buf);
@@ -521,7 +518,7 @@ rsc_print(const X509 *x, const struct rsc *p)
 			break;
 		case CERT_IP_RANGE:
 			sockt = (p->ips[j].afi == AFI_IPV4) ?
-				AF_INET : AF_INET6;
+			    AF_INET : AF_INET6;
 			inet_ntop(sockt, p->ips[j].min, buf1, sizeof(buf1));
 			inet_ntop(sockt, p->ips[j].max, buf2, sizeof(buf2));
 			if (outformats & FORMAT_JSON)

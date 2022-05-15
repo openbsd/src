@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_delta.c,v 1.7 2022/02/03 18:19:32 claudio Exp $ */
+/*	$OpenBSD: rrdp_delta.c,v 1.8 2022/05/15 16:43:35 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -109,7 +109,6 @@ end_delta_elem(struct delta_xml *dxml)
 		PARSE_FAIL(p, "parse failed - exited delta "
 		    "elem unexpectedely");
 	dxml->scope = DELTA_SCOPE_END;
-
 }
 
 static void

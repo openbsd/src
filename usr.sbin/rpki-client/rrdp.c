@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.23 2022/04/04 13:45:02 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.24 2022/05/15 16:43:35 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -73,7 +73,7 @@ struct rrdp {
 	struct delta_xml	*dxml;
 };
 
-TAILQ_HEAD(,rrdp)	states = TAILQ_HEAD_INITIALIZER(states);
+TAILQ_HEAD(, rrdp)	states = TAILQ_HEAD_INITIALIZER(states);
 
 char *
 xstrdup(const char *s)

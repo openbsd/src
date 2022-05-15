@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.34 2021/11/04 11:32:55 claudio Exp $ */
+/*	$OpenBSD: tal.c,v 1.35 2022/05/15 16:43:35 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -98,7 +98,7 @@ tal_parse_buffer(const char *fn, char *buf, size_t len)
 
 		/* Append to list of URIs. */
 		tal->uri = reallocarray(tal->uri,
-			tal->urisz + 1, sizeof(char *));
+		    tal->urisz + 1, sizeof(char *));
 		if (tal->uri == NULL)
 			err(1, NULL);
 

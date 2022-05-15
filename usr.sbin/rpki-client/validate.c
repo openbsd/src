@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.37 2022/05/15 16:40:43 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.38 2022/05/15 16:43:35 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -230,10 +230,10 @@ valid_roa(const char *fn, struct auth *a, struct roa *roa)
 int
 valid_filehash(int fd, const char *hash, size_t hlen)
 {
-	SHA256_CTX ctx;
-	char	filehash[SHA256_DIGEST_LENGTH];
-	char	buffer[8192];
-	ssize_t	nr;
+	SHA256_CTX	ctx;
+	char		filehash[SHA256_DIGEST_LENGTH];
+	char		buffer[8192];
+	ssize_t		nr;
 
 	if (hlen != sizeof(filehash))
 		errx(1, "bad hash size");

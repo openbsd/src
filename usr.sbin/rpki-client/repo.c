@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.33 2022/04/20 15:31:48 tb Exp $ */
+/*	$OpenBSD: repo.c,v 1.34 2022/05/15 16:43:34 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -317,7 +317,7 @@ ta_filename(const struct tarepo *tr, int temp)
 	assert(file);
 
 	if (asprintf(&nfile, "%s%s%s", tr->basedir, file,
-	    temp ? ".XXXXXXXX": "") == -1)
+	    temp ? ".XXXXXXXX" : "") == -1)
 		err(1, NULL);
 
 	return nfile;
@@ -513,7 +513,7 @@ rrdp_state_filename(const struct rrdprepo *rr, int temp)
 	char *nfile;
 
 	if (asprintf(&nfile, "%s/.state%s", rr->basedir,
-	    temp ? ".XXXXXXXX": "") == -1)
+	    temp ? ".XXXXXXXX" : "") == -1)
 		err(1, NULL);
 
 	return nfile;
@@ -688,7 +688,7 @@ rrdp_save_state(unsigned int id, struct rrdp_session *state)
 		warn("mkostemp %s", temp);
 		goto fail;
 	}
-	(void) fchmod(fd, 0644);
+	(void)fchmod(fd, 0644);
 	f = fdopen(fd, "w");
 	if (f == NULL)
 		err(1, "fdopen");
@@ -746,7 +746,6 @@ rrdp_get(const char *uri)
 	rr->basedir = repo_dir(uri, ".rrdp", 1);
 
 	RB_INIT(&rr->deleted);
-
 
 	/* create base directory */
 	if (mkpath(rr->basedir) == -1) {
@@ -994,8 +993,6 @@ http_finish(unsigned int id, enum http_result res, const char *last_mod)
 		ta_fetch(tr);
 	}
 }
-
-
 
 /*
  * Look up a trust anchor, queueing it for download if not found.

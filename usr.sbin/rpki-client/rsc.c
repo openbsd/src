@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.3 2022/05/15 15:00:53 deraadt Exp $ */
+/*	$OpenBSD: rsc.c,v 1.4 2022/05/15 16:43:35 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -192,7 +192,8 @@ rsc_parse_filenamehash(struct parse *p, const ASN1_OCTET_STRING *os)
 	rent = &p->res->files[p->res->filesz++];
 	rent->filename = fn;
 	fn = NULL;
-	memcpy(rent->hash, hash->value.octet_string->data, SHA256_DIGEST_LENGTH);
+	memcpy(rent->hash, hash->value.octet_string->data,
+	    SHA256_DIGEST_LENGTH);
 
 	rc = 1;
  out:
@@ -545,7 +546,7 @@ rsc_parse_resourceblock(const ASN1_OCTET_STRING *os, struct parse *p)
 		default:
 			warnx("%s: want ASN.1 context specific id, have %s"
 			    " (NID %d)", p->fn, ASN1_tag2str(ptag), ptag);
-				goto out;
+			goto out;
 		}
 	}
 
@@ -574,7 +575,7 @@ rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 
 	if ((seq = d2i_ASN1_SEQUENCE_ANY(NULL, &d, dsz)) == NULL) {
 		cryptowarnx("%s: RSC: RpkiSignedChecklist: failed ASN.1 "
-		     "sequence parse", p->fn);
+		    "sequence parse", p->fn);
 		goto out;
 	}
 

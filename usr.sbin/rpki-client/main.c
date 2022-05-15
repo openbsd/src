@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.203 2022/05/10 07:28:43 job Exp $ */
+/*	$OpenBSD: main.c,v 1.204 2022/05/15 16:43:34 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -727,7 +727,7 @@ main(int argc, char *argv[])
 	const char	*cachedir = NULL, *outputdir = NULL;
 	const char	*errs, *name;
 	struct vrp_tree	 vrps = RB_INITIALIZER(&vrps);
-	struct brk_tree  brks = RB_INITIALIZER(&brks);
+	struct brk_tree	 brks = RB_INITIALIZER(&brks);
 	struct rusage	 ru;
 	struct timeval	 start_time, now_time;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.59 2022/05/15 15:00:53 deraadt Exp $ */
+/*	$OpenBSD: http.c,v 1.60 2022/05/15 16:43:34 tb Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -150,7 +150,7 @@ TAILQ_HEAD(http_req_queue, http_request);
 static struct http_conn_list	active = LIST_HEAD_INITIALIZER(active);
 static struct http_conn_list	idle = LIST_HEAD_INITIALIZER(idle);
 static struct http_req_queue	queue = TAILQ_HEAD_INITIALIZER(queue);
-static unsigned int http_conn_count;
+static unsigned int		http_conn_count;
 
 static struct msgbuf msgq;
 static struct sockaddr_storage http_bindaddr;
@@ -180,7 +180,7 @@ static void	http_do(struct http_connection *,
 static enum res	http_connect(struct http_connection *);
 static enum res	http_request(struct http_connection *);
 static enum res	http_close(struct http_connection *);
-static enum res http_handle(struct http_connection *);
+static enum res	http_handle(struct http_connection *);
 
 /* Internal state functions used by the above functions */
 static enum res	http_finish_connect(struct http_connection *);
@@ -1167,7 +1167,7 @@ http_parse_header(struct http_connection *conn, char *buf)
 		size_t s;
 		cp += sizeof(CONTENTLEN) - 1;
 		if ((s = strcspn(cp, " \t")) != 0)
-			*(cp+s) = 0;
+			*(cp + s) = 0;
 		conn->iosz = strtonum(cp, 0, MAX_CONTENTLEN, &errstr);
 		if (errstr != NULL) {
 			warnx("Content-Length of %s is %s",
@@ -1590,7 +1590,7 @@ proxy_write(struct http_connection *conn)
 	assert(conn->state == STATE_PROXY_REQUEST);
 
 	s = write(conn->fd, conn->buf + conn->bufpos,
-		    conn->bufsz - conn->bufpos);
+	    conn->bufsz - conn->bufpos);
 	if (s == -1) {
 		warn("%s: write", http_info(conn->host));
 		return http_failed(conn);
@@ -1695,7 +1695,7 @@ data_write(struct http_connection *conn)
 static enum res
 http_handle(struct http_connection *conn)
 {
-	assert (conn->pfd != NULL && conn->pfd->revents != 0);
+	assert(conn->pfd != NULL && conn->pfd->revents != 0);
 
 	conn->io_time = 0;
 

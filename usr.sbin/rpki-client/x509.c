@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.44 2022/05/11 21:19:06 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.45 2022/05/15 16:43:35 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -80,7 +80,6 @@ x509_init_oid(void)
 	if ((rsc_oid = OBJ_txt2obj("1.2.840.113549.1.9.16.1.48", 1)) == NULL)
 		errx(1, "OBJ_txt2obj for %s failed",
 		    "1.2.840.113549.1.9.16.1.48");
-
 }
 
 /*
@@ -345,7 +344,6 @@ x509_get_expire(X509 *x, const char *fn, time_t *tt)
 		return 0;
 	}
 	return 1;
-
 }
 
 /*

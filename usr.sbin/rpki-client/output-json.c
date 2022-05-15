@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.25 2022/04/20 15:29:24 tb Exp $ */
+/*	$OpenBSD: output-json.c,v 1.26 2022/05/15 16:43:34 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -25,10 +25,10 @@
 static int
 outputheader_json(FILE *out, struct stats *st)
 {
-	char		hn[NI_MAXHOST], tbuf[26];
+	char		 hn[NI_MAXHOST], tbuf[26];
 	struct tm	*tp;
-	time_t		t;
-	int		i;
+	time_t		 t;
+	int		 i;
 
 	time(&t);
 	tp = gmtime(&t);

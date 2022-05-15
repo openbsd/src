@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.19 2022/04/20 15:31:48 tb Exp $ */
+/*	$OpenBSD: io.c,v 1.20 2022/05/15 16:43:34 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -221,7 +221,6 @@ io_buf_read(int fd, struct ibuf **ib)
 
 	return NULL;
 }
-
 
 /*
  * Read data from socket but receive a file descriptor at the same time.

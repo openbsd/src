@@ -1,4 +1,4 @@
-/*	$OpenBSD: as.c,v 1.7 2021/12/26 12:32:28 tb Exp $ */
+/*	$OpenBSD: as.c,v 1.8 2022/05/15 16:43:34 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -152,9 +152,9 @@ as_check_covered(uint32_t min, uint32_t max,
 		if (as[i].type == CERT_AS_INHERIT)
 			return 0;
 		amin = as[i].type == CERT_AS_RANGE ?
-			as[i].range.min : as[i].id;
-		amax = as[i].type == CERT_AS_RANGE?
-			as[i].range.max : as[i].id;
+		    as[i].range.min : as[i].id;
+		amax = as[i].type == CERT_AS_RANGE ?
+		    as[i].range.max : as[i].id;
 		if (min >= amin && max <= amax)
 			return 1;
 	}
