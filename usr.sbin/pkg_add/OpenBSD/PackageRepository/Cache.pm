@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Cache.pm,v 1.8 2022/05/12 04:41:43 espie Exp $
+# $OpenBSD: Cache.pm,v 1.9 2022/05/16 15:54:04 espie Exp $
 #
 # Copyright (c) 2022 Marc Espie <espie@openbsd.org>
 #
@@ -84,6 +84,10 @@ sub prime_update_info_cache
 		$total));
 	my $done = 0;
 	my $oldname = ""; 
+	# This can't go much faster, I've tried splitting the params
+	# and running several locate(1) in //, but this yields negligible
+	# gains for a lot of added complexity (reduced from 18 to 14 seconds
+	# on my usual package install).
 	open my $fh, "-|", $self->pipe_locate(map { "$_-[0-9]*"} @list) 
 	    or $state->fatal("Can't run locate: #1", $!);
 	while (<$fh>) {
