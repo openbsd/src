@@ -1,4 +1,4 @@
-/* $OpenBSD: a_string.c,v 1.8 2022/05/16 20:41:24 tb Exp $ */
+/* $OpenBSD: a_string.c,v 1.9 2022/05/16 20:44:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -95,7 +95,7 @@ ASN1_STRING_clear(ASN1_STRING *astr)
 	astr->data = NULL;
 	astr->length = 0;
 }
- 
+
 void
 ASN1_STRING_free(ASN1_STRING *astr)
 {
