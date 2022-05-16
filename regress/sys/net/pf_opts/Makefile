@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2022/04/29 18:58:33 bluhm Exp $
+# $OpenBSD: Makefile,v 1.6 2022/05/16 16:54:18 bluhm Exp $
 
 # Copyright (c) 2022 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -85,6 +85,7 @@ ifconfig: unconfig
 	${SUDO} /sbin/ifconfig lo$n inet 127.0.0.$n alias
 	${SUDO} /sbin/ifconfig lo$n inet6 ::1/128
 	${SUDO} /sbin/ifconfig lo$n inet6 fe80::$n/64
+	${SUDO} /sbin/route -n -T $n add -inet 224.0.0.0/4 127.0.0.1
 .endfor
 	# Wait until IPv6 addresses are no longer tentative.
 	for i in `jot 50`; do\
@@ -316,12 +317,16 @@ run-icmp6-mld: stamp-bpf
 REGRESS_TARGETS +=	run-bpf-mcast
 run-bpf-mcast: stamp-stop
 	# Check that multicast protocol packet with router alert passed
-	grep ' 127.0.0.${N2}: igmp query .* IPOPT-148{4}' lo${N2}.tcpdump
-	grep ' fe80::${N2}: HBH (rtalert:.* icmp6: multicast ' lo${N2}.tcpdump
+	grep '127.0.0.${N2} > 224.0.0.1:\
+	    igmp query .* IPOPT-148{4}' lo${N2}.tcpdump
+	grep 'fe80::${N2} > ff02::1:\
+	    HBH (rtalert:.* icmp6: multicast ' lo${N2}.tcpdump
 	! grep '127.0.0.${N1}' pflog0.tcpdump
 	! grep 'fe80::${N1}' pflog0.tcpdump
 	! grep '127.0.0.${N2}' pflog0.tcpdump
 	! grep 'fe80::${N2}' pflog0.tcpdump
+	! grep '224.0.0.1' pflog0.tcpdump
+	! grep 'ff02::1' pflog0.tcpdump
 
 REGRESS_TARGETS +=	run-igmp-bad
 run-igmp-bad: stamp-bpf
@@ -336,8 +341,10 @@ run-icmp6-mld-bad: stamp-bpf
 REGRESS_TARGETS +=	run-bpf-mcast-bad
 run-bpf-mcast-bad: stamp-stop
 	# Check that multicast protocol packet with options were blocked
-	grep ' 127.0.0.${N2}: igmp query .* IPOPT-3{4}' pflog0.tcpdump
-	grep ' fe80::${N2}: HBH (type 0x03:.* icmp6: multicast ' pflog0.tcpdump
+	grep '127.0.0.${N2} > 224.0.0.1:\
+	    igmp query .* IPOPT-3{4}' pflog0.tcpdump
+	grep 'fe80::${N2} > ff02::1:\
+	    HBH (type 0x03:.* icmp6: multicast ' pflog0.tcpdump
 	! grep '127.0.0.${N1}' pflog0.tcpdump
 	! grep 'fe80::${N1}' pflog0.tcpdump
 

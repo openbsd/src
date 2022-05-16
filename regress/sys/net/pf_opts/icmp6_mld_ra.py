@@ -18,7 +18,7 @@ ADDR6=eval("ADDR6_"+N);
 
 pid=os.getpid()
 eid=pid & 0xffff
-packet=IPv6(src=ADDR6, dst=ADDR6)/ \
+packet=IPv6(src=ADDR6, dst="ff02::1", hlim=1)/ \
     IPv6ExtHdrHopByHop(options=RouterAlert())/ \
     ICMPv6MLQuery()
 

@@ -18,7 +18,7 @@ ADDR=eval("ADDR_"+N);
 
 pid=os.getpid()
 eid=pid & 0xffff
-packet=IP(src=ADDR, dst=ADDR, options=b"\224\004\000\000")/ \
+packet=IP(src=ADDR, dst="224.0.0.1", ttl=1, options=b"\224\004\000\000")/ \
     IGMP(type=0x11)
 
 send(packet, iface=IF)
