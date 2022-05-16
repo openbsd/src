@@ -1,4 +1,4 @@
-/* $OpenBSD: a_string.c,v 1.9 2022/05/16 20:44:17 tb Exp $ */
+/* $OpenBSD: a_string.c,v 1.10 2022/05/16 20:51:26 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -276,24 +276,35 @@ ASN1_STRING_print(BIO *bp, const ASN1_STRING *astr)
 int
 ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in)
 {
-	ASN1_STRING stmp = { 0 };
-	ASN1_STRING *str = &stmp;
-	int mbflag, ret;
+	ASN1_STRING *astr = NULL;
+	int mbflag;
+	int ret = -1;
+
+	if (out == NULL || *out != NULL)
+		goto err;
 
 	if (in == NULL)
-		return -1;
+		goto err;
 
 	if ((mbflag = asn1_tag2charwidth(in->type)) == -1)
-		return -1;
+		goto err;
 
 	mbflag |= MBSTRING_FLAG;
 
-	ret = ASN1_mbstring_copy(&str, in->data, in->length, mbflag,
-	    B_ASN1_UTF8STRING);
-	if (ret < 0)
-		return ret;
-	*out = stmp.data;
-	return stmp.length;
+	if ((ret = ASN1_mbstring_copy(&astr, in->data, in->length, mbflag,
+	    B_ASN1_UTF8STRING)) < 0)
+		goto err;
+
+	*out = astr->data;
+	ret = astr->length;
+
+	astr->data = NULL;
+	astr->length = 0;
+
+ err:
+	ASN1_STRING_free(astr);
+
+	return ret;
 }
 
 int
