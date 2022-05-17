@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.561 2022/03/14 10:58:35 sthen Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.562 2022/05/17 15:18:43 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 14 2022 $
+.Dd $Mdocdate: May 17 2022 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -51,7 +51,7 @@ by a section covering the fake framework, a section
 explaining flavors and multi-packages, and a section covering
 the generation of package information.
 .Pp
-It ends with sections covering obsolete targets, variables and files,
+It ends with sections covering some obsolete targets, variables and files,
 outlining conversion
 methods from older incarnations of the ports tree or from other
 .Bx
@@ -4231,27 +4231,6 @@ situation, where all these files will automatically default to the
 non-flavor version if there is no flavor-specific file around.
 .Sh OBSOLETE TARGETS
 .Bl -tag -width Ds
-.It Cm addsum
-Used for direct fiddling with
-.Pa distinfo ,
-made obsolete by the correct use of
-.Ev SUPDISTFILES .
-.It Cm cdrom-packages , ftp-packages
-Links are now created during the
-.Cm package
-target.
-.It Cm depends-list
-Renamed into
-.Cm full-build-depends .
-.It Cm describe
-Printed a one-line index entry of the port.
-.Cm dump-vars
-provides much more accurate information, and the indexing role
-has been taken over by the
-.Pa sqlports
-and
-.Pa portslist
-packages.
 .It Cm {build,run,lib}-depends
 The dependency mechanism now meshes
 .Ev BUILD_DEPENDS , LIB_DEPENDS , RUN_DEPENDS, WANTLIB
@@ -4259,102 +4238,9 @@ and
 .Ev MULTI_PACKAGES .
 Refer to
 .Cm prepare , install-depends , test-depends .
-.It Cm {pre,do}-extract
-Don't override.
-Set
-.Ev EXTRACT_ONLY
-to nothing and override
-.Cm post-extract
-instead.
-.It Cm {pre,do,post}-fetch
-These prevented bulk mechanisms from running properly.
-.It Cm {pre,do,post}-package
-There is no port that requires special treatment during packaging,
-as
-.Cm {pre,do,post}-install
-should take care of every necessity.
-.It Cm fetch-list , mirror-distfiles , fetch-makefile , mirror-maker , mirror-maker-fetch
-Use
-.Cm dpb Fl F
-instead, see
-.Xr mirroring-ports 7 .
-.It Cm obj
-Starting with
-.Ox 3.3 ,
-using
-.Ev WRKOBJDIR
-no longer creates a symlink between the current directory and
-a subdirectory of ${WRKOBJDIR}, so
-.Cm obj
-is no longer applicable.
-.It Cm print-depends
-Use
-.Cm print-build-depends
-and
-.Cm print-run-depends
-instead.
-.It Cm print-depends-list
-Renamed into
-.Cm print-build-depends .
-.It Cm print-package-depends
-Renamed into
-.Cm print-run-depends .
-.It Cm print-package-signature
-Renamed into
-.Cm print-update-signature .
-.It Cm readme , readmes
-replaced by the
-.Pa databases/ports-readmes
-port, using the Template Toolkit
-.Po
-.Pa textproc/p5-Template
-.Pc
-instead of hand-coded substitutions.
 .El
 .Sh OBSOLETE VARIABLES
 .Bl -tag -width Ds
-.It Ev BIN_PACKAGES
-Old user settings.
-The infrastructure always trusts the repository to contain correct packages.
-So, if the package name did not change and if it exists in the repository,
-it will not be rebuilt without manual user action.
-.It Ev CATn
-List of formatted manpages, per section.
-.It Ev CATPREFIX
-Location for storing formatted manpages.
-Derived directly from
-.Ev PREFIX .
-.It Ev CDROM_PACKAGES
-Old user settings.
-Base location where packages suitable for a CD-ROM would be placed.
-.It Ev COMMENT
-Used to be the name of the comment file for a package.
-It now holds the comment itself.
-Some magic has been put in to allow for a seamless transition.
-.It Ev CONFIGURE_SHARED
-Used to default to --enable-shared or --disable-shared, depending on whether
-the architecture supported shared libraries.
-.It Ev DESCR_SRC
-From
-.Nx .
-This is DESCR.
-.Ox
-does not give a specific name to the generated file.
-It is not recommended to try to access it directly.
-.It Ev EXTRACT_AFTER_ARGS
-Was used to cobble together the normal extraction command, as
-${EXTRACT_CMD} ${EXTRACT_BEFORE_ARGS} ${EXTRACT_AFTER_ARGS}.
-Use
-.Ev EXTRACT_CASES
-instead.
-.It Ev EXTRACT_BEFORE_ARGS
-Likewise, use
-.Ev EXTRACT_CASES
-instead.
-.It Ev EXTRACT_CMD
-Likewise, use
-.Ev EXTRACT_CASES
-instead.
 .It Ev FETCH_BEFORE_ARGS , FETCH_AFTER_ARGS
 Set
 .Ev FETCH_CMD
@@ -4362,37 +4248,6 @@ to point to a script that does any required special treatment instead.
 .It Ev FETCH_DEPENDS
 Used to specify dependencies that were needed to fetch files.
 It is much easier to mirror locally weird distribution files.
-.It Ev FTP_PACKAGES
-User settings.
-Base location where packages suitable for FTP (see
-PERMIT_PACKAGE) will be placed.
-Now hardwired to
-.Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/ftp .
-.It Ev GNU_CONFIGURE
-Use
-.Ev CONFIGURE_STYLE
-instead.
-.It Ev HAS_CONFIGURE
-Use
-.Ev CONFIGURE_STYLE
-instead.
-.It Ev IGNOREFILES
-Set to the list of files that can't be checksummed.
-All uses of it have led to postponing the correct action: talking
-to the software authors and getting them to provide versioned archives.
-.It Ev MANn
-List of unformatted manpages, per section.
-.It Ev MANPREFIX
-Location for storing unformatted manpages.
-Derived directly from
-.Ev PREFIX .
-.It Ev MASTERDIR
-From
-.Fx .
-Used to organize a collection of ports that share most files.
-.Ox
-uses a single port with flavors or multi-packages to produce
-package variations instead.
 .It Ev MASTER_SITE_SUBDIR
 Contents were used to replace
 .Sq %SUBDIR%
@@ -4405,155 +4260,17 @@ almost always occur at the end of the directory,
 the simpler
 .Li ${VARIABLE:=subdir/}
 construct is now used instead
-.Po
-taken from
-.Nx
-.Pc .
-.It Ev MD5_FILE
-Use
-.Ev CHECKSUM_FILE
-instead.
-.It Ev MIRROR_DISTFILE
-Use
-.Ev PERMIT_DISTFILES
-to determine which files can be mirrored instead.
-See
-.Xr mirroring-ports 7 .
-.It Ev NEED_VERSION
-Used to set a requirement on a specific revision of
-.Nm
-needed by a port.
-No longer needed as
-.Nm
-should always be kept up to date.
-.It Ev NO_CONFIGURE
-If ${CONFIGURE_SCRIPT} does not exist, no automatic configuration will
-be done anyway.
-.It Ev NO_DESCRIBE
-Describe was killed ages ago.
 .It Ev NO_EXTRACT
 Set EXTRACT_ONLY= instead.
-.It Ev NO_INSTALL_MANPAGES
-Use
-.Ev CONFIGURE_STYLE
-instead.
-.It Ev NO_MTREE
-Starting with
-.Ox 2.7 ,
-the operating system installation script runs the /usr/local specification
-globally, instead of embedding it in each package.
-So packages no longer record an
-.Xr mtree 8
-specification.
-Use an explicit
-.Sq @exec
-command if needed.
-.It Ev NO_PACKAGE
-All ports should generate a package, preferably before install.
-.It Ev NO_PATCH
-The absence of a patches directory does the same.
-Use PATCHDIR and PATCH_LIST if patches need to be changed dynamically.
-.It Ev NO_SHARED_ARCHS
-Used to be set to the list of platforms that did not support shared libraries.
-No such architectures remain.
-.It Ev NO_SHARED_LIBS
-Used to be set to
-.Sq Yes
-if platform did not support shared libraries.
 .It Ev NO_WRKDIR
 All ports should have a working directory, as this is necessary to store
 cookies and keep state.
 .It Ev NO_WRKSUBDIR
 The same functionality is obtained by setting WRKDIST=${WRKDIR}.
-.It Ev NOCLEANDEPENDS
-Use CLEANDEPENDS instead.
-.It Ev NOMANCOMPRESS
-.Fx
-ships with compressed man pages, and uses this variable to control
-that behavior.
-.It Ev OBJMACHINE
-Starting with
-.Ox 3.3 ,
-setting
-.Ev WRKOBJDIR
-creates the whole
-.Ev WRKDIR
-hierarchy under ${WRKOBJDIR}, so
-.Ev OBJMACHINE
-is no longer useful.
-.It Ev OLD_WRKDIR_NAME
-Used to be a base name for
-.Ev WRKDIR
-in the old scheme without
-.Ev WRKOBJDIR .
-.It Ev OPSYS
-The operating system.
-This ports tree is only used on
-.Ox .
 .It Ev OPSYS_VER
 Use
 .Ev OSREV
 instead.
-.It Ev PACKAGES
-Base location for packages built, everything is based on
-.Ev PACKAGE_REPOSITORY
-now.
-.It Ev PACKAGING
-Used to be set during package creation, so that the port would test it
-to tweak some settings at this point.
-All its effects are now achieved through
-.Ev MULTI_PACKAGES .
-.It Ev PATCH_SITES
-.Ev PATCHFILES
-used to be retrieved from a separate site list.
-For greater flexibility, all files are now retrieved from
-.Ev MASTER_SITES ,
-.Ev MASTER_SITES0 , ... ,
-.Ev MASTER_SITES9 ,
-using a
-.Sq :0
-to
-.Sq :9
-extension to the file name, e.g.,
-.Bd -literal -offset indent
-PATCHFILES=foo.diff.gz
-PATCH_SITES=ftp://ftp.zoinx.org/pub/
-.Ed
-.Pp
-becomes
-.Bd -literal -offset indent
-PATCHFILES=foo.diff.gz:0
-MASTER_SITES0=ftp://ftp.zoinx.org/pub/
-.Ed
-.\" keep the long form so searching can find them
-.It Ev PERMIT_DISTFILES_CDROM , PERMIT_DISTFILES_FTP , PERMIT_PACKAGE_CDROM , PERMIT_PACKAGE_FTP
-The
-.Ox
-project no longer produces CD-ROMs, so the
-.Ev PERMIT_*_CDROM
-variables were dropped,
-and
-.Ev PERMIT_DISTFILES_FTP / PERMIT_PACKAGE_FTP
-were shortened to
-.Ev PERMIT_DISTFILES / PERMIT_PACKAGE .
-.It Ev PKG_CMD
-Replaced by
-.Ev PKG_CREATE .
-.It Ev PKGREPOSITORY
-Old user settings.
-See
-.Ev PACKAGE_REPOSITORY .
-.It Ev PKGREPOSITORYBASE
-Old user settings.
-See
-.Ev PACKAGE_REPOSITORY .
-.It Ev PLIST_SRC
-From
-.Nx .
-This is PLIST.
-.Ox
-does not give a specific name to the generated file.
-It is not recommended to try to access them directly.
 .It Ev PKGNAME
 Used to refer to the full package name, has been superseded by
 .Ev FULLPKGNAME-foo ,
@@ -4574,43 +4291,11 @@ Use SUBST_VARS instead.
 does not allow general substitutions of the form VAR=value, but uses
 only a list of variables instead.
 Most package files gets transformed, instead of only the packing-list.
-.It Ev PREFERRED_CIPHERS
-Allowing user change of cryptographic digest is dangerous.
-.It Ev RECURSIVE_FETCH_LIST
-No longer needed with modern
-.Xr mirroring-ports 7 .
-.It Ev RESTRICTED
-Port has cryptographic issues.
-.Ox
-focuses on
-.Ev PERMIT_PACKAGE
-instead.
-.It Ev SED_PLIST
-Old pipeline for creating packing-lists at the ports level.
-Necessary functionality has been integrated directly into
-.Xr pkg_create 1 .
-.It Ev SIGNING_PARAMETERS
-Old user settings.
-There is no longer any benefit to signing packages during creation.
 .It Ev SCRIPTDIR
 Old location for scripts related to the current port.
 There is no reason for the semantic distinction, use
 .Ev FILESDIR
 for those.
-.It Ev SCRIPTS_ENV
-Used to contain the environment for invoking various scripts.
-.Ev CONFIGURE_ENV
-and
-.Ev MAKE_ENV
-are enough.
-.It Ev SHARED_ONLY
-Had to be set to
-.Sq Yes
-if port could only be built on architectures with shared libraries.
-.It Ev USE_AUTOCONF
-Use
-.Ev CONFIGURE_STYLE
-instead.
 .It Ev USE_BZIP2
 The framework will automatically detect the presence of
 .Pa .tar.bz2
@@ -4619,10 +4304,6 @@ See also
 .Ev BZIP2 , EXTRACT_CASES ,
 and
 .Ev EXTRACT_SUFX .
-.It Ev USE_IMAKE
-Use
-.Ev CONFIGURE_STYLE
-instead.
 .It Ev USE_ZIP
 The framework will automatically detect the presence of
 .Pa .zip
@@ -4631,60 +4312,9 @@ See also
 .Ev ZIP , EXTRACT_CASES ,
 and
 .Ev EXTRACT_SUFX .
-.It Ev VARNAME
-Use make show=name instead of make show VARNAME=name.
-.It Ev WRKPKG
-Directory used to build package information from the templates under
-.Pa ${PKGDIR} .
-This information is now built on the fly by
-.Xr pkg_create 1 .
 .El
 .Sh OBSOLETE FILES
 .Bl -tag -width Ds
-.It Pa {files,patches,pkg}.${ARCH}
-Offensive to introspection, makes it impossible to build a decent sqlports
-on a given arch.
-Hasn't been used for a long time, and there are lots of mechanisms such as
-.Ev PKG_ARGS
-and fragment substitution, or
-.Ev PATCH_LIST
-to achieve similar results.
-.It Pa Makefile.${ARCH}
-Likewise, offensive to introspection too.
-.It Pa ${FILESDIR}/md5
-Renamed to
-.Pa distinfo
-to match other
-.Bx ,
-and save directories.
-.It Pa ${SCRIPTDIR}/{pre,do,post}-*
-Identical functionality can be obtained through a
-.Cm {pre,do,post}-*
-target, invoking the script manually if necessary.
-.It Pa ${SCRIPTDIR}/configure
-No longer invoked automatically.
-Just inline the instructions in
-.Cm do-configure
-in the Makefile, or put the script in ${FILESDIR} and
-invoke it.
-.It Pa ${PKGDIR}/COMMENT
-Use COMMENT variable instead.
-.It Pa ${PKGDIR}/DEINSTALL*
-Use @unexec annotations in the packing-list instead.
-.It Pa ${PKGDIR}/INSTALL*
-Use @exec annotations in the packing-list instead.
-.It Pa ${PKGDIR}/PLIST.{noshared,no-shared,shared}
-Packaging list fragments to handle platforms that did not support
-shared libraries.
-.It Pa ${PKGDIR}/PLIST.sed
-Use PLIST directly.
-Until revision 1.295,
-.Nm
-did not substitute variables in the packing-list unless this special form
-was used.
-.It Pa ${PKGDIR}/REQ*
-Old requirement script.
-Was mostly unused anyway.
 .It Pa /usr/share/mk/bsd.port.mk
 Original location of
 .Nm .
@@ -4693,23 +4323,6 @@ The current file lives under
 whereas
 .Pa /usr/share/mk/bsd.port.mk
 is just a stub.
-.It Pa {scripts,files,patches}.${OPSYS}
-The
-.Ox
-ports tree focuses on robustness, not on being portable to other operating
-systems.
-In any case, portability should not need to depend on operating
-system dependent patches.
-.It Pa /usr/local/etc
-Used by
-.Fx
-to marshall system configuration files.
-All
-.Ox
-system configuration files are located in
-.Pa /etc ,
-or in a subdirectory of
-.Pa /etc .
 .El
 .Sh SEE ALSO
 .Xr clean-old-distfiles 1 ,
