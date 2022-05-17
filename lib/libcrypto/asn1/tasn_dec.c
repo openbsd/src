@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.69 2022/05/17 12:23:52 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.70 2022/05/17 19:09:16 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -91,6 +91,8 @@ static int asn1_template_ex_d2i(ASN1_VALUE **pval, const unsigned char **in,
     long len, const ASN1_TEMPLATE *tt, char opt, int depth);
 static int asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in,
     long len, const ASN1_TEMPLATE *tt, char opt, int depth);
+static int asn1_d2i_ex_mstring(ASN1_VALUE **pval, CBS *CBS,
+    const ASN1_ITEM *it, int tag_number, int tag_class, char optional);
 static int asn1_d2i_ex_primitive(ASN1_VALUE **pval, CBS *cbs,
     const ASN1_ITEM *it, int tag_number, int tag_class, char optional);
 static int asn1_ex_c2i(ASN1_VALUE **pval, CBS *content, int utype,
@@ -399,9 +401,6 @@ asn1_item_ex_d2i_cbs(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 	const ASN1_EXTERN_FUNCS *ef = it->funcs;
 	const unsigned char *p = NULL;
 	ASN1_TLC ctx = { 0 };
-	CBS cbs_mstring;
-	unsigned char oclass;
-	int otag;
 	int ret = 0;
 
 	if (pval == NULL)
@@ -433,39 +432,8 @@ asn1_item_ex_d2i_cbs(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 		    tag_class, optional);
 
 	case ASN1_ITYPE_MSTRING:
-		/*
-		 * It never makes sense for multi-strings to have implicit
-		 * tagging, so if tag != -1, then this looks like an error in
-		 * the template.
-		 */
-		if (tag_number != -1) {
-			ASN1error(ASN1_R_BAD_TEMPLATE);
-			goto err;
-		}
-
-		/* XXX - avoid reading the header twice for MSTRING. */
-		CBS_dup(cbs, &cbs_mstring);
-		if (asn1_check_tag_cbs(&cbs_mstring, NULL, &otag, &oclass,
-		    NULL, NULL, -1, 0, 1) != 1) {
-			ASN1error(ERR_R_NESTED_ASN1_ERROR);
-			goto err;
-		}
-
-		/* Must be UNIVERSAL class */
-		if (oclass != V_ASN1_UNIVERSAL) {
-			if (optional)
-				return -1;
-			ASN1error(ASN1_R_MSTRING_NOT_UNIVERSAL);
-			goto err;
-		}
-		/* Check tag matches bit map */
-		if (!(ASN1_tag2bit(otag) & it->utype)) {
-			if (optional)
-				return -1;
-			ASN1error(ASN1_R_MSTRING_WRONG_TAG);
-			goto err;
-		}
-		return asn1_d2i_ex_primitive(pval, cbs, it, otag, 0, 0);
+		return asn1_d2i_ex_mstring(pval, cbs, it, tag_number, tag_class,
+		    optional);
 
 	case ASN1_ITYPE_EXTERN:
 		if (CBS_len(cbs) > LONG_MAX)
@@ -750,74 +718,35 @@ asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
 	return 0;
 }
 
+/*
+ * Decode ASN.1 content into a primitive type. There are three possible forms -
+ * a SEQUENCE/SET/OTHER that is stored verbatim (including the ASN.1 tag and
+ * length octets), constructed objects and non-constructed objects. In the
+ * first two cases indefinite length is permitted, which we may need to handle.
+ * When this function is called the *cbs should reference the start of the
+ * ASN.1 object (i.e. the tag/length header), while *cbs_object should
+ * reference the start of the object contents (i.e. after the tag/length
+ * header. Additionally, the *cbs_object offset should be relative to the
+ * ASN.1 object being parsed. On success the *cbs will point at the octet
+ * after the object.
+ */
 static int
-asn1_d2i_ex_primitive(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
-    int tag_number, int tag_class, char optional)
+asn1_d2i_ex_primitive_content(ASN1_VALUE **pval, CBS *cbs, CBS *cbs_object,
+    int utype, char constructed, char indefinite, size_t length,
+    const ASN1_ITEM *it)
 {
-	CBS cbs_any, cbs_content, cbs_object, cbs_initial;
-	char constructed, indefinite;
+	CBS cbs_content, cbs_initial;
 	uint8_t *data = NULL;
 	size_t data_len = 0;
-	int utype = it->utype;
-	unsigned char oclass;
-	size_t length;
 	CBB cbb;
-	int tag_ret;
 	int ret = 0;
 
 	memset(&cbb, 0, sizeof(cbb));
 
 	CBS_dup(cbs, &cbs_initial);
 	CBS_init(&cbs_content, NULL, 0);
-	CBS_init(&cbs_object, CBS_data(cbs), CBS_len(cbs));
 
-	if (pval == NULL) {
-		ASN1error(ASN1_R_ILLEGAL_NULL);
-		goto err;
-	}
-
-	if (it->itype == ASN1_ITYPE_MSTRING) {
-		utype = tag_number;
-		tag_number = -1;
-	}
-
-	if (utype == V_ASN1_ANY) {
-		/* Determine type from ASN.1 tag. */
-		if (tag_number >= 0) {
-			ASN1error(ASN1_R_ILLEGAL_TAGGED_ANY);
-			goto err;
-		}
-		if (optional) {
-			ASN1error(ASN1_R_ILLEGAL_OPTIONAL_ANY);
-			goto err;
-		}
-		/* XXX - avoid reading the header twice for ANY. */
-		CBS_dup(&cbs_object, &cbs_any);
-		tag_ret = asn1_check_tag_cbs(&cbs_any, NULL, &utype, &oclass,
-		    NULL, NULL, -1, 0, 0);
-		if (tag_ret != 1) {
-			ASN1error(ERR_R_NESTED_ASN1_ERROR);
-			goto err;
-		}
-		if (oclass != V_ASN1_UNIVERSAL)
-			utype = V_ASN1_OTHER;
-	}
-
-	if (tag_number == -1) {
-		tag_number = utype;
-		tag_class = V_ASN1_UNIVERSAL;
-	}
-
-	tag_ret = asn1_check_tag_cbs(&cbs_object, &length, NULL, NULL, &indefinite,
-	    &constructed, tag_number, tag_class, optional);
-	if (tag_ret == -1) {
-		ret = -1;
-		goto err;
-	}
-	if (tag_ret != 1) {
-		ASN1error(ERR_R_NESTED_ASN1_ERROR);
-		goto err;
-	}
+	/* XXX - check primitive vs constructed based on utype. */
 
 	/* SEQUENCE and SET must be constructed. */
 	if ((utype == V_ASN1_SEQUENCE || utype == V_ASN1_SET) && !constructed) {
@@ -828,10 +757,10 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 	/* SEQUENCE, SET and "OTHER" are left in encoded form. */
 	if (utype == V_ASN1_SEQUENCE || utype == V_ASN1_SET ||
 	    utype == V_ASN1_OTHER) {
-		if (!asn1_find_end(&cbs_object, length, indefinite))
+		if (!asn1_find_end(cbs_object, length, indefinite))
 			goto err;
 		if (!CBS_get_bytes(&cbs_initial, &cbs_content,
-		    CBS_offset(&cbs_object)))
+		    CBS_offset(cbs_object)))
 			goto err;
 	} else if (constructed) {
 		/*
@@ -843,7 +772,7 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 		 */
 		if (!CBB_init(&cbb, 0))
 			goto err;
-		if (!asn1_collect(&cbb, &cbs_object, indefinite, -1,
+		if (!asn1_collect(&cbb, cbs_object, indefinite, -1,
 		    V_ASN1_UNIVERSAL, 0))
 			goto err;
 		if (!CBB_finish(&cbb, &data, &data_len))
@@ -851,14 +780,14 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 
 		CBS_init(&cbs_content, data, data_len);
 	} else {
-		if (!CBS_get_bytes(&cbs_object, &cbs_content, length))
+		if (!CBS_get_bytes(cbs_object, &cbs_content, length))
 			goto err;
 	}
 
 	if (!asn1_ex_c2i(pval, &cbs_content, utype, it))
 		goto err;
 
-	if (!CBS_skip(cbs, CBS_offset(&cbs_object)))
+	if (!CBS_skip(cbs, CBS_offset(cbs_object)))
 		goto err;
 
 	ret = 1;
@@ -868,6 +797,125 @@ asn1_d2i_ex_primitive(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 	freezero(data, data_len);
 
 	return ret;
+}
+
+static int
+asn1_d2i_ex_any(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
+    int tag_number, int tag_class, char optional)
+{
+	char constructed, indefinite;
+	unsigned char object_class;
+	int object_type;
+	CBS cbs_object;
+	size_t length;
+
+	CBS_init(&cbs_object, CBS_data(cbs), CBS_len(cbs));
+
+	if (it->utype != V_ASN1_ANY)
+		return 0;
+
+	if (tag_number >= 0) {
+		ASN1error(ASN1_R_ILLEGAL_TAGGED_ANY);
+		return 0;
+	}
+	if (optional) {
+		ASN1error(ASN1_R_ILLEGAL_OPTIONAL_ANY);
+		return 0;
+	}
+
+	/* Determine type from ASN.1 tag. */
+	if (asn1_check_tag_cbs(&cbs_object, &length, &object_type, &object_class,
+	    &indefinite, &constructed, -1, 0, 0) != 1) {
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		return 0;
+	}
+	if (object_class != V_ASN1_UNIVERSAL)
+		object_type = V_ASN1_OTHER;
+
+	return asn1_d2i_ex_primitive_content(pval, cbs, &cbs_object, object_type,
+	    constructed, indefinite, length, it);
+}
+
+static int
+asn1_d2i_ex_mstring(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
+    int tag_number, int tag_class, char optional)
+{
+	char constructed, indefinite;
+	unsigned char object_class;
+	int object_tag;
+	CBS cbs_object;
+	size_t length;
+
+	CBS_init(&cbs_object, CBS_data(cbs), CBS_len(cbs));
+
+	/*
+	 * It never makes sense for multi-strings to have implicit tagging, so
+	 * if tag_number != -1, then this looks like an error in the template.
+	 */
+	if (tag_number != -1) {
+		ASN1error(ASN1_R_BAD_TEMPLATE);
+		return 0;
+	}
+
+	if (asn1_check_tag_cbs(&cbs_object, &length, &object_tag, &object_class,
+	    &indefinite, &constructed, -1, 0, 1) != 1) {
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		return 0;
+	}
+
+	/* Class must be UNIVERSAL. */
+	if (object_class != V_ASN1_UNIVERSAL) {
+		if (optional)
+			return -1;
+		ASN1error(ASN1_R_MSTRING_NOT_UNIVERSAL);
+		return 0;
+	}
+	/* Check tag matches bit map. */
+	if ((ASN1_tag2bit(object_tag) & it->utype) == 0) {
+		if (optional)
+			return -1;
+		ASN1error(ASN1_R_MSTRING_WRONG_TAG);
+		return 0;
+	}
+
+	return asn1_d2i_ex_primitive_content(pval, cbs, &cbs_object,
+	    object_tag, constructed, indefinite, length, it);
+}
+
+static int
+asn1_d2i_ex_primitive(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
+    int tag_number, int tag_class, char optional)
+{
+	CBS cbs_object;
+	char constructed, indefinite;
+	int utype = it->utype;
+	size_t length;
+	int ret;
+
+	CBS_init(&cbs_object, CBS_data(cbs), CBS_len(cbs));
+
+	if (it->itype == ASN1_ITYPE_MSTRING)
+		return 0;
+
+	if (it->utype == V_ASN1_ANY)
+		return asn1_d2i_ex_any(pval, cbs, it, tag_number, tag_class, optional);
+
+	if (tag_number == -1) {
+		tag_number = it->utype;
+		tag_class = V_ASN1_UNIVERSAL;
+	}
+
+	ret = asn1_check_tag_cbs(&cbs_object, &length, NULL, NULL, &indefinite,
+	    &constructed, tag_number, tag_class, optional);
+	if (ret == -1)
+		return -1;
+	if (ret != 1) {
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		return 0;
+	}
+
+	return asn1_d2i_ex_primitive_content(pval, cbs, &cbs_object, utype,
+	    constructed, indefinite, length, it);
 }
 
 static int
