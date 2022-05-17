@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.31 2022/05/12 19:55:58 jsing Exp $ */
+/* $OpenBSD: asn1_locl.h,v 1.32 2022/05/17 09:17:20 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -205,6 +205,7 @@ int asn1_get_primitive(CBS *cbs, int der_mode, uint32_t *out_tag_number,
 
 int asn1_tag2charwidth(int tag);
 
+int asn1_abs_set_unused_bits(ASN1_BIT_STRING *abs, uint8_t unused_bits);
 int c2i_ASN1_BIT_STRING_cbs(ASN1_BIT_STRING **out_abs, CBS *cbs);
 
 int c2i_ASN1_INTEGER_cbs(ASN1_INTEGER **out_aint, CBS *cbs);

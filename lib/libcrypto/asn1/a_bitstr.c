@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.35 2022/04/26 20:00:18 jsing Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.36 2022/05/17 09:17:20 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,7 +92,7 @@ asn1_abs_clear_unused_bits(ASN1_BIT_STRING *abs)
 	abs->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
 }
 
-static int
+int
 asn1_abs_set_unused_bits(ASN1_BIT_STRING *abs, uint8_t unused_bits)
 {
 	if (unused_bits > 7)
