@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvclock.c,v 1.11 2022/04/03 20:23:14 patrick Exp $	*/
+/*	$OpenBSD: mvclock.c,v 1.12 2022/05/17 10:09:40 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -72,13 +72,16 @@ mvclock_match(struct device *parent, void *match, void *aux)
 	struct fdt_attach_args *faa = aux;
 	int node = faa->fa_node;
 
-	return (OF_is_compatible(node, "marvell,ap806-clock") ||
+	if (OF_is_compatible(node, "marvell,ap806-clock") ||
 	    OF_is_compatible(node, "marvell,ap807-clock") ||
 	    OF_is_compatible(node, "marvell,cp110-clock") ||
 	    OF_is_compatible(node, "marvell,armada-3700-periph-clock-nb") ||
 	    OF_is_compatible(node, "marvell,armada-3700-periph-clock-sb") ||
 	    OF_is_compatible(node, "marvell,armada-3700-tbg-clock") ||
-	    OF_is_compatible(node, "marvell,armada-3700-xtal-clock"));
+	    OF_is_compatible(node, "marvell,armada-3700-xtal-clock"))
+		return 10;	/* Must beat syscon(4). */
+
+	return 0;
 }
 
 void
