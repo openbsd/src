@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.80 2022/04/21 05:06:07 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.81 2022/05/17 07:50:59 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -73,6 +73,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "asn1_locl.h"
 #include "bytestring.h"
 #include "x509_lcl.h"
 
@@ -847,44 +848,45 @@ range_should_be_prefix(const unsigned char *min, const unsigned char *max,
 }
 
 /*
- * Construct a prefix.
+ * Fill IPAddressOrRange with bit string encoding of a prefix - RFC 3779, 2.1.1.
  */
 static int
-make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
-    unsigned int afi, int prefix_len)
+make_addressPrefix(IPAddressOrRange **out_aor, uint8_t *addr, uint32_t afi,
+    int prefix_len)
 {
-	IPAddressOrRange *aor;
-	int afi_len, byte_len, bit_len, max_len;
+	IPAddressOrRange *aor = NULL;
+	int afi_len, max_len, num_bits, num_octets;
+	uint8_t unused_bits;
 
 	if (prefix_len < 0)
-		return 0;
+		goto err;
 
 	max_len = 16;
 	if ((afi_len = length_from_afi(afi)) > 0)
 		max_len = afi_len;
 	if (prefix_len > 8 * max_len)
-		return 0;
+		goto err;
 
-	byte_len = (prefix_len + 7) / 8;
-	bit_len = prefix_len % 8;
+	num_octets = (prefix_len + 7) / 8;
+	num_bits = prefix_len % 8;
+
+	unused_bits = 0;
+	if (num_bits > 0)
+		unused_bits = 8 - num_bits;
 
 	if ((aor = IPAddressOrRange_new()) == NULL)
-		return 0;
+		goto err;
+
 	aor->type = IPAddressOrRange_addressPrefix;
+
 	if ((aor->u.addressPrefix = ASN1_BIT_STRING_new()) == NULL)
 		goto err;
-
-	if (!ASN1_BIT_STRING_set(aor->u.addressPrefix, addr, byte_len))
+	if (!ASN1_BIT_STRING_set(aor->u.addressPrefix, addr, num_octets))
+		goto err;
+	if (!asn1_abs_set_unused_bits(aor->u.addressPrefix, unused_bits))
 		goto err;
 
-	aor->u.addressPrefix->flags &= ~7;
-	aor->u.addressPrefix->flags |= ASN1_STRING_FLAG_BITS_LEFT;
-	if (bit_len > 0) {
-		aor->u.addressPrefix->data[byte_len - 1] &= ~(0xff >> bit_len);
-		aor->u.addressPrefix->flags |= 8 - bit_len;
-	}
-
-	*result = aor;
+	*out_aor = aor;
 	return 1;
 
  err:
