@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.68 2022/05/16 20:06:15 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.69 2022/05/17 12:23:52 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -528,10 +528,6 @@ ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 	return asn1_item_ex_d2i(pval, in, len, it, tag, aclass, opt, 0);
 }
 
-/* Templates are handled with two separate functions.
- * One handles any EXPLICIT tag and the other handles the rest.
- */
-
 static int
 asn1_template_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long inlen,
     const ASN1_TEMPLATE *tt, char opt, int depth)
@@ -541,6 +537,7 @@ asn1_template_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long inlen,
 	long len;
 	const unsigned char *p, *q;
 	char exp_eoc;
+	char cst;
 
 	if (!val)
 		return 0;
@@ -550,48 +547,47 @@ asn1_template_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long inlen,
 	p = *in;
 
 	/* Check if EXPLICIT tag expected */
-	if (flags & ASN1_TFLG_EXPTAG) {
-		char cst;
-		/* Need to work out amount of data available to the inner
-		 * content and where it starts: so read in EXPLICIT header to
-		 * get the info.
-		 */
-		ret = asn1_check_tag(&len, NULL, NULL, &exp_eoc, &cst, &p,
-		    inlen, tt->tag, aclass, opt);
-		q = p;
-		if (!ret) {
-			ASN1error(ERR_R_NESTED_ASN1_ERROR);
-			return 0;
-		} else if (ret == -1)
-			return -1;
-		if (!cst) {
-			ASN1error(ASN1_R_EXPLICIT_TAG_NOT_CONSTRUCTED);
-			return 0;
-		}
-		/* We've found the field so it can't be OPTIONAL now */
-		ret = asn1_template_noexp_d2i(val, &p, len, tt, 0, depth);
-		if (!ret) {
-			ASN1error(ERR_R_NESTED_ASN1_ERROR);
-			return 0;
-		}
-		/* We read the field in OK so update length */
-		len -= p - q;
-		if (exp_eoc) {
-			/* If NDEF we must have an EOC here */
-			if (!asn1_check_eoc(&p, len)) {
-				ASN1error(ASN1_R_MISSING_EOC);
-				goto err;
-			}
-		} else {
-			/* Otherwise we must hit the EXPLICIT tag end or its
-			 * an error */
-			if (len) {
-				ASN1error(ASN1_R_EXPLICIT_LENGTH_MISMATCH);
-				goto err;
-			}
-		}
-	} else
+	if ((flags & ASN1_TFLG_EXPTAG) == 0)
 		return asn1_template_noexp_d2i(val, in, inlen, tt, opt, depth);
+
+	/* Need to work out amount of data available to the inner
+	 * content and where it starts: so read in EXPLICIT header to
+	 * get the info.
+	 */
+	ret = asn1_check_tag(&len, NULL, NULL, &exp_eoc, &cst, &p,
+	    inlen, tt->tag, aclass, opt);
+	q = p;
+	if (!ret) {
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		return 0;
+	} else if (ret == -1)
+		return -1;
+	if (!cst) {
+		ASN1error(ASN1_R_EXPLICIT_TAG_NOT_CONSTRUCTED);
+		return 0;
+	}
+	/* We've found the field so it can't be OPTIONAL now */
+	ret = asn1_template_noexp_d2i(val, &p, len, tt, 0, depth);
+	if (!ret) {
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		return 0;
+	}
+	/* We read the field in OK so update length */
+	len -= p - q;
+	if (exp_eoc) {
+		/* If NDEF we must have an EOC here */
+		if (!asn1_check_eoc(&p, len)) {
+			ASN1error(ASN1_R_MISSING_EOC);
+			goto err;
+		}
+	} else {
+		/* Otherwise we must hit the EXPLICIT tag end or its
+		 * an error */
+		if (len) {
+			ASN1error(ASN1_R_EXPLICIT_LENGTH_MISMATCH);
+			goto err;
+		}
+	}
 
 	*in = p;
 	return 1;
@@ -622,113 +618,129 @@ asn1_template_ex_d2i_cbs(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *tt,
 }
 
 static int
-asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
+asn1_template_stack_of_d2i(ASN1_VALUE **val, const unsigned char **in, long inlen,
     const ASN1_TEMPLATE *tt, char opt, int depth)
 {
-	int flags, aclass;
-	int ret;
 	const unsigned char *p, *q;
+	int sktag, skaclass;
+	char sk_eoc;
+	long len;
+	int ret;
 
-	if (!val)
-		return 0;
-	flags = tt->flags;
-	aclass = flags & ASN1_TFLG_TAG_CLASS;
+	/* SET OF, SEQUENCE OF */
 
 	p = *in;
 	q = p;
 
-	if (flags & ASN1_TFLG_SK_MASK) {
-		/* SET OF, SEQUENCE OF */
-		int sktag, skaclass;
-		char sk_eoc;
-		/* First work out expected inner tag value */
-		if (flags & ASN1_TFLG_IMPTAG) {
-			sktag = tt->tag;
-			skaclass = aclass;
-		} else {
-			skaclass = V_ASN1_UNIVERSAL;
-			if (flags & ASN1_TFLG_SET_OF)
-				sktag = V_ASN1_SET;
-			else
-				sktag = V_ASN1_SEQUENCE;
+	/* First work out expected inner tag value */
+	if (tt->flags & ASN1_TFLG_IMPTAG) {
+		sktag = tt->tag;
+		skaclass = tt->flags & ASN1_TFLG_TAG_CLASS;
+	} else {
+		skaclass = V_ASN1_UNIVERSAL;
+		if (tt->flags & ASN1_TFLG_SET_OF)
+			sktag = V_ASN1_SET;
+		else
+			sktag = V_ASN1_SEQUENCE;
+	}
+	/* Get the tag */
+	ret = asn1_check_tag(&len, NULL, NULL, &sk_eoc, NULL, &p, inlen,
+	    sktag, skaclass, opt);
+	if (!ret) {
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		return 0;
+	} else if (ret == -1)
+		return -1;
+	if (!*val)
+		*val = (ASN1_VALUE *)sk_new_null();
+	else {
+		/* We've got a valid STACK: free up any items present */
+		STACK_OF(ASN1_VALUE) *sktmp =
+		    (STACK_OF(ASN1_VALUE) *)*val;
+		ASN1_VALUE *vtmp;
+		while (sk_ASN1_VALUE_num(sktmp) > 0) {
+			vtmp = sk_ASN1_VALUE_pop(sktmp);
+			ASN1_item_ex_free(&vtmp,
+			    tt->item);
 		}
-		/* Get the tag */
-		ret = asn1_check_tag(&len, NULL, NULL, &sk_eoc, NULL, &p, len,
-		    sktag, skaclass, opt);
-		if (!ret) {
-			ASN1error(ERR_R_NESTED_ASN1_ERROR);
-			return 0;
-		} else if (ret == -1)
-			return -1;
-		if (!*val)
-			*val = (ASN1_VALUE *)sk_new_null();
-		else {
-			/* We've got a valid STACK: free up any items present */
-			STACK_OF(ASN1_VALUE) *sktmp =
-			    (STACK_OF(ASN1_VALUE) *)*val;
-			ASN1_VALUE *vtmp;
-			while (sk_ASN1_VALUE_num(sktmp) > 0) {
-				vtmp = sk_ASN1_VALUE_pop(sktmp);
-				ASN1_item_ex_free(&vtmp,
-				    tt->item);
-			}
-		}
+	}
 
-		if (!*val) {
-			ASN1error(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
+	if (!*val) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 
-		/* Read as many items as we can */
-		while (len > 0) {
-			ASN1_VALUE *skfield;
-			q = p;
-			/* See if EOC found */
-			if (asn1_check_eoc(&p, len)) {
-				if (!sk_eoc) {
-					ASN1error(ASN1_R_UNEXPECTED_EOC);
-					goto err;
-				}
-				len -= p - q;
-				sk_eoc = 0;
-				break;
-			}
-			skfield = NULL;
-			if (!asn1_item_ex_d2i(&skfield, &p, len,
-			    tt->item, -1, 0, 0, depth)) {
-				ASN1error(ERR_R_NESTED_ASN1_ERROR);
+	/* Read as many items as we can */
+	while (len > 0) {
+		ASN1_VALUE *skfield;
+		q = p;
+		/* See if EOC found */
+		if (asn1_check_eoc(&p, len)) {
+			if (!sk_eoc) {
+				ASN1error(ASN1_R_UNEXPECTED_EOC);
 				goto err;
 			}
 			len -= p - q;
-			if (!sk_ASN1_VALUE_push((STACK_OF(ASN1_VALUE) *)*val,
-			    skfield)) {
-				ASN1error(ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
+			sk_eoc = 0;
+			break;
 		}
-		if (sk_eoc) {
-			ASN1error(ASN1_R_MISSING_EOC);
-			goto err;
-		}
-	} else if (flags & ASN1_TFLG_IMPTAG) {
-		/* IMPLICIT tagging */
-		ret = asn1_item_ex_d2i(val, &p, len,
-		    tt->item, tt->tag, aclass, opt, depth);
-		if (!ret) {
+		skfield = NULL;
+		if (!asn1_item_ex_d2i(&skfield, &p, len,
+		    tt->item, -1, 0, 0, depth)) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
 			goto err;
-		} else if (ret == -1)
-			return -1;
-	} else {
-		/* Nothing special */
-		ret = asn1_item_ex_d2i(val, &p, len, tt->item, -1, 0,
-		    opt, depth);
-		if (!ret) {
-			ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		}
+		len -= p - q;
+		if (!sk_ASN1_VALUE_push((STACK_OF(ASN1_VALUE) *)*val,
+		    skfield)) {
+			ASN1error(ERR_R_MALLOC_FAILURE);
 			goto err;
-		} else if (ret == -1)
-			return -1;
+		}
 	}
+	if (sk_eoc) {
+		ASN1error(ASN1_R_MISSING_EOC);
+		goto err;
+	}
+
+	*in = p;
+	return 1;
+
+ err:
+	ASN1_template_free(val, tt);
+	return 0;
+}
+
+static int
+asn1_template_noexp_d2i(ASN1_VALUE **val, const unsigned char **in, long len,
+    const ASN1_TEMPLATE *tt, char opt, int depth)
+{
+	const unsigned char *p;
+	int tag_number, tag_class;
+	int ret;
+
+	if (!val)
+		return 0;
+
+	p = *in;
+
+	if ((tt->flags & ASN1_TFLG_SK_MASK) != 0)
+		return asn1_template_stack_of_d2i(val, in, len, tt, opt, depth);
+
+	tag_number = -1;
+	tag_class = V_ASN1_UNIVERSAL;
+
+	/* See if we need to use IMPLICIT tagging. */
+	if ((tt->flags & ASN1_TFLG_IMPTAG) != 0) {
+		tag_number = tt->tag;
+		tag_class = tt->flags & ASN1_TFLG_TAG_CLASS;
+	}
+
+	ret = asn1_item_ex_d2i(val, &p, len, tt->item, tag_number, tag_class, opt, depth);
+	if (!ret) {
+		ASN1error(ERR_R_NESTED_ASN1_ERROR);
+		goto err;
+	} else if (ret == -1)
+		return -1;
 
 	*in = p;
 	return 1;
