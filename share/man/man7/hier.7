@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.165 2020/02/06 05:40:02 jsg Exp $
+.\"	$OpenBSD: hier.7,v 1.166 2022/05/17 16:50:30 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)hier.7	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: February 6 2020 $
+.Dd $Mdocdate: May 17 2022 $
 .Dt HIER 7
 .Os
 .Sh NAME
@@ -112,6 +112,9 @@ Configuration files for
 .It ldap/
 Certificates and schema definition files for
 .Xr ldapd 8 .
+.It login.conf.d/
+Additional login attributes for
+.Xr login.conf 5 .
 .It mail/
 System mail configuration files.
 .It mtree/
