@@ -1,6 +1,6 @@
-/* $OpenBSD: roff_int.h,v 1.18 2021/10/04 14:18:42 schwarze Exp $	*/
+/* $OpenBSD: roff_int.h,v 1.19 2022/05/19 15:17:51 schwarze Exp $	*/
 /*
- * Copyright (c) 2013-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -82,6 +82,8 @@ struct ohash	 *roffhash_alloc(enum roff_tok, enum roff_tok);
 enum roff_tok	  roffhash_find(struct ohash *, const char *, size_t);
 void		  roffhash_free(struct ohash *);
 
+enum mandoc_esc	  roff_escape(const char *, const int, const int,
+			int *, int *, int *, int *);
 void		  roff_state_reset(struct roff_man *);
 void		  roff_validate(struct roff_man *);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.h,v 1.218 2022/04/28 16:16:46 schwarze Exp $ */
+/* $OpenBSD: mandoc.h,v 1.219 2022/05/19 15:17:50 schwarze Exp $ */
 /*
  * Copyright (c) 2012-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -285,11 +285,12 @@ enum	mandocerr {
 };
 
 enum	mandoc_esc {
-	ESCAPE_ERROR = 0, /* bail! unparsable escape */
-	ESCAPE_UNSUPP, /* unsupported escape; ignore it */
-	ESCAPE_IGNORE, /* escape to be ignored */
-	ESCAPE_UNDEF, /* undefined escape; print literal character */
-	ESCAPE_SPECIAL, /* a regular special character */
+	ESCAPE_EXPAND = 0, /* interpolation and iterative call needed */
+	ESCAPE_ERROR, /* non-fatal error: unparsable escape */
+	ESCAPE_UNSUPP, /* unsupported escape: warn and ignore */
+	ESCAPE_IGNORE, /* valid escape to be ignored */
+	ESCAPE_UNDEF, /* undefined escape: print literal character */
+	ESCAPE_SPECIAL, /* special character escape */
 	ESCAPE_FONT, /* a generic font mode */
 	ESCAPE_FONTBOLD, /* bold font mode */
 	ESCAPE_FONTITALIC, /* italic font mode */

@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.259 2022/05/01 16:18:59 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.260 2022/05/19 15:17:51 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -205,6 +205,8 @@ static	int		 roff_evalpar(struct roff *, int,
 static	int		 roff_evalstrcond(const char *, int *);
 static	int		 roff_expand(struct roff *, struct buf *,
 				int, int, char);
+static	void		 roff_expand_patch(struct buf *, int,
+				const char *, int);
 static	void		 roff_free1(struct roff *);
 static	void		 roff_freereg(struct roffreg *);
 static	void		 roff_freestr(struct roffkv *);
@@ -1231,9 +1233,15 @@ deroff(char **dest, const struct roff_node *n)
 
 /* --- main functions of the roff parser ---------------------------------- */
 
+/*
+ * Save comments preceding the title macro, for example in order to
+ * preserve Copyright and license headers in HTML output,
+ * provide diagnostics about RCS ids and trailing whitespace in comments,
+ * then discard comments including preceding whitespace.
+ * This function also handles input line continuation.
+ */
 static int
-roff_parse_comment(struct roff *r, struct buf *buf, int ln, int pos,
-    char newesc)
+roff_parse_comment(struct roff *r, struct buf *buf, int ln, int pos, char ec)
 {
 	struct roff_node *n;	/* used for header comments */
 	const char	*start;	/* start of the string to process */
@@ -1243,15 +1251,39 @@ roff_parse_comment(struct roff *r, struct buf *buf, int ln, int pos,
 	int		 rcsid;	/* kind of RCS id seen */
 
 	for (start = stesc = buf->buf + pos;; stesc++) {
+		/*
+		 * XXX Ugly hack: Remove the newline character that
+		 * mparse_buf_r() appended to mark the end of input
+		 * if it is not preceded by an escape character.
+		 */
+		if (stesc[0] == '\n') {
+			assert(stesc[1] == '\0');
+			stesc[0] = '\0';
+		}
+
 		/* The line ends without continuation or comment. */
 		if (stesc[0] == '\0')
 			return ROFF_CONT;
 
 		/* Unescaped byte: skip it. */
-		if (stesc[0] != newesc)
+		if (stesc[0] != ec)
 			continue;
 
-		/* Backslash at end of line requests line continuation. */
+		/*
+		 * XXX Ugly hack: Do not attempt to append another line
+		 * if the function mparse_buf_r() appended a newline
+		 * character to indicate the end of input.
+		 */
+		if (stesc[1] == '\n') {
+			assert(stesc[2] == '\0');
+			stesc[0] = '\0';
+			return ROFF_CONT;
+		}
+
+		/*
+		 * An escape character at the end of an input line
+		 * requests line continuation.
+		 */
 		if (stesc[1] == '\0') {
 			stesc[0] = '\0';
 			return ROFF_IGN | ROFF_APPEND;
@@ -1262,7 +1294,7 @@ roff_parse_comment(struct roff *r, struct buf *buf, int ln, int pos,
 			break;
 
 		/* Escaped escape character: skip them both. */
-		if (stesc[1] == newesc)
+		if (stesc[1] == ec)
 			stesc++;
 	}
 
@@ -1329,322 +1361,215 @@ roff_parse_comment(struct roff *r, struct buf *buf, int ln, int pos,
  * which typically produce output glyphs or change formatter state.
  */
 static int
-roff_expand(struct roff *r, struct buf *buf, int ln, int pos, char newesc)
+roff_expand(struct roff *r, struct buf *buf, int ln, int pos, char ec)
 {
-	struct mctx	*ctx;	/* current macro call context */
-	char		 ubuf[24]; /* buffer to print the number */
-	const char	*start;	/* start of the string to process */
-	char		*stesc;	/* start of an escape sequence ('\\') */
-	const char	*esct;	/* type of esccape sequence */
-	const char	*stnam;	/* start of the name, after "[(*" */
-	const char	*cp;	/* end of the name, e.g. before ']' */
-	const char	*res;	/* the string to be substituted */
-	char		*nbuf;	/* new buffer to copy buf->buf to */
-	size_t		 maxl;  /* expected length of the escape name */
-	size_t		 naml;	/* actual length of the escape name */
-	size_t		 asz;	/* length of the replacement */
-	size_t		 rsz;	/* length of the rest of the string */
-	int		 inaml;	/* length returned from mandoc_escape() */
+	char		 ubuf[24];	/* buffer to print a number */
+	struct mctx	*ctx;		/* current macro call context */
+	const char	*res;		/* the string to be pasted */
+	const char	*src;		/* source for copying */
+	char		*dst;		/* destination for copying */
+	int		 iesc;		/* index of leading escape char */
+	int		 inam;		/* index of the escape name */
+	int		 iarg;		/* index beginning the argument */
+	int		 iendarg;	/* index right after the argument */
+	int		 iend;		/* index right after the sequence */
+	int		 deftype;	/* type of definition to paste */
+	int		 argi;		/* macro argument index */
+	int		 quote_args;	/* true for \\$@, false for \\$* */
+	int		 asz;		/* length of the replacement */
+	int		 rsz;		/* length of the rest of the string */
+	int		 npos;		/* position in numeric expression */
 	int		 expand_count;	/* to avoid infinite loops */
-	int		 npos;	/* position in numeric expression */
-	int		 arg_complete; /* argument not interrupted by eol */
-	int		 quote_args; /* true for \\$@, false for \\$* */
-	int		 deftype; /* type of definition to paste */
-	enum mandocerr	 err;	/* for escape sequence problems */
-	char		 sign;	/* increment number register */
-	char		 term;	/* character terminating the escape */
-
-	start = buf->buf + pos;
-	stesc = strchr(start, '\0') - 1;
-	if (stesc >= start && *stesc == '\n')
-		*stesc-- = '\0';
 
 	expand_count = 0;
-	while (stesc >= start) {
-		if (*stesc != newesc) {
+	while (buf->buf[pos] != '\0') {
+
+		/*
+		 * Skip plain ASCII characters.
+		 * If we have a non-standard escape character,
+		 * escape literal backslashes because all processing in
+		 * subsequent functions uses the standard escaping rules.
+		 */
+
+		if (buf->buf[pos] != ec) {
+			if (ec != ASCII_ESC && buf->buf[pos] == '\\') {
+				roff_expand_patch(buf, pos, "\\e", pos + 1);
+				pos++;
+			}
+			pos++;
+			continue;
+		}
+
+		/*
+		 * Parse escape sequences,
+		 * issue diagnostic messages when appropriate,
+		 * and skip sequences that do not need expansion.
+		 * If we have a non-standard escape character, translate
+		 * it to backslashes and translate backslashes to \e.
+		 */
+
+		if (roff_escape(buf->buf, ln, pos,
+		    &iesc, &iarg, &iendarg, &iend) != ESCAPE_EXPAND) {
+			while (pos < iend) {
+				if (buf->buf[pos] == ec) {
+					buf->buf[pos] = '\\';
+					if (pos + 1 < iend)
+						pos++;
+				} else if (buf->buf[pos] == '\\') {
+					roff_expand_patch(buf,
+					    pos, "\\e", pos + 1);
+					pos++;
+					iend++;
+				}
+				pos++;
+			}
+			continue;
+		}
+
+		/*
+		 * Treat "\E" just like "\";
+		 * it only makes a difference in copy mode.
+		 */
+
+		inam = iesc + 1;
+		while (buf->buf[inam] == 'E')
+			inam++;
+
+		/* Handle expansion. */
+
+		res = NULL;
+		switch (buf->buf[inam]) {
+		case '*':
+			if (iendarg == iarg)
+				break;
+			deftype = ROFFDEF_USER | ROFFDEF_PRE;
+			if ((res = roff_getstrn(r, buf->buf + iarg,
+			    iendarg - iarg, &deftype)) != NULL)
+				break;
 
 			/*
-			 * If we have a non-standard escape character,
-			 * escape literal backslashes because all
-			 * processing in subsequent functions uses
-			 * the standard escaping rules.
+			 * If not overriden,
+			 * let \*(.T through to the formatters.
 			 */
 
-			if (newesc != ASCII_ESC && *stesc == '\\') {
-				*stesc = '\0';
-				buf->sz = mandoc_asprintf(&nbuf, "%s\\e%s",
-				    buf->buf, stesc + 1) + 1;
-				start = nbuf + pos;
-				stesc = nbuf + (stesc - buf->buf);
-				free(buf->buf);
-				buf->buf = nbuf;
-			}
-
-			/* Search backwards for the next escape. */
-
-			stesc--;
-			continue;
-		}
-
-		/* If it is escaped, skip it. */
-
-		for (cp = stesc - 1; cp >= start; cp--)
-			if (*cp != r->escape)
-				break;
-
-		if ((stesc - cp) % 2 == 0) {
-			while (stesc > cp)
-				*stesc-- = '\\';
-			continue;
-		} else if (stesc[1] == '\0') {
-			*stesc-- = '\0';
-			continue;
-		} else
-			*stesc = '\\';
-
-		/* Decide whether to expand or to check only. */
-
-		term = '\0';
-		cp = stesc + 1;
-		while (*cp == 'E')
-			cp++;
-		esct = cp;
-		switch (*esct) {
-		case '*':
-		case '$':
-			res = NULL;
-			break;
-		case 'B':
-		case 'w':
-			term = cp[1];
-			/* FALLTHROUGH */
-		case 'n':
-			sign = cp[1];
-			if (sign == '+' || sign == '-')
-				cp++;
-			res = ubuf;
-			break;
-		default:
-			err = MANDOCERR_OK;
-			switch(mandoc_escape(&cp, &stnam, &inaml)) {
-			case ESCAPE_SPECIAL:
-				if (mchars_spec2cp(stnam, inaml) >= 0)
-					break;
-				/* FALLTHROUGH */
-			case ESCAPE_ERROR:
-				err = MANDOCERR_ESC_BAD;
-				break;
-			case ESCAPE_UNDEF:
-				err = MANDOCERR_ESC_UNDEF;
-				break;
-			case ESCAPE_UNSUPP:
-				err = MANDOCERR_ESC_UNSUPP;
-				break;
-			default:
-				break;
-			}
-			if (err != MANDOCERR_OK)
-				mandoc_msg(err, ln, (int)(stesc - buf->buf),
-				    "%.*s", (int)(cp - stesc), stesc);
-			stesc--;
-			continue;
-		}
-
-		if (EXPAND_LIMIT < ++expand_count) {
-			mandoc_msg(MANDOCERR_ROFFLOOP,
-			    ln, (int)(stesc - buf->buf), NULL);
-			return ROFF_IGN;
-		}
-
-		/*
-		 * The third character decides the length
-		 * of the name of the string or register.
-		 * Save a pointer to the name.
-		 */
-
-		if (term == '\0') {
-			switch (*++cp) {
-			case '\0':
-				maxl = 0;
-				break;
-			case '(':
-				cp++;
-				maxl = 2;
-				break;
-			case '[':
-				cp++;
-				term = ']';
-				maxl = 0;
-				break;
-			default:
-				maxl = 1;
-				break;
-			}
-		} else {
-			cp += 2;
-			maxl = 0;
-		}
-		stnam = cp;
-
-		/* Advance to the end of the name. */
-
-		naml = 0;
-		arg_complete = 1;
-		while (maxl == 0 || naml < maxl) {
-			if (*cp == '\0') {
-				mandoc_msg(MANDOCERR_ESC_BAD, ln,
-				    (int)(stesc - buf->buf), "%s", stesc);
-				arg_complete = 0;
-				break;
-			}
-			if (maxl == 0 && *cp == term) {
-				cp++;
-				break;
-			}
-			if (*cp++ != '\\' || *esct != 'w') {
-				naml++;
+			if (iendarg - iarg == 2 &&
+			    buf->buf[iarg] == '.' &&
+			    buf->buf[iarg + 1] == 'T') {
+				roff_setstrn(&r->strtab, ".T", 2, NULL, 0, 0);
+				pos = iend;
 				continue;
 			}
-			switch (mandoc_escape(&cp, NULL, NULL)) {
-			case ESCAPE_SPECIAL:
-			case ESCAPE_UNICODE:
-			case ESCAPE_NUMBERED:
-			case ESCAPE_UNDEF:
-			case ESCAPE_OVERSTRIKE:
-				naml++;
-				break;
-			default:
-				break;
-			}
-		}
 
-		/*
-		 * Retrieve the replacement string; if it is
-		 * undefined, resume searching for escapes.
-		 */
-
-		switch (*esct) {
-		case '*':
-			if (arg_complete) {
-				deftype = ROFFDEF_USER | ROFFDEF_PRE;
-				res = roff_getstrn(r, stnam, naml, &deftype);
-
-				/*
-				 * If not overriden, let \*(.T
-				 * through to the formatters.
-				 */
-
-				if (res == NULL && naml == 2 &&
-				    stnam[0] == '.' && stnam[1] == 'T') {
-					roff_setstrn(&r->strtab,
-					    ".T", 2, NULL, 0, 0);
-					stesc--;
-					continue;
-				}
-			}
+			mandoc_msg(MANDOCERR_STR_UNDEF, ln, iesc,
+			    "%.*s", iendarg - iarg, buf->buf + iarg);
 			break;
+
 		case '$':
 			if (r->mstackpos < 0) {
-				mandoc_msg(MANDOCERR_ARG_UNDEF, ln,
-				    (int)(stesc - buf->buf), "%.3s", stesc);
+				mandoc_msg(MANDOCERR_ARG_UNDEF, ln, iesc,
+				    "%.*s", iend - iesc, buf->buf + iesc);
 				break;
 			}
 			ctx = r->mstack + r->mstackpos;
-			npos = esct[1] - '1';
-			if (npos >= 0 && npos <= 8) {
-				res = npos < ctx->argc ?
-				    ctx->argv[npos] : "";
+			argi = buf->buf[iarg] - '1';
+			if (argi >= 0 && argi <= 8) {
+				if (argi < ctx->argc)
+					res = ctx->argv[argi];
 				break;
 			}
-			if (esct[1] == '*')
+			if (buf->buf[iarg] == '*')
 				quote_args = 0;
-			else if (esct[1] == '@')
+			else if (buf->buf[iarg] == '@')
 				quote_args = 1;
 			else {
-				mandoc_msg(MANDOCERR_ARG_NONUM, ln,
-				    (int)(stesc - buf->buf), "%.3s", stesc);
+				mandoc_msg(MANDOCERR_ARG_NONUM, ln, iesc,
+				    "%.*s", iend - iesc, buf->buf + iesc);
 				break;
 			}
 			asz = 0;
-			for (npos = 0; npos < ctx->argc; npos++) {
-				if (npos)
+			for (argi = 0; argi < ctx->argc; argi++) {
+				if (argi)
 					asz++;  /* blank */
 				if (quote_args)
 					asz += 2;  /* quotes */
-				asz += strlen(ctx->argv[npos]);
+				asz += strlen(ctx->argv[argi]);
 			}
-			if (asz != 3) {
-				rsz = buf->sz - (stesc - buf->buf) - 3;
-				if (asz < 3)
-					memmove(stesc + asz, stesc + 3, rsz);
-				buf->sz += asz - 3;
-				nbuf = mandoc_realloc(buf->buf, buf->sz);
-				start = nbuf + pos;
-				stesc = nbuf + (stesc - buf->buf);
-				buf->buf = nbuf;
-				if (asz > 3)
-					memmove(stesc + asz, stesc + 3, rsz);
+			if (asz != iend - iesc) {
+				rsz = buf->sz - iend;
+				if (asz < iend - iesc)
+					memmove(buf->buf + iesc + asz,
+					    buf->buf + iend, rsz);
+				buf->sz = iesc + asz + rsz;
+				buf->buf = mandoc_realloc(buf->buf, buf->sz);
+				if (asz > iend - iesc)
+					memmove(buf->buf + iesc + asz,
+					    buf->buf + iend, rsz);
 			}
-			for (npos = 0; npos < ctx->argc; npos++) {
-				if (npos)
-					*stesc++ = ' ';
+			dst = buf->buf + iesc;
+			for (argi = 0; argi < ctx->argc; argi++) {
+				if (argi)
+					*dst++ = ' ';
 				if (quote_args)
-					*stesc++ = '"';
-				cp = ctx->argv[npos];
-				while (*cp != '\0')
-					*stesc++ = *cp++;
+					*dst++ = '"';
+				src = ctx->argv[argi];
+				while (*src != '\0')
+					*dst++ = *src++;
 				if (quote_args)
-					*stesc++ = '"';
+					*dst++ = '"';
 			}
 			continue;
 		case 'B':
 			npos = 0;
-			ubuf[0] = arg_complete &&
-			    roff_evalnum(r, ln, stnam, &npos,
-			      NULL, ROFFNUM_SCALE) &&
-			    stnam + npos + 1 == cp ? '1' : '0';
+			ubuf[0] = iendarg > iarg && iend > iendarg &&
+			    roff_evalnum(r, ln, buf->buf + iarg, &npos,
+					 NULL, ROFFNUM_SCALE) &&
+			    npos == iendarg - iarg ? '1' : '0';
 			ubuf[1] = '\0';
+			res = ubuf;
 			break;
 		case 'n':
-			if (arg_complete)
+			if (iendarg > iarg)
 				(void)snprintf(ubuf, sizeof(ubuf), "%d",
-				    roff_getregn(r, stnam, naml, sign));
+				    roff_getregn(r, buf->buf + iarg,
+				    iendarg - iarg, buf->buf[inam + 1]));
 			else
 				ubuf[0] = '\0';
+			res = ubuf;
 			break;
 		case 'w':
-			/* use even incomplete args */
-			(void)snprintf(ubuf, sizeof(ubuf), "%d",
-			    24 * (int)naml);
+			(void)snprintf(ubuf, sizeof(ubuf),
+			    "%d", (iendarg - iarg) * 24);
+			res = ubuf;
+			break;
+		default:
 			break;
 		}
-
-		if (res == NULL) {
-			if (*esct == '*')
-				mandoc_msg(MANDOCERR_STR_UNDEF,
-				    ln, (int)(stesc - buf->buf),
-				    "%.*s", (int)naml, stnam);
+		if (res == NULL)
 			res = "";
-		} else if (buf->sz + strlen(res) > SHRT_MAX) {
-			mandoc_msg(MANDOCERR_ROFFLOOP,
-			    ln, (int)(stesc - buf->buf), NULL);
+		if (++expand_count > EXPAND_LIMIT ||
+		    buf->sz + strlen(res) > SHRT_MAX) {
+			mandoc_msg(MANDOCERR_ROFFLOOP, ln, iesc, NULL);
 			return ROFF_IGN;
 		}
-
-		/* Replace the escape sequence by the string. */
-
-		*stesc = '\0';
-		buf->sz = mandoc_asprintf(&nbuf, "%s%s%s",
-		    buf->buf, res, cp) + 1;
-
-		/* Prepare for the next replacement. */
-
-		start = nbuf + pos;
-		stesc = nbuf + (stesc - buf->buf) + strlen(res);
-		free(buf->buf);
-		buf->buf = nbuf;
+		roff_expand_patch(buf, iesc, res, iend);
 	}
 	return ROFF_CONT;
+}
+
+/*
+ * Replace the substring from the start position (inclusive)
+ * to end position (exclusive) with the repl(acement) string.
+ */
+static void
+roff_expand_patch(struct buf *buf, int start, const char *repl, int end)
+{
+	char	*nbuf;
+
+	buf->buf[start] = '\0';
+	buf->sz = mandoc_asprintf(&nbuf, "%s%s%s", buf->buf, repl,
+	    buf->buf + end) + 1;
+	free(buf->buf);
+	buf->buf = nbuf;
 }
 
 /*
