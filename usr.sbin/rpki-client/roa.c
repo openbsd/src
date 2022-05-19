@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.43 2022/05/19 06:37:51 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.44 2022/05/19 07:33:02 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -119,7 +119,7 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	/* Parse the optional version field */
+	/* Validate the optional version field */
 	if (roa->version != NULL) {
 		roa_version = ASN1_INTEGER_get(roa->version);
 		if (roa_version < 0) {

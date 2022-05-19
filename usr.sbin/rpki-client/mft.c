@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.66 2022/05/19 06:37:51 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.67 2022/05/19 07:33:02 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -225,8 +225,6 @@ mft_parse_filehash(struct parse *p, const FileAndHash *fh)
 	struct mftfile		*fent;
 	enum rtype		 type;
 
-	/* First is the filename itself. */
-
 	if (!valid_mft_filename(fh->file->data, fh->file->length)) {
 		warnx("%s: RFC 6486 section 4.2.2: bad filename", p->fn);
 		goto out;
@@ -234,8 +232,6 @@ mft_parse_filehash(struct parse *p, const FileAndHash *fh)
 	fn = strndup(fh->file->data, fh->file->length);
 	if (fn == NULL)
 		err(1, NULL);
-
-	/* Now hash value. */
 
 	if (fh->hash->length != SHA256_DIGEST_LENGTH) {
 		warnx("%s: RFC 6486 section 4.2.1: hash: "
@@ -282,7 +278,7 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	/* Parse the optional version field */
+	/* Validate the optional version field */
 	if (mft->version != NULL) {
 		mft_version = ASN1_INTEGER_get(mft->version);
 		if (mft_version < 0) {
@@ -318,8 +314,6 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	if (!mft_parse_time(mft->thisUpdate, mft->nextUpdate, p))
 		goto out;
 
-	/* File list algorithm. */
-
 	if (OBJ_obj2nid(mft->fileHashAlg) != NID_sha256) {
 		warnx("%s: RFC 6486 section 4.2.1: fileHashAlg: "
 		    "want SHA256 object, have %s (NID %d)", p->fn,
@@ -327,8 +321,6 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		    OBJ_obj2nid(mft->fileHashAlg));
 		goto out;
 	}
-
-	/* Now the sequence. */
 
 	if (sk_FileAndHash_num(mft->fileList) > MAX_MANIFEST_ENTRIES) {
 		warnx("%s: %d exceeds manifest entry limit (%d)", p->fn,
