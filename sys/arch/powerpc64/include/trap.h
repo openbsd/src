@@ -1,3 +1,4 @@
+/*	$OpenBSD: trap.h,v 1.9 2022/05/19 05:43:48 miod Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
  *
@@ -105,7 +106,7 @@
 /* POWER8 */
 #define EXC_SOFT_PATCH	0x1500		/* POWER8 Soft Patch Exception */
 
-#define	EXC_LAST	0x2f00		/* Last possible exception vector */
+#define	EXC_END		0x3000		/* End of exception vectors */
 
 #define	EXC_AST		0x3000		/* Fake AST vector */
 

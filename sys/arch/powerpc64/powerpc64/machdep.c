@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.71 2021/12/06 21:21:10 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.72 2022/05/19 05:43:48 miod Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -239,7 +239,7 @@ init_powernv(void *fdt, void *tocbase)
 	 * Initialize all traps with the stub that calls the generic
 	 * trap handler.
 	 */
-	for (trap = EXC_RST; trap < EXC_LAST; trap += 32)
+	for (trap = EXC_RST; trap < EXC_END; trap += 32)
 		memcpy((void *)trap, trapcode, trapcodeend - trapcode);
 
 	/* Hypervisor interrupts needs special handling. */
@@ -262,7 +262,7 @@ init_powernv(void *fdt, void *tocbase)
 	*((void **)TRAP_RSTENTRY) = cpu_idle_restore_context;
 
 	/* Make the stubs visible to the CPU. */
-	__syncicache(EXC_RSVD, EXC_LAST - EXC_RSVD);
+	__syncicache(EXC_RSVD, EXC_END - EXC_RSVD);
 
 	/* We're now ready to take traps. */
 	msr = mfmsr();
@@ -305,7 +305,7 @@ init_powernv(void *fdt, void *tocbase)
 
 	/* Remove interrupt vectors. */
 	reg.addr = trunc_page(EXC_RSVD);
-	reg.size = round_page(EXC_LAST);
+	reg.size = round_page(EXC_END);
 	memreg_remove(&reg);
 
 	/* Remove kernel. */

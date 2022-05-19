@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.195 2021/12/07 17:50:44 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.196 2022/05/19 05:43:48 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -169,7 +169,7 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	/*
 	 * Set up trap vectors
 	 */
-	for (exc = EXC_RSVD; exc <= EXC_LAST; exc += 0x100) {
+	for (exc = EXC_RSVD; exc < EXC_END; exc += 0x100) {
 		switch (exc) {
 		default:
 			bcopy(&trapcode, (void *)exc, (size_t)&trapsize);
@@ -212,7 +212,7 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	}
 
 	/* Grr, ALTIVEC_UNAVAIL is a vector not ~0xff aligned: 0x0f20 */
-	bcopy(&trapcode, (void *)0xf20, (size_t)&trapsize);
+	bcopy(&trapcode, (void *)EXC_VEC, (size_t)&trapsize);
 
 	/*
 	 * since trapsize is > 0x20, we just overwrote the EXC_PERF handler
@@ -222,7 +222,7 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 	 * do not generate EXC_PERF exceptions...
 	 */
 
-	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
+	syncicache((void *)EXC_RST, EXC_END - EXC_RST);
 
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
