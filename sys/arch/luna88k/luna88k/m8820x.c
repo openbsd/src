@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.17 2022/03/05 06:59:12 aoyama Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.18 2022/05/19 12:55:59 aoyama Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  *
@@ -93,41 +93,57 @@
 #include <machine/m8820x.h>
 
 /*
+ * Probe a pair of CMMU addresses to discover the presence of a CPU slot.
+ */
+int
+m8820x_probe_cmmus(uint32_t icmmu, uint32_t dcmmu)
+{
+	/*
+	 * On the luna88k, badaddr() returns 'good' on unpopulated slots,
+	 * so we check the CMMU type value for each CMMU register address.
+	 */
+	int type;
+	volatile uint32_t* icmmuregs = (volatile uint32_t *)icmmu;
+	volatile uint32_t* dcmmuregs = (volatile uint32_t *)dcmmu;
+
+	type = CMMU_TYPE(icmmuregs[CMMU_IDR]);
+	if (type != M88200_ID && type != M88204_ID)
+		return 0;
+
+	type = CMMU_TYPE(dcmmuregs[CMMU_IDR]);
+	if (type != M88200_ID && type != M88204_ID)
+		return 0;
+
+	return 1;
+}
+
+/*
  * This routine sets up the CPU/CMMU configuration.
  */
 void
 m8820x_setup_board_config()
 {
-	struct m8820x_cmmu *cmmu;
-	u_int num;
+	u_int pos = 0;
 
-	m8820x_cmmu[0].cmmu_regs = (void *)CMMU_I0;
-	m8820x_cmmu[1].cmmu_regs = (void *)CMMU_D0;
-	m8820x_cmmu[2].cmmu_regs = (void *)CMMU_I1;
-	m8820x_cmmu[3].cmmu_regs = (void *)CMMU_D1;
-	m8820x_cmmu[4].cmmu_regs = (void *)CMMU_I2;
-	m8820x_cmmu[5].cmmu_regs = (void *)CMMU_D2;
-	m8820x_cmmu[6].cmmu_regs = (void *)CMMU_I3;
-	m8820x_cmmu[7].cmmu_regs = (void *)CMMU_D3;
-
-	/*
-	 * Probe CMMU address to discover which CPU slots are populated.
-	 * On the luna88k, badaddr() returns 'good' on unpopulated slots,
-	 * so we check the CMMU type value for each CMMU register address.
-	 */
-	cmmu = m8820x_cmmu;
-
-	for (num = 0; num < 8; num++) {
-		volatile unsigned *cr = m8820x_cmmu[num].cmmu_regs;
-		int type;
-
-		type = CMMU_TYPE(cr[CMMU_IDR]);
-		if (type != M88200_ID && type != M88204_ID)
-			break;
+	if (m8820x_probe_cmmus(CMMU_I0, CMMU_D0) != 0) {
+		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_I0;
+		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_D0;
+	}
+	if (m8820x_probe_cmmus(CMMU_I1, CMMU_D1) != 0) {
+		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_I1;
+		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_D1;
+	}
+	if (m8820x_probe_cmmus(CMMU_I2, CMMU_D2) != 0) {
+		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_I2;
+		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_D2;
+	}
+	if (m8820x_probe_cmmus(CMMU_I3, CMMU_D3) != 0) {
+		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_I3;
+		m8820x_cmmu[pos++].cmmu_regs = (void *)CMMU_D3;
 	}
 
-	ncpusfound = num >> 1;
-	max_cmmus = ncpusfound << 1;
+	ncpusfound = pos >> 1;
+	max_cmmus = pos;
 	cmmu_shift = 1;	/* fixed 2:1 configuration */
 
 #ifdef M8820X_DEBUG
