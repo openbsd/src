@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.24 2020/12/15 13:40:22 jmc Exp $
+.\" $OpenBSD: imsg_init.3,v 1.25 2022/05/19 08:05:23 stsp Exp $
 .\"
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 15 2020 $
+.Dd $Mdocdate: May 19 2022 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -187,7 +187,9 @@ bytes of ancillary data pointed to by
 .Fa data .
 It returns
 .Fa datalen
-if it succeeds, \-1 otherwise.
+if it succeeds, otherwise
+.Fa msg
+is freed and \-1 is returned.
 .Pp
 .Fn imsg_close
 completes creation of
