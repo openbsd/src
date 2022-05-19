@@ -1,4 +1,4 @@
-/* $OpenBSD: read.c,v 1.191 2021/06/27 17:57:13 schwarze Exp $ */
+/* $OpenBSD: read.c,v 1.192 2022/05/19 14:47:47 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -259,7 +259,12 @@ mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
 			lastln = thisln;
 		}
 
-		/* XXX Ugly hack to mark the end of the input. */
+		/*
+		 * XXX Ugly hack to mark the end of the input,
+		 * such that the function roff_parse_comment()
+		 * doesn't attempt to append another line if the
+		 * last input line ends with an escape character.
+		 */
 
 		if (i == blk.sz || blk.buf[i] == '\0') {
 			if (pos + 2 > ln.sz)
