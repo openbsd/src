@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.309 2022/05/13 18:19:32 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.310 2022/05/20 22:14:19 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -140,7 +140,7 @@ int vm_rwregs(struct vm_rwregs_params *, int);
 int vm_mprotect_ept(struct vm_mprotect_ept_params *);
 int vm_rwvmparams(struct vm_rwvmparams_params *, int);
 int vm_find(uint32_t, struct vm **);
-int vcpu_readregs_vmx(struct vcpu *, uint64_t, struct vcpu_reg_state *);
+int vcpu_readregs_vmx(struct vcpu *, uint64_t, int, struct vcpu_reg_state *);
 int vcpu_readregs_svm(struct vcpu *, uint64_t, struct vcpu_reg_state *);
 int vcpu_writeregs_vmx(struct vcpu *, uint64_t, int, struct vcpu_reg_state *);
 int vcpu_writeregs_svm(struct vcpu *, uint64_t, struct vcpu_reg_state *);
@@ -978,7 +978,7 @@ vm_rwregs(struct vm_rwregs_params *vrwp, int dir)
 	if (vmm_softc->mode == VMM_MODE_VMX ||
 	    vmm_softc->mode == VMM_MODE_EPT)
 		ret = (dir == 0) ?
-		    vcpu_readregs_vmx(vcpu, vrwp->vrwp_mask, vrs) :
+		    vcpu_readregs_vmx(vcpu, vrwp->vrwp_mask, 1, vrs) :
 		    vcpu_writeregs_vmx(vcpu, vrwp->vrwp_mask, 1, vrs);
 	else if (vmm_softc->mode == VMM_MODE_SVM ||
 	    vmm_softc->mode == VMM_MODE_RVI)
@@ -1986,6 +1986,7 @@ vcpu_reload_vmcs_vmx(struct vcpu *vcpu)
  * Parameters:
  *  vcpu: the vcpu to read register values from
  *  regmask: the types of registers to read
+ *  loadvmcs: bit to indicate whether the VMCS has to be loaded first
  *  vrs: output parameter where register values are stored
  *
  * Return values:
@@ -1993,7 +1994,7 @@ vcpu_reload_vmcs_vmx(struct vcpu *vcpu)
  *  EINVAL: an error reading registers occurred
  */
 int
-vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask,
+vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask, int loadvmcs,
     struct vcpu_reg_state *vrs)
 {
 	int i, ret = 0;
@@ -2004,6 +2005,11 @@ vcpu_readregs_vmx(struct vcpu *vcpu, uint64_t regmask,
 	uint64_t *drs = vrs->vrs_drs;
 	struct vcpu_segment_info *sregs = vrs->vrs_sregs;
 	struct vmx_msr_store *msr_store;
+
+	if (loadvmcs) {
+		if (vcpu_reload_vmcs_vmx(vcpu))
+			return (EINVAL);
+	}
 
 #ifdef VMM_DEBUG
 	/* VMCS should be loaded... */
@@ -2393,6 +2399,7 @@ out:
 	if (loadvmcs) {
 		if (vmclear(&vcpu->vc_control_pa))
 			ret = EINVAL;
+		atomic_swap_uint(&vcpu->vc_vmx_vmcs_state, VMCS_CLEARED);
 	}
 	return (ret);
 }
@@ -4631,7 +4638,7 @@ vmm_translate_gva(struct vcpu *vcpu, uint64_t va, uint64_t *pa, int mode)
 
 	if (vmm_softc->mode == VMM_MODE_EPT ||
 	    vmm_softc->mode == VMM_MODE_VMX) {
-		if (vcpu_readregs_vmx(vcpu, VM_RWREGS_ALL, &vrs))
+		if (vcpu_readregs_vmx(vcpu, VM_RWREGS_ALL, 1, &vrs))
 			return (EINVAL);
 	} else if (vmm_softc->mode == VMM_MODE_RVI ||
 	    vmm_softc->mode == VMM_MODE_SVM) {
@@ -5111,7 +5118,7 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	vcpu->vc_last_pcpu = curcpu();
 
 	/* Copy the VCPU register state to the exit structure */
-	if (vcpu_readregs_vmx(vcpu, VM_RWREGS_ALL, &vcpu->vc_exit.vrs))
+	if (vcpu_readregs_vmx(vcpu, VM_RWREGS_ALL, 0, &vcpu->vc_exit.vrs))
 		ret = EINVAL;
 	vcpu->vc_exit.cpl = vmm_get_guest_cpu_cpl(vcpu);
 
