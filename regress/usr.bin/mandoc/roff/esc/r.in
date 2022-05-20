@@ -1,0 +1,13 @@
+.\" $OpenBSD: r.in,v 1.1 2022/05/20 13:06:27 schwarze Exp $
+.Dd $Mdocdate: May 20 2022 $
+.Dt ESC-R 1
+.Os
+.Sh NAME
+.Nm esc-r
+.Nd the roff reverse line feed escape sequence
+.Sh DESCRIPTION
+.Bd -literal
+first line
+before\rafter
+last line
+.Ed
