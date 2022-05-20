@@ -4,12 +4,22 @@ NNAAMMEE
        esc-ignore - ignored roff escape sequences
 
 DDEESSCCRRIIPPTTIIOONN
-       closing parenthesis: abc
-       comma: abc
-       slash: abc
+       percent (hyphenation allowed): abc
+       ampersand (zero width space): abc
+       closing parenthesis (ZWS transparent to EOS): abc
+       comma (left italic correction): abc
+       slash (right italic correction): abc
+       caret (1/12 em space): abc
+       a (leader): abc
+       d (half line feed): abc
+       t (horizontal tab): abc
+       u (half reverse line feed): abc
+       opening brace: abc
+       bar (1/6 em space): abc
+       closing brace: abc
        multiform: abcd
        quoted: abc
        sizes: abcdef
        signed sizes: abcdef
 
-OpenBSD                        December 15, 2018                 ESC-IGNORE(1)
+OpenBSD                          May 20, 2022                    ESC-IGNORE(1)

@@ -1,12 +1,22 @@
-.\" $OpenBSD: ignore.in,v 1.4 2018/12/15 19:30:20 schwarze Exp $
-.TH ESC-IGNORE 1 "December 15, 2018"
+.\" $OpenBSD: ignore.in,v 1.5 2022/05/20 12:30:33 schwarze Exp $
+.TH ESC-IGNORE 1 "May 20, 2022"
 .SH NAME
 esc-ignore \- ignored roff escape sequences
 .SH DESCRIPTION
 .nf
-closing parenthesis: a\)b\[)]c
-comma: a\,b\[,]c
-slash: a\/b\[/]c
+percent (hyphenation allowed): a\%b\[%]c
+ampersand (zero width space): a\&b\[&]c
+closing parenthesis (ZWS transparent to EOS): a\)b\[)]c
+comma (left italic correction): a\,b\[,]c
+slash (right italic correction): a\/b\[/]c
+caret (1/12 em space): a\^b\[^]c
+a (leader): a\ab\[a]c
+d (half line feed): a\db\[d]c
+t (horizontal tab): a\tb\[t]c
+u (half reverse line feed): a\ub\[u]c
+opening brace: a\{b\[{]c
+bar (1/6 em space): a\|b\[|]c
+closing brace: a\}b\[}]c
 multiform: a\kxb\k(xyc\k[xyz]d
 quoted: a\R'myreg 0'b\R'myreg \A'y'0'c
 sizes: a\s0b\s(12c\s[123]d\s'123'e\s'1\w'xy'2'f
