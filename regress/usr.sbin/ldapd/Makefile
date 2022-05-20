@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.11 2021/10/05 17:41:31 anton Exp $
+# $OpenBSD: Makefile,v 1.12 2022/05/20 09:46:47 bluhm Exp $
 
 OUT=${.CURDIR}/out
 DIT=dc=example,dc=com
 DIT2=dc=bar,dc=quux
 NLV=0.65
-CLEANFILES=ldapd.pid log ldapd1.conf ${DIT}_indx.db ${DIT}_data.db ${DIT2}_indx.db ${DIT2}_data.db
+CLEANFILES=ldapd.log ldapd1.conf ${DIT}_indx.db ${DIT}_data.db ${DIT2}_indx.db ${DIT2}_data.db
 
 # Needs p5-ldap and openldap (client)
 
@@ -27,51 +27,42 @@ regress:
 	@echo SKIPPED
 .endif
 
-REGRESS_TARGETS = connect import perl purge #cpan
+REGRESS_TARGETS = connect import perl purge
 REGRESS_ROOT_TARGETS = ${REGRESS_TARGETS}
+REGRESS_SETUP_ONCE = bootstrap
+REGRESS_CLEANUP = kill
 
-bootstrap:
-	@[ -z "${SUDO}" ] || ${SUDO} true
-	@${SUDO} install -m 600 -o root ${.CURDIR}/ldapd.conf ${.OBJDIR}/ldapd1.conf
-	@${SUDO} ldapd -n -r ${.OBJDIR} -f ${.OBJDIR}/ldapd1.conf
-	@${SUDO} ldapd -dvv -r ${.OBJDIR} -f ${.OBJDIR}/ldapd1.conf > ${.OBJDIR}/log 2>&1 & \
-		echo $$! > ${.OBJDIR}/ldapd.pid
-	@sleep 1
+bootstrap: kill
+	[ -z "${SUDO}" ] || ${SUDO} true
+	rm -f ldapd1.conf ldapd.log
+	${SUDO} install -m 600 -o root ${.CURDIR}/ldapd.conf ldapd1.conf
+	${SUDO} ldapd -n -r ${.OBJDIR} -f ${.OBJDIR}/ldapd1.conf
+	${SUDO} ldapd -dvv -r ${.OBJDIR} -f ${.OBJDIR}/ldapd1.conf >ldapd.log 2>&1 &
+	# wait up to 10 seconds for startup
+	for i in `jot 100`; do \
+	    if grep -q 'ldape: entering event loop' ldapd.log; then break; fi; \
+	    sleep .1; \
+	done
+	grep 'ldape: entering event loop' ldapd.log
 
-.if ! (make(clean) || make(cleandir) || make(obj))
-.END:
-	@if [ -f ${.OBJDIR}/ldapd.pid ]; then \
-	    ${SUDO} kill $$(cat ${.OBJDIR}/ldapd.pid) &&\
-	    rm ${.OBJDIR}/ldapd.pid; \
-	fi
-.endif
+kill:
+	-${SUDO} pkill ldapd
 
-connect: bootstrap
-	-ldapsearch -x -H ldapi://%2ftmp%2fldapi | diff - ${OUT}/empty.log
-	-ldapsearch -x -p 6639 -h localhost 2>&1 | diff - ${OUT}/empty.log
-	-ldapsearch -x -p 6636 -h localhost 2>&1 | diff - ${OUT}/empty.log
+connect:
+	ldapsearch -x -H ldapi://%2ftmp%2fldapi | diff - ${OUT}/empty.log
+	ldapsearch -x -H ldap://localhost:6639 2>&1 | diff - ${OUT}/empty.log
+	ldapsearch -x -H ldap://localhost:6636 2>&1 | diff - ${OUT}/empty.log
 
-import: bootstrap
-	ldapadd -f ${.CURDIR}/dit-example.ldif -Dcn=admin,${DIT} -x -w secret -h localhost -p 6639 | diff - ${OUT}/adding.log
-	ldapsearch -x -b ${DIT} -h localhost -p 6639 | diff - ${OUT}/example.log
-	ldapsearch -x -D cn=admin,${DIT} -w secret -b ${DIT} -h localhost -p 6639 | diff - ${OUT}/example.log
+import:
+	ldapadd -f ${.CURDIR}/dit-example.ldif -Dcn=admin,${DIT} -x -w secret -H ldap://localhost:6639 | diff - ${OUT}/adding.log
+	ldapsearch -x -b ${DIT} -H ldap://localhost:6639 | diff - ${OUT}/example.log
+	ldapsearch -x -D cn=admin,${DIT} -w secret -b ${DIT} -H ldap://localhost:6639 | diff - ${OUT}/example.log
 
-purge: bootstrap
-	ldapdelete -Dcn=admin,${DIT} -x -w secret -h localhost -p 6639 -r ${DIT}
-	-ldapsearch -x -p 6639 -h localhost 2>&1 | diff - ${OUT}/empty.log
+purge:
+	ldapdelete -Dcn=admin,${DIT} -x -w secret -H ldap://localhost:6639 -r ${DIT}
+	ldapsearch -x -H ldap://localhost:6639  2>&1 | diff - ${OUT}/empty.log
 
-perl: bootstrap
-	@-perl ${.CURDIR}/run-tests.pl
-
-# run tests from Net::LDAP
-# requires all of databases/p5-ldap RUN_DEPENDS
-# tests above 41 fail because ldapd doesnt handle uppercase namespaces
-cpan: bootstrap
-	tar -C ${.OBJDIR} -xzf /usr/ports/distfiles/perl-ldap-${NLV}.tar.gz
-	@${SUDO} install -m 600 -o root ${.CURDIR}/nldapd.conf ${.OBJDIR}/perl-ldap-${NLV}
-	cp common.pl ${.OBJDIR}/perl-ldap-${NLV}/t
-	cd ${.OBJDIR}/perl-ldap-${NLV} && perl Makefile.PL --skipdeps
-	sed -i -e 's/OpenLDAPperson/inetOrgPerson/' ${.OBJDIR}/perl-ldap-${NLV}/data/*.ldif
-	@-${SUDO} ${MAKE} -C ${.OBJDIR}/perl-ldap-${NLV} test
+perl:
+	perl ${.CURDIR}/run-tests.pl
 
 .include <bsd.regress.mk>
