@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.19 2022/05/13 16:46:34 dv Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.20 2022/05/20 22:06:47 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -533,7 +533,7 @@ mkcluster(struct qcdisk *disk, struct qcdisk *base, off_t off, off_t src_phys)
 
 	/* Grow the disk */
 	if (ftruncate(disk->fd, disk->end + disk->clustersz) < 0)
-		fatalx("%s: could not grow disk", __func__);
+		fatal("%s: could not grow disk", __func__);
 	if (src_phys > 0)
 		copy_cluster(disk, base, disk->end, src_phys);
 	cluster = disk->end;
@@ -640,7 +640,7 @@ virtio_qcow2_create(const char *imgfile_path,
 	if (base_path) {
 		fd = open(base_path, O_RDONLY);
 		if (read(fd, &basehdr, sizeof(basehdr)) != sizeof(basehdr))
-			err(1, "failure to read base image header");
+			errx(1, "failure to read base image header");
 		close(fd);
 		if (strncmp(basehdr.magic,
 		    VM_MAGIC_QCOW, strlen(VM_MAGIC_QCOW)) != 0)
