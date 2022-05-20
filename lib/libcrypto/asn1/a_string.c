@@ -1,4 +1,4 @@
-/* $OpenBSD: a_string.c,v 1.10 2022/05/16 20:51:26 tb Exp $ */
+/* $OpenBSD: a_string.c,v 1.11 2022/05/20 08:04:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -280,7 +280,11 @@ ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in)
 	int mbflag;
 	int ret = -1;
 
-	if (out == NULL || *out != NULL)
+	/*
+	 * XXX We can't fail on *out != NULL here since things like haproxy and
+	 * grpc pass in a pointer to an uninitialized pointer on the stack.
+	 */
+	if (out == NULL)
 		goto err;
 
 	if (in == NULL)
