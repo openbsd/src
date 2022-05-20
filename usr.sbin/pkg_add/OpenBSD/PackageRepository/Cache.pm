@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Cache.pm,v 1.9 2022/05/16 15:54:04 espie Exp $
+# $OpenBSD: Cache.pm,v 1.10 2022/05/20 20:31:38 espie Exp $
 #
 # Copyright (c) 2022 Marc Espie <espie@openbsd.org>
 #
@@ -48,6 +48,16 @@ sub pipe_locate
 	return @params;
 }
 
+# this is a hack to talk to quirks: the interface expects a list of
+# search objects such that the last one can do add_stem, so we oblige
+# (probably TODO: add a secondary interface in quirks, but this can do
+# in the meantime)
+sub add_stem
+{
+	my ($self, $stem) = @_;
+	$self->{stems}{$stem} = 1;
+}
+
 sub prime_update_info_cache
 {
 	my ($self, $state, $setlist) = @_;
@@ -55,6 +65,9 @@ sub prime_update_info_cache
 	my $progress = $state->progress;
 	my $uncached = {};
 	my $found = {};
+
+	my $pseudo_search = [$self];
+
 	# figure out a list of names to precache
 
 	# okay, so basically instead of hitting locate once for each
@@ -71,10 +84,15 @@ sub prime_update_info_cache
 			next if $stem =~ m/^partial\-/;
 			$stem =~ s/\%.*//; # zap branch info
 			$stem =~ s/\-\-.*//; # and set flavors
-			$self->{stems}{$stem} = 1;
+			$self->add_stem($stem);
+			$state->run_quirks(
+			    sub {
+			    	my $quirks = shift;
+				$quirks->tweak_search($pseudo_search, $h, 
+				    $state);
+			    });
 		}
 	}
-	# TODO actually ask quirks to extend the stemlist !
 	my @list = sort keys %{$self->{stems}};
 	return if @list == 0;
 
