@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.310 2022/05/20 22:14:19 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.311 2022/05/20 22:42:09 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -42,6 +42,11 @@
 
 #include <dev/isa/isareg.h>
 #include <dev/pv/pvreg.h>
+
+#ifdef MP_LOCKDEBUG
+#include <ddb/db_output.h>
+extern int __mp_lock_spinout;
+#endif /* MP_LOCKDEBUG */
 
 /* #define VMM_DEBUG */
 
@@ -1328,16 +1333,25 @@ int
 vmm_start(void)
 {
 	struct cpu_info *self = curcpu();
-	int ret = 0;
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-	int i;
-#endif
+#ifdef MP_LOCKDEBUG
+	int nticks;
+#endif /* MP_LOCKDEBUG */
+#endif /* MULTIPROCESSOR */
 
 	/* VMM is already running */
 	if (self->ci_flags & CPUF_VMM)
 		return (0);
+
+	/* Start VMM on this CPU */
+	start_vmm_on_cpu(self);
+	if (!(self->ci_flags & CPUF_VMM)) {
+		printf("%s: failed to enter VMM mode\n",
+			self->ci_dev->dv_xname);
+		return (EIO);
+	}
 
 #ifdef MULTIPROCESSOR
 	/* Broadcast start VMM IPI */
@@ -1346,25 +1360,23 @@ vmm_start(void)
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self)
 			continue;
-		for (i = 100000; (!(ci->ci_flags & CPUF_VMM)) && i>0;i--)
-			delay(10);
-		if (!(ci->ci_flags & CPUF_VMM)) {
-			printf("%s: failed to enter VMM mode\n",
-				ci->ci_dev->dv_xname);
-			ret = EIO;
+#ifdef MP_LOCKDEBUG
+		nticks = __mp_lock_spinout;
+#endif /* MP_LOCKDEBUG */
+		while (!(ci->ci_flags & CPUF_VMM)) {
+			CPU_BUSY_CYCLE();
+#ifdef MP_LOCKDEBUG
+			if (--nticks <= 0) {
+				db_printf("%s: spun out", __func__);
+				db_enter();
+				nticks = __mp_lock_spinout;
+			}
+#endif /* MP_LOCKDEBUG */
 		}
 	}
 #endif /* MULTIPROCESSOR */
 
-	/* Start VMM on this CPU */
-	start_vmm_on_cpu(self);
-	if (!(self->ci_flags & CPUF_VMM)) {
-		printf("%s: failed to enter VMM mode\n",
-			self->ci_dev->dv_xname);
-		ret = EIO;
-	}
-
-	return (ret);
+	return (0);
 }
 
 /*
@@ -1376,16 +1388,25 @@ int
 vmm_stop(void)
 {
 	struct cpu_info *self = curcpu();
-	int ret = 0;
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-	int i;
-#endif
+#ifdef MP_LOCKDEBUG
+	int nticks;
+#endif /* MP_LOCKDEBUG */
+#endif /* MULTIPROCESSOR */
 
 	/* VMM is not running */
 	if (!(self->ci_flags & CPUF_VMM))
 		return (0);
+
+	/* Stop VMM on this CPU */
+	stop_vmm_on_cpu(self);
+	if (self->ci_flags & CPUF_VMM) {
+		printf("%s: failed to exit VMM mode\n",
+			self->ci_dev->dv_xname);
+		return (EIO);
+	}
 
 #ifdef MULTIPROCESSOR
 	/* Stop VMM on other CPUs */
@@ -1394,25 +1415,23 @@ vmm_stop(void)
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ci == self)
 			continue;
-		for (i = 100000; (ci->ci_flags & CPUF_VMM) && i>0 ;i--)
-			delay(10);
-		if (ci->ci_flags & CPUF_VMM) {
-			printf("%s: failed to exit VMM mode\n",
-				ci->ci_dev->dv_xname);
-			ret = EIO;
+#ifdef MP_LOCKDEBUG
+		nticks = __mp_lock_spinout;
+#endif /* MP_LOCKDEBUG */
+		while ((ci->ci_flags & CPUF_VMM)) {
+			CPU_BUSY_CYCLE();
+#ifdef MP_LOCKDEBUG
+			if (--nticks <= 0) {
+				db_printf("%s: spunout", __func__);
+				db_enter();
+				nticks = __mp_lock_spinout;
+			}
+#endif /* MP_LOCKDEBUG */
 		}
 	}
 #endif /* MULTIPROCESSOR */
 
-	/* Stop VMM on this CPU */
-	stop_vmm_on_cpu(self);
-	if (self->ci_flags & CPUF_VMM) {
-		printf("%s: failed to exit VMM mode\n",
-			self->ci_dev->dv_xname);
-		ret = EIO;
-	}
-
-	return (ret);
+	return (0);
 }
 
 /*
@@ -1536,7 +1555,9 @@ vmclear_on_cpu(struct cpu_info *ci)
 static int
 vmx_remote_vmclear(struct cpu_info *ci, struct vcpu *vcpu)
 {
-	int ret = 0, nticks = 200000000;
+#ifdef MP_LOCKDEBUG
+	int nticks = __mp_lock_spinout;
+#endif /* MP_LOCKDEBUG */
 
 	rw_enter_write(&ci->ci_vmcs_lock);
 	atomic_swap_ulong(&ci->ci_vmcs_pa, vcpu->vc_control_pa);
@@ -1544,16 +1565,18 @@ vmx_remote_vmclear(struct cpu_info *ci, struct vcpu *vcpu)
 
 	while (ci->ci_vmcs_pa != VMX_VMCS_PA_CLEAR) {
 		CPU_BUSY_CYCLE();
+#ifdef MP_LOCKDEBUG
 		if (--nticks <= 0) {
-			printf("%s: spun out\n", __func__);
-			ret = 1;
-			break;
+			db_printf("%s: spun out\n", __func__);
+			db_enter();
+			nticks = __mp_lock_spinout;
 		}
+#endif /* MP_LOCKDEBUG */
 	}
 	atomic_swap_uint(&vcpu->vc_vmx_vmcs_state, VMCS_CLEARED);
 	rw_exit_write(&ci->ci_vmcs_lock);
 
-	return (ret);
+	return (0);
 }
 #endif /* MULTIPROCESSOR */
 
