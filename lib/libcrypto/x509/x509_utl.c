@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.2 2020/09/13 15:06:17 beck Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.3 2022/05/20 07:58:54 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -954,7 +954,7 @@ do_check_string(ASN1_STRING *a, int cmp_type, equal_fn equal,
 			rv = -1;
 	} else {
 		int astrlen;
-		unsigned char *astr;
+		unsigned char *astr = NULL;
 		astrlen = ASN1_STRING_to_UTF8(&astr, a);
 		if (astrlen < 0)
 			return -1;
