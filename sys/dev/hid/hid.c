@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.3 2020/06/04 23:03:43 deraadt Exp $ */
+/*	$OpenBSD: hid.c,v 1.4 2022/05/20 05:02:47 anton Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -229,7 +229,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 		 * Only copy HID item, increment position and return
 		 * if correct kind!
 		 */
-		if (s->kind == c->kind) {
+		if (s->kind == hid_none || s->kind == c->kind) {
 			*h = *c;
 			DPRINTF("%u,%u,%u\n", h->loc.pos,
 			    h->loc.size, h->loc.count);
