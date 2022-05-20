@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.4 2022/05/20 05:02:47 anton Exp $ */
+/*	$OpenBSD: hid.c,v 1.5 2022/05/20 05:03:45 anton Exp $ */
 /*	$NetBSD: hid.c,v 1.23 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -229,7 +229,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 		 * Only copy HID item, increment position and return
 		 * if correct kind!
 		 */
-		if (s->kind == hid_none || s->kind == c->kind) {
+		if (s->kind == hid_all || s->kind == c->kind) {
 			*h = *c;
 			DPRINTF("%u,%u,%u\n", h->loc.pos,
 			    h->loc.size, h->loc.count);
@@ -637,7 +637,7 @@ hid_is_collection(const void *desc, int size, uint8_t id, int32_t usage)
 	struct hid_item hi;
 	uint32_t coll_usage = ~0;
 
-	hd = hid_start_parse(desc, size, hid_none);
+	hd = hid_start_parse(desc, size, hid_all);
 
 	DPRINTF("%s: id=%d usage=0x%x\n", __func__, id, usage);
 	while (hid_get_item(hd, &hi)) {

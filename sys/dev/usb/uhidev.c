@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.107 2022/03/21 12:18:52 thfr Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.108 2022/05/20 05:03:45 anton Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -366,7 +366,7 @@ uhidev_maxrepid(void *buf, int len)
 
 	maxid = -1;
 	h.report_ID = 0;
-	for (d = hid_start_parse(buf, len, hid_none); hid_get_item(d, &h); )
+	for (d = hid_start_parse(buf, len, hid_all); hid_get_item(d, &h);)
 		if (h.report_ID > maxid)
 			maxid = h.report_ID;
 	hid_end_parse(d);

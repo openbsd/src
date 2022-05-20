@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.h,v 1.9 2021/09/01 10:41:39 anton Exp $ */
+/*	$OpenBSD: hid.h,v 1.10 2022/05/20 05:03:45 anton Exp $ */
 /*	$NetBSD: hid.h,v 1.8 2002/07/11 21:14:25 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.h,v 1.7 1999/11/17 22:33:40 n_hibma Exp $ */
 
@@ -43,7 +43,7 @@ enum hid_kind {
 	hid_feature,
 	hid_collection,
 	hid_endcollection,
-	hid_none
+	hid_all
 };
 
 struct hid_location {

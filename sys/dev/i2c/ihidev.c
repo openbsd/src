@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.26 2022/04/06 18:59:28 naddy Exp $ */
+/* $OpenBSD: ihidev.c,v 1.27 2022/05/20 05:03:45 anton Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -732,7 +732,7 @@ ihidev_maxrepid(void *buf, int len)
 
 	maxid = -1;
 	h.report_ID = 0;
-	for (d = hid_start_parse(buf, len, hid_none); hid_get_item(d, &h); )
+	for (d = hid_start_parse(buf, len, hid_all); hid_get_item(d, &h);)
 		if (h.report_ID > maxid)
 			maxid = h.report_ID;
 	hid_end_parse(d);
