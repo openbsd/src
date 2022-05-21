@@ -1,4 +1,4 @@
-/*	$OpenBSD: system.c,v 1.12 2016/03/13 18:34:21 guenther Exp $ */
+/*	$OpenBSD: system.c,v 1.13 2022/05/21 00:53:53 millert Exp $ */
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <paths.h>
 
@@ -40,7 +41,7 @@ int
 system(const char *command)
 {
 	pid_t pid, cpid;
-	struct sigaction intsave, quitsave;
+	struct sigaction intsave, quitsave, sa;
 	sigset_t mask, omask;
 	int pstat;
 	char *argp[] = {"sh", "-c", NULL, NULL};
@@ -52,6 +53,8 @@ system(const char *command)
 
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGCHLD);
+	sigaddset(&mask, SIGINT);
+	sigaddset(&mask, SIGQUIT);
 	sigprocmask(SIG_BLOCK, &mask, &omask);
 	switch (cpid = vfork()) {
 	case -1:			/* error */
@@ -63,11 +66,21 @@ system(const char *command)
 		_exit(127);
 	}
 
-	sigaction(SIGINT, NULL, &intsave);
-	sigaction(SIGQUIT, NULL, &quitsave);
+	/* Ignore SIGINT and SIGQUIT while waiting for command to complete. */
+	memset(&sa, 0, sizeof(sa));
+	sigemptyset(&sa.sa_mask);
+	sa.sa_handler = SIG_IGN;
+	sigaction(SIGINT, &sa, &intsave);
+	sigaction(SIGQUIT, &sa, &quitsave);
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGINT);
+	sigaddset(&mask, SIGQUIT);
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
+
 	do {
 		pid = waitpid(cpid, &pstat, 0);
 	} while (pid == -1 && errno == EINTR);
+
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	sigaction(SIGINT, &intsave, NULL);
 	sigaction(SIGQUIT, &quitsave, NULL);
