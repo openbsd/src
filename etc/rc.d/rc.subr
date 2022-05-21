@@ -1,4 +1,4 @@
-#	$OpenBSD: rc.subr,v 1.152 2022/02/10 16:57:33 robert Exp $
+#	$OpenBSD: rc.subr,v 1.153 2022/05/21 10:50:09 ajacoutot Exp $
 #
 # Copyright (c) 2010, 2011, 2014-2021 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2010, 2011 Ingo Schwarze <schwarze@openbsd.org>
@@ -159,9 +159,17 @@ _rc_wait_for_start() {
 	return
 }
 
-rc_start() {
-	${rcexec} "${daemon_logger:+set -o pipefail; }${daemon} ${daemon_flags}${daemon_logger:+ 2>&1 |
+rc_exec() {
+	local _rcexec="su -fl -c ${daemon_class} -s /bin/sh ${daemon_user} -c"
+	[ "${daemon_rtable}" -eq "$(id -R)" ] ||
+		_rcexec="route -T ${daemon_rtable} exec ${_rcexec}"
+
+	${_rcexec} "${daemon_logger:+set -o pipefail; }$@${daemon_logger:+ 2>&1 |
 		logger -ip ${daemon_logger} -t ${_name}}"
+}
+
+rc_start() {
+	rc_exec "${daemon} ${daemon_flags}"
 }
 
 rc_check() {
@@ -343,6 +351,5 @@ unset _rcflags _rclogger _rcrtable _rctimeout _rcuser
 # the shell will strip the quotes from daemon_flags when starting a daemon;
 # make sure pexp matches the process (i.e. doesn't include the quotes)
 pexp="$(eval echo ${daemon}${daemon_flags:+ ${daemon_flags}})"
-rcexec="su -fl -c ${daemon_class} -s /bin/sh ${daemon_user} -c"
-[ "${daemon_rtable}" -eq "$(id -R)" ] ||
-	rcexec="route -T ${daemon_rtable} exec ${rcexec}"
+# XXX old construct compatibility; remove after OPENBSD_7_2_RELEASE
+rcexec=rc_exec
