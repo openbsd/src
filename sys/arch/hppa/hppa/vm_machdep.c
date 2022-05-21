@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.83 2017/07/16 22:47:37 guenther Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.84 2022/05/21 23:43:31 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -136,12 +136,18 @@ cpu_exit(struct proc *p)
 	sched_exit(p);
 }
 
+struct kmem_va_mode kv_physwait = {
+	.kv_map = &phys_map,
+	.kv_wait = 1,
+};
+
 /*
  * Map an IO request into kernel virtual address space.
  */
 void
 vmapbuf(struct buf *bp, vsize_t len)
 {
+	struct kmem_dyn_mode kd_prefer = { .kd_waitok = 1 };
 	struct pmap *pm = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	vaddr_t kva, uva;
 	vsize_t size, off;
@@ -155,7 +161,8 @@ vmapbuf(struct buf *bp, vsize_t len)
 	off = (vaddr_t)bp->b_data - uva;
 	size = round_page(off + len);
 
-	kva = uvm_km_valloc_prefer_wait(phys_map, size, uva);
+	kd_prefer.kd_prefer = uva;
+	kva = (vaddr_t)km_alloc(size, &kv_physwait, &kp_none, &kd_prefer);
 	bp->b_data = (caddr_t)(kva + off);
 	while (size > 0) {
 		paddr_t pa;
@@ -188,7 +195,7 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	len = round_page(off + len);
 	pmap_kremove(addr, len);
 	pmap_update(pmap_kernel());
-	uvm_km_free_wakeup(phys_map, addr, len);
+	km_free((void *)addr, len, &kv_physwait, &kp_none);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
