@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: amd,v 1.9 2018/01/11 21:09:26 rpe Exp $
+# $OpenBSD: amd,v 1.10 2022/05/21 12:42:21 ajacoutot Exp $
 
 daemon="/usr/sbin/amd"
 
@@ -16,7 +16,7 @@ rc_pre() {
 }
 
 rc_start() {
-	${rcexec} "cd /etc/amd; ${daemon} ${daemon_flags}"
+	rc_exec "cd /etc/amd; ${daemon} ${daemon_flags}"
 }
 
 rc_cmd $1

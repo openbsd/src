@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: spamd,v 1.10 2018/01/11 21:09:26 rpe Exp $
+# $OpenBSD: spamd,v 1.11 2022/05/21 12:42:21 ajacoutot Exp $
 
 daemon="/usr/libexec/spamd"
 
@@ -17,7 +17,7 @@ rc_pre() {
 }
 
 rc_start() {
-	${rcexec} "${daemon} ${daemon_flags}" || return 1
+	rc_exec "${daemon} ${daemon_flags}" || return 1
 	/usr/libexec/spamd-setup -D ${spamd_setup_flags}
 }
 

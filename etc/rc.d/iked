@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: iked,v 1.7 2019/01/21 01:41:16 claudio Exp $
+# $OpenBSD: iked,v 1.8 2022/05/21 12:42:21 ajacoutot Exp $
 
 daemon="/sbin/iked"
 
@@ -13,8 +13,8 @@ rc_pre() {
 	[[ ${sasyncd_flags} != NO ]] &&
 		daemon_flags="-S ${daemon_flags}"
 
-	# use rcexec here since daemon_flags may contain arguments with spaces
-	${rcexec} "${daemon} -n ${daemon_flags}"
+	# use rc_exec here since daemon_flags may contain arguments with spaces
+	rc_exec "${daemon} -n ${daemon_flags}"
 }
 
 rc_cmd $1
