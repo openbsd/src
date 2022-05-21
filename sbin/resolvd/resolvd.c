@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolvd.c,v 1.25 2021/11/16 16:24:22 kn Exp $	*/
+/*	$OpenBSD: resolvd.c,v 1.26 2022/05/21 13:54:19 deraadt Exp $	*/
 /*
  * Copyright (c) 2021 Florian Obser <florian@openbsd.org>
  * Copyright (c) 2021 Theo de Raadt <deraadt@openbsd.org>
@@ -608,11 +608,16 @@ regen_resolvconf(char *why)
 		size_t linesize = 0;
 		ssize_t linelen;
 		FILE *fp;
+		int fd2;
 
-		lseek(resolvfd, 0, SEEK_SET);
-		fp = fdopen(resolvfd, "r");
-		if (fp == NULL)
+		if ((fd2 = dup(resolvfd)) == -1)
 			goto err;
+		lseek(fd2, 0, SEEK_SET);
+		fp = fdopen(fd2, "r");
+		if (fp == NULL) {
+			close(fd2);
+			goto err;
+		}
 		while ((linelen = getline(&line, &linesize, fp)) != -1) {
 			char *end = strchr(line, '\n');
 			if (end)
@@ -622,6 +627,7 @@ regen_resolvconf(char *why)
 			dprintf(fd, "%s\n", line);
 		}
 		free(line);
+		fclose(fp);
 	}
 
 	if (rename(_PATH_RESCONF_NEW, _PATH_RESCONF) == -1)
