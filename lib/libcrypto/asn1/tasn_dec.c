@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.73 2022/05/21 11:12:03 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.74 2022/05/21 11:21:31 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -637,7 +637,7 @@ static int
 asn1_item_d2i_choice(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
     int tag_number, int tag_class, char optional, int depth)
 {
-	const ASN1_TEMPLATE *tt, *errtt = NULL;
+	const ASN1_TEMPLATE *at, *errat = NULL;
 	const ASN1_AUX *aux;
 	ASN1_aux_cb *asn1_cb = NULL;
 	ASN1_VALUE *achoice = NULL;
@@ -675,16 +675,18 @@ asn1_item_d2i_choice(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 	}
 
 	/* Try each possible CHOICE in turn. */
-	for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
-		pchptr = asn1_get_field_ptr(&achoice, tt);
+	for (i = 0; i < it->tcount; i++) {
+		at = &it->templates[i];
+
+		pchptr = asn1_get_field_ptr(&achoice, at);
 
 		/* Mark field as OPTIONAL so its absence can be identified. */
-		ret = asn1_template_d2i(pchptr, cbs, tt, 1, depth);
+		ret = asn1_template_d2i(pchptr, cbs, at, 1, depth);
 		if (ret == -1)
 			continue;
 		if (ret != 1) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
-			errtt = tt;
+			errat = at;
 			goto err;
 		}
 
@@ -716,8 +718,8 @@ asn1_item_d2i_choice(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
  err:
 	ASN1_item_ex_free(&achoice, it);
 
-	if (errtt)
-		ERR_asprintf_error_data("Field=%s, Type=%s", errtt->field_name,
+	if (errat != NULL)
+		ERR_asprintf_error_data("Field=%s, Type=%s", errat->field_name,
 		    it->sname);
 	else
 		ERR_asprintf_error_data("Type=%s", it->sname);
@@ -731,8 +733,8 @@ asn1_item_d2i_sequence(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 {
 	CBS cbs_seq, cbs_seq_content, cbs_object;
 	char constructed, indefinite, optional_field;
-	const ASN1_TEMPLATE *errtt = NULL;
-	const ASN1_TEMPLATE *seqtt, *tt;
+	const ASN1_TEMPLATE *errat = NULL;
+	const ASN1_TEMPLATE *seqat, *at;
 	ASN1_aux_cb *asn1_cb = NULL;
 	const ASN1_AUX *aux;
 	ASN1_VALUE *aseq = NULL;
@@ -795,7 +797,9 @@ asn1_item_d2i_sequence(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 		goto err;
 	}
 
-	for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
+	for (i = 0; i < it->tcount; i++) {
+		at = &it->templates[i];
+
 		if (asn1_check_eoc(&cbs_seq_content)) {
 			if (!indefinite) {
 				ASN1error(ASN1_R_UNEXPECTED_EOC);
@@ -807,10 +811,10 @@ asn1_item_d2i_sequence(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 		if (CBS_len(&cbs_seq_content) == 0)
 			break;
 
-		if ((seqtt = asn1_do_adb(&aseq, tt, 1)) == NULL)
+		if ((seqat = asn1_do_adb(&aseq, at, 1)) == NULL)
 			goto err;
 
-		pseqval = asn1_get_field_ptr(&aseq, seqtt);
+		pseqval = asn1_get_field_ptr(&aseq, seqat);
 
 		/*
 		 * This was originally implemented to "increase efficiency",
@@ -818,19 +822,19 @@ asn1_item_d2i_sequence(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 		 * the use of ASN.1 ANY with OPTIONAL in SEQUENCEs (which
 		 * asn1_d2i_primitive() currently rejects).
 		 */
-		optional_field = (seqtt->flags & ASN1_TFLG_OPTIONAL) != 0;
+		optional_field = (seqat->flags & ASN1_TFLG_OPTIONAL) != 0;
 		if (i == it->tcount - 1)
 			optional_field = 0;
 
 		ret = asn1_template_d2i(pseqval, &cbs_seq_content,
-		    seqtt, optional_field, depth);
+		    seqat, optional_field, depth);
 		if (ret == -1) {
 			/* Absent OPTIONAL component. */
-			ASN1_template_free(pseqval, seqtt);
+			ASN1_template_free(pseqval, seqat);
 			continue;
 		}
 		if (ret != 1) {
-			errtt = seqtt;
+			errat = seqat;
 			goto err;
 		}
 	}
@@ -852,19 +856,21 @@ asn1_item_d2i_sequence(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 	 * There is no more data in the ASN.1 SEQUENCE, however we may not have
 	 * populated all fields - check that any remaining are OPTIONAL.
 	 */
-	for (; i < it->tcount; tt++, i++) {
-		if ((seqtt = asn1_do_adb(&aseq, tt, 1)) == NULL)
+	for (; i < it->tcount; i++) {
+		at = &it->templates[i];
+
+		if ((seqat = asn1_do_adb(&aseq, at, 1)) == NULL)
 			goto err;
 
-		if ((seqtt->flags & ASN1_TFLG_OPTIONAL) == 0) {
+		if ((seqat->flags & ASN1_TFLG_OPTIONAL) == 0) {
 			ASN1error(ASN1_R_FIELD_MISSING);
-			errtt = seqtt;
+			errat = seqat;
 			goto err;
 		}
 
 		/* XXX - this is probably unnecessary with earlier free. */
-		pseqval = asn1_get_field_ptr(&aseq, seqtt);
-		ASN1_template_free(pseqval, seqtt);
+		pseqval = asn1_get_field_ptr(&aseq, seqat);
+		ASN1_template_free(pseqval, seqat);
 	}
 
 	if (!CBS_get_bytes(cbs, &cbs_object, CBS_offset(&cbs_seq)))
@@ -888,8 +894,8 @@ asn1_item_d2i_sequence(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
  err:
 	ASN1_item_ex_free(&aseq, it);
 
-	if (errtt != NULL)
-		ERR_asprintf_error_data("Field=%s, Type=%s", errtt->field_name,
+	if (errat != NULL)
+		ERR_asprintf_error_data("Field=%s, Type=%s", errat->field_name,
 		    it->sname);
 	else
 		ERR_asprintf_error_data("Type=%s", it->sname);
@@ -975,7 +981,7 @@ asn1_item_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 }
 
 static void
-asn1_template_stack_of_free(STACK_OF(ASN1_VALUE) *avals, const ASN1_TEMPLATE *tt) {
+asn1_template_stack_of_free(STACK_OF(ASN1_VALUE) *avals, const ASN1_TEMPLATE *at) {
 	ASN1_VALUE *aval;
 
 	if (avals == NULL)
@@ -983,13 +989,13 @@ asn1_template_stack_of_free(STACK_OF(ASN1_VALUE) *avals, const ASN1_TEMPLATE *tt
 
 	while (sk_ASN1_VALUE_num(avals) > 0) {
 		aval = sk_ASN1_VALUE_pop(avals);
-		ASN1_item_ex_free(&aval, tt->item);
+		ASN1_item_ex_free(&aval, at->item);
 	}
 	sk_ASN1_VALUE_free(avals);
 }
 
 static int
-asn1_template_stack_of_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *tt,
+asn1_template_stack_of_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *at,
     char optional, int depth)
 {
 	CBS cbs_object, cbs_object_content;
@@ -1006,17 +1012,17 @@ asn1_template_stack_of_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *tt,
 	if (pval == NULL)
 		return 0;
 
-	asn1_template_stack_of_free((STACK_OF(ASN1_VALUE) *)*pval, tt);
+	asn1_template_stack_of_free((STACK_OF(ASN1_VALUE) *)*pval, at);
 	*pval = NULL;
 
-	tag_number = tt->tag;
-	tag_class = tt->flags & ASN1_TFLG_TAG_CLASS;
+	tag_number = at->tag;
+	tag_class = at->flags & ASN1_TFLG_TAG_CLASS;
 
 	/* Determine the inner tag value for SET OF or SEQUENCE OF. */
-	if ((tt->flags & ASN1_TFLG_IMPTAG) == 0) {
+	if ((at->flags & ASN1_TFLG_IMPTAG) == 0) {
 		tag_number = V_ASN1_SEQUENCE;
 		tag_class = V_ASN1_UNIVERSAL;
-		if ((tt->flags & ASN1_TFLG_SET_OF) != 0)
+		if ((at->flags & ASN1_TFLG_SET_OF) != 0)
 			tag_number = V_ASN1_SET;
 	}
 
@@ -1055,7 +1061,7 @@ asn1_template_stack_of_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *tt,
 			eoc_needed = 0;
 			break;
 		}
-		if (!asn1_item_d2i(&aval, &cbs_object_content, tt->item,
+		if (!asn1_item_d2i(&aval, &cbs_object_content, at->item,
 		    -1, 0, 0, depth)) {
 			ASN1error(ERR_R_NESTED_ASN1_ERROR);
 			goto err;
@@ -1085,14 +1091,14 @@ asn1_template_stack_of_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *tt,
 	return 1;
 
  err:
-	asn1_template_stack_of_free(avals, tt);
-	ASN1_item_ex_free(&aval, tt->item);
+	asn1_template_stack_of_free(avals, at);
+	ASN1_item_ex_free(&aval, at->item);
 
 	return 0;
 }
 
 static int
-asn1_template_noexp_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *tt,
+asn1_template_noexp_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *at,
     char optional, int depth)
 {
 	int tag_number, tag_class;
@@ -1101,19 +1107,19 @@ asn1_template_noexp_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *tt,
 	if (pval == NULL)
 		return 0;
 
-	if ((tt->flags & ASN1_TFLG_SK_MASK) != 0)
-		return asn1_template_stack_of_d2i(pval, cbs, tt, optional, depth);
+	if ((at->flags & ASN1_TFLG_SK_MASK) != 0)
+		return asn1_template_stack_of_d2i(pval, cbs, at, optional, depth);
 
 	tag_number = -1;
 	tag_class = V_ASN1_UNIVERSAL;
 
 	/* See if we need to use IMPLICIT tagging. */
-	if ((tt->flags & ASN1_TFLG_IMPTAG) != 0) {
-		tag_number = tt->tag;
-		tag_class = tt->flags & ASN1_TFLG_TAG_CLASS;
+	if ((at->flags & ASN1_TFLG_IMPTAG) != 0) {
+		tag_number = at->tag;
+		tag_class = at->flags & ASN1_TFLG_TAG_CLASS;
 	}
 
-	ret = asn1_item_d2i(pval, cbs, tt->item, tag_number, tag_class,
+	ret = asn1_item_d2i(pval, cbs, at->item, tag_number, tag_class,
 	    optional, depth);
 	if (ret == -1)
 		return -1;
@@ -1126,12 +1132,12 @@ asn1_template_noexp_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *tt,
 
  err:
 	/* XXX - The called function should have freed already. */
-	ASN1_template_free(pval, tt);
+	ASN1_template_free(pval, at);
 	return 0;
 }
 
 static int
-asn1_template_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *tt,
+asn1_template_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *at,
     char optional, int depth)
 {
 	CBS cbs_exp, cbs_exp_content;
@@ -1143,14 +1149,14 @@ asn1_template_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *tt,
 		return 0;
 
 	/* Check if EXPLICIT tag is expected. */
-	if ((tt->flags & ASN1_TFLG_EXPTAG) == 0)
-		return asn1_template_noexp_d2i(pval, cbs, tt, optional, depth);
+	if ((at->flags & ASN1_TFLG_EXPTAG) == 0)
+		return asn1_template_noexp_d2i(pval, cbs, at, optional, depth);
 
 	CBS_init(&cbs_exp, CBS_data(cbs), CBS_len(cbs));
 
 	/* Read ASN.1 header for EXPLICIT tagged object. */
 	ret = asn1_check_tag(&cbs_exp, &length, NULL, NULL, &indefinite,
-	    &constructed, tt->tag, tt->flags & ASN1_TFLG_TAG_CLASS, optional);
+	    &constructed, at->tag, at->flags & ASN1_TFLG_TAG_CLASS, optional);
 	if (ret == -1)
 		return -1;
 	if (ret != 1) {
@@ -1170,7 +1176,7 @@ asn1_template_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *tt,
 			goto err;
 	}
 
-	if ((ret = asn1_template_noexp_d2i(pval, &cbs_exp_content, tt, 0,
+	if ((ret = asn1_template_noexp_d2i(pval, &cbs_exp_content, at, 0,
 	    depth)) != 1) {
 		ASN1error(ERR_R_NESTED_ASN1_ERROR);
 		return 0;
@@ -1194,7 +1200,7 @@ asn1_template_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *tt,
 	return 1;
 
  err:
-	ASN1_template_free(pval, tt);
+	ASN1_template_free(pval, at);
 	return 0;
 }
 
@@ -1234,7 +1240,7 @@ ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 
 int
 ASN1_template_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
-    const ASN1_TEMPLATE *tt)
+    const ASN1_TEMPLATE *at)
 {
 	CBS cbs;
 	int ret;
@@ -1243,7 +1249,7 @@ ASN1_template_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 		return 0;
 
 	CBS_init(&cbs, *in, len);
-	if ((ret = asn1_template_d2i(pval, &cbs, tt, 0, 0)) == 1)
+	if ((ret = asn1_template_d2i(pval, &cbs, at, 0, 0)) == 1)
 		*in = CBS_data(&cbs);
 
 	return ret;
