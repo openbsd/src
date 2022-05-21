@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.75 2022/05/21 13:16:19 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.76 2022/05/21 13:21:42 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -80,14 +80,13 @@
 /*
  * This determines how many levels of recursion are permitted in ASN.1 string
  * types. If it is not limited stack overflows can occur. If set to zero no
- * recursion is allowed at all. Although zero should be adequate examples exist
- * that require a value of 1. So 5 should be more than enough.
+ * recursion is allowed at all.
  */
 #define ASN1_MAX_STRING_NEST 5
 #endif
 
 static int asn1_template_d2i(ASN1_VALUE **pval, CBS *cbs,
-    const ASN1_TEMPLATE *tt, char optional, int depth);
+    const ASN1_TEMPLATE *at, char optional, int depth);
 
 static int
 asn1_check_eoc(CBS *cbs)
@@ -932,10 +931,6 @@ asn1_item_d2i_extern(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 	return 0;
 }
 
-/*
- * Decode an item, taking care of IMPLICIT tagging, if any.
- * If 'opt' set and tag mismatch return -1 to handle OPTIONAL
- */
 static int
 asn1_item_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
     int tag_number, int tag_class, char optional, int depth)
@@ -1229,7 +1224,7 @@ ASN1_item_d2i(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 
 	if (pval == NULL)
 		pval = &ptmpval;
-	if (ASN1_item_ex_d2i(pval, in, inlen, it, -1, 0, 0, 0) <= 0)
+	if (ASN1_item_ex_d2i(pval, in, inlen, it, -1, 0, 0, NULL) <= 0)
 		return NULL;
 
 	return *pval;
@@ -1247,7 +1242,6 @@ ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 		return 0;
 
 	CBS_init(&cbs, *in, inlen);
-
 	if ((ret = asn1_item_d2i(pval, &cbs, it, tag_number, tag_class,
 	    optional, 0)) == 1)
 		*in = CBS_data(&cbs);
