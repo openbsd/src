@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: unbound,v 1.6 2022/05/17 07:02:40 ajacoutot Exp $
+# $OpenBSD: unbound,v 1.7 2022/05/21 10:10:45 ajacoutot Exp $
 
 daemon="/usr/sbin/unbound"
 daemon_flags="-c /var/unbound/etc/unbound.conf"
@@ -10,7 +10,7 @@ daemon_flags="-c /var/unbound/etc/unbound.conf"
 rc_pre() {
 	if grep '^[[:space:]]*auto-trust-anchor-file:' \
             /var/unbound/etc/unbound.conf > /dev/null 2>&1; then
-		/usr/sbin/unbound-anchor -v || true
+		/usr/sbin/unbound-anchor -v
 	fi
 	/usr/sbin/unbound-checkconf || return 1
 }
