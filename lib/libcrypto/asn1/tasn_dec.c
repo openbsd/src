@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.74 2022/05/21 11:21:31 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.75 2022/05/21 13:16:19 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -903,6 +903,35 @@ asn1_item_d2i_sequence(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 	return 0;
 }
 
+static int
+asn1_item_d2i_extern(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
+    int tag_number, int tag_class, char optional)
+{
+	const ASN1_EXTERN_FUNCS *ef = it->funcs;
+	const unsigned char *p = NULL;
+	ASN1_TLC ctx = { 0 };
+	int ret = 0;
+
+	if (CBS_len(cbs) > LONG_MAX)
+		return 0;
+
+	p = CBS_data(cbs);
+
+	if ((ret = ef->asn1_ex_d2i(pval, &p, (long)CBS_len(cbs), it,
+	    tag_number, tag_class, optional, &ctx)) == 1) {
+		if (!CBS_skip(cbs, p - CBS_data(cbs)))
+			goto err;
+	}
+	return ret;
+
+ err:
+	ASN1_item_ex_free(pval, it);
+
+	ERR_asprintf_error_data("Type=%s", it->sname);
+
+	return 0;
+}
+
 /*
  * Decode an item, taking care of IMPLICIT tagging, if any.
  * If 'opt' set and tag mismatch return -1 to handle OPTIONAL
@@ -911,11 +940,6 @@ static int
 asn1_item_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
     int tag_number, int tag_class, char optional, int depth)
 {
-	const ASN1_EXTERN_FUNCS *ef = it->funcs;
-	const unsigned char *p = NULL;
-	ASN1_TLC ctx = { 0 };
-	int ret = 0;
-
 	if (pval == NULL)
 		return 0;
 
@@ -949,15 +973,8 @@ asn1_item_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 		    optional);
 
 	case ASN1_ITYPE_EXTERN:
-		if (CBS_len(cbs) > LONG_MAX)
-			return 0;
-		p = CBS_data(cbs);
-		if ((ret = ef->asn1_ex_d2i(pval, &p, (long)CBS_len(cbs), it,
-		    tag_number, tag_class, optional, &ctx)) == 1) {
-			if (!CBS_skip(cbs, p - CBS_data(cbs)))
-				goto err;
-		}
-		return ret;
+		return asn1_item_d2i_extern(pval, cbs, it, tag_number,
+		    tag_class, optional);
 
 	case ASN1_ITYPE_CHOICE:
 		return asn1_item_d2i_choice(pval, cbs, it, tag_number,
