@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.33 2017/06/07 23:36:43 millert Exp $	*/
+/*	$OpenBSD: env.c,v 1.34 2022/05/21 01:21:29 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -165,7 +165,7 @@ load_env(char *envstr, FILE *f)
 	filepos = ftell(f);
 	fileline = LineNumber;
 	skip_comments(f);
-	if (EOF == get_string(envstr, MAX_ENVSTR, f, "\n"))
+	if (get_string(envstr, MAX_ENVSTR, f, "\n") == EOF)
 		return (-1);
 
 	bzero(name, sizeof name);

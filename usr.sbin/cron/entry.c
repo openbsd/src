@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.52 2020/04/18 16:19:02 deraadt Exp $	*/
+/*	$OpenBSD: entry.c,v 1.53 2022/05/21 01:21:29 deraadt Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -191,7 +191,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		if (ch == '*')
 			e->flags |= MIN_STAR;
 		ch = get_list(e->minute, FIRST_MINUTE, LAST_MINUTE,
-			      NULL, ch, file);
+		    NULL, ch, file);
 		if (ch == EOF) {
 			ecode = e_minute;
 			goto eof;
@@ -203,7 +203,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		if (ch == '*')
 			e->flags |= HR_STAR;
 		ch = get_list(e->hour, FIRST_HOUR, LAST_HOUR,
-			      NULL, ch, file);
+		    NULL, ch, file);
 		if (ch == EOF) {
 			ecode = e_hour;
 			goto eof;
@@ -215,7 +215,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		if (ch == '*')
 			e->flags |= DOM_STAR;
 		ch = get_list(e->dom, FIRST_DOM, LAST_DOM,
-			      NULL, ch, file);
+		    NULL, ch, file);
 		if (ch == EOF) {
 			ecode = e_dom;
 			goto eof;
@@ -225,7 +225,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		 */
 
 		ch = get_list(e->month, FIRST_MONTH, LAST_MONTH,
-			      MonthNames, ch, file);
+		    MonthNames, ch, file);
 		if (ch == EOF) {
 			ecode = e_month;
 			goto eof;
@@ -237,7 +237,7 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		if (ch == '*')
 			e->flags |= DOW_STAR;
 		ch = get_list(e->dow, FIRST_DOW, LAST_DOW,
-			      DowNames, ch, file);
+		    DowNames, ch, file);
 		if (ch == EOF) {
 			ecode = e_dow;
 			goto eof;
@@ -432,7 +432,7 @@ get_list(bitstr_t *bits, int low, int high, const char *names[],
 	 */
 	done = FALSE;
 	while (!done) {
-		if (EOF == (ch = get_range(bits, low, high, names, ch, file)))
+		if ((ch = get_range(bits, low, high, names, ch, file)) == EOF)
 			return (EOF);
 		if (ch == ',')
 			ch = get_char(file);
@@ -513,7 +513,7 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 		default:
 			/* not a range, it's a single number.
 			 */
-			if (EOF == set_element(bits, low, high, num1)) {
+			if (set_element(bits, low, high, num1) == EOF) {
 				unget_char(ch, file);
 				return (EOF);
 			}
@@ -550,7 +550,7 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 	 * designed then implemented by paul vixie).
 	 */
 	for (i = num1;  i <= num2;  i += num3)
-		if (EOF == set_element(bits, low, high, i)) {
+		if (set_element(bits, low, high, i) == EOF) {
 			unget_char(ch, file);
 			return (EOF);
 		}

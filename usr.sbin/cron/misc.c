@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.71 2015/11/14 13:09:14 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.72 2022/05/21 01:21:29 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -67,7 +67,7 @@ get_string(char *string, int size, FILE *file, char *terms)
 {
 	int ch;
 
-	while (EOF != (ch = get_char(file)) && !strchr(terms, ch)) {
+	while ((ch = get_char(file)) != EOF && !strchr(terms, ch)) {
 		if (size > 1) {
 			*string++ = ch;
 			size--;
@@ -87,7 +87,7 @@ skip_comments(FILE *file)
 {
 	int ch;
 
-	while (EOF != (ch = get_char(file))) {
+	while ((ch = get_char(file)) != EOF) {
 		/* ch is now the first character of a line.
 		 */
 

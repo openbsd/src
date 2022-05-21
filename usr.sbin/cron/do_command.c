@@ -1,4 +1,4 @@
-/*	$OpenBSD: do_command.c,v 1.62 2022/01/28 06:33:27 guenther Exp $	*/
+/*	$OpenBSD: do_command.c,v 1.63 2022/05/21 01:21:29 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -128,8 +128,8 @@ child_process(entry *e, user *u)
 		char *p;
 
 		for (input_data = p = e->cmd;
-		     (ch = *input_data) != '\0';
-		     input_data++, p++) {
+		    (ch = *input_data) != '\0';
+		    input_data++, p++) {
 			if (p != input_data)
 				*p = ch;
 			if (escaped) {
@@ -416,7 +416,7 @@ child_process(entry *e, user *u)
 			 * mail pipe if we ARE mailing.
 			 */
 
-			while (EOF != (ch = getc(in))) {
+			while ((ch = getc(in)) != EOF) {
 				bytes++;
 				if (mail)
 					fputc(ch, mail);
@@ -475,7 +475,7 @@ child_process(entry *e, user *u)
 int
 safe_p(const char *usernm, const char *s)
 {
-	static const char safe_delim[] = "@!:%+-.,";     /* conservative! */
+	static const char safe_delim[] = "@!:%+-.,";	/* conservative! */
 	const char *t;
 	int ch, first;
 
