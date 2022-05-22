@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.41 2021/05/01 16:11:11 visa Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.42 2022/05/22 16:54:17 kettenis Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -144,66 +144,66 @@ cpu_exit(struct proc *p)
 	sched_exit(p);
 }
 
-extern vm_map_t phys_map;
+struct kmem_va_mode kv_physwait = {
+	.kv_map = &phys_map,
+	.kv_wait = 1,
+};
 
 /*
- * Map an user IO request into kernel virtual address space.
+ * Map an IO request into kernel virtual address space.
  */
-
 void
 vmapbuf(struct buf *bp, vsize_t len)
 {
-	vaddr_t uva, kva;
-	vsize_t sz, off;
-	paddr_t pa;
-	struct pmap *pmap;
+	struct kmem_dyn_mode kd_prefer = { .kd_waitok = 1 };
+	struct pmap *pm = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+	vaddr_t kva, uva;
+	vsize_t size, off;
 
-	if ((bp->b_flags & B_PHYS) == 0) {
+#ifdef DIAGNOSTIC
+	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	}
-
-	pmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+#endif
 	bp->b_saveaddr = bp->b_data;
-	uva = trunc_page((vaddr_t)bp->b_saveaddr);
-	off = (vaddr_t)bp->b_saveaddr - uva;
-	sz = round_page(off + len);
+	uva = trunc_page((vaddr_t)bp->b_data);
+	off = (vaddr_t)bp->b_data - uva;
+	size = round_page(off + len);
 
-	kva = uvm_km_valloc_prefer_wait(phys_map, sz, uva);
-	bp->b_data = (caddr_t) (kva + off);
+	kd_prefer.kd_prefer = uva;
+	kva = (vaddr_t)km_alloc(size, &kv_physwait, &kp_none, &kd_prefer);
+	bp->b_data = (caddr_t)(kva + off);
+	while (size > 0) {
+		paddr_t pa;
 
-	while (sz > 0) {
-		if (pmap_extract(pmap, uva, &pa) == 0)
-			panic("vmapbuf: pmap_extract(%p, %lx) failed!",
-			    pmap, uva);
-
-		pmap_enter(vm_map_pmap(phys_map), kva, trunc_page(pa),
-		    PROT_READ | PROT_WRITE,
-		    PROT_READ | PROT_WRITE | PMAP_WIRED);
+		if (pmap_extract(pm, uva, &pa) == FALSE)
+			panic("vmapbuf: null page frame");
+		else
+			pmap_kenter_pa(kva, pa, PROT_READ | PROT_WRITE);
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
-		sz -= PAGE_SIZE;
+		size -= PAGE_SIZE;
 	}
-	pmap_update(vm_map_pmap(phys_map));
+	pmap_update(pmap_kernel());
 }
 
 /*
- * Free the io map PTEs associated with this IO operation.
- * We also invalidate the TLB entries and restore the original b_addr.
+ * Unmap IO request from the kernel virtual address space.
  */
 void
 vunmapbuf(struct buf *bp, vsize_t len)
 {
-	vsize_t sz;
-	vaddr_t addr;
+	vaddr_t addr, off;
 
-	if ((bp->b_flags & B_PHYS) == 0) {
+#ifdef DIAGNOSTIC
+	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
-	}
+#endif
 	addr = trunc_page((vaddr_t)bp->b_data);
-	sz = round_page(len + ((vaddr_t)bp->b_data - addr));
-	pmap_remove(vm_map_pmap(phys_map), addr, addr + sz);
-	pmap_update(vm_map_pmap(phys_map));
-	uvm_km_free_wakeup(phys_map, addr, sz);
+	off = (vaddr_t)bp->b_data - addr;
+	len = round_page(off + len);
+	pmap_kremove(addr, len);
+	pmap_update(pmap_kernel());
+	km_free((void *)addr, len, &kv_physwait, &kp_none);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
 }
