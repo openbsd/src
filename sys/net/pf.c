@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1130 2022/05/18 06:02:33 miod Exp $ */
+/*	$OpenBSD: pf.c,v 1.1131 2022/05/23 09:54:18 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1291,9 +1291,9 @@ pf_purge(void *xnloops)
 	/*
 	 * process a fraction of the state table every second
 	 * Note:
-	 * 	we no longer need PF_LOCK() here, because
-	 * 	pf_purge_expired_states() uses pf_state_lock to maintain
-	 * 	consistency.
+	 *     we no longer need PF_LOCK() here, because
+	 *     pf_purge_expired_states() uses pf_state_lock to maintain
+	 *     consistency.
 	 */
 	if (pf_default_rule.timeout[PFTM_INTERVAL] > 0)
 		pf_purge_expired_states(1 + (pf_status.states
@@ -1519,7 +1519,7 @@ pf_purge_expired_states(u_int32_t maxcheck)
 	time_t			 now;
 
 	PF_ASSERT_UNLOCKED();
- 
+
 	rw_enter_read(&pf_state_list.pfs_rwl);
 
 	mtx_enter(&pf_state_list.pfs_mtx);
@@ -1553,7 +1553,7 @@ pf_purge_expired_states(u_int32_t maxcheck)
 			cur = NULL;
 			break;
 		}
- 
+
 		cur = TAILQ_NEXT(cur, entry_list);
 	} while (maxcheck--);
 
@@ -1569,7 +1569,7 @@ pf_purge_expired_states(u_int32_t maxcheck)
 	SLIST_FOREACH(st, &gcl, gc_list) {
 		if (st->timeout != PFTM_UNLINKED)
 			pf_remove_state(st);
- 
+
 		pf_free_state(st);
 	}
 	PF_STATE_EXIT_WRITE();
@@ -3402,7 +3402,7 @@ pf_find_tcpopt(u_int8_t *opt, u_int8_t *opts, size_t hlen, u_int8_t type,
 		default:
 			if (opt[0] == type &&
 			    opt[1] >= min_typelen)
-			        return (opt);
+				return (opt);
 		}
 
 		opt += MAX(opt[1], 2); /* evade infinite loops */
