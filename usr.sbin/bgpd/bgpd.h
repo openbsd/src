@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.422 2022/03/21 10:15:34 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.423 2022/05/23 13:40:11 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1286,7 +1286,7 @@ int		 ktable_update(u_int, char *, int, uint8_t);
 void		 ktable_preload(void);
 void		 ktable_postload(uint8_t);
 int		 ktable_exists(u_int, u_int *);
-int		 kr_change(u_int, struct kroute_full *,  uint8_t);
+int		 kr_change(u_int, struct kroute_full *, uint8_t);
 int		 kr_delete(u_int, struct kroute_full *, uint8_t);
 int		 kr_flush(u_int);
 void		 kr_shutdown(uint8_t, u_int);

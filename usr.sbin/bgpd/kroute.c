@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.245 2022/05/06 15:51:09 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.246 2022/05/23 13:40:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3384,14 +3384,14 @@ fetchtable(struct ktable *kt, uint8_t fib_prio)
 			}
 
 		if (sa->sa_family == AF_INET) {
-			if (rtm->rtm_priority == fib_prio)  {
+			if (rtm->rtm_priority == fib_prio) {
 				send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r,
 				    fib_prio);
 				free(kr);
 			} else
 				kroute_insert(kt, kr);
 		} else if (sa->sa_family == AF_INET6) {
-			if (rtm->rtm_priority == fib_prio)  {
+			if (rtm->rtm_priority == fib_prio) {
 				send_rt6msg(kr_state.fd, RTM_DELETE, kt,
 				    &kr6->r, fib_prio);
 				free(kr6);

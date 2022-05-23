@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_trie.c,v 1.14 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: rde_trie.c,v 1.15 2022/05/23 13:40:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2018 Claudio Jeker <claudio@openbsd.org>
@@ -158,7 +158,7 @@ trie_add_v4(struct trie_head *th, struct in_addr *prefix, uint8_t plen)
 
 		minlen = n->plen > plen ? plen : n->plen;
 		inet4applymask(&mp, &p, minlen);
-		if (n->addr.s_addr !=  mp.s_addr) {
+		if (n->addr.s_addr != mp.s_addr) {
 			/*
 			 * out of path, insert intermediary node between
 			 * np and n, then insert n and new node there
@@ -425,7 +425,7 @@ trie_roa_add(struct trie_head *th, struct roa *roa)
 	if ((rsp = set_match(*stp, roa->asnum)) != NULL) {
 		if (rsp->maxlen < roa->maxlen)
 			rsp->maxlen = roa->maxlen;
-	} else  {
+	} else {
 		rs.as = roa->asnum;
 		rs.maxlen = roa->maxlen;
 		if (set_add(*stp, &rs, 1) != 0)
@@ -489,7 +489,7 @@ trie_match_v4(struct trie_head *th, struct in_addr *prefix, uint8_t plen,
 			break;	/* too specific, no match possible */
 
 		inet4applymask(&mp, prefix, n->plen);
-		if (n->addr.s_addr !=  mp.s_addr)
+		if (n->addr.s_addr != mp.s_addr)
 			break;	/* off path, no match possible */
 
 		/* the match covers all larger prefixlens */
@@ -585,7 +585,7 @@ trie_roa_check_v4(struct trie_head *th, struct in_addr *prefix, uint8_t plen,
 			break;	/* too specific, no match possible */
 
 		inet4applymask(&mp, prefix, n->plen);
-		if (n->addr.s_addr !=  mp.s_addr)
+		if (n->addr.s_addr != mp.s_addr)
 			break;	/* off path, no other match possible */
 
 		if (n->node) {

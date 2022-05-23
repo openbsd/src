@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.423 2022/03/15 11:13:48 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.424 2022/05/23 13:40:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4746,7 +4746,7 @@ new_prefix_set(char *name, int is_roa)
 		sets = &conf->originsets;
 	}
 
-	if (find_prefixset(name, sets) != NULL)  {
+	if (find_prefixset(name, sets) != NULL) {
 		yyerror("%s \"%s\" already exists", type, name);
 		return NULL;
 	}

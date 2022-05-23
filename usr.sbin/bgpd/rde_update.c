@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.139 2022/03/30 16:06:32 tb Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.140 2022/05/23 13:40:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -170,7 +170,7 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 		    peer->prefix_out_cnt > peer->conf.max_out_prefix) {
 			log_peer_warnx(&peer->conf,
 			    "outbound prefix limit reached (>%u/%u)",
-		    	    peer->prefix_out_cnt, peer->conf.max_out_prefix);
+			    peer->prefix_out_cnt, peer->conf.max_out_prefix);
 			rde_update_err(peer, ERR_CEASE,
 			    ERR_CEASE_MAX_SENT_PREFIX, NULL, 0);
 		}
@@ -230,7 +230,7 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	    peer->prefix_out_cnt > peer->conf.max_out_prefix) {
 		log_peer_warnx(&peer->conf,
 		    "outbound prefix limit reached (>%u/%u)",
-	    	    peer->prefix_out_cnt, peer->conf.max_out_prefix);
+		    peer->prefix_out_cnt, peer->conf.max_out_prefix);
 		rde_update_err(peer, ERR_CEASE,
 		    ERR_CEASE_MAX_SENT_PREFIX, NULL, 0);
 	}

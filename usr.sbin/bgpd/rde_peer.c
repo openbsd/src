@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.15 2022/03/22 10:53:08 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.16 2022/05/23 13:40:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -45,7 +45,7 @@ struct iq {
 	struct imsg		imsg;
 };
 
-extern struct filter_head      *out_rules;
+extern struct filter_head	*out_rules;
 
 int
 peer_has_as4byte(struct rde_peer *peer)
@@ -116,7 +116,7 @@ peer_foreach(void (*callback)(struct rde_peer *, void *), void *arg)
 {
 	struct rde_peer *peer, *np;
 
-	LIST_FOREACH_SAFE(peer,  &peerlist, peer_l, np)
+	LIST_FOREACH_SAFE(peer, &peerlist, peer_l, np)
 		callback(peer, arg);
 }
 

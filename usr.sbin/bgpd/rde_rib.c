@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.237 2022/03/22 10:53:08 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.238 2022/05/23 13:40:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1446,7 +1446,7 @@ prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, uint8_t plen,
 			*buf++ = 0x80;
 			*buf++ = 0x0;
 			*buf++ = 0x0;
-		} else  {
+		} else {
 			memcpy(buf, &prefix->labelstack,
 			    prefix->labellen);
 			buf += prefix->labellen;
