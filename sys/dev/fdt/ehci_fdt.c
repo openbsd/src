@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_fdt.c,v 1.8 2021/12/03 19:22:42 uaa Exp $ */
+/*	$OpenBSD: ehci_fdt.c,v 1.9 2022/05/23 11:37:22 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -40,10 +40,16 @@
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
+#define MARVELL_EHCI_HOST_OFFSET	0x0100
+
 struct ehci_fdt_softc {
 	struct ehci_softc	sc;
-	int			sc_node;
+
+	bus_space_handle_t	sc_ioh;
+	bus_size_t		sc_size;
 	void			*sc_ih;
+
+	int			sc_node;
 };
 
 int	ehci_fdt_match(struct device *, void *, void *);
@@ -62,7 +68,8 @@ ehci_fdt_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "generic-ehci");
+	return OF_is_compatible(faa->fa_node, "generic-ehci") ||
+	    OF_is_compatible(faa->fa_node, "marvell,armada-3700-ehci");
 }
 
 void
@@ -71,6 +78,7 @@ ehci_fdt_attach(struct device *parent, struct device *self, void *aux)
 	struct ehci_fdt_softc *sc = (struct ehci_fdt_softc *)self;
 	struct fdt_attach_args *faa = aux;
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
+	bus_size_t offset = 0;
 	usbd_status r;
 
 	if (faa->fa_nreg < 1) {
@@ -81,12 +89,22 @@ ehci_fdt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = faa->fa_node;
 	sc->sc.iot = faa->fa_iot;
 	sc->sc.sc_bus.dmatag = faa->fa_dmat;
-	sc->sc.sc_size = faa->fa_reg[0].size;
+	sc->sc_size = faa->fa_reg[0].size;
 
 	if (bus_space_map(sc->sc.iot, faa->fa_reg[0].addr,
-	    faa->fa_reg[0].size, 0, &sc->sc.ioh)) {
+	    sc->sc_size, 0, &sc->sc_ioh)) {
 		printf(": can't map registers\n");
 		goto out;
+	}
+
+	if (OF_is_compatible(faa->fa_node, "marvell,armada-3700-ehci"))
+		offset = MARVELL_EHCI_HOST_OFFSET;
+
+	sc->sc.sc_size = sc->sc_size - offset;
+	if (bus_space_subregion(sc->sc.iot, sc->sc_ioh, offset,
+	    sc->sc.sc_size, &sc->sc.ioh)) {
+		printf(": can't map ehci registers\n");
+		goto unmap;
 	}
 
 	pinctrl_byname(sc->sc_node, "default");
@@ -108,6 +126,18 @@ ehci_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	if (OF_is_compatible(faa->fa_node, "marvell,armada-3700-ehci")) {
+		uint32_t usbmode;
+
+		/* force HOST mode */
+		sc->sc.sc_flags = EHCIF_USBMODE;
+
+		usbmode = EOREAD4(&sc->sc, EHCI_USBMODE);
+		CLR(usbmode, EHCI_USBMODE_CM_M);
+		SET(usbmode, EHCI_USBMODE_CM_HOST);
+		EOWRITE4(&sc->sc, EHCI_USBMODE, usbmode);
+	}
+
 	ehci_init_phys(sc);
 
 	strlcpy(sc->sc.sc_vendor, "Generic", sizeof(sc->sc.sc_vendor));
@@ -126,7 +156,7 @@ disestablish_intr:
 	fdt_intr_disestablish(sc->sc_ih);
 	sc->sc_ih = NULL;
 unmap:
-	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+	bus_space_unmap(sc->sc.iot, sc->sc_ioh, sc->sc_size);
 	sc->sc.sc_size = 0;
 out:
 	return;
@@ -148,7 +178,7 @@ ehci_fdt_detach(struct device *self, int flags)
 	}
 
 	if (sc->sc.sc_size) {
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+		bus_space_unmap(sc->sc.iot, sc->sc_ioh, sc->sc_size);
 		sc->sc.sc_size = 0;
 	}
 
