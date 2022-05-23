@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.204 2022/05/15 16:43:34 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.205 2022/05/23 13:39:14 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1165,26 +1165,26 @@ main(int argc, char *argv[])
 	if (outputfiles(&vrps, &brks, &stats))
 		rc = 1;
 
-	logx("Processing time %lld seconds "
-	    "(%lld seconds user, %lld seconds system)",
+	printf("Processing time %lld seconds "
+	    "(%lld seconds user, %lld seconds system)\n",
 	    (long long)stats.elapsed_time.tv_sec,
 	    (long long)stats.user_time.tv_sec,
 	    (long long)stats.system_time.tv_sec);
-	logx("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)",
+	printf("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)\n",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);
-	logx("BGPsec Router Certificates: %zu", stats.brks);
-	logx("Certificates: %zu (%zu invalid)",
+	printf("BGPsec Router Certificates: %zu\n", stats.brks);
+	printf("Certificates: %zu (%zu invalid)\n",
 	    stats.certs, stats.certs_fail);
-	logx("Trust Anchor Locators: %zu (%zu invalid)",
+	printf("Trust Anchor Locators: %zu (%zu invalid)\n",
 	    stats.tals, talsz - stats.tals);
-	logx("Manifests: %zu (%zu failed parse, %zu stale)",
+	printf("Manifests: %zu (%zu failed parse, %zu stale)\n",
 	    stats.mfts, stats.mfts_fail, stats.mfts_stale);
-	logx("Certificate revocation lists: %zu", stats.crls);
-	logx("Ghostbuster records: %zu", stats.gbrs);
-	logx("Repositories: %zu", stats.repos);
-	logx("Cleanup: removed %zu files, %zu directories, %zu superfluous",
+	printf("Certificate revocation lists: %zu\n", stats.crls);
+	printf("Ghostbuster records: %zu\n", stats.gbrs);
+	printf("Repositories: %zu\n", stats.repos);
+	printf("Cleanup: removed %zu files, %zu directories, %zu superfluous\n",
 	    stats.del_files, stats.del_dirs, stats.extra_files);
-	logx("VRP Entries: %zu (%zu unique)", stats.vrps, stats.uniqs);
+	printf("VRP Entries: %zu (%zu unique)\n", stats.vrps, stats.uniqs);
 
 	/* Memory cleanup. */
 	repo_free();
