@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.77 2021/10/04 01:34:29 kevlo Exp $
+#	$OpenBSD: list,v 1.78 2022/05/23 16:58:10 krw Exp $
 
 SRCDIRS distrib/special
 
@@ -82,9 +82,6 @@ COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8188eu	etc/firmware/urtwn-rtl8188eu
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192cT	etc/firmware/urtwn-rtl8192cT
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192cU	etc/firmware/urtwn-rtl8192cU
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192eu	etc/firmware/urtwn-rtl8192eu
-
-# for fdisk(8)
-COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV

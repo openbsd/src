@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.37 2021/07/18 15:18:49 deraadt Exp $
+#	$OpenBSD: list,v 1.38 2022/05/23 16:58:10 krw Exp $
 
 SRCDIRS distrib/special
 
@@ -67,9 +67,6 @@ LINK	instbin					usr/sbin/installboot
 LINK	instbin					usr/sbin/pwd_mkdb
 ARGVLINK ksh					-sh
 SPECIAL	rm bin/md5
-
-# for fdisk(8)
-COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
 
 # firmware we might need
 COPY	${DESTDIR}/etc/firmware/kue		etc/firmware/kue

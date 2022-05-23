@@ -417,7 +417,6 @@
 ./usr/libdata/perl5/mips64el-openbsd/threads/shared.pm
 ./usr/local/libdata/perl5/site_perl/mips64el-openbsd
 ./usr/mdec/boot
-./usr/mdec/mbr
 ./usr/sbin/ZZZ
 ./usr/sbin/apm
 ./usr/sbin/apmd

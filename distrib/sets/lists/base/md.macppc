@@ -421,7 +421,6 @@
 ./usr/libdata/perl5/powerpc-openbsd/threads/shared.pm
 ./usr/local/libdata/perl5/site_perl/powerpc-openbsd
 ./usr/mdec/bsd.tbxi
-./usr/mdec/mbr
 ./usr/mdec/ofwboot
 ./usr/sbin/ZZZ
 ./usr/sbin/apm
