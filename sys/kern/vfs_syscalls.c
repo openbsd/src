@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.356 2022/02/17 03:12:34 rob Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.357 2022/05/23 15:17:11 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -60,6 +60,8 @@
 #include <sys/ktrace.h>
 #include <sys/unistd.h>
 #include <sys/specdev.h>
+#include <sys/resourcevar.h>
+#include <sys/signalvar.h>
 
 #include <sys/syscallargs.h>
 
@@ -2809,6 +2811,35 @@ dofutimens(struct proc *p, int fd, struct timespec ts[2])
 }
 
 /*
+ * Truncate a file given a vnode.
+ */
+int
+dotruncate(struct proc *p, struct vnode *vp, off_t len)
+{
+	struct vattr vattr;
+	int error;
+
+	if (len < 0)
+		return EINVAL;
+	if (vp->v_type == VDIR)
+		return EISDIR;
+	if ((error = vn_writechk(vp)) != 0)
+		return error;
+	if (vp->v_type == VREG && len > lim_cur_proc(p, RLIMIT_FSIZE)) {
+		if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
+			return error;
+		if (len > vattr.va_size) {
+			/* if extending over the limit, send signal and fail */
+			psignal(p, SIGXFSZ);
+			return EFBIG;
+		}
+	}
+	VATTR_NULL(&vattr);
+	vattr.va_size = len;
+	return VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+}
+
+/*
  * Truncate a file given its path name.
  */
 int
@@ -2819,7 +2850,6 @@ sys_truncate(struct proc *p, void *v, register_t *retval)
 		syscallarg(off_t) length;
 	} */ *uap = v;
 	struct vnode *vp;
-	struct vattr vattr;
 	int error;
 	struct nameidata nd;
 
@@ -2830,14 +2860,8 @@ sys_truncate(struct proc *p, void *v, register_t *retval)
 		return (error);
 	vp = nd.ni_vp;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (vp->v_type == VDIR)
-		error = EISDIR;
-	else if ((error = VOP_ACCESS(vp, VWRITE, p->p_ucred, p)) == 0 &&
-	    (error = vn_writechk(vp)) == 0) {
-		VATTR_NULL(&vattr);
-		vattr.va_size = SCARG(uap, length);
-		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
-	}
+	if ((error = VOP_ACCESS(vp, VWRITE, p->p_ucred, p)) == 0)
+		error = dotruncate(p, vp, SCARG(uap, length));
 	vput(vp);
 	return (error);
 }
@@ -2852,28 +2876,19 @@ sys_ftruncate(struct proc *p, void *v, register_t *retval)
 		syscallarg(int) fd;
 		syscallarg(off_t) length;
 	} */ *uap = v;
-	struct vattr vattr;
 	struct vnode *vp;
 	struct file *fp;
-	off_t len;
 	int error;
 
 	if ((error = getvnode(p, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	len = SCARG(uap, length);
-	if ((fp->f_flag & FWRITE) == 0 || len < 0) {
+	if ((fp->f_flag & FWRITE) == 0) {
 		error = EINVAL;
 		goto bad;
 	}
 	vp = fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (vp->v_type == VDIR)
-		error = EISDIR;
-	else if ((error = vn_writechk(vp)) == 0) {
-		VATTR_NULL(&vattr);
-		vattr.va_size = len;
-		error = VOP_SETATTR(vp, &vattr, fp->f_cred, p);
-	}
+	error = dotruncate(p, vp, SCARG(uap, length));
 	VOP_UNLOCK(vp);
 bad:
 	FRELE(fp, p);

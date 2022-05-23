@@ -1,4 +1,4 @@
-.\"	$OpenBSD: truncate.2,v 1.20 2020/02/11 13:19:17 schwarze Exp $
+.\"	$OpenBSD: truncate.2,v 1.21 2022/05/23 15:17:11 millert Exp $
 .\"	$NetBSD: truncate.2,v 1.7 1995/02/27 12:39:00 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)truncate.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: February 11 2020 $
+.Dd $Mdocdate: May 23 2022 $
 .Dt TRUNCATE 2
 .Os
 .Sh NAME
@@ -73,7 +73,8 @@ is a negative value.
 .It Bq Er EFBIG
 The
 .Fa length
-exceeds the maximum file size of the underlying filesystem.
+exceeds the process's file size limit or the maximum file size
+of the underlying filesystem.
 .It Bq Er EIO
 An I/O error occurred updating the inode.
 .El
