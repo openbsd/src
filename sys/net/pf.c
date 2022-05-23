@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1131 2022/05/23 09:54:18 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1132 2022/05/23 11:17:35 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6383,6 +6383,13 @@ pf_walk_option(struct pf_pdesc *pd, struct ip *h, int off, int end,
     u_short *reason)
 {
 	uint8_t	type, length, opts[15 * 4 - sizeof(struct ip)];
+
+	/* IP header in payload of ICMP packet may be too short */
+	if (pd->m->m_pkthdr.len < end) {
+		DPFPRINTF(LOG_NOTICE, "IP option too short");
+		REASON_SET(reason, PFRES_SHORT);
+		return (PF_DROP);
+	}
 
 	KASSERT(end - off <= sizeof(opts));
 	m_copydata(pd->m, off, end - off, opts);
