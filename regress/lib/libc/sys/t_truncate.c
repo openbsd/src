@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_truncate.c,v 1.3 2021/12/13 16:56:48 deraadt Exp $	*/
+/*	$OpenBSD: t_truncate.c,v 1.4 2022/05/24 05:14:30 anton Exp $	*/
 /* $NetBSD: t_truncate.c,v 1.3 2017/01/13 20:03:51 christos Exp $ */
 
 /*-
@@ -157,7 +157,7 @@ ATF_TC_BODY(truncate_err, tc)
 	ATF_REQUIRE_ERRNO(EFAULT, truncate((void *)-1, 999) == -1);
 
 	errno = 0;
-	ATF_REQUIRE_ERRNO(EISDIR, truncate("/etc", 999) == -1);
+	ATF_REQUIRE_ERRNO(EISDIR, truncate("/tmp", 999) == -1);
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(ENOENT, truncate("/a/b/c/d/e/f/g", 999) == -1);
