@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_gen.c,v 1.18 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: asn1_gen.c,v 1.19 2022/05/24 19:56:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2002.
  */
@@ -61,6 +61,8 @@
 #include <openssl/asn1.h>
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
+
+#include "asn1_locl.h"
 
 #define ASN1_GEN_FLAG		0x10000
 #define ASN1_GEN_FLAG_IMP	(ASN1_GEN_FLAG|1)
@@ -754,10 +756,9 @@ asn1_str2type(const char *str, int format, int utype)
 		}
 
 		if ((utype == V_ASN1_BIT_STRING) && no_unused) {
-			atmp->value.asn1_string->flags &=
-			    ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
-			atmp->value.asn1_string->flags |=
-			    ASN1_STRING_FLAG_BITS_LEFT;
+			if (!asn1_abs_set_unused_bits(atmp->value.asn1_string,
+			    0))
+				goto bad_str;
 		}
 
 		break;
