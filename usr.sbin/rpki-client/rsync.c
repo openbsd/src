@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsync.c,v 1.37 2022/04/20 15:38:24 deraadt Exp $ */
+/*	$OpenBSD: rsync.c,v 1.38 2022/05/24 09:20:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -147,7 +147,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 	struct msgbuf		 msgq;
 	struct ibuf		*b, *inbuf = NULL;
 	sigset_t		 mask, oldmask;
-	struct rsyncproc	 ids[MAX_RSYNC_PROCESSES] = { 0 };
+	struct rsyncproc	 ids[MAX_RSYNC_REQUESTS] = { 0 };
 
 	if (pledge("stdio rpath proc exec unveil", NULL) == -1)
 		err(1, "pledge");
@@ -211,7 +211,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 		int st;
 
 		pfd.events = 0;
-		if (nprocs < MAX_RSYNC_PROCESSES)
+		if (nprocs < MAX_RSYNC_REQUESTS)
 			pfd.events |= POLLIN;
 		if (msgq.queued)
 			pfd.events |= POLLOUT;
@@ -230,10 +230,10 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 			while ((pid = waitpid(WAIT_ANY, &st, WNOHANG)) > 0) {
 				int ok = 1;
 
-				for (i = 0; i < MAX_RSYNC_PROCESSES; i++)
+				for (i = 0; i < MAX_RSYNC_REQUESTS; i++)
 					if (ids[i].pid == pid)
 						break;
-				if (i >= MAX_RSYNC_PROCESSES)
+				if (i >= MAX_RSYNC_REQUESTS)
 					errx(1, "waitpid: %d unexpected", pid);
 
 				if (!WIFEXITED(st)) {
@@ -278,7 +278,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 
 		if (!(pfd.revents & POLLIN))
 			continue;
-		if (nprocs >= MAX_RSYNC_PROCESSES)
+		if (nprocs >= MAX_RSYNC_REQUESTS)
 			continue;
 
 		b = io_buf_read(fd, &inbuf);
@@ -340,10 +340,10 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 
 		/* Augment the list of running processes. */
 
-		for (i = 0; i < MAX_RSYNC_PROCESSES; i++)
+		for (i = 0; i < MAX_RSYNC_REQUESTS; i++)
 			if (ids[i].pid == 0)
 				break;
-		assert(i < MAX_RSYNC_PROCESSES);
+		assert(i < MAX_RSYNC_REQUESTS);
 		ids[i].id = id;
 		ids[i].pid = pid;
 		ids[i].uri = uri;
@@ -356,7 +356,7 @@ proc_rsync(char *prog, char *bind_addr, int fd)
 	}
 
 	/* No need for these to be hanging around. */
-	for (i = 0; i < MAX_RSYNC_PROCESSES; i++)
+	for (i = 0; i < MAX_RSYNC_REQUESTS; i++)
 		if (ids[i].pid != 0) {
 			kill(ids[i].pid, SIGTERM);
 			free(ids[i].uri);

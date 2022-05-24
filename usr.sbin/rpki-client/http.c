@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.60 2022/05/15 16:43:34 tb Exp $ */
+/*	$OpenBSD: http.c,v 1.61 2022/05/24 09:20:49 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -71,9 +71,8 @@
 #define HTTP_BUF_SIZE		(32 * 1024)
 #define HTTP_IDLE_TIMEOUT	10
 #define HTTP_IO_TIMEOUT		(3 * 60)
-#define MAX_CONNECTIONS		64
 #define MAX_CONTENTLEN		(2 * 1024 * 1024 * 1024LL)
-#define NPFDS			(MAX_CONNECTIONS + 1)
+#define NPFDS			(MAX_HTTP_REQUESTS + 1)
 
 enum res {
 	DONE,
@@ -620,7 +619,7 @@ http_req_schedule(struct http_request *req)
 		return 1;
 	}
 
-	if (http_conn_count < MAX_CONNECTIONS) {
+	if (http_conn_count < MAX_HTTP_REQUESTS) {
 		http_new(req);
 		return 1;
 	}

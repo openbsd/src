@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.137 2022/05/11 21:19:06 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.138 2022/05/24 09:20:49 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -702,8 +702,9 @@ int	mkpathat(int, const char *);
 /* Maximum depth of the RPKI tree. */
 #define MAX_CERT_DEPTH		12
 
-/* Maximum number of concurrent rsync processes. */
-#define MAX_RSYNC_PROCESSES	16
+/* Maximum number of concurrent http and rsync requests. */
+#define MAX_HTTP_REQUESTS	64
+#define MAX_RSYNC_REQUESTS	16
 
 /* Maximum allowd repositories per tal */
 #define MAX_REPO_PER_TAL	1000
