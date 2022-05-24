@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.1 2006/10/06 21:48:50 mickey Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.2 2022/05/24 17:29:02 krw Exp $	*/
 /*	$NetBSD: mbr.S,v 1.1 2006/09/01 21:26:19 uwe Exp $	*/
 
 /*-
@@ -203,8 +203,8 @@ _pbr_part2:
 	.byte	0, 0, 0, 0, 0, 0, 0, 0	
 	.byte	0, 0, 0, 0, 0, 0, 0, 0
 _pbr_part3:
-	.byte	0x80, 0, 1, 0, 0xa6, 255, 255, 255	
-	.word	0, 0, 0xffff, 0x7fff
+	.byte	0, 0, 0, 0, 0, 0, 0, 0
+	.byte	0, 0, 0, 0, 0, 0, 0, 0
 
 	. = _C_LABEL(start) + 0x1fe
 magic:

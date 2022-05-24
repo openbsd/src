@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.5 2012/06/04 16:17:04 mglocker Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.6 2022/05/24 17:29:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -562,8 +562,8 @@ pt:
 	.long	0,0
 	.byte	0x0,0,0,0,0,0,0,0
 	.long	0,0
-	.byte	DOSACTIVE,0,1,0,DOSPTYP_OPENBSD,255,255,255
-	.long	0,0x7FFFFFFF
+	.byte	0x0,0,0,0,0,0,0,0
+	.long	0,0
 /* the last 2 bytes in the sector 0 contain the signature */
 	. = 0x1fe
 signature:
