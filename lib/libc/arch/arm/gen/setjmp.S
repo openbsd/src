@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.7 2018/06/22 15:18:50 kettenis Exp $	*/
+/*	$OpenBSD: setjmp.S,v 1.8 2022/05/24 17:21:17 guenther Exp $	*/
 /*	$NetBSD: setjmp.S,v 1.5 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ ENTRY(longjmp)
 	ldr	r2, .Lsetjmp_magic
 	ldr	r3, [r0]
 	teq	r2, r3
-	bne	botch
+	bne	.Lbotch
 
 	/* Fetch signal mask and call sigprocmask */
 	mov	r3, r0				/* r3 = jmpbuf */
@@ -130,7 +130,7 @@ ENTRY(longjmp)
 	/* Validate sp and lr */
 	teq	sp, #0
 	teqne	lr, #0
-	beq	botch
+	beq	.Lbotch
 
 	/* Set return value */
 	mov	r0, r12
@@ -142,7 +142,7 @@ ENTRY(longjmp)
 	.word	__jmpxor - 1b
 
 	/* validation failed, die die die. */
-botch:
+.Lbotch:
 	bl	_HIDDEN(abort)
 	b	. - 8		/* Cannot get here */
 END_STRONG(longjmp)
