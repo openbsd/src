@@ -1,4 +1,4 @@
-/* $OpenBSD: tfork_thread.S,v 1.6 2020/10/19 17:57:40 naddy Exp $ */
+/* $OpenBSD: tfork_thread.S,v 1.7 2022/05/24 22:36:58 guenther Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -14,8 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#include <sys/syscall.h>
-#include <machine/asm.h>
+
 #include "SYS.h"
 
 /*
