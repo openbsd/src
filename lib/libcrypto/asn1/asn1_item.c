@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.4 2022/01/14 08:38:05 tb Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.5 2022/05/24 20:20:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -234,9 +234,11 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	const EVP_MD *type;
 	EVP_PKEY *pkey;
 	unsigned char *buf_in = NULL, *buf_out = NULL;
-	size_t inl = 0, outl = 0, outll = 0;
+	size_t buf_out_len = 0;
+	int in_len = 0, out_len = 0;
 	int signid, paramtype;
-	int rv;
+	int rv = 2;
+	int ret = 0;
 
 	type = EVP_MD_CTX_md(ctx);
 	pkey = EVP_PKEY_CTX_get0_pkey(ctx->pctx);
@@ -250,7 +252,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 		rv = pkey->ameth->item_sign(ctx, it, asn, algor1, algor2,
 		    signature);
 		if (rv == 1)
-			outl = signature->length;
+			out_len = signature->length;
 		/* Return value meanings:
 		 * <=0: error.
 		 *   1: method does everything.
@@ -261,8 +263,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 			ASN1error(ERR_R_EVP_LIB);
 		if (rv <= 1)
 			goto err;
-	} else
-		rv = 2;
+	}
 
 	if (rv == 2) {
 		if (!pkey->ameth ||
@@ -286,36 +287,48 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 
 	}
 
-	inl = ASN1_item_i2d(asn, &buf_in, it);
-	outll = outl = EVP_PKEY_size(pkey);
-	buf_out = malloc(outl);
-	if ((buf_in == NULL) || (buf_out == NULL)) {
-		outl = 0;
+	if ((in_len = ASN1_item_i2d(asn, &buf_in, it)) <= 0) {
+		in_len = 0;
+		goto err;
+	}
+
+	if ((out_len = EVP_PKEY_size(pkey)) <= 0) {
+		out_len = 0;
+		goto err;
+	}
+
+	if ((buf_out = malloc(out_len)) == NULL) {
 		ASN1error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	if (!EVP_DigestSignUpdate(ctx, buf_in, inl) ||
-	    !EVP_DigestSignFinal(ctx, buf_out, &outl)) {
-		outl = 0;
+	buf_out_len = out_len;
+	if (!EVP_DigestSignUpdate(ctx, buf_in, in_len) ||
+	    !EVP_DigestSignFinal(ctx, buf_out, &buf_out_len)) {
 		ASN1error(ERR_R_EVP_LIB);
 		goto err;
 	}
-	free(signature->data);
-	signature->data = buf_out;
-	buf_out = NULL;
-	signature->length = outl;
-	/* In the interests of compatibility, I'll make sure that
-	 * the bit string has a 'not-used bits' value of 0
-	 */
-	signature->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
-	signature->flags |= ASN1_STRING_FLAG_BITS_LEFT;
 
+	if (buf_out_len > INT_MAX) {
+		ASN1error(ASN1_R_TOO_LONG);
+		goto err;
+	}
+
+	ASN1_STRING_set0(signature, buf_out, (int)buf_out_len);
+	buf_out = NULL;
+
+	if (!asn1_abs_set_unused_bits(signature, 0)) {
+		ASN1error(ERR_R_ASN1_LIB);
+		goto err;
+	}
+
+	ret = (int)buf_out_len;
  err:
 	EVP_MD_CTX_cleanup(ctx);
-	freezero((char *)buf_in, inl);
-	freezero((char *)buf_out, outll);
-	return (outl);
+	freezero(buf_in, in_len);
+	freezero(buf_out, out_len);
+
+	return ret;
 }
 
 int
