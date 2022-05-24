@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.31 2022/01/10 12:10:26 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.32 2022/05/24 20:00:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -888,8 +888,8 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 		if (penclen <= 0)
 			goto err;
 		ASN1_STRING_set0(pubkey, penc, penclen);
-		pubkey->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
-		pubkey->flags |= ASN1_STRING_FLAG_BITS_LEFT;
+		if (!asn1_abs_set_unused_bits(pubkey, 0))
+			goto err;
 		penc = NULL;
 
 		X509_ALGOR_set0(talg, OBJ_nid2obj(NID_X9_62_id_ecPublicKey),
