@@ -1,4 +1,4 @@
-/*	$OpenBSD: byte_swap_2.S,v 1.3 2008/06/26 05:42:04 ray Exp $	*/
+/*	$OpenBSD: byte_swap_2.S,v 1.4 2022/05/24 17:15:23 guenther Exp $	*/
 /*	$NetBSD: byte_swap_2.S,v 1.3 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*-
@@ -30,13 +30,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 
-_ENTRY(_C_LABEL(__bswap16))
-_ENTRY(_C_LABEL(ntohs))
-_ENTRY(_C_LABEL(htons))
-_PROF_PROLOGUE
+_ENTRY(__bswap16)
+_ENTRY_NB(ntohs)
+ENTRY_NB(htons)
 	and		r1, r0, #0xff
 	mov		r0, r0, lsr #8
 	orr		r0, r0, r1, lsl #8
 	mov		pc, lr  
+END(htons)
+_END(ntohs)
+_END(__bswap16)
+	.weak	htons
+	.weak	ntohs

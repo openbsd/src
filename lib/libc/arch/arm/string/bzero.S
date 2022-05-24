@@ -1,4 +1,4 @@
-/*	$OpenBSD: bzero.S,v 1.6 2017/12/16 09:25:43 kettenis Exp $	*/
+/*	$OpenBSD: bzero.S,v 1.7 2022/05/24 17:15:23 guenther Exp $	*/
 /*	$NetBSD: bzero.S,v 1.2 2001/07/16 05:50:06 matt Exp $	*/
 
 /*-
@@ -32,7 +32,7 @@
 
 #include "DEFS.h"
 
-ENTRY(bzero)
+ENTRY_NB(bzero)
 	mov	r2, r1
 	mov	r1, #0
 	b	_BUILTIN(memset)

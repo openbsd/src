@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.3 2016/08/06 19:16:09 guenther Exp $	*/
+/*	$OpenBSD: sigsetjmp.S,v 1.4 2022/05/24 17:15:23 guenther Exp $	*/
 /*	$NetBSD: sigsetjmp.S,v 1.3 2002/08/17 19:54:30 thorpej Exp $	*/
 
 /*
@@ -46,17 +46,19 @@
  * The previous signal state is restored.
  */
 
-ENTRY(sigsetjmp)
+ENTRY_NB(sigsetjmp)
 	teq	r1, #0
 	beq	_HIDDEN(_setjmp)
 	b	_HIDDEN(setjmp)
+END_WEAK(sigsetjmp)
 
 .L_setjmp_magic:
 	.word	_JB_MAGIC__SETJMP
 
-ENTRY(siglongjmp)
+ENTRY_NB(siglongjmp)
 	ldr	r2, .L_setjmp_magic
 	ldr	r3, [r0]
 	teq	r2, r3
 	beq	_HIDDEN(_longjmp)
 	b	_HIDDEN(longjmp)
+END_WEAK(siglongjmp)

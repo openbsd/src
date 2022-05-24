@@ -1,4 +1,4 @@
-/*	$OpenBSD: brk.S,v 1.11 2021/10/25 14:38:10 jca Exp $	*/
+/*	$OpenBSD: brk.S,v 1.12 2022/05/24 17:15:23 guenther Exp $	*/
 /*	$NetBSD: brk.S,v 1.7 2003/12/26 11:23:44 martin Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ __minbrk:
 /*
  * Change the data segment size
  */
-ENTRY(brk)
+ENTRY_NB(brk)
 #ifdef __PIC__
 	/* Setup the GOT */
 	ldr	r3, .Lgot

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcopy.S,v 1.6 2017/10/29 02:21:33 guenther Exp $	*/
+/*	$OpenBSD: bcopy.S,v 1.7 2022/05/24 17:15:23 guenther Exp $	*/
 /*	$NetBSD: bcopy.S,v 1.2 2001/07/16 05:50:06 matt Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 
 /* bcopy = memcpy/memmove with arguments reversed. */
 
-ENTRY(bcopy)
+ENTRY_NB(bcopy)
 	/* switch the source and destination registers */
 	eor     r0, r1, r0 
 	eor     r1, r0, r1 

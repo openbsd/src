@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.10 2022/02/24 07:08:21 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.11 2022/05/24 17:15:22 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
@@ -61,8 +61,11 @@
  */
 #define _ASM_TYPE_FUNCTION	#function
 #define _ASM_TYPE_OBJECT	#object
-#define _ENTRY(x) \
-	.text; _ALIGN_TEXT; .globl x; .type x,_ASM_TYPE_FUNCTION; x:
+
+/* NB == No Binding: use .globl or .weak as necessary */
+#define _ENTRY_NB(x) \
+	.text; _ALIGN_TEXT; .type x,_ASM_TYPE_FUNCTION; x:
+#define _ENTRY(x)		.globl x; _ENTRY_NB(x)
 
 #if defined(PROF) || defined(GPROF)
 # define _PROF_PROLOGUE	\
@@ -73,6 +76,7 @@
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE
 #define	ENTRY_NP(y)	_ENTRY(_C_LABEL(y))
+#define	ENTRY_NB(y)	_ENTRY_NB(y); _PROF_PROLOGUE
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE
 #define	ASENTRY_NP(y)	_ENTRY(_ASM_LABEL(y))
 #define	END(y)		.size y, . - y
