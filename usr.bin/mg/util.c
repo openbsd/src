@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.43 2021/03/01 10:51:14 lum Exp $	*/
+/*	$OpenBSD: util.c,v 1.44 2022/05/24 16:24:31 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -373,6 +373,7 @@ lfindent(int f, int n)
 				nicol |= 0x07;
 			++nicol;
 		}
+		(void)delwhite(FFRAND, 1);
 		if (lnewline() == FALSE || ((
 #ifdef	NOTAB
 		    curbp->b_flag & BFNOTAB) ? linsert(nicol, ' ') == FALSE : (
