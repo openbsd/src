@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.50 2021/02/27 13:24:52 lum Exp $	*/
+/*	$OpenBSD: basic.c,v 1.51 2022/05/24 16:42:19 op Exp $	*/
 
 /* This file is in the public domain */
 
@@ -536,7 +536,7 @@ gotoline(int f, int n)
 			return (ABORT);
 		n = (int)strtonum(buf, INT_MIN, INT_MAX, &err);
 		if (err)
-			return(dobeep_msgs("Line number %s", err));
+			return(dobeep_msgs("Line number", err));
 	}
 	return(setlineno(n));
 }

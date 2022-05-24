@@ -1,4 +1,4 @@
-/*	$OpenBSD: cscope.c,v 1.20 2021/03/01 10:51:14 lum Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.21 2022/05/24 16:42:19 op Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -185,9 +185,9 @@ cscreatelist(int f, int n)
 		return (FALSE);
 
 	if (stat(dir, &sb) == -1)
-		return(dobeep_msgs("stat: %s", strerror(errno)));
+		return(dobeep_msgs("stat:", strerror(errno)));
 	else if (S_ISDIR(sb.st_mode) == 0)
-		return(dobeep_msgs("%s: Not a directory", dir));
+		return(dobeep_msgs(dir, "Not a directory"));
 
 	if (csexists("cscope-indexer") == FALSE)
 		return(dobeep_msg("no such file or directory, cscope-indexer"));
