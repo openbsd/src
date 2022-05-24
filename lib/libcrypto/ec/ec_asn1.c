@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.36 2022/03/31 13:00:58 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.37 2022/05/24 20:06:32 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -60,10 +60,12 @@
 
 #include <openssl/opensslconf.h>
 
-#include "ec_lcl.h"
 #include <openssl/err.h>
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
+
+#include "asn1_locl.h"
+#include "ec_lcl.h"
 
 int 
 EC_GROUP_get_basis_type(const EC_GROUP * group)
@@ -860,24 +862,24 @@ ec_asn1_group2curve(const EC_GROUP * group, X9_62_CURVE * curve)
 		ECerror(ERR_R_ASN1_LIB);
 		goto err;
 	}
+
+	ASN1_BIT_STRING_free(curve->seed);
+	curve->seed = NULL;
+
 	/* set the seed (optional) */
-	if (group->seed) {
-		if (!curve->seed)
-			if ((curve->seed = ASN1_BIT_STRING_new()) == NULL) {
-				ECerror(ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
-		curve->seed->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
-		curve->seed->flags |= ASN1_STRING_FLAG_BITS_LEFT;
+	if (group->seed != NULL) {
+		if ((curve->seed = ASN1_BIT_STRING_new()) == NULL) {
+			ECerror(ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
 		if (!ASN1_BIT_STRING_set(curve->seed, group->seed,
 			(int) group->seed_len)) {
 			ECerror(ERR_R_ASN1_LIB);
 			goto err;
 		}
-	} else {
-		if (curve->seed) {
-			ASN1_BIT_STRING_free(curve->seed);
-			curve->seed = NULL;
+		if (!asn1_abs_set_unused_bits(curve->seed, 0)) {
+			ECerror(ERR_R_ASN1_LIB);
+			goto err;
 		}
 	}
 
@@ -1481,10 +1483,11 @@ i2d_ECPrivateKey(EC_KEY * a, unsigned char **out)
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
-		priv_key->publicKey->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
-		priv_key->publicKey->flags |= ASN1_STRING_FLAG_BITS_LEFT;
-		if (!ASN1_STRING_set(priv_key->publicKey, buffer,
-			buf_len)) {
+		if (!ASN1_STRING_set(priv_key->publicKey, buffer, buf_len)) {
+			ECerror(ERR_R_ASN1_LIB);
+			goto err;
+		}
+		if (!asn1_abs_set_unused_bits(priv_key->publicKey, 0)) {
 			ECerror(ERR_R_ASN1_LIB);
 			goto err;
 		}
