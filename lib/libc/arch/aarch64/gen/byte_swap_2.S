@@ -1,4 +1,4 @@
-/*	$OpenBSD: byte_swap_2.S,v 1.2 2018/08/12 17:15:10 mortimer Exp $	*/
+/*	$OpenBSD: byte_swap_2.S,v 1.3 2022/05/24 22:34:02 guenther Exp $	*/
 /*	$NetBSD: byte_swap_2.S,v 1.3 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*-
@@ -30,15 +30,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/asm.h>
+#include "DEFS.h"
 
-_ENTRY(_C_LABEL(__bswap16))
-_ENTRY(_C_LABEL(ntohs))
-_ENTRY(_C_LABEL(htons))
-_PROF_PROLOGUE
+_ENTRY(__bswap16)
+_ENTRY_NB(ntohs)
+ENTRY_NB(htons)
 	RETGUARD_SETUP(__bswap16, x15)
 	and     w8, w0, #0xffff
         ubfx    w0, w0, #8, #8
 	bfi     w0, w8, #8, #16
 	RETGUARD_CHECK(__bswap16, x15)
 	ret
+END(htons)
+_END(ntohs)
+_END(__bswap16)
+	.weak	htons
+	.weak	ntohs
