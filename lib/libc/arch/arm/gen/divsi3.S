@@ -1,4 +1,4 @@
-/*	$OpenBSD: divsi3.S,v 1.5 2019/11/10 22:23:28 guenther Exp $	*/
+/*	$OpenBSD: divsi3.S,v 1.6 2022/05/24 17:19:46 guenther Exp $	*/
 /*	$NetBSD: divsi3.S,v 1.5 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*
@@ -29,6 +29,7 @@ ENTRY(__umodsi3)
 	add	sp, sp, #4	/* unalign stack */
 	mov	r0, r1
 	ldmfd	sp!, {pc}
+END(__umodsi3)
 
 ENTRY(__modsi3)
 	stmfd	sp!, {lr}
@@ -37,6 +38,7 @@ ENTRY(__modsi3)
 	add	sp, sp, #4	/* unalign stack */
 	mov	r0, r1
 	ldmfd	sp!, {pc}
+END(__modsi3)
 
 .L_overflow:
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -70,6 +72,7 @@ ENTRY(__udivsi3)
 	mov	r0, r1
 	mov	r1, #0
 	mov	pc, lr
+END(__udivsi3)
 
 ENTRY(__divsi3)
 .L_divide:				/* r0 = r0 / r1; r1 = r0 % r1 */
@@ -385,6 +388,7 @@ ENTRY(__divsi3)
 	addhs	r3, r3, r2
 	mov	r0, r3
 	mov	pc, lr
+END(__divsi3)
 
 STRONG_ALIAS(__aeabi_idiv, __divsi3)
 STRONG_ALIAS(__aeabi_idivmod, __divsi3)
