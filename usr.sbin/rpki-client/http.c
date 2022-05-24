@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.61 2022/05/24 09:20:49 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.62 2022/05/24 09:22:45 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1792,8 +1792,6 @@ proc_http(char *bind_addr, int fd)
 	if (pledge("stdio inet dns recvfd", NULL) == -1)
 		err(1, "pledge");
 
-	memset(&pfds, 0, sizeof(pfds));
-
 	msgbuf_init(&msgq);
 	msgq.fd = fd;
 
@@ -1802,6 +1800,7 @@ proc_http(char *bind_addr, int fd)
 		int timeout;
 		size_t i;
 
+		memset(&pfds, 0, sizeof(pfds));
 		pfds[0].fd = fd;
 		pfds[0].events = POLLIN;
 		if (msgq.queued)
