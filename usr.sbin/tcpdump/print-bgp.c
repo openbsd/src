@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.30 2021/06/17 15:59:23 job Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.31 2022/05/25 14:26:27 job Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -135,6 +135,7 @@ struct bgp_attr {
 #define BGPTYPE_AS4_PATH		17	/* RFC4893 */
 #define BGPTYPE_AGGREGATOR4		18	/* RFC4893 */
 #define BGPTYPE_LARGE_COMMUNITIES	32	/* draft-ietf-idr-large-community */
+#define BGPTYPE_ONLY_TO_CUSTOMER	35	/* RFC9234 */
 
 #define BGP_AS_SET             1
 #define BGP_AS_SEQUENCE        2
@@ -172,6 +173,7 @@ static const char *bgpopt_type[] = {
 
 #define BGP_CAPCODE_MP			1
 #define BGP_CAPCODE_REFRESH		2
+#define BGP_CAPCODE_BGPROLE		9 /* RFC9234 */
 #define BGP_CAPCODE_RESTART		64 /* draft-ietf-idr-restart-05  */
 #define BGP_CAPCODE_AS4			65 /* RFC4893 */
 
@@ -180,7 +182,9 @@ static const char *bgp_capcode[] = {
 	/* 3: RFC5291 */ "OUTBOUND_ROUTE_FILTERING",
 	/* 4: RFC3107 */ "MULTIPLE_ROUTES",
 	/* 5: RFC5549 */ "EXTENDED_NEXTHOP_ENCODING",
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0,
+	/* 9: RFC9234 */ "BGP_ROLE",
+	0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -191,9 +195,15 @@ static const char *bgp_capcode[] = {
 	/* 69: [draft-ietf-idr-add-paths] */ "ADD-PATH",
 	/* 70: RFC7313 */ "ENHANCED_ROUTE_REFRESH"
 };
-
 #define bgp_capcode(x) \
 	num_or_str(bgp_capcode, sizeof(bgp_capcode)/sizeof(bgp_capcode[0]), (x))
+
+static const char *bgp_roletype[] = {
+	"Provider", "Route Server", "RS Client", "Customer", "Lateral Peer"
+};
+#define bgp_roletype(x) \
+	num_or_str(bgp_roletype, \
+		sizeof(bgp_roletype)/sizeof(bgp_roletype[0]), (x))
 
 #define BGP_NOTIFY_MAJOR_CEASE		6
 static const char *bgpnotify_major[] = {
@@ -215,7 +225,8 @@ static const char *bgpnotify_minor_open[] = {
 	NULL, "Unsupported Version Number",
 	"Bad Peer AS", "Bad BGP Identifier",
 	"Unsupported Optional Parameter", "Authentication Failure",
-	"Unacceptable Hold Time", "Unsupported Capability",
+	"Unacceptable Hold Time", "Unsupported Capability", NULL,
+	NULL, NULL, "Role Mismatch"
 };
 
 static const char *bgpnotify_minor_update[] = {
@@ -285,7 +296,7 @@ static const char *bgpattr_type[] = {
 	"ADVERTISERS", "RCID_PATH", "MP_REACH_NLRI", "MP_UNREACH_NLRI",
 	"EXTD_COMMUNITIES", "AS4_PATH", "AGGREGATOR4", NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	"LARGE_COMMUNITIES",
+	"LARGE_COMMUNITIES", NULL, NULL, "ONLY_TO_CUSTOMER"
 };
 #define bgp_attr_type(x) \
 	num_or_str(bgpattr_type, \
@@ -590,6 +601,14 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			p += 12;
 		}
 		break;
+	case BGPTYPE_ONLY_TO_CUSTOMER:
+		if (len != 4) {
+			printf(" invalid len");	
+			break;
+		}
+		TCHECK2(p[0], 4);
+		printf(" AS%u", EXTRACT_32BITS(p));
+		break;
 	case BGPTYPE_ORIGINATOR_ID:
 		if (len != 4) {
 			printf(" invalid len");
@@ -769,6 +788,13 @@ bgp_open_capa_print(const u_char *opt, int length)
 				printf(" BAD ENCODING");
 				break;
 			}
+			break;
+		case BGP_CAPCODE_BGPROLE:
+			if (cap_len != 1) {
+				printf(" BAD ENCODING");
+				break;
+			}
+			printf(" [%s]", bgp_roletype(opt[i]));
 			break;
 		case BGP_CAPCODE_RESTART:
 			if (cap_len < 2 || (cap_len - 2) % 4) {
