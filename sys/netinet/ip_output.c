@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.380 2022/01/04 06:32:39 yasuoka Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.381 2022/05/25 19:48:46 mvs Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1727,9 +1727,9 @@ ip_getmoptions(int optname, struct ip_moptions *imo, struct mbuf *m)
 			addr->s_addr = INADDR_ANY;
 		else {
 			IFP_TO_IA(ifp, ia);
-			if_put(ifp);
 			addr->s_addr = (ia == NULL) ? INADDR_ANY
 					: ia->ia_addr.sin_addr.s_addr;
+			if_put(ifp);
 		}
 		return (0);
 
