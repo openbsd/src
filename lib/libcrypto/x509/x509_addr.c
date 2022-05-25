@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.82 2022/05/17 08:00:51 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.83 2022/05/25 17:10:30 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1307,10 +1307,6 @@ X509v3_addr_is_canonical(IPAddrBlocks *addr)
 		for (j = 0; j < sk_IPAddressOrRange_num(aors) - 1; j++) {
 			aor_a = sk_IPAddressOrRange_value(aors, j);
 			aor_b = sk_IPAddressOrRange_value(aors, j + 1);
-
-			/*
-			 * XXX - check that both are either a prefix or a range.
-			 */
 
 			if (!extract_min_max(aor_a, a_min, a_max, length) ||
 			    !extract_min_max(aor_b, b_min, b_max, length))
