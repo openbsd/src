@@ -1,4 +1,4 @@
-/*	$OpenBSD: _setjmp.S,v 1.7 2022/05/24 17:21:17 guenther Exp $	*/
+/*	$OpenBSD: _setjmp.S,v 1.8 2022/05/25 17:32:36 guenther Exp $	*/
 /*	$NetBSD: _setjmp.S,v 1.5 2003/04/05 23:08:51 bjh21 Exp $	*/
 
 /*
@@ -85,14 +85,12 @@ ENTRY(_setjmp)
 	mov	r3, r0
 	mov	pc, lr
 
+.L_setjmp_magic:
+	.word	_JB_MAGIC__SETJMP
+
 .L_jmpxor_setjmp:
 	.word	__jmpxor - 1b
 END_STRONG(_setjmp)
-
-	.section	.rodata.cst4, "aM", %progbits, 4
-	.balign	4
-.L_setjmp_magic:
-	.word	_JB_MAGIC__SETJMP
 
 ENTRY(_longjmp)
 	ldr	r2, .L_setjmp_magic

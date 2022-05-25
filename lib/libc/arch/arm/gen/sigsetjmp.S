@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.5 2022/05/24 17:21:17 guenther Exp $	*/
+/*	$OpenBSD: sigsetjmp.S,v 1.6 2022/05/25 17:32:36 guenther Exp $	*/
 /*	$NetBSD: sigsetjmp.S,v 1.3 2002/08/17 19:54:30 thorpej Exp $	*/
 
 /*
@@ -52,8 +52,6 @@ ENTRY_NB(sigsetjmp)
 	b	_HIDDEN(setjmp)
 END_WEAK(sigsetjmp)
 
-	.section	.rodata.cst4, "aM", %progbits, 4
-	.balign	4
 .L_setjmp_magic:
 	.word	_JB_MAGIC__SETJMP
 
