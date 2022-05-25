@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community_test.c,v 1.3 2022/02/07 09:31:21 claudio Exp $ */
+/*	$OpenBSD: rde_community_test.c,v 1.4 2022/05/25 16:56:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -73,7 +73,7 @@ test_parsing(size_t num, uint8_t *in, size_t inlen)
 		r = community_add(&comm, flags, in + skip, attr_len);
 		break;
 	case ATTR_EXT_COMMUNITIES:
-		r = community_ext_add(&comm, flags, in + skip, attr_len);
+		r = community_ext_add(&comm, flags, 0, in + skip, attr_len);
 		break;
 	case ATTR_LARGE_COMMUNITIES:
 		r = community_large_add(&comm, flags, in + skip, attr_len);
