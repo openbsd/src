@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.423 2022/05/23 13:40:11 deraadt Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.424 2022/05/25 16:03:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -989,7 +989,7 @@ struct filter_peers {
 #define EXT_COMMUNITY_FLAG_VALID	0x01
 
 struct ext_comm_pairs {
-	short		type;
+	uint8_t		type;
 	uint8_t		subtype;
 	const char	*subname;
 };
@@ -1399,7 +1399,7 @@ const char	*log_in6addr(const struct in6_addr *);
 const char	*log_sockaddr(struct sockaddr *, socklen_t);
 const char	*log_as(uint32_t);
 const char	*log_rd(uint64_t);
-const char	*log_ext_subtype(short, uint8_t);
+const char	*log_ext_subtype(int, uint8_t);
 const char	*log_reason(const char *);
 const char	*log_rtr_error(enum rtr_error);
 int		 aspath_snprint(char *, size_t, void *, uint16_t);

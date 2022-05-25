@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.545 2022/05/06 15:51:09 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.546 2022/05/25 16:03:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1917,8 +1917,8 @@ bad_flags:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
-		if (community_ext_add(&state->communities, flags, p,
-		    attr_len) == -1) {
+		if (community_ext_add(&state->communities, flags,
+		    peer->conf.ebgp, p, attr_len) == -1) {
 			/*
 			 * mark update as bad and withdraw all routes as per
 			 * RFC 7606
@@ -2062,8 +2062,8 @@ rde_attr_add(struct filterstate *state, u_char *p, uint16_t len)
 		return community_large_add(&state->communities, flags, p,
 		    attr_len);
 	case ATTR_EXT_COMMUNITIES:
-		return community_ext_add(&state->communities, flags, p,
-		    attr_len);
+		return community_ext_add(&state->communities, flags, 0,
+		    p, attr_len);
 	}
 
 	if (attr_optadd(&state->aspath, flags, type, p, attr_len) == -1)

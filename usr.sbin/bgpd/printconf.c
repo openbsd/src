@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.150 2022/02/23 11:20:35 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.151 2022/05/25 16:03:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -123,7 +123,7 @@ void
 print_community(struct community *c)
 {
 	struct in_addr addr;
-	short type;
+	int type;
 	uint8_t subtype;
 
 	switch ((uint8_t)c->flags) {
