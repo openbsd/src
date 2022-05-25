@@ -1,4 +1,4 @@
-/* $OpenBSD: ahci_fdt.c,v 1.6 2021/10/24 17:52:26 mpi Exp $ */
+/* $OpenBSD: ahci_fdt.c,v 1.7 2022/05/25 03:03:58 dlg Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -54,6 +54,7 @@ ahci_fdt_match(struct device *parent, void *match, void *aux)
 
 	return OF_is_compatible(faa->fa_node, "generic-ahci") ||
 	    OF_is_compatible(faa->fa_node, "cavium,octeon-7130-ahci") ||
+	    OF_is_compatible(faa->fa_node, "marvell,armada-3700-ahci") ||
 	    OF_is_compatible(faa->fa_node, "snps,dwc-ahci");
 }
 
