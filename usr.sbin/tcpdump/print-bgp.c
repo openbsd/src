@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-bgp.c,v 1.31 2022/05/25 14:26:27 job Exp $	*/
+/*	$OpenBSD: print-bgp.c,v 1.32 2022/05/25 16:21:11 claudio Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -134,7 +134,7 @@ struct bgp_attr {
 #define BGPTYPE_EXTD_COMMUNITIES	16	/* RFC4360 */
 #define BGPTYPE_AS4_PATH		17	/* RFC4893 */
 #define BGPTYPE_AGGREGATOR4		18	/* RFC4893 */
-#define BGPTYPE_LARGE_COMMUNITIES	32	/* draft-ietf-idr-large-community */
+#define BGPTYPE_LARGE_COMMUNITIES	32	/* RFC8092 */
 #define BGPTYPE_ONLY_TO_CUSTOMER	35	/* RFC9234 */
 
 #define BGP_AS_SET             1
@@ -174,7 +174,7 @@ static const char *bgpopt_type[] = {
 #define BGP_CAPCODE_MP			1
 #define BGP_CAPCODE_REFRESH		2
 #define BGP_CAPCODE_BGPROLE		9 /* RFC9234 */
-#define BGP_CAPCODE_RESTART		64 /* draft-ietf-idr-restart-05  */
+#define BGP_CAPCODE_RESTART		64 /* RFC4724 */
 #define BGP_CAPCODE_AS4			65 /* RFC4893 */
 
 static const char *bgp_capcode[] = {
@@ -192,7 +192,7 @@ static const char *bgp_capcode[] = {
 	/* 65: RFC4893 */ "AS4", 0,
 	/* 67: [Chen] */ "DYNAMIC_CAPABILITY",
 	/* 68: [Appanna] */ "MULTISESSION",
-	/* 69: [draft-ietf-idr-add-paths] */ "ADD-PATH",
+	/* 69: RFC7911 */ "ADD-PATH",
 	/* 70: RFC7313 */ "ENHANCED_ROUTE_REFRESH"
 };
 #define bgp_capcode(x) \
@@ -501,13 +501,10 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 			for (i = 0; i < p[1] * asn_bytes; i += asn_bytes) {
 				TCHECK2(p[2 + i], asn_bytes);
 				printf("%s", i == 0 ? "" : " ");
-				if (asn_bytes == 2 || EXTRACT_16BITS(&p[2 + i]))
-					printf("%u%s",
-					    EXTRACT_16BITS(&p[2 + i]),
-					    asn_bytes == 4 ? "." : "");
-				if (asn_bytes == 4)
-					printf("%u",
-					    EXTRACT_16BITS(&p[2 + i + 2]));
+				if (asn_bytes == 2)
+					printf("%u", EXTRACT_16BITS(&p[2 + i]));
+				else
+					printf("%u", EXTRACT_32BITS(&p[2 + i]));
 			}
 			printf("%s",
 			    tok2str(bgp_as_path_segment_close_values,
@@ -549,10 +546,10 @@ bgp_attr_print(const struct bgp_attr *attr, const u_char *dat, int len)
 		}
 		TCHECK2(p[0], len);
 		printf(" AS #");
-		if (len == 6 || EXTRACT_16BITS(p))
-			printf("%u%s", EXTRACT_16BITS(p), len == 8 ? "." : "");
-		if (len == 8)
-			printf("%u", EXTRACT_16BITS(p+2));
+		if (len == 6)
+			printf("%u", EXTRACT_16BITS(p));
+		else
+			printf("%u", EXTRACT_32BITS(p));
 		printf(", origin %s", getname(p+len-4));
 		break;
 	case BGPTYPE_COMMUNITIES:
@@ -822,11 +819,7 @@ bgp_open_capa_print(const u_char *opt, int length)
 				break;
 			}
 			printf(" #");
-			if (EXTRACT_16BITS(opt+i))
-				printf("%u.",
-				    EXTRACT_16BITS(opt+i));
-			printf("%u",
-			    EXTRACT_16BITS(opt+i+2));
+			printf("%u", EXTRACT_32BITS(opt+i));
 			break;
 		default:
 			printf(" len %d", cap_len);
