@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1994 2022/05/09 12:27:40 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.1995 2022/05/26 01:47:02 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6589,6 +6589,8 @@
 #define	PCI_PRODUCT_INTEL_RPL_S_GT_4	0xa783		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RPL_S_GT_5	0xa788		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RPL_S_GT_6	0xa789		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_S_GT_7	0xa78a		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_S_GT_8	0xa78b		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RPL_P_GT_3	0xa7a0		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RPL_P_GT_4	0xa7a1		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RPL_P_GT_5	0xa7a8		/* Graphics */
