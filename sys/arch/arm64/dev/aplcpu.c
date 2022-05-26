@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplcpu.c,v 1.1 2022/02/20 19:25:57 kettenis Exp $	*/
+/*	$OpenBSD: aplcpu.c,v 1.2 2022/05/26 23:32:18 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -19,6 +19,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/sensors.h>
 #include <sys/sysctl.h>
 
 #include <machine/bus.h>
@@ -27,20 +28,17 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/fdt.h>
 
-/*
- * This driver is based on preliminary device tree bindings and will
- * almost certainly need changes once the official bindings land in
- * mainline Linux.  Support for these preliminary bindings will be
- * dropped as soon as official bindings are available.
- */
+#define DVFS_CMD			0x0020
+#define DVFS_CMD_BUSY			(1U << 31)
+#define DVFS_CMD_SET			(1 << 25)
+#define DVFS_CMD_PS2_MASK		(0xf << 12)
+#define DVFS_CMD_PS2_SHIFT		12
+#define DVFS_CMD_PS1_MASK		(0xf << 0)
+#define DVFS_CMD_PS1_SHIFT		0
 
-#define CLUSTER_PSTATE			0x0020
-#define CLUSTER_PSTATE_BUSY		(1U << 31)
-#define CLUSTER_PSTATE_SET		(1 << 25)
-#define CLUSTER_PSTATE_DESIRED2_MASK	(0xf << 12)
-#define CLUSTER_PSTATE_DESIRED2_SHIFT	12
-#define CLUSTER_PSTATE_DESIRED1_MASK	(0xf << 0)
-#define CLUSTER_PSTATE_DESIRED1_SHIFT	0
+#define DVFS_STATUS			0x50
+#define DVFS_STATUS_CUR_PS_MASK		(0xf << 4)
+#define DVFS_STATUS_CUR_PS_SHIFT	4
 
 struct opp {
 	uint64_t opp_hz;
@@ -73,6 +71,9 @@ struct aplcpu_softc {
 	struct opp_table	*sc_opp_table[APLCPU_MAX_CLUSTERS];
 	uint64_t		sc_opp_hz_min;
 	uint64_t		sc_opp_hz_max;
+
+	struct ksensordev	sc_sensordev;
+	struct ksensor		sc_sensor[APLCPU_MAX_CLUSTERS];
 };
 
 struct aplcpu_softc *aplcpu_sc;
@@ -91,13 +92,16 @@ struct cfdriver aplcpu_cd = {
 void	aplcpu_opp_init(struct aplcpu_softc *, int);
 int	aplcpu_clockspeed(int *);
 void	aplcpu_setperf(int level);
+void	aplcpu_refresh_sensors(void *);
 
 int
 aplcpu_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,cluster-cpufreq");
+	/* XXX Remove "apple,cluster-cpufreq" after OpenBSD 7.2 release. */
+	return OF_is_compatible(faa->fa_node, "apple,soc-cpufreq") ||
+	    OF_is_compatible(faa->fa_node, "apple,cluster-cpufreq");
 }
 
 void
@@ -141,6 +145,18 @@ aplcpu_attach(struct device *parent, struct device *self, void *aux)
 	CPU_INFO_FOREACH(cii, ci) {
 		aplcpu_opp_init(sc, ci->ci_node);
 	}
+
+	for (i = 0; i < sc->sc_nclusters; i++) {
+		sc->sc_sensor[i].type = SENSOR_FREQ;
+		sensor_attach(&sc->sc_sensordev, &sc->sc_sensor[i]);
+	}
+
+	aplcpu_refresh_sensors(sc);
+
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+	sensordev_install(&sc->sc_sensordev);
+	sensor_task_register(sc, aplcpu_refresh_sensors, 1);
 
 	aplcpu_sc = sc;
 	cpu_cpuspeed = aplcpu_clockspeed;
@@ -256,9 +272,9 @@ aplcpu_clockspeed(int *freq)
 			continue;
 
 		pstate = bus_space_read_8(sc->sc_iot, sc->sc_ioh[i],
-		    CLUSTER_PSTATE);
-		opp_level = (pstate & CLUSTER_PSTATE_DESIRED1_MASK);
-		opp_level >>= CLUSTER_PSTATE_DESIRED1_SHIFT;
+		    DVFS_STATUS);
+		opp_level = (pstate & DVFS_STATUS_CUR_PS_MASK);
+		opp_level >>= DVFS_STATUS_CUR_PS_SHIFT;
 
 		/* Translate P-state to frequency. */
 		ot = sc->sc_opp_table[i];
@@ -319,23 +335,51 @@ aplcpu_setperf(int level)
 		/* Wait until P-state logic isn't busy. */
 		for (timo = 100; timo > 0; timo--) {
 			reg = bus_space_read_8(sc->sc_iot, sc->sc_ioh[i],
-			    CLUSTER_PSTATE);
-			if ((reg & CLUSTER_PSTATE_BUSY) == 0)
+			    DVFS_CMD);
+			if ((reg & DVFS_CMD_BUSY) == 0)
 				break;
 			delay(1);
 		}
-		if (reg & CLUSTER_PSTATE_BUSY)
+		if (reg & DVFS_CMD_BUSY)
 			continue;
 
 		/* Set desired P-state. */
-		reg &= ~CLUSTER_PSTATE_DESIRED1_MASK;
-		reg &= ~CLUSTER_PSTATE_DESIRED2_MASK;
-		reg |= (opp_level << CLUSTER_PSTATE_DESIRED1_SHIFT);
-		reg |= (opp_level << CLUSTER_PSTATE_DESIRED2_SHIFT);
-		reg |= CLUSTER_PSTATE_SET;
-		bus_space_write_8(sc->sc_iot, sc->sc_ioh[i],
-		    CLUSTER_PSTATE, reg);
+		reg &= ~DVFS_CMD_PS1_MASK;
+		reg &= ~DVFS_CMD_PS2_MASK;
+		reg |= (opp_level << DVFS_CMD_PS1_SHIFT);
+		reg |= (opp_level << DVFS_CMD_PS2_SHIFT);
+		reg |= DVFS_CMD_SET;
+		bus_space_write_8(sc->sc_iot, sc->sc_ioh[i], DVFS_CMD, reg);
 	}
 
 	sc->sc_perflevel = level;
+}
+
+void
+aplcpu_refresh_sensors(void *arg)
+{
+	struct aplcpu_softc *sc = arg;
+	struct opp_table *ot;
+	uint32_t opp_level;
+	uint64_t pstate;
+	int i, j;
+
+	for (i = 0; i < sc->sc_nclusters; i++) {
+		if (sc->sc_opp_table[i] == NULL)
+			continue;
+
+		pstate = bus_space_read_8(sc->sc_iot, sc->sc_ioh[i],
+		    DVFS_STATUS);
+		opp_level = (pstate & DVFS_STATUS_CUR_PS_MASK);
+		opp_level >>= DVFS_STATUS_CUR_PS_SHIFT;
+
+		/* Translate P-state to frequency. */
+		ot = sc->sc_opp_table[i];
+		for (j = 0; j < ot->ot_nopp; j++) {
+			if (ot->ot_opp[j].opp_level == opp_level) {
+				sc->sc_sensor[i].value = ot->ot_opp[j].opp_hz;
+				break;
+			}
+		}
+	}
 }
