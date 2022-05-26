@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.280 2022/05/26 06:53:38 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.281 2022/05/26 21:08:52 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -933,7 +933,7 @@ sub hash_plist
 	delete $self->{hash};
 	my $content;
 	open my $fh, '>', \$content;
-	$plist->write($fh);
+	$plist->write_without_variation($fh);
 	close $fh;
 	my $digest = Digest::SHA::sha256_base64($content);
 	$self->{hash} = $digest;
