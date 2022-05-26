@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.279 2022/04/01 10:14:17 sthen Exp $
+# $OpenBSD: PackingElement.pm,v 1.280 2022/05/26 06:53:38 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -864,6 +864,8 @@ sub new
 		return OpenBSD::PackingElement::ManualInstallation->new;
 	} elsif ($args eq 'firmware') {
 		return OpenBSD::PackingElement::Firmware->new;
+	} elsif ($args =~ m/always-update\s+(\S+)/) {
+		return OpenBSD::PackingElement::AlwaysUpdate->new_with_hash($1);
 	} elsif ($args eq 'always-update') {
 		return OpenBSD::PackingElement::AlwaysUpdate->new;
 	} elsif ($args eq 'is-branch') {
@@ -913,6 +915,34 @@ our @ISA=qw(OpenBSD::PackingElement::UniqueOption);
 sub category()
 {
 	'always-update';
+}
+
+sub stringize
+{
+	my $self = shift;
+	my @l = ($self->category);
+	if (defined $self->{hash}) {
+		push(@l, $self->{hash});
+	}
+	return join(' ', @l);
+}
+
+sub hash_plist
+{
+	my ($self, $plist) = @_;
+	delete $self->{hash};
+	my $content;
+	open my $fh, '>', \$content;
+	$plist->write($fh);
+	close $fh;
+	my $digest = Digest::SHA::sha256_base64($content);
+	$self->{hash} = $digest;
+}
+
+sub new_with_hash
+{
+	my ($class, $hash) = @_;
+	bless { hash => $hash}, $class;
 }
 
 package OpenBSD::PackingElement::IsBranch;
