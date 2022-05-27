@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.120 2021/03/11 13:31:35 jsg Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.121 2022/05/27 11:10:54 mpi Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -1488,6 +1488,9 @@ nfsrv_rename(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 		error = -1;
 out:
 	if (!error) {
+		if (tvp) {
+			(void)uvm_vnp_uncache(tvp);
+		}
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,
 				   tond.ni_dvp, tond.ni_vp, &tond.ni_cnd);
 	} else {
