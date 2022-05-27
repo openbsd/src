@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.39 2017/08/17 20:50:51 tom Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.40 2022/05/27 18:55:30 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.38 2001/06/30 00:02:20 eeh Exp $ */
 
 /*
@@ -67,76 +67,6 @@
 #include <machine/bus.h>
 
 #include <sparc64/sparc64/cache.h>
-
-/*
- * Map a user I/O request into kernel virtual address space.
- * Note: the pages are already locked by uvm_vslock(), so we
- * do not need to pass an access_type to pmap_enter().   
- */
-void
-vmapbuf(struct buf *bp, vsize_t len)
-{
-	struct pmap *upmap, *kpmap;
-	vaddr_t uva;	/* User VA (map from) */
-	vaddr_t kva;	/* Kernel VA (new to) */
-	paddr_t pa; 	/* physical address */
-	vsize_t off;
-
-	if ((bp->b_flags & B_PHYS) == 0)
-		panic("vmapbuf");
-
-	/*
-	 * XXX:  It might be better to round/trunc to a
-	 * segment boundary to avoid VAC problems!
-	 */
-	bp->b_saveaddr = bp->b_data;
-	uva = trunc_page((vaddr_t)bp->b_data);
-	off = (vaddr_t)bp->b_data - uva;
-	len = round_page(off + len);
-	kva = uvm_km_valloc_prefer_wait(phys_map, len, uva);
-	bp->b_data = (caddr_t)(kva + off);
-
-	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
-	kpmap = vm_map_pmap(kernel_map);
-	do {
-		if (pmap_extract(upmap, uva, &pa) == FALSE)
-			panic("vmapbuf: null page frame");
-		/* Now map the page into kernel space. */
-		pmap_enter(pmap_kernel(), kva,
-		    pa /* | PMAP_NC */,
-		    PROT_READ | PROT_WRITE,
-		    PROT_READ | PROT_WRITE | PMAP_WIRED);
-
-		uva += PAGE_SIZE;
-		kva += PAGE_SIZE;
-		len -= PAGE_SIZE;
-	} while (len);
-	pmap_update(pmap_kernel());
-}
-
-/*
- * Unmap a previously-mapped user I/O request.
- */
-void
-vunmapbuf(struct buf *bp, vsize_t len)
-{
-	vaddr_t kva;
-	vsize_t off;
-
-	if ((bp->b_flags & B_PHYS) == 0)
-		panic("vunmapbuf");
-
-	kva = trunc_page((vaddr_t)bp->b_data);
-	off = (vaddr_t)bp->b_data - kva;
-	len = round_page(off + len);
-
-	pmap_remove(pmap_kernel(), kva, kva + len);
-	pmap_update(pmap_kernel());
-	uvm_km_free_wakeup(phys_map, kva, len);
-	bp->b_data = bp->b_saveaddr;
-	bp->b_saveaddr = NULL;
-}
-
 
 /*
  * The offset of the topmost frame in the kernel stack.
@@ -340,4 +270,69 @@ cpu_exit(struct proc *p)
 
 	pmap_deactivate(p);
 	sched_exit(p);
+}
+
+
+struct kmem_va_mode kv_physwait = {
+	.kv_map = &phys_map,
+	.kv_wait = 1,
+};
+
+/*
+ * Map an IO request into kernel virtual address space.
+ */
+void
+vmapbuf(struct buf *bp, vsize_t len)
+{
+	struct kmem_dyn_mode kd_prefer = { .kd_waitok = 1 };
+	struct pmap *pm = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
+	vaddr_t kva, uva;
+	vsize_t size, off;
+
+#ifdef DIAGNOSTIC
+	if ((bp->b_flags & B_PHYS) == 0)
+		panic("vmapbuf");
+#endif
+	bp->b_saveaddr = bp->b_data;
+	uva = trunc_page((vaddr_t)bp->b_data);
+	off = (vaddr_t)bp->b_data - uva;
+	size = round_page(off + len);
+
+	kd_prefer.kd_prefer = uva;
+	kva = (vaddr_t)km_alloc(size, &kv_physwait, &kp_none, &kd_prefer);
+	bp->b_data = (caddr_t)(kva + off);
+	while (size > 0) {
+		paddr_t pa;
+
+		if (pmap_extract(pm, uva, &pa) == FALSE)
+			panic("vmapbuf: null page frame");
+		else
+			pmap_kenter_pa(kva, pa, PROT_READ | PROT_WRITE);
+		uva += PAGE_SIZE;
+		kva += PAGE_SIZE;
+		size -= PAGE_SIZE;
+	}
+	pmap_update(pmap_kernel());
+}
+
+/*
+ * Unmap IO request from the kernel virtual address space.
+ */
+void
+vunmapbuf(struct buf *bp, vsize_t len)
+{
+	vaddr_t addr, off;
+
+#ifdef DIAGNOSTIC
+	if ((bp->b_flags & B_PHYS) == 0)
+		panic("vunmapbuf");
+#endif
+	addr = trunc_page((vaddr_t)bp->b_data);
+	off = (vaddr_t)bp->b_data - addr;
+	len = round_page(off + len);
+	pmap_kremove(addr, len);
+	pmap_update(pmap_kernel());
+	km_free((void *)addr, len, &kv_physwait, &kp_none);
+	bp->b_data = bp->b_saveaddr;
+	bp->b_saveaddr = NULL;
 }
