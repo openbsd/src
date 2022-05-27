@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.595 2022/05/09 21:48:00 sthen Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.596 2022/05/27 15:45:02 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" Copyright (c) 2003 - 2013 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 9 2022 $
+.Dd $Mdocdate: May 27 2022 $
 .Dt PF.CONF 5
 .Os
 .Sh NAME
@@ -2313,7 +2313,15 @@ Parameters are specified enclosed in parentheses.
 At least one of the following parameters must be specified:
 .Bl -tag -width xxxx
 .It Cm max-mss Ar number
-Enforces a maximum segment size (MSS) for matching TCP packets.
+Reduces the maximum segment size (MSS)
+on TCP SYN packets to be no greater than
+.Ar number .
+This is sometimes required in scenarios where the two endpoints
+of a TCP connection are not able to carry similar sized packets
+and the resulting mismatch can lead to packet fragmentation or loss.
+Note that setting the MSS this way can have undesirable effects,
+such as interfering with the OS detection features of
+.Xr pf 4 .
 .It Cm min-ttl Ar number
 Enforces a minimum TTL for matching IP packets.
 .It Cm no-df

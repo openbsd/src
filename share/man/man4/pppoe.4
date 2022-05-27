@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.4,v 1.35 2021/03/16 13:53:39 millert Exp $
+.\"	$OpenBSD: pppoe.4,v 1.36 2022/05/27 15:45:02 jmc Exp $
 .\"	$NetBSD: pppoe.4,v 1.26 2003/10/02 07:06:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 16 2021 $
+.Dd $Mdocdate: May 27 2022 $
 .Dt PPPOE 4
 .Os
 .Sh NAME
@@ -144,44 +144,35 @@ by sending a PADT packet to explicitly terminate the old session.
 Add the following to the kernel config file:
 .Pp
 .Dl option PPPOE_TERM_UNKNOWN_SESSIONS
-.Sh MTU/MSS ISSUES
-Problems can arise on machines with private IPs connecting to the Internet
-via a machine running both
-Network Address Translation (NAT)
-and
-.Nm .
-Standard Ethernet uses a
-maximum transmission unit (MTU)
-of 1500 bytes,
-whereas PPPoE mechanisms need a further 8 bytes of overhead.
-This leaves a maximum MTU of 1492.
+.Sh PPPOE AND MTU/MSS
+PPPoE has an 8-byte header.
+When run over a network interface with the
+standard Ethernet maximum transmission unit (MTU) of 1500 bytes,
+this reduces the maximum available MTU to 1492.
 .Nm
-sets the MTU on its interface to 1492 as a matter of course.
-However,
-machines connecting on a private LAN will still have their MTUs set to 1500,
-causing conflict.
-Using a packet filter,
-the
-maximum segment size (MSS)
-can be set (clamped) to the required value.
-The following rule in
-.Xr pf.conf 5
-would set the MSS to 1440:
+sets the default MTU to this value.
+Unfortunately issues can occur when the path between
+the two endpoints of a TCP connection are not able to carry
+same sized packets,
+leading to possible packet fragmentation and sometimes packet loss.
+In that case the maximum packet size can be set using the
+.Cm max-mss
+option in
+.Xr pf.conf 5 .
+For example:
 .Pp
 .Dl match on pppoe0 scrub (max-mss 1440)
-.Pp
-Although in theory the maximum MSS over a PPPoE interface
-is 1452 bytes,
-1440 appears to be a safer bet.
-Note that setting the MSS this way can have undesirable effects,
-such as interfering with the OS detection features of
-.Xr pf 4 .
-.Pp
-Alternatively in cases where the remote equipment supports RFC 4638
-and the physical interface is configured to support jumbo frames,
-the MTU of the
+.Sh MTU/MSS NEGOTIATION
+When using a PPPoE device configured for a higher MTU ("jumbo frames"),
+the MTU for the
 .Nm
-interface can be raised and it will attempt to negotiate an increased MTU.
+device can also be raised.
+In this case
+.Nm
+attempts to negotiate the higher size with the other PPPoE endpoint
+using the RFC 4638 protocol.
+This can allow standard Ethernet packet sizes (1500 bytes)
+to be carried over PPPoE.
 For example, in
 .Pa /etc/hostname.pppoe0 :
 .Bd -literal -offset indent
@@ -192,32 +183,17 @@ dest 0.0.0.1
 !/sbin/route add default -ifp pppoe0 0.0.0.1
 .Ed
 .Pp
-The physical interface must also be configured like so:
+The physical interface would also have to be configured correspondingly:
 .Bd -literal -offset indent
 # echo "up mtu 1508" > /etc/hostname.em0
 .Ed
 .Pp
-With this, the previously mentioned MSS clamping rules in
-.Xr pf.conf 5
-are no longer necessary.
-.Pp
-If the MTU is set to a value larger than 1492 and the remote endpoint does
-.Em not
-support RFC 4638,
-.Nm
-will write
-.Dq \&No valid PPP-Max-Payload tag received in PADO
-to the kernel message buffer and the MTU will remain at the default value.
 However, RFC 4638 negotiation only takes into account the MTU configured
 on the endpoints, not the maximum MTU supported on the path between them.
 If the path cannot pass the larger Ethernet frames, negotiation will succeed
 but the larger frames will be dropped.
 For this reason it is important to test the connection with large packets
 when enabling a higher MTU.
-.Pp
-See
-.Xr pf.conf 5
-for more information on MTU, MSS, and NAT.
 .Sh SEE ALSO
 .Xr sppp 4 ,
 .Xr hostname.if 5 ,
