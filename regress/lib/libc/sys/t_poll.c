@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_poll.c,v 1.2 2020/11/09 23:18:51 bluhm Exp $	*/
+/*	$OpenBSD: t_poll.c,v 1.3 2022/05/28 18:39:39 mbuhl Exp $	*/
 /*	$NetBSD: t_poll.c,v 1.4 2020/07/17 15:34:16 kamil Exp $	*/
 
 /*-
@@ -175,16 +175,16 @@ ATF_TC_BODY(basic, tc)
 	 */
 	pfds[0].revents = -1;
 	pfds[1].revents = -1;
-	ATF_REQUIRE_EQ_MSG(ret = poll(&pfds[0], 1, 1), 0,
-	    "got: %d", ret);
+	ret = poll(&pfds[0], 1, 1);
+	ATF_REQUIRE_EQ_MSG(ret, 0, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG(pfds[0].revents, 0, "got: %d", pfds[0].revents);
 	ATF_REQUIRE_EQ_MSG(pfds[1].revents, -1, "got: %d", pfds[1].revents);
 
 	/* Check that the write end of the pipe as reported as ready. */
 	pfds[0].revents = -1;
 	pfds[1].revents = -1;
-	ATF_REQUIRE_EQ_MSG(ret = poll(&pfds[1], 1, 1), 1,
-	    "got: %d", ret);
+	ret = poll(&pfds[1], 1, 1);
+	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG(pfds[0].revents, -1, "got: %d", pfds[0].revents);
 	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %d",\
 	    pfds[1].revents);
@@ -192,8 +192,8 @@ ATF_TC_BODY(basic, tc)
 	/* Check that only the write end of the pipe as reported as ready. */
 	pfds[0].revents = -1;
 	pfds[1].revents = -1;
-	ATF_REQUIRE_EQ_MSG(ret = poll(pfds, 2, 1), 1,
-	    "got: %d", ret);
+	ret = poll(pfds, 2, 1);
+	ATF_REQUIRE_EQ_MSG(ret, 1, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG(pfds[0].revents, 0, "got: %d", pfds[0].revents);
 	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %d",
 	    pfds[1].revents);
@@ -204,8 +204,8 @@ ATF_TC_BODY(basic, tc)
 	/* Check that both ends of our pipe are reported as ready. */
 	pfds[0].revents = -1;
 	pfds[1].revents = -1;
-	ATF_REQUIRE_EQ_MSG(ret = poll(pfds, 2, 1), 2,
-	    "got: %d", ret);
+	ret = poll(pfds, 2, 1);
+	ATF_REQUIRE_EQ_MSG(ret, 2, "got: %d", ret);
 	ATF_REQUIRE_EQ_MSG(pfds[0].revents, POLLIN, "got: %d",
 	    pfds[0].revents);
 	ATF_REQUIRE_EQ_MSG(pfds[1].revents, POLLOUT, "got: %d",

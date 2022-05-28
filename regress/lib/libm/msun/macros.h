@@ -1,4 +1,4 @@
-/*      $OpenBSD: macros.h,v 1.3 2021/12/13 18:04:28 deraadt Exp $       */
+/*      $OpenBSD: macros.h,v 1.4 2022/05/28 18:39:39 mbuhl Exp $       */
 /* Public domain - Moritz Buhl */
 
 #define rounddown(x, y)	(((x)/(y))*(y))
@@ -6,3 +6,4 @@
 #define hexdump(...)
 
 #define nitems(_a)      (sizeof((_a)) / sizeof((_a)[0]))
+#define __XSTRING(_a)	(#_a)

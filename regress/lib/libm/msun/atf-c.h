@@ -1,4 +1,4 @@
-/*	$OpenBSD: atf-c.h,v 1.1 2021/10/22 18:00:22 mbuhl Exp $	*/
+/*	$OpenBSD: atf-c.h,v 1.2 2022/05/28 18:39:39 mbuhl Exp $	*/
 /*
  * Copyright (c) 2019-2021 Moritz Buhl <mbuhl@openbsd.org>
  *
@@ -86,7 +86,7 @@ ATF_TC_FUNCTIONS(fn)
 #define ATF_CHECK_STREQ	ATF_REQUIRE_STREQ
 
 #define atf_req(exp, err, msg, ...)					\
-	atf_require(exp, err, #exp, __FILE__, __LINE__, NULL)
+	atf_require(exp, err, #exp, __FILE__, __LINE__, msg, ##__VA_ARGS__)
 #define ATF_REQUIRE(exp)		atf_req(exp, -1, NULL)
 #define ATF_REQUIRE_ERRNO(no, exp)	atf_req(exp, no, NULL)
 #define ATF_REQUIRE_MSG(exp, fmt, ...)	atf_req(exp, -1, fmt, ##__VA_ARGS__)
