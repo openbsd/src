@@ -1,4 +1,4 @@
-/*	$OpenBSD: gencode.c,v 1.62 2022/05/28 03:20:14 deraadt Exp $	*/
+/*	$OpenBSD: gencode.c,v 1.63 2022/05/28 03:20:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998
@@ -213,6 +213,7 @@ freechunks(void)
 		membag[i].ptrs = NULL;
 		membag[i].slot = membag[i].total = 0;
 	}
+	cur_membag = 0;
 }
 
 /*
