@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.90 2022/05/08 13:31:41 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.91 2022/05/28 23:20:28 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -115,7 +115,7 @@ sub skip
 			$self->fatal("Error while skipping archive: #1", $!);
 		}
 		if ($actual == 0) {
-			$self->fatal("Premature end of archive in header: #1", $!);
+			$self->fatal("Premature end of archive in header");
 		}
 		$self->{swallow} -= $actual;
 	}
