@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.178 2022/05/15 08:58:33 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.179 2022/05/28 07:46:27 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1725,6 +1725,10 @@ sub run_command
 			} else {
 				$plist = $self->make_plist_with_sum($state, 
 				    $plist);
+				my $h = $plist->get('always-update');
+				if (defined $h) {
+					$h->hash_plist($plist);
+				}
 			}
 			if (defined(my $dir = $state->defines('HISTORY_DIR'))) {
 				$ordered = $self->save_history($plist, 
