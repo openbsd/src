@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.346 2022/03/14 12:58:55 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.347 2022/05/28 18:51:16 gerhard Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -226,7 +226,7 @@ int
 ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
 	struct iked		*env = p->p_env;
-	struct iked_sa		*sa;
+	struct iked_sa		*sa, *satmp;
 	struct iked_policy	*pol, *old;
 
 	switch (imsg->hdr.type) {
@@ -245,7 +245,7 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 				fatalx("%s: too many traffic selectors", __func__);
 		}
 		/* Find new policies for dangling SAs */
-		RB_FOREACH(sa, iked_sas, &env->sc_sas) {
+		RB_FOREACH_SAFE(sa, iked_sas, &env->sc_sas, satmp) {
 			if (sa->sa_state != IKEV2_STATE_ESTABLISHED) {
 				sa_state(env, sa, IKEV2_STATE_CLOSING);
 				ikev2_ike_sa_setreason(sa, "reload");
