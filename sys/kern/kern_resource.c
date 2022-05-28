@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.73 2022/05/28 03:21:17 deraadt Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.74 2022/05/28 03:47:43 deraadt Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -580,7 +580,7 @@ lim_startup(struct plimit *limit0)
 	limit0->pl_rlimit[RLIMIT_NPROC].rlim_cur = MAXUPRC;
 	lim = ptoa(uvmexp.free);
 	limit0->pl_rlimit[RLIMIT_RSS].rlim_max = lim;
-	lim = ptoa(64*128);		/* Default to very low */
+	lim = ptoa(64*1024);		/* Default to very low */
 	limit0->pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
 	limit0->pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
 	refcnt_init(&limit0->pl_refcnt);
