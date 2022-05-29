@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.147 2020/01/02 12:27:04 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.148 2022/05/29 10:48:41 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -279,8 +279,9 @@ sub UpdateInfoOnly
 {
 	my ($fh, $cont) = @_;
 	while (<$fh>) {
-		# if alwaysupdate, all info is sig
-		if (m/^\@option\s+always-update\b/o) {
+		# if old alwaysupdate, all info is sig
+		# if new, we don't need the rest
+		if (m/^\@option\s+always-update$/o) {
 		    &$cont($_);
 		    while (<$fh>) {
 			    &$cont($_);

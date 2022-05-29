@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Cache.pm,v 1.10 2022/05/20 20:31:38 espie Exp $
+# $OpenBSD: Cache.pm,v 1.11 2022/05/29 10:48:41 espie Exp $
 #
 # Copyright (c) 2022 Marc Espie <espie@openbsd.org>
 #
@@ -63,7 +63,6 @@ sub prime_update_info_cache
 	my ($self, $state, $setlist) = @_;
 
 	my $progress = $state->progress;
-	my $uncached = {};
 	my $found = {};
 
 	my $pseudo_search = [$self];
@@ -114,9 +113,6 @@ sub prime_update_info_cache
 			$found->{OpenBSD::PackageName::splitstem($pkgname)} = 1;
 			$self->{raw_data}{$pkgname} //= '';
 			$self->{raw_data}{$pkgname} .= "$value\n";
-			if ($value =~ m/\@option\s+always-update/) {
-				$uncached->{$pkgname} = 1;
-			}
 			if ($pkgname ne $oldname) {
 				$oldname = $pkgname;
 				$done++;
@@ -125,9 +121,6 @@ sub prime_update_info_cache
 		}
 	}
 	close($fh);
-	for my $pkgname (keys %$uncached) {
-		delete $self->{raw_data}{$pkgname}
-	}
 	return unless $state->defines("CACHING_VERBOSE");
 	for my $k (@list) {
 		if (!defined $found->{$k}) {
