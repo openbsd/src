@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.64 2022/05/29 10:58:03 schwarze Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.65 2022/05/29 12:46:28 schwarze Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -52,6 +52,12 @@ or SCP.
 will try to complete
 .Ar pkg-name
 with a version number while looking through installed packages.
+If no
+.Ar pkg-name
+is specified,
+.Nm
+shows the names and one-line comments for all installed packages
+except internal packages.
 .Pp
 When browsing through uninstalled packages, running
 .Ic pkg_info -I *.tgz
@@ -65,10 +71,18 @@ to check that the installation would proceed cleanly, including dependencies.
 The following command-line options are supported:
 .Bl -tag -width indent
 .It Fl A
-Show information for all currently installed packages,
+Show the names and one-line comments for all installed packages,
 including internal packages.
+This option cannot be combined with
+.Ar pkg-name
+arguments.
 .It Fl a
-Show information for all currently installed packages.
+Show the names and one-line comments for all installed packages
+except internal packages.
+This option cannot be combined with
+.Ar pkg-name
+arguments.
+It is the default when neither options nor arguments are given.
 .It Fl C
 Show certificate information for signed packages.
 .It Fl c
@@ -151,7 +165,10 @@ and
 .Xr package 5
 for the various annotations.
 .It Fl I
-Show the index entry for each package.
+Show the name and one-line comment
+.Pq Dq index entry
+for each package.
+This is done by default if neither options nor arguments are given.
 .It Fl K
 Prefix file names with category keyword (e.g., @file, @lib).
 Always used together with
@@ -174,9 +191,11 @@ This lets you add a special token to the start of each field.
 .It Fl M
 Show the install-message file (if any) for each package.
 .It Fl m
-Only show packages tagged as manual installations.
-It should omit anything
-installed automatically as a dependency.
+Show the names and one-line comments for all packages tagged as manually
+installed, omitting those automatically installed as dependencies.
+This option cannot be combined with
+.Ar pkg-name
+arguments.
 .It Fl P
 Show the
 .Xr pkgpath 7
@@ -216,7 +235,11 @@ of every run time dependency and shared library used to build this package.
 .It Fl s
 Show an estimate of the total size of each package.
 .It Fl t
-Show packages which are not required by any other packages.
+Show the names and one-line comments for packages
+which are not required by any other packages.
+This option cannot be combined with
+.Ar pkg-name
+arguments.
 .It Fl U
 Show the deinstall-message file (if any) for each package.
 .It Fl v
