@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplnco.c,v 1.1 2022/01/30 22:24:42 kettenis Exp $	*/
+/*	$OpenBSD: aplnco.c,v 1.2 2022/05/29 16:19:08 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -25,13 +25,6 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
-
-/*
- * This driver is based on preliminary device tree bindings and will
- * almost certainly need changes once the official bindings land in
- * mainline Linux.  Support for these preliminary bindings will be
- * dropped as soon as official bindings are available.
- */
 
 #define NCO_LFSR_POLY		0xa01
 #define NCO_LFSR_MASK		0x7ff
