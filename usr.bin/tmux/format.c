@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.302 2022/03/08 18:31:46 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.303 2022/05/30 12:55:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2597,7 +2597,7 @@ format_cb_user(__unused struct format_tree *ft)
 
 	if ((pw = getpwuid(getuid())) != NULL)
 		return (xstrdup(pw->pw_name));
-	return NULL;
+	return (NULL);
 }
 
 /* Format table type. */

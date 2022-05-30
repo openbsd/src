@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.279 2022/03/16 17:00:17 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.280 2022/05/30 12:55:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1046,7 +1046,7 @@ window_pane_resize(struct window_pane *wp, u_int sx, u_int sy)
 	if (sx == wp->sx && sy == wp->sy)
 		return;
 
-	r = xmalloc (sizeof *r);
+	r = xmalloc(sizeof *r);
 	r->sx = sx;
 	r->sy = sy;
 	r->osx = wp->sx;

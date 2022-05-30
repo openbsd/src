@@ -1,4 +1,4 @@
-/* $OpenBSD: window-client.c,v 1.32 2021/08/20 19:50:17 nicm Exp $ */
+/* $OpenBSD: window-client.c,v 1.33 2022/05/30 12:55:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -281,7 +281,7 @@ window_client_get_key(void *modedata, void *itemdata, u_int line)
 	key = key_string_lookup_string(expanded);
 	free(expanded);
 	format_free(ft);
-	return key;
+	return (key);
 }
 
 static struct screen *

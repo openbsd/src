@@ -1,4 +1,4 @@
-/* $OpenBSD: notify.c,v 1.40 2022/03/08 21:58:37 nicm Exp $ */
+/* $OpenBSD: notify.c,v 1.41 2022/05/30 12:55:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 George Nachman <tmux@georgester.com>
@@ -47,7 +47,7 @@ notify_insert_one_hook(struct cmdq_item *item, struct notify_entry *ne,
 	if (log_get_level() != 0) {
 		s = cmd_list_print(cmdlist, 0);
 		log_debug("%s: hook %s is: %s", __func__, ne->name, s);
-		free (s);
+		free(s);
 	}
 	new_item = cmdq_get_command(cmdlist, state);
 	return (cmdq_insert_after(item, new_item));

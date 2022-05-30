@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-refresh-client.c,v 1.47 2022/03/08 12:01:19 nicm Exp $ */
+/* $OpenBSD: cmd-refresh-client.c,v 1.48 2022/05/30 12:55:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -185,7 +185,7 @@ cmd_refresh_client_clipboard(struct cmd *self, struct cmdq_item *item)
 		}
 		if (i != tc->clipboard_npanes)
 			return (CMD_RETURN_NORMAL);
-		tc->clipboard_panes = xreallocarray (tc->clipboard_panes,
+		tc->clipboard_panes = xreallocarray(tc->clipboard_panes,
 		    tc->clipboard_npanes + 1, sizeof *tc->clipboard_panes);
 		tc->clipboard_panes[tc->clipboard_npanes++] = fs.wp->id;
 	}

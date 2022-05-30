@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.394 2022/05/30 12:48:57 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.395 2022/05/30 12:55:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3157,7 +3157,7 @@ server_client_add_client_window(struct client *c, u_int id)
 		cw->window = id;
 		RB_INSERT(client_windows, &c->windows, cw);
 	}
-	return cw;
+	return (cw);
 }
 
 /* Get client active pane. */

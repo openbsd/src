@@ -1,4 +1,4 @@
-/* $OpenBSD: window-buffer.c,v 1.35 2021/08/20 19:50:17 nicm Exp $ */
+/* $OpenBSD: window-buffer.c,v 1.36 2022/05/30 12:55:25 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -308,7 +308,7 @@ window_buffer_get_key(void *modedata, void *itemdata, u_int line)
 	}
 	pb = paste_get_name(item->name);
 	if (pb == NULL)
-		return KEYC_NONE;
+		return (KEYC_NONE);
 
 	ft = format_create(NULL, NULL, FORMAT_NONE, 0);
 	format_defaults(ft, NULL, NULL, 0, NULL);
@@ -320,7 +320,7 @@ window_buffer_get_key(void *modedata, void *itemdata, u_int line)
 	key = key_string_lookup_string(expanded);
 	free(expanded);
 	format_free(ft);
-	return key;
+	return (key);
 }
 
 static struct screen *
