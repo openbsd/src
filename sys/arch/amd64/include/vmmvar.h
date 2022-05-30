@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.76 2022/05/13 18:19:32 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.77 2022/05/30 17:58:20 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -371,10 +371,10 @@ struct vm_exit_eptviolation {
  * register content
  */
 struct vcpu_segment_info {
-	uint16_t vsi_sel;
-	uint32_t vsi_limit;
-	uint32_t vsi_ar;
-	uint64_t vsi_base;
+	uint16_t	vsi_sel;
+	uint32_t	vsi_limit;
+	uint32_t	vsi_ar;
+	uint64_t	vsi_base;
 };
 
 #define VCPU_REGS_RAX		0
@@ -397,17 +397,17 @@ struct vcpu_segment_info {
 #define VCPU_REGS_RFLAGS	17
 #define VCPU_REGS_NGPRS		(VCPU_REGS_RFLAGS + 1)
 
-#define VCPU_REGS_CR0	0
-#define VCPU_REGS_CR2	1
-#define VCPU_REGS_CR3	2
-#define VCPU_REGS_CR4	3
-#define VCPU_REGS_CR8	4
-#define VCPU_REGS_XCR0	5
-#define VCPU_REGS_PDPTE0 6
-#define VCPU_REGS_PDPTE1 7
-#define VCPU_REGS_PDPTE2 8
-#define VCPU_REGS_PDPTE3 9
-#define VCPU_REGS_NCRS	(VCPU_REGS_PDPTE3 + 1)
+#define VCPU_REGS_CR0		0
+#define VCPU_REGS_CR2		1
+#define VCPU_REGS_CR3		2
+#define VCPU_REGS_CR4		3
+#define VCPU_REGS_CR8		4
+#define VCPU_REGS_XCR0		5
+#define VCPU_REGS_PDPTE0 	6
+#define VCPU_REGS_PDPTE1 	7
+#define VCPU_REGS_PDPTE2 	8
+#define VCPU_REGS_PDPTE3 	9
+#define VCPU_REGS_NCRS		(VCPU_REGS_PDPTE3 + 1)
 
 #define VCPU_REGS_CS		0
 #define VCPU_REGS_DS		1
@@ -426,7 +426,7 @@ struct vcpu_segment_info {
 #define VCPU_REGS_SFMASK 	4
 #define VCPU_REGS_KGSBASE	5
 #define VCPU_REGS_MISC_ENABLE	6
-#define VCPU_REGS_NMSRS	(VCPU_REGS_MISC_ENABLE + 1)
+#define VCPU_REGS_NMSRS		(VCPU_REGS_MISC_ENABLE + 1)
 
 #define VCPU_REGS_DR0		0
 #define VCPU_REGS_DR1		1
@@ -434,7 +434,7 @@ struct vcpu_segment_info {
 #define VCPU_REGS_DR3		3
 #define VCPU_REGS_DR6		4
 #define VCPU_REGS_DR7		5
-#define VCPU_REGS_NDRS	(VCPU_REGS_DR7 + 1)
+#define VCPU_REGS_NDRS		(VCPU_REGS_DR7 + 1)
 
 struct vcpu_reg_state {
 	uint64_t			vrs_gprs[VCPU_REGS_NGPRS];
@@ -448,7 +448,7 @@ struct vcpu_reg_state {
 
 struct vm_mem_range {
 	paddr_t	vmr_gpa;
-	vaddr_t vmr_va;
+	vaddr_t	vmr_va;
 	size_t	vmr_size;
 };
 
@@ -482,7 +482,7 @@ struct vm_create_params {
 	uint8_t			vcp_macs[VMM_MAX_NICS_PER_VM][6];
 
 	/* Output parameter from VMM_IOC_CREATE */
-	uint32_t	vcp_id;
+	uint32_t		vcp_id;
 };
 
 struct vm_run_params {
@@ -513,7 +513,7 @@ struct vm_info_result {
 
 struct vm_info_params {
 	/* Input parameters to VMM_IOC_INFO */
-	size_t			vip_size;	/* Output buffer size */
+	size_t			 vip_size;	/* Output buffer size */
 
 	/* Output Parameters from VMM_IOC_INFO */
 	size_t			 vip_info_ct;	/* # of entries returned */
@@ -685,19 +685,19 @@ struct vm_mprotect_ept_params {
 
 #ifdef _KERNEL
 
-#define VMX_FAIL_LAUNCH_UNKNOWN 1
-#define VMX_FAIL_LAUNCH_INVALID_VMCS 2
-#define VMX_FAIL_LAUNCH_VALID_VMCS 3
+#define VMX_FAIL_LAUNCH_UNKNOWN 	1
+#define VMX_FAIL_LAUNCH_INVALID_VMCS	2
+#define VMX_FAIL_LAUNCH_VALID_VMCS	3
 
-#define VMX_NUM_MSR_STORE 7
+#define VMX_NUM_MSR_STORE		7
 
 /* MSR bitmap manipulation macros */
-#define VMX_MSRIDX(m) ((m) / 8)
-#define VMX_MSRBIT(m) (1 << (m) % 8)
+#define VMX_MSRIDX(m)			((m) / 8)
+#define VMX_MSRBIT(m)			(1 << (m) % 8)
 
-#define SVM_MSRIDX(m) ((m) / 4)
-#define SVM_MSRBIT_R(m) (1 << (((m) % 4) * 2))
-#define SVM_MSRBIT_W(m) (1 << (((m) % 4) * 2 + 1))
+#define SVM_MSRIDX(m)			((m) / 4)
+#define SVM_MSRBIT_R(m)			(1 << (((m) % 4) * 2))
+#define SVM_MSRBIT_W(m)			(1 << (((m) % 4) * 2 + 1))
 
 enum {
 	VMM_MODE_UNKNOWN,
@@ -770,7 +770,7 @@ struct vmcb {
 			uint64_t	v_avic_phys;		/* 0F8h */
 
 		};
-		uint8_t vmcb_control[0x400];
+		uint8_t			vmcb_control[0x400];
 	};
 
 	union {
@@ -819,8 +819,7 @@ struct vmcb {
 			uint64_t		v_lastexcpfrom;	/* 288h */
 			uint64_t		v_lastexcpto;	/* 290h */
 		};
-
-		uint8_t vmcb_layout[PAGE_SIZE - 0x400];
+		uint8_t				vmcb_layout[PAGE_SIZE - 0x400];
 	};
 };
 
