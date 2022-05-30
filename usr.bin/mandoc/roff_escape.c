@@ -1,4 +1,4 @@
-/* $OpenBSD: roff_escape.c,v 1.2 2022/05/20 13:06:26 schwarze Exp $ */
+/* $OpenBSD: roff_escape.c,v 1.3 2022/05/30 22:50:40 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2020, 2022
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -157,13 +157,13 @@ roff_escape(const char *buf, const int ln, const int aesc,
 
 	case '$':
 	case '*':
+	case 'V':
 	case 'n':
 		rval = ESCAPE_EXPAND;
 		break;
 	case 'F':
 	case 'M':
 	case 'O':
-	case 'V':
 	case 'Y':
 	case 'g':
 	case 'k':

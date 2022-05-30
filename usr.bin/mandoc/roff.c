@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.260 2022/05/19 15:17:51 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.261 2022/05/30 22:50:40 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1527,6 +1527,12 @@ roff_expand(struct roff *r, struct buf *buf, int ln, int pos, char ec)
 			ubuf[1] = '\0';
 			res = ubuf;
 			break;
+		case 'V':
+			mandoc_msg(MANDOCERR_UNSUPP, ln, iesc,
+			    "%.*s", iend - iesc, buf->buf + iesc);
+			roff_expand_patch(buf, iendarg, "}", iend);
+			roff_expand_patch(buf, iesc, "${", iarg);
+			continue;
 		case 'n':
 			if (iendarg > iarg)
 				(void)snprintf(ubuf, sizeof(ubuf), "%d",
@@ -1565,9 +1571,8 @@ roff_expand_patch(struct buf *buf, int start, const char *repl, int end)
 {
 	char	*nbuf;
 
-	buf->buf[start] = '\0';
-	buf->sz = mandoc_asprintf(&nbuf, "%s%s%s", buf->buf, repl,
-	    buf->buf + end) + 1;
+	buf->sz = mandoc_asprintf(&nbuf, "%.*s%s%s", start, buf->buf,
+	    repl, buf->buf + end) + 1;
 	free(buf->buf);
 	buf->buf = nbuf;
 }

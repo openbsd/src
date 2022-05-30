@@ -1,4 +1,4 @@
-.\" $OpenBSD: roff.7,v 1.98 2022/05/20 13:06:27 schwarze Exp $
+.\" $OpenBSD: roff.7,v 1.99 2022/05/30 22:50:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2010-2019, 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 20 2022 $
+.Dd $Mdocdate: May 30 2022 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -2188,12 +2188,16 @@ Horizontal tab; ignored by
 Move up by half a line; ignored by
 .Xr mandoc 1 .
 .It Ic \eV[ Ns Ar name Ns Ic \&]
-Interpolate an environment variable; ignored by
-.Xr mandoc 1 .
+Interpolate an environment variable.
 For short names, there are variants
 .Ic \eV Ns Ar c
 and
 .Ic \eV( Ns Ar cc .
+This escape sequence is intentionally unsupported;
+.Xr mandoc 1
+prints the string
+.Dq Pf $ Brq Ar name
+instead of inspecting the environment.
 .It Ic \ev\(aq Ns Ar number Ns Ic \(aq
 Vertical motion; ignored by
 .Xr mandoc 1 .

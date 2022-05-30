@@ -1,0 +1,3 @@
+mandoc: V1.in:6:25: UNSUPP: unsupported feature: \VN
+mandoc: V1.in:8:25: UNSUPP: unsupported feature: \V(VN
+mandoc: V1.in:10:24: UNSUPP: unsupported feature: \V[VARNAME]
