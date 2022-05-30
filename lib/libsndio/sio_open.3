@@ -1,4 +1,4 @@
-.\" $OpenBSD: sio_open.3,v 1.55 2022/04/30 08:47:18 ratchov Exp $
+.\" $OpenBSD: sio_open.3,v 1.56 2022/05/30 10:31:59 op Exp $
 .\"
 .\" Copyright (c) 2007 Alexandre Ratchov <alex@caoua.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 30 2022 $
+.Dd $Mdocdate: May 30 2022 $
 .Dt SIO_OPEN 3
 .Os
 .Sh NAME
@@ -202,11 +202,6 @@ The number of played channels; meaningful only if
 mode was selected.
 .It Fa rate
 The sampling frequency in Hz.
-.It Fa bufsz
-The maximum number of frames that may be buffered.
-This parameter takes into account any buffers, and
-can be used for latency calculations.
-It is read-only.
 .It Fa appbufsz
 Size of the buffer in frames the application must maintain non-empty
 (on the play end) or non-full (on the record end) by calling
@@ -216,6 +211,11 @@ or
 fast enough to avoid overrun or underrun conditions.
 The audio subsystem may use additional buffering, thus this
 parameter cannot be used for latency calculations.
+.It Fa bufsz
+The maximum number of frames that may be buffered.
+This parameter takes into account any buffers, and
+can be used for latency calculations.
+It is read-only.
 .It Fa round
 Optimal number of frames that the application buffers
 should be a multiple of, to get best performance.
