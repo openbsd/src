@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvnetareg.h,v 1.3 2022/01/09 05:42:37 jsg Exp $	*/
+/*	$OpenBSD: if_mvnetareg.h,v 1.4 2022/05/30 09:37:46 dlg Exp $	*/
 /*	$NetBSD: mvnetareg.h,v 1.8 2013/12/23 02:23:25 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2013 KIYOHARA Takashi
@@ -779,7 +779,7 @@ struct mvneta_tx_desc {
 	uint32_t nextdescptr;		/* Next descriptor pointer */
 #endif
 	uint32_t _padding[4];
-} __packed;
+} __packed __aligned(32);
 
 struct mvneta_rx_desc {
 #if BYTE_ORDER == BIG_ENDIAN
@@ -796,7 +796,7 @@ struct mvneta_rx_desc {
 	uint32_t nextdescptr;		/* Next descriptor pointer */
 #endif
 	uint32_t _padding[4];
-} __packed;
+} __packed __aligned(32);
 
 #define MVNETA_ERROR_SUMMARY		(1 << 0)
 #define MVNETA_BUFFER_OWNED_MASK		(1U << 31)
