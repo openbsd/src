@@ -1,4 +1,4 @@
-/* $OpenBSD: cfg.c,v 1.84 2021/08/21 17:25:32 nicm Exp $ */
+/* $OpenBSD: cfg.c,v 1.85 2022/05/30 13:00:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -251,7 +251,7 @@ cfg_show_causes(struct session *s)
 	if (wme == NULL || wme->mode != &window_view_mode)
 		window_pane_set_mode(wp, NULL, &window_view_mode, NULL, NULL);
 	for (i = 0; i < cfg_ncauses; i++) {
-		window_copy_add(wp, "%s", cfg_causes[i]);
+		window_copy_add(wp, 0, "%s", cfg_causes[i]);
 		free(cfg_causes[i]);
 	}
 

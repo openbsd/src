@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.201 2022/05/30 12:51:27 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.202 2022/05/30 13:00:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1077,6 +1077,9 @@ input_reply(struct input_ctx *ictx, const char *fmt, ...)
 	struct bufferevent	*bev = ictx->event;
 	va_list			 ap;
 	char			*reply;
+
+	if (bev == NULL)
+		return;
 
 	va_start(ap, fmt);
 	xvasprintf(&reply, fmt, ap);

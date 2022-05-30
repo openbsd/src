@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.109 2022/05/30 12:55:25 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.110 2022/05/30 13:00:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -856,7 +856,7 @@ cmdq_print(struct cmdq_item *item, const char *fmt, ...)
 			window_pane_set_mode(wp, NULL, &window_view_mode, NULL,
 			    NULL);
 		}
-		window_copy_add(wp, "%s", msg);
+		window_copy_add(wp, 0, "%s", msg);
 	}
 
 	free(msg);
