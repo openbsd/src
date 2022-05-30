@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-server-access.c,v 1.1 2022/05/30 12:48:57 nicm Exp $ */
+/* $OpenBSD: cmd-server-access.c,v 1.2 2022/05/30 13:06:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2021 Dallas Lyons <dallasdlyons@gmail.com>
@@ -81,7 +81,7 @@ cmd_server_access_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_NORMAL);
 	}
 	if (args_count(args) == 0) {
-		cmdq_error(item, "missing user arguement");
+		cmdq_error(item, "missing user argument");
 		return (CMD_RETURN_ERROR);
 	}
 
