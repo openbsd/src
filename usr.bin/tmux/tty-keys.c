@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.154 2022/03/08 12:01:19 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.155 2022/05/30 13:02:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1061,17 +1061,13 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
 		log_debug("%s: mouse input: %.*s", c->name, (int)*size, buf);
 
 		/* Check and return the mouse input. */
-		if (b < 32)
+		if (b < MOUSE_PARAM_BTN_OFF ||
+		    x < MOUSE_PARAM_POS_OFF ||
+		    y < MOUSE_PARAM_POS_OFF)
 			return (-1);
-		b -= 32;
-		if (x >= 33)
-			x -= 33;
-		else
-			x = 256 - x;
-		if (y >= 33)
-			y -= 33;
-		else
-			y = 256 - y;
+		b -= MOUSE_PARAM_BTN_OFF;
+		x -= MOUSE_PARAM_POS_OFF;
+		y -= MOUSE_PARAM_POS_OFF;
 	} else if (buf[2] == '<') {
 		/* Read the three inputs. */
 		*size = 3;
