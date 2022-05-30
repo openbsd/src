@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdt.h,v 1.3 2021/05/19 17:39:50 kettenis Exp $	*/
+/*	$OpenBSD: fdt.h,v 1.4 2022/05/30 17:39:09 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
@@ -44,6 +44,7 @@ void *fdt_find_cons(const char *);
 #define fdt_intr_enable riscv_intr_enable
 #define fdt_intr_establish riscv_intr_establish_fdt
 #define fdt_intr_establish_idx riscv_intr_establish_fdt_idx
+#define fdt_intr_establish_idx_cpu riscv_intr_establish_fdt_idx_cpu
 #define fdt_intr_establish_imap riscv_intr_establish_fdt_imap
 #define fdt_intr_establish_imap_cpu riscv_intr_establish_fdt_imap_cpu
 #define fdt_intr_establish_msi riscv_intr_establish_fdt_msi
