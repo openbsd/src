@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.134 2022/05/11 17:17:35 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.135 2022/05/30 09:30:40 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -81,7 +81,7 @@ sub tie_files
 package OpenBSD::PackingElement::FileBase;
 sub hash_files
 {
-	my ($self, $sha, $state) = @_;
+	my ($self, $state, $sha) = @_;
 	return if $self->{link} or $self->{symlink} or $self->{nochecksum};
 	if (defined $self->{d}) {
 		push @{$sha->{$self->{d}->key}}, $self;
@@ -90,7 +90,7 @@ sub hash_files
 
 sub tie_files
 {
-	my ($self, $sha, $state) = @_;
+	my ($self, $state, $sha) = @_;
 	return if $self->{link} or $self->{symlink} or $self->{nochecksum};
 	# XXX python doesn't like this, overreliance on timestamps
 	return if $self->{name} =~ m/\.py$/ && !defined $self->{ts};
@@ -117,8 +117,8 @@ sub tie_files
 		# and we also need to tell size computation we won't be
 		# needing extra room for this.
 		$tied->{tied} = 1;
-		$state->say("Tying #1 to #2", $self->stringize,
-		    $tied->realname($state)) if $state->verbose >= 3;
+		$state->say("Tying #1 to #2", $self->stringize, $realname) 
+		    if $state->verbose >= 3;
 	}
 }
 
@@ -788,13 +788,6 @@ sub really_add
 
 	my $errors = 0;
 
-	if ($state->{not}) {
-		$state->status->what("Pretending to add");
-	} else {
-		$state->status->what("Adding");
-	}
-	$set->setup_header($state);
-
 	# XXX in `combined' updates, some dependencies may remove extra
 	# packages, so we do a double-take on the list of packages we
 	# are actually replacing.
@@ -961,10 +954,14 @@ sub may_tie_files
 		my $sha = {};
 
 		for my $o ($set->older_to_do) {
-			$o->{plist}->hash_files($sha, $state);
+			$set->setup_header($state, $o, "hashing");
+			$state->progress->visit_with_count($o->{plist}, 
+			    'hash_files', $sha);
 		}
 		for my $n ($set->newer) {
-			$n->{plist}->tie_files($sha, $state);
+			$set->setup_header($state, $n, "tieing");
+			$state->progress->visit_with_count($n->{plist}, 
+			    'tie_files', $sha);
 		}
 	}
 }
@@ -1079,13 +1076,18 @@ sub process_set
 	if ($state->verbose && !$set->{simple_update}) {
 		$state->say("Update Set #1 runs exec commands", $set->print);
 	}
-	may_tie_files($set, $state);
 	if ($set->newer > 0 || $set->older_to_do > 0) {
+		if ($state->{not}) {
+			$state->status->what("Pretending to add");
+		} else {
+			$state->status->what("Adding");
+		}
 		for my $h ($set->newer) {
 			$h->plist->set_infodir($h->location->info);
 			delete $h->location->{contents};
 		}
 
+		may_tie_files($set, $state);
 		if (!$set->validate_plists($state)) {
 			$state->{bad}++;
 			$set->cleanup(OpenBSD::Handle::CANT_INSTALL,
