@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-attach-session.c,v 1.87 2021/08/21 10:22:38 nicm Exp $ */
+/* $OpenBSD: cmd-attach-session.c,v 1.88 2022/05/30 12:48:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -43,7 +43,7 @@ const struct cmd_entry cmd_attach_session_entry = {
 
 	/* -t is special */
 
-	.flags = CMD_STARTSERVER,
+	.flags = CMD_STARTSERVER|CMD_READONLY,
 	.exec = cmd_attach_session_exec
 };
 
@@ -69,6 +69,7 @@ cmd_attach_session(struct cmdq_item *item, const char *tflag, int dflag,
 
 	if (c == NULL)
 		return (CMD_RETURN_NORMAL);
+
 	if (server_client_check_nested(c)) {
 		cmdq_error(item, "sessions should be nested with care, "
 		    "unset $TMUX to force");

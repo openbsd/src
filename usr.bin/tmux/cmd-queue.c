@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.107 2021/08/21 17:25:32 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.108 2022/05/30 12:48:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -19,9 +19,11 @@
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "tmux.h"
 
@@ -558,17 +560,31 @@ cmdq_add_message(struct cmdq_item *item)
 {
 	struct client		*c = item->client;
 	struct cmdq_state	*state = item->state;
-	const char		*name, *key;
+	const char		*key;
 	char			*tmp;
+	uid_t                    uid;
+	struct passwd		*pw;
+	char                    *user = NULL;
 
 	tmp = cmd_print(item->cmd);
 	if (c != NULL) {
-		name = c->name;
+		uid = proc_get_peer_uid(c->peer);
+		if (uid != (uid_t)-1 && uid != getuid()) {
+			if ((pw = getpwuid(uid)) != NULL)
+				xasprintf(&user, "[%s]", pw->pw_name);
+			else
+				user = xstrdup("[unknown]");
+		} else
+			user = xstrdup("");
 		if (c->session != NULL && state->event.key != KEYC_NONE) {
 			key = key_string_lookup_key(state->event.key, 0);
-			server_add_message("%s key %s: %s", name, key, tmp);
-		} else
-			server_add_message("%s command: %s", name, tmp);
+			server_add_message("%s%s key %s: %s", c->name, user,
+			    key, tmp);
+		} else {
+			server_add_message("%s%s command: %s", c->name, user,
+			    tmp);
+		}
+		free(user);
 	} else
 		server_add_message("command: %s", tmp);
 	free(tmp);

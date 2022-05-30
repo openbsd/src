@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.157 2022/02/28 09:34:57 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.158 2022/05/30 12:48:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -360,6 +360,7 @@ client_main(struct event_base *base, int argc, char **argv, uint64_t flags,
 	/* Send identify messages. */
 	client_send_identify(ttynam, termname, caps, ncaps, cwd, feat);
 	tty_term_free_list(caps, ncaps);
+	proc_flush_peer(client_peer);
 
 	/* Send first command. */
 	if (msg == MSG_COMMAND) {
