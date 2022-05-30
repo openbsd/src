@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.200 2022/03/08 12:01:19 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.201 2022/05/30 12:51:27 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1797,6 +1797,8 @@ input_csi_dispatch_sm_private(struct input_ctx *ictx)
 				break;
 			screen_write_mode_set(sctx, MODE_FOCUSON);
 			if (wp == NULL)
+				break;
+			if (!options_get_number(global_options, "focus-events"))
 				break;
 			if (wp->flags & PANE_FOCUSED)
 				bufferevent_write(wp->event, "\033[I", 3);
