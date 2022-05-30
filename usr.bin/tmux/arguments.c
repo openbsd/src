@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.53 2022/03/03 08:24:12 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.54 2022/05/30 13:04:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -831,6 +831,12 @@ args_strtonum(struct args *args, u_char flag, long long minval,
 		return (0);
 	}
 	value = TAILQ_LAST(&entry->values, args_values);
+	if (value == NULL ||
+	    value->type != ARGS_STRING ||
+	    value->string == NULL) {
+		*cause = xstrdup("missing");
+		return (0);
+	}
 
 	ll = strtonum(value->string, minval, maxval, &errstr);
 	if (errstr != NULL) {
