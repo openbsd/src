@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-layout.c,v 1.40 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-select-layout.c,v 1.41 2022/05/30 12:52:02 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -77,7 +77,7 @@ cmd_select_layout_exec(struct cmd *self, struct cmdq_item *item)
 	struct window		*w = wl->window;
 	struct window_pane	*wp = target->wp;
 	const char		*layoutname;
-	char			*oldlayout;
+	char			*oldlayout, *cause;
 	int			 next, previous, layout;
 
 	server_unzoom_window(w);
@@ -124,8 +124,9 @@ cmd_select_layout_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	if (layoutname != NULL) {
-		if (layout_parse(w, layoutname) == -1) {
-			cmdq_error(item, "can't set layout: %s", layoutname);
+		if (layout_parse(w, layoutname, &cause) == -1) {
+			cmdq_error(item, "%s: %s", cause, layoutname);
+			free(cause);
 			goto error;
 		}
 		goto changed;
