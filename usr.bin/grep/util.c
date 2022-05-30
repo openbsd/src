@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.64 2021/12/28 16:27:53 otto Exp $	*/
+/*	$OpenBSD: util.c,v 1.65 2022/05/30 16:07:28 dv Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -163,7 +163,7 @@ procfile(char *fn)
 			overflow = 1;
 		else
 			c += t;
-		if (mflag && mcount <= 0)
+		if (mflag && mcount <= 0 && tail <= 0)
 			break;
 	}
 	if (Bflag > 0)
@@ -212,6 +212,8 @@ procline(str_t *l, int nottext)
 		c = 1;
 		goto print;
 	}
+	if (mflag && mcount <= 0)
+		goto print;
 
 	for (i = 0; i < patterns; i++) {
 		offset = 0;
