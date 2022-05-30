@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.17 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.18 2022/05/30 10:30:33 dlg Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -27,6 +27,7 @@
  */
 
 #include "bpfilter.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -39,6 +40,7 @@
 #include <sys/sockio.h>
 #include <uvm/uvm_extern.h>
 #include <sys/mbuf.h>
+#include <sys/kstat.h>
 
 #include <machine/bus.h>
 #include <machine/cpufunc.h>
@@ -170,6 +172,12 @@ struct mvneta_softc {
 	int			 sc_link;
 	int			 sc_sfp;
 	int			 sc_node;
+
+#if NKSTAT > 0
+	struct mutex		 sc_kstat_lock;
+	struct timeout		 sc_kstat_tick;
+	struct kstat		*sc_kstat;
+#endif
 };
 
 
@@ -209,6 +217,10 @@ struct mvneta_dmamem *mvneta_dmamem_alloc(struct mvneta_softc *,
     bus_size_t, bus_size_t);
 void mvneta_dmamem_free(struct mvneta_softc *, struct mvneta_dmamem *);
 void mvneta_fill_rx_ring(struct mvneta_softc *);
+
+#if NKSTAT > 0
+void		mvneta_kstat_attach(struct mvneta_softc *);
+#endif
 
 static struct rwlock mvneta_sff_lock = RWLOCK_INITIALIZER("mvnetasff");
 
@@ -781,6 +793,10 @@ mvneta_attach_deferred(struct device *self)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
+#if NKSTAT > 0
+	mvneta_kstat_attach(sc);
+#endif
 }
 
 void
@@ -1702,3 +1718,205 @@ mvneta_fill_rx_ring(struct mvneta_softc *sc)
 
 	if_rxr_put(&sc->sc_rx_ring, slots);
 }
+
+#if NKSTAT > 0
+
+/* this is used to sort and look up the array of kstats quickly */
+enum mvneta_stat {
+	mvneta_stat_good_octets_received,
+	mvneta_stat_bad_octets_received,
+	mvneta_stat_good_frames_received,
+	mvneta_stat_mac_trans_error,
+	mvneta_stat_bad_frames_received,
+	mvneta_stat_broadcast_frames_received,
+	mvneta_stat_multicast_frames_received,
+	mvneta_stat_frames_64_octets,
+	mvneta_stat_frames_65_to_127_octets,
+	mvneta_stat_frames_128_to_255_octets,
+	mvneta_stat_frames_256_to_511_octets,
+	mvneta_stat_frames_512_to_1023_octets,
+	mvneta_stat_frames_1024_to_max_octets,
+	mvneta_stat_good_octets_sent,
+	mvneta_stat_good_frames_sent,
+	mvneta_stat_excessive_collision,
+	mvneta_stat_multicast_frames_sent,
+	mvneta_stat_broadcast_frames_sent,
+	mvneta_stat_unrecog_mac_control_received,
+	mvneta_stat_good_fc_received,
+	mvneta_stat_bad_fc_received,
+	mvneta_stat_undersize,
+	mvneta_stat_fc_sent,
+	mvneta_stat_fragments,
+	mvneta_stat_oversize,
+	mvneta_stat_jabber,
+	mvneta_stat_mac_rcv_error,
+	mvneta_stat_bad_crc,
+	mvneta_stat_collisions,
+	mvneta_stat_late_collisions,
+
+	mvneta_stat_port_discard,
+	mvneta_stat_port_overrun,
+
+	mvnet_stat_count
+};
+
+struct mvneta_counter {
+	const char		 *name;
+	enum kstat_kv_unit	 unit;
+	bus_size_t		 reg;
+};
+
+static const struct mvneta_counter mvneta_counters[] = {
+	[mvneta_stat_good_octets_received] =
+	    { "rx good",	KSTAT_KV_U_BYTES,	0x0 /* 64bit */ },
+	[mvneta_stat_bad_octets_received] =
+	    { "rx bad",		KSTAT_KV_U_BYTES,	0x3008 },
+	[mvneta_stat_good_frames_received] =
+	    { "rx good",	KSTAT_KV_U_PACKETS,	0x3010 },
+	[mvneta_stat_mac_trans_error] =
+	    { "tx mac error",	KSTAT_KV_U_PACKETS,	0x300c },
+	[mvneta_stat_bad_frames_received] =
+	    { "rx bad",		KSTAT_KV_U_PACKETS,	0x3014 },
+	[mvneta_stat_broadcast_frames_received] =
+	    { "rx bcast",	KSTAT_KV_U_PACKETS,	0x3018 },
+	[mvneta_stat_multicast_frames_received] =
+	    { "rx mcast",	KSTAT_KV_U_PACKETS,	0x301c },
+	[mvneta_stat_frames_64_octets] =
+	    { "64B",		KSTAT_KV_U_PACKETS,	0x3020 },
+	[mvneta_stat_frames_65_to_127_octets] =
+	    { "65-127B",	KSTAT_KV_U_PACKETS,	0x3024 },
+	[mvneta_stat_frames_128_to_255_octets] =
+	    { "128-255B",	KSTAT_KV_U_PACKETS,	0x3028 },
+	[mvneta_stat_frames_256_to_511_octets] =
+	    { "256-511B",	KSTAT_KV_U_PACKETS,	0x302c },
+	[mvneta_stat_frames_512_to_1023_octets] =
+	    { "512-1023B",	KSTAT_KV_U_PACKETS,	0x3030 },
+	[mvneta_stat_frames_1024_to_max_octets] =
+	    { "1024-maxB",	KSTAT_KV_U_PACKETS,	0x3034 },
+	[mvneta_stat_good_octets_sent] =
+	    { "tx good",	KSTAT_KV_U_BYTES,	0x0 /* 64bit */ },
+	[mvneta_stat_good_frames_sent] = 
+	    { "tx good",	KSTAT_KV_U_PACKETS,	0x3040 },
+	[mvneta_stat_excessive_collision] = 
+	    { "tx excess coll",	KSTAT_KV_U_PACKETS,	0x3044 },
+	[mvneta_stat_multicast_frames_sent] = 
+	    { "tx mcast",	KSTAT_KV_U_PACKETS,	0x3048 },
+	[mvneta_stat_broadcast_frames_sent] = 
+	    { "tx bcast",	KSTAT_KV_U_PACKETS,	0x304c },
+	[mvneta_stat_unrecog_mac_control_received] = 
+	    { "rx unknown fc",	KSTAT_KV_U_PACKETS,	0x3050 },
+	[mvneta_stat_good_fc_received] = 
+	    { "rx fc good",	KSTAT_KV_U_PACKETS,	0x3058 },
+	[mvneta_stat_bad_fc_received] = 
+	    { "rx fc bad",	KSTAT_KV_U_PACKETS,	0x305c },
+	[mvneta_stat_undersize] = 
+	    { "rx undersize",	KSTAT_KV_U_PACKETS,	0x3060 },
+	[mvneta_stat_fc_sent] = 
+	    { "tx fc",		KSTAT_KV_U_PACKETS,	0x3054 },
+	[mvneta_stat_fragments] = 
+	    { "rx fragments",	KSTAT_KV_U_NONE,	0x3064 },
+	[mvneta_stat_oversize] = 
+	    { "rx oversize",	KSTAT_KV_U_PACKETS,	0x3068 },
+	[mvneta_stat_jabber] = 
+	    { "rx jabber",	KSTAT_KV_U_PACKETS,	0x306c },
+	[mvneta_stat_mac_rcv_error] = 
+	    { "rx mac errors",	KSTAT_KV_U_PACKETS,	0x3070 },
+	[mvneta_stat_bad_crc] = 
+	    { "rx bad crc",	KSTAT_KV_U_PACKETS,	0x3074 },
+	[mvneta_stat_collisions] = 
+	    { "rx colls",	KSTAT_KV_U_PACKETS,	0x3078 },
+	[mvneta_stat_late_collisions] = 
+	    { "rx late colls",	KSTAT_KV_U_PACKETS,	0x307c },
+
+	[mvneta_stat_port_discard] = 
+	    { "rx discard",	KSTAT_KV_U_PACKETS,	MVNETA_PXDFC },
+	[mvneta_stat_port_overrun] = 
+	    { "rx overrun",	KSTAT_KV_U_PACKETS,	MVNETA_POFC },
+	
+};
+
+CTASSERT(nitems(mvneta_counters) == mvnet_stat_count);
+
+int
+mvneta_kstat_read(struct kstat *ks)
+{
+	struct mvneta_softc *sc = ks->ks_softc;
+	struct kstat_kv *kvs = ks->ks_data;
+	unsigned int i;
+	uint32_t hi, lo;
+
+	for (i = 0; i < nitems(mvneta_counters); i++) {
+		const struct mvneta_counter *c = &mvneta_counters[i];
+		if (c->reg == 0)
+			continue;
+
+		kstat_kv_u64(&kvs[i]) += (uint64_t)MVNETA_READ(sc, c->reg);
+	}
+
+	/* handle the exceptions */
+
+	lo = MVNETA_READ(sc, 0x3000);
+	hi = MVNETA_READ(sc, 0x3004);
+	kstat_kv_u64(&kvs[mvneta_stat_good_octets_received]) +=
+	    (uint64_t)hi << 32 | (uint64_t)lo;
+
+	lo = MVNETA_READ(sc, 0x3038);
+	hi = MVNETA_READ(sc, 0x303c);
+	kstat_kv_u64(&kvs[mvneta_stat_good_octets_sent]) +=
+	    (uint64_t)hi << 32 | (uint64_t)lo;
+
+	nanouptime(&ks->ks_updated);
+
+	return (0);
+}
+
+void
+mvneta_kstat_tick(void *arg)
+{
+	struct mvneta_softc *sc = arg;
+
+	timeout_add_sec(&sc->sc_kstat_tick, 37);
+
+	if (mtx_enter_try(&sc->sc_kstat_lock)) {
+		mvneta_kstat_read(sc->sc_kstat);
+		mtx_leave(&sc->sc_kstat_lock);
+	}
+}
+
+void
+mvneta_kstat_attach(struct mvneta_softc *sc)
+{
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+	unsigned int i;
+
+	mtx_init(&sc->sc_kstat_lock, IPL_SOFTCLOCK);
+	timeout_set(&sc->sc_kstat_tick, mvneta_kstat_tick, sc);
+
+	ks = kstat_create(sc->sc_dev.dv_xname, 0, "mvneta-stats", 0,
+	    KSTAT_T_KV, 0);
+	if (ks == NULL)
+		return;
+
+	kvs = mallocarray(nitems(mvneta_counters), sizeof(*kvs),
+	    M_DEVBUF, M_WAITOK|M_ZERO);
+	for (i = 0; i < nitems(mvneta_counters); i++) {
+		const struct mvneta_counter *c = &mvneta_counters[i];
+		kstat_kv_unit_init(&kvs[i], c->name,
+		    KSTAT_KV_T_COUNTER64, c->unit);
+	}
+
+	ks->ks_softc = sc;
+	ks->ks_data = kvs;
+	ks->ks_datalen = nitems(mvneta_counters) * sizeof(*kvs);
+	ks->ks_read = mvneta_kstat_read;
+	kstat_set_mutex(ks, &sc->sc_kstat_lock);
+
+	kstat_install(ks);
+
+	sc->sc_kstat = ks;
+
+	timeout_add_sec(&sc->sc_kstat_tick, 37);
+}
+
+#endif
