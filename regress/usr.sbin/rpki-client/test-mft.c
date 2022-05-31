@@ -1,4 +1,4 @@
-/*	$Id: test-mft.c,v 1.19 2022/04/20 17:26:53 tb Exp $ */
+/*	$Id: test-mft.c,v 1.20 2022/05/31 21:35:46 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -77,7 +77,7 @@ main(int argc, char *argv[])
 		buf = load_file(argv[i], &len);
 		if ((p = mft_parse(&xp, argv[i], buf, len)) == NULL) {
 			free(buf);
-			continue;
+			break;
 		}
 		if (verb)
 			mft_print(xp, p);
