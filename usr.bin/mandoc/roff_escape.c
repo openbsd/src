@@ -1,4 +1,4 @@
-/* $OpenBSD: roff_escape.c,v 1.4 2022/05/31 18:08:02 schwarze Exp $ */
+/* $OpenBSD: roff_escape.c,v 1.5 2022/05/31 20:21:40 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2020, 2022
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -73,6 +73,7 @@ roff_escape(const char *buf, const int ln, const int aesc,
 	int		 maxl;		/* expected length of the argument */
 	int		 argl;		/* actual length of the argument */
 	int		 c, i;		/* for \[char...] parsing */
+	int 		 valid_A;	/* for \A parsing */
 	enum mandoc_esc	 rval;		/* return value */
 	enum mandocerr	 err;		/* diagnostic code */
 	char		 esc_name;
@@ -181,12 +182,12 @@ roff_escape(const char *buf, const int ln, const int aesc,
 
 	/* Quoted arguments */
 
+	case 'A':
 	case 'B':
 	case 'w':
 		rval = ESCAPE_EXPAND;
 		term = '\b';
 		break;
-	case 'A':
 	case 'D':
 	case 'H':
 	case 'L':
@@ -301,6 +302,7 @@ roff_escape(const char *buf, const int ln, const int aesc,
 
 	/* Advance to the end of the argument. */
 
+	valid_A = 1;
 	iendarg = iarg;
 	while (maxl > 0) {
 		if (buf[iendarg] == '\0') {
@@ -319,11 +321,20 @@ roff_escape(const char *buf, const int ln, const int aesc,
 			break;
 		}
 		if (buf[iendarg] == buf[iesc]) {
-			if (roff_escape(buf, ln, iendarg,
-			    &sesc, &sarg, &sendarg, &send) == ESCAPE_EXPAND)
+			switch (roff_escape(buf, ln, iendarg,
+			    &sesc, &sarg, &sendarg, &send)) {
+			case ESCAPE_EXPAND:
 				goto out_sub;
+			case ESCAPE_UNDEF:
+				break;
+			default:
+				valid_A = 0;
+				break;
+			}
 			iendarg = iend = send;
 		} else {
+			if (buf[iendarg] == ' ' || buf[iendarg] == '\t')
+				valid_A = 0;
 			if (maxl != INT_MAX)
 				maxl--;
 			iend = ++iendarg;
@@ -341,6 +352,10 @@ roff_escape(const char *buf, const int ln, const int aesc,
 		if (resc == NULL && argl == 2 &&
 		    buf[iarg] == '.' && buf[iarg + 1] == 'T')
 			rval = ESCAPE_DEVICE;
+		break;
+	case 'A':
+		if (valid_A == 0)
+			iendarg = iarg;
 		break;
 	case 'O':
 		switch (buf[iarg]) {

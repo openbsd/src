@@ -1,4 +1,4 @@
-.\" $OpenBSD: roff.7,v 1.100 2022/05/31 18:08:02 schwarze Exp $
+.\" $OpenBSD: roff.7,v 1.101 2022/05/31 20:21:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2010-2019, 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -2021,8 +2021,23 @@ End conditional input; see
 Paddable non-breaking space character.
 .It Ic \e0
 Digit width space character.
-.It Ic \eA\(aq Ns Ar string Ns Ic \(aq
-Anchor definition; ignored by
+.It Ic \eA\(aq Ns Ar name Ns Ic \(aq
+Interpolate
+.Sq 1
+if
+.Ar name
+is a syntactically valid identifier that can be used
+as a name for a macro or user-defined string, or
+.Sq 0
+otherwise.
+This is a thoroughly non-portable groff extension.
+Heirloom troff uses the same escape sequence with the same syntax
+for a completely different purpose,
+defining a hyperlink target position, also called an
+.Dq anchor ,
+with the given
+.Ar name .
+The Heirloom semantics is not supported by
 .Xr mandoc 1 .
 .It Ic \ea
 Leader character; ignored by
