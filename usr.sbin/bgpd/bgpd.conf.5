@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.219 2022/03/31 17:27:29 naddy Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.220 2022/05/31 09:45:33 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: May 31 2022 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1608,6 +1608,19 @@ where a single
 is repeated more than
 .Ar len
 times.
+.Pp
+.It Ic max-communities Ns | Ns Ic max-large-communities Ns | \
+Ns Ic max-ext-communities Ar num
+This rule applies only to
+.Em UPDATES
+where the
+.Em Basic, 
+.Em Large ,
+or
+.Em Extended Community
+attribute has more than
+.Ar num
+elements.
 .Pp
 .It Ic nexthop Ar address
 This rule applies only to

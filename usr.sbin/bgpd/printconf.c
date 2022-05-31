@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.151 2022/05/25 16:03:34 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.152 2022/05/31 09:45:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -924,6 +924,13 @@ print_rule(struct bgpd_config *conf, struct filter_rule *r)
 			print_community(c);
 		}
 	}
+
+	if (r->match.maxcomm != 0)
+		printf("max-communities %d ", r->match.maxcomm - 1);
+	if (r->match.maxextcomm != 0)
+		printf("max-ext-communities %d ", r->match.maxextcomm - 1);
+	if (r->match.maxlargecomm != 0)
+		printf("max-large-communities %d ", r->match.maxlargecomm - 1);
 
 	print_set(&r->set);
 

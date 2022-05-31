@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.5 2022/05/25 16:03:34 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.6 2022/05/31 09:45:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -280,6 +280,45 @@ struct rde_peer *peer)
 		}
 		return 0;
 	}
+}
+
+/*
+ * Count the number of communities of type type.
+ */
+int
+community_count(struct rde_community *comm, uint8_t type)
+{
+	size_t l;
+	int count = 0;
+	
+	/* use the fact that the array is ordered by type */
+	switch (type) {
+	case COMMUNITY_TYPE_BASIC:
+		for (l = 0; l < comm->nentries; l++) {
+			if ((uint8_t)comm->communities[l].flags == type)
+				count++;
+			else
+				break;
+		}
+		break;
+	case COMMUNITY_TYPE_EXT:
+		for (l = 0; l < comm->nentries; l++) {
+			if ((uint8_t)comm->communities[l].flags == type)
+				count++;
+			else if ((uint8_t)comm->communities[l].flags > type)
+				break;
+		}
+		break;
+	case COMMUNITY_TYPE_LARGE:
+		for (l = comm->nentries; l > 0; l--) {
+			if ((uint8_t)comm->communities[l - 1].flags == type)
+				count++;
+			else
+				break;
+		}
+		break;
+	}
+	return count;
 }
 
 /*

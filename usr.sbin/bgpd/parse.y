@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.424 2022/05/23 13:40:12 deraadt Exp $ */
+/*	$OpenBSD: parse.y,v 1.425 2022/05/31 09:45:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -220,6 +220,7 @@ typedef struct {
 %token	FROM TO ANY
 %token	CONNECTED STATIC
 %token	COMMUNITY EXTCOMMUNITY LARGECOMMUNITY DELETE
+%token	MAXCOMMUNITIES MAXEXTCOMMUNITIES MAXLARGECOMMUNITIES
 %token	PREFIX PREFIXLEN PREFIXSET
 %token	ROASET ORIGINSET OVS EXPIRES
 %token	ASSET SOURCEAS TRANSITAS PEERAS MAXASLEN MAXASSEQ
@@ -2338,6 +2339,46 @@ filter_elm	: filter_prefix_h	{
 			}
 			free($3);
 		}
+		| MAXCOMMUNITIES NUMBER {
+			if ($2 < 0 || $2 > INT16_MAX) {
+				yyerror("bad max-comunities %lld", $2);
+				YYERROR;
+			}
+			if (fmopts.m.maxcomm != 0) {
+				yyerror("%s already specified",
+				    "max-communities");
+				YYERROR;
+			}
+			/*
+			 * Offset by 1 since 0 means not used.
+			 * The match function then uses >= to compensate.
+			 */
+			fmopts.m.maxcomm = $2 + 1;
+		}
+		| MAXEXTCOMMUNITIES NUMBER {
+			if ($2 < 0 || $2 > INT16_MAX) {
+				yyerror("bad max-ext-communities %lld", $2);
+				YYERROR;
+			}
+			if (fmopts.m.maxextcomm != 0) {
+				yyerror("%s already specified",
+				    "max-ext-communities");
+				YYERROR;
+			}
+			fmopts.m.maxextcomm = $2 + 1;
+		}
+		| MAXLARGECOMMUNITIES NUMBER {
+			if ($2 < 0 || $2 > INT16_MAX) {
+				yyerror("bad max-large-communities %lld", $2);
+				YYERROR;
+			}
+			if (fmopts.m.maxlargecomm != 0) {
+				yyerror("%s already specified",
+				    "max-large-communities");
+				YYERROR;
+			}
+			fmopts.m.maxlargecomm = $2 + 1;
+		}
 		| NEXTHOP address	{
 			if (fmopts.m.nexthop.flags) {
 				yyerror("nexthop already specified");
@@ -2999,6 +3040,9 @@ lookup(char *s)
 		{ "match",		MATCH},
 		{ "max-as-len",		MAXASLEN},
 		{ "max-as-seq",		MAXASSEQ},
+		{ "max-communities",	MAXCOMMUNITIES},
+		{ "max-ext-communities",	MAXEXTCOMMUNITIES},
+		{ "max-large-communities",	MAXLARGECOMMUNITIES},
 		{ "max-prefix",		MAXPREFIX},
 		{ "maxlen",		MAXLEN},
 		{ "md5sig",		MD5SIG},

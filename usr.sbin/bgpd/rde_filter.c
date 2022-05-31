@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.127 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.128 2022/05/31 09:45:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -243,6 +243,22 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 			break;
 		if (community_match(&state->communities,
 		    &f->match.community[i], peer) == 0)
+			return (0);
+	}
+
+	if (f->match.maxcomm != 0) {
+		if (f->match.maxcomm >
+		    community_count(&state->communities, COMMUNITY_TYPE_BASIC))
+			return (0);
+	}
+	if (f->match.maxextcomm != 0) {
+		if (f->match.maxextcomm >
+		    community_count(&state->communities, COMMUNITY_TYPE_EXT))
+			return (0);
+	}
+	if (f->match.maxlargecomm != 0) {
+		if (f->match.maxlargecomm >
+		    community_count(&state->communities, COMMUNITY_TYPE_LARGE))
 			return (0);
 	}
 
