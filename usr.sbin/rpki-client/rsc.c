@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.5 2022/05/31 18:40:15 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.6 2022/05/31 18:45:14 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -122,78 +122,6 @@ ASN1_SEQUENCE(RpkiSignedChecklist) = {
 DECLARE_ASN1_FUNCTIONS(RpkiSignedChecklist);
 IMPLEMENT_ASN1_FUNCTIONS(RpkiSignedChecklist);
 
-static int
-rsc_check_digesttype(struct parse *p, const X509_ALGOR *alg)
-{
-	const ASN1_OBJECT	*obj;
-	int			 type, nid;
-
-	X509_ALGOR_get0(&obj, &type, NULL, alg);
-
-	if (type != V_ASN1_UNDEF) {
-		warnx("%s: RSC DigestAlgorithmIdentifier unexpected parameters:"
-		    " %d", p->fn, type);
-		return 0;
-	}
-
-	if ((nid = OBJ_obj2nid(obj)) != NID_sha256) {
-		warnx("%s: RSC DigestAlgorithmIdentifier: want SHA256, have %s"
-		    " (NID %d)", p->fn, ASN1_tag2str(nid), nid);
-		return 0;
-	}
-
-	return 1;
-}
-
-/*
- * Parse the FileNameAndHash sequence, draft-ietf-sidrops-rpki-rsc, section 4.4.
- * Return zero on failure, non-zero on success.
- */
-static int
-rsc_parse_checklist(struct parse *p, const STACK_OF(FileNameAndHash) *checkList)
-{
-	FileNameAndHash		*fh;
-	ASN1_IA5STRING		*fn;
-	struct rscfile		*file;
-	size_t			 sz, i;
-
-	if ((sz = sk_FileNameAndHash_num(checkList)) == 0) {
-		warnx("%s: RSC checkList needs at least one entry", p->fn);
-		return 0;
-	}
-
-	p->res->files = calloc(sz, sizeof(struct rscfile));
-	if (p->res->files == NULL)
-		err(1, NULL);
-	p->res->filesz = sz;
-
-	for (i = 0; i < sz; i++) {
-		fh = sk_FileNameAndHash_value(checkList, i);
-
-		file = &p->res->files[i];
-
-		if (fh->hash->length != SHA256_DIGEST_LENGTH) {
-			warnx("%s: RSC Digest: invalid SHA256 length", p->fn);
-			return 0;
-		}
-		memcpy(file->hash, fh->hash->data, SHA256_DIGEST_LENGTH);
-
-		if ((fn = fh->fileName) == NULL)
-			continue;
-
-		if (!valid_filename(fn->data, fn->length)) {
-			warnx("%s: RSC FileNameAndHash: bad filename", p->fn);
-			return 0;
-		}
-
-		file->filename = strndup(fn->data, fn->length);
-		if (file->filename == NULL)
-			err(1, NULL);
-	}
-
-	return 1;
-}
-
 /*
  * Parse asID (inside ResourceBlock)
  * Return 0 on failure.
@@ -305,6 +233,78 @@ rsc_parse_iplist(struct parse *p, const ConstrainedIPAddrBlocks *ipAddrBlocks)
 				return 0;
 			}
 		}
+	}
+
+	return 1;
+}
+
+static int
+rsc_check_digesttype(struct parse *p, const X509_ALGOR *alg)
+{
+	const ASN1_OBJECT	*obj;
+	int			 type, nid;
+
+	X509_ALGOR_get0(&obj, &type, NULL, alg);
+
+	if (type != V_ASN1_UNDEF) {
+		warnx("%s: RSC DigestAlgorithmIdentifier unexpected parameters:"
+		    " %d", p->fn, type);
+		return 0;
+	}
+
+	if ((nid = OBJ_obj2nid(obj)) != NID_sha256) {
+		warnx("%s: RSC DigestAlgorithmIdentifier: want SHA256, have %s"
+		    " (NID %d)", p->fn, ASN1_tag2str(nid), nid);
+		return 0;
+	}
+
+	return 1;
+}
+
+/*
+ * Parse the FileNameAndHash sequence, draft-ietf-sidrops-rpki-rsc, section 4.4.
+ * Return zero on failure, non-zero on success.
+ */
+static int
+rsc_parse_checklist(struct parse *p, const STACK_OF(FileNameAndHash) *checkList)
+{
+	FileNameAndHash		*fh;
+	ASN1_IA5STRING		*fn;
+	struct rscfile		*file;
+	size_t			 sz, i;
+
+	if ((sz = sk_FileNameAndHash_num(checkList)) == 0) {
+		warnx("%s: RSC checkList needs at least one entry", p->fn);
+		return 0;
+	}
+
+	p->res->files = calloc(sz, sizeof(struct rscfile));
+	if (p->res->files == NULL)
+		err(1, NULL);
+	p->res->filesz = sz;
+
+	for (i = 0; i < sz; i++) {
+		fh = sk_FileNameAndHash_value(checkList, i);
+
+		file = &p->res->files[i];
+
+		if (fh->hash->length != SHA256_DIGEST_LENGTH) {
+			warnx("%s: RSC Digest: invalid SHA256 length", p->fn);
+			return 0;
+		}
+		memcpy(file->hash, fh->hash->data, SHA256_DIGEST_LENGTH);
+
+		if ((fn = fh->fileName) == NULL)
+			continue;
+
+		if (!valid_filename(fn->data, fn->length)) {
+			warnx("%s: RSC FileNameAndHash: bad filename", p->fn);
+			return 0;
+		}
+
+		file->filename = strndup(fn->data, fn->length);
+		if (file->filename == NULL)
+			err(1, NULL);
 	}
 
 	return 1;
