@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen_traffic.c,v 1.2 2016/10/26 14:06:33 bluhm Exp $ */
+/*	$OpenBSD: gen_traffic.c,v 1.3 2022/05/31 19:01:46 mbuhl Exp $ */
 /*
  * Copyright (c) 2013 Florian Obser <florian@openbsd.org>
  *
@@ -219,17 +219,11 @@ gen_traffic_request(int fd, short events, void *arg)
 		break;
 
 	case 0:
-		event_del(&r->ev);
-		close(fd);
-		break;
+		exit(0);
 	default:
 		total += n;
 		/* warnx("read: %lld - %lld", n, total); */
 		break;
-	}
-	if (total == 10 * 4096) {
-		/* warnx("done %lld", total); */
-		exit(0);
 	}
 }
 
