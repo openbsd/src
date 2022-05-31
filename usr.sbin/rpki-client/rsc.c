@@ -1,5 +1,6 @@
-/*	$OpenBSD: rsc.c,v 1.6 2022/05/31 18:45:14 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.7 2022/05/31 18:51:35 tb Exp $ */
 /*
+ * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *

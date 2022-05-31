@@ -1,5 +1,6 @@
-/*	$OpenBSD: roa.c,v 1.45 2022/05/23 14:10:18 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.46 2022/05/31 18:51:35 tb Exp $ */
 /*
+ * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any

@@ -1,5 +1,6 @@
-/*	$OpenBSD: cert.c,v 1.83 2022/05/31 18:33:16 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.84 2022/05/31 18:51:35 tb Exp $ */
 /*
+ * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
