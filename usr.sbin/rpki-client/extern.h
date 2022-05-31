@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.139 2022/05/31 18:33:16 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.140 2022/05/31 18:41:43 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -513,11 +513,6 @@ int		 valid_rsc(const char *, struct auth *, struct rsc *);
 unsigned char	*cms_parse_validate(X509 **, const char *,
 		    const unsigned char *, size_t,
 		    const ASN1_OBJECT *, size_t *);
-int		 cms_econtent_version(const char *, const unsigned char **,
-		    size_t, long *);
-/* Helper for ASN1 parsing */
-int		 ASN1_frame(const char *, size_t,
-			const unsigned char **, long *, int *);
 
 /* Work with RFC 3779 IP addresses, prefixes, ranges. */
 

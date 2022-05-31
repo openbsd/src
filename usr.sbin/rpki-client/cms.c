@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.19 2022/05/15 16:43:34 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.20 2022/05/31 18:41:43 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -271,62 +271,4 @@ out:
 	}
 
 	return res;
-}
-
-/*
- * Wrapper around ASN1_get_object() that preserves the current start
- * state and returns a more meaningful value.
- * Return zero on failure, non-zero on success.
- */
-int
-ASN1_frame(const char *fn, size_t sz,
-    const unsigned char **cnt, long *cntsz, int *tag)
-{
-	int	 ret, pcls;
-
-	ret = ASN1_get_object(cnt, cntsz, tag, &pcls, sz);
-	if ((ret & 0x80)) {
-		cryptowarnx("%s: ASN1_get_object", fn);
-		return 0;
-	}
-	return ASN1_object_size((ret & 0x01) ? 2 : 0, *cntsz, *tag);
-}
-
-/*
- * Check the version field in eContent.
- * Returns -1 on failure, zero on success.
- */
-int
-cms_econtent_version(const char *fn, const unsigned char **d, size_t dsz,
-    long *version)
-{
-	ASN1_INTEGER	*aint = NULL;
-	long		 plen;
-	int		 ptag, rc = -1;
-
-	if (!ASN1_frame(fn, dsz, d, &plen, &ptag))
-		goto out;
-	if (ptag != 0) {
-		warnx("%s: eContent version: expected explicit tag [0]", fn);
-		goto out;
-	}
-
-	aint = d2i_ASN1_INTEGER(NULL, d, plen);
-	if (aint == NULL) {
-		cryptowarnx("%s: eContent version: failed d2i_ASN1_INTEGER",
-		    fn);
-		goto out;
-	}
-
-	*version = ASN1_INTEGER_get(aint);
-	if (*version < 0) {
-		warnx("%s: eContent version: expected positive integer, got:"
-		    " %ld", fn, *version);
-		goto out;
-	}
-
-	rc = 0;
-out:
-	ASN1_INTEGER_free(aint);
-	return rc;
 }
