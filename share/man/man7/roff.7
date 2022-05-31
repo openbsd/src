@@ -1,4 +1,4 @@
-.\" $OpenBSD: roff.7,v 1.99 2022/05/30 22:50:40 schwarze Exp $
+.\" $OpenBSD: roff.7,v 1.100 2022/05/31 18:08:02 schwarze Exp $
 .\"
 .\" Copyright (c) 2010-2019, 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 30 2022 $
+.Dd $Mdocdate: May 31 2022 $
 .Dt ROFF 7
 .Os
 .Sh NAME
@@ -2085,7 +2085,8 @@ defaults to
 .Ic \efP .
 .It Ic \eg[ Ns Ar name Ns Ic \&]
 Interpolate the format of a number register; ignored by
-.Xr mandoc 1 .
+.Xr mandoc 1 ,
+which interpolates an empty string instead.
 For short names, there are variants
 .Ic \eg Ns Ar c
 and

@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.261 2022/05/30 22:50:40 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.262 2022/05/31 18:08:02 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1533,6 +1533,8 @@ roff_expand(struct roff *r, struct buf *buf, int ln, int pos, char ec)
 			roff_expand_patch(buf, iendarg, "}", iend);
 			roff_expand_patch(buf, iesc, "${", iarg);
 			continue;
+		case 'g':
+			break;
 		case 'n':
 			if (iendarg > iarg)
 				(void)snprintf(ubuf, sizeof(ubuf), "%d",
