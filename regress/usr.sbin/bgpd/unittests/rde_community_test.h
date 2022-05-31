@@ -416,6 +416,9 @@ struct testfilter {
 	ssize_t	delete;
 	ssize_t	match;
 	int	mout;
+	int	ncomm;
+	int	next;
+	int	nlarge;
 } testfilters[] = {
 	{
 		.in = { 1, 2, -1 },
@@ -518,5 +521,38 @@ struct testfilter {
 		.match = 0,
 		.mout = 1,
 		.delete = 0,
+	},
+	{
+		.in = { -1 },
+		.match = 21,
+		.mout = 0,
+		.delete = -1,
+		.ncomm = 0 + 1,
+		.next = 0 + 1,
+		.nlarge = 0 + 1,
+	},
+	{
+		.in = { 0, 3, 6, -1 },
+		.match = -1,
+		.delete = -1,
+		.ncomm = 3 + 1,
+		.next = 0 + 1,
+		.nlarge = 0 + 1,
+	},
+	{
+		.in = { 0, 25, 26, 19, -1 },
+		.match = -1,
+		.delete = -1,
+		.ncomm = 1 + 1,
+		.next = 2 + 1,
+		.nlarge = 1 + 1,
+	},
+	{ /* 20 */
+		.in = { 0, 10, 26, -1 },
+		.match = -1,
+		.delete = -1,
+		.ncomm = 1 + 1,
+		.next = 1 + 1,
+		.nlarge = 1 + 1,
 	},
 };

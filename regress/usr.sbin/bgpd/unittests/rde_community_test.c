@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community_test.c,v 1.4 2022/05/25 16:56:04 claudio Exp $ */
+/*	$OpenBSD: rde_community_test.c,v 1.5 2022/05/31 09:46:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -129,21 +129,50 @@ test_filter(size_t num, struct testfilter *f)
 		}
 	}
 
-	r = community_match(&comm, &filters[f->match], &peer);
-	if (r != f->mout) {
-		printf("Test %zu: community_match "
-		    "unexpected return %d != %d\n", num, r, f->mout);
-		return -1;
+	if (f->match != -1) {
+		r = community_match(&comm, &filters[f->match], &peer);
+		if (r != f->mout) {
+			printf("Test %zu: community_match "
+			    "unexpected return %d != %d\n", num, r, f->mout);
+			return -1;
+		}
 	}
 
-	if (f->delete == -1)
-		return 0;
+	if (f->delete != -1) {
+		community_delete(&comm, &filters[f->delete], &peer);
 
-	community_delete(&comm, &filters[f->delete], &peer);
+		if (community_match(&comm, &filters[f->delete], &peer) != 0) {
+			printf("Test %zu: community_delete still around\n",
+			    num);
+			return -1;
+		}
+	}
 
-	if (community_match(&comm, &filters[f->delete], &peer) != 0) {
-		printf("Test %zu: community_delete still around\n", num);
-		return -1;
+	if (f->ncomm != 0) {
+		if (community_count(&comm, COMMUNITY_TYPE_BASIC) !=
+		    f->ncomm - 1) {
+			printf("Test %zu: community_count unexpected "
+			    "return %d != %d\n", num, r, f->ncomm - 1);
+			return -1;
+		}
+	}
+
+	if (f->next != 0) {
+		if (community_count(&comm, COMMUNITY_TYPE_EXT) !=
+		    f->next - 1) {
+			printf("Test %zu: community_count unexpected "
+			    "return %d != %d\n", num, r, f->next - 1);
+			return -1;
+		}
+	}
+
+	if (f->nlarge != 0) {
+		if (community_count(&comm, COMMUNITY_TYPE_LARGE) !=
+		    f->nlarge - 1) {
+			printf("Test %zu: community_count unexpected "
+			    "return %d != %d\n", num, r, f->nlarge - 1);
+			return -1;
+		}
 	}
 
 	return 0;
