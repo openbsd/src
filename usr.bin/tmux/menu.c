@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.44 2022/02/16 18:55:05 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.45 2022/05/31 10:22:42 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -56,7 +56,7 @@ menu_add_item(struct menu *menu, const struct menu_item *item,
 {
 	struct menu_item	*new_item;
 	const char		*key = NULL, *cmd, *suffix = "";
-	char			*s, *name;
+	char			*s, *trimmed, *name;
 	u_int			 width, max_width;
 	int			 line;
 	size_t			 keylen, slen;
@@ -103,11 +103,13 @@ menu_add_item(struct menu *menu, const struct menu_item *item,
 		max_width--;
 		suffix = ">";
 	}
-	if (key != NULL)
-		xasprintf(&name, "%.*s%s#[default] #[align=right](%s)",
-		    (int)max_width, s, suffix, key);
-	else
-		xasprintf(&name, "%.*s%s", (int)max_width, s, suffix);
+	trimmed = format_trim_right(s, max_width);
+	if (key != NULL) {
+		xasprintf(&name, "%s%s#[default] #[align=right](%s)",
+		    trimmed, suffix, key);
+	} else
+		xasprintf(&name, "%s%s", trimmed, suffix);
+	free(trimmed);
 
 	new_item->name = name;
 	free(s);
