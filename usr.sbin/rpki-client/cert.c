@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.82 2022/05/15 15:00:53 deraadt Exp $ */
+/*	$OpenBSD: cert.c,v 1.83 2022/05/31 18:33:16 tb Exp $ */
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -58,11 +58,12 @@ extern ASN1_OBJECT	*notify_oid;	/* 1.3.6.1.5.5.7.48.13 (rpkiNotify) */
  * Returns zero on failure (IP overlap) non-zero on success.
  */
 static int
-append_ip(struct parse *p, const struct cert_ip *ip)
+append_ip(const char *fn, struct cert_ip *ips, size_t *ipsz,
+    const struct cert_ip *ip)
 {
-	if (!ip_addr_check_overlap(ip, p->fn, p->res->ips, p->res->ipsz))
+	if (!ip_addr_check_overlap(ip, fn, ips, *ipsz))
 		return 0;
-	p->res->ips[p->res->ipsz++] = *ip;
+	ips[(*ipsz)++] = *ip;
 	return 1;
 }
 
@@ -72,11 +73,12 @@ append_ip(struct parse *p, const struct cert_ip *ip)
  * as defined by RFC 3779 section 3.3.
  */
 static int
-append_as(struct parse *p, const struct cert_as *as)
+append_as(const char *fn, struct cert_as *ases, size_t *asz,
+    const struct cert_as *as)
 {
-	if (!as_check_overlap(as, p->fn, p->res->as, p->res->asz))
+	if (!as_check_overlap(as, fn, ases, *asz))
 		return 0;
-	p->res->as[p->res->asz++] = *as;
+	ases[(*asz)++] = *as;
 	return 1;
 }
 
@@ -84,8 +86,9 @@ append_as(struct parse *p, const struct cert_as *as)
  * Parse a range of AS identifiers as in 3.2.3.8.
  * Returns zero on failure, non-zero on success.
  */
-static int
-sbgp_asrange(struct parse *p, const ASRange *range)
+int
+sbgp_as_range(const char *fn, struct cert_as *ases, size_t *asz,
+    const ASRange *range)
 {
 	struct cert_as		 as;
 
@@ -94,34 +97,35 @@ sbgp_asrange(struct parse *p, const ASRange *range)
 
 	if (!as_id_parse(range->min, &as.range.min)) {
 		warnx("%s: RFC 3779 section 3.2.3.8 (via RFC 1930): "
-		    "malformed AS identifier", p->fn);
+		    "malformed AS identifier", fn);
 		return 0;
 	}
 
 	if (!as_id_parse(range->max, &as.range.max)) {
 		warnx("%s: RFC 3779 section 3.2.3.8 (via RFC 1930): "
-		    "malformed AS identifier", p->fn);
+		    "malformed AS identifier", fn);
 		return 0;
 	}
 
 	if (as.range.max == as.range.min) {
 		warnx("%s: RFC 3379 section 3.2.3.8: ASRange: "
-		    "range is singular", p->fn);
+		    "range is singular", fn);
 		return 0;
 	} else if (as.range.max < as.range.min) {
 		warnx("%s: RFC 3379 section 3.2.3.8: ASRange: "
-		    "range is out of order", p->fn);
+		    "range is out of order", fn);
 		return 0;
 	}
 
-	return append_as(p, &as);
+	return append_as(fn, ases, asz, &as);
 }
 
 /*
  * Parse an entire 3.2.3.10 integer type.
  */
-static int
-sbgp_asid(struct parse *p, const ASN1_INTEGER *i)
+int
+sbgp_as_id(const char *fn, struct cert_as *ases, size_t *asz,
+    const ASN1_INTEGER *i)
 {
 	struct cert_as	 as;
 
@@ -130,27 +134,27 @@ sbgp_asid(struct parse *p, const ASN1_INTEGER *i)
 
 	if (!as_id_parse(i, &as.id)) {
 		warnx("%s: RFC 3779 section 3.2.3.10 (via RFC 1930): "
-		    "malformed AS identifier", p->fn);
+		    "malformed AS identifier", fn);
 		return 0;
 	}
 	if (as.id == 0) {
 		warnx("%s: RFC 3779 section 3.2.3.10 (via RFC 1930): "
-		    "AS identifier zero is reserved", p->fn);
+		    "AS identifier zero is reserved", fn);
 		return 0;
 	}
 
-	return append_as(p, &as);
+	return append_as(fn, ases, asz, &as);
 }
 
 static int
-sbgp_asinherit(struct parse *p)
+sbgp_as_inherit(const char *fn, struct cert_as *ases, size_t *asz)
 {
 	struct cert_as as;
 
 	memset(&as, 0, sizeof(struct cert_as));
 	as.type = CERT_AS_INHERIT;
 
-	return append_as(p, &as);
+	return append_as(fn, ases, asz, &as);
 }
 
 /*
@@ -214,7 +218,7 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
 		err(1, NULL);
 
 	if (aors == NULL) {
-		if (!sbgp_asinherit(p))
+		if (!sbgp_as_inherit(p->fn, p->res->as, &p->res->asz))
 			goto out;
 	}
 
@@ -224,11 +228,13 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
 		aor = sk_ASIdOrRange_value(aors, i);
 		switch (aor->type) {
 		case ASIdOrRange_id:
-			if (!sbgp_asid(p, aor->u.id))
+			if (!sbgp_as_id(p->fn, p->res->as, &p->res->asz,
+			    aor->u.id))
 				goto out;
 			break;
 		case ASIdOrRange_range:
-			if (!sbgp_asrange(p, aor->u.range))
+			if (!sbgp_as_range(p->fn, p->res->as, &p->res->asz,
+			    aor->u.range))
 				goto out;
 			break;
 		default:
@@ -248,8 +254,9 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
  * Construct a RFC 3779 2.2.3.8 range from its bit string.
  * Returns zero on failure, non-zero on success.
  */
-static int
-sbgp_addr(struct parse *p, enum afi afi, const ASN1_BIT_STRING *bs)
+int
+sbgp_addr(const char *fn, struct cert_ip *ips, size_t *ipsz, enum afi afi,
+    const ASN1_BIT_STRING *bs)
 {
 	struct cert_ip	ip;
 
@@ -258,27 +265,28 @@ sbgp_addr(struct parse *p, enum afi afi, const ASN1_BIT_STRING *bs)
 	ip.afi = afi;
 	ip.type = CERT_IP_ADDR;
 
-	if (!ip_addr_parse(bs, afi, p->fn, &ip.ip)) {
+	if (!ip_addr_parse(bs, afi, fn, &ip.ip)) {
 		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
-		    "invalid IP address", p->fn);
+		    "invalid IP address", fn);
 		return 0;
 	}
 
 	if (!ip_cert_compose_ranges(&ip)) {
 		warnx("%s: RFC 3779 section 2.2.3.8: IPAddress: "
-		    "IP address range reversed", p->fn);
+		    "IP address range reversed", fn);
 		return 0;
 	}
 
-	return append_ip(p, &ip);
+	return append_ip(fn, ips, ipsz, &ip);
 }
 
 /*
  * Parse RFC 3779 2.2.3.9 range of addresses.
  * Returns zero on failure, non-zero on success.
  */
-static int
-sbgp_addr_range(struct parse *p, enum afi afi, const IPAddressRange *range)
+int
+sbgp_addr_range(const char *fn, struct cert_ip *ips, size_t *ipsz,
+    enum afi afi, const IPAddressRange *range)
 {
 	struct cert_ip	ip;
 
@@ -287,29 +295,30 @@ sbgp_addr_range(struct parse *p, enum afi afi, const IPAddressRange *range)
 	ip.afi = afi;
 	ip.type = CERT_IP_RANGE;
 
-	if (!ip_addr_parse(range->min, afi, p->fn, &ip.range.min)) {
+	if (!ip_addr_parse(range->min, afi, fn, &ip.range.min)) {
 		warnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
-		    "invalid IP address", p->fn);
+		    "invalid IP address", fn);
 		return 0;
 	}
 
-	if (!ip_addr_parse(range->max, afi, p->fn, &ip.range.max)) {
+	if (!ip_addr_parse(range->max, afi, fn, &ip.range.max)) {
 		warnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
-		    "invalid IP address", p->fn);
+		    "invalid IP address", fn);
 		return 0;
 	}
 
 	if (!ip_cert_compose_ranges(&ip)) {
 		warnx("%s: RFC 3779 section 2.2.3.9: IPAddressRange: "
-		    "IP address range reversed", p->fn);
+		    "IP address range reversed", fn);
 		return 0;
 	}
 
-	return append_ip(p, &ip);
+	return append_ip(fn, ips, ipsz, &ip);
 }
 
 static int
-sbgp_addr_inherit(struct parse *p, enum afi afi)
+sbgp_addr_inherit(const char *fn, struct cert_ip *ips, size_t *ipsz,
+    enum afi afi)
 {
 	struct cert_ip	ip;
 
@@ -318,7 +327,7 @@ sbgp_addr_inherit(struct parse *p, enum afi afi)
 	ip.afi = afi;
 	ip.type = CERT_IP_INHERIT;
 
-	return append_ip(p, &ip);
+	return append_ip(fn, ips, ipsz, &ip);
 }
 
 /*
@@ -380,7 +389,8 @@ sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 		}
 
 		if (aors == NULL) {
-			if (!sbgp_addr_inherit(p, afi))
+			if (!sbgp_addr_inherit(p->fn, p->res->ips,
+			    &p->res->ipsz, afi))
 				goto out;
 			continue;
 		}
@@ -389,12 +399,13 @@ sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 			aor = sk_IPAddressOrRange_value(aors, j);
 			switch (aor->type) {
 			case IPAddressOrRange_addressPrefix:
-				if (!sbgp_addr(p, afi, aor->u.addressPrefix))
+				if (!sbgp_addr(p->fn, p->res->ips,
+				    &p->res->ipsz, afi, aor->u.addressPrefix))
 					goto out;
 				break;
 			case IPAddressOrRange_addressRange:
-				if (!sbgp_addr_range(p, afi,
-				    aor->u.addressRange))
+				if (!sbgp_addr_range(p->fn, p->res->ips,
+				    &p->res->ipsz, afi, aor->u.addressRange))
 					goto out;
 				break;
 			default:

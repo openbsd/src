@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.138 2022/05/24 09:20:49 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.139 2022/05/31 18:33:16 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -535,6 +535,11 @@ int		 ip_addr_check_covered(enum afi, const unsigned char *,
 int		 ip_cert_compose_ranges(struct cert_ip *);
 void		 ip_roa_compose_ranges(struct roa_ip *);
 
+int		 sbgp_addr(const char *, struct cert_ip *, size_t *,
+		    enum afi, const ASN1_BIT_STRING *);
+int		 sbgp_addr_range(const char *, struct cert_ip *, size_t *,
+		    enum afi, const IPAddressRange *);
+
 /* Work with RFC 3779 AS numbers, ranges. */
 
 int		 as_id_parse(const ASN1_INTEGER *, uint32_t *);
@@ -542,6 +547,11 @@ int		 as_check_overlap(const struct cert_as *, const char *,
 			const struct cert_as *, size_t);
 int		 as_check_covered(uint32_t, uint32_t,
 			const struct cert_as *, size_t);
+
+int		 sbgp_as_id(const char *, struct cert_as *, size_t *,
+		    const ASN1_INTEGER *);
+int		 sbgp_as_range(const char *, struct cert_as *, size_t *,
+		    const ASRange *);
 
 /* Parser-specific */
 void		 entity_free(struct entity *);
