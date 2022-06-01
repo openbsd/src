@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.28 2022/05/15 21:37:29 bluhm Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.29 2022/06/01 17:34:13 sashan Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -944,14 +944,14 @@ veb_broadcast(struct veb_softc *sc, struct veb_port *rp, struct mbuf *m0,
 	 * let pf look at it, but use the veb interface as a proxy.
 	 */
 	if (ISSET(ifp->if_flags, IFF_LINK1) &&
-	    (m = veb_pf(ifp, PF_OUT, m0)) == NULL)
+	    (m0 = veb_pf(ifp, PF_OUT, m0)) == NULL)
 		return;
 #endif
 
 #if 0 && defined(IPSEC)
 	/* same goes for ipsec */
 	if (ISSET(ifp->if_flags, IFF_LINK2) &&
-	    (m = veb_ipsec_out(ifp, m0)) == NULL)
+	    (m0 = veb_ipsec_out(ifp, m0)) == NULL)
 		return;
 #endif
 
