@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvnetareg.h,v 1.5 2022/06/01 03:34:21 dlg Exp $	*/
+/*	$OpenBSD: if_mvnetareg.h,v 1.6 2022/06/01 04:31:08 dlg Exp $	*/
 /*	$NetBSD: mvnetareg.h,v 1.8 2013/12/23 02:23:25 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2013 KIYOHARA Takashi
@@ -525,11 +525,11 @@
 #define MVNETA_PRXS_NODC(x)		(((x) >> 16) & 0x3fff)
 
 /* Port RX queues Status Update (MVNETA_PRXSU) */
-#define MVNETA_PRXSU_MAX			0xff /* works as a mask too */
-#define MVNETA_PRXSU_NOOFPROCESSEDDESCRIPTORS(x) \
-	(((x) & MVNETA_PRXSU_MAX) << 0)
-#define MVNETA_PRXSU_NOOFNEWDESCRIPTORS(x) \
-	(((x) & MVNETA_PRXSU_MAX) << 16)
+#define MVNETA_PRXSU_MAX		0xff /* works as a mask too */
+					/* Number Of Processed Descriptors */
+#define MVNETA_PRXSU_NOPD(x)		(((x) & MVNETA_PRXSU_MAX) << 0)
+					/* Number Of New Descriptors */
+#define MVNETA_PRXSU_NOND(x)		(((x) & MVNETA_PRXSU_MAX) << 16)
 
 /* Port RX Flow Control (MVNETA_PRXFC) */
 #define MVNETA_PRXFC_PERPRIOFCGENCONTROL	(1 << 0)

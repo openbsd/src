@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.22 2022/06/01 03:51:19 dlg Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.23 2022/06/01 04:31:08 dlg Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -152,9 +152,9 @@ struct mvneta_softc {
 	struct mvneta_dmamem	*sc_rxring;
 	struct mvneta_buf	*sc_rxbuf;
 	struct mvneta_rx_desc	*sc_rxdesc;
-	int			 sc_rx_prod;	/* next rx desc to fill */
+	unsigned int		 sc_rx_prod;	/* next rx desc to fill */
+	unsigned int		 sc_rx_cons;	/* next rx desc recvd */
 	struct if_rxring	 sc_rx_ring;
-	int			 sc_rx_cons;	/* next rx desc recvd */
 
 	enum {
 		PHY_MODE_QSGMII,
@@ -1376,45 +1376,27 @@ mvneta_rx_proc(struct mvneta_softc *sc)
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
 	uint32_t rxstat;
-	int i, idx, len, ready;
+	unsigned int i, done, cons;
 
-	DPRINTFN(3, ("%s: %d\n", __func__, sc->sc_rx_cons));
-
-	if (!(ifp->if_flags & IFF_RUNNING))
+	done = MVNETA_PRXS_ODC(MVNETA_READ(sc, MVNETA_PRXS(0)));
+	if (done == 0)
 		return;
 
-	bus_dmamap_sync(sc->sc_dmat, MVNETA_DMA_MAP(sc->sc_rxring), 0,
-	    MVNETA_DMA_LEN(sc->sc_rxring),
-	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(sc->sc_dmat, MVNETA_DMA_MAP(sc->sc_rxring),
+	    0, MVNETA_DMA_LEN(sc->sc_rxring), BUS_DMASYNC_POSTREAD);
 
-	ready = MVNETA_PRXS_ODC(MVNETA_READ(sc, MVNETA_PRXS(0)));
-	MVNETA_WRITE(sc, MVNETA_PRXSU(0), ready);
+	cons = sc->sc_rx_cons;
 
-	for (i = 0; i < ready; i++) {
-		idx = sc->sc_rx_cons;
-		KASSERT(idx < MVNETA_RX_RING_CNT);
-
-		rxd = &sc->sc_rxdesc[idx];
-
-#ifdef DIAGNOSTIC
-		if ((rxd->cmdsts &
-		    (MVNETA_RX_LAST_DESC | MVNETA_RX_FIRST_DESC)) !=
-		    (MVNETA_RX_LAST_DESC | MVNETA_RX_FIRST_DESC))
-			panic("%s: buffer size is smaller than packet",
-			    __func__);
-#endif
-
-		len = rxd->bytecnt;
-		rxb = &sc->sc_rxbuf[idx];
-		KASSERT(rxb->tb_m);
-
-		bus_dmamap_sync(sc->sc_dmat, rxb->tb_map, 0,
-		    len, BUS_DMASYNC_POSTREAD);
-		bus_dmamap_unload(sc->sc_dmat, rxb->tb_map);
+	for (i = 0; i < done; i++) {
+		rxd = &sc->sc_rxdesc[cons];
+		rxb = &sc->sc_rxbuf[cons];
 
 		m = rxb->tb_m;
 		rxb->tb_m = NULL;
-		m->m_pkthdr.len = m->m_len = len;
+
+		bus_dmamap_sync(sc->sc_dmat, rxb->tb_map, 0,
+		    m->m_pkthdr.len, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->sc_dmat, rxb->tb_map);
 
 		rxstat = rxd->cmdsts;
 		if (rxstat & MVNETA_ERROR_SUMMARY) {
@@ -1432,8 +1414,12 @@ mvneta_rx_proc(struct mvneta_softc *sc)
 #else
 			ifp->if_ierrors++;
 #endif
-			panic("%s: handle input errors", __func__);
-			continue;
+			m_freem(m);
+		} else {
+			m->m_pkthdr.len = m->m_len = rxd->bytecnt;
+			m_adj(m, MVNETA_HWHEADER_SIZE);
+
+			ml_enqueue(&ml, m);
 		}
 
 #if notyet
@@ -1469,14 +1455,28 @@ mvneta_rx_proc(struct mvneta_softc *sc)
 		}
 #endif
 
-		/* Skip on first 2byte (HW header) */
-		m_adj(m, MVNETA_HWHEADER_SIZE);
-
-		ml_enqueue(&ml, m);
-
 		if_rxr_put(&sc->sc_rx_ring, 1);
 
-		sc->sc_rx_cons = MVNETA_RX_RING_NEXT(idx);
+		cons = MVNETA_RX_RING_NEXT(cons);
+
+		if (i == MVNETA_PRXSU_MAX) {
+			MVNETA_WRITE(sc, MVNETA_PRXSU(0),
+			    MVNETA_PRXSU_NOPD(MVNETA_PRXSU_MAX));
+
+			/* tweaking the iterator inside the loop is fun */
+			done -= MVNETA_PRXSU_MAX;
+			i = 0;
+		}
+	}
+
+	sc->sc_rx_cons = cons;
+
+	bus_dmamap_sync(sc->sc_dmat, MVNETA_DMA_MAP(sc->sc_rxring),
+	    0, MVNETA_DMA_LEN(sc->sc_rxring), BUS_DMASYNC_PREREAD);
+
+	if (i > 0) {
+		MVNETA_WRITE(sc, MVNETA_PRXSU(0),
+		    MVNETA_PRXSU_NOPD(i));
 	}
 
 	if (ifiq_input(&ifp->if_rcv, &ml))
@@ -1684,13 +1684,13 @@ mvneta_dmamem_free(struct mvneta_softc *sc, struct mvneta_dmamem *mdm)
 	free(mdm, M_DEVBUF, 0);
 }
 
-struct mbuf *
+static inline struct mbuf *
 mvneta_alloc_mbuf(struct mvneta_softc *sc, bus_dmamap_t map)
 {
 	struct mbuf *m = NULL;
 
 	m = MCLGETL(NULL, M_DONTWAIT, MCLBYTES);
-	if (!m)
+	if (m == NULL)
 		return (NULL);
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
 
@@ -1711,31 +1711,44 @@ mvneta_fill_rx_ring(struct mvneta_softc *sc)
 {
 	struct mvneta_rx_desc *rxd;
 	struct mvneta_buf *rxb;
-	u_int slots;
+	unsigned int slots, used = 0;
+	unsigned int prod;
 
-	for (slots = if_rxr_get(&sc->sc_rx_ring, MVNETA_RX_RING_CNT);
+	bus_dmamap_sync(sc->sc_dmat, MVNETA_DMA_MAP(sc->sc_rxring),
+	    0, MVNETA_DMA_LEN(sc->sc_rxring), BUS_DMASYNC_POSTWRITE);
+
+	prod = sc->sc_rx_prod;
+
+	for (slots = if_rxr_get(&sc->sc_rx_ring, MVNETA_PRXSU_MAX);
 	    slots > 0; slots--) {
-		rxb = &sc->sc_rxbuf[sc->sc_rx_prod];
+		rxb = &sc->sc_rxbuf[prod];
 		rxb->tb_m = mvneta_alloc_mbuf(sc, rxb->tb_map);
 		if (rxb->tb_m == NULL)
 			break;
 
-		rxd = &sc->sc_rxdesc[sc->sc_rx_prod];
-		memset(rxd, 0, sizeof(*rxd));
+		rxd = &sc->sc_rxdesc[prod];
+		rxd->cmdsts = 0;
+		rxd->bufsize = 0;
+		rxd->bytecnt = 0;
 		rxd->bufptr = rxb->tb_map->dm_segs[0].ds_addr;
+		rxd->nextdescptr = 0;
+		rxd->_padding[0] = 0;
+		rxd->_padding[1] = 0;
+		rxd->_padding[2] = 0;
+		rxd->_padding[3] = 0;
 
-		bus_dmamap_sync(sc->sc_dmat, MVNETA_DMA_MAP(sc->sc_rxring),
-		    sc->sc_rx_prod * sizeof(*rxd), sizeof(*rxd),
-		    BUS_DMASYNC_PREWRITE);
-
-		sc->sc_rx_prod = MVNETA_RX_RING_NEXT(sc->sc_rx_prod);
-
-		/* Tell him that there's a new free desc. */
-		MVNETA_WRITE(sc, MVNETA_PRXSU(0),
-		    MVNETA_PRXSU_NOOFNEWDESCRIPTORS(1));
+		prod = MVNETA_RX_RING_NEXT(prod);
+		used++;
 	}
-
 	if_rxr_put(&sc->sc_rx_ring, slots);
+
+	sc->sc_rx_prod = prod;
+
+	bus_dmamap_sync(sc->sc_dmat, MVNETA_DMA_MAP(sc->sc_rxring),
+	    0, MVNETA_DMA_LEN(sc->sc_rxring), BUS_DMASYNC_PREWRITE);
+
+	if (used > 0)
+		MVNETA_WRITE(sc, MVNETA_PRXSU(0), MVNETA_PRXSU_NOND(used));
 }
 
 #if NKSTAT > 0
