@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.20 2022/06/01 03:37:41 dlg Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.21 2022/06/01 03:39:57 dlg Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -538,7 +538,7 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_sfp = OF_getpropint(faa->fa_node, "sfp", 0);
 
-	printf("%s: Ethernet address %s\n", self->dv_xname,
+	printf("%s: address %s\n", self->dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
 
 	/* disable port */
