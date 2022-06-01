@@ -1760,6 +1760,102 @@ test25(int fd)
 	SUCCEED;
 }
 
+/*
+ * Test 26 - range end point ambiguity regression
+ *
+ * When a new lock range [start, LLONG_MAX] overlapped with an existing range,
+ * kernel's lock data structure could become inconsistent.
+ */
+static int
+test26(int fd)
+{
+	struct flock fl;
+	pid_t pid;
+	int res, status;
+
+	/* Lock the whole range. */
+	fl.l_start = 0;
+	fl.l_len = 0;
+	fl.l_pid = 0;
+	fl.l_type = F_RDLCK;
+	fl.l_whence = SEEK_SET;
+	res = fcntl(fd, F_SETLK, &fl);
+	FAIL(res != 0);
+
+	/*
+	 * Split the range at the end.
+	 * This should be handled as if l_len == 0.
+	 */
+	fl.l_start = LLONG_MAX;
+	fl.l_len = 1;
+	fl.l_pid = 0;
+	fl.l_type = F_WRLCK;
+	fl.l_whence = SEEK_SET;
+	res = fcntl(fd, F_SETLK, &fl);
+	FAIL(res != 0);
+
+	/* Check the resulting ranges. */
+	pid = fork();
+	if (pid == -1)
+		err(1, "fork");
+	if (pid == 0) {
+		fl.l_start = 0;
+		fl.l_len = 0;
+		fl.l_type = F_WRLCK;
+		fl.l_whence = SEEK_SET;
+		res = fcntl(fd, F_GETLK, &fl);
+		FAIL(res != 0);
+		FAIL(fl.l_type != F_RDLCK);
+		FAIL(fl.l_start != 0);
+		FAIL(fl.l_len != LLONG_MAX);
+
+		fl.l_start = LLONG_MAX;
+		fl.l_len = 0;
+		fl.l_type = F_WRLCK;
+		fl.l_whence = SEEK_SET;
+		res = fcntl(fd, F_GETLK, &fl);
+		FAIL(res != 0);
+		FAIL(fl.l_type != F_WRLCK);
+		FAIL(fl.l_start != LLONG_MAX);
+		FAIL(fl.l_len != 0);
+
+		_exit(0);
+	}
+	status = safe_waitpid(pid);
+	FAIL(status != 0);
+
+	/* Release all locks. */
+	fl.l_start = 0;
+	fl.l_len = 0;
+	fl.l_pid = 0;
+	fl.l_type = F_UNLCK;
+	fl.l_whence = SEEK_SET;
+	res = fcntl(fd, F_SETLK, &fl);
+	FAIL(res != 0);
+
+	/* Check the resulting ranges. */
+	pid = fork();
+	if (pid == -1)
+		err(1, "fork");
+	if (pid == 0) {
+		fl.l_start = 0;
+		fl.l_len = 0;
+		fl.l_type = F_WRLCK;
+		fl.l_whence = SEEK_SET;
+		res = fcntl(fd, F_GETLK, &fl);
+		FAIL(res != 0);
+		FAIL(fl.l_type != F_UNLCK);
+		FAIL(fl.l_start != 0);
+		FAIL(fl.l_len != 0);
+
+		_exit(0);
+	}
+	status = safe_waitpid(pid);
+	FAIL(status != 0);
+
+	SUCCEED;
+}
+
 static struct test tests[] = {
 	{	test1,		0	},
 	{	test2,		0	},
@@ -1786,6 +1882,7 @@ static struct test tests[] = {
 	{	test23,		0	},
 	{	test24,		0	},
 	{	test25,		0	},
+	{	test26,		0	},
 };
 
 static int test_count = sizeof(tests) / sizeof(tests[0]);
