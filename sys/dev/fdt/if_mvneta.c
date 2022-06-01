@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.24 2022/06/01 06:33:46 dlg Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.25 2022/06/01 08:19:15 dlg Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -442,8 +442,6 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	char *phy_mode;
 	char *managed;
 
-	printf("\n");
-
 	sc->sc_iot = faa->fa_iot;
 	timeout_set(&sc->sc_tick_ch, mvneta_tick, sc);
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
@@ -460,7 +458,7 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 
 	len = OF_getproplen(faa->fa_node, "phy-mode");
 	if (len <= 0) {
-		printf("%s: cannot extract phy-mode\n", self->dv_xname);
+		printf(": cannot extract phy-mode\n");
 		return;
 	}
 
@@ -479,8 +477,7 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	else if (!strncmp(phy_mode, "2500base-x", strlen("2500base-x")))
 		sc->sc_phy_mode = PHY_MODE_2500BASEX;
 	else {
-		printf("%s: cannot use phy-mode %s\n", self->dv_xname,
-		    phy_mode);
+		printf(": cannot use phy-mode %s\n", phy_mode);
 		return;
 	}
 	free(phy_mode, M_TEMP, len);
@@ -505,12 +502,12 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_phy = OF_getpropint(faa->fa_node, "phy", 0);
 		node = OF_getnodebyphandle(sc->sc_phy);
 		if (!node) {
-			printf("%s: cannot find phy in fdt\n", self->dv_xname);
+			printf(": cannot find phy in fdt\n");
 			return;
 		}
 
 		if ((sc->sc_phyloc = OF_getpropint(node, "reg", -1)) == -1) {
-			printf("%s: cannot extract phy addr\n", self->dv_xname);
+			printf(": cannot extract phy addr\n");
 			return;
 		}
 	}
@@ -539,8 +536,7 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_sfp = OF_getpropint(faa->fa_node, "sfp", 0);
 
-	printf("%s: address %s\n", self->dv_xname,
-	    ether_sprintf(sc->sc_enaddr));
+	printf(": address %s\n", ether_sprintf(sc->sc_enaddr));
 
 	/* disable port */
 	MVNETA_WRITE(sc, MVNETA_PMACC0,
