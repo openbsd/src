@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.23 2022/06/01 04:31:08 dlg Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.24 2022/06/01 06:33:46 dlg Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -135,6 +135,7 @@ struct mvneta_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 	bus_dma_tag_t sc_dmat;
+	void *sc_ih;
 
 	struct arpcom sc_ac;
 #define sc_enaddr sc_ac.ac_enaddr
@@ -694,8 +695,8 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	while (MVNETA_READ(sc, MVNETA_PMACC2) & MVNETA_PMACC2_PORTMACRESET)
 		;
 
-	fdt_intr_establish(faa->fa_node, IPL_NET, mvneta_intr, sc,
-	    sc->sc_dev.dv_xname);
+	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_NET | IPL_MPSAFE,
+	    mvneta_intr, sc, sc->sc_dev.dv_xname);
 
 	ifp = &sc->sc_ac.ac_if;
 	ifp->if_softc = sc;
@@ -822,6 +823,7 @@ mvneta_intr(void *arg)
 	ic = MVNETA_READ(sc, MVNETA_PRXTXTIC);
 
 	if (ic & MVNETA_PRXTXTI_PMISCICSUMMARY) {
+		KERNEL_LOCK();
 		misc = MVNETA_READ(sc, MVNETA_PMIC);
 		MVNETA_WRITE(sc, MVNETA_PMIC, 0);
 		if (sc->sc_inband_status && (misc &
@@ -830,9 +832,10 @@ mvneta_intr(void *arg)
 		    MVNETA_PMI_PSCSYNCCHNG))) {
 			mvneta_inband_statchg(sc);
 		}
+		KERNEL_UNLOCK();
 	}
 
-	if (!(ifp->if_flags & IFF_RUNNING))
+	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return 1;
 
 	if (ic & MVNETA_PRXTXTI_TBTCQ(0))
@@ -1202,6 +1205,8 @@ mvneta_down(struct mvneta_softc *sc)
 	DPRINTFN(2, ("mvneta_down\n"));
 
 	timeout_del(&sc->sc_tick_ch);
+	ifp->if_flags &= ~IFF_RUNNING;
+	intr_barrier(sc->sc_ih);
 
 	/* Stop Rx port activity. Check port Rx activity. */
 	reg = MVNETA_READ(sc, MVNETA_RQC);
@@ -1312,7 +1317,6 @@ mvneta_down(struct mvneta_softc *sc)
 	MVNETA_WRITE(sc, MVNETA_PRXINIT, 0);
 	MVNETA_WRITE(sc, MVNETA_PTXINIT, 0);
 
-	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
 }
 
