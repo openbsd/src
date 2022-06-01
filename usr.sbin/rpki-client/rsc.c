@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.7 2022/05/31 18:51:35 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.8 2022/06/01 10:59:21 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -276,6 +276,12 @@ rsc_parse_checklist(struct parse *p, const STACK_OF(FileNameAndHash) *checkList)
 
 	if ((sz = sk_FileNameAndHash_num(checkList)) == 0) {
 		warnx("%s: RSC checkList needs at least one entry", p->fn);
+		return 0;
+	}
+
+	if (sz >= MAX_CHECKLIST_ENTRIES) {
+		warnx("%s: %zu exceeds checklist entry limit (%d)", p->fn, sz,
+		    MAX_CHECKLIST_ENTRIES);
 		return 0;
 	}
 

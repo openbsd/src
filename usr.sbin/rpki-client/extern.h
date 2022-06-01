@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.140 2022/05/31 18:41:43 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.141 2022/06/01 10:59:21 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -700,6 +700,9 @@ int	mkpathat(int, const char *);
 
 /* Maximum acceptable file size */
 #define MAX_FILE_SIZE		4000000
+
+/* Maximum number of FileNameAndHash entries per RSC checklist. */
+#define MAX_CHECKLIST_ENTRIES	100000
 
 /* Maximum number of FileAndHash entries per manifest. */
 #define MAX_MANIFEST_ENTRIES	100000
