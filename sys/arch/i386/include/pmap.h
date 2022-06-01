@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.89 2021/03/11 11:16:57 jsg Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.90 2022/06/01 17:16:00 dv Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -259,7 +259,6 @@ void pmap_switch(struct proc *, struct proc *);
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 paddr_t vtophys(vaddr_t va);
 paddr_t vtophys_pae(vaddr_t va);
-int pmap_convert(struct pmap *, int);
 
 extern u_int32_t (*pmap_pte_set_p)(vaddr_t, paddr_t, u_int32_t);
 extern u_int32_t (*pmap_pte_setbits_p)(vaddr_t, u_int32_t, u_int32_t);
