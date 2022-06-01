@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.18 2022/05/30 10:30:33 dlg Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.19 2022/06/01 03:34:21 dlg Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -146,9 +146,8 @@ struct mvneta_softc {
 	struct mvneta_dmamem	*sc_txring;
 	struct mvneta_buf	*sc_txbuf;
 	struct mvneta_tx_desc	*sc_txdesc;
-	int			 sc_tx_prod;	/* next free tx desc */
-	int			 sc_tx_cnt;	/* amount of tx sent */
-	int			 sc_tx_cons;	/* first tx desc sent */
+	unsigned int		 sc_tx_prod;	/* next free tx desc */
+	unsigned int		 sc_tx_cons;	/* first tx desc sent */
 
 	struct mvneta_dmamem	*sc_rxring;
 	struct mvneta_buf	*sc_rxbuf;
@@ -207,7 +206,6 @@ void mvneta_watchdog(struct ifnet *);
 int mvneta_mediachange(struct ifnet *);
 void mvneta_mediastatus(struct ifnet *, struct ifmediareq *);
 
-int mvneta_encap(struct mvneta_softc *, struct mbuf *, uint32_t *);
 void mvneta_rx_proc(struct mvneta_softc *);
 void mvneta_tx_proc(struct mvneta_softc *);
 uint8_t mvneta_crc8(const uint8_t *, size_t);
@@ -848,14 +846,96 @@ mvneta_intr(void *arg)
 	return 1;
 }
 
+static inline int
+mvneta_load_mbuf(struct mvneta_softc *sc, bus_dmamap_t map, struct mbuf *m)
+{
+	int error;
+
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+	    BUS_DMA_STREAMING | BUS_DMA_NOWAIT);
+	switch (error) {
+	case EFBIG:
+		error = m_defrag(m, M_DONTWAIT);
+		if (error != 0)
+			break;
+
+		error = bus_dmamap_load_mbuf(sc->sc_dmat, map, m,
+		    BUS_DMA_STREAMING | BUS_DMA_NOWAIT);
+		if (error != 0)
+			break;
+
+		/* FALLTHROUGH */
+	case 0:
+		return (0);
+
+	default:
+		break;
+	}
+
+        return (error);
+}
+
+static inline void
+mvneta_encap(struct mvneta_softc *sc, bus_dmamap_t map, struct mbuf *m,
+    unsigned int prod)
+{
+	struct mvneta_tx_desc *txd;
+	uint32_t cmdsts;
+	unsigned int i;
+
+	cmdsts = MVNETA_TX_FIRST_DESC | MVNETA_TX_ZERO_PADDING |
+	    MVNETA_TX_L4_CSUM_NOT;
+#if notyet
+	int m_csumflags;
+	if (m_csumflags & M_CSUM_IPv4)
+		cmdsts |= MVNETA_TX_GENERATE_IP_CHKSUM;
+	if (m_csumflags & M_CSUM_TCPv4)
+		cmdsts |=
+		    MVNETA_TX_GENERATE_L4_CHKSUM | MVNETA_TX_L4_TYPE_TCP;
+	if (m_csumflags & M_CSUM_UDPv4)
+		cmdsts |=
+		    MVNETA_TX_GENERATE_L4_CHKSUM | MVNETA_TX_L4_TYPE_UDP;
+	if (m_csumflags & (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4)) {
+		const int iphdr_unitlen = sizeof(struct ip) / sizeof(uint32_t);
+
+		cmdsts |= MVNETA_TX_IP_NO_FRAG |
+		    MVNETA_TX_IP_HEADER_LEN(iphdr_unitlen);	/* unit is 4B */
+	}
+#endif
+
+	for (i = 0; i < map->dm_nsegs; i++) {
+		txd = &sc->sc_txdesc[prod];
+		txd->bytecnt = map->dm_segs[i].ds_len;
+		txd->l4ichk = 0;
+		txd->cmdsts = cmdsts;
+		txd->nextdescptr = 0;
+		txd->bufptr = map->dm_segs[i].ds_addr;
+		txd->_padding[0] = 0;
+		txd->_padding[1] = 0;
+		txd->_padding[2] = 0;
+		txd->_padding[3] = 0;
+
+		prod = MVNETA_TX_RING_NEXT(prod);
+		cmdsts = 0;
+	}
+	txd->cmdsts |= MVNETA_TX_LAST_DESC;
+}
+
+static inline void
+mvneta_sync_txring(struct mvneta_softc *sc, int ops)
+{
+	bus_dmamap_sync(sc->sc_dmat, MVNETA_DMA_MAP(sc->sc_txring), 0,
+	    MVNETA_DMA_LEN(sc->sc_txring), ops);
+}
+
 void
 mvneta_start(struct ifnet *ifp)
 {
 	struct mvneta_softc *sc = ifp->if_softc;
-	struct mbuf *m_head = NULL;
-	int idx;
-
-	DPRINTFN(3, ("mvneta_start (idx %d)\n", sc->sc_tx_prod));
+	struct ifqueue *ifq = &ifp->if_snd;
+	unsigned int prod, nprod, free, used = 0, nused;
+	struct mbuf *m;
+	bus_dmamap_t map;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return;
@@ -865,51 +945,67 @@ mvneta_start(struct ifnet *ifp)
 		return;
 
 	/* If Link is DOWN, can't start TX */
-	if (!MVNETA_IS_LINKUP(sc))
+	if (!MVNETA_IS_LINKUP(sc)) {
+		ifq_purge(ifq);
 		return;
+	}
 
-	bus_dmamap_sync(sc->sc_dmat, MVNETA_DMA_MAP(sc->sc_txring), 0,
-	    MVNETA_DMA_LEN(sc->sc_txring),
-	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	mvneta_sync_txring(sc, BUS_DMASYNC_POSTWRITE);
 
-	idx = sc->sc_tx_prod;
-	while (sc->sc_tx_cnt < MVNETA_TX_RING_CNT) {
-		m_head = ifq_deq_begin(&ifp->if_snd);
-		if (m_head == NULL)
-			break;
+	prod = sc->sc_tx_prod;
+	free = MVNETA_TX_RING_CNT - (prod - sc->sc_tx_cons);
 
-		/*
-		 * Pack the data into the transmit ring. If we
-		 * don't have room, set the OACTIVE flag and wait
-		 * for the NIC to drain the ring.
-		 */
-		if (mvneta_encap(sc, m_head, &idx)) {
-			ifq_deq_rollback(&ifp->if_snd, m_head);
-			ifq_set_oactive(&ifp->if_snd);
+	for (;;) {
+		if (free < MVNETA_NTXSEG - 1) {
+			ifq_set_oactive(ifq);
 			break;
 		}
 
-		/* now we are committed to transmit the packet */
-		ifq_deq_commit(&ifp->if_snd, m_head);
+		m = ifq_dequeue(ifq);
+		if (m == NULL)
+			break;
 
-		/*
-		 * If there's a BPF listener, bounce a copy of this frame
-		 * to him.
-		 */
+		map = sc->sc_txbuf[prod].tb_map;
+		if (mvneta_load_mbuf(sc, map, m) != 0) {
+			m_freem(m);
+			ifp->if_oerrors++; /* XXX atomic */
+			continue;
+		}
+
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m_head, BPF_DIRECTION_OUT);
+			bpf_mtap(ifp->if_bpf, m, BPF_DIRECTION_OUT);
 #endif
+
+		bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
+		    BUS_DMASYNC_PREWRITE);
+
+		mvneta_encap(sc, map, m, prod);
+
+		nprod = (prod + map->dm_nsegs) % MVNETA_TX_RING_CNT;
+		sc->sc_txbuf[prod].tb_map = sc->sc_txbuf[nprod].tb_map;
+		prod = nprod;
+		sc->sc_txbuf[prod].tb_map = map;
+		sc->sc_txbuf[prod].tb_m = m;
+
+		free -= map->dm_nsegs;
+
+		nused = used + map->dm_nsegs;
+		if (nused > MVNETA_PTXSU_MAX) {
+			mvneta_sync_txring(sc,
+			    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTWRITE);
+			MVNETA_WRITE(sc, MVNETA_PTXSU(0),
+			    MVNETA_PTXSU_NOWD(used));
+			used = map->dm_nsegs;
+		} else
+			used = nused;
 	}
 
-	if (sc->sc_tx_prod != idx) {
-		sc->sc_tx_prod = idx;
+	mvneta_sync_txring(sc, BUS_DMASYNC_PREWRITE);
 
-		/*
-		 * Set a timeout in case the chip goes out to lunch.
-		 */
-		ifp->if_timer = 5;
-	}
+	sc->sc_tx_prod = prod;
+	if (used)
+		MVNETA_WRITE(sc, MVNETA_PTXSU(0), MVNETA_PTXSU_NOWD(used));
 }
 
 int
@@ -1028,7 +1124,6 @@ mvneta_up(struct mvneta_softc *sc)
 	}
 
 	sc->sc_tx_prod = sc->sc_tx_cons = 0;
-	sc->sc_tx_cnt = 0;
 
 	/* Allocate Rx descriptor ring. */
 	sc->sc_rxring = mvneta_dmamem_alloc(sc,
@@ -1240,7 +1335,7 @@ mvneta_watchdog(struct ifnet *ifp)
 	 * interrupts.
 	 */
 	mvneta_tx_proc(sc);
-	if (sc->sc_tx_cnt != 0) {
+	if (sc->sc_tx_prod != sc->sc_tx_cons) {
 		printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 
 		ifp->if_oerrors++;
@@ -1279,88 +1374,6 @@ mvneta_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 		ifmr->ifm_active = sc->sc_mii.mii_media_active;
 		ifmr->ifm_status = sc->sc_mii.mii_media_status;
 	}
-}
-
-int
-mvneta_encap(struct mvneta_softc *sc, struct mbuf *m, uint32_t *idx)
-{
-	struct mvneta_tx_desc *txd;
-	bus_dmamap_t map;
-	uint32_t cmdsts;
-	int i, current, first, last;
-
-	DPRINTFN(3, ("mvneta_encap\n"));
-
-	first = last = current = *idx;
-	map = sc->sc_txbuf[current].tb_map;
-
-	if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT))
-		return (ENOBUFS);
-
-	if (map->dm_nsegs > (MVNETA_TX_RING_CNT - sc->sc_tx_cnt - 2)) {
-		bus_dmamap_unload(sc->sc_dmat, map);
-		return (ENOBUFS);
-	}
-
-	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREWRITE);
-
-	DPRINTFN(2, ("mvneta_encap: dm_nsegs=%d\n", map->dm_nsegs));
-
-	cmdsts = MVNETA_TX_L4_CSUM_NOT;
-#if notyet
-	int m_csumflags;
-	if (m_csumflags & M_CSUM_IPv4)
-		cmdsts |= MVNETA_TX_GENERATE_IP_CHKSUM;
-	if (m_csumflags & M_CSUM_TCPv4)
-		cmdsts |=
-		    MVNETA_TX_GENERATE_L4_CHKSUM | MVNETA_TX_L4_TYPE_TCP;
-	if (m_csumflags & M_CSUM_UDPv4)
-		cmdsts |=
-		    MVNETA_TX_GENERATE_L4_CHKSUM | MVNETA_TX_L4_TYPE_UDP;
-	if (m_csumflags & (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4)) {
-		const int iphdr_unitlen = sizeof(struct ip) / sizeof(uint32_t);
-
-		cmdsts |= MVNETA_TX_IP_NO_FRAG |
-		    MVNETA_TX_IP_HEADER_LEN(iphdr_unitlen);	/* unit is 4B */
-	}
-#endif
-
-	for (i = 0; i < map->dm_nsegs; i++) {
-		txd = &sc->sc_txdesc[current];
-		memset(txd, 0, sizeof(*txd));
-		txd->bufptr = map->dm_segs[i].ds_addr;
-		txd->bytecnt = map->dm_segs[i].ds_len;
-		txd->cmdsts = cmdsts |
-		    MVNETA_TX_ZERO_PADDING;
-		if (i == 0)
-		    txd->cmdsts |= MVNETA_TX_FIRST_DESC;
-		if (i == (map->dm_nsegs - 1))
-		    txd->cmdsts |= MVNETA_TX_LAST_DESC;
-
-		bus_dmamap_sync(sc->sc_dmat, MVNETA_DMA_MAP(sc->sc_txring),
-		    current * sizeof(*txd), sizeof(*txd),
-		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-		last = current;
-		current = MVNETA_TX_RING_NEXT(current);
-		KASSERT(current != sc->sc_tx_cons);
-	}
-
-	KASSERT(sc->sc_txbuf[last].tb_m == NULL);
-	sc->sc_txbuf[first].tb_map = sc->sc_txbuf[last].tb_map;
-	sc->sc_txbuf[last].tb_map = map;
-	sc->sc_txbuf[last].tb_m = m;
-
-	sc->sc_tx_cnt += map->dm_nsegs;
-	*idx = current;
-
-	/* Let him know we sent another packet. */
-	MVNETA_WRITE(sc, MVNETA_PTXSU(0), map->dm_nsegs);
-
-	DPRINTFN(3, ("mvneta_encap: completed successfully\n"));
-
-	return 0;
 }
 
 void
@@ -1485,28 +1498,28 @@ void
 mvneta_tx_proc(struct mvneta_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	struct ifqueue *ifq = &ifp->if_snd;
 	struct mvneta_tx_desc *txd;
 	struct mvneta_buf *txb;
-	int i, idx, sent;
-
-	DPRINTFN(3, ("%s\n", __func__));
+	unsigned int i, cons, done;
 
 	if (!(ifp->if_flags & IFF_RUNNING))
+		return;
+
+	done = MVNETA_PTXS_TBC(MVNETA_READ(sc, MVNETA_PTXS(0)));
+	if (done == 0)
 		return;
 
 	bus_dmamap_sync(sc->sc_dmat, MVNETA_DMA_MAP(sc->sc_txring), 0,
 	    MVNETA_DMA_LEN(sc->sc_txring),
 	    BUS_DMASYNC_POSTREAD);
 
-	sent = MVNETA_PTXS_TBC(MVNETA_READ(sc, MVNETA_PTXS(0)));
-	MVNETA_WRITE(sc, MVNETA_PTXSU(0), MVNETA_PTXSU_NORB(sent));
+	cons = sc->sc_tx_cons;
 
-	for (i = 0; i < sent; i++) {
-		idx = sc->sc_tx_cons;
-		KASSERT(idx < MVNETA_TX_RING_CNT);
+	for (i = 0; i < done; i++) {
+		txd = &sc->sc_txdesc[cons];
+		txb = &sc->sc_txbuf[cons];
 
-		txd = &sc->sc_txdesc[idx];
-		txb = &sc->sc_txbuf[idx];
 		if (txb->tb_m) {
 			bus_dmamap_sync(sc->sc_dmat, txb->tb_map, 0,
 			    txb->tb_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -1515,10 +1528,6 @@ mvneta_tx_proc(struct mvneta_softc *sc)
 			m_freem(txb->tb_m);
 			txb->tb_m = NULL;
 		}
-
-		ifq_clr_oactive(&ifp->if_snd);
-
-		sc->sc_tx_cnt--;
 
 		if (txd->cmdsts & MVNETA_ERROR_SUMMARY) {
 			int err = txd->cmdsts & MVNETA_TX_ERROR_CODE_MASK;
@@ -1531,11 +1540,30 @@ mvneta_tx_proc(struct mvneta_softc *sc)
 				ifp->if_collisions++;
 		}
 
-		sc->sc_tx_cons = MVNETA_TX_RING_NEXT(sc->sc_tx_cons);
+		cons = MVNETA_TX_RING_NEXT(cons);
+
+		if (i == MVNETA_PTXSU_MAX) {
+			MVNETA_WRITE(sc, MVNETA_PTXSU(0),
+			    MVNETA_PTXSU_NORB(MVNETA_PTXSU_MAX));
+
+			/* tweaking the iterator inside the loop is fun */
+			done -= MVNETA_PTXSU_MAX;
+			i = 0;
+		}
 	}
 
-	if (sc->sc_tx_cnt == 0)
-		ifp->if_timer = 0;
+	sc->sc_tx_cons = cons;
+
+	bus_dmamap_sync(sc->sc_dmat, MVNETA_DMA_MAP(sc->sc_txring), 0,
+	    MVNETA_DMA_LEN(sc->sc_txring),
+	    BUS_DMASYNC_PREREAD);
+
+	if (i > 0) {
+		MVNETA_WRITE(sc, MVNETA_PTXSU(0),
+		    MVNETA_PTXSU_NORB(i));
+	}
+	if (ifq_is_oactive(ifq))
+		ifq_restart(ifq);
 }
 
 uint8_t
