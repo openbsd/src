@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.311 2022/05/20 22:42:09 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.312 2022/06/01 17:47:18 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -1805,14 +1805,7 @@ vm_impl_init_vmx(struct vm *vm, struct proc *p)
 		}
 	}
 
-	ret = pmap_convert(vm->vm_map->pmap, PMAP_TYPE_EPT);
-	if (ret) {
-		printf("%s: pmap_convert failed\n", __func__);
-		/* uvmspace_free calls pmap_destroy for us */
-		uvmspace_free(vm->vm_vmspace);
-		vm->vm_vmspace = NULL;
-		return (ENOMEM);
-	}
+	pmap_convert(vm->vm_map->pmap, PMAP_TYPE_EPT);
 
 	return (0);
 }
@@ -1869,9 +1862,9 @@ vm_impl_init_svm(struct vm *vm, struct proc *p)
 	}
 
 	/* Convert pmap to RVI */
-	ret = pmap_convert(vm->vm_map->pmap, PMAP_TYPE_RVI);
+	pmap_convert(vm->vm_map->pmap, PMAP_TYPE_RVI);
 
-	return (ret);
+	return (0);
 }
 
 /*

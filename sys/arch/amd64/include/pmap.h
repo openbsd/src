@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.79 2022/02/01 08:38:53 guenther Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.80 2022/06/01 17:47:18 dv Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -400,7 +400,7 @@ paddr_t	pmap_prealloc_lowmem_ptps(paddr_t);
 
 void	pagezero(vaddr_t);
 
-int	pmap_convert(struct pmap *, int);
+void	pmap_convert(struct pmap *, int);
 void	pmap_enter_special(vaddr_t, paddr_t, vm_prot_t);
 vaddr_t	pmap_set_pml4_early(paddr_t pa);
 void	pmap_clear_pml4_early(void);

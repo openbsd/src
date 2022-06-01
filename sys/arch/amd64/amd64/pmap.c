@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.149 2022/02/01 08:38:53 guenther Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.150 2022/06/01 17:47:18 dv Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -3095,11 +3095,8 @@ pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
  * Parameters:
  *  pmap: the pmap to convert
  *  mode: the new mode (see pmap.h, PMAP_TYPE_xxx)
- *
- * Return value:
- *  always 0
  */
-int
+void
 pmap_convert(struct pmap *pmap, int mode)
 {
 	pt_entry_t *pte;
@@ -3117,8 +3114,6 @@ pmap_convert(struct pmap *pmap, int mode)
 			pmap->pm_pdir_intel = NULL;
 		}
 	}
-
-	return (0);
 }
 
 #ifdef MULTIPROCESSOR
