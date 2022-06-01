@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.21 2022/06/01 03:39:57 dlg Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.22 2022/06/01 03:51:19 dlg Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -194,7 +194,7 @@ void mvneta_attach_deferred(struct device *);
 void mvneta_tick(void *);
 int mvneta_intr(void *);
 
-void mvneta_start(struct ifnet *);
+void mvneta_start(struct ifqueue *);
 int mvneta_ioctl(struct ifnet *, u_long, caddr_t);
 void mvneta_inband_statchg(struct mvneta_softc *);
 void mvneta_port_change(struct mvneta_softc *);
@@ -700,7 +700,8 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	ifp = &sc->sc_ac.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_start = mvneta_start;
+	ifp->if_xflags = IFXF_MPSAFE;
+	ifp->if_qstart = mvneta_start;
 	ifp->if_ioctl = mvneta_ioctl;
 	ifp->if_watchdog = mvneta_watchdog;
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
@@ -840,9 +841,6 @@ mvneta_intr(void *arg)
 	if (ic & MVNETA_PRXTXTI_RBICTAPQ(0))
 		mvneta_rx_proc(sc);
 
-	if (!ifq_empty(&ifp->if_snd))
-		mvneta_start(ifp);
-
 	return 1;
 }
 
@@ -929,20 +927,13 @@ mvneta_sync_txring(struct mvneta_softc *sc, int ops)
 }
 
 void
-mvneta_start(struct ifnet *ifp)
+mvneta_start(struct ifqueue *ifq)
 {
+	struct ifnet *ifp = ifq->ifq_if;
 	struct mvneta_softc *sc = ifp->if_softc;
-	struct ifqueue *ifq = &ifp->if_snd;
 	unsigned int prod, nprod, free, used = 0, nused;
 	struct mbuf *m;
 	bus_dmamap_t map;
-
-	if (!(ifp->if_flags & IFF_RUNNING))
-		return;
-	if (ifq_is_oactive(&ifp->if_snd))
-		return;
-	if (ifq_empty(&ifp->if_snd))
-		return;
 
 	/* If Link is DOWN, can't start TX */
 	if (!MVNETA_IS_LINKUP(sc)) {
