@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.19 2022/06/01 03:34:21 dlg Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.20 2022/06/01 03:37:41 dlg Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -1860,7 +1860,6 @@ static const struct mvneta_counter mvneta_counters[] = {
 	    { "rx discard",	KSTAT_KV_U_PACKETS,	MVNETA_PXDFC },
 	[mvneta_stat_port_overrun] = 
 	    { "rx overrun",	KSTAT_KV_U_PACKETS,	MVNETA_POFC },
-	
 };
 
 CTASSERT(nitems(mvneta_counters) == mvnet_stat_count);
