@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.69 2022/05/31 18:51:35 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.70 2022/06/01 10:58:34 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -323,7 +323,7 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	if (sk_FileAndHash_num(mft->fileList) > MAX_MANIFEST_ENTRIES) {
+	if (sk_FileAndHash_num(mft->fileList) >= MAX_MANIFEST_ENTRIES) {
 		warnx("%s: %d exceeds manifest entry limit (%d)", p->fn,
 		    sk_FileAndHash_num(mft->fileList), MAX_MANIFEST_ENTRIES);
 		goto out;
