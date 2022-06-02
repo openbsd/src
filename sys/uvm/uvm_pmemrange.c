@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.61 2021/03/12 14:15:49 jsg Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.62 2022/06/02 18:00:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -959,7 +959,7 @@ again:
 	 * [3]  only pagedaemon "reserved" pages remain and
 	 *        the requestor isn't the pagedaemon nor the syncer.
 	 */
-	if ((uvmexp.free <= uvmexp.reserve_kernel) &&
+	if ((uvmexp.free <= (uvmexp.reserve_kernel + count)) &&
 	    !(flags & UVM_PLA_USERESERVE)) {
 		uvm_unlock_fpageq();
 		return ENOMEM;
