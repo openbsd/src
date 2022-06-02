@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.425 2022/05/31 09:45:33 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.426 2022/06/02 09:29:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -873,7 +873,7 @@ conf_main	: AS as4number		{
 				    RT_TABLEID_MAX);
 				YYERROR;
 			}
-			if (ktable_exists($2, NULL) != 1) {
+			if (!ktable_exists($2, NULL)) {
 				yyerror("rtable id %lld does not exist", $2);
 				YYERROR;
 			}
@@ -3496,7 +3496,9 @@ init_config(struct bgpd_config *c)
 	c->bgpid = get_bgpid();
 	c->fib_priority = RTP_BGP;
 	c->default_tableid = getrtable();
-	ktable_exists(c->default_tableid, &rdomid);
+	if (!ktable_exists(c->default_tableid, &rdomid))
+		fatalx("current routing table %u does not exist",
+		    c->default_tableid);
 	if (rdomid != c->default_tableid)
 		fatalx("current routing table %u is not a routing domain",
 		    c->default_tableid);
@@ -4233,7 +4235,7 @@ rib_add_fib(struct rde_rib *rr, u_int rtableid)
 {
 	u_int	rdom;
 
-	if (ktable_exists(rtableid, &rdom) != 1) {
+	if (!ktable_exists(rtableid, &rdom)) {
 		yyerror("rtable id %u does not exist", rtableid);
 		return (-1);
 	}

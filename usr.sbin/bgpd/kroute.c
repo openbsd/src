@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.246 2022/05/23 13:40:12 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.247 2022/06/02 09:29:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -440,7 +440,7 @@ ktable_exists(u_int rtableid, u_int *rdomid)
 		if (errno == ENOENT)
 			/* table nonexistent */
 			return (0);
-		log_warn("%s: sysctl", __func__);
+		log_warn("sysctl net.route.rtableid");
 		/* must return 0 so that the table is considered non-existent */
 		return (0);
 	}
