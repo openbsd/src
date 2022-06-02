@@ -1,8 +1,12 @@
-#	$OpenBSD: Makefile,v 1.10 2021/12/24 03:01:23 tb Exp $
+#	$OpenBSD: Makefile,v 1.11 2022/06/02 11:48:36 tb Exp $
 
 PROGS =	constraints verify x509attribute x509name x509req_ext callback
-LDADD=	-Wl,-Bstatic -lcrypto -Wl,-Bdynamic
-DPADD=	${LIBCRYPTO}
+LDADD =	-lcrypto
+DPADD =	${LIBCRYPTO}
+
+LDADD_constraints = ${CRYPTO_INT}
+LDADD_verify = ${CRYPTO_INT}
+
 WARNINGS=	Yes
 CFLAGS+=	-DLIBRESSL_INTERNAL -Wall -Werror -I$(BSDSRCDIR)/lib/libcrypto/x509
 
