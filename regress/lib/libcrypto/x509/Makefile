@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2022/06/02 11:48:36 tb Exp $
+#	$OpenBSD: Makefile,v 1.12 2022/06/02 12:08:41 tb Exp $
 
 PROGS =	constraints verify x509attribute x509name x509req_ext callback
 LDADD =	-lcrypto
@@ -7,8 +7,8 @@ DPADD =	${LIBCRYPTO}
 LDADD_constraints = ${CRYPTO_INT}
 LDADD_verify = ${CRYPTO_INT}
 
-WARNINGS=	Yes
-CFLAGS+=	-DLIBRESSL_INTERNAL -Wall -Werror -I$(BSDSRCDIR)/lib/libcrypto/x509
+WARNINGS =	Yes
+CFLAGS +=	-DLIBRESSL_INTERNAL -Wall -Werror -I$(BSDSRCDIR)/lib/libcrypto/x509
 
 SUBDIR += bettertls rfc3779
 
@@ -19,7 +19,7 @@ REGRESS_TARGETS += regress-x509name
 REGRESS_TARGETS += regress-x509req_ext
 REGRESS_TARGETS += regress-callback
 
-CLEANFILES+=	x509name.result callbackout
+CLEANFILES +=	x509name.result callbackout
 
 .if make(clean) || make(cleandir)
 . if ${.OBJDIR} != ${.CURDIR}
