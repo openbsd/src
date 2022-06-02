@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.427 2022/06/02 11:05:15 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.428 2022/06/02 11:12:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -707,9 +707,9 @@ conf_main	: AS as4number		{
 			TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
 		}
 		| FIBPRIORITY NUMBER		{
-			if ($2 < RTP_LOCAL || $2 > RTP_MAX) {
+			if ($2 <= RTP_LOCAL || $2 > RTP_MAX) {
 				yyerror("fib-priority %lld must be between "
-				    "%u and %u", $2, RTP_LOCAL, RTP_MAX);
+				    "%u and %u", $2, RTP_LOCAL + 1, RTP_MAX);
 				YYERROR;
 			}
 			conf->fib_priority = $2;
@@ -1045,9 +1045,9 @@ network		: NETWORK prefix filter_set	{
 		}
 		| NETWORK family PRIORITY NUMBER filter_set	{
 			struct network	*n;
-			if ($4 < RTP_LOCAL && $4 > RTP_MAX) {
+			if ($4 <= RTP_LOCAL && $4 > RTP_MAX) {
 				yyerror("priority %lld must be between "
-				    "%u and %u", $4, RTP_LOCAL, RTP_MAX);
+				    "%u and %u", $4, RTP_LOCAL + 1, RTP_MAX);
 				YYERROR;
 			}
 
