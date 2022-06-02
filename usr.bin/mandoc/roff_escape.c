@@ -1,4 +1,4 @@
-/* $OpenBSD: roff_escape.c,v 1.7 2022/06/02 11:28:16 schwarze Exp $ */
+/* $OpenBSD: roff_escape.c,v 1.8 2022/06/02 14:49:25 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2020, 2022
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -127,6 +127,7 @@ roff_escape(const char *buf, const int ln, const int aesc,
 	case '\0':
 		iendarg = --iend;
 		/* FALLTHROUGH */
+	case '.':
 	case '\\':
 	default:
 		iarg--;
@@ -136,7 +137,6 @@ roff_escape(const char *buf, const int ln, const int aesc,
 	case ' ':
 	case '\'':
 	case '-':
-	case '.':
 	case '0':
 	case ':':
 	case '_':
@@ -481,7 +481,7 @@ out:
 		err = MANDOCERR_ESC_UNSUPP;
 		break;
 	case ESCAPE_UNDEF:
-		if (buf[inam] == '\\')
+		if (buf[inam] == '\\' || buf[inam] == '.')
 			return rval;
 		err = MANDOCERR_ESC_UNDEF;
 		break;
