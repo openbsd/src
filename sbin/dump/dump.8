@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dump.8,v 1.54 2019/12/19 09:38:03 bentley Exp $
+.\"	$OpenBSD: dump.8,v 1.55 2022/06/02 15:35:55 millert Exp $
 .\"	$NetBSD: dump.8,v 1.17 1997/06/05 11:15:06 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)dump.8	8.1 (Berkeley) 6/16/93
 .\"
-.Dd $Mdocdate: December 19 2019 $
+.Dd $Mdocdate: June 2 2022 $
 .Dt DUMP 8
 .Os
 .Sh NAME
@@ -293,6 +293,13 @@ In the latter case, certain restrictions are placed on the backup:
 is ignored, the only dump level that is supported is
 .Fl 0 ,
 and all of the files must reside on the same filesystem.
+If no options are specified, the first of the
+.Ar files-to-dump
+must contain a
+.Ql /
+character to prevent it from being interpreted as a
+.Bx 4.3
+option string.
 .Pp
 .Nm
 requires operator intervention on these conditions:
