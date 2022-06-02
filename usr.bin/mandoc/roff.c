@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.263 2022/05/31 20:21:40 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.264 2022/06/02 11:28:16 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1408,8 +1408,8 @@ roff_expand(struct roff *r, struct buf *buf, int ln, int pos, char ec)
 		 * it to backslashes and translate backslashes to \e.
 		 */
 
-		if (roff_escape(buf->buf, ln, pos,
-		    &iesc, &iarg, &iendarg, &iend) != ESCAPE_EXPAND) {
+		if (roff_escape(buf->buf, ln, pos, &iesc, &inam,
+		    &iarg, &iendarg, &iend) != ESCAPE_EXPAND) {
 			while (pos < iend) {
 				if (buf->buf[pos] == ec) {
 					buf->buf[pos] = '\\';
@@ -1425,15 +1425,6 @@ roff_expand(struct roff *r, struct buf *buf, int ln, int pos, char ec)
 			}
 			continue;
 		}
-
-		/*
-		 * Treat "\E" just like "\";
-		 * it only makes a difference in copy mode.
-		 */
-
-		inam = iesc + 1;
-		while (buf->buf[inam] == 'E')
-			inam++;
 
 		/* Handle expansion. */
 

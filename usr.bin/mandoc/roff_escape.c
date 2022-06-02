@@ -1,4 +1,4 @@
-/* $OpenBSD: roff_escape.c,v 1.6 2022/06/01 23:20:19 schwarze Exp $ */
+/* $OpenBSD: roff_escape.c,v 1.7 2022/06/02 11:28:16 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2020, 2022
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -41,7 +41,8 @@ mandoc_escape(const char **rendarg, const char **rarg, int *rargl)
         int		 iarg, iendarg, iend;
         enum mandoc_esc  rval;
 
-        rval = roff_escape(--*rendarg, 0, 0, NULL, &iarg, &iendarg, &iend);
+        rval = roff_escape(--*rendarg, 0, 0,
+	    NULL, NULL, &iarg, &iendarg, &iend);
         assert(rval != ESCAPE_EXPAND);
         if (rarg != NULL)
 	       *rarg = *rendarg + iarg;
@@ -63,20 +64,20 @@ mandoc_escape(const char **rendarg, const char **rarg, int *rargl)
  */
 enum mandoc_esc
 roff_escape(const char *buf, const int ln, const int aesc,
-    int *resc, int *rarg, int *rendarg, int *rend)
+    int *resc, int *rnam, int *rarg, int *rendarg, int *rend)
 {
 	int		 iesc;		/* index of leading escape char */
+	int		 inam;		/* index of escape name */
 	int		 iarg;		/* index beginning the argument */
 	int		 iendarg;	/* index right after the argument */
 	int		 iend;		/* index right after the sequence */
-	int		 sesc, sarg, sendarg, send; /* for sub-escape */
+	int		 sesc, snam, sarg, sendarg, send; /* for sub-escape */
 	int		 maxl;		/* expected length of the argument */
 	int		 argl;		/* actual length of the argument */
 	int		 c, i;		/* for \[char...] parsing */
 	int 		 valid_A;	/* for \A parsing */
 	enum mandoc_esc	 rval;		/* return value */
 	enum mandocerr	 err;		/* diagnostic code */
-	char		 esc_name;
 	char		 term;		/* byte terminating the argument */
 
 	/*
@@ -84,21 +85,20 @@ roff_escape(const char *buf, const int ln, const int aesc,
 	 * it only makes a difference in copy mode.
 	 */
 
-	iesc = iarg = aesc;
+	iesc = inam = aesc;
 	do {
-		iarg++;
-	} while (buf[iarg] == 'E');
+		inam++;
+	} while (buf[inam] == 'E');
 
 	/*
 	 * Sort the following cases first by syntax category,
 	 * then by escape sequence type, and finally by ASCII code.
 	 */
 
-	esc_name = buf[iarg];
-	iendarg = iend = ++iarg;
+	iarg = iendarg = iend = inam + 1;
 	maxl = INT_MAX;
 	term = '\0';
-	switch (esc_name) {
+	switch (buf[inam]) {
 
 	/* Escape sequences taking no arguments at all. */
 
@@ -269,12 +269,12 @@ roff_escape(const char *buf, const int ln, const int aesc,
 
 	if ((term == '\b' || (term == '\0' && maxl == INT_MAX)) &&
 	    buf[iarg] == buf[iesc] && roff_escape(buf, ln, iendarg,
-	    &sesc, &sarg, &sendarg, &send) == ESCAPE_EXPAND)
+	    &sesc, &snam, &sarg, &sendarg, &send) == ESCAPE_EXPAND)
 		goto out_sub;
 
 	if (term == '\b') {
-		if ((esc_name == 'N' && isdigit((unsigned char)buf[iarg])) ||
-		    (esc_name == 'h' && strchr(" %&()*+-./0123456789:<=>",
+		if ((buf[inam] == 'N' && isdigit((unsigned char)buf[iarg])) ||
+		    (buf[inam] == 'h' && strchr(" %&()*+-./0123456789:<=>",
 		     buf[iarg]) != NULL)) {
 			iendarg = iend = iarg + 1;
 			rval = ESCAPE_ERROR;
@@ -282,7 +282,7 @@ roff_escape(const char *buf, const int ln, const int aesc,
 		}
 		term = buf[iarg++];
 	} else if (term == '\0' && maxl == INT_MAX) {
-		if (esc_name == 'n' && (buf[iarg] == '+' || buf[iarg] == '-'))
+		if (buf[inam] == 'n' && (buf[iarg] == '+' || buf[iarg] == '-'))
 			iarg++;
 		switch (buf[iarg]) {
 		case '(':
@@ -310,7 +310,7 @@ roff_escape(const char *buf, const int ln, const int aesc,
 	while (maxl > 0) {
 		if (buf[iendarg] == '\0') {
 			/* Ignore an incomplete argument except for \w. */
-			if (esc_name != 'w')
+			if (buf[inam] != 'w')
 				iendarg = iarg;
 			break;
 		}
@@ -318,14 +318,14 @@ roff_escape(const char *buf, const int ln, const int aesc,
 			iend = iendarg + 1;
 			break;
 		}
-		if (esc_name == 'N' &&
+		if (buf[inam] == 'N' &&
 		    isdigit((unsigned char)buf[iendarg]) == 0) {
 			iend = iendarg + 1;
 			break;
 		}
 		if (buf[iendarg] == buf[iesc]) {
 			switch (roff_escape(buf, ln, iendarg,
-			    &sesc, &sarg, &sendarg, &send)) {
+			    &sesc, &snam, &sarg, &sendarg, &send)) {
 			case ESCAPE_EXPAND:
 				goto out_sub;
 			case ESCAPE_UNDEF:
@@ -350,7 +350,7 @@ roff_escape(const char *buf, const int ln, const int aesc,
 	/* Post-process depending on the content of the argument. */
 
 	argl = iendarg - iarg;
-	switch (esc_name) {
+	switch (buf[inam]) {
 	case '*':
 		if (resc == NULL && argl == 2 &&
 		    buf[iarg] == '.' && buf[iarg + 1] == 'T')
@@ -449,12 +449,15 @@ roff_escape(const char *buf, const int ln, const int aesc,
 
 out_sub:
 	iesc = sesc;
+	inam = snam;
 	iarg = sarg;
 	iendarg = sendarg;
 	iend = send;
 	rval = ESCAPE_EXPAND;
 
 out:
+	if (rnam != NULL)
+		*rnam = inam;
 	if (rarg != NULL)
 		*rarg = iarg;
 	if (rendarg != NULL)
@@ -478,7 +481,7 @@ out:
 		err = MANDOCERR_ESC_UNSUPP;
 		break;
 	case ESCAPE_UNDEF:
-		if (esc_name == '\\')
+		if (buf[inam] == '\\')
 			return rval;
 		err = MANDOCERR_ESC_UNDEF;
 		break;
