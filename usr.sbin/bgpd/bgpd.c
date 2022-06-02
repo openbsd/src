@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.242 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.243 2022/06/02 08:46:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -629,7 +629,7 @@ send_config(struct bgpd_config *conf)
 		SIMPLEQ_REMOVE_HEAD(&ribnames, entry);
 		if (ktable_update(rr->rtableid, rr->name, rr->flags,
 		    conf->fib_priority) == -1) {
-			log_warnx("failed to load rdomain %d",
+			log_warnx("failed to load routing table %d",
 			    rr->rtableid);
 			return (-1);
 		}
@@ -747,7 +747,7 @@ send_config(struct bgpd_config *conf)
 		SIMPLEQ_REMOVE_HEAD(&conf->l3vpns, entry);
 		if (ktable_update(vpn->rtableid, vpn->descr, vpn->flags,
 		    conf->fib_priority) == -1) {
-			log_warnx("failed to load rdomain %d",
+			log_warnx("failed to load routing table %d",
 			    vpn->rtableid);
 			return (-1);
 		}
