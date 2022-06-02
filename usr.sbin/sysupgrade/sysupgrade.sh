@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.46 2022/03/03 10:12:08 sdk Exp $
+# $OpenBSD: sysupgrade.sh,v 1.47 2022/06/02 07:44:18 florian Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -112,7 +112,9 @@ esac
 	err "invalid installurl: $MIRROR"
 
 if ! $RELEASE && [[ ${#_KERNV[*]} == 2 ]]; then
-	SNAP=true
+	if [[ ${_KERNV[1]} != '-stable' ]]; then
+		SNAP=true
+	fi
 fi
 
 if $RELEASE && [[ ${_KERNV[1]} == '-beta' ]]; then
