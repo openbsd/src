@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.8 2022/05/11 06:14:15 kevlo Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.9 2022/06/02 07:41:17 mbuhl Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -48,6 +48,8 @@
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+#include <netinet/ip.h>
+#include <netinet/ip6.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -115,6 +117,7 @@ int	igc_media_change(struct ifnet *);
 void	igc_iff(struct igc_softc *);
 void	igc_update_link_status(struct igc_softc *);
 int	igc_get_buf(struct rx_ring *, int);
+int	igc_tx_ctx_setup(struct tx_ring *, struct mbuf *, int, uint32_t *);
 
 void	igc_configure_queues(struct igc_softc *);
 void	igc_set_queues(struct igc_softc *, uint32_t, uint32_t, int);
@@ -791,9 +794,11 @@ igc_setup_interface(struct igc_softc *sc)
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
-
-	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
 #endif
+
+	ifp->if_capabilities |= IFCAP_CSUM_IPv4;
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 
 	/* Initialize ifmedia structures. */
 	ifmedia_init(&sc->media, IFM_IMASK, igc_media_change, igc_media_status);
@@ -995,6 +1000,12 @@ igc_start(struct ifqueue *ifq)
 
 		bus_dmamap_sync(txr->txdma.dma_tag, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+
+		if (igc_tx_ctx_setup(txr, m, prod, &olinfo_status)) {
+			/* Consume the first descriptor */
+			prod++;
+			prod &= mask;
+		}
 
 		for (i = 0; i < map->dm_nsegs; i++) {
 			txdesc = &txr->tx_base[prod];
@@ -1977,6 +1988,117 @@ igc_free_transmit_buffers(struct tx_ring *txr)
 		    sc->num_tx_desc * sizeof(struct igc_tx_buf));
 	txr->tx_buffers = NULL;
 	txr->txtag = NULL;
+}
+
+
+/*********************************************************************
+ *
+ *  Advanced Context Descriptor setup for VLAN, CSUM or TSO
+ *
+ **********************************************************************/
+
+int
+igc_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp, int prod,
+    uint32_t *olinfo_status)
+{
+	struct igc_adv_tx_context_desc *txdesc;
+	struct ether_header *eh = mtod(mp, struct ether_header *);
+	struct mbuf *m;
+	uint32_t type_tucmd_mlhl = 0;
+	uint32_t vlan_macip_lens = 0;
+	uint32_t iphlen;
+	int hoff;
+	int off = 0;
+	uint8_t ipproto;
+
+	vlan_macip_lens |= (sizeof(*eh) << IGC_ADVTXD_MACLEN_SHIFT);
+
+	/*
+	 * In advanced descriptors the vlan tag must
+	 * be placed into the context descriptor. Hence
+	 * we need to make one even if not doing offloads.
+	 */
+#ifdef notyet
+#if NVLAN > 0
+	if (ISSET(mp->m_flags, M_VLANTAG)) {
+		uint32_t vtag = mp->m_pkthdr.ether_vtag;
+		vlan_macip_lens |= (vtag << IGC_ADVTXD_VLAN_SHIFT);
+		off = 1;
+	}
+#endif
+#endif
+
+	switch (ntohs(eh->ether_type)) {
+	case ETHERTYPE_IP: {
+		struct ip *ip;
+
+		m = m_getptr(mp, sizeof(*eh), &hoff);
+		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ip));
+		ip = (struct ip *)(mtod(m, caddr_t) + hoff);
+
+		iphlen = ip->ip_hl << 2;
+		ipproto = ip->ip_p;
+
+		type_tucmd_mlhl |= IGC_ADVTXD_TUCMD_IPV4;
+		if (ISSET(mp->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT)) {
+			*olinfo_status |= IGC_TXD_POPTS_IXSM << 8;
+			off = 1;
+		}
+
+		break;
+	}
+#ifdef INET6
+	case ETHERTYPE_IPV6: {
+		struct ip6_hdr *ip6;
+
+		m = m_getptr(mp, sizeof(*eh), &hoff);
+		KASSERT(m != NULL && m->m_len - hoff >= sizeof(*ip6));
+		ip6 = (struct ip6_hdr *)(mtod(m, caddr_t) + hoff);
+
+		iphlen = sizeof(*ip6);
+		ipproto = ip6->ip6_nxt;
+
+		type_tucmd_mlhl |= IGC_ADVTXD_TUCMD_IPV6;
+		break;
+	}
+#endif
+	default:
+		return 0;
+	}
+
+	vlan_macip_lens |= iphlen;
+	type_tucmd_mlhl |= IGC_ADVTXD_DCMD_DEXT | IGC_ADVTXD_DTYP_CTXT;
+
+	switch (ipproto) {
+	case IPPROTO_TCP:
+		type_tucmd_mlhl |= IGC_ADVTXD_TUCMD_L4T_TCP;
+		if (ISSET(mp->m_pkthdr.csum_flags, M_TCP_CSUM_OUT)) {
+			*olinfo_status |= IGC_TXD_POPTS_TXSM << 8;
+			off = 1;
+		}
+		break;
+	case IPPROTO_UDP:
+		type_tucmd_mlhl |= IGC_ADVTXD_TUCMD_L4T_UDP;
+		if (ISSET(mp->m_pkthdr.csum_flags, M_UDP_CSUM_OUT)) {
+			*olinfo_status |= IGC_TXD_POPTS_TXSM << 8;
+			off = 1;
+		}
+		break;
+	}
+
+	if (off == 0)
+		return 0;
+
+	/* Now ready a context descriptor */
+	txdesc = (struct igc_adv_tx_context_desc *)&txr->tx_base[prod];
+
+	/* Now copy bits into descriptor */
+	htolem32(&txdesc->vlan_macip_lens, vlan_macip_lens);
+	htolem32(&txdesc->type_tucmd_mlhl, type_tucmd_mlhl);
+	htolem32(&txdesc->seqnum_seed, 0);
+	htolem32(&txdesc->mss_l4len_idx, 0);
+
+	return 1;
 }
 
 /*********************************************************************
