@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lockf.c,v 1.48 2022/06/01 14:18:43 visa Exp $	*/
+/*	$OpenBSD: vfs_lockf.c,v 1.49 2022/06/02 05:32:28 anton Exp $	*/
 /*	$NetBSD: vfs_lockf.c,v 1.7 1996/02/04 02:18:21 christos Exp $	*/
 
 /*
@@ -148,10 +148,8 @@ ls_rele(struct lockf_state *ls)
 	if (--ls->ls_refs > 0)
 		return;
 
-#ifdef LOCKF_DIAGNOSTIC
 	KASSERT(TAILQ_EMPTY(&ls->ls_locks));
 	KASSERT(TAILQ_EMPTY(&ls->ls_pending));
-#endif
 
 	*ls->ls_owner = NULL;
 	pool_put(&lockf_state_pool, ls);
@@ -201,9 +199,7 @@ lf_free(struct lockf *lock)
 
 	LFPRINT(("lf_free", lock), DEBUG_LINK);
 
-#ifdef LOCKF_DIAGNOSTIC
 	KASSERT(TAILQ_EMPTY(&lock->lf_blkhd));
-#endif /* LOCKF_DIAGNOSTIC */
 
 	ls_rele(lock->lf_state);
 
@@ -758,9 +754,7 @@ lf_purgelocks(struct lockf_state **state)
 	}
 
 	/* This is the last expected thread to hold a lock state reference. */
-#ifdef LOCKF_DIAGNOSTIC
 	KASSERT(ls->ls_refs == 1);
-#endif
 	ls_rele(ls);
 
 out:
