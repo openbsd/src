@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.28 2022/06/03 13:29:39 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.29 2022/06/03 13:31:49 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -127,6 +127,13 @@ int tlsext_psk_kex_modes_server_needs(SSL *s, uint16_t msg_type);
 int tlsext_psk_kex_modes_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
 int tlsext_psk_kex_modes_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
     int *alert);
+
+int tlsext_psk_client_needs(SSL *s, uint16_t msg_type);
+int tlsext_psk_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
+int tlsext_psk_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
+int tlsext_psk_server_needs(SSL *s, uint16_t msg_type);
+int tlsext_psk_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
+int tlsext_psk_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
 
 #ifndef OPENSSL_NO_SRTP
 int tlsext_srtp_client_needs(SSL *s, uint16_t msg_type);

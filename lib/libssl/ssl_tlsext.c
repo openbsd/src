@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.111 2022/06/03 13:29:39 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.112 2022/06/03 13:31:49 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1902,6 +1902,46 @@ tlsext_psk_kex_modes_client_parse(SSL *s, uint16_t msg_type, CBS *cbs,
 	return 0;
 }
 
+/*
+ * Pre-Shared Key Extension - RFC 8446, 4.2.11
+ */
+
+int
+tlsext_psk_client_needs(SSL *s, uint16_t msg_type)
+{
+	return 0;
+}
+
+int
+tlsext_psk_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
+{
+	return 0;
+}
+
+int
+tlsext_psk_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
+{
+	return 0;
+}
+
+int
+tlsext_psk_server_needs(SSL *s, uint16_t msg_type)
+{
+	return 0;
+}
+
+int
+tlsext_psk_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
+{
+	return 0;
+}
+
+int
+tlsext_psk_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
+{
+	return 0;
+}
+
 struct tls_extension_funcs {
 	int (*needs)(SSL *s, uint16_t msg_type);
 	int (*build)(SSL *s, uint16_t msg_type, CBB *cbb);
@@ -2102,6 +2142,22 @@ static const struct tls_extension tls_extensions[] = {
 			.needs = tlsext_psk_kex_modes_server_needs,
 			.build = tlsext_psk_kex_modes_server_build,
 			.parse = tlsext_psk_kex_modes_server_parse,
+		},
+	},
+	{
+		/* MUST be last extension in CH per RFC 8446 section 4.2. */
+
+		.type = TLSEXT_TYPE_pre_shared_key,
+		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_SH,
+		.client = {
+			.needs = tlsext_psk_client_needs,
+			.build = tlsext_psk_client_build,
+			.parse = tlsext_psk_client_parse,
+		},
+		.server = {
+			.needs = tlsext_psk_server_needs,
+			.build = tlsext_psk_server_build,
+			.parse = tlsext_psk_server_parse,
 		},
 	},
 };
