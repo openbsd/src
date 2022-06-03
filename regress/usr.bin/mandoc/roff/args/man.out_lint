@@ -6,4 +6,4 @@ mandoc: man.in:87:26: STYLE: whitespace at end of input line
 mandoc: man.in:91:27: STYLE: whitespace at end of input line
 mandoc: man.in:104:5: STYLE: unterminated quoted argument
 mandoc: man.in:107:9: STYLE: unterminated quoted argument
-mandoc: man.in:131:1: ERROR: escaped character not allowed in a name: IB\(
+mandoc: man.in:131:1: ERROR: escaped character not allowed in a name: IB\(lq

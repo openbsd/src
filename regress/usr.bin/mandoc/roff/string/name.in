@@ -1,5 +1,5 @@
-.\" $OpenBSD: name.in,v 1.4 2017/07/04 14:53:27 schwarze Exp $
-.Dd $Mdocdate: July 4 2017 $
+.\" $OpenBSD: name.in,v 1.5 2022/06/03 11:50:25 schwarze Exp $
+.Dd $Mdocdate: June 3 2022 $
 .Dt STRING-NAME 1
 .Os
 .Sh NAME
@@ -10,7 +10,9 @@
 .ds "quot" value of "quot"
 .ds bs\e value of bs\ee
 .ds bs\\e value of bs\e\ee
+.ds dot. value of dot.
 .ds bl\ e value of bl\e e
+.ds inval\\G value of inval\eG
 norm: \*[norm]
 .br
 norm without closing brace: \*[norm
@@ -26,6 +28,10 @@ bs\e\ee: \*[bs\\e]
 bse: \*[bse]
 .br
 bs: \*[bs]
+.br
+dot.: \*[dot.]
+.br
+dot\e.: \*[dot\.]
 .\".br
 .\"bl\e e: \*[bl\ e]
 .br
@@ -34,3 +40,7 @@ bl e: \*[bl e]
 ble: \*[ble]
 .br
 bl: \*[bl]
+.br
+inval\e\eG: \*[inval\\G]
+.br
+inval\eG: \*[inval\G]

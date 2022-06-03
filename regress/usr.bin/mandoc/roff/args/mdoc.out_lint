@@ -14,4 +14,4 @@ mandoc: mdoc.in:112:5: STYLE: unterminated quoted argument
 mandoc: mdoc.in:112:11: STYLE: whitespace at end of input line
 mandoc: mdoc.in:113:9: STYLE: unterminated quoted argument
 mandoc: mdoc.in:113:15: STYLE: whitespace at end of input line
-mandoc: mdoc.in:121:1: ERROR: escaped character not allowed in a name: Fl\(
+mandoc: mdoc.in:121:1: ERROR: escaped character not allowed in a name: Fl\(lq

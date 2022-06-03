@@ -12,7 +12,18 @@ DDEESSCCRRIIPPTTIIOONN
 
      define first = val1
 
-     Values (first, second, first\second): val1 val2 val3
+     define first\.second = val_dot
+
+     define first\Gsecond = val_inval
+
+     Values:
+     first          val1
+     second         val2
+     first\second   val3
+     first.second   val_dot
+     first\.second  val_dot
+     firstGsecond   val_inval
+     first\Gsecond  val_inval
 
      Remove all but second: val2
 

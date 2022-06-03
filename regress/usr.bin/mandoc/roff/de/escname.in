@@ -1,5 +1,5 @@
-.\" $OpenBSD: escname.in,v 1.4 2017/07/04 14:53:27 schwarze Exp $
-.Dd $Mdocdate: July 4 2017 $
+.\" $OpenBSD: escname.in,v 1.5 2022/06/03 11:50:25 schwarze Exp $
+.Dd $Mdocdate: June 3 2022 $
 .Dt DE-ESCNAME 1
 .Os
 .Sh NAME
@@ -23,10 +23,33 @@ define first = val1
 val1
 ..
 .Pp
-Values (first, second, first\esecond):
+define first\e.second = val_dot
+.de first\.second
+val_dot
+..
+.Pp
+define first\eGsecond = val_inval
+.de first\Gsecond
+val_inval
+..
+.Pp
+Values:
+.Bl -tag -width first_.second -compact
+.It first
 .first
+.It second
 .second
+.It first\esecond
 .first\\second
+.It first.second
+.first.second
+.It first\e.second
+.first\.second
+.It firstGsecond
+.firstGsecond
+.It first\eGsecond
+.first\Gsecond
+.El
 .Pp
 Remove all but second:
 .rm first\\second first\esecond second

@@ -1,5 +1,5 @@
-.\" $OpenBSD: register.in,v 1.3 2019/02/06 20:54:28 schwarze Exp $
-.TH REGISTER 1 "February 6, 2019"
+.\" $OpenBSD: register.in,v 1.4 2022/06/03 11:50:25 schwarze Exp $
+.TH REGISTER 1 "June 3, 2022"
 .SH NAME
 register \- conditional testing whether a register is defined
 .SH DESCRIPTION
@@ -11,10 +11,35 @@ register \- conditional testing whether a register is defined
 .el OOPS
 .if !rmyreg OOPS
 .PP
-identifier + identifier:
+tab after identifier:
 .ie rmyreg	myreg is defined
 .el OOPS
 .PP
 escape sequence after identifier:
 .ie rmyreg\(enmyreg is defined
 .el OOPS
+.PP
+backslash in name:
+.nr \\ 0
+.ie r\\ \e is defined
+.el OOPS
+.rr \\
+.if r\\ is still defined!?
+.PP
+dot in name:
+.nr . 0
+.ie r. \&. is defined
+.el OOPS
+.ie r\. \e. is defined
+.el OOPS
+.rr \.
+.if r. is still defined!?
+.PP
+invalid escape in name:
+.nr G 0
+.ie rG G is defined
+.el OOPS
+.ie r\G \eG is defined
+.el OOPS
+.rr \G
+.if rG is still defined!?

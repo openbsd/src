@@ -1,5 +1,5 @@
-.\" $OpenBSD: escname.in,v 1.3 2017/07/04 14:53:27 schwarze Exp $
-.TH NR-ESCNAME 1 "June 29, 2014"
+.\" $OpenBSD: escname.in,v 1.4 2022/06/03 11:50:25 schwarze Exp $
+.TH NR-ESCNAME 1 "June 3, 2022"
 .SH NAME
 nr-escname \- escape sequences in register names
 .SH DESCRIPTION
@@ -7,7 +7,9 @@ nr-escname \- escape sequences in register names
 .nr second 2
 .nr first\\second 3
 .nr first\esecond 4
-\n[first] \n[second] \n[first\\second]
+.nr first\.second 5
+.nr first\Gsecond 6
+\n[first] \n[second] \n[first\\second] \n[first.second] \n[firstGsecond]
 .PP
 .rr first\esecond
 \n[first] \n[second] \n[first\\second]

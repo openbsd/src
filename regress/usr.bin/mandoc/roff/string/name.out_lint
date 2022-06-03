@@ -1,16 +1,17 @@
 mandoc: name.in:11:5: ERROR: escaped character not allowed in a name: bs\e
-mandoc: name.in:13:5: ERROR: escaped character not allowed in a name: bl\ 
-mandoc: name.in:16:29: WARNING: invalid escape sequence: \*[norm
-mandoc: name.in:16:28: STYLE: whitespace at end of input line
-mandoc: name.in:18:7: WARNING: undefined string, using "": quot
-mandoc: name.in:18:6: STYLE: whitespace at end of input line
-mandoc: name.in:26:6: WARNING: undefined string, using "": bse
-mandoc: name.in:26:5: STYLE: whitespace at end of input line
-mandoc: name.in:28:5: WARNING: undefined string, using "": bs
-mandoc: name.in:28:4: STYLE: whitespace at end of input line
-mandoc: name.in:32:7: WARNING: undefined string, using "": bl e
-mandoc: name.in:32:6: STYLE: whitespace at end of input line
-mandoc: name.in:34:6: WARNING: undefined string, using "": ble
-mandoc: name.in:34:5: STYLE: whitespace at end of input line
-mandoc: name.in:36:5: WARNING: undefined string, using "": bl
-mandoc: name.in:36:4: STYLE: whitespace at end of input line
+mandoc: name.in:14:5: ERROR: escaped character not allowed in a name: bl\ 
+mandoc: name.in:18:29: WARNING: invalid escape sequence: \*[norm
+mandoc: name.in:18:28: STYLE: whitespace at end of input line
+mandoc: name.in:20:7: WARNING: undefined string, using "": quot
+mandoc: name.in:20:6: STYLE: whitespace at end of input line
+mandoc: name.in:28:6: WARNING: undefined string, using "": bse
+mandoc: name.in:28:5: STYLE: whitespace at end of input line
+mandoc: name.in:30:5: WARNING: undefined string, using "": bs
+mandoc: name.in:30:4: STYLE: whitespace at end of input line
+mandoc: name.in:38:7: WARNING: undefined string, using "": bl e
+mandoc: name.in:38:6: STYLE: whitespace at end of input line
+mandoc: name.in:40:6: WARNING: undefined string, using "": ble
+mandoc: name.in:40:5: STYLE: whitespace at end of input line
+mandoc: name.in:42:5: WARNING: undefined string, using "": bl
+mandoc: name.in:42:4: STYLE: whitespace at end of input line
+mandoc: name.in:46:19: WARNING: undefined escape, printing literally: \G

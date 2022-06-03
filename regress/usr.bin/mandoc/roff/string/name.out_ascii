@@ -11,8 +11,12 @@ DDEESSCCRRIIPPTTIIOONN
      bs\\e: value of bs\\e
      bse:
      bs:
+     dot.: value of dot.
+     dot\.: value of dot.
      bl e:
      ble:
      bl:
+     inval\\G: value of inval\G
+     inval\G: value of inval\G
 
-OpenBSD                          July 4, 2017                          OpenBSD
+OpenBSD                          June 3, 2022                          OpenBSD

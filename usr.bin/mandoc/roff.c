@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.264 2022/06/02 11:28:16 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.265 2022/06/03 11:50:25 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1373,6 +1373,7 @@ roff_expand(struct roff *r, struct buf *buf, int ln, int pos, char ec)
 	int		 iarg;		/* index beginning the argument */
 	int		 iendarg;	/* index right after the argument */
 	int		 iend;		/* index right after the sequence */
+	int		 isrc, idst;	/* to reduce \\ and \. in names */
 	int		 deftype;	/* type of definition to paste */
 	int		 argi;		/* macro argument index */
 	int		 quote_args;	/* true for \\$@, false for \\$* */
@@ -1424,6 +1425,21 @@ roff_expand(struct roff *r, struct buf *buf, int ln, int pos, char ec)
 				pos++;
 			}
 			continue;
+		}
+
+		/* Reduce \\ and \. in names. */
+
+		if (buf->buf[inam] == '*' || buf->buf[inam] == 'n') {
+			isrc = idst = iarg;
+			while (isrc < iendarg) {
+				if (isrc + 1 < iendarg &&
+				    buf->buf[isrc] == '\\' &&
+				    (buf->buf[isrc + 1] == '\\' ||
+				     buf->buf[isrc + 1] == '.'))
+					isrc++;
+				buf->buf[idst++] = buf->buf[isrc++];
+			}
+			iendarg -= isrc - idst;
 		}
 
 		/* Handle expansion. */
@@ -4000,7 +4016,7 @@ static size_t
 roff_getname(struct roff *r, char **cpp, int ln, int pos)
 {
 	char	 *name, *cp;
-	size_t	  namesz;
+	int	  namesz, inam, iend;
 
 	name = *cpp;
 	if (*name == '\0')
@@ -4008,24 +4024,46 @@ roff_getname(struct roff *r, char **cpp, int ln, int pos)
 
 	/* Advance cp to the byte after the end of the name. */
 
-	for (cp = name; 1; cp++) {
-		namesz = cp - name;
+	cp = name;
+	namesz = 0;
+	for (;;) {
 		if (*cp == '\0')
 			break;
 		if (*cp == ' ' || *cp == '\t') {
 			cp++;
 			break;
 		}
-		if (*cp != '\\')
+		if (*cp != '\\') {
+			if (name + namesz < cp) {
+				name[namesz] = *cp;
+				*cp = ' ';
+			}
+			namesz++;
+			cp++;
 			continue;
+		}
 		if (cp[1] == '{' || cp[1] == '}')
 			break;
-		if (*++cp == '\\')
-			continue;
-		mandoc_msg(MANDOCERR_NAMESC, ln, pos,
-		    "%.*s", (int)(cp - name + 1), name);
-		mandoc_escape((const char **)&cp, NULL, NULL);
-		break;
+		if (roff_escape(cp, 0, 0, NULL, &inam,
+		    NULL, NULL, &iend) != ESCAPE_UNDEF) {
+			mandoc_msg(MANDOCERR_NAMESC, ln, pos,
+			    "%.*s%.*s", namesz, name, iend, cp);
+			cp += iend;
+			break;
+		}
+
+		/*
+		 * In an identifier, \\, \., \G and so on
+		 * are reduced to \, ., G and so on,
+		 * vaguely similar to copy mode.
+		 */
+
+		name[namesz++] = cp[inam];
+		while (iend--) {
+			if (cp >= name + namesz)
+				*cp = ' ';
+			cp++;
+		}
 	}
 
 	/* Read past spaces. */

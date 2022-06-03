@@ -1,8 +1,10 @@
 mandoc: escname.in:22:2: ERROR: escaped character not allowed in a name: first\e
-mandoc: escname.in:32:19: ERROR: escaped character not allowed in a name: first\e
-mandoc: escname.in:33:2: ERROR: skipping unknown macro: .first
-mandoc: escname.in:35:2: ERROR: skipping unknown macro: .first\\second
-mandoc: escname.in:38:5: ERROR: skipping excess arguments: .de ... excess arguments
-mandoc: escname.in:41:1: ERROR: escaped character not allowed in a name: witharg\(
-mandoc: escname.in:43:1: ERROR: escaped character not allowed in a name: de\e
-mandoc: escname.in:43:2: WARNING: skipping empty request: de
+mandoc: escname.in:32:10: WARNING: undefined escape, printing literally: \G
+mandoc: escname.in:51:7: WARNING: undefined escape, printing literally: \G
+mandoc: escname.in:55:19: ERROR: escaped character not allowed in a name: first\e
+mandoc: escname.in:56:2: ERROR: skipping unknown macro: .first
+mandoc: escname.in:58:2: ERROR: skipping unknown macro: .first\second 
+mandoc: escname.in:61:5: ERROR: skipping excess arguments: .de ... excess arguments
+mandoc: escname.in:64:1: ERROR: escaped character not allowed in a name: witharg\(en
+mandoc: escname.in:66:1: ERROR: escaped character not allowed in a name: de\e
+mandoc: escname.in:66:2: WARNING: skipping empty request: de

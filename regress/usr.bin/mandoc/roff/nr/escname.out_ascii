@@ -4,7 +4,7 @@ NNAAMMEE
        nr-escname - escape sequences in register names
 
 DDEESSCCRRIIPPTTIIOONN
-       1 2 3
+       1 2 3 5 6
 
        0 2 3
 
@@ -12,4 +12,4 @@ DDEESSCCRRIIPPTTIIOONN
 
        incomplete:
 
-OpenBSD                          June 29, 2014                   NR-ESCNAME(1)
+OpenBSD                          June 3, 2022                    NR-ESCNAME(1)

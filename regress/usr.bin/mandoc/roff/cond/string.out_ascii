@@ -19,4 +19,10 @@ DDEESSCCRRIIPPTTIIOONN
 
        escape sequence after identifier: -mystr is defined
 
-OpenBSD                        February 6, 2019                      STRING(1)
+       backslash in name: \ is defined
+
+       dot in name: . is defined \. is defined
+
+       invalid escape in name: G is defined \G is defined
+
+OpenBSD                          June 3, 2022                        STRING(1)

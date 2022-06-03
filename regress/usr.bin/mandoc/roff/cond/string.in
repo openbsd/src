@@ -1,5 +1,5 @@
-.\" $OpenBSD: string.in,v 1.4 2019/02/06 20:54:28 schwarze Exp $
-.TH STRING 1 "February 6, 2019"
+.\" $OpenBSD: string.in,v 1.5 2022/06/03 11:50:25 schwarze Exp $
+.TH STRING 1 "June 3, 2022"
 .SH NAME
 string \- conditional testing whether a string is defined
 .SH DESCRIPTION
@@ -40,3 +40,28 @@ identifier and tab:
 escape sequence after identifier:
 .ie d mystr\(enmystr is defined
 .el OOPS
+.PP
+backslash in name:
+.ds \\ value
+.ie d \\ \e is defined
+.el OOPS
+.rm \\
+.if d \\ still defined!?
+.PP
+dot in name:
+.ds . value
+.ie d . \&. is defined
+.el OOPS
+.ie d \. \e. is defined
+.el OOPS
+.rm .
+.if d . still defined!?
+.PP
+invalid escape in name:
+.ds G value
+.ie d G G is defined
+.el OOPS
+.ie d \G \eG is defined
+.el OOPS
+.rm \G
+.if d G still defined!?
