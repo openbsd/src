@@ -1,4 +1,4 @@
-/*	$OpenBSD: hce.c,v 1.80 2021/02/22 01:24:59 jmatthew Exp $	*/
+/*	$OpenBSD: hce.c,v 1.81 2022/06/03 13:23:16 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -92,6 +92,8 @@ hce_setup_events(void)
 			    table->tls_cfg != NULL)
 				continue;
 			table->tls_cfg = tls_config_new();
+			if (table->tls_cfg == NULL)
+				fatalx("%s: tls_config_new", __func__);
 			tls_config_insecure_noverifycert(table->tls_cfg);
 			tls_config_insecure_noverifyname(table->tls_cfg);
 		}
