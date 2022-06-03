@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvnetareg.h,v 1.6 2022/06/01 04:31:08 dlg Exp $	*/
+/*	$OpenBSD: if_mvnetareg.h,v 1.7 2022/06/03 03:17:36 dlg Exp $	*/
 /*	$NetBSD: mvnetareg.h,v 1.8 2013/12/23 02:23:25 kiyohara Exp $	*/
 /*
  * Copyright (c) 2007, 2013 KIYOHARA Takashi
@@ -138,7 +138,7 @@
 				/* Transmit Queue Arbiter Configuration */
 
 #define MVNETA_PCP2Q(cpu)	(0x2540 + ((cpu) << 2))	/* Port CPUn to Queue */
-#define MVNETA_PRXITTH(q)	(0x2540 + ((q) << 2) /* Port RX Intr Threshold*/
+#define MVNETA_PRXITTH(q)	(0x2580 + ((q) << 2)) /* Port RX Intr Threshold*/
 #define MVNETA_PRXTXTIC		0x25a0	/*Port RX_TX Threshold Interrupt Cause*/
 #define MVNETA_PRXTXTIM		0x25a4	/*Port RX_TX Threshold Interrupt Mask */
 #define MVNETA_PRXTXIC		0x25a8	/* Port RX_TX Interrupt Cause */
