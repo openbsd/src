@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.388 2022/03/17 17:22:16 jsing Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.389 2022/06/03 13:28:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -547,6 +547,9 @@ typedef struct ssl_handshake_tls12_st {
 typedef struct ssl_handshake_tls13_st {
 	int use_legacy;
 	int hrr;
+
+	/* Client indicates psk_dhe_ke support in PskKeyExchangeMode. */
+	int use_psk_dhe_ke;
 
 	/* Certificate selected for use (static pointer). */
 	const SSL_CERT_PKEY *cpk;
