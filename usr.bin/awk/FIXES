@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.43 2022/01/27 16:58:37 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.44 2022/06/03 19:40:56 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,12 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+Mar 3, 2022:
+	Fixed file management memory leak that appears to have been
+	there since the files array was first initialized with stdin,
+	stdout, and stderr (circa 1992). Thanks to Miguel Pineiro Jr.
+	<mpj@pineiro.cc>.
 
 December 8, 2021:
 	The error handling in closefile and closeall was mangled. Long

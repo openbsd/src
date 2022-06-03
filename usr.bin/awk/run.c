@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.71 2022/01/27 16:58:37 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.72 2022/06/03 19:40:56 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1904,13 +1904,13 @@ static void stdinit(void)	/* in case stdin, etc., are not constants */
 	if (files == NULL)
 		FATAL("can't allocate file memory for %zu files", nfiles);
         files[0].fp = stdin;
-	files[0].fname = "/dev/stdin";
+	files[0].fname = tostring("/dev/stdin");
 	files[0].mode = LT;
         files[1].fp = stdout;
-	files[1].fname = "/dev/stdout";
+	files[1].fname = tostring("/dev/stdout");
 	files[1].mode = GT;
         files[2].fp = stderr;
-	files[2].fname = "/dev/stderr";
+	files[2].fname = tostring("/dev/stderr");
 	files[2].mode = GT;
 }
 
@@ -2014,8 +2014,7 @@ Cell *closefile(Node **a, int n)
 			stat = fclose(files[i].fp) == EOF;
 		if (stat)
 			WARNING("i/o error occurred closing %s", files[i].fname);
-		if (i > 2)	/* don't do /dev/std... */
-			xfree(files[i].fname);
+		xfree(files[i].fname);
 		files[i].fname = NULL;	/* watch out for ref thru this */
 		files[i].fp = NULL;
 		break;
