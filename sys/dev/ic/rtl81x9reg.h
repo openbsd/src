@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9reg.h,v 1.103 2022/01/09 05:42:38 jsg Exp $	*/
+/*	$OpenBSD: rtl81x9reg.h,v 1.104 2022/06/03 10:38:40 dlg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -690,24 +690,24 @@ struct rl_desc {
 /*
  * Statistics counter structure (8139C+ and 8169 only)
  */
-struct rl_stats {
-	u_int32_t		rl_tx_pkts_lo;
-	u_int32_t		rl_tx_pkts_hi;
-	u_int32_t		rl_tx_errs_lo;
-	u_int32_t		rl_tx_errs_hi;
-	u_int32_t		rl_tx_errs;
-	u_int16_t		rl_missed_pkts;
-	u_int16_t		rl_rx_framealign_errs;
-	u_int32_t		rl_tx_onecoll;
-	u_int32_t		rl_tx_multicolls;
-	u_int32_t		rl_rx_ucasts_hi;
-	u_int32_t		rl_rx_ucasts_lo;
-	u_int32_t		rl_rx_bcasts_lo;
-	u_int32_t		rl_rx_bcasts_hi;
-	u_int32_t		rl_rx_mcasts;
-	u_int16_t		rl_tx_aborts;
-	u_int16_t		rl_rx_underruns;
-};
+
+struct re_stats {
+	uint64_t		re_tx_ok;
+	uint64_t		re_rx_ok;
+	uint64_t		re_tx_er;
+	uint32_t		re_rx_er;
+	uint16_t		re_miss_pkt;
+	uint16_t		re_fae;
+	uint32_t		re_tx_1col;
+	uint32_t		re_tx_mcol;
+	uint64_t		re_rx_ok_phy;
+	uint64_t		re_rx_ok_brd;
+	uint32_t		re_rx_ok_mul;
+	uint16_t		re_tx_abt;
+	uint16_t		re_tx_undrn;
+} __packed __aligned(sizeof(uint64_t));
+
+#define RE_STATS_ALIGNMENT	64
 
 /*
  * Rx/Tx descriptor parameters (8139C+ and 8169 only)
@@ -858,6 +858,8 @@ struct rl_list_data {
 	int			rl_rx_listnseg;
 };
 
+struct kstat;
+
 struct rl_softc {
 	struct device		sc_dev;		/* us, as a device */
 	void *			sc_ih;		/* interrupt vectoring */
@@ -930,6 +932,8 @@ struct rl_softc {
 #define	RL_IMTYPE_SIM		1	/* simulated */
 #define	RL_IMTYPE_HW		2	/* hardware based */
 	int			rl_timerintr;
+
+	struct kstat		*rl_kstat;
 };
 
 /*
