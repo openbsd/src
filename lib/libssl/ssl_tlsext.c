@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.110 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.111 2022/06/03 13:29:39 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1832,6 +1832,76 @@ tlsext_cookie_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 	return 0;
 }
 
+/*
+ * Pre-Shared Key Exchange Modes - RFC 8446, 4.2.9.
+ */
+
+int
+tlsext_psk_kex_modes_client_needs(SSL *s, uint16_t msg_type)
+{
+	return (s->s3->hs.tls13.use_psk_dhe_ke &&
+	    s->s3->hs.our_max_tls_version >= TLS1_3_VERSION);
+}
+
+int
+tlsext_psk_kex_modes_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
+{
+	CBB ke_modes;
+
+	if (!CBB_add_u8_length_prefixed(cbb, &ke_modes))
+		return 0;
+
+	/* Only indicate support for PSK with DHE key establishment. */
+	if (!CBB_add_u8(&ke_modes, TLS13_PSK_DHE_KE))
+		return 0;
+
+	if (!CBB_flush(cbb))
+		return 0;
+
+	return 1;
+}
+
+int
+tlsext_psk_kex_modes_server_parse(SSL *s, uint16_t msg_type, CBS *cbs,
+    int *alert)
+{
+	CBS ke_modes;
+	uint8_t ke_mode;
+
+	if (!CBS_get_u8_length_prefixed(cbs, &ke_modes))
+		return 0;
+
+	while (CBS_len(&ke_modes) > 0) {
+		if (!CBS_get_u8(&ke_modes, &ke_mode))
+			return 0;
+
+		if (ke_mode == TLS13_PSK_DHE_KE)
+			s->s3->hs.tls13.use_psk_dhe_ke = 1;
+	}
+
+	return 1;
+}
+
+int
+tlsext_psk_kex_modes_server_needs(SSL *s, uint16_t msg_type)
+{
+	/* Servers MUST NOT send this extension. */
+	return 0;
+}
+
+int
+tlsext_psk_kex_modes_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
+{
+	return 0;
+}
+
+int
+tlsext_psk_kex_modes_client_parse(SSL *s, uint16_t msg_type, CBS *cbs,
+    int *alert)
+{
+	return 0;
+}
+
 struct tls_extension_funcs {
 	int (*needs)(SSL *s, uint16_t msg_type);
 	int (*build)(SSL *s, uint16_t msg_type, CBB *cbb);
@@ -2018,8 +2088,22 @@ static const struct tls_extension tls_extensions[] = {
 			.build = tlsext_srtp_server_build,
 			.parse = tlsext_srtp_server_parse,
 		},
-	}
+	},
 #endif /* OPENSSL_NO_SRTP */
+	{
+		.type = TLSEXT_TYPE_psk_key_exchange_modes,
+		.messages = SSL_TLSEXT_MSG_CH,
+		.client = {
+			.needs = tlsext_psk_kex_modes_client_needs,
+			.build = tlsext_psk_kex_modes_client_build,
+			.parse = tlsext_psk_kex_modes_client_parse,
+		},
+		.server = {
+			.needs = tlsext_psk_kex_modes_server_needs,
+			.build = tlsext_psk_kex_modes_server_build,
+			.parse = tlsext_psk_kex_modes_server_parse,
+		},
+	},
 };
 
 #define N_TLS_EXTENSIONS (sizeof(tls_extensions) / sizeof(*tls_extensions))
