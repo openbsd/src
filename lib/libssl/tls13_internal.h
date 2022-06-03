@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_internal.h,v 1.96 2022/01/05 17:10:02 jsing Exp $ */
+/* $OpenBSD: tls13_internal.h,v 1.97 2022/06/03 13:11:04 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
@@ -93,6 +93,17 @@ typedef void (*tls13_phh_sent_cb)(void *_cb_arg);
 typedef void (*tls13_handshake_message_cb)(void *_cb_arg);
 typedef void (*tls13_info_cb)(void *_cb_arg, int _state, int _ret);
 typedef int (*tls13_ocsp_status_cb)(void *_cb_arg);
+
+/*
+ * PSK support.
+ */
+
+/*
+ * Known PskKeyExchangeMode values.
+ * https://www.iana.org/assignments/tls-parameters/#tls-pskkeyexchangemode
+ */
+#define TLS13_PSK_KE					0
+#define TLS13_PSK_DHE_KE				1
 
 /*
  * Secrets.
