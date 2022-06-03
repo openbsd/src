@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.96 2022/02/03 16:33:12 jsing Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.97 2022/06/03 13:26:13 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -108,10 +108,15 @@ tls13_client_hello_required_extensions(struct tls13_ctx *ctx)
 	 */
 
 	/*
-	 * If we got no pre_shared_key, then signature_algorithms and
-	 * supported_groups must both be present.
+	 * RFC 8446, 4.2.9: if we got a pre_shared_key, then we also need
+	 * psk_key_exchange_modes. Otherwise, section 9.2 specifies that we
+	 * need both signature_algorithms and supported_groups.
 	 */
-	if (!tlsext_extension_seen(s, TLSEXT_TYPE_pre_shared_key)) {
+	if (tlsext_extension_seen(s, TLSEXT_TYPE_pre_shared_key)) {
+		if (!tlsext_extension_seen(s,
+		    TLSEXT_TYPE_psk_key_exchange_modes))
+			return 0;
+	} else {
 		if (!tlsext_extension_seen(s, TLSEXT_TYPE_signature_algorithms))
 			return 0;
 		if (!tlsext_extension_seen(s, TLSEXT_TYPE_supported_groups))
