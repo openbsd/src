@@ -1,4 +1,4 @@
-/*	$OpenBSD: tran.c,v 1.34 2021/11/02 15:29:41 millert Exp $	*/
+/*	$OpenBSD: tran.c,v 1.35 2022/06/03 19:46:09 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -70,18 +70,6 @@ Node	*nullnode;	/* zero&null, converted into a node for comparisons */
 Cell	*literal0;
 
 extern Cell **fldtab;
-
-static void
-setfree(Cell *vp)
-{
-	if (&vp->sval == FS || &vp->sval == RS ||
-	    &vp->sval == OFS || &vp->sval == ORS ||
-	    &vp->sval == OFMT || &vp->sval == CONVFMT ||
-	    &vp->sval == FILENAME || &vp->sval == SUBSEP)
-		vp->tval |= DONTFREE;
-	else
-		vp->tval &= ~DONTFREE;
-}
 
 void syminit(void)	/* initialize symbol table with builtin vars */
 {
@@ -378,10 +366,9 @@ char *setsval(Cell *vp, const char *s)	/* set string val of a Cell */
 	t = s ? tostring(s) : tostring("");	/* in case it's self-assign */
 	if (freeable(vp))
 		xfree(vp->sval);
-	vp->tval &= ~(NUM|CONVC|CONVO);
+	vp->tval &= ~(NUM|DONTFREE|CONVC|CONVO);
 	vp->tval |= STR;
 	vp->fmt = NULL;
-	setfree(vp);
 	DPRINTF("setsval %p: %s = \"%s (%p) \", t=%o r,f=%d,%d\n",
 		(void*)vp, NN(vp->nval), t, (void*)t, vp->tval, donerec, donefld);
 	vp->sval = t;
