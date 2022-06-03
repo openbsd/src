@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.418 2022/03/24 09:05:57 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.419 2022/06/03 08:09:16 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -814,7 +814,7 @@ tty_update_mode(struct tty *tty, int mode, struct screen *s)
 			tty_puts(tty, "\033[?1006h");
 		if (mode & MODE_MOUSE_ALL)
 			tty_puts(tty, "\033[?1000h\033[?1002h\033[?1003h");
-		if (mode & MODE_MOUSE_BUTTON)
+		else if (mode & MODE_MOUSE_BUTTON)
 			tty_puts(tty, "\033[?1000h\033[?1002h");
 		else if (mode & MODE_MOUSE_STANDARD)
 			tty_puts(tty, "\033[?1000h");
