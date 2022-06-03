@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.44 2022/06/03 19:40:56 millert Exp $	*/
+/*	$OpenBSD: FIXES,v 1.45 2022/06/03 19:42:27 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,11 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+Mar 14, 2022:
+	The fulfillment of an assignment operand had been truncating its
+	entry in ARGV (since circa 1989). Thanks to Miguel Pineiro Jr.
+	<mpj@pineiro.cc>.
 
 Mar 3, 2022:
 	Fixed file management memory leak that appears to have been

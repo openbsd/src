@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.47 2021/11/02 15:29:41 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.48 2022/06/03 19:42:27 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -295,12 +295,13 @@ char *getargv(int n)	/* get ARGV[n] */
 
 void setclvar(char *s)	/* set var=value from s */
 {
-	char *p;
+	char *e, *p;
 	Cell *q;
 	double result;
 
 	for (p=s; *p != '='; p++)
 		;
+	e = p;
 	*p++ = 0;
 	p = qstring(p, '\0');
 	q = setsymtab(s, p, 0.0, STR, symtab);
@@ -310,6 +311,7 @@ void setclvar(char *s)	/* set var=value from s */
 		q->tval |= NUM;
 	}
 	DPRINTF("command line set %s to |%s|\n", s, p);
+	*e = '=';
 }
 
 
