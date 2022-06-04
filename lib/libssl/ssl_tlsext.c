@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.112 2022/06/03 13:31:49 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.113 2022/06/04 07:55:44 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1921,7 +1921,7 @@ tlsext_psk_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 int
 tlsext_psk_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
-	return 0;
+	return CBS_skip(cbs, CBS_len(cbs));
 }
 
 int
@@ -1939,7 +1939,7 @@ tlsext_psk_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 int
 tlsext_psk_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 {
-	return 0;
+	return CBS_skip(cbs, CBS_len(cbs));
 }
 
 struct tls_extension_funcs {
