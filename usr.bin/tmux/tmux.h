@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1170 2022/05/30 13:02:55 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1171 2022/06/04 07:42:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2057,6 +2057,7 @@ u_int		 paste_buffer_order(struct paste_buffer *);
 time_t		 paste_buffer_created(struct paste_buffer *);
 const char	*paste_buffer_data(struct paste_buffer *, size_t *);
 struct paste_buffer *paste_walk(struct paste_buffer *);
+int		 paste_is_empty(void);
 struct paste_buffer *paste_get_top(const char **);
 struct paste_buffer *paste_get_name(const char *);
 void		 paste_free(struct paste_buffer *);

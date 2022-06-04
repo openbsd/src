@@ -1,4 +1,4 @@
-/* $OpenBSD: paste.c,v 1.42 2020/05/16 15:35:19 nicm Exp $ */
+/* $OpenBSD: paste.c,v 1.43 2022/06/04 07:42:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -112,6 +112,12 @@ paste_walk(struct paste_buffer *pb)
 	return (RB_NEXT(paste_time_tree, &paste_by_time, pb));
 }
 
+int
+paste_is_empty(void)
+{
+	return RB_ROOT(&paste_by_time) == NULL;
+}
+
 /* Get the most recent automatic buffer. */
 struct paste_buffer *
 paste_get_top(const char **name)
@@ -119,6 +125,8 @@ paste_get_top(const char **name)
 	struct paste_buffer	*pb;
 
 	pb = RB_MIN(paste_time_tree, &paste_by_time);
+	while (pb != NULL && !pb->automatic)
+		pb = RB_NEXT(paste_time_tree, &paste_by_time, pb);
 	if (pb == NULL)
 		return (NULL);
 	if (name != NULL)
