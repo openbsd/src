@@ -1,4 +1,4 @@
-.\"	$OpenBSD: package.5,v 1.30 2022/01/13 11:23:47 espie Exp $
+.\"	$OpenBSD: package.5,v 1.31 2022/06/04 10:12:38 espie Exp $
 .\" Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -12,7 +12,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: January 13 2022 $
+.Dd $Mdocdate: June 4 2022 $
 .Dt PACKAGE 5
 .Os
 .Sh NAME
@@ -151,12 +151,12 @@ of
 .It Xo
 .Cm @digital-signature
 .Sm off
-.Ar style :
+.Ar signify2 :
 .Ar date :
-.Ar details
+.Ar external
 .Sm on
 .Xc
-Record a digital signature of the packing-list, synthetized by
+Record the date of signature of a package, synthetized by
 .Xr pkg_add 1
 from
 .Xr signify 1
@@ -181,8 +181,12 @@ for later deinstallation.
 will derive this field from the package file name.
 .Pp
 .It Cm @option Ar name
-Some options are automatically inserted by the package tools:
+Some options are automatically inserted/modified by the package tools:
 .Bl -tag -width indent
+.It Ar always-update
+.Xr pkg_create 1
+will complete the option line with a sha256 digest of the whole packing-list
+encoded in base64.
 .It Ar firmware
 Set by
 .Xr fw_update 8
@@ -204,9 +208,11 @@ to record the files's cryptographic checksum,
 as a sha256 digest encoded in base64.
 .Pp
 .It Cm @signer
-Internal annotation necessary to identify packages signed with
+Record the signing key for a package, synthetized by
+.Xr pkg_add 1
+from
 .Xr signify 1
-keys, as those keys don't carry any identity.
+output.
 .Pp
 .It Cm @size
 Added after a file entry by
@@ -219,9 +225,9 @@ Added after a file entry by
 to record that the entry is actually a symbolic link.
 .Pp
 .It Cm @url
-Original location of the package, automatically recorded in installed packages
-by
-.Xr pkg_add 1 .
+Original location of the package, synthetized by
+.Xr pkg_add 1
+during installation.
 .Pp
 .It Cm @ts Ar timestamp
 Added after a file entry to record the actual file timestamp, instead
