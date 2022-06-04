@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.400 2022/03/23 09:22:49 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.401 2022/06/04 11:32:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -331,6 +331,9 @@ int	iwm_nvm_read_chunk(struct iwm_softc *, uint16_t, uint16_t, uint16_t,
 	    uint8_t *, uint16_t *);
 int	iwm_nvm_read_section(struct iwm_softc *, uint16_t, uint8_t *,
 	    uint16_t *, size_t);
+uint8_t	iwm_fw_valid_tx_ant(struct iwm_softc *);
+uint8_t	iwm_fw_valid_rx_ant(struct iwm_softc *);
+int	iwm_valid_siso_ant_rate_mask(struct iwm_softc *);
 void	iwm_init_channel_map(struct iwm_softc *, const uint16_t * const,
 	    const uint8_t *nvm_channels, int nchan);
 int	iwm_mimo_enabled(struct iwm_softc *);
@@ -3036,6 +3039,23 @@ iwm_fw_valid_rx_ant(struct iwm_softc *sc)
 		rx_ant &= sc->sc_nvm.valid_rx_ant;
 
 	return rx_ant;
+}
+
+int
+iwm_valid_siso_ant_rate_mask(struct iwm_softc *sc)
+{
+	uint8_t valid_tx_ant = iwm_fw_valid_tx_ant(sc);
+
+	/*
+	 * According to the Linux driver, antenna B should be preferred
+	 * on 9k devices since it is not shared with bluetooth. However,
+	 * there are 9k devices which do not support antenna B at all.
+	 */
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000 &&
+	    (valid_tx_ant & IWM_ANT_B))
+		return IWM_RATE_MCS_ANT_B_MSK;
+
+	return IWM_RATE_MCS_ANT_A_MSK;
 }
 
 void
@@ -6628,10 +6648,8 @@ iwm_tx_fill_cmd(struct iwm_softc *sc, struct iwm_node *in,
 	if ((ni->ni_flags & IEEE80211_NODE_VHT) == 0 &&
 	    iwm_is_mimo_ht_plcp(rinfo->ht_plcp))
 		rate_flags = IWM_RATE_MCS_ANT_AB_MSK;
-	else if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000)
-		rate_flags = IWM_RATE_MCS_ANT_B_MSK;
 	else
-		rate_flags = IWM_RATE_MCS_ANT_A_MSK;
+		rate_flags = iwm_valid_siso_ant_rate_mask(sc);
 	if (IWM_RIDX_IS_CCK(ridx))
 		rate_flags |= IWM_RATE_MCS_CCK_MSK;
 	if ((ni->ni_flags & IEEE80211_NODE_HT) &&
@@ -9248,13 +9266,8 @@ iwm_set_rate_table_vht(struct iwm_node *in, struct iwm_lq_cmd *lqcmd)
 			    IWM_RATE_VHT_MCS_NSS_MSK;
 			if (ni->ni_vht_ss > 1)
 				tab |= IWM_RATE_MCS_ANT_AB_MSK;
-			else {
-				if (sc->sc_device_family ==
-				    IWM_DEVICE_FAMILY_9000)
-					tab |= IWM_RATE_MCS_ANT_B_MSK;
-				else
-					tab |= IWM_RATE_MCS_ANT_A_MSK;
-			}
+			else
+				tab |= iwm_valid_siso_ant_rate_mask(sc);
 
 			/*
 			 * First two Tx attempts may use 80MHz/40MHz/SGI.
@@ -9294,10 +9307,7 @@ iwm_set_rate_table_vht(struct iwm_node *in, struct iwm_lq_cmd *lqcmd)
 		} else {
 			/* Fill the rest with the lowest possible rate. */
 			tab = iwm_rates[ridx_min].plcp;
-			if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000)
-				tab |= IWM_RATE_MCS_ANT_B_MSK;
-			else
-				tab |= IWM_RATE_MCS_ANT_A_MSK;
+			tab |= iwm_valid_siso_ant_rate_mask(sc);
 			if (ni->ni_vht_ss > 1 && lqcmd->mimo_delim == 0)
 				lqcmd->mimo_delim = i;
 		}
@@ -9378,10 +9388,8 @@ iwm_set_rate_table(struct iwm_node *in, struct iwm_lq_cmd *lqcmd)
 
 		if (iwm_is_mimo_ht_plcp(ht_plcp))
 			tab |= IWM_RATE_MCS_ANT_AB_MSK;
-		else if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000)
-			tab |= IWM_RATE_MCS_ANT_B_MSK;
 		else
-			tab |= IWM_RATE_MCS_ANT_A_MSK;
+			tab |= iwm_valid_siso_ant_rate_mask(sc);
 
 		if (IWM_RIDX_IS_CCK(ridx))
 			tab |= IWM_RATE_MCS_CCK_MSK;
@@ -9395,10 +9403,7 @@ iwm_set_rate_table(struct iwm_node *in, struct iwm_lq_cmd *lqcmd)
 		tab = iwm_rates[ridx_min].plcp;
 		if (IWM_RIDX_IS_CCK(ridx_min))
 			tab |= IWM_RATE_MCS_CCK_MSK;
-		if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000)
-			tab |= IWM_RATE_MCS_ANT_B_MSK;
-		else
-			tab |= IWM_RATE_MCS_ANT_A_MSK;
+		tab |= iwm_valid_siso_ant_rate_mask(sc);
 		lqcmd->rs_table[j++] = htole32(tab);
 	}
 }
@@ -9428,7 +9433,8 @@ iwm_setrates(struct iwm_node *in, int async)
 	else
 		iwm_set_rate_table(in, &lqcmd);
 
-	if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000)
+	if (sc->sc_device_family == IWM_DEVICE_FAMILY_9000 &&
+	    (iwm_fw_valid_tx_ant(sc) & IWM_ANT_B))
 		lqcmd.single_stream_ant_msk = IWM_ANT_B;
 	else
 		lqcmd.single_stream_ant_msk = IWM_ANT_A;
