@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.9 2022/06/04 02:14:21 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.10 2022/06/05 13:31:35 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -415,11 +415,6 @@ rsc_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	if (p.res->aia == NULL || p.res->aki == NULL || p.res->ski == NULL) {
 		warnx("%s: RFC 6487 section 4.8: "
 		    "missing AIA, AKI or SKI X509 extension", fn);
-		goto out;
-	}
-
-	if (X509_get_ext_by_NID(*x509, NID_sinfo_access, -1) != -1) {
-		warnx("%s: EE certificate MUST NOT have SIA extension", fn);
 		goto out;
 	}
 
