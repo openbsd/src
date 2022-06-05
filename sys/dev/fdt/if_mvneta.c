@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.25 2022/06/01 08:19:15 dlg Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.26 2022/06/05 02:54:18 dlg Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -136,6 +136,8 @@ struct mvneta_softc {
 	bus_space_handle_t sc_ioh;
 	bus_dma_tag_t sc_dmat;
 	void *sc_ih;
+
+	uint64_t		sc_clk_freq;
 
 	struct arpcom sc_ac;
 #define sc_enaddr sc_ac.ac_enaddr
@@ -453,6 +455,7 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = faa->fa_node;
 
 	clock_enable(faa->fa_node, NULL);
+	sc->sc_clk_freq = clock_get_frequency_idx(faa->fa_node, 0);
 
 	pinctrl_byname(faa->fa_node, "default");
 
@@ -837,7 +840,7 @@ mvneta_intr(void *arg)
 	if (ic & MVNETA_PRXTXTI_TBTCQ(0))
 		mvneta_tx_proc(sc);
 
-	if (ic & MVNETA_PRXTXTI_RBICTAPQ(0))
+	if (ISSET(ic, MVNETA_PRXTXTI_RBICTAPQ(0) | MVNETA_PRXTXTI_RDTAQ(0)))
 		mvneta_rx_proc(sc);
 
 	return 1;
@@ -1134,7 +1137,24 @@ mvneta_up(struct mvneta_softc *sc)
 	MVNETA_WRITE(sc, MVNETA_PRXDQA(0), MVNETA_DMA_DVA(sc->sc_rxring));
 	MVNETA_WRITE(sc, MVNETA_PRXDQS(0), MVNETA_RX_RING_CNT |
 	    ((MCLBYTES >> 3) << 19));
-	MVNETA_WRITE(sc, MVNETA_PRXDQTH(0), 0);
+
+	if (sc->sc_clk_freq != 0) {
+		/*
+		 * Use the Non Occupied Descriptors Threshold to
+		 * interrupt when the descriptors granted by rxr are
+		 * used up, otherwise wait until the RX Interrupt
+		 * Time Threshold is reached.
+		 */
+		MVNETA_WRITE(sc, MVNETA_PRXDQTH(0),
+		    MVNETA_PRXDQTH_ODT(MVNETA_RX_RING_CNT) |
+		    MVNETA_PRXDQTH_NODT(2));
+		MVNETA_WRITE(sc, MVNETA_PRXITTH(0), sc->sc_clk_freq / 4000);
+	} else {
+		/* Time based moderation is hard without a clock */
+		MVNETA_WRITE(sc, MVNETA_PRXDQTH(0), 0);
+		MVNETA_WRITE(sc, MVNETA_PRXITTH(0), 0);
+	}
+
 	MVNETA_WRITE(sc, MVNETA_PRXC(0), 0);
 
 	/* Set Tx queue bandwidth. */
@@ -1144,7 +1164,8 @@ mvneta_up(struct mvneta_softc *sc)
 	/* Set Tx descriptor ring data. */
 	MVNETA_WRITE(sc, MVNETA_PTXDQA(0), MVNETA_DMA_DVA(sc->sc_txring));
 	MVNETA_WRITE(sc, MVNETA_PTXDQS(0),
-	    MVNETA_PTXDQS_DQS(MVNETA_TX_RING_CNT));
+	    MVNETA_PTXDQS_DQS(MVNETA_TX_RING_CNT) |
+	    MVNETA_PTXDQS_TBT(MIN(MVNETA_TX_RING_CNT / 2, ifp->if_txmit)));
 
 	sc->sc_rx_prod = sc->sc_rx_cons = 0;
 
@@ -1178,7 +1199,8 @@ mvneta_up(struct mvneta_softc *sc)
 
 	/* Enable interrupt masks */
 	MVNETA_WRITE(sc, MVNETA_PRXTXTIM, MVNETA_PRXTXTI_RBICTAPQ(0) |
-	    MVNETA_PRXTXTI_TBTCQ(0) | MVNETA_PRXTXTI_PMISCICSUMMARY);
+	    MVNETA_PRXTXTI_TBTCQ(0) | MVNETA_PRXTXTI_RDTAQ(0) |
+	    MVNETA_PRXTXTI_PMISCICSUMMARY);
 	MVNETA_WRITE(sc, MVNETA_PMIM, MVNETA_PMI_PHYSTATUSCHNG |
 	    MVNETA_PMI_LINKCHANGE | MVNETA_PMI_PSCSYNCCHNG);
 
