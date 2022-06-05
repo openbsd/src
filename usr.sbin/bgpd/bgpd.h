@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.425 2022/05/31 09:45:33 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.426 2022/06/05 12:43:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1284,20 +1284,20 @@ int		roa_cmp(struct roa *, struct roa *);
 RB_PROTOTYPE(roa_tree, roa, entry, roa_cmp);
 
 /* kroute.c */
-int		 kr_init(int *);
-int		 ktable_update(u_int, char *, int, uint8_t);
+int		 kr_init(int *, uint8_t);
+int		 ktable_update(u_int, char *, int);
 void		 ktable_preload(void);
-void		 ktable_postload(uint8_t);
+void		 ktable_postload(void);
 int		 ktable_exists(u_int, u_int *);
-int		 kr_change(u_int, struct kroute_full *, uint8_t);
-int		 kr_delete(u_int, struct kroute_full *, uint8_t);
+int		 kr_change(u_int, struct kroute_full *);
+int		 kr_delete(u_int, struct kroute_full *);
 int		 kr_flush(u_int);
-void		 kr_shutdown(uint8_t, u_int);
-void		 kr_fib_couple(u_int, uint8_t);
-void		 kr_fib_couple_all(uint8_t);
-void		 kr_fib_decouple(u_int, uint8_t);
-void		 kr_fib_decouple_all(uint8_t);
-void		 kr_fib_update_prio_all(uint8_t);
+void		 kr_shutdown(u_int);
+void		 kr_fib_couple(u_int);
+void		 kr_fib_couple_all(void);
+void		 kr_fib_decouple(u_int);
+void		 kr_fib_decouple_all(void);
+void		 kr_fib_prio_set(uint8_t);
 int		 kr_dispatch_msg(u_int rdomain);
 int		 kr_nexthop_add(uint32_t, struct bgpd_addr *,
 		    struct bgpd_config *);
