@@ -1,8 +1,9 @@
-/* $OpenBSD: tlsexttest.c,v 1.60 2022/02/08 19:00:36 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.61 2022/06/05 20:24:10 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
+ * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -3067,7 +3068,6 @@ test_tlsext_versions_client(void)
 	return (failure);
 }
 
-
 static int
 test_tlsext_versions_server(void)
 {
@@ -3565,6 +3565,211 @@ done:
 	return (failure);
 }
 
+const uint8_t tlsext_default_psk_modes[] = {
+	0x01, 0x01,
+};
+
+const uint8_t tlsext_psk_only_mode[] = {
+	0x01, 0x00,
+};
+
+const uint8_t tlsext_psk_both_modes[] = {
+	0x02, 0x00, 0x01,
+};
+
+static int
+test_tlsext_psk_modes_client(void)
+{
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	int failure;
+	uint8_t *data = NULL;
+	size_t dlen;
+	CBB cbb;
+	CBS cbs;
+	int alert;
+
+	CBB_init(&cbb, 0);
+
+	failure = 1;
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	/* Disabled by default. */
+	if (tlsext_psk_kex_modes_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
+		FAIL("client should not need psk kex modes by default\n");
+		goto err;
+	}
+
+	/*
+	 * Prerequisites: use_psk_dhe_ke flag is set and
+	 * our_max_tls_version >= TLSv1.3.
+	 */
+
+	ssl->s3->hs.tls13.use_psk_dhe_ke = 1;
+	ssl->s3->hs.our_max_tls_version = TLS1_2_VERSION;
+
+	if (tlsext_psk_kex_modes_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
+		FAIL("client should not need psk kex modes with TLSv1.2\n");
+		goto err;
+	}
+
+	ssl->s3->hs.tls13.use_psk_dhe_ke = 0;
+	ssl->s3->hs.our_max_tls_version = TLS1_3_VERSION;
+
+	if (tlsext_psk_kex_modes_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
+		FAIL("client should not need psk kex modes without "
+		    "use_psk_dhe_ke\n");
+		goto err;
+	}
+
+	ssl->s3->hs.tls13.use_psk_dhe_ke = 1;
+	ssl->s3->hs.our_max_tls_version = TLS1_3_VERSION;
+
+	if (!tlsext_psk_kex_modes_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
+		FAIL("client should need psk kex modes with TLSv1.3\n");
+		goto err;
+	}
+
+	/* Make sure we can build the psk modes with DHE key establishments. */
+
+	if (!tlsext_psk_kex_modes_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
+		FAIL("client failed to build psk kex modes\n");
+		goto err;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish psk kex CBB");
+
+	if (dlen != sizeof(tlsext_default_psk_modes)) {
+		FAIL("got client psk kex modes with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_default_psk_modes));
+		compare_data(data, dlen, tlsext_default_psk_modes,
+		    sizeof(tlsext_default_psk_modes));
+		goto err;
+	}
+	if (memcmp(data, tlsext_default_psk_modes, dlen) != 0) {
+		FAIL("client psk kex modes differ:\n");
+		compare_data(data, dlen, tlsext_default_psk_modes,
+		    sizeof(tlsext_default_psk_modes));
+		goto err;
+	}
+
+	CBB_cleanup(&cbb);
+	free(data);
+	data = NULL;
+
+	/*
+	 * Make sure we can parse the default psk modes and that use_psk_dhe_ke
+	 * is set after parsing.
+	 */
+
+	ssl->s3->hs.tls13.use_psk_dhe_ke = 0;
+
+	CBS_init(&cbs, tlsext_default_psk_modes,
+	    sizeof(tlsext_default_psk_modes));
+	if (!tlsext_psk_kex_modes_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs,
+	    &alert)) {
+		FAIL("failed to parse psk kex modes\n");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining\n");
+		goto err;
+	}
+
+	if (ssl->s3->hs.tls13.use_psk_dhe_ke != 1) {
+		FAIL("should have set use_psk_dhe_ke\n");
+		goto err;
+	}
+
+	/*
+	 * Make sure we can parse the psk-only mode and that use_psk_dhe_ke
+	 * is still not set after parsing.
+	 */
+
+	ssl->s3->hs.tls13.use_psk_dhe_ke = 0;
+
+	CBS_init(&cbs, tlsext_psk_only_mode, sizeof(tlsext_psk_only_mode));
+	if (!tlsext_psk_kex_modes_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs,
+	    &alert)) {
+		FAIL("failed to parse psk kex modes\n");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining\n");
+		goto err;
+	}
+
+	if (ssl->s3->hs.tls13.use_psk_dhe_ke != 0) {
+		FAIL("should not have set use_psk_dhe_ke\n");
+		goto err;
+	}
+
+	/*
+	 * Make sure we can parse the extension indicating both modes and that
+	 * use_psk_dhe_ke is set after parsing.
+	 */
+
+	ssl->s3->hs.tls13.use_psk_dhe_ke = 0;
+
+	CBS_init(&cbs, tlsext_psk_both_modes, sizeof(tlsext_psk_both_modes));
+	if (!tlsext_psk_kex_modes_server_parse(ssl, SSL_TLSEXT_MSG_CH, &cbs,
+	    &alert)) {
+		FAIL("failed to parse psk kex modes\n");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining\n");
+		goto err;
+	}
+
+	if (ssl->s3->hs.tls13.use_psk_dhe_ke != 1) {
+		FAIL("should have set use_psk_dhe_ke\n");
+		goto err;
+	}
+
+	failure = 0;
+ err:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return failure;
+}
+
+static int
+test_tlsext_psk_modes_server(void)
+{
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	int failure;
+
+	failure = 1;
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_server_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	if (tlsext_psk_kex_modes_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
+		FAIL("server should not need psk kex modes by default\n");
+		goto err;
+	}
+
+	failure = 0;
+ err:
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+
+	return failure;
+}
+
 struct tls_sni_test {
 	const char *hostname;
 	int is_ip;
@@ -3770,6 +3975,9 @@ main(int argc, char **argv)
 
 	failed |= test_tlsext_cookie_client();
 	failed |= test_tlsext_cookie_server();
+
+	failed |= test_tlsext_psk_modes_client();
+	failed |= test_tlsext_psk_modes_server();
 
 #ifndef OPENSSL_NO_SRTP
 	failed |= test_tlsext_srtp_client();
