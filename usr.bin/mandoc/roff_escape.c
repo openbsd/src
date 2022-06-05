@@ -1,4 +1,4 @@
-/* $OpenBSD: roff_escape.c,v 1.8 2022/06/02 14:49:25 schwarze Exp $ */
+/* $OpenBSD: roff_escape.c,v 1.9 2022/06/05 10:19:47 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2020, 2022
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -98,6 +98,7 @@ roff_escape(const char *buf, const int ln, const int aesc,
 	iarg = iendarg = iend = inam + 1;
 	maxl = INT_MAX;
 	term = '\0';
+	err = MANDOCERR_OK;
 	switch (buf[inam]) {
 
 	/* Escape sequences taking no arguments at all. */
@@ -312,6 +313,10 @@ roff_escape(const char *buf, const int ln, const int aesc,
 			/* Ignore an incomplete argument except for \w. */
 			if (buf[inam] != 'w')
 				iendarg = iarg;
+			if (rval == ESCAPE_EXPAND)
+				err = MANDOCERR_ESC_BAD;
+			else
+				rval = ESCAPE_ERROR;
 			break;
 		}
 		if (buf[iendarg] == term) {
@@ -343,9 +348,6 @@ roff_escape(const char *buf, const int ln, const int aesc,
 			iend = ++iendarg;
 		}
 	}
-	if (resc != NULL && ((maxl != INT_MAX && maxl != 0) ||
-	    (term != '\0' && buf[iendarg] != term)))
-		mandoc_msg(MANDOCERR_ESC_BAD, ln, iesc, "%s", buf + iesc);
 
 	/* Post-process depending on the content of the argument. */
 
@@ -481,18 +483,17 @@ out:
 		err = MANDOCERR_ESC_UNSUPP;
 		break;
 	case ESCAPE_UNDEF:
-		if (buf[inam] == '\\' || buf[inam] == '.')
-			return rval;
-		err = MANDOCERR_ESC_UNDEF;
+		if (buf[inam] != '\\' && buf[inam] != '.')
+			err = MANDOCERR_ESC_UNDEF;
 		break;
 	case ESCAPE_SPECIAL:
-		if (mchars_spec2cp(buf + iarg, argl) >= 0)
-			return rval;
-		err = MANDOCERR_ESC_BAD;
+		if (mchars_spec2cp(buf + iarg, argl) < 0)
+			err = MANDOCERR_ESC_BAD;
 		break;
 	default:
-		return rval;
+		break;
 	}
-	mandoc_msg(err, ln, iesc, "%.*s", iend - iesc, buf + iesc);
+	if (err != MANDOCERR_OK)
+		mandoc_msg(err, ln, iesc, "%.*s", iend - iesc, buf + iesc);
 	return rval;
 }
