@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.h,v 1.219 2022/05/19 15:17:50 schwarze Exp $ */
+/* $OpenBSD: mandoc.h,v 1.220 2022/06/05 13:42:49 schwarze Exp $ */
 /*
  * Copyright (c) 2012-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -234,6 +234,11 @@ enum	mandocerr {
 	MANDOCERR_ARG_SKIP, /* skipping all arguments: macro args */
 	MANDOCERR_ARG_EXCESS, /* skipping excess arguments: macro ... args */
 	MANDOCERR_DIVZERO, /* divide by zero */
+
+	/* related to escape sequences */
+	MANDOCERR_ESC_INCOMPLETE, /* incomplete escape sequence: esc */
+	MANDOCERR_ESC_BADCHAR, /* invalid special character: esc */
+	MANDOCERR_ESC_UNKCHAR, /* unknown special character: esc */
 
 	MANDOCERR_UNSUPP, /* ===== start of unsupported features ===== */
 

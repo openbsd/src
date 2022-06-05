@@ -1,1 +1,1 @@
-mandoc: B.in:37:23: WARNING: invalid escape sequence: \B'1+1
+mandoc: B.in:37:23: ERROR: incomplete escape sequence: \B'1+1

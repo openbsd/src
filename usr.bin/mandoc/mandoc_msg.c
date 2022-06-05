@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc_msg.c,v 1.16 2022/04/28 16:16:46 schwarze Exp $ */
+/* $OpenBSD: mandoc_msg.c,v 1.17 2022/06/05 13:42:49 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -233,6 +233,11 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"skipping all arguments",
 	"skipping excess arguments",
 	"divide by zero",
+
+	/* related to escape sequences */
+	"incomplete escape sequence",
+	"invalid special character",
+	"unknown special character",
 
 	"unsupported feature",
 	"input too large",

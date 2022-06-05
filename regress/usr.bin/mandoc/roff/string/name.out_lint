@@ -1,6 +1,6 @@
 mandoc: name.in:11:5: ERROR: escaped character not allowed in a name: bs\e
 mandoc: name.in:14:5: ERROR: escaped character not allowed in a name: bl\ 
-mandoc: name.in:18:29: WARNING: invalid escape sequence: \*[norm
+mandoc: name.in:18:29: ERROR: incomplete escape sequence: \*[norm
 mandoc: name.in:18:28: STYLE: whitespace at end of input line
 mandoc: name.in:20:7: WARNING: undefined string, using "": quot
 mandoc: name.in:20:6: STYLE: whitespace at end of input line

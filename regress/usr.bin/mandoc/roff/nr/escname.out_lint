@@ -1,5 +1,5 @@
 mandoc: escname.in:9:5: ERROR: escaped character not allowed in a name: first\e
 mandoc: escname.in:11:10: WARNING: undefined escape, printing literally: \G
 mandoc: escname.in:14:5: ERROR: escaped character not allowed in a name: first\e
-mandoc: escname.in:20:13: WARNING: invalid escape sequence: \n[second
+mandoc: escname.in:20:13: ERROR: incomplete escape sequence: \n[second
 mandoc: escname.in:20:12: STYLE: whitespace at end of input line

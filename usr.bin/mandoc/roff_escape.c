@@ -1,4 +1,4 @@
-/* $OpenBSD: roff_escape.c,v 1.9 2022/06/05 10:19:47 schwarze Exp $ */
+/* $OpenBSD: roff_escape.c,v 1.10 2022/06/05 13:42:49 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2020, 2022
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -310,13 +310,12 @@ roff_escape(const char *buf, const int ln, const int aesc,
 	iendarg = iarg;
 	while (maxl > 0) {
 		if (buf[iendarg] == '\0') {
+			err = MANDOCERR_ESC_INCOMPLETE;
+			if (rval != ESCAPE_EXPAND)
+				rval = ESCAPE_ERROR;
 			/* Ignore an incomplete argument except for \w. */
 			if (buf[inam] != 'w')
 				iendarg = iarg;
-			if (rval == ESCAPE_EXPAND)
-				err = MANDOCERR_ESC_BAD;
-			else
-				rval = ESCAPE_ERROR;
 			break;
 		}
 		if (buf[iendarg] == term) {
@@ -401,6 +400,7 @@ roff_escape(const char *buf, const int ln, const int aesc,
 		 */
 
 		if (term != '\0' && argl == 1 && buf[iarg] != '-') {
+			err = MANDOCERR_ESC_BADCHAR;
 			rval = ESCAPE_ERROR;
 			break;
 		}
@@ -416,8 +416,10 @@ roff_escape(const char *buf, const int ln, const int aesc,
 			c = 0;
 			for (i = iarg; i < iendarg; i++)
 				c = 10 * c + (buf[i] - '0');
-			if (c < 0x21 || (c > 0x7e && c < 0xa0) || c > 0xff)
+			if (c < 0x21 || (c > 0x7e && c < 0xa0) || c > 0xff) {
+				err = MANDOCERR_ESC_BADCHAR;
 				break;
+			}
 			iarg += 4;
 			rval = ESCAPE_NUMBERED;
 			break;
@@ -433,13 +435,19 @@ roff_escape(const char *buf, const int ln, const int aesc,
 		if (buf[iarg] != 'u' || argl < 5 || argl > 7)
 			break;
 		if (argl == 7 &&
-		    (buf[iarg + 1] != '1' || buf[iarg + 2] != '0'))
+		    (buf[iarg + 1] != '1' || buf[iarg + 2] != '0')) {
+			err = MANDOCERR_ESC_BADCHAR;
 			break;
-		if (argl == 6 && buf[iarg + 1] == '0')
+		}
+		if (argl == 6 && buf[iarg + 1] == '0') {
+			err = MANDOCERR_ESC_BADCHAR;
 			break;
+		}
 		if (argl == 5 && buf[iarg + 1] == 'D' &&
-		    strchr("89ABCDEF", buf[iarg + 2]) != NULL)
+		    strchr("89ABCDEF", buf[iarg + 2]) != NULL) {
+			err = MANDOCERR_ESC_BADCHAR;
 			break;
+		}
 		if ((int)strspn(buf + iarg + 1, "0123456789ABCDEFabcdef")
 		    + 1 == argl)
 			rval = ESCAPE_UNICODE;
@@ -477,7 +485,8 @@ out:
 	*resc = iesc;
 	switch (rval) {
 	case ESCAPE_ERROR:
-		err = MANDOCERR_ESC_BAD;
+		if (err == MANDOCERR_OK)
+			err = MANDOCERR_ESC_BAD;
 		break;
 	case ESCAPE_UNSUPP:
 		err = MANDOCERR_ESC_UNSUPP;
@@ -487,8 +496,10 @@ out:
 			err = MANDOCERR_ESC_UNDEF;
 		break;
 	case ESCAPE_SPECIAL:
-		if (mchars_spec2cp(buf + iarg, argl) < 0)
-			err = MANDOCERR_ESC_BAD;
+		if (mchars_spec2cp(buf + iarg, argl) >= 0)
+			err = MANDOCERR_OK;
+		else if (err == MANDOCERR_OK)
+			err = MANDOCERR_ESC_UNKCHAR;
 		break;
 	default:
 		break;

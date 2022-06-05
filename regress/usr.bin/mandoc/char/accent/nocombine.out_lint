@@ -1,2 +1,2 @@
-mandoc: nocombine.in:8:27: WARNING: invalid escape sequence: \[']
-mandoc: nocombine.in:14:27: WARNING: invalid escape sequence: \[`]
+mandoc: nocombine.in:8:27: ERROR: invalid special character: \[']
+mandoc: nocombine.in:14:27: ERROR: invalid special character: \[`]
