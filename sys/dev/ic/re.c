@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.212 2022/06/03 10:38:40 dlg Exp $	*/
+/*	$OpenBSD: re.c,v 1.213 2022/06/05 02:49:30 dlg Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -2521,9 +2521,9 @@ re_kstat_copy(struct kstat *ks, void *dst)
 	kstat_kv_u32(&kvs->tx_mcol) = lemtoh32(&rs->re_tx_mcol);
 	kstat_kv_u64(&kvs->rx_ok_phy) = lemtoh64(&rs->re_rx_ok_phy);
 	kstat_kv_u64(&kvs->rx_ok_brd) = lemtoh64(&rs->re_rx_ok_brd);
-	kstat_kv_u32(&kvs->rx_ok_mul) = lemtoh64(&rs->re_rx_ok_mul);
-	kstat_kv_u16(&kvs->tx_abt) = lemtoh64(&rs->re_tx_abt);
-	kstat_kv_u16(&kvs->tx_undrn) = lemtoh64(&rs->re_tx_undrn);
+	kstat_kv_u32(&kvs->rx_ok_mul) = lemtoh32(&rs->re_rx_ok_mul);
+	kstat_kv_u16(&kvs->tx_abt) = lemtoh16(&rs->re_tx_abt);
+	kstat_kv_u16(&kvs->tx_undrn) = lemtoh16(&rs->re_tx_undrn);
 
 	return (0);
 }
