@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.61 2022/06/05 20:24:10 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.62 2022/06/05 20:37:24 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3976,15 +3976,15 @@ main(int argc, char **argv)
 	failed |= test_tlsext_cookie_client();
 	failed |= test_tlsext_cookie_server();
 
-	failed |= test_tlsext_psk_modes_client();
-	failed |= test_tlsext_psk_modes_server();
-
 #ifndef OPENSSL_NO_SRTP
 	failed |= test_tlsext_srtp_client();
 	failed |= test_tlsext_srtp_server();
 #else
 	fprintf(stderr, "Skipping SRTP tests due to OPENSSL_NO_SRTP\n");
 #endif
+
+	failed |= test_tlsext_psk_modes_client();
+	failed |= test_tlsext_psk_modes_server();
 
 	failed |= test_tlsext_clienthello_build();
 	failed |= test_tlsext_serverhello_build();
