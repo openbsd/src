@@ -1,4 +1,4 @@
-/* $OpenBSD: roff_escape.c,v 1.11 2022/06/06 12:09:18 schwarze Exp $ */
+/* $OpenBSD: roff_escape.c,v 1.12 2022/06/06 19:22:54 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2020, 2022
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -270,12 +270,14 @@ roff_escape(const char *buf, const int ln, const int aesc,
 		goto out_sub;
 
 	if (term == '\b') {
-		if ((buf[inam] == 'N' && isdigit((unsigned char)buf[iarg])) ||
-		    (buf[inam] == 'h' && strchr(" %&()*+-./0123456789:<=>",
-		     buf[iarg]) != NULL)) {
-			iendarg = iend = iarg + 1;
-			rval = ESCAPE_ERROR;
-			goto out;
+		if (strchr("BDHLRSvxNhl", buf[inam]) != NULL &&
+		    strchr(" %&()*+-./0123456789:<=>", buf[iarg]) != NULL) {
+			if (rval != ESCAPE_EXPAND)
+				rval = ESCAPE_ERROR;
+			if (buf[inam] != 'D') {
+				iendarg = iend = iarg + 1;
+				goto out;
+			}
 		}
 		term = buf[iarg++];
 	} else if (term == '\0' && maxl == INT_MAX) {
