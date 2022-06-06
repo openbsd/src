@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1995 2022/05/26 01:47:02 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1996 2022/06/06 03:58:19 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -2026,7 +2026,8 @@
 #define	PCI_PRODUCT_ATI_BEIGE_GOBY_2	0x7421		/* Navi 24 */
 #define	PCI_PRODUCT_ATI_BEIGE_GOBY_3	0x7422		/* Navi 24 */
 #define	PCI_PRODUCT_ATI_BEIGE_GOBY_4	0x7423		/* Navi 24 */
-#define	PCI_PRODUCT_ATI_BEIGE_GOBY_5	0x743f		/* Navi 24 */
+#define	PCI_PRODUCT_ATI_BEIGE_GOBY_5	0x7424		/* Navi 24 */
+#define	PCI_PRODUCT_ATI_BEIGE_GOBY_6	0x743f		/* Navi 24 */
 #define	PCI_PRODUCT_ATI_RADEON_9000IGP	0x7834		/* Radeon 9000/9100 IGP */
 #define	PCI_PRODUCT_ATI_RADEON_RS350IGP	0x7835		/* Radeon RS350IGP */
 #define	PCI_PRODUCT_ATI_RS690_HB	0x7910		/* RS690 Host */
