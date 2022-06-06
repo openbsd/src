@@ -1,4 +1,4 @@
-/* $OpenBSD: roff_escape.c,v 1.10 2022/06/05 13:42:49 schwarze Exp $ */
+/* $OpenBSD: roff_escape.c,v 1.11 2022/06/06 12:09:18 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2020, 2022
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -206,10 +206,6 @@ roff_escape(const char *buf, const int ln, const int aesc,
 		term = '\b';
 		break;
 	case 'C':
-		if (buf[iarg] != '\'') {
-			rval = ESCAPE_ERROR;
-			goto out;
-		}
 		rval = ESCAPE_SPECIAL;
 		term = '\b';
 		break;
@@ -391,6 +387,11 @@ roff_escape(const char *buf, const int ln, const int aesc,
 		break;
 
 	case ESCAPE_SPECIAL:
+		if (argl == 0) {
+			err = MANDOCERR_ESC_BADCHAR;
+			rval = ESCAPE_ERROR;
+			break;
+		}
 
 		/*
 		 * The file chars.c only provides one common list of
