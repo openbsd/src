@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.62 2022/06/05 20:37:24 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.63 2022/06/06 06:11:04 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -3634,7 +3634,7 @@ test_tlsext_psk_modes_client(void)
 		goto err;
 	}
 
-	/* Make sure we can build the psk modes with DHE key establishments. */
+	/* Make sure we can build psk modes with DHE key establishment. */
 
 	if (!tlsext_psk_kex_modes_client_build(ssl, SSL_TLSEXT_MSG_CH, &cbb)) {
 		FAIL("client failed to build psk kex modes\n");
@@ -3758,7 +3758,7 @@ test_tlsext_psk_modes_server(void)
 		errx(1, "failed to create SSL");
 
 	if (tlsext_psk_kex_modes_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
-		FAIL("server should not need psk kex modes by default\n");
+		FAIL("server should not need psk kex modes\n");
 		goto err;
 	}
 
