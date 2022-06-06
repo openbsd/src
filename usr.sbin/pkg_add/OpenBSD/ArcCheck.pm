@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.36 2022/02/07 09:38:33 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.37 2022/06/06 06:57:35 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -57,8 +57,16 @@ sub validate_meta
 
 	$o->{cwd} = $item->cwd;
 	if (defined $item->{symlink} || $o->isSymLink) {
-		unless (defined $item->{symlink} && $o->isSymLink) {
-			$o->errsay("bogus symlink #1", $item->name);
+		if (!defined $item->{symlink}) {
+			$o->errsay("bogus symlink #1 -> #2", 
+			    $item->name, $o->{linkname});
+			$o->errsay("\t(no \@symlink annotation in packing-list)");
+			return 0;
+		}
+		if (!$o->isSymLink) {
+			$o->errsay("bogus symlink #1 -> #2", 
+			    $item->name, $item->{symlink});
+			$o->errsay("\t(not a symlink in the tarball)");
 			return 0;
 		}
 		if (!$o->check_linkname($item->{symlink})) {
@@ -67,8 +75,16 @@ sub validate_meta
 			return 0;
 		}
 	} elsif (defined $item->{link} || $o->isHardLink) {
-		unless (defined $item->{link} && $o->isHardLink) {
-			$o->errsay("bogus hardlink #1", $item->name);
+		if (!defined $item->{link}) {
+			$o->errsay("bogus hardlink #1 -> #2",
+			    $item->name, $o->{linkname});
+			$o->errsay("\t(no \@link annotation in packing-list)");
+			return 0;
+		}
+		if (!$o->isHardLink) {
+			$o->errsay("bogus hardlink #1 -> #2",
+			    $item->name, $item->{link});
+			$o->errsay("\t(not a link in the tarball)");
 			return 0;
 		}
 		if (!$o->check_linkname($item->{link})) {
