@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.4 2022/03/22 10:33:50 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.5 2022/06/06 10:50:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -466,10 +466,10 @@ efi_dma_constraint(void)
 {
 	void *node;
 
-	/* Raspberry Pi 4 is "special". */
+	/* StarFive JH7100 has peripherals that only support 32-bit DMA. */
 	node = fdt_find_node("/");
-	if (fdt_node_is_compatible(node, "brcm,bcm2711"))
-		dma_constraint[1] = htobe64(0x3bffffff);
+	if (fdt_node_is_compatible(node, "starfive,jh7100"))
+		dma_constraint[1] = htobe64(0xffffffff);
 
 	/* Pass DMA constraint. */
 	node = fdt_find_node("/chosen");
