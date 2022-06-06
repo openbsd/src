@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.61 2022/01/11 18:39:28 jsing Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.62 2022/06/06 16:12:30 tb Exp $ */
 /*
  * Copyright (c) 2016 Joel Sing <jsing@openbsd.org>
  *
@@ -71,7 +71,7 @@ SSL_SESSION_encode(SSL_SESSION *s, unsigned char **out, size_t *out_len,
 
 	/* Cipher suite ID. */
 	/* XXX - require cipher to be non-NULL or always/only use cipher_id. */
-	cid = (uint16_t)(s->cipher_id & 0xffff);
+	cid = (uint16_t)(s->cipher_id & SSL3_CK_VALUE_MASK);
 	if (s->cipher != NULL)
 		cid = ssl3_cipher_get_value(s->cipher);
 	if (!CBB_add_asn1(&session, &cipher_suite, CBS_ASN1_OCTETSTRING))

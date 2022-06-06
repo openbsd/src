@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_txt.c,v 1.32 2022/06/06 15:20:54 tb Exp $ */
+/* $OpenBSD: ssl_txt.c,v 1.33 2022/06/06 16:12:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,15 +121,9 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 		goto err;
 
 	if (x->cipher == NULL) {
-		if ((x->cipher_id & 0xff000000) == 0x02000000) {
-			if (BIO_printf(bp, "    Cipher    : %06lX\n",
-			    x->cipher_id & 0xffffff) <= 0)
-				goto err;
-		} else {
-			if (BIO_printf(bp, "    Cipher    : %04lX\n",
-			    x->cipher_id & 0xffff) <= 0)
-				goto err;
-		}
+		if (BIO_printf(bp, "    Cipher    : %04lX\n",
+		    x->cipher_id & SSL3_CK_VALUE_MASK) <= 0)
+			goto err;
 	} else {
 		const char *cipher_name = "unknown";
 
