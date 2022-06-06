@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.109 2022/01/11 19:03:15 jsing Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.110 2022/06/06 13:46:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -224,7 +224,7 @@ SSL_SESSION_new(void)
 
 	ss->verify_result = 1; /* avoid 0 (= X509_V_OK) just in case */
 	ss->references = 1;
-	ss->timeout=60*5+4; /* 5 minute timeout by default */
+	ss->timeout = 60 * 5 + 4; /* 5 minutes 4 seconds timeout by default */
 	ss->time = time(NULL);
 	ss->prev = NULL;
 	ss->next = NULL;
