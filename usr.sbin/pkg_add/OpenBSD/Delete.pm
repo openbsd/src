@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.163 2022/04/27 14:55:08 espie Exp $
+# $OpenBSD: Delete.pm,v 1.164 2022/06/06 07:57:21 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -83,7 +83,6 @@ sub delete_handle
 {
 	my ($handle, $state) = @_;
 	my $pkgname = $handle->pkgname;
-	$state->progress->message($state->f("reading list for #1", $pkgname));
 	my $plist = $handle->plist;
 	if ($plist->has('firmware') && !$state->defines('FW_UPDATE')) {
 		if ($state->is_interactive) {
