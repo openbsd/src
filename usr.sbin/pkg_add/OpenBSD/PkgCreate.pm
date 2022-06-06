@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.179 2022/05/28 07:46:27 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.180 2022/06/06 08:18:22 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -269,6 +269,7 @@ sub compute_checksum
 	my ($self, $result, $state, $base) = @_;
 	my $name = $self->fullname;
 	my $fname = $name;
+	my $okay = 1;
 	if (defined $base) {
 		$fname = $base.$fname;
 	}
@@ -276,6 +277,7 @@ sub compute_checksum
 		if (defined $result->{$field}) {
 			$state->error("User tried to define @#1 for #2",
 			    $field, $fname);
+			$okay = 0;
 		}
 	}
 	if (defined $self->{wtempname}) {
@@ -285,12 +287,14 @@ sub compute_checksum
 		if (!defined $base) {
 			$state->error("special file #1 can't be a symlink",
 			    $self->stringize);
+			$okay = 0;
 		}
 		my $value = readlink $fname;
 		my $chk = resolve_link($fname, $base);
 		$fname =~ s|^//|/|; # cosmetic
 		if (!defined $chk) {
 			$state->error("bogus symlink: #1 (too deep)", $fname);
+			$okay = 0;
 		} elsif (!-e $chk) {
 			push(@{$state->{bad_symlinks}{$chk}}, $fname);
 		}
@@ -299,6 +303,7 @@ sub compute_checksum
 		    	$state->error(
 			    "bad symlink: #1 (points into WRKOBJDIR)",
 			    $fname);
+			$okay = 0;
 		}
 		$result->make_symlink($value);
 	} elsif (-f _) {
@@ -319,23 +324,29 @@ sub compute_checksum
 		}
 	} elsif (-d _) {
 		$state->error("#1 should be a file and not a directory", $fname);
+		$okay = 0;
 	} else {
 		$state->error("#1 does not exist", $fname);
+		$okay = 0;
 	}
+	return $okay;
 }
 
 sub makesum_plist_with_base
 {
 	my ($self, $plist, $state, $base) = @_;
-	$self->compute_checksum($self, $state, $base);
-	$self->add_object($plist);
+	if ($self->compute_checksum($self, $state, $base)) {
+		$self->add_object($plist);
+	}
 }
 
 sub verify_checksum_with_base
 {
 	my ($self, $state, $base) = @_;
 	my $check = ref($self)->new($self->name);
-	$self->compute_checksum($check, $state, $base);
+	if (!$self->compute_checksum($check, $state, $base)) {
+		return;
+	}
 
 	for my $field (qw(symlink link size)) {  # md5
 		if ((defined $check->{$field} && defined $self->{$field} &&
