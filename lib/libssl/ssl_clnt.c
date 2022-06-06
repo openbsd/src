@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.141 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.142 2022/06/06 13:18:34 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1647,8 +1647,7 @@ ssl3_get_new_session_ticket(SSL *s)
 	 *
 	 * We choose the former approach because this fits in with
 	 * assumptions elsewhere in OpenSSL. The session ID is set
-	 * to the SHA256 (or SHA1 is SHA256 is disabled) hash of the
-	 * ticket.
+	 * to the SHA256 hash of the ticket.
 	 */
 	EVP_Digest(CBS_data(&session_ticket), CBS_len(&session_ticket),
 	    s->session->session_id, &s->session->session_id_length,
