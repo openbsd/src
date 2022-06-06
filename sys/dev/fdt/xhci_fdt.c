@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.18 2021/10/24 17:52:27 mpi Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.19 2022/06/06 09:46:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -43,6 +43,10 @@ struct xhci_fdt_softc {
 	int			sc_node;
 	bus_space_handle_t	ph_ioh;
 	void			*sc_ih;
+
+	bus_addr_t		sc_otg_base;
+	bus_size_t		sc_otg_size;
+	bus_space_handle_t	sc_otg_ioh;
 };
 
 int	xhci_fdt_match(struct device *, void *, void *);
@@ -52,7 +56,8 @@ const struct cfattach xhci_fdt_ca = {
 	sizeof(struct xhci_fdt_softc), xhci_fdt_match, xhci_fdt_attach
 };
 
-void	xhci_dwc3_init(struct xhci_fdt_softc *);
+int	xhci_cdns_init(struct xhci_fdt_softc *);
+int	xhci_snps_init(struct xhci_fdt_softc *);
 void	xhci_init_phys(struct xhci_fdt_softc *);
 
 int
@@ -62,6 +67,7 @@ xhci_fdt_match(struct device *parent, void *match, void *aux)
 
 	return OF_is_compatible(faa->fa_node, "generic-xhci") ||
 	    OF_is_compatible(faa->fa_node, "cavium,octeon-7130-xhci") ||
+	    OF_is_compatible(faa->fa_node, "cdns,usb3") ||
 	    OF_is_compatible(faa->fa_node, "snps,dwc3");
 }
 
@@ -70,20 +76,40 @@ xhci_fdt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xhci_fdt_softc *sc = (struct xhci_fdt_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	int error;
+	int error = 0;
+	int idx;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
 		return;
 	}
 
+	if (OF_is_compatible(faa->fa_node, "cdns,usb3")) {
+		idx = OF_getindex(faa->fa_node, "otg", "reg-names");
+		if (idx < 0 || idx > faa->fa_nreg) {
+			printf(": no otg registers\n");
+			return;
+		}
+
+		sc->sc_otg_base = faa->fa_reg[idx].addr;
+		sc->sc_otg_size = faa->fa_reg[idx].size;
+	}
+
+	idx = OF_getindex(faa->fa_node, "xhci", "reg-names");
+	if (idx == -1)
+		idx = 0;
+	if (idx >= faa->fa_nreg) {
+		printf(": no xhci registers\n");
+		return;
+	}
+
 	sc->sc_node = faa->fa_node;
 	sc->sc.iot = faa->fa_iot;
-	sc->sc.sc_size = faa->fa_reg[0].size;
+	sc->sc.sc_size = faa->fa_reg[idx].size;
 	sc->sc.sc_bus.dmatag = faa->fa_dmat;
 
-	if (bus_space_map(sc->sc.iot, faa->fa_reg[0].addr,
-	    faa->fa_reg[0].size, 0, &sc->sc.ioh)) {
+	if (bus_space_map(sc->sc.iot, faa->fa_reg[idx].addr,
+	    faa->fa_reg[idx].size, 0, &sc->sc.ioh)) {
 		printf(": can't map registers\n");
 		return;
 	}
@@ -101,11 +127,18 @@ xhci_fdt_attach(struct device *parent, struct device *self, void *aux)
 	clock_enable_all(sc->sc_node);
 
 	/* 
-	 * Synopsys Designware USB3 controller needs some extra
-	 * attention because of the additional OTG functionality.
+	 * Cadence and Synopsys DesignWare USB3 controllers need some
+	 * extra attention because of the additional OTG
+	 * functionality.
 	 */
+	if (OF_is_compatible(sc->sc_node, "cdns,usb3"))
+		error = xhci_cdns_init(sc);
 	if (OF_is_compatible(sc->sc_node, "snps,dwc3"))
-		xhci_dwc3_init(sc);
+		error = xhci_snps_init(sc);
+	if (error) {
+		printf(": can't initialize hardware\n");
+		goto disestablish_ret;
+	}
 
 	xhci_init_phys(sc);
 
@@ -130,9 +163,50 @@ unmap:
 	bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 }
 
+/*
+ * Cadence USB3 controller.
+ */
+
+#define OTG_DID			0x00
+#define  OTG_DID_V1		0x4024e
+#define OTG_CMD			0x10
+#define  OTG_CMD_HOST_BUS_REQ	(1 << 1)
+#define  OTG_CMD_OTG_DIS	(1 << 3)
+#define OTG_STS			0x14
+#define  OTG_STS_XHCI_READY	(1 << 26)
+
+int
+xhci_cdns_init(struct xhci_fdt_softc *sc)
+{
+	uint32_t did, sts;
+	int timo;
+
+	if (bus_space_map(sc->sc.iot, sc->sc_otg_base,
+	    sc->sc_otg_size, 0, &sc->sc_otg_ioh))
+		return ENOMEM;
+
+	did = bus_space_read_4(sc->sc.iot, sc->sc_otg_ioh, OTG_DID);
+	if (did != OTG_DID_V1)
+		return ENOTSUP;
+
+	bus_space_write_4(sc->sc.iot, sc->sc_otg_ioh, OTG_CMD,
+	    OTG_CMD_HOST_BUS_REQ | OTG_CMD_OTG_DIS);
+	for (timo = 100; timo > 0; timo--) {
+		sts = bus_space_read_4(sc->sc.iot, sc->sc_otg_ioh, OTG_STS);
+		if (sts & OTG_STS_XHCI_READY)
+			break;
+		delay(1000);
+	}
+	if (timo == 0) {
+		bus_space_unmap(sc->sc.iot, sc->sc_otg_ioh, sc->sc_otg_size);
+		return ETIMEDOUT;
+	}
+
+	return 0;
+}
 
 /*
- * Synopsys Designware USB3 controller.
+ * Synopsys DesignWare USB3 controller.
  */
 
 #define USB3_GCTL		0xc110
@@ -148,8 +222,8 @@ unmap:
 #define  USB3_GUSB2PHYCFG0_SUSPENDUSB20	(1 << 6)
 #define  USB3_GUSB2PHYCFG0_PHYIF	(1 << 3)
 
-void
-xhci_dwc3_init(struct xhci_fdt_softc *sc)
+int
+xhci_snps_init(struct xhci_fdt_softc *sc)
 {
 	char phy_type[16] = { 0 };
 	int node = sc->sc_node;
@@ -185,6 +259,8 @@ xhci_dwc3_init(struct xhci_fdt_softc *sc)
 	if (OF_getproplen(node, "snps,dis-tx-ipgap-linecheck-quirk") == 0)
 		reg |= USB3_GUCTL1_TX_IPGAP_LINECHECK_DIS;
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, USB3_GUCTL1, reg);
+
+	return 0;
 }
 
 /*
