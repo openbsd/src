@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.148 2022/05/29 10:48:41 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.149 2022/06/06 07:21:17 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -155,6 +155,7 @@ sub zap_wrong_annotations
 		delete $self->{'manual-installation'};
 		delete $self->{'firmware'};
 		delete $self->{'digital-signature'};
+		delete $self->{'signer'};
 	}
 }
 
