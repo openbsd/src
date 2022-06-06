@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.390 2022/06/06 08:48:11 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.391 2022/06/06 16:11:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -434,11 +434,12 @@ struct ssl_method_st {
 	unsigned int enc_flags;		/* SSL_ENC_FLAG_* */
 };
 
-/* Lets make this into an ASN.1 type structure as follows
+/*
+ * Let's make this into an ASN.1 type structure as follows
  * SSL_SESSION_ID ::= SEQUENCE {
  *	version			INTEGER,	-- structure version number
  *	SSLversion		INTEGER,	-- SSL version number
- *	Cipher			OCTET STRING,	-- the 3 byte cipher ID
+ *	Cipher			OCTET STRING,	-- the 2 byte cipher ID
  *	Session_ID		OCTET STRING,	-- the Session ID
  *	Master_key		OCTET STRING,	-- the master key
  *	KRB5_principal		OCTET STRING	-- optional Kerberos principal
@@ -454,7 +455,7 @@ struct ssl_method_st {
  *	Ticket [10]             EXPLICIT OCTET STRING, -- session ticket (clients only)
  *	Compression_meth [11]   EXPLICIT OCTET STRING, -- optional compression method
  *	SRP_username [ 12 ] EXPLICIT OCTET STRING -- optional SRP username
- *	}
+ * }
  * Look in ssl/ssl_asn1.c for more details
  * I'm using EXPLICIT tags so I can read the damn things using asn1parse :-).
  */
