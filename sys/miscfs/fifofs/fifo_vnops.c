@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.93 2022/02/16 13:19:33 visa Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.94 2022/06/06 14:45:41 claudio Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ fifo_open(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct fifoinfo *fip;
 	struct socket *rso, *wso;
-	int s, error;
+	int error;
 
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		fip = malloc(sizeof(*fip), M_VNODE, M_WAITOK);
@@ -175,13 +175,13 @@ fifo_open(void *v)
 			return (error);
 		}
 		fip->fi_readers = fip->fi_writers = 0;
-		s = solock(wso);
+		solock(wso);
 		wso->so_state |= SS_CANTSENDMORE;
 		wso->so_snd.sb_lowat = PIPE_BUF;
 	} else {
 		rso = fip->fi_readsock;
 		wso = fip->fi_writesock;
-		s = solock(wso);
+		solock(wso);
 	}
 	if (ap->a_mode & FREAD) {
 		fip->fi_readers++;
@@ -195,7 +195,7 @@ fifo_open(void *v)
 		fip->fi_writers++;
 		if ((ap->a_mode & O_NONBLOCK) && fip->fi_readers == 0) {
 			error = ENXIO;
-			sounlock(wso, s);
+			sounlock(wso);
 			goto bad;
 		}
 		if (fip->fi_writers == 1) {
@@ -204,7 +204,7 @@ fifo_open(void *v)
 				wakeup(&fip->fi_readers);
 		}
 	}
-	sounlock(wso, s);
+	sounlock(wso);
 	if ((ap->a_mode & O_NONBLOCK) == 0) {
 		if ((ap->a_mode & FREAD) && fip->fi_writers == 0) {
 			VOP_UNLOCK(vp);
@@ -320,12 +320,11 @@ fifo_poll(void *v)
 	struct socket *wso = ap->a_vp->v_fifoinfo->fi_writesock;
 	int events = 0;
 	int revents = 0;
-	int s;
 
 	/*
 	 * FIFOs don't support out-of-band or high priority data.
 	 */
-	s = solock(rso);
+	solock(rso);
 	if (ap->a_fflag & FREAD)
 		events |= ap->a_events & (POLLIN | POLLRDNORM);
 	if (ap->a_fflag & FWRITE)
@@ -355,7 +354,7 @@ fifo_poll(void *v)
 			wso->so_snd.sb_flags |= SB_SEL;
 		}
 	}
-	sounlock(rso, s);
+	sounlock(rso);
 	return (revents);
 }
 
@@ -379,7 +378,7 @@ fifo_close(void *v)
 	struct vop_close_args *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct fifoinfo *fip = vp->v_fifoinfo;
-	int s, error1 = 0, error2 = 0;
+	int error1 = 0, error2 = 0;
 
 	if (fip == NULL)
 		return (0);
@@ -388,20 +387,20 @@ fifo_close(void *v)
 		if (--fip->fi_readers == 0) {
 			struct socket *wso = fip->fi_writesock;
 
-			s = solock(wso);
+			solock(wso);
 			socantsendmore(wso);
-			sounlock(wso, s);
+			sounlock(wso);
 		}
 	}
 	if (ap->a_fflag & FWRITE) {
 		if (--fip->fi_writers == 0) {
 			struct socket *rso = fip->fi_readsock;
 
-			s = solock(rso);
+			solock(rso);
 			/* SS_ISDISCONNECTED will result in POLLHUP */
 			rso->so_state |= SS_ISDISCONNECTED;
 			socantrcvmore(rso);
-			sounlock(rso, s);
+			sounlock(rso);
 		}
 	}
 	if (fip->fi_readers == 0 && fip->fi_writers == 0) {
@@ -642,11 +641,11 @@ int
 filt_fifomodify(struct kevent *kev, struct knote *kn)
 {
 	struct socket *so = kn->kn_hook;
-	int rv, s;
+	int rv;
 
-	s = solock(so);
+	solock(so);
 	rv = knote_modify(kev, kn);
-	sounlock(so, s);
+	sounlock(so);
 
 	return (rv);
 }
@@ -655,11 +654,11 @@ int
 filt_fifoprocess(struct knote *kn, struct kevent *kev)
 {
 	struct socket *so = kn->kn_hook;
-	int rv, s;
+	int rv;
 
-	s = solock(so);
+	solock(so);
 	rv = knote_process(kn, kev);
-	sounlock(so, s);
+	sounlock(so);
 
 	return (rv);
 }

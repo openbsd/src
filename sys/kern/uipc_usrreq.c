@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.164 2022/04/11 18:18:17 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.165 2022/06/06 14:45:41 claudio Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -237,7 +237,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 
 	case PRU_SEND:
 		if (control) {
-			sounlock(so, SL_LOCKED);
+			sounlock(so);
 			error = unp_internalize(control, p);
 			solock(so);
 			if (error)
@@ -328,7 +328,7 @@ uipc_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		 * uipc_usrreq() releasing it here would lead to a
 		 * double unlock.
 		 */
-		sofree(so, SL_NOUNLOCK);
+		sofree(so, 1);
 		break;
 
 	case PRU_SENSE: {
@@ -451,7 +451,7 @@ uipc_attach(struct socket *so, int proto)
 	 * listening socket protected by vnode(9) lock. The peer socket
 	 * has 'UNP_CONNECTING' flag set.
 	 */
-	sounlock(so, SL_LOCKED);
+	sounlock(so);
 	rw_enter_write(&unp_gc_lock);
 	LIST_INSERT_HEAD(&unp_head, unp, unp_link);
 	rw_exit_write(&unp_gc_lock);
@@ -521,7 +521,7 @@ unp_detach(struct unpcb *unp)
 	 * Enforce `unp_gc_lock' -> `solock()' lock order.
 	 * Enforce `i_lock' -> `unp_lock' lock order.
 	 */
-	sounlock(so, SL_LOCKED);
+	sounlock(so);
 
 	rw_enter_write(&unp_gc_lock);
 	LIST_REMOVE(unp, unp_link);
@@ -576,7 +576,7 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct proc *p)
 	 * because the file descriptor reference is still held.
 	 */
 
-	sounlock(unp->unp_socket, SL_LOCKED);
+	sounlock(unp->unp_socket);
 
 	nam2 = m_getclr(M_WAITOK, MT_SONAME);
 	nam2->m_len = sizeof(struct sockaddr_un);
@@ -668,7 +668,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 	 * because the file descriptor reference is still held.
 	 */
 
-	sounlock(so, SL_LOCKED);
+	sounlock(so);
 
 	KERNEL_LOCK();
 	error = namei(&nd);
@@ -714,7 +714,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 	}
 	error = unp_connect2(so, so2);
 put_locked:
-	sounlock(so, SL_LOCKED);
+	sounlock(so);
 put:
 	vput(vp);
 unlock:
@@ -1217,7 +1217,7 @@ unp_gc(void *arg __unused)
 		so = unp->unp_socket;
 		solock(so);
 		unp_scan(so->so_rcv.sb_mb, unp_remove_gcrefs);
-		sounlock(so, SL_LOCKED);
+		sounlock(so);
 	}
 
 	/*
@@ -1241,7 +1241,7 @@ unp_gc(void *arg __unused)
 			so = unp->unp_socket;
 			solock(so);
 			unp_scan(so->so_rcv.sb_mb, unp_restore_gcrefs);
-			sounlock(so, SL_LOCKED);
+			sounlock(so);
 
 			KASSERT(nunref > 0);
 			nunref--;
@@ -1264,7 +1264,7 @@ unp_gc(void *arg __unused)
 				so = unp->unp_socket;
 				solock(so);
 				unp_scan(so->so_rcv.sb_mb, unp_discard);
-				sounlock(so, SL_LOCKED);
+				sounlock(so);
 			}
 		}
 	}

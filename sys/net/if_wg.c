@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.24 2022/03/17 18:51:56 tb Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.25 2022/06/06 14:45:41 claudio Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -680,7 +680,7 @@ wg_socket_open(struct socket **so, int af, in_port_t *port,
 	struct sockaddr_in6	*sin6;
 #endif
 	struct sockaddr_in	*sin;
-	int			 ret, s;
+	int			 ret;
 
 	m_inithdr(&mhostnam);
 	m_inithdr(&mrtable);
@@ -714,7 +714,7 @@ wg_socket_open(struct socket **so, int af, in_port_t *port,
 	if ((ret = socreate(af, so, SOCK_DGRAM, 0)) != 0)
 		return ret;
 
-	s = solock(*so);
+	solock(*so);
 	sotoinpcb(*so)->inp_upcall = wg_input;
 	sotoinpcb(*so)->inp_upcall_arg = upcall_arg;
 
@@ -724,7 +724,7 @@ wg_socket_open(struct socket **so, int af, in_port_t *port,
 			*rtable = sotoinpcb(*so)->inp_rtableid;
 		}
 	}
-	sounlock(*so, s);
+	sounlock(*so);
 
 	if (ret != 0)
 		wg_socket_close(so);

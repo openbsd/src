@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.36 2019/01/22 22:45:04 bluhm Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.37 2022/06/06 14:45:41 claudio Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	struct rpc_call *call;
 	struct rpc_reply *reply;
 	struct uio auio;
-	int s, error, rcvflg, timo, secs, len, authlen;
+	int error, rcvflg, timo, secs, len, authlen;
 	static u_int32_t xid = 0;
 	char addr[INET_ADDRSTRLEN];
 	int *ip;
@@ -239,9 +239,9 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	tv.tv_usec = 0;
 	memcpy(mtod(m, struct timeval *), &tv, sizeof tv);
 	m->m_len = sizeof(tv);
-	s = solock(so);
+	solock(so);
 	error = sosetopt(so, SOL_SOCKET, SO_RCVTIMEO, m);
-	sounlock(so, s);
+	sounlock(so);
 	m_freem(m);
 	if (error)
 		goto out;
@@ -255,9 +255,9 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 		on = mtod(m, int32_t *);
 		m->m_len = sizeof(*on);
 		*on = 1;
-		s = solock(so);
+		solock(so);
 		error = sosetopt(so, SOL_SOCKET, SO_BROADCAST, m);
-		sounlock(so, s);
+		sounlock(so);
 		m_freem(m);
 		if (error)
 			goto out;
@@ -272,9 +272,9 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	mopt->m_len = sizeof(int);
 	ip = mtod(mopt, int *);
 	*ip = IP_PORTRANGE_LOW;
-	s = solock(so);
+	solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
-	sounlock(so, s);
+	sounlock(so);
 	m_freem(mopt);
 	if (error)
 		goto out;
@@ -286,9 +286,9 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = INADDR_ANY;
 	sin->sin_port = htons(0);
-	s = solock(so);
+	solock(so);
 	error = sobind(so, m, &proc0);
-	sounlock(so, s);
+	sounlock(so);
 	m_freem(m);
 	if (error) {
 		printf("bind failed\n");
@@ -299,9 +299,9 @@ krpc_call(struct sockaddr_in *sa, u_int prog, u_int vers, u_int func,
 	mopt->m_len = sizeof(int);
 	ip = mtod(mopt, int *);
 	*ip = IP_PORTRANGE_DEFAULT;
-	s = solock(so);
+	solock(so);
 	error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, mopt);
-	sounlock(so, s);
+	sounlock(so);
 	m_freem(mopt);
 	if (error)
 		goto out;

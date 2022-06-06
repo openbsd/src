@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.277 2022/05/09 14:49:55 visa Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.278 2022/06/06 14:45:41 claudio Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	struct proc *p = curproc;		/* XXX */
 	const struct protosw *prp;
 	struct socket *so;
-	int error, s;
+	int error;
 
 	if (proto)
 		prp = pffindproto(dom, proto, type);
@@ -191,15 +191,15 @@ socreate(int dom, struct socket **aso, int type, int proto)
 	so->so_snd.sb_timeo_nsecs = INFSLP;
 	so->so_rcv.sb_timeo_nsecs = INFSLP;
 
-	s = solock(so);
+	solock(so);
 	error = (*prp->pr_attach)(so, proto);
 	if (error) {
 		so->so_state |= SS_NOFDREF;
 		/* sofree() calls sounlock(). */
-		sofree(so, s);
+		sofree(so, 0);
 		return (error);
 	}
-	sounlock(so, s);
+	sounlock(so);
 	*aso = so;
 	return (0);
 }
@@ -245,12 +245,13 @@ solisten(struct socket *so, int backlog)
 #define SOSP_FREEING_READ	1
 #define SOSP_FREEING_WRITE	2
 void
-sofree(struct socket *so, int s)
+sofree(struct socket *so, int keep_lock)
 {
 	soassertlocked(so);
 
 	if (so->so_pcb || (so->so_state & SS_NOFDREF) == 0) {
-		sounlock(so, s);
+		if (!keep_lock)
+			sounlock(so);
 		return;
 	}
 	if (so->so_head) {
@@ -260,7 +261,8 @@ sofree(struct socket *so, int s)
 		 * indicated that the listening socket was ready.
 		 */
 		if (!soqremque(so, 0)) {
-			sounlock(so, s);
+			if (!keep_lock)
+				sounlock(so);
 			return;
 		}
 	}
@@ -287,7 +289,8 @@ sofree(struct socket *so, int s)
 #endif /* SOCKET_SPLICE */
 	sbrelease(so, &so->so_snd);
 	sorflush(so);
-	sounlock(so, s);
+	if (!keep_lock)
+		sounlock(so);
 #ifdef SOCKET_SPLICE
 	if (so->so_sp) {
 		/* Reuse splice idle, sounsplice() has been called before. */
@@ -318,9 +321,9 @@ int
 soclose(struct socket *so, int flags)
 {
 	struct socket *so2;
-	int s, error = 0;
+	int error = 0;
 
-	s = solock(so);
+	solock(so);
 	/* Revoke async IO early. There is a final revocation in sofree(). */
 	sigio_free(&so->so_sigio);
 	if (so->so_state & SS_ISCONNECTED) {
@@ -367,7 +370,7 @@ discard:
 		panic("soclose NOFDREF: so %p, so_type %d", so, so->so_type);
 	so->so_state |= SS_NOFDREF;
 	/* sofree() calls sounlock(). */
-	sofree(so, s);
+	sofree(so, 0);
 	return (error);
 }
 
@@ -427,12 +430,12 @@ soconnect(struct socket *so, struct mbuf *nam)
 int
 soconnect2(struct socket *so1, struct socket *so2)
 {
-	int s, error;
+	int error;
 
-	s = solock(so1);
+	solock(so1);
 	error = (*so1->so_proto->pr_usrreq)(so1, PRU_CONNECT2, NULL,
 	    (struct mbuf *)so2, NULL, curproc);
-	sounlock(so1, s);
+	sounlock(so1);
 	return (error);
 }
 
@@ -478,7 +481,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 {
 	long space, clen = 0;
 	size_t resid;
-	int error, s;
+	int error;
 	int atomic = sosendallatonce(so) || top;
 
 	if (uio)
@@ -512,7 +515,7 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 
 #define	snderr(errno)	{ error = errno; goto release; }
 
-	s = solock(so);
+	solock(so);
 restart:
 	if ((error = sblock(so, &so->so_snd, SBLOCKWAIT(flags))) != 0)
 		goto out;
@@ -565,9 +568,9 @@ restart:
 				if (flags & MSG_EOR)
 					top->m_flags |= M_EOR;
 			} else {
-				sounlock(so, s);
+				sounlock(so);
 				error = m_getuio(&top, atomic, space, uio);
-				s = solock(so);
+				solock(so);
 				if (error)
 					goto release;
 				space -= top->m_pkthdr.len;
@@ -594,7 +597,7 @@ release:
 	so->so_state &= ~SS_ISSENDING;
 	sbunlock(so, &so->so_snd);
 out:
-	sounlock(so, s);
+	sounlock(so);
 	m_freem(top);
 	m_freem(control);
 	return (error);
@@ -727,7 +730,7 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	struct mbuf *m, **mp;
 	struct mbuf *cm;
 	u_long len, offset, moff;
-	int flags, error, s, type, uio_error = 0;
+	int flags, error, type, uio_error = 0;
 	const struct protosw *pr = so->so_proto;
 	struct mbuf *nextrecord;
 	size_t resid, orig_resid = uio->uio_resid;
@@ -743,10 +746,10 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		flags = 0;
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
-		s = solock(so);
+		solock(so);
 		error = (*pr->pr_usrreq)(so, PRU_RCVOOB, m,
 		    (struct mbuf *)(long)(flags & MSG_PEEK), NULL, curproc);
-		sounlock(so, s);
+		sounlock(so);
 		if (error)
 			goto bad;
 		do {
@@ -761,10 +764,10 @@ bad:
 	if (mp)
 		*mp = NULL;
 
-	s = solock(so);
+	solock(so);
 restart:
 	if ((error = sblock(so, &so->so_rcv, SBLOCKWAIT(flags))) != 0) {
-		sounlock(so, s);
+		sounlock(so);
 		return (error);
 	}
 
@@ -832,7 +835,7 @@ restart:
 		sbunlock(so, &so->so_rcv);
 		error = sbwait(so, &so->so_rcv);
 		if (error) {
-			sounlock(so, s);
+			sounlock(so);
 			return (error);
 		}
 		goto restart;
@@ -901,11 +904,11 @@ dontblock:
 			sbsync(&so->so_rcv, nextrecord);
 			if (controlp) {
 				if (pr->pr_domain->dom_externalize) {
-					sounlock(so, s);
+					sounlock(so);
 					error =
 					    (*pr->pr_domain->dom_externalize)
 					    (cm, controllen, flags);
-					s = solock(so);
+					solock(so);
 				}
 				*controlp = cm;
 			} else {
@@ -979,9 +982,9 @@ dontblock:
 			SBLASTRECORDCHK(&so->so_rcv, "soreceive uiomove");
 			SBLASTMBUFCHK(&so->so_rcv, "soreceive uiomove");
 			resid = uio->uio_resid;
-			sounlock(so, s);
+			sounlock(so);
 			uio_error = uiomove(mtod(m, caddr_t) + moff, len, uio);
-			s = solock(so);
+			solock(so);
 			if (uio_error)
 				uio->uio_resid = resid - len;
 		} else
@@ -1065,7 +1068,7 @@ dontblock:
 			error = sbwait(so, &so->so_rcv);
 			if (error) {
 				sbunlock(so, &so->so_rcv);
-				sounlock(so, s);
+				sounlock(so);
 				return (0);
 			}
 			if ((m = so->so_rcv.sb_mb) != NULL)
@@ -1111,7 +1114,7 @@ dontblock:
 		*flagsp |= flags;
 release:
 	sbunlock(so, &so->so_rcv);
-	sounlock(so, s);
+	sounlock(so);
 	return (error);
 }
 
@@ -1119,9 +1122,9 @@ int
 soshutdown(struct socket *so, int how)
 {
 	const struct protosw *pr = so->so_proto;
-	int s, error = 0;
+	int error = 0;
 
-	s = solock(so);
+	solock(so);
 	switch (how) {
 	case SHUT_RD:
 		sorflush(so);
@@ -1137,7 +1140,7 @@ soshutdown(struct socket *so, int how)
 		error = EINVAL;
 		break;
 	}
-	sounlock(so, s);
+	sounlock(so);
 
 	return (error);
 }
@@ -1300,7 +1303,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	 * socket when sosplice() returns. The dance could be avoided by
 	 * grabbing the socket lock inside this function.
 	 */
-	sounlock(so, SL_LOCKED);
+	sounlock(so);
 	FRELE(fp, curproc);
 	solock(so);
 	return (error);
@@ -1327,23 +1330,21 @@ void
 soidle(void *arg)
 {
 	struct socket *so = arg;
-	int s;
 
-	s = solock(so);
+	solock(so);
 	if (so->so_rcv.sb_flags & SB_SPLICE) {
 		so->so_error = ETIMEDOUT;
 		sounsplice(so, so->so_sp->ssp_socket, 0);
 	}
-	sounlock(so, s);
+	sounlock(so);
 }
 
 void
 sotask(void *arg)
 {
 	struct socket *so = arg;
-	int s;
 
-	s = solock(so);
+	solock(so);
 	if (so->so_rcv.sb_flags & SB_SPLICE) {
 		/*
 		 * We may not sleep here as sofree() and unsplice() may be
@@ -1352,7 +1353,7 @@ sotask(void *arg)
 		 */
 		somove(so, M_DONTWAIT);
 	}
-	sounlock(so, s);
+	sounlock(so);
 
 	/* Avoid user land starvation. */
 	yield();
@@ -2047,9 +2048,8 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 {
 	struct socket *so = kn->kn_fp->f_data;
 	struct sockbuf *sb;
-	int s;
 
-	s = solock(so);
+	solock(so);
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		if (so->so_options & SO_ACCEPTCONN)
@@ -2067,12 +2067,12 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 		sb = &so->so_rcv;
 		break;
 	default:
-		sounlock(so, s);
+		sounlock(so);
 		return (EINVAL);
 	}
 
 	klist_insert_locked(&sb->sb_sel.si_note, kn);
-	sounlock(so, s);
+	sounlock(so);
 
 	return (0);
 }
@@ -2215,11 +2215,11 @@ int
 filt_somodify(struct kevent *kev, struct knote *kn)
 {
 	struct socket *so = kn->kn_fp->f_data;
-	int rv, s;
+	int rv;
 
-	s = solock(so);
+	solock(so);
 	rv = knote_modify(kev, kn);
-	sounlock(so, s);
+	sounlock(so);
 
 	return (rv);
 }
@@ -2228,11 +2228,11 @@ int
 filt_soprocess(struct knote *kn, struct kevent *kev)
 {
 	struct socket *so = kn->kn_fp->f_data;
-	int rv, s;
+	int rv;
 
-	s = solock(so);
+	solock(so);
 	rv = knote_process(kn, kev);
-	sounlock(so, s);
+	sounlock(so);
 
 	return (rv);
 }
@@ -2250,7 +2250,8 @@ klist_solock(void *arg)
 {
 	struct socket *so = arg;
 
-	return (solock(so));
+	solock(so);
+	return (1);
 }
 
 void
@@ -2258,7 +2259,7 @@ klist_sounlock(void *arg, int ls)
 {
 	struct socket *so = arg;
 
-	sounlock(so, ls);
+	sounlock(so);
 }
 
 const struct klistops socket_klistops = {

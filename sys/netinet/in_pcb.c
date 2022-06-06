@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.266 2022/05/15 09:12:20 dlg Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.267 2022/06/06 14:45:41 claudio Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -570,7 +570,7 @@ in_pcbdetach(struct inpcb *inp)
 	 * sockets, do not release it to not introduce new sleeping
 	 * points.
 	 */
-	sofree(so, SL_NOUNLOCK);
+	sofree(so, 1);
 	m_freem(inp->inp_options);
 	if (inp->inp_route.ro_rt) {
 		rtfree(inp->inp_route.ro_rt);

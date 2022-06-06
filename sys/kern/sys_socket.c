@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.49 2022/02/25 23:51:03 guenther Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.50 2022/06/06 14:45:41 claudio Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ int
 soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 {
 	struct socket *so = (struct socket *)fp->f_data;
-	int s, error = 0;
+	int error = 0;
 
 	switch (cmd) {
 
@@ -94,7 +94,7 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		break;
 
 	case FIOASYNC:
-		s = solock(so);
+		solock(so);
 		if (*(int *)data) {
 			so->so_rcv.sb_flags |= SB_ASYNC;
 			so->so_snd.sb_flags |= SB_ASYNC;
@@ -102,7 +102,7 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 			so->so_rcv.sb_flags &= ~SB_ASYNC;
 			so->so_snd.sb_flags &= ~SB_ASYNC;
 		}
-		sounlock(so, s);
+		sounlock(so);
 		break;
 
 	case FIONREAD:
@@ -154,9 +154,8 @@ soo_poll(struct file *fp, int events, struct proc *p)
 {
 	struct socket *so = fp->f_data;
 	int revents = 0;
-	int s;
 
-	s = solock(so);
+	solock(so);
 	if (events & (POLLIN | POLLRDNORM)) {
 		if (soreadable(so))
 			revents |= events & (POLLIN | POLLRDNORM);
@@ -182,7 +181,7 @@ soo_poll(struct file *fp, int events, struct proc *p)
 			so->so_snd.sb_flags |= SB_SEL;
 		}
 	}
-	sounlock(so, s);
+	sounlock(so);
 	return (revents);
 }
 
@@ -190,11 +189,10 @@ int
 soo_stat(struct file *fp, struct stat *ub, struct proc *p)
 {
 	struct socket *so = fp->f_data;
-	int s;
 
 	memset(ub, 0, sizeof (*ub));
 	ub->st_mode = S_IFSOCK;
-	s = solock(so);
+	solock(so);
 	if ((so->so_state & SS_CANTRCVMORE) == 0 || so->so_rcv.sb_cc != 0)
 		ub->st_mode |= S_IRUSR | S_IRGRP | S_IROTH;
 	if ((so->so_state & SS_CANTSENDMORE) == 0)
@@ -203,7 +201,7 @@ soo_stat(struct file *fp, struct stat *ub, struct proc *p)
 	ub->st_gid = so->so_egid;
 	(void) ((*so->so_proto->pr_usrreq)(so, PRU_SENSE,
 	    (struct mbuf *)ub, NULL, NULL, p));
-	sounlock(so, s);
+	sounlock(so);
 	return (0);
 }
 

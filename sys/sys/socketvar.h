@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.101 2021/11/06 05:26:33 visa Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.102 2022/06/06 14:45:41 claudio Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -154,12 +154,6 @@ struct socket {
 #ifdef _KERNEL
 
 #include <lib/libkern/libkern.h>
-
-/*
- * Values for sounlock()/sofree().
- */
-#define SL_NOUNLOCK	0x00
-#define SL_LOCKED	0x42
 
 void	soassertlocked(struct socket *);
 
@@ -336,8 +330,8 @@ void	sowwakeup(struct socket *);
 int	sockargs(struct mbuf **, const void *, size_t, int);
 
 int	sosleep_nsec(struct socket *, void *, int, const char *, uint64_t);
-int	solock(struct socket *);
-void	sounlock(struct socket *, int);
+void	solock(struct socket *);
+void	sounlock(struct socket *);
 
 int	sendit(struct proc *, int, struct msghdr *, int, register_t *);
 int	recvit(struct proc *, int, struct msghdr *, caddr_t, register_t *);

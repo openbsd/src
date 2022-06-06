@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.327 2022/03/09 17:29:52 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.328 2022/06/06 14:45:41 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -350,7 +350,7 @@ route_detach(struct socket *so)
 	    rop_list);
 	rw_exit(&rtptable.rtp_lk);
 
-	sounlock(so, SL_LOCKED);
+	sounlock(so);
 
 	/* wait for all references to drop */
 	refcnt_finalize(&rop->rop_refcnt, "rtsockrefs");
@@ -448,11 +448,10 @@ void
 rtm_senddesync_timer(void *xso)
 {
 	struct socket	*so = xso;
-	int		 s;
 
-	s = solock(so);
+	solock(so);
 	rtm_senddesync(so);
-	sounlock(so, s);
+	sounlock(so);
 }
 
 void
@@ -502,7 +501,6 @@ route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 	struct rt_msghdr *rtm;
 	struct mbuf *m = m0;
 	struct srp_ref sr;
-	int s;
 
 	/* ensure that we can access the rtm_type via mtod() */
 	if (m->m_len < offsetof(struct rt_msghdr, rtm_type) + 1) {
@@ -522,7 +520,7 @@ route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 
 
 		so = rop->rop_socket;
-		s = solock(so);
+		solock(so);
 
 		/*
 		 * Check to see if we don't want our own messages and
@@ -579,7 +577,7 @@ route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 
 		rtm_sendup(so, m);
 next:
-		sounlock(so, s);
+		sounlock(so);
 	}
 	SRPL_LEAVE(&sr);
 
@@ -709,7 +707,7 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 	 * descriptor reference is still held.
 	 */
 
-	sounlock(so, SL_LOCKED);
+	sounlock(so);
 
 	len = m->m_pkthdr.len;
 	if (len < offsetof(struct rt_msghdr, rtm_hdrlen) + 1 ||

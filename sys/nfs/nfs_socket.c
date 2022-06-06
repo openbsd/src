@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.141 2022/05/22 04:52:17 visa Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.142 2022/06/06 14:45:41 claudio Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -234,7 +234,7 @@ int
 nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 {
 	struct socket *so;
-	int s, error, rcvreserve, sndreserve;
+	int error, rcvreserve, sndreserve;
 	struct sockaddr *saddr;
 	struct sockaddr_in *sin;
 	struct mbuf *nam = NULL, *mopt = NULL;
@@ -258,7 +258,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		MGET(nam, M_WAIT, MT_SONAME);
 
 	so = nmp->nm_so;
-	s = solock(so);
+	solock(so);
 	nmp->nm_soflags = so->so_proto->pr_flags;
 
 	/*
@@ -365,7 +365,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		goto bad;
 	so->so_rcv.sb_flags |= SB_NOINTR;
 	so->so_snd.sb_flags |= SB_NOINTR;
-	sounlock(so, s);
+	sounlock(so);
 
 	m_freem(mopt);
 	m_freem(nam);
@@ -378,7 +378,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	return (0);
 
 bad:
-	sounlock(so, s);
+	sounlock(so);
 
 	m_freem(mopt);
 	m_freem(nam);

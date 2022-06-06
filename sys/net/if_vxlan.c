@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.90 2022/02/26 04:46:34 dlg Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.91 2022/06/06 14:45:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -902,7 +902,6 @@ vxlan_tep_add_addr(struct vxlan_softc *sc, const union vxlan_addr *addr,
 	struct sockaddr_in6 *sin6;
 #endif
 	int error;
-	int s;
 
 	vt = vxlan_tep_get(sc, addr);
 	if (vt != NULL) {
@@ -935,7 +934,7 @@ vxlan_tep_add_addr(struct vxlan_softc *sc, const union vxlan_addr *addr,
 	if (error != 0)
 		goto free;
 
-	s = solock(so);
+	solock(so);
 
 	sotoinpcb(so)->inp_upcall = vxlan_input;
 	sotoinpcb(so)->inp_upcall_arg = vt;
@@ -979,7 +978,7 @@ vxlan_tep_add_addr(struct vxlan_softc *sc, const union vxlan_addr *addr,
 	if (error != 0)
 		goto close;
 
-	sounlock(so, s);
+	sounlock(so);
 
 	rw_assert_wrlock(&vxlan_lock);
 	TAILQ_INSERT_TAIL(&vxlan_teps, vt, vt_entry);
@@ -989,7 +988,7 @@ vxlan_tep_add_addr(struct vxlan_softc *sc, const union vxlan_addr *addr,
 	return (0);
 
 close:
-	sounlock(so, s);
+	sounlock(so);
 	soclose(so, MSG_DONTWAIT);
 free:
 	free(vt, M_DEVBUF, sizeof(*vt));

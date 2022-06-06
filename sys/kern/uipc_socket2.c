@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.122 2022/05/09 14:49:55 visa Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.123 2022/06/06 14:45:41 claudio Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -276,7 +276,7 @@ socantrcvmore(struct socket *so)
 	sorwakeup(so);
 }
 
-int
+void
 solock(struct socket *so)
 {
 	switch (so->so_proto->pr_domain->dom_family) {
@@ -291,18 +291,11 @@ solock(struct socket *so)
 		rw_enter_write(&so->so_lock);
 		break;
 	}
-
-	return (SL_LOCKED);
 }
 
 void
-sounlock(struct socket *so, int s)
+sounlock(struct socket *so)
 {
-	KASSERT(s == SL_LOCKED || s == SL_NOUNLOCK);
-
-	if (s != SL_LOCKED)
-		return;
-
 	switch (so->so_proto->pr_domain->dom_family) {
 	case PF_INET:
 	case PF_INET6:
