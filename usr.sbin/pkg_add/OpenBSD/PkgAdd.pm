@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.136 2022/06/06 07:39:39 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.137 2022/06/06 08:03:32 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -768,7 +768,7 @@ sub delete_old_packages
 		$state->set_name_from_handle($o, '-');
 		require OpenBSD::Delete;
 		try {
-			OpenBSD::Delete::delete_handle($o, $state);
+			OpenBSD::Delete::delete_plist($o->plist, $state);
 		} catch {
 			$state->errsay($_);
 			$state->fatal(partial_install(
