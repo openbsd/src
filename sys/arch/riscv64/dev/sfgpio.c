@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfgpio.c,v 1.1 2022/05/30 17:39:09 kettenis Exp $	*/
+/*	$OpenBSD: sfgpio.c,v 1.2 2022/06/06 14:34:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
@@ -83,7 +83,7 @@ struct sfgpio_softc {
 int sfgpio_match(struct device *, void *, void *);
 void sfgpio_attach(struct device *, struct device *, void *);
 
-const struct cfattach	sfgpio_ca = {
+const struct cfattach sfgpio_ca = {
 	sizeof (struct sfgpio_softc), sfgpio_match, sfgpio_attach
 };
 
@@ -99,7 +99,6 @@ int	sfgpio_intr(void *);
 void	*sfgpio_intr_establish(void *, int *, int, struct cpu_info *,
 	    int (*)(void *), void *, char *);
 void	sfgpio_intr_disestablish(void *);
-void	sfgpio_recalc_ipl(struct sfgpio_softc *);
 void	sfgpio_intr_enable(void *);
 void	sfgpio_intr_disable(void *);
 void	sfgpio_intr_barrier(void *);
