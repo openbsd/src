@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.55 2021/08/21 10:22:38 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.56 2022/06/07 10:02:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -133,7 +133,8 @@ cmd_capture_pane_history(struct args *args, struct cmdq_item *item,
 	if (Sflag != NULL && strcmp(Sflag, "-") == 0)
 		top = 0;
 	else {
-		n = args_strtonum(args, 'S', INT_MIN, SHRT_MAX, &cause);
+		n = args_strtonum_and_expand(args, 'S', INT_MIN, SHRT_MAX,
+			item, &cause);
 		if (cause != NULL) {
 			top = gd->hsize;
 			free(cause);
@@ -149,7 +150,8 @@ cmd_capture_pane_history(struct args *args, struct cmdq_item *item,
 	if (Eflag != NULL && strcmp(Eflag, "-") == 0)
 		bottom = gd->hsize + gd->sy - 1;
 	else {
-		n = args_strtonum(args, 'E', INT_MIN, SHRT_MAX, &cause);
+		n = args_strtonum_and_expand(args, 'E', INT_MIN, SHRT_MAX,
+			item, &cause);
 		if (cause != NULL) {
 			bottom = gd->hsize + gd->sy - 1;
 			free(cause);
