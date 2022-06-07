@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.392 2022/06/07 17:18:21 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.393 2022/06/07 17:42:35 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -467,7 +467,7 @@ struct ssl_session_st {
 	unsigned char master_key[SSL_MAX_MASTER_KEY_LENGTH];
 
 	/* session_id - valid? */
-	unsigned int session_id_length;
+	size_t session_id_length;
 	unsigned char session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
 
 	/* this is used to determine whether the session is being reused in
