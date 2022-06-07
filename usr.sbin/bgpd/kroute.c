@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.250 2022/06/07 16:12:00 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.251 2022/06/07 16:42:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -507,6 +507,7 @@ kr4_change(struct ktable *kt, struct kroute_full *kl)
 		kr->r.labelid = labelid;
 
 		if (kroute_insert(kt, kr) == -1) {
+			rtlabel_unref(kr->r.labelid);
 			free(kr);
 			return (-1);
 		}
@@ -565,6 +566,7 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 		kr6->r.labelid = labelid;
 
 		if (kroute6_insert(kt, kr6) == -1) {
+			rtlabel_unref(kr6->r.labelid);
 			free(kr6);
 			return (-1);
 		}
@@ -638,6 +640,7 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kl)
 		kr->r.ifindex = kl->ifindex;
 
 		if (kroute_insert(kt, kr) == -1) {
+			rtlabel_unref(kr->r.labelid);
 			free(kr);
 			return (-1);
 		}
@@ -713,6 +716,7 @@ krVPN6_change(struct ktable *kt, struct kroute_full *kl)
 		kr6->r.ifindex = kl->ifindex;
 
 		if (kroute6_insert(kt, kr6) == -1) {
+			rtlabel_unref(kr6->r.labelid);
 			free(kr6);
 			return (-1);
 		}
@@ -777,8 +781,6 @@ kr_flush(u_int rtableid)
 		if ((kr->r.flags & F_BGPD_INSERTED)) {
 			if (kt->fib_sync)	/* coupled */
 				send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r);
-			rtlabel_unref(kr->r.labelid);
-
 			if (kroute_remove(kt, kr) == -1)
 				return (-1);
 		}
@@ -787,8 +789,6 @@ kr_flush(u_int rtableid)
 			if (kt->fib_sync)	/* coupled */
 				send_rt6msg(kr_state.fd, RTM_DELETE, kt,
 				    &kr6->r);
-			rtlabel_unref(kr6->r.labelid);
-
 			if (kroute6_remove(kt, kr6) == -1)
 				return (-1);
 		}
@@ -812,8 +812,6 @@ kr4_delete(struct ktable *kt, struct kroute_full *kl)
 	if (send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r) == -1)
 		return (-1);
 
-	rtlabel_unref(kr->r.labelid);
-
 	if (kroute_remove(kt, kr) == -1)
 		return (-1);
 
@@ -834,8 +832,6 @@ kr6_delete(struct ktable *kt, struct kroute_full *kl)
 
 	if (send_rt6msg(kr_state.fd, RTM_DELETE, kt, &kr6->r) == -1)
 		return (-1);
-
-	rtlabel_unref(kr6->r.labelid);
 
 	if (kroute6_remove(kt, kr6) == -1)
 		return (-1);
@@ -858,8 +854,6 @@ krVPN4_delete(struct ktable *kt, struct kroute_full *kl)
 	if (send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r) == -1)
 		return (-1);
 
-	rtlabel_unref(kr->r.labelid);
-
 	if (kroute_remove(kt, kr) == -1)
 		return (-1);
 
@@ -880,8 +874,6 @@ krVPN6_delete(struct ktable *kt, struct kroute_full *kl)
 
 	if (send_rt6msg(kr_state.fd, RTM_DELETE, kt, &kr6->r) == -1)
 		return (-1);
-
-	rtlabel_unref(kr6->r.labelid);
 
 	if (kroute6_remove(kt, kr6) == -1)
 		return (-1);
@@ -1895,9 +1887,12 @@ kroute_remove(struct ktable *kt, struct kroute_node *kr)
 
 	if (kr->r.flags & F_CONNECTED)
 		if (kif_kr_remove(kr) == -1) {
+			rtlabel_unref(kr->r.labelid);
 			free(kr);
 			return (-1);
 		}
+
+	rtlabel_unref(kr->r.labelid);
 
 	free(kr);
 	return (0);
@@ -2048,9 +2043,12 @@ kroute6_remove(struct ktable *kt, struct kroute6_node *kr)
 
 	if (kr->r.flags & F_CONNECTED)
 		if (kif_kr6_remove(kr) == -1) {
+			rtlabel_unref(kr->r.labelid);
 			free(kr);
 			return (-1);
 		}
+
+	rtlabel_unref(kr->r.labelid);
 
 	free(kr);
 	return (0);
@@ -3264,8 +3262,6 @@ fetchtable(struct ktable *kt)
 			else
 				kr->r.prefixlen =
 				    prefixlen_classful(kr->r.prefix.s_addr);
-			rtlabel_unref(kr->r.labelid);
-			kr->r.labelid = 0;
 			if ((label = (struct sockaddr_rtlabel *)
 			    rti_info[RTAX_LABEL]) != NULL) {
 				kr->r.labelid =
@@ -3304,8 +3300,6 @@ fetchtable(struct ktable *kt)
 				kr6->r.prefixlen = 128;
 			else
 				fatalx("INET6 route without netmask");
-			rtlabel_unref(kr6->r.labelid);
-			kr6->r.labelid = 0;
 			if ((label = (struct sockaddr_rtlabel *)
 			    rti_info[RTAX_LABEL]) != NULL) {
 				kr6->r.labelid =
@@ -3358,6 +3352,7 @@ fetchtable(struct ktable *kt)
 		if (sa->sa_family == AF_INET) {
 			if (rtm->rtm_priority == kr_state.fib_prio) {
 				send_rtmsg(kr_state.fd, RTM_DELETE, kt, &kr->r);
+				rtlabel_unref(kr->r.labelid);
 				free(kr);
 			} else
 				kroute_insert(kt, kr);
@@ -3365,6 +3360,7 @@ fetchtable(struct ktable *kt)
 			if (rtm->rtm_priority == kr_state.fib_prio) {
 				send_rt6msg(kr_state.fd, RTM_DELETE, kt,
 				    &kr6->r);
+				rtlabel_unref(kr6->r.labelid);
 				free(kr6);
 			} else
 				kroute6_insert(kt, kr6);
@@ -3802,7 +3798,6 @@ add4:
 					    rtlabel_name2id(label->sr_label);
 					if (kr6->r.labelid != new_labelid) {
 						rtlabel_unref(kr6->r.labelid);
-						kr6->r.labelid = 0;
 						kr6->r.labelid = new_labelid;
 						rtlabel_changed = 1;
 					}
