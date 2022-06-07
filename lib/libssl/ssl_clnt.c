@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.144 2022/06/07 17:35:49 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.145 2022/06/07 17:39:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1605,6 +1605,7 @@ ssl3_get_new_session_ticket(SSL *s)
 {
 	uint32_t lifetime_hint;
 	CBS cbs, session_ticket;
+	unsigned int session_id_length = 0;
 	int al, ret;
 
 	if ((ret = ssl3_get_message(s, SSL3_ST_CR_SESSION_TICKET_A,
@@ -1658,9 +1659,13 @@ ssl3_get_new_session_ticket(SSL *s)
 	 * assumptions elsewhere in OpenSSL. The session ID is set
 	 * to the SHA256 hash of the ticket.
 	 */
-	EVP_Digest(CBS_data(&session_ticket), CBS_len(&session_ticket),
-	    s->session->session_id, &s->session->session_id_length,
-	    EVP_sha256(), NULL);
+	if (!EVP_Digest(CBS_data(&session_ticket), CBS_len(&session_ticket),
+	    s->session->session_id, &session_id_length, EVP_sha256(), NULL)) {
+		al = SSL_AD_INTERNAL_ERROR;
+		SSLerror(s, ERR_R_EVP_LIB);
+		goto fatal_err;
+	}
+	s->session->session_id_length = session_id_length;
 
 	return (1);
 
