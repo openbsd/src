@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.140 2022/05/10 23:12:25 sashan Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.141 2022/06/07 22:14:15 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1628,8 +1628,7 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 			if (r != NULL)
 				continue;
 
-			q->pfrkt_rs = pf_find_or_create_ruleset(
-			    q->pfrkt_root->pfrkt_anchor);
+			q->pfrkt_rs = pf_find_or_create_ruleset(q->pfrkt_anchor);
 			/*
 			 * root tables are attached to main ruleset,
 			 * because ->pfrkt_anchor[0] == '\0'
