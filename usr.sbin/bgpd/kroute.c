@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.249 2022/06/07 15:57:47 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.250 2022/06/07 16:12:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -971,7 +971,7 @@ kr_fib_decouple_all(void)
 }
 
 void
-kr_fib_prio_set(u_int8_t prio)
+kr_fib_prio_set(uint8_t prio)
 {
 	kr_state.fib_prio = prio;
 }
