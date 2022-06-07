@@ -1,4 +1,4 @@
-/*	$OpenBSD: asn1test.c,v 1.10 2022/01/11 19:08:08 jsing Exp $	*/
+/*	$OpenBSD: asn1test.c,v 1.11 2022/06/07 18:00:51 tb Exp $	*/
 /*
  * Copyright (c) 2014, 2016 Joel Sing <jsing@openbsd.org>
  *
@@ -272,18 +272,18 @@ session_cmp(SSL_SESSION *s1, SSL_SESSION *s2)
 {
 	/* Compare the ASN.1 encoded values from two sessions. */
 	if (s1->ssl_version != s2->ssl_version) {
-		fprintf(stderr, "ssl_version differs: %i != %i\n",
+		fprintf(stderr, "ssl_version differs: %d != %d\n",
 		    s1->ssl_version, s2->ssl_version);
 		return (1);
 	}
 	if (s1->cipher_id != s2->cipher_id) {
-		fprintf(stderr, "cipher_id differs: %li != %li\n",
+		fprintf(stderr, "cipher_id differs: %ld != %ld\n",
 		    s1->cipher_id, s2->cipher_id);
 		return (1);
 	}
 
 	if (s1->master_key_length != s2->master_key_length) {
-		fprintf(stderr, "master_key_length differs: %i != %i\n",
+		fprintf(stderr, "master_key_length differs: %zu != %zu\n",
 		    s1->master_key_length, s2->master_key_length);
 		return (1);
 	}
@@ -294,7 +294,7 @@ session_cmp(SSL_SESSION *s1, SSL_SESSION *s2)
 	}
 
 	if (s1->session_id_length != s2->session_id_length) {
-		fprintf(stderr, "session_id_length differs: %i != %i\n",
+		fprintf(stderr, "session_id_length differs: %zu != %zu\n",
 		    s1->session_id_length, s2->session_id_length);
 		return (1);
 	}
@@ -305,7 +305,7 @@ session_cmp(SSL_SESSION *s1, SSL_SESSION *s2)
 	}
 
 	if (s1->sid_ctx_length != s2->sid_ctx_length) {
-		fprintf(stderr, "sid_ctx_length differs: %i != %i\n",
+		fprintf(stderr, "sid_ctx_length differs: %zu != %zu\n",
 		    s1->sid_ctx_length, s2->sid_ctx_length);
 		return (1);
 	}
@@ -317,14 +317,14 @@ session_cmp(SSL_SESSION *s1, SSL_SESSION *s2)
 
 	/* d2i_SSL_SESSION uses the current time if decoding a zero value. */
 	if ((s1->time != s2->time) && s1->time != 0 && s2->time != 0) {
-		fprintf(stderr, "time differs: %lli != %lli\n",
+		fprintf(stderr, "time differs: %lld != %lld\n",
 		    (long long)s1->time, (long long)s2->time);
 		return (1);
 	}
 	/* d2i_SSL_SESSION uses a timeout of 3 if decoding a zero value. */
 	if ((s1->timeout != s2->timeout) &&
 	    s1->timeout != 3 && s2->timeout != 3) {
-		fprintf(stderr, "timeout differs: %li != %li\n",
+		fprintf(stderr, "timeout differs: %ld != %ld\n",
 		    s1->timeout, s2->timeout);
 		return (1);
 	}
@@ -338,7 +338,7 @@ session_cmp(SSL_SESSION *s1, SSL_SESSION *s2)
 	}
 
 	if (s1->verify_result != s2->verify_result) {
-		fprintf(stderr, "verify_result differs: %li != %li\n",
+		fprintf(stderr, "verify_result differs: %ld != %ld\n",
 		    s1->verify_result, s2->verify_result);
 		return (1);
 	}
@@ -381,8 +381,8 @@ do_ssl_asn1_test(int test_no, struct ssl_asn1_test *sat)
 
 	len = i2d_SSL_SESSION(&sat->session, NULL);
 	if (len != sat->asn1_len) {
-		fprintf(stderr, "FAIL: test %i returned ASN1 length %i, "
-		    "want %i\n", test_no, len, sat->asn1_len);
+		fprintf(stderr, "FAIL: test %d returned ASN1 length %d, "
+		    "want %d\n", test_no, len, sat->asn1_len);
 		goto failed;
 	}
 
@@ -398,19 +398,19 @@ do_ssl_asn1_test(int test_no, struct ssl_asn1_test *sat)
 
 	/* Check the length again since the code path is different. */
 	if (len != sat->asn1_len) {
-		fprintf(stderr, "FAIL: test %i returned ASN1 length %i, "
-		    "want %i\n", test_no, len, sat->asn1_len);
+		fprintf(stderr, "FAIL: test %d returned ASN1 length %d, "
+		    "want %d\n", test_no, len, sat->asn1_len);
 		goto failed;
 	}
 	/* ap should now point at the end of the buffer. */
 	if (ap - asn1 != len) {
-		fprintf(stderr, "FAIL: test %i pointer increment does not "
-		    "match length (%i != %i)\n", test_no, (int)(ap - asn1), len);
+		fprintf(stderr, "FAIL: test %d pointer increment does not "
+		    "match length (%d != %d)\n", test_no, (int)(ap - asn1), len);
 		goto failed;
 	}
 
 	if (memcmp(asn1, &sat->asn1, len) != 0) {
-		fprintf(stderr, "FAIL: test %i - encoding differs:\n", test_no);
+		fprintf(stderr, "FAIL: test %d - encoding differs:\n", test_no);
 		fprintf(stderr, "encoding:\n");
 		for (i = 1; i <= len; i++) {
 			fprintf(stderr, " 0x%02hhx,", asn1[i - 1]);
@@ -431,12 +431,12 @@ do_ssl_asn1_test(int test_no, struct ssl_asn1_test *sat)
 	pp = sat->asn1;
 
 	if ((sp = d2i_SSL_SESSION(NULL, &pp, sat->asn1_len)) == NULL) {
-		fprintf(stderr, "FAIL: test %i - decoding failed\n", test_no);
+		fprintf(stderr, "FAIL: test %d - decoding failed\n", test_no);
 		goto failed;
 	}
 
 	if (session_cmp(sp, &sat->session) != 0) {
-		fprintf(stderr, "FAIL: test %i - decoding differs\n", test_no);
+		fprintf(stderr, "FAIL: test %d - decoding differs\n", test_no);
 		goto failed;
 	}
 
