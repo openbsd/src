@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.393 2022/06/07 17:42:35 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.394 2022/06/07 17:52:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -473,7 +473,7 @@ struct ssl_session_st {
 	/* this is used to determine whether the session is being reused in
 	 * the appropriate context. It is up to the application to set this,
 	 * via SSL_new */
-	unsigned int sid_ctx_length;
+	size_t sid_ctx_length;
 	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 
 	/* Peer provided leaf (end-entity) certificate. */
@@ -888,7 +888,7 @@ struct ssl_ctx_st {
 	STACK_OF(X509) *extra_certs;
 
 	int verify_mode;
-	unsigned int sid_ctx_length;
+	size_t sid_ctx_length;
 	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 
 	X509_VERIFY_PARAM *param;
@@ -1082,7 +1082,7 @@ struct ssl_st {
 
 	/* the session_id_context is used to ensure sessions are only reused
 	 * in the appropriate context */
-	unsigned int sid_ctx_length;
+	size_t sid_ctx_length;
 	unsigned char sid_ctx[SSL_MAX_SID_CTX_LENGTH];
 
 	/* This can also be in the session once a session is established */
