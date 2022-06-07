@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.111 2022/06/07 17:26:39 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.112 2022/06/07 17:28:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -388,7 +388,7 @@ ssl_get_new_session(SSL *s, int session)
 
 		/* Finally, check for a conflict. */
 		if (SSL_has_matching_session_id(s, ss->session_id,
-			ss->session_id_length)) {
+		    ss->session_id_length)) {
 			SSLerror(s, SSL_R_SSL_SESSION_ID_CONFLICT);
 			SSL_SESSION_free(ss);
 			return (0);
