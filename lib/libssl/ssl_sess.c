@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.110 2022/06/06 13:46:37 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.111 2022/06/07 17:26:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -721,26 +721,27 @@ remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
 	SSL_SESSION *r;
 	int ret = 0;
 
-	if ((c != NULL) && (c->session_id_length != 0)) {
-		if (lck)
-			CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
-		if ((r = lh_SSL_SESSION_retrieve(ctx->internal->sessions, c)) == c) {
-			ret = 1;
-			r = lh_SSL_SESSION_delete(ctx->internal->sessions, c);
-			SSL_SESSION_list_remove(ctx, c);
-		}
-		if (lck)
-			CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+	if (c == NULL || c->session_id_length == 0)
+		return 0;
 
-		if (ret) {
-			r->not_resumable = 1;
-			if (ctx->internal->remove_session_cb != NULL)
-				ctx->internal->remove_session_cb(ctx, r);
-			SSL_SESSION_free(r);
-		}
-	} else
-		ret = 0;
-	return (ret);
+	if (lck)
+		CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
+	if ((r = lh_SSL_SESSION_retrieve(ctx->internal->sessions, c)) == c) {
+		ret = 1;
+		r = lh_SSL_SESSION_delete(ctx->internal->sessions, c);
+		SSL_SESSION_list_remove(ctx, c);
+	}
+	if (lck)
+		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
+
+	if (ret) {
+		r->not_resumable = 1;
+		if (ctx->internal->remove_session_cb != NULL)
+			ctx->internal->remove_session_cb(ctx, r);
+		SSL_SESSION_free(r);
+	}
+
+	return ret;
 }
 
 void
