@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.112 2022/06/07 17:28:05 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.113 2022/06/07 17:31:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -244,7 +244,7 @@ const unsigned char *
 SSL_SESSION_get_id(const SSL_SESSION *ss, unsigned int *len)
 {
 	if (len != NULL)
-		*len = ss->session_id_length;
+		*len = (unsigned int)ss->session_id_length;
 	return ss->session_id;
 }
 
