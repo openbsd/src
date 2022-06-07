@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.113 2022/06/07 17:31:36 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.114 2022/06/07 17:32:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -378,7 +378,7 @@ ssl_get_new_session(SSL *s, int session)
 		 * Don't allow the callback to set the session length to zero.
 		 * nor set it higher than it was.
 		 */
-		if (!tmp || (tmp > ss->session_id_length)) {
+		if (tmp == 0 || tmp > ss->session_id_length) {
 			/* The callback set an illegal length */
 			SSLerror(s, SSL_R_SSL_SESSION_ID_HAS_BAD_LENGTH);
 			SSL_SESSION_free(ss);
