@@ -1,4 +1,4 @@
-mandoc: invalid.in:7:15: WARNING: invalid escape sequence: \[ 
+mandoc: invalid.in:7:15: WARNING: invalid escape sequence argument: \[ 
 mandoc: invalid.in:8:14: ERROR: invalid special character: \[%]
 mandoc: invalid.in:9:16: ERROR: invalid special character: \[&]
 mandoc: invalid.in:10:12: ERROR: invalid special character: \[:]

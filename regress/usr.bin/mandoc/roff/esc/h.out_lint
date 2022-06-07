@@ -1,1 +1,1 @@
-mandoc: h.in:23:21: WARNING: invalid escape sequence: \h-
+mandoc: h.in:23:21: ERROR: invalid escape argument delimiter: \h-

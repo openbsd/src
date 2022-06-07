@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc_msg.c,v 1.17 2022/06/05 13:42:49 schwarze Exp $ */
+/* $OpenBSD: mandoc_msg.c,v 1.18 2022/06/07 09:51:03 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -171,7 +171,7 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"blank line in fill mode, using .sp",
 	"tab in filled text",
 	"new sentence, new line",
-	"invalid escape sequence",
+	"invalid escape sequence argument",
 	"undefined escape, printing literally",
 	"undefined string, using \"\"",
 
@@ -238,6 +238,7 @@ static	const char *const type_message[MANDOCERR_MAX] = {
 	"incomplete escape sequence",
 	"invalid special character",
 	"unknown special character",
+	"invalid escape argument delimiter",
 
 	"unsupported feature",
 	"input too large",

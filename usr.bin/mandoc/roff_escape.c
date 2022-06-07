@@ -1,4 +1,4 @@
-/* $OpenBSD: roff_escape.c,v 1.12 2022/06/06 19:22:54 schwarze Exp $ */
+/* $OpenBSD: roff_escape.c,v 1.13 2022/06/07 09:51:03 schwarze Exp $ */
 /*
  * Copyright (c) 2011, 2012, 2013, 2014, 2015, 2017, 2018, 2020, 2022
  *               Ingo Schwarze <schwarze@openbsd.org>
@@ -272,6 +272,7 @@ roff_escape(const char *buf, const int ln, const int aesc,
 	if (term == '\b') {
 		if (strchr("BDHLRSvxNhl", buf[inam]) != NULL &&
 		    strchr(" %&()*+-./0123456789:<=>", buf[iarg]) != NULL) {
+			err = MANDOCERR_ESC_DELIM;
 			if (rval != ESCAPE_EXPAND)
 				rval = ESCAPE_ERROR;
 			if (buf[inam] != 'D') {
@@ -291,6 +292,7 @@ roff_escape(const char *buf, const int ln, const int aesc,
 		case '[':
 			if (buf[++iarg] == ' ') {
 				iendarg = iend = iarg + 1;
+				err = MANDOCERR_ESC_ARG;
 				rval = ESCAPE_ERROR;
 				goto out;
 			}
@@ -368,13 +370,23 @@ roff_escape(const char *buf, const int ln, const int aesc,
 		case '2':
 		case '3':
 		case '4':
-			rval = argl == 1 ? ESCAPE_IGNORE : ESCAPE_ERROR;
+			if (argl == 1)
+				rval = ESCAPE_IGNORE;
+			else {
+				err = MANDOCERR_ESC_ARG;
+				rval = ESCAPE_ERROR;
+			}
 			break;
 		case '5':
-			rval = buf[iarg - 1] == '[' ? ESCAPE_UNSUPP :
-			    ESCAPE_ERROR;
+			if (buf[iarg - 1] == '[')
+				rval = ESCAPE_UNSUPP;
+			else {
+				err = MANDOCERR_ESC_ARG;
+				rval = ESCAPE_ERROR;
+			}
 			break;
 		default:
+			err = MANDOCERR_ESC_ARG;
 			rval = ESCAPE_ERROR;
 			break;
 		}
@@ -386,6 +398,8 @@ roff_escape(const char *buf, const int ln, const int aesc,
 	switch (rval) {
 	case ESCAPE_FONT:
 		rval = mandoc_font(buf + iarg, argl);
+		if (rval == ESCAPE_ERROR)
+			err = MANDOCERR_ESC_ARG;
 		break;
 
 	case ESCAPE_SPECIAL:
@@ -487,10 +501,6 @@ out:
 
 	*resc = iesc;
 	switch (rval) {
-	case ESCAPE_ERROR:
-		if (err == MANDOCERR_OK)
-			err = MANDOCERR_ESC_BAD;
-		break;
 	case ESCAPE_UNSUPP:
 		err = MANDOCERR_ESC_UNSUPP;
 		break;

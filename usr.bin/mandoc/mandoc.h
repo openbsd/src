@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.h,v 1.220 2022/06/05 13:42:49 schwarze Exp $ */
+/* $OpenBSD: mandoc.h,v 1.221 2022/06/07 09:51:03 schwarze Exp $ */
 /*
  * Copyright (c) 2012-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -172,7 +172,7 @@ enum	mandocerr {
 	MANDOCERR_FI_BLANK, /* blank line in fill mode, using .sp */
 	MANDOCERR_FI_TAB, /* tab in filled text */
 	MANDOCERR_EOS, /* new sentence, new line */
-	MANDOCERR_ESC_BAD, /* invalid escape sequence: esc */
+	MANDOCERR_ESC_ARG, /* invalid escape sequence argument: esc */
 	MANDOCERR_ESC_UNDEF, /* undefined escape, printing literally: char */
 	MANDOCERR_STR_UNDEF, /* undefined string, using "": name */
 
@@ -239,6 +239,7 @@ enum	mandocerr {
 	MANDOCERR_ESC_INCOMPLETE, /* incomplete escape sequence: esc */
 	MANDOCERR_ESC_BADCHAR, /* invalid special character: esc */
 	MANDOCERR_ESC_UNKCHAR, /* unknown special character: esc */
+	MANDOCERR_ESC_DELIM, /* invalid escape argument delimiter: esc */
 
 	MANDOCERR_UNSUPP, /* ===== start of unsupported features ===== */
 

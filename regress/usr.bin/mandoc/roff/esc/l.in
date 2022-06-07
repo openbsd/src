@@ -1,5 +1,5 @@
-.\" $OpenBSD: l.in,v 1.2 2017/07/04 14:53:27 schwarze Exp $
-.Dd $Mdocdate: July 4 2017 $
+.\" $OpenBSD: l.in,v 1.3 2022/06/07 09:51:03 schwarze Exp $
+.Dd $Mdocdate: June 7 2022 $
 .Dt ESC-L 1
 .Os
 .Sh NAME
@@ -20,4 +20,4 @@ default unit and escape char: >\l'7n\(at'<
 .br
 rounding: >\l'0.26ix'<
 .br
-invalid delimiter: >\h-<
+invalid delimiter: >\l-<
