@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.391 2022/06/06 16:11:00 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.392 2022/06/07 17:18:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -463,7 +463,7 @@ struct ssl_session_st {
 	int ssl_version;	/* what ssl version session info is
 				 * being kept in here? */
 
-	int master_key_length;
+	size_t master_key_length;
 	unsigned char master_key[SSL_MAX_MASTER_KEY_LENGTH];
 
 	/* session_id - valid? */
