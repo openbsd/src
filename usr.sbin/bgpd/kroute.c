@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.248 2022/06/05 12:43:13 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.249 2022/06/07 15:57:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3268,7 +3268,6 @@ fetchtable(struct ktable *kt)
 			kr->r.labelid = 0;
 			if ((label = (struct sockaddr_rtlabel *)
 			    rti_info[RTAX_LABEL]) != NULL) {
-				kr->r.flags |= F_RTLABEL;
 				kr->r.labelid =
 				    rtlabel_name2id(label->sr_label);
 			}
@@ -3309,7 +3308,6 @@ fetchtable(struct ktable *kt)
 			kr6->r.labelid = 0;
 			if ((label = (struct sockaddr_rtlabel *)
 			    rti_info[RTAX_LABEL]) != NULL) {
-				kr6->r.flags |= F_RTLABEL;
 				kr6->r.labelid =
 				    rtlabel_name2id(label->sr_label);
 			}
@@ -3702,15 +3700,12 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct sockaddr *rti_info[RTAX_MAX],
 					    rtlabel_name2id(label->sr_label);
 					if (kr->r.labelid != new_labelid) {
 						rtlabel_unref(kr->r.labelid);
-						kr->r.labelid = 0;
-						flags |= F_RTLABEL;
 						kr->r.labelid = new_labelid;
 						rtlabel_changed = 1;
 					}
-				} else if (kr->r.labelid && label == NULL) {
+				} else if (kr->r.labelid) {
 					rtlabel_unref(kr->r.labelid);
 					kr->r.labelid = 0;
-					flags &= ~F_RTLABEL;
 					rtlabel_changed = 1;
 				}
 
@@ -3760,7 +3755,6 @@ add4:
 			kr->r.priority = prio;
 
 			if (label) {
-				kr->r.flags |= F_RTLABEL;
 				kr->r.labelid =
 				    rtlabel_name2id(label->sr_label);
 			}
@@ -3809,14 +3803,12 @@ add4:
 					if (kr6->r.labelid != new_labelid) {
 						rtlabel_unref(kr6->r.labelid);
 						kr6->r.labelid = 0;
-						flags |= F_RTLABEL;
 						kr6->r.labelid = new_labelid;
 						rtlabel_changed = 1;
 					}
-				} else if (kr6->r.labelid && label == NULL) {
+				} else if (kr6->r.labelid) {
 					rtlabel_unref(kr6->r.labelid);
 					kr6->r.labelid = 0;
-					flags &= ~F_RTLABEL;
 					rtlabel_changed = 1;
 				}
 
@@ -3870,7 +3862,6 @@ add6:
 			kr6->r.priority = prio;
 
 			if (label) {
-				kr6->r.flags |= F_RTLABEL;
 				kr6->r.labelid =
 				    rtlabel_name2id(label->sr_label);
 			}

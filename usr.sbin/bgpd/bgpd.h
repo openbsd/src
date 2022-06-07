@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.426 2022/06/05 12:43:13 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.427 2022/06/07 15:57:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -90,7 +90,6 @@
 #define	F_CTL_ADJ_IN		0x2000	/* only set on requests */
 #define	F_CTL_ADJ_OUT		0x4000	/* only set on requests */
 #define	F_CTL_BEST		0x8000
-#define	F_RTLABEL		0x10000
 #define	F_CTL_SSV		0x20000	/* only used by bgpctl */
 #define	F_CTL_INVALID		0x40000 /* only set on requests */
 #define	F_CTL_OVS_VALID		0x80000
