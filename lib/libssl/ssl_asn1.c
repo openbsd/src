@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_asn1.c,v 1.64 2022/06/07 17:45:13 tb Exp $ */
+/* $OpenBSD: ssl_asn1.c,v 1.65 2022/06/07 17:53:42 tb Exp $ */
 /*
  * Copyright (c) 2016 Joel Sing <jsing@openbsd.org>
  *
@@ -348,11 +348,8 @@ d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp, long length)
 		goto err;
 	if (present) {
 		if (!CBS_write_bytes(&session_id, (uint8_t *)&s->sid_ctx,
-		    sizeof(s->sid_ctx), &data_len))
+		    sizeof(s->sid_ctx), &s->sid_ctx_length))
 			goto err;
-		if (data_len > UINT_MAX)
-			goto err;
-		s->sid_ctx_length = (unsigned int)data_len;
 	}
 
 	/* Verify result [5]. */
