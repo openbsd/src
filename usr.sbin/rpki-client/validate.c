@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.38 2022/05/15 16:43:35 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.39 2022/06/07 08:50:07 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -46,15 +46,13 @@ valid_as(struct auth *a, uint32_t min, uint32_t max)
 		return 0;
 
 	/* Does this certificate cover our AS number? */
-	if (a->cert->asz) {
-		c = as_check_covered(min, max, a->cert->as, a->cert->asz);
-		if (c > 0)
-			return 1;
-		else if (c < 0)
-			return 0;
-	}
+	c = as_check_covered(min, max, a->cert->as, a->cert->asz);
+	if (c > 0)
+		return 1;
+	else if (c < 0)
+		return 0;
 
-	/* If it doesn't, walk up the chain. */
+	/* If it inherits, walk up the chain. */
 	return valid_as(a->parent, min, max);
 }
 
@@ -80,7 +78,7 @@ valid_ip(struct auth *a, enum afi afi,
 	else if (c < 0)
 		return 0;
 
-	/* If it doesn't, walk up the chain. */
+	/* If it inherits, walk up the chain. */
 	return valid_ip(a->parent, afi, min, max);
 }
 
