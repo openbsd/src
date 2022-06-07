@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.115 2022/06/07 17:45:13 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.116 2022/06/07 17:49:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -435,8 +435,10 @@ ssl_session_from_cache(SSL *s, CBS *session_id)
 	memset(&data, 0, sizeof(data));
 
 	data.ssl_version = s->version;
-	data.session_id_length = CBS_len(session_id);
-	memcpy(data.session_id, CBS_data(session_id), CBS_len(session_id));
+
+	if (!CBS_write_bytes(session_id, data.session_id,
+	    sizeof(data.session_id), &data.session_id_length))
+		return NULL;
 
 	CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
 	sess = lh_SSL_SESSION_retrieve(s->session_ctx->internal->sessions, &data);
