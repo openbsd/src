@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.145 2022/06/07 17:39:16 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.146 2022/06/07 17:45:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -815,7 +815,6 @@ ssl3_get_server_hello(SSL *s)
 	const SSL_CIPHER *cipher;
 	const SSL_METHOD *method;
 	unsigned long alg_k;
-	size_t outlen;
 	int al, ret;
 
 	s->internal->first_packet = 1;
@@ -975,9 +974,9 @@ ssl3_get_server_hello(SSL *s)
 		 * zero length session identifier.
 		 */
 		if (!CBS_write_bytes(&session_id, s->session->session_id,
-		    sizeof(s->session->session_id), &outlen))
+		    sizeof(s->session->session_id),
+		    &s->session->session_id_length))
 			goto err;
-		s->session->session_id_length = outlen;
 
 		s->session->ssl_version = s->version;
 	}

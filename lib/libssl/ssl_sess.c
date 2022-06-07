@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sess.c,v 1.114 2022/06/07 17:32:53 tb Exp $ */
+/* $OpenBSD: ssl_sess.c,v 1.115 2022/06/07 17:45:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -526,7 +526,6 @@ int
 ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 {
 	SSL_SESSION *sess = NULL;
-	size_t session_id_len;
 	int alert_desc = SSL_AD_INTERNAL_ERROR, fatal = 0;
 	int ticket_decrypted = 0;
 
@@ -555,11 +554,10 @@ ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block, int *alert)
 		 * ticket has been accepted so we copy it into sess.
 		 */
 		if (!CBS_write_bytes(session_id, sess->session_id,
-		    sizeof(sess->session_id), &session_id_len)) {
+		    sizeof(sess->session_id), &sess->session_id_length)) {
 			fatal = 1;
 			goto err;
 		}
-		sess->session_id_length = (unsigned int)session_id_len;
 		break;
 	default:
 		SSLerror(s, ERR_R_INTERNAL_ERROR);
