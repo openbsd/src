@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.141 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.142 2022/06/07 17:14:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1055,34 +1055,41 @@ ssl3_get_client_hello(SSL *s)
 		}
 	}
 
-	if (!s->internal->hit && s->internal->tls_session_secret_cb) {
+	if (!s->internal->hit && s->internal->tls_session_secret_cb != NULL) {
 		SSL_CIPHER *pref_cipher = NULL;
+		int master_key_length = sizeof(s->session->master_key);
 
-		s->session->master_key_length = sizeof(s->session->master_key);
-		if (s->internal->tls_session_secret_cb(s, s->session->master_key,
-		    &s->session->master_key_length, ciphers, &pref_cipher,
-		    s->internal->tls_session_secret_cb_arg)) {
-			s->internal->hit = 1;
-			s->session->ciphers = ciphers;
-			s->session->verify_result = X509_V_OK;
-
-			ciphers = NULL;
-
-			/* check if some cipher was preferred by call back */
-			pref_cipher = pref_cipher ? pref_cipher :
-			    ssl3_choose_cipher(s, s->session->ciphers,
-			    SSL_get_ciphers(s));
-			if (pref_cipher == NULL) {
-				al = SSL_AD_HANDSHAKE_FAILURE;
-				SSLerror(s, SSL_R_NO_SHARED_CIPHER);
-				goto fatal_err;
-			}
-
-			s->session->cipher = pref_cipher;
-
-			sk_SSL_CIPHER_free(s->cipher_list);
-			s->cipher_list = sk_SSL_CIPHER_dup(s->session->ciphers);
+		if (!s->internal->tls_session_secret_cb(s,
+		    s->session->master_key, &master_key_length, ciphers,
+		    &pref_cipher, s->internal->tls_session_secret_cb_arg)) {
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
+			goto err;
 		}
+		if (master_key_length <= 0) {
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
+			goto err;
+		}
+		s->session->master_key_length = master_key_length;
+
+		s->internal->hit = 1;
+		s->session->verify_result = X509_V_OK;
+
+		s->session->ciphers = ciphers;
+		ciphers = NULL;
+
+		/* Check if some cipher was preferred by the callback. */
+		if (pref_cipher == NULL)
+			pref_cipher = ssl3_choose_cipher(s, s->session->ciphers,
+			    SSL_get_ciphers(s));
+		if (pref_cipher == NULL) {
+			al = SSL_AD_HANDSHAKE_FAILURE;
+			SSLerror(s, SSL_R_NO_SHARED_CIPHER);
+			goto fatal_err;
+		}
+		s->session->cipher = pref_cipher;
+
+		sk_SSL_CIPHER_free(s->cipher_list);
+		s->cipher_list = sk_SSL_CIPHER_dup(s->session->ciphers);
 	}
 
 	/*

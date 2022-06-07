@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.142 2022/06/06 13:18:34 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.143 2022/06/07 17:14:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -923,16 +923,26 @@ ssl3_get_server_hello(SSL *s)
 	 * Check if we want to resume the session based on external
 	 * pre-shared secret.
 	 */
-	if (s->internal->tls_session_secret_cb) {
+	if (s->internal->tls_session_secret_cb != NULL) {
 		SSL_CIPHER *pref_cipher = NULL;
-		s->session->master_key_length = sizeof(s->session->master_key);
-		if (s->internal->tls_session_secret_cb(s, s->session->master_key,
-		    &s->session->master_key_length, NULL, &pref_cipher,
-		    s->internal->tls_session_secret_cb_arg)) {
-			s->session->cipher = pref_cipher ? pref_cipher :
-			    ssl3_get_cipher_by_value(cipher_suite);
-			s->s3->flags |= SSL3_FLAGS_CCS_OK;
+		int master_key_length = sizeof(s->session->master_key);
+
+		if (!s->internal->tls_session_secret_cb(s,
+		    s->session->master_key, &master_key_length, NULL,
+		    &pref_cipher, s->internal->tls_session_secret_cb_arg)) {
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
+			goto err;
 		}
+		if (master_key_length <= 0) {
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
+			goto err;
+		}
+		s->session->master_key_length = master_key_length;
+
+		if ((s->session->cipher = pref_cipher) == NULL)
+			s->session->cipher =
+			    ssl3_get_cipher_by_value(cipher_suite);
+		s->s3->flags |= SSL3_FLAGS_CCS_OK;
 	}
 
 	if (s->session->session_id_length != 0 &&
