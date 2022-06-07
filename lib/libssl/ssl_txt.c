@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_txt.c,v 1.33 2022/06/06 16:12:31 tb Exp $ */
+/* $OpenBSD: ssl_txt.c,v 1.34 2022/06/07 17:22:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -153,7 +153,7 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 	if (BIO_puts(bp, "\n    Master-Key: ") <= 0)
 		goto err;
 
-	for (i = 0; i < (unsigned int)x->master_key_length; i++) {
+	for (i = 0; i < x->master_key_length; i++) {
 		if (BIO_printf(bp, "%02X", x->master_key[i]) <= 0)
 			goto err;
 	}
