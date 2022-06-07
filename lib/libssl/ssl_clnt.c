@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.143 2022/06/07 17:14:17 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.144 2022/06/07 17:35:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -652,9 +652,8 @@ ssl3_send_client_hello(SSL *s)
 		}
 		s->version = max_version;
 
-		if (sess == NULL ||
-		    sess->ssl_version != s->version ||
-		    (!sess->session_id_length && !sess->tlsext_tick) ||
+		if (sess == NULL || sess->ssl_version != s->version ||
+		    (sess->session_id_length == 0 && sess->tlsext_tick == NULL) ||
 		    sess->not_resumable) {
 			if (!ssl_get_new_session(s, 0))
 				goto err;
