@@ -1,4 +1,4 @@
-/*	$OpenBSD: socks.c,v 1.30 2019/11/04 17:33:28 millert Exp $	*/
+/*	$OpenBSD: socks.c,v 1.31 2022/06/08 20:20:26 djm Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -321,7 +321,7 @@ socks_connect(const char *host, const char *port,
 		/* HTTP proxy CONNECT */
 
 		/* Disallow bad chars in hostname */
-		if (strcspn(host, "\r\n\t []:") != strlen(host))
+		if (strcspn(host, "\r\n\t []") != strlen(host))
 			errx(1, "Invalid hostname");
 
 		/* Try to be sane about numeric IPv6 addresses */
