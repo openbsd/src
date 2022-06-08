@@ -1,0 +1,51 @@
+.\" $OpenBSD: delim.in,v 1.1 2022/06/08 13:08:00 schwarze Exp $
+.Dd $Mdocdate: June 8 2022 $
+.Dt C-DELIM 1
+.Os
+.Sh NAME
+.Nm C-delim
+.Nd argument delimiters for the C escape sequence
+.Sh DESCRIPTION
+empty: \C''
+.br
+single byte: \C'_'\C'-'
+.br
+two bytes: \C'hy'
+.br
+multiple bytes: \C'integral'
+.Ss Argument delimiters
+unsupported \er: \C\rat\ru
+.br
+ignored \e&: \C\&at\&u
+.br
+useless \e.: \C\.at.u
+.br
+invalid \eG: \C\GatGu
+.br
+special \e-: \C\-at\-u
+.br
+break \ep: \C\pat\pu
+.br
+nospace \ec: \C\cat\cu
+.\".br
+.\"XXX skipchar \ec: \C\zat\zu
+.br
+.ds mystr xatxu
+string expansion: \C\*[mystr]
+.br
+.nr myreg 1341
+register expansion: \C\n[myreg]u
+.br
+ignored \eON: \C\O1at\O2u
+.br
+special character: \C\(hyat\(hyu
+.br
+ignored \eZ\(aqstr\(aq: \C\Z'foo'at\Z'bar'u
+.br
+horizontal motion: \C\h'1'at\h'3'u
+.br
+horizontal line: \C\l'4'at\l'2'u
+.br
+overstrike: \C\o'ab'at\o'cd'u
+.br
+unterminated: \C'at

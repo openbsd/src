@@ -1,0 +1,6 @@
+mandoc: delim.in:9:8: ERROR: invalid special character: \C''
+mandoc: delim.in:11:14: ERROR: invalid special character: \C'_'
+mandoc: delim.in:17:20: UNSUPP: unsupported escape sequence: \r
+mandoc: delim.in:17:24: UNSUPP: unsupported escape sequence: \r
+mandoc: delim.in:23:16: WARNING: undefined escape, printing literally: \G
+mandoc: delim.in:51:15: ERROR: incomplete escape sequence: \C'at

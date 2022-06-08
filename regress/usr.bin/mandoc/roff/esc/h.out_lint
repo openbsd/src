@@ -1,1 +1,30 @@
-mandoc: h.in:23:21: ERROR: invalid escape argument delimiter: \h-
+mandoc: h.in:23:17: ERROR: invalid escape argument delimiter: \h-
+mandoc: h.in:25:20: UNSUPP: unsupported escape sequence: \!
+mandoc: h.in:25:23: UNSUPP: unsupported escape sequence: \!
+mandoc: h.in:27:20: UNSUPP: unsupported escape sequence: \r
+mandoc: h.in:27:18: ERROR: invalid escape argument delimiter: \h\r
+mandoc: h.in:35:14: ERROR: invalid escape argument delimiter: \h\,
+mandoc: h.in:39:14: ERROR: invalid escape argument delimiter: \h\^
+mandoc: h.in:41:14: ERROR: invalid escape argument delimiter: \h\a
+mandoc: h.in:43:14: ERROR: invalid escape argument delimiter: \h\d
+mandoc: h.in:45:14: ERROR: invalid escape argument delimiter: \h\t
+mandoc: h.in:47:14: ERROR: invalid escape argument delimiter: \h\u
+mandoc: h.in:51:14: ERROR: invalid escape argument delimiter: \h\|
+mandoc: h.in:55:14: ERROR: invalid escape argument delimiter: \h\.
+mandoc: h.in:59:16: WARNING: undefined escape, printing literally: \G
+mandoc: h.in:61:15: ERROR: invalid escape argument delimiter: \h\ 
+mandoc: h.in:67:14: ERROR: invalid escape argument delimiter: \h\0
+mandoc: h.in:77:14: ERROR: invalid escape argument delimiter: \h\~
+mandoc: h.in:89:21: ERROR: invalid escape argument delimiter: \h1
+mandoc: h.in:91:14: ERROR: invalid escape argument delimiter: \h\O1
+mandoc: h.in:93:14: ERROR: invalid escape argument delimiter: \h\Y[mystr]
+mandoc: h.in:99:14: ERROR: invalid escape argument delimiter: \h\D't 1'
+mandoc: h.in:101:14: ERROR: invalid escape argument delimiter: \h\L'3'
+mandoc: h.in:103:14: ERROR: invalid escape argument delimiter: \h\X'foo'
+mandoc: h.in:105:14: ERROR: invalid escape argument delimiter: \h\Z'foo'
+mandoc: h.in:107:14: ERROR: invalid escape argument delimiter: \h\b'3'
+mandoc: h.in:109:14: ERROR: invalid escape argument delimiter: \h\v'3'
+mandoc: h.in:111:14: ERROR: invalid escape argument delimiter: \h\x'3'
+mandoc: h.in:113:20: ERROR: invalid escape argument delimiter: \h\h'1'
+mandoc: h.in:115:18: ERROR: invalid escape argument delimiter: \h\l'4'
+mandoc: h.in:117:13: ERROR: invalid escape argument delimiter: \h\o'ab'

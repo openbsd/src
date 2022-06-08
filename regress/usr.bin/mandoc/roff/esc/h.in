@@ -1,5 +1,5 @@
-.\" $OpenBSD: h.in,v 1.6 2017/07/04 14:53:27 schwarze Exp $
-.Dd $Mdocdate: July 4 2017 $
+.\" $OpenBSD: h.in,v 1.7 2022/06/08 13:08:00 schwarze Exp $
+.Dd $Mdocdate: June 8 2022 $
 .Dt ESC-H 1
 .Os
 .Sh NAME
@@ -19,5 +19,99 @@ escape at the end: >\h'0+\w'\&''<
 escape at the beginning: >\h'\w'\&'M+0'<
 .br
 escape in the middle: >\h'0+\w'\&'+0'<
+.Ss Argument delimiters
+invalid ASCII: >\h-<
 .br
-invalid delimiter: >\h-<
+unsupported \e!: \h\!2\!u
+.br
+unsupported \er: \h\r2u
+.br
+ignored \e%: \h\%2\%u
+.br
+ignored \e&: \h\&2\&u
+.br
+ignored \e): \h\)2\)u
+.br
+ignored \e,: \h\,2\,u
+.br
+ignored \e/: \h\/2\/u
+.br
+ignored \e^: \h\^2\^u
+.br
+ignored \ea: \h\a2\au
+.br
+ignored \ed: \h\d2\du
+.br
+ignored \et: \h\t2\tu
+.br
+ignored \eu: \h\u2\uu
+.br
+ignored \e{: \h\{2\{u
+.br
+ignored \e|: \h\|2\|u
+.br
+ignored \e}: \h\}2\}u
+.br
+useless \e.: \h\.2.u
+.\".br
+.\"XXX useless \e\e: \h\\2\\u
+.br
+invalid \eG: \h\G2Gu
+.br
+special \e\ : \h\ 2\ u
+.br
+special \e\(aq: \h\'2\'u
+.br
+special \e-: \h\-2\-u
+.br
+special \e0: \h\02\0u
+.br
+special \e:: \h\:2\:u
+.br
+special \e_: \h\_2\_u
+.br
+special \e\(ga: \h\`2\`u
+.br
+special \ee: \h\e2\eu
+.br
+special \e~: \h\~2\~u
+.br
+break \ep: \h\p2\pu
+.br
+nospace \ec: \h\c2\cu
+.\".br
+.\"XXX skipchar \ec: \h\z2\zu
+.br
+.ds mystr x2xu
+string expansion: \h\*[mystr]
+.br
+.nr myreg 121
+register expansion: \h\n[myreg]u
+.br
+ignored \eO: \h\O12\O2u
+.br
+ignored \eY: \h\Y[mystr]2\Y[mystr]u
+.br
+ignored \ek: \h\k[myreg]2\k[myreg]u
+.br
+special character: \h\(hy2\(hyu
+.br
+ignored \eD: \h\D't 1'2\D't 3'u
+.br
+ignored \eL: \h\L'3'2u
+.br
+ignored \eX: \h\X'foo'2\X'bar'u
+.br
+ignored \eZ: \h\Z'foo'2\Z''u
+.br
+ignored \eb: \h\b'3'2\b''u
+.br
+ignored \ev: \h\v'3'2\v'0'u
+.br
+ignored \ex: \h\x'3'2\v'0'u
+.br
+horizontal motion: \h\h'1'2\h'3'u
+.br
+horizontal line: \h\l'4'2\l'3'u
+.br
+overstrike: \h\o'ab'2\o'cd'u

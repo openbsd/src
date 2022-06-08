@@ -1,0 +1,30 @@
+C-DELIM(1)                  General Commands Manual                 C-DELIM(1)
+
+NNAAMMEE
+     CC--ddeelliimm - argument delimiters for the C escape sequence
+
+DDEESSCCRRIIPPTTIIOONN
+     empty:
+     single byte: -
+     two bytes: -
+     multiple bytes: <integral>
+
+   AArrgguummeenntt ddeelliimmiitteerrss
+     unsupported \r: @u
+     ignored \&: @u
+     useless \.: @u
+     invalid \G: @u
+     special \-: @u
+     break \p: @u
+     nospace \c: @u
+     string expansion: @u
+     register expansion: 3/4u
+     ignored \ON: @u
+     special character: @u
+     ignored \Z'str': @u
+     horizontal motion: @u
+     horizontal line: @u
+     overstrike: @u
+     unterminated:
+
+OpenBSD                          June 8, 2022                          OpenBSD

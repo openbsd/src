@@ -11,6 +11,52 @@ DDEESSCCRRIIPPTTIIOONN
      explicit scaling unit and escape sequence: >+-+-+-<
      default unit and escape char: >@@@@@@@<
      rounding: >xxx<
-     invalid delimiter: ><
 
-OpenBSD                          June 7, 2022                          OpenBSD
+   AArrgguummeenntt ddeelliimmiitteerrss
+     invalid ASCII: ><
+     unsupported \!: __u
+     unsupported \r: 2u
+     ignored \%: __u
+     ignored \&: xxu
+     ignored \): xxu
+     ignored \,: 2u
+     ignored \/: __u
+     ignored \^: 2u
+     ignored \a: 2u
+     ignored \d: 2u
+     ignored \t: 2u
+     ignored \u: 2u
+     ignored \{: __u
+     ignored \|: 2u
+     ignored \}: __u
+     useless \.: 2.u
+     invalid \G: __u
+     special \ : 2 u
+     special \': xxu
+     special \-: xxu
+     special \0: 2 u
+     special \:: __u
+     special \_: __u
+     special \`: xxu
+     special \e: xxu
+     special \~: 2 u
+     break \p: __u
+     nospace \c: __u
+     string expansion: __u
+     register expansion: 21u
+     ignored \O: 2u
+     ignored \Y: 2u
+     ignored \k: __u
+     special character: xxu
+     ignored \D: 2u
+     ignored \L: 2u
+     ignored \X: 2u
+     ignored \Z: 2u
+     ignored \b: 2u
+     ignored \v: 2u
+     ignored \x: 2u
+     horizontal motion: 2   u
+     horizontal line: 2___u
+     overstrike: 2cdu
+
+OpenBSD                          June 8, 2022                          OpenBSD

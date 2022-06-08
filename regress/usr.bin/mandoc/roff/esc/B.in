@@ -1,5 +1,5 @@
-.\" $OpenBSD: B.in,v 1.3 2017/07/04 14:53:27 schwarze Exp $
-.Dd $Mdocdate: July 4 2017 $
+.\" $OpenBSD: B.in,v 1.4 2022/06/08 13:08:00 schwarze Exp $
+.Dd $Mdocdate: June 8 2022 $
 .Dt ESC-B 1
 .Os
 .Sh NAME
@@ -33,5 +33,97 @@ parentheses containing number: \B'(42)'
 complex expression: \B'3+(3*(5==5*2)*4)+(3*5)/2'
 .br
 other delimiter: \Bx1+1x
+.Ss Argument delimiters
+unsupported \e!: \B\!42\!u
 .br
-no closing delimiter: \B'1+1
+unsupported \er: \B\r42u
+.br
+ignored \e%: \B\%42\%u
+.br
+ignored \e&: \B\&42\&u
+.br
+ignored \e): \B\)42\)u
+.br
+ignored \e,: \B\,42\,u
+.br
+ignored \e/: \B\/42\/u
+.br
+ignored \e^: \B\^42\^u
+.br
+ignored \ea: \B\a42\au
+.br
+ignored \ed: \B\d42\du
+.br
+ignored \et: \B\t42\tu
+.br
+ignored \eu: \B\u42\uu
+.br
+ignored \e{: \B\{42\{u
+.br
+ignored \e|: \B\|42\|u
+.br
+ignored \e}: \B\}42\}u
+.br
+useless \e.: \B\.42.u
+.\".br
+.\"XXX useless \e\e: \B\\42\\u
+.br
+invalid \eG: \B\G42Gu
+.br
+special \e\ : \B\ 42\ u
+.br
+special \e\(aq: \B\'42\'u
+.br
+special \e-: \B\-42\-u
+.br
+special \e0: \B\042\0u
+.br
+special \e:: \B\:42\:u
+.br
+special \e_: \B\_42\_u
+.br
+special \e\(ga: \B\`42\`u
+.br
+special \ee: \B\e42\eu
+.br
+special \e~: \B\~42\~u
+.br
+break \ep: \B\p42\pu
+.br
+nospace \ec: \B\c42\cu
+.\".br
+.\"XXX skipchar \ec: \B\z42\zu
+.br
+.ds mystr x42xu
+string expansion: \B\*[mystr]
+.br
+.nr myreg 23
+register expansion: \B\n[myreg]u
+.br
+ignored \eO: \B\O142\O2u
+.br
+ignored \eY: \B\Y[mystr]42\Y[mystr]u
+.br
+ignored \ek: \B\k[myreg]42\k[myreg]u
+.br
+special character: \B\(hy42\(hyu
+.br
+ignored \eD: \B\D't 1'42\D't 2'u
+.br
+ignored \eL: \B\L'2'42u
+.br
+ignored \eX: \B\X'foo'42\X'bar'u
+.br
+ignored \eZ: \B\Z'foo'42\Z''u
+.br
+ignored \eb: \B\b'2'42\b''u
+.br
+ignored \ev: \B\v'2'42\v'0'u
+.br
+ignored \ex: \B\x'2'42\v'0'u
+.br
+horizontal motion: \B\h'1'42\h'3'u
+.br
+horizontal line: \B\l'4'42\l'2'u
+.br
+overstrike: \B\o'ab'42\o'cd'u

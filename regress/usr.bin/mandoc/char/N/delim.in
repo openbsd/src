@@ -1,0 +1,101 @@
+.\" $OpenBSD: delim.in,v 1.1 2022/06/08 13:08:00 schwarze Exp $
+.Dd $Mdocdate: June 8 2022 $
+.Dt N-DELIM 1
+.Os
+.Sh NAME
+.Nm N-delim
+.Nd argument delimiters for the N escape sequence
+.Sh DESCRIPTION
+unsupported \e!: \N\!42\!u
+.br
+unsupported \er: \N\r42u
+.br
+ignored \e%: \N\%42\%u
+.br
+ignored \e&: \N\&42\&u
+.br
+ignored \e): \N\)42\)u
+.br
+ignored \e,: \N\,42\,u
+.br
+ignored \e/: \N\/42\/u
+.br
+ignored \e^: \N\^42\^u
+.br
+ignored \ea: \N\a42\au
+.br
+ignored \ed: \N\d42\du
+.br
+ignored \et: \N\t42\tu
+.br
+ignored \eu: \N\u42\uu
+.br
+ignored \e{: \N\{42\{u
+.br
+ignored \e|: \N\|42\|u
+.br
+ignored \e}: \N\}42\}u
+.br
+useless \e.: \N\.42.u
+.\".br
+.\"XXX useless \e\e: \N\\42\\u
+.br
+invalid \eG: \N\G42Gu
+.br
+special \e\ : \N\ 42\ u
+.br
+special \e\(aq: \N\'42\'u
+.br
+special \e-: \N\-42\-u
+.br
+special \e0: \N\042\0u
+.br
+special \e:: \N\:42\:u
+.br
+special \e_: \N\_42\_u
+.br
+special \e\(ga: \N\`42\`u
+.br
+special \ee: \N\e42\eu
+.br
+special \e~: \N\~42\~u
+.br
+break \ep: \N\p42\pu
+.br
+nospace \ec: \N\c42\cu
+.\".br
+.\"XXX skipchar \ez: \N\z42\zu
+.br
+.ds mystr x42xu
+string expansion: \N\*[mystr]
+.br
+.nr myreg 23
+register expansion: \N\n[myreg]u
+.br
+ignored \eO: \N\O142\O2u
+.br
+ignored \eY: \N\Y[mystr]42\Y[mystr]u
+.br
+ignored \ek: \N\k[myreg]42\k[myreg]u
+.br
+special character: \N\(hy42\(hyu
+.br
+ignored \eD: \N\D't 1'42\D't 2'u
+.br
+ignored \eL: \N\L'2'42u
+.br
+ignored \eX: \N\X'foo'42\X'bar'u
+.br
+ignored \eZ: \N\Z'foo'42\Z''u
+.br
+ignored \eb: \N\b'2'42\b''u
+.br
+ignored \ev: \N\v'2'42\v'0'u
+.br
+ignored \ex: \N\x'2'42\v'0'u
+.br
+horizontal motion: \N\h'1'42\h'3'u
+.br
+horizontal line: \N\l'4'42\l'2'u
+.br
+overstrike: \N\o'ab'42\o'cd'u

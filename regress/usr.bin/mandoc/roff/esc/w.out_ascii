@@ -8,6 +8,23 @@ DDEESSCCRRIIPPTTIIOONN
      character: 24
      blank: 24
      text: 96
+
+   AArrgguummeenntt ddeelliimmiitteerrss
+     unsupported \r: 24u
+     ignored \&: 24u
+     useless \.: 24u
+     invalid \G: 24u
+     special \-: 24u
+     break \p: 24u
+     nospace \c: 24u
+     string expansion: 24u
+     register expansion: 24u
+     ignored \ON: 24u
+     special character: 24u
+     ignored \Z'str': 24u
+     horizontal motion: 24u
+     horizontal line: 24u
+     overstrike: 24u
      unterminated: 72
 
-OpenBSD                          July 4, 2017                          OpenBSD
+OpenBSD                          June 8, 2022                          OpenBSD

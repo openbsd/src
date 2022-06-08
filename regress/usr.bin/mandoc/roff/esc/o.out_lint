@@ -1,0 +1,4 @@
+mandoc: o.in:21:20: UNSUPP: unsupported escape sequence: \r
+mandoc: o.in:21:24: UNSUPP: unsupported escape sequence: \r
+mandoc: o.in:27:16: WARNING: undefined escape, printing literally: \G
+mandoc: o.in:55:15: ERROR: incomplete escape sequence: \o'xy

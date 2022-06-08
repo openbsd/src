@@ -1,0 +1,53 @@
+.\" $OpenBSD: A1.in,v 1.1 2022/06/08 13:08:00 schwarze Exp $
+.Dd $Mdocdate: June 8 2022 $
+.Dt ESC-A1 1
+.Os
+.Sh NAME
+.Nm esc-A1
+.Nd the roff escape A sequence: identifier syntax validation
+.Sh DESCRIPTION
+empty: \A''
+.br
+letters: \A'word'
+.br
+blank: \A'two words'
+.br
+ASCII non-letters: \AA!"#$%&'()*+,-./0123456789:;<=>?@[\\]^_`{|}~A
+.br
+invalid escapes: \A'\\\.\G'
+.Ss Argument delimiters
+unsupported \er: \A\rword\ru
+.br
+ignored \e&: \A\&word\&u
+.br
+useless \e.: \A\.word.u
+.br
+invalid \eG: \A\GwordGu
+.br
+special \e-: \A\-word\-u
+.br
+break \ep: \A\pword\pu
+.br
+nospace \ec: \A\cword\cu
+.\".br
+.\"skipchar \ez: \A\zword\zu
+.br
+.ds mystr xwordxu
+string expansion: \A\*[mystr]
+.br
+.nr myreg 121
+register expansion: \A\n[myreg]u
+.br
+ignored \eON: \A\O1word\O2u
+.br
+special character: \A\(hyword\(hyu
+.br
+ignored \eZ\(aqstr\(aq: \A\Z'foo'word\Z'bar'u
+.br
+horizontal motion: \A\h'1'word\h'3'u
+.br
+horizontal line: \A\l'4'word\l'2'u
+.br
+overstrike: \A\o'ab'word\o'cd'u
+.br
+unterminated: \A'word

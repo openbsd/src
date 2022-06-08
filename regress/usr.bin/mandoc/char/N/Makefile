@@ -1,5 +1,6 @@
-# $OpenBSD: Makefile,v 1.2 2011/11/17 16:28:45 schwarze Exp $
+# $OpenBSD: Makefile,v 1.3 2022/06/08 13:08:00 schwarze Exp $
 
-REGRESS_TARGETS=basic
+REGRESS_TARGETS	 = basic delim
+LINT_TARGETS	 = basic delim
 
 .include <bsd.regress.mk>

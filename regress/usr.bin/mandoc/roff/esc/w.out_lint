@@ -1,1 +1,4 @@
-mandoc: w.in:17:15: ERROR: incomplete escape sequence: \w'foo
+mandoc: w.in:17:20: UNSUPP: unsupported escape sequence: \r
+mandoc: w.in:17:23: UNSUPP: unsupported escape sequence: \r
+mandoc: w.in:23:16: WARNING: undefined escape, printing literally: \G
+mandoc: w.in:51:15: ERROR: incomplete escape sequence: \w'foo

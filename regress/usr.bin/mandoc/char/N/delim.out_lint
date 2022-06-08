@@ -1,0 +1,29 @@
+mandoc: delim.in:9:20: UNSUPP: unsupported escape sequence: \!
+mandoc: delim.in:9:24: UNSUPP: unsupported escape sequence: \!
+mandoc: delim.in:11:20: UNSUPP: unsupported escape sequence: \r
+mandoc: delim.in:11:18: ERROR: invalid escape argument delimiter: \N\r
+mandoc: delim.in:19:14: ERROR: invalid escape argument delimiter: \N\,
+mandoc: delim.in:23:14: ERROR: invalid escape argument delimiter: \N\^
+mandoc: delim.in:25:14: ERROR: invalid escape argument delimiter: \N\a
+mandoc: delim.in:27:14: ERROR: invalid escape argument delimiter: \N\d
+mandoc: delim.in:29:14: ERROR: invalid escape argument delimiter: \N\t
+mandoc: delim.in:31:14: ERROR: invalid escape argument delimiter: \N\u
+mandoc: delim.in:35:14: ERROR: invalid escape argument delimiter: \N\|
+mandoc: delim.in:39:14: ERROR: invalid escape argument delimiter: \N\.
+mandoc: delim.in:43:16: WARNING: undefined escape, printing literally: \G
+mandoc: delim.in:45:15: ERROR: invalid escape argument delimiter: \N\ 
+mandoc: delim.in:51:14: ERROR: invalid escape argument delimiter: \N\0
+mandoc: delim.in:61:14: ERROR: invalid escape argument delimiter: \N\~
+mandoc: delim.in:73:21: ERROR: invalid escape argument delimiter: \N2
+mandoc: delim.in:75:14: ERROR: invalid escape argument delimiter: \N\O1
+mandoc: delim.in:77:14: ERROR: invalid escape argument delimiter: \N\Y[mystr]
+mandoc: delim.in:83:14: ERROR: invalid escape argument delimiter: \N\D't 1'
+mandoc: delim.in:85:14: ERROR: invalid escape argument delimiter: \N\L'2'
+mandoc: delim.in:87:14: ERROR: invalid escape argument delimiter: \N\X'foo'
+mandoc: delim.in:89:14: ERROR: invalid escape argument delimiter: \N\Z'foo'
+mandoc: delim.in:91:14: ERROR: invalid escape argument delimiter: \N\b'2'
+mandoc: delim.in:93:14: ERROR: invalid escape argument delimiter: \N\v'2'
+mandoc: delim.in:95:14: ERROR: invalid escape argument delimiter: \N\x'2'
+mandoc: delim.in:97:20: ERROR: invalid escape argument delimiter: \N\h'1'
+mandoc: delim.in:99:18: ERROR: invalid escape argument delimiter: \N\l'4'
+mandoc: delim.in:101:13: ERROR: invalid escape argument delimiter: \N\o'ab'

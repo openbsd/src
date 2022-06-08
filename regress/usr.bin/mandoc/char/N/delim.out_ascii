@@ -1,0 +1,52 @@
+N-DELIM(1)                  General Commands Manual                 N-DELIM(1)
+
+NNAAMMEE
+     NN--ddeelliimm - argument delimiters for the N escape sequence
+
+DDEESSCCRRIIPPTTIIOONN
+     unsupported \!: *u
+     unsupported \r: 42u
+     ignored \%: *u
+     ignored \&: *u
+     ignored \): *u
+     ignored \,: 42u
+     ignored \/: *u
+     ignored \^: 42u
+     ignored \a: 42u
+     ignored \d: 42u
+     ignored \t: 42u
+     ignored \u: 42u
+     ignored \{: *u
+     ignored \|: 42u
+     ignored \}: *u
+     useless \.: 42.u
+     invalid \G: *u
+     special \ : 42 u
+     special \': *u
+     special \-: *u
+     special \0: 42 u
+     special \:: *u
+     special \_: *u
+     special \`: *u
+     special \e: *u
+     special \~: 42 u
+     break \p: *u
+     nospace \c: *u
+     string expansion: *u
+     register expansion: 3u
+     ignored \O: 42u
+     ignored \Y: 42u
+     ignored \k: *u
+     special character: *u
+     ignored \D: 42u
+     ignored \L: 42u
+     ignored \X: 42u
+     ignored \Z: 42u
+     ignored \b: 42u
+     ignored \v: 42u
+     ignored \x: 42u
+     horizontal motion: 42   u
+     horizontal line: 42__u
+     overstrike: 42cdu
+
+OpenBSD                          June 8, 2022                          OpenBSD

@@ -1,1 +1,29 @@
-mandoc: B.in:37:23: ERROR: incomplete escape sequence: \B'1+1
+mandoc: B.in:37:20: UNSUPP: unsupported escape sequence: \!
+mandoc: B.in:37:24: UNSUPP: unsupported escape sequence: \!
+mandoc: B.in:39:20: UNSUPP: unsupported escape sequence: \r
+mandoc: B.in:39:18: ERROR: invalid escape argument delimiter: \B\r
+mandoc: B.in:47:14: ERROR: invalid escape argument delimiter: \B\,
+mandoc: B.in:51:14: ERROR: invalid escape argument delimiter: \B\^
+mandoc: B.in:53:14: ERROR: invalid escape argument delimiter: \B\a
+mandoc: B.in:55:14: ERROR: invalid escape argument delimiter: \B\d
+mandoc: B.in:57:14: ERROR: invalid escape argument delimiter: \B\t
+mandoc: B.in:59:14: ERROR: invalid escape argument delimiter: \B\u
+mandoc: B.in:63:14: ERROR: invalid escape argument delimiter: \B\|
+mandoc: B.in:67:14: ERROR: invalid escape argument delimiter: \B\.
+mandoc: B.in:71:16: WARNING: undefined escape, printing literally: \G
+mandoc: B.in:73:15: ERROR: invalid escape argument delimiter: \B\ 
+mandoc: B.in:79:14: ERROR: invalid escape argument delimiter: \B\0
+mandoc: B.in:89:14: ERROR: invalid escape argument delimiter: \B\~
+mandoc: B.in:101:21: ERROR: invalid escape argument delimiter: \B2
+mandoc: B.in:103:14: ERROR: invalid escape argument delimiter: \B\O1
+mandoc: B.in:105:14: ERROR: invalid escape argument delimiter: \B\Y[mystr]
+mandoc: B.in:111:14: ERROR: invalid escape argument delimiter: \B\D't 1'
+mandoc: B.in:113:14: ERROR: invalid escape argument delimiter: \B\L'2'
+mandoc: B.in:115:14: ERROR: invalid escape argument delimiter: \B\X'foo'
+mandoc: B.in:117:14: ERROR: invalid escape argument delimiter: \B\Z'foo'
+mandoc: B.in:119:14: ERROR: invalid escape argument delimiter: \B\b'2'
+mandoc: B.in:121:14: ERROR: invalid escape argument delimiter: \B\v'2'
+mandoc: B.in:123:14: ERROR: invalid escape argument delimiter: \B\x'2'
+mandoc: B.in:125:20: ERROR: invalid escape argument delimiter: \B\h'1'
+mandoc: B.in:127:18: ERROR: invalid escape argument delimiter: \B\l'4'
+mandoc: B.in:129:13: ERROR: invalid escape argument delimiter: \B\o'ab'

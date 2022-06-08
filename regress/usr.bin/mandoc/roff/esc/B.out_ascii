@@ -18,6 +18,51 @@ DDEESSCCRRIIPPTTIIOONN
      parentheses containing number: 1
      complex expression: 1
      other delimiter: 1
-     no closing delimiter: 0
 
-OpenBSD                          July 4, 2017                          OpenBSD
+   AArrgguummeenntt ddeelliimmiitteerrss
+     unsupported \!: 1u
+     unsupported \r: 042u
+     ignored \%: 1u
+     ignored \&: 1u
+     ignored \): 1u
+     ignored \,: 042u
+     ignored \/: 1u
+     ignored \^: 042u
+     ignored \a: 042u
+     ignored \d: 042u
+     ignored \t: 042u
+     ignored \u: 042u
+     ignored \{: 1u
+     ignored \|: 042u
+     ignored \}: 1u
+     useless \.: 042.u
+     invalid \G: 1u
+     special \ : 042 u
+     special \': 1u
+     special \-: 1u
+     special \0: 042 u
+     special \:: 1u
+     special \_: 1u
+     special \`: 1u
+     special \e: 1u
+     special \~: 042 u
+     break \p: 1u
+     nospace \c: 1u
+     string expansion: 1u
+     register expansion: 03u
+     ignored \O: 042u
+     ignored \Y: 042u
+     ignored \k: 1u
+     special character: 1u
+     ignored \D: 042u
+     ignored \L: 042u
+     ignored \X: 042u
+     ignored \Z: 042u
+     ignored \b: 042u
+     ignored \v: 042u
+     ignored \x: 042u
+     horizontal motion: 042   u
+     horizontal line: 042__u
+     overstrike: 042cdu
+
+OpenBSD                          June 8, 2022                          OpenBSD

@@ -1,0 +1,31 @@
+ESC-A1(1)                   General Commands Manual                  ESC-A1(1)
+
+NNAAMMEE
+     eesscc--AA11 - the roff escape A sequence: identifier syntax validation
+
+DDEESSCCRRIIPPTTIIOONN
+     empty: 0
+     letters: 1
+     blank: 0
+     ASCII non-letters: 1
+     invalid escapes: 1
+
+   AArrgguummeenntt ddeelliimmiitteerrss
+     unsupported \r: 1u
+     ignored \&: 1u
+     useless \.: 1u
+     invalid \G: 1u
+     special \-: 1u
+     break \p: 1u
+     nospace \c: 1u
+     string expansion: 1u
+     register expansion: 1u
+     ignored \ON: 1u
+     special character: 1u
+     ignored \Z'str': 1u
+     horizontal motion: 1u
+     horizontal line: 1u
+     overstrike: 1u
+     unterminated: 1
+
+OpenBSD                          June 8, 2022                          OpenBSD

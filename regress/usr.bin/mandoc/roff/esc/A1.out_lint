@@ -1,0 +1,5 @@
+mandoc: A1.in:17:25: WARNING: undefined escape, printing literally: \G
+mandoc: A1.in:19:20: UNSUPP: unsupported escape sequence: \r
+mandoc: A1.in:19:26: UNSUPP: unsupported escape sequence: \r
+mandoc: A1.in:25:16: WARNING: undefined escape, printing literally: \G
+mandoc: A1.in:53:15: ERROR: incomplete escape sequence: \A'word

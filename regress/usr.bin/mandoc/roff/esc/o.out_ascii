@@ -11,4 +11,22 @@ DDEESSCCRRIIPPTTIIOONN
      wide/narrow/narrow: xO-|x
      narrow/narrow/wide: x|-Ox
 
-OpenBSD                          July 4, 2017                          OpenBSD
+   AArrgguummeenntt ddeelliimmiitteerrss
+     unsupported \r: xyu
+     ignored \&: xyu
+     useless \.: xyu
+     invalid \G: xyu
+     special \-: xyu
+     break \p: xyu
+     nospace \c: xyu
+     string expansion: xyu
+     register expansion: 23u
+     ignored \ON: xyu
+     special character: xyu
+     ignored \Z'str': xyu
+     horizontal motion: xyu
+     horizontal line: xyu
+     overstrike: xyu
+     unterminated: xy
+
+OpenBSD                          June 8, 2022                          OpenBSD

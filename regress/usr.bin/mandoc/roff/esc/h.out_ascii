@@ -11,6 +11,52 @@ DDEESSCCRRIIPPTTIIOONN
      escape at the end: ><
      escape at the beginning: ><
      escape in the middle: ><
-     invalid delimiter: ><
 
-OpenBSD                          July 4, 2017                          OpenBSD
+   AArrgguummeenntt ddeelliimmiitteerrss
+     invalid ASCII: ><
+     unsupported \!:   u
+     unsupported \r: 2u
+     ignored \%:   u
+     ignored \&:   u
+     ignored \):   u
+     ignored \,: 2u
+     ignored \/:   u
+     ignored \^: 2u
+     ignored \a: 2u
+     ignored \d: 2u
+     ignored \t: 2u
+     ignored \u: 2u
+     ignored \{:   u
+     ignored \|: 2u
+     ignored \}:   u
+     useless \.: 2.u
+     invalid \G:   u
+     special \ : 2 u
+     special \':   u
+     special \-:   u
+     special \0: 2 u
+     special \::   u
+     special \_:   u
+     special \`:   u
+     special \e:   u
+     special \~: 2 u
+     break \p:   u
+     nospace \c:   u
+     string expansion:   u
+     register expansion: 21u
+     ignored \O: 2u
+     ignored \Y: 2u
+     ignored \k:   u
+     special character:   u
+     ignored \D: 2u
+     ignored \L: 2u
+     ignored \X: 2u
+     ignored \Z: 2u
+     ignored \b: 2u
+     ignored \v: 2u
+     ignored \x: 2u
+     horizontal motion: 2   u
+     horizontal line: 2___u
+     overstrike: 2cdu
+
+OpenBSD                          June 8, 2022                          OpenBSD
