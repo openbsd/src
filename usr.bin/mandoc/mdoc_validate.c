@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_validate.c,v 1.305 2021/10/04 14:18:42 schwarze Exp $ */
+/* $OpenBSD: mdoc_validate.c,v 1.306 2022/06/08 16:29:12 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2021 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1098,7 +1098,8 @@ post_tg(POST_ARGS)
 	/* Find the next node. */
 	n = mdoc->last;
 	for (nn = n; nn != NULL; nn = nn->parent) {
-		if (nn->next != NULL) {
+		if (nn->type != ROFFT_HEAD && nn->type != ROFFT_BODY &&
+		    nn->type != ROFFT_TAIL && nn->next != NULL) {
 			nn = nn->next;
 			break;
 		}
