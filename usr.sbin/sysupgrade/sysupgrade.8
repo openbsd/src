@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysupgrade.8,v 1.12 2021/11/08 16:12:10 kn Exp $
+.\"	$OpenBSD: sysupgrade.8,v 1.13 2022/06/08 09:03:11 mglocker Exp $
 .\"
 .\" Copyright (c) 2019 Florian Obser <florian@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 8 2021 $
+.Dd $Mdocdate: June 8 2022 $
 .Dt SYSUPGRADE 8
 .Os
 .Sh NAME
@@ -24,6 +24,7 @@
 .Nm
 .Op Fl fkn
 .Op Fl r | s
+.Op Fl b Ar base-directory
 .Op Ar installurl
 .Sh DESCRIPTION
 .Nm
@@ -48,6 +49,11 @@ triggering a one-shot upgrade using the files in
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl b Ar base-directory
+Download files to
+.Ar base-directory Ns / Ns Pa _sysupgrade
+instead of
+.Pa /home/_sysupgrade .
 .It Fl f
 Force an already applied upgrade.
 The default is to upgrade to latest snapshot only if available.
