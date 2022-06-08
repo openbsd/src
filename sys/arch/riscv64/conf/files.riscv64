@@ -1,4 +1,4 @@
-#	$OpenBSD: files.riscv64,v 1.22 2022/06/06 14:57:33 kettenis Exp $
+#	$OpenBSD: files.riscv64,v 1.23 2022/06/08 08:40:53 kettenis Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -123,6 +123,11 @@ file	arch/riscv64/dev/sfuart.c		sfuart
 device	stfclock
 attach	stfclock at fdt
 file	arch/riscv64/dev/stfclock.c		stfclock
+
+# StarFive pinctrl
+device	stfpinctrl
+attach	stfpinctrl at fdt
+file	arch/riscv64/dev/stfpinctrl.c		stfpinctrl
 
 # Paravirtual device bus and virtio
 include "dev/pv/files.pv"
