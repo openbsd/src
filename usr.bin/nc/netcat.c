@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.218 2021/07/12 15:09:20 beck Exp $ */
+/* $OpenBSD: netcat.c,v 1.219 2022/06/08 20:07:31 tb Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -668,7 +668,6 @@ main(int argc, char *argv[])
 		if (uflag)
 			unlink(unix_dg_tmp_socket);
 		return ret;
-
 	} else {
 		int i = 0;
 
@@ -725,8 +724,8 @@ main(int argc, char *argv[])
 				 * if we aren't connecting thru a proxy and
 				 * there is something to report, print IP
 				 */
-				if (!nflag && !xflag
-				    && (strcmp(host, ipaddr) != 0))
+				if (!nflag && !xflag &&
+				    strcmp(host, ipaddr) != 0)
 					fprintf(stderr, " (%s)", ipaddr);
 
 				fprintf(stderr, " %s port [%s/%s] succeeded!\n",
@@ -824,7 +823,7 @@ tls_setup_client(struct tls *tls_ctx, int s, char *host)
 	const char *errstr;
 
 	if (tls_connect_socket(tls_ctx, s,
-		tls_expectname ? tls_expectname : host) == -1) {
+	    tls_expectname ? tls_expectname : host) == -1) {
 		errx(1, "tls connection failed (%s)",
 		    tls_error(tls_ctx));
 	}
@@ -913,7 +912,6 @@ unix_connect(char *path)
 		return -1;
 	}
 	return s;
-
 }
 
 /*
@@ -1449,7 +1447,6 @@ atelnet(int nfd, unsigned char *buf, unsigned int size)
 	}
 }
 
-
 int
 strtoport(char *portstr, int udp)
 {
@@ -1550,12 +1547,12 @@ set_common_sockopts(int s, int af)
 
 	if (Sflag) {
 		if (setsockopt(s, IPPROTO_TCP, TCP_MD5SIG,
-			&x, sizeof(x)) == -1)
+		    &x, sizeof(x)) == -1)
 			err(1, NULL);
 	}
 	if (Dflag) {
 		if (setsockopt(s, SOL_SOCKET, SO_DEBUG,
-			&x, sizeof(x)) == -1)
+		    &x, sizeof(x)) == -1)
 			err(1, NULL);
 	}
 	if (Tflag != -1) {
@@ -1704,7 +1701,7 @@ save_peer_cert(struct tls *tls_ctx, FILE *fp)
 }
 
 void
-report_tls(struct tls * tls_ctx, char * host)
+report_tls(struct tls *tls_ctx, char *host)
 {
 	time_t t;
 	const char *ocsp_url;
@@ -1732,7 +1729,7 @@ report_tls(struct tls * tls_ctx, char * host)
 	switch (tls_peer_ocsp_response_status(tls_ctx)) {
 	case TLS_OCSP_RESPONSE_SUCCESSFUL:
 		fprintf(stderr, "OCSP Stapling: %s\n",
-		    tls_peer_ocsp_result(tls_ctx) == NULL ?  "" :
+		    tls_peer_ocsp_result(tls_ctx) == NULL ? "" :
 		    tls_peer_ocsp_result(tls_ctx));
 		fprintf(stderr,
 		    "  response_status=%d cert_status=%d crl_reason=%d\n",
@@ -1742,22 +1739,22 @@ report_tls(struct tls * tls_ctx, char * host)
 		t = tls_peer_ocsp_this_update(tls_ctx);
 		fprintf(stderr, "  this update: %s",
 		    t != -1 ? ctime(&t) : "\n");
-		t =  tls_peer_ocsp_next_update(tls_ctx);
+		t = tls_peer_ocsp_next_update(tls_ctx);
 		fprintf(stderr, "  next update: %s",
 		    t != -1 ? ctime(&t) : "\n");
-		t =  tls_peer_ocsp_revocation_time(tls_ctx);
+		t = tls_peer_ocsp_revocation_time(tls_ctx);
 		fprintf(stderr, "  revocation: %s",
 		    t != -1 ? ctime(&t) : "\n");
 		break;
 	case -1:
 		break;
 	default:
-		fprintf(stderr, "OCSP Stapling:  failure - response_status %d (%s)\n",
+		fprintf(stderr,
+		    "OCSP Stapling:  failure - response_status %d (%s)\n",
 		    tls_peer_ocsp_response_status(tls_ctx),
-		    tls_peer_ocsp_result(tls_ctx) == NULL ?  "" :
+		    tls_peer_ocsp_result(tls_ctx) == NULL ? "" :
 		    tls_peer_ocsp_result(tls_ctx));
 		break;
-
 	}
 }
 
@@ -1780,12 +1777,12 @@ report_sock(const char *msg, const struct sockaddr *sa, socklen_t salen,
 	herr = getnameinfo(sa, salen, host, sizeof(host), port, sizeof(port),
 	    flags);
 	switch (herr) {
-		case 0:
-			break;
-		case EAI_SYSTEM:
-			err(1, "getnameinfo");
-		default:
-			errx(1, "getnameinfo: %s", gai_strerror(herr));
+	case 0:
+		break;
+	case EAI_SYSTEM:
+		err(1, "getnameinfo");
+	default:
+		errx(1, "getnameinfo: %s", gai_strerror(herr));
 	}
 
 	fprintf(stderr, "%s on %s %s\n", msg, host, port);
