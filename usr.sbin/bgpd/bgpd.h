@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.427 2022/06/07 15:57:47 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.428 2022/06/09 16:45:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1291,17 +1291,15 @@ int		 ktable_exists(u_int, u_int *);
 int		 kr_change(u_int, struct kroute_full *);
 int		 kr_delete(u_int, struct kroute_full *);
 int		 kr_flush(u_int);
-void		 kr_shutdown(u_int);
+void		 kr_shutdown(void);
 void		 kr_fib_couple(u_int);
 void		 kr_fib_couple_all(void);
 void		 kr_fib_decouple(u_int);
 void		 kr_fib_decouple_all(void);
 void		 kr_fib_prio_set(uint8_t);
-int		 kr_dispatch_msg(u_int rdomain);
-int		 kr_nexthop_add(uint32_t, struct bgpd_addr *,
-		    struct bgpd_config *);
-void		 kr_nexthop_delete(uint32_t, struct bgpd_addr *,
-		    struct bgpd_config *);
+int		 kr_dispatch_msg(void);
+int		 kr_nexthop_add(uint32_t, struct bgpd_addr *);
+void		 kr_nexthop_delete(uint32_t, struct bgpd_addr *);
 void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *);
 void		 kr_net_reload(u_int, uint64_t, struct network_head *);

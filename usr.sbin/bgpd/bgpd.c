@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.244 2022/06/05 12:43:13 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.245 2022/06/09 16:45:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -388,7 +388,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 		}
 
 		if (pfd[PFD_SOCK_ROUTE].revents & POLLIN) {
-			if (kr_dispatch_msg(conf->default_tableid) == -1)
+			if (kr_dispatch_msg() == -1)
 				quit = 1;
 		}
 
@@ -460,7 +460,7 @@ BROKEN	if (pledge("stdio rpath wpath cpath fattr unix route recvfd sendfd",
 
 	/* cleanup kernel data structures */
 	carp_demote_shutdown();
-	kr_shutdown(conf->default_tableid);
+	kr_shutdown();
 	pftable_clear_all();
 
 	RB_FOREACH(p, peer_head, &conf->peers)
@@ -800,6 +800,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 	struct peer		*p;
 	struct rtr_config	*r;
 	ssize_t			 n;
+	u_int			 rtableid;
 	int			 rv, verbose;
 
 	rv = 0;
@@ -843,9 +844,11 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 			else if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct bgpd_addr))
 				log_warnx("wrong imsg len");
-			else if (kr_nexthop_add(imsg.hdr.peerid, imsg.data,
-			    conf) == -1)
-				rv = -1;
+			else {
+				rtableid = conf->default_tableid;
+				if (kr_nexthop_add(rtableid, imsg.data) == -1)
+					rv = -1;
+			}
 			break;
 		case IMSG_NEXTHOP_REMOVE:
 			if (idx != PFD_PIPE_RDE)
@@ -853,9 +856,10 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 			else if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(struct bgpd_addr))
 				log_warnx("wrong imsg len");
-			else
-				kr_nexthop_delete(imsg.hdr.peerid, imsg.data,
-				    conf);
+			else {
+				rtableid = conf->default_tableid;
+				kr_nexthop_delete(rtableid, imsg.data);
+			}
 			break;
 		case IMSG_PFTABLE_ADD:
 			if (idx != PFD_PIPE_RDE)
