@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.33 2022/06/08 08:42:09 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.34 2022/06/09 12:16:56 kettenis Exp $
 
 machine		riscv64
 maxusers	4
@@ -68,6 +68,7 @@ plic*		at fdt? early 1
 
 syscon*		at fdt? early 1
 gfrtc*		at fdt?
+gpiorestart*	at fdt?
 
 cad*		at fdt?
 dwge*		at fdt?
