@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.26 2022/01/09 05:42:37 jsg Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.27 2022/06/09 14:43:28 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -602,7 +602,9 @@ dwmmc_card_detect(sdmmc_chipset_handle_t sch)
 	struct dwmmc_softc *sc = sch;
 	uint32_t cdetect;
 
-	if (OF_getproplen(sc->sc_node, "non-removable") == 0)
+	/* XXX treat broken-cd as non-removable */
+	if (OF_getproplen(sc->sc_node, "non-removable") == 0 ||
+	    OF_getproplen(sc->sc_node, "broken-cd") == 0)
 		return 1;
 
 	if (sc->sc_gpio[0]) {
