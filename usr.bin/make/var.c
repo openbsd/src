@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.103 2019/12/22 09:26:23 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.104 2022/06/09 13:13:14 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -222,7 +222,10 @@ typedef struct Var_ {
 #define VAR_FROM_ENV	8	/* Special source: environment */
 #define VAR_SEEN_ENV	16	/* No need to go look up environment again */
 #define VAR_IS_SHELL	32	/* Magic behavior */
-
+/* XXX there are also some flag values which are part of the visible API
+ * and thus defined inside var.h, don't forget to look there if you want
+ * to define some new flags !
+ */
 #define POISONS (POISON_NORMAL | POISON_EMPTY | POISON_NOT_DEFINED)
 				/* Defined in var.h */
 	char name[1];		/* the variable's name */
