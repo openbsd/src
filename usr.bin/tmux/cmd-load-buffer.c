@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-load-buffer.c,v 1.64 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-load-buffer.c,v 1.65 2022/06/09 09:12:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Tiago Cunha <me@tiagocunha.org>
@@ -77,7 +77,7 @@ cmd_load_buffer_done(__unused struct client *c, const char *path, int error,
 		} else if (tc != NULL &&
 		    tc->session != NULL &&
 		    (~tc->flags & CLIENT_DEAD))
-			tty_set_selection(&tc->tty, copy, bsize);
+			tty_set_selection(&tc->tty, "", copy, bsize);
 		if (tc != NULL)
 			server_client_unref(tc);
 	}

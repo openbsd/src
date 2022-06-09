@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.207 2022/03/17 13:39:13 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.208 2022/06/09 09:12:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2085,12 +2085,14 @@ screen_write_overwrite(struct screen_write_ctx *ctx, struct grid_cell *gc,
 
 /* Set external clipboard. */
 void
-screen_write_setselection(struct screen_write_ctx *ctx, u_char *str, u_int len)
+screen_write_setselection(struct screen_write_ctx *ctx, const char *flags,
+    u_char *str, u_int len)
 {
 	struct tty_ctx	ttyctx;
 
 	screen_write_initctx(ctx, &ttyctx, 0);
 	ttyctx.ptr = str;
+	ttyctx.ptr2 = (void *)flags;
 	ttyctx.num = len;
 
 	tty_write(tty_cmd_setselection, &ttyctx);

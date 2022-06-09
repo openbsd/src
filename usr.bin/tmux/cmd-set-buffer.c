@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-set-buffer.c,v 1.33 2022/06/02 20:41:21 nicm Exp $ */
+/* $OpenBSD: cmd-set-buffer.c,v 1.34 2022/06/09 09:12:55 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -131,7 +131,7 @@ cmd_set_buffer_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_ERROR);
 	}
 	if (args_has(args, 'w') && tc != NULL)
- 		tty_set_selection(&tc->tty, bufdata, bufsize);
+ 		tty_set_selection(&tc->tty, "", bufdata, bufsize);
 
 	return (CMD_RETURN_NORMAL);
 }
