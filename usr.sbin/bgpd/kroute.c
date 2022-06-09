@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.252 2022/06/09 16:45:19 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.253 2022/06/09 16:53:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2794,7 +2794,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 
 	kif->k.nh_reachable = reachable;
 
-	kt = ktable_get(ifd->ifi_rdomain);
+	kt = ktable_get(kif->k.rdomain);
 
 	LIST_FOREACH(kkr, &kif->kroute_l, entry) {
 		if (reachable)
