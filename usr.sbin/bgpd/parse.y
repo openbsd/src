@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.428 2022/06/02 11:12:47 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.429 2022/06/09 17:33:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -3248,8 +3248,10 @@ expand_macro(void)
 		break;
 	}
 	val = symget(buf);
-	if (val == NULL)
+	if (val == NULL) {
 		yyerror("macro '%s' not defined", buf);
+		return (ERROR);
+	}
 	p = val + strlen(val) - 1;
 	lungetc(DONE_EXPAND);
 	while (p >= val) {
