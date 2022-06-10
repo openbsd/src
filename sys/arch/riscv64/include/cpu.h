@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.11 2022/01/01 14:18:39 kettenis Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.12 2022/06/10 21:34:15 jca Exp $	*/
 
 /*
  * Copyright (c) 2019 Mike Larkin <mlarkin@openbsd.org>
@@ -175,7 +175,8 @@ void	cpu_startclock(void);
 
 #endif /* !MULTIPROCESSOR */
 
-#define CPU_BUSY_CYCLE()	do {} while (0)
+/* Zihintpause ratified extension */
+#define CPU_BUSY_CYCLE()	__asm volatile(".long 0x0100000f" ::: "memory")
 
 #define curpcb		curcpu()->ci_curpcb
 
