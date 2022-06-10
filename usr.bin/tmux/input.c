@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.203 2022/06/09 09:12:55 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.204 2022/06/10 11:55:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2292,6 +2292,8 @@ input_exit_osc(struct input_ctx *ictx)
 	option = 0;
 	while (*p >= '0' && *p <= '9')
 		option = option * 10 + *p++ - '0';
+	if (*p != ';' && *p != '\0')
+		return;
 	if (*p == ';')
 		p++;
 
