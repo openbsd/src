@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.78 2022/06/08 21:28:59 fcambus Exp $
+#	$OpenBSD: airport,v 1.79 2022/06/10 20:10:24 kn Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1263,6 +1263,7 @@ OSD:Froesoe, Ostersund, Sweden
 OSH:Wittman Field, Oshkosh, Wisconsin, USA
 OSK:Oskarshamn, Sweden
 OSL:All Airports around Oslo, Norway
+OSW:Orsk, Russia
 OTH:North Bend, Oregon, USA
 OTM:Ottumwa, Iowa, USA
 OTP:Otopeni, Bucharest, Romania
