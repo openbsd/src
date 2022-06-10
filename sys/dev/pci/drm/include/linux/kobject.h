@@ -16,6 +16,9 @@ struct kobj_type {
 	void (*release)(struct kobject *);
 };
 
+struct kobj_attribute {
+};
+
 static inline void
 kobject_init(struct kobject *obj, struct kobj_type *type)
 {
