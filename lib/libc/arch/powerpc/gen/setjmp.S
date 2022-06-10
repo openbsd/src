@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.S,v 1.13 2016/05/29 07:59:36 guenther Exp $ */
+/*	$OpenBSD: setjmp.S,v 1.14 2022/06/10 01:56:02 guenther Exp $ */
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -25,7 +25,6 @@
  */  
 
 #include "SYS.h"
-#include <machine/asm.h>
 
 /* int setjmp(jmp_buf env) */
 

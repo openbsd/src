@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.16 2020/11/28 19:49:30 gkoehler Exp $	*/
+/*	$OpenBSD: asm.h,v 1.17 2022/06/10 01:56:02 guenther Exp $	*/
 /*	$NetBSD: asm.h,v 1.1 1996/09/30 16:34:20 ws Exp $	*/
 
 /*
@@ -69,8 +69,9 @@
 # define _TMP_LABEL(x)	.L_/**/x
 #endif
 
-#define _ENTRY(x) \
-	.text; .align 2; .globl x; .type x,@function; x:
+#define _ENTRY_NB(x) \
+	.text; .align 2; .type x,@function; x:
+#define _ENTRY(x)	.globl x; _ENTRY_NB(x)
 
 #if defined(PROF) || defined(GPROF)
 # define _PROF_PROLOGUE(y)	\
@@ -89,6 +90,7 @@ _TMP_LABEL(y):; \
 #endif
 
 #define	ENTRY(y)	_ENTRY(_C_LABEL(y)); _PROF_PROLOGUE(y)
+#define	ENTRY_NB(y)	_ENTRY_NB(y); _PROF_PROLOGUE(y)
 #define	ASENTRY(y)	_ENTRY(_ASM_LABEL(y)); _PROF_PROLOGUE(y)
 #define	END(y)		.size y, . - y
 

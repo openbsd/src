@@ -1,10 +1,10 @@
-/*	$OpenBSD: ffs.S,v 1.3 2020/11/28 19:49:30 gkoehler Exp $ */
+/*	$OpenBSD: ffs.S,v 1.4 2022/06/10 01:56:02 guenther Exp $ */
 /*
  * Written by Christian Weisgerber <naddy@openbsd.org>.
  * Public domain.
  */
  
-#include "SYS.h"
+#include "DEFS.h"
 
 ENTRY(ffs)
 	RETGUARD_SETUP(ffs, %r11, %r12)
@@ -14,5 +14,4 @@ ENTRY(ffs)
 	subfic	%r3, %r3, 32
 	RETGUARD_CHECK(ffs, %r11, %r12)
 	blr
-END(ffs)
-.protected
+END_BUILTIN(ffs)

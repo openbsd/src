@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigsetjmp.S,v 1.7 2016/05/22 23:56:30 guenther Exp $ */
+/*	$OpenBSD: sigsetjmp.S,v 1.8 2022/06/10 01:56:02 guenther Exp $ */
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -25,7 +25,6 @@
  */  
 
 #include "SYS.h"
-#include <machine/asm.h>
 
 #define JMP_sigflag	0x00
 #define JMP_r1		0x04

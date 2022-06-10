@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.25 2020/11/28 19:49:30 gkoehler Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.26 2022/06/10 01:56:02 guenther Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -42,7 +42,7 @@
 /* r0 will be a non zero errno if there was an error, while r3/r4 will
    contain the return value */
 
-#include "machine/asm.h"
+#include "DEFS.h"
 
 
 /* offsetof(struct tib, tib_errno) - offsetof(struct tib, __tib_tcb) */
@@ -52,28 +52,6 @@
 
 /* offset of errno from %r2 */
 #define	R2_OFFSET_ERRNO		(-TCB_OFFSET + TCB_OFFSET_ERRNO)
-
-/*
- * We define a hidden alias with the prefix "_libc_" for each global symbol
- * that may be used internally.  By referencing _libc_x instead of x, other
- * parts of libc prevent overriding by the application and avoid unnecessary
- * relocations.
- */
-#define _HIDDEN(x)		_libc_##x
-#define _HIDDEN_ALIAS(x,y)			\
-	STRONG_ALIAS(_HIDDEN(x),y);		\
-	.hidden _HIDDEN(x)
-#define _HIDDEN_FALIAS(x,y)			\
-	_HIDDEN_ALIAS(x,y);			\
-	.type _HIDDEN(x),@function
-
-/*
- * For functions implemented in ASM that aren't syscalls.
- *   END_STRONG(x)	Like DEF_STRONG() in C; for standard/reserved C names
- *   END_WEAK(x)	Like DEF_WEAK() in C; for non-ISO C names
- */
-#define	END_STRONG(x)	END(x); _HIDDEN_FALIAS(x,x); END(_HIDDEN(x))
-#define	END_WEAK(x)	END_STRONG(x); .weak x
 
 #define SYSENTRY(x)		WEAK_ALIAS(x, _thread_sys_ ## x);	\
 				ENTRY(_thread_sys_ ## x)

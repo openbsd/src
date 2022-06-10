@@ -1,4 +1,4 @@
-/* $OpenBSD: memmove.S,v 1.4 2020/11/28 19:49:30 gkoehler Exp $ */
+/* $OpenBSD: memmove.S,v 1.5 2022/06/10 01:56:02 guenther Exp $ */
 /* $NetBSD: memmove.S,v 1.3 2011/01/15 07:31:12 matt Exp $ */
 
 /* stropt/memmove.S, pl_string_common, pl_linux 10/11/04 11:45:37
@@ -39,7 +39,7 @@
  * ==========================================================================
  */
 
-#include "SYS.h"
+#include "DEFS.h"
 
         .text
 
@@ -48,11 +48,11 @@
 ENTRY(memcpy)
 	RETGUARD_SETUP(memmove, %r11, %r12)
 	mr	%r8, %r3		/* Save dst (return value)	*/
-	b	fwd
+	b	.Lfwd
 #endif
 
 /* void bcopy(void *, void *, size_t) */
-ENTRY(bcopy)
+ENTRY_NB(bcopy)
 	mr	%r6, %r3		/* swap src/dst */
 	mr	%r3, %r4
 	mr	%r4, %r6
@@ -63,112 +63,112 @@ ENTRY(memmove)
 	mr	%r8, %r3		/* Save dst (return value)	*/
 
 	cmpw	%r4, %r8		/* Branch to reverse if 	*/
-	blt	reverse			/* src < dest. Don't want to	*/
+	blt	.Lreverse		/* src < dest. Don't want to	*/
 					/* overwrite end of src with	*/
 					/* start of dest 		*/
 
-fwd:
+.Lfwd:
 	addi	%r4, %r4, -4		/* Back up src and dst pointers */
 	addi	%r8, %r8, -4		/* due to auto-update of 'load' */
 
 	srwi.	%r9,%r5,2		/* How many words in total cnt	*/
-	beq-	last1			/* Handle byte by byte if < 4	*/
+	beq-	.Llast1			/* Handle byte by byte if < 4	*/
 					/* bytes total 			*/
 	mtctr	%r9			/* Count of words for loop	*/
 	lwzu	%r7, 4(%r4)		/* Preload first word		*/
 
-	b	g1
+	b	.Lg1
 
-g0:					/* Main loop			*/
+.Lg0:					/* Main loop			*/
 
 	lwzu	%r7, 4(%r4)		/* Load a new word		*/
 	stwu	%r6, 4(%r8)		/* Store previous word		*/
 
-g1:
+.Lg1:
 
-	bdz-	last			/* Dec cnt, and branch if just	*/
+	bdz-	.Llast			/* Dec cnt, and branch if just	*/
 					/* one word to store		*/
 	lwzu	%r6, 4(%r4)		/* Load another word		*/
 	stwu	%r7, 4(%r8)		/* Store previous word		*/
-	bdnz+	g0			/* Dec cnt, and loop again if	*/
+	bdnz+	.Lg0			/* Dec cnt, and loop again if	*/
 					/* more words			*/
 	mr	%r7, %r6		/* If word count -> 0, then...	*/
 
-last:
+.Llast:
 
 	stwu	%r7, 4(%r8)		/* ... store last word		*/
 
-last1:					/* Byte-by-byte copy		*/
+.Llast1:				/* Byte-by-byte copy		*/
 
 	clrlwi.	%r5,%r5,30		/* If count -> 0, then ...	*/
-	beq	done			/* we're done			*/
+	beq	.Ldone			/* we're done			*/
 
 	mtctr	%r5			/* else load count for loop	*/
 
 	lbzu	%r6, 4(%r4)		/* 1st byte: update addr by 4	*/
 	stbu	%r6, 4(%r8)		/* since we pre-adjusted by 4	*/
-	bdz-	done			/* in anticipation of main loop */
+	bdz-	.Ldone			/* in anticipation of main loop */
 
-last2:
+.Llast2:
 
 	lbzu	%r6, 1(%r4)		/* But handle the rest by	*/
 	stbu	%r6, 1(%r8)		/* updating addr by 1		*/
-	bdnz+	last2
-	b	done
+	bdnz+	.Llast2
+	b	.Ldone
 
 	/* We're here since src < dest. Don't want to overwrite end of	*/
 	/* src with start of dest					*/
 
-reverse:
+.Lreverse:
 
 	add	%r4, %r4, %r5		/* Work from end to beginning	*/
 	add	%r8, %r8, %r5 		/* so add count to string ptrs	*/
 	srwi.	%r9,%r5,2		/* Words in total count		*/
-	beq-	rlast1			/* Handle byte by byte if < 4	*/
+	beq-	.Lrlast1		/* Handle byte by byte if < 4	*/
 					/* bytes total 			*/
 
 	mtctr	%r9			/* Count of words for loop 	*/
 
 	lwzu	%r7, -4(%r4)		/* Preload first word		*/
-	b	rg1
+	b	.Lrg1
 
-rg0:					/* Main loop			*/
+.Lrg0:					/* Main loop			*/
 
 	lwzu	%r7, -4(%r4)		/* Load a new word		*/
 	stwu	%r6, -4(%r8)		/* Store previous word		*/
 
-rg1:
+.Lrg1:
 
-	bdz-	rlast			/* Dec cnt, and branch if just	*/
+	bdz-	.Lrlast			/* Dec cnt, and branch if just	*/
 					/* one word to store		*/
 
 	lwzu	%r6, -4(%r4)		/* Load another word		*/
 	stwu	%r7, -4(%r8)		/* Store previous word		*/
 
-	bdnz+	rg0			/* Dec cnt, and loop again if	*/
+	bdnz+	.Lrg0			/* Dec cnt, and loop again if	*/
 					/* more words			*/
 
 	mr	%r7, %r6		/* If word count -> 0, then...	*/
 
-rlast:
+.Lrlast:
 
 	stwu	%r7, -4(%r8)		/* ... store last word		*/
 
-rlast1:					/* Byte-by-byte copy		*/
+.Lrlast1:				/* Byte-by-byte copy		*/
 
 	clrlwi.	%r5,%r5,30		/* If count -> 0, then...	*/
-	beq	done			/* ... we're done 		*/
+	beq	.Ldone			/* ... we're done 		*/
 
 	mtctr	%r5			/* else load count for loop 	*/
 
-rlast2:
+.Lrlast2:
 
 	lbzu	%r6, -1(%r4)		/* Handle the rest, byte by 	*/
 	stbu	%r6, -1(%r8)		/* byte				*/
 
-	bdnz+	rlast2		 	/* Dec ctr, and branch if more	*/
+	bdnz+	.Lrlast2	 	/* Dec ctr, and branch if more	*/
 					/* bytes left			*/
-done:
+.Ldone:
 	RETGUARD_CHECK(memmove, %r11, %r12)
 	blr
 END_STRONG(memmove)

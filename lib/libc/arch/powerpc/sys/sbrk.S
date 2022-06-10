@@ -1,4 +1,4 @@
-/* $OpenBSD: sbrk.S,v 1.15 2021/10/25 14:38:10 jca Exp $ */
+/* $OpenBSD: sbrk.S,v 1.16 2022/06/10 01:56:02 guenther Exp $ */
 
 /*
  * Copyright (c) 1996 Dale Rahn
@@ -37,7 +37,7 @@ __curbrk:
 	.type	__curbrk,@object
 
 	.text
-ENTRY(sbrk)
+ENTRY_NB(sbrk)
 	
 	/* call break(__curbrk + size) */
 #ifndef __PIC__
