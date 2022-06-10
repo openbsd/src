@@ -1,4 +1,4 @@
-/* $OpenBSD: tlslegacytest.c,v 1.5 2021/11/20 16:36:55 tb Exp $ */
+/* $OpenBSD: tlslegacytest.c,v 1.6 2022/06/10 22:00:15 tb Exp $ */
 /*
  * Copyright (c) 2015, 2016, 2017, 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -567,7 +567,7 @@ tlslegacy_client_test(int testno, struct tlslegacy_client_test *tct)
 	SSL *ssl = NULL;
 	int ret = 1;
 
-	fprintf(stderr, "Test %i - %s\n", testno, tct->desc);
+	fprintf(stderr, "Test %d - %s\n", testno, tct->desc);
 
 	if ((rbio = BIO_new_mem_buf(tct->server_response,
 	    tct->server_response_len)) == NULL) {

@@ -122,15 +122,15 @@ main(int argc, char **argv)
 
 		ret = tls_buffer_extend(buf, et->extend_len, read_cb, &rs);
 		if (ret != extend_tests[i].want_ret) {
-			fprintf(stderr, "FAIL: Test %zi - extend returned %zi, "
-			    "want %zi\n", i, ret, et->want_ret);
+			fprintf(stderr, "FAIL: Test %zd - extend returned %zd, "
+			    "want %zd\n", i, ret, et->want_ret);
 			return 1;
 		}
 
 		tls_buffer_cbs(buf, &cbs);
 
 		if (!CBS_mem_equal(&cbs, testdata, CBS_len(&cbs))) {
-			fprintf(stderr, "FAIL: Test %zi - extend buffer "
+			fprintf(stderr, "FAIL: Test %zd - extend buffer "
 			    "mismatch", i);
 			return 1;
 		}

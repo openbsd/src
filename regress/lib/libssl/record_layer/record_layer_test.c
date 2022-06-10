@@ -1,4 +1,4 @@
-/* $OpenBSD: record_layer_test.c,v 1.4 2021/03/29 16:22:02 jsing Exp $ */
+/* $OpenBSD: record_layer_test.c,v 1.5 2022/06/10 22:00:15 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -211,7 +211,7 @@ do_seq_num_test_tls12(size_t test_no, int dtls, struct seq_num_test *snt)
 	memcpy(seq_num, snt->seq_num, sizeof(seq_num));
 
 	if ((ret = tls12_record_layer_inc_seq_num(rl, seq_num)) != snt->want) {
-		fprintf(stderr, "FAIL: Test %zu - got return %i, want %i\n",
+		fprintf(stderr, "FAIL: Test %zu - got return %d, want %d\n",
 		    test_no, ret, snt->want);
 		goto failure;
 	}
@@ -260,7 +260,7 @@ do_seq_num_test_tls13(size_t test_no, struct seq_num_test *snt)
 	memcpy(seq_num, snt->seq_num, sizeof(seq_num));
 
 	if ((ret = tls13_record_layer_inc_seq_num(seq_num)) != snt->want) {
-		fprintf(stderr, "FAIL: Test %zu - got return %i, want %i\n",
+		fprintf(stderr, "FAIL: Test %zu - got return %d, want %d\n",
 		    test_no, ret, snt->want);
 		goto failure;
 	}

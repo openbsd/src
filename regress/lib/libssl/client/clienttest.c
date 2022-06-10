@@ -1,4 +1,4 @@
-/*	$OpenBSD: clienttest.c,v 1.36 2021/11/20 16:32:55 tb Exp $ */
+/*	$OpenBSD: clienttest.c,v 1.37 2022/06/10 22:00:15 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -628,7 +628,7 @@ client_hello_test(int testno, const struct client_hello_test *cht)
 	int ret = 1;
 	long len;
 
-	fprintf(stderr, "Test %i - %s\n", testno, cht->desc);
+	fprintf(stderr, "Test %d - %s\n", testno, cht->desc);
 
 	/* Providing a small buf causes *_get_server_hello() to return. */
 	if ((rbio = BIO_new_mem_buf(rbuf, sizeof(rbuf))) == NULL) {
@@ -668,7 +668,7 @@ client_hello_test(int testno, const struct client_hello_test *cht)
 		errx(1, "failed to make client hello");
 
 	if ((size_t)len != client_hello_len) {
-		fprintf(stderr, "FAIL: test returned ClientHello length %li, "
+		fprintf(stderr, "FAIL: test returned ClientHello length %ld, "
 		    "want %zu\n", len, client_hello_len);
 		fprintf(stderr, "received:\n");
 		hexdump(wbuf, len, NULL);

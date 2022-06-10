@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_prf.c,v 1.6 2022/02/06 09:19:46 anton Exp $ */
+/* $OpenBSD: tls_prf.c,v 1.7 2022/06/10 22:00:15 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -182,7 +182,7 @@ do_tls_prf_test(int test_no, struct tls_prf_test *tpt)
 	int failure = 1;
 	int len;
 
-	fprintf(stderr, "Test %i - %s\n", test_no, tpt->desc);
+	fprintf(stderr, "Test %d - %s\n", test_no, tpt->desc);
 
 	if ((out = malloc(TLS_PRF_OUT_LEN)) == NULL)
 		errx(1, "failed to allocate out");
@@ -207,14 +207,14 @@ do_tls_prf_test(int test_no, struct tls_prf_test *tpt)
 		    sizeof(TLS_PRF_SEED2), TLS_PRF_SEED3, sizeof(TLS_PRF_SEED3),
 		    TLS_PRF_SEED4, sizeof(TLS_PRF_SEED4), TLS_PRF_SEED5,
 		    sizeof(TLS_PRF_SEED5), out, len) != 1) {
-			fprintf(stderr, "FAIL: tls_PRF failed for len %i\n",
+			fprintf(stderr, "FAIL: tls_PRF failed for len %d\n",
 			    len);
 			goto failure;
 		}
 
 		if (memcmp(out, tpt->out, len) != 0) {
 			fprintf(stderr, "FAIL: tls_PRF output differs for "
-			    "len %i\n", len);
+			    "len %d\n", len);
 			fprintf(stderr, "output:\n");
 			hexdump(out, TLS_PRF_OUT_LEN);
 			fprintf(stderr, "test data:\n");
