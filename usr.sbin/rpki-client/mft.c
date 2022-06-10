@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.71 2022/06/10 10:36:43 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.72 2022/06/10 10:41:09 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -273,8 +273,8 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	int			 i, rc = 0;
 
 	if ((mft = d2i_Manifest(NULL, &d, dsz)) == NULL) {
-		cryptowarnx("%s: RFC 6486 section 4.2: Manifest: "
-		    "failed ASN.1 sequence parse", p->fn);
+		cryptowarnx("%s: RFC 6486 section 4: failed to parse Manifest",
+		    p->fn);
 		goto out;
 	}
 
