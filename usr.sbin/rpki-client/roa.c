@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.46 2022/05/31 18:51:35 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.47 2022/06/10 10:36:43 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -103,7 +103,6 @@ static int
 roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 {
 	RouteOriginAttestation		*roa;
-	long				 roa_version;
 	const ROAIPAddressFamily	*addrfam;
 	const STACK_OF(ROAIPAddress)	*addrs;
 	int				 addrsz;
@@ -120,24 +119,8 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	/* Validate the optional version field */
-	if (roa->version != NULL) {
-		roa_version = ASN1_INTEGER_get(roa->version);
-		if (roa_version < 0) {
-			warnx("%s: ASN1_INTEGER_get failed", p->fn);
-			goto out;
-		}
-
-		switch (roa_version) {
-		case 0:
-			warnx("%s: incorrect encoding for version 0", p->fn);
-			goto out;
-		default:
-			warnx("%s: version %ld not supported (yet)", p->fn,
-			    roa_version);
-			goto out;
-		}
-	}
+	if (!valid_econtent_version(p->fn, roa->version))
+		goto out;
 
 	if (!as_id_parse(roa->asid, &p->res->asid)) {
 		warnx("%s: RFC 6482 section 3.2: asID: "

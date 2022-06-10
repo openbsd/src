@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.10 2022/06/05 13:31:35 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.11 2022/06/10 10:36:43 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -327,7 +327,6 @@ rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 {
 	RpkiSignedChecklist	*rsc;
 	ResourceBlock		*resources;
-	long			 rsc_version;
 	int			 rc = 0;
 
 	/*
@@ -339,24 +338,8 @@ rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	/* Validate the optional version field */
-	if (rsc->version != NULL) {
-		rsc_version = ASN1_INTEGER_get(rsc->version);
-		if (rsc_version < 0) {
-			cryptowarnx("%s: RSC: ASN1_INTEGER_get failed", p->fn);
-			goto out;
-		}
-
-		switch (rsc_version) {
-		case 0:
-			warnx("%s: RSC: incorrect version encoding", p->fn);
-			goto out;
-		default:
-			warnx("%s: RSC: version %ld not supported (yet)", p->fn,
-			    rsc_version);
-			goto out;
-		}
-	}
+	if (!valid_econtent_version(p->fn, rsc->version))
+		goto out;
 
 	resources = rsc->resources;
 	if (resources->asID == NULL && resources->ipAddrBlocks == NULL) {

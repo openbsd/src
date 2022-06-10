@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.70 2022/06/01 10:58:34 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.71 2022/06/10 10:36:43 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -270,7 +270,6 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 {
 	Manifest		*mft;
 	FileAndHash		*fh;
-	long			 mft_version;
 	int			 i, rc = 0;
 
 	if ((mft = d2i_Manifest(NULL, &d, dsz)) == NULL) {
@@ -279,24 +278,8 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	/* Validate the optional version field */
-	if (mft->version != NULL) {
-		mft_version = ASN1_INTEGER_get(mft->version);
-		if (mft_version < 0) {
-			cryptowarnx("%s: ASN1_INTEGER_get failed", p->fn);
-			goto out;
-		}
-
-		switch (mft_version) {
-		case 0:
-			warnx("%s: incorrect encoding for version 0", p->fn);
-			goto out;
-		default:
-			warnx("%s: version %ld not supported (yet)", p->fn,
-			    mft_version);
-			goto out;
-		}
-	}
+	if (!valid_econtent_version(p->fn, mft->version))
+		goto out;
 
 	p->res->seqnum = x509_convert_seqnum(p->fn, mft->manifestNumber);
 	if (p->res->seqnum == NULL)
