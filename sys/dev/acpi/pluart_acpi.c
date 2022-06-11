@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart_acpi.c,v 1.8 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: pluart_acpi.c,v 1.9 2022/06/11 05:29:24 anton Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -90,6 +90,8 @@ pluart_acpi_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't establish interrupt\n");
 		return;
 	}
+
+	sc->sc.sc_hwflags |= COM_HW_SBSA;
 
 	pluart_attach_common(&sc->sc, pluart_acpi_is_console(sc));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluartvar.h,v 1.3 2022/03/13 21:17:52 kettenis Exp $	*/
+/*	$OpenBSD: pluartvar.h,v 1.4 2022/06/11 05:29:24 anton Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -34,10 +34,12 @@ struct pluart_softc {
 	u_int16_t	sc_ucr3;
 	u_int16_t	sc_ucr4;
 	u_int8_t	sc_hwflags;
+	u_int8_t	sc_hwrev;
 #define COM_HW_NOIEN    0x01
 #define COM_HW_FIFO     0x02
 #define COM_HW_SIR      0x20
 #define COM_HW_CONSOLE  0x40
+#define COM_HW_SBSA	0x80
 	u_int8_t	sc_swflags;
 #define COM_SW_SOFTCAR  0x01
 #define COM_SW_CLOCAL   0x02
@@ -45,6 +47,7 @@ struct pluart_softc {
 #define COM_SW_MDMBUF   0x08
 #define COM_SW_PPS      0x10
 	int		sc_fifolen;
+	int		sc_imsc;
 
 	u_int8_t	sc_initialize;
 	u_int8_t	sc_cua;

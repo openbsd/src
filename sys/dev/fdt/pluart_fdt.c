@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart_fdt.c,v 1.6 2022/03/13 21:17:52 kettenis Exp $	*/
+/*	$OpenBSD: pluart_fdt.c,v 1.7 2022/06/11 05:29:24 anton Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -63,11 +63,19 @@ pluart_fdt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 	struct pluart_softc *sc = (struct pluart_softc *) self;
+	uint32_t periphid;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
 		return;
 	}
+
+	if (OF_is_compatible(faa->fa_node, "arm,sbsa-uart"))
+		sc->sc_hwflags |= COM_HW_SBSA;
+
+	periphid = OF_getpropint(faa->fa_node, "arm,primecell-periphid", 0);
+	if (periphid != 0)
+		sc->sc_hwrev = (periphid >> 20) & 0x0f;
 
 	sc->sc_irq = fdt_intr_establish(faa->fa_node, IPL_TTY, pluart_intr,
 	    sc, sc->sc_dev.dv_xname);
