@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.204 2022/06/10 11:55:30 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.205 2022/06/11 16:59:33 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2696,7 +2696,7 @@ input_osc_52(struct input_ctx *ictx, const char *p)
 	struct screen_write_ctx	 ctx;
 	struct paste_buffer	*pb;
 	const char*              allow = "cpqs01234567";
-	char                     flags[sizeof allow] = "";
+	char                     flags[sizeof "cpqs01234567"] = "";
 	u_int			 i, j = 0;
 
 	if (wp == NULL)
