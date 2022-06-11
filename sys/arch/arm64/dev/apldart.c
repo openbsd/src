@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.14 2022/04/06 18:59:26 naddy Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.15 2022/06/11 19:12:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -49,7 +49,7 @@
 #define DART_ERROR_ADDR_HI	0x0054
 #define DART_CONFIG		0x0060
 #define  DART_CONFIG_LOCK		(1 << 15)
-#define DART_TCR(sid)		(0x0100 + 4 *(sid))
+#define DART_TCR(sid)		(0x0100 + 4 * (sid))
 #define  DART_TCR_TRANSLATE_ENABLE	(1 << 7)
 #define  DART_TCR_BYPASS_DART		(1 << 8)
 #define  DART_TCR_BYPASS_DAPF		(1 << 12)
@@ -150,7 +150,7 @@ void	apldart_dmamem_free(bus_dma_tag_t, struct apldart_dmamem *);
 int	apldart_match(struct device *, void *, void *);
 void	apldart_attach(struct device *, struct device *, void *);
 
-const struct cfattach	apldart_ca = {
+const struct cfattach apldart_ca = {
 	sizeof (struct apldart_softc), apldart_match, apldart_attach
 };
 
