@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.172 2022/06/02 03:09:39 jmatthew Exp $
+# $OpenBSD: RAMDISK,v 1.173 2022/06/12 16:00:12 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -110,10 +110,13 @@ apliic*		at fdt?
 iic*		at apliic?
 aplintc*	at fdt? early 1
 aplmbox*	at fdt?
+aplns*		at fdt?			# Apple NVME Storage controllers
+nvme*		at aplns?
 aplpcie*	at fdt?
 pci*		at aplpcie?
 aplpinctrl*	at fdt? early 1
 aplpmgr*	at fdt? early 1
+aplsart*	at fdt?
 aplsmc*		at fdt?
 aplspi*		at fdt?
 aplhidev*	at spi?
@@ -122,8 +125,6 @@ wskbd*		at aplkbd? mux 1
 aplspmi*	at fdt?
 aplpmu*		at aplspmi?
 exuart*		at fdt?
-aplns*		at fdt?			# Apple NVME Storage controllers
-nvme*		at aplns?
 
 # iMX
 imxccm*		at fdt? early 1

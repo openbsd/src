@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplns.c,v 1.11 2022/04/06 18:59:26 naddy Exp $ */
+/*	$OpenBSD: aplns.c,v 1.12 2022/06/12 16:00:12 kettenis Exp $ */
 /*
  * Copyright (c) 2014, 2021 David Gwynne <dlg@openbsd.org>
  *
@@ -93,6 +93,8 @@ struct cfdriver aplns_cd = {
 	NULL, "aplns", DV_DULL
 };
 
+int	nvme_ans_sart_map(void *, bus_addr_t, bus_size_t);
+
 int
 aplns_match(struct device *parent, void *match, void *aux)
 {
@@ -117,7 +119,9 @@ struct nvme_ans_softc {
 	bus_space_tag_t		 asc_iot;
 	bus_space_handle_t	 asc_ioh;
 
-	struct rtkit_state	*asc_rtkit;
+	uint32_t		 asc_sart;
+	struct rtkit		 asc_rtkit;
+	struct rtkit_state	*asc_rtkit_state;
 	struct nvme_dmamem	*asc_nvmmu;
 };
 
@@ -205,8 +209,13 @@ nvme_ans_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 
-	asc->asc_rtkit = rtkit_init(faa->fa_node, NULL);
-	if (asc->asc_rtkit == NULL) {
+	asc->asc_sart = OF_getpropint(faa->fa_node, "apple,sart", 0);
+	asc->asc_rtkit.rk_cookie = asc;
+	asc->asc_rtkit.rk_dmat = faa->fa_dmat;
+	asc->asc_rtkit.rk_map = nvme_ans_sart_map;
+
+	asc->asc_rtkit_state = rtkit_init(faa->fa_node, NULL, &asc->asc_rtkit);
+	if (asc->asc_rtkit_state == NULL) {
 		printf(": can't map mailbox channel\n");
 		goto disestablish;
 	}
@@ -217,7 +226,7 @@ nvme_ans_attach(struct device *parent, struct device *self, void *aux)
 
 	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ANS_BOOT_STATUS);
 	if (status != ANS_BOOT_STATUS_OK)
-		rtkit_boot(asc->asc_rtkit);
+		rtkit_boot(asc->asc_rtkit_state);
 
 	status = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ANS_BOOT_STATUS);
 	if (status != ANS_BOOT_STATUS_OK) {
@@ -256,6 +265,14 @@ unmap:
 	bus_space_unmap(asc->asc_iot, asc->asc_ioh, faa->fa_reg[1].size);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
 	sc->sc_ios = 0;
+}
+
+int
+nvme_ans_sart_map(void *cookie, bus_addr_t addr, bus_size_t size)
+{
+	struct nvme_ans_softc *asc = cookie;
+	
+	return aplsart_map(asc->asc_sart, addr, size);
 }
 
 int

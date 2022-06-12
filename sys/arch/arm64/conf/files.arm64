@@ -1,4 +1,4 @@
-# $OpenBSD: files.arm64,v 1.56 2022/02/20 19:25:57 kettenis Exp $
+# $OpenBSD: files.arm64,v 1.57 2022/06/12 16:00:12 kettenis Exp $
 
 maxpartitions	16
 maxusers	2 8 128
@@ -196,6 +196,10 @@ device	aplns {}: rtkit
 attach	aplns at fdt
 attach	nvme at aplns with nvme_ans
 file	arch/arm64/dev/aplns.c			aplns | nvme_ans
+
+device	aplsart
+attach	aplsart at fdt
+file	arch/arm64/dev/aplsart.c			aplsart | aplns
 
 device	aplsmc
 attach	aplsmc at fdt

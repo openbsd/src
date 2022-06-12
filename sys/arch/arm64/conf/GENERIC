@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.229 2022/06/02 03:09:39 jmatthew Exp $
+# $OpenBSD: GENERIC,v 1.230 2022/06/12 16:00:12 kettenis Exp $
 #
 # GENERIC machine description file
 #
@@ -147,10 +147,13 @@ apliic*		at fdt?
 iic*		at apliic?
 aplintc*	at fdt? early 1
 aplmbox*	at fdt?
+aplns*		at fdt?			# Apple NVME Storage controllers
+nvme*		at aplns?
 aplpcie*	at fdt?
 pci*		at aplpcie?
 aplpinctrl*	at fdt? early 1
 aplpmgr*	at fdt? early 1
+aplsart*	at fdt?
 aplsmc*		at fdt?
 aplspi*		at fdt?
 aplhidev*	at spi?
@@ -161,8 +164,6 @@ wsmouse*	at aplms? mux 0
 aplspmi*	at fdt?
 aplpmu*		at aplspmi?
 exuart*		at fdt?
-aplns*		at fdt?			# Apple NVME Storage controllers
-nvme*		at aplns?
 
 # iMX
 imxccm*		at fdt? early 1

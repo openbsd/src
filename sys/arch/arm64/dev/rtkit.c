@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtkit.c,v 1.3 2022/01/10 09:07:28 kettenis Exp $	*/
+/*	$OpenBSD: rtkit.c,v 1.4 2022/06/12 16:00:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -68,12 +68,16 @@
 #define RTKIT_BUFFER_SIZE(x)		(((x) >> 44) & 0xff)
 #define RTKIT_BUFFER_SIZE_SHIFT		44
 
+#define RTKIT_IOREPORT_UNKNOWN1		8
+#define RTKIT_IOREPORT_UNKNOWN2		12
+
 /* Versions we support. */
 #define RTKIT_MINVER			11
 #define RTKIT_MAXVER			12
 
 struct rtkit_state {
 	struct mbox_channel	*mc;
+	struct rtkit		*rk;
 	int			pwrstate;
 	uint64_t		epmap;
 	void			(*callback[32])(void *, uint64_t);
@@ -106,6 +110,19 @@ rtkit_send(struct mbox_channel *mc, uint32_t endpoint,
 	return mbox_send(mc, &msg, sizeof(msg));
 }
 
+bus_addr_t
+rtkit_alloc(struct rtkit *rk, bus_size_t size)
+{
+	bus_dma_segment_t seg;
+	int nsegs;
+
+	if (bus_dmamem_alloc(rk->rk_dmat, size, 16384, 0,
+	    &seg, 1, &nsegs, BUS_DMA_WAITOK | BUS_DMA_ZERO))
+		return (bus_addr_t)-1;
+
+	return seg.ds_addr;
+}
+
 int
 rtkit_start(struct rtkit_state *state, uint32_t endpoint)
 {
@@ -131,13 +148,13 @@ rtkit_handle_mgmt(struct rtkit_state *state, struct aplmbox_msg *msg)
 		minver = RTKIT_MGMT_HELLO_MINVER(msg->data0);
 		maxver = RTKIT_MGMT_HELLO_MAXVER(msg->data0);
 		if (minver > RTKIT_MAXVER) {
-			printf("unsupported minimum firmware version %lld\n",
-			    minver);
+			printf("%s: unsupported minimum firmware version %lld\n",
+			    __func__, minver);
 			return EINVAL;
 		}
 		if (maxver < RTKIT_MINVER) {
-			printf("unsupported maximum firmware version %lld\n",
-			    maxver);
+			printf("%s: unsupported maximum firmware version %lld\n",
+			    __func__, maxver);
 			return EINVAL;
 		}
 		ver = min(RTKIT_MAXVER, maxver);
@@ -172,18 +189,24 @@ rtkit_handle_mgmt(struct rtkit_state *state, struct aplmbox_msg *msg)
 
 				switch (endpoint) {
 				case RTKIT_EP_CRASHLOG:
+				case RTKIT_EP_SYSLOG:
 				case RTKIT_EP_DEBUG:
 				case RTKIT_EP_IOREPORT:
 					error = rtkit_start(state, endpoint);
 					if (error)
 						return error;
 					break;
+				default:
+					printf("%s: skipping endpoint %d\n",
+					    __func__, endpoint);
+					break;
 				}
 			}
 		}
 		break;
 	default:
-		printf("unhandled management event 0x%016lld\n", msg->data0);
+		printf("%s: unhandled management event 0x%016lld\n",
+		    __func__, msg->data0);
 		return EIO;
 	}
 
@@ -194,6 +217,7 @@ int
 rtkit_handle_crashlog(struct rtkit_state *state, struct aplmbox_msg *msg)
 {
 	struct mbox_channel *mc = state->mc;
+	struct rtkit *rk = state->rk;
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
@@ -205,13 +229,24 @@ rtkit_handle_crashlog(struct rtkit_state *state, struct aplmbox_msg *msg)
 		if (addr)
 			break;
 
+		if (rk) {
+			addr = rtkit_alloc(rk, size << PAGE_SHIFT);
+			if (addr == (bus_addr_t)-1)
+				return ENOMEM;
+			error = rk->rk_map(rk->rk_cookie, addr,
+			    size << PAGE_SHIFT);
+			if (error)
+				return error;
+		}
+
 		error = rtkit_send(mc, RTKIT_EP_CRASHLOG, RTKIT_BUFFER_REQUEST,
-		    size << RTKIT_BUFFER_SIZE_SHIFT | addr);
+		    (size << RTKIT_BUFFER_SIZE_SHIFT) | addr);
 		if (error)
 			return error;
 		break;
 	default:
-		printf("unhandled crashlog event 0x%016llx\n", msg->data0);
+		printf("%s: unhandled crashlog event 0x%016llx\n",
+		    __func__, msg->data0);
 		return EIO;
 	}
 
@@ -222,6 +257,7 @@ int
 rtkit_handle_ioreport(struct rtkit_state *state, struct aplmbox_msg *msg)
 {
 	struct mbox_channel *mc = state->mc;
+	struct rtkit *rk = state->rk;
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
@@ -233,13 +269,32 @@ rtkit_handle_ioreport(struct rtkit_state *state, struct aplmbox_msg *msg)
 		if (addr)
 			break;
 
+		if (rk) {
+			addr = rtkit_alloc(rk, size << PAGE_SHIFT);
+			if (addr == (bus_addr_t)-1)
+				return ENOMEM;
+			error = rk->rk_map(rk->rk_cookie, addr,
+			    size << PAGE_SHIFT);
+			if (error)
+				return error;
+		}
+
 		error = rtkit_send(mc, RTKIT_EP_IOREPORT, RTKIT_BUFFER_REQUEST,
-		    size << RTKIT_BUFFER_SIZE_SHIFT | addr);
+		    (size << RTKIT_BUFFER_SIZE_SHIFT) | addr);
+		if (error)
+			return error;
+		break;
+	case RTKIT_IOREPORT_UNKNOWN1:
+	case RTKIT_IOREPORT_UNKNOWN2:
+		/* These unknown events have to be acked to make progress. */
+		error = rtkit_send(mc, RTKIT_EP_IOREPORT,
+		    RTKIT_MGMT_TYPE(msg->data0), msg->data0);
 		if (error)
 			return error;
 		break;
 	default:
-		printf("unhandled ioreport event 0x%016llx\n", msg->data0);
+		printf("%s: unhandled ioreport event 0x%016llx\n",
+		    __func__, msg->data0);
 		return EIO;
 	}
 
@@ -286,7 +341,7 @@ rtkit_poll(struct rtkit_state *state)
 			break;
 		}
 
-		printf("unhandled endpoint %d\n", msg.data1);
+		printf("%s: unhandled endpoint %d\n", __func__, msg.data1);
 		return EIO;
 	}
 
@@ -300,7 +355,7 @@ rtkit_rx_callback(void *cookie)
 }
 
 struct rtkit_state *
-rtkit_init(int node, const char *name)
+rtkit_init(int node, const char *name, struct rtkit *rk)
 {
 	struct rtkit_state *state;
 	struct mbox_client client;
@@ -313,6 +368,7 @@ rtkit_init(int node, const char *name)
 		free(state, M_DEVBUF, sizeof(*state));
 		return NULL;
 	}
+	state->rk = rk;
 
 	return state;
 }
