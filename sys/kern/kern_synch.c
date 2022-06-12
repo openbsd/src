@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.187 2022/05/13 15:32:00 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.188 2022/06/12 10:36:04 visa Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -370,8 +370,8 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 	p->p_slppri = prio & PRIMASK;
 	TAILQ_INSERT_TAIL(&slpque[LOOKUP(ident)], p, p_runq);
 
-	KASSERT((p->p_flag & P_TIMEOUT) == 0);
 	if (timo) {
+		KASSERT((p->p_flag & P_TIMEOUT) == 0);
 		sls->sls_timeout = 1;
 		timeout_add(&p->p_sleep_to, timo);
 	}
@@ -432,13 +432,12 @@ sleep_finish(struct sleep_state *sls, int do_sleep)
 
 	if (sls->sls_timeout) {
 		if (p->p_flag & P_TIMEOUT) {
-			atomic_clearbits_int(&p->p_flag, P_TIMEOUT);
 			error1 = EWOULDBLOCK;
 		} else {
-			/* This must not sleep. */
+			/* This can sleep. It must not use timeouts. */
 			timeout_del_barrier(&p->p_sleep_to);
-			KASSERT((p->p_flag & P_TIMEOUT) == 0);
 		}
+		atomic_clearbits_int(&p->p_flag, P_TIMEOUT);
 	}
 
 	/* Check if thread was woken up because of a unwind or signal */
