@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.312 2022/06/01 17:47:18 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.313 2022/06/12 19:48:12 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -4488,22 +4488,8 @@ vm_run(struct vm_run_params *vrp)
 		ret = vcpu_run_svm(vcpu, vrp);
 	}
 
-	/*
-	 * We can set the VCPU states here without CAS because once
-	 * a VCPU is in state RUNNING or REQTERM, only the VCPU itself
-	 * can switch the state.
-	 */
 	atomic_dec_int(&vm->vm_vcpus_running);
-	if (vcpu->vc_state == VCPU_STATE_REQTERM) {
-		vrp->vrp_exit_reason = VM_EXIT_TERMINATED;
-		vcpu->vc_state = VCPU_STATE_TERMINATED;
-		if (vm->vm_vcpus_running == 0) {
-			rw_enter_write(&vmm_softc->vm_lock);
-			vm_teardown(vm);
-			rw_exit_write(&vmm_softc->vm_lock);
-		}
-		ret = 0;
-	} else if (ret == 0 || ret == EAGAIN) {
+	if (ret == 0 || ret == EAGAIN) {
 		/* If we are exiting, populate exit data so vmd can help. */
 		vrp->vrp_exit_reason = (ret == 0) ? VM_EXIT_NONE
 		    : vcpu->vc_gueststate.vg_exit_reason;
