@@ -1,4 +1,4 @@
-/*	$OpenBSD: stfclock.c,v 1.1 2022/06/06 14:57:33 kettenis Exp $	*/
+/*	$OpenBSD: stfclock.c,v 1.2 2022/06/12 10:51:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -48,6 +48,8 @@
 #define JH7100_CLK_GMAC_GTX		123
 #define JH7100_CLK_UART0_CORE		147
 #define JH7100_CLK_UART3_CORE		162
+#define JH7100_CLK_TEMP_APB		183
+#define JH7100_CLK_TEMP_SENSE		184
 #define JH7100_CLK_PLL0_OUT		186
 #define JH7100_CLK_PLL1_OUT		187
 #define JH7100_CLK_PLL2_OUT		188
@@ -280,6 +282,8 @@ stfclock_enable(void *cookie, uint32_t *cells, int on)
 	case JH7100_CLK_GMAC_GTX:
 	case JH7100_CLK_UART0_CORE:
 	case JH7100_CLK_UART3_CORE:
+	case JH7100_CLK_TEMP_APB:
+	case JH7100_CLK_TEMP_SENSE:
 		if (on)
 			HSET4(sc, idx * 4, 1U << 31);
 		else
