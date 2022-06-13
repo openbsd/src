@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1132 2022/05/23 11:17:35 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1133 2022/06/13 12:48:00 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1133,7 +1133,8 @@ pf_find_state(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 
 	/* list is sorted, if-bound states before floating ones */
 	TAILQ_FOREACH(si, &sk->states, entry)
-		if ((si->s->kif == pfi_all || si->s->kif == pd->kif) &&
+		if (si->s->timeout != PFTM_PURGE &&
+		    (si->s->kif == pfi_all || si->s->kif == pd->kif) &&
 		    ((si->s->key[PF_SK_WIRE]->af == si->s->key[PF_SK_STACK]->af
 		    && sk == (pd->dir == PF_IN ? si->s->key[PF_SK_WIRE] :
 		    si->s->key[PF_SK_STACK])) ||
@@ -1144,7 +1145,7 @@ pf_find_state(struct pf_pdesc *pd, struct pf_state_key_cmp *key,
 			break;
 	}
 
-	if (s == NULL || s->timeout == PFTM_PURGE)
+	if (s == NULL)
 		return (PF_DROP);
 
 	if (s->rule.ptr->pktrate.limit && pd->dir == s->direction) {
