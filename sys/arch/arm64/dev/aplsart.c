@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsart.c,v 1.1 2022/06/12 16:00:12 kettenis Exp $	*/
+/*	$OpenBSD: aplsart.c,v 1.2 2022/06/13 12:40:30 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -73,8 +73,8 @@ aplsart_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,sart2") ||
-	    OF_is_compatible(faa->fa_node, "apple,sart3");
+	return OF_is_compatible(faa->fa_node, "apple,t6000-sart") ||
+	    OF_is_compatible(faa->fa_node, "apple,t8103-sart");
 }
 
 void
@@ -97,9 +97,9 @@ aplsart_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_phandle = OF_getpropint(faa->fa_node, "phandle", 0);
 
-	if (OF_is_compatible(faa->fa_node, "apple,sart2"))
+	if (OF_is_compatible(faa->fa_node, "apple,t8103-sart"))
 		sc->sc_version = 2;
-	if (OF_is_compatible(faa->fa_node, "apple,sart3"))
+	if (OF_is_compatible(faa->fa_node, "apple,t6000-sart"))
 		sc->sc_version = 3;
 
 	printf("\n");
