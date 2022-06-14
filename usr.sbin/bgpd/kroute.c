@@ -1,6 +1,7 @@
-/*	$OpenBSD: kroute.c,v 1.254 2022/06/13 09:57:44 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.255 2022/06/14 14:06:48 claudio Exp $ */
 
 /*
+ * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
