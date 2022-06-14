@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.79 2022/06/10 20:10:24 kn Exp $
+#	$OpenBSD: airport,v 1.80 2022/06/14 09:03:46 jmatthew Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1002,6 +1002,7 @@ LPI:Linkoping City Airport, Linkoping, Sweden
 LPL:John Lennon, Liverpool, England, United Kingdom
 LRA:Larisa, Greece
 LRD:Laredo, Texas, USA
+LRE:Longreach, Queensland, Australia
 LRH:Laleu, La Rochelle, France
 LRM:Casa De Campo, Dominican Republic
 LRS:Leros, Greece
