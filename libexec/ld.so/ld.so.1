@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ld.so.1,v 1.24 2020/05/08 10:57:50 jca Exp $
+.\"	$OpenBSD: ld.so.1,v 1.25 2022/06/14 09:56:07 kn Exp $
 .\"	$NetBSD: rtld.1,v 1.2 1995/10/08 23:43:28 pk Exp $
 .\"
 .\" Copyright (c) 1995 Paul Kranenburg
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 8 2020 $
+.Dd $Mdocdate: June 14 2022 $
 .Dt LD.SO 1
 .Os
 .Sh NAME
@@ -77,6 +77,34 @@ file, prepared by the
 utility, in which the full path specification of the shared objects can be
 looked up by hashing on the 3-tuple
 .Aq library-name , major-version-number , minor-version-number .
+.Pp
+.Nm
+searches for shared objects in the following lists of paths:
+.Pp
+.Bl -enum -offset ident -compact
+.It
+.Ev LD_LIBRARY_PATH
+environment variable if set
+.It
+.Dv DT_RUNPATH
+of the calling object if set, otherwise:
+.Bl -enum -compact
+.It
+.Dv DT_RPATH
+of the calling object if set
+.It
+.Dv DT_RPATH
+of the program if set
+.El
+(The use of
+.Dv DT_RPATH
+is deprecated as its behaviour varies across operating systems.)
+.It
+default search path set by
+.Xr ldconfig 8
+.It
+.Pa /usr/lib
+.El
 .Pp
 .Nm
 recognises a number of environment variables that can be used to modify
