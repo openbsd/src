@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.428 2022/06/09 16:45:19 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.429 2022/06/15 10:10:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -74,13 +74,13 @@
 
 #define	SOCKET_NAME			"/var/run/bgpd.sock"
 
-#define	F_BGPD_INSERTED		0x0001
+#define	F_BGPD			0x0001
 #define	F_KERNEL		0x0002
 #define	F_CONNECTED		0x0004
 #define	F_NEXTHOP		0x0008
 #define	F_DOWN			0x0010
 #define	F_STATIC		0x0020
-#define	F_DYNAMIC		0x0040
+#define	F_BGPD_INSERTED		0x0040
 #define	F_REJECT		0x0080
 #define	F_BLACKHOLE		0x0100
 #define	F_LONGER		0x0200
