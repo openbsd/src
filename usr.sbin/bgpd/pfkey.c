@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.63 2022/06/15 14:09:30 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.64 2022/06/15 16:00:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -469,6 +469,9 @@ pfkey_reply(int sd, uint32_t *spi)
 			return (0);
 		else {
 			log_warn("pfkey");
+			/* discard error message */
+			if (read(sd, &hdr, sizeof(hdr)) == -1)
+				log_warn("pfkey read");
 			return (-1);
 		}
 	}
