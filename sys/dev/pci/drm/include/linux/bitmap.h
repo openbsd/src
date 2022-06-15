@@ -1,4 +1,4 @@
-/*	$OpenBSD: bitmap.h,v 1.3 2020/06/08 04:48:14 jsg Exp $	*/
+/*	$OpenBSD: bitmap.h,v 1.4 2022/06/15 07:04:09 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -96,6 +96,27 @@ bitmap_copy(void *d, void *s, u_int n)
 	for (b = 0; b < n; b += 32)
 		dst[b >> 5] = src[b >> 5];
 }
+
+static inline void
+bitmap_to_arr32(void *d, unsigned long *src, u_int n)
+{
+	u_int *dst = d;
+	u_int b;
+
+#ifdef __LP64__
+	for (b = 0; b < n; b += 32) {
+		dst[b >> 5] = src[b >> 6] & 0xffffffff;
+		b += 32;
+		if (b < n)
+			dst[b >> 5] = src[b >> 6] >> 32;
+	}
+#else
+	bitmap_copy(d, src, n);
+#endif
+	if ((n % 32) != 0)
+		dst[n >> 5] &= (0xffffffff >> (32 - (n % 32)));
+}
+
 
 static inline int
 bitmap_weight(void *p, u_int n)
