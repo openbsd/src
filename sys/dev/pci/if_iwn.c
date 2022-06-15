@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwn.c,v 1.258 2022/04/21 21:03:03 stsp Exp $	*/
+/*	$OpenBSD: if_iwn.c,v 1.259 2022/06/15 08:43:17 stsp Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -5409,7 +5409,8 @@ iwn_rxon_configure_ht40(struct ieee80211com *ic, struct ieee80211_node *ni)
 	sc->rxon.flags &= ~htole32(IWN_RXON_HT_CHANMODE_MIXED2040 |
 	    IWN_RXON_HT_CHANMODE_PURE40 | IWN_RXON_HT_HT40MINUS);
 
-	if (ieee80211_node_supports_ht_chan40(ni) &&
+	if ((ni->ni_flags & IEEE80211_NODE_HT) &&
+	    ieee80211_node_supports_ht_chan40(ni) &&
 	    (sco == IEEE80211_HTOP0_SCO_SCA ||
 	    sco == IEEE80211_HTOP0_SCO_SCB)) {
 		if (sco == IEEE80211_HTOP0_SCO_SCB)
