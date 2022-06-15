@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.276 2022/03/21 10:16:23 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.277 2022/06/15 10:10:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -633,14 +633,12 @@ fmt_fib_flags(uint16_t flags)
 	else
 		strlcpy(buf, "*", sizeof(buf));
 
-	if (flags & F_BGPD_INSERTED)
+	if (flags & F_BGPD)
 		strlcat(buf, "B", sizeof(buf));
 	else if (flags & F_CONNECTED)
 		strlcat(buf, "C", sizeof(buf));
 	else if (flags & F_STATIC)
 		strlcat(buf, "S", sizeof(buf));
-	else if (flags & F_DYNAMIC)
-		strlcat(buf, "D", sizeof(buf));
 	else
 		strlcat(buf, " ", sizeof(buf));
 
