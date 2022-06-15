@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.256 2022/06/15 10:10:03 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.257 2022/06/15 15:06:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -3340,7 +3340,7 @@ dispatch_rtmsg(void)
 
 			/* failed attempts */
 			if (rtm->rtm_errno || !(rtm->rtm_flags & RTF_DONE))
-				return (-1);
+				continue;
 
 			if ((kt = ktable_get(rtm->rtm_tableid)) == NULL)
 				continue;
