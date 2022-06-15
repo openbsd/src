@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.152 2022/05/31 09:45:33 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.153 2022/06/15 14:09:30 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -45,8 +45,8 @@ void		 print_roa(struct roa_tree *);
 void		 print_rtrs(struct rtr_config_head *);
 void		 print_peer(struct peer_config *, struct bgpd_config *,
 		    const char *);
-const char	*print_auth_alg(uint8_t);
-const char	*print_enc_alg(uint8_t);
+const char	*print_auth_alg(enum auth_alg);
+const char	*print_enc_alg(enum auth_enc_alg);
 void		 print_announce(struct peer_config *, const char *);
 void		 print_as(struct filter_rule *);
 void		 print_rule(struct bgpd_config *, struct filter_rule *);
@@ -751,12 +751,12 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 }
 
 const char *
-print_auth_alg(uint8_t alg)
+print_auth_alg(enum auth_alg alg)
 {
 	switch (alg) {
-	case SADB_AALG_SHA1HMAC:
+	case AUTH_AALG_SHA1HMAC:
 		return ("sha1");
-	case SADB_AALG_MD5HMAC:
+	case AUTH_AALG_MD5HMAC:
 		return ("md5");
 	default:
 		return ("???");
@@ -764,12 +764,12 @@ print_auth_alg(uint8_t alg)
 }
 
 const char *
-print_enc_alg(uint8_t alg)
+print_enc_alg(enum auth_enc_alg alg)
 {
 	switch (alg) {
-	case SADB_EALG_3DESCBC:
+	case AUTH_EALG_3DESCBC:
 		return ("3des");
-	case SADB_X_EALG_AES:
+	case AUTH_EALG_AES:
 		return ("aes");
 	default:
 		return ("???");

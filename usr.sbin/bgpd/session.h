@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.154 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.155 2022/06/15 14:09:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -295,6 +295,7 @@ void	 mrt_dump_state(struct mrt *, uint16_t, uint16_t,
 void	 mrt_done(struct mrt *);
 
 /* pfkey.c */
+struct sadb_msg;
 int	pfkey_read(int, struct sadb_msg *);
 int	pfkey_establish(struct peer *);
 int	pfkey_remove(struct peer *);

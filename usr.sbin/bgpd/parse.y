@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.429 2022/06/09 17:33:47 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.430 2022/06/15 14:09:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -193,7 +193,7 @@ typedef struct {
 		struct filter_prefixlen	prefixlen;
 		struct prefixset_item	*prefixset_item;
 		struct {
-			uint8_t			enc_alg;
+			enum auth_enc_alg	enc_alg;
 			uint8_t			enc_key_len;
 			char			enc_key[IPSEC_ENC_KEY_LEN];
 		}			encspec;
@@ -1609,7 +1609,7 @@ peeropts	: REMOTEAS as4number	{
 				curpeer->conf.auth.method = AUTH_IPSEC_IKE_AH;
 		}
 		| IPSEC espah inout SPI NUMBER STRING STRING encspec {
-			uint32_t	auth_alg;
+			enum auth_alg	auth_alg;
 			uint8_t		keylen;
 
 			if (curpeer->conf.auth.method &&
@@ -1626,10 +1626,10 @@ peeropts	: REMOTEAS as4number	{
 			}
 
 			if (!strcmp($6, "sha1")) {
-				auth_alg = SADB_AALG_SHA1HMAC;
+				auth_alg = AUTH_AALG_SHA1HMAC;
 				keylen = 20;
 			} else if (!strcmp($6, "md5")) {
-				auth_alg = SADB_AALG_MD5HMAC;
+				auth_alg = AUTH_AALG_MD5HMAC;
 				keylen = 16;
 			} else {
 				yyerror("unknown auth algorithm \"%s\"", $6);
@@ -1860,11 +1860,11 @@ encspec		: /* nada */	{
 		| STRING STRING {
 			bzero(&$$, sizeof($$));
 			if (!strcmp($1, "3des") || !strcmp($1, "3des-cbc")) {
-				$$.enc_alg = SADB_EALG_3DESCBC;
+				$$.enc_alg = AUTH_EALG_3DESCBC;
 				$$.enc_key_len = 21; /* XXX verify */
 			} else if (!strcmp($1, "aes") ||
 			    !strcmp($1, "aes-128-cbc")) {
-				$$.enc_alg = SADB_X_EALG_AES;
+				$$.enc_alg = AUTH_EALG_AES;
 				$$.enc_key_len = 16;
 			} else {
 				yyerror("unknown enc algorithm \"%s\"", $1);

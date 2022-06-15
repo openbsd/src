@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.429 2022/06/15 10:10:03 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.430 2022/06/15 14:09:30 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -26,7 +26,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
-#include <net/pfkeyv2.h>
 
 #include <poll.h>
 #include <stdarg.h>
@@ -329,6 +328,18 @@ enum auth_method {
 	AUTH_IPSEC_IKE_AH
 };
 
+enum auth_alg {
+	AUTH_AALG_NONE,
+	AUTH_AALG_SHA1HMAC,
+	AUTH_AALG_MD5HMAC,
+};
+
+enum auth_enc_alg {
+	AUTH_EALG_NONE,
+	AUTH_EALG_3DESCBC,
+	AUTH_EALG_AES,
+};
+
 struct peer_auth {
 	char			md5key[TCP_MD5_KEY_LEN];
 	char			auth_key_in[IPSEC_AUTH_KEY_LEN];
@@ -338,13 +349,13 @@ struct peer_auth {
 	uint32_t		spi_in;
 	uint32_t		spi_out;
 	enum auth_method	method;
+	enum auth_alg		auth_alg_in;
+	enum auth_alg		auth_alg_out;
+	enum auth_enc_alg	enc_alg_in;
+	enum auth_enc_alg	enc_alg_out;
 	uint8_t			md5key_len;
-	uint8_t			auth_alg_in;
-	uint8_t			auth_alg_out;
 	uint8_t			auth_keylen_in;
 	uint8_t			auth_keylen_out;
-	uint8_t			enc_alg_in;
-	uint8_t			enc_alg_out;
 	uint8_t			enc_keylen_in;
 	uint8_t			enc_keylen_out;
 };
