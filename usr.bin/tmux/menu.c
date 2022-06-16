@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.45 2022/05/31 10:22:42 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.46 2022/06/16 13:27:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -160,10 +160,15 @@ menu_free(struct menu *menu)
 }
 
 struct screen *
-menu_mode_cb(__unused struct client *c, void *data, __unused u_int *cx,
-    __unused u_int *cy)
+menu_mode_cb(__unused struct client *c, void *data, u_int *cx, u_int *cy)
 {
 	struct menu_data	*md = data;
+
+	*cx = md->px + 2;
+	if (md->choice == -1)
+		*cy = md->py;
+	else
+		*cy = md->py + 1 + md->choice;
 
 	return (&md->s);
 }
