@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.64 2022/06/15 16:00:37 claudio Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.65 2022/06/16 09:51:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -567,7 +567,7 @@ pfkey_md5sig_establish(struct peer *p)
 	return (0);
 
 fail:
-	log_peer_warn(&p->conf, "%s: failed to insert md5sig", __func__);
+	log_peer_warn(&p->conf, "failed to insert md5sig");
 	return (-1);
 }
 
@@ -589,7 +589,7 @@ pfkey_md5sig_remove(struct peer *p)
 	return (0);
 
 fail:
-	log_peer_warn(&p->conf, "%s: failed to remove md5sig", __func__);
+	log_peer_warn(&p->conf, "failed to remove md5sig");
 	return (-1);
 }
 
@@ -704,10 +704,10 @@ pfkey_ipsec_establish(struct peer *p)
 	return (0);
 
 fail_key:
-	log_peer_warn(&p->conf, "%s: failed to insert ipsec key", __func__);
+	log_peer_warn(&p->conf, "failed to insert ipsec key");
 	return (-1);
 fail_flow:
-	log_peer_warn(&p->conf, "%s: failed to insert flow", __func__);
+	log_peer_warn(&p->conf, "failed to insert ipsec flow");
 	return (-1);
 }
 
@@ -777,10 +777,10 @@ pfkey_ipsec_remove(struct peer *p)
 	return (0);
 
 fail_key:
-	log_peer_warn(&p->conf, "%s: failed to remove ipsec key", __func__);
+	log_peer_warn(&p->conf, "failed to remove ipsec key");
 	return (-1);
 fail_flow:
-	log_peer_warn(&p->conf, "%s: failed to remove flow", __func__);
+	log_peer_warn(&p->conf, "failed to remove ipsec flow");
 	return (-1);
 }
 
