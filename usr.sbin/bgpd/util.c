@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.63 2022/05/25 16:03:34 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.64 2022/06/16 15:33:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -675,7 +675,14 @@ nlri_get_vpn6(u_char *p, uint16_t len, struct bgpd_addr *prefix,
 	return (plen + rv);
 }
 
+static in_addr_t
+prefixlen2mask(uint8_t prefixlen)
+{
+	if (prefixlen == 0)
+		return (0);
 
+	return (0xffffffff << (32 - prefixlen));
+}
 
 /*
  * This function will have undefined behaviour if the passed in prefixlen is
@@ -748,15 +755,6 @@ prefix_compare(const struct bgpd_addr *a, const struct bgpd_addr *b,
 	}
 	return (0);
 
-}
-
-in_addr_t
-prefixlen2mask(uint8_t prefixlen)
-{
-	if (prefixlen == 0)
-		return (0);
-
-	return (0xffffffff << (32 - prefixlen));
 }
 
 void

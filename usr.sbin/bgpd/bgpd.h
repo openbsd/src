@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.430 2022/06/15 14:09:30 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.431 2022/06/16 15:33:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1315,7 +1315,6 @@ void		 kr_show_route(struct imsg *);
 void		 kr_ifinfo(char *);
 void		 kr_net_reload(u_int, uint64_t, struct network_head *);
 int		 kr_reload(void);
-struct in6_addr	*prefixlen2mask6(uint8_t prefixlen);
 int		 get_mpe_config(const char *, u_int *, u_int *);
 
 /* log.c */
@@ -1433,7 +1432,6 @@ int		 nlri_get_vpn6(u_char *, uint16_t, struct bgpd_addr *,
 		     uint8_t *, int);
 int		 prefix_compare(const struct bgpd_addr *,
 		    const struct bgpd_addr *, int);
-in_addr_t	 prefixlen2mask(uint8_t);
 void		 inet4applymask(struct in_addr *, const struct in_addr *, int);
 void		 inet6applymask(struct in6_addr *, const struct in6_addr *,
 		    int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.257 2022/06/15 15:06:25 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.258 2022/06/16 15:33:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -167,8 +167,9 @@ void			 knexthop_validate(struct ktable *,
 			    struct knexthop_node *);
 void			 knexthop_track(struct ktable *, void *);
 void			 knexthop_send_update(struct knexthop_node *);
-struct kroute_node	*kroute_match(struct ktable *, in_addr_t, int);
-struct kroute6_node	*kroute6_match(struct ktable *, struct in6_addr *, int);
+struct kroute_node	*kroute_match(struct ktable *, struct bgpd_addr *, int);
+struct kroute6_node	*kroute6_match(struct ktable *, struct bgpd_addr *,
+			    int);
 void			 kroute_detach_nexthop(struct ktable *,
 			    struct knexthop_node *);
 
@@ -208,6 +209,12 @@ RB_PROTOTYPE(kif_tree, kif_node, entry, kif_compare)
 RB_GENERATE(kif_tree, kif_node, entry, kif_compare)
 
 #define KT2KNT(x)	(&(ktable_get((x)->nhtableid)->knt))
+
+const struct in_addr	inet4allone = { INADDR_BROADCAST };
+const struct in6_addr	inet6allone = {{{ 0xff, 0xff, 0xff, 0xff,
+     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+     0xff, 0xff, 0xff, 0xff }}};
+
 
 /*
  * exported functions
@@ -1111,14 +1118,14 @@ kr_show_route(struct imsg *imsg)
 		kr = NULL;
 		switch (addr->aid) {
 		case AID_INET:
-			kr = kroute_match(kt, addr->v4.s_addr, 1);
+			kr = kroute_match(kt, addr, 1);
 			if (kr != NULL)
 				send_imsg_session(IMSG_CTL_KROUTE,
 				    imsg->hdr.pid, kr_tofull(&kr->r),
 				    sizeof(struct kroute_full));
 			break;
 		case AID_INET6:
-			kr6 = kroute6_match(kt, &addr->v6, 1);
+			kr6 = kroute6_match(kt, addr, 1);
 			if (kr6 != NULL)
 				send_imsg_session(IMSG_CTL_KROUTE,
 				    imsg->hdr.pid, kr6_tofull(&kr6->r),
@@ -1791,7 +1798,7 @@ kroute_insert(struct ktable *kt, struct kroute_node *kr)
 {
 	struct kroute_node	*krm;
 	struct knexthop_node	*h;
-	in_addr_t		 mask, ina;
+	struct in_addr		 ina, inb;
 
 	if ((krm = RB_INSERT(kroute_tree, &kt->krt, kr)) != NULL) {
 		/* multipath route, add at end of list */
@@ -1803,12 +1810,14 @@ kroute_insert(struct ktable *kt, struct kroute_node *kr)
 
 	/* XXX this is wrong for nexthop validated via BGP */
 	if (kr->r.flags & F_KERNEL) {
-		mask = prefixlen2mask(kr->r.prefixlen);
-		ina = ntohl(kr->r.prefix.s_addr);
+		inet4applymask(&ina, &kr->r.prefix, kr->r.prefixlen);
 		RB_FOREACH(h, knexthop_tree, KT2KNT(kt))
-			if (h->nexthop.aid == AID_INET &&
-			    (ntohl(h->nexthop.v4.s_addr) & mask) == ina)
-				knexthop_validate(kt, h);
+			if (h->nexthop.aid == AID_INET) {
+				inet4applymask(&inb, &h->nexthop.v4,
+				    kr->r.prefixlen);
+				if (memcmp(&ina, &inb, sizeof(ina)) == 0)
+					knexthop_validate(kt, h);
+			}
 
 		if (kr->r.flags & F_CONNECTED)
 			if (kif_kr_insert(kr) == -1)
@@ -2383,7 +2392,7 @@ knexthop_validate(struct ktable *kt, struct knexthop_node *kn)
 
 	switch (kn->nexthop.aid) {
 	case AID_INET:
-		kr = kroute_match(kt, kn->nexthop.v4.s_addr, 0);
+		kr = kroute_match(kt, &kn->nexthop, 0);
 
 		if (kr) {
 			kn->kroute = kr;
@@ -2399,7 +2408,7 @@ knexthop_validate(struct ktable *kt, struct knexthop_node *kn)
 			knexthop_send_update(kn);
 		break;
 	case AID_INET6:
-		kr6 = kroute6_match(kt, &kn->nexthop.v6, 0);
+		kr6 = kroute6_match(kt, &kn->nexthop, 0);
 
 		if (kr6) {
 			kn->kroute = kr6;
@@ -2475,20 +2484,19 @@ knexthop_send_update(struct knexthop_node *kn)
 }
 
 struct kroute_node *
-kroute_match(struct ktable *kt, in_addr_t key, int matchall)
+kroute_match(struct ktable *kt, struct bgpd_addr *key, int matchall)
 {
 	int			 i;
 	struct kroute_node	*kr;
-	in_addr_t		 ina;
-
-	ina = ntohl(key);
+	struct in_addr		 ina;
 
 	/* this will never match the default route */
-	for (i = 32; i > 0; i--)
-		if ((kr = kroute_find(kt, htonl(ina & prefixlen2mask(i)), i,
-		    RTP_ANY)) != NULL)
+	for (i = 32; i > 0; i--) {
+		inet4applymask(&ina, &key->v4, i);
+		if ((kr = kroute_find(kt, ina.s_addr, i, RTP_ANY)) != NULL)
 			if (matchall || bgpd_filternexthop(&kr->r, NULL) == 0)
 			    return (kr);
+	}
 
 	/* so if there is no match yet, lookup the default route */
 	if ((kr = kroute_find(kt, 0, 0, RTP_ANY)) != NULL)
@@ -2499,7 +2507,7 @@ kroute_match(struct ktable *kt, in_addr_t key, int matchall)
 }
 
 struct kroute6_node *
-kroute6_match(struct ktable *kt, struct in6_addr *key, int matchall)
+kroute6_match(struct ktable *kt, struct bgpd_addr *key, int matchall)
 {
 	int			 i;
 	struct kroute6_node	*kr6;
@@ -2507,7 +2515,7 @@ kroute6_match(struct ktable *kt, struct in6_addr *key, int matchall)
 
 	/* this will never match the default route */
 	for (i = 128; i > 0; i--) {
-		inet6applymask(&ina, key, i);
+		inet6applymask(&ina, &key->v6, i);
 		if ((kr6 = kroute6_find(kt, &ina, i, RTP_ANY)) != NULL)
 			if (matchall || bgpd_filternexthop(NULL, &kr6->r) == 0)
 				return (kr6);
@@ -2635,22 +2643,6 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 	if (l > sizeof(struct in6_addr) * 8)
 		fatalx("%s: prefixlen %d out of bound", __func__, l);
 	return (l);
-}
-
-struct in6_addr *
-prefixlen2mask6(uint8_t prefixlen)
-{
-	static struct in6_addr	mask;
-	int			i;
-
-	bzero(&mask, sizeof(mask));
-	for (i = 0; i < prefixlen / 8; i++)
-		mask.s6_addr[i] = 0xff;
-	i = prefixlen % 8;
-	if (i)
-		mask.s6_addr[prefixlen / 8] = 0xff00 >> i;
-
-	return (&mask);
 }
 
 const struct if_status_description
@@ -2914,7 +2906,7 @@ send_rtmsg(int fd, int action, struct ktable *kt, struct kroute *kroute)
 	bzero(&mask, sizeof(mask));
 	mask.sin_len = sizeof(mask);
 	mask.sin_family = AF_INET;
-	mask.sin_addr.s_addr = htonl(prefixlen2mask(kroute->prefixlen));
+	inet4applymask(&mask.sin_addr, &inet4allone, kroute->prefixlen);
 	/* adjust header */
 	hdr.rtm_addrs |= RTA_NETMASK;
 	hdr.rtm_msglen += sizeof(mask);
@@ -3054,8 +3046,7 @@ send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute)
 	bzero(&mask, sizeof(mask));
 	mask.addr.sin6_len = sizeof(struct sockaddr_in6);
 	mask.addr.sin6_family = AF_INET6;
-	memcpy(&mask.addr.sin6_addr, prefixlen2mask6(kroute->prefixlen),
-	    sizeof(struct in6_addr));
+	inet6applymask(&mask.addr.sin6_addr, &inet6allone, kroute->prefixlen);
 	/* adjust header */
 	hdr.rtm_addrs |= RTA_NETMASK;
 	hdr.rtm_msglen += ROUNDUP(sizeof(struct sockaddr_in6));
