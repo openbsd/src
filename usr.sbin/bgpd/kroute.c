@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.258 2022/06/16 15:33:05 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.259 2022/06/16 15:36:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -210,8 +210,8 @@ RB_GENERATE(kif_tree, kif_node, entry, kif_compare)
 
 #define KT2KNT(x)	(&(ktable_get((x)->nhtableid)->knt))
 
-const struct in_addr	inet4allone = { INADDR_BROADCAST };
-const struct in6_addr	inet6allone = {{{ 0xff, 0xff, 0xff, 0xff,
+static const struct in_addr	inet4allone = { INADDR_BROADCAST };
+static const struct in6_addr	inet6allone = {{{ 0xff, 0xff, 0xff, 0xff,
      0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
      0xff, 0xff, 0xff, 0xff }}};
 
