@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.274 2022/05/04 14:47:46 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.275 2022/06/16 18:44:43 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -1570,7 +1570,7 @@ printline(char *hname, char *msgstr)
 		if (*p == '\n')
 			*q++ = ' ';
 		else
-			q = vis(q, *p, 0, 0);
+			q = vis(q, *p, VIS_NOSLASH, 0);
 	}
 	line[LOG_MAXLINE] = *q = '\0';
 
@@ -1626,7 +1626,7 @@ printsys(char *msgstr)
 		q = lp;
 		while (*p && (c = *p++) != '\n' &&
 		    q < &msg.m_msg[sizeof(msg.m_msg) - 4])
-			q = vis(q, c, 0, 0);
+			q = vis(q, c, VIS_NOSLASH, 0);
 
 		logmsg(&msg, flags, LocalHostName);
 	}
