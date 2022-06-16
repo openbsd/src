@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.15 2022/05/15 15:00:53 deraadt Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.16 2022/06/16 16:09:56 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -383,8 +383,13 @@ notification_done(struct notification_xml *nxml, char *last_mod)
 	if (nxml->repository->serial == 0)
 		goto snapshot;
 
-	/* if our serial is equal or bigger, the repo is up to date */
-	if (nxml->repository->serial >= nxml->serial) {
+	if (nxml->repository->serial > nxml->serial)
+		warnx("%s: serial number decreased from %lld to %lld",
+		    nxml->notifyuri, nxml->repository->serial, nxml->serial);
+
+	/* if our serial is equal or plus 2, the repo is up to date */
+	if (nxml->repository->serial >= nxml->serial &&
+	    nxml->repository->serial - nxml->serial <= 2) {
 		nxml->current->serial = nxml->repository->serial;
 		return NOTIFICATION;
 	}
