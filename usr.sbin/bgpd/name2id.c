@@ -1,4 +1,4 @@
-/*	$OpenBSD: name2id.c,v 1.11 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: name2id.c,v 1.12 2022/06/16 15:30:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -94,16 +94,18 @@ pftable_ref(uint16_t id)
 	return (_ref(&pftable_labels, id));
 }
 
+/*
+ * Try to convert a name into id. If something fails 0 is returned which
+ * is the ID of the empty label.
+ */
 uint16_t
 _name2id(struct n2id_labels *head, const char *name)
 {
 	struct n2id_label	*label, *p = NULL;
 	uint16_t		 new_id = 1;
 
-	if (!name[0]) {
-		errno = EINVAL;
+	if (!name[0])
 		return (0);
-	}
 
 	TAILQ_FOREACH(label, head, entry)
 		if (strcmp(name, label->name) == 0) {
@@ -122,10 +124,8 @@ _name2id(struct n2id_labels *head, const char *name)
 		    p->id == new_id; p = TAILQ_NEXT(p, entry))
 			new_id = p->id + 1;
 
-	if (new_id > IDVAL_MAX) {
-		errno = ERANGE;
+	if (new_id > IDVAL_MAX)
 		return (0);
-	}
 
 	if ((label = calloc(1, sizeof(struct n2id_label))) == NULL)
 		return (0);
