@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.8 2022/01/09 05:42:37 jsg Exp $ */
+/*	$OpenBSD: hidms.c,v 1.9 2022/06/16 20:52:38 bru Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -195,30 +195,33 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 	 * as buttons if the device has this quirk.
 	 */
 	if (ms->sc_flags & HIDMS_VENDOR_BUTTONS) {
-		const int b = ms->sc_num_buttons;
-		for (i = 1; b + i <= MAX_BUTTONS; i++)
+		for (i = 1; ms->sc_num_buttons < MAX_BUTTONS; i++) {
 			if (!hid_locate(desc, dlen,
-			    HID_USAGE2(HUP_MICROSOFT, i),
-			    id, hid_input, &ms->sc_loc_btn[b + i - 1], NULL))
+			    HID_USAGE2(HUP_MICROSOFT, i), id, hid_input,
+			    &ms->sc_loc_btn[ms->sc_num_buttons], NULL))
 				break;
-		ms->sc_num_buttons += i;
+			ms->sc_num_buttons++;
+		}
 	}
 
-	if (hid_locate(desc, dlen, HID_USAGE2(HUP_DIGITIZERS,
+	if (ms->sc_num_buttons < MAX_BUTTONS &&
+	    hid_locate(desc, dlen, HID_USAGE2(HUP_DIGITIZERS,
 	    HUD_TIP_SWITCH), id, hid_input,
 	    &ms->sc_loc_btn[ms->sc_num_buttons], NULL)){
 		ms->sc_flags |= HIDMS_TIP;
 		ms->sc_num_buttons++;
 	}
 
-	if (hid_locate(desc, dlen, HID_USAGE2(HUP_DIGITIZERS,
+	if (ms->sc_num_buttons < MAX_BUTTONS &&
+	    hid_locate(desc, dlen, HID_USAGE2(HUP_DIGITIZERS,
 	    HUD_ERASER), id, hid_input,
 	    &ms->sc_loc_btn[ms->sc_num_buttons], NULL)){
 		ms->sc_flags |= HIDMS_ERASER;
 		ms->sc_num_buttons++;
 	}
 
-	if (hid_locate(desc, dlen, HID_USAGE2(HUP_DIGITIZERS,
+	if (ms->sc_num_buttons < MAX_BUTTONS &&
+	    hid_locate(desc, dlen, HID_USAGE2(HUP_DIGITIZERS,
 	    HUD_BARREL_SWITCH), id, hid_input,
 	    &ms->sc_loc_btn[ms->sc_num_buttons], NULL)){
 		ms->sc_flags |= HIDMS_BARREL;
