@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.36 2022/01/02 20:00:21 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.37 2022/06/16 20:44:09 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -453,11 +453,6 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		}
 		if (ci != NULL)
 			sc->sc_cpuremap[ci->ci_cpuid] = nredist;
-#ifdef MULTIPROCESSOR
-		else
-			panic("%s: no CPU found for affinity %08x",
-			    sc->sc_sbus.sc_dev.dv_xname, affinity);
-#endif
 
 		sc->sc_processor[nredist] = bus_space_read_8(sc->sc_iot,
 		    sc->sc_redist_base, offset + GICR_TYPER) >> 8;
