@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1173 2022/06/09 09:12:55 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1174 2022/06/17 07:28:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2997,6 +2997,7 @@ void		*window_pane_get_new_data(struct window_pane *,
 void		 window_pane_update_used_data(struct window_pane *,
 		     struct window_pane_offset *, size_t);
 void		 window_set_fill_character(struct window *);
+void		 window_pane_default_cursor(struct window_pane *);
 
 /* layout.c */
 u_int		 layout_count_cells(struct layout_cell *);
