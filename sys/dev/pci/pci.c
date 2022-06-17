@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.124 2022/03/11 18:00:51 mpi Exp $	*/
+/*	$OpenBSD: pci.c,v 1.125 2022/06/17 10:08:36 kettenis Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -807,11 +807,31 @@ pci_enumerate_bus(struct pci_softc *sc,
 {
 	pci_chipset_tag_t pc = sc->sc_pc;
 	int device, function, nfunctions, ret;
+	int maxndevs = sc->sc_maxndevs;
 	const struct pci_quirkdata *qd;
-	pcireg_t id, bhlcr;
+	pcireg_t id, bhlcr, cap;
 	pcitag_t tag;
 
-	for (device = 0; device < sc->sc_maxndevs; device++) {
+	/*
+	 * PCIe downstream ports and root ports should only forward
+	 * configuration requests for device number 0.  However, not
+	 * all hardware implements this correctly, and some devices
+	 * will respond to other device numbers making the device show
+	 * up 32 times.  Prevent this by only scanning a single
+	 * device.
+	 */
+	if (sc->sc_bridgetag && pci_get_capability(pc, *sc->sc_bridgetag,
+	    PCI_CAP_PCIEXPRESS, NULL, &cap)) {
+		switch (PCI_PCIE_XCAP_TYPE(cap)) {
+		case PCI_PCIE_XCAP_TYPE_RP:
+		case PCI_PCIE_XCAP_TYPE_DOWN:
+		case PCI_PCIE_XCAP_TYPE_PCI2PCIE:
+			maxndevs = 1;
+			break;
+		}
+	}
+
+	for (device = 0; device < maxndevs; device++) {
 		tag = pci_make_tag(pc, sc->sc_bus, device, 0);
 
 		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.60 2021/12/31 11:24:24 jsg Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.61 2022/06/17 10:08:36 kettenis Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -563,6 +563,10 @@ typedef u_int8_t pci_revision_t;
 #define PCI_PCIE_XCAP		0x00
 #define PCI_PCIE_XCAP_SI	0x01000000
 #define PCI_PCIE_XCAP_VER(x)	(((x) >> 16) & 0x0f)
+#define PCI_PCIE_XCAP_TYPE(x)	(((x) >> 20) & 0x0f)
+#define  PCI_PCIE_XCAP_TYPE_RP		0x4
+#define  PCI_PCIE_XCAP_TYPE_DOWN	0x6
+#define  PCI_PCIE_XCAP_TYPE_PCI2PCIE	0x8
 #define PCI_PCIE_DCAP		0x04
 #define PCI_PCIE_DCSR		0x08
 #define PCI_PCIE_DCSR_ERO	0x00000010
