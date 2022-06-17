@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.116 2022/05/04 15:29:58 bluhm Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.117 2022/06/17 13:40:21 bluhm Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -714,7 +714,10 @@ ipsp_delete_acquire_timer(void *v)
 {
 	struct ipsec_acquire *ipa = v;
 
-	ipsp_delete_acquire(ipa);
+	mtx_enter(&ipsec_acquire_mtx);
+	refcnt_rele(&ipa->ipa_refcnt);
+	ipsp_delete_acquire_locked(ipa);
+	mtx_leave(&ipsec_acquire_mtx);
 }
 
 /*
