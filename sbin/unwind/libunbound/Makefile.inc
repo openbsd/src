@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.1 2019/01/23 13:05:26 florian Exp $
+#	$OpenBSD: Makefile.inc,v 1.2 2022/06/18 16:17:29 florian Exp $
 
 #DEBUG=	-g -DDEBUG=3 -O0
 CFLAGS+= -Wall -I${.CURDIR}
@@ -19,5 +19,4 @@ CFLAGS+= -Wsign-compare
 .include "${.CURDIR}/libunbound/util/Makefile.inc"
 .include "${.CURDIR}/libunbound/util/data/Makefile.inc"
 .include "${.CURDIR}/libunbound/util/storage/Makefile.inc"
-.include "${.CURDIR}/libunbound/util/shm_side/Makefile.inc"
 .include "${.CURDIR}/libunbound/validator/Makefile.inc"
