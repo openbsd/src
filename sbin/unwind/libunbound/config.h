@@ -515,7 +515,7 @@
 /* #undef HAVE_SHA512_UPDATE */
 
 /* Define to 1 if you have the `shmget' function. */
-/* #undef HAVE_SHMGET */
+#define HAVE_SHMGET 1
 
 /* Define to 1 if you have the `sigprocmask' function. */
 #define HAVE_SIGPROCMASK 1
@@ -760,7 +760,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.15.0"
+#define PACKAGE_STRING "unbound 1.16.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -769,7 +769,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.15.0"
+#define PACKAGE_VERSION "1.16.0"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -792,7 +792,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,15,0,0
+#define RSRC_PACKAGE_VERSION 1,16,0,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
@@ -975,6 +975,10 @@
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 /* #undef _POSIX_SOURCE */
 
+/* defined to use gcc ansi snprintf and sscanf that understands %lld when
+   compiled for windows. */
+/* #undef __USE_MINGW_ANSI_STDIO */
+
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
 
@@ -1154,7 +1158,7 @@
 #include <ws2tcpip.h>
 #endif
 
-#ifndef USE_WINSOCK
+#if !defined(USE_WINSOCK) || !defined(HAVE_SNPRINTF) || defined(SNPRINTF_RET_BROKEN) || defined(__USE_MINGW_ANSI_STDIO)
 #define ARG_LL "%ll"
 #else
 #define ARG_LL "%I64"
