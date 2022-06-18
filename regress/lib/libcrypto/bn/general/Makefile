@@ -1,16 +1,18 @@
-#	$OpenBSD: Makefile,v 1.10 2022/03/16 12:37:44 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.11 2022/06/18 19:53:19 tb Exp $
 
 .include "../../Makefile.inc"
 
 PROGS +=	bntest
 PROGS +=	bn_mod_exp2_mont
 PROGS +=	bn_mod_sqrt
+PROGS +=	bn_primes
 PROGS +=	bn_to_string
 
 LDADD =		${CRYPTO_INT}
 DPADD =		${LIBCRYPTO}
 WARNINGS =	Yes
 CFLAGS +=	-Werror
+CFLAGS +=	-I${.CURDIR}/../../../../../lib/libcrypto/bn/
 CLEANFILES =	bntest.out bc.out
 
 REGRESS_TARGETS += run-bntest
@@ -29,6 +31,10 @@ run-bn_mod_exp2_mont: bn_mod_exp2_mont
 REGRESS_TARGETS += run-bn_mod_sqrt
 run-bn_mod_sqrt: bn_mod_sqrt
 	./bn_mod_sqrt
+
+REGRESS_TARGETS += run-bn_primes
+run-bn_primes: bn_primes
+	./bn_primes
 
 REGRESS_TARGETS += run-bn_to_string
 run-bn_to_string: bn_to_string
