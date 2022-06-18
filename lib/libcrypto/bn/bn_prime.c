@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.18 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.19 2022/06/18 15:52:35 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -282,7 +282,7 @@ BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
 			if (mod == (BN_ULONG)-1)
 				goto err;
 			if (mod == 0)
-				return 0;
+				return BN_is_word(a, primes[i]);
 		}
 		if (!BN_GENCB_call(cb, 1, -1))
 			goto err;
