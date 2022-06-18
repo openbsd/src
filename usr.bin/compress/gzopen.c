@@ -1,4 +1,4 @@
-/*	$OpenBSD: gzopen.c,v 1.34 2016/09/03 12:29:30 tedu Exp $	*/
+/*	$OpenBSD: gzopen.c,v 1.35 2022/06/18 03:23:19 gkoehler Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -260,8 +260,12 @@ int
 gz_read(void *cookie, char *buf, int len)
 {
 	gz_stream *s = (gz_stream*)cookie;
+	uLong old_total_in;
 	u_char *start = buf; /* starting point for crc computation */
 	int error = Z_OK;
+
+	/* z_stream.total_in might overflow uLong. */
+	old_total_in = s->z_stream.total_in;
 
 	s->z_stream.next_out = buf;
 	s->z_stream.avail_out = len;
@@ -304,29 +308,28 @@ gz_read(void *cookie, char *buf, int len)
 			}
 			s->z_hlen += 2 * sizeof(int32_t);
 
-			/* Add byte counts from the finished stream. */
-			s->z_total_in += s->z_stream.total_in;
-			s->z_total_out += s->z_stream.total_out;
-
 			/* Check for the existence of an appended file. */
 			if (get_header(s, NULL, 0) != 0) {
 				s->z_eof = 1;
 				break;
 			}
+			s->z_total_in += (uLong)(s->z_stream.total_in -
+			    old_total_in);
 			inflateReset(&(s->z_stream));
 			s->z_crc = crc32(0L, Z_NULL, 0);
+			old_total_in = 0;
 			error = Z_OK;
 		}
 	}
 	s->z_crc = crc32(s->z_crc, start,
 	    (uInt)(s->z_stream.next_out - start));
 	len -= s->z_stream.avail_out;
-
+	s->z_total_in += (uLong)(s->z_stream.total_in - old_total_in);
+	s->z_total_out += len;
 	return (len);
 bad:
-	/* Add byte counts from the finished stream. */
-	s->z_total_in += s->z_stream.total_in;
-	s->z_total_out += s->z_stream.total_out;
+	s->z_total_in += (uLong)(s->z_stream.total_in - old_total_in);
+	s->z_total_out += (len - s->z_stream.avail_out);
 	return (-1);
 }
 
@@ -431,6 +434,8 @@ gz_write(void *cookie, const char *buf, int len)
 
 	while (s->z_stream.avail_in != 0) {
 		if (s->z_stream.avail_out == 0) {
+			s->z_total_out += Z_BUFSIZE;
+
 			if (write(s->z_fd, s->z_buf, Z_BUFSIZE) != Z_BUFSIZE)
 				break;
 			s->z_stream.next_out = s->z_buf;
@@ -441,7 +446,9 @@ gz_write(void *cookie, const char *buf, int len)
 	}
 	s->z_crc = crc32(s->z_crc, buf, len);
 
-	return (int)(len - s->z_stream.avail_in);
+	len -= s->z_stream.avail_in;
+	s->z_total_in += len;
+	return len;
 }
 
 int
@@ -463,6 +470,8 @@ gz_flush(void *cookie, int flush)
 		len = Z_BUFSIZE - s->z_stream.avail_out;
 
 		if (len != 0) {
+			s->z_total_out += len;
+
 			if (write(s->z_fd, s->z_buf, len) != len)
 				return Z_ERRNO;
 			s->z_stream.next_out = s->z_buf;
@@ -516,14 +525,8 @@ gz_close(void *cookie, struct z_info *info, const char *name, struct stat *sb)
 		info->mtime = s->z_time;
 		info->crc = s->z_crc;
 		info->hlen = s->z_hlen;
-		if (s->z_mode == 'r') {
-			info->total_in = s->z_total_in;
-			info->total_out = s->z_total_out;
-		} else {
-			info->total_in = s->z_stream.total_in;
-			info->total_out = s->z_stream.total_out;
-		}
-
+		info->total_in = s->z_total_in;
+		info->total_out = s->z_total_out;
 	}
 
 	setfile(name, s->z_fd, sb);
