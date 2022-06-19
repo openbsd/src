@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2022/06/18 19:53:19 tb Exp $
+#	$OpenBSD: Makefile,v 1.12 2022/06/19 17:08:19 tb Exp $
 
 .include "../../Makefile.inc"
 
@@ -8,7 +8,7 @@ PROGS +=	bn_mod_sqrt
 PROGS +=	bn_primes
 PROGS +=	bn_to_string
 
-LDADD =		${CRYPTO_INT}
+LDADD =		${LIBCRYPTO}
 DPADD =		${LIBCRYPTO}
 WARNINGS =	Yes
 CFLAGS +=	-Werror
