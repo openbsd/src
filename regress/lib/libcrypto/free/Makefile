@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 2018/08/31 17:35:21 tb Exp $
+#	$OpenBSD: Makefile,v 1.4 2022/06/19 17:05:31 tb Exp $
 
 TESTS = \
 	freenull
@@ -8,8 +8,7 @@ PROG = ${TESTS}
 REGRESS_TARGETS= all_tests
 
 LDADD=		-lcrypto
-DPADD=		${LIBCRYPTO} ${LIBSSL}
-LDFLAGS+=	-lcrypto
+DPADD=		${LIBCRYPTO}
 CFLAGS+=	-DLIBRESSL_INTERNAL
 
 CLEANFILES+= freenull.c freenull.c.body freenull.c.tmp

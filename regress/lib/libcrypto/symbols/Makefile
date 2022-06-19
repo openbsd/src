@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2020/09/18 10:18:25 tb Exp $
+#	$OpenBSD: Makefile,v 1.2 2022/06/19 17:05:31 tb Exp $
 
 TESTS = \
 	symbols
@@ -21,7 +21,7 @@ include_headers.c: ${BSDSRCDIR}/lib/libcrypto/Symbols.list
 .endif
 
 LDADD=		-lcrypto
-DPADD=		${LIBCRYPTO} ${LIBSSL}
+DPADD=		${LIBCRYPTO}
 LDFLAGS+=	-lcrypto
 CFLAGS+= -Wno-deprecated-declarations
 
