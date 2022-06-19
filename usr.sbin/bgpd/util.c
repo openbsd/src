@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.65 2022/06/17 09:12:06 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.66 2022/06/19 10:30:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -781,6 +781,22 @@ inet6applymask(struct in6_addr *dest, const struct in6_addr *src, int prefixlen)
 
 	for (i = 0; i < 16; i++)
 		dest->s6_addr[i] = src->s6_addr[i] & mask.s6_addr[i];
+}
+
+void
+applymask(struct bgpd_addr *dest, const struct bgpd_addr *src, int prefixlen)
+{
+	*dest = *src;
+	switch (src->aid) {
+	case AID_INET:
+	case AID_VPN_IPv4:
+		inet4applymask(&dest->v4, &src->v4, prefixlen);
+		break;
+	case AID_INET6:
+	case AID_VPN_IPv6:
+		inet6applymask(&dest->v6, &src->v6, prefixlen);
+		break;
+	}
 }
 
 /* address family translation functions */

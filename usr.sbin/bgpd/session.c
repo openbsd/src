@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.427 2022/02/23 11:20:35 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.428 2022/06/19 10:30:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -3382,23 +3382,11 @@ session_template_clone(struct peer *p, struct sockaddr *ip, uint32_t id,
 int
 session_match_mask(struct peer *p, struct bgpd_addr *a)
 {
-	struct in_addr	 v4masked;
-	struct in6_addr	 v6masked;
+	struct bgpd_addr masked;
 
-	switch (p->conf.remote_addr.aid) {
-	case AID_INET:
-		inet4applymask(&v4masked, &a->v4, p->conf.remote_masklen);
-		if (p->conf.remote_addr.v4.s_addr == v4masked.s_addr)
-			return (1);
-		return (0);
-	case AID_INET6:
-		inet6applymask(&v6masked, &a->v6, p->conf.remote_masklen);
-
-		if (memcmp(&v6masked, &p->conf.remote_addr.v6,
-		    sizeof(v6masked)) == 0)
-			return (1);
-		return (0);
-	}
+	applymask(&masked, a, p->conf.remote_masklen);
+	if (memcmp(&masked, &p->conf.remote_addr, sizeof(masked)) == 0)
+		return (1);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.431 2022/06/16 15:33:05 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.432 2022/06/19 10:30:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1435,6 +1435,7 @@ int		 prefix_compare(const struct bgpd_addr *,
 void		 inet4applymask(struct in_addr *, const struct in_addr *, int);
 void		 inet6applymask(struct in6_addr *, const struct in6_addr *,
 		    int);
+void		 applymask(struct bgpd_addr *, const struct bgpd_addr *, int);
 const char	*aid2str(uint8_t);
 int		 aid2afi(uint8_t, uint16_t *, uint8_t *);
 int		 afi2aid(uint16_t, uint8_t, uint8_t *);
