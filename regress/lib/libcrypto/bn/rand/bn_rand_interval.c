@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_rand_interval.c,v 1.4 2021/04/06 16:40:34 tb Exp $	*/
+/*	$OpenBSD: bn_rand_interval.c,v 1.5 2022/06/19 17:10:02 tb Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -105,7 +105,7 @@ main(int argc, char *argv[])
 	}
 
 	if (success == 1)
-		printf("success\n");
+		printf("SUCCESS\n");
 	else
 		printf("FAIL");
 
