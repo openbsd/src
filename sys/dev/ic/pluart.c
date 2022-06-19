@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.10 2022/06/11 05:29:24 anton Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.11 2022/06/19 12:52:19 anton Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -153,11 +153,12 @@ struct cfdriver pluart_cd = {
 	NULL, "pluart", DV_TTY
 };
 
+int		pluartdefaultrate = B38400;
+int		pluartconsrate = B38400;
 bus_space_tag_t	pluartconsiot;
 bus_space_handle_t pluartconsioh;
 bus_addr_t	pluartconsaddr;
 tcflag_t	pluartconscflag = TTYDEF_CFLAG;
-int		pluartdefaultrate = B38400;
 
 struct cdevsw pluartdev =
 	cdev_tty_init(3/*XXX NUART */ ,pluart);		/* 12: serial port */
@@ -563,7 +564,10 @@ pluartopen(dev_t dev, int flag, int mode, struct proc *p)
 		if (ISSET(sc->sc_swflags, COM_SW_MDMBUF))
 			SET(tp->t_cflag, MDMBUF);
 		tp->t_lflag = TTYDEF_LFLAG;
-		tp->t_ispeed = tp->t_ospeed = pluartdefaultrate;
+		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+			tp->t_ispeed = tp->t_ospeed = pluartconsrate;
+		else
+			tp->t_ispeed = tp->t_ospeed = pluartdefaultrate;
 
 		s = spltty();
 
@@ -837,6 +841,7 @@ pluartcnattach(bus_space_tag_t iot, bus_addr_t iobase, int rate, tcflag_t cflag)
 	pluartconsiot = iot;
 	pluartconsaddr = iobase;
 	pluartconscflag = cflag;
+	pluartconsrate = rate;
 
 	return 0;
 }
