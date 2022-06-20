@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_kron.c,v 1.8 2022/06/20 19:38:25 tb Exp $ */
+/* $OpenBSD: bn_kron.c,v 1.9 2022/06/20 19:42:58 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
  *
@@ -55,7 +55,7 @@
 
 #include "bn_lcl.h"
 
-/* least significant word */
+/* The least significant word of a BIGNUM. */
 #define BN_lsw(n) (((n)->top == 0) ? (BN_ULONG) 0 : (n)->d[0])
 
 /*
