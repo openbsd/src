@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqrt.c,v 1.10 2022/03/15 15:52:39 tb Exp $ */
+/* $OpenBSD: bn_sqrt.c,v 1.11 2022/06/20 15:02:21 tb Exp $ */
 /* Written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * and Bodo Moeller for the OpenSSL project. */
 /* ====================================================================
@@ -217,8 +217,9 @@ BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 	/* e > 2, so we really have to use the Tonelli/Shanks algorithm.
 	 * First, find some  y  that is not a square. */
-	if (!BN_copy(q, p)) goto end; /* use 'q' as temp */
-		q->neg = 0;
+	if (!BN_copy(q, p)) /* use 'q' as temp */
+		goto end;
+	q->neg = 0;
 	i = 2;
 	do {
 		/* For efficiency, try small numbers first;
@@ -253,10 +254,9 @@ BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 			BNerror(BN_R_P_IS_NOT_PRIME);
 			goto end;
 		}
-	}
-	while (r == 1 && ++i < 82);
+	} while (r == 1 && ++i < 82);
 
-		if (r != -1) {
+	if (r != -1) {
 		/* Many rounds and still no non-square -- this is more likely
 		 * a bug than just bad luck.
 		 * Even if  p  is not prime, we should have found some  y
@@ -302,8 +302,7 @@ BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		goto end;
 
 	/* x := a^((q-1)/2) */
-	if (BN_is_zero(t)) /* special case: p = 2^e + 1 */
-	{
+	if (BN_is_zero(t)) { /* special case: p = 2^e + 1 */
 		if (!BN_nnmod(t, A, p, ctx))
 			goto end;
 		if (BN_is_zero(t)) {
