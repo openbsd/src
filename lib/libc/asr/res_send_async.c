@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send_async.c,v 1.40 2021/11/22 20:18:27 jca Exp $	*/
+/*	$OpenBSD: res_send_async.c,v 1.41 2022/06/20 06:45:31 jca Exp $	*/
 /*
  * Copyright (c) 2012 Eric Faurot <eric@openbsd.org>
  *
@@ -129,8 +129,8 @@ _res_query_async_ctx(const char *name, int class, int type, struct asr_ctx *a_ct
 		return (NULL); /* errno set */
 	as->as_run = res_send_async_run;
 
-	/* This adds a "." to name if it doesn't already has one.
-	 * That's how res_query() behaves (through res_mkquery").
+	/* This adds a "." to name if it doesn't already have one.
+	 * That's how res_query() behaves (through res_mkquery).
 	 */
 	if (setup_query(as, name, NULL, class, type) == -1)
 		goto err; /* errno set */
