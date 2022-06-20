@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_kron.c,v 1.6 2015/02/09 15:49:22 jsing Exp $ */
+/* $OpenBSD: bn_kron.c,v 1.7 2022/06/20 19:32:35 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
  *
@@ -58,128 +58,143 @@
 /* least significant word */
 #define BN_lsw(n) (((n)->top == 0) ? (BN_ULONG) 0 : (n)->d[0])
 
-/* Returns -2 for errors because both -1 and 0 are valid results. */
+/*
+ * Kronecker symbol, implemented according to Henri Cohen, "A Course in
+ * Computational Algebraic Number Theory", Algorithm 1.4.10.
+ *
+ * Returns -1, 0, or 1 on success and -2 on error.
+ */
+
 int
 BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
-	int i;
-	int ret = -2; /* avoid 'uninitialized' warning */
-	int err = 0;
-	BIGNUM *A, *B, *tmp;
-
-	/* In 'tab', only odd-indexed entries are relevant:
-	 * For any odd BIGNUM n,
-	 *     tab[BN_lsw(n) & 7]
-	 * is $(-1)^{(n^2-1)/8}$ (using TeX notation).
-	 * Note that the sign of n does not matter.
-	 */
+	/* tab[BN_lsw(n) & 7] = (-1)^((n^2 - 1)) / 8) for odd values of n. */
 	static const int tab[8] = {0, 1, 0, -1, 0, -1, 0, 1};
+	BIGNUM *A, *B, *tmp;
+	int k, v;
+	int ret = -2;
 
 	bn_check_top(a);
 	bn_check_top(b);
 
 	BN_CTX_start(ctx);
+
 	if ((A = BN_CTX_get(ctx)) == NULL)
 		goto end;
 	if ((B = BN_CTX_get(ctx)) == NULL)
 		goto end;
 
-	err = !BN_copy(A, a);
-	if (err)
+	if (BN_copy(A, a) == NULL)
 		goto end;
-	err = !BN_copy(B, b);
-	if (err)
+	if (BN_copy(B, b) == NULL)
 		goto end;
 
 	/*
-	 * Kronecker symbol, imlemented according to Henri Cohen,
-	 * "A Course in Computational Algebraic Number Theory"
-	 * (algorithm 1.4.10).
+	 * Cohen's step 1:
 	 */
 
-	/* Cohen's step 1: */
-
+	/* If B is zero, output 1 if |A| is 1, otherwise output 0. */
 	if (BN_is_zero(B)) {
 		ret = BN_abs_is_word(A, 1);
 		goto end;
 	}
 
-	/* Cohen's step 2: */
+	/*
+	 * Cohen's step 2:
+	 */
 
+	/* If both are even, they have a factor in common, so output 0. */
 	if (!BN_is_odd(A) && !BN_is_odd(B)) {
 		ret = 0;
 		goto end;
 	}
 
-	/* now  B  is non-zero */
-	i = 0;
-	while (!BN_is_bit_set(B, i))
-		i++;
-	err = !BN_rshift(B, B, i);
-	if (err)
+	/* Factorize B = 2^v * u with odd u and replace B with u. */
+	v = 0;
+	while (!BN_is_bit_set(B, v))
+		v++;
+	if (!BN_rshift(B, B, v))
 		goto end;
-	if (i & 1) {
-		/* i is odd */
-		/* (thus  B  was even, thus  A  must be odd!)  */
 
-		/* set 'ret' to $(-1)^{(A^2-1)/8}$ */
-		ret = tab[BN_lsw(A) & 7];
-	} else {
-		/* i is even */
-		ret = 1;
+	/* If v is even set k = 1, otherwise set it to (-1)^((A^2 - 1) / 8). */
+	k = 1;
+	if (v % 2 != 0)
+		k = tab[BN_lsw(A) & 7];
+
+	/*
+	 * If B is negative, replace it with -B and if A is also negative
+	 * replace k with -k.
+	 */
+	if (BN_is_negative(B)) {
+		BN_set_negative(B, 0);
+
+		if (BN_is_negative(A))
+			k = -k;
 	}
 
-	if (B->neg) {
-		B->neg = 0;
-		if (A->neg)
-			ret = -ret;
-	}
-
-	/* now  B  is positive and odd, so what remains to be done is
-	 * to compute the Jacobi symbol  (A/B)  and multiply it by 'ret' */
+	/*
+	 * Now B is positive and odd, so compute the Jacobi symbol (A/B)
+	 * and multiply it by k.
+	 */
 
 	while (1) {
-		/* Cohen's step 3: */
+		/*
+		 * Cohen's step 3:
+		 */
 
-		/*  B  is positive and odd */
+		/* B is positive and odd. */
 
+		/* If A is zero output k if B is one, otherwise output 0. */
 		if (BN_is_zero(A)) {
-			ret = BN_is_one(B) ? ret : 0;
+			ret = BN_is_one(B) ? k : 0;
 			goto end;
 		}
 
-		/* now  A  is non-zero */
-		i = 0;
-		while (!BN_is_bit_set(A, i))
-			i++;
-		err = !BN_rshift(A, A, i);
-		if (err)
+		/* Factorize A = 2^v * u with odd u and replace A with u. */
+		v = 0;
+		while (!BN_is_bit_set(A, v))
+			v++;
+		if (!BN_rshift(A, A, v))
 			goto end;
-		if (i & 1) {
-			/* i is odd */
-			/* multiply 'ret' by  $(-1)^{(B^2-1)/8}$ */
-			ret = ret * tab[BN_lsw(B) & 7];
-		}
 
-		/* Cohen's step 4: */
-		/* multiply 'ret' by  $(-1)^{(A-1)(B-1)/4}$ */
-		if ((A->neg ? ~BN_lsw(A) : BN_lsw(A)) & BN_lsw(B) & 2)
-			ret = -ret;
+		/* If v is odd, multiply k with (-1)^((B^2 - 1) / 8). */
+		if (v % 2 != 0)
+			k *= tab[BN_lsw(B) & 7];
 
-		/* (A, B) := (B mod |A|, |A|) */
-		err = !BN_nnmod(B, B, A, ctx);
-		if (err)
+		/*
+		 * Cohen's step 4:
+		 */
+
+		/*
+		 * Apply the reciprocity law: multiply k by (-1)^((A-1)(B-1)/4).
+		 *
+		 * This expression is -1 if and only if A and B are 3 (mod 4).
+		 * In turn, this is the case if and only if their two's
+		 * complement representations have the second bit set.
+		 * A could be negative in the first iteration, B is positive.
+		 */
+		if ((BN_is_negative(A) ? ~BN_lsw(A) : BN_lsw(A)) & BN_lsw(B) & 2)
+			k = -k;
+
+		/*
+		 * (A, B) := (B mod |A|, |A|)
+		 *
+		 * Once this is done, we know that 0 < A < B at the start of the
+		 * loop. Since B is strictly decreasing, the loop terminates.
+		 */
+
+		if (!BN_nnmod(B, B, A, ctx))
 			goto end;
+
 		tmp = A;
 		A = B;
 		B = tmp;
-		tmp->neg = 0;
+
+		BN_set_negative(B, 0);
 	}
 
-end:
+ end:
 	BN_CTX_end(ctx);
-	if (err)
-		return -2;
-	else
-		return ret;
+
+	return ret;
 }
