@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.50 2022/06/06 14:45:41 claudio Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.51 2022/06/20 01:39:44 visa Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/ioctl.h>
-#include <sys/poll.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
 
@@ -52,7 +51,6 @@ const struct fileops socketops = {
 	.fo_read	= soo_read,
 	.fo_write	= soo_write,
 	.fo_ioctl	= soo_ioctl,
-	.fo_poll	= soo_poll,
 	.fo_kqfilter	= soo_kqfilter,
 	.fo_stat	= soo_stat,
 	.fo_close	= soo_close
@@ -147,42 +145,6 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	}
 
 	return (error);
-}
-
-int
-soo_poll(struct file *fp, int events, struct proc *p)
-{
-	struct socket *so = fp->f_data;
-	int revents = 0;
-
-	solock(so);
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (soreadable(so))
-			revents |= events & (POLLIN | POLLRDNORM);
-	}
-	/* NOTE: POLLHUP and POLLOUT/POLLWRNORM are mutually exclusive */
-	if (so->so_state & SS_ISDISCONNECTED) {
-		revents |= POLLHUP;
-	} else if (events & (POLLOUT | POLLWRNORM)) {
-		if (sowriteable(so))
-			revents |= events & (POLLOUT | POLLWRNORM);
-	}
-	if (events & (POLLPRI | POLLRDBAND)) {
-		if (so->so_oobmark || (so->so_state & SS_RCVATMARK))
-			revents |= events & (POLLPRI | POLLRDBAND);
-	}
-	if (revents == 0) {
-		if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
-			selrecord(p, &so->so_rcv.sb_sel);
-			so->so_rcv.sb_flags |= SB_SEL;
-		}
-		if (events & (POLLOUT | POLLWRNORM)) {
-			selrecord(p, &so->so_snd.sb_sel);
-			so->so_snd.sb_flags |= SB_SEL;
-		}
-	}
-	sounlock(so);
-	return (revents);
 }
 
 int

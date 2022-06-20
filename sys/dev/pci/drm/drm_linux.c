@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.92 2022/03/01 11:50:37 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.93 2022/06/20 01:39:44 visa Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -2261,12 +2261,6 @@ dmabuf_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 }
 
 int
-dmabuf_poll(struct file *fp, int events, struct proc *p)
-{
-	return (0);
-}
-
-int
 dmabuf_kqfilter(struct file *fp, struct knote *kn)
 {
 	return (EINVAL);
@@ -2326,7 +2320,6 @@ const struct fileops dmabufops = {
 	.fo_read	= dmabuf_read,
 	.fo_write	= dmabuf_write,
 	.fo_ioctl	= dmabuf_ioctl,
-	.fo_poll	= dmabuf_poll,
 	.fo_kqfilter	= dmabuf_kqfilter,
 	.fo_stat	= dmabuf_stat,
 	.fo_close	= dmabuf_close,
@@ -2849,12 +2842,6 @@ syncfile_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 }
 
 int
-syncfile_poll(struct file *fp, int events, struct proc *p)
-{
-	return 0;
-}
-
-int
 syncfile_kqfilter(struct file *fp, struct knote *kn)
 {
 	return EINVAL;
@@ -2908,7 +2895,6 @@ const struct fileops syncfileops = {
 	.fo_read	= syncfile_read,
 	.fo_write	= syncfile_write,
 	.fo_ioctl	= syncfile_ioctl,
-	.fo_poll	= syncfile_poll,
 	.fo_kqfilter	= syncfile_kqfilter,
 	.fo_stat	= syncfile_stat,
 	.fo_close	= syncfile_close,

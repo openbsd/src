@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventvar.h,v 1.14 2022/03/16 14:38:43 visa Exp $	*/
+/*	$OpenBSD: eventvar.h,v 1.15 2022/06/20 01:39:44 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -65,7 +65,6 @@ struct kqueue {
 	struct		task kq_task;		/* deferring of activation */
 
 	int		kq_state;		/* [q] */
-#define KQ_SEL		0x01
 #define KQ_SLEEP	0x02
 #define KQ_DYING	0x04
 };

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.102 2021/07/17 20:46:02 kn Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.103 2022/06/20 01:39:44 visa Exp $	*/
 
 /*
  * Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
@@ -562,9 +562,8 @@ kqueuetrans(struct kinfo_file *kf)
 
 	printf("kqueue ");
 	hide((void *)(uintptr_t)kf->f_data);
-	printf(" %d state: %s%s\n",
+	printf(" %d state: %s\n",
 	    kf->kq_count,
-	    (kf->kq_state & KQ_SEL) ? "S" : "",
 	    (kf->kq_state & KQ_SLEEP) ? "W" : "");
 	return;
 }

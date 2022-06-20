@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.139 2022/05/30 14:06:16 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.140 2022/06/20 01:39:44 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -40,7 +40,6 @@
 #include <sys/syscallargs.h>
 #include <sys/event.h>
 #include <sys/lock.h>
-#include <sys/poll.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -61,7 +60,6 @@ struct pipe_pair {
 int	pipe_read(struct file *, struct uio *, int);
 int	pipe_write(struct file *, struct uio *, int);
 int	pipe_close(struct file *, struct proc *);
-int	pipe_poll(struct file *, int events, struct proc *);
 int	pipe_kqfilter(struct file *fp, struct knote *kn);
 int	pipe_ioctl(struct file *, u_long, caddr_t, struct proc *);
 int	pipe_stat(struct file *fp, struct stat *ub, struct proc *p);
@@ -70,7 +68,6 @@ static const struct fileops pipeops = {
 	.fo_read	= pipe_read,
 	.fo_write	= pipe_write,
 	.fo_ioctl	= pipe_ioctl,
-	.fo_poll	= pipe_poll,
 	.fo_kqfilter	= pipe_kqfilter,
 	.fo_stat	= pipe_stat,
 	.fo_close	= pipe_close
@@ -716,46 +713,6 @@ pipe_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	}
 
 	return (error);
-}
-
-int
-pipe_poll(struct file *fp, int events, struct proc *p)
-{
-	struct pipe *rpipe = fp->f_data, *wpipe;
-	struct rwlock *lock = rpipe->pipe_lock;
-	int revents = 0;
-
-	rw_enter_write(lock);
-	wpipe = pipe_peer(rpipe);
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (rpipe->pipe_buffer.cnt > 0 ||
-		    (rpipe->pipe_state & PIPE_EOF))
-			revents |= events & (POLLIN | POLLRDNORM);
-	}
-
-	/* NOTE: POLLHUP and POLLOUT/POLLWRNORM are mutually exclusive */
-	if ((rpipe->pipe_state & PIPE_EOF) || wpipe == NULL)
-		revents |= POLLHUP;
-	else if (events & (POLLOUT | POLLWRNORM)) {
-		if (wpipe->pipe_buffer.size - wpipe->pipe_buffer.cnt >= PIPE_BUF)
-			revents |= events & (POLLOUT | POLLWRNORM);
-	}
-
-	if (revents == 0) {
-		if (events & (POLLIN | POLLRDNORM)) {
-			selrecord(p, &rpipe->pipe_sel);
-			rpipe->pipe_state |= PIPE_SEL;
-		}
-		if (events & (POLLOUT | POLLWRNORM)) {
-			selrecord(p, &wpipe->pipe_sel);
-			wpipe->pipe_state |= PIPE_SEL;
-		}
-	}
-
-	rw_exit_write(lock);
-
-	return (revents);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.65 2022/01/20 03:43:31 jsg Exp $	*/
+/*	$OpenBSD: file.h,v 1.66 2022/06/20 01:39:44 visa Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -66,7 +66,6 @@ struct	fileops {
 	int	(*fo_read)(struct file *, struct uio *, int);
 	int	(*fo_write)(struct file *, struct uio *, int);
 	int	(*fo_ioctl)(struct file *, u_long, caddr_t, struct proc *);
-	int	(*fo_poll)(struct file *, int, struct proc *);
 	int	(*fo_kqfilter)(struct file *, struct knote *);
 	int	(*fo_stat)(struct file *, struct stat *, struct proc *);
 	int	(*fo_close)(struct file *, struct proc *);

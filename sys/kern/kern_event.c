@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.189 2022/06/12 10:34:36 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.190 2022/06/20 01:39:44 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -49,7 +49,6 @@
 #include <sys/stat.h>
 #include <sys/uio.h>
 #include <sys/mount.h>
-#include <sys/poll.h>
 #include <sys/syscallargs.h>
 #include <sys/time.h>
 #include <sys/timeout.h>
@@ -79,7 +78,6 @@ int	kqueue_read(struct file *, struct uio *, int);
 int	kqueue_write(struct file *, struct uio *, int);
 int	kqueue_ioctl(struct file *fp, u_long com, caddr_t data,
 		    struct proc *p);
-int	kqueue_poll(struct file *fp, int events, struct proc *p);
 int	kqueue_kqfilter(struct file *fp, struct knote *kn);
 int	kqueue_stat(struct file *fp, struct stat *st, struct proc *p);
 int	kqueue_close(struct file *fp, struct proc *p);
@@ -107,7 +105,6 @@ const struct fileops kqueueops = {
 	.fo_read	= kqueue_read,
 	.fo_write	= kqueue_write,
 	.fo_ioctl	= kqueue_ioctl,
-	.fo_poll	= kqueue_poll,
 	.fo_kqfilter	= kqueue_kqfilter,
 	.fo_stat	= kqueue_stat,
 	.fo_close	= kqueue_close
@@ -1529,25 +1526,6 @@ int
 kqueue_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 {
 	return (ENOTTY);
-}
-
-int
-kqueue_poll(struct file *fp, int events, struct proc *p)
-{
-	struct kqueue *kq = (struct kqueue *)fp->f_data;
-	int revents = 0;
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		mtx_enter(&kq->kq_lock);
-		if (kq->kq_count) {
-			revents |= events & (POLLIN | POLLRDNORM);
-		} else {
-			selrecord(p, &kq->kq_sel);
-			kq->kq_state |= KQ_SEL;
-		}
-		mtx_leave(&kq->kq_lock);
-	}
-	return (revents);
 }
 
 int

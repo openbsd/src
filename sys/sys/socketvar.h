@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.102 2022/06/06 14:45:41 claudio Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.103 2022/06/20 01:39:44 visa Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -270,7 +270,6 @@ struct knote;
 int	soo_read(struct file *, struct uio *, int);
 int	soo_write(struct file *, struct uio *, int);
 int	soo_ioctl(struct file *, u_long, caddr_t, struct proc *);
-int	soo_poll(struct file *, int, struct proc *);
 int	soo_kqfilter(struct file *, struct knote *);
 int 	soo_close(struct file *, struct proc *);
 int	soo_stat(struct file *, struct stat *, struct proc *);
