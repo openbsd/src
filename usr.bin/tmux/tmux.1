@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.891 2022/06/14 07:29:00 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.892 2022/06/20 07:59:37 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 14 2022 $
+.Dd $Mdocdate: June 20 2022 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -6529,6 +6529,8 @@ The client is now attached to the session with ID
 .Ar session-id ,
 which is named
 .Ar name .
+.It Ic %config-error Ar error
+An error has happened in a configuration file.
 .It Ic %continue Ar pane-id
 The pane has been continued after being paused (if the
 .Ar pause-after

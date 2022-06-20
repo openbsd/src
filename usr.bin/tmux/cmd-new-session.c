@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-new-session.c,v 1.144 2021/08/27 17:25:55 nicm Exp $ */
+/* $OpenBSD: cmd-new-session.c,v 1.145 2022/06/20 07:59:37 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -335,7 +335,7 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 
 	/*
 	 * If there are still configuration file errors to display, put the new
-	 * session's current window into more mode and display them now.
+	 * session's current window into view mode and display them now.
 	 */
 	if (cfg_finished)
 		cfg_show_causes(s);
