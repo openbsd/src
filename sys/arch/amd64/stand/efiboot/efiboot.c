@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.38 2021/06/07 00:04:20 krw Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.39 2022/06/20 02:22:05 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -424,8 +424,9 @@ efi_memprobe_internal(void)
 /***********************************************************************
  * Console
  ***********************************************************************/
-static SIMPLE_TEXT_OUTPUT_INTERFACE     *conout = NULL;
-static SIMPLE_INPUT_INTERFACE           *conin;
+static SIMPLE_TEXT_OUTPUT_INTERFACE	*conout = NULL;
+static SIMPLE_INPUT_INTERFACE		*conin;
+static EFI_GRAPHICS_OUTPUT		*gop = NULL;
 static EFI_GUID				 con_guid
 					    = EFI_CONSOLE_CONTROL_PROTOCOL_GUID;
 static EFI_GUID				 gop_guid
@@ -444,6 +445,28 @@ efi_video_init(void)
 	int				 i, mode80x25, mode100x31;
 	UINTN				 cols, rows;
 	EFI_STATUS			 status;
+	EFI_HANDLE			*handles;
+	UINTN				 nhandles;
+	EFI_GRAPHICS_OUTPUT		*first_gop = NULL;
+	EFI_DEVICE_PATH			*devp_test = NULL;
+
+	status = BS->LocateHandleBuffer(ByProtocol, &gop_guid, NULL, &nhandles,
+		&handles);
+	if (!EFI_ERROR(status)) {
+		for (i = 0; i < nhandles; i++) {
+			status = BS->HandleProtocol(handles[i], &gop_guid,
+			    (void **)&gop);
+			if (first_gop == NULL)
+				first_gop = gop;
+			status = BS->HandleProtocol(handles[i], &devp_guid,
+			    (void **)&devp_test);
+			if (status == EFI_SUCCESS)
+				break;
+		}
+		if (status != EFI_SUCCESS)
+			gop = first_gop;
+		BS->FreePool(handles);
+	}
 
 	conout = ST->ConOut;
 	status = BS->LocateProtocol(&con_guid, NULL, (void **)&conctrl);
@@ -808,7 +831,6 @@ efi_com_putc(dev_t dev, int c)
  */
 static EFI_GUID			 acpi_guid = ACPI_20_TABLE_GUID;
 static EFI_GUID			 smbios_guid = SMBIOS_TABLE_GUID;
-static EFI_GRAPHICS_OUTPUT	*gop;
 static int			 gopmode = -1;
 
 #define	efi_guidcmp(_a, _b)	memcmp((_a), (_b), sizeof(EFI_GUID))
@@ -853,8 +875,7 @@ efi_makebootargs(void)
 	/*
 	 * Frame buffer
 	 */
-	status = BS->LocateProtocol(&gop_guid, NULL, (void **)&gop);
-	if (!EFI_ERROR(status)) {
+	if (gop != NULL) {
 		if (gopmode < 0) {
 			for (i = 0; i < gop->Mode->MaxMode; i++) {
 				status = gop->QueryMode(gop, i, &sz, &gopi);
@@ -1030,10 +1051,10 @@ Xgop_efi(void)
 	EFI_GRAPHICS_OUTPUT_MODE_INFORMATION
 			*gopi;
 
-	status = BS->LocateProtocol(&gop_guid, NULL, (void **)&gop);
-	if (EFI_ERROR(status))
+	if (gop == NULL) {
+		printf("No GOP found\n");
 		return (0);
-
+	}
 	if (cmd.argc >= 2) {
 		mode = strtol(cmd.argv[1], NULL, 10);
 		if (0 <= mode && mode < gop->Mode->MaxMode) {
