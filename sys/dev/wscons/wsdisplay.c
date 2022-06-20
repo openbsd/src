@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.144 2022/04/06 18:59:30 naddy Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.145 2022/06/20 16:28:42 gnezdo Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1233,7 +1233,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 		error = 0;
 		sc->sc_burnflags = d->flags;
 		/* disable timeout if necessary */
-		if ((sc->sc_burnflags & (WSDISPLAY_BURN_OUTPUT |
+		if (d->off==0 || (sc->sc_burnflags & (WSDISPLAY_BURN_OUTPUT |
 		    WSDISPLAY_BURN_KBD | WSDISPLAY_BURN_MOUSE)) == 0) {
 			if (sc->sc_burnout)
 				timeout_del(&sc->sc_burner);
@@ -1252,14 +1252,12 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 					wsdisplay_burn(sc, sc->sc_burnflags);
 			}
 		}
-		if (d->off) {
-			sc->sc_burnoutintvl = d->off;
-			if (!sc->sc_burnman) {
-				sc->sc_burnout = sc->sc_burnoutintvl;
-				/* reinit timeout if changed */
-				if ((active->scr_flags & SCR_GRAPHICS) == 0)
-					wsdisplay_burn(sc, sc->sc_burnflags);
-			}
+		sc->sc_burnoutintvl = d->off;
+		if (!sc->sc_burnman) {
+			sc->sc_burnout = sc->sc_burnoutintvl;
+			/* reinit timeout if changed */
+			if ((active->scr_flags & SCR_GRAPHICS) == 0)
+				wsdisplay_burn(sc, sc->sc_burnflags);
 		}
 		return (error);
 	    }
