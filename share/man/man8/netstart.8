@@ -1,4 +1,4 @@
-.\"	$OpenBSD: netstart.8,v 1.25 2020/11/29 20:14:06 deraadt Exp $
+.\"	$OpenBSD: netstart.8,v 1.26 2022/06/21 11:55:55 sthen Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\"
 .\"     @(#)rc.8	8.2 (Berkeley) 12/11/93
 .\"
-.Dd $Mdocdate: November 29 2020 $
+.Dd $Mdocdate: June 21 2022 $
 .Dt NETSTART 8
 .Os
 .Sh NAME
@@ -43,8 +43,7 @@ it performs network initialization.
 .Pp
 The
 .Nm
-script can also be used to start newly created bridges or interfaces,
-or reset existing interfaces to their default state.
+script can also be used to start newly created bridges or interfaces.
 The behaviour of this script is (or can be) controlled to some
 extent by variables defined in
 .Xr rc.conf 8 ,
@@ -91,8 +90,9 @@ and
 After the system is completely initialized, it is possible to start a
 newly created interface or
 .Xr bridge 4 ,
-or reset an existing interface to its default state, by invoking
-the following, where
+or apply the configuration from a
+.Xr hostname.if 5
+file to an existing interface, by invoking the following, where
 .Ar foo0
 is the interface or bridge name:
 .Pp
