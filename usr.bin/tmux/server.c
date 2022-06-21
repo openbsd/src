@@ -1,4 +1,4 @@
-/* $OpenBSD: server.c,v 1.201 2022/05/30 12:48:57 nicm Exp $ */
+/* $OpenBSD: server.c,v 1.202 2022/06/21 09:30:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -54,6 +54,8 @@ struct cmd_find_state	 marked_pane;
 
 static u_int		 message_next;
 struct message_list	 message_log;
+
+time_t			 current_time;
 
 static int	server_loop(void);
 static void	server_send_exit(void);
@@ -256,6 +258,8 @@ server_loop(void)
 {
 	struct client	*c;
 	u_int		 items;
+
+	current_time = time (NULL);
 
 	do {
 		items = cmdq_next(NULL);

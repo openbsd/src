@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.304 2022/05/30 13:07:06 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.305 2022/06/21 09:30:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3387,12 +3387,12 @@ format_quote_style(const char *s)
 }
 
 /* Make a prettier time. */
-static char *
-format_pretty_time(time_t t)
+char *
+format_pretty_time(time_t t, int seconds)
 {
 	struct tm       now_tm, tm;
 	time_t		now, age;
-	char		s[6];
+	char		s[9];
 
 	time(&now);
 	if (now < t)
@@ -3404,7 +3404,10 @@ format_pretty_time(time_t t)
 
 	/* Last 24 hours. */
 	if (age < 24 * 3600) {
-		strftime(s, sizeof s, "%H:%M", &tm);
+		if (seconds)
+			strftime(s, sizeof s, "%H:%M:%S", &tm);
+		else
+			strftime(s, sizeof s, "%H:%M", &tm);
 		return (xstrdup(s));
 	}
 
@@ -3509,7 +3512,7 @@ found:
 		if (t == 0)
 			return (NULL);
 		if (modifiers & FORMAT_PRETTY)
-			found = format_pretty_time(t);
+			found = format_pretty_time(t, 0);
 		else {
 			if (time_format != NULL) {
 				localtime_r(&t, &tm);

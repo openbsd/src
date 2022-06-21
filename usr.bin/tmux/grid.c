@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.123 2022/03/30 07:05:26 nicm Exp $ */
+/* $OpenBSD: grid.c,v 1.124 2022/06/21 09:30:01 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -399,6 +399,7 @@ grid_scroll_history(struct grid *gd, u_int bg)
 
 	gd->hscrolled++;
 	grid_compact_line(&gd->linedata[gd->hsize]);
+	gd->linedata[gd->hsize].time = current_time;
 	gd->hsize++;
 }
 
@@ -438,6 +439,7 @@ grid_scroll_history_region(struct grid *gd, u_int upper, u_int lower, u_int bg)
 
 	/* Move the line into the history. */
 	memcpy(gl_history, gl_upper, sizeof *gl_history);
+	gl_history->time = current_time;
 
 	/* Then move the region up and clear the bottom line. */
 	memmove(gl_upper, gl_upper + 1, (lower - upper) * sizeof *gl_upper);
