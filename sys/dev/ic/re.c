@@ -1,4 +1,4 @@
-/*	$OpenBSD: re.c,v 1.213 2022/06/05 02:49:30 dlg Exp $	*/
+/*	$OpenBSD: re.c,v 1.214 2022/06/21 17:33:21 bket Exp $	*/
 /*	$FreeBSD: if_re.c,v 1.31 2004/09/04 07:54:05 ru Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
@@ -1611,8 +1611,7 @@ re_encap(struct rl_softc *sc, unsigned int idx, struct mbuf *m)
 	 */
 
 	if ((sc->rl_flags & RL_FLAG_JUMBOV2) &&
-	    (m->m_pkthdr.len > RL_MTU ||
-	     m->m_pkthdr.len < (ETHER_MIN_LEN - ETHER_CRC_LEN)) &&
+	    m->m_pkthdr.len > RL_MTU &&
 	    (m->m_pkthdr.csum_flags &
 	    (M_IPV4_CSUM_OUT|M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) != 0) {
 		struct mbuf mh, *mp;
