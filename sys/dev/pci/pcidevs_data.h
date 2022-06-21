@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1996 2022/06/06 03:58:19 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1997 2022/06/21 04:08:53 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -19316,6 +19316,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "Core 12G DTT",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ADL_XHCI,
+	    "Core 12G xHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ADL_P_HB_1,
+	    "Core 12G Host",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ADL_P_GT2_1,
 	    "Graphics",
 	},
@@ -19329,6 +19337,22 @@ static const struct pci_known_product pci_known_products[] = {
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ADL_S_PCIE_2,
+	    "Core 12G PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ADL_TBT_PCIE1,
+	    "Core 12G PCIE",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ADL_TBT_DMA0,
+	    "Core 12G TBT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ADL_TBT_DMA1,
+	    "Core 12G TBT",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ADL_TBT_PCIE0,
 	    "Core 12G PCIE",
 	},
 	{
@@ -19818,6 +19842,66 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EP80579_LAN_6,
 	    "EP80579 LAN",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_ESPI,
+	    "600 Series eSPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_SMB,
+	    "600 Series SMBus",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_SPI,
+	    "600 Series SPI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_I2C_0,
+	    "600 Series I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_I2C_1,
+	    "600 Series I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_HDA,
+	    "600 Series HD Audio",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_I2C_2,
+	    "600 Series I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_I2C_3,
+	    "600 Series I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_HECI,
+	    "600 Series HECI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_I2C_4,
+	    "600 Series I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_I2C_5,
+	    "600 Series I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_I2C_6,
+	    "600 Series I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_I2C_7,
+	    "600 Series I2C",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_XHCI,
+	    "600 Series xHCI",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_600SERIES_LP_SRAM,
+	    "600 Series SRAM",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_WL_22500_11,
