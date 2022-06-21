@@ -513,9 +513,6 @@ static inline int rq_prio(const struct i915_request *rq)
 
 static int guc_dequeue_one_context(struct intel_guc *guc)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	struct i915_sched_engine * const sched_engine = guc->sched_engine;
 	struct i915_request *last = NULL;
 	bool submit = false;
@@ -571,7 +568,6 @@ deadlk:
 	sched_engine->tasklet.callback = NULL;
 	tasklet_disable_nosync(&sched_engine->tasklet);
 	return false;
-#endif
 }
 
 static void guc_submission_tasklet(struct tasklet_struct *t)
@@ -670,8 +666,6 @@ submission_disabled(struct intel_guc *guc)
 
 static void disable_submission(struct intel_guc *guc)
 {
-	STUB();
-#ifdef notyet
 	struct i915_sched_engine * const sched_engine = guc->sched_engine;
 
 	if (__tasklet_is_enabled(&sched_engine->tasklet)) {
@@ -679,13 +673,10 @@ static void disable_submission(struct intel_guc *guc)
 		__tasklet_disable_sync_once(&sched_engine->tasklet);
 		sched_engine->tasklet.callback = NULL;
 	}
-#endif
 }
 
 static void enable_submission(struct intel_guc *guc)
 {
-	STUB();
-#ifdef notyet
 	struct i915_sched_engine * const sched_engine = guc->sched_engine;
 	unsigned long flags;
 
@@ -700,7 +691,6 @@ static void enable_submission(struct intel_guc *guc)
 		tasklet_hi_schedule(&sched_engine->tasklet);
 	}
 	spin_unlock_irqrestore(&guc->sched_engine->lock, flags);
-#endif
 }
 
 static void guc_flush_submissions(struct intel_guc *guc)
@@ -1020,9 +1010,6 @@ void intel_guc_submission_reset_finish(struct intel_guc *guc)
  */
 int intel_guc_submission_init(struct intel_guc *guc)
 {
-	STUB();
-	return -ENOSYS;
-#ifdef notyet
 	int ret;
 
 	if (guc->lrc_desc_pool)
@@ -1044,7 +1031,6 @@ int intel_guc_submission_init(struct intel_guc *guc)
 	ida_init(&guc->guc_ids);
 
 	return 0;
-#endif
 }
 
 void intel_guc_submission_fini(struct intel_guc *guc)
@@ -2398,11 +2384,7 @@ static int guc_resume(struct intel_engine_cs *engine)
 
 static bool guc_sched_engine_disabled(struct i915_sched_engine *sched_engine)
 {
-	STUB();
-	return true;
-#ifdef notyet
 	return !sched_engine->tasklet.callback;
-#endif
 }
 
 static void guc_set_default_submission(struct intel_engine_cs *engine)
