@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.66 2022/06/19 10:30:10 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.67 2022/06/22 14:49:02 tb Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -66,8 +66,10 @@ log_in6addr(const struct in6_addr *addr)
 
 #ifdef __KAME__
 	/* XXX thanks, KAME, for this ugliness... adopted from route/show.c */
-	if (IN6_IS_ADDR_LINKLOCAL(&sa_in6.sin6_addr) ||
-	    IN6_IS_ADDR_MC_LINKLOCAL(&sa_in6.sin6_addr)) {
+	if ((IN6_IS_ADDR_LINKLOCAL(&sa_in6.sin6_addr) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(&sa_in6.sin6_addr) ||
+	    IN6_IS_ADDR_MC_INTFACELOCAL(&sa_in6.sin6_addr)) &&
+	    sa_in6.sin6_scope_id == 0) {
 		uint16_t tmp16;
 		memcpy(&tmp16, &sa_in6.sin6_addr.s6_addr[2], sizeof(tmp16));
 		sa_in6.sin6_scope_id = ntohs(tmp16);
