@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.262 2022/06/22 14:48:51 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.263 2022/06/22 14:56:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -2491,8 +2491,9 @@ kroute_match(struct ktable *kt, struct bgpd_addr *key, int matchall)
 	for (i = 32; i >= 0; i--) {
 		applymask(&masked, key, i);
 		if ((kr = kroute_find(kt, &masked, i, RTP_ANY)) != NULL)
-			if (matchall || bgpd_filternexthop(&kr->r, NULL) == 0)
-			    return (kr);
+			if (matchall ||
+			    bgpd_filternexthop(kr_tofull(&kr->r)) == 0)
+				return (kr);
 	}
 
 	return (NULL);
@@ -2508,7 +2509,8 @@ kroute6_match(struct ktable *kt, struct bgpd_addr *key, int matchall)
 	for (i = 128; i >= 0; i--) {
 		applymask(&masked, key, i);
 		if ((kr6 = kroute6_find(kt, &masked, i, RTP_ANY)) != NULL)
-			if (matchall || bgpd_filternexthop(NULL, &kr6->r) == 0)
+			if (matchall ||
+			    bgpd_filternexthop(kr6_tofull(&kr6->r)) == 0)
 				return (kr6);
 	}
 

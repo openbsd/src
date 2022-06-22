@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.246 2022/06/15 10:10:03 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.247 2022/06/22 14:56:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1114,25 +1114,19 @@ send_network(int type, struct network_config *net, struct filter_set_head *h)
 }
 
 int
-bgpd_filternexthop(struct kroute *kr, struct kroute6 *kr6)
+bgpd_filternexthop(struct kroute_full *kf)
 {
 	/* kernel routes are never filtered */
-	if (kr && kr->flags & F_KERNEL && kr->prefixlen != 0)
-		return (0);
-	if (kr6 && kr6->flags & F_KERNEL && kr6->prefixlen != 0)
+	if (kf->flags & F_KERNEL && kf->prefixlen != 0)
 		return (0);
 
 	if (cflags & BGPD_FLAG_NEXTHOP_BGP) {
-		if (kr && kr->flags & F_BGPD)
-			return (0);
-		if (kr6 && kr6->flags & F_BGPD)
+		if (kf->flags & F_BGPD)
 			return (0);
 	}
 
 	if (cflags & BGPD_FLAG_NEXTHOP_DEFAULT) {
-		if (kr && kr->prefixlen == 0)
-			return (0);
-		if (kr6 && kr6->prefixlen == 0)
+		if (kf->prefixlen == 0)
 			return (0);
 	}
 
