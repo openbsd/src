@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmstest.c,v 1.4 2021/03/22 20:31:34 tb Exp $	*/
+/*	$OpenBSD: cmstest.c,v 1.5 2022/06/22 09:56:45 tb Exp $	*/
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -167,8 +167,8 @@ test_cms_encrypt_decrypt(void)
 	}
 
 	if ((len = BIO_get_mem_data(bio_mem, &p)) != strlen(cms_msg)) {
-		fprintf(stderr, "FAIL: CMS decrypt returned %li bytes, "
-		    "want %zi bytes\n", len, strlen(cms_msg));
+		fprintf(stderr, "FAIL: CMS decrypt returned %zu bytes, "
+		    "want %zu bytes\n", len, strlen(cms_msg));
 		fprintf(stderr, "Got CMS data:\n");
 		hexdump(p, len);
 		fprintf(stderr, "Want CMS data:\n");
@@ -268,8 +268,8 @@ test_cms_sign_verify(void)
 	}
 
 	if ((len = BIO_get_mem_data(bio_mem, &p)) != strlen(cms_msg)) {
-		fprintf(stderr, "FAIL: CMS verify returned %li bytes, "
-		    "want %zi bytes\n", len, strlen(cms_msg));
+		fprintf(stderr, "FAIL: CMS verify returned %zu bytes, "
+		    "want %zu bytes\n", len, strlen(cms_msg));
 		fprintf(stderr, "Got CMS data:\n");
 		hexdump(p, len);
 		fprintf(stderr, "Want CMS data:\n");
