@@ -1,4 +1,4 @@
-.\"	$OpenBSD: task_add.9,v 1.22 2020/06/08 00:29:51 dlg Exp $
+.\"	$OpenBSD: task_add.9,v 1.23 2022/06/22 14:10:49 visa Exp $
 .\"
 .\" Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 8 2020 $
+.Dd $Mdocdate: June 22 2022 $
 .Dt TASK_ADD 9
 .Os
 .Sh NAME
@@ -107,6 +107,13 @@ either removes
 from the list of pending tasks on the
 .Fa tq
 taskq, or waits until any running task has completed.
+.Pp
+The caller of
+.Fn taskq_barrier
+or
+.Fn taskq_del_barrier
+must not hold locks that can block the taskq.
+Otherwise, the system will deadlock.
 .Pp
 It is the responsibility of the caller to provide the
 .Fn task_set ,
