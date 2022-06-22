@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1object.c,v 1.7 2022/05/13 16:39:58 tb Exp $ */
+/* $OpenBSD: asn1object.c,v 1.8 2022/06/22 09:54:19 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -393,7 +393,7 @@ asn1_object_txt_test(void)
 	ret = i2t_ASN1_OBJECT(small_buf, sizeof(small_buf), aobj);
 	if (ret < 0 || (unsigned long)ret != strlen(obj_txt)) {
 		fprintf(stderr, "FAIL: i2t_ASN1_OBJECT() with small buffer "
-		    "returned %d, want %lu\n", ret, strlen(obj_txt));
+		    "returned %d, want %zu\n", ret, strlen(obj_txt));
 		goto failed;
 	}
 
@@ -421,7 +421,7 @@ asn1_object_txt_test(void)
 	ret = i2a_ASN1_OBJECT(bio, aobj);
 	if (ret < 0 || (unsigned long)ret != strlen(obj_txt)) {
 		fprintf(stderr, "FAIL: i2a_ASN1_OBJECT() returned %d, "
-		    "want %lu\n", ret, strlen(obj_txt));
+		    "want %zu\n", ret, strlen(obj_txt));
 		goto failed;
 	}
 	data_len = BIO_get_mem_data(bio, &data);
