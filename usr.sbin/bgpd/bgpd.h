@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.432 2022/06/19 10:30:09 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.433 2022/06/22 14:48:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -769,10 +769,7 @@ struct ctl_show_interface {
 struct ctl_show_nexthop {
 	struct bgpd_addr		addr;
 	struct ctl_show_interface	iface;
-	union {
-		struct kroute		kr4;
-		struct kroute6		kr6;
-	} kr;
+	struct kroute_full		kr;
 	uint8_t				valid;
 	uint8_t				krvalid;
 };

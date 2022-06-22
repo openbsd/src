@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.261 2022/06/22 12:28:33 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.262 2022/06/22 14:48:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -1149,16 +1149,14 @@ kr_show_route(struct imsg *imsg)
 					kr = h->kroute;
 					snh.valid = kroute_validate(&kr->r);
 					snh.krvalid = 1;
-					memcpy(&snh.kr.kr4, &kr->r,
-					    sizeof(snh.kr.kr4));
+					snh.kr = *kr_tofull(&kr->r);
 					ifindex = kr->r.ifindex;
 					break;
 				case AID_INET6:
 					kr6 = h->kroute;
 					snh.valid = kroute6_validate(&kr6->r);
 					snh.krvalid = 1;
-					memcpy(&snh.kr.kr6, &kr6->r,
-					    sizeof(snh.kr.kr6));
+					snh.kr = *kr6_tofull(&kr6->r);
 					ifindex = kr6->r.ifindex;
 					break;
 				}
