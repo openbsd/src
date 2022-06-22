@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.263 2022/06/22 14:56:12 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.264 2022/06/22 15:24:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -53,6 +53,28 @@ struct {
 	int			fd;
 	uint8_t			fib_prio;
 } kr_state;
+
+struct kroute {
+	struct in_addr	prefix;
+	struct in_addr	nexthop;
+	uint32_t	mplslabel;
+	uint16_t	flags;
+	uint16_t	labelid;
+	u_short		ifindex;
+	uint8_t		prefixlen;
+	uint8_t		priority;
+};
+
+struct kroute6 {
+	struct in6_addr	prefix;
+	struct in6_addr	nexthop;
+	uint32_t	mplslabel;
+	uint16_t	flags;
+	uint16_t	labelid;
+	u_short		ifindex;
+	uint8_t		prefixlen;
+	uint8_t		priority;
+};
 
 struct kroute_node {
 	RB_ENTRY(kroute_node)	 entry;
