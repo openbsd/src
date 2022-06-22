@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_shift.c,v 1.13 2014/10/28 07:35:58 jsg Exp $ */
+/* $OpenBSD: bn_shift.c,v 1.14 2022/06/22 09:03:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,6 +58,8 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include <openssl/err.h>
 
 #include "bn_lcl.h"
 
@@ -138,6 +140,11 @@ BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
 	BN_ULONG *t, *f;
 	BN_ULONG l;
 
+	if (n < 0) {
+		BNerror(BN_R_INVALID_LENGTH);
+		return 0;
+	}
+
 	bn_check_top(r);
 	bn_check_top(a);
 
@@ -174,6 +181,11 @@ BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
 	int i, j, nw, lb, rb;
 	BN_ULONG *t, *f;
 	BN_ULONG l, tmp;
+
+	if (n < 0) {
+		BNerror(BN_R_INVALID_LENGTH);
+		return 0;
+	}
 
 	bn_check_top(r);
 	bn_check_top(a);
