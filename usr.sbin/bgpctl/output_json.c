@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.15 2022/06/15 10:10:50 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.16 2022/06/22 14:49:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -414,9 +414,6 @@ json_do_interface(struct ctl_show_interface *iface)
 static void
 json_nexthop(struct ctl_show_nexthop *nh)
 {
-	struct kroute *k;
-	struct kroute6 *k6;
-
 	json_do_array("nexthops");
 
 	json_do_object("nexthop");
@@ -427,27 +424,11 @@ json_nexthop(struct ctl_show_nexthop *nh)
 	if (!nh->krvalid)
 		goto done;
 
-	switch (nh->addr.aid) {
-	case AID_INET:
-		k = &nh->kr.kr4;
-		json_do_printf("prefix", "%s/%u", inet_ntoa(k->prefix),
-		    k->prefixlen);
-		json_do_uint("priority", k->priority);
-		json_do_bool("connected", k->flags & F_CONNECTED);
-		json_do_printf("nexthop", "%s", inet_ntoa(k->nexthop));
-		break;
-	case AID_INET6:
-		k6 = &nh->kr.kr6;
-		json_do_printf("prefix", "%s/%u", log_in6addr(&k6->prefix),
-		    k6->prefixlen);
-		json_do_uint("priority", k6->priority);
-		json_do_bool("connected", k6->flags & F_CONNECTED);
-		json_do_printf("nexthop", "%s", log_in6addr(&k6->nexthop));
-		break;
-	default:
-		warnx("nexthop: unknown address family");
-		goto done;
-	}
+	json_do_printf("prefix", "%s/%u", log_addr(&nh->kr.prefix),
+	    nh->kr.prefixlen);
+	json_do_uint("priority", nh->kr.priority);
+	json_do_bool("connected", nh->kr.flags & F_CONNECTED);
+	json_do_printf("nexthop", "%s", log_addr(&nh->kr.nexthop));
 	if (nh->iface.ifname[0])
 		json_do_interface(&nh->iface);
 done:

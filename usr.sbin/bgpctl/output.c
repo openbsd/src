@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.21 2022/06/15 10:10:50 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.22 2022/06/22 14:49:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -480,8 +480,6 @@ show_fib_table(struct ktable *kt)
 static void
 show_nexthop(struct ctl_show_nexthop *nh)
 {
-	struct kroute	*k;
-	struct kroute6	*k6;
 	char		*s;
 
 	printf("%s %-15s ", nh->valid ? "*" : " ", log_addr(&nh->addr));
@@ -489,33 +487,15 @@ show_nexthop(struct ctl_show_nexthop *nh)
 		printf("\n");
 		return;
 	}
-	switch (nh->addr.aid) {
-	case AID_INET:
-		k = &nh->kr.kr4;
-		if (asprintf(&s, "%s/%u", inet_ntoa(k->prefix),
-		    k->prefixlen) == -1)
-			err(1, NULL);
-		printf("%-20s", s);
-		free(s);
-		printf("%3i %-15s ", k->priority,
-		    k->flags & F_CONNECTED ? "connected" :
-		    inet_ntoa(k->nexthop));
-		break;
-	case AID_INET6:
-		k6 = &nh->kr.kr6;
-		if (asprintf(&s, "%s/%u", log_in6addr(&k6->prefix),
-		    k6->prefixlen) == -1)
-			err(1, NULL);
-		printf("%-20s", s);
-		free(s);
-		printf("%3i %-15s ", k6->priority,
-		    k6->flags & F_CONNECTED ? "connected" :
-		    log_in6addr(&k6->nexthop));
-		break;
-	default:
-		printf("unknown address family\n");
-		return;
-	}
+	if (asprintf(&s, "%s/%u", log_addr(&nh->kr.prefix),
+	    nh->kr.prefixlen) == -1)
+		err(1, NULL);
+	printf("%-20s", s);
+	free(s);
+	printf("%3i %-15s ", nh->kr.priority,
+	    nh->kr.flags & F_CONNECTED ? "connected" :
+	    log_addr(&nh->kr.nexthop));
+
 	if (nh->iface.ifname[0]) {
 		printf("%s (%s, %s)", nh->iface.ifname,
 		    nh->iface.is_up ? "UP" : "DOWN",
