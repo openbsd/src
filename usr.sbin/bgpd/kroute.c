@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.265 2022/06/23 07:43:37 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.266 2022/06/23 09:54:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -1602,8 +1602,17 @@ kr6_tofull(struct kroute6 *kr6)
 
 	kf.prefix.aid = AID_INET6;
 	memcpy(&kf.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
+	/* only set scope_id for link-local addresses because IPv6 */
+	if (IN6_IS_ADDR_LINKLOCAL(&kr6->prefix) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(&kr6->prefix) ||
+	    IN6_IS_ADDR_MC_INTFACELOCAL(&kr6->prefix))
+		kf.prefix.scope_id = kr6->ifindex;
 	kf.nexthop.aid = AID_INET6;
 	memcpy(&kf.nexthop.v6, &kr6->nexthop, sizeof(struct in6_addr));
+	if (IN6_IS_ADDR_LINKLOCAL(&kr6->nexthop) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(&kr6->nexthop) ||
+	    IN6_IS_ADDR_MC_INTFACELOCAL(&kr6->nexthop))
+		kf.nexthop.scope_id = kr6->ifindex;
 	strlcpy(kf.label, rtlabel_id2name(kr6->labelid), sizeof(kf.label));
 	kf.flags = kr6->flags;
 	kf.ifindex = kr6->ifindex;
