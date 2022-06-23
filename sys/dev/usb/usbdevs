@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.746 2022/05/10 08:19:51 stsp Exp $
+$OpenBSD: usbdevs,v 1.747 2022/06/23 00:31:37 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -2412,8 +2412,15 @@ product INTEL2 RMH_2		0x0024	Rate Matching Hub
 product INTEL2 BLUETOOTH3	0x0025	Bluetooth
 product INTEL2 BLUETOOTH5	0x0026	Bluetooth
 product INTEL2 BLUETOOTH4	0x0029	Bluetooth
+product INTEL2 BLUETOOTH6	0x0032	Bluetooth
+product INTEL2 BLUETOOTH7	0x0033	Bluetooth
+product INTEL2 BLUETOOTH8	0x0035	Bluetooth
+product INTEL2 BLUETOOTH9	0x07da	Bluetooth
+product INTEL2 BLUETOOTH10	0x07dc	Bluetooth
 product INTEL2 BLUETOOTH	0x0a2a	Bluetooth
 product INTEL2 BLUETOOTH2	0x0a2b	Bluetooth
+product INTEL2 BLUETOOTH11	0x0aa7	Bluetooth
+product INTEL2 BLUETOOTH12	0x0aaa	Bluetooth
 product INTEL2 RMH_3		0x8000	Rate Matching Hub
 product INTEL2 RMH_5		0x8001	Rate Matching Hub
 product INTEL2 RMH_7		0x8002	Rate Matching Hub
