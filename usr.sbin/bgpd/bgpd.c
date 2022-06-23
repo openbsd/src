@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.247 2022/06/22 14:56:11 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.248 2022/06/23 13:09:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -935,11 +935,11 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 			else
 				kr_show_route(&imsg);
 			break;
-		case IMSG_IFINFO:
+		case IMSG_SESSION_DEPENDON:
 			if (idx != PFD_PIPE_SESSION)
-				log_warnx("IFINFO request not from SE");
+				log_warnx("DEPENDON request not from SE");
 			else if (imsg.hdr.len != IMSG_HEADER_SIZE + IFNAMSIZ)
-				log_warnx("IFINFO request with wrong len");
+				log_warnx("DEPENDON request with wrong len");
 			else
 				kr_ifinfo(imsg.data);
 			break;

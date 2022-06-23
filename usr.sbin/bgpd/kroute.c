@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.267 2022/06/23 10:22:23 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.268 2022/06/23 13:09:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -106,6 +106,18 @@ struct kif_kr6 {
 
 LIST_HEAD(kif_kr_head, kif_kr);
 LIST_HEAD(kif_kr6_head, kif_kr6);
+
+struct kif {
+	char			 ifname[IFNAMSIZ];
+	uint64_t		 baudrate;
+	u_int			 rdomain;
+	int			 flags;
+	u_short			 ifindex;
+	uint8_t			 if_type;
+	uint8_t			 link_state;
+	uint8_t			 nh_reachable;	/* for nexthop verification */
+	uint8_t			 depend_state;	/* for session depend on */
+};
 
 struct kif_node {
 	RB_ENTRY(kif_node)	 entry;
@@ -1202,6 +1214,16 @@ kr_show_route(struct imsg *imsg)
 	send_imsg_session(IMSG_CTL_END, imsg->hdr.pid, NULL, 0);
 }
 
+static void
+kr_send_dependon(struct kif *kif)
+{
+	struct session_dependon sdon = { 0 };
+
+	strlcpy(sdon.ifname, kif->ifname, sizeof(sdon.ifname));
+	sdon.depend_state = kif->depend_state;
+	send_imsg_session(IMSG_SESSION_DEPENDON, 0, &sdon, sizeof(sdon));
+}
+	
 void
 kr_ifinfo(char *ifname)
 {
@@ -1209,8 +1231,7 @@ kr_ifinfo(char *ifname)
 
 	RB_FOREACH(kif, kif_tree, &kit)
 		if (!strcmp(ifname, kif->k.ifname)) {
-			send_imsg_session(IMSG_IFINFO, 0,
-			    &kif->k, sizeof(kif->k));
+			kr_send_dependon(&kif->k);
 			return;
 		}
 }
@@ -2736,7 +2757,7 @@ if_change(u_short ifindex, int flags, struct if_data *ifd)
 	kif->k.baudrate = ifd->ifi_baudrate;
 	kif->k.depend_state = kif_depend_state(&kif->k);
 
-	send_imsg_session(IMSG_IFINFO, 0, &kif->k, sizeof(kif->k));
+	kr_send_dependon(&kif->k);
 
 	if ((reachable = kif_validate(&kif->k)) == kif->k.nh_reachable)
 		return;		/* nothing changed wrt nexthop validity */

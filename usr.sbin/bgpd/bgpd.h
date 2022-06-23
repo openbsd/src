@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.436 2022/06/23 07:43:37 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.437 2022/06/23 13:09:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -572,6 +572,7 @@ enum imsg_type {
 	IMSG_SESSION_STALE,
 	IMSG_SESSION_FLUSH,
 	IMSG_SESSION_RESTARTED,
+	IMSG_SESSION_DEPENDON,
 	IMSG_PFKEY_RELOAD,
 	IMSG_MRT_OPEN,
 	IMSG_MRT_REOPEN,
@@ -586,7 +587,6 @@ enum imsg_type {
 	IMSG_PFTABLE_REMOVE,
 	IMSG_PFTABLE_COMMIT,
 	IMSG_REFRESH,
-	IMSG_IFINFO,
 	IMSG_DEMOTE,
 	IMSG_XON,
 	IMSG_XOFF
@@ -699,15 +699,8 @@ struct kroute_nexthop {
 	uint8_t			netlen;
 };
 
-struct kif {
+struct session_dependon {
 	char			 ifname[IFNAMSIZ];
-	uint64_t		 baudrate;
-	u_int			 rdomain;
-	int			 flags;
-	u_short			 ifindex;
-	uint8_t			 if_type;
-	uint8_t			 link_state;
-	uint8_t			 nh_reachable;	/* for nexthop verification */
 	uint8_t			 depend_state;	/* for session depend on */
 };
 

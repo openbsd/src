@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.428 2022/06/19 10:30:10 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.429 2022/06/23 13:09:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -569,7 +569,7 @@ init_peer(struct peer *p)
 	p->fd = p->wbuf.fd = -1;
 
 	if (p->conf.if_depend[0])
-		imsg_compose(ibuf_main, IMSG_IFINFO, 0, 0, -1,
+		imsg_compose(ibuf_main, IMSG_SESSION_DEPENDON, 0, 0, -1,
 		    p->conf.if_depend, sizeof(p->conf.if_depend));
 	else
 		p->depend_ok = 1;
@@ -2823,7 +2823,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 	struct imsgbuf		*i;
 	struct peer		*p;
 	struct listen_addr	*la, *nla;
-	struct kif		*kif;
+	struct session_dependon	*sdon;
 	u_char			*data;
 	int			 n, fd, depend_ok, restricted;
 	uint16_t		 t;
@@ -2928,7 +2928,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 				fatalx("reconf request not from parent");
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
 			    sizeof(restricted))
-				fatalx("IFINFO imsg with wrong len");
+				fatalx("RECONF_CTRL imsg with wrong len");
 			memcpy(&restricted, imsg.data, sizeof(restricted));
 			if (imsg.fd == -1) {
 				log_warnx("expected to receive fd for control "
@@ -3000,17 +3000,17 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 			 * the peer config sent in merge_peers().
 			 */
 			break;
-		case IMSG_IFINFO:
+		case IMSG_SESSION_DEPENDON:
 			if (idx != PFD_PIPE_MAIN)
 				fatalx("IFINFO message not from parent");
 			if (imsg.hdr.len != IMSG_HEADER_SIZE +
-			    sizeof(struct kif))
-				fatalx("IFINFO imsg with wrong len");
-			kif = imsg.data;
-			depend_ok = kif->depend_state;
+			    sizeof(struct session_dependon))
+				fatalx("DEPENDON imsg with wrong len");
+			sdon = imsg.data;
+			depend_ok = sdon->depend_state;
 
 			RB_FOREACH(p, peer_head, &conf->peers)
-				if (!strcmp(p->conf.if_depend, kif->ifname)) {
+				if (!strcmp(p->conf.if_depend, sdon->ifname)) {
 					if (depend_ok && !p->depend_ok) {
 						p->depend_ok = depend_ok;
 						bgp_fsm(p, EVNT_START);
