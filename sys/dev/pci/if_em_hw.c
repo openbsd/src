@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.115 2022/06/23 09:38:28 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.116 2022/06/23 09:47:04 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -1844,6 +1844,13 @@ em_init_hw(struct em_softc *sc)
 			snoop = (u_int32_t) ~ (PCI_EX_NO_SNOOP_ALL);
 			
 		em_set_pci_ex_no_snoop(hw, snoop);
+	}
+
+	/* ungate DMA clock to avoid packet loss */
+	if (hw->mac_type >= em_pch_tgp) {
+		uint32_t fflt_dbg = E1000_READ_REG(hw, FFLT_DBG);
+		fflt_dbg |= (1 << 12);
+		E1000_WRITE_REG(hw, FFLT_DBG, fflt_dbg);
 	}
 
 	if (hw->device_id == E1000_DEV_ID_82546GB_QUAD_COPPER ||
