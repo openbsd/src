@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.277 2022/06/15 10:10:50 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.278 2022/06/23 12:40:32 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -575,22 +575,17 @@ fmt_auth_method(enum auth_method method)
 	}
 }
 
-#define TF_BUFS	8
-#define TF_LEN	9
+#define TF_LEN	16
 
 const char *
 fmt_timeframe(time_t t)
 {
-	char		*buf;
-	static char	 tfbuf[TF_BUFS][TF_LEN];	/* ring buffer */
-	static int	 idx = 0;
+	static char	 buf[TF_LEN];
 	unsigned int	 sec, min, hrs, day;
-	unsigned long long	week;
+	unsigned long long	 week;
 
-	buf = tfbuf[idx++];
-	if (idx == TF_BUFS)
-		idx = 0;
-
+	if (t < 0)
+		t = 0;
 	week = t;
 
 	sec = week % 60;
@@ -602,7 +597,9 @@ fmt_timeframe(time_t t)
 	day = week % 7;
 	week /= 7;
 
-	if (week > 0)
+	if (week >= 1000)
+		snprintf(buf, TF_LEN, "%02lluw", week);
+	else if (week > 0)
 		snprintf(buf, TF_LEN, "%02lluw%01ud%02uh", week, day, hrs);
 	else if (day > 0)
 		snprintf(buf, TF_LEN, "%01ud%02uh%02um", day, hrs, min);
