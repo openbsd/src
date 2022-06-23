@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.361 2022/03/11 18:00:45 mpi Exp $ */
+/* $OpenBSD: if_em.c,v 1.362 2022/06/23 09:38:28 jsg Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -497,6 +497,8 @@ em_attach(struct device *parent, struct device *self, void *aux)
 		case em_pch_lpt:
 		case em_pch_spt:
 		case em_pch_cnp:
+		case em_pch_tgp:
+		case em_pch_adp:
 		case em_80003es2lan:
 			/* 9K Jumbo Frame size */
 			sc->hw.max_frame_size = 9234;
@@ -908,6 +910,8 @@ em_init(void *arg)
 	case em_pch_lpt:
 	case em_pch_spt:
 	case em_pch_cnp:
+	case em_pch_tgp:
+	case em_pch_adp:
 		pba = E1000_PBA_26K;
 		break;
 	default:
@@ -1640,7 +1644,8 @@ em_legacy_irq_quirk_spt(struct em_softc *sc)
 	uint32_t	reg;
 
 	/* Legacy interrupt: SPT needs a quirk. */
-	if (sc->hw.mac_type != em_pch_spt && sc->hw.mac_type != em_pch_cnp)
+	if (sc->hw.mac_type != em_pch_spt && sc->hw.mac_type != em_pch_cnp &&
+	    sc->hw.mac_type != em_pch_tgp && sc->hw.mac_type != em_pch_adp) 
 		return;
 	if (sc->legacy_irq == 0)
 		return;
