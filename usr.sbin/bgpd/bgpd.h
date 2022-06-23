@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.435 2022/06/22 15:24:58 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.436 2022/06/23 07:43:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -656,13 +656,13 @@ enum suberr_rrefresh {
 	ERR_RR_INV_LEN = 1
 };
 
-struct kroute_node;
-struct kroute6_node;
-struct knexthop_node;
+struct kroute;
+struct kroute6;
+struct knexthop;
 struct kredist_node;
-RB_HEAD(kroute_tree, kroute_node);
-RB_HEAD(kroute6_tree, kroute6_node);
-RB_HEAD(knexthop_tree, knexthop_node);
+RB_HEAD(kroute_tree, kroute);
+RB_HEAD(kroute6_tree, kroute6);
+RB_HEAD(knexthop_tree, knexthop);
 RB_HEAD(kredist_tree, kredist_node);
 
 struct ktable {
