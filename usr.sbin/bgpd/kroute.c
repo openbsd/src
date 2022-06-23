@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.266 2022/06/23 09:54:31 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.267 2022/06/23 10:22:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -614,7 +614,7 @@ krVPN4_change(struct ktable *kt, struct kroute_full *kl)
 	    htonl(INADDR_LOOPBACK & IN_CLASSA_NET))
 		return (0);
 
-	/* only single MPLS label are supported for now */
+	/* only a single MPLS label is supported for now */
 	if (kl->prefix.labellen != 3) {
 		log_warnx("%s: %s/%u has not a single label", __func__,
 		    log_addr(&kl->prefix), kl->prefixlen);
@@ -688,7 +688,7 @@ krVPN6_change(struct ktable *kt, struct kroute_full *kl)
 	if (IN6_IS_ADDR_LOOPBACK(&kl->nexthop.v6))
 		return (0);
 
-	/* only single MPLS label are supported for now */
+	/* only a single MPLS label is supported for now */
 	if (kl->prefix.labellen != 3) {
 		log_warnx("%s: %s/%u has not a single label", __func__,
 		    log_addr(&kl->prefix), kl->prefixlen);
