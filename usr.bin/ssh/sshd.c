@@ -1,4 +1,4 @@
-/* $OpenBSD: sshd.c,v 1.586 2022/06/17 01:00:03 dtucker Exp $ */
+/* $OpenBSD: sshd.c,v 1.587 2022/06/24 04:37:00 dtucker Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -560,6 +560,7 @@ append_hostkey_type(struct sshbuf *b, const char *s)
 		fatal_fr(r, "sshbuf_putf");
 }
 
+/* Returns an allocated string that the caller must free. */
 static char *
 list_hostkey_types(void)
 {
@@ -2194,6 +2195,7 @@ static void
 do_ssh2_kex(struct ssh *ssh)
 {
 	char *myproposal[PROPOSAL_MAX] = { KEX_SERVER };
+	char *hostkey_types = NULL;
 	struct kex *kex;
 	int r;
 
@@ -2215,8 +2217,10 @@ do_ssh2_kex(struct ssh *ssh)
 		ssh_packet_set_rekey_limits(ssh, options.rekey_limit,
 		    options.rekey_interval);
 
+	hostkey_types = list_hostkey_types();
 	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = compat_pkalg_proposal(
-	    ssh, list_hostkey_types());
+	    ssh, hostkey_types);
+	free(hostkey_types);
 
 	/* start key exchange */
 	if ((r = kex_setup(ssh, myproposal)) != 0)
