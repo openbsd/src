@@ -1,4 +1,4 @@
-/* $OpenBSD: html.c,v 1.146 2021/09/09 14:45:18 schwarze Exp $ */
+/* $OpenBSD: html.c,v 1.147 2022/06/24 11:15:19 schwarze Exp $ */
 /*
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011-2015, 2017-2021 Ingo Schwarze <schwarze@openbsd.org>
@@ -67,6 +67,7 @@ static	const struct htmldata htmltags[TAG_MAX] = {
 	{"body",	HTML_NLALL},
 	{"div",		HTML_NLAROUND},
 	{"section",	HTML_NLALL},
+	{"nav",		HTML_NLALL},
 	{"table",	HTML_NLALL | HTML_INDENT},
 	{"tr",		HTML_NLALL | HTML_INDENT},
 	{"td",		HTML_NLAROUND},
@@ -705,6 +706,9 @@ print_otag(struct html *h, enum htmltag tag, const char *fmt, ...)
 			break;
 		case 'i':
 			attr = "id";
+			break;
+		case 'r':
+			attr = "role";
 			break;
 		case '?':
 			attr = arg1;

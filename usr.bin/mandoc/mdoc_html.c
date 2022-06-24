@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_html.c,v 1.217 2021/03/30 19:23:50 schwarze Exp $ */
+/* $OpenBSD: mdoc_html.c,v 1.218 2022/06/24 11:15:19 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2021 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -513,7 +513,7 @@ static int
 mdoc_sh_pre(MDOC_ARGS)
 {
 	struct roff_node	*sn, *subn;
-	struct tag		*t, *tsec, *tsub;
+	struct tag		*t, *tnav, *tsec, *tsub;
 	char			*id;
 	int			 sc;
 
@@ -534,6 +534,7 @@ mdoc_sh_pre(MDOC_ARGS)
 					break;
 		if (sc < 2)
 			break;
+		tnav = print_otag(h, TAG_NAV, "r", "doc-toc");
 		t = print_otag(h, TAG_H1, "c", "Sh");
 		print_text(h, "TABLE OF CONTENTS");
 		print_tagq(h, t);
@@ -565,7 +566,7 @@ mdoc_sh_pre(MDOC_ARGS)
 			}
 			print_tagq(h, tsec);
 		}
-		print_tagq(h, t);
+		print_tagq(h, tnav);
 		print_otag(h, TAG_SECTION, "c", "Sh");
 		break;
 	case ROFFT_HEAD:
