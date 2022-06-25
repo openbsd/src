@@ -1,6 +1,7 @@
-#	$OpenBSD: Makefile,v 1.12 2022/06/02 12:08:41 tb Exp $
+#	$OpenBSD: Makefile,v 1.13 2022/06/25 20:01:43 beck Exp $
 
 PROGS =	constraints verify x509attribute x509name x509req_ext callback
+PROGS += expirecallback
 LDADD =	-lcrypto
 DPADD =	${LIBCRYPTO}
 
@@ -18,6 +19,7 @@ REGRESS_TARGETS += regress-x509attribute
 REGRESS_TARGETS += regress-x509name
 REGRESS_TARGETS += regress-x509req_ext
 REGRESS_TARGETS += regress-callback
+REGRESS_TARGETS += regress-expirecallback
 
 CLEANFILES +=	x509name.result callbackout
 
@@ -48,5 +50,8 @@ regress-x509req_ext: x509req_ext
 regress-callback: callback
 	./callback ${.CURDIR}/../certs
 	perl ${.CURDIR}/callback.pl callback.out
+
+regress-expirecallback: expirecallback
+	./expirecallback ${.CURDIR}/../certs
 
 .include <bsd.regress.mk>

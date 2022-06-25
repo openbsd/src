@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.55 2022/04/12 10:42:35 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.56 2022/06/25 20:01:43 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -32,8 +32,10 @@
 
 static int x509_verify_cert_valid(struct x509_verify_ctx *ctx, X509 *cert,
     struct x509_verify_chain *current_chain);
+static int x509_verify_cert_hostname(struct x509_verify_ctx *ctx, X509 *cert,
+    char *name);
 static void x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
-    struct x509_verify_chain *current_chain, int full_chain);
+    struct x509_verify_chain *current_chain, int full_chain, char *name);
 static int x509_verify_cert_error(struct x509_verify_ctx *ctx, X509 *cert,
     size_t depth, int error, int ok);
 static void x509_verify_chain_free(struct x509_verify_chain *chain);
@@ -233,7 +235,7 @@ x509_verify_ctx_clear(struct x509_verify_ctx *ctx)
 	x509_verify_ctx_reset(ctx);
 	sk_X509_pop_free(ctx->intermediates, X509_free);
 	free(ctx->chains);
-	memset(ctx, 0, sizeof(*ctx));
+
 }
 
 static int
@@ -453,10 +455,11 @@ x509_verify_ctx_validate_legacy_chain(struct x509_verify_ctx *ctx,
 /* Add a validated chain to our list of valid chains */
 static int
 x509_verify_ctx_add_chain(struct x509_verify_ctx *ctx,
-    struct x509_verify_chain *chain)
+    struct x509_verify_chain *chain, char *name)
 {
 	size_t depth;
 	X509 *last = x509_verify_chain_last(chain);
+	X509 *leaf = x509_verify_chain_leaf(chain);
 
 	depth = sk_X509_num(chain->certs);
 	if (depth > 0)
@@ -488,6 +491,13 @@ x509_verify_ctx_add_chain(struct x509_verify_ctx *ctx,
 		return x509_verify_cert_error(ctx, last, depth,
 		    X509_V_ERR_OUT_OF_MEM, 0);
 	}
+
+	if (!x509_verify_cert_valid(ctx, leaf, NULL))
+		return 0;
+
+	if (!x509_verify_cert_hostname(ctx, leaf, name))
+		return 0;
+
 	ctx->chains_count++;
 	ctx->error = X509_V_OK;
 	ctx->error_depth = depth;
@@ -539,7 +549,7 @@ x509_verify_parent_signature(X509 *parent, X509 *child, int *error)
 static int
 x509_verify_consider_candidate(struct x509_verify_ctx *ctx, X509 *cert,
     int is_root_cert, X509 *candidate, struct x509_verify_chain *current_chain,
-    int full_chain)
+    int full_chain, char *name)
 {
 	int depth = sk_X509_num(current_chain->certs);
 	struct x509_verify_chain *new_chain;
@@ -590,14 +600,14 @@ x509_verify_consider_candidate(struct x509_verify_ctx *ctx, X509 *cert,
 			x509_verify_chain_free(new_chain);
 			return 0;
 		}
-		if (!x509_verify_ctx_add_chain(ctx, new_chain)) {
+		if (!x509_verify_ctx_add_chain(ctx, new_chain, name)) {
 			x509_verify_chain_free(new_chain);
 			return 0;
 		}
 		goto done;
 	}
 
-	x509_verify_build_chains(ctx, candidate, new_chain, full_chain);
+	x509_verify_build_chains(ctx, candidate, new_chain, full_chain, name);
 
  done:
 	x509_verify_chain_free(new_chain);
@@ -621,7 +631,7 @@ x509_verify_cert_error(struct x509_verify_ctx *ctx, X509 *cert, size_t depth,
 
 static void
 x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
-    struct x509_verify_chain *current_chain, int full_chain)
+    struct x509_verify_chain *current_chain, int full_chain, char *name)
 {
 	X509 *candidate;
 	int i, depth, count, ret, is_root;
@@ -679,7 +689,7 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 				    x509_verify_cert_self_signed(candidate);
 				x509_verify_consider_candidate(ctx, cert,
 				    is_root, candidate, current_chain,
-				    full_chain);
+				    full_chain, name);
 			}
 			X509_free(candidate);
 		}
@@ -692,7 +702,7 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 				    x509_verify_cert_self_signed(candidate);
 				x509_verify_consider_candidate(ctx, cert,
 				    is_root, candidate, current_chain,
-				    full_chain);
+				    full_chain, name);
 			}
 		}
 	}
@@ -704,7 +714,7 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 			if (x509_verify_potential_parent(ctx, candidate, cert)) {
 				x509_verify_consider_candidate(ctx, cert,
 				    0, candidate, current_chain,
-				    full_chain);
+				    full_chain, name);
 			}
 		}
 	}
@@ -1116,16 +1126,18 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 		ctx->xsc->current_cert = leaf;
 	}
 
-	if (!x509_verify_cert_valid(ctx, leaf, NULL))
-		goto err;
-
-	if (!x509_verify_cert_hostname(ctx, leaf, name))
-		goto err;
-
 	if ((current_chain = x509_verify_chain_new()) == NULL) {
 		ctx->error = X509_V_ERR_OUT_OF_MEM;
 		goto err;
 	}
+
+	/*
+	 * Add the leaf to the chain and try to build chains from it.
+	 * Note that unlike Go's verifier, we have not yet checked
+	 * anything about the leaf, This is intentional, so that we
+	 * report failures in chain building before we report problems
+	 * with the leaf.
+	 */
 	if (!x509_verify_chain_append(current_chain, leaf, &ctx->error)) {
 		x509_verify_chain_free(current_chain);
 		goto err;
@@ -1133,13 +1145,14 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 	do {
 		retry_chain_build = 0;
 		if (x509_verify_ctx_cert_is_root(ctx, leaf, full_chain)) {
-			if (!x509_verify_ctx_add_chain(ctx, current_chain)) {
+			if (!x509_verify_ctx_add_chain(ctx, current_chain,
+			    name)) {
 				x509_verify_chain_free(current_chain);
 				goto err;
 			}
 		} else {
 			x509_verify_build_chains(ctx, leaf, current_chain,
-			    full_chain);
+			    full_chain, name);
 			if (full_chain && ctx->chains_count == 0) {
 				/*
 				 * Save the error state from the xsc
