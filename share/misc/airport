@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.81 2022/06/25 16:48:57 mbuhl Exp $
+#	$OpenBSD: airport,v 1.82 2022/06/25 18:51:52 mlarkin Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -186,6 +186,7 @@ BHS:Bathhurst, Bathurst, New South Wales, Australia
 BHX:Birmingham International, Birmingham, United Kingdom
 BHZ:All Airports around Belo Horizonte, MG, Brazil
 BIA:Bastia/Poretta, Bastia, Corsica, France
+BIH:Bishop, California, USA
 BIK:Frans Kaisiepo, Biak, Indonesia
 BIL:Billings Logan International, Montana, USA
 BIM:South Bimini, Bimini, Bahamas
@@ -378,6 +379,7 @@ CRP:Corpus Christi International, Texas, USA
 CRU:Carriacou Island, Grenada
 CRW:Yeager, Charleston, West Virginia, USA
 CSG:Columbus Metropolitan / Fort Benning, Columbus, Georgia, USA
+CSN:Carson City, Nevada, USA
 CSX:Changsha, China
 CTA:Fontanarossa, Catania, Sicily, Italy
 CTG:Rafael Nunez, Cartagena, Colombia
@@ -459,6 +461,7 @@ DRT:Del Rio, Texas, USA
 DRW:Darwin, Northern Territory, Australia
 DSI:Destin, Florida, USA
 DSM:Des Moines International, Iowa, USA
+DTH:Furnace Creek/Death Valley, California, USA
 DTM:Wickede, Dortmund, Germany
 DTT:All Airports around Detroit, Michigan, USA
 DTW:Detroit Metropolitan/Wayne County, Michigan, USA
@@ -1385,6 +1388,7 @@ PSZ:Puerto Suarez, Bolivia
 PTF:Malololailai, Fiji
 PTG:Polokwane International, Polokwane, South Africa
 PTP:Le Raizet, Pointe A Pitre, Guadeloupe
+PTV:Porterville, California, USA
 PTY:Tocumen International, Panama City, Panama
 PUB:Pueblo, Colorado, USA
 PUF:Pau Pyrenees, Pau, France
@@ -1716,6 +1720,7 @@ TRV:Trivandrum, India
 TRZ:Civil, Tiruchirapally, India
 TSA:Sung Shan, Taipei, Taiwan
 TSE:Astana, Kazakhstan
+TSP:Tehachapi, California, USA
 TSR:Timisoara, Romania
 TSS:East 34Th Street Heliport, New York, New York, USA
 TSV:Townsville, Queensland, Australia
