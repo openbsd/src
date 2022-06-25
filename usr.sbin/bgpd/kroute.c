@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.269 2022/06/24 10:36:53 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.270 2022/06/25 19:21:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -72,6 +72,8 @@ struct kroute6 {
 	struct kroute6		*next;
 	struct in6_addr		 prefix;
 	struct in6_addr		 nexthop;
+	uint32_t		 prefix_scope_id;	/* because ... */
+	uint32_t		 nexthop_scope_id;
 	uint32_t		 mplslabel;
 	uint16_t		 flags;
 	uint16_t		 labelid;
@@ -582,8 +584,10 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 			return (-1);
 		}
 		memcpy(&kr6->prefix, &kl->prefix.v6, sizeof(struct in6_addr));
+		kr6->prefix_scope_id = kl->prefix.scope_id;
 		kr6->prefixlen = kl->prefixlen;
 		memcpy(&kr6->nexthop, &kl->nexthop.v6, sizeof(struct in6_addr));
+		kr6->nexthop_scope_id = kl->nexthop.scope_id;
 		kr6->flags = kl->flags | F_BGPD;
 		kr6->priority = RTP_MINE;
 		kr6->labelid = labelid;
@@ -595,6 +599,7 @@ kr6_change(struct ktable *kt, struct kroute_full *kl)
 		}
 	} else {
 		memcpy(&kr6->nexthop, &kl->nexthop.v6, sizeof(struct in6_addr));
+		kr6->nexthop_scope_id = kl->nexthop.scope_id;
 		rtlabel_unref(kr6->labelid);
 		kr6->labelid = labelid;
 		if (kl->flags & F_BLACKHOLE)
@@ -1623,17 +1628,10 @@ kr6_tofull(struct kroute6 *kr6)
 
 	kf.prefix.aid = AID_INET6;
 	memcpy(&kf.prefix.v6, &kr6->prefix, sizeof(struct in6_addr));
-	/* only set scope_id for link-local addresses because IPv6 */
-	if (IN6_IS_ADDR_LINKLOCAL(&kr6->prefix) ||
-	    IN6_IS_ADDR_MC_LINKLOCAL(&kr6->prefix) ||
-	    IN6_IS_ADDR_MC_NODELOCAL(&kr6->prefix))
-		kf.prefix.scope_id = kr6->ifindex;
+	kf.prefix.scope_id = kr6->prefix_scope_id;
 	kf.nexthop.aid = AID_INET6;
 	memcpy(&kf.nexthop.v6, &kr6->nexthop, sizeof(struct in6_addr));
-	if (IN6_IS_ADDR_LINKLOCAL(&kr6->nexthop) ||
-	    IN6_IS_ADDR_MC_LINKLOCAL(&kr6->nexthop) ||
-	    IN6_IS_ADDR_MC_NODELOCAL(&kr6->nexthop))
-		kf.nexthop.scope_id = kr6->ifindex;
+	kf.nexthop.scope_id = kr6->nexthop_scope_id;
 	strlcpy(kf.label, rtlabel_id2name(kr6->labelid), sizeof(kf.label));
 	kf.flags = kr6->flags;
 	kf.ifindex = kr6->ifindex;
@@ -2498,11 +2496,13 @@ knexthop_send_update(struct knexthop *kn)
 			n.gateway.aid = AID_INET6;
 			memcpy(&n.gateway.v6, &kr6->nexthop,
 			    sizeof(struct in6_addr));
+			n.gateway.scope_id = kr6->nexthop_scope_id;
 		}
 		if (n.connected) {
 			n.net.aid = AID_INET6;
 			memcpy(&n.net.v6, &kr6->prefix,
 			    sizeof(struct in6_addr));
+			n.net.scope_id = kr6->prefix_scope_id;
 			n.netlen = kr6->prefixlen;
 		}
 		break;
@@ -3037,7 +3037,15 @@ send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute)
 	prefix.addr.sin6_family = AF_INET6;
 	memcpy(&prefix.addr.sin6_addr, &kroute->prefix,
 	    sizeof(struct in6_addr));
-	/* XXX scope does not matter or? */
+#ifdef __KAME__
+	/* XXX need to embed the stupid scope for now */
+	if (IN6_IS_ADDR_LINKLOCAL(&kroute->prefix) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(&kroute->prefix) ||
+	    IN6_IS_ADDR_MC_NODELOCAL(&kroute->prefix)) {
+		*(u_int16_t *)&prefix.addr.sin6_addr.s6_addr[2] =
+		    htons(kroute->prefix_scope_id);
+	}
+#endif
 	/* adjust header */
 	hdr.rtm_addrs |= RTA_DST;
 	hdr.rtm_msglen += ROUNDUP(sizeof(struct sockaddr_in6));
@@ -3051,6 +3059,15 @@ send_rt6msg(int fd, int action, struct ktable *kt, struct kroute6 *kroute)
 		nexthop.addr.sin6_family = AF_INET6;
 		memcpy(&nexthop.addr.sin6_addr, &kroute->nexthop,
 		    sizeof(struct in6_addr));
+#ifdef __KAME__
+		/* XXX need to embed the stupid scope for now */
+		if (IN6_IS_ADDR_LINKLOCAL(&kroute->nexthop) ||
+		    IN6_IS_ADDR_MC_LINKLOCAL(&kroute->nexthop) ||
+		    IN6_IS_ADDR_MC_NODELOCAL(&kroute->nexthop)) {
+			*(u_int16_t *)&nexthop.addr.sin6_addr.s6_addr[2] =
+			    htons(kroute->nexthop_scope_id);
+		}
+#endif
 		/* adjust header */
 		hdr.rtm_flags |= RTF_GATEWAY;
 		hdr.rtm_addrs |= RTA_GATEWAY;
@@ -3207,10 +3224,12 @@ fetchtable(struct ktable *kt)
 				return (-1);
 			}
 			kr6->prefix = kl.prefix.v6;
+			kr6->prefix_scope_id = kl.prefix.scope_id;
 			kr6->prefixlen = kl.prefixlen;
-			if (kl.nexthop.aid == AID_INET6)
+			if (kl.nexthop.aid == AID_INET6) {
 				kr6->nexthop = kl.nexthop.v6;
-			else
+				kr6->nexthop_scope_id = kl.nexthop.scope_id;
+			} else
 				kr6->nexthop = in6addr_any;
 			kr6->flags = kl.flags;
 			kr6->ifindex = kl.ifindex;
@@ -3686,10 +3705,12 @@ add6:
 				return (-1);
 			}
 			kr6->prefix = kl->prefix.v6;
+			kr6->prefix_scope_id = kl->prefix.scope_id;
 			kr6->prefixlen = kl->prefixlen;
-			if (kl->nexthop.aid == AID_INET6)
+			if (kl->nexthop.aid == AID_INET6) {
 				kr6->nexthop = kl->nexthop.v6;
-			else
+				kr6->nexthop_scope_id = kl->nexthop.scope_id;
+			} else
 				kr6->nexthop = in6addr_any;
 			kr6->flags = flags;
 			kr6->ifindex = kl->ifindex;
