@@ -47,11 +47,6 @@ dns_rdataset_init(dns_rdataset_t *rdataset) {
 	rdataset->count = UINT32_MAX;
 	rdataset->private1 = NULL;
 	rdataset->private2 = NULL;
-	rdataset->private3 = NULL;
-	rdataset->privateuint4 = 0;
-	rdataset->private5 = NULL;
-	rdataset->private6 = NULL;
-	rdataset->private7 = NULL;
 }
 
 void
@@ -75,10 +70,6 @@ dns_rdataset_disassociate(dns_rdataset_t *rdataset) {
 	rdataset->count = UINT32_MAX;
 	rdataset->private1 = NULL;
 	rdataset->private2 = NULL;
-	rdataset->private3 = NULL;
-	rdataset->privateuint4 = 0;
-	rdataset->private5 = NULL;
-	rdataset->private6 = NULL;
 }
 
 int

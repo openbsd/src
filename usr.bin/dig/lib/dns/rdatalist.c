@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatalist.c,v 1.4 2022/06/25 12:14:18 jsg Exp $ */
+/* $Id: rdatalist.c,v 1.5 2022/06/25 15:38:22 florian Exp $ */
 
 /*! \file */
 
@@ -73,9 +73,6 @@ dns_rdatalist_tordataset(dns_rdatalist_t *rdatalist,
 	rdataset->trust = 0;
 	rdataset->private1 = rdatalist;
 	rdataset->private2 = NULL;
-	rdataset->private3 = NULL;
-	rdataset->privateuint4 = 0;
-	rdataset->private5 = NULL;
 
 	return (ISC_R_SUCCESS);
 }
