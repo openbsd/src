@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.40 2022/06/25 14:22:54 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.41 2022/06/25 15:39:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,6 +80,16 @@ ASN1_INTEGER_new(void)
 	return (ASN1_INTEGER *)ASN1_item_new(&ASN1_INTEGER_it);
 }
 
+static void
+asn1_aint_clear(ASN1_INTEGER *aint)
+{
+	freezero(aint->data, aint->length);
+
+	memset(aint, 0, sizeof(*aint));
+
+	aint->type = V_ASN1_INTEGER;
+}
+
 void
 ASN1_INTEGER_free(ASN1_INTEGER *a)
 {
@@ -117,83 +127,190 @@ ASN1_INTEGER_cmp(const ASN1_INTEGER *a, const ASN1_INTEGER *b)
 }
 
 int
-ASN1_INTEGER_set(ASN1_INTEGER *a, long v)
+asn1_aint_get_uint64(CBS *cbs, uint64_t *out_val)
 {
-	int j, k;
-	unsigned int i;
-	unsigned char buf[sizeof(long) + 1];
-	long d;
+	uint64_t val = 0;
+	uint8_t u8;
 
-	a->type = V_ASN1_INTEGER;
-	/* XXX ssl/ssl_asn1.c:i2d_SSL_SESSION() depends upon this bound vae */
-	if (a->length < (int)(sizeof(long) + 1)) {
-		free(a->data);
-		a->data = calloc(1, sizeof(long) + 1);
-	}
-	if (a->data == NULL) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
-		return (0);
-	}
-	d = v;
-	if (d < 0) {
-		d = -d;
-		a->type = V_ASN1_NEG_INTEGER;
+	*out_val = 0;
+
+	while (CBS_len(cbs) > 0) {
+		if (!CBS_get_u8(cbs, &u8))
+			return 0;
+		if (val > (UINT64_MAX >> 8)) {
+			ASN1error(ASN1_R_TOO_LARGE);
+			return 0;
+		}
+		val = val << 8 | u8;
 	}
 
-	for (i = 0; i < sizeof(long); i++) {
-		if (d == 0)
-			break;
-		buf[i] = (int)d & 0xff;
-		d >>= 8;
-	}
-	j = 0;
-	for (k = i - 1; k >= 0; k--)
-		a->data[j++] = buf[k];
-	a->length = j;
-	return (1);
+	*out_val = val;
+
+	return 1;
 }
 
-/*
- * XXX this particular API is a gibbering eidrich horror that makes it
- * impossible to determine valid return cases from errors.. "a bit
- * ugly" is preserved for posterity, unfortunately this is probably
- * unfixable without changing public API
- */
-long
-ASN1_INTEGER_get(const ASN1_INTEGER *a)
+int
+asn1_aint_set_uint64(uint64_t val, uint8_t **out_data, int *out_len)
 {
-	int neg = 0, i;
-	unsigned long r = 0;
+	uint8_t *data = NULL;
+	size_t data_len = 0;
+	int started = 0;
+	uint8_t u8;
+	CBB cbb;
+	int i;
+	int ret = 0;
 
-	if (a == NULL)
-		return (0L);
-	i = a->type;
-	if (i == V_ASN1_NEG_INTEGER)
-		neg = 1;
-	else if (i != V_ASN1_INTEGER)
+	if (!CBB_init(&cbb, sizeof(long)))
+		goto err;
+
+	if (out_data == NULL || out_len == NULL)
+		goto err;
+	if (*out_data != NULL || *out_len != 0)
+		goto err;
+
+	for (i = sizeof(uint64_t) - 1; i >= 0; i--) {
+		u8 = (val >> (i * 8)) & 0xff;
+		if (!started && i != 0 && u8 == 0)
+			continue;
+		if (!CBB_add_u8(&cbb, u8))
+			goto err;
+		started = 1;
+	}
+
+	if (!CBB_finish(&cbb, &data, &data_len))
+		goto err;
+	if (data_len > INT_MAX)
+		goto err;
+
+	*out_data = data;
+	*out_len = (int)data_len;
+	data = NULL;
+
+	ret = 1;
+ err:
+	CBB_cleanup(&cbb);
+	freezero(data, data_len);
+
+	return ret;
+}
+
+int
+asn1_aint_get_int64(CBS *cbs, int negative, int64_t *out_val)
+{
+	uint64_t val;
+
+	if (!asn1_aint_get_uint64(cbs, &val))
+		return 0;
+
+	if (negative) {
+		if (val > (uint64_t)INT64_MIN) {
+			ASN1error(ASN1_R_TOO_SMALL);
+			return 0;
+		}
+		*out_val = -(int64_t)val;
+	} else {
+		if (val > (uint64_t)INT64_MAX) {
+			ASN1error(ASN1_R_TOO_LARGE);
+			return 0;
+		}
+		*out_val = (int64_t)val;
+	}
+
+	return 1;
+}
+
+int
+ASN1_INTEGER_get_uint64(uint64_t *out_val, const ASN1_INTEGER *aint)
+{
+	uint64_t val;
+	CBS cbs;
+
+	*out_val = 0;
+
+	if (aint == NULL || aint->length < 0)
+		return 0;
+
+	if (aint->type == V_ASN1_NEG_INTEGER) {
+		ASN1error(ASN1_R_ILLEGAL_NEGATIVE_VALUE);
+		return 0;
+	}
+	if (aint->type != V_ASN1_INTEGER) {
+		ASN1error(ASN1_R_WRONG_INTEGER_TYPE);
+		return 0;
+	}
+
+	CBS_init(&cbs, aint->data, aint->length);
+
+	if (!asn1_aint_get_uint64(&cbs, &val))
+		return 0;
+
+	*out_val = val;
+
+	return 1;
+}
+
+int
+ASN1_INTEGER_set_uint64(ASN1_INTEGER *aint, uint64_t val)
+{
+	asn1_aint_clear(aint);
+
+	return asn1_aint_set_uint64(val, &aint->data, &aint->length);
+}
+
+int
+ASN1_INTEGER_get_int64(int64_t *out_val, const ASN1_INTEGER *aint)
+{
+	CBS cbs;
+
+	*out_val = 0;
+
+	if (aint == NULL || aint->length < 0)
+		return 0;
+
+	if (aint->type != V_ASN1_INTEGER &&
+	    aint->type != V_ASN1_NEG_INTEGER) {
+		ASN1error(ASN1_R_WRONG_INTEGER_TYPE);
+		return 0;
+	}
+
+	CBS_init(&cbs, aint->data, aint->length);
+
+	return asn1_aint_get_int64(&cbs, (aint->type == V_ASN1_NEG_INTEGER),
+	    out_val);
+}
+
+int
+ASN1_INTEGER_set_int64(ASN1_INTEGER *aint, int64_t val)
+{
+	asn1_aint_clear(aint);
+
+	if (val < 0) {
+		aint->type = V_ASN1_NEG_INTEGER;
+		val = -val;
+	}
+
+	return asn1_aint_set_uint64((uint64_t)val, &aint->data, &aint->length);
+}
+
+long
+ASN1_INTEGER_get(const ASN1_INTEGER *aint)
+{
+	int64_t val;
+
+	if (!ASN1_INTEGER_get_int64(&val, aint))
 		return -1;
-
-	if (!ASN1_INTEGER_valid(a))
-		return -1; /* XXX best effort */
-
-	if (a->length > (int)sizeof(long)) {
+	if (val < LONG_MIN || val > LONG_MAX) {
 		/* hmm... a bit ugly, return all ones */
 		return -1;
 	}
-	if (a->data == NULL)
-		return 0;
 
-	for (i = 0; i < a->length; i++) {
-		r <<= 8;
-		r |= (unsigned char)a->data[i];
-	}
+	return (long)val;
+}
 
-	if (r > LONG_MAX)
-		return -1;
-
-	if (neg)
-		return -(long)r;
-	return (long)r;
+int
+ASN1_INTEGER_set(ASN1_INTEGER *aint, long val)
+{
+	return ASN1_INTEGER_set_int64(aint, val);
 }
 
 ASN1_INTEGER *

@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_err.c,v 1.22 2020/12/08 15:06:42 tb Exp $ */
+/* $OpenBSD: asn1_err.c,v 1.23 2022/06/25 15:39:12 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -118,6 +118,7 @@ static ERR_STRING_DATA ASN1_str_reasons[] = {
 	{ERR_REASON(ASN1_R_ILLEGAL_HEX)          , "illegal hex"},
 	{ERR_REASON(ASN1_R_ILLEGAL_IMPLICIT_TAG) , "illegal implicit tag"},
 	{ERR_REASON(ASN1_R_ILLEGAL_INTEGER)      , "illegal integer"},
+	{ERR_REASON(ASN1_R_ILLEGAL_NEGATIVE_VALUE), "illegal negative value"},
 	{ERR_REASON(ASN1_R_ILLEGAL_NESTED_TAGGING), "illegal nested tagging"},
 	{ERR_REASON(ASN1_R_ILLEGAL_NULL)         , "illegal null"},
 	{ERR_REASON(ASN1_R_ILLEGAL_NULL_VALUE)   , "illegal null value"},
@@ -177,7 +178,9 @@ static ERR_STRING_DATA ASN1_str_reasons[] = {
 	{ERR_REASON(ASN1_R_TAG_VALUE_TOO_HIGH)   , "tag value too high"},
 	{ERR_REASON(ASN1_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD), "the asn1 object identifier is not known for this md"},
 	{ERR_REASON(ASN1_R_TIME_NOT_ASCII_FORMAT), "time not ascii format"},
+	{ERR_REASON(ASN1_R_TOO_LARGE)            , "too large"},
 	{ERR_REASON(ASN1_R_TOO_LONG)             , "too long"},
+	{ERR_REASON(ASN1_R_TOO_SMALL)            , "too small"},
 	{ERR_REASON(ASN1_R_TYPE_NOT_CONSTRUCTED) , "type not constructed"},
 	{ERR_REASON(ASN1_R_UNABLE_TO_DECODE_RSA_KEY), "unable to decode rsa key"},
 	{ERR_REASON(ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY), "unable to decode rsa private key"},
@@ -195,12 +198,12 @@ static ERR_STRING_DATA ASN1_str_reasons[] = {
 	{ERR_REASON(ASN1_R_UNSUPPORTED_ENCRYPTION_ALGORITHM), "unsupported encryption algorithm"},
 	{ERR_REASON(ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE), "unsupported public key type"},
 	{ERR_REASON(ASN1_R_UNSUPPORTED_TYPE)     , "unsupported type"},
+	{ERR_REASON(ASN1_R_WRONG_INTEGER_TYPE)   , "wrong integer type"},
 	{ERR_REASON(ASN1_R_WRONG_PUBLIC_KEY_TYPE), "wrong public key type"},
 	{ERR_REASON(ASN1_R_WRONG_TAG)            , "wrong tag"},
 	{ERR_REASON(ASN1_R_WRONG_TYPE)           , "wrong type"},
 	{0, NULL}
 };
-
 #endif
 
 void

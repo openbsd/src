@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.62 2022/01/14 08:53:53 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.63 2022/06/25 15:39:12 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -748,6 +748,12 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num);
 ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, int len,
     const char *sn, const char *ln);
 
+#ifdef LIBRESSL_INTERNAL
+int ASN1_INTEGER_get_uint64(uint64_t *out_val, const ASN1_INTEGER *aint);
+int ASN1_INTEGER_set_uint64(ASN1_INTEGER *aint, uint64_t val);
+int ASN1_INTEGER_get_int64(int64_t *out_val, const ASN1_INTEGER *aint);
+int ASN1_INTEGER_set_int64(ASN1_INTEGER *aint, int64_t val);
+#endif
 int ASN1_INTEGER_set(ASN1_INTEGER *a, long v);
 long ASN1_INTEGER_get(const ASN1_INTEGER *a);
 ASN1_INTEGER *BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai);
@@ -1109,6 +1115,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_R_ILLEGAL_HEX				 178
 #define ASN1_R_ILLEGAL_IMPLICIT_TAG			 179
 #define ASN1_R_ILLEGAL_INTEGER				 180
+#define ASN1_R_ILLEGAL_NEGATIVE_VALUE			 226
 #define ASN1_R_ILLEGAL_NESTED_TAGGING			 181
 #define ASN1_R_ILLEGAL_NULL				 125
 #define ASN1_R_ILLEGAL_NULL_VALUE			 182
@@ -1168,7 +1175,9 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_R_TAG_VALUE_TOO_HIGH			 153
 #define ASN1_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 154
 #define ASN1_R_TIME_NOT_ASCII_FORMAT			 193
+#define ASN1_R_TOO_LARGE				 223
 #define ASN1_R_TOO_LONG					 155
+#define ASN1_R_TOO_SMALL				 224
 #define ASN1_R_TYPE_NOT_CONSTRUCTED			 156
 #define ASN1_R_UNABLE_TO_DECODE_RSA_KEY			 157
 #define ASN1_R_UNABLE_TO_DECODE_RSA_PRIVATE_KEY		 158
@@ -1186,10 +1195,10 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_R_UNSUPPORTED_ENCRYPTION_ALGORITHM		 166
 #define ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE		 167
 #define ASN1_R_UNSUPPORTED_TYPE				 196
+#define ASN1_R_WRONG_INTEGER_TYPE			 225
 #define ASN1_R_WRONG_PUBLIC_KEY_TYPE			 200
 #define ASN1_R_WRONG_TAG				 168
 #define ASN1_R_WRONG_TYPE				 169
-
 
 int ASN1_time_parse(const char *_bytes, size_t _len, struct tm *_tm, int _mode);
 int ASN1_time_tm_cmp(struct tm *_tm1, struct tm *_tm2);
