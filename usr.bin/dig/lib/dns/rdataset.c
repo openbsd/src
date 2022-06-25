@@ -52,7 +52,6 @@ dns_rdataset_init(dns_rdataset_t *rdataset) {
 	rdataset->private5 = NULL;
 	rdataset->private6 = NULL;
 	rdataset->private7 = NULL;
-	rdataset->resign = 0;
 }
 
 void
@@ -140,16 +139,6 @@ static dns_rdatasetmethods_t question_methods = {
 	question_current,
 	question_clone,
 	question_count,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
 };
 
 void

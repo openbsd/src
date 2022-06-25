@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataset.h,v 1.11 2022/06/25 09:40:20 florian Exp $ */
+/* $Id: rdataset.h,v 1.12 2022/06/25 10:20:30 florian Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -67,46 +67,6 @@ typedef struct dns_rdatasetmethods {
 	void			(*clone)(dns_rdataset_t *source,
 					 dns_rdataset_t *target);
 	unsigned int		(*count)(dns_rdataset_t *rdataset);
-	isc_result_t		(*addnoqname)(dns_rdataset_t *rdataset,
-					      dns_name_t *name);
-	isc_result_t		(*getnoqname)(dns_rdataset_t *rdataset,
-					      dns_name_t *name,
-					      dns_rdataset_t *neg,
-					      dns_rdataset_t *negsig);
-	isc_result_t		(*addclosest)(dns_rdataset_t *rdataset,
-					      dns_name_t *name);
-	isc_result_t		(*getclosest)(dns_rdataset_t *rdataset,
-					      dns_name_t *name,
-					      dns_rdataset_t *neg,
-					      dns_rdataset_t *negsig);
-	isc_result_t		(*getadditional)(dns_rdataset_t *rdataset,
-						 dns_rdatasetadditional_t type,
-						 dns_rdatatype_t qtype,
-						 dns_acache_t *acache,
-						 dns_zone_t **zonep,
-						 dns_db_t **dbp,
-						 dns_dbversion_t **versionp,
-						 dns_dbnode_t **nodep,
-						 dns_name_t *fname,
-						 dns_message_t *msg,
-						 time_t now);
-	isc_result_t		(*setadditional)(dns_rdataset_t *rdataset,
-						 dns_rdatasetadditional_t type,
-						 dns_rdatatype_t qtype,
-						 dns_acache_t *acache,
-						 dns_zone_t *zone,
-						 dns_db_t *db,
-						 dns_dbversion_t *version,
-						 dns_dbnode_t *node,
-						 dns_name_t *fname);
-	isc_result_t		(*putadditional)(dns_acache_t *acache,
-						 dns_rdataset_t *rdataset,
-						 dns_rdatasetadditional_t type,
-						 dns_rdatatype_t qtype);
-	void			(*settrust)(dns_rdataset_t *rdataset,
-					    dns_trust_t trust);
-	void			(*expire)(dns_rdataset_t *rdataset);
-	void			(*clearprefetch)(dns_rdataset_t *rdataset);
 } dns_rdatasetmethods_t;
 
 /*%
@@ -139,11 +99,6 @@ struct dns_rdataset {
 	 * increment the counter.
 	 */
 	uint32_t			count;
-	/*
-	 * This RRSIG RRset should be re-generated around this time.
-	 * Only valid if DNS_RDATASETATTR_RESIGN is set in attributes.
-	 */
-	time_t			resign;
 	/*@{*/
 	/*%
 	 * These are for use by the rdataset implementation, and MUST NOT
@@ -163,40 +118,10 @@ struct dns_rdataset {
 /*!
  * \def DNS_RDATASETATTR_RENDERED
  *	Used by message.c to indicate that the rdataset was rendered.
- *
- * \def DNS_RDATASETATTR_TTLADJUSTED
- *	Used by message.c to indicate that the rdataset's rdata had differing
- *	TTL values, and the rdataset->ttl holds the smallest.
- *
- * \def DNS_RDATASETATTR_LOADORDER
- *	Output the RRset in load order.
  */
 
 #define DNS_RDATASETATTR_QUESTION	0x00000001
 #define DNS_RDATASETATTR_RENDERED	0x00000002	/*%< Used by message.c */
-#define DNS_RDATASETATTR_ANSWERED	0x00000004	/*%< Used by server. */
-#define DNS_RDATASETATTR_CACHE		0x00000008	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_ANSWER		0x00000010	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_ANSWERSIG	0x00000020	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_EXTERNAL	0x00000040	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_NCACHE		0x00000080	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_CHAINING	0x00000100	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_TTLADJUSTED	0x00000200	/*%< Used by message.c */
-#define DNS_RDATASETATTR_CHASE		0x00001000	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_NXDOMAIN	0x00002000
-#define DNS_RDATASETATTR_NOQNAME	0x00004000
-#define DNS_RDATASETATTR_CHECKNAMES	0x00008000	/*%< Used by resolver. */
-#define DNS_RDATASETATTR_LOADORDER	0x00020000
-#define DNS_RDATASETATTR_RESIGN		0x00040000
-#define DNS_RDATASETATTR_CLOSEST	0x00080000
-#define DNS_RDATASETATTR_OPTOUT		0x00100000	/*%< OPTOUT proof */
-#define DNS_RDATASETATTR_PREFETCH	0x00400000
-
-/*%
- * _OMITDNSSEC:
- * 	Omit DNSSEC records when rendering ncache records.
- */
-#define DNS_RDATASETTOWIRE_OMITDNSSEC	0x0001
 
 void
 dns_rdataset_init(dns_rdataset_t *rdataset);

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatalist_p.h,v 1.2 2020/02/13 13:53:00 jsg Exp $ */
+/* $Id: rdatalist_p.h,v 1.3 2022/06/25 10:20:29 florian Exp $ */
 
 #ifndef DNS_RDATALIST_P_H
 #define DNS_RDATALIST_P_H
@@ -41,19 +41,5 @@ isc__rdatalist_clone(dns_rdataset_t *source, dns_rdataset_t *target);
 
 unsigned int
 isc__rdatalist_count(dns_rdataset_t *rdataset);
-
-isc_result_t
-isc__rdatalist_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name);
-
-isc_result_t
-isc__rdatalist_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
-			  dns_rdataset_t *neg, dns_rdataset_t *negsig);
-
-isc_result_t
-isc__rdatalist_addclosest(dns_rdataset_t *rdataset, dns_name_t *name);
-
-isc_result_t
-isc__rdatalist_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
-			  dns_rdataset_t *neg, dns_rdataset_t *negsig);
 
 #endif /* DNS_RDATALIST_P_H */

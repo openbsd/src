@@ -249,7 +249,6 @@ rdataset_totext(dns_rdataset_t *rdataset,
 	dns_rdatatype_t type;
 	unsigned int type_start;
 
-	rdataset->attributes |= DNS_RDATASETATTR_LOADORDER;
 	result = dns_rdataset_first(rdataset);
 
 	current_ttl = ctx->current_ttl;
