@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.76 2022/05/21 13:21:42 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.77 2022/06/25 17:43:56 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -86,7 +86,7 @@
 #endif
 
 static int asn1_template_d2i(ASN1_VALUE **pval, CBS *cbs,
-    const ASN1_TEMPLATE *at, char optional, int depth);
+    const ASN1_TEMPLATE *at, int optional, int depth);
 
 static int
 asn1_check_eoc(CBS *cbs)
@@ -103,8 +103,8 @@ asn1_check_eoc(CBS *cbs)
 
 static int
 asn1_check_tag(CBS *cbs, size_t *out_len, int *out_tag, uint8_t *out_class,
-    char *out_indefinite, char *out_constructed, int expected_tag,
-    int expected_class, char optional)
+    int *out_indefinite, int *out_constructed, int expected_tag,
+    int expected_class, int optional)
 {
 	int constructed, indefinite;
 	uint32_t tag_number;
@@ -168,20 +168,20 @@ asn1_check_tag(CBS *cbs, size_t *out_len, int *out_tag, uint8_t *out_class,
 		*out_tag = tag_number;
 	if (out_class != NULL)
 		*out_class = tag_class << 6;
-	if (out_indefinite != NULL && indefinite)
-		*out_indefinite = 1 << 0;
-	if (out_constructed != NULL && constructed)
-		*out_constructed = 1 << 5;
+	if (out_indefinite != NULL)
+		*out_indefinite = indefinite;
+	if (out_constructed != NULL)
+		*out_constructed = constructed;
 
 	return 1;
 }
 
 /* Collect the contents from a constructed ASN.1 object. */
 static int
-asn1_collect(CBB *cbb, CBS *cbs, char indefinite, int expected_tag,
+asn1_collect(CBB *cbb, CBS *cbs, int indefinite, int expected_tag,
     int expected_class, int depth)
 {
-	char constructed;
+	int constructed;
 	size_t length;
 	CBS content;
 	int need_eoc;
@@ -232,7 +232,7 @@ asn1_collect(CBB *cbb, CBS *cbs, char indefinite, int expected_tag,
 
 /* Find the end of an ASN.1 object. */
 static int
-asn1_find_end(CBS *cbs, size_t length, char indefinite)
+asn1_find_end(CBS *cbs, size_t length, int indefinite)
 {
 	size_t eoc_count;
 
@@ -446,7 +446,7 @@ asn1_c2i(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *it)
  */
 static int
 asn1_d2i_primitive_content(ASN1_VALUE **pval, CBS *cbs, CBS *cbs_object,
-    int utype, char constructed, char indefinite, size_t length,
+    int utype, int constructed, int indefinite, size_t length,
     const ASN1_ITEM *it)
 {
 	CBS cbs_content, cbs_initial;
@@ -515,10 +515,10 @@ asn1_d2i_primitive_content(ASN1_VALUE **pval, CBS *cbs, CBS *cbs_object,
 
 static int
 asn1_d2i_any(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
-    int tag_number, int tag_class, char optional)
+    int tag_number, int tag_class, int optional)
 {
-	char constructed, indefinite;
-	unsigned char object_class;
+	int constructed, indefinite;
+	uint8_t object_class;
 	int object_type;
 	CBS cbs_object;
 	size_t length;
@@ -552,10 +552,10 @@ asn1_d2i_any(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 
 static int
 asn1_d2i_mstring(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
-    int tag_number, int tag_class, char optional)
+    int tag_number, int tag_class, int optional)
 {
-	char constructed, indefinite;
-	unsigned char object_class;
+	int constructed, indefinite;
+	uint8_t object_class;
 	int object_tag;
 	CBS cbs_object;
 	size_t length;
@@ -598,10 +598,10 @@ asn1_d2i_mstring(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 
 static int
 asn1_d2i_primitive(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
-    int tag_number, int tag_class, char optional)
+    int tag_number, int tag_class, int optional)
 {
 	CBS cbs_object;
-	char constructed, indefinite;
+	int constructed, indefinite;
 	int utype = it->utype;
 	size_t length;
 	int ret;
@@ -634,7 +634,7 @@ asn1_d2i_primitive(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 
 static int
 asn1_item_d2i_choice(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
-    int tag_number, int tag_class, char optional, int depth)
+    int tag_number, int tag_class, int optional, int depth)
 {
 	const ASN1_TEMPLATE *at, *errat = NULL;
 	const ASN1_AUX *aux;
@@ -728,10 +728,10 @@ asn1_item_d2i_choice(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 
 static int
 asn1_item_d2i_sequence(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
-    int tag_number, int tag_class, char optional, int depth)
+    int tag_number, int tag_class, int optional, int depth)
 {
 	CBS cbs_seq, cbs_seq_content, cbs_object;
-	char constructed, indefinite, optional_field;
+	int constructed, indefinite, optional_field;
 	const ASN1_TEMPLATE *errat = NULL;
 	const ASN1_TEMPLATE *seqat, *at;
 	ASN1_aux_cb *asn1_cb = NULL;
@@ -904,7 +904,7 @@ asn1_item_d2i_sequence(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 
 static int
 asn1_item_d2i_extern(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
-    int tag_number, int tag_class, char optional)
+    int tag_number, int tag_class, int optional)
 {
 	const ASN1_EXTERN_FUNCS *ef = it->funcs;
 	const unsigned char *p = NULL;
@@ -933,7 +933,7 @@ asn1_item_d2i_extern(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 
 static int
 asn1_item_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
-    int tag_number, int tag_class, char optional, int depth)
+    int tag_number, int tag_class, int optional, int depth)
 {
 	if (pval == NULL)
 		return 0;
@@ -1008,14 +1008,14 @@ asn1_template_stack_of_free(STACK_OF(ASN1_VALUE) *avals, const ASN1_TEMPLATE *at
 
 static int
 asn1_template_stack_of_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *at,
-    char optional, int depth)
+    int optional, int depth)
 {
 	CBS cbs_object, cbs_object_content;
 	STACK_OF(ASN1_VALUE) *avals = NULL;
 	ASN1_VALUE *aval = NULL;
 	int tag_number, tag_class;
 	int eoc_needed;
-	char indefinite;
+	int indefinite;
 	size_t length;
 	int ret;
 
@@ -1111,7 +1111,7 @@ asn1_template_stack_of_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *at,
 
 static int
 asn1_template_noexp_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *at,
-    char optional, int depth)
+    int optional, int depth)
 {
 	int tag_number, tag_class;
 	int ret;
@@ -1150,10 +1150,10 @@ asn1_template_noexp_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *at,
 
 static int
 asn1_template_d2i(ASN1_VALUE **pval, CBS *cbs, const ASN1_TEMPLATE *at,
-    char optional, int depth)
+    int optional, int depth)
 {
 	CBS cbs_exp, cbs_exp_content;
-	char constructed, indefinite;
+	int constructed, indefinite;
 	size_t length;
 	int ret;
 
@@ -1243,7 +1243,7 @@ ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 
 	CBS_init(&cbs, *in, inlen);
 	if ((ret = asn1_item_d2i(pval, &cbs, it, tag_number, tag_class,
-	    optional, 0)) == 1)
+	    (int)optional, 0)) == 1)
 		*in = CBS_data(&cbs);
 
 	return ret;
