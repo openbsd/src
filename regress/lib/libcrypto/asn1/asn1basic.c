@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.8 2022/06/25 15:41:14 jsing Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.9 2022/06/25 15:49:28 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -94,10 +94,14 @@ asn1_bit_string_test(void)
 		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING\n");
 		goto failed;
 	}
-
 	if (!asn1_compare_bytes("BIT_STRING", p, len, asn1_bit_string_primitive,
 	    sizeof(asn1_bit_string_primitive)))
 		goto failed;
+	if (pp != p + len) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BIT_STRING pp = %p, want %p\n",
+		    pp, p + len);
+		goto failed;
+	}
 
 	/* Test primitive decoding. */
 	q = p;
@@ -108,6 +112,11 @@ asn1_bit_string_test(void)
 	if (!asn1_compare_bytes("BIT_STRING primitive data", abs->data, abs->length,
 	    bs, sizeof(bs)))
 		goto failed;
+	if (q != p + len) {
+		fprintf(stderr, "FAIL: d2i_ASN1_BIT_STRING q = %p, want %p\n",
+		    q, p + len);
+		goto failed;
+	}
 
 	/* Test ASN1_BIT_STRING_get_bit(). */
 	for (i = 0; i < ((int)sizeof(bs) * 8); i++) {
@@ -190,6 +199,11 @@ asn1_boolean_test(void)
 		fprintf(stderr, "FAIL: i2d_ASN1_BOOLEAN false\n");
 		goto failed;
 	}
+	if (pp != p + len) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BOOLEAN pp = %p, want %p\n",
+		    pp, p + len);
+		goto failed;
+	}
 
 	if (!asn1_compare_bytes("BOOLEAN false", p, len, asn1_boolean_false,
 	    sizeof(asn1_boolean_false)))
@@ -198,6 +212,11 @@ asn1_boolean_test(void)
 	q = p;
 	if (d2i_ASN1_BOOLEAN(NULL, &q, len) != 0) {
 		fprintf(stderr, "FAIL: BOOLEAN false did not decode to 0\n");
+		goto failed;
+	}
+	if (q != p + len) {
+		fprintf(stderr, "FAIL: d2i_ASN1_BOOLEAN q = %p, want %p\n",
+		    q, p + len);
 		goto failed;
 	}
 
@@ -215,6 +234,11 @@ asn1_boolean_test(void)
 		fprintf(stderr, "FAIL: i2d_ASN1_BOOLEAN true\n");
 		goto failed;
 	}
+	if (pp != p + len) {
+		fprintf(stderr, "FAIL: i2d_ASN1_BOOLEAN pp = %p, want %p\n",
+		    pp, p + len);
+		goto failed;
+	}
 
 	if (!asn1_compare_bytes("BOOLEAN true", p, len, asn1_boolean_true,
 	    sizeof(asn1_boolean_true)))
@@ -223,6 +247,11 @@ asn1_boolean_test(void)
 	q = p;
 	if (d2i_ASN1_BOOLEAN(NULL, &q, len) != 1) {
 		fprintf(stderr, "FAIL: BOOLEAN true did not decode to 1\n");
+		goto failed;
+	}
+	if (q != p + len) {
+		fprintf(stderr, "FAIL: d2i_ASN1_BOOLEAN q = %p, want %p\n",
+		    q, p + len);
 		goto failed;
 	}
 
@@ -360,6 +389,11 @@ asn1_integer_set_test(struct asn1_integer_test *ait)
 		fprintf(stderr, "FAIL: Not V_ASN1_NEG_INTEGER\n");
 		goto failed;
 	}
+	if (ASN1_INTEGER_get(aint) != ait->value) {
+		fprintf(stderr, "FAIL: ASN1_INTEGER_get() = %ld, want %ld\n",
+		    ASN1_INTEGER_get(aint), ait->value);
+		goto failed;
+	}
 	if ((len = i2d_ASN1_INTEGER(aint, NULL)) < 0) {
 		fprintf(stderr, "FAIL: i2d_ASN1_INTEGER() failed\n");
 		goto failed;
@@ -419,6 +453,11 @@ asn1_integer_content_test(struct asn1_integer_test *ait)
 	if (!asn1_compare_bytes("INTEGER content", p, len, ait->der,
 	    ait->der_len))
 		goto failed;
+	if (pp != p + len) {
+		fprintf(stderr, "FAIL: i2d_ASN1_INTEGER pp = %p, want %p\n",
+		    pp, p + len);
+		goto failed;
+	}
 
 	failed = 0;
 
@@ -446,6 +485,11 @@ asn1_integer_decode_test(struct asn1_integer_test *ait)
 		if (!asn1_compare_bytes("INTEGER content", aint->data,
 		    aint->length, ait->content, ait->content_len))
 			goto failed;
+		if (q != ait->der + ait->der_len) {
+			fprintf(stderr, "FAIL: d2i_ASN1_INTEGER q = %p, want %p\n",
+			    q, ait->der + ait->der_len);
+			goto failed;
+		}
 	} else if (ait->want_error == 0) {
 		fprintf(stderr, "FAIL: INTEGER failed to decode\n");
 		goto failed;
