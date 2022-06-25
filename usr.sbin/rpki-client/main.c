@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.206 2022/06/01 14:48:53 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.207 2022/06/25 20:25:43 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -338,6 +338,10 @@ queue_add_from_mft(const struct mft *mft, struct repo *rp)
 
 	for (i = 0; i < mft->filesz; i++) {
 		f = &mft->files[i];
+
+		if (f->type == RTYPE_INVALID)
+			continue;
+
 		if (mft->path != NULL)
 			if ((npath = strdup(mft->path)) == NULL)
 				err(1, NULL);
