@@ -83,7 +83,6 @@ static const char copyright[] =
 #define TYPECLASSLEN 20		/* DNS mnemonic size. Must be less than 100. */
 #define TYPECLASSBUF (TYPECLASSLEN + 1)
 #define TYPECLASSFMT "%" STR(TYPECLASSLEN) "[-0-9a-z]_%d"
-#define ATTRIBUTESIZE 256
 #define DIRNAMESIZE 256
 
 static struct cc {

@@ -159,19 +159,6 @@ dns_rdataset_makequestion(dns_rdataset_t *rdataset, dns_rdataclass_t rdclass,
 	rdataset->attributes |= DNS_RDATASETATTR_QUESTION;
 }
 
-void
-dns_rdataset_clone(dns_rdataset_t *source, dns_rdataset_t *target) {
-
-	/*
-	 * Make 'target' refer to the same rdataset as 'source'.
-	 */
-
-	REQUIRE(source->methods != NULL);
-	REQUIRE(target->methods == NULL);
-
-	(source->methods->clone)(source, target);
-}
-
 isc_result_t
 dns_rdataset_first(dns_rdataset_t *rdataset) {
 

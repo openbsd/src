@@ -14,11 +14,10 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: lex.c,v 1.14 2022/01/17 18:19:51 naddy Exp $ */
+/* $Id: lex.c,v 1.15 2022/06/25 12:14:18 jsg Exp $ */
 
 /*! \file */
 
-#include <ctype.h>
 #include <stdlib.h>
 
 #include <isc/buffer.h>
@@ -238,8 +237,6 @@ typedef enum {
 	lexstate_eatline,
 	lexstate_qstring
 } lexstate;
-
-#define IWSEOL (ISC_LEXOPT_INITIALWS | ISC_LEXOPT_EOL)
 
 static void
 pushback(inputsource *source, int c) {

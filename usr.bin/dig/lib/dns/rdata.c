@@ -14,13 +14,12 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.33 2021/04/02 06:37:40 florian Exp $ */
+/* $Id: rdata.c,v 1.34 2022/06/25 12:14:18 jsg Exp $ */
 
 /*! \file */
 
 #include <arpa/inet.h>
 
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 

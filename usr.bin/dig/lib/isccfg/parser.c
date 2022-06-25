@@ -590,49 +590,6 @@ cfg_parse_listelt(cfg_parser_t *pctx, const cfg_type_t *elttype,
 	return (result);
 }
 
-int
-cfg_obj_islist(const cfg_obj_t *obj) {
-	REQUIRE(obj != NULL);
-	return (obj->type->rep == &cfg_rep_list);
-}
-
-const cfg_listelt_t *
-cfg_list_first(const cfg_obj_t *obj) {
-	REQUIRE(obj == NULL || obj->type->rep == &cfg_rep_list);
-	if (obj == NULL)
-		return (NULL);
-	return (ISC_LIST_HEAD(obj->value.list));
-}
-
-const cfg_listelt_t *
-cfg_list_next(const cfg_listelt_t *elt) {
-	REQUIRE(elt != NULL);
-	return (ISC_LIST_NEXT(elt, link));
-}
-
-/*
- * Return the length of a list object.  If obj is NULL or is not
- * a list, return 0.
- */
-unsigned int
-cfg_list_length(const cfg_obj_t *obj, int recurse) {
-	const cfg_listelt_t *elt;
-	unsigned int count = 0;
-
-	if (obj == NULL || !cfg_obj_islist(obj))
-		return (0U);
-	for (elt = cfg_list_first(obj);
-	     elt != NULL;
-	     elt = cfg_list_next(elt)) {
-		if (recurse && cfg_obj_islist(elt->obj)) {
-			count += cfg_list_length(elt->obj, recurse);
-		} else {
-			count++;
-		}
-	}
-	return (count);
-}
-
 /*
  * Maps.
  */

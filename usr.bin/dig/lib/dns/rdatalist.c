@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatalist.c,v 1.3 2022/06/25 10:20:29 florian Exp $ */
+/* $Id: rdatalist.c,v 1.4 2022/06/25 12:14:18 jsg Exp $ */
 
 /*! \file */
 
@@ -22,7 +22,6 @@
 
 #include <isc/util.h>
 
-#include <dns/name.h>
 #include <dns/rdata.h>
 #include <dns/rdatalist.h>
 #include <dns/rdataset.h>

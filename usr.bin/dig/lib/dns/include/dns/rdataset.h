@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataset.h,v 1.12 2022/06/25 10:20:30 florian Exp $ */
+/* $Id: rdataset.h,v 1.13 2022/06/25 12:14:18 jsg Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -179,20 +179,6 @@ dns_rdataset_makequestion(dns_rdataset_t *rdataset, dns_rdataclass_t rdclass,
  *
  * Ensures:
  *\li	'rdataset' is a valid, associated, question rdataset.
- */
-
-void
-dns_rdataset_clone(dns_rdataset_t *source, dns_rdataset_t *target);
-/*%<
- * Make 'target' refer to the same rdataset as 'source'.
- *
- * Requires:
- *\li	'source' is a valid, associated rdataset.
- *
- *\li	'target' is a valid, dissociated rdataset.
- *
- * Ensures:
- *\li	'target' references the same rdataset as 'source'.
  */
 
 isc_result_t

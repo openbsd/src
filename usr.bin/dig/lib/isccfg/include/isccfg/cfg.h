@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cfg.h,v 1.6 2020/09/14 08:40:44 florian Exp $ */
+/* $Id: cfg.h,v 1.7 2022/06/25 12:14:18 jsg Exp $ */
 
 #ifndef ISCCFG_CFG_H
 #define ISCCFG_CFG_H 1
@@ -157,74 +157,7 @@ cfg_obj_asstring(const cfg_obj_t *obj);
  * \li     A pointer to a null terminated string.
  */
 
-int
-cfg_obj_islist(const cfg_obj_t *obj);
-/*%<
- * Return true iff 'obj' is of list type.
- */
-
-const cfg_listelt_t *
-cfg_list_first(const cfg_obj_t *obj);
-/*%<
- * Returns the first list element in a configuration object of a list type.
- *
- * Requires:
- * \li     'obj' points to a valid configuration object of a list type or NULL.
- *
- * Returns:
- *   \li   A pointer to a cfg_listelt_t representing the first list element,
- * 	or NULL if the list is empty or nonexistent.
- */
-
-const cfg_listelt_t *
-cfg_list_next(const cfg_listelt_t *elt);
-/*%<
- * Returns the next element of a list of configuration objects.
- *
- * Requires:
- * \li     'elt' points to cfg_listelt_t obtained from cfg_list_first() or
- *	a previous call to cfg_list_next().
- *
- * Returns:
- * \li     A pointer to a cfg_listelt_t representing the next element,
- * 	or NULL if there are no more elements.
- */
-
-unsigned int
-cfg_list_length(const cfg_obj_t *obj, int recurse);
-/*%<
- * Returns the length of a list of configure objects.  If obj is
- * not a list, returns 0.  If recurse is true, add in the length of
- * all contained lists.
- */
-
-void
-cfg_print(const cfg_obj_t *obj,
-	  void (*f)(void *closure, const char *text, int textlen),
-	  void *closure);
-void
-cfg_printx(const cfg_obj_t *obj, unsigned int flags,
-	   void (*f)(void *closure, const char *text, int textlen),
-	   void *closure);
-
 #define CFG_PRINTER_XKEY        0x1     /* '?' out shared keys. */
-
-/*%<
- * Print the configuration object 'obj' by repeatedly calling the
- * function 'f', passing 'closure' and a region of text starting
- * at 'text' and comprising 'textlen' characters.
- *
- * If CFG_PRINTER_XKEY the contents of shared keys will be obscured
- * by replacing them with question marks ('?')
- */
-
-void
-cfg_print_grammar(const cfg_type_t *type,
-	  void (*f)(void *closure, const char *text, int textlen),
-	  void *closure);
-/*%<
- * Print a summary of the grammar of the configuration type 'type'.
- */
 
 void
 cfg_obj_destroy(cfg_parser_t *pctx, cfg_obj_t **obj);
