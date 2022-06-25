@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.6 2022/04/27 17:43:06 jsing Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.7 2022/06/25 13:57:17 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -460,6 +460,79 @@ asn1_integer_decode_test(struct asn1_integer_test *ait)
 }
 
 static int
+asn1_integer_cmp_test(void)
+{
+	ASN1_INTEGER *a = NULL, *b = NULL;
+	int failed = 1;
+
+	if ((a = ASN1_INTEGER_new()) == NULL)
+		goto failed;
+	if ((b = ASN1_INTEGER_new()) == NULL)
+		goto failed;
+
+	if (ASN1_INTEGER_cmp(a, b) != 0) {
+		fprintf(stderr, "FAIL: INTEGER 0 == 0");
+		goto failed;
+	}
+
+	if (!ASN1_INTEGER_set(b, 1)) {
+		fprintf(stderr, "FAIL: failed to set INTEGER");
+		goto failed;
+	}
+	if (ASN1_INTEGER_cmp(a, b) >= 0) {
+		fprintf(stderr, "FAIL: INTEGER 0 < 1");
+		goto failed;
+	}
+	if (ASN1_INTEGER_cmp(b, a) <= 0) {
+		fprintf(stderr, "FAIL: INTEGER 1 > 0");
+		goto failed;
+	}
+
+	if (!ASN1_INTEGER_set(b, -1)) {
+		fprintf(stderr, "FAIL: failed to set INTEGER");
+		goto failed;
+	}
+	if (ASN1_INTEGER_cmp(a, b) <= 0) {
+		fprintf(stderr, "FAIL: INTEGER 0 > -1");
+		goto failed;
+	}
+	if (ASN1_INTEGER_cmp(b, a) >= 0) {
+		fprintf(stderr, "FAIL: INTEGER -1 < 0");
+		goto failed;
+	}
+
+	if (!ASN1_INTEGER_set(a, 1)) {
+		fprintf(stderr, "FAIL: failed to set INTEGER");
+		goto failed;
+	}
+	if (ASN1_INTEGER_cmp(a, b) <= 0) {
+		fprintf(stderr, "FAIL: INTEGER 1 > -1");
+		goto failed;
+	}
+	if (ASN1_INTEGER_cmp(b, a) >= 0) {
+		fprintf(stderr, "FAIL: INTEGER -1 < 1");
+		goto failed;
+	}
+
+	if (!ASN1_INTEGER_set(b, 1)) {
+		fprintf(stderr, "FAIL: failed to set INTEGER");
+		goto failed;
+	}
+	if (ASN1_INTEGER_cmp(a, b) != 0) {
+		fprintf(stderr, "FAIL: INTEGER 1 == 1");
+		goto failed;
+	}
+
+	failed = 0;
+
+ failed:
+	ASN1_INTEGER_free(a);
+	ASN1_INTEGER_free(b);
+
+	return failed;
+}
+
+static int
 asn1_integer_test(void)
 {
 	struct asn1_integer_test *ait;
@@ -474,6 +547,8 @@ asn1_integer_test(void)
 			failed |= asn1_integer_content_test(ait);
 		failed |= asn1_integer_decode_test(ait);
 	}
+
+	failed |= asn1_integer_cmp_test();
 
 	return failed;
 }
