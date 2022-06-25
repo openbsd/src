@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataset.h,v 1.10 2020/09/14 08:40:43 florian Exp $ */
+/* $Id: rdataset.h,v 1.11 2022/06/25 09:40:20 florian Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -182,8 +182,6 @@ struct dns_rdataset {
 #define DNS_RDATASETATTR_NCACHE		0x00000080	/*%< Used by resolver. */
 #define DNS_RDATASETATTR_CHAINING	0x00000100	/*%< Used by resolver. */
 #define DNS_RDATASETATTR_TTLADJUSTED	0x00000200	/*%< Used by message.c */
-#define DNS_RDATASETATTR_FIXEDORDER	0x00000400
-#define DNS_RDATASETATTR_RANDOMIZE	0x00000800
 #define DNS_RDATASETATTR_CHASE		0x00001000	/*%< Used by resolver. */
 #define DNS_RDATASETATTR_NXDOMAIN	0x00002000
 #define DNS_RDATASETATTR_NOQNAME	0x00004000
@@ -388,8 +386,6 @@ dns_rdataset_towiresorted(dns_rdataset_t *rdataset,
 			  const dns_name_t *owner_name,
 			  dns_compress_t *cctx,
 			  isc_buffer_t *target,
-			  dns_rdatasetorderfunc_t order,
-			  const void *order_arg,
 			  unsigned int *countp);
 /*%<
  * Like dns_rdataset_towire(), but sorting the rdatasets according to

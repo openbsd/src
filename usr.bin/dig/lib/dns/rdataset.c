@@ -220,32 +220,21 @@ dns_rdataset_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata) {
 }
 
 #define MAX_SHUFFLE	32
-#define WANT_FIXED(r)	(((r)->attributes & DNS_RDATASETATTR_FIXEDORDER) != 0)
-#define WANT_RANDOM(r)	(((r)->attributes & DNS_RDATASETATTR_RANDOMIZE) != 0)
 
 struct towire_sort {
 	int key;
 	dns_rdata_t *rdata;
 };
 
-static int
-towire_compare(const void *av, const void *bv) {
-	const struct towire_sort *a = (const struct towire_sort *) av;
-	const struct towire_sort *b = (const struct towire_sort *) bv;
-	return (a->key - b->key);
-}
-
 static isc_result_t
 towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
-	     dns_compress_t *cctx, isc_buffer_t *target,
-	     dns_rdatasetorderfunc_t order, const void *order_arg,
-	     int partial, unsigned int *countp)
+	     dns_compress_t *cctx, isc_buffer_t *target, unsigned int *countp)
 {
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	isc_region_t r;
 	isc_result_t result;
-	unsigned int i, count = 0, added, choice;
-	isc_buffer_t savedbuffer, rdlen, rrbuffer;
+	unsigned int i, count = 0, added;
+	isc_buffer_t savedbuffer, rdlen;
 	unsigned int headlen;
 	int question = 0;
 	int shuffle = 0;
@@ -259,7 +248,6 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 
 	REQUIRE(rdataset->methods != NULL);
 	REQUIRE(countp != NULL);
-	REQUIRE((order == NULL) == (order_arg == NULL));
 	REQUIRE(cctx != NULL);
 
 	if ((rdataset->attributes & DNS_RDATASETATTR_QUESTION) != 0) {
@@ -279,9 +267,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	/*
 	 * Do we want to shuffle this answer?
 	 */
-	if (!question && count > 1 &&
-	    (!WANT_FIXED(rdataset) || order != NULL) &&
-	    rdataset->type != dns_rdatatype_rrsig)
+	if (!question && count > 1 && rdataset->type != dns_rdatatype_rrsig)
 		shuffle = 1;
 
 	if (shuffle && count > MAX_SHUFFLE) {
@@ -295,6 +281,9 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	}
 
 	if (shuffle) {
+		uint32_t val;
+		unsigned int j;
+
 		/*
 		 * First we get handles to all of the rdata.
 		 */
@@ -313,60 +302,22 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		/*
 		 * Now we shuffle.
 		 */
-		if (WANT_FIXED(rdataset)) {
-			/*
-			 * 'Fixed' order.
-			 */
-			INSIST(order != NULL);
-			for (i = 0; i < count; i++) {
-				out[i].key = (*order)(&in[i], order_arg);
-				out[i].rdata = &in[i];
-			}
-		} else if (WANT_RANDOM(rdataset)) {
-			/*
-			 * 'Random' order.
-			 */
-			for (i = 0; i < count; i++) {
-				choice = i + arc4random_uniform(count - i);
-				rdata = in[i];
-				in[i] = in[choice];
-				in[choice] = rdata;
-				if (order != NULL)
-					out[i].key = (*order)(&in[i],
-							      order_arg);
-				else
-					out[i].key = 0; /* Unused */
-				out[i].rdata = &in[i];
-			}
-		} else {
-			/*
-			 * "Cyclic" order.
-			 */
-			uint32_t val;
-			unsigned int j;
-
-			val = rdataset->count;
-			if (val == UINT32_MAX)
-				val = arc4random();
-			j = val % count;
-			for (i = 0; i < count; i++) {
-				if (order != NULL)
-					out[i].key = (*order)(&in[j],
-							      order_arg);
-				else
-					out[i].key = 0; /* Unused */
-				out[i].rdata = &in[j];
-				j++;
-				if (j == count)
-					j = 0; /* Wrap around. */
-			}
-		}
 
 		/*
-		 * Sorted order.
+		 * "Cyclic" order.
 		 */
-		if (order != NULL)
-			qsort(out, count, sizeof(out[0]), towire_compare);
+
+		val = rdataset->count;
+		if (val == UINT32_MAX)
+			val = arc4random();
+		j = val % count;
+		for (i = 0; i < count; i++) {
+			out[i].key = 0; /* Unused */
+			out[i].rdata = &in[j];
+			j++;
+			if (j == count)
+				j = 0; /* Wrap around. */
+		}
 	}
 
 	savedbuffer = *target;
@@ -378,7 +329,6 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 		 * Copy out the name, type, class, ttl.
 		 */
 
-		rrbuffer = *target;
 		dns_compress_setmethods(cctx, DNS_COMPRESS_GLOBAL14);
 		result = dns_name_towire(owner_name, cctx, target);
 		if (result != ISC_R_SUCCESS)
@@ -443,13 +393,6 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	goto cleanup;
 
  rollback:
-	if (partial && result == ISC_R_NOSPACE) {
-		INSIST(rrbuffer.used < 65536);
-		dns_compress_rollback(cctx, (uint16_t)rrbuffer.used);
-		*countp += added;
-		*target = rrbuffer;
-		goto cleanup;
-	}
 	INSIST(savedbuffer.used < 65536);
 	dns_compress_rollback(cctx, (uint16_t)savedbuffer.used);
 	*countp = 0;
@@ -468,12 +411,9 @@ dns_rdataset_towiresorted(dns_rdataset_t *rdataset,
 			  const dns_name_t *owner_name,
 			  dns_compress_t *cctx,
 			  isc_buffer_t *target,
-			  dns_rdatasetorderfunc_t order,
-			  const void *order_arg,
 			  unsigned int *countp)
 {
-	return (towiresorted(rdataset, owner_name, cctx, target,
-			     order, order_arg, 0, countp));
+	return (towiresorted(rdataset, owner_name, cctx, target, countp));
 }
 
 isc_result_t
@@ -483,6 +423,5 @@ dns_rdataset_towire(dns_rdataset_t *rdataset,
 		    isc_buffer_t *target,
 		    unsigned int *countp)
 {
-	return (towiresorted(rdataset, owner_name, cctx, target,
-			     NULL, NULL, 0, countp));
+	return (towiresorted(rdataset, owner_name, cctx, target, countp));
 }

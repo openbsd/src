@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.18 2020/11/01 07:12:14 florian Exp $ */
+/* $Id: message.c,v 1.19 2022/06/25 09:40:20 florian Exp $ */
 
 /*! \file */
 
@@ -333,8 +333,6 @@ msginit(dns_message_t *m) {
 	m->tcp_continuation = 0;
 	m->verified_sig = 0;
 	m->verify_attempted = 0;
-	m->order = NULL;
-	m->order_arg = NULL;
 	m->query.base = NULL;
 	m->query.length = 0;
 	m->free_query = 0;
@@ -1657,8 +1655,6 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid)
 						  name,
 						  msg->cctx,
 						  msg->buffer,
-						  msg->order,
-						  msg->order_arg,
 						  &count);
 
 				total += count;

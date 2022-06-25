@@ -226,9 +226,6 @@ struct dns_message {
 	dns_rcode_t			sig0status;
 	isc_region_t			query;
 	isc_region_t			saved;
-
-	dns_rdatasetorderfunc_t		order;
-	const void *			order_arg;
 };
 
 struct dns_ednsopt {
