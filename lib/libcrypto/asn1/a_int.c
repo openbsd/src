@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.39 2022/04/27 17:42:08 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.40 2022/06/25 14:22:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,25 +102,18 @@ ASN1_INTEGER_dup(const ASN1_INTEGER *x)
 }
 
 int
-ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y)
+ASN1_INTEGER_cmp(const ASN1_INTEGER *a, const ASN1_INTEGER *b)
 {
-	int neg, ret;
+	int ret = 1;
 
-	/* Compare signs */
-	neg = x->type & V_ASN1_NEG;
-	if (neg != (y->type & V_ASN1_NEG)) {
-		if (neg)
-			return -1;
-		else
-			return 1;
-	}
+	/* Compare sign, then content. */
+	if ((a->type & V_ASN1_NEG) == (b->type & V_ASN1_NEG))
+		ret = ASN1_STRING_cmp(a, b);
 
-	ret = ASN1_STRING_cmp(x, y);
-
-	if (neg)
+	if ((a->type & V_ASN1_NEG) != 0)
 		return -ret;
-	else
-		return ret;
+
+	return ret;
 }
 
 int
