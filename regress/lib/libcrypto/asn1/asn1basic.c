@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.7 2022/06/25 13:57:17 jsing Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.8 2022/06/25 15:41:14 jsing Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -460,6 +460,107 @@ asn1_integer_decode_test(struct asn1_integer_test *ait)
 }
 
 static int
+asn1_integer_set_val_test(void)
+{
+	ASN1_INTEGER *aint = NULL;
+	uint64_t uval;
+	int64_t val;
+	int failed = 1;
+
+	if ((aint = ASN1_INTEGER_new()) == NULL) {
+		fprintf(stderr, "FAIL: ASN1_INTEGER_new() == NULL\n");
+		goto failed;
+	}
+
+	if (!ASN1_INTEGER_set_uint64(aint, 0)) {
+		fprintf(stderr, "FAIL: ASN_INTEGER_set_uint64() failed with "
+		    "0\n");
+		goto failed;
+	}
+	if (!ASN1_INTEGER_get_uint64(&uval, aint)) {
+		fprintf(stderr, "FAIL: ASN_INTEGER_get_uint64() failed with "
+		    "0\n");
+		goto failed;
+	}
+	if (uval != 0) {
+		fprintf(stderr, "FAIL: uval != 0\n");
+		goto failed;
+	}
+
+	if (!ASN1_INTEGER_set_uint64(aint, UINT64_MAX)) {
+		fprintf(stderr, "FAIL: ASN_INTEGER_set_uint64() failed with "
+		    "UINT64_MAX\n");
+		goto failed;
+	}
+	if (!ASN1_INTEGER_get_uint64(&uval, aint)) {
+		fprintf(stderr, "FAIL: ASN_INTEGER_get_uint64() failed with "
+		    "UINT64_MAX\n");
+		goto failed;
+	}
+	if (uval != UINT64_MAX) {
+		fprintf(stderr, "FAIL: uval != UINT64_MAX\n");
+		goto failed;
+	}
+	if (ASN1_INTEGER_get_int64(&val, aint)) {
+		fprintf(stderr, "FAIL: ASN_INTEGER_get_int64() succeeded "
+		    "with UINT64_MAX\n");
+		goto failed;
+	}
+
+	if (!ASN1_INTEGER_set_int64(aint, INT64_MIN)) {
+		fprintf(stderr, "FAIL: ASN_INTEGER_set_int64() failed with "
+		    "INT64_MIN\n");
+		goto failed;
+	}
+	if (!ASN1_INTEGER_get_int64(&val, aint)) {
+		fprintf(stderr, "FAIL: ASN_INTEGER_get_int64() failed with "
+		    "INT64_MIN\n");
+		goto failed;
+	}
+	if (val != INT64_MIN) {
+		fprintf(stderr, "FAIL: val != INT64_MIN\n");
+		goto failed;
+	}
+	if (ASN1_INTEGER_get_uint64(&uval, aint)) {
+		fprintf(stderr, "FAIL: ASN_INTEGER_get_uint64() succeeded "
+		    "with INT64_MIN\n");
+		goto failed;
+	}
+
+	if (!ASN1_INTEGER_set_int64(aint, INT64_MAX)) {
+		fprintf(stderr, "FAIL: ASN_INTEGER_set_int64() failed with "
+		    "INT64_MAX\n");
+		goto failed;
+	}
+	if (!ASN1_INTEGER_get_int64(&val, aint)) {
+		fprintf(stderr, "FAIL: ASN_INTEGER_get_int64() failed with "
+		    "INT64_MAX\n");
+		goto failed;
+	}
+	if (val != INT64_MAX) {
+		fprintf(stderr, "FAIL: ASN_INTEGER_get_int64() failed with "
+		    "INT64_MAX\n");
+		goto failed;
+	}
+	if (!ASN1_INTEGER_get_uint64(&uval, aint)) {
+		fprintf(stderr, "FAIL: ASN_INTEGER_get_uint64() failed with "
+		    "INT64_MAX\n");
+		goto failed;
+	}
+	if (uval != INT64_MAX) {
+		fprintf(stderr, "FAIL: uval != INT64_MAX\n");
+		goto failed;
+	}
+
+	failed = 0;
+
+ failed:
+	ASN1_INTEGER_free(aint);
+
+	return failed;
+}
+
+static int
 asn1_integer_cmp_test(void)
 {
 	ASN1_INTEGER *a = NULL, *b = NULL;
@@ -549,6 +650,7 @@ asn1_integer_test(void)
 	}
 
 	failed |= asn1_integer_cmp_test();
+	failed |= asn1_integer_set_val_test();
 
 	return failed;
 }
