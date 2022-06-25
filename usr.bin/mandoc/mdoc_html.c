@@ -1,7 +1,8 @@
-/* $OpenBSD: mdoc_html.c,v 1.218 2022/06/24 11:15:19 schwarze Exp $ */
+/* $OpenBSD: mdoc_html.c,v 1.219 2022/06/25 12:44:12 schwarze Exp $ */
 /*
- * Copyright (c) 2014-2021 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2014-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2022 Anna Vyalkova <cyber@sysrq.in>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -663,26 +664,34 @@ mdoc_nm_pre(MDOC_ARGS)
 static int
 mdoc_xr_pre(MDOC_ARGS)
 {
-	if (NULL == n->child)
+	char	*name, *section, *label;
+
+	if (n->child == NULL)
 		return 0;
 
+	name = n->child->string;
+	if (n->child->next != NULL) {
+		section = n->child->next->string;
+		mandoc_asprintf(&label, "%s, section %s", name, section);
+	} else
+		section = label = NULL;
+
 	if (h->base_man1)
-		print_otag(h, TAG_A, "chM", "Xr",
-		    n->child->string, n->child->next == NULL ?
-		    NULL : n->child->next->string);
+		print_otag(h, TAG_A, "chM?", "Xr",
+		    name, section, "aria-label", label);
 	else
-		print_otag(h, TAG_A, "c", "Xr");
+		print_otag(h, TAG_A, "c?", "Xr", "aria-label", label);
 
-	n = n->child;
-	print_text(h, n->string);
+	free(label);
+	print_text(h, name);
 
-	if (NULL == (n = n->next))
+	if (section == NULL)
 		return 0;
 
 	h->flags |= HTML_NOSPACE;
 	print_text(h, "(");
 	h->flags |= HTML_NOSPACE;
-	print_text(h, n->string);
+	print_text(h, section);
 	h->flags |= HTML_NOSPACE;
 	print_text(h, ")");
 	return 0;
