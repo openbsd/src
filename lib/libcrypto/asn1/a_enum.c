@@ -1,4 +1,4 @@
-/* $OpenBSD: a_enum.c,v 1.23 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: a_enum.c,v 1.24 2022/06/25 16:15:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,13 +57,16 @@
  */
 
 #include <limits.h>
-#include <stdio.h>
+#include <string.h>
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+
+#include "asn1_locl.h"
+#include "bytestring.h"
 
 /*
  * Code for ENUMERATED type: identical to INTEGER apart from a different tag.
@@ -82,6 +85,16 @@ ASN1_ENUMERATED_new(void)
 	return (ASN1_ENUMERATED *)ASN1_item_new(&ASN1_ENUMERATED_it);
 }
 
+static void
+asn1_aenum_clear(ASN1_ENUMERATED *aenum)
+{
+	freezero(aenum->data, aenum->length);
+
+	memset(aenum, 0, sizeof(*aenum));
+
+	aenum->type = V_ASN1_ENUMERATED;
+}
+
 void
 ASN1_ENUMERATED_free(ASN1_ENUMERATED *a)
 {
@@ -89,73 +102,59 @@ ASN1_ENUMERATED_free(ASN1_ENUMERATED *a)
 }
 
 int
-ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v)
+ASN1_ENUMERATED_get_int64(int64_t *out_val, const ASN1_ENUMERATED *aenum)
 {
-	int j, k;
-	unsigned int i;
-	unsigned char buf[sizeof(long) + 1];
-	long d;
+	CBS cbs;
 
-	a->type = V_ASN1_ENUMERATED;
-	if (a->length < (int)(sizeof(long) + 1)) {
-		free(a->data);
-		a->data = calloc(1, sizeof(long) + 1);
-	}
-	if (a->data == NULL) {
-		ASN1error(ERR_R_MALLOC_FAILURE);
-		return (0);
-	}
-	d = v;
-	if (d < 0) {
-		d = -d;
-		a->type = V_ASN1_NEG_ENUMERATED;
+	*out_val = 0;
+
+	if (aenum == NULL || aenum->length < 0)
+		return 0;
+
+	if (aenum->type != V_ASN1_ENUMERATED &&
+	    aenum->type != V_ASN1_NEG_ENUMERATED) {
+		ASN1error(ASN1_R_WRONG_INTEGER_TYPE);
+		return 0;
 	}
 
-	for (i = 0; i < sizeof(long); i++) {
-		if (d == 0)
-			break;
-		buf[i] = (int)d & 0xff;
-		d >>= 8;
+	CBS_init(&cbs, aenum->data, aenum->length);
+
+	return asn1_aint_get_int64(&cbs, (aenum->type == V_ASN1_NEG_ENUMERATED),
+	    out_val);
+}
+
+int
+ASN1_ENUMERATED_set_int64(ASN1_ENUMERATED *aenum, int64_t val)
+{
+	asn1_aenum_clear(aenum);
+
+	if (val < 0) {
+		aenum->type = V_ASN1_NEG_ENUMERATED;
+		val = -val;
 	}
-	j = 0;
-	for (k = i - 1; k >= 0; k--)
-		a->data[j++] = buf[k];
-	a->length = j;
-	return (1);
+
+	return asn1_aint_set_uint64((uint64_t)val, &aenum->data, &aenum->length);
 }
 
 long
-ASN1_ENUMERATED_get(const ASN1_ENUMERATED *a)
+ASN1_ENUMERATED_get(const ASN1_ENUMERATED *aenum)
 {
-	int neg = 0, i;
-	unsigned long r = 0;
+	int64_t val;
 
-	if (a == NULL)
-		return (0L);
-	i = a->type;
-	if (i == V_ASN1_NEG_ENUMERATED)
-		neg = 1;
-	else if (i != V_ASN1_ENUMERATED)
+	if (!ASN1_ENUMERATED_get_int64(&val, aenum))
 		return -1;
-
-	if (a->length > (int)sizeof(long)) {
-		/* hmm... a bit ugly */
+	if (val < LONG_MIN || val > LONG_MAX) {
+		/* hmm... a bit ugly, return all ones */
 		return -1;
 	}
-	if (a->data == NULL)
-		return 0;
 
-	for (i = 0; i < a->length; i++) {
-		r <<= 8;
-		r |= (unsigned char)a->data[i];
-	}
+	return (long)val;
+}
 
-	if (r > LONG_MAX)
-		return -1;
-
-	if (neg)
-		return -(long)r;
-	return (long)r;
+int
+ASN1_ENUMERATED_set(ASN1_ENUMERATED *aenum, long val)
+{
+	return ASN1_ENUMERATED_set_int64(aenum, val);
 }
 
 ASN1_ENUMERATED *

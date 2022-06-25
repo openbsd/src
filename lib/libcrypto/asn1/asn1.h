@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.63 2022/06/25 15:39:12 jsing Exp $ */
+/* $OpenBSD: asn1.h,v 1.64 2022/06/25 16:15:18 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -759,6 +759,10 @@ long ASN1_INTEGER_get(const ASN1_INTEGER *a);
 ASN1_INTEGER *BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai);
 BIGNUM *ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai, BIGNUM *bn);
 
+#ifdef LIBRESSL_INTERNAL
+int ASN1_ENUMERATED_get_int64(int64_t *out_val, const ASN1_ENUMERATED *aenum);
+int ASN1_ENUMERATED_set_int64(ASN1_ENUMERATED *aenum, int64_t val);
+#endif
 int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v);
 long ASN1_ENUMERATED_get(const ASN1_ENUMERATED *a);
 ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(const BIGNUM *bn, ASN1_ENUMERATED *ai);
