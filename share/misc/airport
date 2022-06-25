@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.80 2022/06/14 09:03:46 jmatthew Exp $
+#	$OpenBSD: airport,v 1.81 2022/06/25 16:48:57 mbuhl Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -663,6 +663,7 @@ HDY:Hat Yai, Thailand
 HEL:Helsinki-Vantaa, Finland
 HER:Heraklion, Crete Island, Greece
 HET:Hohhot, China
+HFE:Hefei Xinqiao International Airport, Anhui, China
 HFS:Hagfors, Sweden
 HFT:Hammerfest, Norway
 HGH:Hangzhou, China
