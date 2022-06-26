@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.142 2022/04/26 08:35:30 claudio Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.143 2022/06/26 07:14:55 mlarkin Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -221,8 +221,8 @@ struct cpu_info {
 };
 
 #define CPUF_BSP	0x0001		/* CPU is the original BSP */
-#define CPUF_AP		0x0002		/* CPU is an AP */ 
-#define CPUF_SP		0x0004		/* CPU is only processor */  
+#define CPUF_AP		0x0002		/* CPU is an AP */
+#define CPUF_SP		0x0004		/* CPU is only processor */
 #define CPUF_PRIMARY	0x0008		/* CPU is active primary processor */
 
 #define CPUF_IDENTIFY	0x0010		/* CPU may now identify */
@@ -256,7 +256,7 @@ extern struct cpu_info *cpu_info_list;
 
 #define CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
 
-/*      
+/*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
@@ -452,7 +452,7 @@ void mp_setperf_init(void);
 
 #endif /* _KERNEL */
 
-/* 
+/*
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
