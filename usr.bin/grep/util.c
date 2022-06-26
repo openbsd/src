@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.65 2022/05/30 16:07:28 dv Exp $	*/
+/*	$OpenBSD: util.c,v 1.66 2022/06/26 10:57:36 op Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -172,13 +172,13 @@ procfile(char *fn)
 
 	if (cflag) {
 		if (!hflag)
-			printf("%s:", ln.file);
+			printf("%s%c", ln.file, nullflag ? '\0' : ':');
 		printf("%llu%s\n", c, overflow ? "+" : "");
 	}
 	if (lflag && c != 0)
-		printf("%s\n", fn);
+		printf("%s%c", fn, nullflag ? '\0' : '\n');
 	if (Lflag && c == 0)
-		printf("%s\n", fn);
+		printf("%s%c", fn, nullflag ? '\0' : '\n');
 	if (c && !cflag && !lflag && !Lflag &&
 	    binbehave == BIN_FILE_BIN && nottext && !qflag)
 		printf("Binary file %s matches\n", fn);
@@ -653,27 +653,32 @@ grep_revstr(unsigned char *str, int len)
 void
 printline(str_t *line, int sep, regmatch_t *pmatch)
 {
-	int n;
+	int n, printsep;
 
 	n = 0;
+	printsep = !nullflag;
 	if (!hflag) {
 		fputs(line->file, stdout);
+		if (nullflag)
+			putchar(0);
 		++n;
 	}
 	if (nflag) {
-		if (n)
+		if (n && printsep)
 			putchar(sep);
 		printf("%lld", line->line_no);
+		printsep = 1;
 		++n;
 	}
 	if (bflag) {
-		if (n)
+		if (n && printsep)
 			putchar(sep);
 		printf("%lld", (long long)line->off +
 		    (pmatch ? pmatch->rm_so : 0));
+		printsep = 1;
 		++n;
 	}
-	if (n)
+	if (n && printsep)
 		putchar(sep);
 	if (pmatch)
 		fwrite(line->dat + pmatch->rm_so,

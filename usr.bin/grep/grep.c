@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.65 2020/07/23 20:19:27 martijn Exp $	*/
+/*	$OpenBSD: grep.c,v 1.66 2022/06/26 10:57:36 op Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -80,6 +80,7 @@ int	 vflag;		/* -v: only show non-matching lines */
 int	 wflag;		/* -w: pattern must start and end on word boundaries */
 int	 xflag;		/* -x: pattern must match entire line */
 int	 lbflag;	/* --line-buffered */
+int	 nullflag;	/* --null */
 const char *labelname;	/* --label=name */
 
 int binbehave = BIN_FILE_BIN;
@@ -89,6 +90,7 @@ enum {
 	HELP_OPT,
 	MMAP_OPT,
 	LINEBUF_OPT,
+	NULL_OPT,
 	LABEL_OPT,
 };
 
@@ -134,6 +136,7 @@ static const struct option long_options[] =
 	{"mmap",		no_argument,		NULL, MMAP_OPT},
 	{"label",		required_argument,	NULL, LABEL_OPT},
 	{"line-buffered",	no_argument,		NULL, LINEBUF_OPT},
+	{"null",		no_argument,		NULL, NULL_OPT},
 	{"after-context",	required_argument,	NULL, 'A'},
 	{"before-context",	required_argument,	NULL, 'B'},
 	{"context",		optional_argument,	NULL, 'C'},
@@ -435,6 +438,9 @@ main(int argc, char *argv[])
 			break;
 		case LINEBUF_OPT:
 			lbflag = 1;
+			break;
+		case NULL_OPT:
+			nullflag = 1;
 			break;
 		case HELP_OPT:
 		default:
