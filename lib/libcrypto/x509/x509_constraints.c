@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_constraints.c,v 1.26 2022/03/26 16:34:21 tb Exp $ */
+/* $OpenBSD: x509_constraints.c,v 1.27 2022/06/26 11:29:27 beck Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -489,8 +489,17 @@ x509_constraints_uri_host(uint8_t *uri, size_t len, char **hostpart)
 			break;
 		}
 	}
-	if (authority == NULL)
-		return 0;
+	if (authority == NULL) {
+		/*
+		 * There is no authority, so no host part in this
+		 * URI. This might be ok or might not, but it must
+		 * fail if we run into a name constraint later, so
+		 * we indicate that we have a URI with an empty
+		 * host part, and succeed.
+		 */
+		*hostpart = strdup("");
+		return 1;
+	}
 	for (i = authority - uri; i < len; i++) {
 		if (!isascii(uri[i]))
 			return 0;
