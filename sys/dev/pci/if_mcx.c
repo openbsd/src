@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.104 2022/03/11 18:00:45 mpi Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.105 2022/06/26 15:33:37 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -7515,7 +7515,7 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ether_addmulti(ifr, &sc->sc_ac) == ENETRESET) {
 			error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
 			if (error != 0)
-				return (error);
+				break;
 
 			dest = MCX_FLOW_CONTEXT_DEST_TYPE_TABLE |
 			    sc->sc_rss_flow_table_id;
@@ -7553,7 +7553,7 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if (ether_delmulti(ifr, &sc->sc_ac) == ENETRESET) {
 			error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
 			if (error != 0)
-				return (error);
+				break;
 
 			for (i = 0; i < MCX_NUM_MCAST_FLOWS; i++) {
 				if (memcmp(sc->sc_mcast_flows[i], addrlo,
