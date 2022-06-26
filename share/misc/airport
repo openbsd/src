@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.82 2022/06/25 18:51:52 mlarkin Exp $
+#	$OpenBSD: airport,v 1.83 2022/06/26 06:28:51 deraadt Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -540,7 +540,7 @@ FDH:Friedrichshafen, Germany
 FEZ:Fez, Morocco
 FFM:Fergus Falls, Minnesota, USA
 FHU:Fort Huachuca/Sierra Vista, Arizona, USA
-FIH:Kinshasa, Zaire
+FIH:Kinshasa, Democratic Republic of the Congo
 FKL:Chess Lamberton, Franklin, Pennsylvania, USA
 FLG:Flagstaff, Arizona, USA
 FLL:Ft. Lauderdale-Hollywood International, Florida, USA
@@ -1531,10 +1531,10 @@ SHC:Indaselassie, Ethiopia
 SHD:Shenandoah Valley Regional, Staunton, Virginia, USA
 SHE:Shenyang, China
 SHJ:Sharjah, United Arab Emirates
-SHO:King Mswati-III International Airport, Swaziland
+SHO:King Mswati-III International Airport, Eswatini
 SHR:Sheridan, Wyoming, USA
 SHV:Shreveport, Louisiana, USA
-SID:Amilcar Cabral International, Sal, Cape Verde
+SID:Amilcar Cabral International, Sal, Cabo Verde
 SIN:Changi International, Singapore
 SIP:Simferopol International, Crimea, Ukraine
 SIR:Sion, Switzerland
@@ -1550,7 +1550,7 @@ SJW:Shijiazhuang, China
 SKB:Golden Rock, St Kitts, Saint Kitts And Nevis
 SKD:Samarkand, Uzbekistan
 SKG:Thessaloniki, Greece
-SKP:Skopje, Macedonia
+SKP:Skopje, Republic of North Macedonia
 SKS:Jojens, Vojens Lufthavn, Denmark
 SLA:Salta International, Argentina
 SLC:Salt Lake City International, Utah, USA
