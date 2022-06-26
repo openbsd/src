@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.139 2022/06/26 18:56:09 mvs Exp $ */
+/*	$OpenBSD: pipex.c,v 1.140 2022/06/26 21:29:34 mvs Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -779,7 +779,8 @@ pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 			if (is_idle == 0) {
 				mtx_enter(&pipex_list_mtx);
 				/* update expire time */
-				session->idle_time = 0;
+				if (session->state == PIPEX_STATE_OPENED)
+					session->idle_time = 0;
 				mtx_leave(&pipex_list_mtx);
 			}
 		}
@@ -1001,7 +1002,8 @@ pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 		if (is_idle == 0) {
 			/* update expire time */
 			mtx_enter(&pipex_list_mtx);
-			session->idle_time = 0;
+			if (session->state == PIPEX_STATE_OPENED)
+				session->idle_time = 0;
 			mtx_leave(&pipex_list_mtx);
 		}
 	}
