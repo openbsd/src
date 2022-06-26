@@ -1,4 +1,4 @@
-/* $OpenBSD: chars.c,v 1.50 2022/06/02 14:49:25 schwarze Exp $ */
+/* $OpenBSD: chars.c,v 1.51 2022/06/26 20:30:00 schwarze Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2011, 2014, 2015, 2017, 2018, 2020
@@ -362,7 +362,7 @@ static struct ln lines[] = {
 	{ "de",			"<degree>",	0x00b0	},
 	{ "%0",			"<permille>",	0x2030	},
 	{ "fm",			"\'",		0x2032	},
-	{ "sd",			"''",		0x2033	},
+	{ "sd",			"\"",		0x2033	},
 	{ "mc",			"<micro>",	0x00b5	},
 	{ "Of",			"_\ba",		0x00aa	},
 	{ "Om",			"_\bo",		0x00ba	},
