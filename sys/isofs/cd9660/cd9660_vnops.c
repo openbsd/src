@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.92 2021/12/12 09:14:59 visa Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.93 2022/06/26 05:20:42 visa Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -54,7 +54,6 @@
 #include <sys/dirent.h>
 #include <sys/ioctl.h>
 #include <sys/ioccom.h>
-#include <sys/poll.h>
 #include <sys/specdev.h>
 #include <sys/unistd.h>
 
@@ -288,18 +287,6 @@ int
 cd9660_ioctl(void *v)
 {
 	return (ENOTTY);
-}
-
-/* ARGSUSED */
-int
-cd9660_poll(void *v)
-{
-	struct vop_poll_args *ap = v;
-
-	/*
-	 * We should really check to see if I/O is possible.
-	 */
-	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
 }
 
 /*
@@ -825,7 +812,6 @@ const struct vops cd9660_vops = {
 	.vop_read	= cd9660_read,
 	.vop_write	= eopnotsupp,
 	.vop_ioctl	= cd9660_ioctl,
-	.vop_poll	= cd9660_poll,
 	.vop_kqfilter	= cd9660_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_fsync	= nullop,
@@ -872,7 +858,6 @@ const struct vops cd9660_specvops = {
 	.vop_read	= spec_read,
 	.vop_write	= spec_write,
 	.vop_ioctl	= spec_ioctl,
-	.vop_poll	= spec_poll,
 	.vop_kqfilter	= spec_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_fsync	= spec_fsync,
@@ -914,7 +899,6 @@ const struct vops cd9660_fifovops = {
 	.vop_read	= fifo_read,
 	.vop_write	= fifo_write,
 	.vop_ioctl	= fifo_ioctl,
-	.vop_poll	= fifo_poll,
 	.vop_kqfilter	= fifo_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_fsync	= nullop,

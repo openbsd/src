@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_vnops.c,v 1.65 2021/12/11 09:28:26 visa Exp $ */
+/* $OpenBSD: fuse_vnops.c,v 1.66 2022/06/26 05:20:42 visa Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -24,7 +24,6 @@
 #include <sys/malloc.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
-#include <sys/poll.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/specdev.h>
@@ -57,7 +56,6 @@ int	fusefs_create(void *);
 int	fusefs_mknod(void *);
 int	fusefs_read(void *);
 int	fusefs_write(void *);
-int	fusefs_poll(void *);
 int	fusefs_remove(void *);
 int	fusefs_rename(void *);
 int	fusefs_mkdir(void *);
@@ -87,7 +85,6 @@ const struct vops fusefs_vops = {
 	.vop_read	= fusefs_read,
 	.vop_write	= fusefs_write,
 	.vop_ioctl	= fusefs_ioctl,
-	.vop_poll	= fusefs_poll,
 	.vop_kqfilter	= fusefs_kqfilter,
 	.vop_revoke	= NULL,
 	.vop_fsync	= fusefs_fsync,
@@ -1230,17 +1227,6 @@ fusefs_write(void *v)
 
 	fb_delete(fbuf);
 	return (error);
-}
-
-int
-fusefs_poll(void *v)
-{
-	struct vop_poll_args *ap = v;
-
-	/*
-	 * We should really check to see if I/O is possible.
-	 */
-	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
 }
 
 int

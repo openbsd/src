@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.37 2020/02/27 09:10:31 mpi Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.38 2022/06/26 05:20:43 visa Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -76,7 +76,6 @@ int	 ufs_readlink(void *);
 int	 ufs_remove(void *);
 int	 ufs_rename(void *);
 int	 ufs_rmdir(void *);
-int	 ufs_poll(void *);
 int	 ufs_kqfilter(void *);
 int	 ufs_setattr(void *);
 int	 ufs_strategy(void *);

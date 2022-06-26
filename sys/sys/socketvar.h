@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.103 2022/06/20 01:39:44 visa Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.104 2022/06/26 05:20:42 visa Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -122,7 +122,6 @@ struct socket {
 #define	SB_LOCK		0x01		/* lock on data queue */
 #define	SB_WANT		0x02		/* someone is waiting to lock */
 #define	SB_WAIT		0x04		/* someone is waiting for data/space */
-#define	SB_SEL		0x08		/* someone is selecting */
 #define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
 #define	SB_SPLICE	0x20		/* buffer is splice source or drain */
 #define	SB_NOINTR	0x40		/* operations not interruptible */
@@ -172,7 +171,7 @@ sb_notify(struct socket *so, struct sockbuf *sb)
 {
 	KASSERT(sb == &so->so_rcv || sb == &so->so_snd);
 	soassertlocked(so);
-	return ((sb->sb_flags & (SB_WAIT|SB_SEL|SB_ASYNC|SB_SPLICE)) != 0 ||
+	return ((sb->sb_flags & (SB_WAIT|SB_ASYNC|SB_SPLICE)) != 0 ||
 	    !klist_empty(&sb->sb_sel.si_note));
 }
 

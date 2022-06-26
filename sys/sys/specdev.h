@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.40 2021/10/02 08:51:41 semarie Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.41 2022/06/26 05:20:42 visa Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -100,7 +100,6 @@ int	spec_close(void *);
 int	spec_read(void *);
 int	spec_write(void *);
 int	spec_ioctl(void *);
-int	spec_poll(void *);
 int	spec_kqfilter(void *);
 int	spec_fsync(void *);
 int	spec_inactive(void *);

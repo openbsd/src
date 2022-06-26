@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.137 2021/12/12 09:14:59 visa Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.138 2022/06/26 05:20:42 visa Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -67,7 +67,6 @@
 #include <sys/pool.h>
 #include <sys/dirent.h>		/* defines dirent structure */
 #include <sys/lockf.h>
-#include <sys/poll.h>
 #include <sys/unistd.h>
 
 #include <msdosfs/bpb.h>
@@ -767,14 +766,6 @@ int
 msdosfs_ioctl(void *v)
 {
 	return (ENOTTY);
-}
-
-int
-msdosfs_poll(void *v)
-{
-	struct vop_poll_args *ap = v;
-
-	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
 }
 
 /*
@@ -1910,7 +1901,6 @@ const struct vops msdosfs_vops = {
 	.vop_read	= msdosfs_read,
 	.vop_write	= msdosfs_write,
 	.vop_ioctl	= msdosfs_ioctl,
-	.vop_poll	= msdosfs_poll,
 	.vop_kqfilter	= msdosfs_kqfilter,
 	.vop_fsync	= msdosfs_fsync,
 	.vop_remove	= msdosfs_remove,

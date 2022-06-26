@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.107 2021/12/11 09:28:26 visa Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.108 2022/06/26 05:20:42 visa Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
 #include <sys/lockf.h>
-#include <sys/poll.h>
 #include <sys/dkio.h>
 #include <sys/malloc.h>
 #include <sys/specdev.h>
@@ -74,7 +73,6 @@ const struct vops spec_vops = {
 	.vop_read	= spec_read,
 	.vop_write	= spec_write,
 	.vop_ioctl	= spec_ioctl,
-	.vop_poll	= spec_poll,
 	.vop_kqfilter	= spec_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_fsync	= spec_fsync,
@@ -379,21 +377,6 @@ spec_ioctl(void *v)
 	}
 }
 
-int
-spec_poll(void *v)
-{
-	struct vop_poll_args *ap = v;
-	dev_t dev;
-
-	switch (ap->a_vp->v_type) {
-	default:
-		return (ap->a_events &
-		    (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
-	case VCHR:
-		dev = ap->a_vp->v_rdev;
-		return (*cdevsw[major(dev)].d_poll)(dev, ap->a_events, ap->a_p);
-	}
-}
 int
 spec_kqfilter(void *v)
 {

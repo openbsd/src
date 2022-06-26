@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.99 2021/10/02 08:51:41 semarie Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.100 2022/06/26 05:20:43 visa Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -69,7 +69,6 @@ const struct vops ffs_vops = {
 	.vop_read	= ffs_read,
 	.vop_write	= ffs_write,
 	.vop_ioctl	= ufs_ioctl,
-	.vop_poll	= ufs_poll,
 	.vop_kqfilter	= ufs_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_fsync	= ffs_fsync,
@@ -116,7 +115,6 @@ const struct vops ffs_specvops = {
 	.vop_mknod	= vop_generic_badop,
 	.vop_open	= spec_open,
 	.vop_ioctl	= spec_ioctl,
-	.vop_poll	= spec_poll,
 	.vop_kqfilter	= spec_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_remove	= vop_generic_badop,
@@ -158,7 +156,6 @@ const struct vops ffs_fifovops = {
 	.vop_mknod	= vop_generic_badop,
 	.vop_open	= fifo_open,
 	.vop_ioctl	= fifo_ioctl,
-	.vop_poll	= fifo_poll,
 	.vop_kqfilter	= fifo_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_remove	= vop_generic_badop,

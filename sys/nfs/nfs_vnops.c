@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.188 2021/12/12 09:14:59 visa Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.189 2022/06/26 05:20:42 visa Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
-#include <sys/poll.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
@@ -101,7 +100,6 @@ int nfs_mknodrpc(struct vnode *, struct vnode **, struct componentname *,
 int nfs_null(struct vnode *, struct ucred *, struct proc *);
 int nfs_open(void *);
 int nfs_pathconf(void *);
-int nfs_poll(void *);
 int nfs_print(void *);
 int nfs_read(void *);
 int nfs_readdir(void *);
@@ -149,7 +147,6 @@ const struct vops nfs_vops = {
 	.vop_read	= nfs_read,
 	.vop_write	= nfs_write,
 	.vop_ioctl	= nfs_ioctl,
-	.vop_poll	= nfs_poll,
 	.vop_kqfilter	= nfs_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_fsync	= nfs_fsync,
@@ -197,7 +194,6 @@ const struct vops nfs_specvops = {
 	.vop_mknod	= vop_generic_badop,
 	.vop_open	= spec_open,
 	.vop_ioctl	= spec_ioctl,
-	.vop_poll	= spec_poll,
 	.vop_kqfilter	= spec_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_remove	= vop_generic_badop,
@@ -239,7 +235,6 @@ const struct vops nfs_fifovops = {
 	.vop_mknod	= vop_generic_badop,
 	.vop_open	= fifo_open,
 	.vop_ioctl	= fifo_ioctl,
-	.vop_poll	= fifo_poll,
 	.vop_kqfilter	= fifo_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_remove	= vop_generic_badop,
@@ -3264,17 +3259,6 @@ nfsspec_access(void *v)
 
 	return (vaccess(vp->v_type, va.va_mode, va.va_uid, va.va_gid,
 	    ap->a_mode, ap->a_cred));
-}
-
-int
-nfs_poll(void *v)
-{
-	struct vop_poll_args *ap = v;
-
-	/*
-	 * We should really check to see if I/O is possible.
-	 */
-	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
 }
 
 /*

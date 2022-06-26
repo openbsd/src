@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.94 2022/06/06 14:45:41 claudio Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.95 2022/06/26 05:20:42 visa Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <sys/event.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
-#include <sys/poll.h>
 #include <sys/unistd.h>
 
 #include <miscfs/fifofs/fifo.h>
@@ -76,7 +75,6 @@ const struct vops fifo_vops = {
 	.vop_read	= fifo_read,
 	.vop_write	= fifo_write,
 	.vop_ioctl	= fifo_ioctl,
-	.vop_poll	= fifo_poll,
 	.vop_kqfilter	= fifo_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_fsync	= nullop,
@@ -309,53 +307,6 @@ fifo_ioctl(void *v)
 			return (error);
 	}
 	return (0);
-}
-
-/* ARGSUSED */
-int
-fifo_poll(void *v)
-{
-	struct vop_poll_args *ap = v;
-	struct socket *rso = ap->a_vp->v_fifoinfo->fi_readsock;
-	struct socket *wso = ap->a_vp->v_fifoinfo->fi_writesock;
-	int events = 0;
-	int revents = 0;
-
-	/*
-	 * FIFOs don't support out-of-band or high priority data.
-	 */
-	solock(rso);
-	if (ap->a_fflag & FREAD)
-		events |= ap->a_events & (POLLIN | POLLRDNORM);
-	if (ap->a_fflag & FWRITE)
-		events |= ap->a_events & (POLLOUT | POLLWRNORM);
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (soreadable(rso))
-			revents |= events & (POLLIN | POLLRDNORM);
-	}
-	/* NOTE: POLLHUP and POLLOUT/POLLWRNORM are mutually exclusive */
-	if ((rso->so_state & SS_ISDISCONNECTED) && !(ap->a_events & POLL_NOHUP)) {
-		revents |= POLLHUP;
-	} else if (events & (POLLOUT | POLLWRNORM)) {
-		if (sowriteable(wso))
-			revents |= events & (POLLOUT | POLLWRNORM);
-	}
-	if (revents == 0) {
-		/* We want to return POLLHUP even if no valid events set. */
-		if (events == 0 && !(ap->a_events & POLL_NOHUP))
-			events = POLLIN;
-		if (events & (POLLIN | POLLRDNORM)) {
-			selrecord(ap->a_p, &rso->so_rcv.sb_sel);
-			rso->so_rcv.sb_flags |= SB_SEL;
-		}
-		if (events & (POLLOUT | POLLWRNORM)) {
-			selrecord(ap->a_p, &wso->so_snd.sb_sel);
-			wso->so_snd.sb_flags |= SB_SEL;
-		}
-	}
-	sounlock(rso);
-	return (revents);
 }
 
 int

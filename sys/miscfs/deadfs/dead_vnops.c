@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.40 2021/12/20 16:22:24 visa Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.41 2022/06/26 05:20:42 visa Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -40,7 +40,6 @@
 #include <sys/lock.h>
 #include <sys/errno.h>
 #include <sys/buf.h>
-#include <sys/poll.h>
 
 /*
  * Prototypes for dead operations on vnodes.
@@ -51,7 +50,6 @@ int	dead_open(void *);
 int	dead_read(void *);
 int	dead_write(void *);
 int	dead_ioctl(void *);
-int	dead_poll(void *);
 int	dead_kqfilter(void *v);
 int	dead_inactive(void *);
 int	dead_lock(void *);
@@ -73,7 +71,6 @@ const struct vops dead_vops = {
 	.vop_read	= dead_read,
 	.vop_write	= dead_write,
 	.vop_ioctl	= dead_ioctl,
-	.vop_poll	= dead_poll,
 	.vop_kqfilter	= dead_kqfilter,
 	.vop_revoke	= NULL,
 	.vop_fsync	= nullop,
@@ -154,20 +151,6 @@ dead_ioctl(void *v)
 	if (!chkvnlock(ap->a_vp))
 		return (EBADF);
 	return ((ap->a_vp->v_op->vop_ioctl)(ap));
-}
-
-/* ARGSUSED */
-int
-dead_poll(void *v)
-{
-#if 0
-	struct vop_poll_args *ap = v;
-#endif
-
-	/*
-	 * Let the user find out that the descriptor is gone.
-	 */
-	return (POLLHUP);
 }
 
 int

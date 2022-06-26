@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.89 2021/10/02 08:51:41 semarie Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.90 2022/06/26 05:20:42 visa Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1278,7 +1278,6 @@ const struct vops ext2fs_vops = {
         .vop_read       = ext2fs_read,
         .vop_write      = ext2fs_write,
         .vop_ioctl      = ufs_ioctl,
-        .vop_poll       = ufs_poll,
         .vop_kqfilter   = ufs_kqfilter,
         .vop_revoke     = NULL,
         .vop_fsync      = ext2fs_fsync,
@@ -1325,7 +1324,6 @@ const struct vops ext2fs_specvops = {
 	.vop_mknod	= vop_generic_badop,
 	.vop_open	= spec_open,
 	.vop_ioctl	= spec_ioctl,
-	.vop_poll	= spec_poll,
 	.vop_kqfilter	= spec_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_remove	= vop_generic_badop,
@@ -1367,7 +1365,6 @@ const struct vops ext2fs_fifovops = {
 	.vop_mknod	= vop_generic_badop,
 	.vop_open	= fifo_open,
 	.vop_ioctl	= fifo_ioctl,
-	.vop_poll	= fifo_poll,
 	.vop_kqfilter	= fifo_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_remove	= vop_generic_badop,

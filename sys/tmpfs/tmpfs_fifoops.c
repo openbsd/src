@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_fifoops.c,v 1.6 2021/10/02 08:51:41 semarie Exp $	*/
+/*	$OpenBSD: tmpfs_fifoops.c,v 1.7 2022/06/26 05:20:42 visa Exp $	*/
 /*	$NetBSD: tmpfs_fifoops.c,v 1.9 2011/05/24 20:17:49 rmind Exp $	*/
 
 /*
@@ -64,7 +64,6 @@ const struct vops tmpfs_fifovops = {
 	.vop_read	= tmpfs_fifo_read,
 	.vop_write	= tmpfs_fifo_write,
 	.vop_ioctl	= fifo_ioctl,
-	.vop_poll	= fifo_poll,
 	.vop_kqfilter	= fifo_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_fsync	= tmpfs_fifo_fsync,

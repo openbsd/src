@@ -1,4 +1,4 @@
-/*	$OpenBSD: tmpfs_vnops.c,v 1.51 2021/12/11 09:28:26 visa Exp $	*/
+/*	$OpenBSD: tmpfs_vnops.c,v 1.52 2022/06/26 05:20:42 visa Exp $	*/
 /*	$NetBSD: tmpfs_vnops.c,v 1.100 2012/11/05 17:27:39 dholland Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <sys/unistd.h>
 #include <sys/vnode.h>
 #include <sys/lockf.h>
-#include <sys/poll.h>
 #include <sys/file.h>
 
 #include <miscfs/fifofs/fifo.h>
@@ -70,7 +69,6 @@ const struct vops tmpfs_vops = {
 	.vop_read	= tmpfs_read,
 	.vop_write	= tmpfs_write,
 	.vop_ioctl	= tmpfs_ioctl,
-	.vop_poll	= tmpfs_poll,
 	.vop_kqfilter	= tmpfs_kqfilter,
 	.vop_revoke	= vop_generic_revoke,
 	.vop_fsync	= tmpfs_fsync,
@@ -1173,13 +1171,6 @@ int
 tmpfs_bwrite(void *v)
 {
 	return 0;
-}
-
-int
-tmpfs_poll(void *v)
-{
-	struct vop_poll_args *ap = v;
-	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
 }
 
 int

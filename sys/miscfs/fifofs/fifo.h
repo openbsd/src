@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo.h,v 1.23 2021/10/02 08:51:41 semarie Exp $	*/
+/*	$OpenBSD: fifo.h,v 1.24 2022/06/26 05:20:42 visa Exp $	*/
 /*	$NetBSD: fifo.h,v 1.10 1996/02/09 22:40:15 christos Exp $	*/
 
 /*
@@ -43,7 +43,6 @@ int	fifo_close(void *);
 int	fifo_read(void *);
 int	fifo_write(void *);
 int	fifo_ioctl(void *);
-int	fifo_poll(void *);
 int	fifo_kqfilter(void *);
 int	fifo_inactive(void *);
 int	fifo_reclaim(void *);

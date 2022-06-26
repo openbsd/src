@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.34 2019/01/21 18:09:21 anton Exp $	*/
+/*	$OpenBSD: denode.h,v 1.35 2022/06/26 05:20:42 visa Exp $	*/
 /*	$NetBSD: denode.h,v 1.24 1997/10/17 11:23:39 ws Exp $	*/
 
 /*-
@@ -271,7 +271,6 @@ int	msdosfs_setattr(void *);
 int	msdosfs_read(void *);
 int	msdosfs_write(void *);
 int	msdosfs_ioctl(void *);
-int	msdosfs_poll(void *);
 int	msdosfs_fsync(void *);
 int	msdosfs_remove(void *);
 int	msdosfs_link(void *);
