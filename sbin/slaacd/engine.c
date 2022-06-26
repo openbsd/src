@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.77 2022/03/21 16:25:47 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.78 2022/06/26 16:01:39 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -574,7 +574,6 @@ engine_dispatch_frontend(int fd, short event, void *bula)
 			    &dup_addr.addr);
 
 			if (addr_proposal) {
-				/* XXX should we inform netcfgd? */
 				addr_proposal->state = PROPOSAL_DUPLICATED;
 				tv.tv_sec = 0;
 				tv.tv_usec = arc4random_uniform(1000000);
@@ -993,7 +992,6 @@ remove_slaacd_iface(uint32_t if_index)
 		LIST_REMOVE(ra, entries);
 		free_ra(ra);
 	}
-	/* XXX inform netcfgd? */
 	while(!LIST_EMPTY(&iface->addr_proposals)) {
 		addr_proposal = LIST_FIRST(&iface->addr_proposals);
 		free_address_proposal(addr_proposal);
