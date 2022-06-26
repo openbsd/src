@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.40 2022/06/12 10:51:55 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.41 2022/06/26 20:05:06 sthen Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -114,6 +114,8 @@ bge*		at pci?		# Broadcom BCM57xx (aka Tigon3)
 oce*		at pci?		# Emulex OneConnect 10Gb ethernet
 aq*		at pci?		# Aquantia aQtion Ethernet
 ix*		at pci?		# Intel 82598EB 10Gb ethernet
+ixl*		at pci?		# Intel Ethernet 700 Series
+igc*		at pci?		# Intel I225 Ethernet
 
 # Wireless network cards
 iwm*		at pci?		# Intel WiFi Link 7xxx

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.251 2022/03/26 14:26:44 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.252 2022/06/26 20:05:06 sthen Exp $
 
 machine		i386
 maxusers	4
@@ -265,6 +265,8 @@ ale*		at pci?				# Attansic L1E Ethernet
 lii*		at pci?				# Attansic L2 Ethernet
 jme*		at pci?				# JMicron JMC250/JMC260 Ethernet
 vte*		at pci?				# RDC R6040 Ethernet
+aq*		at pci?				# Aquantia aQtion Ethernet
+igc*		at pci?				# Intel I225 Ethernet
 
 acx*		at pci?				# TI ACX100/ACX111 (802.11b/g)
 acx*		at cardbus?			# TI ACX100/ACX111 (802.11b/g)

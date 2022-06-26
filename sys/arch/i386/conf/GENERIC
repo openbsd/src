@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.862 2022/03/26 14:25:14 stsp Exp $
+#	$OpenBSD: GENERIC,v 1.863 2022/06/26 20:05:06 sthen Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -599,6 +599,8 @@ ale*	at pci?				# Attansic L1E Ethernet
 lii*	at pci?				# Attansic L2 Ethernet
 jme*	at pci?				# JMicron JMC250/JMC260 Ethernet
 vte*	at pci?				# RDC R6040 Ethernet
+aq*	at pci?				# Aquantia aQtion Ethernet
+igc*	at pci?				# Intel I225 Ethernet
 
 # Wireless network cards
 acx*	at pci?				# TI ACX100/ACX111 (802.11b/g)

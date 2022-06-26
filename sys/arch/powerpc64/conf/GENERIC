@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.28 2021/11/30 17:05:59 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.29 2022/06/26 20:05:06 sthen Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -36,9 +36,12 @@ option		WSDISPLAY_COMPAT_RAWKBD
 option		WSDISPLAY_DEFAULTSCREENS=6
 
 ahci*		at pci?
+aq*		at pci?
 astfb*		at pci?
 wsdisplay*	at astfb?
 bge*		at pci?
+igc*		at pci?
+ix*		at pci?
 ixl*		at pci?
 mcx*		at pci?
 mpii*		at pci?
@@ -48,6 +51,7 @@ pci*		at ppb?
 radeondrm*	at pci?
 drm*		at radeondrm?
 wsdisplay*	at radeondrm?
+rge*		at pci?
 xhci*		at pci?
 usb*		at xhci?
 

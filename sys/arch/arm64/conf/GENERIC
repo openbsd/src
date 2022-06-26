@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.230 2022/06/12 16:00:12 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.231 2022/06/26 20:05:06 sthen Exp $
 #
 # GENERIC machine description file
 #
@@ -319,6 +319,7 @@ aq*		at pci?			# Aquantia aQtion Ethernet
 bnxt*		at pci?			# Broadcom BCM573xx, BCM574xx
 bge*		at pci?			# Broadcom BCM57xx
 em*		at pci?			# Intel Pro/1000 Ethernet
+igc*		at pci?			# Intel I225 Ethernet
 ix*		at pci?			# Intel 82598EB 10Gb Ethernet
 ixl*		at pci?			# Intel Ethernet 700 Series
 mcx*		at pci?			# Mellanox ConnectX-4/5 Ethernet
