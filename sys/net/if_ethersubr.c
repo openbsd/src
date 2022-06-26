@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.280 2022/06/26 15:50:21 mvs Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.281 2022/06/26 21:19:53 mvs Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -540,7 +540,6 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	case ETHERTYPE_PPPOE:
 		if (m->m_flags & (M_MCAST | M_BCAST))
 			goto dropanyway;
-		KERNEL_LOCK();
 #ifdef PIPEX
 		if (pipex_enable) {
 			struct pipex_session *session;
@@ -548,12 +547,12 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			if ((session = pipex_pppoe_lookup_session(m)) != NULL) {
 				pipex_pppoe_input(m, session);
 				pipex_rele_session(session);
-				KERNEL_UNLOCK();
 				return;
 			}
 			pipex_rele_session(session);
 		}
 #endif
+		KERNEL_LOCK();
 		if (etype == ETHERTYPE_PPPOEDISC)
 			pppoe_disc_input(m);
 		else
