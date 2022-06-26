@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.138 2022/06/26 15:50:21 mvs Exp $ */
+/*	$OpenBSD: pipex.c,v 1.139 2022/06/26 18:56:09 mvs Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -2156,18 +2156,18 @@ pipex_l2tp_userland_output(struct mbuf *m0, struct pipex_session *session)
 	 * overwrite sequence numbers to adjust a gap between pipex and
 	 * userland.
 	 */
-		seq = (struct pipex_l2tp_seq_header *)(l2tp + 1);
-		ns = ntohs(seq->ns);
-		nr = ntohs(seq->nr);
+	seq = (struct pipex_l2tp_seq_header *)(l2tp + 1);
+	ns = ntohs(seq->ns);
+	nr = ntohs(seq->nr);
 
-		ns += session->proto.l2tp.ns_gap;
-		seq->ns = htons(ns);
-		session->proto.l2tp.ns_nxt++;
+	ns += session->proto.l2tp.ns_gap;
+	seq->ns = htons(ns);
+	session->proto.l2tp.ns_nxt++;
 
-		nr += session->proto.l2tp.nr_gap;
-		seq->nr = htons(nr);
-		if (SEQ16_GT(nr, session->proto.l2tp.nr_acked))
-			session->proto.l2tp.nr_acked = nr;
+	nr += session->proto.l2tp.nr_gap;
+	seq->nr = htons(nr);
+	if (SEQ16_GT(nr, session->proto.l2tp.nr_acked))
+		session->proto.l2tp.nr_acked = nr;
 
 	return (m0);
 }
