@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.217 2022/02/22 06:44:40 dlg Exp $
+#	$OpenBSD: netstart,v 1.218 2022/06/26 09:36:13 florian Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -272,6 +272,17 @@ ip6routes() {
 	unset _cmds
 }
 
+# wait for autoconf interfaces
+wait_autoconf_default() {
+	if ifconfig | grep -q ': flags=.*<.*AUTOCONF.*>'; then
+		count=0
+		while ((count++ < 20)); do
+			route -n show | grep -q ^default && break
+			sleep .5
+		done
+	fi
+}
+
 # Make sure the invoking user has the right privileges.  Check for presence of
 # id(1) to avoid problems with diskless setups.
 if [[ -x /usr/bin/id ]] && (($(id -u) != 0)); then
@@ -358,6 +369,9 @@ if $PRINT_ONLY; then
 else
 	route -qn add -net 127 127.0.0.1 -reject
 fi
+
+# If interface autoconf exists, pause a little for at least one default route
+wait_autoconf_default
 
 # Configure interfaces that rely on routing
 ifmstart "tun tap gif etherip gre egre nvgre eoip vxlan pflow wg"

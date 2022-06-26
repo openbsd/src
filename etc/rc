@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.557 2022/06/26 08:08:23 florian Exp $
+#	$OpenBSD: rc,v 1.558 2022/06/26 09:36:13 florian Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -461,15 +461,6 @@ start_daemon unwind >/dev/null 2>&1
 random_seed
 
 reorder_libs
-
-# If interface autoconf exists, pause a little for at least one default route
-if ifconfig | grep -q ': flags=.*<.*AUTOCONF.*>'; then
-	count=0
-	while ((count++ < 20)); do
-		route -n show | grep -q ^default && break
-		sleep .5
-	done
-fi
 
 # Load pf rules and bring up pfsync interface.
 if [[ $pf != NO ]]; then
