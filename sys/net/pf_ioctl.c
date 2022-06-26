@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.381 2022/05/10 23:12:25 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.382 2022/06/26 11:37:08 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -891,8 +891,8 @@ int
 pf_addr_setup(struct pf_ruleset *ruleset, struct pf_addr_wrap *addr,
     sa_family_t af)
 {
-	if (pfi_dynaddr_setup(addr, af) ||
-	    pf_tbladdr_setup(ruleset, addr) ||
+	if (pfi_dynaddr_setup(addr, af, PR_WAITOK) ||
+	    pf_tbladdr_setup(ruleset, addr, PR_WAITOK) ||
 	    pf_rtlabel_add(addr))
 		return (EINVAL);
 
@@ -1413,7 +1413,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if (rule->overload_tblname[0]) {
 			if ((rule->overload_tbl = pfr_attach_table(ruleset,
-			    rule->overload_tblname, 0)) == NULL)
+			    rule->overload_tblname, PR_WAITOK)) == NULL)
 				error = EINVAL;
 			else
 				rule->overload_tbl->pfrkt_flags |= PFR_TFLAG_ACTIVE;
@@ -1636,7 +1636,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 			if (newrule->overload_tblname[0]) {
 				newrule->overload_tbl = pfr_attach_table(
-				    ruleset, newrule->overload_tblname, 0);
+				    ruleset, newrule->overload_tblname,
+				    PR_WAITOK);
 				if (newrule->overload_tbl == NULL)
 					error = EINVAL;
 				else

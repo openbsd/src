@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.142 2022/06/16 20:47:26 sashan Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.143 2022/06/26 11:37:08 mbuhl Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -323,7 +323,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	if (pfr_validate_table(tbl, 0, flags & PFR_FLAG_USERIOCTL))
 		return (EINVAL);
 	tmpkt = pfr_create_ktable(&pfr_nulltable, 0, 0,
-	    !(flags & PFR_FLAG_USERIOCTL));
+	    (flags & PFR_FLAG_USERIOCTL? PR_WAITOK : PR_NOWAIT));
 	if (tmpkt == NULL)
 		return (ENOMEM);
 	SLIST_INIT(&workq);
@@ -540,7 +540,7 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	if (kt->pfrkt_flags & PFR_TFLAG_CONST)
 		return (EPERM);
 	tmpkt = pfr_create_ktable(&pfr_nulltable, 0, 0,
-	    !(flags & PFR_FLAG_USERIOCTL));
+	    (flags & PFR_FLAG_USERIOCTL? PR_WAITOK : PR_NOWAIT));
 	if (tmpkt == NULL)
 		return (ENOMEM);
 	pfr_mark_addrs(kt);
@@ -1513,7 +1513,7 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 			senderr(EINVAL);
 		key.pfrkt_flags |= PFR_TFLAG_ACTIVE;
 		p = pfr_create_ktable(&key.pfrkt_t, tzero, 0,
-		    !(flags & PFR_FLAG_USERIOCTL));
+		    (flags & PFR_FLAG_USERIOCTL? PR_WAITOK : PR_NOWAIT));
 		if (p == NULL)
 			senderr(ENOMEM);
 
@@ -1524,7 +1524,7 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 		key.pfrkt_flags = 0;
 		memset(key.pfrkt_anchor, 0, sizeof(key.pfrkt_anchor));
 		p->pfrkt_root = pfr_create_ktable(&key.pfrkt_t, 0, 0,
-		    !(flags & PFR_FLAG_USERIOCTL));
+		    (flags & PFR_FLAG_USERIOCTL? PR_WAITOK : PR_NOWAIT));
 		if (p->pfrkt_root == NULL) {
 			pfr_destroy_ktable(p, 0);
 			senderr(ENOMEM);
@@ -1910,7 +1910,7 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	kt = RB_FIND(pfr_ktablehead, &pfr_ktables, (struct pfr_ktable *)tbl);
 	if (kt == NULL) {
 		kt = pfr_create_ktable(tbl, 0, 1,
-		    !(flags & PFR_FLAG_USERIOCTL));
+		    (flags & PFR_FLAG_USERIOCTL? PR_WAITOK : PR_NOWAIT));
 		if (kt == NULL)
 			return (ENOMEM);
 		SLIST_INSERT_HEAD(&tableq, kt, pfrkt_workq);
@@ -1927,7 +1927,7 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 			goto _skip;
 		}
 		rt = pfr_create_ktable(&key.pfrkt_t, 0, 1,
-		    !(flags & PFR_FLAG_USERIOCTL));
+		    (flags & PFR_FLAG_USERIOCTL? PR_WAITOK : PR_NOWAIT));
 		if (rt == NULL) {
 			pfr_destroy_ktables(&tableq, 0);
 			return (ENOMEM);
@@ -1937,7 +1937,8 @@ pfr_ina_define(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	} else if (!(kt->pfrkt_flags & PFR_TFLAG_INACTIVE))
 		xadd++;
 _skip:
-	shadow = pfr_create_ktable(tbl, 0, 0, !(flags & PFR_FLAG_USERIOCTL));
+	shadow = pfr_create_ktable(tbl, 0, 0,
+	    (flags & PFR_FLAG_USERIOCTL? PR_WAITOK : PR_NOWAIT));
 	if (shadow == NULL) {
 		pfr_destroy_ktables(&tableq, 0);
 		return (ENOMEM);
@@ -2286,15 +2287,12 @@ pfr_clstats_ktable(struct pfr_ktable *kt, time_t tzero, int recurse)
 
 struct pfr_ktable *
 pfr_create_ktable(struct pfr_table *tbl, time_t tzero, int attachruleset,
-    int intr)
+    int wait)
 {
 	struct pfr_ktable	*kt;
 	struct pf_ruleset	*rs;
 
-	if (intr)
-		kt = pool_get(&pfr_ktable_pl, PR_NOWAIT|PR_ZERO|PR_LIMITFAIL);
-	else
-		kt = pool_get(&pfr_ktable_pl, PR_WAITOK|PR_ZERO|PR_LIMITFAIL);
+	kt = pool_get(&pfr_ktable_pl, wait|PR_ZERO|PR_LIMITFAIL);
 	if (kt == NULL)
 		return (NULL);
 	kt->pfrkt_t = *tbl;
@@ -2533,7 +2531,7 @@ pfr_update_stats(struct pfr_ktable *kt, struct pf_addr *a, struct pf_pdesc *pd,
 }
 
 struct pfr_ktable *
-pfr_attach_table(struct pf_ruleset *rs, char *name, int intr)
+pfr_attach_table(struct pf_ruleset *rs, char *name, int wait)
 {
 	struct pfr_ktable	*kt, *rt;
 	struct pfr_table	 tbl;
@@ -2545,14 +2543,14 @@ pfr_attach_table(struct pf_ruleset *rs, char *name, int intr)
 		strlcpy(tbl.pfrt_anchor, ac->path, sizeof(tbl.pfrt_anchor));
 	kt = pfr_lookup_table(&tbl);
 	if (kt == NULL) {
-		kt = pfr_create_ktable(&tbl, gettime(), 1, intr);
+		kt = pfr_create_ktable(&tbl, gettime(), 1, wait);
 		if (kt == NULL)
 			return (NULL);
 		if (ac != NULL) {
 			bzero(tbl.pfrt_anchor, sizeof(tbl.pfrt_anchor));
 			rt = pfr_lookup_table(&tbl);
 			if (rt == NULL) {
-				rt = pfr_create_ktable(&tbl, 0, 1, intr);
+				rt = pfr_create_ktable(&tbl, 0, 1, wait);
 				if (rt == NULL) {
 					pfr_destroy_ktable(kt, 0);
 					return (NULL);

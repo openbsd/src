@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.105 2022/05/16 13:31:19 bluhm Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.106 2022/06/26 11:37:08 mbuhl Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -423,7 +423,7 @@ pfi_match_addr(struct pfi_dynaddr *dyn, struct pf_addr *a, sa_family_t af)
 }
 
 int
-pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
+pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af, int wait)
 {
 	struct pfi_dynaddr	*dyn;
 	char			 tblname[PF_TABLE_NAME_SIZE];
@@ -432,8 +432,7 @@ pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 
 	if (aw->type != PF_ADDR_DYNIFTL)
 		return (0);
-	if ((dyn = pool_get(&pfi_addr_pl, PR_WAITOK | PR_LIMITFAIL | PR_ZERO))
-	    == NULL)
+	if ((dyn = pool_get(&pfi_addr_pl, wait|PR_LIMITFAIL|PR_ZERO)) == NULL)
 		return (1);
 
 	if (!strcmp(aw->v.ifname, "self"))
@@ -466,7 +465,7 @@ pfi_dynaddr_setup(struct pf_addr_wrap *aw, sa_family_t af)
 		goto _bad;
 	}
 
-	if ((dyn->pfid_kt = pfr_attach_table(ruleset, tblname, 1)) == NULL) {
+	if ((dyn->pfid_kt = pfr_attach_table(ruleset, tblname, wait)) == NULL) {
 		rv = 1;
 		goto _bad;
 	}

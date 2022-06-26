@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1133 2022/06/13 12:48:00 henning Exp $ */
+/*	$OpenBSD: pf.c,v 1.1134 2022/06/26 11:37:08 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1585,11 +1585,11 @@ pf_purge_expired_states(u_int32_t maxcheck)
 }
 
 int
-pf_tbladdr_setup(struct pf_ruleset *rs, struct pf_addr_wrap *aw)
+pf_tbladdr_setup(struct pf_ruleset *rs, struct pf_addr_wrap *aw, int wait)
 {
 	if (aw->type != PF_ADDR_TABLE)
 		return (0);
-	if ((aw->p.tbl = pfr_attach_table(rs, aw->v.tblname, 1)) == NULL)
+	if ((aw->p.tbl = pfr_attach_table(rs, aw->v.tblname, wait)) == NULL)
 		return (1);
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.507 2022/04/29 09:55:43 mbuhl Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.508 2022/06/26 11:37:08 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1709,7 +1709,7 @@ extern struct ifnet		*sync_ifp;
 extern struct pf_rule		 pf_default_rule;
 
 extern int			 pf_tbladdr_setup(struct pf_ruleset *,
-				    struct pf_addr_wrap *);
+				    struct pf_addr_wrap *, int);
 extern void			 pf_tbladdr_remove(struct pf_addr_wrap *);
 extern void			 pf_tbladdr_copyout(struct pf_addr_wrap *);
 extern void			 pf_calc_skip_steps(struct pf_rulequeue *);
@@ -1875,7 +1875,7 @@ void		 pfi_group_addmember(const char *);
 void		 pfi_group_delmember(const char *);
 int		 pfi_match_addr(struct pfi_dynaddr *, struct pf_addr *,
 		    sa_family_t);
-int		 pfi_dynaddr_setup(struct pf_addr_wrap *, sa_family_t);
+int		 pfi_dynaddr_setup(struct pf_addr_wrap *, sa_family_t, int);
 void		 pfi_dynaddr_remove(struct pf_addr_wrap *);
 void		 pfi_dynaddr_copyout(struct pf_addr_wrap *);
 void		 pfi_update_status(const char *, struct pf_status *);
