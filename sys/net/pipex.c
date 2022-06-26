@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.140 2022/06/26 21:29:34 mvs Exp $ */
+/*	$OpenBSD: pipex.c,v 1.141 2022/06/26 22:51:58 mvs Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -94,7 +94,7 @@ struct pool mppe_key_pool;
  *       L       pipex_list_mtx
  */
 
-int	pipex_enable = 0;			/* [N] */
+int	pipex_enable = 0;			/* [A] */
 struct pipex_hash_head
     pipex_session_list,				/* [L] master session list */
     pipex_close_wait_list,			/* [L] expired session list */

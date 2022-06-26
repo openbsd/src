@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.116 2022/06/26 15:50:21 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.117 2022/06/26 22:51:58 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -817,7 +817,9 @@ pppx_if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	struct pppx_if *pxi = (struct pppx_if *)ifp->if_softc;
 	struct pppx_hdr *th;
 	int error = 0;
-	int proto;
+	int pipex_enable_local, proto;
+
+	pipex_enable_local = atomic_load_int(&pipex_enable);
 
 	NET_ASSERT_LOCKED();
 
@@ -831,7 +833,7 @@ pppx_if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	if (ifp->if_bpf)
 		bpf_mtap_af(ifp->if_bpf, dst->sa_family, m, BPF_DIRECTION_OUT);
 #endif
-	if (pipex_enable) {
+	if (pipex_enable_local) {
 		switch (dst->sa_family) {
 #ifdef INET6
 		case AF_INET6:
@@ -856,7 +858,7 @@ pppx_if_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	}
 	*mtod(m, int *) = proto;
 
-	if (pipex_enable)
+	if (pipex_enable_local)
 		error = if_enqueue(ifp, m);
 	else {
 		M_PREPEND(m, sizeof(struct pppx_hdr), M_DONTWAIT);
