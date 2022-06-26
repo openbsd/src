@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.556 2022/01/17 04:12:15 jsg Exp $
+#	$OpenBSD: rc,v 1.557 2022/06/26 08:08:23 florian Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -441,7 +441,10 @@ fill_baddynamic tcp
 
 sysctl_conf
 
-start_daemon slaacd >/dev/null 2>&1
+mount -s /var >/dev/null 2>&1		# cannot be on NFS
+mount -s /var/log >/dev/null 2>&1	# cannot be on NFS
+
+start_daemon slaacd dhcpleased resolvd >/dev/null 2>&1
 
 echo 'starting network'
 
@@ -452,10 +455,8 @@ ifconfig -g carp carpdemote 128
 sh /etc/netstart
 
 mount -s /usr >/dev/null 2>&1
-mount -s /var >/dev/null 2>&1
-mount -s /var/log >/dev/null 2>&1
 
-start_daemon dhcpleased unwind resolvd >/dev/null 2>&1
+start_daemon unwind >/dev/null 2>&1
 
 random_seed
 
