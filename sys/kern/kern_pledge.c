@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.281 2022/03/25 17:40:59 robert Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.282 2022/06/26 06:11:49 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -977,6 +977,7 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 			case HW_PHYSMEM64:	/* hw.physmem */
 			case HW_NCPU:		/* hw.ncpu */
 			case HW_NCPUONLINE:	/* hw.ncpuonline */
+			case HW_USERMEM64:	/* hw.usermem */
 				return (0);
 			}
 			break;
