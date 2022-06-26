@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.73 2022/02/25 23:51:03 guenther Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.74 2022/06/26 15:50:21 mvs Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -70,7 +70,6 @@ gre_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	if (inp != NULL && inp->inp_pipex && req == PRU_SEND) {
 		struct sockaddr_in *sin4;
 		struct in_addr *ina_dst;
-		struct pipex_session *session;
 
 		ina_dst = NULL;
 		if ((so->so_state & SS_ISCONNECTED) != 0) {
@@ -81,10 +80,17 @@ gre_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			if (in_nam2sin(nam, &sin4) == 0)
 				ina_dst = &sin4->sin_addr;
 		}
-		if (ina_dst != NULL &&
-		    (session = pipex_pptp_userland_lookup_session_ipv4(m,
-			    *ina_dst)))
-			m = pipex_pptp_userland_output(m, session);
+		if (ina_dst != NULL) {
+			struct pipex_session *session;
+
+			session = pipex_pptp_userland_lookup_session_ipv4(m,
+			    *ina_dst);
+
+			if(session != NULL) {
+				m = pipex_pptp_userland_output(m, session);
+				pipex_rele_session(session);
+			}
+		}
 
 		if (m == NULL)
 			return (ENOMEM);

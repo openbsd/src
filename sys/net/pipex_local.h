@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.46 2022/06/26 13:14:37 mvs Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.47 2022/06/26 15:50:21 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,6 +25,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/mutex.h>
+#include <sys/refcnt.h>
+
+extern struct mutex pipex_list_mtx;
 
 #define	PIPEX_PPTP	1
 #define	PIPEX_L2TP	1
@@ -53,6 +58,7 @@
  * Locks used to protect struct members:
  *      I       immutable after creation
  *      N       net lock
+ *      L       pipex_list_mtx
  *      s       this pipex_session' `pxs_mtx'
  *      m       this pipex_mppe' `pxm_mtx'
  */
@@ -153,26 +159,28 @@ struct cpumem;
 /* pppac ip-extension session table */
 struct pipex_session {
 	struct radix_node	ps4_rn[2];
-					/* [N] tree glue, and other values */
+					/* [L] tree glue, and other values */
 	struct radix_node	ps6_rn[2];
-					/* [N] tree glue, and other values */
+					/* [L] tree glue, and other values */
+
+	struct refcnt pxs_refcnt;
 	struct mutex pxs_mtx;
 
-	LIST_ENTRY(pipex_session) session_list;	/* [N] all session chain */
-	LIST_ENTRY(pipex_session) state_list;	/* [N] state list chain */
-	LIST_ENTRY(pipex_session) id_chain;	/* [N] id hash chain */
+	LIST_ENTRY(pipex_session) session_list;	/* [L] all session chain */
+	LIST_ENTRY(pipex_session) state_list;	/* [L] state list chain */
+	LIST_ENTRY(pipex_session) id_chain;	/* [L] id hash chain */
 	LIST_ENTRY(pipex_session) peer_addr_chain;
-					/* [N] peer's address hash chain */
-	uint16_t	state;		/* [N] pipex session state */
+					/* [L] peer's address hash chain */
+	u_int		state;		/* [L] pipex session state */
 #define PIPEX_STATE_INITIAL		0x0000
 #define PIPEX_STATE_OPENED		0x0001
 #define PIPEX_STATE_CLOSE_WAIT		0x0002
 #define PIPEX_STATE_CLOSE_WAIT2		0x0003
 #define PIPEX_STATE_CLOSED		0x0004
 
-	uint32_t	idle_time;	/* [N] idle time in seconds */
+	uint32_t	idle_time;	/* [L] idle time in seconds */
 
-	u_int		flags;		     /* [N] flags, see below */
+	u_int		flags;		/* [N] flags, see below */
 #define PIPEX_SFLAGS_IP_FORWARD		0x01 /* [N] enable IP forwarding */
 #define PIPEX_SFLAGS_IP6_FORWARD	0x02 /* [N] enable IPv6 forwarding */
 #define PIPEX_SFLAGS_MULTICAST		0x04 /* [I] virtual entry for
@@ -401,10 +409,10 @@ extern struct pool		pipex_session_pool;
 void                  pipex_destroy_all_sessions (void *);
 int                   pipex_init_session(struct pipex_session **,
                                              struct pipex_session_req *);
-void                  pipex_rele_session(struct pipex_session *);
 int                   pipex_link_session(struct pipex_session *,
                           struct ifnet *, void *);
 void                  pipex_unlink_session(struct pipex_session *);
+void                  pipex_unlink_session_locked(struct pipex_session *);
 void                  pipex_export_session_stats(struct pipex_session *,
                           struct pipex_statistics *);
 int                   pipex_config_session (struct pipex_session_config_req *,
@@ -413,7 +421,9 @@ int                   pipex_get_stat (struct pipex_session_stat_req *,
                           void *);
 int                   pipex_get_closed (struct pipex_session_list_req *,
                           void *);
+struct pipex_session  *pipex_lookup_by_ip_address_locked (struct in_addr);
 struct pipex_session  *pipex_lookup_by_ip_address (struct in_addr);
+struct pipex_session  *pipex_lookup_by_session_id_locked (int, int);
 struct pipex_session  *pipex_lookup_by_session_id (int, int);
 void                  pipex_ip_output (struct mbuf *, struct pipex_session *);
 void                  pipex_ppp_output (struct mbuf *, struct pipex_session *, int);

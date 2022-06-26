@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.137 2022/06/26 13:14:37 mvs Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.138 2022/06/26 15:50:21 mvs Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -40,6 +40,7 @@
 #include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/percpu.h>
+#include <sys/mutex.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -79,6 +80,8 @@
 #include <net/pipex.h>
 #include "pipex_local.h"
 
+struct mutex pipex_list_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
+
 struct pool pipex_session_pool;
 struct pool mppe_key_pool;
 
@@ -88,17 +91,18 @@ struct pool mppe_key_pool;
  *       A       atomic operation
  *       I       immutable after creation
  *       N       net lock
+ *       L       pipex_list_mtx
  */
 
 int	pipex_enable = 0;			/* [N] */
 struct pipex_hash_head
-    pipex_session_list,				/* [N] master session list */
-    pipex_close_wait_list,			/* [N] expired session list */
-    pipex_peer_addr_hashtable[PIPEX_HASH_SIZE],	/* [N] peer's address hash */
-    pipex_id_hashtable[PIPEX_HASH_SIZE];	/* [N] peer id hash */
+    pipex_session_list,				/* [L] master session list */
+    pipex_close_wait_list,			/* [L] expired session list */
+    pipex_peer_addr_hashtable[PIPEX_HASH_SIZE],	/* [L] peer's address hash */
+    pipex_id_hashtable[PIPEX_HASH_SIZE];	/* [L] peer id hash */
 
-struct radix_node_head	*pipex_rd_head4 = NULL;	/* [N] */
-struct radix_node_head	*pipex_rd_head6 = NULL;	/* [N] */
+struct radix_node_head	*pipex_rd_head4 = NULL;	/* [L] */
+struct radix_node_head	*pipex_rd_head6 = NULL;	/* [L] */
 struct timeout pipex_timer_ch;		/* callout timer context */
 int pipex_prune = 1;			/* [I] walk list every seconds */
 
@@ -145,16 +149,18 @@ pipex_destroy_all_sessions(void *ownersc)
 {
 	struct pipex_session *session, *session_tmp;
 
-	NET_ASSERT_LOCKED();
+	mtx_enter(&pipex_list_mtx);
 
 	LIST_FOREACH_SAFE(session, &pipex_session_list, session_list,
 	    session_tmp) {
 		if (session->ownersc == ownersc) {
 			KASSERT((session->flags & PIPEX_SFLAGS_PPPX) == 0);
-			pipex_unlink_session(session);
+			pipex_unlink_session_locked(session);
 			pipex_rele_session(session);
 		}
 	}
+
+	mtx_leave(&pipex_list_mtx);
 }
 
 int
@@ -263,6 +269,7 @@ pipex_init_session(struct pipex_session **rsession,
 
 	/* prepare a new session */
 	session = pool_get(&pipex_session_pool, PR_WAITOK | PR_ZERO);
+	refcnt_init(&session->pxs_refcnt);
 	mtx_init(&session->pxs_mtx, IPL_SOFTNET);
 	session->state = PIPEX_STATE_INITIAL;
 	session->protocol = req->pr_protocol;
@@ -363,6 +370,9 @@ pipex_init_session(struct pipex_session **rsession,
 void
 pipex_rele_session(struct pipex_session *session)
 {
+	if (refcnt_rele(&session->pxs_refcnt) == 0)
+		return;
+
 	if (session->mppe_recv.old_session_keys)
 		pool_put(&mppe_key_pool, session->mppe_recv.old_session_keys);
 	counters_free(session->stat_counters, pxc_ncounters);
@@ -375,8 +385,9 @@ pipex_link_session(struct pipex_session *session, struct ifnet *ifp,
 {
 	struct pipex_hash_head *chain;
 	struct radix_node *rn;
+	int error = 0;
 
-	NET_ASSERT_LOCKED();
+	mtx_enter(&pipex_list_mtx);
 
 	if (pipex_rd_head4 == NULL) {
 		if (!rn_inithead((void **)&pipex_rd_head4,
@@ -388,9 +399,11 @@ pipex_link_session(struct pipex_session *session, struct ifnet *ifp,
 		    offsetof(struct sockaddr_in6, sin6_addr)))
 			panic("rn_inithead() failed on pipex_link_session()");
 	}
-	if (pipex_lookup_by_session_id(session->protocol,
-	    session->session_id))
-		return (EEXIST);
+	if (pipex_lookup_by_session_id_locked(session->protocol,
+	    session->session_id)) {
+		error = EEXIST;
+		goto out;
+	}
 
 	session->ownersc = ownersc;
 	session->ifindex = ifp->if_index;
@@ -399,13 +412,17 @@ pipex_link_session(struct pipex_session *session, struct ifnet *ifp,
 
 	if ((session->flags & PIPEX_SFLAGS_PPPX) == 0 &&
 	    !in_nullhost(session->ip_address.sin_addr)) {
-		if (pipex_lookup_by_ip_address(session->ip_address.sin_addr)
-		    != NULL)
-			return (EADDRINUSE);
+		if (pipex_lookup_by_ip_address_locked(
+		    session->ip_address.sin_addr) != NULL) {
+			error = EADDRINUSE;
+			goto out;
+		}
 		rn = rn_addroute(&session->ip_address, &session->ip_netmask,
 		    pipex_rd_head4, session->ps4_rn, RTP_STATIC);
-		if (rn == NULL)
-			return (ENOMEM);
+		if (rn == NULL) {
+			error = ENOMEM;
+			goto out;
+		}
 	}
 
 	LIST_INSERT_HEAD(&pipex_session_list, session, session_list);
@@ -426,17 +443,21 @@ pipex_link_session(struct pipex_session *session, struct ifnet *ifp,
 		pipex_timer_start();
 	session->state = PIPEX_STATE_OPENED;
 
-	return (0);
+out:
+	mtx_leave(&pipex_list_mtx);
+
+	return error;
 }
 
 void
-pipex_unlink_session(struct pipex_session *session)
+pipex_unlink_session_locked(struct pipex_session *session)
 {
 	struct radix_node *rn;
 
+	MUTEX_ASSERT_LOCKED(&pipex_list_mtx);
+
 	session->ifindex = 0;
 
-	NET_ASSERT_LOCKED();
 	if (session->state == PIPEX_STATE_CLOSED)
 		return;
 	if ((session->flags & PIPEX_SFLAGS_PPPX) == 0 &&
@@ -466,10 +487,19 @@ pipex_unlink_session(struct pipex_session *session)
 		pipex_timer_stop();
 }
 
+void
+pipex_unlink_session(struct pipex_session *session)
+{
+	mtx_enter(&pipex_list_mtx);
+	pipex_unlink_session_locked(session);
+	mtx_leave(&pipex_list_mtx);
+}
+
 int
 pipex_notify_close_session(struct pipex_session *session)
 {
-	NET_ASSERT_LOCKED();
+	MUTEX_ASSERT_LOCKED(&pipex_list_mtx);
+
 	session->state = PIPEX_STATE_CLOSE_WAIT;
 	session->idle_time = 0;
 	LIST_INSERT_HEAD(&pipex_close_wait_list, session, state_list);
@@ -499,38 +529,49 @@ Static int
 pipex_config_session(struct pipex_session_config_req *req, void *ownersc)
 {
 	struct pipex_session *session;
+	int error = 0;
 
 	NET_ASSERT_LOCKED();
+
 	session = pipex_lookup_by_session_id(req->pcr_protocol,
 	    req->pcr_session_id);
 	if (session == NULL)
 		return (EINVAL);
-	if (session->ownersc != ownersc)
-		return (EINVAL);
 
-	if (req->pcr_ip_forward != 0)
-		session->flags |= PIPEX_SFLAGS_IP_FORWARD;
-	else
-		session->flags &= ~PIPEX_SFLAGS_IP_FORWARD;
+	if (session->ownersc == ownersc) {
+		if (req->pcr_ip_forward != 0)
+			session->flags |= PIPEX_SFLAGS_IP_FORWARD;
+		else
+			session->flags &= ~PIPEX_SFLAGS_IP_FORWARD;
+	} else
+		error = EINVAL;
 
-	return (0);
+	pipex_rele_session(session);
+
+	return error;
 }
 
 Static int
 pipex_get_stat(struct pipex_session_stat_req *req, void *ownersc)
 {
 	struct pipex_session *session;
+	int error = 0;
 
 	NET_ASSERT_LOCKED();
+
 	session = pipex_lookup_by_session_id(req->psr_protocol,
 	    req->psr_session_id);
 	if (session == NULL)
 		return (EINVAL);
-	if (session->ownersc != ownersc)
-		return (EINVAL);
-	pipex_export_session_stats(session, &req->psr_stat);
 
-	return (0);
+	if (session->ownersc == ownersc)
+		pipex_export_session_stats(session, &req->psr_stat);
+	else
+		error = EINVAL;
+
+	pipex_rele_session(session);
+
+	return error;
 }
 
 Static int
@@ -538,8 +579,10 @@ pipex_get_closed(struct pipex_session_list_req *req, void *ownersc)
 {
 	struct pipex_session *session, *session_tmp;
 
-	NET_ASSERT_LOCKED();
 	bzero(req, sizeof(*req));
+
+	mtx_enter(&pipex_list_mtx);
+
 	LIST_FOREACH_SAFE(session, &pipex_close_wait_list, state_list,
 	    session_tmp) {
 		if (session->ownersc != ownersc)
@@ -554,14 +597,18 @@ pipex_get_closed(struct pipex_session_list_req *req, void *ownersc)
 		}
 	}
 
+	mtx_leave(&pipex_list_mtx);
+
 	return (0);
 }
 
 Static struct pipex_session *
-pipex_lookup_by_ip_address(struct in_addr addr)
+pipex_lookup_by_ip_address_locked(struct in_addr addr)
 {
 	struct pipex_session *session;
 	struct sockaddr_in pipex_in4, pipex_in4mask;
+
+	MUTEX_ASSERT_LOCKED(&pipex_list_mtx);
 
 	if (pipex_rd_head4 == NULL)
 		return (NULL);
@@ -590,13 +637,31 @@ pipex_lookup_by_ip_address(struct in_addr addr)
 	return (session);
 }
 
+struct pipex_session *
+pipex_lookup_by_ip_address(struct in_addr addr)
+{
+	struct pipex_session *session;
+
+	mtx_enter(&pipex_list_mtx);
+
+	session = pipex_lookup_by_ip_address_locked(addr);
+	if (session != NULL)
+		refcnt_take(&session->pxs_refcnt);
+
+	mtx_leave(&pipex_list_mtx);
+
+	return (session);
+}
+
+
 Static struct pipex_session *
-pipex_lookup_by_session_id(int protocol, int session_id)
+pipex_lookup_by_session_id_locked(int protocol, int session_id)
 {
 	struct pipex_hash_head *list;
 	struct pipex_session *session;
 
-	NET_ASSERT_LOCKED();
+	MUTEX_ASSERT_LOCKED(&pipex_list_mtx);
+
 	list = PIPEX_ID_HASHTABLE(session_id);
 	LIST_FOREACH(session, list, id_chain) {
 		if (session->protocol == protocol &&
@@ -610,6 +675,22 @@ pipex_lookup_by_session_id(int protocol, int session_id)
 		    "<%s> session not found (session_id=%d)", __func__,
 		    session_id));
 #endif
+
+	return (session);
+}
+
+struct pipex_session *
+pipex_lookup_by_session_id(int protocol, int session_id)
+{
+	struct pipex_session *session;
+
+	mtx_enter(&pipex_list_mtx);
+
+	session = pipex_lookup_by_session_id_locked(protocol, session_id);
+	if (session != NULL)
+		refcnt_take(&session->pxs_refcnt);
+
+	mtx_leave(&pipex_list_mtx);
 
 	return (session);
 }
@@ -637,7 +718,7 @@ pipex_timer(void *ignored_arg)
 
 	timeout_add_sec(&pipex_timer_ch, pipex_prune);
 
-	NET_LOCK();
+	mtx_enter(&pipex_list_mtx);
 	/* walk through */
 	LIST_FOREACH_SAFE(session, &pipex_session_list, session_list,
 	    session_tmp) {
@@ -660,7 +741,7 @@ pipex_timer(void *ignored_arg)
 			if (session->idle_time < PIPEX_CLOSE_TIMEOUT)
 				continue;
 			/* Release the sessions when timeout */
-			pipex_unlink_session(session);
+			pipex_unlink_session_locked(session);
 			KASSERTMSG((session->flags & PIPEX_SFLAGS_PPPX) == 0,
 			    "FIXME session must not be released when pppx");
 			pipex_rele_session(session);
@@ -671,7 +752,7 @@ pipex_timer(void *ignored_arg)
 		}
 	}
 
-	NET_UNLOCK();
+	mtx_leave(&pipex_list_mtx);
 }
 
 /***********************************************************************
@@ -695,9 +776,12 @@ pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 			m0 = ip_is_idle_packet(m0, &is_idle);
 			if (m0 == NULL)
 				goto dropped;
-			if (is_idle == 0)
+			if (is_idle == 0) {
+				mtx_enter(&pipex_list_mtx);
 				/* update expire time */
 				session->idle_time = 0;
+				mtx_leave(&pipex_list_mtx);
+			}
 		}
 
 		/* adjust tcpmss */
@@ -914,9 +998,12 @@ pipex_ip_input(struct mbuf *m0, struct pipex_session *session)
 		m0 = ip_is_idle_packet(m0, &is_idle);
 		if (m0 == NULL)
 			goto drop;
-		if (is_idle == 0)
+		if (is_idle == 0) {
 			/* update expire time */
+			mtx_enter(&pipex_list_mtx);
 			session->idle_time = 0;
+			mtx_leave(&pipex_list_mtx);
+		}
 	}
 
 	/* adjust tcpmss */
@@ -1132,8 +1219,11 @@ pipex_pppoe_lookup_session(struct mbuf *m0)
 		PIPEX_DBG((NULL, LOG_DEBUG, "<%s> session not found (id=%d)",
 		    __func__, pppoe.session_id));
 #endif
-	if (session && session->proto.pppoe.over_ifidx != m0->m_pkthdr.ph_ifidx)
+	if (session && session->proto.pppoe.over_ifidx !=
+	    m0->m_pkthdr.ph_ifidx) {
+		pipex_rele_session(session);
 		session = NULL;
+	}
 
 	return (session);
 }
@@ -1144,7 +1234,6 @@ pipex_pppoe_input(struct mbuf *m0, struct pipex_session *session)
 	int hlen;
 	struct pipex_pppoe_header pppoe;
 
-	NET_ASSERT_LOCKED();
 	/* already checked at pipex_pppoe_lookup_session */
 	KASSERT(m0->m_pkthdr.len >= (sizeof(struct ether_header) +
 	    sizeof(pppoe)));
@@ -1568,6 +1657,8 @@ pipex_pptp_userland_lookup_session(struct mbuf *m0, struct sockaddr *sa)
 	/* lookup pipex session table */
 	id = ntohs(gre.call_id);
 
+	mtx_enter(&pipex_list_mtx);
+
 	list = PIPEX_PEER_ADDR_HASHTABLE(pipex_sockaddr_hash_key(sa));
 	LIST_FOREACH(session, list, peer_addr_chain) {
 		if (pipex_sockaddr_compar_addr(&session->peer.sa, sa) != 0)
@@ -1575,6 +1666,12 @@ pipex_pptp_userland_lookup_session(struct mbuf *m0, struct sockaddr *sa)
 		if (session->peer_session_id == id)
 			break;
 	}
+
+	if (session != NULL)
+		refcnt_take(&session->pxs_refcnt);
+
+	mtx_leave(&pipex_list_mtx);
+
 #ifdef PIPEX_DEBUG
 	if (session == NULL) {
 		PIPEX_DBG((NULL, LOG_DEBUG,
@@ -1834,6 +1931,7 @@ pipex_l2tp_input(struct mbuf *m0, int off0, struct pipex_session *session,
 	int rewind = 0;
 
 	NET_ASSERT_LOCKED();
+
 	length = offset = ns = nr = 0;
 	l2tp_session = &session->proto.l2tp;
 	l2tp_session->ipsecflowinfo = ipsecflowinfo;
@@ -2010,6 +2108,8 @@ pipex_l2tp_userland_lookup_session(struct mbuf *m0, struct sockaddr *sa)
 	session_id = ntohs(l2tp.session_id);
 	tunnel_id = ntohs(l2tp.tunnel_id);
 
+	mtx_enter(&pipex_list_mtx);
+
 	list = PIPEX_PEER_ADDR_HASHTABLE(pipex_sockaddr_hash_key(sa));
 	LIST_FOREACH(session, list, peer_addr_chain) {
 		if (pipex_sockaddr_compar_addr(&session->peer.sa, sa) != 0)
@@ -2019,6 +2119,12 @@ pipex_l2tp_userland_lookup_session(struct mbuf *m0, struct sockaddr *sa)
 		if (session->peer_session_id == session_id)
 			break;
 	}
+
+	if (session != NULL)
+		refcnt_take(&session->pxs_refcnt);
+
+	mtx_leave(&pipex_list_mtx);
+
 #ifdef PIPEX_DEBUG
 	if (session == NULL) {
 		PIPEX_DBG((NULL, LOG_DEBUG, "<%s> session not found "

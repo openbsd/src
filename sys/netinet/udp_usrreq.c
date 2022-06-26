@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.278 2022/05/15 09:12:20 dlg Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.279 2022/06/26 15:50:21 mvs Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -565,12 +565,14 @@ udp_input(struct mbuf **mp, int *offp, int proto, int af)
 	if (pipex_enable && inp->inp_pipex) {
 		struct pipex_session *session;
 		int off = iphlen + sizeof(struct udphdr);
+
 		if ((session = pipex_l2tp_lookup_session(m, off)) != NULL) {
-			if ((m = *mp = pipex_l2tp_input(m, off, session,
-			    ipsecflowinfo)) == NULL) {
-				/* the packet is handled by PIPEX */
+			m = *mp = pipex_l2tp_input(m, off, session,
+			    ipsecflowinfo);
+			pipex_rele_session(session);
+
+			if (m == NULL)
 				return IPPROTO_DONE;
-			}
 		}
 	}
 #endif
@@ -1150,12 +1152,15 @@ udp_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *addr,
 				session =
 				    pipex_l2tp_userland_lookup_session_ipv4(
 					m, inp->inp_faddr);
-			if (session != NULL)
-				if ((m = pipex_l2tp_userland_output(
-				    m, session)) == NULL) {
+			if (session != NULL) {
+				m = pipex_l2tp_userland_output(m, session);
+				pipex_rele_session(session);
+
+				if (m == NULL) {
 					error = ENOMEM;
 					goto release;
 				}
+			}
 		}
 #endif
 

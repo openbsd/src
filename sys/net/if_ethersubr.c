@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.279 2022/04/22 12:10:57 bluhm Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.280 2022/06/26 15:50:21 mvs Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -547,9 +547,11 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 			if ((session = pipex_pppoe_lookup_session(m)) != NULL) {
 				pipex_pppoe_input(m, session);
+				pipex_rele_session(session);
 				KERNEL_UNLOCK();
 				return;
 			}
+			pipex_rele_session(session);
 		}
 #endif
 		if (etype == ETHERTYPE_PPPOEDISC)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.115 2022/06/26 13:14:37 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.116 2022/06/26 15:50:21 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1322,9 +1322,7 @@ pppacclose(dev_t dev, int flags, int mode, struct proc *p)
 	splx(s);
 
 	pool_put(&pipex_session_pool, sc->sc_multicast_session);
-	NET_LOCK();
 	pipex_destroy_all_sessions(sc);
-	NET_UNLOCK();
 
 	LIST_REMOVE(sc, sc_entry);
 	free(sc, M_DEVBUF, sizeof(*sc));
@@ -1384,12 +1382,18 @@ pppac_del_session(struct pppac_softc *sc, struct pipex_session_close_req *req)
 {
 	struct pipex_session *session;
 
-	session = pipex_lookup_by_session_id(req->pcr_protocol,
+	mtx_enter(&pipex_list_mtx);
+
+	session = pipex_lookup_by_session_id_locked(req->pcr_protocol,
 	    req->pcr_session_id);
-	if (session == NULL || session->ownersc != sc)
+	if (session == NULL || session->ownersc != sc) {
+		mtx_leave(&pipex_list_mtx);
 		return (EINVAL);
-	pipex_unlink_session(session);
+	}
+	pipex_unlink_session_locked(session);
 	pipex_rele_session(session);
+
+	mtx_leave(&pipex_list_mtx);
 
 	return (0);
 }
@@ -1461,6 +1465,7 @@ pppac_qstart(struct ifqueue *ifq)
 				session = pipex_lookup_by_ip_address(ip.ip_dst);
 				if (session != NULL) {
 					pipex_ip_output(m, session);
+					pipex_rele_session(session);
 					m = NULL;
 				}
 			}
