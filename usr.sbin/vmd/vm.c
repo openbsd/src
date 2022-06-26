@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.69 2022/05/03 21:39:18 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.70 2022/06/26 06:49:09 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -64,6 +64,9 @@
 #include "virtio.h"
 #include "vmd.h"
 #include "vmm.h"
+
+#define MB(x)	(x * 1024UL * 1024UL)
+#define GB(x)	(x * 1024UL * 1024UL * 1024UL)
 
 io_fn_t ioports_map[MAX_PORTS];
 
@@ -234,10 +237,20 @@ loadfile_bios(gzFile fp, off_t size, struct vcpu_reg_state *vrs)
 		return (-1);
 
 	/* The BIOS image must end at 1MB */
-	if ((off = 1048576 - size) < 0)
+	if ((off = MB(1) - size) < 0)
 		return (-1);
 
 	/* Read BIOS image into memory */
+	if (mread(fp, off, size) != (size_t)size) {
+		errno = EIO;
+		return (-1);
+	}
+
+	if (gzseek(fp, 0, SEEK_SET) == -1)
+		return (-1);
+
+	/* Read a second BIOS copy into memory ending at 4GB */
+	off = GB(4) - size;
 	if (mread(fp, off, size) != (size_t)size) {
 		errno = EIO;
 		return (-1);
@@ -872,6 +885,7 @@ void
 create_memory_map(struct vm_create_params *vcp)
 {
 	size_t len, mem_bytes;
+	size_t above_1m = 0, above_4g = 0;
 
 	mem_bytes = vcp->vcp_memranges[0].vmr_size;
 	vcp->vcp_nmemranges = 0;
@@ -893,29 +907,47 @@ create_memory_map(struct vm_create_params *vcp)
 	 * we need to make sure that vmm(4) permits accesses
 	 * to it. So allocate guest memory for it.
 	 */
-	len = 0x100000 - LOWMEM_KB * 1024;
+	len = MB(1) - (LOWMEM_KB * 1024);
 	vcp->vcp_memranges[1].vmr_gpa = LOWMEM_KB * 1024;
 	vcp->vcp_memranges[1].vmr_size = len;
 	mem_bytes -= len;
 
-	/* Make sure that we do not place physical memory into MMIO ranges. */
-	if (mem_bytes > VMM_PCI_MMIO_BAR_BASE - 0x100000)
-		len = VMM_PCI_MMIO_BAR_BASE - 0x100000;
-	else
-		len = mem_bytes;
-
-	/* Third memory region: 1MB - (1MB + len) */
-	vcp->vcp_memranges[2].vmr_gpa = 0x100000;
-	vcp->vcp_memranges[2].vmr_size = len;
-	mem_bytes -= len;
-
-	if (mem_bytes > 0) {
-		/* Fourth memory region for the remaining memory (if any) */
-		vcp->vcp_memranges[3].vmr_gpa = VMM_PCI_MMIO_BAR_END + 1;
-		vcp->vcp_memranges[3].vmr_size = mem_bytes;
-		vcp->vcp_nmemranges = 4;
-	} else
+	/* If we have less than 2MB remaining, still create a 2nd BIOS area. */
+	if (mem_bytes <= MB(2)) {
+		vcp->vcp_memranges[2].vmr_gpa = VMM_PCI_MMIO_BAR_END;
+		vcp->vcp_memranges[2].vmr_size = MB(2);
 		vcp->vcp_nmemranges = 3;
+		return;
+	}
+
+	/*
+	 * Calculate the how to split any remaining memory across the 4GB
+	 * boundary while making sure we do not place physical memory into
+	 * MMIO ranges.
+	 */
+	if (mem_bytes > VMM_PCI_MMIO_BAR_BASE - MB(1)) {
+		above_1m = VMM_PCI_MMIO_BAR_BASE - MB(1);
+		above_4g = mem_bytes - above_1m;
+	} else {
+		above_1m = mem_bytes;
+		above_4g = 0;
+	}
+
+	/* Third memory region: area above 1MB to MMIO region */
+	vcp->vcp_memranges[2].vmr_gpa = MB(1);
+	vcp->vcp_memranges[2].vmr_size = above_1m;
+
+	/* Fourth region: 2nd copy of BIOS above MMIO ending at 4GB */
+	vcp->vcp_memranges[3].vmr_gpa = VMM_PCI_MMIO_BAR_END + 1;
+	vcp->vcp_memranges[3].vmr_size = MB(2);
+
+	/* Fifth region: any remainder above 4GB */
+	if (above_4g > 0) {
+		vcp->vcp_memranges[4].vmr_gpa = GB(4);
+		vcp->vcp_memranges[4].vmr_size = above_4g;
+		vcp->vcp_nmemranges = 5;
+	} else
+		vcp->vcp_nmemranges = 4;
 }
 
 /*
@@ -1015,16 +1047,18 @@ init_emulated_hw(struct vmop_create_params *vmc, int child_cdrom,
     int child_disks[][VM_MAX_BASE_PER_DISK], int *child_taps)
 {
 	struct vm_create_params *vcp = &vmc->vmc_params;
-	int i;
+	size_t i;
 	uint64_t memlo, memhi;
 
 	/* Calculate memory size for NVRAM registers */
 	memlo = memhi = 0;
-	if (vcp->vcp_nmemranges > 2)
-		memlo = vcp->vcp_memranges[2].vmr_size - 15 * 0x100000;
-
-	if (vcp->vcp_nmemranges > 3)
-		memhi = vcp->vcp_memranges[3].vmr_size;
+	for (i = 0; i < vcp->vcp_nmemranges; i++) {
+		if (vcp->vcp_memranges[i].vmr_gpa == MB(1) &&
+		    vcp->vcp_memranges[i].vmr_size > (15 * MB(1)))
+			memlo = vcp->vcp_memranges[i].vmr_size - (15 * MB(1));
+		else if (vcp->vcp_memranges[i].vmr_gpa == GB(4))
+			memhi = vcp->vcp_memranges[i].vmr_size;
+	}
 
 	/* Reset the IO port map */
 	memset(&ioports_map, 0, sizeof(io_fn_t) * MAX_PORTS);
