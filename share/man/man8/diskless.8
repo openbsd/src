@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.71 2021/05/01 16:11:10 visa Exp $
+.\"	$OpenBSD: diskless.8,v 1.72 2022/06/26 12:34:41 deraadt Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 1 2021 $
+.Dd $Mdocdate: June 26 2022 $
 .Dt DISKLESS 8
 .Os
 .Sh NAME
@@ -327,14 +327,11 @@ the critical mount points in the client's
 myserver:/export/myclient/root / nfs rw 0 0
 myserver:/export/myclient/swap none swap sw,nfsmntpt=/swap
 myserver:/export/myclient/root/usr /usr nfs rw,nodev 0 0
-myserver:/export/myclient/root/var /var nfs rw,nosuid,nodev 0 0
 .Ed
 .Pp
 The above example works even if
 .Pa /usr
-and
-.Pa /var
-are not on separate partitions.
+is not on a separate partition.
 It allows them to be mounted with NFSv3,
 if the server allows it,
 and to specify per-partition mount options,
