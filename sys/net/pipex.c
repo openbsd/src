@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.136 2022/01/02 22:36:04 jsg Exp $	*/
+/*	$OpenBSD: pipex.c,v 1.137 2022/06/26 13:14:37 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -150,7 +150,7 @@ pipex_destroy_all_sessions(void *ownersc)
 	LIST_FOREACH_SAFE(session, &pipex_session_list, session_list,
 	    session_tmp) {
 		if (session->ownersc == ownersc) {
-			KASSERT(session->is_pppx == 0);
+			KASSERT((session->flags & PIPEX_SFLAGS_PPPX) == 0);
 			pipex_unlink_session(session);
 			pipex_rele_session(session);
 		}
@@ -273,7 +273,7 @@ pipex_init_session(struct pipex_session **rsession,
 	session->ppp_flags = req->pr_ppp_flags;
 	session->ppp_id = req->pr_ppp_id;
 
-	session->ip_forward = 1;
+	session->flags |= PIPEX_SFLAGS_IP_FORWARD;
 
 	session->stat_counters = counters_alloc(pxc_ncounters);
 
@@ -395,9 +395,9 @@ pipex_link_session(struct pipex_session *session, struct ifnet *ifp,
 	session->ownersc = ownersc;
 	session->ifindex = ifp->if_index;
 	if (ifp->if_flags & IFF_POINTOPOINT)
-		session->is_pppx = 1;
+		session->flags |= PIPEX_SFLAGS_PPPX;
 
-	if (session->is_pppx == 0 &&
+	if ((session->flags & PIPEX_SFLAGS_PPPX) == 0 &&
 	    !in_nullhost(session->ip_address.sin_addr)) {
 		if (pipex_lookup_by_ip_address(session->ip_address.sin_addr)
 		    != NULL)
@@ -439,7 +439,7 @@ pipex_unlink_session(struct pipex_session *session)
 	NET_ASSERT_LOCKED();
 	if (session->state == PIPEX_STATE_CLOSED)
 		return;
-	if (session->is_pppx == 0 &&
+	if ((session->flags & PIPEX_SFLAGS_PPPX) == 0 &&
 	    !in_nullhost(session->ip_address.sin_addr)) {
 		KASSERT(pipex_rd_head4 != NULL);
 		rn = rn_delete(&session->ip_address, &session->ip_netmask,
@@ -507,7 +507,11 @@ pipex_config_session(struct pipex_session_config_req *req, void *ownersc)
 		return (EINVAL);
 	if (session->ownersc != ownersc)
 		return (EINVAL);
-	session->ip_forward = req->pcr_ip_forward;
+
+	if (req->pcr_ip_forward != 0)
+		session->flags |= PIPEX_SFLAGS_IP_FORWARD;
+	else
+		session->flags &= ~PIPEX_SFLAGS_IP_FORWARD;
 
 	return (0);
 }
@@ -657,7 +661,7 @@ pipex_timer(void *ignored_arg)
 				continue;
 			/* Release the sessions when timeout */
 			pipex_unlink_session(session);
-			KASSERTMSG(session->is_pppx == 0,
+			KASSERTMSG((session->flags & PIPEX_SFLAGS_PPPX) == 0,
 			    "FIXME session must not be released when pppx");
 			pipex_rele_session(session);
 			break;
@@ -678,11 +682,12 @@ pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 {
 	int is_idle;
 
-	if (session->is_multicast == 0) {
+	if ((session->flags & PIPEX_SFLAGS_MULTICAST) == 0) {
 		/*
 		 * Multicast packet is a idle packet and it's not TCP.
 		 */
-		if (session->ip_forward == 0 && session->ip6_forward == 0)
+		if ((session->flags & (PIPEX_SFLAGS_IP_FORWARD |
+		    PIPEX_SFLAGS_IP6_FORWARD)) == 0)
 			goto drop;
 		/* reset idle timer */
 		if (session->timeout_sec != 0) {
@@ -712,8 +717,8 @@ pipex_ip_output(struct mbuf *m0, struct pipex_session *session)
 		LIST_FOREACH(session_tmp, &pipex_session_list, session_list) {
 			if (session_tmp->ownersc != session->ownersc)
 				continue;
-			if (session_tmp->ip_forward == 0 &&
-			    session_tmp->ip6_forward == 0)
+			if ((session->flags & (PIPEX_SFLAGS_IP_FORWARD |
+			    PIPEX_SFLAGS_IP6_FORWARD)) == 0)
 				continue;
 			m = m_copym(m0, 0, M_COPYALL, M_NOWAIT);
 			if (m == NULL) {
@@ -838,7 +843,7 @@ pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 
 	switch (proto) {
 	case PPP_IP:
-		if (session->ip_forward == 0)
+		if ((session->flags & PIPEX_SFLAGS_IP_FORWARD) == 0)
 			goto drop;
 		if (!decrypted && pipex_session_is_mppe_required(session))
 			/*
@@ -850,7 +855,7 @@ pipex_ppp_input(struct mbuf *m0, struct pipex_session *session, int decrypted)
 		return;
 #ifdef INET6
 	case PPP_IPV6:
-		if (session->ip6_forward == 0)
+		if ((session->flags & PIPEX_SFLAGS_IP6_FORWARD) == 0)
 			goto drop;
 		if (!decrypted && pipex_session_is_mppe_required(session))
 			/*
@@ -2102,7 +2107,7 @@ pipex_mppe_init(struct pipex_mppe *mppe, int stateless, int keylenbits,
 	memset(mppe, 0, sizeof(struct pipex_mppe));
 	mtx_init(&mppe->pxm_mtx, IPL_SOFTNET);
 	if (stateless)
-		mppe->stateless = 1;
+		mppe->flags |= PIPEX_MPPE_STATELESS;
 	if (has_oldkey)
 		mppe->old_session_keys =
 		    pool_get(&mppe_key_pool, PR_WAITOK);
@@ -2273,7 +2278,7 @@ pipex_mppe_input(struct mbuf *m0, struct pipex_session *session)
 	if (coher_cnt < mppe->coher_cnt)
 		coher_cnt0 += 0x1000;
 	if (coher_cnt0 - mppe->coher_cnt > 0x0f00) {
-		if (!mppe->stateless ||
+		if ((mppe->flags & PIPEX_MPPE_STATELESS) == 0 ||
 		    coher_cnt0 - mppe->coher_cnt
 		    <= 0x1000 - PIPEX_MPPE_NOLDKEY) {
 			pipex_session_log(session, LOG_DEBUG,
@@ -2286,7 +2291,7 @@ pipex_mppe_input(struct mbuf *m0, struct pipex_session *session)
 	}
     }
 
-	if (mppe->stateless != 0) {
+	if ((mppe->flags & PIPEX_MPPE_STATELESS) != 0) {
 		if (!rewind) {
 			mppe_key_change(mppe);
 			while (mppe->coher_cnt != coher_cnt) {
@@ -2407,16 +2412,16 @@ pipex_mppe_output(struct mbuf *m0, struct pipex_session *session,
 
 	mtx_enter(&mppe->pxm_mtx);
 
-	if (mppe->stateless != 0) {
+	if ((mppe->flags & PIPEX_MPPE_STATELESS) != 0) {
 		flushed = 1;
 		mppe_key_change(mppe);
 	} else {
 		if ((mppe->coher_cnt % 0x100) == 0xff) {
 			flushed = 1;
 			mppe_key_change(mppe);
-		} else if (mppe->resetreq != 0) {
+		} else if ((mppe->flags & PIPEX_MPPE_RESETREQ) != 0) {
 			flushed = 1;
-			mppe->resetreq = 0;
+			mppe->flags &= ~PIPEX_MPPE_RESETREQ;
 		}
 	}
 
@@ -2478,7 +2483,7 @@ pipex_ccp_input(struct mbuf *m0, struct pipex_session *session)
 	case CCP_RESETREQ:
 		PIPEX_DBG((session, LOG_DEBUG, "CCP RecvResetReq"));
 		mtx_enter(&session->mppe_send.pxm_mtx);
-		session->mppe_send.resetreq = 1;
+		session->mppe_send.flags |= PIPEX_MPPE_RESETREQ;
 		mtx_leave(&session->mppe_send.pxm_mtx);
 #ifndef PIPEX_NO_CCP_RESETACK
 		PIPEX_DBG((session, LOG_DEBUG, "CCP SendResetAck"));

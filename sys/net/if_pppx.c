@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.114 2022/02/22 01:15:02 guenther Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.115 2022/06/26 13:14:37 mvs Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -1021,7 +1021,7 @@ pppacopen(dev_t dev, int flags, int mode, struct proc *p)
 
 	/* virtual pipex_session entry for multicast */
 	session = pool_get(&pipex_session_pool, PR_WAITOK | PR_ZERO);
-	session->is_multicast = 1;
+	session->flags |= PIPEX_SFLAGS_MULTICAST;
 	session->ownersc = sc;
 	sc->sc_multicast_session = session;
 

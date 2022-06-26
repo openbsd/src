@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex_local.h,v 1.45 2022/02/15 03:31:17 jsg Exp $	*/
+/*	$OpenBSD: pipex_local.h,v 1.46 2022/06/26 13:14:37 mvs Exp $	*/
 
 /*
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -61,9 +61,10 @@
 /* mppe rc4 key */
 struct pipex_mppe {
 	struct mutex pxm_mtx;
-	int16_t	stateless:1,			/* [I] key change mode */
-		resetreq:1,			/* [m] */
-		reserved:14;
+	u_int flags;				/* [m] flags, see below */
+#define PIPEX_MPPE_STATELESS	0x01		/* [I] key change mode */
+#define PIPEX_MPPE_RESETREQ	0x02		/* [m] */
+
 	int16_t	keylenbits;			/* [I] key length */
 	int16_t keylen;				/* [I] */
 	uint16_t coher_cnt;			/* [m] coherency counter */
@@ -170,11 +171,15 @@ struct pipex_session {
 #define PIPEX_STATE_CLOSED		0x0004
 
 	uint32_t	idle_time;	/* [N] idle time in seconds */
-	uint16_t	ip_forward:1,	/* [N] {en|dis}ableIP forwarding */
-			ip6_forward:1,	/* [I] {en|dis}able IPv6 forwarding */
-			is_multicast:1,	/* [I] virtual entry for multicast */
-			is_pppx:1,	/* [I] interface is point2point(pppx) */
-			reserved:12;
+
+	u_int		flags;		     /* [N] flags, see below */
+#define PIPEX_SFLAGS_IP_FORWARD		0x01 /* [N] enable IP forwarding */
+#define PIPEX_SFLAGS_IP6_FORWARD	0x02 /* [N] enable IPv6 forwarding */
+#define PIPEX_SFLAGS_MULTICAST		0x04 /* [I] virtual entry for
+						multicast */
+#define PIPEX_SFLAGS_PPPX		0x08 /* [I] interface is
+						point2point(pppx) */
+
 	uint16_t	protocol;		/* [I] tunnel protocol (PK) */
 	uint16_t	session_id;		/* [I] session-id (PK) */
 	uint16_t	peer_session_id;	/* [I] peer's session-id */
