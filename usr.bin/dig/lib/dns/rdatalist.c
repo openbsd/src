@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdatalist.c,v 1.5 2022/06/25 15:38:22 florian Exp $ */
+/* $Id: rdatalist.c,v 1.6 2022/06/26 09:43:39 florian Exp $ */
 
 /*! \file */
 
@@ -70,7 +70,6 @@ dns_rdatalist_tordataset(dns_rdatalist_t *rdatalist,
 	rdataset->type = rdatalist->type;
 	rdataset->covers = rdatalist->covers;
 	rdataset->ttl = rdatalist->ttl;
-	rdataset->trust = 0;
 	rdataset->private1 = rdatalist;
 	rdataset->private2 = NULL;
 

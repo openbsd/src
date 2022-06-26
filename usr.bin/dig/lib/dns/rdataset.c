@@ -41,7 +41,6 @@ dns_rdataset_init(dns_rdataset_t *rdataset) {
 	rdataset->rdclass = 0;
 	rdataset->type = 0;
 	rdataset->ttl = 0;
-	rdataset->trust = 0;
 	rdataset->covers = 0;
 	rdataset->attributes = 0;
 	rdataset->count = UINT32_MAX;
@@ -64,7 +63,6 @@ dns_rdataset_disassociate(dns_rdataset_t *rdataset) {
 	rdataset->rdclass = 0;
 	rdataset->type = 0;
 	rdataset->ttl = 0;
-	rdataset->trust = 0;
 	rdataset->covers = 0;
 	rdataset->attributes = 0;
 	rdataset->count = UINT32_MAX;

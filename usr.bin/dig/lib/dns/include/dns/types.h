@@ -54,7 +54,6 @@ typedef struct dns_rdatalist			dns_rdatalist_t;
 typedef struct dns_rdataset			dns_rdataset_t;
 typedef uint16_t				dns_rdatatype_t;
 typedef uint8_t				dns_secalg_t;
-typedef uint16_t				dns_trust_t;
 typedef struct dns_tsigkey			dns_tsigkey_t;
 typedef uint32_t				dns_ttl_t;
 typedef struct dns_view				dns_view_t;
@@ -229,55 +228,6 @@ enum {
 #define dns_opcode_notify		((dns_opcode_t)dns_opcode_notify)
 	dns_opcode_update = 5		/* dynamic update */
 #define dns_opcode_update		((dns_opcode_t)dns_opcode_update)
-};
-
-/*%
- * Trust levels.  Must be kept in sync with trustnames[] in masterdump.c.
- */
-enum {
-	/* Sentinel value; no data should have this trust level. */
-	dns_trust_none = 0,
-#define dns_trust_none			((dns_trust_t)dns_trust_none)
-
-	/*%
-	 * Subject to DNSSEC validation but has not yet been validated
-	 * dns_trust_pending_additional (from the additional section).
-	 */
-	dns_trust_pending_additional = 1,
-#define dns_trust_pending_additional \
-		 ((dns_trust_t)dns_trust_pending_additional)
-
-	dns_trust_pending_answer = 2,
-#define dns_trust_pending_answer	((dns_trust_t)dns_trust_pending_answer)
-
-	/*% Received in the additional section of a response. */
-	dns_trust_additional = 3,
-#define dns_trust_additional		((dns_trust_t)dns_trust_additional)
-
-	/* Received in a referral response. */
-	dns_trust_glue = 4,
-#define dns_trust_glue			((dns_trust_t)dns_trust_glue)
-
-	/* Answer from a non-authoritative server */
-	dns_trust_answer = 5,
-#define dns_trust_answer		((dns_trust_t)dns_trust_answer)
-
-	/*  Received in the authority section as part of an
-	    authoritative response */
-	dns_trust_authauthority = 6,
-#define dns_trust_authauthority		((dns_trust_t)dns_trust_authauthority)
-
-	/* Answer from an authoritative server */
-	dns_trust_authanswer = 7,
-#define dns_trust_authanswer		((dns_trust_t)dns_trust_authanswer)
-
-	/* Successfully DNSSEC validated */
-	dns_trust_secure = 8,
-#define dns_trust_secure		((dns_trust_t)dns_trust_secure)
-
-	/* This server is authoritative */
-	dns_trust_ultimate = 9
-#define dns_trust_ultimate		((dns_trust_t)dns_trust_ultimate)
 };
 
 /*

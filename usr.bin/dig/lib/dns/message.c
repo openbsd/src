@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: message.c,v 1.20 2022/06/25 10:20:29 florian Exp $ */
+/* $Id: message.c,v 1.21 2022/06/26 09:43:39 florian Exp $ */
 
 /*! \file */
 
@@ -1674,8 +1674,7 @@ dns_message_rendersection(dns_message_t *msg, dns_section_t sectionid)
 				 * If we have rendered non-validated data,
 				 * ensure that the AD bit is not set.
 				 */
-				if (rdataset->trust != dns_trust_secure &&
-				    (sectionid == DNS_SECTION_ANSWER ||
+				if ((sectionid == DNS_SECTION_ANSWER ||
 				     sectionid == DNS_SECTION_AUTHORITY))
 					msg->flags &= ~DNS_MESSAGEFLAG_AD;
 

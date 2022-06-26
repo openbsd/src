@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdataset.h,v 1.14 2022/06/25 15:38:22 florian Exp $ */
+/* $Id: rdataset.h,v 1.15 2022/06/26 09:43:39 florian Exp $ */
 
 #ifndef DNS_RDATASET_H
 #define DNS_RDATASET_H 1
@@ -86,7 +86,6 @@ struct dns_rdataset {
 	dns_rdataclass_t		rdclass;
 	dns_rdatatype_t			type;
 	dns_ttl_t			ttl;
-	dns_trust_t			trust;
 	dns_rdatatype_t			covers;
 	/*
 	 * attributes
