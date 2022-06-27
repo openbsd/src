@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.72 2022/04/09 20:07:44 naddy Exp $ */
+/*	$OpenBSD: ucom.c,v 1.73 2022/06/27 13:14:49 jan Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -114,6 +114,7 @@ struct ucom_softc {
 	int			sc_swflags;
 
 	u_char			sc_cua;
+	int			sc_error;
 
 	struct rwlock		sc_lock;	/* lock during open */
 	int			sc_open;
@@ -306,6 +307,8 @@ ucomopen(dev_t dev, int flag, int mode, struct proc *p)
 	sc = ucom_cd.cd_devs[unit];
 	if (sc == NULL)
 		return (ENXIO);
+
+	sc->sc_error = 0;
 
 	if (usbd_is_dying(sc->sc_uparent))
 		return (EIO);
@@ -605,6 +608,9 @@ ucomread(dev_t dev, struct uio *uio, int flag)
 
 	if (sc == NULL || usbd_is_dying(sc->sc_uparent))
 		return (EIO);
+
+	if (sc->sc_error)
+		return (sc->sc_error);
 
 	sc->sc_refcnt++;
 	tp = sc->sc_tty;
@@ -1144,6 +1150,7 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 	    usbd_is_dying(sc->sc_uparent)) {
 		DPRINTF(("ucomreadcb: dying\n"));
 		/* Send something to wake upper layer */
+		sc->sc_error = EIO;
 		s = spltty();
 		(*rint)('\n', tp);
 		ttwakeup(tp);
