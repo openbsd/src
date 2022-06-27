@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.314 2022/06/27 15:05:34 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.315 2022/06/27 15:12:14 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2929,7 +2929,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	uint32_t cr0, cr4;
 	uint32_t pinbased, procbased, procbased2, exit, entry;
 	uint32_t want1, want0;
-	uint64_t msr, ctrlval, eptp, cr3;
+	uint64_t ctrlval, cr3;
 	uint16_t ctrl, vpid;
 	struct vmx_msr_store *msr_store;
 
@@ -3183,35 +3183,6 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	if (vmwrite(VMCS_ENTRY_CTLS, entry)) {
 		ret = EINVAL;
 		goto exit;
-	}
-
-	if (vmm_softc->mode == VMM_MODE_EPT) {
-		eptp = vcpu->vc_parent->vm_map->pmap->pm_pdirpa;
-		msr = rdmsr(IA32_VMX_EPT_VPID_CAP);
-		if (msr & IA32_EPT_VPID_CAP_PAGE_WALK_4) {
-			/* Page walk length 4 supported */
-			eptp |= ((IA32_EPT_PAGE_WALK_LENGTH - 1) << 3);
-		} else {
-			DPRINTF("EPT page walk length 4 not supported\n");
-			ret = EINVAL;
-			goto exit;
-		}
-
-		if (msr & IA32_EPT_VPID_CAP_WB) {
-			/* WB cache type supported */
-			eptp |= IA32_EPT_PAGING_CACHE_TYPE_WB;
-		} else
-			DPRINTF("%s: no WB cache type available, guest VM "
-			    "will run uncached\n", __func__);
-
-		DPRINTF("Guest EPTP = 0x%llx\n", eptp);
-		if (vmwrite(VMCS_GUEST_IA32_EPTP, eptp)) {
-			DPRINTF("%s: error setting guest EPTP\n", __func__);
-			ret = EINVAL;
-			goto exit;
-		}
-
-		vcpu->vc_parent->vm_map->pmap->eptp = eptp;
 	}
 
 	if (vcpu_vmx_check_cap(vcpu, IA32_VMX_PROCBASED_CTLS,
@@ -3520,6 +3491,7 @@ int
 vcpu_init_vmx(struct vcpu *vcpu)
 {
 	struct vmcs *vmcs;
+	uint64_t msr, eptp;
 	uint32_t cr0, cr4;
 	int ret = 0;
 
@@ -3612,6 +3584,34 @@ vcpu_init_vmx(struct vcpu *vcpu)
 		ret = EINVAL;
 		goto exit;
 	}
+
+	/* Configure EPT Pointer */
+	eptp = vcpu->vc_parent->vm_map->pmap->pm_pdirpa;
+	msr = rdmsr(IA32_VMX_EPT_VPID_CAP);
+	if (msr & IA32_EPT_VPID_CAP_PAGE_WALK_4) {
+		/* Page walk length 4 supported */
+		eptp |= ((IA32_EPT_PAGE_WALK_LENGTH - 1) << 3);
+	} else {
+		DPRINTF("EPT page walk length 4 not supported\n");
+		ret = EINVAL;
+		goto exit;
+	}
+
+	if (msr & IA32_EPT_VPID_CAP_WB) {
+		/* WB cache type supported */
+		eptp |= IA32_EPT_PAGING_CACHE_TYPE_WB;
+	} else
+		DPRINTF("%s: no WB cache type available, guest VM will run "
+		    "uncached\n", __func__);
+
+	DPRINTF("Guest EPTP = 0x%llx\n", eptp);
+	if (vmwrite(VMCS_GUEST_IA32_EPTP, eptp)) {
+		DPRINTF("%s: error setting guest EPTP\n", __func__);
+		ret = EINVAL;
+		goto exit;
+	}
+
+	vcpu->vc_parent->vm_map->pmap->eptp = eptp;
 
 	/* Host CR0 */
 	cr0 = rcr0() & ~CR0_TS;
