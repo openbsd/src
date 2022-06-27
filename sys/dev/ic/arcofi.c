@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcofi.c,v 1.19 2022/03/21 19:22:40 miod Exp $	*/
+/*	$OpenBSD: arcofi.c,v 1.20 2022/06/27 20:14:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2011 Miodrag Vallat.
@@ -574,7 +574,7 @@ arcofi_mi_to_gain(int lvl)
 }
 
 /*
- * Input and output ports definition (used to be in <audioio.h>
+ * Input and output ports definition (used to be in <audioio.h>)
  */
 #define	AUDIO_SPEAKER		0x01	/* built-in speaker */
 #define	AUDIO_LINE_IN		0x02	/* line in	 */
