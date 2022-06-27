@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_sysent.c,v 1.237 2022/05/16 07:38:10 mvs Exp $	*/
+/*	$OpenBSD: init_sysent.c,v 1.238 2022/06/27 14:26:05 cheloha Exp $	*/
 
 /*
  * System call switch table.
@@ -204,7 +204,7 @@ const struct sysent sysent[] = {
 	    sys_utimensat },			/* 84 = utimensat */
 	{ 2, s(struct sys_futimens_args), 0,
 	    sys_futimens },			/* 85 = futimens */
-	{ 3, s(struct sys_kbind_args), 0,
+	{ 3, s(struct sys_kbind_args), SY_NOLOCK | 0,
 	    sys_kbind },			/* 86 = kbind */
 	{ 2, s(struct sys_clock_gettime_args), SY_NOLOCK | 0,
 	    sys_clock_gettime },		/* 87 = clock_gettime */

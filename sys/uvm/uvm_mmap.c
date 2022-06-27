@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.169 2022/01/19 10:43:48 kn Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.170 2022/06/27 14:26:06 cheloha Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1127,7 +1127,7 @@ sys_kbind(struct proc *p, void *v, register_t *retval)
 	size_t psize, s;
 	u_long pc;
 	int count, i, extra;
-	int error;
+	int error, sigill = 0;
 
 	/*
 	 * extract syscall args from uap
@@ -1135,23 +1135,42 @@ sys_kbind(struct proc *p, void *v, register_t *retval)
 	paramp = SCARG(uap, param);
 	psize = SCARG(uap, psize);
 
-	/* a NULL paramp disables the syscall for the process */
-	if (paramp == NULL) {
-		if (pr->ps_kbind_addr != 0)
-			sigexit(p, SIGILL);
-		pr->ps_kbind_addr = BOGO_PC;
-		return 0;
-	}
-
-	/* security checks */
+	/*
+	 * If paramp is NULL and we're uninitialized, disable the syscall
+	 * for the process.  Raise SIGILL if paramp is NULL and we're
+	 * already initialized.
+	 *
+	 * If paramp is non-NULL and we're uninitialized, do initialization.
+	 * Otherwise, do security checks and raise SIGILL on failure.
+	 */
 	pc = PROC_PC(p);
-	if (pr->ps_kbind_addr == 0) {
+	mtx_enter(&pr->ps_mtx);
+	if (paramp == NULL) {
+		if (pr->ps_kbind_addr == 0)
+			pr->ps_kbind_addr = BOGO_PC;
+		else
+			sigill = 1;
+	} else if (pr->ps_kbind_addr == 0) {
 		pr->ps_kbind_addr = pc;
 		pr->ps_kbind_cookie = SCARG(uap, proc_cookie);
-	} else if (pc != pr->ps_kbind_addr || pc == BOGO_PC)
+	} else if (pc != pr->ps_kbind_addr || pc == BOGO_PC ||
+	    pr->ps_kbind_cookie != SCARG(uap, proc_cookie)) {
+		sigill = 1;
+	}
+	mtx_leave(&pr->ps_mtx);
+
+	/* Raise SIGILL if something is off. */
+	if (sigill) {
+		KERNEL_LOCK();
 		sigexit(p, SIGILL);
-	else if (pr->ps_kbind_cookie != SCARG(uap, proc_cookie))
-		sigexit(p, SIGILL);
+		/* NOTREACHED */
+		KERNEL_UNLOCK();
+	}
+
+	/* We're done if we were disabling the syscall. */
+	if (paramp == NULL)
+		return 0;
+
 	if (psize < sizeof(struct __kbind) || psize > sizeof(param))
 		return EINVAL;
 	if ((error = copyin(paramp, &param, psize)))
@@ -1190,6 +1209,7 @@ sys_kbind(struct proc *p, void *v, register_t *retval)
 	last_baseva = VM_MAXUSER_ADDRESS;
 	kva = 0;
 	TAILQ_INIT(&dead_entries);
+	KERNEL_LOCK();
 	for (i = 0; i < count; i++) {
 		baseva = (vaddr_t)paramp[i].kb_addr;
 		s = paramp[i].kb_size;
@@ -1239,6 +1259,7 @@ redo:
 		vm_map_unlock(kernel_map);
 	}
 	uvm_unmap_detach(&dead_entries, AMAP_REFALL);
+	KERNEL_UNLOCK();
 
 	return error;
 }

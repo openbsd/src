@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.224 2022/05/16 07:36:04 mvs Exp $
+;	$OpenBSD: syscalls.master,v 1.225 2022/06/27 14:26:05 cheloha Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -194,7 +194,7 @@
 			    const struct timespec *times, int flag); }
 85	STD		{ int sys_futimens(int fd, \
 			    const struct timespec *times); }
-86	STD		{ int sys_kbind(const struct __kbind *param, \
+86	STD NOLOCK	{ int sys_kbind(const struct __kbind *param, \
 			    size_t psize, int64_t proc_cookie); }
 87	STD NOLOCK	{ int sys_clock_gettime(clockid_t clock_id, \
 			    struct timespec *tp); }
