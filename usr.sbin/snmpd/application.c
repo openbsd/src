@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.4 2022/06/27 10:25:32 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.5 2022/06/27 10:31:17 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -919,42 +919,18 @@ appl_request_upstream_reply(struct appl_request_upstream *ureq)
 	size_t i, repvarbinds, varbindlen;
 	ssize_t match = -1;
 
-	/* RFC 3416 section 4.2.3: Strip excessive EOMV */
 	varbindlen = ureq->aru_varbindlen;
-	if (ureq->aru_pdu->be_type == SNMP_C_GETBULKREQ &&
-	    ureq->aru_error == APPL_ERROR_NOERROR) {
-		repvarbinds = (ureq->aru_varbindlen - ureq->aru_nonrepeaters) /
-		    ureq->aru_maxrepetitions;
-		for (i = ureq->aru_nonrepeaters;
-		    i < ureq->aru_varbindlen - repvarbinds; i++) {
-			value = ureq->aru_vblist[i].avi_varbind.av_value;
-			if ((i - ureq->aru_nonrepeaters) % repvarbinds == 0 &&
-			    value->be_class == BER_CLASS_CONTEXT &&
-			    value->be_type == APPL_EXC_ENDOFMIBVIEW) {
-				if (match != -1)
-					break;
-				match = i;
-			}
-			if (value->be_class != BER_CLASS_CONTEXT ||
-			    value->be_type != APPL_EXC_ENDOFMIBVIEW)
-				match = -1;
-		}
-		if (match != -1)
-			varbindlen = match + repvarbinds;
-	}
 
-	i = 0;
-	for (; i < varbindlen && ureq->aru_error == APPL_ERROR_NOERROR; i++) {
-		vb = &(ureq->aru_vblist[i]);
-		vb->avi_varbind.av_next =
-		    &(ureq->aru_vblist[i + 1].avi_varbind);
-		/* RFC 3584 section 4.2.2.2 */
-		if (ureq->aru_pduversion == SNMP_V1 &&
-		    vb->avi_varbind.av_value->be_class == BER_CLASS_CONTEXT)
-			appl_varbind_error(vb, APPL_ERROR_NOSUCHNAME);
-	}
-	/* RFC 3584 section 4.4 */
 	if (ureq->aru_pduversion == SNMP_V1) {
+		/* RFC 3584 section 4.2.2.2 Map exceptions */
+		for (i = 0; i < varbindlen; i++) {
+			vb = &(ureq->aru_vblist[i]);
+			value = vb->avi_varbind.av_value;
+			if (value != NULL &&
+			    value->be_class == BER_CLASS_CONTEXT)
+				appl_varbind_error(vb, APPL_ERROR_NOSUCHNAME);
+		}
+		/* RFC 3584 section 4.4 Map errors */
 		switch (ureq->aru_error) {
 		case APPL_ERROR_WRONGVALUE:
 		case APPL_ERROR_WRONGENCODING:
@@ -979,27 +955,59 @@ appl_request_upstream_reply(struct appl_request_upstream *ureq)
 			break;
 		}
 	}
+	/* RFC 3416 section 4.2.{1,2,3} reset original varbinds */
+	if (ureq->aru_error != APPL_ERROR_NOERROR) {
+		ober_scanf_elements(ureq->aru_pdu, "{SSS{e", &varbind);
+		for (varbindlen = 0; varbind != NULL;
+		    varbindlen++, varbind = varbind->be_next) {
+			vb = &(ureq->aru_vblist[varbindlen]);
+			ober_get_oid(varbind->be_sub,
+			    &(vb->avi_varbind.av_oid));
+			ober_free_elements(vb->avi_varbind.av_value);
+			vb->avi_varbind.av_value = ober_add_null(NULL);;
+		}
+	/* RFC 3416 section 4.2.3: Strip excessive EOMV */
+	} else if (ureq->aru_pdu->be_type == SNMP_C_GETBULKREQ) {
+		repvarbinds = (ureq->aru_varbindlen - ureq->aru_nonrepeaters) /
+		    ureq->aru_maxrepetitions;
+		for (i = ureq->aru_nonrepeaters;
+		    i < ureq->aru_varbindlen - repvarbinds; i++) {
+			value = ureq->aru_vblist[i].avi_varbind.av_value;
+			if ((i - ureq->aru_nonrepeaters) % repvarbinds == 0 &&
+			    value->be_class == BER_CLASS_CONTEXT &&
+			    value->be_type == APPL_EXC_ENDOFMIBVIEW) {
+				if (match != -1)
+					break;
+				match = i;
+			}
+			if (value->be_class != BER_CLASS_CONTEXT ||
+			    value->be_type != APPL_EXC_ENDOFMIBVIEW)
+				match = -1;
+		}
+		if (match != -1)
+			varbindlen = match + repvarbinds;
+	}
+
+	for (i = 0; i < varbindlen; i++) {
+		vb = &(ureq->aru_vblist[i]);
+		vb->avi_varbind.av_next =
+		    &(ureq->aru_vblist[i + 1].avi_varbind);
+	}
 
 	ureq->aru_vblist[i - 1].avi_varbind.av_next = NULL;
-	/* XXX On error, print the original string, not the half filled goop */
 	appl_pdu_log(NULL, SNMP_C_RESPONSE, ureq->aru_requestid,
 	    ureq->aru_error, ureq->aru_index,
 	    &(ureq->aru_vblist[0].avi_varbind));
 
-	if (ureq->aru_error != APPL_ERROR_NOERROR) {
-		ober_scanf_elements(ureq->aru_pdu, "{SSSe", &varbindlist);
-		varbindlist = ober_unlink_elements(varbindlist);
-	} else {
-		for (i = 0; i < varbindlen; i++) {
-			varbind = ober_printf_elements(varbind, "{Oe}",
-			    &(ureq->aru_vblist[i].avi_varbind.av_oid),
-			    ureq->aru_vblist[i].avi_varbind.av_value);
-			ureq->aru_vblist[i].avi_varbind.av_value = NULL;
-			if (varbind == NULL)
-				fatal("ober_printf_elements");
-			if (varbindlist == NULL)
-				varbindlist = varbind;
-		}
+	for (i = 0; i < varbindlen; i++) {
+		varbind = ober_printf_elements(varbind, "{Oe}",
+		    &(ureq->aru_vblist[i].avi_varbind.av_oid),
+		    ureq->aru_vblist[i].avi_varbind.av_value);
+		ureq->aru_vblist[i].avi_varbind.av_value = NULL;
+		if (varbind == NULL)
+			fatal("ober_printf_elements");
+		if (varbindlist == NULL)
+			varbindlist = varbind;
 	}
 
 	snmpe_send(ureq->aru_statereference, SNMP_C_RESPONSE,
