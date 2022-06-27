@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.28 2021/11/01 20:53:08 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.29 2022/06/27 14:00:09 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -451,6 +451,12 @@ void
 X509_VERIFY_PARAM_set_depth(X509_VERIFY_PARAM *param, int depth)
 {
 	param->depth = depth;
+}
+
+void
+X509_VERIFY_PARAM_set_auth_level(X509_VERIFY_PARAM *param, int auth_level)
+{
+	param->security_level = auth_level;
 }
 
 void

@@ -272,6 +272,7 @@ struct X509_VERIFY_PARAM_st {
 	int purpose;		/* purpose to check untrusted certificates */
 	int trust;		/* trust setting to check */
 	int depth;		/* Verify depth */
+	int security_level;	/* 'Security level', see SP800-57. */
 	STACK_OF(ASN1_OBJECT) *policies;	/* Permissible policies */
 	X509_VERIFY_PARAM_ID *id;	/* opaque ID data */
 } /* X509_VERIFY_PARAM */;
