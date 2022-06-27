@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.36 2022/01/07 09:27:13 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.37 2022/06/27 12:31:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -243,6 +243,19 @@ int
 DH_bits(const DH *dh)
 {
 	return BN_num_bits(dh->p);
+}
+
+int
+DH_security_bits(const DH *dh)
+{
+	int N = -1;
+
+	if (dh->q != NULL)
+		N = BN_num_bits(dh->q);
+	else if (dh->length > 0)
+		N = dh->length;
+
+	return BN_security_bits(BN_num_bits(dh->p), N);
 }
 
 ENGINE *
