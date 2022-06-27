@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.68 2021/10/24 17:49:19 deraadt Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.69 2022/06/27 20:22:26 miod Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -248,17 +248,13 @@ readline(char *buf, size_t n, int to)
 
 	/* Only do timeout if greater than 0 */
 	if (to > 0) {
-		u_long i = 0;
 		time_t tt = getsecs() + to;
 #ifdef DEBUG
 		if (debug > 2)
 			printf ("readline: timeout(%d) at %u\n", to, tt);
 #endif
-		/* check for timeout expiration less often
-		   (for some very constrained archs) */
-		while (!cnischar())
-			if (!(i++ % 1000) && (getsecs() >= tt))
-				break;
+		while (!cnischar() && getsecs() < tt)
+			continue;
 
 		if (!cnischar()) {
 			strlcpy(buf, "boot", 5);
