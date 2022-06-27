@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdgpio.c,v 1.8 2022/06/27 07:55:28 mlarkin Exp $	*/
+/*	$OpenBSD: amdgpio.c,v 1.9 2022/06/27 08:00:31 mlarkin Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2019 James Hastings
@@ -204,7 +204,7 @@ amdgpio_save(struct amdgpio_softc *sc)
 {
 	int pin;
 
-	for (pin = 0 ; pin < sc->sc_npins; pin++)
+	for (pin = 0; pin < sc->sc_npins; pin++)
 		amdgpio_save_pin(sc, pin);
 }
 
