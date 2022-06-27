@@ -1,4 +1,4 @@
-.\"	$OpenBSD: biosboot.8,v 1.28 2022/06/27 16:10:09 deraadt Exp $
+.\"	$OpenBSD: biosboot.8,v 1.29 2022/06/27 16:39:34 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Tom Cosgrove <tom.cosgrove@arches-consulting.com>
 .\" Copyright (c) 1997 Michael Shalayeff
@@ -170,7 +170,6 @@ The BIOS returned an error indication when
 attempted to read a disk sector.
 This might be any media error, including bad sectors (common on floppy disks),
 and invalid sectors (can occur with bad geometry translations).
-.Pp
 .It Er ERR X
 Can't boot.
 Issued when trying to read sectors in CHS mode,
