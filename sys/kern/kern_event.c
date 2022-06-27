@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.190 2022/06/20 01:39:44 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.191 2022/06/27 13:35:21 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -1559,6 +1559,7 @@ void
 kqueue_terminate(struct proc *p, struct kqueue *kq)
 {
 	struct knote *kn;
+	int state;
 
 	mtx_enter(&kq->kq_lock);
 
@@ -1571,11 +1572,17 @@ kqueue_terminate(struct proc *p, struct kqueue *kq)
 		KASSERT(kn->kn_filter == EVFILT_MARKER);
 
 	kq->kq_state |= KQ_DYING;
+	state = kq->kq_state;
 	kqueue_wakeup(kq);
 	mtx_leave(&kq->kq_lock);
 
+	/*
+	 * Any knotes that were attached to this kqueue were deleted
+	 * by knote_fdclose() when this kqueue's file descriptor was closed.
+	 */
 	KASSERT(klist_empty(&kq->kq_sel.si_note));
-	task_del(systqmp, &kq->kq_task);
+	if (state & KQ_TASK)
+		taskq_del_barrier(systqmp, &kq->kq_task);
 }
 
 int
@@ -1601,7 +1608,6 @@ kqueue_task(void *arg)
 	mtx_enter(&kqueue_klist_lock);
 	KNOTE(&kq->kq_sel.si_note, 0);
 	mtx_leave(&kqueue_klist_lock);
-	KQRELE(kq);
 }
 
 void
@@ -1615,9 +1621,8 @@ kqueue_wakeup(struct kqueue *kq)
 	}
 	if (!klist_empty(&kq->kq_sel.si_note)) {
 		/* Defer activation to avoid recursion. */
-		KQREF(kq);
-		if (!task_add(systqmp, &kq->kq_task))
-			KQRELE(kq);
+		kq->kq_state |= KQ_TASK;
+		task_add(systqmp, &kq->kq_task);
 	}
 }
 
