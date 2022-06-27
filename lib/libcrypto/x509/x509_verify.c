@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.56 2022/06/25 20:01:43 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.57 2022/06/27 14:10:22 tb Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -414,6 +414,9 @@ x509_verify_ctx_validate_legacy_chain(struct x509_verify_ctx *ctx,
 	if (!X509v3_addr_validate_path(ctx->xsc))
 		goto err;
 #endif
+
+	if (!x509_vfy_check_security_level(ctx->xsc))
+		goto err;
 
 	if (!x509_constraints_chain(ctx->xsc->chain,
 		&ctx->xsc->error, &ctx->xsc->error_depth)) {

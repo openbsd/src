@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.51 2022/06/27 14:00:09 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.52 2022/06/27 14:10:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -204,6 +204,13 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define		X509_V_ERR_INVALID_CALL				65
 /* Issuer lookup error */
 #define		X509_V_ERR_STORE_LOOKUP				66
+
+#if defined(LIBRESSL_INTERNAL)
+/* Security level errors */
+#define		X509_V_ERR_EE_KEY_TOO_SMALL                     67
+#define		X509_V_ERR_CA_KEY_TOO_SMALL                     68
+#define		X509_V_ERR_CA_MD_TOO_WEAK                       69
+#endif
 
 /* Certificate verify flags */
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.101 2022/01/22 00:36:46 inoguchi Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.102 2022/06/27 14:10:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -144,6 +144,8 @@ static int X509_cmp_time_internal(const ASN1_TIME *ctm, time_t *cmp_time,
 
 static int internal_verify(X509_STORE_CTX *ctx);
 static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
+static int check_key_level(X509_STORE_CTX *ctx, X509 *cert);
+static int verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err);
 
 int ASN1_time_tm_clamp_notafter(struct tm *tm);
 
@@ -542,6 +544,11 @@ X509_verify_cert_legacy(X509_STORE_CTX *ctx)
 	if (!ok)
 		goto end;
 
+	/* Check that the chain satisfies the security level. */
+	ok = x509_vfy_check_security_level(ctx);
+	if (!ok)
+		goto end;
+
 	/* Check name constraints */
 	ok = check_name_constraints(ctx);
 	if (!ok)
@@ -627,6 +634,14 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		ctx->error = X509_V_ERR_INVALID_CALL;
 		return -1;
 	}
+
+	/*
+	 * If the certificate's public key is too weak, don't bother
+	 * continuing.
+	 */
+	if (!check_key_level(ctx, ctx->cert) &&
+	    !verify_cb_cert(ctx, ctx->cert, 0, X509_V_ERR_EE_KEY_TOO_SMALL))
+		return 0;
 
 	/*
 	 * If flags request legacy, use the legacy verifier. If we
@@ -2595,4 +2610,130 @@ X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param)
 	if (ctx->param)
 		X509_VERIFY_PARAM_free(ctx->param);
 	ctx->param = param;
+}
+
+/*
+ * Check if |bits| are adequate for |security level|.
+ * Returns 1 if ok, 0 otherwise.
+ */
+static int
+enough_bits_for_security_level(int bits, int level)
+{
+	/*
+	 * Sigh. OpenSSL does this silly squashing, so we will
+	 * too. Derp for Derp compatibility being important.
+	 */
+	if (level < 0)
+		level = 0;
+	if (level > 5)
+		level = 5;
+
+	switch (level) {
+	case 0:
+		return 1;
+	case 1:
+		return bits >= 80;
+	case 2:
+		return bits >= 112;
+	case 3:
+		return bits >= 128;
+	case 4:
+		return bits >= 192;
+	case 5:
+		return bits >= 256;
+	default:
+		return 0;
+	}
+}
+
+/*
+ * Check whether the public key of |cert| meets the security level of |ctx|.
+ *
+ * Returns 1 on success, 0 otherwise.
+ */
+static int
+check_key_level(X509_STORE_CTX *ctx, X509 *cert)
+{
+	EVP_PKEY *pkey;
+	int bits;
+
+	/* Unsupported or malformed keys are not secure */
+	if ((pkey = X509_get0_pubkey(cert)) == NULL)
+		return 0;
+
+	if ((bits = EVP_PKEY_security_bits(pkey)) <= 0)
+		return 0;
+
+	return enough_bits_for_security_level(bits, ctx->param->security_level);
+}
+
+/*
+ * Check whether the signature digest algorithm of |cert| meets the security
+ * level of |ctx|.  Do not check trust anchors (self-signed or not).
+ *
+ * Returns 1 on success, 0 otherwise.
+ */
+static int
+check_sig_level(X509_STORE_CTX *ctx, X509 *cert)
+{
+	const EVP_MD *md;
+	int bits, nid, md_nid;
+
+	if ((nid = X509_get_signature_nid(cert)) == NID_undef)
+		return 0;
+
+	/*
+	 * Look up signature algorithm digest.
+	 */
+
+	if (!OBJ_find_sigid_algs(nid, &md_nid, NULL))
+		return 0;
+
+	if (md_nid == NID_undef)
+		return 0;
+
+	if ((md = EVP_get_digestbynid(md_nid)) == NULL)
+		return 0;
+
+	/* Assume 4 bits of collision resistance for each hash octet. */
+	bits = EVP_MD_size(md) * 4;
+
+	return enough_bits_for_security_level(bits, ctx->param->security_level);
+}
+
+int
+x509_vfy_check_security_level(X509_STORE_CTX *ctx)
+{
+	int num = sk_X509_num(ctx->chain);
+	int i;
+
+	if (ctx->param->security_level <= 0)
+		return 1;
+
+	for (i = 0; i < num; i++) {
+		X509 *cert = sk_X509_value(ctx->chain, i);
+
+		/*
+		 * We've already checked the security of the leaf key, so here
+		 * we only check the security of issuer keys.
+		 */
+		if (i > 0) {
+			if (!check_key_level(ctx, cert) &&
+			    !verify_cb_cert(ctx, cert, i,
+			    X509_V_ERR_CA_KEY_TOO_SMALL))
+				return 0;
+		}
+
+		/*
+		 * We also check the signature algorithm security of all certs
+		 * except those of the trust anchor at index num - 1.
+		 */
+		if (i == num - 1)
+			break;
+
+		if (!check_sig_level(ctx, cert) &&
+		    !verify_cb_cert(ctx, cert, i, X509_V_ERR_CA_MD_TOO_WEAK))
+			return 0;
+	}
+	return 1;
 }

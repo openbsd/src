@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_internal.h,v 1.18 2022/03/14 21:15:49 tb Exp $ */
+/* $OpenBSD: x509_internal.h,v 1.19 2022/06/27 14:10:22 tb Exp $ */
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -135,6 +135,7 @@ int x509_constraints_check(struct x509_constraints_names *names,
 int x509_constraints_chain(STACK_OF(X509) *chain, int *error,
     int *depth);
 void x509_verify_cert_info_populate(X509 *cert);
+int x509_vfy_check_security_level(X509_STORE_CTX *ctx);
 
 __END_HIDDEN_DECLS
 
