@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.16 2022/06/22 14:49:51 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.17 2022/06/27 13:27:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -123,6 +123,12 @@ json_neighbor_capabilities(struct capabilities *capa)
 				json_do_end();
 			}
 		json_do_end();
+	}
+
+	if (capa->role_ena) {
+		json_do_printf("open_policy_role", "%s%s",
+		    log_policy(capa->role),
+		    capa->role_ena == 2 ? " enforce" : "");
 	}
 
 	json_do_end();
@@ -811,6 +817,14 @@ bad_len:
 		break;
 	case ATTR_LARGE_COMMUNITIES:
 		json_do_large_community(data, alen);
+		break;
+	case ATTR_OTC:
+		if (alen == 4) {
+			memcpy(&as, data, sizeof(as));
+			as = ntohl(as);
+			json_do_uint("as", as);
+		} else
+			json_do_printf("error", "bad length");
 		break;
 	case ATTR_ATOMIC_AGGREGATE:
 	default:

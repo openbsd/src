@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.22 2022/06/22 14:49:51 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.23 2022/06/27 13:27:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -325,7 +325,7 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	}
 	if (hascapamp || hascapaap || p->capa.peer.grestart.restart ||
 	    p->capa.peer.refresh || p->capa.peer.enhanced_rr ||
-	    p->capa.peer.as4byte) {
+	    p->capa.peer.as4byte || p->capa.peer.role_ena) {
 		printf("  Neighbor capabilities:\n");
 		if (hascapamp)
 			show_neighbor_capa_mp(&p->capa.peer);
@@ -339,6 +339,10 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 			show_neighbor_capa_restart(&p->capa.peer);
 		if (hascapaap)
 			show_neighbor_capa_add_path(&p->capa.peer);
+		if (p->capa.peer.role_ena)
+			printf("    Open Policy role %s (local %s)\n",
+			    log_policy(p->capa.peer.role),
+			    log_policy(p->capa.ann.role));
 	}
 
 	hascapamp = 0;
@@ -351,7 +355,7 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	}
 	if (hascapamp || hascapaap || p->capa.neg.grestart.restart ||
 	    p->capa.neg.refresh || p->capa.neg.enhanced_rr ||
-	    p->capa.neg.as4byte) {
+	    p->capa.neg.as4byte || p->capa.neg.role_ena) {
 		printf("  Negotiated capabilities:\n");
 		if (hascapamp)
 			show_neighbor_capa_mp(&p->capa.neg);
@@ -365,6 +369,10 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 			show_neighbor_capa_restart(&p->capa.neg);
 		if (hascapaap)
 			show_neighbor_capa_add_path(&p->capa.neg);
+		if (p->capa.neg.role_ena)
+			printf("    Open Policy role %s (local %s)\n",
+			    log_policy(p->capa.neg.role),
+			    log_policy(p->capa.ann.role));
 	}
 	printf("\n");
 
@@ -874,6 +882,15 @@ show_attr(u_char *data, size_t len, int reqflags, int addpath)
 		break;
 	case ATTR_LARGE_COMMUNITIES:
 		show_large_community(data, alen);
+		break;
+	case ATTR_OTC:
+		if (alen == 4) {
+			memcpy(&as, data, sizeof(as));
+			as = ntohl(as);
+			printf("%s", log_as(as));
+		} else {
+			printf("bad length");
+		}
 		break;
 	case ATTR_ATOMIC_AGGREGATE:
 	default:

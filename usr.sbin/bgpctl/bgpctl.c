@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.278 2022/06/23 12:40:32 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.279 2022/06/27 13:27:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -684,6 +684,8 @@ fmt_flags(uint8_t flags, int sum)
 	if (sum) {
 		if (flags & F_PREF_INVALID)
 			*p++ = 'E';
+		if (flags & F_PREF_OTC_LOOP)
+			*p++ = 'L';
 		if (flags & F_PREF_ANNOUNCE)
 			*p++ = 'A';
 		if (flags & F_PREF_INTERNAL)
@@ -702,6 +704,10 @@ fmt_flags(uint8_t flags, int sum)
 		else
 			strlcpy(buf, "external", sizeof(buf));
 
+		if (flags & F_PREF_INVALID)
+			strlcat(buf, ", invalid", sizeof(buf));
+		if (flags & F_PREF_OTC_LOOP)
+			strlcat(buf, ", otc loop", sizeof(buf));
 		if (flags & F_PREF_STALE)
 			strlcat(buf, ", stale", sizeof(buf));
 		if (flags & F_PREF_ELIGIBLE)
@@ -881,6 +887,10 @@ fmt_attr(uint8_t type, int flags)
 	case ATTR_LARGE_COMMUNITIES:
 		CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_PARTIAL);
 		strlcpy(cstr, "Large Communities", sizeof(cstr));
+		break;
+	case ATTR_OTC:
+		CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_PARTIAL);
+		strlcpy(cstr, "OTC", sizeof(cstr));
 		break;
 	default:
 		/* ignore unknown attributes */
