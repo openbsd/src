@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.313 2022/06/12 19:48:12 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.314 2022/06/27 15:05:34 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3693,23 +3693,8 @@ vcpu_init_vmx(struct vcpu *vcpu)
 	}
 
 exit:
-	if (ret) {
-		if (vcpu->vc_control_va)
-			km_free((void *)vcpu->vc_control_va, PAGE_SIZE,
-			    &kv_page, &kp_zero);
-		if (vcpu->vc_msr_bitmap_va)
-			km_free((void *)vcpu->vc_msr_bitmap_va, PAGE_SIZE,
-			    &kv_page, &kp_zero);
-		if (vcpu->vc_vmx_msr_exit_save_va)
-			km_free((void *)vcpu->vc_vmx_msr_exit_save_va,
-			    PAGE_SIZE, &kv_page, &kp_zero);
-		if (vcpu->vc_vmx_msr_exit_load_va)
-			km_free((void *)vcpu->vc_vmx_msr_exit_load_va,
-			    PAGE_SIZE, &kv_page, &kp_zero);
-		if (vcpu->vc_vmx_msr_entry_load_va)
-			km_free((void *)vcpu->vc_vmx_msr_entry_load_va,
-			    PAGE_SIZE, &kv_page, &kp_zero);
-	}
+	if (ret)
+		vcpu_deinit_vmx(vcpu);
 
 	return (ret);
 }
@@ -3846,20 +3831,8 @@ vcpu_init_svm(struct vcpu *vcpu)
 	    (uint64_t)vcpu->vc_svm_ioio_pa);
 
 exit:
-	if (ret) {
-		if (vcpu->vc_control_va)
-			km_free((void *)vcpu->vc_control_va, PAGE_SIZE,
-			    &kv_page, &kp_zero);
-		if (vcpu->vc_msr_bitmap_va)
-			km_free((void *)vcpu->vc_msr_bitmap_va, 2 * PAGE_SIZE,
-			    &kv_any, &vmm_kp_contig);
-		if (vcpu->vc_svm_hsa_va)
-			km_free((void *)vcpu->vc_svm_hsa_va, PAGE_SIZE,
-			    &kv_page, &kp_zero);
-		if (vcpu->vc_svm_ioio_va)
-			km_free((void *)vcpu->vc_svm_ioio_va,
-			    3 * PAGE_SIZE, &kv_any, &vmm_kp_contig);
-	}
+	if (ret)
+		vcpu_deinit_svm(vcpu);
 
 	return (ret);
 }
@@ -3908,18 +3881,26 @@ vcpu_init(struct vcpu *vcpu)
 void
 vcpu_deinit_vmx(struct vcpu *vcpu)
 {
-	if (vcpu->vc_control_va)
+	if (vcpu->vc_control_va) {
 		km_free((void *)vcpu->vc_control_va, PAGE_SIZE,
 		    &kv_page, &kp_zero);
-	if (vcpu->vc_vmx_msr_exit_save_va)
+		vcpu->vc_control_va = 0;
+	}
+	if (vcpu->vc_vmx_msr_exit_save_va) {
 		km_free((void *)vcpu->vc_vmx_msr_exit_save_va,
 		    PAGE_SIZE, &kv_page, &kp_zero);
-	if (vcpu->vc_vmx_msr_exit_load_va)
+		vcpu->vc_vmx_msr_exit_save_va = 0;
+	}
+	if (vcpu->vc_vmx_msr_exit_load_va) {
 		km_free((void *)vcpu->vc_vmx_msr_exit_load_va,
 		    PAGE_SIZE, &kv_page, &kp_zero);
-	if (vcpu->vc_vmx_msr_entry_load_va)
+		vcpu->vc_vmx_msr_exit_load_va = 0;
+	}
+	if (vcpu->vc_vmx_msr_entry_load_va) {
 		km_free((void *)vcpu->vc_vmx_msr_entry_load_va,
 		    PAGE_SIZE, &kv_page, &kp_zero);
+		vcpu->vc_vmx_msr_entry_load_va = 0;
+	}
 
 	if (vcpu->vc_vmx_vpid_enabled)
 		vmm_free_vpid(vcpu->vc_vpid);
@@ -3936,18 +3917,26 @@ vcpu_deinit_vmx(struct vcpu *vcpu)
 void
 vcpu_deinit_svm(struct vcpu *vcpu)
 {
-	if (vcpu->vc_control_va)
+	if (vcpu->vc_control_va) {
 		km_free((void *)vcpu->vc_control_va, PAGE_SIZE, &kv_page,
 		    &kp_zero);
-	if (vcpu->vc_msr_bitmap_va)
+		vcpu->vc_control_va = 0;
+	}
+	if (vcpu->vc_msr_bitmap_va) {
 		km_free((void *)vcpu->vc_msr_bitmap_va, 2 * PAGE_SIZE, &kv_any,
 		    &vmm_kp_contig);
-	if (vcpu->vc_svm_hsa_va)
+		vcpu->vc_msr_bitmap_va = 0;
+	}
+	if (vcpu->vc_svm_hsa_va) {
 		km_free((void *)vcpu->vc_svm_hsa_va, PAGE_SIZE, &kv_page,
 		    &kp_zero);
-	if (vcpu->vc_svm_ioio_va)
+		vcpu->vc_svm_hsa_va = 0;
+	}
+	if (vcpu->vc_svm_ioio_va) {
 		km_free((void *)vcpu->vc_svm_ioio_va, 3 * PAGE_SIZE, &kv_any,
 		    &vmm_kp_contig);
+		vcpu->vc_svm_ioio_va = 0;
+	}
 
 	vmm_free_vpid(vcpu->vc_vpid);
 }
