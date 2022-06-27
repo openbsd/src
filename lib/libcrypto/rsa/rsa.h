@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.55 2022/01/14 08:34:39 tb Exp $ */
+/* $OpenBSD: rsa.h,v 1.56 2022/06/27 12:30:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -371,6 +371,10 @@ int RSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int RSA_set_ex_data(RSA *r, int idx, void *arg);
 void *RSA_get_ex_data(const RSA *r, int idx);
+
+#ifdef LIBRESSL_INTERNAL
+int RSA_security_bits(const RSA *rsa);
+#endif
 
 void RSA_get0_key(const RSA *r, const BIGNUM **n, const BIGNUM **e,
     const BIGNUM **d);

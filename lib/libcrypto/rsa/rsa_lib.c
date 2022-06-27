@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.42 2022/01/07 09:55:32 tb Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.43 2022/06/27 12:30:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -239,6 +239,12 @@ void *
 RSA_get_ex_data(const RSA *r, int idx)
 {
 	return CRYPTO_get_ex_data(&r->ex_data, idx);
+}
+
+int
+RSA_security_bits(const RSA *rsa)
+{
+	return BN_security_bits(RSA_bits(rsa), -1);
 }
 
 void
