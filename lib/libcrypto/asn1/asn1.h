@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.64 2022/06/25 16:15:18 jsing Exp $ */
+/* $OpenBSD: asn1.h,v 1.65 2022/06/27 13:54:57 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -719,6 +719,13 @@ ASN1_TIME *d2i_ASN1_TIME(ASN1_TIME **a, const unsigned char **in, long len);
 int i2d_ASN1_TIME(ASN1_TIME *a, unsigned char **out);
 extern const ASN1_ITEM ASN1_TIME_it;
 
+#ifdef LIBRESSL_INTERNAL
+int ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm);
+int ASN1_TIME_compare(const ASN1_TIME *t1, const ASN1_TIME *t2);
+int ASN1_TIME_cmp_time_t(const ASN1_TIME *s, time_t t2);
+int ASN1_TIME_normalize(ASN1_TIME *t);
+int ASN1_TIME_set_string_x509(ASN1_TIME *time, const char *str);
+#endif
 int ASN1_TIME_diff(int *pday, int *psec, const ASN1_TIME *from,
     const ASN1_TIME *to);
 

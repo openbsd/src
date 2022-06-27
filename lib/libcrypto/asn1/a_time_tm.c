@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.20 2022/04/28 17:31:29 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.21 2022/06/27 13:54:57 beck Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -379,6 +379,61 @@ ASN1_TIME_set_string(ASN1_TIME *s, const char *str)
 	return (ASN1_TIME_set_string_internal(s, str, 0));
 }
 
+static int
+ASN1_TIME_cmp_time_t_internal(const ASN1_TIME *s, time_t t2, int mode)
+{
+	struct tm tm1, tm2;
+
+	/*
+	 * This function has never handled failure conditions properly
+	 * The OpenSSL version used to simply follow NULL pointers on failure.
+	 * BoringSSL and OpenSSL now make it return -2 on failure.
+	 *
+	 * The danger is that users of this function will not differentiate the
+	 * -2 failure case from s < t2. Callers must be careful. Sadly this is
+	 * one of those pervasive things from OpenSSL we must continue with.
+	 */
+
+	if (ASN1_time_parse(s->data, s->length, &tm1, mode) == -1)
+		return -2;
+
+	if (gmtime_r(&t2, &tm2) == NULL)
+		return -2;
+
+	return ASN1_time_tm_cmp(&tm1, &tm2);
+}
+
+int
+ASN1_TIME_compare(const ASN1_TIME *t1, const ASN1_TIME *t2)
+{
+	struct tm tm1, tm2;
+
+	if (t1->type != V_ASN1_UTCTIME && t1->type != V_ASN1_GENERALIZEDTIME)
+		return -2;
+
+	if (t2->type != V_ASN1_UTCTIME && t2->type != V_ASN1_GENERALIZEDTIME)
+		return -2;
+
+	if (ASN1_time_parse(t1->data, t1->length, &tm1, t1->type) == -1)
+		return -2;
+
+	if (ASN1_time_parse(t1->data, t2->length, &tm2, t2->type) == -1)
+		return -2;
+
+	return ASN1_time_tm_cmp(&tm1, &tm2);
+}
+
+int
+ASN1_TIME_cmp_time_t(const ASN1_TIME *s, time_t t)
+{
+	if (s->type == V_ASN1_UTCTIME)
+		return ASN1_TIME_cmp_time_t_internal(s, t, V_ASN1_UTCTIME);
+	if (s->type == V_ASN1_GENERALIZEDTIME)
+		return ASN1_TIME_cmp_time_t_internal(s, t,
+		    V_ASN1_GENERALIZEDTIME);
+	return -2;
+}
+
 /*
  * ASN1_UTCTIME wrappers
  */
@@ -413,26 +468,11 @@ ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t, int offset_day, long offset_sec)
 }
 
 int
-ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t2)
+ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
 {
-	struct tm tm1, tm2;
-
-	/*
-	 * This function has never handled failure conditions properly
-	 * and should be deprecated. The OpenSSL version used to
-	 * simply follow NULL pointers on failure. BoringSSL and
-	 * OpenSSL now make it return -2 on failure.
-	 *
-	 * The danger is that users of this function will not
-	 * differentiate the -2 failure case from t1 < t2.
-	 */
-	if (ASN1_time_parse(s->data, s->length, &tm1, V_ASN1_UTCTIME) == -1)
-		return (-2); /* XXX */
-
-	if (gmtime_r(&t2, &tm2) == NULL)
-		return (-2); /* XXX */
-
-	return ASN1_time_tm_cmp(&tm1, &tm2);
+	if (s->type == V_ASN1_UTCTIME)
+		return ASN1_TIME_cmp_time_t_internal(s, t, V_ASN1_UTCTIME);
+	return -2;
 }
 
 /*
@@ -467,4 +507,20 @@ ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s, time_t t, int offset_day,
 {
 	return (ASN1_TIME_adj_internal(s, t, offset_day, offset_sec,
 	    V_ASN1_GENERALIZEDTIME));
+}
+
+int
+ASN1_TIME_normalize(ASN1_TIME *t)
+{
+	struct tm tm;
+
+	if (!ASN1_TIME_to_tm(t, &tm))
+		return 0;
+	return tm_to_rfc5280_time(&tm, t) != NULL;
+}
+
+int
+ASN1_TIME_set_string_x509(ASN1_TIME *s, const char *str)
+{
+	return ASN1_TIME_set_string_internal(s, str, RFC5280);
 }

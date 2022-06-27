@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time.c,v 1.33 2021/12/25 07:48:09 jsing Exp $ */
+/* $OpenBSD: a_time.c,v 1.34 2022/06/27 13:54:57 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -92,8 +92,7 @@ ASN1_TIME_free(ASN1_TIME *a)
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_TIME_it);
 }
 
-/* Public API in OpenSSL. Kept internal for now. */
-static int
+int
 ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm)
 {
 	time_t now;

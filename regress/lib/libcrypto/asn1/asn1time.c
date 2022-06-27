@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.9 2021/12/09 16:31:33 jsing Exp $ */
+/* $OpenBSD: asn1time.c,v 1.10 2022/06/27 13:54:58 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -217,6 +217,11 @@ asn1_invtime_test(int test_no, struct asn1_time_test *att)
 		    "string '%s'\n", test_no, att->str);
 		goto done;
 	}
+	if (ASN1_TIME_set_string_x509(t, att->str) != 0) {
+		fprintf(stderr, "FAIL: test %i - successfully set x509 TIME "
+		    "string '%s'\n", test_no, att->str);
+		goto done;
+	}
 
 	failure = 0;
 
@@ -357,7 +362,7 @@ asn1_utctime_test(int test_no, struct asn1_time_test *att)
 static int
 asn1_time_test(int test_no, struct asn1_time_test *att, int type)
 {
-	ASN1_TIME *t = NULL;
+	ASN1_TIME *t = NULL, *tx509 = NULL;
 	int failure = 1;
 
 	if (ASN1_TIME_set_string(NULL, att->str) != 1) {
@@ -367,6 +372,9 @@ asn1_time_test(int test_no, struct asn1_time_test *att, int type)
 	}
 
 	if ((t = ASN1_TIME_new()) == NULL)
+		goto done;
+
+	if ((tx509 = ASN1_TIME_new()) == NULL)
 		goto done;
 
 	if (ASN1_TIME_set_string(t, att->str) != 1) {
@@ -381,11 +389,36 @@ asn1_time_test(int test_no, struct asn1_time_test *att, int type)
 		goto done;
 	}
 
+	if (ASN1_TIME_normalize(t) != 1) {
+		fprintf(stderr, "FAIL: test %i - failed to set normalize '%s'\n",
+		    test_no, att->str);
+		goto done;
+	}
+
+	if (ASN1_TIME_set_string_x509(tx509, t->data) != 1) {
+		fprintf(stderr, "FAIL: test %i - failed to set string X509 '%s'\n",
+		    test_no, t->data);
+		goto done;
+	}
+
+	if (t->type != tx509->type) {
+		fprintf(stderr, "FAIL: test %i - type %d, different from %d\n",
+		    test_no, t->type, tx509->type);
+		goto done;
+	}
+
+	if (ASN1_TIME_compare(t, tx509) != 0) {
+		fprintf(stderr, "FAIL: ASN1_TIME values differ!\n");
+		goto done;
+	}
+
+
 	failure = 0;
 
  done:
 
 	ASN1_TIME_free(t);
+	ASN1_TIME_free(tx509);
 
 	return (failure);
 }
