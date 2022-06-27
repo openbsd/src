@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.382 2022/05/14 07:22:10 denis Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.383 2022/06/27 15:11:23 jan Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: May 14 2022 $
+.Dd $Mdocdate: June 27 2022 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -279,6 +279,8 @@ tag.
 As CSUM_TCPv4, but supports IPv6 datagrams.
 .It Sy CSUM_UDPv6
 As above, for UDP.
+.It Sy TSO
+The device supports TCP segment offloading (TSO).
 .It Sy WOL
 The device supports Wake on LAN (WoL).
 .It Sy hardmtu
@@ -486,6 +488,22 @@ Query and display information and diagnostics from GBIC and SFP
 modules installed in an interface.
 It is only supported by drivers implementing the necessary functionality
 on hardware which supports it.
+.It Cm tso
+Enable TCP segmentation offloading (TSO) if its supported by the hardware; see
+.Cm hwfeatures .
+TSO enabled NICs modify received TCP/IP packets.
+This will also affect traffic of upper layer interfaces
+.Po
+e.g.,
+.Xr vlan 4 ,
+.Xr aggr 4 ,
+.Xr carp 4 ,
+etc.
+.Pc .
+Changing this option will re-initialize the network interface.
+.It Cm -tso
+Disable TSO.
+TSO is disabled by default.
 .It Cm up
 Mark an interface
 .Dq up .

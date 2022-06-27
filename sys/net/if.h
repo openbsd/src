@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.208 2021/03/11 19:53:40 florian Exp $	*/
+/*	$OpenBSD: if.h,v 1.209 2022/06/27 15:11:23 jan Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -231,6 +231,7 @@ struct if_status_description {
 #define IFXF_INET6_NOSOII	0x40	/* [N] don't do RFC 7217 */
 #define	IFXF_AUTOCONF4		0x80	/* [N] v4 autoconf (aka dhcp) enabled */
 #define	IFXF_MONITOR		0x100	/* [N] only used for bpf */
+#define	IFXF_TSO		0x200	/* [N] TCP segment offloading */
 
 #define	IFXF_CANTCHANGE \
 	(IFXF_MPSAFE|IFXF_CLONED)
@@ -250,6 +251,7 @@ struct if_status_description {
 #define	IFCAP_VLAN_HWTAGGING	0x00000020	/* hardware VLAN tag support */
 #define	IFCAP_CSUM_TCPv6	0x00000080	/* can do IPv6/TCP checksums */
 #define	IFCAP_CSUM_UDPv6	0x00000100	/* can do IPv6/UDP checksums */
+#define	IFCAP_TSO		0x00004000	/* TCP segment offloading */
 #define	IFCAP_WOL		0x00008000	/* can do wake on lan */
 
 #define IFCAP_CSUM_MASK		(IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | \

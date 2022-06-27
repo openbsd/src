@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.185 2022/03/15 11:22:10 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.186 2022/06/27 15:11:23 jan Exp $	*/
 
 /******************************************************************************
 
@@ -159,8 +159,6 @@ int	ixgbe_dma_malloc(struct ix_softc *, bus_size_t,
 void	ixgbe_dma_free(struct ix_softc *, struct ixgbe_dma_alloc *);
 static int
 	ixgbe_tx_ctx_setup(struct tx_ring *, struct mbuf *, uint32_t *,
-	    uint32_t *);
-int	ixgbe_tso_setup(struct tx_ring *, struct mbuf *, uint32_t *,
 	    uint32_t *);
 void	ixgbe_set_ivar(struct ix_softc *, uint8_t, uint8_t, int8_t);
 void	ixgbe_configure_ivars(struct ix_softc *);
@@ -1924,6 +1922,9 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4;
 
+	if (sc->hw.mac.type != ixgbe_mac_82598EB)
+		ifp->if_capabilities |= IFCAP_TSO;
+
 	/*
 	 * Specify the media types supported by this sc and register
 	 * callbacks to update media and link information
@@ -2868,9 +2869,10 @@ fail:
 void
 ixgbe_initialize_receive_units(struct ix_softc *sc)
 {
+	struct ifnet	*ifp = &sc->arpcom.ac_if;
 	struct rx_ring	*rxr = sc->rx_rings;
 	struct ixgbe_hw	*hw = &sc->hw;
-	uint32_t	bufsz, fctrl, srrctl, rxcsum;
+	uint32_t	bufsz, fctrl, srrctl, rxcsum, rdrxctl;
 	uint32_t	hlreg;
 	int		i;
 
@@ -2894,6 +2896,19 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 	hlreg |= IXGBE_HLREG0_JUMBOEN;
 	IXGBE_WRITE_REG(hw, IXGBE_HLREG0, hlreg);
 
+	if (ISSET(ifp->if_xflags, IFXF_TSO)) {
+		rdrxctl = IXGBE_READ_REG(hw, IXGBE_RDRXCTL);
+
+		/* This field has to be set to zero. */
+		rdrxctl &= ~IXGBE_RDRXCTL_RSCFRSTSIZE;
+
+		/* Enable TSO Receive Offloading */
+		rdrxctl |= IXGBE_RDRXCTL_RSCACKC;
+		rdrxctl |= IXGBE_RDRXCTL_FCOE_WRFIX;
+
+		IXGBE_WRITE_REG(hw, IXGBE_RDRXCTL, rdrxctl);
+	}
+
 	bufsz = (sc->rx_mbuf_sz - ETHER_ALIGN) >> IXGBE_SRRCTL_BSIZEPKT_SHIFT;
 
 	for (i = 0; i < sc->num_queues; i++, rxr++) {
@@ -2909,6 +2924,16 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 		/* Set up the SRRCTL register */
 		srrctl = bufsz | IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF;
 		IXGBE_WRITE_REG(hw, IXGBE_SRRCTL(i), srrctl);
+
+		if (ISSET(ifp->if_xflags, IFXF_TSO)) {
+			rdrxctl = IXGBE_READ_REG(&sc->hw, IXGBE_RSCCTL(i));
+
+			/* Enable TSO Receive Side Coalescing */
+			rdrxctl |= IXGBE_RSCCTL_RSCEN;
+			rdrxctl |= IXGBE_RSCCTL_MAXDESC_16;
+
+			IXGBE_WRITE_REG(hw, IXGBE_RSCCTL(i), rdrxctl);
+		}
 
 		/* Setup the HW Rx Head and Tail Descriptor Pointers */
 		IXGBE_WRITE_REG(hw, IXGBE_RDH(i), 0);
@@ -3175,7 +3200,7 @@ ixgbe_rxeof(struct rx_ring *rxr)
 			sendmp = mp;
 			sendmp->m_pkthdr.len = mp->m_len;
 #if NVLAN > 0
-			if (staterr & IXGBE_RXD_STAT_VP) {
+			if (sc->vlan_stripping && staterr & IXGBE_RXD_STAT_VP) {
 				sendmp->m_pkthdr.ether_vtag = vtag;
 				sendmp->m_flags |= M_VLANTAG;
 			}
@@ -3248,8 +3273,20 @@ ixgbe_rx_checksum(uint32_t staterr, struct mbuf * mp, uint32_t ptype)
 void
 ixgbe_setup_vlan_hw_support(struct ix_softc *sc)
 {
-	uint32_t	ctrl;
-	int		i;
+	struct ifnet	*ifp = &sc->arpcom.ac_if;
+	uint32_t	 ctrl;
+	int		 i;
+
+	/*
+	 * We have to disable VLAN striping when using TCP offloading, due to a
+	 * firmware bug.
+	 */
+	if (ISSET(ifp->if_xflags, IFXF_TSO)) {
+		sc->vlan_stripping = 0;
+		return;
+	}
+
+	sc->vlan_stripping = 1;
 
 	/*
 	 * A soft reset zero's out the VFTA, so

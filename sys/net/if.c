@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.653 2022/06/07 22:18:34 sashan Exp $	*/
+/*	$OpenBSD: if.c,v 1.654 2022/06/27 15:11:23 jan Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2018,6 +2018,38 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		} else if (ISSET(ifr->ifr_flags, IFXF_WOL)) {
 			ifr->ifr_flags &= ~IFXF_WOL;
 			error = ENOTSUP;
+		}
+
+		if (ISSET(ifp->if_capabilities, IFCAP_TSO) &&
+		    ISSET(ifr->ifr_flags, IFXF_TSO) !=
+		    ISSET(ifp->if_xflags, IFXF_TSO)) {
+			struct ifreq ifrq;
+
+			s = splnet();
+
+			if (ISSET(ifr->ifr_flags, IFXF_TSO))
+				ifp->if_xflags |= IFXF_TSO;
+			else
+				ifp->if_xflags &= ~IFXF_TSO;
+
+			NET_ASSERT_LOCKED();	/* for ioctl */
+			KERNEL_ASSERT_LOCKED();	/* for if_flags */
+
+			if (ISSET(ifp->if_flags, IFF_UP)) {
+				/* go down for a moment... */
+				ifp->if_flags &= ~IFF_UP;
+				ifrq.ifr_flags = ifp->if_flags;
+				(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS,
+				    (caddr_t)&ifrq);
+
+				/* ... and up again */
+				ifp->if_flags |= IFF_UP;
+				ifrq.ifr_flags = ifp->if_flags;
+				(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS,
+				    (caddr_t)&ifrq);
+			}
+
+			splx(s);
 		}
 #endif
 

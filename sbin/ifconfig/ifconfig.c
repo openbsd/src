@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.454 2022/04/07 16:41:13 naddy Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.455 2022/06/27 15:11:23 jan Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -126,7 +126,7 @@
 #define HWFEATURESBITS							\
 	"\024\1CSUM_IPv4\2CSUM_TCPv4\3CSUM_UDPv4"			\
 	"\5VLAN_MTU\6VLAN_HWTAGGING\10CSUM_TCPv6"			\
-	"\11CSUM_UDPv6\20WOL"
+	"\11CSUM_UDPv6\17TSO\20WOL"
 
 struct ifencap {
 	unsigned int	 ife_flags;
@@ -470,6 +470,8 @@ const struct	cmd {
 	{ "-soii",	IFXF_INET6_NOSOII,	0,	setifxflags },
 	{ "monitor",	IFXF_MONITOR,	0,		setifxflags },
 	{ "-monitor",	-IFXF_MONITOR,	0,		setifxflags },
+	{ "tso",	IFXF_TSO,	0,		setifxflags },
+	{ "-tso",	-IFXF_TSO,	0,		setifxflags },
 #ifndef SMALL
 	{ "hwfeatures", NEXTARG0,	0,		printifhwfeatures },
 	{ "metric",	NEXTARG,	0,		setifmetric },
@@ -673,7 +675,7 @@ const struct	cmd {
 	"\7RUNNING\10NOARP\11PROMISC\12ALLMULTI\13OACTIVE\14SIMPLEX"	\
 	"\15LINK0\16LINK1\17LINK2\20MULTICAST"				\
 	"\23AUTOCONF6TEMP\24MPLS\25WOL\26AUTOCONF6\27INET6_NOSOII"	\
-	"\30AUTOCONF4" "\31MONITOR"
+	"\30AUTOCONF4" "\31MONITOR" "\32TSO"
 
 int	getinfo(struct ifreq *, int);
 void	getsock(int);
