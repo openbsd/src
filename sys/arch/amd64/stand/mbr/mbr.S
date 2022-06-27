@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.S,v 1.6 2022/05/24 17:29:02 krw Exp $	*/
+/*	$OpenBSD: mbr.S,v 1.7 2022/06/27 16:10:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff and Tobias Weingartner
@@ -66,9 +66,6 @@
 
 #define CHAR_LBA_READ	'.'
 #define CHAR_CHS_READ	';'
-#define CHAR_SHIFT_SEEN	0x07	/* Use BEL */
-
-#define MBR_FLAGS_FORCE_CHS	0x0001
 
 #ifdef DEBUG
 #define CHAR_S		'S'	/* started */
@@ -178,27 +175,6 @@ reloc:
 	popw	%dx
 #endif
 
-	/*
-	 * If the SHIFT key is held down on entry, force CHS read
-	 */
-
-	/*
-	 * BIOS call "INT 0x16 Get Keyboard Shift Flags
-	 *	Call with	%ah = 0x02
-	 *	Return:
-	 *			%al = shift flags
-	 *			%ah - undefined by many BIOSes
-	 */
-	movb	$0x02, %ah
-	int	$0x16
-	testb	$0x3, %al	/* Either shift key down? */
-	jz	no_shift
-
-	putc(CHAR_SHIFT_SEEN)	/* Signal that shift key was seen */
-
-	orb	$MBR_FLAGS_FORCE_CHS, flags
-
-no_shift:
 	/* BIOS passes us drive number in %dl
 	 *
 	 * XXX - This is not always true.  We currently check if %dl
@@ -290,10 +266,6 @@ found:
 	 */
 	pushw	%si
 	movw	$info, %si
-	testb	$MBR_FLAGS_FORCE_CHS, flags
-	jnz	1f
-	incw	%si
-1:
 	call	Lmessage
 	popw	%si
 
@@ -322,12 +294,6 @@ found:
 	 * the signature at the end.
 	 */
 	movw	$0, %es:signature(,1)
-
-	/*
-	 * Have we been instructed to ignore LBA?
-	 */
-	testb	$MBR_FLAGS_FORCE_CHS, flags
-	jnz	do_chs
 
 	/*
 	 * We will use the LBA sector number if we have LBA support,
@@ -414,7 +380,7 @@ do_lba:
 	movw	$lba_command, %si
 	int	$0x13
 
-	popw	%si			/* (get back %si) flags unchanged */
+	popw	%si			/* get back %si */
 
 	jnc	booting_os		/* If it worked, run the pbr we got */
 
@@ -523,7 +489,7 @@ lba_sector:
 	.long	0, 0			/* sector number */
 
 /* Info messages */
-info:	.ascii		"!Using drive "
+info:	.ascii		"Using drive "
 drive_num:
 	.byte		'X'
 	.ascii		", partition "
@@ -539,14 +505,6 @@ crlf:	.asciz		"\r\n"
 
 endofcode:
 	nop
-
-/* We're going to store a flags word here */
-
-	. = 0x1b4
-flags:
-	.word	0x0000
-	.ascii	"Ox"			/* Indicate that the two bytes */
-					/* before us are the flags word */
 
 /* (MBR) NT disk signature offset */
 	. = 0x1b8
