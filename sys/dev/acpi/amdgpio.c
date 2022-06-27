@@ -1,4 +1,4 @@
-/*	$OpenBSD: amdgpio.c,v 1.7 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: amdgpio.c,v 1.8 2022/06/27 07:55:28 mlarkin Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  * Copyright (c) 2019 James Hastings
@@ -48,6 +48,11 @@ struct amdgpio_intrhand {
 	void *ih_arg;
 };
 
+struct amdgpio_pincfg {
+	/* Modeled after pchgpio but we only have one value to save/restore */
+	uint32_t	pin_cfg;
+};
+
 struct amdgpio_softc {
 	struct device sc_dev;
 	struct acpi_softc *sc_acpi;
@@ -59,6 +64,7 @@ struct amdgpio_softc {
 	void *sc_ih;
 
 	int sc_npins;
+	struct amdgpio_pincfg *sc_pin_cfg;
 	struct amdgpio_intrhand *sc_pin_ih;
 
 	struct acpi_gpio sc_gpio;
@@ -66,9 +72,11 @@ struct amdgpio_softc {
 
 int	amdgpio_match(struct device *, void *, void *);
 void	amdgpio_attach(struct device *, struct device *, void *);
+int	amdgpio_activate(struct device *, int);
 
 const struct cfattach amdgpio_ca = {
-	sizeof(struct amdgpio_softc), amdgpio_match, amdgpio_attach
+	sizeof(struct amdgpio_softc), amdgpio_match, amdgpio_attach,
+	NULL, amdgpio_activate
 };
 
 struct cfdriver amdgpio_cd = {
@@ -86,6 +94,10 @@ void	amdgpio_write_pin(void *, int, int);
 void	amdgpio_intr_establish(void *, int, int, int (*)(void *), void *);
 int	amdgpio_pin_intr(struct amdgpio_softc *, int);
 int	amdgpio_intr(void *);
+void	amdgpio_save_pin(struct amdgpio_softc *, int pin);
+void	amdgpio_save(struct amdgpio_softc *);
+void	amdgpio_restore_pin(struct amdgpio_softc *, int pin);
+void	amdgpio_restore(struct amdgpio_softc *);
 
 int
 amdgpio_match(struct device *parent, void *match, void *aux)
@@ -135,6 +147,8 @@ amdgpio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_pin_cfg = mallocarray(sc->sc_npins, sizeof(*sc->sc_pin_cfg),
+	    M_DEVBUF, M_WAITOK);
 	sc->sc_pin_ih = mallocarray(sc->sc_npins, sizeof(*sc->sc_pin_ih),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 
@@ -159,6 +173,58 @@ amdgpio_attach(struct device *parent, struct device *self, void *aux)
 unmap:
 	free(sc->sc_pin_ih, M_DEVBUF, sc->sc_npins * sizeof(*sc->sc_pin_ih));
 	bus_space_unmap(sc->sc_memt, sc->sc_memh, aaa->aaa_size[0]);
+}
+
+int
+amdgpio_activate(struct device *self, int act)
+{
+	struct amdgpio_softc *sc = (struct amdgpio_softc *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		amdgpio_save(sc);
+		break;
+	case DVACT_RESUME:
+		amdgpio_restore(sc);
+		break;
+	}
+
+	return 0;
+}
+
+void
+amdgpio_save_pin(struct amdgpio_softc *sc, int pin)
+{
+	sc->sc_pin_cfg[pin].pin_cfg = bus_space_read_4(sc->sc_memt, sc->sc_memh,
+	    pin * 4);
+}
+
+void
+amdgpio_save(struct amdgpio_softc *sc)
+{
+	int pin;
+
+	for (pin = 0 ; pin < sc->sc_npins; pin++)
+		amdgpio_save_pin(sc, pin);
+}
+
+void
+amdgpio_restore_pin(struct amdgpio_softc *sc, int pin)
+{
+	if (!sc->sc_pin_ih[pin].ih_func)
+		return;
+
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, pin * 4,
+	    sc->sc_pin_cfg[pin].pin_cfg);
+}
+
+void
+amdgpio_restore(struct amdgpio_softc *sc)
+{
+	int pin;
+
+	for (pin = 0; pin < sc->sc_npins; pin++)
+		amdgpio_restore_pin(sc, pin);
 }
 
 int
