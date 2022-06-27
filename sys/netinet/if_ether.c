@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.248 2021/04/28 21:21:44 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.249 2022/06/27 12:47:07 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -124,14 +124,16 @@ arptimer(void *arg)
 {
 	struct timeout *to = arg;
 	struct llinfo_arp *la, *nla;
+	time_t uptime;
 
 	NET_LOCK();
+	uptime = getuptime();
 	timeout_add_sec(to, arpt_prune);
 	/* Net lock is exclusive, no arp mutex needed for arp_list here. */
 	LIST_FOREACH_SAFE(la, &arp_list, la_list, nla) {
 		struct rtentry *rt = la->la_rt;
 
-		if (rt->rt_expire && rt->rt_expire < getuptime())
+		if (rt->rt_expire && rt->rt_expire < uptime)
 			arptfree(rt); /* timer has expired; clear */
 	}
 	NET_UNLOCK();
@@ -154,6 +156,7 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
+	time_t uptime;
 
 	NET_ASSERT_LOCKED();
 
@@ -161,8 +164,8 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 	    RTF_GATEWAY|RTF_BROADCAST|RTF_MULTICAST|RTF_MPLS))
 		return;
 
+	uptime = getuptime();
 	switch (req) {
-
 	case RTM_ADD:
 		if (rt->rt_flags & RTF_CLONING) {
 			rt->rt_expire = 0;
@@ -206,7 +209,7 @@ arp_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		la->la_rt = rt;
 		rt->rt_flags |= RTF_LLINFO;
 		if ((rt->rt_flags & RTF_LOCAL) == 0)
-			rt->rt_expire = getuptime();
+			rt->rt_expire = uptime;
 		mtx_enter(&arp_mtx);
 		LIST_INSERT_HEAD(&arp_list, la, la_list);
 		mtx_leave(&arp_mtx);
@@ -325,6 +328,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	struct sockaddr_dl *sdl;
 	struct rtentry *rt = NULL;
 	char addr[INET_ADDRSTRLEN];
+	time_t uptime;
 
 	if (m->m_flags & M_BCAST) {	/* broadcast */
 		memcpy(desten, etherbroadcastaddr, sizeof(etherbroadcastaddr));
@@ -335,10 +339,11 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		return (0);
 	}
 
+	uptime = getuptime();
 	rt = rt_getll(rt0);
 
 	if (ISSET(rt->rt_flags, RTF_REJECT) &&
-	    (rt->rt_expire == 0 || rt->rt_expire > getuptime() )) {
+	    (rt->rt_expire == 0 || rt->rt_expire > uptime)) {
 		m_freem(m);
 		return (rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
@@ -366,15 +371,15 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	 * Check the address family and length is valid, the address
 	 * is resolved; otherwise, try to resolve.
 	 */
-	if ((rt->rt_expire == 0 || rt->rt_expire > getuptime()) &&
+	if ((rt->rt_expire == 0 || rt->rt_expire > uptime) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
 		memcpy(desten, LLADDR(sdl), sdl->sdl_alen);
 
 		/* refresh ARP entry when timeout gets close */
 		if (rt->rt_expire != 0 &&
-		    rt->rt_expire - arpt_keep / 8 < getuptime() &&
-		    la->la_refreshed + 30 < getuptime()) {
-			la->la_refreshed = getuptime();
+		    rt->rt_expire - arpt_keep / 8 < uptime &&
+		    la->la_refreshed + 30 < uptime) {
+			la->la_refreshed = uptime;
 			arprequest(ifp,
 			    &satosin(rt->rt_ifa->ifa_addr)->sin_addr.s_addr,
 			    &satosin(dst)->sin_addr.s_addr,
@@ -407,13 +412,13 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		/* This should never happen. (Should it? -gwr) */
 		printf("%s: unresolved and rt_expire == 0\n", __func__);
 		/* Set expiration time to now (expired). */
-		rt->rt_expire = getuptime();
+		rt->rt_expire = uptime;
 	}
 #endif
 	if (rt->rt_expire) {
 		rt->rt_flags &= ~RTF_REJECT;
-		if (la->la_asked == 0 || rt->rt_expire != getuptime()) {
-			rt->rt_expire = getuptime();
+		if (la->la_asked == 0 || rt->rt_expire != uptime) {
+			rt->rt_expire = uptime;
 			if (la->la_asked++ < arp_maxtries)
 				arprequest(ifp,
 				    &satosin(rt->rt_ifa->ifa_addr)->sin_addr.s_addr,
@@ -613,6 +618,7 @@ arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
 	struct ifnet *rifp;
 	struct mbuf_list ml;
 	struct mbuf *m;
+	time_t uptime;
 	unsigned int len;
 	int changed = 0;
 
@@ -626,6 +632,7 @@ arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
 	if (la == NULL)
 		return (0);
 
+	uptime = getuptime();
 	if (sdl->sdl_alen > 0) {
 		if (memcmp(ea->arp_sha, LLADDR(sdl), sdl->sdl_alen)) {
 			if (ISSET(rt->rt_flags, RTF_PERMANENT_ARP|RTF_LOCAL)) {
@@ -675,7 +682,7 @@ arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
 	sdl->sdl_alen = sizeof(ea->arp_sha);
 	memcpy(LLADDR(sdl), ea->arp_sha, sizeof(ea->arp_sha));
 	if (rt->rt_expire)
-		rt->rt_expire = getuptime() + arpt_keep;
+		rt->rt_expire = uptime + arpt_keep;
 	rt->rt_flags &= ~RTF_REJECT;
 
 	/* Notify userland that an ARP resolution has been done. */
