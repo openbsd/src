@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.383 2022/06/27 15:11:23 jan Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.384 2022/06/27 16:27:03 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -489,17 +489,15 @@ modules installed in an interface.
 It is only supported by drivers implementing the necessary functionality
 on hardware which supports it.
 .It Cm tso
-Enable TCP segmentation offloading (TSO) if its supported by the hardware; see
+Enable TCP segmentation offloading (TSO) if it's supported by the hardware; see
 .Cm hwfeatures .
 TSO enabled NICs modify received TCP/IP packets.
-This will also affect traffic of upper layer interfaces
-.Po
-e.g.,
+This will also affect traffic of upper layer interfaces,
+such as
 .Xr vlan 4 ,
 .Xr aggr 4 ,
-.Xr carp 4 ,
-etc.
-.Pc .
+and
+.Xr carp 4 .
 Changing this option will re-initialize the network interface.
 .It Cm -tso
 Disable TSO.
