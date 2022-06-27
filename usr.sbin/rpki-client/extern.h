@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.142 2022/06/10 10:36:43 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.143 2022/06/27 10:18:27 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,6 +23,15 @@
 
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
+/*
+ * Distrusted hosts (loaded from skipfile).
+ */
+struct skiplistentry {
+	LIST_ENTRY(skiplistentry)	 entry;
+	char				*value; /* FQDN */
+};
+LIST_HEAD(skiplist, skiplistentry);
 
 /*
  * Enumeration for ASN.1 explicit tags in RSC eContent
@@ -430,6 +439,7 @@ struct stats {
 	size_t	 extra_files; /* number of superfluous files */
 	size_t	 del_dirs; /* number of directories removed in cleanup */
 	size_t	 brks; /* number of BGPsec Router Key (BRK) certificates */
+	size_t	 skiplistentries; /* number of skiplist entries */
 	struct timeval	elapsed_time;
 	struct timeval	user_time;
 	struct timeval	system_time;
@@ -688,6 +698,8 @@ int	mkpathat(int, const char *);
 
 #define RPKI_PATH_OUT_DIR	"/var/db/rpki-client"
 #define RPKI_PATH_BASE_DIR	"/var/cache/rpki-client"
+
+#define DEFAULT_SKIPLIST_FILE	"/etc/rpki/skiplist"
 
 /* Maximum number of TAL files we'll load. */
 #define	TALSZ_MAX	8

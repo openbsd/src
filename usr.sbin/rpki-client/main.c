@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.207 2022/06/25 20:25:43 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.208 2022/06/27 10:18:27 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -25,6 +25,7 @@
 #include <sys/wait.h>
 
 #include <assert.h>
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <dirent.h>
@@ -65,6 +66,8 @@ int	noop;
 int	filemode;
 int	rrdpon = 1;
 int	repo_timeout;
+
+struct skiplist skiplist = LIST_HEAD_INITIALIZER(skiplist);
 
 struct stats	 stats;
 
@@ -415,10 +418,22 @@ queue_add_from_tal(struct tal *tal)
 static void
 queue_add_from_cert(const struct cert *cert)
 {
-	struct repo	*repo;
-	char		*nfile, *npath;
-	const char	*uri, *repouri, *file;
-	size_t		 repourisz;
+	struct repo		*repo;
+	struct skiplistentry	*sle;
+	char			*nfile, *npath, *host;
+	const char		*uri, *repouri, *file;
+	size_t			 repourisz;
+
+	LIST_FOREACH(sle, &skiplist, entry) {
+		if (strncmp(cert->repo, "rsync://", 8) != 0)
+			errx(1, "unexpected protocol");
+		host = cert->repo + 8;
+
+		if (strncasecmp(host, sle->value, strcspn(host, "/")) == 0) {
+			warnx("skipping %s (listed in skiplist)", cert->repo);
+			return;
+		}
+	}
 
 	repo = repo_lookup(cert->talid, cert->repo,
 	    rrdpon ? cert->notify : NULL);
@@ -649,6 +664,57 @@ tal_load_default(void)
 	return s;
 }
 
+/*
+ * Load the list of FQDNs from the skiplist which are to be distrusted.
+ * Return 0 on success.
+ */
+static void
+load_skiplist(const char *slf)
+{
+	struct skiplistentry	*sle;
+	FILE			*fp;
+	char			*line = NULL;
+	size_t			 linesize = 0, s;
+	ssize_t			 linelen;
+
+	if ((fp = fopen(slf, "r")) == NULL) {
+		if (strcmp(slf, DEFAULT_SKIPLIST_FILE) != 0)
+			errx(1, "failed to open skiplist %s", slf);
+		return;
+	}
+
+	while ((linelen = getline(&line, &linesize, fp)) != -1) {
+		/* just eat comment lines or empty lines*/
+		if (line[0] == '#' || line[0] == '\n')
+			continue;
+
+		if (line[0] == ' ' || line[0] == '\t')
+			errx(1, "invalid entry in skiplist: %s", line);
+
+		/*
+		 * Ignore anything after comment sign, whitespaces,
+		 * also chop off LF or CR.
+		 */
+		line[strcspn(line, " #\r\n\t")] = 0;
+
+		for (s = 0; s < strlen(line); s++)
+			if (!isalnum((unsigned char)line[s]) &&
+			    !ispunct((unsigned char)line[s]))
+				errx(1, "invalid entry in skiplist: %s", line);
+
+		if ((sle = malloc(sizeof(struct skiplistentry))) == NULL)
+			err(1, NULL);
+		if ((sle->value = strdup(line)) == NULL)
+			err(1, NULL);
+
+		LIST_INSERT_HEAD(&skiplist, sle, entry);
+		stats.skiplistentries++;
+	}
+
+	fclose(fp);
+	free(line);
+}
+
 static void
 check_fs_size(int fd, const char *cachedir)
 {
@@ -724,6 +790,7 @@ main(int argc, char *argv[])
 	char		*bind_addr = NULL;
 	const char	*cachedir = NULL, *outputdir = NULL;
 	const char	*errs, *name;
+	const char	*skiplistfile = NULL;
 	struct vrp_tree	 vrps = RB_INITIALIZER(&vrps);
 	struct brk_tree	 brks = RB_INITIALIZER(&brks);
 	struct rusage	 ru;
@@ -746,12 +813,13 @@ main(int argc, char *argv[])
 	cachedir = RPKI_PATH_BASE_DIR;
 	outputdir = RPKI_PATH_OUT_DIR;
 	repo_timeout = timeout / 4;
+	skiplistfile = DEFAULT_SKIPLIST_FILE;
 
 	if (pledge("stdio rpath wpath cpath inet fattr dns sendfd recvfd "
 	    "proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "b:Bcd:e:fjnorRs:t:T:vV")) != -1)
+	while ((c = getopt(argc, argv, "b:Bcd:e:fjnorRs:S:t:T:vV")) != -1)
 		switch (c) {
 		case 'b':
 			bind_addr = optarg;
@@ -795,6 +863,9 @@ main(int argc, char *argv[])
 				repo_timeout = 24*60*60;
 			else
 				repo_timeout = timeout / 4;
+			break;
+		case 'S':
+			skiplistfile = optarg;
 			break;
 		case 't':
 			if (talsz >= TALSZ_MAX)
@@ -962,6 +1033,8 @@ main(int argc, char *argv[])
 	queues[2] = &httpq;
 	pfd[3].fd = rrdp;
 	queues[3] = &rrdpq;
+
+	load_skiplist(skiplistfile);
 
 	/*
 	 * Prime the process with our TAL files.
@@ -1168,6 +1241,7 @@ main(int argc, char *argv[])
 	    (long long)stats.elapsed_time.tv_sec,
 	    (long long)stats.user_time.tv_sec,
 	    (long long)stats.system_time.tv_sec);
+	printf("Skiplist entries: %zu\n", stats.skiplistentries);
 	printf("Route Origin Authorizations: %zu (%zu failed parse, %zu invalid)\n",
 	    stats.roas, stats.roas_fail, stats.roas_invalid);
 	printf("BGPsec Router Certificates: %zu\n", stats.brks);
@@ -1193,7 +1267,7 @@ usage:
 	fprintf(stderr,
 	    "usage: rpki-client [-BcjnoRrVv] [-b sourceaddr] [-d cachedir]"
 	    " [-e rsync_prog]\n"
-	    "                   [-s timeout] [-T table] [-t tal]"
+	    "                   [-S skiplist] [-s timeout] [-T table] [-t tal]"
 	    " [outputdir]\n"
 	    "       rpki-client [-Vv] [-d cachedir] [-t tal] -f file ...\n");
 	return 1;
