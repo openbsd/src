@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.253 2022/05/31 09:45:33 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.254 2022/06/27 13:26:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -148,6 +148,7 @@ enum attrtypes {
 	ATTR_AS4_PATH=17,
 	ATTR_AS4_AGGREGATOR=18,
 	ATTR_LARGE_COMMUNITIES=32,
+	ATTR_OTC=35,
 	ATTR_FIRST_UNKNOWN,	/* after this all attributes are unknown */
 };
 
@@ -205,9 +206,10 @@ struct rde_community {
 #define	F_ATTR_LOOP		0x00200 /* path would cause a route loop */
 #define	F_PREFIX_ANNOUNCED	0x00400
 #define	F_ANN_DYNAMIC		0x00800
+#define	F_ATTR_OTC		0x01000	/* OTC present */
+#define	F_ATTR_OTC_LOOP		0x02000 /* otc loop, not eligable */
 #define	F_ATTR_PARSE_ERR	0x10000 /* parse error, not eligable */
 #define	F_ATTR_LINKED		0x20000 /* if set path is on various lists */
-
 
 #define ORIGIN_IGP		0
 #define ORIGIN_EGP		1
@@ -391,6 +393,7 @@ int		rde_match_peer(struct rde_peer *, struct ctl_neighbor *);
 /* rde_peer.c */
 int		 peer_has_as4byte(struct rde_peer *);
 int		 peer_has_add_path(struct rde_peer *, uint8_t, int);
+int		 peer_has_open_policy(struct rde_peer *, uint8_t *);
 int		 peer_accept_no_as_set(struct rde_peer *);
 void		 peer_init(uint32_t);
 void		 peer_shutdown(void);

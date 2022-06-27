@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.430 2022/06/15 14:09:30 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.431 2022/06/27 13:26:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -210,7 +210,7 @@ typedef struct {
 %token	EBGP IBGP
 %token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
 %token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY ENHANCED ADDPATH
-%token	SEND RECV
+%token	SEND RECV POLICY
 %token	DEMOTE ENFORCE NEIGHBORAS ASOVERRIDE REFLECTOR DEPEND DOWN
 %token	DUMP IN OUT SOCKET RESTRICTED
 %token	LOG TRANSPARENT
@@ -235,7 +235,7 @@ typedef struct {
 %token	<v.number>		NUMBER
 %type	<v.number>		asnumber as4number as4number_any optnumber
 %type	<v.number>		espah family safi restart origincode nettype
-%type	<v.number>		yesno inout restricted validity expires
+%type	<v.number>		yesno inout restricted validity expires enforce
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
@@ -1515,6 +1515,33 @@ peeropts	: REMOTEAS as4number	{
 				else
 					*ap++ &= ~CAPA_AP_RECV;
 		}
+		| ANNOUNCE POLICY STRING enforce {
+			curpeer->conf.capabilities.role_ena = $4;
+			if (strcmp($3, "no") == 0) {
+				curpeer->conf.capabilities.role_ena = 0;
+			} else if (strcmp($3, "provider") == 0) {
+				curpeer->conf.capabilities.role =
+				    CAPA_ROLE_PROVIDER;
+			} else if (strcmp($3, "rs") == 0) {
+				curpeer->conf.capabilities.role =
+				    CAPA_ROLE_RS;
+			} else if (strcmp($3, "rs-client") == 0) {
+				curpeer->conf.capabilities.role =
+				    CAPA_ROLE_RS_CLIENT;
+			} else if (strcmp($3, "customer") == 0) {
+				curpeer->conf.capabilities.role =
+				    CAPA_ROLE_CUSTOMER;
+			} else if (strcmp($3, "peer") == 0) {
+				curpeer->conf.capabilities.role =
+				    CAPA_ROLE_PEER;
+			} else {
+				yyerror("syntax error, one of no, provider, "
+				    "rs, rs-client, customer, peer expected");
+				free($3);
+				YYERROR;
+			}
+			free($3);
+		}
 		| EXPORT NONE {
 			curpeer->conf.export_type = EXPORT_NONE;
 		}
@@ -2590,6 +2617,10 @@ delete		: /* empty */	{ $$ = 0; }
 		| DELETE	{ $$ = 1; }
 		;
 
+enforce		: /* empty */	{ $$ = 1; }
+		| ENFORCE	{ $$ = 2; }
+		;
+
 filter_set_opt	: LOCALPREF NUMBER		{
 			if ($2 < -INT_MAX || $2 > UINT_MAX) {
 				yyerror("bad localpref %lld", $2);
@@ -3067,6 +3098,7 @@ lookup(char *s)
 		{ "password",		PASSWORD},
 		{ "peer-as",		PEERAS},
 		{ "pftable",		PFTABLE},
+		{ "policy",		POLICY},
 		{ "port",		PORT},
 		{ "prefix",		PREFIX},
 		{ "prefix-set",		PREFIXSET},

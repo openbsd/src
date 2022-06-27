@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.546 2022/05/25 16:03:34 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.547 2022/06/27 13:26:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1182,7 +1182,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 	uint16_t		 withdrawn_len;
 	uint16_t		 attrpath_len;
 	uint16_t		 nlri_len;
-	uint8_t			 aid, prefixlen, safi, subtype;
+	uint8_t			 aid, prefixlen, safi, subtype, role;
 	uint32_t		 fas, pathid;
 
 	p = imsg->data;
@@ -1261,6 +1261,26 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 			    rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
 				    NULL, 0);
 			    goto done;
+			}
+		}
+
+		/* inject open policy OTC attribute if needed */
+		if (peer_has_open_policy(peer, &role) &&
+		    (state.aspath.flags & F_ATTR_OTC) == 0) {
+			uint32_t tmp;
+			switch (role) {
+			case CAPA_ROLE_PROVIDER:
+			case CAPA_ROLE_RS:
+			case CAPA_ROLE_PEER:
+				tmp = htonl(peer->conf.remote_as);
+				if (attr_optadd(&state.aspath,
+				    ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_OTC,
+				    &tmp, sizeof(tmp)) == -1) {
+					rde_update_err(peer, ERR_UPDATE,
+					    ERR_UPD_ATTRLIST, NULL, 0);
+					goto done;
+				}
+				state.aspath.flags |= F_ATTR_OTC;
 			}
 		}
 
@@ -1679,9 +1699,7 @@ rde_attr_parse(u_char *p, uint16_t len, struct rde_peer *peer,
 	int		 error;
 	uint16_t	 attr_len, nlen;
 	uint16_t	 plen = 0;
-	uint8_t		 flags;
-	uint8_t		 type;
-	uint8_t		 tmp8;
+	uint8_t		 flags, type, role, tmp8;
 
 	if (len < 3) {
 bad_len:
@@ -2005,6 +2023,34 @@ bad_flags:
 			break;
 		}
 		a->flags |= F_ATTR_AS4BYTE_NEW;
+		goto optattr;
+	case ATTR_OTC:
+		if (attr_len != 4) {
+			/* treat-as-withdraw */
+			a->flags |= F_ATTR_PARSE_ERR;
+			log_peer_warnx(&peer->conf, "bad OTC, "
+			    "path invalidated and prefix withdrawn");
+			break;
+		}
+		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
+		    ATTR_PARTIAL))
+			goto bad_flags;
+		if (peer_has_open_policy(peer, &role)) {
+			switch (role) {
+			case CAPA_ROLE_CUSTOMER:
+			case CAPA_ROLE_RS_CLIENT:
+				a->flags |= F_ATTR_OTC_LOOP | F_ATTR_PARSE_ERR;
+				break;
+			case CAPA_ROLE_PEER:
+				memcpy(&tmp32, p, sizeof(tmp32));
+				tmp32 = ntohl(tmp32);
+				if (tmp32 != peer->conf.remote_as)
+					a->flags |= F_ATTR_OTC_LOOP |
+					    F_ATTR_PARSE_ERR;
+				break;
+			}
+		}
+		a->flags |= F_ATTR_OTC;
 		goto optattr;
 	default:
 		if ((flags & ATTR_OPTIONAL) == 0) {
@@ -2410,7 +2456,10 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 		rib.flags |= F_PREF_ELIGIBLE;
 	if (asp->flags & F_ATTR_LOOP)
 		rib.flags &= ~F_PREF_ELIGIBLE;
-	if (asp->flags & F_ATTR_PARSE_ERR)
+	/* otc loop includes parse err so skip the latter if the first is set */
+	if (asp->flags & F_ATTR_OTC_LOOP)
+		rib.flags |= F_PREF_OTC_LOOP;
+	else if (asp->flags & F_ATTR_PARSE_ERR)
 		rib.flags |= F_PREF_INVALID;
 	staletime = peer->staletime[p->pt->aid];
 	if (staletime && p->lastchange <= staletime)

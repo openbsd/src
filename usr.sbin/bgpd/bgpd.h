@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.437 2022/06/23 13:09:03 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.438 2022/06/27 13:26:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -371,9 +371,11 @@ struct capabilities {
 	int8_t	as4byte;		/* 4-byte ASnum, RFC 4893 */
 	int8_t	enhanced_rr;		/* enhanced route refresh, RFC 7313 */
 	int8_t	add_path[AID_MAX];	/* ADD_PATH, RFC 7911 */
+	uint8_t	role;			/* Open Policy, RFC 9234 */
+	int8_t	role_ena;		/* 1 for enable, 2 for enforce */
 };
 
-/* flags for RFC4724 - graceful restart */
+/* flags for RFC 4724 - graceful restart */
 #define	CAPA_GR_PRESENT		0x01
 #define	CAPA_GR_RESTART		0x02
 #define	CAPA_GR_FORWARD		0x04
@@ -382,10 +384,17 @@ struct capabilities {
 #define	CAPA_GR_R_FLAG		0x8000
 #define	CAPA_GR_F_FLAG		0x80
 
-/* flags for RFC7911 - enhanced router refresh */
+/* flags for RFC 7911 - enhanced router refresh */
 #define	CAPA_AP_RECV		0x01
 #define	CAPA_AP_SEND		0x02
 #define	CAPA_AP_BIDIR		0x03
+
+/* values for RFC 9234 - BGP Open Policy */
+#define CAPA_ROLE_PROVIDER	0x00
+#define CAPA_ROLE_RS		0x01
+#define CAPA_ROLE_RS_CLIENT	0x02
+#define CAPA_ROLE_CUSTOMER	0x03
+#define CAPA_ROLE_PEER		0x04
 
 struct peer_config {
 	struct bgpd_addr	 remote_addr;
@@ -774,6 +783,7 @@ struct ctl_neighbor {
 #define	F_PREF_STALE	0x10
 #define	F_PREF_INVALID	0x20
 #define	F_PREF_PATH_ID	0x40
+#define	F_PREF_OTC_LOOP	0x80
 
 struct ctl_show_rib {
 	struct bgpd_addr	true_nexthop;
@@ -948,7 +958,7 @@ struct filter_peers {
 #define EXT_COMMUNITY_TRANS_IPV4	0x01	/* IPv4 specific */
 #define EXT_COMMUNITY_TRANS_FOUR_AS	0x02	/* 4 octet AS specific */
 #define EXT_COMMUNITY_TRANS_OPAQUE	0x03	/* opaque ext community */
-#define EXT_COMMUNITY_TRANS_EVPN	0x06	/* EVPN RFC7432 */
+#define EXT_COMMUNITY_TRANS_EVPN	0x06	/* EVPN RFC 7432 */
 /* extended types non-transitive */
 #define EXT_COMMUNITY_NON_TRANS_TWO_AS	0x40	/* 2 octet AS specific */
 #define EXT_COMMUNITY_NON_TRANS_IPV4	0x41	/* IPv4 specific */
@@ -956,7 +966,7 @@ struct filter_peers {
 #define EXT_COMMUNITY_NON_TRANS_OPAQUE	0x43	/* opaque ext community */
 #define EXT_COMMUNITY_UNKNOWN		-1
 
-/* BGP Origin Validation State Extended Community RFC8097 */
+/* BGP Origin Validation State Extended Community RFC 8097 */
 #define EXT_COMMUNITY_SUBTYPE_OVS	0
 #define EXT_COMMUNITY_OVS_VALID		0
 #define EXT_COMMUNITY_OVS_NOTFOUND	1
@@ -1380,6 +1390,7 @@ const char	*log_rd(uint64_t);
 const char	*log_ext_subtype(int, uint8_t);
 const char	*log_reason(const char *);
 const char	*log_rtr_error(enum rtr_error);
+const char	*log_policy(uint8_t);
 int		 aspath_snprint(char *, size_t, void *, uint16_t);
 int		 aspath_asprint(char **, void *, uint16_t);
 size_t		 aspath_strlen(void *, uint16_t);
@@ -1485,8 +1496,10 @@ static const char * const suberr_open_names[] = {
 	"authentication error",
 	"unacceptable holdtime",
 	"unsupported capability",
-	"group membership conflict",	/* draft-ietf-idr-bgp-multisession-07 */
-	"group membership required"	/* draft-ietf-idr-bgp-multisession-07 */
+	NULL,
+	NULL,
+	NULL,
+	"role mismatch",
 };
 
 static const char * const suberr_fsm_names[] = {

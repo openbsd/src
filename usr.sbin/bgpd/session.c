@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.429 2022/06/23 13:09:03 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.430 2022/06/27 13:26:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -87,7 +87,7 @@ int	parse_update(struct peer *);
 int	parse_rrefresh(struct peer *);
 int	parse_notification(struct peer *);
 int	parse_capabilities(struct peer *, u_char *, uint16_t, uint32_t *);
-int	capa_neg_calc(struct peer *);
+int	capa_neg_calc(struct peer *, uint8_t *);
 void	session_dispatch_imsg(struct imsgbuf *, int, u_int *);
 void	session_up(struct peer *);
 void	session_down(struct peer *);
@@ -1439,6 +1439,12 @@ session_open(struct peer *p)
 	if (p->capa.ann.refresh)	/* no data */
 		errs += session_capa_add(opb, CAPA_REFRESH, 0);
 
+	/* BGP open policy, RFC 9234 */
+	if (p->capa.ann.role_ena) {
+		errs += session_capa_add(opb, CAPA_ROLE, 1);
+		errs += ibuf_add(opb, &p->capa.ann.role, 1); 
+	}
+
 	/* graceful restart and End-of-RIB marker, RFC 4724 */
 	if (p->capa.ann.grestart.restart) {
 		int		rst = 0;
@@ -2070,7 +2076,7 @@ parse_open(struct peer *peer)
 	uint16_t	 holdtime, oholdtime, myholdtime;
 	uint32_t	 as, bgpid;
 	uint16_t	 optparamlen, extlen, plen, op_len;
-	uint8_t		 op_type;
+	uint8_t		 op_type, suberr = 0;
 
 	p = peer->rbuf->rptr;
 	p += MSGSIZE_HEADER_MARKER;
@@ -2258,10 +2264,8 @@ bad_len:
 		return (-1);
 	}
 
-	if (capa_neg_calc(peer) == -1) {
-		log_peer_warnx(&peer->conf,
-		    "capability negotiation calculation failed");
-		session_notification(peer, ERR_OPEN, 0, NULL, 0);
+	if (capa_neg_calc(peer, &suberr) == -1) {
+		session_notification(peer, ERR_OPEN, suberr, NULL, 0);
 		change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 		return (-1);
 	}
@@ -2607,6 +2611,16 @@ parse_capabilities(struct peer *peer, u_char *d, uint16_t dlen, uint32_t *as)
 		case CAPA_REFRESH:
 			peer->capa.peer.refresh = 1;
 			break;
+		case CAPA_ROLE:
+			if (capa_len != 1) {
+				log_peer_warnx(&peer->conf,
+				    "Bad open policy capability length: "
+				    "%u", capa_len);
+				break;
+			}
+			peer->capa.peer.role_ena = 1;
+			peer->capa.peer.role = *capa_val;
+			break;
 		case CAPA_RESTART:
 			if (capa_len == 2) {
 				/* peer only supports EoR marker */
@@ -2722,7 +2736,7 @@ parse_capabilities(struct peer *peer, u_char *d, uint16_t dlen, uint32_t *as)
 }
 
 int
-capa_neg_calc(struct peer *p)
+capa_neg_calc(struct peer *p, uint8_t *suberr)
 {
 	uint8_t	i, hasmp = 0;
 
@@ -2775,8 +2789,11 @@ capa_neg_calc(struct peer *p)
 				    CAPA_GR_RESTARTING;
 			} else {
 				if (imsg_rde(IMSG_SESSION_FLUSH, p->conf.id,
-				    &i, sizeof(i)) == -1)
+				    &i, sizeof(i)) == -1) {
+					log_peer_warnx(&p->conf,
+					    "imsg send failed");
 					return (-1);
+				}
 				log_peer_warnx(&p->conf, "graceful restart of "
 				    "%s, not restarted, flushing", aid2str(i));
 			}
@@ -2808,6 +2825,53 @@ capa_neg_calc(struct peer *p)
 				p->capa.neg.add_path[0] |= CAPA_AP_SEND;
 			}
 		}
+	}
+
+	/*
+	 * Open policy: check that the policy is sensible.
+	 *
+	 * Make sure that the roles match and set the negotiated capability
+	 * to the role of the peer. So the RDE can inject the OTC attribute.
+	 * See RFC 9234, section 4.2.
+	 */
+	if (p->capa.ann.role_ena != 0 && p->capa.peer.role_ena != 0) {
+		switch (p->capa.ann.role) {
+		case CAPA_ROLE_PROVIDER:
+			if (p->capa.peer.role != CAPA_ROLE_CUSTOMER)
+				goto fail;
+			break;
+		case CAPA_ROLE_RS:
+			if (p->capa.peer.role != CAPA_ROLE_RS_CLIENT)
+				goto fail;
+			break;
+		case CAPA_ROLE_RS_CLIENT:
+			if (p->capa.peer.role != CAPA_ROLE_RS)
+				goto fail;
+			break;
+		case CAPA_ROLE_CUSTOMER:
+			if (p->capa.peer.role != CAPA_ROLE_PROVIDER)
+				goto fail;
+			break;
+		case CAPA_ROLE_PEER:
+			if (p->capa.peer.role != CAPA_ROLE_PEER)
+				goto fail;
+			break;
+		default:
+ fail:
+			log_peer_warnx(&p->conf, "open policy role mismatch: "
+			    "%s vs %s", log_policy(p->capa.ann.role),
+			    log_policy(p->capa.peer.role));
+			*suberr = ERR_OPEN_ROLE;
+			return (-1);
+		}
+		p->capa.neg.role_ena = 1;
+		p->capa.neg.role = p->capa.peer.role;
+	} else if (p->capa.ann.role_ena == 2) {
+		/* enforce presence of open policy role capability */
+		log_peer_warnx(&p->conf, "open policy role enforced but "
+		    "not present");
+		*suberr = ERR_OPEN_ROLE;
+		return (-1);
 	}
 
 	return (0);

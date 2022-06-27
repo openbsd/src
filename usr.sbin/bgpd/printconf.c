@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.153 2022/06/15 14:09:30 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.154 2022/06/27 13:26:51 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -659,14 +659,6 @@ print_peer(struct peer_config *p, struct bgpd_config *conf, const char *c)
 		printf("%s\tholdtime %u\n", c, p->holdtime);
 	if (p->min_holdtime)
 		printf("%s\tholdtime min %u\n", c, p->min_holdtime);
-	if (p->announce_capa == 0)
-		printf("%s\tannounce capabilities no\n", c);
-	if (p->capabilities.refresh == 0)
-		printf("%s\tannounce refresh no\n", c);
-	if (p->capabilities.grestart.restart == 0)
-		printf("%s\tannounce restart no\n", c);
-	if (p->capabilities.as4byte == 0)
-		printf("%s\tannounce as4byte no\n", c);
 	if (p->export_type == EXPORT_NONE)
 		printf("%s\texport none\n", c);
 	else if (p->export_type == EXPORT_DEFAULT_ROUTE)
@@ -781,9 +773,29 @@ print_announce(struct peer_config *p, const char *c)
 {
 	uint8_t	aid;
 
+	if (p->announce_capa == 0)
+		printf("%s\tannounce capabilities no\n", c);
+
 	for (aid = 0; aid < AID_MAX; aid++)
 		if (p->capabilities.mp[aid])
 			printf("%s\tannounce %s\n", c, aid2str(aid));
+
+	if (p->capabilities.refresh == 0)
+		printf("%s\tannounce refresh no\n", c);
+	if (p->capabilities.enhanced_rr == 0)
+		printf("%s\tannounce enhanced refresh no\n", c);
+	if (p->capabilities.grestart.restart == 0)
+		printf("%s\tannounce restart no\n", c);
+	if (p->capabilities.as4byte == 0)
+		printf("%s\tannounce as4byte no\n", c);
+	if (p->capabilities.add_path[0] & CAPA_AP_RECV)
+		printf("%s\tannounce add-path recv yes\n", c);
+	if (p->capabilities.role_ena) {
+		printf("%s\tannounce policy %s%s\n", c,
+		    log_policy(p->capabilities.role),
+		    p->capabilities.role_ena == 2 ? " enforce" : "");
+	}
+
 }
 
 void

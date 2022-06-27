@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.140 2022/05/23 13:40:12 deraadt Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.141 2022/06/27 13:26:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -104,7 +104,7 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 	struct bgpd_addr	addr;
 	struct prefix		*p;
 	int			need_withdraw;
-	uint8_t			prefixlen;
+	uint8_t			prefixlen, role;
 
 	if (new == NULL) {
 		if (old == NULL)
@@ -152,6 +152,45 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 					continue;
 			}
 			break;
+		}
+
+		/* RFC9234 open policy handling */
+		if (peer_has_open_policy(peer, &role)) {
+			/*
+			 * do not propagate (consider it filtered) if
+			 * OTC is present and neighbor role is peer,
+			 * provider or rs.
+			 */
+			if ((role == CAPA_ROLE_PEER ||
+			    role == CAPA_ROLE_PROVIDER ||
+			    role == CAPA_ROLE_RS) &&
+			    state.aspath.flags & F_ATTR_OTC) {
+				rde_filterstate_clean(&state);
+				if (peer->flags & PEERFLAG_EVALUATE_ALL) {
+					new = TAILQ_NEXT(new, entry.list.rib);
+					if (new != NULL && prefix_eligible(new))
+						continue;
+				}
+				break;
+			}
+			/*
+			 * add OTC attribute if not present for peers,
+			 * customers and rs-clients.
+			 */
+			if ((role == CAPA_ROLE_PEER ||
+			    role == CAPA_ROLE_CUSTOMER ||
+			    role == CAPA_ROLE_RS_CLIENT) &&
+			    (state.aspath.flags & F_ATTR_OTC) == 0) {
+				uint32_t tmp;
+
+				tmp = htonl(peer->conf.local_as);
+				if (attr_optadd(&state.aspath,
+				    ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_OTC,
+				    &tmp, sizeof(tmp)) == -1)
+					log_peer_warnx(&peer->conf,
+					    "failed to add OTC attribute");
+				state.aspath.flags |= F_ATTR_OTC;
+			}
 		}
 
 		/* check if this was actually a withdraw */
@@ -535,6 +574,7 @@ up_generate_attr(u_char *buf, int len, struct rde_peer *peer,
 			/* FALLTHROUGH */
 		case ATTR_ORIGINATOR_ID:
 		case ATTR_CLUSTER_LIST:
+		case ATTR_OTC:
 			if (oa == NULL || oa->type != type)
 				break;
 			if ((!(oa->flags & ATTR_TRANSITIVE)) &&
