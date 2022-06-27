@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1199 2022/05/16 00:27:46 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1200 2022/06/27 11:01:41 sthen Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2859,8 +2859,6 @@ finish_up() {
 	)
 	echo " done."
 
-	[ -x /mnt/usr/sbin/fw_update ] && DESTDIR=/mnt /mnt/usr/sbin/fw_update
-
 	# We may run some programs in chroot, and some of them might be
 	# dynamic.  That is highly discouraged, but let us play it safe.
 	rm -f /mnt/var/run/ld.so.hints
@@ -2894,22 +2892,6 @@ finish_up() {
 	# ensure it references the kernel as /bsd.
 	sha256 /mnt/bsd | (umask 077; sed 's,/mnt,,' >/mnt/var/db/kernel.SHA256)
 
-	if [[ -f $_kernel_dir.tgz ]]; then
-		echo -n "Relinking to create unique kernel..."
-		(
-		set -e
-		rm -rf $_kernel_dir
-		mkdir -m 700 -p $_kernel_dir
-		tar -C $_kernel_dir -xzf $_kernel_dir.tgz $_kernel
-		rm -f $_kernel_dir.tgz
-		chroot /mnt /bin/ksh -e -c "cd ${_kernel_dir#/mnt}/$_kernel; \
-			make newbsd; \
-			[ -f /etc/bsd.re-config ] && \
-			    config -e -c /etc/bsd.re-config -f bsd; \
-			make newinstall"
-		) >/dev/null 2>&1 && echo " done." || echo " failed."
-	fi
-
 	# Ensure that sysmerge in batch mode is run on reboot.
 	[[ $MODE == upgrade ]] &&
 		echo "/usr/sbin/sysmerge -b" >>/mnt/etc/rc.sysmerge
@@ -2938,6 +2920,24 @@ if ((\${#_KERNV[*]} == 1)) && [[ -s /etc/installurl ]] &&
 	rm -f \$_CKPATCH
 fi
 __EOT
+
+	[ -x /mnt/usr/sbin/fw_update ] && DESTDIR=/mnt /mnt/usr/sbin/fw_update
+
+	if [[ -f $_kernel_dir.tgz ]]; then
+		echo -n "Relinking to create unique kernel..."
+		(
+		set -e
+		rm -rf $_kernel_dir
+		mkdir -m 700 -p $_kernel_dir
+		tar -C $_kernel_dir -xzf $_kernel_dir.tgz $_kernel
+		rm -f $_kernel_dir.tgz
+		chroot /mnt /bin/ksh -e -c "cd ${_kernel_dir#/mnt}/$_kernel; \
+			make newbsd; \
+			[ -f /etc/bsd.re-config ] && \
+			    config -e -c /etc/bsd.re-config -f bsd; \
+			make newinstall"
+		) >/dev/null 2>&1 && echo " done." || echo " failed."
+	fi
 
 	# Email installer questions and their answers to root on next boot.
 	prep_root_mail /tmp/i/$MODE.resp "$(hostname) $MODE response file"
