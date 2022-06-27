@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.281 2022/06/26 21:19:53 mvs Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.282 2022/06/27 20:47:10 bluhm Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -221,10 +221,7 @@ ether_resolve(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 
 	switch (af) {
 	case AF_INET:
-		KERNEL_LOCK();
-		/* XXXSMP there is a MP race in arpresolve() */
 		error = arpresolve(ifp, rt, m, dst, eh->ether_dhost);
-		KERNEL_UNLOCK();
 		if (error)
 			return (error);
 		eh->ether_type = htons(ETHERTYPE_IP);
@@ -285,10 +282,7 @@ ether_resolve(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 			break;
 #endif
 		case AF_INET:
-			KERNEL_LOCK();
-			/* XXXSMP there is a MP race in arpresolve() */
 			error = arpresolve(ifp, rt, m, dst, eh->ether_dhost);
-			KERNEL_UNLOCK();
 			if (error)
 				return (error);
 			break;
