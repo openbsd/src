@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.35 2022/01/14 08:27:23 tb Exp $ */
+/* $OpenBSD: dsa.h,v 1.36 2022/06/27 12:28:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -151,6 +151,9 @@ int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int DSA_set_ex_data(DSA *d, int idx, void *arg);
 void *DSA_get_ex_data(DSA *d, int idx);
+#ifdef LIBRESSL_INTERNAL
+int DSA_security_bits(const DSA *d);
+#endif
 
 DSA *d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length);
 int i2d_DSAPublicKey(const DSA *a, unsigned char **pp);

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.34 2022/01/14 08:29:06 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.35 2022/06/27 12:28:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -258,6 +258,15 @@ void *
 DSA_get_ex_data(DSA *d, int idx)
 {
 	return CRYPTO_get_ex_data(&d->ex_data, idx);
+}
+
+int
+DSA_security_bits(const DSA *d)
+{
+	if (d->p == NULL || d->q == NULL)
+		return -1;
+
+	return BN_security_bits(BN_num_bits(d->p), BN_num_bits(d->q));
 }
 
 #ifndef OPENSSL_NO_DH
