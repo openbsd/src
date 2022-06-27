@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.3 2022/02/22 15:59:13 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.4 2022/06/27 10:25:32 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -224,6 +224,7 @@ appl_region(struct appl_context *ctx, uint32_t timeout, uint8_t priority,
 		goto overlap;
 
 	/* Don't use smi_oid2string, because appl_register can't use it */
+	oidbuf[0] = '\0';
 	for (i = 0; i < oid->bo_n; i++) {
 		if (i != 0)
 			strlcat(oidbuf, ".", sizeof(oidbuf));
@@ -272,6 +273,7 @@ appl_region(struct appl_context *ctx, uint32_t timeout, uint8_t priority,
 	    backend->ab_name, oidbuf, priority);
 	return APPL_ERROR_DUPLICATEREGISTRATION;
  overlap:
+	regionbuf[0] = '\0';
 	for (i = 0; i < region->ar_oid.bo_n; i++) {
 		if (i != 0)
 			strlcat(regionbuf, ".", sizeof(regionbuf));
