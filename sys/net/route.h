@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.194 2022/05/05 13:57:40 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.195 2022/06/27 21:26:46 claudio Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -91,6 +91,8 @@ struct rt_metrics {
 
 #include <sys/queue.h>
 #include <net/rtable.h>
+
+struct rttimer;
 
 /*
  * We distinguish between routes to hosts and routes to networks,
@@ -405,15 +407,6 @@ rtstat_inc(enum rtstat_counters c)
  * add,timer} functions all used with the kind permission of BSDI.
  * These allow functions to be called for routes at specific times.
  */
-struct rttimer {
-	TAILQ_ENTRY(rttimer)	rtt_next;	/* [T] entry on timer queue */
-	LIST_ENTRY(rttimer)	rtt_link;	/* [T] timers per rtentry */
-	struct rttimer_queue	*rtt_queue;	/* [T] back pointer to queue */
-	struct rtentry		*rtt_rt;	/* [I] back pointer to route */
-	time_t			rtt_time;	/* [I] when timer registered */
-	u_int			rtt_tableid;	/* [I] rtable id of rtt_rt */
-};
-
 struct rttimer_queue {
 	TAILQ_HEAD(, rttimer)		rtq_head;	/* [T] */
 	LIST_ENTRY(rttimer_queue)	rtq_link;	/* [T] */
@@ -461,6 +454,7 @@ void		rt_timer_init(void);
 int		rt_timer_add(struct rtentry *,
 		    struct rttimer_queue *, u_int);
 void		rt_timer_remove_all(struct rtentry *);
+time_t		rt_timer_get_expire(const struct rtentry *);
 void		rt_timer_queue_init(struct rttimer_queue *, int,
 		    void(*)(struct rtentry *, u_int));
 void		rt_timer_queue_change(struct rttimer_queue *, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.410 2022/05/05 13:57:40 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.411 2022/06/27 21:26:46 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1361,7 +1361,16 @@ rt_ifa_purge_walker(struct rtentry *rt, void *vifa, unsigned int rtableid)
  */
 
 struct mutex			rttimer_mtx;
-LIST_HEAD(, rttimer_queue)	rttimer_queue_head;	/* [T] */
+
+struct rttimer {
+	TAILQ_ENTRY(rttimer)	rtt_next;	/* [T] entry on timer queue */
+	LIST_ENTRY(rttimer)	rtt_link;	/* [T] timers per rtentry */
+	struct timeout		rtt_timeout;	/* [I] timeout for this entry */
+	struct rttimer_queue	*rtt_queue;	/* [I] back pointer to queue */
+	struct rtentry		*rtt_rt;	/* [T] back pointer to route */
+	time_t			rtt_expire;	/* [I] rt expire time */
+	u_int			rtt_tableid;	/* [I] rtable id of rtt_rt */
+};
 
 #define RTTIMER_CALLOUT(r)	{					\
 	if (r->rtt_queue->rtq_func != NULL) {				\
@@ -1388,15 +1397,9 @@ LIST_HEAD(, rttimer_queue)	rttimer_queue_head;	/* [T] */
 void
 rt_timer_init(void)
 {
-	static struct timeout	rt_timer_timeout;
-
 	pool_init(&rttimer_pool, sizeof(struct rttimer), 0,
 	    IPL_MPFLOOR, 0, "rttmr", NULL);
-
 	mtx_init(&rttimer_mtx, IPL_MPFLOOR);
-	LIST_INIT(&rttimer_queue_head);
-	timeout_set_proc(&rt_timer_timeout, rt_timer_timer, &rt_timer_timeout);
-	timeout_add_sec(&rt_timer_timeout, 1);
 }
 
 void
@@ -1407,10 +1410,6 @@ rt_timer_queue_init(struct rttimer_queue *rtq, int timeout,
 	rtq->rtq_count = 0;
 	rtq->rtq_func = func;
 	TAILQ_INIT(&rtq->rtq_head);
-
-	mtx_enter(&rttimer_mtx);
-	LIST_INSERT_HEAD(&rttimer_queue_head, rtq, rtq_link);
-	mtx_leave(&rttimer_mtx);
 }
 
 void
@@ -1453,6 +1452,25 @@ rt_timer_queue_count(struct rttimer_queue *rtq)
 	return (rtq->rtq_count);
 }
 
+static inline struct rttimer *
+rt_timer_unlink(struct rttimer *r)
+{
+	MUTEX_ASSERT_LOCKED(&rttimer_mtx);
+
+	LIST_REMOVE(r, rtt_link);
+	r->rtt_rt = NULL;
+
+	if (timeout_del(&r->rtt_timeout) == 0) {
+		/* timeout fired, so rt_timer_timer will do the cleanup */
+		return NULL;
+	}
+
+	TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
+	KASSERT(r->rtt_queue->rtq_count > 0);
+	r->rtt_queue->rtq_count--;
+	return r;
+}
+
 void
 rt_timer_remove_all(struct rtentry *rt)
 {
@@ -1462,11 +1480,9 @@ rt_timer_remove_all(struct rtentry *rt)
 	TAILQ_INIT(&rttlist);
 	mtx_enter(&rttimer_mtx);
 	while ((r = LIST_FIRST(&rt->rt_timer)) != NULL) {
-		LIST_REMOVE(r, rtt_link);
-		TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
-		TAILQ_INSERT_TAIL(&rttlist, r, rtt_next);
-		KASSERT(r->rtt_queue->rtq_count > 0);
-		r->rtt_queue->rtq_count--;
+		r = rt_timer_unlink(r);
+		if (r != NULL)
+			TAILQ_INSERT_TAIL(&rttlist, r, rtt_next);
 	}
 	mtx_leave(&rttimer_mtx);
 
@@ -1476,41 +1492,52 @@ rt_timer_remove_all(struct rtentry *rt)
 	}
 }
 
+time_t
+rt_timer_get_expire(const struct rtentry *rt)
+{
+	const struct rttimer	*r;
+	time_t			 expire = 0;
+	
+	mtx_enter(&rttimer_mtx);
+	LIST_FOREACH(r, &rt->rt_timer, rtt_link) {
+		if (expire == 0 || expire > r->rtt_expire)
+			expire = r->rtt_expire;
+	}
+	mtx_leave(&rttimer_mtx);
+
+	return expire;
+}
+
 int
 rt_timer_add(struct rtentry *rt, struct rttimer_queue *queue, u_int rtableid)
 {
 	struct rttimer	*r, *rnew;
-	time_t		 current_time;
 
 	rnew = pool_get(&rttimer_pool, PR_NOWAIT | PR_ZERO);
 	if (rnew == NULL)
 		return (ENOBUFS);
 
-	current_time = getuptime();
-
 	rnew->rtt_rt = rt;
-	rnew->rtt_time = current_time;
 	rnew->rtt_queue = queue;
 	rnew->rtt_tableid = rtableid;
+	rnew->rtt_expire = getuptime() + queue->rtq_timeout;
+	timeout_set_proc(&rnew->rtt_timeout, rt_timer_timer, rnew);
 
 	mtx_enter(&rttimer_mtx);
-	rt->rt_expire = current_time + queue->rtq_timeout;
 	/*
 	 * If there's already a timer with this action, destroy it before
 	 * we add a new one.
 	 */
 	LIST_FOREACH(r, &rt->rt_timer, rtt_link) {
 		if (r->rtt_queue == queue) {
-			LIST_REMOVE(r, rtt_link);
-			TAILQ_REMOVE(&r->rtt_queue->rtq_head, r, rtt_next);
-			KASSERT(r->rtt_queue->rtq_count > 0);
-			r->rtt_queue->rtq_count--;
+			r = rt_timer_unlink(r);
 			break;  /* only one per list, so we can quit... */
 		}
 	}
 
 	LIST_INSERT_HEAD(&rt->rt_timer, rnew, rtt_link);
 	TAILQ_INSERT_TAIL(&queue->rtq_head, rnew, rtt_next);
+	timeout_add_sec(&rnew->rtt_timeout, queue->rtq_timeout);
 	rnew->rtt_queue->rtq_count++;
 	mtx_leave(&rttimer_mtx);
 
@@ -1523,37 +1550,25 @@ rt_timer_add(struct rtentry *rt, struct rttimer_queue *queue, u_int rtableid)
 void
 rt_timer_timer(void *arg)
 {
-	struct timeout		*to = (struct timeout *)arg;
-	struct rttimer_queue	*rtq;
-	struct rttimer		*r;
-	TAILQ_HEAD(, rttimer)	 rttlist;
-	time_t			 current_time;
-
-	current_time = getuptime();
-	TAILQ_INIT(&rttlist);
+	struct rttimer		*r = arg;
+	struct rttimer_queue	*rtq = r->rtt_queue;
 
 	NET_LOCK();
 	mtx_enter(&rttimer_mtx);
-	LIST_FOREACH(rtq, &rttimer_queue_head, rtq_link) {
-		while ((r = TAILQ_FIRST(&rtq->rtq_head)) != NULL &&
-		    (r->rtt_time + rtq->rtq_timeout) < current_time) {
-			LIST_REMOVE(r, rtt_link);
-			TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
-			TAILQ_INSERT_TAIL(&rttlist, r, rtt_next);
-			KASSERT(rtq->rtq_count > 0);
-			rtq->rtq_count--;
-		}
-	}
+
+	if (r->rtt_rt != NULL)
+		LIST_REMOVE(r, rtt_link);
+	TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
+	KASSERT(rtq->rtq_count > 0);
+	rtq->rtq_count--;
+
 	mtx_leave(&rttimer_mtx);
 
-	while ((r = TAILQ_FIRST(&rttlist)) != NULL) {
-		TAILQ_REMOVE(&rttlist, r, rtt_next);
+	if (r->rtt_rt != NULL)
 		RTTIMER_CALLOUT(r);
-		pool_put(&rttimer_pool, r);
-	}
 	NET_UNLOCK();
 
-	timeout_add_sec(to, 1);
+	pool_put(&rttimer_pool, r);
 }
 
 #ifdef MPLS

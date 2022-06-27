@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.332 2022/06/27 17:15:35 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.333 2022/06/27 21:26:46 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ int		 rtm_xaddrs(caddr_t, caddr_t, struct rt_addrinfo *);
 int		 rtm_validate_proposal(struct rt_addrinfo *);
 void		 rtm_setmetrics(u_long, const struct rt_metrics *,
 		     struct rt_kmetrics *);
-void		 rtm_getmetrics(const struct rt_kmetrics *,
+void		 rtm_getmetrics(const struct rtentry *,
 		     struct rt_metrics *);
 
 int		 sysctl_iflist(int, struct walkarg *);
@@ -674,7 +674,7 @@ rtm_report(struct rtentry *rt, u_char type, int seq, int tableid)
 	rtm->rtm_flags = rt->rt_flags;
 	rtm->rtm_pid = curproc->p_p->ps_pid;
 	rtm->rtm_seq = seq;
-	rtm_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
+	rtm_getmetrics(rt, &rtm->rtm_rmx);
 	rtm->rtm_addrs = info.rti_addrs;
 #ifdef MPLS
 	rtm->rtm_mpls = info.rti_mpls;
@@ -1391,11 +1391,14 @@ rtm_setmetrics(u_long which, const struct rt_metrics *in,
 }
 
 void
-rtm_getmetrics(const struct rt_kmetrics *in, struct rt_metrics *out)
+rtm_getmetrics(const struct rtentry *rt, struct rt_metrics *out)
 {
+	const struct rt_kmetrics *in = &rt->rt_rmx;
 	int64_t expire;
 
 	expire = in->rmx_expire;
+	if (expire == 0)
+		expire = rt_timer_get_expire(rt);
 	if (expire != 0) {
 		expire -= getuptime();
 		expire += gettime();
@@ -1998,7 +2001,7 @@ sysctl_dumpentry(struct rtentry *rt, void *v, unsigned int id)
 		rtm->rtm_pid = curproc->p_p->ps_pid;
 		rtm->rtm_flags = RTF_DONE | rt->rt_flags;
 		rtm->rtm_priority = rt->rt_priority & RTP_MASK;
-		rtm_getmetrics(&rt->rt_rmx, &rtm->rtm_rmx);
+		rtm_getmetrics(rt, &rtm->rtm_rmx);
 		/* Do not account the routing table's reference. */
 		rtm->rtm_rmx.rmx_refcnt = rt->rt_refcnt - 1;
 		rtm->rtm_index = rt->rt_ifidx;
