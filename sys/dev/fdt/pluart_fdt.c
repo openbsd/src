@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart_fdt.c,v 1.7 2022/06/11 05:29:24 anton Exp $	*/
+/*	$OpenBSD: pluart_fdt.c,v 1.8 2022/06/27 13:03:32 anton Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -27,6 +27,7 @@
 
 #include <dev/ofw/fdt.h>
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_pinctrl.h>
 
 int	pluart_fdt_match(struct device *, void *, void *);
@@ -70,8 +71,12 @@ pluart_fdt_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (OF_is_compatible(faa->fa_node, "arm,sbsa-uart"))
+	if (OF_is_compatible(faa->fa_node, "arm,sbsa-uart")) {
 		sc->sc_hwflags |= COM_HW_SBSA;
+	} else {
+		clock_enable_all(faa->fa_node);
+		sc->sc_clkfreq = clock_get_frequency(faa->fa_node, "uartclk");
+	}
 
 	periphid = OF_getpropint(faa->fa_node, "arm,primecell-periphid", 0);
 	if (periphid != 0)

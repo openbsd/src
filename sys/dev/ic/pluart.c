@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.11 2022/06/19 12:52:19 anton Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.12 2022/06/27 13:03:32 anton Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -71,9 +71,9 @@
 #define UART_ILPR		0x20		/* IrDA low-power counter register */
 #define UART_ILPR_ILPDVSR	((x) & 0xf)	/* IrDA low-power divisor */
 #define UART_IBRD		0x24		/* Integer baud rate register */
-#define UART_IBRD_DIVINT	((x) & 0xff)	/* Integer baud rate divisor */
+#define UART_IBRD_DIVINT(x)	((x) & 0xffff)	/* Integer baud rate divisor */
 #define UART_FBRD		0x28		/* Fractional baud rate register */
-#define UART_FBRD_DIVFRAC	((x) & 0x3f)	/* Fractional baud rate divisor */
+#define UART_FBRD_DIVFRAC(x)	((x) & 0x3f)	/* Fractional baud rate divisor */
 #define UART_LCR_H		0x2c		/* Line control register */
 #define UART_LCR_H_BRK		(1 << 0)	/* Send break */
 #define UART_LCR_H_PEN		(1 << 1)	/* Parity enable */
@@ -338,7 +338,9 @@ pluart_param(struct tty *tp, struct termios *t)
 		/* lower dtr */
 	}
 
-	if (ospeed != 0) {
+	if (sc->sc_clkfreq != 0 && ospeed != 0 && ospeed != tp->t_ospeed) {
+		int cr, div, lcr;
+
 		while (ISSET(tp->t_state, TS_BUSY)) {
 			++sc->sc_halt;
 			error = ttysleep(tp, &tp->t_outq,
@@ -349,7 +351,41 @@ pluart_param(struct tty *tp, struct termios *t)
 				return (error);
 			}
 		}
-		/* set speed */
+
+		/*
+		 * Writes to IBRD and FBRD are made effective first when LCR_H
+		 * is written.
+		 */
+		lcr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, UART_LCR_H);
+
+		/* The UART must be disabled while changing the baud rate. */
+		cr = bus_space_read_4(sc->sc_iot, sc->sc_ioh, UART_CR);
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, UART_CR,
+		    cr & ~UART_CR_UARTEN);
+
+		/*
+		 * The baud rate divisor is expressed relative to the UART clock
+		 * frequency where IBRD represents the quotient using 16 bits
+		 * and FBRD the remainder using 6 bits. The PL011 specification
+		 * provides the following formula:
+		 *
+		 *	uartclk/(16 * baudrate)
+		 *
+		 * The formula can be estimated by scaling it with the
+		 * precision 64 (2^6) and letting the resulting upper 16 bits
+		 * represents the quotient and the lower 6 bits the remainder:
+		 *
+		 *	64 * uartclk/(16 * baudrate) = 4 * uartclk/baudrate
+		 */
+		div = 4 * sc->sc_clkfreq / ospeed;
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, UART_IBRD,
+		    UART_IBRD_DIVINT(div >> 6));
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, UART_FBRD,
+		    UART_FBRD_DIVFRAC(div));
+		/* Commit baud rate change. */
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, UART_LCR_H, lcr);
+		/* Enable UART. */
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, UART_CR, cr);
 	}
 
 	/* setup fifo */
@@ -593,13 +629,6 @@ pluartopen(dev_t dev, int flag, int mode, struct proc *p)
 		    1 << IMXUART_FCR_TXTL_SH |
 		    5 << IMXUART_FCR_RFDIV_SH |
 		    1 << IMXUART_FCR_RXTL_SH);
-
-		bus_space_write_4(iot, ioh, IMXUART_UBIR,
-		    (pluartdefaultrate / 100) - 1);
-
-		/* formula: clk / (rfdiv * 1600) */
-		bus_space_write_4(iot, ioh, IMXUART_UBMR,
-		    (clk_get_rate(sc->sc_clk) * 1000) / 1600);
 
 		SET(sc->sc_ucr1, IMXUART_CR1_EN|IMXUART_CR1_RRDYEN);
 		SET(sc->sc_ucr2, IMXUART_CR2_TXEN|IMXUART_CR2_RXEN);

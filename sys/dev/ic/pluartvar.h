@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluartvar.h,v 1.4 2022/06/11 05:29:24 anton Exp $	*/
+/*	$OpenBSD: pluartvar.h,v 1.5 2022/06/27 13:03:32 anton Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -48,6 +48,7 @@ struct pluart_softc {
 #define COM_SW_PPS      0x10
 	int		sc_fifolen;
 	int		sc_imsc;
+	int		sc_clkfreq;
 
 	u_int8_t	sc_initialize;
 	u_int8_t	sc_cua;
