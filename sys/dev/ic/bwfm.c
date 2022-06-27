@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.103 2022/04/21 21:03:02 stsp Exp $ */
+/* $OpenBSD: bwfm.c,v 1.104 2022/06/27 09:16:56 stsp Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -703,22 +703,24 @@ bwfm_update_node(void *arg, struct ieee80211_node *ni)
 	if (!IEEE80211_ADDR_EQ(ni->ni_macaddr, sta.ea))
 		return;
 
-	if (le16toh(sta.ver) < 4)
+	if (le16toh(sta.ver) < 3)
 		return;
 
 	flags = le32toh(sta.flags);
 	if ((flags & BWFM_STA_SCBSTATS) == 0)
 		return;
 
-	rssi = 0;
-	for (i = 0; i < BWFM_ANT_MAX; i++) {
-		if (sta.rssi[i] >= 0)
-			continue;
-		if (rssi == 0 || sta.rssi[i] > rssi)
-			rssi = sta.rssi[i];
+	if (le16toh(sta.ver) >= 4) {
+		rssi = 0;
+		for (i = 0; i < BWFM_ANT_MAX; i++) {
+			if (sta.rssi[i] >= 0)
+				continue;
+			if (rssi == 0 || sta.rssi[i] > rssi)
+				rssi = sta.rssi[i];
+		}
+		if (rssi)
+			ni->ni_rssi = rssi;
 	}
-	if (rssi)
-		ni->ni_rssi = rssi;
 
 	txrate = le32toh(sta.tx_rate); /* in kbit/s */
 	if (txrate == 0xffffffff) /* Seen this happening during association. */
