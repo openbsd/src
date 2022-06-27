@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.36 2022/03/14 23:41:42 dlg Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.37 2022/06/27 10:02:20 bluhm Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -1543,6 +1543,7 @@ bnxt_intr(void *xq)
 {
 	struct bnxt_queue *q = (struct bnxt_queue *)xq;
 	struct bnxt_softc *sc = q->q_sc;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct bnxt_cp_ring *cpr = &q->q_cp;
 	struct bnxt_rx_queue *rx = &q->q_rx;
 	struct bnxt_tx_queue *tx = &q->q_tx;
@@ -1565,10 +1566,13 @@ bnxt_intr(void *xq)
 			bnxt_handle_async_event(sc, cmpl);
 			break;
 		case CMPL_BASE_TYPE_RX_L2:
-			rollback = bnxt_rx(sc, rx, cpr, &ml, &rxfree, &agfree, cmpl);
+			if (ISSET(ifp->if_flags, IFF_RUNNING))
+				rollback = bnxt_rx(sc, rx, cpr, &ml, &rxfree,
+				    &agfree, cmpl);
 			break;
 		case CMPL_BASE_TYPE_TX_L2:
-			bnxt_txeof(sc, tx, &txfree, cmpl);
+			if (ISSET(ifp->if_flags, IFF_RUNNING))
+				bnxt_txeof(sc, tx, &txfree, cmpl);
 			break;
 		default:
 			printf("%s: unexpected completion type %u\n",
