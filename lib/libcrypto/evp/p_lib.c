@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.28 2022/01/20 11:06:24 inoguchi Exp $ */
+/* $OpenBSD: p_lib.c,v 1.29 2022/06/27 12:36:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,6 +92,17 @@ EVP_PKEY_bits(const EVP_PKEY *pkey)
 	if (pkey && pkey->ameth && pkey->ameth->pkey_bits)
 		return pkey->ameth->pkey_bits(pkey);
 	return 0;
+}
+
+int
+EVP_PKEY_security_bits(const EVP_PKEY *pkey)
+{
+	if (pkey == NULL)
+		return 0;
+	if (pkey->ameth == NULL || pkey->ameth->pkey_security_bits == NULL)
+		return -2;
+
+	return pkey->ameth->pkey_security_bits(pkey);
 }
 
 int

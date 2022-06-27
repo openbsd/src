@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.25 2022/01/10 12:10:26 tb Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.26 2022/06/27 12:36:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -428,6 +428,13 @@ EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
     int (*pkey_ctrl)(EVP_PKEY *pkey, int op, long arg1, void *arg2))
 {
 	ameth->pkey_ctrl = pkey_ctrl;
+}
+
+void
+EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
+    int (*pkey_security_bits)(const EVP_PKEY *pkey))
+{
+	ameth->pkey_security_bits = pkey_security_bits;
 }
 
 void

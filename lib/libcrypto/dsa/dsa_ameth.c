@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.36 2022/05/07 10:31:28 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.37 2022/06/27 12:36:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -303,6 +303,12 @@ static int
 dsa_bits(const EVP_PKEY *pkey)
 {
 	return BN_num_bits(pkey->pkey.dsa->p);
+}
+
+static int
+dsa_security_bits(const EVP_PKEY *pkey)
+{
+	return DSA_security_bits(pkey->pkey.dsa);
 }
 
 static int
@@ -716,6 +722,7 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] = {
 
 		.pkey_size = int_dsa_size,
 		.pkey_bits = dsa_bits,
+		.pkey_security_bits = dsa_security_bits,
 
 		.param_decode = dsa_param_decode,
 		.param_encode = dsa_param_encode,

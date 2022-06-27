@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.100 2022/05/05 08:48:50 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.101 2022/06/27 12:36:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -769,6 +769,9 @@ int EVP_PKEY_type(int type);
 int EVP_PKEY_id(const EVP_PKEY *pkey);
 int EVP_PKEY_base_id(const EVP_PKEY *pkey);
 int EVP_PKEY_bits(const EVP_PKEY *pkey);
+#ifdef LIBRESSL_INTERNAL
+int EVP_PKEY_security_bits(const EVP_PKEY *pkey);
+#endif
 int EVP_PKEY_size(const EVP_PKEY *pkey);
 int EVP_PKEY_set_type(EVP_PKEY *pkey, int type);
 int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len);
@@ -931,6 +934,10 @@ void EVP_PKEY_asn1_set_free(EVP_PKEY_ASN1_METHOD *ameth,
     void (*pkey_free)(EVP_PKEY *pkey));
 void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
     int (*pkey_ctrl)(EVP_PKEY *pkey, int op, long arg1, void *arg2));
+#ifdef LIBRESSL_INTERNAL
+void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
+    int (*pkey_security_bits)(const EVP_PKEY *pkey));
+#endif
 
 void EVP_PKEY_asn1_set_check(EVP_PKEY_ASN1_METHOD *ameth,
     int (*pkey_check)(const EVP_PKEY *pk));

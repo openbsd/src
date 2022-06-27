@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.23 2022/01/20 11:00:34 inoguchi Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.24 2022/06/27 12:36:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -398,6 +398,12 @@ dh_bits(const EVP_PKEY *pkey)
 }
 
 static int
+dh_security_bits(const EVP_PKEY *pkey)
+{
+	return DH_security_bits(pkey->pkey.dh);
+}
+
+static int
 dh_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
 	if (BN_cmp(a->pkey.dh->p, b->pkey.dh->p) ||
@@ -512,6 +518,7 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
 
 	.pkey_size = int_dh_size,
 	.pkey_bits = dh_bits,
+	.pkey_security_bits = dh_security_bits,
 
 	.param_decode = dh_param_decode,
 	.param_encode = dh_param_encode,

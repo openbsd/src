@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.33 2022/06/25 15:39:12 jsing Exp $ */
+/* $OpenBSD: asn1_locl.h,v 1.34 2022/06/27 12:36:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -112,6 +112,7 @@ struct evp_pkey_asn1_method_st {
 
 	int (*pkey_size)(const EVP_PKEY *pk);
 	int (*pkey_bits)(const EVP_PKEY *pk);
+	int (*pkey_security_bits)(const EVP_PKEY *pk);
 
 	int (*param_decode)(EVP_PKEY *pkey, const unsigned char **pder,
 	    int derlen);
