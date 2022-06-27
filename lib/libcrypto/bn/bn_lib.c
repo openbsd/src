@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.53 2021/12/27 15:12:22 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.54 2022/06/27 12:25:49 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1103,6 +1103,37 @@ int
 BN_is_negative(const BIGNUM *a)
 {
 	return a->neg != 0;
+}
+
+/*
+ * Bits of security, see SP800-57, section 5.6.11, table 2.
+ */
+int
+BN_security_bits(int L, int N)
+{
+	int secbits, bits;
+
+	if (L >= 15360)
+		secbits = 256;
+	else if (L >= 7680)
+		secbits = 192;
+	else if (L >= 3072)
+		secbits = 128;
+	else if (L >= 2048)
+		secbits = 112;
+	else if (L >= 1024)
+		secbits = 80;
+	else
+		return 0;
+
+	if (N == -1)
+		return secbits;
+
+	bits = N / 2;
+	if (bits < 80)
+		return 0;
+
+	return bits >= secbits ? secbits : bits;
 }
 
 BN_GENCB *
