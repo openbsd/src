@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.15 2022/05/31 09:50:26 claudio Exp $
+# $OpenBSD: Makefile,v 1.16 2022/06/27 13:29:40 claudio Exp $
 
 REGRESS_TARGETS	= 	network_statement md5 ovs mrt \
 			maxprefix maxprefixout maxcomm \
-			as0 med eval_all
+			as0 med eval_all policy
 
 BGPD ?=			/usr/sbin/bgpd
 
@@ -17,6 +17,9 @@ md5:
 	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
 
 ovs:
+	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
+
+policy:
 	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
 
 mrt:
