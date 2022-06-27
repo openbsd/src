@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.331 2022/06/27 08:15:38 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.332 2022/06/27 17:15:35 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -652,8 +652,8 @@ rtm_report(struct rtentry *rt, u_char type, int seq, int tableid)
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp != NULL) {
 		info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
-		info.rti_info[RTAX_IFA] =
-		    rtable_getsource(tableid, info.rti_info[RTAX_DST]->sa_family);
+		info.rti_info[RTAX_IFA] = rtable_getsource(tableid,
+		    info.rti_info[RTAX_DST]->sa_family);
 		if (info.rti_info[RTAX_IFA] == NULL)
 			info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 		if (ifp->if_flags & IFF_POINTOPOINT)
@@ -813,7 +813,7 @@ route_output(struct mbuf *m, struct socket *so, struct sockaddr *dstaddr,
 		goto fail;
 
 	info.rti_flags = rtm->rtm_flags;
-	
+
 	if (rtm->rtm_type != RTM_SOURCE &&
 	    rtm->rtm_type != RTM_PROPOSAL &&
 	    (info.rti_info[RTAX_DST] == NULL ||
@@ -1716,8 +1716,8 @@ rtm_send(struct rtentry *rt, int cmd, int error, unsigned int rtableid)
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp != NULL) {
 		info.rti_info[RTAX_IFP] = sdltosa(ifp->if_sadl);
-		info.rti_info[RTAX_IFA] =
-		    rtable_getsource(rtableid, info.rti_info[RTAX_DST]->sa_family);
+		info.rti_info[RTAX_IFA] = rtable_getsource(rtableid,
+		    info.rti_info[RTAX_DST]->sa_family);
 		if (info.rti_info[RTAX_IFA] == NULL)
 			info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 	}
@@ -1919,7 +1919,7 @@ rtm_proposal(struct ifnet *ifp, struct rt_addrinfo *rtinfo, int flags,
 	rtm->rtm_tableid = ifp->if_rdomain;
 	rtm->rtm_index = ifp->if_index;
 	rtm->rtm_addrs = rtinfo->rti_addrs;
-	
+
 	route_input(m, NULL, rtinfo->rti_info[RTAX_DNS]->sa_family);
 }
 

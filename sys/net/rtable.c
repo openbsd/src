@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.77 2022/04/19 15:44:56 bluhm Exp $ */
+/*	$OpenBSD: rtable.c,v 1.78 2022/06/27 17:15:35 bluhm Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -574,7 +574,8 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 
 			if (!mpathok ||
 			    (mrt->rt_gateway->sa_len == gateway->sa_len &&
-			    !memcmp(mrt->rt_gateway, gateway, gateway->sa_len))){
+			    memcmp(mrt->rt_gateway, gateway,
+			    gateway->sa_len) == 0)) {
 				error = EEXIST;
 				goto leave;
 			}
