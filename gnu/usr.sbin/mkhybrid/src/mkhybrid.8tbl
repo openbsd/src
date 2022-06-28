@@ -2,7 +2,7 @@
 .\" To print, first run through tbl
 .\" -*- nroff -*-
 .\"
-.\" $Id: mkhybrid.8tbl,v 1.4 2022/02/17 12:24:08 jsg Exp $
+.\" $Id: mkhybrid.8tbl,v 1.5 2022/06/28 00:26:21 jsg Exp $
 .\"
 .TH MKHYBRID 8 "7 April 1999" "Version 1.12b5.1"
 .SH NAME
@@ -254,7 +254,7 @@ and is the native file system used on Macintosh computers.
 As an alternative,
 .B mkhybrid
 can generate the
-.I Apple Entensions to ISO9660
+.I Apple Extensions to ISO9660
 for each file. These extensions provide each file with CREATOR, TYPE and
 certain Finder Flags when accessed from a Macintosh. See the
 .B MACINTOSH FILE FORMATS
