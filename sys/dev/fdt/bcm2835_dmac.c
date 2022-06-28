@@ -1,4 +1,4 @@
-/*     $OpenBSD: bcm2835_dmac.c,v 1.2 2022/04/06 18:59:28 naddy Exp $ */
+/*     $OpenBSD: bcm2835_dmac.c,v 1.3 2022/06/28 16:29:03 anton Exp $ */
 
 /*
  * Copyright (c) 2020 Tobias Heider <tobhe@openbsd.org>
@@ -97,18 +97,18 @@ struct cfdriver bcmdmac_cd = { NULL, "bcmdmac", DV_DULL };
 
 /* utilities */
 enum bcmdmac_type
-bcmdmac_channel_type(struct bcmdmac_channel ch)
+bcmdmac_channel_type(struct bcmdmac_channel *ch)
 {
-	if (ISSET(ch.ch_debug, DMAC_DEBUG_LITE))
+	if (ISSET(ch->ch_debug, DMAC_DEBUG_LITE))
 		return BCMDMAC_TYPE_LITE;
 	else
 		return BCMDMAC_TYPE_NORMAL;
 }
 
 int
-bcmdmac_channel_used(struct bcmdmac_channel ch)
+bcmdmac_channel_used(struct bcmdmac_channel *ch)
 {
-	return ch.ch_callback != NULL;
+	return ch->ch_callback != NULL;
 }
 
 void
@@ -233,9 +233,9 @@ bcmdmac_alloc(enum bcmdmac_type type, int ipl,
 	for (index = 0; index < sc->sc_nchannels; index++) {
 		if (!ISSET(sc->sc_channelmask, (1 << index)))
 			continue;
-		if (bcmdmac_channel_type(sc->sc_channels[index]) != type)
+		if (bcmdmac_channel_type(&sc->sc_channels[index]) != type)
 			continue;
-		if (bcmdmac_channel_used(sc->sc_channels[index]))
+		if (bcmdmac_channel_used(&sc->sc_channels[index]))
 			continue;
 
 		ch = &sc->sc_channels[index];
