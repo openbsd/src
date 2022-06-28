@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.180 2022/06/06 08:18:22 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.181 2022/06/28 08:47:10 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1816,10 +1816,8 @@ sub parse_and_run
 	if (@ARGV == 0) {
 		$state->{regen_package} = 1;
 	} elsif (@ARGV != 1) {
-		if (defined $state->{contents} || 
-		    !defined $state->{signature_params}) {
-			$state->usage("Exactly one single package name is required: #1", join(' ', @ARGV));
-		}
+		$state->usage("Exactly one single package name is required: #1",
+		    join(' ', @ARGV));
 	}
 
 	$self->try_and_run_command($state);
