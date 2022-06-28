@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.3 2019/07/17 14:36:32 visa Exp $	*/
+/*	$OpenBSD: conf.h,v 1.4 2022/06/28 14:43:50 visa Exp $	*/
 /*	$NetBSD: conf.h,v 1.2 1996/05/05 19:28:34 christos Exp $	*/
 
 /*
@@ -39,14 +39,14 @@
 #define cdev_octboot_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, selfalse, \
+	(dev_type_stop((*))) nullop, 0, \
 	(dev_type_mmap((*))) enodev }
 
 /* open, close, ioctl */
 #define cdev_openprom_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, selfalse, \
+	(dev_type_stop((*))) nullop, 0, \
 	(dev_type_mmap((*))) enodev }
 
 cdev_decl(octboot);

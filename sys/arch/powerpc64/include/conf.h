@@ -10,14 +10,14 @@ cdev_decl(opalcons);
 #define cdev_kexec_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, selfalse, \
+	(dev_type_stop((*))) nullop, 0, \
 	(dev_type_mmap((*))) enodev }
 
 /* open, close, ioctl */
 #define cdev_openprom_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, selfalse, \
+	(dev_type_stop((*))) nullop, 0, \
 	(dev_type_mmap((*))) enodev }
 
 cdev_decl(kexec);

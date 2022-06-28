@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.3 2021/10/05 18:32:28 deraadt Exp $	*/
+/*	$OpenBSD: conf.h,v 1.4 2022/06/28 14:43:50 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -42,7 +42,7 @@ cdev_decl(mm);
 #define cdev_openprom_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, selfalse, \
+	(dev_type_stop((*))) nullop, 0, \
 	(dev_type_mmap((*))) enodev }
 
 cdev_decl(openprom);

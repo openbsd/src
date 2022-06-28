@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.26 2020/05/23 11:29:37 mpi Exp $	*/
+/*	$OpenBSD: conf.h,v 1.27 2022/06/28 14:43:50 visa Exp $	*/
 /*	$NetBSD: conf.h,v 1.9 2001/03/26 12:33:26 lukem Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ cdev_decl(openprom);
 #define cdev_openprom_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, selfalse, \
+	(dev_type_stop((*))) nullop, 0, \
 	(dev_type_mmap((*))) enodev }
 
 cdev_decl(uperf);
@@ -49,7 +49,7 @@ cdev_decl(uperf);
 #define cdev_uperf_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, selfalse, \
+	(dev_type_stop((*))) nullop, 0, \
 	(dev_type_mmap((*))) enodev }
 
 cdev_decl(vdsp);
@@ -58,13 +58,13 @@ cdev_decl(vdsp);
 #define cdev_vdsp_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, selfalse, \
+	(dev_type_stop((*))) nullop, 0, \
 	(dev_type_mmap((*))) enodev }
 
 #define	cdev_gen_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, \
+	0, (dev_type_mmap((*))) enodev, \
 	0, 0, dev_init(c,n,kqfilter) }
 
 cdev_decl(cn);
@@ -125,6 +125,6 @@ cdev_decl(sbpp);
 #define	cdev_bpp_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
+	0, (dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
 
 cdev_decl(bpp);

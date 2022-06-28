@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.6 2020/05/13 08:10:03 mpi Exp $	*/
+/*	$OpenBSD: conf.h,v 1.7 2022/06/28 14:43:50 visa Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * All rights reserved.
@@ -53,18 +53,18 @@ cdev_decl(wd);
 	dev_init(c,n,open), dev_init(c,n,close), \
 	(dev_type_read((*))) enodev, dev_init(c,n,write), \
 	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
+	0, (dev_type_mmap((*))) enodev, 0, 0, seltrue_kqfilter }
 
 /* open, close, ioctl, mmap */
 #define cdev_pcex_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, selfalse, \
+	(dev_type_stop((*))) enodev, 0, \
 	dev_init(c,n,mmap) }
 
 /* open, close, ioctl, mmap */
 #define cdev_xp_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, selfalse, \
+	(dev_type_stop((*))) enodev, 0, \
 	dev_init(c,n,mmap) }
