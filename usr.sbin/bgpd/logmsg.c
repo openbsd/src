@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.6 2022/02/06 09:51:19 claudio Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.7 2022/06/28 11:42:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -143,25 +143,29 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 	p = log_fmt_peer(&peer->conf);
 	switch (errcode) {
 	case ERR_HEADER:
-		if (subcode >= sizeof(suberr_header_names)/sizeof(char *))
+		if (subcode >= sizeof(suberr_header_names) / sizeof(char *) ||
+		    suberr_header_names[subcode] == NULL)
 			uk = 1;
 		else
 			suberrname = suberr_header_names[subcode];
 		break;
 	case ERR_OPEN:
-		if (subcode >= sizeof(suberr_open_names)/sizeof(char *))
+		if (subcode >= sizeof(suberr_open_names) / sizeof(char *) || 
+		    suberr_open_names[subcode] == NULL)
 			uk = 1;
 		else
 			suberrname = suberr_open_names[subcode];
 		break;
 	case ERR_UPDATE:
-		if (subcode >= sizeof(suberr_update_names)/sizeof(char *))
+		if (subcode >= sizeof(suberr_update_names) / sizeof(char *) ||
+		    suberr_update_names[subcode] == NULL)
 			uk = 1;
 		else
 			suberrname = suberr_update_names[subcode];
 		break;
 	case ERR_CEASE:
-		if (subcode >= sizeof(suberr_cease_names)/sizeof(char *))
+		if (subcode >= sizeof(suberr_cease_names) / sizeof(char *) ||
+		    suberr_cease_names[subcode] == NULL)
 			uk = 1;
 		else
 			suberrname = suberr_cease_names[subcode];
@@ -171,13 +175,15 @@ log_notification(const struct peer *peer, uint8_t errcode, uint8_t subcode,
 			uk = 1;
 		break;
 	case ERR_FSM:
-		if (subcode >= sizeof(suberr_fsm_names)/sizeof(char *))
+		if (subcode >= sizeof(suberr_fsm_names) / sizeof(char *) ||
+		    suberr_fsm_names[subcode] == NULL)
 			uk = 1;
 		else
 			suberrname = suberr_fsm_names[subcode];
 		break;
 	case ERR_RREFRESH:
-		if (subcode >= sizeof(suberr_rrefresh_names)/sizeof(char *))
+		if (subcode >= sizeof(suberr_rrefresh_names) / sizeof(char *) ||
+		    suberr_rrefresh_names[subcode] == NULL)
 			uk = 1;
 		else
 			suberrname = suberr_rrefresh_names[subcode];
