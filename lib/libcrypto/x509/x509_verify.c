@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.57 2022/06/27 14:10:22 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.58 2022/06/28 07:56:34 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -258,6 +258,25 @@ x509_verify_cert_self_signed(X509 *cert)
 	return (cert->ex_flags & EXFLAG_SS) ? 1 : 0;
 }
 
+/* XXX beck - clean up this mess of is_root */
+static int
+x509_verify_check_chain_end(X509 *cert, int full_chain)
+{
+	if (full_chain)
+		return x509_verify_cert_self_signed(cert);
+	return 1;
+}
+
+static int
+x509_verify_check_legacy_chain_end(struct x509_verify_ctx *ctx, X509 *cert,
+    int full_chain)
+{
+	if (X509_check_trust(cert, ctx->xsc->param->trust, 0) !=
+	    X509_TRUST_TRUSTED)
+		return 0;
+	return x509_verify_check_chain_end(cert, full_chain);
+}
+
 static int
 x509_verify_ctx_cert_is_root(struct x509_verify_ctx *ctx, X509 *cert,
     int full_chain)
@@ -273,15 +292,16 @@ x509_verify_ctx_cert_is_root(struct x509_verify_ctx *ctx, X509 *cert,
 		if ((match = x509_vfy_lookup_cert_match(ctx->xsc,
 		    cert)) != NULL) {
 			X509_free(match);
-			return !full_chain ||
-			    x509_verify_cert_self_signed(cert);
+			return x509_verify_check_legacy_chain_end(ctx, cert,
+			    full_chain);
+
 		}
 	} else {
 		/* Check the provided roots */
 		for (i = 0; i < sk_X509_num(ctx->roots); i++) {
 			if (X509_cmp(sk_X509_value(ctx->roots, i), cert) == 0)
-				return !full_chain ||
-				    x509_verify_cert_self_signed(cert);
+				return x509_verify_check_chain_end(cert,
+				    full_chain);
 		}
 	}
 
@@ -393,12 +413,21 @@ x509_verify_ctx_validate_legacy_chain(struct x509_verify_ctx *ctx,
 	ctx->xsc->error = X509_V_OK;
 	ctx->xsc->error_depth = 0;
 
-	trust = x509_vfy_check_trust(ctx->xsc);
-	if (trust == X509_TRUST_REJECTED)
-		goto err;
-
 	if (!x509_verify_ctx_set_xsc_chain(ctx, chain, 0, 1))
 		goto err;
+
+	/*
+	 * Call the legacy code to walk the chain and check trust
+	 * in the legacy way to handle partial chains and get the
+	 * callback fired correctly.
+	 */
+	trust = x509_vfy_check_trust(ctx->xsc);
+	if (trust == X509_TRUST_REJECTED)
+		goto err; /* callback was called in x509_vfy_check_trust */
+	if (trust != X509_TRUST_TRUSTED) {
+		/* NOTREACHED */
+		goto err;  /* should not happen if we get in here - abort? */
+	}
 
 	/*
 	 * XXX currently this duplicates some work done in chain
@@ -430,10 +459,6 @@ x509_verify_ctx_validate_legacy_chain(struct x509_verify_ctx *ctx,
 		goto err;
 
 	if (!x509_vfy_check_policy(ctx->xsc))
-		goto err;
-
-	if ((!(ctx->xsc->param->flags & X509_V_FLAG_PARTIAL_CHAIN)) &&
-	    trust != X509_TRUST_TRUSTED)
 		goto err;
 
 	ret = 1;
@@ -688,8 +713,8 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 		}
 		if (ret > 0) {
 			if (x509_verify_potential_parent(ctx, candidate, cert)) {
-				is_root = !full_chain ||
-				    x509_verify_cert_self_signed(candidate);
+				is_root = x509_verify_check_legacy_chain_end(
+				    ctx, candidate, full_chain);
 				x509_verify_consider_candidate(ctx, cert,
 				    is_root, candidate, current_chain,
 				    full_chain, name);
@@ -701,8 +726,8 @@ x509_verify_build_chains(struct x509_verify_ctx *ctx, X509 *cert,
 		for (i = 0; i < sk_X509_num(ctx->roots); i++) {
 			candidate = sk_X509_value(ctx->roots, i);
 			if (x509_verify_potential_parent(ctx, candidate, cert)) {
-				is_root = !full_chain ||
-				    x509_verify_cert_self_signed(candidate);
+				is_root = x509_verify_check_chain_end(candidate,
+				    full_chain);
 				x509_verify_consider_candidate(ctx, cert,
 				    is_root, candidate, current_chain,
 				    full_chain, name);
@@ -1168,6 +1193,8 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 				 * on failure and will be needed for
 				 * that.
 				 */
+				ctx->xsc->error = ctx->error;
+				ctx->xsc->error_depth = ctx->error_depth;
 				if (!x509_verify_ctx_save_xsc_error(ctx)) {
 					x509_verify_chain_free(current_chain);
 					goto err;
