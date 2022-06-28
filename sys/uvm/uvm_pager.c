@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.80 2022/06/28 12:10:37 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.81 2022/06/28 19:07:40 mpi Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -58,8 +58,8 @@ const struct uvm_pagerops *uvmpagerops[] = {
  * The number of uvm_pseg instances is dynamic using an array segs.
  * At most UVM_PSEG_COUNT instances can exist.
  *
- * psegs[0] always exists (so that the pager can always map in pages).
- * psegs[0] element 0 is always reserved for the pagedaemon.
+ * psegs[0/1] always exist (so that the pager can always map in pages).
+ * psegs[0/1] element 0 are always reserved for the pagedaemon.
  *
  * Any other pseg is automatically created when no space is available
  * and automatically destroyed when it is no longer in use.
@@ -93,6 +93,7 @@ uvm_pager_init(void)
 
 	/* init pager map */
 	uvm_pseg_init(&psegs[0]);
+	uvm_pseg_init(&psegs[1]);
 	mtx_init(&uvm_pseg_lck, IPL_VM);
 
 	/* init ASYNC I/O queue */
@@ -168,9 +169,10 @@ pager_seg_restart:
 				goto pager_seg_fail;
 		}
 
-		/* Keep index 0 reserved for pagedaemon. */
-		if (pseg == &psegs[0] && curproc != uvm.pagedaemon_proc)
-			i = 1;
+		/* Keep indexes 0,1 reserved for pagedaemon. */
+		if ((pseg == &psegs[0] || pseg == &psegs[1]) &&
+		    (curproc != uvm.pagedaemon_proc))
+			i = 2;
 		else
 			i = 0;
 
@@ -229,7 +231,7 @@ uvm_pseg_release(vaddr_t segaddr)
 	pseg->use &= ~(1 << id);
 	wakeup(&psegs);
 
-	if (pseg != &psegs[0] && UVM_PSEG_EMPTY(pseg)) {
+	if ((pseg != &psegs[0] && pseg != &psegs[1]) && UVM_PSEG_EMPTY(pseg)) {
 		va = pseg->start;
 		pseg->start = 0;
 	}
