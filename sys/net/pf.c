@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1134 2022/06/26 11:37:08 mbuhl Exp $ */
+/*	$OpenBSD: pf.c,v 1.1135 2022/06/28 13:48:06 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -211,7 +211,7 @@ int			 pf_tcp_track_sloppy(struct pf_pdesc *,
 static __inline int	 pf_synproxy(struct pf_pdesc *, struct pf_state **,
 			    u_short *);
 int			 pf_test_state(struct pf_pdesc *, struct pf_state **,
-			    u_short *, int);
+			    u_short *);
 int			 pf_icmp_state_lookup(struct pf_pdesc *,
 			    struct pf_state_key_cmp *, struct pf_state **,
 			    u_int16_t, u_int16_t, int, int *, int, int);
@@ -4847,28 +4847,13 @@ pf_synproxy(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 }
 
 int
-pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason,
-    int syncookie)
+pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason)
 {
-	struct pf_state_key_cmp	 key;
 	int			 copyback = 0;
 	struct pf_state_peer	*src, *dst;
 	int			 action;
-	struct inpcb		*inp;
+	struct inpcb		*inp = pd->m->m_pkthdr.pf.inp;
 	u_int8_t		 psrc, pdst;
-
-	key.af = pd->af;
-	key.proto = pd->virtual_proto;
-	key.rdomain = pd->rdomain;
-	pf_addrcpy(&key.addr[pd->sidx], pd->src, key.af);
-	pf_addrcpy(&key.addr[pd->didx], pd->dst, key.af);
-	key.port[pd->sidx] = pd->osport;
-	key.port[pd->didx] = pd->odport;
-	inp = pd->m->m_pkthdr.pf.inp;
-
-	action = pf_find_state(pd, &key, state);
-	if (action != PF_MATCH)
-		return (action);
 
 	action = PF_PASS;
 	if (pd->dir == (*state)->direction) {
@@ -4885,11 +4870,6 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason,
 
 	switch (pd->virtual_proto) {
 	case IPPROTO_TCP:
-		if (syncookie) {
-			pf_set_protostate(*state, PF_PEER_SRC,
-			    PF_TCPS_PROXY_DST);
-			(*state)->dst.seqhi = ntohl(pd->hdr.tcp.th_ack) - 1;
-		}
 		if ((action = pf_synproxy(pd, state, reason)) != PF_PASS)
 			return (action);
 		if ((pd->hdr.tcp.th_flags & (TH_SYN|TH_ACK)) == TH_SYN) {
@@ -4904,6 +4884,7 @@ pf_test_state(struct pf_pdesc *pd, struct pf_state **state, u_short *reason,
 				}
 				/* XXX make sure it's the same direction ?? */
 				(*state)->timeout = PFTM_PURGE;
+				pf_state_unref(*state);
 				*state = NULL;
 				pf_mbuf_link_inpcb(pd->m, inp);
 				return (PF_DROP);
@@ -7007,6 +6988,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 	u_short			 action, reason = 0;
 	struct pf_rule		*a = NULL, *r = &pf_default_rule;
 	struct pf_state		*s = NULL;
+	struct pf_state_key_cmp	 key;
 	struct pf_ruleset	*ruleset = NULL;
 	struct pf_pdesc		 pd;
 	int			 dir = (fwdir == PF_FWD) ? PF_OUT : fwdir;
@@ -7204,44 +7186,51 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			if (action == PF_DROP)
 				break;
 		}
+
+		key.af = pd.af;
+		key.proto = pd.virtual_proto;
+		key.rdomain = pd.rdomain;
+		pf_addrcpy(&key.addr[pd.sidx], pd.src, key.af);
+		pf_addrcpy(&key.addr[pd.didx], pd.dst, key.af);
+		key.port[pd.sidx] = pd.osport;
+		key.port[pd.didx] = pd.odport;
+
 		PF_STATE_ENTER_READ();
-		action = pf_test_state(&pd, &s, &reason, 0);
+		action = pf_find_state(&pd, &key, &s);
 		s = pf_state_ref(s);
 		PF_STATE_EXIT_READ();
-		if (s == NULL && action != PF_PASS && action != PF_AFRT &&
-		    pd.dir == PF_IN && pd.virtual_proto == IPPROTO_TCP &&
+
+		/* check for syncookies if tcp ack and no active state */
+		if (pd.dir == PF_IN && pd.virtual_proto == IPPROTO_TCP &&
+		    (s == NULL || (s->src.state >= TCPS_FIN_WAIT_2 &&
+		    s->dst.state >= TCPS_FIN_WAIT_2)) &&
 		    (pd.hdr.tcp.th_flags & (TH_SYN|TH_ACK|TH_RST)) == TH_ACK &&
 		    pf_syncookie_validate(&pd)) {
-			struct mbuf	*msyn;
-			msyn = pf_syncookie_recreate_syn(&pd);
+			struct mbuf	*msyn = pf_syncookie_recreate_syn(&pd);
 			if (msyn) {
 				action = pf_test(af, fwdir, ifp, &msyn);
 				m_freem(msyn);
 				if (action == PF_PASS || action == PF_AFRT) {
 					PF_STATE_ENTER_READ();
-					pf_test_state(&pd, &s, &reason, 1);
+					pf_state_unref(s);
+					action = pf_find_state(&pd, &key, &s);
 					s = pf_state_ref(s);
 					PF_STATE_EXIT_READ();
 					if (s == NULL)
 						return (PF_DROP);
-					s->src.seqhi =
+					s->src.seqhi = s->dst.seqhi =
 					    ntohl(pd.hdr.tcp.th_ack) - 1;
 					s->src.seqlo =
 					    ntohl(pd.hdr.tcp.th_seq) - 1;
 					pf_set_protostate(s, PF_PEER_SRC,
 					    PF_TCPS_PROXY_DST);
-					PF_LOCK();
-					have_pf_lock = 1;
-					action = pf_synproxy(&pd, &s, &reason);
-					if (action != PF_PASS) {
-						PF_UNLOCK();
-						pf_state_unref(s);
-						return (action);
-					}
 				}
 			} else
 				action = PF_DROP;
 		}
+
+		if (action == PF_MATCH)
+			action = pf_test_state(&pd, &s, &reason);
 
 		if (action == PF_PASS || action == PF_AFRT) {
 #if NPFSYNC > 0
