@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.411 2022/06/27 21:26:46 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.412 2022/06/28 10:01:13 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -488,40 +488,34 @@ rt_putgwroute(struct rtentry *rt)
 void
 rtref(struct rtentry *rt)
 {
-	atomic_inc_int(&rt->rt_refcnt);
+	refcnt_take(&rt->rt_refcnt);
 }
 
 void
 rtfree(struct rtentry *rt)
 {
-	int		 refcnt;
-
 	if (rt == NULL)
 		return;
 
-	refcnt = (int)atomic_dec_int_nv(&rt->rt_refcnt);
-	if (refcnt <= 0) {
-		KASSERT(!ISSET(rt->rt_flags, RTF_UP));
-		KASSERT(!RT_ROOT(rt));
-		atomic_dec_int(&rttrash);
-		if (refcnt < 0) {
-			printf("rtfree: %p not freed (neg refs)\n", rt);
-			return;
-		}
+	if (refcnt_rele(&rt->rt_refcnt) == 0)
+		return;
 
-		KERNEL_LOCK();
-		rt_timer_remove_all(rt);
-		ifafree(rt->rt_ifa);
-		rtlabel_unref(rt->rt_labelid);
+	KASSERT(!ISSET(rt->rt_flags, RTF_UP));
+	KASSERT(!RT_ROOT(rt));
+	atomic_dec_int(&rttrash);
+
+	KERNEL_LOCK();
+	rt_timer_remove_all(rt);
+	ifafree(rt->rt_ifa);
+	rtlabel_unref(rt->rt_labelid);
 #ifdef MPLS
-		rt_mpls_clear(rt);
+	rt_mpls_clear(rt);
 #endif
-		free(rt->rt_gateway, M_RTABLE, ROUNDUP(rt->rt_gateway->sa_len));
-		free(rt_key(rt), M_RTABLE, rt_key(rt)->sa_len);
-		KERNEL_UNLOCK();
+	free(rt->rt_gateway, M_RTABLE, ROUNDUP(rt->rt_gateway->sa_len));
+	free(rt_key(rt), M_RTABLE, rt_key(rt)->sa_len);
+	KERNEL_UNLOCK();
 
-		pool_put(&rtentry_pool, rt);
-	}
+	pool_put(&rtentry_pool, rt);
 }
 
 void
@@ -877,7 +871,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			return (ENOBUFS);
 		}
 
-		rt->rt_refcnt = 1;
+		refcnt_init(&rt->rt_refcnt);
 		rt->rt_flags = info->rti_flags | RTF_UP;
 		rt->rt_priority = prio;	/* init routing priority */
 		LIST_INIT(&rt->rt_timer);
@@ -1879,8 +1873,8 @@ db_show_rtentry(struct rtentry *rt, void *w, unsigned int id)
 {
 	db_printf("rtentry=%p", rt);
 
-	db_printf(" flags=0x%x refcnt=%d use=%llu expire=%lld rtableid=%u\n",
-	    rt->rt_flags, rt->rt_refcnt, rt->rt_use, rt->rt_expire, id);
+	db_printf(" flags=0x%x refcnt=%u use=%llu expire=%lld rtableid=%u\n",
+	    rt->rt_flags, rt->rt_refcnt.r_refs, rt->rt_use, rt->rt_expire, id);
 
 	db_printf(" key="); db_print_sa(rt_key(rt));
 	db_printf(" plen=%d", rt_plen(rt));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.195 2022/06/27 21:26:46 claudio Exp $	*/
+/*	$OpenBSD: route.h,v 1.196 2022/06/28 10:01:13 bluhm Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -121,7 +121,7 @@ struct rtentry {
 	struct rt_kmetrics rt_rmx;	/* metrics used by rx'ing protocols */
 	unsigned int	 rt_ifidx;	/* the answer: interface to use */
 	unsigned int	 rt_flags;	/* up/down?, host/net */
-	int		 rt_refcnt;	/* # held references */
+	struct refcnt	 rt_refcnt;	/* # held references */
 	int		 rt_plen;	/* prefix length */
 	uint16_t	 rt_labelid;	/* route label ID */
 	uint8_t		 rt_priority;	/* routing priority to use */
