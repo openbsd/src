@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.2 2022/06/28 20:44:49 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.3 2022/06/28 20:49:16 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -156,6 +156,22 @@ ssl_security_secop_tickets(const SSL_CTX *ctx, const SSL *ssl)
 }
 
 static int
+ssl_security_secop_tmp_dh(const SSL_CTX *ctx, const SSL *ssl, int bits)
+{
+	int security_level, minimum_bits;
+
+	if (!ssl_security_level_and_minimum_bits(ctx, ssl, &security_level,
+	    &minimum_bits))
+		return 0;
+
+	/* Disallow DHE keys weaker than 1024 bits even at security level 0. */
+	if (security_level <= 0 && bits < 80)
+		return 0;
+
+	return bits >= minimum_bits;
+}
+
+static int
 ssl_security_secop_default(const SSL_CTX *ctx, const SSL *ssl, int bits)
 {
 	int minimum_bits;
@@ -181,6 +197,8 @@ ssl_security_default_cb(const SSL *ssl, const SSL_CTX *ctx, int op, int bits,
 		return ssl_security_secop_compression(ctx, ssl);
 	case SSL_SECOP_TICKET:
 		return ssl_security_secop_tickets(ctx, ssl);
+	case SSL_SECOP_TMP_DH:
+		return ssl_security_secop_tmp_dh(ctx, ssl, bits);
 	default:
 		return ssl_security_secop_default(ctx, ssl, bits);
 	}
