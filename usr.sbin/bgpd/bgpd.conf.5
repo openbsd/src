@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.222 2022/06/28 04:36:29 jsg Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.223 2022/06/28 11:52:24 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -871,6 +871,30 @@ The default is
 If set to
 .Ic yes ,
 the enhanced route refresh capability is announced.
+The default is
+.Ic no .
+.Pp
+.It Xo
+.Ic announce policy 
+.Pq Ic no Ns | Ns Ar role
+.Op Ic enforce
+.Xc
+If set to
+.Ic no ,
+do not add the open policy role capability.
+The role can be one of
+.Ar provider ,
+.Ar customer ,
+.Ar rs ,
+.Ar rs-client ,
+or
+.Ar peer .
+If the role of the neighbor does not correspond to the expected role then
+the session will be closed.
+If
+.Ic enforce
+is set the session will only establish if the neighbor also announces
+the open policy capability.
 The default is
 .Ic no .
 .Pp
