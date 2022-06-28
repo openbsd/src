@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.3 2022/06/28 20:49:16 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.4 2022/06/28 20:53:32 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -114,8 +114,9 @@ ssl_security_secop_cipher(const SSL_CTX *ctx, const SSL *ssl, int bits,
 	if (security_level <= 2)
 		return 1;
 
-	/* XXX TLSv1.3 */
-	if ((cipher->algorithm_mkey & (SSL_kDHE | SSL_kECDHE)) != 0)
+	/* Security level >= 3 requires a cipher with forward secrecy. */
+	if ((cipher->algorithm_mkey & (SSL_kDHE | SSL_kECDHE)) == 0 &&
+	    cipher->algorithm_ssl != SSL_TLSV1_3)
 		return 0;
 
 	return 1;
