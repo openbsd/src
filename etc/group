@@ -39,6 +39,7 @@ www:*:67:
 _isakmpd:*:68:
 network:*:69:
 _rpki-client:*:70:
+_bgplgd:*:71
 authpf:*:72:
 _syslogd:*:73:
 _pflogd:*:74:
