@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.394 2022/06/07 17:52:00 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.395 2022/06/28 20:31:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -379,6 +379,11 @@ typedef struct ssl_cert_st {
 	DH *dhe_params;
 	DH *(*dhe_params_cb)(SSL *ssl, int is_export, int keysize);
 	int dhe_params_auto;
+
+	int (*security_cb)(const SSL *s, const SSL_CTX *ctx, int op, int bits,
+	    int nid, void *other, void *ex_data);
+	int security_level;
+	void *security_ex_data; /* XXX: do we really need to support this? */
 
 	int references; /* >1 only if SSL_copy_session_id is used */
 } SSL_CERT;
