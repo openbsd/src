@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.290 2022/03/18 18:01:17 jsing Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.291 2022/06/28 20:34:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3269,6 +3269,30 @@ const SSL_METHOD *
 SSL_CTX_get_ssl_method(const SSL_CTX *ctx)
 {
 	return ctx->method;
+}
+
+int
+SSL_CTX_get_security_level(const SSL_CTX *ctx)
+{
+	return ctx->internal->cert->security_level;
+}
+
+void
+SSL_CTX_set_security_level(SSL_CTX *ctx, int level)
+{
+	ctx->internal->cert->security_level = level;
+}
+
+int
+SSL_get_security_level(const SSL *ssl)
+{
+	return ssl->cert->security_level;
+}
+
+void
+SSL_set_security_level(SSL *ssl, int level)
+{
+	ssl->cert->security_level = level;
 }
 
 static int
