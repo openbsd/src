@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.73 2021/11/21 13:33:53 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.74 2022/06/28 09:11:33 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -666,21 +666,20 @@ optwrite	: READONLY				{ $$ = 0; }
 		;
 
 oid		: STRING				{
-			struct ber_oid	*sysoid;
-			if ((sysoid =
-			    calloc(1, sizeof(*sysoid))) == NULL) {
+			struct ber_oid	*oid;
+			if ((oid = calloc(1, sizeof(*oid))) == NULL) {
 				yyerror("calloc");
 				free($1);
 				YYERROR;
 			}
-			if (ober_string2oid($1, sysoid) == -1) {
+			if (smi_string2oid($1, oid) == -1) {
 				yyerror("invalid OID: %s", $1);
-				free(sysoid);
+				free(oid);
 				free($1);
 				YYERROR;
 			}
 			free($1);
-			$$ = sysoid;
+			$$ = oid;
 		}
 		;
 
