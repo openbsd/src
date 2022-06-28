@@ -1,4 +1,4 @@
-/*	$OpenBSD: tracepoint.h,v 1.1 2020/01/21 16:16:23 mpi Exp $ */
+/*	$OpenBSD: tracepoint.h,v 1.2 2022/06/28 09:32:28 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -25,11 +25,13 @@
 #if NDT > 0
 #include <dev/dt/dtvar.h>
 
-#define	TRACEPOINT(func, name, args...)	DT_STATIC_ENTER(func, name, args)
+#define TRACEPOINT(func, name, args...)	DT_STATIC_ENTER(func, name, args)
+#define TRACEINDEX(func, index, args...) DT_INDEX_ENTER(func, index, args)
 
 #else /* NDT > 0 */
 
-#define	TRACEPOINT(func, name, args...)
+#define TRACEPOINT(func, name, args...)
+#define TRACEINDEX(func, index, args...)
 
 #endif /* NDT > 0 */
 #endif /* _KERNEL */

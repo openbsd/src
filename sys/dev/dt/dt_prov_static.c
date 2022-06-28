@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_static.c,v 1.13 2022/03/17 14:53:59 bluhm Exp $ */
+/*	$OpenBSD: dt_prov_static.c,v 1.14 2022/06/28 09:32:27 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -87,6 +87,12 @@ DT_STATIC_PROBE1(smr, barrier_exit, "int");
 DT_STATIC_PROBE0(smr, wakeup);
 DT_STATIC_PROBE2(smr, thread, "uint64_t", "uint64_t");
 
+/*
+ * reference counting
+ */
+DT_STATIC_PROBE0(refcnt, none);
+DT_STATIC_PROBE3(refcnt, inpcb, "void *", "int", "int");
+DT_STATIC_PROBE3(refcnt, tdb, "void *", "int", "int");
 
 /*
  * List of all static probes
@@ -127,15 +133,24 @@ struct dt_probe *const dtps_static[] = {
 	&_DT_STATIC_P(smr, barrier_exit),
 	&_DT_STATIC_P(smr, wakeup),
 	&_DT_STATIC_P(smr, thread),
+	/* refcnt */
+	&_DT_STATIC_P(refcnt, none),
+	&_DT_STATIC_P(refcnt, inpcb),
+	&_DT_STATIC_P(refcnt, tdb),
 };
+
+struct dt_probe *const *dtps_index_refcnt;
 
 int
 dt_prov_static_init(void)
 {
 	int i;
 
-	for (i = 0; i < nitems(dtps_static); i++)
+	for (i = 0; i < nitems(dtps_static); i++) {
+		if (dtps_static[i] == &_DT_STATIC_P(refcnt, none))
+			dtps_index_refcnt = &dtps_static[i];
 		dt_dev_register_probe(dtps_static[i]);
+	}
 
 	return i;
 }
