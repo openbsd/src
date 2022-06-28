@@ -1,4 +1,4 @@
-/* $OpenBSD: lib_tparm.c,v 1.9 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_tparm.c,v 1.10 2022/06/28 07:36:52 nicm Exp $ */
 
 /****************************************************************************
  * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
@@ -45,7 +45,7 @@
 #include <term.h>
 #include <tic.h>
 
-MODULE_ID("$Id: lib_tparm.c,v 1.9 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_tparm.c,v 1.10 2022/06/28 07:36:52 nicm Exp $")
 
 /*
  *	char *
@@ -552,7 +552,7 @@ tparam_internal(const char *string, va_list ap)
 		break;
 
 	    case 'l':
-		save_number("%d", (int) strlen(spop()), 0);
+		npush((int) strlen(spop()));
 		break;
 
 	    case 's':
