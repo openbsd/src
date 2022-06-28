@@ -1,4 +1,4 @@
-/* $OpenBSD: imxccm.c,v 1.28 2022/01/09 05:42:37 jsg Exp $ */
+/* $OpenBSD: imxccm.c,v 1.29 2022/06/28 23:43:12 naddy Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -213,13 +213,13 @@ struct imxccm_softc {
 
 	struct regmap		*sc_anatop;
 
-	struct imxccm_gate	*sc_gates;
+	const struct imxccm_gate *sc_gates;
 	int			sc_ngates;
-	struct imxccm_divider	*sc_divs;
+	const struct imxccm_divider *sc_divs;
 	int			sc_ndivs;
-	struct imxccm_mux	*sc_muxs;
+	const struct imxccm_mux	*sc_muxs;
 	int			sc_nmuxs;
-	struct imxccm_divider	*sc_predivs;
+	const struct imxccm_divider *sc_predivs;
 	int			sc_npredivs;
 	struct clock_device	sc_cd;
 };

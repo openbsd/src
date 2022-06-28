@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvtemp.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: mvtemp.c,v 1.3 2022/06/28 23:43:12 naddy Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -70,7 +70,7 @@ int32_t mvtemp_ap806_calc_temp(uint32_t);
 void	mvtemp_cp110_init(struct mvtemp_softc *);
 int32_t mvtemp_cp110_calc_temp(uint32_t);
 
-struct mvtemp_compat mvtemp_compat[] = {
+const struct mvtemp_compat mvtemp_compat[] = {
 	{
 		"marvell,armada-ap806-thermal", (1 << 16),
 		mvtemp_ap806_init, mvtemp_ap806_calc_temp,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpinctrl.c,v 1.7 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: rkpinctrl.c,v 1.8 2022/06/28 23:43:12 naddy Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -596,7 +596,7 @@ rk3399_pull(uint32_t bank, uint32_t idx, uint32_t phandle)
 
 /* Magic because the drive strength configurations vary wildly. */
 
-int rk3399_strength_levels[][8] = {
+const int rk3399_strength_levels[][8] = {
 	{ 2, 4, 8, 12 },			/* default */
 	{ 3, 6, 9, 12 },			/* 1.8V or 3.0V */
 	{ 5, 10, 15, 20 },			/* 1.8V only */
@@ -604,7 +604,7 @@ int rk3399_strength_levels[][8] = {
 	{ 4, 7, 10, 13, 16, 19, 22, 26 },	/* 3.3V */
 };
 
-int rk3399_strength_types[][4] = {
+const int rk3399_strength_types[][4] = {
 	{ 2, 2, 0, 0 },
 	{ 1, 1, 1, 1 },
 	{ 1, 1, 2, 2 },
@@ -612,7 +612,7 @@ int rk3399_strength_types[][4] = {
 	{ 1, 3, 1, 1 },
 };
 
-int rk3399_strength_regs[][4] = {
+const int rk3399_strength_regs[][4] = {
 	{ 0x0080, 0x0088, 0x0090, 0x0098 },
 	{ 0x00a0, 0x00a8, 0x00b0, 0x00b8 },
 	{ 0x0100, 0x0104, 0x0108, 0x010c },
@@ -624,7 +624,7 @@ int
 rk3399_strength(uint32_t bank, uint32_t idx, uint32_t phandle)
 {
 	int strength, type, level;
-	int *levels;
+	const int *levels;
 	int node;
 
 	node = OF_getnodebyphandle(phandle);

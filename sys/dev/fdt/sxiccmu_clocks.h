@@ -54,7 +54,7 @@
 
 #define A10_CLK_LOSC		254
 
-struct sxiccmu_ccu_bit sun4i_a10_gates[] = {
+const struct sxiccmu_ccu_bit sun4i_a10_gates[] = {
 	[A10_CLK_AHB_EHCI0] =  { 0x0060, 1 },
 	[A10_CLK_AHB_OHCI0] =  { 0x0060, 2 },
 	[A10_CLK_AHB_EHCI1] =  { 0x0060, 3 },
@@ -119,7 +119,7 @@ struct sxiccmu_ccu_bit sun4i_a10_gates[] = {
 #define A23_CLK_MMC2		66
 #define A23_CLK_USB_OHCI	78
 
-struct sxiccmu_ccu_bit sun8i_a23_gates[] = {
+const struct sxiccmu_ccu_bit sun8i_a23_gates[] = {
 	[A23_CLK_BUS_MMC0] =  { 0x0060, 8 },
 	[A23_CLK_BUS_MMC1] =  { 0x0060, 9 },
 	[A23_CLK_BUS_MMC2] =  { 0x0060, 10 },
@@ -186,7 +186,7 @@ struct sxiccmu_ccu_bit sun8i_a23_gates[] = {
 #define A64_CLK_LOSC		254
 #define A64_CLK_HOSC		253
 
-struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
+const struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 	[A64_CLK_PLL_PERIPH0] = { 0x0028, 31 },
 	[A64_CLK_BUS_MMC0] =  { 0x0060, 8 },
 	[A64_CLK_BUS_MMC1] =  { 0x0060, 9 },
@@ -246,7 +246,7 @@ struct sxiccmu_ccu_bit sun50i_a64_gates[] = {
 #define A80_CLK_BUS_UART4	128
 #define A80_CLK_BUS_UART5	129
 
-struct sxiccmu_ccu_bit sun9i_a80_gates[] = {
+const struct sxiccmu_ccu_bit sun9i_a80_gates[] = {
 	[A80_CLK_MMC0] =      { 0x0410, 31 },
 	[A80_CLK_MMC1] =      { 0x0414, 31 },
 	[A80_CLK_MMC2] =      { 0x0418, 31 },
@@ -281,7 +281,7 @@ struct sxiccmu_ccu_bit sun9i_a80_gates[] = {
 #define A80_USB_CLK_HCI2_UTMIPHY	9
 #define A80_USB_CLK_HCI1_HSIC_12M	10
 
-struct sxiccmu_ccu_bit sun9i_a80_usb_gates[] = {
+const struct sxiccmu_ccu_bit sun9i_a80_usb_gates[] = {
 	[A80_USB_CLK_HCI0] =          { 0x0000, 1 },
 	[A80_USB_CLK_OHCI0] =         { 0x0000, 2 },
 	[A80_USB_CLK_HCI1] =          { 0x0000, 3 },
@@ -295,7 +295,7 @@ struct sxiccmu_ccu_bit sun9i_a80_usb_gates[] = {
 	[A80_USB_CLK_HCI1_HSIC_12M] = { 0x0004, 10 },
 };
 
-struct sxiccmu_ccu_bit sun9i_a80_mmc_gates[] = {
+const struct sxiccmu_ccu_bit sun9i_a80_mmc_gates[] = {
 	{ 0x0000, 16 },
 	{ 0x0004, 16 },
 	{ 0x0008, 16 },
@@ -353,7 +353,7 @@ struct sxiccmu_ccu_bit sun9i_a80_mmc_gates[] = {
 #define H3_CLK_LOSC		254
 #define H3_CLK_HOSC		253
 
-struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
+const struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
 	[H3_CLK_PLL_PERIPH0] = { 0x0028, 31 },
 	[H3_CLK_BUS_MMC0] = { 0x0060, 8 },
 	[H3_CLK_BUS_MMC1] = { 0x0060, 9 },
@@ -398,7 +398,7 @@ struct sxiccmu_ccu_bit sun8i_h3_gates[] = {
 #define H3_R_CLK_APB0_RSB	6
 #define H3_R_CLK_APB0_I2C	9
 
-struct sxiccmu_ccu_bit sun8i_h3_r_gates[] = {
+const struct sxiccmu_ccu_bit sun8i_h3_r_gates[] = {
 	[H3_R_CLK_APB0_PIO] = { 0x0028, 0 },
 	[H3_R_CLK_APB0_RSB] = { 0x0028, 3, H3_R_CLK_APB0 },
 	[H3_R_CLK_APB0_I2C] = { 0x0028, 6, H3_R_CLK_APB0 },
@@ -432,7 +432,7 @@ struct sxiccmu_ccu_bit sun8i_h3_r_gates[] = {
 #define H6_CLK_BUS_EHCI0	113
 #define H6_CLK_BUS_EHCI3	115
 
-struct sxiccmu_ccu_bit sun50i_h6_gates[] = {
+const struct sxiccmu_ccu_bit sun50i_h6_gates[] = {
 	[H6_CLK_PLL_PERIPH0] = { 0x0020, 31 },
 	[H6_CLK_APB1] = { 0xffff, 0xff },
 	[H6_CLK_MMC0] = { 0x0830, 31 },
@@ -462,7 +462,7 @@ struct sxiccmu_ccu_bit sun50i_h6_gates[] = {
 #define H6_R_CLK_APB2_I2C	8
 #define H6_R_CLK_APB2_RSB	13
 
-struct sxiccmu_ccu_bit sun50i_h6_r_gates[] = {
+const struct sxiccmu_ccu_bit sun50i_h6_r_gates[] = {
 	[H6_R_CLK_APB1] = { 0xffff, 0xff },
 	[H6_R_CLK_APB2_I2C] = { 0x019c, 0, H6_R_CLK_APB2 },
 	[H6_R_CLK_APB2_RSB] = { 0x01bc, 0, H6_R_CLK_APB2 },
@@ -521,7 +521,7 @@ struct sxiccmu_ccu_bit sun50i_h6_r_gates[] = {
 #define R40_CLK_HOSC		253
 #define R40_CLK_LOSC		254
 
-struct sxiccmu_ccu_bit sun8i_r40_gates[] = {
+const struct sxiccmu_ccu_bit sun8i_r40_gates[] = {
 	[R40_CLK_BUS_MMC0] =  { 0x0060, 8 },
 	[R40_CLK_BUS_MMC1] =  { 0x0060, 9 },
 	[R40_CLK_BUS_MMC2] =  { 0x0060, 10 },
@@ -594,7 +594,7 @@ struct sxiccmu_ccu_bit sun8i_r40_gates[] = {
 #define V3S_CLK_LOSC		254
 #define V3S_CLK_HOSC		253
 
-struct sxiccmu_ccu_bit sun8i_v3s_gates[] = {
+const struct sxiccmu_ccu_bit sun8i_v3s_gates[] = {
 	[V3S_CLK_BUS_OHCI0] =	{ 0x0060, 29 },
 	[V3S_CLK_BUS_EHCI0] =	{ 0x0060, 26 },
 	[V3S_CLK_BUS_EMAC] =	{ 0x0060, 17, V3S_CLK_AHB2 },
@@ -625,7 +625,7 @@ struct sxiccmu_ccu_bit sun8i_v3s_gates[] = {
 #define A10_RST_USB_PHY1	2
 #define A10_RST_USB_PHY2	3
 
-struct sxiccmu_ccu_bit sun4i_a10_resets[] = {
+const struct sxiccmu_ccu_bit sun4i_a10_resets[] = {
 	[A10_RST_USB_PHY0] = { 0x00cc, 0 },
 	[A10_RST_USB_PHY1] = { 0x00cc, 1 },
 	[A10_RST_USB_PHY2] = { 0x00cc, 2 },
@@ -650,7 +650,7 @@ struct sxiccmu_ccu_bit sun4i_a10_resets[] = {
 #define A23_CLK_HOSC		253
 #define A23_CLK_LOSC		254
 
-struct sxiccmu_ccu_bit sun8i_a23_resets[] = {
+const struct sxiccmu_ccu_bit sun8i_a23_resets[] = {
 	[A23_RST_USB_PHY0] =  { 0x00cc, 0 },
 	[A23_RST_USB_PHY1] =  { 0x00cc, 1 },
 	[A23_RST_BUS_MMC0] =  { 0x02c0, 8 },
@@ -686,7 +686,7 @@ struct sxiccmu_ccu_bit sun8i_a23_resets[] = {
 #define A64_RST_BUS_UART3	49
 #define A64_RST_BUS_UART4	50
 
-struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
+const struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
 	[A64_RST_USB_PHY0] =  { 0x00cc, 0 },
 	[A64_RST_USB_PHY1] =  { 0x00cc, 1 },
 	[A64_RST_BUS_MMC0] =  { 0x02c0, 8 },
@@ -724,7 +724,7 @@ struct sxiccmu_ccu_bit sun50i_a64_resets[] = {
 #define A80_RST_BUS_UART4	49
 #define A80_RST_BUS_UART5	50
 
-struct sxiccmu_ccu_bit sun9i_a80_resets[] = {
+const struct sxiccmu_ccu_bit sun9i_a80_resets[] = {
 	[A80_RST_BUS_MMC] =   { 0x05a0, 8 },
 	[A80_RST_BUS_GMAC] =  { 0x05a4, 17 },
 	[A80_RST_BUS_I2C0] =  { 0x05b4, 0 },
@@ -750,7 +750,7 @@ struct sxiccmu_ccu_bit sun9i_a80_resets[] = {
 #define A80_USB_RST_HCI2_HSIC		6
 #define A80_USB_RST_HCI2_UTMIPHY	7
 
-struct sxiccmu_ccu_bit sun9i_a80_usb_resets[] = {
+const struct sxiccmu_ccu_bit sun9i_a80_usb_resets[] = {
 	[A80_USB_RST_HCI0] =         { 0x0000, 17 },
 	[A80_USB_RST_HCI1] =         { 0x0000, 18 },
 	[A80_USB_RST_HCI2] =         { 0x0000, 19 },
@@ -761,7 +761,7 @@ struct sxiccmu_ccu_bit sun9i_a80_usb_resets[] = {
 	[A80_USB_RST_HCI2_UTMIPHY] = { 0x0004, 21 },
 };
 
-struct sxiccmu_ccu_bit sun9i_a80_mmc_resets[] = {
+const struct sxiccmu_ccu_bit sun9i_a80_mmc_resets[] = {
 	{ 0x0000, 18 },
 	{ 0x0004, 18 },
 	{ 0x0008, 18 },
@@ -799,7 +799,7 @@ struct sxiccmu_ccu_bit sun9i_a80_mmc_resets[] = {
 #define H3_RST_BUS_UART2	51
 #define H3_RST_BUS_UART3	52
 
-struct sxiccmu_ccu_bit sun8i_h3_resets[] = {
+const struct sxiccmu_ccu_bit sun8i_h3_resets[] = {
 	[H3_RST_USB_PHY0] =  { 0x00cc, 0 },
 	[H3_RST_USB_PHY1] =  { 0x00cc, 1 },
 	[H3_RST_USB_PHY2] =  { 0x00cc, 2 },
@@ -830,7 +830,7 @@ struct sxiccmu_ccu_bit sun8i_h3_resets[] = {
 #define H3_R_RST_APB0_RSB	2
 #define H3_R_RST_APB0_I2C	5
 
-struct sxiccmu_ccu_bit sun8i_h3_r_resets[] = {
+const struct sxiccmu_ccu_bit sun8i_h3_r_resets[] = {
 	[H3_R_RST_APB0_RSB] = { 0x00b0, 3 },
 	[H3_R_RST_APB0_I2C] = { 0x00b0, 6 },
 };
@@ -853,7 +853,7 @@ struct sxiccmu_ccu_bit sun8i_h3_r_resets[] = {
 #define H6_RST_BUS_EHCI0	50
 #define H6_RST_BUS_EHCI3	52
 
-struct sxiccmu_ccu_bit sun50i_h6_resets[] = {
+const struct sxiccmu_ccu_bit sun50i_h6_resets[] = {
 	[H6_RST_BUS_MMC0] = { 0x084c, 16 },
 	[H6_RST_BUS_MMC1] = { 0x084c, 17 },
 	[H6_RST_BUS_MMC2] = { 0x084c, 18 },
@@ -874,7 +874,7 @@ struct sxiccmu_ccu_bit sun50i_h6_resets[] = {
 #define H6_R_RST_APB2_I2C	4
 #define H6_R_RST_APB2_RSB	7
 
-struct sxiccmu_ccu_bit sun50i_h6_r_resets[] = {
+const struct sxiccmu_ccu_bit sun50i_h6_r_resets[] = {
 	[H6_R_RST_APB2_I2C] = { 0x019c, 16 },
 	[H6_R_RST_APB2_RSB] = { 0x01bc, 16 },
 };
@@ -912,7 +912,7 @@ struct sxiccmu_ccu_bit sun50i_h6_r_resets[] = {
 #define R40_RST_BUS_UART6	79
 #define R40_RST_BUS_UART7	80
 
-struct sxiccmu_ccu_bit sun8i_r40_resets[] = {
+const struct sxiccmu_ccu_bit sun8i_r40_resets[] = {
 	[R40_RST_USB_PHY0] =  { 0x00cc, 0 },
 	[R40_RST_USB_PHY1] =  { 0x00cc, 1 },
 	[R40_RST_USB_PHY2] =  { 0x00cc, 2 },
@@ -961,7 +961,7 @@ struct sxiccmu_ccu_bit sun8i_r40_resets[] = {
 #define V3S_RST_BUS_UART1	50
 #define V3S_RST_BUS_UART2	51
 
-struct sxiccmu_ccu_bit sun8i_v3s_resets[] = {
+const struct sxiccmu_ccu_bit sun8i_v3s_resets[] = {
 	[V3S_RST_USB_PHY0] =	{ 0x00cc, 0 },
 	[V3S_RST_BUS_OHCI0] =	{ 0x02c0, 29 },
 	[V3S_RST_BUS_EHCI0] =	{ 0x02c0, 26 },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hitemp.c,v 1.2 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: hitemp.c,v 1.3 2022/06/28 23:43:12 naddy Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -71,7 +71,7 @@ struct hitemp_compat {
 uint64_t hi3660_calc_temp(uint64_t);
 uint64_t hi3670_calc_temp(uint64_t);
 
-struct hitemp_compat hitemp_compat[] = {
+const struct hitemp_compat hitemp_compat[] = {
 	{
 		"hsilicon,hi3660-tsensor",
 		HI3660_OFFSET, hi3660_calc_temp

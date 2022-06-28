@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.13 2022/01/09 05:42:37 jsg Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.14 2022/06/28 23:43:12 naddy Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -55,7 +55,7 @@ struct axppmic_regdata {
 	uint32_t base2, delta2;
 };
 
-struct axppmic_regdata axp209_regdata[] = {
+const struct axppmic_regdata axp209_regdata[] = {
 	{ "dcdc2", 0x12, (1 << 4), (1 << 4), (0 << 4),
 	  0x23, 0x3f, 700000, 25000 },
 	{ "dcdc3", 0x12, (1 << 1), (1 << 1), (0 << 1),
@@ -71,7 +71,7 @@ struct axppmic_regdata axp209_regdata[] = {
 	{ NULL }
 };
 
-struct axppmic_regdata axp221_regdata[] = {
+const struct axppmic_regdata axp221_regdata[] = {
 	{ "dcdc1", 0x10, (1 << 1), (1 << 1), (0 << 1),
 	  0x21, 0x1f, 1600000, 100000 },
 	{ "dcdc2", 0x10, (1 << 2), (1 << 2), (0 << 2),
@@ -112,7 +112,7 @@ struct axppmic_regdata axp221_regdata[] = {
 	{ NULL }
 };
 
-struct axppmic_regdata axp803_regdata[] = {
+const struct axppmic_regdata axp803_regdata[] = {
 	{ "dcdc1", 0x10, (1 << 0), (1 << 0), (0 << 0),
 	  0x20, 0x1f, 1600000, 100000 },
 	{ "dcdc2", 0x10, (1 << 1), (1 << 1), (0 << 1),
@@ -157,7 +157,7 @@ struct axppmic_regdata axp803_regdata[] = {
 	{ NULL }
 };
 
-struct axppmic_regdata axp806_regdata[] = {
+const struct axppmic_regdata axp806_regdata[] = {
 	{ "dcdca", 0x10, (1 << 0), (1 << 0), (0 << 0),
 	  0x12, 0x7f, 600000, 10000, 1120000, 20000 },
 	{ "dcdcb", 0x10, (1 << 1), (1 << 1), (0 << 1),
@@ -192,7 +192,7 @@ struct axppmic_regdata axp806_regdata[] = {
 	{ NULL }
 };
 
-struct axppmic_regdata axp809_regdata[] = {
+const struct axppmic_regdata axp809_regdata[] = {
 	{ "dcdc1", 0x10, (1 << 1), (1 << 1), (0 << 1),
 	  0x21, 0x1f, 1600000, 100000 },
 	{ "dcdc2", 0x10, (1 << 2), (1 << 2), (0 << 2),
@@ -239,7 +239,7 @@ struct axppmic_sensdata {
 	uint64_t base, delta;
 };
 
-struct axppmic_sensdata axp209_sensdata[] = {
+const struct axppmic_sensdata axp209_sensdata[] = {
 	{ "ACIN", SENSOR_INDICATOR, 0x00, (1 << 7), (1 << 6) },
 	{ "VBUS", SENSOR_INDICATOR, 0x00, (1 << 5), (1 << 4) },
 	{ "ACIN", SENSOR_VOLTS_DC, 0x56, 0, 1700 },
@@ -251,21 +251,21 @@ struct axppmic_sensdata axp209_sensdata[] = {
 	{ NULL }
 };
 
-struct axppmic_sensdata axp221_sensdata[] = {
+const struct axppmic_sensdata axp221_sensdata[] = {
 	{ "ACIN", SENSOR_INDICATOR, 0x00, (1 << 7), (1 << 6) },
 	{ "VBUS", SENSOR_INDICATOR, 0x00, (1 << 5), (1 << 4) },
 	{ "", SENSOR_TEMP, 0x56, 5450000, 105861 },
 	{ NULL }
 };
 
-struct axppmic_sensdata axp803_sensdata[] = {
+const struct axppmic_sensdata axp803_sensdata[] = {
 	{ "ACIN", SENSOR_INDICATOR, 0x00, (1 << 7), (1 << 6) },
 	{ "VBUS", SENSOR_INDICATOR, 0x00, (1 << 5), (1 << 4) },
 	{ "", SENSOR_TEMP, 0x56, 5450000, 106250 },
 	{ NULL }
 };
 	
-struct axppmic_sensdata axp803_battery_sensdata[] = {
+const struct axppmic_sensdata axp803_battery_sensdata[] = {
 	{ "ACIN", SENSOR_INDICATOR, 0x00, (1 << 7), (1 << 6) },
 	{ "VBUS", SENSOR_INDICATOR, 0x00, (1 << 5), (1 << 4) },
 	{ "", SENSOR_TEMP, 0x56, 5450000, 106250 },
@@ -283,11 +283,11 @@ struct axppmic_sensdata axp803_battery_sensdata[] = {
 struct axppmic_device {
 	const char *name;
 	const char *chip;
-	struct axppmic_regdata *regdata;
-	struct axppmic_sensdata *sensdata;
+	const struct axppmic_regdata *regdata;
+	const struct axppmic_sensdata *sensdata;
 };
 
-struct axppmic_device axppmic_devices[] = {
+const struct axppmic_device axppmic_devices[] = {
 	{ "x-powers,axp152", "AXP152" },
 	{ "x-powers,axp209", "AXP209", axp209_regdata, axp209_sensdata },
 	{ "x-powers,axp221", "AXP221", axp221_regdata, axp221_sensdata },
@@ -318,8 +318,8 @@ struct axppmic_softc {
 
 	uint8_t		(*sc_read)(struct axppmic_softc *, uint8_t);
 	void		(*sc_write)(struct axppmic_softc *, uint8_t, uint8_t);
-	struct axppmic_regdata *sc_regdata;
-	struct axppmic_sensdata *sc_sensdata;
+	const struct axppmic_regdata *sc_regdata;
+	const struct axppmic_sensdata *sc_sensdata;
 
 	struct ksensor	sc_sensor[AXPPMIC_NSENSORS];
 	struct ksensordev sc_sensordev;

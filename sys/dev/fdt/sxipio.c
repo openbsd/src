@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipio.c,v 1.14 2021/10/24 17:52:27 mpi Exp $	*/
+/*	$OpenBSD: sxipio.c,v 1.15 2022/06/28 23:43:12 naddy Exp $	*/
 /*
  * Copyright (c) 2010 Miodrag Vallat.
  * Copyright (c) 2013 Artturi Alm
@@ -69,7 +69,7 @@ struct sxipio_softc {
 	int 			sc_max_il;
 	int 			sc_min_il;
 
-	struct sxipio_pin	*sc_pins;
+	const struct sxipio_pin	*sc_pins;
 	int			sc_npins;
 	struct gpio_controller	sc_gc;
 
@@ -125,11 +125,11 @@ void	sxipio_a80_bias_cfg(struct sxipio_softc *, int, uint32_t);
 
 struct sxipio_pins {
 	const char *compat;
-	struct sxipio_pin *pins;
+	const struct sxipio_pin *pins;
 	int npins;
 };
 
-struct sxipio_pins sxipio_pins[] = {
+const struct sxipio_pins sxipio_pins[] = {
 	{
 		"allwinner,sun4i-a10-pinctrl",
 		sun4i_a10_pins, nitems(sun4i_a10_pins)

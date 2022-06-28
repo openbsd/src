@@ -1,4 +1,4 @@
-/* $OpenBSD: imxsrc.c,v 1.5 2021/10/24 17:52:26 mpi Exp $ */
+/* $OpenBSD: imxsrc.c,v 1.6 2022/06/28 23:43:12 naddy Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
  *
@@ -62,7 +62,7 @@ struct imxsrc_reset {
 	uint32_t	bit;
 };
 
-struct imxsrc_reset imx51_resets[] = {
+const struct imxsrc_reset imx51_resets[] = {
 	[IMX51_RESET_GPU] = { SRC_SCR, SRC_SCR_SW_GPU_RST },
 	[IMX51_RESET_VPU] = { SRC_SCR, SRC_SCR_SW_VPU_RST },
 	[IMX51_RESET_IPU1] = { SRC_SCR, SRC_SCR_SW_IPU1_RST },
@@ -70,7 +70,7 @@ struct imxsrc_reset imx51_resets[] = {
 	[IMX51_RESET_IPU2] = { SRC_SCR, SRC_SCR_SW_IPU2_RST },
 };
 
-struct imxsrc_reset imx8m_resets[] = {
+const struct imxsrc_reset imx8m_resets[] = {
 	[IMX8M_RESET_PCIEPHY] = { SRC_PCIE1_RCR,
 	    SRC_PCIE_RCR_PCIEPHY_G_RST | SRC_PCIE_RCR_PCIEPHY_BTN },
 	[IMX8M_RESET_PCIEPHY_PERST] = { SRC_PCIE1_RCR,
@@ -103,7 +103,7 @@ struct imxsrc_softc {
 	bus_space_tag_t		 sc_iot;
 	bus_space_handle_t	 sc_ioh;
 	struct reset_device	 sc_rd;
-	struct imxsrc_reset	*sc_resets;
+	const struct imxsrc_reset *sc_resets;
 	int			 sc_nresets;
 };
 

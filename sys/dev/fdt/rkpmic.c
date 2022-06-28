@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.9 2021/10/24 17:52:27 mpi Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.10 2022/06/28 23:43:12 naddy Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -57,7 +57,7 @@ struct rkpmic_vsel_range {
 struct rkpmic_regdata {
 	const char *name;
 	uint8_t reg, mask;
-	struct rkpmic_vsel_range *vsel_range;
+	const struct rkpmic_vsel_range *vsel_range;
 };
 
 /* 
@@ -66,7 +66,7 @@ struct rkpmic_regdata {
  *  60-62:	1.8V-2.2V, step=200mV
  *  63:		2.3V
  */
-struct rkpmic_vsel_range rk805_vsel_range1[] = {
+const struct rkpmic_vsel_range rk805_vsel_range1[] = {
 	{ 712500, 12500, 0, 59 },
 	{ 1800000, 200000, 60, 62 },
 	{ 2300000, 0, 63, 63 },
@@ -77,7 +77,7 @@ struct rkpmic_vsel_range rk805_vsel_range1[] = {
  * Used by RK805 for BUCK4 
  *  0-27:	0.8V-3.5V, step=100mV
  */
-struct rkpmic_vsel_range rk805_vsel_range2[] = {
+const struct rkpmic_vsel_range rk805_vsel_range2[] = {
 	{ 800000, 100000, 0, 27 },
 	{}
 };
@@ -86,12 +86,12 @@ struct rkpmic_vsel_range rk805_vsel_range2[] = {
  * Used by RK805 for LDO1-3 
  *  0-26:	0.8V-3.4V, step=100mV
  */
-struct rkpmic_vsel_range rk805_vsel_range3[] = {
+const struct rkpmic_vsel_range rk805_vsel_range3[] = {
 	{ 800000, 100000, 0, 26 },
 	{}
 };
 
-struct rkpmic_regdata rk805_regdata[] = {
+const struct rkpmic_regdata rk805_regdata[] = {
 	{ "DCDC_REG1", 0x2f, 0x3f, rk805_vsel_range1 },
 	{ "DCDC_REG2", 0x33, 0x3f, rk805_vsel_range1 },
 	{ "DCDC_REG4", 0x38, 0x1f, rk805_vsel_range2 },
@@ -105,7 +105,7 @@ struct rkpmic_regdata rk805_regdata[] = {
  * Used by RK808 for BUCK1 & BUCK2
  *  0-63:	0.7125V-1.5V, step=12.5mV
  */
-struct rkpmic_vsel_range rk808_vsel_range1[] = {
+const struct rkpmic_vsel_range rk808_vsel_range1[] = {
 	{ 712500, 12500, 0, 63 },
 	{}
 };
@@ -114,7 +114,7 @@ struct rkpmic_vsel_range rk808_vsel_range1[] = {
  * Used by RK808 for BUCK4
  *  0-15:	1.8V-3.3V,step=100mV
  */
-struct rkpmic_vsel_range rk808_vsel_range2[] = {
+const struct rkpmic_vsel_range rk808_vsel_range2[] = {
 	{ 1800000, 100000, 0, 15 },
 	{}
 };
@@ -123,7 +123,7 @@ struct rkpmic_vsel_range rk808_vsel_range2[] = {
  * Used by RK808 for LDO1-2, 4-5, 8
  *  0-16:	1.8V-3.4V, step=100mV
  */
-struct rkpmic_vsel_range rk808_vsel_range3[] = {
+const struct rkpmic_vsel_range rk808_vsel_range3[] = {
 	{ 1800000, 100000, 0, 16 },
 	{}
 };
@@ -134,7 +134,7 @@ struct rkpmic_vsel_range rk808_vsel_range3[] = {
  *   13:	2.2V
  *   15:	2.5V
  */
-struct rkpmic_vsel_range rk808_vsel_range4[] = {
+const struct rkpmic_vsel_range rk808_vsel_range4[] = {
 	{ 800000, 100000, 0, 12 },
 	{ 2200000, 0, 13, 13 },
 	{ 2500000, 0, 15, 15 },
@@ -145,12 +145,12 @@ struct rkpmic_vsel_range rk808_vsel_range4[] = {
  * Used by RK808 for LDO6-7
  *  0-17:	0.8V-2.5V,step=100mV
  */
-struct rkpmic_vsel_range rk808_vsel_range5[] = {
+const struct rkpmic_vsel_range rk808_vsel_range5[] = {
 	{ 800000, 100000, 0, 17 },
 	{}
 };
 
-struct rkpmic_regdata rk808_regdata[] = {
+const struct rkpmic_regdata rk808_regdata[] = {
 	{ "DCDC_REG1", 0x2f, 0x3f, rk808_vsel_range1 },
 	{ "DCDC_REG2", 0x33, 0x3f, rk808_vsel_range1 },
 	{ "DCDC_REG4", 0x38, 0x0f, rk808_vsel_range2 },
@@ -170,7 +170,7 @@ struct rkpmic_regdata rk808_regdata[] = {
  *  0-80:	0.5V-1.5V,step=12.5mV
  *  81-89:	1.6V-2.4V,step=100mV
  */
-struct rkpmic_vsel_range rk809_vsel_range1[] = {
+const struct rkpmic_vsel_range rk809_vsel_range1[] = {
 	{ 500000, 12500, 0, 80 },
 	{ 1600000, 100000, 81, 89 },
 	{}
@@ -181,7 +181,7 @@ struct rkpmic_vsel_range rk809_vsel_range1[] = {
  *  0-80:	0.5V-1.5V,step=12.5mV
  *  81-99:	1.6V-3.4V,step=100mV
  */
-struct rkpmic_vsel_range rk809_vsel_range2[] = {
+const struct rkpmic_vsel_range rk809_vsel_range2[] = {
 	{ 500000, 12500, 0, 80 },
 	{ 1600000, 100000, 81, 99 },
 	{}
@@ -194,7 +194,7 @@ struct rkpmic_vsel_range rk809_vsel_range2[] = {
  *  4-5:	2.8V-3.0V,step=200mV
  *  6-7:	3.3V-3.6V,step=300mV
  */
-struct rkpmic_vsel_range rk809_vsel_range3[] = {
+const struct rkpmic_vsel_range rk809_vsel_range3[] = {
 	{ 1500000, 0, 0, 0 },
 	{ 1800000, 200000, 1, 3 },
 	{ 2800000, 200000, 4, 5 },
@@ -206,12 +206,12 @@ struct rkpmic_vsel_range rk809_vsel_range3[] = {
  * Used by RK809 for LDO1-7
  *  0-112: 0.6V-3.4V,step=25mV
  */
-struct rkpmic_vsel_range rk809_vsel_range4[] = {
+const struct rkpmic_vsel_range rk809_vsel_range4[] = {
 	{ 600000, 25000, 0, 112 },
 	{}
 };
 
-struct rkpmic_regdata rk809_regdata[] = {
+const struct rkpmic_regdata rk809_regdata[] = {
 	{ "DCDC_REG1", 0xbb, 0x7f, rk809_vsel_range1 },
 	{ "DCDC_REG2", 0xbe, 0x7f, rk809_vsel_range1 },
 	{ "DCDC_REG3", 0xc1, 0x7f, rk809_vsel_range1 },
@@ -236,7 +236,7 @@ struct rkpmic_softc {
 
 	int sc_rtc_ctrl_reg, sc_rtc_status_reg;
 	struct todr_chip_handle sc_todr;
-	struct rkpmic_regdata *sc_regdata;
+	const struct rkpmic_regdata *sc_regdata;
 };
 
 int	rkpmic_match(struct device *, void *, void *);
@@ -314,7 +314,7 @@ struct rkpmic_regulator {
 	struct rkpmic_softc *rr_sc;
 
 	uint8_t rr_reg, rr_mask;
-	struct rkpmic_vsel_range *rr_vsel_range;
+	const struct rkpmic_vsel_range *rr_vsel_range;
 
 	struct regulator_device rr_rd;
 };
@@ -357,7 +357,7 @@ uint32_t
 rkpmic_get_voltage(void *cookie)
 {
 	struct rkpmic_regulator *rr = cookie;
-	struct rkpmic_vsel_range *vsel_range = rr->rr_vsel_range;
+	const struct rkpmic_vsel_range *vsel_range = rr->rr_vsel_range;
 	uint8_t vsel;
 	uint32_t ret = 0;
 
@@ -384,7 +384,7 @@ int
 rkpmic_set_voltage(void *cookie, uint32_t voltage)
 {
 	struct rkpmic_regulator *rr = cookie;
-	struct rkpmic_vsel_range *vsel_range = rr->rr_vsel_range;
+	const struct rkpmic_vsel_range *vsel_range = rr->rr_vsel_range;
 	uint32_t vmin, vmax, volt;
 	uint8_t reg, vsel;
 

@@ -34,7 +34,7 @@
 #define IMX6_CLK_PLL6		0xe4
 #define IMX6_CLK_PLL7		0xe5
 
-struct imxccm_gate imx6_gates[] = {
+const struct imxccm_gate imx6_gates[] = {
 	[IMX6_CLK_ECSPI2] = { CCM_CCGR1, 1, IMX6_CLK_ECSPI_ROOT },
 	[IMX6_CLK_ENET] = { CCM_CCGR1, 5, IMX6_CLK_IPG },
 	[IMX6_CLK_I2C1] = { CCM_CCGR2, 3, IMX6_CLK_IPG_PER },
@@ -69,7 +69,7 @@ struct imxccm_gate imx6_gates[] = {
 #define IMX6UL_CLK_USDHC1	0xce
 #define IMX6UL_CLK_USDHC2	0xcf
 
-struct imxccm_gate imx6ul_gates[] = {
+const struct imxccm_gate imx6ul_gates[] = {
 	[IMX6UL_CLK_GPT1_BUS] = { CCM_CCGR1, 10, IMX6UL_CLK_PERCLK },
 	[IMX6UL_CLK_GPT1_SERIAL] = { CCM_CCGR1, 11, IMX6UL_CLK_PERCLK },
 	[IMX6UL_CLK_I2C1] = { CCM_CCGR2, 3, IMX6UL_CLK_PERCLK },
@@ -184,7 +184,7 @@ struct imxccm_gate imx6ul_gates[] = {
 #define IMX7D_USB_PHY1_CLK		0x1a7
 #define IMX7D_USB_PHY2_CLK		0x1a8
 
-struct imxccm_gate imx7d_gates[] = {
+const struct imxccm_gate imx7d_gates[] = {
 	[IMX7D_ENET_AXI_ROOT_CG] = { 0x8900, 28, IMX7D_ENET_AXI_ROOT_SRC },
 	[IMX7D_ENET1_TIME_ROOT_CG] = { 0xa780, 28, IMX7D_ENET1_TIME_ROOT_SRC },
 	[IMX7D_ENET2_TIME_ROOT_CG] = { 0xa880, 28, IMX7D_ENET2_TIME_ROOT_SRC },
@@ -227,7 +227,7 @@ struct imxccm_gate imx7d_gates[] = {
 	[IMX7D_UART7_ROOT_CLK] = { 0x49a0, 0, IMX7D_UART7_ROOT_DIV },
 };
 
-struct imxccm_divider imx7d_divs[] = {
+const struct imxccm_divider imx7d_divs[] = {
 	[IMX7D_ENET_AXI_ROOT_PRE_DIV] = { 0x8900, 16, 0x7, IMX7D_ENET_AXI_ROOT_CG },
 	[IMX7D_ENET1_TIME_ROOT_PRE_DIV] = { 0xa780, 16, 0x7, IMX7D_ENET1_TIME_ROOT_CG },
 	[IMX7D_ENET2_TIME_ROOT_PRE_DIV] = { 0xa880, 16, 0x7, IMX7D_ENET2_TIME_ROOT_CG },
@@ -266,7 +266,7 @@ struct imxccm_divider imx7d_divs[] = {
 	[IMX7D_UART7_ROOT_DIV] = { 0xb280, 0, 0x3f, IMX7D_UART7_ROOT_PRE_DIV },
 };
 
-struct imxccm_mux imx7d_muxs[] = {
+const struct imxccm_mux imx7d_muxs[] = {
 	[IMX7D_ENET_AXI_ROOT_SRC] = { 0x8900, 24, 0x7 },
 	[IMX7D_ENET1_TIME_ROOT_SRC] = { 0xa780, 24, 0x7 },
 	[IMX7D_ENET2_TIME_ROOT_SRC] = { 0xa880, 24, 0x7 },
@@ -346,7 +346,7 @@ struct imxccm_mux imx7d_muxs[] = {
 #define IMX8MM_CLK_TMU_ROOT		0xd1
 #define IMX8MM_CLK_ARM			0xd7
 
-struct imxccm_gate imx8mm_gates[] = {
+const struct imxccm_gate imx8mm_gates[] = {
 	[IMX8MM_CLK_A53_CG] = { 0x8000, 14 },
 	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 14 },
 	[IMX8MM_CLK_NAND_USDHC_BUS] = { 0x8900, 14 },
@@ -392,7 +392,7 @@ struct imxccm_gate imx8mm_gates[] = {
 	[IMX8MM_CLK_TMU_ROOT] = { 0x4620, 0 },
 };
 
-struct imxccm_divider imx8mm_divs[] = {
+const struct imxccm_divider imx8mm_divs[] = {
 	[IMX8MM_CLK_A53_DIV] = { 0x8000, 0, 0x7, IMX8MM_CLK_A53_CG },
 	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 0, 0x3f },
 	[IMX8MM_CLK_NAND_USDHC_BUS] = { 0x8900, 0, 0x3f },
@@ -420,7 +420,7 @@ struct imxccm_divider imx8mm_divs[] = {
 	[IMX8MM_CLK_PCIE2_AUX] = { 0xc100, 0, 0x3f },
 };
 
-struct imxccm_divider imx8mm_predivs[] = {
+const struct imxccm_divider imx8mm_predivs[] = {
 	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 16, 0x7 },
 	[IMX8MM_CLK_NAND_USDHC_BUS] = { 0x8900, 16, 0x7 },
 	[IMX8MM_CLK_USB_BUS] = { 0x8b80, 16, 0x7 },
@@ -446,7 +446,7 @@ struct imxccm_divider imx8mm_predivs[] = {
 	[IMX8MM_CLK_PCIE2_AUX] = { 0xc100, 16, 0x7 },
 };
 
-struct imxccm_mux imx8mm_muxs[] = {
+const struct imxccm_mux imx8mm_muxs[] = {
 	[IMX8MM_CLK_A53_SRC] = { 0x8000, 24, 0x7 },
 	[IMX8MM_CLK_ENET_AXI] = { 0x8880, 24, 0x7 },
 	[IMX8MM_CLK_NAND_USDHC_BUS] = { 0x8900, 24, 0x7 },
@@ -535,7 +535,7 @@ struct imxccm_mux imx8mm_muxs[] = {
 #define IMX8MP_CLK_USDHC3_ROOT		0x115
 #define IMX8MP_CLK_HSIO_AXI		0x137
 
-struct imxccm_gate imx8mp_gates[] = {
+const struct imxccm_gate imx8mp_gates[] = {
 	[IMX8MP_CLK_ENET_AXI] = { 0x8880, 14 },
 	[IMX8MP_CLK_NAND_USDHC_BUS] = { 0x8900, 14 },
 	[IMX8MP_CLK_AHB] = { 0x9000, 14 },
@@ -588,7 +588,7 @@ struct imxccm_gate imx8mp_gates[] = {
 	[IMX8MP_CLK_HSIO_AXI] = { 0x8400, 14 },
 };
 
-struct imxccm_divider imx8mp_divs[] = {
+const struct imxccm_divider imx8mp_divs[] = {
 	[IMX8MP_CLK_ENET_AXI] = { 0x8880, 0, 0x3f },
 	[IMX8MP_CLK_NAND_USDHC_BUS] = { 0x8900, 0, 0x3f },
 	[IMX8MP_CLK_AHB] = { 0x9000, 0, 0x3f },
@@ -620,7 +620,7 @@ struct imxccm_divider imx8mp_divs[] = {
 	[IMX8MP_CLK_HSIO_AXI] = { 0x8400, 0, 0x3f },
 };
 
-struct imxccm_divider imx8mp_predivs[] = {
+const struct imxccm_divider imx8mp_predivs[] = {
 	[IMX8MP_CLK_ENET_AXI] = { 0x8880, 16, 0x7 },
 	[IMX8MP_CLK_NAND_USDHC_BUS] = { 0x8900, 16, 0x7 },
 	[IMX8MP_CLK_AHB] = { 0x9000, 16, 0x7 },
@@ -651,7 +651,7 @@ struct imxccm_divider imx8mp_predivs[] = {
 	[IMX8MP_CLK_HSIO_AXI] = { 0x8400, 16, 0x7 },
 };
 
-struct imxccm_mux imx8mp_muxs[] = {
+const struct imxccm_mux imx8mp_muxs[] = {
 	[IMX8MP_CLK_ENET_AXI] = { 0x8880, 24, 0x7 },
 	[IMX8MP_CLK_NAND_USDHC_BUS] = { 0x8900, 24, 0x7 },
 	[IMX8MP_CLK_AHB] = { 0x9000, 24, 0x7 },
@@ -760,7 +760,7 @@ struct imxccm_mux imx8mp_muxs[] = {
 #define IMX8MQ_CLK_OCOTP_ROOT		0xfa
 #define IMX8MQ_CLK_ARM			0x102
 
-struct imxccm_gate imx8mq_gates[] = {
+const struct imxccm_gate imx8mq_gates[] = {
 	[IMX8MQ_CLK_A53_CG] = { 0x8000, 14 },
 	[IMX8MQ_CLK_ENET_AXI] = { 0x8880, 14 },
 	[IMX8MQ_CLK_NAND_USDHC_BUS] = { 0x8900, 14 },
@@ -822,7 +822,7 @@ struct imxccm_gate imx8mq_gates[] = {
 	[IMX8MQ_CLK_OCOTP_ROOT] = { 0x4220, 0, IMX8MQ_CLK_IPG_ROOT },
 };
 
-struct imxccm_divider imx8mq_divs[] = {
+const struct imxccm_divider imx8mq_divs[] = {
 	[IMX8MQ_CLK_A53_DIV] = { 0x8000, 0, 0x7, IMX8MQ_CLK_A53_CG },
 	[IMX8MQ_CLK_ENET_AXI] = { 0x8880, 0, 0x3f },
 	[IMX8MQ_CLK_NAND_USDHC_BUS] = { 0x8900, 0, 0x3f },
@@ -859,7 +859,7 @@ struct imxccm_divider imx8mq_divs[] = {
 	[IMX8MQ_CLK_IPG_ROOT] = { 0x9080, 0, 0x1, IMX8MQ_CLK_AHB },
 };
 
-struct imxccm_divider imx8mq_predivs[] = {
+const struct imxccm_divider imx8mq_predivs[] = {
 	[IMX8MQ_CLK_ENET_AXI] = { 0x8880, 16, 0x7 },
 	[IMX8MQ_CLK_NAND_USDHC_BUS] = { 0x8900, 16, 0x7 },
 	[IMX8MQ_CLK_USB_BUS] = { 0x8b80, 16, 0x7 },
@@ -894,7 +894,7 @@ struct imxccm_divider imx8mq_predivs[] = {
 	[IMX8MQ_CLK_ECSPI3] = { 0xc180, 16, 0x7 },
 };
 
-struct imxccm_mux imx8mq_muxs[] = {
+const struct imxccm_mux imx8mq_muxs[] = {
 	[IMX8MQ_CLK_A53_SRC] = { 0x8000, 24, 0x7 },
 	[IMX8MQ_CLK_ENET_AXI] = { 0x8880, 24, 0x7 },
 	[IMX8MQ_CLK_NAND_USDHC_BUS] = { 0x8900, 24, 0x7 },

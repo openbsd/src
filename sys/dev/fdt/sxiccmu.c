@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxiccmu.c,v 1.30 2021/12/03 19:22:42 uaa Exp $	*/
+/*	$OpenBSD: sxiccmu.c,v 1.31 2022/06/28 23:43:12 naddy Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Artturi Alm
@@ -58,11 +58,11 @@ struct sxiccmu_softc {
 	bus_space_handle_t	sc_ioh;
 	int			sc_node;
 
-	struct sxiccmu_ccu_bit	*sc_gates;
+	const struct sxiccmu_ccu_bit *sc_gates;
 	int			sc_ngates;
 	struct clock_device	sc_cd;
 
-	struct sxiccmu_ccu_bit	*sc_resets;
+	const struct sxiccmu_ccu_bit *sc_resets;
 	int			sc_nresets;
 	struct reset_device	sc_rd;
 
@@ -335,7 +335,7 @@ void	sxiccmu_mmc_enable(void *, uint32_t *, int);
 void	sxiccmu_gate_enable(void *, uint32_t *, int);
 void	sxiccmu_reset(void *, uint32_t *, int);
 
-struct sxiccmu_device sxiccmu_devices[] = {
+const struct sxiccmu_device sxiccmu_devices[] = {
 	{
 		.compat = "allwinner,sun4i-a10-osc-clk",
 		.get_frequency = sxiccmu_osc_get_frequency,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rktemp.c,v 1.9 2022/01/09 05:42:37 jsg Exp $	*/
+/*	$OpenBSD: rktemp.c,v 1.10 2022/06/28 23:43:12 naddy Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -77,7 +77,7 @@ struct rktemp_entry {
 };
 
 /* RK3288 conversion table. */
-struct rktemp_entry rk3288_temps[] = {
+const struct rktemp_entry rk3288_temps[] = {
 	{ -40000, 3800 },
 	{ -35000, 3792 },
 	{ -30000, 3783 },
@@ -114,10 +114,10 @@ struct rktemp_entry rk3288_temps[] = {
 	{ 125000, 3421 },
 };
 
-const char *rk3288_names[] = { "", "CPU", "GPU" };
+const char *const rk3288_names[] = { "", "CPU", "GPU" };
 
 /* RK3328 conversion table. */
-struct rktemp_entry rk3328_temps[] = {
+const struct rktemp_entry rk3328_temps[] = {
 	{ -40000, 296 },
 	{ -35000, 304 },
 	{ -30000, 313 },
@@ -153,11 +153,11 @@ struct rktemp_entry rk3328_temps[] = {
 	{ 125000, 675 },
 };
 
-const char *rk3308_names[] = { "CPU", "GPU" };
-const char *rk3328_names[] = { "CPU" };
+const char *const rk3308_names[] = { "CPU", "GPU" };
+const char *const rk3328_names[] = { "CPU" };
 
 /* RK3399 conversion table. */
-struct rktemp_entry rk3399_temps[] = {
+const struct rktemp_entry rk3399_temps[] = {
 	{ -40000, 402 },
 	{ -35000, 410 },
 	{ -30000, 419 },
@@ -194,14 +194,14 @@ struct rktemp_entry rk3399_temps[] = {
 	{ 125000, 685 },
 };
 
-const char *rk3399_names[] = { "CPU", "GPU" };
+const char *const rk3399_names[] = { "CPU", "GPU" };
 
 struct rktemp_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
-	struct rktemp_entry	*sc_temps;
+	const struct rktemp_entry *sc_temps;
 	int			sc_ntemps;
 
 	struct ksensor		sc_sensors[3];
@@ -244,7 +244,7 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rktemp_softc *sc = (struct rktemp_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	const char **names;
+	const char *const *names;
 	uint32_t mode, polarity, temp;
 	uint32_t auto_con, int_en;
 	int node = faa->fa_node;

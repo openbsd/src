@@ -1,7 +1,7 @@
 /* Public Domain */
 
 
-struct sxipio_pin sun4i_a10_pins[] = {
+const struct sxipio_pin sun4i_a10_pins[] = {
 	{ SXIPIO_PIN(A, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -1161,7 +1161,7 @@ struct sxipio_pin sun4i_a10_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun7i_a20_pins[] = {
+const struct sxipio_pin sun7i_a20_pins[] = {
 	{ SXIPIO_PIN(A, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -2340,7 +2340,7 @@ struct sxipio_pin sun7i_a20_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun8i_r40_pins[] = {
+const struct sxipio_pin sun8i_r40_pins[] = {
 	{ SXIPIO_PIN(A, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -3524,7 +3524,7 @@ struct sxipio_pin sun8i_r40_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun5i_a10s_pins[] = {
+const struct sxipio_pin sun5i_a10s_pins[] = {
 	{ SXIPIO_PIN(A, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -4277,7 +4277,7 @@ struct sxipio_pin sun5i_a10s_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun5i_a13_pins[] = {
+const struct sxipio_pin sun5i_a13_pins[] = {
 	{ SXIPIO_PIN(B, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -4743,7 +4743,7 @@ struct sxipio_pin sun5i_a13_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun5i_gr8_pins[] = {
+const struct sxipio_pin sun5i_gr8_pins[] = {
 	{ SXIPIO_PIN(B, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -5307,7 +5307,7 @@ struct sxipio_pin sun5i_gr8_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun8i_a33_pins[] = {
+const struct sxipio_pin sun8i_a33_pins[] = {
 	{ SXIPIO_PIN(B, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -5856,7 +5856,7 @@ struct sxipio_pin sun8i_a33_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun8i_h3_pins[] = {
+const struct sxipio_pin sun8i_h3_pins[] = {
 	{ SXIPIO_PIN(A, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -6412,7 +6412,7 @@ struct sxipio_pin sun8i_h3_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun8i_h3_r_pins[] = {
+const struct sxipio_pin sun8i_h3_r_pins[] = {
 	{ SXIPIO_PIN(L, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -6485,7 +6485,7 @@ struct sxipio_pin sun8i_h3_r_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun8i_v3s_pins[] = {
+const struct sxipio_pin sun8i_v3s_pins[] = {
 	{ SXIPIO_PIN(B, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -6802,7 +6802,7 @@ struct sxipio_pin sun8i_v3s_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun9i_a80_pins[] = {
+const struct sxipio_pin sun9i_a80_pins[] = {
 	{ SXIPIO_PIN(A, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -7615,7 +7615,7 @@ struct sxipio_pin sun9i_a80_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun9i_a80_r_pins[] = {
+const struct sxipio_pin sun9i_a80_r_pins[] = {
 	{ SXIPIO_PIN(L, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -7763,7 +7763,7 @@ struct sxipio_pin sun9i_a80_r_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun50i_a64_pins[] = {
+const struct sxipio_pin sun50i_a64_pins[] = {
 	{ SXIPIO_PIN(B, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -8414,7 +8414,7 @@ struct sxipio_pin sun50i_a64_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun50i_a64_r_pins[] = {
+const struct sxipio_pin sun50i_a64_r_pins[] = {
 	{ SXIPIO_PIN(L, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -8496,7 +8496,7 @@ struct sxipio_pin sun50i_a64_r_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun50i_h5_pins[] = {
+const struct sxipio_pin sun50i_h5_pins[] = {
 	{ SXIPIO_PIN(A, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },
@@ -9092,7 +9092,7 @@ struct sxipio_pin sun50i_h5_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun50i_h6_pins[] = {
+const struct sxipio_pin sun50i_h6_pins[] = {
 	{ SXIPIO_PIN(A, 0), {
 		{ "emac", 2 },
 	} },
@@ -9764,7 +9764,7 @@ struct sxipio_pin sun50i_h6_pins[] = {
 	} },
 };
 
-struct sxipio_pin sun50i_h6_r_pins[] = {
+const struct sxipio_pin sun50i_h6_r_pins[] = {
 	{ SXIPIO_PIN(L, 0), {
 		{ "gpio_in", 0 },
 		{ "gpio_out", 1 },

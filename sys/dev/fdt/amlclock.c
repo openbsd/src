@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlclock.c,v 1.13 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: amlclock.c,v 1.14 2022/06/28 23:43:12 naddy Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -117,7 +117,7 @@ struct amlclock_gate {
 	uint8_t bit;
 };
 
-struct amlclock_gate aml_g12a_gates[] = {
+const struct amlclock_gate aml_g12a_gates[] = {
 	[G12A_I2C] = { HHI_GCLK_MPEG0, 9 },
 	[G12A_SD_EMMC_A] = { HHI_GCLK_MPEG0, 24 },
 	[G12A_SD_EMMC_B] = { HHI_GCLK_MPEG0, 25 },
@@ -139,7 +139,7 @@ struct amlclock_softc {
 	int			sc_node;
 	uint32_t		sc_g12b;
 
-	struct amlclock_gate	*sc_gates;
+	const struct amlclock_gate *sc_gates;
 	int			sc_ngates;
 
 	struct clock_device	sc_cd;

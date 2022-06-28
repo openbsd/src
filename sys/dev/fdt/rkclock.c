@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.61 2022/01/09 05:42:37 jsg Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.62 2022/06/28 23:43:12 naddy Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -203,7 +203,7 @@ struct rkclock_softc {
 	struct regmap		*sc_grf;
 
 	uint32_t		sc_phandle;
-	struct rkclock		*sc_clocks;
+	const struct rkclock	*sc_clocks;
 
 	struct clock_device	sc_cd;
 	struct reset_device	sc_rd;
@@ -264,7 +264,7 @@ struct rkclock_compat {
 	void	(*reset)(void *, uint32_t *, int);
 };
 
-struct rkclock_compat rkclock_compat[] = {
+const struct rkclock_compat rkclock_compat[] = {
 	{
 		"rockchip,rk3288-cru", 0, rk3288_init,
 		rk3288_enable, rk3288_get_frequency,
@@ -365,10 +365,10 @@ rkclock_attach(struct device *parent, struct device *self, void *aux)
 		clock_set_assigned(faa->fa_node);
 }
 
-struct rkclock *
+const struct rkclock *
 rkclock_lookup(struct rkclock_softc *sc, uint32_t idx)
 {
-	struct rkclock *clk;
+	const struct rkclock *clk;
 
 	for (clk = sc->sc_clocks; clk->idx; clk++) {
 		if (clk->idx == idx)
@@ -379,7 +379,7 @@ rkclock_lookup(struct rkclock_softc *sc, uint32_t idx)
 }
 
 uint32_t
-rkclock_div_con(struct rkclock_softc *sc, struct rkclock *clk,
+rkclock_div_con(struct rkclock_softc *sc, const struct rkclock *clk,
     uint32_t mux, uint32_t freq)
 {
 	uint32_t parent_freq, div, div_con, max_div_con;
@@ -395,7 +395,7 @@ rkclock_div_con(struct rkclock_softc *sc, struct rkclock *clk,
 }
 
 uint32_t
-rkclock_freq(struct rkclock_softc *sc, struct rkclock *clk,
+rkclock_freq(struct rkclock_softc *sc, const struct rkclock *clk,
     uint32_t mux, uint32_t freq)
 {
 	uint32_t parent_freq, div_con;
@@ -409,7 +409,7 @@ rkclock_freq(struct rkclock_softc *sc, struct rkclock *clk,
 uint32_t
 rkclock_get_frequency(struct rkclock_softc *sc, uint32_t idx)
 {
-	struct rkclock *clk;
+	const struct rkclock *clk;
 	uint32_t reg, mux, div_con;
 	int shift;
 
@@ -442,7 +442,7 @@ rkclock_get_frequency(struct rkclock_softc *sc, uint32_t idx)
 int
 rkclock_set_frequency(struct rkclock_softc *sc, uint32_t idx, uint32_t freq)
 {
-	struct rkclock *clk;
+	const struct rkclock *clk;
 	uint32_t reg, mux, div_con;
 	uint32_t best_freq, best_mux, f;
 	int sel_shift, div_shift, i;
@@ -512,7 +512,7 @@ rkclock_set_frequency(struct rkclock_softc *sc, uint32_t idx, uint32_t freq)
 int
 rkclock_set_parent(struct rkclock_softc *sc, uint32_t idx, uint32_t parent)
 {
-	struct rkclock *clk;
+	const struct rkclock *clk;
 	uint32_t mux;
 	int shift;
 
@@ -540,7 +540,7 @@ rkclock_set_parent(struct rkclock_softc *sc, uint32_t idx, uint32_t parent)
  * Rockchip RK3288
  */
 
-struct rkclock rk3288_clocks[] = {
+const struct rkclock rk3288_clocks[] = {
 	{
 		RK3288_CLK_SDMMC, RK3288_CRU_CLKSEL_CON(11),
 		SEL(7, 6), DIV(5, 0),
@@ -861,7 +861,7 @@ rk3288_reset(void *cookie, uint32_t *cells, int on)
  * Rockchip RK3308
  */
 
-struct rkclock rk3308_clocks[] = {
+const struct rkclock rk3308_clocks[] = {
 	{
 		RK3308_CLK_RTC32K, RK3308_CRU_CLKSEL_CON(2),
 		SEL(10, 9), 0,
@@ -1261,7 +1261,7 @@ rk3308_get_rtc32k(struct rkclock_softc *sc)
 int
 rk3308_set_rtc32k(struct rkclock_softc *sc, uint32_t freq)
 {
-	struct rkclock *clk;
+	const struct rkclock *clk;
 	uint32_t vpll0_freq, vpll1_freq, mux, div_con;
 
 	clk = rkclock_lookup(sc, RK3308_CLK_RTC32K);
@@ -1384,7 +1384,7 @@ rk3308_reset(void *cookie, uint32_t *cells, int on)
  * Rockchip RK3328
  */
 
-struct rkclock rk3328_clocks[] = {
+const struct rkclock rk3328_clocks[] = {
 	{
 		RK3328_CLK_RTC32K, RK3328_CRU_CLKSEL_CON(38),
 		SEL(15, 14), DIV(13, 0),
@@ -2089,7 +2089,7 @@ rk3328_reset(void *cookie, uint32_t *cells, int on)
  * Rockchip RK3399 
  */
 
-struct rkclock rk3399_clocks[] = {
+const struct rkclock rk3399_clocks[] = {
 	{
 		RK3399_CLK_I2C1, RK3399_CRU_CLKSEL_CON(61),
 		SEL(7, 7), DIV(6, 0),
@@ -2844,7 +2844,7 @@ rk3399_reset(void *cookie, uint32_t *cells, int on)
 
 /* PMUCRU */
 
-struct rkclock rk3399_pmu_clocks[] = {
+const struct rkclock rk3399_pmu_clocks[] = {
 	{
 		RK3399_CLK_I2C0, RK3399_PMUCRU_CLKSEL_CON(2),
 		0, DIV(6, 0),

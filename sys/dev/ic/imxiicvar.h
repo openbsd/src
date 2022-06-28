@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiicvar.h,v 1.1 2020/11/17 14:30:13 patrick Exp $ */
+/* $OpenBSD: imxiicvar.h,v 1.2 2022/06/28 23:43:13 naddy Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -38,7 +38,7 @@ struct imxiic_softc {
 	int			sc_bitrate;
 	uint32_t		sc_clkrate;
 
-	struct imxiic_clk_pair	*sc_clk_div;
+	const struct imxiic_clk_pair *sc_clk_div;
 	int			sc_clk_ndiv;
 
 	struct rwlock		sc_buslock;
@@ -61,7 +61,7 @@ struct imxiic_clk_pair {
 	uint16_t val;
 };
 
-static struct imxiic_clk_pair imxiic_imx21_clk_div[50] = {
+static const struct imxiic_clk_pair imxiic_imx21_clk_div[50] = {
 	{ 22,	0x20 }, { 24,	0x21 }, { 26,	0x22 }, { 28,	0x23 },
 	{ 30,	0x00 }, { 32,	0x24 }, { 36,	0x25 }, { 40,	0x26 },
 	{ 42,	0x03 }, { 44,	0x27 }, { 48,	0x28 }, { 52,	0x05 },
@@ -77,7 +77,7 @@ static struct imxiic_clk_pair imxiic_imx21_clk_div[50] = {
 	{ 3072,	0x1E }, { 3840,	0x1F }
 };
 
-static struct imxiic_clk_pair imxiic_vf610_clk_div[60] = {
+static const struct imxiic_clk_pair imxiic_vf610_clk_div[60] = {
 	{ 20,	0x00 }, { 22,	0x01 }, { 24,	0x02 }, { 26,	0x03 },
 	{ 28,	0x04 }, { 30,	0x05 }, { 32,	0x09 }, { 34,	0x06 },
 	{ 36,	0x0A }, { 40,	0x07 }, { 44,	0x0C }, { 48,	0x0D },

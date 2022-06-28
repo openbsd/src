@@ -1,7 +1,7 @@
 /* Public Domain */
 
 
-struct mvpinctrl_pin armada_38x_pins[] = {
+const struct mvpinctrl_pin armada_38x_pins[] = {
 	MPP(0, "gpio", 0),
 	MPP(0, "ua0", 1),
 	MPP(1, "gpio", 0),
@@ -290,7 +290,7 @@ struct mvpinctrl_pin armada_38x_pins[] = {
 	MPP(59, "sd0", 5),
 };
 
-struct mvpinctrl_pin armada_ap806_pins[] = {
+const struct mvpinctrl_pin armada_ap806_pins[] = {
 	MPP(0, "gpio", 0),
 	MPP(0, "sdio", 1),
 	MPP(0, "spi0", 3),
@@ -338,7 +338,7 @@ struct mvpinctrl_pin armada_ap806_pins[] = {
 	MPP(19, "sdio", 4),
 };
 
-struct mvpinctrl_pin armada_cp110_pins[] = {
+const struct mvpinctrl_pin armada_cp110_pins[] = {
 	MPP(0, "gpio", 0),
 	MPP(0, "dev", 1),
 	MPP(0, "au", 2),

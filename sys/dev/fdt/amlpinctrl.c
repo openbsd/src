@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlpinctrl.c,v 1.11 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: amlpinctrl.c,v 1.12 2022/06/28 23:43:12 naddy Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -162,7 +162,7 @@ struct aml_pin_group {
 	const char *function;
 };
 
-struct aml_gpio_bank aml_g12a_gpio_banks[] = {
+const struct aml_gpio_bank aml_g12a_gpio_banks[] = {
 	/* BOOT */
 	{ BOOT_0, 16,
 	  PERIPHS_PIN_MUX_0 - PERIPHS_PIN_MUX_0, 0,
@@ -226,7 +226,7 @@ struct aml_gpio_bank aml_g12a_gpio_banks[] = {
 	{ }
 };
 
-struct aml_pin_group aml_g12a_pin_groups[] = {
+const struct aml_pin_group aml_g12a_pin_groups[] = {
 	/* GPIOZ */
 	{ "i2c0_sda_z0", GPIOZ_0, 4, "i2c0" },
 	{ "i2c0_sck_z1", GPIOZ_1, 4, "i2c0" },
@@ -292,7 +292,7 @@ struct aml_pin_group aml_g12a_pin_groups[] = {
 	{ }
 };
 
-struct aml_gpio_bank aml_g12a_ao_gpio_banks[] = {
+const struct aml_gpio_bank aml_g12a_ao_gpio_banks[] = {
 	/* GPIOAO */
 	{ GPIOAO_0, 12,
 	  AO_RTI_PINMUX_0 - AO_RTI_PINMUX_0, 0,
@@ -316,7 +316,7 @@ struct aml_gpio_bank aml_g12a_ao_gpio_banks[] = {
 	{ }
 };
 
-struct aml_pin_group aml_g12a_ao_pin_groups[] = {
+const struct aml_pin_group aml_g12a_ao_pin_groups[] = {
 	/* GPIOAO */
 	{ "uart_ao_a_tx", GPIOAO_0, 1, "uart_ao_a" },
 	{ "uart_ao_a_rx", GPIOAO_1, 1, "uart_ao_a" },
@@ -347,8 +347,8 @@ struct amlpinctrl_softc {
 	bus_space_handle_t	sc_ds_ioh;
 	int			sc_nobias;
 
-	struct aml_gpio_bank	*sc_gpio_banks;
-	struct aml_pin_group	*sc_pin_groups;
+	const struct aml_gpio_bank *sc_gpio_banks;
+	const struct aml_pin_group *sc_pin_groups;
 
 	struct gpio_controller	sc_gc;
 };
@@ -481,10 +481,10 @@ amlpinctrl_attach(struct device *parent, struct device *self, void *aux)
 	gpio_controller_register(&sc->sc_gc);
 }
 
-struct aml_gpio_bank *
+const struct aml_gpio_bank *
 amlpinctrl_lookup_bank(struct amlpinctrl_softc *sc, uint32_t pin)
 {
-	struct aml_gpio_bank *bank;
+	const struct aml_gpio_bank *bank;
 
 	for (bank = sc->sc_gpio_banks; bank->num_pins > 0; bank++) {
 		if (pin >= bank->first_pin &&
@@ -495,10 +495,10 @@ amlpinctrl_lookup_bank(struct amlpinctrl_softc *sc, uint32_t pin)
 	return NULL;
 }
 
-struct aml_pin_group *
+const struct aml_pin_group *
 amlpinctrl_lookup_group(struct amlpinctrl_softc *sc, const char *name)
 {
-	struct aml_pin_group *group;
+	const struct aml_pin_group *group;
 
 	for (group = sc->sc_pin_groups; group->name; group++) {
 		if (strcmp(name, group->name) == 0)
@@ -512,8 +512,8 @@ void
 amlpinctrl_config_func(struct amlpinctrl_softc *sc, const char *name,
     const char *function, int bias, int ds)
 {
-	struct aml_pin_group *group;
-	struct aml_gpio_bank *bank;
+	const struct aml_pin_group *group;
+	const struct aml_gpio_bank *bank;
 	bus_addr_t off;
 	uint32_t pin;
 	uint32_t reg;
@@ -640,7 +640,7 @@ void
 amlpinctrl_config_pin(void *cookie, uint32_t *cells, int config)
 {
 	struct amlpinctrl_softc *sc = cookie;
-	struct aml_gpio_bank *bank;
+	const struct aml_gpio_bank *bank;
 	bus_addr_t off;
 	uint32_t pin = cells[0];
 	uint32_t flags = cells[1];
@@ -678,7 +678,7 @@ int
 amlpinctrl_get_pin(void *cookie, uint32_t *cells)
 {
 	struct amlpinctrl_softc *sc = cookie;
-	struct aml_gpio_bank *bank;
+	const struct aml_gpio_bank *bank;
 	bus_addr_t off;
 	uint32_t pin = cells[0];
 	uint32_t flags = cells[1];
@@ -707,7 +707,7 @@ void
 amlpinctrl_set_pin(void *cookie, uint32_t *cells, int val)
 {
 	struct amlpinctrl_softc *sc = cookie;
-	struct aml_gpio_bank *bank;
+	const struct aml_gpio_bank *bank;
 	bus_addr_t off;
 	uint32_t pin = cells[0];
 	uint32_t flags = cells[1];
