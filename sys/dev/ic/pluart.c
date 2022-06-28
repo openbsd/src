@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.12 2022/06/27 13:03:32 anton Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.13 2022/06/28 16:28:08 anton Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -303,12 +303,9 @@ int
 pluart_param(struct tty *tp, struct termios *t)
 {
 	struct pluart_softc *sc = pluart_cd.cd_devs[DEVUNIT(tp->t_dev)];
-	//bus_space_tag_t iot = sc->sc_iot;
-	//bus_space_handle_t ioh = sc->sc_ioh;
 	int ospeed = t->c_ospeed;
 	int error;
 	tcflag_t oldcflag;
-
 
 	if (t->c_ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
 		return EINVAL;
@@ -392,7 +389,6 @@ pluart_param(struct tty *tp, struct termios *t)
 
 	/* When not using CRTSCTS, RTS follows DTR. */
 	/* sc->sc_dtr = MCR_DTR; */
-
 
 	/* and copy to tty */
 	tp->t_ispeed = t->c_ispeed;
