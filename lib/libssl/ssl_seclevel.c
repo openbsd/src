@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.4 2022/06/28 20:53:32 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.5 2022/06/28 20:54:16 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -101,7 +101,7 @@ ssl_security_secop_cipher(const SSL_CTX *ctx, const SSL *ssl, int bits,
 	if (bits < minimum_bits)
 		return 0;
 
-	/* No unauthenticated ciphersuites */
+	/* No unauthenticated ciphersuites. */
 	if (cipher->algorithm_auth & SSL_aNULL)
 		return 0;
 
