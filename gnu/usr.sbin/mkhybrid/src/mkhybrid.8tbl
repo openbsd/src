@@ -2,7 +2,7 @@
 .\" To print, first run through tbl
 .\" -*- nroff -*-
 .\"
-.\" $Id: mkhybrid.8tbl,v 1.5 2022/06/28 00:26:21 jsg Exp $
+.\" $Id: mkhybrid.8tbl,v 1.6 2022/06/28 04:36:30 jsg Exp $
 .\"
 .TH MKHYBRID 8 "7 April 1999" "Version 1.12b5.1"
 .SH NAME
@@ -566,7 +566,7 @@ copied to CDROM. Note that if you had a directory called "foobar" it too (and
 of course all its descendants) would be excluded.
 .sp
 NOTE: The \-m and \-x option description should both be updated, they are wrong.
-Both now work identical and use filename globbing. A file is exluded if either
+Both now work identical and use filename globbing. A file is excluded if either
 the last component matches or the whole path matches.
 .TP
 .BI \-exclude-list " file
@@ -756,7 +756,7 @@ Example:
 mkhybrid \-o cd \-x /local/dir1 \-x /local/dir2 /local
 .sp
 NOTE: The \-m and \-x option description should both be updated, they are wrong.
-Both now work identical and use filename globbing. A file is exluded if either
+Both now work identical and use filename globbing. A file is excluded if either
 the last component matches or the whole path matches.
 .TP
 .B \-z
@@ -1569,7 +1569,7 @@ the command line:
 mkhybrid -o output.raw -hfs newname=oldname cd_dir
 .LP
 mkhybrid will be unable to decode "oldname". However, you can graft
-Apple/Unix encoded files or directories as long as you do not atempt to
+Apple/Unix encoded files or directories as long as you do not attempt to
 give them new names as above.
 .PP
 The
