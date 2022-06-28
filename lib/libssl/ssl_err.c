@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.40 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.41 2022/06/28 20:46:05 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -327,6 +327,7 @@ static ERR_STRING_DATA SSL_str_reasons[]= {
 	{ERR_REASON(SSL_R_PACKET_LENGTH_TOO_LONG), "packet length too long"},
 	{ERR_REASON(SSL_R_PARSE_TLSEXT)          , "parse tlsext"},
 	{ERR_REASON(SSL_R_PATH_TOO_LONG)         , "path too long"},
+	{ERR_REASON(SSL_R_PEER_BEHAVING_BADLY)   , "peer is doing strange or hostile things"},
 	{ERR_REASON(SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE), "peer did not return a certificate"},
 	{ERR_REASON(SSL_R_PEER_ERROR)            , "peer error"},
 	{ERR_REASON(SSL_R_PEER_ERROR_CERTIFICATE), "peer error certificate"},
@@ -432,6 +433,7 @@ static ERR_STRING_DATA SSL_str_reasons[]= {
 	{ERR_REASON(SSL_R_UNEXPECTED_MESSAGE)    , "unexpected message"},
 	{ERR_REASON(SSL_R_UNEXPECTED_RECORD)     , "unexpected record"},
 	{ERR_REASON(SSL_R_UNINITIALIZED)         , "uninitialized"},
+	{ERR_REASON(SSL_R_UNKNOWN), "unknown failure occurred"},
 	{ERR_REASON(SSL_R_UNKNOWN_ALERT_TYPE)    , "unknown alert type"},
 	{ERR_REASON(SSL_R_UNKNOWN_CERTIFICATE_TYPE), "unknown certificate type"},
 	{ERR_REASON(SSL_R_UNKNOWN_CIPHER_RETURNED), "unknown cipher returned"},
@@ -464,8 +466,6 @@ static ERR_STRING_DATA SSL_str_reasons[]= {
 	{ERR_REASON(SSL_R_WRONG_VERSION_NUMBER)  , "wrong version number"},
 	{ERR_REASON(SSL_R_X509_LIB)              , "x509 lib"},
 	{ERR_REASON(SSL_R_X509_VERIFICATION_SETUP_PROBLEMS), "x509 verification setup problems"},
-	{ERR_REASON(SSL_R_PEER_BEHAVING_BADLY), "peer is doing strange or hostile things"},
-	{ERR_REASON(SSL_R_UNKNOWN), "unknown failure occurred"},
 	{0, NULL}
 };
 
