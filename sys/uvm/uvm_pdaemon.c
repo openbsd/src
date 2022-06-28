@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.100 2022/06/28 19:23:08 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.101 2022/06/28 19:31:30 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -101,8 +101,8 @@ extern void drmbackoff(long);
  * local prototypes
  */
 
-void		uvmpd_scan(void);
-boolean_t	uvmpd_scan_inactive(struct pglist *);
+void		uvmpd_scan(struct uvm_pmalloc *);
+boolean_t	uvmpd_scan_inactive(struct uvm_pmalloc *, struct pglist *);
 void		uvmpd_tune(void);
 void		uvmpd_drop(struct pglist *);
 
@@ -281,7 +281,7 @@ uvm_pageout(void *arg)
 		if (pma != NULL ||
 		    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg) ||
 		    ((uvmexp.inactive + BUFPAGES_INACT) < uvmexp.inactarg)) {
-			uvmpd_scan();
+			uvmpd_scan(pma);
 		}
 
 		/*
@@ -379,7 +379,7 @@ uvm_aiodone_daemon(void *arg)
  */
 
 boolean_t
-uvmpd_scan_inactive(struct pglist *pglst)
+uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 {
 	boolean_t retval = FALSE;	/* assume we haven't hit target */
 	int free, result;
@@ -404,8 +404,27 @@ uvmpd_scan_inactive(struct pglist *pglst)
 	swnpages = swcpages = 0;
 	free = 0;
 	dirtyreacts = 0;
+	p = NULL;
 
-	for (p = TAILQ_FIRST(pglst); p != NULL || swslot != 0; p = nextpg) {
+	/* Start with the first page on the list that fit in pma's ranges */
+	if (pma != NULL) {
+		paddr_t paddr;
+
+		TAILQ_FOREACH(p, pglst, pageq) {
+			paddr = atop(VM_PAGE_TO_PHYS(p));
+			if (paddr >= pma->pm_constraint.ucr_low &&
+			    paddr < pma->pm_constraint.ucr_high)
+				break;
+		}
+
+	}
+
+	if (p == NULL) {
+		p = TAILQ_FIRST(pglst);
+		pma = NULL;
+	}
+
+	for (; p != NULL || swslot != 0; p = nextpg) {
 		/*
 		 * note that p can be NULL iff we have traversed the whole
 		 * list and need to do one final swap-backed clustered pageout.
@@ -419,8 +438,8 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			 * our target
 			 */
 			free = uvmexp.free - BUFPAGES_DEFICIT;
-
-			if (free + uvmexp.paging >= uvmexp.freetarg << 2 ||
+			if (((pma == NULL || (pma->pm_flags & UVM_PMA_FREED)) &&
+			    (free + uvmexp.paging >= uvmexp.freetarg << 2)) ||
 			    dirtyreacts == UVMPD_NUMDIRTYREACTS) {
 				retval = TRUE;
 
@@ -531,7 +550,8 @@ uvmpd_scan_inactive(struct pglist *pglst)
 			 * this page is dirty, skip it if we'll have met our
 			 * free target when all the current pageouts complete.
 			 */
-			if (free + uvmexp.paging > uvmexp.freetarg << 2) {
+			if ((pma == NULL || (pma->pm_flags & UVM_PMA_FREED)) &&
+			    (free + uvmexp.paging > uvmexp.freetarg << 2)) {
 				if (anon) {
 					rw_exit(anon->an_lock);
 				} else {
@@ -867,7 +887,7 @@ uvmpd_scan_inactive(struct pglist *pglst)
  */
 
 void
-uvmpd_scan(void)
+uvmpd_scan(struct uvm_pmalloc *pma)
 {
 	int free, inactive_shortage, swap_shortage, pages_freed;
 	struct vm_page *p, *nextpg;
@@ -910,7 +930,7 @@ uvmpd_scan(void)
 	 * low bit of uvmexp.pdrevs (which we bump by one each call).
 	 */
 	pages_freed = uvmexp.pdfreed;
-	(void) uvmpd_scan_inactive(&uvm.page_inactive);
+	(void) uvmpd_scan_inactive(pma, &uvm.page_inactive);
 	pages_freed = uvmexp.pdfreed - pages_freed;
 
 	/*
