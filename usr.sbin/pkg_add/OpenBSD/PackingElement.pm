@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.282 2022/06/08 14:57:12 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.283 2022/06/28 08:15:43 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -2156,9 +2156,19 @@ sub new
 {
 	my ($class, $fullpkgpath) = @_;
 	my ($dir, @mandatory) = split(/\,/, $fullpkgpath);
-	return bless {dir => $dir,
+	my $o = 
+	    bless {dir => $dir,
 		mandatory => {map {($_, 1)} @mandatory},
-	}, $class;
+	    }, $class;
+	my @sub = grep {/^\-/} @mandatory;
+	if (@sub > 1) {
+		print STDERR "Invalid $fullpkgpath (multiple subpackages)\n";
+		exit 1;
+	}
+	if (@sub == 1) {
+		$o->{subpackage} = shift @sub;
+	}
+	return $o;
 }
 
 sub fullpkgpath
