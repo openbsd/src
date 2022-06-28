@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1997 2022/06/21 04:08:53 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1998 2022/06/28 13:05:42 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -28636,6 +28636,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ISP8432",
 	},
 	{
+	    PCI_VENDOR_QUALCOMM, PCI_PRODUCT_QUALCOMM_QCNFA765,
+	    "QCNFA765",
+	},
+	{
 	    PCI_VENDOR_QUANCOM, PCI_PRODUCT_QUANCOM_PWDOG1,
 	    "PWDOG1",
 	},
@@ -34494,6 +34498,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_HAWKING,
 	    "Hawking Technology",
+	},
+	{
+	    PCI_VENDOR_QUALCOMM,
+	    "Qualcomm",
 	},
 	{
 	    PCI_VENDOR_NETCHIP,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.1997 2022/06/21 04:08:53 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.1998 2022/06/28 13:05:42 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -311,6 +311,7 @@
 #define	PCI_VENDOR_GENESYS	0x17a0		/* Genesys Logic */
 #define	PCI_VENDOR_LENOVO	0x17aa		/* Lenovo */
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
+#define	PCI_VENDOR_QUALCOMM	0x17cb		/* Qualcomm */
 #define	PCI_VENDOR_NETCHIP	0x17cc		/* NetChip Technology */
 #define	PCI_VENDOR_I4	0x17cf		/* I4 */
 #define	PCI_VENDOR_ARECA	0x17d3		/* Areca */
@@ -7986,6 +7987,9 @@
 #define	PCI_PRODUCT_QLOGIC_ISP6312	0x6312		/* ISP6312 */
 #define	PCI_PRODUCT_QLOGIC_ISP6322	0x6322		/* ISP6322 */
 #define	PCI_PRODUCT_QLOGIC_ISP8432	0x8432		/* ISP8432 */
+
+/* Qualcomm products */
+#define	PCI_PRODUCT_QUALCOMM_QCNFA765	0x1103		/* QCNFA765 */
 
 /* Quancom products */
 #define	PCI_PRODUCT_QUANCOM_PWDOG1	0x0010		/* PWDOG1 */
