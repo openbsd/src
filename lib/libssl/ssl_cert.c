@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.95 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.96 2022/06/28 20:42:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -170,6 +170,13 @@ ssl_cert_new(void)
 	}
 	ret->key = &(ret->pkeys[SSL_PKEY_RSA]);
 	ret->references = 1;
+#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
+	ret->security_cb = ssl_security_default_cb;
+#else
+	ret->security_cb = ssl_security_dummy_cb;
+#endif
+	ret->security_level = OPENSSL_TLS_SECURITY_LEVEL;
+	ret->security_ex_data = NULL;
 	return (ret);
 }
 
