@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.157 2022/06/28 19:19:34 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.158 2022/06/28 19:39:54 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -239,7 +239,7 @@ void sw_reg_start(struct swapdev *);
 int uvm_swap_io(struct vm_page **, int, int, int);
 
 void swapmount(void);
-int uvm_swap_allocpages(struct vm_page **, int);
+int uvm_swap_allocpages(struct vm_page **, int, int);
 
 #ifdef UVM_SWAP_ENCRYPT
 /* for swap encrypt */
@@ -288,7 +288,7 @@ uvm_swap_init(void)
 	    "swp vnd", NULL);
 
 	/* allocate pages for OOM situations. */
-	error = uvm_swap_allocpages(oompps, SWCLUSTPAGES);
+	error = uvm_swap_allocpages(oompps, SWCLUSTPAGES, UVM_PLA_NOWAIT);
 	KASSERT(error == 0);
 
 	/* Setup the initial swap partition */
@@ -334,7 +334,7 @@ uvm_swap_initcrypt(struct swapdev *sdp, int npages)
 #endif /* UVM_SWAP_ENCRYPT */
 
 int
-uvm_swap_allocpages(struct vm_page **pps, int npages)
+uvm_swap_allocpages(struct vm_page **pps, int npages, int flags)
 {
 	struct pglist	pgl;
 	int error, i;
@@ -344,7 +344,7 @@ uvm_swap_allocpages(struct vm_page **pps, int npages)
 	TAILQ_INIT(&pgl);
 again:
 	error = uvm_pglistalloc(npages * PAGE_SIZE, dma_constraint.ucr_low,
-	    dma_constraint.ucr_high, 0, 0, &pgl, npages, UVM_PLA_NOWAIT);
+	    dma_constraint.ucr_high, 0, 0, &pgl, npages, flags);
 	if (error && (curproc == uvm.pagedaemon_proc)) {
 		mtx_enter(&oommtx);
 		if (oom) {
@@ -394,6 +394,7 @@ uvm_swap_freepages(struct vm_page **pps, int npages)
 	for (i = 0; i < npages; i++)
 		uvm_pagefree(pps[i]);
 	uvm_unlock_pageq();
+
 }
 
 #ifdef UVM_SWAP_ENCRYPT
@@ -1707,13 +1708,16 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	}
 
 	if (bounce)  {
-		int swmapflags;
+		int swmapflags, plaflags;
 
 		/* We always need write access. */
 		swmapflags = UVMPAGER_MAPIN_READ;
-		if (!async)
+		plaflags = UVM_PLA_NOWAIT;
+		if (!async) {
 			swmapflags |= UVMPAGER_MAPIN_WAITOK;
-		if (uvm_swap_allocpages(tpps, npages)) {
+			plaflags = UVM_PLA_WAITOK;
+		}
+		if (uvm_swap_allocpages(tpps, npages, plaflags)) {
 			pool_put(&bufpool, bp);
 			uvm_pagermapout(kva, npages);
 			return (VM_PAGER_AGAIN);
