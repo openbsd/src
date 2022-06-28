@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2022/06/19 17:05:31 tb Exp $
+#	$OpenBSD: Makefile,v 1.19 2022/06/28 08:41:17 beck Exp $
 
 PROGS = \
 	asn1api \
@@ -16,6 +16,7 @@ PROGS = \
 DPADD+=		${LIBCRYPTO}
 WARNINGS=	Yes
 LDFLAGS+=	-lcrypto
+LDADD= ${CRYPTO_INT}
 CFLAGS+=	-DLIBRESSL_INTERNAL
 CFLAGS+=	-Wall -Wundef -Werror
 CFLAGS+=	-I${.CURDIR}/../../../../lib/libcrypto/asn1
