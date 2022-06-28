@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.41 2022/04/06 21:27:03 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.42 2022/06/28 19:55:22 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -71,7 +71,8 @@ static void efi_heap_init(void);
 static void efi_memprobe_internal(void);
 static void efi_timer_init(void);
 static void efi_timer_cleanup(void);
-static EFI_STATUS efi_memprobe_find(UINTN, UINTN, EFI_PHYSICAL_ADDRESS *);
+static EFI_STATUS efi_memprobe_find(UINTN, UINTN, EFI_MEMORY_TYPE,
+    EFI_PHYSICAL_ADDRESS *);
 
 EFI_STATUS
 efi_main(EFI_HANDLE image, EFI_SYSTEM_TABLE *systab)
@@ -699,7 +700,7 @@ machdep(void)
 	 * gives us plenty of room for growth.
 	 */
 	if (efi_memprobe_find(EFI_SIZE_TO_PAGES(64 * 1024 * 1024),
-	    0x200000, &addr) != EFI_SUCCESS)
+	    0x200000, EfiLoaderCode, &addr) != EFI_SUCCESS)
 		printf("Can't allocate memory\n");
 	efi_loadaddr = addr;
 
@@ -999,7 +1000,8 @@ efi_memprobe_internal(void)
  * use the memory table to find a place where we can fit.
  */
 static EFI_STATUS
-efi_memprobe_find(UINTN pages, UINTN align, EFI_PHYSICAL_ADDRESS *addr)
+efi_memprobe_find(UINTN pages, UINTN align, EFI_MEMORY_TYPE type,
+    EFI_PHYSICAL_ADDRESS *addr)
 {
 	EFI_MEMORY_DESCRIPTOR	*mm;
 	int			 i, j;
@@ -1027,7 +1029,7 @@ efi_memprobe_find(UINTN pages, UINTN align, EFI_PHYSICAL_ADDRESS *addr)
 			if (paddr & (align - 1))
 				continue;
 
-			if (BS->AllocatePages(AllocateAddress, EfiLoaderData,
+			if (BS->AllocatePages(AllocateAddress, type,
 			    pages, &paddr) == EFI_SUCCESS) {
 				*addr = paddr;
 				return EFI_SUCCESS;
@@ -1110,7 +1112,7 @@ Xdtb_efi(void)
 		return (0);
 	}
 	if (efi_memprobe_find(EFI_SIZE_TO_PAGES(sb.st_size),
-	    0x1000, &addr) != EFI_SUCCESS) {
+	    PAGE_SIZE, EfiLoaderData, &addr) != EFI_SUCCESS) {
 		printf("cannot allocate memory for %s\n", path);
 		return (0);
 	}
