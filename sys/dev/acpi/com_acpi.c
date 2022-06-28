@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_acpi.c,v 1.9 2022/06/28 16:29:56 anton Exp $	*/
+/*	$OpenBSD: com_acpi.c,v 1.10 2022/06/28 21:02:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -49,6 +49,7 @@ const struct cfattach com_acpi_ca = {
 };
 
 const char *com_hids[] = {
+	"AMDI0020",
 	"HISI0031",
 	"PNP0501",
 	NULL
@@ -86,10 +87,14 @@ com_acpi_attach(struct device *parent, struct device *self, void *aux)
 	printf(" addr 0x%llx/0x%llx", aaa->aaa_addr[0], aaa->aaa_size[0]);
 	printf(" irq %d", aaa->aaa_irq[0]);
 
+	sc->sc.sc_frequency = COM_FREQ;
+	if (strcmp(aaa->aaa_dev, "AMDI0020") == 0)
+		sc->sc.sc_frequency = 48000000;
+
 	sc->sc.sc_iot = aaa->aaa_bst[0];
 	sc->sc.sc_iobase = aaa->aaa_addr[0];
 	sc->sc.sc_frequency = acpi_getpropint(sc->sc_node, "clock-frequency",
-	    COM_FREQ);
+	    sc->sc.sc_frequency);
 
 	if (com_acpi_is_designware(aaa->aaa_dev)) {
 		intr = com_acpi_intr_designware;
@@ -153,7 +158,8 @@ com_acpi_is_console(struct com_acpi_softc *sc)
 int
 com_acpi_is_designware(const char *hid)
 {
-	return strcmp("HISI0031", hid) == 0;
+	return strcmp(hid, "AMDI0020") == 0 ||
+	    strcmp(hid, "HISI0031") == 0;
 }
 
 int
