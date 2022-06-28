@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.78 2022/02/18 09:04:38 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.79 2022/06/28 10:45:55 mpi Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -675,14 +675,8 @@ uvm_pager_dropcluster(struct uvm_object *uobj, struct vm_page *pg,
 		/* if page was released, release it.  otherwise un-busy it */
 		if (ppsp[lcv]->pg_flags & PG_RELEASED &&
 		    ppsp[lcv]->pg_flags & PQ_ANON) {
-				/* so that anfree will free */
-				atomic_clearbits_int(&ppsp[lcv]->pg_flags,
-				    PG_BUSY);
-				UVM_PAGE_OWN(ppsp[lcv], NULL);
-
 				/* kills anon and frees pg */
 				uvm_anon_release(ppsp[lcv]->uanon);
-
 				continue;
 		} else {
 			/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.130 2022/06/28 10:38:55 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.131 2022/06/28 10:45:55 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -389,10 +389,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			if (pg->pg_flags & PG_WANTED) {
 				wakeup(pg);
 			}
-			/* un-busy! */
-			atomic_clearbits_int(&pg->pg_flags,
-			    PG_WANTED|PG_BUSY|PG_FAKE);
-			UVM_PAGE_OWN(pg, NULL);
 
 			/*
 			 * if we were RELEASED during I/O, then our anon is
@@ -450,6 +446,9 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			uvm_lock_pageq();
 			uvm_pageactivate(pg);
 			uvm_unlock_pageq();
+			atomic_clearbits_int(&pg->pg_flags,
+			    PG_WANTED|PG_BUSY|PG_FAKE);
+			UVM_PAGE_OWN(pg, NULL);
 		}
 
 		/*
