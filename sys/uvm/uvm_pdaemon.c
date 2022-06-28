@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.99 2022/05/12 12:49:31 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.100 2022/06/28 19:23:08 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -385,9 +385,9 @@ uvmpd_scan_inactive(struct pglist *pglst)
 	int free, result;
 	struct vm_page *p, *nextpg;
 	struct uvm_object *uobj;
-	struct vm_page *pps[MAXBSIZE >> PAGE_SHIFT], **ppsp;
+	struct vm_page *pps[SWCLUSTPAGES], **ppsp;
 	int npages;
-	struct vm_page *swpps[MAXBSIZE >> PAGE_SHIFT]; 	/* XXX: see below */
+	struct vm_page *swpps[SWCLUSTPAGES]; 	/* XXX: see below */
 	int swnpages, swcpages;				/* XXX: see below */
 	int swslot;
 	struct vm_anon *anon;
@@ -611,7 +611,7 @@ uvmpd_scan_inactive(struct pglist *pglst)
 
 				/* start new cluster (if necessary) */
 				if (swslot == 0) {
-					swnpages = MAXBSIZE >> PAGE_SHIFT;
+					swnpages = SWCLUSTPAGES;
 					swslot = uvm_swap_alloc(&swnpages,
 					    TRUE);
 					if (swslot == 0) {
