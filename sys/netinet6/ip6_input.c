@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.245 2022/05/05 13:57:40 claudio Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.246 2022/06/28 08:24:29 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ uint8_t ip6_soiikey[IP6_SOIIKEY_LEN];
 int ip6_ours(struct mbuf **, int *, int, int);
 int ip6_local(struct mbuf **, int *, int, int);
 int ip6_check_rh0hdr(struct mbuf *, int *);
-int ip6_hbhchcheck(struct mbuf *, int *, int *, int *);
+int ip6_hbhchcheck(struct mbuf *, int *, int *);
 int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
 struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
 int ip6_sysctl_soiikey(void *, size_t *, void *, size_t);
@@ -424,7 +424,8 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		if (ip6_mforwarding && ip6_mrouter[ifp->if_rdomain]) {
 			int error;
 
-			if (ip6_hbhchcheck(m, offp, &nxt, &ours))
+			nxt = ip6_hbhchcheck(m, offp, &ours);
+			if (nxt == IPPROTO_DONE)
 				goto out;
 
 			ip6 = mtod(m, struct ip6_hdr *);
@@ -543,7 +544,8 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		goto bad;
 	}
 
-	if (ip6_hbhchcheck(m, offp, &nxt, &ours))
+	nxt = ip6_hbhchcheck(m, offp, &ours);
+	if (nxt == IPPROTO_DONE)
 		goto out;
 
 	if (ours) {
@@ -584,7 +586,8 @@ ip6_local(struct mbuf **mp, int *offp, int nxt, int af)
 {
 	NET_ASSERT_WLOCKED();
 
-	if (ip6_hbhchcheck(*mp, offp, &nxt, NULL))
+	nxt = ip6_hbhchcheck(*mp, offp, NULL);
+	if (nxt == IPPROTO_DONE)
 		return IPPROTO_DONE;
 
 	/* Check whether we are already in a IPv4/IPv6 local deliver loop. */
@@ -594,10 +597,11 @@ ip6_local(struct mbuf **mp, int *offp, int nxt, int af)
 }
 
 int
-ip6_hbhchcheck(struct mbuf *m, int *offp, int *nxtp, int *oursp)
+ip6_hbhchcheck(struct mbuf *m, int *offp, int *oursp)
 {
 	struct ip6_hdr *ip6;
 	u_int32_t plen, rtalert = ~0;
+	int nxt;
 
 	ip6 = mtod(m, struct ip6_hdr *);
 
@@ -641,7 +645,7 @@ ip6_hbhchcheck(struct mbuf *m, int *offp, int *nxtp, int *oursp)
 			ip6stat_inc(ip6s_tooshort);
 			goto bad;
 		}
-		*nxtp = hbh->ip6h_nxt;
+		nxt = hbh->ip6h_nxt;
 
 		/*
 		 * accept the packet if a router alert option is included
@@ -650,7 +654,7 @@ ip6_hbhchcheck(struct mbuf *m, int *offp, int *nxtp, int *oursp)
 		if (rtalert != ~0 && ip6_forwarding && oursp != NULL)
 			*oursp = 1;
 	} else
-		*nxtp = ip6->ip6_nxt;
+		nxt = ip6->ip6_nxt;
 
 	/*
 	 * Check that the amount of data in the buffers
@@ -673,11 +677,9 @@ ip6_hbhchcheck(struct mbuf *m, int *offp, int *nxtp, int *oursp)
 		}
 	}
 
-	return (0);
-
+	return nxt;
  bad:
-	*nxtp = IPPROTO_DONE;
-	return (-1);
+	return IPPROTO_DONE;
 }
 
 /* scan packet for RH0 routing header. Mostly stolen from pf.c:pf_test() */
