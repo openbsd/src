@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.154 2022/06/27 13:26:51 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.155 2022/06/28 11:46:05 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -782,8 +782,8 @@ print_announce(struct peer_config *p, const char *c)
 
 	if (p->capabilities.refresh == 0)
 		printf("%s\tannounce refresh no\n", c);
-	if (p->capabilities.enhanced_rr == 0)
-		printf("%s\tannounce enhanced refresh no\n", c);
+	if (p->capabilities.enhanced_rr == 1)
+		printf("%s\tannounce enhanced refresh yes\n", c);
 	if (p->capabilities.grestart.restart == 0)
 		printf("%s\tannounce restart no\n", c);
 	if (p->capabilities.as4byte == 0)
