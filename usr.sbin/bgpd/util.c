@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.68 2022/06/24 10:36:53 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.69 2022/06/28 05:49:05 tb Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -192,6 +192,25 @@ log_rtr_error(enum rtr_error err)
 	default:
 		snprintf(buf, sizeof(buf), "unknown %u", err);
 		return buf;
+	}
+}
+
+const char *
+log_policy(uint8_t role)
+{
+	switch (role) {
+	case CAPA_ROLE_PROVIDER:
+		return "provider";
+	case CAPA_ROLE_RS:
+		return "rs";
+	case CAPA_ROLE_RS_CLIENT:
+		return "rs-client";
+	case CAPA_ROLE_CUSTOMER:
+		return "customer";
+	case CAPA_ROLE_PEER:
+		return "peer";
+	default:
+		return "unknown";
 	}
 }
 
