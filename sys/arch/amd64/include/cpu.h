@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.143 2022/06/26 07:14:55 mlarkin Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.144 2022/06/28 12:11:41 jsg Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -44,7 +44,6 @@
 #ifdef _KERNEL
 #include <machine/frame.h>
 #include <machine/segments.h>		/* USERMODE */
-#include <machine/cacheinfo.h>
 #include <machine/intrdefs.h>
 #endif /* _KERNEL */
 
@@ -177,8 +176,6 @@ struct cpu_info {
 #define	MWAIT_IDLING	(MWAIT_IN_IDLE | MWAIT_KEEP_IDLING)
 
 	int		ci_want_resched;
-
-	struct x86_cache_info ci_cinfo[CAI_COUNT];
 
 	struct	x86_64_tss *ci_tss;
 	void		*ci_gdt;
@@ -388,6 +385,10 @@ extern int cpu_meltdown;
 /* cpu.c */
 extern u_int cpu_mwait_size;
 extern u_int cpu_mwait_states;
+
+/* cacheinfo.c */
+void	amd_cpu_cacheinfo(struct cpu_info *);
+void	x86_print_cacheinfo(struct cpu_info *);
 
 /* identcpu.c */
 void	identifycpu(struct cpu_info *);

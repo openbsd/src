@@ -1,32 +1,19 @@
-/*	$OpenBSD: cacheinfo.c,v 1.9 2020/12/22 03:42:03 jsg Exp $	*/
+/*	$OpenBSD: cacheinfo.c,v 1.10 2022/06/28 12:11:41 jsg Exp $	*/
 
-/*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
- * All rights reserved.
+/*
+ * Copyright (c) 2022 Jonathan Gray <jsg@openbsd.org>
  *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/param.h>
@@ -35,232 +22,238 @@
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
 
-static char *print_cache_config(struct cpu_info *, int, char *, char *);
-static char *print_tlb_config(struct cpu_info *, int, char *, char *);
-
-static char *
-print_cache_config(struct cpu_info *ci, int cache_tag, char *name, char *sep)
+void
+amd_cpu_cacheinfo(struct cpu_info *ci)
 {
-	struct x86_cache_info *cai = &ci->ci_cinfo[cache_tag];
+	u_int eax, ebx, ecx, edx;
 
-	if (cai->cai_totalsize == 0)
-		return sep;
+	/* used by vmm */
 
-	if (sep == NULL)
-		printf("%s: ", ci->ci_dev->dv_xname);
+	if (ci->ci_pnfeatset >= 0x80000005) {
+		CPUID(0x80000005, eax, ebx, ecx, edx);
+		ci->ci_amdcacheinfo[0] = eax;
+		ci->ci_amdcacheinfo[1] = ebx;
+		ci->ci_amdcacheinfo[2] = ecx;
+		ci->ci_amdcacheinfo[3] = edx;
+	}
+
+	if (ci->ci_pnfeatset >= 0x80000006) {
+		CPUID(0x80000006, eax, ebx, ecx, edx);
+		ci->ci_extcacheinfo[0] = eax;
+		ci->ci_extcacheinfo[1] = ebx;
+		ci->ci_extcacheinfo[2] = ecx;
+		ci->ci_extcacheinfo[3] = edx;
+	}
+}
+
+void
+amd64_print_l1_cacheinfo(struct cpu_info *ci)
+{
+	u_int ways, linesize, totalsize;
+	u_int eax, ebx, ecx, edx;
+
+	if (ci->ci_pnfeatset < 0x80000006)
+		return;
+
+	CPUID(0x80000005, eax, ebx, ecx, edx);
+
+	if (ecx == 0)
+		return;
+
+	/* L1D */
+	linesize = ecx & 0xff;
+	ways = (ecx >> 16) & 0xff;
+	totalsize = (ecx >> 24) & 0xff; /* KB */
+
+	printf("%s: ", ci->ci_dev->dv_xname);
+
+	if (totalsize < 1024)
+		printf("%dKB ", totalsize);
 	else
-		printf("%s", sep);
+		printf("%dMB ", totalsize >> 10);
+	printf("%db/line ", linesize);
 
-	if (cai->cai_string != NULL)
-		printf("%s ", cai->cai_string);
-	else if (cai->cai_totalsize >= 1024*1024)
-		printf("%dMB %db/line ", cai->cai_totalsize / 1024 / 1024,
-		    cai->cai_linesize);
-	else
-		printf("%dKB %db/line ", cai->cai_totalsize / 1024,
-		    cai->cai_linesize);
-
-	switch (cai->cai_associativity) {
-	case    0:
-		printf("disabled");
+	switch (ways) {
+	case 0x00:
+		/* reserved */
 		break;
-	case    1:
+	case 0x01:
 		printf("direct-mapped");
 		break;
 	case 0xff:
 		printf("fully associative");
 		break;
 	default:
-		printf("%d-way", cai->cai_associativity);
+		printf("%d-way", ways);
 		break;
 	}
+	printf(" D-cache, ");
 
-	if (name != NULL)
-		printf(" %s", name);
+	/* L1C */
+	linesize = edx & 0xff;
+	ways = (edx >> 16) & 0xff;
+	totalsize = (edx >> 24) & 0xff; /* KB */
 
-	return ", ";
-}
-
-static char *
-print_tlb_config(struct cpu_info *ci, int cache_tag, char *name, char *sep)
-{
-	struct x86_cache_info *cai = &ci->ci_cinfo[cache_tag];
-
-	if (cai->cai_totalsize == 0)
-		return sep;
-
-	if (sep == NULL)
-		printf("%s: ", ci->ci_dev->dv_xname);
+	if (totalsize < 1024)
+		printf("%dKB ", totalsize);
 	else
-		printf("%s", sep);
-	if (name != NULL)
-		printf("%s ", name);
+		printf("%dMB ", totalsize >> 10);
+	printf("%db/line ", linesize);
 
-	if (cai->cai_string != NULL) {
-		printf("%s", cai->cai_string);
-	} else {
-		if (cai->cai_linesize >= 1024*1024)
-			printf("%d %dMB entries ", cai->cai_totalsize,
-			    cai->cai_linesize / 1024 / 1024);
-		else
-			printf("%d %dKB entries ", cai->cai_totalsize,
-			    cai->cai_linesize / 1024);
-		switch (cai->cai_associativity) {
-		case 0:
-			printf("disabled");
-			break;
-		case 1:
-			printf("direct-mapped");
-			break;
-		case 0xff:
-			printf("fully associative");
-			break;
-		default:
-			printf("%d-way", cai->cai_associativity);
-			break;
-		}
+	switch (ways) {
+	case 0x00:
+		/* reserved */
+		break;
+	case 0x01:
+		printf("direct-mapped");
+		break;
+	case 0xff:
+		printf("fully associative");
+		break;
+	default:
+		printf("%d-way", ways);
+		break;
 	}
-	return ", ";
+	printf(" I-cache\n");
 }
-
-const struct x86_cache_info *
-cache_info_lookup(const struct x86_cache_info *cai, u_int8_t desc)
-{
-	int i;
-
-	for (i = 0; cai[i].cai_desc != 0; i++) {
-		if (cai[i].cai_desc == desc)
-			return (&cai[i]);
-	}
-
-	return (NULL);
-}
-
-
-static const struct x86_cache_info amd_cpuid_l2cache_assoc_info[] = {
-	{ 0, 0x01,    1 },
-	{ 0, 0x02,    2 },
-	{ 0, 0x04,    4 },
-	{ 0, 0x06,    8 },
-	{ 0, 0x08,   16 },
-	{ 0, 0x0a,   32 },
-	{ 0, 0x0b,   48 },
-	{ 0, 0x0c,   64 },
-	{ 0, 0x0d,   96 },
-	{ 0, 0x0e,  128 },
-	{ 0, 0x0f, 0xff },
-	{ 0, 0x00,    0 },
-};
 
 void
-amd_cpu_cacheinfo(struct cpu_info *ci)
+amd64_print_l2_cacheinfo(struct cpu_info *ci)
 {
-	const struct x86_cache_info *cp;
-	struct x86_cache_info *cai;
-	int family, model;
-	u_int descs[4];
+	u_int ways, linesize, totalsize;
+	u_int eax, ebx, ecx, edx;
 
-	family = ci->ci_family;
-	model = ci->ci_model;
-
-	/*
-	 * K5 model 0 has none of this info.
-	 */
-	if (family == 5 && model == 0)
+	if (ci->ci_pnfeatset < 0x80000006)
 		return;
 
-	/*
-	 * Determine L1 cache/TLB info.
-	 */
-	if (ci->ci_pnfeatset < 0x80000005) {
-		/* No L1 cache info available. */
+	CPUID(0x80000006, eax, ebx, ecx, edx);
+
+	if (ecx == 0)
 		return;
-	}
 
-	CPUID(0x80000005, descs[0], descs[1], descs[2], descs[3]);
-	ci->ci_amdcacheinfo[0] = descs[0];
-	ci->ci_amdcacheinfo[1] = descs[1];
-	ci->ci_amdcacheinfo[2] = descs[2];
-	ci->ci_amdcacheinfo[3] = descs[3];
+	printf("%s: ", ci->ci_dev->dv_xname);
 
-	/*
-	 * K6-III and higher have large page TLBs.
-	 */
-	if ((family == 5 && model >= 9) || family >= 6) {
-		cai = &ci->ci_cinfo[CAI_ITLB2];
-		cai->cai_totalsize = AMD_L1_EAX_ITLB_ENTRIES(descs[0]);
-		cai->cai_associativity = AMD_L1_EAX_ITLB_ASSOC(descs[0]);
-		cai->cai_linesize = (4 * 1024 * 1024);
+	linesize = ecx & 0xff;
+	ways = (ecx >> 12) & 0x0f;
+	totalsize = ((ecx >> 16) & 0xffff); /* KB */
 
-		cai = &ci->ci_cinfo[CAI_DTLB2];
-		cai->cai_totalsize = AMD_L1_EAX_DTLB_ENTRIES(descs[0]);
-		cai->cai_associativity = AMD_L1_EAX_DTLB_ASSOC(descs[0]);
-		cai->cai_linesize = (4 * 1024 * 1024);
-	}
-
-	cai = &ci->ci_cinfo[CAI_ITLB];
-	cai->cai_totalsize = AMD_L1_EBX_ITLB_ENTRIES(descs[1]);
-	cai->cai_associativity = AMD_L1_EBX_ITLB_ASSOC(descs[1]);
-	cai->cai_linesize = (4 * 1024);
-
-	cai = &ci->ci_cinfo[CAI_DTLB];
-	cai->cai_totalsize = AMD_L1_EBX_DTLB_ENTRIES(descs[1]);
-	cai->cai_associativity = AMD_L1_EBX_DTLB_ASSOC(descs[1]);
-	cai->cai_linesize = (4 * 1024);
-
-	cai = &ci->ci_cinfo[CAI_DCACHE];
-	cai->cai_totalsize = AMD_L1_ECX_DC_SIZE(descs[2]);
-	cai->cai_associativity = AMD_L1_ECX_DC_ASSOC(descs[2]);
-	cai->cai_linesize = AMD_L1_EDX_IC_LS(descs[2]);
-
-	cai = &ci->ci_cinfo[CAI_ICACHE];
-	cai->cai_totalsize = AMD_L1_EDX_IC_SIZE(descs[3]);
-	cai->cai_associativity = AMD_L1_EDX_IC_ASSOC(descs[3]);
-	cai->cai_linesize = AMD_L1_EDX_IC_LS(descs[3]);
-
-	/*
-	 * Determine L2 cache/TLB info.
-	 */
-	if (ci->ci_pnfeatset < 0x80000006) {
-		/* No L2 cache info available. */
-		return;
-	}
-
-	CPUID(0x80000006, descs[0], descs[1], descs[2], descs[3]);
-	ci->ci_extcacheinfo[0] = descs[0];
-	ci->ci_extcacheinfo[1] = descs[1];
-	ci->ci_extcacheinfo[2] = descs[2];
-	ci->ci_extcacheinfo[3] = descs[3];
-
-	cai = &ci->ci_cinfo[CAI_L2CACHE];
-	cai->cai_totalsize = AMD_L2_ECX_C_SIZE(descs[2]);
-	cai->cai_associativity = AMD_L2_ECX_C_ASSOC(descs[2]);
-	cai->cai_linesize = AMD_L2_ECX_C_LS(descs[2]);
-
-	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
-	    cai->cai_associativity);
-	if (cp != NULL)
-		cai->cai_associativity = cp->cai_associativity;
+	if (totalsize < 1024)
+		printf("%dKB ", totalsize);
 	else
-		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+		printf("%dMB ", totalsize >> 10);
+	printf("%db/line ", linesize);
+
+	switch (ways) {
+	case 0x00:
+		printf("disabled");
+		break;
+	case 0x01:
+		printf("direct-mapped");
+		break;
+	case 0x02:
+	case 0x04:
+		printf("%d-way", ways);
+		break;
+	case 0x06:
+		printf("8-way");
+		break;
+	case 0x03:	
+	case 0x05:
+	case 0x09:
+		/* reserved */
+		break;
+	case 0x07:
+		/* see cpuid 4 sub-leaf 2 */
+		break;
+	case 0x08:
+		printf("16-way");
+		break;
+	case 0x0a:
+		printf("32-way");
+		break;
+	case 0x0c:
+		printf("64-way");
+		break;
+	case 0x0d:
+		printf("96-way");
+		break;
+	case 0x0e:
+		printf("128-way");
+		break;
+	case 0x0f:
+		printf("fully associative");
+	}
+
+	printf(" L2 cache\n");
+}
+
+void
+intel_print_cacheinfo(struct cpu_info *ci, u_int fn)
+{
+	u_int ways, partitions, linesize, sets, totalsize;
+	int type, level, leaf;
+	u_int eax, ebx, ecx, edx;
+
+	printf("%s: ", ci->ci_dev->dv_xname);
+
+	for (leaf = 0; leaf < 10; leaf++) {
+		CPUID_LEAF(fn, leaf, eax, ebx, ecx, edx);
+		type =  eax & 0x1f;
+		if (type == 0)
+			break;
+		level = (eax >> 5) & 7;
+	
+		ways = (ebx >> 22) + 1;
+		linesize = (ebx & 0xfff) + 1;
+		partitions =  ((ebx >> 12) & 0x3ff) + 1;
+		sets = ecx + 1;
+
+		totalsize = ways * linesize * partitions * sets;
+
+		if (leaf > 0)
+			printf(", ");
+
+		if (totalsize < 1024*1024)
+			printf("%dKB ", totalsize >> 10);
+		else
+			printf("%dMB ", totalsize >> 20);
+		printf("%db/line %d-way ", linesize, ways);
+
+		if (level == 1) {
+			if (type == 1)
+				printf("D");
+			else if (type == 2)
+				printf("I");
+			else if (type == 3)
+				printf("U");
+			printf("-cache");
+		} else {
+			printf("L%d cache", level);
+		}
+		
+	}
+	printf("\n");
 }
 
 void
 x86_print_cacheinfo(struct cpu_info *ci)
 {
-	char *sep;
-	
-	sep = print_cache_config(ci, CAI_ICACHE, "I-cache", NULL);
-	sep = print_cache_config(ci, CAI_DCACHE, "D-cache", sep);
-	sep = print_cache_config(ci, CAI_L2CACHE, "L2 cache", sep);
-	if (sep != NULL)
-		printf("\n");
-	sep = print_tlb_config(ci, CAI_ITLB, "ITLB", NULL);
-	sep = print_tlb_config(ci, CAI_ITLB2, NULL, sep);
-	if (sep != NULL)
-		printf("\n");
-	sep = print_tlb_config(ci, CAI_DTLB, "DTLB", NULL);
-	sep = print_tlb_config(ci, CAI_DTLB2, NULL, sep);
-	if (sep != NULL)
-		printf("\n");
+	uint64_t msr;
+
+	if (strcmp(cpu_vendor, "GenuineIntel") == 0 &&
+	    rdmsr_safe(MSR_MISC_ENABLE, &msr) == 0 &&
+	    (msr & MISC_ENABLE_LIMIT_CPUID_MAXVAL) == 0) {
+		intel_print_cacheinfo(ci, 4);
+		return;
+	}
+
+	if (strcmp(cpu_vendor, "AuthenticAMD") == 0 &&
+	    (ecpu_ecxfeature & CPUIDECX_TOPEXT)) {
+		intel_print_cacheinfo(ci, 0x8000001d);
+		return;
+	}
+
+	/* 0x80000005 / 0x80000006 */
+	amd64_print_l1_cacheinfo(ci);
+	amd64_print_l2_cacheinfo(ci);
 }
