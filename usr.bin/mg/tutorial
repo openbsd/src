@@ -254,7 +254,7 @@ in the bottom of your screen. In general, it is a good idea to save quite
 often. When you save a file, mg saves a backup of the file with a tilde (~)
 character at the end.
 
-If you decide to open a directory instead of a file, mg will transistion into a
+If you decide to open a directory instead of a file, mg will transition into a
 mode called dired. Dired fills a buffer with the contents of the selected
 directory, one file or sub-directory's details per line. Some basic file
 management functions can be performed on the files and sub-directories in the
