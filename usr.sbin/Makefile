@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.214 2022/01/05 16:35:33 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.215 2022/06/28 18:47:54 claudio Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	ac accton acme-client acpidump adduser amd apm apmd arp \
-	authpf bgpctl bgpd btrace chroot config cron crunchgen dev_mkdb \
+SUBDIR=	ac accton acme-client acpidump adduser amd apm apmd arp authpf \
+	bgpctl bgpd bgplgd btrace chroot config cron crunchgen dev_mkdb \
 	dhcpd dhcpleasectl dhcrelay dhcrelay6 dvmrpctl dvmrpd edquota eeprom \
 	eigrpd eigrpctl fdformat ftp-proxy fw_update gpioctl hostapd hostctl \
 	hotplugd httpd identd ifstated ikectl inetd installboot iostat \
