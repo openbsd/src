@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.96 2022/06/28 20:42:22 tb Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.97 2022/06/28 20:43:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -252,6 +252,10 @@ ssl_cert_dup(SSL_CERT *cert)
 				goto err;
 		}
 	}
+
+	ret->security_cb = cert->security_cb;
+	ret->security_level = cert->security_level;
+	ret->security_ex_data = cert->security_ex_data;
 
 	/*
 	 * ret->extra_certs *should* exist, but currently the own certificate
