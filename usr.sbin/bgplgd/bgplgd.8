@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgplgd.8,v 1.1 2022/06/28 16:11:30 claudio Exp $
+.\" $OpenBSD: bgplgd.8,v 1.2 2022/06/28 16:56:29 claudio Exp $
 .\"
 .\" Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
 .\"
@@ -27,7 +27,6 @@
 .Op Fl S Ar socket
 .Op Fl s Ar socket
 .Op Fl U Ar user
-.Op Fl u Ar user
 .Sh DESCRIPTION
 .Nm
 is a server which implements the FastCGI Protocol to execute
@@ -42,9 +41,8 @@ opens a socket at
 .Pa /var/www/run/bgplgd.sock ,
 owned by www:www,
 with permissions 0660.
-It will then
-and drop privileges to user
-.Qq www ,
+It will then drop privileges to user
+.Qq _bgplgd ,
 .Xr unveil 2
 the
 .Xr bgpctl 8
