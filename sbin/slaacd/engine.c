@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.78 2022/06/26 16:01:39 florian Exp $	*/
+/*	$OpenBSD: engine.c,v 1.79 2022/06/28 09:21:58 florian Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -182,7 +182,6 @@ struct address_proposal {
 	int64_t				 id;
 	enum proposal_state		 state;
 	time_t				 next_timeout;
-	int				 timeout_count;
 	struct timespec			 created;
 	struct timespec			 when;
 	struct timespec			 uptime;
@@ -206,7 +205,6 @@ struct dfr_proposal {
 	int64_t				 id;
 	enum proposal_state		 state;
 	time_t				 next_timeout;
-	int				 timeout_count;
 	struct timespec			 when;
 	struct timespec			 uptime;
 	uint32_t			 if_index;
@@ -222,7 +220,6 @@ struct rdns_proposal {
 	int64_t				 id;
 	enum proposal_state		 state;
 	time_t				 next_timeout;
-	int				 timeout_count;
 	struct timespec			 when;
 	struct timespec			 uptime;
 	uint32_t			 if_index;
@@ -833,7 +830,6 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		    sizeof(cei_addr_proposal.state))
 			log_warnx("truncated state name");
 		cei_addr_proposal.next_timeout = addr_proposal->next_timeout;
-		cei_addr_proposal.timeout_count = addr_proposal->timeout_count;
 		cei_addr_proposal.when = addr_proposal->when;
 		cei_addr_proposal.uptime = addr_proposal->uptime;
 		memcpy(&cei_addr_proposal.addr, &addr_proposal->addr, sizeof(
@@ -863,7 +859,6 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		    sizeof(cei_dfr_proposal.state))
 			log_warnx("truncated state name");
 		cei_dfr_proposal.next_timeout = dfr_proposal->next_timeout;
-		cei_dfr_proposal.timeout_count = dfr_proposal->timeout_count;
 		cei_dfr_proposal.when = dfr_proposal->when;
 		cei_dfr_proposal.uptime = dfr_proposal->uptime;
 		memcpy(&cei_dfr_proposal.addr, &dfr_proposal->addr, sizeof(
@@ -893,7 +888,6 @@ send_interface_info(struct slaacd_iface *iface, pid_t pid)
 		    sizeof(cei_rdns_proposal.state))
 			log_warnx("truncated state name");
 		cei_rdns_proposal.next_timeout = rdns_proposal->next_timeout;
-		cei_rdns_proposal.timeout_count = rdns_proposal->timeout_count;
 		cei_rdns_proposal.when = rdns_proposal->when;
 		cei_rdns_proposal.uptime = rdns_proposal->uptime;
 		memcpy(&cei_rdns_proposal.from, &rdns_proposal->from, sizeof(
@@ -1907,7 +1901,6 @@ gen_address_proposal(struct slaacd_iface *iface, struct radv *ra, struct
 	evtimer_set(&addr_proposal->timer, address_proposal_timeout,
 	    addr_proposal);
 	addr_proposal->next_timeout = 1;
-	addr_proposal->timeout_count = 0;
 	addr_proposal->state = PROPOSAL_NOT_CONFIGURED;
 	if (clock_gettime(CLOCK_MONOTONIC, &addr_proposal->created))
 		fatal("clock_gettime");
@@ -1996,7 +1989,6 @@ gen_dfr_proposal(struct slaacd_iface *iface, struct radv *ra)
 	evtimer_set(&dfr_proposal->timer, dfr_proposal_timeout,
 	    dfr_proposal);
 	dfr_proposal->next_timeout = 1;
-	dfr_proposal->timeout_count = 0;
 	dfr_proposal->state = PROPOSAL_NOT_CONFIGURED;
 	dfr_proposal->when = ra->when;
 	dfr_proposal->uptime = ra->uptime;
@@ -2101,7 +2093,6 @@ gen_rdns_proposal(struct slaacd_iface *iface, struct radv *ra)
 	evtimer_set(&rdns_proposal->timer, rdns_proposal_timeout,
 	    rdns_proposal);
 	rdns_proposal->next_timeout = 1;
-	rdns_proposal->timeout_count = 0;
 	rdns_proposal->state = PROPOSAL_NOT_CONFIGURED;
 	rdns_proposal->when = ra->when;
 	rdns_proposal->uptime = ra->uptime;
@@ -2231,7 +2222,6 @@ address_proposal_timeout(int fd, short events, void *arg)
 		    "y" : "n");
 
 		addr_proposal->next_timeout = 1;
-		addr_proposal->timeout_count = 0;
 		addr_proposal->state = PROPOSAL_NEARLY_EXPIRED;
 
 		tv.tv_sec = 0;
@@ -2305,7 +2295,6 @@ dfr_proposal_timeout(int fd, short events, void *arg)
 		    dfr_proposal->id);
 
 		dfr_proposal->next_timeout = 1;
-		dfr_proposal->timeout_count = 0;
 		dfr_proposal->state = PROPOSAL_NEARLY_EXPIRED;
 
 		tv.tv_sec = 0;
@@ -2355,7 +2344,6 @@ rdns_proposal_timeout(int fd, short events, void *arg)
 		    rdns_proposal->id);
 
 		rdns_proposal->next_timeout = 1;
-		rdns_proposal->timeout_count = 0;
 		rdns_proposal->state = PROPOSAL_NEARLY_EXPIRED;
 
 		tv.tv_sec = 0;
