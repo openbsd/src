@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.41 2022/06/25 15:39:12 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.42 2022/06/28 19:44:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -207,7 +207,7 @@ asn1_aint_get_int64(CBS *cbs, int negative, int64_t *out_val)
 			ASN1error(ASN1_R_TOO_SMALL);
 			return 0;
 		}
-		*out_val = -(int64_t)val;
+		*out_val = (int64_t)-val;
 	} else {
 		if (val > (uint64_t)INT64_MAX) {
 			ASN1error(ASN1_R_TOO_LARGE);
