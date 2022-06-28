@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.58 2022/06/28 07:56:34 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.59 2022/06/28 16:05:42 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -1193,7 +1193,6 @@ x509_verify(struct x509_verify_ctx *ctx, X509 *leaf, char *name)
 				 * on failure and will be needed for
 				 * that.
 				 */
-				ctx->xsc->error = ctx->error;
 				ctx->xsc->error_depth = ctx->error_depth;
 				if (!x509_verify_ctx_save_xsc_error(ctx)) {
 					x509_verify_chain_free(current_chain);
