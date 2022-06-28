@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.181 2022/06/28 08:47:10 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.182 2022/06/28 09:01:45 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -48,6 +48,7 @@ sub error
 	my $msg = shift;
 	$self->{bad}++;
 	$self->progress->disable;
+	# XXX the actual format is $msg.
 	$self->errsay("Error: $msg", @_);
 }
 
@@ -140,8 +141,12 @@ sub parse_userdb
 {
 	my ($self, $fname) = @_;
 	my $result = {};
-	open(my $fh, '<', $fname) or 
+	my $bad = 0;
+	open(my $fh, '<', $fname) or $bad = 1;
+	if ($bad) {
 		$self->error("Can't open #1: #2", $fname, $!);
+		return;
+	}
 	# skip header
 	my $separator_found = 0;
 	while (<$fh>) {
