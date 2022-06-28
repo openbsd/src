@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.296 2022/05/13 15:32:00 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.297 2022/06/28 12:08:17 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -2020,18 +2020,15 @@ single_thread_check_locked(struct proc *p, int deep, int s)
 	SCHED_ASSERT_LOCKED();
 
 	if (pr->ps_single != NULL && pr->ps_single != p) {
+		/* if we're in deep, we need to unwind to the edge */
+		if (deep) {
+			if (pr->ps_flags & PS_SINGLEUNWIND)
+				return (ERESTART);
+			if (pr->ps_flags & PS_SINGLEEXIT)
+				return (EINTR);
+		}
+
 		do {
-			/* if we're in deep, we need to unwind to the edge */
-			if (deep) {
-				if (pr->ps_flags & PS_SINGLEUNWIND)
-					return (ERESTART);
-				if (pr->ps_flags & PS_SINGLEEXIT)
-					return (EINTR);
-			}
-
-			if (pr->ps_single == NULL)
-				continue;
-
 			if (atomic_dec_int_nv(&pr->ps_singlecount) == 0)
 				wakeup(&pr->ps_singlecount);
 
