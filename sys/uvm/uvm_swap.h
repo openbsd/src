@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.h,v 1.18 2020/09/29 11:47:41 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.h,v 1.19 2022/06/28 19:19:34 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.h,v 1.5 2000/01/11 06:57:51 chs Exp $	*/
 
 /*
@@ -32,6 +32,7 @@
 #ifndef _UVM_UVM_SWAP_H_
 #define _UVM_UVM_SWAP_H_
 
+#define	SWCLUSTPAGES	(MAXBSIZE >> PAGE_SHIFT)
 #define	SWSLOT_BAD	(-1)
 
 #ifdef _KERNEL

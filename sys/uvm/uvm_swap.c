@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.156 2022/06/07 12:02:52 kettenis Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.157 2022/06/28 19:19:34 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -213,6 +213,10 @@ struct swap_priority swap_priority;
 /* locks */
 struct rwlock swap_syscall_lock = RWLOCK_INITIALIZER("swplk");
 
+struct mutex oommtx = MUTEX_INITIALIZER(IPL_VM);
+struct vm_page *oompps[SWCLUSTPAGES];
+int oom = 0;
+
 /*
  * prototypes
  */
@@ -235,7 +239,7 @@ void sw_reg_start(struct swapdev *);
 int uvm_swap_io(struct vm_page **, int, int, int);
 
 void swapmount(void);
-boolean_t uvm_swap_allocpages(struct vm_page **, int);
+int uvm_swap_allocpages(struct vm_page **, int);
 
 #ifdef UVM_SWAP_ENCRYPT
 /* for swap encrypt */
@@ -253,6 +257,8 @@ void uvm_swap_initcrypt(struct swapdev *, int);
 void
 uvm_swap_init(void)
 {
+	int error;
+
 	/*
 	 * first, init the swap list, its counter, and its lock.
 	 * then get a handle on the vnode for /dev/drum by using
@@ -280,6 +286,10 @@ uvm_swap_init(void)
 	    "swp vnx", NULL);
 	pool_init(&vndbuf_pool, sizeof(struct vndbuf), 0, IPL_BIO, 0,
 	    "swp vnd", NULL);
+
+	/* allocate pages for OOM situations. */
+	error = uvm_swap_allocpages(oompps, SWCLUSTPAGES);
+	KASSERT(error == 0);
 
 	/* Setup the initial swap partition */
 	swapmount();
@@ -323,16 +333,35 @@ uvm_swap_initcrypt(struct swapdev *sdp, int npages)
 
 #endif /* UVM_SWAP_ENCRYPT */
 
-boolean_t
+int
 uvm_swap_allocpages(struct vm_page **pps, int npages)
 {
 	struct pglist	pgl;
-	int i;
+	int error, i;
+
+	KASSERT(npages <= SWCLUSTPAGES);
 
 	TAILQ_INIT(&pgl);
-	if (uvm_pglistalloc(npages * PAGE_SIZE, dma_constraint.ucr_low,
-	    dma_constraint.ucr_high, 0, 0, &pgl, npages, UVM_PLA_NOWAIT))
-		return FALSE;
+again:
+	error = uvm_pglistalloc(npages * PAGE_SIZE, dma_constraint.ucr_low,
+	    dma_constraint.ucr_high, 0, 0, &pgl, npages, UVM_PLA_NOWAIT);
+	if (error && (curproc == uvm.pagedaemon_proc)) {
+		mtx_enter(&oommtx);
+		if (oom) {
+			msleep_nsec(&oom, &oommtx, PVM | PNORELOCK,
+			 "oom", INFSLP);
+			goto again;
+		}
+		oom = 1;
+		for (i = 0; i < npages; i++) {
+			pps[i] = oompps[i];
+			atomic_setbits_int(&pps[i]->pg_flags, PG_BUSY);
+		}
+		mtx_leave(&oommtx);
+		return 0;
+	}
+	if (error)
+		return error;
 
 	for (i = 0; i < npages; i++) {
 		pps[i] = TAILQ_FIRST(&pgl);
@@ -341,13 +370,25 @@ uvm_swap_allocpages(struct vm_page **pps, int npages)
 		TAILQ_REMOVE(&pgl, pps[i], pageq);
 	}
 
-	return TRUE;
+	return 0;
 }
 
 void
 uvm_swap_freepages(struct vm_page **pps, int npages)
 {
 	int i;
+
+	if (pps[0] == oompps[0]) {
+		for (i = 0; i < npages; i++)
+			uvm_pageclean(pps[i]);
+
+		mtx_enter(&oommtx);
+		KASSERT(oom == 1);
+		oom = 0;
+		mtx_leave(&oommtx);
+		wakeup(&oom);
+		return;
+	}
 
 	uvm_lock_pageq();
 	for (i = 0; i < npages; i++)
@@ -1587,7 +1628,8 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	int	result, s, mapinflags, pflag, bounce = 0, i;
 	boolean_t write, async;
 	vaddr_t bouncekva;
-	struct vm_page *tpps[MAXBSIZE >> PAGE_SHIFT];
+	struct vm_page *tpps[SWCLUSTPAGES];
+	int pdaemon = (curproc == uvm.pagedaemon_proc);
 #ifdef UVM_SWAP_ENCRYPT
 	struct swapdev *sdp;
 	int	encrypt = 0;
@@ -1601,16 +1643,23 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	/* convert starting drum slot to block number */
 	startblk = btodb((u_int64_t)startslot << PAGE_SHIFT);
 
+	pflag = (async || pdaemon) ? PR_NOWAIT : PR_WAITOK;
+	bp = pool_get(&bufpool, pflag | PR_ZERO);
+	if (bp == NULL)
+		return (VM_PAGER_AGAIN);
+
 	/*
-	 * first, map the pages into the kernel (XXX: currently required
+	 * map the pages into the kernel (XXX: currently required
 	 * by buffer system).
 	 */
 	mapinflags = !write ? UVMPAGER_MAPIN_READ : UVMPAGER_MAPIN_WRITE;
 	if (!async)
 		mapinflags |= UVMPAGER_MAPIN_WAITOK;
 	kva = uvm_pagermapin(pps, npages, mapinflags);
-	if (kva == 0)
+	if (kva == 0) {
+		pool_put(&bufpool, bp);
 		return (VM_PAGER_AGAIN);
+	}
 
 #ifdef UVM_SWAP_ENCRYPT
 	if (write) {
@@ -1664,38 +1713,20 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		swmapflags = UVMPAGER_MAPIN_READ;
 		if (!async)
 			swmapflags |= UVMPAGER_MAPIN_WAITOK;
-
-		if (!uvm_swap_allocpages(tpps, npages)) {
+		if (uvm_swap_allocpages(tpps, npages)) {
+			pool_put(&bufpool, bp);
 			uvm_pagermapout(kva, npages);
 			return (VM_PAGER_AGAIN);
 		}
 
 		bouncekva = uvm_pagermapin(tpps, npages, swmapflags);
 		if (bouncekva == 0) {
+			KASSERT(tpps[0] != oompps[0]);
+			pool_put(&bufpool, bp);
 			uvm_pagermapout(kva, npages);
 			uvm_swap_freepages(tpps, npages);
 			return (VM_PAGER_AGAIN);
 		}
-	}
-
-	/*
-	 * now allocate a buf for the i/o.
-	 * [make sure we don't put the pagedaemon to sleep...]
-	 */
-	pflag = (async || curproc == uvm.pagedaemon_proc) ? PR_NOWAIT :
-	    PR_WAITOK;
-	bp = pool_get(&bufpool, pflag | PR_ZERO);
-
-	/*
-	 * if we failed to get a swapbuf, return "try again"
-	 */
-	if (bp == NULL) {
-		if (bounce) {
-			uvm_pagermapout(bouncekva, npages);
-			uvm_swap_freepages(tpps, npages);
-		}
-		uvm_pagermapout(kva, npages);
-		return (VM_PAGER_AGAIN);
 	}
 
 	/* encrypt to swap */
@@ -1789,8 +1820,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 
 	/* for async ops we must set up the iodone handler. */
 	if (async) {
-		bp->b_flags |= B_CALL | (curproc == uvm.pagedaemon_proc ?
-					 B_PDAEMON : 0);
+		bp->b_flags |= B_CALL | (pdaemon ? B_PDAEMON : 0);
 		bp->b_iodone = uvm_aio_biodone;
 	}
 
