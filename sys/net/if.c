@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.654 2022/06/27 15:11:23 jan Exp $	*/
+/*	$OpenBSD: if.c,v 1.655 2022/06/28 08:01:40 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -913,6 +913,10 @@ if_netisr(void *unused)
 #if NBRIDGE > 0
 		if (n & (1 << NETISR_BRIDGE))
 			bridgeintr();
+#endif
+#ifdef PIPEX
+		if (n & (1 << NETISR_PIPEX))
+			pipexintr();
 #endif
 		t |= n;
 	}
