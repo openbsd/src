@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_acpi.c,v 1.2 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: ehci_acpi.c,v 1.3 2022/06/28 08:15:04 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -52,6 +52,7 @@ const struct cfattach ehci_acpi_ca = {
 
 const char *ehci_hids[] = {
 	"PNP0D20",
+	"PNP0D25",
 	NULL
 };
 
