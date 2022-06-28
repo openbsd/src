@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1201 2022/06/27 13:48:38 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1202 2022/06/28 12:10:08 sthen Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1296,7 +1296,7 @@ ieee80211_config() {
 
 # Set up IPv4 and IPv6 interface configuration.
 configure_ifs() {
-	local _first _hn _if _name _p _vi
+	local _first _hn _if _name _p _vi _vn
 
 	# Always need lo0 configured.
 	ifconfig lo0 inet 127.0.0.1/8
@@ -1309,9 +1309,10 @@ configure_ifs() {
 		# minor for the next offered vlan interface.
 		_vi=$(get_ifs vlan | sed '$!d;s/^vlan//')
 		[[ -n $_vi ]] && ((_vi++))
+		[[ -n $(get_ifs) ]] && _vn="vlan${_vi:-0}"
 
 		ask_which "network interface" "do you wish to configure" \
-			"\$(get_ifs) vlan${_vi:-0}" \
+			"\$(get_ifs) $_vn" \
 			${_p:-'$( (get_ifs netboot; get_ifs) | sed q )'}
 		[[ $resp == done ]] && break
 
