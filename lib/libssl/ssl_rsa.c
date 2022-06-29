@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.41 2022/06/29 21:13:34 tb Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.42 2022/06/29 21:16:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -364,7 +364,13 @@ ssl_set_cert(SSL_CTX *ctx, SSL *ssl, X509 *x)
 {
 	SSL_CERT *c;
 	EVP_PKEY *pkey;
+	int ssl_err;
 	int i;
+
+	if (!ssl_security_cert(ctx, ssl, x, 1, &ssl_err)) {
+		SSLerrorx(ssl_err);
+		return (0);
+	}
 
 	if ((c = ssl_get0_cert(ctx, ssl)) == NULL)
 		return (0);
