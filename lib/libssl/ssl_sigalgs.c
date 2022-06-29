@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.44 2022/06/29 07:54:54 tb Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.45 2022/06/29 07:55:59 tb Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -272,6 +272,9 @@ ssl_sigalgs_build(uint16_t tls_version, CBB *cbb, int security_level)
 static const struct ssl_sigalg *
 ssl_sigalg_for_legacy(SSL *s, EVP_PKEY *pkey)
 {
+	if (SSL_get_security_level(s) > 1)
+		return NULL;
+
 	/* Default signature algorithms used for TLSv1.2 and earlier. */
 	switch (EVP_PKEY_id(pkey)) {
 	case EVP_PKEY_RSA:
