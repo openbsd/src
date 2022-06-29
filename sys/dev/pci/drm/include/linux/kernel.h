@@ -83,38 +83,33 @@
 #define PTR_ALIGN(x, y)		((__typeof(x))roundup2((unsigned long)(x), (y)))
 
 static inline char *
-kasprintf(int flags, const char *fmt, ...)
+kvasprintf(int flags, const char *fmt, va_list ap)
 {
 	char *buf;
 	size_t len;
-	va_list ap;
+	va_list vl;
 
-	va_start(ap, fmt);
-	len = vsnprintf(NULL, 0, fmt, ap);
-	va_end(ap);
+	va_copy(vl, ap);
+	len = vsnprintf(NULL, 0, fmt, vl);
+	va_end(vl);
 
 	buf = malloc(len + 1, M_DRM, flags);
 	if (buf) {
-		va_start(ap, fmt);
 		vsnprintf(buf, len + 1, fmt, ap);
-		va_end(ap);
 	}
 
 	return buf;
 }
 
 static inline char *
-kvasprintf(int flags, const char *fmt, va_list ap)
+kasprintf(int flags, const char *fmt, ...)
 {
 	char *buf;
-	size_t len;
+	va_list ap;
 
-	len = vsnprintf(NULL, 0, fmt, ap);
-
-	buf = malloc(len + 1, M_DRM, flags);
-	if (buf) {
-		vsnprintf(buf, len + 1, fmt, ap);
-	}
+	va_start(ap, fmt);
+	buf = kvasprintf(flags, fmt, ap);
+	va_end(ap);
 
 	return buf;
 }
