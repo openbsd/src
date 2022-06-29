@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.283 2022/06/29 12:01:22 jca Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.284 2022/06/29 12:17:31 jca Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -21,6 +21,7 @@
 
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/mutex.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -465,13 +466,26 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 	struct process *pr = p->p_p;
 	uint64_t promises, execpromises;
 	int error;
+	int unveil_cleanup = 0;
 
+	/* Check for any error in user input */
 	if (SCARG(uap, promises)) {
 		error = parsepledges(p, "pledgereq",
 		    SCARG(uap, promises), &promises);
 		if (error)
 			return (error);
+	}
+	if (SCARG(uap, execpromises)) {
+		error = parsepledges(p, "pledgeexecreq",
+		    SCARG(uap, execpromises), &execpromises);
+		if (error)
+			return (error);
+	}
 
+	mtx_enter(&pr->ps_mtx);
+
+	/* Check for any error wrt current promises */
+	if (SCARG(uap, promises)) {
 		/* In "error" mode, ignore promise increase requests,
 		 * but accept promise decrease requests */
 		if (ISSET(pr->ps_flags, PS_PLEDGE) &&
@@ -480,37 +494,47 @@ sys_pledge(struct proc *p, void *v, register_t *retval)
 
 		/* Only permit reductions */
 		if (ISSET(pr->ps_flags, PS_PLEDGE) &&
-		    (((promises | pr->ps_pledge) != pr->ps_pledge)))
+		    (((promises | pr->ps_pledge) != pr->ps_pledge))) {
+			mtx_leave(&pr->ps_mtx);
 			return (EPERM);
+		}
 	}
 	if (SCARG(uap, execpromises)) {
-		error = parsepledges(p, "pledgeexecreq",
-		    SCARG(uap, execpromises), &execpromises);
-		if (error)
-			return (error);
-
 		/* Only permit reductions */
 		if (ISSET(pr->ps_flags, PS_EXECPLEDGE) &&
-		    (((execpromises | pr->ps_execpledge) != pr->ps_execpledge)))
+		    (((execpromises | pr->ps_execpledge) != pr->ps_execpledge))) {
+			mtx_leave(&pr->ps_mtx);
 			return (EPERM);
+		}
 	}
 
+	/* Set up promises */
 	if (SCARG(uap, promises)) {
 		pr->ps_pledge = promises;
 		atomic_setbits_int(&pr->ps_flags, PS_PLEDGE);
-		/*
-		 * Kill off unveil and drop unveil vnode refs if we no
-		 * longer are holding any path-accessing pledge
-		 */
+
 		if ((pr->ps_pledge & (PLEDGE_RPATH | PLEDGE_WPATH |
 		    PLEDGE_CPATH | PLEDGE_DPATH | PLEDGE_TMPPATH | PLEDGE_EXEC |
 		    PLEDGE_UNIX | PLEDGE_UNVEIL)) == 0)
-			unveil_destroy(pr);
+			unveil_cleanup = 1;
 	}
 	if (SCARG(uap, execpromises)) {
 		pr->ps_execpledge = execpromises;
 		atomic_setbits_int(&pr->ps_flags, PS_EXECPLEDGE);
 	}
+
+	mtx_leave(&pr->ps_mtx);
+
+	if (unveil_cleanup) {
+		/*
+		 * Kill off unveil and drop unveil vnode refs if we no
+		 * longer are holding any path-accessing pledge
+		 */
+		KERNEL_LOCK();
+		unveil_destroy(pr);
+		KERNEL_UNLOCK();
+	}
+
 	return (0);
 }
 
@@ -704,11 +728,11 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 				 * XXX
 				 * The current hack for YP support in "getpw"
 				 * is to enable some "inet" features until
-				 * next pledge call.  Setting a bit in ps_pledge
-				 * is not safe with respect to multiple threads,
-				 * a very different approach is needed.
+				 * next pledge call.
 				 */
+				mtx_enter(&p->p_p->ps_mtx);
 				p->p_p->ps_pledge |= PLEDGE_YPACTIVE;
+				mtx_leave(&p->p_p->ps_mtx);
 				ni->ni_cnd.cn_flags |= BYPASSUNVEIL;
 				return (0);
 			}
