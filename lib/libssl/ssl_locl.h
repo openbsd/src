@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.406 2022/06/29 21:17:22 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.407 2022/06/29 21:18:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1288,8 +1288,8 @@ void ssl_cert_free(SSL_CERT *c);
 SSL_CERT *ssl_get0_cert(SSL_CTX *ctx, SSL *ssl);
 int ssl_cert_set0_chain(SSL_CTX *ctx, SSL *ssl, STACK_OF(X509) *chain);
 int ssl_cert_set1_chain(SSL_CTX *ctx, SSL *ssl, STACK_OF(X509) *chain);
-int ssl_cert_add0_chain_cert(SSL_CERT *c, X509 *cert);
-int ssl_cert_add1_chain_cert(SSL_CERT *c, X509 *cert);
+int ssl_cert_add0_chain_cert(SSL_CTX *ctx, SSL *ssl, X509 *cert);
+int ssl_cert_add1_chain_cert(SSL_CTX *ctx, SSL *ssl, X509 *cert);
 
 int ssl_security_default_cb(const SSL *ssl, const SSL_CTX *ctx, int op,
     int bits, int nid, void *other, void *ex_data);

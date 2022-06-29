@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.43 2022/06/29 21:17:22 tb Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.44 2022/06/29 21:18:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -641,7 +641,6 @@ use_certificate_chain_bio(SSL_CTX *ctx, SSL *ssl, BIO *in)
 {
 	pem_password_cb *passwd_cb;
 	void *passwd_arg;
-	SSL_CERT *cert;
 	X509 *ca, *x = NULL;
 	unsigned long err;
 	int ret = 0;
@@ -655,9 +654,6 @@ use_certificate_chain_bio(SSL_CTX *ctx, SSL *ssl, BIO *in)
 		goto err;
 	}
 
-	if ((cert = ssl_get0_cert(ctx, ssl)) == NULL)
-		goto err;
-
 	if (!ssl_set_cert(ctx, ssl, x))
 		goto err;
 
@@ -667,7 +663,7 @@ use_certificate_chain_bio(SSL_CTX *ctx, SSL *ssl, BIO *in)
 	/* Process any additional CA certificates. */
 	while ((ca = PEM_read_bio_X509(in, NULL, passwd_cb, passwd_arg)) !=
 	    NULL) {
-		if (!ssl_cert_add0_chain_cert(cert, ca)) {
+		if (!ssl_cert_add0_chain_cert(ctx, ssl, ca)) {
 			X509_free(ca);
 			goto err;
 		}
