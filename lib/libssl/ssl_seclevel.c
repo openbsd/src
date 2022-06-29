@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.9 2022/06/29 21:10:20 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.10 2022/06/29 21:19:21 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -26,6 +26,7 @@
 #include <openssl/ssl.h>
 #include <openssl/tls1.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 #include "ssl_locl.h"
 
@@ -284,7 +285,7 @@ ssl_security_cert_key(const SSL_CTX *ctx, const SSL *ssl, X509 *x509, int op)
 }
 
 static int
-ssl_cert_signature_md_nid(const X509 *x509)
+ssl_cert_signature_md_nid(X509 *x509)
 {
 	int md_nid, signature_nid;
 
@@ -316,6 +317,10 @@ static int
 ssl_security_cert_sig(const SSL_CTX *ctx, const SSL *ssl, X509 *x509, int op)
 {
 	int md_nid, security_bits;
+
+	/* Don't check signature if self signed. */
+	if ((X509_get_extension_flags(x509) & EXFLAG_SS) != 0)
+		return 1;
 
 	md_nid = ssl_cert_signature_md_nid(x509);
 	security_bits = ssl_cert_md_nid_security_bits(md_nid);
