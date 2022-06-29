@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.282 2022/06/26 06:11:49 jsg Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.283 2022/06/29 12:01:22 jca Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -583,7 +583,7 @@ pledge_namei(struct proc *p, struct nameidata *ni, char *origpath)
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0 ||
 	    (p->p_p->ps_flags & PS_COREDUMP))
 		return (0);
-	pledge = p->p_p->ps_pledge;
+	pledge = READ_ONCE(p->p_p->ps_pledge);
 
 	if (ni->ni_pledge == 0)
 		panic("pledge_namei: ni_pledge");
@@ -826,7 +826,7 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
-	pledge = p->p_p->ps_pledge;
+	pledge = READ_ONCE(p->p_p->ps_pledge);
 
 	if (new)
 		return pledge_fail(p, EFAULT, 0);
@@ -1070,7 +1070,7 @@ pledge_ioctl(struct proc *p, long com, struct file *fp)
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
-	pledge = p->p_p->ps_pledge;
+	pledge = READ_ONCE(p->p_p->ps_pledge);
 
 	/*
 	 * The ioctl's which are always allowed.
@@ -1365,7 +1365,7 @@ pledge_sockopt(struct proc *p, int set, int level, int optname)
 
 	if ((p->p_p->ps_flags & PS_PLEDGE) == 0)
 		return (0);
-	pledge = p->p_p->ps_pledge;
+	pledge = READ_ONCE(p->p_p->ps_pledge);
 
 	/* Always allow these, which are too common to reject */
 	switch (level) {
@@ -1515,7 +1515,7 @@ pledge_socket(struct proc *p, int domain, unsigned int state)
 
 	if (!ISSET(p->p_p->ps_flags, PS_PLEDGE))
 		return 0;
-	pledge = p->p_p->ps_pledge;
+	pledge = READ_ONCE(p->p_p->ps_pledge);
 
 	if (ISSET(state, SS_DNS)) {
 		if (ISSET(pledge, PLEDGE_DNS))
