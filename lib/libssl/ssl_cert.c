@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.97 2022/06/28 20:43:21 tb Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.98 2022/06/29 21:08:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -362,6 +362,7 @@ int
 ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 {
 	X509_STORE_CTX *ctx = NULL;
+	X509_VERIFY_PARAM *param;
 	X509 *x;
 	int ret = 0;
 
@@ -385,11 +386,17 @@ ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
 	 */
 	X509_STORE_CTX_set_default(ctx, s->server ? "ssl_client" : "ssl_server");
 
+	param = X509_STORE_CTX_get0_param(ctx);
+
+#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
+	X509_VERIFY_PARAM_set_auth_level(param, SSL_get_security_level(s));
+#endif
+
 	/*
 	 * Anything non-default in "param" should overwrite anything
 	 * in the ctx.
 	 */
-	X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(ctx), s->param);
+	X509_VERIFY_PARAM_set1(param, s->param);
 
 	if (s->internal->verify_callback)
 		X509_STORE_CTX_set_verify_cb(ctx, s->internal->verify_callback);
