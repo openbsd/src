@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.246 2022/06/28 08:24:29 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.247 2022/06/29 11:22:10 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ uint8_t ip6_soiikey[IP6_SOIIKEY_LEN];
 int ip6_ours(struct mbuf **, int *, int, int);
 int ip6_local(struct mbuf **, int *, int, int);
 int ip6_check_rh0hdr(struct mbuf *, int *);
-int ip6_hbhchcheck(struct mbuf *, int *, int *);
+int ip6_hbhchcheck(struct mbuf **, int *, int *);
 int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
 struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
 int ip6_sysctl_soiikey(void *, size_t *, void *, size_t);
@@ -424,7 +424,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		if (ip6_mforwarding && ip6_mrouter[ifp->if_rdomain]) {
 			int error;
 
-			nxt = ip6_hbhchcheck(m, offp, &ours);
+			nxt = ip6_hbhchcheck(&m, offp, &ours);
 			if (nxt == IPPROTO_DONE)
 				goto out;
 
@@ -544,7 +544,7 @@ ip6_input_if(struct mbuf **mp, int *offp, int nxt, int af, struct ifnet *ifp)
 		goto bad;
 	}
 
-	nxt = ip6_hbhchcheck(m, offp, &ours);
+	nxt = ip6_hbhchcheck(&m, offp, &ours);
 	if (nxt == IPPROTO_DONE)
 		goto out;
 
@@ -586,7 +586,7 @@ ip6_local(struct mbuf **mp, int *offp, int nxt, int af)
 {
 	NET_ASSERT_WLOCKED();
 
-	nxt = ip6_hbhchcheck(*mp, offp, NULL);
+	nxt = ip6_hbhchcheck(mp, offp, NULL);
 	if (nxt == IPPROTO_DONE)
 		return IPPROTO_DONE;
 
@@ -596,14 +596,15 @@ ip6_local(struct mbuf **mp, int *offp, int nxt, int af)
 	return nxt;
 }
 
+/* On error free mbuf and return IPPROTO_DONE. */
 int
-ip6_hbhchcheck(struct mbuf *m, int *offp, int *oursp)
+ip6_hbhchcheck(struct mbuf **mp, int *offp, int *oursp)
 {
 	struct ip6_hdr *ip6;
 	u_int32_t plen, rtalert = ~0;
 	int nxt;
 
-	ip6 = mtod(m, struct ip6_hdr *);
+	ip6 = mtod(*mp, struct ip6_hdr *);
 
 	/*
 	 * Process Hop-by-Hop options header if it's contained.
@@ -615,12 +616,11 @@ ip6_hbhchcheck(struct mbuf *m, int *offp, int *oursp)
 	if (ip6->ip6_nxt == IPPROTO_HOPOPTS) {
 		struct ip6_hbh *hbh;
 
-		if (ip6_hopopts_input(&plen, &rtalert, &m, offp)) {
+		if (ip6_hopopts_input(&plen, &rtalert, mp, offp))
 			goto bad;	/* m have already been freed */
-		}
 
 		/* adjust pointer */
-		ip6 = mtod(m, struct ip6_hdr *);
+		ip6 = mtod(*mp, struct ip6_hdr *);
 
 		/*
 		 * if the payload length field is 0 and the next header field
@@ -634,13 +634,13 @@ ip6_hbhchcheck(struct mbuf *m, int *offp, int *oursp)
 			 * (non-zero) payload length to the variable plen.
 			 */
 			ip6stat_inc(ip6s_badoptions);
-			icmp6_error(m, ICMP6_PARAM_PROB,
+			icmp6_error(*mp, ICMP6_PARAM_PROB,
 				    ICMP6_PARAMPROB_HEADER,
 				    (caddr_t)&ip6->ip6_plen - (caddr_t)ip6);
 			goto bad;
 		}
-		IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m, sizeof(struct ip6_hdr),
-			sizeof(struct ip6_hbh));
+		IP6_EXTHDR_GET(hbh, struct ip6_hbh *, *mp,
+		    sizeof(struct ip6_hdr), sizeof(struct ip6_hbh));
 		if (hbh == NULL) {
 			ip6stat_inc(ip6s_tooshort);
 			goto bad;
@@ -662,18 +662,18 @@ ip6_hbhchcheck(struct mbuf *m, int *offp, int *oursp)
 	 * Trim mbufs if longer than we expect.
 	 * Drop packet if shorter than we expect.
 	 */
-	if (m->m_pkthdr.len - sizeof(struct ip6_hdr) < plen) {
+	if ((*mp)->m_pkthdr.len - sizeof(struct ip6_hdr) < plen) {
 		ip6stat_inc(ip6s_tooshort);
-		m_freem(m);
+		m_freemp(mp);
 		goto bad;
 	}
-	if (m->m_pkthdr.len > sizeof(struct ip6_hdr) + plen) {
-		if (m->m_len == m->m_pkthdr.len) {
-			m->m_len = sizeof(struct ip6_hdr) + plen;
-			m->m_pkthdr.len = sizeof(struct ip6_hdr) + plen;
+	if ((*mp)->m_pkthdr.len > sizeof(struct ip6_hdr) + plen) {
+		if ((*mp)->m_len == (*mp)->m_pkthdr.len) {
+			(*mp)->m_len = sizeof(struct ip6_hdr) + plen;
+			(*mp)->m_pkthdr.len = sizeof(struct ip6_hdr) + plen;
 		} else {
-			m_adj(m,
-			    sizeof(struct ip6_hdr) + plen - m->m_pkthdr.len);
+			m_adj((*mp), sizeof(struct ip6_hdr) + plen -
+			    (*mp)->m_pkthdr.len);
 		}
 	}
 
@@ -753,6 +753,7 @@ ip6_check_rh0hdr(struct mbuf *m, int *offp)
 /*
  * Hop-by-Hop options header processing. If a valid jumbo payload option is
  * included, the real payload length will be stored in plenp.
+ * On error free mbuf and return -1.
  *
  * rtalertp - XXX: should be stored in a more smart way
  */
@@ -760,19 +761,18 @@ int
 ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp, struct mbuf **mp,
     int *offp)
 {
-	struct mbuf *m = *mp;
 	int off = *offp, hbhlen;
 	struct ip6_hbh *hbh;
 
 	/* validation of the length of the header */
-	IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m,
+	IP6_EXTHDR_GET(hbh, struct ip6_hbh *, *mp,
 		sizeof(struct ip6_hdr), sizeof(struct ip6_hbh));
 	if (hbh == NULL) {
 		ip6stat_inc(ip6s_tooshort);
 		return -1;
 	}
 	hbhlen = (hbh->ip6h_len + 1) << 3;
-	IP6_EXTHDR_GET(hbh, struct ip6_hbh *, m, sizeof(struct ip6_hdr),
+	IP6_EXTHDR_GET(hbh, struct ip6_hbh *, *mp, sizeof(struct ip6_hdr),
 		hbhlen);
 	if (hbh == NULL) {
 		ip6stat_inc(ip6s_tooshort);
@@ -781,12 +781,11 @@ ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp, struct mbuf **mp,
 	off += hbhlen;
 	hbhlen -= sizeof(struct ip6_hbh);
 
-	if (ip6_process_hopopts(m, (u_int8_t *)hbh + sizeof(struct ip6_hbh),
+	if (ip6_process_hopopts(*mp, (u_int8_t *)hbh + sizeof(struct ip6_hbh),
 				hbhlen, rtalertp, plenp) < 0)
 		return (-1);
 
 	*offp = off;
-	*mp = m;
 	return (0);
 }
 
