@@ -671,6 +671,7 @@
 ./usr/bin/tput
 ./usr/bin/tr
 ./usr/bin/true
+./usr/bin/ts
 ./usr/bin/tset
 ./usr/bin/tsort
 ./usr/bin/tty
