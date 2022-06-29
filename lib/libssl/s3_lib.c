@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.228 2022/03/17 17:24:37 jsing Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.229 2022/06/29 08:30:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1706,6 +1706,11 @@ _SSL_set_tmp_dh(SSL *s, DH *dh)
 		return 0;
 	}
 
+	if (!ssl_security_dh(s, dh)) {
+		SSLerror(s, SSL_R_DH_KEY_TOO_SMALL);
+		return 0;
+	}
+
 	if ((dhe_params = DHparams_dup(dh)) == NULL) {
 		SSLerror(s, ERR_R_DH_LIB);
 		return 0;
@@ -2135,6 +2140,11 @@ _SSL_CTX_set_tmp_dh(SSL_CTX *ctx, DH *dh)
 
 	if (dh == NULL) {
 		SSLerrorx(ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+	}
+
+	if (!ssl_ctx_security_dh(ctx, dh)) {
+		SSLerrorx(SSL_R_DH_KEY_TOO_SMALL);
 		return 0;
 	}
 

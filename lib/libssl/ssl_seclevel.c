@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.6 2022/06/29 08:27:51 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.7 2022/06/29 08:30:04 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -227,6 +227,16 @@ ssl_security(const SSL *ssl, int op, int bits, int nid, void *other)
 	    ssl->cert->security_ex_data);
 }
 
+int
+ssl_ctx_security_dh(const SSL_CTX *ctx, DH *dh)
+{
+#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
+	return ssl_ctx_security(ctx, SSL_SECOP_TMP_DH, DH_security_bits(dh), 0,
+	    dh);
+#else
+	return 1;
+#endif
+}
 int
 ssl_security_dh(const SSL *ssl, DH *dh)
 {
