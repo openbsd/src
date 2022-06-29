@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.231 2022/06/29 17:39:20 beck Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.232 2022/06/29 21:17:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1867,13 +1867,13 @@ _SSL_set_tlsext_status_ocsp_resp(SSL *s, unsigned char *resp, int resp_len)
 int
 SSL_set0_chain(SSL *ssl, STACK_OF(X509) *chain)
 {
-	return ssl_cert_set0_chain(ssl->cert, chain);
+	return ssl_cert_set0_chain(NULL, ssl, chain);
 }
 
 int
 SSL_set1_chain(SSL *ssl, STACK_OF(X509) *chain)
 {
-	return ssl_cert_set1_chain(ssl->cert, chain);
+	return ssl_cert_set1_chain(NULL, ssl, chain);
 }
 
 int
@@ -1902,7 +1902,7 @@ SSL_get0_chain_certs(const SSL *ssl, STACK_OF(X509) **out_chain)
 int
 SSL_clear_chain_certs(SSL *ssl)
 {
-	return ssl_cert_set0_chain(ssl->cert, NULL);
+	return ssl_cert_set0_chain(NULL, ssl, NULL);
 }
 
 int
@@ -2255,13 +2255,13 @@ _SSL_CTX_set_tlsext_status_arg(SSL_CTX *ctx, void *arg)
 int
 SSL_CTX_set0_chain(SSL_CTX *ctx, STACK_OF(X509) *chain)
 {
-	return ssl_cert_set0_chain(ctx->internal->cert, chain);
+	return ssl_cert_set0_chain(ctx, NULL, chain);
 }
 
 int
 SSL_CTX_set1_chain(SSL_CTX *ctx, STACK_OF(X509) *chain)
 {
-	return ssl_cert_set1_chain(ctx->internal->cert, chain);
+	return ssl_cert_set1_chain(ctx, NULL, chain);
 }
 
 int
@@ -2290,7 +2290,7 @@ SSL_CTX_get0_chain_certs(const SSL_CTX *ctx, STACK_OF(X509) **out_chain)
 int
 SSL_CTX_clear_chain_certs(SSL_CTX *ctx)
 {
-	return ssl_cert_set0_chain(ctx->internal->cert, NULL);
+	return ssl_cert_set0_chain(ctx, NULL, NULL);
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.42 2022/06/29 21:16:30 tb Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.43 2022/06/29 21:17:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -661,7 +661,7 @@ use_certificate_chain_bio(SSL_CTX *ctx, SSL *ssl, BIO *in)
 	if (!ssl_set_cert(ctx, ssl, x))
 		goto err;
 
-	if (!ssl_cert_set0_chain(cert, NULL))
+	if (!ssl_cert_set0_chain(ctx, ssl, NULL))
 		goto err;
 
 	/* Process any additional CA certificates. */

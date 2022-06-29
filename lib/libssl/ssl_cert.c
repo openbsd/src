@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.99 2022/06/29 21:12:19 tb Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.100 2022/06/29 21:17:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -312,19 +312,36 @@ ssl_get0_cert(SSL_CTX *ctx, SSL *ssl)
 }
 
 int
-ssl_cert_set0_chain(SSL_CERT *c, STACK_OF(X509) *chain)
+ssl_cert_set0_chain(SSL_CTX *ctx, SSL *ssl, STACK_OF(X509) *chain)
 {
-	if (c->key == NULL)
+	SSL_CERT *ssl_cert;
+	SSL_CERT_PKEY *cpk;
+	X509 *x509;
+	int ssl_err;
+	int i;
+
+	if ((ssl_cert = ssl_get0_cert(ctx, ssl)) == NULL)
 		return 0;
 
-	sk_X509_pop_free(c->key->chain, X509_free);
-	c->key->chain = chain;
+	if ((cpk = ssl_cert->key) == NULL)
+		return 0;
+
+	for (i = 0; i < sk_X509_num(chain); i++) {
+		x509 = sk_X509_value(chain, i);
+		if (!ssl_security_cert(ctx, ssl, x509, 0, &ssl_err)) {
+			SSLerrorx(ssl_err);
+			return 0;
+		}
+	}
+
+	sk_X509_pop_free(cpk->chain, X509_free);
+	cpk->chain = chain;
 
 	return 1;
 }
 
 int
-ssl_cert_set1_chain(SSL_CERT *c, STACK_OF(X509) *chain)
+ssl_cert_set1_chain(SSL_CTX *ctx, SSL *ssl, STACK_OF(X509) *chain)
 {
 	STACK_OF(X509) *new_chain = NULL;
 
@@ -332,7 +349,7 @@ ssl_cert_set1_chain(SSL_CERT *c, STACK_OF(X509) *chain)
 		if ((new_chain = X509_chain_up_ref(chain)) == NULL)
 			return 0;
 	}
-	if (!ssl_cert_set0_chain(c, new_chain)) {
+	if (!ssl_cert_set0_chain(ctx, ssl, new_chain)) {
 		sk_X509_pop_free(new_chain, X509_free);
 		return 0;
 	}
