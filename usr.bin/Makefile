@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.167 2022/04/19 01:32:06 dlg Exp $
+#	$OpenBSD: Makefile,v 1.168 2022/06/29 08:39:49 job Exp $
 
 .include <bsd.own.mk>
 
@@ -26,7 +26,7 @@ SUBDIR= apply arch at aucat audioctl awk banner \
 	skeyaudit skeyinfo skeyinit sndioctl sndiod snmp \
 	sort spell split ssh stat su systat \
 	tail talk tcpbench tee telnet tftp tic time timeout \
-	tmux top touch tput tr true tset tsort tty usbhidaction usbhidctl \
+	tmux top touch tput tr true ts tset tsort tty usbhidaction usbhidctl \
 	ul uname unexpand unifdef uniq units \
 	unvis users uudecode uuencode vacation vi vis vmstat w wall wc \
 	what which who whois write x99token xargs xinstall \
