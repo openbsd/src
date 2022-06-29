@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.229 2022/06/29 08:30:04 tb Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.230 2022/06/29 08:37:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2525,6 +2525,10 @@ ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 		/* If TLS v1.3, only allow TLS v1.3 ciphersuites. */
 		if (SSL_USE_TLS1_3_CIPHERS(s) &&
 		    !(c->algorithm_ssl & SSL_TLSV1_3))
+			continue;
+
+		if (!ssl_security(s, SSL_SECOP_CIPHER_SHARED, c->strength_bits,
+		    0, c))
 			continue;
 
 		ssl_set_cert_masks(cert, c);
