@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.291 2022/06/28 20:34:17 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.292 2022/06/29 08:39:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1449,7 +1449,7 @@ STACK_OF(SSL_CIPHER) *
 SSL_get1_supported_ciphers(SSL *s)
 {
 	STACK_OF(SSL_CIPHER) *supported_ciphers = NULL, *ciphers;
-	const SSL_CIPHER *cipher;
+	SSL_CIPHER *cipher;
 	uint16_t min_vers, max_vers;
 	int i;
 
@@ -1467,6 +1467,9 @@ SSL_get1_supported_ciphers(SSL *s)
 			goto err;
 		if (!ssl_cipher_allowed_in_tls_version_range(cipher, min_vers,
 		    max_vers))
+			continue;
+		if (!ssl_security(s, SSL_SECOP_CIPHER_SUPPORTED,
+		    cipher->strength_bits, 0, cipher))
 			continue;
 		if (!sk_SSL_CIPHER_push(supported_ciphers, cipher))
 			goto err;
