@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.58 2022/06/29 09:08:07 mvs Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.59 2022/06/29 16:04:49 mvs Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -49,7 +49,6 @@
 #define	NETISR_PPP	28		/* for PPP processing */
 #define	NETISR_BRIDGE	29		/* for bridge processing */
 #define	NETISR_PPPOE	30		/* for pppoe processing */
-#define	NETISR_SWITCH	31		/* for switch dataplane */
 
 #ifndef _LOCORE
 #ifdef _KERNEL
@@ -65,7 +64,6 @@ void	ipintr(void);
 void	ip6intr(void);
 void	pppintr(void);
 void	bridgeintr(void);
-void	switchintr(void);
 void	pfsyncintr(void);
 void	pipexintr(void);
 void	pppoeintr(void);
