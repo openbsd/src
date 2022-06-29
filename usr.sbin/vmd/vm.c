@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.70 2022/06/26 06:49:09 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.71 2022/06/29 17:39:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1778,7 +1778,7 @@ find_gpa_range(struct vm_create_params *vcp, paddr_t gpa, size_t len)
 	/* Find the first vm_mem_range that contains gpa */
 	for (i = 0; i < vcp->vcp_nmemranges; i++) {
 		vmr = &vcp->vcp_memranges[i];
-		if (vmr->vmr_gpa + vmr->vmr_size >= gpa)
+		if (gpa < vmr->vmr_gpa + vmr->vmr_size)
 			break;
 	}
 
