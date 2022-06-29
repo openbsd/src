@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.218 2022/02/21 09:57:18 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.219 2022/06/29 14:24:29 dv Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -1721,7 +1721,6 @@ pmap_copy_page_86(struct vm_page *srcpg, struct vm_page *dstpg)
 /*
  * pmap_remove_ptes: remove PTEs from a PTP
  *
- * => must have proper locking on pmap_master_lock
  * => caller must hold pmap's lock
  * => PTP must be mapped into KVA
  * => PTP should be null if pmap == pmap_kernel()

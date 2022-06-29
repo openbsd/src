@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.66 2022/01/02 05:30:07 jsg Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.67 2022/06/29 14:24:29 dv Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1153,7 +1153,6 @@ pmap_copy_page_pae(struct vm_page *srcpg, struct vm_page *dstpg)
 /*
  * pmap_remove_ptes: remove PTEs from a PTP
  *
- * => must have proper locking on pmap_master_lock
  * => caller must hold pmap's lock
  * => PTP must be mapped into KVA
  * => PTP should be null if pmap == pmap_kernel()
