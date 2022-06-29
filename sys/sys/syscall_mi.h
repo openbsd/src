@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall_mi.h,v 1.25 2020/01/21 16:16:23 mpi Exp $	*/
+/*	$OpenBSD: syscall_mi.h,v 1.26 2022/06/29 12:06:11 jca Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,16 +89,15 @@ mi_syscall(struct proc *p, register_t code, const struct sysent *callp,
 	    uvm_map_inentry_pc, p->p_vmspace->vm_map.wserial))
 		return (EPERM);
 
-	if (lock)
-		KERNEL_LOCK();
 	pledged = (p->p_p->ps_flags & PS_PLEDGE);
 	if (pledged && (error = pledge_syscall(p, code, &tval))) {
-		if (!lock)
-			KERNEL_LOCK();
+		KERNEL_LOCK();
 		error = pledge_fail(p, error, tval);
 		KERNEL_UNLOCK();
 		return (error);
 	}
+	if (lock)
+		KERNEL_LOCK();
 	error = (*callp->sy_call)(p, argp, retval);
 	if (lock)
 		KERNEL_UNLOCK();
