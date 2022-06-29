@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus_space.c,v 1.26 2015/04/25 21:31:24 guenther Exp $	*/
+/*	$OpenBSD: bus_space.c,v 1.27 2022/06/29 07:44:10 kettenis Exp $	*/
 /*	$NetBSD: bus_space.c,v 1.2 2003/03/14 18:47:53 christos Exp $	*/
 
 /*-
@@ -42,6 +42,8 @@
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
+
+extern int pmap_initialized;
 
 /*
  * Extent maps to manage I/O and memory space.  Allocate
@@ -376,6 +378,11 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 		return(0);
 	}
 
+	if (!pmap_initialized && bpa < 0x100000000) {
+		*bshp = (bus_space_handle_t)PMAP_DIRECT_MAP(bpa);
+		return(0);
+	}
+
 	/*
 	 * For memory space, map the bus physical address to
 	 * a kernel virtual address.
@@ -585,6 +592,11 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		bpa = (bus_addr_t)ISA_PHYSADDR(bsh);
 		if (IOM_BEGIN <= bpa && bpa <= IOM_END)
 			goto ok;
+
+		if (bsh >= PMAP_DIRECT_BASE && bsh < PMAP_DIRECT_END) {
+			bpa = PMAP_DIRECT_UNMAP(bsh);
+			goto ok;
+		}
 
 		va = trunc_page(bsh);
 		endva = round_page(bsh + size);
