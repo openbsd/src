@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.127 2022/03/05 07:13:48 bket Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.128 2022/06/29 20:04:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -945,7 +945,8 @@ ssl_cipher_strength_sort(CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 
 static int
 ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
-    CIPHER_ORDER **tail_p, const SSL_CIPHER **ca_list, int *tls13_seen)
+    CIPHER_ORDER **tail_p, const SSL_CIPHER **ca_list, SSL_CERT *cert,
+    int *tls13_seen)
 {
 	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl;
 	unsigned long algo_strength;
@@ -1000,7 +1001,7 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 			    ((ch >= '0') && (ch <= '9')) ||
 			    ((ch >= 'a') && (ch <= 'z')) ||
 			    (ch == '-') || (ch == '.') ||
-			    (ch == '_')) {
+			    (ch == '_') || (ch == '=')) {
 				ch = *(++l);
 				buflen++;
 			}
@@ -1156,10 +1157,21 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 		if (rule == CIPHER_SPECIAL) {
 			/* special command */
 			ok = 0;
-			if ((buflen == 8) && !strncmp(buf, "STRENGTH", 8))
+			if (buflen == 8 && strncmp(buf, "STRENGTH", 8) == 0) {
 				ok = ssl_cipher_strength_sort(head_p, tail_p);
-			else
+			} else if (buflen == 10 &&
+			    strncmp(buf, "SECLEVEL=", 9) == 0) {
+				int level = buf[9] - '0';
+
+				if (level >= 0 && level <= 5) {
+					cert->security_level = level;
+					ok = 1;
+				} else {
+					SSLerrorx(SSL_R_INVALID_COMMAND);
+				}
+			} else {
 				SSLerrorx(SSL_R_INVALID_COMMAND);
+			}
 			if (ok == 0)
 				retval = 0;
 			/*
@@ -1201,7 +1213,7 @@ STACK_OF(SSL_CIPHER) *
 ssl_create_cipher_list(const SSL_METHOD *ssl_method,
     STACK_OF(SSL_CIPHER) **cipher_list,
     STACK_OF(SSL_CIPHER) *cipher_list_tls13,
-    const char *rule_str)
+    const char *rule_str, SSL_CERT *cert)
 {
 	int ok, num_of_ciphers, num_of_alias_max, num_of_group_aliases;
 	unsigned long disabled_mkey, disabled_auth, disabled_enc, disabled_mac, disabled_ssl;
@@ -1327,7 +1339,7 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	rule_p = rule_str;
 	if (strncmp(rule_str, "DEFAULT", 7) == 0) {
 		ok = ssl_cipher_process_rulestr(SSL_DEFAULT_CIPHER_LIST,
-		    &head, &tail, ca_list, &tls13_seen);
+		    &head, &tail, ca_list, cert, &tls13_seen);
 		rule_p += 7;
 		if (*rule_p == ':')
 			rule_p++;
@@ -1335,7 +1347,7 @@ ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 
 	if (ok && (strlen(rule_p) > 0))
 		ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list,
-		    &tls13_seen);
+		    cert, &tls13_seen);
 
 	free((void *)ca_list);	/* Not needed anymore */
 

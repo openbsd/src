@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.293 2022/06/29 17:39:20 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.294 2022/06/29 20:04:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -226,7 +226,8 @@ SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 	ctx->method = meth;
 
 	ciphers = ssl_create_cipher_list(ctx->method, &ctx->cipher_list,
-	    ctx->internal->cipher_list_tls13, SSL_DEFAULT_CIPHER_LIST);
+	    ctx->internal->cipher_list_tls13, SSL_DEFAULT_CIPHER_LIST,
+	    ctx->internal->cert);
 	if (ciphers == NULL || sk_SSL_CIPHER_num(ciphers) <= 0) {
 		SSLerrorx(SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
 		return (0);
@@ -1547,7 +1548,7 @@ SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 	 * ctx->cipher_list has been updated.
 	 */
 	ciphers = ssl_create_cipher_list(ctx->method, &ctx->cipher_list,
-	    ctx->internal->cipher_list_tls13, str);
+	    ctx->internal->cipher_list_tls13, str, ctx->internal->cert);
 	if (ciphers == NULL) {
 		return (0);
 	} else if (sk_SSL_CIPHER_num(ciphers) == 0) {
@@ -1582,7 +1583,7 @@ SSL_set_cipher_list(SSL *s, const char *str)
 
 	/* See comment in SSL_CTX_set_cipher_list. */
 	ciphers = ssl_create_cipher_list(s->ctx->method, &s->cipher_list,
-	    ciphers_tls13, str);
+	    ciphers_tls13, str, s->cert);
 	if (ciphers == NULL) {
 		return (0);
 	} else if (sk_SSL_CIPHER_num(ciphers) == 0) {
@@ -2011,7 +2012,7 @@ SSL_CTX_new(const SSL_METHOD *meth)
 		goto err;
 
 	ssl_create_cipher_list(ret->method, &ret->cipher_list,
-	    NULL, SSL_DEFAULT_CIPHER_LIST);
+	    NULL, SSL_DEFAULT_CIPHER_LIST, ret->internal->cert);
 	if (ret->cipher_list == NULL ||
 	    sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
 		SSLerrorx(SSL_R_LIBRARY_HAS_NO_CIPHERS);
