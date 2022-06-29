@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.146 2022/06/07 17:45:13 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.147 2022/06/29 08:27:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1246,6 +1246,12 @@ ssl3_get_server_kex_dhe(SSL *s, CBS *cbs)
 		SSLerror(s, SSL_R_BAD_DH_PUB_KEY_LENGTH);
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
 		goto err;
+	}
+
+	if (!tls_key_share_peer_security(s, s->s3->hs.key_share)) {
+		SSLerror(s, SSL_R_DH_KEY_TOO_SMALL);
+		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
+		return 0;
 	}
 
 	return 1;

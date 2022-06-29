@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.5 2022/06/28 20:54:16 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.6 2022/06/29 08:27:51 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -17,6 +17,7 @@
 
 #include <stddef.h>
 
+#include <openssl/dh.h>
 #include <openssl/ossl_typ.h>
 #include <openssl/ssl.h>
 #include <openssl/tls1.h>
@@ -224,4 +225,14 @@ ssl_security(const SSL *ssl, int op, int bits, int nid, void *other)
 {
 	return ssl->cert->security_cb(ssl, NULL, op, bits, nid, other,
 	    ssl->cert->security_ex_data);
+}
+
+int
+ssl_security_dh(const SSL *ssl, DH *dh)
+{
+#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
+	return ssl_security(ssl, SSL_SECOP_TMP_DH, DH_security_bits(dh), 0, dh);
+#else
+	return 1;
+#endif
 }

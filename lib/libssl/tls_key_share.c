@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_key_share.c,v 1.4 2022/01/11 18:28:41 jsing Exp $ */
+/* $OpenBSD: tls_key_share.c,v 1.5 2022/06/29 08:27:52 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -470,4 +470,15 @@ tls_key_share_derive(struct tls_key_share *ks, uint8_t **shared_key,
 
 	return tls_key_share_derive_ecdhe_ecp(ks, shared_key,
 	    shared_key_len);
+}
+
+int
+tls_key_share_peer_security(const SSL *ssl, struct tls_key_share *ks)
+{
+	switch (ks->nid) {
+	case NID_dhKeyAgreement:
+		return ssl_security_dh(ssl, ks->dhe_peer);
+	default:
+		return 0;
+	}
 }
