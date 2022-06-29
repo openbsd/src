@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.1 2022/06/29 08:39:49 job Exp $	*/
+/*	$OpenBSD: ts.c,v 1.2 2022/06/29 16:01:10 job Exp $	*/
 /*
  * Copyright (c) 2022 Job Snijders <job@openbsd.org>
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -38,25 +38,32 @@ static void __dead	 usage(void);
 int
 main(int argc, char *argv[])
 {
-	int iflag, sflag;
+	int iflag, mflag, sflag;
 	int ch, prev;
-	struct timespec start, now, elapsed;
+	struct timespec rstart, start, now, elapsed;
 	struct tm *lt, tm;
+	int clock = CLOCK_REALTIME;
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
 
-	iflag = sflag = 0;
+	iflag = mflag = sflag = 0;
 
-	while ((ch = getopt(argc, argv, "is")) != -1) {
+	while ((ch = getopt(argc, argv, "ims")) != -1) {
 		switch (ch) {
 		case 'i':
 			iflag = 1;
 			format = "%H:%M:%S";
+			clock = CLOCK_MONOTONIC;
+			break;
+		case 'm':
+			mflag = 1;
+			clock = CLOCK_MONOTONIC;
 			break;
 		case 's':
 			sflag = 1;
 			format = "%H:%M:%S";
+			clock = CLOCK_MONOTONIC;
 			break;
 		default:
 			usage();
@@ -81,22 +88,29 @@ main(int argc, char *argv[])
 	if ((outbuf = calloc(1, bufsize)) == NULL)
 		err(1, NULL);
 
+	clock_gettime(CLOCK_REALTIME, &rstart);
 	clock_gettime(CLOCK_MONOTONIC, &start);
 
 	for (prev = '\n'; (ch = getchar()) != EOF; prev = ch) {
 		if (prev == '\n') {
+			if (clock_gettime(clock, &now))
+				err(1, "clock_gettime");
 			if (iflag || sflag) {
-				if (clock_gettime(CLOCK_MONOTONIC, &now))
-					err(1, "clock_gettime");
 				timespecsub(&now, &start, &elapsed);
 				if (gmtime_r(&elapsed.tv_sec, &tm) == NULL)
 					err(1, "gmtime_r");
 				if (iflag)
-					clock_gettime(CLOCK_MONOTONIC, &start);
+					if (clock_gettime(clock, &start))
+						err(1, "clock_gettime");
 				fmtfmt(&tm, elapsed.tv_nsec);
+			} else if (mflag) {
+				timespecsub(&now, &start, &elapsed);
+				timespecadd(&rstart, &elapsed, &now);
+				lt = localtime(&now.tv_sec);
+				if (lt == NULL)
+					err(1, "localtime");
+				fmtfmt(lt, now.tv_nsec);
 			} else {
-				if (clock_gettime(CLOCK_REALTIME, &now))
-					err(1, "clock_gettime");
 				lt = localtime(&now.tv_sec);
 				if (lt == NULL)
 					err(1, "localtime");
@@ -115,7 +129,7 @@ main(int argc, char *argv[])
 static void __dead
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-i | -s] [format]\n", getprogname());
+	fprintf(stderr, "usage: %s [-i | -s] [-m] [format]\n", getprogname());
 	exit(1);
 }
 
