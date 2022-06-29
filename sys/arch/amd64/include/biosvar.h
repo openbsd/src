@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.27 2019/11/29 16:16:19 kettenis Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.28 2022/06/29 07:51:54 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -162,11 +162,23 @@ typedef struct _bios_pciinfo {
 
 #define	BOOTARG_CONSDEV	5
 typedef struct _bios_consdev {
+	dev_t		consdev;
+	int		conspeed;
+	uint64_t	consaddr;
+	int		consfreq;
+	uint32_t	flags;
+#define BCD_MMIO	0x00000001	/* Memory Mapped IO */
+	int		reg_width;
+	int		reg_shift;
+} __packed bios_consdev_t;
+
+/* Old interface; remove after OpenBSD 7.3 is released */
+typedef struct _bios_oconsdev {
 	dev_t	consdev;
 	int	conspeed;
 	int	consaddr;
 	int	consfreq;
-} __packed bios_consdev_t;
+} __packed bios_oconsdev_t;
 
 #define BOOTARG_BOOTMAC	7
 typedef struct _bios_bootmac {
