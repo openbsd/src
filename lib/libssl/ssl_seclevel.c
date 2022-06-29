@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.8 2022/06/29 11:59:23 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.9 2022/06/29 21:10:20 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -17,10 +17,15 @@
 
 #include <stddef.h>
 
+#include <openssl/asn1.h>
 #include <openssl/dh.h>
+#include <openssl/evp.h>
+#include <openssl/obj_mac.h>
+#include <openssl/objects.h>
 #include <openssl/ossl_typ.h>
 #include <openssl/ssl.h>
 #include <openssl/tls1.h>
+#include <openssl/x509.h>
 
 #include "ssl_locl.h"
 
@@ -246,4 +251,140 @@ ssl_security_dh(const SSL *ssl, DH *dh)
 #else
 	return 1;
 #endif
+}
+
+#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
+static int
+ssl_cert_pubkey_security_bits(const X509 *x509)
+{
+	EVP_PKEY *pkey;
+
+	if ((pkey = X509_get0_pubkey(x509)) == NULL)
+		return -1;
+
+	/*
+	 * XXX: DSA_security_bits() returns -1 on keys without parameters and
+	 * cause the default security callback to fail.
+	 */
+
+	return EVP_PKEY_security_bits(pkey);
+}
+
+static int
+ssl_security_cert_key(const SSL_CTX *ctx, const SSL *ssl, X509 *x509, int op)
+{
+	int security_bits;
+
+	security_bits = ssl_cert_pubkey_security_bits(x509);
+
+	if (ssl != NULL)
+		return ssl_security(ssl, op, security_bits, 0, x509);
+
+	return ssl_ctx_security(ctx, op, security_bits, 0, x509);
+}
+
+static int
+ssl_cert_signature_md_nid(const X509 *x509)
+{
+	int md_nid, signature_nid;
+
+	if ((signature_nid = X509_get_signature_nid(x509)) == NID_undef)
+		return NID_undef;
+
+	if (!OBJ_find_sigid_algs(signature_nid, &md_nid, NULL))
+		return NID_undef;
+
+	return md_nid;
+}
+
+static int
+ssl_cert_md_nid_security_bits(int md_nid)
+{
+	const EVP_MD *md;
+
+	if (md_nid == NID_undef)
+		return -1;
+
+	if ((md = EVP_get_digestbynid(md_nid)) == NULL)
+		return -1;
+
+	/* Assume 4 bits of collision resistance for each hash octet. */
+	return EVP_MD_size(md) * 4;
+}
+
+static int
+ssl_security_cert_sig(const SSL_CTX *ctx, const SSL *ssl, X509 *x509, int op)
+{
+	int md_nid, security_bits;
+
+	md_nid = ssl_cert_signature_md_nid(x509);
+	security_bits = ssl_cert_md_nid_security_bits(md_nid);
+
+	if (ssl != NULL)
+		return ssl_security(ssl, op, security_bits, md_nid, x509);
+
+	return ssl_ctx_security(ctx, op, security_bits, md_nid, x509);
+}
+#endif
+
+int
+ssl_security_cert(const SSL_CTX *ctx, const SSL *ssl, X509 *x509,
+    int is_ee, int *out_error)
+{
+#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
+	int key_error, operation;
+
+	*out_error = 0;
+
+	if (is_ee) {
+		operation = SSL_SECOP_EE_KEY;
+		key_error = SSL_R_EE_KEY_TOO_SMALL;
+	} else {
+		operation = SSL_SECOP_CA_KEY;
+		key_error = SSL_R_CA_KEY_TOO_SMALL;
+	}
+
+	if (!ssl_security_cert_key(ctx, ssl, x509, operation)) {
+		*out_error = key_error;
+		return 0;
+	}
+
+	if (!ssl_security_cert_sig(ctx, ssl, x509, SSL_SECOP_CA_MD)) {
+		*out_error = SSL_R_CA_MD_TOO_WEAK;
+		return 0;
+	}
+
+#endif
+	return 1;
+}
+
+/*
+ * Check security of a chain. If |sk| includes the end entity certificate
+ * then |x509| must be NULL.
+ */
+int
+ssl_security_cert_chain(const SSL *ssl, STACK_OF(X509) *sk, X509 *x509,
+    int *out_error)
+{
+	int start_idx = 0;
+	int is_ee;
+	int i;
+
+	if (x509 == NULL) {
+		x509 = sk_X509_value(sk, 0);
+		start_idx = 1;
+	}
+
+	if (!ssl_security_cert(NULL, ssl, x509, is_ee = 1, out_error))
+		return 0;
+
+	for (i = start_idx; i < sk_X509_num(sk); i++) {
+		x509 = sk_X509_value(sk, i);
+
+		if (!ssl_security_cert(NULL, ssl, x509, is_ee = 0,
+		    out_error))
+			return 0;
+	}
+
+	return 1;
 }
