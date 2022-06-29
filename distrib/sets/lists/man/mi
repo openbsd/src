@@ -2342,6 +2342,7 @@
 ./usr/share/man/man8/bgpctl.8
 ./usr/share/man/man8/bgpd.8
 ./usr/share/man/man8/bgplg.8
+./usr/share/man/man8/bgplgd.8
 ./usr/share/man/man8/bgplgsh.8
 ./usr/share/man/man8/bioctl.8
 ./usr/share/man/man8/boot_config.8
