@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.41 2022/02/05 14:54:10 jsing Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.42 2022/06/29 07:53:00 tb Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -32,11 +32,13 @@ const struct ssl_sigalg sigalgs[] = {
 		.value = SIGALG_RSA_PKCS1_SHA512,
 		.key_type = EVP_PKEY_RSA,
 		.md = EVP_sha512,
+		.security_level = 5,
 	},
 	{
 		.value = SIGALG_ECDSA_SECP521R1_SHA512,
 		.key_type = EVP_PKEY_EC,
 		.md = EVP_sha512,
+		.security_level = 5,
 		.curve_nid = NID_secp521r1,
 	},
 #ifndef OPENSSL_NO_GOST
@@ -44,28 +46,33 @@ const struct ssl_sigalg sigalgs[] = {
 		.value = SIGALG_GOSTR12_512_STREEBOG_512,
 		.key_type = EVP_PKEY_GOSTR12_512,
 		.md = EVP_streebog512,
+		.security_level = 0,
 	},
 #endif
 	{
 		.value = SIGALG_RSA_PKCS1_SHA384,
 		.key_type = EVP_PKEY_RSA,
 		.md = EVP_sha384,
+		.security_level = 4,
 	},
 	{
 		.value = SIGALG_ECDSA_SECP384R1_SHA384,
 		.key_type = EVP_PKEY_EC,
 		.md = EVP_sha384,
+		.security_level = 4,
 		.curve_nid = NID_secp384r1,
 	},
 	{
 		.value = SIGALG_RSA_PKCS1_SHA256,
 		.key_type = EVP_PKEY_RSA,
 		.md = EVP_sha256,
+		.security_level = 3,
 	},
 	{
 		.value = SIGALG_ECDSA_SECP256R1_SHA256,
 		.key_type = EVP_PKEY_EC,
 		.md = EVP_sha256,
+		.security_level = 3,
 		.curve_nid = NID_X9_62_prime256v1,
 	},
 #ifndef OPENSSL_NO_GOST
@@ -73,73 +80,86 @@ const struct ssl_sigalg sigalgs[] = {
 		.value = SIGALG_GOSTR12_256_STREEBOG_256,
 		.key_type = EVP_PKEY_GOSTR12_256,
 		.md = EVP_streebog256,
+		.security_level = 0,
 	},
 	{
 		.value = SIGALG_GOSTR01_GOST94,
 		.key_type = EVP_PKEY_GOSTR01,
 		.md = EVP_gostr341194,
+		.security_level = 0, /* XXX */
 	},
 #endif
 	{
 		.value = SIGALG_RSA_PSS_RSAE_SHA256,
 		.key_type = EVP_PKEY_RSA,
 		.md = EVP_sha256,
+		.security_level = 3,
 		.flags = SIGALG_FLAG_RSA_PSS,
 	},
 	{
 		.value = SIGALG_RSA_PSS_RSAE_SHA384,
 		.key_type = EVP_PKEY_RSA,
 		.md = EVP_sha384,
+		.security_level = 4,
 		.flags = SIGALG_FLAG_RSA_PSS,
 	},
 	{
 		.value = SIGALG_RSA_PSS_RSAE_SHA512,
 		.key_type = EVP_PKEY_RSA,
 		.md = EVP_sha512,
+		.security_level = 5,
 		.flags = SIGALG_FLAG_RSA_PSS,
 	},
 	{
 		.value = SIGALG_RSA_PSS_PSS_SHA256,
 		.key_type = EVP_PKEY_RSA,
 		.md = EVP_sha256,
+		.security_level = 3,
 		.flags = SIGALG_FLAG_RSA_PSS,
 	},
 	{
 		.value = SIGALG_RSA_PSS_PSS_SHA384,
 		.key_type = EVP_PKEY_RSA,
 		.md = EVP_sha384,
+		.security_level = 4,
 		.flags = SIGALG_FLAG_RSA_PSS,
 	},
 	{
 		.value = SIGALG_RSA_PSS_PSS_SHA512,
 		.key_type = EVP_PKEY_RSA,
 		.md = EVP_sha512,
+		.security_level = 5,
 		.flags = SIGALG_FLAG_RSA_PSS,
 	},
 	{
 		.value = SIGALG_RSA_PKCS1_SHA224,
 		.key_type = EVP_PKEY_RSA,
 		.md = EVP_sha224,
+		.security_level = 2,
 	},
 	{
 		.value = SIGALG_ECDSA_SECP224R1_SHA224,
 		.key_type = EVP_PKEY_EC,
 		.md = EVP_sha224,
+		.security_level = 2,
 	},
 	{
 		.value = SIGALG_RSA_PKCS1_SHA1,
 		.key_type = EVP_PKEY_RSA,
 		.md = EVP_sha1,
+		.security_level = 1,
 	},
 	{
 		.value = SIGALG_ECDSA_SHA1,
 		.key_type = EVP_PKEY_EC,
 		.md = EVP_sha1,
+		.security_level = 1,
 	},
 	{
 		.value = SIGALG_RSA_PKCS1_MD5_SHA1,
 		.key_type = EVP_PKEY_RSA,
 		.md = EVP_md5_sha1,
+		.security_level = 1,
 	},
 	{
 		.value = SIGALG_NONE,
