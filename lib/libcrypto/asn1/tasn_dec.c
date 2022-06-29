@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.77 2022/06/25 17:43:56 jsing Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.78 2022/06/29 08:56:44 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -352,6 +352,13 @@ asn1_c2i_primitive(ASN1_VALUE **pval, CBS *content, int utype, const ASN1_ITEM *
 		if (utype == V_ASN1_UNIVERSALSTRING && (CBS_len(content) & 3)) {
 			ASN1error(ASN1_R_UNIVERSALSTRING_IS_WRONG_LENGTH);
 			goto err;
+		}
+		if (utype == V_ASN1_UTCTIME || utype == V_ASN1_GENERALIZEDTIME) {
+			if (!asn1_time_parse_cbs(content,
+			    utype == V_ASN1_GENERALIZEDTIME, NULL))  {
+				ASN1error(ASN1_R_INVALID_TIME_FORMAT);
+				goto err;
+			}
 		}
 		/* All based on ASN1_STRING and handled the same way. */
 		if (*pval == NULL) {

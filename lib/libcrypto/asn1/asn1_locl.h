@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_locl.h,v 1.34 2022/06/27 12:36:05 tb Exp $ */
+/* $OpenBSD: asn1_locl.h,v 1.35 2022/06/29 08:56:44 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -218,5 +218,7 @@ int c2i_ASN1_OBJECT_cbs(ASN1_OBJECT **out_aobj, CBS *content);
 int i2t_ASN1_OBJECT_internal(const ASN1_OBJECT *aobj, char *buf, int buf_len,
     int no_name);
 ASN1_OBJECT *t2i_ASN1_OBJECT_internal(const char *oid);
+
+int asn1_time_parse_cbs(const CBS *cbs, int is_gentime, struct tm *out_tm);
 
 __END_HIDDEN_DECLS
