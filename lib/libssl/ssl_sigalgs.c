@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.43 2022/06/29 07:53:58 tb Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.44 2022/06/29 07:54:54 tb Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -303,6 +303,12 @@ ssl_sigalg_pkey_ok(SSL *s, const struct ssl_sigalg *sigalg, EVP_PKEY *pkey)
 		    EVP_PKEY_size(pkey) < (2 * EVP_MD_size(sigalg->md()) + 2))
 			return 0;
 	}
+
+#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
+	if (!ssl_security(s, SSL_SECOP_SIGALG_CHECK,
+	    EVP_PKEY_security_bits(pkey), 0, NULL))
+		return 0;
+#endif
 
 	if (s->s3->hs.negotiated_tls_version < TLS1_3_VERSION)
 		return 1;
