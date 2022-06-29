@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.14 2019/10/24 12:39:26 tb Exp $ */
+/*	$OpenBSD: auth.c,v 1.15 2022/06/29 09:10:13 martijn Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -220,7 +220,7 @@ check_password(struct request *req, const char *stored_passwd,
 	if (stored_passwd == NULL)
 		return -1;
 
-	if (strncmp(stored_passwd, "{SHA}", 5) == 0) {
+	if (strncasecmp(stored_passwd, "{SHA}", 5) == 0) {
 		sz = b64_pton(stored_passwd + 5, tmp, sizeof(tmp));
 		if (sz != SHA_DIGEST_LENGTH)
 			return (-1);
@@ -228,7 +228,7 @@ check_password(struct request *req, const char *stored_passwd,
 		SHA1_Update(&ctx, passwd, strlen(passwd));
 		SHA1_Final(md, &ctx);
 		return (bcmp(md, tmp, SHA_DIGEST_LENGTH) == 0 ? 1 : 0);
-	} else if (strncmp(stored_passwd, "{SSHA}", 6) == 0) {
+	} else if (strncasecmp(stored_passwd, "{SSHA}", 6) == 0) {
 		sz = b64_pton(stored_passwd + 6, tmp, sizeof(tmp));
 		if (sz <= SHA_DIGEST_LENGTH)
 			return (-1);
@@ -238,12 +238,12 @@ check_password(struct request *req, const char *stored_passwd,
 		SHA1_Update(&ctx, salt, sz - SHA_DIGEST_LENGTH);
 		SHA1_Final(md, &ctx);
 		return (bcmp(md, tmp, SHA_DIGEST_LENGTH) == 0 ? 1 : 0);
-	} else if (strncmp(stored_passwd, "{CRYPT}", 7) == 0) {
+	} else if (strncasecmp(stored_passwd, "{CRYPT}", 7) == 0) {
 		encpw = crypt(passwd, stored_passwd + 7);
 		if (encpw == NULL)
 			return (-1);
 		return (strcmp(encpw, stored_passwd + 7) == 0 ? 1 : 0);
-	} else if (strncmp(stored_passwd, "{BSDAUTH}", 9) == 0) {
+	} else if (strncasecmp(stored_passwd, "{BSDAUTH}", 9) == 0) {
 		if (send_auth_request(req, stored_passwd + 9, passwd) == -1)
 			return (-1);
 		return 2;	/* Operation in progress. */
