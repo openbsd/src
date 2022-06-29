@@ -1,4 +1,4 @@
-/* $OpenBSD: if_pppoe.c,v 1.80 2022/05/14 09:46:15 tobhe Exp $ */
+/* $OpenBSD: if_pppoe.c,v 1.81 2022/06/29 09:08:07 mvs Exp $ */
 /* $NetBSD: if_pppoe.c,v 1.51 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -144,6 +144,8 @@ struct pppoe_softc {
 };
 
 /* input routines */
+void pppoe_disc_input(struct mbuf *);
+void pppoe_data_input(struct mbuf *);
 static void pppoe_dispatch_disc_pkt(struct mbuf *);
 
 /* management routines */
@@ -181,6 +183,26 @@ int pppoe_clone_destroy(struct ifnet *);
 struct if_clone pppoe_cloner =
     IF_CLONE_INITIALIZER("pppoe", pppoe_clone_create, pppoe_clone_destroy);
 
+struct mbuf_queue pppoediscinq = MBUF_QUEUE_INITIALIZER(
+	IFQ_MAXLEN, IPL_SOFTNET);
+struct mbuf_queue pppoeinq = MBUF_QUEUE_INITIALIZER(
+	IFQ_MAXLEN, IPL_SOFTNET);
+
+void pppoeintr(void)
+{
+	struct mbuf_list ml;
+	struct mbuf *m;
+
+	NET_ASSERT_LOCKED();
+
+	mq_delist(&pppoediscinq, &ml);
+	while ((m = ml_dequeue(&ml)) != NULL)
+		pppoe_disc_input(m);
+
+	mq_delist(&pppoeinq, &ml);
+	while ((m = ml_dequeue(&ml)) != NULL)
+		pppoe_data_input(m);
+}
 
 void
 pppoeattach(int count)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppoe.h,v 1.7 2021/01/04 21:21:41 kn Exp $ */
+/*	$OpenBSD: if_pppoe.h,v 1.8 2022/06/29 09:08:07 mvs Exp $ */
 /*	$NetBSD: if_pppoe.h,v 1.5 2003/11/28 08:56:48 keihan Exp $ */
 
 /*
@@ -66,8 +66,8 @@ struct pppoeconnectionstate {
 
 #ifdef _KERNEL
 
-void pppoe_disc_input(struct mbuf *);
-void pppoe_data_input(struct mbuf *);
+extern struct mbuf_queue pppoediscinq;
+extern struct mbuf_queue pppoeinq;
 
 #endif /* _KERNEL */
 #endif /* _NET_IF_PPPOE_H_ */
