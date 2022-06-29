@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.128 2022/06/29 20:04:28 tb Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.129 2022/06/29 20:06:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1174,12 +1174,7 @@ ssl_cipher_process_rulestr(const char *rule_str, CIPHER_ORDER **head_p,
 			}
 			if (ok == 0)
 				retval = 0;
-			/*
-			 * We do not support any "multi" options
-			 * together with "@", so throw away the
-			 * rest of the command, if any left, until
-			 * end or ':' is found.
-			 */
+
 			while ((*l != '\0') && !ITEM_SEP(*l))
 				l++;
 		} else if (found) {
