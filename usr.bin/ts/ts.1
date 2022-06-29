@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ts.1,v 1.2 2022/06/29 16:01:10 job Exp $
+.\"	$OpenBSD: ts.1,v 1.3 2022/06/29 16:06:22 job Exp $
 .\"
 .\" Copyright (c) 2022 Job Snijders <job@openbsd.org>
 .\"
@@ -51,10 +51,14 @@ specifications described in the
 .Xr strftime 3
 manual page.
 The default format is
-.Qq %b %d %H:%M:%S ,
+.Qq %b %d %H:%M:%S ;
 or
 .Qq %H:%M:%S
-if an option is used.
+if one of the
+.Fl i
+or
+.Fl s
+options is used.
 .Pp
 The following non-standard conversion specifications append microsecond
 resolution:
