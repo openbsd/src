@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.39 2022/02/03 16:33:12 jsing Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.40 2022/06/29 21:12:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,12 +66,12 @@
 
 #include "ssl_locl.h"
 
+static int ssl_get_password_cb_and_arg(SSL_CTX *ctx, SSL *ssl,
+    pem_password_cb **passwd_cb, void **passwd_arg);
 static int ssl_set_cert(SSL_CERT *c, X509 *x509);
 static int ssl_set_pkey(SSL_CERT *c, EVP_PKEY *pkey);
-static int use_certificate_chain_bio(BIO *in, SSL_CERT *cert,
-    pem_password_cb *passwd_cb, void *passwd_arg);
-static int use_certificate_chain_file(const char *file, SSL_CERT *cert,
-    pem_password_cb *passwd_cb, void *passwd_arg);
+static int use_certificate_chain_bio(SSL_CTX *ctx, SSL *ssl, BIO *in);
+static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file);
 
 int
 SSL_use_certificate(SSL *ssl, X509 *x)
@@ -343,6 +343,19 @@ SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
 }
 
 static int
+ssl_get_password_cb_and_arg(SSL_CTX *ctx, SSL *ssl,
+    pem_password_cb **passwd_cb, void **passwd_arg)
+{
+	if (ssl != NULL)
+		ctx = ssl->ctx;
+
+	*passwd_cb = ctx->default_passwd_callback;
+	*passwd_arg = ctx->default_passwd_callback_userdata;
+
+	return 1;
+}
+
+static int
 ssl_set_cert(SSL_CERT *c, X509 *x)
 {
 	EVP_PKEY *pkey;
@@ -610,18 +623,26 @@ SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx, const unsigned char *d,
  * sent to the peer in the Certificate message.
  */
 static int
-use_certificate_chain_bio(BIO *in, SSL_CERT *cert, pem_password_cb *passwd_cb,
-    void *passwd_arg)
+use_certificate_chain_bio(SSL_CTX *ctx, SSL *ssl, BIO *in)
 {
+	pem_password_cb *passwd_cb;
+	void *passwd_arg;
+	SSL_CERT *cert;
 	X509 *ca, *x = NULL;
 	unsigned long err;
 	int ret = 0;
+
+	if (!ssl_get_password_cb_and_arg(ctx, ssl, &passwd_cb, &passwd_arg))
+		goto err;
 
 	if ((x = PEM_read_bio_X509_AUX(in, NULL, passwd_cb, passwd_arg)) ==
 	    NULL) {
 		SSLerrorx(ERR_R_PEM_LIB);
 		goto err;
 	}
+
+	if ((cert = ssl_get0_cert(ctx, ssl)) == NULL)
+		goto err;
 
 	if (!ssl_set_cert(cert, x))
 		goto err;
@@ -653,8 +674,7 @@ use_certificate_chain_bio(BIO *in, SSL_CERT *cert, pem_password_cb *passwd_cb,
 }
 
 int
-use_certificate_chain_file(const char *file, SSL_CERT *cert,
-    pem_password_cb *passwd_cb, void *passwd_arg)
+use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
 {
 	BIO *in;
 	int ret = 0;
@@ -670,7 +690,7 @@ use_certificate_chain_file(const char *file, SSL_CERT *cert,
 		goto end;
 	}
 
-	ret = use_certificate_chain_bio(in, cert, passwd_cb, passwd_arg);
+	ret = use_certificate_chain_bio(ctx, ssl, in);
 
  end:
 	BIO_free(in);
@@ -680,17 +700,13 @@ use_certificate_chain_file(const char *file, SSL_CERT *cert,
 int
 SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
 {
-	return use_certificate_chain_file(file, ctx->internal->cert,
-	    ctx->default_passwd_callback,
-	    ctx->default_passwd_callback_userdata);
+	return use_certificate_chain_file(ctx, NULL, file);
 }
 
 int
 SSL_use_certificate_chain_file(SSL *ssl, const char *file)
 {
-	return use_certificate_chain_file(file, ssl->cert,
-	    ssl->ctx->default_passwd_callback,
-	    ssl->ctx->default_passwd_callback_userdata);
+	return use_certificate_chain_file(NULL, ssl, file);
 }
 
 int
@@ -705,9 +721,7 @@ SSL_CTX_use_certificate_chain_mem(SSL_CTX *ctx, void *buf, int len)
 		goto end;
 	}
 
-	ret = use_certificate_chain_bio(in, ctx->internal->cert,
-	    ctx->default_passwd_callback,
-	    ctx->default_passwd_callback_userdata);
+	ret = use_certificate_chain_bio(ctx, NULL, in);
 
  end:
 	BIO_free(in);

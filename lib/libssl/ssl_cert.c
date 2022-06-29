@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.98 2022/06/29 21:08:07 tb Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.99 2022/06/29 21:12:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -300,6 +300,15 @@ ssl_cert_free(SSL_CERT *c)
 	}
 
 	free(c);
+}
+
+SSL_CERT *
+ssl_get0_cert(SSL_CTX *ctx, SSL *ssl)
+{
+	if (ssl != NULL)
+		return ssl->cert;
+
+	return ctx->internal->cert;
 }
 
 int
