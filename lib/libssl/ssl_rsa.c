@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_rsa.c,v 1.40 2022/06/29 21:12:19 tb Exp $ */
+/* $OpenBSD: ssl_rsa.c,v 1.41 2022/06/29 21:13:34 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,8 +68,8 @@
 
 static int ssl_get_password_cb_and_arg(SSL_CTX *ctx, SSL *ssl,
     pem_password_cb **passwd_cb, void **passwd_arg);
-static int ssl_set_cert(SSL_CERT *c, X509 *x509);
-static int ssl_set_pkey(SSL_CERT *c, EVP_PKEY *pkey);
+static int ssl_set_cert(SSL_CTX *ctx, SSL *ssl, X509 *x509);
+static int ssl_set_pkey(SSL_CTX *ctx, SSL *ssl, EVP_PKEY *pkey);
 static int use_certificate_chain_bio(SSL_CTX *ctx, SSL *ssl, BIO *in);
 static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file);
 
@@ -80,7 +80,7 @@ SSL_use_certificate(SSL *ssl, X509 *x)
 		SSLerror(ssl, ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
-	return (ssl_set_cert(ssl->cert, x));
+	return ssl_set_cert(NULL, ssl, x);
 }
 
 int
@@ -161,14 +161,15 @@ SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 	RSA_up_ref(rsa);
 	EVP_PKEY_assign_RSA(pkey, rsa);
 
-	ret = ssl_set_pkey(ssl->cert, pkey);
+	ret = ssl_set_pkey(NULL, ssl, pkey);
 	EVP_PKEY_free(pkey);
 	return (ret);
 }
 
 static int
-ssl_set_pkey(SSL_CERT *c, EVP_PKEY *pkey)
+ssl_set_pkey(SSL_CTX *ctx, SSL *ssl, EVP_PKEY *pkey)
 {
+	SSL_CERT *c;
 	int i;
 
 	i = ssl_cert_type(pkey);
@@ -176,6 +177,9 @@ ssl_set_pkey(SSL_CERT *c, EVP_PKEY *pkey)
 		SSLerrorx(SSL_R_UNKNOWN_CERTIFICATE_TYPE);
 		return (0);
 	}
+
+	if ((c = ssl_get0_cert(ctx, ssl)) == NULL)
+		return (0);
 
 	if (c->pkeys[i].x509 != NULL) {
 		EVP_PKEY *pktmp;
@@ -272,7 +276,7 @@ SSL_use_PrivateKey(SSL *ssl, EVP_PKEY *pkey)
 		SSLerror(ssl, ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
-	ret = ssl_set_pkey(ssl->cert, pkey);
+	ret = ssl_set_pkey(NULL, ssl, pkey);
 	return (ret);
 }
 
@@ -339,7 +343,7 @@ SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
 		SSLerrorx(ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
-	return (ssl_set_cert(ctx->internal->cert, x));
+	return ssl_set_cert(ctx, NULL, x);
 }
 
 static int
@@ -356,10 +360,14 @@ ssl_get_password_cb_and_arg(SSL_CTX *ctx, SSL *ssl,
 }
 
 static int
-ssl_set_cert(SSL_CERT *c, X509 *x)
+ssl_set_cert(SSL_CTX *ctx, SSL *ssl, X509 *x)
 {
+	SSL_CERT *c;
 	EVP_PKEY *pkey;
 	int i;
+
+	if ((c = ssl_get0_cert(ctx, ssl)) == NULL)
+		return (0);
 
 	pkey = X509_get_pubkey(x);
 	if (pkey == NULL) {
@@ -488,7 +496,7 @@ SSL_CTX_use_RSAPrivateKey(SSL_CTX *ctx, RSA *rsa)
 	RSA_up_ref(rsa);
 	EVP_PKEY_assign_RSA(pkey, rsa);
 
-	ret = ssl_set_pkey(ctx->internal->cert, pkey);
+	ret = ssl_set_pkey(ctx, NULL, pkey);
 	EVP_PKEY_free(pkey);
 	return (ret);
 }
@@ -556,7 +564,7 @@ SSL_CTX_use_PrivateKey(SSL_CTX *ctx, EVP_PKEY *pkey)
 		SSLerrorx(ERR_R_PASSED_NULL_PARAMETER);
 		return (0);
 	}
-	return (ssl_set_pkey(ctx->internal->cert, pkey));
+	return ssl_set_pkey(ctx, NULL, pkey);
 }
 
 int
@@ -644,7 +652,7 @@ use_certificate_chain_bio(SSL_CTX *ctx, SSL *ssl, BIO *in)
 	if ((cert = ssl_get0_cert(ctx, ssl)) == NULL)
 		goto err;
 
-	if (!ssl_set_cert(cert, x))
+	if (!ssl_set_cert(ctx, ssl, x))
 		goto err;
 
 	if (!ssl_cert_set0_chain(cert, NULL))
