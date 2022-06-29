@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.401 2022/06/29 12:03:38 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.402 2022/06/29 17:39:20 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -932,6 +932,10 @@ typedef struct ssl_internal_st {
 	unsigned char *alpn_client_proto_list;
 	unsigned int alpn_client_proto_list_len;
 
+	/* QUIC transport params we will send */
+	uint8_t *quic_transport_params;
+	size_t quic_transport_params_len;
+
 	/* XXX Callbacks */
 
 	/* true when we are actually in SSL_accept() or SSL_connect() */
@@ -1218,6 +1222,10 @@ typedef struct ssl3_state_st {
 	 */
 	unsigned char *alpn_selected;
 	size_t alpn_selected_len;
+
+	/* Contains the QUIC transport params received from our peer. */
+	uint8_t *peer_quic_transport_params;
+	size_t peer_quic_transport_params_len;
 } SSL3_STATE;
 
 /*

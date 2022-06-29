@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.h,v 1.29 2022/06/03 13:31:49 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.h,v 1.30 2022/06/29 17:39:20 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -143,6 +143,17 @@ int tlsext_srtp_server_needs(SSL *s, uint16_t msg_type);
 int tlsext_srtp_server_build(SSL *s, uint16_t msg_type, CBB *cbb);
 int tlsext_srtp_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);
 #endif
+
+int tlsext_quic_transport_parameters_client_needs(SSL *s, uint16_t msg_type);
+int tlsext_quic_transport_parameters_client_build(SSL *s, uint16_t msg_type,
+    CBB *cbb);
+int tlsext_quic_transport_parameters_client_parse(SSL *s, uint16_t msg_type,
+    CBS *cbs, int *alert);
+int tlsext_quic_transport_parameters_server_needs(SSL *s, uint16_t msg_type);
+int tlsext_quic_transport_parameters_server_build(SSL *s, uint16_t msg_type,
+    CBB *cbb);
+int tlsext_quic_transport_parameters_server_parse(SSL *s, uint16_t msg_type,
+    CBS *cbs, int *alert);
 
 int tlsext_client_build(SSL *s, uint16_t msg_type, CBB *cbb);
 int tlsext_client_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert);

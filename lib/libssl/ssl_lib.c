@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.292 2022/06/29 08:39:08 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.293 2022/06/29 17:39:20 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -572,6 +572,8 @@ SSL_free(SSL *s)
 	SSL_CTX_free(s->ctx);
 
 	free(s->internal->alpn_client_proto_list);
+
+	free(s->internal->quic_transport_params);
 
 #ifndef OPENSSL_NO_SRTP
 	sk_SRTP_PROTECTION_PROFILE_free(s->internal->srtp_profiles);
@@ -3311,4 +3313,30 @@ OBJ_bsearch_ssl_cipher_id(SSL_CIPHER *key, SSL_CIPHER const *base, int num)
 {
 	return (SSL_CIPHER *)OBJ_bsearch_(key, base, num, sizeof(SSL_CIPHER),
 	    ssl_cipher_id_cmp_BSEARCH_CMP_FN);
+}
+
+int
+SSL_set_quic_transport_params(SSL *ssl, const uint8_t *params,
+    size_t params_len)
+{
+	freezero(ssl->internal->quic_transport_params,
+	    ssl->internal->quic_transport_params_len);
+	ssl->internal->quic_transport_params = NULL;
+	ssl->internal->quic_transport_params_len = 0;
+
+	if ((ssl->internal->quic_transport_params = malloc(params_len)) == NULL)
+		return 0;
+
+	memcpy(ssl->internal->quic_transport_params, params, params_len);
+	ssl->internal->quic_transport_params_len = params_len;
+
+	return 1;
+}
+
+void
+SSL_get_peer_quic_transport_params(const SSL *ssl, const uint8_t **out_params,
+    size_t *out_params_len)
+{
+	*out_params = ssl->s3->peer_quic_transport_params;
+	*out_params_len = ssl->s3->peer_quic_transport_params_len;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.63 2022/06/06 06:11:04 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.64 2022/06/29 17:39:21 beck Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1882,6 +1882,259 @@ test_tlsext_sni_server(void)
 		strlen(TEST_SNI_SERVERNAME)) != 0) {
 		FAIL("got tlsext_hostname `%s', want `%s'\n",
 		    ssl->session->tlsext_hostname, TEST_SNI_SERVERNAME);
+		goto err;
+	}
+
+	failure = 0;
+
+ err:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
+
+/*
+ * QUIC transport parameters extenstion - RFC 90210 :)
+ */
+
+#define TEST_QUIC_TRANSPORT_DATA "0123456789abcdef"
+
+static unsigned char tlsext_quic_transport_data[] = {
+	0x00, 0x10, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35,
+	0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64,
+	0x65, 0x66,
+};
+
+static int
+test_tlsext_quic_transport_parameters_client(void)
+{
+	unsigned char *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	int failure;
+	size_t dlen;
+	CBB cbb;
+	CBS cbs;
+	int alert;
+	const uint8_t *out_bytes;
+	size_t out_bytes_len;
+
+	failure = 1;
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_client_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	CBB_init(&cbb, 0);
+
+	if (tlsext_quic_transport_parameters_client_needs(ssl,
+	    SSL_TLSEXT_MSG_CH)) {
+		FAIL("client should not need QUIC\n");
+		goto err;
+	}
+
+	if (!SSL_set_quic_transport_params(ssl,
+	    TEST_QUIC_TRANSPORT_DATA, strlen(TEST_QUIC_TRANSPORT_DATA))) {
+		FAIL("client failed to set QUIC parametes\n");
+		goto err;
+	}
+
+	if (tlsext_quic_transport_parameters_client_needs(ssl,
+	    SSL_TLSEXT_MSG_CH)) {
+		FAIL("client should not need QUIC\n");
+		goto err;
+	}
+
+	ssl->s3->hs.our_max_tls_version = TLS1_3_VERSION;
+	ssl->s3->hs.negotiated_tls_version = TLS1_3_VERSION;
+
+	if (!tlsext_quic_transport_parameters_client_needs(ssl,
+	    SSL_TLSEXT_MSG_CH)) {
+		FAIL("client should not need QUIC\n");
+		goto err;
+	}
+
+	if (!tlsext_quic_transport_parameters_client_build(ssl,
+	    SSL_TLSEXT_MSG_CH, &cbb)) {
+		FAIL("client failed to build QUIC\n");
+		goto err;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen)) {
+		FAIL("failed to finish CBB");
+		goto err;
+	}
+
+	if (dlen != sizeof(tlsext_quic_transport_data)) {
+		FAIL("got client QUIC with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_quic_transport_data));
+		goto err;
+	}
+
+	if (memcmp(data, tlsext_quic_transport_data, dlen) != 0) {
+		FAIL("client QUIC differs:\n");
+		fprintf(stderr, "received:\n");
+		hexdump(data, dlen);
+		fprintf(stderr, "test data:\n");
+		hexdump(tlsext_quic_transport_data,
+		    sizeof(tlsext_quic_transport_data));
+		goto err;
+	}
+
+	CBS_init(&cbs, tlsext_quic_transport_data,
+	    sizeof(tlsext_quic_transport_data));
+
+	if (!tlsext_quic_transport_parameters_server_parse(ssl,
+	    SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
+		FAIL("server_parse of QUIC from server failed\n");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining\n");
+		goto err;
+	}
+
+	SSL_get_peer_quic_transport_params(ssl, &out_bytes, &out_bytes_len);
+
+	if (out_bytes_len != strlen(TEST_QUIC_TRANSPORT_DATA)) {
+		FAIL("server_parse QUIC length differs, got %zu want %zu\n",
+		    out_bytes_len,
+		    sizeof(tlsext_quic_transport_data));
+		goto err;
+	}
+
+	if (memcmp(out_bytes, TEST_QUIC_TRANSPORT_DATA,
+	    out_bytes_len) != 0) {
+		FAIL("server_parse QUIC differs from sent:\n");
+		fprintf(stderr, "received:\n");
+		hexdump(data, dlen);
+		fprintf(stderr, "test data:\n");
+		hexdump(tlsext_quic_transport_data,
+		    sizeof(tlsext_quic_transport_data));
+		goto err;
+	}
+
+	failure = 0;
+
+ err:
+	CBB_cleanup(&cbb);
+	SSL_CTX_free(ssl_ctx);
+	SSL_free(ssl);
+	free(data);
+
+	return (failure);
+}
+
+static int
+test_tlsext_quic_transport_parameters_server(void)
+{
+	unsigned char *data = NULL;
+	SSL_CTX *ssl_ctx = NULL;
+	SSL *ssl = NULL;
+	int failure;
+	size_t dlen;
+	int alert;
+	CBB cbb;
+	CBS cbs;
+	const uint8_t *out_bytes;
+	size_t out_bytes_len;
+
+	failure = 1;
+
+	CBB_init(&cbb, 0);
+
+	if ((ssl_ctx = SSL_CTX_new(TLS_server_method())) == NULL)
+		errx(1, "failed to create SSL_CTX");
+	if ((ssl = SSL_new(ssl_ctx)) == NULL)
+		errx(1, "failed to create SSL");
+
+	if (tlsext_quic_transport_parameters_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
+		FAIL("server should not need QUIC\n");
+		goto err;
+	}
+
+	if (!SSL_set_quic_transport_params(ssl,
+	    TEST_QUIC_TRANSPORT_DATA, strlen(TEST_QUIC_TRANSPORT_DATA))) {
+		FAIL("server failed to set QUIC parametes\n");
+		goto err;
+	}
+
+	if (!tlsext_quic_transport_parameters_server_needs(ssl, SSL_TLSEXT_MSG_SH)) {
+		FAIL("server should need QUIC\n");
+		goto err;
+	}
+
+	if (!tlsext_quic_transport_parameters_server_build(ssl,
+	    SSL_TLSEXT_MSG_SH, &cbb)) {
+		FAIL("server failed to build QUIC\n");
+		goto err;
+	}
+
+	if (!CBB_finish(&cbb, &data, &dlen))
+		errx(1, "failed to finish CBB");
+
+	if (dlen != sizeof(tlsext_quic_transport_data)) {
+		FAIL("got server QUIC with length %zu, "
+		    "want length %zu\n", dlen,
+		    sizeof(tlsext_quic_transport_data));
+		goto err;
+	}
+
+	if (memcmp(data, tlsext_quic_transport_data, dlen) != 0) {
+		FAIL("saved server QUIC differs:\n");
+		fprintf(stderr, "received:\n");
+		hexdump(data, dlen);
+		fprintf(stderr, "test data:\n");
+		hexdump(tlsext_quic_transport_data,
+		    sizeof(tlsext_quic_transport_data));
+		goto err;
+	}
+
+	CBS_init(&cbs, tlsext_quic_transport_data,
+	    sizeof(tlsext_quic_transport_data));
+
+	if (tlsext_quic_transport_parameters_client_parse(ssl,
+	    SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
+		FAIL("QUIC parse should have failed!\n");
+		goto err;
+	}
+
+	ssl->s3->hs.our_max_tls_version = TLS1_3_VERSION;
+	ssl->s3->hs.negotiated_tls_version = TLS1_3_VERSION;
+
+	if (!tlsext_quic_transport_parameters_client_parse(ssl,
+	    SSL_TLSEXT_MSG_SH, &cbs, &alert)) {
+		FAIL("client_parse of QUIC from server failed\n");
+		goto err;
+	}
+	if (CBS_len(&cbs) != 0) {
+		FAIL("extension data remaining\n");
+		goto err;
+	}
+
+	SSL_get_peer_quic_transport_params(ssl, &out_bytes, &out_bytes_len);
+
+	if (out_bytes_len != strlen(TEST_QUIC_TRANSPORT_DATA)) {
+		FAIL("client QUIC length differs, got %zu want %zu\n",
+		    out_bytes_len,
+		    sizeof(tlsext_quic_transport_data));
+		goto err;
+	}
+
+	if (memcmp(out_bytes, TEST_QUIC_TRANSPORT_DATA,
+	    out_bytes_len) != 0) {
+		FAIL("client QUIC differs from sent:\n");
+		fprintf(stderr, "received:\n");
+		hexdump(data, dlen);
+		fprintf(stderr, "test data:\n");
+		hexdump(tlsext_quic_transport_data,
+		    sizeof(tlsext_quic_transport_data));
 		goto err;
 	}
 
@@ -3990,6 +4243,9 @@ main(int argc, char **argv)
 	failed |= test_tlsext_serverhello_build();
 
 	failed |= test_tlsext_valid_hostnames();
+
+	failed |= test_tlsext_quic_transport_parameters_client();
+	failed |= test_tlsext_quic_transport_parameters_server();
 
 	return (failed);
 }

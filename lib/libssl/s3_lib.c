@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.230 2022/06/29 08:37:18 tb Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.231 2022/06/29 17:39:20 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1575,6 +1575,9 @@ ssl3_free(SSL *s)
 
 	free(s->s3->alpn_selected);
 
+	freezero(s->s3->peer_quic_transport_params,
+	    s->s3->peer_quic_transport_params_len);
+
 	freezero(s->s3, sizeof(*s->s3));
 
 	s->s3 = NULL;
@@ -1618,6 +1621,11 @@ ssl3_clear(SSL *s)
 	free(s->s3->alpn_selected);
 	s->s3->alpn_selected = NULL;
 	s->s3->alpn_selected_len = 0;
+
+	freezero(s->s3->peer_quic_transport_params,
+	    s->s3->peer_quic_transport_params_len);
+	s->s3->peer_quic_transport_params = NULL;
+	s->s3->peer_quic_transport_params_len = 0;
 
 	memset(s->s3, 0, sizeof(*s->s3));
 
