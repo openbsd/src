@@ -1,9 +1,10 @@
-# $OpenBSD: Makefile,v 1.1 2017/07/16 18:18:10 jsing Exp $
+# $OpenBSD: Makefile,v 1.2 2022/06/29 15:06:18 tb Exp $
 
 PROG=	tlsexttest
 LDADD=	${SSL_INT} -lcrypto
 DPADD=	${LIBCRYPTO} ${LIBSSL}
 WARNINGS=	Yes
-CFLAGS+=	-DLIBRESSL_INTERNAL -Wundef -Werror -I$(BSDSRCDIR)/lib/libssl
+CFLAGS+=	-DLIBRESSL_INTERNAL -Wundef -Werror
+CFLAGS+=	-I${.CURDIR}/../../../../lib/libssl
 
 .include <bsd.regress.mk>
