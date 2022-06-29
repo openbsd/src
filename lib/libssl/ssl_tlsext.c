@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.113 2022/06/04 07:55:44 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.114 2022/06/29 07:53:58 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -587,7 +587,7 @@ tlsext_sigalgs_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 
 	if (!CBB_add_u16_length_prefixed(cbb, &sigalgs))
 		return 0;
-	if (!ssl_sigalgs_build(tls_version, &sigalgs))
+	if (!ssl_sigalgs_build(tls_version, &sigalgs, SSL_get_security_level(s)))
 		return 0;
 	if (!CBB_flush(cbb))
 		return 0;
@@ -623,7 +623,8 @@ tlsext_sigalgs_server_build(SSL *s, uint16_t msg_type, CBB *cbb)
 
 	if (!CBB_add_u16_length_prefixed(cbb, &sigalgs))
 		return 0;
-	if (!ssl_sigalgs_build(s->s3->hs.negotiated_tls_version, &sigalgs))
+	if (!ssl_sigalgs_build(s->s3->hs.negotiated_tls_version, &sigalgs,
+	    SSL_get_security_level(s)))
 		return 0;
 	if (!CBB_flush(cbb))
 		return 0;

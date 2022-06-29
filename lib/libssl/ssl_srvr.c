@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.143 2022/06/28 14:51:37 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.144 2022/06/29 07:53:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1567,8 +1567,8 @@ ssl3_send_certificate_request(SSL *s)
 			if (!CBB_add_u16_length_prefixed(&cert_request,
 			    &sigalgs))
 				goto err;
-			if (!ssl_sigalgs_build(
-			    s->s3->hs.negotiated_tls_version, &sigalgs))
+			if (!ssl_sigalgs_build(s->s3->hs.negotiated_tls_version,
+			    &sigalgs, SSL_get_security_level(s)))
 				goto err;
 		}
 

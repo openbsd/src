@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.42 2022/06/29 07:53:00 tb Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.43 2022/06/29 07:53:58 tb Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -241,11 +241,13 @@ ssl_sigalg_from_value(SSL *s, uint16_t value)
 }
 
 int
-ssl_sigalgs_build(uint16_t tls_version, CBB *cbb)
+ssl_sigalgs_build(uint16_t tls_version, CBB *cbb, int security_level)
 {
+	const struct ssl_sigalg *sigalg;
 	const uint16_t *values;
 	size_t len;
 	size_t i;
+	int ret = 0;
 
 	ssl_sigalgs_for_version(tls_version, &values, &len);
 
@@ -254,12 +256,17 @@ ssl_sigalgs_build(uint16_t tls_version, CBB *cbb)
 		/* Do not allow the legacy value for < 1.2 to be used. */
 		if (values[i] == SIGALG_RSA_PKCS1_MD5_SHA1)
 			return 0;
-		if (ssl_sigalg_lookup(values[i]) == NULL)
+		if ((sigalg = ssl_sigalg_lookup(values[i])) == NULL)
 			return 0;
+		if (sigalg->security_level < security_level)
+			continue;
+
 		if (!CBB_add_u16(cbb, values[i]))
 			return 0;
+
+		ret = 1;
 	}
-	return 1;
+	return ret;
 }
 
 static const struct ssl_sigalg *
