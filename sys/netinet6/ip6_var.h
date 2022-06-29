@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.92 2022/05/05 13:57:41 claudio Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.93 2022/06/29 22:45:24 bluhm Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -307,12 +307,12 @@ void	ip6intr(void);
 int	ip6_input_if(struct mbuf **, int *, int, int, struct ifnet *);
 void	ip6_freepcbopts(struct ip6_pktopts *);
 void	ip6_freemoptions(struct ip6_moptions *);
-int	ip6_unknown_opt(u_int8_t *, struct mbuf *, int);
+int	ip6_unknown_opt(struct mbuf **, u_int8_t *, int);
 int	ip6_get_prevhdr(struct mbuf *, int);
 int	ip6_nexthdr(struct mbuf *, int, int, int *);
 int	ip6_lasthdr(struct mbuf *, int, int, int *);
 int	ip6_mforward(struct ip6_hdr *, struct ifnet *, struct mbuf *);
-int	ip6_process_hopopts(struct mbuf *, u_int8_t *, int, u_int32_t *,
+int	ip6_process_hopopts(struct mbuf **, u_int8_t *, int, u_int32_t *,
 	     u_int32_t *);
 void	ip6_savecontrol(struct inpcb *, struct mbuf *, struct mbuf **);
 int	ip6_sysctl(int *, u_int, void *, size_t *, void *, size_t);

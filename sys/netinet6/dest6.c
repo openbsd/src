@@ -1,4 +1,4 @@
-/*	$OpenBSD: dest6.c,v 1.18 2022/02/22 01:15:02 guenther Exp $	*/
+/*	$OpenBSD: dest6.c,v 1.19 2022/06/29 22:45:24 bluhm Exp $	*/
 /*	$KAME: dest6.c,v 1.25 2001/02/22 01:39:16 itojun Exp $	*/
 
 /*
@@ -49,18 +49,17 @@
 int
 dest6_input(struct mbuf **mp, int *offp, int proto, int af)
 {
-	struct mbuf *m = *mp;
 	int off = *offp, dstoptlen, optlen;
 	struct ip6_dest *dstopts;
 	u_int8_t *opt;
 
 	/* validation of the length of the header */
-	IP6_EXTHDR_GET(dstopts, struct ip6_dest *, m, off, sizeof(*dstopts));
+	IP6_EXTHDR_GET(dstopts, struct ip6_dest *, *mp, off, sizeof(*dstopts));
 	if (dstopts == NULL)
 		return IPPROTO_DONE;
 	dstoptlen = (dstopts->ip6d_len + 1) << 3;
 
-	IP6_EXTHDR_GET(dstopts, struct ip6_dest *, m, off, dstoptlen);
+	IP6_EXTHDR_GET(dstopts, struct ip6_dest *, *mp, off, dstoptlen);
 	if (dstopts == NULL)
 		return IPPROTO_DONE;
 	off += dstoptlen;
@@ -83,8 +82,8 @@ dest6_input(struct mbuf **mp, int *offp, int proto, int af)
 			optlen = *(opt + 1) + 2;
 			break;
 		default:		/* unknown option */
-			optlen = ip6_unknown_opt(opt, m,
-			    opt - mtod(m, u_int8_t *));
+			optlen = ip6_unknown_opt(mp, opt,
+			    opt - mtod(*mp, u_int8_t *));
 			if (optlen == -1)
 				return (IPPROTO_DONE);
 			optlen += 2;
@@ -96,6 +95,6 @@ dest6_input(struct mbuf **mp, int *offp, int proto, int af)
 	return (dstopts->ip6d_nxt);
 
   bad:
-	m_freem(m);
+	m_freemp(mp);
 	return (IPPROTO_DONE);
 }

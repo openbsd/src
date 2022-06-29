@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.268 2022/02/22 01:35:41 guenther Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.269 2022/06/29 22:45:24 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -619,7 +619,7 @@ reroute:
 		u_int32_t plen = 0; /* no more than 1 jumbo payload option! */
 
 		m->m_pkthdr.ph_ifidx = ifp->if_index;
-		if (ip6_process_hopopts(m, (u_int8_t *)(hbh + 1),
+		if (ip6_process_hopopts(&m, (u_int8_t *)(hbh + 1),
 		    ((hbh->ip6h_len + 1) << 3) - sizeof(struct ip6_hbh),
 		    &rtalert, &plen) < 0) {
 			/* m was already freed at this point */

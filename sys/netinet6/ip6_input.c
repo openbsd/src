@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.247 2022/06/29 11:22:10 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.248 2022/06/29 22:45:24 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ int ip6_ours(struct mbuf **, int *, int, int);
 int ip6_local(struct mbuf **, int *, int, int);
 int ip6_check_rh0hdr(struct mbuf *, int *);
 int ip6_hbhchcheck(struct mbuf **, int *, int *);
-int ip6_hopopts_input(u_int32_t *, u_int32_t *, struct mbuf **, int *);
+int ip6_hopopts_input(struct mbuf **, int *, u_int32_t *, u_int32_t *);
 struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
 int ip6_sysctl_soiikey(void *, size_t *, void *, size_t);
 
@@ -616,7 +616,7 @@ ip6_hbhchcheck(struct mbuf **mp, int *offp, int *oursp)
 	if (ip6->ip6_nxt == IPPROTO_HOPOPTS) {
 		struct ip6_hbh *hbh;
 
-		if (ip6_hopopts_input(&plen, &rtalert, mp, offp))
+		if (ip6_hopopts_input(mp, offp, &plen, &rtalert))
 			goto bad;	/* m have already been freed */
 
 		/* adjust pointer */
@@ -758,8 +758,8 @@ ip6_check_rh0hdr(struct mbuf *m, int *offp)
  * rtalertp - XXX: should be stored in a more smart way
  */
 int
-ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp, struct mbuf **mp,
-    int *offp)
+ip6_hopopts_input(struct mbuf **mp, int *offp, u_int32_t *plenp,
+    u_int32_t *rtalertp)
 {
 	int off = *offp, hbhlen;
 	struct ip6_hbh *hbh;
@@ -781,7 +781,7 @@ ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp, struct mbuf **mp,
 	off += hbhlen;
 	hbhlen -= sizeof(struct ip6_hbh);
 
-	if (ip6_process_hopopts(*mp, (u_int8_t *)hbh + sizeof(struct ip6_hbh),
+	if (ip6_process_hopopts(mp, (u_int8_t *)hbh + sizeof(struct ip6_hbh),
 				hbhlen, rtalertp, plenp) < 0)
 		return (-1);
 
@@ -794,13 +794,14 @@ ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp, struct mbuf **mp,
  * This function is separate from ip6_hopopts_input() in order to
  * handle a case where the sending node itself process its hop-by-hop
  * options header. In such a case, the function is called from ip6_output().
+ * On error free mbuf and return -1.
  *
  * The function assumes that hbh header is located right after the IPv6 header
  * (RFC2460 p7), opthead is pointer into data content in m, and opthead to
  * opthead + hbhlen is located in continuous memory region.
  */
 int
-ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
+ip6_process_hopopts(struct mbuf **mp, u_int8_t *opthead, int hbhlen,
     u_int32_t *rtalertp, u_int32_t *plenp)
 {
 	struct ip6_hdr *ip6;
@@ -830,7 +831,7 @@ ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
 			}
 			if (*(opt + 1) != IP6OPT_RTALERT_LEN - 2) {
 				/* XXX stat */
-				icmp6_error(m, ICMP6_PARAM_PROB,
+				icmp6_error(*mp, ICMP6_PARAM_PROB,
 				    ICMP6_PARAMPROB_HEADER,
 				    erroff + opt + 1 - opthead);
 				return (-1);
@@ -847,7 +848,7 @@ ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
 			}
 			if (*(opt + 1) != IP6OPT_JUMBO_LEN - 2) {
 				/* XXX stat */
-				icmp6_error(m, ICMP6_PARAM_PROB,
+				icmp6_error(*mp, ICMP6_PARAM_PROB,
 				    ICMP6_PARAMPROB_HEADER,
 				    erroff + opt + 1 - opthead);
 				return (-1);
@@ -858,10 +859,10 @@ ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
 			 * IPv6 packets that have non 0 payload length
 			 * must not contain a jumbo payload option.
 			 */
-			ip6 = mtod(m, struct ip6_hdr *);
+			ip6 = mtod(*mp, struct ip6_hdr *);
 			if (ip6->ip6_plen) {
 				ip6stat_inc(ip6s_badoptions);
-				icmp6_error(m, ICMP6_PARAM_PROB,
+				icmp6_error(*mp, ICMP6_PARAM_PROB,
 				    ICMP6_PARAMPROB_HEADER,
 				    erroff + opt - opthead);
 				return (-1);
@@ -885,7 +886,7 @@ ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
 			 */
 			if (*plenp != 0) {
 				ip6stat_inc(ip6s_badoptions);
-				icmp6_error(m, ICMP6_PARAM_PROB,
+				icmp6_error(*mp, ICMP6_PARAM_PROB,
 				    ICMP6_PARAMPROB_HEADER,
 				    erroff + opt + 2 - opthead);
 				return (-1);
@@ -897,7 +898,7 @@ ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
 			 */
 			if (jumboplen <= IPV6_MAXPACKET) {
 				ip6stat_inc(ip6s_badoptions);
-				icmp6_error(m, ICMP6_PARAM_PROB,
+				icmp6_error(*mp, ICMP6_PARAM_PROB,
 				    ICMP6_PARAMPROB_HEADER,
 				    erroff + opt + 2 - opthead);
 				return (-1);
@@ -910,7 +911,7 @@ ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
 				ip6stat_inc(ip6s_toosmall);
 				goto bad;
 			}
-			optlen = ip6_unknown_opt(opt, m,
+			optlen = ip6_unknown_opt(mp, opt,
 			    erroff + opt - opthead);
 			if (optlen == -1)
 				return (-1);
@@ -922,7 +923,7 @@ ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
 	return (0);
 
   bad:
-	m_freem(m);
+	m_freemp(mp);
 	return (-1);
 }
 
@@ -931,9 +932,10 @@ ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
  * The third argument `off' is the offset from the IPv6 header to the option,
  * which allows returning an ICMPv6 error even if the IPv6 header and the
  * option header are not continuous.
+ * On error free mbuf and return -1.
  */
 int
-ip6_unknown_opt(u_int8_t *optp, struct mbuf *m, int off)
+ip6_unknown_opt(struct mbuf **mp, u_int8_t *optp, int off)
 {
 	struct ip6_hdr *ip6;
 
@@ -941,25 +943,25 @@ ip6_unknown_opt(u_int8_t *optp, struct mbuf *m, int off)
 	case IP6OPT_TYPE_SKIP: /* ignore the option */
 		return ((int)*(optp + 1));
 	case IP6OPT_TYPE_DISCARD:	/* silently discard */
-		m_freem(m);
+		m_freemp(mp);
 		return (-1);
 	case IP6OPT_TYPE_FORCEICMP: /* send ICMP even if multicasted */
 		ip6stat_inc(ip6s_badoptions);
-		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_OPTION, off);
+		icmp6_error(*mp, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_OPTION, off);
 		return (-1);
 	case IP6OPT_TYPE_ICMP: /* send ICMP if not multicasted */
 		ip6stat_inc(ip6s_badoptions);
-		ip6 = mtod(m, struct ip6_hdr *);
+		ip6 = mtod(*mp, struct ip6_hdr *);
 		if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
-		    (m->m_flags & (M_BCAST|M_MCAST)))
-			m_freem(m);
+		    ((*mp)->m_flags & (M_BCAST|M_MCAST)))
+			m_freemp(mp);
 		else
-			icmp6_error(m, ICMP6_PARAM_PROB,
+			icmp6_error(*mp, ICMP6_PARAM_PROB,
 				    ICMP6_PARAMPROB_OPTION, off);
 		return (-1);
 	}
 
-	m_freem(m);		/* XXX: NOTREACHED */
+	m_freemp(mp);		/* XXX: NOTREACHED */
 	return (-1);
 }
 
