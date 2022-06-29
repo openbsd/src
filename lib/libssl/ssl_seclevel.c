@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.7 2022/06/29 08:30:04 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.8 2022/06/29 11:59:23 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -237,6 +237,7 @@ ssl_ctx_security_dh(const SSL_CTX *ctx, DH *dh)
 	return 1;
 #endif
 }
+
 int
 ssl_security_dh(const SSL *ssl, DH *dh)
 {
