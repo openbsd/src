@@ -12,4 +12,6 @@
 int ASN1_time_parse(const char *, size_t, struct tm *, int);
 int ASN1_time_tm_cmp(struct tm *, struct tm *);
 
+#ifndef DECLARE_STACK_OF
 #define DECLARE_STACK_OF DEFINE_STACK_OF
+#endif
