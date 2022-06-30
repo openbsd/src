@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-capture-pane.c,v 1.56 2022/06/07 10:02:19 nicm Exp $ */
+/* $OpenBSD: cmd-capture-pane.c,v 1.57 2022/06/30 09:55:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Jonathan Alvarado <radobobo@users.sourceforge.net>
@@ -53,8 +53,8 @@ const struct cmd_entry cmd_clear_history_entry = {
 	.name = "clear-history",
 	.alias = "clearhist",
 
-	.args = { "t:", 0, 0, NULL },
-	.usage = CMD_TARGET_PANE_USAGE,
+	.args = { "Ht:", 0, 0, NULL },
+	.usage = "[-H] " CMD_TARGET_PANE_USAGE,
 
 	.target = { 't', CMD_FIND_PANE, 0 },
 
@@ -204,6 +204,8 @@ cmd_capture_pane_exec(struct cmd *self, struct cmdq_item *item)
 	if (cmd_get_entry(self) == &cmd_clear_history_entry) {
 		window_pane_reset_mode_all(wp);
 		grid_clear_history(wp->base.grid);
+		if (args_has(args, 'H'))
+			screen_reset_hyperlinks(wp->screen);
 		return (CMD_RETURN_NORMAL);
 	}
 

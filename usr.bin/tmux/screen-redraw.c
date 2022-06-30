@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-redraw.c,v 1.95 2022/03/16 17:00:17 nicm Exp $ */
+/* $OpenBSD: screen-redraw.c,v 1.96 2022/06/30 09:55:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -738,7 +738,7 @@ screen_redraw_draw_borders_cell(struct screen_redraw_ctx *ctx, u_int i, u_int j)
 		}
 	}
 
-	tty_cell(tty, &gc, &grid_default_cell, NULL);
+	tty_cell(tty, &gc, &grid_default_cell, NULL, NULL);
 	if (isolates)
 		tty_puts(tty, START_ISOLATE);
 }

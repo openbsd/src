@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.92 2022/03/24 09:05:57 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.93 2022/06/30 09:55:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -100,6 +100,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_ENFCS] = { TTYCODE_STRING, "Enfcs" },
 	[TTYC_ENMG] = { TTYCODE_STRING, "Enmg" },
 	[TTYC_FSL] = { TTYCODE_STRING, "fsl" },
+	[TTYC_HLS] = { TTYCODE_STRING, "Hls" },
 	[TTYC_HOME] = { TTYCODE_STRING, "home" },
 	[TTYC_HPA] = { TTYCODE_STRING, "hpa" },
 	[TTYC_ICH1] = { TTYCODE_STRING, "ich1" },
