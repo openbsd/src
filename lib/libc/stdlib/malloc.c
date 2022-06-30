@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.273 2022/02/26 16:14:42 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.274 2022/06/30 17:15:48 guenther Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -99,9 +99,6 @@
 
 #define MMAPA(a,sz,f)	mmap((a), (sz), PROT_READ | PROT_WRITE, \
     MAP_ANON | MAP_PRIVATE | (f), -1, 0)
-
-#define MQUERY(a,sz,f)	mquery((a), (sz), PROT_READ | PROT_WRITE, \
-    MAP_ANON | MAP_PRIVATE | MAP_FIXED | (f), -1, 0)
 
 struct region_info {
 	void *p;		/* page; low bits used to mark chunks */
@@ -1687,11 +1684,7 @@ orealloc(struct dir_info **argpool, void *p, size_t newsz, void *f)
 				size_t needed = rnewsz - roldsz;
 
 				STATS_INC(pool->cheap_realloc_tries);
-				q = MQUERY(hint, needed, pool->mmap_flag);
-				if (q == hint)
-					q = MMAPA(hint, needed, pool->mmap_flag);
-				else
-					q = MAP_FAILED;
+				q = MMAPA(hint, needed, MAP_FIXED | __MAP_NOREPLACE | pool->mmap_flag);
 				if (q == hint) {
 					STATS_ADD(pool->malloc_used, needed);
 					if (pool->malloc_junk == 2)
@@ -1709,9 +1702,6 @@ orealloc(struct dir_info **argpool, void *p, size_t newsz, void *f)
 					STATS_INC(pool->cheap_reallocs);
 					ret = p;
 					goto done;
-				} else if (q != MAP_FAILED) {
-					if (munmap(q, needed))
-						wrterror(pool, "munmap %p", q);
 				}
 			}
 		} else if (rnewsz < roldsz) {
