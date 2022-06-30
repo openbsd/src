@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.78 2022/06/26 06:49:09 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.79 2022/06/30 13:17:58 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -894,57 +894,67 @@ struct vm;
 
 /*
  * Virtual CPU
+ *
+ * Methods used to vcpu struct members:
+ *	a	atomic operations
+ *	I	immutable operations
+ *	K	kernel lock
+ *	r	reference count
+ *	v	vcpu rwlock
+ *	V	vm struct's vcpu list lock (vm_vcpu_lock)
  */
 struct vcpu {
 	/*
 	 * Guest FPU state - this must remain as the first member of the struct
 	 * to ensure 64-byte alignment (set up during vcpu_pool init)
 	 */
-	struct savefpu vc_g_fpu;
+	struct savefpu vc_g_fpu;		/* [v] */
 
 	/* VMCS / VMCB pointer */
-	vaddr_t vc_control_va;
-	paddr_t vc_control_pa;
+	vaddr_t vc_control_va;			/* [I] */
+	paddr_t vc_control_pa;			/* [I] */
 
 	/* VLAPIC pointer */
-	vaddr_t vc_vlapic_va;
-	uint64_t vc_vlapic_pa;
+	vaddr_t vc_vlapic_va;			/* [I] */
+	uint64_t vc_vlapic_pa;			/* [I] */
 
 	/* MSR bitmap address */
-	vaddr_t vc_msr_bitmap_va;
-	uint64_t vc_msr_bitmap_pa;
+	vaddr_t vc_msr_bitmap_va;		/* [I] */
+	uint64_t vc_msr_bitmap_pa;		/* [I] */
 
-	struct vm *vc_parent;
-	uint32_t vc_id;
-	uint16_t vc_vpid;
-	u_int vc_state;
-	SLIST_ENTRY(vcpu) vc_vcpu_link;
+	struct vm *vc_parent;			/* [I] */
+	uint32_t vc_id;				/* [I] */
+	uint16_t vc_vpid;			/* [I] */
+	u_int vc_state;				/* [a] */
+	SLIST_ENTRY(vcpu) vc_vcpu_link;		/* [V] */
 
-	uint8_t vc_virt_mode;
+	uint8_t vc_virt_mode;			/* [I] */
 
 	struct rwlock vc_lock;
-	struct cpu_info *vc_last_pcpu;
-	struct vm_exit vc_exit;
+	struct refcnt vc_refcnt;		/* [a] */
 
-	uint16_t vc_intr;
-	uint8_t vc_irqready;
+	struct cpu_info *vc_last_pcpu;		/* [v] */
+	struct vm_exit vc_exit;			/* [v] */
 
-	uint8_t vc_fpuinited;
+	uint16_t vc_intr;			/* [v] */
+	uint8_t vc_irqready;			/* [v] */
 
-	uint64_t vc_h_xcr0;
+	uint8_t vc_fpuinited;			/* [v] */
 
-	struct vcpu_gueststate vc_gueststate;
+	uint64_t vc_h_xcr0;			/* [v] */
+
+	struct vcpu_gueststate vc_gueststate;	/* [v] */
 
 	uint8_t vc_event;
 
-	uint32_t vc_pvclock_version;
-	paddr_t vc_pvclock_system_gpa;
-	uint32_t vc_pvclock_system_tsc_mul;
+	uint32_t vc_pvclock_version;		/* [v] */
+	paddr_t vc_pvclock_system_gpa;		/* [v] */
+	uint32_t vc_pvclock_system_tsc_mul;	/* [v] */
 
 	/* Shadowed MSRs */
-	uint64_t vc_shadow_pat;
+	uint64_t vc_shadow_pat;			/* [v] */
 
-	/* VMX only */
+	/* VMX only (all requiring [v]) */
 	uint64_t vc_vmx_basic;
 	uint64_t vc_vmx_entry_ctls;
 	uint64_t vc_vmx_true_entry_ctls;
@@ -964,11 +974,11 @@ struct vcpu {
 	uint8_t vc_vmx_vpid_enabled;
 	uint64_t vc_vmx_cr0_fixed1;
 	uint64_t vc_vmx_cr0_fixed0;
-	uint32_t vc_vmx_vmcs_state;
+	uint32_t vc_vmx_vmcs_state;		/* [a] */
 #define VMCS_CLEARED	0
 #define VMCS_LAUNCHED	1
 
-	/* SVM only */
+	/* SVM only (all requiring [v]) */
 	vaddr_t vc_svm_hsa_va;
 	paddr_t vc_svm_hsa_pa;
 	vaddr_t vc_svm_ioio_va;
