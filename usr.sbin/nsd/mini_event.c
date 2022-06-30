@@ -298,6 +298,11 @@ event_base_loopexit(struct event_base* base,
 	return 0;
 }
 
+int event_base_loopbreak(struct event_base * base)
+{
+	return event_base_loopexit(base, NULL);
+}
+
 /* free event base, free events yourself */
 void
 event_base_free(struct event_base* base)

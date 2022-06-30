@@ -151,6 +151,62 @@ version(void)
 }
 
 static void
+setup_verifier_environment(void)
+{
+	size_t i;
+	int ret, ip4, ip6;
+	char *buf, host[NI_MAXHOST], serv[NI_MAXSERV];
+	size_t size, cnt = 0;
+
+	/* allocate large enough buffer to hold a list of all ip addresses.
+	   ((" " + INET6_ADDRSTRLEN + "@" + "65535") * n) + "\0" */
+	size = ((INET6_ADDRSTRLEN + 1 + 5 + 1) * nsd.verify_ifs) + 1;
+	buf = xalloc(size);
+
+	ip4 = ip6 = 0;
+	for(i = 0; i < nsd.verify_ifs; i++) {
+		ret = getnameinfo(
+			(struct sockaddr *)&nsd.verify_udp[i].addr.ai_addr,
+			nsd.verify_udp[i].addr.ai_addrlen,
+			host, sizeof(host), serv, sizeof(serv),
+			NI_NUMERICHOST | NI_NUMERICSERV);
+		if(ret != 0) {
+			log_msg(LOG_ERR, "error in getnameinfo: %s",
+				gai_strerror(ret));
+			continue;
+		}
+		buf[cnt++] = ' ';
+		cnt += strlcpy(&buf[cnt], host, size - cnt);
+		assert(cnt < size);
+		buf[cnt++] = '@';
+		cnt += strlcpy(&buf[cnt], serv, size - cnt);
+		assert(cnt < size);
+#ifdef INET6
+		if (nsd.verify_udp[i].addr.ai_family == AF_INET6 && !ip6) {
+			setenv("VERIFY_IPV6_ADDRESS", host, 1);
+			setenv("VERIFY_IPV6_PORT", serv, 1);
+			setenv("VERIFY_IP_ADDRESS", host, 1);
+			setenv("VERIFY_PORT", serv, 1);
+			ip6 = 1;
+		} else
+#endif
+		if (!ip4) {
+			assert(nsd.verify_udp[i].addr.ai_family == AF_INET);
+			setenv("VERIFY_IPV4_ADDRESS", host, 1);
+			setenv("VERIFY_IPV4_PORT", serv, 1);
+			if (!ip6) {
+				setenv("VERIFY_IP_ADDRESS", host, 1);
+				setenv("VERIFY_PORT", serv, 1);
+			}
+			ip4 = 1;
+		}
+	}
+
+	setenv("VERIFY_IP_ADDRESSES", &buf[1], 1);
+	free(buf);
+}
+
+static void
 copyaddrinfo(struct nsd_addrinfo *dest, struct addrinfo *src)
 {
 	dest->ai_flags = src->ai_flags;
@@ -260,7 +316,7 @@ figure_socket_servers(
 static void
 figure_default_sockets(
 	struct nsd_socket **udp, struct nsd_socket **tcp, size_t *ifs,
-	const char *udp_port, const char *tcp_port,
+	const char *node, const char *udp_port, const char *tcp_port,
 	const struct addrinfo *hints)
 {
 	size_t i = 0, n = 1;
@@ -291,23 +347,22 @@ figure_default_sockets(
 #ifdef INET6
 	if(hints->ai_family == AF_UNSPEC) {
 		/*
-		 * With IPv6 we'd like to open two separate sockets,
-		 * one for IPv4 and one for IPv6, both listening to
-		 * the wildcard address (unless the -4 or -6 flags are
-		 * specified).
+		 * With IPv6 we'd like to open two separate sockets, one for
+		 * IPv4 and one for IPv6, both listening to the wildcard
+		 * address (unless the -4 or -6 flags are specified).
 		 *
-		 * However, this is only supported on platforms where
-		 * we can turn the socket option IPV6_V6ONLY _on_.
-		 * Otherwise we just listen to a single IPv6 socket
-		 * and any incoming IPv4 connections will be
-		 * automatically mapped to our IPv6 socket.
+		 * However, this is only supported on platforms where we can
+		 * turn the socket option IPV6_V6ONLY _on_. Otherwise we just
+		 * listen to a single IPv6 socket and any incoming IPv4
+		 * connections will be automatically mapped to our IPv6
+		 * socket.
 		 */
 #ifdef IPV6_V6ONLY
 		int r;
 		struct addrinfo *addrs[2] = { NULL, NULL };
 
-		if((r = getaddrinfo(NULL, udp_port, &ai[0], &addrs[0])) == 0 &&
-		   (r = getaddrinfo(NULL, tcp_port, &ai[1], &addrs[1])) == 0)
+		if((r = getaddrinfo(node, udp_port, &ai[0], &addrs[0])) == 0 &&
+		   (r = getaddrinfo(node, tcp_port, &ai[1], &addrs[1])) == 0)
 		{
 			(*udp)[i].flags |= NSD_SOCKET_IS_OPTIONAL;
 			(*udp)[i].fib = -1;
@@ -335,9 +390,9 @@ figure_default_sockets(
 #endif /* INET6 */
 
 	*ifs = i + 1;
-	setup_socket(&(*udp)[i], NULL, udp_port, &ai[0]);
+	setup_socket(&(*udp)[i], node, udp_port, &ai[0]);
 	figure_socket_servers(&(*udp)[i], NULL);
-	setup_socket(&(*tcp)[i], NULL, tcp_port, &ai[1]);
+	setup_socket(&(*tcp)[i], node, tcp_port, &ai[1]);
 	figure_socket_servers(&(*tcp)[i], NULL);
 }
 
@@ -396,7 +451,7 @@ static void
 figure_sockets(
 	struct nsd_socket **udp, struct nsd_socket **tcp, size_t *ifs,
 	struct ip_address_option *ips,
-	const char *udp_port, const char *tcp_port,
+	const char *node, const char *udp_port, const char *tcp_port,
 	const struct addrinfo *hints)
 {
 	size_t i = 0;
@@ -409,7 +464,7 @@ figure_sockets(
 
 	if(!ips) {
 		figure_default_sockets(
-			udp, tcp, ifs, udp_port, tcp_port, hints);
+			udp, tcp, ifs, node, udp_port, tcp_port, hints);
 		return;
 	}
 
@@ -884,6 +939,7 @@ main(int argc, char *argv[])
 	struct addrinfo hints;
 	const char *udp_port = 0;
 	const char *tcp_port = 0;
+	const char *verify_port = 0;
 
 	const char *configfile = CONFIGFILE;
 
@@ -1153,6 +1209,11 @@ main(int argc, char *argv[])
 			tcp_port = TCP_PORT;
 		}
 	}
+	if(nsd.options->verify_port != 0) {
+		verify_port = nsd.options->verify_port;
+	} else {
+		verify_port = VERIFY_PORT;
+	}
 #ifdef BIND8_STATS
 	if(nsd.st.period == 0) {
 		nsd.st.period = nsd.options->statistics;
@@ -1340,7 +1401,13 @@ main(int argc, char *argv[])
 
 	resolve_interface_names(nsd.options);
 	figure_sockets(&nsd.udp, &nsd.tcp, &nsd.ifs,
-		nsd.options->ip_addresses, udp_port, tcp_port, &hints);
+		nsd.options->ip_addresses, NULL, udp_port, tcp_port, &hints);
+
+	if(nsd.options->verify_enable) {
+		figure_sockets(&nsd.verify_udp, &nsd.verify_tcp, &nsd.verify_ifs,
+			nsd.options->verify_ip_addresses, "localhost", verify_port, verify_port, &hints);
+		setup_verifier_environment();
+	}
 
 	/* Parse the username into uid and gid */
 	nsd.gid = getgid();

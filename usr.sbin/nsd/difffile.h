@@ -19,6 +19,12 @@ struct nsdst;
 #define DIFF_PART_XXFR ('X'<<24 | 'X'<<16 | 'F'<<8 | 'R')
 #define DIFF_PART_XFRF ('X'<<24 | 'F'<<16 | 'R'<<8 | 'F')
 
+#define DIFF_NOT_COMMITTED (0u) /* XFR not (yet) committed to disk */
+#define DIFF_COMMITTED (1u<<0) /* XFR committed to disk */
+#define DIFF_CORRUPT (1u<<1) /* XFR corrupt */
+#define DIFF_INCONSISTENT (1u<<2) /* IXFR cannot be applied */
+#define DIFF_VERIFIED (1u<<3) /* XFR already verified */
+
 /* write an xfr packet data to the diff file, type=IXFR.
    The diff file is created if necessary, with initial header(notcommitted). */
 void diff_write_packet(const char* zone, const char* pat, uint32_t old_serial,
@@ -32,6 +38,13 @@ void diff_write_packet(const char* zone, const char* pat, uint32_t old_serial,
 void diff_write_commit(const char* zone, uint32_t old_serial,
 	uint32_t new_serial, uint32_t num_parts, uint8_t commit,
 	const char* log_msg, struct nsd* nsd, uint64_t filenumber);
+
+/*
+ * Overwrite committed value of diff file with discarded to ensure diff
+ * file is not reapplied on reload.
+ */
+void diff_update_commit(const char* zone,
+	uint8_t commit, struct nsd* nsd, uint64_t filenumber);
 
 /*
  * These functions read parts of the diff file.
@@ -52,6 +65,12 @@ int add_RR(namedb_type* db, const dname_type* dname,
 	uint16_t type, uint16_t klass, uint32_t ttl,
 	buffer_type* packet, size_t rdatalen, zone_type *zone,
 	struct udb_ptr* udbz, int* softfail);
+
+enum soainfo_hint {
+	soainfo_ok,
+	soainfo_gone,
+	soainfo_bad
+};
 
 /* task udb structure */
 struct task_list_d {
@@ -98,7 +117,7 @@ struct task_list_d {
 	} task_type;
 	uint32_t size; /* size of this struct */
 
-	/** soainfo: zonename dname, soaRR wireform */
+	/** soainfo: zonename dname, soaRR wireform, yesno is soainfo_hint */
 	/** expire: zonename, boolyesno */
 	/** apply_xfr: zonename, serials, yesno is filenamecounter */
 	uint32_t oldserial, newserial;
@@ -112,7 +131,7 @@ struct udb_base* task_file_create(const char* file);
 void task_remap(udb_base* udb);
 void task_process_sync(udb_base* udb);
 void task_clear(udb_base* udb);
-void task_new_soainfo(udb_base* udb, udb_ptr* last, struct zone* z, int gone);
+void task_new_soainfo(udb_base* udb, udb_ptr* last, struct zone* z, enum soainfo_hint hint);
 void task_new_expire(udb_base* udb, udb_ptr* last,
 	const struct dname* z, int expired);
 void* task_new_stat_info(udb_base* udb, udb_ptr* last, struct nsdst* stat,

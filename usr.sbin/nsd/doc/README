@@ -14,13 +14,14 @@
 3.5 ... Diagnosing NSD log entries
 3.6 ... Interfaces
 3.7 ... Tuning
+3.8 ... Zone verification
 4.0 Support and Feedback
 4.1 ... Your Support
 
 
 1.0 Introduction
 
-This is NSD Name Server Daemon (NSD) version 4.5.0.
+This is NSD Name Server Daemon (NSD) version 4.6.0.
 
 The NLnet Labs Name Server Daemon (NSD) is an authoritative RFC compliant 
 DNS nameserver. It was first conceived to allow for more genetic 
@@ -56,7 +57,7 @@ and uses a simple configuration file 'nsd.conf'.
 
 1.2 Quick build and install
 
-Step 1: Unpack the source with gtar -xzvf nsd-4.5.0.tar.gz
+Step 1: Unpack the source with gtar -xzvf nsd-4.6.0.tar.gz
 
 Step 2: Create user nsd or any other unprivileged user of your
         choice. In case of later make sure to use
@@ -110,9 +111,9 @@ Step 11: If desired add 'nsd-control write' to your superuser crontab to
 Use your favorite combination of tar and gnu zip to unpack the source,
 for example
 
-$ gtar -xzvf nsd-4.5.0.tar.gz
+$ gtar -xzvf nsd-4.6.0.tar.gz
 
-will unpack the source into the ./nsd-4.5.0 directory...
+will unpack the source into the ./nsd-4.6.0 directory...
 
 
 2.2 Configuring NSD
@@ -767,6 +768,102 @@ entirely on the hardware. cpu-affinity options are supported on Linux and
 FreeBSD.
 
 
+3.8 Zone verification
+
+NSD can be configured to verify a zone is correct before publishing it. This
+feature is primarily aimed at fortifying DNSSEC in the DNS
+notify/transfer-chain, but can be used to carry out any checks desired.
+
+An external verifier can be configured per zone. When a zone with verification
+enabled is received or updated via an (incremental) zone transfer, it will be
+submitted to the verifier for evaluation. If the verifier deems the updated
+zone correct (indicated with exit status 0), the zone will be served. NSD will
+discard the update and continue to serve the zone before the update if the
+exit status of the verifier is non-zero.
+
+Verifier options can be configured globally in the "verify:" clause, or
+specifically for a zone/pattern in the respective "zone:" and "pattern:"
+clauses. The global values are applied by default.
+
+The zone can be provided to the verifier in two ways.
+
+	1. The complete zone can be fed to the standard input of the verifier.
+
+	   This modus operandi is enabled by default and can be configured
+	   with the "verifier-feed-zone:" option.
+
+	   Examples for verifiers that read from the standard input are:
+	   "ldns-verify-zone -V2" (-V2 to suppress copying to stdout) or
+	   "validns -" (don't forget the dash (-) to read the zone from stdin).
+
+	2. The zone can be served to the verifier.
+
+	   This is disabled by default and can be enabled by configuring ip-
+	   addresses, with the "ip-address:" option in the "verify:" clause,
+	   on which the zone to be assessed will be served. Addresses can
+	   contain a port number to override the default, which is 5347 by
+	   default, but can be overridden with the "port:" option in the
+	   verify clause.
+
+	   For example to validate the SOA of a zone example.com by querying,
+	   with a certain DS record as the trust anchor (in file example.com.ds),
+	   the "verifier:" option could have the following value:
+	   "drill -S -k example.com.ds @localhost -p 5347 example.com SOA"
+
+A verifier is informed about the domain name of the zone to be verified and
+the accessibility of the system submitting the zone via environment variables.
+
+	VERIFY_ZONE
+		Domain name of the zone to be verified.
+
+	VERIFY_ZONE_ON_STDIN
+		Contains "yes" if the zone is fed over standard input,
+		otherwise "no".
+
+	VERIFY_IP_ADDRESSES
+		Contains a list of <ip-address>@<port>s on which the zone
+		to be verified can be queried.
+
+	VERIFY_IPV6_ADDRESS and VERIFY_IPV6_PORT
+                Contains the first configured IPv6 address and port.
+
+	VERIFY_IPV4_ADDRESS and VERIFY_IPV4_PORT
+		Contains the first configured IPv4 address and port.
+
+	VERIFY_IP_ADDRESS and VERIFY_PORT
+		Contains the first configured address and port.
+		IPv6 is preferred over IPv4.
+
+For each zone one verifier will be run at the same time, but when multiple
+to-be-verified zones are received, multiple verifiers may be run
+simultaneously. The number of verifiers that may be run simultaneously is
+configured with the "verifier-count:" option in the "verify:" clause and
+defaults to 1.
+
+The time a verifier may take can be configured with the "verifier-timeout:"
+option in the "verify:" clause (to make the general default) or in the "zone:"
+or "pattern:" clause to set it for a specific zone. When the time the verifier
+takes exceeds the timeout value, the zone to be verified will be considered
+bad. By default the value is 0, which means that the verifier may take as long
+as it needs.
+
+To enable verification for all zones.
+
+	verify:
+		enable: yes
+		verifier: <command>
+
+To enable verification only for a specific zone.
+
+	verify:
+		enable: yes
+		verify-zones: no
+
+	zone:
+		name: example.com
+		verify-zone: yes
+
+
 4.0 Support and Feedback
 
 NLnet Labs is committed to support NSD and its other software products on 
@@ -830,4 +927,4 @@ larger and regular donations please contact us at users@NLnetLabs.nl. Also
 see http://www.nlnetlabs.nl/labs/contributors/.
 
 
-$Id: README,v 1.3 2022/06/30 08:21:37 florian Exp $
+$Id: README,v 1.4 2022/06/30 10:49:39 florian Exp $

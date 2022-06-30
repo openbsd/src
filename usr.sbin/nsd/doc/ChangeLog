@@ -1,3 +1,26 @@
+23 June 2022: Wouter
+	- Tag for 4.6.0rc1.
+
+17 June 2022: Wouter
+	- Fix compilation with libev, without event_base_loopbreak.
+
+16 June 2022: Wouter
+	- Fix that the unit test verify_repat cleans up nsd on exit.
+	- Fix to remove ixfrcreate.c asserts about uint16 within limits
+	  because of warnings from analyzers.
+
+14 June 2022: Wouter
+	- Fix compilation without libevent and compilation of nsd-mem.
+	- Fix verify handler add of sigchld event for compilation without
+	  libevent.
+
+3 June 2022: Wouter
+	- Fix static analyzer reports on ixfrcreate temp file.
+	- Fixup wrong ixfrcreate fread return check.
+
+13 May 2022: Wouter
+	- The code repo continues with version 4.5.1.
+
 6 May 2022: Wouter
 	- Merge PR #209: IXFR out
 	  This adds IXFR out functionality to NSD. NSD can copy IXFRs from

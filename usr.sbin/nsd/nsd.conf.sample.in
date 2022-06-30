@@ -264,6 +264,38 @@ server:
 	# Transfers over TLS (XoT). Default is "" (default verify locations).
 	# tls-cert-bundle: "path/to/ca-bundle.pem"
 
+verify:
+	# Enable zone verification. Default is no.
+	# enable: no
+
+	# Port to answer verifier queries on. Default is 5347.
+	# port: 5347
+
+	# Interfaces to bind for zone verification (default are the localhost
+	# interfaces, usually 127.0.0.1 and ::1). To bind to to multiple IP
+	# addresses, list them one by one. Socket options cannot be specified
+	# for verify ip-address options.
+	# ip-address: 127.0.0.1
+	# ip-address: 127.0.0.1@5347
+	# ip-address: ::1
+
+	# Verify zones by default. Default is yes.
+	# verify-zones: yes
+
+	# Command to execute for zone verification.
+	# verifier: ldns-verify-zone
+	# verifier: validns -
+	# verifier: drill -k <keyfile> @127.0.0.1 -p 5347 example.com SOA
+
+	# Maximum number of verifiers to run concurrently. Default is 1.
+	# verifier-count: 1
+
+	# Feed updated zone to verifier over standard input. Default is yes.
+	# verifier-feed-zone: yes
+
+	# Number of seconds before verifier is killed (0 is forever).
+	# verifier-timeout: 0
+
 # DNSTAP config section, if compiled with that
 # dnstap:
 	# set this to yes and set one or more of dnstap-log-..-messages to yes.
@@ -431,6 +463,23 @@ remote-control:
 	# (which master to request from first, which slave to notify first).
 	#include-pattern: "common-masters"
 
+	# Verify zone before publishing.
+	# Default is value of verify-zones in verify.
+	# verify-zone: yes
+
+	# Command to execute for zone verification.
+	# Default is verifier in verify.
+	# verifier: ldns-verify-zone
+	# verifier: validns -
+	# verifier: drill -k <keyfile> @127.0.0.1 -p 5347 example.com SOA
+
+	# Feed updated zone to verifier over standard input.
+	# Default is value of verifier-feed-zone in verify.
+	# verifier-feed-zone: yes
+
+	# Number of seconds before verifier is killed (0 is forever).
+	# Default is verifier-timeout in verify.
+	# verifier-timeout: 0
 
 # Fixed zone entries.  Here you can config zones that cannot be deleted.
 # Zones that are dynamically added and deleted are put in the zonelist file.

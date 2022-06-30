@@ -35,6 +35,7 @@ struct xfrd_tcp_set;
 struct notify_zone;
 struct udb_ptr;
 typedef struct xfrd_state xfrd_state_type;
+typedef struct xfrd_xfr xfrd_xfr_type;
 typedef struct xfrd_zone xfrd_zone_type;
 typedef struct xfrd_soa xfrd_soa_type;
 /*
@@ -78,6 +79,8 @@ struct xfrd_state {
 	int reload_added;
 	/* last reload must have caught all zone updates before this time */
 	time_t reload_cmd_last_sent;
+	time_t reload_cmd_first_sent;
+	uint8_t reload_failed;
 	uint8_t can_send_reload;
 	pid_t reload_pid;
 	/* timeout for lost sigchild and reaping children */
@@ -210,17 +213,29 @@ struct xfrd_zone {
 	/* xfr message handling data */
 	/* query id */
 	uint16_t query_id;
+	xfrd_xfr_type *latest_xfr;
+
+	int multi_master_first_master; /* >0: first check master_num */
+	int multi_master_update_check; /* -1: not update >0: last update master_num */
+} ATTR_PACKED;
+
+/*
+ * State for a single zone XFR
+ */
+struct xfrd_xfr {
+	xfrd_xfr_type *next;
+	xfrd_xfr_type *prev;
 	uint16_t query_type;
+	uint8_t sent; /* written to tasklist (tri-state) */
+	time_t acquired; /* time xfr was acquired */
 	uint32_t msg_seq_nr; /* number of messages already handled */
 	uint32_t msg_old_serial, msg_new_serial; /* host byte order */
 	size_t msg_rr_count;
 	uint8_t msg_is_ixfr; /* 1:IXFR detected. 2:middle IXFR SOA seen. */
 	tsig_record_type tsig; /* tsig state for IXFR/AXFR */
 	uint64_t xfrfilenumber; /* identifier for file to store xfr into,
-				valid if msg_seq_nr nonzero */
-	int multi_master_first_master; /* >0: first check master_num */
-	int multi_master_update_check; /* -1: not update >0: last update master_num */
-} ATTR_PACKED;
+	                           valid if msg_seq_nr nonzero */
+};
 
 enum xfrd_packet_result {
 	xfrd_packet_bad, /* drop the packet/connection */
@@ -328,6 +343,13 @@ bound_soa_disk_expire(xfrd_zone_type* zone)
 	return within_expire_bounds(zone, ntohl(zone->soa_disk.expire));
 }
 
+/* return the zone's expire period (from the SOA in use by the running server) */
+static inline time_t
+bound_soa_nsd_expire(xfrd_zone_type* zone)
+{
+	return within_expire_bounds(zone, ntohl(zone->soa_nsd.expire));
+}
+
 extern xfrd_state_type* xfrd;
 
 /* start xfrd, new start. Pass socket to server_main. */
@@ -424,6 +446,9 @@ void xfrd_copy_soa(xfrd_soa_type* soa, rr_type* rr);
    finished, and all zone SOAs have been sent. */
 void xfrd_check_failed_updates(void);
 
+void
+xfrd_prepare_updates_for_reload(void);
+
 /*
  * Prepare zones for a reload, this sets the times on the zones to be
  * before the current time, so the reload happens after.
@@ -450,5 +475,9 @@ void xfrd_handle_notify_and_start_xfr(xfrd_zone_type* zone, xfrd_soa_type* soa);
 void xfrd_handle_zone(int fd, short event, void* arg);
 
 const char* xfrd_pretty_time(time_t v);
+
+xfrd_xfr_type *xfrd_prepare_zone_xfr(xfrd_zone_type *zone, uint16_t query_type);
+
+void xfrd_delete_zone_xfr(xfrd_zone_type *zone, xfrd_xfr_type *xfr);
 
 #endif /* XFRD_H */

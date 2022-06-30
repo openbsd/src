@@ -85,6 +85,7 @@
 #ifdef USE_DNSTAP
 #include "dnstap/dnstap_collector.h"
 #endif
+#include "verify.h"
 
 #define RELOAD_SYNC_TIMEOUT 25 /* seconds */
 
@@ -1384,6 +1385,15 @@ server_init(struct nsd *nsd)
 		nsd->reuseport = 0;
 	}
 
+	/* open server interface ports for verifiers */
+	for(i = 0; i < nsd->verify_ifs; i++) {
+		if(open_udp_socket(nsd, &nsd->verify_udp[i], NULL) == -1 ||
+		   open_tcp_socket(nsd, &nsd->verify_tcp[i], NULL) == -1)
+		{
+			return -1;
+		}
+	}
+
 	return 0;
 }
 
@@ -2252,6 +2262,8 @@ reload_do_stats(int cmdfd, struct nsd* nsd, udb_ptr* last)
 }
 #endif /* BIND8_STATS */
 
+void server_verify(struct nsd *nsd, int cmdsocket);
+
 /*
  * Reload the database, stop parent, re-fork children and continue.
  * as server_main.
@@ -2265,6 +2277,9 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 	int ret;
 	udb_ptr last_task;
 	struct sigaction old_sigchld, ign_sigchld;
+	struct radnode* node;
+	zone_type* zone;
+	enum soainfo_hint hint;
 	/* ignore SIGCHLD from the previous server_main that used this pid */
 	memset(&ign_sigchld, 0, sizeof(ign_sigchld));
 	ign_sigchld.sa_handler = SIG_IGN;
@@ -2305,6 +2320,52 @@ server_reload(struct nsd *nsd, region_type* server_region, netio_type* netio,
 	server_zonestat_realloc(nsd); /* realloc for new children */
 	server_zonestat_switch(nsd);
 #endif
+
+	if(nsd->options->verify_enable) {
+#ifdef RATELIMIT
+		/* allocate resources for rate limiting. use a slot that is guaranteed
+		   not mapped to a file so no persistent data is overwritten */
+		rrl_init(nsd->child_count + 1);
+#endif
+
+		/* spin-up server and execute verifiers for each zone */
+		server_verify(nsd, cmdsocket);
+#ifdef RATELIMIT
+		/* deallocate rate limiting resources */
+		rrl_deinit(nsd->child_count + 1);
+#endif
+	}
+
+	for(node = radix_first(nsd->db->zonetree);
+	    node != NULL;
+	    node = radix_next(node))
+	{
+		zone = (zone_type *)node->elem;
+		if(zone->is_updated) {
+			if(zone->is_bad) {
+				nsd->mode = NSD_RELOAD_FAILED;
+				hint = soainfo_bad;
+			} else {
+				hint = soainfo_ok;
+			}
+			/* update(s), verified or not, possibly with subsequent
+			   skipped update(s). skipped update(s) are picked up
+			   by failed update check in xfrd */
+			task_new_soainfo(nsd->task[nsd->mytask], &last_task,
+			                 zone, hint);
+		} else if(zone->is_skipped) {
+			/* corrupt or inconsistent update without preceding
+			   update(s), communicate soainfo_gone */
+			task_new_soainfo(nsd->task[nsd->mytask], &last_task,
+			                 zone, soainfo_gone);
+		}
+		zone->is_updated = 0;
+		zone->is_skipped = 0;
+	}
+
+	if(nsd->mode == NSD_RELOAD_FAILED) {
+		exit(NSD_RELOAD_FAILED);
+	}
 
 	/* listen for the signals of failed children again */
 	sigaction(SIGCHLD, &old_sigchld, NULL);
@@ -2490,13 +2551,14 @@ server_main(struct nsd *nsd)
 					restart_child_servers(nsd, server_region, netio,
 						&nsd->xfrd_listener->fd);
 				} else if (child_pid == reload_pid) {
-					sig_atomic_t cmd = NSD_RELOAD_DONE;
+					sig_atomic_t cmd = NSD_RELOAD_FAILED;
 					pid_t mypid;
 					log_msg(LOG_WARNING,
 					       "Reload process %d failed with status %d, continuing with old database",
 					       (int) child_pid, status);
 					reload_pid = -1;
 					if(reload_listener.fd != -1) close(reload_listener.fd);
+					netio_remove_handler(netio, &reload_listener);
 					reload_listener.fd = -1;
 					reload_listener.event_types = NETIO_EVENT_NONE;
 					task_process_sync(nsd->task[nsd->mytask]);
@@ -2586,7 +2648,7 @@ server_main(struct nsd *nsd)
 				nsd->restart_children = 0;
 			}
 			if(nsd->reload_failed) {
-				sig_atomic_t cmd = NSD_RELOAD_DONE;
+				sig_atomic_t cmd = NSD_RELOAD_FAILED;
 				pid_t mypid;
 				nsd->reload_failed = 0;
 				log_msg(LOG_WARNING,
@@ -2594,6 +2656,7 @@ server_main(struct nsd *nsd)
 				       (int) reload_pid);
 				reload_pid = -1;
 				if(reload_listener.fd != -1) close(reload_listener.fd);
+				netio_remove_handler(netio, &reload_listener);
 				reload_listener.fd = -1;
 				reload_listener.event_types = NETIO_EVENT_NONE;
 				task_process_sync(nsd->task[nsd->mytask]);
@@ -2953,6 +3016,131 @@ add_tcp_handler(
 	if(event_add(handler, NULL) != 0)
 		log_msg(LOG_ERR, "nsd tcp: event_add failed");
 	data->event_added = 1;
+}
+
+/*
+ * Serve DNS request to verifiers (short-lived)
+ */
+void server_verify(struct nsd *nsd, int cmdsocket)
+{
+	size_t size = 0;
+	struct event cmd_event, signal_event, exit_event;
+	struct zone *zone;
+
+	assert(nsd != NULL);
+
+	zone = verify_next_zone(nsd, NULL);
+	if(zone == NULL)
+		return;
+
+	nsd->server_region = region_create(xalloc, free);
+	nsd->event_base = nsd_child_event_base();
+
+	nsd->next_zone_to_verify = zone;
+	nsd->verifier_count = 0;
+	nsd->verifier_limit = nsd->options->verifier_count;
+	size = sizeof(struct verifier) * nsd->verifier_limit;
+	pipe(nsd->verifier_pipe);
+	fcntl(nsd->verifier_pipe[0], F_SETFD, FD_CLOEXEC);
+	fcntl(nsd->verifier_pipe[1], F_SETFD, FD_CLOEXEC);
+	nsd->verifiers = region_alloc_zero(nsd->server_region, size);
+
+	for(size_t i = 0; i < nsd->verifier_limit; i++) {
+		nsd->verifiers[i].nsd = nsd;
+		nsd->verifiers[i].zone = NULL;
+		nsd->verifiers[i].pid = -1;
+		nsd->verifiers[i].output_stream.fd = -1;
+		nsd->verifiers[i].output_stream.priority = LOG_INFO;
+		nsd->verifiers[i].error_stream.fd = -1;
+		nsd->verifiers[i].error_stream.priority = LOG_ERR;
+	}
+
+	event_set(&cmd_event, cmdsocket, EV_READ|EV_PERSIST, verify_handle_command, nsd);
+	if(event_base_set(nsd->event_base, &cmd_event) != 0 ||
+	   event_add(&cmd_event, NULL) != 0)
+	{
+		log_msg(LOG_ERR, "verify: could not add command event");
+		goto fail;
+	}
+
+	event_set(&signal_event, SIGCHLD, EV_SIGNAL|EV_PERSIST, verify_handle_signal, nsd);
+	if(event_base_set(nsd->event_base, &signal_event) != 0 ||
+	   signal_add(&signal_event, NULL) != 0)
+	{
+		log_msg(LOG_ERR, "verify: could not add signal event");
+		goto fail;
+	}
+
+	event_set(&exit_event, nsd->verifier_pipe[0], EV_READ|EV_PERSIST, verify_handle_exit, nsd);
+	if(event_base_set(nsd->event_base, &exit_event) != 0 ||
+	   event_add(&exit_event, NULL) != 0)
+  {
+		log_msg(LOG_ERR, "verify: could not add exit event");
+		goto fail;
+	}
+
+	memset(msgs, 0, sizeof(msgs));
+	for (int i = 0; i < NUM_RECV_PER_SELECT; i++) {
+		queries[i] = query_create(nsd->server_region,
+			compressed_dname_offsets,
+			compression_table_size, compressed_dnames);
+		query_reset(queries[i], UDP_MAX_MESSAGE_LEN, 0);
+		iovecs[i].iov_base = buffer_begin(queries[i]->packet);
+		iovecs[i].iov_len = buffer_remaining(queries[i]->packet);
+		msgs[i].msg_hdr.msg_iov = &iovecs[i];
+		msgs[i].msg_hdr.msg_iovlen = 1;
+		msgs[i].msg_hdr.msg_name = &queries[i]->addr;
+		msgs[i].msg_hdr.msg_namelen = queries[i]->addrlen;
+	}
+
+	for (size_t i = 0; i < nsd->verify_ifs; i++) {
+		struct udp_handler_data *data;
+		data = region_alloc_zero(
+			nsd->server_region, sizeof(*data));
+		add_udp_handler(nsd, &nsd->verify_udp[i], data);
+	}
+
+	tcp_accept_handler_count = nsd->verify_ifs;
+	tcp_accept_handlers = region_alloc_array(nsd->server_region,
+		nsd->verify_ifs, sizeof(*tcp_accept_handlers));
+
+	for (size_t i = 0; i < nsd->verify_ifs; i++) {
+		struct tcp_accept_handler_data *data;
+		data = &tcp_accept_handlers[i];
+		memset(data, 0, sizeof(*data));
+		add_tcp_handler(nsd, &nsd->verify_tcp[i], data);
+	}
+
+	while(nsd->next_zone_to_verify != NULL &&
+	      nsd->verifier_count < nsd->verifier_limit)
+	{
+		verify_zone(nsd, nsd->next_zone_to_verify);
+		nsd->next_zone_to_verify
+			= verify_next_zone(nsd, nsd->next_zone_to_verify);
+	}
+
+	/* short-lived main loop */
+	event_base_dispatch(nsd->event_base);
+
+	/* remove command and exit event handlers */
+	event_del(&exit_event);
+	event_del(&signal_event);
+	event_del(&cmd_event);
+
+	assert(nsd->next_zone_to_verify == NULL || nsd->mode == NSD_QUIT);
+	assert(nsd->verifier_count == 0 || nsd->mode == NSD_QUIT);
+fail:
+	event_base_free(nsd->event_base);
+	close(nsd->verifier_pipe[0]);
+	close(nsd->verifier_pipe[1]);
+	region_destroy(nsd->server_region);
+
+	nsd->event_base = NULL;
+	nsd->server_region = NULL;
+	nsd->verifier_limit = 0;
+	nsd->verifier_pipe[0] = -1;
+	nsd->verifier_pipe[1] = -1;
+	nsd->verifiers = NULL;
 }
 
 /*

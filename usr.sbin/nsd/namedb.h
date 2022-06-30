@@ -144,8 +144,12 @@ struct zone
 	struct timespec mtime; /* time of last modification */
 	unsigned     zonestatid; /* array index for zone stats */
 	unsigned     is_secure : 1; /* zone uses DNSSEC */
-	unsigned     is_ok : 1; /* zone has not expired. */
-	unsigned     is_changed : 1; /* zone was changed by AXFR */
+	unsigned     is_ok : 1; /* zone has not expired */
+	unsigned     is_changed : 1; /* zone changes must be written to disk */
+	unsigned     is_updated : 1; /* zone was changed by XFR */
+	unsigned     is_skipped : 1; /* subsequent zone updates are skipped */
+	unsigned     is_checked : 1; /* zone already verified */
+	unsigned     is_bad : 1; /* zone failed verification */
 } ATTR_PACKED;
 
 /* a RR in DNS */

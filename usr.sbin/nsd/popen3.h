@@ -20,8 +20,8 @@
  * of the pointers will have been set.
  */
 pid_t popen3(char *const *command,
-             FILE **finptr,
-             FILE **foutptr,
-             FILE **ferrptr);
+             int *fdinptr,
+             int *fdoutptr,
+             int *fderrptr);
 
 #endif /* _POPEN3_H_ */

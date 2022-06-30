@@ -1,4 +1,4 @@
-.TH "nsd\-control" "8" "May 13, 2022" "NLnet Labs" "nsd 4.5.0"
+.TH "nsd\-control" "8" "Jun 30, 2022" "NLnet Labs" "nsd 4.6.0"
 .\" Copyright (c) 2011, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -35,8 +35,11 @@ There are several commands that the server understands.
 .TP
 .B start
 Start the server. Simply execs \fInsd\fR(8).  The nsd executable 
-is searched for in the \fBPATH\fR set in the environment.  It is started 
-with the config file specified using \fI\-c\fR or the default config file.
+is not searched for in the \fBPATH\fR set in the environment.  Instead the
+default location relative to the installation prefix specified at
+compile-time.  The executable location can be overridden by setting
+\fINSD_PATH\fR in the environment.  It is started with the config file
+specified using \fI\-c\fR or the default config file.
 .TP
 .B stop
 Stop the server. The server daemon exits.

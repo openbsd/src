@@ -247,6 +247,10 @@ namedb_zone_create(namedb_type* db, const dname_type* dname,
 	zone->zonestatid = 0;
 	zone->is_secure = 0;
 	zone->is_changed = 0;
+	zone->is_updated = 0;
+	zone->is_skipped = 0;
+	zone->is_checked = 0;
+	zone->is_bad = 0;
 	zone->is_ok = 1;
 	return zone;
 }

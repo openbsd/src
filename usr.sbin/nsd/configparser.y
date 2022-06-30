@@ -36,6 +36,12 @@ static int parse_boolean(const char *str, int *bln);
 static int parse_expire_expr(const char *str, long long *num, uint8_t *expr);
 static int parse_number(const char *str, long long *num);
 static int parse_range(const char *str, long long *low, long long *high);
+
+struct component {
+	struct component *next;
+	char *str;
+};
+
 %}
 
 %union {
@@ -45,6 +51,8 @@ static int parse_range(const char *str, long long *low, long long *high);
   struct ip_address_option *ip;
   struct range_option *range;
   struct cpu_option *cpu;
+  char **strv;
+  struct component *comp;
 }
 
 %token <str> STRING
@@ -53,6 +61,8 @@ static int parse_range(const char *str, long long *low, long long *high);
 %type <ip> ip_address
 %type <llng> service_cpu_affinity
 %type <cpu> cpus
+%type <strv> command
+%type <comp> arguments
 
 /* server */
 %token VAR_SERVER
@@ -195,6 +205,16 @@ static int parse_range(const char *str, long long *low, long long *high);
 %token VAR_BINDTODEVICE
 %token VAR_SETFIB
 
+/* verify */
+%token VAR_VERIFY
+%token VAR_ENABLE
+%token VAR_VERIFY_ZONE
+%token VAR_VERIFY_ZONES
+%token VAR_VERIFIER
+%token VAR_VERIFIER_COUNT
+%token VAR_VERIFIER_FEED_ZONE
+%token VAR_VERIFIER_TIMEOUT
+
 %%
 
 blocks:
@@ -208,7 +228,8 @@ block:
   | key
   | tls_auth
   | pattern
-  | zone ;
+  | zone
+  | verify ;
 
 server:
     VAR_SERVER server_block ;
@@ -986,6 +1007,90 @@ pattern_or_zone_option:
     {
       cfg_parser->pattern->create_ixfr = $2;
       cfg_parser->pattern->create_ixfr_is_default = 0;
+    }
+  | VAR_VERIFY_ZONE boolean
+    { cfg_parser->pattern->verify_zone = $2; }
+  | VAR_VERIFIER command
+    { cfg_parser->pattern->verifier = $2; }
+  | VAR_VERIFIER_FEED_ZONE boolean
+    { cfg_parser->pattern->verifier_feed_zone = $2; }
+  | VAR_VERIFIER_TIMEOUT number
+    { cfg_parser->pattern->verifier_timeout = $2; } ;
+
+verify:
+    VAR_VERIFY verify_block ;
+
+verify_block:
+    verify_block verify_option | ;
+
+verify_option:
+    VAR_ENABLE boolean
+    { cfg_parser->opt->verify_enable = $2; }
+  | VAR_IP_ADDRESS ip_address
+    {
+      struct ip_address_option *ip = cfg_parser->opt->verify_ip_addresses;
+      if(!ip) {
+        cfg_parser->opt->verify_ip_addresses = $2;
+      } else {
+        while(ip->next) { ip = ip->next; }
+        ip->next = $2;
+      }
+    }
+  | VAR_PORT number
+    {
+      /* port number, stored as a string */
+      char buf[16];
+      (void)snprintf(buf, sizeof(buf), "%lld", $2);
+      cfg_parser->opt->verify_port = region_strdup(cfg_parser->opt->region, buf);
+    }
+  | VAR_VERIFY_ZONES boolean
+    { cfg_parser->opt->verify_zones = $2; }
+  | VAR_VERIFIER command
+    { cfg_parser->opt->verifier = $2; }
+  | VAR_VERIFIER_COUNT number
+    { cfg_parser->opt->verifier_count = (int)$2; }
+  | VAR_VERIFIER_TIMEOUT number
+    { cfg_parser->opt->verifier_timeout = (int)$2; }
+  | VAR_VERIFIER_FEED_ZONE boolean
+    { cfg_parser->opt->verifier_feed_zone = $2; } ;
+
+command:
+    STRING arguments
+    {
+      char **argv;
+      size_t argc = 1;
+      for(struct component *i = $2; i; i = i->next) {
+        argc++;
+      }
+      argv = region_alloc_zero(
+        cfg_parser->opt->region, (argc + 1) * sizeof(char *));
+      argc = 0;
+      argv[argc++] = $1;
+      for(struct component *j, *i = $2; i; i = j) {
+        j = i->next;
+        argv[argc++] = i->str;
+        region_recycle(cfg_parser->opt->region, i, sizeof(*i));
+      }
+      $$ = argv;
+    } ;
+
+arguments:
+    { $$ = NULL; }
+  | arguments STRING
+    {
+      struct component *comp = region_alloc_zero(
+        cfg_parser->opt->region, sizeof(*comp));
+      comp->str = region_strdup(cfg_parser->opt->region, $2);
+      if($1) {
+        struct component *tail = $1;
+        while(tail->next) {
+         tail = tail->next;
+        }
+        tail->next = comp;
+        $$ = $1;
+      } else {
+        $$ = comp;
+      }
     } ;
 
 ip_address:

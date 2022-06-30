@@ -43,6 +43,7 @@
 
 #include "config.h"
 #include <stdio.h>
+#include <stdlib.h>
 #ifdef HAVE_SSL
 #include <sys/types.h>
 #include <unistd.h>
@@ -589,8 +590,11 @@ int main(int argc, char* argv[])
 	if(argc == 0)
 		usage();
 	if(argc >= 1 && strcmp(argv[0], "start")==0) {
-		if(execl(NSD_START_PATH, "nsd", "-c", cfgfile, 
-			(char*)NULL) < 0) {
+		const char *path;
+		if((path = getenv("NSD_PATH")) == NULL) {
+			path = NSD_START_PATH;
+		}
+		if(execl(path, "nsd", "-c", cfgfile, (char*)NULL) < 0) {
 			fprintf(stderr, "could not exec %s: %s\n",
 				NSD_START_PATH, strerror(errno));
 			exit(1);

@@ -974,7 +974,7 @@ xfrd_tcp_setup_write_packet(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 
 		xfrd_setup_packet(tcp->packet, TYPE_AXFR, CLASS_IN, zone->apex,
 			zone->query_id);
-		zone->query_type = TYPE_AXFR;
+		xfrd_prepare_zone_xfr(zone, TYPE_AXFR);
 	} else {
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "request incremental zone "
 						"transfer (IXFR) for %s to %s",
@@ -982,17 +982,13 @@ xfrd_tcp_setup_write_packet(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 
 		xfrd_setup_packet(tcp->packet, TYPE_IXFR, CLASS_IN, zone->apex,
 			zone->query_id);
-		zone->query_type = TYPE_IXFR;
+		xfrd_prepare_zone_xfr(zone, TYPE_IXFR);
 		NSCOUNT_SET(tcp->packet, 1);
 		xfrd_write_soa_buffer(tcp->packet, zone->apex, &zone->soa_disk);
 	}
-	/* old transfer needs to be removed still? */
-	if(zone->msg_seq_nr)
-		xfrd_unlink_xfrfile(xfrd->nsd, zone->xfrfilenumber);
-	zone->msg_seq_nr = 0;
-	zone->msg_rr_count = 0;
 	if(zone->master->key_options && zone->master->key_options->tsig_key) {
-		xfrd_tsig_sign_request(tcp->packet, &zone->tsig, zone->master);
+		xfrd_tsig_sign_request(
+			tcp->packet, &zone->latest_xfr->tsig, zone->master);
 	}
 	buffer_flip(tcp->packet);
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "sent tcp query with ID %d", zone->query_id));
@@ -1459,7 +1455,7 @@ xfrd_tcp_read(struct xfrd_tcp_pipeline* tp)
 #endif
 		ret = conn_read(tcp);
 	if(ret == -1) {
-		log_msg(LOG_ERR, "xfrd: failed writing tcp %s", strerror(errno));
+		log_msg(LOG_ERR, "xfrd: failed reading tcp %s", strerror(errno));
 		xfrd_tcp_pipe_stop(tp);
 		return;
 	}

@@ -1,5 +1,13 @@
 NSD RELEASE NOTES
 
+4.6.0
+================
+FEATURES:
+	- Port zone-verification from CreDNS to NSD4.
+BUG FIXES:
+	- Fix static analyzer reports on ixfrcreate temp file.
+	- Fixup wrong ixfrcreate fread return check.
+
 4.5.0
 ================
 FEATURES:

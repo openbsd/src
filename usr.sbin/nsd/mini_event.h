@@ -151,6 +151,8 @@ const char *event_get_method(void);
 int event_base_dispatch(struct event_base *);
 /** exit that loop */
 int event_base_loopexit(struct event_base *, struct timeval *);
+/** exit loop */
+int event_base_loopbreak(struct event_base *);
 /** run select once */
 #define EVLOOP_ONCE 1
 int event_base_loop(struct event_base* base, int flags);

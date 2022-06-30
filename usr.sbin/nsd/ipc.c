@@ -589,8 +589,8 @@ xfrd_send_reload_req(xfrd_state_type* xfrd)
 	task_remap(xfrd->nsd->task[xfrd->nsd->mytask]);
 	udb_ptr_init(xfrd->last_task, xfrd->nsd->task[xfrd->nsd->mytask]);
 	assert(udb_base_get_userdata(xfrd->nsd->task[xfrd->nsd->mytask])->data == 0);
-
-	xfrd_prepare_zones_for_reload();
+	if(!xfrd->reload_cmd_first_sent)
+		xfrd->reload_cmd_first_sent = xfrd_time();
 	xfrd->reload_cmd_last_sent = xfrd_time();
 	xfrd->need_to_send_reload = 0;
 	xfrd->can_send_reload = 0;
@@ -760,9 +760,13 @@ xfrd_handle_ipc_read(struct event* handler, xfrd_state_type* xfrd)
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: main sent shutdown cmd."));
 		xfrd->shutdown = 1;
 		break;
+	case NSD_RELOAD_FAILED:
+		xfrd->reload_failed = 1;
+		/* fall through */
 	case NSD_RELOAD_DONE:
 		/* reload has finished */
-		DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: ipc recv RELOAD_DONE"));
+		DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: ipc recv %s",
+			xfrd->reload_failed ? "RELOAD FAILED" : "RELOAD DONE"));
 		if(block_read(NULL, handler->ev_fd, &xfrd->reload_pid,
 			sizeof(pid_t), -1) != sizeof(pid_t)) {
 			log_msg(LOG_ERR, "xfrd cannot get reload_pid");
@@ -776,7 +780,15 @@ xfrd_handle_ipc_read(struct event* handler, xfrd_state_type* xfrd)
 		xfrd->ipc_send_blocked = 0;
 		ipc_xfrd_set_listening(xfrd, EV_PERSIST|EV_READ|EV_WRITE);
 		xfrd_reopen_logfile();
-		xfrd_check_failed_updates();
+		if(!xfrd->reload_failed) {
+			xfrd_check_failed_updates();
+			xfrd->reload_cmd_first_sent = 0;
+		} else {
+			/* make reload happen again, right away */
+			xfrd_set_reload_now(xfrd);
+		}
+		xfrd_prepare_zones_for_reload();
+		xfrd->reload_failed = 0;
 		break;
 	case NSD_PASS_TO_XFRD:
 		DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: ipc recv PASS_TO_XFRD"));

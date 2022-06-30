@@ -144,6 +144,16 @@ nsd_options_create(region_type* region)
 	opt->server_cert_file = CONFIGDIR"/nsd_server.pem";
 	opt->control_key_file = CONFIGDIR"/nsd_control.key";
 	opt->control_cert_file = CONFIGDIR"/nsd_control.pem";
+
+	opt->verify_enable = 0;
+	opt->verify_ip_addresses = NULL;
+	opt->verify_port = VERIFY_PORT;
+	opt->verify_zones = 1;
+	opt->verifier = NULL;
+	opt->verifier_count = 1;
+	opt->verifier_feed_zone = 1;
+	opt->verifier_timeout = 0;
+
 	return opt;
 }
 
@@ -891,6 +901,14 @@ pattern_options_create(region_type* region)
 	p->ixfr_number_is_default = 1;
 	p->create_ixfr = 0;
 	p->create_ixfr_is_default = 1;
+	p->verify_zone = VERIFY_ZONE_INHERIT;
+	p->verify_zone_is_default = 1;
+	p->verifier = NULL;
+	p->verifier_feed_zone = VERIFIER_FEED_ZONE_INHERIT;
+	p->verifier_feed_zone_is_default = 1;
+	p->verifier_timeout = VERIFIER_TIMEOUT_INHERIT;
+	p->verifier_timeout_is_default = 1;
+
 	return p;
 }
 
@@ -921,6 +939,17 @@ acl_list_delete(region_type* region, struct acl_options* list)
 	}
 }
 
+static void
+verifier_delete(region_type* region, char **v)
+{
+	if(v != NULL) {
+		size_t vc = 0;
+		for(vc = 0; v[vc] != NULL; vc++)
+			region_recycle(region, v[vc], strlen(v[vc]) + 1);
+		region_recycle(region, v, (vc + 1) * sizeof(char *));
+	}
+}
+
 void
 pattern_options_remove(struct nsd_options* opt, const char* name)
 {
@@ -944,6 +973,7 @@ pattern_options_remove(struct nsd_options* opt, const char* name)
 	acl_list_delete(opt->region, p->provide_xfr);
 	acl_list_delete(opt->region, p->allow_query);
 	acl_list_delete(opt->region, p->outgoing_interface);
+	verifier_delete(opt->region, p->verifier);
 
 	region_recycle(opt->region, p, sizeof(struct pattern_options));
 }
@@ -1006,6 +1036,37 @@ copy_changed_acl(struct nsd_options* opt, struct acl_options** orig,
 }
 
 static void
+copy_changed_verifier(struct nsd_options* opt, char ***ov, char **nv)
+{
+	size_t ovc, nvc;
+	assert(ov != NULL);
+	ovc = nvc = 0;
+	if(nv != NULL) {
+		for(; nv[nvc] != NULL; nvc++) ;
+	} else {
+		verifier_delete(opt->region, *ov);
+		*ov = NULL;
+		return;
+	}
+	if(*ov != NULL) {
+		for(; (*ov)[ovc] != NULL; ovc++) {
+			if(ovc < nvc && strcmp((*ov)[ovc], nv[ovc]) != 0)
+				break;
+		}
+		if(ovc == nvc)
+			return;
+		verifier_delete(opt->region, *ov);
+		*ov = NULL;
+	}
+	*ov = region_alloc(opt->region, (nvc + 1) * sizeof(*nv));
+	for(ovc = 0; nv[ovc] != NULL; ovc++) {
+		(*ov)[ovc] = region_strdup(opt->region, nv[ovc]);
+	}
+	(*ov)[ovc] = NULL;
+	assert(ovc == nvc);
+}
+
+static void
 copy_pat_fixed(region_type* region, struct pattern_options* orig,
 	struct pattern_options* p)
 {
@@ -1043,6 +1104,12 @@ copy_pat_fixed(region_type* region, struct pattern_options* orig,
 	orig->ixfr_number_is_default = p->ixfr_number_is_default;
 	orig->create_ixfr = p->create_ixfr;
 	orig->create_ixfr_is_default = p->create_ixfr_is_default;
+	orig->verify_zone = p->verify_zone;
+	orig->verify_zone_is_default = p->verify_zone_is_default;
+	orig->verifier_timeout = p->verifier_timeout;
+	orig->verifier_timeout_is_default = p->verifier_timeout_is_default;
+	orig->verifier_feed_zone = p->verifier_feed_zone;
+	orig->verifier_feed_zone_is_default = p->verifier_feed_zone_is_default;
 }
 
 void
@@ -1061,6 +1128,7 @@ pattern_options_add_modify(struct nsd_options* opt, struct pattern_options* p)
 		orig->allow_query = copy_acl_list(opt, p->allow_query);
 		orig->outgoing_interface = copy_acl_list(opt,
 			p->outgoing_interface);
+		copy_changed_verifier(opt, &orig->verifier, p->verifier);
 		nsd_options_insert_pattern(opt, orig);
 	} else {
 		/* modify in place so pointers stay valid (and copy
@@ -1079,6 +1147,7 @@ pattern_options_add_modify(struct nsd_options* opt, struct pattern_options* p)
 		copy_changed_acl(opt, &orig->allow_query, p->allow_query);
 		copy_changed_acl(opt, &orig->outgoing_interface,
 			p->outgoing_interface);
+		copy_changed_verifier(opt, &orig->verifier, p->verifier);
 	}
 }
 
@@ -1086,6 +1155,26 @@ struct pattern_options*
 pattern_options_find(struct nsd_options* opt, const char* name)
 {
 	return (struct pattern_options*)rbtree_search(opt->patterns, name);
+}
+
+static int
+pattern_verifiers_equal(const char **vp, const char **vq)
+{
+	size_t vpc, vqc;
+	if(vp == NULL)
+		return vq == NULL;
+	if(vq == NULL)
+		return 0;
+	for(vpc = 0; vp[vpc] != NULL; vpc++) ;
+	for(vqc = 0; vq[vqc] != NULL; vqc++) ;
+	if(vpc != vqc)
+		return 0;
+	for(vpc = 0; vp[vpc] != NULL; vpc++) {
+		assert(vq[vpc] != NULL);
+		if (strcmp(vp[vpc], vq[vpc]) != 0)
+			return 0;
+	}
+	return 1;
 }
 
 int
@@ -1144,6 +1233,17 @@ pattern_options_equal(struct pattern_options* p, struct pattern_options* q)
 	if(!booleq(p->ixfr_number_is_default,q->ixfr_number_is_default)) return 0;
 	if(!booleq(p->create_ixfr,q->create_ixfr)) return 0;
 	if(!booleq(p->create_ixfr_is_default,q->create_ixfr_is_default)) return 0;
+	if(p->verify_zone != q->verify_zone) return 0;
+	if(!booleq(p->verify_zone_is_default,
+		q->verify_zone_is_default)) return 0;
+	if(!pattern_verifiers_equal((const char **)p->verifier,
+		(const char **)q->verifier)) return 0;
+	if(p->verifier_feed_zone != q->verifier_feed_zone) return 0;
+	if(!booleq(p->verifier_feed_zone_is_default,
+		q->verifier_feed_zone_is_default)) return 0;
+	if(p->verifier_timeout != q->verifier_timeout) return 0;
+	if(!booleq(p->verifier_timeout_is_default,
+		q->verifier_timeout_is_default)) return 0;
 	return 1;
 }
 
@@ -1278,6 +1378,49 @@ unmarshal_acl_list(region_type* r, struct buffer* b)
 	return list;
 }
 
+static void
+marshal_strv(struct buffer* b, char **strv)
+{
+	uint32_t i, n;
+
+	assert(b != NULL);
+
+	if (strv == NULL) {
+		marshal_u32(b, 0);
+		return;
+	}
+	for(n = 0; strv[n]; n++) {
+		/* do nothing */
+	}
+	marshal_u32(b, n);
+	for(i = 0; strv[i] != NULL; i++) {
+		marshal_str(b, strv[i]);
+	}
+	marshal_u8(b, 0);
+}
+
+static char **
+unmarshal_strv(region_type* r, struct buffer* b)
+{
+	uint32_t i, n;
+	char **strv;
+
+	assert(r != NULL);
+	assert(b != NULL);
+
+	if ((n = unmarshal_u32(b)) == 0) {
+		return NULL;
+	}
+	strv = region_alloc_zero(r, (n + 1) * sizeof(char *));
+	for(i = 0; i <= n; i++) {
+		strv[i] = unmarshal_str(r, b);
+	}
+	assert(i == (n + 1));
+	assert(strv[i - 1] == NULL);
+
+	return strv;
+}
+
 void
 pattern_options_marshal(struct buffer* b, struct pattern_options* p)
 {
@@ -1318,6 +1461,13 @@ pattern_options_marshal(struct buffer* b, struct pattern_options* p)
 	marshal_u8(b, p->ixfr_number_is_default);
 	marshal_u8(b, p->create_ixfr);
 	marshal_u8(b, p->create_ixfr_is_default);
+	marshal_u8(b, p->verify_zone);
+	marshal_u8(b, p->verify_zone_is_default);
+	marshal_strv(b, p->verifier);
+	marshal_u8(b, p->verifier_feed_zone);
+	marshal_u8(b, p->verifier_feed_zone_is_default);
+	marshal_u32(b, p->verifier_timeout);
+	marshal_u8(b, p->verifier_timeout_is_default);
 }
 
 struct pattern_options*
@@ -1361,6 +1511,13 @@ pattern_options_unmarshal(region_type* r, struct buffer* b)
 	p->ixfr_number_is_default = unmarshal_u8(b);
 	p->create_ixfr = unmarshal_u8(b);
 	p->create_ixfr_is_default = unmarshal_u8(b);
+	p->verify_zone = unmarshal_u8(b);
+	p->verify_zone_is_default = unmarshal_u8(b);
+	p->verifier = unmarshal_strv(r, b);
+	p->verifier_feed_zone = unmarshal_u8(b);
+	p->verifier_feed_zone_is_default = unmarshal_u8(b);
+	p->verifier_timeout = unmarshal_u32(b);
+	p->verifier_timeout_is_default = unmarshal_u8(b);
 	return p;
 }
 
@@ -2187,6 +2344,42 @@ config_apply_pattern(struct pattern_options *dest, const char* name)
 	copy_and_append_acls(&dest->outgoing_interface, pat->outgoing_interface);
 	if(pat->multi_master_check)
 		dest->multi_master_check = pat->multi_master_check;
+
+	if(!pat->verify_zone_is_default) {
+		dest->verify_zone = pat->verify_zone;
+		dest->verify_zone_is_default = 0;
+	}
+	if(!pat->verifier_timeout_is_default) {
+		dest->verifier_timeout = pat->verifier_timeout;
+		dest->verifier_timeout_is_default = 0;
+	}
+	if(!pat->verifier_feed_zone_is_default) {
+		dest->verifier_feed_zone = pat->verifier_feed_zone;
+		dest->verifier_feed_zone_is_default = 0;
+	}
+	if(pat->verifier != NULL) {
+		size_t cnt;
+		char **vec;
+		region_type *region = cfg_parser->opt->region;
+
+		for(cnt = 0; pat->verifier[cnt] != NULL; cnt++) ;
+		vec = region_alloc(region, (cnt + 1) * sizeof(char *));
+		for(cnt = 0; pat->verifier[cnt] != NULL; cnt++) {
+			vec[cnt] = region_strdup(region, pat->verifier[cnt]);
+		}
+		vec[cnt] = NULL;
+		if(dest->verifier != NULL) {
+			size_t size;
+			for(cnt = 0; dest->verifier[cnt] != NULL; cnt++) {
+				size = strlen(dest->verifier[cnt]) + 1;
+				region_recycle(
+					region, dest->verifier[cnt], size);
+			}
+			size = (cnt + 1) * sizeof(char *);
+			region_recycle(region, dest->verifier, size);
+		}
+		dest->verifier = vec;
+	}
 }
 
 void
