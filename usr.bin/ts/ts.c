@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.2 2022/06/29 16:01:10 job Exp $	*/
+/*	$OpenBSD: ts.c,v 1.3 2022/06/30 07:42:50 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Job Snijders <job@openbsd.org>
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -40,8 +40,8 @@ main(int argc, char *argv[])
 {
 	int iflag, mflag, sflag;
 	int ch, prev;
-	struct timespec rstart, start, now, elapsed;
-	struct tm *lt, tm;
+	struct timespec roff, start, now;
+	struct tm *tm;
 	int clock = CLOCK_REALTIME;
 
 	if (pledge("stdio", NULL) == -1)
@@ -88,34 +88,27 @@ main(int argc, char *argv[])
 	if ((outbuf = calloc(1, bufsize)) == NULL)
 		err(1, NULL);
 
-	clock_gettime(CLOCK_REALTIME, &rstart);
-	clock_gettime(CLOCK_MONOTONIC, &start);
+	/* force UTC for interval calculations */
+	if (iflag || sflag)
+		if (setenv("TZ", "UTC", 1) == -1)
+			err(1, "setenv UTC");
+
+	clock_gettime(CLOCK_REALTIME, &roff);
+	clock_gettime(clock, &start);
+	timespecsub(&roff, &start, &roff);
 
 	for (prev = '\n'; (ch = getchar()) != EOF; prev = ch) {
 		if (prev == '\n') {
-			if (clock_gettime(clock, &now))
-				err(1, "clock_gettime");
-			if (iflag || sflag) {
-				timespecsub(&now, &start, &elapsed);
-				if (gmtime_r(&elapsed.tv_sec, &tm) == NULL)
-					err(1, "gmtime_r");
-				if (iflag)
-					if (clock_gettime(clock, &start))
-						err(1, "clock_gettime");
-				fmtfmt(&tm, elapsed.tv_nsec);
-			} else if (mflag) {
-				timespecsub(&now, &start, &elapsed);
-				timespecadd(&rstart, &elapsed, &now);
-				lt = localtime(&now.tv_sec);
-				if (lt == NULL)
-					err(1, "localtime");
-				fmtfmt(lt, now.tv_nsec);
-			} else {
-				lt = localtime(&now.tv_sec);
-				if (lt == NULL)
-					err(1, "localtime");
-				fmtfmt(lt, now.tv_nsec);
-			}
+			clock_gettime(clock, &now);
+			if (iflag || sflag)
+				timespecsub(&now, &start, &now);
+			else if (mflag)
+				timespecadd(&now, &roff, &now);
+			if (iflag)
+				clock_gettime(clock, &start);
+			if ((tm = localtime(&now.tv_sec)) == NULL)
+				err(1, "localtime/gmtime");
+			fmtfmt(tm, now.tv_nsec);
 		}
 		if (putchar(ch) == EOF)
 			break;
