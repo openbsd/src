@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.22 2022/06/29 08:56:44 beck Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.23 2022/06/30 08:25:56 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -285,7 +285,7 @@ asn1_time_parse_cbs(const CBS *cbs, int is_gentime, struct tm *out_tm)
 
 	if (!CBS_get_u8(&copy, &tz))
 		return 0;
-	if ( tz != 'Z')
+	if (tz != 'Z')
 		return 0; /* Reject anything but Z on the end. */
 
 	if (CBS_len(&copy) != 0)
