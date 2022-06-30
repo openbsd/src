@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_sct_ctx.c,v 1.5 2021/12/18 16:34:52 tb Exp $ */
+/*	$OpenBSD: ct_sct_ctx.c,v 1.6 2022/06/30 11:14:47 tb Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
  * (steve@openssl.org) for the OpenSSL project 2014.
@@ -65,7 +65,7 @@
 #include <string.h>
 
 #include <openssl/err.h>
-#include <openssl/obj_mac.h>
+#include <openssl/objects.h>
 #include <openssl/x509.h>
 
 #include "ct_local.h"
