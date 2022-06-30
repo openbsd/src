@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ts.1,v 1.5 2022/06/30 15:45:31 kn Exp $
+.\"	$OpenBSD: ts.1,v 1.6 2022/06/30 21:40:41 jmc Exp $
 .\"
 .\" Copyright (c) 2022 Job Snijders <job@openbsd.org>
 .\"
@@ -61,15 +61,15 @@ or
 .Fl s
 options is used.
 .Pp
-The following non-standard conversion specifications append microsecond
-resolution:
-.Cm \&%.S ,
-.Cm \&%.s ,
+Some additional conversion specifications are also supported
+to append microsecond resolution:
+.Cm %.S ,
+.Cm %.s ,
 and
-.Cm \&%.T ;
+.Cm %.T ;
 which are similar to
-.Cm \&%S ,
-.Cm \&%s ,
+.Cm %S ,
+.Cm %s ,
 and
 .Cm \&%T .
 Examples:
@@ -89,6 +89,8 @@ $ ls | ts -i %.S
 00.000004 ts.1
 00.000004 ts.c
 .Ed
+.Sh SEE ALSO
+.Xr strftime 3
 .Sh HISTORY
 A
 .Nm
