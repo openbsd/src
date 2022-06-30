@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.158 2022/06/28 19:39:54 mpi Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.159 2022/06/30 13:54:37 mpi Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.40 2000/11/17 11:39:39 mrg Exp $	*/
 
 /*
@@ -1725,7 +1725,6 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 
 		bouncekva = uvm_pagermapin(tpps, npages, swmapflags);
 		if (bouncekva == 0) {
-			KASSERT(tpps[0] != oompps[0]);
 			pool_put(&bufpool, bp);
 			uvm_pagermapout(kva, npages);
 			uvm_swap_freepages(tpps, npages);
