@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.12 2022/06/30 08:41:01 beck Exp $ */
+/* $OpenBSD: asn1time.c,v 1.13 2022/06/30 09:13:49 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -99,6 +99,16 @@ struct asn1_time_test asn1_goodtime_tests[] = {
 };
 
 struct asn1_time_test asn1_gentime_tests[] = {
+	{
+		.str = "20161208193400Z",
+		.data = "20161208193400Z",
+		.time = 1481225640,
+		.der = {
+			0x18, 0x0f, 0x32, 0x30, 0x31, 0x36, 0x31, 0x32,
+			0x30, 0x38, 0x31, 0x39, 0x33, 0x34, 0x30, 0x30,
+			0x5a,
+		},
+	},
 	{
 		.str = "19700101000000Z",
 		.data = "19700101000000Z",
@@ -279,6 +289,7 @@ asn1_gentime_test(int test_no, struct asn1_time_test *att)
 	ASN1_GENERALIZEDTIME *gt = NULL;
 	int failure = 1;
 	int len;
+	struct tm tm;
 
 	if (ASN1_GENERALIZEDTIME_set_string(NULL, att->str) != 1) {
 		fprintf(stderr, "FAIL: test %i - failed to set string '%s'\n",
@@ -296,6 +307,21 @@ asn1_gentime_test(int test_no, struct asn1_time_test *att)
 	}
 	if (asn1_compare_str(test_no, gt, att->str) != 0)
 		goto done;
+
+	if (ASN1_TIME_to_tm(gt, &tm) == 0)  {
+		fprintf(stderr, "FAIL: test %i - ASN1_time_to_tm failed '%s'\n",
+		    test_no, att->str);
+		goto done;
+	}
+
+	if (timegm(&tm) != att->time) {
+		/* things with crappy time_t should die in fire */
+		int64_t a = timegm(&tm);
+		int64_t b = att->time;
+		fprintf(stderr, "FAIL: test %i - times don't match, expected %lld got %lld\n",
+		    test_no, b, a);
+		goto done;
+	}
 
 	if ((len = i2d_ASN1_GENERALIZEDTIME(gt, &p)) <= 0) {
 		fprintf(stderr, "FAIL: test %i - i2d_ASN1_GENERALIZEDTIME "
