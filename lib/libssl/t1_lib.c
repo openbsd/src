@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.186 2022/01/24 13:47:53 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.187 2022/06/30 16:05:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -150,36 +150,128 @@ tls1_clear(SSL *s)
 	s->version = s->method->version;
 }
 
-static const int nid_list[] = {
-	NID_sect163k1,		/* sect163k1 (1) */
-	NID_sect163r1,		/* sect163r1 (2) */
-	NID_sect163r2,		/* sect163r2 (3) */
-	NID_sect193r1,		/* sect193r1 (4) */
-	NID_sect193r2,		/* sect193r2 (5) */
-	NID_sect233k1,		/* sect233k1 (6) */
-	NID_sect233r1,		/* sect233r1 (7) */
-	NID_sect239k1,		/* sect239k1 (8) */
-	NID_sect283k1,		/* sect283k1 (9) */
-	NID_sect283r1,		/* sect283r1 (10) */
-	NID_sect409k1,		/* sect409k1 (11) */
-	NID_sect409r1,		/* sect409r1 (12) */
-	NID_sect571k1,		/* sect571k1 (13) */
-	NID_sect571r1,		/* sect571r1 (14) */
-	NID_secp160k1,		/* secp160k1 (15) */
-	NID_secp160r1,		/* secp160r1 (16) */
-	NID_secp160r2,		/* secp160r2 (17) */
-	NID_secp192k1,		/* secp192k1 (18) */
-	NID_X9_62_prime192v1,	/* secp192r1 (19) */
-	NID_secp224k1,		/* secp224k1 (20) */
-	NID_secp224r1,		/* secp224r1 (21) */
-	NID_secp256k1,		/* secp256k1 (22) */
-	NID_X9_62_prime256v1,	/* secp256r1 (23) */
-	NID_secp384r1,		/* secp384r1 (24) */
-	NID_secp521r1,		/* secp521r1 (25) */
-	NID_brainpoolP256r1,	/* brainpoolP256r1 (26) */
-	NID_brainpoolP384r1,	/* brainpoolP384r1 (27) */
-	NID_brainpoolP512r1,	/* brainpoolP512r1 (28) */
-	NID_X25519,		/* X25519 (29) */
+struct curve {
+	int nid;
+	int bits;
+};
+
+static const struct curve nid_list[] = {
+	[1] = {
+		.nid = NID_sect163k1,		/* sect163k1 (1) */
+		.bits = 80,
+	},
+	[2] = {
+		.nid = NID_sect163r1,		/* sect163r1 (2) */
+		.bits = 80,
+	},
+	[3] = {
+		.nid = NID_sect163r2,		/* sect163r2 (3) */
+		.bits = 80,
+	},
+	[4] = {
+		.nid = NID_sect193r1,		/* sect193r1 (4) */
+		.bits = 80,
+	},
+	[5] = {
+		.nid = NID_sect193r2,		/* sect193r2 (5) */
+		.bits = 80,
+	},
+	[6] = {
+		.nid = NID_sect233k1,		/* sect233k1 (6) */
+		.bits = 112,
+	},
+	[7] = {
+		.nid = NID_sect233r1,		/* sect233r1 (7) */
+		.bits = 112,
+	},
+	[8] = {
+		.nid = NID_sect239k1,		/* sect239k1 (8) */
+		.bits = 112,
+	},
+	[9] = {
+		.nid = NID_sect283k1,		/* sect283k1 (9) */
+		.bits = 128,
+	},
+	[10] = {
+		.nid = NID_sect283r1,		/* sect283r1 (10) */
+		.bits = 128,
+	},
+	[11] = {
+		.nid = NID_sect409k1,		/* sect409k1 (11) */
+		.bits = 192,
+	},
+	[12] = {
+		.nid = NID_sect409r1,		/* sect409r1 (12) */
+		.bits = 192,
+	},
+	[13] = {
+		.nid = NID_sect571k1,		/* sect571k1 (13) */
+		.bits = 256,
+	},
+	[14] = {
+		.nid = NID_sect571r1,		/* sect571r1 (14) */
+		.bits = 256,
+	},
+	[15] = {
+		.nid = NID_secp160k1,		/* secp160k1 (15) */
+		.bits = 80,
+	},
+	[16] = {
+		.nid = NID_secp160r1,		/* secp160r1 (16) */
+		.bits = 80,
+	},
+	[17] = {
+		.nid = NID_secp160r2,		/* secp160r2 (17) */
+		.bits = 80,
+	},
+	[18] = {
+		.nid = NID_secp192k1,		/* secp192k1 (18) */
+		.bits = 80,
+	},
+	[19] = {
+		.nid = NID_X9_62_prime192v1,	/* secp192r1 (19) */
+		.bits = 80,
+	},
+	[20] = {
+		.nid = NID_secp224k1,		/* secp224k1 (20) */
+		.bits = 112,
+	},
+	[21] = {
+		.nid = NID_secp224r1,		/* secp224r1 (21) */
+		.bits = 112,
+	},
+	[22] = {
+		.nid = NID_secp256k1,		/* secp256k1 (22) */
+		.bits = 128,
+	},
+	[23] = {
+		.nid = NID_X9_62_prime256v1,	/* secp256r1 (23) */
+		.bits = 128,
+	},
+	[24] = {
+		.nid = NID_secp384r1,		/* secp384r1 (24) */
+		.bits = 192,
+	},
+	[25] = {
+		.nid = NID_secp521r1,		/* secp521r1 (25) */
+		.bits = 256,
+	},
+	[26] = {
+		.nid = NID_brainpoolP256r1,	/* brainpoolP256r1 (26) */
+		.bits = 128,
+	},
+	[27] = {
+		.nid = NID_brainpoolP384r1,	/* brainpoolP384r1 (27) */
+		.bits = 192,
+	},
+	[28] = {
+		.nid = NID_brainpoolP512r1,	/* brainpoolP512r1 (28) */
+		.bits = 256,
+	},
+	[29] = {
+		.nid = NID_X25519,		/* X25519 (29) */
+		.bits = 128,
+	},
 };
 
 #if 0
@@ -244,11 +336,32 @@ static const uint16_t eccurves_server_default[] = {
 int
 tls1_ec_curve_id2nid(const uint16_t curve_id)
 {
+	const struct curve *curve;
+
 	/* ECC curves from draft-ietf-tls-ecc-12.txt (Oct. 17, 2005) */
 	if ((curve_id < 1) ||
 	    ((unsigned int)curve_id > sizeof(nid_list) / sizeof(nid_list[0])))
 		return 0;
-	return nid_list[curve_id - 1];
+
+	if ((curve = &nid_list[curve_id]) == NULL)
+		return 0;
+
+	return curve->nid;
+}
+
+int
+tls1_ec_curve_id2bits(const uint16_t curve_id)
+{
+	const struct curve *curve;
+
+	if ((curve_id < 1) ||
+	    ((unsigned int)curve_id > sizeof(nid_list) / sizeof(nid_list[0])))
+		return 0;
+
+	if ((curve = &nid_list[curve_id]) == NULL)
+		return 0;
+
+	return curve->bits;
 }
 
 uint16_t
@@ -455,6 +568,8 @@ tls1_check_curve(SSL *s, const uint16_t curve_id)
 	tls1_get_group_list(s, 0, &groups, &groupslen);
 
 	for (i = 0; i < groupslen; i++) {
+		if (!ssl_security_supported_group(s, groups[i]))
+			continue;
 		if (groups[i] == curve_id)
 			return (1);
 	}
@@ -478,6 +593,8 @@ tls1_get_shared_curve(SSL *s)
 	tls1_get_group_list(s, (server_pref != 0), &supp, &supplen);
 
 	for (i = 0; i < preflen; i++) {
+		if (!ssl_security_supported_group(s, pref[i]))
+			continue;
 		for (j = 0; j < supplen; j++) {
 			if (pref[i] == supp[j])
 				return (tls1_ec_curve_id2nid(pref[i]));

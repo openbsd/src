@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.13 2022/06/30 11:25:52 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.14 2022/06/30 16:05:07 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -27,6 +27,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "bytestring.h"
 #include "ssl_locl.h"
 
 static int
@@ -397,4 +398,26 @@ ssl_security_cert_chain(const SSL *ssl, STACK_OF(X509) *sk, X509 *x509,
 	}
 
 	return 1;
+}
+
+int
+ssl_security_supported_group(const SSL *ssl, uint16_t curve_id)
+{
+	CBB cbb;
+	int bits, nid;
+	uint8_t curve[2];
+
+	if ((bits = tls1_ec_curve_id2bits(curve_id)) == 0)
+		return 0;
+	if ((nid = tls1_ec_curve_id2nid(curve_id)) == NID_undef)
+		return 0;
+
+	if (!CBB_init_fixed(&cbb, curve, sizeof(curve)))
+		return 0;
+	if (!CBB_add_u16(&cbb, curve_id))
+		return 0;
+	if (!CBB_finish(&cbb, NULL, NULL))
+		return 0;
+
+	return ssl_security(ssl, SSL_SECOP_CURVE_SUPPORTED, bits, nid, curve);
 }

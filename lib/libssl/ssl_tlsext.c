@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.116 2022/06/30 11:18:38 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.117 2022/06/30 16:05:07 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -216,6 +216,8 @@ tlsext_supportedgroups_client_build(SSL *s, uint16_t msg_type, CBB *cbb)
 		return 0;
 
 	for (i = 0; i < groups_len; i++) {
+		if (!ssl_security_supported_group(s, groups[i]))
+			continue;
 		if (!CBB_add_u16(&grouplist, groups[i]))
 			return 0;
 	}
