@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.12 2022/06/30 11:17:49 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.13 2022/06/30 11:25:52 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -233,9 +233,9 @@ ssl_security(const SSL *ssl, int op, int bits, int nid, void *other)
 }
 
 int
-ssl_security_version(const SSL *ssl, int tls_version)
+ssl_security_version(const SSL *ssl, int version)
 {
-	return ssl_security(ssl, SSL_SECOP_VERSION, 0, tls_version, NULL);
+	return ssl_security(ssl, SSL_SECOP_VERSION, 0, version, NULL);
 }
 
 int
