@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.284 2022/06/29 12:17:31 jca Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.285 2022/06/30 15:35:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -932,6 +932,9 @@ pledge_sysctl(struct proc *p, int miblen, int *mib, void *new)
 		if (miblen == 3 &&		/* vfs.generic.bcachestat */
 		    mib[0] == CTL_VFS && mib[1] == VFS_GENERIC &&
 		    mib[2] == VFS_BCACHESTAT)
+			return (0);
+		if (miblen == 3 &&		/* for sysconf(3) */
+		    mib[0] == CTL_NET && mib[1] == PF_INET6)
 			return (0);
 	}
 
