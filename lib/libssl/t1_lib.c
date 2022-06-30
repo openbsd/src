@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.187 2022/06/30 16:05:07 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.188 2022/06/30 16:18:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -157,119 +157,119 @@ struct curve {
 
 static const struct curve nid_list[] = {
 	[1] = {
-		.nid = NID_sect163k1,		/* sect163k1 (1) */
+		.nid = NID_sect163k1,
 		.bits = 80,
 	},
 	[2] = {
-		.nid = NID_sect163r1,		/* sect163r1 (2) */
+		.nid = NID_sect163r1,
 		.bits = 80,
 	},
 	[3] = {
-		.nid = NID_sect163r2,		/* sect163r2 (3) */
+		.nid = NID_sect163r2,
 		.bits = 80,
 	},
 	[4] = {
-		.nid = NID_sect193r1,		/* sect193r1 (4) */
+		.nid = NID_sect193r1,
 		.bits = 80,
 	},
 	[5] = {
-		.nid = NID_sect193r2,		/* sect193r2 (5) */
+		.nid = NID_sect193r2,
 		.bits = 80,
 	},
 	[6] = {
-		.nid = NID_sect233k1,		/* sect233k1 (6) */
+		.nid = NID_sect233k1,
 		.bits = 112,
 	},
 	[7] = {
-		.nid = NID_sect233r1,		/* sect233r1 (7) */
+		.nid = NID_sect233r1,
 		.bits = 112,
 	},
 	[8] = {
-		.nid = NID_sect239k1,		/* sect239k1 (8) */
+		.nid = NID_sect239k1,
 		.bits = 112,
 	},
 	[9] = {
-		.nid = NID_sect283k1,		/* sect283k1 (9) */
+		.nid = NID_sect283k1,
 		.bits = 128,
 	},
 	[10] = {
-		.nid = NID_sect283r1,		/* sect283r1 (10) */
+		.nid = NID_sect283r1,
 		.bits = 128,
 	},
 	[11] = {
-		.nid = NID_sect409k1,		/* sect409k1 (11) */
+		.nid = NID_sect409k1,
 		.bits = 192,
 	},
 	[12] = {
-		.nid = NID_sect409r1,		/* sect409r1 (12) */
+		.nid = NID_sect409r1,
 		.bits = 192,
 	},
 	[13] = {
-		.nid = NID_sect571k1,		/* sect571k1 (13) */
+		.nid = NID_sect571k1,
 		.bits = 256,
 	},
 	[14] = {
-		.nid = NID_sect571r1,		/* sect571r1 (14) */
+		.nid = NID_sect571r1,
 		.bits = 256,
 	},
 	[15] = {
-		.nid = NID_secp160k1,		/* secp160k1 (15) */
+		.nid = NID_secp160k1,
 		.bits = 80,
 	},
 	[16] = {
-		.nid = NID_secp160r1,		/* secp160r1 (16) */
+		.nid = NID_secp160r1,
 		.bits = 80,
 	},
 	[17] = {
-		.nid = NID_secp160r2,		/* secp160r2 (17) */
+		.nid = NID_secp160r2,
 		.bits = 80,
 	},
 	[18] = {
-		.nid = NID_secp192k1,		/* secp192k1 (18) */
+		.nid = NID_secp192k1,
 		.bits = 80,
 	},
 	[19] = {
-		.nid = NID_X9_62_prime192v1,	/* secp192r1 (19) */
+		.nid = NID_X9_62_prime192v1,	/* aka secp192r1 */
 		.bits = 80,
 	},
 	[20] = {
-		.nid = NID_secp224k1,		/* secp224k1 (20) */
+		.nid = NID_secp224k1,
 		.bits = 112,
 	},
 	[21] = {
-		.nid = NID_secp224r1,		/* secp224r1 (21) */
+		.nid = NID_secp224r1,
 		.bits = 112,
 	},
 	[22] = {
-		.nid = NID_secp256k1,		/* secp256k1 (22) */
+		.nid = NID_secp256k1,
 		.bits = 128,
 	},
 	[23] = {
-		.nid = NID_X9_62_prime256v1,	/* secp256r1 (23) */
+		.nid = NID_X9_62_prime256v1,	/* aka secp256r1 */
 		.bits = 128,
 	},
 	[24] = {
-		.nid = NID_secp384r1,		/* secp384r1 (24) */
+		.nid = NID_secp384r1,
 		.bits = 192,
 	},
 	[25] = {
-		.nid = NID_secp521r1,		/* secp521r1 (25) */
+		.nid = NID_secp521r1,
 		.bits = 256,
 	},
 	[26] = {
-		.nid = NID_brainpoolP256r1,	/* brainpoolP256r1 (26) */
+		.nid = NID_brainpoolP256r1,
 		.bits = 128,
 	},
 	[27] = {
-		.nid = NID_brainpoolP384r1,	/* brainpoolP384r1 (27) */
+		.nid = NID_brainpoolP384r1,
 		.bits = 192,
 	},
 	[28] = {
-		.nid = NID_brainpoolP512r1,	/* brainpoolP512r1 (28) */
+		.nid = NID_brainpoolP512r1,
 		.bits = 256,
 	},
 	[29] = {
-		.nid = NID_X25519,		/* X25519 (29) */
+		.nid = NID_X25519,
 		.bits = 128,
 	},
 };
