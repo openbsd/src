@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.7 2021/10/24 17:49:19 deraadt Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.8 2022/06/30 15:46:57 anton Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -72,7 +72,7 @@ run_loadfile(uint64_t *marks, int howto)
 	dev_t bootdev = bootdev_dip->bootdev;
 	size_t ac = BOOTARG_LEN;
 	caddr_t av = (caddr_t)BOOTARG_OFF;
-	bios_consdev_t cd;
+	bios_oconsdev_t cd;
 	extern int com_speed; /* from bioscons.c */
 	extern int com_addr;
 	bios_ddb_t ddb;
