@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.11 2022/06/30 08:32:26 beck Exp $ */
+/* $OpenBSD: asn1time.c,v 1.12 2022/06/30 08:41:01 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -76,6 +76,10 @@ struct asn1_time_test asn1_invgentime_tests[] = {
 	/* Generalized time with omitted seconds, should fail */
 	{
 		.str = "201612081934Z",
+	},
+	/* Valid UTC time, should fail as a generalized time */
+	{
+		.str = "160908234300Z",
 	},
 };
 
@@ -473,7 +477,7 @@ main(int argc, char **argv)
 	fprintf(stderr, "Invalid generalized time tests...\n");
 	for (i = 0; i < N_INVGENTIME_TESTS; i++) {
 		att = &asn1_invgentime_tests[i];
-		failed |= asn1_invtime_test(i, att, 0);
+		failed |= asn1_invtime_test(i, att, 1);
 	}
 
 	fprintf(stderr, "GENERALIZEDTIME tests...\n");
