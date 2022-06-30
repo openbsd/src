@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.152 2022/06/30 09:38:22 mlarkin Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.153 2022/06/30 13:51:24 mlarkin Exp $	*/
 /*	$NetBSD: pmap.c,v 1.3 2003/05/08 18:13:13 thorpej Exp $	*/
 
 /*
@@ -1787,8 +1787,8 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 				ptp = pmap_find_ptp(pmap, sva, ptppa, 1);
 #ifdef DIAGNOSTIC
 				if (ptp == NULL)
-					panic("%s: unmanaged PTP detected",
-					      __func__);
+					panic("%s: unmanaged PTP detected "
+					    "in shortcut path", __func__);
 #endif
 			}
 
