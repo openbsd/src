@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.438 2022/06/27 13:26:51 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.439 2022/06/30 20:33:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -693,6 +693,7 @@ struct kroute_full {
 	struct bgpd_addr	prefix;
 	struct bgpd_addr	nexthop;
 	char			label[RTLABEL_LEN];
+	uint32_t		mplslabel;
 	uint16_t		flags;
 	u_short			ifindex;
 	uint8_t			prefixlen;
