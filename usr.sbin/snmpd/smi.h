@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.h,v 1.1 2022/01/19 10:25:04 martijn Exp $	*/
+/*	$OpenBSD: smi.h,v 1.2 2022/06/30 09:42:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -25,3 +25,4 @@
 char	*smi_oid2string(struct ber_oid *, char *, size_t, size_t);
 u_long	 smi_getticks(void);
 char	*smi_print_element(struct ber_element *);
+char	*smi_print_element_legacy(struct ber_element *);

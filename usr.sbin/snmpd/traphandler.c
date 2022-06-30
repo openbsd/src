@@ -1,4 +1,4 @@
-/*	$OpenBSD: traphandler.c,v 1.22 2021/10/21 08:17:34 martijn Exp $	*/
+/*	$OpenBSD: traphandler.c,v 1.23 2022/06/30 09:42:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2014 Bret Stephen Lambert <blambert@openbsd.org>
@@ -380,7 +380,7 @@ trapcmd_exec(struct trapcmd *cmd, struct sockaddr *sa,
 	for (; vb != NULL; vb = vb->be_next) {
 		if (ober_scanf_elements(vb, "{oeS$}", &oid, &elm) == -1)
 			goto out;
-		if ((value = smi_print_element(elm)) == NULL)
+		if ((value = smi_print_element_legacy(elm)) == NULL)
 			goto out;
 		smi_oid2string(&oid, oidbuf, sizeof(oidbuf), 0);
 		n = dprintf(s[0], "%s %s\n", oidbuf, value);

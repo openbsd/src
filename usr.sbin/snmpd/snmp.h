@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmp.h,v 1.18 2021/10/21 14:33:13 martijn Exp $	*/
+/*	$OpenBSD: snmp.h,v 1.19 2022/06/30 09:42:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -89,6 +89,12 @@ enum snmp_pdutype {
 	SNMP_C_INFORMREQ	= 6,
 	SNMP_C_TRAPV2		= 7,
 	SNMP_C_REPORT		= 8
+};
+
+enum snmp_varbindtype {
+	SNMP_V_NOSUCHOBJECT	= 0,
+	SNMP_V_NOSUCHINSTANCE	= 1,
+	SNMP_V_ENDOFMIBVIEW	= 2
 };
 
 enum snmp_application {

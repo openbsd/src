@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.30 2021/10/21 15:08:15 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.31 2022/06/30 09:42:19 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -46,6 +46,7 @@
 
 #include "snmpd.h"
 #include "mib.h"
+#include "application.h"
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
@@ -461,8 +462,9 @@ smi_debug_elements(struct ber_element *root)
 }
 #endif
 
+/* Keep around so trap handle scripts don't break */
 char *
-smi_print_element(struct ber_element *root)
+smi_print_element_legacy(struct ber_element *root)
 {
 	char		*str = NULL, *buf, *p;
 	size_t		 len, i;
@@ -520,6 +522,140 @@ smi_print_element(struct ber_element *root)
 	case BER_TYPE_SET:
 	default:
 		str = strdup("");
+		break;
+	}
+
+	return (str);
+
+ fail:
+	free(str);
+	return (NULL);
+}
+
+char *
+smi_print_element(struct ber_element *root)
+{
+	char		*str = NULL, *buf, *p;
+	long long	 v;
+	struct ber_oid	 o;
+	char		 strbuf[BUFSIZ];
+
+	switch (root->be_class) {
+	case BER_CLASS_UNIVERSAL:
+		switch (root->be_type) {
+		case BER_TYPE_INTEGER:
+			if (ober_get_integer(root, &v) == -1)
+				goto fail;
+			if (asprintf(&str, "%lld", v) == -1)
+				goto fail;
+			break;
+		case BER_TYPE_OBJECT:
+			if (ober_get_oid(root, &o) == -1)
+				goto fail;
+			if (asprintf(&str, "%s", smi_oid2string(&o, strbuf,
+			    sizeof(strbuf), 0)) == -1)
+				goto fail;
+			break;
+		case BER_TYPE_OCTETSTRING:
+			if (ober_get_string(root, &buf) == -1)
+				goto fail;
+			p = reallocarray(NULL, 4, root->be_len + 1);
+			if (p == NULL)
+				goto fail;
+			strvisx(p, buf, root->be_len, VIS_NL);
+			if (asprintf(&str, "\"%s\"", p) == -1) {
+				free(p);
+				goto fail;
+			}
+			free(p);
+			break;
+		case BER_TYPE_NULL:
+			if (asprintf(&str, "null") == -1)
+				goto fail;
+			break;
+		default:
+			/* Should not happen in a valid SNMP packet */
+			if (asprintf(&str, "[U/%u]", root->be_type) == -1)
+				goto fail;
+			break;
+		}
+		break;
+	case BER_CLASS_APPLICATION:
+		switch (root->be_type) {
+		case SNMP_T_IPADDR:
+			if (ober_get_string(root, &buf) == -1)
+				goto fail;
+			if (asprintf(&str, "%s",
+			    inet_ntoa(*(struct in_addr *)buf)) == -1)
+					goto fail;
+			break;
+		case SNMP_T_COUNTER32:
+			if (ober_get_integer(root, &v) == -1)
+				goto fail;
+			if (asprintf(&str, "%lld(c32)", v) == -1)
+				goto fail;
+			break;
+		case SNMP_T_GAUGE32:
+			if (ober_get_integer(root, &v) == -1)
+				goto fail;
+			if (asprintf(&str, "%lld(g32)", v) == -1)
+				goto fail;
+			break;
+		case SNMP_T_TIMETICKS:
+			if (ober_get_integer(root, &v) == -1)
+				goto fail;
+			if (asprintf(&str, "%lld.%llds", v/100, v%100) == -1)
+				goto fail;
+			break;
+		case SNMP_T_OPAQUE:
+			if (ober_get_string(root, &buf) == -1)
+				goto fail;
+			p = reallocarray(NULL, 4, root->be_len + 1);
+			if (p == NULL)
+				goto fail;
+			strvisx(p, buf, root->be_len, VIS_NL);
+			if (asprintf(&str, "\"%s\"(opaque)", p) == -1) {
+				free(p);
+				goto fail;
+			}
+			free(p);
+			break;
+		case SNMP_T_COUNTER64:
+			if (ober_get_integer(root, &v) == -1)
+				goto fail;
+			if (asprintf(&str, "%lld(c64)", v) == -1)
+				goto fail;
+			break;
+		default:
+			/* Should not happen in a valid SNMP packet */
+			if (asprintf(&str, "[A/%u]", root->be_type) == -1)
+				goto fail;
+			break;
+		}
+		break;
+	case BER_CLASS_CONTEXT:
+		switch (root->be_type) {
+		case SNMP_V_NOSUCHOBJECT:
+			str = strdup("noSuchObject");
+			break;
+		case SNMP_V_NOSUCHINSTANCE:
+			str = strdup("noSuchInstance");
+			break;
+		case SNMP_V_ENDOFMIBVIEW:
+			str = strdup("endOfMibView");
+			break;
+		default:
+			/* Should not happen in a valid SNMP packet */
+			if (asprintf(&str, "[C/%u]", root->be_type) == -1)
+				goto fail;
+			break;
+		}
+		break;
+	default:
+		/* Should not happen in a valid SNMP packet */
+		if (asprintf(&str, "[%hhu/%u]", root->be_class,
+		    root->be_type) == -1)
+			goto fail;
 		break;
 	}
 
