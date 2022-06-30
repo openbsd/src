@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.59 2022/03/31 17:27:31 naddy Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.60 2022/06/30 11:28:36 martijn Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: June 30 2022 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -78,15 +78,13 @@ listen on $ext_addr
 .Sh GLOBAL CONFIGURATION
 The following options can be set globally:
 .Bl -tag -width Ds
-.It Ic filter-pf-addresses Pq Ic yes | no
-If set to
-.Ic yes ,
-.Xr snmpd 8
-will filter out the OPENBSD-PF-MIB::pfTblAddrTable tree.
-Addresses stored in PF tables will not be available, but CPU use will be
-reduced during bulk walks.
-The default is
-.Ic no .
+.It Ic blocklist Ar oid
+Remove the
+.Ar oid
+subtree from view.
+Multiple
+.Ic blocklist
+statements are supported.
 .It Ic filter-routes Pq Ic yes | no
 If set to
 .Ic yes ,

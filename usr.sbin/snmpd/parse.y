@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.74 2022/06/28 09:11:33 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.75 2022/06/30 11:28:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -130,7 +130,7 @@ typedef struct {
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR
-%token	HANDLE DEFAULT SRCADDR TCP UDP PFADDRFILTER PORT
+%token	HANDLE DEFAULT SRCADDR TCP UDP PFADDRFILTER BLOCKLIST PORT
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
 %type	<v.string>	usmuser community optcommunity
@@ -255,6 +255,20 @@ main		: LISTEN ON listen_udptcp
 			}
 			conf->sc_traphandler = 1;
 		}
+		| BLOCKLIST oid {
+			struct ber_oid *blocklist;
+
+			blocklist = recallocarray(conf->sc_blocklist,
+			    conf->sc_nblocklist, conf->sc_nblocklist + 1,
+			    sizeof(*blocklist));
+			if (blocklist == NULL) {
+				yyerror("malloc");
+				YYERROR;
+			}
+			conf->sc_blocklist = blocklist;
+			blocklist[conf->sc_nblocklist++] = *$2;
+			free($2);
+		}
 		| RTFILTER yesno		{
 			if ($2 == 1)
 				conf->sc_rtfilter = ROUTE_FILTER(RTM_NEWADDR) |
@@ -264,8 +278,25 @@ main		: LISTEN ON listen_udptcp
 			else
 				conf->sc_rtfilter = 0;
 		}
+		/* XXX Remove after 7.4 */
 		| PFADDRFILTER yesno		{
-			conf->sc_pfaddrfilter = $2;
+			struct ber_oid *blocklist;
+
+			log_warnx("filter-pf-addresses is deprecated. "
+			    "Please use blocklist instead.");
+			if ($2) {
+				blocklist = recallocarray(conf->sc_blocklist,
+				    conf->sc_nblocklist,
+				    conf->sc_nblocklist + 1,
+				    sizeof(*blocklist));
+				if (blocklist == NULL) {
+					yyerror("malloc");
+					YYERROR;
+				}
+				conf->sc_blocklist = blocklist;
+				smi_string2oid("pfTblAddrTable",
+				    &(blocklist[conf->sc_nblocklist++]));
+			}
 		}
 		| seclevel {
 			conf->sc_min_seclevel = $1;
@@ -995,6 +1026,7 @@ lookup(char *s)
 		{ "agentid",			AGENTID },
 		{ "auth",			AUTH },
 		{ "authkey",			AUTHKEY },
+		{ "blocklist",			BLOCKLIST },
 		{ "community",			COMMUNITY },
 		{ "contact",			CONTACT },
 		{ "default",			DEFAULT },

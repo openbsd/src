@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.18 2022/01/19 11:00:56 martijn Exp $
+#	$OpenBSD: Makefile,v 1.19 2022/06/30 11:28:36 martijn Exp $
 
 PROG=		snmpd
 MAN=		snmpd.8 snmpd.conf.5
 SRCS=		parse.y log.c snmpe.c application.c application_legacy.c \
+		    application_blocklist.c \
 		    mps.c trap.c mib.c smi.c kroute.c snmpd.c timer.c \
 		    pf.c proc.c usm.c traphandler.c util.c
 

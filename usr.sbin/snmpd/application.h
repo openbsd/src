@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.h,v 1.1 2022/01/19 10:59:35 martijn Exp $	*/
+/*	$OpenBSD: application.h,v 1.2 2022/06/30 11:28:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -133,3 +133,7 @@ struct ber_element *appl_exception(enum appl_exception);
 /* application_legacy.c */
 void	 appl_legacy_init(void);
 void	 appl_legacy_shutdown(void);
+
+/* application_blocklist.c */
+void	 appl_blocklist_init(void);
+void	 appl_blocklist_shutdown(void);

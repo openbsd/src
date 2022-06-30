@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.5 2022/06/27 10:31:17 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.6 2022/06/30 11:28:36 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -148,6 +148,7 @@ RB_PROTOTYPE_STATIC(appl_requests, appl_request_downstream, ard_entry,
 void
 appl_init(void)
 {
+	appl_blocklist_init();
 	appl_legacy_init();
 }
 
@@ -156,6 +157,7 @@ appl_shutdown(void)
 {
 	struct appl_context *ctx, *tctx;
 
+	appl_blocklist_shutdown();
 	appl_legacy_shutdown();
 
 	TAILQ_FOREACH_SAFE(ctx, &contexts, ac_entries, tctx) {
