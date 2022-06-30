@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.10 2022/06/27 13:54:58 beck Exp $ */
+/* $OpenBSD: asn1time.c,v 1.11 2022/06/30 08:32:26 beck Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -66,6 +66,32 @@ struct asn1_time_test asn1_invtime_tests[] = {
 	{
 		.str = "aaaaaaaaaaaaaaZ",
 	},
+	/* utc time with omitted seconds, should fail */
+	{
+		.str = "1609082343Z",
+	},
+};
+
+struct asn1_time_test asn1_invgentime_tests[] = {
+	/* Generalized time with omitted seconds, should fail */
+	{
+		.str = "201612081934Z",
+	},
+};
+
+struct asn1_time_test asn1_goodtime_tests[] = {
+	{
+		.str = "99990908234339Z",
+		.time = 1,
+	},
+	{
+		.str = "201612081934Z",
+		.time = 1,
+	},
+	{
+		.str = "1609082343Z",
+		.time = 0,
+	},
 };
 
 struct asn1_time_test asn1_gentime_tests[] = {
@@ -132,6 +158,8 @@ struct asn1_time_test asn1_utctime_tests[] = {
 
 #define N_INVTIME_TESTS \
     (sizeof(asn1_invtime_tests) / sizeof(*asn1_invtime_tests))
+#define N_INVGENTIME_TESTS \
+    (sizeof(asn1_invgentime_tests) / sizeof(*asn1_invgentime_tests))
 #define N_GENTIME_TESTS \
     (sizeof(asn1_gentime_tests) / sizeof(*asn1_gentime_tests))
 #define N_UTCTIME_TESTS \
@@ -188,7 +216,7 @@ asn1_compare_str(int test_no, struct asn1_string_st *asn1str, const char *str)
 }
 
 static int
-asn1_invtime_test(int test_no, struct asn1_time_test *att)
+asn1_invtime_test(int test_no, struct asn1_time_test *att, int gen)
 {
 	ASN1_GENERALIZEDTIME *gt = NULL;
 	ASN1_UTCTIME *ut = NULL;
@@ -207,6 +235,12 @@ asn1_invtime_test(int test_no, struct asn1_time_test *att)
 		    "GENERALIZEDTIME string '%s'\n", test_no, att->str);
 		goto done;
 	}
+
+	if (gen)  {
+		failure = 0;
+		goto done;
+	}
+
 	if (ASN1_UTCTIME_set_string(ut, att->str) != 0) {
 		fprintf(stderr, "FAIL: test %i - successfully set UTCTIME "
 		    "string '%s'\n", test_no, att->str);
@@ -433,7 +467,13 @@ main(int argc, char **argv)
 	fprintf(stderr, "Invalid time tests...\n");
 	for (i = 0; i < N_INVTIME_TESTS; i++) {
 		att = &asn1_invtime_tests[i];
-		failed |= asn1_invtime_test(i, att);
+		failed |= asn1_invtime_test(i, att, 0);
+	}
+
+	fprintf(stderr, "Invalid generalized time tests...\n");
+	for (i = 0; i < N_INVGENTIME_TESTS; i++) {
+		att = &asn1_invgentime_tests[i];
+		failed |= asn1_invtime_test(i, att, 0);
 	}
 
 	fprintf(stderr, "GENERALIZEDTIME tests...\n");
