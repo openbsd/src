@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.75 2022/06/30 11:28:36 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.76 2022/06/30 11:53:07 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -283,7 +283,7 @@ main		: LISTEN ON listen_udptcp
 			struct ber_oid *blocklist;
 
 			log_warnx("filter-pf-addresses is deprecated. "
-			    "Please use blocklist instead.");
+			    "Please use blocklist pfTblAddrTable instead.");
 			if ($2) {
 				blocklist = recallocarray(conf->sc_blocklist,
 				    conf->sc_nblocklist,
