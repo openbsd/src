@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.81 2022/06/28 19:07:40 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.82 2022/06/30 20:28:42 mpi Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -258,6 +258,16 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 	vsize_t size;
 	struct vm_page *pp;
 
+#ifdef __HAVE_PMAP_DIRECT
+	/* use direct mappings for single page */
+	if (npages == 1) {
+		KASSERT(pps[0]);
+		KASSERT(pps[0]->pg_flags & PG_BUSY);
+		kva = pmap_map_direct(pps[0]);
+		return kva;
+	}
+#endif
+
 	prot = PROT_READ;
 	if (flags & UVMPAGER_MAPIN_READ)
 		prot |= PROT_WRITE;
@@ -273,14 +283,7 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 		pp = *pps++;
 		KASSERT(pp);
 		KASSERT(pp->pg_flags & PG_BUSY);
-		/* Allow pmap_enter to fail. */
-		if (pmap_enter(pmap_kernel(), cva, VM_PAGE_TO_PHYS(pp),
-		    prot, PMAP_WIRED | PMAP_CANFAIL | prot) != 0) {
-			pmap_remove(pmap_kernel(), kva, cva);
-			pmap_update(pmap_kernel());
-			uvm_pseg_release(kva);
-			return 0;
-		}
+		pmap_kenter_pa(cva, VM_PAGE_TO_PHYS(pp), prot);
 	}
 	pmap_update(pmap_kernel());
 	return kva;
@@ -294,8 +297,15 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 void
 uvm_pagermapout(vaddr_t kva, int npages)
 {
+#ifdef __HAVE_PMAP_DIRECT
+	/* use direct mappings for single page */
+	if (npages == 1) {
+		pmap_unmap_direct(kva);
+		return;
+	}
+#endif
 
-	pmap_remove(pmap_kernel(), kva, kva + ((vsize_t)npages << PAGE_SHIFT));
+	pmap_kremove(kva, (vsize_t)npages << PAGE_SHIFT);
 	pmap_update(pmap_kernel());
 	uvm_pseg_release(kva);
 
