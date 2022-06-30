@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.3 2022/06/30 07:42:50 claudio Exp $	*/
+/*	$OpenBSD: ts.c,v 1.4 2022/06/30 07:55:48 job Exp $	*/
 /*
  * Copyright (c) 2022 Job Snijders <job@openbsd.org>
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 			if (iflag)
 				clock_gettime(clock, &start);
 			if ((tm = localtime(&now.tv_sec)) == NULL)
-				err(1, "localtime/gmtime");
+				err(1, "localtime");
 			fmtfmt(tm, now.tv_nsec);
 		}
 		if (putchar(ch) == EOF)
