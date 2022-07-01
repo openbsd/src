@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.278 2022/06/06 14:45:41 claudio Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.279 2022/07/01 09:56:17 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/atomic.h>
 #include <sys/rwlock.h>
 #include <sys/time.h>
+#include <sys/refcnt.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
@@ -146,7 +147,9 @@ soalloc(int prflags)
 	so = pool_get(&socket_pool, prflags);
 	if (so == NULL)
 		return (NULL);
-	rw_init(&so->so_lock, "solock");
+	rw_init_flags(&so->so_lock, "solock", RWL_DUPOK);
+	refcnt_init(&so->so_refcnt);
+
 	return (so);
 }
 
@@ -247,6 +250,8 @@ solisten(struct socket *so, int backlog)
 void
 sofree(struct socket *so, int keep_lock)
 {
+	int persocket = solock_persocket(so);
+
 	soassertlocked(so);
 
 	if (so->so_pcb || (so->so_state & SS_NOFDREF) == 0) {
@@ -255,17 +260,54 @@ sofree(struct socket *so, int keep_lock)
 		return;
 	}
 	if (so->so_head) {
+		struct socket *head = so->so_head;
+
 		/*
 		 * We must not decommission a socket that's on the accept(2)
 		 * queue.  If we do, then accept(2) may hang after select(2)
 		 * indicated that the listening socket was ready.
 		 */
-		if (!soqremque(so, 0)) {
+		if (so->so_onq == &head->so_q) {
 			if (!keep_lock)
 				sounlock(so);
 			return;
 		}
+
+		if (persocket) {
+			/*
+			 * Concurrent close of `head' could
+			 * abort `so' due to re-lock.
+			 */
+			soref(so);
+			soref(head);
+			sounlock(so);
+			solock(head);
+			solock(so);
+
+			if (so->so_onq != &head->so_q0) {
+				sounlock(head);
+				sounlock(so);
+				sorele(head);
+				sorele(so);
+				return;
+			}
+
+			sorele(head);
+			sorele(so);
+		}
+
+		soqremque(so, 0);
+
+		if (persocket)
+			sounlock(head);
 	}
+
+	if (persocket) {
+		sounlock(so);
+		refcnt_finalize(&so->so_refcnt, "sofinal");
+		solock(so);
+	}
+
 	sigio_free(&so->so_sigio);
 	klist_free(&so->so_rcv.sb_sel.si_note);
 	klist_free(&so->so_snd.sb_sel.si_note);
@@ -356,13 +398,36 @@ drop:
 			error = error2;
 	}
 	if (so->so_options & SO_ACCEPTCONN) {
+		int persocket = solock_persocket(so);
+
+		if (persocket) {
+			/* Wait concurrent sonewconn() threads. */
+			while (so->so_newconn > 0) {
+				so->so_state |= SS_NEWCONN_WAIT;
+				sosleep_nsec(so, &so->so_newconn, PSOCK,
+					"netlck", INFSLP);
+			}
+		}
+
 		while ((so2 = TAILQ_FIRST(&so->so_q0)) != NULL) {
+			if (persocket)
+				solock(so2);
 			(void) soqremque(so2, 0);
+			if (persocket)
+				sounlock(so);
 			(void) soabort(so2);
+			if (persocket)
+				solock(so);
 		}
 		while ((so2 = TAILQ_FIRST(&so->so_q)) != NULL) {
+			if (persocket)
+				solock(so2);
 			(void) soqremque(so2, 1);
+			if (persocket)
+				sounlock(so);
 			(void) soabort(so2);
+			if (persocket)
+				solock(so);
 		}
 	}
 discard:
@@ -430,11 +495,18 @@ soconnect(struct socket *so, struct mbuf *nam)
 int
 soconnect2(struct socket *so1, struct socket *so2)
 {
-	int error;
+	int persocket, error;
 
-	solock(so1);
+	if ((persocket = solock_persocket(so1)))
+		solock_pair(so1, so2);
+	else
+		solock(so1);
+
 	error = (*so1->so_proto->pr_usrreq)(so1, PRU_CONNECT2, NULL,
 	    (struct mbuf *)so2, NULL, curproc);
+
+	if (persocket)
+		sounlock(so2);
 	sounlock(so1);
 	return (error);
 }

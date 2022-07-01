@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.195 2022/06/06 14:45:41 claudio Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.196 2022/07/01 09:56:17 mvs Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -246,7 +246,7 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	socklen_t namelen;
 	int error, tmpfd;
 	struct socket *head, *so;
-	int cloexec, nflag;
+	int cloexec, nflag, persocket;
 
 	cloexec = (flags & SOCK_CLOEXEC) ? UF_EXCLOSE : 0;
 
@@ -269,16 +269,19 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 
 	head = headfp->f_data;
 	solock(head);
+
+	persocket = solock_persocket(head);
+
 	if (isdnssocket(head) || (head->so_options & SO_ACCEPTCONN) == 0) {
 		error = EINVAL;
-		goto out;
+		goto out_unlock;
 	}
 	if ((headfp->f_flag & FNONBLOCK) && head->so_qlen == 0) {
 		if (head->so_state & SS_CANTRCVMORE)
 			error = ECONNABORTED;
 		else
 			error = EWOULDBLOCK;
-		goto out;
+		goto out_unlock;
 	}
 	while (head->so_qlen == 0 && head->so_error == 0) {
 		if (head->so_state & SS_CANTRCVMORE) {
@@ -288,18 +291,22 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 		error = sosleep_nsec(head, &head->so_timeo, PSOCK | PCATCH,
 		    "netcon", INFSLP);
 		if (error)
-			goto out;
+			goto out_unlock;
 	}
 	if (head->so_error) {
 		error = head->so_error;
 		head->so_error = 0;
-		goto out;
+		goto out_unlock;
 	}
 
 	/*
 	 * Do not sleep after we have taken the socket out of the queue.
 	 */
 	so = TAILQ_FIRST(&head->so_q);
+
+	if (persocket)
+		solock(so);
+
 	if (soqremque(so, 1) == 0)
 		panic("accept");
 
@@ -310,30 +317,52 @@ doaccept(struct proc *p, int sock, struct sockaddr *name, socklen_t *anamelen,
 	/* connection has been removed from the listen queue */
 	KNOTE(&head->so_rcv.sb_sel.si_note, 0);
 
+	if (persocket)
+		sounlock(head);
+
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_flag = FREAD | FWRITE | nflag;
 	fp->f_ops = &socketops;
 	fp->f_data = so;
+
 	error = soaccept(so, nam);
-out:
-	sounlock(head);
-	if (!error && name != NULL)
+
+	if (persocket)
+		sounlock(so);
+	else
+		sounlock(head);
+
+	if (error)
+		goto out;
+
+	if (name != NULL) {
 		error = copyaddrout(p, nam, name, namelen, anamelen);
-	if (!error) {
-		fdplock(fdp);
-		fdinsert(fdp, tmpfd, cloexec, fp);
-		fdpunlock(fdp);
-		FRELE(fp, p);
-		*retval = tmpfd;
-	} else {
-		fdplock(fdp);
-		fdremove(fdp, tmpfd);
-		fdpunlock(fdp);
-		closef(fp, p);
+		if (error)
+			goto out;
 	}
+
+	fdplock(fdp);
+	fdinsert(fdp, tmpfd, cloexec, fp);
+	fdpunlock(fdp);
+	FRELE(fp, p);
+	*retval = tmpfd;
 
 	m_freem(nam);
 	FRELE(headfp, p);
+
+	return 0;
+
+out_unlock:
+	sounlock(head);
+out:
+	fdplock(fdp);
+	fdremove(fdp, tmpfd);
+	fdpunlock(fdp);
+	closef(fp, p);
+
+	m_freem(nam);
+	FRELE(headfp, p);
+
 	return (error);
 }
 

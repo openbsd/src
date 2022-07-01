@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.95 2022/06/26 05:20:42 visa Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.96 2022/07/01 09:56:17 mvs Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -176,15 +176,17 @@ fifo_open(void *v)
 		solock(wso);
 		wso->so_state |= SS_CANTSENDMORE;
 		wso->so_snd.sb_lowat = PIPE_BUF;
+		sounlock(wso);
 	} else {
 		rso = fip->fi_readsock;
 		wso = fip->fi_writesock;
-		solock(wso);
 	}
 	if (ap->a_mode & FREAD) {
 		fip->fi_readers++;
 		if (fip->fi_readers == 1) {
+			solock(wso);
 			wso->so_state &= ~SS_CANTSENDMORE;
+			sounlock(wso);
 			if (fip->fi_writers > 0)
 				wakeup(&fip->fi_writers);
 		}
@@ -193,16 +195,16 @@ fifo_open(void *v)
 		fip->fi_writers++;
 		if ((ap->a_mode & O_NONBLOCK) && fip->fi_readers == 0) {
 			error = ENXIO;
-			sounlock(wso);
 			goto bad;
 		}
 		if (fip->fi_writers == 1) {
+			solock(rso);
 			rso->so_state &= ~(SS_CANTRCVMORE|SS_ISDISCONNECTED);
+			sounlock(rso);
 			if (fip->fi_readers > 0)
 				wakeup(&fip->fi_readers);
 		}
 	}
-	sounlock(wso);
 	if ((ap->a_mode & O_NONBLOCK) == 0) {
 		if ((ap->a_mode & FREAD) && fip->fi_writers == 0) {
 			VOP_UNLOCK(vp);

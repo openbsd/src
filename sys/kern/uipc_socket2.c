@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.124 2022/06/26 05:20:42 visa Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.125 2022/07/01 09:56:17 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -53,8 +53,6 @@ u_long	sb_max = SB_MAX;		/* patchable */
 extern struct pool mclpools[];
 extern struct pool mbpool;
 
-extern struct rwlock unp_lock;
-
 /*
  * Procedures to manipulate state flags of socket
  * and do appropriate wakeups.  Normal sequence from the
@@ -101,10 +99,37 @@ soisconnected(struct socket *so)
 	soassertlocked(so);
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISDISCONNECTING);
 	so->so_state |= SS_ISCONNECTED;
-	if (head && soqremque(so, 0)) {
+
+	if (head != NULL && so->so_onq == &head->so_q0) {
+		int persocket = solock_persocket(so);
+
+		if (persocket) {
+			soref(so);
+			soref(head);
+
+			sounlock(so);
+			solock(head);
+			solock(so);
+
+			if (so->so_onq != &head->so_q0) {
+				sounlock(head);
+				sorele(head);
+				sorele(so);
+
+				return;
+			}
+
+			sorele(head);
+			sorele(so);
+		}
+
+		soqremque(so, 0);
 		soqinsque(head, so, 1);
 		sorwakeup(head);
 		wakeup_one(&head->so_timeo);
+
+		if (persocket)
+			sounlock(head);
 	} else {
 		wakeup(&so->so_timeo);
 		sorwakeup(so);
@@ -146,7 +171,8 @@ struct socket *
 sonewconn(struct socket *head, int connstatus)
 {
 	struct socket *so;
-	int soqueue = connstatus ? 1 : 0;
+	int persocket = solock_persocket(head);
+	int error;
 
 	/*
 	 * XXXSMP as long as `so' and `head' share the same lock, we
@@ -175,9 +201,17 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_cpid = head->so_cpid;
 
 	/*
+	 * Lock order will be `head' -> `so' while these sockets are linked.
+	 */
+	if (persocket)
+		solock(so);
+
+	/*
 	 * Inherit watermarks but those may get clamped in low mem situations.
 	 */
 	if (soreserve(so, head->so_snd.sb_hiwat, head->so_rcv.sb_hiwat)) {
+		if (persocket)
+			sounlock(so);
 		pool_put(&socket_pool, so);
 		return (NULL);
 	}
@@ -193,20 +227,54 @@ sonewconn(struct socket *head, int connstatus)
 	sigio_init(&so->so_sigio);
 	sigio_copy(&so->so_sigio, &head->so_sigio);
 
-	soqinsque(head, so, soqueue);
-	if ((*so->so_proto->pr_attach)(so, 0)) {
-		(void) soqremque(so, soqueue);
+	soqinsque(head, so, 0);
+
+	/*
+	 * We need to unlock `head' because PCB layer could release
+	 * solock() to enforce desired lock order.
+	 */
+	if (persocket) {
+		head->so_newconn++;
+		sounlock(head);
+	}
+
+	error = (*so->so_proto->pr_attach)(so, 0);
+
+	if (persocket) {
+		sounlock(so);
+		solock(head);
+		solock(so);
+
+		if ((head->so_newconn--) == 0) {
+			if ((head->so_state & SS_NEWCONN_WAIT) != 0) {
+				head->so_state &= ~SS_NEWCONN_WAIT;
+				wakeup(&head->so_newconn);
+			}
+		}
+	}
+
+	if (error) {
+		soqremque(so, 0);
+		if (persocket)
+			sounlock(so);
 		sigio_free(&so->so_sigio);
 		klist_free(&so->so_rcv.sb_sel.si_note);
 		klist_free(&so->so_snd.sb_sel.si_note);
 		pool_put(&socket_pool, so);
 		return (NULL);
 	}
+
 	if (connstatus) {
+		so->so_state |= connstatus;
+		soqremque(so, 0);
+		soqinsque(head, so, 1);
 		sorwakeup(head);
 		wakeup(&head->so_timeo);
-		so->so_state |= connstatus;
 	}
+
+	if (persocket)
+		sounlock(so);
+
 	return (so);
 }
 
@@ -214,6 +282,7 @@ void
 soqinsque(struct socket *head, struct socket *so, int q)
 {
 	soassertlocked(head);
+	soassertlocked(so);
 
 	KASSERT(so->so_onq == NULL);
 
@@ -233,6 +302,7 @@ soqremque(struct socket *so, int q)
 {
 	struct socket *head = so->so_head;
 
+	soassertlocked(so);
 	soassertlocked(head);
 
 	if (q == 0) {
@@ -284,12 +354,37 @@ solock(struct socket *so)
 	case PF_INET6:
 		NET_LOCK();
 		break;
-	case PF_UNIX:
-		rw_enter_write(&unp_lock);
-		break;
 	default:
 		rw_enter_write(&so->so_lock);
 		break;
+	}
+}
+
+int
+solock_persocket(struct socket *so)
+{
+	switch (so->so_proto->pr_domain->dom_family) {
+	case PF_INET:
+	case PF_INET6:
+		return 0;
+	default:
+		return 1;
+	}
+}
+
+void
+solock_pair(struct socket *so1, struct socket *so2)
+{
+	KASSERT(so1 != so2);
+	KASSERT(so1->so_type == so2->so_type);
+	KASSERT(solock_persocket(so1));
+
+	if (so1 < so2) {
+		solock(so1);
+		solock(so2);
+	} else {
+		solock(so2);
+		solock(so1);
 	}
 }
 
@@ -300,9 +395,6 @@ sounlock(struct socket *so)
 	case PF_INET:
 	case PF_INET6:
 		NET_UNLOCK();
-		break;
-	case PF_UNIX:
-		rw_exit_write(&unp_lock);
 		break;
 	default:
 		rw_exit_write(&so->so_lock);
@@ -317,9 +409,6 @@ soassertlocked(struct socket *so)
 	case PF_INET:
 	case PF_INET6:
 		NET_ASSERT_LOCKED();
-		break;
-	case PF_UNIX:
-		rw_assert_wrlock(&unp_lock);
 		break;
 	default:
 		rw_assert_wrlock(&so->so_lock);
@@ -337,9 +426,6 @@ sosleep_nsec(struct socket *so, void *ident, int prio, const char *wmesg,
 	case PF_INET:
 	case PF_INET6:
 		ret = rwsleep_nsec(ident, &netlock, prio, wmesg, nsecs);
-		break;
-	case PF_UNIX:
-		ret = rwsleep_nsec(ident, &unp_lock, prio, wmesg, nsecs);
 		break;
 	default:
 		ret = rwsleep_nsec(ident, &so->so_lock, prio, wmesg, nsecs);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: unpcb.h,v 1.25 2022/02/25 23:51:04 guenther Exp $	*/
+/*	$OpenBSD: unpcb.h,v 1.26 2022/07/01 09:56:17 mvs Exp $	*/
 /*	$NetBSD: unpcb.h,v 1.6 1994/06/29 06:46:08 cgd Exp $	*/
 
 /*
@@ -32,6 +32,8 @@
  *	@(#)unpcb.h	8.1 (Berkeley) 6/2/93
  */
 
+#include <sys/refcnt.h>
+
 /*
  * Protocol control block for an active
  * instance of a UNIX internal protocol.
@@ -60,24 +62,26 @@
  * Locks used to protect struct members:
  *      I       immutable after creation
  *      G       unp_gc_lock
- *      U       unp_lock
+ *      s       socket lock
  */
 
 
 struct	unpcb {
+	struct  refcnt unp_refcnt;      /* references to this pcb */
 	struct	socket *unp_socket;	/* [I] pointer back to socket */
-	struct	vnode *unp_vnode;	/* [U] if associated with file */
+	struct	vnode *unp_vnode;	/* [s] if associated with file */
 	struct	file *unp_file;		/* [G] backpointer for unp_gc() */
-	struct	unpcb *unp_conn;	/* [U] control block of connected socket */
-	ino_t	unp_ino;		/* [U] fake inode number */
-	SLIST_HEAD(,unpcb) unp_refs;	/* [U] referencing socket linked list */
-	SLIST_ENTRY(unpcb) unp_nextref;	/* [U] link in unp_refs list */
-	struct	mbuf *unp_addr;		/* [U] bound address of socket */
+	struct	unpcb *unp_conn;	/* [s] control block of connected
+						socket */
+	ino_t	unp_ino;		/* [s] fake inode number */
+	SLIST_HEAD(,unpcb) unp_refs;	/* [s] referencing socket linked list */
+	SLIST_ENTRY(unpcb) unp_nextref;	/* [s] link in unp_refs list */
+	struct	mbuf *unp_addr;		/* [s] bound address of socket */
 	long	unp_msgcount;		/* [G] references from socket rcv buf */
 	long	unp_gcrefs;		/* [G] references from gc */
-	int	unp_flags;		/* [U] this unpcb contains peer eids */
+	int	unp_flags;		/* [s] this unpcb contains peer eids */
 	int	unp_gcflags;		/* [G] garbage collector flags */
-	struct	sockpeercred unp_connid;/* [U] id of peer process */
+	struct	sockpeercred unp_connid;/* [s] id of peer process */
 	struct	timespec unp_ctime;	/* [I] holds creation time */
 	LIST_ENTRY(unpcb) unp_link;	/* [G] link in per-AF list of sockets */
 };
@@ -114,7 +118,6 @@ int	unp_connect(struct socket *, struct mbuf *, struct proc *);
 int	unp_connect2(struct socket *, struct socket *);
 void	unp_detach(struct unpcb *);
 void	unp_disconnect(struct unpcb *);
-void	unp_drop(struct unpcb *, int);
 void	unp_gc(void *);
 void	unp_shutdown(struct unpcb *);
 int 	unp_externalize(struct mbuf *, socklen_t, int);
