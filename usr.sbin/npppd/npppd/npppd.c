@@ -1,4 +1,4 @@
-/*	$OpenBSD: npppd.c,v 1.52 2021/11/15 15:14:24 millert Exp $ */
+/*	$OpenBSD: npppd.c,v 1.53 2022/07/01 09:57:24 mvs Exp $ */
 
 /*-
  * Copyright (c) 2005-2008,2009 Internet Initiative Japan Inc.
@@ -29,7 +29,7 @@
  * Next pppd(nppd). This file provides a npppd daemon process and operations
  * for npppd instance.
  * @author	Yasuoka Masahiko
- * $Id: npppd.c,v 1.52 2021/11/15 15:14:24 millert Exp $
+ * $Id: npppd.c,v 1.53 2022/07/01 09:57:24 mvs Exp $
  */
 #include "version.h"
 #include <sys/param.h>	/* ALIGNED_POINTER */
@@ -114,7 +114,6 @@ static struct in_addr loop;	/* initialize at npppd_init() */
 static uint32_t        str_hash(const void *, int);
 
 #ifdef USE_NPPPD_PIPEX
-static int npppd_ppp_pipex_ip_disable(npppd *, npppd_ppp *);
 static void pipex_periodic(npppd *);
 #endif /* USE_NPPPD_PIPEX */
 
@@ -1246,62 +1245,6 @@ npppd_ppp_pipex_disable(npppd *_this, npppd_ppp *ppp)
 	return error;
 }
 
-/* XXX: s/npppd_ppp_pipex_ip_disable/npppd_ppp_pipex_stop/ ?? */
-
-/** Stop PIPEX of the {@link npppd_ppp ppp} */
-static int
-npppd_ppp_pipex_ip_disable(npppd *_this, npppd_ppp *ppp)
-{
-	struct pipex_session_config_req req;
-#ifdef USE_NPPPD_PPPOE
-	pppoe_session *pppoe;
-#endif
-#ifdef USE_NPPPD_PPTP
-	pptp_call *call;
-#endif
-#ifdef USE_NPPPD_L2TP
-	l2tp_call *l2tp;
-#endif
-	if (ppp->pipex_started == 0)
-		return 0;	/* not started */
-
-	bzero(&req, sizeof(req));
-	switch(ppp->tunnel_type) {
-#ifdef USE_NPPPD_PPPOE
-	case NPPPD_TUNNEL_PPPOE:
-		pppoe = (pppoe_session *)ppp->phy_context;
-
-		/* PPPoE specific information */
-		req.pcr_protocol = PIPEX_PROTO_PPPOE;
-		req.pcr_session_id = pppoe->session_id;
-		break;
-#endif
-#ifdef USE_NPPPD_PPTP
-	case NPPPD_TUNNEL_PPTP:
-		call = (pptp_call *)ppp->phy_context;
-
-		/* PPTP specific information */
-		req.pcr_session_id = call->id;
-		req.pcr_protocol = PIPEX_PROTO_PPTP;
-		break;
-#endif
-#ifdef USE_NPPPD_L2TP
-	case NPPPD_TUNNEL_L2TP:
-		l2tp = (l2tp_call *)ppp->phy_context;
-
-		/* L2TP specific context */
-		req.pcr_session_id = l2tp->session_id;
-		req.pcr_protocol = PIPEX_PROTO_L2TP;
-		break;
-#endif
-	default:
-		return 1;
-	}
-	req.pcr_ip_forward = 0;
-
-	return ioctl(_this->iface[ppp->ifidx].devf, PIPEXCSESSION, &req);
-}
-
 static void
 pipex_periodic(npppd *_this)
 {
@@ -1565,11 +1508,6 @@ npppd_set_ip_enabled(npppd *_this, npppd_ppp *ppp, int enabled)
 				hl->key = ppp1->username;
 			}
 		}
-#ifdef USE_NPPPD_PIPEX
-		if (npppd_ppp_pipex_ip_disable(_this, ppp) != 0)
-			ppp_log(ppp, LOG_ERR,
-			    "npppd_ppp_pipex_ip_disable() failed: %m");
-#endif /* USE_NPPPD_PIPEX */
 	}
 }
 
