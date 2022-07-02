@@ -27,7 +27,6 @@
 ./usr/include/landisk/kcore.h
 ./usr/include/landisk/limits.h
 ./usr/include/landisk/loadfile_machdep.h
-./usr/include/landisk/lock.h
 ./usr/include/landisk/mutex.h
 ./usr/include/landisk/param.h
 ./usr/include/landisk/pcb.h
@@ -75,7 +74,6 @@
 ./usr/include/sh/intr.h
 ./usr/include/sh/kcore.h
 ./usr/include/sh/limits.h
-./usr/include/sh/lock.h
 ./usr/include/sh/locore.h
 ./usr/include/sh/mmu.h
 ./usr/include/sh/mmu_sh3.h

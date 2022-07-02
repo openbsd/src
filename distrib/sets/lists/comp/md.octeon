@@ -24,7 +24,6 @@
 ./usr/include/mips64/ieeefp.h
 ./usr/include/mips64/kcore.h
 ./usr/include/mips64/limits.h
-./usr/include/mips64/lock.h
 ./usr/include/mips64/loongson2.h
 ./usr/include/mips64/loongson3.h
 ./usr/include/mips64/memconf.h
@@ -76,7 +75,6 @@
 ./usr/include/octeon/kcore.h
 ./usr/include/octeon/limits.h
 ./usr/include/octeon/loadfile_machdep.h
-./usr/include/octeon/lock.h
 ./usr/include/octeon/memconf.h
 ./usr/include/octeon/mips_opcode.h
 ./usr/include/octeon/mplock.h

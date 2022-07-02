@@ -31,7 +31,6 @@
 ./usr/include/loongson/kcore.h
 ./usr/include/loongson/limits.h
 ./usr/include/loongson/loadfile_machdep.h
-./usr/include/loongson/lock.h
 ./usr/include/loongson/loongson2.h
 ./usr/include/loongson/loongson3.h
 ./usr/include/loongson/memconf.h
@@ -80,7 +79,6 @@
 ./usr/include/mips64/ieeefp.h
 ./usr/include/mips64/kcore.h
 ./usr/include/mips64/limits.h
-./usr/include/mips64/lock.h
 ./usr/include/mips64/loongson2.h
 ./usr/include/mips64/loongson3.h
 ./usr/include/mips64/memconf.h

@@ -29,7 +29,6 @@
 ./usr/include/arm64/kcore.h
 ./usr/include/arm64/limits.h
 ./usr/include/arm64/loadfile_machdep.h
-./usr/include/arm64/lock.h
 ./usr/include/arm64/mplock.h
 ./usr/include/arm64/mutex.h
 ./usr/include/arm64/openpromio.h

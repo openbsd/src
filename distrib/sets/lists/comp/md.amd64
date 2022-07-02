@@ -44,7 +44,6 @@
 ./usr/include/amd64/kcore.h
 ./usr/include/amd64/limits.h
 ./usr/include/amd64/loadfile_machdep.h
-./usr/include/amd64/lock.h
 ./usr/include/amd64/mpbiosreg.h
 ./usr/include/amd64/mpbiosvar.h
 ./usr/include/amd64/mpconfig.h

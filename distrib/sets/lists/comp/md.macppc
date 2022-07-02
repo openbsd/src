@@ -29,7 +29,6 @@
 ./usr/include/macppc/kcore.h
 ./usr/include/macppc/limits.h
 ./usr/include/macppc/loadfile_machdep.h
-./usr/include/macppc/lock.h
 ./usr/include/macppc/mplock.h
 ./usr/include/macppc/mutex.h
 ./usr/include/macppc/openpromio.h
@@ -75,7 +74,6 @@
 ./usr/include/powerpc/ipkdb.h
 ./usr/include/powerpc/kcore.h
 ./usr/include/powerpc/limits.h
-./usr/include/powerpc/lock.h
 ./usr/include/powerpc/mplock.h
 ./usr/include/powerpc/mutex.h
 ./usr/include/powerpc/param.h
