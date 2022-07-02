@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.188 2022/06/30 16:18:03 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.189 2022/07/02 09:33:20 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -341,10 +341,10 @@ tls1_ec_curve_id2nid(const uint16_t curve_id)
 	/* ECC curves from draft-ietf-tls-ecc-12.txt (Oct. 17, 2005) */
 	if ((curve_id < 1) ||
 	    ((unsigned int)curve_id > sizeof(nid_list) / sizeof(nid_list[0])))
-		return 0;
+		return NID_undef;
 
 	if ((curve = &nid_list[curve_id]) == NULL)
-		return 0;
+		return NID_undef;
 
 	return curve->nid;
 }
