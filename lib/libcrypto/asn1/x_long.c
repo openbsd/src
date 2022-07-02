@@ -1,4 +1,4 @@
-/* $OpenBSD: x_long.c,v 1.17 2022/06/26 13:10:15 jsing Exp $ */
+/* $OpenBSD: x_long.c,v 1.18 2022/07/02 18:14:35 jsing Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -56,12 +56,14 @@
  *
  */
 
-#include <stdio.h>
+#include <limits.h>
 #include <string.h>
 
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
+
+#include "asn1_locl.h"
 
 /*
  * Custom primitive type for long handling. This converts between an
@@ -72,10 +74,10 @@ static int long_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void long_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void long_clear(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
-static int long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
+static int long_i2c(ASN1_VALUE **pval, unsigned char *content, int *putype,
     const ASN1_ITEM *it);
-static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-    int utype, char *free_cont, const ASN1_ITEM *it);
+static int long_c2i(ASN1_VALUE **pval, const unsigned char *content, int len,
+    int utype, char *free_content, const ASN1_ITEM *it);
 static int long_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
     int indent, const ASN1_PCTX *pctx);
 
@@ -144,86 +146,82 @@ long_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
 }
 
 static int
-long_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
+long_i2c(ASN1_VALUE **pval, unsigned char *content, int *putype,
     const ASN1_ITEM *it)
 {
-	long ltmp;
-	unsigned long utmp;
-	int clen, pad, i;
+	ASN1_INTEGER *aint;
+	uint8_t **pp = NULL;
+	long val;
+	int ret = 0;
 
-	long_get(pval, &ltmp);
+	long_get(pval, &val);
 
-	if (ltmp == it->size)
-		return -1;
-	/* Convert the long to positive: we subtract one if negative so
-	 * we can cleanly handle the padding if only the MSB of the leading
-	 * octet is set.
+	/*
+	 * The zero value for this type (stored in the overloaded it->size
+	 * field) is considered to be invalid.
 	 */
-	if (ltmp < 0)
-		utmp = -(ltmp + 1);
-	else
-		utmp = ltmp;
-	clen = BN_num_bits_word(utmp);
-	/* If MSB of leading octet set we need to pad */
-	if (!(clen & 0x7))
-		pad = 1;
-	else
-		pad = 0;
+	if (val == it->size)
+		return -1;
 
-	/* Convert number of bits to number of octets */
-	clen = (clen + 7) >> 3;
+	if ((aint = ASN1_INTEGER_new()) == NULL)
+		goto err;
+	if (!ASN1_INTEGER_set_int64(aint, (int64_t)val))
+		goto err;
+	if (content != NULL)
+		pp = &content;
+	ret = i2c_ASN1_INTEGER(aint, pp);
 
-	if (cont) {
-		if (pad)
-			*cont++ = (ltmp < 0) ? 0xff : 0;
-		for (i = clen - 1; i >= 0; i--) {
-			cont[i] = (unsigned char)(utmp & 0xff);
-			if (ltmp < 0)
-				cont[i] ^= 0xff;
-			utmp >>= 8;
-		}
-	}
-	return clen + pad;
+ err:
+	ASN1_INTEGER_free(aint);
+
+	return ret;
 }
 
 static int
-long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len, int utype,
-    char *free_cont, const ASN1_ITEM *it)
+long_c2i(ASN1_VALUE **pval, const unsigned char *content, int len, int utype,
+    char *free_content, const ASN1_ITEM *it)
 {
-	int neg, i;
-	long ltmp;
-	unsigned long utmp = 0;
+	ASN1_INTEGER *aint = NULL;
+	const uint8_t **pp = NULL;
+	int64_t val = 0;
+	int ret = 0;
 
-	if (len > (int)sizeof(long)) {
+	/*
+	 * The original long_i2c() mishandled 0 values and encoded them as
+	 * content with zero length, rather than a single zero byte. Permit
+	 * zero length content here for backwards compatibility.
+	 */
+	if (len != 0) {
+		if (content != NULL)
+			pp = &content;
+		if (!c2i_ASN1_INTEGER(&aint, pp, len))
+			goto err;
+		if (!ASN1_INTEGER_get_int64(&val, aint))
+			goto err;
+	}
+
+	if (val < LONG_MIN || val > LONG_MAX) {
 		ASN1error(ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
-		return 0;
+		goto err;
 	}
-	/* Is it negative? */
-	if (len && (cont[0] & 0x80))
-		neg = 1;
-	else
-		neg = 0;
-	utmp = 0;
-	for (i = 0; i < len; i++) {
-		utmp <<= 8;
-		if (neg)
-			utmp |= cont[i] ^ 0xff;
-		else
-			utmp |= cont[i];
-	}
-	ltmp = (long)utmp;
-	if (neg) {
-		ltmp = -ltmp;
-		ltmp--;
-	}
-	if (ltmp == it->size) {
+
+	/*
+	 * The zero value for this type (stored in the overloaded it->size
+	 * field) is considered to be invalid.
+	 */
+	if (val == (int64_t)it->size) {
 		ASN1error(ASN1_R_INTEGER_TOO_LARGE_FOR_LONG);
-		return 0;
+		goto err;
 	}
 
-	long_set(pval, ltmp);
+	long_set(pval, (long)val);
 
-	return 1;
+	ret = 1;
+
+ err:
+	ASN1_INTEGER_free(aint);
+
+	return ret;
 }
 
 static int
