@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.131 2022/05/12 20:45:01 sthen Exp $
+#	$OpenBSD: changelist,v 1.132 2022/07/02 03:32:05 danj Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -118,6 +118,7 @@
 /etc/rpki/arin.tal
 /etc/rpki/lacnic.tal
 /etc/rpki/ripe.tal
+/etc/rpki/skiplist
 /etc/sasyncd.conf
 /etc/sensorsd.conf
 /etc/services
