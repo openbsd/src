@@ -1059,14 +1059,15 @@ command:
     {
       char **argv;
       size_t argc = 1;
-      for(struct component *i = $2; i; i = i->next) {
+      struct component *i, *j;
+      for(i = $2; i; i = i->next) {
         argc++;
       }
       argv = region_alloc_zero(
         cfg_parser->opt->region, (argc + 1) * sizeof(char *));
       argc = 0;
       argv[argc++] = $1;
-      for(struct component *j, *i = $2; i; i = j) {
+      for(i = $2; i; i = j) {
         j = i->next;
         argv[argc++] = i->str;
         region_recycle(cfg_parser->opt->region, i, sizeof(*i));

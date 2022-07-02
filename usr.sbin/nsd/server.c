@@ -3026,6 +3026,7 @@ void server_verify(struct nsd *nsd, int cmdsocket)
 	size_t size = 0;
 	struct event cmd_event, signal_event, exit_event;
 	struct zone *zone;
+	size_t i;
 
 	assert(nsd != NULL);
 
@@ -3045,7 +3046,7 @@ void server_verify(struct nsd *nsd, int cmdsocket)
 	fcntl(nsd->verifier_pipe[1], F_SETFD, FD_CLOEXEC);
 	nsd->verifiers = region_alloc_zero(nsd->server_region, size);
 
-	for(size_t i = 0; i < nsd->verifier_limit; i++) {
+	for(i = 0; i < nsd->verifier_limit; i++) {
 		nsd->verifiers[i].nsd = nsd;
 		nsd->verifiers[i].zone = NULL;
 		nsd->verifiers[i].pid = -1;
@@ -3080,7 +3081,7 @@ void server_verify(struct nsd *nsd, int cmdsocket)
 	}
 
 	memset(msgs, 0, sizeof(msgs));
-	for (int i = 0; i < NUM_RECV_PER_SELECT; i++) {
+	for (i = 0; i < NUM_RECV_PER_SELECT; i++) {
 		queries[i] = query_create(nsd->server_region,
 			compressed_dname_offsets,
 			compression_table_size, compressed_dnames);
@@ -3093,7 +3094,7 @@ void server_verify(struct nsd *nsd, int cmdsocket)
 		msgs[i].msg_hdr.msg_namelen = queries[i]->addrlen;
 	}
 
-	for (size_t i = 0; i < nsd->verify_ifs; i++) {
+	for (i = 0; i < nsd->verify_ifs; i++) {
 		struct udp_handler_data *data;
 		data = region_alloc_zero(
 			nsd->server_region, sizeof(*data));
@@ -3104,7 +3105,7 @@ void server_verify(struct nsd *nsd, int cmdsocket)
 	tcp_accept_handlers = region_alloc_array(nsd->server_region,
 		nsd->verify_ifs, sizeof(*tcp_accept_handlers));
 
-	for (size_t i = 0; i < nsd->verify_ifs; i++) {
+	for (i = 0; i < nsd->verify_ifs; i++) {
 		struct tcp_accept_handler_data *data;
 		data = &tcp_accept_handlers[i];
 		memset(data, 0, sizeof(*data));

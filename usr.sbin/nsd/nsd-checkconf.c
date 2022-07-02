@@ -557,8 +557,9 @@ static void print_zone_content_elems(pattern_options_type* pat)
 		}
 	}
 	if(pat->verifier) {
+		char *const *s;
 		printf("\tverifier:");
-		for(char *const *s = pat->verifier; *s; s++) {
+		for(s = pat->verifier; *s; s++) {
 			printf(" \"%s\"", *s);
 		}
 		printf("\n");
@@ -725,8 +726,9 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\tport: %s\n", opt->verify_port);
 	printf("\tverify-zones: %s\n", opt->verify_zones?"yes":"no");
 	if(opt->verifier) {
+		char **s;
 		printf("\tverifier:");
-		for(char **s = opt->verifier; *s; s++) {
+		for(s = opt->verifier; *s; s++) {
 			printf(" \"%s\"", *s);
 		}
 		printf("\n");
