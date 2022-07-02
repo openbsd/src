@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.726 2021/10/24 21:24:21 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.727 2022/07/02 17:21:32 deraadt Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -623,7 +623,9 @@ main(int argc, char *argv[])
 		path_dhclient_conf = _PATH_DHCLIENT_CONF;
 	memset(actions, ACTION_USELEASE, sizeof(actions));
 
-	while ((ch = getopt(argc, argv, "c:di:nrv")) != -1)
+	while ((ch = getopt(argc, argv, "c:di:nrv")) != -1) {
+		syslog(LOG_ALERT | LOG_CONS,
+		    "dhclient will go away, so -%c option will not exist", ch);
 		switch (ch) {
 		case 'c':
 			if (strlen(optarg) == 0)
@@ -637,6 +639,8 @@ main(int argc, char *argv[])
 			cmd_opts |= OPT_FOREGROUND;
 			break;
 		case 'i':
+			syslog(LOG_ALERT | LOG_CONS,
+			    "dhclient will go away, for -i learn dhcpleased.conf");
 			if (strlen(optarg) == 0)
 				break;
 			ignore_list = strdup(optarg);
@@ -665,12 +669,18 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+	}
 
 	argc -= optind;
 	argv += optind;
 
 	if (argc != 1)
 		usage();
+
+	syslog(LOG_ALERT | LOG_CONS,
+	    "dhclient will go away, stop using it");
+
+	execl("/sbin/ifconfig", "ifconfig", argv[0], "inet", "autoconf", NULL);
 
 	if ((cmd_opts & (OPT_FOREGROUND | OPT_NOACTION)) != 0)
 		cmd_opts |= OPT_VERBOSE;
