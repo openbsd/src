@@ -1,4 +1,4 @@
-/*	$OpenBSD: video.c,v 1.56 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: video.c,v 1.57 2022/07/02 08:50:41 visa Exp $	*/
 
 /*
  * Copyright (c) 2008 Robert Nagy <robert@openbsd.org>
@@ -22,7 +22,6 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
-#include <sys/poll.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/kernel.h>
@@ -388,54 +387,6 @@ videoioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	}
 
 	return (error);
-}
-
-int
-videopoll(dev_t dev, int events, struct proc *p)
-{
-	int unit = VIDEOUNIT(dev);
-	struct video_softc *sc;
-	int error, revents = 0;
-
-	KERNEL_ASSERT_LOCKED();
-
-	if (unit >= video_cd.cd_ndevs ||
-	    (sc = video_cd.cd_devs[unit]) == NULL)
-		return (POLLERR);
-
-	if (sc->sc_dying)
-		return (POLLERR);
-
-	if ((error = video_claim(sc, p->p_p)))
-		return (error);
-
-	DPRINTF(1, "%s: events=0x%x\n", __func__, events);
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (sc->sc_frames_ready > 0)
-			revents |= events & (POLLIN | POLLRDNORM);
-	}
-	if (revents == 0) {
-		if (events & (POLLIN | POLLRDNORM)) {
-			/*
-			 * Start the stream in read() mode if not already
-			 * started.  If the user wanted mmap() mode,
-			 * he should have called mmap() before now.
-			 */
-			if (sc->sc_vidmode == VIDMODE_NONE &&
-			    sc->hw_if->start_read) {
-				error = sc->hw_if->start_read(sc->hw_hdl);
-				if (error)
-					return (POLLERR);
-				sc->sc_vidmode = VIDMODE_READ;
-			}
-			selrecord(p, &sc->sc_rsel);
-		}
-	}
-
-	DPRINTF(1, "%s: revents=0x%x\n", __func__, revents);
-
-	return (revents);
 }
 
 paddr_t

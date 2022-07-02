@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.112 2021/12/15 15:30:47 visa Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.113 2022/07/02 08:50:42 visa Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 #include <sys/conf.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
-#include <sys/poll.h>
 #include <sys/pledge.h>
 #include <sys/rwlock.h>
 
@@ -600,55 +599,6 @@ done:
 	if (bufcc)
 		explicit_bzero(buf, bufcc);
 	return (error);
-}
-
-int
-ptcpoll(dev_t dev, int events, struct proc *p)
-{
-	struct pt_softc *pti = pt_softc[minor(dev)];
-	struct tty *tp = pti->pt_tty;
-	int revents = 0, s;
-
-	if (!ISSET(tp->t_state, TS_ISOPEN) && ISSET(tp->t_state, TS_CARR_ON))
-		goto notopen;
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		/*
-		 * Need to protect access to t_outq
-		 */
-		s = spltty();
-		if ((tp->t_outq.c_cc && !ISSET(tp->t_state, TS_TTSTOP)) ||
-		    ((pti->pt_flags & PF_PKT) && pti->pt_send) ||
-		    ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl))
-			revents |= events & (POLLIN | POLLRDNORM);
-		splx(s);
-	}
-	/* NOTE: POLLHUP and POLLOUT/POLLWRNORM are mutually exclusive */
-	if (!ISSET(tp->t_state, TS_CARR_ON)) {
-		revents |= POLLHUP;
-	} else if (events & (POLLOUT | POLLWRNORM)) {
-		if ((pti->pt_flags & PF_REMOTE) ?
-		    (tp->t_canq.c_cc == 0) :
-		    ((tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG(tp) - 2) ||
-		    (tp->t_canq.c_cc == 0 && ISSET(tp->t_lflag, ICANON))))
-			revents |= events & (POLLOUT | POLLWRNORM);
-	}
-	if (events & (POLLPRI | POLLRDBAND)) {
-		/* If in packet or user control mode, check for data. */
-		if (((pti->pt_flags & PF_PKT) && pti->pt_send) ||
-		    ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl))
-			revents |= events & (POLLPRI | POLLRDBAND);
-	}
-
-	if (revents == 0) {
-notopen:
-		if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND))
-			selrecord(p, &pti->pt_selr);
-		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(p, &pti->pt_selw);
-	}
-
-	return (revents);
 }
 
 void

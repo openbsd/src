@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwc2.c,v 1.61 2022/05/01 10:28:54 mglocker Exp $	*/
+/*	$OpenBSD: dwc2.c,v 1.62 2022/07/02 08:50:42 visa Exp $	*/
 /*	$NetBSD: dwc2.c,v 1.32 2014/09/02 23:26:20 macallan Exp $	*/
 
 /*-
@@ -35,7 +35,6 @@
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/select.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/endian.h>

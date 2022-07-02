@@ -1,4 +1,4 @@
-/*	$OpenBSD: spif.c,v 1.26 2022/03/13 13:34:54 mpi Exp $	*/
+/*	$OpenBSD: spif.c,v 1.27 2022/07/02 08:50:42 visa Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Jason L. Wright (jason@thought.net)
@@ -90,7 +90,6 @@ int	sbppread(dev_t, struct uio *, int);
 int	sbppwrite(dev_t, struct uio *, int);
 int	sbpp_rw(dev_t, struct uio *);
 int	spifppcintr(void *);
-int	sbpppoll(dev_t, int, struct proc *);
 int	sbppkqfilter(dev_t, struct knote *);
 int	sbppioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
@@ -1040,11 +1039,6 @@ sbpp_rw(dev_t dev, struct uio *uio)
 	return (ENXIO);
 }
 
-int
-sbpppoll(dev_t dev, int events, struct proc *p)
-{
-	return (seltrue(dev, events, p));
-}
 int
 sbppkqfilter(dev_t dev, struct knote *kn)
 {

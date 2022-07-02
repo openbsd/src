@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_tty.c,v 1.30 2022/06/26 05:20:42 visa Exp $	*/
+/*	$OpenBSD: tty_tty.c,v 1.31 2022/07/02 08:50:42 visa Exp $	*/
 /*	$NetBSD: tty_tty.c,v 1.13 1996/03/30 22:24:46 christos Exp $	*/
 
 /*-
@@ -141,13 +141,6 @@ cttyioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		return EPERM;
 	}
 	return (VOP_IOCTL(ttyvp, cmd, addr, flag, NOCRED, p));
-}
-
-int
-cttypoll(dev_t dev, int events, struct proc *p)
-{
-	panic("not implemented");
-	return (0);
 }
 
 int

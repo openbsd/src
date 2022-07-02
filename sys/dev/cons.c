@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.29 2020/04/03 08:24:52 mpi Exp $	*/
+/*	$OpenBSD: cons.c,v 1.30 2022/07/02 08:50:41 visa Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-#include <sys/poll.h>
 
 #include <dev/cons.h>
 
@@ -178,26 +177,6 @@ cnioctl(dev_t dev, u_long cmd, caddr_t data, int flag,
 		dev = cn_tab->cn_dev;
 	return ((*cdevsw[major(dev)].d_ioctl)(dev, cmd, data, flag, p));
 }
-
-/*ARGSUSED*/
-int
-cnpoll(dev_t dev, int rw, struct proc *p)
-{
-
-	/*
-	 * Redirect the poll, if that's appropriate.
-	 * I don't want to think of the possible side effects
-	 * of console redirection here.
-	 */
-	if (constty != NULL)
-		dev = constty->t_dev;
-	else if (cn_tab == NULL)
-		return POLLERR;
-	else
-		dev = cn_tab->cn_dev;
-	return (ttpoll(dev, rw, p));
-}
-
 
 int
 cnkqfilter(dev_t dev, struct knote *kn)

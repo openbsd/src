@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.34 2022/03/13 13:34:54 mpi Exp $	*/
+/*	$OpenBSD: magma.c,v 1.35 2022/07/02 08:50:42 visa Exp $	*/
 
 /*-
  * Copyright (c) 1998 Iain Hibbert
@@ -1340,7 +1340,6 @@ mtty_param(struct tty *tp, struct termios *t)
  *	mbppread	read from mbpp
  *	mbppwrite	write to mbpp
  *	mbppioctl	do ioctl on mbpp
- *	mbpppoll	do poll on mbpp
  *	mbppkqfilter	kqueue on mbpp
  *	mbpp_rw		general rw routine
  *	mbpp_timeout	rw timeout
@@ -1506,15 +1505,6 @@ mbppioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	}
 
 	return (error);
-}
-
-/*
- * poll routine
- */
-int
-mbpppoll(dev_t dev, int events, struct proc *p)
-{
-	return (seltrue(dev, events, p));
 }
 
 int

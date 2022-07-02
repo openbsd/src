@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath.c,v 1.56 2022/04/16 19:19:59 naddy Exp $ */
+/*	$OpenBSD: mpath.c,v 1.57 2022/07/02 08:50:42 visa Exp $ */
 
 /*
  * Copyright (c) 2009 David Gwynne <dlg@openbsd.org>
@@ -25,8 +25,6 @@
 #include <sys/queue.h>
 #include <sys/rwlock.h>
 #include <sys/ioctl.h>
-#include <sys/poll.h>
-#include <sys/selinfo.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.174 2022/02/15 03:53:58 jsg Exp $	*/
+/*	$OpenBSD: tty.c,v 1.175 2022/07/02 08:50:42 visa Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -57,7 +57,6 @@
 #include <sys/resourcevar.h>
 #include <sys/sysctl.h>
 #include <sys/pool.h>
-#include <sys/poll.h>
 #include <sys/unistd.h>
 #include <sys/pledge.h>
 
@@ -1056,38 +1055,6 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (-1);
 	}
 	return (0);
-}
-
-int
-ttpoll(dev_t device, int events, struct proc *p)
-{
-	struct tty *tp;
-	int revents, s;
-
-	tp = (*cdevsw[major(device)].d_tty)(device);
-
-	revents = 0;
-	s = spltty();
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (ttnread(tp) > 0 || (!ISSET(tp->t_cflag, CLOCAL) &&
-		    !ISSET(tp->t_state, TS_CARR_ON)))
-			revents |= events & (POLLIN | POLLRDNORM);
-	}
-	/* NOTE: POLLHUP and POLLOUT/POLLWRNORM are mutually exclusive */
-	if (!ISSET(tp->t_cflag, CLOCAL) && !ISSET(tp->t_state, TS_CARR_ON)) {
-		revents |= POLLHUP;
-	} else if (events & (POLLOUT | POLLWRNORM)) {
-		if (tp->t_outq.c_cc <= tp->t_lowat)
-			revents |= events & (POLLOUT | POLLWRNORM);
-	}
-	if (revents == 0) {
-		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &tp->t_rsel);
-		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(p, &tp->t_wsel);
-	}
-	splx(s);
-	return (revents);
 }
 
 const struct filterops ttyread_filtops = {

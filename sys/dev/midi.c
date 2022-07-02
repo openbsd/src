@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.54 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: midi.c,v 1.55 2022/07/02 08:50:41 visa Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -21,7 +21,6 @@
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
-#include <sys/poll.h>
 #include <sys/kernel.h>
 #include <sys/timeout.h>
 #include <sys/vnode.h>
@@ -39,7 +38,6 @@ int	midiopen(dev_t, int, int, struct proc *);
 int	midiclose(dev_t, int, int, struct proc *);
 int	midiread(dev_t, struct uio *, int);
 int	midiwrite(dev_t, struct uio *, int);
-int	midipoll(dev_t, int, struct proc *);
 int	midikqfilter(dev_t, struct knote *);
 int	midiioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	midiprobe(struct device *, void *, void *);
@@ -329,36 +327,6 @@ done_mtx:
 done:
 	device_unref(&sc->dev);
 	return error;
-}
-
-int
-midipoll(dev_t dev, int events, struct proc *p)
-{
-	struct midi_softc *sc;
-	int revents;
-
-	sc = (struct midi_softc *)device_lookup(&midi_cd, minor(dev));
-	if (sc == NULL)
-		return POLLERR;
-	revents = 0;
-	mtx_enter(&audio_lock);
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (!MIDIBUF_ISEMPTY(&sc->inbuf))
-			revents |= events & (POLLIN | POLLRDNORM);
-	}
-	if (events & (POLLOUT | POLLWRNORM)) {
-		if (!MIDIBUF_ISFULL(&sc->outbuf))
-			revents |= events & (POLLOUT | POLLWRNORM);
-	}
-	if (revents == 0) {
-		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &sc->inbuf.sel);
-		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(p, &sc->outbuf.sel);
-	}
-	mtx_leave(&audio_lock);
-	device_unref(&sc->dev);
-	return (revents);
 }
 
 int

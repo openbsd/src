@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.145 2022/06/20 16:28:42 gnezdo Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.146 2022/07/02 08:50:42 visa Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -45,7 +45,6 @@
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/timeout.h>
-#include <sys/poll.h>
 
 #include <dev/wscons/wscons_features.h>
 #include <dev/wscons/wsconsio.h>
@@ -1404,24 +1403,6 @@ wsdisplaymmap(dev_t dev, off_t offset, int prot)
 
 	/* pass mmap to display */
 	return ((*sc->sc_accessops->mmap)(sc->sc_accesscookie, offset, prot));
-}
-
-int
-wsdisplaypoll(dev_t dev, int events, struct proc *p)
-{
-	struct wsdisplay_softc *sc = wsdisplay_cd.cd_devs[WSDISPLAYUNIT(dev)];
-	struct wsscreen *scr;
-
-	if (ISWSDISPLAYCTL(dev))
-		return (0);
-
-	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(dev)]) == NULL)
-		return (POLLERR);
-
-	if (!WSSCREEN_HAS_TTY(scr))
-		return (POLLERR);
-
-	return (ttpoll(dev, events, p));
 }
 
 int

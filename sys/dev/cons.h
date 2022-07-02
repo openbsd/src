@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.h,v 1.18 2016/05/17 23:43:47 bluhm Exp $	*/
+/*	$OpenBSD: cons.h,v 1.19 2022/07/02 08:50:41 visa Exp $	*/
 /*	$NetBSD: cons.h,v 1.14 1996/03/14 19:08:35 christos Exp $	*/
 
 /*
@@ -81,7 +81,6 @@ int	cnclose(dev_t, int, int, struct proc *);
 int	cnread(dev_t, struct uio *, int);
 int	cnwrite(dev_t, struct uio *, int);
 int	cnioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	cnpoll(dev_t, int, struct proc *);
 int	cnkqfilter(dev_t, struct knote *);
 int	cngetc(void);
 void	cnputc(int);

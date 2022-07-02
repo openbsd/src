@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpath_hds.c,v 1.25 2021/10/24 16:57:30 mpi Exp $ */
+/*	$OpenBSD: mpath_hds.c,v 1.26 2022/07/02 08:50:42 visa Exp $ */
 
 /*
  * Copyright (c) 2011 David Gwynne <dlg@openbsd.org>
@@ -28,8 +28,6 @@
 #include <sys/rwlock.h>
 #include <sys/pool.h>
 #include <sys/ioctl.h>
-#include <sys/poll.h>
-#include <sys/selinfo.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>

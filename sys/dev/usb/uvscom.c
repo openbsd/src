@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvscom.c,v 1.41 2022/04/09 20:07:44 naddy Exp $ */
+/*	$OpenBSD: uvscom.c,v 1.42 2022/07/02 08:50:42 visa Exp $ */
 /*	$NetBSD: uvscom.c,v 1.9 2003/02/12 15:36:20 ichiro Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
@@ -44,7 +44,6 @@
 #include <sys/tty.h>
 #include <sys/ioctl.h>
 #include <sys/device.h>
-#include <sys/poll.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbcdc.h>

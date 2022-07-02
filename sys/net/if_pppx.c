@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pppx.c,v 1.117 2022/06/26 22:51:58 mvs Exp $ */
+/*	$OpenBSD: if_pppx.c,v 1.118 2022/07/02 08:50:42 visa Exp $ */
 
 /*
  * Copyright (c) 2010 Claudio Jeker <claudio@openbsd.org>
@@ -56,7 +56,6 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/vnode.h>
-#include <sys/poll.h>
 #include <sys/selinfo.h>
 
 #include <net/if.h>
@@ -445,27 +444,6 @@ pppxioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 	NET_UNLOCK();
 
 	return (error);
-}
-
-int
-pppxpoll(dev_t dev, int events, struct proc *p)
-{
-	struct pppx_dev *pxd = pppx_dev2pxd(dev);
-	int revents = 0;
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (!mq_empty(&pxd->pxd_svcq))
-			revents |= events & (POLLIN | POLLRDNORM);
-	}
-	if (events & (POLLOUT | POLLWRNORM))
-		revents |= events & (POLLOUT | POLLWRNORM);
-
-	if (revents == 0) {
-		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &pxd->pxd_rsel);
-	}
-
-	return (revents);
 }
 
 int
@@ -1210,27 +1188,6 @@ pppacioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	NET_UNLOCK();
 
 	return (error);
-}
-
-int
-pppacpoll(dev_t dev, int events, struct proc *p)
-{
-	struct pppac_softc *sc = pppac_lookup(dev);
-	int revents = 0;
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (!mq_empty(&sc->sc_mq))
-			revents |= events & (POLLIN | POLLRDNORM);
-	}
-	if (events & (POLLOUT | POLLWRNORM))
-		revents |= events & (POLLOUT | POLLWRNORM);
-
-	if (revents == 0) {
-		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &sc->sc_rsel);
-	}
-
-	return (revents);
 }
 
 int

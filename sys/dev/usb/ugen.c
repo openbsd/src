@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugen.c,v 1.115 2021/02/05 08:17:22 mglocker Exp $ */
+/*	$OpenBSD: ugen.c,v 1.116 2022/07/02 08:50:42 visa Exp $ */
 /*	$NetBSD: ugen.c,v 1.63 2002/11/26 18:49:48 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -44,7 +44,6 @@
 #include <sys/fcntl.h>
 #include <sys/selinfo.h>
 #include <sys/vnode.h>
-#include <sys/poll.h>
 
 #include <machine/bus.h>
 
@@ -1243,67 +1242,6 @@ ugenioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(&sc->sc_dev);
 	return (error);
-}
-
-int
-ugenpoll(dev_t dev, int events, struct proc *p)
-{
-	struct ugen_softc *sc;
-	struct ugen_endpoint *sce;
-	int revents = 0;
-	int s;
-
-	sc = ugen_cd.cd_devs[UGENUNIT(dev)];
-
-	if (usbd_is_dying(sc->sc_udev))
-		return (POLLERR);
-
-	/* XXX always IN */
-	sce = &sc->sc_endpoints[UGENENDPOINT(dev)][IN];
-	if (sce == NULL)
-		return (POLLERR);
-#ifdef DIAGNOSTIC
-	if (!sce->edesc) {
-		printf("ugenpoll: no edesc\n");
-		return (POLLERR);
-	}
-	if (!sce->pipeh) {
-		printf("ugenpoll: no pipe\n");
-		return (POLLERR);
-	}
-#endif
-	s = splusb();
-	switch (UE_GET_XFERTYPE(sce->edesc->bmAttributes)) {
-	case UE_INTERRUPT:
-		if (events & (POLLIN | POLLRDNORM)) {
-			if (sce->q.c_cc > 0)
-				revents |= events & (POLLIN | POLLRDNORM);
-			else
-				selrecord(p, &sce->rsel);
-		}
-		break;
-	case UE_ISOCHRONOUS:
-		if (events & (POLLIN | POLLRDNORM)) {
-			if (sce->cur != sce->fill)
-				revents |= events & (POLLIN | POLLRDNORM);
-			else
-				selrecord(p, &sce->rsel);
-		}
-		break;
-	case UE_BULK:
-		/*
-		 * We have no easy way of determining if a read will
-		 * yield any data or a write will happen.
-		 * Pretend they will.
-		 */
-		revents |= events &
-			   (POLLIN | POLLRDNORM | POLLOUT | POLLWRNORM);
-		break;
-	default:
-		break;
-	}
-	splx(s);
-	return (revents);
 }
 
 void filt_ugenrdetach(struct knote *);

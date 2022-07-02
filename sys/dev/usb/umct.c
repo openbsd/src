@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.49 2022/04/09 20:07:44 naddy Exp $	*/
+/*	$OpenBSD: umct.c,v 1.50 2022/07/02 08:50:42 visa Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,9 +42,7 @@
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
-#include <sys/selinfo.h>
 #include <sys/device.h>
-#include <sys/poll.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbcdc.h>

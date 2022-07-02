@@ -1,4 +1,4 @@
-/* $OpenBSD: wsmouse.c,v 1.68 2022/04/06 18:59:30 naddy Exp $ */
+/* $OpenBSD: wsmouse.c,v 1.69 2022/07/02 08:50:42 visa Exp $ */
 /* $NetBSD: wsmouse.c,v 1.35 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -103,7 +103,6 @@
 #include <sys/signalvar.h>
 #include <sys/device.h>
 #include <sys/vnode.h>
-#include <sys/poll.h>
 #include <sys/malloc.h>
 
 #include <dev/wscons/wscons_features.h>
@@ -531,16 +530,6 @@ wsmouse_do_ioctl(struct wsmouse_softc *sc, u_long cmd, caddr_t data, int flag,
 	error = (*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd,
 	    data, flag, p);
 	return (error != -1 ? error : ENOTTY);
-}
-
-int
-wsmousepoll(dev_t dev, int events, struct proc *p)
-{
-	struct wsmouse_softc *sc = wsmouse_cd.cd_devs[minor(dev)];
-
-	if (sc->sc_base.me_evp == NULL)
-		return (POLLERR);
-	return (wsevent_poll(sc->sc_base.me_evp, events, p));
 }
 
 int

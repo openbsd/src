@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.68 2022/04/09 20:07:44 naddy Exp $ */
+/*	$OpenBSD: umodem.c,v 1.69 2022/07/02 08:50:42 visa Exp $ */
 /*	$NetBSD: umodem.c,v 1.45 2002/09/23 05:51:23 simonb Exp $	*/
 
 /*
@@ -49,9 +49,7 @@
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
-#include <sys/selinfo.h>
 #include <sys/device.h>
-#include <sys/poll.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbcdc.h>

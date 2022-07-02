@@ -1,4 +1,4 @@
-/*	$OpenBSD: pluart.c,v 1.13 2022/06/28 16:28:08 anton Exp $	*/
+/*	$OpenBSD: pluart.c,v 1.14 2022/07/02 08:50:42 visa Exp $	*/
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2005 Dale Rahn <drahn@dalerahn.com>
@@ -27,7 +27,6 @@
 #include <sys/syslog.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
-#include <sys/select.h>
 #include <sys/kernel.h>
 
 #include <machine/bus.h>

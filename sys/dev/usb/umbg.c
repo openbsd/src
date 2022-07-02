@@ -1,4 +1,4 @@
-/*	$OpenBSD: umbg.c,v 1.27 2020/07/31 10:49:33 mglocker Exp $ */
+/*	$OpenBSD: umbg.c,v 1.28 2022/07/02 08:50:42 visa Exp $ */
 
 /*
  * Copyright (c) 2007 Marc Balmer <mbalmer@openbsd.org>
@@ -20,9 +20,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/conf.h>
-#include <sys/select.h>
 #include <sys/device.h>
-#include <sys/poll.h>
 #include <sys/time.h>
 #include <sys/sensors.h>
 #include <sys/timeout.h>

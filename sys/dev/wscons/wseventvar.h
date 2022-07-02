@@ -1,4 +1,4 @@
-/* $OpenBSD: wseventvar.h,v 1.10 2019/05/22 18:52:14 anton Exp $ */
+/* $OpenBSD: wseventvar.h,v 1.11 2022/07/02 08:50:42 visa Exp $ */
 /* $NetBSD: wseventvar.h,v 1.1 1998/03/22 14:24:03 drochner Exp $ */
 
 /*
@@ -107,7 +107,6 @@ struct wseventvar {
 int	wsevent_init(struct wseventvar *);
 void	wsevent_fini(struct wseventvar *);
 int	wsevent_read(struct wseventvar *, struct uio *, int);
-int	wsevent_poll(struct wseventvar *, int, struct proc *);
 int	wsevent_kqfilter(struct wseventvar *, struct knote *);
 
 /*

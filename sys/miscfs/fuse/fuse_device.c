@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.36 2021/03/11 13:31:35 jsg Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.37 2022/07/02 08:50:42 visa Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -21,7 +21,6 @@
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
-#include <sys/poll.h>
 #include <sys/stat.h>
 #include <sys/statvfs.h>
 #include <sys/vnode.h>
@@ -64,7 +63,6 @@ int	fuseclose(dev_t, int, int, struct proc *);
 int	fuseioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	fuseread(dev_t, struct uio *, int);
 int	fusewrite(dev_t, struct uio *, int);
-int	fusepoll(dev_t, int, struct proc *);
 int	fusekqfilter(dev_t dev, struct knote *kn);
 int	filt_fuse_read(struct knote *, long);
 void	filt_fuse_rdetach(struct knote *);
@@ -506,30 +504,6 @@ end:
 	}
 
 	return (error);
-}
-
-int
-fusepoll(dev_t dev, int events, struct proc *p)
-{
-	struct fuse_d *fd;
-	int revents = 0;
-
-	fd = fuse_lookup(minor(dev));
-	if (fd == NULL)
-		return (POLLERR);
-
-	if (events & (POLLIN | POLLRDNORM))
-		if (!SIMPLEQ_EMPTY(&fd->fd_fbufs_in))
-			revents |= events & (POLLIN | POLLRDNORM);
-
-	if (events & (POLLOUT | POLLWRNORM))
-		revents |= events & (POLLOUT | POLLWRNORM);
-
-	if (revents == 0)
-		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &fd->fd_rsel);
-
-	return (revents);
 }
 
 int

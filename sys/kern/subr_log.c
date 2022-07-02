@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.74 2021/03/18 08:43:38 mvs Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.75 2022/07/02 08:50:42 visa Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -46,7 +46,6 @@
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/syslog.h>
-#include <sys/poll.h>
 #include <sys/malloc.h>
 #include <sys/filedesc.h>
 #include <sys/socket.h>
@@ -297,22 +296,6 @@ logread(dev_t dev, struct uio *uio, int flag)
  out:
 	mtx_leave(&log_mtx);
 	return (error);
-}
-
-int
-logpoll(dev_t dev, int events, struct proc *p)
-{
-	int revents = 0;
-
-	mtx_enter(&log_mtx);
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (msgbufp->msg_bufr != msgbufp->msg_bufx)
-			revents |= events & (POLLIN | POLLRDNORM);
-		else
-			selrecord(p, &logsoftc.sc_selp);
-	}
-	mtx_leave(&log_mtx);
-	return (revents);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_os.c,v 1.36 2022/03/21 19:22:41 miod Exp $	*/
+/*	$OpenBSD: bktr_os.c,v 1.37 2022/07/02 08:50:42 visa Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp $ */
 
 /*
@@ -60,8 +60,6 @@
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/mman.h>
-#include <sys/poll.h>
-#include <sys/selinfo.h>
 #include <sys/vnode.h>
 #if NRADIO > 0
 #include <sys/radioio.h>

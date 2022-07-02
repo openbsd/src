@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.112 2022/04/06 18:59:30 naddy Exp $ */
+/* $OpenBSD: wskbd.c,v 1.113 2022/07/02 08:50:42 visa Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -94,7 +94,6 @@
 #include <sys/errno.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
-#include <sys/poll.h>
 
 #include <ddb/db_var.h>
 
@@ -1254,16 +1253,6 @@ getkeyrepeat:
 	}
 #endif
 	return (error);
-}
-
-int
-wskbdpoll(dev_t dev, int events, struct proc *p)
-{
-	struct wskbd_softc *sc = wskbd_cd.cd_devs[minor(dev)];
-
-	if (sc->sc_base.me_evp == NULL)
-		return (POLLERR);
-	return (wsevent_poll(sc->sc_base.me_evp, events, p));
 }
 
 int

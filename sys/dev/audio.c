@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.198 2022/03/21 19:22:39 miod Exp $	*/
+/*	$OpenBSD: audio.c,v 1.199 2022/07/02 08:50:41 visa Exp $	*/
 /*
  * Copyright (c) 2015 Alexandre Ratchov <alex@caoua.org>
  *
@@ -19,7 +19,6 @@
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
-#include <sys/poll.h>
 #include <sys/kernel.h>
 #include <sys/task.h>
 #include <sys/vnode.h>
@@ -2051,22 +2050,6 @@ audio_mixer_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 }
 
 int
-audio_mixer_poll(struct audio_softc *sc, int events, struct proc *p)
-{
-	int revents = 0;
-
-	mtx_enter(&audio_lock);
-	if (sc->mix_isopen && sc->mix_pending)
-		revents |= events & (POLLIN | POLLRDNORM);
-	if (revents == 0) {
-		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &sc->mix_sel);
-	}
-	mtx_leave(&audio_lock);
-	return revents;
-}
-
-int
 audio_mixer_open(struct audio_softc *sc, int flags)
 {
 	DPRINTF("%s: flags = 0x%x\n", __func__, flags);
@@ -2096,26 +2079,6 @@ audio_mixer_close(struct audio_softc *sc, int flags)
 		mtx_leave(&audio_lock);
 	}
 	return 0;
-}
-
-int
-audio_poll(struct audio_softc *sc, int events, struct proc *p)
-{
-	int revents = 0;
-
-	mtx_enter(&audio_lock);
-	if ((sc->mode & AUMODE_RECORD) && sc->rec.used > 0)
-		revents |= events & (POLLIN | POLLRDNORM);
-	if ((sc->mode & AUMODE_PLAY) && sc->play.used < sc->play.len)
-		revents |= events & (POLLOUT | POLLWRNORM);
-	if (revents == 0) {
-		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &sc->rec.sel);
-		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(p, &sc->play.sel);
-	}
-	mtx_leave(&audio_lock);
-	return revents;
 }
 
 int
@@ -2248,30 +2211,6 @@ audioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	}
 	device_unref(&sc->dev);
 	return error;
-}
-
-int
-audiopoll(dev_t dev, int events, struct proc *p)
-{
-	struct audio_softc *sc;
-	int revents;
-
-	sc = (struct audio_softc *)device_lookup(&audio_cd, AUDIO_UNIT(dev));
-	if (sc == NULL)
-		return POLLERR;
-	switch (AUDIO_DEV(dev)) {
-	case AUDIO_DEV_AUDIO:
-		revents = audio_poll(sc, events, p);
-		break;
-	case AUDIO_DEV_AUDIOCTL:
-		revents = audio_mixer_poll(sc, events, p);
-		break;
-	default:
-		revents = 0;
-		break;
-	}
-	device_unref(&sc->dev);
-	return revents;
 }
 
 int

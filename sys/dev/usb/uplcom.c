@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.79 2022/04/09 20:07:44 naddy Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.80 2022/07/02 08:50:42 visa Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,9 +44,7 @@
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/tty.h>
-#include <sys/selinfo.h>
 #include <sys/device.h>
-#include <sys/poll.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbcdc.h>

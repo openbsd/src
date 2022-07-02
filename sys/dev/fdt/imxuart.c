@@ -1,4 +1,4 @@
-/* $OpenBSD: imxuart.c,v 1.12 2021/10/24 17:52:26 mpi Exp $ */
+/* $OpenBSD: imxuart.c,v 1.13 2022/07/02 08:50:42 visa Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -26,7 +26,6 @@
 #include <sys/syslog.h>
 #include <sys/conf.h>
 #include <sys/fcntl.h>
-#include <sys/select.h>
 #include <sys/kernel.h>
 
 #include <machine/bus.h>

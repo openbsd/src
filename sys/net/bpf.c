@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.216 2022/03/17 14:22:03 visa Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.217 2022/07/02 08:50:42 visa Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/socket.h>
-#include <sys/poll.h>
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
 #include <sys/rwlock.h>
@@ -98,7 +97,6 @@ void	bpf_mcopy(const void *, void *, size_t);
 int	bpf_movein(struct uio *, struct bpf_d *, struct mbuf **,
 	    struct sockaddr *);
 int	bpf_setif(struct bpf_d *, struct ifreq *);
-int	bpfpoll(dev_t, int, struct proc *);
 int	bpfkqfilter(dev_t, struct knote *);
 void	bpf_wakeup(struct bpf_d *);
 void	bpf_wakeup_cb(void *);
@@ -1141,46 +1139,6 @@ void
 bpf_ifname(struct bpf_if *bif, struct ifreq *ifr)
 {
 	bcopy(bif->bif_name, ifr->ifr_name, sizeof(ifr->ifr_name));
-}
-
-/*
- * Support for poll() system call
- */
-int
-bpfpoll(dev_t dev, int events, struct proc *p)
-{
-	struct bpf_d *d;
-	int revents;
-
-	KERNEL_ASSERT_LOCKED();
-
-	/*
-	 * An imitation of the FIONREAD ioctl code.
-	 */
-	d = bpfilter_lookup(minor(dev));
-
-	/*
-	 * XXX The USB stack manages it to trigger some race condition
-	 * which causes bpfilter_lookup to return NULL when a USB device
-	 * gets detached while it is up and has an open bpf handler (e.g.
-	 * dhclient).  We still should recheck if we can fix the root
-	 * cause of this issue.
-	 */
-	if (d == NULL)
-		return (POLLERR);
-
-	/* Always ready to write data */
-	revents = events & (POLLOUT | POLLWRNORM);
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		mtx_enter(&d->bd_mtx);
-		if (d->bd_hlen != 0 || (d->bd_immediate && d->bd_slen != 0))
-			revents |= events & (POLLIN | POLLRDNORM);
-		else
-			selrecord(p, &d->bd_sel);
-		mtx_leave(&d->bd_mtx);
-	}
-	return (revents);
 }
 
 const struct filterops bpfread_filtops = {

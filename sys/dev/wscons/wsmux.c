@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsmux.c,v 1.55 2021/09/22 15:44:12 anton Exp $	*/
+/*	$OpenBSD: wsmux.c,v 1.56 2022/07/02 08:50:42 visa Exp $	*/
 /*      $NetBSD: wsmux.c,v 1.37 2005/04/30 03:47:12 augustss Exp $      */
 
 /*
@@ -55,7 +55,6 @@
 #include <sys/tty.h>
 #include <sys/signalvar.h>
 #include <sys/device.h>
-#include <sys/poll.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsksymdef.h>
@@ -559,24 +558,6 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		error = 0;
 
 	return (error);
-}
-
-/*
- * poll() of the pseudo device from device table.
- */
-int
-wsmuxpoll(dev_t dev, int events, struct proc *p)
-{
-	struct wsmux_softc *sc = wsmuxdevs[minor(dev)];
-
-	if (sc->sc_base.me_evp == NULL) {
-#ifdef DIAGNOSTIC
-		printf("wsmuxpoll: not open\n");
-#endif
-		return (POLLERR);
-	}
-
-	return (wsevent_poll(sc->sc_base.me_evp, events, p));
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: wsevent.c,v 1.25 2020/12/25 12:59:52 visa Exp $ */
+/* $OpenBSD: wsevent.c,v 1.26 2022/07/02 08:50:42 visa Exp $ */
 /* $NetBSD: wsevent.c,v 1.16 2003/08/07 16:31:29 agc Exp $ */
 
 /*
@@ -79,8 +79,6 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
-#include <sys/selinfo.h>
-#include <sys/poll.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wseventvar.h>
@@ -140,7 +138,7 @@ wsevent_fini(struct wseventvar *ev)
 }
 
 /*
- * User-level interface: read, poll.
+ * User-level interface: read, kqueue.
  * (User cannot write an event queue.)
  */
 int
@@ -198,23 +196,6 @@ wsevent_read(struct wseventvar *ev, struct uio *uio, int flags)
 	    cnt * sizeof(struct wscons_event), uio);
 	ev->get = cnt;
 	return (error);
-}
-
-int
-wsevent_poll(struct wseventvar *ev, int events, struct proc *p)
-{
-	int revents = 0;
-	int s = splwsevent();
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (ev->get != ev->put)
-			revents |= events & (POLLIN | POLLRDNORM);
-		else
-			selrecord(p, &ev->sel);
-	}
-
-	splx(s);
-	return (revents);
 }
 
 int

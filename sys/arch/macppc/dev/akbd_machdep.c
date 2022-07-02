@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbd_machdep.c,v 1.2 2019/09/03 17:51:52 deraadt Exp $	*/
+/*	$OpenBSD: akbd_machdep.c,v 1.3 2022/07/02 08:50:41 visa Exp $	*/
 /*	$NetBSD: akbd.c,v 1.13 2001/01/25 14:08:55 tsubai Exp $	*/
 
 /*
@@ -36,8 +36,6 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
-#include <sys/poll.h>
-#include <sys/selinfo.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>

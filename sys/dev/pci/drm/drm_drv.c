@@ -28,7 +28,6 @@
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
-#include <sys/poll.h>
 #include <sys/specdev.h>
 #include <sys/vnode.h>
 
@@ -1862,34 +1861,6 @@ out:
 	mtx_leave(&dev->event_lock);
 
 	return (gotone);
-}
-
-int
-drmpoll(dev_t kdev, int events, struct proc *p)
-{
-	struct drm_device	*dev = drm_get_device_from_kdev(kdev);
-	struct drm_file		*file_priv;
-	int		 	 revents = 0;
-
-	if (dev == NULL)
-		return (POLLERR);
-
-	mutex_lock(&dev->filelist_mutex);
-	file_priv = drm_find_file_by_minor(dev, minor(kdev));
-	mutex_unlock(&dev->filelist_mutex);
-	if (file_priv == NULL)
-		return (POLLERR);
-
-	mtx_enter(&dev->event_lock);
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (!list_empty(&file_priv->event_list))
-			revents |=  events & (POLLIN | POLLRDNORM);
-		else
-			selrecord(p, &file_priv->rsel);
-	}
-	mtx_leave(&dev->event_lock);
-
-	return (revents);
 }
 
 paddr_t

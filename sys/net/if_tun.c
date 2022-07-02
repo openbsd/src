@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.236 2022/02/26 02:15:45 dlg Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.237 2022/07/02 08:50:42 visa Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -53,7 +53,6 @@
 #include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
-#include <sys/poll.h>
 #include <sys/conf.h>
 #include <sys/smr.h>
 
@@ -110,7 +109,6 @@ int	tun_dev_close(dev_t, struct proc *);
 int	tun_dev_ioctl(dev_t, u_long, void *);
 int	tun_dev_read(dev_t, struct uio *, int);
 int	tun_dev_write(dev_t, struct uio *, int, int);
-int	tun_dev_poll(dev_t, int, struct proc *);
 int	tun_dev_kqfilter(dev_t, struct knote *);
 
 int	tun_ioctl(struct ifnet *, u_long, caddr_t);
@@ -941,50 +939,6 @@ tun_input(struct ifnet *ifp, struct mbuf *m0)
 		m_freem(m0);
 		break;
 	}
-}
-
-/*
- * tunpoll - the poll interface, this is only useful on reads
- * really. The write detect always returns true, write never blocks
- * anyway, it either accepts the packet or drops it.
- */
-int
-tunpoll(dev_t dev, int events, struct proc *p)
-{
-	return (tun_dev_poll(dev, events, p));
-}
-
-int
-tappoll(dev_t dev, int events, struct proc *p)
-{
-	return (tun_dev_poll(dev, events, p));
-}
-
-int
-tun_dev_poll(dev_t dev, int events, struct proc *p)
-{
-	struct tun_softc	*sc;
-	struct ifnet		*ifp;
-	int			 revents;
-
-	sc = tun_get(dev);
-	if (sc == NULL)
-		return (POLLERR);
-
-	ifp = &sc->sc_if;
-	revents = 0;
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		if (!ifq_empty(&ifp->if_snd))
-			revents |= events & (POLLIN | POLLRDNORM);
-		else
-			selrecord(p, &sc->sc_rsel);
-	}
-	if (events & (POLLOUT | POLLWRNORM))
-		revents |= events & (POLLOUT | POLLWRNORM);
-
-	tun_put(sc);
-	return (revents);
 }
 
 int

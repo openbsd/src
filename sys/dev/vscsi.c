@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.60 2022/04/16 19:19:58 naddy Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.61 2022/07/02 08:50:41 visa Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -27,7 +27,6 @@
 #include <sys/pool.h>
 #include <sys/task.h>
 #include <sys/ioctl.h>
-#include <sys/poll.h>
 #include <sys/selinfo.h>
 
 #include <scsi/scsi_all.h>
@@ -525,31 +524,6 @@ gone:
 	device_unref(&sc->sc_dev);
 
 	free(dt, M_TEMP, sizeof(*dt));
-}
-
-int
-vscsipoll(dev_t dev, int events, struct proc *p)
-{
-	struct vscsi_softc		*sc = DEV2SC(dev);
-	int				revents = 0;
-
-	if (sc == NULL)
-		return (POLLERR);
-
-	if (events & (POLLIN | POLLRDNORM)) {
-		mtx_enter(&sc->sc_state_mtx);
-		if (!TAILQ_EMPTY(&sc->sc_ccb_i2t))
-			revents |= events & (POLLIN | POLLRDNORM);
-		mtx_leave(&sc->sc_state_mtx);
-	}
-
-	if (revents == 0) {
-		if (events & (POLLIN | POLLRDNORM))
-			selrecord(p, &sc->sc_sel);
-	}
-
-	device_unref(&sc->sc_dev);
-	return (revents);
 }
 
 int
