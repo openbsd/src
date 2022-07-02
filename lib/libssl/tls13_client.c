@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_client.c,v 1.94 2022/02/03 16:33:12 jsing Exp $ */
+/* $OpenBSD: tls13_client.c,v 1.95 2022/07/02 16:00:12 tb Exp $ */
 /*
  * Copyright (c) 2018, 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -440,7 +440,7 @@ tls13_client_hello_retry_send(struct tls13_ctx *ctx, CBB *cbb)
 	 * supported groups and is not the same as the key share we previously
 	 * offered.
 	 */
-	if (!tls1_check_curve(ctx->ssl, ctx->hs->tls13.server_group))
+	if (!tls1_check_group(ctx->ssl, ctx->hs->tls13.server_group))
 		return 0; /* XXX alert */
 	if (ctx->hs->tls13.server_group == tls_key_share_group(ctx->hs->key_share))
 		return 0; /* XXX alert */

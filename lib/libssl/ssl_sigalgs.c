@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_sigalgs.c,v 1.45 2022/06/29 07:55:59 tb Exp $ */
+/* $OpenBSD: ssl_sigalgs.c,v 1.46 2022/07/02 16:00:12 tb Exp $ */
 /*
  * Copyright (c) 2018-2020 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -39,7 +39,7 @@ const struct ssl_sigalg sigalgs[] = {
 		.key_type = EVP_PKEY_EC,
 		.md = EVP_sha512,
 		.security_level = 5,
-		.curve_nid = NID_secp521r1,
+		.group_nid = NID_secp521r1,
 	},
 #ifndef OPENSSL_NO_GOST
 	{
@@ -60,7 +60,7 @@ const struct ssl_sigalg sigalgs[] = {
 		.key_type = EVP_PKEY_EC,
 		.md = EVP_sha384,
 		.security_level = 4,
-		.curve_nid = NID_secp384r1,
+		.group_nid = NID_secp384r1,
 	},
 	{
 		.value = SIGALG_RSA_PKCS1_SHA256,
@@ -73,7 +73,7 @@ const struct ssl_sigalg sigalgs[] = {
 		.key_type = EVP_PKEY_EC,
 		.md = EVP_sha256,
 		.security_level = 3,
-		.curve_nid = NID_X9_62_prime256v1,
+		.group_nid = NID_X9_62_prime256v1,
 	},
 #ifndef OPENSSL_NO_GOST
 	{
@@ -321,12 +321,12 @@ ssl_sigalg_pkey_ok(SSL *s, const struct ssl_sigalg *sigalg, EVP_PKEY *pkey)
 	    (sigalg->flags & SIGALG_FLAG_RSA_PSS) == 0)
 		return 0;
 
-	/* Ensure that curve matches for EC keys. */
+	/* Ensure that group matches for EC keys. */
 	if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
-		if (sigalg->curve_nid == 0)
+		if (sigalg->group_nid == 0)
 			return 0;
 		if (EC_GROUP_get_curve_name(EC_KEY_get0_group(
-		    EVP_PKEY_get0_EC_KEY(pkey))) != sigalg->curve_nid)
+		    EVP_PKEY_get0_EC_KEY(pkey))) != sigalg->group_nid)
 			return 0;
 	}
 

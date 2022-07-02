@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.149 2022/06/30 11:17:49 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.150 2022/07/02 16:00:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1271,13 +1271,13 @@ static int
 ssl3_get_server_kex_ecdhe(SSL *s, CBS *cbs)
 {
 	uint8_t curve_type;
-	uint16_t curve_id;
+	uint16_t group_id;
 	int decode_error;
 	CBS public;
 
 	if (!CBS_get_u8(cbs, &curve_type))
 		goto decode_err;
-	if (!CBS_get_u16(cbs, &curve_id))
+	if (!CBS_get_u16(cbs, &group_id))
 		goto decode_err;
 
 	/* Only named curves are supported. */
@@ -1291,17 +1291,17 @@ ssl3_get_server_kex_ecdhe(SSL *s, CBS *cbs)
 		goto decode_err;
 
 	/*
-	 * Check that the curve is one of our preferences - if it is not,
-	 * the server has sent us an invalid curve.
+	 * Check that the group is one of our preferences - if it is not,
+	 * the server has sent us an invalid group.
 	 */
-	if (!tls1_check_curve(s, curve_id)) {
+	if (!tls1_check_group(s, group_id)) {
 		SSLerror(s, SSL_R_WRONG_CURVE);
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
 		goto err;
 	}
 
 	tls_key_share_free(s->s3->hs.key_share);
-	if ((s->s3->hs.key_share = tls_key_share_new(curve_id)) == NULL)
+	if ((s->s3->hs.key_share = tls_key_share_new(group_id)) == NULL)
 		goto err;
 
 	if (!tls_key_share_peer_public(s->s3->hs.key_share, &public,

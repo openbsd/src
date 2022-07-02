@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.117 2022/06/30 16:05:07 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.118 2022/07/02 16:00:12 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1516,7 +1516,7 @@ tlsext_keyshare_server_parse(SSL *s, uint16_t msg_type, CBS *cbs, int *alert)
 			continue;
 
 		/* XXX - consider implementing server preference. */
-		if (!tls1_check_curve(s, group))
+		if (!tls1_check_group(s, group))
 			continue;
 
 		/* Decode and store the selected key share. */

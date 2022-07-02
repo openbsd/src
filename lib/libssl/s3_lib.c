@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.233 2022/06/29 21:18:04 tb Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.234 2022/07/02 16:00:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2494,13 +2494,13 @@ ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	STACK_OF(SSL_CIPHER) *prio, *allow;
 	SSL_CIPHER *c, *ret = NULL;
 	int can_use_ecc;
-	int i, ii, ok;
+	int i, ii, nid, ok;
 	SSL_CERT *cert;
 
 	/* Let's see which ciphers we can support */
 	cert = s->cert;
 
-	can_use_ecc = (tls1_get_shared_curve(s) != NID_undef);
+	can_use_ecc = tls1_get_supported_group(s, &nid);
 
 	/*
 	 * Do not set the compare functions, because this may lead to a

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_key_share.c,v 1.6 2022/07/02 09:33:20 tb Exp $ */
+/* $OpenBSD: tls_key_share.c,v 1.7 2022/07/02 16:00:12 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -61,7 +61,7 @@ tls_key_share_new(uint16_t group_id)
 {
 	int nid;
 
-	if ((nid = tls1_ec_curve_id2nid(group_id)) == NID_undef)
+	if (!tls1_ec_group_id2nid(group_id, &nid))
 		return NULL;
 
 	return tls_key_share_new_internal(nid, group_id);
@@ -73,7 +73,7 @@ tls_key_share_new_nid(int nid)
 	uint16_t group_id = 0;
 
 	if (nid != NID_dhKeyAgreement) {
-		if ((group_id = tls1_ec_nid2curve_id(nid)) == 0)
+		if (!tls1_ec_nid2group_id(nid, &group_id))
 			return NULL;
 	}
 

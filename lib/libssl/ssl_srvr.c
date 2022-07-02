@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.146 2022/06/30 11:17:50 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.147 2022/07/02 16:00:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1380,7 +1380,7 @@ ssl3_send_server_kex_ecdhe(SSL *s, CBB *cbb)
 	CBB public;
 	int nid;
 
-	if ((nid = tls1_get_shared_curve(s)) == NID_undef) {
+	if (!tls1_get_supported_group(s, &nid)) {
 		SSLerror(s, SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
 		ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
 		goto err;

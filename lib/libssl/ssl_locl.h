@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.409 2022/06/30 16:05:07 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.410 2022/07/02 16:00:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1306,7 +1306,7 @@ int ssl_security_cert(const SSL_CTX *ctx, const SSL *ssl, X509 *x509,
     int is_peer, int *out_error);
 int ssl_security_cert_chain(const SSL *ssl, STACK_OF(X509) *sk,
     X509 *x509, int *out_error);
-int ssl_security_supported_group(const SSL *ssl, uint16_t curve_id);
+int ssl_security_supported_group(const SSL *ssl, uint16_t group_id);
 
 int ssl_get_new_session(SSL *s, int session);
 int ssl_get_prev_session(SSL *s, CBS *session_id, CBS *ext_block,
@@ -1515,11 +1515,11 @@ int tls1_set_groups(uint16_t **out_group_ids, size_t *out_group_ids_len,
 int tls1_set_group_list(uint16_t **out_group_ids, size_t *out_group_ids_len,
     const char *groups);
 
-int tls1_ec_curve_id2nid(const uint16_t curve_id);
-int tls1_ec_curve_id2bits(const uint16_t curve_id);
-uint16_t tls1_ec_nid2curve_id(const int nid);
-int tls1_check_curve(SSL *s, const uint16_t group_id);
-int tls1_get_shared_curve(SSL *s);
+int tls1_ec_group_id2nid(uint16_t group_id, int *out_nid);
+int tls1_ec_group_id2bits(uint16_t group_id, int *out_bits);
+int tls1_ec_nid2group_id(int nid, uint16_t *out_group_id);
+int tls1_check_group(SSL *s, uint16_t group_id);
+int tls1_get_supported_group(SSL *s, int *group_nid);
 
 int ssl_check_clienthello_tlsext_early(SSL *s);
 int ssl_check_clienthello_tlsext_late(SSL *s);

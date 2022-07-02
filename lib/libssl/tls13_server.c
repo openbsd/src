@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_server.c,v 1.98 2022/06/04 01:14:43 tb Exp $ */
+/* $OpenBSD: tls13_server.c,v 1.99 2022/07/02 16:00:12 tb Exp $ */
 /*
  * Copyright (c) 2019, 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
@@ -432,9 +432,9 @@ tls13_server_hello_retry_request_send(struct tls13_ctx *ctx, CBB *cbb)
 
 	if (ctx->hs->key_share != NULL)
 		return 0;
-	if ((nid = tls1_get_shared_curve(ctx->ssl)) == NID_undef)
+	if (!tls1_get_supported_group(ctx->ssl, &nid))
 		return 0;
-	if ((ctx->hs->tls13.server_group = tls1_ec_nid2curve_id(nid)) == 0)
+	if (!tls1_ec_nid2group_id(nid, &ctx->hs->tls13.server_group))
 		return 0;
 
 	if (!tls13_server_hello_build(ctx, cbb, 1))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.14 2022/06/30 16:05:07 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.15 2022/07/02 16:00:12 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -401,23 +401,23 @@ ssl_security_cert_chain(const SSL *ssl, STACK_OF(X509) *sk, X509 *x509,
 }
 
 int
-ssl_security_supported_group(const SSL *ssl, uint16_t curve_id)
+ssl_security_supported_group(const SSL *ssl, uint16_t group_id)
 {
 	CBB cbb;
 	int bits, nid;
-	uint8_t curve[2];
+	uint8_t group[2];
 
-	if ((bits = tls1_ec_curve_id2bits(curve_id)) == 0)
+	if (!tls1_ec_group_id2bits(group_id, &bits))
 		return 0;
-	if ((nid = tls1_ec_curve_id2nid(curve_id)) == NID_undef)
+	if (!tls1_ec_group_id2nid(group_id, &nid))
 		return 0;
 
-	if (!CBB_init_fixed(&cbb, curve, sizeof(curve)))
+	if (!CBB_init_fixed(&cbb, group, sizeof(group)))
 		return 0;
-	if (!CBB_add_u16(&cbb, curve_id))
+	if (!CBB_add_u16(&cbb, group_id))
 		return 0;
 	if (!CBB_finish(&cbb, NULL, NULL))
 		return 0;
 
-	return ssl_security(ssl, SSL_SECOP_CURVE_SUPPORTED, bits, nid, curve);
+	return ssl_security(ssl, SSL_SECOP_CURVE_SUPPORTED, bits, nid, group);
 }
