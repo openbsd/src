@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.101 2022/06/29 21:18:04 tb Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.102 2022/07/02 19:36:07 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -397,21 +397,21 @@ ssl_cert_add1_chain_cert(SSL_CTX *ctx, SSL *ssl, X509 *cert)
 }
 
 int
-ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
+ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *certs)
 {
 	X509_STORE_CTX *ctx = NULL;
 	X509_VERIFY_PARAM *param;
-	X509 *x;
+	X509 *cert;
 	int ret = 0;
 
-	if ((sk == NULL) || (sk_X509_num(sk) == 0))
+	if (sk_X509_num(certs) < 1)
 		goto err;
 
 	if ((ctx = X509_STORE_CTX_new()) == NULL)
 		goto err;
 
-	x = sk_X509_value(sk, 0);
-	if (!X509_STORE_CTX_init(ctx, s->ctx->cert_store, x, sk)) {
+	cert = sk_X509_value(certs, 0);
+	if (!X509_STORE_CTX_init(ctx, s->ctx->cert_store, cert, certs)) {
 		SSLerror(s, ERR_R_X509_LIB);
 		goto err;
 	}
