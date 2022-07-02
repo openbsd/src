@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.118 2022/07/02 16:00:12 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.119 2022/07/02 16:31:04 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -1126,7 +1126,7 @@ tlsext_sessionticket_client_needs(SSL *s, uint16_t msg_type)
 	if ((SSL_get_options(s) & SSL_OP_NO_TICKET) != 0)
 		return 0;
 
-	if (!ssl_security(s, SSL_SECOP_TICKET, 0, 0, NULL))
+	if (!ssl_security_tickets(s))
 		return 0;
 
 	if (s->internal->new_session)
@@ -1209,7 +1209,7 @@ tlsext_sessionticket_server_needs(SSL *s, uint16_t msg_type)
 {
 	return (s->internal->tlsext_ticket_expected &&
 	    !(SSL_get_options(s) & SSL_OP_NO_TICKET) &&
-	    ssl_security(s, SSL_SECOP_TICKET, 0, 0, NULL));
+	    ssl_security_tickets(s));
 }
 
 int

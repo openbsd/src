@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_ciphers.c,v 1.14 2022/06/29 08:38:01 tb Exp $ */
+/*	$OpenBSD: ssl_ciphers.c,v 1.15 2022/07/02 16:31:04 tb Exp $ */
 /*
  * Copyright (c) 2015-2017 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015-2018, 2020 Joel Sing <jsing@openbsd.org>
@@ -70,8 +70,7 @@ ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *ciphers, CBB *cbb)
 		if (!ssl_cipher_allowed_in_tls_version_range(cipher, min_vers,
 		    max_vers))
 			continue;
-		if (!ssl_security(s, SSL_SECOP_CIPHER_CHECK,
-		    cipher->strength_bits, 0, cipher))
+		if (!ssl_security_cipher_check(s, cipher))
 			continue;
 		if (!CBB_add_u16(cbb, ssl3_cipher_get_value(cipher)))
 			return 0;

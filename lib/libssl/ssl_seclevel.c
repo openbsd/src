@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.15 2022/07/02 16:00:12 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.16 2022/07/02 16:31:04 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -226,7 +226,7 @@ ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid, void *other)
 	    ctx->internal->cert->security_ex_data);
 }
 
-int
+static int
 ssl_security(const SSL *ssl, int op, int bits, int nid, void *other)
 {
 	return ssl->cert->security_cb(ssl, NULL, op, bits, nid, other,
@@ -234,9 +234,50 @@ ssl_security(const SSL *ssl, int op, int bits, int nid, void *other)
 }
 
 int
+ssl_security_sigalg_check(const SSL *ssl, const EVP_PKEY *pkey)
+{
+#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
+	return ssl_security(ssl, SSL_SECOP_SIGALG_CHECK,
+	    EVP_PKEY_security_bits(pkey), 0, NULL);
+#else
+	return 1;
+#endif
+}
+
+int
+ssl_security_tickets(const SSL *ssl)
+{
+	return ssl_security(ssl, SSL_SECOP_TICKET, 0, 0, NULL);
+}
+
+int
 ssl_security_version(const SSL *ssl, int version)
 {
 	return ssl_security(ssl, SSL_SECOP_VERSION, 0, version, NULL);
+}
+
+static int
+ssl_security_cipher(const SSL *ssl, SSL_CIPHER *cipher, int secop)
+{
+	return ssl_security(ssl, secop, cipher->strength_bits, 0, cipher);
+}
+
+int
+ssl_security_cipher_check(const SSL *ssl, SSL_CIPHER *cipher)
+{
+	return ssl_security_cipher(ssl, cipher, SSL_SECOP_CIPHER_CHECK);
+}
+
+int
+ssl_security_shared_cipher(const SSL *ssl, SSL_CIPHER *cipher)
+{
+	return ssl_security_cipher(ssl, cipher, SSL_SECOP_CIPHER_SHARED);
+}
+
+int
+ssl_security_supported_cipher(const SSL *ssl, SSL_CIPHER *cipher)
+{
+	return ssl_security_cipher(ssl, cipher, SSL_SECOP_CIPHER_SUPPORTED);
 }
 
 int
