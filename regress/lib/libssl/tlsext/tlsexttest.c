@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.64 2022/06/29 17:39:21 beck Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.65 2022/07/02 16:01:56 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -479,7 +479,7 @@ static uint8_t tlsext_supportedgroups_client_default[] = {
 };
 
 static uint16_t tlsext_supportedgroups_client_secp384r1_val[] = {
-	0x0018   /* tls1_ec_nid2curve_id(NID_secp384r1) */
+	0x0018   /* tls1_ec_nid2group_id(NID_secp384r1) */
 };
 static uint8_t tlsext_supportedgroups_client_secp384r1[] = {
 	0x00, 0x02,
@@ -488,8 +488,8 @@ static uint8_t tlsext_supportedgroups_client_secp384r1[] = {
 
 /* Example from RFC 4492 section 5.1.1 */
 static uint16_t tlsext_supportedgroups_client_nistp192and224_val[] = {
-	0x0013,  /* tls1_ec_nid2curve_id(NID_X9_62_prime192v1) */
-	0x0015   /* tls1_ec_nid2curve_id(NID_secp224r1) */
+	0x0013,  /* tls1_ec_nid2group_id(NID_X9_62_prime192v1) */
+	0x0015   /* tls1_ec_nid2group_id(NID_secp224r1) */
 };
 static uint8_t tlsext_supportedgroups_client_nistp192and224[] = {
 	0x00, 0x04,
@@ -562,7 +562,9 @@ test_tlsext_supportedgroups_client(void)
 		FAIL("client could not malloc\n");
 		goto err;
 	}
-	ssl->session->tlsext_supportedgroups[0] = tls1_ec_nid2curve_id(NID_secp384r1);
+	if (!tls1_ec_nid2group_id(NID_secp384r1,
+	    &ssl->session->tlsext_supportedgroups[0]))
+		goto err;
 	ssl->session->tlsext_supportedgroups_length = 1;
 
 	if (!tlsext_supportedgroups_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
@@ -650,8 +652,12 @@ test_tlsext_supportedgroups_client(void)
 		FAIL("client could not malloc\n");
 		goto err;
 	}
-	ssl->internal->tlsext_supportedgroups[0] = tls1_ec_nid2curve_id(NID_X9_62_prime192v1);
-	ssl->internal->tlsext_supportedgroups[1] = tls1_ec_nid2curve_id(NID_secp224r1);
+	if (!tls1_ec_nid2group_id(NID_X9_62_prime192v1,
+	    &ssl->internal->tlsext_supportedgroups[0]))
+		goto err;
+	if (!tls1_ec_nid2group_id(NID_secp224r1,
+	    &ssl->internal->tlsext_supportedgroups[1]))
+		goto err;
 	ssl->internal->tlsext_supportedgroups_length = 2;
 
 	if (!tlsext_supportedgroups_client_needs(ssl, SSL_TLSEXT_MSG_CH)) {
