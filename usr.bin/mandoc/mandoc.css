@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.36 2022/03/17 18:45:43 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.37 2022/07/03 14:28:27 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  *
@@ -69,8 +69,7 @@ td.foot-os {	text-align: right; }
 
 /* Sections and paragraphs. */
 
-.manual-text {
-		margin-left: 3.8em; }
+main {		margin-left: 3.8em; }
 .Nd { }
 section.Sh { }
 h1.Sh {		margin-top: 1.2em;
@@ -338,8 +337,7 @@ h1.Sh::before, h2.Ss::before, .St::before, .Sx::before, .Sy::before,
 /* Overrides to avoid excessive margins on small devices. */
 
 @media (max-width: 37.5em) {
-.manual-text {
-		margin-left: 0.5em; }
+main {		margin-left: 0.5em; }
 h1.Sh, h2.Ss {	margin-left: 0em; }
 .Bd-indent {	margin-left: 2em; }
 .Bl-hang > dd {

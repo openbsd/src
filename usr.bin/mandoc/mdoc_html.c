@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_html.c,v 1.219 2022/06/25 12:44:12 schwarze Exp $ */
+/* $OpenBSD: mdoc_html.c,v 1.220 2022/07/03 14:28:27 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -300,7 +300,7 @@ html_mdoc(void *arg, const struct roff_meta *mdoc)
 	}
 
 	mdoc_root_pre(mdoc, h);
-	t = print_otag(h, TAG_DIV, "c", "manual-text");
+	t = print_otag(h, TAG_MAIN, "c", "manual-text");
 	print_mdoc_nodelist(mdoc, n, h);
 	print_tagq(h, t);
 	mdoc_root_post(mdoc, h);
