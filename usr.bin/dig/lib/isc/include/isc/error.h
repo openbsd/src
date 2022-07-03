@@ -14,14 +14,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: error.h,v 1.5 2020/02/25 05:00:43 jsg Exp $ */
+/* $Id: error.h,v 1.6 2022/07/03 16:00:11 florian Exp $ */
 
 #ifndef ISC_ERROR_H
 #define ISC_ERROR_H 1
 
 /*! \file isc/error.h */
 
-#include <sys/cdefs.h>
+#include <sys/types.h>
 #include <stdarg.h>
 
 typedef void (*isc_errorcallback_t)(const char *, int, const char *, va_list);
