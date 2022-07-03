@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.191 2022/07/02 16:00:12 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.192 2022/07/03 08:13:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -342,15 +342,15 @@ static const uint16_t ecgroups_server_default[] = {
 int
 tls1_ec_group_id2nid(uint16_t group_id, int *out_nid)
 {
-	const struct supported_group *group;
+	int nid;
 
-	if (group_id < 1 || group_id >= NID_LIST_LEN)
+	if (group_id >= NID_LIST_LEN)
 		return 0;
 
-	if ((group = &nid_list[group_id]) == NULL)
+	if ((nid = nid_list[group_id].nid) == 0)
 		return 0;
 
-	*out_nid = group->nid;
+	*out_nid = nid;
 
 	return 1;
 }
@@ -358,15 +358,15 @@ tls1_ec_group_id2nid(uint16_t group_id, int *out_nid)
 int
 tls1_ec_group_id2bits(uint16_t group_id, int *out_bits)
 {
-	const struct supported_group *group;
+	int bits;
 
-	if (group_id < 1 || group_id >= NID_LIST_LEN)
+	if (group_id >= NID_LIST_LEN)
 		return 0;
 
-	if ((group = &nid_list[group_id]) == NULL)
+	if ((bits = nid_list[group_id].bits) == 0)
 		return 0;
 
-	*out_bits = group->bits;
+	*out_bits = bits;
 
 	return 1;
 }
