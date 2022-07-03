@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: format-pem.pl,v 1.5 2019/04/02 12:30:20 sthen Exp $
+# $OpenBSD: format-pem.pl,v 1.6 2022/07/03 15:02:04 sthen Exp $
 #
 # Copyright (c) 2016 Stuart Henderson <sthen@openbsd.org>
 #
@@ -15,10 +15,10 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-# To update cert.pem from Mozilla NSS:
+# To update cert.pem based on the certificates included in Mozilla NSS,
+# pkg_add curl for mk-ca-bundle(1), and:
 # - perl format-pem.pl < cert.pem > /dev/null 2> calist.old
-# - cd /usr/ports/net/curl; make NO_DEPENDS=Yes patch; curldir=`make show=WRKSRC`; cd -
-# - pkg_add curl; perl $curldir/lib/mk-ca-bundle.pl
+# - mk-ca-bundle
 # - perl format-pem.pl < ca-bundle.crt > certnew.pem 2> calist.new
 # Summarize additions/removals for review:
 # - diff calist.old calist.new
