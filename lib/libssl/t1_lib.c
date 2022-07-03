@@ -1,4 +1,4 @@
-/* $OpenBSD: t1_lib.c,v 1.192 2022/07/03 08:13:45 tb Exp $ */
+/* $OpenBSD: t1_lib.c,v 1.193 2022/07/03 08:15:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -372,109 +372,21 @@ tls1_ec_group_id2bits(uint16_t group_id, int *out_bits)
 }
 
 int
-tls1_ec_nid2group_id(const int nid, uint16_t *out_group_id)
+tls1_ec_nid2group_id(int nid, uint16_t *out_group_id)
 {
 	uint16_t group_id;
 
-	switch (nid) {
-	case NID_sect163k1:
-		group_id = 1;
-		break;
-	case NID_sect163r1:
-		group_id = 2;
-		break;
-	case NID_sect163r2:
-		group_id = 3;
-		break;
-	case NID_sect193r1:
-		group_id = 4;
-		break;
-	case NID_sect193r2:
-		group_id = 5;
-		break;
-	case NID_sect233k1:
-		group_id = 6;
-		break;
-	case NID_sect233r1:
-		group_id = 7;
-		break;
-	case NID_sect239k1:
-		group_id = 8;
-		break;
-	case NID_sect283k1:
-		group_id = 9;
-		break;
-	case NID_sect283r1:
-		group_id = 10;
-		break;
-	case NID_sect409k1:
-		group_id = 11;
-		break;
-	case NID_sect409r1:
-		group_id = 12;
-		break;
-	case NID_sect571k1:
-		group_id = 13;
-		break;
-	case NID_sect571r1:
-		group_id = 14;
-		break;
-	case NID_secp160k1:
-		group_id = 15;
-		break;
-	case NID_secp160r1:
-		group_id = 16;
-		break;
-	case NID_secp160r2:
-		group_id = 17;
-		break;
-	case NID_secp192k1:
-		group_id = 18;
-		break;
-	case NID_X9_62_prime192v1: /* aka secp192r1 */
-		group_id = 19;
-		break;
-	case NID_secp224k1:
-		group_id = 20;
-		break;
-	case NID_secp224r1:
-		group_id = 21;
-		break;
-	case NID_secp256k1:
-		group_id = 22;
-		break;
-	case NID_X9_62_prime256v1: /* aka secp256r1 */
-		group_id = 23;
-		break;
-	case NID_secp384r1:
-		group_id = 24;
-		break;
-	case NID_secp521r1:
-		group_id = 25;
-		break;
-	case NID_brainpoolP256r1:
-		group_id = 26;
-		break;
-	case NID_brainpoolP384r1:
-		group_id = 27;
-		break;
-	case NID_brainpoolP512r1:
-		group_id = 28;
-		break;
-	case NID_X25519:
-		group_id = 29;
-		break;
-	default:
-		group_id = 0;
-		break;
-	}
-
-	if (group_id == 0)
+	if (nid == 0)
 		return 0;
 
-	*out_group_id = group_id;
+	for (group_id = 0; group_id < NID_LIST_LEN; group_id++) {
+		if (nid_list[group_id].nid == nid) {
+			*out_group_id = group_id;
+			return 1;
+		}
+	}
 
-	return 1;
+	return 0;
 }
 
 /*
