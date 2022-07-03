@@ -138,6 +138,8 @@ enum {
 	dns_rdatatype_openpgpkey = 61,
 	dns_rdatatype_csync = 62,
 	dns_rdatatype_zonemd = 63,
+	dns_rdatatype_svcb = 64,
+	dns_rdatatype_https = 65,
 	dns_rdatatype_spf = 99,
 	dns_rdatatype_unspec = 103,
 	dns_rdatatype_nid = 104,

@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: rdata.c,v 1.34 2022/06/25 12:14:18 jsg Exp $ */
+/* $Id: rdata.c,v 1.35 2022/07/03 12:07:52 florian Exp $ */
 
 /*! \file */
 
@@ -774,6 +774,7 @@ dns_rdatatype_fromtext(dns_rdatatype_t *typep, isc_textregion_t *source) {
 		{"gpos",	27},
 		{"hinfo",	13},
 		{"hip",		55},
+		{"https",	65},
 		{"ipseckey",	45},
 		{"isdn",	20},
 		{"ixfr",	251},
@@ -821,6 +822,7 @@ dns_rdatatype_fromtext(dns_rdatatype_t *typep, isc_textregion_t *source) {
 		{"spf",		99},
 		{"srv",		33},
 		{"sshfp",	44},
+		{"svcb",	64},
 		{"ta",		32768},
 		{"talink",	58},
 		{"tkey",	249},
@@ -1005,6 +1007,10 @@ dns_rdatatype_totext(dns_rdatatype_t type, isc_buffer_t *target) {
 		return (isc_str_tobuffer("CSYNC", target));
 	case 63:
 		return (isc_str_tobuffer("ZONEMD", target));
+	case 64:
+		return (isc_str_tobuffer("SVCB", target));
+	case 65:
+		return (isc_str_tobuffer("HTTPS", target));
 	case 99:
 		return (isc_str_tobuffer("SPF", target));
 	case 100:
