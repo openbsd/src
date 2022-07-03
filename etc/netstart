@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.218 2022/06/26 09:36:13 florian Exp $
+#	$OpenBSD: netstart,v 1.219 2022/07/03 12:14:36 kn Exp $
 
 # Turn off Strict Bourne shell mode.
 set +o sh
@@ -9,6 +9,17 @@ set +o sh
 usage() {
 	print -u2 "usage: ${0##*/} [[-n] interface ...]"
 	exit 1
+}
+
+# Test the first argument against the remaining ones, return success on a match.
+isin() {
+	local _a=$1 _b
+
+	shift
+	for _b; do
+		[[ $_a == "$_b" ]] && return 0
+	done
+	return 1
 }
 
 # Echo file $1 to stdout. Skip comment lines. Strip leading and trailing
@@ -94,7 +105,8 @@ ifcreate() {
 }
 
 # Create interfaces for network pseudo-devices referred to by hostname.if files.
-# Usage: vifscreate
+# Optionally, limit creation to given interfaces only.
+# Usage: vifscreate [if ...]
 vifscreate() {
 	local _vif _hn _if
 
@@ -105,6 +117,10 @@ vifscreate() {
 
 			# loopback for routing domain is created by kernel
 			[[ -n ${_if##lo[1-9]*} ]] || continue
+
+			if (($# > 0)) && ! isin $_if "$@"; then
+				continue
+			fi
 
 			if ! ifcreate $_if; then
 				print -u2 "${0##*/}: create for '$_if' failed."
@@ -313,7 +329,11 @@ $PRINT_ONLY || [[ ! -f /etc/soii.key ]] ||
 
 # If we were invoked with a list of interface names, just reconfigure these
 # interfaces (or bridges), add default routes and return.
+# Create virtual interfaces upfront to make ifconfig commands depending on
+# other interfaces, e.g. "patch", work regardless of in which order interface
+# names were specified.
 if (($# > 0)); then
+	vifscreate "$@"
 	for _if; do ifstart $_if; done
 	defaultroute
 	return
