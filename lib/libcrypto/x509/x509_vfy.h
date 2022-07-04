@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.52 2022/06/27 14:10:22 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.53 2022/07/04 12:17:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -435,6 +435,7 @@ int X509_VERIFY_PARAM_set_trust(X509_VERIFY_PARAM *param, int trust);
 void X509_VERIFY_PARAM_set_depth(X509_VERIFY_PARAM *param, int depth);
 #if defined(LIBRESSL_INTERNAL)
 void X509_VERIFY_PARAM_set_auth_level(X509_VERIFY_PARAM *param, int auth_level);
+time_t X509_VERIFY_PARAM_get_time(const X509_VERIFY_PARAM *param);
 #endif
 void X509_VERIFY_PARAM_set_time(X509_VERIFY_PARAM *param, time_t t);
 int X509_VERIFY_PARAM_add0_policy(X509_VERIFY_PARAM *param,
