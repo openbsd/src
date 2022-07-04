@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_locl.h,v 1.12 2022/01/14 08:34:39 tb Exp $ */
+/* $OpenBSD: rsa_locl.h,v 1.13 2022/07/04 12:23:30 tb Exp $ */
 
 __BEGIN_HIDDEN_DECLS
 
@@ -9,7 +9,7 @@ __BEGIN_HIDDEN_DECLS
 #define pkey_ctx_is_pss(ctx) (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS)
 
 struct rsa_meth_st {
-	const char *name;
+	char *name;
 	int (*rsa_pub_enc)(int flen, const unsigned char *from,
 	    unsigned char *to, RSA *rsa, int padding);
 	int (*rsa_pub_dec)(int flen, const unsigned char *from,
