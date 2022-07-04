@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_acpi.c,v 1.7 2022/06/28 08:14:03 kettenis Exp $	*/
+/*	$OpenBSD: xhci_acpi.c,v 1.8 2022/07/04 20:03:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -53,6 +53,8 @@ const struct cfattach xhci_acpi_ca = {
 const char *xhci_hids[] = {
 	"PNP0D10",
 	"PNP0D15",
+	"QCOM068B",
+	"QCOM068C",
 	NULL
 };
 
@@ -62,7 +64,7 @@ xhci_acpi_match(struct device *parent, void *match, void *aux)
 	struct acpi_attach_args *aaa = aux;
 	struct cfdata *cf = match;
 
-	if (aaa->aaa_naddr < 1 || aaa->aaa_nirq < 1)
+	if (aaa->aaa_naddr < 1)
 		return 0;
 	return acpi_matchhids(aaa, xhci_hids, cf->cf_driver->cd_name);
 }
@@ -72,11 +74,33 @@ xhci_acpi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct xhci_acpi_softc *sc = (struct xhci_acpi_softc *)self;
 	struct acpi_attach_args *aaa = aux;
+	struct aml_node *node;
 	int error;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_node = aaa->aaa_node;
 	printf(" %s", sc->sc_node->name);
+
+	/*
+	 * The Qualcomm dual role controller has the interrupt on a
+	 * child node.  Find it and parse its resources to find the
+	 * interrupt.
+	 */
+	if (strcmp(aaa->aaa_dev, "QCOM068B") == 0 ||
+	    strcmp(aaa->aaa_dev, "QCOM068C") == 0) {
+		SIMPLEQ_FOREACH(node, &sc->sc_node->son, sib) {
+			if (strncmp(node->name, "USB", 3) == 0) {
+				aaa->aaa_node = node;
+				acpi_parse_crs(sc->sc_acpi, aaa);
+				break;
+			}
+		}
+	}
+
+	if (aaa->aaa_nirq < 1) {
+		printf(": no interrupt\n");
+		return;
+	}
 
 	printf(" addr 0x%llx/0x%llx", aaa->aaa_addr[0], aaa->aaa_size[0]);
 	printf(" irq %d", aaa->aaa_irq[0]);
