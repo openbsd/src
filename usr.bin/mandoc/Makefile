@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.119 2022/05/19 15:17:50 schwarze Exp $
+# $OpenBSD: Makefile,v 1.120 2022/07/04 15:45:27 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -52,7 +52,7 @@ afterinstall:
 LIBMDOC_OBJS =	mdoc_argv.o mdoc_macro.o mdoc_state.o \
 		mdoc_validate.o mdoc.o att.o st.o
 LIBMAN_OBJS =	man.o man_macro.o man_validate.o
-LIBROFF_OBJS =	roff.o roff_validate.o eqn.o \
+LIBROFF_OBJS =	roff.o roff_escape.o roff_validate.o eqn.o \
 		tbl.o tbl_data.o tbl_layout.o tbl_opts.o
 LIBMANDOC_OBJS = ${LIBMDOC_OBJS} ${LIBMAN_OBJS} ${LIBROFF_OBJS} \
 		arch.o mandoc.o mandoc_aux.o mandoc_msg.o mandoc_ohash.o \
