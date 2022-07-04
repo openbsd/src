@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.60 2022/05/30 12:55:25 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.61 2022/07/04 08:24:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1243,12 +1243,17 @@ window_tree_key(struct window_mode_entry *wme, struct client *c,
 
 	item = mode_tree_get_current(data->data);
 	finished = mode_tree_key(data->data, c, &key, m, &x, &y);
+
+again:
 	if (item != (new_item = mode_tree_get_current(data->data))) {
 		item = new_item;
 		data->offset = 0;
 	}
-	if (KEYC_IS_MOUSE(key) && m != NULL)
+	if (KEYC_IS_MOUSE(key) && m != NULL) {
 		key = window_tree_mouse(data, key, x, item);
+		goto again;
+	}
+
 	switch (key) {
 	case '<':
 		data->offset--;
