@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_locl.h,v 1.5 2022/01/14 08:29:06 tb Exp $ */
+/* $OpenBSD: dsa_locl.h,v 1.6 2022/07/04 12:22:32 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
  *
@@ -63,7 +63,7 @@ struct DSA_SIG_st {
 } /* DSA_SIG */;
 
 struct dsa_method {
-	const char *name;
+	char *name;
 	DSA_SIG *(*dsa_do_sign)(const unsigned char *dgst, int dlen, DSA *dsa);
 	int (*dsa_sign_setup)(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
 	    BIGNUM **rp);
