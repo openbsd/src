@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.347 2022/05/28 18:51:16 gerhard Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.348 2022/07/04 08:39:55 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -4387,14 +4387,14 @@ ikev2_init_create_child_sa(struct iked *env, struct iked_message *msg)
 	sa->sa_rnonce = msg->msg_nonce;
 	msg->msg_nonce = NULL;
 
-	if (csa && (ni = sa->sa_simult) != NULL) {
+	if (csa && (nr = sa->sa_simult) != NULL) {
 		log_info("%s: resolving simultaneous CHILD SA rekeying",
 		    SPI_SA(sa, __func__));
-		/* set nr to minimum nonce for exchange initiated by peer */
+		/* set ni to minimum nonce for exchange initiated by us */
 		if (ikev2_nonce_cmp(sa->sa_inonce, sa->sa_rnonce) < 0)
-			nr = sa->sa_inonce;
+			ni = sa->sa_inonce;
 		else
-			nr = sa->sa_rnonce;
+			ni = sa->sa_rnonce;
 		/*
 		 * If the exchange initated by us has smaller nonce,
 		 * then we have to delete our SAs.
