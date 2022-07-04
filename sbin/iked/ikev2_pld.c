@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.123 2022/03/14 12:58:55 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.124 2022/07/04 09:23:15 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -827,9 +827,9 @@ ikev2_pld_cert(struct iked *env, struct ikev2_payload *pld,
 
 	certid = &msg->msg_parent->msg_cert;
 	if (certid->id_type) {
-		log_info("%s: multiple cert payloads not supported",
+		log_debug("%s: multiple cert payloads, ignoring",
 		   SPI_SA(sa, __func__));
-		return (-1);
+		return (0);
 	}
 
 	if ((certid->id_buf = ibuf_new(buf, len)) == NULL) {
