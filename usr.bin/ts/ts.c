@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.5 2022/07/03 15:06:06 deraadt Exp $	*/
+/*	$OpenBSD: ts.c,v 1.6 2022/07/04 17:29:03 cheloha Exp $	*/
 /*
  * Copyright (c) 2022 Job Snijders <job@openbsd.org>
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -42,7 +42,7 @@ main(int argc, char *argv[])
 	int ch, prev;
 	struct timespec roff, start, now;
 	struct tm *tm;
-	int clock = CLOCK_REALTIME;
+	clockid_t clock = CLOCK_REALTIME;
 
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
