@@ -1,4 +1,4 @@
-/*	$OpenBSD: lom.c,v 1.28 2021/10/24 17:05:03 mpi Exp $	*/
+/*	$OpenBSD: lom.c,v 1.29 2022/07/04 19:06:10 miod Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -955,7 +955,7 @@ lom_refresh(void *arg)
 			lom1_write_hostname(sc);
 		else
 			lom2_write_hostname(sc);
-		strlcpy(sc->sc_hostname, hostname, sizeof(hostname));
+		strlcpy(sc->sc_hostname, hostname, sizeof(sc->sc_hostname));
 	}
 }
 
