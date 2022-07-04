@@ -1,4 +1,4 @@
-/* $OpenBSD: window-tree.c,v 1.61 2022/07/04 08:24:36 nicm Exp $ */
+/* $OpenBSD: window-tree.c,v 1.62 2022/07/04 08:39:45 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -272,9 +272,10 @@ window_tree_cmp_window(const void *a0, const void *b0)
 static int
 window_tree_cmp_pane(const void *a0, const void *b0)
 {
-	const struct window_pane *const	*a = a0;
-	const struct window_pane *const	*b = b0;
-	int				 result;
+	struct window_pane	**a = (struct window_pane **)a0;
+	struct window_pane	**b = (struct window_pane **)b0;
+	int			  result;
+	u_int			  ai, bi;
 
 	if (window_tree_sort->field == WINDOW_TREE_BY_TIME)
 		result = (*a)->active_point - (*b)->active_point;
@@ -283,7 +284,9 @@ window_tree_cmp_pane(const void *a0, const void *b0)
 		 * Panes don't have names, so use number order for any other
 		 * sort field.
 		 */
-		result = (*a)->id - (*b)->id;
+		window_pane_index(*a, &ai);
+		window_pane_index(*b, &bi);
+		result = ai - bi;
 	}
 	if (window_tree_sort->reversed)
 		result = -result;
