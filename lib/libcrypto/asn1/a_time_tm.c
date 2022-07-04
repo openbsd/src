@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.23 2022/06/30 08:25:56 tb Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.24 2022/07/04 14:39:43 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -598,7 +598,7 @@ ASN1_TIME_normalize(ASN1_TIME *t)
 }
 
 int
-ASN1_TIME_set_string_x509(ASN1_TIME *s, const char *str)
+ASN1_TIME_set_string_X509(ASN1_TIME *s, const char *str)
 {
 	return ASN1_TIME_set_string_internal(s, str, RFC5280);
 }

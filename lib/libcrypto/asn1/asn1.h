@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.65 2022/06/27 13:54:57 beck Exp $ */
+/* $OpenBSD: asn1.h,v 1.66 2022/07/04 14:39:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -724,7 +724,7 @@ int ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm);
 int ASN1_TIME_compare(const ASN1_TIME *t1, const ASN1_TIME *t2);
 int ASN1_TIME_cmp_time_t(const ASN1_TIME *s, time_t t2);
 int ASN1_TIME_normalize(ASN1_TIME *t);
-int ASN1_TIME_set_string_x509(ASN1_TIME *time, const char *str);
+int ASN1_TIME_set_string_X509(ASN1_TIME *time, const char *str);
 #endif
 int ASN1_TIME_diff(int *pday, int *psec, const ASN1_TIME *from,
     const ASN1_TIME *to);
