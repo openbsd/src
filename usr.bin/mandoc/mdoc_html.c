@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_html.c,v 1.220 2022/07/03 14:28:27 schwarze Exp $ */
+/* $OpenBSD: mdoc_html.c,v 1.221 2022/07/04 14:37:14 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -291,11 +291,11 @@ html_mdoc(void *arg, const struct roff_meta *mdoc)
 	if ((h->oflags & HTML_FRAGMENT) == 0) {
 		print_gen_decls(h);
 		print_otag(h, TAG_HTML, "");
-		if (n != NULL && n->type == ROFFT_COMMENT)
-			print_gen_comment(h, n);
 		t = print_otag(h, TAG_HEAD, "");
 		print_mdoc_head(mdoc, h);
 		print_tagq(h, t);
+		if (n != NULL && n->type == ROFFT_COMMENT)
+			print_gen_comment(h, n);
 		print_otag(h, TAG_BODY, "");
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: man_html.c,v 1.133 2022/07/03 14:28:27 schwarze Exp $ */
+/* $OpenBSD: man_html.c,v 1.134 2022/07/04 14:37:14 schwarze Exp $ */
 /*
  * Copyright (c) 2013-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -121,11 +121,11 @@ html_man(void *arg, const struct roff_meta *man)
 	if ((h->oflags & HTML_FRAGMENT) == 0) {
 		print_gen_decls(h);
 		print_otag(h, TAG_HTML, "");
-		if (n != NULL && n->type == ROFFT_COMMENT)
-			print_gen_comment(h, n);
 		t = print_otag(h, TAG_HEAD, "");
 		print_man_head(man, h);
 		print_tagq(h, t);
+		if (n != NULL && n->type == ROFFT_COMMENT)
+			print_gen_comment(h, n);
 		print_otag(h, TAG_BODY, "");
 	}
 
