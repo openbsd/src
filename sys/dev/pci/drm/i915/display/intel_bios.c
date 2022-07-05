@@ -2664,6 +2664,17 @@ bool intel_bios_is_port_edp(struct drm_i915_private *i915, enum port port)
 		[PORT_F] = DVO_PORT_DPF,
 	};
 
+	/*
+	 * XXX on T14 Gen 3 resume
+	 * [drm] AUX A/DDI A/PHY A: timeout (status 0x7d4003ff)
+	 * [drm] AUX A/DDI A/PHY A: Too many retries, giving up. First error: -60
+	 * intel_edp_init_source_oui *ERROR* [drm] *ERROR* Failed to write source OUI
+	 * intel_dp_link_training_clock_recovery *ERROR* [drm] *ERROR* failed to enable link training
+	 * https://gitlab.freedesktop.org/drm/intel/-/issues/5531
+	 */
+	if (IS_ALDERLAKE_P(i915) && port == PORT_B)
+		return false;
+
 	if (HAS_DDI(i915)) {
 		const struct intel_bios_encoder_data *devdata;
 
