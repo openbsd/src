@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_html.c,v 1.221 2022/07/04 14:37:14 schwarze Exp $ */
+/* $OpenBSD: mdoc_html.c,v 1.222 2022/07/05 21:25:24 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -451,16 +451,19 @@ print_mdoc_node(MDOC_ARGS)
 static void
 mdoc_root_post(const struct roff_meta *meta, struct html *h)
 {
-	struct tag	*t, *tt;
+	struct tag	*t;
 
-	t = print_otag(h, TAG_TABLE, "c", "foot");
-	tt = print_otag(h, TAG_TR, "");
+	t = print_otag(h, TAG_DIV, "cr?", "foot", "doc-pagefooter",
+	    "aria-label", "manual footer line");
 
-	print_otag(h, TAG_TD, "c", "foot-date");
+	print_otag(h, TAG_SPAN, "c", "foot-left");
+	print_stagq(h, t);
+
+	print_otag(h, TAG_SPAN, "c", "foot-date");
 	print_text(h, meta->date);
-	print_stagq(h, tt);
+	print_stagq(h, t);
 
-	print_otag(h, TAG_TD, "c", "foot-os");
+	print_otag(h, TAG_SPAN, "c", "foot-os");
 	print_text(h, meta->os);
 	print_tagq(h, t);
 }
@@ -468,7 +471,7 @@ mdoc_root_post(const struct roff_meta *meta, struct html *h)
 static int
 mdoc_root_pre(const struct roff_meta *meta, struct html *h)
 {
-	struct tag	*t, *tt;
+	struct tag	*t;
 	char		*volume, *title;
 
 	if (NULL == meta->arch)
@@ -483,18 +486,18 @@ mdoc_root_pre(const struct roff_meta *meta, struct html *h)
 		mandoc_asprintf(&title, "%s(%s)",
 		    meta->title, meta->msec);
 
-	t = print_otag(h, TAG_TABLE, "c", "head");
-	tt = print_otag(h, TAG_TR, "");
+	t = print_otag(h, TAG_DIV, "cr?", "head", "doc-pageheader",
+	    "aria-label", "manual header line");
 
-	print_otag(h, TAG_TD, "c", "head-ltitle");
+	print_otag(h, TAG_SPAN, "c", "head-ltitle");
 	print_text(h, title);
-	print_stagq(h, tt);
+	print_stagq(h, t);
 
-	print_otag(h, TAG_TD, "c", "head-vol");
+	print_otag(h, TAG_SPAN, "c", "head-vol");
 	print_text(h, volume);
-	print_stagq(h, tt);
+	print_stagq(h, t);
 
-	print_otag(h, TAG_TD, "c", "head-rtitle");
+	print_otag(h, TAG_SPAN, "c", "head-rtitle");
 	print_text(h, title);
 	print_tagq(h, t);
 

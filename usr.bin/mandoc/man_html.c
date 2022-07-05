@@ -1,6 +1,6 @@
-/* $OpenBSD: man_html.c,v 1.134 2022/07/04 14:37:14 schwarze Exp $ */
+/* $OpenBSD: man_html.c,v 1.135 2022/07/05 21:25:23 schwarze Exp $ */
 /*
- * Copyright (c) 2013-2015, 2017-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2013-2015,2017-2020,2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -261,26 +261,26 @@ print_man_node(MAN_ARGS)
 static void
 man_root_pre(const struct roff_meta *man, struct html *h)
 {
-	struct tag	*t, *tt;
+	struct tag	*t;
 	char		*title;
 
 	assert(man->title);
 	assert(man->msec);
 	mandoc_asprintf(&title, "%s(%s)", man->title, man->msec);
 
-	t = print_otag(h, TAG_TABLE, "c", "head");
-	tt = print_otag(h, TAG_TR, "");
+	t = print_otag(h, TAG_DIV, "cr?", "head", "doc-pageheader",
+	    "aria-label", "manual header line");
 
-	print_otag(h, TAG_TD, "c", "head-ltitle");
+	print_otag(h, TAG_SPAN, "c", "head-ltitle");
 	print_text(h, title);
-	print_stagq(h, tt);
+	print_stagq(h, t);
 
-	print_otag(h, TAG_TD, "c", "head-vol");
+	print_otag(h, TAG_SPAN, "c", "head-vol");
 	if (man->vol != NULL)
 		print_text(h, man->vol);
-	print_stagq(h, tt);
+	print_stagq(h, t);
 
-	print_otag(h, TAG_TD, "c", "head-rtitle");
+	print_otag(h, TAG_SPAN, "c", "head-rtitle");
 	print_text(h, title);
 	print_tagq(h, t);
 	free(title);
@@ -289,16 +289,19 @@ man_root_pre(const struct roff_meta *man, struct html *h)
 static void
 man_root_post(const struct roff_meta *man, struct html *h)
 {
-	struct tag	*t, *tt;
+	struct tag	*t;
 
-	t = print_otag(h, TAG_TABLE, "c", "foot");
-	tt = print_otag(h, TAG_TR, "");
+	t = print_otag(h, TAG_DIV, "cr?", "foot", "doc-pagefooter",
+	    "aria-label", "manual footer line");
 
-	print_otag(h, TAG_TD, "c", "foot-date");
+	print_otag(h, TAG_SPAN, "c", "foot-left");
+	print_stagq(h, t);
+
+	print_otag(h, TAG_SPAN, "c", "foot-date");
 	print_text(h, man->date);
-	print_stagq(h, tt);
+	print_stagq(h, t);
 
-	print_otag(h, TAG_TD, "c", "foot-os");
+	print_otag(h, TAG_SPAN, "c", "foot-os");
 	if (man->os != NULL)
 		print_text(h, man->os);
 	print_tagq(h, t);
