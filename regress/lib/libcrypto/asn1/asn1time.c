@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.13 2022/06/30 09:13:49 beck Exp $ */
+/* $OpenBSD: asn1time.c,v 1.14 2022/07/05 04:49:02 anton Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -265,7 +265,7 @@ asn1_invtime_test(int test_no, struct asn1_time_test *att, int gen)
 		    "string '%s'\n", test_no, att->str);
 		goto done;
 	}
-	if (ASN1_TIME_set_string_x509(t, att->str) != 0) {
+	if (ASN1_TIME_set_string_X509(t, att->str) != 0) {
 		fprintf(stderr, "FAIL: test %i - successfully set x509 TIME "
 		    "string '%s'\n", test_no, att->str);
 		goto done;
@@ -459,7 +459,7 @@ asn1_time_test(int test_no, struct asn1_time_test *att, int type)
 		goto done;
 	}
 
-	if (ASN1_TIME_set_string_x509(tx509, t->data) != 1) {
+	if (ASN1_TIME_set_string_X509(tx509, t->data) != 1) {
 		fprintf(stderr, "FAIL: test %i - failed to set string X509 '%s'\n",
 		    test_no, t->data);
 		goto done;
