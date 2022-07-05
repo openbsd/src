@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.19 2022/07/05 16:05:18 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.20 2022/07/05 16:14:18 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -191,10 +191,10 @@ ssl_security_secop_default(const SSL_CTX *ctx, const SSL *ssl, int bits)
 }
 
 int
-ssl_security_default_cb(const SSL *ssl, const SSL_CTX *ctx, int op, int bits,
+ssl_security_default_cb(const SSL *ssl, const SSL_CTX *ctx, int secop, int bits,
     int version, void *cipher, void *ex_data)
 {
-	switch (op) {
+	switch (secop) {
 	case SSL_SECOP_CIPHER_SUPPORTED:
 	case SSL_SECOP_CIPHER_SHARED:
 	case SSL_SECOP_CIPHER_CHECK:
@@ -213,23 +213,23 @@ ssl_security_default_cb(const SSL *ssl, const SSL_CTX *ctx, int op, int bits,
 }
 
 int
-ssl_security_dummy_cb(const SSL *ssl, const SSL_CTX *ctx, int op, int bits,
+ssl_security_dummy_cb(const SSL *ssl, const SSL_CTX *ctx, int secop, int bits,
     int version, void *cipher, void *ex_data)
 {
 	return 1;
 }
 
 int
-ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid, void *other)
+ssl_ctx_security(const SSL_CTX *ctx, int secop, int bits, int nid, void *other)
 {
-	return ctx->internal->cert->security_cb(NULL, ctx, op, bits, nid, other,
-	    ctx->internal->cert->security_ex_data);
+	return ctx->internal->cert->security_cb(NULL, ctx, secop, bits, nid,
+	    other, ctx->internal->cert->security_ex_data);
 }
 
 static int
-ssl_security(const SSL *ssl, int op, int bits, int nid, void *other)
+ssl_security(const SSL *ssl, int secop, int bits, int nid, void *other)
 {
-	return ssl->cert->security_cb(ssl, NULL, op, bits, nid, other,
+	return ssl->cert->security_cb(ssl, NULL, secop, bits, nid, other,
 	    ssl->cert->security_ex_data);
 }
 
@@ -319,16 +319,16 @@ ssl_cert_pubkey_security_bits(const X509 *x509)
 }
 
 static int
-ssl_security_cert_key(const SSL_CTX *ctx, const SSL *ssl, X509 *x509, int op)
+ssl_security_cert_key(const SSL_CTX *ctx, const SSL *ssl, X509 *x509, int secop)
 {
 	int security_bits;
 
 	security_bits = ssl_cert_pubkey_security_bits(x509);
 
 	if (ssl != NULL)
-		return ssl_security(ssl, op, security_bits, 0, x509);
+		return ssl_security(ssl, secop, security_bits, 0, x509);
 
-	return ssl_ctx_security(ctx, op, security_bits, 0, x509);
+	return ssl_ctx_security(ctx, secop, security_bits, 0, x509);
 }
 
 static int
@@ -361,7 +361,7 @@ ssl_cert_md_nid_security_bits(int md_nid)
 }
 
 static int
-ssl_security_cert_sig(const SSL_CTX *ctx, const SSL *ssl, X509 *x509, int op)
+ssl_security_cert_sig(const SSL_CTX *ctx, const SSL *ssl, X509 *x509, int secop)
 {
 	int md_nid, security_bits;
 
@@ -373,9 +373,9 @@ ssl_security_cert_sig(const SSL_CTX *ctx, const SSL *ssl, X509 *x509, int op)
 	security_bits = ssl_cert_md_nid_security_bits(md_nid);
 
 	if (ssl != NULL)
-		return ssl_security(ssl, op, security_bits, md_nid, x509);
+		return ssl_security(ssl, secop, security_bits, md_nid, x509);
 
-	return ssl_ctx_security(ctx, op, security_bits, md_nid, x509);
+	return ssl_ctx_security(ctx, secop, security_bits, md_nid, x509);
 }
 #endif
 
