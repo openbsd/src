@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.119 2022/02/10 07:39:20 visa Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.120 2022/07/05 09:33:39 tb Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -373,6 +373,7 @@ void	acpi_sleep(int, char *);
 int	acpi_matchcls(struct acpi_attach_args *, int, int, int);
 int	acpi_matchhids(struct acpi_attach_args *, const char *[], const char *);
 int	acpi_parsehid(struct aml_node *, void *, char *, char *, size_t);
+void	acpi_parse_crs(struct acpi_softc *, struct acpi_attach_args *);
 int64_t	acpi_getsta(struct acpi_softc *sc, struct aml_node *);
 
 int	acpi_getprop(struct aml_node *, const char *, void *, int);
