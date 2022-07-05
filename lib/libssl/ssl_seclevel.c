@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.18 2022/07/03 22:10:25 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.19 2022/07/05 16:05:18 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -427,13 +427,15 @@ ssl_security_cert_chain(const SSL *ssl, STACK_OF(X509) *sk, X509 *x509,
 		start_idx = 1;
 	}
 
-	if (!ssl_security_cert(NULL, ssl, x509, is_ee = 1, out_error))
+	is_ee = 1;
+	if (!ssl_security_cert(NULL, ssl, x509, is_ee, out_error))
 		return 0;
 
+	is_ee = 0;
 	for (i = start_idx; i < sk_X509_num(sk); i++) {
 		x509 = sk_X509_value(sk, i);
 
-		if (!ssl_security_cert(NULL, ssl, x509, is_ee = 0, out_error))
+		if (!ssl_security_cert(NULL, ssl, x509, is_ee, out_error))
 			return 0;
 	}
 
