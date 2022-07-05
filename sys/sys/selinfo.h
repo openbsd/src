@@ -1,4 +1,4 @@
-/*	$OpenBSD: selinfo.h,v 1.5 2017/07/18 19:20:26 sf Exp $	*/
+/*	$OpenBSD: selinfo.h,v 1.6 2022/07/05 15:06:16 visa Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,15 +42,9 @@
  */
 struct selinfo {
 	struct	klist si_note;	/* kernel note list */
-	pid_t	si_seltid;	/* thread to be notified */
-	short	si_flags;	/* see below */
 };
-#define	SI_COLL	0x0001		/* collision occurred */
 
 #ifdef _KERNEL
-struct proc;
-
-void	selrecord(struct proc *selector, struct selinfo *);
 void	selwakeup(struct selinfo *);
 #endif
 

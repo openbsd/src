@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.217 2022/07/02 08:50:42 visa Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.218 2022/07/05 15:06:16 visa Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -588,11 +588,11 @@ bpf_wakeup(struct bpf_d *d)
 	KNOTE(&d->bd_sel.si_note, 0);
 
 	/*
-	 * As long as pgsigio() and selwakeup() need to be protected
+	 * As long as pgsigio() needs to be protected
 	 * by the KERNEL_LOCK() we have to delay the wakeup to
 	 * another context to keep the hot path KERNEL_LOCK()-free.
 	 */
-	if ((d->bd_async && d->bd_sig) || d->bd_sel.si_seltid != 0) {
+	if (d->bd_async && d->bd_sig) {
 		bpf_get(d);
 		if (!task_add(systq, &d->bd_wake_task))
 			bpf_put(d);
@@ -607,9 +607,6 @@ bpf_wakeup_cb(void *xd)
 	if (d->bd_async && d->bd_sig)
 		pgsigio(&d->bd_sigio, d->bd_sig, 0);
 
-	mtx_enter(&d->bd_mtx);
-	selwakeup(&d->bd_sel);
-	mtx_leave(&d->bd_mtx);
 	bpf_put(d);
 }
 
@@ -1191,9 +1188,6 @@ int
 filt_bpfread(struct knote *kn, long hint)
 {
 	struct bpf_d *d = kn->kn_hook;
-
-	if (hint == NOTE_SUBMIT) /* ignore activation from selwakeup */
-		return (0);
 
 	MUTEX_ASSERT_LOCKED(&d->bd_mtx);
 

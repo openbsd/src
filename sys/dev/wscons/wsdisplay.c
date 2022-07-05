@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.146 2022/07/02 08:50:42 visa Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.147 2022/07/05 15:06:16 visa Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -1441,7 +1441,7 @@ wsdisplaystart(struct tty *tp)
 		splx(s);
 		return;
 	}
-	if (tp->t_outq.c_cc == 0 && tp->t_wsel.si_seltid == 0)
+	if (tp->t_outq.c_cc == 0)
 		goto low;
 
 	if ((scr = sc->sc_scr[WSDISPLAYSCREEN(tp->t_dev)]) == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.402 2022/03/21 09:12:34 bluhm Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.403 2022/07/05 15:06:16 visa Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -120,7 +120,7 @@
 
 extern struct forkstat forkstat;
 extern struct nchstats nchstats;
-extern int nselcoll, fscale;
+extern int fscale;
 extern fixpt_t ccpu;
 extern long numvnodes;
 extern int allowdt;
@@ -298,7 +298,7 @@ const struct sysctl_bounded_args kern_vars[] = {
 	{KERN_NFILES, &numfiles, SYSCTL_INT_READONLY},
 	{KERN_TTYCOUNT, &tty_count, SYSCTL_INT_READONLY},
 	{KERN_ARGMAX, &arg_max, SYSCTL_INT_READONLY},
-	{KERN_NSELCOLL, &nselcoll, SYSCTL_INT_READONLY},
+	{KERN_NSELCOLL, &int_zero, SYSCTL_INT_READONLY},
 	{KERN_POSIX1, &posix_version, SYSCTL_INT_READONLY},
 	{KERN_NGROUPS, &ngroups_max, SYSCTL_INT_READONLY},
 	{KERN_JOB_CONTROL, &int_one, SYSCTL_INT_READONLY},

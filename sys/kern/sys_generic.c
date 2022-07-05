@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.147 2022/02/08 08:56:41 visa Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.148 2022/07/05 15:06:16 visa Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -89,7 +89,6 @@ int dopselect(struct proc *, int, fd_set *, fd_set *, fd_set *,
     struct timespec *, const sigset_t *, register_t *);
 int doppoll(struct proc *, struct pollfd *, u_int, struct timespec *,
     const sigset_t *, register_t *);
-void doselwakeup(struct selinfo *);
 
 int
 iovec_copyin(const struct iovec *uiov, struct iovec **iovp, struct iovec *aiov,
@@ -522,8 +521,6 @@ out:
 	return (error);
 }
 
-int	selwait, nselcoll;
-
 /*
  * Select system call.
  */
@@ -840,41 +837,6 @@ pselcollect(struct proc *p, struct kevent *kevp, fd_set *pobits[3],
 	return (0);
 }
 
-int
-seltrue(dev_t dev, int events, struct proc *p)
-{
-
-	return (events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
-}
-
-int
-selfalse(dev_t dev, int events, struct proc *p)
-{
-
-	return (0);
-}
-
-/*
- * Record a select request.
- */
-void
-selrecord(struct proc *selector, struct selinfo *sip)
-{
-	struct proc *p;
-	pid_t mytid;
-
-	KERNEL_ASSERT_LOCKED();
-
-	mytid = selector->p_tid;
-	if (sip->si_seltid == mytid)
-		return;
-	if (sip->si_seltid && (p = tfind(sip->si_seltid)) &&
-	    p->p_wchan == (caddr_t)&selwait)
-		sip->si_flags |= SI_COLL;
-	else
-		sip->si_seltid = mytid;
-}
-
 /*
  * Do a wakeup when a selectable event occurs.
  */
@@ -883,32 +845,7 @@ selwakeup(struct selinfo *sip)
 {
 	KERNEL_LOCK();
 	KNOTE(&sip->si_note, NOTE_SUBMIT);
-	doselwakeup(sip);
 	KERNEL_UNLOCK();
-}
-
-void
-doselwakeup(struct selinfo *sip)
-{
-	struct proc *p;
-
-	KERNEL_ASSERT_LOCKED();
-
-	if (sip->si_seltid == 0)
-		return;
-	if (sip->si_flags & SI_COLL) {
-		nselcoll++;
-		sip->si_flags &= ~SI_COLL;
-		wakeup(&selwait);
-	}
-	p = tfind(sip->si_seltid);
-	sip->si_seltid = 0;
-	if (p != NULL) {
-		if (wakeup_proc(p, &selwait)) {
-			/* nothing else to do */
-		} else if (p->p_flag & P_SELECT)
-			atomic_clearbits_int(&p->p_flag, P_SELECT);
-	}
 }
 
 /*
