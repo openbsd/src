@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_txt.c,v 1.19 2014/07/11 08:44:49 jsing Exp $ */
+/* $OpenBSD: x509_txt.c,v 1.20 2022/07/05 20:31:46 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -181,6 +181,22 @@ X509_verify_cert_error_string(long n)
 		return("unsupported or invalid name syntax");
 	case X509_V_ERR_CRL_PATH_VALIDATION_ERROR:
 		return("CRL path validation error");
+	case X509_V_ERR_HOSTNAME_MISMATCH:
+		return("Hostname mismatch");
+	case X509_V_ERR_EMAIL_MISMATCH:
+		return("Email address mismatch");
+	case X509_V_ERR_IP_ADDRESS_MISMATCH:
+		return("IP address mismatch");
+	case X509_V_ERR_INVALID_CALL:
+		return("Invalid certificate verification context");
+	case X509_V_ERR_STORE_LOOKUP:
+		return("Issuer certificate lookup error");
+	case X509_V_ERR_EE_KEY_TOO_SMALL:
+		return("EE certificate key too weak");
+	case X509_V_ERR_CA_KEY_TOO_SMALL:
+		return("CA certificate key too weak");
+	case X509_V_ERR_CA_MD_TOO_WEAK:
+		return("CA signature digest algorithm too weak");
 
 	default:
 		(void) snprintf(buf, sizeof buf, "error number %ld", n);
