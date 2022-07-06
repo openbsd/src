@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.6 2022/07/04 17:29:03 cheloha Exp $	*/
+/*	$OpenBSD: ts.c,v 1.7 2022/07/06 07:59:03 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Job Snijders <job@openbsd.org>
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -32,7 +32,7 @@ static char		*buf;
 static char		*outbuf;
 static size_t		 bufsize;
 
-static void		 fmtfmt(struct tm *, long);
+static void		 fmtfmt(const struct timespec *);
 static void __dead	 usage(void);
 
 int
@@ -40,8 +40,7 @@ main(int argc, char *argv[])
 {
 	int iflag, mflag, sflag;
 	int ch, prev;
-	struct timespec roff, start, now;
-	struct tm *tm;
+	struct timespec start, now, utc_offset, ts;
 	clockid_t clock = CLOCK_REALTIME;
 
 	if (pledge("stdio", NULL) == -1)
@@ -93,22 +92,22 @@ main(int argc, char *argv[])
 		if (setenv("TZ", "UTC", 1) == -1)
 			err(1, "setenv UTC");
 
-	clock_gettime(CLOCK_REALTIME, &roff);
 	clock_gettime(clock, &start);
-	timespecsub(&roff, &start, &roff);
+	clock_gettime(CLOCK_REALTIME, &utc_offset);
+	timespecsub(&utc_offset, &start, &utc_offset);
 
 	for (prev = '\n'; (ch = getchar()) != EOF; prev = ch) {
 		if (prev == '\n') {
 			clock_gettime(clock, &now);
 			if (iflag || sflag)
-				timespecsub(&now, &start, &now);
+				timespecsub(&now, &start, &ts);
 			else if (mflag)
-				timespecadd(&now, &roff, &now);
+				timespecadd(&now, &utc_offset, &ts);
+			else
+				ts = now;
+			fmtfmt(&ts);
 			if (iflag)
-				clock_gettime(clock, &start);
-			if ((tm = localtime(&now.tv_sec)) == NULL)
-				err(1, "localtime");
-			fmtfmt(tm, now.tv_nsec);
+				start = now;
 		}
 		if (putchar(ch) == EOF)
 			break;
@@ -132,11 +131,15 @@ usage(void)
  * so you can format while you format
  */
 static void
-fmtfmt(struct tm *tm, long tv_nsec)
+fmtfmt(const struct timespec *ts)
 {
-	char *f, ms[7];
+	struct tm *tm;
+	char *f, us[7];
 
-	snprintf(ms, sizeof(ms), "%06ld", tv_nsec / 1000);
+	if ((tm = localtime(&ts->tv_sec)) == NULL)
+		err(1, "localtime");
+
+	snprintf(us, sizeof(us), "%06ld", ts->tv_nsec / 1000);
 	strlcpy(buf, format, bufsize);
 	f = buf;
 
@@ -157,7 +160,7 @@ fmtfmt(struct tm *tm, long tv_nsec)
 			f += 2;
 			l = strlen(f);
 			memmove(f + 6, f, l + 1);
-			memcpy(f, ms, 6);
+			memcpy(f, us, 6);
 			f += 6;
 		}
 	} while (*f != '\0');
