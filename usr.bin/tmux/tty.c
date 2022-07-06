@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.421 2022/06/30 09:55:53 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.422 2022/07/06 07:36:36 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2501,7 +2501,7 @@ tty_hyperlink(struct tty *tty, const struct grid_cell *gc,
 	if (hl == NULL)
 		return;
 
-	if (gc->link == 0 || !hyperlinks_get(hl, gc->link, &uri, &id))
+	if (gc->link == 0 || !hyperlinks_get(hl, gc->link, &uri, NULL, &id))
 		tty_putcode_ptr2(tty, TTYC_HLS, "", "");
 	else
 		tty_putcode_ptr2(tty, TTYC_HLS, id, uri);
