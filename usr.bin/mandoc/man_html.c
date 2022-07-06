@@ -1,4 +1,4 @@
-/* $OpenBSD: man_html.c,v 1.136 2022/07/06 14:27:55 schwarze Exp $ */
+/* $OpenBSD: man_html.c,v 1.137 2022/07/06 16:02:52 schwarze Exp $ */
 /*
  * Copyright (c) 2013-2015,2017-2020,2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -269,7 +269,7 @@ man_root_pre(const struct roff_meta *man, struct html *h)
 	mandoc_asprintf(&title, "%s(%s)", man->title, man->msec);
 
 	t = print_otag(h, TAG_DIV, "cr?", "head", "doc-pageheader",
-	    "aria-label", "manual header line");
+	    "aria-label", "Manual header line");
 
 	print_otag(h, TAG_SPAN, "c", "head-ltitle");
 	print_text(h, title);
@@ -292,7 +292,7 @@ man_root_post(const struct roff_meta *man, struct html *h)
 	struct tag	*t;
 
 	t = print_otag(h, TAG_DIV, "cr?", "foot", "doc-pagefooter",
-	    "aria-label", "manual footer line");
+	    "aria-label", "Manual footer line");
 
 	print_otag(h, TAG_SPAN, "c", "foot-left");
 	print_stagq(h, t);
