@@ -1,9 +1,9 @@
 <p class="Pp">descriptive text</p>
 <section class="Ss">
-<h2 class="Ss" id="Subsection"><a class="permalink" href="#Subsection">Subsection</a></h2>
+<h3 class="Ss" id="Subsection"><a class="permalink" href="#Subsection">Subsection</a></h3>
 <p class="Pp">initial subsection text</p>
 <p class="Pp">subsection paragraph</p>
 </section>
 </section>
 <section class="Sh">
-<h1 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h1>
+<h2 class="Sh" id="EXAMPLES"><a class="permalink" href="#EXAMPLES">EXAMPLES</a></h2>

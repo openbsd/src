@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_html.c,v 1.222 2022/07/05 21:25:24 schwarze Exp $ */
+/* $OpenBSD: mdoc_html.c,v 1.223 2022/07/06 14:27:55 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -539,7 +539,7 @@ mdoc_sh_pre(MDOC_ARGS)
 		if (sc < 2)
 			break;
 		tnav = print_otag(h, TAG_NAV, "r", "doc-toc");
-		t = print_otag(h, TAG_H1, "c", "Sh");
+		t = print_otag(h, TAG_H2, "c", "Sh");
 		print_text(h, "TABLE OF CONTENTS");
 		print_tagq(h, t);
 		t = print_otag(h, TAG_UL, "c", "Bl-compact");
@@ -574,7 +574,7 @@ mdoc_sh_pre(MDOC_ARGS)
 		print_otag(h, TAG_SECTION, "c", "Sh");
 		break;
 	case ROFFT_HEAD:
-		print_otag_id(h, TAG_H1, "Sh", n);
+		print_otag_id(h, TAG_H2, "Sh", n);
 		break;
 	case ROFFT_BODY:
 		if (n->sec == SEC_AUTHORS)
@@ -595,7 +595,7 @@ mdoc_ss_pre(MDOC_ARGS)
 		print_otag(h, TAG_SECTION, "c", "Ss");
 		break;
 	case ROFFT_HEAD:
-		print_otag_id(h, TAG_H2, "Ss", n);
+		print_otag_id(h, TAG_H3, "Ss", n);
 		break;
 	case ROFFT_BODY:
 		break;

@@ -2,10 +2,10 @@
     <a class="permalink" href="#macro"><code class="Ic" id="macro">macro</code></a>
     too many badstart badend whitespace <mark id="sub"></mark></p>
 <section class="Ss">
-<h2 class="Ss" id="double"><a class="permalink" href="#double">Subsection</a></h2>
+<h3 class="Ss" id="double"><a class="permalink" href="#double">Subsection</a></h3>
 <p class="Pp">subtext</p>
 </section>
 </section>
 <section class="Sh">
-<h1 class="Sh" id="examples"><a class="permalink" href="#examples">EXAMPLES</a></h1>
+<h2 class="Sh" id="examples"><a class="permalink" href="#examples">EXAMPLES</a></h2>
 <p class="Pp">example text</p>

@@ -2,26 +2,26 @@
 </section>
 </section>
 <section class="Sh">
-<h1 class="Sh" id="DESCRIPTION~2"><a class="permalink" href="#DESCRIPTION~2">DESCRIPTION</a></h1>
+<h2 class="Sh" id="DESCRIPTION~2"><a class="permalink" href="#DESCRIPTION~2">DESCRIPTION</a></h2>
 <p class="Pp">Text in duplicate description section.</p>
 </section>
 <section class="Sh">
-<h1 class="Sh" id="examples"><a class="permalink" href="#examples">EXAMPLES</a></h1>
+<h2 class="Sh" id="examples"><a class="permalink" href="#examples">EXAMPLES</a></h2>
 <p class="Pp">Text introducing examples.</p>
 <section class="Ss">
-<h2 class="Ss" id="example"><a class="permalink" href="#example">Subsection</a></h2>
+<h3 class="Ss" id="example"><a class="permalink" href="#example">Subsection</a></h3>
 <p class="Pp">Example text.</p>
 </section>
 <section class="Ss">
-<h2 class="Ss" id="Sub-section"><a class="permalink" href="#Sub-section">Sub-section</a></h2>
+<h3 class="Ss" id="Sub-section"><a class="permalink" href="#Sub-section">Sub-section</a></h3>
 <p class="Pp">More example text.</p>
 </section>
 </section>
 <section class="Sh">
-<h1 class="Sh" id="WEIRD_SECTION"><a class="permalink" href="#WEIRD_SECTION">	
-  WEIRD SECTION	 </a></h1>
+<h2 class="Sh" id="WEIRD_SECTION"><a class="permalink" href="#WEIRD_SECTION">	
+  WEIRD SECTION	 </a></h2>
 <p class="Pp">Text in weird section.</p>
 </section>
 <section class="Sh">
-<h1 class="Sh">&#x00A0;</h1>
+<h2 class="Sh">&#x00A0;</h2>
 <p class="Pp">Text in section with empty header.</p>

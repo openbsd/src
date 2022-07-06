@@ -5,7 +5,7 @@
 <a class="permalink" href="#two"><code class="Er" id="two">two</code></a>
 </section>
 <section class="Sh">
-<h1 class="Sh" id="ERRORS"><a class="permalink" href="#ERRORS">ERRORS</a></h1>
+<h2 class="Sh" id="ERRORS"><a class="permalink" href="#ERRORS">ERRORS</a></h2>
 <dl class="Bl-tag">
   <dt id="ENOENT">[<a class="permalink" href="#ENOENT"><code class="Er">ENOENT</code></a>]</dt>
   <dd>text</dd>

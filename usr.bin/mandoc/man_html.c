@@ -1,4 +1,4 @@
-/* $OpenBSD: man_html.c,v 1.135 2022/07/05 21:25:23 schwarze Exp $ */
+/* $OpenBSD: man_html.c,v 1.136 2022/07/06 14:27:55 schwarze Exp $ */
 /*
  * Copyright (c) 2013-2015,2017-2020,2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -314,10 +314,10 @@ man_SH_pre(MAN_ARGS)
 	enum htmltag	 tag;
 
 	if (n->tok == MAN_SH) {
-		tag = TAG_H1;
+		tag = TAG_H2;
 		class = "Sh";
 	} else {
-		tag = TAG_H2;
+		tag = TAG_H3;
 		class = "Ss";
 	}
 	switch (n->type) {

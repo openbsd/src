@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.css,v 1.38 2022/07/05 21:25:24 schwarze Exp $ */
+/* $OpenBSD: mandoc.css,v 1.39 2022/07/06 14:27:55 schwarze Exp $ */
 /*
  * Standard style sheet for mandoc(1) -Thtml and man.cgi(8).
  *
@@ -16,7 +16,7 @@ html {		max-width: 65em;
 body {		background: var(--bg);
 		color: var(--fg);
 		font-family: Helvetica,Arial,sans-serif; }
-h1 {		font-size: 110%; }
+h1, h2 {	font-size: 110%; }
 table {		margin-top: 0em;
 		margin-bottom: 0em;
 		border-collapse: collapse; }
@@ -81,11 +81,11 @@ div[role=doc-pagefooter] {
 main {		margin-left: 3.8em; }
 .Nd { }
 section.Sh { }
-h1.Sh {		margin-top: 1.2em;
+h2.Sh {		margin-top: 1.2em;
 		margin-bottom: 0.6em;
 		margin-left: -3.2em; }
 section.Ss { }
-h2.Ss {		margin-top: 1.2em;
+h3.Ss {		margin-top: 1.2em;
 		margin-bottom: 0.6em;
 		margin-left: -1.2em;
 		font-size: 105%; }
@@ -271,7 +271,7 @@ a.In { }
 
 /* Tooltip support. */
 
-h1.Sh, h2.Ss {	position: relative; }
+h2.Sh, h3.Ss {	position: relative; }
 .An, .Ar, .Cd, .Cm, .Dv, .Em, .Er, .Ev, .Fa, .Fd, .Fl, .Fn, .Ft,
 .Ic, code.In, .Lb, .Lk, .Ms, .Mt, .Nd, code.Nm, .Pa, .Rs,
 .St, .Sx, .Sy, .Va, .Vt, .Xr {
@@ -301,8 +301,8 @@ code.In::before { content: "In"; }
 code.Nm::before { content: "Nm"; }
 .Pa::before {	content: "Pa"; }
 .Rs::before {	content: "Rs"; }
-h1.Sh::before {	content: "Sh"; }
-h2.Ss::before {	content: "Ss"; }
+h2.Sh::before {	content: "Sh"; }
+h3.Ss::before {	content: "Ss"; }
 .St::before {	content: "St"; }
 .Sx::before {	content: "Sx"; }
 .Sy::before {	content: "Sy"; }
@@ -316,7 +316,7 @@ h2.Ss::before {	content: "Ss"; }
 .Ic::before, code.In::before, .Lb::before, .Lk::before,
 .Ms::before, .Mt::before, .Nd::before, code.Nm::before,
 .Pa::before, .Rs::before,
-h1.Sh::before, h2.Ss::before, .St::before, .Sx::before, .Sy::before,
+h2.Sh::before, h3.Ss::before, .St::before, .Sx::before, .Sy::before,
 .Va::before, .Vt::before, .Xr::before {
 		opacity: 0;
 		transition: .15s ease opacity;
@@ -337,7 +337,7 @@ h1.Sh::before, h2.Ss::before, .St::before, .Sx::before, .Sy::before,
 .Ft:hover::before, .Ic:hover::before, code.In:hover::before,
 .Lb:hover::before, .Lk:hover::before, .Ms:hover::before, .Mt:hover::before,
 .Nd:hover::before, code.Nm:hover::before, .Pa:hover::before,
-.Rs:hover::before, h1.Sh:hover::before, h2.Ss:hover::before, .St:hover::before,
+.Rs:hover::before, h2.Sh:hover::before, h3.Ss:hover::before, .St:hover::before,
 .Sx:hover::before, .Sy:hover::before, .Va:hover::before, .Vt:hover::before,
 .Xr:hover::before {
 		opacity: 1;
@@ -347,7 +347,7 @@ h1.Sh::before, h2.Ss::before, .St::before, .Sx::before, .Sy::before,
 
 @media (max-width: 37.5em) {
 main {		margin-left: 0.5em; }
-h1.Sh, h2.Ss {	margin-left: 0em; }
+h2.Sh, h3.Ss {	margin-left: 0em; }
 .Bd-indent {	margin-left: 2em; }
 .Bl-hang > dd {
 		margin-left: 2em; }
