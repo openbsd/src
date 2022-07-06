@@ -1,4 +1,4 @@
-/* $OpenBSD: mdoc_html.c,v 1.223 2022/07/06 14:27:55 schwarze Exp $ */
+/* $OpenBSD: mdoc_html.c,v 1.224 2022/07/06 15:25:22 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -635,7 +635,7 @@ mdoc_nd_pre(MDOC_ARGS)
 		abort();
 	}
 	print_text(h, "\\(em");
-	print_otag(h, TAG_SPAN, "c", "Nd");
+	print_otag(h, TAG_SPAN, "cr", "Nd", "doc-subtitle");
 	return 1;
 }
 
