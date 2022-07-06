@@ -1,9 +1,9 @@
 Algeria:Alg[iers|er]
 Angola:Luanda
-Benin|Dahomey:Porto[-| ]Novo
+Benin:Porto[-| ]Novo
 Botswana:Gaborone
 Burkina Faso:Ouagadougou
-Burundi:Bujumbura
+Burundi:Gitega|Bujumbura
 Camero[o|u]n:Yaounde
 [Cabo|Cape] Verde:Praia
 Central Africa{n Rep{ublic}}:Bangui
@@ -16,9 +16,10 @@ Djibouti:Djibouti City
 Egypt:Cairo
 Equatorial Guinea:Malabo
 Eritrea:Asmara
+Eswatini|Swaziland:Mbabane|Lobamba
 Ethiopia:Addis Ababa
 Gabon:Libreville
-Gambia:Banjul
+{The }Gambia:Banjul
 Ghana:Accra
 Guinea-Bissau:Bissau
 Guinea:Conakry
@@ -42,10 +43,9 @@ Senegal:Dakar
 Seychelles:Victoria
 Sierra Leone:Freetown
 Somalia:Mogadishu
-{Rep{ublic} of }South Africa:Pretoria
+South Africa:Pretoria|Cape Town|Bloemfontein
 South Sudan:Juba
 Sudan:Khartoum
-Swaziland:Mbabane
 Tanzania:Dodoma
 Togo:Lome
 Tunisia:Tunis
