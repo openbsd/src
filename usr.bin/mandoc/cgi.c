@@ -1,4 +1,4 @@
-/* $OpenBSD: cgi.c,v 1.118 2022/07/06 16:02:52 schwarze Exp $ */
+/* $OpenBSD: cgi.c,v 1.119 2022/07/06 17:19:57 schwarze Exp $ */
 /*
  * Copyright (c) 2014-2019, 2021, 2022 Ingo Schwarze <schwarze@usta.de>
  * Copyright (c) 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -440,13 +440,14 @@ resp_searchform(const struct req *req, enum focus focus)
 
 	/* Write query input box. */
 
-	printf("    <input type=\"search\" name=\"query\" value=\"");
+	printf("    <label>Search query:\n"
+	       "      <input type=\"search\" name=\"query\" value=\"");
 	if (req->q.query != NULL)
 		html_print(req->q.query);
-	printf( "\" size=\"40\"");
+	printf("\" size=\"40\"");
 	if (focus == FOCUS_QUERY)
 		printf(" autofocus");
-	puts(">");
+	puts(">\n    </label>");
 
 	/* Write submission buttons. */
 
@@ -487,7 +488,8 @@ resp_searchform(const struct req *req, enum focus focus)
 	/* Write manpath selector. */
 
 	if (req->psz > 1) {
-		puts("    <select name=\"manpath\">");
+		puts("    <select name=\"manpath\""
+		     " aria-label=\"Manual path\">");
 		for (i = 0; i < (int)req->psz; i++) {
 			printf("      <option");
 			if (strcmp(req->q.manpath, req->p[i]) == 0)
