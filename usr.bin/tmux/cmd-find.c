@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-find.c,v 1.80 2022/07/06 08:31:59 nicm Exp $ */
+/* $OpenBSD: cmd-find.c,v 1.81 2022/07/06 08:32:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1265,7 +1265,7 @@ cmd_find_current_client(struct cmdq_item *item, int quiet)
 			found = cmd_find_best_client(s);
 	}
 	if (found == NULL && item != NULL && !quiet)
-		abort();//cmdq_error(item, "no current client");
+		cmdq_error(item, "no current client");
 	log_debug("%s: no target, return %p", __func__, found);
 	return (found);
 }
