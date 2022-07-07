@@ -66,13 +66,25 @@ for protocol in SSLv3 TLSv1.2; do
   done
 done
 for protocol in TLSv1.3; do
-  echo "Testing ciphersuites for $protocol"
+  echo "Testing ciphersuites for $protocol at security level 2"
   for cipher in `$openssl ciphers -v "$protocol" |
     awk "/ $protocol / { print \\$1 }"`; do
     echo "Testing $cipher"
-    $ssltest -cipher $cipher
+    $ssltest -cipher $cipher -seclevel 2
     if [ $? -ne 0 ] ; then
       echo "Failed $cipher"
+      exit 1
+    fi
+  done
+done
+for protocol in TLSv1.3; do
+  echo "Testing ciphersuites for $protocol at security level 3"
+  for cipher in `$openssl ciphers -v "$protocol" |
+    awk "/ $protocol / { print \\$1 }"`; do
+    echo "Testing $cipher"
+    $ssltest -cipher $cipher -seclevel 3
+    if [ $? -eq 0 ] ; then
+      echo "Failed $cipher should not have succeeded"
       exit 1
     fi
   done
