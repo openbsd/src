@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.21 2022/07/07 13:04:39 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.22 2022/07/07 17:08:28 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -229,8 +229,11 @@ ssl_security(const SSL *ssl, int secop, int bits, int nid, void *other)
 int
 ssl_security_sigalg_check(const SSL *ssl, const EVP_PKEY *pkey)
 {
-	return ssl_security(ssl, SSL_SECOP_SIGALG_CHECK,
-	    EVP_PKEY_security_bits(pkey), 0, NULL);
+	int bits;
+
+	bits = EVP_PKEY_security_bits(pkey);
+
+	return ssl_security(ssl, SSL_SECOP_SIGALG_CHECK, bits, 0, NULL);
 }
 
 int
@@ -272,14 +275,21 @@ ssl_security_supported_cipher(const SSL *ssl, SSL_CIPHER *cipher)
 int
 ssl_ctx_security_dh(const SSL_CTX *ctx, DH *dh)
 {
-	return ssl_ctx_security(ctx, SSL_SECOP_TMP_DH, DH_security_bits(dh), 0,
-	    dh);
+	int bits;
+
+	bits = DH_security_bits(dh);
+
+	return ssl_ctx_security(ctx, SSL_SECOP_TMP_DH, bits, 0, dh);
 }
 
 int
 ssl_security_dh(const SSL *ssl, DH *dh)
 {
-	return ssl_security(ssl, SSL_SECOP_TMP_DH, DH_security_bits(dh), 0, dh);
+	int bits;
+
+	bits = DH_security_bits(dh);
+
+	return ssl_security(ssl, SSL_SECOP_TMP_DH, bits, 0, dh);
 }
 
 static int
