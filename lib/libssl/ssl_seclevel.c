@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl_seclevel.c,v 1.20 2022/07/05 16:14:18 tb Exp $ */
+/*	$OpenBSD: ssl_seclevel.c,v 1.21 2022/07/07 13:04:39 tb Exp $ */
 /*
  * Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
  *
@@ -212,14 +212,7 @@ ssl_security_default_cb(const SSL *ssl, const SSL_CTX *ctx, int secop, int bits,
 	}
 }
 
-int
-ssl_security_dummy_cb(const SSL *ssl, const SSL_CTX *ctx, int secop, int bits,
-    int version, void *cipher, void *ex_data)
-{
-	return 1;
-}
-
-int
+static int
 ssl_ctx_security(const SSL_CTX *ctx, int secop, int bits, int nid, void *other)
 {
 	return ctx->internal->cert->security_cb(NULL, ctx, secop, bits, nid,
@@ -236,12 +229,8 @@ ssl_security(const SSL *ssl, int secop, int bits, int nid, void *other)
 int
 ssl_security_sigalg_check(const SSL *ssl, const EVP_PKEY *pkey)
 {
-#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
 	return ssl_security(ssl, SSL_SECOP_SIGALG_CHECK,
 	    EVP_PKEY_security_bits(pkey), 0, NULL);
-#else
-	return 1;
-#endif
 }
 
 int
@@ -283,25 +272,16 @@ ssl_security_supported_cipher(const SSL *ssl, SSL_CIPHER *cipher)
 int
 ssl_ctx_security_dh(const SSL_CTX *ctx, DH *dh)
 {
-#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
 	return ssl_ctx_security(ctx, SSL_SECOP_TMP_DH, DH_security_bits(dh), 0,
 	    dh);
-#else
-	return 1;
-#endif
 }
 
 int
 ssl_security_dh(const SSL *ssl, DH *dh)
 {
-#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
 	return ssl_security(ssl, SSL_SECOP_TMP_DH, DH_security_bits(dh), 0, dh);
-#else
-	return 1;
-#endif
 }
 
-#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
 static int
 ssl_cert_pubkey_security_bits(const X509 *x509)
 {
@@ -377,13 +357,11 @@ ssl_security_cert_sig(const SSL_CTX *ctx, const SSL *ssl, X509 *x509, int secop)
 
 	return ssl_ctx_security(ctx, secop, security_bits, md_nid, x509);
 }
-#endif
 
 int
 ssl_security_cert(const SSL_CTX *ctx, const SSL *ssl, X509 *x509,
     int is_ee, int *out_error)
 {
-#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
 	int key_error, operation;
 
 	*out_error = 0;
@@ -406,7 +384,6 @@ ssl_security_cert(const SSL_CTX *ctx, const SSL *ssl, X509 *x509,
 		return 0;
 	}
 
-#endif
 	return 1;
 }
 

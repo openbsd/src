@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.102 2022/07/02 19:36:07 jsing Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.103 2022/07/07 13:04:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -170,11 +170,7 @@ ssl_cert_new(void)
 	}
 	ret->key = &(ret->pkeys[SSL_PKEY_RSA]);
 	ret->references = 1;
-#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
 	ret->security_cb = ssl_security_default_cb;
-#else
-	ret->security_cb = ssl_security_dummy_cb;
-#endif
 	ret->security_level = OPENSSL_TLS_SECURITY_LEVEL;
 	ret->security_ex_data = NULL;
 	return (ret);
@@ -426,9 +422,7 @@ ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *certs)
 
 	param = X509_STORE_CTX_get0_param(ctx);
 
-#if defined(LIBRESSL_HAS_SECURITY_LEVEL)
 	X509_VERIFY_PARAM_set_auth_level(param, SSL_get_security_level(s));
-#endif
 
 	/*
 	 * Anything non-default in "param" should overwrite anything

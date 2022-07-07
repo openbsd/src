@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_locl.h,v 1.411 2022/07/02 16:31:04 tb Exp $ */
+/* $OpenBSD: ssl_locl.h,v 1.412 2022/07/07 13:04:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1292,8 +1292,6 @@ int ssl_cert_add0_chain_cert(SSL_CTX *ctx, SSL *ssl, X509 *cert);
 int ssl_cert_add1_chain_cert(SSL_CTX *ctx, SSL *ssl, X509 *cert);
 
 int ssl_security_default_cb(const SSL *ssl, const SSL_CTX *ctx, int op,
-    int bits, int nid, void *other, void *ex_data);
-int ssl_security_dummy_cb(const SSL *ssl, const SSL_CTX *ctx, int op,
     int bits, int nid, void *other, void *ex_data);
 
 int ssl_security_cipher_check(const SSL *ssl, SSL_CIPHER *cipher);
