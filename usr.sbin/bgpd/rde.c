@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.549 2022/07/07 12:16:04 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.550 2022/07/07 12:38:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2474,6 +2474,8 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 			xp = NULL;	/* stop loop */
 			break;
 		}
+		if (xp == NULL || xp == p)
+			break;
 	}
 	if (!peer->conf.ebgp)
 		rib.flags |= F_PREF_INTERNAL;
