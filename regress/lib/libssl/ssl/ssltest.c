@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssltest.c,v 1.33 2021/11/21 21:40:45 tb Exp $ */
+/*	$OpenBSD: ssltest.c,v 1.34 2022/07/07 11:40:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -659,8 +659,7 @@ bad:
 		EC_KEY_free(ecdh);
 	}
 
-	if (!SSL_CTX_use_certificate_file(s_ctx, server_cert,
-	    SSL_FILETYPE_PEM)) {
+	if (!SSL_CTX_use_certificate_chain_file(s_ctx, server_cert)) {
 		ERR_print_errors(bio_err);
 	} else if (!SSL_CTX_use_PrivateKey_file(s_ctx,
 	    (server_key ? server_key : server_cert), SSL_FILETYPE_PEM)) {
@@ -669,8 +668,7 @@ bad:
 	}
 
 	if (client_auth) {
-		SSL_CTX_use_certificate_file(c_ctx, client_cert,
-		    SSL_FILETYPE_PEM);
+		SSL_CTX_use_certificate_chain_file(c_ctx, client_cert);
 		SSL_CTX_use_PrivateKey_file(c_ctx,
 		    (client_key ? client_key : client_cert),
 		    SSL_FILETYPE_PEM);
