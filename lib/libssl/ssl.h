@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.218 2022/06/29 17:39:20 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.219 2022/07/07 13:02:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1507,7 +1507,6 @@ int SSL_set_session_secret_cb(SSL *s,
 void SSL_set_debug(SSL *s, int debug);
 int SSL_cache_hit(SSL *s);
 
-#if defined(LIBRESSL_INTERNAL)
 /* What the "other" parameter contains in security callback */
 /* Mask for type */
 #define SSL_SECOP_OTHER_TYPE		0xffff0000
@@ -1576,7 +1575,6 @@ int SSL_get_security_level(const SSL *ssl);
 
 void SSL_CTX_set_security_level(SSL_CTX *ctx, int level);
 int SSL_CTX_get_security_level(const SSL_CTX *ctx);
-#endif /* LIBRESSL_INTERNAL */
 
 #ifdef LIBRESSL_INTERNAL
 /*
