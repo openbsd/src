@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.37 2022/07/04 12:22:32 tb Exp $ */
+/* $OpenBSD: dsa.h,v 1.38 2022/07/07 13:01:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -151,9 +151,7 @@ int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int DSA_set_ex_data(DSA *d, int idx, void *arg);
 void *DSA_get_ex_data(DSA *d, int idx);
-#ifdef LIBRESSL_INTERNAL
 int DSA_security_bits(const DSA *d);
-#endif
 
 DSA *d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length);
 int i2d_DSAPublicKey(const DSA *a, unsigned char **pp);
@@ -222,10 +220,8 @@ ENGINE *DSA_get0_engine(DSA *d);
 DSA_METHOD *DSA_meth_new(const char *name, int flags);
 void DSA_meth_free(DSA_METHOD *meth);
 DSA_METHOD *DSA_meth_dup(const DSA_METHOD *meth);
-#ifdef LIBRESSL_INTERNAL
 const char *DSA_meth_get0_name(const DSA_METHOD *meth);
 int DSA_meth_set1_name(DSA_METHOD *meth, const char *name);
-#endif
 int DSA_meth_set_sign(DSA_METHOD *meth,
     DSA_SIG *(*sign)(const unsigned char *, int, DSA *));
 int DSA_meth_set_finish(DSA_METHOD *meth, int (*finish)(DSA *));

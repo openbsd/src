@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.53 2022/06/27 12:25:49 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.54 2022/07/07 13:01:28 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -471,9 +471,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *ret,
 
 void	BN_consttime_swap(BN_ULONG swap, BIGNUM *a, BIGNUM *b, int nwords);
 
-#ifdef LIBRESSL_INTERNAL
 int	BN_security_bits(int L, int N);
-#endif
 
 /* Deprecated versions */
 #ifndef OPENSSL_NO_DEPRECATED

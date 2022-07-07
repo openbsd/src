@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.h,v 1.33 2022/06/27 12:31:38 tb Exp $ */
+/* $OpenBSD: dh.h,v 1.34 2022/07/07 13:01:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -143,9 +143,7 @@ int DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int DH_set_ex_data(DH *d, int idx, void *arg);
 void *DH_get_ex_data(DH *d, int idx);
-#ifdef LIBRESSL_INTERNAL
 int DH_security_bits(const DH *dh);
-#endif
 
 ENGINE *DH_get0_engine(DH *d);
 void DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q,

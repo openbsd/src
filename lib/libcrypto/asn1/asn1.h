@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.66 2022/07/04 14:39:43 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.67 2022/07/07 13:01:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -719,13 +719,11 @@ ASN1_TIME *d2i_ASN1_TIME(ASN1_TIME **a, const unsigned char **in, long len);
 int i2d_ASN1_TIME(ASN1_TIME *a, unsigned char **out);
 extern const ASN1_ITEM ASN1_TIME_it;
 
-#ifdef LIBRESSL_INTERNAL
 int ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm);
 int ASN1_TIME_compare(const ASN1_TIME *t1, const ASN1_TIME *t2);
 int ASN1_TIME_cmp_time_t(const ASN1_TIME *s, time_t t2);
 int ASN1_TIME_normalize(ASN1_TIME *t);
 int ASN1_TIME_set_string_X509(ASN1_TIME *time, const char *str);
-#endif
 int ASN1_TIME_diff(int *pday, int *psec, const ASN1_TIME *from,
     const ASN1_TIME *to);
 
@@ -755,21 +753,17 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num);
 ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, int len,
     const char *sn, const char *ln);
 
-#ifdef LIBRESSL_INTERNAL
 int ASN1_INTEGER_get_uint64(uint64_t *out_val, const ASN1_INTEGER *aint);
 int ASN1_INTEGER_set_uint64(ASN1_INTEGER *aint, uint64_t val);
 int ASN1_INTEGER_get_int64(int64_t *out_val, const ASN1_INTEGER *aint);
 int ASN1_INTEGER_set_int64(ASN1_INTEGER *aint, int64_t val);
-#endif
 int ASN1_INTEGER_set(ASN1_INTEGER *a, long v);
 long ASN1_INTEGER_get(const ASN1_INTEGER *a);
 ASN1_INTEGER *BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai);
 BIGNUM *ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai, BIGNUM *bn);
 
-#ifdef LIBRESSL_INTERNAL
 int ASN1_ENUMERATED_get_int64(int64_t *out_val, const ASN1_ENUMERATED *aenum);
 int ASN1_ENUMERATED_set_int64(ASN1_ENUMERATED *aenum, int64_t val);
-#endif
 int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v);
 long ASN1_ENUMERATED_get(const ASN1_ENUMERATED *a);
 ASN1_ENUMERATED *BN_to_ASN1_ENUMERATED(const BIGNUM *bn, ASN1_ENUMERATED *ai);
