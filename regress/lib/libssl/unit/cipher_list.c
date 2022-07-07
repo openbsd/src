@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_list.c,v 1.10 2021/01/09 12:39:22 tb Exp $	*/
+/*	$OpenBSD: cipher_list.c,v 1.11 2022/07/07 13:11:45 tb Exp $	*/
 /*
  * Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
@@ -180,6 +180,7 @@ main(void)
 	/* Use TLSv1.2 client to get all ciphers. */
 	CHECK_GOTO((ctx = SSL_CTX_new(TLSv1_2_client_method())) != NULL);
 	CHECK_GOTO((s = SSL_new(ctx)) != NULL);
+	SSL_set_security_level(s, 2);
 
 	if (!ssl_bytes_to_list_alloc(s, &ciphers))
 		goto err;
@@ -188,6 +189,10 @@ main(void)
 	if (!ssl_list_to_bytes_no_scsv(s, &ciphers))
 		goto err;
 	if (!ssl_bytes_to_list_invalid(s, &ciphers))
+		goto err;
+
+	SSL_set_security_level(s, 3);
+	if (ssl_list_to_bytes_scsv(s, &ciphers))
 		goto err;
 
 	rv = 0;
