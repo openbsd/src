@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.7 2022/07/06 07:59:03 claudio Exp $	*/
+/*	$OpenBSD: ts.c,v 1.8 2022/07/07 10:40:25 claudio Exp $	*/
 /*
  * Copyright (c) 2022 Job Snijders <job@openbsd.org>
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -31,6 +31,7 @@ static char		*format = "%b %d %H:%M:%S";
 static char		*buf;
 static char		*outbuf;
 static size_t		 bufsize;
+static size_t		 obsize;
 
 static void		 fmtfmt(const struct timespec *);
 static void __dead	 usage(void);
@@ -77,14 +78,14 @@ main(int argc, char *argv[])
 	if (argc == 1)
 		format = *argv;
 
-	bufsize = strlen(format);
+	bufsize = strlen(format) + 1;
 	if (bufsize > SIZE_MAX / 10)
 		errx(1, "format string too big");
-
 	bufsize *= 10;
+	obsize = bufsize;
 	if ((buf = calloc(1, bufsize)) == NULL)
 		err(1, NULL);
-	if ((outbuf = calloc(1, bufsize)) == NULL)
+	if ((outbuf = calloc(1, obsize)) == NULL)
 		err(1, NULL);
 
 	/* force UTC for interval calculations */
@@ -165,9 +166,14 @@ fmtfmt(const struct timespec *ts)
 		}
 	} while (*f != '\0');
 
-	if (strftime(outbuf, bufsize, buf, tm) == 0)
-		errx(1, "strftime");
-
+	*outbuf = '\0';
+	if (*buf != '\0') {
+		while (strftime(outbuf, obsize, buf, tm) == 0) {
+			if ((outbuf = reallocarray(outbuf, 2, obsize)) == NULL)
+				err(1, NULL);
+			obsize *= 2;
+		}
+	}
 	fprintf(stdout, "%s ", outbuf);
 	if (ferror(stdout))
 		exit(1);
