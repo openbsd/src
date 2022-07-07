@@ -5,5 +5,5 @@ origin: i = IGP, e = EGP, ? = Incomplete
 
 flags ovs destination          gateway          lpref   med aspath origin
 *>      N 10.12.1.0/24         10.12.57.3        100   100 64502 64510 i
-*       N 10.12.1.0/24         10.12.57.4        100    50 64501 64510 i
+*m      N 10.12.1.0/24         10.12.57.4        100    50 64501 64510 i
 *       N 10.12.1.0/24         10.12.57.2        100   100 64501 64510 i
