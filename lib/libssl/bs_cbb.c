@@ -1,4 +1,4 @@
-/*	$OpenBSD: bs_cbb.c,v 1.27 2022/01/06 14:30:30 jsing Exp $	*/
+/*	$OpenBSD: bs_cbb.c,v 1.28 2022/07/07 17:12:15 tb Exp $	*/
 /*
  * Copyright (c) 2014, Google Inc.
  *
@@ -161,6 +161,9 @@ CBB_finish(CBB *cbb, uint8_t **out_data, size_t *out_len)
 		 * |out_data| and |out_len| can only be NULL if the CBB is
 		 * fixed.
 		 */
+		return 0;
+
+	if (out_data != NULL && *out_data != NULL)
 		return 0;
 
 	if (out_data != NULL)
