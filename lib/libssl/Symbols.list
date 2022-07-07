@@ -107,7 +107,6 @@ SSL_CTX_sess_set_get_cb
 SSL_CTX_sess_set_new_cb
 SSL_CTX_sess_set_remove_cb
 SSL_CTX_sessions
-SSL_CTX_set_security_level
 SSL_CTX_set0_chain
 SSL_CTX_set1_chain
 SSL_CTX_set1_groups
@@ -141,6 +140,7 @@ SSL_CTX_set_num_tickets
 SSL_CTX_set_post_handshake_auth
 SSL_CTX_set_purpose
 SSL_CTX_set_quiet_shutdown
+SSL_CTX_set_security_level
 SSL_CTX_set_session_id_context
 SSL_CTX_set_ssl_version
 SSL_CTX_set_timeout
