@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.124 2022/05/03 21:20:35 bluhm Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.125 2022/07/07 13:52:20 mpi Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -1472,11 +1472,6 @@ uvm_vnp_sync(struct mount *mp)
 		if (mp && vp->v_mount != mp)
 			continue;
 
-		/* Spin to ensure `uvn_wlist' isn't modified concurrently. */
-		while (rw_enter(uvn->u_obj.vmobjlock, RW_WRITE|RW_NOSLEEP)) {
-			CPU_BUSY_CYCLE();
-		}
-
 		/*
 		 * If the vnode is "blocked" it means it must be dying, which
 		 * in turn means its in the process of being flushed out so
@@ -1485,10 +1480,8 @@ uvm_vnp_sync(struct mount *mp)
 		 * note that uvn must already be valid because we found it on
 		 * the wlist (this also means it can't be ALOCK'd).
 		 */
-		if ((uvn->u_flags & UVM_VNODE_BLOCKED) != 0) {
-			rw_exit(uvn->u_obj.vmobjlock);
+		if ((uvn->u_flags & UVM_VNODE_BLOCKED) != 0)
 			continue;
-		}
 
 		/*
 		 * gain reference.   watch out for persisting uvns (need to
@@ -1497,7 +1490,6 @@ uvm_vnp_sync(struct mount *mp)
 		if (uvn->u_obj.uo_refs == 0)
 			vref(vp);
 		uvn->u_obj.uo_refs++;
-		rw_exit(uvn->u_obj.vmobjlock);
 
 		SIMPLEQ_INSERT_HEAD(&uvn_sync_q, uvn, u_syncq);
 	}
