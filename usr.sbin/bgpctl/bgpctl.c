@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.279 2022/06/27 13:27:38 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.280 2022/07/07 12:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -675,7 +675,7 @@ fmt_origin(uint8_t origin, int sum)
 }
 
 const char *
-fmt_flags(uint8_t flags, int sum)
+fmt_flags(uint32_t flags, int sum)
 {
 	static char buf[80];
 	char	 flagstr[5];
@@ -696,6 +696,10 @@ fmt_flags(uint8_t flags, int sum)
 			*p++ = '*';
 		if (flags & F_PREF_BEST)
 			*p++ = '>';
+		if (flags & F_PREF_ECMP)
+			*p++ = 'm';
+		if (flags & F_PREF_AS_WIDE)
+			*p++ = 'w';
 		*p = '\0';
 		snprintf(buf, sizeof(buf), "%-5s", flagstr);
 	} else {
@@ -714,6 +718,10 @@ fmt_flags(uint8_t flags, int sum)
 			strlcat(buf, ", valid", sizeof(buf));
 		if (flags & F_PREF_BEST)
 			strlcat(buf, ", best", sizeof(buf));
+		if (flags & F_PREF_ECMP)
+			strlcat(buf, ", ecmp", sizeof(buf));
+		if (flags & F_PREF_AS_WIDE)
+			strlcat(buf, ", as-wide", sizeof(buf));
 		if (flags & F_PREF_ANNOUNCE)
 			strlcat(buf, ", announced", sizeof(buf));
 		if (strlen(buf) >= sizeof(buf) - 1)

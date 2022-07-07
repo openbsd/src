@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.17 2022/06/27 13:27:38 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.18 2022/07/07 12:17:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -870,6 +870,10 @@ json_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 	json_do_bool("valid", r->flags & F_PREF_ELIGIBLE);
 	if (r->flags & F_PREF_BEST)
 		json_do_bool("best", 1);
+	if (r->flags & F_PREF_ECMP)
+		json_do_bool("ecmp", 1);
+	if (r->flags & F_PREF_AS_WIDE)
+		json_do_bool("as-wide", 1);
 	if (r->flags & F_PREF_INTERNAL)
 		json_do_printf("source", "%s", "internal");
 	else
@@ -885,6 +889,7 @@ json_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 	json_do_uint("metric", r->med);
 	json_do_uint("localpref", r->local_pref);
 	json_do_uint("weight", r->weight);
+	json_do_int("dmetric", r->dmetric);
 	json_do_printf("last_update", "%s", fmt_timeframe(r->age));
 	json_do_int("last_update_sec", r->age);
 

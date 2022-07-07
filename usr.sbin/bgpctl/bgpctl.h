@@ -47,7 +47,7 @@ const char	*fmt_timeframe(time_t);
 const char	*fmt_monotime(time_t);
 const char	*fmt_fib_flags(uint16_t);
 const char	*fmt_origin(uint8_t, int);
-const char	*fmt_flags(uint8_t, int);
+const char	*fmt_flags(uint32_t, int);
 const char	*fmt_ovs(uint8_t, int);
 const char	*fmt_auth_method(enum auth_method);
 const char	*fmt_mem(long long);
