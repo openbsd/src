@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.93 2022/07/07 12:16:04 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.94 2022/07/07 19:46:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -348,7 +348,7 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 {
 	struct prefix_queue redo = TAILQ_HEAD_INITIALIZER(redo);
 	struct prefix *xp, *np, *insertp = ep;
-	int testall, selected = 0;
+	int testall, preferred, selected = 0, removed = 0;
 
 	/* start scan at the entry point (ep) or the head if ep == NULL */
 	if (ep == NULL)
@@ -357,26 +357,25 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 	for (xp = ep; xp != NULL; xp = np) {
 		np = TAILQ_NEXT(xp, entry.list.rib);
 
-		if (prefix_cmp(new, xp, &testall) > 0) {
+		if ((preferred = (prefix_cmp(new, xp, &testall) > 0))) {
 			/* new is preferred over xp */
-			if (testall == 0)
-				break;		/* we're done */
-			else if (testall == 2) {
+			if (testall == 2) {
 				/*
 				 * MED inversion, take out prefix and
 				 * put it onto redo queue.
 				 */
-				prefix_set_dmetric(TAILQ_PREV(xp, prefix_queue,
-				    entry.list.rib), np);
 				TAILQ_REMOVE(&re->prefix_h, xp, entry.list.rib);
 				TAILQ_INSERT_TAIL(&redo, xp, entry.list.rib);
-			} else {
+				removed = 1;
+				continue;
+			}
+
+			if (testall == 1) {
 				/*
 				 * lock insertion point and
 				 * continue on with scan
 				 */
 				selected = 1;
-				continue;
 			}
 		} else {
 			/*
@@ -393,15 +392,26 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 			if (!selected)
 				insertp = xp;
 		}
+
+		/*
+		 * If previous element(s) got removed, fixup the
+		 * dmetric, now that it is clear that this element
+		 * is on the list.
+		 */
+		if (removed) {
+			prefix_set_dmetric(TAILQ_PREV(xp, prefix_queue,
+			    entry.list.rib), xp);
+			removed = 0;
+		}
+
+		if (preferred && testall == 0)
+			break;			/* we're done */
 	}
 
 	if (insertp == NULL) {
 		TAILQ_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
 	} else {
 		TAILQ_INSERT_AFTER(&re->prefix_h, insertp, new, entry.list.rib);
-		new->dmetric = prefix_cmp(insertp, new, &testall);
-		if (new->dmetric < 0)
-			fatalx("bad dmetric in decision process");
 	}
 
 	prefix_set_dmetric(insertp, new);
@@ -429,11 +439,11 @@ void
 prefix_remove(struct prefix *old, struct rib_entry *re)
 {
 	struct prefix_queue redo = TAILQ_HEAD_INITIALIZER(redo);
-	struct prefix *xp, *np;
-	int testall;
+	struct prefix *xp, *np, *pp;
+	int testall, removed = 0;
 
 	xp = TAILQ_NEXT(old, entry.list.rib);
-	prefix_set_dmetric(TAILQ_PREV(old, prefix_queue, entry.list.rib), xp);
+	pp = TAILQ_PREV(old, prefix_queue, entry.list.rib);
 	TAILQ_REMOVE(&re->prefix_h, old, entry.list.rib);
 
 	/* check if a MED inversion could be possible */
@@ -445,20 +455,35 @@ prefix_remove(struct prefix *old, struct rib_entry *re)
 
 			/* only interested in the testall result */
 			prefix_cmp(old, xp, &testall);
-			if (testall == 0)
-				break;		/* we're done */
-			else if (testall == 2) {
+			if (testall == 2) {
 				/*
 				 * possible MED inversion, take out prefix and
 				 * put it onto redo queue.
 				 */
-				prefix_set_dmetric(TAILQ_PREV(xp, prefix_queue,
-				    entry.list.rib), np);
 				TAILQ_REMOVE(&re->prefix_h, xp, entry.list.rib);
 				TAILQ_INSERT_TAIL(&redo, xp, entry.list.rib);
+				removed = 1;
+				continue;
 			}
+			/*
+			 * If previous element(s) got removed, fixup the
+			 * dmetric, now that it is clear that this element
+			 * is on the list.
+			 */
+			if (removed) {
+				prefix_set_dmetric(TAILQ_PREV(xp, prefix_queue,
+				    entry.list.rib), xp);
+				removed = 0;
+			}
+			if (testall == 0)
+				break;		/* we're done */
 		}
 	}
+
+	if (pp)
+		prefix_set_dmetric(pp, TAILQ_NEXT(pp, entry.list.rib));
+	else
+		prefix_set_dmetric(NULL, TAILQ_FIRST(&re->prefix_h));
 
 	/* Fixup MED order again, reinsert prefixes from the start */
 	while (!TAILQ_EMPTY(&redo)) {
