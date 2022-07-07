@@ -90,6 +90,7 @@ SSL_CTX_get_max_proto_version
 SSL_CTX_get_min_proto_version
 SSL_CTX_get_num_tickets
 SSL_CTX_get_quiet_shutdown
+SSL_CTX_get_security_level
 SSL_CTX_get_ssl_method
 SSL_CTX_get_timeout
 SSL_CTX_get_verify_callback
@@ -106,6 +107,7 @@ SSL_CTX_sess_set_get_cb
 SSL_CTX_sess_set_new_cb
 SSL_CTX_sess_set_remove_cb
 SSL_CTX_sessions
+SSL_CTX_set_security_level
 SSL_CTX_set0_chain
 SSL_CTX_set1_chain
 SSL_CTX_set1_groups
@@ -249,6 +251,7 @@ SSL_get_quiet_shutdown
 SSL_get_rbio
 SSL_get_read_ahead
 SSL_get_rfd
+SSL_get_security_level
 SSL_get_selected_srtp_profile
 SSL_get_server_random
 SSL_get_servername
@@ -316,6 +319,7 @@ SSL_set_purpose
 SSL_set_quiet_shutdown
 SSL_set_read_ahead
 SSL_set_rfd
+SSL_set_security_level
 SSL_set_session
 SSL_set_session_id_context
 SSL_set_session_secret_cb
