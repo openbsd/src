@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.255 2022/07/07 10:46:54 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.256 2022/07/07 12:16:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -336,7 +336,7 @@ struct prefix {
 	uint32_t			 path_id_tx;
 	uint8_t				 validation_state;
 	uint8_t				 nhflags;
-	uint8_t				 unused;
+	int8_t				 dmetric;	/* decision metric */
 	uint8_t				 flags;
 #define	PREFIX_FLAG_WITHDRAW	0x01	/* enqueued on withdraw queue */
 #define	PREFIX_FLAG_UPDATE	0x02	/* enqueued on update queue */
@@ -347,6 +347,13 @@ struct prefix {
 #define	PREFIX_FLAG_EOR		0x20	/* prefix is EoR */
 #define	PREFIX_NEXTHOP_LINKED	0x40	/* prefix is linked onto nexthop list */
 #define	PREFIX_FLAG_LOCKED	0x80	/* locked by rib walker */
+
+#define	PREFIX_DMETRIC_NONE	0
+#define	PREFIX_DMETRIC_INVALID	1
+#define	PREFIX_DMETRIC_VALID	2
+#define	PREFIX_DMETRIC_AS_WIDE	3
+#define	PREFIX_DMETRIC_ECMP	4
+#define	PREFIX_DMETRIC_BEST	5
 };
 
 /* possible states for nhflags */

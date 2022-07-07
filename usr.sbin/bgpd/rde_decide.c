@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.92 2022/07/07 10:46:54 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.93 2022/07/07 12:16:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -27,6 +27,7 @@
 #include "log.h"
 
 int	prefix_cmp(struct prefix *, struct prefix *, int *);
+void	prefix_set_dmetric(struct prefix *, struct prefix *);
 void	prefix_insert(struct prefix *, struct prefix *, struct rib_entry *);
 void	prefix_remove(struct prefix *, struct rib_entry *);
 /*
@@ -106,7 +107,14 @@ void	prefix_remove(struct prefix *, struct rib_entry *);
  * Compare two prefixes with equal pt_entry. Returns an integer greater than or
  * less than 0, according to whether the prefix p1 is more or less preferred
  * than the prefix p2. p1 should be used for the new prefix and p2 for a
- * already added prefix.
+ * already added prefix. The absolute value returned specifies the similarity
+ * of the prefixes.
+ *   1: prefixes differ because of validity
+ *   2: prefixes don't belong in any multipath set
+ *   3: prefixes belong only in the as-wide multipath set
+ *   4: prefixes belong in both the ecmp and as-wide multipath set
+ *   TODO: maybe we also need a strict ecmp set that requires
+ *   prefixes to e.g. equal ASPATH or equal neighbor-as (like for MED).
  */
 int
 prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
@@ -116,6 +124,7 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 	struct attr		*a;
 	uint32_t		 p1id, p2id;
 	int			 p1cnt, p2cnt, i;
+	int			 rv = 1;
 
 	/*
 	 * If a match happens before the MED check then the list is
@@ -129,9 +138,9 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 	*testall = 0;
 
 	if (p1 == NULL)
-		return -1;
+		return -rv;
 	if (p2 == NULL)
-		return 1;
+		return rv;
 
 	asp1 = prefix_aspath(p1);
 	asp2 = prefix_aspath(p2);
@@ -140,15 +149,15 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 
 	/* pathes with errors are not eligible */
 	if (asp1 == NULL || asp1->flags & F_ATTR_PARSE_ERR)
-		return -1;
+		return -rv;
 	if (asp2 == NULL || asp2->flags & F_ATTR_PARSE_ERR)
-		return 1;
+		return rv;
 
 	/* only loop free pathes are eligible */
 	if (asp1->flags & F_ATTR_LOOP)
-		return -1;
+		return -rv;
 	if (asp2->flags & F_ATTR_LOOP)
-		return 1;
+		return rv;
 
 	/*
 	 * 1. check if prefix is eligible a.k.a reachable
@@ -157,24 +166,31 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 	 */
 	if (prefix_nexthop(p2) != NULL &&
 	    prefix_nexthop(p2)->state != NEXTHOP_REACH)
-		return 1;
+		return rv;
 	if (prefix_nexthop(p1) != NULL &&
 	    prefix_nexthop(p1)->state != NEXTHOP_REACH)
-		return -1;
+		return -rv;
+
+	/* bump rv, from here on prefix is considered valid */
+	rv++;
 
 	/* 2. local preference of prefix, bigger is better */
 	if (asp1->lpref > asp2->lpref)
-		return 1;
+		return rv;
 	if (asp1->lpref < asp2->lpref)
-		return -1;
+		return -rv;
 
 	/* 3. aspath count, the shorter the better */
-	if ((asp2->aspath->ascnt - asp1->aspath->ascnt) != 0)
-		return (asp2->aspath->ascnt - asp1->aspath->ascnt);
+	if (asp1->aspath->ascnt < asp2->aspath->ascnt)
+		return rv;
+	if (asp1->aspath->ascnt > asp2->aspath->ascnt)
+		return -rv;
 
 	/* 4. origin, the lower the better */
-	if ((asp2->origin - asp1->origin) != 0)
-		return (asp2->origin - asp1->origin);
+	if (asp1->origin < asp2->origin)
+		return rv;
+	if (asp1->origin > asp2->origin)
+		return -rv;
 
 	/*
 	 * 5. MED decision
@@ -189,9 +205,9 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 			*testall = 2;
 		/* lowest value wins */
 		if (asp1->med < asp2->med)
-			return 1;
+			return rv;
 		if (asp1->med > asp2->med)
-			return -1;
+			return -rv;
 	}
 
 	if (!(rde_decisionflags() & BGPD_FLAG_DECISION_MED_ALWAYS))
@@ -204,10 +220,13 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 	 */
 	if (peer1->conf.ebgp != peer2->conf.ebgp) {
 		if (peer1->conf.ebgp) /* peer1 is EBGP other is lower */
-			return 1;
+			return rv;
 		else if (peer2->conf.ebgp) /* peer2 is EBGP */
-			return -1;
+			return -rv;
 	}
+
+	/* bump rv, as-wide multipath */
+	rv++;
 
 	/*
 	 * 7. local tie-breaker, this weight is here to tip equal long AS
@@ -217,11 +236,14 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 	 * decision process.
 	 */
 	if (asp1->weight > asp2->weight)
-		return 1;
+		return rv;
 	if (asp1->weight < asp2->weight)
-		return -1;
+		return -rv;
 
 	/* 8. nexthop costs. NOT YET -> IGNORE */
+
+	/* bump rv, equal cost multipath */
+	rv++;
 
 	/*
 	 * 9. older route (more stable) wins but only if route-age
@@ -229,9 +251,9 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 	 */
 	if (rde_decisionflags() & BGPD_FLAG_DECISION_ROUTEAGE) {
 		if (p1->lastchange < p2->lastchange) /* p1 is older */
-			return 1;
+			return rv;
 		if (p1->lastchange > p2->lastchange)
-			return -1;
+			return -rv;
 	}
 
 	/* 10. lowest BGP Id wins, use ORIGINATOR_ID if present */
@@ -246,9 +268,9 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 	} else
 		p2id = peer2->remote_bgpid;
 	if (p1id < p2id)
-		return 1;
+		return rv;
 	if (p1id > p2id)
-		return -1;
+		return -rv;
 
 	/* 11. compare CLUSTER_LIST length, shorter is better */
 	p1cnt = p2cnt = 0;
@@ -256,14 +278,16 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 		p1cnt = a->len / sizeof(uint32_t);
 	if ((a = attr_optget(asp2, ATTR_CLUSTER_LIST)) != NULL)
 		p2cnt = a->len / sizeof(uint32_t);
-	if ((p2cnt - p1cnt) != 0)
-		return (p2cnt - p1cnt);
+	if (p1cnt < p2cnt)
+		return rv;
+	if (p1cnt > p2cnt)
+		return -rv;
 
 	/* 12. lowest peer address wins (IPv4 is better than IPv6) */
 	if (peer1->remote_addr.aid < peer2->remote_addr.aid)
-		return 1;
+		return rv;
 	if (peer1->remote_addr.aid > peer2->remote_addr.aid)
-		return -1;
+		return -rv;
 	switch (peer1->remote_addr.aid) {
 	case AID_INET:
 		i = memcmp(&peer1->remote_addr.v4, &peer2->remote_addr.v4,
@@ -277,18 +301,39 @@ prefix_cmp(struct prefix *p1, struct prefix *p2, int *testall)
 		fatalx("%s: unknown af", __func__);
 	}
 	if (i < 0)
-		return 1;
+		return rv;
 	if (i > 0)
-		return -1;
+		return -rv;
 
 	/* RFC7911 does not specify this but something like this is needed. */
 	/* 13. lowest path identifier wins */
 	if (p1->path_id < p2->path_id)
-		return 1;
+		return rv;
 	if (p1->path_id > p2->path_id)
-		return -1;
+		return -rv;
 
 	fatalx("Uh, oh a politician in the decision process");
+}
+
+/*
+ * set the dmetric value of np based on the return value of
+ * prefix_evaluate(pp, np) or set it to either PREFIX_DMETRIC_BEST
+ * or PREFIX_DMETRIC_INVALID for the first element.
+ */
+void
+prefix_set_dmetric(struct prefix *pp, struct prefix *np)
+{
+	int testall;
+
+	if (np != NULL) {
+		if (pp == NULL)
+			np->dmetric = prefix_eligible(np) ?
+			    PREFIX_DMETRIC_BEST : PREFIX_DMETRIC_INVALID;
+		else
+			np->dmetric = prefix_cmp(pp, np, &testall);
+		if (np->dmetric < 0)
+			fatalx("bad dmetric in decision process");
+	}
 }
 
 /*
@@ -321,6 +366,8 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 				 * MED inversion, take out prefix and
 				 * put it onto redo queue.
 				 */
+				prefix_set_dmetric(TAILQ_PREV(xp, prefix_queue,
+				    entry.list.rib), np);
 				TAILQ_REMOVE(&re->prefix_h, xp, entry.list.rib);
 				TAILQ_INSERT_TAIL(&redo, xp, entry.list.rib);
 			} else {
@@ -348,10 +395,17 @@ prefix_insert(struct prefix *new, struct prefix *ep, struct rib_entry *re)
 		}
 	}
 
-	if (insertp == NULL)
+	if (insertp == NULL) {
 		TAILQ_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
-	else
+	} else {
 		TAILQ_INSERT_AFTER(&re->prefix_h, insertp, new, entry.list.rib);
+		new->dmetric = prefix_cmp(insertp, new, &testall);
+		if (new->dmetric < 0)
+			fatalx("bad dmetric in decision process");
+	}
+
+	prefix_set_dmetric(insertp, new);
+	prefix_set_dmetric(new, TAILQ_NEXT(new, entry.list.rib));
 
 	/* Fixup MED order again. All elements are < new */
 	while (!TAILQ_EMPTY(&redo)) {
@@ -379,7 +433,9 @@ prefix_remove(struct prefix *old, struct rib_entry *re)
 	int testall;
 
 	xp = TAILQ_NEXT(old, entry.list.rib);
+	prefix_set_dmetric(TAILQ_PREV(old, prefix_queue, entry.list.rib), xp);
 	TAILQ_REMOVE(&re->prefix_h, old, entry.list.rib);
+
 	/* check if a MED inversion could be possible */
 	prefix_cmp(old, xp, &testall);
 	if (testall > 0) {
@@ -396,6 +452,8 @@ prefix_remove(struct prefix *old, struct rib_entry *re)
 				 * possible MED inversion, take out prefix and
 				 * put it onto redo queue.
 				 */
+				prefix_set_dmetric(TAILQ_PREV(xp, prefix_queue,
+				    entry.list.rib), np);
 				TAILQ_REMOVE(&re->prefix_h, xp, entry.list.rib);
 				TAILQ_INSERT_TAIL(&redo, xp, entry.list.rib);
 			}
@@ -466,8 +524,10 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 		/* decision process is turned off */
 		if (old != NULL)
 			TAILQ_REMOVE(&re->prefix_h, old, entry.list.rib);
-		if (new != NULL)
+		if (new != NULL) {
 			TAILQ_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
+			new->dmetric = PREFIX_DMETRIC_INVALID;
+		}
 		return;
 	}
 

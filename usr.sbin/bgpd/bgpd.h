@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.439 2022/06/30 20:33:14 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.440 2022/07/07 12:16:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -777,14 +777,16 @@ struct ctl_neighbor {
 	int			is_group;
 };
 
-#define	F_PREF_ELIGIBLE	0x01
-#define	F_PREF_BEST	0x02
-#define	F_PREF_INTERNAL	0x04
-#define	F_PREF_ANNOUNCE	0x08
-#define	F_PREF_STALE	0x10
-#define	F_PREF_INVALID	0x20
-#define	F_PREF_PATH_ID	0x40
-#define	F_PREF_OTC_LOOP	0x80
+#define	F_PREF_ELIGIBLE	0x001
+#define	F_PREF_BEST	0x002
+#define	F_PREF_INTERNAL	0x004
+#define	F_PREF_ANNOUNCE	0x008
+#define	F_PREF_STALE	0x010
+#define	F_PREF_INVALID	0x020
+#define	F_PREF_PATH_ID	0x040
+#define	F_PREF_OTC_LOOP	0x080
+#define	F_PREF_ECMP	0x100
+#define	F_PREF_AS_WIDE	0x200
 
 struct ctl_show_rib {
 	struct bgpd_addr	true_nexthop;
@@ -802,6 +804,7 @@ struct ctl_show_rib {
 	uint8_t			prefixlen;
 	uint8_t			origin;
 	uint8_t			validation_state;
+	int8_t			dmetric;
 	/* plus an aspath */
 };
 

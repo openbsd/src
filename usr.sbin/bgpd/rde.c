@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.548 2022/07/07 10:46:54 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.549 2022/07/07 12:16:04 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2419,6 +2419,7 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	struct attr		*a;
 	struct nexthop		*nexthop;
 	struct rib_entry	*re;
+	struct prefix		*xp;
 	struct rde_peer		*peer;
 	void			*bp;
 	time_t			 staletime;
@@ -2452,10 +2453,28 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	rib.prefixlen = p->pt->prefixlen;
 	rib.origin = asp->origin;
 	rib.validation_state = p->validation_state;
+	rib.dmetric = p->dmetric;
 	rib.flags = 0;
 	re = prefix_re(p);
-	if (re != NULL && prefix_best(re) == p)
-		rib.flags |= F_PREF_BEST;
+	TAILQ_FOREACH(xp, &re->prefix_h, entry.list.rib) {
+		switch (xp->dmetric) {
+		case PREFIX_DMETRIC_BEST:
+			if (xp == p)
+				rib.flags |= F_PREF_BEST;
+			break;
+		case PREFIX_DMETRIC_ECMP:
+			if (xp == p)
+				rib.flags |= F_PREF_ECMP;
+			break;
+		case PREFIX_DMETRIC_AS_WIDE:
+			if (xp == p)
+				rib.flags |= F_PREF_AS_WIDE;
+			break;
+		default:
+			xp = NULL;	/* stop loop */
+			break;
+		}
+	}
 	if (!peer->conf.ebgp)
 		rib.flags |= F_PREF_INTERNAL;
 	if (asp->flags & F_PREFIX_ANNOUNCED)
@@ -2550,16 +2569,12 @@ static void
 rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req, int adjout)
 {
 	struct rde_aspath	*asp;
-	struct rib_entry	*re;
 
 	if (!rde_match_peer(prefix_peer(p), &req->neighbor))
 		return;
 
 	asp = prefix_aspath(p);
-	re = prefix_re(p);
-	if (asp == NULL)	/* skip pending withdraw in Adj-RIB-Out */
-		return;
-	if ((req->flags & F_CTL_BEST) && re != NULL && prefix_best(re) != p)
+	if ((req->flags & F_CTL_BEST) && p->dmetric != PREFIX_DMETRIC_BEST)
 		return;
 	if ((req->flags & F_CTL_INVALID) &&
 	    (asp->flags & F_ATTR_PARSE_ERR) == 0)
@@ -3743,6 +3758,7 @@ rde_softreconfig_sync_reeval(struct rib_entry *re, void *arg)
 		TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib) {
 			if (p->flags & PREFIX_NEXTHOP_LINKED)
 				nexthop_unlink(p);
+			p->dmetric = PREFIX_DMETRIC_INVALID;
 		}
 		return;
 	}
