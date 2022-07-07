@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.10 2020/09/14 00:51:04 bluhm Exp $	*/
+/*	$OpenBSD: client.c,v 1.11 2022/07/07 13:12:57 tb Exp $	*/
 /*
  * Copyright (c) 2018-2019 Alexander Bluhm <bluhm@openbsd.org>
  *
@@ -184,10 +184,22 @@ main(int argc, char *argv[])
 	}
 
 	if (listciphers) {
+		STACK_OF(SSL_CIPHER) *supported_ciphers;
+
+#if OPENSSL_VERSION_NUMBER < 0x1010000f
+#define SSL_get1_supported_ciphers SSL_get_ciphers
+#endif
 		ssl = SSL_new(ctx);
 		if (ssl == NULL)
 			err_ssl(1, "SSL_new");
-		print_ciphers(SSL_get_ciphers(ssl));
+		supported_ciphers = SSL_get1_supported_ciphers(ssl);
+		if (supported_ciphers == NULL)
+			err_ssl(1, "SSL_get1_supported_ciphers");
+		print_ciphers(supported_ciphers);
+
+#if OPENSSL_VERSION_NUMBER >= 0x1010000f
+		sk_SSL_CIPHER_free(supported_ciphers);
+#endif
 		return 0;
 	}
 
