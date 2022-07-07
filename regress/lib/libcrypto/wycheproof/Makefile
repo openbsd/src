@@ -1,17 +1,21 @@
-# $OpenBSD: Makefile,v 1.3 2019/04/24 20:25:19 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2022/07/07 20:01:20 tb Exp $
 
-.if ! (make(clean) || make(cleandir) || make(obj))
-GO_VERSION != sh -c "(go version) 2>/dev/null || true"
-.endif
+WYCHEPROOF_TESTVECTORS = /usr/local/share/wycheproof/testvectors/
 
-.if empty(GO_VERSION)
+.if !exists(${WYCHEPROOF_TESTVECTORS})
 regress:
-	@echo package go is required for this regress
+	@echo package wycheproof-testvectors is required for this regress
+	@echo package go should be installed if available
 	@echo SKIPPED
-.endif
+.else
 
-CLEANFILES+=wycheproof
-REGRESS_TARGETS=regress-wycheproof
+# REGRESS_TARGETS += regress-wycheproof-primes
+
+. if exists(/usr/local/bin/go)
+
+REGRESS_TARGETS += regress-wycheproof
+
+CLEANFILES +=	wycheproof
 
 audit: wycheproof
 	./wycheproof -v
@@ -23,5 +27,26 @@ regress-wycheproof: wycheproof
 	./wycheproof
 
 .PHONY: audit
+
+. endif
+
+PROGS += wycheproof-primes
+
+LDADD =		-lcrypto
+DPADD =		${LIBCRYPTO}
+CFLAGS =	-I${.CURDIR} -I${.OBJDIR}
+
+primality_testcases.h: wycheproof-json.pl ${WYCHEPROOF_TESTVECTORS}/primality_test.json
+	perl ${.CURDIR}/wycheproof-json.pl > $@.tmp
+	mv -f $@.tmp $@
+
+wycheproof-primes: wycheproof-primes.c primality_testcases.h
+
+regress-wycheproof-primes: primality_testcases.h wycheproof-primes
+	./wycheproof-primes
+
+CLEANFILES +=	primality_testcases.h
+
+.endif
 
 .include <bsd.regress.mk>

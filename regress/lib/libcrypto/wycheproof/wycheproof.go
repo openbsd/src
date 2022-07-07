@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.126 2022/05/05 18:34:27 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.127 2022/07/07 20:01:20 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -347,6 +347,19 @@ type wycheproofTestGroupKW struct {
 	KeySize int                 `json:"keySize"`
 	Type    string              `json:"type"`
 	Tests   []*wycheproofTestKW `json:"tests"`
+}
+
+type wycheproofTestPrimality struct {
+	TCID    int      `json:"tcId"`
+	Comment string   `json:"comment"`
+	Value   string   `json:"value"`
+	Result  string   `json:"result"`
+	Flags   []string `json:"flags"`
+}
+
+type wycheproofTestGroupPrimality struct {
+	Type  string                     `json:"type"`
+	Tests []*wycheproofTestPrimality `json:"tests"`
 }
 
 type wycheproofTestRSA struct {
@@ -2223,6 +2236,35 @@ func runKWTestGroup(algorithm string, wtg *wycheproofTestGroupKW) bool {
 	return success
 }
 
+func runPrimalityTest(wt *wycheproofTestPrimality) bool {
+	var bnValue *C.BIGNUM
+	value := C.CString(wt.Value)
+	if C.BN_hex2bn(&bnValue, value) == 0 {
+		log.Fatal("Failed to set bnValue")
+	}
+	C.free(unsafe.Pointer(value))
+	defer C.BN_free(bnValue)
+
+	ret := C.BN_is_prime_ex(bnValue, C.BN_prime_checks, (*C.BN_CTX)(unsafe.Pointer(nil)), (*C.BN_GENCB)(unsafe.Pointer(nil)))
+	success := wt.Result == "acceptable" || (ret == 0 && wt.Result == "invalid") || (ret == 1 && wt.Result == "valid")
+	if !success {
+		fmt.Printf("FAIL: Test case %d (%q) %v failed - got %d, want %v\n", wt.TCID, wt.Comment, wt.Flags, ret, wt.Result)
+	}
+	return success
+}
+
+func runPrimalityTestGroup(algorithm string, wtg *wycheproofTestGroupPrimality) bool {
+	fmt.Printf("Running %v test group...\n", algorithm)
+
+	success := true
+	for _, wt := range wtg.Tests {
+		if !runPrimalityTest(wt) {
+			success = false
+		}
+	}
+	return success
+}
+
 func runRsaesOaepTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, wt *wycheproofTestRsaes) bool {
 	ct, err := hex.DecodeString(wt.CT)
 	if err != nil {
@@ -2733,6 +2775,8 @@ func runTestVectors(path string, variant testVariant) bool {
 		wtg = &wycheproofTestGroupHmac{}
 	case "KW":
 		wtg = &wycheproofTestGroupKW{}
+	case "PrimalityTest":
+		wtg = &wycheproofTestGroupPrimality{}
 	case "RSAES-OAEP":
 		wtg = &wycheproofTestGroupRsaesOaep{}
 	case "RSAES-PKCS1-v1_5":
@@ -2812,6 +2856,10 @@ func runTestVectors(path string, variant testVariant) bool {
 			if !runKWTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupKW)) {
 				success = false
 			}
+		case "PrimalityTest":
+			if !runPrimalityTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupPrimality)) {
+				success = false
+			}
 		case "RSAES-OAEP":
 			if !runRsaesOaepTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRsaesOaep)) {
 				success = false
@@ -2875,6 +2923,7 @@ func main() {
 		{"HKDF", "hkdf_sha*_test.json", Normal},
 		{"HMAC", "hmac_sha*_test.json", Normal},
 		{"KW", "kw_test.json", Normal},
+		{"Primality test", "primality_test.json", Skip}, // XXX
 		{"RSA", "rsa_*test.json", Normal},
 		{"X25519", "x25519_test.json", Normal},
 		{"X25519 ASN", "x25519_asn_test.json", Skip},
