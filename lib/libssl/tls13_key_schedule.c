@@ -1,4 +1,4 @@
-/* $OpenBSD: tls13_key_schedule.c,v 1.14 2021/01/05 18:36:22 tb Exp $ */
+/* $OpenBSD: tls13_key_schedule.c,v 1.15 2022/07/07 17:09:45 tb Exp $ */
 /*
  * Copyright (c) 2018, Bob Beck <beck@openbsd.org>
  *
@@ -169,7 +169,7 @@ tls13_hkdf_expand_label_with_length(struct tls13_secret *out,
     const uint8_t *label, size_t label_len, const struct tls13_secret *context)
 {
 	const char tls13_plabel[] = "tls13 ";
-	uint8_t *hkdf_label;
+	uint8_t *hkdf_label = NULL;
 	size_t hkdf_label_len;
 	CBB cbb, child;
 	int ret;
