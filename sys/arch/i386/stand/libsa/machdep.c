@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.39 2018/07/11 18:08:05 mlarkin Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.40 2022/07/07 00:56:47 daniel Exp $	*/
 
 /*
  * Copyright (c) 2004 Tom Cosgrove
@@ -78,17 +78,6 @@ machdep(void)
 	 * We try to toggle bit 21 (PSL_ID) in eflags.  If it works, then
 	 * cpuid is supported.  If not, there's no cpuid, and we don't
 	 * try it (don't want /boot to get an invalid opcode exception).
-	 *
-	 * XXX The NexGen Nx586 does not support this bit, so this is not
-	 *     a good method to detect the presence of cpuid on this
-	 *     processor.  That's fine: the purpose here is to detect the
-	 *     absence of cpuid.  We don't mind if the instruction's not
-	 *     there - this is not intended to determine exactly what
-	 *     processor is there, just whether it's i386 or amd64.
-	 *
-	 *     The only thing that would cause us grief is a processor which
-	 *     does not support cpuid but which does allow the PSL_ID bit
-	 *     in eflags to be toggled.
 	 */
 	__asm volatile(
 	    "pushfl\n\t"

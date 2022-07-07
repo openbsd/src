@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.5 2021/12/31 10:44:05 jsg Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.6 2022/07/07 00:56:46 daniel Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -131,25 +131,6 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	testl	%eax,%eax
 	jnz	.Ltry486
-
-	/*
-	 * Try the test of a NexGen CPU -- ZF will not change on a DIV
-	 * instruction on a NexGen, it will on an i386.  Documented in
-	 * Nx586 Processor Recognition Application Note, NexGen, Inc.
-	 */
-	movl	$0x5555,%eax
-	xorl	%edx,%edx
-	movl	$2,%ecx
-	divl	%ecx
-	jnz	.Lis386
-
-.Lisnx586:
-	/*
-	 * Don't try cpuid, as Nx586s reportedly don't support the
-	 * PSL_ID bit.
-	 */
-	movl	$CPU_NX586,RELOC(_C_LABEL(cpu))
-	jmp	2f
 
 .Lis386:
 	movl	$CPU_386,RELOC(_C_LABEL(cpu))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cputypes.h,v 1.10 2003/12/29 08:14:18 grange Exp $	*/
+/*	$OpenBSD: cputypes.h,v 1.11 2022/07/07 00:56:46 daniel Exp $	*/
 /*	$NetBSD: cputypes.h,v 1.10 1997/10/18 04:51:03 mikel Exp $	*/
 
 /*
@@ -48,11 +48,10 @@
 #define	CPU_486		3	/* Intel 80486DX */
 #define	CPU_486DLC	4	/* Cyrix 486DLC */
 #define CPU_6x86	5	/* Cyrix/IBM 6x86 */
-#define CPU_NX586	6	/* NexGen 586 */
 #define	CPU_586		7	/* Intel P.....m (I hate lawyers; it's TM) */
 #define CPU_AM586	8	/* AMD Am486 and Am5x86 */
 #define CPU_K5		9	/* AMD K5 */
-#define CPU_K6		10	/* NexGen 686 aka AMD K6 */
+#define CPU_K6		10	/* AMD K6 */
 #define	CPU_686		11	/* Intel P.....m Pro */
 
 /*
@@ -62,7 +61,6 @@
 #define CPUVENDOR_UNKNOWN	-1
 #define CPUVENDOR_INTEL		0
 #define CPUVENDOR_CYRIX		1
-#define CPUVENDOR_NEXGEN	2
 #define CPUVENDOR_AMD		3
 #define CPUVENDOR_IDT		4
 #define CPUVENDOR_RISE		5

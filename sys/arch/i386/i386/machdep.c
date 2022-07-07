@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.648 2022/02/01 20:29:55 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.649 2022/07/07 00:56:46 daniel Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -510,8 +510,6 @@ const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[] = {
 		NULL},				/* CPU_486DLC */
 	{ CPUVENDOR_CYRIX, "Cyrix", "6x86",	CPUCLASS_486,
 		cyrix6x86_cpu_setup},		/* CPU_6x86 */
-	{ CPUVENDOR_NEXGEN,"NexGen","586",	CPUCLASS_386,
-		NULL},				/* CPU_NX586 */
 };
 
 const char *classnames[] = {
