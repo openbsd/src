@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.401 2022/06/04 11:32:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.402 2022/07/07 07:48:45 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5698,9 +5698,6 @@ iwm_txq_advance(struct iwm_softc *sc, struct iwm_tx_ring *ring, int idx)
 	while (ring->tail != idx) {
 		txd = &ring->data[ring->tail];
 		if (txd->m != NULL) {
-			if (ring->qid < IWM_FIRST_AGG_TX_QUEUE)
-				DPRINTF(("%s: missed Tx completion: tail=%d "
-				    "idx=%d\n", __func__, ring->tail, idx));
 			iwm_reset_sched(sc, ring->qid, ring->tail, IWM_STATION_ID);
 			iwm_txd_done(sc, txd);
 			ring->queued--;
