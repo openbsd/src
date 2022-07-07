@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.550 2022/07/07 12:38:19 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.551 2022/07/07 13:55:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2455,27 +2455,29 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	rib.validation_state = p->validation_state;
 	rib.dmetric = p->dmetric;
 	rib.flags = 0;
-	re = prefix_re(p);
-	TAILQ_FOREACH(xp, &re->prefix_h, entry.list.rib) {
-		switch (xp->dmetric) {
-		case PREFIX_DMETRIC_BEST:
-			if (xp == p)
-				rib.flags |= F_PREF_BEST;
-			break;
-		case PREFIX_DMETRIC_ECMP:
-			if (xp == p)
-				rib.flags |= F_PREF_ECMP;
-			break;
-		case PREFIX_DMETRIC_AS_WIDE:
-			if (xp == p)
-				rib.flags |= F_PREF_AS_WIDE;
-			break;
-		default:
-			xp = NULL;	/* stop loop */
-			break;
+	if (!adjout) {
+		re = prefix_re(p);
+		TAILQ_FOREACH(xp, &re->prefix_h, entry.list.rib) {
+			switch (xp->dmetric) {
+			case PREFIX_DMETRIC_BEST:
+				if (xp == p)
+					rib.flags |= F_PREF_BEST;
+				break;
+			case PREFIX_DMETRIC_ECMP:
+				if (xp == p)
+					rib.flags |= F_PREF_ECMP;
+				break;
+			case PREFIX_DMETRIC_AS_WIDE:
+				if (xp == p)
+					rib.flags |= F_PREF_AS_WIDE;
+				break;
+			default:
+				xp = NULL;	/* stop loop */
+				break;
+			}
+			if (xp == NULL || xp == p)
+				break;
 		}
-		if (xp == NULL || xp == p)
-			break;
 	}
 	if (!peer->conf.ebgp)
 		rib.flags |= F_PREF_INTERNAL;
