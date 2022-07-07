@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssltest.c,v 1.34 2022/07/07 11:40:17 tb Exp $ */
+/*	$OpenBSD: ssltest.c,v 1.35 2022/07/07 13:10:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -434,6 +434,7 @@ main(int argc, char *argv[])
 	const SSL_METHOD *meth = NULL;
 	SSL *c_ssl, *s_ssl;
 	int number = 1, reuse = 0;
+	int seclevel = 0;
 	long bytes = 256L;
 	DH *dh;
 	int dhe1024dsa = 0;
@@ -494,6 +495,10 @@ main(int argc, char *argv[])
 			number = atoi(*(++argv));
 			if (number == 0)
 				number = 1;
+		} else if (strncmp(*argv, "-seclevel", 9) == 0) {
+			if (--argc < 1)
+				goto bad;
+			seclevel = atoi(*(++argv));
 		} else if (strcmp(*argv, "-bytes") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -619,6 +624,9 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 	}
+
+	SSL_CTX_set_security_level(c_ctx, seclevel);
+	SSL_CTX_set_security_level(s_ctx, seclevel);
 
 	if (cipher != NULL) {
 		SSL_CTX_set_cipher_list(c_ctx, cipher);
