@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.547 2022/06/27 13:26:51 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.548 2022/07/07 10:46:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1123,12 +1123,19 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 		break;
 	case IMSG_REFRESH:
 		if (imsg.hdr.len - IMSG_HEADER_SIZE != sizeof(rr)) {
-			log_warnx("%s: wrong imsg len", __func__);
+			log_warnx("route refresh: wrong imsg len");
 			break;
 		}
 		memcpy(&rr, imsg.data, sizeof(rr));
 		if (rr.aid >= AID_MAX) {
-			log_warnx("%s: bad AID", __func__);
+			log_peer_warnx(&peer->conf,
+			    "route refresh: bad AID %d", rr.aid);
+			break;
+		}
+		if (peer->capa.mp[rr.aid]) {
+			log_peer_warnx(&peer->conf,
+			    "route refresh: AID %s not negotiated",
+			    aid2str(rr.aid));
 			break;
 		}
 		switch (rr.subtype) {
@@ -1156,7 +1163,8 @@ rde_dispatch_imsg_peer(struct rde_peer *peer, void *bula)
 				    aid2str(rr.aid));
 			break;
 		default:
-			log_warnx("%s: bad subtype %d", __func__, rr.subtype);
+			log_peer_warnx(&peer->conf,
+			    "route refresh: bad subtype %d", rr.subtype);
 			break;
 		}
 		break;
@@ -3037,59 +3045,6 @@ rde_evaluate_all(void)
 	return rde_eval_all;
 }
 
-static int
-rde_skip_peer(struct rde_peer *peer, uint16_t rib_id, uint8_t aid)
-{
-	/* skip ourself */
-	if (peer == peerself)
-		return 1;
-	if (peer->state != PEER_UP)
-		return 1;
-	/* skip peers using a different rib */
-	if (peer->loc_rib_id != rib_id)
-		return 1;
-	/* check if peer actually supports the address family */
-	if (peer->capa.mp[aid] == 0)
-		return 1;
-	/* skip peers with special export types */
-	if (peer->export_type == EXPORT_NONE ||
-	    peer->export_type == EXPORT_DEFAULT_ROUTE)
-		return 1;
-
-	return 0;
-}
-
-void
-rde_generate_updates(struct rib *rib, struct prefix *new, struct prefix *old,
-    int eval_all)
-{
-	struct rde_peer	*peer;
-	uint8_t		 aid;
-
-	/*
-	 * If old is != NULL we know it was active and should be removed.
-	 * If new is != NULL we know it is reachable and then we should
-	 * generate an update.
-	 */
-	if (old == NULL && new == NULL)
-		return;
-
-	if (new)
-		aid = new->pt->aid;
-	else
-		aid = old->pt->aid;
-
-	LIST_FOREACH(peer, &peerlist, peer_l) {
-		if (rde_skip_peer(peer, rib->id, aid))
-			continue;
-		/* skip regular peers if the best path didn't change */
-		if ((peer->flags & PEERFLAG_EVALUATE_ALL) == 0 && eval_all)
-			continue;
-
-		up_generate_updates(out_rules, peer, new, old);
-	}
-}
-
 /* flush Adj-RIB-Out by withdrawing all prefixes */
 static void
 rde_up_flush_upcall(struct prefix *p, void *ptr)
@@ -3760,26 +3715,16 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 }
 
 static void
-rde_softreconfig_out(struct rib_entry *re, void *bula)
+rde_softreconfig_out(struct rib_entry *re, void *arg)
 {
-	struct prefix		*p;
-	struct rde_peer		*peer;
-	uint8_t			 aid = re->prefix->aid;
+	struct rib	*rib = arg;
+	struct prefix	*p;
 
 	if ((p = prefix_best(re)) == NULL)
 		/* no valid path for prefix */
 		return;
 
-	LIST_FOREACH(peer, &peerlist, peer_l) {
-		if (rde_skip_peer(peer, re->rib_id, aid))
-			continue;
-		/* skip peers which don't need to reconfigure */
-		if (peer->reconf_out == 0)
-			continue;
-
-		/* Regenerate all updates. */
-		up_generate_updates(out_rules, peer, p, p);
-	}
+	rde_generate_updates(rib, p, NULL, EVAL_RECONF);
 }
 
 static void

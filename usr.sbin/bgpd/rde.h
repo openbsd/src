@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.254 2022/06/27 13:26:51 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.255 2022/07/07 10:46:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -362,6 +362,12 @@ struct filterstate {
 	uint8_t			 nhflags;
 };
 
+enum eval_mode {
+	EVAL_DEFAULT,
+	EVAL_ALL,
+	EVAL_RECONF,
+};
+
 extern struct rde_memstats rdemem;
 
 /* prototypes */
@@ -384,7 +390,7 @@ void		rde_pftable_del(uint16_t, struct prefix *);
 
 int		rde_evaluate_all(void);
 void		rde_generate_updates(struct rib *, struct prefix *,
-		    struct prefix *, int);
+		    struct prefix *, enum eval_mode);
 uint32_t	rde_local_as(void);
 int		rde_decisionflags(void);
 void		rde_peer_send_rrefresh(struct rde_peer *, uint8_t, uint8_t);

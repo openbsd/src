@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.91 2022/03/22 10:53:08 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.92 2022/07/07 10:46:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -493,7 +493,7 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 		 * but remember that xp may be NULL aka ineligible.
 		 * Additional decision may be made by the called functions.
 		 */
-		rde_generate_updates(rib, xp, active, 0);
+		rde_generate_updates(rib, xp, active, EVAL_DEFAULT);
 		if ((rib->flags & F_RIB_NOFIB) == 0)
 			rde_send_kroute(rib, xp, active);
 		return;
@@ -506,5 +506,6 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	 */
 	if (rde_evaluate_all())
 		if ((new != NULL && prefix_eligible(new)) || old != NULL)
-			rde_generate_updates(rib, prefix_best(re), NULL, 1);
+			rde_generate_updates(rib, prefix_best(re), NULL,
+			    EVAL_ALL);
 }
