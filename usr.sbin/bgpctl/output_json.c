@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.18 2022/07/07 12:17:57 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.19 2022/07/08 16:12:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -43,7 +43,7 @@ json_neighbor_capabilities(struct capabilities *capa)
 	int hascapamp = 0, hascapaap = 0;
 	uint8_t i;
 
-	for (i = 0; i < AID_MAX; i++) {
+	for (i = AID_MIN; i < AID_MAX; i++) {
 		if (capa->mp[i])
 			hascapamp = 1;
 		if (capa->add_path[i])
@@ -60,7 +60,7 @@ json_neighbor_capabilities(struct capabilities *capa)
 
 	if (hascapamp) {
 		json_do_array("multiprotocol");
-		for (i = 0; i < AID_MAX; i++)
+		for (i = AID_MIN; i < AID_MAX; i++)
 			if (capa->mp[i])
 				json_do_printf("mp", "%s", aid2str(i));
 		json_do_end();
@@ -68,7 +68,7 @@ json_neighbor_capabilities(struct capabilities *capa)
 	if (capa->grestart.restart) {
 		int restarted = 0, present = 0;
 
-		for (i = 0; i < AID_MAX; i++)
+		for (i = AID_MIN; i < AID_MAX; i++)
 			if (capa->grestart.flags[i] & CAPA_GR_PRESENT) {
 				present = 1;
 				if (capa->grestart.flags[i] & CAPA_GR_RESTART)
@@ -84,7 +84,7 @@ json_neighbor_capabilities(struct capabilities *capa)
 
 		if (present) {
 			json_do_array("protocols");
-			for (i = 0; i < AID_MAX; i++)
+			for (i = AID_MIN; i < AID_MAX; i++)
 				if (capa->grestart.flags[i] & CAPA_GR_PRESENT) {
 					json_do_object("family");
 					json_do_printf("family", "%s",
@@ -101,7 +101,7 @@ json_neighbor_capabilities(struct capabilities *capa)
 	}
 	if (hascapaap) {
 		json_do_array("add-path");
-		for (i = 0; i < AID_MAX; i++)
+		for (i = AID_MIN; i < AID_MAX; i++)
 			if (capa->add_path[i]) {
 				json_do_object("add-path-elm");
 				json_do_printf("family", "%s", aid2str(i));

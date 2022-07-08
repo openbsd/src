@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.23 2022/06/27 13:27:38 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.24 2022/07/08 16:12:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -138,7 +138,7 @@ show_neighbor_capa_mp(struct capabilities *capa)
 	uint8_t	i;
 
 	printf("    Multiprotocol extensions: ");
-	for (i = 0, comma = 0; i < AID_MAX; i++)
+	for (i = AID_MIN, comma = 0; i < AID_MAX; i++)
 		if (capa->mp[i]) {
 			printf("%s%s", comma ? ", " : "", aid2str(i));
 			comma = 1;
@@ -154,7 +154,7 @@ show_neighbor_capa_add_path(struct capabilities *capa)
 	uint8_t		i;
 
 	printf("    Add-path: ");
-	for (i = 0, comma = 0; i < AID_MAX; i++) {
+	for (i = AID_MIN, comma = 0; i < AID_MAX; i++) {
 		switch (capa->add_path[i]) {
 		case 0:
 		default:
@@ -183,7 +183,7 @@ show_neighbor_capa_restart(struct capabilities *capa)
 	printf("    Graceful Restart");
 	if (capa->grestart.timeout)
 		printf(": Timeout: %d, ", capa->grestart.timeout);
-	for (i = 0, comma = 0; i < AID_MAX; i++)
+	for (i = AID_MIN, comma = 0; i < AID_MAX; i++)
 		if (capa->grestart.flags[i] & CAPA_GR_PRESENT) {
 			if (!comma &&
 			    capa->grestart.flags[i] & CAPA_GR_RESTART)
