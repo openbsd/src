@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.20 2022/01/28 05:24:15 guenther Exp $	*/
+/*	$OpenBSD: eap.c,v 1.21 2022/07/08 19:51:11 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -90,6 +90,7 @@ eap_identity_request(struct iked *env, struct iked_sa *sa)
 	uint8_t				 firstpayload;
 	int				 ret = -1;
 	ssize_t				 len = 0;
+	int				 i;
 
 	/* Responder only */
 	if (sa->sa_hdr.sh_initiator)
@@ -128,6 +129,22 @@ eap_identity_request(struct iked *env, struct iked_sa *sa)
 		if (ibuf_cat(e, certid->id_buf) != 0)
 			goto done;
 		len = ibuf_size(certid->id_buf) + sizeof(*cert);
+
+		for (i = 0; i < IKED_SCERT_MAX; i++) {
+			if (sa->sa_scert[i].id_type == IKEV2_CERT_NONE)
+				break;
+			if (ikev2_next_payload(pld, len,
+			    IKEV2_PAYLOAD_CERT) == -1)
+				goto done;
+			if ((pld = ikev2_add_payload(e)) == NULL)
+				goto done;
+			if ((cert = ibuf_advance(e, sizeof(*cert))) == NULL)
+				goto done;
+			cert->cert_type = sa->sa_scert[i].id_type;
+			if (ibuf_cat(e, sa->sa_scert[i].id_buf) != 0)
+				goto done;
+			len = ibuf_size(sa->sa_scert[i].id_buf) + sizeof(*cert);
+		}
 	}
 
 	if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_AUTH) == -1)

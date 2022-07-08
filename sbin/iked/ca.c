@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.87 2021/12/14 13:44:36 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.88 2022/07/08 19:51:11 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -328,6 +328,32 @@ ca_setcert(struct iked *env, struct iked_sahdr *sh, struct iked_id *id,
 	return (0);
 }
 
+static int
+ca_setscert(struct iked *env, struct iked_sahdr *sh, uint8_t type, X509 *cert)
+{
+	struct iovec		iov[3];
+	int			iovcnt = 0;
+	struct ibuf		*buf;
+	int			ret;
+
+	if ((buf = ca_x509_serialize(cert)) == NULL)
+		return (-1);
+
+	iov[iovcnt].iov_base = sh;
+	iov[iovcnt].iov_len = sizeof(*sh);
+	iovcnt++;
+	iov[iovcnt].iov_base = &type;
+	iov[iovcnt].iov_len = sizeof(type);
+	iovcnt++;
+	iov[iovcnt].iov_base = ibuf_data(buf);
+	iov[iovcnt].iov_len = ibuf_size(buf);
+	iovcnt++;
+
+	ret = proc_composev(&env->sc_ps, PROC_IKEV2, IMSG_SCERT, iov, iovcnt);
+	ibuf_release(buf);
+	return (ret);
+}
+
 int
 ca_setreq(struct iked *env, struct iked_sa *sa,
     struct iked_static_id *localid, uint8_t type, uint8_t more, uint8_t *data,
@@ -541,6 +567,51 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 	return (0);
 }
 
+static unsigned int
+ca_chain_by_issuer(struct ca_store *store, X509_NAME *subject,
+    struct iked_static_id *id, X509 **dst, size_t dstlen)
+{
+	STACK_OF(X509_OBJECT)	*h;
+	X509_OBJECT		*xo;
+	X509			*cert;
+	int			i;
+	unsigned int		n;
+	X509_NAME		*issuer, *subj;
+
+        if (subject == NULL || dstlen == 0)
+		return (0);
+
+	if ((cert = ca_by_issuer(store->ca_certs, subject, id)) != NULL) {
+		*dst = cert;
+		return (1);
+	}
+
+	h = X509_STORE_get0_objects(store->ca_cas);
+	for (i = 0; i < sk_X509_OBJECT_num(h); i++) {
+		xo = sk_X509_OBJECT_value(h, i);
+		if (X509_OBJECT_get_type(xo) != X509_LU_X509)
+			continue;
+		cert = X509_OBJECT_get0_X509(xo);
+		if ((issuer = X509_get_issuer_name(cert)) == NULL)
+			continue;
+		if (X509_NAME_cmp(subject, issuer) == 0) {
+			if ((subj = X509_get_subject_name(cert)) == NULL)
+				continue;
+			/* Skip root CAs */
+			if (X509_NAME_cmp(subj, issuer) == 0)
+				continue;
+			n = ca_chain_by_issuer(store, subj, id,
+			    dst + 1, dstlen - 1);
+			if (n > 0) {
+				*dst = cert;
+				return (n + 1);
+			}
+		}
+	}
+
+	return (0);
+}
+
 int
 ca_getreq(struct iked *env, struct imsg *imsg)
 {
@@ -551,6 +622,8 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 	size_t			 len;
 	unsigned int		 i;
 	X509			*ca = NULL, *cert = NULL;
+	X509			*chain[IKED_SCERT_MAX + 1];
+	size_t			 chain_len = 0;
 	struct ibuf		*buf;
 	struct iked_static_id	 id;
 	char			 idstr[IKED_ID_SIZE];
@@ -612,8 +685,10 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 			log_debug("%s: found CA %s", __func__, subj_name);
 			free(subj_name);
 
-			if ((cert = ca_by_issuer(store->ca_certs,
-			    subj, &id)) != NULL) {
+			chain_len = ca_chain_by_issuer(store, subj, &id,
+			    chain, nitems(chain));
+			if (chain_len > 0) {
+				cert = chain[chain_len - 1];
 				if (!ca_cert_local(env, cert)) {
 					log_info("%s: found cert with matching "
 					    "ID but without matching key.",
@@ -623,6 +698,10 @@ ca_getreq(struct iked *env, struct imsg *imsg)
 				break;
 			}
 		}
+
+		for (i = chain_len; i >= 2; i--)
+			ca_setscert(env, &sh, type, chain[i - 2]);
+
 		/* Fallthrough */
 	case IKEV2_CERT_NONE:
  fallback:

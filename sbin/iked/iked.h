@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.204 2022/03/14 12:58:55 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.205 2022/07/08 19:51:11 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -469,11 +469,13 @@ struct iked_sa {
 	struct iked_id			 sa_localauth;	/* local AUTH message */
 	struct iked_id			 sa_peerauth;	/* peer AUTH message */
 	int				 sa_sigsha2;	/* use SHA2 for signatures */
+#define IKED_SCERT_MAX	3 /* max # of supplemental cert payloads */
 
 	struct iked_id			 sa_iid;	/* initiator id */
 	struct iked_id			 sa_rid;	/* responder id */
 	struct iked_id			 sa_icert;	/* initiator cert */
 	struct iked_id			 sa_rcert;	/* responder cert */
+	struct iked_id			 sa_scert[IKED_SCERT_MAX]; /* supplemental certs */
 #define IKESA_SRCID(x) ((x)->sa_hdr.sh_initiator ? &(x)->sa_iid : &(x)->sa_rid)
 #define IKESA_DSTID(x) ((x)->sa_hdr.sh_initiator ? &(x)->sa_rid : &(x)->sa_iid)
 

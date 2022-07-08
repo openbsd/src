@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.48 2022/04/13 20:54:55 deraadt Exp $	*/
+/*	$OpenBSD: types.h,v 1.49 2022/07/08 19:51:11 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -115,6 +115,7 @@ enum imsg_type {
 	IMSG_CERTVALID,
 	IMSG_CERTINVALID,
 	IMSG_CERT_PARTIAL_CHAIN,
+	IMSG_SCERT,
 	IMSG_IF_ADDADDR,
 	IMSG_IF_DELADDR,
 	IMSG_VROUTE_ADD,

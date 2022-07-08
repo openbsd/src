@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.85 2022/05/08 20:26:31 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.86 2022/07/08 19:51:11 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -110,6 +110,8 @@ config_free_fragments(struct iked_frag *frag)
 void
 config_free_sa(struct iked *env, struct iked_sa *sa)
 {
+	int i;
+
 	timer_del(env, &sa->sa_timer);
 	timer_del(env, &sa->sa_keepalive);
 	timer_del(env, &sa->sa_rekey);
@@ -165,6 +167,8 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 	ibuf_release(sa->sa_rid.id_buf);
 	ibuf_release(sa->sa_icert.id_buf);
 	ibuf_release(sa->sa_rcert.id_buf);
+	for (i = 0; i < IKED_SCERT_MAX; i++)
+		ibuf_release(sa->sa_scert[i].id_buf);
 	ibuf_release(sa->sa_localauth.id_buf);
 	ibuf_release(sa->sa_peerauth.id_buf);
 
