@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.147 2022/07/05 15:06:16 visa Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.148 2022/07/08 21:29:20 miod Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.82 2005/02/27 00:27:52 perry Exp $ */
 
 /*
@@ -147,6 +147,8 @@ void	wsdisplay_suspend_device(struct device *);
 void	wsdisplay_addscreen_print(struct wsdisplay_softc *, int, int);
 void	wsdisplay_closescreen(struct wsdisplay_softc *, struct wsscreen *);
 int	wsdisplay_delscreen(struct wsdisplay_softc *, int, int);
+int	wsdisplay_driver_ioctl(struct wsdisplay_softc *, u_long, caddr_t,
+	    int, struct proc *);
 
 void	wsdisplay_burner_setup(struct wsdisplay_softc *, struct wsscreen *);
 void	wsdisplay_burner(void *v);
@@ -1100,9 +1102,7 @@ int
 wsdisplay_param(struct device *dev, u_long cmd, struct wsdisplay_param *dp)
 {
 	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
-
-	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd,
-	    (caddr_t)dp, 0, NULL));
+	return wsdisplay_driver_ioctl(sc, cmd, (caddr_t)dp, 0, NULL);
 }
 
 int
@@ -1293,8 +1293,31 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
         }
 
 	/* check ioctls for display */
-	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
+	return wsdisplay_driver_ioctl(sc, cmd, data, flag, p);
+}
+
+int
+wsdisplay_driver_ioctl(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
+    int flag, struct proc *p)
+{
+	int error;
+
+	error = ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd, data,
 	    flag, p));
+	/* Do not report parameters with empty ranges to userland. */
+	if (error == 0 && cmd == WSDISPLAYIO_GETPARAM) {
+		struct wsdisplay_param *dp = (struct wsdisplay_param *)data;
+		switch (dp->param) {
+		case WSDISPLAYIO_PARAM_BACKLIGHT:
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+		case WSDISPLAYIO_PARAM_CONTRAST:
+			if (dp->min == dp->max)
+				error = ENOTTY;
+			break;
+		}
+	}
+
+	return error;
 }
 
 int
