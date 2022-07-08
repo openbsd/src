@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.455 2022/06/27 15:11:23 jan Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.456 2022/07/08 07:04:54 jsg Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -158,10 +158,6 @@ struct	in6_aliasreq	in6_addreq;
 struct	sockaddr_in	netmask;
 
 #ifndef SMALL
-struct	ifaliasreq	addreq;
-
-int	wconfig = 0;
-int	wcwconfig = 0;
 int	rdomainid;
 #endif /* SMALL */
 
@@ -1891,10 +1887,8 @@ void
 delifjoinlist(const char *val, int d)
 {
 	struct ieee80211_join join;
-	int len;
 
 	memset(&join, 0, sizeof(join));
-	len = 0;
 	join.i_flags |= (IEEE80211_JOIN_DEL | IEEE80211_JOIN_DEL_ALL);
 
 	if (d == -1) {
@@ -5996,8 +5990,6 @@ const struct umb_valdescr umb_regstate[] = MBIM_REGSTATE_DESCRIPTIONS;
 const struct umb_valdescr umb_dataclass[] = MBIM_DATACLASS_DESCRIPTIONS;
 const struct umb_valdescr umb_simstate[] = MBIM_SIMSTATE_DESCRIPTIONS;
 const struct umb_valdescr umb_istate[] = UMB_INTERNAL_STATE_DESCRIPTIONS;
-const struct umb_valdescr umb_pktstate[] = MBIM_PKTSRV_STATE_DESCRIPTIONS;
-const struct umb_valdescr umb_actstate[] = MBIM_ACTIVATION_STATE_DESCRIPTIONS;
 
 const struct umb_valdescr umb_classalias[] = {
 	{ MBIM_DATACLASS_GPRS | MBIM_DATACLASS_EDGE, "2g" },

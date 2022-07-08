@@ -1,4 +1,4 @@
-/*	$OpenBSD: brconfig.c,v 1.30 2021/11/11 09:39:16 claudio Exp $	*/
+/*	$OpenBSD: brconfig.c,v 1.31 2022/07/08 07:04:54 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -560,7 +560,6 @@ void
 bridge_maxaddr(const char *arg, int d)
 {
 	struct ifbrparam bp;
-	unsigned long newsize;
 	const char *errstr;
 
 	bp.ifbrp_csize = strtonum(arg, 0, UINT32_MAX, &errstr);
