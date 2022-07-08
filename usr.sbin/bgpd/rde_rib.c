@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.239 2022/07/08 08:11:25 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.240 2022/07/08 10:01:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -917,14 +917,14 @@ prefix_get(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
  * Returns NULL if not found.
  */
 struct prefix *
-prefix_adjout_get(struct rde_peer *peer, uint32_t path_id,
+prefix_adjout_get(struct rde_peer *peer, uint32_t path_id_tx,
     struct bgpd_addr *prefix, int prefixlen)
 {
 	struct prefix xp;
 
 	memset(&xp, 0, sizeof(xp));
 	xp.pt = pt_fill(prefix, prefixlen);
-	xp.path_id_tx = path_id;
+	xp.path_id_tx = path_id_tx;
 
 	return RB_FIND(prefix_index, &peer->adj_rib_out, &xp);
 }
@@ -1168,14 +1168,14 @@ prefix_add_eor(struct rde_peer *peer, uint8_t aid)
  * Put a prefix from the Adj-RIB-Out onto the update queue.
  */
 void
-prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
-    struct bgpd_addr *prefix, int prefixlen, uint8_t vstate)
+prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
+    struct filterstate *state, struct bgpd_addr *prefix, int prefixlen,
+    uint32_t path_id_tx, uint8_t vstate)
 {
 	struct rde_aspath *asp;
 	struct rde_community *comm;
-	struct prefix *p;
 
-	if ((p = prefix_adjout_get(peer, 0, prefix, prefixlen)) == NULL) {
+	if (p == NULL) {
 		p = prefix_alloc();
 		/* initally mark DEAD so code below is skipped */
 		p->flags |= PREFIX_FLAG_ADJOUT | PREFIX_FLAG_DEAD;
@@ -1185,7 +1185,7 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 			p->pt = pt_add(prefix, prefixlen);
 		pt_ref(p->pt);
 		p->peer = peer;
-		p->path_id_tx = 0 /* XXX force this for now */;
+		p->path_id_tx = path_id_tx;
 
 		if (RB_INSERT(prefix_index, &peer->adj_rib_out, p) != NULL)
 			fatalx("%s: RB index invariant violated", __func__);
@@ -1194,7 +1194,14 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 	if ((p->flags & PREFIX_FLAG_ADJOUT) == 0)
 		fatalx("%s: prefix without PREFIX_FLAG_ADJOUT hit", __func__);
 	if ((p->flags & (PREFIX_FLAG_WITHDRAW | PREFIX_FLAG_DEAD)) == 0) {
-		if (prefix_nhflags(p) == state->nhflags &&
+		/*
+		 * XXX for now treat a different path_id_tx like different
+		 * attributes and force out an update. It is unclear how
+		 * common it is to have equivalent updates from alternative
+		 * paths.
+		 */
+		if (p->path_id_tx == path_id_tx &&
+		    prefix_nhflags(p) == state->nhflags &&
 		    prefix_nexthop(p) == state->nexthop &&
 		    communities_equal(&state->communities,
 		    prefix_communities(p)) &&
@@ -1224,6 +1231,15 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 	/* nothing needs to be done for PREFIX_FLAG_DEAD and STALE */
 	p->flags &= ~PREFIX_FLAG_MASK;
 
+	/* update path_id_tx now that the prefix is unlinked */
+	if (p->path_id_tx != path_id_tx) {
+		/* path_id_tx is part of the index so remove and re-insert p */
+		RB_REMOVE(prefix_index, &peer->adj_rib_out, p);
+		p->path_id_tx = path_id_tx;
+		if (RB_INSERT(prefix_index, &peer->adj_rib_out, p) != NULL)
+			fatalx("%s: RB index invariant violated", __func__);
+	}
+
 	if ((asp = path_lookup(&state->aspath)) == NULL) {
 		/* Path not available, create and link a new one. */
 		asp = path_copy(path_get(), &state->aspath);
@@ -1235,7 +1251,7 @@ prefix_adjout_update(struct rde_peer *peer, struct filterstate *state,
 		comm = communities_link(&state->communities);
 	}
 
-	prefix_link(p, NULL, p->pt, peer, 0, /* XXX */ 0, asp, comm,
+	prefix_link(p, NULL, p->pt, peer, 0, p->path_id_tx, asp, comm,
 	    state->nexthop, state->nhflags, vstate);
 	peer->prefix_out_cnt++;
 

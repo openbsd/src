@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.141 2022/06/27 13:26:51 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.142 2022/07/08 10:01:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -117,6 +117,8 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 		prefixlen = new->pt->prefixlen;
 	}
 
+	p = prefix_adjout_lookup(peer, &addr, prefixlen);
+
 	while (new != NULL) {
 		need_withdraw = 0;
 		/*
@@ -200,8 +202,8 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 		/* from here on we know this is an update */
 
 		up_prep_adjout(peer, &state, addr.aid);
-		prefix_adjout_update(peer, &state, &addr,
-		    new->pt->prefixlen, prefix_vstate(new));
+		prefix_adjout_update(p, peer, &state, &addr,
+		    new->pt->prefixlen, new->path_id_tx, prefix_vstate(new));
 		rde_filterstate_clean(&state);
 
 		/* max prefix checker outbound */
@@ -218,7 +220,7 @@ up_generate_updates(struct filter_head *rules, struct rde_peer *peer,
 	}
 
 	/* withdraw prefix */
-	if ((p = prefix_adjout_get(peer, 0, &addr, prefixlen)) != NULL)
+	if (p != NULL)
 		prefix_adjout_withdraw(p);
 }
 
@@ -234,6 +236,7 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	extern struct rde_peer	*peerself;
 	struct filterstate	 state;
 	struct rde_aspath	*asp;
+	struct prefix		*p;
 	struct bgpd_addr	 addr;
 
 	if (peer->capa.mp[aid] == 0)
@@ -253,6 +256,8 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 
 	bzero(&addr, sizeof(addr));
 	addr.aid = aid;
+	p = prefix_adjout_lookup(peer, &addr, 0);
+
 	/* outbound filter as usual */
 	if (rde_filter(rules, peer, peerself, &addr, 0, ROA_NOTFOUND,
 	    &state) == ACTION_DENY) {
@@ -261,7 +266,7 @@ up_generate_default(struct filter_head *rules, struct rde_peer *peer,
 	}
 
 	up_prep_adjout(peer, &state, addr.aid);
-	prefix_adjout_update(peer, &state, &addr, 0, ROA_NOTFOUND);
+	prefix_adjout_update(p, peer, &state, &addr, 0, 0, ROA_NOTFOUND);
 	rde_filterstate_clean(&state);
 
 	/* max prefix checker outbound */
