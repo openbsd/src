@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.551 2022/07/07 13:55:52 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.552 2022/07/08 08:11:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1600,6 +1600,46 @@ done:
 	rde_filterstate_clean(&state);
 }
 
+/*
+ * Check if path_id is already in use.
+ */
+static int
+pathid_conflict(struct rib_entry *re, uint32_t pathid)
+{
+	struct prefix *p;
+
+	if (re == NULL)
+		return 0;
+
+	TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib)
+		if (p->path_id_tx == pathid)
+			return 1;
+	return 0;
+}
+
+static uint32_t
+pathid_assign(struct rde_peer *peer, uint32_t path_id,
+    struct bgpd_addr *prefix, uint8_t prefixlen)
+{
+	struct rib_entry *re;
+	struct prefix *p = NULL;
+	uint32_t path_id_tx;
+
+	/* Assign a send side path_id to all paths */
+	re = rib_get(rib_byid(RIB_ADJ_IN), prefix, prefixlen);
+	if (re != NULL)
+		p = prefix_bypeer(re, peer, path_id);
+	if (p != NULL)
+		path_id_tx = p->path_id_tx;
+	else {
+		do {
+			/* assign new local path_id */
+			path_id_tx = arc4random();
+		} while (pathid_conflict(re, path_id_tx));
+	}
+	return path_id_tx;
+}
+
 int
 rde_update_update(struct rde_peer *peer, uint32_t path_id,
     struct filterstate *in, struct bgpd_addr *prefix, uint8_t prefixlen)
@@ -1608,15 +1648,18 @@ rde_update_update(struct rde_peer *peer, uint32_t path_id,
 	enum filter_actions	 action;
 	uint8_t			 vstate;
 	uint16_t		 i;
+	uint32_t		 path_id_tx;
 	const char		*wmsg = "filtered, withdraw";
 
 	peer->prefix_rcvd_update++;
 	vstate = rde_roa_validity(&rde_roa, prefix, prefixlen,
 	    aspath_origin(in->aspath.aspath));
 
+	path_id_tx = pathid_assign(peer, path_id, prefix, prefixlen);
+
 	/* add original path to the Adj-RIB-In */
-	if (prefix_update(rib_byid(RIB_ADJ_IN), peer, path_id, in,
-	    prefix, prefixlen, vstate) == 1)
+	if (prefix_update(rib_byid(RIB_ADJ_IN), peer, path_id, path_id_tx,
+	    in, prefix, prefixlen, vstate) == 1)
 		peer->prefix_cnt++;
 
 	/* max prefix checker */
@@ -1644,8 +1687,8 @@ rde_update_update(struct rde_peer *peer, uint32_t path_id,
 			rde_update_log("update", i, peer,
 			    &state.nexthop->exit_nexthop, prefix,
 			    prefixlen);
-			prefix_update(rib, peer, path_id, &state, prefix,
-			    prefixlen, vstate);
+			prefix_update(rib, peer, path_id, path_id_tx, &state,
+			    prefix, prefixlen, vstate);
 		} else if (prefix_withdraw(rib, peer, path_id, prefix,
 		    prefixlen)) {
 			rde_update_log(wmsg, i, peer,
@@ -3719,7 +3762,8 @@ rde_softreconfig_in(struct rib_entry *re, void *bula)
 
 			if (action == ACTION_ALLOW) {
 				/* update Local-RIB */
-				prefix_update(rib, peer, p->path_id, &state,
+				prefix_update(rib, peer, p->path_id,
+				    p->path_id_tx, &state,
 				    &prefix, pt->prefixlen,
 				    p->validation_state);
 			} else if (action == ACTION_DENY) {
@@ -3858,7 +3902,8 @@ rde_roa_softreload(struct rib_entry *re, void *bula)
 
 			if (action == ACTION_ALLOW) {
 				/* update Local-RIB */
-				prefix_update(rib, peer, p->path_id, &state,
+				prefix_update(rib, peer, p->path_id,
+				    p->path_id_tx, &state,
 				    &prefix, pt->prefixlen,
 				    p->validation_state);
 			} else if (action == ACTION_DENY) {
@@ -4026,6 +4071,7 @@ network_add(struct network_config *nc, struct filterstate *state)
 	struct in6_addr		 prefix6;
 	uint8_t			 vstate;
 	uint16_t		 i;
+	uint32_t		 path_id_tx;
 
 	if (nc->rd != 0) {
 		SIMPLEQ_FOREACH(vpn, &conf->l3vpns, entry) {
@@ -4087,8 +4133,9 @@ network_add(struct network_config *nc, struct filterstate *state)
 
 	vstate = rde_roa_validity(&rde_roa, &nc->prefix,
 	    nc->prefixlen, aspath_origin(state->aspath.aspath));
-	if (prefix_update(rib_byid(RIB_ADJ_IN), peerself, 0, state, &nc->prefix,
-	    nc->prefixlen, vstate) == 1)
+	path_id_tx = pathid_assign(peerself, 0, &nc->prefix, nc->prefixlen);
+	if (prefix_update(rib_byid(RIB_ADJ_IN), peerself, 0, path_id_tx,
+	    state, &nc->prefix, nc->prefixlen, vstate) == 1)
 		peerself->prefix_cnt++;
 	for (i = RIB_LOC_START; i < rib_size; i++) {
 		struct rib *rib = rib_byid(i);
@@ -4097,7 +4144,7 @@ network_add(struct network_config *nc, struct filterstate *state)
 		rde_update_log("announce", i, peerself,
 		    state->nexthop ? &state->nexthop->exit_nexthop : NULL,
 		    &nc->prefix, nc->prefixlen);
-		prefix_update(rib, peerself, 0, state, &nc->prefix,
+		prefix_update(rib, peerself, 0, path_id_tx, state, &nc->prefix,
 		    nc->prefixlen, vstate);
 	}
 	filterset_free(&nc->attrset);
