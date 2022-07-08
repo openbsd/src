@@ -1,4 +1,4 @@
-/*	$OpenBSD: slowcgi.c,v 1.1 2022/06/28 16:11:30 claudio Exp $ */
+/*	$OpenBSD: slowcgi.c,v 1.2 2022/07/08 08:48:56 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -26,6 +26,7 @@
 #include <sys/time.h>
 #include <sys/un.h>
 #include <sys/wait.h>
+#include <arpa/inet.h>
 #include <err.h>
 #include <fcntl.h>
 #include <errno.h>
