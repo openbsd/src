@@ -1,4 +1,4 @@
-/*	$OpenBSD: psci.c,v 1.10 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: psci.c,v 1.11 2022/07/09 19:27:56 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
@@ -36,6 +36,7 @@ extern void (*powerdownfn)(void);
 #define SMCCC_ARCH_WORKAROUND_1	0x80008000
 
 #define PSCI_VERSION		0x84000000
+#define CPU_OFF			0x84000002
 #ifdef __LP64__
 #define CPU_ON			0xc4000003
 #else
@@ -44,6 +45,11 @@ extern void (*powerdownfn)(void);
 #define SYSTEM_OFF		0x84000008
 #define SYSTEM_RESET		0x84000009
 #define PSCI_FEATURES		0x8400000a
+#ifdef __LP64__
+#define SYSTEM_SUSPEND		0xc400000e
+#else
+#define SYSTEM_SUSPEND		0x8400000e
+#endif
 
 struct psci_softc {
 	struct device	 sc_dev;
@@ -52,7 +58,9 @@ struct psci_softc {
 	uint32_t	 sc_psci_version; 
 	uint32_t	 sc_system_off;
 	uint32_t	 sc_system_reset;
+	uint32_t	 sc_system_suspend;
 	uint32_t	 sc_cpu_on;
+	uint32_t	 sc_cpu_off;
 
 	uint32_t	 sc_smccc_version;
 };
@@ -117,12 +125,14 @@ psci_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_system_off = SYSTEM_OFF;
 		sc->sc_system_reset = SYSTEM_RESET;
 		sc->sc_cpu_on = CPU_ON;
+		sc->sc_cpu_off = CPU_OFF;
 	} else if (OF_is_compatible(faa->fa_node, "arm,psci")) {
 		sc->sc_system_off = OF_getpropint(faa->fa_node,
 		    "system_off", 0);
 		sc->sc_system_reset = OF_getpropint(faa->fa_node,
 		    "system_reset", 0);
 		sc->sc_cpu_on = OF_getpropint(faa->fa_node, "cpu_on", 0);
+		sc->sc_cpu_off = OF_getpropint(faa->fa_node, "cpu_off", 0);
 	}
 
 	psci_sc = sc;
@@ -135,6 +145,10 @@ psci_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_smccc_version = smccc_version();
 			printf(", SMCCC %d.%d", sc->sc_smccc_version >> 16,
 			    sc->sc_smccc_version & 0xffff);
+		}
+		if (psci_features(SYSTEM_SUSPEND) == PSCI_SUCCESS) {
+			sc->sc_system_suspend = SYSTEM_SUSPEND;
+			printf(", SYSTEM_SUSPEND");
 		}
 	}
 
@@ -241,6 +255,29 @@ psci_version(void)
 }
 
 int32_t
+psci_system_suspend(register_t entry_point_address, register_t context_id)
+{
+	struct psci_softc *sc = psci_sc;
+
+	if (sc && sc->sc_callfn && sc->sc_system_suspend != 0)
+		return (*sc->sc_callfn)(sc->sc_system_suspend,
+		    entry_point_address, context_id, 0);
+
+	return PSCI_NOT_SUPPORTED;
+}
+
+int32_t
+psci_cpu_off(void)
+{
+	struct psci_softc *sc = psci_sc;
+
+	if (sc && sc->sc_callfn && sc->sc_cpu_off != 0)
+		return (*sc->sc_callfn)(sc->sc_cpu_off, 0, 0, 0);
+
+	return PSCI_NOT_SUPPORTED;
+}
+
+int32_t
 psci_cpu_on(register_t target_cpu, register_t entry_point_address,
     register_t context_id)
 {
@@ -262,4 +299,12 @@ psci_features(uint32_t psci_func_id)
 		return (*sc->sc_callfn)(PSCI_FEATURES, psci_func_id, 0, 0);
 
 	return PSCI_NOT_SUPPORTED;
+}
+
+int
+psci_can_suspend(void)
+{
+	struct psci_softc *sc = psci_sc;
+
+	return (sc && sc->sc_system_suspend != 0);
 }
