@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.42 2022/06/28 19:44:28 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.43 2022/07/09 14:46:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -297,6 +297,8 @@ ASN1_INTEGER_get(const ASN1_INTEGER *aint)
 {
 	int64_t val;
 
+	if (aint == NULL)
+		return 0;
 	if (!ASN1_INTEGER_get_int64(&val, aint))
 		return -1;
 	if (val < LONG_MIN || val > LONG_MAX) {
