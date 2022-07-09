@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxirsb.c,v 1.5 2022/01/11 10:23:17 uaa Exp $	*/
+/*	$OpenBSD: sxirsb.c,v 1.6 2022/07/09 20:52:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -71,20 +71,24 @@ struct sxirsb_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
+	int			sc_node;
 	int			sc_addr;
 };
 
 int	sxirsb_match(struct device *, void *, void *);
 void	sxirsb_attach(struct device *, struct device *, void *);
+int	sxirsb_activate(struct device *, int);
 
 const struct cfattach sxirsb_ca = {
-	sizeof(struct sxirsb_softc), sxirsb_match, sxirsb_attach
+	sizeof(struct sxirsb_softc), sxirsb_match, sxirsb_attach,
+	NULL, sxirsb_activate
 };
 
 struct cfdriver sxirsb_cd = {
 	NULL, "sxirsb", DV_DULL
 };
 
+int	sxirsb_init(struct sxirsb_softc *);
 uint8_t	sxirsb_rta(uint16_t);
 
 int
@@ -100,19 +104,17 @@ sxirsb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct sxirsb_softc *sc = (struct sxirsb_softc *)self;
 	struct fdt_attach_args *faa = aux;
-	uint32_t freq, parent_freq, div, odly;
 	struct rsb_attach_args ra;
 	char name[32];
 	uint32_t reg;
-	uint8_t rta;
 	int node;
-	int timo;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
 		return;
 	}
 
+	sc->sc_node = faa->fa_node;
 	sc->sc_iot = faa->fa_iot;
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
@@ -120,10 +122,66 @@ sxirsb_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	pinctrl_byname(faa->fa_node, "default");
+	printf("\n");
 
-	clock_enable_all(faa->fa_node);
-	reset_deassert_all(faa->fa_node);
+	if (sxirsb_init(sc))
+		return;
+
+	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
+		reg = OF_getpropint(node, "reg", 0);
+		if (reg == 0)
+			continue;
+
+		memset(name, 0, sizeof(name));
+		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
+			continue;
+		if (name[0] == '\0')
+			continue;
+
+		memset(&ra, 0, sizeof(ra));
+		ra.ra_cookie = sc;
+		ra.ra_da = reg;
+		ra.ra_rta = sxirsb_rta(reg);
+		ra.ra_name = name;
+		ra.ra_node = node;
+		config_found(self, &ra, rsb_print);
+	}
+}
+
+int
+sxirsb_activate(struct device *self, int act)
+{
+	struct sxirsb_softc *sc = (struct sxirsb_softc *)self;
+	int error = 0;
+
+	switch (act) {
+	case DVACT_RESUME:
+		error = sxirsb_init(sc);
+		if (error)
+			return error;
+		error = config_activate_children(self, act);
+		break;
+	default:
+		error = config_activate_children(self, act);
+		break;
+	}
+
+	return error;
+}
+
+int
+sxirsb_init(struct sxirsb_softc *sc)
+{
+	uint32_t freq, parent_freq, div, odly;
+	uint32_t reg;
+	uint8_t rta;
+	int node;
+	int timo;
+
+	pinctrl_byname(sc->sc_node, "default");
+
+	clock_enable_all(sc->sc_node);
+	reset_deassert_all(sc->sc_node);
 
 	HWRITE4(sc, RSB_CTRL, RSB_CTRL_SOFT_RESET);
 	for (timo = 1000; timo > 0; timo--) {
@@ -132,12 +190,12 @@ sxirsb_attach(struct device *parent, struct device *self, void *aux)
 		delay(100);
 	}
 	if (timo == 0) {
-		printf(": reset failed\n");
-		return;
+		printf("%s: reset failed\n", sc->sc_dev.dv_xname);
+		return EIO;
 	}
 
-	freq = OF_getpropint(faa->fa_node, "clock-frequency", 3000000);
-	parent_freq = clock_get_frequency_idx(faa->fa_node, 0);
+	freq = OF_getpropint(sc->sc_node, "clock-frequency", 3000000);
+	parent_freq = clock_get_frequency_idx(sc->sc_node, 0);
 	div = parent_freq / freq / 2;
 	if (div == 0)
 		div = 1;
@@ -159,11 +217,11 @@ sxirsb_attach(struct device *parent, struct device *self, void *aux)
 		delay(100);
 	}
 	if (timo == 0) {
-		printf(": mode switch failed\n");
-		return;
+		printf("%s: mode switch failed\n", sc->sc_dev.dv_xname);
+		return EIO;
 	}
 
-	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
+	for (node = OF_child(sc->sc_node); node; node = OF_peer(node)) {
 		reg = OF_getpropint(node, "reg", 0);
 		if (reg == 0)
 			continue;
@@ -179,32 +237,13 @@ sxirsb_attach(struct device *parent, struct device *self, void *aux)
 			delay(10);
 		}
 		if (timo == 0) {
-			printf(": SRTA failed for device 0x%03x\n", reg);
-			return;
+			printf("%s: SRTA failed for device 0x%03x\n",
+			    sc->sc_dev.dv_xname, reg);
+			return EIO;
 		}
 	}
 
-	printf("\n");
-
-	for (node = OF_child(faa->fa_node); node; node = OF_peer(node)) {
-		reg = OF_getpropint(node, "reg", 0);
-		if (reg == 0)
-			continue;
-
-		memset(name, 0, sizeof(name));
-		if (OF_getprop(node, "compatible", name, sizeof(name)) == -1)
-			continue;
-		if (name[0] == '\0')
-			continue;
-
-		memset(&ra, 0, sizeof(ra));
-		ra.ra_cookie = sc;
-		ra.ra_da = reg;
-		ra.ra_rta = sxirsb_rta(reg);
-		ra.ra_name = name;
-		ra.ra_node = node;
-		config_found(self, &ra, rsb_print);
-	}
+	return 0;
 }
 
 /*
