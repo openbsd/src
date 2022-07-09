@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.140 2022/06/20 01:39:44 visa Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.141 2022/07/09 12:48:21 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -371,7 +371,7 @@ pipeselwakeup(struct pipe *cpipe)
 {
 	rw_assert_wrlock(cpipe->pipe_lock);
 
-	KNOTE(&cpipe->pipe_sel.si_note, 0);
+	KNOTE(&cpipe->pipe_klist, 0);
 
 	if (cpipe->pipe_state & PIPE_ASYNC)
 		pgsigio(&cpipe->pipe_sigio, SIGIO, 0);
@@ -854,7 +854,7 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 	case EVFILT_READ:
 		kn->kn_fop = &pipe_rfiltops;
 		kn->kn_hook = rpipe;
-		klist_insert_locked(&rpipe->pipe_sel.si_note, kn);
+		klist_insert_locked(&rpipe->pipe_klist, kn);
 		break;
 	case EVFILT_WRITE:
 		if (wpipe == NULL) {
@@ -864,7 +864,7 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 		}
 		kn->kn_fop = &pipe_wfiltops;
 		kn->kn_hook = wpipe;
-		klist_insert_locked(&wpipe->pipe_sel.si_note, kn);
+		klist_insert_locked(&wpipe->pipe_klist, kn);
 		break;
 	case EVFILT_EXCEPT:
 		if (kn->kn_flags & __EV_SELECT) {
@@ -879,7 +879,7 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 		}
 		kn->kn_fop = &pipe_efiltops;
 		kn->kn_hook = rpipe;
-		klist_insert_locked(&rpipe->pipe_sel.si_note, kn);
+		klist_insert_locked(&rpipe->pipe_klist, kn);
 		break;
 	default:
 		error = EINVAL;
@@ -895,7 +895,7 @@ filt_pipedetach(struct knote *kn)
 {
 	struct pipe *cpipe = kn->kn_hook;
 
-	klist_remove(&cpipe->pipe_sel.si_note, kn);
+	klist_remove(&cpipe->pipe_klist, kn);
 }
 
 int
@@ -1011,8 +1011,8 @@ pipe_pair_create(void)
 	pp->pp_wpipe.pipe_lock = &pp->pp_lock;
 	pp->pp_rpipe.pipe_lock = &pp->pp_lock;
 
-	klist_init_rwlock(&pp->pp_wpipe.pipe_sel.si_note, &pp->pp_lock);
-	klist_init_rwlock(&pp->pp_rpipe.pipe_sel.si_note, &pp->pp_lock);
+	klist_init_rwlock(&pp->pp_wpipe.pipe_klist, &pp->pp_lock);
+	klist_init_rwlock(&pp->pp_rpipe.pipe_klist, &pp->pp_lock);
 
 	if (pipe_create(&pp->pp_wpipe) || pipe_create(&pp->pp_rpipe))
 		goto err;
@@ -1026,7 +1026,7 @@ err:
 void
 pipe_pair_destroy(struct pipe_pair *pp)
 {
-	klist_free(&pp->pp_wpipe.pipe_sel.si_note);
-	klist_free(&pp->pp_rpipe.pipe_sel.si_note);
+	klist_free(&pp->pp_wpipe.pipe_klist);
+	klist_free(&pp->pp_rpipe.pipe_klist);
 	pool_put(&pipe_pair_pool, pp);
 }

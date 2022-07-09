@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.218 2022/07/05 15:06:16 visa Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.219 2022/07/09 12:48:21 visa Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -54,10 +54,11 @@
 #include <sys/sysctl.h>
 #include <sys/rwlock.h>
 #include <sys/atomic.h>
+#include <sys/event.h>
+#include <sys/mutex.h>
 #include <sys/refcnt.h>
 #include <sys/smr.h>
 #include <sys/specdev.h>
-#include <sys/selinfo.h>
 #include <sys/sigio.h>
 #include <sys/task.h>
 #include <sys/time.h>
@@ -393,7 +394,7 @@ bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 	task_set(&bd->bd_wake_task, bpf_wakeup_cb, bd);
 	smr_init(&bd->bd_smr);
 	sigio_init(&bd->bd_sigio);
-	klist_init_mutex(&bd->bd_sel.si_note, &bd->bd_mtx);
+	klist_init_mutex(&bd->bd_klist, &bd->bd_mtx);
 
 	bd->bd_rtout = 0;	/* no timeout by default */
 
@@ -585,7 +586,7 @@ bpf_wakeup(struct bpf_d *d)
 	if (d->bd_nreaders)
 		wakeup(d);
 
-	KNOTE(&d->bd_sel.si_note, 0);
+	KNOTE(&d->bd_klist, 0);
 
 	/*
 	 * As long as pgsigio() needs to be protected
@@ -1161,7 +1162,7 @@ bpfkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &d->bd_sel.si_note;
+		klist = &d->bd_klist;
 		kn->kn_fop = &bpfread_filtops;
 		break;
 	default:
@@ -1180,7 +1181,7 @@ filt_bpfrdetach(struct knote *kn)
 {
 	struct bpf_d *d = kn->kn_hook;
 
-	klist_remove(&d->bd_sel.si_note, kn);
+	klist_remove(&d->bd_klist, kn);
 	bpf_put(d);
 }
 
@@ -1591,7 +1592,7 @@ bpf_d_smr(void *smr)
 	if (bd->bd_wfilter != NULL)
 		bpf_prog_smr(bd->bd_wfilter);
 
-	klist_free(&bd->bd_sel.si_note);
+	klist_free(&bd->bd_klist);
 	free(bd, M_DEVBUF, sizeof(*bd));
 }
 
@@ -1684,7 +1685,7 @@ bpfsdetach(void *p)
 
 	while ((bd = SMR_SLIST_FIRST_LOCKED(&bp->bif_dlist))) {
 		vdevgone(maj, bd->bd_unit, bd->bd_unit, VCHR);
-		klist_invalidate(&bd->bd_sel.si_note);
+		klist_invalidate(&bd->bd_klist);
 	}
 
 	for (tbp = bpf_iflist; tbp; tbp = tbp->bif_next) {

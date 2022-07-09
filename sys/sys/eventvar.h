@@ -1,4 +1,4 @@
-/*	$OpenBSD: eventvar.h,v 1.16 2022/06/27 13:35:21 visa Exp $	*/
+/*	$OpenBSD: eventvar.h,v 1.17 2022/07/09 12:48:21 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -41,6 +41,7 @@
 /*
  * Locking:
  *	I	immutable after creation
+ *	L	kqueue_klist_lock
  *	a	atomic operations
  *	q	kq_lock
  */
@@ -49,7 +50,7 @@ struct kqueue {
 	TAILQ_HEAD(, knote) kq_head;		/* [q] list of pending event */
 	int		kq_count;		/* [q] # of pending events */
 	struct		refcnt kq_refcnt;	/* [a] # of references */
-	struct		selinfo kq_sel;
+	struct		klist kq_klist;		/* [L] knotes of other kqs */
 	struct		filedesc *kq_fdp;	/* [I] fd table of this kq */
 
 	LIST_ENTRY(kqueue) kq_next;

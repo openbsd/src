@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.191 2022/06/27 13:35:21 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.192 2022/07/09 12:48:21 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -38,7 +38,6 @@
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/fcntl.h>
-#include <sys/selinfo.h>
 #include <sys/queue.h>
 #include <sys/event.h>
 #include <sys/eventvar.h>
@@ -221,7 +220,7 @@ KQRELE(struct kqueue *kq)
 	free(kq->kq_knlist, M_KEVENT, kq->kq_knlistsize *
 	    sizeof(struct knlist));
 	hashfree(kq->kq_knhash, KN_HASHSIZE, M_KEVENT);
-	klist_free(&kq->kq_sel.si_note);
+	klist_free(&kq->kq_klist);
 	pool_put(&kqueue_pool, kq);
 }
 
@@ -257,7 +256,7 @@ kqueue_kqfilter(struct file *fp, struct knote *kn)
 		return (EINVAL);
 
 	kn->kn_fop = &kqread_filtops;
-	klist_insert(&kq->kq_sel.si_note, kn);
+	klist_insert(&kq->kq_klist, kn);
 	return (0);
 }
 
@@ -266,7 +265,7 @@ filt_kqdetach(struct knote *kn)
 {
 	struct kqueue *kq = kn->kn_fp->f_data;
 
-	klist_remove(&kq->kq_sel.si_note, kn);
+	klist_remove(&kq->kq_klist, kn);
 }
 
 int
@@ -849,7 +848,7 @@ kqueue_alloc(struct filedesc *fdp)
 	TAILQ_INIT(&kq->kq_head);
 	mtx_init(&kq->kq_lock, IPL_HIGH);
 	task_set(&kq->kq_task, kqueue_task, kq);
-	klist_init_mutex(&kq->kq_sel.si_note, &kqueue_klist_lock);
+	klist_init_mutex(&kq->kq_klist, &kqueue_klist_lock);
 
 	return (kq);
 }
@@ -1580,7 +1579,7 @@ kqueue_terminate(struct proc *p, struct kqueue *kq)
 	 * Any knotes that were attached to this kqueue were deleted
 	 * by knote_fdclose() when this kqueue's file descriptor was closed.
 	 */
-	KASSERT(klist_empty(&kq->kq_sel.si_note));
+	KASSERT(klist_empty(&kq->kq_klist));
 	if (state & KQ_TASK)
 		taskq_del_barrier(systqmp, &kq->kq_task);
 }
@@ -1606,7 +1605,7 @@ kqueue_task(void *arg)
 	struct kqueue *kq = arg;
 
 	mtx_enter(&kqueue_klist_lock);
-	KNOTE(&kq->kq_sel.si_note, 0);
+	KNOTE(&kq->kq_klist, 0);
 	mtx_leave(&kqueue_klist_lock);
 }
 
@@ -1619,7 +1618,7 @@ kqueue_wakeup(struct kqueue *kq)
 		kq->kq_state &= ~KQ_SLEEP;
 		wakeup(kq);
 	}
-	if (!klist_empty(&kq->kq_sel.si_note)) {
+	if (!klist_empty(&kq->kq_klist)) {
 		/* Defer activation to avoid recursion. */
 		kq->kq_state |= KQ_TASK;
 		task_add(systqmp, &kq->kq_task);

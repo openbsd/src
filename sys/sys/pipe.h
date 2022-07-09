@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipe.h,v 1.28 2022/06/20 01:39:44 visa Exp $	*/
+/*	$OpenBSD: pipe.h,v 1.29 2022/07/09 12:48:21 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -26,9 +26,9 @@
 
 #ifndef _KERNEL
 #include <sys/time.h>			/* for struct timespec */
-#include <sys/selinfo.h>		/* for struct selinfo */
 #endif /* _KERNEL */
 
+#include <sys/event.h>			/* for struct klist */
 #include <sys/sigio.h>			/* for struct sigio_ref */
 
 /*
@@ -80,7 +80,7 @@ struct pipe_pair;
 struct pipe {
 	struct	rwlock *pipe_lock;
 	struct	pipebuf pipe_buffer;	/* [p] data storage */
-	struct	selinfo pipe_sel;	/* [p] for compat with select */
+	struct	klist pipe_klist;	/* [p] list of knotes */
 	struct	timespec pipe_atime;	/* [p] time of last access */
 	struct	timespec pipe_mtime;	/* [p] time of last modify */
 	struct	timespec pipe_ctime;	/* [I] time of status change */
