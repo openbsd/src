@@ -1,11 +1,11 @@
-.\" $OpenBSD: ASN1_INTEGER_get.3,v 1.5 2021/11/23 13:52:27 schwarze Exp $
+.\" $OpenBSD: ASN1_INTEGER_get.3,v 1.6 2022/07/09 13:13:34 schwarze Exp $
 .\" selective merge up to:
 .\" OpenSSL man3/ASN1_INTEGER_get_int64 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2018, 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2018, 2021, 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -66,26 +66,52 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 23 2021 $
+.Dd $Mdocdate: July 9 2022 $
 .Dt ASN1_INTEGER_GET 3
 .Os
 .Sh NAME
+.Nm ASN1_INTEGER_get_uint64 ,
+.Nm ASN1_INTEGER_get_int64 ,
 .Nm ASN1_INTEGER_get ,
+.Nm ASN1_INTEGER_set_uint64 ,
+.Nm ASN1_INTEGER_set_int64 ,
 .Nm ASN1_INTEGER_set ,
 .Nm ASN1_INTEGER_cmp ,
 .Nm ASN1_INTEGER_dup ,
 .Nm BN_to_ASN1_INTEGER ,
 .Nm ASN1_INTEGER_to_BN ,
+.Nm ASN1_ENUMERATED_get_int64 ,
 .Nm ASN1_ENUMERATED_get ,
+.Nm ASN1_ENUMERATED_set_int64 ,
 .Nm ASN1_ENUMERATED_set ,
 .Nm BN_to_ASN1_ENUMERATED ,
 .Nm ASN1_ENUMERATED_to_BN
 .Nd ASN.1 INTEGER and ENUMERATED utilities
 .Sh SYNOPSIS
 .In openssl/asn1.h
+.Ft int
+.Fo ASN1_INTEGER_get_uint64
+.Fa "uint64_t *out_val"
+.Fa "const ASN1_INTEGER *a"
+.Fc
+.Ft int
+.Fo ASN1_INTEGER_get_int64
+.Fa "int64_t *out_val"
+.Fa "const ASN1_INTEGER *a"
+.Fc
 .Ft long
 .Fo ASN1_INTEGER_get
 .Fa "const ASN1_INTEGER *a"
+.Fc
+.Ft int
+.Fo ASN1_INTEGER_set_uint64
+.Fa "ASN1_INTEGER *a"
+.Fa "uint64_t v"
+.Fc
+.Ft int
+.Fo ASN1_INTEGER_set_int64
+.Fa "ASN1_INTEGER *a"
+.Fa "int64_t v";
 .Fc
 .Ft int
 .Fo ASN1_INTEGER_set
@@ -111,9 +137,19 @@
 .Fa "const ASN1_INTEGER *ai"
 .Fa "BIGNUM *bn"
 .Fc
+.Ft int
+.Fo ASN1_ENUMERATED_get_int64
+.Fa "int64_t *out_val"
+.Fa "const ASN1_ENUMERATED *a"
+.Fc
 .Ft long
 .Fo ASN1_ENUMERATED_get
 .Fa "const ASN1_ENUMERATED *a"
+.Fc
+.Ft int
+.Fo ASN1_ENUMERATED_set_int64
+.Fa "ASN1_ENUMERATED *a"
+.Fa "int64_t v"
 .Fc
 .Ft int
 .Fo ASN1_ENUMERATED_set
@@ -137,6 +173,16 @@ and
 .Vt ASN1_ENUMERATED
 objects.
 .Pp
+.Fn ASN1_INTEGER_get_uint64
+and
+.Fn ASN1_INTEGER_get_int64
+store the value of
+.Fa a
+in
+.Pf * Fa out_val
+if successful.
+.Pp
+The deprecated function
 .Fn ASN1_INTEGER_get
 converts
 .Fa a
@@ -144,8 +190,11 @@ to the
 .Vt long
 type.
 .Pp
+.Fn ASN1_INTEGER_set_uint64 ,
+.Fn ASN1_INTEGER_set_int64 ,
+and
 .Fn ASN1_INTEGER_set
-sets the type of
+set the type of
 .Fa a
 to
 .Dv V_ASN1_INTEGER
@@ -153,7 +202,7 @@ or
 .Dv V_ASN1_NEG_INTEGER
 depending on the sign of
 .Fa v
-and sets the value of
+and set the value of
 .Fa a
 to
 .Fa v .
@@ -206,7 +255,9 @@ Otherwise, the existing object
 .Fa bn
 is used instead.
 .Pp
+.Fn ASN1_ENUMERATED_get_int64 ,
 .Fn ASN1_ENUMERATED_get ,
+.Fn ASN1_ENUMERATED_set_int64 ,
 .Fn ASN1_ENUMERATED_set ,
 .Fn BN_to_ASN1_ENUMERATED ,
 and
@@ -217,6 +268,26 @@ counterparts except that they operate on an
 .Vt ASN1_ENUMERATED
 object.
 .Sh RETURN VALUES
+.Fn ASN1_INTEGER_get_uint64
+returns 1 in case of success or 0 if
+.Fa a
+is not of the type
+.Dv V_ASN1_INTEGER
+or greater than
+.Dv UINT64_MAX .
+.Pp
+.Fn ASN1_INTEGER_get_int64
+returns 1 in case of success or 0 if
+.Fa a
+is not of the type
+.Dv V_ASN1_INTEGER
+or
+.Dv V_ASN1_NEG_INTEGER ,
+less than
+.Dv INT64_MIN ,
+or greater than
+.Dv INT64_MAX .
+.Pp
 .Fn ASN1_INTEGER_get
 and
 .Fn ASN1_ENUMERATED_get
@@ -228,7 +299,10 @@ or \-1 on error, which is ambiguous because \-1 is a legitimate
 value for an
 .Vt ASN1_INTEGER .
 .Pp
-.Fn ASN1_INTEGER_set
+.Fn ASN1_INTEGER_set_uint64 ,
+.Fn ASN1_INTEGER_set_int64 ,
+.Fn ASN1_INTEGER_set ,
+.Fn ASN1_ENUMERATED_set_int64 ,
 and
 .Fn ASN1_ENUMERATED_set
 return 1 for success or 0 for failure.
@@ -303,6 +377,16 @@ and
 .Fn ASN1_ENUMERATED_to_BN
 first appeared in OpenSSL 0.9.2b and have been available since
 .Ox 2.6 .
+.Pp
+.Fn ASN1_INTEGER_get_uint64 ,
+.Fn ASN1_INTEGER_get_int64 ,
+.Fn ASN1_INTEGER_set_uint64 ,
+.Fn ASN1_INTEGER_set_int64 ,
+.Fn ASN1_ENUMERATED_get_int64 ,
+and
+.Fn ASN1_ENUMERATED_set_int64
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 7.2 .
 .Sh CAVEATS
 In general an
 .Vt ASN1_INTEGER
